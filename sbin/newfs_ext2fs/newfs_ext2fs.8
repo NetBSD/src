@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_ext2fs.8,v 1.1 2007/11/17 16:50:26 tsutsui Exp $
+.\"	$NetBSD: newfs_ext2fs.8,v 1.1.18.1 2009/05/13 19:19:04 jym Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd November 17, 2007
+.Dd March 1, 2009
 .Dt NEWFS_EXT2FS 8
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nm
 .Op Fl FINZ
 .Op Fl b Ar block-size
+.Op Fl D Ar inodesize
 .Op Fl f Ar frag-size
 .Op Fl i Ar bytes-per-inode
 .Op Fl m Ar free-space
@@ -93,6 +94,10 @@ The default size depends upon the size of the file system:
 .It \*[Gt] 512 MB
 4 KB
 .El
+.It Fl D
+Set the inode size.
+Defaults to 128, and can also be set to 256 for
+compatibility with ext4.
 .It Fl F
 Create a file system image in
 .Ar special .
@@ -134,7 +139,8 @@ Select the filesystem-format
 .It 0
 .Ql GOOD_OLD_REV ;
 This option is primarily used to build root file systems that can be
-understood by old or dumb firmwares for bootstrap. (default)
+understood by old or dumb firmwares for bootstrap.
+(default)
 .It 1
 .Ql DYNAMIC_REV ;
 Various extended (and sometimes incompatible) features are enabled

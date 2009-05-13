@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2008/10/07 09:58:15 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.2.4.1 2009/05/13 19:17:59 jym Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -104,17 +104,22 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
+	char *bootxx;
+	int error;
 
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
-	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-	    "/usr/sbin/installboot -v -m landisk /dev/r%sa /usr/mdec/bootxx_ffsv1",
-	    diskdev))
-		process_menu(MENU_ok,
-			 deconst("Warning: disk is probably not bootable"));
+	bootxx = bootxx_name();
+	if (bootxx != NULL) {
+		error = run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+		    "/usr/sbin/installboot -v /dev/r%sa %s", diskdev, bootxx);
+		free(bootxx);
+	} else
+		error = -1;
 
-	process_menu(MENU_ok,
-		 deconst("blah"));
+	if (error != 0)
+		process_menu(MENU_ok,
+		    deconst("Warning: disk is probably not bootable"));
 
 	return 0;
 }
@@ -122,17 +127,21 @@ md_post_newfs(void)
 int
 md_pre_disklabel(void)
 {
+
 	if (no_mbr)
 		return 0;
 
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, &mbr, 1) != 0) {
+	if (write_mbr(diskdev, &mbr, 1) != 0 ||
+	    run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "/sbin/fdisk -f -i -c /usr/mdec/mbr %s", diskdev)) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
 		return 1;
 	}
+
 	return 0;
 }
 

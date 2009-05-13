@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.32 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.32.2.1 2009/05/13 19:18:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -104,8 +104,8 @@ int scandir(const char *, struct dirent ***,
     int (*)(const struct dirent *), int (*)(const void *, const void *))
     __RENAME(__scandir30);
 int getdents(int, char *, size_t) __RENAME(__getdents30);
+int alphasort(const void *, const void *) __RENAME(__alphasort30);
 #endif
-int alphasort(const void *, const void *);
 #endif /* defined(_NETBSD_SOURCE) */
 __END_DECLS
 

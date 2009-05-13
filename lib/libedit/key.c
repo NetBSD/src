@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.19 2006/03/23 20:22:51 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.19.28.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.19 2006/03/23 20:22:51 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.19.28.1 2009/05/13 19:18:29 jym Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -89,8 +89,8 @@ private void		 node__free(key_node_t *);
 private void		 node__put(EditLine *, key_node_t *);
 private int		 node__delete(EditLine *, key_node_t **, const char *);
 private int		 node_lookup(EditLine *, const char *, key_node_t *,
-    int);
-private int		 node_enum(EditLine *, key_node_t *, int);
+    size_t);
+private int		 node_enum(EditLine *, key_node_t *, size_t);
 
 #define	KEY_BUFSIZ	EL_BUFSIZ
 
@@ -481,9 +481,9 @@ node__free(key_node_t *k)
  *	Print if last node
  */
 private int
-node_lookup(EditLine *el, const char *str, key_node_t *ptr, int cnt)
+node_lookup(EditLine *el, const char *str, key_node_t *ptr, size_t cnt)
 {
-	int ncnt;
+	size_t ncnt;
 
 	if (ptr == NULL)
 		return (-1);	/* cannot have null ptr */
@@ -496,7 +496,8 @@ node_lookup(EditLine *el, const char *str, key_node_t *ptr, int cnt)
 		/* If match put this char into el->el_key.buf.  Recurse */
 		if (ptr->ch == *str) {
 			/* match found */
-			ncnt = key__decode_char(el->el_key.buf, KEY_BUFSIZ, cnt,
+			ncnt = key__decode_char(el->el_key.buf,
+			    (size_t)KEY_BUFSIZ, cnt,
 			    (unsigned char) ptr->ch);
 			if (ptr->next != NULL)
 				/* not yet at leaf */
@@ -530,9 +531,9 @@ node_lookup(EditLine *el, const char *str, key_node_t *ptr, int cnt)
  *	Traverse the node printing the characters it is bound in buffer
  */
 private int
-node_enum(EditLine *el, key_node_t *ptr, int cnt)
+node_enum(EditLine *el, key_node_t *ptr, size_t cnt)
 {
-	int ncnt;
+	size_t ncnt;
 
 	if (cnt >= KEY_BUFSIZ - 5) {	/* buffer too small */
 		el->el_key.buf[++cnt] = '"';
@@ -550,7 +551,7 @@ node_enum(EditLine *el, key_node_t *ptr, int cnt)
 		return (-1);
 	}
 	/* put this char at end of str */
-	ncnt = key__decode_char(el->el_key.buf, KEY_BUFSIZ, cnt,
+	ncnt = key__decode_char(el->el_key.buf, (size_t)KEY_BUFSIZ, cnt,
 	    (unsigned char)ptr->ch);
 	if (ptr->next == NULL) {
 		/* print this key and function */
@@ -618,8 +619,8 @@ key_kprint(EditLine *el, const char *key, key_value_t *val, int ntype)
 /* key__decode_char():
  *	Put a printable form of char in buf.
  */
-protected int
-key__decode_char(char *buf, int cnt, int off, int ch)
+protected size_t
+key__decode_char(char *buf, size_t cnt, size_t off, int ch)
 {
 	char *sb = buf + off;
 	char *eb = buf + cnt;
@@ -627,7 +628,7 @@ key__decode_char(char *buf, int cnt, int off, int ch)
 	if (ch == 0) {
 		ADDC('^');
 		ADDC('@');
-		return b - sb;
+		return (int)(b - sb);
 	}
 	if (iscntrl(ch)) {
 		ADDC('^');
@@ -649,15 +650,15 @@ key__decode_char(char *buf, int cnt, int off, int ch)
 		ADDC((((unsigned int) ch >> 3) & 7) + '0');
 		ADDC((ch & 7) + '0');
 	}
-	return b - sb;
+	return (size_t)(b - sb);
 }
 
 
 /* key__decode_str():
  *	Make a printable version of the ey
  */
-protected int
-key__decode_str(const char *str, char *buf, int len, const char *sep)
+protected size_t
+key__decode_str(const char *str, char *buf, size_t len, const char *sep)
 {
 	char *b = buf, *eb = b + len;
 	const char *p;
@@ -700,7 +701,7 @@ key__decode_str(const char *str, char *buf, int len, const char *sep)
 	}
 done:
 	ADDC('\0');
-	if (b - buf >= len)
+	if ((size_t)(b - buf) >= len)
 	    buf[len - 1] = '\0';
-	return b - buf;
+	return (size_t)(b - buf);
 }

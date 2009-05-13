@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.104 2007/12/08 21:40:23 jnemeth Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.104.14.1 2009/05/13 19:19:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.104 2007/12/08 21:40:23 jnemeth Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.104.14.1 2009/05/13 19:19:03 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ void
 mkfs(const char *fsys, int fi, int fo,
     mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
-	uint fragsperinodeblk, ncg;
+	uint fragsperinodeblk, ncg, u;
 	uint cgzero;
 	uint64_t inodeblks, cgall;
 	int32_t cylno, i, csfrags;
@@ -177,7 +177,7 @@ mkfs(const char *fsys, int fi, int fo,
 #ifdef MFS
 	if (mfs && !Nflag) {
 		calc_memfree();
-		if (fssize * sectorsize > memleft)
+		if ((uint64_t)fssize * sectorsize > memleft)
 			fssize = memleft / sectorsize;
 		if ((membase = mkfs_malloc(fssize * sectorsize)) == NULL)
 			exit(12);
@@ -287,9 +287,9 @@ mkfs(const char *fsys, int fi, int fo,
 	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / sectorsize);
 	sblock.fs_size = dbtofsb(&sblock, fssize);
 	if (Oflag <= 1) {
-		if (sblock.fs_size >= 1ull << 31) {
+		if ((uint64_t)sblock.fs_size >= 1ull << 31) {
 			printf("Too many fragments (0x%" PRIx64
-			    ") for a UFS1 filesystem\n", sblock.fs_size);
+			    ") for a FFSv1 filesystem\n", sblock.fs_size);
 			exit(22);
 		}
 		sblock.fs_magic = FS_UFS1_MAGIC;
@@ -370,7 +370,7 @@ mkfs(const char *fsys, int fi, int fo,
 	if (inodeblks == 0)
 		inodeblks = 1;
 	/* Ensure that there are at least 2 data blocks (or we fail below) */
-	if (inodeblks > (sblock.fs_size - sblock.fs_iblkno)/sblock.fs_frag - 2)
+	if (inodeblks > (uint64_t)(sblock.fs_size - sblock.fs_iblkno)/sblock.fs_frag - 2)
 		inodeblks = (sblock.fs_size-sblock.fs_iblkno)/sblock.fs_frag-2;
 	/* Even UFS2 limits number of inodes to 2^31 (fs_ipg is int32_t) */
 	if (inodeblks * INOPB(&sblock) >= 1ull << 31)
@@ -388,10 +388,10 @@ mkfs(const char *fsys, int fi, int fo,
 		 * but for small file sytems (especially ones with a lot
 		 * of inodes) this is not desirable (or possible).
 		 */
-		i = sblock.fs_size / 2 / (sblock.fs_iblkno +
+		u = sblock.fs_size / 2 / (sblock.fs_iblkno +
 						inodeblks * sblock.fs_frag);
-		if (i > ncg)
-			ncg = i;
+		if (u > ncg)
+			ncg = u;
 		if (ncg > MINCYLGRPS)
 			ncg = MINCYLGRPS;
 		if (ncg > inodeblks)
@@ -417,7 +417,7 @@ mkfs(const char *fsys, int fi, int fo,
 	}
 	sblock.fs_ipg = inodes_per_cg;
 	/* Sanity check on our sums... */
-	if (CGSIZE(&sblock) > sblock.fs_bsize) {
+	if ((int)CGSIZE(&sblock) > sblock.fs_bsize) {
 		printf("CGSIZE miscalculated %d > %d\n",
 		    (int)CGSIZE(&sblock), sblock.fs_bsize);
 		exit(24);
@@ -735,6 +735,7 @@ initcg(int cylno, const struct timeval *tv)
 {
 	daddr_t cbase, dmax;
 	int32_t i, d, dlower, dupper, blkno;
+	uint32_t u;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	int start;
@@ -812,8 +813,8 @@ initcg(int cylno, const struct timeval *tv)
 	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
 	if (cylno == 0)
-		for (i = 0; i < ROOTINO; i++) {
-			setbit(cg_inosused(&acg, 0), i);
+		for (u = 0; u < ROOTINO; u++) {
+			setbit(cg_inosused(&acg, 0), u);
 			acg.cg_cs.cs_nifree--;
 		}
 	if (cylno > 0) {
@@ -1237,7 +1238,7 @@ iput(union dinode *ip, ino_t ino)
 	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	sblock.fs_cstotal.cs_nifree--;
 	fscs_0->cs_nifree--;
-	if (ino >= sblock.fs_ipg * sblock.fs_ncg) {
+	if (ino >= (ino_t)(sblock.fs_ipg * sblock.fs_ncg)) {
 		printf("fsinit: inode value out of range (%llu).\n",
 		    (unsigned long long)ino);
 		exit(32);

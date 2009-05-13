@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.10 2008/09/26 22:52:24 matt Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.10.6.1 2009/05/13 19:20:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.10 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.10.6.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 
 #include <limits.h>
@@ -57,7 +57,7 @@ ttab_t	ttab[NTSPEC];
 void
 inittyp(void)
 {
-	int	i;
+	size_t	i;
 	static const struct {
 		tspec_t	it_tspec;
 		ttab_t	it_ttab;

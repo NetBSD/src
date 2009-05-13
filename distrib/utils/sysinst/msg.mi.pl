@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.63 2009/01/28 16:31:49 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.63.2.1 2009/05/13 19:17:55 jym Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -784,6 +784,13 @@ message must_be_one_root
 
 message partitions_overlap
 {partycje %c i %c pokrycia.}
+
+message No_Bootcode
+{No bootcode for root partition}
+
+message cannot_ufs2_root
+{Sorry, the root file system can't be FFSv2 due to lack of bootloader support
+on this port.}
 
 message edit_partitions_again
 {

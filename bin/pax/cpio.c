@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.19 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: cpio.c,v 1.19.28.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.19 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.19.28.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ rd_nm(ARCHD *arcn, int nsz)
 	/*
 	 * do not even try bogus values
 	 */
-	if ((nsz == 0) || (nsz > sizeof(arcn->name))) {
+	if ((nsz <= 0) || (nsz > (int)sizeof(arcn->name))) {
 		tty_warn(1, "Cpio file name length %d is out of range", nsz);
 		return -1;
 	}
@@ -223,7 +223,7 @@ rd_ln_nm(ARCHD *arcn)
 	 * check the length specified for bogus values
 	 */
 	if ((arcn->sb.st_size == 0) ||
-	    (arcn->sb.st_size >= sizeof(arcn->ln_name))) {
+	    (arcn->sb.st_size >= (off_t)sizeof(arcn->ln_name))) {
 		tty_warn(1, "Cpio link name length is invalid: " OFFT_F,
 		    (OFFT_T) arcn->sb.st_size);
 		return -1;
@@ -265,7 +265,7 @@ rd_ln_nm(ARCHD *arcn)
 int
 cpio_id(char *blk, int size)
 {
-	if ((size < sizeof(HD_CPIO)) ||
+	if ((size < (int)sizeof(HD_CPIO)) ||
 	    (strncmp(blk, AMAGIC, sizeof(AMAGIC) - 1) != 0))
 		return -1;
 	return 0;
@@ -507,7 +507,7 @@ cpio_wr(ARCHD *arcn)
 int
 vcpio_id(char *blk, int size)
 {
-	if ((size < sizeof(HD_VCPIO)) ||
+	if ((size < (int)sizeof(HD_VCPIO)) ||
 	    (strncmp(blk, AVMAGIC, sizeof(AVMAGIC) - 1) != 0))
 		return -1;
 	return 0;
@@ -524,7 +524,7 @@ vcpio_id(char *blk, int size)
 int
 crc_id(char *blk, int size)
 {
-	if ((size < sizeof(HD_VCPIO)) ||
+	if ((size < (int)sizeof(HD_VCPIO)) ||
 	    (strncmp(blk, AVCMAGIC, sizeof(AVCMAGIC) - 1) != 0))
 		return -1;
 	return 0;
@@ -833,7 +833,7 @@ vcpio_wr(ARCHD *arcn)
 int
 bcpio_id(char *blk, int size)
 {
-	if (size < sizeof(HD_BCPIO))
+	if (size < (int)sizeof(HD_BCPIO))
 		return -1;
 
 	/*

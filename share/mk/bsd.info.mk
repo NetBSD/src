@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.38 2006/03/16 18:43:34 jwise Exp $
+#	$NetBSD: bsd.info.mk,v 1.38.28.1 2009/05/13 19:19:16 jym Exp $
 
 .include <bsd.init.mk>
 
@@ -23,7 +23,7 @@ realall:	${INFOFILES}
 
 .txi.info .texi.info .texinfo.info:
 	${_MKTARGET_CREATE}
-	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split -o ${.TARGET} ${.IMPSRC}
+	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split --no-version-header -o ${.TARGET} ${.IMPSRC}
 
 .endif # ${MKINFO} != "no"
 

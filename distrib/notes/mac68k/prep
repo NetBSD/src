@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.15 2006/10/12 12:46:18 pavel Exp $
+.\"	$NetBSD: prep,v 1.15.28.1 2009/05/13 19:17:46 jym Exp $
 .
 No matter which installation method you use, there is some planning
 and preparation that is required beforehand.  First and foremost,
@@ -33,7 +33,7 @@ it is best if this space is physically contiguous on the disk as
 is not capable of merging non-contiguous disk partitions.  If you are
 using the
 .Ic sysinst
-method  and have sufficient disk space in one or more
+method and have sufficient disk space in one or more
 disk partitions you should skip forward to the section labeled
 .Sx Installing\ the\ NetBSD\ System\ (Sysinst\ Method)
 in this document.
@@ -120,15 +120,13 @@ how much space to allocate to each partition. A minimal install of
 .Pa base.tgz , etc.tgz, No and either
 .Pa kern-GENERIC.tgz No or
 .Pa kern-GENERICSBC.tgz )
-should just fit in a 56 MB partition.
-For a full installation, you should allocate at least 180 MB (150 MB if you
-do not wish to install the X sets). A general rule of thumb for sizing
-the swap partition is to allocate twice as much swap space as you have
-real memory. Having your swap + real memory total at least 20 MB is also
-a good idea. Systems that will be heavily used or that are low on real
-memory should have more swap space allocated. Systems that will be only
-lightly used or have a very large amount of real memory can get away
-with less.
+requires about 100MB.
+A general rule of thumb for sizing the swap partition is to allocate
+twice as much swap space as you have real memory.
+Having your swap + real memory total at least 20 MB is also a good idea.
+Systems that will be heavily used or that are low on real memory should
+have more swap space allocated. Systems that will be only lightly used
+or have a very large amount of real memory can get away with less.
 .Pp
 Keep in mind that
 .Nx

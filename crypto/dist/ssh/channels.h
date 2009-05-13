@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.17 2008/06/22 15:42:50 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.89 2007/06/11 09:14:00 markus Exp $ */
+/*	$NetBSD: channels.h,v 1.17.6.1 2009/05/13 19:15:56 jym Exp $	*/
+/* $OpenBSD: channels.h,v 1.96 2008/06/15 20:06:26 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -63,7 +63,26 @@ typedef struct Channel Channel;
 
 typedef void channel_callback_fn(int, void *);
 typedef int channel_infilter_fn(struct Channel *, char *, int);
+typedef void channel_filter_cleanup_fn(int, void *);
 typedef u_char *channel_outfilter_fn(struct Channel *, u_char **, u_int *);
+
+/* Channel success/failure callbacks */
+typedef void channel_confirm_cb(int, struct Channel *, void *);
+typedef void channel_confirm_abandon_cb(struct Channel *, void *);
+struct channel_confirm {
+	TAILQ_ENTRY(channel_confirm) entry;
+	channel_confirm_cb *cb;
+	channel_confirm_abandon_cb *abandon_cb;
+	void *ctx;
+};
+TAILQ_HEAD(channel_confirms, channel_confirm);
+
+/* Context for non-blocking connects */
+struct channel_connect {
+	char *host;
+	int port;
+	struct addrinfo *ai, *aitop;
+};
 
 struct Channel {
 	int     type;		/* channel type/state */
@@ -106,16 +125,23 @@ struct Channel {
 	char   *ctype;		/* type */
 
 	/* callback */
-	channel_callback_fn	*confirm;
-	void			*confirm_ctx;
+	channel_callback_fn	*open_confirm;
+	void			*open_confirm_ctx;
 	channel_callback_fn	*detach_user;
 	int			detach_close;
+	struct channel_confirms	status_confirms;
 
 	/* filter */
 	channel_infilter_fn	*input_filter;
 	channel_outfilter_fn	*output_filter;
+	void			*filter_ctx;
+	channel_filter_cleanup_fn *filter_cleanup;
 
-	int     datagram;	/* keep boundaries */
+	/* keep boundaries */
+	int     		datagram;
+
+	/* non-blocking connect */
+	struct channel_connect	connect_ctx;
 };
 
 #define CHAN_EXTENDED_IGNORE		0
@@ -166,7 +192,7 @@ struct Channel {
 Channel	*channel_by_id(int);
 Channel	*channel_lookup(int);
 Channel *channel_new(char *, int, int, int, int, u_int, u_int, int, char *, int);
-void	 channel_set_fds(int, int, int, int, int, int, u_int);
+void	 channel_set_fds(int, int, int, int, int, int, int, u_int);
 void	 channel_free(Channel *);
 void	 channel_free_all(void);
 void	 channel_stop_listening(void);
@@ -174,8 +200,11 @@ void	 channel_stop_listening(void);
 void	 channel_send_open(int);
 void	 channel_request_start(int, char *, int);
 void	 channel_register_cleanup(int, channel_callback_fn *, int);
-void	 channel_register_confirm(int, channel_callback_fn *, void *);
-void	 channel_register_filter(int, channel_infilter_fn *, channel_outfilter_fn *);
+void	 channel_register_open_confirm(int, channel_callback_fn *, void *);
+void	 channel_register_filter(int, channel_infilter_fn *,
+    channel_outfilter_fn *, channel_filter_cleanup_fn *, void *);
+void	 channel_register_status_confirm(int, channel_confirm_cb *,
+    channel_confirm_abandon_cb *, void *);
 void	 channel_cancel_cleanup(int);
 int	 channel_close_fd(int *);
 void	 channel_send_window_changes(void);
@@ -192,6 +221,7 @@ void	 channel_input_open_confirmation(int, u_int32_t, void *);
 void	 channel_input_open_failure(int, u_int32_t, void *);
 void	 channel_input_port_open(int, u_int32_t, void *);
 void	 channel_input_window_adjust(int, u_int32_t, void *);
+void	 channel_input_status_confirm(int, u_int32_t, void *);
 
 /* file descriptor handling (read/write) */
 
@@ -212,24 +242,25 @@ void	 channel_add_permitted_opens(char *, int);
 int	 channel_add_adm_permitted_opens(char *, int);
 void	 channel_clear_permitted_opens(void);
 void	 channel_clear_adm_permitted_opens(void);
-int      channel_input_port_forward_request(int, int, int, int);
-int	 channel_connect_to(const char *, u_short);
-int	 channel_connect_by_listen_address(u_short);
+void 	 channel_print_adm_permitted_opens(void);
+int      channel_input_port_forward_request(int, int);
+Channel	*channel_connect_to(const char *, u_short, char *, char *);
+Channel	*channel_connect_by_listen_address(u_short, char *, char *);
 int	 channel_request_remote_forwarding(const char *, u_short,
 	     const char *, u_short);
 int	 channel_setup_local_fwd_listener(const char *, u_short,
-	     const char *, u_short, int, int, int);
+	     const char *, u_short, int);
 void	 channel_request_rforward_cancel(const char *host, u_short port);
-int	 channel_setup_remote_fwd_listener(const char *, u_short, int, int, int);
+int	 channel_setup_remote_fwd_listener(const char *, u_short, int);
 int	 channel_cancel_rport_listener(const char *, u_short);
 
 /* x11 forwarding */
 
 int	 x11_connect_display(void);
-int	 x11_create_display_inet(int, int, int, u_int *, int **, int, int);
+int	 x11_create_display_inet(int, int, int, u_int *, int **);
 void     x11_input_open(int, u_int32_t, void *);
 void	 x11_request_forwarding_with_spoofing(int, const char *, const char *,
-	    const char *);
+	     const char *);
 void	 deny_input_open(int, u_int32_t, void *);
 
 /* agent forwarding */
@@ -244,11 +275,15 @@ void	 chan_mark_dead(Channel *);
 /* channel events */
 
 void	 chan_rcvd_oclose(Channel *);
+void	 chan_rcvd_eow(Channel *);	/* SSH2-only */
 void	 chan_read_failed(Channel *);
 void	 chan_ibuf_empty(Channel *);
 
 void	 chan_rcvd_ieof(Channel *);
 void	 chan_write_failed(Channel *);
 void	 chan_obuf_empty(Channel *);
+
+/* hpn handler */
+void     channel_set_hpn(int, int);
 
 #endif

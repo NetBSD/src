@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_frag.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_frag.c,v 1.4.28.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: isakmp_frag.c,v 1.4 2004/11/13 17:31:36 manubsd Exp */
 
@@ -199,7 +199,8 @@ isakmp_frag_extract(iph1, msg)
 	 * frag->len is the frag payload data plus the frag payload header,
 	 * whose size is sizeof(*frag) 
 	 */
-	if (msg->l < sizeof(*isakmp) + ntohs(frag->len)) {
+	if (msg->l < sizeof(*isakmp) + ntohs(frag->len) ||
+	    ntohs(frag->len) < sizeof(*frag) + 1) {
 		plog(LLV_ERROR, LOCATION, NULL, "Fragment too short\n");
 		return -1;
 	}

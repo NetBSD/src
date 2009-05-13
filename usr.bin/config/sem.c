@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.32 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: sem.c,v 1.32.2.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -713,7 +713,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	int unit;
 	char buf[NAMESIZE];
 
-	if ((u_int)(part -= 'a') >= maxpartitions)
+	if ((part -= 'a') >= maxpartitions || part < 0)
 		panic("resolve");
 	if ((nv = *nvp) == NULL) {
 		dev_t	d = NODEV;
@@ -721,7 +721,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 		 * Apply default.  Easiest to do this by number.
 		 * Make sure to retain NODEVness, if this is dflt's disposition.
 		 */
-		if (dflt->nv_num != NODEV) {
+		if ((dev_t)dflt->nv_num != NODEV) {
 			maj = major(dflt->nv_num);
 			min = ((minor(dflt->nv_num) / maxpartitions) *
 			    maxpartitions) + part;
@@ -731,7 +731,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 			cp = NULL;
 		*nvp = nv = newnv(NULL, cp, NULL, d, NULL);
 	}
-	if (nv->nv_num != NODEV) {
+	if ((dev_t)nv->nv_num != NODEV) {
 		/*
 		 * By the numbers.  Find the appropriate major number
 		 * to make a name.
@@ -780,7 +780,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 		nv->nv_ifunit = unit;	/* XXX XXX XXX */
 	} else {
 		maj = dev2major(dev);
-		if (maj == NODEV) {
+		if (maj == NODEVMAJOR) {
 			cfgerror("%s: can't make %s device from `%s'",
 			    name, what, nv->nv_str);
 			return (1);
@@ -1464,24 +1464,24 @@ delpseudo(const char *name)
 
 void
 adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
-	struct nvlist *options)
+	struct nvlist *nv)
 {
 	struct devm *dm;
 
 	if (cmajor != NODEVMAJOR && (cmajor < 0 || cmajor >= 4096)) {
 		cfgerror("character major %d is invalid", cmajor);
-		nvfreel(options);
+		nvfreel(nv);
 		return;
 	}
 
 	if (bmajor != NODEVMAJOR && (bmajor < 0 || bmajor >= 4096)) {
 		cfgerror("block major %d is invalid", bmajor);
-		nvfreel(options);
+		nvfreel(nv);
 		return;
 	}
 	if (cmajor == NODEVMAJOR && bmajor == NODEVMAJOR) {
 		cfgerror("both character/block majors are not specified");
-		nvfreel(options);
+		nvfreel(nv);
 		return;
 	}
 
@@ -1491,7 +1491,7 @@ adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
 	dm->dm_name = name;
 	dm->dm_cmajor = cmajor;
 	dm->dm_bmajor = bmajor;
-	dm->dm_opts = options;
+	dm->dm_opts = nv;
 
 	TAILQ_INSERT_TAIL(&alldevms, dm, dm_next);
 

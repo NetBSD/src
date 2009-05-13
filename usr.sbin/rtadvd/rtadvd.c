@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.34 2007/01/16 17:32:04 hubertf Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.34.20.1 2009/05/13 19:20:38 jym Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1475,12 +1475,12 @@ rtsock_open()
 }
 
 struct rainfo *
-if_indextorainfo(int index)
+if_indextorainfo(int idx)
 {
 	struct rainfo *rai = ralist;
 
 	for (rai = ralist; rai; rai = rai->next) {
-		if (rai->ifindex == index)
+		if (rai->ifindex == idx)
 			return(rai);
 	}
 

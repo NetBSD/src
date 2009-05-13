@@ -1,8 +1,9 @@
-.\"	$NetBSD: rpcgen.1,v 1.21 2008/01/19 14:22:05 hubertf Exp $
+.\"	$NetBSD: rpcgen.1,v 1.21.12.1 2009/05/13 19:20:03 jym Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
 .Dd January 19, 2008
 .Dt RPCGEN 1
+.Os
 .Sh NAME
 .Nm rpcgen
 .Nd Remote Procedure Call (RPC) protocol compiler
@@ -125,7 +126,7 @@ it backgrounds itself by default.
 A special define symbol
 .Dv RPC_SVC_FG
 can be used to run the server process in foreground.
-.P
+.Pp
 The second synopsis provides special features which allow
 for the creation of more sophisticated
 .Tn RPC

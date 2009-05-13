@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.554 2009/01/25 23:11:16 tron Exp $
+#	$NetBSD: bsd.own.mk,v 1.554.2.1 2009/05/13 19:19:16 jym Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -125,10 +125,16 @@ USETOOLS?=	no
 .if !defined(HOST_OSTYPE)
 _HOST_OSNAME!=	uname -s
 _HOST_OSREL!=	uname -r
-_HOST_ARCH!=	uname -p 2>/dev/null || uname -m
+# For _HOST_ARCH, if uname -p fails, or prints "unknown", or prints
+# something that does not look like an identifier, then use uname -m.
+_HOST_ARCH!=	uname -p 2>/dev/null
+_HOST_ARCH:=	${HOST_ARCH:tW:C/.*[^-_A-Za-z0-9].*//:S/unknown//}
+.if empty(_HOST_ARCH)
+_HOST_ARCH!=	uname -m
+.endif
 HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//g:[*]:C/ /_/g}-${_HOST_ARCH:C/\([^\)]*\)//g:[*]:C/ /_/g}
 .MAKEOVERRIDES+= HOST_OSTYPE
-.endif
+.endif # !defined(HOST_OSTYPE)
 
 .if ${USETOOLS} == "yes"						# {
 
@@ -230,6 +236,7 @@ TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
 TOOL_GENASSYM=		${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
+TOOL_GREP=		${TOOLDIR}/bin/${_TOOL_PREFIX}grep
 TOOL_GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
 TOOL_HP300MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp300-mkboot
@@ -298,6 +305,7 @@ TOOL_FGEN=		fgen
 TOOL_GENASSYM=		genassym
 TOOL_GENCAT=		gencat
 TOOL_GMAKE=		gmake
+TOOL_GREP=		grep
 TOOL_GROFF=		groff
 TOOL_HEXDUMP=		hexdump
 TOOL_HP300MKBOOT=	hp300-mkboot
@@ -528,6 +536,10 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # GNU sources and packages sometimes see architecture names differently.
 #
 GNU_ARCH.coldfire=m68k
+GNU_ARCH.i386=i486
+GCC_CONFIG_ARCH.i386=i486
+GCC_CONFIG_TUNE.i386=nocona
+GCC_CONFIG_TUNE.x86_64=nocona
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
@@ -673,12 +685,17 @@ ${var}?=no
 #
 # Do we default to XFree86 or Xorg for this platform?
 #
-.if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "shark" || \
-    ${MACHINE} == "sparc64"
-X11FLAVOUR?=	Xorg
-.else
+.if ${MACHINE} == "alpha" || ${MACHINE} == "acorn32" || \
+	${MACHINE} == "amiga" || ${MACHINE} == "cats" || \
+	${MACHINE} == "dreamcast" || ${MACHINE} == "ews4800mips" || \
+	${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || \
+	${MACHINE} == "hpcsh" || ${MACHINE} == "mac68k" || \
+	${MACHINE} == "netwinder" || ${MACHINE} == "newsmips" || \
+	${MACHINE} == "ofppc" || ${MACHINE} == "pmax" || \
+	${MACHINE} == "sparc" || ${MACHINE} == "sun3" || ${MACHINE} == "x68k"
 X11FLAVOUR?=	XFree86
+.else
+X11FLAVOUR?=	Xorg
 .endif
 
 #
@@ -734,7 +751,7 @@ METALOG?=	${DESTDIR}/METALOG
 METALOG.add?=	${TOOL_CAT} -l >> ${METALOG}
 .if (${_SRC_TOP_} != "")	# only set INSTPRIV if inside ${NETBSDSRCDIR}
 .if ${MKUNPRIVED} != "no"
-INSTPRIV.unpriv=-U -M ${METALOG} -D ${DESTDIR} -h sha1
+INSTPRIV.unpriv=-U -M ${METALOG} -D ${DESTDIR} -h sha256
 .else
 INSTPRIV.unpriv=
 .endif

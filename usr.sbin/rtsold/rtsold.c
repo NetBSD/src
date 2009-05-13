@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.34 2008/06/23 04:55:27 dholland Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.34.6.1 2009/05/13 19:20:38 jym Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ int main __P((int, char **));
 static int mobile_node = 0;
 #ifndef SMALL
 static int do_dump;
-static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
+static const char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
 #endif
 
 #if 0

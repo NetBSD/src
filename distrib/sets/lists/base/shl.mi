@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.460 2009/02/08 16:30:48 pooka Exp $
+# $NetBSD: shl.mi,v 1.460.2.1 2009/05/13 19:17:51 jym Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -13,12 +13,13 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
-./lib/libc.so.12.164				base-sys-shlib		dynamicroot
+./lib/libc.so.12.167				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so.5.0				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
 ./lib/libedit.so.3.0				base-sys-shlib		dynamicroot
 ./lib/libevent.so.3.0				base-sys-shlib		dynamicroot
+./lib/libgcc_s.so.1.0				base-sys-shlib		gcc
 ./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
 ./lib/libm.so.0.6				base-sys-shlib		dynamicroot
@@ -26,7 +27,7 @@
 ./lib/libradius.so.3.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
 ./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
-./lib/libutil.so.7.16				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.17				base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so.5.0			base-i18n-shlib
 ./usr/lib/i18n/libDECHanyu.so.5.0		base-i18n-shlib
@@ -55,18 +56,18 @@
 ./usr/lib/libarchive.so.3.0			base-sys-shlib
 ./usr/lib/libasn1.so.8.0			base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.10.0			base-sys-shlib		bfd
-./usr/lib/libbind9.so.2.0			base-bind-shlib
-./usr/lib/libbluetooth.so.4.0			base-sys-shlib
+./usr/lib/libbind9.so.3.0			base-bind-shlib
+./usr/lib/libbluetooth.so.4.1			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
-./usr/lib/libc.so.12.164			base-sys-shlib
+./usr/lib/libc.so.12.167			base-sys-shlib
 ./usr/lib/libcom_err.so.6.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so.5.0			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.7.0			base-sys-shlib
 ./usr/lib/libdes.so.8.0				base-crypto-shlib	crypto
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
-./usr/lib/libdns.so.2.0				base-bind-shlib
+./usr/lib/libdns.so.3.0				base-bind-shlib
 ./usr/lib/libedit.so.3.0			base-sys-shlib
 ./usr/lib/libevent.so.3.0			base-sys-shlib
 ./usr/lib/libfetch.so.2.0			base-sys-shlib
@@ -80,9 +81,9 @@
 ./usr/lib/libhx509.so.3.0			base-krb5-shlib		kerberos
 ./usr/lib/libintl.so.1.0			base-sys-shlib
 ./usr/lib/libipsec.so.3.0			base-net-shlib
-./usr/lib/libisc.so.2.0				base-bind-shlib
-./usr/lib/libisccc.so.2.0			base-bind-shlib
-./usr/lib/libisccfg.so.2.0			base-bind-shlib
+./usr/lib/libisc.so.3.0				base-bind-shlib
+./usr/lib/libisccc.so.3.0			base-bind-shlib
+./usr/lib/libisccfg.so.3.0			base-bind-shlib
 ./usr/lib/libiscsi.so.1.0			base-iscsi-shlib	iscsi
 ./usr/lib/libkadm5clnt.so.11.0			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so.12.0			base-krb5-shlib		kerberos
@@ -92,13 +93,14 @@
 ./usr/lib/liblber.so.3.0			base-ldap-shlib		ldap
 ./usr/lib/libldap.so.3.0			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.3.0			base-ldap-shlib		ldap
-./usr/lib/liblwres.so.2.0			base-bind-shlib
+./usr/lib/liblwres.so.3.0			base-bind-shlib
 ./usr/lib/libm.so.0.6				base-sys-shlib
-./usr/lib/libmagic.so.2.0			base-sys-shlib
+./usr/lib/libmagic.so.3.0			base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
+./usr/lib/libnetpgp.so.0.9			base-crypto-shlib	crypto
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
-./usr/lib/libopenpgpsdk.so.0.9			base-crypto-shlib	crypto
+./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
 ./usr/lib/libossaudio.so.1.0			base-sys-shlib
 ./usr/lib/libp2k.so.1.0				base-puffs-shlib
 ./usr/lib/libpam.so.2.0				base-sys-shlib		pam
@@ -129,20 +131,20 @@
 ./usr/lib/librumpfs_sysvbfs.so.0.0		base-rump-shlib
 ./usr/lib/librumpfs_tmpfs.so.0.0		base-rump-shlib
 ./usr/lib/librumpfs_udf.so.0.0			base-rump-shlib
-./usr/lib/librumpfs_ufs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_ufs.so.0.0			base-obsolete		obsolete
 ./usr/lib/librumpnet.so.0.0			base-rump-shlib
 ./usr/lib/librumpnet_local.so.0.0		base-rump-shlib
 ./usr/lib/librumpnet_net.so.0.0			base-rump-shlib
 ./usr/lib/librumpnet_netinet.so.0.0		base-rump-shlib
+./usr/lib/librumpnet_shmif.so.0.0		base-rump-shlib
 ./usr/lib/librumpnet_sockin.so.0.0		base-rump-shlib
 ./usr/lib/librumpnet_virtif.so.0.0		base-rump-shlib
 ./usr/lib/librumpuser.so.0.0			base-rump-shlib
 ./usr/lib/librumpvfs.so.0.0			base-rump-shlib
-./usr/lib/libsdp.so.3.0				base-sys-shlib
 ./usr/lib/libskey.so.2.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.4.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.6.0				base-krb5-shlib		kerberos
-./usr/lib/libssh.so.11.0			base-secsh-shlib	crypto
+./usr/lib/libssh.so.12.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so.7.0				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4
@@ -150,7 +152,7 @@
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
 ./usr/lib/libukfs.so.1.0			base-sys-shlib
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
-./usr/lib/libutil.so.7.16			base-sys-shlib
+./usr/lib/libutil.so.7.17			base-sys-shlib
 ./usr/lib/libwrap.so.1.0			base-net-shlib
 ./usr/lib/libz.so.1.0				base-sys-shlib
 ./usr/lib/security/pam_afslog.so.2		base-sys-shlib		kerberos,pam

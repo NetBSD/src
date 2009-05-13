@@ -27,7 +27,7 @@
  *	printing cause values
  *	---------------------
  *
- *	$Id: pcause_1tr6.c,v 1.3 2003/10/06 09:43:28 itojun Exp $
+ *	$Id: pcause_1tr6.c,v 1.3.40.1 2009/05/13 19:20:26 jym Exp $
  *
  * $FreeBSD$
  *
@@ -38,11 +38,11 @@
 #include "trace.h"
 #include "pcause_1tr6.h"
 
-char *
+const char *
 print_cause_1tr6(unsigned char code)
 {
 	static char error_message[120];
-	char *e;
+	const char *e;
 
 	switch (code)
 	{

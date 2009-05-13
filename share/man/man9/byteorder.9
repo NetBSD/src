@@ -1,0 +1,201 @@
+.\"	$NetBSD: byteorder.9,v 1.3.2.2 2009/05/13 19:19:15 jym Exp $
+.\"
+.\" Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD: src/share/man/man9/byteorder.9,v 1.6 2003/05/21 17:32:55 ru Exp $
+.\"
+.Dd March 31, 2009
+.Dt BYTEORDER 9
+.Os
+.Sh NAME
+.Nm bswap16 ,
+.Nm bswap32 ,
+.Nm bswap64 ,
+.Nm be16toh ,
+.Nm be32toh ,
+.Nm be64toh ,
+.Nm htobe16 ,
+.Nm htobe32 ,
+.Nm htobe64 ,
+.Nm htole16 ,
+.Nm htole32 ,
+.Nm htole64 ,
+.Nm le16toh ,
+.Nm le32toh ,
+.Nm le64toh ,
+.Nm be16enc ,
+.Nm be16dec ,
+.Nm be32enc ,
+.Nm be32dec ,
+.Nm be64enc ,
+.Nm be64dec ,
+.Nm le16enc ,
+.Nm le16dec ,
+.Nm le32enc ,
+.Nm le32dec ,
+.Nm le64enc ,
+.Nm le64dec
+.Nd byte order operations
+.Sh SYNOPSIS
+.In sys/endian.h
+.Ft uint16_t
+.Fn bswap16 "uint16_t int16"
+.Ft uint32_t
+.Fn bswap32 "uint32_t int32"
+.Ft uint64_t
+.Fn bswap64 "uint64_t int64"
+.Ft uint16_t
+.Fn be16toh "uint16_t big16"
+.Ft uint32_t
+.Fn be32toh "uint32_t big32"
+.Ft uint64_t
+.Fn be64toh "uint64_t big64"
+.Ft uint16_t
+.Fn htobe16 "uint16_t host16"
+.Ft uint32_t
+.Fn htobe32 "uint32_t host32"
+.Ft uint64_t
+.Fn htobe64 "uint64_t host64"
+.Ft uint16_t
+.Fn htole16 "uint16_t host16"
+.Ft uint32_t
+.Fn htole32 "uint32_t host32"
+.Ft uint64_t
+.Fn htole64 "uint64_t host64"
+.Ft uint16_t
+.Fn le16toh "uint16_t little16"
+.Ft uint32_t
+.Fn le32toh "uint32_t little32"
+.Ft uint64_t
+.Fn le64toh "uint64_t little64"
+.Ft uint16_t
+.Fn be16dec "const void *stream"
+.Ft uint32_t
+.Fn be32dec "const void *stream"
+.Ft uint64_t
+.Fn be64dec "const void *stream"
+.Ft uint16_t
+.Fn le16dec "const void *stream"
+.Ft uint32_t
+.Fn le32dec "const void *stream"
+.Ft uint64_t
+.Fn le64dec "const void *stream"
+.Ft void
+.Fn be16enc "void *stream" "uint16_t host16"
+.Ft void
+.Fn be32enc "void *stream" "uint32_t host32"
+.Ft void
+.Fn be64enc "void *stream" "uint64_t host64"
+.Ft void
+.Fn le16enc "void *stream" "uint16_t host16"
+.Ft void
+.Fn le32enc "void *stream" "uint32_t host32"
+.Ft void
+.Fn le64enc "void *stream" "uint64_t host64"
+.Sh DESCRIPTION
+The
+.Fn bswap16 ,
+.Fn bswap32 ,
+and
+.Fn bswap64
+functions return a byte order swapped integer.
+On big endian systems, the number is converted to little endian byte order.
+On little endian systems, the number is converted to big endian byte order.
+.Pp
+The
+.Fn be16toh ,
+.Fn be32toh ,
+and
+.Fn be64toh
+functions return a big endian byte ordered integer
+converted to the system's native byte order.
+The return value will be the same as the argument on big endian systems.
+.Pp
+The
+.Fn le16toh ,
+.Fn le32toh ,
+and
+.Fn le64toh
+functions return a little endian byte ordered integer
+converted to the system's native byte order.
+The return value will be the same as the argument on little endian systems.
+.Pp
+The
+.Fn htobe16 ,
+.Fn htobe32 ,
+and
+.Fn htobe64
+functions return a integer in the system's native
+byte order converted to big endian byte order.
+The return value will be the same as the argument on big endian systems.
+.Pp
+The
+.Fn htole16 ,
+.Fn htole32 ,
+and
+.Fn htole64
+functions return a integer in the system's native
+byte order converted to little endian byte order.
+The return value will be the same as the argument on little endian systems.
+.Pp
+The
+.Fn be16enc ,
+.Fn be16dec ,
+.Fn be32enc ,
+.Fn be32dec ,
+.Fn be64enc ,
+.Fn be64dec ,
+.Fn le16enc ,
+.Fn le16dec ,
+.Fn le32enc ,
+.Fn le32dec ,
+.Fn le64enc ,
+and
+.Fn le64dec
+functions encode and decode integers to/from octet stream
+on any alignment in big/little endian format.
+.Sh SEE ALSO
+.Xr byteorder 3
+.Sh HISTORY
+The
+.Fn hto*
+and
+.Fn toh*
+functions first appeared in
+.Nx 1.5 .
+These functions were introduced to handle PCI bus master devices which assumed
+host's memory used to pass integer parameters via DMA transfer was
+always little endian even on big endian systems.
+.Pp
+The encode/decode functions first appeared in
+.Fx 5.1 ,
+and ported to
+.Nx 3.0
+as a part of
+.Xr uuidgen 2
+support.
+.Sh AUTHORS
+This manual page was written by
+.An Mike Barcroft Aq mike@FreeBSD.org .

@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.48 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: rm.c,v 1.48.6.1 2009/05/13 19:15:51 jym Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.48 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: rm.c,v 1.48.6.1 2009/05/13 19:15:51 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -396,7 +396,7 @@ rm_overwrite(char *file, struct stat *sbp)
 
 #define	WRITE_PASS(mode, byte) do {					\
 	off_t len;							\
-	int wlen, i;							\
+	size_t wlen, i;							\
 	char buf[8 * 1024];						\
 									\
 	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))			\
@@ -410,8 +410,8 @@ rm_overwrite(char *file, struct stat *sbp)
 			    i+= sizeof(u_int32_t))			\
 				*(int *)(buf + i) = arc4random();	\
 		}							\
-		wlen = len < sizeof(buf) ? len : sizeof(buf);		\
-		if (write(fd, buf, wlen) != wlen)			\
+		wlen = len < (off_t)sizeof(buf) ? (size_t)len : sizeof(buf); \
+		if ((size_t)write(fd, buf, wlen) != wlen)		\
 			goto err;					\
 	}								\
 	sync();		/* another poke at hidden caches */		\
@@ -419,7 +419,7 @@ rm_overwrite(char *file, struct stat *sbp)
 
 #define READ_PASS(byte) do {						\
 	off_t len;							\
-	int rlen;							\
+	size_t rlen;							\
 	char pattern[8 * 1024];						\
 	char buf[8 * 1024];						\
 									\
@@ -428,8 +428,8 @@ rm_overwrite(char *file, struct stat *sbp)
 									\
 	memset(pattern, byte, sizeof(pattern));				\
 	for(len = sbp->st_size; len > 0; len -= rlen) {			\
-		rlen = len < sizeof(buf) ? len : sizeof(buf);		\
-		if(read(fd, buf, rlen) != rlen)				\
+		rlen = len < (off_t)sizeof(buf) ? (size_t)len : sizeof(buf); \
+		if((size_t)read(fd, buf, rlen) != rlen)			\
 			goto err;					\
 		if(memcmp(buf, pattern, rlen))				\
 			goto err;					\

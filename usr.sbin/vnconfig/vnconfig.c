@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.36 2008/12/29 03:49:17 christos Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.36.2.1 2009/05/13 19:20:43 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -199,7 +199,8 @@ main(argc, argv)
 			usage();
 		rv = config(argv[0], NULL, NULL, action);
 	} else { /* VND_GET */
-		char *vn, path[64];
+		const char *vn;
+		char path[64];
 		struct vnd_user vnu;
 		int v, n;
 
@@ -227,19 +228,19 @@ main(argc, argv)
 			else {
 				char *dev;
 				struct statvfs *mnt = NULL;
-				int i, n;
+				int i, nmount;
 
-				n = 0;	/* XXXGCC -Wuninitialized */
+				nmount = 0;	/* XXXGCC -Wuninitialized */
 
 				printf("vnd%d: ", vnu.vnu_unit);
 
 				dev = devname(vnu.vnu_dev, S_IFBLK);
 				if (dev != NULL)
-					n = getmntinfo(&mnt, MNT_NOWAIT);
+					nmount = getmntinfo(&mnt, MNT_NOWAIT);
 				else
 					mnt = NULL;
 				if (mnt != NULL) {
-					for (i = 0; i < n; i++) {
+					for (i = 0; i < nmount; i++) {
 						if (strncmp(
 						    mnt[i].f_mntfromname,
 						    "/dev/", 5) == 0 &&
@@ -248,7 +249,7 @@ main(argc, argv)
 						    dev) == 0)
 							break;
 					}
-					if (i < n)
+					if (i < nmount)
 						printf("%s (%s) ",
 						    mnt[i].f_mntonname,
 						    mnt[i].f_mntfromname);

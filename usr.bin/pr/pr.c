@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.19 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: pr.c,v 1.19.6.1 2009/05/13 19:20:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.19 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: pr.c,v 1.19.6.1 2009/05/13 19:20:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ char	schar;			/* text column separation character */
 int	sflag;			/* -s option for multiple columns */
 int	nohead;			/* do not write head and trailer */
 int	pgwd;			/* page width with multiple col output */
-char	*timefrmt = TIMEFMT;	/* time conversion string */
+const char *timefrmt = TIMEFMT;	/* time conversion string */
 
 /*
  * misc globals
@@ -165,7 +165,7 @@ onecol(argc, argv)
 	char *hbuf = NULL;
 	char *ohbuf;
 	FILE *inf = NULL;
-	char *fname;
+	const char *fname;
 	int mor;
 	int error = 1;
 
@@ -325,7 +325,7 @@ vertcol(argc, argv)
 	char *buf = NULL;
 	char *hbuf = NULL;
 	char *ohbuf;
-	char *fname;
+	const char *fname;
 	FILE *inf = NULL;
 	int ips = 0;
 	int cps = 0;
@@ -642,7 +642,7 @@ horzcol(argc, argv)
 	char *buf = NULL;
 	char *hbuf = NULL;
 	char *ohbuf;
-	char *fname;
+	const char *fname;
 	FILE *inf = NULL;
 	int ips = 0;
 	int cps = 0;
@@ -796,7 +796,7 @@ mulfile(argc, argv)
 	char *buf = NULL;
 	char *hbuf = NULL;
 	char *ohbuf;
-	char *fname;
+	const char *fname;
 	int ips = 0;
 	int cps = 0;
 	int ops = 0;
@@ -1302,7 +1302,7 @@ FILE *
 nxtfile(argc, argv, fname, buf, dt)
 	int argc;
 	char **argv;
-	char **fname;
+	const char **fname;
 	char *buf;
 	int dt;
 {
@@ -1470,7 +1470,7 @@ addnum(buf, wdth, line)
 int
 prhead(buf, fname, pagcnt)
 	char *buf;
-	char *fname;
+	const char *fname;
 	int pagcnt;
 {
 	int ips = 0;

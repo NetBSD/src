@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.33 2009/01/25 14:07:18 lukem Exp $	*/
+/*	$NetBSD: send.c,v 1.33.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,16 +34,18 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.33 2009/01/25 14:07:18 lukem Exp $");
+__RCSID("$NetBSD: send.c,v 1.33.2.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
+
+#include <assert.h>
 
 #include "rcv.h"
 #include "extern.h"
 #ifdef MIME_SUPPORT
 #include "mime.h"
 #endif
-
+#include "sig.h"
 
 /*
  * Mail -- a mail program
@@ -125,9 +127,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	char *cp;
 	size_t prefixlen;
 	size_t linelen;
+	int rval;
 
 	ignoring = 0;
 	prefixlen = 0;
+	rval = -1;
 
 	/*
 	 * Compute the prefix string, without trailing whitespace
@@ -145,6 +149,8 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	dostat = doign == 0 || !isign("status", doign);
 	infld = 0;
 	firstline = 1;
+
+	sig_check();
 	/*
 	 * Process headers first
 	 */
@@ -153,7 +159,8 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 		obuf = mime_decode_header(mip);
 #endif
 	while (len > 0 && isheadflag) {
-		if (fgets(line, sizeof(line), ibuf) == NULL)
+		sig_check();
+		if (fgets(line, (int)sizeof(line), ibuf) == NULL)
 			break;
 		len -= linelen = strlen(line);
 		if (firstline) {
@@ -254,26 +261,32 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			}
 			(void)fwrite(line, sizeof(*line), linelen, obuf);
 			if (ferror(obuf))
-				return -1;
+				goto out;
 		}
 	}
+	sig_check();
+
 	/*
 	 * Copy out message body
 	 */
 #ifdef MIME_SUPPORT
 	if (mip) {
 		obuf = mime_decode_body(mip);
-		if (obuf == NULL) /* XXX - early out */
-			return 0;
+		sig_check();
+		if (obuf == NULL) { /* XXX - early out */
+			rval = 0;
+			goto out;
+		}
 	}
 #endif
 	if (doign == ignoreall)
 		len--;		/* skip final blank line */
 
 	linelen = 0;		/* needed for in case len == 0 */
-	if (prefix != NULL)
+	if (prefix != NULL) {
 		while (len > 0) {
-			if (fgets(line, sizeof(line), ibuf) == NULL) {
+			sig_check();
+			if (fgets(line, (int)sizeof(line), ibuf) == NULL) {
 				linelen = 0;
 				break;
 			}
@@ -289,24 +302,33 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 						prefixlen, obuf);
 			(void)fwrite(line, sizeof(*line), linelen, obuf);
 			if (ferror(obuf))
-				return -1;
+				goto out;
 		}
-	else
+	}
+	else {
 		while (len > 0) {
+			sig_check();
 			linelen = (size_t)len < sizeof(line) ? (size_t)len : sizeof(line);
-			if ((linelen = fread(line, sizeof(*line), linelen, ibuf)) == 0)
+			if ((linelen = fread(line, sizeof(*line), linelen, ibuf)) == 0) {
 				break;
+			}
 			len -= linelen;
 			if (fwrite(line, sizeof(*line), linelen, obuf) != linelen)
-				return -1;
+				goto out;
 		}
+	}
+	sig_check();
 	if (doign == ignoreall && linelen > 0 && line[linelen - 1] != '\n') {
 		int c;
+
 		/* no final blank line */
 		if ((c = getc(ibuf)) != EOF && putc(c, obuf) == EOF)
-			return -1;
+			goto out;
 	}
-	return 0;
+	rval = 0;
+ out:
+	sig_check();
+	return rval;
 }
 
 /*
@@ -340,9 +362,10 @@ fixhead(struct header *hp, struct name *tolist)
  * Format the given header line to not exceed 72 characters.
  */
 static void
-fmt(const char *str, struct name *np, FILE *fo, int comma)
+fmt(const char *str, struct name *np, FILE *fo, size_t comma)
 {
-	int col, len;
+	size_t col;
+	size_t len;
 
 	comma = comma ? 1 : 0;
 	col = strlen(str);
@@ -367,29 +390,80 @@ fmt(const char *str, struct name *np, FILE *fo, int comma)
 }
 
 /*
+ * Formatting for extra_header lines: try to wrap them before 72
+ * characters.
+ *
+ * XXX - should this allow for quoting?
+ */
+static void
+fmt2(const char *str, FILE *fo)
+{
+	const char *p;
+	size_t col;
+
+	col = 0;
+	p = strchr(str, ':');
+	assert(p != NULL);	/* this is a coding error */
+
+	while (str <= p) {	/* output the header name */
+		(void)putc(*str, fo);
+		str++;
+		col++;
+	}
+	assert(is_WSP(*str));	/* this is a coding error */
+
+	(void)putc(' ', fo);	/* output a single space after the ':' */
+	str = skip_WSP(str);
+
+	while (*str != '\0') {
+		if (p <= str) {
+			p = strpbrk(str, " \t");
+			if (p == NULL)
+				p = str + strlen(str);
+			if (col + (p - str) > 72 && col > 4) {
+				(void)fputs("\n    ", fo);
+				col = 4;
+				str = skip_WSP(str);
+				continue;
+			}
+		}
+		(void)putc(*str, fo);
+		str++;
+		col++;
+	}
+	(void)putc('\n', fo);
+}
+
+/*
  * Dump the to, subject, cc header on the
  * passed file buffer.
  */
 PUBLIC int
 puthead(struct header *hp, FILE *fo, int w)
 {
+	struct name *np;
 	int gotcha;
 
 	gotcha = 0;
 	if (hp->h_to != NULL && w & GTO)
-		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
+		fmt("To:", hp->h_to, fo, w & GCOMMA), gotcha++;
 	if (hp->h_subject != NULL && w & GSUBJECT)
 		(void)fprintf(fo, "Subject: %s\n", hp->h_subject), gotcha++;
-	if (hp->h_smopts != NULL && w & GSMOPTS)
-		(void)fprintf(fo, "(sendmail options: %s)\n", detract(hp->h_smopts, GSMOPTS)), gotcha++;
 	if (hp->h_cc != NULL && w & GCC)
-		fmt("Cc:", hp->h_cc, fo, w&GCOMMA), gotcha++;
+		fmt("Cc:", hp->h_cc, fo, w & GCOMMA), gotcha++;
 	if (hp->h_bcc != NULL && w & GBCC)
-		fmt("Bcc:", hp->h_bcc, fo, w&GCOMMA), gotcha++;
+		fmt("Bcc:", hp->h_bcc, fo, w & GCOMMA), gotcha++;
 	if (hp->h_in_reply_to != NULL && w & GMISC)
 		(void)fprintf(fo, "In-Reply-To: %s\n", hp->h_in_reply_to), gotcha++;
 	if (hp->h_references != NULL && w & GMISC)
-		fmt("References:", hp->h_references, fo, w&GCOMMA), gotcha++;
+		fmt("References:", hp->h_references, fo, w & GCOMMA), gotcha++;
+	if (hp->h_extra != NULL && w & GMISC) {
+		for (np = hp->h_extra; np != NULL; np = np->n_flink)
+			fmt2(np->n_name, fo);
+		gotcha++;
+	}
+	if (hp->h_smopts != NULL && w & GSMOPTS)
+		(void)fprintf(fo, "(sendmail options: %s)\n", detract(hp->h_smopts, GSMOPTS)), gotcha++;
 #ifdef MIME_SUPPORT
 	if (w & GMIME && (hp->h_attach || value(ENAME_MIME_ENCODE_MSG)))
 		mime_putheader(fo, hp), gotcha++;
@@ -426,11 +500,12 @@ infix(struct header *hp, FILE *fi)
 		return fi;
 	}
 	(void)rm(tempname);
+	(void)puthead(hp, nfo,
+	    GTO | GSUBJECT | GCC | GBCC | GMISC | GNL | GCOMMA
 #ifdef MIME_SUPPORT
-	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GMISC|GMIME|GNL|GCOMMA);
-#else
-	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GMISC|GNL|GCOMMA);
+	    | GMIME
 #endif
+		);
 
 	c = getc(fi);
 	while (c != EOF) {
@@ -576,6 +651,28 @@ mail2(FILE *mtf, const char **namelist)
 	}
 }
 
+static struct name *
+ncopy(struct name *np)
+{
+	struct name *rv;
+	struct name *lp;
+	struct name *tp;
+
+	lp = NULL; /* XXX gcc -Wuninitialized sh3 */
+	rv = NULL;
+	for (/*EMPTY*/; np; np = np->n_flink) {
+		tp = nalloc(np->n_name, np->n_type);
+		if (rv == NULL)
+			rv = tp;
+		else {
+			lp->n_flink = tp;
+			tp->n_blink = lp;
+		}
+		lp = tp;
+	}
+	return rv;
+}
+
 /*
  * Mail a message on standard input to the people indicated
  * in the passed header.  (Internal interface).
@@ -593,6 +690,12 @@ mail1(struct header *hp, int printheaders)
 	 */
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
+
+	/*
+	 * Grab any extra header lines.  Do this after collect() so
+	 * that we can add header lines while collecting.
+	 */
+	hp->h_extra = ncopy(extra_headers);
 
 	if (value(ENAME_INTERACTIVE) != NULL) {
 		if (value(ENAME_ASKCC) != NULL || value(ENAME_ASKBCC) != NULL) {

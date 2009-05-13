@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_udf.8,v 1.10 2009/02/08 19:28:49 reinoud Exp $
+.\" $NetBSD: mount_udf.8,v 1.10.2.1 2009/05/13 19:19:03 jym Exp $
 .\"
 .\" Copyright (c) 2006, 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd August 8, 2008
+.Dd February 8, 2009
 .Dt MOUNT_UDF 8
 .Os
 .Sh NAME
@@ -63,10 +63,10 @@ Both uid and gid can be either specified with their names as with
 their numerical equivalents.
 .Bl -tag -width XXXoptions
 .It Fl c
-Close the session after unmount creating remountable snapshots. Closing a
-session also allows -ROM devices to read the disc created. Note that this
-option only makes sense when mounting sequential recordable media like CD-R
-and DVD*R.
+Close the session after unmount creating remountable snapshots.
+Closing a session also allows -ROM devices to read the disc created.
+Note that this option only makes sense when mounting sequential
+recordable media like CD-R and DVD*R.
 .It Fl g Ar gid
 Set the group of anonymous files on the file system.
 The default group is the nobody group.
@@ -78,8 +78,8 @@ as specified in
 .It Fl s Ar session
 Select the session
 .Ar session
-to be mounted instead of the default last one. Implements readonly snapshots
-on sequential media.
+to be mounted instead of the default last one.
+Implements readonly snapshots on sequential media.
 Positive
 .Ar session
 values indicate an absolute session number.
@@ -112,7 +112,8 @@ Its also more and more common on other media like Compact
 Flash (CF) cards.
 .Pp
 Read and write access is supported for all media types that CD/DVD type drives
-can recognise including DVD-RAM. BluRay support is preliminary; read-only
+can recognise including DVD-RAM.
+BluRay support is preliminary; read-only
 access should work fine but write support is experimental.
 .Pp
 Implemented and tested media types are CD-ROM, CD-R, CD-RW, CD-MRW,

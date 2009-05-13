@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.26 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: files.c,v 1.26.8.1 2009/05/13 19:20:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.26 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: files.c,v 1.26.8.1 2009/05/13 19:20:05 jym Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ getnext(binno, infl0, filelist, nfiles, pos, end, dummy)
 	if ((u_char *) pos > end - sizeof(TRECHEADER))
 		return (BUFFEND);
 	fread(pos, sizeof(TRECHEADER), 1, fp);
-	if (end - pos->data < pos->length) {
+	if (end - pos->data < (ptrdiff_t)pos->length) {
 		hp = ((u_char *)pos) + sizeof(TRECHEADER);
 		for (i = sizeof(TRECHEADER); i ;  i--)
 			ungetc(*--hp, fp);
@@ -392,7 +392,7 @@ geteasy(flno, top, filelist, nfiles, rec, end, dummy2)
 		fstack[flno].fp = 0;
 		return (EOF);
 	}
-	if (end - rec->data < rec->length) {
+	if (end - rec->data < (ptrdiff_t)rec->length) {
 		for (i = sizeof(TRECHEADER) - 1; i >= 0;  i--)
 			ungetc(*((char *) rec + i), fp);
 		return (BUFFEND);

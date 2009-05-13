@@ -1,4 +1,4 @@
-/* $NetBSD: findcc.c,v 1.4 2008/07/21 14:19:24 lukem Exp $ */
+/* $NetBSD: findcc.c,v 1.4.6.1 2009/05/13 19:19:58 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: findcc.c,v 1.4 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: findcc.c,v 1.4.6.1 2009/05/13 19:19:58 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,7 +72,7 @@ findcc(progname)
 			*next++ = '\0';
 
 		if (snprintf(buffer, sizeof(buffer),
-		    "%s/%s", dir, progname) < sizeof(buffer)) {
+		    "%s/%s", dir, progname) < (int)sizeof(buffer)) {
 			if (!access(buffer, X_OK)) {
 				free(path);
 				return strdup(buffer);

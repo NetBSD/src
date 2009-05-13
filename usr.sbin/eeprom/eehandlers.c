@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.14 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.14.8.1 2009/05/13 19:20:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ ee_num8(ktent, arg)
 	int i;
 
 	if (arg) {
-		for (i = 0; i < (strlen(arg) - 1); ++i)
+		for (i = 0; i < (int)strlen(arg) - 1; ++i)
 			if (!isdigit((unsigned char)arg[i]))
 				BARF(ktent);
 		num32 = atoi(arg);
@@ -204,7 +204,7 @@ ee_num16(ktent, arg)
 	int i;
 
 	if (arg) {
-		for (i = 0; i < (strlen(arg) - 1); ++i)
+		for (i = 0; i < (int)strlen(arg) - 1; ++i)
 			if (!isdigit((unsigned char)arg[i]))
 				BARF(ktent);
 		num32 = atoi(arg);
@@ -384,7 +384,7 @@ ee_kbdtype(ktent, arg)
 	int i;
 
 	if (arg) {
-		for (i = 0; i < (strlen(arg) - 1); ++i)
+		for (i = 0; i < (int)strlen(arg) - 1; ++i)
 			if (!isdigit((unsigned char)arg[i]))
 				BARF(ktent);
 		kbd2 = atoi(arg);

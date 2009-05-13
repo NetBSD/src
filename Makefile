@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.266 2009/01/19 07:19:09 jmmv Exp $
+#	$NetBSD: Makefile,v 1.266.2.1 2009/05/13 19:15:48 jym Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -96,8 +96,6 @@
 #   do-sys-rump-net-lib: builds and installs prerequisites from sys/rump/net/lib
 #   do-sys-modules:  builds and installs kernel modules (used by rump binaries)
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
-#   do-compat-external-lib: builds and installs prerequisites from
-#                    compat/external/lib if ${MKCOMPAT} != "no".
 #   do-compat-lib-csu: builds and installs prerequisites from compat/lib/csu
 #                    if ${MKCOMPAT} != "no".
 #   do-compat-libgcc: builds and installs prerequisites from
@@ -180,17 +178,17 @@ _POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall
 
 postinstall-check: .PHONY
 	@echo "   === Post installation checks ==="
-	MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check; if [ $$? -gt 1 ]; then exit 1; fi
+	AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check; if [ $$? -gt 1 ]; then exit 1; fi
 	@echo "   ================================"
 
 postinstall-fix: .NOTMAIN .PHONY
 	@echo "   === Post installation fixes ==="
-	MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix
+	AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix
 	@echo "   ==============================="
 
 postinstall-fix-obsolete: .NOTMAIN .PHONY
 	@echo "   === Removing obsolete files ==="
-	MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
+	AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
 	@echo "   ==============================="
 
 
@@ -221,6 +219,7 @@ BUILDTARGETS+=	do-tools
 .if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	obj
 .endif
+BUILDTARGETS+=	clean_METALOG
 .if !defined(NODISTRIBDIRS)
 BUILDTARGETS+=	do-distrib-dirs
 .endif
@@ -245,7 +244,6 @@ BUILDTARGETS+=	do-sys-modules
 BUILDTARGETS+=	do-compat-lib-csu
 BUILDTARGETS+=	do-compat-libgcc
 BUILDTARGETS+=	do-compat-lib-libc
-BUILDTARGETS+=	do-compat-external-lib
 .endif
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
@@ -384,6 +382,12 @@ check-tools: .PHONY
 	@echo '*** WARNING: NBUILDJOBS is obsolete; use -j directly instead!'
 .endif
 
+# Delete or sanitise a leftover METALOG from a previous build.
+clean_METALOG: .PHONY .MAKE
+.if ${MKUPDATE} != "no"
+	${MAKEDIRTARGET} distrib/sets clean_METALOG
+.endif
+
 do-distrib-dirs: .PHONY .MAKE
 .if !defined(DESTDIR) || ${DESTDIR} == ""
 	${MAKEDIRTARGET} etc distrib-dirs DESTDIR=/
@@ -406,7 +410,6 @@ BUILD_CC_LIB+= external/bsd/pcc/libpcc
 
 .if ${MKCOMPAT} != "no"
 BUILD_COMPAT_LIBS=	compat/lib/csu ${BUILD_CC_LIB:S/^/compat\//} compat/lib/libc
-BUILD_COMPAT_LIBS+=	compat/external/lib
 .else
 BUILD_COMPAT_LIBS=
 .endif

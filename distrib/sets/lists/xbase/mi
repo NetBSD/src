@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.70 2008/12/25 12:12:17 ghen Exp $
+# $NetBSD: mi,v 1.70.2.1 2009/05/13 19:17:53 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1182,7 +1182,6 @@
 ./usr/X11R7/bin/bmtoa					-unknown-	xorg
 ./usr/X11R7/bin/ccmakedep				-unknown-	xorg
 ./usr/X11R7/bin/cleanlinks				-unknown-	xorg
-./usr/X11R7/bin/cvt					-unknown-	xorg
 ./usr/X11R7/bin/cxpm					-unknown-	xorg
 ./usr/X11R7/bin/dga					-unknown-	xorg
 ./usr/X11R7/bin/editres					-unknown-	xorg
@@ -1196,11 +1195,10 @@
 ./usr/X11R7/bin/fstobdf					-unknown-	xorg
 ./usr/X11R7/bin/glxgears				-unknown-	xorg
 ./usr/X11R7/bin/glxinfo					-unknown-	xorg
-./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/iceauth					-unknown-	xorg
 ./usr/X11R7/bin/ico					-unknown-	xorg
 ./usr/X11R7/bin/imake					-unknown-	xorg
-./usr/X11R7/bin/lbxproxy				-unknown-	xorg
+./usr/X11R7/bin/lbxproxy				-obsolete	obsolete
 ./usr/X11R7/bin/listres					-unknown-	xorg
 ./usr/X11R7/bin/luit					-unknown-	xorg
 ./usr/X11R7/bin/makedepend				-unknown-	xorg
@@ -1258,7 +1256,6 @@
 ./usr/X11R7/bin/xinput					-unknown-	xorg
 ./usr/X11R7/bin/xkbbell					-unknown-	xorg
 ./usr/X11R7/bin/xkbcomp					-unknown-	xorg
-./usr/X11R7/bin/xkbcomp					-unknown-	xorg
 ./usr/X11R7/bin/xkbevd					-unknown-	xorg
 ./usr/X11R7/bin/xkbprint				-unknown-	xorg
 ./usr/X11R7/bin/xkbvleds				-unknown-	xorg
@@ -1277,12 +1274,12 @@
 ./usr/X11R7/bin/xmlwf					-unknown-	xorg
 ./usr/X11R7/bin/xmodmap					-unknown-	xorg
 ./usr/X11R7/bin/xmore					-unknown-	xorg
-./usr/X11R7/bin/xphelloworld				-unknown-	xorg
-./usr/X11R7/bin/xplsprinters				-unknown-	xorg
-./usr/X11R7/bin/xprehashprinterlist			-unknown-	xorg
+./usr/X11R7/bin/xphelloworld				-obsolete-	obsolete
+./usr/X11R7/bin/xplsprinters				-obsolete-	obsolete
+./usr/X11R7/bin/xprehashprinterlist			-obsolete-	obsolete
 ./usr/X11R7/bin/xprop					-unknown-	xorg
-./usr/X11R7/bin/xpsimplehelloworld			-unknown-	xorg
-./usr/X11R7/bin/xpxthelloworld				-unknown-	xorg
+./usr/X11R7/bin/xpsimplehelloworld			-obsolete-	obsolete
+./usr/X11R7/bin/xpxthelloworld				-obsolete-	obsolete
 ./usr/X11R7/bin/xrandr					-unknown-	xorg
 ./usr/X11R7/bin/xrdb					-unknown-	xorg
 ./usr/X11R7/bin/xrefresh				-unknown-	xorg
@@ -1305,6 +1302,11 @@
 ./usr/X11R7/bin/xwd					-unknown-	xorg
 ./usr/X11R7/bin/xwininfo				-unknown-	xorg
 ./usr/X11R7/bin/xwud					-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-bw.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-inv.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/xorg-bw.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg
 ./usr/X11R7/lib/X11/XErrorDB				-unknown-	xorg
 ./usr/X11R7/lib/X11/XKeysymDB				-unknown-	xorg
 ./usr/X11R7/lib/X11/Xcms.txt				-unknown-	xorg
@@ -1915,7 +1917,6 @@
 ./usr/X11R7/man/cat1/bmtoa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/ccmakedep.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cleanlinks.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cxpm.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/dga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/editres.0				-unknown-	.cat,xorg
@@ -1926,11 +1927,10 @@
 ./usr/X11R7/man/cat1/fonttosfnt.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fslsfonts.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fstobdf.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/iceauth.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/ico.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/imake.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/lbxproxy.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/lbxproxy.0				-obsolete	obsolete
 ./usr/X11R7/man/cat1/listres.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/luit.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/makedepend.0			-unknown-	.cat,xorg
@@ -1998,12 +1998,12 @@
 ./usr/X11R7/man/cat1/xmlwf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmodmap.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmore.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xphelloworld.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xplsprinters.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xprehashprinterlist.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xphelloworld.0			-obsolete-	obsolete
+./usr/X11R7/man/cat1/xplsprinters.0			-obsolete-	obsolete
+./usr/X11R7/man/cat1/xprehashprinterlist.0		-obsolete-	obsolete
 ./usr/X11R7/man/cat1/xprop.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xpsimplehelloworld.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xpxthelloworld.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xpsimplehelloworld.0		-obsolete-	obsolete
+./usr/X11R7/man/cat1/xpxthelloworld.0			-obsolete-	obsolete
 ./usr/X11R7/man/cat1/xrandr.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xrdb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xrefresh.0				-unknown-	.cat,xorg
@@ -2037,7 +2037,6 @@
 ./usr/X11R7/man/html1/bmtoa.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/ccmakedep.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/cleanlinks.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/cxpm.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/dga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/editres.html			-unknown-	html,xorg
@@ -2048,11 +2047,10 @@
 ./usr/X11R7/man/html1/fonttosfnt.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fslsfonts.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fstobdf.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/iceauth.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/ico.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/imake.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/lbxproxy.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/lbxproxy.html			-obsolete		obsolete
 ./usr/X11R7/man/html1/listres.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/luit.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/makedepend.html			-unknown-	html,xorg
@@ -2120,12 +2118,12 @@
 ./usr/X11R7/man/html1/xmlwf.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmodmap.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmore.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xphelloworld.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xplsprinters.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xprehashprinterlist.html		-unknown-	html,xorg
+./usr/X11R7/man/html1/xphelloworld.html			-obsolete-	obsolete
+./usr/X11R7/man/html1/xplsprinters.html			-obsolete-	obsolete
+./usr/X11R7/man/html1/xprehashprinterlist.html		-obsolete-	obsolete
 ./usr/X11R7/man/html1/xprop.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xpsimplehelloworld.html		-unknown-	html,xorg
-./usr/X11R7/man/html1/xpxthelloworld.html		-unknown-	html,xorg
+./usr/X11R7/man/html1/xpsimplehelloworld.html		-obsolete-	obsolete
+./usr/X11R7/man/html1/xpxthelloworld.html		-obsolete-	obsolete
 ./usr/X11R7/man/html1/xrandr.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xrdb.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/xrefresh.html			-unknown-	html,xorg
@@ -2159,7 +2157,6 @@
 ./usr/X11R7/man/man1/bmtoa.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/ccmakedep.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/cleanlinks.1			-unknown-	.man,xorg
-./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/cxpm.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/dga.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/editres.1				-unknown-	.man,xorg
@@ -2170,11 +2167,10 @@
 ./usr/X11R7/man/man1/fonttosfnt.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fslsfonts.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fstobdf.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/iceauth.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/ico.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/imake.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/lbxproxy.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/lbxproxy.1				-obsolete	obsolete
 ./usr/X11R7/man/man1/listres.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/luit.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/makedepend.1			-unknown-	.man,xorg
@@ -2243,12 +2239,12 @@
 ./usr/X11R7/man/man1/xmlwf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmodmap.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmore.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xphelloworld.1			-unknown-	.man,xorg
-./usr/X11R7/man/man1/xplsprinters.1			-unknown-	.man,xorg
-./usr/X11R7/man/man1/xprehashprinterlist.1		-unknown-	.man,xorg
+./usr/X11R7/man/man1/xphelloworld.1			-obsolete-	obsolete
+./usr/X11R7/man/man1/xplsprinters.1			-obsolete-	obsolete
+./usr/X11R7/man/man1/xprehashprinterlist.1		-obsolete-	obsolete
 ./usr/X11R7/man/man1/xprop.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xpsimplehelloworld.1		-unknown-	.man,xorg
-./usr/X11R7/man/man1/xpxthelloworld.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/xpsimplehelloworld.1		-obsolete-	obsolete
+./usr/X11R7/man/man1/xpxthelloworld.1			-obsolete-	obsolete
 ./usr/X11R7/man/man1/xrandr.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xrdb.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xrefresh.1				-unknown-	.man,xorg

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/01/30 04:14:19 agc Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2009/05/13 19:16:06 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,9 @@ CPPFLAGS+=	-I${.CURDIR}/../dist/include
 LIBOPSOBJDIR!=	cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 LDADD+=		-L${LIBOPSOBJDIR} -lopenpgpsdk
 DPADD+=		${LIBOPSOBJDIR}/libopenpgpsdk.a
+
+LDADD+=		-lcrypto -lz -lbz2
+DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}
 
 MAN=		openpgp.1
 

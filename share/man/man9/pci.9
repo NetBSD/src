@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.27 2008/11/12 12:35:54 ad Exp $
+.\"     $NetBSD: pci.9,v 1.27.2.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2006
+.Dd April 17, 2009
 .Dt PCI 9
 .Os
 .Sh NAME
@@ -66,9 +66,9 @@
 .In dev/pci/pcireg.h
 .In dev/pci/pcidevs.h
 .Ft int
-.Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "int reg" "void *sc" \
+.Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "device_t dev" \
 "int (*wakeup)(pci_chipset_tag_t pc, pcitag_t tag" \
-"\t\tvoid *sc, pcireg_t reg)"
+"\t\tdevice_t dev, pcireg_t reg)"
 .Ft pcireg_t
 .Fn pci_conf_read "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
 .Ft void
@@ -216,7 +216,7 @@ It contains the following member:
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn pci_activate "pc" "tag" "sc" "fun"
+.It Fn pci_activate "pc" "tag" "dev" "fun"
 Attempt to bring the device to state D0.
 If the device is not in the D0 state call
 .Fa fun

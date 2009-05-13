@@ -1,4 +1,4 @@
-.\"     $NetBSD: util.3,v 1.18 2008/11/17 15:21:43 wiz Exp $
+.\"     $NetBSD: util.3,v 1.18.4.1 2009/05/13 19:18:37 jym Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,61 +49,57 @@ Their use should be restricted.
 Declarations for these functions may be obtained from the include file
 .Pa \*[Lt]util.h\*[Gt] .
 .Sh LIST OF FUNCTIONS
-.sp 2
-.nf
-.ta \w'getmaxpartitions.3'u+2n +\w'get the maximum number of partitions allowed per disk'u
-\fIName/Page\fP	\fIDescription\fP
-.ta \w'getmaxpartitions.3'u+2n +\w'get the maximum number of partitions allowed per disk'u+6nC
-.sp 5p
-disklabel_dkcksum.3	compute the checksum for a disklabel
-disklabel_scan.3	scan a buffer for a valid disklabel
-forkpty.3	tty utility function
-getbootfile.3	get the name of the booted kernel file
-getlabeloffset.3	get the sector number and offset of the disklabel
-getlabelsector.3	get the sector number and offset of the disklabel
-getmaxpartitions.3	get the maximum number of partitions allowed per disk
-getrawpartition.3	get the system ``raw'' partition
-login.3	login utility function
-login_cap.3	query login.conf database about a user class
-login_close.3	query login.conf database about a user class
-login_getcapbool.3	query login.conf database about a user class
-login_getcapnum.3	query login.conf database about a user class
-login_getcapsize.3	query login.conf database about a user class
-login_getcapstr.3	query login.conf database about a user class
-login_getcaptime.3	query login.conf database about a user class
-login_getclass.3	query login.conf database about a user class
-login_tty.3	tty utility function
-loginx.3	login utility function
-logout.3	login utility function
-logoutx.3	login utility function
-logwtmp.3	login utility function
-logwtmpx.3	login utility function
-opendisk.3	open a disk partition
-openpty.3	tty utility function
-pidfile.3	write a daemon pid file
-pidlock.3	locks based on files containing PIDs
-pw_abort.3	passwd file update function
-pw_copy.3	utility function for interactive passwd file updates
-pw_edit.3	utility function for interactive passwd file updates
-pw_error.3	utility function for interactive passwd file updates
-pw_getconf.3	password encryption configuration access function
-pw_getprefix.3	passwd file update function
-pw_init.3	utility function for interactive passwd file updates
-pw_lock.3	passwd file update function
-pw_mkdb.3	passwd file update function
-pw_prompt.3	utility function for interactive passwd file updates
-pw_scan.3	utility function for interactive passwd file updates
-pw_setprefix.3	passwd file update function
-secure_path.3	determine if a file appears to be ``secure''
-setclasscontext.3	query login.conf database about a user class
-setusercontext.3	query login.conf database about a user class
-snprintb.3	bitmask output conversion
-sockaddr_snprintf.3	socket address formatting function
-ttyaction.3	ttyaction utility function
-ttylock.3	locks based on files containing PIDs
-ttymsg.3	ttymsg utility function
-ttyunlock.3	locks based on files containing PIDs
-.fi
+.Bl -column ".Xr sockaddr_snprintf 3" -compact
+.It Sy Name	Description
+.It Xr disklabel_dkcksum 3 Ta compute the checksum for a disklabel
+.It Xr disklabel_scan 3 Ta scan a buffer for a valid disklabel
+.It Xr forkpty 3 Ta tty utility function
+.It Xr getbootfile 3 Ta get the name of the booted kernel file
+.It Xr getlabeloffset 3 Ta get the sector number and offset of the disklabel
+.It Xr getlabelsector 3 Ta get the sector number and offset of the disklabel
+.It Xr getmaxpartitions 3 Ta get the maximum number of partitions allowed per disk
+.It Xr getrawpartition 3 Ta get the system ``raw'' partition
+.It Xr login 3 Ta login utility function
+.It Xr login_cap 3 Ta query login.conf database about a user class
+.It Xr login_close 3 Ta query login.conf database about a user class
+.It Xr login_getcapbool 3 Ta query login.conf database about a user class
+.It Xr login_getcapnum 3 Ta query login.conf database about a user class
+.It Xr login_getcapsize 3 Ta query login.conf database about a user class
+.It Xr login_getcapstr 3 Ta query login.conf database about a user class
+.It Xr login_getcaptime 3 Ta query login.conf database about a user class
+.It Xr login_getclass 3 Ta query login.conf database about a user class
+.It Xr login_tty 3 Ta tty utility function
+.It Xr loginx 3 Ta login utility function
+.It Xr logout 3 Ta login utility function
+.It Xr logoutx 3 Ta login utility function
+.It Xr logwtmp 3 Ta login utility function
+.It Xr logwtmpx 3 Ta login utility function
+.It Xr opendisk 3 Ta open a disk partition
+.It Xr openpty 3 Ta tty utility function
+.It Xr pidfile 3 Ta write a daemon pid file
+.It Xr pidlock 3 Ta locks based on files containing PIDs
+.It Xr pw_abort 3 Ta passwd file update function
+.It Xr pw_copy 3 Ta utility function for interactive passwd file updates
+.It Xr pw_edit 3 Ta utility function for interactive passwd file updates
+.It Xr pw_error 3 Ta utility function for interactive passwd file updates
+.It Xr pw_getconf 3 Ta password encryption configuration access function
+.It Xr pw_getprefix 3 Ta passwd file update function
+.It Xr pw_init 3 Ta utility function for interactive passwd file updates
+.It Xr pw_lock 3 Ta passwd file update function
+.It Xr pw_mkdb 3 Ta passwd file update function
+.It Xr pw_prompt 3 Ta utility function for interactive passwd file updates
+.It Xr pw_scan 3 Ta utility function for interactive passwd file updates
+.It Xr pw_setprefix 3 Ta passwd file update function
+.It Xr secure_path 3 Ta determine if a file appears to be ``secure''
+.It Xr setclasscontext 3 Ta query login.conf database about a user class
+.It Xr setusercontext 3 Ta query login.conf database about a user class
+.It Xr snprintb 3 Ta bitmask output conversion
+.It Xr sockaddr_snprintf 3 Ta socket address formatting function
+.It Xr ttyaction 3 Ta ttyaction utility function
+.It Xr ttylock 3 Ta locks based on files containing PIDs
+.It Xr ttymsg 3 Ta ttymsg utility function
+.It Xr ttyunlock 3 Ta locks based on files containing PIDs
+.El
 .Sh FILES
 .Bl -tag -width /usr/lib/libutil_p.a -compact
 .It Pa /usr/lib/libutil.a

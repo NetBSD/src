@@ -1,0 +1,161 @@
+# $Id: Makefile.in,v 1.2.2.2 2009/05/13 19:16:04 jym Exp $
+
+@SET_MAKE@
+SHELL = @SHELL@
+VPATH=@srcdir@
+
+PACKAGE_NAME= @PACKAGE_NAME@
+PACKAGE_VERSION= @PACKAGE_VERSION@
+PACKAGE_BUGREPORT= @PACKAGE_BUGREPORT@
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+PREFIX = @prefix@
+exec_prefix = @exec_prefix@
+
+libdir = @libdir@
+mandir = @mandir@
+incdir = @incdir@
+top_builddir = .
+
+AUTOCONF = @AUTOCONF@
+AUTOHEADER = @AUTOHEADER@
+mkinstalldirs = $(SHELL) $(srcdir)/mkinstalldirs
+install_sh = $(SHELL) $(srcdir)/install-sh
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_HEADER = $(INSTALL_DATA)
+transform = @program_transform_name@
+host_alias = @host_alias@
+host_triplet = @host@
+CANONICAL_HOST = @CANONICAL_HOST@
+LIBTOOL= ../../libtool
+
+CC = @CC@
+CCLD= $(CC)
+LIBS= @LIBS@
+CPPFLAGS= @CPPFLAGS@
+DEFS= @DEFS@ -I. -I@srcdir@ -DHOST=\"$(CANONICAL_HOST)\" -DNETPGP_AUTOCONF_VERSION=\"$(PACKAGE_VERSION)\"
+DEFS+= -DNETPGP_MAINTAINER=\"$(PACKAGE_BUGREPORT)\" -I@srcdir@/../../include
+CFLAGS= @CFLAGS@
+LDFLAGS= @LDFLAGS@
+
+LINK= $(CCLD) $(CFLAGS) $(LDFLAGS) -o $@
+COMPILE= $(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS)
+
+OPSOBJS+= compress.o create.o crypto.o
+OPSOBJS+= keyring.o misc.o netpgp.o openssl_crypto.o packet-parse.o
+OPSOBJS+= packet-print.o packet-show.o reader.o signature.o
+OPSOBJS+= symmetric.o validate.o writer.o
+
+SRCS+= compress.c create.c crypto.c
+SRCS+= keyring.c misc.c netpgp.c openssl_crypto.c packet-parse.c
+SRCS+= packet-print.c packet-show.c reader.c signature.c
+SRCS+= symmetric.c validate.c writer.c
+
+DISTFILES= $(SRCS) AUTHORS COPYING DESCR INSTALL Makefile.in NEWS aclocal.m4 \
+config.guess config.h.in config.sub configure configure.ac install-sh \
+missing mkinstalldirs regress.sh
+
+LIB=	libnetpgpsdk.a
+
+.c.o:
+	t=`date +%Y%m%d`; \
+	${LIBTOOL} --mode=compile ${COMPILE} -c -DNETPGP_BUILD_TIME=\"$$t\" $< -o $@
+
+all: ${LIB}
+
+${LIB}: $(OPSOBJS)
+	${LIBTOOL} --mode=link cc -o ${LIB:.a=.la} ${OPSOBJS:.o=.lo} -rpath ${PREFIX}/lib -version-info 1:0
+
+check: ${LIB}
+	@SHELL@ $(srcdir)/regress.sh
+
+clean:
+	rm -rf *.o *.lo .libs ${LIB} ${LIB:.a=.la}
+
+distclean: clean
+	rm -f Makefile config.h
+	rm -f config.status config.cache config.log
+
+maintainer-clean: distclean
+	rm -f configure config.h.in
+
+install: ${LIB}
+	$(srcdir)/mkinstalldirs ${DESTDIR}$(libdir) ${DESTDIR}$(prefix)/include/netpgpsdk ${DESTDIR}$(mandir)/man3
+	${LIBTOOL} --mode=install ${INSTALL_PROGRAM} ${LIB:.a=.la} ${DESTDIR}${libdir}
+	@f=`echo libnetpgp.3|sed '$(transform)'`; \
+	echo "$(INSTALL_DATA) libnetpgp.3 $(DESTDIR)$(mandir)/man3/$$f"; \
+	$(INSTALL_DATA) libnetpgp.3 $(DESTDIR)$(mandir)/man3/$$f
+	(cd ../../include/netpgpsdk && \
+		for f in *.h; do \
+			${INSTALL_DATA} $$f ${DESTDIR}${prefix}/include/netpgpsdk; \
+		done)
+
+uninstall:
+	@f=`echo ${LIB}|sed '$(transform)'`; \
+	echo " rm -f $(DESTDIR)$(libdir)/$$f"; \
+	rm -f $(DESTDIR)$(libdir)/$$f
+
+GZIP_ENV= --best
+TAR= tar
+distdir= $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+
+distdir: $(DISTFILES)
+	-chmod -R a+w $(distdir) >/dev/null 2>&1; rm -rf $(distdir)
+	mkdir $(distdir)
+	@for file in $(DISTFILES); do \
+		if test -f $$file; then d=.; else d=$(srcdir); fi; \
+		dir=`echo "$$file" | sed -e 's,/[^/]*$$,,'`; \
+		if test "$$dir" != "$$file" && test "$$dir" != "."; then \
+			$(mkinstalldirs) "$(distdir)/$$dir"; \
+		fi; \
+		if test -d $$d/$$file; then \
+			cp -pR $$d/$$file $(distdir) \
+			|| exit 1; \
+		else \
+			test -f $(distdir)/$$file \
+			|| cp -p $$d/$$file $(distdir)/$$file \
+			|| exit 1; \
+		fi; \
+	done
+	-find $(distdir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
+	  ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -400 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -444 -exec $(SHELL) $(install_sh) -c -m a+r {} {} \; \
+	|| chmod -R a+r $(distdir)
+
+dist: distdir
+	$(TAR) chof - $(distdir) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
+	-chmod -R a+w $(distdir) >/dev/null 2>&1; rm -rf $(distdir)
+
+distcheck: dist
+	-chmod -R a+w $(distdir) > /dev/null 2>&1; rm -rf $(distdir)
+	GZIP=$(GZIP_ENV) gunzip -c $(distdir).tar.gz | $(TAR) xf -
+	chmod -R a-w $(distdir); chmod a+w $(distdir)
+	mkdir $(distdir)/=build
+	mkdir $(distdir)/=inst
+	chmod a-w $(distdir)
+	dc_install_base=`CDPATH=: && cd $(distdir)/=inst && pwd` \
+	  && cd $(distdir)/=build \
+	  && ../configure --srcdir=.. --prefix=$$dc_install_base \
+	  && $(MAKE) \
+	  && $(MAKE) check \
+	  && $(MAKE) install \
+	  && $(MAKE) uninstall \
+	  && (test `find $$dc_install_base -type f -print | wc -l` -le 1 \
+	     || (echo "Error: files left after uninstall" 1>&2; \
+	         exit 1) ) \
+	  && $(MAKE) dist \
+	  && $(MAKE) distclean \
+	  && rm -f $(distdir).tar.gz \
+	  && (test `find . -type f -print | wc -l` -eq 0 \
+	     || (echo "Error: files left after distclean" 1>&2; \
+	         exit 1) )
+	-chmod -R a+w $(distdir) > /dev/null 2>&1; rm -rf $(distdir)
+	@echo "$(distdir).tar.gz is ready for distribution" | \
+	  sed 'h;s/./=/g;p;x;p;x'

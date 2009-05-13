@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.15 2003/08/07 09:37:42 agc Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.15.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.15 2003/08/07 09:37:42 agc Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.15.40.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,10 +43,10 @@ __RCSID("$NetBSD: dr_3.c,v 1.15 2003/08/07 09:37:42 agc Exp $");
 #include "extern.h"
 #include "driver.h"
 
-static int	stillmoving(int);
-static int	is_isolated(struct ship *);
-static int	push(struct ship *, struct ship *);
-static void	step(struct ship *, int,  char *);
+static int stillmoving(int);
+static int is_isolated(struct ship *);
+static int push(struct ship *, struct ship *);
+static void step(struct ship *, int, char *);
 
 /* move all comp ships */
 void
@@ -64,7 +64,7 @@ moveall(void)
 	foreachship(sp) {
 		struct ship *closest;
 		int ma, ta;
-		char af;
+		bool af;
 
 		if (sp->file->captain[0] || sp->file->dir == 0)
 			continue;
@@ -77,6 +77,7 @@ moveall(void)
 				*sp->file->movebuf = '\0';
 			else
 				closeon(sp, closest, sp->file->movebuf,
+					sizeof(sp->file->movebuf),
 					ta, ma, af);
 		} else
 			*sp->file->movebuf = '\0';
@@ -142,8 +143,8 @@ moveall(void)
 					if (dieroll() < 4) {
 						makesignal(sp, "fouled with $$",
 						    sq);
-						Write(W_FOUL, sp, l, 0, 0, 0);
-						Write(W_FOUL, sq, n, 0, 0, 0);
+						send_foul(sp, l);
+						send_foul(sq, n);
 					}
 					snap++;
 				}
@@ -174,13 +175,13 @@ moveall(void)
 		if (sp->file->dir != 0) {
 			*sp->file->movebuf = 0;
 			if (row[n] != sp->file->row)
-				Write(W_ROW, sp, sp->file->row, 0, 0, 0);
+				send_row(sp, sp->file->row);
 			if (col[n] != sp->file->col)
-				Write(W_COL, sp, sp->file->col, 0, 0, 0);
+				send_col(sp, sp->file->col);
 			if (dir[n] != sp->file->dir)
-				Write(W_DIR, sp, sp->file->dir, 0, 0, 0);
+				send_dir(sp, sp->file->dir);
 			if (drift[n] != sp->file->drift)
-				Write(W_DRIFT, sp, sp->file->drift, 0, 0, 0);
+				send_drift(sp, sp->file->drift);
 		}
 		n++;
 	}
@@ -257,8 +258,9 @@ step(struct ship *sp, int com, char *moved)
 				sp->file->row -= dr[winddir];
 				sp->file->col -= dc[winddir];
 			}
-		} else
+		} else {
 			sp->file->drift = 0;
+		}
 		break;
 	}
 }
@@ -273,8 +275,11 @@ sendbp(struct ship *from, struct ship *to, int sections, int isdefense)
 	for (n = 0; n < NBP && bp[n].turnsent; n++)
 		;
 	if (n < NBP && sections) {
-		Write(isdefense ? W_DBP : W_OBP, from,
-			n, turn, to->file->index, sections);
+		if (isdefense) {
+			send_dbp(from, n, turn, to->file->index, sections);
+		} else {
+			send_obp(from, n, turn, to->file->index, sections);
+		}
 		if (isdefense)
 			makemsg(from, "repelling boarders");
 		else
@@ -327,7 +332,7 @@ void
 checksails(void)
 {
 	struct ship *sp;
-	int rig, full; 
+	int rig, full;
 	struct ship *close;
 
 	foreachship(sp) {
@@ -343,11 +348,13 @@ checksails(void)
 					full = 1;
 				else
 					full = 0;
-			} else 
+			} else {
 				full = 0;
-		} else
+			}
+		} else {
 			full = 0;
+		}
 		if ((sp->file->FS != 0) != full)
-			Write(W_FS, sp, full, 0, 0, 0);
+			send_fs(sp, full);
 	}
 }

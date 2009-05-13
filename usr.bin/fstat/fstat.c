@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.87 2008/12/29 00:59:08 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.87.2.1 2009/05/13 19:19:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.87 2008/12/29 00:59:08 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.87.2.1 2009/05/13 19:19:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -519,7 +519,7 @@ vtrans(struct vnode *vp, int i, int flag)
 		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf(" %7lu %*s", (unsigned long)fst.fileid, nflg ? 5 : 10, mode);
+	(void)printf(" %7"PRIu64" %*s", fst.fileid, nflg ? 5 : 10, mode);
 	switch (vn.v_type) {
 	case VBLK:
 	case VCHR: {
@@ -580,7 +580,7 @@ ufs_filestat(struct vnode *vp, struct filestat *fsp)
 	}
 
 	fsp->fsid = inode.i_dev & 0xffff;
-	fsp->fileid = (long)inode.i_number;
+	fsp->fileid = inode.i_number;
 	fsp->mode = (mode_t)inode.i_mode;
 	fsp->size = inode.i_size;
 
@@ -599,7 +599,7 @@ ext2fs_filestat(struct vnode *vp, struct filestat *fsp)
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
-	fsp->fileid = (long)inode.i_number;
+	fsp->fileid = inode.i_number;
 
 	if (!KVM_READ(&inode.i_e2fs_mode, &mode, sizeof mode)) {
 		dprintf("can't read inode %p's mode at %p for pid %d", VTOI(vp),

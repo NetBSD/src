@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.84 2009/01/26 07:40:01 jklos Exp $
+# $NetBSD: postinstall,v 1.84.2.1 2009/05/13 19:20:32 jym Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,13 @@
 #	- install moduli into usr/share/examples/ssh and use from there?
 #	- differentiate between "needs fix" versus "can't fix" issues
 #
+
+# This script is executed as part of a cross build.  Allow the build
+# environment to override the locations of some tools.
+: ${AWK:=awk}
+: ${FGREP:=fgrep}
+: ${GREP:=grep}
+: ${MAKE:=make}
 
 #
 #	helper functions
@@ -183,7 +190,7 @@ check_ids()
 	if [ "${_op}" = "fix" ]; then
 		_notfixed="${NOT_FIXED}"
 	fi
-	_missing="$(awk -F: '
+	_missing="$(${AWK} -F: '
 		BEGIN {
 			for (x = 1; x < ARGC; x++)
 				idlist[ARGV[x]]++
@@ -400,13 +407,16 @@ stat()
 }
 
 # file_exists_exact path
-#	Returns true if file exists matching exact case for path
-#	Each path is relative to ${DEST_DIR}, and should
-#	be an absolute path or start with `./'.
+#	Returns true if a file exists in the ${DEST_DIR} whose name
+#	is exactly ${path}, interpreted in a case-sensitive way
+#	even if the underlying file system is case-insensitive.
+#
+#	The path must begin with '/' or './', and is interpreted as
+#	being relative to ${DEST_DIR}.
 #
 file_exists_exact()
 {
-	[ -n "1" ] || err 3 "USAGE: file_exists_exact path"
+	[ -n "$1" ] || err 3 "USAGE: file_exists_exact path"
 	_path="${1#.}"
 	[ -h "${DEST_DIR}${_path}" ] || \
         	[ -e "${DEST_DIR}${_path}" ] || return 1
@@ -414,7 +424,7 @@ file_exists_exact()
 		_dirname="$(dirname "${_path}" 2>/dev/null)"
 		_basename="$(basename "${_path}" 2>/dev/null)"
 		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
-			| grep -q -x -F "${_basename}" \
+			| ${FGREP} -x "${_basename}" >/dev/null \
 			|| return 1
 		_path="${_dirname}"
 	done
@@ -481,7 +491,7 @@ obsolete_libs()
 	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
 	echo lib*.so.* \
 	| tr ' ' '\n' \
-	| awk -v LibDir="${dir}/" '
+	| ${AWK} -v LibDir="${dir}/" '
 #{
 
 function digit(v, c, n) { return (n <= c) ? v[n] : 0 }
@@ -542,7 +552,7 @@ modify_file()
 	_mfprog="$4"
 	_mffailed=0
 
-	awk "${_mfprog}" < "${_mffile}" > "${_mfscratch}"
+	${AWK} "${_mfprog}" < "${_mffile}" > "${_mfscratch}"
 	if ! cmp -s "${_mffile}" "${_mfscratch}"; then
 		diff "${_mffile}" "${_mfscratch}" > "${_mfscratch}.diffs"
 		if [ "${_mfop}" = "check" ]; then
@@ -601,7 +611,7 @@ get_makevar()
 
 	for _var in "$@"; do
 		_value="$(echo '.include <bsd.own.mk>' | \
-		    ${MAKE:-make} -f - -V "${_var}")"
+		    ${MAKE} -f - -V "${_var}")"
 
 		eval ${_var}=\"${_value}\"
 	done
@@ -653,6 +663,35 @@ do_bluetooth()
 }
 
 #
+#	ddbonpanic
+#
+additem ddbonpanic "verify ddb.onpanic is configured in sysctl.conf"
+do_ddbonpanic()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_ddbonpanic  fix|check"
+
+	if ${GREP} -E '^#*[[:space:]]*ddb\.onpanic[[:space:]]*\??=[[:space:]]*[[:digit:]]+' \
+		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
+	then
+		result=0
+	else
+		if [ "$1" = check ]; then
+			msg \
+    "The ddb.onpanic behaviour is not explicitly specified in /etc/sysctl.conf"
+			result=1
+		else
+			echo >> "${DEST_DIR}/etc/sysctl.conf"
+			sed < "${SRC_DIR}/etc/sysctl.conf" \
+			   -e '/^ddb\.onpanic/q' | \
+			       sed -e '1,/^$/d' >> \
+			    "${DEST_DIR}/etc/sysctl.conf"
+			result=$?
+		fi
+	fi
+	return ${result}
+}
+
+#
 #	defaults
 #
 additem defaults "/etc/defaults/ being up to date"
@@ -672,6 +711,23 @@ do_defaults()
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$op" "${dir}" "${DEST_DIR}/etc/defaults" 444 pf.boot.conf
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	dhcpcd
+#
+additem dhcpcd "dhcpcd configuration is up to date"
+do_dhcpcd()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_dhcpcd fix|check"
+	op="$1"
+	failed=0
+
+	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		dhcpcd.conf
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
@@ -759,7 +815,7 @@ do_makedev()
 		env MACHINE="${MACHINE}" \
 		    MACHINE_ARCH="${MACHINE_ARCH}" \
 		    NETBSDSRCDIR="${SRC_DIR}" \
-		    awk -f "${SRC_DIR}/etc/MAKEDEV.awk" \
+		    ${AWK} -f "${SRC_DIR}/etc/MAKEDEV.awk" \
 		    "${SRC_DIR}/etc/MAKEDEV.tmpl" > "${SCRATCHDIR}/MAKEDEV"
 	fi
 
@@ -768,7 +824,11 @@ do_makedev()
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV
-	compare_dir "$1" "${SRC_DIR}/etc" "${DEST_DIR}/dev" 555 MAKEDEV.local
+	find_file_in_dirlist MAKEDEV.local "MAKEDEV.local" \
+	    "${SRC_DIR}/etc" "${SRC_DIR}/dev" \
+	    || return 1
+			# ${dir} is set by find_file_in_dirlist()
+	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV.local
 }
 
 #
@@ -779,9 +839,9 @@ do_motd()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_motd  fix|check"
 
-	if grep -i 'http://www.NetBSD.org/Misc/send-pr.html' \
+	if ${GREP} -i 'http://www.NetBSD.org/Misc/send-pr.html' \
 		"${DEST_DIR}/etc/motd" >/dev/null 2>&1 \
-	    || grep -i 'http://www.NetBSD.org/support/send-pr.html' \
+	    || ${GREP} -i 'http://www.NetBSD.org/support/send-pr.html' \
 		"${DEST_DIR}/etc/motd" >/dev/null 2>&1
 	then
 		tmp1="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
@@ -948,12 +1008,12 @@ do_rc()
 	fi
 
 	compare_dir "${op}" "${SRC_DIR}/etc/rc.d" "${DEST_DIR}/etc/rc.d" 555 \
-		DAEMON LOGIN NETWORKING SERVERS \
+		DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
 		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
-		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
-		fsck ftp_proxy ftpd \
+		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
+		fsck fsck_root ftp_proxy ftpd \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \
@@ -1057,7 +1117,7 @@ do_mailerconf()
 	op="$1"
 
 	failed=0
-	mta_path="$(awk '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)"
+	mta_path="$(${AWK} '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)"
 	old_sendmail_path="/usr/libexec/sendmail/sendmail"
 	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
 	    if [ "$op" = check ]; then

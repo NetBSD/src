@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.14 2008/05/14 11:44:09 tron Exp $	*/
+/*	$NetBSD: getent.c,v 1.14.6.1 2009/05/13 19:19:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.14 2008/05/14 11:44:09 tron Exp $");
+__RCSID("$NetBSD: getent.c,v 1.14.6.1 2009/05/13 19:19:51 jym Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -101,7 +101,7 @@ static struct getentdb {
 	{	"netgroup",	netgroup,	},
 	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
-	{	"princap",	printcap,	},
+	{	"printcap",	printcap,	},
 	{	"protocols",	protocols,	},
 	{	"rpc",		rpc,		},
 	{	"services",	services,	},
@@ -594,7 +594,8 @@ handlecap(const char *db, int argc, char *argv[])
 	static const char sfx[] = "=#:";
 	const char *db_array[] = { db, NULL };
 	char	*b, *cap;
-	int	i, j, rv, c;
+	int	i, rv, c;
+	size_t	j;
 	int	expand = 1, recurse = 0, pretty = 0;
 
 	assert(argc > 1);

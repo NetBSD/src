@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.22 2008/02/29 03:00:47 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.22.10.1 2009/05/13 19:20:44 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.22 2008/02/29 03:00:47 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.22.10.1 2009/05/13 19:20:44 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: makedbm.c,v 1.22 2008/02/29 03:00:47 lukem Exp $");
 
 int	main(int, char *[]);
 void	usage(void);
-int	add_record(DBM *, char *, char *, int);
+int	add_record(DBM *, const char *, const char *, int);
 char	*file_date(char *);
 void	list_database(char *);
 void	create_database(char *, char *, char *, char *, char *, char *,
@@ -149,12 +149,12 @@ main(int argc, char *argv[])
 }
 
 int
-add_record(DBM *db, char *str1, char *str2, int check)
+add_record(DBM *db, const char *str1, const char *str2, int check)
 {
 	datum key, val;
 	int status;
 
-	key.dptr = str1;
+	key.dptr = __UNCONST(str1);
 	key.dsize = strlen(str1);
 
 	if (check) {
@@ -163,7 +163,7 @@ add_record(DBM *db, char *str1, char *str2, int check)
 		if (val.dptr != NULL)
 			return 0;	/* already there */
 	}
-	val.dptr = str2;
+	val.dptr = __UNCONST(str2);
 	val.dsize = strlen(str2);
 	status = ypdb_store(db, key, val, YPDB_INSERT);
 

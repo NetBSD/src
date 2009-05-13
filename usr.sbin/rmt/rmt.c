@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.c,v 1.15 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: rmt.c,v 1.15.6.1 2009/05/13 19:20:37 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)rmt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rmt.c,v 1.15 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: rmt.c,v 1.15.6.1 2009/05/13 19:20:37 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: rmt.c,v 1.15 2008/07/21 13:36:59 lukem Exp $");
 
 int	tape = -1;
 
-char	*record;
 int	maxrecsize = -1;
 
 #define	SSIZE	64
@@ -85,6 +84,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
+	char *record = NULL;
 	int rval;
 	char c;
 	int n, i, cc;

@@ -1,9 +1,10 @@
 .\" @(#)rpcinfo.1m 1.23 93/03/29 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
-.\" $NetBSD: rpcinfo.8,v 1.13 2003/02/25 10:35:53 wiz Exp $
+.\" $NetBSD: rpcinfo.8,v 1.13.42.1 2009/05/13 19:20:03 jym Exp $
 .Dd August 18, 1992
 .Dt RPCINFO 8
+.Os
 .Sh NAME
 .Nm rpcinfo
 .Nd report RPC information
@@ -303,7 +304,7 @@ option to display a more concise list:
 .Bd -literal
 	example$ rpcinfo -s klaxon
 .Ed
-.Bl -column "program" "w,x,y,z" "local,tcp,udp,tcp6,udp6" "nlockmgr" "super-user"
+.Bl -column "program" "version(s)" "local,tcp,udp,tcp6,udp6" "nlockmgr" "super-user"
 .It program Ta version(s) Ta netid(s) Ta service Ta owner
 .It 100000 Ta 2,3,4 Ta local,tcp,udp,tcp6,udp6 Ta rpcbind Ta super-user
 .It 100008 Ta 1 Ta udp,tcp,udp6,tcp6 Ta walld Ta super-user

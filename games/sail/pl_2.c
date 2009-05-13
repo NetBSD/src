@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_2.c,v 1.11 2003/08/07 09:37:43 agc Exp $	*/
+/*	$NetBSD: pl_2.c,v 1.11.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,13 +34,66 @@
 #if 0
 static char sccsid[] = "@(#)pl_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_2.c,v 1.11 2003/08/07 09:37:43 agc Exp $");
+__RCSID("$NetBSD: pl_2.c,v 1.11.40.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
 #include <signal.h>
+#include <unistd.h>
+#include "display.h"
 #include "extern.h"
 #include "player.h"
+
+/*ARGSUSED*/
+void
+newturn(int n __unused)
+{
+	repaired = loaded = fired = changed = 0;
+	movebuf[0] = '\0';
+
+	alarm(0);
+	if (mf->readyL & R_LOADING) {
+		if (mf->readyL & R_DOUBLE)
+			mf->readyL = R_LOADING;
+		else
+			mf->readyL = R_LOADED;
+	}
+	if (mf->readyR & R_LOADING) {
+		if (mf->readyR & R_DOUBLE)
+			mf->readyR = R_LOADING;
+		else
+			mf->readyR = R_LOADED;
+	}
+	if (!hasdriver)
+		send_ddead();
+
+	display_hide_prompt();
+	if (Sync() < 0)
+		leave(LEAVE_SYNC);
+	if (!hasdriver)
+		leave(LEAVE_DRIVER);
+	display_reshow_prompt();
+
+	if (turn % 50 == 0)
+		send_alive();
+	if (mf->FS && (!mc->rig1 || windspeed == 6))
+		send_fs(ms, 0);
+	if (mf->FS == 1)
+		send_fs(ms, 2);
+
+	if (mf->struck)
+		leave(LEAVE_QUIT);
+	if (mf->captured != 0)
+		leave(LEAVE_CAPTURED);
+	if (windspeed == 7)
+		leave(LEAVE_HURRICAN);
+
+	display_adjust_view();
+	display_redraw();
+
+	signal(SIGALRM, newturn);
+	alarm(7);
+}
 
 void
 play(void)
@@ -48,7 +101,17 @@ play(void)
 	struct ship *sp;
 
 	for (;;) {
-		switch (sgetch("~\b", (struct ship *)0, 0)) {
+		blockalarm();
+		display_redraw();
+		unblockalarm();
+
+		switch (sgetch("~ ", (struct ship *)0, 0)) {
+		case 14: /* ^N */
+			display_scroll_pagedown();
+			break;
+		case 16: /* ^P */
+			display_scroll_pageup();
+			break;
 		case 'm':
 			acceptmove();
 			break;
@@ -86,10 +149,7 @@ play(void)
 			break;
 		case '\f':
 			centerview();
-			blockalarm();
-			draw_board();
-			draw_screen();
-			unblockalarm();
+			display_force_full_redraw();
 			break;
 		case 'L':
 			mf->loadL = L_EMPTY;
@@ -117,43 +177,25 @@ play(void)
 			break;
 		case 'C':
 			centerview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'U':
 			upview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'D':
 		case 'N':
 			downview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'H':
 			leftview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'J':
 			rightview();
-			blockalarm();
-			draw_view();
-			unblockalarm();
 			break;
 		case 'F':
 			lookout();
 			break;
 		case 'S':
 			dont_adjust = !dont_adjust;
-			blockalarm();
-			draw_turn();
-			unblockalarm();
 			break;
 		}
 	}

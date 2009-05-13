@@ -76,7 +76,7 @@ int     unix_send_fd(int fd, int sendfd)
 
     memset((char *) &msg, 0, sizeof(msg));		/* Fix 200512 */
     msg.msg_control = control_un.control;
-    msg.msg_controllen = CMSG_LEN(sizeof(sendfd));	/* Fix 200506 */
+    msg.msg_controllen = sizeof(control_un.control);	/* Fix 200506 */
 
     cmptr = CMSG_FIRSTHDR(&msg);
     cmptr->cmsg_len = CMSG_LEN(sizeof(sendfd));

@@ -1,0 +1,94 @@
+$NetBSD: README,v 1.4.2.2 2009/05/13 19:17:40 jym Exp $
+
+This distrib/cdrom directory was used to create bootable CD images
+in the past releases with optional rsync(1) and mkisofs(8) tool.
+All necessary binaries for ISOs must be prepared in ${DISTRIBDIR},
+which is ${.OBJDIR}/download by default, and the binaries can be fetched
+by rsync(1) with the "fetch" target defined in Makefile.
+
+Now build.sh script has the "iso-image" target using our native makefs(8)
+and this distrib/cdrom is being superseded, but our makefs(8) still
+lacks support for a hybrid ISO9660/HFS file system which is required
+to create bootable CD images for mac68k and macppc.
+
+On the other hand, the recent version of mkisofs(8) seems to use
+iconv(3) libraries on creating the hybrid ISO9660/HFS file system,
+but the latest mkisofs(8) (at least cdrtools-2.01.01.36) from pkgsrc
+dumps core on it. cdrtools-2.01 is required to build images. (PR pkg/37643)
+
+Note you can also use compiled release binaries prepared in RELEASEDIR by
+"build.sh release" if you need only single ISO image for a specific port.
+
+
+Environment variables:
+
+RELEASE
+  specify target release version (no default, mandatory)
+
+TARGET_CD_IMAGE
+  specify target ${MACHINE}cd name
+  (default: all targets defined in ${RELEASE}.conf)
+
+MKISOFS
+  specify mkisofs(8) path (default: /usr/pkg/bin/mkisofs)
+
+RSYNC
+  specify rsync(1) path (default: /usr/pkg/bin/rsync)
+
+RSYNC_HOST
+  specify rsync host (default: rsync.NetBSD.org)
+
+RSYNC_PATH_PREFIX
+  specify extra prefix path of NetBSD module names for rsync mirrors
+   ex. "/pub", "/netbsd" etc. (default: empty)
+
+DAILY_DIR
+  specify directory name on using NetBSD-daily snapshot for -current
+   ex. "200712060002Z" etc. (no default; mandatory for -current)
+
+BRANCH
+  spcify branch name on using NetBSD-daily snapshot (default: current)
+
+RELEASE_SUFFIX
+  specify suffix of directory names used for pre-releases
+   ex. "_BETA2", "_RC5" etc. (default: empty)
+
+RSYNC_PATH
+  specify path used to rsync hosts (default: set from the above variables)
+
+
+Example usage:
+
+make RELEASE=5.0 TARGET_CD_IMAGE=mac68kcd fetch
+ -> fetch 5.0 mac68k sets from
+    rsync://rsync.NetBSD.org/NetBSD/NetBSD-5.0/
+
+make RELEASE=4.0 TARGET_CD_IMAGE=mac68kcd RELEASE_SUFFIX=_RC5 fetch
+ -> fetch 4.0_RC5 mac68k sets from
+    rsync://rsync.NetBSD.org/NetBSD/NetBSD-4.0_RC5/
+
+make RELEASE=current TARGET_CD_IMAGE=mac68kcd \
+    DAILY_DIR=200903060000Z fetch
+ -> fetch -current mac68k sets from
+    rsync://rsync.NetBSD.org/NetBSD-daily/HEAD/200903060000Z/
+
+make RELEASE=4.0 TARGET_CD_IMAGE=mac68kcd RELEASE_SUFFIX=_RC5 \
+    RSYNC_HOST=rsync3.jp.NetBSD.org \
+    RSYNC_PATH_PREFIX=/pub fetch
+ -> fetch 4.0_RC5 mac68k sets from
+    rsync://rsync3.jp.NetBSD.org/pub/NetBSD/NetBSD-4.0_RC5/
+
+make RELEASE=5.0 TARGET_CD_IMAGE=mac68kcd \
+    RSYNC_HOST=rsync.jp.NetBSD.org \
+    RSYNC_PATH=/NetBSD-daily/netbsd-5/200903070000Z fetch
+ -> fetch mac68k sets of netbsd-5 branch from
+    rsync://rsync.jp.NetBSD.org/pub/NetBSD-daily/netbsd-5/200903070000Z
+
+make RELEASE=5.0 TARGET_CD_IMAGE=mac68kcd all
+ -> build an ISO image for mac68k from downloaded files as the above
+
+make RELEASE=5.0 TARGET_CD_IMAGE=macppccd \
+    DISTRIBDIR=/usr/obj.macppc/releasedir all
+ -> build an ISO image for macppc from release binaries
+    built by "build.sh release" in the RELEASEDIR 
+    (use appropriate RELEASEDIR on your build environment)

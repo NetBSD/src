@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.16 2007/10/29 23:20:39 christos Exp $	*/
+/*	$NetBSD: strings.c,v 1.16.14.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: strings.c,v 1.16 2007/10/29 23:20:39 christos Exp $");
+__RCSID("$NetBSD: strings.c,v 1.16.14.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: strings.c,v 1.16 2007/10/29 23:20:39 christos Exp $");
 static struct strings {
 	char	*s_topFree;		/* Beginning of this area */
 	char	*s_nextFree;		/* Next alloctable place here */
-	unsigned s_nleft;		/* Number of bytes left here */
+	size_t	s_nleft;		/* Number of bytes left here */
 } stringdope[NSPACE];
 
 /*
@@ -71,7 +71,6 @@ static struct strings {
  * The string spaces are of exponentially increasing size, to satisfy
  * the occasional user with enormous string size requests.
  */
-
 PUBLIC void *
 salloc(size_t size)
 {
@@ -94,7 +93,7 @@ salloc(size_t size)
 	if (sp >= &stringdope[NSPACE])
 		errx(1, "String too large");
 	if (sp->s_topFree == NULL) {
-		idx = sp - &stringdope[0];
+		idx = (int)(sp - &stringdope[0]);
 		sp->s_topFree = malloc(STRINGSIZE << idx);
 		if (sp->s_topFree == NULL)
 			errx(1, "No room for space %d", idx);

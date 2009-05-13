@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.46 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: dirs.c,v 1.46.30.1 2009/05/13 19:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.46 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.46.30.1 2009/05/13 19:19:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ treescan(const char *pname, ino_t ino, long (*todo)(const char *, ino_t, int))
 {
 	struct inotab *itp;
 	struct direct *dp;
-	int namelen;
+	size_t namelen;
 	long bpt;
 	char locname[MAXPATHLEN + 1];
 
@@ -441,7 +441,7 @@ static void
 dcvt(struct odirect *odp, struct direct *ndp)
 {
 
-	memset(ndp, 0, (size_t)(sizeof *ndp));
+	memset(ndp, 0, sizeof(*ndp));
 	if (Bcvt)
 		ndp->d_ino = bswap16(odp->d_ino);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.19 2006/04/09 19:39:17 christos Exp $	*/
+/*	$NetBSD: reverse.c,v 1.19.30.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.19 2006/04/09 19:39:17 christos Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.19.30.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,11 +85,11 @@ reverse(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 		switch(style) {
 		case FBYTES:
 		case RBYTES:
-			(void)bytes(fp, off);
+			(void)displaybytes(fp, off);
 			break;
 		case FLINES:
 		case RLINES:
-			(void)lines(fp, off);
+			(void)displaylines(fp, off);
 			break;
 		case REVERSE:
 			r_buf(fp);
@@ -113,7 +113,8 @@ r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	if (!(size = sbp->st_size))
 		return;
 
-	if (size > SIZE_T_MAX) {
+	if ((uint64_t)size > SIZE_T_MAX) {
+			/* XXX: need a cleaner way to check this on amd64 */
 		err(0, "%s: %s", fname, strerror(EFBIG));
 		return;
 	}

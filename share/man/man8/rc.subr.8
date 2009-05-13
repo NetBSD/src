@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.21 2008/05/25 09:07:21 wiz Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.21.4.1 2009/05/13 19:19:14 jym Exp $
 .\"
 .\" Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,9 +88,7 @@ into the current shell.
 .Pp
 The following shell functions are available:
 .Bl -tag -width 4n
-.It Xo
-.Ic backup_file Ar action Ar file Ar current Ar backup
-.Xc
+.It Ic backup_file Ar action Ar file Ar current Ar backup
 Make a backup copy of
 .Ar file
 into
@@ -175,12 +173,7 @@ is not set references a manual page where the user can find more information.
 Its name is picked up from the
 .Sy rcvar_manpage
 variable.
-.It Xo
-.Ic check_pidfile
-.Ar pidfile
-.Ar procname
-.Op Ar interpreter
-.Xc
+.It Ic check_pidfile Ar pidfile Ar procname Op Ar interpreter
 Parses the first word of the first line of
 .Ar pidfile
 for a PID, and ensures that the process with that PID

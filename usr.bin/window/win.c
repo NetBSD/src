@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.13 2003/08/07 11:17:34 agc Exp $	*/
+/*	$NetBSD: win.c,v 1.13.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: win.c,v 1.13 2003/08/07 11:17:34 agc Exp $");
+__RCSID("$NetBSD: win.c,v 1.13.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ closewin(struct ww *w)
  * Open an information (display) window.
  */
 struct ww *
-openiwin(int nrow, char *label)
+openiwin(int nrow, const char *label)
 {
 	struct ww *w;
 
@@ -352,7 +352,7 @@ more(struct ww *w, char always)
 }
 
 int
-waitnl1(struct ww *w, char *prompt)
+waitnl1(struct ww *w, const char *prompt)
 {
 	int uc = ISSET(w->ww_wflags, WWW_UNCTRL);
 

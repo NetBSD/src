@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2006/11/18 16:09:57 dsl Exp $
+#	$NetBSD: list,v 1.2.28.1 2009/05/13 19:17:43 jym Exp $
 #
 
 PROG	bin/chio
@@ -9,7 +9,6 @@ PROG	bin/mt
 PROG	bin/rcmd
 PROG	bin/sync
 
-PROG	sbin/dhclient
 PROG	sbin/fdisk
 PROG	sbin/mount_ext2fs
 PROG	sbin/mount_ntfs
@@ -26,11 +25,6 @@ PROG	usr/bin/tip
 PROG	usr/sbin/installboot
 
 PROG	usr/sbin/wiconfig
-
-SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
-
-# various files that we need in /etc for the install
-COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall

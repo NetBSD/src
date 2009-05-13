@@ -1,4 +1,4 @@
-.\"	$NetBSD: rd.4,v 1.10 2003/08/07 10:31:06 agc Exp $
+.\"	$NetBSD: rd.4,v 1.10.42.1 2009/05/13 19:19:11 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,14 +76,13 @@ Special file names begin with
 .Sq Li rd
 and
 .Sq Li rrd
-for the block and character files respectively. The second
-component of the name, a drive unit number in the range of zero to
-seven, is represented by a
+for the block and character files respectively.
+The second component of the name, a drive unit number in the range
+of zero to seven, is represented by a
 .Sq Li \&?
-in the disk layouts below. The last component of the name is the
-file system partition
-and is designated
-by a letter from
+in the disk layouts below.
+The last component of the name is the file system partition and is
+designated by a letter from
 .Sq Li a
 to
 .Sq Li h
@@ -94,160 +93,175 @@ three respectively
 .Xr physio 4 ) .
 The location and size (in sectors) of the
 partitions for these drives:
-.Bl -column header diskx undefined length
-.Tn 7945/7946 No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	112	15904	1-142
-	rd?b	16016	20160	143-322
-	rd?c	0	108416	0-967
-	rd?d	16016	40320	143-502
-	rd?e	undefined
-	rd?f	undefined
-	rd?g	36176	72240	323-967
-	rd?h	56336	52080	503-967
-.Pp
-.Tn 9134D No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	96	15936	1-166
-	rd?b	16032	13056	167-302
-	rd?c	0	29088	0-302
-	rd?d	undefined
-	rd?e	undefined
-	rd?f	undefined
-	rd?g	undefined
-	rd?h	undefined
-.Pp
-.Tn 9122S No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	undefined
-	rd?b	undefined
-	rd?c	0	1232	0-76
-	rd?d	undefined
-	rd?e	undefined
-	rd?f	undefined
-	rd?g	undefined
-	rd?h	undefined
-.Pp
-.Tn 7912P No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	0	15904	0-70
-	rd?b	16128	22400	72-171
-	rd?c	0	128128	0-571
-	rd?d	16128	42560	72-261
-	rd?e	undefined
-	rd?f	undefined
-	rd?g	38528	89600	172-571
-	rd?h	58688	69440	262-571
-.Pp
-.Tn 7914CT/P No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	224	15904	1-71
-	rd?b	16128	40320	72-251
-	rd?c	0	258048	0-1151
-	rd?d	16128	64960	72-361
-	rd?e	81088	98560	362-801
-	rd?f	179648	78400	802-1151
-	rd?g	56448	201600	252-1151
-	rd?h	81088	176960	362-1151
-.Pp
-.Tn 7958A No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	252	16128	1-64
-	rd?b	16380	32256	65-192
-	rd?c	0	255276	0-1012
-	rd?d	16380	48384	65-256
-	rd?e	64764	100800	257-656
-	rd?f	165564	89712	657-1012
-	rd?g	48636	206640	193-1012
-	rd?h	64764	190512	257-1012
-.Pp
-.Tn 7957A No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	154	16016	1-104
-	rd?b	16170	24640	105-264
-	rd?c	0	159544	0-1035
-	rd?d	16170	42350	105-379
-	rd?e	58520	54824	380-735
-	rd?f	113344	46200	736-1035
-	rd?g	40810	118734	265-1035
-	rd?h	58520	101024	380-1035
-.Pp
-.Tn 7933H No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	598	16146	1-27
-	rd?b	16744	66976	28-139
-	rd?c	0	789958	0-1320
-	rd?d	83720	16146	140-166
-	rd?e	99866	165646	167-443
-	rd?f	265512	165646	444-720
-	rd?g	83720	706238	140-1320
-	rd?h	431158	358800	721-1320
-.Pp
-.Tn 9134L No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	80	15920	1-199
-	rd?b	16000	20000	200-449
-	rd?c	0	77840	0-972
-	rd?d	16000	32000	200-599
-	rd?e	undefined
-	rd?f	undefined
-	rd?g	36000	41840	450-972
-	rd?h	48000	29840	600-972
-.Pp
-.Tn 7936H No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	861	16359	1-19
-	rd?b	17220	67158	20-97
-	rd?c	0	600978	0-697
-	rd?d	84378	16359	98-116
-	rd?e	100737	120540	117-256
-	rd?f	220416	120540	256-395
-	rd?g	84378	516600	98-697
-	rd?h	341817	259161	397-697
-.Pp
-.Tn 7937H No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	1599	15990	1-10
-	rd?b	17589	67158	11-52
-	rd?c	0	1116102	0-697
-	rd?d	84747	15990	53-62
-	rd?e	100737	246246	63-216
-	rd?f	346983	246246	217-370
-	rd?g	84747	1031355	53-697
-	rd?h	593229	522873	371-697
-.Pp
-.Tn 7957B/7961B No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	126	16002	1-127
-	rd?b	16128	32760	128-387
-	rd?c	0	159894	0-1268
-	rd?d	16128	49140	128-517
-	rd?e	65268	50400	518-917
-	rd?f	115668	44226	918-1268
-	rd?g	48888	111006	388-1268
-	rd?h	65268	94626	518-1268
-.Pp
-.Tn 7958B/7962B No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	378	16254	1-43
-	rd?b	16632	32886	44-130
-	rd?c	0	297108	0-785
-	rd?d	16632	49140	44-173
-	rd?e	65772	121716	174-495
-	rd?f	187488	109620	496-785
-	rd?g	49518	247590	131-785
-	rd?h	65772	231336	174-785
-.Pp
-.Tn 7959B/7963B No partitions :
-.Sy	disk	start	length	cyls
-	rd?a	378	16254	1-43
-	rd?b	16632	49140	44-173
-	rd?c	0	594216	0-1571
-	rd?d	16632	65772	44-217
-	rd?e	82404	303912	218-1021
-	rd?f	386316	207900	1022-1571
-	rd?g	65772	528444	174-1571
-	rd?h	82404	511812	218-1571
+.Bl -hang
+.It Tn 7945/7946 No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	112	15904	1-142
+.It rd?b	16016	20160	143-322
+.It rd?c	0	108416	0-967
+.It rd?d	16016	40320	143-502
+.It rd?e	undefined Ta "" Ta ""
+.It rd?f	undefined Ta "" Ta ""
+.It rd?g	36176	72240	323-967
+.It rd?h	56336	52080	503-967
+.El
+.It Tn 9134D No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	96	15936	1-166
+.It rd?b	16032	13056	167-302
+.It rd?c	0	29088	0-302
+.It rd?d	undefined Ta "" Ta ""
+.It rd?e	undefined Ta "" Ta ""
+.It rd?f	undefined Ta "" Ta ""
+.It rd?g	undefined Ta "" Ta ""
+.It rd?h	undefined Ta "" Ta ""
+.El
+.It Tn 9122S No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	undefined Ta "" Ta ""
+.It rd?b	undefined Ta "" Ta ""
+.It rd?c	0	1232	0-76
+.It rd?d	undefined Ta "" Ta ""
+.It rd?e	undefined Ta "" Ta ""
+.It rd?f	undefined Ta "" Ta ""
+.It rd?g	undefined Ta "" Ta ""
+.It rd?h	undefined Ta "" Ta ""
+.El
+.It Tn 7912P No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	0	15904	0-70
+.It rd?b	16128	22400	72-171
+.It rd?c	0	128128	0-571
+.It rd?d	16128	42560	72-261
+.It rd?e	undefined Ta "" Ta ""
+.It rd?f	undefined Ta "" Ta ""
+.It rd?g	38528	89600	172-571
+.It rd?h	58688	69440	262-571
+.El
+.It Tn 7914CT/P No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	224	15904	1-71
+.It rd?b	16128	40320	72-251
+.It rd?c	0	258048	0-1151
+.It rd?d	16128	64960	72-361
+.It rd?e	81088	98560	362-801
+.It rd?f	179648	78400	802-1151
+.It rd?g	56448	201600	252-1151
+.It rd?h	81088	176960	362-1151
+.El
+.It Tn 7958A No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	252	16128	1-64
+.It rd?b	16380	32256	65-192
+.It rd?c	0	255276	0-1012
+.It rd?d	16380	48384	65-256
+.It rd?e	64764	100800	257-656
+.It rd?f	165564	89712	657-1012
+.It rd?g	48636	206640	193-1012
+.It rd?h	64764	190512	257-1012
+.El
+.It Tn 7957A No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	154	16016	1-104
+.It rd?b	16170	24640	105-264
+.It rd?c	0	159544	0-1035
+.It rd?d	16170	42350	105-379
+.It rd?e	58520	54824	380-735
+.It rd?f	113344	46200	736-1035
+.It rd?g	40810	118734	265-1035
+.It rd?h	58520	101024	380-1035
+.El
+.It Tn 7933H No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	598	16146	1-27
+.It rd?b	16744	66976	28-139
+.It rd?c	0	789958	0-1320
+.It rd?d	83720	16146	140-166
+.It rd?e	99866	165646	167-443
+.It rd?f	265512	165646	444-720
+.It rd?g	83720	706238	140-1320
+.It rd?h	431158	358800	721-1320
+.El
+.It Tn 9134L No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	80	15920	1-199
+.It rd?b	16000	20000	200-449
+.It rd?c	0	77840	0-972
+.It rd?d	16000	32000	200-599
+.It rd?e	undefined Ta "" Ta ""
+.It rd?f	undefined Ta "" Ta ""
+.It rd?g	36000	41840	450-972
+.It rd?h	48000	29840	600-972
+.El
+.It Tn 7936H No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	861	16359	1-19
+.It rd?b	17220	67158	20-97
+.It rd?c	0	600978	0-697
+.It rd?d	84378	16359	98-116
+.It rd?e	100737	120540	117-256
+.It rd?f	220416	120540	256-395
+.It rd?g	84378	516600	98-697
+.It rd?h	341817	259161	397-697
+.El
+.It Tn 7937H No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	1599	15990	1-10
+.It rd?b	17589	67158	11-52
+.It rd?c	0	1116102	0-697
+.It rd?d	84747	15990	53-62
+.It rd?e	100737	246246	63-216
+.It rd?f	346983	246246	217-370
+.It rd?g	84747	1031355	53-697
+.It rd?h	593229	522873	371-697
+.El
+.It Tn 7957B/7961B No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	126	16002	1-127
+.It rd?b	16128	32760	128-387
+.It rd?c	0	159894	0-1268
+.It rd?d	16128	49140	128-517
+.It rd?e	65268	50400	518-917
+.It rd?f	115668	44226	918-1268
+.It rd?g	48888	111006	388-1268
+.It rd?h	65268	94626	518-1268
+.El
+.It Tn 7958B/7962B No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	378	16254	1-43
+.It rd?b	16632	32886	44-130
+.It rd?c	0	297108	0-785
+.It rd?d	16632	49140	44-173
+.It rd?e	65772	121716	174-495
+.It rd?f	187488	109620	496-785
+.It rd?g	49518	247590	131-785
+.It rd?h	65772	231336	174-785
+.El
+.It Tn 7959B/7963B No partitions :
+.Bl -column diskx undefined length "xxx-yyyy" -compact
+.It Sy disk	start	length	cyls
+.It rd?a	378	16254	1-43
+.It rd?b	16632	49140	44-173
+.It rd?c	0	594216	0-1571
+.It rd?d	16632	65772	44-217
+.It rd?e	82404	303912	218-1021
+.It rd?f	386316	207900	1022-1571
+.It rd?g	65772	528444	174-1571
+.It rd?h	82404	511812	218-1571
+.El
 .El
 .Pp
 The eight partitions as given support four basic, non-overlapping layouts,

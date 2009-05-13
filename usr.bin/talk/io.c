@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.12 2006/10/07 17:27:57 elad Exp $	*/
+/*	$NetBSD: io.c,v 1.12.26.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: io.c,v 1.12 2006/10/07 17:27:57 elad Exp $");
+__RCSID("$NetBSD: io.c,v 1.12.26.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -114,7 +114,7 @@ talk()
  */
 void
 p_error(string) 
-	char *string;
+	const char *string;
 {
 	wmove(my_win.x_win, current_line%my_win.x_nlines, 0);
 	wprintw(my_win.x_win, "[%s : %s (%d)]\n",
@@ -130,7 +130,7 @@ p_error(string)
  */
 void
 message(string)
-	char *string;
+	const char *string;
 {
 	wmove(my_win.x_win, current_line % my_win.x_nlines, 0);
 	wprintw(my_win.x_win, "[%s]", string);

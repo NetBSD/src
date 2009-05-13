@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.16 2003/12/26 06:19:19 grant Exp $	*/
+/*	$NetBSD: ls.h,v 1.16.40.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@ typedef struct {
 	u_int64_t btotal;
 	u_int64_t stotal;
 	int entries;
-	int maxlen;
+	unsigned int maxlen;
 	int s_block;
 	int s_flags;
 	int s_group;

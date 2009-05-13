@@ -27,7 +27,7 @@
  *	i4b daemon - controller state support routines
  *	----------------------------------------------
  *
- *	$Id: controller.c,v 1.9 2004/03/28 20:49:22 pooka Exp $
+ *	$Id: controller.c,v 1.9.40.1 2009/05/13 19:20:25 jym Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
 #include "isdnd.h"
 
 static int
-init_controller_state(int controller, const char *devname, const char *cardname, int tei, int nbch);
+init_controller_state(int controller, const char *devnam, const char *cardname, int tei, int nbch);
 
 /*
  * add a single controller
@@ -101,7 +101,7 @@ init_controller(void)
  *	init controller state table entry
  *--------------------------------------------------------------------------*/
 static int
-init_controller_state(int controller, const char *devname, const char *cardname, int tei, int nbch)
+init_controller_state(int controller, const char *devnam, const char *cardname, int tei, int nbch)
 {
 	struct isdn_ctrl_state *ctrl;
 	int i;
@@ -116,7 +116,7 @@ init_controller_state(int controller, const char *devname, const char *cardname,
 
 	memset(ctrl, 0, sizeof *ctrl);
 	strncpy(ctrl->device_name,
-	    devname, 
+	    devnam, 
 	    sizeof(ctrl->device_name)-1);
 	strncpy(ctrl->controller,
 	    cardname, 
@@ -133,7 +133,7 @@ init_controller_state(int controller, const char *devname, const char *cardname,
 	ctrl->l2stat = LAYER_IDLE;
 	ctrl->firmware = NULL;
 	DBGL(DL_RCCF, (logit(LL_DBG, "init_controller_state: controller %d (%s) is %s",
-	   controller, devname, cardname)));
+	   controller, devnam, cardname)));
 
 	/* add to list */
 	add_ctrl_state(ctrl);

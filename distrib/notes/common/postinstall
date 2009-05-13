@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.72 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: postinstall,v 1.72.2.1 2009/05/13 19:17:46 jym Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,8 @@
 .\"
 Once you've got the operating system running, there are a few
 things you need to do in order to bring the system into a properly
-configured state, with the most important ones described below.
+configured state.
+The most important steps are described below.
 .(enum
 Configuring
 .Pa /etc/rc.conf
@@ -115,34 +116,14 @@ where some in-line documentation may be found.
 More complete documentation can be found in
 .Xr rc.conf 5 .
 .Pp
-If your
-.Pa /usr
-directory is on a separate partition and you do not know how to use
-.Ic ed ,
-you will have to mount your
-.Pa /usr
-partition to gain access to
-.Ic ex
-or
-.Ic vi .
-Do the following:
-.Pp
-.Dl # Ic "mount /usr"
-.Dl # Ic "export TERM=\*[termtype]"
-.Pp
-If you have
-.Pa /var
-on a separate partition, you need to repeat that step for it.
-After that, you can edit
-.Pa /etc/rc.conf
-with
-.Xr vi 1 .
-When you have finished, type
+When you have finished editing
+.Pa /etc/rc.conf ,
+type
 .Ic exit
 at the prompt to
 leave the single-user shell and continue with the multi-user boot.
 .Pp
-Other values that need to be set in
+Other values that may need to be set in
 .Pa /etc/rc.conf
 for a networked environment are
 .Ar hostname
@@ -299,12 +280,6 @@ user that belongs to group
 and use
 .Xr su 1
 to become root.
-.Pp
-Unless you have connected an unusual terminal device as the console
-you can just press
-.Key RETURN
-when it prompts for
-.Li Terminal type? [...] .
 .It
 Adding accounts
 .Pp
@@ -355,13 +330,12 @@ systems you are strongly advised to first check the
 package system, pkgsrc.
 pkgsrc automatically handles any changes necessary to make the
 software run on
-.Nx ,
-retrieval and installation of any other packages on which the software
-may depend, and simplifies installation (and deinstallation), both
-from source and precompiled binaries.
+.Nx .
+This includes the retrieval and installation of any other
+packages on which the software may depend.
 .Pp
 .(bullet
-More information on the package system is at
+More information on the package system is available at
 .Lk http://www.NetBSD.org/docs/software/packages.html
 .It
 A list of available packages suitable for browsing is at
@@ -395,15 +369,15 @@ then replace the first two lines with the following:
 .Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 .Ed
 .(Note
-Some mirror sites don't mirror
+Some mirror sites don't mirror the
 .Pa /pub/pkgsrc
 directory.
 If you would like to use such mirrors, you could also try the
 .Pa /pub/NetBSD/packages/current-packages/NetBSD/\*M/\*V/All
-directory which may have the same contents.
+directory, which may have the same contents.
 .Note)
 .Pp
-The above commands will install the Tenex-csh and Bourne Again shell,
+The above commands will install the Tenex-csh and Bourne Again shells,
 the Perl programming language, Apache web server, KDE desktop
 environment and the Firefox web browser 
 as well as all the packages they depend on.
@@ -416,21 +390,18 @@ like the following:
 .Dl NetBSD/i386 M.N (pkg) vs. NetBSD/i386 \*V (this host) ,
 This warning is harmless if the formal major release numbers are the same
 between the pkg and your host.
-Please refer to
-.Dq the NetBSD release glossary and graphs :
+Please refer to the NetBSD release glossary and graphs at
 .Lk http://www.NetBSD.org/releases/release-map.html
-for details of the release numbering scheme used with
-.Nx .
+for more information about NetBSD's release numbering scheme.
 .Note)
 .It
 The framework for compiling packages can be obtained by
 retrieving the file
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc.tar.gz .
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc.tar.gz
 It is typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine) with the commands:
 .Pp
-.Dl # Ic "mkdir /usr/pkgsrc"
 .Dl # Ic "cd /usr"
 .Dl # Ic "tar -zxpf pkgsrc.tar.gz"
 .Pp

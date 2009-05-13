@@ -1,4 +1,4 @@
-.\"     $NetBSD: sockaddr_snprintf.3,v 1.6 2008/04/30 13:10:52 martin Exp $
+.\"     $NetBSD: sockaddr_snprintf.3,v 1.6.10.1 2009/05/13 19:18:37 jym Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@ The symbolic name of the address is printed.
 For
 .Dv AF_INET
 and
-.AF_INET6
+.Dv AF_INET6
 this is the hostname associated with the address.
 For all other address families, it is the same as the
 .Dq a
@@ -176,7 +176,7 @@ to
 For
 .Dv AF_INET
 and
-.DV AF_INET6
+.Dv AF_INET6
 addresses
 .Fn sockaddr_snprintf
 returns \-1 if the

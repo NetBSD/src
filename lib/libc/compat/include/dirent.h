@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.6 2008/05/04 18:53:26 tonnerre Exp $	*/
+/*	$NetBSD: dirent.h,v 1.6.10.1 2009/05/13 19:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -65,6 +65,9 @@ int __scandir30(const char *, struct dirent ***,
 
 int getdents(int, char *, size_t);
 int __getdents30(int, char *, size_t);
+
+int alphasort(const void *, const void *);
+int __alphasort30(const void *, const void *);
 
 int getdirentries(int, char *, int, long *);
 

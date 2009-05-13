@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc.9,v 1.8 2006/01/29 02:40:40 rpaulo Exp $
+.\" $NetBSD: pmc.9,v 1.8.30.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 2002, 2005 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -150,18 +150,17 @@ struct pmc_counter_cfg {
 	uint32_t	flags;
 };
 .Ed
-.sp
+.Pp
 .Fa flags
 are currently unused.
 .Sh FUNCTIONS
-.Bl -tag -width width -compact
+.Bl -tag -width width
 .It Fn pmc_get_num_counters "void"
 Returns the number of counters present on the current system.
 Valid values for
 .Fa ctr
 in the interface entry points below are from zero to one less than the
 return value from this function.
-.sp
 .It Fn pmc_get_counter_type "int ctr"
 Returns an implementation-dependent type describing the specified counter.
 If
@@ -170,20 +169,17 @@ is specified as \-1, returns a machine-dependent type describing the
 CPU or counter configuration.
 For example, on an ia32 architecture, it may distinguish between
 586-, 686-, and K7-style counters.
-.sp
 .It Fn pmc_save_context "struct lwp *l"
 Saves the PMC context for the current process.
 This is called just before
 .Xr cpu_switch 9 .
 If there is kernel PMC state, it must be maintained across this call.
-.sp
 .It Fn pmc_restore_context "struct lwp *l"
 Restores the PMC context for the current process.
 This is called just after
 .Xr cpu_switch 9
 returns.
 If there is kernel PMC state, it must be maintained across this call.
-.sp
 .It Fn pmc_enable_counter "struct lwp *l" "int ctr"
 Enables counter
 .Fa ctr
@@ -192,29 +188,24 @@ The counter should have already been configured with a call to
 .Fn pmc_configure_counter .
 This starts the counter running if it is not already started and enables
 any interrupts, as appropriate.
-.sp
 .It Fn pmc_disable_counter "struct lwp *l" "int ctr"
 Disables counter
 .Fa ctr
 for the specified process.
 This stops the counter from running, and disables any interrupts,
 as appropriate.
-.sp
 .It Fn pmc_counter_isrunning "struct lwp *l" "int ctr"
 Returns non-zero if the specified counter in the specified process is
 running or if the counter is running in the kernel.
-.sp
 .It Fn pmc_counter_isconfigured "struct lwp *l" "int ctr"
 Returns non-zero if the specified counter in the specified process is
 configured or if the counter is in use by the kernel.
-.sp
 .It Fn pmc_configure_counter "struct lwp *l" "int ctr" \
 "struct pmc_counter_cfg *cfg"
 Configures counter
 .Fa ctr
 according to the configuration information stored in
 .Fa cfg .
-.sp
 .It Fn pmc_get_counter_value "struct lwp *l" "int ctr" "int flags" \
 "uint64_t *pval"
 Returns the value of counter
@@ -225,34 +216,28 @@ The only recognized flag is
 .Fa PMC_VALUE_FLAGS_CHILDREN
 which specifies that the returned counts should be accumulated values
 for any exited child processes.
-.sp
 .It Fn pmc_accumulate "struct lwp *l_parent" "struct lwp *l_exiting"
 Accumulates any counter data from the exiting process
 .Fa p_exiting
 into the counters for the parent process
 .Fa p_parent .
-.sp
 .It Fn pmc_alloc_kernel_counter "int ctr" "struct pmc_counter_cfg *cfg"
 Allocates counter
 .Fa ctr
 for use by the kernel and configures it with
 .Fa cfg .
-.sp
 .It Fn pmc_free_kernel_counter "int ctr"
 Returns counter
 .Fa ctr
 to the available pool of counters that may be used by processes.
-.sp
 .It Fn pmc_start_profiling "int ctr" "struct pmc_counter_cfg *cfg"
 Allocates counter
 .Fa ctr
 for use by the kernel for profiling and configures it with
 .Fa cfg .
-.sp
 .It Fn pmc_stop_profiling "int ctr"
 Stops profiling with counter
 .Fa ctr .
-.sp
 .It Fn PMC_ENABLED "struct lwp *l"
 Returns non-zero if the given process or the kernel is using the PMC at all.
 .El

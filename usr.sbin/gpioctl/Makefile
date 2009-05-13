@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2008/01/09 15:57:06 xtraeme Exp $
+# $NetBSD: Makefile,v 1.2.12.1 2009/05/13 19:20:22 jym Exp $
 
 PROG=	gpioctl
 SRCS=	gpioctl.c
 
 MAN=	gpioctl.8
-WARNS=	4
 
 .include <bsd.prog.mk>

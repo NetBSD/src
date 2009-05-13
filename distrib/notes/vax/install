@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.17 2008/09/06 22:32:07 tsutsui Exp $
+.\"	$NetBSD: install,v 1.17.4.1 2009/05/13 19:17:48 jym Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ install media, as described earlier.
 Booting from install media
 .Pp
 The built-in console monitor understands a bunch of commands, dependent
-of which VAX you have.
+on which VAX you have.
 To just boot from a device, type
 .Sq Ic B
 at the
@@ -99,7 +99,7 @@ Other devices may be appropriate for your configuration.
 .Pp
 Then just proceed with the program
 .Ic sysinst .
-The install descriptions for sysinst that follows can be easily adopted to VAX.
+The procedure that is described below can be easily adapted to VAX.
 .Pp
 .\" Sad that the sysinst install instructions are so i386-specific.
 .so ../common/sysinst

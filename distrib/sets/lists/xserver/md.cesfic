@@ -1,5 +1,0 @@
-# $NetBSD: md.cesfic,v 1.5 2008/09/02 02:17:48 lukem Exp $
-./usr/X11R6/bin/Xvfb					-unknown-	x11
-./usr/X11R6/man/cat1/Xvfb.0				-unknown-	.cat,x11
-./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
-./usr/X11R6/man/man1/Xvfb.1				-unknown-	.man,x11

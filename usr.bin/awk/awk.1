@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.17 2008/05/26 02:07:25 dholland Exp $
+.\"	$NetBSD: awk.1,v 1.17.6.1 2009/05/13 19:19:44 jym Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -57,7 +57,7 @@ specified as
 With each pattern
 there can be an associated action that will be performed
 when a line of a
-.I file
+.Ar file
 matches the pattern.
 Each line is matched against the
 pattern portion of every pattern-action statement;
@@ -129,9 +129,9 @@ If
 is null, the input line is split into one field per character.
 .Pp
 A pattern-action statement has the form
-.sp
+.Lp
 .Dl pattern \&{ action \&}
-.sp
+.Lp
 A missing \&{ action \&}
 means print the line;
 a missing pattern always matches.
@@ -144,7 +144,8 @@ An empty
 .Ar expression-list
 stands for
 .Va $0 .
-String constants are quoted \&\f(CW"\ "\fR,
+String constants are quoted
+.Em \&"\ \&" ,
 with the usual C escapes recognized within.
 Expressions take on string or numeric values as appropriate,
 and are built using the
@@ -203,7 +204,7 @@ Logical OR
 .It Ic ?:
 C conditional expression.
 This is used as
-.Ar expr1 Ic ? Ar expr2 Ic : Ar expr3 No .
+.Ar expr1 Ic \&? Ar expr2 Ic \&: Ar expr3 No .
 If
 .Ar expr1
 is true, the result value is
@@ -223,25 +224,12 @@ Assignment and Operator-Assignment
 The control statements are as follows:
 .Pp
 .Bl -hang -offset indent -width indent -compact
-.It Xo
-.Ic if \&( Ar expression Ic \&) Ar statement
-.Bq Ic else Ar statement
-.Xc
-.It Ic while( Ar expression Ic \&) Ar statement
-.It Xo
-.Ic for( Ar expression Ic \&; Ar expression Ic \&;
-.Ar expression Ic \&)
-.Ar statement
-.Xc
-.It Xo
-.Ic for( Va var Ic in Ar array
-.Ic \&)
-.Ar statement
-.Xc
-.It Xo
-.Ic do Ar statement
-.Ic while( Ar expression Ic \&)
-.Xc
+.It Ic if \&( Ar expression Ic \&) Ar statement Bq Ic else Ar statement
+.It Ic while \&( Ar expression Ic \&) Ar statement
+.It Ic for \&( Ar expression Ic \&; Ar expression Ic \&; \
+Ar expression Ic \&) Ar statement
+.It Ic for \&( Va var Ic in Ar array Ic \&) Ar statement
+.It Ic do Ar statement Ic while \&( Ar expression Ic \&)
 .It Ic break
 .It Ic continue
 .It Ic delete Va array Bq Ar expression
@@ -249,7 +237,7 @@ The control statements are as follows:
 .It Ic exit Bq Ar expression
 .Ar expression
 .It Ic return Bq Ar expression
-.It Ic { Ar [ statement ... ] Ic }
+.It Ic \&{ Ar [ statement ... ] Ic \&}
 .El
 .Ss I/O Statements
 The input/output statements are as follows:
@@ -274,12 +262,7 @@ to the next input record from the current input file.
 .Ic getline
 returns 1 for a successful input,
 0 for end of file, and \-1 for an error.
-.It Xo
-.Ic getline
-.Bq Va var
-.Ic \*[Lt]
-.Ar file
-.Xc
+.It Ic getline Bo Va var Bc Ic \*[Lt] Ar file
 Set
 .Va var
 (or
@@ -301,11 +284,7 @@ returns the next line of output from
 Skip remaining patterns on this input line.
 .It Ic nextfile
 Skip rest of this file, open next, start at top.
-.It Xo
-.Ic print
-.Bq Ar expr-list
-.Bq Ic \*[Gt] Ar file
-.Xc
+.It Ic print Bo Ar expr-list Bc Bq Ic \*[Gt] Ar file
 The
 .Ic print
 statement prints its arguments on the standard output (or to a file
@@ -325,12 +304,7 @@ and
 .Ar expr
 may be literal names or parenthesized expressions; identical string values in
 different statements denote the same open file.
-.It Xo
-.Ic printf
-.Ar format
-.Bq Ic , Ar expr-list
-.Bq Ic \*[Gt] Ar file
-.Xc
+.It Ic printf Ar format Bo Ic \&, Ar expr-list Bc Bq Ic \*[Gt] Ar file
 Format and print its expression list according to
 .Ar format .
 See
@@ -701,7 +675,7 @@ the function definition.
 .It Ic length($0) \*[Gt] 72
 Print lines longer than 72 characters.
 .Pp
-.It Ic { print $2, $1 }
+.It Ic \&{ print $2, $1 \&}
 Print first two fields in opposite order.
 .Pp
 .It Ic BEGIN { FS =  \&",[ \et]*|[ \et]+\&" }
@@ -709,9 +683,7 @@ Print first two fields in opposite order.
 Same, with input fields separated by comma and/or blanks and tabs.
 .Pp
 .It Ic "\ \ \ \ {" s += $1 }
-.It Xo
-.Ic END { print \&"sum is\&", s, \&" average is\ \&",\ s/NR\ }
-.Xc
+.It Ic END { print \&"sum is\&", s, \&" average is\ \&",\ s/NR\ }
 Add up first column, print sum and average.
 .Pp
 .It Ic /start/, /stop/
@@ -755,6 +727,6 @@ There are no explicit conversions between numbers and strings.
 To force an expression to be treated as a number add 0 to it;
 to force it to be treated as a string concatenate
 \&"\&" to it.
-.br
+.Pp
 The scope rules for variables in functions are a botch;
 the syntax is worse.

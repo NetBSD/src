@@ -1,10 +1,6 @@
-# $NetBSD: md.x68k,v 1.16 2009/02/08 00:50:07 abs Exp $
+# $NetBSD: md.x68k,v 1.16.2.1 2009/05/13 19:17:54 jym Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/X68k					-unknown-	x11
-./usr/X11R6/bin/Xvfb					-unknown-	x11
 ./usr/X11R6/man/cat1/X68k.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/Xvfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/html1/X68k.html				-unknown-	html,x11
-./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
 ./usr/X11R6/man/man1/X68k.1				-unknown-	.man,x11
-./usr/X11R6/man/man1/Xvfb.1				-unknown-	.man,x11

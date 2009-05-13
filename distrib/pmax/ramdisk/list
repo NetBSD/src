@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.20 2008/11/30 04:18:14 tsutsui Exp $
+#	$NetBSD: list,v 1.20.2.1 2009/05/13 19:17:49 jym Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/pmax/stand
 
@@ -61,6 +61,7 @@ LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lprop
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/bootxx_ffs		usr/mdec/bootxx_ffs
+COPY	${DESTDIR}/usr/mdec/bootxx_ffsv2	usr/mdec/bootxx_ffsv2
 COPY	${DESTDIR}/usr/mdec/boot.pmax		usr/mdec/boot.pmax
 
 # various files that we need in /etc for the install

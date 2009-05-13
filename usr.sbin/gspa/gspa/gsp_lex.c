@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_lex.c,v 1.8 2006/08/26 18:15:37 christos Exp $	*/
+/*	$NetBSD: gsp_lex.c,v 1.8.26.1 2009/05/13 19:20:23 jym Exp $	*/
 /*
  * Lexical analyser for GSP assembler
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_lex.c,v 1.8 2006/08/26 18:15:37 christos Exp $");
+__RCSID("$NetBSD: gsp_lex.c,v 1.8.26.1 2009/05/13 19:20:23 jym Exp $");
 #endif
 
 #include <stdio.h>
@@ -51,9 +51,9 @@ char *idptr;
 
 extern YYSTYPE yylval;
 
-int str_match(char *, char **);
+int str_match(const char *, const char **);
 
-char *regnames[] = {
+const char *regnames[] = {
 	"A0",	"A1",	"A2",	"A3",	"A4",	"A5",	"A6",	"A7",
 	"A8",	"A9",	"A10",	"A11",	"A12",	"A13",	"A14",	"SP",
 	"B0",	"B1",	"B2",	"B3",	"B4",	"B5",	"B6",	"B7",
@@ -73,9 +73,9 @@ short regnumbers[] = {
 };
 
 void
-lex_init(char *line)
+lex_init(char *lline)
 {
-	lineptr = line;
+	lineptr = lline;
 	idptr = idents;
 }
 
@@ -183,9 +183,9 @@ ucasify(char *p)
 }
 
 int
-str_match(char *id, char **names)
+str_match(const char *id, const char **names)
 {
-	char **np;
+	const char **np;
 
 	for( np = names; *np != NULL; ++np )
 		if( strcmp(id, *np) == 0 )

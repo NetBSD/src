@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2007/12/12 21:56:38 christos Exp $
+#	$NetBSD: Makefile,v 1.31.12.1 2009/05/13 19:20:31 jym Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -13,7 +13,6 @@ SRCS=	compare.c crc.c create.c excludes.c misc.c mtree.c spec.c verify.c \
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 .endif
-WARNS?=	4
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sbin/mknod
 .PATH:		${NETBSDSRCDIR}/sbin/mknod

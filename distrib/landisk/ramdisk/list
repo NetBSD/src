@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.2 2009/01/25 22:08:38 abs Exp $
+#	$NetBSD: list,v 1.2.2.1 2009/05/13 19:17:44 jym Exp $
 
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
+SRCDIRS	bin sbin usr.bin usr.sbin
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -19,7 +19,6 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
-PROG	sbin/dhclient
 PROG	sbin/disklabel
 PROG	sbin/fdisk
 PROG	sbin/fsck
@@ -47,28 +46,26 @@ PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 PROG	usr/sbin/installboot
 
-SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS	libhack.o -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
+LIBS	libhack.o -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lprop
 
 # init invokes the shell as -sh
 ARGVLN	sh -sh
 
 # various files that we need in /etc for the install
-COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script 555
 COPY	${NETBSDSRCDIR}/etc/group			etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd		etc/master.passwd
-COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/etc/netconfig			etc/netconfig
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # and the common installation tools
-COPY	${CURDIR}/termcap.mini			usr/share/misc/termcap
+COPY	${NETBSDSRCDIR}/distrib/common/termcap.mini	usr/share/misc/termcap
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
@@ -80,3 +77,5 @@ COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 # we need the boot 
 COPY    ${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 COPY    ${DESTDIR}/usr/mdec/bootxx_ffsv1	usr/mdec/bootxx_ffsv1
+COPY    ${DESTDIR}/usr/mdec/bootxx_ffsv2	usr/mdec/bootxx_ffsv2
+COPY    ${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr

@@ -19,12 +19,12 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$NetBSD: grfinfo.c,v 1.8 2001/02/19 23:22:43 cgd Exp $
+ *	$NetBSD: grfinfo.c,v 1.8.42.1 2009/05/13 19:20:23 jym Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: grfinfo.c,v 1.8 2001/02/19 23:22:43 cgd Exp $");
+__RCSID("$NetBSD: grfinfo.c,v 1.8.42.1 2009/05/13 19:20:23 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -42,7 +42,7 @@ struct grfinfo gi;
 
 struct grf_info {
 	int	grf_id;
-	char	*grf_name;
+	const char *grf_name;
 } info[] = {
 	{ GRFGATOR,	"gatorbox" },
 	{ GRFBOBCAT,	"topcat" },
@@ -56,7 +56,7 @@ struct grf_info {
 void	getinfo __P((void));
 int	main __P((int, char **));
 void	printall __P((void));
-char   *tname __P((void));
+const char *tname __P((void));
 void	usage __P((void));
 
 int
@@ -125,7 +125,7 @@ printall()
 	       gi.gd_fbsize, gi.gd_fbaddr, gi.gd_fbwidth, gi.gd_fbheight);
 }
 
-char *
+const char *
 tname()
 {
 	struct grf_info *gp;

@@ -1,2 +1,0 @@
-all:
-	%OINK%/oink/cc_qual -q-config %OINK%/qual/config/lattice *.i

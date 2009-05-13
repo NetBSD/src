@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.13 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.13.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -73,10 +73,8 @@ extern int isakmp_open __P((struct sockaddr *, int));
 extern void isakmp_close __P((int fd));
 extern int isakmp_send __P((struct ph1handle *, vchar_t *));
 
-extern void isakmp_ph1resend_stub __P((struct sched *));
-extern int isakmp_ph1resend __P((struct ph1handle *));
-extern void isakmp_ph2resend_stub __P((struct sched *));
-extern int isakmp_ph2resend __P((struct ph2handle *));
+extern int isakmp_ph1send __P((struct ph1handle *));
+extern int isakmp_ph2send __P((struct ph2handle *));
 extern void isakmp_ph1dying_stub __P((struct sched *));
 extern void isakmp_ph1dying __P((struct ph1handle *));
 extern void isakmp_ph1expire_stub __P((struct sched *));
@@ -108,8 +106,19 @@ extern caddr_t set_isakmp_header1 __P((vchar_t *, struct ph1handle *, int));
 extern caddr_t set_isakmp_header2 __P((vchar_t *, struct ph2handle *, int));
 extern caddr_t set_isakmp_payload __P((caddr_t, vchar_t *, int));
 
-extern struct payload_list *isakmp_plist_append __P((struct payload_list *plist, 
-	vchar_t *payload, int payload_type));
+extern struct payload_list *isakmp_plist_append_full __P((
+	struct payload_list *plist, vchar_t *payload,
+	u_int8_t payload_type, u_int8_t free));
+
+static inline struct payload_list *isakmp_plist_append(plist, payload, payload_type)
+	struct payload_list *plist;
+	vchar_t *payload;
+	u_int8_t payload_type;
+{
+	return isakmp_plist_append_full(plist, payload, payload_type, 0);
+}
+
+
 extern vchar_t *isakmp_plist_set_all __P((struct payload_list **plist,
 	struct ph1handle *iph1));
 
@@ -131,4 +140,5 @@ void delete_spd __P((struct ph2handle *, u_int64_t));
 #ifdef INET6
 u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
 #endif
+
 #endif /* _ISAKMP_VAR_H */

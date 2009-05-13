@@ -1,4 +1,4 @@
-/*	$NetBSD: wordexp.c,v 1.2 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: wordexp.c,v 1.2.30.1 2009/05/13 19:18:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins.
@@ -43,7 +43,7 @@
 #if 0
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/gen/wordexp.c,v 1.5 2004/04/09 11:32:32 tjr Exp $");
 #else
-__RCSID("$NetBSD: wordexp.c,v 1.2 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: wordexp.c,v 1.2.30.1 2009/05/13 19:18:23 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,6 +94,7 @@ we_askshell(const char *words, wordexp_t *we, int flags)
 	int pdes[2];			/* Pipe to child */
 	size_t nwords, nbytes;		/* Number of words, bytes from child */
 	int i;				/* Handy integer */
+	unsigned int ui;		/* For array iteration */
 	size_t sofs;			/* Offset into we->we_strings */
 	size_t vofs;			/* Offset into we->we_wordv */
 	pid_t pid;			/* Process ID of child */
@@ -204,9 +205,9 @@ we_askshell(const char *words, wordexp_t *we, int flags)
 		waitpid(pid, &status, 0);
 		return (WRDE_NOSPACE);
 	}
-	for (i = 0; i < vofs; i++)
-		if (we->we_wordv[i] != NULL)
-			we->we_wordv[i] += nstrings - we->we_strings;
+	for (ui = 0; ui < vofs; ui++)
+		if (we->we_wordv[ui] != NULL)
+			we->we_wordv[ui] += nstrings - we->we_strings;
 	we->we_strings = nstrings;
 
 	if (fread(we->we_strings + sofs, sizeof(char), nbytes, fp) != nbytes) {

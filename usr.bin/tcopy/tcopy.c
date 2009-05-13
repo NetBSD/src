@@ -1,4 +1,4 @@
-/*	$NetBSD: tcopy.c,v 1.15 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: tcopy.c,v 1.15.6.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1993, 1995
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-__RCSID("$NetBSD: tcopy.c,v 1.15 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: tcopy.c,v 1.15.6.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,7 +82,8 @@ main(argc, argv)
 	ssize_t lastnread, nread;
 	enum {READ, VERIFY, COPY, COPYVERIFY} op = READ;
 	sig_t oldsig;
-	char *buff, *inf;
+	char *buff;
+	const char *inf;
 
 	outp = 0;
 	inf = NULL;

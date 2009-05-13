@@ -1,4 +1,4 @@
-.\"     $NetBSD: file.9,v 1.11 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: file.9,v 1.11.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2006
+.Dd May 10, 2009
 .Dt FILE 9
 .Os
 .Sh NAME
@@ -37,7 +37,9 @@
 .Nm FILE_IS_USABLE ,
 .Nm FILE_USE ,
 .Nm FILE_UNUSE ,
-.Nm FILE_SET_MATURE
+.Nm FILE_SET_MATURE ,
+.Nm FILE_LOCK ,
+.Nm FILE_UNLOCK
 .Nd operations on file entries
 .Sh SYNOPSIS
 .In sys/file.h
@@ -53,6 +55,10 @@
 .Fn FILE_UNUSE "struct file *fp" "struct lwp *l"
 .Ft void
 .Fn FILE_SET_MATURE "struct file *fp"
+.Ft void
+.Fn FILE_LOCK "struct file *fp"
+.Ft void
+.Fn FILE_UNLOCK "struct file *fp"
 .Sh DESCRIPTION
 The file descriptor table of a process references a file entry for
 each file used by the kernel.
@@ -241,6 +247,12 @@ the file entry is freed.
 Mark the file entry as being fully constructed (mature) by clearing
 the FIF_LARVAL flag in
 .Em f_iflags .
+.It Fn FILE_LOCK "fp"
+Locks the file entry
+.Ar fp .
+.It Fn FILE_UNLOCK "fp"
+Unlocks the file entry
+.Ar fp .
 .El
 .Sh CODE REFERENCES
 This section describes places within the

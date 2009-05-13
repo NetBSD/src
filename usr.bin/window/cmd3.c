@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.7 2003/08/07 11:17:22 agc Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.7 2003/08/07 11:17:22 agc Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: cmd3.c,v 1.7 2003/08/07 11:17:22 agc Exp $");
 #include "window_string.h"
 
 void
-setescape(char *esc)
+setescape(const char *esc)
 {
 	if (*esc == '^') {
 		if (esc[1] != 0)
@@ -57,7 +57,7 @@ setescape(char *esc)
 }
 
 int
-setlabel(struct ww *w, char *label)
+setlabel(struct ww *w, const char *label)
 {
 	if (w->ww_label != 0)
 		str_free(w->ww_label);

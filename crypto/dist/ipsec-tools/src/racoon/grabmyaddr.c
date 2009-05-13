@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.21 2009/01/23 08:05:58 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.21.2.1 2009/05/13 19:15:54 jym Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -288,13 +288,17 @@ myaddr_getsport(addr)
 	return bestmatch_port;
 }
 
-int
-myaddr_init()
+void
+myaddr_init_lists()
 {
 	LIST_INIT(&configured);
 	LIST_INIT(&opened);
+}
 
-	if (!lcconf->strict_address) {
+int
+myaddr_init()
+{
+        if (!lcconf->strict_address) {
 		lcconf->rtsock = kernel_open_socket();
 		if (lcconf->rtsock < 0)
 			return -1;

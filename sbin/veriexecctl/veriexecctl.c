@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.33 2008/08/31 23:37:45 dholland Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.33.4.1 2009/05/13 19:19:07 jym Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -124,7 +124,7 @@ print_query(prop_dictionary_t qp, char *file)
 {
 	struct statvfs sv;
 	const char *v;
-	int i;
+	size_t i;
 	uint8_t u8;
 	char buf[64];
 

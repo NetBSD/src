@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.153 2009/01/24 13:02:33 wiz Exp $
+.\"	$NetBSD: make.1,v 1.153.2.1 2009/05/13 19:19:57 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 24, 2009
+.Dd April 11, 2009
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -185,16 +185,24 @@ Also known as "loud" behavior.
 Print debugging information about making targets, including modification
 dates.
 .It Ar n
-Don't delete the temporary command scripts created in
+Don't delete the temporary command scripts created when running commands.
+These temporary scripts are created in the directory
+referred to by the
+.Ev TMPDIR
+environment variable, or in
 .Pa /tmp
-when running commands.
-These are created via
-.Xr mkstemp 3
+if
+.Ev TMPDIR
+is unset or set to the empty string.
+The temporary scripts are created by
+.Xr mkstemp 3 ,
 and have names of the form
-.Pa /tmp/makeXXXXX .
+.Pa makeXXXXXX .
 .Em NOTE :
-This can create many file in
-.Pa /tmp
+This can create many files in
+.Ev TMPDIR
+or
+.Pa /tmp ,
 so use with care.
 .It Ar p
 Print debugging information about makefile parsing.
@@ -1769,8 +1777,9 @@ uses the following environment variables, if they exist:
 .Ev MAKEOBJDIR ,
 .Ev MAKEOBJDIRPREFIX ,
 .Ev MAKESYSPATH ,
+.Ev PWD ,
 and
-.Ev PWD .
+.Ev TMPDIR .
 .Pp
 .Ev MAKEOBJDIRPREFIX
 and

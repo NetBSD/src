@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.70 2008/08/22 11:27:50 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.70.6.1 2009/05/13 19:20:22 jym Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.70 2008/08/22 11:27:50 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.70.6.1 2009/05/13 19:20:22 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: envstat.c,v 1.70 2008/08/22 11:27:50 pgoyette Exp $");
 #define ENVSYS_SFLAG	0x00000020	/* remove all properties set */
 #define ENVSYS_TFLAG	0x00000040	/* make statistics */
 #define ENVSYS_WFLAG	0x00000080	/* print warn{min,max} values */
+#define ENVSYS_KFLAG	0x00000100	/* show temp in kelvin */
 
 /* Sensors */
 typedef struct envsys_sensor {
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "c:Dd:fIi:lrSs:Tw:Wx")) != -1) {
+	while ((c = getopt(argc, argv, "c:Dd:fIi:klrSs:Tw:Wx")) != -1) {
 		switch (c) {
 		case 'c':	/* configuration file */
 			configfile = strdup(optarg);
@@ -150,6 +151,9 @@ int main(int argc, char **argv)
 			interval = (unsigned int)strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
 				errx(EXIT_FAILURE, "bad interval '%s'", optarg);
+			break;
+		case 'k':	/* display temperature in Kelvin */
+			flags |= ENVSYS_KFLAG;
 			break;
 		case 'l':	/* list sensors */
 			flags |= ENVSYS_LFLAG;
@@ -809,17 +813,22 @@ print_sensors(void)
 
 			(void)printf(": %10s", sensor->cur_value ? "ON" : "OFF");
 
-/* converts the value to degC or degF */
+/* converts the value to degC or degF or keep in Kelvin */
 #define CONVERTTEMP(a, b, c)					\
 do {								\
 	if (b) 							\
-		(a) = ((b) / 1000000.0) - 273.15;		\
+		(a) = ((b) / 1000000.0);			\
 	if (flags & ENVSYS_FFLAG) {				\
 		if (b)						\
-			(a) = (9.0 / 5.0) * (a) + 32.0;		\
+			(a) = (a) * (9.0 / 5.0) - 459.67;	\
 		(c) = "degF";					\
-	} else							\
+	} else if (flags & ENVSYS_KFLAG) {			\
+		(c) = "K";					\
+	} else {						\
+		if (b)						\
+			(a) = (a) - 273.15;			\
 		(c) = "degC";					\
+	}							\
 } while (/* CONSTCOND */ 0)
 
 
@@ -981,9 +990,9 @@ do {								\
 						ilen = 16 + 1;
 					}
 					if (sensor->warncap_value) {
-						ilen = 24 + 2;
+						ilen = 24 + 2 - 1;
 						(void)printf("%*.2f%% ", (int)ilen,
-						    (sensor->critcap_value * 100.0) /
+						    (sensor->warncap_value * 100.0) /
 						    sensor->max_value);
 						ilen = 8;
 					}
@@ -1006,7 +1015,7 @@ do {								\
 					}
 
 					if (sensor->critcap_value) {
-						ilen = 24 + 2;
+						ilen = 24 + 2 - 1;
 						(void)printf("%*.2f%% ", (int)ilen,
 						    (sensor->critcap_value * 100.0) /
 						    sensor->max_value);
@@ -1039,7 +1048,7 @@ do {								\
 static int
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-DfIlrSTx] ", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-DfIklrSTx] ", getprogname());
 	(void)fprintf(stderr, "[-c file] [-d device] [-i interval] ");
 	(void)fprintf(stderr, "[-s device:sensor,...] [-w width]\n");
 	exit(EXIT_FAILURE);

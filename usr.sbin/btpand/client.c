@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $	*/
+/*	$NetBSD: client.c,v 1.2.2.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
- * Copyright (c) 2008 Iain Hibbert
+ * Copyright (c) 2008-2009 Iain Hibbert
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $");
+__RCSID("$NetBSD: client.c,v 1.2.2.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -35,8 +35,8 @@ __RCSID("$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $");
 
 #include "btpand.h"
 #include "bnep.h"
-#include "sdp.h"
 
+static void client_down(channel_t *);
 static void client_query(void);
 
 void
@@ -51,7 +51,7 @@ client_init(void)
 	if (bdaddr_any(&remote_bdaddr))
 		return;
 
-	if (service_name)
+	if (service_type)
 		client_query();
 
 	fd = socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_L2CAP);
@@ -118,6 +118,7 @@ client_init(void)
 
 	chan->send = bnep_send;
 	chan->recv = bnep_recv;
+	chan->down = client_down;
 	chan->mru = mru;
 	chan->mtu = mtu;
 	b2eaddr(chan->raddr, &remote_bdaddr);
@@ -132,66 +133,93 @@ client_init(void)
 }
 
 static void
+client_down(channel_t *chan)
+{
+
+	log_err("Client connection shut down, exiting");
+	exit(EXIT_FAILURE);
+}
+
+static void
 client_query(void)
 {
-	uint8_t buffer[512];
-	sdp_attr_t attr;
-	uint32_t range;
-	void *ss;
-	int rv;
-	uint8_t *seq0, *seq1;
-
-	attr.flags = SDP_ATTR_INVALID;
-	attr.attr = 0;
-	attr.vlen = sizeof(buffer);
-	attr.value = buffer;
-
-	range = SDP_ATTR_RANGE(SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST,
-			       SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST);
+	uint8_t buf[12];	/* enough for SSP and AIL both */
+	sdp_session_t ss;
+	sdp_data_t ssp, ail, rsp, rec, value, pdl, seq;
+	uintmax_t psm;
+	uint16_t attr;
+	bool rv;
 
 	ss = sdp_open(&local_bdaddr, &remote_bdaddr);
-	if (ss == NULL || (errno = sdp_error(ss)) != 0) {
-		log_err("%s: %m", service_name);
+	if (ss == NULL) {
+		log_err("%s: %m", service_type);
 		exit(EXIT_FAILURE);
 	}
 
 	log_info("Searching for %s service at %s",
-	    service_name, bt_ntoa(&remote_bdaddr, NULL));
+	    service_type, bt_ntoa(&remote_bdaddr, NULL));
 
-	rv = sdp_search(ss, 1, &service_class, 1, &range, 1, &attr);
-	if (rv != 0) {
-		log_err("%s: %s", service_name, strerror(sdp_error(ss)));
-		exit(EXIT_FAILURE);
-	}
+	seq.next = buf;
+	seq.end = buf + sizeof(buf);
 
-	sdp_close(ss);
+	/*
+	 * build ServiceSearchPattern (9 bytes)
+	 *
+	 *	uuid16	"service_class"
+	 *	uuid16	L2CAP
+	 *	uuid16	BNEP
+	 */
+	ssp.next = seq.next;
+	sdp_put_uuid16(&seq, service_class);
+	sdp_put_uuid16(&seq, SDP_UUID_PROTOCOL_L2CAP);
+	sdp_put_uuid16(&seq, SDP_UUID_PROTOCOL_BNEP);
+	ssp.end = seq.next;
 
-	if (attr.flags != SDP_ATTR_OK
-	    || attr.attr != SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST) {
-		log_err("%s service not found", service_name);
+	/*
+	 * build AttributeIDList (3 bytes)
+	 *
+	 *	uint16	ProtocolDescriptorList
+	 */
+	ail.next = seq.next;
+	sdp_put_uint16(&seq, SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST);
+	ail.end = seq.next;
+
+	rv = sdp_service_search_attribute(ss, &ssp, &ail, &rsp);
+	if (!rv) {
+		log_err("%s: %m", service_type);
 		exit(EXIT_FAILURE);
 	}
 
 	/*
-	 * we expect the following protocol descriptor list
-	 *
-	 *	seq len
-	 *	  seq len
-	 *	    uuid value == L2CAP
-	 *	    uint16 value16 => PSM
-	 *	  seq len
-	 *	    uuid value == BNEP
+	 * we expect the response to contain a list of records
+	 * containing a ProtocolDescriptorList. Find the first
+	 * one containing L2CAP and BNEP protocols and extract
+	 * the PSM.
 	 */
-	if (_sdp_get_seq(&attr.value, attr.value + attr.vlen, &seq0)
-	    && _sdp_get_seq(&seq0, attr.value, &seq1)
-	    && _sdp_match_uuid16(&seq1, seq0, SDP_UUID_PROTOCOL_L2CAP)
-	    && _sdp_get_uint16(&seq1, seq0, &l2cap_psm)
-	    && _sdp_get_seq(&seq0, attr.value, &seq1)
-	    && _sdp_match_uuid16(&seq1, seq0, SDP_UUID_PROTOCOL_BNEP)) {
-		log_info("Found PSM %d for service %s", l2cap_psm, service_name);
-		return;
+	rv = false;
+	while (!rv && sdp_get_seq(&rsp, &rec)) {
+		if (!sdp_get_attr(&rec, &attr, &value)
+		    || attr != SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST)
+			continue;
+
+		sdp_get_alt(&value, &value);	/* drop any alt header */
+		while (!rv && sdp_get_seq(&value, &pdl)) {
+			if (sdp_get_seq(&pdl, &seq)
+			    && sdp_match_uuid16(&seq, SDP_UUID_PROTOCOL_L2CAP)
+			    && sdp_get_uint(&seq, &psm)
+			    && sdp_get_seq(&pdl, &seq)
+			    && sdp_match_uuid16(&seq, SDP_UUID_PROTOCOL_BNEP))
+				rv = true;
+		}
 	}
 
-	log_err("%s query failed", service_name);
-	exit(EXIT_FAILURE);
+	sdp_close(ss);
+
+	if (!rv) {
+		log_err("%s query failed", service_type);
+		exit(EXIT_FAILURE);
+	}
+
+	l2cap_psm = (uint16_t)psm;
+	log_info("Found PSM %u for service %s", l2cap_psm, service_type);
 }

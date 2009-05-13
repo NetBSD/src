@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.12 2003/04/16 13:35:18 wiz Exp $
+.\" $NetBSD: speaker.4,v 1.12.42.1 2009/05/13 19:19:09 jym Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -121,24 +121,24 @@ sustain dots. May also be written '~'.
 .Pp
 T \*[Lt]n\*[Gt] -- Sets the number of quarter notes per minute; default is 120. Musical
 names for common tempi are:
-.Bl -column Description Tempo BPM -offset indent
-.Em 	Tempo		Beats per Minute
-very slow	Larghissimo
-        	Largo	 	40-60
-         	Larghetto	60-66
-        	Grave
-        	Lento
-        	Adagio	 	66-76
-slow    	Adagietto
-        	Andante	 	76-108
-medium   	Andantino
-        	Moderato 	108-120
-fast    	Allegretto
-        	Allegro	 	120-168
-        	Vivace
-        	Veloce
-        	Presto	 	168-208
-very fast	Prestissimo
+.Bl -column Description Prestissimo "Beats per Minute" -offset indent
+.It Ta Sy Tempo Ta Sy "Beats per Minute"
+.It very slow Ta Larghissimo Ta ""
+.It           Ta Largo Ta 40-60
+.It           Ta Larghetto Ta 60-66
+.It           Ta Grave Ta ""
+.It           Ta Lento Ta ""
+.It           Ta Adagio Ta 66-76
+.It slow Ta Adagietto Ta ""
+.It      Ta Andante Ta 76-108
+.It medium Ta Andantino Ta ""
+.It        Ta Moderato Ta 108-120
+.It fast Ta Allegretto Ta ""
+.It      Ta Allegro Ta 120-168
+.It      Ta Vivace Ta ""
+.It      Ta Veloce Ta ""
+.It      Ta Presto Ta 168-208
+.It very fast Ta Prestissimo Ta ""
 .El
 .Pp
 M[LNS] -- set articulation. MN (N for normal) is the default; the last 1/8th of

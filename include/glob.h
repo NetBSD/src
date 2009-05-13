@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.24 2008/09/13 17:05:07 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.24.8.1 2009/05/13 19:18:19 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -103,6 +103,9 @@ __BEGIN_DECLS
 int	glob(const char * __restrict, int,
     int (*)(const char *, int), glob_t * __restrict)	 __RENAME(__glob30);
 void	globfree(glob_t *)				 __RENAME(__globfree30);
+#endif
+#ifdef _NETBSD_SOURCE
+int	glob_pattern_p(const char *, int);
 #endif
 __END_DECLS
 

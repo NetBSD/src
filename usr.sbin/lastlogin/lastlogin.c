@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.13 2005/04/09 02:13:20 atatat Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.13.28.1 2009/05/13 19:20:27 jym Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.13 2005/04/09 02:13:20 atatat Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.13.28.1 2009/05/13 19:20:27 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,15 +65,6 @@ struct output {
 	char		 o_host[256];
 	struct output	*next;
 };
-
-static	char *logfile =
-#if defined(SUPPORT_UTMPX)
-    _PATH_LASTLOGX;
-#elif defined(SUPPORT_UTMP)
-    _PATH_LASTLOG;
-#else
-	#error "either SUPPORT_UTMP or SUPPORT_UTMPX must be defined"
-#endif
 
 #define SORT_NONE	0x0000
 #define SORT_REVERSE	0x0001
@@ -108,6 +99,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	const char *logfile =
+#if defined(SUPPORT_UTMPX)
+	    _PATH_LASTLOGX;
+#elif defined(SUPPORT_UTMP)
+	    _PATH_LASTLOG;
+#else
+	#error "either SUPPORT_UTMP or SUPPORT_UTMPX must be defined"
+#endif
 	int	ch;
 	size_t	len;
 
@@ -410,8 +409,8 @@ sortoutput(struct output *o)
 static int
 comparelog(const void *left, const void *right)
 {
-	struct output *l = *(struct output **)left;
-	struct output *r = *(struct output **)right;
+	const struct output *l = *(const struct output * const *)left;
+	const struct output *r = *(const struct output * const *)right;
 	int order = (sortlog&SORT_REVERSE)?-1:1;
 
 	if (l->o_tv.tv_sec < r->o_tv.tv_sec)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.25 2008/05/04 13:56:27 martin Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.25.6.1 2009/05/13 19:19:13 jym Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -59,7 +59,7 @@ take if that status code occurs.
 .Ss Sources
 The following sources are implemented:
 .Bl -column "compat" -offset indent -compact
-.Sy Source	Description
+.It Sy Source	Description
 .It files	Local files, such as
 .Pa /etc/hosts ,
 and
@@ -86,7 +86,7 @@ If this is present, it must be the only source for that entry.
 .Ss Databases
 The following databases are used by the following C library functions:
 .Bl -column "netgroup" -offset indent -compact
-.Sy Database	Used by
+.It Sy Database	Used by
 .It group Ta Xr getgrent 3
 .It hosts Ta Xr gethostbyname 3
 .It netgroup Ta Xr getnetgrent 3
@@ -97,7 +97,7 @@ The following databases are used by the following C library functions:
 .Ss Status codes
 The following status codes are available:
 .Bl -column "tryagain" -offset indent -compact
-.Sy Status	Description
+.It Sy Status	Description
 .It success	The requested entry was found.
 .It notfound	The entry is not present at this source.
 .It tryagain	The source is busy, and may respond to retries.
@@ -106,7 +106,7 @@ The following status codes are available:
 .Ss Actions
 For each of the status codes, one of two actions is possible:
 .Bl -column "continue" -offset indent -compact
-.Sy Action	Description
+.It Sy Action	Description
 .It continue	Try the next source
 .It return	Return with the current result
 .El
@@ -199,7 +199,7 @@ will default to an entry of
 for the requested database.
 Exceptions are:
 .Bl -column passwd_compat "files dns" -offset indent
-.Sy Database	Default source list
+.It Sy Database	Default source list
 .It group	compat
 .It group_compat	nis
 .It hosts	files dns

@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.33 2008/08/02 12:05:48 apb Exp $
+.\" $NetBSD: lint.1,v 1.33.6.1 2009/05/13 19:20:13 jym Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -471,14 +471,9 @@ option for the next function).
 .It Li /* BITFIELDTYPE */
 Suppress error messages about illegal bitfield types if the type
 is an integer type, and suppress non-portable bitfield type warnings.
-.It Li /* CONSTCOND */ No or Xo
-.Li /* CONSTANTCOND */ No or
-.Li /* CONSTANTCONDITION */
-.Xc
+.It Li /* CONSTCOND */ No or Li /* CONSTANTCOND */ No or Li /* CONSTANTCONDITION */
 Suppress complaints about constant operands for the next expression.
-.It Li /*\ FALLTHRU\ */ No or Xo
-.Li /* FALLTHROUGH */
-.Xc
+.It Li /*\ FALLTHRU\ */ No or Li /* FALLTHROUGH */
 Suppress complaints about fall through to a
 .Sy case
 or
@@ -490,13 +485,7 @@ At the beginning of a file, mark all functions and variables defined
 in this file as
 .Em used .
 Also shut off complaints about unused function arguments.
-.It Li /* LINTED Xo
-.Op Ar comment
-.Li */ No or
-.Li /* NOSTRICT
-.Op Ar comment
-.Li */
-.Xc
+.It Li /* LINTED Oo Ar comment Oc Li */ No or Li /* NOSTRICT Oo Ar comment Oc Li */
 Suppresses any intra-file warning except those dealing with
 unused variables or functions.
 This directive should be placed

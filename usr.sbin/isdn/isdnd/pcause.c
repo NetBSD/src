@@ -27,7 +27,7 @@
  *	printing cause values
  *	---------------------
  *
- *	$Id: pcause.c,v 1.4 2003/10/06 09:43:27 itojun Exp $
+ *	$Id: pcause.c,v 1.4.40.1 2009/05/13 19:20:26 jym Exp $
  *
  * $FreeBSD$
  *
@@ -37,7 +37,7 @@
 
 #include "isdnd.h"
 
-static char *cause_i4b_tab[CAUSE_I4B_MAX+1] = {
+static const char *cause_i4b_tab[CAUSE_I4B_MAX+1] = {
 	"normal call clearing",
 	"user busy",
 	"channel not available",
@@ -50,7 +50,7 @@ static char *cause_i4b_tab[CAUSE_I4B_MAX+1] = {
 	"ERROR, invalid I4B cause value!"
 };
 
-static char *cause_q850_tab[CAUSE_Q850_MAX] = {
+static const char *cause_q850_tab[CAUSE_Q850_MAX] = {
 	"Normal D-channel shutdown",
 	"Unallocated (unassigned) number",
 	"No route to specified transit network (national use)",
@@ -211,8 +211,7 @@ print_i4b_cause(cause_t code)
 		break;
 
 	case CAUSET_I4B:
-		if ((GET_CAUSE_VAL(code) < CAUSE_I4B_NORMAL) ||
-		    (GET_CAUSE_VAL(code) >= CAUSE_I4B_MAX))
+		if ((GET_CAUSE_VAL(code) >= CAUSE_I4B_MAX))
 		{
 			SET_CAUSE_VAL(code, CAUSE_I4B_MAX);
 		}

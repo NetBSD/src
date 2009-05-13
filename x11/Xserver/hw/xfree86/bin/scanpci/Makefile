@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/03/19 21:41:58 christos Exp $
+#	$NetBSD: Makefile,v 1.4.26.1 2009/05/13 19:20:47 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ LDADD=	-L${XF86OSOBJDIR} -lxf86_os \
 
 DPADD=	${LIBXF86_OS} ${LIBSCANPCI} ${LIBDUMMY}
 
-.if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DUSE_I386_IOPL
 .if ${MACHINE_ARCH} != "x86_64"
 LDADD+=		-li386

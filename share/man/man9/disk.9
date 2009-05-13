@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.27 2008/05/03 09:43:40 plunky Exp $
+.\"	$NetBSD: disk.9,v 1.27.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 3, 2008
+.Dd March 14, 2009
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -190,6 +190,88 @@ and
 The function
 .Fn disk_find
 is provided as a utility function.
+.Sh DISK IOCTLS
+The following ioctls should be implemented by disk drivers:
+.Bl -tag -width "xxxxxx"
+.It Dv DIOCGDINFO "struct disklabel"
+Get disklabel.
+.It Dv DIOCSDINFO "struct disklabel"
+Set in-memory disklabel.
+.It Dv DIOCWDINFO "struct disklabel"
+Set in-memory disklabel, and write on-disk disklabel.
+.It Dv DIOCGPART "struct partinfo"
+Get partition information.
+This is used internally.
+.It Dv DIOCRFORMAT "struct format_op"
+Read format.
+.It Dv DIOCWFORMAT "struct format_op"
+Write format.
+.It Dv DIOCSSTEP "int"
+Set step rate.
+.It Dv DIOCSRETRIES "int"
+Set number of retries.
+.It Dv DIOCKLABEL "int"
+Specify whether to keep or drop the in-memory disklabel
+when the device is closed.
+.It Dv DIOCWLABEL "int"
+Enable or disable writing to the part of the disk that contains the label.
+.It Dv DIOCSBAD "struct dkbad"
+Set kernel dkbad.
+.It Dv DIOCEJECT "int"
+Eject removable disk.
+.It Dv DIOCLOCK "int"
+Lock or unlock disk pack.
+For devices with removable media, locking is intended to prevent
+the operator from removing the media.
+.It Dv DIOCGDEFLABEL "struct disklabel"
+Get default label.
+.It Dv DIOCCLRLABEL
+Clear disk label.
+.It Dv DIOCGCACHE "int"
+Get status of disk read and write caches.
+The result is a bitmask containing the following values:
+.Bl -tag -width DKCACHE_RCHANGE
+.It Dv DKCACHE_READ
+Read cache enabled.
+.It Dv DKCACHE_WRITE
+Write(back) cache enabled.
+.It Dv DKCACHE_RCHANGE
+Read cache enable is changeable.
+.It Dv DKCACHE_WCHANGE
+Write cache enable is changeable.
+.It Dv DKCACHE_SAVE
+Cache parameters may be saved, so that they persist across reboots
+or device detach/attach cycles.
+.El
+.It Dv DIOCSCACHE "int"
+Set status of disk read and write caches.
+The input is a bitmask in the same format as used for
+.Dv DIOCGCACHE .
+.It Dv DIOCCACHESYNC "int"
+Synchronise the disk cache.
+This causes information in the disk's write cache (if any)
+to be flushed to stable storage.
+The argument specifies whether or not to force a flush even if
+the kernel believes that there is no outstanding data.
+.It Dv DIOCBSLIST "struct disk_badsecinfo"
+Get bad sector list.
+.It Dv DIOCBSFLUSH
+Flush bad sector list.
+.It Dv DIOCAWEDGE "struct dkwedge_info"
+Add wedge.
+.It Dv DIOCGWEDGEINFO "struct dkwedge_info"
+Get wedge information.
+.It Dv DIOCDWEDGE "struct dkwedge_info"
+Delete wedge.
+.It Dv DIOCLWEDGES "struct dkwedge_list"
+List wedges.
+.It Dv DIOCGSTRATEGY "struct disk_strategy"
+Get disk buffer queue strategy.
+.It Dv DIOCSSTRATEGY "struct disk_strategy"
+Set disk buffer queue strategy.
+.It Dv DIOCGDISKINFO "struct plistref"
+Get disk-info dictionary.
+.El
 .Sh USING THE FRAMEWORK
 This section includes a description on basic use of the framework
 and example usage of its functions.

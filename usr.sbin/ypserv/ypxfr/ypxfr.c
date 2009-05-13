@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.15 2008/02/29 03:00:47 lukem Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.15.10.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.15 2008/02/29 03:00:47 lukem Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.15.10.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -301,9 +301,9 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 	char order_key[] = YP_LAST_KEY;
 	char order[MAX_LAST_LEN+1];
 	struct stat finfo;
-	DBM *db;
+	DBM *ldb;
 	datum k, v;
-	int status;
+	unsigned int status;
 
 	status = YPPUSH_SUCC;
 
@@ -328,8 +328,8 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 	/* Open the map file. */
 	snprintf(map_path, sizeof(map_path), "%s/%s/%s",
 	    YP_DB_PATH, domain, map);
-	db = ypdb_open(map_path);
-	if (db == NULL) {
+	ldb = ypdb_open(map_path);
+	if (ldb == NULL) {
 		status = YPPUSH_DBM;
 		goto out;
 	}
@@ -337,7 +337,7 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 	k.dptr = (char *)&order_key;
 	k.dsize = YP_LAST_LEN;
 
-	v = ypdb_fetch(db, k);
+	v = ypdb_fetch(ldb, k);
 
 	if (v.dptr == NULL)
 		*lordernum = 0;
@@ -346,7 +346,7 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 		order[v.dsize] = '\0';
 		*lordernum = (u_int)atoi((char *)&order);
 	}
-	ypdb_close(db);
+	ypdb_close(ldb);
 
  out:
 	if ((status == YPPUSH_NOMAP) || (status == YPPUSH_DBM)) {
@@ -387,14 +387,14 @@ DBM *
 create_db(char *domain, char *map, char *db_temp, size_t db_temp_len)
 {
 	static const char template[] = "ypdbXXXXXX";
-	DBM *db;
+	DBM *ldb;
 
 	snprintf(db_temp, db_temp_len, "%s/%s/%s",
 	    YP_DB_PATH, domain, template);
 
-	db = ypdb_mktemp(db_temp);
+	ldb = ypdb_mktemp(db_temp);
 
-	return db;
+	return ldb;
 }
 
 int
@@ -426,7 +426,7 @@ unlink_db(char *domain, char *map, char *db_temp)
 }
 
 int
-add_order(DBM *db, u_int ordernum)
+add_order(DBM *ldb, u_int ordernum)
 {
 	char datestr[11];
 	datum key, val;
@@ -441,7 +441,7 @@ add_order(DBM *db, u_int ordernum)
 	val.dptr = datestr;
 	val.dsize = strlen(datestr);
 	
-	status = ypdb_store(db, key, val, YPDB_INSERT);
+	status = ypdb_store(ldb, key, val, YPDB_INSERT);
 	if(status >= 0)
 		status = YPPUSH_SUCC;
 	else
@@ -451,7 +451,7 @@ add_order(DBM *db, u_int ordernum)
 }
 
 int
-add_master(CLIENT *client, char *domain, char *map, DBM *db)
+add_master(CLIENT *client, char *domain, char *map, DBM *ldb)
 {
 	char keystr[] = YP_MASTER_KEY;
 	char *master;
@@ -470,7 +470,7 @@ add_master(CLIENT *client, char *domain, char *map, DBM *db)
 		val.dptr = master;
 		val.dsize = strlen(master);
 
-		status = ypdb_store(db, key, val, YPDB_INSERT);
+		status = ypdb_store(ldb, key, val, YPDB_INSERT);
 		if (status >= 0)
 			status = YPPUSH_SUCC;
 		else
@@ -481,7 +481,7 @@ add_master(CLIENT *client, char *domain, char *map, DBM *db)
 }
 
 int
-add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
+add_interdomain(CLIENT *client, char *domain, char *map, DBM *ldb)
 {
 	char keystr[] = YP_INTERDOMAIN_KEY;
 	char *value;
@@ -501,7 +501,7 @@ add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 		v.dsize = vallen;
 		
 		if (v.dptr != NULL) {
-			status = ypdb_store(db, k, v, YPDB_INSERT);
+			status = ypdb_store(ldb, k, v, YPDB_INSERT);
 			if (status >= 0)
 				status = YPPUSH_SUCC;
 			else
@@ -513,7 +513,7 @@ add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 }
 
 int
-add_secure(CLIENT *client, char *domain, char *map, DBM *db)
+add_secure(CLIENT *client, char *domain, char *map, DBM *ldb)
 {
 	char keystr[] = YP_SECURE_KEY;
 	char *value;
@@ -528,12 +528,12 @@ add_secure(CLIENT *client, char *domain, char *map, DBM *db)
 	status = yp_match_host(client, domain, map,
 	    k.dptr, k.dsize, &value, &vallen);
 	
-	if (status == 0 && value > 0) {
+	if (status == 0 && value != 0) {
 		v.dptr = value;
 		v.dsize = vallen;
 		
 		if (v.dptr != NULL) {
-			status = ypdb_store(db, k, v, YPDB_INSERT);
+			status = ypdb_store(ldb, k, v, YPDB_INSERT);
 			if (status >= 0)
 				status = YPPUSH_SUCC;
 			else

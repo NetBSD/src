@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/04/05 16:26:57 christos Exp $
+#	$NetBSD: Makefile,v 1.10.10.1 2009/05/13 19:19:43 jym Exp $
 
 USE_FORT?=	yes	# setuid
 
@@ -16,7 +16,5 @@ BINMODE=	4555
 
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
-
-WARNS=		4
 
 .include <bsd.prog.mk>

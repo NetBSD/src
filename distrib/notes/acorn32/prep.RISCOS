@@ -1,22 +1,21 @@
-	$NetBSD: prep.RISCOS,v 1.19 2008/04/11 12:10:42 mjf Exp $
+	$NetBSD: prep.RISCOS,v 1.19.8.1 2009/05/13 19:17:44 jym Exp $
 
-These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
-(RiscPC/A7000/A7000+/NC's).
+These instructions are specific to NetBSD/acorn32 on Acorn RISC OS platforms
+(RiscPC/A7000/A7000+/NC).
 
 Last updated for the BtNetBSD bootloader version 0.99a at 10 July 2002 by
 Reinoud Zandijk (reinoud@NetBSD.org), portmaster of NetBSD/acorn32.
 
-For a more detailed acknowledgement and list of contributers see Appendix B
+For a more detailed acknowledgement and list of contributors see Appendix B
 at the bottom.
 
 
 
 0 Before you start
 
-Read this document and one of the INSTALL documents accompanying this
-document completely before continuing. There might be some things mentioned
-double but this document ought to help with the RISCOS installation
-specifically.
+Read this document and one of the INSTALL documents completely before
+continuing. There might be some things mentioned twice, but this document
+ought to help with the RISC OS installation specifically.
 
 
 
@@ -31,11 +30,11 @@ http://www.NetBSD.org/ports/acorn32/ for a list of supported hardware.
 
 1.2 Software
 
-You will need the following RiscOS software:
+You will need the following RISC OS software:
 
 	A program that will unpack sparchives. We recommend that you
 	get David Pilling's !SparkPlug. A self-extracting version of this
-	can be found at David Pilling's W3 site
+	can be found at David Pilling's web site
 	(http://www.davidpilling.net/free.html).
 
 	A program to report your disk's geometry:
@@ -63,27 +62,27 @@ You will need the following RiscOS software:
 		MCS Connect32 SCSI: UNKNOWN
 		Morley SCSI: UNKNOWN
 
-Additionally you will require the following :
+Additionally you will require the following:
 
-	The Bootloader and RiscOS tools: BtNetBSD.tar.Z as found in
-	the installation/misc directory. This archive which can be
-	unpacked with !SparcPlug *includes the installation-kernel*
+	The Bootloader and RISC OS tools: BtNetBSD.tar.Z as found in
+	the installation/misc directory. This archive, which can be
+	unpacked with !SparkPlug, *includes the installation-kernel*
 	so you don't have to download it separately.
 
-	The NetBSD/acorn32 distribution sets (Will be on the CD-ROM, or
+	The NetBSD/acorn32 distribution sets (will be on the CD-ROM, or
 	available from your nearest NetBSD ftp site).
 
 	A hardcopy of this document, along with a hardcopy of the
 	NetBSD installation instructions "INSTALL").
 
-1.3 Preliminary steps :
+1.3 Preliminary steps:
 
 	Unpack your BtNetBSD archive in whatever way, set the type of
 	the `Settype' file in the BtNetBSD directory to `Obey' and run
-	it. This will make the files RISC OS typed correctly. this is
+	it. This will set the files' RISC OS filetypes correctly. This is
 	also explained in a bit more detail in the enclosed README file.
 	It will also type the `InstKern' file that is the installation
-	kernel itself complete with embedded ramdisc.
+	kernel itself which contains the embedded ramdisk.
 
 2 Preparing your hard disk
 
@@ -92,12 +91,12 @@ Terms:
 Device:		The actual physical hard disk
 Partition:	A section of a device.
 File system:	A structured partition that is able to hold files.
-Disc:		A RiscOS file system in a partition. There can be
+Disc:		A RISC OS file system in a partition. There can be
 		more than one Disc per Device.
 
 You will have to decide which device you wish to install NetBSD on.
 You will also have to decide whether you want to split the device
-between one or more RiscOS discs and NetBSD or dedicate a whole
+between one or more RISC OS discs and NetBSD or dedicate a whole
 Device for NetBSD.
 
 In making this decision you should consider the possibility that if
@@ -106,9 +105,9 @@ data is at risk.
 
 It is still recommended that if you decide to dedicate a device to
 NetBSD that you set aside a small RISC OS partition at the beginning
-of the device. This is a useful place to store the RiscOS side of
+of the device. This is a useful place to store the RISC OS side of
 NetBSD, and will make the use of UnixFS easier to configure. If you
-do decide to create a minimal RiscOS partition at the beginning of
+do decide to create a minimal RISC OS partition at the beginning of
 the device, a size of 10-20 MB is recommended (some partitioning
 software has problems with partitions smaller than this).
 
@@ -171,11 +170,11 @@ in the following way:
 	want to use part of it for NetBSD.
 
 	Enter the amount of the device you wish to reserve for
-	RiscOS. This will be the whole device size less the amount
+	RISC OS. This will be the whole device size less the amount
 	you want to reserve for NetBSD. Make a note of this number.
 
 	If you like, split the RISC OS portion of the device into
-	several partition (you should only "see" the RiscOS portion).
+	several partition (you should only "see" the RISC OS portion).
 
 	Click on Execute when you are happy with the partitions. This
 	will create your partitions, and wipe your device.
@@ -217,7 +216,7 @@ Here is the procedure you should use:
 
 		Unset the tick on your Empty: partition.
 
-		Click on Inititialize selected partitions.
+		Click on Initialize selected partitions.
 
 		Click on yes to proceed init as you want to wipe the
 		selected partitions.
@@ -293,7 +292,7 @@ As a safety precaution NetBSD/acorn32 looks for a filecore bootblock
 at the beginning of any device it labels. If it finds one and it
 looks as though it is in use then NetBSD/acorn32 will not touch it.
 
-Because of this, if you've ever used your device for RiscOS, you will
+Because of this, if you've ever used your device for RISC OS, you will
 need to invalidate this bootblock.
 
 To do this you need to:
@@ -302,7 +301,7 @@ To do this you need to:
 
 	Run bb_trash and follow the instructions.
 
-Ensure that this device is now not configured for RiscOS.
+Ensure that this device is now not configured for RISC OS.
 
 You are now ready to boot NetBSD and continue the installation.
 
@@ -320,7 +319,7 @@ Then you will be asked which disc you want to install NetBSD on. This
 *must* be the first disc on the device. bb_riscbsd will now
 scrutinize the device and see how it has been laid out.
 
-It will then tell you how much of the device is occupied by RiscOS in
+It will then tell you how much of the device is occupied by RISC OS in
 cylinders, and you will then be asked for the NetBSD starting
 cylinder. Normally you should just enter the number given to you
 since the RISC OS starting cylinder is 0 and therefore the last
@@ -346,9 +345,9 @@ Now that your device is ready for the installation you need to
 unpack the bootloader archive.
 
 In the archive you'll find the tools mentioned in this document as well as
-the bootloader !BtNetBSD itself and accompanied a file called `InstKern'
-which is the actual installation kernel with embedded ramdisc containing the
-NetBSD userland nessisary for installation.
+the bootloader !BtNetBSD itself and a file called `InstKern'
+which is the actual installation kernel with embedded ramdisk containing the
+NetBSD userland necessary for installation.
 
 
 4.1 [Optional] Configuring the !BtNetBSD bootloader before installation
@@ -379,7 +378,7 @@ instructed.
 4.3 [Optional] Configuring !BtNetBSD after installation
 
 Open the !BtNetBSD application again and edit the `fastboot' file again
-to custimise details like the mode defition file you want to use.
+to customise details like the mode definition file you want to use.
 
 Save the file and run !BtNetBSD again (see above).
 
@@ -392,13 +391,13 @@ Save the file and run !BtNetBSD again (see above).
 
 Once the required sets are installed and you can boot from your
 newly installed NetBSD setup, you can use UnixFS to copy the
-remaining sets from RiscOS to NetBSD.
+remaining sets from RISC OS to NetBSD.
 
 In order to be able to use unixfs to transfer the sets you must have
 a certain setup.
 
-1) You must have the RiscOS disc that corresponds to the NetBSD
-   device configured (e.g., *con. IDEdiscs 2) even if it has no RiscOS
+1) You must have the RISC OS disc that corresponds to the NetBSD
+   device configured (e.g., *con. IDEdiscs 2) even if it has no RISC OS
    section.
 2) If you have RISC OS 3.5 without the new FileCore, then you must
    also have the NetBSD file system *completely* below the 511 MB
@@ -427,7 +426,7 @@ To mount a Unix partition:
 
 The difficult step here is step number 2). If you are using an
 ADFS IDE disc, then you can just double-click on one of the
-following obey files (always choose the RiscOS disc number that
+following obey files (always choose the RISC OS disc number that
 corresponds to the *first* disc on the NetBSD device):
 - wd0a (ADFS::4 drive, not disc, root file system)
 - wd0e (ADFS::4 drive, not disc, /usr file system)
@@ -445,8 +444,8 @@ The unixfs_mount command normally only takes one argument. That
 is composed of the following:
 (discop_swibase + (disc << 3) + partition)
 
-To mount the root partition of third Power-tec SCSI-2 disc the
-following commands can be used in task window (press CTRL-F12) to
+To mount the root partition of the third Powertec SCSI-2 disc, the
+following commands can be used in a task window (press CTRL-F12) to
 find the argument to unixfs_mount:
         *basic
         PRINT ~(&40980 + (6 << 3) + 0)
@@ -539,8 +538,8 @@ Also, if you have different controllers, all devices on controller
    common allocations):
         - a     The root partition
         - b     The swap partition
-        - c     The complete and whole disc ; all OS's and partitions
-        - d     Part of the disc that is not used by NetBSD; normally RiscOS
+        - c     The complete and whole disc ; all OSes and partitions
+        - d     Part of the disc that is not used by NetBSD; normally RISC OS
         - e     The first additional partition.
                 i.e. if you have only /usr, then this will be /usr
                 if you have both /var and /usr this will be /var
@@ -588,4 +587,3 @@ Jasper Wallace (jasper@ivision.co.uk)
 Mark Brinicombe (amb@physig.ph.kcl.ac.uk)
 Scott Stevens (s.k.stevens@ic.ac.uk)
 and a lot more people posting to the original RiscBSD mailing list.
-

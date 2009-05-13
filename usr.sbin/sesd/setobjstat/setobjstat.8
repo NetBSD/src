@@ -1,4 +1,4 @@
-.\"	$NetBSD: setobjstat.8,v 1.3 2002/02/02 01:50:37 wiz Exp $
+.\"	$NetBSD: setobjstat.8,v 1.3.42.1 2009/05/13 19:20:40 jym Exp $
 .\"	$OpenBSD: $
 .\"	$FreeBSD: $
 .\"
@@ -51,14 +51,15 @@ argument may be determined by running
 .Pp
 The status fields are partially common (first byte only, which must
 have a value of 0x80 contained in it), but otherwise quite device
-specific. A complete discussion of the possible values is impractical
-here. Please refer to the ANSI SCSI specification (available on
+specific.
+A complete discussion of the possible values is impractical here.
+Please refer to the ANSI SCSI specification (available on
 the FTP site ftp.t10.org).
 .Pp
 Note that devices may simply and silently ignore the setting of these values.
 .Sh FILES
 .Bl -tag -width /dev/sesN -compact
-.It Pa /dev/ses\fIN\fR
+.It Pa /dev/ses Ns Ar N
 SCSI Environmental Services Devices
 .El
 .Sh SEE ALSO

@@ -1,8 +1,8 @@
-/*	$NetBSD: path.c,v 1.7 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: path.c,v 1.7.28.1 2009/05/13 19:15:50 jym Exp $	*/
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.7 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: path.c,v 1.7.28.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 
 
@@ -256,7 +256,7 @@ do_phys_path(xsp, xp, pathx)
 			p++;
 		if (!*p)
 			break;
-		len = (q = ksh_strchr_dirsep(p)) ? q - p : strlen(p);
+		len = (q = ksh_strchr_dirsep(p)) ? q - p : (int)strlen(p);
 		if (len == 1 && p[0] == '.')
 			continue;
 		if (len == 2 && p[0] == '.' && p[1] == '.') {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.20 2008/09/06 22:19:03 tsutsui Exp $
+.\"	$NetBSD: install,v 1.20.4.1 2009/05/13 19:17:47 jym Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,7 +89,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.20 $]
+\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.20.4.1 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -497,7 +497,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.20 $]
+\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.20.4.1 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -645,9 +645,7 @@ The system should now be running the miniroot installation program.
 The miniroot's install program is very simple to use.
 It will guide you through the entire process, and is well automated.
 .Pp
-Starting with
-.Nx
-version 1.6, you have the option of using
+All recent releases of NetBSD provide the option of using
 .Ic sysinst
 instead of the old installation and upgrade shell scripts.
 At this time,

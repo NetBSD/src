@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipfilter,v 1.17 2008/11/22 20:23:33 tsutsui Exp $
+# $NetBSD: ipfilter,v 1.17.2.1 2009/05/13 19:18:03 jym Exp $
 #
 
 # PROVIDE: ipfilter
@@ -36,7 +36,7 @@ ipfilter_prestart()
 ipfilter_start()
 {
 	echo "Enabling ipfilter."
-	/sbin/ipf -E
+	/sbin/ipf ${rc_flags} -E
 
 		# Do the flush first; since older ipf has different semantics.
 		#

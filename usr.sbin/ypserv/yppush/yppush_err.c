@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_err.c,v 1.4 2002/07/06 00:46:12 wiz Exp $	*/
+/*	$NetBSD: yppush_err.c,v 1.4.40.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_err.c,v 1.4 2002/07/06 00:46:12 wiz Exp $");
+__RCSID("$NetBSD: yppush_err.c,v 1.4.40.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: yppush_err.c,v 1.4 2002/07/06 00:46:12 wiz Exp $");
 
 #include "yppush.h"
 
-char *
+const char *
 yppush_err_string(int y)
 {
 	static char errstr[64];

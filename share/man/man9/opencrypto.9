@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.5 2007/07/14 10:52:49 ad Exp $
+.\"	$NetBSD: opencrypto.9,v 1.5.20.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -137,7 +137,7 @@ these sessionless commands perform mathematical operations using
 input and output parameters.
 .Pp
 Since the consumers may not be associated with a process, drivers may
-not use condition variables: 
+not use condition variables:
 .Xr condvar 9 .
 The same holds for the framework.
 Thus, a callback mechanism is used
@@ -308,19 +308,19 @@ Each descriptor provides
 information about what type of cryptographic operation should be done
 on the input buffer.
 The various fields are:
-.Bl -tag
+.Bl -tag -width ".Fa crd_inject"
 .It Fa crd_skip
 The offset in the input buffer where processing should start.
 .It Fa crd_len
 How many bytes, after
-.Fa Fa crd_skip ,
+.Fa crd_skip ,
 should be processed.
 .It Fa crd_inject
 Offset from the beginning of the buffer to insert any results.
 For encryption algorithms, this is where the initialization vector
 (IV) will be inserted when encrypting or where it can be found when
 decrypting (subject to
-.Fa Fa crd_flags ) .
+.Fa crd_flags ) .
 For MAC algorithms, this is where the result of the keyed hash will be
 inserted.
 .It Fa crd_flags
@@ -564,9 +564,9 @@ field.
 most of the framework code
 .El
 .Sh SEE ALSO
-.Xr condvar 9 ,
 .Xr ipsec 4 ,
 .Xr pcmcia 4 ,
+.Xr condvar 9 ,
 .Xr malloc 9
 .Rs
 .%A "Angelos D. Keromytis"

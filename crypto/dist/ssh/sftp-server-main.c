@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server-main.c,v 1.1.1.1 2008/04/06 21:18:28 christos Exp $	*/
+/*	$NetBSD: sftp-server-main.c,v 1.1.1.1.10.1 2009/05/13 19:15:58 jym Exp $	*/
 /* $OpenBSD: sftp-server-main.c,v 1.3 2008/03/26 23:44:41 djm Exp $ */
 /*
  * Copyright (c) 2008 Markus Friedl.  All rights reserved.
@@ -15,12 +15,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sftp-server-main.c,v 1.1.1.1.10.1 2009/05/13 19:15:58 jym Exp $");
 
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "log.h"
 #include "sftp.h"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh_config.5,v 1.16 2008/04/06 23:38:20 christos Exp $
+.\"	$NetBSD: ssh_config.5,v 1.16.10.1 2009/05/13 19:15:58 jym Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh_config.5,v 1.105 2007/10/29 07:48:19 jmc Exp $
-.Dd $Mdocdate: October 29 2007 $
+.\" $OpenBSD: ssh_config.5,v 1.111 2008/06/26 11:46:31 grunk Exp $
+.Dd June 26, 2008
 .Dt SSH_CONFIG 5
 .Os
 .Sh NAME
@@ -104,6 +104,7 @@ Restricts the following declarations (up to the next
 .Cm Host
 keyword) to be only for those hosts that match one of the patterns
 given after the keyword.
+If more than one pattern is provided, they should be separated by whitepsace.
 A single
 .Ql *
 as a pattern can be used to provide global
@@ -601,6 +602,21 @@ Specifies a command to execute on the local machine after successfully
 connecting to the server.
 The command string extends to the end of the line, and is executed with
 the user's shell.
+The following escape character substitutions will be performed:
+.Ql %d
+(local user's home directory),
+.Ql %h
+(remote host name),
+.Ql %l
+(local host name),
+.Ql %n
+(host name as provided on the command line),
+.Ql %p
+(remote port),
+.Ql %r
+(remote user name) or
+.Ql %u
+(local user name).
 This directive is ignored unless
 .Cm PermitLocalCommand
 has been enabled.
@@ -1045,6 +1061,16 @@ See also
 .Sx VERIFYING HOST KEYS
 in
 .Xr ssh 1 .
+.It Cm VisualHostKey
+If this flag is set to
+.Dq yes ,
+an ASCII art representation of the remote host key fingerprint is
+printed additionally to the hex fingerprint string.
+If this flag is set to
+.Dq no ,
+only the hex fingerprint string will be printed.
+The default is
+.Dq no .
 .It Cm XAuthLocation
 Specifies the full pathname of the
 .Xr xauth 1

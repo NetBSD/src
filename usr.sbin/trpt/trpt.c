@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.25 2008/07/21 13:37:00 lukem Exp $	*/
+/*	$NetBSD: trpt.c,v 1.25.6.1 2009/05/13 19:20:43 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2005, 2006 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.25 2008/07/21 13:37:00 lukem Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.25.6.1 2009/05/13 19:20:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,12 +125,12 @@ __RCSID("$NetBSD: trpt.c,v 1.25 2008/07/21 13:37:00 lukem Exp $");
 
 struct nlist nl[] = {
 #define	N_HARDCLOCK_TICKS	0
-	{ "_hardclock_ticks" },
+	{ "_hardclock_ticks", 0, 0, 0, 0 },
 #define	N_TCP_DEBUG		1
-	{ "_tcp_debug" },
+	{ "_tcp_debug", 0, 0, 0, 0 },
 #define	N_TCP_DEBX		2
-	{ "_tcp_debx" },
-	{ NULL },
+	{ "_tcp_debx", 0, 0, 0, 0 },
+	{ NULL, 0, 0, 0, 0 },
 };
 
 static caddr_t tcp_pcbs[TCP_NDEBUG];
@@ -155,11 +155,11 @@ int
 main(int argc, char *argv[])
 {
 	int ch, i, jflag, npcbs;
-	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
+	char *kernel, *core, *cp, errbuf[_POSIX2_LINE_MAX];
 	unsigned long l;
 
 	jflag = npcbs = 0;
-	system = core = NULL;
+	kernel = core = NULL;
 
 	while ((ch = getopt(argc, argv, "afjp:stN:M:")) != -1) {
 		switch (ch) {
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 			++tflag;
 			break;
 		case 'N':
-			system = optarg;
+			kernel = optarg;
 			break;
 		case 'M':
 			core = optarg;
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
 	if (argc)
 		usage();
 
-	use_sysctl = (system == NULL && core == NULL);
+	use_sysctl = (kernel == NULL && core == NULL);
 
 	if (use_sysctl) {
 		size_t lenx = sizeof(tcp_debx);
@@ -221,12 +221,12 @@ main(int argc, char *argv[])
 		    NULL, 0) == -1)
 			err(1, "net.inet.tcp.debug");
 	} else {
-		kd = kvm_openfiles(system, core, NULL, O_RDONLY, errbuf);
+		kd = kvm_openfiles(kernel, core, NULL, O_RDONLY, errbuf);
 		if (kd == NULL)
 			errx(1, "can't open kmem: %s", errbuf);
 
 		if (kvm_nlist(kd, nl))
-			errx(2, "%s: no namelist", system);
+			errx(2, "%s: no namelist", kernel);
 
 		if (kvm_read(kd, nl[N_TCP_DEBX].n_value, (char *)&tcp_debx,
 		    sizeof(tcp_debx)) != sizeof(tcp_debx))
@@ -477,7 +477,7 @@ tcp_trace(short act, short ostate, struct tcpcb *atp, struct tcpcb *tp,
 			printf("(win=%x)", win);
 		flags = th->th_flags;
 		if (flags) {
-			char *cp = "<";
+			const char *cp = "<";
 #define	pf(flag, string) { \
 	if (th->th_flags&flag) { \
 		(void)printf("%s%s", cp, string); \
@@ -517,15 +517,15 @@ skipact:
 	}
 	/* print out timers? */
 	if (tflag) {
-		char *cp = "\t";
+		const char *cp = "\t";
 		int i;
 		int hardticks;
 
 		if (use_sysctl) {
-			size_t len = sizeof(hardticks);
+			size_t hlen = sizeof(hardticks);
 
 			if (sysctlbyname("kern.hardclock_ticks", &hardticks,
-			    &len, NULL, 0) == -1)
+			    &hlen, NULL, 0) == -1)
 				err(1, "kern.hardclock_ticks");
 		} else {
 			if (kvm_read(kd, nl[N_HARDCLOCK_TICKS].n_value,

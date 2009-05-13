@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 2007/10/27 15:14:50 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.30.14.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$NetBSD: extern.h,v 1.30 2007/10/27 15:14:50 christos Exp $
+ *	$NetBSD: extern.h,v 1.30.14.1 2009/05/13 19:19:56 jym Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -126,6 +126,7 @@ void	sort(const char **);
 struct smopts_s *findsmopts(const char *, int);
 int	smoptscmd(void *);
 int	unsmoptscmd(void *);
+int	Header(void *);
 
 /*
  * from cmdtab.c
@@ -158,10 +159,11 @@ const char *expand(const char *);
 off_t	fsize(FILE *);
 const char *getdeadletter(void);
 int	getfold(char *, size_t);
-void	holdsigs(void);
-int	mail_readline(FILE *, char *, int);
+#ifdef USE_EDITLINE
+#define readline xreadline	/* readline() is defined in libedit */
+#endif
+int	readline(FILE *, char *, int, int);
 int	putline(FILE *, const char *, int);
-void	relsesigs(void);
 int	rm(char *);
 FILE *	setinput(const struct message *);
 void	setptr(FILE *, off_t);
@@ -201,7 +203,7 @@ int	first(int, int);
 int	get_Hflag(char **);
 int	getmsglist(char *, int *, int);
 int	getrawlist(const char [], char **, int);
-int	show_headers_and_exit(int) __attribute__((__noreturn__));
+int	show_headers_and_exit(int) __dead;
 
 /*
  * from main.c
@@ -253,7 +255,7 @@ void	flush_files(FILE *, int);
 /*
  * from quit.c
  */
-void	quit(void);
+void	quit(jmp_buf);
 int	quitcmd(void *);
 
 /*

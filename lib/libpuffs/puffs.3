@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.45 2008/12/12 18:59:53 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.45.2.1 2009/05/13 19:18:35 jym Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -89,15 +89,6 @@
 .Ft int
 .Fn puffs_dispatch_exec "struct puffs_cc *pcc" "struct puffs_framebuf **pbp"
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
-.Pp
 .Nm
 provides a framework for creating file systems as userspace servers.
 Operations are transported from the kernel virtual file system layer
@@ -548,7 +539,7 @@ An unsupported experimental version of
 .Nm
 first appeared in
 .Nx 4.0 .
+A stable version appeared in
+.Nx 5.0 .
 .Sh AUTHORS
 .An Antti Kantee Aq pooka@iki.fi
-.Sh BUGS
-Under construction.

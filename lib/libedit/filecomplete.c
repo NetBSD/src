@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.13 2009/01/26 17:32:41 apb Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.13.2.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.13 2009/01/26 17:32:41 apb Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.13.2.1 2009/05/13 19:18:29 jym Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -335,9 +335,9 @@ _fn_qsort_string_compare(const void *i1, const void *i2)
  * 'max' is maximum length of string in 'matches'.
  */
 void
-fn_display_match_list (EditLine *el, char **matches, int len, int max)
+fn_display_match_list (EditLine *el, char **matches, size_t len, size_t max)
 {
-	int i, idx, limit, count;
+	size_t i, idx, limit, count;
 	int screenwidth = el->el_term.t_size.h;
 
 	/*
@@ -360,7 +360,7 @@ fn_display_match_list (EditLine *el, char **matches, int len, int max)
 	idx = 1;
 	for(; count > 0; count--) {
 		for(i = 0; i < limit && matches[idx]; i++, idx++)
-			(void)fprintf(el->el_outfile, "%-*s  ", max,
+			(void)fprintf(el->el_outfile, "%-*s  ", (int)max,
 			    matches[idx]);
 		(void)fprintf(el->el_outfile, "\n");
 	}
@@ -383,7 +383,7 @@ fn_complete(EditLine *el,
 	char *(*complet_func)(const char *, int),
 	char **(*attempted_completion_function)(const char *, int, int),
 	const char *word_break, const char *special_prefixes,
-	const char *(*app_func)(const char *), int query_items,
+	const char *(*app_func)(const char *), size_t query_items,
 	int *completion_type, int *over, int *point, int *end)
 {
 	const LineInfo *li;
@@ -425,12 +425,12 @@ fn_complete(EditLine *el,
 	/* these can be used by function called in completion_matches() */
 	/* or (*attempted_completion_function)() */
 	if (point != 0)
-		*point = li->cursor - li->buffer;
+		*point = (int)(li->cursor - li->buffer);
 	if (end != NULL)
-		*end = li->lastchar - li->buffer;
+		*end = (int)(li->lastchar - li->buffer);
 
 	if (attempted_completion_function) {
-		int cur_off = li->cursor - li->buffer;
+		int cur_off = (int)(li->cursor - li->buffer);
 		matches = (*attempted_completion_function) (temp,
 		    (int)(cur_off - len), cur_off);
 	} else
@@ -444,7 +444,7 @@ fn_complete(EditLine *el,
 
 	if (matches) {
 		int i;
-		int matches_num, maxlen, match_len, match_display=1;
+		size_t matches_num, maxlen, match_len, match_display=1;
 
 		retval = CC_REFRESH;
 		/*
@@ -489,7 +489,7 @@ fn_complete(EditLine *el,
 			 */
 			if (matches_num > query_items) {
 				(void)fprintf(el->el_outfile,
-				    "Display all %d possibilities? (y or n) ",
+				    "Display all %zu possibilities? (y or n) ",
 				    matches_num);
 				(void)fflush(el->el_outfile);
 				if (getc(stdin) != 'y')
@@ -499,7 +499,7 @@ fn_complete(EditLine *el,
 
 			if (match_display)
 				fn_display_match_list(el, matches, matches_num,
-					maxlen);
+				    maxlen);
 			retval = CC_REDISPLAY;
 		} else if (matches[0][0]) {
 			/*

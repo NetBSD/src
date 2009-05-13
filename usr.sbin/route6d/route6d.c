@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.61 2008/01/21 20:46:58 dyoung Exp $	*/
+/*	$NetBSD: route6d.c,v 1.61.12.1 2009/05/13 19:20:37 jym Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.61 2008/01/21 20:46:58 dyoung Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.61.12.1 2009/05/13 19:20:37 jym Exp $");
 #endif
 
 #include <stdbool.h>
@@ -674,7 +674,7 @@ init(void)
  * ripflush flushes the rip datagram stored in the rip buffer
  */
 static int nrt;
-static struct netinfo6 *np;
+static struct netinfo6 *nip;
 
 void
 ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
@@ -690,23 +690,23 @@ ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 		tracet(1, "Send: info(%d) to %s.%d\n",
 			nrt, inet6_n2p(&sin6->sin6_addr), ntohs(sin6->sin6_port));
 	if (dflag >= 2) {
-		np = ripbuf->rip6_nets;
-		for (i = 0; i < nrt; i++, np++) {
-			if (np->rip6_metric == NEXTHOP_METRIC) {
-				if (IN6_IS_ADDR_UNSPECIFIED(&np->rip6_dest))
+		nip = ripbuf->rip6_nets;
+		for (i = 0; i < nrt; i++, nip++) {
+			if (nip->rip6_metric == NEXTHOP_METRIC) {
+				if (IN6_IS_ADDR_UNSPECIFIED(&nip->rip6_dest))
 					trace(2, "    NextHop reset");
 				else {
 					trace(2, "    NextHop %s",
-						inet6_n2p(&np->rip6_dest));
+						inet6_n2p(&nip->rip6_dest));
 				}
 			} else {
 				trace(2, "    %s/%d[%d]",
-					inet6_n2p(&np->rip6_dest),
-					np->rip6_plen, np->rip6_metric);
+					inet6_n2p(&nip->rip6_dest),
+					nip->rip6_plen, nip->rip6_metric);
 			}
-			if (np->rip6_tag) {
+			if (nip->rip6_tag) {
 				trace(2, "  tag=0x%04x",
-					ntohs(np->rip6_tag) & 0xffff);
+					ntohs(nip->rip6_tag) & 0xffff);
 			}
 			trace(2, "\n");
 		}
@@ -719,7 +719,7 @@ ripflush(struct ifc *ifcp, struct sockaddr_in6 *sin6)
 			ifcp->ifc_name, inet6_n2p(&ifcp->ifc_ripsin.sin6_addr));
 		ifcp->ifc_flags &= ~IFF_UP;	/* As if down for AF_INET6 */
 	}
-	nrt = 0; np = ripbuf->rip6_nets;
+	nrt = 0; nip = ripbuf->rip6_nets;
 }
 
 /*
@@ -744,13 +744,13 @@ ripsend(struct ifc *ifcp, struct sockaddr_in6 *sin6, int flag)
 				sizeof(struct udphdr) - 
 				sizeof(struct rip6) + sizeof(struct netinfo6)) /
 				sizeof(struct netinfo6);
-		nrt = 0; np = ripbuf->rip6_nets; nh = NULL;
+		nrt = 0; nip = ripbuf->rip6_nets; nh = NULL;
 		for (rrt = riprt; rrt; rrt = rrt->rrt_next) {
 			if (rrt->rrt_rflags & RRTF_NOADVERTISE)
 				continue;
 			/* Put the route to the buffer */
-			*np = rrt->rrt_info;
-			np++; nrt++;
+			*nip = rrt->rrt_info;
+			nip++; nrt++;
 			if (nrt == maxrte) {
 				ripflush(NULL, sin6);
 				nh = NULL;
@@ -778,8 +778,8 @@ ripsend(struct ifc *ifcp, struct sockaddr_in6 *sin6, int flag)
 		rrt_info.rip6_metric = 1;
 		rrt_info.rip6_metric += ifcp->ifc_metric;
 		rrt_info.rip6_tag = htons(routetag & 0xffff);
-		np = ripbuf->rip6_nets;
-		*np = rrt_info;
+		nip = ripbuf->rip6_nets;
+		*nip = rrt_info;
 		nrt = 1;
 		ripflush(ifcp, sin6);
 		return;
@@ -790,7 +790,7 @@ ripsend(struct ifc *ifcp, struct sockaddr_in6 *sin6, int flag)
 			sizeof(struct rip6) + sizeof(struct netinfo6)) /
 			sizeof(struct netinfo6);
 
-	nrt = 0; np = ripbuf->rip6_nets; nh = NULL;
+	nrt = 0; nip = ripbuf->rip6_nets; nh = NULL;
 	for (rrt = riprt; rrt; rrt = rrt->rrt_next) {
 		if (rrt->rrt_rflags & RRTF_NOADVERTISE)
 			continue;
@@ -815,14 +815,14 @@ ripsend(struct ifc *ifcp, struct sockaddr_in6 *sin6, int flag)
 			if (nh == NULL || !IN6_ARE_ADDR_EQUAL(nh, &rrt->rrt_gw)) {
 				if (nrt == maxrte - 2)
 					ripflush(ifcp, sin6);
-				np->rip6_dest = rrt->rrt_gw;
-				if (IN6_IS_ADDR_LINKLOCAL(&np->rip6_dest))
-					SET_IN6_LINKLOCAL_IFINDEX(np->rip6_dest, 0);
-				np->rip6_plen = 0;
-				np->rip6_tag = 0;
-				np->rip6_metric = NEXTHOP_METRIC;
+				nip->rip6_dest = rrt->rrt_gw;
+				if (IN6_IS_ADDR_LINKLOCAL(&nip->rip6_dest))
+					SET_IN6_LINKLOCAL_IFINDEX(nip->rip6_dest, 0);
+				nip->rip6_plen = 0;
+				nip->rip6_tag = 0;
+				nip->rip6_metric = NEXTHOP_METRIC;
 				nh = &rrt->rrt_gw;
-				np++; nrt++;
+				nip++; nrt++;
 			}
 		} else if (nh && (rrt->rrt_index != ifcp->ifc_index ||
 			          !IN6_ARE_ADDR_EQUAL(nh, &rrt->rrt_gw) ||
@@ -830,15 +830,15 @@ ripsend(struct ifc *ifcp, struct sockaddr_in6 *sin6, int flag)
 			/* Reset nexthop */
 			if (nrt == maxrte - 2)
 				ripflush(ifcp, sin6);
-			memset(np, 0, sizeof(struct netinfo6));
-			np->rip6_metric = NEXTHOP_METRIC;
+			memset(nip, 0, sizeof(struct netinfo6));
+			nip->rip6_metric = NEXTHOP_METRIC;
 			nh = NULL;
-			np++; nrt++;
+			nip++; nrt++;
 		}
 
 		/* Put the route to the buffer */
-		*np = rrt->rrt_info;
-		np++; nrt++;
+		*nip = rrt->rrt_info;
+		nip++; nrt++;
 		if (nrt == maxrte) {
 			ripflush(ifcp, sin6);
 			nh = NULL;
@@ -1058,7 +1058,7 @@ riprecv(void)
 	if (idx && IN6_IS_ADDR_LINKLOCAL(&fsock.sin6_addr))
 		SET_IN6_LINKLOCAL_IFINDEX(fsock.sin6_addr, idx);
 
-	if (len < sizeof(struct rip6)) {
+	if (len < (int)sizeof(struct rip6)) {
 		trace(1, "Packet too short\n");
 		return;
 	}
@@ -1074,7 +1074,7 @@ riprecv(void)
 		return;
 	}
 	if (rp->rip6_cmd == RIP6_REQUEST) {
-		if (idx && idx < nindex2ifc) {
+		if (idx && idx < (unsigned)nindex2ifc) {
 			ifcp = index2ifc[idx];
 			riprequest(ifcp, np, nn, &fsock);
 		} else {
@@ -1089,7 +1089,7 @@ riprecv(void)
 		return;		/* Ignore packets from non-link-local addr */
 	}
 	idx = IN6_LINKLOCAL_IFINDEX(fsock.sin6_addr);
-	ifcp = (idx < nindex2ifc) ? index2ifc[idx] : NULL;
+	ifcp = (idx < (unsigned)nindex2ifc) ? index2ifc[idx] : NULL;
 	if (!ifcp) {
 		trace(1, "Packets to unknown interface index %d\n", idx);
 		return;		/* Ignore it */
@@ -1521,7 +1521,7 @@ rtrecv(void)
 		perror("read from rtsock");
 		exit(1);
 	}
-	if (len < sizeof(*rtm)) {
+	if (len < (int)sizeof(*rtm)) {
 		trace(1, "short read from rtsock: %d (should be > %lu)\n",
 			len, (u_long)sizeof(*rtm));
 		return;

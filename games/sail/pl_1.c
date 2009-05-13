@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.19 2007/12/15 19:44:43 perry Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.19.12.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.19 2007/12/15 19:44:43 perry Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.19.12.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,6 @@ leave(int conditions)
 			printf("The driver died.\n");
 			break;
 		case LEAVE_FORK:
-			perror("fork");
 			break;
 		case LEAVE_SYNC:
 			printf("Synchronization error\n.");
@@ -108,7 +107,7 @@ leave(int conditions)
 		if (conditions != LEAVE_SYNC) {
 			makemsg(ms, "Captain %s relinquishing.",
 				mf->captain);
-			Write(W_END, ms, 0, 0, 0, 0);
+			send_end(ms);
 			Sync();
 		}
 	}

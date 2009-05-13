@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2006/09/18 10:09:31 elad Exp $
+# $NetBSD: Makefile,v 1.2.26.1 2009/05/13 19:20:43 jym Exp $
+
+WARNS?=	2	# XXX -Wcast-qual -Wsign-compare
 
 .include <bsd.own.mk>
 

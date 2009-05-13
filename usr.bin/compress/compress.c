@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.24 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: compress.c,v 1.24.6.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.24 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: compress.c,v 1.24.6.1 2009/05/13 19:19:47 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,12 +55,12 @@ __RCSID("$NetBSD: compress.c,v 1.24 2008/07/21 14:19:22 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	compress(char *, char *, int);
+void	compress(const char *, const char *, int);
 void	cwarn(const char *, ...) __attribute__((__format__(__printf__,1,2)));
 void	cwarnx(const char *, ...) __attribute__((__format__(__printf__,1,2)));
-void	decompress(char *, char *, int);
-int	permission(char *);
-void	setfile(char *, struct stat *);
+void	decompress(const char *, const char *, int);
+int	permission(const char *);
+void	setfile(const char *, struct stat *);
 void	usage(int);
 
 int	main(int, char *[]);
@@ -199,9 +199,9 @@ main(int argc, char **argv)
 }
 
 void
-compress(char *in, char *out, int bits)
+compress(const char *in, const char *out, int bits)
 {
-	int nr;
+	size_t nr;
 	struct stat isb, sb;
 	const char *error = NULL;
 	FILE *ifp, *ofp;
@@ -298,9 +298,9 @@ err:	if (ofp)
 }
 
 void
-decompress(char *in, char *out, int bits)
+decompress(const char *in, const char *out, int bits)
 {
-	int nr;
+	size_t nr;
 	struct stat sb;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
@@ -377,7 +377,7 @@ err:	if (ofp)
 }
 
 void
-setfile(char *name, struct stat *fs)
+setfile(const char *name, struct stat *fs)
 {
 	static struct timeval tv[2];
 
@@ -412,7 +412,7 @@ setfile(char *name, struct stat *fs)
 }
 
 int
-permission(char *fname)
+permission(const char *fname)
 {
 	int ch, first;
 

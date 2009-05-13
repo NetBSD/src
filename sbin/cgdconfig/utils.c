@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.19 2008/05/11 03:15:21 elric Exp $ */
+/* $NetBSD: utils.c,v 1.19.4.1 2009/05/13 19:19:00 jym Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.19 2008/05/11 03:15:21 elric Exp $");
+__RCSID("$NetBSD: utils.c,v 1.19.4.1 2009/05/13 19:19:00 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -303,7 +303,7 @@ bits_len(bits_t *in)
 int
 bits_match(const bits_t *b1, const bits_t *b2)
 {
-	int i;
+	size_t i;
 
 	if (b1->length != b2->length)
 		return 0;
@@ -319,7 +319,7 @@ bits_t *
 bits_xor(const bits_t *x1, const bits_t *x2)
 {
 	bits_t	*b;
-	int	 i;
+	size_t	 i;
 
 	b = emalloc(sizeof(*b));
 	b->length = MAX(x1->length, x2->length);

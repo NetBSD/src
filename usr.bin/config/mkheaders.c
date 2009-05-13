@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.14 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.14.2.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,9 +72,9 @@ static char *cntname(const char *);
  */
 
 /* Unlikely constant for undefined options */
-#define UNDEFINED ('n' << 24 | 0 << 20 | 't' << 12 | 0xdef)
+#define UNDEFINED ('n' << 24 | 0 << 20 | 't' << 12 | 0xdefU)
 /* Value for defined options with value UNDEFINED */
-#define	DEFINED (0xdef1 << 16 | 'n' << 8 | 0xed)
+#define	DEFINED (0xdef1U << 16 | 'n' << 8 | 0xed)
 
 /*
  * Make the various config-generated header files.
@@ -346,7 +346,7 @@ locators_print(const char *name, void *value, void *arg)
 static int
 emitlocs(void)
 {
-	char *tfname;
+	const char *tfname;
 	int rval;
 	FILE *tfp;
 	

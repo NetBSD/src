@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.21 2009/01/25 22:08:39 abs Exp $
+#	$NetBSD: list,v 1.21.2.1 2009/05/13 19:18:01 jym Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/x68k/stand
 
@@ -69,8 +69,8 @@ LIBS	libhack.o -lz -lutil -lcurses -ltermcap -lcrypt -ll -lm -lprop
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
-COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${CURDIR}/services			etc/services
 
 # we need the boot blocks in /usr/mdec

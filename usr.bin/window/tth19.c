@@ -1,4 +1,4 @@
-/*	$NetBSD: tth19.c,v 1.6 2003/08/07 11:17:31 agc Exp $	*/
+/*	$NetBSD: tth19.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tth19.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tth19.c,v 1.6 2003/08/07 11:17:31 agc Exp $");
+__RCSID("$NetBSD: tth19.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ void	h19_scroll_up(int);
 void	h19_scroll_down(int);
 void	h19_setmodes(int);
 void	h19_start(void);
-void	h19_write(char *, int);
+void	h19_write(const char *, int);
 
 void
 h19_setmodes(int new)
@@ -143,7 +143,7 @@ h19_putc(char c)
 }
 
 void
-h19_write(char *p, int n)
+h19_write(const char *p, int n)
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		(*tt.tt_setmodes)(tt.tt_nmodes);

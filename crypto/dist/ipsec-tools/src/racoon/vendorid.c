@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.c,v 1.6 2009/01/23 08:06:56 tteras Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.6.2.1 2009/05/13 19:15:55 jym Exp $	*/
 
 /* Id: vendorid.c,v 1.10 2006/02/22 16:10:21 vanhu Exp */
 
@@ -260,7 +260,8 @@ handle_vendorid(struct ph1handle *iph1, struct isakmp_gen *gen)
 	iph1->vendorid_mask |= BIT(vid_numeric);
 
 #ifdef ENABLE_NATT
-	if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
+	if ((iph1->rmconf == NULL || iph1->rmconf->nat_traversal) &&
+	    natt_vendorid(vid_numeric))
 		natt_handle_vendorid(iph1, vid_numeric);
 #endif
 #ifdef ENABLE_HYBRID
@@ -276,7 +277,8 @@ handle_vendorid(struct ph1handle *iph1, struct isakmp_gen *gen)
 	}
 #endif
 #ifdef ENABLE_DPD
-	if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd) {
+	if (vid_numeric == VENDORID_DPD &&
+	    (iph1->rmconf == NULL || iph1->rmconf->dpd)) {
 		iph1->dpd_support = 1;
 		plog(LLV_DEBUG, LOCATION, NULL, "remote supports DPD\n");
 	}

@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.7 2009/02/05 17:32:10 haad Exp $
+# $NetBSD: module.mi,v 1.7.2.1 2009/05/13 19:17:51 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -89,6 +89,8 @@
 ./@MODULEDIR@/sysvbfs/sysvbfs.kmod		base-kernel-modules
 ./@MODULEDIR@/tmpfs				base-kernel-modules
 ./@MODULEDIR@/tmpfs/tmpfs.kmod			base-kernel-modules
+./@MODULEDIR@/tprof				base-kernel-modules
+./@MODULEDIR@/tprof/tprof.kmod			base-kernel-modules
 ./@MODULEDIR@/udf				base-kernel-modules
 ./@MODULEDIR@/udf/udf.kmod			base-kernel-modules
 ./@MODULEDIR@/umap				base-kernel-modules

@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.9 2008/11/14 21:10:44 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.9.2.1 2009/05/13 19:18:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.9 2008/11/14 21:10:44 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.9.2.1 2009/05/13 19:18:08 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: setup.c,v 1.9 2008/11/14 21:10:44 christos Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <err.h>
+#include <limits.h>
 #include "trek.h"
 #include "getpar.h"
 
@@ -211,7 +212,7 @@ setup()
 	for (i = 0; i < MAXEVENTS; i++)
 	{
 		e = &Event[i];
-		e->date = 1e50;
+		e->date = TOOLARGE;
 		e->evcode = 0;
 	}
 	xsched(E_SNOVA, 1, 0, 0, 0);

@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.39 2009/01/28 17:11:54 tsutsui Exp $
+# $NetBSD: Makefile,v 1.39.2.1 2009/05/13 19:17:40 jym Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
 ##############################################################################
 
-.include <bsd.own.mk>
+all:	cdimages
 
-all:
+.include <bsd.own.mk>
 
 .if exists(site.conf)
 .include "site.conf"
@@ -60,7 +60,7 @@ ALL_PORTS:=		${ALL_PORTS} ${BASE_PORTS.${image}}
 SUBDIR=
 
 .if !empty(ALL_PORTS:Mmacppc)
-SUBDIR+=	macppc_mkboothfs macppc_installboot
+SUBDIR+=	macppc_installboot
 .endif
 
 .if !empty(SUBDIR)
@@ -72,17 +72,32 @@ SUBDIR+=	macppc_mkboothfs macppc_installboot
 
 ##### Default paths for programs #####
 
-MKISOFS?=	/usr/pkg/bin/mkisofs
+MKISOFS?=	/usr/local/bin/mkisofs
 RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	${TOOL_INSTALLBOOT} -m alpha -o sunsum,append
 PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
 VAX_IBOOT?=	${TOOL_INSTALLBOOT} -m vax -o sunsum,append
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
-MACPPC_MKBOOTHFSDIR!= cd ${.CURDIR}/macppc_mkboothfs && ${PRINTOBJDIR}
 .endif
 .if !empty(ALL_PORTS:Msgimips)
 SGIMIPS_SGIVOL?=	${TOOLDIR}/bin/nbsgivol
+.endif
+
+check_mkisofs:
+.if !exists(${MKISOFS})
+	@echo "Error: File does not exist: ${MKISOFS}"
+	@echo "Please build and install mkisofs(8) utility and set MKISOFS in the environment"
+	@echo "or in site.conf to create image."
+	@false
+.endif
+
+check_rsync:
+.if !exists(${RSYNC})
+	@echo "Error: File does not exist: ${RSYNC}"
+	@echo "Please build and install rsync(1) utility and set RSYNC in the environment"
+	@echo "or in site.conf to fetch release binaries."
+	@false
 .endif
 
 ##### rsync settings #####
@@ -94,6 +109,7 @@ RSYNC_HOST?=	rsync.NetBSD.org
 # extra path for rsync mirrors ("/pub", "/netbsd" etc.)
 RSYNC_PATH_PREFIX?=
 
+.if !target(.BEGIN)
 .if ${RELEASE} == "current"
 # daily date dir name
 BRANCH?=	HEAD
@@ -109,12 +125,14 @@ RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD/${RELEASENAME}${RELEASE_SUFFIX}
 #BRANCH?=	netbsd-4
 #RSYNC_PATH?=	${RSYNC_PATH_PREFIX}/NetBSD-daily/${BRANCH}/${DAILY_DIR}
 .endif
+.endif
 
 RSYNC_SITE?=	rsync://${RSYNC_HOST}${RSYNC_PATH}
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
-DISTRIBDIR?=	${.OBJDIR}/download
+DOWNLOADDIR?=	${.OBJDIR}/download
+DISTRIBDIR?=	${DOWNLOADDIR}
 STAGEDIR?=	${.OBJDIR}/staging
 IMAGEDIR?=	${.OBJDIR}
 EXTFILEDIR?=	${.OBJDIR}/extfiles
@@ -223,9 +241,10 @@ INTFILES.${image}?=
 INTDIRS.${image}?=
 ADDFILES.${image}?=
 
+bports=			# empty first
 # For a source only cd just ignore the shared/ALL directory
-.if ${ports} != "source"
-bports=			shared/ALL
+.if ${ports} != "source" && exists(${DISTRIBDIR}/shared/ALL)
+bports+=		shared/ALL
 .endif
 .for port in ${ports}					# {
 EXTFILES+=		${EXTFILES.${port}}
@@ -235,7 +254,8 @@ ADDFILES.${image}+=	${ADDFILES.${port}}
 MKISOFS_ARGS.${image}+=	${MKISOFS_ARGS.${port}}
 # add shared/ALL and shared/${MACHINE_ARCH} to BASE_PORTS.${image}
 bports+=		${port}
-.if defined(MACHINE_ARCH.${port})
+.if defined(MACHINE_ARCH.${port}) &&	\
+    exists(${DISTRIBDIR}/shared/${MACHINE_ARCH.${port}})
 bports+=		shared/${MACHINE_ARCH.${port}}
 .endif
 .endfor							# }
@@ -269,9 +289,12 @@ MKISOFS_ARGS.${image}+= -b ${BOOTFILE.amd64} -c boot.catalog
 # Mac (mac68k, macppc)
 
 .if !empty(ports:Mmacppc)
+BOOTHFS=	boothfs
 MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
 	--macbin -map ${.CURDIR}/hfsmap.lst \
-	-boot-hfs-file ${MACPPC_MKBOOTHFSDIR}/boothfs
+	-boot-hfs-file ${.OBJDIR}/${BOOTHFS}
+UUDECODE_FILES=	${BOOTHFS}
+.include <bsd.files.mk>
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
 MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
@@ -354,7 +377,7 @@ USE-FILE: .USE
 			cp `pwd -P`/${>:S/,link$//} $@;; \
 		*.tgz,*) \
 			echo "Extracting: $> --> $@..."; \
-			tar --fast-read -xzf ${>:C/,.*$//} ${>:C/^.*,//} ; \
+			${TOOL_PAX} -rnz -f ${>:C/,.*$//} ${>:C/^.*,//} ; \
 			cp ${>:C/^.*,//} $@; rm -rf ${>:C/^.*,//} ;; \
 		*.gz) echo "gunzip -c <$> >$@"; gunzip -c <$> >$@;; \
 		*) echo "Unknown archive method for $@"; false;; \
@@ -363,7 +386,7 @@ USE-FILE: .USE
 ##### Makefile rules #####
 
 .for image in ${CD_IMAGES}			# {
-all: ${IMAGEDIR}/${image}.iso
+cdimages: ${IMAGEDIR}/${image}.iso
 
 stage-${image}:
 	mkdir -p ${STAGEDIR}/${image} ${EXTFILEDIR}
@@ -397,6 +420,10 @@ ${STAGEDIR}/${image}/${file:C/:.*$//}: ${file:C/^.*://} USE-FILE
 ${file:C/^.*://}: .PHONY
 .endfor						# }
 
+.if !empty(BASE_PORTS.${image}:Mmacppc)
+fileprep-${image}: ${BOOTHFS}
+.endif
+
 # Size the CD image.  This is done via the following formula:
 # 1. Size the image produced by mkisofs.
 # 2. Add images added by distrib/common/sunbootcd.sh by rounding to a 320k
@@ -404,22 +431,14 @@ ${file:C/^.*://}: .PHONY
 # 3. Add bootfile sizes rounded up to 512 bytes for pmax and vax.
 # 4. Round up to a 32k boundary, then add another 32k for TAO padding.
 
-.if !empty(BASE_PORTS.${image}:Mmacppc)
-size-${image}: all-macppc_mkboothfs all-macppc_installboot
-.endif
-
 SGIVOLHDR.size= 4096
 
-size-${image}: stage-${image} extfileprep fileprep-${image}
-.if !empty(BASE_PORTS.${image}:Mmacppc)
-	${MACPPC_MKBOOTHFSDIR}/macppc_mkboothfs ${MACPPC_MKBOOTHFSDIR}/boothfs
-.endif
+size-${image}: stage-${image} extfileprep fileprep-${image} check_mkisofs
 	@size=$$((`cd ${STAGEDIR}/${image} && \
 		   ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} \
 			-print-size . 2>&1 \
 		   | tee /dev/stderr \
-		   | ${TOOL_SED} '/=/!d;s/^[^=]*=//'` \
-	       \* 2048)) && \
+		   | ${TOOL_SED} '/=/!d;s/^[^=]*=//'` * 2048)) && \
 	if [ "${SUN_BOOT_ARGS.${image}}" != "" ]; then \
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
 		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N-:O}; do echo $$f; done | uniq` && \
@@ -445,7 +464,11 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 
 # Actually build the image with all the bootstrap goo....
 
-${IMAGEDIR}/${image}.iso: size-${image}
+.if !empty(BASE_PORTS.${image}:Mmacppc)
+${IMAGEDIR}/${image}.iso: all-macppc_installboot
+.endif
+
+${IMAGEDIR}/${image}.iso: size-${image} check_mkisofs
 	@sort -o ${contents.${image}} ${contents.${image}}
 .if defined(LOG_MKISOFS)
 	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -v -v . >${IMAGEDIR}/${image}.iso.log 2>&1
@@ -490,13 +513,13 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 
 .endfor		# image in ${CD_IMAGES}		# }
 
-fetch:
+fetch: check_rsync
 	@mkdir -p ${DISTRIBDIR}
 	@echo Fetching distributions....
 	${RSYNC} ${RSYNC_INCLUDE} ${RSYNC_ARGS} ${RSYNC_EXCLUDE} ${RSYNC_SITE}/ ${DISTRIBDIR}/
 
 clean: cleanstagedir cleanimages
-cleandir distclean: cleandistribdir
+cleandir distclean: cleandownloaddir
 
 cleanimages:
 .for image in ${CD_IMAGES}
@@ -507,5 +530,5 @@ cleanimages:
 cleanstagedir:
 	-rm -rf ${STAGEDIR} ${EXTFILEDIR}
 
-cleandistribdir:
-	-rm -rf ${DISTRIBDIR}
+cleandownloaddir:
+	-rm -rf ${DOWNLOADDIR}

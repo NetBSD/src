@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.20 2009/01/24 10:43:38 wiz Exp $
+.\"	$NetBSD: racoonctl.8,v 1.20.2.1 2009/05/13 19:15:54 jym Exp $
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 23, 2009
+.Dd March 12, 2009
 .Dt RACOONCTL 8
 .Os
 .\"
@@ -64,8 +64,9 @@ delete-sa
 .Nm
 .Op opts
 establish-sa
-.Op Fl u Ar identity
 .Op Fl w
+.Op Fl n Ar remoteconf
+.Op Fl u Ar identity
 .Ar saopts
 .Nm
 .Op opts
@@ -126,10 +127,7 @@ IPsec ESP SAs, IPsec AH SAs, or all IPsec SAs.
 Use
 .Fl l
 to increase verbosity.
-.It Xo get-sa-cert
-.Oo inet|inet6
-.Oc Ar src dst
-.Xc
+.It get-sa-cert Oo inet|inet6 Oc Ar src dst
 Output the raw certificate that was used to authenticate the phase 1
 matching
 .Ar src
@@ -138,16 +136,14 @@ and
 .It flush-sa Op isakmp|esp|ah|ipsec
 is used to flush all SAs if no SA class is provided, or a class of SAs,
 either ISAKMP SAs, IPsec ESP SAs, IPsec AH SAs, or all IPsec SAs.
-.It Xo establish-sa
-.Oo Fl u Ar username
-.Oc
-.Oo Fl w
-.Oc Ar saopts
-.Xc
+.It establish-sa Oo Fl w Oc Oo Fl n Ar remoteconf Oc Oo Fl u Ar username \
+Oc Ar saopts
 Establish an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
 The optional
 .Fl u Ar username
 can be used when establishing an ISAKMP SA while hybrid auth is in use.
+The exact remote block to use can be specified with
+.Fl n Ar remoteconf .
 .Nm
 will prompt you for the password associated with
 .Ar username
@@ -165,10 +161,7 @@ has the following format:
 .It {esp|ah} {inet|inet6} Ar src/prefixlen/port Ar dst/prefixlen/port
 {icmp|tcp|udp|gre|any}
 .El
-.It Xo vpn-connect
-.Oo Fl u Ar username
-.Oc Ar vpn_gateway
-.Xc
+.It vpn-connect Oo Fl u Ar username Oc Ar vpn_gateway
 This is a particular case of the previous command.
 It will establish an ISAKMP SA with
 .Ar vpn_gateway .

@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.31 2006/08/23 20:38:25 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.31.26.1 2009/05/13 19:19:09 jym Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -26,9 +26,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 17, 2006
-.Os
+.Dd February 19, 2009
 .Dt WSDISPLAY 4
+.Os
 .Sh NAME
 .Nm wsdisplay
 .Nd generic display device support in wscons
@@ -39,8 +39,6 @@
 (VGA display on ISA or PCI)
 .Cd "wsdisplay* at pcdisplay? console ?"
 (generic PC (ISA) display)
-.Cd "wsdisplay* at vesafb? console ?"
-(VESA frame buffer display, i386 only)
 .Cd "wsdisplay* at tga? console ?"
 (DEC TGA display, alpha only)
 .Cd "wsdisplay* at pfb? console ?"
@@ -104,7 +102,8 @@ The logical unit of an independent contents displayed on a display
 .Dq virtual terminal
 ) is called a
 .Dq screen
-here. If the underlying device driver supports it, multiple screens can
+here.
+If the underlying device driver supports it, multiple screens can
 be used on one display.
 (As of this writing, only the
 .Xr vga 4
@@ -116,7 +115,8 @@ Screens have different minor device numbers and separate tty instances.
 One screen possesses the
 .Dq focus ,
 this means it is visible and its tty device will get
-the keyboard input. (In some cases \- if no screen is set up or if a screen
+the keyboard input.
+(In some cases \- if no screen is set up or if a screen
 was just deleted \- it is possible that no focus is present at all.)
 The focus can be switched by either special keyboard input (typically
 .Tn CTRL-ALT-F Ns Ar n )
@@ -125,7 +125,8 @@ Screens are created and deleted through the
 .Pa /dev/ttyEcfg
 control device (preferably using the
 .Xr wsconscfg 8
-utility). Alternatively, the compile-time option
+utility).
+Alternatively, the compile-time option
 .Dv WSDISPLAY_DEFAULTSCREENS Ns = Ns Ar n
 will also create (at autoconfiguration time)
 .Ar n
@@ -166,7 +167,8 @@ Useful for small root filesystems where the
 .Xr wsconscfg 8
 utility is not wanted.
 .It Cd options WSDISPLAY_SCROLLSUPPORT
-Enables scrolling support. The key combinations are
+Enables scrolling support.
+The key combinations are
 .Ic LEFT SHIFT + PAGE UP
 and
 .Ic LEFT SHIFT + PAGE DOWN
@@ -288,8 +290,8 @@ members count the number of pixels right and down, respectively, from
 the top-left corner of the display to the hot spot of the cursor.
 This call is not available on displays without a hardware cursor.
 .It Dv WSDISPLAYOP_SCURPOS Pq Li "struct wsdisplay_curpos"
-Set the current cursor position.  The argument structure, and its semantics,
-are the same as for
+Set the current cursor position.
+The argument structure, and its semantics, are the same as for
 .Dv WSDISPLAYIO_GCURPOS .
 This call is not available on displays without a hardware cursor.
 .It Dv WSDISPLAYIO_GCURMAX Pq Li "struct wsdisplay_curpos"
@@ -561,7 +563,6 @@ Status device.
 .\" .Xr ega 4 ,
 .Xr pcdisplay 4 ,
 .Xr tty 4 ,
-.Xr \&i386/vesafb 4 ,
 .Xr vga 4 ,
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,

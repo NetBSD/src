@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.81 2008/12/28 19:49:26 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.81.2.1 2009/05/13 19:18:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.81 2008/12/28 19:49:26 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.81.2.1 2009/05/13 19:18:34 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,6 +99,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.81 2008/12/28 19:49:26 christos Exp $");
 #include <kvm.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
 #include <uvm/uvm_amap.h>
 
 #include <sys/sysctl.h>
@@ -679,6 +680,12 @@ again:
 			kp2p->p_vm_tsize = kp->kp_eproc.e_vm.vm_tsize;
 			kp2p->p_vm_dsize = kp->kp_eproc.e_vm.vm_dsize;
 			kp2p->p_vm_ssize = kp->kp_eproc.e_vm.vm_ssize;
+			kp2p->p_vm_vsize = kp->kp_eproc.e_vm.vm_map.size;
+			/* Adjust mapped size */
+			kp2p->p_vm_msize =
+			    (kp->kp_eproc.e_vm.vm_map.size / kd->nbpg) -
+			    kp->kp_eproc.e_vm.vm_issize +
+			    kp->kp_eproc.e_vm.vm_ssize;
 
 			kp2p->p_eflag = (int32_t)kp->kp_eproc.e_flag;
 

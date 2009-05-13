@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.61 2008/10/07 09:58:15 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.61.4.1 2009/05/13 19:18:00 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,18 +141,29 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
+	char *bootxx;
+	int error;
+
 	/* XXX boot blocks ... */
 	if (target_already_root()) {
-		/* /usr is empty and we must already have bootblocks?*/
+		/* /usr is empty and we must already have bootblocks? */
 		return 0;
 	}
 
 	printf(msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot.pmax", "/boot.pmax");
-	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
-	    "/usr/sbin/installboot /dev/r%sc /usr/mdec/bootxx_ffs", diskdev))
+	bootxx = bootxx_name();
+	if (bootxx != NULL) {
+		error = run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+		    "/usr/sbin/installboot /dev/r%sc %s", diskdev, bootxx);
+		free(bootxx);
+	} else
+		error = -1;
+
+	if (error != 0)
 		process_menu(MENU_ok,
-			deconst("Warning: disk is probably not bootable"));
+		    deconst("Warning: disk is probably not bootable"));
+
 	return 0;
 }
 

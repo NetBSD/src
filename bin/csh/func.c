@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.36 2007/09/15 14:33:05 ragge Exp $ */
+/* $NetBSD: func.c,v 1.36.14.1 2009/05/13 19:15:48 jym Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.36 2007/09/15 14:33:05 ragge Exp $");
+__RCSID("$NetBSD: func.c,v 1.36.14.1 2009/05/13 19:15:48 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -1106,6 +1106,7 @@ static const struct limits {
     { RLIMIT_NPROC,	"maxproc",	1,	"" },
     { RLIMIT_NOFILE,	"openfiles",	1,	"" },
     { RLIMIT_SBSIZE,	"sbsize",	1,	"bytes" },
+    { RLIMIT_AS,	"vmemoryuse",	1024,	"kbytes" },
     { -1,		NULL,		0,	NULL }
 };
 

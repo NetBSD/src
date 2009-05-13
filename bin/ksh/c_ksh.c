@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.15 2006/04/24 20:00:31 christos Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.15.28.1 2009/05/13 19:15:49 jym Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.15 2006/04/24 20:00:31 christos Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.15.28.1 2009/05/13 19:15:49 jym Exp $");
 #endif
 
 #include "sh.h"
@@ -1268,7 +1268,8 @@ c_kill(wp)
 			ki.name_width = mess_width = 0;
 			for (si = 0; si < SIGNALS; si++) {
 				w = sigtraps[si].name ?
-				    strlen(sigtraps[si].name) : ki.num_width;
+				    (int)strlen(sigtraps[si].name) :
+				    ki.num_width;
 				if (w > ki.name_width)
 					ki.name_width = w;
 				w = strlen(sigtraps[si].mess);

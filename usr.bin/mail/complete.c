@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.16.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -34,11 +34,10 @@
  */
 
 #ifdef USE_EDITLINE
-#undef NO_EDITCOMPLETE
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.16.2.1 2009/05/13 19:19:56 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -54,6 +53,7 @@ __RCSID("$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <stringlist.h>
+#include <termcap.h>
 #include <util.h>
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: complete.c,v 1.16 2009/01/18 01:29:57 lukem Exp $");
 #ifdef MIME_SUPPORT
 #include "mime.h"
 #endif
+#include "sig.h"
 #ifdef THREAD_SUPPORT
 #include "thread.h"
 #endif
@@ -737,6 +738,7 @@ static int
 is_emacs_mode(EditLine *el)
 {
 	char *mode;
+
 	if (el_get(el, EL_EDITOR, &mode) == -1)
 		return 0;
 	return equal(mode, "emacs");
@@ -746,6 +748,7 @@ static int
 emacs_ctrl_d(EditLine *el, const LineInfo *lf, int ch)
 {
 	static char delunder[3] = { CTRL('f'), CTRL('h'), '\0' };
+
 	if (ch == CTRL('d') && is_emacs_mode(el)) {	/* CTRL-D is special */
 		if (lf->buffer == lf->lastchar)
 			return CC_EOF;
@@ -881,7 +884,7 @@ split_word(int *cmpltype, const char *cmplarray, LineInfo *li)
 	}
 
 	/* check for 'continuation' completes (which are uppercase) */
-	arraylen = strlen(cmplarray);
+	arraylen = (int)strlen(cmplarray);
 	if (cursorc >= arraylen &&
 	    arraylen > 0 &&
 	    isupper((unsigned char)cmplarray[arraylen - 1]))
@@ -1067,12 +1070,10 @@ mime_enc_complete(EditLine *el, int ch)
  *    Initializes of all editline and completion data strutures.
  *
  * my_gets()
- *    Returns the next line of input as a NULL termnated string without
- *    the trailing newline.
- *
- * my_getline()
- *    Same as my_gets(), but strips leading and trailing whitespace
- *    and returns an empty line if it gets a SIGINT.
+ *    Displays prompt, calls el_gets() and deals with history.
+ *    Returns the next line of input as a NULL termnated string
+ *    without the trailing newline, or NULL if el_gets() sees is an
+ *    error or signal.
  */
 
 static const char *el_prompt;
@@ -1084,30 +1085,68 @@ show_prompt(EditLine *e __unused)
 	return el_prompt;
 }
 
+/*
+ * Write the current INTR character to fp in a friendly form.
+ */
+static void
+echo_INTR(void *p)
+{
+	struct termios ttybuf;
+	char buf[5];
+	FILE *fp;
+
+	fp = p;
+	if (tcgetattr(fileno(stdin), &ttybuf) == -1)
+		warn("tcgetattr");
+	else {
+		(void)vis(buf, ttybuf.c_cc[VINTR], VIS_SAFE | VIS_NOSLASH, 0);
+		(void)fprintf(fp, "%s", buf);
+		(void)fflush(fp);
+	}
+}
+
+static sig_t old_sigint;
+static void
+comp_intr(int signo)
+{
+
+	echo_INTR(stdout);
+	old_sigint(signo);
+}
+
 PUBLIC char *
 my_gets(el_mode_t *em, const char *prompt, char *string)
 {
-	int cnt;
+	static char line[LINE_MAX];
 	size_t len;
+	int cnt;
 	const char *buf;
 	HistEvent ev;
-	static char line[LINE_MAX];
+
+	sig_check();
 
 	el_prompt = prompt;
-
 	if (string)
 		el_push(em->el, string);
 
+	/*
+	 * Let el_gets() deal with flow control.  Also, make sure we
+	 * output a ^C when we get a SIGINT as el_gets() doesn't echo
+	 * one.
+	 */
+	old_sigint = sig_signal(SIGINT, comp_intr);
 	buf = el_gets(em->el, &cnt);
+	(void)sig_signal(SIGINT, old_sigint);
 
-	if (buf == NULL || cnt <= 0) {
-		if (cnt == 0)
-			(void)putc('\n', stdout);
+	if (buf == NULL) {
+		sig_check();
 		return NULL;
 	}
 
+	assert(cnt > 0);
 	if (buf[cnt - 1] == '\n')
 		cnt--;	/* trash the trailing LF */
+
 	len = MIN(sizeof(line) - 1, (size_t)cnt);
 	(void)memcpy(line, buf, len);
 	line[cnt] = '\0';
@@ -1115,55 +1154,14 @@ my_gets(el_mode_t *em, const char *prompt, char *string)
 	/* enter non-empty lines into history */
 	if (em->hist) {
 		const char *p;
+
 		p = skip_WSP(line);
 		if (*p && history(em->hist, &ev, H_ENTER, line) == 0)
 			(void)printf("Failed history entry: %s", line);
 	}
+	sig_check();
 	return line;
 }
-
-#ifdef MIME_SUPPORT
-/* XXX - do we really want this here? */
-
-static jmp_buf intjmp;
-/*ARGSUSED*/
-static void
-sigint(int signum __unused)
-{
-	siglongjmp(intjmp, 1);
-}
-
-PUBLIC char *
-my_getline(el_mode_t *em, const char *prompt, const char *str)
-{
-	sig_t saveint;
-	char *cp;
-	char *line;
-
-	saveint = signal(SIGINT, sigint);
-	if (sigsetjmp(intjmp, 1)) {
-		(void)signal(SIGINT, saveint);
-		(void)putc('\n', stdout);
-		return __UNCONST("");
-	}
-
-	line = my_gets(em, prompt, __UNCONST(str));
-	/* LINTED */
-	line = line ? savestr(line) : __UNCONST("");
-
-	(void)signal(SIGINT, saveint);
-
-	/* strip trailing white space */
-	for (cp = line + strlen(line) - 1;
-	     cp >= line && is_WSP(*cp); cp--)
-		*cp = '\0';
-
-	/* skip leading white space */
-	cp = skip_WSP(line);
-
-	return cp;
-}
-#endif /* MIME_SUPPORT */
 
 static el_mode_t
 init_el_mode(
@@ -1172,13 +1170,20 @@ init_el_mode(
 	struct name *keys,
 	int history_size)
 {
+	FILE *nullfp;
 	el_mode_t em;
+
 	(void)memset(&em, 0, sizeof(em));
 
-	if ((em.el = el_init(getprogname(), stdin, stdout, stderr)) == NULL) {
+	if ((nullfp = fopen(_PATH_DEVNULL, "w")) == NULL)
+		err(EXIT_FAILURE, "Cannot open `%s'", _PATH_DEVNULL);
+
+	if ((em.el = el_init(getprogname(), stdin, stdout, nullfp)) == NULL) {
 		warn("el_init");
 		return em;
 	}
+	(void)fflush(nullfp);
+	(void)dup2(STDERR_FILENO, fileno(nullfp));
 
 	(void)el_set(em.el, EL_PROMPT, show_prompt);
 	(void)el_set(em.el, EL_SIGNAL, 1); /* editline handles the signals. */

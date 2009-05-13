@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.24 2009/02/05 19:15:26 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.24.2.1 2009/05/13 19:18:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ typedef KEYMAP_ENTRY *Keymap;
 
 #ifndef CTRL
 #include <sys/ioctl.h>
-#if !defined(__sun__) && !defined(__hpux__)
+#if !defined(__sun) && !defined(__hpux) && !defined(_AIX)
 #include <sys/ttydefaults.h>
 #endif
 #ifndef CTRL
@@ -79,6 +79,8 @@ typedef KEYMAP_ENTRY *Keymap;
 
 #define RUBOUT		0x7f
 #define ABORT_CHAR	CTRL('G')
+#define RL_PROMPT_START_IGNORE	'\1'
+#define RL_PROMPT_END_IGNORE	'\2'
 
 /* global variables used by readline enabled applications */
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.16 2008/05/16 09:21:59 hannken Exp $  */
+/*      $NetBSD: coalesce.c,v 1.16.6.1 2009/05/13 19:18:42 jym Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ enum coalesce_returncodes {
 	COALESCE_MAXERROR
 };
 
-char *coalesce_return[] = {
+const char *coalesce_return[] = {
 	"Successfully coalesced",
 	"File not in use or inode not found",
 	"Not large enough to coalesce",
@@ -167,11 +167,13 @@ clean_inode(struct clfs *fs, ino_t ino)
 	}
 
 	/* Sanity checks */
+#if 0	/* di_size is uint64_t -- this is a noop */
 	if (dip->di_size < 0) {
 		dlog("ino %d, negative size (%" PRId64 ")", ino, dip->di_size);
 		free(dip);
 		return COALESCE_BADSIZE;
 	}
+#endif
 	if (nb > dip->di_blocks) {
 		dlog("ino %d, computed blocks %d > held blocks %d", ino, nb,
 		     dip->di_blocks);

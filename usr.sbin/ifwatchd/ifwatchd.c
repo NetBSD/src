@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.23 2008/05/24 17:45:14 joerg Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.23.6.1 2009/05/13 19:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@ invoke_script(struct sockaddr *sa, struct sockaddr *dest, enum event ev,
     int ifindex, const char *ifname_hint)
 {
 	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ];
-	const char *ifname;
+	const char * volatile ifname;
 	const char *script;
 	int status;
 
@@ -524,12 +524,12 @@ free_interfaces(void)
 }
 
 static int
-find_interface(int index)
+find_interface(int idx)
 {
 	struct interface_data * p;
 
 	SLIST_FOREACH(p, &ifs, next)
-		if (p->index == index)
+		if (p->index == idx)
 			return 1;
 	return 0;
 }
@@ -602,7 +602,7 @@ out:
 static int
 check_is_connected(const char *ifname, int def_retval)
 {
-	int s, err;
+	int s, error;
 	struct spppstatus oldstatus;
 	struct spppstatusncp status;
 
@@ -614,10 +614,10 @@ check_is_connected(const char *ifname, int def_retval)
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0)
 		return 1;	/* no idea how to handle this... */
-	err = ioctl(s, SPPPGETSTATUSNCP, &status);
-	if (err != 0) {
-		err = ioctl(s, SPPPGETSTATUS, &oldstatus);
-		if (err != 0) {
+	error = ioctl(s, SPPPGETSTATUSNCP, &status);
+	if (error != 0) {
+		error = ioctl(s, SPPPGETSTATUS, &oldstatus);
+		if (error != 0) {
 			/* not if_spppsubr.c based - return default */
 			close(s);
 			return def_retval;

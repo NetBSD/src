@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.18 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: mpool.c,v 1.18.8.1 2009/05/13 19:18:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mpool.c,v 1.18 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.18.8.1 2009/05/13 19:18:23 jym Exp $");
 
 #include "namespace.h"
 #include <sys/queue.h>
@@ -341,7 +341,7 @@ mpool_bkt(MPOOL *mp)
 			return (bp);
 		}
 
-new:	if ((bp = (BKT *)malloc((size_t)(sizeof(BKT) + mp->pagesize))) == NULL)
+new:	if ((bp = calloc(1, (size_t)(sizeof(BKT) + mp->pagesize))) == NULL)
 		return (NULL);
 #ifdef STATISTICS
 	++mp->pagealloc;

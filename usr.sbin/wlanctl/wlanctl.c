@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.10 2007/12/22 00:58:15 dyoung Exp $ */
+/* $NetBSD: wlanctl.c,v 1.10.12.1 2009/05/13 19:20:44 jym Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -98,7 +98,7 @@ print_rateset(struct ieee80211_rateset *rs, int txrate)
 static void
 print_flags(u_int32_t flags, const struct flagname *flagnames, u_int nname)
 {
-	int i;
+	u_int i;
 	const char *delim;
 	delim = "<";
 
@@ -115,7 +115,7 @@ print_flags(u_int32_t flags, const struct flagname *flagnames, u_int nname)
 static void
 print_node_flags(u_int32_t flags)
 {
-	const static struct flagname nodeflags[] = {
+	static const struct flagname nodeflags[] = {
 		  {IEEE80211_NODE_SYSCTL_F_BSS, "bss"}
 		, {IEEE80211_NODE_SYSCTL_F_STA, "sta"}
 		, {IEEE80211_NODE_SYSCTL_F_SCAN, "scan"}
@@ -128,7 +128,7 @@ print_node_flags(u_int32_t flags)
 static void
 print_capinfo(u_int16_t capinfo)
 {
-	const static struct flagname capflags[] = {
+	static const struct flagname capflags[] = {
 		{IEEE80211_CAPINFO_ESS, "ess"},
 		{IEEE80211_CAPINFO_IBSS, "ibss"},
 		{IEEE80211_CAPINFO_CF_POLLABLE, "cf pollable"},
@@ -158,7 +158,7 @@ ether_string(u_int8_t *addr)
 static void
 print_channel(u_int16_t chanidx, u_int16_t freq, u_int16_t flags)
 {
-	const static struct flagname chanflags[] = {
+	static const struct flagname chanflags[] = {
 		{IEEE80211_CHAN_TURBO, "turbo"},
 		{IEEE80211_CHAN_CCK, "cck"},
 		{IEEE80211_CHAN_OFDM, "ofdm"},

@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.11 2003/05/18 07:57:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.42.1 2009/05/13 19:19:57 jym Exp $
+
+WARNS?= 1	# XXX -Wshadow -Wcast-qual issues
 
 .include <bsd.own.mk>
 
 PROG=		menuc
 SRCS=		main.c parse.y scan.l avl.c mdb.c util.c
-CPPFLAGS+=	-I. -I${.CURDIR}
+CPPFLAGS+=	-I. -I${.CURDIR} -DYY_NO_INPUT
 YHEADER=
 
 .if ${MKSHARE} != "no"

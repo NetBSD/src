@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.13 2008/02/16 18:27:48 matt Exp $
+# $NetBSD: Makefile,v 1.13.12.1 2009/05/13 19:19:57 jym Exp $
+
+WARNS?=	1	# XXX -Wextra -Wshadow
 
 NOMAN=	# defined
 NOLINT= # defined
@@ -7,8 +9,6 @@ NOLINT= # defined
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/sl
-
-WARNS?=  1
 
 PROG= mk_cmds
 

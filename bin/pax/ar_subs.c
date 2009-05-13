@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.54 2007/05/04 21:19:36 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.54.20.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.54 2007/05/04 21:19:36 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.54.20.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -930,8 +930,8 @@ copy(void)
 	int res;
 	int fddest;
 	char *dest_pt;
-	int dlen;
-	int drem;
+	size_t dlen;
+	size_t drem;
 	int fdsrc = -1;
 	struct stat sb;
 	char dirbuf[PAXPATHLEN+1];

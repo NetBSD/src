@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.156 2008/05/10 00:05:31 skd Exp $	*/
+/*	$NetBSD: ftp.c,v 1.156.6.1 2009/05/13 19:19:50 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.156 2008/05/10 00:05:31 skd Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.156.6.1 2009/05/13 19:19:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ struct sockinet {
 struct sockinet myctladdr, hisctladdr, data_addr;
 
 char *
-hookup(char *host, char *port)
+hookup(const char *host, const char *port)
 {
 	int s = -1, error;
 	struct addrinfo hints, *res, *res0;
@@ -362,7 +362,7 @@ int
 getreply(int expecteof)
 {
 	char current_line[BUFSIZ];	/* last line of previous reply */
-	int c, n, line;
+	int c, n, lineno;
 	int dig;
 	int originalcode = 0, continuation = 0;
 	sigfunc oldsigint, oldsigalrm;
@@ -375,7 +375,7 @@ getreply(int expecteof)
 	oldsigint = xsignal(SIGINT, cmdabort);
 	oldsigalrm = xsignal(SIGALRM, cmdtimeout);
 
-	for (line = 0 ;; line++) {
+	for (lineno = 0 ;; lineno++) {
 		dig = n = code = 0;
 		cp = current_line;
 		while (alarmtimer(quit_time ? quit_time : 60),
@@ -480,10 +480,10 @@ getreply(int expecteof)
 		if (cp[-1] == '\r')
 			cp[-1] = '\0';
 		*cp = '\0';
-		if (line == 0)
+		if (lineno == 0)
 			(void)strlcpy(reply_string, current_line,
 			    sizeof(reply_string));
-		if (line > 0 && code == 0 && reply_callback != NULL)
+		if (lineno > 0 && code == 0 && reply_callback != NULL)
 			(*reply_callback)(current_line);
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
@@ -507,14 +507,14 @@ getreply(int expecteof)
 }
 
 static int
-empty(FILE *cin, FILE *din, int sec)
+empty(FILE *ecin, FILE *din, int sec)
 {
 	int		nr, nfd;
 	struct pollfd	pfd[2];
 
 	nfd = 0;
-	if (cin) {
-		pfd[nfd].fd = fileno(cin);
+	if (ecin) {
+		pfd[nfd].fd = fileno(ecin);
 		pfd[nfd++].events = POLLIN;
 	}
 
@@ -528,7 +528,7 @@ empty(FILE *cin, FILE *din, int sec)
 
 	nr = 0;
 	nfd = 0;
-	if (cin)
+	if (ecin)
 		nr |= (pfd[nfd++].revents & POLLIN) ? 1 : 0;
 	if (din)
 		nr |= (pfd[nfd++].revents & POLLIN) ? 2 : 0;
@@ -598,7 +598,7 @@ copy_bytes(int infd, int outfd, char *buf, size_t bufsize,
 					/* copy bufchunk at a time */
 		bufrem = bufchunk;
 		while (bufrem > 0) {
-			inc = read(infd, buf, MIN(bufsize, bufrem));
+			inc = read(infd, buf, MIN((off_t)bufsize, bufrem));
 			if (inc <= 0)
 				goto copy_done;
 			bytes += inc;
@@ -660,7 +660,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	sigfunc volatile oldintp;
 	off_t volatile hashbytes;
 	int hash_interval;
-	char *volatile lmode;
+	const char *lmode;
 	static size_t bufsize;
 	static char *buf;
 	int oprogress;
@@ -764,7 +764,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	if (dout == NULL)
 		goto abort;
 
-	if (sndbuf_size > bufsize) {
+	if ((size_t)sndbuf_size > bufsize) {
 		if (buf)
 			(void)free(buf);
 		bufsize = sndbuf_size;
@@ -1025,7 +1025,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 		progress = 0;
 		preserve = 0;
 	}
-	if (rcvbuf_size > bufsize) {
+	if ((size_t)rcvbuf_size > bufsize) {
 		if (buf)
 			(void)free(buf);
 		bufsize = rcvbuf_size;
@@ -1199,7 +1199,7 @@ initconn(void)
 	unsigned int addr[16], port[2];
 	unsigned int af, hal, pal;
 	socklen_t len;
-	char *pasvcmd = NULL;
+	const char *pasvcmd = NULL;
 	int overbose;
 
 #ifdef INET6
@@ -1423,7 +1423,7 @@ initconn(void)
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
 			    {
-				int i;
+				size_t i;
 				for (i = 0; i < sizeof(struct in6_addr); i++) {
 					data_addr.si_su.su_sin6.sin6_addr.s6_addr[i] =
 					    UC(addr[i]);
@@ -1530,7 +1530,6 @@ initconn(void)
 
 	if (sendport) {
 		char hname[NI_MAXHOST], sname[NI_MAXSERV];
-		int af;
 		struct sockinet tmp;
 
 		switch (data_addr.su_family) {
@@ -1561,7 +1560,7 @@ initconn(void)
 				overbose = verbose;
 				if (ftp_debug == 0)
 					verbose = -1;
-				result = command("EPRT |%d|%s|%s|", af, hname,
+				result = command("EPRT |%u|%s|%s|", af, hname,
 				    sname);
 				verbose = overbose;
 				if (verbose > 0 &&
@@ -1625,8 +1624,9 @@ initconn(void)
 	if (data_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS,
-				(void *)&on, sizeof(on)) == -1)
+				(void *)&on, sizeof(on)) == -1) {
 			DWARN("setsockopt %s (ignored)", "IPTOS_THROUGHPUT");
+		}
 	}
 #endif
 	return (0);
@@ -1832,7 +1832,7 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 	sigfunc volatile oldintr;
 	int prox_type, nfnd;
 	int volatile secndflag;
-	char *volatile cmd2;
+	const char *volatile cmd2;
 
 	oldintr = NULL;
 	secndflag = 0;

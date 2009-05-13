@@ -1,4 +1,4 @@
-.\"	$NetBSD: unvis.3,v 1.17 2005/11/10 17:23:26 christos Exp $
+.\"	$NetBSD: unvis.3,v 1.17.30.1 2009/05/13 19:18:23 jym Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unvis.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 11, 2005
+.Dd February 10, 2009
 .Dt UNVIS 3
 .Os
 .Sh NAME
@@ -98,8 +98,10 @@ function,
 but it allows you to add a flag that specifies the style the string
 .Ar src
 is encoded with.
-Currently, the only supported flag is
-.Dv VIS_HTTPSTYLE .
+Currently, the supported flags are:
+.Dv VIS_HTTPSTYLE
+and
+.Dv VIS_MIMESTYLE .
 .Pp
 The
 .Fn unvis
@@ -149,6 +151,10 @@ If set to
 .Dv VIS_HTTPSTYLE ,
 .Fn unvis
 will decode URI strings as specified in RFC 1808.
+If set to
+.Dv VIS_MIMESTYLE ,
+.Fn unvis
+will decode MIME Quoted-Printable strings as specified in RFC 2045.
 .Pp
 The following code fragment illustrates a proper use of
 .Fn unvis .

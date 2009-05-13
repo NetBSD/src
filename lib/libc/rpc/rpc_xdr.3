@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_xdr.new 1.1 89/04/06 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\" $NetBSD: rpc_xdr.3,v 1.7 2003/04/16 13:34:43 wiz Exp $
+.\" $NetBSD: rpc_xdr.3,v 1.7.42.1 2009/05/13 19:18:26 jym Exp $
 .Dd May 3, 1993
 .Dt RPC_XDR 3
 .Os
@@ -60,9 +60,7 @@ Used for describing UNIX operating system credentials.
 It includes machine-name, uid, gid list, etc.
 .Pp
 .It Fn xdr_callhdr
-Used for describing
-.SM RPC
-call header messages.
+Used for describing RPC call header messages.
 It encodes the static part of the call message header in the
 XDR language format.
 It includes information such as transaction

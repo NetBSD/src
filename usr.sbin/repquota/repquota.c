@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.23 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.23.6.1 2009/05/13 19:20:37 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ __RCSID("$NetBSD: repquota.c,v 1.23 2008/07/21 13:36:59 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES;
+const char *qfname = QUOTAFILENAME;
+const char *qfextension[] = INITQFNAMES;
 
 struct fileusage {
 	struct	fileusage *fu_next;
@@ -83,7 +83,7 @@ struct fileusage *lookup __P((u_long, int));
 int	main __P((int, char **));
 int	oneof __P((const char *, char **, int));
 int	repquota __P((struct fstab *, int, char *));
-char   *timeprt __P((time_t));
+const char *timeprt __P((time_t));
 void	usage __P((void));
 
 int
@@ -368,7 +368,7 @@ addid(id, type, name)
 /*
  * Calculate the grace period and return a printable string for it.
  */
-char *
+const char *
 timeprt(seconds)
 	time_t seconds;
 {

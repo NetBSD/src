@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.44 2008/11/16 07:06:37 dholland Exp $ */
+/* $NetBSD: decl.c,v 1.44.2.1 2009/05/13 19:20:13 jym Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.44 2008/11/16 07:06:37 dholland Exp $");
+__RCSID("$NetBSD: decl.c,v 1.44.2.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -863,7 +863,7 @@ length(type_t *tp, const char *name)
 int
 getbound(type_t *tp)
 {
-	int	a;
+	size_t	a;
 	tspec_t	t;
 
 	while (tp && tp->t_tspec == ARRAY)
@@ -1079,7 +1079,7 @@ decl1str(sym_t *dsym)
 					tp->t_flen = size(t);
 			}
 		}
-		if ((len = tp->t_flen) < 0 || len > size(t)) {
+		if ((len = tp->t_flen) < 0 || len > (ssize_t)size(t)) {
 			/* illegal bit-field size */
 			error(36);
 			tp->t_flen = size(t);
@@ -1994,6 +1994,31 @@ isredec(sym_t *dsym, int *dowarn)
 	return (0);
 }
 
+static int
+chkqual(type_t *tp1, type_t *tp2, int ignqual)
+{
+	if (tp1->t_const != tp2->t_const && !ignqual && !tflag)
+		return 0;
+
+	if (tp1->t_volatile != tp2->t_volatile && !ignqual && !tflag)
+		return 0;
+
+	return 1;
+}
+
+int
+eqptrtype(type_t *tp1, type_t *tp2, int ignqual)
+{
+	if (tp1->t_tspec != VOID && tp2->t_tspec != VOID)
+		return 0;
+
+	if (!chkqual(tp1, tp2, ignqual))
+		return 0;
+
+	return 1;
+}
+
+
 /*
  * Checks if two types are compatible. Returns 0 if not, otherwise 1.
  *
@@ -2029,11 +2054,8 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
 		if (t != tp2->t_tspec)
 			return (0);
 
-		if (tp1->t_const != tp2->t_const && !ignqual && !tflag)
-			return (0);
-
-		if (tp1->t_volatile != tp2->t_volatile && !ignqual && !tflag)
-			return (0);
+		if (!chkqual(tp1, tp2, ignqual))
+			return 0;
 
 		if (t == STRUCT || t == UNION)
 			return (tp1->t_str == tp2->t_str);

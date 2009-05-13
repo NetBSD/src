@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.55 2008/02/24 20:42:46 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.55.10.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -216,7 +216,7 @@ int do_chroot;
  * pat_rep.c
  */
 int rep_add(char *);
-int pat_add(char *, char *);
+int pat_add(char *, char *, int);
 void pat_chk(void);
 int pat_sel(ARCHD *);
 int pat_match(ARCHD *);

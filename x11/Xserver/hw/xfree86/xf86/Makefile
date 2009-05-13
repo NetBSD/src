@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/03/08 10:39:00 phx Exp $
+#	$NetBSD: Makefile,v 1.11.8.1 2009/05/13 19:20:48 jym Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -17,7 +17,7 @@ SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c \
 	xf86xvmc.c xf86cmap.c xf86PM.c xf86Versions.c xf86Debug.c \
 	xf86KbdBSD.c xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
 
-.if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
+.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
 SRCS+=	xf86sbusBus.c
 CPPFLAGS+=-DUSE_MODULAR_KBD
 .endif
@@ -73,7 +73,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
 

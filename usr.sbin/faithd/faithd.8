@@ -1,4 +1,4 @@
-.\"	$NetBSD: faithd.8,v 1.23 2003/09/07 16:22:25 wiz Exp $
+.\"	$NetBSD: faithd.8,v 1.23.40.1 2009/05/13 19:20:22 jym Exp $
 .\"	$KAME: faithd.8,v 1.37 2002/05/09 14:21:23 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -282,7 +282,7 @@ Before invoking
 .Nm ,
 .Xr faith 4
 interface has to be configured properly.
-.Bd -literal -offset
+.Bd -literal
 # sysctl -w net.inet6.ip6.accept_rtadv=0
 # sysctl -w net.inet6.ip6.forwarding=1
 # sysctl -w net.inet6.ip6.keepfaith=1
@@ -296,7 +296,7 @@ To translate
 service, and provide no local telnet service, invoke
 .Nm
 as follows:
-.Bd -literal -offset
+.Bd -literal
 # faithd telnet
 .Ed
 .Pp
@@ -305,12 +305,12 @@ If you would like to provide local telnet service via
 on
 .Pa /usr/libexec/telnetd ,
 use the following command line:
-.Bd -literal -offset
+.Bd -literal
 # faithd telnet /usr/libexec/telnetd telnetd
 .Ed
 .Pp
 If you would like to pass extra arguments to the local daemon:
-.Bd -literal -offset
+.Bd -literal
 # faithd ftp /usr/libexec/ftpd ftpd -l
 .Ed
 .Pp
@@ -318,7 +318,7 @@ Here are some other examples.
 You may need
 .Fl p
 if the service checks the source port range.
-.Bd -literal -offset
+.Bd -literal
 # faithd ssh
 # faithd telnet /usr/libexec/telnetd telnetd
 .Ed
@@ -326,7 +326,7 @@ if the service checks the source port range.
 Add the following lines into
 .Xr inetd.conf 5 .
 .\"Syntax may vary depending upon your operating system.
-.Bd -literal -offset
+.Bd -literal
 telnet  stream  faith/tcp6  nowait  root  faithd  telnetd
 ftp     stream  faith/tcp6  nowait  root  faithd  ftpd -l
 ssh     stream  faith/tcp6  nowait  root  faithd  /usr/sbin/sshd -i
@@ -349,7 +349,7 @@ will invoke service-specific daemon like
 The following illustrates a simple
 .Pa faithd.conf
 setting.
-.Bd -literal -offset
+.Bd -literal
 # permit anyone from 3ffe:501:ffff::/48 to use the translator,
 # to connect to the following IPv4 destinations:
 # - any location except 10.0.0.0/8 and 127.0.0.0/8.

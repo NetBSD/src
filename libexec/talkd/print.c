@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2006/03/17 02:12:15 elad Exp $	*/
+/*	$NetBSD: print.c,v 1.8.28.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.8 2006/03/17 02:12:15 elad Exp $");
+__RCSID("$NetBSD: print.c,v 1.8.28.1 2009/05/13 19:18:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,11 +43,12 @@ __RCSID("$NetBSD: print.c,v 1.8 2006/03/17 02:12:15 elad Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <protocols/talkd.h>
+#include <inttypes.h>
 #include <syslog.h>
 #include <stdio.h>
 #include "extern.h"
 
-static	char *types[] = {
+static	const char *types[] = {
 	"leave_invite",
 	"look_up",
 	"delete",
@@ -55,7 +56,7 @@ static	char *types[] = {
 };
 #define	NTYPES	(sizeof (types) / sizeof (types[0]))
 
-static	char *answers[] = {
+static	const char *answers[] = {
 	"success",
 	"not_here",
 	"failed",
@@ -69,11 +70,10 @@ static	char *answers[] = {
 #define	NANSWERS	(sizeof (answers) / sizeof (answers[0]))
 
 void
-print_request(cp, mp)
-	char *cp;
-	CTL_MSG *mp;
+print_request(const char *cp, CTL_MSG *mp)
 {
-	char tbuf[80], *tp;
+	char tbuf[80];
+	const char *tp;
 	
 	if (mp->type >= NTYPES) {
 		(void)snprintf(tbuf, sizeof tbuf, "type %d", mp->type);
@@ -81,16 +81,15 @@ print_request(cp, mp)
 	} else
 		tp = types[mp->type];
 	syslog(debug ? LOG_DEBUG : LOG_INFO,
-	    "%s: %s: id %d, l_user %s, r_user %s, r_tty %s",
+	    "%s: %s: id %"PRIu32", l_user %s, r_user %s, r_tty %s",
 	    cp, tp, mp->id_num, mp->l_name, mp->r_name, mp->r_tty);
 }
 
 void
-print_response(cp, rp)
-	char *cp;
-	CTL_RESPONSE *rp;
+print_response(const char *cp, CTL_RESPONSE *rp)
 {
-	char tbuf[80], *tp, abuf[80], *ap;
+	char tbuf[80], abuf[80];
+	const char *tp, *ap;
 	
 	if (rp->type >= NTYPES) {
 		(void)snprintf(tbuf, sizeof tbuf, "type %d", rp->type);
@@ -102,6 +101,6 @@ print_response(cp, rp)
 		ap = abuf;
 	} else
 		ap = answers[rp->answer];
-	syslog(debug ? LOG_DEBUG : LOG_INFO, "%s: %s: %s, id %d",
+	syslog(debug ? LOG_DEBUG : LOG_INFO, "%s: %s: %s, id %"PRIu32,
 	    cp, tp, ap, ntohl(rp->id_num));
 }

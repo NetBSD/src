@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.15 2008/05/16 09:21:59 hannken Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.15.6.1 2009/05/13 19:18:42 jym Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ void pwarn(const char *unused, ...) { /* Does nothing */ };
  * Log a message if debugging is turned on.
  */
 void
-dlog(char *fmt, ...)
+dlog(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -116,12 +116,12 @@ dlog(char *fmt, ...)
  * become unmounted or other error condition.
  */
 void
-handle_error(struct clfs **fsp, int n)
+handle_error(struct clfs **cfsp, int n)
 {
-	syslog(LOG_NOTICE, "%s: detaching cleaner", fsp[n]->lfs_fsmnt);
-	free(fsp[n]);
+	syslog(LOG_NOTICE, "%s: detaching cleaner", cfsp[n]->lfs_fsmnt);
+	free(cfsp[n]);
 	if (n != nfss - 1)
-		fsp[n] = fsp[nfss - 1];
+		cfsp[n] = cfsp[nfss - 1];
 	--nfss;
 }
 
@@ -599,7 +599,7 @@ log_segment_read(struct clfs *fs, int sn)
 
         fp = fopen(copylog_filename, "ab");
         if (fp != NULL) {
-                if (fwrite(cp, (size_t)fs->lfs_ssize, 1, fp) < 0) {
+                if (fwrite(cp, (size_t)fs->lfs_ssize, 1, fp) != 1) {
                         perror("writing segment to copy log");
                 }
         }
@@ -684,7 +684,7 @@ calc_cb(struct clfs *fs, int sn, struct clfs_seguse *t)
 		return;
 	}
 
-	if (t->nbytes < 0 || t->nbytes > fs->lfs_ssize) {
+	if (t->nbytes > fs->lfs_ssize) {
 		/* Another type of error */
 		syslog(LOG_WARNING, "segment %d: bad seguse count %d",
 		       sn, t->nbytes);
@@ -725,10 +725,10 @@ calc_cb(struct clfs *fs, int sn, struct clfs_seguse *t)
 static int
 bi_comparator(const void *va, const void *vb)
 {
-	BLOCK_INFO *a, *b;
+	const BLOCK_INFO *a, *b;
 
-	a = (BLOCK_INFO *)va;
-	b = (BLOCK_INFO *)vb;
+	a = (const BLOCK_INFO *)va;
+	b = (const BLOCK_INFO *)vb;
 
 	/* Check for out-of-place block */
 	if (a->bi_segcreate == a->bi_daddr &&
@@ -765,10 +765,10 @@ bi_comparator(const void *va, const void *vb)
 static int
 cb_comparator(const void *va, const void *vb)
 {
-	struct clfs_seguse *a, *b;
+	const struct clfs_seguse *a, *b;
 
-	a = *(struct clfs_seguse **)va;
-	b = *(struct clfs_seguse **)vb;
+	a = *(const struct clfs_seguse * const *)va;
+	b = *(const struct clfs_seguse * const *)vb;
 	return a->priority > b->priority ? -1 : 1;
 }
 

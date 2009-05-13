@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.10 2002/11/05 14:18:05 thorpej Exp $	*/
+/*	$NetBSD: mopd.c,v 1.10.40.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.10 2002/11/05 14:18:05 thorpej Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.10.40.1 2009/05/13 19:20:29 jym Exp $");
 #endif
 
 /*
@@ -72,7 +72,7 @@ int	VersionFlag = 0;	/* print version              */
 int	Not3Flag = 0;		/* Not MOP V3 messages.       */
 int	Not4Flag = 0;		/* Not MOP V4 messages.       */
 int	promisc = 1;		/* Need promisc mode    */
-char	*MopdDir = MOP_FILE_PATH;  /* Path to mop directory  */
+const char *MopdDir = MOP_FILE_PATH;  /* Path to mop directory  */
 
 int
 main(argc, argv)
@@ -181,7 +181,7 @@ mopProcess(ii, pkt)
 {
 	u_char	*dst, *src;
 	u_short  ptype;
-	int	 index, trans, len;
+	int	 idx, trans, len;
 
 	/* We don't known with transport, Guess! */
 
@@ -192,8 +192,8 @@ mopProcess(ii, pkt)
 	if ((trans == TRANS_ETHER) && Not3Flag) return;
 	if ((trans == TRANS_8023) && Not4Flag)	return;
 
-	index = 0;
-	mopGetHeader(pkt, &index, &dst, &src, &ptype, &len, trans);
+	idx = 0;
+	mopGetHeader(pkt, &idx, &dst, &src, &ptype, &len, trans);
 
 	/*
 	 * Ignore our own transmissions
@@ -204,10 +204,10 @@ mopProcess(ii, pkt)
 
 	switch(ptype) {
 	case MOP_K_PROTO_DL:
-		mopProcessDL(stdout, ii, pkt, &index, dst, src, trans, len);
+		mopProcessDL(stdout, ii, pkt, &idx, dst, src, trans, len);
 		break;
 	case MOP_K_PROTO_RC:
-		mopProcessRC(stdout, ii, pkt, &index, dst, src, trans, len);
+		mopProcessRC(stdout, ii, pkt, &idx, dst, src, trans, len);
 		break;
 	default:
 		break;

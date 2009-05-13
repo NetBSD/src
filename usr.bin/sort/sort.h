@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.19 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: sort.h,v 1.19.8.1 2009/05/13 19:20:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

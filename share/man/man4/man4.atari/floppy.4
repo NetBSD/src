@@ -1,4 +1,4 @@
-.\"	$NetBSD: floppy.4,v 1.6 2001/04/21 14:31:39 wiz Exp $
+.\"	$NetBSD: floppy.4,v 1.6.44.1 2009/05/13 19:19:10 jym Exp $
 .\"
 .\" Copyright (c) 1995 Leo Weppelman
 .\" All rights reserved.
@@ -48,11 +48,11 @@ floppy interface uses the partition number embedded in the minor device number
 to distinguish between various floppy formats.
 .Pp
 Currently, the following formats are supported:
-.Bl -column header Partition Size sides tracks sectors/track
-.Sy    "Partition   Size   sides  tracks  sectors/track"
-    a       360Kb    1      80          9
-    b       720Kb    2      80          9
-    c      1.44Mb    2      80         18
+.Bl -column Partition Size sides tracks sectors/track
+.It Sy Partition Ta Sy Size  Ta Sy sides Ta Sy tracks Ta Sy sectors/track
+.It a Ta  360Kb Ta 1 Ta 80 Ta 9
+.It b Ta  720Kb Ta 2 Ta 80 Ta 9
+.It c Ta 1.44Mb Ta 2 Ta 80 Ta 18
 .El
 .Sh FILES
 .Bl -tag -width /dev/rfd[01][abc] -compact

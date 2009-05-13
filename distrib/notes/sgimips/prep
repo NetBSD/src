@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2008/10/29 17:01:50 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.9.4.1 2009/05/13 19:17:48 jym Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -52,13 +52,6 @@ to more suitable values.  For example:
 .Dl # Ic sysctl -w net.inet.ip.anonportmin=16384
 .Dl # Ic sysctl -w net.inet.ip.anonportmax=32767
 .Pp
-.Ic Note about installing on a O2:
-Unfortunately, the O2 graphics hardware is not supported yet. Thus,
-you have to use a serial console to boot and install
-NetBSD. Disconnect the keyboard from your target machine. Connect the
-O2 with a standard DB9 serial cable to a remote machine. After
-powering up the O2 you can connect to the serial console with
-.Pp
 .Dl "# cu -l /dev/ttyXX
 .Pp
 where XX is the serial port used on your remote machine (usually
@@ -72,5 +65,3 @@ environment with
 .Dl "\*[Gt] setenv console serial
 .Pp
 Afterwards, just continue with the normal installation procedure.
-.\" The O2 internal MACE Ethernet chip isn't supported yet, so to boot the O2
-.\" and mount nfsroot, you will need an external NIC in the PCI slot.

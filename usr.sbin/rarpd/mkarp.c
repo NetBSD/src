@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.7 2008/07/21 13:36:59 lukem Exp $ */
+/*	$NetBSD: mkarp.c,v 1.7.6.1 2009/05/13 19:20:36 jym Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.7 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.7.6.1 2009/05/13 19:20:36 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,10 @@ struct	{
 int
 mkarp(u_char *haddr, u_int32_t ipaddr)
 {
-	static struct sockaddr_inarp blank_sin = {sizeof(blank_sin), AF_INET };
-	static struct sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK };
+	static struct sockaddr_inarp blank_sin = {
+		sizeof(blank_sin), AF_INET, 0, { 0 }, { 0 }, 0, 0  };
+	static struct sockaddr_dl blank_sdl = {
+		sizeof(blank_sdl), AF_LINK, 0, 0, 0, 0, 0, { 0 } };
 
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
@@ -183,7 +185,7 @@ rtmsg(int cmd, int s, struct rt_msghdr *rtm, struct sockaddr_inarp *sin_m,
 	char *cp;
 	int l;
 	pid_t pid;
-	struct timeval time;
+	struct timeval tv;
 
 	rtm = &m_rtmsg.m_rtm;
 	cp = m_rtmsg.m_space;
@@ -200,8 +202,8 @@ rtmsg(int cmd, int s, struct rt_msghdr *rtm, struct sockaddr_inarp *sin_m,
 		/*NOTREACHED*/
 	case RTM_ADD:
 		rtm->rtm_addrs |= RTA_GATEWAY;
-		(void)gettimeofday(&time, 0);
-		rtm->rtm_rmx.rmx_expire = time.tv_sec + 20 * 60;
+		(void)gettimeofday(&tv, 0);
+		rtm->rtm_rmx.rmx_expire = tv.tv_sec + 20 * 60;
 		rtm->rtm_inits = RTV_EXPIRE;
 		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC);
 		sin_m->sin_other = 0;

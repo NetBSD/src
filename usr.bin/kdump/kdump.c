@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.102 2009/01/11 03:05:41 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.102.2.1 2009/05/13 19:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.102 2009/01/11 03:05:41 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.102.2.1 2009/05/13 19:19:53 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,33 @@ main(int argc, char **argv)
 	char *cp;
 
 	setprogname(argv[0]);
+
+	if (strcmp(getprogname(), "ioctlname") == 0) {
+		int i;
+
+		while ((ch = getopt(argc, argv, "e:")) != -1)
+			switch (ch) {
+			case 'e':
+				emul_name = optarg;
+				break;
+			default:
+				usage();
+				break;
+			}
+		setemul(emul_name, 0, 0);
+		argv += optind;
+		argc -= optind;
+
+		if (argc < 1)
+			usage();
+
+		for (i = 0; i < argc; i++) {
+			ioctldecode(strtoul(argv[i], NULL, 0));
+			(void)putchar('\n');
+		}
+		return 0;
+	}
+		
 	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:xX:")) != -1) {
 		switch (ch) {
 		case 'e':
@@ -455,9 +482,9 @@ ioctldecode(u_long cmd)
 
 	c = (cmd >> 8) & 0xff;
 	if (isprint(c))
-		printf(",_IO%s('%c',", dirbuf, c);
+		printf("_IO%s('%c',", dirbuf, c);
 	else
-		printf(",_IO%s(0x%02x,", dirbuf, c);
+		printf("_IO%s(0x%02x,", dirbuf, c);
 	output_long(cmd & 0xff, decimal == 0);
 	if ((cmd & IOC_VOID) == 0) {
 		putchar(',');
@@ -515,8 +542,10 @@ ktrsyscall(struct ktr_syscall *ktr)
 			argcount--;
 			if ((cp = ioctlname(*ap)) != NULL)
 				(void)printf(",%s", cp);
-			else
+			else {
+				(void)putchar(',');
 				ioctldecode(*ap);
+			}
 			ap++;
 			argcount--;
 			c = ',';
@@ -542,21 +571,21 @@ ktrsyscall(struct ktr_syscall *ktr)
 			if (strcmp(emul->name, "linux") == 0 ||
 			    strcmp(emul->name, "linux32") == 0) {
 				if ((long)*ap >= 0 && *ap <
-				    sizeof(linux_ptrace_ops) /
-				    sizeof(linux_ptrace_ops[0]))
+				    (register_t)(sizeof(linux_ptrace_ops) /
+				    sizeof(linux_ptrace_ops[0])))
 					(void)printf("%s",
 					    linux_ptrace_ops[*ap]);
 				else
 					output_long((long)*ap, 1);
 			} else {
 				if ((long)*ap >= 0 && *ap <
-				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
+				    (register_t)(sizeof(ptrace_ops) / sizeof(ptrace_ops[0])))
 					(void)printf("%s", ptrace_ops[*ap]);
 #ifdef PT_MACHDEP_STRINGS
 				else if (*ap >= PT_FIRSTMACH &&
 				    *ap - PT_FIRSTMACH <
-						sizeof(ptrace_machdep_ops) /
-						sizeof(ptrace_machdep_ops[0]))
+				    (register_t)(sizeof(ptrace_machdep_ops) /
+						sizeof(ptrace_machdep_ops[0])))
 					(void)printf("%s", ptrace_machdep_ops[*ap - PT_FIRSTMACH]);
 #endif
 				else
@@ -602,7 +631,7 @@ ktrsysret(struct ktr_sysret *ktr, int len)
 	switch (error) {
 	case 0:
 		rprint(ktr->ktr_retval);
-		if (len > offsetof(struct ktr_sysret, ktr_retval_1) &&
+		if (len > (int)offsetof(struct ktr_sysret, ktr_retval_1) &&
 		    ktr->ktr_retval_1 != 0) {
 			(void)printf(", ");
 			rprint(ktr->ktr_retval_1);
@@ -1035,7 +1064,7 @@ ktrmool(struct ktr_mool *mool, int len)
 static void
 ktrmib(int *namep, int len)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < (len / sizeof(*namep)); i++)
 		printf("%s%d", (i == 0) ? "" : ".", namep[i]);
@@ -1060,9 +1089,13 @@ signame(long sig, int xlat)
 static void
 usage(void)
 {
-
-	(void)fprintf(stderr, "Usage: %s [-dlNnRT] [-e emulation] "
-	   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
-	   "[-x | -X size] [file]\n", getprogname());
+	if (strcmp(getprogname(), "ioctlname") == 0) {
+		(void)fprintf(stderr, "Usage: %s [-e emulation] <ioctl> ...\n",
+		    getprogname());
+	} else {
+		(void)fprintf(stderr, "Usage: %s [-dlNnRT] [-e emulation] "
+		   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
+		   "[-x | -X size] [file]\n", getprogname());
+	}
 	exit(1);
 }

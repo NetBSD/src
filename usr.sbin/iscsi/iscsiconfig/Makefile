@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2006/02/20 09:01:39 agc Exp $
+# $NetBSD: Makefile,v 1.1.28.1 2009/05/13 19:20:25 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,5 @@ CPPFLAGS+= -pthread
 LDADD+=  -L${LIBDIR} -Wl,-R${LIBDIR} -liscsi
 LDFLAGS+= -pthread
 MAN= iscsiconfig.8
-WARNS=4
 
 .include <bsd.prog.mk>

@@ -1,9 +1,9 @@
-/*	$NetBSD: zic.c,v 1.23 2004/05/27 20:39:49 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.23.36.1 2009/05/13 19:18:28 jym Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zic.c,v 1.23 2004/05/27 20:39:49 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.23.36.1 2009/05/13 19:18:28 jym Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -1426,9 +1426,9 @@ atcomp(avp, bvp)
 const void *	avp;
 const void *	bvp;
 {
-	if (((struct attype *) avp)->at < ((struct attype *) bvp)->at)
+	if (((const struct attype *) avp)->at < ((const struct attype *) bvp)->at)
 		return -1;
-	else if (((struct attype *) avp)->at > ((struct attype *) bvp)->at)
+	else if (((const struct attype *) avp)->at > ((const struct attype *) bvp)->at)
 		return 1;
 	else	return 0;
 }

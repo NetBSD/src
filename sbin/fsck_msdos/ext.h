@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.12 2008/06/13 20:46:09 martin Exp $	*/
+/*	$NetBSD: ext.h,v 1.12.4.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -83,13 +83,13 @@ int writefsinfo(int, struct bootblock *);
  * Read one of the FAT copies and return a pointer to the new
  * allocated array holding our description of it.
  */
-int readfat(int, struct bootblock *, int, struct fatEntry **);
+int readfat(int, struct bootblock *, u_int, struct fatEntry **);
 
 /*
  * Check two FAT copies for consistency and merge changes into the
  * first if necessary.
  */
-int comparefat(struct bootblock *, struct fatEntry *, struct fatEntry *, int);
+int comparefat(struct bootblock *, struct fatEntry *, struct fatEntry *, u_int);
 
 /*
  * Check a FAT

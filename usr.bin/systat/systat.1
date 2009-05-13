@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.37 2007/02/18 17:29:26 dsl Exp $
+.\"	$NetBSD: systat.1,v 1.37.20.1 2009/05/13 19:20:07 jym Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -182,10 +182,7 @@ Print the load average over the past 1, 5, and 15 minutes
 on the command line.
 .It Ic stop
 Stop refreshing the screen.
-.It Xo
-.Op Ic start
-.Op Ar number
-.Xc
+.It Oo Ic start Oc Oo Ar number Oc
 Start (continue) refreshing the screen.
 If a second, numeric, argument is provided it is interpreted as a
 refresh interval in seconds.

@@ -1,6 +1,6 @@
-/*	$NetBSD: ssl-bozo.c,v 1.4 2008/05/10 19:25:20 mlelstv Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.4.6.1 2009/05/13 19:18:38 jym Exp $	*/
 
-/*	$eterna: ssl-bozo.c,v 1.7 2008/03/03 03:36:12 mrg Exp $	*/
+/*	$eterna: ssl-bozo.c,v 1.9 2008/11/06 05:08:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Matthew R. Green
@@ -15,8 +15,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

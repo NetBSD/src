@@ -1,4 +1,4 @@
-/*	$NetBSD: iteconfig.c,v 1.8 2003/09/27 19:35:14 mhitch Exp $	*/
+/*	$NetBSD: iteconfig.c,v 1.8.40.1 2009/05/13 19:20:26 jym Exp $	*/
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: iteconfig.c,v 1.8 2003/09/27 19:35:14 mhitch Exp $");
+__RCSID("$NetBSD: iteconfig.c,v 1.8.40.1 2009/05/13 19:20:26 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: iteconfig.c,v 1.8 2003/09/27 19:35:14 mhitch Exp $");
 
 #include "pathnames.h"
 
-int	initialize __P((char *, struct itewinsize *, struct itebell *,
+int	initialize __P((const char *, struct itewinsize *, struct itebell *,
 			struct itewinsize *, struct itebell *));
 int	main __P((int, char **));
 void	printcmap __P((colormap_t *, int));
@@ -85,7 +85,7 @@ main(argc, argv)
 	struct itebell ib, newib;
 	struct winsize ws;
 	colormap_t *cm;
-	char *file = _PATH_CONSOLE;
+	const char *file = _PATH_CONSOLE;
 	int ch, fd, i, iflag, max_colors, did_reset;
 	long val;
 
@@ -265,7 +265,7 @@ printcmap(cm, ncols)
 
 int
 initialize(file, is, ib, newis, newib)
-	char	*file;
+	const char	*file;
 	struct itewinsize *is, *newis;
 	struct itebell *ib, *newib;
 {

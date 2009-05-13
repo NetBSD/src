@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.70.6.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.70 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.70.6.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,138 +67,138 @@ __RCSID("$NetBSD: main.c,v 1.70 2008/07/21 14:19:24 lukem Exp $");
 
 struct nlist nl[] = {
 #define	N_MBSTAT	0
-	{ "_mbstat" },
+	{ "_mbstat", 0, 0, 0, 0 },
 #define	N_IPSTAT	1
-	{ "_ipstat" },		/* not available via kvm */
+	{ "_ipstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_TCBTABLE	2
-	{ "_tcbtable" },
+	{ "_tcbtable", 0, 0, 0, 0 },
 #define	N_TCPSTAT	3
-	{ "_tcpstat" },		/* not available via kvm */
+	{ "_tcpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_UDBTABLE	4
-	{ "_udbtable" },
+	{ "_udbtable", 0, 0, 0, 0 },
 #define	N_UDPSTAT	5
-	{ "_udpstat" },		/* not available via kvm */
+	{ "_udpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_IFNET		6
-	{ "_ifnet" },
+	{ "_ifnet", 0, 0, 0, 0 },
 #define	N_IMP		7
-	{ "_imp_softc" },
+	{ "_imp_softc", 0, 0, 0, 0 },
 #define	N_ICMPSTAT	8
-	{ "_icmpstat" },	/* not available via kvm */
+	{ "_icmpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_RTSTAT	9
-	{ "_rtstat" },
+	{ "_rtstat", 0, 0, 0, 0 },
 #define	N_UNIXSW	10
-	{ "_unixsw" },
+	{ "_unixsw", 0, 0, 0, 0 },
 #define	N_CLNPSTAT	11
-	{ "_clnp_stat"},
+	{ "_clnp_stat", 0, 0, 0, 0 },
 #define	IN_NOTUSED	12
-	{ "_tp_inpcb" },
+	{ "_tp_inpcb", 0, 0, 0, 0 },
 #define	ISO_TP		13
-	{ "_tp_refinfo" },
+	{ "_tp_refinfo", 0, 0, 0, 0 },
 #define	N_TPSTAT	14
-	{ "_tp_stat" },
+	{ "_tp_stat", 0, 0, 0, 0 },
 #define	N_ESISSTAT	15
-	{ "_esis_stat"},
+	{ "_esis_stat", 0, 0, 0, 0 },
 #define N_NIMP		16
-	{ "_nimp"},
+	{ "_nimp", 0, 0, 0, 0 },
 #define N_RTREE		17
-	{ "_rt_tables"},
+	{ "_rt_tables", 0, 0, 0, 0 },
 #define N_CLTP		18
-	{ "_cltb"},
+	{ "_cltb", 0, 0, 0, 0 },
 #define N_CLTPSTAT	19
-	{ "_cltpstat"},
+	{ "_cltpstat", 0, 0, 0, 0 },
 #define	N_NFILE		20
-	{ "_nfile" },
+	{ "_nfile", 0, 0, 0, 0 },
 #define	N_FILE		21
-	{ "_file" },
+	{ "_file", 0, 0, 0, 0 },
 #define N_IGMPSTAT	22
-	{ "_igmpstat" },	/* not available via kvm */
+	{ "_igmpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_MRTPROTO	23
-	{ "_ip_mrtproto" },
+	{ "_ip_mrtproto", 0, 0, 0, 0 },
 #define N_MRTSTAT	24
-	{ "_mrtstat" },
+	{ "_mrtstat", 0, 0, 0, 0 },
 #define N_MFCHASHTBL	25
-	{ "_mfchashtbl" },
+	{ "_mfchashtbl", 0, 0, 0, 0 },
 #define	N_MFCHASH	26
-	{ "_mfchash" },
+	{ "_mfchash", 0, 0, 0, 0 },
 #define N_VIFTABLE	27
-	{ "_viftable" },
+	{ "_viftable", 0, 0, 0, 0 },
 #define N_MSIZE		28
-	{ "_msize" },
+	{ "_msize", 0, 0, 0, 0 },
 #define N_MCLBYTES	29
-	{ "_mclbytes" },
+	{ "_mclbytes", 0, 0, 0, 0 },
 #define N_DDPSTAT	30
-	{ "_ddpstat"},		/* not available via kvm */
+	{ "_ddpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_DDPCB		31
-	{ "_ddpcb"},
+	{ "_ddpcb", 0, 0, 0, 0 },
 #define N_MBPOOL	32
-	{ "_mbpool" },
+	{ "_mbpool", 0, 0, 0, 0 },
 #define N_MCLPOOL	33
-	{ "_mclpool" },
+	{ "_mclpool", 0, 0, 0, 0 },
 #define N_DIVPCB	34
-	{ "_divcb"},
+	{ "_divcb", 0, 0, 0, 0 },
 #define N_DIVSTAT	35
-	{ "_divstat"},
+	{ "_divstat", 0, 0, 0, 0 },
 #define N_IP6STAT	36
-	{ "_ip6stat" },		/* not available via kvm */
+	{ "_ip6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_TCP6STAT	37
-	{ "_tcp6stat" },	/* not available via kvm */
+	{ "_tcp6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_UDP6STAT	38
-	{ "_udp6stat" },	/* not available via kvm */
+	{ "_udp6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_ICMP6STAT	39
-	{ "_icmp6stat" },	/* not available via kvm */
+	{ "_icmp6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_IPSECSTAT	40
-	{ "_ipsecstat" },	/* not available via kvm */
+	{ "_ipsecstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_IPSEC6STAT	41
-	{ "_ipsec6stat" },	/* not available via kvm */
+	{ "_ipsec6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_PIM6STAT	42
-	{ "_pim6stat" },	/* not available via kvm */
+	{ "_pim6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_MRT6PROTO	43
-	{ "_ip6_mrtproto" },
+	{ "_ip6_mrtproto", 0, 0, 0, 0 },
 #define N_MRT6STAT	44
-	{ "_mrt6stat" },
+	{ "_mrt6stat", 0, 0, 0, 0 },
 #define N_MF6CTABLE	45
-	{ "_mf6ctable" },
+	{ "_mf6ctable", 0, 0, 0, 0 },
 #define N_MIF6TABLE	46
-	{ "_mif6table" },
+	{ "_mif6table", 0, 0, 0, 0 },
 #define N_PFKEYSTAT	47
-	{ "_pfkeystat" },	/* not available via kvm */
+	{ "_pfkeystat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_ARPSTAT	48
-	{ "_arpstat" },		/* not available via kvm */
+	{ "_arpstat", 0, 0, 0, 0 },	/* not available via kvm */
 #define N_RIP6STAT	49
-	{ "_rip6stat" },	/* not available via kvm */
+	{ "_rip6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_ARPINTRQ	50
-	{ "_arpintrq" },
+	{ "_arpintrq", 0, 0, 0, 0 },
 #define	N_IPINTRQ	51
-	{ "_ipintrq" },
+	{ "_ipintrq", 0, 0, 0, 0 },
 #define	N_IP6INTRQ	52
-	{ "_ip6intrq" },
+	{ "_ip6intrq", 0, 0, 0, 0 },
 #define	N_ATINTRQ1	53
-	{ "_atintrq1" },
+	{ "_atintrq1", 0, 0, 0, 0 },
 #define	N_ATINTRQ2	54
-	{ "_atintrq2" },
+	{ "_atintrq2", 0, 0, 0, 0 },
 #define	N_NSINTRQ	55
-	{ "_nsintrq" },
+	{ "_nsintrq", 0, 0, 0, 0 },
 #define	N_CLNLINTRQ	56
-	{ "_clnlintrq" },
+	{ "_clnlintrq", 0, 0, 0, 0 },
 #define	N_LLCINTRQ	57
-	{ "_llcintrq" },
+	{ "_llcintrq", 0, 0, 0, 0 },
 #define	N_HDINTRQ	58
-	{ "_hdintrq" },
+	{ "_hdintrq", 0, 0, 0, 0 },
 #define	N_NATMINTRQ	59
-	{ "_natmintrq" },
+	{ "_natmintrq", 0, 0, 0, 0 },
 #define	N_PPPOEDISCINQ	61
-	{ "_ppoediscinq" },
+	{ "_ppoediscinq", 0, 0, 0, 0 },
 #define	N_PPPOEINQ	61
-	{ "_ppoeinq" },
+	{ "_ppoeinq", 0, 0, 0, 0 },
 #define	N_PKINTRQ	62
-	{ "_pkintrq" },
+	{ "_pkintrq", 0, 0, 0, 0 },
 #define	N_HARDCLOCK_TICKS 63
-	{ "_hardclock_ticks" },
+	{ "_hardclock_ticks", 0, 0, 0, 0 },
 #define N_PIMSTAT	64
-	{ "_pimstat" },
+	{ "_pimstat", 0, 0, 0, 0 },
 #define N_CARPSTAT	65
-	{ "_carpstats" },	/* not available via kvm */
-	{ "" },
+	{ "_carpstats", 0, 0, 0, 0 },	/* not available via kvm */
+	{ "", 0, 0, 0, 0 },
 };
 
 struct protox {
@@ -206,14 +206,14 @@ struct protox {
 	u_char	pr_sindex;		/* index into nlist of stat block */
 	u_char	pr_wanted;		/* 1 if wanted, 0 otherwise */
 	void	(*pr_cblocks)		/* control blocks printing routine */
-			__P((u_long, char *));
+			__P((u_long, const char *));
 	void	(*pr_stats)		/* statistics printing routine */
-			__P((u_long, char *));
+			__P((u_long, const char *));
 	void	(*pr_istats)
-			__P((char *));	/* per/if statistics printing routine */
+			__P((const char *));	/* per/if statistics printing routine */
 	void	(*pr_dump)		/* PCB state dump routine */
 			__P((u_long));
-	char	*pr_name;		/* well-known name */
+	const char *pr_name;		/* well-known name */
 } protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
 	  tcp_stats,	NULL,		tcp_dump,	"tcp" },
@@ -286,7 +286,7 @@ struct protox atalkprotox[] = {
 	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
 	  ddp_stats,	NULL,		0,	"ddp" },
 	{ -1,		-1,		0,	0,
-	  0,		NULL,		0 }
+	  0,		NULL,		0,	NULL }
 };
 
 struct protox isoprotox[] = {
@@ -337,15 +337,16 @@ const struct softintrq {
 };
 
 int main __P((int, char *[]));
-static void printproto __P((struct protox *, char *));
+static void printproto __P((struct protox *, const char *));
 static void print_softintrq __P((void));
 static void usage __P((void));
-static struct protox *name2protox __P((char *));
-static struct protox *knownname __P((char *));
+static struct protox *name2protox __P((const char *));
+static struct protox *knownname __P((const char *));
 static void prepare(char *, char *, struct protox *tp);
 
 kvm_t *kvmd;
 gid_t egid;
+int interval;	/* repeat interval for i/f stats */
 
 void
 prepare(char *nlistf, char *memf, struct protox *tp)
@@ -692,9 +693,9 @@ main(argc, argv)
 static void
 printproto(tp, name)
 	struct protox *tp;
-	char *name;
+	const char *name;
 {
-	void (*pr) __P((u_long, char *));
+	void (*pr) __P((u_long, const char *));
 	u_long off;
 
 	if (sflag) {
@@ -757,7 +758,7 @@ kread(addr, buf, size)
 	return (0);
 }
 
-char *
+const char *
 plural(n)
 	int n;
 {
@@ -765,7 +766,7 @@ plural(n)
 	return (n != 1 ? "s" : "");
 }
 
-char *
+const char *
 plurales(n)
 	int n;
 {
@@ -788,7 +789,7 @@ get_hardticks(void)
  */
 static struct protox *
 knownname(name)
-	char *name;
+	const char *name;
 {
 	struct protox **tpp, *tp;
 
@@ -804,7 +805,7 @@ knownname(name)
  */
 static struct protox *
 name2protox(name)
-	char *name;
+	const char *name;
 {
 	struct protox *tp;
 	char **alias;			/* alias from p->aliases */

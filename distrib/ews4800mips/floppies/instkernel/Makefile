@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/06/23 02:16:53 matt Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2009/05/13 19:17:42 jym Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -20,7 +20,7 @@ ${BOOT_RAMDISK}.gz:	netbsd-RAMDISK.gz ${DESTDIR}/usr/mdec/boot_kernel.gz
 	gunzip -c ${DESTDIR}/usr/mdec/boot_kernel.gz > ${BOOT_RAMDISK}.tmp
 	${TOOL_MDSETIMAGE} ${BOOT_RAMDISK}.tmp netbsd-RAMDISK.gz
 	${ELF2ECOFF} ${BOOT_RAMDISK}.tmp ${BOOT_RAMDISK}.coff
-	gzip -9c ${BOOT_RAMDISK}.coff > ${.TARGET}
+	gzip -9nc ${BOOT_RAMDISK}.coff > ${.TARGET}
 
 CLEANFILES+=	${BOOT_RAMDISK}.tmp ${BOOT_RAMDISK}.coff ${BOOT_RAMDISK}.gz
 

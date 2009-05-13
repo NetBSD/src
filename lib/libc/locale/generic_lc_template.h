@@ -1,4 +1,4 @@
-/* $NetBSD: generic_lc_template.h,v 1.2 2009/01/11 02:46:28 christos Exp $ */
+/* $NetBSD: generic_lc_template.h,v 1.2.4.1 2009/05/13 19:18:25 jym Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -29,17 +29,10 @@
 #ifndef _GENERIC_LC_TEMPLATE_H_
 #define _GENERIC_LC_TEMPLATE_H_
 
-#ifdef __lint__
-#define STATIC	/**/
-#else
-#define STATIC	static
-#endif
-
 #define _LOCALE_CATEGORY_ENTRY(name)			\
-STATIC const _locale_category_t name##desc = {		\
+const _locale_category_t name##desc = {			\
     .category = _CATEGORY_ID,				\
     .setlocale = &name##setlocale,			\
-};							\
-__link_set_add_data(all_categories, name##desc)
+}
 
 #endif /*_GENERIC_LC_TEMPLATE_H_*/

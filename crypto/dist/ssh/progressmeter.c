@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.9 2008/08/05 14:13:34 simonb Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.9.6.1 2009/05/13 19:15:57 jym Exp $	*/
 /* $OpenBSD: progressmeter.c,v 1.37 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.9 2008/08/05 14:13:34 simonb Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.9.6.1 2009/05/13 19:15:57 jym Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -197,8 +197,12 @@ refresh_progress_meter(void)
 	strlcat(buf, "/s ", win_size);
 
 	/* instantaneous rate */
-	format_rate(buf + strlen(buf), win_size - strlen(buf),
-	    delta_pos);
+	if (bytes_left > 0)
+		format_rate(buf + strlen(buf), win_size - strlen(buf),
+			    delta_pos);
+	else
+		format_rate(buf + strlen(buf), win_size - strlen(buf),
+			    max_delta_pos);
 	strlcat(buf, "/s ", win_size);
 
 	/* ETA */

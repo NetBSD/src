@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.127 2009/01/04 12:10:30 apb Exp $
+.\"	$NetBSD: rc.conf.5,v 1.127.2.1 2009/05/13 19:19:13 jym Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 4, 2009
+.Dd April 5, 2009
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -184,6 +184,15 @@ Extra arguments to the
 .Xr rcorder 8
 run by
 .Pa /etc/rc .
+.It Sy rc_directories
+A string.
+Space separated list of directories searched for rc scripts.
+The default is
+.Pa /etc/rc.d .
+All directories in
+.Ev rc_directories
+must be located in the root filesystem, otherwise they will be silently
+skipped.
 .El
 .Ss Basic network configuration
 .Bl -tag -width net_interfaces
@@ -657,6 +666,8 @@ Runs
 to load in packet filter specifications from
 .Pa /etc/ipf.conf
 at network boot time, before any interfaces are configured.
+Passes
+.Sy ipfilter_flags .
 See
 .Xr ipf.conf 5 .
 .It Sy ipfs

@@ -1,4 +1,4 @@
-.\"	$NetBSD: operator.7,v 1.6 2003/08/07 10:31:21 agc Exp $
+.\"	$NetBSD: operator.7,v 1.6.42.1 2009/05/13 19:19:13 jym Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,10 +36,8 @@
 .Nm operator
 .Nd C operator precedence and associativity
 .Sh DESCRIPTION
-.Bd -ragged -offset indent -compact
-.Bl -column "Operator    Associativity   "
-.It Operator	Associativity
-.It --------	-------------
+.Bl -column "! ~ ++ -- - (type) * \*[Am] sizeof" Associativity
+.It Sy Operator	Associativity
 .It \&() [] -\*[Gt] .	left to right
 .It "! ~ ++ -- - (type) * \*[Am] sizeof"	right to left
 .It \&* / %	left to right
@@ -56,7 +54,6 @@
 .It \&= += -= etc.	right to left
 .It \&,	left to right
 .El
-.Ed
 .Sh FILES
 .Bl -tag -width /usr/share/misc/operator -compact
 .It Pa /usr/share/misc/operator

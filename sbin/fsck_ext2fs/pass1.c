@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.18 2008/11/24 18:05:25 tsutsui Exp $	*/
+/*	$NetBSD: pass1.c,v 1.18.2.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.18 2008/11/24 18:05:25 tsutsui Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.18.2.1 2009/05/13 19:19:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ pass1(void)
 {
 	ino_t inumber;
 	int c, i;
+	size_t j;
 	daddr_t dbase;
 	struct inodesc idesc;
 
@@ -144,9 +145,9 @@ pass1(void)
 	n_files = n_blks = 0;
 	resetinodebuf();
 	for (c = 0; c < sblock.e2fs_ncg; c++) {
-		for (i = 0;
-			i < sblock.e2fs.e2fs_ipg && inumber <= sblock.e2fs.e2fs_icount;
-			i++, inumber++) {
+		for (j = 0;
+			j < sblock.e2fs.e2fs_ipg && inumber <= sblock.e2fs.e2fs_icount;
+			j++, inumber++) {
 			if (inumber < EXT2_ROOTINO) /* XXX */
 				continue;
 			checkinode(inumber, &idesc);
@@ -307,7 +308,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.e2fs_bsize);
-	if (fs2h32(dp->e2di_nblock) != idesc->id_entryno) {
+	if (fs2h32(dp->e2di_nblock) != (uint32_t)idesc->id_entryno) {
 		pwarn("INCORRECT BLOCK COUNT I=%llu (%d should be %d)",
 		    (unsigned long long)inumber, fs2h32(dp->e2di_nblock),
 		    idesc->id_entryno);

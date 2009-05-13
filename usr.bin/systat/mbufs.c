@@ -1,4 +1,4 @@
-/*	$NetBSD: mbufs.c,v 1.14 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: mbufs.c,v 1.14.26.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: mbufs.c,v 1.14 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: mbufs.c,v 1.14.26.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -110,7 +110,7 @@ showmbufs(void)
 			}
 		if (max == 0)
 			break;
-		if (j > NNAMES)
+		if (j > (int)NNAMES)
 			mvwprintw(wnd, 1+j, 0, "%10d", idx);
 		else
 			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[idx]);

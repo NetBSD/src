@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: root,v 1.3 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: root,v 1.3.36.1 2009/05/13 19:18:03 jym Exp $
 #
 
 # PROVIDE: root
-# REQUIRE: fsck
+# REQUIRE: fsck_root
 
 $_rc_subr_loaded . /etc/rc.subr
 

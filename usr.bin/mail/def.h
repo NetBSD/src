@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.26 2007/10/27 15:14:50 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.26.14.1 2009/05/13 19:19:56 jym Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.26 2007/10/27 15:14:50 christos Exp $
+ *	$NetBSD: def.h,v 1.26.14.1 2009/05/13 19:19:56 jym Exp $
  */
 
 /*
@@ -54,6 +54,7 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,6 +62,8 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+#include <vis.h>
+
 #include "pathnames.h"
 
 #define	APPEND				/* New mail goes to end of mailbox */
@@ -111,6 +114,7 @@
 #define ENAME_METOO		"metoo"
 #define ENAME_NOHEADER		"noheader"
 #define ENAME_NOSAVE		"nosave"
+#define ENAME_PAGE_ALSO		"page-also"
 #define ENAME_PAGER		"PAGER"
 #define ENAME_PAGER_OFF		"pager-off"
 #define ENAME_PROMPT		"prompt"
@@ -131,7 +135,6 @@
 #define ENAME_VERBOSE		"verbose"
 #define ENAME_VISUAL		"VISUAL"
 
-#define sizeofarray(a)	(sizeof(a)/sizeof(*a))
 #define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */
 
 struct message {
@@ -249,7 +252,7 @@ struct headline {
 #ifdef MIME_SUPPORT
 #define GMIME    0x040		/* mime flag */
 #endif
-#define	GMASK	(GTO|GSUBJECT|GCC|GBCC|GSMOPTS)
+#define	GMASK	(GTO | GSUBJECT | GCC | GBCC | GSMOPTS)
 				/* Mask of places from whence */
 
 #define	GNL	 0x100		/* Print blank line after */
@@ -318,14 +321,14 @@ struct attachment {
  */
 
 struct header {
-	struct name *h_to;		/* Dynamic "To:" string */
-	char *h_subject;		/* Subject string */
-	struct name *h_cc;		/* Carbon copies string */
-	struct name *h_bcc;		/* Blind carbon copies */
-	struct name *h_smopts;		/* Sendmail options */
-	char *h_in_reply_to;
-	struct name *h_references;
-	char *h_extra;			/* extra lines to output */
+	struct name	*h_to;		/* Dynamic "To:" string */
+	char		*h_subject;	/* Subject string */
+	struct name	*h_cc;		/* Carbon copies string */
+	struct name	*h_bcc;		/* Blind carbon copies */
+	struct name	*h_smopts;	/* Sendmail options */
+	char		*h_in_reply_to;	/* In-Reply-To: field */
+	struct name	*h_references;	/* References: field */
+	struct name	*h_extra;	/* extra header fields */
 #ifdef MIME_SUPPORT
 	char *h_mime_boundary;		/* MIME multipart boundary string */
 	struct Content h_Content;	/* MIME content for message */
@@ -407,13 +410,6 @@ enum mailmode_e {
 };
 
 /*
- * Kludges to handle the change from setexit / reset to setjmp / longjmp
- */
-
-#define	setexit()	(void)setjmp(srbuf)
-#define	reset(x)	longjmp(srbuf, x)
-
-/*
  * Truncate a file to the last character written. This is
  * useful just before closing an old file that was opened
  * for read/write.
@@ -438,7 +434,7 @@ is_WSP(int c)
 	return c == ' ' || c == '\t';
 }
 
-static inline char*
+static inline char *
 skip_WSP(const char *cp)
 {
 	while (is_WSP(*cp))
@@ -446,12 +442,27 @@ skip_WSP(const char *cp)
 	return __UNCONST(cp);
 }
 
-static inline char*
+static inline char *
 skip_space(char *p)
 {
 	while (isspace((unsigned char)*p))
 		p++;
 	return p;
+}
+
+/*
+ * strip trailing white space
+ */
+static inline char *
+strip_WSP(char *line)
+{
+	char *cp;
+
+	cp = line + strlen(line) - 1;
+	while (cp >= line && is_WSP(*cp))
+		cp--;
+	*++cp = '\0';
+	return cp;
 }
 
 #endif /* __DEF_H__ */

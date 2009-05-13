@@ -27,7 +27,7 @@
  *	printing cause values
  *	---------------------
  *
- *	$Id: pcause_q850.c,v 1.2 2003/10/06 09:43:28 itojun Exp $
+ *	$Id: pcause_q850.c,v 1.2.40.1 2009/05/13 19:20:26 jym Exp $
  *
  * $FreeBSD$
  *
@@ -38,11 +38,11 @@
 #include "trace.h"
 #include "pcause_q850.h"
 
-char *
+const char *
 print_cause_q850(unsigned char code)
 {
 	static char error_message[120];
-	char *e;
+	const char *e;
 
 	switch (code)
 	{

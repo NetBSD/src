@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_main.c,v 1.12 2003/08/07 09:37:42 agc Exp $	*/
+/*	$NetBSD: dr_main.c,v 1.12.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: dr_main.c,v 1.12 2003/08/07 09:37:42 agc Exp $");
+__RCSID("$NetBSD: dr_main.c,v 1.12.40.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,20 +58,18 @@ dr_main(void)
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGTSTP, SIG_IGN);
 	if (game < 0 || game >= NSCENE) {
-		fprintf(stderr, "DRIVER: Bad game number %d\n", game);
-		exit(1);
+		errx(1, "driver: Bad game number %d", game);
 	}
 	cc = &scene[game];
 	ls = SHIP(cc->vessels);
 	if (sync_open() < 0) {
-		perror("driver: syncfile");
-		exit(1);
+		err(1, "driver: syncfile");
 	}
 	for (n = 0; n < NNATION; n++)
 		nat[n] = 0;
 	foreachship(sp) {
 		if (sp->file == NULL &&
-		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL) {
+		    (sp->file = calloc(1, sizeof (struct File))) == NULL) {
 			fprintf(stderr, "DRIVER: Out of memory.\n");
 			exit(1);
 		}

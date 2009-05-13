@@ -1,4 +1,4 @@
-.\"     $NetBSD: getiobuf.9,v 1.3 2008/05/06 11:32:47 yamt Exp $
+.\"     $NetBSD: getiobuf.9,v 1.3.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c)2006,2008 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -40,7 +40,6 @@
 .Fn putiobuf "struct buf *bp"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
-.Bl -tag -width compact
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn getiobuf
 allocates a
@@ -75,8 +74,6 @@ frees
 which should be a buffer allocated with
 .Fn getiobuf .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.El
-.\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr buffercache 9 ,
 .Xr intro 9

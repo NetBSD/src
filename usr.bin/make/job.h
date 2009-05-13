@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.38 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.38.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-#define TMPPAT	"/tmp/makeXXXXXX"
+#define TMPPAT	"makeXXXXXX"		/* relative to tmpdir */
 
 #ifdef USE_SELECT
 /*

@@ -1,8 +1,8 @@
-.\"	$NetBSD: prep,v 1.12 2003/02/12 08:18:22 leo Exp $
+.\"	$NetBSD: prep,v 1.12.42.1 2009/05/13 19:17:45 jym Exp $
 .
 .Ss2 Preparing your hard disk for the NetBSD installation.
-Note you will be modifying your HD's if you mess something up here you
-could lose everything on all the drives that you work with.
+Note that you will be modifying your hard drives and if you mess something
+up here you could lose everything on all the drives that you work with.
 It is therefore advised that you:
 .(bullet
 Write down your current configurations.
@@ -19,17 +19,13 @@ either take care of partitioning your harddisk before installing
 or delay this until the installer requests you to do it.
 If you decide to do it now, please create space for at least
 .Pa /
-(root), swap and
-.Pa /usr
-partitions and possibly at least one more for
-.Pa /local
-if you have the space.
+(root) and swap partitions.
 Whatever you decide, take note of the paragraphs below!
 You need this info to create bootable disks.
 .Pp
 .(tag Warning:
 .It Em Warning:
-The AHDI partioning function erases all partions on your harddisk
+The AHDI partitioning function erases all partitions on your harddisk
 even if they are not changed!
 We know this is rather stupid, but don't say we didn't warn you.
 .tag)
@@ -39,16 +35,16 @@ boot directly into
 .Nx ,
 there are some constraints on the partition layout.
 .Pp
-As you might know; every hard disk has a
+As you might know, every hard disk has a
 .Sq root sector
 that contains information about the size of the hard disk and the partitions
 on the hard disk.
 The root sector can only contain the necessary data for four partitions.
 Nobody thought that this limitation would cause any problems.
 After all, 640 KByte should be enough.
-As hard disk grew, it was necessary to define more than four partitions.
+As hard disks grew, it was necessary to define more than four partitions.
 In order to be more or less compatible with the old format,
-a new type of partition entry was defined: XGM partions.
+a new type of partition entry was defined: XGM partitions.
 .Pp
 An XGM partition is a
 .Sq look over there
@@ -153,9 +149,9 @@ extended partition range.
 If you already have
 .Nx
 installed, it is easy.
-Just boot into single user state on your current system, or use the
+Just boot into single user mode on your current system, or use the
 .Ic shutdown now
-command to shutdown to single-user state.
+command to shutdown to single-user mode.
 Then copy the installer using
 .Ic dd :
 .Pp
@@ -193,7 +189,7 @@ When a swap partition has been created, you can transfer the installer using
 the
 .Ic file2swp.ttp
 command, which is also on the bootfloppy.
-This program copies a (gzipped)file
+This program copies a (gzipped) file
 to the first AHDI partition with id 'SWP' on the designated disk.
 To copy sysinst.fs to your first SCSI disk, use:
 .Pp
@@ -201,7 +197,7 @@ To copy sysinst.fs to your first SCSI disk, use:
 .Pp
 Note that
 .Ic file2swp
-automatically detects a gzipped file, there is no need for a  .gz extension.
+automatically detects a gzipped file, there is no need for a .gz extension.
 .Ss2 Using loadbsd.ttp
 To start the installer, you first need to load a
 .Nx
@@ -217,8 +213,7 @@ kernel to a boot floppy disk (1.44 MB needed) or put them on a
 partition.
 Select the loadbsd program and it will ask for parameters, supply:
 .Sq Ic "-b netbsd"
-(or whatever name
-you copied the kernel to).
+(or whatever name you copied the kernel to).
 You can, of course, also run it from the shell command-line in
 .Tn MiNT :
 .Pp
@@ -234,7 +229,7 @@ When you used your first SCSI disk, this will be
 On the first IDE drive it would be
 .Ic wd0b.
 .Pp
-When you didn't copy the installer to swap, need to use the RAMdisk, so
+If you didn't copy the installer to swap, you need to use the RAMdisk, so
 remove the
 .Tn GEMDOS
 kernel boot floppy from the drive if present and insert the
@@ -244,13 +239,13 @@ Now enter the name of the boot device depending on the floppy type you have
 inserted. Use:
 .(bullet
 .Ic md0a
-for the old installer (1MB filesystem) on 720KB floppy's.
+for the old installer (1MB filesystem) on 720KB floppies.
 .It
 .Ic md1a
-for the sysinst installer on 720KB floppy's.
+for the sysinst installer on 720KB floppies.
 .It
 .Ic md2a
-for the sysinst installer on 1.44MB floppy's.
+for the sysinst installer on 1.44MB floppies.
 .bullet)
 The kernel will load the install file system into RAMdisk.
 While the kernel is loading, it will show a

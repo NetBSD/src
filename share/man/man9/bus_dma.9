@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.45 2008/05/02 21:36:23 martin Exp $
+.\" $NetBSD: bus_dma.9,v 1.45.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 7, 2007
+.Dd February 19, 2009
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ A structure with at least the following members:
 	bus_addr_t	ds_addr;
 	bus_size_t	ds_len;
 .Ed
-.sp
+.Pp
 The structure may have machine-dependent members and arbitrary layout.
 The values in
 .Fa ds_addr
@@ -135,7 +135,7 @@ A pointer to a structure with at least the following members:
 	int		dm_nsegs;
 	bus_dma_segment_t *dm_segs;
 .Ed
-.sp
+.Pp
 The structure may have machine-dependent members and arbitrary layout.
 The
 .Fa  dm_maxsegsz
@@ -211,6 +211,8 @@ This is a pointer to a bus_dmamap_t.
 A DMA map will be allocated and pointed to by
 .Fa dmamp
 upon successful completion of this routine.
+.Fa dmamp
+is undefined if this routine fails.
 .El
 .Pp
 Behavior is not defined if invalid arguments are passed to

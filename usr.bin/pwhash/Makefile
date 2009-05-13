@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2005/01/12 05:45:23 christos Exp $
+#	$NetBSD: Makefile,v 1.6.36.1 2009/05/13 19:20:02 jym Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
 
-WARNS=	3
 PROG=	pwhash
 
 CPPFLAGS+=-I${.CURDIR} -DLOGIN_CAP

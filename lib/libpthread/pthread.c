@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.106 2008/10/08 10:03:28 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.106.6.1 2009/05/13 19:18:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.106 2008/10/08 10:03:28 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.106.6.1 2009/05/13 19:18:35 jym Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -95,7 +95,6 @@ static int pthread__diagassert;
 int pthread__concurrency;
 int pthread__nspins;
 int pthread__unpark_max = PTHREAD__UNPARK_MAX;
-int pthread__osrev;
 
 /* 
  * We have to initialize the pthread_stack* variables here because
@@ -168,10 +167,6 @@ pthread__init(void)
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSREV; 
-
-	len = sizeof(pthread__osrev);
-	if (sysctl(mib, 2, &pthread__osrev, &len, NULL, 0) == -1)
-		err(1, "sysctl(hw.osrevision");
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
@@ -449,10 +444,11 @@ pthread__create_tramp(pthread_t self, void *(*start)(void *), void *arg)
 {
 	void *retval;
 
-#ifdef PTHREAD__HAVE_THREADREG
-	/* Set up identity register. */
-	pthread__threadreg_set(self);
-#endif
+	/*
+	 * Set up identity register.
+	 * XXX Race: could receive a signal before this.
+	 */
+	(void)_lwp_setprivate(self);
 
 	/*
 	 * Throw away some stack in a feeble attempt to reduce cache
@@ -1238,10 +1234,8 @@ pthread__initmain(pthread_t *newt)
 
 	*newt = t;
 
-#ifdef PTHREAD__HAVE_THREADREG
 	/* Set up identity register. */
-	pthread__threadreg_set(t);
-#endif
+	(void)_lwp_setprivate(t);
 }
 
 static int
@@ -1281,7 +1275,13 @@ pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 static int
 pthread__cmp(struct __pthread_st *a, struct __pthread_st *b)
 {
-	return b - a;
+
+	if ((uintptr_t)a < (uintptr_t)b)
+		return (-1);
+	else if (a == b)
+		return 0;
+	else
+		return 1;
 }
 RB_GENERATE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 #endif

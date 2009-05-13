@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.18 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: alpha.c,v 1.18.8.1 2009/05/13 19:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.18 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.18.8.1 2009/05/13 19:20:24 jym Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -309,7 +309,7 @@ alpha_setboot(ib_params *params)
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
-	} else if (rv != bootstrapsize) {
+	} else if ((size_t)rv != bootstrapsize) {
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	}

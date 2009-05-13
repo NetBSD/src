@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.28 2009/01/23 08:05:58 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.28.2.1 2009/05/13 19:15:53 jym Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -263,8 +263,12 @@ admin_process(so2, combuf)
 			break;
 		}
 
-		if (iph1->cert_p != NULL)
-			buf = vdup(&iph1->cert_p->cert);
+		if (iph1->cert_p != NULL) {
+			vchar_t tmp;
+			tmp.v = iph1->cert_p->v + 1;
+			tmp.l = iph1->cert_p->l - 1;
+			buf = vdup(&tmp);
+		}
 		break;
 	}
 
@@ -321,16 +325,18 @@ admin_process(so2, combuf)
 #ifdef ENABLE_HYBRID
 	case ADMIN_LOGOUT_USER: {
 		struct ph1handle *iph1;
-		char *user;
-		int found = 0;
+		char user[LOGINLEN+1];
+		int found = 0, len = com->ac_len - sizeof(com);
 
-		if (com->ac_len > sizeof(com) + LOGINLEN + 1) {
+		if (len > LOGINLEN) {
 			plog(LLV_ERROR, LOCATION, NULL,
 			    "malformed message (login too long)\n");
 			break;
 		}
 
-		user = (char *)(com + 1);
+		memcpy(user, (char *)(com + 1), len);
+		user[len] = 0;
+
 		found = purgeph1bylogin(user);
 		plog(LLV_INFO, LOCATION, NULL, 
 		    "deleted %d SA for user \"%s\"\n", found, user);
@@ -404,17 +410,20 @@ admin_process(so2, combuf)
 		struct admin_com_indexes *ndx;
 		struct sockaddr *dst;
 		struct sockaddr *src;
+		char *name = NULL;
 
 		ndx = (struct admin_com_indexes *) ((caddr_t)com + sizeof(*com));
 		src = (struct sockaddr *) &ndx->src;
 		dst = (struct sockaddr *) &ndx->dst;
 
+		if (com->ac_cmd == ADMIN_ESTABLISH_SA &&
+		    com->ac_len > sizeof(*com) + sizeof(*ndx))
+			name = (char *) ((caddr_t) ndx + sizeof(*ndx));
+
 		switch (com->ac_proto) {
 		case ADMIN_PROTO_ISAKMP: {
 			struct ph1handle *ph1;
 			struct remoteconf *rmconf;
-			struct sockaddr *remote = NULL;
-			struct sockaddr *local = NULL;
 			u_int16_t port;
 
 			l_ac_errno = -1;
@@ -431,35 +440,23 @@ admin_process(so2, combuf)
 			}
 
 			/* search appropreate configuration */
-			rmconf = getrmconf(dst);
+			if (name == NULL)
+				rmconf = getrmconf(dst, 0);
+			else
+				rmconf = getrmconf_by_name(name);
 			if (rmconf == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"no configuration found "
 					"for %s\n", saddrwop2str(dst));
-				goto out1;
+				break;
 			}
 
-			/* get remote IP address and port number. */
-			if ((remote = dupsaddr(dst)) == NULL)
-				goto out1;
-
-			port = extract_port(rmconf->remote);
-			if (set_port(remote, port) == NULL)
-				goto out1;
-
-			/* get local address */
-			if ((local = dupsaddr(src)) == NULL)
-				goto out1;
-
-			port = myaddr_getsport(local);
-			if (set_port(local, port) == NULL)
-				goto out1;
-
 #ifdef ENABLE_HYBRID
+			/* XXX This overwrites rmconf information globally. */
 			/* Set the id and key */
 			if (id && key) {
 				if (xauth_rmconf_used(&rmconf->xauth) == -1)
-					goto out1;
+					break;
 
 				if (rmconf->xauth->login != NULL) {
 					vfree(rmconf->xauth->login);
@@ -477,20 +474,15 @@ admin_process(so2, combuf)
  
 			plog(LLV_INFO, LOCATION, NULL,
 				"accept a request to establish IKE-SA: "
-				"%s\n", saddrwop2str(remote));
+				"%s\n", saddrwop2str(dst));
 
 			/* begin ident mode */
-			ph1 = isakmp_ph1begin_i(rmconf, remote, local);
+			ph1 = isakmp_ph1begin_i(rmconf, dst, src);
 			if (ph1 == NULL)
-				goto out1;
+				break;
 
 			event_list = &ph1->evt_listeners;
 			l_ac_errno = 0;
-out1:
-			if (local != NULL)
-				racoon_free(local);
-			if (remote != NULL)
-				racoon_free(remote);
 			break;
 		}
 		case ADMIN_PROTO_AH:

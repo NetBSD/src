@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.39 2006/08/04 23:30:53 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.39.28.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -305,7 +305,7 @@ By default, the flag is enabled (value is 1).
 now supports several standard
 .Xr ioctl 2 Ns 's
 which allow the user to do async and/or non-blocking I/O to an open
-.I bpf
+.Nm bpf
 file descriptor.
 .Bl -tag -width indent -offset indent
 .It Dv FIONREAD (int)

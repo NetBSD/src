@@ -1,4 +1,4 @@
-/*	$NetBSD: wwiomux.c,v 1.13 2006/12/18 20:04:55 christos Exp $	*/
+/*	$NetBSD: wwiomux.c,v 1.13.20.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwiomux.c,v 1.13 2006/12/18 20:04:55 christos Exp $");
+__RCSID("$NetBSD: wwiomux.c,v 1.13.20.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,14 +67,15 @@ void
 wwiomux(void)
 {
 	struct ww *w;
-	int nfd;
+	nfds_t nfd;
+	int i;
 	int volatile dostdin;	/* avoid longjmp clobbering */
 	char volatile c;	/* avoid longjmp clobbering */
 	char *p;
 	int millis;
 	char noblock = 0;
 	static struct pollfd *pfd = NULL;
-	static size_t maxfds = 0;
+	static nfds_t maxfds = 0;
 
 	c = 0; 	/* XXXGCC -Wuninitialized */
 
@@ -145,13 +146,13 @@ wwiomux(void)
 			millis = 10;
 		}
 		wwnselect++;
-		nfd = poll(pfd, nfd, millis);
+		i = poll(pfd, nfd, millis);
 		wwsetjmp = 0;
 		noblock = 0;
 
-		if (nfd < 0)
+		if (i < 0)
 			wwnselecte++;
-		else if (nfd == 0)
+		else if (i == 0)
 			wwnselectz++;
 		else {
 			if (dostdin != -1 && (pfd[dostdin].revents & POLLIN) != 0)

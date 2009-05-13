@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2005/11/12 22:57:46 spz Exp $
+#	$NetBSD: Makefile,v 1.13.26.1 2009/05/13 19:20:46 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,7 @@ DPADD=	${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
 .if ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
-.elif ${MACHINE} == "i386"
+.elif ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .endif

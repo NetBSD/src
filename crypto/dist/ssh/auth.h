@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.22 2008/04/06 23:38:19 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.60 2007/09/21 08:15:29 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.22.10.1 2009/05/13 19:15:56 jym Exp $	*/
+/* $OpenBSD: auth.h,v 1.61 2008/07/02 12:03:51 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -176,8 +176,7 @@ int	verify_response(Authctxt *, const char *);
 char	*authorized_keys_file(struct passwd *);
 char	*authorized_keys_file2(struct passwd *);
 
-int
-secure_filename(FILE *, const char *, struct passwd *, char *, size_t);
+FILE	*auth_openkeyfile(const char *, struct passwd *, int);
 
 HostStatus
 check_key_in_hostfiles(struct passwd *, Key *, const char *,

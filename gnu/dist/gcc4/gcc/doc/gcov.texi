@@ -128,8 +128,9 @@ gcov [@option{-v}|@option{--version}] [@option{-h}|@option{--help}]
      [@option{-l}|@option{--long-file-names}]
      [@option{-p}|@option{--preserve-paths}]
      [@option{-f}|@option{--function-summaries}]
-     [@option{-o}|@option{--object-directory} @var{directory|file}] @var{sourcefile}
+     [@option{-o}|@option{--object-directory} @var{directory|file}]
      [@option{-u}|@option{--unconditional-branches}]
+     @var{sourcefile}
 @c man end
 @c man begin SEEALSO
 gpl(7), gfdl(7), fsf-funding(7), gcc(1) and the Info entry for @file{gcc}.

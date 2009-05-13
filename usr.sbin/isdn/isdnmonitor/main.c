@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.10 2008/07/15 17:51:38 perry Exp $ */
+/* $NetBSD: main.c,v 1.10.6.1 2009/05/13 19:20:26 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,7 +96,8 @@ static void dump_event(u_int8_t *msg, int len, int readflag);
 static ssize_t sock_read(int fd, void *buf, size_t nbytes);
 static ssize_t sock_write(int fd, void *buf, size_t nbytes);
 
-static void mprintf(char *fmt, ...);
+static void mprintf(const char *fmt, ...)
+ __attribute__((__format__(__printf__, 1, 2)));
 
 /*
  * Global variables
@@ -256,7 +257,7 @@ int main(int argc, char **argv)
  *	Return socket if successful, -1 on error.
  ---------------------------------------------------------------------------*/
 static int
-connect_remote(char *host, int portno)
+connect_remote(char *host, int portnum)
 {
 	struct sockaddr_in sa;
 	struct hostent *h;
@@ -284,7 +285,7 @@ connect_remote(char *host, int portno)
 	sa.sin_len = sizeof(sa);
 #endif
 	sa.sin_family = AF_INET;
-	sa.sin_port = htons(portno);
+	sa.sin_port = htons(portnum);
 
 	memcpy(&sa.sin_addr.s_addr, h->h_addr_list[0], sizeof(sa.sin_addr.s_addr));
 
@@ -303,16 +304,16 @@ connect_remote(char *host, int portno)
  *	Return socket on success, -1 on failure.
  *---------------------------------------------------------------------------*/
 static int
-connect_local(char *sockpath)
+connect_local(char *clsockpath)
 {
 	int s;
 	struct sockaddr_un sa;
 
 	/* check path length */
-	if (strlen(sockpath) >= sizeof(sa.sun_path))
+	if (strlen(clsockpath) >= sizeof(sa.sun_path))
 	{
 		fprintf(stderr, "pathname to long for local socket: %s\n",
-			sockpath);
+			clsockpath);
 		exit(1);
 	}
 
@@ -329,11 +330,11 @@ connect_local(char *sockpath)
 
 	sa.sun_len = sizeof(sa);
 	sa.sun_family = AF_LOCAL;
-	strlcpy(sa.sun_path, sockpath, sizeof(sa.sun_path));
+	strlcpy(sa.sun_path, clsockpath, sizeof(sa.sun_path));
 
 	if (connect(s, (struct sockaddr *)&sa, sizeof(sa)))
 	{
-		fprintf(stderr, "could not connect local monitor socket [%s]: %s\n", sockpath, strerror(errno));
+		fprintf(stderr, "could not connect local monitor socket [%s]: %s\n", clsockpath, strerror(errno));
 	}
 
 	return s;
@@ -429,7 +430,7 @@ mloop()
 
 			bytes = I4B_GET_2B(buf, I4B_MON_EVNT_LEN);
 
-			if (bytes >= sizeof(buf))
+			if (bytes >= (int)sizeof(buf))
 			{
 				fprintf(stderr, "mloop: socket recv buffer overflow %d!\n", bytes);
 				break;
@@ -467,11 +468,11 @@ mloop()
 /*
  * Dump a complete event packet.
  */
-static void dump_event(u_int8_t *msg, int len, int read)
+static void dump_event(u_int8_t *msg, int len, int doread)
 {
 	int i;
 
-	if (read)
+	if (doread)
 		mprintf("read from socket:");
 	else
 		mprintf("write to socket:");
@@ -549,7 +550,7 @@ static void print_connect(
 	int controller, /* controller number */
 	int channel,	/* channel no, used to identify this connection until disconnect */
 	char * cfgname, 	/* name of config entry/connection */
-	char * devname, 	/* device used (e.g. isp0) */
+	char * devnam, 	/* device used (e.g. isp0) */
 	char * remphone, 	/* phone no of remote side */
 	char * locphone)	/* local phone no */
 {
@@ -569,11 +570,11 @@ static void print_connect(
 		mprintf("%s: incoming call from '%s' [to msn: '%s']",
 			buf, remphone, locphone);
 	mprintf(", controller %d, channel %d, config '%s' on device '%s'\n",
-		controller, channel, cfgname, devname);
+		controller, channel, cfgname, devnam);
 
 #ifndef WIN32
 	if (fullscreen)
-		display_connect(CHPOS(controller, channel), outgoing, cfgname, remphone, devname);
+		display_connect(CHPOS(controller, channel), outgoing, cfgname, remphone, devnam);
 #endif
 }
 
@@ -619,16 +620,16 @@ print_updown(time_t tstamp, int controller, int channel, int isup)
  * Print l1 / l2 status
  */
 static void
-print_l12stat(time_t tstamp, int controller, int layer, int state)
+print_l12stat(time_t tstamp, int controller, int layer, int status)
 {
 	char buf[256];
 	strftime(buf, sizeof(buf), I4B_TIME_FORMAT, localtime(&tstamp));
 
 	mprintf("%s: layer %d change on controller %d: %s\n",
-		buf, layer, controller, state ? "up" : "down");
+		buf, layer, controller, status ? "up" : "down");
 #ifndef WIN32
 	if (fullscreen)
-		display_l12stat(controller, layer, state);
+		display_l12stat(controller, layer, status);
 #endif
 }
 
@@ -1158,7 +1159,7 @@ sock_write(int fd, void *buf, size_t nbytes)
 }
 
 static void
-mprintf(char *fmt, ...)
+mprintf(const char *fmt, ...)
 {
 #define	PRBUFLEN 1024
 	char buffer[PRBUFLEN];

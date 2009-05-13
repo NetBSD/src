@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.22 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.22.8.1 2009/05/13 19:19:57 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.22 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.22.8.1 2009/05/13 19:19:57 jym Exp $");
 #endif
 
 #include <stdio.h>
@@ -83,7 +83,7 @@ findfield(char *name)
 }
 
 static void
-prfield(struct field *p, char *sep, int prvalset)
+prfield(struct field *p, const char *sep, int prvalset)
 {
 	mixer_ctrl_t *m;
 	int i, n;
@@ -247,7 +247,7 @@ incfield(struct field *p, int inc)
 }
 
 static void
-wrarg(int fd, char *arg, char *sep)
+wrarg(int fd, char *arg, const char *sep)
 {
 	char *q;
 	struct field *p;
@@ -305,7 +305,7 @@ wrarg(int fd, char *arg, char *sep)
 }
 
 static void
-prarg(int fd, char *arg, char *sep)
+prarg(int fd, char *arg, const char *sep)
 {
 	struct field *p;
 
@@ -321,8 +321,8 @@ main(int argc, char **argv)
 {
 	int fd, i, j, ch, pos;
 	int aflag = 0, wflag = 0;
-	char *file;
-	char *sep = "=";
+	const char *file;
+	const char *sep = "=";
 	mixer_devinfo_t dinfo;
 	int ndev;
 

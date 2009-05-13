@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.34 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.34.6.1 2009/05/13 19:20:31 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.34 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.34.6.1 2009/05/13 19:20:31 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,8 @@ main(int argc, char **argv)
 	dir = NULL;
 	init_excludes();
 
-	while ((ch = getopt(argc, argv, "cCdDeE:f:I:ik:K:lLmMN:p:PrR:s:tuUWxX:"))
+	while ((ch = getopt(argc, argv,
+	    "cCdDeE:f:I:ik:K:lLmMN:p:PrR:s:StuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
@@ -159,6 +160,9 @@ main(int argc, char **argv)
 			if (*p)
 				mtree_err("illegal seed value -- %s", optarg);
 			break;
+		case 'S':
+			mtree_Sflag = 1;
+			break;
 		case 't':
 			tflag = 1;
 			break;
@@ -222,9 +226,9 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-cCdDelLMPruUWx] [-i|-m] [-f spec] [-k key]\n"
-	    "\t\t[-K addkey] [-R removekey] [-I inctags] [-E exctags]\n"
-	    "\t\t[-N userdbdir] [-X exclude-file] [-p path] [-s seed]\n",
+	    "usage: %s [-CcDdeLlMPrSUuWx] [-i|-m] [-E tags] [-f spec]\n"
+	    "\t\t[-I tags] [-K keywords] [-k keywords] [-N dbdir] [-p path]\n"
+	    "\t\t[-R keywords] [-s seed] [-X exclude-file]\n",
 	    getprogname());
 	exit(1);
 }

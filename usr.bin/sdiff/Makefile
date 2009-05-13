@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2007/02/18 22:13:42 rmind Exp $
+#	$NetBSD: Makefile,v 1.1.20.1 2009/05/13 19:20:04 jym Exp $
+
+WARNS?=	2	# XXX -Wcast-qual issues
 
 PROG=	sdiff
 SRCS=	common.c edit.c sdiff.c strtonum.c
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
-
-WARNS=	1
 
 .include <bsd.prog.mk>

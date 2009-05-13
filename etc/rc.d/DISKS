@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $NetBSD: DISKS,v 1.1.2.2 2009/05/13 19:18:03 jym Exp $
+#
+
+# PROVIDE: DISKS
+
+#
+# This is a dummy dependency, to ensure that all disk devices are
+# accessible for fsck and mountcritlocal.
+#

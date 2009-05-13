@@ -1,4 +1,4 @@
-.\"     $NetBSD: csf.9,v 1.4 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: csf.9,v 1.4.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,7 +99,7 @@ schedulers.
 The following functions have to be implemented by the individual
 scheduler.
 .Ss Scheduler initialization
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn sched_cpuattach "struct cpu_info *"
 Per-CPU scheduler initialization routine.
 .It Ft void Fn sched_rqinit "void"
@@ -112,7 +112,7 @@ events.
 Runqueue handling is completely internal to the scheduler.
 Other parts of the kernel should access runqueues only through the
 following functions:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn sched_enqueue "lwp_t *" "bool"
 Place an LWP within the scheduler's runqueue structures.
 .It Ft void Fn sched_dequeue "lwp_t *"
@@ -125,7 +125,7 @@ Indicate if there is a runnable LWP for the current CPU.
 Print runqueues in DDB.
 .El
 .Ss Core scheduler functions
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn sched_tick "struct cpu_info *"
 Periodically called from
 .Xr hardclock 9 .
@@ -137,12 +137,12 @@ Periodically called from
 in order to handle priority adjustment.
 .El
 .Ss Priority adjustment
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn sched_nice "struct proc *, int"
 Recalculate the process priority according to its nice value.
 .El
 .Ss General helper functions
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn sched_proc_fork "struct proc *" "struct proc *"
 Inherit the scheduling history of the parent process after
 .Fn fork .
@@ -160,7 +160,7 @@ Scheduler-specific actions for
 .Fn sched_pstats .
 .El
 .Sh Common scheduler functions
-.Bl -tag
+.Bl -tag -width compact
 .It Ft pri_t Fn sched_kpri "lwp_t *"
 Scale a priority level to a kernel priority level, usually for an LWP
 that is about to sleep.

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.54 2008/11/19 14:10:48 pooka Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.54.2.1 2009/05/13 19:19:16 jym Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -47,7 +47,6 @@ LIBRUMP?=	/usr/lib/librump.a
 LIBRUMPNET?=	/usr/lib/librumpnet.a
 LIBRUMPUSER?=	/usr/lib/librumpuser.a
 LIBRUMPVFS?=	/usr/lib/librumpvfs.a
-LIBSDP?=	/usr/lib/libsdp.a
 LIBSKEY?=	/usr/lib/libskey.a
 LIBSSP?=	/usr/lib/libssp.a
 LIBSTDCXX?=	/usr/lib/libstdc++.a
@@ -132,6 +131,7 @@ lint: ${LOBJS}
 .endif
 
 ##### Pull in related .mk logic
+LINKSMODE?= ${BINMODE}
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tbrconfig.8,v 1.5 2006/03/08 22:47:40 jmmv Exp $
+.\"	$NetBSD: tbrconfig.8,v 1.5.30.1 2009/05/13 19:20:15 jym Exp $
 .\"	$KAME: tbrconfig.8,v 1.2 2001/04/09 16:26:30 thorpej Exp $
 .\"
 .\" Copyright (C) 2000
@@ -152,12 +152,12 @@ to display information about all interfaces in the system.
 .Sh EXAMPLES
 To configure a token bucket regulator for the interface en0 with
 10Mbps token rate and 8KB bucket size,
-.Bd -literal -offset
+.Bd -literal -offset indent
 # tbrconfig en0 10M 8K
 .Ed
 .Pp
 To rate-limit the interface en0 up to 3Mbps,
-.Bd -literal -offset
+.Bd -literal -offset indent
 # tbrconfig en0 3M auto
 .Ed
 .Sh SEE ALSO

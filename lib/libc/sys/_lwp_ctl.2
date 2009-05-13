@@ -1,4 +1,4 @@
-.\"     $NetBSD: _lwp_ctl.2,v 1.2 2008/05/05 05:04:06 yamt Exp $
+.\"     $NetBSD: _lwp_ctl.2,v 1.2.10.1 2009/05/13 19:18:27 jym Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -72,8 +72,6 @@ userland.
 It's available only if requested with the
 .Dv LWPCTL_FEATURE_CURCPU
 flag.
-.El
-.Bl -tag -width int_lc_curcpu
 .It int lc_pctr
 The integer which is incremented on every context switches to the LWP.
 It can be used to detect preemption of the LWP.
@@ -83,6 +81,7 @@ userland.
 It's available only if requested with the
 .Dv LWPCTL_FEATURE_PCTR
 flag.
+.El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 .Fn _lwp_ctl

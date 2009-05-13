@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.117 2009/01/18 21:15:14 apb Exp $ */
+/*	$NetBSD: fdisk.c,v 1.117.2.1 2009/05/13 19:19:00 jym Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.117 2009/01/18 21:15:14 apb Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.117.2.1 2009/05/13 19:19:00 jym Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -286,8 +286,8 @@ main(int argc, char *argv[])
 	char *cbootmenu = 0;
 #endif
 
-	int csysid, cstart, csize;	/* For the b_flag. */
-
+	int csysid;	/* For the s_flag. */
+	unsigned int cstart, csize;
 	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
 	v_flag = 0;
 	E_flag = 0;
@@ -345,7 +345,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':	/* Partition details */
 			s_flag = 1;
-			if (sscanf(optarg, "%d/%d/%d%n", &csysid, &cstart,
+			if (sscanf(optarg, "%d/%u/%u%n", &csysid, &cstart,
 			    &csize, &n) == 3) {
 				if (optarg[n] == 0)
 					break;
@@ -1451,7 +1451,8 @@ configure_bootsel(daddr_t default_ptn)
 void
 intuit_translated_geometry(void)
 {
-	int xcylinders = -1, xheads = -1, xsectors = -1, i, j;
+	uint32_t xcylinders;
+	int xheads = -1, xsectors = -1, i, j;
 	unsigned int c1, h1, s1, c2, h2, s2;
 	unsigned long a1, a2;
 	uint64_t num, denom;
@@ -1471,9 +1472,9 @@ intuit_translated_geometry(void)
 		if (dl != NULL) {
 			/* BIOS may use 256 heads or 1024 cylinders */
 			for (i = 0; i < dl->dl_nbiosdisks; i++) {
-				if (h1 < dl->dl_biosdisks[i].bi_head)
+				if (h1 < (unsigned int)dl->dl_biosdisks[i].bi_head)
 					h1 = dl->dl_biosdisks[i].bi_head;
-				if (c1 < dl->dl_biosdisks[i].bi_cyl)
+				if (c1 < (unsigned int)dl->dl_biosdisks[i].bi_cyl)
 					c1 = dl->dl_biosdisks[i].bi_cyl;
 			}
 		}
@@ -1508,6 +1509,11 @@ intuit_translated_geometry(void)
 
 	if (xheads == -1) {
 		warnx("Cannot determine the number of heads");
+		return;
+	}
+
+	if (xsectors == -1) {
+		warnx("Cannot determine the number of sectors");
 		return;
 	}
 
@@ -2442,7 +2448,7 @@ validate_bootsel(struct mbr_bootsel *mbs)
 {
 	unsigned int key = mbs->mbrbs_defkey;
 	unsigned int tmo;
-	int i;
+	size_t i;
 
 	if (v_flag)
 		return 0;

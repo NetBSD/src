@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2008/06/21 18:59:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7.6.1 2009/05/13 19:16:15 jym Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -828,7 +828,7 @@ main(int argc, char *argv[]) {
 	 * strings named.core | grep "named version:"
 	 */
 	strlcat(version,
-#ifdef __DATE__
+#if 0
 		"named version: BIND " VERSION " (" __DATE__ ")",
 #else
 		"named version: BIND " VERSION,

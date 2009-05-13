@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2002/08/11 13:42:27 isaki Exp $
+.\"	$NetBSD: hardware,v 1.16.42.1 2009/05/13 19:17:48 jym Exp $
 .
 .Nx*M
 \*V runs on the Sharp X68030 series PCs with a
@@ -35,32 +35,17 @@ The minimal configuration requires 4 MB of RAM and about 100 MB of
 disk space.
 To install the entire system requires much more disk space,
 and to run X or compile the system, more RAM is recommended.
-.Pp
-Here is a table of recommended HD partition sizes for a full install:
-.Bl -column -offset indent Partition Suggested 100xMBxx Needed 100xMB
-.It Partition Ta Suggested Ta +\ X     Ta Needed   Ta +\ X
-.It /\ (root) Ta "25 MB"   Ta "25 MB"  Ta "20 MB"  Ta "20 MB"
-.It /usr      Ta "200 MB"  Ta "225 MB" Ta "100 MB" Ta "125 MB"
-.It /var      Ta "20 MB"   Ta "20 MB"  Ta "5 MB"   Ta "5 MB"
-.It swap      Ta Em 2*RAM
-.El
-.(item -offset indent
-Anything else is up to you!
-.item)
-.Pp
-As you may note the recommended size of
-.Pa /usr
-is 100 MB greater than needed.
-This is to leave room for a kernel source and
-compile tree as you will probably want to compile your own kernel.
-.Li ( ALL
-is large and bulky to accommodate all people).
+A good rule of thumb is to have a swap partition twice the size of the
+amount of RAM in your machine.
+You will probably want to compile your own kernel, as
+.Li ALL
+is large and bulky to accommodate all people.
 .Pp
 Supported devices include:
 .(bullet -compact -offset indent
 Sharp genuine SCSI interface (builtin / optional)
 .It
-SCSI harddisks, CD-ROM drives, tape drives, scanners,...
+SCSI hard disks, CD-ROM drives, tape drives, scanners,...
 .It
 Mankai Seisakusho Mach-2 SCSI interface
 .(Note

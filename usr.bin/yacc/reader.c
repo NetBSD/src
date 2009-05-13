@@ -1,4 +1,4 @@
-/*	$NetBSD: reader.c,v 1.17 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.17.26.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: reader.c,v 1.17 2006/11/24 19:47:00 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.17.26.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,6 @@ static char saw_eof;
 static int linesize;
 
 static bucket *goal;
-static int prec;
 static int gensym;
 static char last_was_action;
 
@@ -920,6 +919,7 @@ declare_tokens(int assoc)
     bucket *bp;
     int value;
     char *tag = 0;
+    static int prec;
 
     if (assoc != TOKEN) ++prec;
 

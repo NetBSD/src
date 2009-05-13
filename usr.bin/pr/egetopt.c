@@ -1,4 +1,4 @@
-/*	$NetBSD: egetopt.c,v 1.7 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: egetopt.c,v 1.7.42.1 2009/05/13 19:20:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: egetopt.c,v 1.7 2003/10/13 07:41:22 agc Exp $");
+__RCSID("$NetBSD: egetopt.c,v 1.7.42.1 2009/05/13 19:20:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ int	eoptopt;		/* character checked for validity */
 char	*eoptarg;		/* argument associated with option */
 
 #define	BADCH	(int)'?'
-#define	EMSG	""
+char EMSG[1] = { '\0' };
 
 int
 egetopt(nargc, nargv, ostr)

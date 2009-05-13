@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.19 2009/01/05 06:03:58 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.19.2.1 2009/05/13 19:15:53 jym Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -310,6 +310,7 @@ hexstring	0x{hexdigit}+
 	/* remote spec */
 <S_RMT>{bcl}		{ BEGIN S_RMTS; return(BOC); }
 <S_RMTS>{ecl}		{ BEGIN S_INI; return(EOC); }
+<S_RMTS>remote_address	{ YYD; return(REMOTE_ADDRESS); }
 <S_RMTS>exchange_mode	{ YYD; return(EXCHANGE_MODE); }
 <S_RMTS>{comma}		{ YYD; /* XXX ignored, but to be handled. */ ; }
 <S_RMTS>base		{ YYD; yylval.num = ISAKMP_ETYPE_BASE; return(EXCHANGETYPE); }
@@ -334,6 +335,7 @@ hexstring	0x{hexdigit}+
 <S_RMTS>verify_cert	{ YYD; return(VERIFY_CERT); }
 <S_RMTS>send_cert	{ YYD; return(SEND_CERT); }
 <S_RMTS>send_cr		{ YYD; return(SEND_CR); }
+<S_RMTS>match_empty_cr	{ YYD; return(MATCH_EMPTY_CR); }
 <S_RMTS>dh_group	{ YYD; return(DH_GROUP); }
 <S_RMTS>nonce_size	{ YYD; return(NONCE_SIZE); }
 <S_RMTS>generate_policy	{ YYD; return(GENERATE_POLICY); }

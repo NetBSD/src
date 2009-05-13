@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.2 2008/07/21 13:36:57 lukem Exp $	*/
+/*	$NetBSD: btattach.c,v 1.2.6.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.2 2008/07/21 13:36:57 lukem Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.2.6.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	int i;
+	size_t i;
 
 	fprintf(stderr,
 		"Usage: %s [-dfop] [-i speed] [type] tty speed\n"

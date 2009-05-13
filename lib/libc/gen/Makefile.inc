@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.167 2009/01/11 02:46:27 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.167.2.1 2009/05/13 19:18:23 jym Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -126,6 +126,7 @@ MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 \
 	getttyent.3 setttyent.3 getttyent.3 setttyentpath.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
+MLINKS+=glob.3 glob_pattern_p.3
 MLINKS+=humanize_number.3 dehumanize_number.3
 MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3

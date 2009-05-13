@@ -1,18 +1,17 @@
-.\"	$NetBSD: hardware,v 1.1 2001/10/14 14:08:03 bjh21 Exp $
+.\"	$NetBSD: hardware,v 1.1.44.1 2009/05/13 19:17:44 jym Exp $
 .
 .Nx*M
 \*V runs on Acorn systems with
 .Tn ARM6
 or later processors,
-with or without FPU coprocessor. The minimal configuration is said to
-require 8 MB of RAM and 50 MB of disk space, though we do not know of anyone
-running with a system quite this minimal today. To install the entire
-system requires much more disk space (the unpacked binary distribution,
-without sources, requires at least 65 MB without counting space needed for
-swap space, etc), and to run X or compile the system, more RAM is
-recommended. (8 MB of RAM will actually allow you to run X and/or compile,
-but it won't be speedy. Note that until you have around 16 MB of RAM,
-getting more RAM is more important than getting a faster CPU.)
+with or without a FPU coprocessor.
+The minimal configuration is said to require 8 MB of RAM and 100 MB of
+disk space, though we do not know of anyone running with a system quite
+this minimal today.
+8 MB of RAM might allow you to run X and/or compile, but it
+won't be speedy.
+Note that until you have around 16 MB of RAM, getting more RAM is more
+important than getting a faster CPU.
 .
 .Ss2 Supported devices
 .(bullet -offset indent
@@ -82,7 +81,7 @@ Most SCSI CD-ROM drives
 Most ATAPI CD-ROM drives
 .(Note
 Some low-priced IDE CD-ROM drives are known for being not or not fully
-ATAPI compliant, and thus requires some hack (generally an entry to a
+ATAPI compliant, and thus require some hack (generally an entry to a
 quirk table) to work with
 .Nx .
 .Note)
@@ -139,8 +138,8 @@ are
 .Em not
 present in installation kernels.
 .Pp
-Support for some devices is limited to particular kernels. eg there is no
-SA110 support in A7000 kernels.
+Support for some devices is limited to particular kernels. For example,
+there is no SA110 support in A7000 kernels.
 .
 .Ss2 Unsupported devices
 .(bullet -offset indent -compact

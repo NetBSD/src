@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.26 2009/01/14 07:07:12 jnemeth Exp $
+# $NetBSD: shl.mi,v 1.26.2.1 2009/05/13 19:17:53 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -67,8 +67,8 @@
 ./usr/X11R7/lib/libXTrap.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libXau.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libXaw6.so.7.0			-unknown-		xorg
-./usr/X11R7/lib/libXaw7.so.8.0			-unknown-		xorg
-./usr/X11R7/lib/libXaw8.so.9.0			-unknown-		xorg
+./usr/X11R7/lib/libXaw7.so.10.0			-unknown		xorg
+./usr/X11R7/lib/libXaw8.so.9.0			-obsolete-		obsolete
 ./usr/X11R7/lib/libXcomposite.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libXcursor.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libXdamage.so.2.0		-unknown-		xorg
@@ -83,10 +83,10 @@
 ./usr/X11R7/lib/libXinerama.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libXmu.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libXmuu.so.2.0			-unknown-		xorg
-./usr/X11R7/lib/libXp.so.7.0			-unknown-		xorg
+./usr/X11R7/lib/libXp.so.7.0			-obsolete-		obsolete
 ./usr/X11R7/lib/libXpm.so.5.0			-unknown-		xorg
-./usr/X11R7/lib/libXprintAppUtil.so.2.0		-unknown-		xorg
-./usr/X11R7/lib/libXprintUtil.so.2.0		-unknown-		xorg
+./usr/X11R7/lib/libXprintAppUtil.so.2.0		-obsolete-		obsolete
+./usr/X11R7/lib/libXprintUtil.so.2.0		-obsolete-		obsolete
 ./usr/X11R7/lib/libXrandr.so.3.0		-unknown-		xorg
 ./usr/X11R7/lib/libXrender.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libXres.so.1.0			-obsolete-		obsolete
@@ -102,9 +102,9 @@
 ./usr/X11R7/lib/libexpat.so.2.0			-unknown-		xorg
 ./usr/X11R7/lib/libfontconfig.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libfontenc.so.2.0		-unknown-		xorg
-./usr/X11R7/lib/libfreetype.so.7.0		-unknown-		xorg
+./usr/X11R7/lib/libfreetype.so.7.1		-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg
-./usr/X11R7/lib/liblbxutil.so.2.0		-unknown-		xorg
+./usr/X11R7/lib/liblbxutil.so.2.0		-obsolete-		obsolete
 ./usr/X11R7/lib/libpixman-1.so.1.0		-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libxkbui.so.2.0			-unknown-		xorg

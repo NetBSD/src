@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.48 2007/08/30 18:52:36 jnemeth Exp $
+.\"	$NetBSD: netstat.1,v 1.48.14.1 2009/05/13 19:19:59 jym Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm
-.Op Fl bdgiLmnqrsSv
+.Op Fl bdgiLmnqrSsv
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -53,22 +53,21 @@
 .Op Fl N Ar system
 .Op Fl w Ar wait
 .Nm
-.Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Fl p Ar protocol
 .Nm
-.Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Fl p Ar protocol
 .Fl P Ar pcbaddr
 .Nm
-.Op Fl p Ar protocol
 .Op Fl i
 .Op Fl I Ar Interface
+.Op Fl p Ar protocol
 .Nm
-.Op Fl s
+.Op Fl is
 .Op Fl f Ar address_family
-.Op Fl i
 .Op Fl I Ar Interface
 .Nm
 .Op Fl s
@@ -222,10 +221,6 @@ Show network addresses and ports as numbers (normally
 interprets addresses and ports and attempts to display them
 symbolically).
 This option may be used with any of the display formats.
-.It Fl S
-Show network addresses as numbers (as with
-.Fl n ,
-but show ports symbolically).
 .It Fl P Ar pcbaddr
 Dump the contents of the protocol control block (PCB) located at kernel
 virtual address
@@ -249,14 +244,18 @@ The program will complain if
 is unknown or if there is no statistics routine for it.
 .It Fl q
 Show software interrupt queue setting/statistics for all protocols.
-.It Fl s
-Show per-protocol statistics.
-If this option is repeated, counters with a value of zero are suppressed.
 .It Fl r
 Show the routing tables.
 When
 .Fl s
 is also present, show routing statistics instead.
+.It Fl S
+Show network addresses as numbers (as with
+.Fl n ,
+but show ports symbolically).
+.It Fl s
+Show per-protocol statistics.
+If this option is repeated, counters with a value of zero are suppressed.
 .It Fl v
 Show extra (verbose) detail for the routing tables
 .Pq Fl r ,
@@ -313,20 +312,20 @@ and
 manual pages.
 The mapping between letters and flags is:
 .Bl -column XXXX RTF_BLACKHOLE
-1	RTF_PROTO1	Protocol specific routing flag #1
-2	RTF_PROTO2	Protocol specific routing flag #2
-B	RTF_BLACKHOLE	Just discard pkts (during updates)
-C	RTF_CLONING	Generate new routes on use
-c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
-D	RTF_DYNAMIC	Created dynamically (by redirect)
-G	RTF_GATEWAY	Destination requires forwarding by intermediary
-H	RTF_HOST	Host entry (net otherwise)
-L	RTF_LLINFO	Valid protocol to link address translation.
-M	RTF_MODIFIED	Modified dynamically (by redirect)
-R	RTF_REJECT	Host or net unreachable
-S	RTF_STATIC	Manually added
-U	RTF_UP	Route usable
-X	RTF_XRESOLVE	External daemon translates proto to link address
+.It 1	RTF_PROTO1	Protocol specific routing flag #1
+.It 2	RTF_PROTO2	Protocol specific routing flag #2
+.It B	RTF_BLACKHOLE	Just discard pkts (during updates)
+.It C	RTF_CLONING	Generate new routes on use
+.It c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
+.It D	RTF_DYNAMIC	Created dynamically (by redirect)
+.It G	RTF_GATEWAY	Destination requires forwarding by intermediary
+.It H	RTF_HOST	Host entry (net otherwise)
+.It L	RTF_LLINFO	Valid protocol to link address translation.
+.It M	RTF_MODIFIED	Modified dynamically (by redirect)
+.It R	RTF_REJECT	Host or net unreachable
+.It S	RTF_STATIC	Manually added
+.It U	RTF_UP	Route usable
+.It X	RTF_XRESOLVE	External daemon translates proto to link address
 .El
 .Pp
 Direct routes are created for each
@@ -399,7 +398,7 @@ And the fifth character shows the header complete flag status.
 .Xr protocols 5 ,
 .Xr services 5 ,
 .Xr iostat 8 ,
-.Xr trpt 8 ,
+.Xr trpt 8
 .Sh HISTORY
 The
 .Nm

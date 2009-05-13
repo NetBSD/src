@@ -1,4 +1,4 @@
-.\"	$NetBSD: csplit.1,v 1.3 2009/01/04 17:26:24 wiz Exp $
+.\"	$NetBSD: csplit.1,v 1.3.2.1 2009/05/13 19:19:47 jym Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -95,23 +95,13 @@ The
 .Ar args
 operands may be a combination of the following patterns:
 .Bl -tag -offset indent -width 10n
-.It Xo
-.Sm off
-.No / Ar regexp No /
-.Op Oo Cm + | - Oc Ar offset
-.Sm on
-.Xc
+.It / Ns Ar regexp Ns / Ns Oo Oo Cm + Ns | Ns Cm - Oc Ns Ar offset Oc
 Create a file containing the input from the current line to (but not including)
 the next line matching the given basic regular expression.
 An optional
 .Ar offset
 from the line that matched may be specified.
-.It Xo
-.Sm off
-.No % Ar regexp No %
-.Op Oo Cm + | - Oc Ar offset
-.Sm on
-.Xc
+.It % Ns Ar regexp Ns % Ns Oo Oo Cm + Ns | Ns Cm - Oc Ns Ar offset Oc
 Same as above but a file is not created for the output.
 .It Ar line_no
 Create containing the input from the current line to (but not including)

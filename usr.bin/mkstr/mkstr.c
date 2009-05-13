@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.12 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.12.6.1 2009/05/13 19:19:58 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.12 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.12.6.1 2009/05/13 19:19:58 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,10 +83,10 @@ char	name[100], *np;
 
 void process __P((void));
 int main __P((int, char **));
-int match __P((char *));
+int match __P((const char *));
 int octdigit __P((char));
 void inithash __P((void));
-int hashit __P((char *, char, unsigned));
+long hashit __P((char *, char, long));
 void copystr __P((void));
 int fgetNUL __P((char *, int, FILE *));
 
@@ -151,9 +151,9 @@ process()
 
 int
 match(ocp)
-	char *ocp;
+	const char *ocp;
 {
-	char *cp;
+	const char *cp;
 	int c;
 
 	for (cp = ocp + 1; *cp; cp++) {
@@ -229,7 +229,7 @@ copystr()
 	}
 out:
 	*cp = 0;
-	printf("%d", hashit(buf, 1, 0));
+	printf("%ld", hashit(buf, 1, 0));
 }
 
 int
@@ -244,7 +244,7 @@ void
 inithash()
 {
 	char buf[512];
-	int mesgpt = 0;
+	long mesgpt = 0;
 
 	rewind(mesgread);
 	while (fgetNUL(buf, sizeof buf, mesgread) != 0) {
@@ -257,15 +257,15 @@ inithash()
 
 struct	hash {
 	long	hval;
-	unsigned hpt;
+	long	hpt;
 	struct	hash *hnext;
 } *bucket[NBUCKETS];
 
-int
+long
 hashit(str, really, fakept)
 	char *str;
 	char really;
-	unsigned fakept;
+	long fakept;
 {
 	int i;
 	struct hash *hp;
@@ -286,10 +286,10 @@ hashit(str, really, fakept)
 	if (really != 0)
 		for (hp = bucket[i]; hp != 0; hp = hp->hnext)
 		if (hp->hval == hashval) {
-			fseek(mesgread, (long) hp->hpt, 0);
+			fseek(mesgread, hp->hpt, 0);
 			fgetNUL(buf, sizeof buf, mesgread);
 /*
-			fprintf(stderr, "Got (from %d) %s\n", hp->hpt, buf);
+			fprintf(stderr, "Got (from %ld) %s\n", hp->hpt, buf);
 */
 			if (strcmp(buf, str) == 0)
 				break;
@@ -306,7 +306,7 @@ hashit(str, really, fakept)
 		bucket[i] = hp;
 	}
 /*
-	fprintf(stderr, "%s hashed to %ld at %d\n", str, hp->hval, hp->hpt);
+	fprintf(stderr, "%s hashed to %ld at %ld\n", str, hp->hval, hp->hpt);
 */
 	return (hp->hpt);
 }

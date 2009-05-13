@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.56 2008/12/29 01:35:09 christos Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.56.2.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.56 2008/12/29 01:35:09 christos Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.56.2.1 2009/05/13 19:19:59 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -540,9 +540,9 @@ log_trim(struct conf_entry *log)
 	for (i = log->numhist - 1; i > 0; i--) {
 		for (j = 0; j < (int)__arraycount(compress); j++) {
 			snprintf(file1, sizeof(file1), "%s.%d%s", log->logfile,
-			    i - 1, compress[ziptype].suffix);
+			    i - 1, compress[j].suffix);
 			snprintf(file2, sizeof(file2), "%s.%d%s", log->logfile,
-			    i, compress[ziptype].suffix);
+			    i, compress[j].suffix);
 			k = lstat(file1, &st);
 			if (!k) break;
 		}

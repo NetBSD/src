@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.29 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: join.c,v 1.29.6.1 2009/05/13 19:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991\
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.29 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: join.c,v 1.29.6.1 2009/05/13 19:19:53 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,8 @@ typedef struct {
 	u_long fieldalloc;	/* line field(s) allocated count */
 } LINE;
 
-LINE noline = {"", 0, 0, 0, 0};	/* arg for outfield if no line to output */
+char nolineline[1] = { '\0' };
+LINE noline = {nolineline, 0, 0, 0, 0};	/* arg for outfield if no line to output */
 
 typedef struct {
 	FILE *fp;		/* file descriptor */
@@ -102,7 +103,7 @@ int joinout = 1;		/* show lines with matched join fields (-v) */
 int needsep;			/* need separator character */
 int spans = 1;			/* span multiple delimiters (-t) */
 char *empty;			/* empty field replacement string (-e) */
-char *tabchar = " \t";		/* delimiter characters (-t) */
+const char *tabchar = " \t";	/* delimiter characters (-t) */
 
 int  cmp(LINE *, u_long, LINE *, u_long);
 void enomem(void);
@@ -301,7 +302,7 @@ slurp(INPUT *F)
 	LINE tmp;
 	LINE *nline;
 	size_t len;
-	int cnt;
+	u_long cnt;
 	char *bp, *fieldp;
 	u_long nsize;
 
@@ -338,11 +339,11 @@ slurp(INPUT *F)
 		 * but it's probably okay as is.
 		 */
 		lp = &F->set[F->setcnt];
-		if (F->pushback != -1) {
+		if (F->pushback != (u_long)-1) {
 			tmp = F->set[F->setcnt];
 			F->set[F->setcnt] = F->set[F->pushback];
 			F->set[F->pushback] = tmp;
-			F->pushback = -1;
+			F->pushback = (u_long)-1;
 			continue;
 		}
 		if ((bp = fgetln(F->fp, &len)) == NULL)
@@ -414,7 +415,7 @@ cmp(LINE *lp1, u_long fieldno1, LINE *lp2, u_long fieldno2)
 void
 joinlines(INPUT *F1, INPUT *F2)
 {
-	int cnt1, cnt2;
+	u_long cnt1, cnt2;
 
 	/*
 	 * Output the results of a join comparison.  The output may be from
@@ -434,7 +435,7 @@ joinlines(INPUT *F1, INPUT *F2)
 void
 outoneline(INPUT *F, LINE *lp)
 {
-	int cnt;
+	u_long cnt;
 
 	/*
 	 * Output a single line from one of the files, according to the
@@ -443,7 +444,7 @@ outoneline(INPUT *F, LINE *lp)
 	 */
 	if (olist)
 		for (cnt = 0; cnt < olistcnt; ++cnt) {
-			if (olist[cnt].fileno == F->number)
+			if (olist[cnt].fileno == (u_long)F->number)
 				outfield(lp, olist[cnt].fieldno);
 			else
 				outfield(&noline, 1);
@@ -460,7 +461,7 @@ outoneline(INPUT *F, LINE *lp)
 void
 outtwoline(INPUT *F1, LINE *lp1, INPUT *F2, LINE *lp2)
 {
-	int cnt;
+	u_long cnt;
 
 	/* Output a pair of lines according to the join list (if any). */
 	if (olist) {
@@ -544,7 +545,7 @@ fieldarg(char *option)
 void
 obsolete(char **argv)
 {
-	int len;
+	size_t len;
 	char **p, *ap, *t;
 
 	while ((ap = *++argv) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.19.6.1 2009/05/13 19:20:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.19 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.19.6.1 2009/05/13 19:20:21 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,10 +65,10 @@ static	void action (char *);
 static	void dump_prom (void);
 static	void usage (void);
 
-char	*path_eeprom = _PATH_EEPROM;
-char	*path_openprom = _PATH_OPENPROM;
-char	*path_openfirm = _PATH_OPENFIRM;
-char	*path_prepnvram = _PATH_PREPNVRAM;
+const char *path_eeprom = _PATH_EEPROM;
+const char *path_openprom = _PATH_OPENPROM;
+const char *path_openfirm = _PATH_OPENFIRM;
+const char *path_prepnvram = _PATH_PREPNVRAM;
 int	fix_checksum = 0;
 int	ignore_checksum = 0;
 int	update_checksums = 0;
@@ -91,9 +91,9 @@ main(argc, argv)
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
 #if defined(USE_OPENPROM) || defined(USE_OPENFIRM) || defined(USE_PREPNVRAM)
-	char *optstring = "-cf:iv";
+	const char *optstring = "-cf:iv";
 #else
-	char *optstring = "-cf:i";
+	const char *optstring = "-cf:i";
 #endif /* USE_OPENPROM */
 
 	while ((ch = getopt(argc, argv, optstring)) != -1)
@@ -201,9 +201,12 @@ action(line)
 #ifdef USE_OPENPROM
 	if (use_openprom)
 		op_action(keyword, arg);
-	else
+	else {
 #endif /* USE_OPENPROM */
 		ee_action(keyword, arg);
+#ifdef USE_OPENPROM
+	}
+#endif /* USE_OPENPROM */
 #endif /* USE_OPENFIRM */
 #endif /* USE_PREPNVRAM */
 }
@@ -227,9 +230,12 @@ dump_prom()
 		 * We have a special dump routine for this.
 		 */
 		op_dump();
-	else
+	else {
 #endif /* USE_OPENPROM */
 		ee_dump();
+#ifdef USE_OPENPROM
+	}
+#endif /* USE_OPENPROM */
 #endif /* USE_OPENFIRM */
 #endif /* USE_PREPNVRAM */
 }

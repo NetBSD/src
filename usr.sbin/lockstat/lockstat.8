@@ -1,6 +1,6 @@
-.\"	$NetBSD: lockstat.8,v 1.8 2008/04/30 13:11:02 martin Exp $
+.\"	$NetBSD: lockstat.8,v 1.8.8.1 2009/05/13 19:20:28 jym Exp $
 .\"
-.\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 14, 2007
+.Dd March 21, 2009
 .Dt LOCKSTAT 8
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd display kernel locking statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl ceflMmpst
+.Op Fl ceflMmpstx
 .Op Fl b Ar nbuf
 .Op Fl E Ar event
 .Op Fl F Ar func
@@ -123,6 +123,8 @@ option to list valid lock types.
 List valid lock types for the
 .Fl T
 option and exit.
+.It Fl x
+Summarize events, and do not report on lock types.
 .El
 .Sh FILES
 .Bl -tag -width /dev/lockstat -compact
@@ -130,33 +132,27 @@ option and exit.
 .Nm
 control device
 .It Pa /dev/ksyms
-default namelist
-.It Pa /netbsd
 namelist
 .El
 .Sh EXAMPLES
 .Bd -literal
-# lockstat -T kernel_lock sleep 10
+# lockstat -L uvm_pageqlock sleep 10
 Elapsed time: 10.01 seconds.
 
--- Kernel lock spin
+-- Adaptive mutex spin
 
 Total%  Count   Time/ms          Lock                       Caller
 ------ ------- --------- ---------------------- ------------------------------
-100.00   74941   1545.54 kernel_lock            \*[Lt]all\*[Gt]
- 43.54   28467    673.00 kernel_lock            trap+71e
- 42.87   34466    662.51 kernel_lock            syscall_plain+111
-  7.38    7565    114.14 kernel_lock            uiomove+17a
-  1.92    1221     29.61 kernel_lock            sleepq_block+20b
-  1.84    1759     28.40 kernel_lock            trap+706
-  0.81     124     12.54 kernel_lock            x86_softintlock+1a
-  0.64     587      9.87 kernel_lock            pmap_load+2a6
-  0.52     214      8.10 kernel_lock            intr_biglock_wrapper+1e
-  0.20     219      3.09 kernel_lock            pmap_load+323
-  0.14     175      2.12 kernel_lock            do_sys_wait+2d0
-  0.09      85      1.43 kernel_lock            lwp_startup+66
-  0.04      49      0.64 kernel_lock            sleepq_block+18c
-  0.01      10      0.12 kernel_lock            lwp_userret+3c
+100.00    1281      0.78 uvm_pageqlock          \*[Lt]all\*[Gt]
+ 39.81     385      0.31 uvm_pageqlock          uvm_fault_internal+11cc
+ 30.98     358      0.24 uvm_pageqlock          uvm_fault_internal+bb1
+ 28.06     522      0.22 uvm_pageqlock          uvm_anfree+132
+  0.51       5      0.00 uvm_pageqlock          ubc_fault+28f
+  0.20       4      0.00 uvm_pageqlock          uvm_fault_internal+12b6
+  0.18       2      0.00 uvm_pageqlock          uao_detach_locked+58
+  0.11       2      0.00 uvm_pageqlock          uvm_fault_internal+7d5
+  0.08       2      0.00 uvm_pageqlock          ufs_balloc_range+160
+  0.07       1      0.00 uvm_pageqlock          uvm_fault_internal+107b
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

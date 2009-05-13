@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2006/06/02 22:11:07 hubertf Exp $
+#	$NetBSD: Makefile,v 1.1.30.1 2009/05/13 19:17:43 jym Exp $
 
 BOOTMODEL=	big
 IMAGE=		ramdisk-${BOOTMODEL}.fs
 IMAGESIZE=	5000k
-IMAGEDEPENDS= 	disktab.preinstall \
-		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
+IMAGEDEPENDS= 	disktab.preinstall
 USE_SYSINST=	yes
 SMALLPROG_INET6=1
 
 .include "${.CURDIR}/../common/Makefile.ramdisk"
+.include "${DISTRIBDIR}/common/Makefile.dhcpcd"
 
 .if ${USE_INET6} != "no"
 LISTS+=		${.CURDIR}/list.inet6

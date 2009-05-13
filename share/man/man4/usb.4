@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.88 2008/04/30 13:10:54 martin Exp $
+.\" $NetBSD: usb.4,v 1.88.6.1 2009/05/13 19:19:09 jym Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Cd "ohci*   at cardbus? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
 .Cd "slhci*  at isa? port ? irq ?"
-.Cd "slhci*  at pcmcia? function ?
+.Cd "slhci*  at pcmcia? function ?"
 .Cd "uhci*   at cardbus? function ?"
 .Cd "uhci*   at pci? dev ? function ?"
 .Cd "usb*    at ehci? flags X"
@@ -100,13 +100,14 @@ during cold boot.
 Normally, only the USB host controller and the
 .Va usb
 device are detected during the autoconfiguration when the
-machine is booted.  The rest of the devices are detected once
+machine is booted.
+The rest of the devices are detected once
 the system becomes functional and the kernel thread for the
 .Va usb
 device is started.
 Sometimes it is desirable to have a device detected early in the
-boot process, e.g., the console keyboard.  To achieve this use
-a
+boot process, e.g., the console keyboard.
+To achieve this use a
 .Va flags
 value of 1.
 .Pp
@@ -470,7 +471,8 @@ All
 .Tn USB
 events are reported via the
 .Pa /dev/usb
-device.  This devices can be opened for reading and each
+device.
+This devices can be opened for reading and each
 .Xr read 2
 will yield an event record (if something has happened).
 The
@@ -501,23 +503,25 @@ struct usb_event {
         } u;
 };
 .Ed
+.Pp
 The
 .Va ue_type
 field identifies the type of event that is described.
 The possible events are attach/detach of a host controller,
-a device, or a device driver.  The union contains information
+a device, or a device driver.
+The union contains information
 pertinent to the different types of events.
-.br
+.Pp
 The
 .Va ue_bus
 contains the number of the
 .Tn USB
 bus for host controller events.
-.br
+.Pp
 The
 .Va ue_device
 record contains information about the device in a device event event.
-.br
+.Pp
 The
 .Va ue_cookie
 is an opaque value that uniquely determines which
@@ -529,8 +533,10 @@ contains the name of the device (driver) as seen in, e.g.,
 kernel messages.
 .Pp
 Note that there is a separation between device and device
-driver events.  A device event is generated when a physical
-USB device is attached or detached.  A single USB device may
+driver events.
+A device event is generated when a physical
+USB device is attached or detached.
+A single USB device may
 have zero, one, or many device drivers associated with it.
 .Sh KERNEL THREADS
 For each USB bus, i.e., for each host controller, there is

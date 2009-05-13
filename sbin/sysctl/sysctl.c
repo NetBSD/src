@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.125 2008/12/28 20:20:37 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.125.2.1 2009/05/13 19:19:07 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.125 2008/12/28 20:20:37 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.125.2.1 2009/05/13 19:19:07 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,8 +548,8 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	   int add)
 {
 	struct sysctlnode *node;
-	int rc, ni;
-	size_t sz;
+	int rc;
+	size_t ni, sz;
 	char *sp, *dp, n[20];
 	const struct handlespec *p;
 
@@ -788,12 +788,18 @@ parse(char *l)
 	u_int namelen, type;
 	char *key, *value, *dot;
 	size_t sz;
+	bool optional = false;
 
 	req = 1;
 	key = l;
-	value = strchr(l, '=');
-	if (value != NULL)
+
+	if ((value = strchr(l, '=')) != NULL) {
+		if (value > l && value[-1] == '?') {
+			value[-1] = '\0';
+			optional = true;
+		}
 		*value++ = '\0';
+	}
 
 	if ((dot = strpbrk(key, "./")) == NULL)
 		sep[0] = '.';
@@ -836,6 +842,8 @@ parse(char *l)
 
 	if (sysctlgetmibinfo(key, &name[0], &namelen, gsname, &sz, &node,
 			     SYSCTL_VERSION) == -1) {
+		if (optional)
+			return;
 		sysctlparseerror(namelen, l);
 		EXIT(1);
 	}
@@ -1528,8 +1536,8 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 	struct sysctlnode *node = pnode->sysctl_child;
 	struct sysctldesc *d, *p, *plim;
 	char *desc;
-	size_t sz;
-	int rc, i;
+	size_t i, sz;
+	int rc;
 
 	sz = 128 * pnode->sysctl_clen;
 	name[namelen] = CTL_DESCRIBE;
@@ -1916,7 +1924,8 @@ display_struct(const struct sysctlnode *node, const char *name,
 static void
 hex_dump(const unsigned char *buf, size_t len)
 {
-	int i, j;
+	unsigned int i;
+	int j;
 	char line[80], tmp[12];
 
 	memset(line, ' ', sizeof(line));
@@ -1927,7 +1936,7 @@ hex_dump(const unsigned char *buf, size_t len)
 			line[58] = '|';
 			line[77] = '|';
 			line[78] = 0;
-			snprintf(tmp, sizeof(tmp), "%07d", i);
+			snprintf(tmp, sizeof(tmp), "%07x", i);
 			memcpy(&line[0], tmp, 7);
 		}
 		/* copy out hex version of byte */
@@ -2477,11 +2486,12 @@ machdep_diskinfo(HANDLER_ARGS)
 		char t = ':';
 		printf(" %.*s", (int)sizeof ni->ni_devname,
 		       ni->ni_devname);
-		for (b = 0; b < ni->ni_nmatches; t = ',', b++)
+		for (b = 0; b < (unsigned int)ni->ni_nmatches; t = ',', b++)
 			printf("%c%x", t,
 			       bi[ni->ni_biosmatches[b]].bi_dev);
 	}
 	printf("\n");
+	free(dl);
 }
 #endif /* CPU_DISKINFO */
 

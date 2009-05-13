@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 2007/07/22 17:03:13 christos Exp $
+#	$NetBSD: Makefile,v 1.17.20.1 2009/05/13 19:19:59 jym Exp $
 
-WARNS?=4
 PROG=	newsyslog
 SRCS=	newsyslog.c
 

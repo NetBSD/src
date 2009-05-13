@@ -1,9 +1,7 @@
-# $NetBSD: md.atari,v 1.50 2009/01/13 13:52:06 tsutsui Exp $
+# $NetBSD: md.atari,v 1.50.2.1 2009/05/13 19:17:50 jym Exp $
 ./sbin/ahdilabel				base-sysutil-root
 ./sbin/binpatch					base-sysutil-root
 ./sbin/edahdi					base-sysutil-root
-./sbin/edlabel					base-sysutil-root
-./usr/bin/fdformat				base-util-bin
 ./usr/bin/msconfig				base-util-bin
 ./usr/mdec/installboot				base-sysutil-bin
 ./usr/mdec/milan				base-sysutil-bin

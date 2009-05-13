@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.5,v 1.10 2008/06/23 04:22:36 dholland Exp $
+.\"	$NetBSD: statvfs.5,v 1.10.4.1 2009/05/13 19:19:13 jym Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
 .\"
-.Dd June 23, 2008
+.Dd April 10, 2009
 .Dt STATVFS 5
 .Os
 .Sh NAME
@@ -115,8 +115,8 @@ Never update access times.
 Recognize symbolic link permission.
 .It Dv ST_NODEVMTIME
 Never update modification times for device files.
-.It Dv ST_SOFTDEP
-Use soft dependencies.
+.It Dv ST_LOG
+Use logging (journalling).
 .It Dv ST_LOCAL
 The filesystem resides locally.
 .It Dv ST_QUOTA

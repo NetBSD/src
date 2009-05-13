@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.15 2008/11/07 07:36:38 minskim Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.15.2.1 2009/05/13 19:20:41 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -435,7 +435,7 @@ One function of TLS is mutual authentication of client and server.
 Unless authentication is disabled by setting
 .Sq tls_verify=off
 the following rules are used:
-.Ss "as client:"
+.Ss "As client:"
 A client can be configured not to check a server's certificate by setting the
 parameter
 .Ar verify
@@ -453,14 +453,14 @@ destination and adding its hostname as
 .Ar subject
 to authenticate the TLS connection without having to add the IP to the X.509
 certificate.
-.br
+.Pp
 If no CA is used or no trust path between CA and server certificate exists, then
 hash value of the server's certificate is compared with the hash given in
 .Ar fingerprint
 and the hash of the certificate in
 .Ar cert .
 If the hashes are equal then the server is authenticated.
-.Ss "as server:"
+.Ss "As server:"
 If using a CA and the client's certificate is signed by it then the client is
 authenticated.
 Otherwise the hash of the client's certificate is compared with the hashes given

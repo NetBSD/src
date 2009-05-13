@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/08/29 00:02:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.7.6.1 2009/05/13 19:20:25 jym Exp $
 
 PROG	=	isdnd
 SRCS	=	rc_parse.y rc_scan.l main.c rc_config.c log.c curses.c	\
@@ -7,7 +7,7 @@ SRCS	=	rc_parse.y rc_scan.l main.c rc_config.c log.c curses.c	\
 		holiday.c
 
 CPPFLAGS+=	-I${.CURDIR}/../isdnmonitor -I${.CURDIR}/../isdntel
-CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR}
+CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR} -DYY_NO_INPUT
 
 # compile debug support
 CPPFLAGS+=	-DDEBUG

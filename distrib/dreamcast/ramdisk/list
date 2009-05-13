@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 2009/01/25 22:08:37 abs Exp $
+#	$NetBSD: list,v 1.7.2.1 2009/05/13 19:17:41 jym Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -22,6 +22,7 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
+PROG	sbin/dhclient
 PROG	sbin/disklabel
 PROG	sbin/dmesg
 PROG	sbin/fsck
@@ -55,6 +56,7 @@ PROG	usr/sbin/chroot
 # init invokes the shell as -sh
 ARGVLN	sh	-sh
 
+SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
@@ -69,8 +71,9 @@ LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz -lprop
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
+COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script 555
 
 # and the common installation tools
 COPY	${NETBSDSRCDIR}/distrib/common/termcap.mini	usr/share/misc/termcap

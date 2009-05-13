@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.40 2009/01/23 08:23:51 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.40.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -83,9 +83,6 @@
 #ifdef ENABLE_NATT
 #include "nattraversal.h"
 #endif
-#ifdef ENABLE_HYBRID
-static int switch_authmethod(int);
-#endif
 
 #ifdef HAVE_GSSAPI
 #include <iconv.h>
@@ -97,12 +94,10 @@ static int switch_authmethod(int);
 #endif
 #endif
 
-int verbose_proposal_check = 1;
+static vchar_t *get_ph1approval __P((struct ph1handle *, u_int32_t, u_int32_t,
+				     struct prop_pair **));
+static int get_ph1approvalx __P((struct remoteconf *, void *));
 
-static vchar_t *get_ph1approval __P((struct ph1handle *, struct prop_pair **));
-static struct isakmpsa *get_ph1approvalx __P((struct prop_pair *,
-	struct isakmpsa *, struct isakmpsa *, int, u_int32_t));
-static void print_ph1mismatched __P((struct prop_pair *, struct isakmpsa *, u_int32_t));
 static int t2isakmpsa __P((struct isakmp_pl_t *, struct isakmpsa *, u_int32_t));
 static int cmp_aproppair_i __P((struct prop_pair *, struct prop_pair *));
 static struct prop_pair *get_ph2approval __P((struct ph2handle *,
@@ -110,6 +105,8 @@ static struct prop_pair *get_ph2approval __P((struct ph2handle *,
 static struct prop_pair *get_ph2approvalx __P((struct ph2handle *,
 	struct prop_pair *));
 static void free_proppair0 __P((struct prop_pair *));
+static struct prop_pair ** get_proppair_and_doi_sit __P((vchar_t *, int,
+							 u_int32_t *, u_int32_t *));
 
 static int get_transform
 	__P((struct isakmp_pl_p *, struct prop_pair **, int *));
@@ -158,10 +155,10 @@ static int setph1attr __P((struct isakmpsa *, caddr_t));
 static vchar_t *setph2proposal0 __P((const struct ph2handle *,
 	const struct saprop *, const struct saproto *));
 
-#ifdef HAVE_GSSAPI
-static struct isakmpsa *fixup_initiator_sa __P((struct isakmpsa *,
-	struct isakmpsa *));
-#endif
+struct ph1approvalx_ctx {
+	struct prop_pair *p;
+	struct isakmpsa *sa;
+};
 
 /*%%%*/
 /*
@@ -180,39 +177,81 @@ ipsecdoi_checkph1proposal(sa, iph1)
 {
 	vchar_t *newsa;		/* new SA payload approved. */
 	struct prop_pair **pair;
+	u_int32_t doitype, sittype;
 
 	/* get proposal pair */
-	pair = get_proppair(sa, IPSECDOI_TYPE_PH1);
+	pair = get_proppair_and_doi_sit(sa, IPSECDOI_TYPE_PH1,
+					&doitype, &sittype);
 	if (pair == NULL)
 		return -1;
 
 	/* check and get one SA for use */
-	newsa = get_ph1approval(iph1, pair);
-	
+	newsa = get_ph1approval(iph1, doitype, sittype, pair);
 	free_proppair(pair);
 
 	if (newsa == NULL)
 		return -1;
 
 	iph1->sa_ret = newsa;
-
 	return 0;
 }
+
+static void
+print_ph1proposal(pair, s)
+	struct prop_pair *pair;
+	struct isakmpsa *s;
+{
+	struct isakmp_pl_p *prop = pair->prop;
+	struct isakmp_pl_t *trns = pair->trns;
+
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "prop#=%d, prot-id=%s, spi-size=%d, #trns=%d\n",
+	     prop->p_no, s_ipsecdoi_proto(prop->proto_id),
+	     prop->spi_size, prop->num_t);
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "trns#=%d, trns-id=%s\n",
+	     trns->t_no, s_ipsecdoi_trns(prop->proto_id, trns->t_id));
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "  lifetime = %ld\n", (long) s->lifetime);
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "  lifebyte = %zu\n", s->lifebyte);
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "  enctype = %s\n",
+	     s_oakley_attr_v(OAKLEY_ATTR_ENC_ALG, s->enctype));
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "  encklen = %d\n", s->encklen);
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "  hashtype = %s\n",
+	     s_oakley_attr_v(OAKLEY_ATTR_HASH_ALG, s->hashtype));
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "  authmethod = %s\n",
+	     s_oakley_attr_v(OAKLEY_ATTR_AUTH_METHOD, s->authmethod));
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "  dh_group = %s\n",
+	     s_oakley_attr_v(OAKLEY_ATTR_GRP_DESC, s->dh_group));
+}
+
 
 /*
  * acceptable check for remote configuration.
  * return a new SA payload to be reply to peer.
  */
+
 static vchar_t *
-get_ph1approval(iph1, pair)
+get_ph1approval(iph1, doitype, sittype, pair)
 	struct ph1handle *iph1;
+	u_int32_t doitype, sittype;
 	struct prop_pair **pair;
 {
 	vchar_t *newsa;
-	struct isakmpsa *sa, tsa;
+	struct ph1approvalx_ctx ctx;
 	struct prop_pair *s, *p;
-	int prophlen;
+	struct rmconfselector rmsel;
+	struct isakmpsa *sa;
 	int i;
+
+	memset(&rmsel, 0, sizeof(rmsel));
+	rmsel.remote = iph1->remote;
 
 	if (iph1->approval) {
 		delisakmpsa(iph1->approval);
@@ -223,44 +262,35 @@ get_ph1approval(iph1, pair)
 		if (pair[i] == NULL)
 			continue;
 		for (s = pair[i]; s; s = s->next) {
-			prophlen = 
-			    sizeof(struct isakmp_pl_p) + s->prop->spi_size;
-
 			/* compare proposal and select one */
 			for (p = s; p; p = p->tnext) {
-				if ((sa = get_ph1approvalx(p, 
-						iph1->rmconf->proposal, &tsa,
-						iph1->rmconf->pcheck_level,
-						iph1->vendorid_mask)) != NULL)
-					goto found;
+				struct isakmp_pl_p *prop = p->prop;
+
+				sa = newisakmpsa();
+				ctx.p = p;
+				ctx.sa = sa;
+				if (t2isakmpsa(p->trns, sa,
+					       iph1->vendorid_mask) < 0)
+					continue;
+				print_ph1proposal(p, sa);
+				if (iph1->rmconf != NULL) {
+					if (get_ph1approvalx(iph1->rmconf, &ctx))
+						goto found;
+				} else {
+					if (enumrmconf(&rmsel, get_ph1approvalx, &ctx))
+						goto found;
+				}
+				delisakmpsa(sa);
 			}
 		}
 	}
 
-	/*
-	 * if there is no suitable proposal, racoon complains about all of
-	 * mismatched items in those proposal.
-	 */
-	if (verbose_proposal_check) {
-		for (i = 0; i < MAXPROPPAIRLEN; i++) {
-			if (pair[i] == NULL)
-				continue;
-			for (s = pair[i]; s; s = s->next) {
-				prophlen = sizeof(struct isakmp_pl_p)
-						+ s->prop->spi_size;
-				for (p = s; p; p = p->tnext) {
-					print_ph1mismatched(p,
-						iph1->rmconf->proposal,
-						iph1->vendorid_mask);
-				}
-			}
-		}
-	}
 	plog(LLV_ERROR, LOCATION, NULL, "no suitable proposal found.\n");
 
 	return NULL;
 
 found:
+	sa = ctx.sa;
 	plog(LLV_DEBUG, LOCATION, NULL, "an acceptable proposal found.\n");
 
 	/* check DH group settings */
@@ -277,7 +307,7 @@ found:
 
 	if (oakley_setdhgroup(sa->dh_group, &sa->dhgrp) == -1) {
 		sa->dhgrp = NULL;
-		racoon_free(sa);
+		delisakmpsa(sa);
 		return NULL;
 	}
 
@@ -286,20 +316,16 @@ saok:
 	if (sa->gssid != NULL)
 		plog(LLV_DEBUG, LOCATION, NULL, "gss id in new sa '%.*s'\n",
 		    (int)sa->gssid->l, sa->gssid->v);
-	if (iph1-> side == INITIATOR) {
+	if (iph1->side == INITIATOR) {
 		if (iph1->rmconf->proposal->gssid != NULL)
 			iph1->gi_i = vdup(iph1->rmconf->proposal->gssid);
-		if (tsa.gssid != NULL)
-			iph1->gi_r = vdup(tsa.gssid);
-		iph1->approval = fixup_initiator_sa(sa, &tsa);
+		if (sa->gssid != NULL)
+			iph1->gi_r = vdup(sa->gssid);
 	} else {
-		if (tsa.gssid != NULL) {
-			iph1->gi_r = vdup(tsa.gssid);
+		if (sa->gssid != NULL) {
+			iph1->gi_r = vdup(sa->gssid);
 			iph1->gi_i = gssapi_get_id(iph1);
-			if (sa->gssid == NULL && iph1->gi_i != NULL)
-				sa->gssid = vdup(iph1->gi_i);
 		}
-		iph1->approval = sa;
 	}
 	if (iph1->gi_i != NULL)
 		plog(LLV_DEBUG, LOCATION, NULL, "GIi is %.*s\n",
@@ -307,19 +333,15 @@ saok:
 	if (iph1->gi_r != NULL)
 		plog(LLV_DEBUG, LOCATION, NULL, "GIr is %.*s\n",
 		    (int)iph1->gi_r->l, iph1->gi_r->v);
-#else
-	iph1->approval = sa;
 #endif
-	if(iph1->approval) {
-		plog(LLV_DEBUG, LOCATION, NULL, "agreed on %s auth.\n",
-		    s_oakley_attr_method(iph1->approval->authmethod));
-	}
+	plog(LLV_DEBUG, LOCATION, NULL, "agreed on %s auth.\n",
+	     s_oakley_attr_method(sa->authmethod));
 
-	newsa = get_sabyproppair(p, iph1);
-	if (newsa == NULL && iph1->approval != NULL){
-		delisakmpsa(iph1->approval);
-		iph1->approval = NULL;
-	}
+	newsa = get_sabyproppair(doitype, sittype, p);
+	if (newsa == NULL)
+		delisakmpsa(sa);
+	else
+		iph1->approval = sa;
 
 	return newsa;
 }
@@ -327,221 +349,43 @@ saok:
 /*
  * compare peer's single proposal and all of my proposal.
  * and select one if suiatable.
- * p       : one of peer's proposal.
- * proposal: my proposals.
  */
-static struct isakmpsa *
-get_ph1approvalx(p, proposal, sap, check_level, vendorid_mask)
-	struct prop_pair *p;
-	struct isakmpsa *proposal, *sap;
-	int check_level;
-	u_int32_t vendorid_mask;
+static int
+get_ph1approvalx(rmconf, ctx)
+	struct remoteconf *rmconf;
+	void *ctx;
 {
-	struct isakmp_pl_p *prop = p->prop;
-	struct isakmp_pl_t *trns = p->trns;
-	struct isakmpsa sa, *s, *tsap;
-	int authmethod;
+	struct ph1approvalx_ctx *pctx = (struct ph1approvalx_ctx *) ctx;
+	struct isakmpsa *sa;
 
-	plog(LLV_DEBUG, LOCATION, NULL,
-       		"prop#=%d, prot-id=%s, spi-size=%d, #trns=%d\n",
-		prop->p_no, s_ipsecdoi_proto(prop->proto_id),
-		prop->spi_size, prop->num_t);
+	/* do the hard work */
+	sa = checkisakmpsa(rmconf->pcheck_level, pctx->sa, rmconf->proposal);
+	if (sa == NULL)
+		return 0;
 
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"trns#=%d, trns-id=%s\n",
-		trns->t_no,
-		s_ipsecdoi_trns(prop->proto_id, trns->t_id));
+	/* duplicate and modify the found SA to match proposal */
+	sa = dupisakmpsa(sa);
 
-	tsap = sap != NULL ? sap : &sa;
-
-	memset(tsap, 0, sizeof(*tsap));
-	if (t2isakmpsa(trns, tsap, vendorid_mask) < 0)
-		return NULL;
-	for (s = proposal; s != NULL; s = s->next) {
-#ifdef ENABLE_HYBRID
-		authmethod = switch_authmethod(s->authmethod);
-#else
-		authmethod = s->authmethod;
-#endif
-		plog(LLV_DEBUG, LOCATION, NULL, "Compared: DB:Peer\n");
-		plog(LLV_DEBUG, LOCATION, NULL, "(lifetime = %ld:%ld)\n",
-			(long)s->lifetime, (long)tsap->lifetime);
-		plog(LLV_DEBUG, LOCATION, NULL, "(lifebyte = %zu:%zu)\n",
-			s->lifebyte, tsap->lifebyte);
-		plog(LLV_DEBUG, LOCATION, NULL, "enctype = %s:%s\n",
-			s_oakley_attr_v(OAKLEY_ATTR_ENC_ALG,
-					s->enctype),
-			s_oakley_attr_v(OAKLEY_ATTR_ENC_ALG,
-					tsap->enctype));
-		plog(LLV_DEBUG, LOCATION, NULL, "(encklen = %d:%d)\n",
-			s->encklen, tsap->encklen);
-		plog(LLV_DEBUG, LOCATION, NULL, "hashtype = %s:%s\n",
-			s_oakley_attr_v(OAKLEY_ATTR_HASH_ALG,
-					s->hashtype),
-			s_oakley_attr_v(OAKLEY_ATTR_HASH_ALG,
-					tsap->hashtype));
-		plog(LLV_DEBUG, LOCATION, NULL, "authmethod = %s:%s\n",
-			s_oakley_attr_v(OAKLEY_ATTR_AUTH_METHOD,
-					s->authmethod),
-			s_oakley_attr_v(OAKLEY_ATTR_AUTH_METHOD,
-					tsap->authmethod));
-		plog(LLV_DEBUG, LOCATION, NULL, "dh_group = %s:%s\n",
-			s_oakley_attr_v(OAKLEY_ATTR_GRP_DESC,
-					s->dh_group),
-			s_oakley_attr_v(OAKLEY_ATTR_GRP_DESC,
-					tsap->dh_group));
-#if 0
-		/* XXX to be considered ? */
-		if (tsap->lifebyte > s->lifebyte) ;
-#endif
-		/*
-		 * if responder side and peer's key length in proposal
-		 * is bigger than mine, it might be accepted.
-		 */
-		if(tsap->enctype == s->enctype &&
-		    tsap->authmethod == authmethod &&
-		    tsap->hashtype == s->hashtype &&
-		    tsap->dh_group == s->dh_group &&
-		    tsap->encklen == s->encklen) {
-			switch(check_level) {
-			case PROP_CHECK_OBEY:
-				goto found;
-				break;
-
-			case PROP_CHECK_STRICT:
-				if ((tsap->lifetime > s->lifetime) ||
-				    (tsap->lifebyte > s->lifebyte))
-					continue;
-				goto found;
-				break;
-
-			case PROP_CHECK_CLAIM:
-				if (tsap->lifetime < s->lifetime)
-					s->lifetime = tsap->lifetime;
-				if (tsap->lifebyte < s->lifebyte)
-					s->lifebyte = tsap->lifebyte;
-				goto found;
-				break;
-
-			case PROP_CHECK_EXACT:
-				if ((tsap->lifetime != s->lifetime) ||
-				    (tsap->lifebyte != s->lifebyte))
-					continue;
-				goto found;
-				break;
-
-			default:
-				plog(LLV_ERROR, LOCATION, NULL, 
-				    "Unexpected proposal_check value\n");
-				continue;
-				break;
-			}
-		}
+	switch (rmconf->pcheck_level) {
+	case PROP_CHECK_OBEY:
+		sa->lifetime = pctx->sa->lifetime;
+		sa->lifebyte = pctx->sa->lifebyte;
+		break;
+	case PROP_CHECK_CLAIM:
+		if (pctx->sa->lifetime < sa->lifetime)
+			sa->lifetime = pctx->sa->lifetime;
+		if (pctx->sa->lifebyte < sa->lifebyte)
+			sa->lifebyte = pctx->sa->lifebyte;
+		break;
+	default:
+		break;
 	}
 
-found:
-	if (tsap->dhgrp != NULL){
-		oakley_dhgrp_free(tsap->dhgrp);
-		tsap->dhgrp = NULL;
-	}
+	/* replace the proposal with our approval sa */
+	delisakmpsa(pctx->sa);
+	pctx->sa = sa;
 
-	if ((s = dupisakmpsa(s)) != NULL) {
-		switch(check_level) {
-		case PROP_CHECK_OBEY:
-			s->lifetime = tsap->lifetime;
-			s->lifebyte = tsap->lifebyte;
-			break;
-
-		case PROP_CHECK_STRICT:
-			s->lifetime = tsap->lifetime;
-			s->lifebyte = tsap->lifebyte;
-			break;
-
-		case PROP_CHECK_CLAIM:
-			if (tsap->lifetime < s->lifetime)
-				s->lifetime = tsap->lifetime;
-			if (tsap->lifebyte < s->lifebyte)
-				s->lifebyte = tsap->lifebyte;
-			break;
-
-		default:
-			break;
-		}
-	}
-	return s;
-}
-
-/*
- * print all of items in peer's proposal which are mismatched to my proposal.
- * p       : one of peer's proposal.
- * proposal: my proposals.
- */
-static void
-print_ph1mismatched(p, proposal, vendorid_mask)
-	struct prop_pair *p;
-	struct isakmpsa *proposal;
-	u_int32_t vendorid_mask;
-{
-	struct isakmpsa sa, *s;
-
-	memset(&sa, 0, sizeof(sa));
-	if (t2isakmpsa(p->trns, &sa, vendorid_mask) < 0)
-		return;
-	for (s = proposal; s ; s = s->next) {
-		if (sa.enctype != s->enctype) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"rejected enctype: "
-				"DB(prop#%d:trns#%d):Peer(prop#%d:trns#%d) = "
-				"%s:%s\n",
-				s->prop_no, s->trns_no,
-				p->prop->p_no, p->trns->t_no,
-				s_oakley_attr_v(OAKLEY_ATTR_ENC_ALG,
-					s->enctype),
-				s_oakley_attr_v(OAKLEY_ATTR_ENC_ALG,
-					sa.enctype));
-		}
-		if (sa.authmethod != s->authmethod) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"rejected authmethod: "
-				"DB(prop#%d:trns#%d):Peer(prop#%d:trns#%d) = "
-				"%s:%s\n",
-				s->prop_no, s->trns_no,
-				p->prop->p_no, p->trns->t_no,
-				s_oakley_attr_v(OAKLEY_ATTR_AUTH_METHOD,
-					s->authmethod),
-				s_oakley_attr_v(OAKLEY_ATTR_AUTH_METHOD,
-					sa.authmethod));
-		}
-		if (sa.hashtype != s->hashtype) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"rejected hashtype: "
-				"DB(prop#%d:trns#%d):Peer(prop#%d:trns#%d) = "
-				"%s:%s\n",
-				s->prop_no, s->trns_no,
-				p->prop->p_no, p->trns->t_no,
-				s_oakley_attr_v(OAKLEY_ATTR_HASH_ALG,
-					s->hashtype),
-				s_oakley_attr_v(OAKLEY_ATTR_HASH_ALG,
-					sa.hashtype));
-		}
-		if (sa.dh_group != s->dh_group) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"rejected dh_group: "
-				"DB(prop#%d:trns#%d):Peer(prop#%d:trns#%d) = "
-				"%s:%s\n",
-				s->prop_no, s->trns_no,
-				p->prop->p_no, p->trns->t_no,
-				s_oakley_attr_v(OAKLEY_ATTR_GRP_DESC,
-					s->dh_group),
-				s_oakley_attr_v(OAKLEY_ATTR_GRP_DESC,
-					sa.dh_group));
-		}
-	}
-
-	if (sa.dhgrp != NULL){
-		oakley_dhgrp_free(sa.dhgrp);
-		sa.dhgrp=NULL;
-	}
+	return 1;
 }
 
 /*
@@ -899,9 +743,11 @@ ipsecdoi_selectph2proposal(iph2)
 {
 	struct prop_pair **pair;
 	struct prop_pair *ret;
+	u_int32_t doitype, sittype;
 
 	/* get proposal pair */
-	pair = get_proppair(iph2->sa, IPSECDOI_TYPE_PH2);
+	pair = get_proppair_and_doi_sit(iph2->sa, IPSECDOI_TYPE_PH2,
+					&doitype, &sittype);
 	if (pair == NULL)
 		return -1;
 
@@ -913,7 +759,7 @@ ipsecdoi_selectph2proposal(iph2)
 
 	/* make a SA to be replayed. */
 	/* SPI must be updated later. */
-	iph2->sa_ret = get_sabyproppair(ret, iph2->ph1);
+	iph2->sa_ret = get_sabyproppair(doitype, sittype, ret);
 	free_proppair0(ret);
 	if (iph2->sa_ret == NULL)
 		return -1;
@@ -937,9 +783,11 @@ ipsecdoi_checkph2proposal(iph2)
 	int i, n, num;
 	int error = -1;
 	vchar_t *sa_ret = NULL;
+	u_int32_t doitype, sittype;
 
 	/* get proposal pair of SA sent. */
-	spair = get_proppair(iph2->sa, IPSECDOI_TYPE_PH2);
+	spair = get_proppair_and_doi_sit(iph2->sa, IPSECDOI_TYPE_PH2,
+					 &doitype, &sittype);
 	if (spair == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get prop pair.\n");
@@ -1005,7 +853,7 @@ ipsecdoi_checkph2proposal(iph2)
 
 	/* make a SA to be replayed. */
 	sa_ret = iph2->sa_ret;
-	iph2->sa_ret = get_sabyproppair(p, iph2->ph1);
+	iph2->sa_ret = get_sabyproppair(doitype, sittype, p);
 	free_proppair0(p);
 	if (iph2->sa_ret == NULL)
 		goto end;
@@ -1290,10 +1138,11 @@ free_proppair0(pair)
  * get proposal pairs from SA payload.
  * tiny check for proposal payload.
  */
-struct prop_pair **
-get_proppair(sa, mode)
+static struct prop_pair **
+get_proppair_and_doi_sit(sa, mode, doitype, sittype)
 	vchar_t *sa;
 	int mode;
+	u_int32_t *doitype, *sittype;
 {
 	struct prop_pair **pair = NULL;
 	int num_p = 0;			/* number of proposal for use */
@@ -1315,10 +1164,14 @@ get_proppair(sa, mode)
 	/* check DOI */
 	if (check_doi(ntohl(sab->doi)) < 0)
 		goto bad;
+	if (doitype != NULL)
+		*doitype = ntohl(sab->doi);
 
 	/* check SITUATION */
 	if (check_situation(ntohl(sab->sit)) < 0)
 		goto bad;
+	if (sittype != NULL)
+		*sittype = ntohl(sab->sit);
 
 	pair = racoon_calloc(1, MAXPROPPAIRLEN * sizeof(*pair));
 	if (pair == NULL) {
@@ -1454,6 +1307,15 @@ bad:
 	return NULL;
 }
 
+struct prop_pair **
+get_proppair(sa, mode)
+	vchar_t *sa;
+	int mode;
+{
+	return get_proppair_and_doi_sit(sa, mode, NULL, NULL);
+}
+
+
 /*
  * check transform payload.
  * OUT:
@@ -1568,9 +1430,9 @@ get_transform(prop, pair, num_p)
  * NOTE: this function make spi value clear.
  */
 vchar_t *
-get_sabyproppair(pair, iph1)
+get_sabyproppair(doitype, sittype, pair)
+	u_int32_t doitype, sittype;
 	struct prop_pair *pair;
-	struct ph1handle *iph1;
 {
 	vchar_t *newsa;
 	int newtlen;
@@ -1596,8 +1458,8 @@ get_sabyproppair(pair, iph1)
 	((struct isakmp_gen *)bp)->len = htons(newtlen);
 
 	/* update some of values in SA header */
-	((struct ipsecdoi_sa_b *)bp)->doi = htonl(iph1->rmconf->doitype);
-	((struct ipsecdoi_sa_b *)bp)->sit = htonl(iph1->rmconf->sittype);
+	((struct ipsecdoi_sa_b *)bp)->doi = htonl(doitype);
+	((struct ipsecdoi_sa_b *)bp)->sit = htonl(sittype);
 	bp += sizeof(struct ipsecdoi_sa_b);
 
 	/* create proposal payloads */
@@ -2737,7 +2599,8 @@ check_attr_ipcomp(trns)
  * NOT INCLUDING isakmp general header of SA payload
  */
 vchar_t *
-ipsecdoi_setph1proposal(props)
+ipsecdoi_setph1proposal(rmconf, props)
+	struct remoteconf *rmconf;
 	struct isakmpsa *props;
 {
 	vchar_t *mysa;
@@ -2757,8 +2620,8 @@ ipsecdoi_setph1proposal(props)
 
 	/* create SA payload */
 	/* not including isakmp general header */
-	((struct ipsecdoi_sa_b *)mysa->v)->doi = htonl(props->rmconf->doitype);
-	((struct ipsecdoi_sa_b *)mysa->v)->sit = htonl(props->rmconf->sittype);
+	((struct ipsecdoi_sa_b *)mysa->v)->doi = htonl(rmconf->doitype);
+	((struct ipsecdoi_sa_b *)mysa->v)->sit = htonl(rmconf->sittype);
 
 	(void)setph1prop(props, mysa->v + sizeof(struct ipsecdoi_sa_b));
 
@@ -2909,11 +2772,7 @@ setph1attr(sa, buf)
 	if (sa->authmethod) {
 		int authmethod;
 
-#ifdef ENABLE_HYBRID
-		authmethod = switch_authmethod(sa->authmethod);
-#else
-		authmethod = sa->authmethod;
-#endif
+		authmethod = isakmpsa_switch_authmethod(sa->authmethod);
 		authmethod &= 0xffff;
 		attrlen += sizeof(struct isakmp_data);
 		if (buf)
@@ -3699,8 +3558,6 @@ ipsecdoi_checkid1(iph1)
 	struct ph1handle *iph1;
 {
 	struct ipsecdoi_id_b *id_b;
-	struct sockaddr *sa;
-	caddr_t sa1, sa2;
 
 	if (iph1->id_p == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -3770,63 +3627,13 @@ ipsecdoi_checkid1(iph1)
 		}
 	}
 
-	/* compare with the ID if specified. */
-	if (genlist_next(iph1->rmconf->idvl_p, 0)) {
-		vchar_t ident;
-		struct idspec *id;
-		struct genlist_entry *gpb;
+	/* resolve remote configuration if not done yet */
+	if (resolveph1rmconf(iph1) < 0)
+		return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 
-		for (id = genlist_next (iph1->rmconf->idvl_p, &gpb); id; id = genlist_next (0, &gpb)) {
-			/* check the type of both IDs */
-			if (id->idtype != doi2idtype(id_b->type))
-				continue;  /* ID type mismatch */
-			if (id->id == 0)
-				goto matched;
+	if (iph1->rmconf == NULL)
+		return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 
-			/* compare defined ID with the ID sent by peer. */
-			switch (id->idtype) {
-			case IDTYPE_ASN1DN:
-				ident.v = iph1->id_p->v + sizeof(*id_b);
-				ident.l = iph1->id_p->l - sizeof(*id_b);
-				if (eay_cmp_asn1dn(id->id, &ident) == 0)
-					goto matched;
-				break;
-			case IDTYPE_ADDRESS:
-				sa = (struct sockaddr *)id->id->v;
-				sa2 = (caddr_t)(id_b + 1);
-				switch (sa->sa_family) {
-				case AF_INET:
-					if (iph1->id_p->l - sizeof(*id_b) != sizeof(struct in_addr))
-						continue;  /* ID value mismatch */
-					sa1 = (caddr_t)&((struct sockaddr_in *)sa)->sin_addr;
-					if (memcmp(sa1, sa2, sizeof(struct in_addr)) == 0)
-						goto matched;
-					break;
-#ifdef INET6
-				case AF_INET6:
-					if (iph1->id_p->l - sizeof(*id_b) != sizeof(struct in6_addr))
-						continue;  /* ID value mismatch */
-					sa1 = (caddr_t)&((struct sockaddr_in6 *)sa)->sin6_addr;
-					if (memcmp(sa1, sa2, sizeof(struct in6_addr)) == 0)
-						goto matched;
-					break;
-#endif
-				default:
-					break;
-				}
-				break;
-			default:
-				if (memcmp(id->id->v, id_b + 1, id->id->l) == 0)
-					goto matched;
-				break;
-			}
-		}
-		plog(LLV_WARNING, LOCATION, NULL, "No ID match.\n");
-		if (iph1->rmconf->verify_identifier)
-			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
-	}
-
-matched: /* ID value match */
 	return 0;
 }
 
@@ -3873,7 +3680,7 @@ ipsecdoi_setid1(iph1)
 					"failed to get own CERT.\n");
 				goto err;
 			}
-			ident = eay_get_x509asn1subjectname(&iph1->cert->cert);
+			ident = eay_get_x509asn1subjectname(iph1->cert);
 		}
 		break;
 	case IDTYPE_ADDRESS:
@@ -3918,7 +3725,7 @@ ipsecdoi_setid1(iph1)
 		if (!ident) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to get ID buffer.\n");
-			return 0;
+			return -1;
 		}
 		memcpy(ident->v, p, ident->l);
 	    }
@@ -3926,7 +3733,7 @@ ipsecdoi_setid1(iph1)
 	if (!ident) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID buffer.\n");
-		return 0;
+		return -1;
 	}
 
 	ret = vmalloc(sizeof(id_b) + ident->l);
@@ -4941,18 +4748,6 @@ ipsecdoi_authalg2trnsid(alg)
 	return -1;
 }
 
-#ifdef HAVE_GSSAPI
-struct isakmpsa *
-fixup_initiator_sa(match, received)
-	struct isakmpsa *match, *received;
-{
-	if (received->gssid != NULL)
-		match->gssid = vdup(received->gssid);
-
-	return match;
-}
-#endif
-
 static int rm_idtype2doi[] = {
 	255,				/* IDTYPE_UNDEFINED, 0 */
 	IPSECDOI_ID_FQDN,		/* IDTYPE_FQDN, 1 */
@@ -5003,39 +4798,3 @@ doi2idtype(doi)
 	}
 	/*NOTREACHED*/
 }
-
-#ifdef ENABLE_HYBRID
-static int
-switch_authmethod(authmethod)
-	int authmethod;
-{
-	switch(authmethod) {
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_R:
-		authmethod = OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I;
-		break;
-	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_R:
-		authmethod = OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I;
-		break;
-	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_R:
-		authmethod = OAKLEY_ATTR_AUTH_METHOD_XAUTH_PSKEY_I;
-		break;
-	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
-		authmethod = OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_I;
-		break;
-	/* Those are not implemented */
-	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
-		authmethod = OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I;
-		break;
-	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_R:
-		authmethod = OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAENC_I;
-		break;
-	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_R:
-		authmethod = OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSAREV_I;
-		break;
-	default:
-		break;
-	}
-
-	return authmethod;
-}
-#endif

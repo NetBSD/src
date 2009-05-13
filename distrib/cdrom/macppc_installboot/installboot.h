@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.2 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: installboot.h,v 1.2.6.1 2009/05/13 19:17:40 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 
 #include <sys/stat.h>
 #include <stdint.h>
+
+#ifndef MAXNAMLEN
+#define MAXNAMLEN	511
+#endif
 
 typedef enum {
 				/* flags from global options */

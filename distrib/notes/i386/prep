@@ -1,10 +1,11 @@
-.\"	$NetBSD: prep,v 1.13 2002/06/29 22:45:30 lukem Exp $
+.\"	$NetBSD: prep,v 1.13.42.1 2009/05/13 19:17:46 jym Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
 of any data on your hard disk that you
 wish to keep.
 Mistakes in partitioning your hard disk may lead to data loss.
+.so ../amd64/prep
 .Pp
 Before you begin, you should be aware of the geometry issues that may
 arise in relation to your hard disk.

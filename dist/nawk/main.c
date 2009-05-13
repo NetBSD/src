@@ -72,6 +72,33 @@ setfs(char *p)
 	return NULL;
 }
 
+static void fpecatch(int n
+#ifdef SA_SIGINFO
+	, siginfo_t *si, void *uc
+#endif
+)
+{
+#ifdef SA_SIGINFO
+	static const char *emsg[] = {
+	    "Unknown error",
+	    "Integer divide by zero",
+	    "Integer overflow",
+	    "Floating point divide by zero",
+	    "Floating point overflow",
+	    "Floating point underflow",
+	    "Floating point inexact result",
+	    "Invalid Floating point operation",
+	    "Subscript out of range",
+	};
+#endif
+	FATAL("floating point exception"
+#ifdef SA_SIGINFO
+	    ": %s\n", emsg[si->si_code >= 1 && si->si_code <= 8 ?
+	    si->si_code : 0]
+#endif
+	    );
+}
+
 int main(int argc, char *argv[])
 {
 	const char *fs = NULL;
@@ -88,7 +115,17 @@ int main(int argc, char *argv[])
 
 	(void) setlocale(LC_ALL, "");
 
-	signal(SIGFPE, fpecatch);
+#ifdef SA_SIGINFO
+	{
+		struct sigaction sa;
+		sa.sa_sigaction = fpecatch;
+		sa.sa_flags = SA_SIGINFO;
+		sigemptyset(&sa.sa_mask);
+		(void)sigaction(SIGFPE, &sa, NULL);
+	}
+#else
+	(void)signal(SIGFPE, fpecatch);
+#endif
 	yyin = NULL;
 	symtab = makesymtab(NSYMTAB/NSYMTAB);
 	while (argc > 1 && argv[1][0] == '-' && argv[1][1] != '\0') {

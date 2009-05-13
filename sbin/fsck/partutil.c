@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.3 2008/04/28 20:23:08 martin Exp $	*/
+/*	$NetBSD: partutil.c,v 1.3.6.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.3 2008/04/28 20:23:08 martin Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.3.6.1 2009/05/13 19:19:01 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -75,7 +75,8 @@ part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
 		return;
 
 	ptn = strchr(s, '\0')[-1] - 'a';
-	if (ptn >= lp->d_npartitions || ptn != DISKPART(sb.st_rdev))
+	if ((unsigned)ptn >= lp->d_npartitions ||
+	    (devminor_t)ptn != DISKPART(sb.st_rdev))
 		return;
 
 	pp = &lp->d_partitions[ptn];

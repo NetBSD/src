@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: packet.c,v 1.1.8.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__RCSID("$NetBSD: packet.c,v 1.1.8.1 2009/05/13 19:20:19 jym Exp $");
 
 #include "btpand.h"
 
@@ -75,8 +75,8 @@ void
 packet_adj(packet_t *pkt, size_t size)
 {
 
-	_DIAGASSERT(pkt->refcnt == 0);
-	_DIAGASSERT(pkt->len >= size);
+	assert(pkt->refcnt == 0);
+	assert(pkt->len >= size);
 
 	pkt->ptr += size;
 	pkt->len -= size;

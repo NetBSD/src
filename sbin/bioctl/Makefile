@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.8 2006/11/26 11:31:08 deraadt Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2009/05/13 19:18:59 jym Exp $
 
 PROG=	bioctl
 SRCS=   bioctl.c strtonum.c
 MAN=	bioctl.8
-
-WARNS=	4
 
 .include <bsd.prog.mk>

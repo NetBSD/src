@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.19 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: fields.c,v 1.19.8.1 2009/05/13 19:20:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.19 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: fields.c,v 1.19.8.1 2009/05/13 19:20:05 jym Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ enterkey(keybuf, line, size, fieldtable)
 
 	keybuf->offset = keypos - keybuf->data;
 	keybuf->length = keybuf->offset + line->size;
-	if (keybuf->length + sizeof(TRECHEADER) > size) {
+	if (keybuf->length + sizeof(TRECHEADER) > (length_t)size) {
 		/* line too long for buffer */
 		return (1);
 	}

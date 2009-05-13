@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.30 2004/03/20 23:10:01 heas Exp $
+.\"	$NetBSD: telnet.1,v 1.30.42.1 2009/05/13 19:20:08 jym Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -581,13 +581,7 @@ Prints out help information for the
 .Ic mode
 command.
 .El
-.It Xo
-.Ic open Ar host
-.Op Fl l Ar user
-.Op Fl a
-.Oo Op \&- Ns
-.Ar port Oc
-.Xc
+.It Ic open Ar host Oo Fl l Ar user Oc Oo Fl a Oc Oo Oo \&- Oc Ns Ar port Oc
 Open a connection to the named host.
 If no port number
 is specified,

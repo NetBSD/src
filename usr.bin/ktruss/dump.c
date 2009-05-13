@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.32 2009/01/11 03:05:23 christos Exp $	*/
+/*	$NetBSD: dump.c,v 1.32.2.1 2009/05/13 19:19:54 jym Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.32 2009/01/11 03:05:23 christos Exp $");
+__RCSID("$NetBSD: dump.c,v 1.32.2.1 2009/05/13 19:19:54 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -216,11 +216,11 @@ void
 flushpendq(struct ktr_entry *us)
 {
 	struct ktr_entry *kte, *kte_next;
-	int pid = KTE_PID(us);
+	int pid = KTE_PID(us), lid = KTE_LID(us);
 
 	for (kte = TAILQ_FIRST(&ktependq); kte != NULL; kte = kte_next) {
 		kte_next = TAILQ_NEXT(kte, kte_list);
-		if (KTE_PID(kte) == pid) {
+		if (KTE_PID(kte) == pid || KTE_LID(kte) == lid) {
 			TAILQ_REMOVE(&ktependq, kte, kte_list);
 			free(kte);
 		}
@@ -573,7 +573,7 @@ syscallprint(struct ktr_header *kth)
 
 	case SYS_ptrace :
 		if ((long)*ap >= 0 &&
-		    *ap < sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
+		    *ap < (register_t)(sizeof(ptrace_ops) / sizeof(ptrace_ops[0])))
 			wprintf("(%s", ptrace_ops[*ap]);
 		else
 			wprintf("(%ld", (long)*ap);
@@ -637,7 +637,7 @@ sysretprint(struct ktr_header *kth)
 			break;
 		default:
 			wprintf(" = %ld", (long)ret);
-			if (kth->ktr_len > offsetof(struct ktr_sysret,
+			if (kth->ktr_len > (int)offsetof(struct ktr_sysret,
 			    ktr_retval_1) && ktr->ktr_retval_1 != 0)
 				wprintf(", %ld", (long)ktr->ktr_retval_1);
 			break;
@@ -676,9 +676,7 @@ ktrsysret(struct ktr_entry *kte)
 		free(genio);
 	}
 
-#if 0 /* Why? */
 	flushpendq(kte);
-#endif
 	free(kte);
 }
 

@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.31 2008/06/22 15:42:51 christos Exp $
-#	$OpenBSD: sshd_config,v 1.77 2008/02/08 23:24:07 djm Exp $
+#	$NetBSD: sshd_config,v 1.31.6.1 2009/05/13 19:15:59 jym Exp $
+#	$OpenBSD: sshd_config,v 1.80 2008/07/02 02:24:18 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -27,7 +27,7 @@ Protocol 2
 
 # Lifetime and size of ephemeral version 1 server key
 #KeyRegenerationInterval 1h
-#ServerKeyBits 768
+#ServerKeyBits 1024
 
 # Logging
 # obsoletes QuietMode and FascistLogging
@@ -41,6 +41,7 @@ LoginGraceTime 600
 #PermitRootLogin no
 #StrictModes yes
 #MaxAuthTries 6
+#MaxSessions 10
 
 #RSAAuthentication yes
 #PubkeyAuthentication yes
@@ -73,6 +74,7 @@ LoginGraceTime 600
 #GSSAPIAuthentication no
 #GSSAPICleanupCredentials yes
 
+#AllowAgentForwarding yes
 #AllowTcpForwarding yes
 #GatewayPorts no
 #X11Forwarding no

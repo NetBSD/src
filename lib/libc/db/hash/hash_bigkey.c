@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.22 2008/09/10 17:52:35 joerg Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.22.8.1 2009/05/13 19:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_bigkey.c,v 1.22 2008/09/10 17:52:35 joerg Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.22.8.1 2009/05/13 19:18:22 jym Exp $");
 
 /*
  * PACKAGE: hash
@@ -85,8 +85,8 @@ static int collect_data(HTAB *, BUFHEAD *, int, int);
 int
 __big_insert(HTAB *hashp, BUFHEAD *bufp, const DBT *key, const DBT *val)
 {
-	uint16_t *p;
-	int key_size, n, val_size;
+	uint16_t *p, n;
+	size_t key_size, val_size;
 	uint16_t space, move_bytes, off;
 	char *cp, *key_data, *val_data;
 	size_t temp;
@@ -96,10 +96,10 @@ __big_insert(HTAB *hashp, BUFHEAD *bufp, const DBT *key, const DBT *val)
 
 	key_data = (char *)key->data;
 	_DBFIT(key->size, int);
-	key_size = (int)key->size;
+	key_size = key->size;
 	val_data = (char *)val->data;
 	_DBFIT(val->size, int);
-	val_size = (int)val->size;
+	val_size = val->size;
 
 	/* First move the Key */
 	

@@ -1,4 +1,6 @@
-# $NetBSD: md.landisk,v 1.3 2008/11/29 17:57:33 tsutsui Exp $
+# $NetBSD: md.landisk,v 1.3.2.1 2009/05/13 19:17:50 jym Exp $
 ./usr/mdec/boot			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1		base-sysutil-bin
+./usr/mdec/bootxx_ffsv2		base-sysutil-bin
+./usr/mdec/bootxx_ustarfs	base-sysutil-bin
 ./usr/mdec/mbr			base-sysutil-bin

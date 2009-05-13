@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2005/03/21 13:16:34 tron Exp $
+#	$NetBSD: Makefile,v 1.6.26.1 2009/05/13 19:20:50 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,8 @@ BUILDSYMLINKS=	Standards.man	XStandards.man	\
 
 .PATH:  ${X11SRCDIR.xc}/doc/man/general
 
-.if ${MACHINE} == "amd64" || ${MACHINE} == "cats" || \
-    ${MACHINE} == "shark" || ${MACHINE} == "i386" || \
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "cats" || \
+    ${MACHINE} == "shark" || ${MACHINE_ARCH} == "i386" || \
     ${MACHINE} == "atari" || ${MACHINE} == "macppc"
 MAN+=	XF86VidMode.3
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/doc/man

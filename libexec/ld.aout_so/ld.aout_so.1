@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.aout_so.1,v 1.8 2008/04/30 13:10:52 martin Exp $
+.\"	$NetBSD: ld.aout_so.1,v 1.8.8.1 2009/05/13 19:18:41 jym Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,8 @@ library-name, major-version-number, minor-version-number
 recognizes a number of environment variables that can be used to modify
 its behavior as follows:
 .Pp
-.Bl -tag -width LD_TRACE_LOADED_OBJECTS \" intentionally not the longest
+.\" intentionally not the longest
+.Bl -tag -width LD_TRACE_LOADED_OBJECTS
 .It Ev LD_LIBRARY_PATH
 A colon separated list of directories, overriding the default search path
 for shared libraries.

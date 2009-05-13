@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ceil.c,v 1.12 2008/04/25 22:21:53 christos Exp $");
+__RCSID("$NetBSD: s_ceil.c,v 1.12.8.1 2009/05/13 19:18:34 jym Exp $");
 #endif
 
 /*
@@ -61,7 +61,7 @@ ceil(double x)
 		    if(jj0==20) i0+=1;
 		    else {
 			j = i1 + (1<<(52-jj0));
-			if(j<i1) i0+=1;	/* got a carry */
+			if(j<(u_int32_t)i1) i0+=1;	/* got a carry */
 			i1 = j;
 		    }
 		}

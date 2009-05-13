@@ -1,0 +1,118 @@
+# $Id: Makefile.in,v 1.1.1.1.2.2 2009/05/13 19:16:01 jym Exp $
+
+@SET_MAKE@
+SHELL = @SHELL@
+VPATH=@srcdir@
+
+PACKAGE_NAME= @PACKAGE_NAME@
+PACKAGE_VERSION= @PACKAGE_VERSION@
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+mandir = @mandir@
+top_builddir = .
+
+AUTOCONF = @AUTOCONF@
+AUTOHEADER = @AUTOHEADER@
+mkinstalldirs = $(SHELL) $(srcdir)/mkinstalldirs
+install_sh = $(SHELL) $(srcdir)/install-sh
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_HEADER = $(INSTALL_DATA)
+transform = @program_transform_name@
+host_alias = @host_alias@
+host_triplet = @host@
+CANONICAL_HOST = @CANONICAL_HOST@
+
+CC = @CC@
+CCLD= $(CC)
+LIBS= @LIBS@
+CPPFLAGS= @CPPFLAGS@
+DEFS= @DEFS@ -I. -I@srcdir@ -DHOST=\"$(CANONICAL_HOST)\" -DVERSION=\"$(PACKAGE_VERSION)\"
+CFLAGS= @CFLAGS@
+LDFLAGS= @LDFLAGS@
+
+LINK= $(CCLD) $(CFLAGS) $(LDFLAGS) -o $@
+COMPILE= $(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS)
+
+all: lib bin
+
+lib:
+	cd src/lib && ${MAKE}
+
+bin:
+	cd src/bin && ${MAKE}
+
+install: all
+	cd src/lib && ${MAKE} install
+	cd src/bin && ${MAKE} install
+
+clean:
+	cd src/lib && ${MAKE} clean
+	cd src/bin && ${MAKE} clean
+
+GZIP_ENV= --best
+TAR= tar
+distdir= $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+
+distdir: $(DISTFILES)
+	-chmod -R a+w $(distdir) >/dev/null 2>&1; rm -rf $(distdir)
+	mkdir $(distdir)
+	@for file in $(DISTFILES); do \
+		if test -f $$file; then d=.; else d=$(srcdir); fi; \
+		dir=`echo "$$file" | sed -e 's,/[^/]*$$,,'`; \
+		if test "$$dir" != "$$file" && test "$$dir" != "."; then \
+			$(mkinstalldirs) "$(distdir)/$$dir"; \
+		fi; \
+		if test -d $$d/$$file; then \
+			cp -pR $$d/$$file $(distdir) \
+			|| exit 1; \
+		else \
+			test -f $(distdir)/$$file \
+			|| cp -p $$d/$$file $(distdir)/$$file \
+			|| exit 1; \
+		fi; \
+	done
+	-find $(distdir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
+	  ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -400 -exec chmod a+r {} \; -o \
+	  ! -type d ! -perm -444 -exec $(SHELL) $(install_sh) -c -m a+r {} {} \; \
+	|| chmod -R a+r $(distdir)
+
+dist: distdir
+	$(TAR) chof - $(distdir) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
+	-chmod -R a+w $(distdir) >/dev/null 2>&1; rm -rf $(distdir)
+
+distcheck: dist
+	-chmod -R a+w $(distdir) > /dev/null 2>&1; rm -rf $(distdir)
+	GZIP=$(GZIP_ENV) gunzip -c $(distdir).tar.gz | $(TAR) xf -
+	chmod -R a-w $(distdir); chmod a+w $(distdir)
+	mkdir $(distdir)/=build
+	mkdir $(distdir)/=inst
+	chmod a-w $(distdir)
+	dc_install_base=`CDPATH=: && cd $(distdir)/=inst && pwd` \
+	  && cd $(distdir)/=build \
+	  && ../configure --srcdir=.. --prefix=$$dc_install_base \
+	  && $(MAKE) \
+	  && $(MAKE) check \
+	  && $(MAKE) install \
+	  && $(MAKE) uninstall \
+	  && (test `find $$dc_install_base -type f -print | wc -l` -le 1 \
+	     || (echo "Error: files left after uninstall" 1>&2; \
+	         exit 1) ) \
+	  && $(MAKE) dist \
+	  && $(MAKE) distclean \
+	  && rm -f $(distdir).tar.gz \
+	  && (test `find . -type f -print | wc -l` -eq 0 \
+	     || (echo "Error: files left after distclean" 1>&2; \
+	         exit 1) )
+	-chmod -R a+w $(distdir) > /dev/null 2>&1; rm -rf $(distdir)
+	@echo "$(distdir).tar.gz is ready for distribution" | \
+	  sed 'h;s/./=/g;p;x;p;x'

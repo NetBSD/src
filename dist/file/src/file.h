@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.17 2008/08/31 07:53:33 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.17.6.1 2009/05/13 19:17:32 jym Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -42,6 +42,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include <sys/param.h>	/* This might define MIN and MAX */
 
 #include <stdio.h>	/* Include that here, to make sure __P gets defined */
 #include <errno.h>

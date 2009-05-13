@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpd.c,v 1.191 2009/01/08 18:47:49 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.191.2.1 2009/05/13 19:18:37 jym Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.191 2009/01/08 18:47:49 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.191.2.1 2009/05/13 19:18:37 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -1676,7 +1676,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 }
 
 void
-retrieve(char *argv[], const char *name)
+retrieve(const char *argv[], const char *name)
 {
 	FILE *fin, *dout;
 	struct stat st;
@@ -1685,7 +1685,7 @@ retrieve(char *argv[], const char *name)
 	struct timeval start, finish, td, *tdp;
 	struct rusage rusage_before, rusage_after;
 	const char *dispname;
-	char *error;
+	const char *error;
 
 	sendrv = closerv = stderrfd = -1;
 	isconversion = isdata = isls = dolog = 0;
@@ -1824,7 +1824,7 @@ store(const char *name, const char *fmode, int unique)
 	struct stat st;
 	int (*closefunc)(FILE *);
 	struct timeval start, finish, td, *tdp;
-	char *desc, *error;
+	const char *desc, *error;
 
 	din = NULL;
 	desc = (*fmode == 'w') ? "put" : "append";
@@ -2130,14 +2130,14 @@ send_data_with_read(int filefd, int netfd, const struct stat *st, int isdata)
 {
 	struct timeval then;
 	off_t bufrem;
-	size_t readsize;
+	ssize_t readsize;
 	char *buf;
 	int c, error;
 
-	if (curclass.readsize)
+	if (curclass.readsize > 0)
 		readsize = curclass.readsize;
 	else
-		readsize = (size_t)st->st_blksize;
+		readsize = st->st_blksize;
 	if ((buf = malloc(readsize)) == NULL) {
 		perror_reply(451, "Local resource failure: malloc");
 		return (SS_NO_TRANSFER);
@@ -2146,7 +2146,8 @@ send_data_with_read(int filefd, int netfd, const struct stat *st, int isdata)
 	if (curclass.rateget) {
 		bufrem = curclass.rateget;
 		(void)gettimeofday(&then, NULL);
-	}
+	} else
+		bufrem = readsize;
 	while (1) {
 		(void) alarm(curclass.timeout);
 		c = read(filefd, buf, readsize);
@@ -2171,10 +2172,11 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 {
 	struct timeval then;
 	off_t bufrem, filesize, off, origoff;
-	size_t mapsize, winsize;
+	ssize_t mapsize, winsize;
 	int error, sendbufsize, sendlowat;
 	void *win;
 
+	bufrem = 0;
 	if (curclass.sendbufsize) {
 		sendbufsize = curclass.sendbufsize;
 		if (setsockopt(netfd, SOL_SOCKET, SO_SNDBUF,
@@ -2194,9 +2196,9 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 	winsize = curclass.mmapsize;
 	filesize = st->st_size;
 	if (ftpd_debug)
-		syslog(LOG_INFO, "mmapsize = %ld, writesize = %ld",
-		    (long)winsize, (long)curclass.writesize);
-	if (winsize == 0)
+		syslog(LOG_INFO, "mmapsize = " LLF ", writesize = " LLF,
+		    (LLT)winsize, (LLT)curclass.writesize);
+	if (winsize <= 0)
 		goto try_read;
 
 	off = lseek(filefd, (off_t)0, SEEK_CUR);
@@ -2207,7 +2209,8 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 	if (curclass.rateget) {
 		bufrem = curclass.rateget;
 		(void)gettimeofday(&then, NULL);
-	}
+	} else
+		bufrem = winsize;
 	while (1) {
 		mapsize = MIN(filesize - off, winsize);
 		if (mapsize == 0)
@@ -2353,7 +2356,7 @@ receive_data(FILE *instr, FILE *outstr)
 	int	volatile bare_lfs;
 	off_t	byteswritten;
 	char	*buf;
-	size_t	readsize;
+	ssize_t	readsize;
 	struct sigaction sa, sa_saved;
 	struct stat st;
 
@@ -2389,7 +2392,7 @@ receive_data(FILE *instr, FILE *outstr)
 		if (curclass.readsize)
 			readsize = curclass.readsize;
 		else if (fstat(filefd, &st))
-			readsize = (size_t)st.st_blksize;
+			readsize = (ssize_t)st.st_blksize;
 		else
 			readsize = BUFSIZ;
 		if ((buf = malloc(readsize)) == NULL) {
@@ -3015,7 +3018,8 @@ bind_pasv_addr(void)
 void
 passive(void)
 {
-	socklen_t len, recvbufsize;
+	socklen_t len;
+	int recvbufsize;
 	char *p, *a;
 
 	if (pdata >= 0)
@@ -3133,7 +3137,7 @@ af2epsvproto(int af)
  * 229 Entering Extended Passive Mode (|||port|)
  */
 void
-long_passive(char *cmd, int pf)
+long_passive(const char *cmd, int pf)
 {
 	socklen_t len;
 	char *p, *a;
@@ -3376,7 +3380,7 @@ perror_reply(int code, const char *string)
 }
 
 static char *onefile[] = {
-	"",
+	NULL,
 	0
 };
 
@@ -3435,7 +3439,7 @@ send_file_list(const char *whichf)
 			/* XXX: nuke this support? */
 			if (dirname[0] == '-' && *dirlist == NULL &&
 			    transflag == 0) {
-				char *argv[] = { INTERNAL_LS, "", NULL };
+				const char *argv[] = { INTERNAL_LS, "", NULL };
 
 				argv[1] = dirname;
 				retrieve(argv, dirname);
@@ -3587,8 +3591,8 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 			    " %s", r2);
 		if (elapsed != NULL)
 			len += snprintf(buf + len, sizeof(buf) - len,
-			    " in %lld.%.03ld seconds",
-			    (long long)elapsed->tv_sec,
+			    " in " LLF ".%.03ld seconds",
+			    (LLT)elapsed->tv_sec,
 			    (long)(elapsed->tv_usec / 1000));
 		if (error != NULL)
 			len += snprintf(buf + len, sizeof(buf) - len,
@@ -3611,7 +3615,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 
 	time(&now);
 	len = snprintf(buf, sizeof(buf),
-	    "%.24s %lld %s " LLF " %s %c %s %c %c %s FTP 0 * %c\n",
+	    "%.24s " LLF " %s " LLF " %s %c %s %c %c %s FTP 0 * %c\n",
 
 /*
  * XXX: wu-ftpd puts ' (send)' or ' (recv)' in the syslog message, and removes
@@ -3619,7 +3623,7 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
  *	given that syslog messages don't contain the full date.
  */
 	    ctime(&now),
-	    (long long)
+	    (LLT)
 	    (elapsed == NULL ? 0 : elapsed->tv_sec + (elapsed->tv_usec > 0)),
 	    remotehost,
 	    (LLT) bytes,
@@ -3660,9 +3664,9 @@ logrusage(const struct rusage *rusage_before,
 
 	timersub(&rusage_after->ru_utime, &rusage_before->ru_utime, &usrtime);
 	timersub(&rusage_after->ru_stime, &rusage_before->ru_stime, &systime);
-	syslog(LOG_INFO, "%lld.%.03ldu %lld.%.03lds %ld+%ldio %ldpf+%ldw",
-	    (long long)usrtime.tv_sec, (long)(usrtime.tv_usec / 1000),
-	    (long long)systime.tv_sec, (long)(systime.tv_usec / 1000),
+	syslog(LOG_INFO, LLF ".%.03ldu " LLF ".%.03lds %ld+%ldio %ldpf+%ldw",
+	    (LLT)usrtime.tv_sec, (long)(usrtime.tv_usec / 1000),
+	    (LLT)systime.tv_sec, (long)(systime.tv_usec / 1000),
 	    rusage_after->ru_inblock - rusage_before->ru_inblock,
 	    rusage_after->ru_oublock - rusage_before->ru_oublock,
 	    rusage_after->ru_majflt - rusage_before->ru_majflt,

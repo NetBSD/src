@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.38 2008/08/30 10:46:16 bouyer Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.38.4.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.38 2008/08/30 10:46:16 bouyer Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.38.4.1 2009/05/13 19:19:01 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -566,7 +566,7 @@ CMDFUNCSTART(findblk)
 				{
 				uint64_t size = iswap64(DIP(curinode, size));
 				if (size > 0 &&
-				    size < sblock->fs_maxsymlinklen &&
+				    size < (uint64_t)sblock->fs_maxsymlinklen &&
 				    DIP(curinode, blocks) == 0)
 					continue;
 				else
@@ -672,7 +672,7 @@ find_indirblks32(uint32_t blk, int ind_level, uint32_t *wantedblk)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(uint32_t))
 	uint32_t idblk[MAXNINDIR];
-	int i;
+	size_t i;
 
 	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
 	    (int)sblock->fs_bsize);
@@ -718,7 +718,7 @@ find_indirblks64(uint64_t blk, int ind_level, uint64_t *wantedblk)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(uint64_t))
 	uint64_t idblk[MAXNINDIR];
-	int i;
+	size_t i;
 
 	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
 	    (int)sblock->fs_bsize);

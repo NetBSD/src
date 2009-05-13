@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.29 2008/08/17 10:50:50 rtr Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.29.8.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.29 2008/08/17 10:50:50 rtr Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.29.8.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif
 
@@ -157,7 +157,7 @@ typedef struct rec_strm {
 static u_int	fix_buf_size __P((u_int));
 static bool_t	flush_out __P((RECSTREAM *, bool_t));
 static bool_t	fill_input_buf __P((RECSTREAM *));
-static bool_t	get_input_bytes __P((RECSTREAM *, char *, int));
+static bool_t	get_input_bytes __P((RECSTREAM *, char *, u_int));
 static bool_t	set_input_fragment __P((RECSTREAM *));
 static bool_t	skip_input_bytes __P((RECSTREAM *, long));
 static bool_t	realloc_stream __P((RECSTREAM *, int));
@@ -252,8 +252,8 @@ xdrrec_getlong(xdrs, lp)
 	int32_t mylong;
 
 	/* first try the inline, fast case */
-	if ((rstrm->fbtbc >= sizeof(int32_t)) &&
-		(((long)rstrm->in_boundry - (long)buflp) >= sizeof(int32_t))) {
+	if ((rstrm->fbtbc >= (long)sizeof(int32_t)) &&
+		(((uintptr_t)rstrm->in_boundry - (uintptr_t)buflp) >= sizeof(int32_t))) {
 		*lp = (long)ntohl((u_int32_t)(*buflp));
 		rstrm->fbtbc -= sizeof(int32_t);
 		rstrm->in_finger += sizeof(int32_t);
@@ -297,10 +297,10 @@ xdrrec_getbytes(xdrs, addr, len)
 	u_int len;
 {
 	RECSTREAM *rstrm = (RECSTREAM *)(xdrs->x_private);
-	int current;
+	u_int current;
 
 	while (len > 0) {
-		current = (int)rstrm->fbtbc;
+		current = (u_int)rstrm->fbtbc;
 		if (current == 0) {
 			if (rstrm->last_frag)
 				return (FALSE);
@@ -427,7 +427,7 @@ xdrrec_inline(xdrs, len)
 		break;
 
 	case XDR_DECODE:
-		if ((len <= rstrm->fbtbc) &&
+		if ((len <= (u_int)rstrm->fbtbc) &&
 			((rstrm->in_finger + len) <= rstrm->in_boundry)) {
 			buf = (int32_t *)(void *)rstrm->in_finger;
 			rstrm->fbtbc -= len;
@@ -569,7 +569,7 @@ __xdrrec_getrec(xdrs, statp, expectdata)
 		}
 		rstrm->in_hdrp += n;
 		rstrm->in_hdrlen += n;
-		if (rstrm->in_hdrlen < sizeof (rstrm->in_header)) {
+		if (rstrm->in_hdrlen < (int)sizeof(rstrm->in_header)) {
 			*statp = XPRT_MOREREQS;
 			return FALSE;
 		}
@@ -581,7 +581,7 @@ __xdrrec_getrec(xdrs, statp, expectdata)
 			return FALSE;
 		}
 		rstrm->in_reclen += fraglen;
-		if (rstrm->in_reclen > rstrm->recvsize)
+		if ((u_int)rstrm->in_reclen > rstrm->recvsize)
 			realloc_stream(rstrm, rstrm->in_reclen);
 		if (rstrm->in_header & LAST_FRAG) {
 			rstrm->in_header &= ~LAST_FRAG;
@@ -687,21 +687,21 @@ static bool_t  /* knows nothing about records!  Only about input buffers */
 get_input_bytes(rstrm, addr, len)
 	RECSTREAM *rstrm;
 	char *addr;
-	int len;
+	u_int len;
 {
-	size_t current;
+	u_int current;
 
 	if (rstrm->nonblock) {
-		if (len > (int)(rstrm->in_boundry - rstrm->in_finger))
+		if (len > ((uintptr_t)rstrm->in_boundry - (uintptr_t)rstrm->in_finger))
 			return FALSE;
-		memcpy(addr, rstrm->in_finger, (size_t)len);
+		memcpy(addr, rstrm->in_finger, len);
 		rstrm->in_finger += len;
 		return TRUE;
 	}
 
 	while (len > 0) {
-		current = (size_t)((long)rstrm->in_boundry -
-		    (long)rstrm->in_finger);
+		current = ((uintptr_t)rstrm->in_boundry -
+		    (uintptr_t)rstrm->in_finger);
 		if (current == 0) {
 			if (! fill_input_buf(rstrm))
 				return (FALSE);
@@ -757,7 +757,7 @@ skip_input_bytes(rstrm, cnt)
 				return (FALSE);
 			continue;
 		}
-		current = (u_int32_t)((cnt < current) ? cnt : current);
+		current = ((u_int32_t)cnt < current) ? (u_int32_t)cnt : current;
 		rstrm->in_finger += current;
 		cnt -= current;
 	}
@@ -785,7 +785,7 @@ realloc_stream(rstrm, size)
 	ptrdiff_t diff;
 	char *buf;
 
-	if (size > rstrm->recvsize) {
+	if ((u_int)size > rstrm->recvsize) {
 		buf = realloc(rstrm->in_base, (size_t)size);
 		if (buf == NULL)
 			return FALSE;

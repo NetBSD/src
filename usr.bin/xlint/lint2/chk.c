@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.19 2008/04/26 19:38:30 christos Exp $ */
+/* $NetBSD: chk.c,v 1.19.8.1 2009/05/13 19:20:13 jym Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.19 2008/04/26 19:38:30 christos Exp $");
+__RCSID("$NetBSD: chk.c,v 1.19.8.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 
 #include <ctype.h>
@@ -236,8 +236,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 	fcall_t	*call;
 	char	*pos1;
 	type_t	*tp1, *tp2;
-	/* LINTED (automatic hides external declaration: warn) */
-	int	warn, eq;
+	int	dowarn, eq;
 	tspec_t	t1;
 
 	if (hte->h_calls == NULL)
@@ -251,7 +250,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 	t1 = (tp1 = TP(def->s_type)->t_subt)->t_tspec;
 	for (call = hte->h_calls; call != NULL; call = call->f_nxt) {
 		tp2 = TP(call->f_type)->t_subt;
-		eq = eqtype(tp1, tp2, 1, 0, 0, (warn = 0, &warn));
+		eq = eqtype(tp1, tp2, 1, 0, 0, (dowarn = 0, &dowarn));
 		if (!call->f_rused) {
 			/* no return value used */
 			if ((t1 == STRUCT || t1 == UNION) && !eq) {
@@ -277,7 +276,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 			}
 			continue;
 		}
-		if (!eq || (sflag && warn)) {
+		if (!eq || (sflag && dowarn)) {
 			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value used inconsistenty\t%s  ::  %s */
 			msg(4, hte->h_name, pos1, mkpos(&call->f_pos));
@@ -296,8 +295,7 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 {
 	sym_t	*sym;
 	type_t	*tp1, *tp2;
-	/* LINTED (automatic hides external declaration: warn) */
-	int	eq, warn;
+	int	eq, dowarn;
 	char	*pos1;
 
 	if (def == NULL)
@@ -311,14 +309,14 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 		if (sym == def)
 			continue;
 		tp2 = TP(sym->s_type);
-		warn = 0;
+		dowarn = 0;
 		if (tp1->t_tspec == FUNC && tp2->t_tspec == FUNC) {
 			eq = eqtype(xt1 = tp1->t_subt, xt2 = tp2->t_subt,
-			    1, 0, 0, &warn);
+			    1, 0, 0, &dowarn);
 		} else {
-			eq = eqtype(xt1 = tp1, xt2 = tp2, 0, 0, 0, &warn);
+			eq = eqtype(xt1 = tp1, xt2 = tp2, 0, 0, 0, &dowarn);
 		}
-		if (!eq || (sflag && warn)) {
+		if (!eq || (sflag && dowarn)) {
 			char b1[64], b2[64];
 			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value declared inconsistently\t%s  ::  %s */
@@ -447,8 +445,7 @@ static void
 chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	fcall_t *call1, fcall_t *call, type_t *arg1, type_t *arg2)
 {
-	/* LINTED (automatic hides external declaration: warn) */
-	int	promote, asgn, warn;
+	int	promote, asgn, dowarn;
 	tspec_t	t1, t2;
 	arginf_t *ai, *ai1;
 	char	*pos1;
@@ -473,8 +470,8 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	 */
 	asgn = def != NULL || (decl != NULL && TP(decl->s_type)->t_proto);
 
-	warn = 0;
-	if (eqtype(arg1, arg2, 1, promote, asgn, &warn) && (!sflag || !warn))
+	dowarn = 0;
+	if (eqtype(arg1, arg2, 1, promote, asgn, &dowarn) && (!sflag || !dowarn))
 		return;
 
 	/*
@@ -1104,8 +1101,7 @@ chkrvu(hte_t *hte, sym_t *def)
 static void
 chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 {
-	/* LINTED (automatic hides external declaration: warn) */
-	int	osdef, eq, warn, n;
+	int	osdef, eq, dowarn, n;
 	sym_t	*sym1, *sym;
 	type_t	**ap1, **ap2, *tp1, *tp2;
 	char	*pos1;
@@ -1136,9 +1132,9 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 		n = 0;
 		while (*ap1 != NULL && *ap2 != NULL) {
 			type_t *xt1, *xt2;
-			warn = 0;
-			eq = eqtype(xt1 = *ap1, xt2 = *ap2, 1, osdef, 0, &warn);
-			if (!eq || warn) {
+			dowarn = 0;
+			eq = eqtype(xt1 = *ap1, xt2 = *ap2, 1, osdef, 0, &dowarn);
+			if (!eq || dowarn) {
 				char b1[64], b2[64];
 				pos1 = xstrdup(mkpos(&sym1->s_pos));
 				pos2 = mkpos(&sym->s_pos);
@@ -1182,11 +1178,11 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
  * asgn		left indirected type must have at least the same qualifiers
  *		like right indirected type (for assignments and function
  *		arguments)
- * *warn	set to 1 if an old style declaration was compared with
+ * *dowarn	set to 1 if an old style declaration was compared with
  *		an incompatible prototype declaration
  */
 static int
-eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *warn)
+eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *dowarn)
 {
 	tspec_t	t, to;
 	int	indir;
@@ -1286,13 +1282,13 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *warn)
 
 		if (t == FUNC) {
 			if (tp1->t_proto && tp2->t_proto) {
-				if (!eqargs(tp1, tp2, warn))
+				if (!eqargs(tp1, tp2, dowarn))
 					return (0);
 			} else if (tp1->t_proto) {
-				if (!mnoarg(tp1, warn))
+				if (!mnoarg(tp1, dowarn))
 					return (0);
 			} else if (tp2->t_proto) {
-				if (!mnoarg(tp2, warn))
+				if (!mnoarg(tp2, dowarn))
 					return (0);
 			}
 		}
@@ -1312,7 +1308,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *warn)
  * Compares arguments of two prototypes
  */
 static int
-eqargs(type_t *tp1, type_t *tp2, int *warn)
+eqargs(type_t *tp1, type_t *tp2, int *dowarn)
 {
 	type_t	**a1, **a2;
 
@@ -1324,7 +1320,7 @@ eqargs(type_t *tp1, type_t *tp2, int *warn)
 
 	while (*a1 != NULL && *a2 != NULL) {
 
-		if (eqtype(*a1, *a2, 1, 0, 0, warn) == 0)
+		if (eqtype(*a1, *a2, 1, 0, 0, dowarn) == 0)
 			return (0);
 
 		a1++;
@@ -1346,13 +1342,13 @@ eqargs(type_t *tp1, type_t *tp2, int *warn)
  *	   is applied on it
  */
 static int
-mnoarg(type_t *tp, int *warn)
+mnoarg(type_t *tp, int *dowarn)
 {
 	type_t	**arg;
 	tspec_t	t;
 
-	if (tp->t_vararg && warn != NULL)
-		*warn = 1;
+	if (tp->t_vararg && dowarn != NULL)
+		*dowarn = 1;
 	for (arg = tp->t_args; *arg != NULL; arg++) {
 		if ((t = (*arg)->t_tspec) == FLOAT)
 			return (0);

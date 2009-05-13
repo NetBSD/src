@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2003/08/07 11:15:49 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.9.42.1 2009/05/13 19:20:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.9 2003/08/07 11:15:49 agc Exp $
+ *	$NetBSD: extern.h,v 1.9.42.1 2009/05/13 19:20:04 jym Exp $
  */
 
 /*-
@@ -70,7 +70,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.9 2003/08/07 11:15:49 agc Exp $
+ *	$NetBSD: extern.h,v 1.9.42.1 2009/05/13 19:20:04 jym Exp $
  */
 
 extern struct s_command *prog;
@@ -82,11 +82,11 @@ extern int appendnum;
 extern int lastline;
 extern int aflag, eflag, nflag;
 extern int ere;
-extern char *fname;
+extern const char *fname;
 
 void	 cfclose(struct s_command *, struct s_command *);
 void	 compile(void);
-void	 cspace(SPACE *, char *, size_t, enum e_spflag);
+void	 cspace(SPACE *, const char *, size_t, enum e_spflag);
 char	*cu_fgets(char *, int);
 void	 err(int, const char *, ...)
      __attribute__((__format__(__printf__, 2, 3)));

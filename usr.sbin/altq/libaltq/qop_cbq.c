@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.c,v 1.7 2008/05/02 19:07:44 xtraeme Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.7.8.1 2009/05/13 19:20:15 jym Exp $	*/
 /*	$KAME: qop_cbq.c,v 1.7 2002/05/31 06:03:35 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -421,9 +421,10 @@ qcmd_cbq_add_ctl_filters(const char *ifname, const char *clname)
 	struct flow_filter6	sfilt6;
 	u_int8_t ctl6_protos[3] = {IPPROTO_ICMPV6, IPPROTO_IGMP, IPPROTO_RSVP};
 #endif
-	int error, i;
+	int error;
+	size_t i;
 
-	for (i = 0; i < (int)sizeof(ctl_protos); i++) {
+	for (i = 0; i < sizeof(ctl_protos); i++) {
 		memset(&sfilt, 0, sizeof(sfilt));
 		sfilt.ff_flow.fi_family = AF_INET;
 		sfilt.ff_flow.fi_proto = ctl_protos[i];

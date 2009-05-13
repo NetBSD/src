@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.16 2008/05/21 14:03:17 wiz Exp $
+.\" $NetBSD: pckbd.4,v 1.16.4.1 2009/05/13 19:19:09 jym Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -25,8 +25,8 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd May 21, 2008
-.Os
 .Dt PCKBD 4
+.Os
 .Sh NAME
 .Nm pckbd
 .Nd PC keyboard driver for wscons
@@ -81,6 +81,7 @@ The builtin mappings are at this time:
 .Dq dead accents
 .It Li KB_PT Ta pt Ta Portuguese
 .It Li KB_ES Ta es Ta Spanish
+.It Li KB_CZ Ta cz Ta Czech (QWERTY)
 .El
 .Pp
 The
@@ -130,8 +131,7 @@ and sending an ESC character before the key symbol if the ALT
 key is pressed simultaneously, use
 .Ic wsconsctl Fl w Ar encoding=de.nodead.metaesc .
 To set it at kernel build time, add
-.Cd options PCKBD_LAYOUT="(KB_DE | KB_NODEAD | KB_METAESC)"
-.br
+.D1 Cd options PCKBD_LAYOUT="(KB_DE | KB_NODEAD | KB_METAESC)"
 to the kernel configuration file.
 .Sh SEE ALSO
 .Xr isa 4 ,

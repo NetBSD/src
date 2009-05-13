@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.24 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.24.6.1 2009/05/13 19:18:37 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.24 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.24.6.1 2009/05/13 19:18:37 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,13 +72,17 @@ main(int argc, char *argv[])
 	socklen_t sval;
 #define	ENTRIES	50
 	char **ap, *av[ENTRIES + 1], **comp, line[1024], *prog, *s;
+#if 0
+	const char *av[ENTRIES + 1], **comp;
+	const char *prog;
+#endif
 	char hostbuf[MAXHOSTNAMELEN];
 
-	prog = _PATH_FINGER;
+	prog = __UNCONST(_PATH_FINGER);
 	logging = no_forward = user_required = short_list = 0;
 	openlog("fingerd", LOG_PID, LOG_DAEMON);
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "gsluShmpP:8")) != -1)
+	while ((ch = getopt(argc, argv, "gsluShmpP:8")) != -1) {
 		switch (ch) {
 		case 'l':
 			logging = 1;
@@ -94,27 +98,30 @@ main(int argc, char *argv[])
 			break;
 		case 'S':
 			short_list = 1;
-			av[ac++] = "-s";
+			av[ac++] = __UNCONST("-s");
 			break;
 		case 'h':
-			av[ac++] = "-h";
+			av[ac++] = __UNCONST("-h");
 			break;
 		case 'm':
-			av[ac++] = "-m";
+			av[ac++] = __UNCONST("-m");
 			break;
 		case 'p':
-			av[ac++] = "-p";
+			av[ac++] = __UNCONST("-p");
 			break;
 		case 'g':
-			av[ac++] = "-g";
+			av[ac++] = __UNCONST("-g");
 			break;
 		case '8':
-			av[ac++] = "-8";
+			av[ac++] = __UNCONST("-8");
 			break;
 		case '?':
 		default:
 			err("illegal option -- %c", optopt);
 		}
+		if (ac >= ENTRIES)
+			err("Too many options provided");
+	}
 
 
 	if (logging) {
@@ -142,7 +149,9 @@ main(int argc, char *argv[])
 			syslog(LOG_NOTICE, "query from %s: %s", lp, line);
 	}
 
-	av[ac++] = "--";
+	if (ac >= ENTRIES)
+		err("Too many options provided");
+	av[ac++] = __UNCONST("--");
 	comp = &av[1];
 	for (lp = line, ap = &av[ac]; ac < ENTRIES;) {
 		if ((*ap = strtok(lp, " \t\r\n")) == NULL)
@@ -162,7 +171,7 @@ main(int argc, char *argv[])
 		/* RFC1196: "/[Ww]" == "-l" */
 		if ((*ap)[0] == '/' && ((*ap)[1] == 'W' || (*ap)[1] == 'w')) {
 			if (!short_list) {
-				av[1] = "-l";
+				av[1] = __UNCONST("-l");
 				comp = &av[0];
 			}
 		} else {

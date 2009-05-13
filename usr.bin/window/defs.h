@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 2003/08/07 11:17:25 agc Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -95,7 +95,8 @@ int		doconfig(void);
 void		dodefault(void);
 int		dolongcmd(char *, struct value *, int);
 int		dosource(char *);
-void		error(const char *, ...);
+void		error(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 void		err_end(void);
 int		findid(void);
 struct ww      *findselwin(void);
@@ -108,13 +109,13 @@ int		more(struct ww *,  char);
 void		movewin(struct ww *, int, int);
 struct ww      *openwin(int, int, int, int, int, int, char *, int, int,
 			char *, char **);
-struct ww      *openiwin(int, char *);
+struct ww      *openiwin(int, const char *);
 void		p_memerror(void);
 void		p_start(void);
 void		reframe(void);
 void		setcmd(char);
-void		setescape(char *);
-int		setlabel(struct ww *, char *);
+void		setescape(const char *);
+int		setlabel(struct ww *, const char *);
 void		setselwin(struct ww *);
 void		setterse(char);
 void		setvars(void);
@@ -124,4 +125,4 @@ void		stopwin(struct ww *);
 int		s_gettok(void);
 void		verror(const char *, va_list);
 void		waitnl(struct ww *);
-int		waitnl1(struct ww *, char *);
+int		waitnl1(struct ww *, const char *);

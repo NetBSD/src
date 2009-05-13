@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.16 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.16.6.1 2009/05/13 19:17:33 jym Exp $	*/
 
 /*
  * Copyright (C) 2002-2006 by Darren Reed.
@@ -792,6 +792,8 @@ char *group, *comment;
 	frgroup_t *g;
 	ipfobj_t obj;
 	int n;
+	void *buf;
+	size_t bufsiz;
 
 	if (use_inet6 == 1)
 		fb.fr_v = 6;
@@ -818,11 +820,17 @@ char *group, *comment;
 	obj.ipfo_size = sizeof(rule);
 	obj.ipfo_ptr = &rule;
 
-	do {
-		u_long array[1000];
+	/*
+	 * The API does not know how much we need for filter data. Assume
+	 * 10K is large enough. XXX: The code silently fails elsewhere on
+	 * allocation, we do the same here.
+	 */
+	if ((buf = malloc(bufsiz = sizeof(*fp) + 10240)) == NULL)
+		return;
 
-		memset(array, 0xff, sizeof(array));
-		fp = (frentry_t *)array;
+	do {
+		memset(buf, 0xff, bufsiz);
+		fp = buf;
 		rule.iri_rule = fp;
 		if (ioctl(ipf_fd, SIOCIPFITER, &obj) == -1) {
 			perror("ioctl(SIOCIPFITER)");
@@ -897,6 +905,7 @@ char *group, *comment;
 			free(g);
 		}
 	}
+	free(buf);
 }
 
 

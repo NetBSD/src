@@ -1,4 +1,4 @@
-.\"     $NetBSD: isa.9,v 1.17 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: isa.9,v 1.17.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -194,7 +194,7 @@ Level-triggered interrupt.
 .It IST_PULSE
 Pulse-triggered interrupt.
 .El
-.sp
+.Pp
 .Fn isa_intr_establish
 returns an opaque handle to an event descriptor if it succeeds, and
 returns NULL on failure.
@@ -341,7 +341,7 @@ Transfer buffer continuously in loop until notified to stop.
 .It DMAMODE_LOOPDEMAND
 Transfer buffer continuously in loop and demand mode.
 .El
-.sp
+.Pp
 The argument
 .Fa bf
 is the bus-space flags.

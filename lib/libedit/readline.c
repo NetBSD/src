@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.78 2009/02/05 19:15:26 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.78.2.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.78 2009/02/05 19:15:26 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.78.2.1 2009/05/13 19:18:29 jym Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -52,13 +52,10 @@ __RCSID("$NetBSD: readline.c,v 1.78 2009/02/05 19:15:26 christos Exp $");
 #else
 #include "np/vis.h"
 #endif
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
+#include "readline/readline.h"
 #include "el.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
 #include "histedit.h"
-#include "readline/readline.h"
 #include "filecomplete.h"
 
 void rl_prep_terminal(int);
@@ -228,6 +225,8 @@ _getc_function(EditLine *el, char *c)
 int
 rl_set_prompt(const char *prompt)
 {
+	char *p;
+
 	if (!prompt)
 		prompt = "";
 	if (rl_prompt != NULL && strcmp(rl_prompt, prompt) == 0) 
@@ -235,7 +234,13 @@ rl_set_prompt(const char *prompt)
 	if (rl_prompt)
 		free(rl_prompt);
 	rl_prompt = strdup(prompt);
-	return rl_prompt == NULL ? -1 : 0;
+	if (rl_prompt == NULL)
+		return -1;
+
+	while ((p = strchr(rl_prompt, RL_PROMPT_END_IGNORE)) != NULL)
+		*p = RL_PROMPT_START_IGNORE;
+
+	return 0;
 }
 
 /*
@@ -289,7 +294,7 @@ rl_initialize(void)
 		el_end(e);
 		return -1;
 	}
-	el_set(e, EL_PROMPT, _get_prompt);
+	el_set(e, EL_PROMPT, _get_prompt, RL_PROMPT_START_IGNORE);
 	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */
@@ -987,11 +992,11 @@ history_arg_extract(int start, int end, const char *str)
 	max--;
 
 	if (start == '$')
-		start = max;
+		start = (int)max;
 	if (end == '$')
-		end = max;
+		end = (int)max;
 	if (end < 0)
-		end = max + end + 1;
+		end = (int)max + end + 1;
 	if (start < 0)
 		start = end;
 
@@ -1283,7 +1288,8 @@ int
 history_total_bytes(void)
 {
 	HistEvent ev;
-	int curr_num, size;
+	int curr_num;
+	size_t size;
 
 	if (history(h, &ev, H_CURR) != 0)
 		return (-1);
@@ -1298,7 +1304,7 @@ history_total_bytes(void)
 	/* get to the same position as before */
 	history(h, &ev, H_PREV_EVENT, curr_num);
 
-	return (size);
+	return (int)(size);
 }
 
 
@@ -1490,7 +1496,7 @@ void
 rl_display_match_list(char **matches, int len, int max)
 {
 
-	fn_display_match_list(e, matches, len, max);
+	fn_display_match_list(e, matches, (size_t)len, (size_t)max);
 }
 
 static const char *
@@ -1528,7 +1534,8 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	    (CPFunction *)rl_completion_entry_function,
 	    rl_attempted_completion_function,
 	    rl_basic_word_break_characters, rl_special_prefixes,
-	    _rl_completion_append_character_function, rl_completion_query_items,
+	    _rl_completion_append_character_function,
+	    (size_t)rl_completion_query_items,
 	    &rl_completion_type, &rl_attempted_completion_over,
 	    &rl_point, &rl_end);
 }
@@ -1777,7 +1784,8 @@ rl_stuff_char(int c)
 static int
 _rl_event_read_char(EditLine *el, char *cp)
 {
-	int	n, num_read = 0;
+	int	n;
+	ssize_t num_read = 0;
 
 	*cp = '\0';
 	while (rl_event_hook) {
@@ -1813,7 +1821,7 @@ _rl_event_read_char(EditLine *el, char *cp)
 	}
 	if (!rl_event_hook)
 		el_set(el, EL_GETCFN, EL_BUILTIN_GETCFN);
-	return(num_read);
+	return (int)num_read;
 }
 
 static void
@@ -1821,8 +1829,8 @@ _rl_update_pos(void)
 {
 	const LineInfo *li = el_line(e);
 
-	rl_point = li->cursor - li->buffer;
-	rl_end = li->lastchar - li->buffer;
+	rl_point = (int)(li->cursor - li->buffer);
+	rl_end = (int)(li->lastchar - li->buffer);
 }
 
 void
@@ -1856,6 +1864,7 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 		return NULL;
 
 	while ((match = (*fun)(str, (int)(len - 1))) != NULL) {
+		list[len++] = match;
 		if (len == max) {
 			char **nl;
 			max += 10;
@@ -1863,7 +1872,6 @@ rl_completion_matches(const char *str, rl_compentry_func_t *fun)
 				goto out;
 			list = nl;
 		}
-		list[len++] = match;
 	}
 	if (len == 1)
 		goto out;

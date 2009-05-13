@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.7 2004/03/20 17:07:33 christos Exp $	*/
+/*	$NetBSD: ctl.c,v 1.7.42.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ctl.c,v 1.7 2004/03/20 17:07:33 christos Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.7.42.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -47,9 +47,9 @@ __RCSID("$NetBSD: ctl.c,v 1.7 2004/03/20 17:07:33 christos Exp $");
 #include <arpa/inet.h>
 #include "talk_ctl.h"
 
-struct	sockaddr_in daemon_addr = { sizeof(daemon_addr), AF_INET };
-struct	sockaddr_in ctl_addr = { sizeof(ctl_addr), AF_INET };
-struct	sockaddr_in my_addr = { sizeof(my_addr), AF_INET };
+struct	sockaddr_in daemon_addr = { sizeof(daemon_addr), AF_INET, 0, {0}, {0} };
+struct	sockaddr_in ctl_addr = { sizeof(ctl_addr), AF_INET, 0, {0}, {0} };
+struct	sockaddr_in my_addr = { sizeof(my_addr), AF_INET, 0, {0}, {0} };
 
 	/* inet addresses of the two machines */
 struct	in_addr my_machine_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.12 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: setkey.c,v 1.12.20.1 2009/05/13 19:15:55 jym Exp $	*/
 
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
@@ -445,6 +445,167 @@ promisc()
 	}
 }
 
+/* Generate 'spi' array with SPIs matching 'satype', 'srcs', and 'dsts'
+ * Return value is dynamically generated array of SPIs, also number of
+ * SPIs through num_spi pointer.
+ * On any error, set *num_spi to 0 and return NULL.
+ */
+u_int32_t *
+sendkeymsg_spigrep(satype, srcs, dsts, num_spi)
+	unsigned int satype;
+	struct addrinfo *srcs;
+	struct addrinfo *dsts;
+	int *num_spi;
+{
+	struct sadb_msg msg, *m;
+	char *buf;
+	size_t len;
+	ssize_t l;
+	u_char rbuf[1024 * 32];
+	caddr_t mhp[SADB_EXT_MAX + 1];
+	struct sadb_address *saddr;
+	struct sockaddr *s;
+	struct addrinfo *a;
+	struct sadb_sa *sa;
+	u_int32_t *spi = NULL;
+	int max_spi = 0, fail = 0;
+
+	*num_spi = 0;
+
+	if (f_notreally) {
+		return NULL;
+	}
+
+    {
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	if (setsockopt(so, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+		perror("setsockopt");
+		return NULL;
+	}
+    }
+
+	msg.sadb_msg_version = PF_KEY_V2;
+	msg.sadb_msg_type = SADB_DUMP;
+	msg.sadb_msg_errno = 0;
+	msg.sadb_msg_satype = satype;
+	msg.sadb_msg_len = PFKEY_UNIT64(sizeof(msg));
+	msg.sadb_msg_reserved = 0;
+	msg.sadb_msg_seq = 0;
+	msg.sadb_msg_pid = getpid();
+	buf = (char *)&msg;
+	len = sizeof(msg);
+
+	if (f_verbose) {
+		kdebug_sadb(&msg);
+		printf("\n");
+	}
+	if (f_hexdump) {
+		int i;
+		for (i = 0; i < len; i++) {
+			if (i % 16 == 0)
+				printf("%08x: ", i);
+			printf("%02x ", buf[i] & 0xff);
+			if (i % 16 == 15)
+				printf("\n");
+		}
+		if (len % 16)
+			printf("\n");
+	}
+
+	if ((l = send(so, buf, len, 0)) < 0) {
+		perror("send");
+		return NULL;
+	}
+
+	m = (struct sadb_msg *)rbuf;
+	do {
+		if ((l = recv(so, rbuf, sizeof(rbuf), 0)) < 0) {
+			perror("recv");
+			fail = 1;
+			break;
+		}
+
+		if (PFKEY_UNUNIT64(m->sadb_msg_len) != l) {
+			warnx("invalid keymsg length");
+			fail = 1;
+			break;
+		}
+
+		if (f_verbose) {
+			kdebug_sadb(m);
+			printf("\n");
+		}
+
+		if (m->sadb_msg_type != SADB_DUMP) {
+			warnx("unexpected message type");
+			fail = 1;
+			break;
+		}
+
+		if (m->sadb_msg_errno != 0) {
+			warnx("error encountered");
+			fail = 1;
+			break;
+		}
+
+		/* match satype */
+		if (m->sadb_msg_satype != satype)
+			continue;
+
+		pfkey_align(m, mhp);
+		pfkey_check(mhp);
+
+		/* match src */
+		saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
+		if (saddr == NULL)
+			continue;
+		s = (struct sockaddr *)(saddr + 1);
+		for (a = srcs; a; a = a->ai_next)
+			if (memcmp(a->ai_addr, s, a->ai_addrlen) == 0)
+				break;
+		if (a == NULL)
+			continue;
+
+		/* match dst */
+		saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
+		if (saddr == NULL)
+			continue;
+		s = (struct sockaddr *)(saddr + 1);
+		for (a = dsts; a; a = a->ai_next)
+			if (memcmp(a->ai_addr, s, a->ai_addrlen) == 0)
+				break;
+		if (a == NULL)
+			continue;
+
+		if (*num_spi >= max_spi) {
+			max_spi += 512;
+			spi = realloc(spi, max_spi * sizeof(u_int32_t));
+		}
+
+		sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
+		if (sa != NULL)
+			spi[(*num_spi)++] = (u_int32_t)ntohl(sa->sadb_sa_spi);
+
+		m = (struct sadb_msg *)((caddr_t)m + PFKEY_UNUNIT64(m->sadb_msg_len));
+
+		if (f_verbose) {
+			kdebug_sadb(m);
+			printf("\n");
+		}
+
+	} while (m->sadb_msg_seq);
+
+	if (fail) {
+		free(spi);
+		*num_spi = 0;
+		return NULL;
+	}
+
+	return spi;
+}
+
 int
 sendkeymsg(buf, len)
 	char *buf;
@@ -506,7 +667,7 @@ again:
 		}
 
 		if (f_verbose) {
-			kdebug_sadb((struct sadb_msg *)rbuf);
+			kdebug_sadb(msg);
 			printf("\n");
 		}
 		if (postproc(msg, l) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.16 2007/12/15 19:44:56 perry Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.16.12.1 2009/05/13 19:20:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.16 2007/12/15 19:44:56 perry Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.16.12.1 2009/05/13 19:20:31 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ static	int	 dups = 0;
 static const char ng_empty[] = "";
 #define NG_EMPTY(a)	((a) ? (a) : ng_empty)
 
-static char    *dbname = _PATH_NETGROUP_DB;
+static const char *dbname = _PATH_NETGROUP_DB;
 
 int
 main(int argc, char **argv)
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 	DB		 *db, *ndb, *hdb, *udb;
 	int               ch;
 	char		  buf[MAXPATHLEN];
-	char		 *fname = _PATH_NETGROUP;
+	const char	 *fname = _PATH_NETGROUP;
 
 
 	while ((ch = getopt(argc, argv, "dDo:")) != -1)
@@ -315,7 +315,7 @@ ng_insert(DB *db, const char *name)
 	DB             *xdb = NULL;
 	DBT             key, data;
 
-	key.data = (u_char *)name;
+	key.data = __UNCONST(name);
 	key.size = strlen(name) + 1;
 
 	switch ((db->get)(db, &key, &data, 0)) {

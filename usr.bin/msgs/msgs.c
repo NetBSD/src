@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.19 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: msgs.c,v 1.19.6.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.19 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.19.6.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ typedef	char	bool;
 
 FILE	*msgsrc;
 FILE	*newmsg;
-char	*sep = "-";
+const char *sep = "-";
 char	inbuf[BUFSIZ];
 char	fname[MAXPATHLEN];
 char	cmdbuf[MAXPATHLEN + 16];
@@ -139,7 +139,7 @@ int	Lpp = 0;
 time_t	t;
 time_t	keep;
 
-void	ask __P((char *));
+void	ask __P((const char *));
 void	gfrsub __P((FILE *));
 int	linecnt __P((FILE *));
 int	main __P((int, char *[]));
@@ -742,7 +742,7 @@ next(buf)
 
 void
 ask(prompt)
-	char *prompt;
+	const char *prompt;
 {
 	char	inch;
 	int	n, cmsg;

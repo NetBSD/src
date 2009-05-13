@@ -1,4 +1,4 @@
-.\"	$NetBSD: dpt.4,v 1.23 2006/11/13 16:33:57 ad Exp $
+.\"	$NetBSD: dpt.4,v 1.23.26.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2002 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -75,17 +75,12 @@ should be noted that the list below is not complete.
 .Pp
 .Bl -tag -width indent
 .It dpt%d: readcfg failed - see dpt(4)
-.br
 The EATA configuration data did not appear upon request.  This may be caused
 by older firmware.  Generally the solution is to power-cycle the affected
 machine.
-.br
 .It dpt%d: spurious intr
-.br
 A spurious interrupt was received from the HBA.
-.br
 .It dpt%d: bogus status (returned CCB id NNNN)
-.br
 A corrupt or incomplete status packet was received from the HBA.
 .El
 .Sh SEE ALSO

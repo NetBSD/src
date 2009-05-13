@@ -1,4 +1,4 @@
-/*	$NetBSD: invite.c,v 1.7 2005/09/24 16:40:01 christos Exp $	*/
+/*	$NetBSD: invite.c,v 1.7.30.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: invite.c,v 1.7 2005/09/24 16:40:01 christos Exp $");
+__RCSID("$NetBSD: invite.c,v 1.7.30.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -129,7 +129,7 @@ re_invite(dummy)
 	longjmp(invitebuf, 1);
 }
 
-static	char *answers[] = {
+static	const char *answers[] = {
 	"answer #0",					/* SUCCESS */
 	"Your party is not logged on",			/* NOT_HERE */
 	"Target machine is too confused to talk to us",	/* FAILED */

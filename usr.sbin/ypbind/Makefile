@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.17 2007/07/07 22:33:57 christos Exp $
+#	$NetBSD: Makefile,v 1.17.20.1 2009/05/13 19:20:44 jym Exp $
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
 
 USE_FORT?= yes	# network client
-WARNS?=	4
 
 PROG=	ypbind
 MAN=	ypbind.8

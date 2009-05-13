@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.11 2008/10/19 22:05:24 apb Exp $
+# $NetBSD: Makefile,v 1.11.4.1 2009/05/13 19:20:43 jym Exp $
 #
+
+WARNS?=	1	# XXX: -Wsign-compare -Wcast-qual
+
 .include <bsd.own.mk>
 
 CPPFLAGS+= -DEXTENSIONS -DPW_MKDB_ARGC=2
-WARNS= 3
 
 PROG= user
 SRCS+= user.c main.c

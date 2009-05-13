@@ -1,4 +1,4 @@
-.\"	$NetBSD: tree.3,v 1.4 2008/10/07 13:03:50 apb Exp $
+.\"	$NetBSD: tree.3,v 1.4.4.1 2009/05/13 19:19:08 jym Exp $
 .\"	$OpenBSD: tree.3,v 1.9 2003/05/20 09:13:38 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,7 +29,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.Dd October 7, 2008
+.Dd February 14, 2009
 .Dt TREE 3
 .Os
 .Sh NAME
@@ -382,8 +382,9 @@ The
 .Fn RB_REMOVE
 macro removes the element
 .Fa elm
-from the tree pointed by
+from the tree pointed to by
 .Fa head .
+The element must be present in that tree.
 .Pp
 The
 .Fn RB_FIND

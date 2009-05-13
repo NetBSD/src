@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.32 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: quota.c,v 1.32.6.1 2009/05/13 19:20:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.32 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: quota.c,v 1.32.6.1 2009/05/13 19:20:02 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,8 @@ __RCSID("$NetBSD: quota.c,v 1.32 2008/07/21 14:19:25 lukem Exp $");
 #include <rpc/pmap_prot.h>
 #include <rpcsvc/rquota.h>
 
-char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES;
+const char *qfname = QUOTAFILENAME;
+const char *qfextension[] = INITQFNAMES;
 
 struct quotause {
 	struct	quotause *next;
@@ -101,7 +101,7 @@ void	showgrpname __P((const char *));
 void	showquotas __P((int, u_long, const char *));
 void	showuid __P((uid_t));
 void	showusrname __P((const char *));
-char   *timeprt __P((time_t seconds));
+const char *timeprt __P((time_t seconds));
 int	ufshasquota __P((struct fstab *, int, char **));
 void	usage __P((void));
 
@@ -311,7 +311,7 @@ showquotas(type, id, name)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
-	char *msgi, *msgb, *nam;
+	const char *msgi, *msgb, *nam;
 	int lines = 0;
 	static time_t now;
 
@@ -325,7 +325,7 @@ showquotas(type, id, name)
 		    qup->dqblk.dqb_bsoftlimit == 0 &&
 		    qup->dqblk.dqb_bhardlimit == 0)
 			continue;
-		msgi = (char *)0;
+		msgi = NULL;
 		if (qup->dqblk.dqb_ihardlimit &&
 		    qup->dqblk.dqb_curinodes >= qup->dqblk.dqb_ihardlimit)
 			msgi = "File limit reached on";
@@ -336,7 +336,7 @@ showquotas(type, id, name)
 			else
 				msgi = "Over file quota on";
 		}
-		msgb = (char *)0;
+		msgb = NULL;
 		if (qup->dqblk.dqb_bhardlimit &&
 		    qup->dqblk.dqb_curblocks >= qup->dqblk.dqb_bhardlimit)
 			msgb = "Block limit reached on";
@@ -351,12 +351,12 @@ showquotas(type, id, name)
 			}
 		}
 		if (qflag) {
-			if ((msgi != (char *)0 || msgb != (char *)0) &&
+			if ((msgi != NULL || msgb != NULL) &&
 			    lines++ == 0)
 				heading(type, id, name, "");
-			if (msgi != (char *)0)
+			if (msgi != NULL)
 				printf("\t%s %s\n", msgi, qup->fsname);
-			if (msgb != (char *)0)
+			if (msgb != NULL)
 				printf("\t%s %s\n", msgb, qup->fsname);
 			continue;
 		}
@@ -374,19 +374,19 @@ showquotas(type, id, name)
 			    , nam
 			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks)
 				/ 1024)
-			    , (msgb == (char *)0) ? ' ' : '*'
+			    , (msgb == NULL) ? ' ' : '*'
 			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit)
 				/ 1024)
 			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit)
 				/ 1024)
-			    , (msgb == (char *)0) ? ""
+			    , (msgb == NULL) ? ""
 			        : timeprt(qup->dqblk.dqb_btime));
 			printf("%8d%c%7d%8d%8s\n"
 			    , qup->dqblk.dqb_curinodes
-			    , (msgi == (char *)0) ? ' ' : '*'
+			    , (msgi == NULL) ? ' ' : '*'
 			    , qup->dqblk.dqb_isoftlimit
 			    , qup->dqblk.dqb_ihardlimit
-			    , (msgi == (char *)0) ? ""
+			    , (msgi == NULL) ? ""
 			        : timeprt(qup->dqblk.dqb_itime)
 			);
 			continue;
@@ -423,7 +423,7 @@ heading(type, id, name, tag)
 /*
  * Calculate the grace period and return a printable string for it.
  */
-char *
+const char *
 timeprt(seconds)
 	time_t seconds;
 {
@@ -710,7 +710,7 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	struct timeval timeout, tottimeout;
  
 	CLIENT *client = NULL;
-	int socket = RPC_ANYSOCK;
+	int sock = RPC_ANYSOCK;
  
 	if ((hp = gethostbyname(host)) == NULL)
 		return ((int) RPC_UNKNOWNHOST);
@@ -721,7 +721,7 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	server_addr.sin_port =  0;
 
 	if ((client = clntudp_create(&server_addr, prognum,
-	    versnum, timeout, &socket)) == NULL)
+	    versnum, timeout, &sock)) == NULL)
 		return ((int) rpc_createerr.cf_stat);
 
 	client->cl_auth = authunix_create_default();

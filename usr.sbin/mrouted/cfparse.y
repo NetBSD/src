@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.15 2003/08/18 05:39:53 itojun Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.15.40.1 2009/05/13 19:20:30 jym Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -31,11 +31,11 @@
 /*
  * Local function declarations
  */
-static void		fatal(char *fmt, ...)
+static void		fatal(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-static void		warn(char *fmt, ...)
+static void		warn(const char *fmt, ...)
         __attribute__((__format__(__printf__, 1, 2)));
-static void		yyerror(char *s);
+static void		yyerror(const char *s);
 static char *		next_word(void);
 static int		yylex(void);
 static u_int32_t	valid_if(char *s);
@@ -44,7 +44,7 @@ int			yyparse(void);
 
 static FILE *f __attribute__((__unused__));	/* XXX egcs */
 extern int udp_socket;
-char *configfilename = _PATH_MROUTED_CONF;
+const char *configfilename = _PATH_MROUTED_CONF;
 
 extern int cache_lifetime;
 extern int max_prune_lifetime;
@@ -390,7 +390,7 @@ addrmask	: ADDRMASK	{ $$ = $1; }
 	;
 %%
 static void
-fatal(char *fmt, ...)
+fatal(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[200];
@@ -403,7 +403,7 @@ fatal(char *fmt, ...)
 }
 
 static void
-warn(char *fmt, ...)
+warn(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[200];
@@ -417,7 +417,7 @@ warn(char *fmt, ...)
 
 static void
 yyerror(s)
-char *s;
+const char *s;
 {
 	logit(LOG_ERR, 0, "%s: %s near line %d", configfilename, s, lineno);
 }
@@ -577,11 +577,11 @@ valid_if(s)
 char *s;
 {
 	vifi_t vifi;
-	struct uvif *v;
+	struct uvif *uv;
 
-	for (vifi=0, v=uvifs; vifi<numvifs; vifi++, v++)
-	    if (!strcmp(v->uv_name, s))
-		return v->uv_lcl_addr;
+	for (vifi=0, uv=uvifs; vifi<numvifs; vifi++, uv++)
+	    if (!strcmp(uv->uv_name, s))
+		return uv->uv_lcl_addr;
 
 	return 0;
 }

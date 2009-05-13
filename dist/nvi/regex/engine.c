@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: engine.c,v 1.4.2.1 2009/05/13 19:17:36 jym Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -97,16 +97,13 @@ static RCHAR_T *dissect __P((struct match *m, RCHAR_T *start, RCHAR_T *stop, sop
 static RCHAR_T *backref __P((struct match *m, RCHAR_T *start, RCHAR_T *stop, sopno startst, sopno stopst, sopno lev));
 static RCHAR_T *fast __P((struct match *m, RCHAR_T *start, RCHAR_T *stop, sopno startst, sopno stopst));
 static RCHAR_T *slow __P((struct match *m, RCHAR_T *start, RCHAR_T *stop, sopno startst, sopno stopst));
-static states step __P((struct re_guts *g, sopno start, sopno stop, states bef, int ch, states aft));
-#define	BOL	(OUT+1)
+static states step __P((struct re_guts *g, sopno start, sopno stop, states bef, int flag, RCHAR_T ch, states aft));
+#define	BOL	(1)
 #define	EOL	(BOL+1)
 #define	BOLEOL	(BOL+2)
 #define	NOTHING	(BOL+3)
 #define	BOW	(BOL+4)
 #define	EOW	(BOL+5)
-#define	CODEMAX	(BOL+5)		/* highest code used */
-#define	NONCHAR(c)	((RCHAR_T)(c) > (RCHAR_T)RCHAR_T_MAX)
-#define	NNONCHAR	(CODEMAX-CHAR_MAX)
 #ifdef REDEBUG
 static void print __P((struct match *m, char *caption, states st, int ch, FILE *d));
 #endif
@@ -716,15 +713,15 @@ sopno stopst;
 	register states fresh = m->fresh;
 	register states tmp = m->tmp;
 	register RCHAR_T *p = start;
-	register int c = (start == m->beginp) ? OUT : *(start-1);
-	register int lastc;	/* previous c */
-	register int flagch;
+	register RCHAR_T c = (start == m->beginp) ? OUT : *(start-1);
+	register RCHAR_T lastc;	/* previous c */
+	register int flag;
 	register int i;
 	register RCHAR_T *coldp;	/* last p after which no match was underway */
 
 	CLEAR(st);
 	SET1(st, startst);
-	st = step(m->g, startst, stopst, st, NOTHING, st);
+	st = step(m->g, startst, stopst, st, NOTHING, OUT, st);
 	ASSIGN(fresh, st);
 	SP("start", st, *p);
 	coldp = NULL;
@@ -736,35 +733,35 @@ sopno stopst;
 			coldp = p;
 
 		/* is there an EOL and/or BOL between lastc and c? */
-		flagch = '\0';
+		flag = 0;
 		i = 0;
 		if ( (lastc == '\n' && m->g->cflags&REG_NEWLINE) ||
 				(lastc == OUT && !(m->eflags&REG_NOTBOL)) ) {
-			flagch = BOL;
+			flag = BOL;
 			i = m->g->nbol;
 		}
 		if ( (c == '\n' && m->g->cflags&REG_NEWLINE) ||
 				(c == OUT && !(m->eflags&REG_NOTEOL)) ) {
-			flagch = (flagch == BOL) ? BOLEOL : EOL;
+			flag = (flag == BOL) ? BOLEOL : EOL;
 			i += m->g->neol;
 		}
 		if (i != 0) {
 			for (; i > 0; i--)
-				st = step(m->g, startst, stopst, st, flagch, st);
+				st = step(m->g, startst, stopst, st, flag, OUT, st);
 			SP("boleol", st, c);
 		}
 
 		/* how about a word boundary? */
-		if ( (flagch == BOL || (lastc != OUT && !ISWORD(lastc))) &&
+		if ( (flag == BOL || (lastc != OUT && !ISWORD(lastc))) &&
 					(c != OUT && ISWORD(c)) ) {
-			flagch = BOW;
+			flag = BOW;
 		}
 		if ( (lastc != OUT && ISWORD(lastc)) &&
-				(flagch == EOL || (c != OUT && !ISWORD(c))) ) {
-			flagch = EOW;
+				(flag == EOL || (c != OUT && !ISWORD(c))) ) {
+			flag = EOW;
 		}
-		if (flagch == BOW || flagch == EOW) {
-			st = step(m->g, startst, stopst, st, flagch, st);
+		if (flag == BOW || flag == EOW) {
+			st = step(m->g, startst, stopst, st, flag, OUT, st);
 			SP("boweow", st, c);
 		}
 
@@ -776,9 +773,9 @@ sopno stopst;
 		ASSIGN(tmp, st);
 		ASSIGN(st, fresh);
 		assert(c != OUT);
-		st = step(m->g, startst, stopst, tmp, c, st);
+		st = step(m->g, startst, stopst, tmp, 0, c, st);
 		SP("aft", st, c);
-		assert(EQ(step(m->g, startst, stopst, st, NOTHING, st), st));
+		assert(EQ(step(m->g, startst, stopst, st, NOTHING, OUT, st), st));
 		p++;
 	}
 
@@ -807,9 +804,9 @@ sopno stopst;
 	register states empty = m->empty;
 	register states tmp = m->tmp;
 	register RCHAR_T *p = start;
-	register int c = (start == m->beginp) ? OUT : *(start-1);
-	register int lastc;	/* previous c */
-	register int flagch;
+	register RCHAR_T c = (start == m->beginp) ? OUT : *(start-1);
+	register RCHAR_T lastc;	/* previous c */
+	register int flag;
 	register int i;
 	register RCHAR_T *matchp;	/* last p at which a match ended */
 
@@ -817,7 +814,7 @@ sopno stopst;
 	CLEAR(st);
 	SET1(st, startst);
 	SP("sstart", st, *p);
-	st = step(m->g, startst, stopst, st, NOTHING, st);
+	st = step(m->g, startst, stopst, st, NOTHING, OUT, st);
 	matchp = NULL;
 	for (;;) {
 		/* next character */
@@ -825,35 +822,35 @@ sopno stopst;
 		c = (p == m->endp) ? OUT : *p;
 
 		/* is there an EOL and/or BOL between lastc and c? */
-		flagch = '\0';
+		flag = 0;
 		i = 0;
 		if ( (lastc == '\n' && m->g->cflags&REG_NEWLINE) ||
 				(lastc == OUT && !(m->eflags&REG_NOTBOL)) ) {
-			flagch = BOL;
+			flag = BOL;
 			i = m->g->nbol;
 		}
 		if ( (c == '\n' && m->g->cflags&REG_NEWLINE) ||
 				(c == OUT && !(m->eflags&REG_NOTEOL)) ) {
-			flagch = (flagch == BOL) ? BOLEOL : EOL;
+			flag = (flag == BOL) ? BOLEOL : EOL;
 			i += m->g->neol;
 		}
 		if (i != 0) {
 			for (; i > 0; i--)
-				st = step(m->g, startst, stopst, st, flagch, st);
+				st = step(m->g, startst, stopst, st, flag, OUT, st);
 			SP("sboleol", st, c);
 		}
 
 		/* how about a word boundary? */
-		if ( (flagch == BOL || (lastc != OUT && !ISWORD(lastc))) &&
+		if ( (flag == BOL || (lastc != OUT && !ISWORD(lastc))) &&
 					(c != OUT && ISWORD(c)) ) {
-			flagch = BOW;
+			flag = BOW;
 		}
 		if ( (lastc != OUT && ISWORD(lastc)) &&
-				(flagch == EOL || (c != OUT && !ISWORD(c))) ) {
-			flagch = EOW;
+				(flag == EOL || (c != OUT && !ISWORD(c))) ) {
+			flag = EOW;
 		}
-		if (flagch == BOW || flagch == EOW) {
-			st = step(m->g, startst, stopst, st, flagch, st);
+		if (flag == BOW || flag == EOW) {
+			st = step(m->g, startst, stopst, st, flag, OUT, st);
 			SP("sboweow", st, c);
 		}
 
@@ -867,9 +864,9 @@ sopno stopst;
 		ASSIGN(tmp, st);
 		ASSIGN(st, empty);
 		assert(c != OUT);
-		st = step(m->g, startst, stopst, tmp, c, st);
+		st = step(m->g, startst, stopst, tmp, 0, c, st);
 		SP("saft", st, c);
-		assert(EQ(step(m->g, startst, stopst, st, NOTHING, st), st));
+		assert(EQ(step(m->g, startst, stopst, st, NOTHING, OUT, st), st));
 		p++;
 	}
 
@@ -880,24 +877,22 @@ sopno stopst;
 /*
  - step - map set of states reachable before char to set reachable after
  == static states step(register struct re_guts *g, sopno start, sopno stop, \
- ==	register states bef, int ch, register states aft);
- == #define	BOL	(OUT+1)
+ ==	register states bef, int flag, RCHAR_T ch, register states aft);
+ == #define	BOL	(1)
  == #define	EOL	(BOL+1)
  == #define	BOLEOL	(BOL+2)
  == #define	NOTHING	(BOL+3)
  == #define	BOW	(BOL+4)
  == #define	EOW	(BOL+5)
- == #define	CODEMAX	(BOL+5)		// highest code used
- == #define	NONCHAR(c)	((c) > CHAR_MAX)
- == #define	NNONCHAR	(CODEMAX-CHAR_MAX)
  */
 static states
-step(g, start, stop, bef, ch, aft)
+step(g, start, stop, bef, flag, ch, aft)
 register struct re_guts *g;
 sopno start;			/* start state within strip */
 sopno stop;			/* state after stop state within strip */
 register states bef;		/* states reachable before */
-int ch;				/* character or NONCHAR code */
+int flag;			/* NONCHAR flag */
+RCHAR_T ch;			/* character code */
 register states aft;		/* states already known reachable after */
 {
 	register cset *cs;
@@ -917,33 +912,33 @@ register states aft;		/* states already known reachable after */
 			break;
 		case OCHAR:
 			/* only characters can match */
-			assert(!NONCHAR(ch) || ch != d);
+			assert(!flag || ch != d);
 			if (ch == d)
 				FWD(aft, bef, 1);
 			break;
 		case OBOL:
-			if (ch == BOL || ch == BOLEOL)
+			if (flag == BOL || flag == BOLEOL)
 				FWD(aft, bef, 1);
 			break;
 		case OEOL:
-			if (ch == EOL || ch == BOLEOL)
+			if (flag == EOL || flag == BOLEOL)
 				FWD(aft, bef, 1);
 			break;
 		case OBOW:
-			if (ch == BOW)
+			if (flag == BOW)
 				FWD(aft, bef, 1);
 			break;
 		case OEOW:
-			if (ch == EOW)
+			if (flag == EOW)
 				FWD(aft, bef, 1);
 			break;
 		case OANY:
-			if (!NONCHAR(ch))
+			if (!flag)
 				FWD(aft, bef, 1);
 			break;
 		case OANYOF:
 			cs = &g->sets[d];
-			if (!NONCHAR(ch) && CHIN(cs, ch))
+			if (!flag && CHIN(cs, ch))
 				FWD(aft, bef, 1);
 			break;
 		case OBACK_:		/* ignored here */

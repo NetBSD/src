@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.32 2008/07/21 14:19:24 lukem Exp $ */
+/* $NetBSD: mkdep.c,v 1.32.6.1 2009/05/13 19:19:58 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.32 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.32.6.1 2009/05/13 19:19:58 jym Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -65,7 +65,7 @@ struct opt {
 };
 
 typedef struct {
-	int	len;
+	size_t	len;
 	char	suff[12];
 } suff_list_t;
 
@@ -191,7 +191,7 @@ main(int argc, char **argv)
 	int	dependfile;
 	char	*buf, *lim, *ptr, *line, *suf, *colon, *eol;
 	int	ok_ind, ch;
-	int	sz;
+	size_t	sz;
 	int	fd;
 	const char *fname;
 	const char *suffixes = NULL, *s;

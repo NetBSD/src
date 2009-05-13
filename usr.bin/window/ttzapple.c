@@ -1,4 +1,4 @@
-/*	$NetBSD: ttzapple.c,v 1.8 2006/12/18 20:04:55 christos Exp $	*/
+/*	$NetBSD: ttzapple.c,v 1.8.20.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttzapple.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttzapple.c,v 1.8 2006/12/18 20:04:55 christos Exp $");
+__RCSID("$NetBSD: ttzapple.c,v 1.8.20.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ void	zz_end(void);
 void	zz_insline(int);
 void	zz_insspace(int);
 void	zz_move(int, int);
-void	zz_put_token(int, char *, int);
+void	zz_put_token(int, const char *, int);
 void	zz_putc(char);
 void	zz_reset(void);
 int	zz_rint(char *, int);
@@ -93,7 +93,7 @@ void	zz_setmodes(int);
 void	zz_setscroll(int, int);
 void	zz_set_token(int, char *, int);
 void	zz_start(void);
-void	zz_write(char *, int);
+void	zz_write(const char *, int);
 
 void
 zz_setmodes(int new)
@@ -140,7 +140,7 @@ zz_putc(char c)
 }
 
 void
-zz_write(char *p, int n)
+zz_write(const char *p, int n)
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		zz_setmodes(tt.tt_nmodes);
@@ -380,7 +380,7 @@ zz_set_token(int t, char *s, int n)
 }
 
 void
-zz_put_token(int t, char *s __unused, int n __unused)
+zz_put_token(int t, const char *s __unused, int n __unused)
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		zz_setmodes(tt.tt_nmodes);

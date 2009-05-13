@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.4 2007/03/30 20:23:03 ghen Exp $	*/
+/*	$NetBSD: list.h,v 1.4.22.1 2009/05/13 19:18:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,8 @@
 	} while (/*CONSTCOND*/0)
 #define INIT_LINK(elt, link) \
 	INIT_LINK_TYPE(elt, link, void)
-#define LINKED(elt, link) ((void *)((elt)->link.prev) != (void *)(-1))
+#define LINKED(elt, link) ((void *)((elt)->link.prev) != (void *)(-1) && \
+			   (void *)((elt)->link.next) != (void *)(-1))
 
 #define HEAD(list) ((list).head)
 #define TAIL(list) ((list).tail)

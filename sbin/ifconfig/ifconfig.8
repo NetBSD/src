@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.94 2008/09/30 09:41:41 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.94.4.1 2009/05/13 19:19:02 jym Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd September 29, 2008
+.Dd March 27, 2009
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -210,7 +210,6 @@ Enable driver dependent debugging code; usually, this turns on
 extra console error logging.
 .It Fl debug
 Disable driver dependent debugging code.
-.ne 1i
 .It Cm delete
 Remove the network address specified.
 This would be used if you incorrectly specified an alias, or it
@@ -262,13 +261,22 @@ or
 .Dq UTP
 would activate twisted pair.
 Refer to the interfaces' driver
-specific man page for a complete list of the available types.
+specific man page for a complete list of the available types
+and the
+.Xr ifmedia 4
+manual page for a list of media types.
+See the
+.Fl m
+flag below.
 .It Cm mediaopt Ar opts
 Set the specified media options on the interface.
 .Ar opts
 is a comma delimited list of options to apply to the interface.
 Refer to the interfaces' driver specific man page for a complete
 list of available options.
+Also see the
+.Xr ifmedia 4
+manual page for a list of media options.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the interface.
 .It Cm mode Ar mode
@@ -476,7 +484,6 @@ to be used for IEEE 802.11-based wireless network interfaces.
 Unset the desired channel to be used
 for IEEE 802.11-based wireless network interfaces.
 It doesn't affect the channel to be created for IBSS or hostap mode.
-.It Bk -words
 .It Cm list scan
 .Pq IEEE 802.11 devices only
 Display the access points and/or ad-hoc neighbors
@@ -489,7 +496,6 @@ also causes received information elements to be displayed symbolicaly.
 Only the super-user can use this command.
 .It Cm tunnel Ar src_addr Ns Op Ar ,src_port
 .Ar dest_addr Ns Op Ar ,dest_port
-.Ek
 .Pq IP tunnel devices only
 Configure the physical source and destination address for IP tunnel
 interfaces, including

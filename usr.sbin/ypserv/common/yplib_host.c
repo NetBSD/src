@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.c,v 1.7 2004/10/30 16:01:48 dsl Exp $	*/
+/*	$NetBSD: yplib_host.c,v 1.7.34.1 2009/05/13 19:20:44 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yplib_host.c,v 1.7 2004/10/30 16:01:48 dsl Exp $");
+__RCSID("$NetBSD: yplib_host.c,v 1.7.34.1 2009/05/13 19:20:44 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -136,7 +136,7 @@ yp_match_host(CLIENT *client, char *indomain, char *inmap, const char *inkey,
 
 	yprk.domain = indomain;
 	yprk.map = inmap;
-	yprk.keydat.dptr = (char *)inkey;
+	yprk.keydat.dptr = __UNCONST(inkey);
 	yprk.keydat.dsize = inkeylen;
 
 	memset(&yprv, 0, sizeof yprv);
@@ -228,7 +228,7 @@ yp_next_host(CLIENT *client, char *indomain, char *inmap, char *inkey,
 }
 
 int
-yp_all_host(CLIENT *client, char *indomain, char *inmap,
+yp_all_host(CLIENT *client, const char *indomain, const char *inmap,
 	    struct ypall_callback *incallback)
 {
 	struct ypreq_nokey yprnk;

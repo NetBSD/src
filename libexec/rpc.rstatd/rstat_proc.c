@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.43 2006/04/14 13:19:03 blymn Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.43.28.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.43 2006/04/14 13:19:03 blymn Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.43.28.1 2009/05/13 19:18:43 jym Exp $");
 #endif
 #endif
 
@@ -96,15 +96,15 @@ int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
 
 struct nlist nl[] = {
 #define	X_IFNET		0
-	{ "_ifnet" },
-	{ NULL },
+	{ "_ifnet", 0, 0, 0, 0 },
+	{ NULL, 0, 0, 0, 0 },
 };
 
 int hz;
 char *memf = NULL, *nlistf = NULL;
 
 struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
-int numintfs;
+unsigned int numintfs;
 
 extern int from_inetd;
 int sincelastreq = 0;		/* number of alarms since last request */
@@ -197,7 +197,7 @@ void
 updatestat(int dummy)
 {
 	long off;
-	int i;
+	unsigned int i;
 	size_t len;
 	int mib[2];
 	struct uvmexp_sysctl uvmexp;

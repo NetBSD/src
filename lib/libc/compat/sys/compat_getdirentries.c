@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getdirentries.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_getdirentries.c,v 1.1.30.1 2009/05/13 19:18:22 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getdirentries.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_getdirentries.c,v 1.1.30.1 2009/05/13 19:18:22 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -43,6 +43,9 @@ __RCSID("$NetBSD: compat_getdirentries.c,v 1.1 2005/09/13 01:44:09 christos Exp 
 #include <dirent.h>
 #include <compat/include/dirent.h>
 #include <unistd.h>
+
+__warn_references(getdirentries,
+    "reference to compatibility-only getdirentries(); this will break; use getdents() or readdir() instead")
 
 int
 getdirentries(fd, buf, nbytes, basep)

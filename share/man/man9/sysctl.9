@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.13 2008/11/12 12:35:54 ad Exp $
+.\"	$NetBSD: sysctl.9,v 1.13.2.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -468,22 +468,22 @@ like the following:
 .Pp
 .Bd -literal -offset indent -compact
 static int sysctl_helper(SYSCTLFN_PROTO);
-.sp
+
 static int
 sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	int t, error;
-.sp
+
 	node = *rnode;
 	node.sysctl_data = \*[Am]t;
 	error = sysctl_lookup(SYSCTLFN_CALL(\*[Am]node));
 	if (error || newp == NULL)
 		return (error);
-.sp
+
 	if (t \*[Lt] 0 || t \*[Gt] 20)
 		return (EINVAL);
-.sp
+
 	*(int*)rnode-\*[Gt]sysctl_data = t;
 	return (0);
 }

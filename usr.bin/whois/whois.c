@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.33 2008/07/21 14:19:28 lukem Exp $   */
+/*      $NetBSD: whois.c,v 1.33.6.1 2009/05/13 19:20:12 jym Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.33 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: whois.c,v 1.33.6.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,13 @@ static const char *ip_whois[] =
 
 static void usage(void) __dead;
 static int whois(const char *, const char *, const char *, int);
-static char *choose_server(const char *, const char *);
+static const char *choose_server(const char *, const char *);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, flags, rval;
-	char *host, *name, *country;
+	const char *host, *name, *country;
 
 #ifdef SOCKS
 	SOCKSinit(argv[0]);
@@ -288,7 +288,7 @@ whois(const char *query, const char *server, const char *port, int flags)
  * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+).
  * Fall back to NICHOST for the non-handle case.
  */
-static char *
+static const char *
 choose_server(const char *name, const char *country)
 {
 	static char *server;

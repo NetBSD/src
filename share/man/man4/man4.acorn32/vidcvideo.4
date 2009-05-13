@@ -1,4 +1,4 @@
-.\" $NetBSD: vidcvideo.4,v 1.4 2007/04/13 00:39:10 plunky Exp $
+.\" $NetBSD: vidcvideo.4,v 1.4.20.1 2009/05/13 19:19:10 jym Exp $
 .\"
 .\" Copyright (c) 2006 Ben Harris
 .\" All rights reserved.
@@ -59,12 +59,12 @@ driver chooses a screen mode to use when
 starts up, and has no means of changing it thereafter.
 The driver attempts to choose a screen mode from its built-in list that most
 closely matches the mode being used under
-.Tn RISC OS .
+.Tn RISC \&OS .
 If the built-in list of modes is inadequate, a different one can be substituted
 by compiling a kernel using the
 .Cd MONITOR
 option to refer to a
-.Tn RISC OS
+.Tn RISC \&OS
 ModeInfo file, specifying the list of modes to extract from it in
 .Cd MODES .
 .Sh FILES

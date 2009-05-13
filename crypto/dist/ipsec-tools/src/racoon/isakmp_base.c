@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.11 2009/01/23 08:23:51 tteras Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.11.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -143,7 +143,8 @@ base_i1send(iph1, msg)
 		goto end;
 
 	/* create SA payload for my proposal */
-	iph1->sa = ipsecdoi_setph1proposal(iph1->rmconf->proposal);
+	iph1->sa = ipsecdoi_setph1proposal(iph1->rmconf,
+					   iph1->rmconf->proposal);
 	if (iph1->sa == NULL)
 		goto end;
 
@@ -250,8 +251,7 @@ base_i1send(iph1, msg)
 #endif
 
 	/* send the packet, add to the schedule to resend */
-	iph1->retry_counter = iph1->rmconf->retry_counter;
-	if (isakmp_ph1resend(iph1) == -1)
+	if (isakmp_ph1send(iph1) == -1)
 		goto end;
 
 	iph1->status = PHASE1ST_MSG1SENT;
@@ -493,16 +493,16 @@ base_i2send(iph1, msg)
 			need_cert = 1;
 
 		/* create isakmp KE payload */
-		plist = isakmp_plist_append(plist, 
-		    iph1->dhpub, ISAKMP_NPTYPE_KE);
+		plist = isakmp_plist_append(plist, iph1->dhpub,
+					    ISAKMP_NPTYPE_KE);
 
 		/* add CERT payload if there */
 		if (need_cert)
-			plist = isakmp_plist_append(plist, 
-			    iph1->cert->pl, ISAKMP_NPTYPE_CERT);
+			plist = isakmp_plist_append(plist,  iph1->cert,
+						    ISAKMP_NPTYPE_CERT);
 
 		/* add SIG payload */
-		plist = isakmp_plist_append(plist, 
+		plist = isakmp_plist_append(plist,
 		    iph1->sig, ISAKMP_NPTYPE_SIG);
 
 		break;
@@ -551,8 +551,7 @@ base_i2send(iph1, msg)
 #endif
 
 	/* send the packet, add to the schedule to resend */
-	iph1->retry_counter = iph1->rmconf->retry_counter;
-	if (isakmp_ph1resend(iph1) == -1)
+	if (isakmp_ph1send(iph1) == -1)
 		goto end;
 
 	/* the sending message is added to the received-list. */
@@ -739,10 +738,8 @@ end:
 
 	if (error) {
 		VPTRINIT(iph1->dhpub_p);
-		oakley_delcert(iph1->cert_p);
-		iph1->cert_p = NULL;
-		oakley_delcert(iph1->crl_p);
-		iph1->crl_p = NULL;
+		VPTRINIT(iph1->cert_p);
+		VPTRINIT(iph1->crl_p);
 		VPTRINIT(iph1->sig_p);
 	}
 
@@ -1013,8 +1010,7 @@ base_r1send(iph1, msg)
 #endif
 
 	/* send the packet, add to the schedule to resend */
-	iph1->retry_counter = iph1->rmconf->retry_counter;
-	if (isakmp_ph1resend(iph1) == -1) {
+	if (isakmp_ph1send(iph1) == -1) {
 		iph1 = NULL;
 		goto end;
 	}
@@ -1196,10 +1192,8 @@ end:
 
 	if (error) {
 		VPTRINIT(iph1->dhpub_p);
-		oakley_delcert(iph1->cert_p);
-		iph1->cert_p = NULL;
-		oakley_delcert(iph1->crl_p);
-		iph1->crl_p = NULL;
+		VPTRINIT(iph1->cert_p);
+		VPTRINIT(iph1->crl_p);
 		VPTRINIT(iph1->sig_p);
 	}
 
@@ -1307,16 +1301,17 @@ base_r2send(iph1, msg)
 			need_cert = 1;
 
 		/* create isakmp KE payload */
-		plist = isakmp_plist_append(plist, 
-		    iph1->dhpub, ISAKMP_NPTYPE_KE);
+		plist = isakmp_plist_append(plist, iph1->dhpub,
+					    ISAKMP_NPTYPE_KE);
 
 		/* add CERT payload if there */
 		if (need_cert)
-			plist = isakmp_plist_append(plist, 
-			    iph1->cert->pl, ISAKMP_NPTYPE_CERT);
+			plist = isakmp_plist_append(plist, iph1->cert,
+						    ISAKMP_NPTYPE_CERT);
+
 		/* add SIG payload */
-		plist = isakmp_plist_append(plist, 
-		    iph1->sig, ISAKMP_NPTYPE_SIG);
+		plist = isakmp_plist_append(plist, iph1->sig,
+					    ISAKMP_NPTYPE_SIG);
 		break;
 #ifdef HAVE_GSSAPI
 	case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:

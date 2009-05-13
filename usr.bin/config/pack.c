@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.5 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: pack.c,v 1.5.20.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -288,9 +288,9 @@ findvec(const void *ptr, int hash, int len, vec_cmp_func cmp, int nextplace)
 static int
 samelocs(const void *ptr, int off, int len)
 {
-	const char **p, **q;
+	const char * const *p, * const *q;
 
-	for (p = &locators.vec[off], q = (const char **)ptr; --len >= 0;)
+	for (p = &locators.vec[off], q = (const char * const *)ptr; --len >= 0;)
 		if (*p++ != *q++)
 			return (0);	/* different */
 	return (1);			/* same */
@@ -323,10 +323,10 @@ loclencmp(const void *a, const void *b)
 	const struct pspec *p1, *p2;
 	int l1, l2;
 
-	p1 = (*(const struct devi **)a)->i_pspec;
+	p1 = (*(const struct devi * const *)a)->i_pspec;
 	l1 = p1 != NULL ? p1->p_iattr->a_loclen : 0;
 
-	p2 = (*(const struct devi **)b)->i_pspec;
+	p2 = (*(const struct devi * const *)b)->i_pspec;
 	l2 = p2 != NULL ? p2->p_iattr->a_loclen : 0;
 
 	return (l2 - l1);

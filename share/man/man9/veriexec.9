@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.9,v 1.19 2008/05/28 00:33:39 snj Exp $
+.\" $NetBSD: veriexec.9,v 1.19.4.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
@@ -48,7 +48,7 @@ enforce the
 .Em Veriexec
 policy.
 .Ss Core Routines
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn veriexec_init "void"
 Initialize the
 .Em Veriexec
@@ -74,7 +74,7 @@ is the filename, and
 .Ar flag
 is the access flag.
 The access flag can be one of:
-.Bl -tag
+.Bl -tag -width VERIEXEC_INDIRECT
 .It Dv VERIEXEC_DIRECT
 The file was executed directly via
 .Xr execve 2 .
@@ -102,8 +102,8 @@ is accessed.
 .\" veriexec_page_verify() intentionally not documented.
 .El
 .Ss Fingerprint Related Routines
-.Bl -tag
-.It Ft Fn veriexec_fpops_add "const char *fp_type" "size_t hash_len" \
+.Bl -tag -width compact
+.It Ft int Fn veriexec_fpops_add "const char *fp_type" "size_t hash_len" \
 "size_t ctx_size" "veriexec_fpop_init_t init" "veriexec_fpop_update_t update" \
 "veriexec_fpop_final_t final"
 Add support for fingerprinting algorithm
@@ -122,7 +122,7 @@ are the routines used to initialize, update, and finalize a calculation
 context.
 .El
 .Ss Table Management Routines
-.Bl -tag
+.Bl -tag -width compact
 .It Ft int Fn veriexec_file_add "struct lwp *l" \
 "prop_dictionary_t dict"
 Add a
@@ -132,8 +132,8 @@ entry for the file described by
 .Pp
 .Ar dict
 is expected to have the following:
-.Bl -column entryxtype string
-.Sy Name	Type	Purpose
+.Bl -column entry-type string "entry type flags (see veriexec(4))"
+.It Sy Name	Type	Purpose
 .It file	string	filename
 .It entry-type	uint8	entry type flags ( see Xr veriexec 4 )
 .It fp-type	string	fingerprint hashing algorithm
@@ -155,7 +155,7 @@ Delete all
 tables.
 .El
 .Ss Hook Handlers
-.Bl -tag
+.Bl -tag -width compact
 .It Ft int Fn veriexec_openchk "struct lwp *l" "struct vnode *vp" \
 "const char *path" "int fmode"
 Called when a file is opened.
@@ -210,7 +210,7 @@ Checks if the current strict level allows
 to be unmounted.
 .El
 .Ss Misc. Routines
-.Bl -tag
+.Bl -tag -width compact
 .It Ft int Fn veriexec_convert "struct vnode *vp" "prop_dictionary_t rdict"
 Convert
 .Em Veriexec
@@ -222,7 +222,7 @@ dictionary,
 .Ar rdict ,
 with the following elements:
 .Bl -column entryxtype string
-.Sy Name	Type	Purpose
+.It Sy Name	Type	Purpose
 .It entry-type	uint8	entry type flags ( see Xr veriexec 4 )
 .It status	uint8	entry status ( see below )
 .It fp-type	string	fingerprint hashing algorithm
@@ -260,7 +260,7 @@ containing the filename.
 .El
 .Sh FILES
 .Bl -column srcxsysxkernxkernxverifiedexecxc foo
-.Sy Path	Purpose
+.It Sy Path	Purpose
 .It src/sys/dev/verified_exec.c	driver for userland communication
 .It src/sys/sys/verified_exec.h	shared (userland/kernel) header file
 .It src/sys/kern/kern_verifiedexec.c	subsystem code

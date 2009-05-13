@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.36 2009/01/23 08:23:51 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.36.2.1 2009/05/13 19:15:53 jym Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -94,14 +94,7 @@
 #endif
 #include "vendorid.h"
 #include "rsalist.h"
-
-struct proposalspec {
-	time_t lifetime;		/* for isakmp/ipsec */
-	int lifebyte;			/* for isakmp/ipsec */
-	struct secprotospec *spspec;	/* the head is always current spec. */
-	struct proposalspec *next;	/* the tail is the most prefered. */
-	struct proposalspec *prev;
-};
+#include "crypto_openssl.h"
 
 struct secprotospec {
 	int prop_no;
@@ -120,7 +113,6 @@ struct secprotospec {
 
 	struct secprotospec *next;	/* the tail is the most prefiered. */
 	struct secprotospec *prev;
-	struct proposalspec *back;
 };
 
 static int num2dhgroup[] = {
@@ -151,23 +143,33 @@ static struct sainfo *cur_sainfo;
 static int cur_algclass;
 static int oldloglevel = LLV_BASE;
 
-static struct proposalspec *newprspec __P((void));
-static void insprspec __P((struct proposalspec *, struct proposalspec **));
 static struct secprotospec *newspspec __P((void));
-static void insspspec __P((struct secprotospec *, struct proposalspec **));
+static void insspspec __P((struct remoteconf *, struct secprotospec *));
 static void adminsock_conf __P((vchar_t *, vchar_t *, vchar_t *, int));
 
-static int set_isakmp_proposal
-	__P((struct remoteconf *, struct proposalspec *));
+static int set_isakmp_proposal __P((struct remoteconf *));
 static void clean_tmpalgtype __P((void));
 static int expand_isakmpspec __P((int, int, int *,
 	int, int, time_t, int, int, int, char *, struct remoteconf *));
 
 void freeetypes (struct etypes **etypes);
 
-#if 0
-static int fix_lifebyte __P((u_long));
-#endif
+static int load_x509(const char *file, char **filenameptr,
+		     vchar_t **certptr)
+{
+	char path[PATH_MAX];
+
+	getpathname(path, sizeof(path), LC_PATHTYPE_CERT, file);
+	*certptr = eay_get_x509cert(path);
+	if (*certptr == NULL)
+		return -1;
+
+	*filenameptr = racoon_strdup(file);
+	STRDUP_FATAL(*filenameptr);
+
+	return 0;
+}
+
 %}
 
 %union {
@@ -212,10 +214,10 @@ static int fix_lifebyte __P((u_long));
 	/* sainfo */
 %token SAINFO FROM
 	/* remote */
-%token REMOTE ANONYMOUS CLIENTADDR INHERIT
+%token REMOTE ANONYMOUS CLIENTADDR INHERIT REMOTE_ADDRESS
 %token EXCHANGE_MODE EXCHANGETYPE DOI DOITYPE SITUATION SITUATIONTYPE
 %token CERTIFICATE_TYPE CERTTYPE PEERS_CERTFILE CA_TYPE
-%token VERIFY_CERT SEND_CERT SEND_CR
+%token VERIFY_CERT SEND_CERT SEND_CR MATCH_EMPTY_CR
 %token IDENTIFIERTYPE IDENTIFIERQUAL MY_IDENTIFIER 
 %token PEERS_IDENTIFIER VERIFY_IDENTIFIER
 %token DNSSEC CERT_X509 CERT_PLAINRSA
@@ -1607,36 +1609,81 @@ keylength
 
 	/* remote */
 remote_statement
-	:	REMOTE remote_index INHERIT remote_index
+	: REMOTE QUOTEDSTRING INHERIT QUOTEDSTRING
+		{
+			struct remoteconf *from, *new;
+
+			if (getrmconf_by_name($2->v) != NULL) {
+				yyerror("named remoteconf \"%s\" already exists.");
+				return -1;
+			}
+
+			from = getrmconf_by_name($4->v);
+			if (from == NULL) {
+				yyerror("named parent remoteconf \"%s\" does not exist.",
+					$4->v);
+				return -1;
+			}
+
+			new = duprmconf(from);
+			if (new == NULL) {
+				yyerror("failed to duplicate remoteconf from \"%s\".",
+					$4->v);
+				return -1;
+			}
+
+			new->name = racoon_strdup($2->v);
+			cur_rmconf = new;
+
+			vfree($2);
+			vfree($4);
+		}
+		remote_specs_block
+	| REMOTE QUOTEDSTRING
 		{
 			struct remoteconf *new;
-			struct proposalspec *prspec;
 
-			new = copyrmconf($4);
+			if (getrmconf_by_name($2->v) != NULL) {
+				yyerror("Named remoteconf \"%s\" already exists.");
+				return -1;
+			}
+
+			new = newrmconf();
 			if (new == NULL) {
-				yyerror("failed to get remoteconf for %s.", saddr2str ($4));
+				yyerror("failed to get new remoteconf.");
+				return -1;
+			}
+			new->name = racoon_strdup($2->v);
+			cur_rmconf = new;
+
+			vfree($2);
+		}
+		remote_specs_block
+	| REMOTE remote_index INHERIT remote_index
+		{
+			struct remoteconf *from, *new;
+
+			from = getrmconf($4, GETRMCONF_F_NO_ANONYMOUS);
+			if (from == NULL) {
+				yyerror("failed to get remoteconf for %s.",
+					saddr2str($4));
+				return -1;
+			}
+
+			new = duprmconf(from);
+			if (new == NULL) {
+				yyerror("failed to duplicate remoteconf from %s.",
+					saddr2str($4));
 				return -1;
 			}
 
 			new->remote = $2;
-			new->inherited_from = getrmconf_strict($4, 1);
-			new->proposal = NULL;
-			new->prhead = NULL;
 			cur_rmconf = new;
-
-			prspec = newprspec();
-			if (prspec == NULL || !cur_rmconf->inherited_from 
-				|| !cur_rmconf->inherited_from->proposal)
-				return -1;
-			prspec->lifetime = cur_rmconf->inherited_from->proposal->lifetime;
-			prspec->lifebyte = cur_rmconf->inherited_from->proposal->lifebyte;
-			insprspec(prspec, &cur_rmconf->prhead);
 		}
 		remote_specs_block
 	|	REMOTE remote_index
 		{
 			struct remoteconf *new;
-			struct proposalspec *prspec;
 
 			new = newrmconf();
 			if (new == NULL) {
@@ -1646,12 +1693,6 @@ remote_statement
 
 			new->remote = $2;
 			cur_rmconf = new;
-
-			prspec = newprspec();
-			if (prspec == NULL)
-				return -1;
-			prspec->lifetime = oakley_get_defaultlifetime();
-			insprspec(prspec, &cur_rmconf->prhead);
 		}
 		remote_specs_block
 	;
@@ -1668,7 +1709,6 @@ remote_specs_block
 			if (cur_rmconf->idvtype == IDTYPE_UNDEFINED)
 				cur_rmconf->idvtype = IDTYPE_ADDRESS;
 
-
 			if (cur_rmconf->idvtype == IDTYPE_ASN1DN) {
 				if (cur_rmconf->mycertfile) {
 					if (cur_rmconf->idv)
@@ -1684,16 +1724,15 @@ remote_specs_block
 				}
 			}
 			
-			if (cur_rmconf->prhead->spspec == NULL
-				&& cur_rmconf->inherited_from
-				&& cur_rmconf->inherited_from->prhead) {
-				cur_rmconf->prhead->spspec = cur_rmconf->inherited_from->prhead->spspec;
+			if (cur_rmconf->spspec == NULL &&
+			    cur_rmconf->inherited_from != NULL) {
+				cur_rmconf->spspec = cur_rmconf->inherited_from->spspec;
 			}
-			if (set_isakmp_proposal(cur_rmconf, cur_rmconf->prhead) != 0)
+			if (set_isakmp_proposal(cur_rmconf) != 0)
 				return -1;
 
 			/* DH group settting if aggressive mode is there. */
-			if (check_etypeok(cur_rmconf, ISAKMP_ETYPE_AGG) != NULL) {
+			if (check_etypeok(cur_rmconf, (void*) ISAKMP_ETYPE_AGG)) {
 				struct isakmpsa *p;
 				int b = 0;
 
@@ -1748,7 +1787,16 @@ remote_specs
 	|	remote_specs remote_spec
 	;
 remote_spec
-	:	EXCHANGE_MODE
+	:	REMOTE_ADDRESS ike_addrinfo_port
+		{
+			if (cur_rmconf->remote != NULL) {
+				yyerror("remote_address already specified");
+				return -1;
+			}
+			cur_rmconf->remote = $2;
+		}
+		EOS
+	|	EXCHANGE_MODE
 		{
 			cur_rmconf->etypes = NULL;
 		}
@@ -1760,33 +1808,36 @@ remote_spec
 		{
 			yywarn("This directive without certtype will be removed!\n");
 			yywarn("Please use 'peers_certfile x509 \"%s\";' instead\n", $2->v);
-			cur_rmconf->getcert_method = ISAKMP_GETCERT_LOCALFILE;
 
-			if (cur_rmconf->peerscertfile != NULL)
-				racoon_free(cur_rmconf->peerscertfile);
-			cur_rmconf->peerscertfile = racoon_strdup($2->v);
-			STRDUP_FATAL(cur_rmconf->peerscertfile);
+			if (cur_rmconf->peerscert != NULL) {
+				yyerror("peers_certfile already defined\n");
+				return -1;
+			}
+
+			if (load_x509($2->v, &cur_rmconf->peerscertfile,
+				      &cur_rmconf->peerscert)) {
+				yyerror("failed to load certificate \"%s\"\n",
+					$2->v);
+				return -1;
+			}
+
 			vfree($2);
-		}
-		EOS
-	|	CA_TYPE CERT_X509 QUOTEDSTRING
-		{
-			cur_rmconf->cacerttype = $2;
-			cur_rmconf->getcacert_method = ISAKMP_GETCERT_LOCALFILE;
-			if (cur_rmconf->cacertfile != NULL)
-				racoon_free(cur_rmconf->cacertfile);
-			cur_rmconf->cacertfile = racoon_strdup($3->v);
-			STRDUP_FATAL(cur_rmconf->cacertfile);
-			vfree($3);
 		}
 		EOS
 	|	PEERS_CERTFILE CERT_X509 QUOTEDSTRING
 		{
-			cur_rmconf->getcert_method = ISAKMP_GETCERT_LOCALFILE;
-			if (cur_rmconf->peerscertfile != NULL)
-				racoon_free(cur_rmconf->peerscertfile);
-			cur_rmconf->peerscertfile = racoon_strdup($3->v);
-			STRDUP_FATAL(cur_rmconf->peerscertfile);
+			if (cur_rmconf->peerscert != NULL) {
+				yyerror("peers_certfile already defined\n");
+				return -1;
+			}
+
+			if (load_x509($3->v, &cur_rmconf->peerscertfile,
+				      &cur_rmconf->peerscert)) {
+				yyerror("failed to load certificate \"%s\"\n",
+					$3->v);
+				return -1;
+			}
+
 			vfree($3);
 		}
 		EOS
@@ -1795,37 +1846,66 @@ remote_spec
 			char path[MAXPATHLEN];
 			int ret = 0;
 
-			getpathname(path, sizeof(path),
-				LC_PATHTYPE_CERT, $3->v);
-			vfree($3);
-
-			if (cur_rmconf->getcert_method == ISAKMP_GETCERT_DNS) {
-				yyerror("Different peers_certfile method "
-					"already defined: %d!\n",
-					cur_rmconf->getcert_method);
+			if (cur_rmconf->peerscert != NULL) {
+				yyerror("peers_certfile already defined\n");
 				return -1;
 			}
-			cur_rmconf->getcert_method = ISAKMP_GETCERT_LOCALFILE;
-			if (rsa_parse_file(cur_rmconf->rsa_public, path, RSA_TYPE_PUBLIC)) {
+
+			cur_rmconf->peerscert = vmalloc(1);
+			if (cur_rmconf->peerscert == NULL) {
+				yyerror("failed to allocate peerscert");
+				return -1;
+			}
+			cur_rmconf->peerscert->v[0] = ISAKMP_CERT_PLAINRSA;
+
+			getpathname(path, sizeof(path),
+				    LC_PATHTYPE_CERT, $3->v);
+			if (rsa_parse_file(cur_rmconf->rsa_public, path,
+					   RSA_TYPE_PUBLIC)) {
 				yyerror("Couldn't parse keyfile.\n", path);
 				return -1;
 			}
-			plog(LLV_DEBUG, LOCATION, NULL, "Public PlainRSA keyfile parsed: %s\n", path);
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "Public PlainRSA keyfile parsed: %s\n", path);
+
+			vfree($3);
 		}
 		EOS
 	|	PEERS_CERTFILE DNSSEC
 		{
-			if (cur_rmconf->getcert_method) {
-				yyerror("Different peers_certfile method already defined!\n");
+			if (cur_rmconf->peerscert != NULL) {
+				yyerror("peers_certfile already defined\n");
 				return -1;
 			}
-			cur_rmconf->getcert_method = ISAKMP_GETCERT_DNS;
-			cur_rmconf->peerscertfile = NULL;
+			cur_rmconf->peerscert = vmalloc(1);
+			if (cur_rmconf->peerscert == NULL) {
+				yyerror("failed to allocate peerscert");
+				return -1;
+			}
+			cur_rmconf->peerscert->v[0] = ISAKMP_CERT_DNS;
+		}
+		EOS
+	|	CA_TYPE CERT_X509 QUOTEDSTRING
+		{
+			if (cur_rmconf->cacert != NULL) {
+				yyerror("ca_type already defined\n");
+				return -1;
+			}
+
+			if (load_x509($3->v, &cur_rmconf->cacertfile,
+				      &cur_rmconf->cacert)) {
+				yyerror("failed to load certificate \"%s\"\n",
+					$3->v);
+				return -1;
+			}
+
+			vfree($3);
 		}
 		EOS
 	|	VERIFY_CERT SWITCH { cur_rmconf->verify_cert = $2; } EOS
 	|	SEND_CERT SWITCH { cur_rmconf->send_cert = $2; } EOS
 	|	SEND_CR SWITCH { cur_rmconf->send_cr = $2; } EOS
+	|	MATCH_EMPTY_CR SWITCH { cur_rmconf->match_empty_cr = $2; } EOS
 	|	MY_IDENTIFIER IDENTIFIERTYPE identifierstring
 		{
 			if (set_identifier(&cur_rmconf->idv, $2, $3) != 0) {
@@ -2004,7 +2084,7 @@ remote_spec
 		EOS
 	|	LIFETIME LIFETYPE_TIME NUMBER unittype_time
 		{
-			cur_rmconf->prhead->lifetime = $3 * $4;
+			cur_rmconf->lifetime = $3 * $4;
 		}
 		EOS
 	|	PROPOSAL_CHECK PROPOSAL_CHECK_LEVEL { cur_rmconf->pcheck_level = $2; } EOS
@@ -2016,8 +2096,8 @@ remote_spec
 #else
 			yywarn("the lifetime of bytes in phase 1 "
 				"will be ignored at the moment.");
-			cur_rmconf->prhead->lifebyte = fix_lifebyte($3 * $4);
-			if (cur_rmconf->prhead->lifebyte == 0)
+			cur_rmconf->lifebyte = fix_lifebyte($3 * $4);
+			if (cur_rmconf->lifebyte == 0)
 				return -1;
 #endif
 		}
@@ -2029,7 +2109,7 @@ remote_spec
 			spspec = newspspec();
 			if (spspec == NULL)
 				return -1;
-			insspspec(spspec, &cur_rmconf->prhead);
+			insspspec(cur_rmconf, spspec);
 		}
 		BOC isakmpproposal_specs EOC
 	;
@@ -2060,16 +2140,22 @@ exchange_types
 cert_spec
 	:	CERT_X509 QUOTEDSTRING QUOTEDSTRING
 		{
-			cur_rmconf->certtype = $1;
-			if (cur_rmconf->mycertfile != NULL)
-				racoon_free(cur_rmconf->mycertfile);
-			cur_rmconf->mycertfile = racoon_strdup($2->v);
-			STRDUP_FATAL(cur_rmconf->mycertfile);
-			vfree($2);
-			if (cur_rmconf->myprivfile != NULL)
-				racoon_free(cur_rmconf->myprivfile);
+			if (cur_rmconf->mycert != NULL) {
+				yyerror("certificate_type already defined\n");
+				return -1;
+			}
+
+			if (load_x509($2->v, &cur_rmconf->mycertfile,
+				      &cur_rmconf->mycert)) {
+				yyerror("failed to load certificate \"%s\"\n",
+					$2->v);
+				return -1;
+			}
+
 			cur_rmconf->myprivfile = racoon_strdup($3->v);
 			STRDUP_FATAL(cur_rmconf->myprivfile);
+
+			vfree($2);
 			vfree($3);
 		}
 		EOS
@@ -2078,19 +2164,31 @@ cert_spec
 			char path[MAXPATHLEN];
 			int ret = 0;
 
-			getpathname(path, sizeof(path),
-				LC_PATHTYPE_CERT, $2->v);
-			vfree($2);
+			if (cur_rmconf->mycert != NULL) {
+				yyerror("certificate_type already defined\n");
+				return -1;
+			}
 
-			cur_rmconf->certtype = $1;
+			cur_rmconf->mycert = vmalloc(1);
+			if (cur_rmconf->mycert == NULL) {
+				yyerror("failed to allocate mycert");
+				return -1;
+			}
+			cur_rmconf->mycert->v[0] = ISAKMP_CERT_PLAINRSA;
+
+			getpathname(path, sizeof(path),
+				    LC_PATHTYPE_CERT, $2->v);
 			cur_rmconf->send_cr = FALSE;
 			cur_rmconf->send_cert = FALSE;
 			cur_rmconf->verify_cert = FALSE;
-			if (rsa_parse_file(cur_rmconf->rsa_private, path, RSA_TYPE_PRIVATE)) {
+			if (rsa_parse_file(cur_rmconf->rsa_private, path,
+					   RSA_TYPE_PRIVATE)) {
 				yyerror("Couldn't parse keyfile.\n", path);
 				return -1;
 			}
-			plog(LLV_DEBUG, LOCATION, NULL, "Private PlainRSA keyfile parsed: %s\n", path);
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "Private PlainRSA keyfile parsed: %s\n", path);
+			vfree($2);
 		}
 		EOS
 	;
@@ -2126,7 +2224,7 @@ isakmpproposal_specs
 isakmpproposal_spec
 	:	LIFETIME LIFETYPE_TIME NUMBER unittype_time
 		{
-			cur_rmconf->prhead->spspec->lifetime = $3 * $4;
+			cur_rmconf->spspec->lifetime = $3 * $4;
 		}
 		EOS
 	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
@@ -2135,28 +2233,28 @@ isakmpproposal_spec
 			yyerror("byte lifetime support is deprecated");
 			return -1;
 #else
-			cur_rmconf->prhead->spspec->lifebyte = fix_lifebyte($3 * $4);
-			if (cur_rmconf->prhead->spspec->lifebyte == 0)
+			cur_rmconf->spspec->lifebyte = fix_lifebyte($3 * $4);
+			if (cur_rmconf->spspec->lifebyte == 0)
 				return -1;
 #endif
 		}
 		EOS
 	|	DH_GROUP dh_group_num
 		{
-			cur_rmconf->prhead->spspec->algclass[algclass_isakmp_dh] = $2;
+			cur_rmconf->spspec->algclass[algclass_isakmp_dh] = $2;
 		}
 		EOS
 	|	GSS_ID QUOTEDSTRING
 		{
-			if (cur_rmconf->prhead->spspec->vendorid != VENDORID_GSSAPI) {
+			if (cur_rmconf->spspec->vendorid != VENDORID_GSSAPI) {
 				yyerror("wrong Vendor ID for gssapi_id");
 				return -1;
 			}
-			if (cur_rmconf->prhead->spspec->gssid != NULL)
-				racoon_free(cur_rmconf->prhead->spspec->gssid);
-			cur_rmconf->prhead->spspec->gssid = 
+			if (cur_rmconf->spspec->gssid != NULL)
+				racoon_free(cur_rmconf->spspec->gssid);
+			cur_rmconf->spspec->gssid =
 			    racoon_strdup($2->v);
-			STRDUP_FATAL(cur_rmconf->prhead->spspec->gssid);
+			STRDUP_FATAL(cur_rmconf->spspec->gssid);
 		}
 		EOS
 	|	ALGORITHM_CLASS ALGORITHMTYPE keylength
@@ -2188,7 +2286,7 @@ isakmpproposal_spec
 				}
 #endif
 
-				cur_rmconf->prhead->spspec->algclass[algclass_isakmp_enc] = doi;
+				cur_rmconf->spspec->algclass[algclass_isakmp_enc] = doi;
 				defklen = default_keylen($1, $2);
 				if (defklen == 0) {
 					if ($3) {
@@ -2202,22 +2300,22 @@ isakmpproposal_spec
 					}
 				}
 				if ($3)
-					cur_rmconf->prhead->spspec->encklen = $3;
+					cur_rmconf->spspec->encklen = $3;
 				else
-					cur_rmconf->prhead->spspec->encklen = defklen;
+					cur_rmconf->spspec->encklen = defklen;
 				break;
 			case algclass_isakmp_hash:
-				cur_rmconf->prhead->spspec->algclass[algclass_isakmp_hash] = doi;
+				cur_rmconf->spspec->algclass[algclass_isakmp_hash] = doi;
 				break;
 			case algclass_isakmp_ameth:
-				cur_rmconf->prhead->spspec->algclass[algclass_isakmp_ameth] = doi;
+				cur_rmconf->spspec->algclass[algclass_isakmp_ameth] = doi;
 				/*
 				 * We may have to set the Vendor ID for the
 				 * authentication method we're using.
 				 */
 				switch ($2) {
 				case algtype_gssapikrb:
-					if (cur_rmconf->prhead->spspec->vendorid !=
+					if (cur_rmconf->spspec->vendorid !=
 					    VENDORID_UNKNOWN) {
 						yyerror("Vendor ID mismatch "
 						    "for auth method");
@@ -2227,19 +2325,19 @@ isakmpproposal_spec
 					 * For interoperability with Win2k,
 					 * we set the Vendor ID to "GSSAPI".
 					 */
-					cur_rmconf->prhead->spspec->vendorid =
+					cur_rmconf->spspec->vendorid =
 					    VENDORID_GSSAPI;
 					break;
 				case algtype_rsasig:
-					if (cur_rmconf->certtype == ISAKMP_CERT_PLAINRSA) {
+					if (oakley_get_certtype(cur_rmconf->peerscert) == ISAKMP_CERT_PLAINRSA) {
 						if (rsa_list_count(cur_rmconf->rsa_private) == 0) {
 							yyerror ("Private PlainRSA key not set. "
-								"Use directive 'certificate_type plainrsa ...'\n");
+								 "Use directive 'certificate_type plainrsa ...'\n");
 							return -1;
 						}
 						if (rsa_list_count(cur_rmconf->rsa_public) == 0) {
 							yyerror ("Public PlainRSA keys not set. "
-								"Use directive 'peers_certfile plainrsa ...'\n");
+								 "Use directive 'peers_certfile plainrsa ...'\n");
 							return -1;
 						}
 					}
@@ -2269,32 +2367,6 @@ unittype_byte
 	;
 %%
 
-static struct proposalspec *
-newprspec()
-{
-	struct proposalspec *new;
-
-	new = racoon_calloc(1, sizeof(*new));
-	if (new == NULL)
-		yyerror("failed to allocate proposal");
-
-	return new;
-}
-
-/*
- * insert into head of list.
- */
-static void
-insprspec(prspec, head)
-	struct proposalspec *prspec;
-	struct proposalspec **head;
-{
-	if (*head != NULL)
-		(*head)->prev = prspec;
-	prspec->next = *head;
-	*head = prspec;
-}
-
 static struct secprotospec *
 newspspec()
 {
@@ -2322,44 +2394,33 @@ newspspec()
  * insert into head of list.
  */
 static void
-insspspec(spspec, head)
+insspspec(rmconf, spspec)
+	struct remoteconf *rmconf;
 	struct secprotospec *spspec;
-	struct proposalspec **head;
 {
-	spspec->back = *head;
-
-	if ((*head)->spspec != NULL)
-		(*head)->spspec->prev = spspec;
-	spspec->next = (*head)->spspec;
-	(*head)->spspec = spspec;
+	if (rmconf->spspec != NULL)
+		rmconf->spspec->prev = spspec;
+	spspec->next = rmconf->spspec;
+	rmconf->spspec = spspec;
 }
 
 /* set final acceptable proposal */
 static int
-set_isakmp_proposal(rmconf, prspec)
+set_isakmp_proposal(rmconf)
 	struct remoteconf *rmconf;
-	struct proposalspec *prspec;
 {
-	struct proposalspec *p;
 	struct secprotospec *s;
 	int prop_no = 1; 
 	int trns_no = 1;
 	int32_t types[MAXALGCLASS];
 
-	p = prspec;
-	if (p->next != 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"multiple proposal definition.\n");
-		return -1;
-	}
-
 	/* mandatory check */
-	if (p->spspec == NULL) {
+	if (rmconf->spspec == NULL) {
 		yyerror("no remote specification found: %s.\n",
 			saddr2str(rmconf->remote));
 		return -1;
 	}
-	for (s = p->spspec; s != NULL; s = s->next) {
+	for (s = rmconf->spspec; s != NULL; s = s->next) {
 		/* XXX need more to check */
 		if (s->algclass[algclass_isakmp_enc] == 0) {
 			yyerror("encryption algorithm required.");
@@ -2380,16 +2441,16 @@ set_isakmp_proposal(rmconf, prspec)
 	}
 
 	/* skip to last part */
-	for (s = p->spspec; s->next != NULL; s = s->next)
+	for (s = rmconf->spspec; s->next != NULL; s = s->next)
 		;
 
 	while (s != NULL) {
 		plog(LLV_DEBUG2, LOCATION, NULL,
 			"lifetime = %ld\n", (long)
-			(s->lifetime ? s->lifetime : p->lifetime));
+			(s->lifetime ? s->lifetime : rmconf->lifetime));
 		plog(LLV_DEBUG2, LOCATION, NULL,
 			"lifebyte = %d\n",
-			s->lifebyte ? s->lifebyte : p->lifebyte);
+			s->lifebyte ? s->lifebyte : rmconf->lifebyte);
 		plog(LLV_DEBUG2, LOCATION, NULL,
 			"encklen=%d\n", s->encklen);
 
@@ -2404,8 +2465,8 @@ set_isakmp_proposal(rmconf, prspec)
 		clean_tmpalgtype();
 		trns_no = expand_isakmpspec(prop_no, trns_no, types,
 				algclass_isakmp_enc, algclass_isakmp_ameth + 1,
-				s->lifetime ? s->lifetime : p->lifetime,
-				s->lifebyte ? s->lifebyte : p->lifebyte,
+				s->lifetime ? s->lifetime : rmconf->lifetime,
+				s->lifebyte ? s->lifebyte : rmconf->lifebyte,
 				s->encklen, s->vendorid, s->gssid,
 				rmconf);
 		if (trns_no == -1) {

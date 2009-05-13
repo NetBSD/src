@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_cc.3,v 1.12 2008/05/25 19:38:21 wiz Exp $
+.\"	$NetBSD: puffs_cc.3,v 1.12.6.1 2009/05/13 19:18:35 jym Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -42,15 +42,6 @@
 .Ft struct puffs_cc *
 .Fn puffs_cc_getcc "struct puffs_usermount *pu"
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
-.Pp
 These routines are used for the cooperative multitasking suite present
 in puffs.
 .Pp
@@ -92,7 +83,8 @@ own internal bookkeeping.
 This cookie should be hooked to the
 .Va pcc
 so that the correct continuation can be continued when the event it
-was waiting for triggers.  Alternatively, the
+was waiting for triggers.
+Alternatively, the
 .Xr puffs_framebuf 3
 framework and
 .Fn puffs_mainloop

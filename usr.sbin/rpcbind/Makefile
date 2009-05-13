@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2007/08/27 19:53:32 dsl Exp $
+#	$NetBSD: Makefile,v 1.11.14.1 2009/05/13 19:20:38 jym Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client
 
-WARNS=4
 PROG=	rpcbind
 MAN=	rpcbind.8
 SRCS=	check_bound.c rpcb_stat.c rpcb_svc_4.c rpcbind.c pmap_svc.c \

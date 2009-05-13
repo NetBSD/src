@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.65 2008/09/25 23:44:05 lukem Exp $	*/
+/*	$NetBSD: ls.c,v 1.65.6.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.65 2008/09/25 23:44:05 lukem Exp $");
+__RCSID("$NetBSD: ls.c,v 1.65.6.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -461,10 +461,14 @@ display(FTSENT *p, FTSENT *list)
 	DISPLAY d;
 	FTSENT *cur;
 	NAMES *np;
-	u_int64_t btotal, stotal, maxblock, maxsize;
+	u_int64_t btotal, stotal;
+	off_t maxsize;
+	blkcnt_t maxblock;
 	ino_t maxinode;
-	int maxnlink, maxmajor, maxminor;
-	int bcfile, entries, flen, glen, ulen, maxflags, maxgroup, maxlen;
+	int maxmajor, maxminor;
+	uint32_t maxnlink;
+	int bcfile, entries, flen, glen, ulen, maxflags, maxgroup;
+	unsigned int maxlen;
 	int maxuser, needstats;
 	const char *user, *group;
 	char buf[21];		/* 64 bits == 20 digits, +1 for NUL */

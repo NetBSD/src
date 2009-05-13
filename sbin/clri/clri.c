@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.20 2008/07/20 01:20:21 lukem Exp $	*/
+/*	$NetBSD: clri.c,v 1.20.4.1 2009/05/13 19:19:00 jym Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.20 2008/07/20 01:20:21 lukem Exp $");
+__RCSID("$NetBSD: clri.c,v 1.20.4.1 2009/05/13 19:19:00 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 
 		/* check we haven't found an alternate */
 		if (is_ufs2 || sbp->fs_old_flags & FS_FLAGS_UPDATED) {
-			if (sblockloc != ufs_rw64(sbp->fs_sblockloc, needswap))
+			if ((uint64_t)sblockloc != ufs_rw64(sbp->fs_sblockloc, needswap))
 				continue;
 		} else {
 			if (sblockloc == SBLOCK_UFS2)
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 		/* seek and read the block */
 		if (lseek(fd, offset, SEEK_SET) < 0)
 			err(1, "%s", fs);
-		if (read(fd, ibuf, bsize) != bsize)
+		if ((size_t)read(fd, ibuf, bsize) != bsize)
 			err(1, "%s", fs);
 
 		/* get the inode within the block. */
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 		/* backup and write the block */
 		if (lseek(fd, offset, SEEK_SET) < 0)
 			err(1, "%s", fs);
-		if (write(fd, ibuf, bsize) != bsize)
+		if ((size_t)write(fd, ibuf, bsize) != bsize)
 			err(1, "%s", fs);
 		(void)fsync(fd);
 	}

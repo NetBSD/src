@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_opt.h,v 1.4 2007/05/17 01:55:43 christos Exp $	*/
+/*	$NetBSD: fuse_opt.h,v 1.4.20.1 2009/05/13 19:18:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
@@ -31,6 +31,10 @@
 #ifndef _FUSE_OPT_H_
 #define _FUSE_OPT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif  
+
 enum {
 	FUSE_OPT_KEY_OPT = -1,
 	FUSE_OPT_KEY_NONOPT = -2,
@@ -58,5 +62,9 @@ int fuse_opt_add_opt(char **, const char *);
 int fuse_opt_parse(struct fuse_args *, void *,
 		   const struct fuse_opt *, fuse_opt_proc_t);
 int fuse_opt_match(const struct fuse_opt *, const char *);
+
+#ifdef __cplusplus
+}
+#endif 
 
 #endif /* _FUSE_OPT_H_ */

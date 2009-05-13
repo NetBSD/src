@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2004/02/16 21:57:04 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.8.42.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,8 +40,8 @@ enum STYLE { NOTSET = 0, FBYTES, FLINES, RBYTES, RLINES, REVERSE };
 void forward(FILE *, enum STYLE, off_t, struct stat *);
 void reverse(FILE *, enum STYLE, off_t, struct stat *);
 
-int bytes(FILE *, off_t);
-int lines(FILE *, off_t);
+int displaybytes(FILE *, off_t);
+int displaylines(FILE *, off_t);
 
 void err(int fatal, const char *fmt, ...)
      __attribute__((__format__(__printf__, 2, 3)));
@@ -49,4 +49,4 @@ void ierr(void);
 void oerr(void);
 
 extern int fflag, rflag, rval;
-extern char *fname;
+extern const char *fname;

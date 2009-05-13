@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.27 2008/09/07 05:08:42 tsutsui Exp $
+.\"	$NetBSD: upgrade,v 1.27.4.1 2009/05/13 19:17:45 jym Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,11 +24,9 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-The upgrade to
+The upgrade path to
 .Nx \*V
-is a binary upgrade; it can be quite difficult
-to advance to a later version by recompiling from source due primarily
-to interdependencies in the various components.
+documented here is by binary sets.
 .Pp
 To do the upgrade, you must have the
 .Nx
@@ -41,19 +39,14 @@ onto the swap partition of the
 hard disk.
 You must also have at least the
 .Sy base
-binary distribution set available, so that you can upgrade
-with it, using one of the upgrade methods described above.
+binary distribution set available.
 Finally, you must have sufficient disk space available to install the new
 binaries.
 Since the old binaries are being overwritten in place, you only need
-space for the new binaries, which weren't previously on the system.
-If you have a few megabytes free on each of your
-.Pa /
-(root) and
-.Pa /usr
-partitions, you should have enough space.
+space for the new binaries, which weren't previously on the system.  This is
+typically not more than a few megabytes.
 .Pp
-Since upgrading involves replacing the kernel, and most of the system
+Since upgrading involves replacing the kernel and most of the system
 binaries, it has the potential to cause data loss.
 You are strongly advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK,
 whether on the
@@ -61,10 +54,8 @@ whether on the
 partition or on another operating system's partition, before
 beginning the upgrade process.
 .Pp
-To upgrade your system, follow the following instructions:
-.Pp
-Transfer the miniroot file system onto the hard disk partition
-used by
+To upgrade your system, begin by transferring the miniroot file system
+onto the hard disk partition used by
 .Nx
 for swapping, as described in the "Preparing
 your System for
@@ -73,7 +64,7 @@ Installation" section above.
 .Pp
 Now boot up
 .Nx ,
-with boot blocks installed
+with bootblocks installed
 .(Note
 This description is for V40 (OS 3.1) ROMs.
 For older ROMs, there might be small differences.
@@ -97,8 +88,8 @@ Select the swap partition with the miniroot, and then
 Select
 .Ic Boot
 now.
-The machine will boot the bootblock, which will prompt your for a command line.
-You have a few seconds time to change the default.
+The machine will boot the bootblock, which will prompt you for a command line.
+You have a few seconds to change the default.
 Entering an empty line will accept the
 default.
 .Pp
@@ -159,7 +150,7 @@ However, if you press it at an inopportune moment, your system
 may be left in an inconsistent (and possibly unusable) state.
 .Pp
 You will now be greeted and reminded of the fact that this is a
-potential dangerous procedure and that you should not upgrade the
+potentially dangerous procedure and that you should not upgrade the
 .Sy etc
 set.
 .Pp
@@ -169,8 +160,7 @@ automatically to make sure that the file system is in a sane
 state before making any modifications.
 After this is done, you will be asked if you want to configure your network.
 .Pp
-You are now allowed to edit your fstab.
-Normally you don't have to.
+You are now allowed to edit your fstab, but normally you don't have to.
 Note that the upgrade-kit uses its own copy of the fstab.
 Whatever you do here
 .Em won't
@@ -221,16 +211,3 @@ that you upgraded from and have since
 been removed from the
 .Nx
 distribution.
-If upgrading from a
-.Nx
-version older than 1.0, you might also want to
-recompile any locally-built binaries, to take advantage of the
-shared libraries.
-(Note that any new binaries that you build
-will be dynamically linked, and therefore take advantage of
-the shared libraries, by default.
-For information on how to make statically linked binaries, see the
-.Xr cc 1
-and
-.Xr ld 1
-manual pages.)

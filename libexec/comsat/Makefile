@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2004/06/25 17:34:38 christos Exp $
+#	$NetBSD: Makefile,v 1.6.34.1 2009/05/13 19:18:37 jym Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
-WARNS?=3
 
 PROG=	comsat
 SRCS=	comsat.c utmpentry.c

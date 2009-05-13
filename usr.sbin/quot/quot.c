@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.27 2007/07/17 22:00:46 christos Exp $	*/
+/*	$NetBSD: quot.c,v 1.27.20.1 2009/05/13 19:20:36 jym Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.27 2007/07/17 22:00:46 christos Exp $");
+__RCSID("$NetBSD: quot.c,v 1.27.20.1 2009/05/13 19:20:36 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -296,7 +296,7 @@ static int
 cmpusers(u1, u2)
 	const void *u1, *u2;
 {
-	return ((struct user *)u2)->space - ((struct user *)u1)->space;
+	return ((const struct user *)u2)->space - ((const struct user *)u1)->space;
 }
 
 #define	sortusers(users)	(qsort((users), nusers, sizeof(struct user), \
@@ -485,7 +485,7 @@ donames(fd, super, name)
 	ungetc(c, stdin);
 	inode1 = -1;
 	while (scanf("%" SCNu64, &inode) == 1) {
-		if (inode < 0 || inode > maxino) {
+		if (inode > maxino) {
 #ifndef	COMPAT
 			warnx("invalid inode %" PRIu64, inode);
 #endif

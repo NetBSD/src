@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.13 2003/08/07 09:37:42 agc Exp $	*/
+/*	$NetBSD: globals.c,v 1.13.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.13 2003/08/07 09:37:42 agc Exp $");
+__RCSID("$NetBSD: globals.c,v 1.13.40.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -452,7 +452,7 @@ const char AMMO[9][4] = {
 	{ -3, 2, 0, 3 },
 	{ -3, 2, 0, 3 }
 };
-	
+
 const char HDT[9][10] = {
 	{ 1, 0,-1,-2,-3,-3,-4,-4,-4,-4 },
 	{ 1, 1, 0,-1,-2,-2,-3,-3,-3,-3 },
@@ -536,7 +536,14 @@ const char *const directionname[] = {
 	"dead ahead"
 };
 
-const char *const qualname[] = { "dead", "mutinous", "green", "mundane", "crack", "elite" };
+const char *const qualname[] = {
+	"dead",
+	"mutinous",
+	"green",
+	"mundane",
+	"crack",
+	"elite"
+};
 
 const char loadname[] = { '-', 'G', 'C', 'R', 'D', 'E' };
 
@@ -553,8 +560,8 @@ int nobells;				/* -b, don't ring bell before Signal */
 gid_t gid;
 gid_t egid;
 
-struct scenario *cc;		/* the current scenario */
-struct ship *ls;		/* &cc->ship[cc->vessels] */
+struct scenario *cc;			/* the current scenario */
+struct ship *ls;			/* &cc->ship[cc->vessels] */
 
 int winddir;
 int windspeed;

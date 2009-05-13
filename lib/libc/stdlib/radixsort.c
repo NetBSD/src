@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.16 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.16.30.1 2009/05/13 19:18:27 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.16 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.16.30.1 2009/05/13 19:18:27 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,7 +106,7 @@ radixsort(a, n, tab, endch)
 	u_int endch;
 {
 	const u_char *tr;
-	int c;
+	u_int c;
 	u_char tr0[256];
 
 	_DIAGASSERT(a != NULL);
@@ -124,7 +124,7 @@ sradixsort(a, n, tab, endch)
 	u_int endch;
 {
 	const u_char *tr, **ta;
-	int c;
+	u_int c;
 	u_char tr0[256];
 
 	_DIAGASSERT(a != NULL);
@@ -159,11 +159,11 @@ r_sort_a(a, n, i, tr, endch)
 	const u_char *tr;
 	u_int endch;
 {
-	static int count[256], nc, bmin;
-	int c;
+	static u_int count[256], nc, bmin;
+	u_int c;
 	const u_char **ak, *r;
 	stack s[SIZE], *sp, *sp0, *sp1, temp;
-	int *cp, bigc;
+	u_int *cp, bigc;
 	const u_char **an, *t, **aj, **top[256];
 
 	_DIAGASSERT(a != NULL);
@@ -253,12 +253,12 @@ r_sort_b(a, ta, n, i, tr, endch)
 	const u_char *tr;
 	u_int endch;
 {
-	static int count[256], nc, bmin;
-	int c;
+	static u_int count[256], nc, bmin;
+	u_int c;
 	const u_char **ak, **ai;
 	stack s[512], *sp, *sp0, *sp1, temp;
 	const u_char **top[256];
-	int *cp, bigc;
+	u_int *cp, bigc;
 
 	_DIAGASSERT(a != NULL);
 	_DIAGASSERT(ta != NULL);

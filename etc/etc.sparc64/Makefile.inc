@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2008/03/18 04:20:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.29.8.1 2009/05/13 19:18:03 jym Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -26,8 +26,7 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	SHLIB_LDSTARTFILE=${DESTDIR}${LIBDIR}/crtbeginS.o \
 	SHLIB_LDENDFILE=${DESTDIR}${LIBDIR}/crtendS.o
 
-.if ${MACHINE_ARCH} == "sparc64" && ${MACHINE} == "sparc64" && \
-	${MK32BITLIBS} != "no"
+.if ${MACHINE_ARCH} == "sparc64" && ${MK32BITLIBS} != "no"
 
 	# build 32 bit programs
 .for _s64dir in lib/csu lib gnu/lib libexec/ld_elf.so

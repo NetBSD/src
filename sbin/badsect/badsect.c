@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.31 2008/12/29 16:03:57 christos Exp $	*/
+/*	$NetBSD: badsect.c,v 1.31.2.1 2009/05/13 19:18:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.31 2008/12/29 16:03:57 christos Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.31.2.1 2009/05/13 19:18:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ chkuse(off_t blkno, int cnt)
 static void
 rdfs(off_t bno, size_t size, void *bf)
 {
-	int n;
+	ssize_t n;
 
 	if (lseek(fsi, bno * dev_bsize, SEEK_SET) == -1)
 		err(1, "seek error at block %lld", (long long)bno);
@@ -261,7 +261,7 @@ rdfs(off_t bno, size_t size, void *bf)
 		break;
 
 	default:
-		if (n == size)
+		if ((size_t)n == size)
 			return;
 		errx(1, "incomplete read at block %lld", (long long)bno);
 	}

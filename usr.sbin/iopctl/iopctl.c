@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.18 2008/09/17 16:03:28 mhitch Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.18.6.1 2009/05/13 19:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.18 2008/09/17 16:03:28 mhitch Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.18.6.1 2009/05/13 19:20:24 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,8 @@ const char	*class2str(int);
 void	getparam(int, int, void *, int);
 int	gettid(char **);
 int	main(int, char **);
-int	show(const char *, const char *, ...);
+int	show(const char *, const char *, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
 void	i2ostrvis(const u_char *, int, char *, int);
 void	usage(void);
 
@@ -106,7 +107,8 @@ struct	i2o_status status;
 int
 main(int argc, char **argv)
 {
-	int ch, i;
+	int ch;
+	size_t i;
 	const char *dv;
 	struct iovec iov;
 
@@ -179,7 +181,7 @@ show(const char *hdr, const char *fmt, ...)
 const char *
 class2str(int class)
 {
-	int i;
+	size_t i;
 	
 	for (i = 0; i < sizeof(i2oclass) / sizeof(i2oclass[0]); i++)
 		if (class == i2oclass[i].class)

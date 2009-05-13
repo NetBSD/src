@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattrctl.8,v 1.2 2005/09/23 20:58:50 wiz Exp $
+.\"	$NetBSD: extattrctl.8,v 1.2.28.1 2009/05/13 19:20:22 jym Exp $
 .\"
 .\" Copyright (c) 2000-2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -87,12 +87,7 @@ kernel option must have been enabled.
 Stop extended attribute support on the file system named using
 .Ar path .
 Extended attribute support must previously have been started.
-.It Xo
-.Cm initattr
-.Op Fl f
-.Op Fl p Ar path
-.Ar attrsize attrfile
-.Xc
+.It Cm initattr Oo Fl f Oc Oo Fl p Ar path Oc Ar attrsize attrfile
 Create and initialize a file to use as an attribute backing file.
 You must specify a maximum per-inode size for the attribute in bytes in
 .Ar attrsize ,

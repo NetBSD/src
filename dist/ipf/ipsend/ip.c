@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.8 2007/04/14 20:34:22 martin Exp $	*/
+/*	$NetBSD: ip.c,v 1.8.20.1 2009/05/13 19:17:32 jym Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
@@ -264,7 +264,7 @@ struct	in_addr	gwip;
 	hlen = IP_HL(ip) << 2;
 	t = (tcphdr_t *)((char *)ip + hlen);
 	ip2 = (struct ip *)lbuf;
-	t2 = (tcphdr_t *)((char *)ip2 + hlen);
+	t2 = (tcphdr_t *)((char *)ip2 + sizeof(ip_t));
 	thlen = TCP_OFF(t) << 2;
 	if (!thlen)
 		thlen = sizeof(tcphdr_t);

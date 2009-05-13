@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.76 2009/02/08 16:30:48 pooka Exp $
+# $NetBSD: shl.mi,v 1.76.2.1 2009/05/13 19:17:52 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -59,10 +59,11 @@
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib
+./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libopcodes.so.3			comp-c-shlib		bfd
 ./usr/lib/libopcodes.so.3.0			comp-c-shlib		bfd
-./usr/lib/libopenpgpsdk_pic.a			comp-c-piclib		crypto
+./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib
 ./usr/lib/libpam_pic.a				comp-c-piclib		pam
@@ -93,16 +94,17 @@
 ./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_udf_pic.a			comp-c-piclib
-./usr/lib/librumpfs_ufs_pic.a			comp-c-piclib
+./usr/lib/librumpfs_ufs_pic.a			comp-obsolete		obsolete
 ./usr/lib/librumpnet_pic.a			comp-c-piclib
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_net_pic.a			comp-c-piclib
 ./usr/lib/librumpnet_netinet_pic.a		comp-c-piclib
+./usr/lib/librumpnet_shmif_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib
 ./usr/lib/librumpuser_pic.a			comp-c-piclib
 ./usr/lib/librumpvfs_pic.a			comp-c-piclib
-./usr/lib/libsdp_pic.a				comp-c-piclib
+./usr/lib/libsdp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
 ./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libss_pic.a				comp-c-piclib		kerberos

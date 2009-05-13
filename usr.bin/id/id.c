@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.30 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: id.c,v 1.30.6.1 2009/05/13 19:19:52 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,8 @@ static void
 group(struct passwd *pw, int nflag)
 {
 	struct group *gr;
-	int cnt, id, lastid, ngroups;
+	int cnt, ngroups;
+	gid_t id, lastid;
 	const char *fmt;
 	gid_t *glist = groups;
 

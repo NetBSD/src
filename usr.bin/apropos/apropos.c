@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.29 2008/07/21 14:19:20 lukem Exp $	*/
+/*	$NetBSD: apropos.c,v 1.29.6.1 2009/05/13 19:19:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.29 2008/07/21 14:19:20 lukem Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.29.6.1 2009/05/13 19:19:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,9 @@ static bool foundman = false;
 
 #define	MAXLINELEN	8192		/* max line handled */
 
-static void apropos(char **, char *, bool);
-static void lowstr(char *, char *);
-static bool match(char *, char *);
+static void apropos(char **, const char *, bool, const char *, const char *);
+static void lowstr(const char *, char *);
+static bool match(const char *, const char *);
 static void usage(void) __dead;
 
 int
@@ -76,12 +76,13 @@ main(int argc, char *argv[])
 	ENTRY *ep;
 	TAG *tp;
 	int ch, rv;
-	char *conffile, **p, *p_augment, *p_path;
+	char *conffile, *machine, **p, *p_augment, *p_path, *sflag;
 	glob_t pg;
 
 	conffile = NULL;
 	p_augment = p_path = NULL;
-	while ((ch = getopt(argc, argv, "C:M:m:P:")) != -1) {
+	machine = sflag = NULL;
+	while ((ch = getopt(argc, argv, "C:M:m:P:S:s:")) != -1) {
 		switch (ch) {
 		case 'C':
 			conffile = optarg;
@@ -92,6 +93,14 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			p_augment = optarg;
+			break;
+		case 'S':
+			machine = optarg;
+			lowstr(machine, machine);
+			break;
+		case 's':
+			sflag = optarg;
+			lowstr(sflag, sflag);
 			break;
 		case '?':
 		default:
@@ -112,9 +121,9 @@ main(int argc, char *argv[])
 		lowstr(*p, *p);
 
 	if (p_augment)
-		apropos(argv, p_augment, true);
+		apropos(argv, p_augment, true, sflag, machine);
 	if (p_path || (p_path = getenv("MANPATH")))
-		apropos(argv, p_path, true);
+		apropos(argv, p_path, true, sflag, machine);
 	else {
 		config(conffile);
 		tp = gettag("_whatdb", 1);
@@ -130,7 +139,8 @@ main(int argc, char *argv[])
 			}
 			if (pg.gl_pathc)
 				for (p = pg.gl_pathv; *p; p++)
-					apropos(argv, *p, false);
+					apropos(argv, *p, false, sflag,
+						machine);
 			globfree(&pg);
 		}
 	}
@@ -148,12 +158,20 @@ main(int argc, char *argv[])
 }
 
 static void
-apropos(char **argv, char *path, bool buildpath)
+apropos(char **argv, const char *path, bool buildpath,
+	const char *sflag, const char *machine)
 {
-	char *end, *name, **p;
+	char *end, **p;
+	const char *name;
 	char buf[MAXLINELEN + 1];
 	char hold[MAXPATHLEN + 1];
 	char wbuf[MAXLINELEN + 1];
+	size_t slen = 0, mlen = 0;
+
+	if (sflag)
+		slen = strlen(sflag);
+	if (machine)
+		mlen = strlen(machine);
 
 	for (name = path; name; name = end) {	/* through name list */
 		if ((end = strchr(name, ':')) != NULL)
@@ -177,6 +195,19 @@ apropos(char **argv, char *path, bool buildpath)
 				continue;
 			}
 			lowstr(buf, wbuf);
+			if (machine) {
+				if ((strncmp(wbuf, machine, mlen) != 0) ||
+				    strlen(wbuf) <= mlen || wbuf[mlen] != '/')
+					continue;
+			}
+			if (sflag) {
+				char *s = strchr(wbuf, '(');
+
+				if (!s)
+					continue;
+				if (strncmp(s+1, sflag, slen) != 0)
+					continue;
+			}
 			for (p = argv; *p; ++p) {
 				if (match(wbuf, *p)) {
 					(void)printf("%s", buf);
@@ -198,7 +229,7 @@ apropos(char **argv, char *path, bool buildpath)
  *	match anywhere the string appears
  */
 static bool
-match(char *bp, char *str)
+match(const char *bp, const char *str)
 {
 	size_t len;
 	char test;
@@ -219,7 +250,7 @@ match(char *bp, char *str)
  *	convert a string to lower case
  */
 static void
-lowstr(char *from, char *to)
+lowstr(const char *from, char *to)
 {
 	char ch;
 
@@ -238,7 +269,9 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-C file] [-M path] [-m path] keyword ...\n",
+	    "usage: %s [-C file] [-M path] [-m path] "
+	    "[-S subsection] [-s section]\n"
+	    "       keyword ...\n",
 	    getprogname());
 	exit(1);
 }

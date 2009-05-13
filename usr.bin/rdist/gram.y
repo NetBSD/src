@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.12 2006/03/18 09:46:35 christos Exp $	*/
+/*	$NetBSD: gram.y,v 1.12.30.1 2009/05/13 19:20:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: gram.y,v 1.12 2006/03/18 09:46:35 christos Exp $");
+__RCSID("$NetBSD: gram.y,v 1.12.30.1 2009/05/13 19:20:02 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,7 +353,7 @@ again:
 }
 
 int
-any(int c, char *str)
+any(int c, const char *str)
 {
 	while (*str)
 		if (c == *str++)
@@ -440,7 +440,7 @@ append(char *label, struct namelist *files, char *stamp,
  * Error printing routine in parser.
  */
 void
-yyerror(char *s)
+yyerror(const char *s)
 {
 
 	++nerrs;

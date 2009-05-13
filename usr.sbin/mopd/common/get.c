@@ -1,4 +1,4 @@
-/*	$NetBSD: get.c,v 1.3 1997/10/16 23:24:38 lukem Exp $	*/
+/*	$NetBSD: get.c,v 1.3.54.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get.c,v 1.3 1997/10/16 23:24:38 lukem Exp $");
+__RCSID("$NetBSD: get.c,v 1.3.54.1 2009/05/13 19:20:29 jym Exp $");
 #endif
 
 #include "os.h"
@@ -39,55 +39,55 @@ __RCSID("$NetBSD: get.c,v 1.3 1997/10/16 23:24:38 lukem Exp $");
 #include "mopdef.h"
 
 u_char
-mopGetChar(pkt, index)
+mopGetChar(pkt, idx)
 	u_char *pkt;
-	int    *index;
+	int    *idx;
 {
         u_char ret;
 
-	ret = pkt[*index];
-	*index = *index + 1;
+	ret = pkt[*idx];
+	*idx = *idx + 1;
 	return(ret);
 }
 
 u_short
-mopGetShort(pkt, index)
+mopGetShort(pkt, idx)
 	u_char *pkt;
-	int    *index;
+	int    *idx;
 {
         u_short ret;
 	
-	ret = pkt[*index] + pkt[*index+1]*256;
-	*index = *index + 2;
+	ret = pkt[*idx] + pkt[*idx+1]*256;
+	*idx = *idx + 2;
 	return(ret);
 }
 
 u_int32_t
-mopGetLong(pkt, index)
+mopGetLong(pkt, idx)
 	u_char *pkt;
-	int    *index;
+	int    *idx;
 {
         u_int32_t ret;
 	
-	ret = pkt[*index] +
-	      pkt[*index+1]*0x100 +
-	      pkt[*index+2]*0x10000 +
-	      pkt[*index+3]*0x1000000;
-	*index = *index + 4;
+	ret = pkt[*idx] +
+	      pkt[*idx+1]*0x100 +
+	      pkt[*idx+2]*0x10000 +
+	      pkt[*idx+3]*0x1000000;
+	*idx = *idx + 4;
 	return(ret);
 }
 
 void
-mopGetMulti(pkt, index, dest, size)
+mopGetMulti(pkt, idx, dest, size)
 	u_char *pkt,*dest;
-	int    *index,size;
+	int    *idx,size;
 {
 	int i;
 
 	for (i = 0; i < size; i++) {
-	  dest[i] = pkt[*index+i];
+	  dest[i] = pkt[*idx+i];
 	}  
-	*index = *index + size;
+	*idx = *idx + size;
 
 }
 
@@ -110,27 +110,27 @@ mopGetTrans(pkt, trans)
 }
 
 void
-mopGetHeader(pkt, index, dst, src, proto, len, trans)
+mopGetHeader(pkt, idx, dst, src, proto, len, trans)
 	u_char	*pkt, **dst, **src;
-	int	*index, *len, trans;
+	int	*idx, *len, trans;
 	u_short	*proto;
 {
 	*dst = pkt;
 	*src = pkt + 6;
-	*index = *index + 12;
+	*idx = *idx + 12;
 
 	switch(trans) {
 	case TRANS_ETHER:
-		*proto = (u_short)(pkt[*index]*256 + pkt[*index+1]);
-		*index = *index + 2;
-		*len   = (int)(pkt[*index+1]*256 + pkt[*index]);
-		*index = *index + 2;
+		*proto = (u_short)(pkt[*idx]*256 + pkt[*idx+1]);
+		*idx = *idx + 2;
+		*len   = (int)(pkt[*idx+1]*256 + pkt[*idx]);
+		*idx = *idx + 2;
 		break;
 	case TRANS_8023:
-		*len   = (int)(pkt[*index]*256 + pkt[*index+1]);
-		*index = *index + 8;
-		*proto = (u_short)(pkt[*index]*256 + pkt[*index+1]);
-		*index = *index + 2;
+		*len   = (int)(pkt[*idx]*256 + pkt[*idx+1]);
+		*idx = *idx + 8;
+		*proto = (u_short)(pkt[*idx]*256 + pkt[*idx+1]);
+		*idx = *idx + 2;
 		break;
 	}
 }

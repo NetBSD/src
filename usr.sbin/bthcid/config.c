@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.4 2007/01/25 20:33:41 plunky Exp $	*/
+/*	$NetBSD: config.c,v 1.4.20.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.4 2007/01/25 20:33:41 plunky Exp $");
+__RCSID("$NetBSD: config.c,v 1.4.20.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <sys/time.h>
 #include <prop/proplib.h>
@@ -189,7 +189,7 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 	}
 
 	len = strlen(xml);
-	if (write(fd, xml, len) != len) {
+	if ((size_t)write(fd, xml, len) != len) {
 		syslog(LOG_ERR, "Write of keyfile failed: %m");
 		free(xml);
 		close(fd);

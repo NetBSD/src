@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.8 2008/04/28 20:23:04 martin Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.8.8.1 2009/05/13 19:18:44 jym Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: utmp_update.c,v 1.8 2008/04/28 20:23:04 martin Exp $");
+__RCSID("$NetBSD: utmp_update.c,v 1.8.8.1 2009/05/13 19:18:44 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,7 @@ main(int argc, char *argv[])
 	struct passwd *pwd;
 	struct stat st;
 	int fd;
+	int res;
 	uid_t euid, ruid;
 	char tty[MAXPATHLEN];
 
@@ -79,8 +80,9 @@ main(int argc, char *argv[])
 	if ((utx = malloc(len)) == NULL)
 		err(1, NULL);
 
-	if (strunvis((char *)utx, argv[1]) != sizeof(*utx))
-		errx(1, "Decoding error");
+	res = strunvis((char *)utx, argv[1]);
+	if (res != (int)sizeof(*utx))
+		errx(1, "Decoding error %s %d != %zu", argv[1], res, sizeof(*utx));
 
 	switch (utx->ut_type) {
 	case USER_PROCESS:

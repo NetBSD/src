@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.6 2007/11/06 21:35:52 plunky Exp $	*/
+/*	$NetBSD: search.c,v 1.6.14.1 2009/05/13 19:20:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.6 2007/11/06 21:35:52 plunky Exp $
+ * $Id: search.c,v 1.6.14.1 2009/05/13 19:20:04 jym Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/search.c,v 1.4 2005/05/27 19:11:33 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.6 2007/11/06 21:35:52 plunky Exp $");
+__RCSID("$NetBSD: search.c,v 1.6.14.1 2009/05/13 19:20:04 jym Exp $");
 
 #include <netinet/in.h>
 #include <bluetooth.h>
@@ -568,7 +568,9 @@ do_sdp_search(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char const **argv)
 	struct service	*s;
 	void		*xs;
 	char		*ep;
-	int32_t		 n, type, value;
+	int32_t		 type, value;
+	size_t		 n;
+	int		 sdp;
 	uint16_t	 service;
 
 	if (argc != 1)
@@ -603,8 +605,8 @@ do_sdp_search(bdaddr_t *laddr, bdaddr_t *raddr, int argc, char const **argv)
 		err(EXIT_FAILURE, "sdp_open");
 
 	/* Do SDP Service Search Attribute Request */
-	n = sdp_search(xs, 1, &service, attrs_len, attrs, values_len, values);
-	if (n != 0)
+	sdp = sdp_search(xs, 1, &service, attrs_len, attrs, values_len, values);
+	if (sdp != 0)
 		err(EXIT_FAILURE, "sdp_search");
 
 	sdp_close(xs);

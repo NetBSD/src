@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2007/04/21 00:41:20 matt Exp $
+#	$NetBSD: Makefile,v 1.15.18.1 2009/05/13 19:20:49 jym Exp $
 
 .include "../Makefile.serverlib"
 .include <bsd.own.mk>
@@ -50,7 +50,7 @@ CPPFLAGS.transport.c=	-DBSD44SOCKETS -I${X11SRCDIR.xc}/lib/xtrans
 CPPFLAGS.utils.c=	${XDMCP_DEFINES} ${X11FLAGS.EXTENSION}
 CPPFLAGS.xdmauth.c=	${XDMCP_DEFINES}
 COPTS.xdmauth.c=	-Wno-error	# XXX
-.if ${MACHINE} == "vax"
+.if ${MACHINE_ARCH} == "vax"
 COPTS.connection.c=	-O2	# XXX
 .endif
 CPPFLAGS.xdmcp.c=	${XDMCP_DEFINES} -DBSD44SOCKETS

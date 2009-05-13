@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.7 2003/08/07 09:37:52 agc Exp $	*/
+/*	$NetBSD: kill.c,v 1.7.40.1 2009/05/13 19:18:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: kill.c,v 1.7 2003/08/07 09:37:52 agc Exp $");
+__RCSID("$NetBSD: kill.c,v 1.7.40.1 2009/05/13 19:18:08 jym Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <limits.h>
 #include "trek.h"
 
 /*
@@ -138,7 +139,7 @@ int	qx, qy;
 			printf("   quadrant %d,%d has been destroyed\n", qx, qy);
 		}
 		else
-			schedule(E_KATSB | E_GHOST, 1e50, qx, qy, 0);
+			schedule(E_KATSB | E_GHOST, TOOLARGE, qx, qy, 0);
 	}
 }
 

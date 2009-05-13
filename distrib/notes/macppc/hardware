@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.46 2008/09/06 21:02:34 tsutsui Exp $
+.\"$NetBSD: hardware,v 1.46.4.1 2009/05/13 19:17:47 jym Exp $
 .
 Currently,
 .Nx*M
@@ -43,11 +43,10 @@ or G4 microprocessor via a daughtercard replacement, in which case
 .Nx
 will run on this system.
 .Pp
-The minimal configuration requires 16 MB of RAM and ~80 MB of disk space.
-To install the entire system requires 200 MB plus space for the swap 
-partition (usually the RAM size, unless you've got a lot of RAM).  To 
-install X, an additional 60 MB disk space is required, as is more RAM (at 
-least 32 MB).
+The minimal configuration requires 16 MB of RAM and 100 MB of disk space.
+To install the entire system requires considerably more, plus space for the
+swap partition (usually the RAM size, unless you've got a lot of RAM).
+To use X, 32MB of RAM is required.
 .Nx
 with 16 MB of RAM is very slow.  Until you have around 32 MB of RAM,
 getting more RAM is more important than getting a faster CPU.

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.16 2007/12/15 22:01:25 perry Exp $	*/
+/*	$NetBSD: defs.h,v 1.16.12.1 2009/05/13 19:20:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -226,9 +226,9 @@ extern char lflag;
 extern char rflag;
 extern char tflag;
 extern char vflag;
-extern char *symbol_prefix;
+extern const char *symbol_prefix;
 
-extern char *myname;
+extern const char *myname;
 extern char *cptr;
 extern char *line;
 extern int lineno;
@@ -243,7 +243,7 @@ extern const char * const trailer[];
 extern char *action_file_name;
 extern char *code_file_name;
 extern char *defines_file_name;
-extern char *input_file_name;
+extern const char *input_file_name;
 extern char *output_file_name;
 extern char *text_file_name;
 extern char *union_file_name;
@@ -314,19 +314,19 @@ extern short final_state;
 
 extern char *allocate(unsigned);
 extern bucket *lookup(char *);
-extern bucket *make_bucket(char *);
+extern bucket *make_bucket(const char *);
 
 extern void set_first_derives(void);
 extern void closure(short *, int);
 extern void finalize_closure(void);
 
-extern __dead void fatal(char *);
+extern __dead void fatal(const char *);
 
 extern void reflexive_transitive_closure(unsigned *, int);
 extern __dead void done(int);
 
 extern __dead void no_space(void);
-extern __dead void open_error(char *);
+extern __dead void open_error(const char *);
 extern __dead void unexpected_EOF(void);
 extern void print_pos(char *, char *);
 extern __dead void syntax_error(int, char *, char *);

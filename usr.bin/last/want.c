@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.12 2008/12/29 01:25:04 christos Exp $	*/
+/*	$NetBSD: want.c,v 1.12.2.1 2009/05/13 19:19:54 jym Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -42,11 +42,11 @@ gethost(struct utmp *ut, const char *host, int numeric)
 	return numeric ? "" : host;
 #else
 	if (numeric) {
-		static char buf[512];
-		buf[0] = '\0';
-		(void)sockaddr_snprintf(buf, sizeof(buf), "%a",
+		static char hbuf[512];
+		hbuf[0] = '\0';
+		(void)sockaddr_snprintf(hbuf, sizeof(hbuf), "%a",
 		    (struct sockaddr *)&ut->ut_ss);
-		return buf;
+		return hbuf;
 	} else
 		return host;
 #endif
@@ -71,14 +71,15 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	struct stat	stb;		/* stat of file for sz */
 	off_t	offset;
 	int	wfd;
-	char	*ct, *crmsg;
+	char	*ct;
+	const char *crmsg;
 	size_t  len = sizeof(*buf) * MAXUTMP;
 	char namebuf[sizeof(bp->ut_name) + 1], *namep;
 	char linebuf[sizeof(bp->ut_line) + 1], *linep;
 	char hostbuf[sizeof(bp->ut_host) + 1], *hostp;
-	int checkname = namesz > sizeof(bp->ut_name);
-	int checkline = linesz > sizeof(bp->ut_line);
-	int checkhost = hostsz > sizeof(bp->ut_host);
+	int checkname = namesz > (int)sizeof(bp->ut_name);
+	int checkline = linesz > (int)sizeof(bp->ut_line);
+	int checkhost = hostsz > (int)sizeof(bp->ut_host);
 
 	if ((buf = malloc(len)) == NULL)
 		err(EXIT_FAILURE, "Cannot allocate utmp buffer");
@@ -141,7 +142,7 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 		ssize_t ret, i;
 		size_t size;
 
-		size = MIN(len, offset);
+		size = MIN((off_t)len, offset);
 		offset -= size; /* Always a multiple of sizeof(*buf) */
 		ret = pread(wfd, buf, size, offset);
 		if (ret < 0) {

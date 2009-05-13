@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2008/10/07 09:58:16 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.23.4.1 2009/05/13 19:18:00 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -166,7 +166,7 @@ md_make_bsd_partitions(void)
 int
 md_check_partitions(void)
 {
-	return check_partitions();
+	return 1;
 }
 
 /* Upgrade support */

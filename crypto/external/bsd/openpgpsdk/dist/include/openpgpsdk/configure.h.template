@@ -1,5 +1,0 @@
-%HAVE_ALLOCA_H%
-#define TIME_T_FMT	%TIME_T_FMT%
-
-/* for silencing unused parameter warnings */
-#define OPS_USED(x)	(x)=(x)

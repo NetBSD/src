@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.37 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: ctl.c,v 1.37.8.1 2009/05/13 19:19:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ctl.c,v 1.37 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.37.8.1 2009/05/13 19:19:43 jym Exp $");
 #endif
 
 
@@ -302,11 +302,11 @@ getinfo(fd)
 		enc.index = i;
 		if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
 			break;
-		if (pos >= sizeof(encbuf)-1)
+		if (pos >= (int)sizeof(encbuf)-1)
 			break;
 		if (pos)
 			encbuf[pos++] = ',';
-		if (pos >= sizeof(encbuf)-1)
+		if (pos >= (int)sizeof(encbuf)-1)
 			break;
 		pos += snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d%s",
 			enc.name, enc.precision,

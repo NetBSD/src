@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.12 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: mld6.c,v 1.12.28.1 2009/05/13 19:20:29 jym Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct mld6_hdr mldh;
 struct in6_addr maddr = IN6ADDR_ANY_INIT, any = IN6ADDR_ANY_INIT;
 struct ipv6_mreq mreq;
 u_short ifindex;
-int s;
+int sock;
 
 #define QUERY_RESPONSE_INTERVAL 10000
 
@@ -107,16 +107,16 @@ main(int argc, char *argv[])
 	if (argc == 3 && inet_pton(AF_INET6, argv[1], &maddr) != 1)
 		usage();
 
-	if ((s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+	if ((sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		err(1, "socket");
 
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &hlim,
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &hlim,
 		       sizeof(hlim)) == -1)
 		err(1, "setsockopt(IPV6_MULTICAST_HOPS)");
 
 	mreq.ipv6mr_multiaddr = any;
 	mreq.ipv6mr_interface = ifindex;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
 		       sizeof(mreq)) == -1)
 		err(1, "setsockopt(IPV6_JOIN_GROUP)");
 
@@ -124,13 +124,13 @@ main(int argc, char *argv[])
 	ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_QUERY, &filt);
 	ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REPORT, &filt);
 	ICMP6_FILTER_SETPASS(ICMP6_MEMBERSHIP_REDUCTION, &filt);
-	if (setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
+	if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 			sizeof(filt)) < 0)
 		err(1, "setsockopt(ICMP6_FILTER)");
 
 	make_msg(ifindex, &maddr, type);
 
-	if (sendmsg(s, &m, 0) < 0)
+	if (sendmsg(sock, &m, 0) < 0)
 		err(1, "sendmsg");
 
 	itimer.it_value.tv_sec =  QUERY_RESPONSE_INTERVAL / 1000;
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGALRM, quit);
 	(void)setitimer(ITIMER_REAL, &itimer, NULL);
 
-	set[0].fd = s;
+	set[0].fd = sock;
 	set[0].events = POLLIN;
 	for (;;) {
 		if ((i = poll(set, 1, INFTIM)) < 0)
@@ -149,12 +149,12 @@ main(int argc, char *argv[])
 		if (i == 0)
 			continue;
 		else
-			dump(s);
+			dump(sock);
 	}
 }
 
 void
-make_msg(int index, struct in6_addr *addr, u_int type)
+make_msg(int idx, struct in6_addr *addr, u_int type)
 {
 	static struct iovec iov[2];
 	static u_char *cmsgbuf;
@@ -214,7 +214,7 @@ make_msg(int index, struct in6_addr *addr, u_int type)
 	cmsgp->cmsg_level = IPPROTO_IPV6;
 	cmsgp->cmsg_type = IPV6_PKTINFO;
 	pi = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
-	pi->ipi6_ifindex = index;
+	pi->ipi6_ifindex = idx;
 	memset(&pi->ipi6_addr, 0, sizeof(pi->ipi6_addr));
 	/* specifiy to insert router alert option in a hop-by-hop opt hdr. */
 	cmsgp = CMSG_NXTHDR(&m, cmsgp);
@@ -259,7 +259,7 @@ dump(int s)
 			  &from_len)) < 0)
 		return;
 
-	if (i < sizeof(struct mld6_hdr)) {
+	if (i < (int)sizeof(struct mld6_hdr)) {
 		printf("too short!\n");
 		return;
 	}
@@ -291,7 +291,7 @@ void
 quit(int signum) {
 	mreq.ipv6mr_multiaddr = any;
 	mreq.ipv6mr_interface = ifindex;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq,
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq,
 		       sizeof(mreq)) == -1)
 		err(1, "setsockopt(IPV6_LEAVE_GROUP)");
 

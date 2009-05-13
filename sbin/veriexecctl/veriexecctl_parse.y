@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.25 2008/08/31 23:37:45 dholland Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.25.4.1 2009/05/13 19:19:07 jym Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -135,7 +135,7 @@ fingerprint	:	STRING {
 		err(1, "Cannot allocate memory for fingerprint");
 
 	n = convert($1, fp);
-	if (n == -1) {
+	if (n == (size_t)-1) {
 		free(fp);
 		if (verbose)
 			warnx("Bad fingerprint `%s' in line %zu", $1, line);
@@ -212,7 +212,7 @@ convert(char *fp, u_char *out)
 	 * not an integral number of bytes in the fingerprint.
 	 */
 	if ((count % 2) != 0)
-		return -1;
+		return (size_t)-1;
 
 	count /= 2;
 
@@ -222,7 +222,7 @@ convert(char *fp, u_char *out)
 	else if (isxdigit((unsigned char) cv)) \
 		value += 10 + tolower((unsigned char) cv) - 'a'; \
 	else \
-		return -1
+		return (size_t)-1
 
 	for (i = 0; i < count; i++) {
 		value = 0;

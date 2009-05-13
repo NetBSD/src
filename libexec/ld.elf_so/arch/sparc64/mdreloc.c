@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.43 2008/07/24 04:39:25 matt Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.43.6.1 2009/05/13 19:18:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.43 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.43.6.1 2009/05/13 19:18:42 jym Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -289,7 +289,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			break;
 		}
 	}
-	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	relalim = (const Elf_Rela *)((const uint8_t *)rela + relasz);
 	for (; rela < relalim; rela++) {
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
 		*where = (Elf_Addr)(relocbase + rela->r_addend);

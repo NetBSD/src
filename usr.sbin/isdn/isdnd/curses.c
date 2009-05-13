@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.9 2004/03/28 20:49:22 pooka Exp $
+ *	$Id: curses.c,v 1.9.40.1 2009/05/13 19:20:25 jym Exp $
  *
  * $FreeBSD$
  *
@@ -96,7 +96,7 @@ init_screen(void)
 
 	snprintf(buffer, sizeof(buffer), "----- isdn controller channel state ------------- isdnd %02d.%02d.%d [pid %d] -", VERSION, REL, STEP, (int)getpid());
 
-	while(strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
+	while((int)strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(0, 0);
@@ -109,7 +109,7 @@ init_screen(void)
 	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
 
 	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");
-	while(strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
+	while((int)strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+2, 0);
@@ -118,7 +118,7 @@ init_screen(void)
 	standend();
 
 	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
-	while(strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
+	while((int)strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+4, 0);
@@ -159,7 +159,7 @@ init_screen(void)
 void
 do_menu(void)
 {
-	static char *menu[WMITEMS] =
+	static const char *menu[WMITEMS] =
 	{
 		"1 - (D)isplay refresh",
 		"2 - (H)angup (choose a channel)",
@@ -337,7 +337,7 @@ menuexit(WINDOW *menu_w)
 	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
 
 	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");
-	while(strlen(buffer) < COLS)
+	while((int)strlen(buffer) < COLS)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+2, 0);
@@ -346,7 +346,7 @@ menuexit(WINDOW *menu_w)
 	standend();
 
 	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
-	while(strlen(buffer) < COLS)
+	while((int)strlen(buffer) < COLS)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+4, 0);

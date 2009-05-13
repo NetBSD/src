@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.5 2004/01/03 01:40:32 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.5.40.1 2009/05/13 19:20:38 jym Exp $	*/
 /*	$KAME: rtsock.c,v 1.4 2001/09/19 06:59:41 sakane Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ rtsock_input(int s)
 	lim = msg + n;
 	for (next = msg; next < lim; next += len) {
 		rtm = (struct rt_msghdr *)next;
-		if (lim - next < lenlim)
+		if (lim - next < (intptr_t)lenlim)
 			break;
 		len = rtm->rtm_msglen;
 		if (len < lenlim)

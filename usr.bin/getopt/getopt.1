@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.1,v 1.16 2003/05/10 17:02:04 jmmv Exp $
+.\"	$NetBSD: getopt.1,v 1.16.42.1 2009/05/13 19:19:51 jym Exp $
 .Dd November 9, 2000
 .Dt GETOPT 1
 .Os
@@ -28,7 +28,8 @@ will place
 in the arguments at the end of the options,
 or recognize it if used explicitly.
 The shell arguments
-(\fB$1 $2\fR ...) are reset so that each option is
+.Pq Ev $1 , Ev $2 , ...
+are reset so that each option is
 preceded by a
 .Dq \-
 and in its own shell argument;

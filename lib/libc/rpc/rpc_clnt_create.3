@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_create 1.5 89/07/24 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_create.3,v 1.9 2003/04/16 13:34:43 wiz Exp $
+.\"	$NetBSD: rpc_clnt_create.3,v 1.9.42.1 2009/05/13 19:18:26 jym Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_CREATE 3
 .Os
@@ -287,7 +287,6 @@ returns a pointer to a buffer that is overwritten
 on each call.
 .Pp
 .It Fn clnt_raw_create
-.IP
 This routine creates an RPC
 client handle for the remote program
 .Fa prognum
@@ -328,7 +327,7 @@ is connected.
 For connectionless transports, if
 .Fa svcaddr
 is
-..Dv NULL ,
+.Dv NULL ,
 .Dv RPC_UNKNOWNADDR
 error is set.
 .Fa fildes

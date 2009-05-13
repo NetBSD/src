@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2007/11/17 16:50:25 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.1.18.1 2009/05/13 19:19:04 jym Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
+
+WARNS?=	3	# XXX: sign-compare issues
 
 .include <bsd.own.mk>
 

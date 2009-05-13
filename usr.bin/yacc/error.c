@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.10 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.10.28.1 2009/05/13 19:20:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: error.c,v 1.10 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.10.28.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: error.c,v 1.10 2006/05/24 18:01:43 christos Exp $");
 #include "defs.h"
 
 __dead void
-fatal(char *msg)
+fatal(const char *msg)
 {
     fprintf(stderr, "%s: f - %s\n", myname, msg);
     done(2);
@@ -61,7 +61,7 @@ no_space(void)
 }
 
 __dead void
-open_error(char *filename)
+open_error(const char *filename)
 {
     fprintf(stderr, "%s: f - cannot open \"%s\"\n", myname, filename);
     done(2);

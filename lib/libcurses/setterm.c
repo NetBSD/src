@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.43 2007/10/06 20:14:41 martin Exp $	*/
+/*	$NetBSD: setterm.c,v 1.43.14.1 2009/05/13 19:18:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.43 2007/10/06 20:14:41 martin Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.43.14.1 2009/05/13 19:18:28 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,9 +160,12 @@ _cursesi_setterm(char *type, SCREEN *screen)
 
 	/* POSIX 1003.2 requires that the environment override. */
 	if ((p = getenv("LINES")) != NULL)
-		screen->LINES = (int) strtol(p, NULL, 10);
+		screen->LINES = (int) strtol(p, NULL, 0);
 	if ((p = getenv("COLUMNS")) != NULL)
-		screen->COLS = (int) strtol(p, NULL, 10);
+		screen->COLS = (int) strtol(p, NULL, 0);
+	if ((p = getenv("ESCDELAY")) != NULL)
+		ESCDELAY = (int) strtol(p, NULL, 0);
+
 
 	/*
 	 * Want cols > 4, otherwise things will fail.

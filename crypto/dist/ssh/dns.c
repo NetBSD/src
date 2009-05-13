@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.5 2007/03/10 22:52:05 christos Exp $	*/
-/* $OpenBSD: dns.c,v 1.24 2007/01/03 03:01:40 stevesk Exp $ */
+/*	$NetBSD: dns.c,v 1.5.20.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: dns.c,v 1.25 2008/06/12 00:03:49 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.5 2007/03/10 22:52:05 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.5.20.1 2009/05/13 19:15:57 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -147,11 +147,20 @@ is_numeric_hostname(const char *hostname)
 {
 	struct addrinfo hints, *ai;
 
+	/*
+	 * We shouldn't ever get a null host but if we do then log an error
+	 * and return -1 which stops DNS key fingerprint processing.
+	 */
+	if (hostname == NULL) {
+		error("is_numeric_hostname called with NULL hostname");
+		return -1;
+	}
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_NUMERICHOST;
 
-	if (getaddrinfo(hostname, "0", &hints, &ai) == 0) {
+	if (getaddrinfo(hostname, NULL, &hints, &ai) == 0) {
 		freeaddrinfo(ai);
 		return -1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: wrterm.c,v 1.7 2003/08/07 11:16:50 agc Exp $	*/
+/*	$NetBSD: wrterm.c,v 1.7.42.1 2009/05/13 19:20:09 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: wrterm.c,v 1.7 2003/08/07 11:16:50 agc Exp $");
+__RCSID("$NetBSD: wrterm.c,v 1.7.42.1 2009/05/13 19:20:09 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,8 @@ wrtermcap(bp)
 {
 	int ch;
 	char *p;
-	char *t, *sep;
+	char *t;
+	const char *sep;
 
 	/* Find the end of the terminal names. */
 	if ((t = strchr(bp, ':')) == NULL)

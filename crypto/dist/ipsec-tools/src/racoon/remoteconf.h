@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.8 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.8.6.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -43,99 +43,13 @@
 #include "isakmp_xauth.h"
 #endif
 
-struct proposalspec;
+struct ph1handle;
+struct secprotospec;
 
 struct etypes {
 	int type;
 	struct etypes *next;
 };
-
-/* Script hooks */
-#define SCRIPT_PHASE1_UP	0
-#define SCRIPT_PHASE1_DOWN	1
-#define SCRIPT_MAX		1
-extern char *script_names[SCRIPT_MAX + 1];
-
-struct remoteconf {
-	struct sockaddr *remote;	/* remote IP address */
-					/* if family is AF_UNSPEC, that is
-					 * for anonymous configuration. */
-
-	struct etypes *etypes;		/* exchange type list. the head
-					 * is a type to be sent first. */
-	int doitype;			/* doi type */
-	int sittype;			/* situation type */
-
-	int idvtype;			/* my identifier type */
-	vchar_t *idv;			/* my identifier */
-	vchar_t *key;			/* my pre-shared key */
-	struct genlist *idvl_p;         /* peer's identifiers list */
-
-	int certtype;			/* certificate type if need */
-	char *mycertfile;		/* file name of my certificate */
-	char *myprivfile;		/* file name of my private key file */
-	char *peerscertfile;		/* file name of peer's certifcate */
-	int getcert_method;		/* the way to get peer's certificate */
-	int cacerttype;			/* CA type is needed */
-	char *cacertfile;		/* file name of CA */
-	int getcacert_method;		/* the way to get the CA */
-	int send_cert;			/* send to CERT or not */
-	int send_cr;			/* send to CR or not */
-	int verify_cert;		/* verify a CERT strictly */
-	int verify_identifier;		/* vefify the peer's identifier */
-	int nonce_size;			/* the number of bytes of nonce */
-	int passive;			/* never initiate */
-	int ike_frag;			/* IKE fragmentation */
-	int esp_frag;			/* ESP fragmentation */
-	int mode_cfg;			/* Gets config through mode config */
-	int support_proxy;		/* support mip6/proxy */
-#define GENERATE_POLICY_NONE   0
-#define GENERATE_POLICY_REQUIRE        1
-#define GENERATE_POLICY_UNIQUE 2
-	int gen_policy;			/* generate policy if no policy found */
-	int ini_contact;		/* initial contact */
-	int pcheck_level;		/* level of propocl checking */
-	int nat_traversal;		/* NAT-Traversal */
-	vchar_t *script[SCRIPT_MAX + 1];/* script hooks paths */
-	int dh_group;			/* use it when only aggressive mode */
-	struct dhgroup *dhgrp;		/* use it when only aggressive mode */
-					/* above two can't be defined by user*/
-
-	int retry_counter;		/* times to retry. */
-	int retry_interval;		/* interval each retry. */
-				/* above 2 values are copied from localconf. */
-
-	int dpd;				/* Negociate DPD support ? */
-	int dpd_retry;			/* in seconds */
-	int dpd_interval;		/* in seconds */
-	int dpd_maxfails;
-
-	int rekey;			/* rekey ph1 when active ph2s? */
-#define REKEY_OFF		FALSE
-#define REKEY_ON		TRUE
-#define REKEY_FORCE		2
-
-	int ph1id; /* ph1id to be matched with sainfo sections */
-
-	int weak_phase1_check;		/* act on unencrypted deletions ? */
-
-	struct isakmpsa *proposal;	/* proposal list */
-	struct remoteconf *inherited_from;	/* the original rmconf 
-						   from which this one 
-						   was inherited */
-	struct proposalspec *prhead;
-
-	struct genlist	*rsa_private,	/* lists of PlainRSA keys to use */
-			*rsa_public;
-
-#ifdef ENABLE_HYBRID
-	struct xauth_rmconf *xauth;
-#endif
-
-	TAILQ_ENTRY(remoteconf) chain;	/* next remote conf */
-};
-
-struct dhgroup;
 
 /* ISAKMP SA specification */
 struct isakmpsa {
@@ -155,24 +69,140 @@ struct isakmpsa {
 	struct dhgroup *dhgrp;		/* don't use it if aggressive mode */
 
 	struct isakmpsa *next;		/* next transform */
-	struct remoteconf *rmconf;	/* backpointer to remoteconf */
 };
+
+/* Certificate information */
+struct rmconf_cert {
+	vchar_t *data;			/* certificate payload */
+	char *filename;			/* name of local file */
+};
+
+/* Script hooks */
+#define SCRIPT_PHASE1_UP	0
+#define SCRIPT_PHASE1_DOWN	1
+#define SCRIPT_MAX		1
+extern char *script_names[SCRIPT_MAX + 1];
+
+struct remoteconf {
+	char *name;			/* remote configuration name */
+	struct sockaddr *remote;	/* remote IP address */
+					/* if family is AF_UNSPEC, that is
+					 * for anonymous configuration. */
+
+	struct etypes *etypes;		/* exchange type list. the head
+					 * is a type to be sent first. */
+	int doitype;			/* doi type */
+	int sittype;			/* situation type */
+
+	int idvtype;			/* my identifier type */
+	vchar_t *idv;			/* my identifier */
+	vchar_t *key;			/* my pre-shared key */
+	struct genlist *idvl_p;         /* peer's identifiers list */
+
+	char *myprivfile;		/* file name of my private key file */
+	char *mycertfile;		/* file name of my certificate */
+	vchar_t *mycert;		/* my certificate */
+	char *peerscertfile;		/* file name of peer's certifcate */
+	vchar_t *peerscert;		/* peer's certificate */
+	char *cacertfile;		/* file name of CA */
+	vchar_t *cacert;		/* CA certificate */
+
+	int send_cert;			/* send to CERT or not */
+	int send_cr;			/* send to CR or not */
+	int match_empty_cr;		/* does this match if CR is empty */
+	int verify_cert;		/* verify a CERT strictly */
+	int verify_identifier;		/* vefify the peer's identifier */
+	int nonce_size;			/* the number of bytes of nonce */
+	int passive;			/* never initiate */
+	int ike_frag;			/* IKE fragmentation */
+	int esp_frag;			/* ESP fragmentation */
+	int mode_cfg;			/* Gets config through mode config */
+	int support_proxy;		/* support mip6/proxy */
+#define GENERATE_POLICY_NONE	0
+#define GENERATE_POLICY_REQUIRE	1
+#define GENERATE_POLICY_UNIQUE	2
+	int gen_policy;			/* generate policy if no policy found */
+	int ini_contact;		/* initial contact */
+	int pcheck_level;		/* level of propocl checking */
+	int nat_traversal;		/* NAT-Traversal */
+	vchar_t *script[SCRIPT_MAX + 1];/* script hooks paths */
+	int dh_group;			/* use it when only aggressive mode */
+	struct dhgroup *dhgrp;		/* use it when only aggressive mode */
+					/* above two can't be defined by user*/
+
+	int dpd;				/* Negociate DPD support ? */
+	int dpd_retry;			/* in seconds */
+	int dpd_interval;		/* in seconds */
+	int dpd_maxfails;
+
+	int rekey;			/* rekey ph1 when active ph2s? */
+#define REKEY_OFF		FALSE
+#define REKEY_ON		TRUE
+#define REKEY_FORCE		2
+
+	int ph1id; /* ph1id to be matched with sainfo sections */
+
+	int weak_phase1_check;		/* act on unencrypted deletions ? */
+
+	struct isakmpsa *proposal;	/* proposal list */
+	struct remoteconf *inherited_from;	/* the original rmconf 
+						   from which this one 
+						   was inherited */
+
+	time_t lifetime;		/* for isakmp/ipsec */
+	int lifebyte;			/* for isakmp/ipsec */
+	struct secprotospec *spspec;	/* the head is always current spec. */
+
+	struct genlist	*rsa_private,	/* lists of PlainRSA keys to use */
+			*rsa_public;
+
+#ifdef ENABLE_HYBRID
+	struct xauth_rmconf *xauth;
+#endif
+
+	TAILQ_ENTRY(remoteconf) chain;	/* next remote conf */
+};
+
+#define RMCONF_NONCE_SIZE(rmconf) \
+	(rmconf != NULL ? rmconf->nonce_size : DEFAULT_NONCE_SIZE)
+
+struct dhgroup;
 
 struct idspec {
 	int idtype;                     /* identifier type */
 	vchar_t *id;                    /* identifier */
 };
 
-typedef struct remoteconf * (rmconf_func_t)(struct remoteconf *rmconf, void *data);
+struct rmconfselector {
+	int flags;
+	struct sockaddr *remote;
+	int etype;
+	struct isakmpsa *approval;
+	vchar_t *identity;
+	vchar_t *certificate_request;
+};
 
-extern struct remoteconf *getrmconf __P((struct sockaddr *));
-extern struct remoteconf *getrmconf_strict
-	__P((struct sockaddr *remote, int allow_anon));
-extern struct remoteconf *copyrmconf __P((struct sockaddr *));
+extern void rmconf_selector_from_ph1 __P((struct rmconfselector *rmsel,
+					  struct ph1handle *iph1));
+extern int enumrmconf __P((struct rmconfselector *rmsel,
+			   int (* enum_func)(struct remoteconf *rmconf, void *arg),
+			   void *enum_arg));
+
+#define GETRMCONF_F_NO_ANONYMOUS	0x0001
+#define GETRMCONF_F_NO_PORTS		0x0002
+#define GETRMCONF_F_NO_PASSIVE		0x0004
+
+#define RMCONF_ERR_MULTIPLE		((struct remoteconf *) -1)
+
+extern int rmconf_match_identity __P((struct remoteconf *rmconf,
+				      vchar_t *id_p));
+extern struct remoteconf *getrmconf __P((struct sockaddr *remote, int flags));
+extern struct remoteconf *getrmconf_by_ph1 __P((struct ph1handle *iph1));
+extern struct remoteconf *getrmconf_by_name __P((const char *name));
+
 extern struct remoteconf *newrmconf __P((void));
 extern struct remoteconf *duprmconf __P((struct remoteconf *));
 extern void delrmconf __P((struct remoteconf *));
-extern void delisakmpsa __P((struct isakmpsa *));
 extern void deletypes __P((struct etypes *));
 extern struct etypes * dupetypes __P((struct etypes *));
 extern void insrmconf __P((struct remoteconf *));
@@ -182,15 +212,24 @@ extern void initrmconf __P((void));
 extern void save_rmconf __P((void));
 extern void save_rmconf_flush __P((void));
 
-extern struct etypes *check_etypeok
-	__P((struct remoteconf *, u_int8_t));
-extern struct remoteconf *foreachrmconf __P((rmconf_func_t rmconf_func,
-					     void *data));
+extern int check_etypeok __P((struct remoteconf *, void *));
 
 extern struct isakmpsa *newisakmpsa __P((void));
 extern struct isakmpsa *dupisakmpsa __P((struct isakmpsa *));
-
+extern void delisakmpsa __P((struct isakmpsa *));
 extern void insisakmpsa __P((struct isakmpsa *, struct remoteconf *));
+#ifdef ENABLE_HYBRID
+extern int isakmpsa_switch_authmethod __P((int authmethod));
+#else
+static inline int isakmpsa_switch_authmethod(int authmethod)
+{
+	return authmethod;
+}
+#endif
+extern struct isakmpsa * checkisakmpsa __P((int pcheck,
+					    struct isakmpsa *proposal,
+					    struct isakmpsa *acceptable));
+
 
 extern void dumprmconf __P((void));
 

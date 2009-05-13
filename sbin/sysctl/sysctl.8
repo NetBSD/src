@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.159 2008/11/11 00:09:36 reed Exp $
+.\"	$NetBSD: sysctl.8,v 1.159.2.1 2009/05/13 19:19:07 jym Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 4, 2006
+.Dd April 1, 2009
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@
 .Fl x
 .Oc
 .Fl w
-.Ar name Ns Li = Ns Ar value ...
+.Ar name Ns Li [?]= Ns Ar value ...
 .Nm sysctl
 .Op Fl en
 .Oo
@@ -202,6 +202,10 @@ Sets the MIB style name given to the value given.
 The MIB style name and value must be separated by
 .Ql =
 with no whitespace.
+To prevent an error if the MIB style name does not exist (as would be the
+case with optional kernel components), one can separate the MIB style name
+and the value with
+.Ql ?= .
 Only integral and string values can be set via this method.
 .It Fl x
 Makes

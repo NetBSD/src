@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.14 2008/04/29 06:53:03 martin Exp $ */
+/*	$NetBSD: sockstat.c,v 1.14.8.1 2009/05/13 19:20:05 jym Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.14 2008/04/29 06:53:03 martin Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.14.8.1 2009/05/13 19:20:05 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -97,7 +97,7 @@ struct sockitem {
 };
 
 struct kinfo_file *flist;
-u_int nfiles;
+size_t flistc;
 
 int pf_list, only, nonames;
 bitstr_t *portmap;
@@ -114,7 +114,8 @@ int
 main(int argc, char *argv[])
 {
 	struct kinfo_pcb *kp;
-	int i, ch;
+	int ch;
+	size_t i;
 	struct kinfo_proc2 p;
 
 	pf_list = only = 0;
@@ -210,7 +211,7 @@ main(int argc, char *argv[])
 	get_files();
 
 	p.p_pid = 0;
-	for (i = 0; i < nfiles; i++)
+	for (i = 0; i < flistc; i++)
 		if ((kp = pick_socket(&flist[i])) != NULL &&
 		    get_proc(&p, flist[i].ki_pid) == 0)
 			print_socket(&flist[i], kp, &p);
@@ -326,9 +327,9 @@ get_files(void)
 
 	sysctl_sucker(&name[0], namelen, &v, &sz);
 	flist = v;
-	nfiles = sz / sizeof(struct kinfo_file);
+	flistc = sz / sizeof(struct kinfo_file);
 
-	qsort(flist, nfiles, sizeof(*flist), sort_files);
+	qsort(flist, flistc, sizeof(*flist), sort_files);
 }
 
 int

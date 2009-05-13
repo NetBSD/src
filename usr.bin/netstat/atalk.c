@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.13 2008/04/24 04:09:50 thorpej Exp $	*/
+/*	$NetBSD: atalk.c,v 1.13.8.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.13 2008/04/24 04:09:50 thorpej Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.13.8.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,8 +74,8 @@ static int first = 1;
  * -a (all) flag is specified.
  */
 
-static char *
-at_pr_net(struct sockaddr_at *sat, int numeric)
+static const char *
+at_pr_net(const struct sockaddr_at *sat, int numeric)
 {
 	static char mybuf[50];
 
@@ -91,8 +91,8 @@ at_pr_net(struct sockaddr_at *sat, int numeric)
 	return (mybuf);
 }
 
-static char *
-at_pr_host(struct sockaddr_at *sat, int numeric)
+static const char *
+at_pr_host(const struct sockaddr_at *sat, int numeric)
 {
 	static char mybuf[50];
 
@@ -109,8 +109,8 @@ at_pr_host(struct sockaddr_at *sat, int numeric)
 	return (mybuf);
 }
 
-static char *
-at_pr_port(struct sockaddr_at *sat)
+static const char *
+at_pr_port(const struct sockaddr_at *sat)
 {
 	static char mybuf[50];
 
@@ -126,8 +126,8 @@ at_pr_port(struct sockaddr_at *sat)
 	}
 }
 
-static char *
-at_pr_range(struct sockaddr_at *sat)
+static const char *
+at_pr_range(const struct sockaddr_at *sat)
 {
 	static char mybuf[50];
 
@@ -150,10 +150,10 @@ at_pr_range(struct sockaddr_at *sat)
  *	4 for port
  *	8 for numeric only
  */
-char *
+const char *
 atalk_print(const struct sockaddr *sa, int what)
 {
-	struct sockaddr_at *sat = (struct sockaddr_at *) sa;
+	const struct sockaddr_at *sat = (const struct sockaddr_at *) sa;
 	static char mybuf[50];
 	int numeric = (what & 0x08);
 
@@ -185,23 +185,23 @@ atalk_print(const struct sockaddr *sa, int what)
 	return (mybuf);
 }
 
-char *
+const char *
 atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 {
 	int		n, l;
 	static char     buf[100];
-	struct sockaddr_at *sat1, *sat2;
+	const struct sockaddr_at *sat1, *sat2;
 	struct sockaddr_at thesockaddr;
 	struct sockaddr *sa2;
 
-	sat1 = (struct sockaddr_at *) sa;
-	sat2 = (struct sockaddr_at *) mask;
+	sat1 = (const struct sockaddr_at *) sa;
+	sat2 = (const struct sockaddr_at *) mask;
 	sa2 = (struct sockaddr *) & thesockaddr;
 
 	thesockaddr.sat_addr.s_net = sat1->sat_addr.s_net &
 	    sat2->sat_addr.s_net;
 	n = snprintf(buf, sizeof(buf), "%s", atalk_print(sa2, 1 | (what & 8)));
-	if (n >= sizeof(buf))
+	if (n >= (int)sizeof(buf))
 		n = sizeof(buf) - 1;
 	else if (n == -1)
 		n = 0;	/* What else can be done ? */
@@ -210,7 +210,7 @@ atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 		    ~sat2->sat_addr.s_net;
 		l = snprintf(buf + n, sizeof(buf) - n,
 		    "-%s", atalk_print(sa2, 1 | (what & 8)));
-		if (l >= sizeof(buf) - n)
+		if (l >= (int)(sizeof(buf) - n))
 			l = sizeof(buf) - n - 1;
 		if (l > 0)
 			n += l;
@@ -218,7 +218,7 @@ atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 	if (what & 2) {
 		l = snprintf(buf + n, sizeof(buf) - n, ".%s",
 		    atalk_print(sa, what & (~1)));
-		if (l >= sizeof(buf) - n)
+		if (l >= (int)(sizeof(buf) - n))
 			l = sizeof(buf) - n - 1;
 		if (l > 0)
 			n += l;
@@ -227,7 +227,7 @@ atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 }
 
 void
-atalkprotopr(u_long off, char *name)
+atalkprotopr(u_long off, const char *name)
 {
 	struct ddpcb    cb;
 	struct ddpcb *prev, *next;
@@ -286,7 +286,7 @@ atalkprotopr(u_long off, char *name)
  * Dump DDP statistics structure.
  */
 void
-ddp_stats(u_long off, char *name)
+ddp_stats(u_long off, const char *name)
 {
 	uint64_t ddpstat[DDP_NSTATS];
 

@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2008/10/08 03:55:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 2009/05/13 19:19:46 jym Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/28/95
 
-WARNS=	4
 PROG=	cksum
 SRCS=	cksum.c crc.c md2.c md4.c md5.c sha1.c rmd160.c print.c sum1.c sum2.c
 SRCS+=	sha256.c sha384.c sha512.c

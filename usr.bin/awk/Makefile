@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2008/10/20 18:16:54 apb Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2009/05/13 19:19:44 jym Exp $
+
+WARNS?=	1	# fails -Wshadow -Wcast-qual
 
 .include <bsd.own.mk>
 
@@ -14,7 +16,7 @@ DPADD+=	${LIBM}
 .endif
 YHEADER=	yes
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
-COPTS=	-Wno-pointer-sign
+COPTS+=	-Wno-pointer-sign
 .endif
 
 # info file originally from GNU awk 3.1.3, adjusted for nawk slightly

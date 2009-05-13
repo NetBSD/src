@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.16 2005/01/08 05:04:34 kim Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.16.36.1 2009/05/13 19:20:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.16 2005/01/08 05:04:34 kim Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.16.36.1 2009/05/13 19:20:11 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ pr_attime(time_t *started, time_t *now)
 	int tnow_yday;
 	struct tm *tp;
 	time_t diff;
-	char *fmt;
+	const char *fmt;
 
 	tnow_yday = localtime(now)->tm_yday;
 	tp = localtime(started);

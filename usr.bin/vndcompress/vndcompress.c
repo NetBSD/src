@@ -1,4 +1,4 @@
-/* $Id: vndcompress.c,v 1.4 2008/02/18 03:34:04 dyoung Exp $ */
+/* $Id: vndcompress.c,v 1.4.12.1 2009/05/13 19:20:11 jym Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr <netbsd@wolfnode.de>
@@ -39,6 +39,7 @@
  */
 #include <err.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,8 +158,8 @@ vndcompress(const char *fs, const char *comp, uint32_t blocksize)
 	 * blocks block-by-block to disk. After that, we overwrite the offset
 	 * table in the image file with the real offset table.
 	 */
-	if (write(fd_out, &clh, sizeof(struct cloop_header)) 
-		< sizeof(struct cloop_header))
+	if ((size_t)write(fd_out, &clh, sizeof(struct cloop_header)) 
+		!= sizeof(struct cloop_header))
 		err(EXIT_FAILURE, "Cannot write to output file \"%s\"", comp);
 		/* NOTREACHED */
 		
@@ -200,7 +201,7 @@ vndcompress(const char *fs, const char *comp, uint32_t blocksize)
 			errx(EXIT_FAILURE, "Compression failed in block %d", i);
 			/* NOTREACHED */
 
-		if (write(fd_out, cb, complen) < complen)
+		if ((unsigned long)write(fd_out, cb, complen) != complen)
 			err(EXIT_FAILURE, "Cannot write to output file \"%s\"", comp);
 			/* NOTREACHED */
 		
@@ -248,8 +249,8 @@ readheader(int fd, struct cloop_header *clh, off_t *dstart)
 	uint32_t offtable_size;
 	uint64_t *offt;
 
-	if (read(fd, clh, sizeof(struct cloop_header)) 
-		< sizeof(struct cloop_header))
+	if ((size_t)read(fd, clh, sizeof(struct cloop_header)) 
+		!= sizeof(struct cloop_header))
 		return NULL;
 		
 	/* Convert endianness */
@@ -259,7 +260,7 @@ readheader(int fd, struct cloop_header *clh, off_t *dstart)
 	offtable_size = (clh->num_blocks + 1) * sizeof(uint64_t);
 	offt = (uint64_t *)malloc(offtable_size);
 	
-	if (read(fd, offt, offtable_size) < offtable_size) {
+	if ((uint32_t)read(fd, offt, offtable_size) != offtable_size) {
 		free(offt);
 		return NULL;
 	}
@@ -276,7 +277,7 @@ void
 vnduncompress(const char *comp, const char *fs)
 {
 	int fd_in, fd_out;
-	int i;
+	uint32_t i;
 	struct cloop_header clh;
 	uint64_t *offtable;
 	off_t imgofs, datastart;
@@ -321,14 +322,14 @@ vnduncompress(const char *comp, const char *fs)
 		complen = SWAPPER(*(offtable + i + 1))
 		           - SWAPPER(*(offtable + i));
 		
-		if (read(fd_in, cb, complen) < complen)
-			err(EXIT_FAILURE, "Cannot read compressed block %d from \"%s\"", i, comp);
+		if ((unsigned long)read(fd_in, cb, complen) != complen)
+			err(EXIT_FAILURE, "Cannot read compressed block %"PRIu32" from \"%s\"", i, comp);
 			/* NOTREACHED */
 
 		uncomplen = clh.block_size;
 		rc = uncompress(ucb, &uncomplen, cb, complen);
 		if (rc != Z_OK)
-			errx(EXIT_FAILURE, "Cannot decompress block %d from \"%s\" (rc=%d)",
+			errx(EXIT_FAILURE, "Cannot decompress block %"PRIu32" from \"%s\" (rc=%d)",
 			    i, comp, rc);
 			/* NOTREACHED */
 			

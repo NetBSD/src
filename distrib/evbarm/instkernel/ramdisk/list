@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2009/01/25 22:08:37 abs Exp $
+#	$NetBSD: list,v 1.8.2.1 2009/05/13 19:17:41 jym Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -20,7 +20,6 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
-PROG	sbin/dhclient
 PROG	sbin/disklabel
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -53,7 +52,6 @@ PROG	usr/bin/tset
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
-SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
@@ -69,11 +67,10 @@ ARGVLN	sh -sh
 #COPY	${DESTDIR}/usr/mdec/ofwboot	usr/mdec/ofwboot
 
 # various files that we need in /etc for the install
-COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script 555
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/distrib/common/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # and the common installation tools

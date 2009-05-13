@@ -1,4 +1,4 @@
-/* $NetBSD: exec_ecoff.c,v 1.6 2003/07/26 20:34:12 salo Exp $ */
+/* $NetBSD: exec_ecoff.c,v 1.6.42.1 2009/05/13 19:19:47 jym Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_ecoff.c,v 1.6 2003/07/26 20:34:12 salo Exp $");
+__RCSID("$NetBSD: exec_ecoff.c,v 1.6.42.1 2009/05/13 19:19:47 jym Exp $");
 #endif
  
 #include <sys/types.h>
@@ -64,7 +64,7 @@ check_ecoff(int fd, const char *filename)
 	 */
 	if (fstat(fd, &sb) == -1)
 		return 0;
-	if (sb.st_size < sizeof eh)
+	if (sb.st_size < (off_t)sizeof eh)
 		return 0;
 	if (read(fd, &eh, sizeof eh) != sizeof eh)
 		return 0;

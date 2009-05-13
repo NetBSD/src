@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.17 2008/09/12 14:40:47 christos Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.17.6.1 2009/05/13 19:20:33 jym Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.17 2008/09/12 14:40:47 christos Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.17.6.1 2009/05/13 19:20:33 jym Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -141,6 +141,10 @@ readfd(struct puffs_framebuf *pufbuf, int fd, int *done)
 
 	/* the data for the server */
 	puffs_framebuf_putdata_atoff(pufbuf, 0, &error, sizeof(int));
+	if (error) {
+		rv = error;
+		goto out;
+	}
 	puffs_framebuf_putdata_atoff(pufbuf, sizeof(int),
 	    CMSG_DATA(cmp), sizeof(int));
 	*done = 1;
@@ -276,17 +280,22 @@ sendfd(int s, int fd, int error)
 	iov.iov_base = &error;
 	iov.iov_len = sizeof(int);
 
-	cmp->cmsg_level = SOL_SOCKET;
-	cmp->cmsg_type = SCM_RIGHTS;
-	cmp->cmsg_len = CMSG_LEN(sizeof(int));
-
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
-	msg.msg_control = cmp;
-	msg.msg_controllen = CMSG_LEN(sizeof(int));
-	*(int *)CMSG_DATA(cmp) = fd;
+	if (error == 0) {
+		cmp->cmsg_level = SOL_SOCKET;
+		cmp->cmsg_type = SCM_RIGHTS;
+		cmp->cmsg_len = CMSG_LEN(sizeof(int));
+
+		msg.msg_control = cmp;
+		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		*(int *)CMSG_DATA(cmp) = fd;
+	} else {
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+	}
 
 	n = sendmsg(s, &msg, 0);
 	if (n == -1)
@@ -338,18 +347,25 @@ provide(struct puffs_usermount *pu, struct portal_node *portn,
 		puffs_framev_removefd(pu, s[0], 0);
 		close(s[0]);
 		close(s[1]);
+
+		if (puffs_framebuf_tellsize(pufbuf) < sizeof(int)) {
+			errno = EIO;
+			goto bad;
+		}
+		puffs_framebuf_getdata_atoff(pufbuf, 0, &error, sizeof(int));
+		if (error) {
+			errno = error;
+			goto bad;
+		}
+
 		if (puffs_framebuf_tellsize(pufbuf) != 2*sizeof(int)) {
 			errno = EIO;
 			goto bad;
 		}
 
-		puffs_framebuf_getdata_atoff(pufbuf, 0, &error, sizeof(int));
 		puffs_framebuf_getdata_atoff(pufbuf, sizeof(int),
 		    &fd, sizeof(int));
 		puffs_framebuf_destroy(pufbuf);
-
-		if (error)
-			return error;
 
 		data = 1;
 		if (ioctl(fd, FIONBIO, &data) == -1)

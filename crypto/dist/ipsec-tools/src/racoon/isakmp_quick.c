@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.24 2009/01/23 08:27:24 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.24.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -367,8 +367,7 @@ quick_i1send(iph2, msg)
 		goto end;
 
 	/* send the packet, add to the schedule to resend */
-	iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
-	if (isakmp_ph2resend(iph2) == -1)
+	if (isakmp_ph2send(iph2) == -1)
 		goto end;
 
 	/* change status of isakmp status entry */
@@ -831,8 +830,7 @@ quick_i2send(iph2, msg0)
 	/* if there is commit bit, need resending */
 	if (ISSET(iph2->flags, ISAKMP_FLAG_C)) {
 		/* send the packet, add to the schedule to resend */
-		iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
-		if (isakmp_ph2resend(iph2) == -1)
+		if (isakmp_ph2send(iph2) == -1)
 			goto end;
 	} else {
 		/* send the packet */
@@ -1648,8 +1646,7 @@ quick_r2send(iph2, msg)
 		goto end;
 
 	/* send the packet, add to the schedule to resend */
-	iph2->retry_counter = iph2->ph1->rmconf->retry_counter;
-	if (isakmp_ph2resend(iph2) == -1)
+	if (isakmp_ph2send(iph2) == -1)
 		goto end;
 
 	/* the sending message is added to the received-list. */

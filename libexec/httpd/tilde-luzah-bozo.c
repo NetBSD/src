@@ -1,9 +1,9 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.4 2009/02/04 22:55:58 tls Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.4.2.1 2009/05/13 19:18:38 jym Exp $	*/
 
-/*	$eterna: tilde-luzah-bozo.c,v 1.5 2008/03/03 03:36:12 mrg Exp $	*/
+/*	$eterna: tilde-luzah-bozo.c,v 1.10 2009/04/18 05:36:04 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +15,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -40,6 +38,7 @@
 
 #include <errno.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -56,11 +55,13 @@
  * user_transform does this:
  *	- chdir's /~user/public_html
  *	- returns the rest of the file, index.html appended if required
+ *	- returned malloced file to serve in request->hr_file,
+ *        ala transform_request().
  *
  * transform_request() is supposed to check that we have user support
  * enabled.
  */
-char *
+int
 user_transform(request, isindex)
 	http_req *request;
 	int *isindex;
@@ -81,19 +82,23 @@ user_transform(request, isindex)
 	/* fix this up immediately */
 	if (s)
 		s[-1] = '/';
-	if (pw == NULL)
-		http_error(404, request, "no such user");
+	if (pw == NULL) {
+		(void)http_error(404, request, "no such user");
+		return 0;
+	}
 
 	debug((DEBUG_OBESE, "user %s home dir %s uid %d gid %d", pw->pw_name,
 	    pw->pw_dir, pw->pw_uid, pw->pw_gid));
 
 	if (chdir(pw->pw_dir) < 0) {
 		warning("chdir1 error: %s: %s", pw->pw_dir, strerror(errno));
-		http_error(403, request, "can't chdir to homedir");
+		(void)http_error(403, request, "can't chdir to homedir");
+		return 0;
 	}
 	if (chdir(public_html) < 0) {
 		warning("chdir2 error: %s: %s", public_html, strerror(errno));
-		http_error(403, request, "can't chdir to public_html");
+		(void)http_error(403, request, "can't chdir to public_html");
+		return 0;
 	}
 	if (s == NULL || *s == '\0') {
 		file = bozostrdup(index_html);
@@ -107,13 +112,22 @@ user_transform(request, isindex)
 
 	/* see transform_request() */
 	if (*file == '/' || strcmp(file, "..") == 0 ||
-	    strstr(file, "/..") || strstr(file, "../"))
-		http_error(403, request, "illegal request");
+	    strstr(file, "/..") || strstr(file, "../")) {
+		(void)http_error(403, request, "illegal request");
+		free(file);
+		return 0;
+	}
 
-	auth_check(request, file);
+	if (auth_check(request, file)) {
+		free(file);
+		return 0;
+	}
+
+	free(request->hr_file);
+	request->hr_file = file;
 
 	debug((DEBUG_FAT, "transform_user returning %s under %s", file,
 	    pw->pw_dir));
-	return (file);
+	return 1;
 }
 #endif /* NO_USER_SUPPORT */

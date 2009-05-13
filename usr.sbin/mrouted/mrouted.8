@@ -1,4 +1,4 @@
-.\"	$NetBSD: mrouted.8,v 1.16 2003/09/07 16:22:25 wiz Exp $
+.\"	$NetBSD: mrouted.8,v 1.16.40.1 2009/05/13 19:20:30 jym Exp $
 .\"	$OpenBSD: mrouted.8,v 1.11 2003/03/03 15:14:28 deraadt Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
@@ -131,7 +131,7 @@ There are four types of configuration commands:
 .El
 .It
 .Bl -tag -width flag -compact -offset indent
-.Tn tunnel \*[Lt]local-addr\*[Gt] \*[Lt]remote-addr\*[Gt] [metric \*[Lt]m\*[Gt]]
+.It Tn tunnel \*[Lt]local-addr\*[Gt] \*[Lt]remote-addr\*[Gt] [metric \*[Lt]m\*[Gt]]
 .It [threshold \*[Lt]t\*[Gt]] [rate_limit \*[Lt]b\*[Gt]]
 .It [boundary (\*[Lt]boundary-name\*[Gt]|\*[Lt]scoped-addr\*[Gt]/\*[Lt]mask-len\*[Gt])]
 .El
@@ -178,10 +178,10 @@ may be replaced by a host name, if and only if the host name has a single
 IP address associated with it.
 The tunnel must be set up in the mrouted.conf files of both routers before
 it can be used.
-'\"For backwards compatibility with older
-'\".IR mrouted s,
-'\"the srcrt keyword specifies
-'\"encapsulation using IP source routing.
+.\"For backwards compatibility with older
+.\".IR mrouted s,
+.\"the srcrt keyword specifies
+.\"encapsulation using IP source routing.
 .Pp
 The cache_lifetime is a value that determines the amount of time that a
 cached multicast route stays in kernel before timing out.
@@ -443,7 +443,7 @@ Note that there can be many sources in one subnet.
 .Xr map-mbone 8 ,
 .Xr mrinfo 8 ,
 .Xr mtrace 8
-.sp
+.Pp
 DVMRP is described, along with other multicast routing algorithms, in the
 paper "Multicast Routing in Internetworks and Extended LANs" by S. Deering,
 in the Proceedings of the ACM SIGCOMM '88 Conference.

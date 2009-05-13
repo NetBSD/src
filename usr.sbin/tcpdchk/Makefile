@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2002/09/18 03:54:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.12.40.1 2009/05/13 19:20:41 jym Exp $
+
+WARNS?=	1	# XXX: many issues in lib/libwrap to address first
 
 .include <bsd.own.mk>
 

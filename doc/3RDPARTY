@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.669 2009/02/05 07:11:59 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.669.2.1 2009/05/13 19:18:01 jym Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -26,7 +26,7 @@
 
 Package:	acpica
 Version:	20080321
-Current Vers:	20090123
+Current Vers:	20090220
 Maintainer:	INTEL
 Archive Site:	http://www.acpica.org/downloads/unix_source_code.php
 Home Page:	http://www.acpica.org/
@@ -90,9 +90,9 @@ License:	GPLv2, LGPGv2.1
 Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
-Package:	bind/named
-Version:	libc/includes: 9.5.0, bind: 9.5.0
-Current Vers:	9.5.1-P1/9.6.0-P1
+Package:	bind [named and utils]
+Version:	9.6.1-P1
+Current Vers:	9.6.1-P1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
@@ -100,10 +100,23 @@ Mailing List:
 Responsible:	vixie, christos
 License:	BSD-like (2-clause)
 Notes:
-First bind2netbsd script to import into src/dist/bind.
-The Makefiles in src/usr.sbin/bind are not handled by the script.
+First bind2netbsd script to import into src/external/bsd/bind/dist.
+The Makefiles in src/external/bsd/bind are not handled by the script.
 Build bind to generate the include files.
-Then binclude4netbsd script to import into src/usr.sbin/bind/include.
+Then binclude4netbsd script to import into src/external/bsd/bind/include.
+The libc and include parts of the resolver are now part of libbind.
+
+Package:	libbind [libc resolver and includes]
+Version:	libbind-6.0-rc1
+Current Vers:	libbind-6.0-rc1
+Maintainer:	Paul Vixie <vixie@vix.com>
+Archive Site:	ftp://ftp.isc.org/isc/libbind/
+Home Page:	http://www.isc.org/sw/bind/
+Mailing List:
+Responsible:	vixie, christos
+License:	BSD-like (2-clause)
+Notes:
+First libbind2netbsd script to import into src/external/bsd/libbind/dist.
 Then include4netbsd script to import into src/include.
 Then libc4netbsd script to update the resolver in libc.
 Todo[1]: Update libresolv if needed.
@@ -115,6 +128,7 @@ Todo[2]: A few files in libc/net were imported in the ISC branch but now
 Todo[3]: net/base64.c is imported from bind but should be moved from net
 	 to isc/base64.c.
 Todo[4]: Re-entrant functions of net/*
+Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
 Version:	2.16.1
@@ -134,7 +148,7 @@ Maintainer:	n/a
 Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Mailing List:
-Responsible:	xtraeme
+Responsible:
 License:	See URL above.
 Notes:
 
@@ -186,7 +200,7 @@ main trunc has Citrus code in the following places:
 
 Package:	cron
 Version:	3.0
-Current Vers:	4.3
+Current Vers:	4.1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/cron/
 Home Page:
@@ -196,8 +210,8 @@ License:	BSD-like
 Notes:
 
 Package:	cvs
-Version:	1.11.22
-Current Vers:	1.11.23/1.12.13
+Version:	1.12.13
+Current Vers:	1.12.13
 Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
@@ -209,8 +223,6 @@ Use src/gnu/dist/xcvs/cvs2netbsd for preparing the source tree
 for the import.
 Do not forget to update gnu/usr.bin/xcvs/include/config.h to match
 gnu/dist/xcvs/config.h.in.
-If you want to upgrade to 1.12.XX, please talk to christos first.
-I have merged all the changes already.
 
 Package:	db
 Version:	1.85
@@ -246,8 +258,8 @@ No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
 
 Package:	dhcpcd
-Version:	4.0.10
-Current Vers:	4.0.10
+Version:	5.0.3
+Current Vers:	5.0.3
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -285,8 +297,8 @@ No hexadecimal floating-point string conversion for VAX FP yet.
 Only double-precision addressed at this time.
 
 Package:	file
-Version:	4.26
-Current Vers:	4.26
+Version:	5.03
+Current Vers:	5.03
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:
@@ -311,7 +323,7 @@ among other features, it can produce re-entrant scanners.
 
 Package:	gcc
 Version:	4.1.3-20080831
-Current Vers:	4.3.2
+Current Vers:	4.4.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -525,7 +537,7 @@ leave it alone.  (garbled 1/4/2001)
 
 Package:        libdevmapper
 Version:        1.02.29
-Current Vers:   1.02.29
+Current Vers:   1.02.30
 Maintainer:     lvm-devel@redhat.com
 Archive Site:   ftp://sources.redhat.com/pub/lvm2/
 Home Page:      http://sources.redhat.com/lvm2/
@@ -547,7 +559,7 @@ Notes:
 
 Package:        lvm2tools
 Version:        2.02.43
-Current Vers:   2.02.43
+Current Vers:   2.02.44
 Maintainer:     lvm-devel@redhat.com
 Archive Site:   ftp://sources.redhat.com/pub/lvm2/
 Home Page:      http://sources.redhat.com/lvm2/
@@ -649,7 +661,7 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.11
-Current Vers:	2.4.11
+Current Vers:	2.4.16
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
@@ -686,7 +698,7 @@ Patch applied after OpenSSH import.
 
 Package:	OpenSSH
 Version:	5.0
-Current Vers:	5.1 / portable 5.1p1
+Current Vers:	5.2 / portable 5.2p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -712,7 +724,7 @@ markus is very cooperative about it):
 
 Package:	OpenSSL
 Version:	SNAP-20080509
-Current Vers:	0.9.8j
+Current Vers:	0.9.8k
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
@@ -960,8 +972,8 @@ License:	BSD (4-clause)
 Notes:
 
 Package:	tz
-Version:	tzcode2004a / tzdata2009a
-Current Vers:	tzcode2008h / tzdata2009a
+Version:	tzcode2004a / tzdata2009c
+Current Vers:	tzcode2009b / tzdata2009c
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:
@@ -999,18 +1011,6 @@ Notes:
  files which we don't need in our tree.
  ALL changes must be sent back to the XFree86 repository. Patches should
  be submitted back via http://bugzilla.xfree86.org.
-
-Package:	Xorg
-Version:	7.0
-Current Vers:	7.0
-Maintainer:	The X.Org Foundation
-Archive Site:	http://xorg.freedesktop.org/releases/X11R7.0/src/
-Home Page:	http://www.x.org/
-Mailing List:	xorg@lists.freedesktop.org
-Responsible:	macallan
-License:	XFree
-Notes:		This is the modular branch tagged as XORG-7_0 pulled from
-		xorg's cvs repository.
 
 Package:	zlib
 Version:	1.2.3
@@ -1056,3 +1056,16 @@ Responsible:	mrg, bjs
 License:	BSD
 Notes:
 Imported all except for linux-core into src/sys/external/bsd/drm/dist.
+
+Package:	bozohttpd 
+Version:	20090418
+Current Vers:	20090418
+Maintainer:	mrg@eterna.com.au
+Archive Site:	ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS
+Home Page:	http://eterna.com.au/bozohttpd/
+Mailing List:
+Responsible:	mrg
+License:	BSD
+Notes:
+1. Delete "queue.h" from the distribution.
+2. Integrated as src/libexec/httpd.

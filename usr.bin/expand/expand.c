@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.12 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: expand.c,v 1.12.6.1 2009/05/13 19:19:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: expand.c,v 1.12 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: expand.c,v 1.12.6.1 2009/05/13 19:19:49 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -160,7 +160,7 @@ getstops(const char *spec)
 			i = i * 10 + *cp++ - '0';
 		if (i <= 0 || i > 256)
 			errx(EXIT_FAILURE, "Too large tab stop spec `%d'", i);
-		if (nstops > 0 && i <= tabstops[nstops-1])
+		if (nstops > 0 && (size_t)i <= tabstops[nstops-1])
 			errx(EXIT_FAILURE, "Out of order tabstop spec `%d'", i);
 		if (nstops == sizeof(tabstops) / sizeof(tabstops[0]) - 1)
 			errx(EXIT_FAILURE, "Too many tabstops");

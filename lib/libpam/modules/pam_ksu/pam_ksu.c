@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ksu.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+/*	$NetBSD: pam_ksu.c,v 1.2.34.1 2009/05/13 19:18:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
@@ -29,7 +29,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ksu.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+__RCSID("$NetBSD: pam_ksu.c,v 1.2.34.1 2009/05/13 19:18:35 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: pam_ksu.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
 #include <security/pam_mod_misc.h>
 
 static const char superuser[] = "root";
+
+#define PASSWORD_PROMPT	"%s's password:"
 
 static long	get_su_principal(krb5_context, const char *, const char *,
 		    char **, krb5_principal *);
@@ -121,22 +123,21 @@ auth_krb5(pam_handle_t *pamh, krb5_context context, const char *su_principal_nam
 	krb5_get_init_creds_opt gic_opt;
 	krb5_verify_init_creds_opt vic_opt;
 	const char	*pass;
-	char		*prompt;
+	char		 prompt[80];
 	long		 rv;
 	int		 pamret;
 
-	prompt = NULL;
 	krb5_get_init_creds_opt_init(&gic_opt);
 	krb5_verify_init_creds_opt_init(&vic_opt);
 	if (su_principal_name != NULL)
-		(void)asprintf(&prompt, "Password for %s:", su_principal_name);
+		(void)snprintf(prompt, sizeof(prompt), PASSWORD_PROMPT,
+		    su_principal_name);
 	else
-		(void)asprintf(&prompt, "Password:");
+		(void)snprintf(prompt, sizeof(prompt), "Password:");
 	if (prompt == NULL)
 		return (PAM_BUF_ERR);
 	pass = NULL;
 	pamret = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, prompt);
-	free(prompt);
 	if (pamret != PAM_SUCCESS)
 		return (pamret);
 	rv = krb5_get_init_creds_password(context, &creds, su_principal,

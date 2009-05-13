@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.6 2003/08/07 11:17:24 agc Exp $	*/
+/*	$NetBSD: compress.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)compress.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compress.c,v 1.6 2003/08/07 11:17:24 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,13 +113,13 @@ short cc_wlimits[TOKEN_MAX + 1];
 int cc_score_adjustments[TOKEN_MAX + 1][8]; /* XXX, 8 > max of cc_thresholds */
 #define score_adjust(score, p) \
 	do { \
-		int length = (p)->length; \
-		int ccount = (p)->ccount; \
-		if (threshp((p)->code, ccount, length) || \
-		    wthreshp((p)->weight, length)) /* XXX */ \
-			(score) -= length - tt.tt_put_token_cost; \
+		int _length = (p)->length; \
+		int _ccount = (p)->ccount; \
+		if (threshp((p)->code, _ccount, _length) || \
+		    wthreshp((p)->weight, _length)) /* XXX */ \
+			(score) -= _length - tt.tt_put_token_cost; \
 		else \
-			(score) += cc_score_adjustments[length][ccount]; \
+			(score) += cc_score_adjustments[_length][_ccount]; \
 	} while (0)
 
 int cc_initial_scores[TOKEN_MAX + 1][8]; /* XXX, 8 > max of cc_thresholds */
@@ -195,7 +195,7 @@ ccinit(void)
 	if (tt.tt_ntoken > cc_ntoken / 2)	/* not likely */
 		tt.tt_ntoken = cc_ntoken / 2;
 #define C(x) (sizeof (x) / sizeof *(x))
-	for (i = 0; i < C(cc_thresholds); i++) {
+	for (i = 0; i < (int)C(cc_thresholds); i++) {
 		int h = i - tt.tt_put_token_cost;
 		if (h > 0)
 			cc_thresholds[i] =
@@ -203,9 +203,9 @@ ccinit(void)
 		else
 			cc_thresholds[i] = 0;
 	}
-	for (i = 0; i < C(cc_score_adjustments); i++) {
+	for (i = 0; i < (int)C(cc_score_adjustments); i++) {
 		int t = cc_thresholds[i];
-		for (j = 0; j < C(*cc_score_adjustments); j++) {
+		for (j = 0; j < (int)C(*cc_score_adjustments); j++) {
 			if (j >= t)
 				cc_score_adjustments[i][j] =
 					- (i - tt.tt_put_token_cost);
@@ -475,15 +475,15 @@ cc_sweep(char *buffer, int bufsize, struct cc **tokens, int length)
 	short wthreshold = wthresh(length);
 	short limit = wlimit(length);
 #endif
-	int time;
+	int time0;
 	short pc = tt.tt_padc;
 
 	i = length - 1;
 	bufsize -= i;
 	cp = buffer + i;
 	hc = cc_hashcodes;
-	time = cc_time0;
-	for (i = 0; i < bufsize; i++, time++) {
+	time0 = cc_time0;
+	for (i = 0; i < bufsize; i++, time0++) {
 		struct cc **h;
 
 		{
@@ -530,7 +530,7 @@ cc_sweep(char *buffer, int bufsize, struct cc **tokens, int length)
 #ifndef cc_weight
 			p->weight = cc_weight;
 #endif
-			p->time = time;
+			p->time = time0;
 			p->bcount = 1;
 			p->ccount = 0;
 			p->flag = 0;
@@ -546,12 +546,12 @@ cc_sweep(char *buffer, int bufsize, struct cc **tokens, int length)
 #endif
 		} else if (p->time < cc_time0) {
 #ifndef cc_weight
-			if ((p->weight += p->time - time) < 0)
+			if ((p->weight += p->time - time0) < 0)
 				p->weight = cc_weight;
 			else if ((p->weight += cc_weight) > limit)
 				p->weight = limit;
 #endif
-			p->time = time;
+			p->time = time0;
 			p->bcount = 1;
 			p->ccount = 0;
 			if (p->code >= 0) {
@@ -574,15 +574,15 @@ cc_sweep(char *buffer, int bufsize, struct cc **tokens, int length)
 #ifdef STATS
 			ntoken_stat++;
 #endif
-		} else if (p->time + length > time) {
+		} else if (p->time + length > time0) {
 			/*
 			 * overlapping token, don't count as two and
-			 * don't update time, but do adjust weight to offset
+			 * don't update time0, but do adjust weight to offset
 			 * the difference
 			 */
 #ifndef cc_weight
 			if (cc_weight != 0) {	/* XXX */
-				p->weight += time - p->time;
+				p->weight += time0 - p->time;
 				if (!p->flag && p->weight >= wthreshold) {
 					p->flag = 1;
 					*pp++ = p;
@@ -594,12 +594,12 @@ cc_sweep(char *buffer, int bufsize, struct cc **tokens, int length)
 			p->places = i;
 		} else {
 #ifndef cc_weight
-			if ((p->weight += p->time - time) < 0)
+			if ((p->weight += p->time - time0) < 0)
 				p->weight = cc_weight;
 			else if ((p->weight += cc_weight) > limit)
 				p->weight = limit;
 #endif
-			p->time = time;
+			p->time = time0;
 			p->bcount++;
 			if (!p->flag &&
 			    /* code must be < 0 if flag false here */
@@ -638,17 +638,17 @@ void
 cc_sweep_reverse(struct cc **pp, short int *places)
 {
 	struct cc *p;
-	short front, back, t;
+	short frnt, back, t;
 
 	while ((p = *pp++) != 0) {
 		back = -1;
 		t = p->places;
 		/* the list is never empty */
 		do {
-			front = places[t];
+			frnt = places[t];
 			places[t] = back;
 			back = t;
-		} while ((t = front) >= 0);
+		} while ((t = frnt) >= 0);
 		p->places = back;
 	}
 }
@@ -903,7 +903,7 @@ cc_output_phase(char *buffer, struct cc **output, int bufsize)
 int
 cc_token_compare(const void *p1, const void *p2)
 {
-	const struct cc **vp1 = (void *)p1;
-	const struct cc **vp2 = (void *)p2;
+	const struct cc * const * vp1 = p1;
+	const struct cc * const * vp2 = p2;
 	return (*vp2)->bcount - (*vp1)->bcount;
 }

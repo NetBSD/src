@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.27 2007/05/05 16:55:17 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.27.20.1 2009/05/13 19:19:49 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.27 2007/05/05 16:55:17 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.27.20.1 2009/05/13 19:19:49 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ enter_lastlog(PERSON *pn)
 	}
 	if (fd == -1 ||
 	    lseek(fd, (off_t)pn->uid * sizeof(ll), SEEK_SET) !=
-	    (long)pn->uid * sizeof(ll) ||
+	    (off_t)pn->uid * (off_t)sizeof(ll) ||
 	    read(fd, (char *)&ll, sizeof(ll)) != sizeof(ll)) {
 			/* as if never logged in */
 			ll.ll_line[0] = ll.ll_host[0] = '\0';

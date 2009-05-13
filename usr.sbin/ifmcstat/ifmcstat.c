@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.9 2004/11/16 05:59:32 itojun Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.9.34.1 2009/05/13 19:20:23 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,12 +66,12 @@ kvm_t	*kvmd;
 
 struct	nlist nl[] = {
 #define	N_IFNET	0
-	{ "_ifnet" },
+	{ "_ifnet", 0, 0, 0, 0 },
 #if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #define N_IN6_MK 1
-	{ "_in6_mk" },
+	{ "_in6_mk", 0, 0, 0, 0 },
 #endif
-	{ "" },
+	{ "", 0, 0, 0, 0 },
 };
 
 const char *inet6_n2a __P((struct in6_addr *));
@@ -134,7 +134,7 @@ const char *inet6_n2a(p)
 
 int main()
 {
-	char	buf[_POSIX2_LINE_MAX], ifname[IFNAMSIZ];
+	char	buf[_POSIX2_LINE_MAX], ifnam[IFNAMSIZ];
 	struct	ifnet	*ifp, *nifp, ifnet;
 #ifndef __NetBSD__
 	struct	arpcom	arpcom;
@@ -158,7 +158,7 @@ int main()
 	KREAD(nl[N_IFNET].n_value, &ifp, struct ifnet *);
 	while (ifp) {
 		KREAD(ifp, &ifnet, struct ifnet);
-		printf("%s:\n", if_indextoname(ifnet.if_index, ifname));
+		printf("%s:\n", if_indextoname(ifnet.if_index, ifnam));
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 		if6_addrlist(ifnet.if_addrlist.tqh_first);

@@ -1,0 +1,3 @@
+# $NetBSD: ad.m68k,v 1.15.16.1 2009/05/13 19:17:50 jym Exp $
+./sbin/edlabel					base-sysutil-root
+./usr/bin/fdformat				base-util-bin

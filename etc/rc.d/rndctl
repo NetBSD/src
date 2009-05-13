@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: rndctl,v 1.2 2009/02/02 09:24:47 apb Exp $
+# $NetBSD: rndctl,v 1.2.4.1 2009/05/13 19:18:03 jym Exp $
 #
 
 # PROVIDE: rndctl
-# BEFORE: disks ike ipsec sshd
+# BEFORE:  DISKS ike ipsec sshd
+# REQUIRE: wdogctl
 
 $_rc_subr_loaded . /etc/rc.subr
 

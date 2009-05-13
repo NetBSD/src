@@ -1,4 +1,4 @@
-.\"	$NetBSD: wscons.conf.5,v 1.19 2008/11/22 23:08:31 reed Exp $
+.\"	$NetBSD: wscons.conf.5,v 1.19.2.1 2009/05/13 19:19:13 jym Exp $
 .\"
 .\" Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,10 +60,7 @@ for details on enabling the rc.d script.
 .Pp
 The following keywords and arguments are recognized:
 .Bl -tag -width keyboard
-.It Sy font Xo
-.Ar name Ar width Ar height
-.Ar enc Ar file
-.Xc
+.It Sy font Ar name Ar width Ar height Ar enc Ar file
 Used to load a font via
 .Xr wsfontload 8 .
 .Ar name

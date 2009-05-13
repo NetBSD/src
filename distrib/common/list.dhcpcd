@@ -1,0 +1,14 @@
+#	$NetBSD: list.dhcpcd,v 1.1.2.2 2009/05/13 19:17:41 jym Exp $
+#
+# list file (c.f. parselist.awk) for DHCP-enabled install media.
+#
+
+SRCDIRS	external/bsd/dhcpcd/sbin
+PROG	sbin/dhcpcd
+
+COPY	${DESTDIR}/etc/dhcpcd.conf etc/dhcpcd.conf
+COPY	${DESTDIR}/libexec/dhcpcd-run-hooks libexec/dhcpcd-run-hooks 555
+
+COPY	${NETBSDSRCDIR}/distrib/common/10-resolv.conf libexec/dhcpcd-hooks/10-resolv.conf
+COPY	${DESTDIR}/libexec/dhcpcd-hooks/30-hostname libexec/dhcpcd-hooks/30-hostname
+COPY	${NETBSDSRCDIR}/distrib/common/99-print-sysinst libexec/dhcpcd-hooks/99-print-sysinst

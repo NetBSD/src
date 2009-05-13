@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.23 2008/01/28 01:58:01 dholland Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.23.12.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.23 2008/01/28 01:58:01 dholland Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.23.12.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: dr_1.c,v 1.23 2008/01/28 01:58:01 dholland Exp $");
 #include "extern.h"
 #include "driver.h"
 
-static int	fightitout(struct ship *, struct ship *, int);
+static int fightitout(struct ship *, struct ship *, int);
 
 void
 unfoul(void)
@@ -102,7 +102,7 @@ boardcomp(void)
 					/* OBP */
 					sendbp(sp, sq, crew[0]*100, 0);
 					crew[0] = 0;
-				} else if (crew[1]){
+				} else if (crew[1]) {
 					/* OBP */
 					sendbp(sp, sq, crew[1]*10, 0);
 					crew[1] = 0;
@@ -190,9 +190,10 @@ fightitout(struct ship *from, struct ship *to, int key)
 		subtract(from, fromcap, totalfrom, crewfrom, pcfrom);
 		subtract(to, tocap, totalto, crewto, pcto);
 		makemsg(from, "boarders from %s repelled", to->shipname);
-		sprintf(message, "killed in melee: %d.  %s: %d",
+		snprintf(message, sizeof(message),
+			"killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
-		Writestr(W_SIGNAL, to, message);
+		send_signal(to, message);
 		if (key)
 			return 1;
 	} else if (strengthto >= fromstrength * 3) {
@@ -201,32 +202,29 @@ fightitout(struct ship *from, struct ship *to, int key)
 		subtract(to, tocap, totalto, crewto, pcto);
 		if (key) {
 			if (fromcap != from)
-				Write(W_POINTS, fromcap,
+				send_points(fromcap,
 					fromcap->file->points -
 						from->file->struck
 						? from->specs->pts
-						: 2 * from->specs->pts,
-					0, 0, 0);
+						: 2 * from->specs->pts);
 
-/* ptr1 points to the shipspec for the ship that was just unboarded.
-   I guess that what is going on here is that the pointer is multiplied
-   or something. */
-
-			Write(W_CAPTURED, from, to->file->index, 0, 0, 0);
+			send_captured(from, to->file->index);
 			topoints = 2 * from->specs->pts + to->file->points;
 			if (from->file->struck)
 				topoints -= from->specs->pts;
-			Write(W_POINTS, to, topoints, 0, 0, 0);
+			send_points(to, topoints);
 			mento = crewto[0] ? crewto[0] : crewto[1];
 			if (mento) {
 				subtract(to, tocap, mento, crewto, pcto);
 				subtract(from, to, - mento, crewfrom, 0);
 			}
-			sprintf(message, "captured by the %s!", to->shipname);
-			Writestr(W_SIGNAL, from, message);
-			sprintf(message, "killed in melee: %d.  %s: %d",
+			snprintf(message, sizeof(message),
+				"captured by the %s!", to->shipname);
+			send_signal(from, message);
+			snprintf(message, sizeof(message),
+				"killed in melee: %d.  %s: %d",
 				totalto, from->shipname, totalfrom);
-			Writestr(W_SIGNAL, to, message);
+			send_signal(to, message);
 			mento = 0;
 			return 0;
 		}
@@ -244,7 +242,8 @@ resolve(void)
 		if (sp->file->dir == 0)
 			continue;
 		for (sq = sp + 1; sq < ls; sq++)
-			if (sq->file->dir && meleeing(sp, sq) && meleeing(sq, sp))
+			if (sq->file->dir && meleeing(sp, sq) &&
+			    meleeing(sq, sp))
 				fightitout(sp, sq, 0);
 		thwart = 2;
 		foreachship(sq) {
@@ -290,7 +289,7 @@ compcombat(void)
 			if (sp->file->DBP[n].turnsent)
 				men += sp->file->DBP[n].mensent;
 		}
-		if (men){
+		if (men) {
 			crew[0] = men/100 ? 0 : crew[0] != 0;
 			crew[1] = (men%100)/10 ? 0 : crew[1] != 0;
 			crew[2] = men%10 ? 0 : crew[2] != 0;
@@ -316,7 +315,8 @@ compcombat(void)
 			closest = closestenemy(sp, r ? 'r' : 'l', 0);
 			if (closest == 0)
 				continue;
-			if (range(closest, sp) > range(sp, closestenemy(sp, r ? 'r' : 'l', 1)))
+			if (range(closest, sp) >
+			    range(sp, closestenemy(sp, r ? 'r' : 'l', 1)))
 				continue;
 			if (closest->file->struck)
 				continue;
@@ -357,13 +357,14 @@ compcombat(void)
 			if (rakehim && sternrake)
 				hit++;
 			hit += QUAL[indx][capship(sp)->specs->qual - 1];
-			for (n = 0; n < 3 && sp->file->captured == 0; n++)
+			for (n = 0; n < 3 && sp->file->captured == 0; n++) {
 				if (!crew[n]) {
 					if (indx <= 5)
 						hit--;
 					else
 						hit -= 2;
 				}
+			}
 			if (ready & R_INITIAL) {
 				if (!r)
 					sp->file->readyL &= ~R_INITIAL;
@@ -391,7 +392,8 @@ compcombat(void)
 			if (hit >= 0) {
 				if (load != L_GRAPE)
 					hit = hit > 10 ? 10 : hit;
-				table(sp, closest, shootat, load, hit, dieroll());
+				table(sp, closest, shootat, load, hit,
+				      dieroll());
 			}
 		}
 	}
@@ -434,7 +436,7 @@ next(void)
 		}
 		return -1;
 	}
-	Write(W_TURN, SHIP(0), turn, 0, 0, 0);
+	send_turn(turn);
 	if (turn % 7 == 0 && (dieroll() >= cc->windchange || !windspeed)) {
 		switch (dieroll()) {
 		case 1:
@@ -472,7 +474,7 @@ next(void)
 			}
 		else
 			windspeed++;
-		Write(W_WIND, SHIP(0), winddir, windspeed, 0, 0);
+		send_wind( winddir, windspeed);
 	}
 	return 0;
 }

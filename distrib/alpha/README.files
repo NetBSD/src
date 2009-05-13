@@ -1,13 +1,14 @@
-$NetBSD: README.files,v 1.13 1999/09/20 08:18:31 ross Exp $
+$NetBSD: README.files,v 1.13.52.1 2009/05/13 19:17:38 jym Exp $
 
 	   Tape, CD, Disk, and Netboot Images
 	   ----- --- ----- --- ------- ------
 
-This release or snapshot contains three installation image types,
-the first, for floppies, is split into a multiple volume set.
+This release or snapshot contains three installation image types.
+The first, for floppies, is split into a multiple volume set.
 
-	installation/floppy/disk1of2
-	installation/floppy/disk2of2
+	installation/floppy/disk1of3
+	installation/floppy/disk2of3
+	installation/floppy/disk3of3
 
 	installation/diskimage/cdhdtape
 
@@ -30,9 +31,12 @@ To copy the boot images to a magnetic disk under unix, the dd(1)
 command can be used:
 
 Floppy:
-	dd if=disk1of2 of=/dev/rfd0a bs=18k
+	dd if=disk1of3 of=/dev/rfd0a bs=18k
 	(change floppies)
-	dd if=disk2of2 of=/dev/rfd0a bs=18k
+	dd if=disk2of3 of=/dev/rfd0a bs=18k
+	(change floppies)
+	dd if=disk3of3 of=/dev/rfd0a bs=18k
+
 
 You can write the image to a hard drive too:
 

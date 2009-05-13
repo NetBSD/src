@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.119 2009/01/03 08:49:03 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.119.2.1 2009/05/13 19:18:02 jym Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -277,7 +277,7 @@
 #	twa	3ware Apache control interface
 #	twe	3ware Escalade control interface
 #	uk*	unknown SCSI device
-#	veriexec verified executable fingerprint loader
+#	veriexec Veriexec fingerprint loader
 #	video*	video capture devices
 #	view*	generic interface to graphic displays (Amiga)
 #	vmegen*	generic VME access
@@ -741,6 +741,7 @@ all)
 	makedev putter
 	makedev drvctl
 	makedev video
+	makedev altmem
 	makedev local # do this last
 	;;
 
@@ -775,6 +776,10 @@ radio)
 
 video)
 	makedev video0 video1 video2 video3
+	;;
+
+altmem)
+	makedev altmem0 altmem1
 	;;
 
 ramdisk)
@@ -1005,6 +1010,11 @@ fd*)
 
 ld*)
 	name=ld; unit=${i#ld}; blk=%ld_blk%; chr=%ld_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+altmem*)
+	name=altmem; unit=${i#altmem}; blk=%altmem_blk%; chr=%altmem_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 

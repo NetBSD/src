@@ -1,17 +1,16 @@
-# $NetBSD: Makefile,v 1.2 2008/04/10 15:05:23 tsutsui Exp $
+# $NetBSD: Makefile,v 1.2.10.1 2009/05/13 19:19:52 jym Exp $
+
+WARNS?=	1	# XXX -Wextra -Wshadow
 
 NOLINT= # defined
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/hx509
 
-WARNS?=  1
-
 PROG= hxtool
-# man page is missing
-MAN=
 
 SRCS= \
 	hxtool.c				\

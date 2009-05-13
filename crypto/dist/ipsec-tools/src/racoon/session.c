@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.24 2009/01/23 08:05:58 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.24.2.1 2009/05/13 19:15:55 jym Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -192,6 +192,8 @@ session(void)
 	if (xauth_radius_init_conf(0) != 0)
 		errx(1, "could not initialize radius config");
 #endif
+
+	myaddr_init_lists();
 
 	/*
 	 * in order to prefer the parameters by command line,

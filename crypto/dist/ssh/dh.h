@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.h,v 1.5 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: dh.h,v 1.9 2006/03/25 22:22:43 djm Exp $ */
+/*	$NetBSD: dh.h,v 1.5.26.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: dh.h,v 1.10 2008/06/26 09:19:40 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -46,5 +46,29 @@ int	 dh_estimate(int);
 
 #define DH_GRP_MIN	1024
 #define DH_GRP_MAX	8192
+
+/*
+ * Values for "type" field of moduli(5)
+ * Specifies the internal structure of the prime modulus.
+ */
+#define MODULI_TYPE_UNKNOWN		(0)
+#define MODULI_TYPE_UNSTRUCTURED	(1)
+#define MODULI_TYPE_SAFE		(2)
+#define MODULI_TYPE_SCHNORR		(3)
+#define MODULI_TYPE_SOPHIE_GERMAIN	(4)
+#define MODULI_TYPE_STRONG		(5)
+
+/*
+ * Values for "tests" field of moduli(5)
+ * Specifies the methods used in checking for primality.
+ * Usually, more than one test is used.
+ */
+#define MODULI_TESTS_UNTESTED		(0x00)
+#define MODULI_TESTS_COMPOSITE		(0x01)
+#define MODULI_TESTS_SIEVE		(0x02)
+#define MODULI_TESTS_MILLER_RABIN	(0x04)
+#define MODULI_TESTS_JACOBI		(0x08)
+#define MODULI_TESTS_ELLIPTIC		(0x10)
+
 
 #endif

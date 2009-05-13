@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2008/11/13 20:40:11 apb Exp $
+#	$NetBSD: Makefile,v 1.65.2.1 2009/05/13 19:17:50 jym Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -60,40 +60,67 @@ print_object_fmt: .PHONY
 print_toolchain_missing: .PHONY
 	@echo "${TOOLCHAIN_MISSING}"
 
+#
+# METALOG MANIPULATION TARGETS
+#
+# METALOG is the name of a metadata log file, and is set in <bsd.own.mk>
+# if MKUNPRIVED is not "no".
+#
+# METALOG.unpriv is a command line option passed to various scripts;
+# it is either blank or "-M ${METALOG}.sanitised", depending on the
+# MKUNPRIVED flag.
+#
+# The sanitise_METALOG target creates METALOG.sanitised from METALOG,
+# without modifying METALOG itself.  METALOG.sanitised is sorted, and
+# has duplicates merged.  This is used near the end of a build, after
+# build products have been installed in DESTDIR and corresponding lines
+# have been added to METALOG, but before METALOG.sanitised is used in
+# the creation of sets in RELEASEDIR.
+#
+# The clean_METALOG either deletes METALOG or replaces METALOG with
+# a sanitised version of itself, depending on the MKUPDATE flag, and
+# deletes old METALOG.* files.  This is intended to be used at the start
+# of a build, to ensure that repeated MKUPDATE builds do not cause
+# unbounded growth of METALOG.
+#
+
+.if ${MKUNPRIVED} == "no"
+METALOG.unpriv=
+sanitise_METALOG: .PHONY
+	@true
+clean_METALOG: .PHONY
+	@true
+.else	# MKUNPRIVED
+METALOG.unpriv= -M ${METALOG}.sanitised
+sanitise_METALOG: .PHONY ${METALOG}.sanitised
+${METALOG}.sanitised: ${METALOG}
+	${TOOL_MTREE} -CS -k all -N ${NETBSDSRCDIR}/etc <${METALOG} \
+	    >${METALOG}.new
+	mv ${METALOG}.new ${METALOG}.sanitised
+.if ${MKUPDATE} == "no" || !exists(${METALOG})
+clean_METALOG: .PHONY
+	rm -f ${METALOG} ${METALOG}.*
+.else	# MKUPDATE
+clean_METALOG: .PHONY ${METALOG}.sanitised
+	mv ${METALOG}.sanitised ${METALOG}
+	rm -f ${METALOG}.*
+.endif	# MKUPDATE
+.endif	# MKUNPRIVED
+
+#
+# FILE LIST TARGETS
+#
+
 # This target has debugging value only, really.
 makeflist: .PHONY .PRECIOUS check_DESTDIR
 	${SETSCMD} ./makeflist ${MAKEFLIST_FLAGS}
 
-#
-# SET BUILDING TARGETS
-#
+checkflist: .PRECIOUS .PHONY check_DESTDIR sanitise_METALOG
+	${SETSCMD} ${.CURDIR}/checkflist \
+	    ${MAKEFLIST_FLAGS} ${CHECKFLIST_FLAGS} ${METALOG.unpriv}
 
-TARDIR=		${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
-SOURCETARDIR=	${RELEASEDIR}/source/sets
-
-.if ${MKUNPRIVED} == "no"
-METALOG.unpriv=
-METALOG.sanitised.unpriv=
-.else
-METALOG.unpriv=	-M ${METALOG}
-METALOG.sanitised= ${METALOG}.sanitised
-METALOG.sanitised.unpriv= -M ${METALOG.sanitised}
-.endif
-
-.if ${MKUNPRIVED} == "no"
-sanitise_METALOG: .PHONY
-	@true
-.else
-sanitise_METALOG: .PHONY ${METALOG.sanitised}
-${METALOG.sanitised}: ${METALOG}
-	( cat ${NETBSDSRCDIR}/etc/mtree/NetBSD.dist ; \
-		echo '/unset all' ; \
-		cat ${METALOG} ) \
-	| ${TOOL_MTREE} -C -k all -N ${NETBSDSRCDIR}/etc > ${METALOG}.new && \
-		( rm -f ${METALOG} ; \
-		mv ${METALOG}.new ${METALOG} )
-	cat ${METALOG} | ${GREP} -v " optional" > ${.TARGET}
-.endif
+checkflist-x11: .PHONY check_DESTDIR
+	${SETSCMD} ./checkflist -x ${CHECKFLIST_FLAGS}
 
 .if defined(DESTDIR) && ${DESTDIR} != ""
 checkflist_if_DESTDIR: checkflist
@@ -101,13 +128,12 @@ checkflist_if_DESTDIR: checkflist
 checkflist_if_DESTDIR:
 .endif
 
-checkflist: .PRECIOUS .PHONY check_DESTDIR sanitise_METALOG
-	${SETSCMD} ${.CURDIR}/checkflist \
-	    ${MAKEFLIST_FLAGS} ${CHECKFLIST_FLAGS} ${METALOG.sanitised.unpriv}
+#
+# SET BUILDING TARGETS
+#
 
-checkflist-x11: .PHONY check_DESTDIR
-	${SETSCMD} ./checkflist -x ${CHECKFLIST_FLAGS}
-
+TARDIR=		${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
+SOURCETARDIR=	${RELEASEDIR}/source/sets
 
 # If MAKETARS_SERIAL is set to "YES" or "yes", then the tar sets will be
 # made in series, even if make's "-j" flag requests multiple parallel
@@ -139,17 +165,17 @@ maketarsetup: .EXEC
 		rm -f ${TARDIR}/$$i ${TARDIR}/$$i.tmp; \
 	done
 
-makesetfiles: .PHONY
+makesetfiles: .PHONY sanitise_METALOG
 	${_MKMSG_CREATE} "set lists"
-	${SETSCMD} ./maketars -S -d ${DESTDIR:S,^$,/,} ${METALOG.unpriv} \
-	    ${MAKETARS_FLAGS} \
+	${SETSCMD} ./maketars -S -d ${DESTDIR:S,^$,/,} ${MAKETARS_FLAGS} \
+	    ${METALOG.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc ${MAKEFLIST_FLAGS} -t ${TARDIR}
 
 .for tar in ${MAKETARSETS}
 do-${tar}: .PHONY sanitise_METALOG
 	${_MKMSG_CREATE} "${tar}.tgz"
 	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} ${MAKETARS_FLAGS} \
-	    ${METALOG.sanitised.unpriv} \
+	    ${METALOG.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc -t ${TARDIR} ${tar} \
 	|| rm -f ${TARDIR}/${tar}.tgz
 .endfor
@@ -185,7 +211,7 @@ installsets: .PHONY check_DESTDIR sanitise_METALOG
 	@false
 .endif
 	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} ${MAKETARS_FLAGS} \
-	    ${METALOG.sanitised.unpriv} -N ${NETBSDSRCDIR}/etc \
+	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc \
 	    ${MAKEFLIST_FLAGS} -i ${INSTALLDIR} ${INSTALLSETS}
 
 # Should we ignore errors like extra or missing files in the flists?
@@ -212,7 +238,7 @@ makesyspkgs: .PHONY check_DESTDIR check_RELEASEDIR \
 	${SETSCMD} ${.CURDIR}/regpkgset \
 	    ${REGPKG.verbose} ${REGPKG.force} ${REGPKG.sloppy} \
 	    ${REGPKG.cache} ${REGPKG.update} \
-	    -d ${DESTDIR:S,^$,/,} ${METALOG.sanitised.unpriv} \
+	    -d ${DESTDIR:S,^$,/,} ${METALOG.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc \
 	    -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs ${SYSPKGSETS}
 

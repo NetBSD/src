@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.20 2007/12/15 19:44:47 perry Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.20.12.1 2009/05/13 19:19:06 jym Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.20 2007/12/15 19:44:47 perry Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.20.12.1 2009/05/13 19:19:06 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -273,7 +273,7 @@ ffs_scan(struct sblockinfo *sbi, int n)
 		 * Really enough for now.
 		 */
 		for (i = 1; i < 16; i <<= 1)
-			if ((BLK_CNT - lastblk) == (i * SBLOCKSIZE / 512)) {
+			if ((BLK_CNT - lastblk) == (daddr_t)(i * SBLOCKSIZE / 512)) {
 				if (flags & LABELS)
 					ffs_printpart(sbi, LABELS, i, n);
 				else
@@ -348,7 +348,7 @@ lfs_scan(struct sblockinfo *sbi, int n)
 	 */
 	case FIRST_SBLOCK_ADDRESS:
 		/* copy partition offset */
-		if (sbi->lfs_off != lastblk)
+		if ((daddr_t)sbi->lfs_off != lastblk)
 			sbi->lfs_off = BLK_CNT - (LFS_LABELPAD / 512);
 		break;
 	case SECOND_SBLOCK_ADDRESS:

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.11 2008/10/09 07:18:15 dholland Exp $	*/
+/*	$NetBSD: scan.l,v 1.11.4.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -412,7 +412,7 @@ curdir_pop(void)
 	if (SLIST_EMPTY(&curdirs))
 		panic("curdirs is empty");
 	/* LINTED cast away const (pf_prefix is malloc'd for curdirs) */
-	free((void *)pf->pf_prefix);
+	free((void *)__UNCONST(pf->pf_prefix));
 	free(pf);
 }
 
@@ -559,7 +559,7 @@ getincludepath()
 	}
 
 	len = e-p;
-	if (len > sizeof(curinclpath)-1)
+	if (len > (ptrdiff_t)sizeof(curinclpath)-1)
 		len = sizeof(curinclpath)-1;
 	strncpy(curinclpath, p, sizeof(curinclpath));
 	curinclpath[len] = '\0';

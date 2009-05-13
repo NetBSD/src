@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.24 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: jot.c,v 1.24.6.1 2009/05/13 19:19:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.24 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: jot.c,v 1.24.6.1 2009/05/13 19:19:53 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -347,7 +347,7 @@ getformat(void)
 	sz = sizeof(format) - strlen(format) - 1;
 	if (!*p) {
 		if (chardata || prec == 0) {
-			if (snprintf(p, sz, "%%%s", chardata ? "c" : "ld") >= sz)
+			if ((size_t)snprintf(p, sz, "%%%s", chardata ? "c" : "ld") >= sz)
 				errx(EXIT_FAILURE, "-w word too long");
 			dox = 1;
 		} else {

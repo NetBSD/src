@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.11 2008/04/24 04:09:27 thorpej Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.11.8.1 2009/05/13 19:19:59 jym Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.11 2008/04/24 04:09:27 thorpej Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.11.8.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint*/
 
@@ -90,7 +90,7 @@ have_fast_ipsec(void)
  * about the vagaries of the two implementations.
  */
 void
-ipsec_switch(u_long off, char * name)
+ipsec_switch(u_long off, const char * name)
 {
 
 	if (have_fast_ipsec())
@@ -156,7 +156,7 @@ algname(int a, const struct alg algs[], int nalgs)
  * if that happens when we are running on KAME IPsec.
  */
 void
-fast_ipsec_stats(u_long off, char *name)
+fast_ipsec_stats(u_long off, const char *name)
 {
 	uint64_t ipsecstats[IPSEC_NSTATS];
 	uint64_t ahstats[AH_NSTATS];

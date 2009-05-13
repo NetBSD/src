@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.26 2008/05/02 18:11:06 martin Exp $
+.\"	$NetBSD: sort.1,v 1.26.8.1 2009/05/13 19:20:05 jym Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -221,10 +221,7 @@ This should be used with discretion;
 .Fl R Ar \*[Lt]alphanumeric\*[Gt]
 usually produces undesirable results.
 The default record separator is newline.
-.It Xo
-.Fl k
-.Ar field1 Ns Op Li \&, Ns Ar field2
-.Xc
+.It Fl k Ar field1 Ns Op Li \&, Ns Ar field2
 Designates the starting position,
 .Ar field1 ,
 and optional ending position,

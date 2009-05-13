@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.52 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: iostat.c,v 1.52.6.1 2009/05/13 19:20:24 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.52 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.52.6.1 2009/05/13 19:20:24 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ sig_header(int signo)
 static void
 header()
 {
-	int i;
+	size_t i;
 
 					/* Main Headers. */
 	if (ISSET(todo, SHOW_STATS_X)) {
@@ -311,7 +311,7 @@ header()
 static void
 drive_stats(double etime)
 {
-	int dn;
+	size_t dn;
 	double atime, mbps;
 
 	for (dn = 0; dn < ndrive; ++dn) {
@@ -346,7 +346,7 @@ drive_stats(double etime)
 static void
 drive_stats2(double etime)
 {
-	int dn;
+	size_t dn;
 	double atime;
 
 	for (dn = 0; dn < ndrive; ++dn) {
@@ -371,7 +371,7 @@ drive_stats2(double etime)
 static void
 drive_statsx(double etime)
 {
-	int dn;
+	size_t dn;
 	double atime, kbps;
 
 	for (dn = 0; dn < ndrive; ++dn) {
@@ -429,16 +429,16 @@ static void
 cpustats(void)
 {
 	int state;
-	double time;
+	double ttime;
 
-	time = 0;
+	ttime = 0;
 	for (state = 0; state < CPUSTATES; ++state)
-		time += cur.cp_time[state];
-	if (!time)
-		time = 1.0;
+		ttime += cur.cp_time[state];
+	if (!ttime)
+		ttime = 1.0;
 			/* States are generally never 100% and can use %3.0f. */
 	for (state = 0; state < CPUSTATES; ++state)
-		printf(" %2.0f", 100. * cur.cp_time[state] / time);
+		printf(" %2.0f", 100. * cur.cp_time[state] / ttime);
 }
 
 static void
@@ -514,7 +514,7 @@ selectdrives(int argc, char *argv[])
 			break;
 #endif
 		tried++;
-		for (i = 0; i < ndrive; i++) {
+		for (i = 0; i < (int)ndrive; i++) {
 			if (strcmp(cur.name[i], *argv))
 				continue;
 			cur.select[i] = 1;
@@ -529,8 +529,8 @@ selectdrives(int argc, char *argv[])
 		 * if none specified.
 		 */
 		maxdrives = (ISSET(todo, SHOW_STATS_X) ||
-			     ndrive < defdrives)
-			? (ndrive) : defdrives;
+			     (int)ndrive < defdrives)
+			? (int)(ndrive) : defdrives;
 		for (i = 0; i < maxdrives; i++) {
 			cur.select[i] = 1;
 

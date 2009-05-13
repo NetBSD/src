@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.14 2008/09/30 04:03:37 dholland Exp $	*/
+/*	$NetBSD: read.c,v 1.14.6.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.14 2008/09/30 04:03:37 dholland Exp $");
+__RCSID("$NetBSD: read.c,v 1.14.6.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: read.c,v 1.14 2008/09/30 04:03:37 dholland Exp $");
 #include "extern.h"
 
 /*
- * bytes -- read bytes to an offset from the end and display.
+ * displaybytes -- read bytes to an offset from the end and display.
  *
  * This is the function that reads to a byte offset from the end of the input,
  * storing the data in a wrap-around buffer which is then displayed.  If the
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: read.c,v 1.14 2008/09/30 04:03:37 dholland Exp $");
  * Non-zero return means than a (non-fatal) error occurred.
  */
 int
-bytes(FILE *fp, off_t off)
+displaybytes(FILE *fp, off_t off)
 {
 	int ch, len, tlen;
 	char *ep, *p, *t;
@@ -119,7 +119,7 @@ bytes(FILE *fp, off_t off)
 }
 
 /*
- * lines -- read lines to an offset from the end and display.
+ * displaylines -- read lines to an offset from the end and display.
  *
  * This is the function that reads to a line offset from the end of the input,
  * storing the data in an array of buffers which is then displayed.  If the
@@ -131,11 +131,11 @@ bytes(FILE *fp, off_t off)
  * Non-zero return means than a (non-fatal) error occurred.
  */
 int
-lines(FILE *fp, off_t off)
+displaylines(FILE *fp, off_t off)
 {
 	struct {
-		u_int blen;
-		u_int len;
+		int blen;
+		int len;
 		char *l;
 	} *lines;
 	int ch;

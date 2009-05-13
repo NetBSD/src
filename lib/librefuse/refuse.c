@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.91 2009/01/26 04:00:40 lukem Exp $	*/
+/*	$NetBSD: refuse.c,v 1.91.2.1 2009/05/13 19:18:35 jym Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.91 2009/01/26 04:00:40 lukem Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.91.2.1 2009/05/13 19:18:35 jym Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1286,7 +1286,7 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 		err(EXIT_FAILURE, "fuse_new");
 	}
 
-	/* copy fuse ops to their own stucture */
+	/* copy fuse ops to their own structure */
 	(void) memcpy(&fuse->op, ops, sizeof(fuse->op));
 
 	fusectx = fuse_get_context();

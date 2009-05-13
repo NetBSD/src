@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.18 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: rwho.c,v 1.18.6.1 2009/05/13 19:20:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: rwho.c,v 1.18 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: rwho.c,v 1.18.6.1 2009/05/13 19:20:04 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 		if (f < 0)
 			continue;
 		cc = read(f, &wd, sizeof (wd));
-		if (cc < WHDRSIZE) {
+		if (cc < (ssize_t)WHDRSIZE) {
 			(void)close(f);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.75 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: compat.c,v 1.75.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.75 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.75.2.1 2009/05/13 19:19:56 jym Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.75 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: compat.c,v 1.75.2.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -211,8 +211,8 @@ CompatRunCommand(void *cmdp, void *gnp)
     volatile Boolean errCheck; 	/* Check errors */
     int 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
-    int	    	  cpid;	    	/* Child actually found */
-    ReturnStatus  retstat;    	/* Status of fork */
+    pid_t	  cpid;	    	/* Child actually found */
+    pid_t	  retstat;    	/* Result of wait */
     LstNode 	  cmdNode;  	/* Node where current command is located */
     const char  ** volatile av;	/* Argument vector for thing to exec */
     char	** volatile mav;/* Copy of the argument vector for freeing */

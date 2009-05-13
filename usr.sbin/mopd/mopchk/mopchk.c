@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.10 2003/04/20 00:19:56 christos Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.10.40.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopchk.c,v 1.10 2003/04/20 00:19:56 christos Exp $");
+__RCSID("$NetBSD: mopchk.c,v 1.10.40.1 2009/05/13 19:20:29 jym Exp $");
 #endif
 
 /*
@@ -73,7 +73,7 @@ main(argc, argv)
 	int     op, i;
 	char   *filename;
 	struct if_info *ii;
-	int	err;
+	int	error;
 
 	mopInteractive = 1;
 
@@ -126,17 +126,17 @@ main(argc, argv)
 		if (dl.ldfd == -1)
 			printf("Unknown file.\n");
 		else {
-			if ((err = CheckElfFile(dl.ldfd)) == 0) {
+			if ((error = CheckElfFile(dl.ldfd)) == 0) {
 				if (GetElfFileInfo(&dl) < 0) {
 					printf(
 					"Some failure in GetElfFileInfo\n");
 				}
-			} else if ((err = CheckAOutFile(dl.ldfd)) == 0) {
+			} else if ((error = CheckAOutFile(dl.ldfd)) == 0) {
 				if (GetAOutFileInfo(&dl) < 0) {
 					printf(
 					"Some failure in GetAOutFileInfo\n");
 				}
-			} else if ((err = CheckMopFile(dl.ldfd)) == 0) {
+			} else if ((error = CheckMopFile(dl.ldfd)) == 0) {
 				if (GetMopFileInfo(&dl) < 0) {
 					printf(
 					    "Some failure in GetMopFileInfo\n");

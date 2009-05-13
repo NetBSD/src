@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.72 2008/11/12 12:35:54 ad Exp $
+.\" $NetBSD: kauth.9,v 1.72.2.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2008
+.Dd May 7, 2009
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@ developers in this document.
 Some
 .Nm
 types include the following:
-.Bl -tag
+.Bl -tag -width kauth_listener_t
 .It kauth_cred_t
 Representing credentials that can be associated with an object.
 Includes user- and group-ids (real, effective, and save) as well as group
@@ -135,7 +135,7 @@ The authorization wrapper for this scope is declared as
 "void *arg0"
 .Pp
 The following operations are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_GENERIC_ISSUSER
 Checks whether the credentials belong to the super-user.
 .Pp
@@ -166,13 +166,13 @@ The authorization wrapper for this scope is declared as
 "void *arg3"
 .Pp
 The following requests are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_SYSTEM_ACCOUNTING
 Check if enabling/disabling accounting allowed.
 .It Dv KAUTH_SYSTEM_CHROOT
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_CHROOT_CHROOT
 Check if calling
 .Xr chroot 2
@@ -187,7 +187,7 @@ Check CPU-manipulation access.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_CPU_SETSTATE
 Set CPU state, including setting it online or offline.
 .El
@@ -195,7 +195,7 @@ Set CPU state, including setting it online or offline.
 This request concentrates several debugging-related operations.
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_DEBUG_IPKDB
 Check if using
 .Xr ipkdb 4
@@ -203,6 +203,37 @@ is allowed.
 .El
 .It Dv KAUTH_SYSTEM_FILEHANDLE
 Check if filehandle operations allowed.
+.It Dv KAUTH_SYSTEM_FS_QUOTA
+Check if file-system quota operations are allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct mount *
+describing the file-system mount in question.
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_GET
+Check if retrieving quota information is allowed.
+.Pp
+.Ar arg2
+is a
+.Ft uid_t
+with the user-id of the user whose quota information is to be retrieved.
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF
+Check if turning quota on/off is allowed.
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE
+Check if managing the quota by setting the quota/quota use is allowed.
+.Pp
+.Ar arg2
+is a
+.Ft uid_t
+with the user-id of the user whose quota/quota use is to be set.
+.It Dv KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT
+Check if bypassing the quota (not enforcing it) is allowed.
+.El
+.It Dv KAUTH_SYSTEM_FS_RESERVEDSPACE
+Check if using the file-system reserved space is allowed.
 .It Dv KAUTH_SYSTEM_MODULE
 Check if a module request is allowed.
 .Pp
@@ -215,7 +246,7 @@ Check if mount-related operations are allowed.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_GET
 Check if retrieving information about a mount is allowed.
 .Ar arg1
@@ -269,7 +300,7 @@ Check processor-set manipulation.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_PSET_ASSIGN
 Change processor-set processor assignment.
 .It Dv KAUTH_REQ_SYSTEM_PSET_BIND
@@ -292,7 +323,7 @@ This requests operations related to
 .Xr sysctl 9 .
 .Ar req
 indicates the specific request and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_SYSCTL_ADD
 Check if adding a
 .Xr sysctl 9
@@ -305,6 +336,12 @@ node is allowed.
 Check if adding description to a
 .Xr sysctl 9
 node is allowed.
+.It Dv KAUTH_REQ_SYSTEM_SYSCTL_MODIFY
+Check if modifying a
+.Xr sysctl 9
+node variable that doesn't have a custom sysctl helper function is allowed.
+.Pp
+This request might be deprecated in the future.
 .It Dv KAUTH_REQ_SYSTEM_SYSCTL_PRVT
 Check if accessing private
 .Xr sysctl 9
@@ -314,7 +351,7 @@ nodes is allowed.
 This request groups time-related operations.
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_SYSTEM_TIME_ADJTIME
 Check if changing the time using
 .Xr adjtime 2
@@ -339,7 +376,7 @@ with the delta from the current time,
 .Ar arg3
 is a
 .Ft bool
-indicating whether the caller is a device context (eg.
+indicating whether the caller is a device context (e.g.
 .Pa /dev/clockctl )
 or not.
 .It Dv KAUTH_REQ_SYSTEM_TIME_RTCOFFSET
@@ -360,7 +397,7 @@ The authorization wrapper for this scope is declared as
 "void *arg3"
 .Pp
 The following operations are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_PROCESS_KTRACE
 Checks whether an object with one set of credentials can
 .Xr ktrace 1
@@ -374,7 +411,7 @@ is
 .Dv KAUTH_REQ_PROCESS_KTRACE_PERSISTENT ,
 this checks if persistent tracing can be done.
 Persistent tracing maintains the trace across a set-user-id/set-group-id
-.Xr exec 2 ,
+.Xr exec 3 ,
 and normally requires privileged credentials.
 .It Dv KAUTH_PROCESS_PROCFS
 Checks whether object with passed credentials can use
@@ -515,14 +552,14 @@ The authorization wrapper for this scope is declared as
 "enum kauth_network_req req" "void *arg1" "void *arg2" "void *arg3"
 .Pp
 The following operations are available for this scope:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_NETWORK_ALTQ
 Checks if an ALTQ operation is allowed.
 .Pp
 .Ar req
 indicates the ALTQ subsystem in question, and can be one of the following:
 .Pp
-.Bl -tag -compact
+.Bl -tag -compact -width compact
 .It Dv KAUTH_REQ_NETWORK_ALTQ_AFMAP
 .It Dv KAUTH_REQ_NETWORK_ALTQ_BLUE
 .It Dv KAUTH_REQ_NETWORK_ALTQ_CBQ
@@ -545,7 +582,9 @@ request is allowed.
 allows to indicate the type of the request to structure listeners and callers
 easier.
 Supported request types:
-.Bl -tag
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_BIND_PORT
+Checks if binding to a non-privileged/reserved port is allowed.
 .It Dv KAUTH_REQ_NETWORK_BIND_PRIVPORT
 Checks if binding to a privileged/reserved port is allowed.
 .El
@@ -554,7 +593,7 @@ Checks if firewall-related operations are allowed.
 .Pp
 .Ar req
 indicates the sub-action, and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_FIREWALL_FW
 Modification of packet filtering rules.
 .It Dv KAUTH_REQ_NETWORK_FIREWALL_NAT
@@ -575,7 +614,7 @@ describing the interface-specific operation.
 is (optionally) a pointer to the interface-specific request structure.
 .Ar req
 indicates the sub-action, and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_GET
 Check if retrieving information from the device is allowed.
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_GETPRIV
@@ -593,6 +632,58 @@ for the interface was passed in
 there's no way to tell what structure
 .Ar arg3
 is.
+.It Dv KAUTH_NETWORK_INTERFACE_PPP
+Checks if operations performed on the
+.Xr ppp 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_PPP_ADD
+Checks if adding and enabling a
+.Xr ppp 4
+interface to the system is allowed.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE_SLIP
+Checks if operations performed on the
+.Xr sl 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_SLIP_ADD
+Checks if adding and enabling a
+.Xr sl 4
+interface to the system is allowed.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE_STRIP
+Checks if operations performed on the
+.Xr strip 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_STRIP_ADD
+Check if adding and enabling a
+.Xr strip 4
+interface to the system is allowed.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE_TUN
+Checks if operations performed on the
+.Xr tun 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_TUN_ADD
+Checks if adding and enabling a
+.Xr tun 4
+interface to the system is allowed.
+.El
 .It Dv KAUTH_NETWORK_FORWSRCRT
 Checks whether status of forwarding of source-routed packets can be modified
 or not.
@@ -601,7 +692,7 @@ Check is an NFS related operation is allowed.
 .Pp
 .Ar req
 can be any of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_NFS_EXPORT
 Check if modifying the NFS export table is allowed.
 .It Dv KAUTH_REQ_NETWORK_NFS_SVC
@@ -623,7 +714,7 @@ Checks if a socket related operation is allowed.
 allows to indicate the type of the request to structure listeners and callers
 easier.
 Supported request types:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_REQ_NETWORK_SOCKET_RAWSOCK
 Checks if opening a raw socket is allowed.
 .It Dv KAUTH_REQ_NETWORK_SOCKET_OPEN
@@ -642,6 +733,24 @@ Checks if looking at the socket passed is allowed.
 is a
 .Ft struct socket *
 describing the socket.
+.It Dv KAUTH_REQ_NETWORK_SOCKET_DROP
+Checks if a connection can be dropped.
+.Pp
+.Ar arg1
+is a
+.Ft struct socket *
+describing the socket.
+.It Dv KAUTH_REQ_NETWORK_SOCKET_SETPRIV
+Checks if setting privileged socket options is allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct socket *
+describing the socket,
+.Ar arg2
+is a
+.Ft u_long
+describing the socket option.
 .El
 .El
 .Ss Machine-dependent Scope
@@ -658,7 +767,12 @@ The actions on this scope provide a set that may or may not affect all
 platforms.
 Below is a list of available actions, along with which platforms are affected
 by each.
-.Bl -tag
+.Bl -tag -width compact
+.It Dv KAUTH_MACHDEP_CACHEFLUSH
+Request to flush the whole CPU cache.
+Affects
+.Em m68k
+Linux emulation.
 .It Dv KAUTH_MACHDEP_IOPERM_GET
 Request to get the I/O permission level.
 Affects
@@ -701,6 +815,10 @@ Affects
 .Em amd64 ,
 .Em i386 ,
 .Em xen .
+.It Dv KAUTH_MACHDEP_NVRAM
+Request to access (read/write) the NVRAM.
+Affects
+.Em i386 .
 .It Dv KAUTH_MACHDEP_UNMANAGEDMEM
 Request to access unmanaged memory.
 Affects
@@ -717,7 +835,8 @@ Affects
 The device scope,
 .Dq org.netbsd.kauth.device ,
 manages authorization requests related to devices on the system.
-Devices can be, for example, terminals, tape drives, and any other hardware.
+Devices can be, for example, terminals, tape drives, Bluetooth accessories, and
+any other hardware.
 Network devices specifically are handled by the
 .Em network
 scope.
@@ -743,7 +862,7 @@ It is passed to the listener as
 The second argument,
 .Ar op ,
 is the action and can be one of the following:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_DEVICE_TTY_OPEN
 Open the terminal device pointed to by
 .Ar tty .
@@ -812,7 +931,7 @@ passed as
 to the listener, is a generic representation of the access mode requested.
 It can be one or more (binary-OR'd) of the following:
 .Pp
-.Bl -tag -offset indent -compact
+.Bl -tag -width compact -offset indent -compact
 .It KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ
 .It KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF
 .It KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE
@@ -824,6 +943,70 @@ passed as
 .Ar arg2
 to the listener, is device-specific data that may be associated with the
 request.
+.Ss Bluetooth Devices
+Authorizing actions relevant to Bluetooth devices is done using the standard
+authorization wrapper, with the following actions:
+.Pp
+.Bl -tag -width compact
+.It KAUTH_DEVICE_BLUETOOTH_BCSP
+Check if operations on a
+.Xr bcsp 4
+device are allowed.
+.Pp
+.Ar arg0
+is an
+.Ft enum kauth_device_req
+with one of the following values:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_DEVICE_BLUETOOTH_BCSP_ADD
+Check if adding and enabling a
+.Xr bcsp 4
+device is allowed.
+.El
+.It KAUTH_DEVICE_BLUETOOTH_BTUART
+Check if operations on a
+.Xr btuart 4
+device are allowed.
+.Pp
+.Ar arg0
+is an
+.Ft enum kauth_device_req
+with one of the following values:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_DEVICE_BLUETOOTH_BTUART_ADD
+Check if adding and enabling a
+.Xr btuart 4
+device is allowed.
+.El
+.It KAUTH_DEVICE_BLUETOOTH_SETPRIV
+Check if privileged settings can be changed.
+.Pp
+.Ar arg0
+is a
+.Ft struct hci_unit *
+describing the HCI unit,
+.Ar arg1
+is a
+.Ft struct btreq *
+describing the request, and
+.Ar arg2
+is a
+.Ft u_long
+describing the command.
+.El
+.Ss Kernel random device
+Authorization actions relevant to the kernel random device,
+.Xr rnd 4 ,
+is done using the standard authorization wrapper, with the following actions:
+.Pp
+.Bl -tag -width compact
+.It KAUTH_DEVICE_RND_ADDDATA
+Check if adding data to the entropy pool is allowed.
+.It KAUTH_DEVICE_RND_GETPRIV
+Check if privileged settings and information can be retrieved.
+.It KAUTH_DEVICE_RND_SETPRIV
+Check if privileged settings can be changed.
+.El
 .Ss Credentials Scope
 The credentials scope,
 .Dq org.netbsd.kauth.cred ,
@@ -846,7 +1029,7 @@ Notifications are made using the following function, which is internal to
 "void *arg0" "void *arg1"
 .Pp
 With the following actions:
-.Bl -tag
+.Bl -tag -width compact
 .It Dv KAUTH_CRED_COPY
 The credentials are being copied.
 .Ar cred
@@ -894,7 +1077,7 @@ objects.
 The following routines can be used to access and modify the user- and
 group-ids in a
 .Ft kauth_cred_t :
-.Bl -tag
+.Bl -tag -width compact
 .It Ft uid_t Fn kauth_cred_getuid "kauth_cred_t cred"
 Returns the real user-id from
 .Ar cred .
@@ -951,7 +1134,7 @@ Return the reference count for
 The following routines can be used to access and modify the group
 list in a
 .Ft kauth_cred_t :
-.Bl -tag
+.Bl -tag -width compact
 .It Ft int Fn kauth_cred_ismember_gid "kauth_cred_t cred" "gid_t gid" \
 "int *resultp"
 Checks if the group-id
@@ -1034,7 +1217,7 @@ as a unique identifier, distinguishing various sets of private data that
 may be associated with the credentials.
 Registering, and deregistering, a key is done by using these routines:
 .Pp
-.Bl -tag
+.Bl -tag -width compact
 .It Ft int Fn kauth_register_key "const char *name" "kauth_key_t *keyp"
 Register new key for private data for
 .Ar name
@@ -1051,7 +1234,7 @@ Deregister private data key
 .El
 .Pp
 Once registered, private data may be manipulated by the following routines:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_cred_setdata "kauth_cred_t cred" "kauth_key_t key" \
 "void *data"
 Set private data for
@@ -1087,7 +1270,7 @@ LWPs, files, etc.) reference it.
 .Pp
 The following routines are available for managing credentials reference
 counting:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_cred_hold "kauth_cred_t cred"
 Increases reference count to
 .Ar cred
@@ -1122,7 +1305,7 @@ subsystem.
 The
 .Ft kauth_cred_t
 objects have their own memory management routines:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft kauth_cred_t Fn kauth_cred_alloc "void"
 Allocates a new
 .Ft kauth_cred_t ,
@@ -1136,7 +1319,7 @@ to userland's view of credentials, a
 or vice versa.
 .Pp
 The following routines are available for these cases:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_uucred_to_cred "kauth_cred_t cred" "const struct uucred *uucred"
 Convert userland's view of credentials to a
 .Ft kauth_cred_t .
@@ -1174,7 +1357,7 @@ the group list.
 Other routines provided by
 .Nm
 are:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft void Fn kauth_cred_clone "kauth_cred_t cred1" "kauth_cred_t cred2"
 Clone credentials from
 .Ar cred1
@@ -1221,7 +1404,7 @@ Note that the built-in scopes, the
 scope and the
 .Dq process
 scope, can't be deleted.
-.Bl -tag
+.Bl -tag -width compact
 .It Ft kauth_scope_t Fn kauth_register_scope "const char *id" \
 "kauth_scope_callback_t cb" "void *cookie"
 Register a new scope on the system.
@@ -1260,7 +1443,7 @@ and in a case where all listeners defer the request -- leaving the decision
 for other listeners -- the request is denied.
 .Pp
 The following KPI is provided for the management of listeners:
-.Bl -tag
+.Bl -tag -width compact
 .It Ft kauth_listener_t Fn kauth_listen_scope "const char *id" \
 "kauth_scope_callback_t cb" "void *cookie"
 Create a new listener on the scope with the id
@@ -1343,7 +1526,7 @@ Adding a new scope should happen only when an entire subsystem is
 introduced and it is assumed other parts of the kernel may want to
 interfere with its inner-workings.
 When a subsystem that has the potential of impacting the security
-if the system is introduced, existing security modules must be updated
+of the system is introduced, existing security modules must be updated
 to also handle actions on the newly added scope.
 .Pp
 New actions should be added when sets of operations not covered at all

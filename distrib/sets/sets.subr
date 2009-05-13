@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.81 2009/01/24 22:14:44 rmind Exp $
+#	$NetBSD: sets.subr,v 1.81.2.1 2009/05/13 19:17:50 jym Exp $
 #
 
 #
@@ -227,7 +227,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.81 2009/01/24 22:14:44 rmind Exp $
+# 	# $NetBSD: sets.subr,v 1.81.2.1 2009/05/13 19:17:50 jym Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -303,7 +303,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #
 list_set_files()
 {
-	if [ ${MAKEVERBOSE:-2} -lt 2 ]; then
+	if [ ${MAKEVERBOSE:-2} -lt 3 ]; then
 		verbose=false
 	else
 		verbose=true
@@ -313,7 +313,7 @@ list_set_files()
 		for l in $list; do
 			echo $l
 			if $verbose; then
-				echo $l >&2
+				echo >&2 "DEBUG: list_set_files: $l"
 			fi
 		done
 	done | xargs cat | ${SED} ${SUBST} | \

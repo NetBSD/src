@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.3 2006/11/24 19:46:58 christos Exp $
+.\" $NetBSD: gpt.8,v 1.3.28.1 2009/05/13 19:19:02 jym Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -27,8 +27,8 @@
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
 .Dd June 22, 2006
-.Os
 .Dt GPT 8
+.Os
 .Sh NAME
 .Nm gpt
 .Nd GUID partition table maintenance utility
@@ -92,15 +92,8 @@ There is no formalized definition of the different levels yet.
 .Ss Commands
 .Bl -tag -width indent
 .\" ==== add ====
-.It Xo
-.Nm
-.Ic add
-.Op Fl b Ar number
-.Op Fl i Ar index
-.Op Fl s Ar count
-.Op Fl t Ar type
-.Ar device ...
-.Xc
+.It Nm Ic add Oo Fl b Ar number Oc Oo Fl i Ar index Oc Oo Fl s Ar count Oc \
+Oo Fl t Ar type Oc Ar device ...
 The
 .Ic add
 command allows the user to add a new partition to an existing table.
@@ -168,23 +161,10 @@ option instructs
 .Nm
 to destroy the table in a way that it can be recovered.
 .\" ==== label ====
-.It Xo
-.Nm
-.Ic label
-.Op Fl a
-.Aq Fl f Ar file | Fl l Ar label
-.Ar device ...
-.Xc
-.It Xo
-.Nm
-.Ic label
-.Op Fl b Ar number
-.Op Fl i Ar index
-.Op Fl s Ar count
-.Op Fl t Ar type
-.Aq Fl f Ar file | Fl l Ar label
-.Ar device ...
-.Xc
+.It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
+.It Nm Ic label Oo Fl b Ar number Oc Oo Fl i Ar index Oc \
+Oo Fl s Ar count Oc Oo Fl t Ar type Oc \
+Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 The
 .Ic label
 command allows the user to label any partitions that match the selection.
@@ -258,15 +238,8 @@ disk labels into GPT partitions by creating
 the GPT equivalent of a slice.
 .\" ==== remove ====
 .It Nm Ic remove Oo Fl a Oc Ar device ...
-.It Xo
-.Nm
-.Ic remove
-.Op Fl b Ar number
-.Op Fl i Ar index
-.Op Fl s Ar count
-.Op Fl t Ar type
-.Ar device ...
-.Xc
+.It Nm Ic remove Oo Fl b Ar number Oc Oo Fl i Ar index Oc \
+Oo Fl s Ar count Oc Oo Fl t Ar type Oc Ar device ...
 The
 .Ic remove
 command allows the user to remove any and all partitions that match the

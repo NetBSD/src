@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.13 2008/07/21 13:37:00 lukem Exp $	*/
+/*	$NetBSD: vipw.c,v 1.13.6.1 2009/05/13 19:20:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: vipw.c,v 1.13 2008/07/21 13:37:00 lukem Exp $");
+__RCSID("$NetBSD: vipw.c,v 1.13.6.1 2009/05/13 19:20:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ char mpwd[MAXPATHLEN], mpwdl[MAXPATHLEN];
 int
 main(int argc, char *argv[])
 {
-	char *prefix;
+	const char *prefix;
 	int pfd, tfd;
 	struct stat begin, end;
 	int ch;

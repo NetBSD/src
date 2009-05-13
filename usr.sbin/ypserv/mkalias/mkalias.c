@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.15 2008/02/29 03:00:47 lukem Exp $ */
+/*	$NetBSD: mkalias.c,v 1.15.10.1 2009/05/13 19:20:45 jym Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.15 2008/02/29 03:00:47 lukem Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.15.10.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 
 	if (new_db != NULL) {
 	  	snprintf(datestr, sizeof(datestr), "%010d", (int)time(NULL));
-		key.dptr = YP_LAST_KEY;
+		key.dptr = __UNCONST(YP_LAST_KEY);
 		key.dsize = strlen(YP_LAST_KEY);
 		val.dptr = datestr;
 		val.dsize = strlen(datestr);
@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 
 	if (new_db != NULL) {
 	  	localhostname(myname, sizeof(myname) - 1);
-		key.dptr = YP_MASTER_KEY;
+		key.dptr = __UNCONST(YP_MASTER_KEY);
 		key.dsize = strlen(YP_MASTER_KEY);
 		val.dptr = myname;
 		val.dsize = strlen(myname);

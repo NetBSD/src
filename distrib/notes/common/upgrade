@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.26 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: upgrade,v 1.26.2.1 2009/05/13 19:17:46 jym Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,16 +59,13 @@ utility and the installation kernel you chose, or the
 boot floppies available to do the upgrade.
 .\}
 .el \{\
-To do the upgrade, you must have the boot floppy
-.if \n[alpha]:\n[i386] set
-available.
+To do the upgrade, you must have one form of boot media available.
 .\}\}\}\}
 You must also have at least the
 .Sy base
 and
 .Sy kern
-binary distribution sets available, so that you can upgrade with them,
-using one of the upgrade methods described above.
+binary distribution sets available.
 Finally, you must have sufficient disk space available to install the
 new binaries.
 Since files already installed on the system are overwritten in place,
@@ -80,9 +77,8 @@ and
 .Pa /usr
 partitions, you should have enough space.
 .Pp
-Since upgrading involves replacing the kernel, the boot blocks on your
-.Nx
-partition, and most of the system binaries, it has the
+Since upgrading involves replacing the kernel, boot blocks,
+and most of the system binaries, it has the
 potential to cause data loss.
 You are strongly advised to 
 .Em back up 
@@ -99,19 +95,17 @@ booting, there is an option to bypass this step.
 Make sure you know whether or not to install the bootloader.
 .\}
 .Pp
-The upgrade procedure using the
-.Ic sysinst
-tool is similar to an installation, but without the hard disk partitioning.
+The upgrade procedure
+is similar to an installation, but without the hard disk partitioning.
 .Ic sysinst
 will attempt to merge the settings stored in your
 .Pa /etc
 directory with the new version of
 .Nx .
 Also, file systems are checked before unpacking the sets.
-Getting the binary
+Fetching the binary
 sets is done in the same manner as the installation procedure;
-refer to the installation part of the document
-for how to do this.
+refer to the installation part of the document for help.
 .Pp
 After a new kernel has been copied to your hard disk, your
 machine is a complete

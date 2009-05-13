@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.38 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.38.6.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.38 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.38.6.1 2009/05/13 19:18:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -437,7 +437,7 @@ control(pty, cp, n)
 {
 	struct winsize w;
 
-	if (n < 4+sizeof (w) || cp[2] != 's' || cp[3] != 's')
+	if (n < (int)(4+sizeof (w)) || cp[2] != 's' || cp[3] != 's')
 		return (0);
 	oobdata[0] &= ~TIOCPKT_WINDOW;	/* we know he heard */
 	memmove(&w, cp+4, sizeof(w));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd6.c,v 1.7 2003/08/07 11:17:23 agc Exp $	*/
+/*	$NetBSD: cmd6.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd6.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd6.c,v 1.7 2003/08/07 11:17:23 agc Exp $");
+__RCSID("$NetBSD: cmd6.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ debug_str(void)
 	for (s = str_head.s_forw; s != &str_head; s = s->s_forw) {
 		if (more(w, 0) == 2)
 			goto out;
-		wwprintf(w, "(0x%x)\t\"%s\"\n", s->s_data, s->s_data);
+		wwprintf(w, "(%p)\t\"%s\"\n", s->s_data, s->s_data);
 	}
 	waitnl(w);
 out:

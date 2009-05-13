@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.32 2008/01/25 19:36:12 christos Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.32.12.1 2009/05/13 19:20:00 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.32 2008/01/25 19:36:12 christos Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.32.12.1 2009/05/13 19:20:00 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,10 @@ static uid_t uid;
 static char *domain;
 
 static void
-pwerror(char *name, int err, int eval)
+pwerror(const char *name, int show_err, int eval)
 {
 
-	if (err)
+	if (show_err)
 		warn("%s", name);
 	errx(eval, "NIS passwd database unchanged");
 }
@@ -83,7 +83,8 @@ static char *
 getnewpasswd(struct passwd *pw, char **old_pass)
 {
 	int tries;
-	char *p, *t;
+	const char *p, *t;
+	char *result;
 	static char buf[_PASSWORD_LEN+1];
 	char salt[_PASSWORD_LEN+1];
 	char option[LINE_MAX], *key, *opt;
@@ -140,12 +141,12 @@ getnewpasswd(struct passwd *pw, char **old_pass)
 		warn("Couldn't generate salt");
 		pwerror(NULL, 0, 0);
 	}
-	p = strdup(crypt(buf, salt));
-	if (!p) {
+	result = strdup(crypt(buf, salt));
+	if (!result) {
 		(void)printf("not enough core.\n");
 		pwerror(NULL, 0, 0);
 	}
-	return (p);
+	return (result);
 }
 
 static void

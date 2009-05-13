@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.9,v 1.23 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: arp.9,v 1.23.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,12 +118,13 @@ sent.
 .Xr ether_ifattach 9
 .\" .Xr fddi_ifattach 9 ,
 .\" .Xr arc_ifattach 9
-.br
+.Pp
 Plummer, D., "RFC826", An Ethernet Address Resolution Protocol.
 .Sh AUTHORS
-UCB CSRG (original implementation)
-.br
-Ignatios Souvatzis (support for non-Ethernet)
+.An UCB CSRG
+(original implementation)
+.An Ignatios Souvatzis
+(support for non-Ethernet)
 .Sh CODE REFERENCES
 The ARP code is implemented in
 .Pa sys/net/if_arp.h ,

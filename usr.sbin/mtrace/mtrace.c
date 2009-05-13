@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.37 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.37.28.1 2009/05/13 19:20:31 jym Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.37 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.37.28.1 2009/05/13 19:20:31 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -137,11 +137,11 @@ vifi_t  numvifs;		/* to keep loader happy */
 				/* (see kern.c) */
 
 u_long			byteswap(u_long);
-char *			inet_name(u_int32_t addr);
-u_int32_t			host_addr(char *name);
+const char *		inet_name(u_int32_t addr);
+u_int32_t			host_addr(const char *name);
 /* u_int is promoted u_char */
-char *			proto_type(u_int type);
-char *			flag_type(u_int type);
+const char *		proto_type(u_int type);
+const char *		flag_type(u_int type);
 
 u_int32_t		get_netmask(int s, u_int32_t dst);
 int			get_ttl(struct resp_buf *buf);
@@ -149,11 +149,11 @@ int			t_diff(u_long a, u_long b);
 u_long			fixtime(u_long time);
 int			send_recv(u_int32_t dst, int type, int code,
 				  int tries, struct resp_buf *save);
-char *			print_host(u_int32_t addr);
-char *			print_host2(u_int32_t addr1, u_int32_t addr2);
+const char *		print_host(u_int32_t addr);
+const char *		print_host2(u_int32_t addr1, u_int32_t addr2);
 void			print_trace(int index, struct resp_buf *buf);
-int			what_kind(struct resp_buf *buf, char *why);
-char *			scale(int *hop);
+int			what_kind(struct resp_buf *buf, const char *why);
+const char *		scale(int *hop);
 void			stat_line(struct tr_resp *r, struct tr_resp *s,
 				  int have_next, int *res);
 void			fixup_stats(struct resp_buf *base,
@@ -169,7 +169,7 @@ int			main(int argc, char *argv[]);
 /* logit() prototyped in defs.h */
 
 
-char   *
+const char *
 inet_name(u_int32_t addr)
 {
     struct hostent *e;
@@ -181,13 +181,13 @@ inet_name(u_int32_t addr)
 
 
 u_int32_t 
-host_addr(char *name)
+host_addr(const char *name)
 {
     struct hostent *e = (struct hostent *)0;
     u_int32_t  addr;
     int	i, dots = 3;
     char	buf[40];
-    char	*ip = name;
+    const char	*ip = name;
     char	*op = buf;
 
     /*
@@ -210,7 +210,7 @@ host_addr(char *name)
     if (e) memcpy((char *)&addr, e->h_addr_list[0], sizeof(addr));
     else {
 	addr = inet_addr(buf);
-	if (addr == -1) {
+	if (addr == (in_addr_t)-1) {
 	    addr = 0;
 	    printf("Could not parse %s as host name or address\n", name);
 	}
@@ -219,7 +219,7 @@ host_addr(char *name)
 }
 
 
-char *
+const char *
 proto_type(u_int type)
 {
     static char buf[80];
@@ -248,7 +248,7 @@ proto_type(u_int type)
 }
 
 
-char *
+const char *
 flag_type(u_int type)
 {
     static char buf[80];
@@ -369,12 +369,12 @@ t_diff(u_long a, u_long b)
  * so correct and incorrect times will be far apart.
  */
 u_long
-fixtime(u_long time)
+fixtime(u_long tim)
 {
-    if (abs((int)(time-base.qtime)) > 0x3FFFFFFF)
-        time = ((time & 0xFFFF0000) + (JAN_1970 << 16)) +
-	       ((time & 0xFFFF) << 14) / 15625;
-    return (time);
+    if (abs((int)(tim-base.qtime)) > 0x3FFFFFFF)
+        tim = ((tim & 0xFFFF0000) + (JAN_1970 << 16)) +
+	       ((tim & 0xFFFF) << 14) / 15625;
+    return (tim);
 }
 
 /*
@@ -485,7 +485,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 		continue;
 	    }
 
-	    if (recvlen < sizeof(struct ip)) {
+	    if (recvlen < (int)sizeof(struct ip)) {
 		fprintf(stderr,
 			"packet too short (%u bytes) for IP header", recvlen);
 		continue;
@@ -540,7 +540,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 
 	      case IGMP_MTRACE_QUERY:	    /* For backward compatibility with 3.3 */
 	      case IGMP_MTRACE_REPLY:
-		if (igmpdatalen <= QLEN) continue;
+		if (igmpdatalen <= (int)QLEN) continue;
 		if ((igmpdatalen - QLEN)%RLEN) {
 		    printf("packet with incorrect datalen\n");
 		    continue;
@@ -640,7 +640,7 @@ passive_mode(void)
 	    continue;
 	}
 
-	if (recvlen < sizeof(struct ip)) {
+	if (recvlen < (int)sizeof(struct ip)) {
 	    fprintf(stderr,
 		    "packet too short (%u bytes) for IP header", recvlen);
 	    continue;
@@ -671,7 +671,7 @@ passive_mode(void)
 
 	  case IGMP_MTRACE_QUERY:	    /* For backward compatibility with 3.3 */
 	  case IGMP_MTRACE_REPLY:
-	    if (igmpdatalen < QLEN) continue;
+	    if (igmpdatalen < (int)QLEN) continue;
 	    if ((igmpdatalen - QLEN)%RLEN) {
 		printf("packet with incorrect datalen\n");
 		continue;
@@ -728,7 +728,7 @@ passive_mode(void)
     }
 }
 
-char *
+const char *
 print_host(u_int32_t addr)
 {
     return print_host2(addr, 0);
@@ -740,10 +740,10 @@ print_host(u_int32_t addr)
  * sometimes get the name from the incoming interface.  This might be
  * confusing but should be slightly more helpful than just a "?".
  */
-char *
+const char *
 print_host2(u_int32_t addr1, u_int32_t addr2)
 {
-    char *name;
+    const char *name;
 
     if (numeric) {
 	printf("%s", inet_fmt(addr1));
@@ -760,19 +760,19 @@ print_host2(u_int32_t addr1, u_int32_t addr2)
  * Print responses as received (reverse path from dst to src)
  */
 void
-print_trace(int index, struct resp_buf *buf)
+print_trace(int idx, struct resp_buf *buf)
 {
     struct tr_resp *r;
-    char *name;
+    const char *name;
     int i;
     int hop;
-    char *ms, *ft;
+    const char *ms, *ft;
 
-    i = abs(index);
+    i = abs(idx);
     r = buf->resps + i - 1;
 
     for (; i <= buf->len; ++i, ++r) {
-	if (index > 0) printf("%3d  ", -i);
+	if (idx > 0) printf("%3d  ", -i);
 	name = print_host2(r->tr_outaddr, r->tr_inaddr);
 	printf("  %s  thresh^ %d", proto_type(r->tr_rproto), r->tr_fttl);
 	if (verbose) {
@@ -793,7 +793,7 @@ print_trace(int index, struct resp_buf *buf)
  * See what kind of router is the next hop
  */
 int
-what_kind(struct resp_buf *buf, char *why)
+what_kind(struct resp_buf *buf, const char *why)
 {
     u_int32_t smask;
     int retval;
@@ -807,7 +807,7 @@ what_kind(struct resp_buf *buf, char *why)
 	u_int32_t version = ntohl(incr[0].igmp.igmp_group.s_addr);
 	u_int32_t *p = (u_int32_t *)incr[0].ndata;
 	u_int32_t *ep = p + (incr[0].len >> 2);
-	char *type = "";
+	const char *type = "";
 	retval = 0;
 	switch (version & 0xFF) {
 	  case 1:
@@ -850,7 +850,7 @@ what_kind(struct resp_buf *buf, char *why)
 }
 
 
-char *
+const char *
 scale(int *hop)
 {
     if (*hop > -1000 && *hop < 10000) return (" ms");
@@ -965,10 +965,10 @@ stat_line(struct tr_resp *r, struct tr_resp *s, int have_next, int *rst)
  * byteorder bugs in mrouted 3.6 on little-endian machines.
  */
 void
-fixup_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
+fixup_stats(struct resp_buf *basep, struct resp_buf *prev, struct resp_buf *new)
 {
-    int rno = base->len;
-    struct tr_resp *b = base->resps + rno;
+    int rno = basep->len;
+    struct tr_resp *b = basep->resps + rno;
     struct tr_resp *p = prev->resps + rno;
     struct tr_resp *n = new->resps + rno;
     int *r = reset + rno;
@@ -995,8 +995,8 @@ fixup_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 	}
     }
 
-    rno = base->len;
-    b = base->resps + rno;
+    rno = basep->len;
+    b = basep->resps + rno;
     p = prev->resps + rno;
     n = new->resps + rno;
 
@@ -1033,8 +1033,8 @@ fixup_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 
     if (rno < 0) return;
 
-    rno = base->len;
-    b = base->resps + rno;
+    rno = basep->len;
+    b = basep->resps + rno;
     p = prev->resps + rno;
 
     while (--rno >= 0) (--b)->tr_pktcnt = (--p)->tr_pktcnt;
@@ -1044,21 +1044,21 @@ fixup_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
  * Print responses with statistics for forward path (from src to dst)
  */
 int
-print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
+print_stats(struct resp_buf *basep, struct resp_buf *prev, struct resp_buf *new)
 {
     int rtt, hop;
-    char *ms;
+    const char *ms;
     char *s1;
     u_int32_t smask;
-    int rno = base->len - 1;
-    struct tr_resp *b = base->resps + rno;
+    int rno = basep->len - 1;
+    struct tr_resp *b = basep->resps + rno;
     struct tr_resp *p = prev->resps + rno;
     struct tr_resp *n = new->resps + rno;
     int *r = reset + rno;
     u_long resptime = new->rtime;
     u_long qarrtime = fixtime(ntohl(n->tr_qarr));
     u_int ttl = n->tr_fttl;
-    int first = (base == prev);
+    int first = (basep == prev);
 
     VAL_TO_MASK(smask, b->tr_smask);
     printf("  Source        Response Dest");
@@ -1066,7 +1066,7 @@ print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
     s1 = inet_fmt(qsrc); 
     printf("%-15s %-15s  All Multicast Traffic     From %s\n",
 	   ((b->tr_inaddr & smask) == (qsrc & smask)) ? s1 : "   * * *       ",
-	   inet_fmt(base->qhdr.tr_raddr), s1);
+	   inet_fmt(basep->qhdr.tr_raddr), s1);
     rtt = t_diff(resptime, new->qtime);
     ms = scale(&rtt);
     printf("     %c       __/  rtt%5d%s    Lost/Sent = Pct  Rate       To %s\n",
@@ -1167,11 +1167,11 @@ main(int argc, char **argv)
     if (argc == 0) goto usage;
 
     while (argc > 0 && *argv[0] == '-') {
-	char *p = *argv++;  argc--;
+	const char *p = *argv++;  argc--;
 	p++;
 	do {
 	    char c = *p++;
-	    char *arg = (char *) 0;
+	    const char *arg = (char *) 0;
 	    if (isdigit((unsigned char)*p)) {
 		arg = p;
 		p = "";

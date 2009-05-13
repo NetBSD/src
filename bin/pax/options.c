@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.102 2008/11/23 10:08:50 dholland Exp $	*/
+/*	$NetBSD: options.c,v 1.102.2.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.102 2008/11/23 10:08:50 dholland Exp $");
+__RCSID("$NetBSD: options.c,v 1.102.2.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,7 +254,7 @@ static void
 pax_options(int argc, char **argv)
 {
 	int c;
-	int i;
+	size_t i;
 	u_int64_t flg = 0;
 	u_int64_t bflg = 0;
 	char *pt;
@@ -692,7 +692,7 @@ pax_options(int argc, char **argv)
 	case LIST:
 	case EXTRACT:
 		for (; optind < argc; optind++)
-			if (pat_add(argv[optind], NULL) < 0)
+			if (pat_add(argv[optind], NULL, NOGLOB_MTCH) < 0)
 				pax_usage();
 		break;
 	case COPY:
@@ -1234,7 +1234,7 @@ tar_options(int argc, char **argv)
 							free(str);
 							continue;
 						}
-						if (pat_add(str, dir) < 0)
+						if (pat_add(str, dir, NOGLOB_MTCH) < 0)
 							tar_usage();
 						sawpat = 1;
 					}
@@ -1254,7 +1254,7 @@ tar_options(int argc, char **argv)
  						break;
 					chdname = *argv++;
 					havechd++;
-				} else if (pat_add(*argv++, chdname) < 0)
+				} else if (pat_add(*argv++, chdname, 0) < 0)
 					tar_usage();
 				else
 					sawpat = 1;
@@ -1473,7 +1473,8 @@ cpio_options(int argc, char **argv)
 	FSUB tmp;
 	u_int64_t flg = 0;
 	u_int64_t bflg = 0;
-	int c, i;
+	int c;
+	size_t i;
 	FILE *fp;
 	char *str;
 
@@ -1641,7 +1642,7 @@ cpio_options(int argc, char **argv)
 				cpio_usage();
 			}
 			while ((str = getline(fp)) != NULL) {
-				pat_add(str, NULL);
+				pat_add(str, NULL, 0);
 			}
 			fclose(fp);
 			if (getline_error) {
@@ -1780,7 +1781,7 @@ cpio_options(int argc, char **argv)
 	case LIST:
 	case EXTRACT:
 		for (; optind < argc; optind++)
-			if (pat_add(argv[optind], 0) < 0)
+			if (pat_add(argv[optind], NULL, 0) < 0)
 				cpio_usage();
 		break;
 	case COPY:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2007/04/22 23:42:38 macallan Exp $
+#	$NetBSD: Makefile,v 1.5.18.1 2009/05/13 19:20:48 jym Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -16,11 +16,11 @@ SRCS=	ffb_driver.c ffb_accel.c ffb_attr.c ffb_stip.c ffb_bcopy.c \
 
 SRCS+=	VISmoveImage.s ffb_asm.s
 
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc64"
 AFLAGS+= -x assembler-with-cpp -Wa,-Av9a
 .endif
 
-.if ${MACHINE} == "sparc"
+.if ${MACHINE_ARCH} == "sparc"
 AFLAGS+= -x assembler-with-cpp -Wa,-Av8plusa
 COPTS= -mv8plus
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.9 2003/08/07 11:17:33 agc Exp $	*/
+/*	$NetBSD: var.c,v 1.9.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: var.c,v 1.9 2003/08/07 11:17:33 agc Exp $");
+__RCSID("$NetBSD: var.c,v 1.9.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: var.c,v 1.9 2003/08/07 11:17:33 agc Exp $");
 #include "window_string.h"
 
 struct var *
-var_set1(struct var **head, char *name, struct value *v)
+var_set1(struct var **head, const char *name, struct value *v)
 {
 	struct var **p;
 	struct var *r;
@@ -83,7 +83,7 @@ var_set1(struct var **head, char *name, struct value *v)
 }
 
 struct var *
-var_setstr1(struct var **head, char *name, char *str)
+var_setstr1(struct var **head, const char *name, char *str)
 {
 	struct value v;
 
@@ -93,7 +93,7 @@ var_setstr1(struct var **head, char *name, char *str)
 }
 
 struct var *
-var_setnum1(struct var **head, char *name, int num)
+var_setnum1(struct var **head, const char *name, int num)
 {
 	struct value v;
 
@@ -103,7 +103,7 @@ var_setnum1(struct var **head, char *name, int num)
 }
 
 int
-var_unset1(struct var **head, char *name)
+var_unset1(struct var **head, const char *name)
 {
 	struct var **p;
 	struct var *r;
@@ -122,7 +122,7 @@ var_unset1(struct var **head, char *name)
 }
 
 struct var **
-var_lookup1(struct var **p, char *name)
+var_lookup1(struct var **p, const char *name)
 {
 	int cmp;
 

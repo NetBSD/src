@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2007/07/01 07:39:47 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.4.20.1 2009/05/13 19:20:32 jym Exp $
 
 PROG=	powerd
 SRCS=	powerd.c
 
-WARNS?= 4
 DPADD+=	${LIBPROP} ${LIBUTIL}
 LDADD+=	-lprop -lutil
 

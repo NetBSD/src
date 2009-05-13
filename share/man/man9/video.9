@@ -1,4 +1,4 @@
-.\"	$NetBSD: video.9,v 1.4 2008/09/08 22:21:47 ahoka Exp $
+.\"	$NetBSD: video.9,v 1.4.8.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 2008 Patrick Mahoney
 .\" All rights reserved.
@@ -85,7 +85,6 @@ The hardware driver submits data to the video layer with
 .Fa vl_dev
 is the video layer device returned by
 .Fa video_attach_mi .
-.Bl -tag -width indent
 .Bd -literal
 struct video_payload {
 	const uint8_t	*data;
@@ -94,6 +93,7 @@ struct video_payload {
 	bool		end_of_frame;
 };
 .Ed
+.Bl -tag -width indent
 .It Fa data
 Pointer to the video data for this payload.
 This may only be a

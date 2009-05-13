@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.8 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.8.8.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -68,13 +68,13 @@ bpf_stats(void)
 }
 
 void
-bpf_dump(char *interface)
+bpf_dump(const char *bpfif)
 {
 	struct bpf_d_ext *dpe;
 
 	if (use_sysctl) {
-		int	name[CTL_MAXNAME], rc, i;
-		size_t	sz, szproc;
+		int	name[CTL_MAXNAME], rc;
+		size_t	i, sz, szproc;
 		u_int	namelen;
 		void	*v;
 		struct kinfo_proc2 p;
@@ -115,8 +115,8 @@ bpf_dump(char *interface)
 #define BPFEXT(entry) dpe->entry
 
 		for (i = 0; i < (sz / sizeof(*dpe)); i++, dpe++) {
-			if (interface && 
-			    strncmp(BPFEXT(bde_ifname), interface, IFNAMSIZ))
+			if (bpfif && 
+			    strncmp(BPFEXT(bde_ifname), bpfif, IFNAMSIZ))
 				continue;
 			
 			printf("%-7d ", BPFEXT(bde_pid));

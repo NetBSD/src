@@ -1,0 +1,52 @@
+.\"	$NetBSD: sdmmc.4,v 1.1.2.2 2009/05/13 19:19:09 jym Exp $
+.\"	$OpenBSD: sdmmc.4,v 1.8 2009/03/25 19:33:06 mk Exp $
+.\"
+.\" Theo de Raadt, 2006. Public Domain.
+.\"
+.Dd April 21, 2009
+.Dt SDMMC 4
+.Os
+.Sh NAME
+.Nm sdmmc
+.Nd SD bus
+.Sh SYNOPSIS
+.Cd "# zaurus specific"
+.Cd "sdmmc* at pxammc?"
+.Cd "# all architectures"
+.Cd "sdmmc* at sdhc?"
+.Cd "ld* at sdmmc?"
+.Sh DESCRIPTION
+The
+.Nm
+subsystem provides machine-independent bus support and drivers for
+SD/MMC devices.
+.Pp
+Standard SD/SDHC memory devices will show up as a logical disk, using
+.Xr ld 4 .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr ld 4 ,
+.Xr sbt 4 ,
+.Xr sdhc 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Uwe Stuehler
+.Aq uwe@openbsd.org
+for
+.Ox
+and ported to
+.Nx
+by
+.An NONAKA Kimihiro
+.Aq nonakap@gmail.com
+and
+.An KIYOHARA Takashi
+.Aq kiyohara@kk.iij4u.or.jp .

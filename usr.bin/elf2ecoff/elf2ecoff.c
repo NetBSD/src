@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.22 2006/05/31 08:09:55 simonb Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.22.28.1 2009/05/13 19:19:48 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -79,8 +79,8 @@ int     debug = 0;
 int     phcmp(Elf32_Phdr * h1, Elf32_Phdr * h2);
 
 
-char   *saveRead(int file, off_t offset, off_t len, char *name);
-void    safewrite(int outfile, void *buf, off_t len, const char *msg);
+char   *saveRead(int file, off_t offset, off_t len, const char *name);
+void    safewrite(int outfile, const void *buf, off_t len, const char *msg);
 void    copy(int, int, off_t, off_t);
 void    combine(struct sect * base, struct sect * new, int paddable);
 void    translate_syms(struct elf_syms *, struct ecoff_syms *);
@@ -123,7 +123,8 @@ main(int argc, char **argv, char **envp)
 	Elf32_Shdr *sh;
 	char   *shstrtab;
 	int     strtabix, symtabix;
-	int     i, pad;
+	size_t	i;
+	int     pad;
 	struct sect text, data, bss;	/* a.out-compatible sections */
 	struct sect rdata, sdata, sbss;	/* ECOFF-only sections */
 
@@ -490,7 +491,7 @@ copy(out, in, offset, size)
 	off_t   offset, size;
 {
 	char    ibuf[4096];
-	int     remaining, cur, count;
+	size_t  remaining, cur, count;
 
 	/* Go to the start of the ELF symbol table... */
 	if (lseek(in, offset, SEEK_SET) < 0) {
@@ -550,7 +551,7 @@ phcmp(h1, h2)
 
 char
        *
-saveRead(int file, off_t offset, off_t len, char *name)
+saveRead(int file, off_t offset, off_t len, const char *name)
 {
 	char   *tmp;
 	int     count;
@@ -573,10 +574,10 @@ saveRead(int file, off_t offset, off_t len, char *name)
 }
 
 void
-safewrite(int outfile, void *buf, off_t len, const char *msg)
+safewrite(int outfile, const void *buf, off_t len, const char *msg)
 {
 	int     written;
-	written = write(outfile, (char *) buf, len);
+	written = write(outfile, buf, len);
 	if (written != len) {
 		fprintf(stderr, msg, strerror(errno));
 		exit(1);
@@ -859,7 +860,7 @@ pad16(int fd, int size, const char *msg)
 void
 bswap32_region(int32_t* p, int len)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < len / sizeof(int32_t); i++, p++)
 		*p = bswap32(*p);

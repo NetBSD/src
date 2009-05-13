@@ -1,4 +1,4 @@
-/*	$NetBSD: isofs.c,v 1.6 2006/05/11 11:56:38 yamt Exp $	*/
+/*	$NetBSD: isofs.c,v 1.6.30.1 2009/05/13 19:19:50 jym Exp $	*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isofs.c,v 1.6 2006/05/11 11:56:38 yamt Exp $");
+__RCSID("$NetBSD: isofs.c,v 1.6.30.1 2009/05/13 19:19:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -54,7 +54,7 @@ isofs_filestat(struct vnode *vp, struct filestat *fsp)
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
-	fsp->fileid = (long)inode.i_number;
+	fsp->fileid = inode.i_number;
 	fsp->mode = inode.inode.iso_mode;
 	fsp->size = inode.i_size;
 	fsp->rdev = inode.i_dev;

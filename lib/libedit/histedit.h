@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.35 2009/02/05 19:15:44 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.35.2.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -132,11 +132,13 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_GETCFN	13	/* , el_rfunc_t);		*/
 #define	EL_CLIENTDATA	14	/* , void *);			*/
 #define	EL_UNBUFFERED	15	/* , int);			*/
-#define	EL_PREP_TERM    16      /* , int);                      */
+#define	EL_PREP_TERM	16	/* , int);			*/
 #define	EL_GETTC	17	/* , const char *, ..., NULL);	*/
 #define	EL_GETFP	18	/* , int, FILE **);		*/
 #define	EL_SETFP	19	/* , int, FILE *);		*/
-#define EL_REFRESH	20	/* , void);			*/
+#define	EL_REFRESH	20	/* , void);			*/
+#define	EL_PROMPT_ESC	21	/* , el_pfunc_t, char);		*/
+#define	EL_RPROMPT_ESC	22	/* , el_pfunc_t, char);		*/
 
 #define	EL_BUILTIN_GETCFN	(NULL)
 

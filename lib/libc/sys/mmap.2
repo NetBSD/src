@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.39 2007/07/18 23:34:23 wiz Exp $
+.\"	$NetBSD: mmap.2,v 1.39.22.1 2009/05/13 19:18:28 jym Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd October 6, 2003
+.Dd February 27, 2009
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -107,10 +107,9 @@ parameter specifies the type of the mapped object, mapping options and
 whether modifications made to the mapped copy of the page are private
 to the process or are to be shared with other references.
 Note that either
-.Dv MAP_SHARED ,
-.Dv MAP_PRIVATE
+.Dv MAP_SHARED
 or
-.Dv MAP_COPY
+.Dv MAP_PRIVATE
 must be specified.
 Sharing, mapping type and options are specified in the
 .Fa flags
@@ -160,9 +159,13 @@ system calls.
 Attempt to use the address
 .Fa addr
 even if it falls within the normally protected process data or
-text segment memory regions.  If the requested region of memory
+text segment memory regions.
+If the requested region of memory
 is actually present in the memory map, a different address will
-be selected as if MAP_TRYFIXED had not been specified.  If
+be selected as if
+.Dv MAP_TRYFIXED
+had not been specified.
+If
 .Fa addr
 is
 .Fa NULL ,
@@ -177,8 +180,6 @@ other processes using
 will be seen.
 .It Dv MAP_SHARED
 Modifications are shared.
-.It Dv MAP_COPY
-Modifications are private, including other processes.
 .El
 .Pp
 The
@@ -286,12 +287,3 @@ would exceed the offset maximum established in its open file description.
 .Xr munmap 2 ,
 .Xr getpagesize 3 ,
 .Xr sysconf 3
-.Sh BUGS
-The
-.Dv MAP_COPY
-flag is not implemented.
-The current
-.Dv MAP_COPY
-semantics are the same as those of the
-.Dv MAP_PRIVATE
-flag.

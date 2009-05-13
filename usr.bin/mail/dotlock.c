@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.9 2007/10/29 23:20:38 christos Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.9.14.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,11 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.9 2007/10/29 23:20:38 christos Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.9.14.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 
 #include "rcv.h"
 #include "extern.h"
+#include "sig.h"
 
 #ifndef O_SYNC
 #define O_SYNC	0
@@ -139,6 +140,7 @@ dot_lock(const char *fname, int pollinterval, FILE *fp, const char *msg)
 {
 	char path[MAXPATHLEN];
 	sigset_t nset, oset;
+	int retval;
 
 	(void)sigemptyset(&nset);
 	(void)sigaddset(&nset, SIGHUP);
@@ -152,17 +154,20 @@ dot_lock(const char *fname, int pollinterval, FILE *fp, const char *msg)
 
 	(void)snprintf(path, sizeof(path), "%s.lock", fname);
 
+	retval = -1;
 	for (;;) {
+		sig_check();
 		(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 		if (create_exclusive(path) != -1) {
 			(void)sigprocmask(SIG_SETMASK, &oset, NULL);
-			return 0;
+			retval = 0;
+			break;
 		}
 		else
 			(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 
 		if (errno != EEXIST)
-			return -1;
+			break;
 
 		if (fp && msg)
 		    (void)fputs(msg, fp);
@@ -170,11 +175,13 @@ dot_lock(const char *fname, int pollinterval, FILE *fp, const char *msg)
 		if (pollinterval) {
 			if (pollinterval == -1) {
 				errno = EEXIST;
-				return -1;
+				break;
 			}
 			(void)sleep((unsigned int)pollinterval);
 		}
 	}
+	sig_check();
+	return retval;
 }
 
 PUBLIC void

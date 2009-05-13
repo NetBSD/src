@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2008/02/04 08:42:41 chris Exp $	*/
+/*	$NetBSD: md.h,v 1.18.16.1 2009/05/13 19:17:55 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,9 @@
 #define	PART_REST	PART_D
 #define	PART_USR	PART_E
 #define	PART_FIRST_FREE	PART_F
+
+/* have support for booting from UFS2 */
+#define	HAVE_UFS2_BOOT
 
 /*
  *  Default filesets to fetch and install during installation

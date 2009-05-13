@@ -1,11 +1,11 @@
-# $NetBSD: mi,v 1.11 2008/12/05 18:56:47 cube Exp $
+# $NetBSD: mi,v 1.11.2.1 2009/05/13 19:17:53 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/X11/fs/config					-unknown-	x11
 ./etc/X11/fs/config					-unknown-	xorg
 ./etc/X11/lbxproxy/AtomControl				-unknown-	x11
-./etc/X11/lbxproxy/AtomControl				-unknown-	xorg
+./etc/X11/lbxproxy/AtomControl				-obsolete-	xorg,obsolete
 ./etc/X11/proxymngr/pmconfig				-unknown-	x11
 ./etc/X11/proxymngr/pmconfig				-unknown-	xorg
 ./etc/X11/rstart/commands/@List				-unknown-	x11
@@ -32,6 +32,7 @@
 ./etc/X11/xdm/Xaccess					-unknown-	xorg
 ./etc/X11/xdm/Xresources				-unknown-	x11
 ./etc/X11/xdm/Xresources				-unknown-	xorg
+./etc/X11/xdm/Xreset					-unknown-	xorg
 ./etc/X11/xdm/Xservers					-unknown-	x11
 ./etc/X11/xdm/Xservers					-unknown-	xorg
 ./etc/X11/xdm/Xservers.fs				-unknown-	x11
@@ -42,12 +43,13 @@
 ./etc/X11/xdm/Xsession					-unknown-	xorg
 ./etc/X11/xdm/Xsetup_0					-unknown-	x11
 ./etc/X11/xdm/Xsetup_0					-unknown-	xorg
+./etc/X11/xdm/Xstartup					-unknown-	xorg
 ./etc/X11/xdm/Xwilling					-unknown-	x11
 ./etc/X11/xdm/Xwilling					-unknown-	xorg
 ./etc/X11/xdm/xdm-config				-unknown-	x11
 ./etc/X11/xdm/xdm-config				-unknown-	xorg
-./etc/X11/xdm/xorg-bw.xpm				-unknown-	xorg
-./etc/X11/xdm/xorg.xpm					-unknown-	xorg
+./etc/X11/xdm/xorg-bw.xpm				xetc-obsolete	obsolete
+./etc/X11/xdm/xorg.xpm					xetc-obsolete	obsolete
 ./etc/X11/xinit/xinitrc					-unknown-	x11
 ./etc/X11/xinit/xinitrc					-unknown-	xorg
 ./etc/X11/xserver/SecurityPolicy			-unknown-	x11

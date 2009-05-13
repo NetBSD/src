@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.40 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: install,v 1.40.6.1 2009/05/13 19:17:47 jym Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -154,7 +154,7 @@ and
 file systems, a comfortable size for the
 .Nx
 .Pa /
-partition is about 64 MB.
+partition is about 100 MB.
 A good initial size for the swap partition is twice the
 amount of physical memory in your machine (though, unlike
 .Tn Ultrix ,
@@ -162,11 +162,6 @@ there are no restrictions on the size of the swap partition that would render
 part of your memory unusable).
 The default swap size is 64 MB, which
 is adequate for doing a full system build.
-A full binary installation, with X11R6 takes about 315 MB in
-.Pa /usr ;
-a 350 MB
-.Pa /usr
-should be ample.
 .
 .Ss2 Install via a NetBSD CD-ROM
 .
@@ -220,34 +215,8 @@ section later in the INSTALL notes.
 .
 .Ss2 Installing from an existing system
 .
-.(Note
-If you are installing
-.Nx
-using an existing
-.Nx
-system that is older than
-.Nx 1.4 , you will need to install new bootblocks
-before installing
-.Nx \*V.
-New bootblocks are in the tar file:
 .Pp
-.Dl Pa \*M/binary/sets/base.tgz
-.Pp
-in the
-.Nx \*V
-distribution.
-To install the new bootblocks, use the following commands:
-.Pp
-.Dl # Ic "cd /"
-.Dl # Ic "tar -zxpvf .../\*M/binary/sets/base.tgz ./boot.pmax ./usr/mdec"
-.Dl # Ic "/usr/sbin/installboot /dev/rrz" Ns Ar X Ns Ic "c /usr/mdec/bootxx_ffs"
-.Pp
-where
-.Ar X
-is your boot disk SCSI-ID.
-.Note)
-.Pp
-With new
+With the
 .Nx
 bootblocks or using the
 .Tn Ultrix

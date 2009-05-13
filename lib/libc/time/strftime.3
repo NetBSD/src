@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.23 2006/06/17 04:58:14 reed Exp $
+.\"	$NetBSD: strftime.3,v 1.23.30.1 2009/05/13 19:18:28 jym Exp $
 .\"
 .Dd April 14, 2004
 .Dt STRFTIME 3
@@ -104,7 +104,6 @@ is replaced by the date in the format
 (the ISO 8601 date format).
 .It Cm \&%G
 is replaced by the ISO 8601 year with century as a decimal number.
-.TP
 .It Cm \&%g
 is replaced by the ISO 8601 year without century as a decimal number (00-99).
 This is the year that includes the greater part of the week.
@@ -112,7 +111,6 @@ This is the year that includes the greater part of the week.
 See also the
 .Ql \&%V
 conversion specification.
-.TP
 .It Cm \&%H
 is replaced by the hour (24-hour clock) as a decimal number [00,23].
 .It Cm \&%I

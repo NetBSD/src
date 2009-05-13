@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.96 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: sysinst,v 1.96.2.1 2009/05/13 19:17:46 jym Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,9 +76,9 @@ Using
 installing
 .Nx
 is a relatively easy process.
-You still should read this document and have it in hand when doing the
+Still, you should read this document and have it in hand when doing the
 installation process.
-This document tries to be a good guideline for the installation and as such
+This document tries to be a good guide to the installation, and as such,
 covers many details for the sake of completeness.
 Do not let this discourage you; the install program is not hard
 to use.
@@ -178,10 +178,8 @@ an example.
 What you need.
 .(bullet
 The distribution sets (in this example, they are on CD).
-.if !\n[pmax]:\n[sgimips]:\n[sparc64] \{\
+.if !\n[alpha]:\n[amd64]:\n[i386]:\n[pmax]:\n[sgimips]:\n[sparc64] \{\
 .It
-.ie \n[alpha] Three floppy disks.
-.el \{\
 .ie \n[ews4800mips] Two floppy disks.
 .el \{\
 .ie \n[hp700] \{\
@@ -189,8 +187,6 @@ The
 .Pa netinstall.lif
 volume on a netboot server as described above.
 .\}
-.el \{\
-.ie \n[i386] Two 1.44 MB 3.5" floppy disks if the CD is not bootable or if you cannot boot from CD.
 .el \{\
 .ie \n[mac68k] The Mac OS Booter application and an Installation Kernel
 .el \{\
@@ -204,12 +200,8 @@ sysinst.fs image.
 See the "prepare" section about obtaining those.
 .\}
 .el One 1.44 MB 3.5" floppy.
-.\}\}\}\}\}\}
-.\} \" !\n[pmax]:\n[sgimips]:\n[sparc64]
-.if \n[i386] \{\
-.It
-A PC with a 386 or newer processor.
-.\} \" \n[i386]
+.\}\}\}\}
+.\} \" !\n[alpha]:\n[i386]:\n[pmax]:\n[sgimips]:\n[sparc64]
 .if \n[mac68k] \{\
 .It
 A Macintosh with a 68020 and MMU, 68030 or 68RC040 processor.
@@ -218,8 +210,9 @@ An FPU is not required but will be used if present
 .\}
 .It
 A CD-ROM drive
-.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[evbppc]:\n[i386]:\n[macppc]:\n[sparc64] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[amd64]:\n[cats]:\n[evbppc]:\n[i386]:\n[macppc]:\n[sparc64] (SCSI or ATAPI),
 .el (SCSI),
+.ie !\n[amd64] \{\
 a hard disk and a minimum of
 .if \n[acorn26] 8 MB
 .if \n[alpha] 32 MB
@@ -228,7 +221,7 @@ a hard disk and a minimum of
 .if \n[cats] 8 MB
 .if \n[ews4800mips] 16 MB
 .if \n[hp700] 32 MB
-.if \n[i386] 4 MB
+.if \n[i386] 32 MB
 .if \n[mac68k] 8 MB
 .if \n[macppc] 16 MB
 .if \n[mvme68k] 4 MB
@@ -239,10 +232,13 @@ a hard disk and a minimum of
 .if \n[sparc64] 32 MB
 .if \n[sgimips] 16 MB
 of memory installed.
+\}
+.el and a hard disk.
 .It
 The hard disk should have at least
 .if \n[acorn26] 200
 .if \n[alpha] 200
+.if \n[amd64] 200
 .if \n[arc] 200
 .if \n[atari] 120
 .if \n[cats] 200
@@ -268,7 +264,7 @@ main memory in your system.
 If you wish to install the X Window System as well, you will need at least
 215 MB more.
 .bullet)
-.if \n[alpha]:\n[ews4800mips]:\n[i386]:\n[news68k]:\n[newsmips] \{\
+.if \n[ews4800mips]:\n[news68k]:\n[newsmips] \{\
 .It
 Creating the boot floppies.
 You can create the floppies needed for installation
@@ -287,13 +283,12 @@ command prompt:
 .Dl Ic "rawrite"
 .Pp
 When asked for a source filename, answer
-.if \n[ews4800mips]:\n[i386]:\n[newsmips] \{\
+.if \n[ews4800mips]:\n[newsmips] \{\
 .Dl Pa \&..\efloppy\eboot1.fs
 for the first diskette and
 .Dl Pa \&..\efloppy\eboot2.fs
 for the second diskette.
 .\}
-.if \n[alpha] .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of3
 .if \n[news68k] .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
 .Pp
 When asked for a destination drive answer
@@ -307,7 +302,7 @@ system, you would type something like:
 .Pp
 .Dl # Ic "dd if=.../boot1.fs of=/dev/rfd0a bs=18k"
 .Pp
-.\} \" \n[alpha]:\n[ews4800mips]:\n[i386]:\n[news68k]:\n[newsmips]
+.\} \" \n[ews4800mips]:\n[news68k]:\n[newsmips]
 .if \n[mac68k] \{\
 .It
 The NetBSD Boot Tools folder.
@@ -394,22 +389,25 @@ progress as this may leave the keyboard locked to
 .Pp
 The main menu will be displayed.
 .\} \" \n[mac68k]
-.el \{\
-Insert the first boot floppy you just created.
-.ie \n[i386] Restart
-.el Boot
-the computer.
+.ie \n[alpha]:\n[amd64]:\n[i386] \{\
+Insert the CD into the drive and boot the computer.
 .if \n[alpha] \{\
 Type
 .Pp
-.Dl \&\*[Gt]\*[Gt]\*[Gt] Ic "B DVA0"
-.Pp
+.Dl \&\*[Gt]\*[Gt]\*[Gt] Ic "B DQA0"
+.(Note
+This is only an example, and
+.Dv DQA0
+may not be the proper device, depending on your hardware configuration.
+.Note)
 .\}
+.\}
+.el \{\
+Insert the first boot floppy you just created and boot the computer.
 .if \n[ews4800mips] \{\
 Change boot device to floppy on the PROM menu which is invoked by
 pressing ESC key right after hardware checks, and boot the computer again.
 .\}
-.if \n[i386] When prompted, insert the second boot floppy.
 .if \n[news68k] \{\
 Type
 .Pp
@@ -507,7 +505,7 @@ The default values for the path and device should be ok.
 .It
 After all the files have been unpacked, go back to
 the main menu and select
-.ie \n[mac68k]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
+.ie \n[alpha]:\n[amd64]:\n[i386]:\n[mac68k]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 .Me reboot.
 .\}
 .el \{\
@@ -668,24 +666,13 @@ Boot the system as described in the "Booting the installer" section above.
 .el \{\
 Boot your machine.
 The boot loader will start, and will print a countdown and begin booting.
+.if !\n[alpha]:\n[amd64]:\n[i386] \{
 .Pp
 If the boot loader messages do not appear in a reasonable
 amount of time, you either have a bad boot floppy or a
 hardware problem.
 Try writing the install floppy image to
 a different disk, and using that.
-.\}
-.if \n[i386] \{\
-.Pp
-If that doesn't work, try booting after disabling your CPU's
-internal and external caches (if any).
-If it still doesn't work,
-.Nx
-probably can't be run on your hardware.
-This can probably be considered a bug, so you might want to report it.
-If you do, please include as many details about your system
-configuration as you can.
-.\}
 .Pp
 It will take a while to load the kernel
 .ie !\n[mac68k] \{\
@@ -698,6 +685,7 @@ This may take a little while also, as
 .Nx
 will be probing your system to discover which hardware devices are
 installed.
+.\} \" !\n[alpha]:\n[i386]
 .if \n[atari]:\n[i386] \{\
 You may want to read the
 boot messages, to notice your disk's name and geometry.
@@ -727,7 +715,7 @@ is your first SCSI disk,
 .Li sd1
 the second, etc.
 .Pp
-.if !\n[atari]:\n[mac68k] \{\
+.if !\n[alpha]:\n[amd64]:\n[atari]:\n[i386]:\n[mac68k] \{\
 Note that once the system has finished booting, you need not
 leave the floppy in the disk drive.
 .\}
@@ -742,7 +730,7 @@ It will also include instructions for using the menus.
 .To 2 "Network configuration"
 .Em Network configuration
 .Pp
-If you will not use networking during the installation,
+If you do not intend to use networking during the installation,
 but you do want your machine to be configured for networking once
 it is installed, you should first go to the
 .Me Utility menu
@@ -753,7 +741,7 @@ If you only want to temporarily
 use networking during the installation, you can specify these
 parameters later.
 If you are not using the Domain Name System (DNS),
-you can give an empty response to questions about this.
+you can give an empty response when asked to provide a server.
 .if \n[mac68k] \{\
 .It
 .To 2 "Preparing a disk for Mac OS and NetBSD"
@@ -954,7 +942,6 @@ install
 .Ic sysinst
 will report a list of disks it finds
 and ask you for your selection.
-Depending on how many disks are found, you may get a different message.
 You should see disk names like
 .ie \n[pmax] \{\
 .Li rz0
@@ -976,6 +963,7 @@ next tries to figure out the real and BIOS geometry
 of your disk.
 It will present you with the values it found,
 if any, and will give you a chance to change them.
+Normally, the values it presents will be correct.
 .\}
 .if \n[mac68k] \{\
 .Pp
@@ -990,33 +978,6 @@ You will have the option of creating HFS partitions that may be
 subsequently initialized and used under Mac OS though.
 .\}
 .Pp
-.if \n[i386] \{\
-Next, depending on whether you are using a
-.Li wd Ns Ar X
-or
-.Li sd Ns Ar X
-disk,
-you will either be asked for the type of disk
-.Pq Li wd Ns Ar X
-you are
-using or you will be asked if you want to specify a fake geometry
-for your SCSI disk
-.Pq Li sd Ns Ar X .
-The types of disk are
-.Tn IDE, ST-506
-or
-.Tn ESDI .
-If you're installing on an
-.Tn ST-506
-or
-.Tn ESDI
-drive, you'll be asked if your disk supports automatic sector forwarding.
-If you are
-.Em sure
-that it does, reply affirmatively.
-Otherwise, the install program will automatically reserve space for
-bad144 tables.
-.\}
 .if \n[macppc] \{\
 If
 .Ic sysinst
@@ -1027,6 +988,15 @@ the FAQ entry
 .Lk http://www.NetBSD.org/ports/macppc/faq.html#nodisk
 .\}
 .\}
+.It
+.To 2 "Selecting which sets to install"
+.Em Selecting which sets to install
+.Pp
+The next step is to choose which distribution sets you wish to install.
+Options are provided for full, minimal, and custom installations.
+If you choose sets on your own, 
+.Sy base , Sy etc ,
+and a kernel must be selected.
 .It
 .To 2 "Partitioning the disk"
 .Em Partitioning the disk
@@ -1277,11 +1247,7 @@ the following section and go to
 .It
 .Em "Editing the Master Boot Record"
 .Pp
-First, you will be prompted to specify the units of size
-that you want to express the sizes of the partitions in.
-You can either pick megabytes, cylinders or sectors.
-.Pp
-After this, you will be presented with the current values
+You will be presented with the current values
 stored in the MBR, and will be given the opportunity to
 change, create or delete partitions.
 For each partition you can set the type, the start and the size.
@@ -1302,7 +1268,7 @@ partition you have specified, you
 may also be asked if you want to install newer bootcode in your MBR.
 If you have multiple operating systems on the
 disk that you are installing on, you will also be given
-the option to install a bootselector, that will allow you
+the option to install a bootselector, which will allow you
 to pick the operating system to start up when your computer
 is (re-)started.
 .Pp
@@ -1346,8 +1312,7 @@ and
 If your disk already has a disklabel written to it, you can choose
 .Ic Use existing partition sizes .
 Otherwise, select
-.Ic Set sizes of NetBSD partitions
-and you will be presented with a simple partition editor.
+.Ic Set sizes of NetBSD partitions .
 .Pp
 .if \n[atari] \{\
 If you want to use
@@ -1388,7 +1353,7 @@ the disklabel to add this once you have installed
 .Nx ,
 or use
 .Xr mbrlabel 8
-to help you updating your disklabel with data from the MBR).
+to help you update your disklabel with data from the MBR).
 .Pp
 .\}
 .
@@ -1486,8 +1451,7 @@ The
 distribution consists of a number of
 .Em sets
 that come in the form of gzipped tarfiles.
-A few sets must be installed for a working system, others are optional.
-At this point of the installation, you will be presented with a menu
+At this point, you will be presented with a menu
 which enables you to choose from one of the following methods
 of installing the sets.
 Some of these methods will first load the sets on your hard disk,
@@ -1501,59 +1465,6 @@ After reading the one about the method you will be using, you
 can continue to the section labeled
 .Sq Extracting the distribution sets .
 .It
-.To 2 "Installation using ftp"
-.Em Installation using ftp
-.Pp
-To be able to install using ftp, you first need to configure
-your network setup, if you haven't already at the start of
-the install procedure.
-.Ic sysinst
-will do this for you, asking you
-if you want to use DHCP, and if not
-to provide data like IP address, hostname, etc.
-If you do not have name service set up for the machine that you
-are installing on, you can just press
-.Key RETURN
-in answer to these questions, and DNS will not be used.
-.Pp
-You will also be asked to specify the host that you want
-to transfer the sets from, the directory on that host,
-the account name and password used to log into that
-host using ftp, and optionally a proxy server to use.
-If you did not set up DNS when answering
-the questions to configure networking, you will need to
-specify an IP address instead of a hostname for the ftp
-server.
-.Pp
-.Ic sysinst
-will proceed to transfer all the default set files
-from the remote site to your hard disk.
-.It
-.To 2 "Installation using NFS"
-.Em Installation using NFS
-.Pp
-To be able to install using NFS, you first need to configure
-your network setup, if you haven't already at the start of
-the install procedure.
-.Ic sysinst
-will do this for you, asking you
-if you want to use DHCP, and if not
-to provide data like IP address, hostname, etc.
-If you do not have name service set up for the machine that you
-are installing on, you can just press
-.Key RETURN
-in answer to these questions, and DNS will not be used.
-.Pp
-You will also be asked to specify the host that you want
-to transfer the sets from, and the directory on that host
-that the files are in.
-This directory should be mountable by the machine you are installing on,
-i.e., correctly exported to your machine.
-.Pp
-If you did not set up DNS when answering the questions to
-configure networking, you will need to specify an IP address
-instead of a hostname for the NFS server.
-.It
 .To 2 "Installation from CD-ROM"
 .Em Installation from CD-ROM
 .Pp
@@ -1566,6 +1477,57 @@ and the directory name on the CD-ROM where the distribution files are.
 will then check if the files are indeed available
 in the specified location, and proceed to the actual
 extraction of the sets.
+.It
+.To 2 "Installation using ftp"
+.Em Installation using ftp
+.Pp
+To be able to install using ftp, you first need to configure
+your network setup if you haven't already done so.
+.Ic sysinst
+will do this for you, asking you
+if you want to use DHCP.
+If you do not use DHCP, you can enter network configuration
+details yourself.
+If you do not have DNS set up for the machine that you
+are installing on, you can just press
+.Key RETURN
+in answer to this question, and DNS will not be used.
+.Pp
+You will also be asked to specify the host that you want
+to transfer the sets from, the directory on that host,
+the account name and password used to log into that
+host using ftp, and optionally a proxy server to use.
+If you did not set up DNS, you will need to
+specify an IP address instead of a hostname for the ftp
+server.
+.Pp
+.Ic sysinst
+will proceed to transfer all the default set files
+from the remote site to your hard disk.
+.It
+.To 2 "Installation using NFS"
+.Em Installation using NFS
+.Pp
+To be able to install using NFS, you first need to configure
+your network setup if you haven't already done so.
+.Ic sysinst
+will do this for you, asking you
+if you want to use DHCP.
+If you do not use DHCP, you can enter network configuration
+details yourself.
+If you do not have DNS set up for the machine that you
+are installing on, you can just press
+.Key RETURN
+in answer to this question, and DNS will not be used.
+.Pp
+You will also be asked to specify the host that you want
+to transfer the sets from and the directory on that host
+that the files are in.
+This directory should be mountable by the machine you are installing on,
+i.e., correctly exported to your machine.
+.Pp
+If you did not set up DNS, you will need to
+specify an IP address instead of a hostname for the NFS server.
 .if \n[i386] \{\
 .It
 .To 2 "Installation from a floppy set"
@@ -1633,22 +1595,11 @@ for the name of this directory.
 .To 2 "Extracting the distribution sets"
 .Em Extracting the distribution sets
 .Pp
-After the install sets containing the
-.Nx
-distribution
-have been made available, you can either extract all the
-sets (a full installation), or only extract sets that
-you have selected.
-In the latter case, you will be shown the currently selected sets,
-and given the opportunity to select the sets you want.
-.Sy base , Sy etc ,
-and a kernel must be installed if you want a functional system.
-.Pp
 Before extraction begins, you can elect to watch the files being
 extracted; the name of each file that is extracted will be shown.
-This can slow down the installation process considerably, especially
+This can slow down the installation process considerably
 on machines with slow graphics consoles or serial consoles.
-Alternatively, you will be asked if you wish to have a progress bar.
+Alternatively, you can choose to see a progress bar.
 This is the preferred option as it shows progress without significantly
 slowing down the installation process.
 .Pp
@@ -1660,7 +1611,7 @@ option, then you will need to create the device nodes in
 otherwise,
 .\}
 .el After all the files have been extracted,
-all the necessary device node files will be created.
+the device node files will be created.
 If you have already configured networking, you will be asked if you want to
 use this configuration for normal operation.
 If so, these values will be installed in the network configuration files.
@@ -1668,7 +1619,7 @@ The next menu will allow you to select the time zone that you're in,
 to make sure your clock has the right offset from UTC.
 Finally you will be asked to select a password encryption algorithm
 and can then set a password for the "root" account, to prevent
-the machine coming up without access restrictions.
+the machine from coming up without access restrictions.
 .if \n[macppc] \{\
 .It
 .To 2 "Making the device nodes"
@@ -1769,7 +1720,7 @@ should be issued as the firmware prompt.
 .Pp
 .\}
 .if !\n[macppc] \{\
-You can now reboot the machine, and boot
+You can now reboot the machine and boot
 .Nx
 from hard disk.
 .\} \" !\n[macppc]

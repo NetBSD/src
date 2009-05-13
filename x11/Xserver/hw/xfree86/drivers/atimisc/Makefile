@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/03/08 10:38:59 phx Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 2009/05/13 19:20:47 jym Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -18,7 +18,7 @@ SRCS=	atiaccel.c atiadjust.c atiaudio.c aticlock.c aticonfig.c \
 
 # NOTICE: there is a corresponding CPPFLAG below that sets -DAVOID_DGA
 #         if sparc.
-.if ${MACHINE} != "sparc"
+.if ${MACHINE_ARCH} != "sparc"
 SRCS+=	atidga.c
 .endif
 
@@ -57,10 +57,9 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
 # provide or emulate a little-endian undirected PIO address space of
 # at least 64KB in size.  The 'first cut' configuration only explicitly
 # defines the following as providing.
-.if !(${MACHINE} == "i386" || \
-    ${MACHINE} == "x86_64" || \
-    ${MACHINE} == "amd64"  || \
-    ${MACHINE} == "alpha") 
+.if !(${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "alpha") 
 CPPFLAGS+=	-DAVOID_CPIO
 .endif
 
@@ -71,7 +70,7 @@ CPPFLAGS+=	-DAVOID_CPIO
 CPPFLAGS+=	-DAVOID_NON_PCI
 .endif
 
-.if ${MACHINE} == "sparc"
+.if ${MACHINE_ARCH} == "sparc"
 CPPFLAGS+=	-DAVOID_DGA
 .endif
 

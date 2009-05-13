@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.35 2007/04/17 20:30:29 christos Exp $	*/
+/*	$NetBSD: compile.c,v 1.35.20.1 2009/05/13 19:20:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.35 2007/04/17 20:30:29 christos Exp $");
+__RCSID("$NetBSD: compile.c,v 1.35.20.1 2009/05/13 19:20:04 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ static char	 *compile_text(void);
 static char	 *compile_tr(char *, char **);
 static struct s_command
 		**compile_stream(struct s_command **);
-static char	 *duptoeol(char *, char *);
+static char	 *duptoeol(char *, const char *);
 static void	  enterlabel(struct s_command *);
 static struct s_command
 		 *findlabel(char *);
@@ -525,7 +525,7 @@ compile_subst(char *p, struct s_subst *s)
 					*sp++ = '\\';
 					ref = *p - '0';
 					if (s->re != NULL &&
-					    ref > s->re->re_nsub)
+					    (size_t)ref > s->re->re_nsub)
 						err(COMPILE,
 "\\%c not defined in the RE", *p);
 					if (s->maxbref < ref)
@@ -743,7 +743,7 @@ compile_addr(char *p, struct s_addr *a)
  *	Return a copy of all the characters up to \n or \0.
  */
 static char *
-duptoeol(char *s, char *ctype)
+duptoeol(char *s, const char *ctype)
 {
 	size_t len;
 	int ws;

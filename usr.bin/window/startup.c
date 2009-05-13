@@ -1,4 +1,4 @@
-/*	$NetBSD: startup.c,v 1.7 2003/08/07 11:17:29 agc Exp $	*/
+/*	$NetBSD: startup.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: startup.c,v 1.7 2003/08/07 11:17:29 agc Exp $");
+__RCSID("$NetBSD: startup.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ int
 doconfig(void)
 {
 	char buf[100];
-	char *home;
+	const char *home;
 	static char runcom[] = RUNCOM;
 
 	if ((home = getenv("HOME")) == 0)

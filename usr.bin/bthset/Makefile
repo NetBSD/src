@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2007/05/28 12:06:24 tls Exp $
+# $NetBSD: Makefile,v 1.2.20.1 2009/05/13 19:19:44 jym Exp $
 
 USE_FORT?= yes	# network client
 
@@ -6,7 +6,7 @@ PROG=		bthset
 SRCS=		bthset.c
 MAN=		bthset.1
 
-DPADD+=		${LIBBLUETOOTH} ${LIBEVENT} ${LIBSDP}
-LDADD+=		-lbluetooth -levent -lsdp
+DPADD+=		${LIBBLUETOOTH} ${LIBEVENT}
+LDADD+=		-lbluetooth -levent
 
 .include <bsd.prog.mk>

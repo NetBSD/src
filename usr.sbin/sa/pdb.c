@@ -1,4 +1,4 @@
-/* $NetBSD: pdb.c,v 1.12 2003/11/12 13:31:08 grant Exp $ */
+/* $NetBSD: pdb.c,v 1.12.40.1 2009/05/13 19:20:39 jym Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pdb.c,v 1.12 2003/11/12 13:31:08 grant Exp $");
+__RCSID("$NetBSD: pdb.c,v 1.12.40.1 2009/05/13 19:20:39 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -261,7 +261,7 @@ pacct_print()
 		/* add to total */
 		add_ci(&ci, &ci_total);
 
-		if (vflag && ci.ci_calls <= cutoff &&
+		if (vflag && ci.ci_calls <= (unsigned)cutoff &&
 		    (fflag || check_junk(&ci))) {
 			/* put it into **junk** */
 			add_ci(&ci, &ci_junk);

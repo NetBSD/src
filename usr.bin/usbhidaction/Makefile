@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2006/05/19 14:43:58 christos Exp $
+#	$NetBSD: Makefile,v 1.5.30.1 2009/05/13 19:20:09 jym Exp $
 
 .include <bsd.own.mk>
-WARNS?=4
 
 PROG=	usbhidaction
 SRCS=	usbhidaction.c

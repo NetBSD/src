@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.4 2008/04/30 13:10:52 martin Exp $
+.\"     $NetBSD: parsedate.3,v 1.4.10.1 2009/05/13 19:18:37 jym Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -195,7 +195,7 @@ Timezone names:
 .Dv idle .
 .Pp
 A variety of unambiguous dates are recognized:
-.Bl -tag -compact
+.Bl -tag -compact -width "20 Jun 1994"
 .It 69-09-10
 For years between 69-99 we assume 1900+ and for years between 0-68
 we assume 2000+.
@@ -212,7 +212,7 @@ the year can be omitted
 .El
 .Pp
 As well as times:
-.Bl -tag -compact
+.Bl -tag -compact -width 12:11:01.000012
 .It 10:01
 .It 10:12pm
 .It 12:11:01.000012
@@ -220,7 +220,7 @@ As well as times:
 .El
 .Pp
 Relative items are also supported:
-.Bl -tag -compact
+.Bl -tag -compact -width "this thursday"
 .It -1 month
 .It last friday
 .It one week ago

@@ -1,4 +1,4 @@
-.\"	$NetBSD: time2posix.3,v 1.13 2003/04/16 13:34:58 wiz Exp $
+.\"	$NetBSD: time2posix.3,v 1.13.42.1 2009/05/13 19:18:28 jym Exp $
 .Dd April 1, 2001
 .Dt TIME2POSIX 3
 .Os
@@ -86,7 +86,7 @@ The following table summarizes the relationship between a
 .Va time_t
 and its conversion to, and back from, the POSIX representation over
 the leap second inserted at the end of June, 1993.
-.Bl -column "93/06/30" "23:59:59" "A+0" "X=time2posix(T)" "posix2time(X) -offset indent
+.Bl -column "93/06/30" "23:59:59" "A+0" "X=time2posix(T)" "posix2time(X)" -offset indent
 .It Sy DATE	TIME	T	X=time2posix(T)	posix2time(X)
 .It 93/06/30	23:59:59	A+0	B+0	A+0
 .It 93/06/30	23:59:60	A+1	B+1	A+1 or A+2
@@ -95,7 +95,7 @@ the leap second inserted at the end of June, 1993.
 .El
 .Pp
 A leap second deletion would look like...
-.Bl -column "??/06/30" "23:59:58" "A+0" "X=time2posix(T)" "posix2time(X) -offset indent
+.Bl -column "??/06/30" "23:59:58" "A+0" "X=time2posix(T)" "posix2time(X)" -offset indent
 .It Sy DATE	TIME	T	X=time2posix(T)	posix2time(X)
 .It ??/06/30	23:59:58	A+0	B+0	A+0
 .It ??/07/01	00:00:00	A+1	B+2	A+1

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.61 2008/01/10 04:24:51 tls Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.61.12.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.61 2008/01/10 04:24:51 tls Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.61.12.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,15 +275,9 @@ lnk_creat(ARCHD *arcn, int *payload)
 
 	/*
 	 * We may be running as root, so we have to be sure that link target
-	 * is not a directory, so we lstat and check
+	 * is not a directory, so we lstat and check. XXX: This is still racy.
 	 */
-	if (lstat(arcn->ln_name, &sb) < 0) {
-		syswarn(1, errno, "Cannot link to %s from %s", arcn->ln_name,
-		    arcn->name);
-		return -1;
-	}
-
-	if (S_ISDIR(sb.st_mode)) {
+	if (lstat(arcn->ln_name, &sb) != -1 && S_ISDIR(sb.st_mode)) {
 		tty_warn(1, "A hard link to the directory %s is not allowed",
 		    arcn->ln_name);
 		return -1;

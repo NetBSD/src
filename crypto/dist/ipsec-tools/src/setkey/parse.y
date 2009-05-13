@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.11 2008/12/29 12:54:33 mlelstv Exp $	*/
+/*	$NetBSD: parse.y,v 1.11.2.1 2009/05/13 19:15:55 jym Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -211,11 +211,27 @@ delete_command
 deleteall_command
 	:	DELETEALL ipaddropts ipaddr ipaddr protocol_spec EOT
 		{
-			int status;
-
-			status = setkeymsg_addr(SADB_DELETE, $5, $3, $4, 1);
-			if (status < 0)
+#ifndef __linux__
+			if (setkeymsg_addr(SADB_DELETE, $5, $3, $4, 1) < 0)
 				return -1;
+#else /* __linux__ */
+			/* linux strictly adheres to RFC2367, and returns
+			 * an error if we send an SADB_DELETE request without
+			 * an SPI. Therefore, we must first retrieve a list
+			 * of SPIs for all matching SADB entries, and then
+			 * delete each one separately. */
+			u_int32_t *spi;
+			int i, n;
+
+			spi = sendkeymsg_spigrep($5, $3, $4, &n);
+			for (i = 0; i < n; i++) {
+				p_spi = spi[i];
+				if (setkeymsg_addr(SADB_DELETE,
+							$5, $3, $4, 0) < 0)
+					return -1;
+			}
+			free(spi);
+#endif /* __linux__ */
 		}
 	;
 

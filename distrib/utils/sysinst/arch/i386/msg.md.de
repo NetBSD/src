@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.15 2008/04/30 15:29:11 ad Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.15.8.1 2009/05/13 19:17:56 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,8 +73,6 @@ message Use_serial_com2		{Serieller Anschluss com2 benutzen}
 message Use_serial_com3		{Serieller Anschluss com3 benutzen}
 message serial_baud_rate	{Serielle baud Rate}
 message Use_existing_bootblocks	{Vorhandene Bootblöcke benutzen}
-
-message No_Bootcode		{Kein Bootcode für die Rootpartition vorhanden}
 
 message dobootblks
 {Installiere die Bootblöcke auf %s ...

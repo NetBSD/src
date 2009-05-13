@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2008/06/20 14:34:20 christos Exp $
+#	$NetBSD: Makefile,v 1.32.4.1 2009/05/13 19:19:07 jym Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 CMSG_DATA.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
@@ -6,12 +6,22 @@ MAN=	_DIAGASSERT.3 CMSG_DATA.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
 
 USETBL=	# used by queue.3
 
-MLINKS+=end.3 edata.3 end.3 etext.3
+MLINKS+=bitstring.3 bit_alloc.3 \
+	bitstring.3 bit_clear.3 \
+	bitstring.3 bit_decl.3 \
+	bitstring.3 bit_ffc.3 \
+	bitstring.3 bit_ffs.3 \
+	bitstring.3 bit_nclear.3 \
+	bitstring.3 bit_nset.3 \
+	bitstring.3 bit_set.3 \
+	bitstring.3 bitstr_size.3 \
+	bitstring.3 bit_test.3
 MLINKS+=bits.3 __BIT.3 \
 	bits.3 __BITS.3 \
 	bits.3 __SHIFTIN.3 \
 	bits.3 __SHIFTOUT.3 \
 	bits.3 __SHIFTOUT_MASK.3
+MLINKS+=end.3 edata.3 end.3 etext.3
 MLINKS+=gcq.3 GCQ_INIT.3 \
 	gcq.3 GCQ_INIT_HEAD.3 \
 	gcq.3 gcq_init.3 \

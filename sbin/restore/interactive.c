@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.25 2006/12/18 20:07:32 christos Exp $	*/
+/*	$NetBSD: interactive.c,v 1.25.22.1 2009/05/13 19:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.25 2006/12/18 20:07:32 christos Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.25.22.1 2009/05/13 19:19:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ static char *nextarg = NULL;
 struct afile {
 	ino_t	fnum;		/* inode number of file */
 	char	*fname;		/* file name */
-	short	len;		/* name length */
+	size_t	len;		/* name length */
 	char	prefix;		/* prefix character */
 	char	postfix;	/* postfix character */
 };
@@ -650,8 +650,10 @@ static void
 formatf(struct afile *list, int nentry)
 {
 	struct afile *fp, *endlist;
-	int width, bigino, haveprefix, havepostfix;
-	int i, j, w, precision, columns, lines;
+	int haveprefix, havepostfix;
+	ino_t bigino;
+	size_t width, w;
+	int i, j, precision, columns, lines;
 
 	width = 0;
 	haveprefix = 0;

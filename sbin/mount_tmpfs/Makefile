@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/05 20:57:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2009/05/13 19:19:03 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,5 @@ MOUNT=		${NETBSDSRCDIR}/sbin/mount
 CPPFLAGS+=	-I${MOUNT}
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
-WARNS=		4
 
 .include <bsd.prog.mk>

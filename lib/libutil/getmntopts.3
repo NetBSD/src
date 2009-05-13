@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.8 2007/08/26 22:53:01 pooka Exp $
+.\"	$NetBSD: getmntopts.3,v 1.8.18.1 2009/05/13 19:18:37 jym Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -157,6 +157,24 @@ The
 .Fn freemntopts
 frees the storage used by
 .Fn getmntopts .
+.Sh RETURN VALUES
+.Fn getmntopts
+returns
+.Dv NULL
+if an error occurred.
+Note that some bits may already have been set in
+.Va flagp
+and
+.Va altflagp
+even if
+.Dv NULL
+is returned.
+.Fn getmntoptstr
+returns
+.Dv NULL
+if the option does not have an argument, or the option string.
+.Fn getmntoptnum
+returns \-1 if an error occurred.
 .Sh EXAMPLES
 Most commands will use the standard option set.
 Local filesystems which support the
@@ -185,24 +203,6 @@ if ((mp = getmntopts(options, mopts, \*[Am]mntflags, \*[Am]mntaltflags)) == NULL
 val = getmntoptnum(mp, "rsize");
 freemntopts(mp);
 .Ed
-.Sh RETURN VALUE
-.Fn getmntopts
-returns
-.Dv NULL
-if an error occurred.
-Note that some bits may already have been set in
-.Va flagp
-and
-.Va altflagp
-even if
-.Dv NULL
-is returned.
-.Fn getmntoptstr
-returns
-.Dv NULL
-if the option does not have an argument, or the option string.
-.Fn getmntoptnum
-returns \-1 if an error occurred.
 .Sh DIAGNOSTICS
 If the external integer variable
 .Va getmnt_silent

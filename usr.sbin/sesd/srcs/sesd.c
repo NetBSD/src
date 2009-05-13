@@ -1,4 +1,4 @@
-/* $NetBSD: sesd.c,v 1.4 2001/01/11 02:46:21 lukem Exp $ */
+/* $NetBSD: sesd.c,v 1.4.42.1 2009/05/13 19:20:40 jym Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -59,7 +59,7 @@ main(a, v)
 	static const char usage[] =
 	    "usage: %s [ -d ] [ -t pollinterval ] device [ device ]\n";
 	int fd, polltime, dev, devbase, nodaemon;
-	ses_encstat stat, *carray;
+	ses_encstat sestat, *carray;
 
 	if (a < 2) {
 		fprintf(stderr, usage, *v);
@@ -127,7 +127,7 @@ main(a, v)
 			/*
 			 * Get the actual current enclosure status.
 			 */
-			if (ioctl(fd, SESIOC_GETENCSTAT, (caddr_t) &stat) < 0) {
+			if (ioctl(fd, SESIOC_GETENCSTAT, (caddr_t) &sestat) < 0) {
 				syslog(LOG_ERR,
 				    "%s: SESIOC_GETENCSTAT- %m", v[dev]);
 				(void) close(fd);
@@ -135,28 +135,28 @@ main(a, v)
 			}
 			(void) close(fd);
 
-			if (stat == carray[dev])
+			if (sestat == carray[dev])
 				continue;
 
-			carray[dev] = stat;
-			if ((stat & ALLSTAT) == 0) {
+			carray[dev] = sestat;
+			if ((sestat & ALLSTAT) == 0) {
 				syslog(LOG_NOTICE,
 				    "%s: Enclosure Status OK", v[dev]);
 			}
-			if (stat & SES_ENCSTAT_INFO) {
+			if (sestat & SES_ENCSTAT_INFO) {
 				syslog(LOG_INFO,
 				    "%s: Enclosure Status Has Information",
 				    v[dev]);
 			}
-			if (stat & SES_ENCSTAT_NONCRITICAL) {
+			if (sestat & SES_ENCSTAT_NONCRITICAL) {
 				syslog(LOG_WARNING,
 				    "%s: Enclosure Non-Critical", v[dev]);
 			}
-			if (stat & SES_ENCSTAT_CRITICAL) {
+			if (sestat & SES_ENCSTAT_CRITICAL) {
 				syslog(LOG_CRIT,
 				    "%s: Enclosure Critical", v[dev]);
 			}
-			if (stat & SES_ENCSTAT_UNRECOV) {
+			if (sestat & SES_ENCSTAT_UNRECOV) {
 				syslog(LOG_ALERT,
 				    "%s: Enclosure Unrecoverable", v[dev]);
 			}

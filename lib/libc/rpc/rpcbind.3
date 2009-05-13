@@ -1,7 +1,7 @@
 .\" @(#)rpcbind.3n 1.25 93/05/07 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpcbind.3,v 1.10 2005/12/03 15:16:19 yamt Exp $
+.\"	$NetBSD: rpcbind.3,v 1.10.30.1 2009/05/13 19:18:26 jym Exp $
 .Dd December 4, 2005
 .Dt RPCBIND 3
 .Os
@@ -125,7 +125,7 @@ for the definitions of other parameters).
 This procedure should normally be used for a
 ``ping'' and nothing else.
 This routine allows programs to do lookup and call, all in one step.
-.IP
+.Pp
 Note: Even if the server is not running
 .Fn rpcb_rmtcall
 does not return any error messages to the caller.
@@ -156,7 +156,7 @@ if it succeeds,
 .Dv FALSE
 otherwise.
 (See also
-.B svc_reg(\|)
+.Fn svc_reg
 in
 .Xr rpc_svc_calls 3 .
 If there already exists such an entry with rpcbind,

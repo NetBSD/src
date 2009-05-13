@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.31 2006/03/22 02:23:11 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.31.30.1 2009/05/13 19:19:06 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: trace.c,v 1.31 2006/03/22 02:23:11 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.31.30.1 2009/05/13 19:19:06 jym Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -601,7 +601,7 @@ rtname(naddr dst,
 	int i;
 
 	i = snprintf(buf, sizeof(buf), "%-16s-->", addrname(dst, mask, 0));
-	if (i >= sizeof(buf) || i < 0)
+	if (i < 0 || (size_t)i >= sizeof(buf))
 		return buf;
 	(void)snprintf(&buf[i], sizeof(buf) - i, "%-*s", 15+20-MAX(20, i),
 	    naddr_ntoa(gate));

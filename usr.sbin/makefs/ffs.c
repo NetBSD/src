@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.42 2006/12/18 21:03:29 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.42.20.1 2009/05/13 19:20:28 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.42 2006/12/18 21:03:29 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.42.20.1 2009/05/13 19:20:28 jym Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -477,7 +477,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	assert (fsopts != NULL);
 
 		/* create image */
-	if ((fsopts->fd = open(image, O_RDWR | O_CREAT | O_TRUNC, 0777))
+	if ((fsopts->fd = open(image, O_RDWR | O_CREAT | O_TRUNC, 0666))
 	    == -1) {
 		warn("Can't open `%s' for writing", image);
 		return (-1);
@@ -845,6 +845,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 	int 	isfile, ffd;
 	char	*fbuf, *p;
 	off_t	bufleft, chunk, offset;
+	ssize_t nread;
 	struct inode	in;
 	struct buf *	bp;
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
@@ -899,12 +900,19 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 	chunk = 0;
 	for (bufleft = DIP(din, size); bufleft > 0; bufleft -= chunk) {
 		chunk = MIN(bufleft, ffs_opts->bsize);
-		if (isfile) {
-			if (read(ffd, fbuf, chunk) != chunk)
-				err(1, "Reading `%s', %lld bytes to go",
-				    (char *)buf, (long long)bufleft);
+		if (!isfile)
+			;
+		else if ((nread = read(ffd, fbuf, chunk)) == -1)
+			err(EXIT_FAILURE, "Reading `%s', %lld bytes to go",
+			    (char *)buf, (long long)bufleft);
+		else if (nread != chunk)
+			errx(EXIT_FAILURE, "Reading `%s', %lld bytes to go, "
+			    "read %zd bytes, expected %ju bytes, does "
+			    "metalog size= attribute mismatch source size?",
+			    (char *)buf, (long long)bufleft, nread,
+			    (uintmax_t)chunk);
+		else
 			p = fbuf;
-		}
 		offset = DIP(din, size) - bufleft;
 		if (debug & DEBUG_FS_WRITE_FILE_BLOCK)
 			printf(

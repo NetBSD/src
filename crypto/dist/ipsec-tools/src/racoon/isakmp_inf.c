@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.36 2009/01/23 08:25:06 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.36.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -340,8 +340,7 @@ isakmp_log_notify(iph1, notify, exchange)
 	const char *exchange;
 {
 	u_int type;
-	vchar_t *ndata;
-	char *nraw, *nhex;
+	char *nraw, *ndata, *nhex;
 	size_t l;
 
 	type = ntohs(notify->type);
@@ -361,13 +360,12 @@ isakmp_log_notify(iph1, notify, exchange)
 	if (l > 0) {
 		if (type >= ISAKMP_NTYPE_MINERROR &&
 		    type <= ISAKMP_NTYPE_MAXERROR) {
-			ndata = vmalloc(l);
+			ndata = binsanitize(nraw, l);
 			if (ndata != NULL) {
-				memcpy(ndata->v, nraw, ndata->l);
 				plog(LLV_ERROR, LOCATION, iph1->remote,
 					"error message: '%s'.\n",
-					binsanitize(ndata->v, ndata->l));
-				vfree(ndata);
+					ndata);
+				racoon_free(ndata);
 			} else {
 				plog(LLV_ERROR, LOCATION, iph1->remote,
 					"Cannot allocate memory\n");
@@ -700,20 +698,11 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 	vchar_t *data;
 {
 	struct ph1handle *iph1 = NULL;
-	struct remoteconf *rmconf;
 	vchar_t *payload = NULL;
 	int tlen;
 	int error = -1;
 	struct isakmp_pl_n *n;
 	int spisiz = 0;		/* see below */
-
-	/* search appropreate configuration */
-	rmconf = getrmconf(remote);
-	if (rmconf == NULL) {
-		plog(LLV_ERROR, LOCATION, remote,
-			"no configuration found for peer address.\n");
-		goto end;
-	}
 
 	/* add new entry to isakmp status table. */
 	iph1 = newph1();
@@ -723,7 +712,6 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 	memcpy(&iph1->index.i_ck, &isakmp->i_ck, sizeof(cookie_t));
 	isakmp_newcookie((char *)&iph1->index.r_ck, remote, local);
 	iph1->status = PHASE1ST_START;
-	iph1->rmconf = rmconf;
 	iph1->side = INITIATOR;
 	iph1->version = isakmp->v;
 	iph1->flags = 0;
@@ -738,7 +726,7 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 #endif
 
 	/* copy remote address */
-	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0)
+	if (copy_ph1addresses(iph1, NULL, remote, local) < 0)
 		goto end;
 
 	tlen = sizeof(*n) + spisiz;

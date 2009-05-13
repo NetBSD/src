@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.275 2009/01/11 14:49:48 christos Exp $
+#	$NetBSD: BRANCHES,v 1.275.2.1 2009/05/13 19:18:01 jym Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -215,6 +215,16 @@ Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
 
+Branch:		netbsd-5-0
+Description:	Tracking security/critical fixes for NetBSD 5.0
+Status:		Active
+Start Date:	29 Apr 2009
+End Date:
+Base Tag:	netbsd-5-0-RELEASE
+Maintainer:	5.0 Release Engineering <releng-5@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:		Commits restricted to Release Engineering.
+
 ########################################################################
 # Individual developers' branches (Active/Dormant):
 ########################################################################
@@ -346,6 +356,19 @@ Notes:		To check out the kernel source tree,
 		2. update files in the branch
 			sh -e src/sys/dev/usb/filelist
 
+Branch:		jym-xensuspend
+Description:	Implement xm save/restore/migrate for NetBSD domU
+Status:		Active
+Start Date:	2009-02-08
+End Date:
+Base Tag:	jym-xensuspend-base
+Maintainer:	Jean-Yves Migeon <jym@NetBSD.org>
+Scope:		kernel
+Notes:		This branch contains the code required to support the Xen
+		save/restore/migrate facilities. It affects domU frontend
+		drivers (xbd, xennet, xencons, hypervisor), autoconf(9)
+		machinery, as well as MD code (mostly pmap(9)).
+
 Branch:		kame
 Description:	KAME Project
 Status:		Dormant
@@ -431,10 +454,10 @@ Notes:
 
 Branch:		nick-hppapmap
 Description:	Update of hppa pmap with OpenBSD code.
-Status:		Active
+Status: 	Terminated; merged to -current
 Start Date:	27 October 2008
-End Date:
-Base Tag:	nick-hppapmap-base
+End Date:	30 April 2009
+Base Tag:	nick-hppapmap-base3
 Maintainer:	Nick Hudson <skrll@NetBSD.org>
 Scope:		sys/
 Notes:		Port of the OpenBSD pmap including support for PA2.0 CPUs in
@@ -1030,7 +1053,7 @@ Notes:		As per the newlock branch, however given the amount of time
 
 Branch:		nick-csl-alignment
 Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
-Status:		Terminated
+Status: 	Terminated; merged to -current
 Start Date:	2007-07-18
 End Date:
 Base Tag:	nick-csl-alignment-base5

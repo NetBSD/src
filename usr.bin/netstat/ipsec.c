@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.14 2008/04/24 04:09:27 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.14.8.1 2009/05/13 19:19:59 jym Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.14 2008/04/24 04:09:27 thorpej Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.14.8.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -142,18 +142,18 @@ static uint64_t ipsecstat[IPSEC_NSTATS];
 
 static void print_ipsecstats(void);
 static const char *pfkey_msgtype_names(int);
-static void ipsec_hist(const u_quad_t *, size_t, const struct val2str *,
+static void ipsec_hist(const u_quad_t *, int, const struct val2str *,
 	size_t, const char *);
 
 /*
  * Dump IPSEC statistics structure.
  */
 static void
-ipsec_hist(const uint64_t *hist, size_t histmax, const struct val2str *name,
+ipsec_hist(const uint64_t *hist, int histmax, const struct val2str *name,
 	   size_t namemax, const char *title)
 {
 	int first;
-	size_t proto;
+	int proto;
 	const struct val2str *p;
 
 	first = 1;
@@ -221,7 +221,7 @@ print_ipsecstats(void)
 }
 
 void
-ipsec_stats(u_long off, char *name)
+ipsec_stats(u_long off, const char *name)
 {
 
 	if (use_sysctl) {
@@ -254,7 +254,7 @@ pfkey_msgtype_names(int x)
 }
 
 void
-pfkey_stats(u_long off, char *name)
+pfkey_stats(u_long off, const char *name)
 {
 	uint64_t pfkeystat[PFKEY_NSTATS];
 	int first, type;

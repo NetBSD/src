@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.44 2004/10/30 15:23:30 dsl Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.44.34.1 2009/05/13 19:20:37 jym Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.44 2004/10/30 15:23:30 dsl Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.44.34.1 2009/05/13 19:20:37 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ int     debug = 0;
 int     dolog = 0;
 struct in_addr route_addr;
 struct sockaddr_in my_addr;
-char   *bootpfile = _PATH_BOOTPARAMS;
+const char *bootpfile = _PATH_BOOTPARAMS;
 char   *iface = NULL;
 
 int	main __P((int, char *[]));
@@ -234,7 +234,7 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 {
 	static bp_getfile_res res;
 	struct hostent *he;
-	int     err;
+	int     error;
 
 	if (debug)
 		warnx("getfile got question for \"%s\" and file \"%s\"",
@@ -258,9 +258,9 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	}
 
 	(void)strlcpy(askname, he->h_name, sizeof(askname));
-	err = lookup_bootparam(askname, NULL, getfile->file_id,
+	error = lookup_bootparam(askname, NULL, getfile->file_id,
 	    &res.server_name, &res.server_path);
-	if (err == 0) {
+	if (error == 0) {
 		he = gethostbyname(res.server_name);
 		if (!he) {
 			if (debug)
@@ -276,7 +276,7 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 		memmove(&res.server_address.bp_address_u.ip_addr,
 		    he->h_addr, 4);
 		res.server_address.address_type = IP_ADDR_TYPE;
-	} else if (err == ENOENT && !strcmp(getfile->file_id, "dump")) {
+	} else if (error == ENOENT && !strcmp(getfile->file_id, "dump")) {
 		/* Special for dump, answer with null strings. */
 		res.server_name[0] = '\0';
 		res.server_path[0] = '\0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.c,v 1.5 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: ptyfs.c,v 1.5.8.1 2009/05/13 19:19:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptyfs.c,v 1.5 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: ptyfs.c,v 1.5.8.1 2009/05/13 19:19:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,7 +71,7 @@ ptyfs_filestat(struct vnode *vp, struct filestat *fsp)
 		return 0;
 	}
 	fsp->fsid = mt.mnt_stat.f_fsidx.__fsid_val[0];
-	fsp->fileid = (long)pn.ptyfs_fileno;
+	fsp->fileid = pn.ptyfs_fileno;
 	fsp->mode = pn.ptyfs_mode;
 	fsp->size = 0;
 	switch (pn.ptyfs_type) {

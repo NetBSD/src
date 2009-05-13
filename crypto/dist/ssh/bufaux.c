@@ -1,5 +1,5 @@
-/*	$NetBSD: bufaux.c,v 1.9 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: bufaux.c,v 1.44 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: bufaux.c,v 1.9.26.1 2009/05/13 19:15:56 jym Exp $	*/
+/* $OpenBSD: bufaux.c,v 1.46 2008/06/10 23:21:34 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,13 +39,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: bufaux.c,v 1.9 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: bufaux.c,v 1.9.26.1 2009/05/13 19:15:56 jym Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
 
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -181,7 +182,7 @@ buffer_get_string_ret(Buffer *buffer, u_int *length_ptr)
 		return (NULL);
 	}
 	/* Append a null character to make processing easier. */
-	value[len] = 0;
+	value[len] = '\0';
 	/* Optionally return the length of the string. */
 	if (length_ptr)
 		*length_ptr = len;
@@ -196,6 +197,22 @@ buffer_get_string(Buffer *buffer, u_int *length_ptr)
 	if ((ret = buffer_get_string_ret(buffer, length_ptr)) == NULL)
 		fatal("buffer_get_string: buffer error");
 	return (ret);
+}
+
+void *
+buffer_get_string_ptr(Buffer *buffer, u_int *length_ptr)
+{
+	void *ptr;
+	u_int len;
+
+	len = buffer_get_int(buffer);
+	if (len > 256 * 1024)
+		fatal("buffer_get_string_ptr: bad string length %u", len);
+	ptr = buffer_ptr(buffer);
+	buffer_consume(buffer, len);
+	if (length_ptr)
+		*length_ptr = len;
+	return (ptr);
 }
 
 /*

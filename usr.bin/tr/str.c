@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.11 2007/01/17 00:21:44 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.11.20.1 2009/05/13 19:20:09 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.11 2007/01/17 00:21:44 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.11.20.1 2009/05/13 19:20:09 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,24 +148,24 @@ bracket(s)
 }
 
 typedef struct {
-	char *name;
+	const char *name;
 	int (*func) __P((int));
 	int *set;
 } CLASS;
 
 static CLASS classes[] = {
-	{ "alnum",  isalnum,  },
-	{ "alpha",  isalpha,  },
-	{ "blank",  isblank,  },
-	{ "cntrl",  iscntrl,  },
-	{ "digit",  isdigit,  },
-	{ "graph",  isgraph,  },
-	{ "lower",  islower,  },
-	{ "print",  isprint,  },
-	{ "punct",  ispunct,  },
-	{ "space",  isspace,  },
-	{ "upper",  isupper,  },
-	{ "xdigit", isxdigit, },
+	{ "alnum",  isalnum,  NULL, },
+	{ "alpha",  isalpha,  NULL, },
+	{ "blank",  isblank,  NULL, },
+	{ "cntrl",  iscntrl,  NULL, },
+	{ "digit",  isdigit,  NULL, },
+	{ "graph",  isgraph,  NULL, },
+	{ "lower",  islower,  NULL, },
+	{ "print",  isprint,  NULL, },
+	{ "punct",  ispunct,  NULL, },
+	{ "space",  isspace,  NULL, },
+	{ "upper",  isupper,  NULL, },
+	{ "xdigit", isxdigit, NULL, },
 };
 
 static void
@@ -198,7 +198,7 @@ static int
 c_class(a, b)
 	const void *a, *b;
 {
-	return (strcmp(((CLASS *)a)->name, ((CLASS *)b)->name));
+	return (strcmp(((const CLASS *)a)->name, ((const CLASS *)b)->name));
 }
 
 /*

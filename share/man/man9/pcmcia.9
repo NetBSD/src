@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.16 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: pcmcia.9,v 1.16.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -247,7 +247,7 @@ Force 8-bit I/O width.
 .It PCMCIA_WIDTH_IO16
 Force 16-bit I/O width.
 .El
-.sp
+.Pp
 A handle for the mapped I/O window is returned in
 .Fa windowp .
 .It Fn pcmcia_io_unmap "pf" "window"
@@ -286,7 +286,7 @@ Force 8-bit memory width.
 .It PCMCIA_WIDTH_MEM16
 Force 16-bit memory width.
 .El
-.sp
+.Pp
 A handle for the mapped memory window is returned in
 .Fa windowp
 and a bus-space offset into the memory window is returned in

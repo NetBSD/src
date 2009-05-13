@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.27 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: defs.h,v 1.27.2.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20081219
+#define CONFIG_VERSION		20090313
 #define CONFIG_MINVERSION	0
 
 /*
@@ -402,7 +402,7 @@ struct	nvlist *options;	/* options */
 struct	nvlist *fsoptions;	/* filesystems */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	nvlist *appmkoptions;	/* appending mkoptions */
-struct	hashtab *condmkopttab;	/* conditional makeoption table */
+struct	nvlist *condmkoptions;	/* conditional makeoption table */
 struct	hashtab *devbasetab;	/* devbase lookup */
 struct	hashtab *devroottab;	/* attach at root lookup */
 struct	hashtab *devatab;	/* devbase attachment lookup */
@@ -466,6 +466,8 @@ int	fixobjects(void);
 int	fixdevsw(void);
 void	addfile(const char *, struct nvlist *, int, const char *);
 void	addobject(const char *, struct nvlist *, int);
+int	expr_eval(struct nvlist *, int (*)(const char *, void *), void *);
+void	expr_free(struct nvlist *);
 
 /* hash.c */
 struct	hashtab *ht_new(void);
@@ -490,7 +492,7 @@ void	addoption(const char *, const char *);
 void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
 void	appendmkoption(const char *, const char *);
-void	appendcondmkoption(const char *, const char *, const char *);
+void	appendcondmkoption(struct nvlist *, const char *, const char *);
 void	deffilesystem(const char *, struct nvlist *, struct nvlist *);
 void	defoption(const char *, struct nvlist *, struct nvlist *);
 void	defflag(const char *, struct nvlist *, struct nvlist *, int);
@@ -502,6 +504,7 @@ int	devbase_has_instances(struct devbase *, int);
 struct nvlist * find_declared_option(const char *);
 int	deva_has_instances(struct deva *, int);
 void	setupdirs(void);
+const char *strtolower(const char *);
 
 /* tests on option types */
 #define OPT_FSOPT(n)	(ht_lookup(deffstab, (n)) != NULL)

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.75 2009/01/16 01:59:23 haad Exp $
+# $NetBSD: Makefile,v 1.75.2.1 2009/05/13 19:18:03 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -10,14 +10,16 @@
 #	src/etc/mtree/special
 #	src/usr.sbin/postinstall/postinstall
 #
+# You can find a script to visualize the dependency graph in
+# src/sbin/rcorder.
 
 CONFIGFILES=\
-		DAEMON LOGIN NETWORKING SERVERS \
+		DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
 		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
-		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
-		fsck ftp_proxy ftpd \
+		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
+		fsck fsck_root ftp_proxy ftpd \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \

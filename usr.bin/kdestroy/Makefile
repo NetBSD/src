@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2008/04/10 15:05:23 tsutsui Exp $
+# $NetBSD: Makefile,v 1.19.10.1 2009/05/13 19:19:53 jym Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -8,8 +8,6 @@ NOLINT= # defined
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/kuser
-
-WARNS?=  1
 
 PROG= kdestroy
 

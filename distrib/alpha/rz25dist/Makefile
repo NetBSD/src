@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2003/07/10 10:34:02 lukem Exp $
+# $NetBSD: Makefile,v 1.28.42.1 2009/05/13 19:17:38 jym Exp $
 
 .include "../../../Makefile.inc"
 
@@ -77,21 +77,21 @@ diskimage.gz: mount-fs build-fs unmount-fs
 	umount ${DESTDIR}/usr ${DESTDIR}
 	/bin/rm -f $@
 	dd if=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
-	    count=${CYLS} | gzip -9 > $@
+	    count=${CYLS} | gzip -9n > $@
 
 bin.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
 	(cd ${DESTDIR} ; find . | grep -v '^./etc' | \
 	    grep -v '^./usr/X11R6' | grep -v '^./netbsd' | \
-	    grep -v '^./boot' | pax -w -d | gzip -9) > $@
+	    grep -v '^./boot' | pax -w -d | gzip -9n) > $@
 
 etc.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
-	(cd ${DESTDIR} ; find ./etc | pax -w -d | gzip -9) > $@
+	(cd ${DESTDIR} ; find ./etc | pax -w -d | gzip -9n) > $@
 
 x11.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
-	(cd ${DESTDIR} ; find ./usr/X11R6 | pax -w -d | gzip -9) > $@
+	(cd ${DESTDIR} ; find ./usr/X11R6 | pax -w -d | gzip -9n) > $@
 
 .endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.5 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: next68k.c,v 1.5.8.1 2009/05/13 19:20:24 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.5 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: next68k.c,v 1.5.8.1 2009/05/13 19:20:24 jym Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -78,7 +78,7 @@ next68k_setboot(ib_params *params)
 {
 	int retval, labelupdated;
 	uint8_t *bootbuf;
-	u_int bootsize;
+	size_t bootsize;
 	ssize_t rv;
 	uint32_t cd_secsize;
 	int sec_netonb_mult;
@@ -139,7 +139,7 @@ next68k_setboot(ib_params *params)
 
 	bootbuf = malloc(bootsize);
 	if (bootbuf == NULL) {
-		warn("Allocating %lu bytes", (unsigned long)bootsize);
+		warn("Allocating %zu bytes", bootsize);
 		goto done;
 	}
 	memset(bootbuf, 0, bootsize);
@@ -193,11 +193,11 @@ next68k_setboot(ib_params *params)
 				b1 = fp - bootsize / cd_secsize;
 		}
 	}
-	if (next68klabel->cd_boot_blkno[0] != htobe32(b0)) {
+	if (next68klabel->cd_boot_blkno[0] != (int32_t)htobe32(b0)) {
 		next68klabel->cd_boot_blkno[0] = htobe32(b0);
 		labelupdated = 1;
 	}
-	if (next68klabel->cd_boot_blkno[1] != htobe32(b1)) {
+	if (next68klabel->cd_boot_blkno[1] != (int32_t)htobe32(b1)) {
 		next68klabel->cd_boot_blkno[1] = htobe32(b1);
 		labelupdated = 1;
 	}
@@ -245,7 +245,7 @@ next68k_setboot(ib_params *params)
 			warn("Writing `%s' at %d", params->filesystem, b0);
 			goto done;
 		}
-		if (rv != bootsize) {
+		if ((size_t)rv != bootsize) {
 			warnx("Writing `%s' at %d: short write", 
 			    params->filesystem, b0);
 			goto done;

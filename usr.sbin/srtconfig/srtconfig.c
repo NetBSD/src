@@ -1,4 +1,4 @@
-/* $NetBSD: srtconfig.c,v 1.2 2006/12/29 10:39:59 wiz Exp $ */
+/* $NetBSD: srtconfig.c,v 1.2.20.1 2009/05/13 19:20:41 jym Exp $ */
 /* This file is in the public domain. */
 
 #include <stdio.h>
@@ -37,7 +37,7 @@ static struct {
 	 const char *name;
 	 unsigned int bit;
 	 } flagbits[] = { { "mtulock", SSF_MTULOCK },
-			  { 0 } };
+			  { 0, 0 } };
 
 static void handleargs(int ac, char **av)
 {

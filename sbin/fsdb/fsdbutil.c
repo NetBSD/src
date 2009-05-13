@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.21 2008/12/29 20:02:30 mlelstv Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.21.2.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.21 2008/12/29 20:02:30 mlelstv Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.21.2.1 2009/05/13 19:19:01 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -124,7 +124,7 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 		break;
 	case IFLNK:
 		fputs("symlink", stdout);
-		if (size > 0 && size < sblock->fs_maxsymlinklen &&
+		if (size > 0 && size < (uint64_t)sblock->fs_maxsymlinklen &&
 		    DIP(dp, blocks) == 0) {
 			p = is_ufs2 ? (char *)dp->dp2.di_db :
 			    (char *)dp->dp1.di_db;

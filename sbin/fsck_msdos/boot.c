@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2008/06/13 20:46:09 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.14.4.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1997 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.14 2008/06/13 20:46:09 martin Exp $");
+__RCSID("$NetBSD: boot.c,v 1.14.4.1 2009/05/13 19:19:01 jym Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@ readboot(int dosfs, struct bootblock *boot)
 	int ret = FSOK;
 	int i;
 	
-	if (read(dosfs, block, sizeof block) < sizeof block) {
+	if ((size_t)read(dosfs, block, sizeof block) != sizeof block) {
 		perr("could not read boot block");
 		return FSFATAL;
 	}

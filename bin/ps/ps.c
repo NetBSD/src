@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.72 2008/12/28 19:50:22 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.72.2.1 2009/05/13 19:15:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.72 2008/12/28 19:50:22 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.72.2.1 2009/05/13 19:15:51 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -585,7 +585,7 @@ pscomp(const void *a, const void *b)
 	struct varent *ve;
 	const sigset_t *sa, *sb;
 
-#define	V_SIZE(k) (k->p_vm_dsize + k->p_vm_ssize + k->p_vm_tsize)
+#define	V_SIZE(k) ((k)->p_vm_msize)
 #define	RDIFF_N(t, n) \
 	if (((const t *)((const char *)ka + v->off))[n] > ((const t *)((const char *)kb + v->off))[n]) \
 		return 1; \
@@ -631,7 +631,7 @@ pscomp(const void *a, const void *b)
 				if (sa->__bits[i] < sb->__bits[i])
 					return -1;
 				i++;
-			} while (i < sizeof sa->__bits / sizeof sa->__bits[0]);
+			} while (i < (int)__arraycount(sa->__bits));
 			continue;
 		case INT64:
 			RDIFF(int64_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.5 2003/08/07 09:37:45 agc Exp $	*/
+/*	$NetBSD: version.c,v 1.5.40.1 2009/05/13 19:18:06 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,8 +34,8 @@
 #if 0
 static char sccsid[] = "@(#)version.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: version.c,v 1.5 2003/08/07 09:37:45 agc Exp $");
+__RCSID("$NetBSD: version.c,v 1.5.40.1 2009/05/13 19:18:06 jym Exp $");
 #endif
 #endif /* not lint */
 
-char version[] = "Wooden Ships and Iron Men, Version 8.1 (93/05/31)";
+const char version[] = "Wooden Ships and Iron Men, Version 8.1 (93/05/31)";

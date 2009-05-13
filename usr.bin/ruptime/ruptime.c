@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.13 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.13.6.1 2009/05/13 19:20:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-__RCSID("$NetBSD: ruptime.c,v 1.13 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: ruptime.c,v 1.13.6.1 2009/05/13 19:20:03 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@ time_t now;
 int rflg = 1;
 
 int	 hscmp(const void *, const void *);
-char	*interval(time_t, char *);
+char	*interval(time_t, const char *);
 int	 lcmp(const void *, const void *);
 int	 main(int, char **);
 void	 morehosts(void);
@@ -85,8 +85,8 @@ main(int argc, char **argv)
 	struct whod *wd;
 	struct whoent *we;
 	DIR *dirp;
-	size_t hspace;
-	int aflg, cc, ch, fd, i, maxloadav;
+	size_t hspace, i;
+	int aflg, cc, ch, fd, maxloadav;
 	char buf[sizeof(struct whod)];
 	int (*cmp)(const void *, const void *);
 
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 		cc = read(fd, buf, sizeof(struct whod));
 		(void)close(fd);
 
-		if (cc < WHDRSIZE)
+		if (cc < (int)WHDRSIZE)
 			continue;
 		if (nhosts == hspace) {
 			if ((hs =
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 }
 
 char *
-interval(time_t tval, char *updown)
+interval(time_t tval, const char *updown)
 {
 	static char resbuf[32];
 	int days, hours, minutes;
@@ -211,7 +211,7 @@ interval(time_t tval, char *updown)
 	return (resbuf);
 }
 
-#define	HS(a)	((struct hs *)(a))
+#define	HS(a)	((const struct hs *)(a))
 
 /* Alphabetical comparison. */
 int

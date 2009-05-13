@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.18 2008/12/07 05:15:21 isaki Exp $
+.\"	$NetBSD: signal.9,v 1.18.2.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -282,7 +282,7 @@ caused by a hardware trap to the process
 .Fa p .
 This function is meant to be called by machine-dependent trap handling
 code, through the
-.Dv p->p_emul->e_trapsignal
+.Dv p-\*[Gt]p_emul-\*[Gt]e_trapsignal
 function pointer because some emulations define their own trapsignal
 functions that remap the signal information to what the emulation
 expects.

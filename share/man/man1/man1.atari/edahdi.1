@@ -1,4 +1,4 @@
-.\"	$NetBSD: edahdi.1,v 1.9 2003/02/25 10:35:13 wiz Exp $
+.\"	$NetBSD: edahdi.1,v 1.9.42.1 2009/05/13 19:19:07 jym Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
 .\" All rights reserved.
@@ -91,38 +91,38 @@ swap partition (deprecated).
 .Sh EXAMPLES
 Say, you have a disk with that is partitioned like:
 .Pp
-.Bl -column header Number   Id
-.Sy "Number   Id"
-  1     GEM
-  2     GEM
-  3     GEM
-  4     GEM
+.Bl -column Number   Id
+.It Sy "Number" Ta Sy "Id"
+.It 1 Ta GEM
+.It 2 Ta GEM
+.It 3 Ta GEM
+.It 4 Ta GEM
 .El
 .Pp
 This partitioning will show up in
 .Nx
 as (Number refers to the first table):
 .Pp
-.Bl -column header "Partition        Fstype  Number"
-.Sy "Partition        Fstype  Number"
- c (whole disk)  unused
- d (user part)   MSDOS     1
- e (user part)   MSDOS     2
- f (user part)   MSDOS     3
- g (user part)   MSDOS     4
+.Bl -column "c (whole disk)" "Fstype" "Number"
+.It Sy Partition Ta Sy Fstype Ta Sy Number
+.It c (whole disk) Ta unused Ta ""
+.It d (user part) Ta MSDOS Ta 1
+.It e (user part) Ta MSDOS Ta 2
+.It f (user part) Ta MSDOS Ta 3
+.It g (user part) Ta MSDOS Ta 4
 .El
 .Pp
 Now you decide to change the id of partition 2 and 3 to NBD. Now
 .Nx
 will show the partitioning as (Number refers to the first table):
 .Pp
-.Bl -column header "Partition        Fstype  Number"
-.Sy "Partition        Fstype  Number"
- a (root)        4.2BSD    2
- c (whole disk)  unused
- d (user part)   MSDOS     1
- e (user part)   4.2BSD    3
- f (user part)   MSDOS     4
+.Bl -column "c (whole disk)" "Fstype" "Number"
+.It Sy Partition Ta Sy Fstype Ta Sy Number
+.It a (root) Ta 4.2BSD Ta 2
+.It c (whole disk) Ta unused Ta ""
+.It d (user part)  Ta MSDOS  Ta 1
+.It e (user part)  Ta 4.2BSD Ta 3
+.It f (user part)  Ta MSDOS  Ta 4
 .El
 .Pp
 You will notice that the order of the partitions has changed! You will have

@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.8 2003/08/07 11:15:36 agc Exp $	*/
+/*	$NetBSD: lookup.c,v 1.8.42.1 2009/05/13 19:20:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: lookup.c,v 1.8 2003/08/07 11:15:36 agc Exp $");
+__RCSID("$NetBSD: lookup.c,v 1.8.42.1 2009/05/13 19:20:02 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ lookup(char *name, int action, struct namelist *value)
 	unsigned n;
 	char *cp;
 	struct syment *s;
-	char buf[256];
+	char lbuf[256];
 
 	if (debug)
 		printf("lookup(%s, %d, %lx)\n", name, action, (long)value);
@@ -142,17 +142,17 @@ lookup(char *name, int action, struct namelist *value)
 			continue;
 		if (action != LOOKUP) {
 			if (action != INSERT || s->s_type != CONST) {
-				(void)snprintf(buf, sizeof(buf),
+				(void)snprintf(lbuf, sizeof(lbuf),
 				    "%s redefined", name);
-				yyerror(buf);
+				yyerror(lbuf);
 			}
 		}
 		return(s->s_value);
 	}
 
 	if (action == LOOKUP) {
-		(void)snprintf(buf, sizeof(buf), "%s undefined", name);
-		yyerror(buf);
+		(void)snprintf(lbuf, sizeof(lbuf), "%s undefined", name);
+		yyerror(lbuf);
 		return(NULL);
 	}
 

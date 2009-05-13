@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.21 2008/04/30 13:10:53 martin Exp $
+.\"	$NetBSD: dlfcn.3,v 1.21.6.1 2009/05/13 19:19:07 jym Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,8 +68,7 @@ its external references are resolved in the same way as is done
 with the implicitly loaded shared libraries at program startup.
 The argument can either be an absolute pathname or it can be of the form
 .Sm off
-.Do Xo lib Ao name Ac .so
-.Op .xx Op .yy Xc
+.Do lib Ao name Ac .so Oo .xx Oo .yy Oc Oc
 .Dc
 .Sm on
 in which case the same library search rules apply that are used for
@@ -185,9 +184,8 @@ be modified by the caller.
 provides an interface similar to
 .Xr ioctl 2
 to control several aspects of the run-time linker's operation.
-This interface
-is
-.Ud .
+This interface is
+.Ud
 .Pp
 .Fn dlerror
 returns a character string representing the most recent error that has

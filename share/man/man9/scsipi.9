@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.19 2007/07/30 22:48:47 alc Exp $
+.\"	$NetBSD: scsipi.9,v 1.19.18.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -81,14 +81,14 @@ A high-level command (command sent from the high-level SCSI/ATAPI
 layer to the low-level HBA layer) is described by a
 .Va struct scsipi_xfer .
 .Pp
-A request is sent to the HBA driver though the
+A request is sent to the HBA driver through the
 .Fn adapt_request
 callback.
 The HBA driver signals completion (with or without errors) of the
-request though
+request through
 .Fn scsipi_done .
 .Nm
-knows the resources limits of the HBA (max number of concurrent requests per
+knows the resource's limits of the HBA (max number of concurrent requests per
 adapter of channel, and per periph), and will make sure the HBA won't receive
 more requests than it can handle.
 .Pp
@@ -194,7 +194,7 @@ adapter's ID on this channel
 .It Va int chan_defquirks
 default device quirks.
 Quirks are defined in
-.Pa \*[Lt]dev/scsipi/scsipiconf.h\*[Gt]
+.Aq Pa dev/scsipi/scsipiconf.h
 and are usually set in the middle layer based on the device's inquiry
 data.
 For some kinds of adapters it may be convenient to have a set of
@@ -206,7 +206,7 @@ The HBA driver attaches the SCSI or ATAPI bus (depending on the setting of
 by passing a pointer to the
 .Va struct scsipi_channel
 to the
-.Xr autoconf 4
+.Xr autoconf 9
 machinery.
 The print function shall be either
 .Fn scsiprint
@@ -378,7 +378,7 @@ ST 32 bit wide transfers
 .It Dv PERIPH_CAP_DT
 DT transfers
 .It Dv PERIPH_CAP_TQING
-tagged queueing
+tagged queuing
 .El
 Whenever the xfer mode changes, the driver should call
 .Fn scsipi_async_event
@@ -444,9 +444,9 @@ Argument is a
 .Va struct scsipi_xfer_mode
 properly filled in.
 An
-.Fa Dv ASYNC_EVENT_XFER_MODE
+.Dv ASYNC_EVENT_XFER_MODE
 call with
-.Fa Dv PERIPH_CAP_TQING
+.Dv PERIPH_CAP_TQING
 set in
 .Va xm_mode
 is mandatory to activate tagged queuing.

@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.22 2008/04/28 20:24:17 martin Exp $ */
+/* $NetBSD: sunlabel.c,v 1.22.8.1 2009/05/13 19:20:41 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.22 2008/04/28 20:24:17 martin Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.22.8.1 2009/05/13 19:20:41 jym Exp $");
 #endif
 
 #include <stdio.h>
@@ -192,20 +192,20 @@ int  main(int, char **);
 /* The fields themselves. */
 static struct field fields[] = 
 {
-	{"ascii", &label.asciilabel[0], print_ascii, chval_ascii, 0},
-	{"rpm", &label.rpm, print_int, chval_int, 0},
-	{"pcyl", &label.pcyl, print_int, chval_int, 0},
-	{"apc", &label.apc, print_int, chval_int, 0},
-	{"obs1", &label.obs1, print_int, chval_int, 0},
-	{"obs2", &label.obs2, print_int, chval_int, 0},
-	{"intrlv", &label.intrlv, print_int, chval_int, 0},
-	{"ncyl", &label.ncyl, print_int, chval_int, 0},
-	{"acyl", &label.acyl, print_int, chval_int, 0},
-	{"nhead", &label.nhead, print_int, chval_int, update_spc},
-	{"nsect", &label.nsect, print_int, chval_int, update_spc},
-	{"obs3", &label.obs3, print_int, chval_int, 0},
-	{"obs4", &label.obs4, print_int, chval_int, 0},
-	{NULL, NULL, NULL, NULL, 0}
+	{"ascii", &label.asciilabel[0], print_ascii, chval_ascii, 0, 0 },
+	{"rpm", &label.rpm, print_int, chval_int, 0, 0 },
+	{"pcyl", &label.pcyl, print_int, chval_int, 0, 0 },
+	{"apc", &label.apc, print_int, chval_int, 0, 0 },
+	{"obs1", &label.obs1, print_int, chval_int, 0, 0 },
+	{"obs2", &label.obs2, print_int, chval_int, 0, 0 },
+	{"intrlv", &label.intrlv, print_int, chval_int, 0, 0 },
+	{"ncyl", &label.ncyl, print_int, chval_int, 0, 0 },
+	{"acyl", &label.acyl, print_int, chval_int, 0, 0 },
+	{"nhead", &label.nhead, print_int, chval_int, update_spc, 0 },
+	{"nsect", &label.nsect, print_int, chval_int, update_spc, 0 },
+	{"obs3", &label.obs3, print_int, chval_int, 0, 0 },
+	{"obs4", &label.obs4, print_int, chval_int, 0, 0 },
+	{NULL, NULL, NULL, NULL, 0, 0 }
 };
 
 /*
@@ -893,7 +893,7 @@ chvalue(const char *str)
 		cp++;
 	n = cp - str;
 	for (i = 0; fields[i].tag; i++) {
-		if ((n == fields[i].taglen) && !memcmp(str, fields[i].tag, n)) {
+		if (((int)n == fields[i].taglen) && !memcmp(str, fields[i].tag, n)) {
 			(*fields[i].chval) (cp, &fields[i]);
 			if (fields[i].changed)
 				(*fields[i].changed)();
@@ -1091,7 +1091,7 @@ print_part(int all)
 		if (ce[i] <= ce[i - 1])
 			ce[i] = ce[i - 1] + 1;
 
-	if (ce[n - 1] > ncols) {
+	if ((size_t)ce[n - 1] > ncols) {
 		ce[n - 1] = ncols;
 		for (i = n - 1; (i > 0) && (ce[i] <= ce[i - 1]); i--)
 			ce[i - 1] = ce[i] - 1;
@@ -1130,7 +1130,7 @@ print_part(int all)
 		err(1, "Can't allocate memory");
 
 	for (i = 0; i <= r; i++) {
-		for (j = 0; j < ncols; j++)
+		for (j = 0; (size_t)j < ncols; j++)
 			line[j] = ' ';
 		for (j = 0; j < NPART; j++) {
 			if (row[j] != i)

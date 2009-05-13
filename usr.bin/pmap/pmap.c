@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2008/12/29 01:40:59 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.42.2.1 2009/05/13 19:20:01 jym Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.42 2008/12/29 01:40:59 christos Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.42.2.1 2009/05/13 19:20:01 jym Exp $");
 #endif
 
 #include <string.h>
@@ -533,7 +533,8 @@ dump_amap(kvm_t *kd, struct kbit *amap)
 	int *am_slots;
 	int *am_bckptr;
 	int *am_ppref;
-	size_t i, r, l, e;
+	size_t l;
+	int i, r, e;
 
 	if (S(amap) == (size_t)-1) {
 		heapfound = 1;
@@ -630,7 +631,7 @@ dump_amap(kvm_t *kd, struct kbit *amap)
 			l--;
 		}
 
-		dump_vm_anon(kd, am_anon, (int)i);
+		dump_vm_anon(kd, am_anon, i);
 	}
 
 	free(am_anon);
@@ -720,12 +721,18 @@ findname(kvm_t *kd, struct kbit *vmspace,
 				     (unsigned long long)minor(dev));
 			name = buf;
 		}
-		else if (UVM_OBJ_IS_AOBJ(D(uvm_obj, uvm_object))) 
-			name = "  [ uvm_aobj ]";
-		else if (UVM_OBJ_IS_UBCPAGER(D(uvm_obj, uvm_object)))
-			name = "  [ ubc_pager ]";
-		else if (UVM_OBJ_IS_VNODE(D(uvm_obj, uvm_object)))
-			name = "  [ ?VNODE? ]";
+		else if (UVM_OBJ_IS_AOBJ(D(uvm_obj, uvm_object))) {
+			snprintf(buf, sizeof(buf), "  [ uvm_aobj ]");
+			name = buf;
+		}
+		else if (UVM_OBJ_IS_UBCPAGER(D(uvm_obj, uvm_object))) {
+			snprintf(buf, sizeof(buf), "  [ ubc_pager ]");
+			name = buf;
+		}
+		else if (UVM_OBJ_IS_VNODE(D(uvm_obj, uvm_object))) {
+			snprintf(buf, sizeof(buf), "  [ ?VNODE? ]");
+			name = buf;
+		}
 		else {
 			snprintf(buf, sizeof(buf), "  [ ?? %p ?? ]",
 				 D(uvm_obj, uvm_object)->pgops);
@@ -736,14 +743,17 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	else if ((char *)D(vmspace, vmspace)->vm_maxsaddr <=
 		 (char *)vme->start &&
 		 ((char *)D(vmspace, vmspace)->vm_maxsaddr + (size_t)maxssiz) >=
-		 (char *)vme->end)
-		name = "  [ stack ]";
+		 (char *)vme->end) {
+		snprintf(buf, sizeof(buf), "  [ stack ]");
+		name = buf;
+	}
 
 	else if (!heapfound &&
 		 (vme->protection & rwx) == rwx &&
 		 vme->start >= (u_long)D(vmspace, vmspace)->vm_daddr) {
 		heapfound = 1;
-		name = "  [ heap ]";
+		snprintf(buf, sizeof(buf), "  [ heap ]");
+		name = buf;
 	}
 
 	else if (UVM_ET_ISSUBMAP(vme)) {
@@ -752,8 +762,10 @@ findname(kvm_t *kd, struct kbit *vmspace,
 		name = buf;
 	}
 
-	else
-		name = "  [ anon ]";
+	else {
+		snprintf(buf, sizeof(buf), "  [ anon ]");
+		name = buf;
+	}
 
 	return (name);
 }

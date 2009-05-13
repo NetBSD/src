@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.25 2008/03/16 23:17:55 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.25.8.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.25 2008/03/16 23:17:55 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.25.8.1 2009/05/13 19:19:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,6 +309,14 @@ readsb(int listerr)
 		badsb(listerr, "BAD LOG_BSIZE");
 		return 0;
 	}
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    (!powerof2(sblock.e2fs.e2fs_inode_size) ||
+	     sblock.e2fs.e2fs_inode_size < sizeof(struct ext2fs_dinode) ||
+	     sblock.e2fs.e2fs_inode_size >
+	      (1024 << sblock.e2fs.e2fs_log_bsize))) {
+		badsb(listerr, "BAD INODE_SIZE");
+		return 0;
+	}
 
 	/* compute the dynamic fields of the in-memory sb */
 	/* compute dynamic sb infos */
@@ -323,7 +331,7 @@ readsb(int listerr)
 	sblock.e2fs_bmask = ~sblock.e2fs_qbmask;
 	sblock.e2fs_ngdb = howmany(sblock.e2fs_ncg,
 	    sblock.e2fs_bsize / sizeof(struct ext2_gd));
-	sblock.e2fs_ipb = sblock.e2fs_bsize / sizeof(struct ext2fs_dinode);
+	sblock.e2fs_ipb = sblock.e2fs_bsize / EXT2_DINODE_SIZE(&sblock);
 	sblock.e2fs_itpg = howmany(sblock.e2fs.e2fs_ipg, sblock.e2fs_ipb);
 
 	/*

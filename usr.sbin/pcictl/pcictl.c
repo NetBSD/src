@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.11 2007/02/08 23:27:07 hubertf Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.11.20.1 2009/05/13 19:20:32 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@ const struct command commands[] = {
 	  cmd_dump,
 	  O_RDONLY },
 
-	{ 0 },
+	{ 0, 0, 0, 0 },
 };
 
 int	parse_bdf(const char *);
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 	/* Open the device. */
 	if ((strchr(dvname, '/') == NULL) &&
 	    (snprintf(dvname_store, sizeof(dvname_store), _PATH_DEV "%s",
-	     dvname) < sizeof(dvname_store)))
+	     dvname) < (int)sizeof(dvname_store)))
 		dvname = dvname_store;
 	pcifd = open(dvname, commands[i].open_flags);
 	if (pcifd < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.32 2006/12/18 20:07:32 christos Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.32.22.1 2009/05/13 19:19:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.32 2006/12/18 20:07:32 christos Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.32.22.1 2009/05/13 19:19:00 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,7 @@ static int
 rmtcall(const char *cmd, const char *buf, int verbose)
 {
 
-	if (write(rmtape, buf, strlen(buf)) != strlen(buf))
+	if ((size_t)write(rmtape, buf, strlen(buf)) != strlen(buf))
 		rmtconnaborted(0);
 	return (rmtreply(cmd, verbose));
 }

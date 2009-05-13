@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.21 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.21.10.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.21 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.21.10.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif
 
@@ -371,7 +371,7 @@ again:
 			goto out;
 		if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1)
 			goto out;
-		if (cd->recvsize > cd->maxrec)
+		if (cd->recvsize > (u_int)cd->maxrec)
 			cd->recvsize = cd->maxrec;
 		cd->nonblock = TRUE;
 		__xdrrec_setnonblock(&cd->xdrs, cd->maxrec);

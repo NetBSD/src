@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.4 2007/03/29 18:35:08 wiz Exp $
+.\"	$NetBSD: drm.4,v 1.4.20.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 28, 2007
+.Dd May 12, 2009
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Cd viadrm*        at vga?
 .Pp
 .Cd options        DRM_DEBUG
+.Cd options        DRM_NO_AGP
 .Sh DESCRIPTION
 The
 .Tn Direct Rendering Manager
@@ -74,7 +75,11 @@ SiS
 VIA
 .El
 .Pp
-To make use of the driver,
+To make use of the driver, the kernel must include
+.Xr agp 4
+(for some drivers, using
+.Cd options        DRM_NO_AGP
+instead may be sufficient),
 .Xr X 7
 must be compiled with DRI support, Mesa DRI drivers must be installed,
 the appropriate
@@ -112,7 +117,7 @@ Section "Module"
         Load  "GLcore"
         Load  "glx"
 EndSection
-...
+\&...
 Section "DRI"
         Group "wheel"
         Mode 0660
@@ -132,6 +137,7 @@ nodes
 .Ar hw.dri.card1 ,
 etc.
 .Sh SEE ALSO
+.Xr agp 4 ,
 .Xr X 7
 .Sh HISTORY
 DRM was first available for Linux.

@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.11 2005/02/17 17:09:48 xtraeme Exp $	*/
+/*	$NetBSD: field.c,v 1.11.36.1 2009/05/13 19:19:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: field.c,v 1.11 2005/02/17 17:09:48 xtraeme Exp $");
+__RCSID("$NetBSD: field.c,v 1.11.36.1 2009/05/13 19:19:45 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,9 +85,7 @@ int
 p_passwd(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
-	if (!*p)
-		pw->pw_passwd = "";	/* "NOLOGIN"; */
-	else if (!(pw->pw_passwd = strdup(p))) {
+	if (!(pw->pw_passwd = strdup(p))) {
 		warnx("can't save password entry");
 		return (1);
 	}
@@ -163,9 +161,7 @@ int
 p_class(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
-	if (!*p)
-		pw->pw_class = "";
-	else if (!(pw->pw_class = strdup(p))) {
+	if (!(pw->pw_class = strdup(p))) {
 		warnx("can't save entry");
 		return (1);
 	}
@@ -230,7 +226,10 @@ p_shell(const char *p, struct passwd *pw, ENTRY *ep)
 	const char *t;
 
 	if (!*p) {
-		pw->pw_shell = _PATH_BSHELL;
+		if (!(pw->pw_shell = strdup(_PATH_BSHELL))) {
+			warnx("can't save entry");
+			return (1);
+		}
 		return (0);
 	}
 	/* only admin can change from or to "restricted" shells */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.8 2009/01/10 20:21:15 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.8.2.1 2009/05/13 19:20:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -129,13 +129,13 @@ mount_syspuffs_parseargs(int argc, char *argv[],
 		err(1, "mp 1");
 	if (len > MAXPATHLEN)
 		err(1, "mntpath > MAXPATHLEN");
-	if (read(sv[1], canon_dir, len) != len)
+	if ((size_t)read(sv[1], canon_dir, len) != len)
 		err(1, "mp 2");
 	if (read(sv[1], &len, sizeof(len)) != sizeof(len))
 		err(1, "fn 1");
 	if (len > MAXPATHLEN)
 		err(1, "devpath > MAXPATHLEN");
-	if (read(sv[1], canon_dev, len) != len)
+	if ((size_t)read(sv[1], canon_dev, len) != len)
 		err(1, "fn 2");
 	if (read(sv[1], mntflags, sizeof(*mntflags)) != sizeof(*mntflags))
 		err(1, "mntflags");

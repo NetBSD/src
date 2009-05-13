@@ -1,5 +1,5 @@
-/*	$NetBSD: serverloop.c,v 1.31 2008/06/22 15:42:50 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.148 2008/02/22 20:44:02 dtucker Exp $ */
+/*	$NetBSD: serverloop.c,v 1.31.6.1 2009/05/13 19:15:58 jym Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.153 2008/06/30 12:15:39 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,12 +37,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.31 2008/06/22 15:42:50 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.31.6.1 2009/05/13 19:15:58 jym Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 
 #include <netinet/in.h>
 
@@ -103,6 +104,7 @@ static int connection_in;	/* Connection to client (input). */
 static int connection_out;	/* Connection to client (output). */
 static int connection_closed = 0;	/* Connection to client closed. */
 static u_int buffer_high;	/* "Soft" max buffer size. */
+static int no_more_sessions = 0; /* Disallow further sessions. */
 
 /*
  * This SIGCHLD kludge is used to detect when the child exits.  The server
@@ -934,7 +936,6 @@ static Channel *
 server_request_direct_tcpip(void)
 {
 	Channel *c;
-	int sock;
 	char *target, *originator;
 	int target_port, originator_port;
 
@@ -944,23 +945,16 @@ server_request_direct_tcpip(void)
 	originator_port = packet_get_int();
 	packet_check_eom();
 
-	debug("server_request_direct_tcpip: originator %s port %d, target %s port %d",
-	    originator, originator_port, target, target_port);
+	debug("server_request_direct_tcpip: originator %s port %d, target %s "
+	    "port %d", originator, originator_port, target, target_port);
 
 	/* XXX check permission */
-	sock = channel_connect_to(target, target_port);
-	xfree(target);
+	c = channel_connect_to(target, target_port,
+	    "direct-tcpip", "direct-tcpip");
+
 	xfree(originator);
-	if (sock < 0)
-		return NULL;
-	if (options.hpn_disabled)
-	c = channel_new("direct-tcpip", SSH_CHANNEL_CONNECTING,
-	    sock, sock, -1, CHAN_TCP_WINDOW_DEFAULT,
-	    CHAN_TCP_PACKET_DEFAULT, 0, "direct-tcpip", 1);
-	else
-		c = channel_new("direct-tcpip", SSH_CHANNEL_CONNECTING,
-		    sock, sock, -1, options.hpn_buffer_size,
-		    CHAN_TCP_PACKET_DEFAULT, 0, "direct-tcpip", 1);
+	xfree(target);
+
 	return c;
 }
 
@@ -1016,6 +1010,12 @@ server_request_session(void)
 
 	debug("input_session_request");
 	packet_check_eom();
+
+	if (no_more_sessions) {
+		packet_disconnect("Possible attack: attempt to open a session "
+		    "after additional sessions disabled");
+	}
+
 	/*
 	 * A server session has no fd to read or write until a
 	 * CHANNEL_REQUEST for a shell is made, so we set the type to
@@ -1120,8 +1120,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 		} else {
 			/* Start listening on the port */
 			success = channel_setup_remote_fwd_listener(
-			    listen_address, listen_port, options.gateway_ports, 
-           		    options.hpn_disabled, options.hpn_buffer_size);
+			    listen_address, listen_port, options.gateway_ports);
 		}
 		xfree(listen_address);
 	} else if (strcmp(rtype, "cancel-tcpip-forward") == 0) {
@@ -1136,6 +1135,9 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 		success = channel_cancel_rport_listener(cancel_address,
 		    cancel_port);
 		xfree(cancel_address);
+	} else if (strcmp(rtype, "no-more-sessions@openssh.com") == 0) {
+		no_more_sessions = 1;
+		success = 1;
 	}
 	if (want_reply) {
 		packet_start(success ?
@@ -1163,7 +1165,11 @@ server_input_channel_req(int type, u_int32_t seq, void *ctxt)
 	if ((c = channel_lookup(id)) == NULL)
 		packet_disconnect("server_input_channel_req: "
 		    "unknown channel %d", id);
-	if (c->type == SSH_CHANNEL_LARVAL || c->type == SSH_CHANNEL_OPEN)
+	if (!strcmp(rtype, "eow@openssh.com")) {
+		packet_check_eom();
+		chan_rcvd_eow(c);
+	} else if ((c->type == SSH_CHANNEL_LARVAL ||
+	    c->type == SSH_CHANNEL_OPEN) && strcmp(c->ctype, "session") == 0)
 		success = session_input_channel_req(c, rtype);
 	if (reply) {
 		packet_start(success ?
@@ -1189,8 +1195,9 @@ server_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &server_input_channel_req);
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
 	dispatch_set(SSH2_MSG_GLOBAL_REQUEST, &server_input_global_request);
+	dispatch_set(SSH2_MSG_CHANNEL_SUCCESS, &channel_input_status_confirm);
+	dispatch_set(SSH2_MSG_CHANNEL_FAILURE, &channel_input_status_confirm);
 	/* client_alive */
-	dispatch_set(SSH2_MSG_CHANNEL_FAILURE, &server_input_keep_alive);
 	dispatch_set(SSH2_MSG_REQUEST_SUCCESS, &server_input_keep_alive);
 	dispatch_set(SSH2_MSG_REQUEST_FAILURE, &server_input_keep_alive);
 	/* rekeying */

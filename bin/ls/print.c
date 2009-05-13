@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.44 2008/12/28 19:30:33 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.44.2.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.44 2008/12/28 19:30:33 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.44.2.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,7 +300,7 @@ printstream(DISPLAY *dp)
 			continue;
 		if (col > 0) {
 			(void)putchar(','), col++;
-			if (col + 1 + extwidth + p->fts_namelen >= termwidth)
+			if (col + 1 + extwidth + (int)p->fts_namelen >= termwidth)
 				(void)putchar('\n'), col = 0;
 			else
 				(void)putchar(' '), col++;

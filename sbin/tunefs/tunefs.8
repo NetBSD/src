@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.37 2008/07/31 05:38:04 simonb Exp $
+.\"	$NetBSD: tunefs.8,v 1.37.4.1 2009/05/13 19:19:07 jym Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,6 @@
 .Op Fl l Ar logsize
 .Op Fl m Ar minfree
 .Bk -words
-.\" .Op Fl n Ar soft_dependency_enabling
 .Op Fl o Ar optimize_preference
 .Ek
 .Ar special | Ar filesys
@@ -116,25 +115,6 @@ threshold.
 Note that if the value is raised above the current usage level,
 users will be unable to allocate files until enough files have
 been deleted to get under the higher threshold.
-.\"
-.\" comment out -n, since softdeps are now a mount option
-.ig
-.It Fl n Ar soft_dependency_enabling
-The soft dependency code allows most file system I/O to be done
-asynchronously by reordering dependent writes to ensure that the
-on-disk metadata is self-consistent even when updates are deferred.
-Additionally, metadata updates are aggregated, reducing the total
-number of writes performed.
-Use of this facility does not require any changes to the file system,
-so it can be enabled or disabled any time that the file system is unmounted.
-This experimental facility is turned off by default.
-It is turned on by using
-.Fl n
-enable;
-it is turned off by using
-.Fl n
-disable.
-..
 .It Fl o Ar optimize_preference
 The file system can either try to minimize the time spent
 allocating blocks, or it can attempt to minimize the space

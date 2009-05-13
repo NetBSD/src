@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.47 2009/01/28 16:31:49 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.47.2.1 2009/05/13 19:17:55 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -844,6 +844,13 @@ message must_be_one_root
 
 message partitions_overlap
 {Die Partitionen %c und %c überlappen sich.}
+
+message No_Bootcode
+{Kein Bootcode für die Rootpartition vorhanden}
+
+message cannot_ufs2_root
+{Leider existiert für diese Maschine kein Bootloader für FFSv2 Dateisysteme,
+daher kann das Root-Dateisystem nicht im FFSv2 Format angelegt werden.}
 
 message edit_partitions_again
 {

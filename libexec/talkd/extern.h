@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2007/01/08 17:51:34 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.4.20.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,26 +30,26 @@
  */
 
 /* announce.c */
-int announce __P((CTL_MSG *, char *));
-int print_mesg __P((char *, CTL_MSG *, char *));
+int announce(CTL_MSG *, const char *);
+int print_mesg(const char *, CTL_MSG *, const char *);
 
 /* print.c */
-void print_request __P((char *, CTL_MSG *));
-void print_response __P((char *, CTL_RESPONSE *));
+void print_request(const char *, CTL_MSG *);
+void print_response(const char *, CTL_RESPONSE *);
 
 /* process.c */
-void process_request __P((CTL_MSG *, CTL_RESPONSE *));
-void do_announce __P((CTL_MSG *, CTL_RESPONSE *));
-int find_user __P((char *, char *, size_t));
+void process_request(CTL_MSG *, CTL_RESPONSE *);
+void do_announce(CTL_MSG *, CTL_RESPONSE *);
+int find_user(const char *, char *, size_t);
 
 /* table.c */
-CTL_MSG *find_match __P((CTL_MSG *));
-CTL_MSG *find_request __P((CTL_MSG *));
-void insert_table __P((CTL_MSG *, CTL_RESPONSE *));
-int new_id __P((void));
-int delete_invite __P((int));
+CTL_MSG *find_match(CTL_MSG *);
+CTL_MSG *find_request(CTL_MSG *);
+void insert_table(CTL_MSG *, CTL_RESPONSE *);
+uint32_t new_id(void);
+u_char delete_invite(uint32_t);
 
 /* talkd.c */
 extern int debug;
 extern int logging;
-void tsa2sa __P((struct sockaddr *, const struct talkd_sockaddr *));
+void tsa2sa(struct sockaddr *, const struct talkd_sockaddr *);

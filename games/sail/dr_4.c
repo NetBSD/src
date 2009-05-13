@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_4.c,v 1.13 2003/08/07 09:37:42 agc Exp $	*/
+/*	$NetBSD: dr_4.c,v 1.13.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_4.c,v 1.13 2003/08/07 09:37:42 agc Exp $");
+__RCSID("$NetBSD: dr_4.c,v 1.13.40.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,9 +61,10 @@ ungrap(struct ship *from, struct ship *to)
 void
 grap(struct ship *from, struct ship *to)
 {
-	if (capship(from)->nationality != capship(to)->nationality && dieroll() > 2)
+	if (capship(from)->nationality != capship(to)->nationality &&
+	    dieroll() > 2)
 		return;
-	Write(W_GRAP, from, to->file->index, 0, 0, 0);
-	Write(W_GRAP, to, from->file->index, 0, 0, 0);
+	send_grap(from, to->file->index);
+	send_grap(to, from->file->index);
 	makesignal(from, "grappled with $$", to);
 }

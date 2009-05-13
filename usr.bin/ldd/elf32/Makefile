@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/01/20 22:49:29 tron Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2009/05/13 19:19:54 jym Exp $
 
 .include <bsd.own.mk>
 CPPFLAGS+=	-DELFSIZE=32
@@ -12,13 +12,13 @@ LIBISPRIVATE=	yes
 
 # XXX
 .include <bsd.own.mk>
-.if ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc64"
 .include "${NETBSDSRCDIR}/libexec/ld.elf_so/arch/sparc/Makefile.ld32"
-.elif ${MACHINE} == "amd64"
+.elif ${MACHINE_ARCH} == "x86_64"
 .include "${NETBSDSRCDIR}/libexec/ld.elf_so/arch/i386/Makefile.ld32"
 .endif
 
-.if ${MACHINE} != "alpha"
+.if ${MACHINE_ARCH} != "alpha"
 .include "../Makefile.elf"
 .endif
 

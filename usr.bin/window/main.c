@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.14.6.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.14.6.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ int
 main(int argc, char **argv)
 {
 	char *p;
+	const char *kp;
 	char fflag = 0;
 	char dflag = 0;
 	char xflag = 0;
@@ -105,9 +106,9 @@ main(int argc, char **argv)
 			usage();
 		}
 	}
-	if ((p = getenv("SHELL")) == 0)
-		p = _PATH_BSHELL;
-	if ((default_shellfile = str_cpy(p)) == 0)
+	if ((kp = getenv("SHELL")) == 0)
+		kp = _PATH_BSHELL;
+	if ((default_shellfile = str_cpy(kp)) == 0)
 		errx(1, "Out of memory.");
 	if ((p = strrchr(default_shellfile, '/')))
 		p++;

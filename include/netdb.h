@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.60 2008/06/21 20:12:49 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.60.8.1 2009/05/13 19:18:19 jym Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -84,7 +84,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.21.288.1 2008/02/28 05:46:12 marka Exp
+ *	Id: netdb.h,v 1.22 2008/02/28 05:34:17 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -132,7 +132,7 @@ typedef _BSD_SIZE_T_	size_t;
 
 __BEGIN_DECLS
 extern int h_errno;
-extern int * __h_errno __P((void));
+extern int * __h_errno(void);
 #ifdef _REENTRANT
 #define	h_errno (*__h_errno())
 #endif

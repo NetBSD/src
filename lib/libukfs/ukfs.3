@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.6 2008/11/26 19:05:55 wiz Exp $
+.\"     $NetBSD: ukfs.3,v 1.6.4.1 2009/05/13 19:18:36 jym Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -62,32 +62,21 @@ The only exception is the file system handle
 .Ft struct ukfs
 which should be released after use.
 .Sh INITIALIZATION
-.Ft int
-.br
+.Bl -ohang
+.It Ft int
 .Fn ukfs_init
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_modload "const char *fname"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_modload_dir "const char *dirname"
-.Pp
-.Ft ssize_t
-.br
+.It Ft ssize_t
 .Fn ukfs_vfstypes "char *buf" "size_t buflen"
-.Pp
-.Ft struct ukfs *
-.br
-.Fo ukfs_mount
-.Fa "const char *vfsname" "const char *devpath" "const char *mounpath"
-.Fa "int mntflags" "void *arg" "size_t alen"
-.Fc
-.Pp
-.Ft void
-.br
+.It Ft struct ukfs *
+.Fn ukfs_mount "const char *vfsname" "const char *devpath" \
+"const char *mountpath"  "int mntflags" "void *arg" "size_t alen"
+.It Ft void
 .Fn ukfs_release "struct ukfs *ukfs" "int flags"
+.El
 .Pp
 .Fn ukfs_init
 intializes the library and must be called once per process using
@@ -172,7 +161,7 @@ Flags as passed to the
 system call, for example
 .Dv MNT_RDONLY .
 In addition to generic parameters, file system specific parameters such as
-.Dv MNT_SOFTDEP
+.Dv MNT_LOG
 (ffs) may be passed here.
 .It arg
 File system private argument structure.
@@ -195,126 +184,67 @@ the file system is not unmounted.
 This is required if the file system has already been unmounted due
 to prior activity, otherwise 0 should be passed.
 .Sh OPERATION
-.Ft int
-.br
+.Bl -ohang
+.It Ft int
 .Fn ukfs_chdir "struct ukfs *ukfs" "const char *path"
-.Pp
-.Ft int
-.br
-.Fo ukfs_getdents
-.Fa "struct ukfs *ukfs" "const char *dirname" "off_t *off"
-.Fa "uint8_t *buf" "size_t bufsize"
-.Fc
-.Pp
-.Ft ssize_t
-.br
-.Fo ukfs_read
-.Fa "struct ukfs *ukfs" "const char *filename" "off_t off"
-.Fa "uint8_t *buf" "size_t bufsize"
-.Fc
-.Pp
-.Ft ssize_t
-.br
-.Fo ukfs_write
-.Fa "struct ukfs *ukfs" "const char *filename" "off_t off"
-.Fa "uint8_t *buf" "size_t bufsize"
-.Fc
-.Pp
-.Ft int
-.br
+.It Ft int
+.Fn ukfs_getdents "struct ukfs *ukfs" "const char *dirname" "off_t *off" \
+"uint8_t *buf" "size_t bufsize"
+.It Ft ssize_t
+.Fn ukfs_read "struct ukfs *ukfs" "const char *filename" "off_t off" \
+"uint8_t *buf" "size_t bufsize"
+.It Ft ssize_t
+.Fn ukfs_write "struct ukfs *ukfs" "const char *filename" "off_t off" \
+"uint8_t *buf" "size_t bufsize"
+.It Ft int
 .Fn ukfs_create "struct ukfs *ukfs" "const char *filename" "mode_t mode"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_mknod "struct ukfs *ukfs" "const char *path" "mode_t mode" "dev_t dev"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_mkfifo "struct ukfs *ukfs" "const char *path" "mode_t mode"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_mkdir "struct ukfs *ukfs" "const char *filename" "mode_t mode"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_remove "struct ukfs *ukfs" "const char *filename"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_rmdir "struct ukfs *ukfs" "const char *filename"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_link "struct ukfs *ukfs" "const char *filename" "const char *f_create"
-.Pp
-.Ft int
-.br
-.Fo ukfs_symlink
-.Fa "struct ukfs *ukfs" "const char *filename" "const char *linkname"
-.Fc
-.Pp
-.Ft ssize_t
-.br
-.Fo ukfs_readlink
-.Fa "struct ukfs *ukfs" "const char *filename" "char *linkbuf" "size_t buflen"
-.Fc
-.Pp
-.Ft int
-.br
+.It Ft int
+.Fn ukfs_symlink "struct ukfs *ukfs" "const char *filename" \
+"const char *linkname"
+.It Ft ssize_t
+.Fn ukfs_readlink "struct ukfs *ukfs" "const char *filename" \
+"char *linkbuf" "size_t buflen"
+.It Ft int
 .Fn ukfs_rename "struct ukfs *ukfs" "const char *from" "const char *to"
-.Pp
-.Ft int
-.br
-.Fo ukfs_stat
-.Fa "struct ukfs *ukfs" "const char *filename" "struct stat *file_stat"
-.Fc
-.Pp
-.Ft int
-.br
-.Fo ukfs_lstat
-.Fa "struct ukfs *ukfs" "const char *filename" "struct stat *file_stat"
-.Fc
-.Pp
-.Ft int
-.br
+.It Ft int
+.Fn ukfs_stat "struct ukfs *ukfs" "const char *filename" \
+"struct stat *file_stat"
+.It Ft int
+.Fn ukfs_lstat "struct ukfs *ukfs" "const char *filename" \
+"struct stat *file_stat"
+.It Ft int
 .Fn ukfs_chmod "struct ukfs *ukfs" "const char *filename" "mode_t mode"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_lchmod "struct ukfs *ukfs" "const char *filename" "mode_t mode"
-.Pp
-.Ft int
-.br
-.Fo ukfs_chown
-.Fa "struct ukfs *ukfs" "const char *filename" "uid_t uid" "gid_t gid"
-.Fc
-.Pp
-.Ft int
-.br
-.Fo ukfs_lchown
-.Fa "struct ukfs *ukfs" "const char *filename" "uid_t uid" "gid_t gid"
-.Fc
-.Pp
-.Ft int
-.br
+.It Ft int
+.Fn ukfs_chown "struct ukfs *ukfs" "const char *filename" "uid_t uid" \
+"gid_t gid"
+.It Ft int
+.Fn ukfs_lchown "struct ukfs *ukfs" "const char *filename" "uid_t uid" \
+"gid_t gid"
+.It Ft int
 .Fn ukfs_chflags "struct ukfs *ukfs" "const char *filename" "u_long flags"
-.Pp
-.Ft int
-.br
+.It Ft int
 .Fn ukfs_lchflags "struct ukfs *ukfs" "const char *filename" "u_long flags"
-.Pp
-.Ft int
-.br
-.Fo ukfs_utimes
-.Fa "struct ukfs *ukfs" "const char *filename" "const struct timeval *tptr"
-.Fc
-.Pp
-.Ft int
-.br
-.Fo ukfs_lutimes
-.Fa "struct ukfs *ukfs" "const char *filename" "const struct timeval *tptr"
-.Fc
+.It Ft int
+.Fn ukfs_utimes "struct ukfs *ukfs" "const char *filename"
+"const struct timeval *tptr"
+.It Ft int
+.Fn ukfs_lutimes "struct ukfs *ukfs" "const char *filename" \
+"const struct timeval *tptr"
+.El
 .Pp
 The above routines operate like their system call counterparts and the
 system call manual pages without the ukfs_ prefix should be referred to
@@ -333,9 +263,10 @@ Currently the call affects all accesses to that particular
 .Fa ,
 but it might be later changed to be thread private.
 .Sh UTILITIES
-.Ft int
-.br
+.Bl -ohang
+.It Ft int
 .Fn ukfs_util_builddirs "struct ukfs *ukfs" "const char *pathname" "mode_t mode"
+.El
 .Pp
 Builds a directory hierarchy.
 Unlike mkdir, the

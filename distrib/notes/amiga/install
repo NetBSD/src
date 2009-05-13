@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.34 2008/09/06 18:27:26 tsutsui Exp $
+.\"	$NetBSD: install,v 1.34.4.1 2009/05/13 19:17:45 jym Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,7 +182,7 @@ disk label of the disks at this point.
 You should do this, to find out
 what partition letters the
 .Nx
-kernel assigned to the partitions you created, and as a check whether the
+kernel assigned to the partitions you created, and as a check of whether the
 disk number you are going to use is right.
 .Pp
 .Em you are now at the point of no return.
@@ -231,10 +231,10 @@ You should expect this error whenever using newfs.
 .Pp
 The install will now ask you want to configure any network
 information.
-It ill ask for the machine's host name, domain
+It will ask for the machine's host name, domain
 name, and other network configuration information.
 .Pp
-Since the network configuration might have lead to additional (nfs)
+Since the network configuration might have lead to additional (NFS)
 file system entries, you get another chance to modify your fstab.
 .Pp
 You are finally at the point where some real data will be put on
@@ -289,7 +289,7 @@ kern.tgz distribution set, this is an old kernel, and you should answer
 .Pp
 If you did install the kern.tgz kernel, you normally should answer "n".
 .Pp
-Finally, the installer ask you if you want to install the bootblock
+Finally, the installer asks you if you want to install the bootblock
 code on your root disk.
 This is a matter of personal choice and can also be done from a running
 .Nx
@@ -317,20 +317,9 @@ First mount your file systems like so:
 .Pp
 .Dl Ic "mount -av"
 .Pp
-Your system is now complete but not completely configured; you
-should adjust the
-.Pa /etc/sendmail.cf
-file as necessary to suit your site.
-You should also examine and adjust the settings in
+Your system is now complete, and it is up to you to configure the rest.
+You may want to start by looking at
 .Pa /etc/rc.conf .
-You can use
-.Xr vi 1
-or
-.Xr ed 1
-to edit the files.
-If you installed the man pages you can type
-.Ic man vi No or Ic man ed
-for instructions on how to use these somewhat non-intuitive editors.
 .Pp
 Once you are done with the rest of configuration unmount your file
 systems and halt your system, then reboot:

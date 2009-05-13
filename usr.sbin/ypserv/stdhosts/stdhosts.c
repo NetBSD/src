@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.17 2004/10/30 16:01:48 dsl Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.17.34.1 2009/05/13 19:20:45 jym Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.17 2004/10/30 16:01:48 dsl Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.17.34.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,8 @@ main(int argc, char *argv[])
 	FILE	*data_file;
 	size_t	 line_no;
 	size_t	 len;
-	char	*line, *k, *v, *addr_string, *fname;
+	char	*line, *k, *v, *addr_string;
+	const char *fname;
 	int	 ch;
 	int	 af = 1 << 4;	/*IPv4*/
 	struct addrinfo hints, *res;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.40 2008/12/29 00:50:06 christos Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.40.2.1 2009/05/13 19:19:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.40 2008/12/29 00:50:06 christos Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.40.2.1 2009/05/13 19:19:45 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -603,8 +603,8 @@ run(int cmd, const char *arg)
 int
 play(const char *arg, int fromuser)
 {
-	int rv, n, start, end, istart, iend, blk, len, relend;
-	u_int tr1, tr2, m1, m2, s1, s2, f1, f2, tm, ts, tf;
+	int rv, start, end, istart, iend, blk, len, relend;
+	u_int n, tr1, tr2, m1, m2, s1, s2, f1, f2, tm, ts, tf;
 	struct ioc_toc_header h;
 
 	if (shuffle && fromuser) {
@@ -878,8 +878,9 @@ skip(int dir, int fromuser)
 	if (dir == 0 || shuffle != 0) {
 		if (fromuser || (rv != CD_AS_PLAY_IN_PROGRESS &&
 		    rv != CD_AS_PLAY_PAUSED))
-			trk = shuffle < 0 ? (-shuffle) : (h.starting_track +
-			    arc4random() % (h.ending_track - h.starting_track + 1));
+			trk = shuffle < 0 ? (-shuffle) :
+			    (int)((h.starting_track +
+			    arc4random() % (h.ending_track - h.starting_track + 1)));
 		else
 			return (0);
 	} else {
@@ -1192,7 +1193,8 @@ get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 	struct ioc_toc_header h;
 	u_int mm, ss, ff;
 	int rv;
-	int lba, i, n, rc;
+	int i, n, rc;
+	uint32_t lba;
 
 	if (!tbvalid) {
 		if ((rc = ioctl(fd, CDIOREADTOCHEADER, &h)) < 0) {
@@ -1263,7 +1265,7 @@ parse(char *buf, int *cmd)
 {
 	const struct cmdtab *c, *mc;
 	char *p, *q;
-	int len;
+	unsigned int len;
 
 	for (p = buf; isspace((unsigned char)*p); p++)
 		continue;
@@ -1297,7 +1299,7 @@ parse(char *buf, int *cmd)
 		}
 		/* Try short hand forms then... */
 		if (len >= c->min && strncasecmp(buf, c->name, len) == 0) {
-			if (*cmd != -1 && *cmd != c->command) {
+			if (*cmd != -1 && *cmd != (int)c->command) {
 				warnx("ambiguous command");
 				return (0);
 			}
@@ -1347,7 +1349,7 @@ openaudio()
 	int rc, aei;
 
 	if (da.afd > -1)
-	return (1);
+		return (1);
 	da.afd = open(da.auname, O_WRONLY);
 	if (da.afd < 0) {
 		warn("openaudio");

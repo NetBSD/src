@@ -1,11 +1,11 @@
-/*	$NetBSD: restart.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: restart.h,v 1.3.8.1 2009/05/13 19:18:06 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

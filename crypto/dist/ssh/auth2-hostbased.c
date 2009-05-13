@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.5 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.11 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.5.26.1 2009/05/13 19:15:56 jym Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.12 2008/07/17 08:51:07 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.5 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.5.26.1 2009/05/13 19:15:56 jym Exp $");
 
 #include <sys/types.h>
 
@@ -153,15 +153,16 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
 	debug2("userauth_hostbased: chost %s resolvedname %s ipaddr %s",
 	    chost, resolvedname, ipaddr);
 
+	if (((len = strlen(chost)) > 0) && chost[len - 1] == '.') {
+		debug2("stripping trailing dot from chost %s", chost);
+		chost[len - 1] = '\0';
+	}
+
 	if (options.hostbased_uses_name_from_packet_only) {
 		if (auth_rhosts2(pw, cuser, chost, chost) == 0)
 			return 0;
 		lookup = chost;
 	} else {
-		if (((len = strlen(chost)) > 0) && chost[len - 1] == '.') {
-			debug2("stripping trailing dot from chost %s", chost);
-			chost[len - 1] = '\0';
-		}
 		if (strcasecmp(resolvedname, chost) != 0)
 			logit("userauth_hostbased mismatch: "
 			    "client sends %s, but we resolve %s to %s",

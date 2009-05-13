@@ -255,7 +255,10 @@ ops_decrypt_secret_key_from_data(const ops_keydata_t * key,
 
 	memset(&arg, '\0', sizeof(arg));
 	arg.key = key;
-	arg.pphrase = strdup(pphrase);
+
+	if (pphrase) {
+		arg.pphrase = strdup(pphrase);
+	}
 
 	pinfo = ops_parse_info_new();
 
@@ -823,8 +826,8 @@ str2keyid(const char *userid, unsigned char *keyid, size_t len)
 	static const char	*hexes = "0123456789ABCDEF";
 	const char		*hi;
 	const char		*lo;
-	int			 i;
-	int			 j;
+	size_t			 i;
+	size_t			 j;
 
 	for (i = j = 0 ; j < len && userid[i] && userid[i + 1] ; i += 2, j++) {
 		if ((hi = strchr(hexes, userid[i])) == NULL ||
@@ -865,23 +868,28 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 			       const char *userid)
 {
 	const ops_keydata_t	*kp;
+	ops_user_id_t		*user;
+	ops_keydata_t		*keyp;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE + 1];
-	unsigned int    	 i = 0;
+	unsigned int    	 u = 0;
 	size_t          	 len;
 	char	                *cp;
-	int             	 n = 0;
+	int             	 k = 0;
 
 	if (!keyring)
 		return NULL;
 
 	len = strlen(userid);
-	for (n = 0; n < keyring->nkeys; ++n) {
-		for (i = 0; i < keyring->keys[n].nuids; i++) {
+	for (k = 0, keyp = keyring->keys ; k < keyring->nkeys; k++, keyp++) {
+		for (u = 0, user = keyp->uids; u < keyp->nuids; u++, user++) {
 			if (ops_get_debug_level(__FILE__)) {
-				printf("[%d][%d] userid %s, last '%d'\n", n, i, keyring->keys[n].uids[i].user_id, keyring->keys[n].uids[i].user_id[len]);
+				printf("[%d][%d] userid %s, last '%d'\n",
+					k, u, user->user_id,
+					user->user_id[len]);
 			}
-			if (strncmp((char *) keyring->keys[n].uids[i].user_id, userid, len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ')
-				return &keyring->keys[n];
+			if (strncmp((char *)user->user_id, userid, len) == 0 &&
+			    user->user_id[len] == ' ')
+				return keyp;
 		}
 	}
 
@@ -895,44 +903,51 @@ ops_keyring_find_key_by_userid(const ops_keyring_t *keyring,
 					userid,
 					keyid[0], keyid[1], keyid[2], keyid[3]);
 			}
-			if ((kp = ops_keyring_find_key_by_id(keyring, keyid)) != NULL) {
+			kp = ops_keyring_find_key_by_id(keyring, keyid);
+			if (kp != NULL) {
 				return kp;
 			}
 		}
 		/* match on full name */
-		for (n = 0; n < keyring->nkeys; n++) {
-			for (i = 0; i < keyring->keys[n].nuids; i++) {
+		for (k=0, keyp=keyring->keys; k < keyring->nkeys; k++, keyp++) {
+			for (u=0, user=keyp->uids; u < keyp->nuids; u++, user++) {
 				if (ops_get_debug_level(__FILE__)) {
-					printf("keyid ,%s, len %" PRIsize "u, keyid[len] %c\n",
-					       (char *) keyring->keys[n].uids[i].user_id, len, keyring->keys[n].uids[i].user_id[len]);
+					printf("keyid ,%s, len %" PRIsize
+						   "u, keyid[len] %c\n",
+					       (char *)user->user_id, len,
+					       user->user_id[len]);
 				}
-				if (strncasecmp((char *) keyring->keys[n].uids[i].user_id, userid, len) == 0 && keyring->keys[n].uids[i].user_id[len] == ' ') {
-					return &keyring->keys[n];
+				if (strncasecmp((char *)user->user_id, userid,
+						len) == 0 &&
+						user->user_id[len] == ' ') {
+					return keyp;
 				}
 			}
 		}
 	}
 	/* match on <email@address> */
-	for (n = 0; n < keyring->nkeys; n++) {
-		for (i = 0; i < keyring->keys[n].nuids; i++) {
+	for (k = 0, keyp = keyring->keys; k < keyring->nkeys; k++, keyp++) {
+		for (u = 0, user = keyp->uids ; u < keyp->nuids; u++, user++) {
 			/*
 			 * look for the rightmost '<', in case there is one
 			 * in the comment field
 			 */
-			if ((cp = strrchr((char *) keyring->keys[n].uids[i].user_id, '<')) != NULL) {
+			cp = strrchr((char *)user->user_id, '<');
+			if (cp != NULL) {
 				if (ops_get_debug_level(__FILE__)) {
-					printf("cp ,%s, userid ,%s, len %" PRIsize "u ,%c,\n",
-					       cp + 1, userid, len, *(cp + len + 1));
+					printf("cp ,%s, userid ,%s, len %"
+							PRIsize "u ,%c,\n",
+					       cp + 1, userid, len,
+					       *(cp + len + 1));
 				}
 				if (strncasecmp(cp + 1, userid, len) == 0 &&
 				    *(cp + len + 1) == '>') {
-					return &keyring->keys[n];
+					return keyp;
 				}
 			}
 		}
 	}
 
-	/* printf("end: n=%d,i=%d\n",n,i); */
 	return NULL;
 }
 

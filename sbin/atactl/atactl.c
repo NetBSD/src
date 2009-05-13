@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.52 2008/08/25 00:45:56 dholland Exp $	*/
+/*	$NetBSD: atactl.c,v 1.52.4.1 2009/05/13 19:18:59 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.52 2008/08/25 00:45:56 dholland Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.52.4.1 2009/05/13 19:18:59 jym Exp $");
 #endif
 
 
@@ -683,7 +683,7 @@ void
 print_selftest_entry(int num, struct ata_smart_selftest *le)
 {
 	unsigned char *p;
-	int i;
+	size_t i;
 
 	/* check if all zero */
 	for (p = (void *)le, i = 0; i < sizeof(*le); i++)

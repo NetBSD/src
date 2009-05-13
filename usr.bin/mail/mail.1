@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.54 2008/12/08 11:32:18 wiz Exp $
+.\"	$NetBSD: mail.1,v 1.54.2.1 2009/05/13 19:19:56 jym Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd December 7, 2008
+.Dd February 18, 2009
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -43,9 +43,10 @@
 .Op Fl a Ar file
 .Op Fl b Ar bcc-addr
 .Op Fl c Ar cc-addr
+.Op Fl r Ar rcfile
 .Op Fl s Ar subject
 .Ar to-addr ...
-.Op Ar sendmail-flags
+.Op - Ar sendmail-flags
 .Nm
 .Op Fl EIiNnv
 .Op Fl H Ns Op colon-modifier
@@ -118,6 +119,13 @@ when reading mail or editing a mail folder.
 Inhibits reading
 .Pa /etc/mail.rc
 upon startup.
+.It Fl r
+Specify an alternate user rcfile to load.
+This overrides the value specified in the environment variable
+.Ev MAILRC
+which in turn overrides the default
+.Pa ~/.mailrc
+file.
 .It Fl s
 Specify subject on command line
 (only the first argument after the
@@ -499,6 +507,33 @@ but also saves MIME parts that don't have a filename associated with
 them.
 For the unnamed parts, a filename is suggested containing the message
 and part numbers, and the subtype.
+.It Ic Header
+.Pq Ic H
+Specify or show additional header fields.
+This is intended for adding extra header fields like
+.Dq Reply-To:
+or
+.Dq X-Organization:
+to the header.
+For example:
+.Bd -literal -offset 0
+  Header X-Mailer: NetBSD mail(1) 9.1
+.Ed
+.Pp
+would add the
+.Dq X-Mailer: NetBSD mail(1) 9.1
+line to the message header.
+Without any arguments, the extra header fields are displayed.
+With only a header name (including the
+.Sq \&: ) ,
+it will delete all extra header fields with that name.
+Note: Although some syntax checking is done on the header line, care
+should be taken to ensure that it complies with RFC 2821 and 2822.
+Also, the extra header lines are not currently displayed by the
+.Ic \&~h
+tilde command when sending mail (use
+.Ic \&~:Header
+to see them).
 .It Ic More
 .Pq Ic M
 Like
@@ -1292,7 +1327,7 @@ Message headers currently being ignored (by the
 or
 .Ic retain
 command) are not included.
-.It Ic \&~F Ns Ar messages
+.It Ic \&~
 Identical to
 .Ic \&~f ,
 except all message headers are included.
@@ -1428,6 +1463,8 @@ and
 .Ic Type
 commands.
 Normally these commands do not invoke the pager.
+(See
+.Va page-also . )
 .It Ar debug
 Setting the binary option
 .Ar debug
@@ -1572,6 +1609,17 @@ in your home directory.
 Setting the binary option
 .Ar nosave
 prevents this.
+.It Ar page-also
+A comma or whitespace delimited list of additional commands to page.
+The comparisons are case insensitive, so if
+.Ic view
+is in the list, both
+.Ic view
+and
+.Ic View
+will page.
+.It Ar pager-off
+If set, disable the pager on all commands.
 .It Ar quiet
 Suppresses the printing of the version when first invoked.
 .It Ar recursive-commands
@@ -1833,7 +1881,7 @@ set header-format=\&"\&%??%P%Q%?* ?%3i \&%-21.20f \&%a \&%b \&%e \&%R \&%3K/%-5O
 Note 1: The message status flag
 .Ql \&%Q
 will display the single character
-.Ql \+
+.Ql \&+
 for the parent of a subthread.
 This will be overwritten by a
 .Ql T ,

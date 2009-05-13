@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.5 2008/03/19 23:15:19 plunky Exp $	*/
+/*	$NetBSD: profile.c,v 1.5.10.1 2009/05/13 19:20:39 jym Exp $	*/
 
 /*
  * profile.c
@@ -28,12 +28,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: profile.c,v 1.5 2008/03/19 23:15:19 plunky Exp $
+ * $Id: profile.c,v 1.5.10.1 2009/05/13 19:20:39 jym Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/profile.c,v 1.2 2004/07/28 07:15:44 kan Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: profile.c,v 1.5 2008/03/19 23:15:19 plunky Exp $");
+__RCSID("$NetBSD: profile.c,v 1.5.10.1 2009/05/13 19:20:39 jym Exp $");
 
 #include <sys/queue.h>
 #include <sys/utsname.h>
@@ -79,7 +79,7 @@ profile_get_descriptor(uint16_t uuid)
 		&sp_profile_descriptor,
 	};
 
-	int32_t			i;
+	size_t			i;
 
 	for (i = 0; i < sizeof(profiles)/sizeof(profiles[0]); i++)
 		if (profiles[i]->uuid[0] == uuid)
@@ -415,7 +415,7 @@ bnep_profile_create_protocol_descriptor_list(
 #endif
 	};
 	const int psize = __arraycount(ptype) * 3;
-	int i;
+	size_t i;
 
 	if (datalen != 2 || (18 + psize) > 255 || (buf + 20 + psize) > eob)
 		return (-1);
@@ -428,7 +428,7 @@ bnep_profile_create_protocol_descriptor_list(
 	SDP_PUT8(SDP_DATA_UUID16, buf);
 	SDP_PUT16(SDP_UUID_PROTOCOL_L2CAP, buf);
 	SDP_PUT8(SDP_DATA_UINT16, buf);
-	SDP_PUT16(*(uint16_t *)data, buf);
+	SDP_PUT16(*(const uint16_t *)data, buf);
 
 	SDP_PUT8(SDP_DATA_SEQ8, buf);
 	SDP_PUT8(8 + psize, buf);

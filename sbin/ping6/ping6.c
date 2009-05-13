@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.71 2008/10/13 13:47:35 dholland Exp $	*/
+/*	$NetBSD: ping6.c,v 1.71.4.1 2009/05/13 19:19:05 jym Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.71 2008/10/13 13:47:35 dholland Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.71.4.1 2009/05/13 19:19:05 jym Exp $");
 #endif
 #endif
 
@@ -287,8 +287,9 @@ main(int argc, char *argv[])
 	int timeout;
 	struct addrinfo hints;
 	struct pollfd fdmaskp[1];
-	int cc, i;
-	int ch, hold, packlen, preload, optval, ret_ga;
+	int cc;
+	u_int i, packlen;
+	int ch, hold, preload, optval, ret_ga;
 	u_char *datap, *packet;
 	char *e, *target, *ifname = NULL, *gateway = NULL;
 	int ip6optlen = 0;
@@ -379,7 +380,7 @@ main(int argc, char *argv[])
 			lsockbufsize = strtoul(optarg, &e, 10);
 			sockbufsize = lsockbufsize;
 			if (errno || !*optarg || *e ||
-			    sockbufsize != lsockbufsize)
+			    (u_long)sockbufsize != lsockbufsize)
 				errx(1, "invalid socket buffer size");
 #else
 			errx(1,
@@ -678,7 +679,7 @@ main(int argc, char *argv[])
 		errx(1, "-f and -i incompatible options");
 
 	if ((options & F_NOUSERDATA) == 0) {
-		if (datalen >= sizeof(struct tv32)) {
+		if (datalen >= (int)sizeof(struct tv32)) {
 			/* we can time transfer */
 			timing = 1;
 		} else
@@ -695,7 +696,7 @@ main(int argc, char *argv[])
 		packlen = 2048 + IP6LEN + ICMP6ECHOLEN + EXTRA;
 	}
 
-	if (!(packet = (u_char *)malloc((u_int)packlen)))
+	if (!(packet = (u_char *)malloc(packlen)))
 		err(1, "Unable to allocate packet");
 	if (!(options & F_PINGFILLED))
 		for (i = ICMP6ECHOLEN; i < packlen; ++i)
@@ -1364,7 +1365,7 @@ dnsdecode(const u_char **sp, const u_char *ep, const u_char *base, char *buf,
 			while (i-- > 0 && cp < ep) {
 				l = snprintf(cresult, sizeof(cresult),
 				    isprint(*cp) ? "%c" : "\\%03o", *cp & 0xff);
-				if (l >= sizeof(cresult) || l < 0)
+				if (l >= (int)sizeof(cresult) || l < 0)
 					return NULL;
 				if (strlcat(buf, cresult, bufsiz) >= bufsiz)
 					return NULL;	/*result overrun*/
@@ -1419,7 +1420,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	}
 	from = (struct sockaddr *)mhdr->msg_name;
 	fromlen = mhdr->msg_namelen;
-	if (cc < sizeof(struct icmp6_hdr)) {
+	if (cc < (int)sizeof(struct icmp6_hdr)) {
 		if (options & F_VERBOSE)
 			warnx("packet too short (%d bytes) from %s", cc,
 			    pr_addr(from, fromlen));
@@ -2418,7 +2419,7 @@ pr_retip(struct ip6_hdr *ip6, u_char *end)
 	u_char *cp = (u_char *)ip6, nh;
 	int hlen;
 
-	if (end - (u_char *)ip6 < sizeof(*ip6)) {
+	if (end - (u_char *)ip6 < (intptr_t)sizeof(*ip6)) {
 		printf("IP6");
 		goto trunc;
 	}
@@ -2511,7 +2512,7 @@ fill(char *bp, char *patp)
 /* xxx */
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXDATALEN - (8 + sizeof(struct tv32) + ii);
+		    kk <= (int)(MAXDATALEN - (8 + sizeof(struct tv32) + ii));
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];

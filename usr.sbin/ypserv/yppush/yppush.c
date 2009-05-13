@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.21 2008/02/29 03:00:47 lukem Exp $	*/
+/*	$NetBSD: yppush.c,v 1.21.10.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  *
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	const char *cp;
 	char   *master;
 	DBM    *ypdb;
-	datum   datum;
+	datum   dat;
 	CLIENT *ypserv;
 	struct timeval tv;
 	enum clnt_stat retval;
@@ -178,16 +178,16 @@ main(int argc, char *argv[])
 	if (ypdb == NULL)
 		err(1, "ypdb_open %s/%s/%s", YP_DB_PATH, ypi.ourdomain,
 		    ypi.map);
-	datum.dptr = YP_LAST_KEY;
-	datum.dsize = YP_LAST_LEN;
-	datum = ypdb_fetch(ypdb, datum);
-	if (datum.dptr == NULL)
+	dat.dptr = YP_LAST_KEY;
+	dat.dsize = YP_LAST_LEN;
+	dat = ypdb_fetch(ypdb, dat);
+	if (dat.dptr == NULL)
 		errx(1,
 		    "unable to fetch %s key: check database with 'makedbm -u'",
 		    YP_LAST_KEY);
 	ypi.order = 0;
-	cp = datum.dptr;
-	while (cp < datum.dptr + datum.dsize) {
+	cp = dat.dptr;
+	while (cp < dat.dptr + dat.dsize) {
 		if (!isdigit((unsigned char)*cp))
 			errx(1,
 		    "invalid order number: check database with 'makedbm -u'");

@@ -1,4 +1,4 @@
-/*	$NetBSD: makeinfo.c,v 1.14 2008/09/02 08:00:24 christos Exp $	*/
+/*	$NetBSD: makeinfo.c,v 1.14.6.1 2009/05/13 19:18:10 jym Exp $	*/
 
 /* makeinfo -- convert Texinfo source into other formats.
    Id: makeinfo.c,v 1.74 2004/12/19 17:15:42 karl Exp
@@ -381,6 +381,8 @@ General output options:\n\
                               also, write to standard output by default.\n\
       --no-split            suppress splitting of Info or HTML output,\n\
                             generate only one output file.\n\
+      --no-version-headers  suppress header with makeinfo version and\n\
+                            source path.\n\
       --number-sections     output chapter and sectioning numbers.\n\
   -o, --output=FILE         output to FILE (directory if split HTML),\n\
 "));
@@ -505,6 +507,7 @@ struct option long_options[] =
   { "no-pointer-validate", 0, &validating, 0 },
   { "no-split", 0, &splitting, 0 },
   { "no-validate", 0, &validating, 0 },
+  { "no-version-header", 0, &no_version_header, 1 },
   { "no-warn", 0, &print_warnings, 0 },
   { "number-footnotes", 0, &number_footnotes, 1 },
   { "number-sections", 0, &number_sections, 1 },
@@ -1671,7 +1674,7 @@ convert_from_loaded_file (char *name)
   }
 
   /* html fixxme: should output this as trailer on first page.  */
-  if (!no_headers && !html && !xml)
+  if (!no_headers && !html && !xml && !no_version_header)
     add_word_args (_("This is %s, produced by makeinfo version %s from %s.\n"),
                    output_filename, VERSION, input_filename);
 

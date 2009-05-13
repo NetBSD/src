@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.17 2006/12/15 22:13:33 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.17.20.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,6 +115,7 @@ struct editline {
 	FILE		 *el_errfile;	/* Stdio stuff			*/
 	int		  el_infd;	/* Input file descriptor	*/
 	int		  el_flags;	/* Various flags.		*/
+	int		  el_errno;	/* Local copy of errno		*/
 	coord_t		  el_cursor;	/* Cursor location		*/
 	char		**el_display;	/* Real screen image = what is there */
 	char		**el_vdisplay;	/* Virtual screen image = what we see */

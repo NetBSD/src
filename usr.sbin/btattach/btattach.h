@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.h,v 1.1 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: btattach.h,v 1.1.10.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -36,7 +36,7 @@ struct devtype {
 	const char *	descr;	/* long description */
 	devinit_t *	init;	/* init function */
 	tcflag_t	cflag;	/* default cflags */
-	int		speed;	/* default baudrate */
+	unsigned int	speed;	/* default baudrate */
 };
 
 devinit_t init_bcm2035;

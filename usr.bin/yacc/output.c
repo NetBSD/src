@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.14 2006/05/24 18:01:43 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.14.28.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: output.c,v 1.14 2006/05/24 18:01:43 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.14.28.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -931,7 +931,7 @@ static void
 output_debug(void)
 {
     int i, j, k, max;
-    char **symnam, *s;
+    const char **symnam, *s;
 
     ++outline;
     fprintf(code_file, "#define YYFINAL %d\n", final_state);
@@ -949,7 +949,7 @@ output_debug(void)
     ++outline;
     fprintf(code_file, "#define YYMAXTOKEN %d\n", max);
 
-    symnam = (char **) MALLOC((max+1)*sizeof(char *));
+    symnam = (const char **) MALLOC((max+1)*sizeof(char *));
     if (symnam == 0) no_space();
 
     /* Note that it is  not necessary to initialize the element		*/

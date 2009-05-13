@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)diskpart.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: diskpart.8,v 1.8 2003/08/07 11:25:18 agc Exp $
+.\"	$NetBSD: diskpart.8,v 1.8.40.1 2009/05/13 19:20:21 jym Exp $
 .\"
 .Dd June 6, 1993
 .Dt DISKPART 8
@@ -111,12 +111,12 @@ If the disk is smaller than 20 Megabytes, then
 aborts with the message
 .Dq Li disk too small, calculate by hand .
 .Bl -column Partition 20-60\ MB 61-205\ MB 206-355\ MB 356+\ MB
-Partition	20-60 MB	61-205 MB	206-355 MB	356+ MB
-a	15884	15884	15884	15884
-b	10032	33440	33440	66880
-d	15884	15884	15884	15884
-e	unused	55936	55936	307200
-h	unused	unused	291346	291346
+.It Partition	20-60 MB	61-205 MB	206-355 MB	356+ MB
+.It a	15884	15884	15884	15884
+.It b	10032	33440	33440	66880
+.It d	15884	15884	15884	15884
+.It e	unused	55936	55936	307200
+.It h	unused	unused	291346	291346
 .El
 .Pp
 If an unknown disk type is specified,

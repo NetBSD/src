@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.32 2008/07/24 04:39:26 matt Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.32.6.1 2009/05/13 19:18:42 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,12 +68,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.32 2008/07/24 04:39:26 matt Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.32.6.1 2009/05/13 19:18:42 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -120,7 +119,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	 * Assume only 64-bit relocations here, which should always
 	 * be true for the dynamic linker.
 	 */
-	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	relalim = (const Elf_Rela *)((const uint8_t *)rela + relasz);
 	for (; rela < relalim; rela++) {
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
 		*where = (Elf_Addr)(relocbase + rela->r_addend);
@@ -284,12 +283,12 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = obj->pltrela + reloff;
 	Elf_Addr new_value;
-	int err;
+	int error;
 
 	new_value = 0; /* XXX GCC4 */
 
-	err = _rtld_relocate_plt_object(obj, rela, &new_value);
-	if (err || new_value == 0)
+	error = _rtld_relocate_plt_object(obj, rela, &new_value);
+	if (error || new_value == 0)
 		_rtld_die();
 
 	return (caddr_t)new_value;

@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.17 2003/09/25 09:37:32 wiz Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.17.40.1 2009/05/13 19:20:25 jym Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.17 2003/09/25 09:37:32 wiz Exp $
+.\"	$Id: isdnd.rc.5,v 1.17.40.1 2009/05/13 19:20:25 jym Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -289,7 +289,7 @@ This keyword is used to set the D-channel protocol for the S0-bus a
 controller is connected to.
 The following parameters are currently supported:
 .Pp
-.Bl -tag -width calledback -compact -offset
+.Bl -tag -width calledback -compact -offset xxxx
 .It Ar dss1
 The DSS1 or so-called "Euro-ISDN" D-channel protocol according to
 ITU Recommendations Q.921 and Q.931.
@@ -302,7 +302,7 @@ This keyword starts one configuration entry.
 It must not have a parameter.
 This keyword must be used at least once.
 The following keywords are valid in an entry section:
-.Bl -tag -width unitlengthsrc -compact
+.Bl -tag -width downtime
 .It Li answerprog
 This keyword is used to specify the name of a program which is run in
 case an incoming telephone connection specified
@@ -421,7 +421,7 @@ Used to specify what to do when an incoming connection request is received.
 The keyword is mandatory.
 The currently supported parameters are:
 .Pp
-.Bl -tag -width calledback -compact -offset
+.Bl -tag -width calledback -compact -offset xxxx
 .It Ar accept
 Accept an incoming call.
 .It Ar reject
@@ -505,7 +505,7 @@ The algorithm used to determine when to hang up an outgoing call when the
 line becomes idle.
 The current algorithms are:
 .Pp
-.Bl -tag -width calledback -compact -offset
+.Bl -tag -width calledback -compact -offset xxxx
 .It Ar fix-unit-size
 idle algorithm which assumes fixed sized changing units during the whole call.
 .It Ar var-unit-size
@@ -702,7 +702,7 @@ PPP interface.
 .It Li ratetype
 The rate entry used from the rates file.
 (optional)
-.br
+.Pp
 For example, ratetype=0 selects lines beginning "ra0" in /etc/isdn/isdnd.rates;
 (typically ra0 lines are a set of tables for local call rates on different
 days of the week \*[Am] times per day).

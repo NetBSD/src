@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.15 2007/02/05 18:26:01 apb Exp $
+# $NetBSD: regpkg,v 1.15.22.1 2009/05/13 19:17:50 jym Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -635,7 +635,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.15 2007/02/05 18:26:01 apb Exp $'
+		rcsid='$NetBSD: regpkg,v 1.15.22.1 2009/05/13 19:17:50 jym Exp $'
 		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
@@ -892,7 +892,7 @@ EOM
 			<"${specfile_payload}" \
 		|| bomb
 	)
-	${GZIP_CMD} -9 <"${tarball_uncompressed}" >"${binpkgfile}" || bomb
+	${GZIP_CMD} -9n <"${tarball_uncompressed}" >"${binpkgfile}" || bomb
 
 	# (Extra space is to make message line up with "Registered" message.)
 	if ${verbose}; then

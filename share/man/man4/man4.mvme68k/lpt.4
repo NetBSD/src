@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.6 2003/07/26 20:17:35 salo Exp $
+.\" $NetBSD: lpt.4,v 1.6.42.1 2009/05/13 19:19:11 jym Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -39,8 +39,8 @@
 .Nm lpt
 .Nd parallel port driver
 .Sh SYNOPSIS
-.Cd "lpt0 at pcc? ipl 1
-.Cd "lpt0 at pcctwo? ipl 1
+.Cd "lpt0 at pcc? ipl 1"
+.Cd "lpt0 at pcctwo? ipl 1"
 .Sh DESCRIPTION
 This driver provides access to parallel ports.  The bits in the minor
 number select various features of the driver.
@@ -48,7 +48,7 @@ number select various features of the driver.
 .Bl -column "Minor Bit" "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
 .It Sy "Minor Bit"	Function
 .It 128	Use the interruptless driver. (polling)
-.It  64	Do not initialize the device on the port.
+.It  64	\&Do not initialize the device on the port.
 .It  32	Automatic LF on CR.
 .It  16	Select 1.6uS strobe pulse width (default is 6.4uS)
 .El

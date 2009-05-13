@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.12 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: vis.c,v 1.12.6.1 2009/05/13 19:20:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.12 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: vis.c,v 1.12.6.1 2009/05/13 19:20:11 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,75 +49,87 @@ __RCSID("$NetBSD: vis.c,v 1.12 2008/07/21 14:19:27 lukem Exp $");
 #include <err.h>
 #include <vis.h>
 
-int eflags, fold, foldwidth=80, none, markeol, debug;
-char *extra;
+#include "extern.h"
 
-int foldit __P((char *, int, int));
-int main __P((int, char **));
-void process __P((FILE *, char *));
+static int eflags, fold, foldwidth = 80, none, markeol;
+#ifdef DEBUG
+int debug;
+#endif
+static char *extra;
+
+static void process(FILE *);
 
 int
-main(argc, argv) 
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *fp;
 	int ch;
 	int rval;
 
-	while ((ch = getopt(argc, argv, "bcfhlnostwe:F:d")) != -1)
+	while ((ch = getopt(argc, argv, "bcde:F:fhlmnostw")) != -1)
 		switch((char)ch) {
-		case 'n':
-			none++;
-			break;
-		case 'w':
-			eflags |= VIS_WHITE;
-			break;
-		case 'c':
-			eflags |= VIS_CSTYLE;
-			break;
-		case 't':
-			eflags |= VIS_TAB;
-			break;
-		case 's':
-			eflags |= VIS_SAFE;
-			break;
-		case 'o':
-			eflags |= VIS_OCTAL;
-			break;
-		case 'h':
-			eflags |= VIS_HTTPSTYLE;
-			break;
 		case 'b':
 			eflags |= VIS_NOSLASH;
 			break;
-		case 'e':
-			extra = optarg;
-			break;
-		case 'F':
-			if ((foldwidth = atoi(optarg))<5) {
-				errx(1, "can't fold lines to less than 5 cols");
-				/* NOTREACHED */
-			}
-			/*FALLTHROUGH*/
-		case 'f':
-			fold++;		/* fold output lines to 80 cols */
-			break;		/* using hidden newline */
-		case 'l':
-			markeol++;	/* mark end of line with \$ */
+		case 'c':
+			eflags |= VIS_CSTYLE;
 			break;
 #ifdef DEBUG
 		case 'd':
 			debug++;
 			break;
 #endif
+		case 'e':
+			extra = optarg;
+			break;
+		case 'F':
+			if ((foldwidth = atoi(optarg)) < 5) {
+				errx(1, "can't fold lines to less than 5 cols");
+				/* NOTREACHED */
+			}
+			markeol++;
+			break;
+		case 'f':
+			fold++;		/* fold output lines to 80 cols */
+			break;		/* using hidden newline */
+		case 'h':
+			eflags |= VIS_HTTPSTYLE;
+			break;
+		case 'l':
+			markeol++;	/* mark end of line with \$ */
+			break;
+		case 'm':
+			eflags |= VIS_MIMESTYLE;
+			if (foldwidth == 80)
+				foldwidth = 76;
+			break;
+		case 'n':
+			none++;
+			break;
+		case 'o':
+			eflags |= VIS_OCTAL;
+			break;
+		case 's':
+			eflags |= VIS_SAFE;
+			break;
+		case 't':
+			eflags |= VIS_TAB;
+			break;
+		case 'w':
+			eflags |= VIS_WHITE;
+			break;
 		case '?':
 		default:
-			fprintf(stderr, 
-			    "usage: %s [-bcfhlnostw] [-e extra] [-F foldwidth]"
-			    " [file ...]\n", getprogname());
-			exit(1);
+			(void)fprintf(stderr, 
+			    "Usage: %s [-bcfhlmnostw] [-e extra]" 
+			    " [-F foldwidth] [file ...]\n", getprogname());
+			return 1;
 		}
+
+	if ((eflags & (VIS_HTTPSTYLE|VIS_MIMESTYLE)) ==
+	    (VIS_HTTPSTYLE|VIS_MIMESTYLE))
+		errx(1, "Can't specify -m and -h at the same time");
+
 	argc -= optind;
 	argv += optind;
 
@@ -125,9 +137,9 @@ main(argc, argv)
 
 	if (*argv)
 		while (*argv) {
-			if ((fp=fopen(*argv, "r")) != NULL) {
-				process(fp, *argv);
-				fclose(fp);
+			if ((fp = fopen(*argv, "r")) != NULL) {
+				process(fp);
+				(void)fclose(fp);
 			} else {
 				warn("%s", *argv);
 				rval = 1;
@@ -135,17 +147,16 @@ main(argc, argv)
 			argv++;
 		}
 	else
-		process(stdin, "<stdin>");
-	exit(rval);
+		process(stdin);
+	return rval;
 }
 	
-void
-process(fp, filename)
-	FILE *fp;
-	char *filename;
+static void
+process(FILE *fp)
 {
 	static int col = 0;
-	char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */
+	static char nul[] = "\0";
+	char *cp = nul + 1;	/* so *(cp-1) starts out != '\n' */
 	int c, rachar; 
 	char buff[5];
 	
@@ -166,30 +177,30 @@ process(fp, filename)
 			*cp++ = '\n';
 			*cp = '\0';
 		} else if (extra)
-			(void) svis(buff, (char)c, eflags, (char)rachar, extra);
+			(void)svis(buff, (char)c, eflags, (char)rachar, extra);
 		else
-			(void) vis(buff, (char)c, eflags, (char)rachar);
+			(void)vis(buff, (char)c, eflags, (char)rachar);
 
 		cp = buff;
 		if (fold) {
 #ifdef DEBUG
 			if (debug)
-				printf("<%02d,", col);
+				(void)printf("<%02d,", col);
 #endif
-			col = foldit(cp, col, foldwidth);
+			col = foldit(cp, col, foldwidth, eflags);
 #ifdef DEBUG
 			if (debug)
-				printf("%02d>", col);
+				(void)printf("%02d>", col);
 #endif
 		}
 		do {
-			putchar(*cp);
+			(void)putchar(*cp);
 		} while (*++cp);
 		c = rachar;
 	}
 	/*
 	 * terminate partial line with a hidden newline
 	 */
-	if (fold && *(cp-1) != '\n')
-		printf("\\\n");
+	if (fold && *(cp - 1) != '\n')
+		(void)printf(eflags & VIS_MIMESTYLE ? "=\n" : "\\\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_sym.c,v 1.8 2006/08/26 18:15:37 christos Exp $	*/
+/*	$NetBSD: gsp_sym.c,v 1.8.26.1 2009/05/13 19:20:23 jym Exp $	*/
 /*
  * GSP assembler - symbol table
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_sym.c,v 1.8 2006/08/26 18:15:37 christos Exp $");
+__RCSID("$NetBSD: gsp_sym.c,v 1.8.26.1 2009/05/13 19:20:23 jym Exp $");
 #endif
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ lookup(char *id, bool makeit)
 }
 
 void
-define_sym(char *id, unsigned val, unsigned lineno, int flags)
+define_sym(char *id, unsigned val, unsigned lno, int flags)
 {
 	symbol ptr;
 
@@ -95,7 +95,7 @@ define_sym(char *id, unsigned val, unsigned lineno, int flags)
 	ptr->flags = flags;
 	ptr->ndefn += 1;
 	ptr->value = val;
-	ptr->lineno = lineno;
+	ptr->lineno = lno;
 }
 
 void
@@ -112,13 +112,13 @@ void
 do_asg(char *name, expr value, int flags)
 {
 	int32_t val;
-	unsigned line;
+	unsigned lno;
 
-	if( eval_expr(value, &val, &line) )
+	if( eval_expr(value, &val, &lno) )
 		flags |= DEFINED;
-	if( line < lineno )
-		line = lineno;
-	define_sym(name, val, line, flags);
+	if( lno < lineno )
+		lno = lineno;
+	define_sym(name, val, lno, flags);
 	if( pass2 )
 		do_show_val(val);
 }

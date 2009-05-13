@@ -1,4 +1,4 @@
-/*	$NetBSD: sdiff.c,v 1.1 2007/02/18 22:13:43 rmind Exp $	*/
+/*	$NetBSD: sdiff.c,v 1.1.20.1 2009/05/13 19:20:04 jym Exp $	*/
 /*	$OpenBSD: sdiff.c,v 1.20 2006/09/19 05:52:23 otto Exp $ */
 
 /*
@@ -496,7 +496,7 @@ QUIT:
  * Takes into account that tabs can take multiple columns.
  */
 static void
-println(const char *s1, const char div, const char *s2)
+println(const char *s1, const char divc, const char *s2)
 {
 	size_t col;
 
@@ -509,7 +509,7 @@ println(const char *s1, const char div, const char *s2)
 	}
 
 	/* Only print left column. */
-	if (div == ' ' && !s2) {
+	if (divc == ' ' && !s2) {
 		putchar('\n');
 		return;
 	}
@@ -523,10 +523,10 @@ println(const char *s1, const char div, const char *s2)
 	 * need to add the space for padding.
 	 */
 	if (!s2) {
-		printf(" %c\n", div);
+		printf(" %c\n", divc);
 		return;
 	}
-	printf(" %c ", div);
+	printf(" %c ", divc);
 	col += 3;
 
 	/* Skip angle bracket and space. */
@@ -747,14 +747,14 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
  * Queues up a diff line.
  */
 static void
-enqueue(char *left, char div, char *right)
+enqueue(char *left, char divc, char *right)
 {
 	struct diffline *diffp;
 
 	if (!(diffp = malloc(sizeof(struct diffline))))
 		err(2, "enqueue");
 	diffp->left = left;
-	diffp->div = div;
+	diffp->div = divc;
 	diffp->right = right;
 	SIMPLEQ_INSERT_TAIL(&diffhead, diffp, diffentries);
 }

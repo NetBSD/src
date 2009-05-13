@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.35 2008/06/22 15:42:50 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.165 2008/01/19 23:09:49 djm Exp $ */
+/*	$NetBSD: readconf.c,v 1.35.6.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: readconf.c,v 1.167 2008/06/26 11:46:31 grunk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.35 2008/06/22 15:42:50 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.35.6.1 2009/05/13 19:15:57 jym Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -140,6 +140,7 @@ typedef enum {
 	oServerAliveInterval, oServerAliveCountMax, oIdentitiesOnly,
 	oSendEnv, oControlPath, oControlMaster, oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
+	oVisualHostKey,
 	oNoneEnabled, oTcpRcvBufPoll, oTcpRcvBuf, oNoneSwitch, oHPNDisabled,
 	oHPNBufferSize,
 	oDeprecated, oUnsupported
@@ -246,10 +247,11 @@ static struct {
 	{ "tunneldevice", oTunnelDevice },
 	{ "localcommand", oLocalCommand },
 	{ "permitlocalcommand", oPermitLocalCommand },
-        { "noneenabled", oNoneEnabled },
-        { "tcprcvbufpoll", oTcpRcvBufPoll },
-        { "tcprcvbuf", oTcpRcvBuf },
-        { "noneswitch", oNoneSwitch },
+	{ "visualhostkey", oVisualHostKey },
+	{ "noneenabled", oNoneEnabled },
+	{ "tcprcvbufpoll", oTcpRcvBufPoll },
+	{ "tcprcvbuf", oTcpRcvBuf },
+	{ "noneswitch", oNoneSwitch },
 	{ "hpndisabled", oHPNDisabled },
 	{ "hpnbuffersize", oHPNBufferSize },
 	{ NULL, oBadOption }
@@ -994,6 +996,10 @@ parse_int:
 		intptr = &options->permit_local_command;
 		goto parse_flag;
 
+	case oVisualHostKey:
+		intptr = &options->visual_host_key;
+		goto parse_flag;
+
 	case oDeprecated:
 		debug("%s line %d: Deprecated option \"%s\"",
 		    filename, linenum, keyword);
@@ -1153,6 +1159,7 @@ initialize_options(Options * options)
 	options->tun_remote = -1;
 	options->local_command = NULL;
 	options->permit_local_command = -1;
+	options->visual_host_key = -1;
 	options->none_switch = -1;
 	options->none_enabled = -1;
 	options->hpn_disabled = -1;
@@ -1328,6 +1335,8 @@ fill_default_options(Options * options)
 		options->tun_remote = SSH_TUNID_ANY;
 	if (options->permit_local_command == -1)
 		options->permit_local_command = 0;
+	if (options->visual_host_key == -1)
+		options->visual_host_key = 0;
 	/* options->local_command should not be set by default */
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */

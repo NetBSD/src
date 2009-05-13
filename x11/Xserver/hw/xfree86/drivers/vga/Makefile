@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.40.1 2009/05/13 19:20:48 jym Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -32,7 +32,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/vga \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/int10 \
 		-I${XSERVERINCDIR}
 
-.if ${MACHINE} == "alpha"
+.if ${MACHINE_ARCH} == "alpha"
 CPPFLAGS+=	-DSPECIAL_FB_BYTE_ACCESS
 .endif
 

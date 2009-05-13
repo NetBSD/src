@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.22 2008/12/29 01:33:03 christos Exp $	*/
+/*	$NetBSD: mroute.c,v 1.22.2.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.22 2008/12/29 01:33:03 christos Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.22.2.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,12 +134,11 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 {
 	u_int mrtproto;
 	LIST_HEAD(, mfc) *mfchashtbl;
-	u_long mfchash;
+	u_long mfchash, i;
 	struct vif viftable[MAXVIFS];
 	struct mfc *mfcp, mfc;
 	struct vif *v;
 	vifi_t vifi;
-	int i;
 	int banner_printed;
 	int saved_numeric_addr;
 	int numvifs;
@@ -224,7 +223,7 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 			}
 
 			kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
-			printf("  %3u  %-15.15s",
+			printf("  %3lu  %-15.15s",
 			    i, routename4(mfc.mfc_origin.s_addr));
 			printf("  %-15.15s  %7s     %3u ",
 			    routename4(mfc.mfc_mcastgrp.s_addr),

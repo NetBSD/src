@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.66 2008/02/24 20:42:46 joerg Exp $	*/
+/*	$NetBSD: tar.c,v 1.66.10.1 2009/05/13 19:15:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.66 2008/02/24 20:42:46 joerg Exp $");
+__RCSID("$NetBSD: tar.c,v 1.66.10.1 2009/05/13 19:15:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -614,7 +614,7 @@ tar_wr(ARCHD *arcn)
 	case PAX_SLK:
 	case PAX_HLK:
 	case PAX_HRG:
-		if (arcn->ln_nlen > sizeof(hd->linkname)) {
+		if (arcn->ln_nlen > (int)sizeof(hd->linkname)) {
 			tty_warn(1,"Link name too long for tar %s",
 			    arcn->ln_name);
 			return 1;
@@ -632,7 +632,7 @@ tar_wr(ARCHD *arcn)
 	len = arcn->nlen;
 	if (arcn->type == PAX_DIR)
 		++len;
-	if (len >= sizeof(hd->name)) {
+	if (len >= (int)sizeof(hd->name)) {
 		tty_warn(1, "File name too long for tar %s", arcn->name);
 		return 1;
 	}
@@ -1055,7 +1055,7 @@ ustar_wr(ARCHD *arcn)
 		/*
 		 * check the length of the linkname
 		 */
-		if (arcn->ln_nlen >= sizeof(hd->linkname)) {
+		if (arcn->ln_nlen >= (int)sizeof(hd->linkname)) {
 			if (is_gnutar) {
 				longlink(arcn, PAX_GLL);
 			} else {
@@ -1318,7 +1318,8 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 	char sbuf[MAXPATHLEN * 2 + 1];
 	/* + / + // + .*""/\/ + \/.* */
 	char rabuf[MAXPATHLEN * 2 + 1 + 1 + 2 + 4 + 4];
-	int i, j = 0;
+	size_t i;
+	int j = 0;
 
 	if (line[len - 1] == '\n')
 		len--;

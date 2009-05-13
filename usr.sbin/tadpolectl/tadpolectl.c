@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.7 2008/04/28 20:24:17 martin Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.7.8.1 2009/05/13 19:20:41 jym Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ int aflag, nflag, wflag, dev;
 #define PROTO(x) int x __P((int, int, int));
 void usage __P((void));
 static void parse __P((char *));
-char *dashdot __P((char *));
+char *dashdot __P((const char *));
 int main __P((int, char *[]));
 PROTO(hw_version)
 PROTO(hw_microcontroller_version)
@@ -85,7 +85,7 @@ PROTO(hw_serial_power)
 #define TABLE(n) { __STRING(n), 0, n }
 
 struct {
-	char *mib;
+	const char *mib;
 	int value;
 	int (*funcptr)(int, int, int);
 } table[NUM_MIBS] = {
@@ -122,8 +122,8 @@ struct {
 
 #define FUNC(x) \
 int \
-x(read, new, num) \
-	int read, new, num;
+x(readflg, new, num) \
+	int readflg, new, num;
 
 #define READ_REQ(a, b, c) \
 	req.cmdbuf[0] = a; \
@@ -138,7 +138,7 @@ x(read, new, num) \
 	ioctl(dev, TCTRL_CMD_REQ, &req)
 
 #define READ_ONLY \
-	if (!read) \
+	if (!readflg) \
 		return(0)
 
 /* hardware functions */
@@ -151,7 +151,7 @@ FUNC(hw_mouse_sensitivity)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x2c, 3, 2);
 	table[num].value = req.rspbuf[0];
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -176,7 +176,7 @@ FUNC(hw_power_battery_chargedisabled)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x22, 3, 2);
 	table[num].value = req.rspbuf[0]&0x01 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -199,7 +199,7 @@ FUNC(hw_mouse_disable)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x22, 3, 2);
 	table[num].value = req.rspbuf[0]&0x02 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -222,7 +222,7 @@ FUNC(hw_kbd_click)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x22, 3, 2);
 	table[num].value = req.rspbuf[0]&0x04 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -245,7 +245,7 @@ FUNC(hw_mouse_intclick)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x22, 3, 2);
 	table[num].value = req.rspbuf[0]&0x08 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -268,7 +268,7 @@ FUNC(hw_mouse_extclick)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x22, 3, 2);
 	table[num].value = req.rspbuf[0]&0x10 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -289,7 +289,7 @@ FUNC(hw_mouse_recalibrate)
 	struct tctrl_req req;
 
 	table[num].value = 0;
-	if (read)
+	if (readflg)
 		return(1);
 	READ_REQ(0x36, 1, 1);
 	return(1);
@@ -303,7 +303,7 @@ FUNC(hw_kbd_repeat_delay)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x28, 3, 2);
 	table[num].value = req.rspbuf[0];
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -328,7 +328,7 @@ FUNC(hw_kbd_repeat_speed)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x29, 3, 2);
 	table[num].value = req.rspbuf[0];
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -350,7 +350,7 @@ FUNC(hw_speaker_freq)
 	struct tctrl_req req;
 
 	table[num].value = 0;
-	if (read)
+	if (readflg)
 		return(1);
 	req.cmdbuf[1] = new * 256;
 	req.cmdbuf[2] = new % 256;
@@ -366,7 +366,7 @@ FUNC(hw_speaker_volume)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x23, 3, 2);
 	table[num].value = req.rspbuf[0];
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -391,7 +391,7 @@ FUNC(hw_video_tft_brightness)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x24, 3, 2);
 	table[num].value = req.rspbuf[0];
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -416,7 +416,7 @@ FUNC(hw_video_syncinva)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x21, 3, 2);
 	table[num].value = req.rspbuf[0]&0x02 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -439,7 +439,7 @@ FUNC(hw_video_syncinvb)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x21, 3, 2);
 	table[num].value = req.rspbuf[0]&0x04 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -462,7 +462,7 @@ FUNC(hw_video_compsync)
 	req.cmdbuf[2] = 0x00;
 	READ_REQ(0x21, 3, 2);
 	table[num].value = req.rspbuf[0]&0x10 ? 1 : 0;
-	if (read)
+	if (readflg)
 		return(1);
 	if (new == 0)
 		req.cmdbuf[2] = 0x00;
@@ -532,7 +532,7 @@ FUNC(hw_power_battery_int_chargerate)
 
 	READ_REQ(0x18, 1, 2);
 	table[num].value = req.rspbuf[0];
-	if (read)
+	if (readflg)
 		return(1);
 	req.cmdbuf[1] = new < 255 ? new : 255;
 	WRITE_REQ(0x39, 2, 1);
@@ -547,7 +547,7 @@ FUNC(hw_power_battery_ext_chargerate)
 
 	READ_REQ(0x18, 1, 2);
 	table[num].value = req.rspbuf[0];
-	if (read)
+	if (readflg)
 		return(1);
 	req.cmdbuf[1] = new < 255 ? new : 255;
 	WRITE_REQ(0x39, 2, 1);
@@ -652,7 +652,7 @@ FUNC(hw_serial_power)
 {
 	struct tctrl_pwr pwrreq;
 
-	if (!read) {
+	if (!readflg) {
 		pwrreq.rw = 0x00;
 		pwrreq.state = new;
 		ioctl(dev, TCTRL_SERIAL_PWR, &pwrreq);
@@ -715,7 +715,7 @@ parse(string)
 
 char *
 dashdot(string)
-	char *string;
+	const char *string;
 {
 	char *p;
 	char *save;

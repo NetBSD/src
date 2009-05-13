@@ -1,4 +1,4 @@
-/*	$NetBSD: spray.c,v 1.5 1997/10/17 13:39:12 lukem Exp $	*/
+/*	$NetBSD: spray.c,v 1.5.54.1 2009/05/13 19:20:40 jym Exp $	*/
 
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: spray.c,v 1.5 1997/10/17 13:39:12 lukem Exp $");
+__RCSID("$NetBSD: spray.c,v 1.5.54.1 2009/05/13 19:20:40 jym Exp $");
 #endif
 
 #include <stdio.h>
@@ -177,7 +177,7 @@ main(argc, argv)
 
 
 	/* report dropped packets */
-	if (host_stats.counter != count) {
+	if (host_stats.counter != (unsigned)count) {
 		int packets_dropped = count - host_stats.counter;
 
 		printf("\t%d packets (%.2f%%) dropped\n",

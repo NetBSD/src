@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.9 2008/12/23 20:49:19 christos Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.9.2.1 2009/05/13 19:17:36 jym Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -189,7 +189,7 @@ sync_status(const char *what, int status)
 {
 	char buf[1024];
 #ifdef STA_FMT
-	snprintb(buf, sizeof(buf), STA_FMT, ntv.status);
+	snprintb(buf, sizeof(buf), STA_FMT, status);
 #else
 	snprintf(buf, sizeof(buf), "%04x, status);
 #endif

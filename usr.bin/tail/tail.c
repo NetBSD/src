@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.13 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: tail.c,v 1.13.6.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: tail.c,v 1.13 2008/07/21 14:19:26 lukem Exp $");
 #include "extern.h"
 
 int fflag, rflag, rval;
-char *fname;
+const char *fname;
 
 int	main(int, char **);
 static void obsolete(char **);

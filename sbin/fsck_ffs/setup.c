@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.84 2008/08/30 10:46:16 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.84.4.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.84 2008/08/30 10:46:16 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.84.4.1 2009/05/13 19:19:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ setup(const char *dev, const char *origdev)
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
 	}
 	if (sblock->fs_flags & FS_DOWAPBL) {
-		if (preen) {
+		if (preen && skipclean) {
 			if (!quiet)
 				pwarn("file system is journaled; not checking\n");
 			return (-1);
@@ -1004,7 +1004,7 @@ calcsb(const char *dev, int devfd, struct fs *fs)
 		pfatal("%s: CANNOT FIGURE OUT OLD CYLINDERS PER GROUP\n", dev);
 		return 0;
 	}
-	memcpy(fs, &sblk.b_un.b_fs, sizeof(struct fs));
+	memcpy(fs, sblk.b_un.b_fs, sizeof(struct fs));
 	nspf = fs->fs_fsize / geo.dg_secsize;
 	fs->fs_old_nspf = nspf;
 	for (fs->fs_fsbtodb = 0, i = nspf; i > 1; i >>= 1)

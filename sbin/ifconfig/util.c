@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 2009/01/18 00:24:29 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.9.2.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,12 +27,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.9 2009/01/18 00:24:29 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.9.2.1 2009/05/13 19:19:02 jym Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <netdb.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,9 +41,14 @@ __RCSID("$NetBSD: util.c,v 1.9 2009/01/18 00:24:29 lukem Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <ifaddrs.h>
+
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <netinet/in.h>		/* XXX */
 
 #include "env.h"
@@ -228,6 +234,58 @@ indirect_ioctl(prop_dictionary_t env, unsigned long cmd, void *data)
 	ifr.ifr_data = data;
 
 	return direct_ioctl(env, cmd, &ifr);
+}
+
+void
+print_link_addresses(prop_dictionary_t env, bool print_active_only)
+{
+	char hbuf[NI_MAXHOST];
+	const char *ifname;
+	int s;
+	struct ifaddrs *ifa, *ifap;
+	const struct sockaddr_dl *sdl;
+	struct if_laddrreq iflr;
+
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+
+	if ((s = getsock(AF_LINK)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
+
+	if (getifaddrs(&ifap) == -1)
+		err(EXIT_FAILURE, "%s: getifaddrs", __func__);
+
+	memset(&iflr, 0, sizeof(iflr));
+
+	strlcpy(iflr.iflr_name, ifname, sizeof(iflr.iflr_name));
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(ifname, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
+
+		sdl = satocsdl(ifa->ifa_addr);
+
+		memcpy(&iflr.addr, ifa->ifa_addr, MIN(ifa->ifa_addr->sa_len,
+		    sizeof(iflr.addr)));
+		iflr.flags = IFLR_PREFIX;
+		iflr.prefixlen = sdl->sdl_alen * NBBY;
+
+		if (ioctl(s, SIOCGLIFADDR, &iflr) == -1)
+			err(EXIT_FAILURE, "%s: ioctl", __func__);
+
+		if (((iflr.flags & IFLR_ACTIVE) != 0) != print_active_only)
+			continue;
+
+		if (getnameinfo(ifa->ifa_addr, ifa->ifa_addr->sa_len,
+			hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
+		    hbuf[0] != '\0') {
+			printf("\t%s %s\n",
+			    print_active_only ? "address:" : "link", hbuf);
+		}
+	}
+	freeifaddrs(ifap);
 }
 
 #ifdef INET6

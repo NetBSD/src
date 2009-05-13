@@ -1,9 +1,9 @@
-/*	$NetBSD: content-bozo.c,v 1.3 2008/03/03 22:15:09 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.3.10.1 2009/05/13 19:18:38 jym Exp $	*/
 
-/*	$eterna: content-bozo.c,v 1.9 2008/03/03 03:36:11 mrg Exp $	*/
+/*	$eterna: content-bozo.c,v 1.12 2009/04/17 22:52:20 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2009 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +15,6 @@
  *    notice, this list of conditions and the following disclaimer and
  *    dedication in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -36,6 +34,7 @@
 
 #include <sys/param.h>
 
+#include <errno.h>
 #include <string.h>
 
 #include "bozohttpd.h"
@@ -242,6 +241,8 @@ get_content_map(const char *name)
 	dynamic_content_map_size++;
 	dynamic_content_map = bozorealloc(dynamic_content_map,
 	    (dynamic_content_map_size + 1) * sizeof *map);
+	if (dynamic_content_map == NULL)
+		error(1, "out of memory allocating content map");
 	map = &dynamic_content_map[dynamic_content_map_size];
 	map->name = map->type = map->encoding = map->encoding11 =
 	    map->cgihandler = NULL;

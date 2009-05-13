@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.30 2008/04/30 15:29:11 ad Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.30.8.1 2009/05/13 19:17:56 jym Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -70,8 +70,6 @@ message Use_serial_com2		{Use serial port com2}
 message Use_serial_com3		{Use serial port com3}
 message serial_baud_rate	{Serial baud rate}
 message Use_existing_bootblocks	{Use existing bootblocks}
-
-message No_Bootcode		{No bootcode for root partition}
 
 message dobootblks
 {Instalowanie bootblokow na %s....

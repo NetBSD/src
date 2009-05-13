@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.12 2008/09/03 09:57:28 tteras Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.12.6.1 2009/05/13 19:15:55 jym Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -63,6 +63,7 @@
 #include "gcmalloc.h"
 #include "debugrm.h"
 #include "libpfkey.h"
+#include "isakmp_var.h"
 
 #ifdef NOUSE_PRIVSEP
 #define BIND bind
@@ -106,6 +107,8 @@ cmpsaddrwop(addr1, addr2)
 #endif /* __linux__ */
 
 	switch (addr1->sa_family) {
+	case AF_UNSPEC:
+		break;
 	case AF_INET:
 		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
@@ -160,6 +163,8 @@ cmpsaddrwild(addr1, addr2)
 #endif /* __linux__ */
 
 	switch (addr1->sa_family) {
+	case AF_UNSPEC:
+		break;
 	case AF_INET:
 		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
@@ -181,6 +186,78 @@ cmpsaddrwild(addr1, addr2)
 		if (!(port1 == IPSEC_PORT_ANY ||
 		      port2 == IPSEC_PORT_ANY ||
 		      port1 == port2))
+			return 1;
+		if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
+			return 1;
+		if (((struct sockaddr_in6 *)addr1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)addr2)->sin6_scope_id)
+			return 1;
+		break;
+#endif
+	default:
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * compare two sockaddr with port, taking care specific situation:
+ * one addr has 0 as port, and the other has 500 (network order), return equal
+ * OUT:	0: equal.
+ *	1: not equal.
+ */
+int
+cmpsaddrmagic(addr1, addr2)
+	const struct sockaddr *addr1;
+	const struct sockaddr *addr2;
+{
+	caddr_t sa1, sa2;
+	u_short port1, port2;
+
+	if (addr1 == 0 && addr2 == 0)
+		return 0;
+	if (addr1 == 0 || addr2 == 0)
+		return 1;
+
+#ifdef __linux__
+	if (addr1->sa_family != addr2->sa_family)
+		return 1;
+#else
+	if (addr1->sa_len != addr2->sa_len
+	 || addr1->sa_family != addr2->sa_family)
+		return 1;
+
+#endif /* __linux__ */
+
+	switch (addr1->sa_family) {
+	case AF_UNSPEC:
+		break;
+	case AF_INET:
+		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
+		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
+		port1 = ((struct sockaddr_in *)addr1)->sin_port;
+		port2 = ((struct sockaddr_in *)addr2)->sin_port;
+		plog(LLV_DEBUG, LOCATION, NULL, "cmpsaddr_magic: port1 == %d, port2 == %d\n", port1, port2);
+		if (!((port1 == IPSEC_PORT_ANY && port2 == ntohs(PORT_ISAKMP)) ||
+			  (port2 == IPSEC_PORT_ANY && port1 == ntohs(PORT_ISAKMP)) ||
+		      (port1 == port2))){			
+			plog(LLV_DEBUG, LOCATION, NULL, "cmpsaddr_magic: ports mismatch\n");
+			return 1;
+		}
+		plog(LLV_DEBUG, LOCATION, NULL, "cmpsaddr_magic: ports matched\n");
+		if (memcmp(sa1, sa2, sizeof(struct in_addr)) != 0)
+			return 1;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		sa1 = (caddr_t)&((struct sockaddr_in6 *)addr1)->sin6_addr;
+		sa2 = (caddr_t)&((struct sockaddr_in6 *)addr2)->sin6_addr;
+		port1 = ((struct sockaddr_in6 *)addr1)->sin6_port;
+		port2 = ((struct sockaddr_in6 *)addr2)->sin6_port;
+		if (!((port1 == IPSEC_PORT_ANY && port2 == PORT_ISAKMP) ||
+			  (port2 == IPSEC_PORT_ANY && port1 == PORT_ISAKMP) ||
+		      (port1 == port2)))
 			return 1;
 		if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
 			return 1;

@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_fsync.3,v 1.3 2008/04/30 13:10:52 martin Exp $
+.\" $NetBSD: aio_fsync.3,v 1.3.8.1 2009/05/13 19:18:36 jym Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,10 +96,10 @@ are not allowed.
 .Sh RETURN VALUES
 .Rv -std aio_fsync
 .Sh ERRORS
-.Bl -tag -width Er
 The
 .Fn aio_fsync
 system call will fail if:
+.Bl -tag -width Er
 .It Bq Er EAGAIN
 The request was not queued because of system resource limitations.
 .El

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2008/09/06 21:49:33 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.9.4.1 2009/05/13 19:17:46 jym Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,8 +28,7 @@
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
 of any data on the target system that you wish to keep.
-Mistakes in
-e.g. partitioning your hard disk may lead to data loss.
+Mistakes in partitioning may lead to data loss.
 .Ss2 Preparation for the Technologic Systems TS-7200
 The TS-7200 uses RedBoot firmware which supports loading the kernel via
 serial port and the on-chip Ethernet.

@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.19 2008/06/23 10:46:25 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.19.8.1 2009/05/13 19:18:27 jym Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.19 2008/06/23 10:46:25 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.19.8.1 2009/05/13 19:18:27 jym Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -1029,7 +1029,8 @@ base_pages_alloc(size_t minsize)
 			 */
 			incr = (intptr_t)chunksize
 			    - (intptr_t)CHUNK_ADDR2OFFSET(brk_cur);
-			if (incr < minsize)
+			assert(incr >= 0);
+			if ((size_t)incr < minsize)
 				incr += csize;
 
 			brk_prev = sbrk(incr);
@@ -1364,7 +1365,7 @@ chunk_alloc(size_t size)
 			 */
 			incr = (intptr_t)size
 			    - (intptr_t)CHUNK_ADDR2OFFSET(brk_cur);
-			if (incr == size) {
+			if (incr == (intptr_t)size) {
 				ret = brk_cur;
 			} else {
 				ret = (void *)((intptr_t)brk_cur + incr);
@@ -3430,14 +3431,8 @@ malloc_init_hard(void)
 					opt_chunk_2pow--;
 				break;
 			case 'K':
-				/*
-				 * There must be fewer pages in a chunk than
-				 * can be recorded by the pos field of
-				 * arena_chunk_map_t, in order to make POS_FREE
-				 * special.
-				 */
-				if (opt_chunk_2pow - pagesize_2pow
-				    < (sizeof(uint32_t) << 3) - 1)
+				if (opt_chunk_2pow + 1 <
+				    (int)(sizeof(size_t) << 3))
 					opt_chunk_2pow++;
 				break;
 			case 'n':

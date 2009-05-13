@@ -1,0 +1,12 @@
+Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.1.2.2 2009/05/13 19:19:33 jym Exp $"
+
+prop: test-suite = "NetBSD"
+
+tp: read
+tp: write
+
+tp: t_ioctl
+tp: t_proc1
+tp: t_proc2
+tp: t_sig

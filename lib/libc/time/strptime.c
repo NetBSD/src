@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.31 2008/11/04 21:08:33 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.31.4.1 2009/05/13 19:18:28 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.31 2008/11/04 21:08:33 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.31.4.1 2009/05/13 19:18:28 jym Exp $");
 #endif
 
 #include "namespace.h"
@@ -59,6 +59,13 @@ __weak_alias(strptime,_strptime)
 
 static char gmt[] = { "GMT" };
 static char utc[] = { "UTC" };
+/* RFC-822/RFC-2822 */
+static const char * const nast[5] = {
+       "EST",    "CST",    "MST",    "PST",    "\0\0\0"
+};
+static const char * const nadt[5] = {
+       "EDT",    "CDT",    "MDT",    "PDT",    "\0\0\0"
+};
 
 static const u_char *conv_num(const unsigned char *, int *, uint, uint);
 static const u_char *find_string(const u_char *, int *, const char * const *,
@@ -69,8 +76,8 @@ char *
 strptime(const char *buf, const char *fmt, struct tm *tm)
 {
 	unsigned char c;
-	const unsigned char *bp;
-	int alt_format, i, split_year = 0, neg, offs;
+	const unsigned char *bp, *ep;
+	int alt_format, i, split_year = 0, neg = 0, offs;
 	const char *new_fmt;
 
 	bp = (const u_char *)buf;
@@ -320,8 +327,6 @@ literal:
 #endif
 				bp += 3;
 			} else {
-				const unsigned char *ep;
-
 				ep = find_string(bp, &i,
 					       	 (const char * const *)tzname,
 					       	  NULL, 2);
@@ -345,11 +350,29 @@ literal:
 			 * [+-]hhmm
 			 * [+-]hh:mm
 			 * [+-]hh
+			 * We recognize all RFC-822/RFC-2822 formats:
+			 * UT|GMT
+			 *          North American : UTC offsets
+			 * E[DS]T = Eastern : -4 | -5
+			 * C[DS]T = Central : -5 | -6
+			 * M[DS]T = Mountain: -6 | -7
+			 * P[DS]T = Pacific : -7 | -8
+			 *          Military
+			 * [A-IL-M] = -1 ... -9 (J not used)
+			 * [N-Y]  = +1 ... +12
 			 */
 			while (isspace(*bp))
 				bp++;
 
 			switch (*bp++) {
+			case 'G':
+				if (*bp++ != 'M')
+					return NULL;
+				/*FALLTHROUGH*/
+			case 'U':
+				if (*bp++ != 'T')
+					return NULL;
+				/*FALLTHROUGH*/
 			case 'Z':
 				tm->tm_isdst = 0;
 #ifdef TM_GMTOFF
@@ -366,6 +389,49 @@ literal:
 				neg = 1;
 				break;
 			default:
+				--bp;
+				ep = find_string(bp, &i, nast, NULL, 4);
+				if (ep != NULL) {
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -5 - i;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = __UNCONST(nast[i]);
+#endif
+					bp = ep;
+					continue;
+				}
+				ep = find_string(bp, &i, nadt, NULL, 4);
+				if (ep != NULL) {
+					tm->tm_isdst = 1;
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -4 - i;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = __UNCONST(nadt[i]);
+#endif
+					bp = ep;
+					continue;
+				}
+
+				if ((*bp >= 'A' && *bp <= 'I') ||
+				    (*bp >= 'L' && *bp <= 'Y')) {
+#ifdef TM_GMTOFF
+					/* Argh! No 'J'! */
+					if (*bp >= 'A' && *bp <= 'I')
+						tm->TM_GMTOFF =
+						    ('A' - 1) - (int)*bp;
+					else if (*bp >= 'L' && *bp <= 'M')
+						tm->TM_GMTOFF = 'A' - (int)*bp;
+					else if (*bp >= 'N' && *bp <= 'Y')
+						tm->TM_GMTOFF = (int)*bp - 'M';
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = NULL; /* XXX */
+#endif
+					bp++;
+					continue;
+				}
 				return NULL;
 			}
 			offs = 0;

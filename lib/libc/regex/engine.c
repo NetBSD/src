@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.21 2007/02/08 05:44:18 junyoung Exp $	*/
+/*	$NetBSD: engine.c,v 1.21.22.1 2009/05/13 19:18:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -181,7 +181,7 @@ matcher(
     int eflags)
 {
 	const char *endp;
-	int i;
+	size_t i;
 	struct match mv;
 	struct match *m = &mv;
 	const char *dp;

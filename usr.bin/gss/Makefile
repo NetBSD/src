@@ -1,17 +1,16 @@
-# $NetBSD: Makefile,v 1.2 2008/04/10 15:05:23 tsutsui Exp $
+# $NetBSD: Makefile,v 1.2.10.1 2009/05/13 19:19:51 jym Exp $
+
+WARNS?=	2	# XXX -Wextra -Wcast-qual
 
 NOLINT= # defined
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/gssapi
 
-WARNS?=  1
-
 PROG= gss
-# no man page yet
-MAN=
 
 SRCS= \
 	gss.c				\

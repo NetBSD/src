@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.13 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.13.2.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,8 +124,8 @@ cforder(const void *a, const void *b)
 {
 	int n1, n2;
 
-	n1 = (*(const struct devi **)a)->i_cfindex;
-	n2 = (*(const struct devi **)b)->i_cfindex;
+	n1 = (*(const struct devi * const *)a)->i_cfindex;
+	n2 = (*(const struct devi * const *)b)->i_cfindex;
 	return (n1 - n2);
 }
 
@@ -353,7 +353,7 @@ emitcfdata(FILE *fp)
 	const char *state, *basename, *attachment;
 	struct nvlist *nv;
 	struct attr *a;
-	char *loc;
+	const char *loc;
 	char locbuf[20];
 	const char *lastname = "";
 

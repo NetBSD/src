@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.16 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.16.42.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.16 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.16.42.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: ypmatch.c,v 1.16 2004/01/05 23:23:37 jmmv Exp $");
 #include <rpcsvc/ypclnt.h>
 
 const struct ypalias {
-	char *alias, *name;
+	const char *alias, *name;
 } ypaliases[] = {
 	{ "passwd", "passwd.byname" },
 	{ "group", "group.byname" },
@@ -68,9 +68,11 @@ main(argc, argv)
 	char *argv[];
 {
 	char *domainname;
-	char *inkey, *inmap, *outbuf;
+	char *inkey, *outbuf;
+	const char *inmap;
 	int outbuflen, key, null, notrans;
-	int c, r, i, len;
+	int c, r, len;
+	size_t i;
 	int rval;
 
 	domainname = NULL;
@@ -123,8 +125,8 @@ main(argc, argv)
 	}
 
 	rval = 0;
-	for(i = 0; i < (argc - 1); i++) {
-		inkey = argv[i];
+	for(c = 0; c < (argc - 1); c++) {
+		inkey = argv[c];
 
 		len = strlen(inkey);
 		if (null)

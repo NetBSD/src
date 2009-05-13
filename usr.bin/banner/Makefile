@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 2005/01/12 14:45:26 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.3.36.1 2009/05/13 19:19:44 jym Exp $
 
-WARNS=	3
 PROG=	banner
 
 SRCS=	$(PROG).c chset.c

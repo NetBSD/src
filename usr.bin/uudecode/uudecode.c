@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.24 2008/11/29 22:36:57 dholland Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.24.2.1 2009/05/13 19:20:10 jym Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.24 2008/11/29 22:36:57 dholland Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.24.2.1 2009/05/13 19:20:10 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -74,7 +74,7 @@ static int base64_decode(void);
 int main(int, char *[]);
 
 int base64, pflag;
-char *filename;
+const char *filename;
 
 int
 main(int argc, char *argv[])

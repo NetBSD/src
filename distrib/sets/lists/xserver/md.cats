@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.26 2008/12/25 12:45:56 jmmv Exp $
+# $NetBSD: md.cats,v 1.26.2.1 2009/05/13 19:17:54 jym Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -341,9 +341,9 @@
 ./usr/X11R6/man/man4/wsfb.4				-unknown-	.man,x11
 ./usr/X11R6/man/man5/XF86Config.5			-unknown-	.man,x11
 ./usr/X11R7/bin/X					-unknown-	xorg
-./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
-./usr/X11R7/bin/Xvfb					-unknown-	xorg
+./usr/X11R7/bin/cvt					-unknown-	xorg
+./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
 ./usr/X11R7/bin/scanpci					-unknown-	xorg
 ./usr/X11R7/bin/xorgconfig				-unknown-	xorg
@@ -547,6 +547,9 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	xorg
+./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/pcitweak.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/scanpci.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xorgconfig.0			-unknown-	.cat,xorg
@@ -579,6 +582,10 @@
 ./usr/X11R7/man/cat4/via.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vmware.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
+./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
+./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
+./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/scanpci.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xorgconfig.html			-unknown-	html,xorg
@@ -611,6 +618,10 @@
 ./usr/X11R7/man/html4/via.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/vmware.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
+./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/scanpci.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown-	.man,xorg
@@ -643,3 +654,4 @@
 ./usr/X11R7/man/man4/via.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vmware.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
+./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg

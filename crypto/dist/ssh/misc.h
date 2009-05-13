@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.14 2008/04/06 23:38:19 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.37 2007/12/27 14:22:08 dtucker Exp $ */
+/*	$NetBSD: misc.h,v 1.14.10.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: misc.h,v 1.38 2008/06/12 20:38:28 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,6 +38,8 @@ char	*percent_expand(const char *, ...)
     ;
 char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
+void	 ms_subtract_diff(struct timeval *, int *);
+void	 ms_to_timeval(struct timeval *, int);
 
 struct passwd *pwcopy(struct passwd *);
 const char *ssh_gai_strerror(int);

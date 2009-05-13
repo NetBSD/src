@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.11 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: cmds.c,v 1.11.8.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.11 2008/04/28 20:24:17 martin Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.11.8.1 2009/05/13 19:20:29 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,10 +86,10 @@ static void	cmd_detach0(struct mlx_disk *);
 static struct	mlx_rebuild_status rs;
 static int	rstatus;
 
-struct {
+static struct {
 	int	hwid;
 	const char	*name;
-} static const mlx_ctlr_names[] = {
+} const mlx_ctlr_names[] = {
 	{ 0x00, "960E/960M" },
 	{ 0x01,	"960P/PD" },
 	{ 0x02,	"960PL" },
@@ -184,7 +184,8 @@ cmd_cstatus(char **argv)
 	struct mlx_phys_drv pd;
 	static char buf[80];
 	const char *model;
-	int i, channel, target;
+	int channel, target;
+	size_t i;
 
 	model = NULL;	/* XXXGCC -Wuninitialized */
 

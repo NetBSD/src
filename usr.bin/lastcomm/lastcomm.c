@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.20 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.20.6.1 2009/05/13 19:19:54 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.20 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.20.6.1 2009/05/13 19:19:54 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	size = sb.st_size - sb.st_size % sizeof(struct acct);
 
 	/* Check if any records to display. */
-	if (size < sizeof(struct acct))
+	if (size < (off_t)sizeof(struct acct))
 		exit(0);
 
 	/*

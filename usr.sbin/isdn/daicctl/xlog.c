@@ -1,4 +1,4 @@
-/* $NetBSD: xlog.c,v 1.6 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: xlog.c,v 1.6.8.1 2009/05/13 19:20:25 jym Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 void xlog(int fd, int controller);
 
-static char *ll_name[10] = {
+static const char *ll_name[10] = {
   "LL_UDATA",
   "LL_ESTABLISH",
   "LL_RELEASE",
@@ -73,7 +73,7 @@ static char *ll_name[10] = {
   "LL_BUDATA"
 };
 
-static char *ns_name[11] = {
+static const char *ns_name[11] = {
   "N_MDATA",
   "N_CONNECT",
   "N_CONNECT ACK",

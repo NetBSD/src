@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.11 2006/05/01 23:18:37 christos Exp $	*/
+/*	$NetBSD: set.c,v 1.11.30.1 2009/05/13 19:20:09 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
 #endif
-__RCSID("$NetBSD: set.c,v 1.11 2006/05/01 23:18:37 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.11.30.1 2009/05/13 19:20:09 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -285,7 +285,8 @@ set_tabs()
 {
 	int c;
 	char *capsp, *clear_tabs;
-	char *set_column, *set_tab, *tg_out;
+	char *set_column, *set_tab;
+	const char *tg_out;
 	char caps[1024];
 
 	capsp = caps;

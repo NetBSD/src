@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.40 2008/08/29 00:44:48 gmcgarry Exp $ */
+/* $NetBSD: xlint.c,v 1.40.6.1 2009/05/13 19:20:13 jym Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.40 2008/08/29 00:44:48 gmcgarry Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.40.6.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -310,17 +310,18 @@ int
 main(int argc, char *argv[])
 {
 	int	c;
-	char	flgbuf[3], *tmp, *s;
+	char	flgbuf[3], *tmp;
 	size_t	len;
+	const char *ks;
 
 	setprogname(argv[0]);
 
 	if ((tmp = getenv("TMPDIR")) == NULL || (len = strlen(tmp)) == 0) {
 		tmpdir = xstrdup(_PATH_TMP);
 	} else {
-		s = xmalloc(len + 2);
-		(void)sprintf(s, "%s%s", tmp, tmp[len - 1] == '/' ? "" : "/");
-		tmpdir = s;
+		char *p = xmalloc(len + 2);
+		(void)sprintf(p, "%s%s", tmp, tmp[len - 1] == '/' ? "" : "/");
+		tmpdir = p;
 	}
 
 	cppout = xmalloc(strlen(tmpdir) + sizeof ("lint0.XXXXXX"));
@@ -578,9 +579,9 @@ main(int argc, char *argv[])
 		terminate(0);
 
 	if (!oflag) {
-		if ((s = getenv("LIBDIR")) == NULL || strlen(s) == 0)
-			s = PATH_LINTLIB;
-		appcstrg(&libsrchpath, s);
+		if ((ks = getenv("LIBDIR")) == NULL || strlen(ks) == 0)
+			ks = PATH_LINTLIB;
+		appcstrg(&libsrchpath, ks);
 		findlibs(libs);
 		findlibs(deflibs);
 	}
@@ -606,7 +607,8 @@ static void
 fname(const char *name)
 {
 	const	char *bn, *suff;
-	char	**args, *ofn, *pathname, *CC;
+	char	**args, *ofn, *pathname;
+	const char *CC;
 	size_t	len;
 	int is_stdin;
 	int	fd;
@@ -643,7 +645,7 @@ fname(const char *name)
 			return;
 		}
 		ofn = xmalloc(strlen(bn) + (bn == suff ? 4 : 2));
-		len = bn == suff ? strlen(bn) : (suff - 1) - bn;
+		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
 		(void)sprintf(ofn, "%.*s", (int)len, bn);
 		(void)strcat(ofn, ".ln");
 	} else {

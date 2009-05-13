@@ -1,7 +1,7 @@
-/*	$NetBSD: cmdtab.c,v 1.50 2008/09/30 03:41:53 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.50.6.1 2009/05/13 19:19:50 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.50 2008/09/30 03:41:53 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.50.6.1 2009/05/13 19:19:50 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,7 @@ struct cmd cmdtab[] = {
 	{ "verbose",	H(verbosehelp),	0, 0, 0, CMPL0		setverbose },
 	{ "xferbuf",	H(xferbufhelp),	0, 0, 0, CMPL0		setxferbuf },
 	{ "?",		H(helphelp),	0, 0, 1, CMPL(C)	help },
-	{ 0 },
+	{ NULL,		NULL,		0, 0, 0, CMPL0		NULL },
 };
 
 struct option optiontab[] = {
@@ -302,5 +302,5 @@ struct option optiontab[] = {
 	{ "pager",	NULL },
 	{ "prompt",	NULL },
 	{ "rprompt",	NULL },
-	{ 0 },
+	{ NULL,		NULL },
 };

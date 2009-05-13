@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.11 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.11.8.1 2009/05/13 19:19:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ntfs.c,v 1.11 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: ntfs.c,v 1.11.8.1 2009/05/13 19:19:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -72,7 +72,7 @@ ntfs_filestat(struct vnode *vp, struct filestat *fsp)
 	}
 
 	fsp->fsid = ntnode.i_dev & 0xffff;
-	fsp->fileid = (long)ntnode.i_number;
+	fsp->fileid = ntnode.i_number;
 	fsp->mode = (mode_t)ntm.ntm_mode | getftype(vp->v_type);
 	fsp->size = fn.f_size;
 	fsp->rdev = 0;  /* XXX */

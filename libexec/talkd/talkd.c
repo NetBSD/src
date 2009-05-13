@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.20 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: talkd.c,v 1.20.6.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.20 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.20.6.1 2009/05/13 19:18:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,13 +80,11 @@ char	hostname[MAXHOSTNAMELEN + 1];
 #define TIMEOUT 30
 #define MAXIDLE 120
 
-static void timeout __P((int));
-int	main __P((int, char *[]));
+static void timeout(int);
+int	main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	CTL_MSG *mp = &request;
 	int cc, ch;
@@ -146,8 +144,7 @@ main(argc, argv)
 }
 
 void
-timeout(n)
-	int n;
+timeout(int n)
 {
 	int save_errno = errno;
 

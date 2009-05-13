@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.47 2008/11/08 17:11:56 christos Exp $	*/
+/*	$NetBSD: sort.c,v 1.47.2.1 2009/05/13 19:20:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.47 2008/11/08 17:11:56 christos Exp $");
+__RCSID("$NetBSD: sort.c,v 1.47.2.1 2009/05/13 19:20:05 jym Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ main(argc, argv)
 					optarg++, t = 8;
 				REC_D = (int)strtol(optarg, &ep, t);
 				if (*ep != '\0' || REC_D < 0 ||
-				    REC_D >= __arraycount(d_mask))
+				    REC_D >= (int)__arraycount(d_mask))
 					errx(2, "invalid record delimiter %s",
 					    optarg);
 			}
@@ -257,7 +257,7 @@ main(argc, argv)
 
 			/* change to /dev/stdin if '-' */
 			if (argv[i][0] == '-')
-				argv[i] = _PATH_STDIN;
+				argv[i] = __UNCONST(_PATH_STDIN);
 
 		} else if ((ch = access(argv[i], R_OK)))
 			err(2, "%s", argv[i]);

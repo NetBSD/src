@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.48 2009/02/06 20:08:13 sketch Exp $	*/
+/*	$NetBSD: term.c,v 1.48.2.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.48 2009/02/06 20:08:13 sketch Exp $");
+__RCSID("$NetBSD: term.c,v 1.48.2.1 2009/05/13 19:18:29 jym Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -56,8 +56,7 @@ __RCSID("$NetBSD: term.c,v 1.48 2009/02/06 20:08:13 sketch Exp $");
 #endif
 #ifdef HAVE_CURSES_H
 #include <curses.h>
-#endif
-#ifdef HAVE_NCURSES_H
+#elif HAVE_NCURSES_H
 #include <ncurses.h>
 #endif
 /* Solaris's term.h does horrid things. */
@@ -388,7 +387,7 @@ private void
 term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 {
 	char termbuf[TC_BUFSIZE];
-	int tlen, clen;
+	size_t tlen, clen;
 	char **tlist = el->el_term.t_str;
 	char **tmp, **str = &tlist[t - tstr];
 
@@ -415,7 +414,7 @@ term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 						/* XXX strcpy is safe */
 		(void) strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc],
 		    cap);
-		el->el_term.t_loc += clen + 1;	/* one for \0 */
+		el->el_term.t_loc += (int)clen + 1;	/* one for \0 */
 		return;
 	}
 	/*
@@ -432,7 +431,7 @@ term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 			termbuf[tlen++] = '\0';
 		}
 	memcpy(el->el_term.t_buf, termbuf, TC_BUFSIZE);
-	el->el_term.t_loc = tlen;
+	el->el_term.t_loc = (int)tlen;
 	if (el->el_term.t_loc + 3 >= TC_BUFSIZE) {
 		(void) fprintf(el->el_errfile,
 		    "Out of termcap string space.\n");
@@ -440,7 +439,7 @@ term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 	}
 					/* XXX strcpy is safe */
 	(void) strcpy(*str = &el->el_term.t_buf[el->el_term.t_loc], cap);
-	el->el_term.t_loc += clen + 1;	/* one for \0 */
+	el->el_term.t_loc += (int)clen + 1;	/* one for \0 */
 	return;
 }
 
@@ -560,7 +559,7 @@ term_move_to_line(EditLine *el, int where)
 				term_move_to_char(el, el->el_term.t_size.h - 1);
 				term_overwrite(el,
 				    &el->el_display[el->el_cursor.v][el->el_cursor.h],
-				    1);
+				    (size_t)1);
 				/* updates Cursor */
 				del--;
 			} else {
@@ -647,7 +646,7 @@ mc_again:
 				 */
 				term_overwrite(el,
 				    &el->el_display[el->el_cursor.v][el->el_cursor.h],
-				    where - el->el_cursor.h);
+				    (size_t)(where - el->el_cursor.h));
 
 			}
 		} else {	/* del < 0 := moving backward */
@@ -681,18 +680,19 @@ mc_again:
  *	Overstrike num characters
  */
 protected void
-term_overwrite(EditLine *el, const char *cp, int n)
+term_overwrite(EditLine *el, const char *cp, size_t n)
 {
-	if (n <= 0)
-		return;		/* catch bugs */
+	if (n == 0)
+		return;
 
-	if (n > el->el_term.t_size.h) {
+	if (n > (size_t)el->el_term.t_size.h) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
 		    "term_overwrite: n is riduculous: %d\r\n", n);
 #endif /* DEBUG_SCREEN */
 		return;
 	}
+
 	do {
 		term__putc(el, *cp++);
 		el->el_cursor.h++;
@@ -785,7 +785,7 @@ term_insertwrite(EditLine *el, char *cp, int num)
 		if ((num > 1) || !GoodStr(T_ic)) {
 				/* if ic would be more expensive */
 			term_tputs(el, tgoto(Str(T_IC), num, num), num);
-			term_overwrite(el, cp, num);
+			term_overwrite(el, cp, (size_t)num);
 				/* this updates el_cursor.h */
 			return;
 		}
@@ -1290,9 +1290,9 @@ protected void
 term_writec(EditLine *el, int c)
 {
 	char buf[8];
-	int cnt = key__decode_char(buf, sizeof(buf), 0, c);
+	size_t cnt = key__decode_char(buf, sizeof(buf), 0, c);
 	buf[cnt] = '\0';
-	term_overwrite(el, buf, cnt);
+	term_overwrite(el, buf, (size_t)cnt);
 	term__flush(el);
 }
 
