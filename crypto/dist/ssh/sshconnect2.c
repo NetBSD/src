@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.33 2008/06/22 15:42:51 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.165 2008/01/19 23:09:49 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.33.6.1 2009/05/13 19:15:58 jym Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.166 2008/07/17 08:48:00 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.33 2008/06/22 15:42:51 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.33.6.1 2009/05/13 19:15:58 jym Exp $");
 
 #include <sys/queue.h>
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.33 2008/06/22 15:42:51 christos Exp $");
 #include <signal.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -413,14 +414,21 @@ input_userauth_error(int type, u_int32_t seq, void *ctxt)
 void
 input_userauth_banner(int type, u_int32_t seq, void *ctxt)
 {
-	char *msg, *lang;
+	char *msg, *raw, *lang;
+	u_int len;
 
 	debug3("input_userauth_banner");
-	msg = packet_get_string(NULL);
+	raw = packet_get_string(&len);
 	lang = packet_get_string(NULL);
-	if (options.log_level >= SYSLOG_LEVEL_INFO)
+	if (len > 0 && options.log_level >= SYSLOG_LEVEL_INFO) {
+		if (len > 65536)
+			len = 65536;
+		msg = xmalloc(len * 4 + 1); /* max expansion from strnvis() */
+		strvisx(msg, raw, len * 4 + 1, VIS_SAFE|VIS_OCTAL);
 		fprintf(stderr, "%s", msg);
-	xfree(msg);
+		xfree(msg);
+	}
+	xfree(raw);
 	xfree(lang);
 }
 

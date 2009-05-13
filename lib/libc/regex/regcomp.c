@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.28 2007/02/09 23:44:18 junyoung Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.28.22.1 2009/05/13 19:18:25 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.28 2007/02/09 23:44:18 junyoung Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.28.22.1 2009/05/13 19:18:25 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1260,7 +1260,7 @@ freeset(
     struct parse *p,
     cset *cs)
 {
-	int i;
+	size_t i;
 	cset *top;
 	size_t css;
 
@@ -1292,7 +1292,7 @@ freezeset(
     cset *cs)
 {
 	uch h;
-	int i;
+	size_t i;
 	cset *top;
 	cset *cs2;
 	size_t css;
@@ -1332,7 +1332,7 @@ firstch(
     struct parse *p,
     cset *cs)
 {
-	int i;
+	size_t i;
 	size_t css;
 
 	_DIAGASSERT(p != NULL);
@@ -1356,7 +1356,7 @@ nch(
     struct parse *p,
     cset *cs)
 {
-	int i;
+	size_t i;
 	size_t css;
 	int n = 0;
 

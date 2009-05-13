@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2008/10/25 22:15:28 apb Exp $
+#	$NetBSD: Makefile,v 1.30.4.1 2009/05/13 19:19:42 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -16,14 +16,23 @@ MULTILIB_ARGS= --enable-multilib
 MULTILIB_ARGS= --disable-multilib
 .endif
 
-CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
-		--enable-long-long \
+COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
+			--enable-long-long \
+			--enable-threads \
+			${VAX_CONFIGURE_ARGS} \
+			--enable-__cxa_atexit
+.if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
+COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
+.endif
+.if defined(GCC_CONFIG_TUNE.${MACHINE_ARCH})
+COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
+.endif
+
+CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
+		--disable-nls \
 		${MULTILIB_ARGS} \
-		--enable-threads \
-		${VAX_CONFIGURE_ARGS} \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--enable-languages="${GCC_LANGUAGES}" \
-		--enable-__cxa_atexit
+		--enable-languages="${GCC_LANGUAGES}"
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
@@ -73,20 +82,18 @@ native-gcc: .native/.configure_done
 	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} ${MKNATIVE_TARGET} \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
+NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
+			--disable-multilib \
+			--disable-symvers \
+			--build=`${.CURDIR}/../../gnu/dist/${MODULE}/config.guess` \
+			--host=${MACHINE_GNU_PLATFORM}
+
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	mkdir .native 2>/dev/null || true
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} \
 			${HOST_SH} ${GNUHOSTDIST}/configure \
-			--enable-long-long \
-			--disable-multilib \
-			--enable-threads \
-			--disable-symvers \
-			${VAX_CONFIGURE_ARGS} \
-			--build=`${.CURDIR}/../../gnu/dist/${MODULE}/config.guess` \
-			--host=${MACHINE_GNU_PLATFORM} \
-			--target=${MACHINE_GNU_PLATFORM} \
-			--enable-__cxa_atexit) && \
+			${NATIVE_CONFIGURE_ARGS}) && \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-build-libiberty)
 .if ${HAVE_GCC} == 4
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \

@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.184 2008/11/21 11:32:21 sketch Exp $
+$NetBSD: acronyms,v 1.184.2.1 2009/05/13 19:19:16 jym Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -281,6 +281,7 @@ WFH	working from home
 WFM	works for me
 WIBNI	wouldn't it be nice if
 WIP	work in progress
+WMNC	watch me not care
 WOFTAM	waste of fucking time and money
 WOMBAT	waste of money, brain, and time
 WRT	with respect to

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2004/01/03 19:32:58 dbj Exp $
+#	$NetBSD: Makefile,v 1.14.42.1 2009/05/13 19:20:21 jym Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -11,8 +11,6 @@ SRCS=	dumpfs.c ffs_bswap.c
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 .endif
-
-WARNS=	2
 
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
 

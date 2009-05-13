@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.26 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: crypt.c,v 1.26.20.1 2009/05/13 19:18:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.26 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.26.20.1 2009/05/13 19:18:28 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,24 +287,20 @@ typedef union {
 	{ C_block tblk; permute(cpp,&tblk,p,4); LOAD (d,d0,d1,tblk); }
 #endif /* LARGEDATA */
 
-STATIC	init_des __P((void));
-STATIC	init_perm __P((C_block [64/CHUNKBITS][1<<CHUNKBITS],
-		       const unsigned char [64], int, int));
+STATIC	init_des(void);
+STATIC	init_perm(C_block [64/CHUNKBITS][1<<CHUNKBITS],
+		       const unsigned char [64], int, int);
 #ifndef LARGEDATA
-STATIC	permute __P((const unsigned char *, C_block *, C_block *, int));
+STATIC	permute(const unsigned char *, C_block *, C_block *, int);
 #endif
 #ifdef DEBUG
-STATIC	prtab __P((const char *, unsigned char *, int));
+STATIC	prtab(const char *, unsigned char *, int);
 #endif
 
 
 #ifndef LARGEDATA
 STATIC
-permute(cp, out, p, chars_in)
-	const unsigned char *cp;
-	C_block *out;
-	C_block *p;
-	int chars_in;
+permute(const unsigned char *cp, C_block *out, C_block *p, int chars_in)
 {
 	DCL_BLOCK(D,D0,D1);
 	C_block *tp;
@@ -479,9 +475,7 @@ static char	cryptresult[1+4+4+11+1];	/* encrypted result */
  * followed by an encryption produced by the "key" and "setting".
  */
 char *
-crypt(key, setting)
-	const char *key;
-	const char *setting;
+crypt(const char *key, const char *setting)
 {
 	char *encp;
 	int32_t i;
@@ -597,8 +591,7 @@ static C_block	KS[KS_SIZE];
  * Set up the key schedule from the key.
  */
 int
-des_setkey(key)
-	const char *key;
+des_setkey(const char *key)
 {
 	DCL_BLOCK(K, K0, K1);
 	C_block *help, *ptabp;
@@ -632,11 +625,7 @@ des_setkey(key)
  * compiler and machine architecture.
  */
 int
-des_cipher(in, out, salt, num_iter)
-	const char *in;
-	char *out;
-	long salt;
-	int num_iter;
+des_cipher(const char *in, char *out, long salt, int num_iter)
 {
 	/* variables that we want in registers, most important first */
 #if defined(pdp11)
@@ -754,7 +743,7 @@ des_cipher(in, out, salt, num_iter)
  * done at compile time, if the compiler were capable of that sort of thing.
  */
 STATIC
-init_des()
+init_des(void)
 {
 	int i, j;
 	int32_t k;
@@ -898,10 +887,8 @@ init_des()
  * "perm" must be all-zeroes on entry to this routine.
  */
 STATIC
-init_perm(perm, p, chars_in, chars_out)
-	C_block perm[64/CHUNKBITS][1<<CHUNKBITS];
-	const unsigned char p[64];
-	int chars_in, chars_out;
+init_perm(C_block perm[64/CHUNKBITS][1<<CHUNKBITS], const unsigned char p[64],
+    int chars_in, int chars_out)
 {
 	int i, j, k, l;
 
@@ -922,8 +909,7 @@ init_perm(perm, p, chars_in, chars_out)
  * "setkey" routine (for backwards compatibility)
  */
 int
-setkey(key)
-	const char *key;
+setkey(const char *key)
 {
 	int i, j, k;
 	C_block keyblock;
@@ -943,9 +929,7 @@ setkey(key)
  * "encrypt" routine (for backwards compatibility)
  */
 int
-encrypt(block, flag)
-	char *block;
-	int flag;
+encrypt(char *block, int flag)
 {
 	int i, j, k;
 	C_block cblock;
@@ -972,10 +956,7 @@ encrypt(block, flag)
 
 #ifdef DEBUG
 STATIC
-prtab(s, t, num_rows)
-	const char *s;
-	unsigned char *t;
-	int num_rows;
+prtab(const char *s, unsigned char *t, int num_rows)
 {
 	int i, j;
 
@@ -994,7 +975,7 @@ prtab(s, t, num_rows)
 #include <err.h>
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
     if (argc < 2)
 	errx(1, "Usage: %s password [salt]\n", argv[0]);

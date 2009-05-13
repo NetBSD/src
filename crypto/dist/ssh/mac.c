@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.c,v 1.12 2007/12/20 14:14:04 martin Exp $	*/
-/* $OpenBSD: mac.c,v 1.14 2007/06/07 19:37:34 pvalchev Exp $ */
+/*	$NetBSD: mac.c,v 1.12.12.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: mac.c,v 1.15 2008/06/13 00:51:47 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.12 2007/12/20 14:14:04 martin Exp $");
+__RCSID("$NetBSD: mac.c,v 1.12.12.1 2009/05/13 19:15:57 jym Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -136,8 +136,8 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 #endif
 
 	if (mac->mac_len > sizeof(m))
-		fatal("mac_compute: mac too long %u %zu",
-		    mac->mac_len, sizeof(m));
+		fatal("mac_compute: mac too long %u %lu",
+		    mac->mac_len, (u_long)sizeof(m));
 
 	switch (mac->type) {
 	case SSH_EVP:

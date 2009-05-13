@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.41 2008/11/19 14:10:48 pooka Exp $
+# $NetBSD: md.sparc64,v 1.41.2.1 2009/05/13 19:17:51 jym Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -516,10 +516,10 @@
 ./usr/lib/sparc/librumpvfs.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/librumpvfs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/librumpvfs_pic.a		comp-c-piclib		compat,pic
-./usr/lib/sparc/libsdp.a			comp-c-lib		compat
-./usr/lib/sparc/libsdp.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libsdp_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libsdp_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libsdp.a			comp-obsolete		obsolete
+./usr/lib/sparc/libsdp.so			base-obsolete		obsolete
+./usr/lib/sparc/libsdp_p.a			comp-obsolete		obsolete
+./usr/lib/sparc/libsdp_pic.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libskey.a			comp-c-lib		compat
 ./usr/lib/sparc/libskey.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libskey_p.a			comp-c-proflib		compat,profile
@@ -585,34 +585,34 @@
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
-./usr/libdata/ldscripts/elf32_sparc.x		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xbn		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xc		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xd		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xdc		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xdw		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xn		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xr		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xs		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xsc		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xsw		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xu		comp-util-bin
-./usr/libdata/ldscripts/elf32_sparc.xw		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.x		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xbn		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xc		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xd		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xdc		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xdw		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xn		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xr		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xs		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xsc		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xsw		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xu		comp-util-bin
-./usr/libdata/ldscripts/elf64_sparc.xw		comp-util-bin
-./usr/libdata/ldscripts/sparcnbsd.x		comp-util-bin
-./usr/libdata/ldscripts/sparcnbsd.xbn		comp-util-bin
-./usr/libdata/ldscripts/sparcnbsd.xn		comp-util-bin
-./usr/libdata/ldscripts/sparcnbsd.xr		comp-util-bin
-./usr/libdata/ldscripts/sparcnbsd.xu		comp-util-bin
+./usr/libdata/ldscripts/elf32_sparc.x		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xbn		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xc		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xd		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xdc		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xdw		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xn		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xr		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xs		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xsc		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xsw		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xu		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf32_sparc.xw		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.x		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xbn		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xc		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xd		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xdc		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xdw		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xn		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xr		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xs		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xsc		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xsw		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xu		comp-util-bin		bfd
+./usr/libdata/ldscripts/elf64_sparc.xw		comp-util-bin		bfd
+./usr/libdata/ldscripts/sparcnbsd.x		comp-util-bin		bfd
+./usr/libdata/ldscripts/sparcnbsd.xbn		comp-util-bin		bfd
+./usr/libdata/ldscripts/sparcnbsd.xn		comp-util-bin		bfd
+./usr/libdata/ldscripts/sparcnbsd.xr		comp-util-bin		bfd
+./usr/libdata/ldscripts/sparcnbsd.xu		comp-util-bin		bfd

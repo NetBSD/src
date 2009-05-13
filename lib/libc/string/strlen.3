@@ -30,13 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strlen.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strlen.3,v 1.8 2003/08/07 16:43:51 agc Exp $
+.\"	$NetBSD: strlen.3,v 1.8.42.1 2009/05/13 19:18:27 jym Exp $
 .\"
-.Dd June 4, 1993
+.Dd May 1, 2009
 .Dt STRLEN 3
 .Os
 .Sh NAME
-.Nm strlen
+.Nm strlen ,
+.Nm strnlen
 .Nd find length of string
 .Sh LIBRARY
 .Lb libc
@@ -44,11 +45,22 @@
 .In string.h
 .Ft size_t
 .Fn strlen "const char *s"
+.Ft size_t
+.Fn strnlen "const char *s" "size_t maxlen"
 .Sh DESCRIPTION
 The
 .Fn strlen
 function
 computes the length of the string
+.Fa s .
+.Pp
+The
+.Fn strnlen
+function attempts to compute the length of
+.Fa s ,
+but never scans beyond the first
+.Fa maxlen
+bytes of
 .Fa s .
 .Sh RETURN VALUES
 The
@@ -59,11 +71,25 @@ the number of characters that precede the
 terminating
 .Dv NUL
 character.
+.Pp
+The
+.Fn strnlen
+function returns either the same result as
+.Fn strlen
+or
+.Fa maxlen ,
+whichever is smaller.
 .Sh SEE ALSO
-.Xr string 3
+.Xr string 3 ,
+.Xr wcslen 3 ,
+.Xr wcswidth 3
 .Sh STANDARDS
 The
 .Fn strlen
 function
 conforms to
-.St -ansiC .
+.St -isoC .
+The
+.Fn strnlen
+function conforms to
+.St -p1003.1-2008 .

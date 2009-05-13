@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.19 2002/07/19 07:17:54 scottr Exp $
+.\"	$NetBSD: xfer,v 1.19.42.1 2009/05/13 19:17:46 jym Exp $
 .
 There are currently two installation methods available for initial
 installation of NetBSD on Apple Macintosh 68000-based systems. Neither
@@ -25,16 +25,11 @@ volume.
 .Pp
 The Traditional method of installation is currently supported from the local
 Macintosh hard drive, from a CD-ROM, or from an AppleShare volume
-(however, you may ugrade a system from within NetBSD; see the
+(however, you may upgrade a system from within NetBSD; see the
 .Sx Upgrading\ a\ previously-installed\ NetBSD\ System 
 section for more details).
 If you are installing from a local hard drive, this means that you'll need
 at least enough room for the largest file that you will have to install.
-This is the 15.2 MB
-.Pa base.tgz
-file. There has been talk of allowing an install
-from split files. If you have the time, desire, and knowledge, please feel
-free to add that functionality.
 .Pp
 If the install is being done from an AppleShare-mounted volume, the
 .Nx*M

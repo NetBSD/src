@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.16 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: showmount.c,v 1.16.6.1 2009/05/13 19:20:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.16 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.16.6.1 2009/05/13 19:20:05 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -110,7 +110,7 @@ main(int argc, char **argv)
 	struct exportslist *exp;
 	struct grouplist *grp;
 	int estat, rpcs = 0, mntvers = 1;
-	char *host;
+	const char *host;
 	int ch;
 	int len;
 

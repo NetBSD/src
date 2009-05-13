@@ -1,0 +1,53 @@
+# $NetBSD: t_make.in,v 1.1.2.2 2009/05/13 19:19:40 jym Exp $
+#
+# Copyright (c) 2008 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+h_check()
+{
+	atf_check -o file:"$(atf_get_srcdir)/d_$1.out" -x \
+	    "make -k -f $(atf_get_srcdir)/d_$1.mk 2>&1 | sed -e 's,$(atf_get_srcdir)/d_,,'"
+}
+
+tc:comment:Checks comments (PR/17732, PR/30536)
+tc:cond1:Checks conditionals (PR/24420)
+tc:dotwait:Checks .WAIT
+tc:export:Checks .export of provided variables
+tc:export_all:Checks .export of all global variables
+tc:moderrs:Checks correct handling of errors in modifiers usage
+tc:modmatch:Checks modifier :M
+tc:modmisc:Checks modifiers specified in variables
+tc:modorder:Checks modifier :Ox
+tc:modts:Checks modifier :ts
+tc:modword:Checks modifier :[]
+tc:posix:Checks conformance to POSIX
+tc:qequals:Checks operator ?=
+tc:ternary:Checks ternary modifier
+tc:varcmd:Checks behavior of command line variable assignments
+
+atf_init_test_cases()
+{
+tc_list
+}

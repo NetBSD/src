@@ -1,4 +1,4 @@
-/*	$NetBSD: init_st.c,v 1.1 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: init_st.c,v 1.1.10.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_st.c,v 1.1 2008/04/15 11:17:48 plunky Exp $");
+__RCSID("$NetBSD: init_st.c,v 1.1.10.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -59,7 +59,7 @@ init_st(int fd, unsigned int speed)
 	case B460800:	rate = 0x13;	break;
 	case B921600:	rate = 0x14;	break;
 	default:
-		errx(EXIT_FAILURE, "invalid speed for st: %d\n", speed);
+		errx(EXIT_FAILURE, "invalid speed for st: %u\n", speed);
 	}
 
 	uart_send_cmd(fd, HCI_CMD_ST_SET_UART_BAUD_RATE, &rate, sizeof(rate));

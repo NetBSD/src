@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.h,v 1.3 2003/12/10 12:06:26 agc Exp $	*/
+/*	$NetBSD: yplib_host.h,v 1.3.40.1 2009/05/13 19:20:44 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -42,7 +42,7 @@ int	yp_master_host(CLIENT *client,
 		       char *indomain, char *inmap, char **outname);
 int	yp_order_host(CLIENT *client,
 		      char *indomain, char *inmap, int *outorder);
-int	yp_all_host(CLIENT *client, char *indomain, char *inmap,
+int	yp_all_host(CLIENT *client, const char *indomain, const char *inmap,
 		    struct ypall_callback *incallback);
 int	yp_maplist_host(CLIENT *client, char *indomain,
 		        struct ypmaplist **outmaplist);

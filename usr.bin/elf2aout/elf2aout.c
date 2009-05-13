@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.11 2004/04/23 02:55:11 simonb Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.11.36.1 2009/05/13 19:19:48 jym Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -56,7 +56,7 @@ struct sect {
 
 void	combine __P((struct sect *, struct sect *, int));
 int	phcmp __P((const void *, const void *));
-char   *saveRead __P((int file, off_t offset, off_t len, char *name));
+char   *saveRead __P((int file, off_t offset, off_t len, const char *name));
 void	copy __P((int, int, off_t, off_t));
 void	translate_syms __P((int, int, off_t, off_t, off_t, off_t));
 
@@ -334,7 +334,7 @@ translate_syms(out, in, symoff, symsize, stroff, strsize)
 			cur = SYMS_PER_PASS;
 		remaining -= cur;
 		if ((i = read(in, inbuf, cur * sizeof(Elf32_Sym)))
-		    != cur * sizeof(Elf32_Sym)) {
+		    != cur * (long)sizeof(Elf32_Sym)) {
 			if (i < 0)
 				perror("translate_syms");
 			else
@@ -378,7 +378,7 @@ translate_syms(out, in, symoff, symsize, stroff, strsize)
 		}
 		/* Write out the symbols... */
 		if ((i = write(out, outbuf, cur * sizeof(struct nlist)))
-		    != cur * sizeof(struct nlist)) {
+		    != cur * (long)sizeof(struct nlist)) {
 			fprintf(stderr, "translate_syms: write: %s\n", strerror(errno));
 			exit(1);
 		}
@@ -413,7 +413,7 @@ copy(out, in, offset, size)
 	remaining = size;
 	while (remaining) {
 		cur = remaining;
-		if (cur > sizeof ibuf)
+		if (cur > (long)sizeof ibuf)
 			cur = sizeof ibuf;
 		remaining -= cur;
 		if ((count = read(in, ibuf, cur)) != cur) {
@@ -455,9 +455,9 @@ int
 phcmp(vh1, vh2)
 	const void *vh1, *vh2;
 {
-	Elf32_Phdr *h1, *h2;
-	h1 = (Elf32_Phdr *) vh1;
-	h2 = (Elf32_Phdr *) vh2;
+	const Elf32_Phdr *h1, *h2;
+	h1 = (const Elf32_Phdr *) vh1;
+	h2 = (const Elf32_Phdr *) vh2;
 
 	if (h1->p_vaddr > h2->p_vaddr)
 		return 1;
@@ -469,7 +469,7 @@ phcmp(vh1, vh2)
 }
 
 char   *
-saveRead(int file, off_t offset, off_t len, char *name)
+saveRead(int file, off_t offset, off_t len, const char *name)
 {
 	char   *tmp;
 	int     count;

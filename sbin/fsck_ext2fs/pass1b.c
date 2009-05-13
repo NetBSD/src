@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.6.36.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.6.36.1 2009/05/13 19:19:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,8 @@ static struct	dups *duphead;
 void
 pass1b(void)
 {
-	int c, i;
+	int c;
+	uint32_t i;
 	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
 	ino_t inumber;

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshtty.c,v 1.4 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sshtty.c,v 1.12 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sshtty.c,v 1.4.26.1 2009/05/13 19:15:59 jym Exp $	*/
+/* $OpenBSD: sshtty.c,v 1.13 2008/05/19 15:45:07 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshtty.c,v 1.4 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sshtty.c,v 1.4.26.1 2009/05/13 19:15:59 jym Exp $");
 #include <sys/types.h>
 #include <stdio.h>
 #include <termios.h>
@@ -48,10 +48,10 @@ __RCSID("$NetBSD: sshtty.c,v 1.4 2006/09/28 21:22:15 christos Exp $");
 static struct termios _saved_tio;
 static int _in_raw_mode = 0;
 
-struct termios
+struct termios *
 get_saved_tio(void)
 {
-	return _saved_tio;
+	return _in_raw_mode ? &_saved_tio : NULL;
 }
 
 void

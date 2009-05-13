@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.17 2003/08/07 11:17:35 agc Exp $	*/
+/*	$NetBSD: ww.h,v 1.17.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -313,8 +313,8 @@ EXTERN char wwterminfopath[1024];
 
 struct ww *wwopen(int, int, int, int, int, int, int);
 void	wwadd(struct ww *, struct ww *);
-void	wwaddcap(char *, char **);
-void	wwaddcap1(char *, char **);
+void	wwaddcap(const char *, char **);
+void	wwaddcap1(const char *, char **);
 void	wwalarm(int);
 char  **wwalloc(int, int, int, int, int);
 void	wwbell(void);
@@ -353,9 +353,10 @@ void	wwinsline(struct ww *, int);
 void	wwiomux(void);
 void	wwlabel(struct ww *, struct ww *, int, char *, int);
 void	wwmove(struct ww *, int, int);
-void	wwprintf(struct ww *, const char *, ...);
+void	wwprintf(struct ww *, const char *, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
 void	wwputc(char, struct ww *);
-void	wwputs(char *, struct ww *);
+void	wwputs(const char *, struct ww *);
 void	wwredraw(void);
 void	wwredrawwin1(struct ww *,int, int, int);
 void	wwquit(int);
@@ -377,7 +378,7 @@ void	wwunframe(struct ww *);
 void	wwupdate1(int, int);
 int	wwvisible(struct ww *);
 void	wwvprintf(struct ww *, const char *, va_list);
-int	wwwrite(struct ww *, char *, int);
+int	wwwrite(struct ww *, const char *, int);
 #ifdef TERMINFO
 int	wwterminfoinit(void);
 int	wwterminfoend(void);

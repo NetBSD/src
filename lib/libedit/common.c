@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.21 2008/09/30 08:37:42 aymeric Exp $	*/
+/*	$NetBSD: common.c,v 1.21.6.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.21 2008/09/30 08:37:42 aymeric Exp $");
+__RCSID("$NetBSD: common.c,v 1.21.6.1 2009/05/13 19:18:29 jym Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -123,7 +123,7 @@ ed_delete_prev_word(EditLine *el, int c __attribute__((__unused__)))
 		*kp++ = *p;
 	el->el_chared.c_kill.last = kp;
 
-	c_delbefore(el, el->el_line.cursor - cp);	/* delete before dot */
+	c_delbefore(el, (int)(el->el_line.cursor - cp));/* delete before dot */
 	el->el_line.cursor = cp;
 	if (el->el_line.cursor < el->el_line.buffer)
 		el->el_line.cursor = el->el_line.buffer; /* bounds check */
@@ -382,7 +382,7 @@ protected el_action_t
 ed_digit(EditLine *el, int c)
 {
 
-	if (!isdigit(c))
+	if (!isdigit((unsigned char)c))
 		return (CC_ERROR);
 
 	if (el->el_state.doingarg) {
@@ -410,7 +410,7 @@ protected el_action_t
 ed_argument_digit(EditLine *el, int c)
 {
 
-	if (!isdigit(c))
+	if (!isdigit((unsigned char)c))
 		return (CC_ERROR);
 
 	if (el->el_state.doingarg) {

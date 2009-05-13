@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.28 2008/12/29 00:33:34 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.28.2.1 2009/05/13 19:18:37 jym Exp $	*/
 
 /*
- * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.28 2008/12/29 00:33:34 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.28.2.1 2009/05/13 19:18:37 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,7 +193,7 @@ delete(const char *name)
 void
 feat(void)
 {
-	int i;
+	size_t i;
 
 	reply(-211, "Features supported");
 	cprintf(stdout, " MDTM\r\n");
@@ -339,7 +339,7 @@ opts(const char *command)
 			/* special case: MLST */
 	if (strcasecmp(command, "MLST") == 0) {
 		int	 enabled[FACTTABSIZE];
-		int	 i, onedone;
+		size_t	 i, onedone;
 		size_t	 len;
 		char	*p;
 
@@ -505,9 +505,9 @@ statfilecmd(const char *filename)
 	FILE *fin;
 	int c;
 	int atstart;
-	char *argv[] = { INTERNAL_LS, "-lgA", "", NULL };
+	const char *argv[] = { INTERNAL_LS, "-lgA", "", NULL };
 
-	argv[2] = (char *)filename;
+	argv[2] = filename;
 	fin = ftpd_popen(argv, "r", STDOUT_FILENO);
 	reply(-211, "status of %s:", filename);
 /* XXX: use fgetln() or fparseln() here? */
@@ -760,10 +760,10 @@ fact_type(const char *fact, FILE *fd, factelem *fe)
 		break;
 	case S_IFBLK:
 	case S_IFCHR:
-		cprintf(fd, "OS.unix=%s-%llu/%llu",
+		cprintf(fd, "OS.unix=%s-" ULLF "/" ULLF,
 		    S_ISBLK(fe->stat->st_mode) ? "blk" : "chr",
-		    (unsigned long long)major(fe->stat->st_rdev),
-		    (unsigned long long)minor(fe->stat->st_rdev));
+		    (ULLT)major(fe->stat->st_rdev),
+		    (ULLT)minor(fe->stat->st_rdev));
 		break;
 	default:
 		cprintf(fd, "OS.unix=UNKNOWN(0%o)", fe->stat->st_mode & S_IFMT);
@@ -801,7 +801,8 @@ static void
 mlsname(FILE *fp, factelem *fe)
 {
 	char realfile[MAXPATHLEN];
-	int i, userf = 0;
+	int userf = 0;
+	size_t i;
 
 	for (i = 0; i < FACTTABSIZE; i++) {
 		if (facttab[i].enabled)

@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.16 2008/07/21 14:19:25 lukem Exp $	*/
+/*	$NetBSD: script.c,v 1.16.6.1 2009/05/13 19:20:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.16 2008/07/21 14:19:25 lukem Exp $");
+__RCSID("$NetBSD: script.c,v 1.16.6.1 2009/05/13 19:20:04 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ int	master, slave;
 int	child, subchild;
 int	outcc;
 int	usesleep, rawout;
-char	*fname;
+const char *fname;
 
 struct	termios tt;
 
@@ -241,7 +241,7 @@ scriptflush(int signo)
 void
 doshell()
 {
-	char *shell;
+	const char *shell;
 
 	shell = getenv("SHELL");
 	if (shell == NULL)
@@ -285,7 +285,7 @@ done()
 }
 
 void
-record(FILE *fscript, char *buf, size_t cc, int direction)
+record(FILE *fp, char *buf, size_t cc, int direction)
 {
 	struct iovec iov[2];
 	struct stamp stamp;
@@ -300,23 +300,23 @@ record(FILE *fscript, char *buf, size_t cc, int direction)
 	iov[0].iov_base = &stamp;
 	iov[1].iov_len = cc;
 	iov[1].iov_base = buf;
-	if (writev(fileno(fscript), &iov[0], 2) == -1)
+	if (writev(fileno(fp), &iov[0], 2) == -1)
 		err(1, "writev");
 }
 
 void
-consume(FILE *fscript, off_t len, char *buf, int reg)
+consume(FILE *fp, off_t len, char *buf, int reg)
 {
 	size_t l;
 
 	if (reg) {
-		if (fseeko(fscript, len, SEEK_CUR) == -1)
+		if (fseeko(fp, len, SEEK_CUR) == -1)
 			err(1, NULL);
 	}
 	else {
 		while (len > 0) {
 			l = MIN(DEF_BUF, len);
-			if (fread(buf, sizeof(char), l, fscript) != l)
+			if (fread(buf, sizeof(char), l, fp) != l)
 				err(1, "cannot read buffer");
 			len -= l;
 		}
@@ -333,7 +333,7 @@ consume(FILE *fscript, off_t len, char *buf, int reg)
 } while (0/*CONSTCOND*/)
 
 void
-playback(FILE *fscript)
+playback(FILE *fp)
 {
 	struct timespec tsi, tso;
 	struct stamp stamp;
@@ -341,16 +341,16 @@ playback(FILE *fscript)
 	char buf[DEF_BUF];
 	off_t nread, save_len;
 	size_t l;
-	time_t clock;
+	time_t tclock;
 	int reg;
 
-	if (fstat(fileno(fscript), &pst) == -1)
+	if (fstat(fileno(fp), &pst) == -1)
 		err(1, "fstat failed");	
 
 	reg = S_ISREG(pst.st_mode);
 
 	for (nread = 0; !reg || nread < pst.st_size; nread += save_len) {
-		if (fread(&stamp, sizeof(stamp), 1, fscript) != 1) {
+		if (fread(&stamp, sizeof(stamp), 1, fp) != 1) {
 			if (reg)
 				err(1, "reading playback header");
 			else
@@ -364,23 +364,23 @@ playback(FILE *fscript)
 			err(1, "invalid stamp");
 
 		save_len += stamp.scr_len;
-		clock = stamp.scr_sec;
+		tclock = stamp.scr_sec;
 		tso.tv_sec = stamp.scr_sec;
 		tso.tv_nsec = stamp.scr_usec * 1000;
 
 		switch (stamp.scr_direction) {
 		case 's':
-			(void)printf("Script started on %s", ctime(&clock));
+			(void)printf("Script started on %s", ctime(&tclock));
 			tsi = tso;
-			(void)consume(fscript, stamp.scr_len, buf, reg);
+			(void)consume(fp, stamp.scr_len, buf, reg);
 			break;
 		case 'e':
-			(void)printf("\nScript done on %s", ctime(&clock));
-			(void)consume(fscript, stamp.scr_len, buf, reg);
+			(void)printf("\nScript done on %s", ctime(&tclock));
+			(void)consume(fp, stamp.scr_len, buf, reg);
 			break;
 		case 'i':
 			/* throw input away */
-			(void)consume(fscript, stamp.scr_len, buf, reg);
+			(void)consume(fp, stamp.scr_len, buf, reg);
 			break;
 		case 'o':
 			tsi.tv_sec = tso.tv_sec - tsi.tv_sec;
@@ -394,7 +394,7 @@ playback(FILE *fscript)
 			tsi = tso;
 			while (stamp.scr_len > 0) {
 				l = MIN(DEF_BUF, stamp.scr_len);
-				if (fread(buf, sizeof(char), l, fscript) != l)
+				if (fread(buf, sizeof(char), l, fp) != l)
 					err(1, "cannot read buffer");
 
 				(void)write(STDOUT_FILENO, buf, l);
@@ -405,6 +405,6 @@ playback(FILE *fscript)
 			err(1, "invalid direction");
 		}
 	}
-	(void)fclose(fscript);
+	(void)fclose(fp);
 	exit(0);
 }

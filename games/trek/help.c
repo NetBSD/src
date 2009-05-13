@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.8 2007/12/15 19:44:44 perry Exp $	*/
+/*	$NetBSD: help.c,v 1.8.12.1 2009/05/13 19:18:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.8 2007/12/15 19:44:44 perry Exp $");
+__RCSID("$NetBSD: help.c,v 1.8.12.1 2009/05/13 19:18:08 jym Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#include <limits.h>
 #include "trek.h"
 
 /*
@@ -96,7 +97,7 @@ help(v)
 	Game.helps += 1;
 
 	/* find the closest base */
-	dist = 1e50;
+	dist = TOOLARGE;
 	if (Quad[Ship.quadx][Ship.quady].bases <= 0)
 	{
 		/* there isn't one in this quadrant */

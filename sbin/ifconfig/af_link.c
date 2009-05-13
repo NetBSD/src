@@ -1,4 +1,4 @@
-/*	$NetBSD: af_link.c,v 1.3 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: af_link.c,v 1.3.4.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_link.c,v 1.3 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: af_link.c,v 1.3.4.1 2009/05/13 19:19:02 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -74,56 +74,7 @@ static void link_constructor(void) __attribute__((constructor));
 static void
 link_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
-	const char *delim, *ifname;
-	int i, s;
-	struct ifaddrs *ifa, *ifap;
-	const struct sockaddr_dl *sdl;
-	struct if_laddrreq iflr;
-	const uint8_t *octets;
-
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
-	if ((s = getsock(AF_LINK)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
-
-	if (getifaddrs(&ifap) == -1)
-		err(EXIT_FAILURE, "%s: getifaddrs", __func__);
-
-	memset(&iflr, 0, sizeof(iflr));
-
-	strlcpy(iflr.iflr_name, ifname, sizeof(iflr.iflr_name));
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(ifname, ifa->ifa_name) != 0)
-			continue;
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-		if (ifa->ifa_data != NULL)
-			continue;
-
-		sdl = satocsdl(ifa->ifa_addr);
-
-		memcpy(&iflr.addr, ifa->ifa_addr, MIN(ifa->ifa_addr->sa_len,
-		    sizeof(iflr.addr)));
-		iflr.flags = IFLR_PREFIX;
-		iflr.prefixlen = sdl->sdl_alen * NBBY;
-
-		if (ioctl(s, SIOCGLIFADDR, &iflr) == -1)
-			err(EXIT_FAILURE, "%s: ioctl", __func__);
-
-                if ((iflr.flags & IFLR_ACTIVE) != 0)
-			continue;
-
-		octets = (const uint8_t *)&sdl->sdl_data[sdl->sdl_nlen];
-
-		delim = "\tlink ";
-		for (i = 0; i < sdl->sdl_alen; i++) {
-			printf("%s%02" PRIx8, delim, octets[i]);
-			delim = ":";
-		}
-		printf("\n");
-	}
+	print_link_addresses(env, false);
 }
 
 static int

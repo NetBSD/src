@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.9 2003/03/09 08:10:43 mjl Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.9.40.1 2009/05/13 19:20:28 jym Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -41,7 +41,7 @@
 
 struct arglist {
 	size_t argc, maxc;
-	char **argv;
+	const char **argv;
 };
 
 int main __P((int, char *[], char *[]));
@@ -83,7 +83,7 @@ addarg(al, arg, copy)
 		if ((al->argv[al->argc++] = strdup(arg)) == NULL)
 			err(1, "mailwrapper:");
 	} else
-		al->argv[al->argc++] = (char *)arg;
+		al->argv[al->argc++] = arg;
 }
 
 int
@@ -147,7 +147,7 @@ main(argc, argv, envp)
 		addarg(&al, argv[i], 0);
 
 	addarg(&al, NULL, 0);
-	execve(to, al.argv, envp);
+	execve(to, __UNCONST(al.argv), envp);
 	err(1, "mailwrapper: execing %s", to);
 	/*NOTREACHED*/
 parse_error:

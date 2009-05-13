@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.5 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: data.c,v 1.5.6.1 2009/05/13 19:20:42 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -41,7 +41,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: data.c,v 1.5 2008/05/10 15:31:05 martin Exp $");
+__RCSID("$NetBSD: data.c,v 1.5.6.1 2009/05/13 19:20:42 jym Exp $");
 #endif /* not lint */
 
 static void *
@@ -86,7 +86,7 @@ init_data(struct tpctl_data *data)
 }
 
 int
-read_data(char *filename, struct tpctl_data *data)
+read_data(const char *filename, struct tpctl_data *data)
 {
 	int res, len, n, i, t;
 	char buf[MAXDATALEN + 2], *p, *p2;
@@ -252,32 +252,32 @@ read_data(char *filename, struct tpctl_data *data)
 }
 
 int
-write_data(char *filename, struct tpctl_data *data)
+write_data(const char *filename, struct tpctl_data *data)
 {
 	int res, fd;
 	FILE *fp;
 	struct tpctl_data_elem *elem;
-	char *p, tmpfile[MAXPATHLEN + 1];
+	char *p, tempfile[MAXPATHLEN + 1];
 
 	fd = 0;		/* XXXGCC -Wuninitialized [hpcarm] */
 
 	if (filename == NULL) {
 		fp = stdout;
 	} else {
-		strncpy(tmpfile, filename, MAXPATHLEN);
-		tmpfile[MAXPATHLEN] = '\0';
-		if ((p = strrchr(tmpfile, '/')) == NULL) {
-			strcpy(tmpfile, TPCTL_TMP_FILENAME);
+		strncpy(tempfile, filename, MAXPATHLEN);
+		tempfile[MAXPATHLEN] = '\0';
+		if ((p = strrchr(tempfile, '/')) == NULL) {
+			strcpy(tempfile, TPCTL_TMP_FILENAME);
 		} else {
 			p++;
 			if (MAXPATHLEN <
-			    p - tmpfile + strlen(TPCTL_TMP_FILENAME))
+			    p - tempfile + strlen(TPCTL_TMP_FILENAME))
 				return (ERR_NOFILE);/* file name is too long */
-			strcat(tmpfile, TPCTL_TMP_FILENAME);
+			strcat(tempfile, TPCTL_TMP_FILENAME);
 		}
-		if ((fd = open(tmpfile, O_RDWR|O_CREAT|O_EXCL, 0644)) < 0) {
+		if ((fd = open(tempfile, O_RDWR|O_CREAT|O_EXCL, 0644)) < 0) {
 			fprintf(stderr, "%s: can't create %s\n",
-			    getprogname(), tmpfile);
+			    getprogname(), tempfile);
 			return (ERR_NOFILE);
 		}
 		if ((fp = fdopen(fd, "w")) == NULL) {
@@ -304,8 +304,8 @@ write_data(char *filename, struct tpctl_data *data)
 	if (filename != NULL) {
 		fclose(fp);
 		close(fd);
-		if (rename(tmpfile, filename) < 0) {
-			unlink(tmpfile);
+		if (rename(tempfile, filename) < 0) {
+			unlink(tempfile);
 			return (ERR_NOFILE);
 		}
 	}

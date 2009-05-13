@@ -1,4 +1,4 @@
-/*	$NetBSD: load_http.c,v 1.1.1.1 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: load_http.c,v 1.1.1.1.22.1 2009/05/13 19:17:33 jym Exp $	*/
 
 /*
  * Copyright (C) 2006 by Darren Reed.
@@ -17,7 +17,8 @@ alist_t *
 load_http(char *url)
 {
 	int fd, len, left, port, endhdr, removed;
-	char *s, *t, *u, buffer[1024], *myurl;
+	size_t rem;
+	char *s, *t, *u, buffer[2048], *myurl;
 	alist_t *a, *rtop, *rbot;
 	struct sockaddr_in sin;
 	struct hostent *host;
@@ -34,18 +35,21 @@ load_http(char *url)
 	rtop = NULL;
 	rbot = NULL;
 
-	sprintf(buffer, "GET %s HTTP/1.0\r\n", url);
-
 	myurl = strdup(url);
 	if (myurl == NULL)
 		goto done;
+
+	rem = sizeof(buffer);
+	left = snprintf(buffer, rem, "GET %s HTTP/1.0\r\n", url);
+	if (left < 0 || left > rem)
+		goto done;
+	rem -= left;
 
 	s = myurl + 7;			/* http:// */
 	t = strchr(s, '/');
 	if (t == NULL) {
 		fprintf(stderr, "load_http has a malformed URL '%s'\n", url);
-		free(myurl);
-		return NULL;
+		goto done;
 	}
 	*t++ = '\0';
 
@@ -53,7 +57,10 @@ load_http(char *url)
 	if (u != NULL)
 		s = u + 1;		/* AUTH */
 
-	sprintf(buffer + strlen(buffer), "Host: %s\r\n\r\n", s);
+	left = snprintf(buffer + left, rem, "Host: %s\r\n\r\n", s);
+	if (left < 0 || left > rem)
+		goto done;
+	rem -= left;
 
 	u = strchr(s, ':');
 	if (u != NULL) {
@@ -69,7 +76,7 @@ load_http(char *url)
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
-	if (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
 		if (inet_aton(s, &sin.sin_addr) == -1) {
 			goto done;
 		}
@@ -85,16 +92,12 @@ load_http(char *url)
 	if (fd == -1)
 		goto done;
 
-	if (connect(fd, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
-		close(fd);
+	if (connect(fd, (struct sockaddr *)&sin, sizeof(sin)) == -1)
 		goto done;
-	}
 
 	len = strlen(buffer);
-	if (write(fd, buffer, len) != len) {
-		close(fd);
+	if (write(fd, buffer, len) != len)
 		goto done;
-	}
 
 	s = buffer;
 	endhdr = 0;
@@ -144,16 +147,17 @@ load_http(char *url)
 				break;
 
 			*t++ = '\0';
-			for (u = buffer; isdigit(*u) || (*u == '.'); u++)
-				;
+			for (u = buffer; isdigit((unsigned char)*u) ||
+			    (*u == '.'); u++)
+				continue;
 			if (*u == '/') {
 				char *slash;
 
 				slash = u;
 				u++;
-				while (isdigit(*u))
+				while (isdigit((unsigned char)*u))
 					u++;
-				if (!isspace(*u) && *u)
+				if (!isspace((unsigned char)*u) && *u)
 					u = slash;
 			}
 			*u = '\0';

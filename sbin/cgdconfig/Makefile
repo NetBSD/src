@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2008/07/24 05:32:45 dholland Exp $
+# $NetBSD: Makefile,v 1.10.4.1 2009/05/13 19:19:00 jym Exp $
 
 PROG=	cgdconfig
 MAN=	cgdconfig.8
@@ -10,7 +10,7 @@ SRCS=	cgdconfig.c		\
 	params.c		\
 	utils.c
 
-CPPFLAGS+= -I${.CURDIR} -I.
+CPPFLAGS+= -I${.CURDIR} -I. -DYY_NO_INPUT
 
 YHEADER=1
 

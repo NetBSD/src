@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.17 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: indent.c,v 1.17.6.1 2009/05/13 19:19:52 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.17 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: indent.c,v 1.17.6.1 2009/05/13 19:19:52 jym Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,10 +94,10 @@ __RCSID("$NetBSD: indent.c,v 1.17 2008/07/21 14:19:23 lukem Exp $");
 #undef  EXTERN
 #include "indent_codes.h"
 
-char   *in_name = "Standard Input";	/* will always point to name of input
-					 * file */
-char   *out_name = "Standard Output";	/* will always point to name of output
-					 * file */
+const char *in_name = "Standard Input";		/* will always point to name of
+						 * input file */
+const char *out_name = "Standard Output";	/* will always point to name of
+						 * output file */
 char    bakfile[MAXPATHLEN] = "";
 
 int main(int, char **);
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	int     squest;		/* when this is positive, we have seen a ?
 				 * without the matching : in a <c>?<s>:<s>
 				 * construct */
-	char   *t_ptr;		/* used for copying tokens */
+	const char *t_ptr;	/* used for copying tokens */
 	int     type_code;	/* the type of token, returned by lexi */
 
 	int     last_else = 0;	/* true iff last keyword was an else */
@@ -309,7 +309,7 @@ main(int argc, char **argv)
 			ps.ind_level = ps.i_l_follow = col / ps.ind_size;
 	}
 	if (troff) {
-		char   *p = in_name, *beg = in_name;
+		const char   *p = in_name, *beg = in_name;
 
 		while (*p)
 			if (*p++ == '/')
@@ -648,7 +648,7 @@ check_type:
 				ps.dumped_decl_indent = 1;
 				e_code += strlen(e_code);
 			} else {
-				char   *res = token;
+				const char *res = token;
 
 				if (ps.in_decl && !ps.block_init) {	/* if this is a unary op
 									 * in a declaration, we
@@ -674,7 +674,7 @@ check_type:
 			if (ps.want_blank)
 				*e_code++ = ' ';
 			{
-				char   *res = token;
+				const char *res = token;
 
 				if (troff)
 					switch (token[0]) {
@@ -1179,7 +1179,7 @@ check_type:
 					while ((c = getc(input)) == '\n');
 					ungetc(c, input);
 				}
-				if (ifdef_level < sizeof state_stack / sizeof state_stack[0]) {
+				if (ifdef_level < (int)(sizeof state_stack / sizeof state_stack[0])) {
 					match_state[ifdef_level].tos = -1;
 					state_stack[ifdef_level++] = ps;
 				} else
@@ -1246,7 +1246,7 @@ bakcopy(void)
 {
 	int     n, bakchn;
 	char    buff[8 * 1024];
-	char   *p;
+	const char *p;
 
 	/* construct file name .Bfile */
 	for (p = in_name; *p; p++);	/* skip to end of string */

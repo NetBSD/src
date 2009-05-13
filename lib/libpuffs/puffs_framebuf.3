@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.25 2008/09/06 15:43:27 wiz Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.25.6.1 2009/05/13 19:18:35 jym Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -151,13 +151,6 @@
 .Fa "struct puffs_usermount *pu" "int fd" "int what"
 .Fc
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-.Pp
 The
 .Nm
 routines provide buffering and an event loop structured around the

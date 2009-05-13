@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2009/01/24 11:59:39 dsl Exp $
+#	$NetBSD: Makefile,v 1.46.2.1 2009/05/13 19:19:56 jym Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -14,7 +14,6 @@ SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 SRCS += lstPrev.c
 
 .PATH:	${.CURDIR}/lst.lib
-WARNS=4
 .if make(install)
 SUBDIR=	PSD.doc
 .endif
@@ -25,12 +24,7 @@ SUBDIR+= unit-tests
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
 
-# provide a clue as to what we are using
-BUILD_DATE!= date +%Y%m%d
-MAKE_VERSION:= netbsd-${BUILD_DATE}
-CPPFLAGS_main.o:= "-DMAKE_VERSION=\"${MAKE_VERSION}\""
-CPPFLAGS+= ${CPPFLAGS_${.TARGET}} -DMAKE_NATIVE
-main.o:	${OBJS:Nmain.o} ${MAKEFILE}
+CPPFLAGS+= -DMAKE_NATIVE
 COPTS.var.c+= -Wno-cast-qual
 
 .ifdef TOOLDIR

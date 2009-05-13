@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2008/06/17 15:54:45 christos Exp $ */
+/*	$NetBSD: main.c,v 1.19.6.1 2009/05/13 19:20:01 jym Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.19 2008/06/17 15:54:45 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.19.6.1 2009/05/13 19:20:01 jym Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,45 +62,45 @@ int print_all, print_map, print_maps, print_solaris, print_ddb;
 rlim_t maxssiz;
 
 struct nlist ksyms[] = {
-	{ "_maxsmap" },
+	{ "_maxsmap", 0, 0, 0, 0 },
 #define NL_MAXSSIZ		0
-	{ "_uvm_vnodeops" },
+	{ "_uvm_vnodeops", 0, 0, 0, 0 },
 #define NL_UVM_VNODEOPS		1
-	{ "_uvm_deviceops" },
+	{ "_uvm_deviceops", 0, 0, 0, 0 },
 #define NL_UVM_DEVICEOPS	2
-	{ "_aobj_pager" },
+	{ "_aobj_pager", 0, 0, 0, 0 },
 #define NL_AOBJ_PAGER		3
-	{ "_ubc_pager" },
+	{ "_ubc_pager", 0, 0, 0, 0 },
 #define NL_UBC_PAGER		4
-	{ "_kernel_map" },
+	{ "_kernel_map", 0, 0, 0, 0 },
 #define NL_KERNEL_MAP		5
-	{ "_nchashtbl" },
+	{ "_nchashtbl", 0, 0, 0, 0 },
 #define NL_NCHASHTBL		6
-	{ "_nchash" },
+	{ "_nchash", 0, 0, 0, 0 },
 #define NL_NCHASH		7
-	{ NULL }
+	{ NULL, 0, 0, 0, 0 }
 };
 
 struct nlist kmaps[] = {
-	{ "_kmem_map" },
+	{ "_kmem_map", 0, 0, 0, 0 },
 #define NL_kmem_map		0
-	{ "_mb_map" },
+	{ "_mb_map", 0, 0, 0, 0 },
 #define NL_mb_map		1
-	{ "_phys_map" },
+	{ "_phys_map", 0, 0, 0, 0 },
 #define NL_phys_map		2
-	{ "_exec_map" },
+	{ "_exec_map", 0, 0, 0, 0 },
 #define NL_exec_map		3
-	{ "_pager_map" },
+	{ "_pager_map", 0, 0, 0, 0 },
 #define NL_pager_map		4
-	{ "_st_map" },
+	{ "_st_map", 0, 0, 0, 0 },
 #define NL_st_map		5
-	{ "_pt_map" },
+	{ "_pt_map", 0, 0, 0, 0 },
 #define NL_pt_map		6
-	{ "_lkm_map" },
+	{ "_lkm_map", 0, 0, 0, 0 },
 #define NL_lkm_map		7
-	{ "_buf_map" },
+	{ "_buf_map", 0, 0, 0, 0 },
 #define NL_buf_map		8
-	{ NULL }
+	{ NULL, 0, 0, 0, 0 },
 };
 
 #define VMSPACE_ADDRESS		1
@@ -110,7 +110,7 @@ struct nlist kmaps[] = {
 
 void check_fd(int);
 void load_symbols(kvm_t *);
-void cache_enter(int, struct namecache *);
+void cache_enter(u_long, struct namecache *);
 
 int
 main(int argc, char *argv[])
@@ -450,8 +450,7 @@ load_name_cache(kvm_t *kd)
 {
 	struct namecache _ncp, *ncp, *oncp;
 	struct nchashhead _ncpp, *ncpp; 
-	u_long nchash;
-	int i;
+	u_long nchash, i;
 
 	LIST_INIT(&lcache);
 
@@ -484,12 +483,12 @@ load_name_cache(kvm_t *kd)
 }
 
 void
-cache_enter(int i, struct namecache *ncp)
+cache_enter(u_long i, struct namecache *ncp)
 {
 	struct cache_entry *ce;
 
 	if (debug & DUMP_NAMEI_CACHE)
-		printf("[%d] ncp->nc_vp %10p, ncp->nc_dvp %10p, "
+		printf("[%lu] ncp->nc_vp %10p, ncp->nc_dvp %10p, "
 		       "ncp->nc_nlen %3d [%.*s]\n",
 		       i, ncp->nc_vp, ncp->nc_dvp,
 		       ncp->nc_nlen, ncp->nc_nlen, ncp->nc_name);
@@ -500,7 +499,7 @@ cache_enter(int i, struct namecache *ncp)
 	ce->ce_pvp = ncp->nc_dvp;
 	ce->ce_nlen = ncp->nc_nlen;
 	strncpy(ce->ce_name, ncp->nc_name, sizeof(ce->ce_name));
-	ce->ce_name[MIN(ce->ce_nlen, sizeof(ce->ce_name) - 1)] = '\0';
+	ce->ce_name[MIN(ce->ce_nlen, (int)(sizeof(ce->ce_name) - 1))] = '\0';
 
 	LIST_INSERT_HEAD(&lcache, ce, ce_next);
 }

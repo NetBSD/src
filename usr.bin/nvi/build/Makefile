@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.10 2008/12/05 22:52:03 christos Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2009/05/13 19:20:00 jym Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
-WARNS=4
 #DBG=-g
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
@@ -58,7 +57,6 @@ options_def.h: options.awk options.c
 .PATH: ${DIST}/vi ${DIST}/ex ${DIST}/cl
 .PATH: ${DIST}/common
 .PATH: ${DIST}/regex
-
-BUILDSYMLINKS=	${DIST}/docs/vi.man/vi.1 vi.1
+.PATH: ${DIST}/docs/vi.man
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.31 2008/08/29 06:08:40 lukem Exp $
+# $NetBSD: mi,v 1.31.4.1 2009/05/13 19:17:52 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -602,6 +602,7 @@
 ./usr/share/tmac/an-old.tmac			text-groff-share	share
 ./usr/share/tmac/an.tmac			text-groff-share	share
 ./usr/share/tmac/andoc.tmac			text-groff-share	share
+./usr/share/tmac/ascii.tmac			text-groff-share	share
 ./usr/share/tmac/composite.tmac			text-groff-share	share
 ./usr/share/tmac/cp1047.tmac			text-groff-share	share
 ./usr/share/tmac/devtag.tmac			text-groff-share	share

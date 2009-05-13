@@ -1,0 +1,41 @@
+.\"	$NetBSD: sbt.4,v 1.1.2.2 2009/05/13 19:19:09 jym Exp $
+.\"	$OpenBSD: sbt.4,v 1.1 2007/06/19 11:33:40 uwe Exp $
+.\"
+.\" Uwe Stuehler, 2007. Public Domain.
+.\"
+.Dd April 21, 2009
+.Dt SBT 4
+.Os
+.Sh NAME
+.Nm sbt
+.Nd SDIO Bluetooth adapter
+.Sh SYNOPSIS
+.Cd "sbt* at sdmmc?"
+.Sh DESCRIPTION
+The
+.Nm
+device driver provides support for Type-A and Type-B SDIO Bluetooth
+adapters.
+.Sh SEE ALSO
+.Xr bluetooth 4 ,
+.Xr intro 4 ,
+.Xr sdmmc 4
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Uwe Stuehler
+.Aq uwe@openbsd.org
+for
+.Ox
+and ported to
+.Nx
+by
+.An NONAKA Kimihiro
+.Aq nonakap@gmail.com .

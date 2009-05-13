@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.8 2008/12/29 15:57:01 wiz Exp $
+.\"	$NetBSD: kmem_alloc.9,v 1.8.2.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 29, 2008
+.Dd March 29, 2009
 .Dt KMEM_ALLOC 9
 .Os
 .\" ------------------------------------------------------------
@@ -40,6 +40,8 @@
 .Fn kmem_alloc \
 "size_t size" "km_flag_t kmflags"
 .\" ------------------------------------------------------------
+.Pp
+.Cd "options DEBUG"
 .Sh DESCRIPTION
 .Fn kmem_alloc
 allocates kernel wired memory.
@@ -51,7 +53,7 @@ Specify the size of allocation in bytes.
 Either of the following:
 .Bl -tag -width KM_NOSLEEP
 .It KM_SLEEP
-If the allocation cannot be satisfied immediatley, sleep until enough
+If the allocation cannot be satisfied immediately, sleep until enough
 memory is available.
 .It KM_NOSLEEP
 Don't sleep.
@@ -118,6 +120,60 @@ For example:
         }
 .Ed
 .\" ------------------------------------------------------------
+.Sh OPTIONS
+Kernels compiled with the
+.Dv DEBUG
+option perform CPU intensive sanity checks on kmem operations,
+and include the
+.Dv kmguard
+facility which can be enabled at runtime.
+.Pp
+.Dv kmguard
+adds additional, very high overhead runtime verification to kmem operations.
+To enable it, boot the system with the
+.Fl d
+option, which causes the debugger to be entered early during the kernel
+boot process.
+Issue commands such as the following:
+.Bd -literal
+db\*[Gt] w kmem_guard_depth 0t30000
+db\*[Gt] c
+.Ed
+.Pp
+This instructs
+.Dv kmguard
+to queue up to 60000 (30000*2) pages of unmapped KVA to catch
+use-after-free type errors.
+When
+.Fn kmem_free
+is called, memory backing a freed item is unmapped and the kernel VA
+space pushed onto a FIFO.
+The VA space will not be reused until another 30k items have been freed.
+Until reused the kernel will catch invalid accesses and panic with a page fault.
+Limitations:
+.Bl -bullet
+.It
+It has a severe impact on performance.
+.It
+It is best used on a 64-bit machine with lots of RAM.
+.It
+Allocations larger than PAGE_SIZE bypass the
+.Dv kmguard
+facility.
+.El
+.Pp
+kmguard tries to catch the following types of bugs:
+.Bl -bullet
+.It
+Overflow at time of occurrence, by means of a guard page.
+.It
+Underflow at
+.Fn kmem_free ,
+by using a canary value.
+.It
+Invalid pointer or size passed, at
+.Fn kmem_free .
+.El
 .Sh RETURN VALUES
 On success,
 .Fn kmem_alloc

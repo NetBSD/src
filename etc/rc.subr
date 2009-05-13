@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.74 2008/12/06 23:21:32 salo Exp $
+# $NetBSD: rc.subr,v 1.74.2.1 2009/05/13 19:18:02 jym Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -424,7 +424,10 @@ run_rc_command()
 		;;
 	esac
 
-	_keywords="start stop restart rcvar $extra_commands"
+	_keywords="start stop restart rcvar"
+	if [ -n "$extra_commands" ]; then
+		_keywords="${_keywords} ${extra_commands}"
+	fi
 	rc_pid=
 	_pidcmd=
 	_procname=${procname:-${command}}

@@ -1,4 +1,4 @@
-.\" $NetBSD: wlanctl.8,v 1.4 2007/08/29 02:27:55 dogcow Exp $
+.\" $NetBSD: wlanctl.8,v 1.4.14.1 2009/05/13 19:20:44 jym Exp $
 .\" Copyright (c) 2004 David Young.  All rights reserved.
 .\"
 .\" This code was written by David Young.
@@ -49,7 +49,8 @@ utility to print node tables from IEEE 802.11 interfaces.
 Use the
 .Fl a
 flag to print the nodes for all interfaces, or list one or more
-802.11 interfaces to select their tables for examination. The
+802.11 interfaces to select their tables for examination.
+The
 .Fl p
 flag causes only nodes that do not have encryption enabled to be printed.
 For example, to examine the node tables for atw0, use:
@@ -103,9 +104,10 @@ The first node belongs to the 802.11 network identified
 by Basic Service Set Identifier (BSSID) 02:02:6f:20:f6:2e.
 .It Fa "node flags"
 Only three node flags,
-.Dq bss, sta,
+.Dq bss ,
+.Dq sta ,
 and
-.Dq scan,
+.Dq scan ,
 are presently defined.
 The first node is distinguished from the rest by its node flags:
 flag
@@ -126,17 +128,11 @@ option.
 .Nm
 prints the channel number, the center frequency in megahertz, and
 the channel flags.
-The channel flags indicate the frequency band (
-.Po Dq 2.4GHz
-or
-.Dq 5GHz Pc ,
+The channel flags indicate the frequency band
+.Po Do 2.4GHz Dc or Do 5GHz Dc Pc ,
 modulation
-.Po Dq cck ,
-.Dq gfsk ,
-.Dq ofdm ,
-.Dq turbo ,
-and
-.Dq dynamic cck-ofdm Pc ,
+.Po Do cck Dc , Do gfsk Dc , Do ofdm Dc , Do turbo Dc , and \
+Do dynamic cck-ofdm Dc Pc ,
 and operation constraints
 .Pq Dq passive scan .
 Common combinations of band and modulation are these:

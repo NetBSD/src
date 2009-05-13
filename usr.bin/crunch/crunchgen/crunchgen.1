@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.27 2006/10/26 10:49:35 wiz Exp $
+.\"	$NetBSD: crunchgen.1,v 1.27.26.1 2009/05/13 19:19:47 jym Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -229,7 +229,7 @@ and if that is not found, the
 .Ar srcdir
 itself becomes the
 .Ar objdir .
-.br
+.Pp
 .Nm Note :
 This option only takes effect if the -o option to use existing object files is also
 specified.
@@ -293,7 +293,7 @@ If the environment variable
 .Ev MAKEOBJDIRPREFIX
 is set, the object directory will be prefixed with the path contained in this
 environment variable.
-.br
+.Pp
 .Nm Note :
 This variable is only used if the -o option to use existing object files is also
 specified.
@@ -304,7 +304,7 @@ is set, it is used as the name of the machine type, when accessing object
 directories of the form obj.MACHINE.
 If it is not set, it defaults to the machine type returned by
 .Xr uname 3 .
-.br
+.Pp
 .Nm Note :
 This option is only used if the -o option to use existing object files is also
 specified.

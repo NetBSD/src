@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.65 2009/01/11 20:22:11 pooka Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.65.2.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.65 2009/01/11 20:22:11 pooka Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.65.2.1 2009/05/13 19:19:02 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,24 +137,24 @@ static const struct mntopt mopts[] = {
 };
 
 struct nfs_args nfsdefargs = {
-	NFS_ARGSVERSION,
-	(struct sockaddr *)0,
-	sizeof (struct sockaddr_in),
-	SOCK_DGRAM,
-	0,
-	(u_char *)0,
-	0,
-	NFSMNT_NFSV3|NFSMNT_NOCONN|NFSMNT_RESVPORT,
-	NFS_WSIZE,
-	NFS_RSIZE,
-	NFS_READDIRSIZE,
-	10,
-	NFS_RETRANS,
-	NFS_MAXGRPS,
-	NFS_DEFRAHEAD,
-	0,	/* Ignored; lease term */
-	NFS_DEFDEADTHRESH,
-	(char *)0,
+	.version = NFS_ARGSVERSION,
+	.addr = NULL,
+	.addrlen = sizeof(struct sockaddr_in),
+	.sotype = SOCK_DGRAM,
+	.proto = 0,
+	.fh = NULL,
+	.fhsize = 0,
+	.flags = NFSMNT_NFSV3|NFSMNT_NOCONN|NFSMNT_RESVPORT,
+	.wsize = NFS_WSIZE,
+	.rsize = NFS_RSIZE,
+	.readdirsize = NFS_READDIRSIZE,
+	.timeo = 10,
+	.retrans = NFS_RETRANS,
+	.maxgrouplist = NFS_MAXGRPS,
+	.readahead = NFS_DEFRAHEAD,
+	.leaseterm = 0,	/* Ignored; lease term */
+	.deadthresh = NFS_DEFDEADTHRESH,
+	.hostname = NULL,
 };
 
 #define DEF_RETRY 10000
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 void
 mount_nfs_dogetargs(struct nfs_args *nfsargsp, int mntflags, const char *spec)
 {
-	struct sockaddr_storage sa;
+	static struct sockaddr_storage sa;
 	char *tspec;
 
 	if ((mntflags & MNT_GETARGS) != 0) {

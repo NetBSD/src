@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.30 2006/11/26 16:16:31 jmmv Exp $	*/
+/*	$NetBSD: interact.c,v 1.30.28.1 2009/05/13 19:19:00 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.30 2006/11/26 16:16:31 jmmv Exp $");
+__RCSID("$NetBSD: interact.c,v 1.30.28.1 2009/05/13 19:19:00 jym Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -508,10 +508,10 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 				    cp[line[0] - 'a'].p_size;
 			}
 		} else {
-			if ((i = getnum(lp, line, 0)) == -1) {
+			if ((i = getnum(lp, line, 0)) == -1 || i < 0) {
 				printf("Bad offset `%s'\n", line);
 				continue;
-			} else if (i > lp->d_secperunit) {
+			} else if ((uint32_t)i > lp->d_secperunit) {
 				printf("Offset `%s' out of range\n", line);
 				continue;
 			}
@@ -547,7 +547,7 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 		struct partition *cp = lp->d_partitions;
 		for (i = 0; i < lp->d_npartitions; i++) {
 			if (cp[i].p_fstype != FS_UNUSED) {
-				if (offs != -1 && cp[i].p_offset != offs) {
+				if (offs != -1 && cp[i].p_offset != (uint32_t)offs) {
 					cp[i].p_offset = offs;
 					showpartition(stdout, lp, i, Cflag);
 					}
@@ -650,9 +650,9 @@ alphacmp(const void *a, const void *b)
 static void
 dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 {
-	int	i, w;
-	int	entry;
-	int	columns, width, lines;
+	int	w;
+	size_t	i, entry, lines;
+	int	columns, width;
 	const char *p;
 	const char **list;
 

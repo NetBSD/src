@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.4 2006/03/18 14:33:07 bouyer Exp $ */
+/*	$NetBSD: hash.c,v 1.4.28.1 2009/05/13 19:20:45 jym Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hash.c,v 1.4 2006/03/18 14:33:07 bouyer Exp $");
+__RCSID("$NetBSD: hash.c,v 1.4.28.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -116,7 +116,7 @@ hashkey(const char *key)
 
 	if (key == NULL)
 		return (-1);
-	return(hash((void *)key, strlen(key)) & HASH_MASK);
+	return(hash((const void *)key, strlen(key)) & HASH_MASK);
 }
 
 /* Find an entry in the hash table (may be hanging off a linked list). */

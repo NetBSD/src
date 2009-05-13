@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.9.34.1 2009/05/13 19:18:42 jym Exp $
 #	from @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
 
-WARNS=3
 PROG=	rexecd
 MAN=	rexecd.8
 

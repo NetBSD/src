@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2008/09/16 13:32:04 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.19.6.1 2009/05/13 19:20:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2008/09/16 13:32:04 perry Exp $");
+__RCSID("$NetBSD: main.c,v 1.19.6.1 2009/05/13 19:20:04 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ int aflag, eflag, nflag, ere;
  * Current file and line number; line numbers restart across compilation
  * units, but span across input files.
  */
-char *fname;			/* File name. */
+const char *fname;			/* File name. */
 u_long linenum;
 int lastline;			/* TRUE on the last line of the last file */
 
@@ -231,7 +231,7 @@ again:
 		case CU_STRING:
 			if ((snprintf(string_ident,
 			    sizeof(string_ident), "\"%s\"", script->s)) >=
-			    sizeof(string_ident) - 1)
+			    (int)(sizeof(string_ident) - 1))
 				(void)strcpy(string_ident +
 				    sizeof(string_ident) - 6, " ...\"");
 			fname = string_ident;

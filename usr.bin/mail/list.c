@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.24 2008/12/07 19:21:00 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.24.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.24 2008/12/07 19:21:00 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.24.2.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -727,7 +727,7 @@ matchfrom(int (*cmpfn)(void *, char *, size_t),
 #ifdef __lint__
 	fieldname = fieldname;
 #endif
-	(void)mail_readline(setinput(mp), headline, sizeof(headline));
+	(void)readline(setinput(mp), headline, (int)sizeof(headline), 0);
 	field = savestr(headline);
 	if (strncmp(field, "From ", 5) != 0)
 		return 1;
@@ -1286,7 +1286,7 @@ getmsglist(char *buf, int *vector, int flags)
 		if (mp->m_flag & MMARK)
 			*ip++ = get_msgnum(mp);
 	*ip = 0;
-	return ip - vector;
+	return (int)(ip - vector);
 }
 
 /*
@@ -1319,6 +1319,10 @@ PUBLIC int
 show_headers_and_exit(int flags)
 {
 	struct message *mp;
+
+	/* We are exiting anyway, so use the default signal handler. */
+	if (signal(SIGINT, SIG_DFL) == SIG_IGN)
+		(void)signal(SIGINT, SIG_IGN);
 
 	flags &= CMMASK;
 	for (mp = get_message(1); mp; mp = next_message(mp))

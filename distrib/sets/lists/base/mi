@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.796 2009/02/05 19:35:48 dyoung Exp $
+# $NetBSD: mi,v 1.796.2.1 2009/05/13 19:17:51 jym Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -134,6 +134,9 @@
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-4965-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-5000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-5000-1.ucode	base-firmware-root
 ./libdata/firmware/if_wpi			base-firmware-root
 ./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-sys-root obsolete
 ./libdata/firmware/if_wpi/README.ipw3945-ucode	base-sys-root obsolete
@@ -150,7 +153,8 @@
 ./libdata/firmware/rum/rum-license		base-firmware-root
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
 ./libdata/firmware/zyd				base-firmware-root
-./libdata/firmware/zyd/zd1211-licence		base-firmware-root
+./libdata/firmware/zyd/zd1211-licence		base-firmware-root obsolete
+./libdata/firmware/zyd/zd1211-license		base-firmware-root
 ./libdata/firmware/zyd/zyd-zd1211		base-firmware-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root
 ./libexec					base-sys-root
@@ -488,8 +492,8 @@
 ./usr/X11R7/include/X11/Xcursor			base-x11-root
 ./usr/X11R7/include/X11/Xft			base-x11-root
 ./usr/X11R7/include/X11/Xmu			base-x11-root
-./usr/X11R7/include/X11/XprintAppUtil		base-x11-root
-./usr/X11R7/include/X11/XprintUtil		base-x11-root
+./usr/X11R7/include/X11/XprintAppUtil		base-obsolete		obsolete
+./usr/X11R7/include/X11/XprintUtil		base-obsolete		obsolete
 ./usr/X11R7/include/X11/Xtrans			base-x11-root
 ./usr/X11R7/include/X11/bitmaps			base-x11-root
 ./usr/X11R7/include/X11/extensions		base-x11-root
@@ -830,6 +834,7 @@
 ./usr/bin/msgs					base-util-bin
 ./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
+./usr/bin/netpgp				base-crypto-bin		crypto
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
@@ -844,7 +849,7 @@
 ./usr/bin/nvi					base-obsolete		obsolete
 ./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
-./usr/bin/openpgp				base-crypto-bin		crypto
+./usr/bin/openpgp				base-obsolete		obsolete
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
 ./usr/bin/pagesize				base-util-bin
@@ -1107,7 +1112,7 @@
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
 ./usr/include/objc				base-objc-usr
-./usr/include/openpgpsdk			base-c-usr
+./usr/include/openpgpsdk			base-obsolete		obsolete
 ./usr/include/openssl				base-c-usr
 ./usr/include/prop				base-c-usr
 ./usr/include/protocols				base-c-usr
@@ -1184,6 +1189,7 @@
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
 ./usr/libdata/debug/usr/libexec/postfix		base-sys-usr
 ./usr/libdata/debug/usr/libexec/uucp		base-obsolete		obsolete
+./usr/libdata/debug/usr/mdec			base-sys-usr
 ./usr/libdata/debug/usr/sbin			base-sys-usr
 ./usr/libdata/firmware				base-sys-usr
 ./usr/libdata/ldscripts				base-c-usr
@@ -1348,6 +1354,7 @@
 ./usr/sbin/chrtbl				base-sysutil-bin
 ./usr/sbin/cnwctl				base-netutil-bin
 ./usr/sbin/cpuctl				base-sysutil-bin
+./usr/sbin/crash				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-isdn-bin
 ./usr/sbin/dbsym				base-sysutil-bin	bfd
@@ -1357,6 +1364,8 @@
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
+./usr/sbin/dnssec-dsfromkey			base-bind-bin
+./usr/sbin/dnssec-keyfromlabel			base-bind-bin
 ./usr/sbin/dnssec-keygen			base-bind-bin
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
@@ -3793,7 +3802,7 @@
 ./usr/share/misc/ascii				base-reference-share	share
 ./usr/share/misc/bsd-family-tree		base-reference-share	share
 ./usr/share/misc/getopt				base-obsolete		obsolete
-./usr/share/misc/magic				base-magic-share	share
+./usr/share/misc/magic				base-obsolete		obsolete
 ./usr/share/misc/magic.mgc			base-magic-share	share
 ./usr/share/misc/magic.mime			base-obsolete		obsolete
 ./usr/share/misc/magic.mime.mgc			base-obsolete		obsolete
@@ -4529,6 +4538,7 @@
 ./usr/share/zoneinfo/Asia/Kamchatka		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Karachi		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kashgar		base-sys-share		share
+./usr/share/zoneinfo/Asia/Kathmandu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Katmandu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kolkata		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Krasnoyarsk		base-sys-share		share
@@ -4923,6 +4933,8 @@
 ./var/chroot/named/usr/libexec			base-bind-root
 ./var/chroot/named/var				base-bind-root
 ./var/chroot/named/var/run			base-bind-root
+./var/chroot/named/var/run/lwresd		base-bind-root
+./var/chroot/named/var/run/named		base-bind-root
 ./var/chroot/named/var/tmp			base-bind-root
 ./var/chroot/ntpd				base-ntp-root
 ./var/chroot/ntpd/dev				base-ntp-root
@@ -4950,6 +4962,7 @@
 ./var/db/obsolete/text				base-sys-root
 ./var/db/postfix				base-postfix-root
 ./var/db/xdm					base-sys-root
+./var/db/xkb					base-sys-root
 ./var/empty					base-obsolete		obsolete
 ./var/games					base-games-root
 ./var/games/hackdir				base-games-root
@@ -4976,6 +4989,8 @@
 ./var/preserve					base-util-root
 ./var/quotas					base-util-root
 ./var/run					base-sys-root
+./var/run/lwresd				base-bind-root
+./var/run/named					base-bind-root
 ./var/rwho					base-netutil-root
 ./var/spool					base-sys-root
 ./var/spool/ftp					base-netutil-root

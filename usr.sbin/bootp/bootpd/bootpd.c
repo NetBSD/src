@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.22 2008/05/02 19:22:10 xtraeme Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.22.8.1 2009/05/13 19:20:18 jym Exp $");
 #endif
 
 /*
@@ -519,7 +519,7 @@ main(int argc, char **argv)
 			report(LOG_INFO, "recvd pkt from IP addr %s",
 				   inet_ntoa(recv_addr.sin_addr));
 		}
-		if (n < sizeof(struct bootp)) {
+		if (n < (int)sizeof(struct bootp)) {
 			if (debug) {
 				report(LOG_INFO, "received short packet");
 			}
@@ -1224,7 +1224,7 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 		 * a response of that same length where the additional length
 		 * is assumed to be part of the bp_vend (options) area.
 		 */
-		if (pktlen > sizeof(*bp)) {
+		if (pktlen > (int)sizeof(*bp)) {
 			if (debug > 1)
 				report(LOG_INFO, "request message length=%d", pktlen);
 		}
@@ -1265,7 +1265,7 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 				p += llen;
 			}
 
-			if (msgsz > sizeof(*bp)) {
+			if (msgsz > (int)sizeof(*bp)) {
 				if (debug > 1)
 					report(LOG_INFO, "request has DHCP msglen=%d", msgsz);
 				pktlen = msgsz;
@@ -1273,12 +1273,12 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 		}
 	}
 
-	if (pktlen < sizeof(*bp)) {
+	if (pktlen < (int)sizeof(*bp)) {
 		report(LOG_ERR, "invalid response length=%d", pktlen);
 		pktlen = sizeof(*bp);
 	}
 	bytesleft = ((byte*)bp + pktlen) - vp;
-	if (pktlen > sizeof(*bp)) {
+	if (pktlen > (int)sizeof(*bp)) {
 		if (debug > 1)
 			report(LOG_INFO, "extended reply, length=%d, options=%d",
 				   pktlen, bytesleft);
@@ -1304,7 +1304,7 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 	if (hp->flags.bootsize) {
 		/* always enough room here */
 		bootsize = (hp->flags.bootsize_auto) ?
-			((bootsize + 511) / 512) : (hp->bootsize);	/* Round up */
+			((bootsize + 511) / 512) : ((int32_t)hp->bootsize);	/* Round up */
 		*vp++ = TAG_BOOT_SIZE;
 		*vp++ = 2;
 		*vp++ = (byte) ((bootsize >> 8) & 0xFF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.h,v 1.3 2003/11/12 13:31:08 grant Exp $	*/
+/*	$NetBSD: yppush.h,v 1.3.40.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -51,4 +51,4 @@ void	*yppushproc_xfrresp_1_svc(void *, struct svc_req *);
 
 void	yppush_xfrrespprog_1(struct svc_req *, SVCXPRT *);
 
-char	*yppush_err_string(int);
+const char *yppush_err_string(int);

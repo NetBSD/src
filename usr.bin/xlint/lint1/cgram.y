@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.42 2008/11/16 07:06:37 dholland Exp $ */
+/* $NetBSD: cgram.y,v 1.42.2.1 2009/05/13 19:20:13 jym Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.42 2008/11/16 07:06:37 dholland Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.42.2.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 1
+%expect 3
 
 %union {
 	int	y_int;
@@ -130,6 +130,7 @@ static inline void RESTORE(const char *file, size_t line)
 %token	<y_op>		T_UNOP
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
+%token			T_ALIGNOF
 %token	<y_op>		T_MULT
 %token	<y_op>		T_DIVOP
 %token	<y_op>		T_ADDOP
@@ -195,7 +196,7 @@ static inline void RESTORE(const char *file, size_t line)
 %left	T_SHFTOP
 %left	T_ADDOP
 %left	T_MULT T_DIVOP
-%right	T_UNOP T_INCDEC T_SIZEOF T_REAL T_IMAG
+%right	T_UNOP T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
 %left	T_LPARN T_LBRACK T_STROP
 
 %token	<y_sb>		T_NAME
@@ -1462,7 +1463,13 @@ do_while_expr:
 	;
 
 for_exprs:
-	  T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
+	    T_FOR T_LPARN declspecs deftyp notype_init_decls T_SEMI opt_expr
+	    T_SEMI opt_expr T_RPARN {
+		c99ism(325);
+		for1(NULL, $7, $9);
+		CLRWFLGS(__FILE__, __LINE__);
+	    }
+	  | T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
 		for1($3, $5, $7);
 		CLRWFLGS(__FILE__, __LINE__);
 	  }
@@ -1687,6 +1694,9 @@ term:
 	  }
 	| T_SIZEOF T_LPARN type_name T_RPARN		%prec T_SIZEOF {
 		$$ = bldszof($3);
+	  }
+	| T_ALIGNOF T_LPARN type_name T_RPARN		%prec T_ALIGNOF {
+		$$ = bldalof($3);
 	  }
 	| T_LPARN type_name T_RPARN term		%prec T_UNOP {
 		$$ = cast($4, $2);

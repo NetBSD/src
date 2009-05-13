@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.13 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.13.4.1 2009/05/13 19:19:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.13 2008/05/16 09:21:59 hannken Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.13.4.1 2009/05/13 19:19:04 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -673,9 +673,9 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	dip->di_mode = IFDIR | UMASK;
 	VTOI(vp)->i_lfs_osize = dip->di_size = DIRBLKSIZ;
 #ifdef MAKE_LF_DIR
-        VTOI(vp)->i_ffs_effnlink = dip->di_nlink = 3;
+	VTOI(vp)->i_nlink = dip->di_nlink = 3;
 #else
-        VTOI(vp)->i_ffs_effnlink = dip->di_nlink = 2;
+	VTOI(vp)->i_nlink = dip->di_nlink = 2;
 #endif
         VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
 		btofsb(fs, roundup(DIRBLKSIZ,fs->lfs_fsize));
@@ -696,7 +696,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	make_dinode(LOSTFOUNDINO, dip, howmany(DIRBLKSIZ,fs->lfs_fsize), fs);
 	dip->di_mode = IFDIR | UMASK;
 	VTOI(vp)->i_lfs_osize = dip->di_size = DIRBLKSIZ;
-        VTOI(vp)->i_ffs_effnlink = dip->di_nlink = 2;
+        VTOI(vp)->i_nlink = dip->di_nlink = 2;
         VTOI(vp)->i_lfs_effnblks = dip->di_blocks =
 		btofsb(fs, roundup(DIRBLKSIZ,fs->lfs_fsize));
 	for (i = 0; i < NDADDR && i < howmany(DIRBLKSIZ, fs->lfs_bsize); i++)

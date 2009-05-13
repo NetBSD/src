@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.19 2008/02/29 03:00:47 lukem Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.19.10.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.19 2008/02/29 03:00:47 lukem Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.19.10.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 /*
@@ -241,8 +241,8 @@ DBM *
 ypdb_open_db(const char *domain, const char *map, u_int *status,
 	     struct opt_map **map_info)
 {
-	static char *domain_key = YP_INTERDOMAIN_KEY;
-	static char *secure_key = YP_SECURE_KEY;
+	static const char *domain_key = YP_INTERDOMAIN_KEY;
+	static const char *secure_key = YP_SECURE_KEY;
 	char map_path[MAXPATHLEN];
 	struct stat finfo;
 	struct opt_domain *d = NULL;
@@ -695,7 +695,7 @@ struct ypresp_order
 ypdb_get_order(const char *domain, const char *map)
 {
 	static struct ypresp_order res;
-	static char *order_key = YP_LAST_KEY;
+	static const char *order_key = YP_LAST_KEY;
 	char order[MAX_LAST_LEN + 1];
 	DBM *db;
 	datum k, v;
@@ -727,7 +727,7 @@ struct ypresp_master
 ypdb_get_master(const char *domain, const char *map)
 {
 	static struct ypresp_master res;
-	static char *master_key = YP_MASTER_KEY;
+	static const char *master_key = YP_MASTER_KEY;
 	static char master[MAX_MASTER_LEN + 1];
 	DBM *db;
 	datum k, v;

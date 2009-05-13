@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.7 2008/10/07 23:16:59 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.7.6.1 2009/05/13 19:18:36 jym Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,7 @@ struct stat;
 struct timeval;
 
 struct ukfs;
+struct ukfs_dircookie;
 
 #define UKFS_DEFAULTMP "/"
 
@@ -56,12 +57,23 @@ struct ukfs	*ukfs_mount(const char *, const char *, const char *,
 			  int, void *, size_t);
 void		ukfs_release(struct ukfs *, int);
 
+int		ukfs_opendir(struct ukfs *, const char *,
+			     struct ukfs_dircookie **);
 int		ukfs_getdents(struct ukfs *, const char *, off_t *,
 			      uint8_t *, size_t);
+int		ukfs_getdents_cookie(struct ukfs *, struct ukfs_dircookie *,
+				     off_t *, uint8_t *, size_t);
+int		ukfs_closedir(struct ukfs *, struct ukfs_dircookie *);
+
+int		ukfs_open(struct ukfs *, const char *, int);
 ssize_t		ukfs_read(struct ukfs *, const char *, off_t,
 			      uint8_t *, size_t);
+ssize_t		ukfs_read_fd(struct ukfs *, int, off_t, uint8_t *, size_t);
 ssize_t		ukfs_write(struct ukfs *, const char *, off_t,
 			       uint8_t *, size_t);
+ssize_t		ukfs_write_fd(struct ukfs *, int, off_t, uint8_t *, size_t,int);
+int		ukfs_close(struct ukfs *, int);
+
 ssize_t		ukfs_readlink(struct ukfs *, const char *, char *, size_t);
 
 int		ukfs_create(struct ukfs *, const char *, mode_t);

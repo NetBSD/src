@@ -1,4 +1,4 @@
-.\"	$NetBSD: lp.1,v 1.8 2003/02/25 10:36:11 wiz Exp $
+.\"	$NetBSD: lp.1,v 1.8.40.1 2009/05/13 19:20:28 jym Exp $
 .\"
 .\" Copyright (c) 1995 Joerg Wunsch
 .\"
@@ -57,7 +57,8 @@
 .Nm
 is a front-end to the print spooler as required by the
 .St -p1003.2
-specification.  It effectively invokes
+specification.
+It effectively invokes
 .Xr lpr 1
 with the proper set of arguments.
 It generally prints the named files on the destination printer.
@@ -68,10 +69,12 @@ The following options are available:
 Make the
 .Nm
 command exit only after further access to any of the input files is no
-longer required.  The application can then safely delete or modify the
-files without affecting the output operation.
+longer required.
+The application can then safely delete or modify the files without
+affecting the output operation.
 .It Fl d Ar dest
-Specify a particular printer. If no
+Specify a particular printer.
+If no
 .Fl d
 is provided on the command line, the contents of the environment
 variables
@@ -87,8 +90,8 @@ copies of each of the named files shall be printed.
 .It Fl s
 Silent operation.
 .It Fl o
-Printer specific options.  Not supported, provided only as a compatibility
-option for SVR4.
+Printer specific options.
+Not supported, provided only as a compatibility option for SVR4.
 .El
 .Sh ENVIRONMENT
 As described above, the variables
@@ -108,11 +111,10 @@ specification.
 This implementation of the
 .Nm
 command has been written by
-.if t J\(:org Wunsch .
-.if n Joerg Wunsch .
+.An J\(:org Wunsch .
 .Sh BUGS
 The
 .St -p1003.2
-specification does not provide any means to print non-text files.  It
-rather requires the files to be printed to be text files limited to
-reasonable line lengths and printable characters.
+specification does not provide any means to print non-text files.
+It rather requires the files to be printed to be text files limited
+to reasonable line lengths and printable characters.

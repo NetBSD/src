@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.27 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: touch.c,v 1.27.6.1 2009/05/13 19:20:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.27 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: touch.c,v 1.27.6.1 2009/05/13 19:20:08 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -190,9 +190,8 @@ main(argc, argv)
 		 if (!(*change_file_times)(*argv, NULL))
 			continue;
 
-		/* Try reading/writing. */
-		if (!S_ISLNK(sb.st_mode) && rw(*argv, &sb, fflag))
-			rval = 1;
+		rval = 1;
+		warn("%s", *argv);
 	}
 	exit(rval);
 }
@@ -312,58 +311,6 @@ stime_file(fname, tvp)
 		err(1, "%s", fname);
 	TIMESPEC_TO_TIMEVAL(&tvp[0], &sb.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tvp[1], &sb.st_mtimespec);
-}
-
-int
-rw(fname, sbp, force)
-	char *fname;
-	struct stat *sbp;
-	int force;
-{
-	int fd, needed_chmod, rval;
-	u_char byte;
-
-	/* Try regular files and directories. */
-	if (!S_ISREG(sbp->st_mode) && !S_ISDIR(sbp->st_mode)) {
-		warnx("%s: %s", fname, strerror(EFTYPE));
-		return (1);
-	}
-
-	needed_chmod = rval = 0;
-	if ((fd = open(fname, O_RDWR, 0)) == -1) {
-		if (!force || chmod(fname, DEFFILEMODE))
-			goto err;
-		if ((fd = open(fname, O_RDWR, 0)) == -1)
-			goto err;
-		needed_chmod = 1;
-	}
-
-	if (sbp->st_size != 0) {
-		if (read(fd, &byte, sizeof(byte)) != sizeof(byte))
-			goto err;
-		if (lseek(fd, (off_t)0, SEEK_SET) == -1)
-			goto err;
-		if (write(fd, &byte, sizeof(byte)) != sizeof(byte))
-			goto err;
-	} else {
-		if (write(fd, &byte, sizeof(byte)) != sizeof(byte)) {
-err:			rval = 1;
-			warn("%s", fname);
-		} else if (ftruncate(fd, (off_t)0)) {
-			rval = 1;
-			warn("%s: file modified", fname);
-		}
-	}
-
-	if (fd >= 0 && close(fd) && rval != 1) {
-		rval = 1;
-		warn("%s", fname);
-	}
-	if (needed_chmod && chmod(fname, sbp->st_mode) && rval != 1) {
-		rval = 1;
-		warn("%s: permissions modified", fname);
-	}
-	return (rval);
 }
 
 __dead void

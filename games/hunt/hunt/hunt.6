@@ -1,4 +1,4 @@
-.\"	$NetBSD: hunt.6,v 1.12 2005/09/15 02:10:37 wiz Exp $
+.\"	$NetBSD: hunt.6,v 1.12.28.1 2009/05/13 19:18:04 jym Exp $
 .\"
 .\" hunt
 .\"
@@ -33,6 +33,7 @@
 .\"
 .Dd April 4, 2001
 .Dt HUNT 6
+.Os
 .Sh NAME
 .Nm hunt
 .Nd a multi-player multi-terminal game
@@ -156,8 +157,8 @@ To change which direction you're facing in the maze,
 use the upper case version of the movement key (i.e.,
 .Ic HJKL ) .
 You can only fire or throw things in the direction you're facing.
-.Bl -tag -width xxxxxxx
 Other commands are:
+.Bl -tag -width xxxxxxx
 .It Ic f No or Ic 1
 Fire a bullet (Takes 1 charge)
 .It Ic g No or Ic 2
@@ -387,7 +388,7 @@ how many of player's shots were ducked
 how many slime kills player had
 .It enemy
 how many enemies were killed
-.tI friend
+.It friend
 how many friends were killed (self and same team)
 .It deaths
 how many times player died

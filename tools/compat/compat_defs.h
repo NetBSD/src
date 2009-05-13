@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.71 2009/02/03 05:18:42 dbj Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.71.2.1 2009/05/13 19:19:42 jym Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -100,6 +100,8 @@ struct group;
 #endif
 #if !defined(__packed)
 #if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+#define __packed	__attribute__((__packed__))
+#elif defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590)
 #define __packed	__attribute__((__packed__))
 #else
 #define	__packed	error: no __packed for this compiler
@@ -232,6 +234,7 @@ void err(int, const char *, ...);
 void errx(int, const char *, ...);
 void warn(const char *, ...);
 void warnx(const char *, ...);
+void vwarnx(const char *, va_list);
 #endif
 
 #if !HAVE_ESETFUNC
@@ -500,6 +503,10 @@ void *setmode(const char *);
 #define RCSID(x)
 
 /* Some definitions not available on all systems. */
+
+#ifndef __inline
+#define __inline inline
+#endif
 
 /* <errno.h> */
 

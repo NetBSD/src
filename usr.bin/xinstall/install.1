@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.42 2004/01/29 11:17:37 wiz Exp $
+.\"	$NetBSD: install.1,v 1.42.42.1 2009/05/13 19:20:12 jym Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 29, 2003
+.Dd May 1, 2009
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -249,6 +249,18 @@ The MD5 cryptographic message digest.
 The RMD-160 cryptographic message digest.
 .It Sy sha1
 The SHA-1 cryptographic message digest.
+.It Sy sha256
+The 256-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha384
+The 384-bits
+.Tn SHA-2
+cryptographic message digest of the file.
+.It Sy sha512
+The 512-bits
+.Tn SHA-2
+cryptographic message digest of the file.
 .El
 .It Fl l Ar linkflags
 Instead of copying the file make a link to the source.

@@ -1,0 +1,155 @@
+# $NetBSD: t_libcrypto.in,v 1.2.2.2 2009/05/13 19:19:18 jym Exp $
+#
+# Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+h_check()
+{
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/$1"
+}
+
+# Symmetric ciphers
+tc:bf:h_bftest:Checks blowfish cipher
+tc:cast:h_casttest:Checks CAST cipher
+tc:des:h_destest:Checks DES cipher (libdes)
+tc:rc2:h_rc2test:Checks RC2 cipher
+tc:rc4:h_rc4test:Checks RC4 cipher
+
+atf_test_case idea
+idea_head()
+{
+	atf_set "descr" "Checks IDEA cipher"
+}
+idea_body()
+{
+	[ -x "$(atf_get_srcdir)/h_ideatest" ] \
+	    || atf_skip "IDEA support not available; system built" \
+	                "with MKCRYPTO_IDEA=no"
+	h_check h_ideatest
+}
+
+atf_test_case rc5
+rc5_head()
+{
+	atf_set "descr" "Checks RC5 cipher"
+}
+rc5_body()
+{
+	[ -x "$(atf_get_srcdir)/h_rc5test" ] \
+	    || atf_skip "RC5 support not available; system built" \
+	                "with MKCRYPTO_RC5=no"
+	h_check h_rc5test
+}
+
+# Public key cryptography
+tc:dsa:h_dsatest:Checks DSA cipher
+tc:dh:h_dhtest:Checks Diffie-Hellman key agreement protocol
+tc:rsa:h_rsatest:Checks RSA
+tc:ec:h_ectest:Checks EC cipher
+tc:ecdh:h_ecdhtest:Checks ECDH key agreement protocol
+tc:ecdsa:h_ecdsatest:Checks ECDSA algorithm
+
+# Certificates
+tc:x509v3:h_x509v3test:Checks x509v3 certificates
+
+# Authentication codes, hash functions
+tc:hmac:h_hmactest:Checks HMAC message authentication code
+tc:md2:h_md2test:Checks MD2 digest
+tc:md4:h_md4test:Checks MD4 digest
+tc:md5:h_md5test:Checks MD5 digest
+tc:ripemd:h_ripemdtest:Checks RMD-160 digest
+tc:sha:h_shatest:Checks SHA-1 digest
+
+atf_test_case mdc2
+mdc2_head()
+{
+	atf_set "descr" "Checks MDC2 digest"
+}
+mdc2_body()
+{
+	[ -x "$(atf_get_srcdir)/h_mdc2test" ] \
+	    || atf_skip "MDC2 support not available; system built" \
+	                "with MKCRYPTO_MDC2=no"
+	h_check h_mdc2test
+}
+
+# Auxiliary
+tc:engine:h_enginetest:Checks ENGINE framework
+tc:rand:h_randtest:Checks pseudo-random number generator
+
+atf_test_case bn
+bn_head()
+{
+	atf_set "descr" "Checks BIGNUM library"
+}
+bn_body()
+{
+	h_check h_bntest
+	h_check h_divtest
+	h_check h_exptest
+}
+
+atf_test_case conf
+conf_head()
+{
+	atf_set "descr" "Checks configuration modules"
+}
+conf_body()
+{
+	cp $(atf_get_srcdir)/d_conf_ssleay.cnf ssleay.cnf
+
+	atf_check -o file:$(atf_get_srcdir)/d_conf.out \
+		$(atf_get_srcdir)/h_conftest
+}
+
+atf_test_case lhash
+lhash_head()
+{
+	atf_set "descr" "Checks lhash - dynamic hash tables"
+}
+lhash_body()
+{
+	atf_check -o ignore -e ignore -x \
+		"echo hoge | $(atf_get_srcdir)/h_lhashtest"
+}
+
+atf_test_case threads
+threads_head()
+{
+	atf_set "descr" "Checks threading"
+}
+threads_body()
+{
+	$(atf_get_srcdir)/h_threadstest \
+	    -cert $(atf_get_srcdir)/d_server.pem \
+	    -ccert $(atf_get_srcdir)/d_client.pem \
+	    2>&1 | tee out
+	atf_check -s eq:1 -o empty -e empty grep :error: out
+}
+
+atf_init_test_cases()
+{
+tc_list
+}

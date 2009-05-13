@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.31 2008/07/21 13:25:47 lukem Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.31.6.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.31 2008/07/21 13:25:47 lukem Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.31.6.1 2009/05/13 19:18:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -837,7 +837,7 @@ timer(int dummy)
 static const char *
 opcode(int code)
 {
-	static char buf[64];
+	static char obuf[64];
 
 	switch (code) {
 	case RRQ:
@@ -853,8 +853,8 @@ opcode(int code)
 	case OACK:
 		return "OACK";
 	default:
-		(void)snprintf(buf, sizeof(buf), "*code %d*", code);
-		return buf;
+		(void)snprintf(obuf, sizeof(obuf), "*code %d*", code);
+		return obuf;
 	}
 }
 

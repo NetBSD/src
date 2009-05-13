@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_group.c,v 1.10 2006/11/03 18:03:23 christos Exp $	*/
+/*	$NetBSD: pam_group.c,v 1.10.26.1 2009/05/13 19:18:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_group/pam_group.c,v 1.4 2003/12/11 13:55:15 des Exp $");
 #else
-__RCSID("$NetBSD: pam_group.c,v 1.10 2006/11/03 18:03:23 christos Exp $");
+__RCSID("$NetBSD: pam_group.c,v 1.10.26.1 2009/05/13 19:18:34 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: pam_group.c,v 1.10 2006/11/03 18:03:23 christos Exp $");
 #include <security/openpam.h>
 
 static int authenticate(pam_handle_t *, struct passwd *, int);
+
+#define PASSWORD_PROMPT         "%s's password:"
 
 PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
@@ -152,9 +154,12 @@ authenticate(pam_handle_t *pamh, struct passwd *pwd, int flags)
 	int retval;
 	login_cap_t *lc;
 	const char *pass;
+	char password_prompt[80];
 
+	(void) snprintf(password_prompt, sizeof(password_prompt),
+		    PASSWORD_PROMPT, pwd->pw_name);
 	lc = login_getpwclass(pwd);
-	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, NULL);
+	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, password_prompt);
 	login_close(lc);
 
 	if (retval != PAM_SUCCESS)

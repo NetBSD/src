@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: lmcconfig.c,v 1.10 2006/05/25 00:16:48 christos Exp $
+ * $NetBSD: lmcconfig.c,v 1.10.28.1 2009/05/13 19:20:28 jym Exp $
  *
  * First author: Michael Graff.
  * Copyright (c) 1997-2000 Lan Media Corp.
@@ -144,12 +144,12 @@ void print_hssi_sigs(void);
 void print_events(void);
 void print_summary(void);
 
-char *print_t3_bop(int);
+const char *print_t3_bop(int);
 void print_t3_snmp(void);
 void print_t3_dsu(void);
 void t3_cmd(int, char **);
 
-char *print_t1_bop(int);
+const char *print_t1_bop(int);
 void print_t1_test_pattern(int);
 void print_t1_far_report(int);
 void print_t1_snmp(void);
@@ -168,7 +168,7 @@ void main_cmd(int, char **);
 /* program global variables */
 
 char *		progname;	/* name of this program */
-char *		ifname;		/* interface name */
+const char *	ifname;		/* interface name */
 int		fdcs;		/* ifnet File Desc or ng Ctl Socket */
 struct status	status;		/* card status (read only) */
 struct config	config;		/* card configuration (read/write) */
@@ -343,258 +343,258 @@ void call_driver(unsigned long cmd, struct iohdr *iohdr)
 
 u_int32_t read_pci_config(u_int8_t addr)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_PCI;
-  ioctl.address = addr;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_PCI;
+  ioc.address = addr;
 
-  call_driver(LMCIOCREAD, &ioctl.iohdr);
+  call_driver(LMCIOCREAD, &ioc.iohdr);
 
-  return ioctl.data;
+  return ioc.data;
   }
 
 void write_pci_config(u_int8_t addr, u_int32_t data)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_PCI;
-  ioctl.address = addr;
-  ioctl.data = data;
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_PCI;
+  ioc.address = addr;
+  ioc.data = data;
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 u_int32_t read_csr(u_int8_t addr)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_CSR;
-  ioctl.address = addr;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_CSR;
+  ioc.address = addr;
 
-  call_driver(LMCIOCREAD, &ioctl.iohdr);
+  call_driver(LMCIOCREAD, &ioc.iohdr);
 
-  return ioctl.data;
+  return ioc.data;
   }
 
 void write_csr(u_int8_t addr, u_int32_t data)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_CSR;
-  ioctl.address = addr;
-  ioctl.data = data;
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_CSR;
+  ioc.address = addr;
+  ioc.data = data;
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 u_int16_t read_srom(u_int8_t addr)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_SROM;
-  ioctl.address = addr;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_SROM;
+  ioc.address = addr;
 
-  call_driver(LMCIOCREAD, &ioctl.iohdr);
+  call_driver(LMCIOCREAD, &ioc.iohdr);
 
-  return ioctl.data;
+  return ioc.data;
   }
 
 void write_srom(u_int8_t addr, u_int16_t data)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_SROM;
-  ioctl.address = addr;
-  ioctl.data = data;
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_SROM;
+  ioc.address = addr;
+  ioc.data = data;
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 u_int8_t read_bios_rom(u_int32_t addr)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_BIOS;
-  ioctl.address = addr;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_BIOS;
+  ioc.address = addr;
 
-  call_driver(LMCIOCREAD, &ioctl.iohdr);
+  call_driver(LMCIOCREAD, &ioc.iohdr);
 
-  return ioctl.data;
+  return ioc.data;
   }
 
 void write_bios_rom(u_int32_t addr, u_int8_t data)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_BIOS;
-  ioctl.address = addr;
-  ioctl.data = data;
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_BIOS;
+  ioc.address = addr;
+  ioc.data = data;
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 u_int16_t read_mii(u_int8_t addr)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_MII;
-  ioctl.address = addr;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_MII;
+  ioc.address = addr;
 
-  call_driver(LMCIOCREAD, &ioctl.iohdr);
+  call_driver(LMCIOCREAD, &ioc.iohdr);
 
-  return ioctl.data;
+  return ioc.data;
   }
 
 void write_mii(u_int8_t addr, u_int16_t data)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_MII;
-  ioctl.address = addr;
-  ioctl.data = data;
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_MII;
+  ioc.address = addr;
+  ioc.data = data;
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 u_int8_t read_framer(u_int16_t addr)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_FRAME;
-  ioctl.address = addr;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_FRAME;
+  ioc.address = addr;
 
-  call_driver(LMCIOCREAD, &ioctl.iohdr);
+  call_driver(LMCIOCREAD, &ioc.iohdr);
 
-  return ioctl.data;
+  return ioc.data;
   }
 
 void write_framer(u_int16_t addr, u_int8_t data)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RW_FRAME;
-  ioctl.address = addr;
-  ioctl.data = data;
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RW_FRAME;
+  ioc.address = addr;
+  ioc.data = data;
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 void write_synth(struct synth synth)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_WO_SYNTH;
-  bcopy(&synth, &ioctl.data, sizeof(synth));
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_WO_SYNTH;
+  bcopy(&synth, &ioc.data, sizeof(synth));
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 void write_dac(u_int16_t data)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOW;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_WO_DAC;
-  ioctl.data = data;
+  ioc.iohdr.direction = DIR_IOW;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_WO_DAC;
+  ioc.data = data;
 
-  call_driver(LMCIOCWRITE, &ioctl.iohdr);
+  call_driver(LMCIOCWRITE, &ioc.iohdr);
   }
 
 void reset_xilinx()
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_XILINX_RESET;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_XILINX_RESET;
 
-  call_driver(LMCIOCTL, &ioctl.iohdr);
+  call_driver(LMCIOCTL, &ioc.iohdr);
   }
 
 void load_xilinx_from_rom()
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_XILINX_ROM;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_XILINX_ROM;
 
-  call_driver(LMCIOCTL, &ioctl.iohdr);
+  call_driver(LMCIOCTL, &ioc.iohdr);
   }
 
 void load_xilinx_from_file(char *ucode, int len)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_XILINX_FILE;
-  ioctl.data = len;
-  ioctl.ucode = ucode;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_XILINX_FILE;
+  ioc.data = len;
+  ioc.ucode = ucode;
 
-  call_driver(LMCIOCTL, &ioctl.iohdr);
+  call_driver(LMCIOCTL, &ioc.iohdr);
   }
 
-void ioctl_snmp_send(u_int32_t send)
+void ioctl_snmp_send(u_int32_t sendval)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_SNMP_SEND;
-  ioctl.data = send;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_SNMP_SEND;
+  ioc.data = sendval;
 
-  call_driver(LMCIOCTL, &ioctl.iohdr);
+  call_driver(LMCIOCTL, &ioc.iohdr);
   }
 
 void ioctl_snmp_loop(u_int32_t loop)
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_SNMP_LOOP;
-  ioctl.data = loop;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_SNMP_LOOP;
+  ioc.data = loop;
 
-  call_driver(LMCIOCTL, &ioctl.iohdr);
+  call_driver(LMCIOCTL, &ioc.iohdr);
   }
 
 void ioctl_reset_cntrs()
   {
-  struct ioctl ioctl;
+  struct ioctl ioc;
 
-  ioctl.iohdr.direction = DIR_IOWR;
-  ioctl.iohdr.length = sizeof(struct ioctl);
-  ioctl.cmd = IOCTL_RESET_CNTRS;
+  ioc.iohdr.direction = DIR_IOWR;
+  ioc.iohdr.length = sizeof(struct ioctl);
+  ioc.cmd = IOCTL_RESET_CNTRS;
 
-  call_driver(LMCIOCTL, &ioctl.iohdr);
+  call_driver(LMCIOCTL, &ioc.iohdr);
   }
 
 void ioctl_read_config()
@@ -1108,23 +1108,23 @@ void print_hssi_sigs()
 
 void print_events()
   {
-  char *time;
+  const char *timestr;
   struct timeval tv;
   time_t tv_sec;
 
   (void)gettimeofday(&tv, NULL);
   tv_sec = tv.tv_sec;
-  time = ctime(&tv_sec);
-  printf("Current time:\t\t%s", time);
+  timestr = ctime(&tv_sec);
+  printf("Current time:\t\t%s", timestr);
 
   if (status.cntrs.reset_time.tv_sec < 1000)
-    time = "Never\n";
+    timestr = "Never\n";
   else
     {
     tv_sec = status.cntrs.reset_time.tv_sec;
-    time = ctime(&tv_sec);
+    timestr = ctime(&tv_sec);
     }
-  printf("Cntrs reset:\t\t%s", time);
+  printf("Cntrs reset:\t\t%s", timestr);
 
   if (status.cntrs.ibytes)     printf("Rx bytes:\t\t%llu\n",   (unsigned long long)status.cntrs.ibytes);
   if (status.cntrs.obytes)     printf("Tx bytes:\t\t%llu\n",   (unsigned long long)status.cntrs.obytes);
@@ -1256,7 +1256,7 @@ void print_summary()
     }
   }
 
-char *print_t3_bop(int bop_code)
+const char *print_t3_bop(int bop_code)
   {
   switch(bop_code)
     {
@@ -1349,7 +1349,7 @@ void print_t3_dsu()
 void t3_cmd(int argc, char **argv)
   {
   int ch;
-  char *optstring = "a:A:B:c:de:fF:lLsS:V:";
+  const char *optstring = "a:A:B:c:de:fF:lLsS:V:";
 
   while ((ch = getopt(argc, argv, optstring)) != -1)
     {
@@ -1526,7 +1526,7 @@ void t3_cmd(int argc, char **argv)
     } /* while */
   } /* proc */
 
-char *print_t1_bop(int bop_code)
+const char *print_t1_bop(int bop_code)
   {
   switch(bop_code)
     {
@@ -1605,9 +1605,9 @@ void print_t1_test_pattern(int patt)
     }
   }
 
-void print_t1_far_report(int index)
+void print_t1_far_report(int idx)
   {
-  u_int16_t far = status.snmp.t1.prm[index];
+  u_int16_t far = status.snmp.t1.prm[idx];
 
   printf(" SEQ=%d ", (far & T1PRM_SEQ)>>8);
   if      (far & T1PRM_G1) printf("CRC=1");
@@ -1741,7 +1741,7 @@ void print_t1_dsu()
 void t1_cmd(int argc, char **argv)
   {
   int ch;
-  char *optstring = "a:A:B:c:de:E:fF:g:iIlLpPstT:u:U:xX";
+  const char *optstring = "a:A:B:c:de:E:fF:g:iIlLpPstT:u:U:xX";
 
   while ((ch = getopt(argc, argv, optstring)) != -1)
     {
@@ -2140,7 +2140,7 @@ u_int8_t crc8(u_int16_t *bufp, int len)
 void main_cmd(int argc, char **argv)
   {
   int ch;
-  char *optstring = "13a:bBcCdDeEf:gG:hi:L:mM:pP:sS:tT:uUvVw:x:X:yY?";
+  const char *optstring = "13a:bBcCdDeEf:gG:hi:L:mM:pP:sS:tT:uUvVw:x:X:yY?";
 
   while ((ch = getopt(argc, argv, optstring)) != -1)
     {

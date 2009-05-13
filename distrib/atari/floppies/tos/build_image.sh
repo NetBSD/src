@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: build_image.sh,v 1.1.1.1 2002/09/10 13:58:51 leo Exp $
+# $NetBSD: build_image.sh,v 1.1.1.1.42.1 2009/05/13 19:17:39 jym Exp $
 # This script is a quick hack to generate the various floppies in the
 # 'installation/floppies' directory. This script cannot be run in the
 # build environment, it is provided as a howto.
@@ -59,7 +59,7 @@ do_images() {
 		$SUDO umount ${MNT_DIR}
 		$SUDO vnconfig -u ${VND_DEV}
 		mv /tmp/${base_img}.fs /tmp/$1.fs
-		gzip -9 /tmp/$1.fs
+		gzip -9n /tmp/$1.fs
 		mv /tmp/$1.fs.gz $DESTDIR
 		shift 2
 	done

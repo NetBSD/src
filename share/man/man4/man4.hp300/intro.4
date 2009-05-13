@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.16 2005/06/20 13:25:24 peter Exp $
+.\"	$NetBSD: intro.4,v 1.16.30.1 2009/05/13 19:19:10 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,29 +98,29 @@ simply by creating appropriate table entries in the driver;
 for example, new
 .Tn CS/80
 drives.
-.Bl -column grf/ite -offset indent
-com	serial interfaces (98644, 98626, and built-in apci and dca)
-ct	7946/9144 CS/80 cartridge tape
-dcm	HP 98642A communications multiplexer
-dio	DIO/DIO-II bus
-dnkbd	Domain keyboard
-dvbox	HP98730 ``DaVinci'' device interface
-fhpib	``fast'' HP-IB interface
-frodo	Frodo ASIC (a.k.a. Apollo Utility Chip)
-gbox	HP98700 ``Gatorbox'' device interface
-grf/ite	Topcat/Gatorbox/Renaissance frame buffer
-hil	HIL interface
-nhpib	Built-in and 98625 HP-IB interface
-hyper	Hyperion device interface
-intio	HP300 internal I/O space driver
-ite	HP Internal Terminal Emulator
-le	98643 Lance-based Ethernet interface
-ppi	HP-IB printer/plotter interface
-rbox	HP98720 ``Renaissance'' device interface
-rd	CS/80 disk interface
-rmp	HP Remote Maintenance Protocol family
-spc	HP98265A SCSI interface
-topcat	HP98544-98550 ``Topcat'' and ``Catseye'' device interface
+.Bl -column grf/ite description -offset indent
+.It com	serial interfaces (98644, 98626, and built-in apci and dca)
+.It ct	7946/9144 CS/80 cartridge tape
+.It dcm	HP 98642A communications multiplexer
+.It dio	DIO/DIO-II bus
+.It dnkbd	Domain keyboard
+.It dvbox	HP98730 ``DaVinci'' device interface
+.It fhpib	``fast'' HP-IB interface
+.It frodo	Frodo ASIC (a.k.a. Apollo Utility Chip)
+.It gbox	HP98700 ``Gatorbox'' device interface
+.It grf/ite	Topcat/Gatorbox/Renaissance frame buffer
+.It hil	HIL interface
+.It nhpib	Built-in and 98625 HP-IB interface
+.It hyper	Hyperion device interface
+.It intio	HP300 internal I/O space driver
+.It ite	HP Internal Terminal Emulator
+.It le	98643 Lance-based Ethernet interface
+.It ppi	HP-IB printer/plotter interface
+.It rbox	HP98720 ``Renaissance'' device interface
+.It rd	CS/80 disk interface
+.It rmp	HP Remote Maintenance Protocol family
+.It spc	HP98265A SCSI interface
+.It topcat	HP98544-98550 ``Topcat'' and ``Catseye'' device interface
 .El
 .Sh SEE ALSO
 .Xr config 1 ,

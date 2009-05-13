@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.166 2009/01/24 11:59:39 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.166.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.166 2009/01/24 11:59:39 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.166.2.1 2009/05/13 19:19:56 jym Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.166 2009/01/24 11:59:39 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.166.2.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -666,6 +666,22 @@ ReadAllMakefiles(const void *p, const void *q)
 	return (ReadMakefile(p, q) == 0);
 }
 
+#ifdef SIGINFO
+/*ARGSUSED*/
+static void
+siginfo(int signo)
+{
+	char dir[MAXPATHLEN];
+	char str[2 * MAXPATHLEN];
+	int len;
+	if (getcwd(dir, sizeof(dir)) == NULL)
+		return;
+	len = snprintf(str, sizeof(str), "%s: Working in: %s\n", progname, dir);
+	if (len > 0)
+		(void)write(STDERR_FILENO, str, (size_t)len);
+}
+#endif
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -707,6 +723,9 @@ main(int argc, char **argv)
 	/* default to writing debug to stderr */
 	debug_file = stderr;
 
+#ifdef SIGINFO
+	(void)signal(SIGINFO, siginfo);
+#endif
 	/*
 	 * Set the seed to produce a different random sequence
 	 * on each program execution.

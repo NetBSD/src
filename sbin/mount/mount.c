@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.88 2009/01/11 20:39:34 pooka Exp $	*/
+/*	$NetBSD: mount.c,v 1.88.2.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.88 2009/01/11 20:39:34 pooka Exp $");
+__RCSID("$NetBSD: mount.c,v 1.88.2.1 2009/05/13 19:19:02 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,9 @@ main(int argc, char *argv[])
 	const char *mntfromname, *mntonname, **vfslist, *vfstype;
 	struct fstab *fs;
 	struct statvfs *mntbuf;
+#if 0
 	FILE *mountdfp;
+#endif
 	int all, ch, forceall, i, init_flags, mntsize, rval;
 	char *options;
 	const char *mountopts, *fstypename;
@@ -301,6 +303,7 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
+#if 0	/* disabled because it interferes the service. */
 	/*
 	 * If the mount was successfully, and done by root, tell mountd the
 	 * good news.  Pid checks are probably unnecessary, but don't hurt.
@@ -314,6 +317,7 @@ main(int argc, char *argv[])
 			err(1, "signal mountd");
 		(void)fclose(mountdfp);
 	}
+#endif
 
 	exit(rval);
 	/* NOTREACHED */

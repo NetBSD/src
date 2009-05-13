@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.21 2008/01/27 01:23:20 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.21.12.1 2009/05/13 19:18:35 jym Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.21 2008/01/27 01:23:20 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.21.12.1 2009/05/13 19:18:35 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ static const	char *compat_princ_component(krb5_context, krb5_principal, int);
 static void	compat_free_data_contents(krb5_context, krb5_data *);
 
 #define USER_PROMPT		"Username: "
-#define PASSWORD_PROMPT		"%s's Password:"
+#define PASSWORD_PROMPT		"%s's password:"
 #define NEW_PASSWORD_PROMPT	"New Password:"
 
 #define PAM_OPT_CCACHE		"ccache"

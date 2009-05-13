@@ -114,7 +114,7 @@ partition_map* find_entry_by_base(u32 base, partition_map_header *map);
 partition_map_header* init_partition_map(char *name, partition_map_header* oldmap);
 void move_entry_in_map(long, long, partition_map_header *);
 partition_map_header* open_partition_map(char *name, int *valid_file, int ask_logical_size);
-void resize_map(long new_size, partition_map_header *map);
+void resize_map(unsigned long new_size, partition_map_header *map);
 void write_partition_map(partition_map_header *map);
 void bzb_init_slice(BZB *bp, int slice);
 void dpme_init_flags(DPME *data);

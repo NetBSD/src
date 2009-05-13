@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.7 2003/08/07 11:16:04 agc Exp $	*/
+/*	$NetBSD: display.c,v 1.7.42.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: display.c,v 1.7 2003/08/07 11:16:04 agc Exp $");
+__RCSID("$NetBSD: display.c,v 1.7.42.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -97,7 +97,7 @@ display(win, text, size)
 		 * the line.
 		 */
 		if (*text == win->werase) {
-			int endcol, xcol, i, c;
+			int endcol, xcol, j, c;
 
 			endcol = win->x_col;
 			xcol = endcol - 1;
@@ -114,7 +114,7 @@ display(win, text, size)
 				xcol--;
 			}
 			wmove(win->x_win, win->x_line, xcol + 1);
-			for (i = xcol + 1; i < endcol; i++)
+			for (j = xcol + 1; j < endcol; j++)
 				waddch(win->x_win, ' ');
 			wmove(win->x_win, win->x_line, xcol + 1);
 			getyx(win->x_win, win->x_line, win->x_col);

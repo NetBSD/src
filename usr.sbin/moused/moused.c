@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.17 2008/07/21 12:44:25 gmcgarry Exp $ */
+/* $NetBSD: moused.c,v 1.17.6.1 2009/05/13 19:20:30 jym Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.17 2008/07/21 12:44:25 gmcgarry Exp $");
+__RCSID("$NetBSD: moused.c,v 1.17.6.1 2009/05/13 19:20:30 jym Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -111,7 +111,7 @@ __RCSID("$NetBSD: moused.c,v 1.17 2008/07/21 12:44:25 gmcgarry Exp $");
 
 /* symbol table entry */
 typedef struct {
-    char *name;
+    const char *name;
     int val;
     int val2;
 } symtab_t;
@@ -119,11 +119,11 @@ typedef struct {
 /* serial PnP ID string */
 typedef struct {
     int revision;	/* PnP revision, 100 for 1.00 */
-    char *eisaid;	/* EISA ID including mfr ID and product ID */
-    char *serial;	/* serial No, optional */
-    char *class;	/* device class, optional */
-    char *compat;	/* list of compatible drivers, optional */
-    char *description;	/* product description, optional */
+    const char *eisaid;	/* EISA ID including mfr ID and product ID */
+    const char *serial;	/* serial No, optional */
+    const char *class;	/* device class, optional */
+    const char *compat;	/* list of compatible drivers, optional */
+    const char *description;	/* product description, optional */
     int neisaid;	/* length of the above fields... */
     int nserial;
     int nclass;
@@ -137,23 +137,23 @@ int	dbg = 0;
 int	nodaemon = FALSE;
 int	background = FALSE;
 int	identify = ID_NONE;
-char	*pidfile = "/var/run/moused.pid";
+const char *pidfile = "/var/run/moused.pid";
 
 /* local variables */
 
 /* interface (the table must be ordered by MOUSE_IF_XXX in mouse.h) */
 static symtab_t rifs[] = {
-    { "serial",		MOUSE_IF_SERIAL },
-    { "bus",		MOUSE_IF_BUS },
-    { "inport",		MOUSE_IF_INPORT },
-    { "ps/2",		MOUSE_IF_PS2 },
-    { "sysmouse",	MOUSE_IF_SYSMOUSE },
-    { "usb",		MOUSE_IF_USB },
-    { NULL,		MOUSE_IF_UNKNOWN },
+    { "serial",		MOUSE_IF_SERIAL, 0 },
+    { "bus",		MOUSE_IF_BUS, 0 },
+    { "inport",		MOUSE_IF_INPORT, 0 },
+    { "ps/2",		MOUSE_IF_PS2, 0 },
+    { "sysmouse",	MOUSE_IF_SYSMOUSE, 0 },
+    { "usb",		MOUSE_IF_USB, 0 },
+    { NULL,		MOUSE_IF_UNKNOWN, 0 },
 };
 
 /* types (the table must be ordered by MOUSE_PROTO_XXX in mouse.h) */
-static char *rnames[] = {
+static const char *rnames[] = {
     "microsoft",
     "mousesystems",
     "logitech",
@@ -177,20 +177,20 @@ static char *rnames[] = {
 
 /* models */
 static symtab_t	rmodels[] = {
-    { "NetScroll",		MOUSE_MODEL_NETSCROLL },
-    { "NetMouse/NetScroll Optical", MOUSE_MODEL_NET },
-    { "GlidePoint",		MOUSE_MODEL_GLIDEPOINT },
-    { "ThinkingMouse",		MOUSE_MODEL_THINK },
-    { "IntelliMouse",		MOUSE_MODEL_INTELLI },
-    { "EasyScroll/SmartScroll",	MOUSE_MODEL_EASYSCROLL },
-    { "MouseMan+",		MOUSE_MODEL_MOUSEMANPLUS },
-    { "Kidspad",		MOUSE_MODEL_KIDSPAD },
-    { "VersaPad",		MOUSE_MODEL_VERSAPAD },
-    { "IntelliMouse Explorer",	MOUSE_MODEL_EXPLORER },
-    { "4D Mouse",		MOUSE_MODEL_4D },
-    { "4D+ Mouse",		MOUSE_MODEL_4DPLUS },
-    { "generic",		MOUSE_MODEL_GENERIC },
-    { NULL, 			MOUSE_MODEL_UNKNOWN },
+    { "NetScroll",		MOUSE_MODEL_NETSCROLL, 0 },
+    { "NetMouse/NetScroll Optical", MOUSE_MODEL_NET, 0 },
+    { "GlidePoint",		MOUSE_MODEL_GLIDEPOINT, 0 },
+    { "ThinkingMouse",		MOUSE_MODEL_THINK, 0 },
+    { "IntelliMouse",		MOUSE_MODEL_INTELLI, 0 },
+    { "EasyScroll/SmartScroll",	MOUSE_MODEL_EASYSCROLL, 0 },
+    { "MouseMan+",		MOUSE_MODEL_MOUSEMANPLUS, 0 },
+    { "Kidspad",		MOUSE_MODEL_KIDSPAD, 0 },
+    { "VersaPad",		MOUSE_MODEL_VERSAPAD, 0 },
+    { "IntelliMouse Explorer",	MOUSE_MODEL_EXPLORER, 0 },
+    { "4D Mouse",		MOUSE_MODEL_4D, 0 },
+    { "4D+ Mouse",		MOUSE_MODEL_4DPLUS, 0 },
+    { "generic",		MOUSE_MODEL_GENERIC, 0 },
+    { NULL, 			MOUSE_MODEL_UNKNOWN, 0 },
 };
 
 /* PnP EISA/product IDs */
@@ -437,15 +437,15 @@ static jmp_buf env;
 
 /* function prototypes */
 
-static void	moused(char *);
+static void	moused(const char *);
 static void	hup(int sig);
 static void	cleanup(int sig);
 static void	usage(void);
 
 static int	r_identify(void);
-static char	*r_if(int type);
-static char	*r_name(int type);
-static char	*r_model(int model);
+static const char *r_if(int type);
+static const char *r_name(int type);
+static const char *r_model(int model);
 static void	r_init(void);
 static int	r_protocol(u_char b, mousestatus_t *act);
 static int	r_statetrans(mousestatus_t *a1, mousestatus_t *a2, int trans);
@@ -461,8 +461,8 @@ static int	pnpgets(char *buf);
 static int	pnpparse(pnpid_t *id, char *buf, int len);
 static symtab_t	*pnpproto(pnpid_t *id);
 
-static symtab_t	*gettoken(symtab_t *tab, char *s, int len);
-static char	*gettokenname(symtab_t *tab, int val);
+static symtab_t	*gettoken(symtab_t *tab, const char *s, int len);
+static const char *gettokenname(symtab_t *tab, int val);
 
 static void wsev(int ty, int val);
 
@@ -531,7 +531,7 @@ main(int argc, char *argv[])
     int c;
     int	i;
     int	j;
-    char *ctldev = "/dev/wsmuxctl0";
+    const char * volatile ctldev = "/dev/wsmuxctl0";
 
     for (i = 0; i < MOUSE_MAXBUTTON; ++i)
 	mstate[i] = &bstate[i];
@@ -851,7 +851,7 @@ wsev(int ty, int val)
 }
 
 static void
-moused(char *wsm)
+moused(const char *wsm)
 {
     mousestatus_t action0;		/* original mouse action */
     mousestatus_t action;		/* interrim buffer */
@@ -892,7 +892,7 @@ moused(char *wsm)
 	bstate[i].count = 0;
 	bstate[i].tv = mouse_button_state_tv;
     }
-    for (i = 0; i < sizeof(zstate)/sizeof(zstate[0]); ++i) {
+    for (i = 0; i < (int)(sizeof(zstate)/sizeof(zstate[0])); ++i) {
 	zstate[i].count = 0;
 	zstate[i].tv = mouse_button_state_tv;
     }
@@ -1180,27 +1180,27 @@ r_identify(void)
     return rodent.rtype;
 }
 
-static char *
+static const char *
 r_if(int iftype)
 {
-    char *s;
+    const char *s;
 
     s = gettokenname(rifs, iftype);
     return (s == NULL) ? "unknown" : s;
 }
 
-static char *
+static const char *
 r_name(int type)
 {
     return ((type == MOUSE_PROTO_UNKNOWN) 
-	|| (type > sizeof(rnames)/sizeof(rnames[0]) - 1))
+	|| (type > (int)(sizeof(rnames)/sizeof(rnames[0]) - 1)))
 	? "unknown" : rnames[type];
 }
 
-static char *
+static const char *
 r_model(int model)
 {
-    char *s;
+    const char *s;
 
     s = gettokenname(rmodels, model);
     return (s == NULL) ? "unknown" : s;
@@ -1211,7 +1211,7 @@ r_init(void)
 {
     unsigned char buf[16];	/* scrach buffer */
     struct pollfd set[1];
-    char *s;
+    const char *s;
     char c;
     int i;
 
@@ -2241,7 +2241,7 @@ static void
 setmousespeed(int old, int new, unsigned cflag)
 {
 	struct termios tty;
-	char *c;
+	const char *c;
 
 	if (tcgetattr(rodent.mfd, &tty) < 0)
 	{
@@ -2713,7 +2713,7 @@ pnpproto(pnpid_t *id)
 /* name/val mapping */
 
 static symtab_t *
-gettoken(symtab_t *tab, char *s, int len)
+gettoken(symtab_t *tab, const char *s, int len)
 {
     int i;
 
@@ -2724,7 +2724,7 @@ gettoken(symtab_t *tab, char *s, int len)
     return &tab[i];
 }
 
-static char *
+static const char *
 gettokenname(symtab_t *tab, int val)
 {
     int i;

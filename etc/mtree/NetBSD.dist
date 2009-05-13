@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.388 2009/01/24 01:15:26 agc Exp $
+#	$NetBSD: NetBSD.dist,v 1.388.2.1 2009/05/13 19:18:03 jym Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -260,8 +260,6 @@
 ./usr/X11R7/include/X11/Xcursor
 ./usr/X11R7/include/X11/Xft
 ./usr/X11R7/include/X11/Xmu
-./usr/X11R7/include/X11/XprintAppUtil
-./usr/X11R7/include/X11/XprintUtil
 ./usr/X11R7/include/X11/Xtrans
 ./usr/X11R7/include/X11/bitmaps
 ./usr/X11R7/include/X11/extensions
@@ -534,6 +532,7 @@
 ./usr/libdata/debug/usr/libexec/ching
 ./usr/libdata/debug/usr/libexec/lpr
 ./usr/libdata/debug/usr/libexec/postfix
+./usr/libdata/debug/usr/mdec
 ./usr/libdata/debug/usr/sbin
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -542,12 +541,23 @@
 ./usr/libdata/debug/usr/tests/atf/formats
 ./usr/libdata/debug/usr/tests/atf/test_programs
 ./usr/libdata/debug/usr/tests/atf/tools
+./usr/libdata/debug/usr/tests/crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto
 ./usr/libdata/debug/usr/tests/fs
+./usr/libdata/debug/usr/tests/fs/ffs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
+./usr/libdata/debug/usr/tests/ipf
+./usr/libdata/debug/usr/tests/kernel
+./usr/libdata/debug/usr/tests/kernel/kqueue
+./usr/libdata/debug/usr/tests/kernel/kqueue/read
+./usr/libdata/debug/usr/tests/kernel/kqueue/write
 ./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/sys
+./usr/libdata/debug/usr/tests/rump
+./usr/libdata/debug/usr/tests/rump/rumpkern
+./usr/libdata/debug/usr/tests/syscall
 ./usr/libdata/debug/usr/tests/util
 ./usr/libdata/debug/usr/tests/util/df
 ./usr/libdata/debug/usr/tests/util/id
@@ -1399,17 +1409,45 @@
 ./usr/tests/atf/formats
 ./usr/tests/atf/test_programs
 ./usr/tests/atf/tools
+./usr/tests/crypto
+./usr/tests/crypto/libcrypto
 ./usr/tests/fs
+./usr/tests/fs/ffs
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs
 ./usr/tests/games
+./usr/tests/ipf
+./usr/tests/ipf/expected
+./usr/tests/ipf/input
+./usr/tests/ipf/regress
+./usr/tests/kernel
+./usr/tests/kernel/kqueue
+./usr/tests/kernel/kqueue/read
+./usr/tests/kernel/kqueue/write
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/sys
+./usr/tests/rump
+./usr/tests/rump/rumpkern
+./usr/tests/syscall
 ./usr/tests/util
+./usr/tests/util/awk
+./usr/tests/util/bzip2
+./usr/tests/util/config
+./usr/tests/util/config/support
+./usr/tests/util/config/support/arch
+./usr/tests/util/config/support/arch/regress
+./usr/tests/util/config/support/arch/regress/conf
+./usr/tests/util/config/support/conf
+./usr/tests/util/cut
 ./usr/tests/util/df
+./usr/tests/util/grep
 ./usr/tests/util/id
+./usr/tests/util/m4
+./usr/tests/util/make
+./usr/tests/util/mtree
 ./usr/tests/util/ps
+./usr/tests/util/sdiff
 ./usr/tests/util/sh
 ./var
 ./var/account
@@ -1428,6 +1466,8 @@
 ./var/chroot/named/usr/libexec
 ./var/chroot/named/var
 ./var/chroot/named/var/run	mode=0775 gname=named
+./var/chroot/named/var/run/lwresd	mode=0775 gname=named
+./var/chroot/named/var/run/named	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
 ./var/chroot/ntpd
 ./var/chroot/ntpd/dev
@@ -1445,6 +1485,7 @@
 ./var/db/obsolete
 ./var/db/postfix		uname=postfix gname=postfix mode=0755
 ./var/db/xdm
+./var/db/xkb
 ./var/games			uname=games gname=games mode=0775
 ./var/games/hackdir		uname=games gname=games mode=0775
 ./var/games/hackdir/save	uname=games gname=games mode=0770
@@ -1459,6 +1500,8 @@
 ./var/preserve
 ./var/quotas			gname=operator mode=0750
 ./var/run
+./var/run/lwresd		mode=0775 gname=named
+./var/run/named			mode=0775 gname=named
 ./var/rwho			uname=_rwhod gname=_rwhod
 ./var/spool
 ./var/spool/ftp

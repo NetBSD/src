@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.46 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: rshd.c,v 1.46.6.1 2009/05/13 19:18:43 jym Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.46 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.46.6.1 2009/05/13 19:18:43 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,8 @@ doit(struct sockaddr *fromp)
 
 	u_char optbuf[BUFSIZ/3];
 	socklen_t optsize = sizeof(optbuf);
-	int ipproto, i;
+	int ipproto;
+	unsigned int i;
 	struct protoent *ip;
 
 	if ((ip = getprotobyname("ip")) != NULL)

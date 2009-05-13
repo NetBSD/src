@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.34 2008/06/22 15:42:50 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.162 2008/01/01 09:06:39 dtucker Exp $ */
+/*	$NetBSD: scp.c,v 1.34.6.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: scp.c,v 1.163 2008/06/13 18:55:22 dtucker Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.34 2008/06/22 15:42:50 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.34.6.1 2009/05/13 19:15:57 jym Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -615,7 +615,8 @@ source(int argc, char **argv)
 	struct stat stb;
 	static BUF buffer;
 	BUF *bp;
-	off_t i, amt, statbytes;
+	off_t i, statbytes;
+	size_t amt;
 	int fd = -1, haderr, indx;
 	char *last, *name, buf[16384], encname[MAXPATHLEN];
 	int len;
@@ -635,6 +636,10 @@ source(int argc, char **argv)
 		}
 		if (fstat(fd, &stb) < 0) {
 syserr:			run_err("%s: %s", name, strerror(errno));
+			goto next;
+		}
+		if (stb.st_size < 0) {
+			run_err("%s: %s", name, "Negative file size");
 			goto next;
 		}
 		unset_nonblock(fd);
@@ -696,7 +701,7 @@ next:			if (fd != -1) {
 		set_nonblock(remout);
 		for (haderr = i = 0; i < stb.st_size; i += bp->cnt) {
 			amt = bp->cnt;
-			if (i + amt > stb.st_size)
+			if (i + (off_t)amt > stb.st_size)
 				amt = stb.st_size - i;
 			if (!haderr) {
 				if (atomicio(read, fd, bp->buf, amt) != amt)

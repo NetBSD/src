@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.15 2004/10/30 16:01:48 dsl Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.15.34.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.15 2004/10/30 16:01:48 dsl Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.15.34.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 /*
@@ -89,10 +89,10 @@ struct user_list hroot[HASHMAX];
 int
 main(int argc, char *argv[])
 {
-	char *HostFile = _PATH_HOSTS;
-	char *PasswdFile = _PATH_PASSWD;
-	char *GroupFile = _PATH_GROUP;
-	char *NetidFile = "/etc/netid";
+	const char *HostFile = _PATH_HOSTS;
+	const char *PasswdFile = _PATH_PASSWD;
+	const char *GroupFile = _PATH_GROUP;
+	const char *NetidFile = "/etc/netid";
 
 	int qflag, ch;
 	char *domain;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2006/07/29 19:10:56 ad Exp $
+.\"	$NetBSD: hardware,v 1.16.30.1 2009/05/13 19:17:47 jym Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -35,7 +35,7 @@ DECsystem 5800 (xbi-based multiprocessor, a Vax 6200 with
 Vax CPU boards replaced with Mips CPU boards)
 .bullet)
 .Pp
-The minimal configuration requires 8 MB of RAM and ~60 MB of disk space.
+The minimal configuration requires 8 MB of RAM and 100 MB of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended, as
 .Nx

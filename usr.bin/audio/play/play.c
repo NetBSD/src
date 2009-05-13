@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.49 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.49.6.1 2009/05/13 19:19:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.49 2008/05/29 14:51:27 mrg Exp $");
+__RCSID("$NetBSD: play.c,v 1.49.6.1 2009/05/13 19:19:43 jym Exp $");
 #endif
 
 
@@ -277,19 +277,19 @@ play(file)
 
 	filesize -= hdrlen;
 	addr = (char *)addr + hdrlen;
-	if (filesize < datasize || datasize == 0) {
-		if (filesize < datasize)
+	if ((uint64_t)filesize < datasize || datasize == 0) {
+		if ((uint64_t)filesize < datasize)
 			warnx("bogus datasize: %ld", (u_long)datasize);
 		datasize = filesize;
 	}
 
 	while (datasize > bufsize) {
-		if (write(audiofd, addr, bufsize) != bufsize)
+		if ((size_t)write(audiofd, addr, bufsize) != bufsize)
 			err(1, "write failed");
 		addr = (char *)addr + bufsize;
 		datasize -= bufsize;
 	}
-	if (write(audiofd, addr, (size_t)datasize) != (ssize_t)datasize)
+	if ((size_t)write(audiofd, addr, datasize) != datasize)
 		err(1, "final write failed");
 
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)

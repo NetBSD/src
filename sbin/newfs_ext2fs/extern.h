@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 2007/12/14 13:19:35 tsutsui Exp $	*/
+/*	$NetBSD: extern.h,v 1.2.14.1 2009/05/13 19:19:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -41,6 +41,7 @@ extern int	Nflag;		/* run mkfs without writing file system */
 extern int	Oflag;		/* format as an 4.3BSD file system */
 extern int	verbosity;	/* amount of printf() output */
 extern int64_t	fssize;		/* file system size */
+extern uint16_t	inodesize;	/* bytes per inode */
 extern uint	sectorsize;	/* sector size */
 extern uint	fsize;		/* fragment size */
 extern uint	bsize;		/* block size */

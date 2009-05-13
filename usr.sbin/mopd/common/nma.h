@@ -1,4 +1,4 @@
-/*	$NetBSD: nma.h,v 1.4 2001/01/16 02:50:31 cgd Exp $	*/
+/*	$NetBSD: nma.h,v 1.4.42.1 2009/05/13 19:20:29 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: nma.h,v 1.4 2001/01/16 02:50:31 cgd Exp $
+ *	$NetBSD: nma.h,v 1.4.42.1 2009/05/13 19:20:29 jym Exp $
  *
  */
 
@@ -36,8 +36,8 @@
 #define _NMA_H_
 
 __BEGIN_DECLS
-char	*nmaGetShort  __P((int));
-char	*nmaGetDevice __P((int));
+const char	*nmaGetShort  __P((int));
+const char	*nmaGetDevice __P((int));
 __END_DECLS
 
 #endif /* _NMA_H_ */

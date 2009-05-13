@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.44 2008/04/28 20:23:08 martin Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.44.6.1 2009/05/13 19:19:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.44 2008/04/28 20:23:08 martin Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.44.6.1 2009/05/13 19:19:02 jym Exp $");
 #endif
 
 
@@ -468,7 +468,7 @@ buildhints(void)
 		warn("%s", _PATH_LD_HINTS);
 		goto out;
 	}
-	if (write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
+	if ((size_t)write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
 		  hdr.hh_nbucket * sizeof(struct hints_bucket)) {
 		warn("%s", _PATH_LD_HINTS);
 		goto out;

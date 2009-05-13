@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2006/04/21 21:46:06 sketch Exp $
+#	$NetBSD: Makefile,v 1.14.26.1 2009/05/13 19:20:49 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ SRCS.glx+=	glcontextmodes.c
 .PATH:	${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi
 SRCS.glx+=	glapi.c
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 .PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/x86
 SRCS.glx+=	glapi_x86.S
 CPPFLAGS+=	-DUSE_X86_ASM -I${X11SRCDIR.xc}/extras/Mesa/src/X86

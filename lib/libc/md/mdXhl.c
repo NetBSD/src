@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.7 2005/09/26 03:01:41 christos Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.7.30.1 2009/05/13 19:18:25 jym Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,10 +15,14 @@
  * Modified April 29, 1997 by Jason R. Thorpe <thorpej@NetBSD.org>
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #define	CONCAT(x,y)	__CONCAT(x,y)
 #define	MDNAME(x)	CONCAT(MDALGORITHM,x)
 
-#if !defined(_KERNEL) && defined(__weak_alias)
+#if !defined(_KERNEL) && defined(__weak_alias) && !defined(HAVE_NBTOOL_CONFIG_H)
 #define	WA(a,b)	__weak_alias(a,b)
 WA(MDNAME(End),CONCAT(_,MDNAME(End)))
 WA(MDNAME(File),CONCAT(_,MDNAME(File)))
@@ -37,10 +41,6 @@ WA(MDNAME(Data),CONCAT(_,MDNAME(Data)))
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
 
 
 

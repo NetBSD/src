@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.26 2008/10/12 16:03:27 apb Exp $	*/
+/*	$NetBSD: ffs.c,v 1.26.4.1 2009/05/13 19:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.26 2008/10/12 16:03:27 apb Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.26.4.1 2009/05/13 19:20:24 jym Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -232,7 +232,7 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 #endif
 		rv = (*callback)(params, state, 
 		    fsbtodb(fs, blk) + params->fstype->offset,
-		    sblksize(fs, inode->di_size, lblk));
+		    sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;
 		if (rv != 1)
@@ -263,7 +263,7 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 	char		inodebuf[MAXBSIZE];
 	struct ufs2_dinode	*inode;
 	int		level_i;
-	int64_t	blk, lblk, nblk;
+	int64_t		blk, lblk, nblk;
 	int		rv;
 #define LEVELS 4
 	struct {
@@ -368,7 +368,7 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 #endif
 		rv = (*callback)(params, state, 
 		    fsbtodb(fs, blk) + params->fstype->offset,
-		    sblksize(fs, inode->di_size, lblk));
+		    sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;
 		if (rv != 1)

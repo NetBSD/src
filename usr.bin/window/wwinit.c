@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.18 2003/08/13 15:21:07 itojun Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.18.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwinit.c,v 1.18 2003/08/13 15:21:07 itojun Exp $");
+__RCSID("$NetBSD: wwinit.c,v 1.18.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,11 +345,12 @@ bad:
 }
 
 void
-wwaddcap(char *cap, char **kp)
+wwaddcap(const char *cap, char **kp)
 {
 	char tbuf[512];
 	char *tp = tbuf;
-	char *str, *p;
+	char *str;
+	const char *p;
 
 	if ((str = tgetstr(cap, &tp)) != 0) {
 		while ((*(*kp)++ = *cap++))
@@ -366,7 +367,7 @@ wwaddcap(char *cap, char **kp)
 }
 
 void
-wwaddcap1(char *cap, char **kp)
+wwaddcap1(const char *cap, char **kp)
 {
 	while ((*(*kp)++ = *cap++))
 		;

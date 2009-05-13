@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.13 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: nohup.c,v 1.13.6.1 2009/05/13 19:20:00 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989\
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nohup.c,v 1.13 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: nohup.c,v 1.13.6.1 2009/05/13 19:20:00 jym Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,8 @@ static void
 dofile()
 {
 	int fd;
-	char *p, path[MAXPATHLEN];
+	char path[MAXPATHLEN];
+	const char *p;
 
 	/* If the standard output is a terminal, all output written to 
 	   its standard output shall be appended to the end of the file

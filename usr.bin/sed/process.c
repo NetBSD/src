@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.37 2006/06/18 05:16:41 gdamore Exp $	*/
+/*	$NetBSD: process.c,v 1.37.28.1 2009/05/13 19:20:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.37 2006/06/18 05:16:41 gdamore Exp $");
+__RCSID("$NetBSD: process.c,v 1.37.28.1 2009/05/13 19:20:04 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,7 +272,7 @@ redirect:
 				    DEFFILEMODE)) == -1)
 					err(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
-				if (write(cp->u.fd, ps, psl) != psl)
+				if ((size_t)write(cp->u.fd, ps, psl) != psl)
 					err(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
 				break;
@@ -369,7 +369,7 @@ substitute(struct s_command *cp)
 	s = ps;
 	re = cp->u.s->re;
 	if (re == NULL) {
-		if (defpreg != NULL && cp->u.s->maxbref > defpreg->re_nsub) {
+		if (defpreg != NULL && (size_t)cp->u.s->maxbref > defpreg->re_nsub) {
 			linenum = cp->u.s->linenum;
 			err(COMPILE, "\\%d not defined in the RE",
 			    cp->u.s->maxbref);
@@ -456,7 +456,7 @@ substitute(struct s_command *cp)
 		if (cp->u.s->wfd == -1 && (cp->u.s->wfd = open(cp->u.s->wfile,
 		    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1)
 			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
-		if (write(cp->u.s->wfd, ps, psl) != psl)
+		if ((size_t)write(cp->u.s->wfd, ps, psl) != psl)
 			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
 	}
 	return (1);
@@ -505,7 +505,7 @@ static void
 lputs(char *s)
 {
 	int count;
-	char *escapes, *p;
+	const char *escapes, *p;
 #ifndef HAVE_NBTOOL_CONFIG_H
 	struct winsize win;
 #endif
@@ -642,7 +642,7 @@ regsub(SPACE *sp, char *string, char *src)
  *	space as necessary.
  */
 void
-cspace(SPACE *sp, char *p, size_t len, enum e_spflag spflag)
+cspace(SPACE *sp, const char *p, size_t len, enum e_spflag spflag)
 {
 	size_t tlen;
 

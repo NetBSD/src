@@ -1,4 +1,4 @@
-/*	$NetBSD: talk.h,v 1.7 2003/08/07 11:16:05 agc Exp $	*/
+/*	$NetBSD: talk.h,v 1.7.42.1 2009/05/13 19:20:07 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ extern	int sockt;
 extern	int curses_initialized;
 extern	int invitation_waiting;
 
-extern	char *current_state;
+extern	const char *current_state;
 extern	int current_line;
 
 typedef struct xwin {
@@ -73,11 +73,11 @@ void	init_display __P((void));
 void	invite_remote __P((void));
 int	look_for_invite __P((CTL_RESPONSE *));
 int	max __P((int, int));
-void	message __P((char *));
+void	message __P((const char *));
 void	open_ctl __P((void));
 void	open_sockt __P((void));
 void	print_addr __P((struct sockaddr_in));
-void	p_error __P((char *));
+void	p_error __P((const char *));
 void	quit __P((void));
 int	readwin __P((WINDOW *, int, int));
 void	re_invite __P((int));

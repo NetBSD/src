@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2005/06/27 01:00:05 christos Exp $
+#	$NetBSD: Makefile,v 1.11.30.1 2009/05/13 19:19:02 jym Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	mknod

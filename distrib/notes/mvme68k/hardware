@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.10 2008/09/06 22:19:03 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.10.4.1 2009/05/13 19:17:47 jym Exp $
 .
 .Nx*M
 \*V runs on Motorola
@@ -15,9 +15,7 @@ and
 Single Board Computers.
 .Pp
 The minimal configuration requires 8 MB of RAM and ~200 MB of disk space.
-To install the entire system requires much more disk space (approx.
-600 MB additional space is necessary for full sources.
-Double that if you want to recompile it all!).
+To install the entire system requires much more disk space.
 To run X (clients only) or compile the system, more RAM is recommended.
 Good performance requires 16 MB of RAM, or 32 MB
 when running the X Window System.
@@ -29,17 +27,7 @@ on a system with only 4 MB of onboard RAM, but you will need to use a
 VMEbus RAM card with at least another 4 MB to augment the onboard
 memory in order to actually install the system.
 .Pp
-Here is a table of recommended HD partition sizes for a full install:
-.Bl -column -offset indent Partition Suggested Needed
-.It Partition Ta Suggested Ta Needed
-.It /\ (root) Ta "32 MB"   Ta "26 MB"
-.It /usr      Ta "200 MB"  Ta "150 MB"
-.It /var      Ta "32 MB"   Ta "6 MB"
-.It swap      Ta Em "2-3 *RAM" Ta 16 MB
-.El
-.(item -offset indent
-Anything else is up to you!
-.item)
+A swap partition of 2-3*RAM is recommended.
 .Pp
 Note that the
 .Nx*M

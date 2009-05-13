@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.27 2009/01/06 04:01:46 mrg Exp $	 */
+/*	$NetBSD: headers.c,v 1.27.2.1 2009/05/13 19:18:41 jym Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.27 2009/01/06 04:01:46 mrg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.27.2.1 2009/05/13 19:18:41 jym Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -232,8 +232,8 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 		}
 	}
 
-	obj->rellim = (const Elf_Rel *)((caddr_t)obj->rel + relsz);
-	obj->relalim = (const Elf_Rela *)((caddr_t)obj->rela + relasz);
+	obj->rellim = (const Elf_Rel *)((const uint8_t *)obj->rel + relsz);
+	obj->relalim = (const Elf_Rela *)((const uint8_t *)obj->rela + relasz);
 	if (plttype == DT_REL) {
 		obj->pltrel = (const Elf_Rel *)(obj->relocbase + pltrel);
 		obj->pltrellim = (const Elf_Rel *)(obj->relocbase + pltrel + pltrelsz);

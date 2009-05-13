@@ -1,4 +1,4 @@
-.\"	$NetBSD: larn.6,v 1.12 2005/09/15 02:09:41 wiz Exp $
+.\"	$NetBSD: larn.6,v 1.12.28.1 2009/05/13 19:18:05 jym Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -78,19 +78,19 @@ option specifies a different options file than
 .Sh COMMANDS
 These are the movement commands:
 .Bl -column " print program version" " give present pack weight"
-h move to the left	H run left	. stay here
-j move down	J run down	Z teleport yourself
-k move up	K run up	c cast a spell
-l move to the right	L run right	r read a scroll
-y move northwest	Y run northwest	q quaff a potion
-u move northeast	U run northeast	W wear armor
-b move southwest	B run southwest	T take off armor
-n move southeast	N run southeast	w wield a weapon
-^ identify a trap	g give present pack weight	P give tax status
-d drop an item	i inventory your pockets	Q quit the game
-v print program version	S save the game	D list all items found
-? this help screen	A create diagnostic file	e eat something
-	(wizards only)
+.It h move to the left	H run left	. stay here
+.It j move down	J run down	Z teleport yourself
+.It k move up	K run up	c cast a spell
+.It l move to the right	L run right	r read a scroll
+.It y move northwest	Y run northwest	q quaff a potion
+.It u move northeast	U run northeast	W wear armor
+.It b move southwest	B run southwest	T take off armor
+.It n move southeast	N run southeast	w wield a weapon
+.It ^ identify a trap	g give present pack weight	P give tax status
+.It d drop an item	i inventory your pockets	Q quit the game
+.It v print program version	S save the game	D list all items found
+.It ? this help screen	A create diagnostic file	e eat something
+.It 	(wizards only)
 .El
 .Sh OPTIONS FILE
 The file
@@ -140,7 +140,8 @@ This is true when visiting the bank, or when contributing at altars.
 You can get out of the store, trading post, school, or home by hitting
 .Aq Sy esc .
 .Pp
-When casting a spell, if you need a list of spells you can cast, type \fBD\fP
+When casting a spell, if you need a list of spells you can cast, type
+.Ic D
 as the first letter of your spell.
 The available list of spells will be shown,
 after which you may enter the spell code.

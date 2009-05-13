@@ -1,4 +1,4 @@
-.\"     $NetBSD: fsetown.9,v 1.8 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: fsetown.9,v 1.8.6.1 2009/05/13 19:19:15 jym Exp $
 .\"
 .\" Copyright (c) 2003, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,7 +120,7 @@ If the information is not available from the context of the
 call, these should be passed as zero.
 .Fa fdescdata
 is used to lookup the file descriptor for
-.Sa SA_SIGINFO
+.Dv SA_SIGINFO
 signals.
 If it is specified, the file descriptor number is sent along with
 the signal as additional signal specific information.

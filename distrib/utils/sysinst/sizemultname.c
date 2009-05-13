@@ -1,4 +1,4 @@
-/*	$NetBSD: sizemultname.c,v 1.3 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: sizemultname.c,v 1.3.44.1 2009/05/13 19:17:55 jym Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,23 +51,6 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-
-/*
- * check that there is at least a / somewhere.
- */
-int
-check_partitions(void)
-{
-	int i;
-
-	for (i = 0; i < getmaxpartitions(); i++)
-		if (PI_ISBSDFS(&bsdlabel[i]) &&
-		    strcmp(bsdlabel[i].pi_mount, "/") == 0)
-			return 1;
-	msg_display(MSG_no_root_fs);
-	getchar();
-	return 0;
-}
 
 void
 set_sizemultname_cyl(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.12 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: vax.c,v 1.12.8.1 2009/05/13 19:20:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.12 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: vax.c,v 1.12.8.1 2009/05/13 19:20:24 jym Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -261,7 +261,7 @@ vax_setboot(ib_params *params)
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
-	} else if (rv != bootstrapsize) {
+	} else if ((size_t)rv != bootstrapsize) {
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	}

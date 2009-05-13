@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.23 2006/12/29 22:56:55 yamt Exp $
+.\"	$NetBSD: nfssvc.2,v 1.23.22.1 2009/05/13 19:18:28 jym Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,7 +143,7 @@ and a pointer to a
 .Ft struct mountd_exports_list
 object to atomically change the exports lists of a specific file system.
 This structure has the following fields:
-.Bl -tag
+.Bl -tag -width ".Vt const char *mel_path"
 .It Vt const char *mel_path
 Path to the file system that will have its exports list replaced by the
 one described in the other fields.

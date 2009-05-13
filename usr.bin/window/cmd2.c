@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.6 2003/08/07 11:17:22 agc Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,13 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.6 2003/08/07 11:17:22 agc Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.6.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 
-char *help_shortcmd[] = {
+const char *help_shortcmd[] = {
 	"#       Select window # and return to conversation mode",
 	"%#      Select window # but stay in command mode",
 	"escape  Return to conversation mode without changing window",
@@ -75,7 +75,7 @@ char *help_shortcmd[] = {
 	0
 };
 
-char *help_longcmd[] = {
+const char *help_longcmd[] = {
 	":alias name string ...  Make `name' an alias for `string ...'",
 	":alias                  Show all aliases",
 	":close # ...            Close windows",
@@ -104,7 +104,7 @@ char *help_longcmd[] = {
 	0
 };
 
-int	help_print(struct ww *, char *, char **);
+int	help_print(struct ww *, const char *, const char **);
 
 void
 c_help(void)
@@ -123,7 +123,7 @@ c_help(void)
 }
 
 int
-help_print(struct ww *w, char *name, char **list)
+help_print(struct ww *w, const char *name, const char **list)
 {
 	wwprintf(w, "%s:\n\n", name);
 	while (*list)

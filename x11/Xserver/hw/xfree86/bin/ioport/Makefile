@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/03/10 02:02:56 dholland Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 2009/05/13 19:20:47 jym Exp $
 
 NOMAN=# defined (must come before bsd.own.mk)
 
@@ -25,7 +25,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/etc \
 LDADD=	-L${XF86OSOBJDIR} -lxf86_os \
 	-L${DUMMYOBJDIR} -ldummy -lm
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .else

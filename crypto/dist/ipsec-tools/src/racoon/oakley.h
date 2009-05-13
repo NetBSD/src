@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.h,v 1.6 2009/01/23 08:23:51 tteras Exp $	*/
+/*	$NetBSD: oakley.h,v 1.6.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: oakley.h,v 1.13 2005/05/30 20:12:43 fredsen Exp */
 
@@ -160,13 +160,6 @@ struct dhgroup {
 	vchar_t *order;
 };
 
-/* certificate holder */
-typedef struct cert_t_tag {
-	u_int8_t type;		/* type of CERT, must be same to pl->v[0]*/
-	vchar_t cert;		/* pointer to the CERT */
-	vchar_t *pl;		/* CERT payload minus isakmp general header */
-} cert_t;
-
 struct ph1handle;
 struct ph2handle;
 struct isakmp_ivm;
@@ -197,10 +190,13 @@ extern vchar_t *oakley_ph1hash_common __P((struct ph1handle *, int));
 extern vchar_t *oakley_ph1hash_base_i __P((struct ph1handle *, int));
 extern vchar_t *oakley_ph1hash_base_r __P((struct ph1handle *, int));
 
+extern int oakley_get_certtype __P((vchar_t *));
 extern int oakley_validate_auth __P((struct ph1handle *));
 extern int oakley_getmycert __P((struct ph1handle *));
 extern int oakley_getsign __P((struct ph1handle *));
 extern vchar_t *oakley_getcr __P((struct ph1handle *));
+extern struct payload_list *oakley_append_cr __P((struct payload_list *,
+						  struct ph1handle *));
 extern int oakley_checkcr __P((struct ph1handle *));
 extern int oakley_needcr __P((int));
 struct isakmp_gen;
@@ -211,8 +207,6 @@ extern int oakley_skeyid __P((struct ph1handle *));
 extern int oakley_skeyid_dae __P((struct ph1handle *));
 
 extern int oakley_compute_enckey __P((struct ph1handle *));
-extern cert_t *oakley_newcert __P((void));
-extern void oakley_delcert __P((cert_t *));
 extern int oakley_newiv __P((struct ph1handle *));
 extern struct isakmp_ivm *oakley_newiv2 __P((struct ph1handle *, u_int32_t));
 extern void oakley_delivm __P((struct isakmp_ivm *));

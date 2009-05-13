@@ -1,4 +1,4 @@
-.\"	$NetBSD: zlib.3,v 1.5 2004/05/01 07:54:50 mrg Exp $
+.\"	$NetBSD: zlib.3,v 1.5.34.1 2009/05/13 19:18:37 jym Exp $
 .\"	$OpenBSD: zlib.3,v 1.1 2003/09/25 09:12:09 jmc Exp $
 .\"
 .\"  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
@@ -47,9 +47,11 @@
 .Fn inflateEnd "z_streamp strm"
 .Ss Advanced functions
 .Ft int
-.Fn deflateInit2 "z_streamp strm" "int level" "int method" "int windowBits" "int memLevel" "int strategy"
+.Fn deflateInit2 "z_streamp strm" "int level" "int method" \
+"int windowBits" "int memLevel" "int strategy"
 .Ft int
-.Fn deflateSetDictionary "z_streamp strm" "const Bytef *dictionary" "uInt dictLength"
+.Fn deflateSetDictionary "z_streamp strm" "const Bytef *dictionary" \
+"uInt dictLength"
 .Ft int
 .Fn deflateCopy "z_streamp dest" "z_streamp source"
 .Ft int
@@ -158,10 +160,7 @@ Checksum functions
 .El
 .Sh BASIC FUNCTIONS
 .Bl -tag -width Ds
-.It Xo
-.Fa const char *
-.Fn zlibVersion "void" ;
-.Xc
+.It Fa const char * Fn zlibVersion "void" ;
 .Pp
 The application can compare
 .Fn zlibVersion
@@ -176,10 +175,7 @@ This check is automatically made by
 .Fn deflateInit
 and
 .Fn inflateInit .
-.It Xo
-.Fa int
-.Fn deflateInit "z_streamp strm" "int level" ;
-.Xc
+.It Fa int Fn deflateInit "z_streamp strm" "int level" ;
 .Pp
 The
 .Fn deflateInit
@@ -229,10 +225,7 @@ is set to null if there is no error message.
 .Fn deflateInit
 does not perform any compression: this will be done by
 .Fn deflate .
-.It Xo
-.Fa int
-.Fn deflate "z_streamp strm" "int flush" ;
-.Xc
+.It Fa int Fn deflate "z_streamp strm" "int flush" ;
 .Pp
 .Fn deflate
 compresses as much data as possible, and stops when the input
@@ -427,10 +420,7 @@ if no progress is possible
 or
 .Fa avail_out
 was zero).
-.It Xo
-.Fa int
-.Fn deflateEnd "z_streamp strm" ;
-.Xc
+.It Fa int Fn deflateEnd "z_streamp strm" ;
 .Pp
 All dynamically allocated data structures for this stream are freed.
 This function discards any unprocessed input and does not flush any
@@ -449,10 +439,7 @@ In the error case,
 .Fa msg
 may be set but then points to a static string
 .Pq which must not be deallocated .
-.It Xo
-.Fa int
-.Fn inflateInit "z_streamp strm" ;
-.Xc
+.It Fa int Fn inflateInit "z_streamp strm" ;
 The
 .Fn inflateInit
 function initializes the internal stream state for decompression.
@@ -514,10 +501,7 @@ but
 and
 .Fa avail_out
 are unchanged.)
-.It Xo
-.Fa int
-.Fn inflate "z_streamp strm" "int flush" ;
-.Xc
+.It Fa int Fn inflate "z_streamp strm" "int flush" ;
 .Fn inflate
 decompresses as much data as possible, and stops when the input
 buffer becomes empty or the output buffer becomes full.
@@ -670,10 +654,7 @@ In the
 case, the application may then call
 .Fn inflateSync
 to look for a good compression block.
-.It Xo
-.Fa int
-.Fn inflateEnd "z_streamp strm" ;
-.Xc
+.It Fa int Fn inflateEnd "z_streamp strm" ;
 All dynamically allocated data structures for this stream are freed.
 This function discards any unprocessed input and does not flush any
 pending output.
@@ -692,10 +673,8 @@ may be set but then points to a static string
 .Sh ADVANCED FUNCTIONS
 The following functions are needed only in some special applications.
 .Bl -tag -width Ds
-.It Xo
-.Fa int
-.Fn deflateInit2 "z_streamp strm" "int level" "int method" "int windowBits" "int memLevel" "int strategy" ;
-.Xc
+.It Fa int Fn deflateInit2 "z_streamp strm" "int level" "int method" \
+"int windowBits" "int memLevel" "int strategy" ;
 .Pp
 This is another version of
 .Fn deflateInit
@@ -782,10 +761,8 @@ is set to null if there is no error message.
 .Fn deflateInit2
 does not perform any compression: this will be done by
 .Fn deflate .
-.It Xo
-.Fa int
-.Fn deflateSetDictionary "z_streamp strm" "const Bytef *dictionary" "uInt dictLength" ;
-.Xc
+.It Fa int Fn deflateSetDictionary "z_streamp strm" \
+"const Bytef *dictionary" "uInt dictLength" ;
 .Pp
 Initializes the compression dictionary from the given byte sequence
 without producing any compressed output.
@@ -842,10 +819,7 @@ has already been called for this stream or if the compression method is bsort).
 .Fn deflateSetDictionary
 does not perform any compression: this will be done by
 .Fn deflate .
-.It Xo
-.Fa int
-.Fn deflateCopy "z_streamp dest" "z_streamp source" ;
-.Xc
+.It Fa int Fn deflateCopy "z_streamp dest" "z_streamp source" ;
 .Pp
 The
 .Fn deflateCopy
@@ -874,10 +848,7 @@ if the source stream state was inconsistent
 being NULL).
 .Fa msg
 is left unchanged in both source and destination.
-.It Xo
-.Fa int
-.Fn deflateReset "z_streamp strm" ;
-.Xc
+.It Fa int Fn deflateReset "z_streamp strm" ;
 .Pp
 This function is equivalent to
 .Fn deflateEnd
@@ -899,10 +870,7 @@ if the source stream state was inconsistent
 or
 .Fa state
 being NULL).
-.It Xo
-.Fa int
-.Fn deflateParams "z_streamp strm" "int level" "int strategy" ;
-.Xc
+.It Fa int Fn deflateParams "z_streamp strm" "int level" "int strategy" ;
 .Pp
 The
 .Fn deflateParams
@@ -933,10 +901,7 @@ if successful,
 if the source stream state was inconsistent or if a parameter was invalid, or
 .Dv Z_BUF_ERROR
 if strm-\*[Gt]avail_out was zero.
-.It Xo
-.Fa int
-.Fn inflateInit2 "z_streamp strm" "int windowBits" ;
-.Xc
+.It Fa int Fn inflateInit2 "z_streamp strm" "int windowBits" ;
 .Pp
 This is another version of
 .Fn inflateInit
@@ -990,10 +955,8 @@ may be modified, but
 and
 .Fa avail_out
 are unchanged.)
-.It Xo
-.Fa int
-.Fn inflateSetDictionary "z_streamp strm" "const Bytef *dictionary" "uInt dictLength" ;
-.Xc
+.It Fa int Fn inflateSetDictionary "z_streamp strm" \
+"const Bytef *dictionary" "uInt dictLength" ;
 .Pp
 Initializes the decompression dictionary from the given uncompressed byte
 sequence.
@@ -1022,10 +985,7 @@ if the given dictionary doesn't match the expected one
 .Fn inflateSetDictionary
 does not perform any decompression: this will be done by subsequent calls of
 .Fn inflate .
-.It Xo
-.Fa int
-.Fn inflateSync "z_streamp strm" ;
-.Xc
+.It Fa int Fn inflateSync "z_streamp strm" ;
 .Pp
 Skips invalid compressed data until a full flush point
 (see above the description of
@@ -1051,10 +1011,7 @@ which indicates where valid compressed data was found.
 In the error case, the application may repeatedly call
 .Fn inflateSync ,
 providing more input each time, until success or end of the input data.
-.It Xo
-.Fa int
-.Fn inflateReset "z_streamp strm" ;
-.Xc
+.It Fa int Fn inflateReset "z_streamp strm" ;
 .Pp
 This function is equivalent to
 .Fn inflateEnd
@@ -1085,10 +1042,8 @@ standard memory allocation functions).
 The source code of these utility functions can easily be modified
 if you need special options.
 .Bl -tag -width Ds
-.It Xo
-.Fa int
-.Fn compress "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen" ;
-.Xc
+.It Fa int Fn compress "Bytef *dest" "uLongf *destLen" \
+"const Bytef *source" "uLong sourceLen" ;
 .Pp
 The
 .Fn compress
@@ -1115,10 +1070,8 @@ if successful,
 if there was not enough memory, or
 .Dv Z_BUF_ERROR
 if there was not enough room in the output buffer.
-.It Xo
-.Fa int
-.Fn compress2 "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen" "int level" ;
-.Xc
+.It Fa int Fn compress2 "Bytef *dest" "uLongf *destLen" \
+"const Bytef *source" "uLong sourceLen" "int level" ;
 .Pp
 The
 .Fn compress2
@@ -1149,10 +1102,8 @@ if there was not enough memory,
 if there was not enough room in the output buffer, or
 .Dv Z_STREAM_ERROR
 if the level parameter is invalid.
-.It Xo
-.Fa int
-.Fn uncompress "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen" ;
-.Xc
+.It Fa int Fn uncompress "Bytef *dest" "uLongf *destLen" \
+"const Bytef *source" "uLong sourceLen" ;
 .Pp
 The
 .Fn uncompress
@@ -1182,10 +1133,7 @@ if there was not enough memory,
 if there was not enough room in the output buffer, or
 .Dv Z_DATA_ERROR
 if the input data was corrupted.
-.It Xo
-.Fa gzFile
-.Fn gzopen "const char *path" "const char *mode" ;
-.Xc
+.It Fa gzFile Fn gzopen "const char *path" "const char *mode" ;
 .Pp
 The
 .Fn gzopen
@@ -1227,10 +1175,7 @@ errno can be checked to distinguish the two cases (if errno is zero, the
 .Nm
 error is
 .Dv Z_MEM_ERROR ) .
-.It Xo
-.Fa gzFile
-.Fn gzdopen "int fd" "const char *mode" ;
-.Xc
+.It Fa gzFile Fn gzdopen "int fd" "const char *mode" ;
 .Pp
 The
 .Fn gzdopen
@@ -1260,10 +1205,7 @@ If you want to keep fd open, use gzdopen(dup(fd), mode).
 returns
 .Dv NULL
 if there was insufficient memory to allocate the (de)compression state.
-.It Xo
-.Fa int
-.Fn gzsetparams "gzFile file" "int level" "int strategy" ;
-.Xc
+.It Fa int Fn gzsetparams "gzFile file" "int level" "int strategy" ;
 .Pp
 The
 .Fn gzsetparams
@@ -1278,10 +1220,7 @@ returns
 if successful, or
 .Dv Z_STREAM_ERROR
 if the file was not opened for writing.
-.It Xo
-.Fa int
-.Fn gzread "gzFile file" "voidp buf" "unsigned len" ;
-.Xc
+.It Fa int Fn gzread "gzFile file" "voidp buf" "unsigned len" ;
 .Pp
 The
 .Fn gzread
@@ -1293,10 +1232,7 @@ copies the given number of bytes into the buffer.
 .Fn gzread
 returns the number of uncompressed bytes actually read
 (0 for end of file, \-1 for error).
-.It Xo
-.Fa int
-.Fn gzwrite "gzFile file" "const voidp buf" "unsigned len" ;
-.Xc
+.It Fa int Fn gzwrite "gzFile file" "const voidp buf" "unsigned len" ;
 .Pp
 The
 .Fn gzwrite
@@ -1304,10 +1240,7 @@ function writes the given number of uncompressed bytes into the compressed file.
 .Fn gzwrite
 returns the number of uncompressed bytes actually written
 .Pq 0 in case of error .
-.It Xo
-.Fa int
-.Fn gzprintf "gzFile file" "const char *format" "..." ;
-.Xc
+.It Fa int Fn gzprintf "gzFile file" "const char *format" "..." ;
 .Pp
 The
 .Fn gzprintf
@@ -1317,10 +1250,7 @@ under control of the format string, as in
 .Fn gzprintf
 returns the number of uncompressed bytes actually written
 .Pq 0 in case of error .
-.It Xo
-.Fa int
-.Fn gzputs "gzFile file" "const char *s" ;
-.Xc
+.It Fa int Fn gzputs "gzFile file" "const char *s" ;
 .Pp
 The
 .Fn gzputs
@@ -1329,10 +1259,7 @@ excluding the terminating null character.
 .Pp
 .Fn gzputs
 returns the number of characters written, or \-1 in case of error.
-.It Xo
-.Fa char *
-.Fn gzgets "gzFile file" "char *buf" "int len" ;
-.Xc
+.It Fa char * Fn gzgets "gzFile file" "char *buf" "int len" ;
 .Pp
 The
 .Fn gzgets
@@ -1348,10 +1275,7 @@ returns
 or
 .Dv Z_NULL
 in case of error.
-.It Xo
-.Fa int
-.Fn gzputc "gzFile file" "int c" ;
-.Xc
+.It Fa int Fn gzputc "gzFile file" "int c" ;
 .Pp
 The
 .Fn gzputc
@@ -1360,20 +1284,14 @@ function writes
 converted to an unsigned char, into the compressed file.
 .Fn gzputc
 returns the value that was written, or \-1 in case of error.
-.It Xo
-.Fa int
-.Fn gzgetc "gzFile file" ;
-.Xc
+.It Fa int Fn gzgetc "gzFile file" ;
 .Pp
 The
 .Fn gzgetc
 function reads one byte from the compressed file.
 .Fn gzgetc
 returns this byte or \-1 in case of end of file or error.
-.It Xo
-.Fa int
-.Fn gzflush "gzFile file" "int flush" ;
-.Xc
+.It Fa int Fn gzflush "gzFile file" "int flush" ;
 .Pp
 The
 .Fn gzflush
@@ -1398,10 +1316,7 @@ and all output could be flushed.
 .Fn gzflush
 should be called only when strictly necessary because it can
 degrade compression.
-.It Xo
-.Fa z_off_t
-.Fn gzseek "gzFile file" "z_off_t offset" "int whence" ;
-.Xc
+.It Fa z_off_t Fn gzseek "gzFile file" "z_off_t offset" "int whence" ;
 .Pp
 Sets the starting position for the next
 .Fn gzread
@@ -1426,10 +1341,7 @@ returns the resulting offset location as measured in bytes from
 the beginning of the uncompressed stream, or \-1 in case of error,
 in particular if the file is opened for writing and the new starting position
 would be before the current position.
-.It Xo
-.Fa int
-.Fn gzrewind "gzFile file" ;
-.Xc
+.It Fa int Fn gzrewind "gzFile file" ;
 .Pp
 The
 .Fn gzrewind
@@ -1438,10 +1350,7 @@ function rewinds the given
 This function is supported only for reading.
 .Pp
 gzrewind(file) is equivalent to (int)gzseek(file, 0L, SEEK_SET).
-.It Xo
-.Fa z_off_t
-.Fn gztell "gzFile file" ;
-.Xc
+.It Fa z_off_t Fn gztell "gzFile file" ;
 .Pp
 The
 .Fn gztell
@@ -1453,20 +1362,14 @@ on the given compressed file.
 This position represents a number of bytes in the uncompressed data stream.
 .Pp
 gztell(file) is equivalent to gzseek(file, 0L, SEEK_CUR).
-.It Xo
-.Fa int
-.Fn gzeof "gzFile file" ;
-.Xc
+.It Fa int Fn gzeof "gzFile file" ;
 .Pp
 The
 .Fn gzeof
 function returns 1 when
 .Dv EOF
 has previously been detected reading the given input stream, otherwise zero.
-.It Xo
-.Fa int
-.Fn gzclose "gzFile file" ;
-.Xc
+.It Fa int Fn gzclose "gzFile file" ;
 .Pp
 The
 .Fn gzclose
@@ -1477,10 +1380,7 @@ The return value is the
 error number (see function
 .Fn gzerror
 below).
-.It Xo
-.Fa const char *
-.Fn gzerror "gzFile file" "int *errnum" ;
-.Xc
+.It Fa const char * Fn gzerror "gzFile file" "int *errnum" ;
 .Pp
 The
 .Fn gzerror
@@ -1502,10 +1402,7 @@ These functions are not related to compression but are exported
 anyway because they might be useful in applications using the
 compression library.
 .Bl -tag -width Ds
-.It Xo
-.Fa uLong
-.Fn adler32 "uLong adler" "const Bytef *buf" "uInt len" ;
-.Xc
+.It Fa uLong Fn adler32 "uLong adler" "const Bytef *buf" "uInt len" ;
 The
 .Fn adler32
 function updates a running Adler-32 checksum with the bytes buf[0..len-1]
@@ -1527,10 +1424,7 @@ adler = adler32(adler, buffer, length);
 }
 if (adler != original_adler) error();
 .Ed
-.It Xo
-.Fa uLong
-.Fn crc32 "uLong crc" "const Bytef *buf" "uInt len" ;
-.Xc
+.It Fa uLong Fn crc32 "uLong crc" "const Bytef *buf" "uInt len" ;
 The
 .Fn crc32
 function updates a running CRC with the bytes buf[0..len-1]
@@ -1713,43 +1607,18 @@ deflateInit and inflateInit are macros to allow checking the
 version and the compiler's view of
 .Fa z_stream .
 .Bl -tag -width Ds
-.It Xo
-.Fa int
-.Fn deflateInit_ "z_stream strm" "int level" "const char *version" "int stream_size" ;
-.Xc
-.It Xo
-.Fa int
-.Fn inflateInit_ "z_stream strm" "const char *version" "int stream_size" ;
-.Xc
-.It Xo
-.Fa int
-.Fo deflateInit2_
-.Fa "z_stream strm"
-.Fa "int level"
-.Fa "int method"
-.Fa "int windowBits"
-.Fa "int memLevel"
-.Fa "int strategy"
-.Fa "const char *version"
-.Fa "int stream_size"
-.Fc
-.Xc
-.It Xo
-.Fa int
-.Fn inflateInit2_ "z_stream strm" "int windowBits" "const char *version" "int stream_size" ;
-.Xc
-.It Xo
-.Fa const char *
-.Fn zError "int err" ;
-.Xc
-.It Xo
-.Fa int
-.Fn inflateSyncPoint "z_streamp z" ;
-.Xc
-.It Xo
-.Fa const uLongf *
-.Fn "get_crc_table" "void" ;
-.Xc
+.It Fa int Fn deflateInit_ "z_stream strm" "int level" \
+"const char *version" "int stream_size" ;
+.It Fa int Fn inflateInit_ "z_stream strm" "const char *version" \
+"int stream_size" ;
+.It Fa int Fn deflateInit2_ "z_stream strm" "int level" "int method" \
+"int windowBits" "int memLevel" "int strategy" "const char *version" \
+"int stream_size" ;
+.It Fa int Fn inflateInit2_ "z_stream strm" "int windowBits" \
+"const char *version" "int stream_size" ;
+.It Fa const char * Fn zError "int err" ;
+.It Fa int Fn inflateSyncPoint "z_streamp z" ;
+.It Fa const uLongf * Fn "get_crc_table" "void" ;
 .El
 .Sh SEE ALSO
 .Bl -tag -width 12n -compact

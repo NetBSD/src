@@ -1,4 +1,4 @@
-/*	$NetBSD: elf32.c,v 1.7 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: elf32.c,v 1.7.8.1 2009/05/13 19:20:28 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: elf32.c,v 1.7 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: elf32.c,v 1.7.8.1 2009/05/13 19:20:28 jym Exp $");
 #endif
 
 #ifndef ELFSIZE
@@ -168,7 +168,8 @@ NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 {
 	static int lastptr[FIND_MAX];
 	uintptr_t sa, ea;
-	int i, rv, st, off;
+	int i, rv, off;
+	Elf_Byte st;
 
 	switch (find) {
 	case LOCK_BYNAME:

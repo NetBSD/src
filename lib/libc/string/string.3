@@ -28,12 +28,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)string.3	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: string.3,v 1.15 2007/02/17 09:32:58 wiz Exp $
+.\"	$NetBSD: string.3,v 1.15.22.1 2009/05/13 19:18:27 jym Exp $
 .\"
-.Dd February 17, 2007
+.Dd May 1, 2009
 .Dt STRING 3
 .Os
 .Sh NAME
+.Nm stpcpy ,
+.Nm stpncpy ,
 .Nm strcat ,
 .Nm strlcat ,
 .Nm strncat ,
@@ -41,6 +43,8 @@
 .Nm strrchr ,
 .Nm strcmp ,
 .Nm strncmp ,
+.Nm strcasecmp ,
+.Nm strncasecmp ,
 .Nm strcoll ,
 .Nm strcpy ,
 .Nm strlcpy ,
@@ -48,6 +52,7 @@
 .Nm strerror ,
 .Nm strerror_r ,
 .Nm strlen ,
+.Nm strnlen ,
 .Nm strpbrk ,
 .Nm strsep ,
 .Nm stresep ,
@@ -66,6 +71,10 @@
 .Sh SYNOPSIS
 .In string.h
 .Ft char *
+.Fn stpcpy "char *dst" "const char *src"
+.Ft char *
+.Fn stpncpy "char *dst" "const char *src" "size_t count"
+.Ft char *
 .Fn strcat "char *s" "const char * append"
 .Ft size_t
 .Fn strlcat "char *dst" "const char *src" "size_t size"
@@ -80,6 +89,10 @@
 .Ft int
 .Fn strncmp "const char *s1" "const char *s2" "size_t count"
 .Ft int
+.Fn strcasecmp "const char *s1" "const char *s2"
+.Ft int
+.Fn strncasecmp "const char *s1" "const char *s2" "size_t count"
+.Ft int
 .Fn strcoll "const char *s1" "const char *s2"
 .Ft char *
 .Fn strcpy "char *dst" "const char *src"
@@ -93,6 +106,8 @@
 .Fn strerror_r "int errnum" "char *strerrbuf" "size_t buflen"
 .Ft size_t
 .Fn strlen "const char *s"
+.Ft size_t
+.Fn strnlen "const char *s" "size_t count"
 .Ft char *
 .Fn strpbrk "const char *s" "const char *charset"
 .Ft char *

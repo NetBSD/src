@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.18 2009/01/24 22:14:45 rmind Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.18.2.1 2009/05/13 19:19:16 jym Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -96,6 +96,9 @@ lint: ${LOBJS}
 .endif
 
 ##### Pull in related .mk logic
+LINKSOWN?= ${KMODULEOWN}
+LINKSGRP?= ${KMODULEGRP}
+LINKSMODE?= ${KMODULEMODE}
 .include <bsd.man.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>

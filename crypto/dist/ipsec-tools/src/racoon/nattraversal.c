@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.8 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.8.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -127,10 +127,14 @@ natt_hash_addr (struct ph1handle *iph1, struct sockaddr *addr)
   char *ptr;
   void *addr_ptr, *addr_port;
   size_t buf_size, addr_size;
+  int natt_force = 0;
+
+  if (iph1->rmconf != NULL && iph1->rmconf->nat_traversal == NATT_FORCE)
+	  natt_force = 1;
 
   plog (LLV_INFO, LOCATION, addr, "Hashing %s with algo #%d %s\n",
 	saddr2str(addr), iph1->approval->hashtype, 
-	(iph1->rmconf->nat_traversal == NATT_FORCE)?"(NAT-T forced)":"");
+	natt_force?"(NAT-T forced)":"");
   
   if (addr->sa_family == AF_INET) {
     addr_size = sizeof (struct in_addr);	/* IPv4 address */
@@ -164,7 +168,7 @@ natt_hash_addr (struct ph1handle *iph1, struct sockaddr *addr)
   ptr += sizeof (cookie_t);
   
   /* Copy-in Address (or zeroes if NATT_FORCE) */
-  if (iph1->rmconf->nat_traversal == NATT_FORCE)
+  if (natt_force)
     memset (ptr, 0, addr_size);
   else
     memcpy (ptr, addr_ptr, addr_size);
@@ -187,7 +191,8 @@ natt_compare_addr_hash (struct ph1handle *iph1, vchar_t *natd_received,
   u_int32_t flag;
   int verified = 0;
 
-  if (iph1->rmconf->nat_traversal == NATT_FORCE)
+  if (iph1->rmconf != NULL &&
+      iph1->rmconf->nat_traversal == NATT_FORCE)
     return verified;
 
   if (natd_seq == 0) {
@@ -320,6 +325,15 @@ natt_handle_vendorid (struct ph1handle *iph1, int vid_numeric)
       iph1->natt_flags |= NAT_ANNOUNCED;
 }
 
+static void
+natt_keepalive_delete (struct natt_ka_addrs *ka)
+{
+  TAILQ_REMOVE (&ka_tree, ka, chain);
+  racoon_free (ka->src);
+  racoon_free (ka->dst);
+  racoon_free (ka);
+}
+
 /* NAT keepalive functions */
 static void
 natt_keepalive_send (struct sched *param)
@@ -334,8 +348,7 @@ natt_keepalive_send (struct sched *param)
     
     s = myaddr_getfd(ka->src);
     if (s == -1) {
-      TAILQ_REMOVE (&ka_tree, ka, chain);
-      racoon_free (ka);
+      natt_keepalive_delete(ka);
       continue;
     }
     plog (LLV_DEBUG, LOCATION, NULL, "KA: %s\n", 
@@ -436,8 +449,7 @@ natt_keepalive_remove (struct sockaddr *src, struct sockaddr *dst)
 
       plog (LLV_DEBUG, LOCATION, NULL, "KA removing this one...\n");
 
-      TAILQ_REMOVE (&ka_tree, ka, chain);
-      racoon_free (ka);
+      natt_keepalive_delete (ka);
       /* Should we break here? Every pair of addresses should 
          be inserted only once, but who knows :-) Lets traverse 
 	 the whole list... */
@@ -445,16 +457,16 @@ natt_keepalive_remove (struct sockaddr *src, struct sockaddr *dst)
   }
 }
 
-static struct remoteconf *
+static int
 natt_enabled_in_rmconf_stub (struct remoteconf *rmconf, void *data)
 {
-  return (rmconf->nat_traversal ? rmconf : NULL);
+  return rmconf->nat_traversal ? 1 : 0;
 }
 
 int
 natt_enabled_in_rmconf ()
 {
-  return foreachrmconf (natt_enabled_in_rmconf_stub, NULL) != NULL;
+  return enumrmconf(NULL, natt_enabled_in_rmconf_stub, NULL) != 0;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.33 2008/08/08 02:54:06 simonb Exp $	*/
+/*	$NetBSD: menus.mi,v 1.33.4.1 2009/05/13 19:17:55 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,8 +131,6 @@ menu mountoptions, title MSG_toggle, y=5, x=30, exitstring MSG_unchanged;
 		menu->numopts = actual_numopt - 
 			(((partinfo *)arg)->pi_fstype !=  FS_BSDFFS);
 	};
-	option "softdep", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_SOFTDEP; };
 	option "log", exit, action
 		{ ((partinfo *)arg)->pi_flags ^= PIF_LOG; };
 	option "async", exit, action
@@ -347,19 +345,10 @@ menu localdirsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 		action { src_prompt(MSG_Set_dir, set_dir, 60); };
 
 menu namesrv6, title MSG_Select_IPv6_DNS_server;
-	option "ns9.iij.ad.jp", exit, action
-		{
-#ifdef INET6
-		  strlcpy(net_namesvr6, "2001:240::1", sizeof(net_namesvr6));
-		  yesno = 1;
-#else
-		  yesno = 0;
-#endif
-		}; 
 	option "ns-wide.wide.ad.jp", exit, action
 		{
 #ifdef INET6
-		  strlcpy(net_namesvr6, "2001:200:0:1::3", sizeof(net_namesvr6));
+		  strlcpy(net_namesvr6, "2001:200:0:1::f", sizeof(net_namesvr6));
 		  yesno = 1;
 #else
 		  yesno = 0;
@@ -368,7 +357,7 @@ menu namesrv6, title MSG_Select_IPv6_DNS_server;
 	option "light.imasy.or.jp", exit, action
 		{
 #ifdef INET6
-		  strlcpy(net_namesvr6, "3ffe:505:0:1:2a0:c9ff:fe61:6521",
+		  strlcpy(net_namesvr6, "2001:200:300:1:2a0:c9ff:fe61:6521",
 		      sizeof(net_namesvr6));
 		  yesno = 1;
 #else

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.31 2008/04/06 23:38:19 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.157 2007/09/25 23:48:57 canacar Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.31.10.1 2009/05/13 19:15:58 jym Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.159 2008/06/28 14:05:15 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.31 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.31.10.1 2009/05/13 19:15:58 jym Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -302,6 +302,7 @@ process_sign_request2(SocketEntry *e)
 	u_char *blob, *data, *signature = NULL;
 	u_int blen, dlen, slen = 0;
 	extern int datafellows;
+	int odatafellows;
 	int ok = -1, flags;
 	Buffer msg;
 	Key *key;
@@ -312,6 +313,7 @@ process_sign_request2(SocketEntry *e)
 	data = buffer_get_string(&e->request, &dlen);
 
 	flags = buffer_get_int(&e->request);
+	odatafellows = datafellows;
 	if (flags & SSH_AGENT_OLD_SIGNATURE)
 		datafellows = SSH_BUG_SIGBLOB;
 
@@ -337,6 +339,7 @@ process_sign_request2(SocketEntry *e)
 	xfree(blob);
 	if (signature != NULL)
 		xfree(signature);
+	datafellows = odatafellows;
 }
 
 /* shared */
@@ -515,9 +518,8 @@ process_add_identity(SocketEntry *e, int version)
 		xfree(comment);
 		goto send;
 	}
-	success = 1;
 	while (buffer_len(&e->request)) {
-		switch (buffer_get_char(&e->request)) {
+		switch ((type = buffer_get_char(&e->request))) {
 		case SSH_AGENT_CONSTRAIN_LIFETIME:
 			death = time(NULL) + buffer_get_int(&e->request);
 			break;
@@ -525,9 +527,14 @@ process_add_identity(SocketEntry *e, int version)
 			confirm = 1;
 			break;
 		default:
-			break;
+			error("process_add_identity: "
+			    "Unknown constraint type %d", type);
+			xfree(comment);
+			key_free(k);
+			goto send;
 		}
 	}
+	success = 1;
 	if (lifetime && !death)
 		death = time(NULL) + lifetime;
 	if ((id = lookup_identity(k, version)) == NULL) {
@@ -593,10 +600,10 @@ no_identities(SocketEntry *e, u_int type)
 
 #ifdef SMARTCARD
 static void
-process_add_smartcard_key (SocketEntry *e)
+process_add_smartcard_key(SocketEntry *e)
 {
 	char *sc_reader_id = NULL, *pin;
-	int i, version, success = 0, death = 0, confirm = 0;
+	int i, type, version, success = 0, death = 0, confirm = 0;
 	Key **keys, *k;
 	Identity *id;
 	Idtab *tab;
@@ -605,7 +612,7 @@ process_add_smartcard_key (SocketEntry *e)
 	pin = buffer_get_string(&e->request, NULL);
 
 	while (buffer_len(&e->request)) {
-		switch (buffer_get_char(&e->request)) {
+		switch ((type = buffer_get_char(&e->request))) {
 		case SSH_AGENT_CONSTRAIN_LIFETIME:
 			death = time(NULL) + buffer_get_int(&e->request);
 			break;
@@ -613,7 +620,11 @@ process_add_smartcard_key (SocketEntry *e)
 			confirm = 1;
 			break;
 		default:
-			break;
+			error("process_add_smartcard_key: "
+			    "Unknown constraint type %d", type);
+			xfree(sc_reader_id);
+			xfree(pin);
+			goto send;
 		}
 	}
 	if (lifetime && !death)

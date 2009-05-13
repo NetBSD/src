@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.16 2007/03/10 01:21:08 hubertf Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.16.20.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.16 2007/03/10 01:21:08 hubertf Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.16.20.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,8 @@ main(int argc, char *argv[])
 	FILE	*data_file;
 	size_t	 line_no;
 	size_t	 len;
-	char	*fname, *p;
+	const char *fname;
+	char	*p;
 	char	 hostname[MAXHOSTNAMELEN + 1];
 
 	if (argc > 2)

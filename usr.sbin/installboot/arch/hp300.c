@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.10 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: hp300.c,v 1.10.8.1 2009/05/13 19:20:24 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.10 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.10.8.1 2009/05/13 19:20:24 jym Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -137,7 +137,7 @@ hp300_setboot(ib_params *params)
 		 * Maybe we ought to be able to take a binary file and add
 		 * it to the LIF filesystem.
 		 */
-		if (boot_size < params->s1stat.st_size) {
+		if (boot_size < (uint64_t)params->s1stat.st_size) {
 			warn("BOOT partition too small (%llu < %llu)",
 				(unsigned long long)boot_size,
 				(unsigned long long)params->s1stat.st_size);
@@ -155,11 +155,12 @@ hp300_setboot(ib_params *params)
 	/* Relocate files, sanity check LIF directory on the way */
 	lifdir = (void *)(bootstrap + HP300_SECTSIZE * 2);
 	for (i = 0; i < 8; lifdir++, i++) {
-		int addr = be32toh(lifdir->dir_addr);
-		int limit = (params->s1stat.st_size - 1) / HP300_SECTSIZE + 1;
-		if (addr + be32toh(lifdir->dir_length) > limit) {
+		int32_t addr = be32toh(lifdir->dir_addr);
+		int32_t limit = (params->s1stat.st_size - 1) / HP300_SECTSIZE + 1;
+		int32_t end = addr + be32toh(lifdir->dir_length);
+		if (end > limit) {
 			warnx("LIF entry %d larger (%d %d) than LIF file",
-				i,  addr + be32toh(lifdir->dir_length), limit);
+				i, end, limit);
 			goto done;
 		}
 		if (addr != 0 && boot_offset != 0)

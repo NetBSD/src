@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/12/12 12:24:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.15.44.1 2009/05/13 19:19:57 jym Exp $
 
 NOMAN=	# defined
 
@@ -13,7 +13,6 @@ PROG=	testm
 SRCS=	msg_defs.c menu_defs.c main.c
 CFLAGS+=-g
 CPPFLAGS+=-I.
-WARNS=	1
 LDADD+=	-lcurses -ltermcap
 DPADD+=	${LIBCURSES}
 

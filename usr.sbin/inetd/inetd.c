@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.110 2009/01/08 21:37:20 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.110.2.1 2009/05/13 19:20:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.110 2009/01/08 21:37:20 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.110.2.1 2009/05/13 19:20:23 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -1147,7 +1147,7 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	    (intptr_t)sep);
 	if (sep->se_fd > maxsock) {
 		maxsock = sep->se_fd;
-		if (maxsock > rlim_ofile_cur - FD_MARGIN)
+		if (maxsock > (int)(rlim_ofile_cur - FD_MARGIN))
 			bump_nofile();
 	}
 	if (debug)

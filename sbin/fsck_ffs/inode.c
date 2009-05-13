@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.61 2008/10/09 16:56:23 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.61.4.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.61 2008/10/09 16:56:23 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.61.4.1 2009/05/13 19:19:01 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	ilevel--;
 	for (sizepb = sblock->fs_bsize, i = 0; i < ilevel; i++)
 		sizepb *= NINDIR(sblock);
-	if (howmany(isize, sizepb) > NINDIR(sblock))
+	if (howmany(isize, sizepb) > (size_t)NINDIR(sblock))
 		nif = NINDIR(sblock);
 	else
 		nif = howmany(isize, sizepb);
@@ -356,7 +356,7 @@ swap_dinode1(union dinode *dp, int n)
 		if (((iswap16(dp1->di_mode) & IFMT) != IFLNK) ||
 		    doinglevel2 ||
 		    (maxsymlinklen < 0) ||
-		    (iswap64(dp1->di_size) > maxsymlinklen)) {
+		    (iswap64(dp1->di_size) > (uint64_t)maxsymlinklen)) {
 			for (j = 0; j < (NDADDR + NIADDR); j++)
 			    dp1->di_db[j] = bswap32(dp1->di_db[j]);
 		}
@@ -477,8 +477,7 @@ cacheino(union dinode *dp, ino_t inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp, **ninpsort;
-	unsigned int blks, extra;
-	int i;
+	unsigned int i, blks, extra;
 	int64_t size;
 
 	size = iswap64(DIP(dp, size));
@@ -717,7 +716,7 @@ allocino(ino_t request, int type)
 		return (0);
 	cg = ino_to_cg(sblock, ino);
 	/* If necessary, extend the inoinfo array. grow exponentially */
-	if ((ino % sblock->fs_ipg) >= inostathead[cg].il_numalloced) {
+	if ((ino % sblock->fs_ipg) >= (uint64_t)inostathead[cg].il_numalloced) {
 		unsigned long newalloced, i;
 		newalloced = MIN(sblock->fs_ipg,
 			MAX(2 * inostathead[cg].il_numalloced, 10));

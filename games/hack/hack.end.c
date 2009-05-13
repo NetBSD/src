@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.9 2008/01/28 06:55:41 dholland Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.9.12.1 2009/05/13 19:18:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.9 2008/01/28 06:55:41 dholland Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.9.12.1 2009/05/13 19:18:04 jym Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -360,7 +360,7 @@ topten()
 	(t0->name)[NAMSZ] = 0;
 	(void) strncpy(t0->death, killer, DTHSZ);
 	(t0->death)[DTHSZ] = 0;
-	(void) strcpy(t0->date, getdate());
+	(void) strcpy(t0->date, getdatestr());
 
 	/* assure minimum number of points */
 	if (t0->points < POINTSMIN)

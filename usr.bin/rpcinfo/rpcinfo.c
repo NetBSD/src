@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.27 2008/02/13 16:15:18 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.27.12.1 2009/05/13 19:20:03 jym Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -481,7 +481,7 @@ pmapdump(argc, argv)
 {
 	struct sockaddr_in server_addr;
 	struct pmaplist *head = NULL;
-	int socket = RPC_ANYSOCK;
+	int sock = RPC_ANYSOCK;
 	struct timeval minutetimeout;
 	register CLIENT *client;
 	struct rpcent *rpc;
@@ -498,7 +498,7 @@ pmapdump(argc, argv)
 		get_inet_address(&server_addr, host);
 		server_addr.sin_port = htons(PMAPPORT);
 		client = clnttcp_create(&server_addr, PMAPPROG, PMAPVERS,
-		    &socket, 50, 500);
+		    &sock, 50, 500);
 	} else
 		client = local_rpcb(PMAPPROG, PMAPVERS);
 
@@ -866,14 +866,14 @@ failed:
 		printf(
 "   program version(s) netid(s)                         service     owner\n");
 		for (rs = rs_head; rs; rs = rs->next) {
-			char *p = buf;
+			char *bp = buf;
 
 			printf("%10ld  ", rs->prog);
 			for (vl = rs->vlist; vl; vl = vl->next) {
-				sprintf(p, "%d", vl->vers);
-				p = p + strlen(p);
+				sprintf(bp, "%d", vl->vers);
+				bp = bp + strlen(bp);
 				if (vl->next)
-					sprintf(p++, ",");
+					sprintf(bp++, ",");
 			}
 			printf("%-10s", buf);
 			buf[0] = 0;

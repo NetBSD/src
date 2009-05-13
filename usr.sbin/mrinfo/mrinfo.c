@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.26 2007/02/22 01:29:35 hubertf Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.26.20.1 2009/05/13 19:20:30 jym Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.26 2007/02/22 01:29:35 hubertf Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.26.20.1 2009/05/13 19:20:30 jym Exp $");
 #endif
 #endif
 
@@ -105,7 +105,7 @@ int	target_level = 0;
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see COPY_TABLES macro called in kern.c) */
 
-char *			inet_name(u_int32_t addr);
+const char *		inet_name(u_int32_t addr);
 void			ask(u_int32_t dst);
 void			ask2(u_int32_t dst);
 int			get_number(int *var, int deflt, char ***pargv,
@@ -118,7 +118,7 @@ int			main(int argc, char *argv[]);
 /* logit() prototyped in defs.h */
 
 
-char   *
+const char *
 inet_name(u_int32_t addr)
 {
 	struct hostent *e;
@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 	struct timeval et;
 	struct hostent *hp;
 	struct hostent bogus;
-	char *host;
+	const char *host;
 	int curaddr;
 
 	if (geteuid() != 0) {
@@ -364,7 +364,7 @@ main(int argc, char *argv[])
 	else
 		host = "127.0.0.1";
 
-	if ((target_addr = inet_addr(host)) != -1) {
+	if ((target_addr = inet_addr(host)) != (in_addr_t)-1) {
 		hp = &bogus;
 		hp->h_length = sizeof(target_addr);
 		hp->h_addr_list = (char **)malloc(2 * sizeof(char *));
@@ -479,7 +479,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		if (recvlen < sizeof(struct ip)) {
+		if (recvlen < (int)sizeof(struct ip)) {
 			logit(LOG_WARNING, 0,
 			    "packet too short (%u bytes) for IP header",
 			    recvlen);

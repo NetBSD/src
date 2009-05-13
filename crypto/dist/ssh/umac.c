@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.c,v 1.5 2008/04/20 15:01:14 martin Exp $	*/
-/* $OpenBSD: umac.c,v 1.2 2007/09/12 19:39:19 stevesk Exp $ */
+/*	$NetBSD: umac.c,v 1.5.8.1 2009/05/13 19:15:59 jym Exp $	*/
+/* $OpenBSD: umac.c,v 1.3 2008/05/12 20:52:20 pvalchev Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.c -- C Implementation UMAC Message Authentication
@@ -65,7 +65,7 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.5 2008/04/20 15:01:14 martin Exp $");
+__RCSID("$NetBSD: umac.c,v 1.5.8.1 2009/05/13 19:15:59 jym Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 
@@ -1051,7 +1051,8 @@ static int uhash_update(uhash_ctx_t ctx, u_char *input, long len)
  */
 {
     UWORD bytes_hashed, bytes_remaining;
-    UINT8 nh_result[STREAMS*sizeof(UINT64)];
+    UINT64 result_buf[STREAMS];
+    UINT8 *nh_result = (UINT8 *)&result_buf;
     
     if (ctx->msg_len + len <= L1_KEY_LEN) {
         nh_update(&ctx->hash, (UINT8 *)input, len);
@@ -1103,7 +1104,8 @@ static int uhash_update(uhash_ctx_t ctx, u_char *input, long len)
 static int uhash_final(uhash_ctx_t ctx, u_char *res)
 /* Incorporate any pending data, pad, and generate tag */
 {
-    UINT8 nh_result[STREAMS*sizeof(UINT64)];
+    UINT64 result_buf[STREAMS];
+    UINT8 *nh_result = (UINT8 *)&result_buf;
 
     if (ctx->msg_len > L1_KEY_LEN) {
         if (ctx->msg_len % L1_KEY_LEN) {

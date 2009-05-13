@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_put.c,v 1.18 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: bt_put.c,v 1.18.8.1 2009/05/13 19:18:22 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_put.c,v 1.18 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: bt_put.c,v 1.18.8.1 2009/05/13 19:18:22 jym Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -202,7 +202,7 @@ delete:		if (__bt_dleaf(t, key, h, (u_int)idx) == RET_ERROR) {
 	 * into the offset array, shift the pointers up.
 	 */
 	nbytes = NBLEAFDBT(key->size, data->size);
-	if (h->upper - h->lower < nbytes + sizeof(indx_t)) {
+	if ((uint32_t)h->upper - (uint32_t)h->lower < nbytes + sizeof(indx_t)) {
 		if ((status = __bt_split(t, h, key,
 		    data, dflags, nbytes, (u_int)idx)) != RET_SUCCESS)
 			return (status);
@@ -283,7 +283,7 @@ bt_fast(BTREE *t, const DBT *key, const DBT *data, int *exactp)
 	 * have to search to get split stack.
 	 */
 	nbytes = NBLEAFDBT(key->size, data->size);
-	if (h->upper - h->lower < nbytes + sizeof(indx_t))
+	if ((uint32_t)h->upper - (uint32_t)h->lower < nbytes + sizeof(indx_t))
 		goto miss;
 
 	if (t->bt_order == FORWARD) {

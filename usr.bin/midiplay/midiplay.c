@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.26 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.26.8.1 2009/05/13 19:19:57 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.26 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.26.8.1 2009/05/13 19:19:57 jym Exp $");
 #endif
 
 
@@ -72,7 +72,7 @@ struct track {
 #define META_SMPTE	0x54
 #define META_TIMESIGN	0x58
 
-char *metanames[] = { 
+const char *metanames[] = { 
 	"", "Text", "Copyright", "Track", "Instrument", 
 	"Lyric", "Marker", "Cue",
 };
@@ -88,8 +88,8 @@ void midireset(void);
 void send_sysex(u_char *, u_int);
 u_long getvar(struct track *);
 u_long getlen(struct track *);
-void playfile(FILE *, char *);
-void playdata(u_char *, u_int, char *);
+void playfile(FILE *, const char *);
+void playdata(u_char *, u_int, const char *);
 int main(int argc, char **argv);
 
 void Heapify(struct track *, int, int);
@@ -350,7 +350,7 @@ send_sysex(u_char *p, u_int l)
 }
 
 void
-playfile(FILE *f, char *name)
+playfile(FILE *f, const char *name)
 {
 	u_char *buf, *nbuf;
 	u_int tot, n, size, nread;
@@ -385,7 +385,7 @@ playfile(FILE *f, char *name)
 }
 
 void
-playdata(u_char *buf, u_int tot, char *name)
+playdata(u_char *buf, u_int tot, const char *name)
 {
 	int format, ntrks, divfmt, ticks, t;
 	u_int len, mlen, status, chan;
@@ -406,7 +406,7 @@ playdata(u_char *buf, u_int tot, char *name)
 		u_char *eod;
 		/* Detected a RMID file, let's just check if it's
 		 * a MIDI file */
-		if (GET32_LE(buf + MARK_LEN) != tot - 8) {
+		if ((u_int)GET32_LE(buf + MARK_LEN) != tot - 8) {
 			warnx("Not a RMID file, bad header");
 			return;
 		}

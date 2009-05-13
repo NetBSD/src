@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.9 2007/09/08 15:34:23 pooka Exp $ 
+ *	$Id: trace.c,v 1.9.14.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -131,8 +131,8 @@ main(int argc, char *argv[])
 	int c;
 	char *b;
 
-	char *outfile = TRACE_FILE_NAME;
-	char *binfile = BIN_FILE_NAME;
+	const char *outfile = TRACE_FILE_NAME;
+	const char *binfile = BIN_FILE_NAME;
 	int outfileset = 0;
 	int raw = 1;
 	int noct = -1;
@@ -405,7 +405,7 @@ main(int argc, char *argv[])
 
 			if (Bopt)
 			{
-				if ((fwrite(buf, 1, n, BP)) != n)
+				if ((int)(fwrite(buf, 1, n, BP)) != n)
 				{
 					snprintf(buffer, sizeof(buffer),
 					    "Error writing file [%s]",
@@ -548,7 +548,7 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
  *	decode protocol and output to file(s)
  *---------------------------------------------------------------------------*/
 static void
-dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
+dumpbuf(int n, unsigned char *dbuf, struct i4b_trace_hdr *hdr, int raw)
 {
 	static char l1buf[128];
 	static unsigned char l2buf[32000];
@@ -572,7 +572,7 @@ dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
 			
 		pbuf = &l1buf[0];
 
-		switch (buf[0])
+		switch (dbuf[0])
 		{
 		case INFO0:
 			sprintf((pbuf+strlen(pbuf)),"I430: INFO0 (No Signal)\n");
@@ -603,29 +603,29 @@ dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
 			break;
 
 		default:
-			sprintf((pbuf+strlen(pbuf)),"I430: ERROR, invalid INFO value 0x%x!\n", buf[0]);
+			sprintf((pbuf+strlen(pbuf)),"I430: ERROR, invalid INFO value 0x%x!\n", dbuf[0]);
 			break;
 		}
 		break;
 		
 	case TRC_CH_D:		/* D-channel data */
 
-		cnt = decode_lapd(l2buf, n, buf, hdr->dir, raw, print_q921);
+		cnt = decode_lapd(l2buf, n, dbuf, hdr->dir, raw, print_q921);
 	
 		n -= cnt;
-		buf += cnt;
+		dbuf += cnt;
 	
 		if (n)
 		{
-			switch (*buf)
+			switch (*dbuf)
 			{
 			case 0x40:
 			case 0x41:
-				decode_1tr6(l3buf, n, cnt, buf, raw);
+				decode_1tr6(l3buf, n, cnt, dbuf, raw);
 				break;
 				
 			case 0x08:
-				decode_q931(l3buf, n, cnt, buf, raw);
+				decode_q931(l3buf, n, cnt, dbuf, raw);
 				break;
 
 			default:
@@ -636,7 +636,7 @@ dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
 				}
 				else
 				{	
-					decode_unknownl3(l3buf, n, cnt, buf, raw);
+					decode_unknownl3(l3buf, n, cnt, dbuf, raw);
 				}
 				break;
 			}
@@ -653,15 +653,15 @@ dumpbuf(int n, unsigned char *buf, struct i4b_trace_hdr *hdr, int raw)
 
 			for (j = 0; j < 16; j++)
 				if (i + j < n)
-					sprintf((pbuf+strlen(pbuf)),"%02x ", buf[i + j]);
+					sprintf((pbuf+strlen(pbuf)),"%02x ", dbuf[i + j]);
 				else
 					sprintf((pbuf+strlen(pbuf)),"   ");
 
 			sprintf((pbuf+strlen(pbuf)),"      ");
 
 			for (j = 0; j < 16 && i + j < n; j++)
-				if (isprint(buf[i + j]))
-					sprintf((pbuf+strlen(pbuf)),"%c", buf[i + j]);
+				if (isprint(dbuf[i + j]))
+					sprintf((pbuf+strlen(pbuf)),"%c", dbuf[i + j]);
 				else
 					sprintf((pbuf+strlen(pbuf)),".");
 

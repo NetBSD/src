@@ -1,5 +1,6 @@
-.\" $NetBSD: sdpd.8,v 1.4 2007/12/01 19:00:55 wiz Exp $
+.\" $NetBSD: sdpd.8,v 1.4.14.1 2009/05/13 19:20:39 jym Exp $
 .\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
 .\"
@@ -24,10 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: sdpd.8,v 1.4 2007/12/01 19:00:55 wiz Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/sdpd/sdpd.8,v 1.5 2005/12/06 17:56:36 emax Exp $
 .\"
-.Dd January 13, 2004
+.Dd May 7, 2009
 .Dt SDPD 8
 .Os
 .Sh NAME
@@ -43,32 +43,31 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon keeps track of the Bluetooth services registered on the host
-and responds to Service Discovery inquiries from the remote Bluetooth devices.
+daemon keeps a database of Bluetooth Service Records registered on
+the host and responds to Service Discovery inquiries from remote
+Bluetooth devices.
 .Pp
-In order to use any service remote Bluetooth device need to send Service
-Search and Service Attribute or Service Search Attribute request over
-Bluetooth L2CAP connection on SDP PSM (0x0001).
+In order to discover services, remote Bluetooth devices send Service
+Search and Service Attribute or Service Search Attribute requests over
+Bluetooth L2CAP connections on the SDP PSM
+. Pq 0x0001 .
 The
 .Nm
-daemon will try to find matching Service Record in its Service Database
-and will send appropriate response back.
-The remote device then will process the response, extract all required
-information and will make a separate connection in order to use the service.
+daemon will try to find matching Service Records in its Service Database
+and will return the requested record extracts for the remote device to
+interpret.
+The remote device will then make a separate connection in order to
+access the service.
 .Pp
-Bluetooth applications, running on the host, register services with
-the local
+Bluetooth applications, running on the host, are able to insert, remove
+and update Service Records with the
 .Nm
-daemon.
-Operation like service registration, service removal and service change are
-performed over the control socket.
-It is possible to query entire content of the
-.Nm
-Service Database with
+daemon via the control socket.
+It is possible to query entire contents of the Service Database locally with
 .Xr sdpquery 1
-by issuing
-.Cm browse
-command on the control socket.
+using the
+.Fl l
+option.
 .Pp
 The command line options are as follows:
 .Bl -tag -width indent
@@ -107,20 +106,50 @@ was started as root.
 The default user name is
 .Dq Li _sdpd .
 .El
-.Sh CAVEAT
+.Sh FILES
+.Bl -tag -width ".Pa /var/run/sdp" -compact
+.It Pa /var/run/sdp
+.El
+.Sh SEE ALSO
+.Xr sdpquery 1 ,
+.Xr sdp 3
+.Pp
+The
+.Qq Service Discovery Protocol
+section of the Bluetooth Core specifications, available at
+.Qq http://www.bluetooth.com/
+.Sh HISTORY
+The original
+.Nm
+daemon first appeared in
+.Fx 5.3
+and was imported into
+.Nx 4.0
+by
+.An Iain Hibbert
+under the sponsorship of
+.An Itronix, Inc.
+This version was rewritten by
+.An Iain Hibbert
+for
+.Nx 6.0
+in order to allow Bluetooth applications to fully specify
+service records.
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
+.An Iain Hibbert
+.Sh CAVEATS
 The
 .Nm
 daemon
 will listen for incoming L2CAP connections on a wildcard BD_ADDR.
 .Pp
-In case of multiple Bluetooth devices connected to the same host it is
-possible to specify which services should be
-.Dq bound
-to which Bluetooth device.
-Such assignment should be done at service registration time.
+In case of multiple Bluetooth controllers connected to the same host
+it is possible to limit visibility of Service Records according to
+the controller the connection is made through.
 .Pp
-Requests to register, remove or change service can only be made via the
-control socket.
+Requests to insert, remove or update service records can only be made
+via the control socket.
 The
 .Nm
 daemon will check the peer's credentials and will only accept the request
@@ -131,31 +160,22 @@ option.
 .Pp
 The
 .Nm
-daemon does not check for duplicated Service Records.
-It only performs minimal checking on the service data sent in the Service
-Register request.
+daemon does not check for duplicated Service Records and only
+performs minimal validation of the record data sent in the Insert/Update
+Record requests.
 It is assumed that application must obtain all required resources such
 as RFCOMM channels etc., before registering the service.
-.Sh FILES
-.Bl -tag -width ".Pa /var/run/sdp" -compact
-.It Pa /var/run/sdp
-.El
-.Sh SEE ALSO
-.Xr sdpquery 1 ,
-.Xr sdp 3
-.Sh HISTORY
-The
-.Nm
-daemon first appeared in
-.Fx 5.3
-and was imported into
-.Nx 4.0
-by
-.An Iain Hibbert
-under the sponsorship of
-.An Itronix, Inc.
-.Sh AUTHORS
-.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
 .Sh BUGS
-Most likely.
-Please report if found.
+.Nm
+only ever generates 16-bit sequence headers, so if a response was
+to grow over
+.Dv UINT16_MAX ,
+the sequence header will be wrong.
+.Pp
+There is no way for clients to discover the maximum packet size that
+.Nm
+will accept on the local socket.
+Currently this is
+.Dv SDP_LOCAL_MTU
+as defined in
+.In bluetooth/sdp.h .

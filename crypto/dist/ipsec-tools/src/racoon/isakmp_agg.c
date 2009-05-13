@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.14 2009/01/23 08:23:51 tteras Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.14.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -113,8 +113,6 @@ agg_i1send(iph1, msg)
 	vchar_t *msg; /* must be null */
 {
 	struct payload_list *plist = NULL;
-	int need_cr = 0;
-	vchar_t *cr = NULL; 
 	int error = -1;
 #ifdef ENABLE_NATT
 	vchar_t *vid_natt[MAX_NATT_VID_COUNT] = { NULL };
@@ -134,7 +132,6 @@ agg_i1send(iph1, msg)
 #ifdef ENABLE_DPD
 	vchar_t *vid_dpd = NULL;
 #endif
-
 
 	/* validity check */
 	if (msg != NULL) {
@@ -157,7 +154,7 @@ agg_i1send(iph1, msg)
 		goto end;
 
 	/* create SA payload for my proposal */
-	iph1->sa = ipsecdoi_setph1proposal(iph1->rmconf->proposal);
+	iph1->sa = ipsecdoi_setph1proposal(iph1->rmconf, iph1->rmconf->proposal);
 	if (iph1->sa == NULL)
 		goto end;
 
@@ -212,19 +209,6 @@ agg_i1send(iph1, msg)
 	}		
 #endif
 
-	/* create CR if need */
-	if (iph1->rmconf->send_cr
-	 && oakley_needcr(iph1->rmconf->proposal->authmethod)
-	 && iph1->rmconf->peerscertfile == NULL) {
-		need_cr = 1;
-		cr = oakley_getcr(iph1);
-		if (cr == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to get cr buffer.\n");
-			goto end;
-		}
-	}
-
 	plog(LLV_DEBUG, LOCATION, NULL, "authmethod is %s\n",
 		s_oakley_attr_method(iph1->rmconf->proposal->authmethod));
 #ifdef HAVE_GSSAPI
@@ -251,8 +235,8 @@ agg_i1send(iph1, msg)
 	}
 #endif
 	/* create isakmp CR payload */
-	if (need_cr)
-		plist = isakmp_plist_append(plist, cr, ISAKMP_NPTYPE_CR);
+	if (oakley_needcr(iph1->rmconf->proposal->authmethod))
+		plist = oakley_append_cr(plist, iph1);
 
 #ifdef ENABLE_FRAG
 	if (vid_frag)
@@ -289,8 +273,7 @@ agg_i1send(iph1, msg)
 #endif
 
 	/* send the packet, add to the schedule to resend */
-	iph1->retry_counter = iph1->rmconf->retry_counter;
-	if (isakmp_ph1resend(iph1) == -1)
+	if (isakmp_ph1send(iph1) == -1)
 		goto end;
 
 	iph1->status = PHASE1ST_MSG1SENT;
@@ -298,8 +281,6 @@ agg_i1send(iph1, msg)
 	error = 0;
 
 end:
-	if (cr)
-		vfree(cr);
 #ifdef HAVE_GSSAPI
 	if (gsstoken)
 		vfree(gsstoken);
@@ -589,13 +570,10 @@ end:
 		VPTRINIT(iph1->dhpub_p);
 		VPTRINIT(iph1->nonce_p);
 		VPTRINIT(iph1->id_p);
-		oakley_delcert(iph1->cert_p);
-		iph1->cert_p = NULL;
-		oakley_delcert(iph1->crl_p);
-		iph1->crl_p = NULL;
+		VPTRINIT(iph1->cert_p);
+		VPTRINIT(iph1->crl_p);
 		VPTRINIT(iph1->sig_p);
-		oakley_delcert(iph1->cr_p);
-		iph1->cr_p = NULL;
+		VPTRINIT(iph1->cr_p);
 	}
 
 	return error;
@@ -673,11 +651,11 @@ agg_i2send(iph1, msg)
 
 		/* add CERT payload if there */
 		if (need_cert)
-			plist = isakmp_plist_append(plist, 
-			    iph1->cert->pl, ISAKMP_NPTYPE_CERT);
+			plist = isakmp_plist_append(plist, iph1->cert,
+						    ISAKMP_NPTYPE_CERT);
 
 		/* add SIG payload */
-		plist = isakmp_plist_append(plist, 
+		plist = isakmp_plist_append(plist,
 		    iph1->sig, ISAKMP_NPTYPE_SIG);
 		break;
 
@@ -913,8 +891,7 @@ end:
 		VPTRINIT(iph1->dhpub_p);
 		VPTRINIT(iph1->nonce_p);
 		VPTRINIT(iph1->id_p);
-		oakley_delcert(iph1->cr_p);
-		iph1->cr_p = NULL;
+		VPTRINIT(iph1->cr_p);
 	}
 
 	return error;
@@ -934,9 +911,7 @@ agg_r1send(iph1, msg)
 	vchar_t *msg;
 {
 	struct payload_list *plist = NULL;
-	int need_cr = 0;
 	int need_cert = 0;
-	vchar_t *cr = NULL;
 	int error = -1;
 #ifdef ENABLE_HYBRID
 	vchar_t *xauth_vid = NULL;
@@ -1016,19 +991,6 @@ agg_r1send(iph1, msg)
 		goto end;
 	}
 
-	/* create CR if need */
-	if (iph1->rmconf->send_cr
-	 && oakley_needcr(iph1->approval->authmethod)
-	 && iph1->rmconf->peerscertfile == NULL) {
-		need_cr = 1;
-		cr = oakley_getcr(iph1);
-		if (cr == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to get cr buffer.\n");
-			goto end;
-		}
-	}
-
 #ifdef ENABLE_NATT
 	/* Has the peer announced NAT-T? */
 	if (NATT_AVAILABLE(iph1)) {
@@ -1093,9 +1055,8 @@ agg_r1send(iph1, msg)
 		    iph1->hash, ISAKMP_NPTYPE_HASH);
 
 		/* create isakmp CR payload if needed */
-		if (need_cr)
-			plist = isakmp_plist_append(plist, 
-			    cr, ISAKMP_NPTYPE_CR);
+		if (oakley_needcr(iph1->approval->authmethod))
+			plist = oakley_append_cr(plist, iph1);
 		break;
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
 	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
@@ -1134,17 +1095,16 @@ agg_r1send(iph1, msg)
 
 		/* add CERT payload if there */
 		if (need_cert)
-			plist = isakmp_plist_append(plist, 
-			    iph1->cert->pl, ISAKMP_NPTYPE_CERT);
+			plist = isakmp_plist_append(plist, iph1->cert,
+						    ISAKMP_NPTYPE_CERT);
 
 		/* add SIG payload */
-		plist = isakmp_plist_append(plist, 
+		plist = isakmp_plist_append(plist,
 		    iph1->sig, ISAKMP_NPTYPE_SIG);
 
 		/* create isakmp CR payload if needed */
-		if (need_cr)
-			plist = isakmp_plist_append(plist, 
-			    cr, ISAKMP_NPTYPE_CR);
+		if (oakley_needcr(iph1->approval->authmethod))
+			plist = oakley_append_cr(plist, iph1);
 		break;
 
 	case OAKLEY_ATTR_AUTH_METHOD_RSAENC:
@@ -1172,8 +1132,8 @@ agg_r1send(iph1, msg)
 				goto end;
 			}
 			if (iph1->approval->gssid != NULL)
-				gss_sa = 
-				    ipsecdoi_setph1proposal(iph1->approval);  
+				gss_sa = ipsecdoi_setph1proposal(iph1->rmconf,
+								 iph1->approval);
 			else
 				gss_sa = iph1->sa_ret;
 
@@ -1261,8 +1221,7 @@ agg_r1send(iph1, msg)
 #endif
 
 	/* send the packet, add to the schedule to resend */
-	iph1->retry_counter = iph1->rmconf->retry_counter;
-	if (isakmp_ph1resend(iph1) == -1)
+	if (isakmp_ph1send(iph1) == -1)
 		goto end;
 
 	/* the sending message is added to the received-list. */
@@ -1277,8 +1236,6 @@ agg_r1send(iph1, msg)
 	error = 0;
 
 end:
-	if (cr)
-		vfree(cr);
 #ifdef ENABLE_HYBRID
 	if (xauth_vid)
 		vfree(xauth_vid);
@@ -1444,10 +1401,8 @@ end:
 	if (msg)
 		vfree(msg);
 	if (error) {
-		oakley_delcert(iph1->cert_p);
-		iph1->cert_p = NULL;
-		oakley_delcert(iph1->crl_p);
-		iph1->crl_p = NULL;
+		VPTRINIT(iph1->cert_p);
+		VPTRINIT(iph1->crl_p);
 		VPTRINIT(iph1->sig_p);
 	}
 

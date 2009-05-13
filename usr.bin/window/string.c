@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.9 2003/08/07 11:17:29 agc Exp $	*/
+/*	$NetBSD: string.c,v 1.9.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)string.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: string.c,v 1.9 2003/08/07 11:17:29 agc Exp $");
+__RCSID("$NetBSD: string.c,v 1.9.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: string.c,v 1.9 2003/08/07 11:17:29 agc Exp $");
 #undef  EXTERN
 
 char *
-str_cpy(char *s)
+str_cpy(const char *s)
 {
 	char *str;
 	char *p;
@@ -63,7 +63,7 @@ str_cpy(char *s)
 }
 
 char *
-str_ncpy(char *s, int n)
+str_ncpy(const char *s, int n)
 {
 	int l = strlen(s);
 	char *str;
@@ -90,10 +90,11 @@ str_itoa(int i)
 }
 
 char *
-str_cat(char *s1, char *s2)
+str_cat(const char *s1, const char *s2)
 {
 	char *str;
-	char *p, *q;
+	char *p;
+	const char *q;
 
 	str = p = str_alloc(strlen(s1) + strlen(s2) + 1);
 	if (p == 0)
@@ -110,7 +111,7 @@ str_cat(char *s1, char *s2)
  * s can be a prefix of p with at least min characters.
  */
 int
-str_match(char *s, char *p, int min)
+str_match(const char *s, const char *p, int min)
 {
 	for (; *s && *p && *s == *p; s++, p++, min--)
 		;

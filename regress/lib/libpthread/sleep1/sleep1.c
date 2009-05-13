@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep1.c,v 1.2 2005/08/29 18:52:16 drochner Exp $	*/
+/*	$NetBSD: sleep1.c,v 1.2.28.1 2009/05/13 19:18:48 jym Exp $	*/
 
 #include <signal.h>
 #include <stdio.h>
@@ -10,10 +10,6 @@
 void *threadfunc(void *);
 void handler(int);
 
-/*
- * More than enough to cross the border from the present time until time_t
- * wraps in 2038.
- */
 #define LONGTIME 2000000000 
 
 int

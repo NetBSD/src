@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.179 2008/10/26 23:13:24 apb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.179.4.1 2009/05/13 19:19:17 jym Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -41,6 +41,7 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Woverloaded-virtual -Wno-pmf-conversions -Wsign-promo -Wsynth
 .endif
 .if ${WARNS} > 3 && defined(HAVE_GCC) && ${HAVE_GCC} >= 3
+CFLAGS+=	-Wsign-compare
 CFLAGS+=	-std=gnu99
 .endif
 .endif

@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.75 2008/05/10 00:05:31 skd Exp $	*/
+/*	$NetBSD: extern.h,v 1.75.6.1 2009/05/13 19:19:50 jym Exp $	*/
 
 /*-
- * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -142,7 +142,7 @@ int	getreply(int);
 char   *globulize(const char *);
 char   *gunique(const char *);
 void	help(int, char **);
-char   *hookup(char *, char *);
+char   *hookup(const char *, const char *);
 void	idlecmd(int, char **);
 int	initconn(void);
 void	intr(int);
@@ -228,6 +228,7 @@ void	settype(int, char **);
 void	setupsockbufsize(int);
 void	setverbose(int, char **);
 void	setxferbuf(int, char **);
+void	set_option(const char *, const char *, int);
 void	shell(int, char **);
 void	site(int, char **);
 void	sizecmd(int, char **);

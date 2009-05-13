@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.7 2003/11/12 13:31:08 grant Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.7.40.1 2009/05/13 19:20:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_svc.c,v 1.7 2003/11/12 13:31:08 grant Exp $");
+__RCSID("$NetBSD: yppush_svc.c,v 1.7.40.1 2009/05/13 19:20:45 jym Exp $");
 #endif
 
 /*
@@ -69,10 +69,10 @@ int _rpcpmstart;		/* Started by a port monitor ? */
 int _rpcfdtype;			/* Whether Stream or Datagram ? */
 int _rpcsvcdirty;		/* Still serving ? */
 
-static	void _msgout(char *);
+static	void _msgout(const char *);
 
 static
-void _msgout(char *msg)
+void _msgout(const char *msg)
 {
 #ifdef RPC_SVC_FG
 	if (_rpcpmstart)

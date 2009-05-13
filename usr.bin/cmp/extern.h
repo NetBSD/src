@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2007/08/21 14:09:53 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.7.16.1 2009/05/13 19:19:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,10 +35,10 @@
 #define DIFF_EXIT	1
 #define ERR_EXIT	2	/* error exit code */
 
-void	c_regular(int, char *, off_t, off_t, int, char *, off_t, off_t);
-void	c_special(int, char *, off_t, int, char *, off_t);
-void	diffmsg(char *, char *, off_t, off_t);
-void	eofmsg(char *, off_t, off_t);
-void	errmsg(char *, off_t, off_t);
+void	c_regular(int, const char *, off_t, off_t, int, const char *, off_t, off_t);
+void	c_special(int, const char *, off_t, int, const char *, off_t);
+void	diffmsg(const char *, const char *, off_t, off_t);
+void	eofmsg(const char *, off_t, off_t);
+void	errmsg(const char *, off_t, off_t);
 
 extern int lflag, sflag;

@@ -354,7 +354,7 @@ validate_map(partition_map_header *map)
 {
     range_list *list;
     char *name;
-    int i;
+    unsigned int i;
     u32 limit;
     int printed;
     

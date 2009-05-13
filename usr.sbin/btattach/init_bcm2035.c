@@ -1,4 +1,4 @@
-/*	$NetBSD: init_bcm2035.c,v 1.1 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: init_bcm2035.c,v 1.1.10.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_bcm2035.c,v 1.1 2008/04/15 11:17:48 plunky Exp $");
+__RCSID("$NetBSD: init_bcm2035.c,v 1.1.10.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -66,7 +66,7 @@ init_bcm2035(int fd, unsigned int speed)
 	case B460800:	rate = 0xfd22;	break;
 	case B921600:	rate = 0xff55;	break;
 	default:
-		errx(EXIT_FAILURE, "invalid speed for bcm2035: %d\n", speed);
+		errx(EXIT_FAILURE, "invalid speed for bcm2035: %u\n", speed);
 	};
 
 	rate = htole16(rate);

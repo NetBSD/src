@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.10 2008/05/02 19:59:19 xtraeme Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.10.8.1 2009/05/13 19:20:20 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -364,7 +364,7 @@ output_ascii(fn, ct)
 	const char *fn;
 	const struct chartbl *ct;
 {
-	int i;
+	size_t i;
 	FILE *fp;
 
 	if ((fp = fopen(fn, "w")) == NULL) {
@@ -442,6 +442,7 @@ main(argc, argv)
 	const struct toklist *t;
 	struct chartbl ct;
 	int c;
+	size_t i;
 	char *ifname, *ofname = NULL;
 	int error = 0;
 
@@ -505,11 +506,11 @@ main(argc, argv)
 	}
 	(void) fclose(fp);
 
-	for (c = 1; c <= ct.maxchar; c++) {
-		if (ct.uptab[c] == 0)
-			ct.uptab[c] = c - 1;
-		if (ct.lotab[c] == 0)
-			ct.lotab[c] = c - 1;
+	for (i = 1; i <= ct.maxchar; i++) {
+		if (ct.uptab[i] == 0)
+			ct.uptab[i] = i - 1;
+		if (ct.lotab[i] == 0)
+			ct.lotab[i] = i - 1;
 	}
 
 	if (ofname != NULL)

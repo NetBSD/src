@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.17 2007/02/02 23:00:28 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.17.22.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.17 2007/02/02 23:00:28 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.17.22.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ __sfvwrite(fp, uio)
 	FILE *fp;
 	struct __suio *uio;
 {
-	size_t len;
+	int len;
 	char *p;
 	struct __siov *iov;
 	int w, s;
@@ -71,6 +71,10 @@ __sfvwrite(fp, uio)
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(uio != NULL);
 
+	if ((int)uio->uio_resid < 0) {
+		errno = EINVAL;
+		return (EOF);
+	}
 	if ((len = uio->uio_resid) == 0)
 		return (0);
 	/* make sure we can write */
@@ -122,7 +126,7 @@ __sfvwrite(fp, uio)
 			GETIOV(;);
 			if ((fp->_flags & (__SALC | __SSTR)) ==
 			    (__SALC | __SSTR) && fp->_w < len) {
-				size_t blen = fp->_p - fp->_bf._base;
+				int blen = fp->_p - fp->_bf._base;
 				unsigned char *_base;
 				int _size;
 
@@ -183,7 +187,7 @@ __sfvwrite(fp, uio)
 		do {
 			GETIOV(nlknown = 0);
 			if (!nlknown) {
-				nl = memchr((void *)p, '\n', len);
+				nl = memchr((void *)p, '\n', (size_t)len);
 				nldist = nl ? nl + 1 - p : len + 1;
 				nlknown = 1;
 			}

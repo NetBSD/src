@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.6 2009/01/21 14:43:14 he Exp $
+.\"	$NetBSD: hardware,v 1.6.2.1 2009/05/13 19:17:45 jym Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,16 +29,12 @@
 \*V runs on a Chalice CATS systems from Simtec Electronics and Intel EBSA
 boards.
 The minimal configuration is said to
-require 8 MB of RAM and 50 MB of disk space, though we do not know of anyone
+require 8 MB of RAM and 100 MB of disk space, though we do not know of anyone
 running with a system quite this minimal today.
-To install the entire system requires much more disk space
-(the unpacked binary distribution,
-without sources, requires at least 65 MB without counting space needed for
-swap space, etc), and to run X or compile the system, more RAM is
-recommended.
-(8 MB of RAM will actually allow you to run X and/or compile,
+To install the entire system requires much more disk space.
+8 MB of RAM might actually allow you to run X and/or compile,
 but it won't be speedy. Note that until you have around 16 MB of RAM,
-getting more RAM is more important than getting a faster CPU.)
+getting more RAM is more important than getting a faster CPU.
 .
 .Ss2 Supported Chalice CATS devices
 .(bullet -offset indent -compact

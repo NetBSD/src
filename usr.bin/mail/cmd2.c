@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.23 2007/10/27 15:14:50 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.23.14.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.23 2007/10/27 15:14:50 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.23.14.1 2009/05/13 19:19:56 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,12 @@ __RCSID("$NetBSD: cmd2.c,v 1.23 2007/10/27 15:14:50 christos Exp $");
 PUBLIC int
 next(void *v)
 {
-	int *msgvec = v;
+	int *msgvec;
 	struct message *mp;
 	int *ip, *ip2;
 	int list[2], mdot;
 
+	msgvec = v;
 	if (*msgvec != 0) {
 
 		/*
@@ -151,15 +152,13 @@ snarf(char linebuf[], int *flag, const char *string)
 	/*
 	 * Strip away trailing blanks.
 	 */
-
-	while (cp > linebuf && isspace((unsigned char)*cp))
+	while (cp >= linebuf && isspace((unsigned char)*cp))
 		cp--;
-	*++cp = 0;
+	*++cp = '\0';
 
 	/*
 	 * Now search for the beginning of the file name.
 	 */
-
 	while (cp > linebuf && !isspace((unsigned char)*cp))
 		cp--;
 	if (*cp == '\0') {
@@ -167,7 +166,7 @@ snarf(char linebuf[], int *flag, const char *string)
 		return NULL;
 	}
 	if (isspace((unsigned char)*cp))
-		*cp++ = 0;
+		*cp++ = '\0';
 	else
 		*flag = 0;
 	return cp;
@@ -182,8 +181,8 @@ static int
 save1_core(struct message *mp, void *v)
 {
 	struct save1_core_args_s *args;
-	args = v;
 
+	args = v;
 	touch(mp);
 
 	if (sendmessage(mp, args->obuf, args->igtab, NULL, NULL) < 0)
@@ -264,8 +263,9 @@ save1(char str[], int markmsg, const char *cmd, struct ignoretab *igtab)
 PUBLIC int
 save(void *v)
 {
-	char *str = v;
+	char *str;
 
+	str = v;
 	return save1(str, 1, "save", saveignore);
 }
 
@@ -277,8 +277,9 @@ save(void *v)
 PUBLIC int
 Save(void *v)
 {
-	char *str = v;
+	char *str;
 
+	str = v;
 	return save1(str, 1, "Save", NULL);
 }
 
@@ -288,8 +289,9 @@ Save(void *v)
 PUBLIC int
 copycmd(void *v)
 {
-	char *str = v;
+	char *str;
 
+	str = v;
 	return save1(str, 0, "copy", saveignore);
 }
 
@@ -300,8 +302,9 @@ copycmd(void *v)
 PUBLIC int
 swrite(void *v)
 {
-	char *str = v;
+	char *str;
 
+	str = v;
 	return save1(str, 1, "write", ignoreall);
 }
 
@@ -349,7 +352,9 @@ delm(int *msgvec)
 PUBLIC int
 delete(void *v)
 {
-	int *msgvec = v;
+	int *msgvec;
+
+	msgvec = v;
 	(void)delm(msgvec);
 	return 0;
 }
@@ -360,10 +365,11 @@ delete(void *v)
 PUBLIC int
 deltype(void *v)
 {
-	int *msgvec = v;
+	int *msgvec;
 	int list[2];
 	int lastdot;
 
+	msgvec = v;
 	lastdot = get_msgnum(dot);
 	if (delm(msgvec) >= 0) {
 		list[0] = get_msgnum(dot);
@@ -449,9 +455,10 @@ clob1(int n)
 PUBLIC int
 clobber(void *v)
 {
-	char **argv = v;
+	char **argv;
 	int times;
 
+	argv = v;
 	if (argv[0] == 0)
 		times = 1;
 	else
@@ -519,8 +526,9 @@ ignore1(char *list[], struct ignoretab *tab, const char *which)
 PUBLIC int
 retfield(void *v)
 {
-	char **list = v;
+	char **list;
 
+	list = v;
 	return ignore1(list, ignore + 1, "retained");
 }
 
@@ -531,8 +539,9 @@ retfield(void *v)
 PUBLIC int
 igfield(void *v)
 {
-	char **list = v;
+	char **list;
 
+	list = v;
 	return ignore1(list, ignore, "ignored");
 }
 
@@ -543,8 +552,9 @@ igfield(void *v)
 PUBLIC int
 saveretfield(void *v)
 {
-	char **list = v;
+	char **list;
 
+	list = v;
 	return ignore1(list, saveignore + 1, "retained");
 }
 
@@ -555,8 +565,9 @@ saveretfield(void *v)
 PUBLIC int
 saveigfield(void *v)
 {
-	char **list = v;
+	char **list;
 
+	list = v;
 	return ignore1(list, saveignore, "ignored");
 }
 
@@ -595,7 +606,7 @@ check_dirname(char *filename)
 	if (access(canon_name, W_OK|X_OK) == -1) {
 		warnx("access: %s is not writable", canon_name);
 		canon_name = NULL;
-		/* goto done; */
+		goto done;
 	}
  done:
 	if (fname != filename)
@@ -603,7 +614,6 @@ check_dirname(char *filename)
 
 	return canon_name ? savestr(canon_name) : NULL;
 }
-
 
 struct detach1_core_args_s {
 	struct message *parent;
@@ -683,6 +693,7 @@ detach1(void *v, int do_unnamed)
 	for (ip = msgvec; *ip && ip - msgvec < msgCount; ip++) {
 		struct detach1_core_args_s args;
 		struct message *mp;
+
 		mp = get_message(*ip);
 		dot = mp;
 		args.parent = recursive ? mp : NULL;
@@ -699,6 +710,7 @@ detach1(void *v, int do_unnamed)
 PUBLIC int
 detach(void *v)
 {
+
 	return detach1(v, 0);
 }
 
@@ -708,6 +720,7 @@ detach(void *v)
 PUBLIC int
 Detach(void *v)
 {
+
 	return detach1(v, 1);
 }
 #endif /* MIME_SUPPORT */

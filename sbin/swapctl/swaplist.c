@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.15 2008/05/29 14:51:25 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.15.4.1 2009/05/13 19:19:06 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.15 2008/05/29 14:51:25 mrg Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.15.4.1 2009/05/13 19:19:06 jym Exp $");
 #endif
 
 
@@ -111,7 +111,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 
 	if (dolong && tflag == 0) {
 		for (i = rnswap; i-- > 0; sep++)
-			if (pathmax < (l = strlen(sep->se_path)))
+			if ((size_t)pathmax < (l = strlen(sep->se_path)))
 				pathmax = l;
 		sep = fsep;
 		(void)printf("%-*s %*s %8s %8s %8s  %s\n",

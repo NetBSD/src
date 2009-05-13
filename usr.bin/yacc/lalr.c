@@ -1,4 +1,4 @@
-/*	$NetBSD: lalr.c,v 1.10 2006/05/24 18:06:58 christos Exp $	*/
+/*	$NetBSD: lalr.c,v 1.10.28.1 2009/05/13 19:20:14 jym Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lalr.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: lalr.c,v 1.10 2006/05/24 18:06:58 christos Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.10.28.1 2009/05/13 19:20:14 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,7 +407,7 @@ build_relations(void)
   shifts *sp;
   int length;
   int nedges;
-  int done;
+  int isdone;
   int state1;
   int stateno;
   int symbol1;
@@ -451,16 +451,16 @@ build_relations(void)
 	  add_lookback_edge(stateno, *rulep, i);
 
 	  length--;
-	  done = 0;
-	  while (!done)
+	  isdone = 0;
+	  while (!isdone)
 	    {
-	      done = 1;
+	      isdone = 1;
 	      rp--;
 	      if (ISVAR(*rp))
 		{
 		  stateno = states[--length];
 		  edge[nedges++] = map_goto(stateno, *rp);
-		  if (nullable[*rp] && length > 0) done = 0;
+		  if (nullable[*rp] && length > 0) isdone = 0;
 		}
 	    }
 	}
@@ -517,7 +517,7 @@ add_lookback_edge(int stateno, int ruleno, int gotono)
 
 
 static short **
-transpose(short **R, int n)
+transpose(short **tR, int n)
 {
   short **new_R;
   short **temp_R;
@@ -530,7 +530,7 @@ transpose(short **R, int n)
 
   for (i = 0; i < n; i++)
     {
-      sp = R[i];
+      sp = tR[i];
       if (sp)
 	{
 	  while (*sp >= 0)
@@ -557,7 +557,7 @@ transpose(short **R, int n)
 
   for (i = 0; i < n; i++)
     {
-      sp = R[i];
+      sp = tR[i];
       if (sp)
 	{
 	  while (*sp >= 0)

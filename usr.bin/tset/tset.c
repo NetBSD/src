@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.16 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: tset.c,v 1.16.6.1 2009/05/13 19:20:09 jym Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.16 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: tset.c,v 1.16.6.1 2009/05/13 19:20:09 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: tset.c,v 1.16 2008/07/21 14:19:27 lukem Exp $");
 
 int	main __P((int, char *[]));
 void	obsolete __P((char *[]));
-void	report __P((char *, int, u_int));
+void	report __P((const char *, int, u_int));
 void	usage __P((void));
 
 struct termios mode, oldmode;
@@ -76,7 +76,8 @@ main(argc, argv)
 	int ch, extended, noinit, noset, quiet, Sflag, sflag, showterm;
 	int erasechar = 0, intrchar = 0, killchar = 0;
 	int usingupper;
-	char savech, *p, *q, *t, *tcapbuf;
+	char savech, *p, *tcapbuf;
+	const char *k1, *k2, *k3;
 	const char *ttype;
 
 	if (tcgetattr(STDERR_FILENO, &mode) < 0)
@@ -193,11 +194,11 @@ main(argc, argv)
 	/* Get the terminal name from the entry. */
 	p = tcapbuf;
 	if (p != NULL && *p != ':') {
-		t = p;
+		k1 = p;
 		if ((p = strpbrk(p, "|:")) != NULL) {
 			savech = *p;
 			*p = '\0';
-			if ((ttype = strdup(t)) == NULL)
+			if ((ttype = strdup(k1)) == NULL)
 				err(1, "strdup");
 			*p = savech;
 		}
@@ -231,17 +232,17 @@ main(argc, argv)
 		 */
 		if ((p = getenv("SHELL")) &&
 		    !strcmp(p + strlen(p) - 3, "csh")) {
-			p = "set noglob;\nsetenv TERM ";
-			q = ";\nsetenv TERMCAP '";
-			t = "';\nunset noglob;\n";
+			k1 = "set noglob;\nsetenv TERM ";
+			k2 = ";\nsetenv TERMCAP '";
+			k3 = "';\nunset noglob;\n";
 		} else {
-			p = "TERM=";
-			q = ";\nTERMCAP='";
-			t = "';\nexport TERMCAP TERM;\n";
+			k1 = "TERM=";
+			k2 = ";\nTERMCAP='";
+			k3 = "';\nexport TERMCAP TERM;\n";
 		}
-		(void)printf("%s%s%s", p, ttype, q);
+		(void)printf("%s%s%s", k1, ttype, k2);
 		wrtermcap(tcapbuf);
-		(void)printf("%s", t);
+		(void)printf("%s", k3);
 	}
 
 	exit(0);
@@ -252,7 +253,7 @@ main(argc, argv)
  */
 void
 report(name, which, def)
-	char *name;
+	const char *name;
 	int which;
 	u_int def;
 {
@@ -268,7 +269,7 @@ report(name, which, def)
 	(void)fprintf(stderr, "%s %s ", name, old == new ? "is" : "set to");
 
 	bp = buf;
-	if (tgetstr("kb", &bp) && new == buf[0] && buf[1] == '\0')
+	if (tgetstr("kb", &bp) && new == (unsigned int)buf[0] && buf[1] == '\0')
 		(void)fprintf(stderr, "backspace.\n");
 	else if (new == 0177)
 		(void)fprintf(stderr, "delete.\n");
@@ -289,6 +290,10 @@ void
 obsolete(argv)
 	char *argv[];
 {
+	static char earg[5] = { '-', 'e', '^', 'H', '\0' };
+	static char iarg[5] = { '-', 'i', '^', 'C', '\0' };
+	static char karg[5] = { '-', 'k', '^', 'U', '\0' };
+
 	for (; *argv; ++argv) {
 		if (argv[0][0] != '-' || (argv[1] && argv[1][0] != '-') ||
 		    (argv[0][1] != 'e' && argv[0][1] != 'i' &&
@@ -296,13 +301,13 @@ obsolete(argv)
 			continue;
 		switch(argv[0][1]) {
 		case 'e':
-			argv[0] = "-e^H";
+			argv[0] = earg;
 			break;
 		case 'i':
-			argv[0] = "-i^C";
+			argv[0] = iarg;
 			break;
 		case 'k':
-			argv[0] = "-k^U";
+			argv[0] = karg;
 			break;
 		}
 	}

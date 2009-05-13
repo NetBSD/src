@@ -1,4 +1,4 @@
-/*	$NetBSD: fgen.h,v 1.5 2001/10/05 22:36:02 eeh Exp $	*/
+/*	$NetBSD: fgen.h,v 1.5.44.1 2009/05/13 19:19:49 jym Exp $	*/
 /*
  * fgen.h -- stuff for the fcode tokenizer.
  *
@@ -41,14 +41,14 @@ struct tok {
 };
 
 #define TOKEN struct tok
-#define YY_DECL TOKEN* yylex __P((void))
+#define YY_DECL TOKEN* yylex(void)
 
 #define FCODE	0xF00DBABE
 #define MACRO	0xFEEDBABE
 
 /* Defined fcode and string. */
 struct fcode {
-	char *name;
+	const char *name;
 	long num;
 	int type;
 	struct fcode *l;
@@ -57,8 +57,8 @@ struct fcode {
 
 /* macro instruction as separate words */
 struct macro {
-	char *name;
-	char *equiv;
+	const char *name;
+	const char *equiv;
 	int type;
 	struct macro *l;
 	struct macro *r;

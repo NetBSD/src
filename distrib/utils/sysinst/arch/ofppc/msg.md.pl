@@ -68,7 +68,7 @@ message nobootpart
 
 message boottoosmall
 {The boot partition is too small.  It needs to be at least 2MB in size,
-however a size of at least 100MB is reccomended.}
+however a size of at least 100MB is recommended.}
 
 message nobootpartdisklabel
 {There is no boot partition in the disklabel.  The boot partition should 

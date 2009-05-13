@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.8 2003/08/07 11:25:41 agc Exp $	*/
+/*	$NetBSD: defs.h,v 1.8.40.1 2009/05/13 19:20:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,11 +170,11 @@ extern	char	MyHost[MAXHOSTNAMELEN+1]; /* this hosts' name */
 extern	int	DebugFlg;		/* set true if debugging */
 extern	int	BootAny;		/* set true if we can boot anyone */
 
-extern	char	*ConfigFile;		/* configuration file */
-extern	char	*DfltConfig;		/* default configuration file */
-extern	char	*DbgFile;		/* debug output file */
-extern	char	*PidFile;		/* file containing pid of server */
-extern	char	*BootDir;		/* directory w/boot files */
+extern	const char *ConfigFile;		/* configuration file */
+extern	const char *DfltConfig;		/* default configuration file */
+extern	const char *DbgFile;		/* debug output file */
+extern	const char *PidFile;		/* file containing pid of server */
+extern	const char *BootDir;		/* directory w/boot files */
 
 extern	FILE	*DbgFp;			/* debug file pointer */
 extern	char	*IntfName;		/* interface we are attached to */

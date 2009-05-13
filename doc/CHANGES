@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1180 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1180.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,17 +101,17 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rgephy(4): Support for RTL8211C(L) phy. From FreeBSD. [cegger 20090109]
 	rgephy(4): Support for flow control. From OpenBSD. [cegger 20090109]
 	makefs(8): Add support for encoding RISC OS metadata into
-		ISO 9660 filesystems. [bjh21 20090110]
+		ISO 9660 file systems. [bjh21 20090110]
 	time_t, dev_t: Change time_t and dev_t to be 64 bit quantities. Fixed
 		POSIX issues in timeval and timespec. [christos 20090110]
 	make(1): Changes to the way .for loops are processed. [dsl 20090111]
 	openpgpsdk: Initial import of openpgpsdk v0.9. [agc 20090112]
-	age(4):	Add a driver for Attensic/Atheros L1 gigabit ethernet.
+	age(4):	Add a driver for Attensic/Atheros L1 Gigabit Ethernet.
 		From FreeBSD via OpenBSD. [cegger 20090116]
 	atphy(4): Add a driver for Attensic/Atheros F1 PHY.
 		From FreeBSD via OpenBSD. [cegger 20090116]
 	atf(7): Import 0.6.  [jmmv 20090119]
-	msdosfs: The default behaviour when mounting empty filesystems has
+	msdosfs: The default behavior when mounting empty file systems has
 		been changed. Previously, msdosfs would assume the -s flag
 		(short filenames) in this case; now msdosfs will assume the
 		-l flag (long filenames). [jmcneill 20090122]
@@ -121,10 +121,156 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		user-friendly. [agc 20090123]
 	X11: added support for X11FLAVOUR=xorg for NetBSD/alpha.  No support
 		for turbochannel graphic cards yet. [bouyer 20090124]
-	dhcpcd(8): Import 4.0.8 [roy 20090128]
-	dhcpcd(8): Import 4.0.9 [roy 20090131]
-	dhcpcd(8): Import 4.0.10 [roy 20090204]
+	kernel: Add support for loading pseudo-device drivers. [haad 20090202]
+	module: Add a module for vnd(4) driver. [haad 20090205]
+	dkctl(8): Display cache, strategy, and list of wedges if no command
+		is specified in the command line. [uebayasi 20090207]
 	udf, mount_udf(8): add support for session opening/closing on
 		sequential media. Media can be closed on request on unmount by
 		passing the '-c' flag as mount option. [reinoud 20090208]
-
+	libc: Add RFC 2045 MIME Quoted-Printable support. [christos 20090210]
+	sgimips: Add Personal IRIS 4D/20 and 4D/25 (IP6 and IP10) support.
+		[rumble 20090212]
+	sk(4): Add support for flow control. [cegger 20090212]
+	nfe(4): Add support for flow control for MCP65. [cegger 20090212]
+	share/mk: Enable -Wsign-compare for $WARNS>=4.  [lukem 20090212]
+	tests: Converted the awk, basename, bzip2, config, cut, dirname, grep,
+		gzip, libcrypto, m4, make and sdiff tests to ATF.  Initial
+		work from the GSoC 2008 project by Lukasz Strzygowski.
+		[jmmv 20090213]
+	libfetch: Import libfetch-2.22. [joerg 20090214]
+	openssh: Import 5.1. [christos 20090216]
+	amd64, i386: The bootloader has been enhanced to support framebuffer
+		consoles using VESA BIOS extensions. These changes allow the
+		x86 ports to work with the genfb(4) driver, and obsoletes
+		the i386-only vesafb(4) driver. [jmcneill 20090216]
+	lvm: Import new lvm2tools 2.02.44 version and libdevmapper 1.02.30.
+		[haad 20090218]
+	compat_linux(8), compat_linux32: Add IPC_64 support for all shmctl(2)
+		commands, not only for STAT/SET. [njoly 20090218]
+	i386: The vesafb(4) driver has been retired. [jmcneill 20090218]
+	tests: Converted some of the kernel tests, including kqueue and ipf,
+		to ATF.  Initial work from the GSoC 2008 project by Lukasz
+		Strzygowski.  [jmmv 20090220]
+	dhcpcd(8): Import dhcpcd-4.0.11. [roy 20090221]
+	softdep: The soft dependences / soft updates feature of the fast
+		file system (FFS) has been supplanted by meta data
+		journaling (logging).  Logging provides better reliability
+		and better performance for most applications.  Soft
+		dependencies will no longer be available from NetBSD 6.0
+		onwards.  We encourage users to enable logging on FFS file
+		systems. [ad 20090222]
+	dhcpcd(8): Import dhcpcd-4.0.12. [roy 20090226]
+	evbarm: Improved support for GPIO support on the EP93xx ARM processors.
+		[kenh 20090227]
+	ext2fs: Add support for >128 byte inode. From Frederic Sausmikat.
+		[christos 20090301]
+	zaurus: Add zboot from OpenBSD. [nonaka 20090302]
+	xen: Add PCI pass-through support for Xen3.  domain0 kernel gets a
+		pciback PCI drivers, to which device specified in the
+		pciback.hide boot parameter will attach.
+		DomU kernels gets a xpci device, to which PCI buses
+		will attach.  [bouyer 20090305]
+	xen: Add XEN3PAE_DOM0, a i386 domain0 kernel with PAE support.
+		requires a i386PAE or x86_64 hypervisor.  [bouyer 20090305]
+	ar(1): Add support to ar(1) for 'deterministic mode'.
+		[christos 20090306]
+	kernel: Compute kern.ipc.shmmaxpgs on startup based on physical
+		memory. Default can be overridden via sysctl. [joerg 20090306]
+	fxp(4): Add TCPv4/UDPv4 RX hardware checksum support for i82559 and
+		later chips. [tsutsui 20090307]
+	crash(8): Add a new utility to diagnose kernel crashes. Based upon
+		the in-kernel debugger (ddb). [ad 20090307]
+	piixide(4): Add support for 82965PM. [christos 20090309]
+	libfetch: Import libfetch-2.23. [joerg 20090310]
+	wm(4): Add support for 82567LF-3, and fix register access for ICH10DO.
+		[msaitoh 20090310]
+	module: Add tprof modules. [yamt 20090310]
+	zaurus: Add kloader(4) support. [nonaka 20090311]
+	altmem(4): Add 'alternative memory' disk device driver.
+		[jmcneill 20090312]
+	zaurus: Add only playback support to zaudio(4). [nonaka 20090313]
+	vnd(4): Implement DIOCCACHESYNC ioctl. [christos 20090314]
+	sgimips: Add TCPv4/UDPv4 RX hardware checksum support for mec(4)
+		Ethernet on O2. [tsutsui 20090316]
+	zoneinfo: Import tzdata2009c. [kleink 20090316]
+	am-utils: Import latest from head; adds udf support amd -uu
+		[christos 20090320]
+	re(4): Add hardware checksum support for newer PCIe 8168C/8111C/8102E
+		chips. [tsutsui 20090321]
+	eject(1): Turn on amd(8) support for eject. [christos 20090323]
+	i386: Use "i486" as GNU_ARCH for i386. [drochner 20090327]
+	kmem_alloc(9): Add more extensive runtime debugging facilities.
+		[ad 20090329]
+	wm(4): Add workaround for 82543GC. [msaitoh 20090329]
+	wm(4): Enable hardware vlan(4) support. [darran 20090331]
+	amd64, i386: Default to UFS2 on sysinst(8). [ad 20090404]
+	sysinst(8): Default to wapbl(4) log for ufs partitions. [ad 20090404]
+	pckbd(4): Add a Czech keyboard layout. [mkirby 20090406]
+	sysinst(8): Make installer reject UFS2 for root partition on ports
+		whose bootloaders don't support UFS2 boot. [tsutsui 20090407]
+	cvs(1): Import 1.12.13 [christos 20090408]
+	libc: Add glob_pattern_p(3) for new cvs(1). [christos 20090408]
+	mtree(8): Add -S option to sort entries.  [apb 20090408]
+	newfs_sysvbfs(8): Add support creating a file system to a regular file.
+		[pooka 20090409]
+	libc: Add memrchr(3). [christos 20090410]
+	bind: Update to 9.6.1-P1.  Full NSEC3 support, automatic zone
+		re-signing, new update-policy methods tcp-self and 6to4-self,
+		unbundle libbind, change the default pid file location from
+		/var/run to /var/run/{named,lwresd} for improved chroot/setuid
+		support. [christos 20090412]
+	libbind: Update to 6.0-rc1. Use md5 for randomid instead of
+		sequential id, add suppport for DS, SSHFP, RRSIG, NSEC, DNSKEY,
+		DHCID, NSEC3, NSEC3PARAM, HIP and DLV, various new API
+		functions.  [christos 20090412]
+	re(4): Add support for RTL8168CP and RTL8168D. [tsutsui 20090413]
+	dhcpcd(8): Import dhcpcd-4.0.13 [roy 20090417]
+	zaurus: Add recoding support to zaudio(4). [nonaka 20090418]
+	httpd(8): Import bozohttpd-20090418. [mrg 20090418]
+	bge(4): Add misc quirk code for chip specific bugs.
+		From FreeBSD and OpenBSD.  [msaitoh 20090419]
+	queue(3): Add SLIST_FOREACH_SAFE, STAILQ_FOREACH_SAFE, STAILQ_LAST,
+		SIMPLEQ_CONCAT, and SIMPLEQ_LAST. [mschuett 20090420]
+	ale(4):	Add a driver for Attensic/Atheros L1E Gigabit Ethernet.
+		From OpenBSD and improvements from Kevin Lahey.
+		[cegger 20090420]
+	sdmmc(4): Add a driver for SD/MMC from OpenBSD. [nonaka 20090421]
+	landisk: Add UFS2 boot support. [tsutsui 20090421]
+	pmax: Add UFS2 boot support. [tsutsui 20090421]
+	uftdi(4): Add support for USB serial adapter REX-USB60F.
+		[taca 20090421]
+	netpgp: Import netpgp. This is a heavily-modified version of
+		openpgpsdk, and will replace it. [agc 20090423]
+	landisk: Enable to build a bootable install disk image.
+		[tsutsui 20090423]
+	compat_linux(8): Add IPC_64 support for all semctl(2)/msgctl(2).
+		[njoly 20090423]
+	zx(4): Add wscons support [macallan 20090423]
+	compat_linux32: Add IPC_64 support for all semctl(2),
+		following corresponding compat_linux(8) change.
+		[njoly 20090427]
+	dhcpcd(8): Import dhcpcd-5.0.0. [roy 20090428]
+	rc.d(8): Add an rc.d script for dhcpcd(8). [roy 20090428]
+	ichlpcib(4): Attach 82801IEM LPC Interface Bridge too. [njoly 20090429]
+	sh3: Add some support for SH7706. [nonaka 20090430]
+	hppa: Merge the nick-hppapmap branch which includes a port of the
+		OpenBSD pmap, improves support for machines without the
+		PA7100LC or PA7300LC CPUs, and much more.  [skrll 20090430]
+	libc: Add stpcpy(3), stpncpy(3), strnlen(3), all from FreeBSD.
+		[perry 20090501]
+	install(1): Add support for writing sha256, sha384, or sha512 hashes
+		to a METALOG.  [apb 20090501]
+	build: Use sha256 instead of sha1 hashes in METALOG and
+		/etc/mtree/set.* files.  [apb 20090501]
+	dhcpcd(8): Import dhcpcd-5.0.1 [roy 20090503]
+	hp700: Enable support for UFS2 boot. [tsutsui 20090503]
+	rpcgen(1): Add support for hyper and quad keywords. [ginsbach 20090506]
+	apropos(1): Add -S and -s support, for searching by machine and
+		section [wiz 20090508]
+	file(1): Import 5.03 [christos 20090508]
+	dhcpcd(8): Import dhcpcd-5.0.2 [roy 20090510]
+	dhcpcd(8): Import dhcpcd-5.0.3 [roy 20090511]
+	bluetooth: Update the Bluetooth service discovery API and merge it
+		into libbluetooth, retiring the separate libsdp.
+		[plunky 20090512]

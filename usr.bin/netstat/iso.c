@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.30 2008/04/23 08:26:47 plunky Exp $	*/
+/*	$NetBSD: iso.c,v 1.30.8.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.30 2008/04/23 08:26:47 plunky Exp $");
+__RCSID("$NetBSD: iso.c,v 1.30.8.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ SOFTWARE.
 
 static void tprintstat __P((struct tp_stat *, int));
 static void isonetprint __P((struct sockaddr_iso *, int));
-static void hexprint __P((int, const char *, char *));
+static void hexprint __P((int, const char *, const char *));
 extern void inetprint __P((struct in_addr *, u_int16_t, const char *, int));
 
 /*
@@ -115,7 +115,7 @@ extern void inetprint __P((struct in_addr *, u_int16_t, const char *, int));
 void
 esis_stats(off, name)
 	u_long	off;
-	char	*name;
+	const char	*name;
 {
 	struct esis_stat esis_stat;
 
@@ -148,7 +148,7 @@ esis_stats(off, name)
 void
 clnp_stats(off, name)
 	u_long off;
-	char *name;
+	const char *name;
 {
 	struct clnp_stat clnp_stat;
 
@@ -188,7 +188,7 @@ clnp_stats(off, name)
 void
 cltp_stats(off, name)
 	u_long off;
-	char *name;
+	const char *name;
 {
 	struct cltpstat cltpstat;
 
@@ -230,7 +230,7 @@ static	int first = 1;
 void
 iso_protopr(off, name)
 	u_long off;
-	char *name;
+	const char *name;
 {
 	struct isopcb cb;
 	struct isopcb *prev, *next;
@@ -321,7 +321,7 @@ iso_protopr1(kern_addr, istp)
 void
 tp_protopr(off, name)
 	u_long off;
-	char *name;
+	const char *name;
 {
 	extern const char * const tp_sstring[];	/* from sys/netiso/tp_astring.c */
 	struct tp_ref *tpr, *tpr_base;
@@ -372,7 +372,7 @@ tp_inproto(pcb)
 	struct inpcb inpcb;
 
 	kget(tpcb.tp_npcb, inpcb);
-	if (!aflag && inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
+	if (!aflag && inet_lnaof(inpcb.inp_faddr) == INADDR_ANY)
 		return;
 	if (Aflag)
 		printf("%8lx ", pcb);
@@ -553,7 +553,7 @@ struct	tp_stat tp_stat;
 void
 tp_stats(off, name)
 	u_long off;
-	char *name;
+	const char *name;
 {
 
 	if (off == 0) {
@@ -567,7 +567,7 @@ tp_stats(off, name)
 
 struct tpstatpr {
 	size_t off;
-	char *text;
+	const char *text;
 };
 
 #define o(f) offsetof(struct tp_stat, f)
@@ -649,7 +649,7 @@ tprintstat(s, indent)
 {
 	int j, tpfirst, tpfirst2;
 
-	static char *rttname[]= {
+	static const char *rttname[]= {
 		"~LOCAL, PDN",
 		"~LOCAL,~PDN",
 		" LOCAL,~PDN",
@@ -852,9 +852,9 @@ static void
 hexprint(n, buf, delim)
 	int n;
 	const char *buf;
-	char *delim;
+	const char *delim;
 {
-	u_char *in = (u_char *)buf, *top = in + n;
+	const u_char *in = (const u_char *)buf, *top = in + n;
 	char *out = obuf;
 	int i;
 

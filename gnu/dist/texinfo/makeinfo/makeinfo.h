@@ -1,4 +1,4 @@
-/*	$NetBSD: makeinfo.h,v 1.1.1.7 2008/09/02 07:50:44 christos Exp $	*/
+/*	$NetBSD: makeinfo.h,v 1.1.1.7.6.1 2009/05/13 19:18:10 jym Exp $	*/
 
 /* makeinfo.h -- declarations for Makeinfo.
    Id: makeinfo.h,v 1.17 2004/11/30 02:03:23 karl Exp
@@ -191,6 +191,10 @@ DECLARE (char *, css_include, NULL);
 /* Nonzero means do not output "Node: Foo" for node separations, that
    is, generate plain text.  (--no-headers) */
 DECLARE (int, no_headers, 0);
+
+/* Nonzero means do not output makeinfo version and source file.
+   (--no-version-header) */
+DECLARE (int, no_version_header, 0);
 
 /* Nonzero means that we process @docbook and @ifdocbook.  (--ifdocbook) */
 DECLARE (int, process_docbook, 0);

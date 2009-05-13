@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.28 2008/02/27 16:36:54 ad Exp $	*/
+/*	$NetBSD: unix.c,v 1.28.10.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.28 2008/02/27 16:36:54 ad Exp $");
+__RCSID("$NetBSD: unix.c,v 1.28.10.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ unixdomainprhdr(void)
 	       "Nextref");
 }
 
-static	char *socktype[] =
+static	const char *socktype[] =
     { "#0", "stream", "dgram", "raw", "rdm", "seqpacket" };
 
 static void
@@ -153,7 +153,7 @@ unixpr(off)
 		struct kinfo_pcb *pcblist;
 		int mib[8];
 		size_t namelen = 0, size = 0, i;
-		char *mibname = "net.local.stream.pcblist";
+		const char *mibname = "net.local.stream.pcblist";
 		static int first = 1;
 		int done = 0;
 

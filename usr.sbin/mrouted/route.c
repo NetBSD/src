@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.12 2006/05/25 01:44:28 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.12.28.1 2009/05/13 19:20:30 jym Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -707,8 +707,8 @@ struct newrt {
 static int
 compare_rts(const void *rt1, const void *rt2)
 {
-    struct newrt *r1 = (struct newrt *)rt1;
-    struct newrt *r2 = (struct newrt *)rt2;
+    const struct newrt *r1 = (const struct newrt *)rt1;
+    const struct newrt *r2 = (const struct newrt *)rt2;
     u_int32_t m1 = ntohl(r1->mask);
     u_int32_t m2 = ntohl(r2->mask);
     u_int32_t o1, o2;

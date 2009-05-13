@@ -1,4 +1,4 @@
-/* $NetBSD: krb5_passwd.c,v 1.17 2008/04/28 20:24:14 martin Exp $ */
+/* $NetBSD: krb5_passwd.c,v 1.17.8.1 2009/05/13 19:20:00 jym Exp $ */
 
 /*
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -213,18 +213,18 @@ pwkrb5_process(const char *username, int argc, char **argv)
 
 #else /* ! USE_PAM */
 
-static krb5_context context;
+static krb5_context defcontext;
 static krb5_principal defprinc;
 static int kusage = PW_USE;
 
 int
 krb5_init(const char *progname)
 {
-    return krb5_init_context(&context);
+    return krb5_init_context(&defcontext);
 }
 
 int
-krb5_arg (char ch, const char *optarg)
+krb5_arg (char ch, const char *opt)
 {
     krb5_error_code ret;
     switch(ch) {
@@ -233,9 +233,9 @@ krb5_arg (char ch, const char *optarg)
 	kusage = PW_USE_FORCE;
 	return 1;
     case 'u':
-	ret = krb5_parse_name(context, optarg, &defprinc);
+	ret = krb5_parse_name(defcontext, opt, &defprinc);
 	if(ret) {
-	    krb5_warn(context, ret, "%s", optarg);
+	    krb5_warn(defcontext, ret, "%s", opt);
 	    return 0;
 	}
 	return 1;
@@ -252,11 +252,11 @@ krb5_arg_end(void)
 void
 krb5_end(void)
 {
-    if (context == NULL)
+    if (defcontext == NULL)
 	return;
     if(defprinc)
-	krb5_free_principal(context, defprinc);
-    krb5_free_context(context);
+	krb5_free_principal(defcontext, defprinc);
+    krb5_free_context(defcontext);
 }
 
 

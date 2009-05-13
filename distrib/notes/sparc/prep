@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.25 2008/11/20 20:52:17 jdc Exp $
+.\"	$NetBSD: prep,v 1.25.2.1 2009/05/13 19:17:48 jym Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -415,20 +415,15 @@ to look at the partition sizes of disk you intend installing
 .Nx*M
 on.
 .Pp
-Assuming a classic partition scheme with
-.Pa /
-(root) and
-.Pa /usr
-file systems, a comfortable size for the
+A minimal installation of
 .Nx
-root file system partition is
-about 20 MB; a good initial size for the swap partition is twice the amount
-of physical memory in your machine (though, unlike
+requires about 100 MB.
+A full installation requires considerably more.
+A good initial size for the swap partition is twice the amount
+of physical memory in your machine (unlike
 .Tn SunOS 4.x ,
 there are no restrictions on the size of the swap partition that would render
-part of your memory unusable). A full binary installation takes about 275 MB
-in
-.Pa /usr .
+part of your memory unusable).
 .Pp
 Note that there are limitations on the size of the root partition for
 various models.

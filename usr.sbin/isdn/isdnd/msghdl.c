@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.10 2004/03/28 20:49:22 pooka Exp $ 
+ *	$Id: msghdl.c,v 1.10.40.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -60,8 +60,8 @@ void
 msg_connect_ind(msg_connect_ind_t *mp, int len)
 {
 	struct cfg_entry *cep;
-	char *src_tela = "ERROR-src_tela";
-	char *dst_tela = "ERROR-dst_tela";
+	const char *src_tela = "ERROR-src_tela";
+	const char *dst_tela = "ERROR-dst_tela";
 
 #define SRC (aliasing == 0 ? mp->src_telno : src_tela)
 #define DST (aliasing == 0 ? mp->dst_telno : dst_tela)
@@ -926,7 +926,7 @@ msg_accounting(msg_accounting_ind_t *mp)
 void
 msg_charging_ind(msg_charging_ind_t *mp)
 {
-	static char *cttab[] = {
+	static const char *cttab[] = {
 		"invalid",
 		"AOCD",
 		"AOCE",
@@ -1036,7 +1036,7 @@ msg_packet_ind(msg_packet_ind_t *mp)
 	u_char *proto_hdr;
 	char tmp[80];
 	char *cptr = tmp;
-	char *name = "???";
+	const char *name = "???";
 
 	for (cep = get_first_cfg_entry(); cep; cep = NEXT_CFE(cep)) {
 		if (cep->usrdevice == mp->driver &&

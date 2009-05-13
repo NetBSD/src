@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.6 2006/03/19 00:56:12 christos Exp $	*/
+/*	$NetBSD: schedule.c,v 1.6.28.1 2009/05/13 19:18:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: schedule.c,v 1.6 2006/03/19 00:56:12 christos Exp $");
+__RCSID("$NetBSD: schedule.c,v 1.6.28.1 2009/05/13 19:18:08 jym Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <math.h>
 #include <err.h>
+#include <limits.h>
 #include "trek.h"
 
 /*
@@ -135,7 +136,7 @@ struct event	*e1;
 			e->evcode, e->date, e->x, e->y, e->systemname);
 #	endif
 	Now.eventptr[e->evcode & E_EVENT] = 0;
-	e->date = 1e50;
+	e->date = TOOLARGE;
 	e->evcode = 0;
 	return;
 }

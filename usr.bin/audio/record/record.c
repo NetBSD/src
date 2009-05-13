@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.46 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.46.6.1 2009/05/13 19:19:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.46 2008/05/29 14:51:27 mrg Exp $");
+__RCSID("$NetBSD: record.c,v 1.46.6.1 2009/05/13 19:19:43 jym Exp $");
 #endif
 
 
@@ -334,11 +334,11 @@ main(argc, argv)
 
 	(void)gettimeofday(&start_time, NULL);
 	while (no_time_limit || timeleft(&start_time, &record_time)) {
-		if (read(audiofd, buffer, bufsize) != bufsize)
+		if ((size_t)read(audiofd, buffer, bufsize) != bufsize)
 			err(1, "read failed");
 		if (conv_func)
 			(*conv_func)(buffer, bufsize);
-		if (write(outfd, buffer, bufsize) != bufsize)
+		if ((size_t)write(outfd, buffer, bufsize) != bufsize)
 			err(1, "write failed");
 		total_size += bufsize;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.57 2009/02/01 22:36:24 hubertf Exp $	*/
+/*	$NetBSD: create.c,v 1.57.2.1 2009/05/13 19:20:31 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.57 2009/02/01 22:36:24 hubertf Exp $");
+__RCSID("$NetBSD: create.c,v 1.57.2.1 2009/05/13 19:20:31 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,6 +384,15 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 	return (0);
 }
 
+/*
+ * dcmp --
+ *	used as a comparison function passed to fts_open() to control
+ *	the order in which fts_read() returns results.	We make
+ *	directories sort after non-directories, but otherwise sort in
+ *	strcmp() order.
+ *
+ * Keep this in sync with nodecmp() in spec.c.
+ */
 static int
 dcmp(const FTSENT **a, const FTSENT **b)
 {

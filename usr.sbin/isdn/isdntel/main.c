@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: main.c,v 1.6 2004/10/30 08:31:39 dsl Exp $ 
+ *      $Id: main.c,v 1.6.34.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@ main(int argc, char **argv)
 	struct pollfd set[1];
 	char *ncp;
 	
-	char *aliasfile = ALIASFILE;
+	const char *aliasfile = ALIASFILE;
 	int rrtimeout = REREADTIMEOUT;
 	
 	extern char *optarg;	
@@ -179,7 +179,7 @@ main(int argc, char **argv)
  *      handle horizontal selection bar movement
  *---------------------------------------------------------------------------*/
 static void
-makecurrent(int cur_pos, struct onefile *cur_file, int cold)
+makecurrent(int mc_cur_pos, struct onefile *mc_cur_file, int cold)
 {
 	static int lastpos;
 	static struct onefile *lastfile;
@@ -187,7 +187,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 
 	/* un-higlight current horizontal bar */
 
-	if (!cold && lastfile && cur_file)
+	if (!cold && lastfile && mc_cur_file)
 	{
 		snprintf(buffer, sizeof(buffer),
 		    "%s %s %-16s %-16s %-20s %-6s%*s",
@@ -201,16 +201,16 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 		wattroff(main_w, A_REVERSE);
 	}
 
-	if (cur_file == NULL)
+	if (mc_cur_file == NULL)
 	{
 		lastpos = cur_pos_scr;
-		lastfile = cur_file;
+		lastfile = mc_cur_file;
 		return;
 	}
 		
 	/* have to scroll up or down ? */
 
-	if (cur_pos >= bot_dis)		
+	if (mc_cur_pos >= bot_dis)		
 	{
 		/* scroll up */
 
@@ -220,7 +220,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 	    	top_dis++;
 	    	cur_pos_scr = LINES-START_O-3;
 	}
-	else if (cur_pos < top_dis)
+	else if (mc_cur_pos < top_dis)
 	{
 		/* scroll down */
 
@@ -232,14 +232,14 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 	}
 	else
 	{
-		cur_pos_scr = cur_pos - top_dis;
+		cur_pos_scr = mc_cur_pos - top_dis;
 	}		
 
 	snprintf(buffer, sizeof(buffer), "%s %s %-16s %-16s %-20s %-6s%*s",
-			cur_file->date, cur_file->time,
-			cur_file->dstnumber, cur_file->srcnumber,
-			cur_file->alias == NULL ? "-/-" : cur_file->alias,
-			cur_file->seconds,
+			mc_cur_file->date, mc_cur_file->time,
+			mc_cur_file->dstnumber, mc_cur_file->srcnumber,
+			mc_cur_file->alias == NULL ? "-/-" : mc_cur_file->alias,
+			mc_cur_file->seconds,
 			COLS - LAST_POS - 2, "");
 			
 	wattron(main_w, A_REVERSE);
@@ -247,7 +247,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 	wattroff(main_w, A_REVERSE);
 
 	lastpos = cur_pos_scr;
-	lastfile = cur_file;
+	lastfile = mc_cur_file;
 
 	wrefresh(main_w);	
 }
@@ -286,7 +286,7 @@ usage(void)
  *	fatal error exit
  *---------------------------------------------------------------------------*/
 void
-fatal(char *fmt, ...)
+fatal(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -313,7 +313,7 @@ fatal(char *fmt, ...)
  *	error printing
  *---------------------------------------------------------------------------*/
 void
-error(char *fmt, ...)
+error(const char *fmt, ...)
 {
 	va_list ap;
 

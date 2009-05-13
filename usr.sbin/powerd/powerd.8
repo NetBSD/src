@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.18 2007/12/22 18:40:21 jmcneill Exp $
+.\"	$NetBSD: powerd.8,v 1.18.12.1 2009/05/13 19:20:32 jym Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -190,9 +190,10 @@ Capacity dropped below the limit set by the user.
 .It low-power
 System is running in low power, that means that there is not
 any AC Adapter connected and all batteries are in critical or
-low capacity. When this event is received there's no much time
-so you should only suspend or shutdown the system. The script
-shutdowns the system gracefully by default.
+low capacity.
+When this event is received there's no much time so you should only
+suspend or shutdown the system.
+The script shutdowns the system gracefully by default.
 .El
 .Pp
 The following events are defined for drive and battery sensors:

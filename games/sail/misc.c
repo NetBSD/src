@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.16 2008/01/28 01:58:01 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.16.12.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.16 2008/01/28 01:58:01 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16.12.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,9 +46,10 @@ __RCSID("$NetBSD: misc.c,v 1.16 2008/01/28 01:58:01 dholland Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-#define distance(x,y) (abs(x) >= abs(y) ? abs(x) + abs(y)/2 : abs(y) + abs(x)/2)
+#define distance(x,y) \
+	(abs(x) >= abs(y) ? abs(x) + abs(y)/2 : abs(y) + abs(x)/2)
 
-static int	angle(int, int);
+static int angle(int, int);
 
 /* XXX */
 int
@@ -213,7 +214,7 @@ logger(struct ship *s)
 #endif
 	net = (float)s->file->points / s->specs->pts;
 	persons = getw(fp);
-	n = fread((char *)log, sizeof(struct logs), NLOG, fp);
+	n = fread(log, sizeof(struct logs), NLOG, fp);
 	for (lp = &log[n]; lp < &log[NLOG]; lp++)
 		lp->l_name[0] = lp->l_uid = lp->l_shipnum
 			= lp->l_gamenum = lp->l_netpoints = 0;
@@ -225,14 +226,14 @@ logger(struct ship *s)
 	for (lp = log; lp < &log[NLOG]; lp++)
 		if (net > (float)lp->l_netpoints
 		    / scene[lp->l_gamenum].ship[lp->l_shipnum].specs->pts) {
-			fwrite((char *)log, sizeof (struct logs), lp - log, fp);
+			fwrite(log, sizeof (struct logs), lp - log, fp);
 			strcpy(log[NLOG-1].l_name, s->file->captain);
 			log[NLOG-1].l_uid = getuid();
 			log[NLOG-1].l_shipnum = s->file->index;
 			log[NLOG-1].l_gamenum = game;
 			log[NLOG-1].l_netpoints = s->file->points;
-			fwrite((char *)&log[NLOG-1], sizeof (struct logs), 1, fp);
-			fwrite((char *)lp, sizeof (struct logs), &log[NLOG-1] - lp, fp);
+			fwrite(&log[NLOG-1], sizeof (struct logs), 1, fp);
+			fwrite(lp, sizeof (struct logs), &log[NLOG-1] - lp, fp);
 			break;
 		}
 #ifdef LOCK_EX

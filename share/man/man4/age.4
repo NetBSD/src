@@ -1,4 +1,4 @@
-.\"	$NetBSD: age.4,v 1.2 2009/01/16 23:27:49 wiz Exp $
+.\"	$NetBSD: age.4,v 1.2.2.1 2009/05/13 19:19:08 jym Exp $
 .\"	$OpenBSD: age.4,v 1.2 2009/01/16 06:03:44 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Kevin Lo <kevlo@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 16, 2009
+.Dd May 5, 2009
 .Dt AGE 4
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ Set 1000Mbps (Gigabit Ethernet) operation.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 To view a list of media types and options supported by the card, try
-.Ic ifconfig \*[Lt]device\*[Gt] media .
+.Ic ifconfig Ao Ic device Ac Ic media .
 For example,
 .Ic ifconfig age0 media .
 .Sh SEE ALSO
@@ -70,7 +70,7 @@ The
 device driver first appeared in
 .Ox 4.5 .
 It was then ported to
-.Nx 6.0 .
+.Nx 5.1 .
 .Sh AUTHORS
 .An -nosplit
 The

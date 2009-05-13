@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.17 2006/03/18 09:46:35 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.17.30.1 2009/05/13 19:20:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -149,7 +149,7 @@ extern struct group *gr;	/* pointer to static area used by getgrent */
 extern uid_t userid;		/* user's user ID */
 extern gid_t groupid;		/* user's group ID */
 
-int	 any(int, char *);
+int	 any(int, const char *);
 char	*colon(char *);
 void	 cleanup(int);
 void	 define(char *);
@@ -179,5 +179,5 @@ struct subcmd *
 void	 freesubcmd(struct subcmd *);
 void	 prnames(struct namelist *);
 void	 server(void);
-void	 yyerror(char *);
+void	 yyerror(const char *);
 int	 yyparse(void);

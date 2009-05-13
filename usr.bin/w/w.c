@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.73 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: w.c,v 1.73.6.1 2009/05/13 19:20:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.73 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: w.c,v 1.73.6.1 2009/05/13 19:20:11 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,6 @@ struct timeval	boottime;
 struct winsize	ws;
 kvm_t	       *kd;
 time_t		now;		/* the current time of day */
-time_t		uptime;		/* time of last reboot & elapsed time since */
 int		ttywidth;	/* width of tty */
 int		argwidth;	/* width of tty left to print process args */
 int		header = 1;	/* true if -h flag: don't print heading */
@@ -117,7 +116,7 @@ struct	entry {
 	struct	kinfo_proc2 *tp;	/* `most interesting' tty proc */
 	struct	kinfo_proc2 *pp;	/* pid proc */
 	pid_t	pid;			/* pid or ~0 if not known */
-} *ep, *ehead = NULL, **nextp = &ehead;
+} *ehead = NULL, **nextp = &ehead;
 
 static void	pr_args(struct kinfo_proc2 *);
 static void	pr_header(time_t *, int);
@@ -135,8 +134,10 @@ main(int argc, char **argv)
 	struct kinfo_proc2 *kp;
 	struct hostent *hp;
 	struct in_addr l;
+	struct entry *ep;
 	int ch, i, nentries, nusers, wcmd, curtain, use_sysctl;
 	char *memf, *nlistf, *p, *x, *usrnp;
+	const char *options;
 	time_t then;
 	size_t len;
 #ifdef SUPPORT_UTMP
@@ -156,14 +157,14 @@ main(int argc, char **argv)
 		progname++;
 	if (*progname == 'u') {
 		wcmd = 0;
-		p = "";
+		options = "";
 	} else {
 		wcmd = 1;
-		p = "hiM:N:nw";
+		options = "hiM:N:nw";
 	}
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, p)) != -1)
+	while ((ch = getopt(argc, argv, options)) != -1)
 		switch (ch) {
 		case 'h':
 			header = 0;
@@ -392,8 +393,8 @@ main(int argc, char **argv)
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		char host_buf[MAXHOSTNAMELEN + 1];
 
-		strlcpy(host_buf, ep->host, sizeof(host_buf));
-		p = *host_buf ? host_buf : "-";
+		strlcpy(host_buf, *ep->host ? ep->host : "-", sizeof(host_buf));
+		p = host_buf;
 
 		for (x = p; x < p + MAXHOSTNAMELEN; x++)
 			if (*x == '\0' || *x == ':')
@@ -481,9 +482,9 @@ pr_header(time_t *nowp, int nusers)
 {
 	double avenrun[3];
 	time_t uptime;
-	int days, hrs, i, mins;
+	int days, hrs, mins;
 	int mib[2];
-	size_t size;
+	size_t size, i;
 	char buf[256];
 
 	/*

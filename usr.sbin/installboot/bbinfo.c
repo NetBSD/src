@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.13 2008/05/09 10:53:55 tsutsui Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.13.6.1 2009/05/13 19:20:24 jym Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.13 2008/05/09 10:53:55 tsutsui Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.13.6.1 2009/05/13 19:20:24 jym Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -81,7 +81,7 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams,
 	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
 		goto done;
-	} else if (rv != bbparams->maxsize) {
+	} else if ((uint32_t)rv != bbparams->maxsize) {
 		warnx("Reading `%s': short read", params->filesystem);
 		goto done;
 	}
@@ -127,7 +127,7 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams,
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
-	} else if (rv != bbparams->maxsize) {
+	} else if ((uint32_t)rv != bbparams->maxsize) {
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	} else
@@ -202,9 +202,9 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	}
 
 #define HOSTTOTARGET32(x) ((bbparams->endian == BBINFO_LITTLE_ENDIAN) \
-			    ? htole32((x)) : htobe32((x)))
+			    ? (uint32_t)htole32((x)) : (uint32_t)htobe32((x)))
 #define TARGET32TOHOST(x) ((bbparams->endian == BBINFO_LITTLE_ENDIAN) \
-			    ? le32toh((x)) : be32toh((x)))
+			    ? (uint32_t)le32toh((x)) : (uint32_t)be32toh((x)))
 
 		/* Look for the bbinfo structure. */
 	bbinfop = NULL;
@@ -314,7 +314,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
-	} else if (rv != bbparams->maxsize) {
+	} else if ((uint32_t)rv != bbparams->maxsize) {
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.23 2006/03/19 01:57:11 dan Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.23.30.1 2009/05/13 19:19:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.23 2006/03/19 01:57:11 dan Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.23.30.1 2009/05/13 19:19:05 jym Exp $");
 #endif
 
 
@@ -399,7 +399,7 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	while (fscanf(fp, "%d", &val) == 1)
 		*p++ = (char) val;
 	fclose(fp);
-	if (p - cfgBuf != cfgPtr->layoutSpecificSize) {
+	if ((unsigned int)(p - cfgBuf) != cfgPtr->layoutSpecificSize) {
 		RF_ERRORMSG2("Size mismatch creating layout specific data: is %d sb %d bytes\n", (int) (p - cfgBuf), (int) (6 * sizeof(int) + b * k));
 		return (EINVAL);
 	}

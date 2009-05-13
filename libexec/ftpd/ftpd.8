@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.82 2008/09/21 06:20:46 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.82.6.1 2009/05/13 19:18:37 jym Exp $
 .\"
 .\" Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 21, 2008
+.Dd May 1, 2009
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -278,8 +278,7 @@ style
 .Pa xferlog
 file suitable for input into a third-party log analysis tool with a command
 similar to:
-.Dl "grep 'xferlog: ' /var/log/xferlog | \e"
-.Dl "\ \ \ sed -e 's/^.*xferlog: //' \*[Gt] wuxferlog"
+.Dl "sed -ne 's/^.*xferlog: //p' /var/log/xferlog \*[Gt] wuxferlog"
 .El
 .Pp
 The file
@@ -313,7 +312,7 @@ server currently supports the following
 .Tn FTP
 requests.
 The case of the requests is ignored.
-.Bl -column "Request" -offset indent
+.Bl -column "Request" "Description" -offset indent
 .It Sy Request Ta Sy Description
 .It ABOR Ta "abort previous command"
 .It ACCT Ta "specify account (ignored)"
@@ -367,7 +366,7 @@ The following non-standard or
 .Ux
 specific commands are supported by the SITE request.
 .Pp
-.Bl -column Request -offset indent
+.Bl -column Request Description -offset indent
 .It Sy Request Ta Sy Description
 .It CHMOD Ta "change mode of a file, e.g. ``SITE CHMOD 755 filename''"
 .It HELP Ta "give help information."
@@ -868,5 +867,5 @@ requests against files larger than 10240 bytes will be denied if
 the current transfer
 .Sy TYPE
 is
-.Sq Li A 
+.Sq Li A
 (ASCII).

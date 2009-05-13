@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.9 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.9.4.1 2009/05/13 19:19:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.9 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.9.4.1 2009/05/13 19:19:03 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,17 +94,20 @@ __RCSID("$NetBSD: mount_ptyfs.c,v 1.9 2008/07/20 01:20:22 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <grp.h>
+#include <util.h>
 
 #include <mntopts.h>
 
 #define ALTF_GROUP	1
 #define ALTF_MODE	2
+#define ALTF_CHROOT	3
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
 	{ "group", 0, ALTF_GROUP, 1 },
 	{ "mode", 0, ALTF_MODE, 1 },
+	{ "chroot", 0, ALTF_CHROOT, 1 },
 	MOPT_NULL,
 };
 
@@ -160,8 +163,9 @@ mount_ptyfs(int argc, char *argv[])
 	args.version = PTYFS_ARGSVERSION;
 	args.gid = getgrp("tty");
 	args.mode = S_IRUSR|S_IWUSR|S_IWGRP;
+	args.flags = 0;
 
-	while ((ch = getopt(argc, argv, "g:m:o:")) != -1)
+	while ((ch = getopt(argc, argv, "cg:m:o:")) != -1)
 		switch (ch) {
 		case 'o':
 			altflags = 0;
@@ -172,7 +176,12 @@ mount_ptyfs(int argc, char *argv[])
 				args.gid = getgrp(getmntoptstr(mp, "group"));
 			if (altflags & ALTF_MODE)
 				args.mode = (mode_t)getmntoptnum(mp, "mode");
+			if (altflags & ALTF_CHROOT)
+				args.flags |= PTYFSMNT_CHROOT;
 			freemntopts(mp);
+			break;
+		case 'c':
+			args.flags |= PTYFSMNT_CHROOT;
 			break;
 		case 'g':
 			args.gid = getgrp(optarg);
@@ -200,9 +209,13 @@ mount_ptyfs(int argc, char *argv[])
 
 	if (mount(MOUNT_PTYFS, canon_dir, mntflags, &args, sizeof args) == -1)
 		err(1, "ptyfs on %s", canon_dir);
-	if (mntflags & MNT_GETARGS)
-		printf("version=%d, gid=%lu, mode=0%o\n", args.version,
-		    (unsigned long)args.gid, args.mode);
+	if (mntflags & MNT_GETARGS) {
+		char buf[1024];
+		(void)snprintb(buf, sizeof(buf), PTYFSMNT_BITS, args.flags);
+		printf("version=%d, flags=%s\n", args.version, buf);
+		printf("version=%d, gid=%lu, mode=0%o flags=%s\n", args.version,
+		    (unsigned long)args.gid, args.mode, buf);
+	}
 	return 0;
 }
 
@@ -210,6 +223,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-g <group|gid>] [-m <mode>] [-o options] ptyfs mountpoint\n", getprogname());
+	    "Usage: %s [-c] [-g <group|gid>] [-m <mode>] [-o options] "
+	    "ptyfs mountpoint\n", getprogname());
 	exit(1);
 }

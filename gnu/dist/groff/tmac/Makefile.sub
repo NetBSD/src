@@ -18,7 +18,7 @@ NORMALFILES=\
   ps.tmac psold.tmac pspic.tmac psatk.tmac \
   dvi.tmac \
   tty.tmac tty-char.tmac \
-  latin1.tmac latin2.tmac latin9.tmac cp1047.tmac \
+  latin1.tmac latin2.tmac latin9.tmac cp1047.tmac ascii.tmac \
   unicode.tmac \
   X.tmac Xps.tmac \
   lj4.tmac \

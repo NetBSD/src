@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.17 2006/04/20 10:57:26 drochner Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.17.28.1 2009/05/13 19:18:06 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,27 +34,28 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.17 2006/04/20 10:57:26 drochner Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.17.28.1 2009/05/13 19:18:06 jym Exp $");
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "display.h"
 #include "extern.h"
 #include "player.h"
 #include "restart.h"
 
-static void	initialize(void);
+static void initialize(void);
 
 /*ARGSUSED*/
 int
 pl_main(void)
 {
-
 	initialize();
 	Msg("Aye aye, Sir");
 	play();
@@ -86,12 +87,11 @@ reprint:
 		printf("\nScenario number? ");
 		fflush(stdout);
 		scanf("%d", &game);
-		while (getchar() != '\n')
+		while (getchar() != '\n' && !feof(stdin))
 			;
 	}
 	if (game < 0 || game >= NSCENE) {
-		puts("Very funny.");
-		exit(1);
+		errx(1, "Very funny.");
 	}
 	cc = &scene[game];
 	ls = SHIP(cc->vessels);
@@ -100,9 +100,8 @@ reprint:
 		nat[n] = 0;
 	foreachship(sp) {
 		if (sp->file == NULL &&
-		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL) {
-			puts("OUT OF MEMORY");
-			exit(1);
+		    (sp->file = calloc(1, sizeof (struct File))) == NULL) {
+			err(1, "calloc");
 		}
 		sp->file->index = sp - SHIP(0);
 		sp->file->stern = nat[sp->nationality]++;
@@ -118,8 +117,7 @@ reprint:
 
 	hasdriver = sync_exists(game);
 	if (sync_open() < 0) {
-		perror("sail: syncfile");
-		exit(1);
+		err(1, "syncfile");
 	}
 
 	if (hasdriver) {
@@ -136,7 +134,7 @@ reprint:
 		if (sp >= ls) {
 			puts("All ships taken in that scenario.");
 			foreachship(sp)
-				free((char *)sp->file);
+				free(sp->file);
 			sync_close(0);
 			people = 0;
 			goto reprint;
@@ -156,13 +154,17 @@ reprint:
 			fflush(stdout);
 			if (scanf("%d", &player) != 1 || player < 0
 			    || player >= cc->vessels) {
-				while (getchar() != '\n')
+				while (getchar() != '\n' && !feof(stdin))
 					;
 				puts("Say what?");
 				player = -1;
 			} else
-				while (getchar() != '\n')
+				while (getchar() != '\n' && !feof(stdin))
 					;
+			if (feof(stdin)) {
+				printf("\nExiting...\n");
+				leave(LEAVE_QUIT);
+			}
 		}
 		if (player < 0)
 			continue;
@@ -179,7 +181,7 @@ reprint:
 	mf = ms->file;
 	mc = ms->specs;
 
-	Write(W_BEGIN, ms, 0, 0, 0, 0);
+	send_begin(ms);
 	if (Sync() < 0)
 		leave(LEAVE_SYNC);
 
@@ -190,7 +192,7 @@ reprint:
 			longjmp(restart, MODE_DRIVER);
 			/*NOTREACHED*/
 		case -1:
-			perror("fork");
+			warn("fork");
 			leave(LEAVE_FORK);
 			break;
 		default:
@@ -200,19 +202,19 @@ reprint:
 	printf("Your ship is the %s, a %d gun %s (%s crew).\n",
 		ms->shipname, mc->guns, classname[mc->class],
 		qualname[mc->qual]);
-	if ((nameptr = (char *) getenv("SAILNAME")) && *nameptr)
-		strncpy(captain, nameptr, sizeof captain);
+	if ((nameptr = getenv("SAILNAME")) && *nameptr)
+		strlcpy(captain, nameptr, sizeof captain);
 	else {
 		printf("Your name, Captain? ");
 		fflush(stdout);
-		fgets(captain, sizeof captain, stdin);
-		if (!*captain)
+		if (fgets(captain, sizeof captain, stdin) == NULL)
+			strcpy(captain, "no name");
+		else if (*captain == '\0' || *captain == '\n')
 			strcpy(captain, "no name");
 		else
 		    captain[strlen(captain) - 1] = '\0';
 	}
-	captain[sizeof captain - 1] = '\0';
-	Writestr(W_CAPTAIN, ms, captain);
+	send_captain(ms, captain);
 	for (n = 0; n < 2; n++) {
 		char buf[10];
 
@@ -245,10 +247,12 @@ reprint:
 		}
 	}
 
+	printf("\n");
+	fflush(stdout);
 	initscreen();
-	draw_board();
+	display_redraw();
 	snprintf(message, sizeof message, "Captain %s assuming command",
 			captain);
-	Writestr(W_SIGNAL, ms, message);
+	send_signal(ms, message);
 	newturn(0);
 }

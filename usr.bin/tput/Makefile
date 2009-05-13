@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2005/07/30 14:43:13 christos Exp $
+#	$NetBSD: Makefile,v 1.8.30.1 2009/05/13 19:20:08 jym Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-WARNS=	3
 PROG=	tput
 DPADD=	${LIBTERMCAP}
 LDADD=	-ltermcap

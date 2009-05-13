@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppya.c,v 1.3 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: utoppya.c,v 1.3.8.1 2009/05/13 19:20:10 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -438,7 +438,7 @@ cmd_get(int argc, char **argv)
 
 		rv = fwrite(buf, 1, l, ofp);
 
-		if (rv != l) {
+		if (rv != (size_t)l) {
 			if (ofp != stdout)
 				fclose(ofp);
 			progressmeter(1);
@@ -552,7 +552,7 @@ cmd_put(int argc, char **argv)
 
 	while ((l = fread(buf, 1, TOPPY_IO_SIZE, ifp)) > 0) {
 		rv = write(toppy_fd, buf, l);
-		if (rv != l) {
+		if ((size_t)rv != l) {
 			fclose(ifp);
 			if (progbar)
 				progressmeter(1);

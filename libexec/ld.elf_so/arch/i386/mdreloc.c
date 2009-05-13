@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.26 2008/07/24 04:39:25 matt Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.26.6.1 2009/05/13 19:18:41 jym Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.26 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.26.6.1 2009/05/13 19:18:41 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	}
 	if (rel == 0 || relsz == 0)
 		return;
-	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
+	rellim = (const Elf_Rel *)((const uint8_t *)rel + relsz);
 	for (; rel < rellim; rel++) {
 		where = (Elf_Addr *)(relocbase + rel->r_offset);
 		*where += (Elf_Addr)relocbase;
@@ -184,7 +184,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
-	const Elf_Rel *rel = (const Elf_Rel *)((caddr_t)obj->pltrel + reloff);
+	const Elf_Rel *rel = (const Elf_Rel *)((const uint8_t *)obj->pltrel + reloff);
 	Elf_Addr new_value;
 	int err;
 

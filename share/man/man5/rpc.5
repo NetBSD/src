@@ -1,8 +1,9 @@
-.\" $NetBSD: rpc.5,v 1.8 2005/03/30 13:07:34 jmmv Exp $
+.\" $NetBSD: rpc.5,v 1.8.30.1 2009/05/13 19:19:13 jym Exp $
 .\" @(#)rpc.4 1.17 93/08/30 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .Dd December 10, 1991
 .Dt RPC 5
+.Os
 .Sh NAME
 .Nm rpc
 .Nd rpc program number data base
@@ -17,7 +18,7 @@ can be used in place of RPC program numbers.
 The rpc file has one line for each RPC
 program name. The line has the following format:
 .Pp
-.I name-of-the-RPC-program	RPC-program-number	aliases
+.Dl name-of-the-RPC-program	RPC-program-number	aliases
 .Pp
 Items are separated by any number of blanks and/or
 tab characters.

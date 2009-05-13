@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.21 2007/04/13 00:38:45 lukem Exp $
+.\"	$NetBSD: dd.1,v 1.21.20.1 2009/05/13 19:15:49 jym Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,12 +142,9 @@ This will cause a
 to be printed (to the standard error output) for every
 .Va n
 full or partial blocks written to the output file.
-.It Xo
 .Sm off
-.Cm conv=
-.Cm value Op \&, Cm value \&...
+.It Cm conv= Cm value Op \&, Cm value \&...
 .Sm on
-.Xc
 Where
 .Cm value
 is one of the symbols from the following list.

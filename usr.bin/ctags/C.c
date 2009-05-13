@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.15 2006/04/22 17:46:48 christos Exp $	*/
+/*	$NetBSD: C.c,v 1.15.30.1 2009/05/13 19:19:47 jym Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.15 2006/04/22 17:46:48 christos Exp $");
+__RCSID("$NetBSD: C.c,v 1.15.30.1 2009/05/13 19:19:47 jym Exp $");
 #endif
 #endif /* not lint */
 
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -224,7 +225,7 @@ c_entries(void)
 						break;
 					}
 					/* catch "typedef struct" */
-					if ((!t_def || t_level < level)
+					if ((!t_def || t_level <= level)
 					    && (!memcmp(tok, "struct", 7)
 					    || !memcmp(tok, "union", 6)
 					    || !memcmp(tok, "enum", 5))) {
@@ -323,7 +324,7 @@ fnd:
 		} else {
 			if (intoken(c)) {
 				if (anext - maybe_attribute 
-				 < sizeof attribute - 1)
+				 < (ptrdiff_t)(sizeof attribute - 1))
 					*anext++ = c;
 				else	break;
 				continue;

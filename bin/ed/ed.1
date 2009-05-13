@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.28 2003/09/08 13:13:08 wiz Exp $
+.\"	$NetBSD: ed.1,v 1.28.40.1 2009/05/13 19:15:49 jym Exp $
 .\"	$OpenBSD: ed.1,v 1.42 2003/07/27 13:25:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -397,10 +397,7 @@ matches the beginning of the string
 .Em bbb ) ,
 since a null match is the only leftmost match.
 .Sm off
-.It Xo Em \e{ No n,m
-.Em \e}\ \e{ No n, Em \e}\ \&
-.Em \e{ No n Em \e}
-.Xc
+.It Em \e{ No n,m Em \e}\ \e{ No n, Em \e}\ \& Em \e{ No n Em \e}
 .Sm on
 Matches the single character regular expression or subexpression
 immediately preceding it at least
@@ -543,7 +540,7 @@ The current address is set to the last line read.
 Edits the standard output of
 .Ar command ,
 (see
-.Ic ! Ar command
+.Ic \&! Ar command
 below).
 The default filename is unchanged.
 Any lines in the buffer are deleted before the output of
@@ -692,15 +689,14 @@ The current address is set to the last line read.
 Reads to after the addressed line the standard output of
 .Ar command ,
 (see the
-.Ic !
+.Ic \&!
 command below).
 The default filename is unchanged.
 The current address is set to the last line read.
 .Sm off
-.It Xo (.,.) Ic s Ar /re/replacement/ , \ (.,.)
-.Ic s Ar /re/replacement/ Em g , Ar \ (.,.)
-.Ic s Ar /re/replacement/ Em n
-.Xc
+.It (.,.) Ic s Ar /re/replacement/ , \ (.,.) \
+Ic s Ar /re/replacement/ Em g , Ar \ (.,.) \
+Ic s Ar /re/replacement/ Em n
 .Sm on
 Replaces text in the addressed lines matching a regular expression
 .Ar re
@@ -837,7 +833,7 @@ command.
 Writes the addressed lines to the standard input of
 .Ar command ,
 (see the
-.Ic !
+.Ic \&!
 command below).
 The default filename and current address are unchanged.
 .It (1,$) Ns Ic W Ar file
@@ -866,7 +862,7 @@ The current address is set to the last line printed.
 Prints the line number of the addressed line.
 .It (.+1) Ns Ic newline
 Prints the addressed line, and sets the current address to that line.
-.It Ic ! Ns Ar command
+.It Ic \&! Ns Ar command
 Executes
 .Ar command
 via
@@ -874,7 +870,7 @@ via
 If the first character of
 .Ar command
 is
-.Ic ! ,
+.Ic \&! ,
 then it is replaced by text of the previous
 .Ic !command .
 .Nm

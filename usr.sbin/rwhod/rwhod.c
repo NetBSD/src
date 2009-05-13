@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.37 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.37.6.1 2009/05/13 19:20:38 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.37 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.37.6.1 2009/05/13 19:20:38 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,7 @@ handleread(int s)
 			ntohs(from.sin_port));
 		return;
 	}
-	if (cc < WHDRSIZE) {
+	if (cc < (int)WHDRSIZE) {
 		syslog(LOG_WARNING, "Short packet from %s",
 			inet_ntoa(from.sin_addr));
 		return;

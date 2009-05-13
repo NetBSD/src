@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.6 2003/10/06 09:43:27 itojun Exp $
+ *	$Id: curses.c,v 1.6.40.1 2009/05/13 19:20:26 jym Exp $
  *
  * $FreeBSD$
  *
@@ -103,7 +103,7 @@ init_screen(void)
 
 	snprintf(buffer, sizeof(buffer), "----- isdn controller channel state ------------- isdnmonitor %02d.%02d.%d -", VERSION, REL, STEP);
 
-	while(strlen(buffer) < COLS)
+	while((int)strlen(buffer) < COLS)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(0, 0);
@@ -120,7 +120,7 @@ init_screen(void)
 	else
 		snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------- %s -", sockpath);
 
-	while(strlen(buffer) < COLS)
+	while((int)strlen(buffer) < COLS)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+2, 0);
@@ -129,7 +129,7 @@ init_screen(void)
 	standend();
 
 	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
-	while(strlen(buffer) < COLS)
+	while((int)strlen(buffer) < COLS)
 		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+4, 0);
@@ -302,7 +302,7 @@ display_bell(void)
 void
 do_menu(void)
 {
-	static char *menu[WMITEMS] =
+	static const char *menu[WMITEMS] =
 	{
 		"1 - (D)isplay refresh",
 		"2 - (H)angup (choose a channel)",

@@ -1,4 +1,4 @@
-/*	$NetBSD: char.c,v 1.5 2003/08/07 11:17:21 agc Exp $	*/
+/*	$NetBSD: char.c,v 1.5.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)char.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: char.c,v 1.5 2003/08/07 11:17:21 agc Exp $");
+__RCSID("$NetBSD: char.c,v 1.5.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ char _cmap[] = {
 	_C|_U,		_C|_U,		_C|_U,		_C|_U
 };
 
-char *_unctrl[] = {
+const char *_unctrl[] = {
 	"^@",	"^A",	"^B",	"^C",	"^D",	"^E",	"^F",	"^G",
 	"^H",	"^I",	"^J",	"^K",	"^L",	"^M",	"^N",	"^O",
 	"^P",	"^Q",	"^R",	"^S",	"^T",	"^U",	"^V",	"^W",

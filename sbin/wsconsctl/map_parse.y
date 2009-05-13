@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.7 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: map_parse.y,v 1.7.6.1 2009/05/13 19:19:07 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,12 +63,12 @@ static struct wscons_keymap mapdata[KS_NUMKEYCODES];
 struct wskbd_map_data newkbmap;		/* used in util.c */
 static struct wscons_keymap *cur_mp;
 
-static int ksym_lookup(keysym_t);
+static size_t ksym_lookup(keysym_t);
 
-static int
+static size_t
 ksym_lookup(keysym_t ksym)
 {
-	int i;
+	size_t i;
 	struct wscons_keymap *mp;
 
 	for (i = 0; i < kbmap.maplen; i++) {
@@ -124,7 +124,7 @@ expr		: keysym_expr
 		;
 
 keysym_expr	: T_KEYSYM keysym_var "=" keysym_var = {
-			int src, dst;
+			size_t src, dst;
 
 			dst = ksym_lookup($2);
 			src = ksym_lookup($4);
@@ -137,7 +137,7 @@ keysym_expr	: T_KEYSYM keysym_var "=" keysym_var = {
 keycode_expr	: T_KEYCODE T_NUMBER "=" = {
 			if ($2 >= KS_NUMKEYCODES)
 				errx(EXIT_FAILURE, "%d: keycode too large", $2);
-			if ($2 >= newkbmap.maplen)
+			if ((unsigned int)$2 >= newkbmap.maplen)
 				newkbmap.maplen = $2 + 1;
 			cur_mp = mapdata + $2;
 		} keysym_cmd keysym_list

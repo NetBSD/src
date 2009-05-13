@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.54 2008/11/16 07:06:37 dholland Exp $	*/
+/*	$NetBSD: tree.c,v 1.54.2.1 2009/05/13 19:20:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.54 2008/11/16 07:06:37 dholland Exp $");
+__RCSID("$NetBSD: tree.c,v 1.54.2.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1010,10 +1010,10 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			if (!isutyp(rt) && rn->tn_val->v_quad < 0) {
 				/* negative shift */
 				warning(121);
-			} else if ((uint64_t)rn->tn_val->v_quad == size(lt)) {
+			} else if ((uint64_t)rn->tn_val->v_quad == (uint64_t)size(lt)) {
 				/* shift equal to size fo object */
 				warning(267);
-			} else if ((uint64_t)rn->tn_val->v_quad > size(lt)) {
+			} else if ((uint64_t)rn->tn_val->v_quad > (uint64_t)size(lt)) {
 				/* shift greater than size of object */
 				warning(122);
 			}
@@ -1105,6 +1105,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		}
 
 		if (rt == PTR && lt == PTR) {
+			if (eqptrtype(lstp, rstp, 1))
+				break;
 			if (!eqtype(lstp, rstp, 1, 0, NULL))
 				illptrc(mp, ltp, rtp);
 			break;
@@ -1256,6 +1258,7 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
 	mod_t	*mp;
 	const	char *lts, *rts;
+	char lbuf[128], rbuf[128];
 
 	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
@@ -1307,19 +1310,21 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		    ((!lstp->t_const && rstp->t_const) ||
 		     (!lstp->t_volatile && rstp->t_volatile))) {
 			/* left side has not all qualifiers of right */
+			tyname(lbuf, sizeof(lbuf), lstp);
+			tyname(rbuf, sizeof(rbuf), rstp);
 			switch (op) {
 			case INIT:
 			case RETURN:
 				/* incompatible pointer types */
-				warning(182);
+				warning(182, lbuf, rbuf);
 				break;
 			case FARG:
 				/* argument has incompat. ptr. type, arg #%d */
-				warning(153, arg);
+				warning(153, arg, lbuf, rbuf);
 				break;
 			default:
 				/* operands have incompat. ptr. types, op %s */
-				warning(128, mp->m_name);
+				warning(128, mp->m_name, lbuf, rbuf);
 				break;
 			}
 		}
@@ -1353,7 +1358,8 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			break;
 		case FARG:
 			/* argument has incompatible pointer type, arg #%d */
-			warning(153, arg);
+			warning(153, arg, tyname(lbuf, sizeof(lbuf), ltp),
+			    tyname(rbuf, sizeof(rbuf), rtp));
 			break;
 		default:
 			illptrc(mp, ltp, rtp);
@@ -1540,7 +1546,7 @@ promote(op_t op, int farg, tnode_t *tn)
 {
 	tspec_t	t;
 	type_t	*ntp;
-	int	len;
+	u_int	len;
 
 	t = tn->tn_type->t_tspec;
 
@@ -2019,7 +2025,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			nv->v_ldbl = v->v_ldbl;
 		} else {
 			nv->v_quad = (nt == PTR || isutyp(nt)) ?
-				(uint64_t)v->v_ldbl : (int64_t)v->v_ldbl;
+				(int64_t)v->v_ldbl : (int64_t)v->v_ldbl;
 		}
 	} else {
 		if (nt == FLOAT) {
@@ -2786,7 +2792,7 @@ fold(tnode_t *tn)
 			error(139);
 			q = utyp ? UQUAD_MAX : QUAD_MAX;
 		} else {
-			q = utyp ? ul / ur : sl / sr;
+			q = utyp ? (int64_t)(ul / ur) : sl / sr;
 		}
 		break;
 	case MOD:
@@ -2795,11 +2801,11 @@ fold(tnode_t *tn)
 			error(140);
 			q = 0;
 		} else {
-			q = utyp ? ul % ur : sl % sr;
+			q = utyp ? (int64_t)(ul % ur) : sl % sr;
 		}
 		break;
 	case PLUS:
-		q = utyp ? ul + ur : sl + sr;
+		q = utyp ? (int64_t)(ul + ur) : sl + sr;
 		if (msb(sl, t, -1)  != 0 && msb(sr, t, -1) != 0) {
 			if (msb(q, t, -1) == 0)
 				ovfl = 1;
@@ -2809,7 +2815,7 @@ fold(tnode_t *tn)
 		}
 		break;
 	case MINUS:
-		q = utyp ? ul - ur : sl - sr;
+		q = utyp ? (int64_t)(ul - ur) : sl - sr;
 		if (msb(sl, t, -1) != 0 && msb(sr, t, -1) == 0) {
 			if (msb(q, t, -1) == 0)
 				ovfl = 1;
@@ -2819,7 +2825,7 @@ fold(tnode_t *tn)
 		}
 		break;
 	case SHL:
-		q = utyp ? ul << sr : sl << sr;
+		q = utyp ? (int64_t)(ul << sr) : sl << sr;
 		break;
 	case SHR:
 		/*
@@ -2848,20 +2854,21 @@ fold(tnode_t *tn)
 		q = utyp ? ul != ur : sl != sr;
 		break;
 	case AND:
-		q = utyp ? ul & ur : sl & sr;
+		q = utyp ? (int64_t)(ul & ur) : sl & sr;
 		break;
 	case XOR:
-		q = utyp ? ul ^ ur : sl ^ sr;
+		q = utyp ? (int64_t)(ul ^ ur) : sl ^ sr;
 		break;
 	case OR:
-		q = utyp ? ul | ur : sl | sr;
+		q = utyp ? (int64_t)(ul | ur) : sl | sr;
 		break;
 	default:
 		LERROR("fold()");
 	}
 
 	/* XXX does not work for quads. */
-	if (ovfl || ((q | mask) != ~(uint64_t)0 && (q & ~mask) != 0)) {
+	if (ovfl || ((uint64_t)(q | mask) != ~(uint64_t)0 &&
+	    (q & ~mask) != 0)) {
 		if (hflag)
 			/* integer overflow detected, op %s */
 			warning(141, modtab[tn->tn_op].m_name);
@@ -3088,6 +3095,55 @@ bldszof(type_t *tp)
 #endif
 
 	return (getinode(st, (int64_t)(elem * elsz / CHAR_BIT)));
+}
+
+/*
+ */
+tnode_t *
+bldalof(type_t *tp)
+{
+	tspec_t	st;
+
+	switch (tp->t_tspec) {
+	case ARRAY:
+		break;
+
+	case FUNC:
+		/* cannot take align of function */
+		error(144);
+		return 0;
+
+	case STRUCT:
+	case UNION:
+		if (incompl(tp)) {
+			/* cannot take align of incomplete type */
+			error(143);
+			return 0;
+		}
+		break;
+	case ENUM:
+		break;
+	default:
+		if (tp->t_isfield) {
+			/* cannot take align of bit-field */
+			error(145);
+			return 0;
+		}
+		if (tp->t_tspec == VOID) {
+			/* cannot take alignsize of void */
+			error(146);
+			return 0;
+		}
+		break;
+	}
+
+#if SIZEOF_IS_ULONG
+	st = ULONG;
+#else
+	st = UINT;
+#endif
+
+	return getinode(st, (int64_t)getbound(tp));
 }
 
 /*
@@ -3737,7 +3793,7 @@ chkaidx(tnode_t *tn, int amper)
 	if (!isutyp(rn->tn_type->t_tspec) && con < 0) {
 		/* array subscript cannot be negative: %ld */
 		warning(167, (long)con);
-	} else if (dim > 0 && (uint64_t)con >= dim) {
+	} else if (dim > 0 && (uint64_t)con >= (uint64_t)dim) {
 		/* array subscript cannot be > %d: %ld */
 		warning(168, dim - 1, (long)con);
 	}

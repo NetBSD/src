@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.17 2008/09/06 12:29:57 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.17.6.1 2009/05/13 19:20:33 jym Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.17 2008/09/06 12:29:57 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.17.6.1 2009/05/13 19:20:33 jym Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -59,6 +59,30 @@ do {									\
 	return rv;							\
 } while (/*CONSTCOND*/0)
 
+/* openssh extensions */
+static const struct extunit {
+	const char *ext;
+	const char *val;
+	int extflag;
+} exttable[] = {
+{
+	"posix-rename@openssh.com",
+	"1",
+	SFTP_EXT_POSIX_RENAME,
+},{
+	"statvfs@openssh.com",
+	"2",
+	SFTP_EXT_STATVFS,
+},{
+	"fstatvfs@openssh.com",
+	"2",
+	SFTP_EXT_FSTATVFS,
+},{
+	NULL,
+	NULL,
+	0
+}};
+	
 int
 psshfs_handshake(struct puffs_usermount *pu)
 {
@@ -67,7 +91,9 @@ psshfs_handshake(struct puffs_usermount *pu)
 	struct puffs_pathobj *po_root;
 	struct puffs_node *pn_root;
 	struct vattr va, *rva;
+	const struct extunit *extu;
 	char *rootpath;
+	char *ext, *val;
 	uint32_t count;
 	int rv, done;
 
@@ -82,7 +108,22 @@ psshfs_handshake(struct puffs_usermount *pu)
 		reterr((stderr, "invalid server response: %d",
 		    psbuf_get_type(pb)), EPROTO);
 	pctx->protover = psbuf_get_reqid(pb);
-	/* might contain some other stuff, but we're not interested */
+
+	/*
+	 * Check out which extensions are available.  Currently
+	 * we are only interested in the openssh statvfs extension.
+	 */
+	for (;;) {
+		if (psbuf_get_str(pb, &ext, NULL) != 0)
+			break;
+		if (psbuf_get_str(pb, &val, NULL) != 0)
+			break;
+		
+		for (extu = exttable; extu->ext; extu++)
+			if (strcmp(ext, extu->ext) == 0
+			    && strcmp(val, extu->val) == 0)
+				pctx->extensions |= extu->extflag;
+	}
 
 	/* scope out our rootpath */
 	psbuf_recycleout(pb);
@@ -129,6 +170,49 @@ psshfs_handshake(struct puffs_usermount *pu)
 	po_root->po_len = strlen(rootpath);
 
 	return 0;
+}
+
+int
+psshfs_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
+{
+	PSSHFSAUTOVAR(pu);
+	uint64_t tmpval;
+	uint8_t type;
+
+	memset(sbp, 0, sizeof(*sbp));
+	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = 512;
+
+	if ((pctx->extensions & SFTP_EXT_STATVFS) == 0)
+		goto out;
+
+	psbuf_req_str(pb, SSH_FXP_EXTENDED, reqid, "statvfs@openssh.com");
+	psbuf_put_str(pb, pctx->mountpath);
+	GETRESPONSE(pb);
+
+	type = psbuf_get_type(pb);
+	if (type != SSH_FXP_EXTENDED_REPLY) {
+		/* use the default */
+		goto out;
+	}
+
+	psbuf_get_8(pb, &tmpval);
+	sbp->f_bsize = tmpval;
+	psbuf_get_8(pb, &tmpval);
+	sbp->f_frsize = tmpval;
+	psbuf_get_8(pb, &sbp->f_blocks);
+	psbuf_get_8(pb, &sbp->f_bfree);
+	psbuf_get_8(pb, &sbp->f_bavail);
+	psbuf_get_8(pb, &sbp->f_files);
+	psbuf_get_8(pb, &sbp->f_ffree);
+	psbuf_get_8(pb, &sbp->f_favail);
+
+	psbuf_get_8(pb, &tmpval); /* fsid */
+	psbuf_get_8(pb, &tmpval); /* flag */
+	psbuf_get_8(pb, &tmpval);
+	sbp->f_namemax = tmpval;
+
+ out:
+	PSSHFSRETURN(rv);
 }
 
 int

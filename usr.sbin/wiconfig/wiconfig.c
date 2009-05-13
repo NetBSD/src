@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.41 2008/07/21 13:37:00 lukem Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.41.6.1 2009/05/13 19:20:43 jym Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -68,7 +68,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 1999\
  Bill Paul.  All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.41 2008/07/21 13:37:00 lukem Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.41.6.1 2009/05/13 19:20:43 jym Exp $");
 #endif
 
 struct wi_table {
@@ -82,9 +82,9 @@ struct wi_table {
 #define	WI_KEYSTRUCT		0x05
 #define	WI_BITS			0x06
 #define	WI_VENDOR		0x07
-	char *wi_label;			/* label used to print info */
+	const char *wi_label;		/* label used to print info */
 	int wi_opt;			/* option character to set this */
-	char *wi_desc;
+	const char *wi_desc;
 	char *wi_optval;
 };
 
@@ -228,7 +228,7 @@ static void wi_apscan(iface)
 	for ( i = 0; i < naps; i++, w++) {
 		printf("ap[%d]:\n", i);
 		if (w->scanreason) {
-			static char *scanm[] = {
+			static const char *scanm[] = {
 				"Host initiated",
 				"Firmware initiated",
 				"Inquiry request from host"
@@ -572,51 +572,51 @@ void wi_printbits(wreq)
 }
 
 static struct wi_table wi_table[] = {
-	{ WI_RID_SERIALNO, WI_STRING, "NIC serial number:\t\t\t" },
+	{ WI_RID_SERIALNO, WI_STRING, "NIC serial number:\t\t\t", 0, 0, 0 },
 	{ WI_RID_NODENAME, WI_STRING, "Station name:\t\t\t\t",
-	    's', "station name" },
-	{ WI_RID_OWN_SSID, WI_STRING, "SSID for IBSS creation:\t\t\t" },
-	{ WI_RID_CURRENT_SSID, WI_STRING, "Current netname (SSID):\t\t\t" },
-	{ WI_RID_DESIRED_SSID, WI_STRING, "Desired netname (SSID):\t\t\t" },
-	{ WI_RID_CURRENT_BSSID, WI_HEXBYTES, "Current BSSID:\t\t\t\t" },
-	{ WI_RID_CHANNEL_LIST, WI_BITS, "Channel list:\t\t\t\t" },
-	{ WI_RID_OWN_CHNL, WI_WORDS, "IBSS channel:\t\t\t\t" },
-	{ WI_RID_CURRENT_CHAN, WI_WORDS, "Current channel:\t\t\t" },
-	{ WI_RID_COMMS_QUALITY, WI_WORDS, "Comms quality/signal/noise:\t\t" },
-	{ WI_RID_PROMISC, WI_BOOL, "Promiscuous mode:\t\t\t" },
-	{ WI_RID_PORTTYPE, WI_WORDS, "Port type:\t\t\t\t" },
+	    's', "station name", 0, },
+	{ WI_RID_OWN_SSID, WI_STRING, "SSID for IBSS creation:\t\t\t", 0, 0, 0 },
+	{ WI_RID_CURRENT_SSID, WI_STRING, "Current netname (SSID):\t\t\t", 0, 0, 0 },
+	{ WI_RID_DESIRED_SSID, WI_STRING, "Desired netname (SSID):\t\t\t", 0, 0, 0 },
+	{ WI_RID_CURRENT_BSSID, WI_HEXBYTES, "Current BSSID:\t\t\t\t", 0, 0, 0 },
+	{ WI_RID_CHANNEL_LIST, WI_BITS, "Channel list:\t\t\t\t", 0, 0, 0 },
+	{ WI_RID_OWN_CHNL, WI_WORDS, "IBSS channel:\t\t\t\t", 0, 0, 0 },
+	{ WI_RID_CURRENT_CHAN, WI_WORDS, "Current channel:\t\t\t", 0, 0, 0 },
+	{ WI_RID_COMMS_QUALITY, WI_WORDS, "Comms quality/signal/noise:\t\t", 0, 0, 0 },
+	{ WI_RID_PROMISC, WI_BOOL, "Promiscuous mode:\t\t\t", 0, 0, 0 },
+	{ WI_RID_PORTTYPE, WI_WORDS, "Port type:\t\t\t\t", 0, 0, 0 },
 	{ WI_RID_MAC_NODE, WI_HEXBYTES, "MAC address:\t\t\t\t",
-	    'm', "MAC address" },
-	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t" },
-	{ WI_RID_CUR_TX_RATE, WI_WORDS, "TX rate (actual speed):\t\t\t"},
-	{ WI_RID_CUR_BEACON_INT, WI_WORDS, "Beacon Interval (current) [msec]:\t"},
+	    'm', "MAC address", 0, },
+	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t", 0, 0, 0 },
+	{ WI_RID_CUR_TX_RATE, WI_WORDS, "TX rate (actual speed):\t\t\t", 0, 0, 0 },
+	{ WI_RID_CUR_BEACON_INT, WI_WORDS, "Beacon Interval (current) [msec]:\t", 0, 0, 0 },
 	{ WI_RID_MAX_DATALEN, WI_WORDS, "Maximum data length:\t\t\t",
-	    'd', "maximum data length" },
+	    'd', "maximum data length", 0 },
 	{ WI_RID_RTS_THRESH, WI_WORDS, "RTS/CTS handshake threshold:\t\t",
-	    'r', "RTS threshold" },
+	    'r', "RTS threshold", 0 },
 	{ WI_RID_FRAG_THRESH, WI_WORDS, "fragmentation threshold:\t\t",
-	    'g', "fragmentation threshold" },
-	{ WI_RID_DBM_ADJUST, WI_WORDS, "RSSI -> dBm adjustment:\t\t\t" },
-	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t" },
+	    'g', "fragmentation threshold", 0, },
+	{ WI_RID_DBM_ADJUST, WI_WORDS, "RSSI -> dBm adjustment:\t\t\t", 0, 0, 0 },
+	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t", 0, 0, 0 },
 	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t",
-	    'M', "microwave oven robustness enabled" },
+	    'M', "microwave oven robustness enabled", 0 },
 	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1:firm,3:disable):\t\t",
-	    'R', "roaming mode" },
+	    'R', "roaming mode", 0 },
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t",
-	    'a', "system scale" },
-	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t" },
-	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time (msec):\t\t\t" },
- 	{ WI_RID_STA_IDENTITY, WI_VENDOR, "Vendor info:\t\t\t\t" },
-	{ 0, WI_NONE }
+	    'a', "system scale", 0 },
+	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t", 0, 0, 0 },
+	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time (msec):\t\t\t", 0, 0, 0 },
+ 	{ WI_RID_STA_IDENTITY, WI_VENDOR, "Vendor info:\t\t\t\t", 0, 0, 0 },
+	{ 0, WI_NONE, 0, 0, 0, 0 }
 };
 
 static struct wi_table wi_crypt_table[] = {
-	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
+	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t", 0, 0, 0 },
 	{ WI_RID_CNFAUTHMODE, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t",
-	    'A', "authentication type" },
-        { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
-        { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
-	{ 0, WI_NONE }
+	    'A', "authentication type", 0 },
+        { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t", 0, 0, 0 },
+        { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t", 0, 0, 0 },
+	{ 0, WI_NONE, 0, 0, 0, 0 }
 };
 
 static struct wi_table *wi_tables[] = {

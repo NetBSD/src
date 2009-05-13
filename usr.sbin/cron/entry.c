@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.9 2008/02/16 07:26:00 matt Exp $	*/
+/*	$NetBSD: entry.c,v 1.9.12.1 2009/05/13 19:20:21 jym Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.9 2008/02/16 07:26:00 matt Exp $");
+__RCSID("$NetBSD: entry.c,v 1.9.12.1 2009/05/13 19:20:21 jym Exp $");
 #endif
 #endif
 
@@ -358,6 +358,18 @@ get_list(bitstr_t *bits,    /* one bit per flag, default=FALSE */
 }
 
 
+static int
+random_with_range(int low, int high)
+{
+	/* Kind of crappy error detection, but...
+	 */
+	if (low >= high)
+		return low;
+	else
+		return arc4random() % (high - low + 1) + low;
+}
+
+
 static char
 get_range(bitstr_t *bits,   /* one bit per flag, default=FALSE */
           int low,  /* bounds, impl. offset for bitstr */
@@ -371,24 +383,44 @@ get_range(bitstr_t *bits,   /* one bit per flag, default=FALSE */
 
 	int	i;
 	int	num1, num2, num3;
+	int	qmark, star;
+
+	qmark = star = FALSE;
 
 	Debug(DPARS|DEXT, ("get_range()...entering, exit won't show\n"))
 
 	if (ch == '*') {
 		/* '*' means "first-last" but can still be modified by /step
 		 */
+		star = TRUE;
 		num1 = low;
 		num2 = high;
 		ch = get_char(file);
 		if (ch == EOF)
 			return EOF;
-	} else {
+	} else if (ch == '?') {
+		qmark = TRUE;
+		ch = get_char(file);
+		if (ch == EOF)
+			return EOF;
+		if (!isdigit(ch)) {
+			num1 = random_with_range(low, high);
+			if (EOF == set_element(bits, low, high, num1))
+				return EOF;
+			return ch;
+		}
+	}
+
+	if (!star) {
 		if (EOF == (ch = get_number(&num1, low, names, ch, file)))
 			return EOF;
 
 		if (ch != '-') {
 			/* not a range, it's a single number.
+			 * a single number after '?' is bogus.
 			 */
+			if (qmark)
+				return EOF;
 			if (EOF == set_element(bits, low, high, num1))
 				return EOF;
 			return ch;
@@ -404,12 +436,28 @@ get_range(bitstr_t *bits,   /* one bit per flag, default=FALSE */
 			ch = get_number(&num2, low, names, ch, file);
 			if (ch == EOF)
 				return EOF;
+
+			/* if we have a random range, it is really
+			 * like having a single number.
+			 */
+			if (qmark) {
+				if (num1 > num2)
+					return EOF;
+				num1 = random_with_range(num1, num2);
+				if (EOF == set_element(bits, low, high, num1))
+					return EOF;
+				return ch;
+			}
 		}
 	}
 
 	/* check for step size
 	 */
 	if (ch == '/') {
+		/* '?' is incompatible with '/'
+		 */
+		if (qmark)
+			return EOF;
 		/* eat the slash
 		 */
 		ch = get_char(file);

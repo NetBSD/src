@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.59 2009/01/08 18:47:49 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.59.2.1 2009/05/13 19:18:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 /*-
- * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -114,10 +114,8 @@
 #define FTP_BUFLEN	512
 
 void	abor(void);
-void	blkfree(char **);
 void	closedataconn(FILE *);
 char   *conffilename(const char *);
-char  **copyblk(char **);
 void	count_users(void);
 void	cprintf(FILE *, const char *, ...)
 	    __attribute__((__format__(__printf__, 2, 3)));
@@ -125,13 +123,13 @@ void	cwd(const char *);
 FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
 int	display_file(const char *, int);
-char  **do_conversion(const char *);
+const char **do_conversion(const char *);
 void	dologout(int);
 void	fatal(const char *);
 void	feat(void);
 void	format_path(char *, const char *);
 int	ftpd_pclose(FILE *);
-FILE   *ftpd_popen(char *[], const char *, int);
+FILE   *ftpd_popen(const char *[], const char *, int);
 int	getline(char *, int, FILE *);
 void	init_curclass(void);
 void	logxfer(const char *, off_t, const char *, const char *,
@@ -148,7 +146,7 @@ int	lpsvproto2af(int);
 int	af2lpsvproto(int);
 int	epsvproto2af(int);
 int	af2epsvproto(int);
-void	long_passive(char *, int);
+void	long_passive(const char *, int);
 int	extended_port(const char *);
 void	epsv_protounsupp(const char *);
 void	perror_reply(int, const char *);
@@ -158,7 +156,7 @@ void	renamecmd(const char *, const char *);
 char   *renamefrom(const char *);
 void	reply(int, const char *, ...)
 	    __attribute__((__format__(__printf__, 2, 3)));
-void	retrieve(char *[], const char *);
+void	retrieve(const char *[], const char *);
 void	send_file_list(const char *);
 void	show_chdir_messages(int);
 void	sizecmd(const char *);
@@ -168,7 +166,7 @@ void	statxfer(void);
 void	store(const char *, const char *, int);
 void	user(const char *);
 char   *ftpd_strdup(const char *);
-void	yyerror(char *);
+void	yyerror(const char *);
 
 #ifdef SUPPORT_UTMP
 struct utmp;
@@ -224,18 +222,18 @@ struct sockinet {
 #endif
 
 struct tab {
-	char	*name;
-	short	 token;
-	short	 state;
-	short	 flags;	/* 1 if command implemented, 2 if has options,
-	                   4 if can occur OOB */
-	char	*help;
-	char	*options;
+	const char	*name;
+	short	 	token;
+	short	 	state;
+	short	 	flags;	/* 1 if command implemented, 2 if has options,
+				   4 if can occur OOB */
+	const char	*help;
+	char		*options;
 };
 
 struct ftpconv {
 	struct ftpconv	*next;
-	char		*suffix;	/* Suffix of requested name */
+	char 		*suffix;	/* Suffix of requested name */
 	char		*types;		/* Valid file types */
 	char		*disable;	/* File to disable conversions */
 	char		*command;	/* Command to do the conversion */

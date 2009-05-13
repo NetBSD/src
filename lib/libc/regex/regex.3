@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.18 2003/12/29 17:36:12 wiz Exp $
+.\"	$NetBSD: regex.3,v 1.18.42.1 2009/05/13 19:18:25 jym Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,7 +105,7 @@ frees any dynamically-allocated storage used by the internal form
 of an RE.
 .Pp
 The header
-.Em \*[Lt]regex.h\*[Gt]
+.Aq Pa regex.h
 declares two structure types,
 .Fa regex_t
 and
@@ -514,7 +514,9 @@ An empty string is not a legal RE.
 .Pp
 A `{' followed by a digit is considered the beginning of bounds for a
 bounded repetition, which must then follow the syntax for bounds.
-A `{' \fInot\fR followed by a digit is considered an ordinary character.
+A `{'
+.Em not
+followed by a digit is considered an ordinary character.
 .Pp
 `^' and `$' beginning and ending subexpressions in obsolete (``basic'')
 REs are anchors, not ordinary characters.
@@ -527,7 +529,8 @@ include the following:
 .Pp
 .Bl -tag -width XXXREG_ECOLLATE -compact
 .It Dv REG_NOMATCH
-regexec() failed to match
+.Fn regexec
+failed to match
 .It Dv REG_BADPAT
 invalid regular expression
 .It Dv REG_ECOLLATE

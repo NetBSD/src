@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.9 2003/07/16 08:22:01 itojun Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.9.40.1 2009/05/13 19:20:38 jym Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -512,8 +512,8 @@ fillin_extra_groups(uname, main_gid, len, extra_gids)
  */
 char   *
 find_entry(key, map)
-	char   *key;
-	char   *map;
+	const char   *key;
+	const char   *map;
 {
 	int     err;
 	char   *val = NULL;

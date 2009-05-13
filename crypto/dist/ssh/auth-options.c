@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.9 2008/04/06 23:38:19 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.41 2008/03/26 21:28:14 djm Exp $ */
+/*	$NetBSD: auth-options.c,v 1.9.10.1 2009/05/13 19:15:56 jym Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.43 2008/06/10 23:06:19 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,14 +12,16 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.9 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.9.10.1 2009/05/13 19:15:56 jym Exp $");
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #include <netdb.h>
 #include <pwd.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "match.h"
@@ -226,8 +228,19 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			}
 			patterns[i] = '\0';
 			opts++;
-			if (match_host_and_ip(remote_host, remote_ip,
-			    patterns) != 1) {
+			switch (match_host_and_ip(remote_host, remote_ip,
+			    patterns)) {
+			case 1:
+				xfree(patterns);
+				/* Host name matches. */
+				goto next_option;
+			case -1:
+				debug("%.100s, line %lu: invalid criteria",
+				    file, linenum);
+				auth_debug_add("%.100s, line %lu: "
+				    "invalid criteria", file, linenum);
+				/* FALLTHROUGH */
+			case 0:
 				xfree(patterns);
 				logit("Authentication tried for %.100s with "
 				    "correct key but not from a permitted "
@@ -236,12 +249,10 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				auth_debug_add("Your host '%.200s' is not "
 				    "permitted to use this key for login.",
 				    remote_host);
-				/* deny access */
-				return 0;
+				break;
 			}
-			xfree(patterns);
-			/* Host name matches. */
-			goto next_option;
+			/* deny access */
+			return 0;
 		}
 		cp = "permitopen=\"";
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {

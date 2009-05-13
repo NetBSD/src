@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.37 2009/02/03 05:21:24 lukem Exp $	*/
+/*	$NetBSD: fts.c,v 1.37.2.1 2009/05/13 19:18:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.37 2009/02/03 05:21:24 lukem Exp $");
+__RCSID("$NetBSD: fts.c,v 1.37.2.1 2009/05/13 19:18:23 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -725,6 +725,14 @@ fts_build(FTS *sp, int type)
 	}
 	len++;
 	maxlen = sp->fts_pathlen - len;
+
+	if (cur->fts_level == SHRT_MAX) {
+		(void)closedir(dirp);
+		cur->fts_info = FTS_ERR;
+		SET(FTS_STOP);
+		errno = ENAMETOOLONG;
+		return (NULL);
+	}
 
 	level = cur->fts_level + 1;
 

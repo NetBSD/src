@@ -1,13 +1,13 @@
-/*	$NetBSD: mdreloc.c,v 1.22 2008/07/24 06:51:58 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.22.6.1 2009/05/13 19:18:41 jym Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.22 2008/07/24 06:51:58 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.22.6.1 2009/05/13 19:18:41 jym Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.22 2008/07/24 06:51:58 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.22.6.1 2009/05/13 19:18:41 jym Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			break;
 		}
 	}
-	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	relalim = (const Elf_Rela *)((const uint8_t *)rela + relasz);
 	for (; rela < relalim; rela++) {
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
 		*where += (Elf_Addr)relocbase;
@@ -195,7 +195,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
-	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	const Elf_Rela *rela = (const Elf_Rela *)((const uint8_t *)obj->pltrela + reloff);
 	Elf_Addr result;
 	int err;
 

@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.24 2006/09/27 21:39:15 christos Exp $ 
+ *	$Id: rc_config.c,v 1.24.26.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -74,7 +74,7 @@ struct isdn_ctrl_state * cur_ctrl = NULL;
  *	called from main to read and process config file
  *---------------------------------------------------------------------------*/
 void
-configure(char *filename, int reread)
+configure(const char *filename, int reread)
 {
 	extern void reset_scanner(FILE *inputfile);
 	
@@ -1331,11 +1331,11 @@ print_config(void)
 #endif
 	struct cfg_entry *cep = NULL;
 	int i, j;
-	time_t clock;
+	time_t now;
 	char mytime[64];
 
-	time(&clock);
-	strlcpy(mytime, ctime(&clock), sizeof(mytime));
+	time(&now);
+	strlcpy(mytime, ctime(&now), sizeof(mytime));
 	mytime[strlen(mytime)-1] = '\0';
 
 	fprintf(PFILE, "#---------------------------------------------------------------------------\n");
@@ -1376,7 +1376,7 @@ print_config(void)
 	m_rights = monitor_next_rights(NULL);
 	if (m_rights != NULL)
 	{
-		char *s = "error\n";
+		const char *s = "error\n";
 		char b[512];
 
 		for ( ; m_rights != NULL; m_rights = monitor_next_rights(m_rights))
@@ -1617,7 +1617,7 @@ print_config(void)
 		}
 
 		{
-			char *s;
+			const char *s;
 			switch (cep->ppp_expect_auth)
 			{
 			case AUTH_NONE:
@@ -1677,7 +1677,7 @@ print_config(void)
 			fprintf(PFILE, "autoupdown = no\n");
 
 		{
-			char *s;
+			const char *s;
 			fprintf(PFILE, "idletime-outgoing     = %d\t\t# outgoing call idle timeout\n", cep->idle_time_out);
 
 			switch ( cep->shorthold_algorithm )

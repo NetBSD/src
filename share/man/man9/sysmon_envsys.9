@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.20 2008/11/12 12:35:54 ad Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.20.2.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .Ft void
 .Fn sysmon_envsys_unregister "struct sysmon_envsys *"
 .Ft int
-.Fn sysmon_envsys_sensor_attach "struct sysmon_envsys *, envsys_data_t *"
+.Fn sysmon_envsys_sensor_attach "struct sysmon_envsys *" "envsys_data_t *"
 .Ft int
-.Fn sysmon_envsys_sensor_detach "struct sysmon_envsys *, envsys_data_t *"
+.Fn sysmon_envsys_sensor_detach "struct sysmon_envsys *" "envsys_data_t *"
 .Sh DESCRIPTION
 .Pp
 .Nm
@@ -58,16 +58,15 @@ With this framework you are able to register and unregister a
 device, attach or detach sensors into a device and enable or disable
 automatic monitoring for some sensors without any user interactivity,
 among other things.
-.Pp
 .Ss HOW TO USE THE FRAMEWORK
-.Pp
 To register a new driver to the
 .Nm
 framework, a
 .Sy sysmon_envsys
 object must be allocated and initialized; the
 .Fn sysmon_envsys_create
-function is used for this. This returns a zero'ed pointer to a sysmon_envsys
+function is used for this.
+This returns a zero'ed pointer to a sysmon_envsys
 structure and takes care of initialization of some private features.
 .Pp
 Once we have the object we could start initializing sensors (see the
@@ -75,7 +74,8 @@ Once we have the object we could start initializing sensors (see the
 section for more information) and attaching
 them to the device, this is acomplished by the
 .Fn sysmon_envsys_sensor_attach
-function. This function attachs the envsys_data_t (sensor) specified
+function.
+This function attachs the envsys_data_t (sensor) specified
 as second argument into the sysmon_envsys object specified in the
 first argument.
 .Pp
@@ -111,7 +111,8 @@ The members have the following meaning:
 .Pp
 .Bl -tag -width "sme_sensor_data_xxxxxxxxx"
 .It Fa sme_class
-This specifies the class of the sysmon envsys device. See the
+This specifies the class of the sysmon envsys device.
+See the
 .Sy DEVICE CLASSES
 section for more information (OPTIONAL).
 .It Fa sme_name
@@ -119,7 +120,8 @@ The name that will be used in the driver (REQUIRED).
 .It Fa sme_flags
 Additional flags for the
 .Nm
-device. Currently supporting
+device.
+Currently supporting
 .Ar SME_DISABLE_REFRESH .
 If enabled, the
 .Ar sme_refresh
@@ -130,10 +132,9 @@ Hence
 won't be necessary either (OPTIONAL).
 .It Fa sme_events_timeout
 This is used to specify the default timeout value that will be used to
-check for critical events if any monitoring flag was set. The value
-is used as seconds (OPTIONAL).
+check for critical events if any monitoring flag was set.
+The value is used as seconds (OPTIONAL).
 .El
-.Pp
 .Pp
 If the driver wants to refresh sensors data via the
 .Nm
@@ -142,24 +143,24 @@ framework, the following members must be specified:
 .Bl -tag -width "sme_sensor_data_xxxxxxxxx"
 .It Fa sme_cookie
 Pointer to the device struct (also called
-.Dq softc
-). This may be used in the
+.Dq softc ) .
+This may be used in the
 .Sy sme_refresh
 function callback.
 .It Fa sme_refresh
 Pointer to a function that will be used to refresh sensor data in
-the device. This can be used to set the state and other properties of the
+the device.
+This can be used to set the state and other properties of the
 sensor depending of the returned data by the driver.
 .Em NOTE :
 .Em You don't have to refresh all sensors, only the sensor specified by the
-.Sy edata->sensor
-.Em index.
+.Sy edata-\*[Gt]sensor
+.Em index .
 .El
 .Pp
 Note that it's not necessary to refresh the sensors data before the
 driver is registered, only do it if you need the data in your driver
 to check for a specific condition.
-.Pp
 .Pp
 The timeout value for the monitoring events on a device may be changed via the
 .Em ENVSYS_SETDICTIONARY
@@ -172,21 +173,22 @@ To unregister a driver previously registered with the
 .Nm
 framework, the
 .Fn sysmon_envsys_unregister
-function must be used. If there were monitoring events registered for the
+function must be used.
+If there were monitoring events registered for the
 driver, they all will be destroyed before the device is unregistered and
 its sensors will be detached; finally the
 .Em sysmon_envsys
 object will be freed, so there's no need to call
 .Fn sysmon_envsys_destroy
 if we are going to unregister a device.
-.Pp
 .Ss DEVICE CLASSES
 The
 .Fa sme_class
 member of the
 .Fa sysmon_envsys
 structure is an optional flag that specifies the class of the
-sysmon envsys device. Currently there are two classes:
+sysmon envsys device.
+Currently there are two classes:
 .Pp
 .Bl -tag -width ident
 .It SME_CLASS_ACADAPTER
@@ -213,7 +215,7 @@ These two sensors are used to ensure that the battery device won't
 never send a
 .Em low-power
 event to the
-.Xr powerd 8 
+.Xr powerd 8
 daemon (if running) when all battery devices are in a critical state.
 The critical state means that a battery is not currently charging
 and its charge state is low or critical.
@@ -234,7 +236,7 @@ call with the
 flag.
 .Pp
 .El
-.Em NOTE:
+.Em NOTE :
 If a
 .Em SME_CLASS_ACADAPTER
 or
@@ -243,7 +245,6 @@ class don't have the sensors required, the
 .Em low-power
 event will never be sent, and the graceful shutdown won't be possible.
 .Ss SENSOR DETAILS
-.Pp
 Each sensor uses a
 .Sy envsys_data_t
 structure, it's defined as follow (only the public members are shown);
@@ -276,7 +277,7 @@ Used to set the current state.
 Used to set additional flags.
 .It Fa rpms
 Used to set the nominal RPM value for
-.Sy fan 
+.Sy fan
 sensors.
 .It Fa rfact
 Used to set the rfact value for
@@ -292,11 +293,12 @@ Used to set the minimum value.
 Used to set the average value.
 .It Fa monitor
 Used to enable automatic sensor monitoring (by default
-it's disabled). The automatic sensor monitoring will check if
+it's disabled).
+The automatic sensor monitoring will check if
 a condition is met periodically and will send an event to the
 .Xr powerd 8
-daemon (if running). The monitoring event will be registered when this flag
-is
+daemon (if running).
+The monitoring event will be registered when this flag is
 .Em true
 and one or more of the
 .Em ENVSYS_FMONFOO
@@ -307,7 +309,7 @@ member.
 Used to set the description string.
 .Em NOTE
 .Em that the description string must be unique in a device, and sensors with
-.Em duplicate or empty description will simply be ignored.
+.Em duplicate or empty description will simply be ignored .
 .El
 .Pp
 Users of this framework must take care about the following points:
@@ -320,7 +322,8 @@ to be valid.
 .It
 The
 .Ar units
-type must be valid. The following units are defined:
+type must be valid.
+The following units are defined:
 .Pp
 .Bl -tag -width "ENVSYS_BATTERY_CAPACITY" -compact
 .It ENVSYS_STEMP
@@ -348,20 +351,24 @@ For sensors that only want an integer type.
 .It ENVSYS_DRIVE
 For drive sensors.
 .It ENVSYS_BATTERY_CAPACITY
-For Battery device classes. This sensor unit uses the ENVSYS_BATTERY_CAPACITY_*
+For Battery device classes.
+This sensor unit uses the ENVSYS_BATTERY_CAPACITY_*
 values in
 .Ar value_cur
-to report its current capacity to userland. Mandatory if
+to report its current capacity to userland.
+Mandatory if
 .Em sme_class
 is set to
 .Em SME_CLASS_BATTERY .
 .It ENVSYS_BATTERY_CHARGE
-For Battery device classes. This sensor is equivalent to the Indicator type,
-it's a boolean. Use it to specify in what state is the Battery state:
+For Battery device classes.
+This sensor is equivalent to the Indicator type, it's a boolean.
+Use it to specify in what state is the Battery state:
 .Sy true
 if the battery is currently charging or
 .Sy false
-otherwise. Mandatory if
+otherwise.
+Mandatory if
 .Em sme_class
 is set to
 .Em SME_CLASS_BATTERY .
@@ -370,7 +377,8 @@ is set to
 When initializing or refreshing the sensor, the
 .Ar state
 member should be set to a known state (otherwise it will be in
-unknown state). Possible values:
+unknown state).
+Possible values:
 .Pp
 .Bl -tag -width "ENVSYS_SCRITUNDERXX" -compact
 .It ENVSYS_SVALID
@@ -398,7 +406,8 @@ member accepts one or more of the following flags:
 .It ENVSYS_FCHANGERFACT
 Marks the sensor with ability to change the
 .Ar rfact
-value on the fly (in voltage sensors). The
+value on the fly (in voltage sensors).
+The
 .Ar rfact
 member must be used in the correct place of the code
 that retrieves and converts the value of the sensor.
@@ -407,8 +416,8 @@ This uses the
 .Ar value_cur
 and
 .Ar value_max
-members to make a percentage. Both values must be enabled
-and have data.
+members to make a percentage.
+Both values must be enabled and have data.
 .It ENVSYS_FVALID_MAX
 Marks the
 .Ar value_max
@@ -433,7 +442,8 @@ Enables and registers a new event to monitor a warning under state.
 Enables and registers a new event to monitor a warning over state.
 .It ENVSYS_FMONSTCHANGED
 Enables and registers a new event to monitor Battery capacity or drive state
-sensors. It won't be effective if the
+sensors.
+It won't be effective if the
 .Ar units
 member is not set to
 .Ar ENVSYS_DRIVE
@@ -442,7 +452,7 @@ or
 .It ENVSYS_FMONNOTSUPP
 Disallows to set a critical limit via the
 .Em ENVSYS_SETDICTIONARY
-.Xr ioctl(2) .
+.Xr ioctl 2 .
 This flag has not any effect for monitoring flags set in the driver and it's
 only meant to disable setting critical limits from userland.
 .El
@@ -452,7 +462,7 @@ only meant to disable setting critical limits from userland.
 .Ar value_min
 .Em or
 .Ar value_avg
-.Em members, they should be marked as valid with the appropiate flag.
+.Em members, they should be marked as valid with the appropiate flag .
 .Pp
 .It
 If
@@ -519,7 +529,8 @@ Battery charge is in warning capacity.
 The
 .Xr envsys 4
 framework expects to have the values converted to
-a unit that can be converted to another one easily. That means the user
+a unit that can be converted to another one easily.
+That means the user
 should convert the value returned by the driver to the appropiate unit.
 For example voltage sensors to
 .Sy mV ,
@@ -541,15 +552,15 @@ and
 .Pp
 .Em PLEASE NOTE THAT YOU MUST AVOID USING FLOATING POINT OPERATIONS
 .Em IN KERNEL WHEN CONVERTING THE DATA RETURNED BY THE DRIVER TO THE
-.Em APPROPIATE UNIT, IT'S NOT ALLOWED.
+.Em APPROPIATE UNIT, IT'S NOT ALLOWED .
 .Pp
 .El
 .Ss HOW TO ENABLE AUTOMATIC MONITORING IN SENSORS
 The following example illustrates how to enable automatic monitoring
-in a virtual driver for a 
+in a virtual driver for a
 .Em critical
 state in the first sensor
-.Em (sc_sensor[0]):
+.Em (sc_sensor[0]) :
 .Pp
 .Bd -literal
 int
@@ -557,51 +568,52 @@ mydriver_initialize_sensors(struct mysoftc *sc)
 {
 	...
 	/* sensor is initialized with a valid state */
-	sc->sc_sensor[0].state = ENVSYS_SVALID;
+	sc-\*[Gt]sc_sensor[0].state = ENVSYS_SVALID;
 
-	/* 
+	/*
 	 * the monitor member must be true to enable
 	 * automatic monitoring.
 	 */
-	sc->sc_sensor[0].monitor = true;
+	sc-\*[Gt]sc_sensor[0].monitor = true;
 
 	/* and now we specify the type of the monitoring event */
-	sc->sc_sensor[0].flags |= ENVSYS_FMONCRITICAL;
+	sc-\*[Gt]sc_sensor[0].flags |= ENVSYS_FMONCRITICAL;
 	...
 }
 
 int
 mydriver_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct mysoftc *sc = sme->sme_cookie;
+	struct mysoftc *sc = sme-\*[Gt]sme_cookie;
 
 	/* we get current data from the driver */
-	edata->value_cur = sc->sc_getdata();
+	edata-\*[Gt]value_cur = sc-\*[Gt]sc_getdata();
 
-	/* 
+	/*
 	 * if value is too high, mark the sensor in
 	 * critical state.
 	 */
-	if (edata->value_cur > MYDRIVER_SENSOR0_HIWAT) {
-		edata->state = ENVSYS_SCRITICAL;
+	if (edata-\*[Gt]value_cur \*[Gt] MYDRIVER_SENSOR0_HIWAT) {
+		edata-\*[Gt]state = ENVSYS_SCRITICAL;
 		/* a critical event will be sent now automatically */
 	} else {
-		/* 
+		/*
 		 * if value is within the limits, and we came from
 		 * a critical state make sure to change sensor's state
 		 * to valid.
 		 */
-		edata->state = ENVSYS_SVALID;
+		edata-\*[Gt]state = ENVSYS_SVALID;
 	}
 	...
 }
 .Ed
-.Pp
 .Sh CODE REFERENCES
-This section describes places within the NetBSD source tree where actual
-code implementing the
+This section describes places within the
+.Nx
+source tree where actual code implementing the
 .Sy envsys 2
-framework can be found. All pathnames are relative to
+framework can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The

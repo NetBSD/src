@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.8 2008/12/06 14:17:43 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.8.2.1 2009/05/13 19:18:38 jym Exp $
 .\"
-.\"	$eterna: bozohttpd.8,v 1.78 2008/03/03 03:36:11 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.87 2009/04/18 20:53:58 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2008 Matthew R. Green
+.\" Copyright (c) 1997-2009 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -13,8 +13,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -28,8 +26,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 6, 2008
+.Dd April 17, 2009
 .Dt HTTPD 8
+.Os
 .Sh NAME
 .Nm httpd
 .Nd hyper text transfer protocol version 1.1 daemon
@@ -98,7 +97,7 @@ directory is expected to contain the CGI programs to be used.
 looks for URL's in the form of
 .Em /cgi-bin/\*[Lt]scriptname\*[Gt]
 where
-.Em \*[Lt]scriptname\*[Gt]
+.Em Aq scriptname
 is a valid CGI program in the
 .Ar cgibin
 directory.
@@ -142,6 +141,9 @@ If otherwise unspecified, the address used to bind is derived from the
 .Ar myname ,
 which defaults to the name returned by
 .Xr gethostname 3 .
+Only the last
+.Fl i
+option is used.
 .It Fl M Ar suffix type encoding encoding11
 This option adds a new entry to the table that converts file suffixes to
 content type and encoding.
@@ -362,7 +364,7 @@ While
 distributed with
 .Nx
 has support for HTTP Basic Authorisation enabled by default,
-the portable distribution it is excluded.
+in the portable distribution it is excluded.
 Compile
 .Nm
 with
@@ -437,22 +439,21 @@ httpd -C .php /usr/pkg/bin/php /var/www
 .Sh HISTORY
 The
 .Nm
-program was first written in perl, based on another perl http server
+program is actually called
+.Dq bozohttpd .
+It was first written in perl, based on another perl http server
 called
 .Dq tinyhttpd .
 It was then rewritten from scratch in perl, and then once again in C.
-It was known for many years as
-.Dq bozohttpd .
+From
 .Dq bozohttpd
-version 20060517 was integrated into
-.Nx 5.0
-as
-.Nm .
+version 20060517, it has been integrated into
+.Nx .
 The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20080303.
+version 20090418.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green
@@ -462,7 +463,7 @@ The large list of contributors includes:
 .Bl -dash
 .It
 Arnaud Lacombe
-.Aq alc@netbs.dorg
+.Aq alc@netbsd.org
 provided some clean up for memory leaks
 .It
 Christoph Badura
@@ -477,6 +478,10 @@ Chuck Cranor
 .Aq chuck@research.att.com
 provided cgi-bin support fixes, and more
 .It
+DEGROOTE Arnaud
+.Aq degroote@netbsd.org
+provided a fix for daemon mode
+.It
 Andrew Doran
 .Aq ad@netbsd.org
 provided directory indexing support
@@ -484,10 +489,6 @@ provided directory indexing support
 Per Ekman
 .Aq pek@pdc.kth.se
 provided a fix for a minor (non-security) buffer overflow condition
-.It
-Zak Johnson
-.Aq zakj@nox.cx
-provided cgi-bin enhancements
 .It
 Jun-ichiro itojun Hagino, KAME
 .Aq itojun@iijlab.net
@@ -497,9 +498,17 @@ Martin Husemann
 .Aq martin@netbsd.org
 provided .bzabsredirect support
 .It
+Arto Huusko
+.Aq arto.huusko@pp2.inet.fi
+provided fixes cgi-bin
+.It
 Roland Illig
 .Aq roland.illig@gmx.de
 provided some off-by-one fixes
+.It
+Zak Johnson
+.Aq zakj@nox.cx
+provided cgi-bin enhancements
 .It
 Nicolas Jombart
 .Aq ecu@ipv42.net
@@ -536,15 +545,31 @@ provided the
 .Fl V
 option.
 .It
+Joerg Sonnenberger
+.Aq joerg@netbsd.org
+implemented If-Modified-Since support
+.It
 ISIHARA Takanori
 .Aq ishit@oak.dti.ne.jp
 provided a man page fix
 .It
+Holger Weiss
+.Aq holger@CIS.FU-Berlin.DE
+provided http authorisation fixes
+.It
 .Aq xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
+.It
+Coyote Point provided various CGI fixes
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)
+.Pp
+Please send all updates to
+.Nm
+to
+.Aq mrg@eterna.com.au
+for inclusion in future releaases.
 .Sh BUGS
 .Nm
 does not handled HTTP/1.1 chunked input from the client yet.

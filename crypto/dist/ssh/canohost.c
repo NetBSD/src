@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.c,v 1.23 2008/04/06 23:38:19 christos Exp $	*/
-/* $OpenBSD: canohost.c,v 1.62 2007/12/27 14:22:08 dtucker Exp $ */
+/*	$NetBSD: canohost.c,v 1.23.10.1 2009/05/13 19:15:56 jym Exp $	*/
+/* $OpenBSD: canohost.c,v 1.63 2008/06/12 00:03:49 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.23 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.23.10.1 2009/05/13 19:15:56 jym Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -27,6 +27,7 @@ __RCSID("$NetBSD: canohost.c,v 1.23 2008/04/06 23:38:19 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -84,7 +85,7 @@ get_remote_hostname(int sock, int use_dns)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(name, "0", &hints, &ai) == 0) {
+	if (getaddrinfo(name, NULL, &hints, &ai) == 0) {
 		logit("Nasty PTR record \"%s\" is set up for %s, ignoring",
 		    name, ntop);
 		freeaddrinfo(ai);

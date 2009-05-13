@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.42 2008/12/10 16:12:39 joerg Exp $ */
+/* $NetBSD: scan.l,v 1.42.2.1 2009/05/13 19:20:13 jym Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.42 2008/12/10 16:12:39 joerg Exp $");
+__RCSID("$NetBSD: scan.l,v 1.42.2.1 2009/05/13 19:20:13 jym Exp $");
 #endif
 
 #include <stdlib.h>
@@ -193,6 +193,7 @@ static	struct	kwtab {
 	u_int	kw_c99;		/* c99 keyword */
 	u_int	kw_gcc;		/* GCC keyword */
 } kwtab[] = {
+	{ "__alignof__",T_ALIGNOF,	0,	0,	0,	  0, 0, 0 },
 	{ "asm",	T_ASM,		0,	0,	0,	  0, 0, 1 },
 	{ "__asm",	T_ASM,		0,	0,	0,	  0, 0, 0 },
 	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0, 0 },
@@ -274,7 +275,7 @@ initscan(void)
 {
 	struct	kwtab *kw;
 	sym_t	*sym;
-	int	h, i;
+	size_t	h, i;
 	uint64_t uq;
 
 	for (kw = kwtab; kw->kw_name != NULL; kw++) {
@@ -761,7 +762,8 @@ operator(int t, op_t o)
 static int
 ccon(void)
 {
-	int	n, val, c;
+	size_t	n;
+	int val, c;
 	char	cv;
 
 	n = 0;
@@ -804,7 +806,8 @@ static int
 wccon(void)
 {
 	static	char buf[MB_LEN_MAX + 1];
-	int	i, c;
+	size_t	i;
+	int c;
 	wchar_t	wc;
 
 	i = 0;
@@ -1098,7 +1101,8 @@ comment(void)
 	};
 	char	keywd[32];
 	char	arg[32];
-	int	l, i, a;
+	size_t	l, i;
+	int	a;
 	int	eoc;
 
 	eoc = 0;
@@ -1242,7 +1246,8 @@ static int
 wcstrg(void)
 {
 	char	*s;
-	int	c, i, n, wi;
+	int	c, n;
+	size_t	i, wi;
 	size_t	len, max, wlen;
 	wchar_t	*ws;
 	strg_t	*strg;

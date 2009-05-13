@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_inst.c,v 1.10 2006/12/18 20:12:21 christos Exp $	*/
+/*	$NetBSD: gsp_inst.c,v 1.10.20.1 2009/05/13 19:20:23 jym Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_inst.c,v 1.10 2006/12/18 20:12:21 christos Exp $");
+__RCSID("$NetBSD: gsp_inst.c,v 1.10.20.1 2009/05/13 19:20:23 jym Exp $");
 #endif
 
 #include <string.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: gsp_inst.c,v 1.10 2006/12/18 20:12:21 christos Exp $");
 #include "gsp_code.h"
 
 struct inst {
-	char	*opname;
+	const char *opname;
 	u_int16_t opcode;
 	u_char	class;		/* instruction class + flags */
 	u_char	optypes[4];	/* permissible operand classes */
@@ -254,7 +254,7 @@ struct inst instructions[] = {
 	{NULL,	0,	0,	{0,	0,	0,	0}}
 };
 
-int check_spec(int spec, char *valid, char *what);
+int check_spec(int spec, const char *valid, const char *what);
 void do_statement(char *opcode, operand operands);
 int encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords);
 int specifier(operand op);
@@ -270,7 +270,8 @@ void
 do_statement(char *opcode, operand operands)
 {
 	struct inst *ip;
-	int i, nop, req;
+	int i, req;
+	unsigned nop;
 	operand op;
 	int spec[3];
 	u_int16_t iwords[6];
@@ -300,7 +301,7 @@ do_statement(char *opcode, operand operands)
 		if( req == 0 )
 			break;
 		if( (op->type & req) == 0 ){
-			perr("Inappropriate type for operand %d", nop+1);
+			perr("Inappropriate type for operand %u", nop+1);
 			return;
 		}
 		if( (req & ~OPTOPRN) == SPEC ) {
@@ -336,12 +337,12 @@ do_statement(char *opcode, operand operands)
 		putcode(iwords, i);
 }
 
-char *specs[] = { "B", "L", "W", "XY", NULL };
+const char *specs[] = { "B", "L", "W", "XY", NULL };
 
 int
 specifier(operand op)
 {
-	char **sl;
+	const char **sl;
 	expr e;
 	char sp[4];
 
@@ -364,7 +365,7 @@ specifier(operand op)
 }
 
 int
-check_spec(int spec, char *valid, char *what)
+check_spec(int spec, const char *valid, const char *what)
 {
 	char *p;
 
@@ -444,7 +445,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 	int opc, nw, class, flags, ms, md, off;
 	int mask, file, bit, i;
 	operand op0, op1;
-	unsigned line[2];
+	unsigned eline[2];
 	int32_t val[2];
 
 	rs = rd = 0;
@@ -453,10 +454,10 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 	op0 = ops;
 	if( op0 != NULL ){
 		if( spec[0] == 0 && USES_EXPR(op0) )
-			eval_expr(op0->op_u.value, &val[0], &line[0]);
+			eval_expr(op0->op_u.value, &val[0], &eline[0]);
 		op1 = ops->next;
 		if( op1 != NULL && spec[1] == 0 && USES_EXPR(op1) )
-			eval_expr(op1->op_u.value, &val[1], &line[1]);
+			eval_expr(op1->op_u.value, &val[1], &eline[1]);
 	} else
 		op1 = NULL;
 	class = ip->class & CLASS;
@@ -475,7 +476,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		/* turn it into TWOREG, IMMREG or KREG */
 		if( op0->type == REG ){
 			class = TWOREG;
-		} else if( (flags & K32) != 0 && line[0] <= lineno
+		} else if( (flags & K32) != 0 && eline[0] <= lineno
 			  && spec[2] == 0
 			  && 0 < val[0] && val[0] <= 32 ){
 			/* use 5-bit immediate */
@@ -531,7 +532,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 			val[0] = ~ val[0];
 		i = check_spec(spec[2], " WL", "length");
 		if( i == 1
-		   || (i == 0 && (flags & NOIMM16) == 0 && line[0] <= lineno
+		   || (i == 0 && (flags & NOIMM16) == 0 && eline[0] <= lineno
 		      && (int16_t)val[0] == val[0] )){
 			if( (int16_t) val[0] != val[0] )
 				perr("Value truncated to 16 bits");
@@ -564,7 +565,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		}
 		off = (int)(val[0] - pc - 0x20) >> 4;
 		if( opc == 0x0920 ){		/* CALL */
-			if( line[0] <= lineno && (int16_t) off == off )
+			if( eline[0] <= lineno && (int16_t) off == off )
 				opc = 0x0D3F;	/* CALLR */
 			else
 				opc = 0x0D5F;	/* CALLA */

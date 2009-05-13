@@ -1,15 +1,15 @@
-.\"	$NetBSD: prep,v 1.42 2007/12/14 21:15:59 pavel Exp $
+.\"	$NetBSD: prep,v 1.42.14.1 2009/05/13 19:17:47 jym Exp $
 .
 .Ss2 Prepare yourself
 .
 Take a deep breath.
 .Pp
 Good.
-Now, make sure you are reading the PDF (if available), PostScript,
-or HTML version of this document, as the
+Now, make sure you are reading the PostScript or HTML version of this
+document, as the
 .Pa \&.txt No and Pa \&.more
 versions lack important formatting information that will prevent you from
-following the twisted path you must follow.
+following the twisted path documented below.
 OK, good.
 Now, print out this document.
 .Pp
@@ -51,7 +51,7 @@ stress this enough times).
 Spend about 15 minutes and read through this document from this point onward.
 There will be many pages of instructions that apply to Open Firmware versions
 that you do not have.  Throw them out.  Do not read them \(em at best you 
-will be confused, at worst you may damage your system requiring repairs.
+will be confused, at worst you may damage your system, requiring repairs.
 .Pp
 .It
 Now create your bootable media and media for the distribution sets.
@@ -62,12 +62,12 @@ Prepare your machine, depending on the instructions for your model
 up a serial console).
 .Pp
 .It
-Boot into Open Firmware, and verify that it has the version of Open
+Boot into Open Firmware and verify that it has the version of Open
 Firmware you think it does.
 Also make sure that the other variables are set correctly.
 .Pp
 .It
-Figure out the correct boot command, and boot your machine from the
+Figure out the correct boot command and boot your machine from the
 bootable media you just created.
 If you're having trouble, be sure to read the section on
 .Sx "Common Problems and Error Messages"
@@ -80,7 +80,7 @@ whatever turns your fancy.
 .Pp
 .It
 Now use the installer to install the distribution sets onto your system
-and do some initial configurations.
+and do some initial configuration.
 .Pp
 .It
 Figure out how to boot from the installed partition.
@@ -109,7 +109,8 @@ it will make more sense.
 .(Note
 If the instructions in a subsection below do not apply to
 .Em all
-versions of Open Firmware, there will be a line listing which versions of
+versions of Open Firmware.
+There will be a line listing which versions of
 Open Firmware they apply to, such as:
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open

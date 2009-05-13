@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.22 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.22.10.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.22 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.22.10.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif
 
@@ -368,7 +368,7 @@ call_again:
 	outlen = (size_t)XDR_GETPOS(xdrs);
 
 send_again:
-	if (sendto(cu->cu_fd, cu->cu_outbuf, outlen, 0,
+	if ((size_t)sendto(cu->cu_fd, cu->cu_outbuf, outlen, 0,
 	    (struct sockaddr *)(void *)&cu->cu_raddr, (socklen_t)cu->cu_rlen)
 	    != outlen) {
 		cu->cu_error.re_errno = errno;
@@ -416,7 +416,7 @@ send_again:
 				cu->cu_error.re_status = RPC_CANTRECV;
 				goto out;
 			}
-			if (recvlen >= sizeof(uint32_t) &&
+			if (recvlen >= (ssize_t)sizeof(uint32_t) &&
 			    (*((uint32_t *)(void *)(cu->cu_inbuf)) == 
 				*((uint32_t *)(void *)(cu->cu_outbuf)))) {
 				/* We now assume we have the proper reply. */

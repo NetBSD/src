@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.3 2001/07/26 14:20:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3.44.1 2009/05/13 19:19:55 jym Exp $
+
+WARNS?=	1	# many -Wshadow -Wcast-qual & other issues
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

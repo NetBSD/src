@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.19.4.1 2009/05/13 19:19:00 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.19.4.1 2009/05/13 19:19:00 jym Exp $");
 #endif
 #endif	/* not lint */
 
@@ -549,7 +549,7 @@ write_label(int f)
 		}
 
 		alt = lab.d_ncylinders * lab.d_secpercyl - lab.d_nsectors;
-		for (i = 1; i < 11 && i < lab.d_nsectors; i += 2) {
+		for (i = 1; i < 11 && (uint32_t)i < lab.d_nsectors; i += 2) {
 			if (pwrite(f, sec0, 512, (off_t)(alt + i) * 512) < 512)
 				warn("alternate label %d write", i/2);
 		}

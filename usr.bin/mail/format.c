@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.13 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: format.c,v 1.13.8.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.13 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: format.c,v 1.13.8.1 2009/05/13 19:19:56 jym Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -796,7 +796,7 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		 */
 		tm->tm_isdst = -1; /* let mktime(3) determine tm_isdst */
 		headline[0] = '\0';
-		(void)mail_readline(setinput(mp), headline, sizeof(headline));
+		(void)readline(setinput(mp), headline, (int)sizeof(headline), 0);
 		parse(headline, &hl, pbuf);
 		if (hl.l_date == NULL)
 			warnx("invalid headline: `%s'", headline);
@@ -912,7 +912,7 @@ get_display_name(char *name)
 			if (!quoted && q < qend) {
 				*q++ = *p;
 				if (!is_WSP(*p)
-				    /* && !is_specials((unsigned char)*p) */ )
+				    /* && !is_specials((unsigned char)*p) */)
 					lastq = q;
 			}
 			break;

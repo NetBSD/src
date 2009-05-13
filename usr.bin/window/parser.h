@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.7 2003/08/07 11:17:27 agc Exp $	*/
+/*	$NetBSD: parser.h,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,9 +43,10 @@
 #define p_clearerr()	(cx.x_erred = cx.x_synerred = 0)
 #define p_abort()	(cx.x_abort)
 
-int	p_assign(char *, struct value *, int);
+int	p_assign(const char *, struct value *, int);
 int	p_convstr(struct value *v);
-void	p_error(const char *msg, ...);
+void	p_error(const char *msg, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 int	p_expr(struct value *, char);
 int	p_expr0(struct value *, char);
 int	p_expr1(struct value *, char);
@@ -54,7 +55,7 @@ int	p_expr12(struct value *, char);
 int	p_expr2(struct value *, char);
 int	p_expr3_10(int, struct value *, char);
 int	p_expression(char);
-int	p_function(char *, struct value *, int);
+int	p_function(const char *, struct value *, int);
 int	p_if(char);
 int	p_statement(char);
 void	p_statementlist(char);

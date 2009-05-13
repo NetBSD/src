@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.19 2008/02/10 19:32:23 elad Exp $
+.\" $NetBSD: veriexec.4,v 1.19.12.1 2009/05/13 19:19:09 jym Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -28,6 +28,7 @@
 .\"
 .Dd February 10, 2008
 .Dt VERIEXEC 4
+.Os
 .Sh NAME
 .Nm veriexec
 .Nd Veriexec pseudo-device
@@ -92,7 +93,7 @@ monitored files database from the kernel.
 Only files that the filename is kept for them will be dumped.
 The returned array contains dictionaries with the following elements:
 .Bl -column entryxtype string
-.Sy Name	Type	Purpose
+.It Sy Name	Type	Purpose
 .It file	string	filename
 .It fp-type	string	fingerprint hashing algorithm
 .It fp	data	the fingerprint
@@ -117,7 +118,7 @@ The dictionary passed contains the following elements:
 .Pp
 The dictionary returned contains the following elements:
 .Bl -column entryxtype string
-.Sy Name	Type	Purpose
+.It Sy Name	Type	Purpose
 .It entry-type	uint8	entry type ( see above )
 .It status	uint8	entry status
 .It fp-type	string	fingerprint hashing algorithm

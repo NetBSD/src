@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.5 2009/01/11 02:46:29 christos Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.5.2.1 2009/05/13 19:18:26 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.5 2009/01/11 02:46:29 christos Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.5.2.1 2009/05/13 19:18:26 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -724,7 +724,7 @@ literal:
 					*va_arg(ap, float *) = res;
 				}
 #ifdef DEBUG
-				if (p - buf != width)
+				if (p - buf != (ptrdiff_t)width)
 					abort();
 #endif
 				nassigned++;

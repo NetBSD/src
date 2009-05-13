@@ -1,4 +1,4 @@
-;; $NetBSD: NetBSD.el,v 1.5 2007/09/24 15:38:11 christos Exp $
+;; $NetBSD: NetBSD.el,v 1.5.14.1 2009/05/13 19:19:16 jym Exp $
 
 (defconst netbsd-knf-style
   '(
@@ -7,6 +7,7 @@
    (c-basic-offset . 8)
    ;; in which column to add backslashes when macroizing a region
    (c-backslash-column . 78)
+   (c-backslash-max-column . 78)
    ;; automatically compact brace-else(if)-brace on one line and
    ;; semi-colon after closing struct brace
    (c-cleanup-list . (brace-else-brace
@@ -36,8 +37,9 @@
    (c-offsets-alist . ((arglist-cont-nonempty . 4)
 		       (block-open        . 0)
 ;;		       (block-open        . -)
-		       (brace-list-entry  . 8)
-		       (brace-list-open   . 8)
+		       (brace-list-open   . +)
+		       (brace-list-intro  . +)
+		       (brace-list-entry  . 0)
 		       (brace-list-close  . 0)
 		       (knr-argdecl       . 0)
 		       (knr-argdecl-intro . +)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/23 08:45:02 rtr Exp $
+#	$NetBSD: Makefile,v 1.2.40.1 2009/05/13 19:20:47 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ LDADD=	-L${XF86OSOBJDIR} -lxf86_os \
 
 DPADD=	${LIBXF86_OS} ${LIBDUMMY}
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .endif

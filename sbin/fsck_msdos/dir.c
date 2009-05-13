@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.22 2008/06/13 20:46:09 martin Exp $	*/
+/*	$NetBSD: dir.c,v 1.22.4.1 2009/05/13 19:19:01 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.22 2008/06/13 20:46:09 martin Exp $");
+__RCSID("$NetBSD: dir.c,v 1.22.4.1 2009/05/13 19:19:01 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -393,7 +393,7 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 	/*
 	 * Check size on ordinary files
 	 */
-	int32_t physicalSize;
+	u_int32_t physicalSize;
 
 	if (dir->head == CLUST_FREE)
 		physicalSize = 0;
@@ -963,7 +963,7 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 		lfoff = lfcl * boot->ClusterSize
 		    + boot->ClusterOffset * boot->BytesPerSec;
 		if (lseek(dosfs, lfoff, SEEK_SET) != lfoff
-		    || read(dosfs, lfbuf, boot->ClusterSize) != boot->ClusterSize) {
+		    || (size_t)read(dosfs, lfbuf, boot->ClusterSize) != boot->ClusterSize) {
 			perr("could not read LOST.DIR");
 			return FSFATAL;
 		}
@@ -993,7 +993,7 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 	p[31] = (u_char)(d.size >> 24);
 	fat[head].flags |= FAT_USED;
 	if (lseek(dosfs, lfoff, SEEK_SET) != lfoff
-	    || write(dosfs, lfbuf, boot->ClusterSize) != boot->ClusterSize) {
+	    || (size_t)write(dosfs, lfbuf, boot->ClusterSize) != boot->ClusterSize) {
 		perr("could not write LOST.DIR");
 		return FSFATAL;
 	}

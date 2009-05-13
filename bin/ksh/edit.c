@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.21 2007/01/28 20:20:25 cbiere Exp $	*/
+/*	$NetBSD: edit.c,v 1.21.20.1 2009/05/13 19:15:49 jym Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.21 2007/01/28 20:20:25 cbiere Exp $");
+__RCSID("$NetBSD: edit.c,v 1.21.20.1 2009/05/13 19:15:49 jym Exp $");
 #endif
 
 
@@ -390,7 +390,7 @@ set_editmode(ed)
 #endif
 		    };
 	char *rcp;
-	int i;
+	size_t i;
 
 	if ((rcp = ksh_strrchr_dirsep(ed)))
 		ed = ++rcp;

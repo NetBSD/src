@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.44 2008/09/09 19:18:41 jschauma Exp $ */
+/* $NetBSD: style,v 1.44.4.1 2009/05/13 19:19:16 jym Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.44 2008/09/09 19:18:41 jschauma Exp $");
+__RCSID("$NetBSD: style,v 1.44.4.1 2009/05/13 19:19:16 jym Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -110,7 +110,7 @@ __RCSID("$NetBSD: style,v 1.44 2008/09/09 19:18:41 jschauma Exp $");
 
 /*
  * ANSI function declarations for private functions (i.e. functions not used
- * elsewhere) and the main() function go at the top of the source module. 
+ * elsewhere) and the main() function go at the top of the source module.
  * Don't associate a name with the types.  I.e. use:
  *	void function(int);
  * Use your discretion on indenting between the return type and the name, and
@@ -429,7 +429,7 @@ vaf(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	STUFF;
-	va_end(ap);	
+	va_end(ap);
 				/* No return needed for void functions. */
 }
 

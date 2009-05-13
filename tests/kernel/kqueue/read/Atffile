@@ -1,0 +1,10 @@
+Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.1.2.2 2009/05/13 19:19:34 jym Exp $"
+
+prop: test-suite = "NetBSD"
+
+tp: t_fifo
+tp: t_file
+tp: t_file2
+tp: t_pipe
+tp: t_ttypty

@@ -1,4 +1,4 @@
-/*	$NetBSD: term.h,v 1.19 2008/09/10 15:45:37 christos Exp $	*/
+/*	$NetBSD: term.h,v 1.19.6.1 2009/05/13 19:18:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,7 +84,7 @@ typedef struct {
 protected void	term_move_to_line(EditLine *, int);
 protected void	term_move_to_char(EditLine *, int);
 protected void	term_clear_EOL(EditLine *, int);
-protected void	term_overwrite(EditLine *, const char *, int);
+protected void	term_overwrite(EditLine *, const char *, size_t);
 protected void	term_insertwrite(EditLine *, char *, int);
 protected void	term_deletechars(EditLine *, int);
 protected void	term_clear_screen(EditLine *);

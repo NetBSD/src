@@ -1,4 +1,4 @@
-.\"	$NetBSD: sesd.8,v 1.4 2003/01/06 14:43:01 hubertf Exp $
+.\"	$NetBSD: sesd.8,v 1.4.40.1 2009/05/13 19:20:40 jym Exp $
 .\"	$OpenBSD: $
 .\"	$FreeBSD: $
 .\"
@@ -58,13 +58,13 @@ poll each device for a change in state.
 .Pp
 The following options may be used:
 .Bl -tag -width Ds
-.It Fl p Ar poll-interval
-Change the interval of polling from the default 30 seconds to the number
-of seconds specified.
 .It Fl d
 Instead of detaching and becoming a daemon, stay attached to the
 controlling terminal and log changes there as well as via the system
 logger.
+.It Fl p Ar poll-interval
+Change the interval of polling from the default 30 seconds to the number
+of seconds specified.
 .El
 .Pp
 The user may then use
@@ -73,7 +73,7 @@ to get more detailed information about the state of the over enclosure device
 or objects within the enclosure device.
 .Sh FILES
 .Bl -tag -width /dev/sesN -compact
-.It Pa /dev/ses\fIN\fR
+.It Pa /dev/ses Ns Ar N
 SCSI Environmental Services Devices
 .El
 .Sh SEE ALSO

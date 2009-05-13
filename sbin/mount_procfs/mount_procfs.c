@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.22 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.22.4.1 2009/05/13 19:19:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.22 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.22.4.1 2009/05/13 19:19:03 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,8 @@ mount_procfs(int argc, char *argv[])
 	char canon_dir[MAXPATHLEN];
 	mntoptparse_t mp;
 
-	mntflags = altflags = 0;
+	mntflags = 0;
+	altflags = PROCFSMNT_LINUXCOMPAT;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':

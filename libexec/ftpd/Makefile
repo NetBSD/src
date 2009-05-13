@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2008/09/16 12:23:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.59.6.1 2009/05/13 19:18:37 jym Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
@@ -22,8 +22,6 @@ SRCS+=	ls.c cmp.c print.c util.c
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
-
-WARNS=2
 
 .if (${USE_PAM} != "no")
 CPPFLAGS+=-DUSE_PAM

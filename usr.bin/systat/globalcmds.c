@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.13 2006/02/05 08:51:03 dsl Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.13.30.1 2009/05/13 19:20:07 jym Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: globalcmds.c,v 1.13 2006/02/05 08:51:03 dsl Exp $");
+__RCSID("$NetBSD: globalcmds.c,v 1.13.30.1 2009/05/13 19:20:07 jym Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -104,7 +104,7 @@ global_help(char *args)
 	}
 	if (col == 0 && args) {
 		standout();
-		if (strlen(args) < COLS - 25)
+		if ((int)strlen(args) < COLS - 25)
 			printw("help: no matches for `%s.*'", args);
 		else
 			printw("help: no matches");

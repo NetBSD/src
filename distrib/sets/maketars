@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.64 2008/03/16 07:02:22 lukem Exp $
+# $NetBSD: maketars,v 1.64.8.1 2009/05/13 19:17:50 jym Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -144,13 +144,14 @@ for setname in ${lists}; do
 	if [ -n "${metalog}" ]; then
 		${setfilesonly} && msg "Creating ${setlistdir}/set.${setname}"
 		${AWK} -f "${rundir}/getdirs.awk" "${SDIR}/flist.${setname}" \
-		    | ${SORT} -u > "${SDIR}/flist.${setname}.full"
+		    > "${SDIR}/flist.${setname}.full"
 		(
 			echo "/set uname=root gname=wheel"
 			${AWK} -f "${rundir}/join.awk" \
 				"${SDIR}/flist.${setname}.full" "${metalog}"
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
-		) > "${setlistdir}/set.${setname}"
+		) | ${MTREE} -CS -k all -R time -N "${etcdir}" \
+		    > "${setlistdir}/set.${setname}"
 		# We deliberately do not add set.${setname} to ${metalog},
 		# because we depend on it as an input.
 	elif ! cmp -s "${SDIR}/flist.${setname}" \
@@ -167,7 +168,7 @@ fi
 # now build the tarfiles
 #
 
-GZIP=-9			# for pax -z
+GZIP=-9n		# for pax -z
 export GZIP
 es=0
 for setname in ${lists}; do

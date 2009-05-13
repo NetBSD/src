@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftp-proxy.8,v 1.2 2008/06/18 09:06:26 yamt Exp $
+.\"	$NetBSD: ftp-proxy.8,v 1.2.6.1 2009/05/13 19:17:38 jym Exp $
 .\"	$OpenBSD: ftp-proxy.8,v 1.10 2007/08/01 15:45:41 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate$
+.Dd August 1, 2007
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -73,14 +73,14 @@ adds the following rules to the various anchors.
 .Pp
 In case of active mode (PORT or EPRT):
 .Bd -literal -offset 2n
-rdr from $server to $proxy port $port -*[Gt] $client
+rdr from $server to $proxy port $port -\*[Gt] $client
 pass quick inet proto tcp \e
     from $server to $client port $port
 .Ed
 .Pp
 In case of passive mode (PASV or EPSV):
 .Bd -literal -offset 2n
-nat from $client to $server port $port -*[Gt] $proxy
+nat from $client to $server port $port -\*[Gt] $proxy
 pass in quick inet proto tcp \e
     from $client to $server port $port
 pass out quick inet proto tcp \e
@@ -174,7 +174,7 @@ In the NAT section:
 .Bd -literal -offset 2n
 nat-anchor "ftp-proxy/*"
 rdr-anchor "ftp-proxy/*"
-rdr pass on $int_if proto tcp from $lan to any port 21 -*[Gt] \e
+rdr pass on $int_if proto tcp from $lan to any port 21 -\*[Gt] \e
     127.0.0.1 port 8021
 .Ed
 .Pp
@@ -189,7 +189,7 @@ To make use of the proxy using
 .Xr ipnat.conf 5
 need the following rule:
 .Bd -literal -offset 2n
-rdr $int_if any port 21 -*[Gt] 127.0.0.1 port 8021 tcp
+rdr $int_if any port 21 -\*[Gt] 127.0.0.1 port 8021 tcp
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,

@@ -1,5 +1,5 @@
-/*	$NetBSD: groupaccess.h,v 1.4 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: groupaccess.h,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: groupaccess.h,v 1.4.26.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: groupaccess.h,v 1.8 2008/07/04 03:44:59 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Kevin Steves.  All rights reserved.
@@ -30,6 +30,7 @@
 
 int	 ga_init(const char *, gid_t);
 int	 ga_match(char * const *, int);
+int	 ga_match_pattern_list(const char *);
 void	 ga_free(void);
 
 #endif

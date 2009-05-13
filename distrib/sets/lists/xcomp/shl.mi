@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.11 2008/11/11 16:13:50 cube Exp $
+#	$NetBSD: shl.mi,v 1.11.2.1 2009/05/13 19:17:53 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -59,7 +59,7 @@
 ./usr/X11R7/lib/libXTrap_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXau_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXaw7_pic.a				-unknown-	xorg
-./usr/X11R7/lib/libXaw8_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libXaw8_pic.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libXcomposite_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXcursor_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXdamage_pic.a			-unknown-	xorg
@@ -74,10 +74,10 @@
 ./usr/X11R7/lib/libXinerama_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXmu_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXmuu_pic.a				-unknown-	xorg
-./usr/X11R7/lib/libXp_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libXp_pic.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libXpm_pic.a				-unknown-	xorg
-./usr/X11R7/lib/libXprintAppUtil_pic.a			-unknown-	xorg
-./usr/X11R7/lib/libXprintUtil_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libXprintAppUtil_pic.a			-obsolete-	obsolete
+./usr/X11R7/lib/libXprintUtil_pic.a			-obsolete-	obsolete
 ./usr/X11R7/lib/libXrandr_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXrender_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXres_pic.a				-obsolete-	obsolete
@@ -95,7 +95,7 @@
 ./usr/X11R7/lib/libfontenc_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libfreetype_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libglut_pic.a				-unknown-	xorg
-./usr/X11R7/lib/liblbxutil_pic.a			-unknown-	xorg
+./usr/X11R7/lib/liblbxutil_pic.a			-obsolete-	obsolete
 ./usr/X11R7/lib/liblisp_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libmp_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libpixman-1_pic.a			-unknown-	xorg

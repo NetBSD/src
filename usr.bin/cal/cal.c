@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.24 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: cal.c,v 1.24.6.1 2009/05/13 19:19:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.24 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: cal.c,v 1.24.6.1 2009/05/13 19:19:45 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,13 +83,13 @@ int empty[MAXDAYS] = {
 };
 int shift_days[2][4][MAXDAYS + 1];
 
-char *month_names[12] = {
+const char *month_names[12] = {
 	"January", "February", "March", "April", "May", "June",
 	"July", "August", "September", "October", "November", "December",
 };
 
-char *day_headings = " S  M Tu  W Th  F  S";
-char *j_day_headings = "  S   M  Tu   W  Th   F   S";
+const char *day_headings = " S  M Tu  W Th  F  S";
+const char *j_day_headings = "  S   M  Tu   W  Th   F   S";
 
 /* leap years according to the julian calendar */
 #define j_leap_year(y, m, d) \
@@ -163,36 +163,36 @@ struct reform {
 	 * days that get displayed, plus a crib slot.
 	 */
 } *reform, reforms[] = {
-	{ "DEFAULT",		0, 1752,  9,  3 },
-	{ "Italy",		1, 1582, 10,  5 },
-	{ "Spain",		1, 1582, 10,  5 },
-	{ "Portugal",		1, 1582, 10,  5 },
-	{ "Poland",		1, 1582, 10,  5 },
-	{ "France",		2, 1582, 12, 10 },
-	{ "Luxembourg",		2, 1582, 12, 22 },
-	{ "Netherlands",	2, 1582, 12, 22 },
-	{ "Bavaria",		0, 1583, 10,  6 },
-	{ "Austria",		2, 1584,  1,  7 },
-	{ "Switzerland",	2, 1584,  1, 12 },
-	{ "Hungary",		0, 1587, 10, 22 },
-	{ "Germany",		0, 1700,  2, 19 },
-	{ "Norway",		0, 1700,  2, 19 },
-	{ "Denmark",		0, 1700,  2, 19 },
-	{ "Great Britain",	0, 1752,  9,  3 },
-	{ "England",		0, 1752,  9,  3 },
-	{ "America",		0, 1752,  9,  3 },
-	{ "Sweden",		0, 1753,  2, 18 },
-	{ "Finland",		0, 1753,  2, 18 },
-	{ "Japan",		0, 1872, 12, 20 },
-	{ "China",		0, 1911, 11,  7 },
-	{ "Bulgaria",		0, 1916,  4,  1 },
-	{ "U.S.S.R.",		0, 1918,  2,  1 },
-	{ "Serbia",		0, 1919,  1, 19 },
-	{ "Romania",		0, 1919,  1, 19 },
-	{ "Greece",		0, 1924,  3, 10 },
-	{ "Turkey",		0, 1925, 12, 19 },
-	{ "Egypt",		0, 1928,  9, 18 },
-	{ NULL,			0,    0,  0,  0 },
+	{ "DEFAULT",		0, 1752,  9,  3, 0, 0 },
+	{ "Italy",		1, 1582, 10,  5, 0, 0 },
+	{ "Spain",		1, 1582, 10,  5, 0, 0 },
+	{ "Portugal",		1, 1582, 10,  5, 0, 0 },
+	{ "Poland",		1, 1582, 10,  5, 0, 0 },
+	{ "France",		2, 1582, 12, 10, 0, 0 },
+	{ "Luxembourg",		2, 1582, 12, 22, 0, 0 },
+	{ "Netherlands",	2, 1582, 12, 22, 0, 0 },
+	{ "Bavaria",		0, 1583, 10,  6, 0, 0 },
+	{ "Austria",		2, 1584,  1,  7, 0, 0 },
+	{ "Switzerland",	2, 1584,  1, 12, 0, 0 },
+	{ "Hungary",		0, 1587, 10, 22, 0, 0 },
+	{ "Germany",		0, 1700,  2, 19, 0, 0 },
+	{ "Norway",		0, 1700,  2, 19, 0, 0 },
+	{ "Denmark",		0, 1700,  2, 19, 0, 0 },
+	{ "Great Britain",	0, 1752,  9,  3, 0, 0 },
+	{ "England",		0, 1752,  9,  3, 0, 0 },
+	{ "America",		0, 1752,  9,  3, 0, 0 },
+	{ "Sweden",		0, 1753,  2, 18, 0, 0 },
+	{ "Finland",		0, 1753,  2, 18, 0, 0 },
+	{ "Japan",		0, 1872, 12, 20, 0, 0 },
+	{ "China",		0, 1911, 11,  7, 0, 0 },
+	{ "Bulgaria",		0, 1916,  4,  1, 0, 0 },
+	{ "U.S.S.R.",		0, 1918,  2,  1, 0, 0 },
+	{ "Serbia",		0, 1919,  1, 19, 0, 0 },
+	{ "Romania",		0, 1919,  1, 19, 0, 0 },
+	{ "Greece",		0, 1924,  3, 10, 0, 0 },
+	{ "Turkey",		0, 1925, 12, 19, 0, 0 },
+	{ "Egypt",		0, 1928,  9, 18, 0, 0 },
+	{ NULL,			0,    0,  0,  0, 0, 0 },
 };
 
 int julian;
@@ -205,7 +205,7 @@ int	getnum(const char *);
 void	gregorian_reform(const char *);
 void	reform_day_array(int, int, int *, int *, int *,int *,int *,int *);
 int	ascii_day(char *, int);
-void	center(char *, int, int);
+void	center(const char *, int, int);
 void	day_array(int, int, int *);
 int	day_in_week(int, int, int);
 int	day_in_year(int, int, int);
@@ -559,7 +559,7 @@ ascii_day(char *p, int day)
 {
 	int display, val, rc;
 	char *b;
-	static char *aday[] = {
+	static const char *aday[] = {
 		"",
 		" 1", " 2", " 3", " 4", " 5", " 6", " 7",
 		" 8", " 9", "10", "11", "12", "13", "14",
@@ -643,7 +643,7 @@ trim_trailing_spaces(char *s)
 }
 
 void
-center(char *str, int len, int separate)
+center(const char *str, int len, int separate)
 {
 
 	len -= strlen(str);
@@ -863,7 +863,7 @@ reform_day_array(int month, int year, int *done, int *date, int *diw, int *diy,
 int
 getnum(const char *p)
 {
-	long result;
+	unsigned long result;
 	char *ep;
 
 	errno = 0;
@@ -887,6 +887,7 @@ init_hilite(void)
 {
 	static char control[128];
 	char cap[1024];
+	const char *term;
 	char *tc;
 
 	hilite++;
@@ -894,10 +895,10 @@ init_hilite(void)
 	if (!isatty(fileno(stdout)))
 		return;
 
-	tc = getenv("TERM");
-	if (tc == NULL)
-		tc = "dumb";
-	if (tgetent(&cap[0], tc) != 1)
+	term = getenv("TERM");
+	if (term == NULL)
+		term = "dumb";
+	if (tgetent(&cap[0], term) != 1)
 		return;
 
 	tc = &control[0];

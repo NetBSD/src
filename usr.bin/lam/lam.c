@@ -1,4 +1,4 @@
-/*	$NetBSD: lam.c,v 1.6 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: lam.c,v 1.6.6.1 2009/05/13 19:19:54 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lam.c,v 1.6 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: lam.c,v 1.6.6.1 2009/05/13 19:19:54 jym Exp $");
 #endif /* not lint */
 
 /*
@@ -61,8 +61,8 @@ struct	openfile {		/* open file structure */
 	short	eof;		/* eof flag */
 	short	pad;		/* pad flag for missing columns */
 	char	eol;		/* end of line character */
-	char	*sepstring;	/* string to print before each line */
-	char	*format;	/* printf(3) style string spec. */
+	const char *sepstring;	/* string to print before each line */
+	const char *format;	/* printf(3) style string spec. */
 }	input[MAXOFILES];
 
 int	morefiles;		/* set by getargs(), changed by gatherline() */
@@ -70,7 +70,7 @@ int	nofinalnl;		/* normally append \n to each output line */
 char	line[BIGBUFSIZ];
 char	*linep;
 
-void	 error __P((char *, char *));
+void	 error __P((const char *, const char *));
 char	*gatherline __P((struct openfile *));
 void	 getargs __P((char *[]));
 int	 main __P((int, char **));
@@ -223,8 +223,7 @@ gatherline(ip)
 }
 
 void
-error(msg, s)
-	char *msg, *s;
+error(const char *msg, const char *s)
 {
 	warnx(msg, s);
 	fprintf(stderr,

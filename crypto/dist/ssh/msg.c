@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.12 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: msg.c,v 1.12.26.1 2009/05/13 19:15:57 jym Exp $	*/
 /* $OpenBSD: msg.c,v 1.15 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: msg.c,v 1.12 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.12.26.1 2009/05/13 19:15:57 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -34,6 +34,7 @@ __RCSID("$NetBSD: msg.c,v 1.12 2006/09/28 21:22:14 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "buffer.h"
 #include "log.h"

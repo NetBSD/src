@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.7 2006/05/11 01:24:14 mrg Exp $ */
+/* $NetBSD: radioctl.c,v 1.7.30.1 2009/05/13 19:20:02 jym Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: radioctl.c,v 1.7 2006/05/11 01:24:14 mrg Exp $");
+__RCSID("$NetBSD: radioctl.c,v 1.7.30.1 2009/05/13 19:20:02 jym Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -97,8 +97,8 @@ static void     warn_unsupported(int);
 static void	usage(void);
 
 static void	show_verbose(const char *, int);
-static void	show_int_val(u_long, const char *, char *, int);
-static void	show_float_val(float, const char *, char *, int);
+static void	show_int_val(u_long, const char *, const char *, int);
+static void	show_float_val(float, const char *, const char *, int);
 static void	show_char_val(const char *, const char *, int);
 static int	str_to_opt(const char *);
 static u_long	str_to_long(char *, int);
@@ -110,7 +110,7 @@ int
 main(int argc, char **argv)
 {
 	struct opt_t opt;
-	char *radiodev = NULL;
+	const char *radiodev = NULL;
 	int rd = -1;
 	int optchar;
 	char *param = NULL;
@@ -378,7 +378,7 @@ parse_opt(char *s, struct opt_t *o) {
 	/* Set only o->optval, the rest is missing */
 	if (slen == optlen) {
 		o->option = str_to_opt(s);
-		return o->option == OPTION_NONE ? 0 : 1;
+		return o->option == (int)OPTION_NONE ? 0 : 1;
 	}
 
 	if (optlen > slen - 2) {
@@ -394,7 +394,7 @@ parse_opt(char *s, struct opt_t *o) {
 	}
 	strlcpy(topt, s, optlen);
 
-	if ((o->option = str_to_opt(topt)) == OPTION_NONE) {
+	if ((o->option = str_to_opt(topt)) == (int)OPTION_NONE) {
 		free(topt);
 		return 0;
 	}
@@ -443,7 +443,7 @@ parse_opt(char *s, struct opt_t *o) {
 static void
 print_value(int optval)
 {
-	if (optval == OPTION_NONE)
+	if (optval == (int)OPTION_NONE)
 		return;
 
 	switch (optval) {
@@ -475,14 +475,14 @@ print_value(int optval)
 }
 
 static void
-show_int_val(u_long val, const char *nick, char *append, int silent)
+show_int_val(u_long val, const char *nick, const char *append, int silent)
 {
 	show_verbose(nick, silent);
 	printf("%lu%s\n", val, append);
 }
 
 static void
-show_float_val(float val, const char *nick, char *append, int silent)
+show_float_val(float val, const char *nick, const char *append, int silent)
 {
 	show_verbose(nick, silent);
 	printf("%.2f%s\n", val, append);

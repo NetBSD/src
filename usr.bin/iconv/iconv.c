@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.13 2008/03/22 10:30:21 yamt Exp $ */
+/*	$NetBSD: iconv.c,v 1.13.10.1 2009/05/13 19:19:52 jym Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.13 2008/03/22 10:30:21 yamt Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.13.10.1 2009/05/13 19:19:52 jym Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -97,7 +97,7 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 	const char *in;
 	size_t inbytes, outbytes, ret, invalids;
 	iconv_t cd;
-	u_int32_t flags = 0;
+	uint32_t flags = 0;
 
 	if (hide_invalid)
 		flags |= __ICONV_F_HIDE_INVALID;
@@ -116,6 +116,9 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 			ret = __iconv(cd, &in, &inbytes, &out, &outbytes,
 			    flags, &inval);
 			invalids += inval;
+			if (outbytes < OUTBUFSIZE)
+				(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes,
+				    stdout);
 			if (ret == (size_t)-1 && errno != E2BIG) {
 				/*
 				 * XXX: iconv(3) is bad interface.
@@ -130,6 +133,7 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 				ret = fread(inbuf + inbytes, 1,
 				    INBUFSIZE - inbytes, fp);
 				if (ret == 0) {
+					fflush(stdout);
 					if (feof(fp))
 						errx(EXIT_FAILURE,
 						     "unexpected end of file; "
@@ -141,16 +145,13 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 				in = inbuf;
 				inbytes += ret;
 			}
-			if (outbytes < OUTBUFSIZE)
-				(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes,
-				    stdout);
 		}
 	}
 	/* reset the shift state of the output buffer */
 	outbytes = OUTBUFSIZE;
 	out = outbuf;
 	ret = iconv(cd, NULL, NULL, &out, &outbytes);
-	if (ret == -1)
+	if (ret == (size_t)-1)
 		err(EXIT_FAILURE, "iconv()");
 	if (outbytes < OUTBUFSIZE)
 		(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes, stdout);

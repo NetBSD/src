@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.h,v 1.8 2002/05/31 10:22:17 itojun Exp $	*/
+/*	$NetBSD: rtsold.h,v 1.8.40.1 2009/05/13 19:20:38 jym Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ extern int probe_init __P((void));
 extern void defrouter_probe __P((struct ifinfo *));
 
 /* dump.c */
-extern void rtsold_dump_file __P((char *));
+extern void rtsold_dump_file __P((const char *));
 
 /* rtsock.c */
 extern int rtsock_open __P((void));

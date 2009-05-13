@@ -1,4 +1,4 @@
-/*	$NetBSD: bufbn.c,v 1.4 2007/12/18 02:35:25 christos Exp $	*/
+/*	$NetBSD: bufbn.c,v 1.4.12.1 2009/05/13 19:15:56 jym Exp $	*/
 /* $OpenBSD: bufbn.c,v 1.6 2007/06/02 09:04:58 djm Exp $*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: bufbn.c,v 1.4 2007/12/18 02:35:25 christos Exp $");
+__RCSID("$NetBSD: bufbn.c,v 1.4.12.1 2009/05/13 19:15:56 jym Exp $");
 
 #include <sys/types.h>
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: bufbn.c,v 1.4 2007/12/18 02:35:25 christos Exp $");
 
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "buffer.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.7 2008/07/29 09:10:09 pooka Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.7.6.1 2009/05/13 19:19:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tmpfs.c,v 1.7 2008/07/29 09:10:09 pooka Exp $");
+__RCSID("$NetBSD: tmpfs.c,v 1.7.6.1 2009/05/13 19:19:50 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ tmpfs_filestat(struct vnode *vp, struct filestat *fsp)
 	}
 
 	fsp->fsid = mt.mnt_stat.f_fsidx.__fsid_val[0];
-	fsp->fileid = (long)tn.tn_id;
+	fsp->fileid = tn.tn_id;
 	fsp->mode = tn.tn_mode | getftype(vp->v_type);
 	fsp->size = tn.tn_size;
 	switch (tn.tn_type) {

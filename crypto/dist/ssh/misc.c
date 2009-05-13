@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.22 2008/09/17 15:45:50 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.67 2008/01/01 08:47:04 dtucker Exp $ */
+/*	$NetBSD: misc.c,v 1.22.6.1 2009/05/13 19:15:57 jym Exp $	*/
+/* $OpenBSD: misc.c,v 1.69 2008/06/13 01:38:23 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.22 2008/09/17 15:45:50 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.22.6.1 2009/05/13 19:15:57 jym Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -525,10 +525,10 @@ tilde_expand_filename(const char *filename, uid_t uid)
 		if ((pw = getpwnam(user)) == NULL)
 			fatal("tilde_expand_filename: No such user %s", user);
 		homedir = pw->pw_dir;
-	} else {					/* ~/path */
-		if ((pw = getpwuid(uid)) == NULL)
-			fatal("tilde_expand_filename: No such uid %d",
-			    (int)uid);
+	} else {
+		if ((pw = getpwuid(uid)) == NULL)	/* ~/path */
+			fatal("tilde_expand_filename: No such uid %ld",
+			    (long)uid);
 		homedir = pw->pw_dir;
 	}
 
@@ -835,3 +835,23 @@ put_u16(void *vp, u_int16_t v)
 	p[0] = (u_char)(v >> 8) & 0xff;
 	p[1] = (u_char)v & 0xff;
 }
+
+void
+ms_subtract_diff(struct timeval *start, int *ms)
+{
+	struct timeval diff, finish;
+
+	gettimeofday(&finish, NULL);
+	timersub(&finish, start, &diff);	
+	*ms -= (diff.tv_sec * 1000) + (diff.tv_usec / 1000);
+}
+
+void
+ms_to_timeval(struct timeval *tv, int ms)
+{
+	if (ms < 0)
+		ms = 0;
+	tv->tv_sec = ms / 1000;
+	tv->tv_usec = (ms % 1000) * 1000;
+}
+

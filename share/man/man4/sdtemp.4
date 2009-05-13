@@ -1,0 +1,99 @@
+.\"	$NetBSD: sdtemp.4,v 1.1.2.2 2009/05/13 19:19:09 jym Exp $
+.\"
+.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Paul Goyette.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 9, 2009
+.Dt SDTEMP 4
+.Os
+.Sh NAME
+.Nm sdtemp
+.Nd Microchip Technology MCP9805/98242 and compatible memory module
+temperature sensors
+.Sh SYNOPSIS
+.Cd "sdtemp0 at iic? addr 0x18"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the
+.Tn Microchip Technology
+MCP9805/98242 and other chips that conform to JEDEC Standard 21-C section
+4.7.
+Memory module temperature sensors are optional on DDR2 and DDR3 SDRAM DIMMs.
+Sensors provided by this driver are accessed through the
+.Xr envsys 4
+API.
+The on-chip thresholds for the Alarm Window and Critical level are
+accessed through the
+.Xr sysctl 8
+utility.
+.Pp
+The
+.Nm
+supports temperature ranges from -256 to +255 degrees C.
+.Sh HARDWARE
+Chips supported by the
+.Nm
+driver include:
+.Pp
+.Bl -item -offset indent
+.It
+.Tn Microchip Technology
+.Em MCP9805
+.It
+.Tn Microchip Technology
+.Em MCP98242
+.It
+.Tn Analog Devices
+.Em ADT7408
+.It
+.Tn NXP Semiconductors
+.Em SE97
+.It
+.Tn NXP Semiconductors
+.Em SE98
+.It
+.Tn STmicroelectronics
+.Em STTS424E02-DA/DN
+.It
+.Tn Catalyst
+.Em CAT34TS02
+.It
+.Tn Catalyst
+.Em CAT6095
+.El
+.Sh SEE ALSO
+.Xr envsys 4 ,
+.Xr envstat 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+device appeared in
+.Nx 6.0 .
+.Sh BUGS
+Interrupt support is unimplemented.

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1234 2009/02/08 16:30:48 pooka Exp $
+#	$NetBSD: mi,v 1.1234.2.1 2009/05/13 19:17:51 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1624,6 +1624,7 @@
 ./usr/include/netns/spp_debug.h			comp-obsolete		obsolete
 ./usr/include/netns/spp_timer.h			comp-obsolete		obsolete
 ./usr/include/netns/spp_var.h			comp-obsolete		obsolete
+./usr/include/netpgp.h				comp-c-include		crypto
 ./usr/include/nfs/krpc.h			comp-c-include
 ./usr/include/nfs/nfs.h				comp-c-include
 ./usr/include/nfs/nfs_var.h			comp-obsolete		obsolete
@@ -1663,36 +1664,36 @@
 ./usr/include/objc/sarray.h			comp-c-include
 ./usr/include/objc/thr.h			comp-c-include
 ./usr/include/objc/typedstream.h		comp-c-include
-./usr/include/openpgpsdk/accumulate.h		comp-c-include		crypto
-./usr/include/openpgpsdk/armour.h		comp-c-include		crypto
-./usr/include/openpgpsdk/callback.h		comp-c-include		crypto
-./usr/include/openpgpsdk/compress.h		comp-c-include		crypto
-./usr/include/openpgpsdk/configure.h		comp-c-include		crypto
-./usr/include/openpgpsdk/create.h		comp-c-include		crypto
-./usr/include/openpgpsdk/crypto.h		comp-c-include		crypto
-./usr/include/openpgpsdk/defs.h			comp-c-include		crypto
-./usr/include/openpgpsdk/errors.h		comp-c-include		crypto
-./usr/include/openpgpsdk/final.h		comp-c-include		crypto
-./usr/include/openpgpsdk/hash.h			comp-c-include		crypto
-./usr/include/openpgpsdk/keyring.h		comp-c-include		crypto
-./usr/include/openpgpsdk/lists.h		comp-c-include		crypto
-./usr/include/openpgpsdk/memory.h		comp-c-include		crypto
-./usr/include/openpgpsdk/openpgpsdk.h		comp-c-include		crypto
-./usr/include/openpgpsdk/packet-parse.h		comp-c-include		crypto
-./usr/include/openpgpsdk/packet-show-cast.h	comp-c-include		crypto
-./usr/include/openpgpsdk/packet-show.h		comp-c-include		crypto
-./usr/include/openpgpsdk/packet.h		comp-c-include		crypto
-./usr/include/openpgpsdk/random.h		comp-c-include		crypto
-./usr/include/openpgpsdk/readerwriter.h		comp-c-include		crypto
-./usr/include/openpgpsdk/signature.h		comp-c-include		crypto
-./usr/include/openpgpsdk/std_print.h		comp-c-include		crypto
-./usr/include/openpgpsdk/streamwriter.h		comp-c-include		crypto
-./usr/include/openpgpsdk/types.h		comp-c-include		crypto
-./usr/include/openpgpsdk/util.h			comp-c-include		crypto
-./usr/include/openpgpsdk/validate.h		comp-c-include		crypto
-./usr/include/openpgpsdk/version.h		comp-c-include		crypto
-./usr/include/openpgpsdk/writer.h		comp-c-include		crypto
-./usr/include/openpgpsdk/writer_armoured.h	comp-c-include		crypto
+./usr/include/openpgpsdk/accumulate.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/armour.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/callback.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/compress.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/configure.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/create.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/crypto.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/defs.h			comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/errors.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/final.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/hash.h			comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/keyring.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/lists.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/memory.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/openpgpsdk.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/packet-parse.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/packet-show-cast.h	comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/packet-show.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/packet.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/random.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/readerwriter.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/signature.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/std_print.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/streamwriter.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/types.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/util.h			comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/validate.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/version.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/writer.h		comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/writer_armoured.h	comp-c-obsolete		obsolete
 ./usr/include/openssl/aes.h			comp-c-include		crypto
 ./usr/include/openssl/asn1.h			comp-c-include		crypto
 ./usr/include/openssl/asn1_mac.h		comp-c-include		crypto
@@ -1865,8 +1866,8 @@
 ./usr/include/rpcsvc/yppasswd.x			comp-c-include
 ./usr/include/rump/p2k.h			comp-puffs-include
 ./usr/include/rump/rump.h			comp-c-include
-./usr/include/rump/rump_syscalls.h		comp-c-include
 ./usr/include/rump/rump_namei.h			comp-c-include
+./usr/include/rump/rump_syscalls.h		comp-c-include
 ./usr/include/rump/rumpdefs.h			comp-c-include
 ./usr/include/rump/rumpuser.h			comp-c-include
 ./usr/include/rump/rumpvnode_if.h		comp-c-include
@@ -2213,134 +2214,135 @@
 ./usr/lib/crt0.o				comp-c-lib
 ./usr/lib/gcrt0.o				comp-c-lib
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib
-./usr/lib/i18n/libBIG5_g.a		-unknown-	debuglib
+./usr/lib/i18n/libBIG5_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libDECHanyu.a			comp-i18n-lib
-./usr/lib/i18n/libDECHanyu_g.a		-unknown-	debuglib
+./usr/lib/i18n/libDECHanyu_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libEUC.a				comp-i18n-lib
 ./usr/lib/i18n/libEUCTW.a			comp-i18n-lib
-./usr/lib/i18n/libEUCTW_g.a		-unknown-	debuglib
-./usr/lib/i18n/libEUC_g.a		-unknown-	debuglib
+./usr/lib/i18n/libEUCTW_g.a			-unknown-		debuglib
+./usr/lib/i18n/libEUC_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libGBK2K.a			comp-i18n-lib
-./usr/lib/i18n/libGBK2K_g.a		-unknown-	debuglib
+./usr/lib/i18n/libGBK2K_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libHZ.a				comp-i18n-lib
-./usr/lib/i18n/libHZ_g.a		-unknown-	debuglib
+./usr/lib/i18n/libHZ_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libISO2022.a			comp-i18n-lib
-./usr/lib/i18n/libISO2022_g.a		-unknown-	debuglib
+./usr/lib/i18n/libISO2022_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libJOHAB.a			comp-i18n-lib
-./usr/lib/i18n/libJOHAB_g.a		-unknown-	debuglib
+./usr/lib/i18n/libJOHAB_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libMSKanji.a			comp-i18n-lib
-./usr/lib/i18n/libMSKanji_g.a		-unknown-	debuglib
+./usr/lib/i18n/libMSKanji_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libUES.a				comp-i18n-lib
-./usr/lib/i18n/libUES_g.a		-unknown-	debuglib
+./usr/lib/i18n/libUES_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libUTF1632.a			comp-i18n-lib
-./usr/lib/i18n/libUTF1632_g.a		-unknown-	debuglib
+./usr/lib/i18n/libUTF1632_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libUTF7.a			comp-i18n-lib
-./usr/lib/i18n/libUTF7_g.a		-unknown-	debuglib
+./usr/lib/i18n/libUTF7_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libUTF8.a			comp-i18n-lib
-./usr/lib/i18n/libUTF8_g.a		-unknown-	debuglib
+./usr/lib/i18n/libUTF8_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libVIQR.a			comp-i18n-lib
-./usr/lib/i18n/libVIQR_g.a		-unknown-	debuglib
+./usr/lib/i18n/libVIQR_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libZW.a				comp-i18n-lib
-./usr/lib/i18n/libZW_g.a		-unknown-	debuglib
+./usr/lib/i18n/libZW_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libiconv_none.a			comp-i18n-lib
-./usr/lib/i18n/libiconv_none_g.a		-unknown-	debuglib
+./usr/lib/i18n/libiconv_none_g.a		-unknown-		debuglib
 ./usr/lib/i18n/libiconv_std.a			comp-i18n-lib
-./usr/lib/i18n/libiconv_std_g.a		-unknown-	debuglib
+./usr/lib/i18n/libiconv_std_g.a			-unknown-		debuglib
 ./usr/lib/i18n/libmapper_646.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_646_g.a		-unknown-	debuglib
+./usr/lib/i18n/libmapper_646_g.a		-unknown-		debuglib
 ./usr/lib/i18n/libmapper_none.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_none_g.a		-unknown-	debuglib
+./usr/lib/i18n/libmapper_none_g.a		-unknown-		debuglib
 ./usr/lib/i18n/libmapper_parallel.a		comp-i18n-lib
-./usr/lib/i18n/libmapper_parallel_g.a		-unknown-	debuglib
+./usr/lib/i18n/libmapper_parallel_g.a		-unknown-		debuglib
 ./usr/lib/i18n/libmapper_serial.a		comp-i18n-lib
-./usr/lib/i18n/libmapper_serial_g.a		-unknown-	debuglib
+./usr/lib/i18n/libmapper_serial_g.a		-unknown-		debuglib
 ./usr/lib/i18n/libmapper_std.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_std_g.a		-unknown-	debuglib
+./usr/lib/i18n/libmapper_std_g.a		-unknown-		debuglib
 ./usr/lib/i18n/libmapper_zone.a			comp-i18n-lib
-./usr/lib/i18n/libmapper_zone_g.a		-unknown-	debuglib
+./usr/lib/i18n/libmapper_zone_g.a		-unknown-		debuglib
 ./usr/lib/libamu.a				comp-obsolete		obsolete
-./usr/lib/libamu_g.a		-unknown-	debuglib
+./usr/lib/libamu_g.a				-unknown-		debuglib,obsolete
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib
-./usr/lib/libarchive_g.a		-unknown-	debuglib
+./usr/lib/libarchive_g.a			-unknown-		debuglib
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
-./usr/lib/libasn1_g.a		-unknown-	debuglib
-./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libasn1_g.a				-unknown-		debuglib,kerberos
+./usr/lib/libasn1_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libatf-c++.a				comp-atf-lib
-./usr/lib/libatf-c++_g.a		-unknown-	debuglib
+./usr/lib/libatf-c++_g.a			-unknown-		debuglib
 ./usr/lib/libatf-c++_p.a			comp-atf-lib		profile
 ./usr/lib/libatf-c.a				comp-atf-lib
-./usr/lib/libatf-c_g.a		-unknown-	debuglib
+./usr/lib/libatf-c_g.a				-unknown-		debuglib
 ./usr/lib/libatf-c_p.a				comp-atf-lib		profile
 ./usr/lib/libatf.a				comp-obsolete		obsolete
 ./usr/lib/libatf_p.a				comp-obsolete		obsolete
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
-./usr/lib/libbfd_g.a		-unknown-	debuglib
+./usr/lib/libbfd_g.a				-unknown-		debuglib
 ./usr/lib/libbind9.a				comp-bind-lib
-./usr/lib/libbind9_g.a		-unknown-	debuglib
+./usr/lib/libbind9_g.a				-unknown-		debuglib
 ./usr/lib/libbind9_p.a				comp-bind-proflib	profile
 ./usr/lib/libbluetooth.a			comp-c-lib
-./usr/lib/libbluetooth_g.a		-unknown-	debuglib
+./usr/lib/libbluetooth_g.a			-unknown-		debuglib
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		profile
 ./usr/lib/libbsdmalloc.a			comp-c-lib
-./usr/lib/libbsdmalloc_g.a		-unknown-	debuglib
+./usr/lib/libbsdmalloc_g.a			-unknown-		debuglib
 ./usr/lib/libbsdmalloc_p.a			comp-c-proflib		profile
 ./usr/lib/libbz2.a				comp-c-lib
-./usr/lib/libbz2_g.a		-unknown-	debuglib
+./usr/lib/libbz2_g.a				-unknown-		debuglib
 ./usr/lib/libbz2_p.a				comp-c-proflib		profile
 ./usr/lib/libc.a				comp-c-lib
-./usr/lib/libc_g.a		-unknown-	debuglib
+./usr/lib/libc_g.a				-unknown-		debuglib
 ./usr/lib/libc_p.a				comp-c-proflib		profile
 ./usr/lib/libcdk.a				comp-obsolete		obsolete
 ./usr/lib/libcdk_p.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err.a				comp-krb5-lib		kerberos
-./usr/lib/libcom_err_g.a		-unknown-	debuglib
-./usr/lib/libcom_err_p.a			comp-krb5-proflib	kerberos,profile
+./usr/lib/libcom_err_g.a			-unknown-		debuglib,kerberos
+./usr/lib/libcom_err_p.a			comp-krb5-proflib	profile,kerberos
 ./usr/lib/libcompat.a				comp-c-lib
-./usr/lib/libcompat_g.a		-unknown-	debuglib
+./usr/lib/libcompat_g.a				-unknown-		debuglib
 ./usr/lib/libcompat_p.a				comp-c-proflib		profile
 ./usr/lib/libcrypt.a				comp-c-lib
-./usr/lib/libcrypt_g.a		-unknown-	debuglib
+./usr/lib/libcrypt_g.a				-unknown-		debuglib
 ./usr/lib/libcrypt_p.a				comp-c-proflib		profile
 ./usr/lib/libcrypto.a				comp-c-lib		crypto
-./usr/lib/libcrypto_g.a		-unknown-	debuglib
+./usr/lib/libcrypto_g.a				-unknown-		debuglib,crypto
 ./usr/lib/libcrypto_idea.a			comp-c-lib		crypto_idea
-./usr/lib/libcrypto_idea_g.a	-unknown-	debuglib
-./usr/lib/libcrypto_idea_p.a			comp-c-proflib		crypto_idea,profile
+./usr/lib/libcrypto_idea_g.a			-unknown-		debuglib,crypto_idea
+./usr/lib/libcrypto_idea_p.a			comp-c-proflib		profile,crypto_idea
 ./usr/lib/libcrypto_mdc2.a			comp-c-lib		crypto_mdc2
-./usr/lib/libcrypto_mdc2_g.a	-unknown-	debuglib
-./usr/lib/libcrypto_mdc2_p.a			comp-c-proflib		crypto_mdc2,profile
+./usr/lib/libcrypto_mdc2_g.a			-unknown-		debuglib,crypto_mdc2
+./usr/lib/libcrypto_mdc2_p.a			comp-c-proflib		profile,crypto_mdc2
+./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
-./usr/lib/libcrypto_rc5_g.a	-unknown-	debuglib
-./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		crypto_rc5,profile
+./usr/lib/libcrypto_rc5_g.a			-unknown-		debuglib,crypto_rc5
+./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		profile,crypto_rc5
 ./usr/lib/libcurses.a				comp-c-lib
-./usr/lib/libcurses_g.a		-unknown-	debuglib
+./usr/lib/libcurses_g.a				-unknown-		debuglib
 ./usr/lib/libcurses_p.a				comp-c-proflib		profile
 ./usr/lib/libdes.a				comp-c-lib		crypto
-./usr/lib/libdes_g.a		-unknown-	debuglib
+./usr/lib/libdes_g.a				-unknown-		debuglib,crypto
 ./usr/lib/libdes_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libdevmapper.a			comp-lvm-lib		lvm
-./usr/lib/libdevmapper_g.a	-unknown-	debuglib
+./usr/lib/libdevmapper_g.a			-unknown-		debuglib,lvm
 ./usr/lib/libdevmapper_p.a			comp-lvm-proflib	profile,lvm
 ./usr/lib/libdns.a				comp-bind-lib
-./usr/lib/libdns_g.a		-unknown-	debuglib
+./usr/lib/libdns_g.a				-unknown-		debuglib
 ./usr/lib/libdns_p.a				comp-bind-proflib	profile
 ./usr/lib/libedit.a				comp-c-lib
-./usr/lib/libedit_g.a		-unknown-	debuglib
+./usr/lib/libedit_g.a				-unknown-		debuglib
 ./usr/lib/libedit_p.a				comp-c-proflib		profile
 ./usr/lib/libevent.a				comp-c-lib
-./usr/lib/libevent_g.a		-unknown-	debuglib
+./usr/lib/libevent_g.a				-unknown-		debuglib
 ./usr/lib/libevent_p.a				comp-c-proflib		profile
 ./usr/lib/libfetch.a				comp-c-lib
-./usr/lib/libfetch_g.a		-unknown-	debuglib
-./usr/lib/libfetch_p.a			comp-c-proflib		profile
+./usr/lib/libfetch_g.a				-unknown-		debuglib
+./usr/lib/libfetch_p.a				comp-c-proflib		profile
 ./usr/lib/libfl.a				comp-c-lib
 ./usr/lib/libfl_p.a				comp-c-proflib		profile
 ./usr/lib/libform.a				comp-c-lib
-./usr/lib/libform_g.a		-unknown-	debuglib
+./usr/lib/libform_g.a				-unknown-		debuglib
 ./usr/lib/libform_p.a				comp-c-proflib		profile
 ./usr/lib/libfrtbegin.a				comp-c-lib		gcc=3
 ./usr/lib/libfrtbegin.a				comp-obsolete		gcc=4,obsolete
@@ -2352,282 +2354,288 @@
 ./usr/lib/libg2c_p.a				comp-fortran-proflib	gcc=3,profile
 ./usr/lib/libg2c_p.a				comp-obsolete		gcc=4,obsolete
 ./usr/lib/libgcc.a				comp-c-lib
-./usr/lib/libgcc_eh_g.a		-unknown-	debuglib
-./usr/lib/libgcc_g.a		-unknown-	debuglib
+./usr/lib/libgcc_eh_g.a				-unknown-		debuglib
+./usr/lib/libgcc_g.a				-unknown-		debuglib
 ./usr/lib/libgcc_p.a				comp-c-proflib		profile
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
-./usr/lib/libgcc_s_g.a		-unknown-	debuglib
+./usr/lib/libgcc_s_g.a				-unknown-		debuglib
 ./usr/lib/libgcov.a				comp-c-lib
-./usr/lib/libgcov_g.a		-unknown-	debuglib
+./usr/lib/libgcov_g.a				-unknown-		debuglib
 ./usr/lib/libgnumalloc.a			comp-c-lib
-./usr/lib/libgnumalloc_g.a		-unknown-	debuglib
+./usr/lib/libgnumalloc_g.a			-unknown-		debuglib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
 ./usr/lib/libgssapi.a				comp-krb5-lib		kerberos
-./usr/lib/libgssapi_g.a		-unknown-	debuglib
-./usr/lib/libgssapi_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libgssapi_g.a				-unknown-		debuglib,kerberos
+./usr/lib/libgssapi_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libhdb.a				comp-c-lib		kerberos
-./usr/lib/libhdb_g.a		-unknown-	debuglib
-./usr/lib/libhdb_p.a				comp-c-proflib		kerberos,profile
+./usr/lib/libhdb_g.a				-unknown-		debuglib,kerberos
+./usr/lib/libhdb_p.a				comp-c-proflib		profile,kerberos
 ./usr/lib/libheimntlm.a				comp-krb5-lib		kerberos
-./usr/lib/libheimntlm_g.a		-unknown-	debuglib
-./usr/lib/libheimntlm_p.a			comp-krb5-proflib	kerberos,profile
+./usr/lib/libheimntlm_g.a			-unknown-		debuglib,kerberos
+./usr/lib/libheimntlm_p.a			comp-krb5-proflib	profile,kerberos
 ./usr/lib/libhx509.a				comp-krb5-lib		kerberos
-./usr/lib/libhx509_g.a		-unknown-	debuglib
-./usr/lib/libhx509_p.a				comp-krb5-proflib	kerberos,profile
-./usr/lib/libi386_g.a		-unknown-	debuglib
-./usr/lib/libiberty_g.a		-unknown-	debuglib
+./usr/lib/libhx509_g.a				-unknown-		debuglib,kerberos
+./usr/lib/libhx509_p.a				comp-krb5-proflib	profile,kerberos
+./usr/lib/libi386_g.a				-unknown-		debuglib
+./usr/lib/libiberty_g.a				-unknown-		debuglib
 ./usr/lib/libintl.a				comp-c-lib
-./usr/lib/libintl_g.a		-unknown-	debuglib
+./usr/lib/libintl_g.a				-unknown-		debuglib
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
-./usr/lib/libipsec_g.a		-unknown-	debuglib
+./usr/lib/libipsec_g.a				-unknown-		debuglib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
 ./usr/lib/libisc.a				comp-bind-lib
-./usr/lib/libisc_g.a		-unknown-	debuglib
+./usr/lib/libisc_g.a				-unknown-		debuglib
 ./usr/lib/libisc_p.a				comp-bind-lib		profile
 ./usr/lib/libisccc.a				comp-bind-lib
-./usr/lib/libisccc_g.a		-unknown-	debuglib
+./usr/lib/libisccc_g.a				-unknown-		debuglib
 ./usr/lib/libisccc_p.a				comp-bind-profilb	profile
 ./usr/lib/libisccfg.a				comp-bind-lib
-./usr/lib/libisccfg_g.a		-unknown-	debuglib
+./usr/lib/libisccfg_g.a				-unknown-		debuglib
 ./usr/lib/libisccfg_p.a				comp-bind-profilb	profile
 ./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
-./usr/lib/libiscsi_g.a		-unknown-	debuglib
+./usr/lib/libiscsi_g.a				-unknown-		debuglib,iscsi
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
 ./usr/lib/libkadm5clnt.a			comp-krb5-lib		kerberos
-./usr/lib/libkadm5clnt_g.a		-unknown-	debuglib
-./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	kerberos,profile
+./usr/lib/libkadm5clnt_g.a			-unknown-		debuglib,kerberos
+./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	profile,kerberos
 ./usr/lib/libkadm5srv.a				comp-krb5-lib		kerberos
-./usr/lib/libkadm5srv_g.a		-unknown-	debuglib
-./usr/lib/libkadm5srv_p.a			comp-krb5-proflib	kerberos,profile
+./usr/lib/libkadm5srv_g.a			-unknown-		debuglib,kerberos
+./usr/lib/libkadm5srv_p.a			comp-krb5-proflib	profile,kerberos
 ./usr/lib/libkadm_p.a				comp-obsolete		obsolete
 ./usr/lib/libkafs.a				comp-krb5-lib		kerberos
-./usr/lib/libkafs_g.a		-unknown-	debuglib
-./usr/lib/libkafs_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libkafs_g.a				-unknown-		debuglib,kerberos
+./usr/lib/libkafs_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libkdb.a				comp-obsolete		obsolete
 ./usr/lib/libkdb_p.a				comp-obsolete		obsolete
 ./usr/lib/libkrb.a				comp-obsolete		obsolete
 ./usr/lib/libkrb5.a				comp-krb5-lib		kerberos
-./usr/lib/libkrb5_g.a		-unknown-	debuglib
-./usr/lib/libkrb5_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libkrb5_g.a				-unknown-		debuglib,kerberos
+./usr/lib/libkrb5_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libkrb_p.a				comp-obsolete		obsolete
 ./usr/lib/libkstream.a				comp-obsolete		obsolete
 ./usr/lib/libkstream_p.a			comp-obsolete		obsolete
 ./usr/lib/libkvm.a				comp-c-lib
-./usr/lib/libkvm_g.a		-unknown-	debuglib
+./usr/lib/libkvm_g.a				-unknown-		debuglib
 ./usr/lib/libkvm_p.a				comp-c-proflib		profile
 ./usr/lib/libl.a				comp-c-lib
-./usr/lib/libl_g.a		-unknown-	debuglib
+./usr/lib/libl_g.a				-unknown-		debuglib
 ./usr/lib/libl_p.a				comp-c-proflib		profile
 ./usr/lib/liblber.a				comp-ldap-lib		ldap
-./usr/lib/liblber_g.a		-unknown-	debuglib
-./usr/lib/liblber_p.a				comp-ldap-proflib	ldap,profile
+./usr/lib/liblber_g.a				-unknown-		debuglib,ldap
+./usr/lib/liblber_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/libldap.a				comp-ldap-lib		ldap
-./usr/lib/libldap_g.a		-unknown-	debuglib
-./usr/lib/libldap_p.a				comp-ldap-proflib	ldap,profile
+./usr/lib/libldap_g.a				-unknown-		debuglib,ldap
+./usr/lib/libldap_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/libldap_r.a				comp-ldap-lib		ldap
-./usr/lib/libldap_r_g.a		-unknown-	debuglib
-./usr/lib/libldap_r_p.a				comp-ldap-proflib	ldap,profile
+./usr/lib/libldap_r_g.a				-unknown-		debuglib,ldap
+./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/liblwres.a				comp-bind-lib
-./usr/lib/liblwres_g.a		-unknown-	debuglib
+./usr/lib/liblwres_g.a				-unknown-		debuglib
 ./usr/lib/liblwres_p.a				comp-bind-profilb	profile
 ./usr/lib/libm.a				comp-c-lib
-./usr/lib/libm387_g.a		-unknown-	debuglib
-./usr/lib/libm_g.a		-unknown-	debuglib
+./usr/lib/libm387_g.a				-unknown-		debuglib
+./usr/lib/libm_g.a				-unknown-		debuglib
 ./usr/lib/libm_p.a				comp-c-proflib		profile
 ./usr/lib/libmagic.a				comp-c-lib
-./usr/lib/libmagic_g.a		-unknown-	debuglib
+./usr/lib/libmagic_g.a				-unknown-		debuglib
 ./usr/lib/libmagic_p.a				comp-c-proflib		profile
 ./usr/lib/libmenu.a				comp-c-lib
-./usr/lib/libmenu_g.a		-unknown-	debuglib
+./usr/lib/libmenu_g.a				-unknown-		debuglib
 ./usr/lib/libmenu_p.a				comp-c-proflib		profile
 ./usr/lib/libmilter.a				comp-obsolete		obsolete
+./usr/lib/libnetpgp.a				comp-c-lib		crypto
+./usr/lib/libnetpgp_g.a				-unknown-		debuglib
+./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libobjc.a				comp-objc-lib
-./usr/lib/libobjc_g.a		-unknown-	debuglib
+./usr/lib/libobjc_g.a				-unknown-		debuglib
 ./usr/lib/libobjc_p.a				comp-objc-proflib	profile
-./usr/lib/libopcodes_g.a		-unknown-	debuglib
-./usr/lib/libopenpgpsdk.a			comp-c-lib		crypto
-./usr/lib/libopenpgpsdk_g.a	-unknown-	debuglib
-./usr/lib/libopenpgpsdk_p.a			comp-c-proflib		profile,crypto
+./usr/lib/libopcodes_g.a			-unknown-		debuglib
+./usr/lib/libopenpgpsdk.a			comp-obsolete		obsolete
+./usr/lib/libopenpgpsdk_g.a			comp-obsolete		obsolete
+./usr/lib/libopenpgpsdk_p.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio.a				comp-c-lib
-./usr/lib/libossaudio_g.a		-unknown-	debuglib
+./usr/lib/libossaudio_g.a			-unknown-		debuglib
 ./usr/lib/libossaudio_p.a			comp-c-proflib		profile
 ./usr/lib/libp2k.a				comp-puffs-lib
-./usr/lib/libp2k_g.a		-unknown-	debuglib
+./usr/lib/libp2k_g.a				-unknown-		debuglib
 ./usr/lib/libp2k_p.a				comp-puffs-proflib	profile
 ./usr/lib/libpam.a				comp-c-lib		pam
-./usr/lib/libpam_g.a		-unknown-	debuglib
+./usr/lib/libpam_g.a				-unknown-		debuglib
 ./usr/lib/libpcap.a				comp-c-lib
-./usr/lib/libpcap_g.a		-unknown-	debuglib
+./usr/lib/libpcap_g.a				-unknown-		debuglib
 ./usr/lib/libpcap_p.a				comp-c-proflib		profile
 ./usr/lib/libpci.a				comp-c-lib
-./usr/lib/libpci_g.a		-unknown-	debuglib
+./usr/lib/libpci_g.a				-unknown-		debuglib
 ./usr/lib/libpci_p.a				comp-c-proflib		profile
-./usr/lib/libpmc_g.a		-unknown-	debuglib
+./usr/lib/libpmc_g.a				-unknown-		debuglib
 ./usr/lib/libposix.a				comp-c-lib
-./usr/lib/libposix_g.a		-unknown-	debuglib
+./usr/lib/libposix_g.a				-unknown-		debuglib
 ./usr/lib/libposix_p.a				comp-c-proflib		profile
 ./usr/lib/libprop.a				comp-c-lib
-./usr/lib/libprop_g.a		-unknown-	debuglib
+./usr/lib/libprop_g.a				-unknown-		debuglib
 ./usr/lib/libprop_p.a				comp-c-proflib		profile
 ./usr/lib/libpthread.a				comp-c-lib
 ./usr/lib/libpthread_dbg.a			comp-c-lib
-./usr/lib/libpthread_dbg_g.a		-unknown-	debuglib
+./usr/lib/libpthread_dbg_g.a			-unknown-		debuglib
 ./usr/lib/libpthread_dbg_p.a			comp-c-proflib		profile
-./usr/lib/libpthread_g.a		-unknown-	debuglib
+./usr/lib/libpthread_g.a			-unknown-		debuglib
 ./usr/lib/libpthread_p.a			comp-c-proflib		profile
 ./usr/lib/libpuffs.a				comp-puffs-lib
-./usr/lib/libpuffs_g.a		-unknown-	debuglib
+./usr/lib/libpuffs_g.a				-unknown-		debuglib
 ./usr/lib/libpuffs_p.a				comp-puffs-proflib	profile
 ./usr/lib/libradius.a				comp-c-lib
-./usr/lib/libradius_g.a		-unknown-	debuglib
+./usr/lib/libradius_g.a				-unknown-		debuglib
 ./usr/lib/libradius_p.a				comp-c-proflib		profile
 ./usr/lib/librefuse.a				comp-refuse-lib
-./usr/lib/librefuse_g.a		-unknown-	debuglib 
+./usr/lib/librefuse_g.a				-unknown-		debuglib 
 ./usr/lib/librefuse_p.a				comp-refuse-proflib	profile
 ./usr/lib/libresolv.a				comp-c-lib
-./usr/lib/libresolv_g.a		-unknown-	debuglib
+./usr/lib/libresolv_g.a				-unknown-		debuglib
 ./usr/lib/libresolv_p.a				comp-c-proflib		profile
 ./usr/lib/librmt.a				comp-c-lib
-./usr/lib/librmt_g.a		-unknown-	debuglib
+./usr/lib/librmt_g.a				-unknown-		debuglib
 ./usr/lib/libroken.a				comp-krb5-lib		kerberos
-./usr/lib/libroken_g.a		-unknown-	debuglib
-./usr/lib/libroken_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libroken_g.a				-unknown-		debuglib,kerberos
+./usr/lib/libroken_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/librpcsvc.a				comp-c-lib
-./usr/lib/librpcsvc_g.a		-unknown-	debuglib
+./usr/lib/librpcsvc_g.a				-unknown-		debuglib
 ./usr/lib/librpcsvc_p.a				comp-c-proflib		profile
 ./usr/lib/librt.a				comp-c-lib
-./usr/lib/librt_g.a		-unknown-	debuglib
+./usr/lib/librt_g.a				-unknown-		debuglib
 ./usr/lib/librt_p.a				comp-c-proflib		profile
 ./usr/lib/librump.a				comp-c-lib
-./usr/lib/librump_g.a		-unknown-	debuglib
+./usr/lib/librump_g.a				-unknown-		debuglib
 ./usr/lib/librump_p.a				comp-c-proflib		profile
 ./usr/lib/librumpfs_cd9660.a			comp-c-lib
-./usr/lib/librumpfs_cd9660_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_cd9660_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_efs.a			comp-c-lib
-./usr/lib/librumpfs_efs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_efs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_efs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ext2fs.a			comp-c-lib
-./usr/lib/librumpfs_ext2fs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_ext2fs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_ext2fs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ffs.a			comp-c-lib
-./usr/lib/librumpfs_ffs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_ffs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_hfs.a			comp-c-lib
-./usr/lib/librumpfs_hfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_hfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_lfs.a			comp-c-lib
-./usr/lib/librumpfs_lfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_lfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_msdos.a			comp-c-lib
-./usr/lib/librumpfs_msdos_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_msdos_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_nfs.a			comp-c-lib
-./usr/lib/librumpfs_nfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_nfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib
-./usr/lib/librumpfs_ntfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_ntfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_syspuffs.a			comp-c-lib
-./usr/lib/librumpfs_syspuffs_g.a	-unknown-	debuglib
+./usr/lib/librumpfs_syspuffs_g.a		-unknown-		debuglib
 ./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile
 ./usr/lib/librumpfs_sysvbfs.a			comp-c-lib
-./usr/lib/librumpfs_sysvbfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_sysvbfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_sysvbfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_tmpfs.a			comp-c-lib
-./usr/lib/librumpfs_tmpfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_tmpfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_udf.a			comp-c-lib
-./usr/lib/librumpfs_udf_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_udf_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_udf_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_ufs.a			comp-c-lib
-./usr/lib/librumpfs_ufs_g.a		-unknown-	debuglib
-./usr/lib/librumpfs_ufs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_ufs.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_ufs_g.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_ufs_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpnet.a				comp-c-lib
-./usr/lib/librumpnet_g.a		-unknown-	debuglib
-./usr/lib/librumpnet_p.a			comp-c-proflib		profile
+./usr/lib/librumpnet_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_local.a			comp-c-lib
-./usr/lib/librumpnet_local_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_local_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_local_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_net.a			comp-c-lib
-./usr/lib/librumpnet_net_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_net_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_net_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_netinet.a			comp-c-lib
-./usr/lib/librumpnet_netinet_g.a	-unknown-	debuglib
+./usr/lib/librumpnet_netinet_g.a		-unknown-		debuglib
 ./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile
+./usr/lib/librumpnet_p.a			comp-c-proflib		profile
+./usr/lib/librumpnet_shmif.a			comp-c-lib
+./usr/lib/librumpnet_shmif_g.a			-unknown-		debuglib
+./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_sockin.a			comp-c-lib
-./usr/lib/librumpnet_sockin_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_sockin_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_virtif.a			comp-c-lib
-./usr/lib/librumpnet_virtif_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_virtif_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		profile
 ./usr/lib/librumpuser.a				comp-c-lib
-./usr/lib/librumpuser_g.a		-unknown-	debuglib
+./usr/lib/librumpuser_g.a			-unknown-		debuglib
 ./usr/lib/librumpuser_p.a			comp-c-proflib		profile
 ./usr/lib/librumpvfs.a				comp-c-lib
-./usr/lib/librumpvfs_g.a		-unknown-	debuglib
+./usr/lib/librumpvfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpvfs_p.a			comp-c-proflib		profile
-./usr/lib/libsdp.a				comp-c-lib
-./usr/lib/libsdp_g.a		-unknown-	debuglib
-./usr/lib/libsdp_p.a				comp-c-proflib		profile
+./usr/lib/libsdp.a				comp-obsolete		obsolete
+./usr/lib/libsdp_g.a				-unknown-		obsolete
+./usr/lib/libsdp_p.a				comp-obsolete		obsolete
 ./usr/lib/libskey.a				comp-c-lib		skey
-./usr/lib/libskey_g.a		-unknown-	debuglib
-./usr/lib/libskey_p.a				comp-c-proflib		skey,profile
+./usr/lib/libskey_g.a				-unknown-		debuglib,skey
+./usr/lib/libskey_p.a				comp-c-proflib		profile,skey
 ./usr/lib/libsl.a				comp-krb5-lib		kerberos
-./usr/lib/libsl_g.a		-unknown-	debuglib
-./usr/lib/libsl_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libsl_g.a				-unknown-		debuglib
+./usr/lib/libsl_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libsm.a				comp-obsolete		obsolete
 ./usr/lib/libss.a				comp-krb5-lib		kerberos
-./usr/lib/libss_g.a		-unknown-	debuglib
-./usr/lib/libss_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libss_g.a				-unknown-		debuglib
+./usr/lib/libss_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libssh.a				comp-c-lib		crypto
-./usr/lib/libssh_g.a		-unknown-	debuglib
+./usr/lib/libssh_g.a				-unknown-		debuglib
 ./usr/lib/libssh_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssl.a				comp-c-lib		crypto
-./usr/lib/libssl_g.a		-unknown-	debuglib
+./usr/lib/libssl_g.a				-unknown-		debuglib
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssp.a				comp-obsolete		obsolete
 ./usr/lib/libssp_p.a				comp-obsolete		obsolete
 ./usr/lib/libstdc++.a				comp-cxx-lib
-./usr/lib/libstdc++_g.a		-unknown-	debuglib
+./usr/lib/libstdc++_g.a				-unknown-		debuglib
 ./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile
 ./usr/lib/libsupc++.a				comp-cxx-lib
-./usr/lib/libsupc++_g.a		-unknown-	debuglib
+./usr/lib/libsupc++_g.a				-unknown-		debuglib
 ./usr/lib/libtelnet.a				comp-obsolete		obsolete
 ./usr/lib/libtelnet.so				comp-obsolete		obsolete
 ./usr/lib/libtelnet_p.a				comp-obsolete		obsolete
 ./usr/lib/libtelnet_pic.a			comp-obsolete		obsolete
 ./usr/lib/libtermcap.a				comp-c-lib
-./usr/lib/libtermcap_g.a		-unknown-	debuglib
+./usr/lib/libtermcap_g.a			-unknown-		debuglib
 ./usr/lib/libtermcap_p.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
 ./usr/lib/libukfs.a				comp-c-lib
-./usr/lib/libukfs_g.a		-unknown-	debuglib
+./usr/lib/libukfs_g.a				-unknown-		debuglib
 ./usr/lib/libukfs_p.a				comp-c-proflib		profile
 ./usr/lib/libusb.a				comp-obsolete		obsolete
 ./usr/lib/libusb_p.a				comp-obsolete		obsolete
 ./usr/lib/libusb_pic.a				comp-obsolete		obsolete
 ./usr/lib/libusbhid.a				comp-c-lib
-./usr/lib/libusbhid_g.a		-unknown-	debuglib
+./usr/lib/libusbhid_g.a				-unknown-		debuglib
 ./usr/lib/libusbhid_p.a				comp-c-proflib		profile
 ./usr/lib/libutil.a				comp-c-lib
-./usr/lib/libutil_g.a		-unknown-	debuglib
+./usr/lib/libutil_g.a				-unknown-		debuglib
 ./usr/lib/libutil_p.a				comp-c-proflib		profile
-./usr/lib/libvers_g.a		-unknown-	debuglib
+./usr/lib/libvers_g.a				-unknown-		debuglib
 ./usr/lib/libwrap.a				comp-c-lib
-./usr/lib/libwrap_g.a		-unknown-	debuglib
+./usr/lib/libwrap_g.a				-unknown-		debuglib
 ./usr/lib/libwrap_p.a				comp-c-proflib		profile
 ./usr/lib/liby.a				comp-c-lib
-./usr/lib/liby_g.a		-unknown-	debuglib
+./usr/lib/liby_g.a				-unknown-		debuglib
 ./usr/lib/liby_p.a				comp-c-proflib		profile
 ./usr/lib/libz.a				comp-c-lib
-./usr/lib/libz_g.a		-unknown-	debuglib
+./usr/lib/libz_g.a				-unknown-		debuglib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
@@ -2966,6 +2974,7 @@
 ./usr/libdata/debug/usr/bin/msguniq.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/nbsvtool.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netgroup.debug	comp-nis-debug		debug
+./usr/libdata/debug/usr/bin/netpgp.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netstat.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/newgrp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/newsyslog.debug	comp-util-debug		debug
@@ -2979,7 +2988,7 @@
 ./usr/libdata/debug/usr/bin/nvi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/objcopy.debug	comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		bfd,debug
-./usr/libdata/debug/usr/bin/openpgp.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/bin/openpgp.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/passwd.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/paste.debug		comp-util-debug		debug
@@ -3276,6 +3285,7 @@
 ./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cnwctl.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cpuctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	bfd,debug
@@ -3283,6 +3293,8 @@
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-debugd-bin		debug
+./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/dnssec-keygen.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-debugd-bin		debug
 ./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-isdn-debug		debug
@@ -3548,8 +3560,9 @@
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
-./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
@@ -3567,7 +3580,7 @@
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lsdp.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lssh.ln			comp-c-lintlib		lint,crypto
@@ -4323,16 +4336,16 @@
 ./usr/share/man/cat3/RSA_sign.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RSA_sign_ASN1_OCTET_STRING.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RSA_size.0			comp-c-catman		crypto,.cat
-./usr/share/man/cat3/SDP_GET128.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_GET16.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_GET32.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_GET64.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_GET8.0			comp-c-catman		.cat
-./usr/share/man/cat3/SDP_PUT128.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_PUT16.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_PUT32.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_PUT64.0		comp-c-catman		.cat
-./usr/share/man/cat3/SDP_PUT8.0			comp-c-catman		.cat
+./usr/share/man/cat3/SDP_GET128.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_GET16.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_GET32.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_GET64.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_GET8.0			comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_PUT128.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_PUT16.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_PUT32.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_PUT64.0		comp-obsolete		obsolete
+./usr/share/man/cat3/SDP_PUT8.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/SHA1Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1End.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1File.0			comp-c-catman		.cat
@@ -4840,7 +4853,17 @@
 ./usr/share/man/cat3/bindresvport.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bindresvport_sa.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bindtextdomain.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_alloc.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_clear.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_decl.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_ffc.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_ffs.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_nclear.0		comp-c-catman		.cat
+./usr/share/man/cat3/bit_nset.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_set.0			comp-c-catman		.cat
+./usr/share/man/cat3/bit_test.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bits.0			comp-c-catman		.cat
+./usr/share/man/cat3/bitstr_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bitstring.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bkgd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bkgdset.0			comp-c-catman		.cat
@@ -5608,6 +5631,7 @@
 ./usr/share/man/cat3/getyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gid_from_group.0		comp-c-catman		.cat
 ./usr/share/man/cat3/glob.0			comp-c-catman		.cat
+./usr/share/man/cat3/glob_pattern_p.0		comp-c-catman		.cat
 ./usr/share/man/cat3/globfree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gmtime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gmtime_r.0			comp-c-catman		.cat
@@ -5833,7 +5857,7 @@
 ./usr/share/man/cat3/keyname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/keypad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/killchar.0			comp-c-catman		.cat
-./usr/share/man/cat3/killpg.0			comp-c-catman		.cat,obsolete
+./usr/share/man/cat3/killpg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/krb5.0			comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb524_convert_creds_kdc.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb524_convert_creds_kdc_ccache.0	comp-krb5-catman	kerberos,.cat
@@ -6556,6 +6580,7 @@
 ./usr/share/man/cat3/libarchive.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libarchive_internals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/libmagic.0			comp-c-catman		.cat
+./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
@@ -6653,6 +6678,7 @@
 ./usr/share/man/cat3/memmem.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memmove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memory.0			comp-c-catman		.cat
+./usr/share/man/cat3/memrchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menu_attributes.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_cursor.0		comp-c-catman		.cat
@@ -6790,7 +6816,7 @@
 ./usr/share/man/cat3/openpam_restore_cred.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_set_option.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat,pam
-./usr/share/man/cat3/openpgpsdk.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/openpgpsdk.0		comp-c-obsolete		obsolete
 ./usr/share/man/cat3/openpty.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openssl_bio.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_blowfish.0		comp-c-catman		crypto,.cat
@@ -7286,16 +7312,64 @@
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scrollok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sdp.0			comp-c-catman		.cat
-./usr/share/man/cat3/sdp_attr2desc.0		comp-c-catman		.cat
-./usr/share/man/cat3/sdp_change_service.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_attr2desc.0		comp-obsolete		obsolete
+./usr/share/man/cat3/sdp_change_service.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/sdp_close.0		comp-c-catman		.cat
-./usr/share/man/cat3/sdp_error.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_data.0			comp-c-catman		.cat
+./usr/share/man/cat3/sdp_data_print.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_data_size.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_data_type.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_data_valid.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_error.0		comp-obsolete		obsolete
+./usr/share/man/cat3/sdp_get_alt.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_attr.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_bool.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_data.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_int.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_seq.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_str.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_url.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_uint.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_get_uuid.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_match_uuid16.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sdp_open.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sdp_open_local.0		comp-c-catman		.cat
-./usr/share/man/cat3/sdp_register_service.0	comp-c-catman		.cat
-./usr/share/man/cat3/sdp_search.0		comp-c-catman		.cat
-./usr/share/man/cat3/sdp_unregister_service.0	comp-c-catman		.cat
-./usr/share/man/cat3/sdp_uuid2desc.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_alt.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_attr.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_bool.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_data.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_int.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_int8.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_int16.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_int32.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_int64.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_seq.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_str.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uint.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uint8.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uint16.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uint32.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uint64.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_url.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uuid.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uuid16.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uuid32.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_put_uuid128.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_record_insert.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_record_remove.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_record_update.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_register_service.0	comp-obsolete		obsolete
+./usr/share/man/cat3/sdp_search.0		comp-obsolete		obsolete
+./usr/share/man/cat3/sdp_service_search.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_service_attribute.0	comp-c-catman		.cat
+./usr/share/man/cat3/sdp_service_search_attribute.0	comp-c-catman	.cat
+./usr/share/man/cat3/sdp_set_alt.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_set_bool.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_set_seq.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_set_uint.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_set_int.0		comp-c-catman		.cat
+./usr/share/man/cat3/sdp_unregister_service.0	comp-obsolete		obsolete
+./usr/share/man/cat3/sdp_uuid2desc.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/secure_path.0		comp-c-catman		.cat
 ./usr/share/man/cat3/securepath.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/seed48.0			comp-c-catman		.cat
@@ -7445,6 +7519,7 @@
 ./usr/share/man/cat3/sl_init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sleep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintb.0			comp-c-catman		.cat
+./usr/share/man/cat3/snprintb_m.0		comp-c-catman		.cat
 ./usr/share/man/cat3/snprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sockaddr_snprintf.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sockatmark.0		comp-c-catman		.cat
@@ -7464,6 +7539,8 @@
 ./usr/share/man/cat3/stat_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stdarg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
+./usr/share/man/cat3/stpcpy.0			comp-c-catman		.cat
+./usr/share/man/cat3/stpncpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcat.0			comp-c-catman		.cat
@@ -7491,6 +7568,7 @@
 ./usr/share/man/cat3/strncmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strncpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strndup.0			comp-c-catman		.cat
+./usr/share/man/cat3/strnlen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strpbrk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strptime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strrchr.0			comp-c-catman		.cat
@@ -8083,8 +8161,17 @@
 ./usr/share/man/cat9/bcopy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdwrite.0			comp-sys-catman		.cat
-./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be16dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be16enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be16toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be32dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be32enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be32toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be64dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be64enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/be64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bintime.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/binuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/biodone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/biowait.0			comp-sys-catman		.cat
@@ -8096,6 +8183,9 @@
 ./usr/share/man/cat9/breada.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/breadn.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/brelse.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bswap16.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bswap32.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bswap64.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/buffercache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bufq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dma.0			comp-sys-catman		.cat
@@ -8156,6 +8246,7 @@
 ./usr/share/man/cat9/bus_space_write_region_4.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_space_write_region_8.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bwrite.0			comp-sys-catman		.cat
+./usr/share/man/cat9/byteorder.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bzero.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cache_enter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cache_lookup.0		comp-sys-catman		.cat
@@ -8168,6 +8259,7 @@
 ./usr/share/man/cat9/callout_deactivate.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/callout_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_expired.0		comp-sys-catman		.cat
+./usr/share/man/cat9/callout_halt.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_invoking.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/callout_pending.0		comp-sys-catman		.cat
@@ -8198,17 +8290,17 @@
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/closef.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cltom.0			comp-sys-catman		.cat
+./usr/share/man/cat9/cn_check_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_destroy_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_get_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_init_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_isconsole.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_set_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_trap.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnbell.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cngetc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cngetsn.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnmagic.0			comp-sys-catman		.cat
-./usr/share/man/cat9/cn_trap.0			comp-sys-catman		.cat
-./usr/share/man/cat9/cn_isconsole.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_check_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_init_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_set_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_get_magic.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cn_destroy_magic.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cnpollc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnputc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/condvar.0			comp-sys-catman		.cat
@@ -8409,8 +8501,8 @@
 ./usr/share/man/cat9/geteblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf_nowait.0		comp-obsolete		obsolete
-./usr/share/man/cat9/getmicrouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getmicrotime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getmicrouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanotime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
@@ -8423,6 +8515,12 @@
 ./usr/share/man/cat9/hashdone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hashinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/holdrele.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htobe16.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htobe32.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htobe64.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htole16.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htole32.0			comp-sys-catman		.cat
+./usr/share/man/cat9/htole64.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/humanize_number.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bios32_service.0	comp-sys-catman		.cat
@@ -8531,6 +8629,15 @@
 ./usr/share/man/cat9/kthread_create1.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/kthread_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_exit.0		comp-sys-catman		.cat
+./usr/share/man/cat9/le16dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le16enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le16toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le32dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le32enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le32toh.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le64dec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le64enc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/le64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/linedisc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockinit.0			comp-sys-catman		.cat
@@ -8713,6 +8820,25 @@
 ./usr/share/man/cat9/pmc_start_profiling.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pmc_stop_profiling.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pmf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_class_display_register.0 comp-sys-catman	.cat
+./usr/share/man/cat9/pmf_class_input_register.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_class_network_register.0 comp-sys-catman	.cat
+./usr/share/man/cat9/pmf_device_deregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_device_recursive_suspend.0 comp-sys-catman	.cat
+./usr/share/man/cat9/pmf_device_recursive_resume.0 comp-sys-catman	.cat
+./usr/share/man/cat9/pmf_device_register.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_device_register1.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_device_resume.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_device_resume_subtree.0 comp-sys-catman	.cat
+./usr/share/man/cat9/pmf_device_suspend.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_event_deregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_event_inject.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_event_register.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_get_platform.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_set_platform.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_system_resume.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_system_shutdown.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmf_system_suspend.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_destroy.0	comp-sys-catman		.cat
@@ -9035,6 +9161,7 @@
 ./usr/share/man/cat9/vfs_getvfs.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_hooks.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_hooks_unmount.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_mountalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_mountedon.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_reinit.0		comp-sys-catman		.cat
@@ -9712,16 +9839,16 @@
 ./usr/share/man/html3/RSA_sign.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/RSA_sign_ASN1_OCTET_STRING.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/RSA_size.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/SDP_GET128.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_GET16.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_GET32.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_GET64.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_GET8.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_PUT128.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_PUT16.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_PUT32.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_PUT64.html		comp-c-htmlman		html
-./usr/share/man/html3/SDP_PUT8.html		comp-c-htmlman		html
+./usr/share/man/html3/SDP_GET128.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_GET16.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_GET32.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_GET64.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_GET8.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_PUT128.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_PUT16.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_PUT32.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_PUT64.html		comp-obsolete		obsolete
+./usr/share/man/html3/SDP_PUT8.html		comp-obsolete		obsolete
 ./usr/share/man/html3/SHA1Data.html		comp-c-htmlman		html
 ./usr/share/man/html3/SHA1End.html		comp-c-htmlman		html
 ./usr/share/man/html3/SHA1File.html		comp-c-htmlman		html
@@ -10229,7 +10356,17 @@
 ./usr/share/man/html3/bindresvport.html		comp-c-htmlman		html
 ./usr/share/man/html3/bindresvport_sa.html	comp-c-htmlman		html
 ./usr/share/man/html3/bindtextdomain.html	comp-c-htmlman		html
+./usr/share/man/html3/bit_alloc.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_clear.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_decl.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_ffc.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_ffs.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_nclear.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_nset.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_set.html		comp-c-htmlman		html
+./usr/share/man/html3/bit_test.html		comp-c-htmlman		html
 ./usr/share/man/html3/bits.html			comp-c-htmlman		html
+./usr/share/man/html3/bitstr_size.html		comp-c-htmlman		html
 ./usr/share/man/html3/bitstring.html		comp-c-htmlman		html
 ./usr/share/man/html3/bkgd.html			comp-c-htmlman		html
 ./usr/share/man/html3/bkgdset.html		comp-c-htmlman		html
@@ -10678,8 +10815,8 @@
 ./usr/share/man/html3/fdopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopendir.html		comp-c-htmlman		html
 ./usr/share/man/html3/feof.html			comp-c-htmlman		html
-./usr/share/man/html3/fetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ferror.html		comp-c-htmlman		html
+./usr/share/man/html3/fetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/fflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs.html			comp-c-htmlman		html
 ./usr/share/man/html3/fgetc.html		comp-c-htmlman		html
@@ -10938,6 +11075,7 @@
 ./usr/share/man/html3/getyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/gid_from_group.html	comp-c-htmlman		html
 ./usr/share/man/html3/glob.html			comp-c-htmlman		html
+./usr/share/man/html3/glob_pattern_p.html	comp-c-htmlman		html
 ./usr/share/man/html3/globfree.html		comp-c-htmlman		html
 ./usr/share/man/html3/gmtime.html		comp-c-htmlman		html
 ./usr/share/man/html3/gmtime_r.html		comp-c-htmlman		html
@@ -11161,7 +11299,7 @@
 ./usr/share/man/html3/keyname.html		comp-c-htmlman		html
 ./usr/share/man/html3/keypad.html		comp-c-htmlman		html
 ./usr/share/man/html3/killchar.html		comp-c-htmlman		html
-./usr/share/man/html3/killpg.html		comp-c-htmlman		html,obsolete
+./usr/share/man/html3/killpg.html		comp-c-htmlman		html
 ./usr/share/man/html3/krb5.html			comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb524_convert_creds_kdc.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb524_convert_creds_kdc_ccache.html	comp-krb5-htmlman	kerberos,html
@@ -11863,6 +12001,7 @@
 ./usr/share/man/html3/libarchive.html		comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_internals.html	comp-c-htmlman		html
 ./usr/share/man/html3/libmagic.html		comp-c-htmlman		html
+./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_addr.html		comp-c-htmlman		html
@@ -11947,6 +12086,7 @@
 ./usr/share/man/html3/memmem.html		comp-c-htmlman		html
 ./usr/share/man/html3/memmove.html		comp-c-htmlman		html
 ./usr/share/man/html3/memory.html		comp-c-htmlman		html
+./usr/share/man/html3/memrchr.html		comp-c-htmlman		html
 ./usr/share/man/html3/memset.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_attributes.html	comp-c-htmlman		html
 ./usr/share/man/html3/menu_cursor.html		comp-c-htmlman		html
@@ -12081,7 +12221,7 @@
 ./usr/share/man/html3/openpam_restore_cred.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpam_set_option.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpam_ttyconv.html	comp-c-htmlman		html,pam
-./usr/share/man/html3/openpgpsdk.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/openpgpsdk.html		comp-obsolete		obsolete
 ./usr/share/man/html3/openpty.html		comp-c-htmlman		html
 ./usr/share/man/html3/openssl_bio.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/openssl_blowfish.html	comp-c-htmlman		crypto,html
@@ -12570,16 +12710,64 @@
 ./usr/share/man/html3/scroll.html		comp-c-htmlman		html
 ./usr/share/man/html3/scrollok.html		comp-c-htmlman		html
 ./usr/share/man/html3/sdp.html			comp-c-htmlman		html
-./usr/share/man/html3/sdp_attr2desc.html	comp-c-htmlman		html
-./usr/share/man/html3/sdp_change_service.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_attr2desc.html	comp-obsolete		obsolete
+./usr/share/man/html3/sdp_change_service.html	comp-obsolete		obsolete
 ./usr/share/man/html3/sdp_close.html		comp-c-htmlman		html
-./usr/share/man/html3/sdp_error.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_data.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_data_print.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_data_size.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_data_type.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_data_valid.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_error.html		comp-obsolete		obsolete
+./usr/share/man/html3/sdp_get_alt.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_attr.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_bool.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_data.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_int.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_seq.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_str.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_url.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_uint.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_get_uuid.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_match_uuid16.html	comp-c-htmlman		html
 ./usr/share/man/html3/sdp_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/sdp_open_local.html	comp-c-htmlman		html
-./usr/share/man/html3/sdp_register_service.html	comp-c-htmlman		html
-./usr/share/man/html3/sdp_search.html		comp-c-htmlman		html
-./usr/share/man/html3/sdp_unregister_service.html	comp-c-htmlman		html
-./usr/share/man/html3/sdp_uuid2desc.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_alt.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_attr.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_bool.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_data.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_int.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_int8.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_int16.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_int32.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_int64.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_seq.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_str.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uint.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uint8.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uint16.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uint32.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uint64.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_url.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uuid.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uuid16.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uuid32.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_put_uuid128.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_record_insert.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_record_remove.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_record_update.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_register_service.html	comp-obsolete		obsolete
+./usr/share/man/html3/sdp_search.html		comp-obsolete		obsolete
+./usr/share/man/html3/sdp_service_search.html	comp-c-htmlman		html
+./usr/share/man/html3/sdp_service_attribute.html	comp-c-htmlman	html
+./usr/share/man/html3/sdp_service_search_attribute.html	comp-c-htmlman	html
+./usr/share/man/html3/sdp_set_alt.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_set_bool.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_set_seq.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_set_uint.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_set_int.html		comp-c-htmlman		html
+./usr/share/man/html3/sdp_unregister_service.html	comp-obsolete	obsolete
+./usr/share/man/html3/sdp_uuid2desc.html	comp-obsolete		obsolete
 ./usr/share/man/html3/secure_path.html		comp-c-htmlman		html
 ./usr/share/man/html3/seed48.html		comp-c-htmlman		html
 ./usr/share/man/html3/seekdir.html		comp-c-htmlman		html
@@ -12712,6 +12900,7 @@
 ./usr/share/man/html3/sl_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/sleep.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintb.html		comp-c-htmlman		html
+./usr/share/man/html3/snprintb_m.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/sockaddr_snprintf.html	comp-c-htmlman		html
 ./usr/share/man/html3/sockatmark.html		comp-c-htmlman		html
@@ -12731,6 +12920,8 @@
 ./usr/share/man/html3/stat_flags.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdarg.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdio.html		comp-c-htmlman		html
+./usr/share/man/html3/stpcpy.html		comp-c-htmlman		html
+./usr/share/man/html3/stpncpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcasecmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcasestr.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcat.html		comp-c-htmlman		html
@@ -12758,6 +12949,7 @@
 ./usr/share/man/html3/strncmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/strncpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/strndup.html		comp-c-htmlman		html
+./usr/share/man/html3/strnlen.html		comp-c-htmlman		html
 ./usr/share/man/html3/strpbrk.html		comp-c-htmlman		html
 ./usr/share/man/html3/strptime.html		comp-c-htmlman		html
 ./usr/share/man/html3/strrchr.html		comp-c-htmlman		html
@@ -13313,8 +13505,17 @@
 ./usr/share/man/html9/bcopy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdwrite.html		comp-sys-htmlman	html
-./usr/share/man/html9/bintobcd.html		comp-sys-htmlman	html
+./usr/share/man/html9/be16dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/be16enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/be16toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/be32dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/be32enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/be32toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/be64dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/be64enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/be64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bintime.html		comp-sys-htmlman	html
+./usr/share/man/html9/bintobcd.html		comp-sys-htmlman	html
 ./usr/share/man/html9/binuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biodone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biowait.html		comp-sys-htmlman	html
@@ -13326,6 +13527,9 @@
 ./usr/share/man/html9/breada.html		comp-sys-htmlman	html
 ./usr/share/man/html9/breadn.html		comp-sys-htmlman	html
 ./usr/share/man/html9/brelse.html		comp-sys-htmlman	html
+./usr/share/man/html9/bswap16.html		comp-sys-htmlman	html
+./usr/share/man/html9/bswap32.html		comp-sys-htmlman	html
+./usr/share/man/html9/bswap64.html		comp-sys-htmlman	html
 ./usr/share/man/html9/buffercache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bufq.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dma.html		comp-sys-htmlman	html
@@ -13386,6 +13590,7 @@
 ./usr/share/man/html9/bus_space_write_region_4.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_space_write_region_8.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bwrite.html		comp-sys-htmlman	html
+./usr/share/man/html9/byteorder.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bzero.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cache_enter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cache_lookup.html		comp-sys-htmlman	html
@@ -13396,6 +13601,7 @@
 ./usr/share/man/html9/callout_ack.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/callout_expired.html	comp-sys-htmlman	html
+./usr/share/man/html9/callout_halt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/callout_invoking.html	comp-sys-htmlman	html
 ./usr/share/man/html9/callout_pending.html	comp-sys-htmlman	html
@@ -13424,17 +13630,17 @@
 ./usr/share/man/html9/clock_ymdhms_to_secs.html	comp-sys-htmlman	html
 ./usr/share/man/html9/closef.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cltom.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_check_magic.html	comp-sys-htmlman	html
+./usr/share/man/html9/cn_destroy_magic.html	comp-sys-htmlman	html
+./usr/share/man/html9/cn_get_magic.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_init_magic.html	comp-sys-htmlman	html
+./usr/share/man/html9/cn_isconsole.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_set_magic.html		comp-sys-htmlman	html
+./usr/share/man/html9/cn_trap.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnbell.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cngetc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cngetsn.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnmagic.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_trap.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_isconsole.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_check_magic.html	comp-sys-htmlman	html
-./usr/share/man/html9/cn_init_magic.html	comp-sys-htmlman	html
-./usr/share/man/html9/cn_set_magic.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_get_magic.html		comp-sys-htmlman	html
-./usr/share/man/html9/cn_destroy_magic.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cnpollc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnputc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/condvar.html		comp-sys-htmlman	html
@@ -13631,6 +13837,12 @@
 ./usr/share/man/html9/hashdone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hashinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/holdrele.html		comp-sys-htmlman	html
+./usr/share/man/html9/htobe16.html		comp-sys-htmlman	html
+./usr/share/man/html9/htobe32.html		comp-sys-htmlman	html
+./usr/share/man/html9/htobe64.html		comp-sys-htmlman	html
+./usr/share/man/html9/htole16.html		comp-sys-htmlman	html
+./usr/share/man/html9/htole32.html		comp-sys-htmlman	html
+./usr/share/man/html9/htole64.html		comp-sys-htmlman	html
 ./usr/share/man/html9/humanize_number.html	comp-sys-htmlman	html
 ./usr/share/man/html9/hz.html			comp-sys-htmlman	html
 ./usr/share/man/html9/i386/bios32_service.html	comp-sys-htmlman	html
@@ -13736,6 +13948,15 @@
 ./usr/share/man/html9/kthread_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_exit.html		comp-sys-htmlman	html
+./usr/share/man/html9/le16dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/le16enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/le16toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/le32dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/le32enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/le32toh.html		comp-sys-htmlman	html
+./usr/share/man/html9/le64dec.html		comp-sys-htmlman	html
+./usr/share/man/html9/le64enc.html		comp-sys-htmlman	html
+./usr/share/man/html9/le64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/linedisc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lock.html			comp-sys-htmlman	html
 ./usr/share/man/html9/lockinit.html		comp-sys-htmlman	html
@@ -13914,6 +14135,25 @@
 ./usr/share/man/html9/pmc_start_profiling.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmc_stop_profiling.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmf.html			comp-sys-htmlman	html
+./usr/share/man/html9/pmf_class_display_register.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_class_input_register.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_class_network_register.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_deregister.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_recursive_suspend.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_recursive_resume.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_register1.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_resume.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_resume_subtree.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_suspend.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_event_deregister.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_event_inject.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_event_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_get_platform.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_set_platform.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_system_resume.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_system_shutdown.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmf_system_suspend.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_destroy.html	comp-sys-htmlman	html
@@ -14200,6 +14440,7 @@
 ./usr/share/man/html9/vfs_getvfs.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_hooks.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_hooks_unmount.html	comp-sys-htmlman	html
+./usr/share/man/html9/vfs_mountalloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_mountedon.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_mountroot.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfs_reinit.html		comp-sys-htmlman	html
@@ -14900,16 +15141,16 @@
 ./usr/share/man/man3/RSA_sign.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/RSA_sign_ASN1_OCTET_STRING.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/RSA_size.3			comp-c-man		crypto,.man
-./usr/share/man/man3/SDP_GET128.3		comp-c-man		.man
-./usr/share/man/man3/SDP_GET16.3		comp-c-man		.man
-./usr/share/man/man3/SDP_GET32.3		comp-c-man		.man
-./usr/share/man/man3/SDP_GET64.3		comp-c-man		.man
-./usr/share/man/man3/SDP_GET8.3			comp-c-man		.man
-./usr/share/man/man3/SDP_PUT128.3		comp-c-man		.man
-./usr/share/man/man3/SDP_PUT16.3		comp-c-man		.man
-./usr/share/man/man3/SDP_PUT32.3		comp-c-man		.man
-./usr/share/man/man3/SDP_PUT64.3		comp-c-man		.man
-./usr/share/man/man3/SDP_PUT8.3			comp-c-man		.man
+./usr/share/man/man3/SDP_GET128.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_GET16.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_GET32.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_GET64.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_GET8.3			comp-obsolete		obsolete
+./usr/share/man/man3/SDP_PUT128.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_PUT16.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_PUT32.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_PUT64.3		comp-obsolete		obsolete
+./usr/share/man/man3/SDP_PUT8.3			comp-obsolete		obsolete
 ./usr/share/man/man3/SHA1Data.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1End.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1File.3			comp-c-man		.man
@@ -15417,7 +15658,17 @@
 ./usr/share/man/man3/bindresvport.3		comp-c-man		.man
 ./usr/share/man/man3/bindresvport_sa.3		comp-c-man		.man
 ./usr/share/man/man3/bindtextdomain.3		comp-c-man		.man
+./usr/share/man/man3/bit_alloc.3		comp-c-man		.man
+./usr/share/man/man3/bit_clear.3		comp-c-man		.man
+./usr/share/man/man3/bit_decl.3			comp-c-man		.man
+./usr/share/man/man3/bit_ffc.3			comp-c-man		.man
+./usr/share/man/man3/bit_ffs.3			comp-c-man		.man
+./usr/share/man/man3/bit_nclear.3		comp-c-man		.man
+./usr/share/man/man3/bit_nset.3			comp-c-man		.man
+./usr/share/man/man3/bit_set.3			comp-c-man		.man
+./usr/share/man/man3/bit_test.3			comp-c-man		.man
 ./usr/share/man/man3/bits.3			comp-c-man		.man
+./usr/share/man/man3/bitstr_size.3		comp-c-man		.man
 ./usr/share/man/man3/bitstring.3		comp-c-man		.man
 ./usr/share/man/man3/bkgd.3			comp-c-man		.man
 ./usr/share/man/man3/bkgdset.3			comp-c-man		.man
@@ -16185,6 +16436,7 @@
 ./usr/share/man/man3/getyx.3			comp-c-man		.man
 ./usr/share/man/man3/gid_from_group.3		comp-c-man		.man
 ./usr/share/man/man3/glob.3			comp-c-man		.man
+./usr/share/man/man3/glob_pattern_p.3		comp-c-man		.man
 ./usr/share/man/man3/globfree.3			comp-c-man		.man
 ./usr/share/man/man3/gmtime.3			comp-c-man		.man
 ./usr/share/man/man3/gmtime_r.3			comp-c-man		.man
@@ -16410,7 +16662,7 @@
 ./usr/share/man/man3/keyname.3			comp-c-man		.man
 ./usr/share/man/man3/keypad.3			comp-c-man		.man
 ./usr/share/man/man3/killchar.3			comp-c-man		.man
-./usr/share/man/man3/killpg.3			comp-c-man		.man,obsolete
+./usr/share/man/man3/killpg.3			comp-c-man		.man
 ./usr/share/man/man3/krb5.3			comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb524_convert_creds_kdc.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb524_convert_creds_kdc_ccache.3	comp-krb5-man		kerberos,.man
@@ -17133,6 +17385,7 @@
 ./usr/share/man/man3/libarchive.3		comp-c-man		.man
 ./usr/share/man/man3/libarchive_internals.3	comp-c-man		.man
 ./usr/share/man/man3/libmagic.3			comp-c-man		.man
+./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man
@@ -17230,6 +17483,7 @@
 ./usr/share/man/man3/memmem.3			comp-c-man		.man
 ./usr/share/man/man3/memmove.3			comp-c-man		.man
 ./usr/share/man/man3/memory.3			comp-c-man		.man
+./usr/share/man/man3/memrchr.3			comp-c-man		.man
 ./usr/share/man/man3/memset.3			comp-c-man		.man
 ./usr/share/man/man3/menu_attributes.3		comp-c-man		.man
 ./usr/share/man/man3/menu_cursor.3		comp-c-man		.man
@@ -17367,7 +17621,7 @@
 ./usr/share/man/man3/openpam_restore_cred.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_set_option.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_ttyconv.3		comp-c-man		.man,pam
-./usr/share/man/man3/openpgpsdk.3		comp-c-man		crypto,.man
+./usr/share/man/man3/openpgpsdk.3		comp-obsolete		obsolete
 ./usr/share/man/man3/openpty.3			comp-c-man		.man
 ./usr/share/man/man3/openssl_bio.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/openssl_blowfish.3		comp-c-man		crypto,.man
@@ -17863,16 +18117,64 @@
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
 ./usr/share/man/man3/scrollok.3			comp-c-man		.man
 ./usr/share/man/man3/sdp.3			comp-c-man		.man
-./usr/share/man/man3/sdp_attr2desc.3		comp-c-man		.man
-./usr/share/man/man3/sdp_change_service.3	comp-c-man		.man
+./usr/share/man/man3/sdp_attr2desc.3		comp-obsolete		obsolete
+./usr/share/man/man3/sdp_change_service.3	comp-obsolete		obsolete
 ./usr/share/man/man3/sdp_close.3		comp-c-man		.man
-./usr/share/man/man3/sdp_error.3		comp-c-man		.man
+./usr/share/man/man3/sdp_data.3			comp-c-man		.man
+./usr/share/man/man3/sdp_data_print.3		comp-c-man		.man
+./usr/share/man/man3/sdp_data_size.3		comp-c-man		.man
+./usr/share/man/man3/sdp_data_type.3		comp-c-man		.man
+./usr/share/man/man3/sdp_data_valid.3		comp-c-man		.man
+./usr/share/man/man3/sdp_error.3		comp-obsolete		obsolete
+./usr/share/man/man3/sdp_get_alt.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_attr.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_bool.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_data.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_int.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_seq.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_str.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_url.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_uint.3		comp-c-man		.man
+./usr/share/man/man3/sdp_get_uuid.3		comp-c-man		.man
+./usr/share/man/man3/sdp_match_uuid16.3		comp-c-man		.man
 ./usr/share/man/man3/sdp_open.3			comp-c-man		.man
 ./usr/share/man/man3/sdp_open_local.3		comp-c-man		.man
-./usr/share/man/man3/sdp_register_service.3	comp-c-man		.man
-./usr/share/man/man3/sdp_search.3		comp-c-man		.man
-./usr/share/man/man3/sdp_unregister_service.3	comp-c-man		.man
-./usr/share/man/man3/sdp_uuid2desc.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_alt.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_attr.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_bool.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_data.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_int.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_int8.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_int16.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_int32.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_int64.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_seq.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_str.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uint.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uint8.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uint16.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uint32.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uint64.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_url.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uuid.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uuid16.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uuid32.3		comp-c-man		.man
+./usr/share/man/man3/sdp_put_uuid128.3		comp-c-man		.man
+./usr/share/man/man3/sdp_record_insert.3	comp-c-man		.man
+./usr/share/man/man3/sdp_record_remove.3	comp-c-man		.man
+./usr/share/man/man3/sdp_record_update.3	comp-c-man		.man
+./usr/share/man/man3/sdp_register_service.3	comp-obsolete		obsolete
+./usr/share/man/man3/sdp_search.3		comp-obsolete		obsolete
+./usr/share/man/man3/sdp_service_search.3	comp-c-man		.man
+./usr/share/man/man3/sdp_service_attribute.3	comp-c-man		.man
+./usr/share/man/man3/sdp_service_search_attribute.3	comp-c-man	.man
+./usr/share/man/man3/sdp_set_alt.3		comp-c-man		.man
+./usr/share/man/man3/sdp_set_bool.3		comp-c-man		.man
+./usr/share/man/man3/sdp_set_seq.3		comp-c-man		.man
+./usr/share/man/man3/sdp_set_uint.3		comp-c-man		.man
+./usr/share/man/man3/sdp_set_int.3		comp-c-man		.man
+./usr/share/man/man3/sdp_unregister_service.3	comp-obsolete		obsolete
+./usr/share/man/man3/sdp_uuid2desc.3		comp-obsolete		obsolete
 ./usr/share/man/man3/secure_path.3		comp-c-man		.man
 ./usr/share/man/man3/securepath.3		comp-obsolete		obsolete
 ./usr/share/man/man3/seed48.3			comp-c-man		.man
@@ -18018,6 +18320,7 @@
 ./usr/share/man/man3/sl_init.3			comp-c-man		.man
 ./usr/share/man/man3/sleep.3			comp-c-man		.man
 ./usr/share/man/man3/snprintb.3			comp-c-man		.man
+./usr/share/man/man3/snprintb_m.3		comp-c-man		.man
 ./usr/share/man/man3/snprintf.3			comp-c-man		.man
 ./usr/share/man/man3/sockaddr_snprintf.3	comp-c-man		.man
 ./usr/share/man/man3/sockatmark.3		comp-c-man		.man
@@ -18037,6 +18340,8 @@
 ./usr/share/man/man3/stat_flags.3		comp-c-man		.man
 ./usr/share/man/man3/stdarg.3			comp-c-man		.man
 ./usr/share/man/man3/stdio.3			comp-c-man		.man
+./usr/share/man/man3/stpcpy.3			comp-c-man		.man
+./usr/share/man/man3/stpncpy.3			comp-c-man		.man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man		.man
 ./usr/share/man/man3/strcasestr.3		comp-c-man		.man
 ./usr/share/man/man3/strcat.3			comp-c-man		.man
@@ -18064,6 +18369,7 @@
 ./usr/share/man/man3/strncmp.3			comp-c-man		.man
 ./usr/share/man/man3/strncpy.3			comp-c-man		.man
 ./usr/share/man/man3/strndup.3			comp-c-man		.man
+./usr/share/man/man3/strnlen.3			comp-c-man		.man
 ./usr/share/man/man3/strpbrk.3			comp-c-man		.man
 ./usr/share/man/man3/strptime.3			comp-c-man		.man
 ./usr/share/man/man3/strrchr.3			comp-c-man		.man
@@ -18655,8 +18961,17 @@
 ./usr/share/man/man9/bcopy.9			comp-sys-man		.man
 ./usr/share/man/man9/bdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/bdwrite.9			comp-sys-man		.man
-./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
+./usr/share/man/man9/be16dec.9			comp-sys-man		.man
+./usr/share/man/man9/be16enc.9			comp-sys-man		.man
+./usr/share/man/man9/be16toh.9			comp-sys-man		.man
+./usr/share/man/man9/be32dec.9			comp-sys-man		.man
+./usr/share/man/man9/be32enc.9			comp-sys-man		.man
+./usr/share/man/man9/be32toh.9			comp-sys-man		.man
+./usr/share/man/man9/be64dec.9			comp-sys-man		.man
+./usr/share/man/man9/be64enc.9			comp-sys-man		.man
+./usr/share/man/man9/be64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/bintime.9			comp-sys-man		.man
+./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
 ./usr/share/man/man9/binuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/biodone.9			comp-sys-man		.man
 ./usr/share/man/man9/biowait.9			comp-sys-man		.man
@@ -18668,6 +18983,9 @@
 ./usr/share/man/man9/breada.9			comp-sys-man		.man
 ./usr/share/man/man9/breadn.9			comp-sys-man		.man
 ./usr/share/man/man9/brelse.9			comp-sys-man		.man
+./usr/share/man/man9/bswap16.9			comp-sys-man		.man
+./usr/share/man/man9/bswap32.9			comp-sys-man		.man
+./usr/share/man/man9/bswap64.9			comp-sys-man		.man
 ./usr/share/man/man9/buffercache.9		comp-sys-man		.man
 ./usr/share/man/man9/bufq.9			comp-sys-man		.man
 ./usr/share/man/man9/bus_dma.9			comp-sys-man		.man
@@ -18728,6 +19046,7 @@
 ./usr/share/man/man9/bus_space_write_region_4.9	comp-sys-man		.man
 ./usr/share/man/man9/bus_space_write_region_8.9	comp-sys-man		.man
 ./usr/share/man/man9/bwrite.9			comp-sys-man		.man
+./usr/share/man/man9/byteorder.9		comp-sys-man		.man
 ./usr/share/man/man9/bzero.9			comp-sys-man		.man
 ./usr/share/man/man9/cache_enter.9		comp-sys-man		.man
 ./usr/share/man/man9/cache_lookup.9		comp-sys-man		.man
@@ -18740,6 +19059,7 @@
 ./usr/share/man/man9/callout_deactivate.9	comp-obsolete		obsolete
 ./usr/share/man/man9/callout_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_expired.9		comp-sys-man		.man
+./usr/share/man/man9/callout_halt.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_init.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_invoking.9		comp-sys-man		.man
 ./usr/share/man/man9/callout_pending.9		comp-sys-man		.man
@@ -18770,17 +19090,17 @@
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man		.man
 ./usr/share/man/man9/closef.9			comp-sys-man		.man
 ./usr/share/man/man9/cltom.9			comp-sys-man		.man
+./usr/share/man/man9/cn_check_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_destroy_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_get_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_init_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_isconsole.9		comp-sys-man		.man
+./usr/share/man/man9/cn_set_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_trap.9			comp-sys-man		.man
 ./usr/share/man/man9/cnbell.9			comp-sys-man		.man
 ./usr/share/man/man9/cngetc.9			comp-sys-man		.man
 ./usr/share/man/man9/cngetsn.9			comp-sys-man		.man
 ./usr/share/man/man9/cnmagic.9			comp-sys-man		.man
-./usr/share/man/man9/cn_trap.9			comp-sys-man		.man
-./usr/share/man/man9/cn_isconsole.9		comp-sys-man		.man
-./usr/share/man/man9/cn_check_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_init_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_set_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_get_magic.9		comp-sys-man		.man
-./usr/share/man/man9/cn_destroy_magic.9		comp-sys-man		.man
 ./usr/share/man/man9/cnpollc.9			comp-sys-man		.man
 ./usr/share/man/man9/cnputc.9			comp-sys-man		.man
 ./usr/share/man/man9/condvar.9			comp-sys-man		.man
@@ -18995,6 +19315,12 @@
 ./usr/share/man/man9/hashdone.9			comp-sys-man		.man
 ./usr/share/man/man9/hashinit.9			comp-sys-man		.man
 ./usr/share/man/man9/holdrele.9			comp-sys-man		.man
+./usr/share/man/man9/htobe16.9			comp-sys-man		.man
+./usr/share/man/man9/htobe32.9			comp-sys-man		.man
+./usr/share/man/man9/htobe64.9			comp-sys-man		.man
+./usr/share/man/man9/htole16.9			comp-sys-man		.man
+./usr/share/man/man9/htole32.9			comp-sys-man		.man
+./usr/share/man/man9/htole64.9			comp-sys-man		.man
 ./usr/share/man/man9/humanize_number.9		comp-sys-man		.man
 ./usr/share/man/man9/hz.9			comp-sys-man		.man
 ./usr/share/man/man9/i386/bios32_service.9	comp-sys-man		.man
@@ -19103,6 +19429,15 @@
 ./usr/share/man/man9/kthread_create1.9		comp-obsolete		obsolete
 ./usr/share/man/man9/kthread_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/kthread_exit.9		comp-sys-man		.man
+./usr/share/man/man9/le16dec.9			comp-sys-man		.man
+./usr/share/man/man9/le16enc.9			comp-sys-man		.man
+./usr/share/man/man9/le16toh.9			comp-sys-man		.man
+./usr/share/man/man9/le32dec.9			comp-sys-man		.man
+./usr/share/man/man9/le32enc.9			comp-sys-man		.man
+./usr/share/man/man9/le32toh.9			comp-sys-man		.man
+./usr/share/man/man9/le64dec.9			comp-sys-man		.man
+./usr/share/man/man9/le64enc.9			comp-sys-man		.man
+./usr/share/man/man9/le64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/linedisc.9			comp-sys-man		.man
 ./usr/share/man/man9/lock.9			comp-sys-man		.man
 ./usr/share/man/man9/lockinit.9			comp-sys-man		.man
@@ -19285,6 +19620,25 @@
 ./usr/share/man/man9/pmc_start_profiling.9	comp-sys-man		.man
 ./usr/share/man/man9/pmc_stop_profiling.9	comp-sys-man		.man
 ./usr/share/man/man9/pmf.9			comp-sys-man		.man
+./usr/share/man/man9/pmf_class_display_register.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_class_input_register.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_class_network_register.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_device_deregister.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_recursive_suspend.9 comp-sys-man	.man
+./usr/share/man/man9/pmf_device_recursive_resume.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_device_register.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_register1.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_resume.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_device_resume_subtree.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_device_suspend.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_event_deregister.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_event_inject.9		comp-sys-man		.man
+./usr/share/man/man9/pmf_event_register.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_get_platform.9		comp-sys-man		.man
+./usr/share/man/man9/pmf_set_platform.9		comp-sys-man		.man
+./usr/share/man/man9/pmf_system_resume.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_system_shutdown.9	comp-sys-man		.man
+./usr/share/man/man9/pmf_system_suspend.9	comp-sys-man		.man
 ./usr/share/man/man9/pool.9			comp-sys-man		.man
 ./usr/share/man/man9/pool_cache.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_destroy.9	comp-sys-man		.man
@@ -19607,6 +19961,7 @@
 ./usr/share/man/man9/vfs_getvfs.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_hooks.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_hooks_unmount.9	comp-sys-man		.man
+./usr/share/man/man9/vfs_mountalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_mountedon.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_mountroot.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_reinit.9		comp-sys-man		.man

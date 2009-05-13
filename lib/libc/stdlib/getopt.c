@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.27 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.27.30.1 2009/05/13 19:18:27 jym Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -30,13 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
-#else
-__RCSID("$NetBSD: getopt.c,v 1.27 2005/11/29 03:12:00 christos Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: getopt.c,v 1.27.30.1 2009/05/13 19:18:27 jym Exp $");
 
 #include "namespace.h"
 
@@ -66,10 +60,7 @@ char	*optarg;		/* argument associated with option */
  *	Parse argc/argv argument vector.
  */
 int
-getopt(nargc, nargv, ostr)
-	int nargc;
-	char * const nargv[];
-	const char *ostr;
+getopt(int nargc, char * const nargv[], const char *ostr)
 {
 	static const char *place = EMSG;	/* option letter processing */
 	char *oli;				/* option letter list index */

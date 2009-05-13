@@ -1,6 +1,6 @@
-.\"	$NetBSD: callout.9,v 1.20 2009/01/04 19:32:16 jdc Exp $
+.\"	$NetBSD: callout.9,v 1.20.2.1 2009/05/13 19:19:15 jym Exp $
 .\"
-.\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,12 +27,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 29, 2007
+.Dd May 4, 2009
 .Dt CALLOUT 9
 .Os
 .Sh NAME
 .Nm callout_init ,
 .Nm callout_destroy ,
+.Nm callout_halt ,
 .Nm callout_reset ,
 .Nm callout_schedule ,
 .Nm callout_setfunc ,
@@ -57,6 +58,8 @@
 .Fn "callout_setfunc" "callout_t *c" "void (*func)(void *)" "void *arg"
 .Ft bool
 .Fn "callout_stop" "callout_t *c"
+.Ft bool
+.Fn "callout_halt" "callout_t *c" "kmutex_t *interlock"
 .Ft bool
 .Fn "callout_pending" "callout_t *c"
 .Ft bool
@@ -89,7 +92,7 @@ functions
 .Fn timeout
 and
 .Fn untimeout .
-.Pp
+.Sh FUNCTIONS
 The
 .Fn callout_init
 function initializes the callout handle
@@ -156,8 +159,9 @@ is slightly more efficient than using
 .Pp
 The
 .Fn callout_stop
-function stops the timer associated the callout handle
-.Fa c .
+function requests that the timer associated with the callout handle
+.Fa c
+be stopped.
 The
 .Em PENDING
 and
@@ -166,9 +170,46 @@ status for the callout handle is cleared.
 It is safe to call
 .Fn callout_stop
 on a callout handle that is not pending, so long as it is initialized.
-. Fn callout_stop
+.Fn callout_stop
 will return a non-zero value if the callout was
 .Em EXPIRED .
+Note that
+.Fn callout_stop
+can return while the callout is running on a different CPU or at a
+different interrupt priority level on the current CPU.
+It can only be said to prevent the callout from firing in the future,
+unless explicitly re-scheduled.
+To stop a callout and wait for completion, use
+.Fn callout_halt .
+.Pp
+.Fn callout_halt
+acts much like
+.Fn callout_stop ,
+but waits for the callout to complete if it is currently in-flight.
+.Fn callout_halt
+may not be called from a hard interrupt handler as it will sleep if the
+callout is currently executing.
+If the callout can take locks (such as mutexes or RW locks), the caller of
+.Fn callout_halt
+must not hold any of those locks, otherwise the two could deadlock.
+To facilitate this,
+.Fn callout_halt
+can optionally release a single mutex specified by the
+.Fa interlock
+parameter.
+If
+.Fa interlock
+is not
+.Dv NULL
+and the calling thread must wait for the callout to complete,
+.Fa interlock
+will be released before waiting and re-acquired before returning.
+If no wait is required,
+.Fa interlock
+will not be released.
+However, to avoid race conditions the caller should always assume that
+.Fa interlock
+has been released and reacquired, and act accordingly.
 .Pp
 The
 .Fn callout_pending
@@ -241,6 +282,20 @@ state in the callout handle
 This is used in situations where it is necessary to protect against
 the race condition described under
 .Fn callout_invoking .
+.Sh CONCURRENCY
+The callout facility performs locking internally in order to guarantee the
+atomicity of individual operations performed on callouts.
+It does not provide life cycle management of user-provided callout data
+structures, nor does it ensure that groups of operations (multiple function
+calls) are performed atomically.
+These aspects of callout management are the responsibility of the user of
+the callout facility.
+.Pp
+Scheduled callouts may be active concurrently in a context different to the
+user of the callout facility: on another CPU, or at a different interrupt
+priority level or thread on the current CPU.
+The callout facility provides only one guarantee in this regard: any given
+callout will never have multiple concurrent invocations.
 .Sh SEE ALSO
 .Xr hz 9
 .Sh HISTORY

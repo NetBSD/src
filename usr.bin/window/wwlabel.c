@@ -1,4 +1,4 @@
-/*	$NetBSD: wwlabel.c,v 1.7 2003/08/07 11:17:41 agc Exp $	*/
+/*	$NetBSD: wwlabel.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwlabel.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwlabel.c,v 1.7 2003/08/07 11:17:41 agc Exp $");
+__RCSID("$NetBSD: wwlabel.c,v 1.7.42.1 2009/05/13 19:20:12 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ wwlabel(struct ww *w, struct ww *f, int where, char *l, int mode)
 	char *fmap;
 	unsigned char *smap;
 	char touched;
-	char *p;
+	const char *p;
 
 	if (f->ww_fmap == 0)
 		return;

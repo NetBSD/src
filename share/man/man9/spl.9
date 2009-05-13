@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.32 2008/02/13 16:00:18 skrll Exp $
+.\"	$NetBSD: spl.9,v 1.32.12.1 2009/05/13 19:19:16 jym Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -92,7 +92,7 @@ scheduled by the higher-level interrupt handler.
 Software interrupts are further described by
 .Xr softint 9 .
 .Pp
-Note that hard interupt handlers do not possess process (thread) context
+Note that hard interrupt handlers do not possess process (thread) context
 and so it is not valid to use kernel facilities that may attempt to sleep
 from a hardware interrupt.
 For example, it is not possible to acquire a reader/writer lock from

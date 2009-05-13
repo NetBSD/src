@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.123 2009/02/04 20:45:17 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.123.2.1 2009/05/13 19:19:08 jym Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd February 2, 2009
+.Dd March 7, 2009
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ from the keyboard:
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
 .It amd64
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
-.br
+.It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It amiga
 \*[Lt]LAlt\*[Gt]-\*[Lt]LAmiga\*[Gt]-\*[Lt]F10\*[Gt]
@@ -122,7 +122,7 @@ from the keyboard:
 .It hp700
 +++++
 (five plus signs)
-.br
+.It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It hpcarm
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
@@ -132,7 +132,7 @@ from the keyboard:
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It i386
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
-.br
+.It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It mac68k
 \*[Lt]Command\*[Gt]-\*[Lt]Power\*[Gt], or the Interrupt switch.
@@ -145,25 +145,25 @@ Abort switch on CPU card.
 \*[Lt]Do\*[Gt] on
 .Tn LK-201
 rcons console.
-.br
+.It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It sparc
 \*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
 .Tn Sun
 keyboard.
-.br
+.It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It sparc64
 \*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
 .Tn Sun
 keyboard.
-.br
+.It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It sun3
 \*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
 .Tn Sun
 keyboard.
-.br
+.It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It vax
 \*[Lt]Esc\*[Gt]-\*[Lt]Shift\*[Gt]-D on serial console.
@@ -288,23 +288,10 @@ retrieve next command in history (if any).
 .Nm
 supports the following commands:
 .Bl -tag -width 5n
-.It Xo
-.Sm off
-.Ic \&!
-.Ar address
-.Oo
-.Cm ( Ar expression
-.Op Ar ,...
-.Cm )
-.Oc
-.Sm on
-.Xc
+.It Ic \&! Ns Ar address Ns Oo Cm ( Ar expression Ns Oo Ar ,... Oc Ns Cm ) Oc
 A synonym for
 .Ic call .
-.It Xo
-.Ic break Ns Op Cm /u
-.Ar address Ns Op Cm , Ns Ar count
-.Xc
+.It Ic break Ns Oo Cm /u Oc Ar address Ns Op Cm , Ns Ar count
 Set a breakpoint at
 .Ar address .
 If
@@ -335,44 +322,16 @@ Warning: if a user text is shadowed by a normal user-space debugger,
 user-space breakpoints may not work correctly.
 Setting a breakpoint at the low-level code paths may also cause
 strange behavior.
-.It Xo
-.Ic bt Ns Op Cm /ul
-.Sm off
-.Op Ar frame-address
-.Op Cm , Ar count
-.Sm on
-.Xc
+.It Ic bt Ns Oo Cm /ul Oc Oo Ar frame-address Oc Ns Oo Cm , Ns Ar count Oc
 A synonym for
 .Ic trace .
-.It Xo
-.Ic bt/t Ns Op Cm /ul
-.Sm off
-.Op Ar pid
-.Op Cm , Ar count
-.Sm on
-.Xc
+.It Ic bt/t Ns Oo Cm /ul Oc Oo Ar pid Oc Ns Oo Cm , Ns Ar count Oc
 A synonym for
 .Ic trace/t .
-.It Xo
-.Ic bt/a Ns Op Cm /ul
-.Sm off
-.Op Ar lwpaddr
-.Op Cm , Ar count
-.Sm on
-.Xc
+.It Ic bt/a Ns Oo Cm /ul Oc Oo Ar lwpaddr Oc Ns Oo Cm , Ns Ar count Oc
 A synonym for
 .Ic trace/a .
-.It Xo
-.Ic call
-.Sm off
-.Ar address
-.Oo
-.Cm ( Ar expression
-.Op Ar ,...
-.Cm )
-.Oc
-.Sm on
-.Xc
+.It Ic call Ar address Ns Oo Cm ( Ns Ar expression Ns Oo Ar ,... Oc Ns Cm ) Oc
 Call the function specified by
 .Ar address
 with the argument(s) listed in parentheses.
@@ -389,11 +348,7 @@ Warning: when counting, the debugger is really silently
 single-stepping.
 This means that single-stepping on low-level may cause strange
 behavior.
-.It Xo
-.Ic delete
-.Ar "address" |
-.Cm # Ns Ar number
-.Xc
+.It Ic delete Ar "address" | Cm # Ns Ar number
 Delete a breakpoint.
 The target breakpoint may be specified by
 .Ar address ,
@@ -403,28 +358,20 @@ or by the breakpoint number returned by
 .Ic break
 if it's prefixed with
 .Sq Cm \&# .
-.It Xo
-.Ic dmesg Op Ar count
-.Xc
+.It Ic dmesg Op Ar count
 Prints the contents of the kernel message buffer.
 The optional
 .Ar count
 argument will limit printing to at most the last
 .Ar count
 bytes of the message buffer.
-.It Xo
-.Ic dwatch
-.Ar address
-.Xc
+.It Ic dwatch Ar address
 Delete the watchpoint at
 .Ar address
 that was previously set with
 .Ic watch
 command.
-.It Xo
-.Ic examine Ns Op Cm / Ns Ar modifier
-.Ar address Ns Op Cm , Ns Ar count
-.Xc
+.It Ic examine Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op Cm , Ns Ar count
 Display the address locations according to the format in
 .Ar modifier .
 Multiple modifier formats display multiple locations.
@@ -489,10 +436,7 @@ use Motorola syntax
 don't assume that each external label is a procedure entry mask
 .El
 .El
-.It Xo
-.Ic kill
-.Ar pid Ns Op Cm , Ns Ar signal_number
-.Xc
+.It Ic kill Ar pid Ns Op Cm , Ns Ar signal_number
 Send a signal to the process specified by the
 .Ar pid .
 Note that
@@ -513,10 +457,7 @@ If
 is specified, print the call nesting depth and the
 cumulative instruction count at each call or return.
 Otherwise, only print when the matching return is hit.
-.It Xo
-.Ic print Ns Op Cm /axzodurc
-.Ar address Op Ar address ...
-.Xc
+.It Ic print Ns Oo Cm /axzodurc Oc Ar address Op Ar address ...
 Print addresses
 .Ar address
 according to the modifier character, as per
@@ -547,15 +488,7 @@ will produce:
 eax = xxxxxx
 ecx = yyyyyy
 .Ed
-.It Xo
-.Sm off
-.Ic ps
-.Op Cm /a
-.Op Cm /n
-.Op Cm /w
-.Op Cm /l
-.Sm on
-.Xc
+.It Ic ps Ns Oo Cm /a Oc Ns Oo Cm /n Oc Ns Oo Cm /w Oc Ns Oo Cm /l Oc
 A synonym for
 .Ic show all procs .
 .It Ic reboot Op Ar flags
@@ -577,13 +510,8 @@ Some of the more useful flags:
 .Pp
 Note: Limitations of the command line interface preclude
 specification of a boot string.
-.It Xo
-.Ic search Ns Op Cm /bhl
-.Ar address
-.Ar value
-.Op Ar mask
-.Op Cm , Ns Ar count
-.Xc
+.It Ic search Ns Oo Cm /bhl Oc Ar address Ar value \
+Oo Ar mask Oc Oo Cm , Ns Ar count Oc
 Search memory from
 .Ar address
 for
@@ -607,12 +535,7 @@ doesn't always recover from touching bad memory.
 The optional
 .Ar count
 limits the search.
-.It Xo
-.Ic set
-.Cm $ Ns Ar variable
-.Op Cm =
-.Ar expression
-.Xc
+.It Ic set Cm $ Ns Ar variable Oo Cm = Oc Ar expression
 Set the named variable or register to the value of
 .Ar expression .
 Valid variable names are described in
@@ -630,15 +553,8 @@ For more detailed information about a single page, use
 Display all pool information.
 Modifiers are the same as
 .Ic show pool .
-.It Xo
-.Sm off
-.Ic "show\ all\ procs"
-.Op Cm /a
-.Op Cm /n
-.Op Cm /w
-.Op Cm /l
-.Sm on
-.Xc
+.It Ic "show\ all\ procs" Ns Oo Cm /a Oc Ns Oo Cm /n Oc Ns Oo Cm /w Oc Ns \
+Oo Cm /l Oc
 Display all process information.
 Valid modifiers:
 .Bl -tag -width 3n
@@ -671,28 +587,20 @@ routing table.
 This command is available only on systems which support inet and ARP.
 .It Ic show breaks
 Display all breakpoints.
-.It Xo
-.Ic show buf Ns Op Cm /f
-.Ar address
-.Xc
+.It Ic show buf Ns Oo Cm /f Oc Ar address
 Print the struct buf at
 .Ar address .
 The
 .Cm /f
 does nothing at this time.
-.It Xo
-.Ic show event Ns Op Cm /f
-.Xc
+.It Ic show event Ns Op Cm /f
 Print all the non-zero
 .Xr evcnt 9
 event counters.
 If
 .Cm /f
 is specified, all event counters with a count of zero are printed as well.
-.It Xo
-.Ic show files
-.Ar address
-.Xc
+.It Ic show files Ar address
 Display information about the vnodes of the files that are currently
 open by the process associated with the proc structure at
 .Ar address .
@@ -703,18 +611,12 @@ If the kernel is compiled with
 .Cd options LOCKDEBUG
 then details about the locking of the underlying uvm object will also
 be displayed.
-.It Xo
-.Ic show lock
-.Ar address
-.Xc
+.It Ic show lock Ar address
 Display information about a lock at
 .Ar address .
 This command is useful only if a kernel is compiled with
 .Cd options LOCKDEBUG .
-.It Xo
-.Ic show malloc
-.Ar address
-.Xc
+.It Ic show malloc Ar address
 If
 .Ar address
 is supplied, display the kernel memory allocator's idea on the
@@ -722,28 +624,19 @@ allocation status for it.
 Also, print out global statistics for the memory allocator.
 This command is useful only if a kernel is compiled with
 .Cd options MALLOC_DEBUG .
-.It Xo
-.Ic show map Ns Op Cm /f
-.Ar address
-.Xc
+.It Ic show map Ns Oo Cm /f Oc Ar address
 Print the vm_map at
 .Ar address .
 If
 .Cm /f
 is specified, the complete map is printed.
-.It Xo
-.Ic show mount Ns Op Cm /f
-.Ar address
-.Xc
+.It Ic show mount Ns Oo Cm /f Oc Ar address
 Print the mount structure at
 .Ar address .
 If
 .Cm /f
 is specified, the complete vnode list is printed.
-.It Xo
-.Ic show mbuf Ns Op Cm /c
-.Ar address
-.Xc
+.It Ic show mbuf Ns Oo Cm /c Oc Ar address
 Print the mbuf structure at
 .Ar address .
 If
@@ -752,28 +645,19 @@ is specified, the mbufs in the chain are followed.
 .It Ic show ncache Ar address
 Dump the namecache list associated with vnode at
 .Ar address .
-.It Xo
-.Ic show object Ns Op Cm /f
-.Ar address
-.Xc
+.It Ic show object Ns Oo Cm /f Oc Ar address
 Print the vm_object at
 .Ar address .
 If
 .Cm /f
 is specified, the complete object is printed.
-.It Xo
-.Ic show page Ns Op Cm /f
-.Ar address
-.Xc
+.It Ic show page Ns Oo Cm /f Oc Ar address
 Print the vm_page at
 .Ar address .
 If
 .Cm /f
 is specified, the complete page is printed.
-.It Xo
-.Ic show pool Ns Op Cm /clp
-.Ar address
-.Xc
+.It Ic show pool Ns Oo Cm /clp Oc Ar address
 Print the pool at
 .Ar address .
 Valid modifiers:
@@ -805,16 +689,11 @@ queue, the queue index will be prefixed with a
 .Sq \&! .
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
-.It Xo
-.Ic show uvmhist
-.Xc
+.It Ic show uvmhist
 Dumps the UVM histories.
 This command is available only if a kernel is compiled with
 .Cd options UVMHIST .
-.It Xo
-.Ic show vnode Ns Op Cm /f
-.Ar address
-.Xc
+.It Ic show vnode Ns Oo Cm /f Oc Ar address
 Print the vnode at
 .Ar address .
 If
@@ -822,10 +701,7 @@ If
 is specified, the complete vnode is printed.
 .It Ic show watches
 Display all watchpoints.
-.It Xo
-.Ic sifting Ns Op Cm /F
-.Ar string
-.Xc
+.It Ic sifting Ns Oo Cm /F Oc Ar string
 Search the symbol tables for all symbols of which
 .Ar string
 is a substring, and display them.
@@ -865,10 +741,7 @@ character with a backslash as:
 .Bd -literal -offset indent
 sifting \\386
 .Ed
-.It Xo
-.Ic step Ns Op Cm /p
-.Op Cm , Ns Ar count
-.Xc
+.It Ic step Ns Oo Cm /p Oc Op Cm , Ns Ar count
 Single-step
 .Ar count
 times.
@@ -885,13 +758,8 @@ stepping through code executed by interrupt handlers will probably
 do the wrong thing.
 .It Ic sync
 Force a crash dump, and then reboot.
-.It Xo
-.Ic trace Ns Op Cm /u Ns Op Cm l
-.Sm off
-.Op Ar frame-address
-.Op Cm , Ar count
-.Sm on
-.Xc
+.It Ic trace Ns Oo Cm /u Ns Oo Cm l Oc Oc Oo Ar frame-address Oc Ns \
+Oo Cm , Ns Ar count Oc
 Stack trace from
 .Ar frame-address .
 If
@@ -909,13 +777,7 @@ message buffer.
 .Pp
 Warning: user-space stack trace is valid only if the machine dependent
 code supports it.
-.It Xo
-.Ic trace/t Ns Op Cm l
-.Sm off
-.Op Ar pid
-.Op Cm , Ar count
-.Sm on
-.Xc
+.It Ic trace/t Ns Oo Cm l Oc Oo Ar pid Oc Ns Oo Cm , Ns Ar count Oc
 Stack trace by
 .Dq thread
 (process, on
@@ -939,13 +801,7 @@ message buffer.
 .Pp
 Warning: trace by pid is valid only if the machine dependent code
 supports it.
-.It Xo
-.Ic trace/a Ns Op Cm l
-.Sm off
-.Op Ar lwpaddr
-.Op Cm , Ar count
-.Sm on
-.Xc
+.It Ic trace/a Ns Oo Cm l Oc Oo Ar lwpaddr Oc Ns Oo Cm , Ns Ar count Oc
 Stack trace by light weight process (LWP) address
 rather than by stack frame address.
 If
@@ -962,13 +818,7 @@ If
 is specified, print the call nesting depth and the
 cumulative instruction count at each call or return.
 Otherwise, only print when the matching return is hit.
-.It Xo
-.Ic watch
-.Sm off
-.Ar address
-.Op Cm , Ar size
-.Sm on
-.Xc
+.It Ic watch Ar address Ns Oo Cm , Ns Ar size Oc
 Set a watchpoint for a region.
 Execution stops when an attempt to modify the region occurs.
 .Ar size
@@ -980,18 +830,9 @@ rejected with an error message.
 Warning: attempts to watch wired kernel memory may cause
 an unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work the best.
-.It Xo
-.Ic whatis
-.Sm off
-.Ar address
-.Sm on
-.Xc
+.It Ic whatis Ar address
 Describe what an address is.
-.It Xo
-.Ic write Ns Op Cm /bhl
-.Ar address
-.Ar expression Op Ar expression ...
-.Xc
+.It Ic write Ns Oo Cm /bhl Oc Ar address Ar expression Oo Ar expression ... Oc
 Write the
 .Ar expression Ns s
 at succeeding locations.
@@ -1012,10 +853,7 @@ strange things may occur.
 It's best to enclose each
 .Ar expression
 in parentheses.
-.It Xo
-.Ic x Ns Op Cm / Ns Ar modifier
-.Ar address Ns Op Cm , Ns Ar count
-.Xc
+.It Ic x Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op Cm , Ns Ar count
 A synonym for
 .Ic examine .
 .\" XXX - these commands aren't implemented; jhawk 19 May 2000
@@ -1386,6 +1224,7 @@ and modifiers as described above.
 .Sh SEE ALSO
 .Xr reboot 2 ,
 .Xr options 4 ,
+.Xr crash 8 ,
 .Xr reboot 8 ,
 .Xr sysctl 8 ,
 .Xr cnmagic 9

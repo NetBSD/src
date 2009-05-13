@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.28 2008/01/17 14:53:18 yamt Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.28.12.1 2009/05/13 19:19:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.28 2008/01/17 14:53:18 yamt Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.28.12.1 2009/05/13 19:19:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ struct pool mbpool, mclpool;
 struct pool_allocator mbpa, mclpa;
 
 static struct mbtypes {
-	int	mt_type;
-	char	*mt_name;
+	int		mt_type;
+	const char	*mt_name;
 } mbtypes[] = {
 	{ MT_DATA,	"data" },
 	{ MT_OOBDATA,	"oob data" },

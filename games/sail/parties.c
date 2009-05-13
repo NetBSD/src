@@ -1,4 +1,4 @@
-/*	$NetBSD: parties.c,v 1.11 2003/08/07 09:37:43 agc Exp $	*/
+/*	$NetBSD: parties.c,v 1.11.40.1 2009/05/13 19:18:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parties.c,v 1.11 2003/08/07 09:37:43 agc Exp $");
+__RCSID("$NetBSD: parties.c,v 1.11.40.1 2009/05/13 19:18:05 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,14 @@ unboard(struct ship *ship, struct ship *to, int isdefense)
 	struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
 	int n;
 
-	for (n = 0; n < NBP; p++, n++)
-		if (p->turnsent && (p->toship == to || isdefense || ship == to))
-			Write(isdefense ? W_DBP : W_OBP, ship, n, 0, 0, 0);
+	for (n = 0; n < NBP; p++, n++) {
+		if (p->turnsent &&
+		    (p->toship == to || isdefense || ship == to)) {
+			if (isdefense) {
+				send_dbp(ship, n, 0, 0, 0);
+			} else {
+				send_obp(ship, n, 0, 0, 0);
+			}
+		}
+	}
 }

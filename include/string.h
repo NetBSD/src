@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.35 2007/10/19 15:58:53 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.35.18.1 2009/05/13 19:18:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -79,6 +79,21 @@ void	*memccpy(void *, const void *, int, size_t);
 char	*strdup(const char *);
 #endif
 
+#if (_POSIX_C_SOURCE - 0 >= 200809L) || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_NETBSD_SOURCE)
+char	*stpcpy(char * __restrict, const char * __restrict);
+char	*stpncpy(char * __restrict, const char * __restrict, size_t);
+size_t	strnlen(const char *, size_t);
+/*
+ * For POSIX compliance, we still need:
+ * strcoll_l
+ * strerror_l
+ * strxfrm_l
+ *
+ * and strsignal needs to be moved from unistd.h to here.
+ */
+#endif
+
 #if defined(_NETBSD_SOURCE)
 #include <strings.h>		/* for backwards-compatibilty */
 void	*memmem(const void *, size_t, const void *, size_t);
@@ -88,6 +103,7 @@ size_t	 strlcpy(char *, const char *, size_t);
 char	*strsep(char **, const char *);
 char	*stresep(char **, const char *, int);
 char	*strndup(const char *, size_t);
+void	*memrchr(const void *, int, size_t);
 #endif
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.19 2009/01/23 08:25:06 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.19.2.1 2009/05/13 19:15:54 jym Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -164,10 +164,10 @@ struct ph1handle {
 	vchar_t *hash;			/* HASH minus general header */
 	vchar_t *sig;			/* SIG minus general header */
 	vchar_t *sig_p;			/* peer's SIG minus general header */
-	cert_t *cert;			/* CERT minus general header */
-	cert_t *cert_p;			/* peer's CERT minus general header */
-	cert_t *crl_p;			/* peer's CRL minus general header */
-	cert_t *cr_p;			/* peer's CR not including general */
+	vchar_t *cert;			/* CERT minus general header */
+	vchar_t *cert_p;		/* peer's CERT minus general header */
+	vchar_t *crl_p;			/* peer's CRL minus general header */
+	vchar_t *cr_p;			/* peer's CR not including general */
 	RSA *rsa;			/* my RSA key */
 	RSA *rsa_p;			/* peer's RSA key */
 	struct genlist *rsa_candidates;	/* possible candidates for peer's RSA key */
@@ -466,11 +466,21 @@ extern int enumph1 __P((struct ph1selector *ph1sel,
 			int (* enum_func)(struct ph1handle *iph1, void *arg),
 			void *enum_arg));
 
-extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
-					   struct sockaddr *, int));
-extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
-					      struct sockaddr *));
-extern struct ph1handle *getph1bydstaddrwop __P((struct sockaddr *));
+#define GETPH1_F_ESTABLISHED		0x0001
+#define GETPH1_F_WITHOUT_PORTS		0x0002
+
+extern struct ph1handle *getph1 __P((struct remoteconf *rmconf,
+				     struct sockaddr *local,
+				     struct sockaddr *remote,
+				     int flags));
+
+#define getph1byaddr(local, remote, est) \
+	getph1(NULL, local, remote, est ? GETPH1_F_ESTABLISHED : 0)
+#define getph1byaddrwop(local, remote) \
+	getph1(NULL, local, remote, GETPH1_F_WITHOUT_PORTS)
+#define getph1bydstaddrwop(remote) \
+	getph1(NULL, NULL, remote, GETPH1_F_WITHOUT_PORTS)
+
 #ifdef ENABLE_HYBRID
 struct ph1handle *getph1bylogin __P((char *));
 int purgeph1bylogin __P((char *));
@@ -482,6 +492,7 @@ extern struct ph1handle *newph1 __P((void));
 extern void delph1 __P((struct ph1handle *));
 extern int insph1 __P((struct ph1handle *));
 extern void remph1 __P((struct ph1handle *));
+extern int resolveph1rmconf __P((struct ph1handle *));
 extern void flushph1 __P((void));
 extern void initph1tree __P((void));
 

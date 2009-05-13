@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.11 2005/02/15 12:54:50 jsm Exp $	*/
+/*	$NetBSD: trek.h,v 1.11.34.1 2009/05/13 19:18:08 jym Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -369,6 +369,8 @@ extern struct Etc_struct Etc;
 /* Trace info */
 # define	xTRACE		1
 extern int	Trace;
+
+# define 	TOOLARGE	(DBL_MAX / 2)	/* < DOUBLE_MAX for everyone */
 
 /* abandon.c */
 void abandon(int);

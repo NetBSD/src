@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2007/02/26 00:17:37 matt Exp $
+#	$NetBSD: Makefile,v 1.6.20.1 2009/05/13 19:20:08 jym Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
 
-WARNS=2
 CPPFLAGS+=	-DNOT_CSH
 CPPFLAGS+=	-I. -I${NETBSDSRCDIR}/bin
 SRCS=	time.c strpct.c xtime.c

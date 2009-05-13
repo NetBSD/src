@@ -1,4 +1,4 @@
-/*	$NetBSD: init_digi.c,v 1.1 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: init_digi.c,v 1.1.10.1 2009/05/13 19:20:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_digi.c,v 1.1 2008/04/15 11:17:48 plunky Exp $");
+__RCSID("$NetBSD: init_digi.c,v 1.1.10.1 2009/05/13 19:20:19 jym Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -53,7 +53,7 @@ init_digi(int fd, unsigned int speed)
 	case B57600:	rate = 0x08;	break;
 	case B115200:	rate = 0x09;	break;
 	default:
-		errx(EXIT_FAILURE, "invalid speed for digi: %d\n", speed);
+		errx(EXIT_FAILURE, "invalid speed for digi: %u\n", speed);
 	}
 
 	uart_send_cmd(fd, HCI_CMD_DIGIANSWER_SET_UART_BAUD_RATE, &rate, sizeof(rate));

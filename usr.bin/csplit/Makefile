@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2007/10/05 07:27:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.14.1 2009/05/13 19:19:47 jym Exp $
 
-WARNS=	4
 PROG=	csplit
 
 DPADD+=	${LIBUTIL}

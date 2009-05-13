@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.8 2009/01/18 01:29:57 lukem Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.8.2.1 2009/05/13 19:19:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.8 2009/01/18 01:29:57 lukem Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.8.2.1 2009/05/13 19:19:56 jym Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -276,7 +276,7 @@ mime_bintob64(char *b64, const char *bin, size_t cnt)
 	static const char b64table[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	const unsigned char *p = (const unsigned char*)bin;
-	int i;
+	ssize_t i;
 
 	for (i = cnt; i > 0; i -= 3) {
 		unsigned a = p[0];
@@ -314,7 +314,7 @@ mime_fB64_encode(FILE *fi, FILE *fo, void *cookie __unused)
 {
 	static char b64[MIME_BASE64_LINE_MAX];
 	static char mem[3 * (MIME_BASE64_LINE_MAX / 4)];
-	int cnt;
+	size_t cnt;
 	char *cp;
 	size_t limit;
 #ifdef __lint__
@@ -530,9 +530,9 @@ mime_fQP_decode(FILE *fi, FILE *fo, void *cookie __unused)
 	cookie = cookie;
 #endif
 	while ((line = fgetln(fi, &len)) != NULL) {
-		int c;
 		char *p;
 		char *end;
+
 		end = line + len;
 		for (p = line; p < end; p++) {
 			if (*p == '=') {
@@ -540,11 +540,13 @@ mime_fQP_decode(FILE *fi, FILE *fo, void *cookie __unused)
 				while (p < end && is_WSP(*p))
 					p++;
 				if (*p != '\n' && p + 1 < end) {
+					int c;
 					char buf[3];
+
 					buf[0] = *p++;
 					buf[1] = *p;
 					buf[2] = '\0';
-					c = strtol(buf, NULL, 16);
+					c = (int)strtol(buf, NULL, 16);
 					(void)fputc(c, fo);
 				}
 			}

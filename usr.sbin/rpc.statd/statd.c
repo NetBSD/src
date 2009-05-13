@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.28 2007/12/15 19:44:56 perry Exp $	*/
+/*	$NetBSD: statd.c,v 1.28.12.1 2009/05/13 19:20:38 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.28 2007/12/15 19:44:56 perry Exp $");
+__RCSID("$NetBSD: statd.c,v 1.28.12.1 2009/05/13 19:20:38 jym Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -86,8 +86,8 @@ static int reset_host __P((DBT *, HostInfo *, void *));
 static int check_work __P((DBT *, HostInfo *, void *));
 static int unmon_host __P((DBT *, HostInfo *, void *));
 static int notify_one __P((DBT *, HostInfo *, void *));
-static void init_file __P((char *));
-static int notify_one_host __P((char *));
+static void init_file __P((const char *));
+static int notify_one_host __P((const char *));
 static void die __P((int)) __dead;
 
 int main __P((int, char **));
@@ -518,7 +518,7 @@ notify_one(key, hi, ptr)
  */
 static void 
 init_file(filename)
-	char *filename;
+	const char *filename;
 {
 	DBT data;
 
@@ -586,7 +586,7 @@ unmon_hosts()
 
 static int 
 notify_one_host(hostname)
-	char *hostname;
+	const char *hostname;
 {
 	struct timeval timeout = {20, 0};	/* 20 secs timeout */
 	CLIENT *cli;

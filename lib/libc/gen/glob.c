@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.23 2008/05/26 13:06:38 ad Exp $	*/
+/*	$NetBSD: glob.c,v 1.23.8.1 2009/05/13 19:18:23 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.23 2008/05/26 13:06:38 ad Exp $");
+__RCSID("$NetBSD: glob.c,v 1.23.8.1 2009/05/13 19:18:23 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -926,6 +926,39 @@ globfree(glob_t *pglob)
 		pglob->gl_pathc = 0;
 	}
 }
+
+#ifndef __LIBC12_SOURCE__
+int
+glob_pattern_p(const char *pattern, int quote)
+{
+	int range = 0;
+
+	for (; *pattern; pattern++)
+		switch (*pattern) {
+		case QUESTION:
+		case STAR:
+			return 1;
+
+		case QUOTE:
+			if (quote && pattern[1] != '\0')
+			      ++pattern;
+			break;
+
+		case LBRACKET:
+			range = 1;
+			break;
+
+		case RBRACKET:
+			if (range)
+			      return 1;
+			break;
+		default:
+			break;
+		}
+
+	  return 0;
+}
+#endif
 
 static DIR *
 g_opendir(Char *str, glob_t *pglob)

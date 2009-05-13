@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.9 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.9.6.1 2009/05/13 19:20:32 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ofctl.c,v 1.9 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.9.6.1 2009/05/13 19:20:32 jym Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: ofctl.c,v 1.9 2008/07/21 13:36:59 lukem Exp $");
 
 static void oflist(int, const char *, int, void *, size_t);
 static void ofprop(int);
-static void ofgetprop(int, char *);
+static void ofgetprop(int, const char *);
 #if 0
 static int isstrprint(const char *, size_t, int);
 #endif
@@ -91,11 +91,11 @@ int OF_parent(int);
 int OF_child(int);
 int OF_peer(int);
 int OF_finddevice(const char *);
-int OF_getproplen(int, char *);
-int OF_getprop(int, char *, void *, size_t);
-int OF_nextprop(int, char *, void *);
+int OF_getproplen(int, const char *);
+int OF_getprop(int, const char *, void *, size_t);
+int OF_nextprop(int, const char *, void *);
 
-struct of_prop *of_tree_getprop(int, char *);
+struct of_prop *of_tree_getprop(int, const char *);
 
 static void
 of_tree_mkprop(struct of_node *node, prop_dictionary_t propdict,
@@ -401,7 +401,7 @@ OF_finddevice(const char *name)
 }
 
 struct of_prop *
-of_tree_getprop(int nodeid, char *name)
+of_tree_getprop(int nodeid, const char *name)
 {
 	struct of_node *node;
 	struct of_prop *prop;
@@ -431,14 +431,14 @@ of_tree_getprop(int nodeid, char *name)
 }
 
 int
-OF_getproplen(int nodeid, char *name)
+OF_getproplen(int nodeid, const char *name)
 {
 	struct of_prop *prop = of_tree_getprop(nodeid, name);
-	return (prop != NULL) ? prop->prop_length : -1;
+	return (prop != NULL) ? (int)prop->prop_length : -1;
 }
 
 int
-OF_getprop(int nodeid, char *name, void *buf, size_t len)
+OF_getprop(int nodeid, const char *name, void *buf, size_t len)
 {
 	struct of_prop *prop = of_tree_getprop(nodeid, name);
 	if (prop == NULL)
@@ -450,7 +450,7 @@ OF_getprop(int nodeid, char *name, void *buf, size_t len)
 }
 
 int
-OF_nextprop(int nodeid, char *name, void *nextname)
+OF_nextprop(int nodeid, const char *name, void *nextname)
 {
 	struct of_prop *prop = of_tree_getprop(nodeid, name);
 	if (prop == NULL)
@@ -897,7 +897,7 @@ static const struct {
 };
 
 static void
-ofgetprop(int node, char *name)
+ofgetprop(int node, const char *name)
 {
 	u_int8_t of_buf[4097];
 	int len;

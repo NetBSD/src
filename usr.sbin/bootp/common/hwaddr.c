@@ -1,8 +1,8 @@
-/*	$NetBSD: hwaddr.c,v 1.9 2007/05/27 16:31:42 tls Exp $	*/
+/*	$NetBSD: hwaddr.c,v 1.9.20.1 2009/05/13 19:20:18 jym Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hwaddr.c,v 1.9 2007/05/27 16:31:42 tls Exp $");
+__RCSID("$NetBSD: hwaddr.c,v 1.9.20.1 2009/05/13 19:20:18 jym Exp $");
 #endif
 
 /*
@@ -59,7 +59,7 @@ struct hwinfo hwinfolist[] =
 	{6, "IEEE 802"},			/* Type 6:  IEEE 802 Networks		*/
 	{0, "ARCNET"}				/* Type 7:  ARCNET			*/
 };
-int hwinfocnt = sizeof(hwinfolist) / sizeof(hwinfolist[0]);
+size_t hwinfocnt = sizeof(hwinfolist) / sizeof(hwinfolist[0]);
 
 
 /*

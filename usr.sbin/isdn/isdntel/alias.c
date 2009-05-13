@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: alias.c,v 1.3 2003/10/06 09:43:27 itojun Exp $ 
+ *      $Id: alias.c,v 1.3.40.1 2009/05/13 19:20:26 jym Exp $ 
  *
  * $FreeBSD$
  *
@@ -46,7 +46,7 @@ static struct alias *firsta = NULL;
  *	read in and init aliases
  *---------------------------------------------------------------------------*/
 void 
-init_alias(char *filename)
+init_alias(const char *filename)
 {
 	FILE *fp;
 	unsigned char buffer[MAXBUFSZ + 1];

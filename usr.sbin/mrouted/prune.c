@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.17 2006/05/25 01:41:13 christos Exp $	*/
+/*	$NetBSD: prune.c,v 1.17.28.1 2009/05/13 19:20:30 jym Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -56,7 +56,7 @@ static void		send_graft(struct gtable *gt);
 static void		send_graft_ack(u_int32_t src, u_int32_t dst,
 				       u_int32_t origin, u_int32_t grp);
 static void		update_kernel(struct gtable *g);
-static char *		scaletime(u_long t);
+static const char *	scaletime(u_long t);
 
 /* 
  * Updates the ttl values for each vif.
@@ -1211,7 +1211,7 @@ accept_prune(u_int32_t src, u_int32_t dst, char *p, int datalen)
 
 	/* Refresh the group's lifetime */
 	g->gt_timer = CACHE_LIFETIME(cache_lifetime);
-	if (g->gt_timer < prun_tmr)
+	if ((u_int32_t)g->gt_timer < prun_tmr)
 	    g->gt_timer = prun_tmr;
 
 	/*
@@ -1834,7 +1834,7 @@ expire_prune(vifi_t vifi, struct gtable *gt)
 }
 
 
-static char *
+static const char *
 scaletime(u_long t)
 {
     static char buf1[5];
@@ -1994,7 +1994,7 @@ accept_mtrace(u_int32_t src, u_int32_t dst, u_int32_t group, char *data,
     /*
      * if it is a packet with all reports filled, drop it
      */
-    if ((rcount = (datalen - QLEN)/RLEN) == no) {
+    if ((u_int)(rcount = (datalen - QLEN)/RLEN) == no) {
 	logit(LOG_DEBUG, 0, "packet with all reports filled in");
 	return;
     }
@@ -2201,7 +2201,7 @@ sendit:
      */
     logit(LOG_DEBUG, 0, "rcount:%d, no:%d", rcount, no);
 
-    if ((rcount + 1 == no) || (rt == NULL) || (rt->rt_metric == 1)) {
+    if (((u_int)(rcount + 1) == no) || (rt == NULL) || (rt->rt_metric == 1)) {
 	resptype = IGMP_MTRACE_REPLY;
 	dst = qry->tr_raddr;
     } else

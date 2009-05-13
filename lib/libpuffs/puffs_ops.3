@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.22 2008/11/25 11:49:08 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.22.2.1 2009/05/13 19:18:35 jym Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -194,15 +194,6 @@
 .Ft void
 .Fn puffs_newinfo_setrdev "struct puffs_newinfo *pni" "dev_t rdev"
 .Sh DESCRIPTION
-.Em IMPORTANT NOTE!
-This document describes interfaces which are not yet guaranteed to be
-stable.
-In case you update your system sources, please recompile everything
-and fix compilation errors.
-If your sources are out-of-sync, incorrect operation may result.
-The interfaces in this document will most likely be hugely simplified
-in later versions or made transparent to the implementation.
-.Pp
 The operations
 .Nm puffs
 requires to function can be divided into two categories: file system
@@ -572,7 +563,7 @@ The target directory and target name are given by
 and
 .Fa pcn_targ ,
 respectively.
-.B If
+.Em If
 the target node already exists, it is specified by
 .Fa targ
 and must be replaced atomically.
@@ -707,8 +698,8 @@ In case the flag
 .Dv PUFFS_IO_APPEND
 is specified, the data should be appended to the end of the file.
 .It Fn puffs_node_print "pu" "opc"
-Print information about node.  This is used only for kernel-initiated
-diagnostic purposes.
+Print information about node.
+This is used only for kernel-initiated diagnostic purposes.
 .It Fn puffs_node_reclaim "pu" "opc"
 The kernel will no longer reference the cookie and resources associated
 with it may be freed.

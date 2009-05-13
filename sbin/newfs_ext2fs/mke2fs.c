@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.9 2008/08/28 16:29:24 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.9.4.1 2009/05/13 19:19:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -106,7 +106,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.9 2008/08/28 16:29:24 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.9.4.1 2009/05/13 19:19:04 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,6 +243,12 @@ mke2fs(const char *fsys, int fi, int fo)
 		    bsize, fsize);
 	}
 
+	/* variable inodesize is REV1 feature */
+	if (Oflag == 0 && inodesize != EXT2_REV0_DINODE_SIZE) {
+		errx(EXIT_FAILURE, "GOOD_OLD_REV file system format"
+		    " doesn't support %d byte inode\n", inodesize);
+	}
+
 	sblock.e2fs.e2fs_log_bsize = ilog2(bsize) - LOG_MINBSIZE;
 	/* Umm, why not e2fs_log_fsize? */
 	sblock.e2fs.e2fs_fsize = ilog2(fsize) - LOG_MINBSIZE;
@@ -252,7 +258,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs_qbmask = sblock.e2fs_bsize - 1;
 	sblock.e2fs_bmask = ~sblock.e2fs_qbmask;
 	sblock.e2fs_fsbtodb = ilog2(sblock.e2fs_bsize) - ilog2(sectorsize);
-	sblock.e2fs_ipb = sblock.e2fs_bsize / EXT2_DINODE_SIZE;
+	sblock.e2fs_ipb = sblock.e2fs_bsize / inodesize;
 
 	/*
 	 * Ext2fs preserves BBSIZE (1024 bytes) space at the top for
@@ -301,7 +307,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		num_inodes = UINT16_MAX * ncg;	/* ext2bgd_nifree is uint16_t */
 
 	inodes_per_cg = num_inodes / ncg;
-	iblocks_per_cg = howmany(EXT2_DINODE_SIZE * inodes_per_cg, bsize);
+	iblocks_per_cg = howmany(inodesize * inodes_per_cg, bsize);
 
 	/* Check that the last cylinder group has enough space for inodes */
 	minblocks_per_cg =
@@ -404,7 +410,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs.e2fs_rgid = getegid();
 
 	sblock.e2fs.e2fs_first_ino = EXT2_FIRSTINO;
-	sblock.e2fs.e2fs_inode_size = EXT2_DINODE_SIZE;
+	sblock.e2fs.e2fs_inode_size = inodesize;
 
 	/* e2fs_block_group_nr is set on writing superblock to each group */
 
@@ -754,11 +760,11 @@ initcg(uint cylno)
 	 *       to override these generated numbers.
 	 */
 	memset(buf, 0, sblock.e2fs_bsize);
-	dp = (struct ext2fs_dinode *)buf;
 	for (i = 0; i < sblock.e2fs_itpg; i++) {
 		for (j = 0; j < sblock.e2fs_ipb; j++) {
+			dp = (struct ext2fs_dinode *)(buf + inodesize * j);
 			/* h2fs32() just for consistency */
-			dp[j].e2di_gen = h2fs32(arc4random());
+			dp->e2di_gen = h2fs32(arc4random());
 		}
 		wtfs(fsbtodb(&sblock, gd[cylno].ext2bgd_i_tables + i),
 		    sblock.e2fs_bsize, buf);
@@ -1352,8 +1358,8 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
 	rdfs(d, sblock.e2fs_bsize, bp);
 
-	dp = (struct ext2fs_dinode *)bp;
-	dp += ino_to_fsbo(&sblock, ino);
+	dp = (struct ext2fs_dinode *)(bp +
+	    inodesize * ino_to_fsbo(&sblock, ino));
 	e2fs_isave(ip, dp);
 	/* e2fs_i_bswap() doesn't swap e2di_blocks addrs */
 	if ((ip->e2di_mode & EXT2_IFMT) != EXT2_IFLNK) {

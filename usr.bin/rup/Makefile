@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2007/05/28 12:06:30 tls Exp $
+#	$NetBSD: Makefile,v 1.7.20.1 2009/05/13 19:20:03 jym Exp $
 
 USE_FORT?= yes	# network client
 
 PROG=	rup
-WARNS=3
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

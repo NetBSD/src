@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.2 2007/12/15 16:03:30 perry Exp $	*/
+/*	$NetBSD: device.c,v 1.2.14.1 2009/05/13 19:19:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 Iain Hibbert
@@ -28,9 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: device.c,v 1.2 2007/12/15 16:03:30 perry Exp $");
+__RCSID("$NetBSD: device.c,v 1.2.14.1 2009/05/13 19:19:44 jym Exp $");
 
 #include <bluetooth.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
@@ -134,8 +135,10 @@ list_device_cc(void *arg)
 {
 	hci_read_stored_link_key_rp *rp = arg;
 
-	if (rp->status)
+	if (rp->status) {
+		errno = ENODEV;
 		return -1;
+	}
 
 	printf("\n");
 	printf("read %d keys (max %d)\n", rp->num_keys_read, rp->max_num_keys);
@@ -217,8 +220,10 @@ write_device_cc(void *arg)
 {
 	hci_write_stored_link_key_rp *rp = arg;
 
-	if (rp->status || rp->num_keys_written != 1)
+	if (rp->status || rp->num_keys_written != 1) {
+		errno = ENODEV;
 		return -1;
+	}
 
 	return 1;
 }
@@ -245,8 +250,10 @@ clear_device_cc(void *arg)
 {
 	hci_delete_stored_link_key_rp *rp = arg;
 
-	if (rp->status || rp->num_keys_deleted != 1)
+	if (rp->status || rp->num_keys_deleted != 1) {
+		errno = ENODEV;
 		return -1;
+	}
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftok.3,v 1.13 2004/09/15 19:45:17 hubertf Exp $
+.\"	$NetBSD: ftok.3,v 1.13.36.1 2009/05/13 19:18:23 jym Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -24,8 +24,8 @@
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd June 24, 1994
-.Os
 .Dt FTOK 3
+.Os
 .Sh NAME
 .Nm ftok
 .Nd create IPC identifier from path name
@@ -75,9 +75,7 @@ The
 function originated with System V and is typically used by programs
 that use the System V IPC routines.
 .Sh AUTHORS
-.Bl -tag
-Thorsten Lockert \*[Lt]tholo@sigmasoft.com\*[Gt]
-.El
+.An Thorsten Lockert Aq tholo@sigmasoft.com
 .Sh BUGS
 The returned key is computed based on the device and inode of the
 specified

@@ -1,0 +1,14 @@
+.\"	$NetBSD: hardware,v 1.1.2.2 2009/05/13 19:17:47 jym Exp $
+.
+Since
+.Nx*M
+is an experimental port, the hardware support is in a constant state of flux.
+Check the
+.Mt port-prep@NetBSD.org
+mailing list and the
+.Nx*M
+port homepage for an up-to-date list of known supported hardware.
+.Lk http://www.NetBSD.org/ports/rs6000/
+.Pp
+.Nx*M
+\*V works diskless via netboot.

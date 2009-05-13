@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.17 2008/05/02 19:22:10 xtraeme Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.17.8.1 2009/05/13 19:20:18 jym Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.17 2008/05/02 19:22:10 xtraeme Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.17.8.1 2009/05/13 19:20:18 jym Exp $");
 #endif
 
 const char *usage = "usage: %s [-f bootfile] [-h] [-m magic_number] server-name\n"
@@ -407,7 +407,7 @@ main(int argc, char **argv)
 		if (n <= 0) {
 			continue;
 		}
-		if (n < sizeof(struct bootp)) {
+		if (n < (int)sizeof(struct bootp)) {
 			printf("received short packet\n");
 			continue;
 		}
