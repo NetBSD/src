@@ -86,8 +86,9 @@ com_dino_match(device_t parent, cfdata_t match, void *aux)
 void
 com_dino_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_dino_softc *sc_dino = device_private(self);
-	struct com_softc *sc = &sc_dino->sc_com;
+	void *sc_dino = device_private(parent);
+	struct com_dino_softc *sc_comdino = device_private(self);
+	struct com_softc *sc = &sc_comdino->sc_com;
 	struct confargs *ca = aux;
 	struct com_dino_regs *regs = (struct com_dino_regs *)ca->ca_hpa;
 	int pagezero_cookie;
@@ -139,6 +140,6 @@ com_dino_attach(device_t parent, device_t self, void *aux)
 
 	ca->ca_irq = 11;
 
-	sc_dino->sc_ih = dino_intr_establish(parent, ca->ca_irq, IPL_TTY,
+	sc_comdino->sc_ih = dino_intr_establish(sc_dino, ca->ca_irq, IPL_TTY,
 	    comintr, sc);
 }
