@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.9 2009/05/13 01:09:06 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.10 2009/05/14 00:29:37 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -92,4 +92,10 @@ usr.sbin/postinstall/postinstall		1.95
 
 	Teach postinstall about /etc/dhcpcd.conf.
 	[jnemeth, ticket #752]
+
+usr.sbin/postinstall/postinstall		1.97
+
+	Fetch /etc/dhcpcd.conf from the correct place when building the
+	system from source.
+	[jnemeth, ticket #756]
 
