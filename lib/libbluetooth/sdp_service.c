@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_service.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: sdp_service.c,v 1.2 2009/05/14 19:12:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_service.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: sdp_service.c,v 1.2 2009/05/14 19:12:45 plunky Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -236,7 +236,7 @@ sdp_service_attribute(struct sdp_session *ss, uint32_t id,
 	/*
 	 * setup AttributeIDList
 	 */
-	len = (ail == NULL ? sizeof(ail_default) : (ail->end - ail->next));
+	len = (ail == NULL ? (ssize_t)sizeof(ail_default) : (ail->end - ail->next));
 	if (len < 0 || len > UINT16_MAX) {
 		errno = EINVAL;
 		return false;
@@ -320,7 +320,7 @@ sdp_service_attribute(struct sdp_session *ss, uint32_t id,
 		if (ss->cs[0] == 0) {
 			rsp->next = rbuf;
 			rsp->end = rbuf + rlen;
-			if (sdp_data_size(rsp) != rlen
+			if (sdp_data_size(rsp) != (ssize_t)rlen
 			    || !sdp_data_valid(rsp)
 			    || !sdp_get_seq(rsp, rsp))
 				break;
@@ -372,7 +372,7 @@ sdp_service_search_attribute(struct sdp_session *ss, const sdp_data_t *ssp,
 	/*
 	 * setup AttributeIDList
 	 */
-	len = (ail == NULL ? sizeof(ail_default) : (ail->end - ail->next));
+	len = (ail == NULL ? (ssize_t)sizeof(ail_default) : (ail->end - ail->next));
 	if (len < 0 || len > UINT16_MAX) {
 		errno = EINVAL;
 		return false;
@@ -456,7 +456,7 @@ sdp_service_search_attribute(struct sdp_session *ss, const sdp_data_t *ssp,
 		if (ss->cs[0] == 0) {
 			rsp->next = rbuf;
 			rsp->end = rbuf + rlen;
-			if (sdp_data_size(rsp) != rlen
+			if (sdp_data_size(rsp) != (ssize_t)rlen
 			    || !sdp_data_valid(rsp)
 			    || !sdp_get_seq(rsp, rsp))
 				break;
