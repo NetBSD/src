@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.51 2009/04/07 10:45:04 tsutsui Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.52 2009/05/14 16:23:38 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,7 +90,7 @@ static int check_partitions(void);
 #endif
 
 int
-save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
+save_ptn(int ptn, daddr_t start, daddr_t size, int fstype, const char *mountpt)
 {
 	static int maxptn;
 	partinfo *p;
@@ -151,7 +151,7 @@ set_ptn_titles(menudesc *m, int opt, void *arg)
 	struct ptn_info *pi = arg;
 	struct ptn_size *p;
 	int sm = MEG / sectorsize;
-	int size;
+	daddr_t size;
 	char inc_free[12];
 
 	p = &pi->ptn_sizes[opt];
@@ -161,11 +161,11 @@ set_ptn_titles(menudesc *m, int opt, void *arg)
 	}
 	size = p->size;
 	if (p == pi->pool_part)
-		snprintf(inc_free, sizeof inc_free, "(%u)", 
+		snprintf(inc_free, sizeof inc_free, "(%" PRIi64 ")", 
 		    (size + pi->free_space) / sm);
 	else
 		inc_free[0] = 0;
-	wprintw(m->mw, "%6u%8s%10u%10u %c %s",
+	wprintw(m->mw, "%6" PRIi64 "%8s%10" PRIi64 "%10" PRIi64 " %c %s",
 		size / sm, inc_free, size / dlcylsize, size,
 		p == pi->pool_part ? '+' : ' ', p->mount);
 }
@@ -195,11 +195,11 @@ set_ptn_menu(struct ptn_info *pi)
 	if (pi->free_space >= 0)
 		snprintf(pi->exit_msg, sizeof pi->exit_msg,
 			msg_string(MSG_fssizesok),
-			pi->free_space / sizemult, multname, pi->free_parts);
+			(int)(pi->free_space / sizemult), multname, pi->free_parts);
 	else
 		snprintf(pi->exit_msg, sizeof pi->exit_msg,
 			msg_string(MSG_fssizesbad),
-			-pi->free_space / sizemult, multname, -pi->free_space);
+			(int)(-pi->free_space / sizemult), multname, (uint) -pi->free_space);
 
 	set_menu_numopts(pi->menu_no, m - pi->ptn_menus);
 }
@@ -212,7 +212,7 @@ set_ptn_size(menudesc *m, void *arg)
 	char answer[10];
 	char dflt[10];
 	char *cp;
-	int size, old_size;
+	daddr_t size, old_size;
 	int mult;
 
 	p = pi->ptn_sizes + m->cursel;
@@ -233,7 +233,7 @@ set_ptn_size(menudesc *m, void *arg)
 	if (size == 0)
 		size = p->dflt_size;
 	size /= sizemult;
-	snprintf(dflt, sizeof dflt, "%d%s",
+	snprintf(dflt, sizeof dflt, "%" PRIi64 "%s",
 	    size, p == pi->pool_part ? "+" : "");
 
 	for (;;) {
@@ -342,13 +342,13 @@ set_ptn_size(menudesc *m, void *arg)
 }
 
 void
-get_ptn_sizes(int part_start, int sectors, int no_swap)
+get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 {
 	int i;
 	int maxpart = getmaxpartitions();
 	int sm;				/* sectors in 1MB */
 	struct ptn_size *p;
-	int size;
+	daddr_t size;
 
 	static struct ptn_info pi = { -1, {
 #define PI_ROOT 0
@@ -534,9 +534,9 @@ make_bsd_partitions(void)
 	int i;
 	int part;
 	int maxpart = getmaxpartitions();
-	int partstart;
+	daddr_t partstart;
 	int part_raw, part_bsd;
-	int ptend;
+	daddr_t ptend;
 	int no_swap = 0, valid_part = -1;
 	partinfo *p;
 
@@ -554,7 +554,7 @@ make_bsd_partitions(void)
 
 	/* Ask for layout type -- standard or special */
 	msg_display(MSG_layout,
-		    ptsize / (MEG / sectorsize),
+		    (int) (ptsize / (MEG / sectorsize)),
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE,
 		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB);
 
