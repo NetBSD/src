@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_internal.h,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ah_internal.h,v 1.3 2009/05/14 09:07:49 reinoud Exp $
  */
 #ifndef _ATH_AH_INTERAL_H_
 #define _ATH_AH_INTERAL_H_
@@ -516,7 +516,7 @@ extern	u_int ath_hal_getctl(struct ath_hal *, HAL_CHANNEL *);
  * based on the current regulatory domain for the specified
  * channel.
  */
-extern	u_int ath_hal_getnfcheckrequired(struct ath_hal *, HAL_CHANNEL *);
+extern	HAL_BOOL ath_hal_getnfcheckrequired(struct ath_hal *, HAL_CHANNEL *);
 
 /*
  * Map a public channel definition to the corresponding
