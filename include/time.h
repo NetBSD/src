@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.38 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.39 2009/05/14 02:37:36 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -129,6 +129,12 @@ extern long int timezone __RENAME(__timezone13);
 #endif
 char *strptime(const char * __restrict, const char * __restrict,
     struct tm * __restrict);
+#endif
+
+#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    defined(_NETBSD_SOURCE)
+struct tm *getdate(const char *);
+extern int getdate_err;
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \

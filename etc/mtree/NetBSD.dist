@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.399 2009/05/02 16:02:19 pooka Exp $
+#	$NetBSD: NetBSD.dist,v 1.400 2009/05/14 02:37:35 ginsbach Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -677,6 +677,7 @@
 ./usr/share/examples/disktab
 ./usr/share/examples/fstab
 ./usr/share/examples/ftpd
+./usr/share/examples/getdate
 ./usr/share/examples/hostapd
 ./usr/share/examples/ipf
 ./usr/share/examples/isdn

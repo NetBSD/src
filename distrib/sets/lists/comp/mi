@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1259 2009/05/13 02:50:31 pgoyette Exp $
+#	$NetBSD: mi,v 1.1260 2009/05/14 02:37:36 ginsbach Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5535,7 +5535,8 @@
 ./usr/share/man/cat3/getcurx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getcury.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getcwd.0			comp-c-catman		.cat
-./usr/share/man/cat3/getdate.0			comp-obsolete		obsolete
+./usr/share/man/cat3/getdate.0			comp-c-catman		.cat
+./usr/share/man/cat3/getdate_err.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdevmajor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdirentries.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdiskbyname.0		comp-c-catman		.cat
@@ -16340,7 +16341,8 @@
 ./usr/share/man/man3/getcurx.3			comp-c-man		.man
 ./usr/share/man/man3/getcury.3			comp-c-man		.man
 ./usr/share/man/man3/getcwd.3			comp-c-man		.man
-./usr/share/man/man3/getdate.3			comp-obsolete		obsolete
+./usr/share/man/man3/getdate.3			comp-c-man		.man
+./usr/share/man/man3/getdate_err.3		comp-c-man		.man
 ./usr/share/man/man3/getdevmajor.3		comp-c-man		.man
 ./usr/share/man/man3/getdirentries.3		comp-c-man		.man
 ./usr/share/man/man3/getdiskbyname.3		comp-c-man		.man
