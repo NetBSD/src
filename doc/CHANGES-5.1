@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.12 2009/05/13 01:08:36 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.13 2009/05/14 00:28:55 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -473,4 +473,10 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.35
 	Do not forget to detach rnd(4) device when removing a xennet
 	device.
 	[jym, ticket #754]
+
+usr.sbin/postinstall/postinstall		1.97
+
+	Fetch /etc/dhcpcd.conf from the correct place when building
+	the system from source.
+	[jnemeth, ticket #756]
 
