@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.18 2009/05/13 22:25:51 pgoyette Exp $	*/
+/*	$NetBSD: i386.c,v 1.19 2009/05/14 20:16:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.18 2009/05/13 22:25:51 pgoyette Exp $");
+__RCSID("$NetBSD: i386.c,v 1.19 2009/05/14 20:16:10 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -248,8 +248,8 @@ struct cpu_extend_nameclass intel_family6_ext_models[] = {
 	{ /* Extended models 1x */
 	  0x01, { NULL,			NULL,
 		  NULL,			NULL,
-		  NULL,			NULL,
-		  NULL,			NULL,
+		  NULL,			"EP80579 Integrated Processor",
+		  "Celeron (45nm)",	"Core 2 Extreme",
 		  NULL,			NULL,
 		  "Core i7 (Nehalem)",	NULL,
 		  "Atom",		"XeonMP (Nehalem)",
