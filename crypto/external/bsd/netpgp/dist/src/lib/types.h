@@ -50,16 +50,8 @@
 /** \file
  */
 
-#ifndef OPS_TYPES_H
-#define OPS_TYPES_H
-
-#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
-#else
-#define	bool	unsigned
-#define false	0
-#define	true	1
-#endif
+#ifndef TYPES_H_
+#define TYPES_H_
 
 /** Special type for intermediate function casting, avoids warnings on
     some platforms
@@ -99,4 +91,4 @@ typedef enum {
  */
 typedef struct __ops_createinfo __ops_createinfo_t;
 
-#endif
+#endif /* TYPES_H_ */

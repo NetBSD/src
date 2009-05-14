@@ -96,9 +96,9 @@ void	__ops_keydata_reader_set(__ops_parseinfo_t *, const __ops_keydata_t *);
 __ops_parse_cb_return_t __ops_validate_key_cb(const __ops_packet_t *,
 					__ops_callback_data_t *);
 
-bool   __ops_validate_file(__ops_validation_t *, const char *, const char *,
+unsigned   __ops_validate_file(__ops_validation_t *, const char *, const char *,
 			const int, const __ops_keyring_t *);
-bool   __ops_validate_mem(__ops_validation_t *, __ops_memory_t *, const int,
+unsigned   __ops_validate_mem(__ops_validation_t *, __ops_memory_t *, const int,
 			const __ops_keyring_t *);
 
 __ops_parse_cb_return_t validate_data_cb(const __ops_packet_t *,

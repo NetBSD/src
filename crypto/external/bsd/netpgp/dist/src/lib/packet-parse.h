@@ -51,8 +51,8 @@
  * Parser for OpenPGP packets - headers.
  */
 
-#ifndef OPS_PACKET_PARSE_H
-#define OPS_PACKET_PARSE_H
+#ifndef PACKET_PARSE_H_
+#define PACKET_PARSE_H_
 
 #include "types.h"
 #include "packet.h"
@@ -145,8 +145,8 @@ typedef enum {
 void 
 __ops_parse_options(__ops_parseinfo_t *, __ops_content_tag_t, __ops_parse_type_t);
 
-bool __ops_limited_read(unsigned char *, size_t, __ops_region_t *, __ops_error_t **, __ops_reader_t *, __ops_callback_data_t *);
-bool __ops_stacked_limited_read(unsigned char *, unsigned, __ops_region_t *, __ops_error_t **, __ops_reader_t *, __ops_callback_data_t *);
+unsigned __ops_limited_read(unsigned char *, size_t, __ops_region_t *, __ops_error_t **, __ops_reader_t *, __ops_callback_data_t *);
+unsigned __ops_stacked_limited_read(unsigned char *, unsigned, __ops_region_t *, __ops_error_t **, __ops_reader_t *, __ops_callback_data_t *);
 void __ops_parse_hash_init(__ops_parseinfo_t *, __ops_hash_alg_t, const unsigned char *);
 void __ops_parse_hash_data(__ops_parseinfo_t *, const void *, size_t);
 void            __ops_parse_hash_finish(__ops_parseinfo_t *);
@@ -155,6 +155,6 @@ __ops_hash_t     *__ops_parse_hash_find(__ops_parseinfo_t *, const unsigned char
 __ops_reader_func_t    __ops_stacked_read;
 
 int __ops_decompress(__ops_region_t *, __ops_parseinfo_t *, __ops_compression_type_t);
-bool __ops_write_compressed(const unsigned char *, const unsigned int, __ops_createinfo_t *);
+unsigned __ops_write_compressed(const unsigned char *, const unsigned int, __ops_createinfo_t *);
 
-#endif
+#endif /* PACKET_PARSE_H_ */
