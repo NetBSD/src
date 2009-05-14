@@ -70,7 +70,6 @@
 #include "create.h"
 #include "netpgpsdk.h"
 #include "readerwriter.h"
-#include "loccreate.h"
 #include "validate.h"
 #include "netpgpdefs.h"
 
@@ -243,7 +242,7 @@ dsa_sign(__ops_hash_t * hash,
 	return 1;
 }
 
-static bool 
+static unsigned 
 rsa_verify(__ops_hash_alg_t type,
 	   const unsigned char *hash,
 	   size_t hash_length,
@@ -264,11 +263,11 @@ rsa_verify(__ops_hash_alg_t type,
 	/* RSA key can't be bigger than 65535 bits, so... */
 	if (keysize > sizeof(hashbuf_from_sig)) {
 		(void) fprintf(stderr, "rsa_verify: keysize too big\n");
-		return false;
+		return 0;
 	}
 	if ((unsigned) BN_num_bits(sig->sig) > 8 * sizeof(sigbuf)) {
 		(void) fprintf(stderr, "rsa_verify: BN_numbits too big\n");
-		return false;
+		return 0;
 	}
 	BN_bn2bin(sig->sig, sigbuf);
 
@@ -278,13 +277,13 @@ rsa_verify(__ops_hash_alg_t type,
 
 	if (n != keysize) {
 		/* obviously, this includes error returns */
-		return false;
+		return 0;
 	}
 
 	/* XXX: why is there a leading 0? The first byte should be 1... */
 	/* XXX: because the decrypt should use keysize and not sigsize? */
 	if (hashbuf_from_sig[0] != 0 || hashbuf_from_sig[1] != 1) {
-		return false;
+		return 0;
 	}
 
 	switch (type) {
@@ -302,21 +301,21 @@ rsa_verify(__ops_hash_alg_t type,
 		break;
 	default:
 		(void) fprintf(stderr, "Unknown hash algorithm: %d\n", type);
-		return false;
+		return 0;
 	}
 
 	if (keysize - plen - hash_length < 10) {
-		return false;
+		return 0;
 	}
 
 	for (n = 2; n < keysize - plen - hash_length - 1; ++n) {
 		if (hashbuf_from_sig[n] != 0xff) {
-			return false;
+			return 0;
 		}
 	}
 
 	if (hashbuf_from_sig[n++] != 0) {
-		return false;
+		return 0;
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
@@ -349,9 +348,9 @@ rsa_verify(__ops_hash_alg_t type,
 	}
 	if (memcmp(&hashbuf_from_sig[n], prefix, plen) != 0 ||
 	    memcmp(&hashbuf_from_sig[n + plen], hash, hash_length) != 0) {
-		return false;
+		return 0;
 	}
-	return true;
+	return 1;
 }
 
 static void 
@@ -360,7 +359,7 @@ hash_add_key(__ops_hash_t *hash, const __ops_pubkey_t *key)
 	__ops_memory_t	*mem = __ops_memory_new();
 	size_t		 len;
 
-	__ops_build_pubkey(mem, key, false);
+	__ops_build_pubkey(mem, key, 0);
 	len = __ops_memory_get_length(mem);
 	__ops_hash_add_int(hash, 0x99, 1);
 	__ops_hash_add_int(hash, len, 2);
@@ -408,14 +407,14 @@ hash_add_trailer(__ops_hash_t * hash, const __ops_sig_t * sig,
    \param length Signature Length
    \param sig The Signature to be checked
    \param signer The signer's public key
-   \return true if good; else false
+   \return 1 if good; else 0
 */
-bool 
+unsigned 
 __ops_check_sig(const unsigned char *hash, unsigned length,
 		    const __ops_sig_t * sig,
 		    const __ops_pubkey_t * signer)
 {
-	bool   ret;
+	unsigned   ret;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("__ops_check_sig: (length %d) hash=", length);
@@ -437,13 +436,13 @@ __ops_check_sig(const unsigned char *hash, unsigned length,
 
 	default:
 		(void) fprintf(stderr, "__ops_check_sig: unusual alg\n");
-		ret = false;
+		ret = 0;
 	}
 
 	return ret;
 }
 
-static bool 
+static unsigned 
 hash_and_check_sig(__ops_hash_t * hash,
 			 const __ops_sig_t * sig,
 			 const __ops_pubkey_t * signer)
@@ -455,7 +454,7 @@ hash_and_check_sig(__ops_hash_t * hash,
 	return __ops_check_sig(hashout, n, sig, signer);
 }
 
-static bool 
+static unsigned 
 finalise_sig(__ops_hash_t * hash,
 		   const __ops_sig_t * sig,
 		   const __ops_pubkey_t * signer,
@@ -475,9 +474,9 @@ finalise_sig(__ops_hash_t * hash,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return true if OK; else false
+ * \return 1 if OK; else 0
  */
-bool
+unsigned
 __ops_check_useridcert_sig(const __ops_pubkey_t * key,
 			  const __ops_user_id_t * id,
 			  const __ops_sig_t * sig,
@@ -508,9 +507,9 @@ __ops_check_useridcert_sig(const __ops_pubkey_t * key,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return true if OK; else false
+ * \return 1 if OK; else 0
  */
-bool
+unsigned
 __ops_check_userattrcert_sig(const __ops_pubkey_t * key,
 				const __ops_user_attribute_t *attribute,
 				const __ops_sig_t *sig,
@@ -540,9 +539,9 @@ __ops_check_userattrcert_sig(const __ops_pubkey_t * key,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return true if OK; else false
+ * \return 1 if OK; else 0
  */
-bool
+unsigned
 __ops_check_subkey_sig(const __ops_pubkey_t * key,
 			   const __ops_pubkey_t * subkey,
 			   const __ops_sig_t * sig,
@@ -566,9 +565,9 @@ __ops_check_subkey_sig(const __ops_pubkey_t * key,
  * \param sig The signature.
  * \param signer The public key of the signer.
  * \param raw_packet The raw signature packet.
- * \return true if OK; else false
+ * \return 1 if OK; else 0
  */
-bool
+unsigned
 __ops_check_direct_sig(const __ops_pubkey_t * key,
 			   const __ops_sig_t * sig,
 			   const __ops_pubkey_t * signer,
@@ -590,16 +589,16 @@ __ops_check_direct_sig(const __ops_pubkey_t * key,
  * the material to be signed. This MUST NOT have been finalised.
  * \param sig The signature to be verified.
  * \param signer The public key of the signer.
- * \return true if OK; else false
+ * \return 1 if OK; else 0
  */
-bool
+unsigned
 __ops_check_hash_sig(__ops_hash_t * hash,
 			 const __ops_sig_t * sig,
 			 const __ops_pubkey_t * signer)
 {
 	return (sig->info.hash_alg == hash->alg) ?
 		finalise_sig(hash, sig, signer, NULL) :
-		false;
+		0;
 }
 
 static void 
@@ -723,7 +722,7 @@ __ops_sig_add_data(__ops_create_sig_t * sig, const void *buf,
  * \param sig
  */
 
-bool 
+unsigned 
 __ops_sig_hashed_subpackets_end(__ops_create_sig_t * sig)
 {
 	sig->hashed_data_length = __ops_memory_get_length(sig->mem)
@@ -747,14 +746,14 @@ __ops_sig_hashed_subpackets_end(__ops_create_sig_t * sig)
  *
  */
 
-bool 
+unsigned 
 __ops_write_sig(__ops_create_sig_t * sig,
 			const __ops_pubkey_t *key,
 			const __ops_seckey_t *seckey,
 			__ops_createinfo_t *info)
 {
 	size_t	l = __ops_memory_get_length(sig->mem);
-	bool	rtn = false;
+	unsigned	rtn = 0;
 
 	/* check key not decrypted */
 	switch (seckey->pubkey.alg) {
@@ -764,7 +763,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 		if (seckey->key.rsa.d == NULL) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: null rsa.d\n");
-			return false;
+			return 0;
 		}
 		break;
 
@@ -772,20 +771,20 @@ __ops_write_sig(__ops_create_sig_t * sig,
 		if (seckey->key.dsa.x == NULL) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: null dsa.x\n");
-			return false;
+			return 0;
 		}
 		break;
 
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
 				seckey->pubkey.alg);
-		return false;
+		return 0;
 	}
 
 	if (sig->hashed_data_length == (unsigned) -1) {
 		(void) fprintf(stderr,
 			"ops_write_sig: bad hashed data len\n");
-		return false;
+		return 0;
 	}
 
 	__ops_memory_place_int(sig->mem, sig->unhashed_count_offset,
@@ -820,7 +819,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 				sig->info)) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: rsa_sign failure\n");
-			return false;
+			return 0;
 		}
 		break;
 
@@ -829,25 +828,25 @@ __ops_write_sig(__ops_create_sig_t * sig,
 				sig->info)) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: dsa_sign failure\n");
-			return false;
+			return 0;
 		}
 		break;
 
 	default:
 		(void) fprintf(stderr, "Unsupported algorithm %d\n",
 					seckey->pubkey.alg);
-		return false;
+		return 0;
 	}
 
 	rtn = __ops_write_ptag(OPS_PTAG_CT_SIGNATURE, info);
-	if (rtn != false) {
+	if (rtn) {
 		l = __ops_memory_get_length(sig->mem);
 		rtn = __ops_write_length(l, info) &&
 			__ops_write(__ops_memory_get_data(sig->mem), l, info);
 	}
 	__ops_memory_free(sig->mem);
 
-	if (rtn == false) {
+	if (rtn == 0) {
 		OPS_ERROR(&info->errors, OPS_E_W, "Cannot write signature");
 	}
 	return rtn;
@@ -861,7 +860,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
  * \param sig
  * \param when
  */
-bool 
+unsigned 
 __ops_sig_add_birthtime(__ops_create_sig_t * sig, time_t when)
 {
 	return __ops_write_ss_header(5, OPS_PTAG_SS_CREATION_TIME,
@@ -878,7 +877,7 @@ __ops_sig_add_birthtime(__ops_create_sig_t * sig, time_t when)
  * \param keyid
  */
 
-bool 
+unsigned 
 __ops_sig_add_issuer_key_id(__ops_create_sig_t * sig,
 				const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
@@ -897,7 +896,7 @@ __ops_sig_add_issuer_key_id(__ops_create_sig_t * sig,
  */
 void 
 __ops_sig_add_primary_user_id(__ops_create_sig_t * sig,
-				  bool primary)
+				  unsigned primary)
 {
 	__ops_write_ss_header(2, OPS_PTAG_SS_PRIMARY_USER_ID, sig->info);
 	__ops_write_scalar(primary, 1, sig->info);
@@ -921,8 +920,8 @@ static int
 open_output_file(__ops_createinfo_t ** cinfo,
 			const char *input_filename,
 			const char *output_filename,
-			const bool use_armour,
-			const bool overwrite)
+			const unsigned use_armour,
+			const unsigned overwrite)
 {
 	int             fd_out;
 
@@ -957,15 +956,15 @@ open_output_file(__ops_createinfo_t ** cinfo,
    \param output_filename Filename to be created. If NULL, filename will be constructed from the input_filename.
    \param seckey Secret Key to sign with
    \param overwrite Allow output file to be overwritten, if set
-   \return true if OK, else false
+   \return 1 if OK, else 0
 
 */
-bool 
+unsigned 
 __ops_sign_file_as_cleartext(const char *input_filename,
 			const char *output_filename,
 			const __ops_seckey_t *seckey,
 			const char *hashname,
-			const bool overwrite)
+			const unsigned overwrite)
 {
 	__ops_createinfo_t	*cinfo = NULL;
 	__ops_create_sig_t	*sig = NULL;
@@ -973,8 +972,8 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 	__ops_hash_alg_t	 hash_alg;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE];
 	unsigned char		 buf[MAXBUF];
-	bool			 rtn = false;
-	bool			 use_armour = true;
+	unsigned			 rtn = 0;
+	unsigned			 use_armour = 1;
 	int			 fd_out = 0;
 	int			 fd_in = 0;
 
@@ -984,7 +983,7 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 		(void) fprintf(stderr,
 			"__ops_sign_file_as_cleartext: unknown hash algorithm"
 			": \"%s\"\n", hashname);
-		return false;
+		return 0;
 	}
 
 	/* open file to sign */
@@ -994,7 +993,7 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 	fd_in = open(input_filename, O_RDONLY);
 #endif
 	if (fd_in < 0) {
-		return false;
+		return 0;
 	}
 
 	/* set up output file */
@@ -1002,7 +1001,7 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 			use_armour, overwrite);
 	if (fd_out < 0) {
 		close(fd_in);
-		return false;
+		return 0;
 	}
 
 	/* set up signature */
@@ -1010,13 +1009,13 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 	if (!sig) {
 		close(fd_in);
 		__ops_teardown_file_write(cinfo, fd_out);
-		return false;
+		return 0;
 	}
 
 	/* \todo could add more error detection here */
 	__ops_start_sig(sig, seckey, hash_alg, sig_type);
-	if (__ops_writer_push_clearsigned(cinfo, sig) != true) {
-		return false;
+	if (__ops_writer_push_clearsigned(cinfo, sig) != 1) {
+		return 0;
 	}
 
 	/* Do the signing */
@@ -1030,7 +1029,7 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 		if (n < 0) {
 			(void) fprintf(stderr,
 				"__ops_sign_file_as_cleartext: bad read\n");
-			return false;
+			return 0;
 		}
 		__ops_write(buf, (unsigned)n, cinfo);
 	}
@@ -1039,11 +1038,11 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 	/* add signature with subpackets: */
 	/* - creation time */
 	/* - key id */
-	rtn = __ops_writer_use_armored_sig(cinfo)
-		&& __ops_sig_add_birthtime(sig, time(NULL));
-	if (rtn == false) {
+	rtn = __ops_writer_use_armored_sig(cinfo) &&
+			__ops_sig_add_birthtime(sig, time(NULL));
+	if (rtn == 0) {
 		__ops_teardown_file_write(cinfo, fd_out);
-		return false;
+		return 0;
 	}
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
@@ -1053,15 +1052,13 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 
 	__ops_teardown_file_write(cinfo, fd_out);
 
-	if (rtn == false) {
+	if (rtn == 0) {
 		OPS_ERROR(&cinfo->errors, OPS_E_W,
 				"Cannot sign file as cleartext");
 	}
 	return rtn;
 }
 
-#if 0
-/* XXX commented out until I work out what header file to put this one in */
 /**
  * \ingroup HighLevel_Sign
  * \brief Sign a buffer with a Cleartext signature
@@ -1069,39 +1066,49 @@ __ops_sign_file_as_cleartext(const char *input_filename,
  * \param len Length of text
  * \param signed_cleartext __ops_memory_t struct in which to write the signed cleartext
  * \param seckey Secret key with which to sign the cleartext
- * \return true if OK; else false
+ * \return 1 if OK; else 0
 
  * \note It is the calling function's responsibility to free signed_cleartext
  * \note signed_cleartext should be a NULL pointer when passed in
 
  */
-bool 
+unsigned 
 __ops_sign_buf_as_cleartext(const char *cleartext,
-				const size_t len,
-				__ops_memory_t **signed_cleartext,
-				const __ops_seckey_t *seckey)
+			const size_t len,
+			__ops_memory_t **signed_cleartext,
+			const __ops_seckey_t *seckey,
+			const char *hashname)
 {
-	bool   rtn = false;
-	unsigned char   keyid[OPS_KEY_ID_SIZE];
-	__ops_create_sig_t *sig = NULL;
-	__ops_createinfo_t *cinfo = NULL;
+	__ops_createinfo_t	*cinfo = NULL;
+	__ops_create_sig_t	*sig = NULL;
+	__ops_sig_type_t	 sig_type = OPS_SIG_BINARY;
+	__ops_hash_alg_t	 hash_alg;
+	unsigned char		 keyid[OPS_KEY_ID_SIZE];
+	unsigned			 rtn = 0;
 
-	/* \todo allow choice of hash algorithams */
-	/* enforce use of SHA1 for now */
+	/* check the hash algorithm */
+	hash_alg = __ops_str_to_hash_alg(hashname);
+	if (hash_alg == OPS_HASH_UNKNOWN) {
+		(void) fprintf(stderr,
+			"__ops_sign_buf_as_cleartext: unknown hash algorithm"
+			": \"%s\"\n", hashname);
+		return 0;
+	}
+
 
 	if (*signed_cleartext != 0x0) {
 		(void) fprintf(stderr,
 			"__ops_sign_buf_as_cleartext: non-null cleartext\n");
-		return false;
+		return 0;
 	}
 
 	/* set up signature */
 	sig = __ops_create_sig_new();
 	if (!sig) {
-		return false;
+		return 0;
 	}
 	/* \todo could add more error detection here */
-	__ops_start_sig(sig, seckey, OPS_HASH_SHA1, OPS_SIG_BINARY);
+	__ops_start_sig(sig, seckey, hash_alg, sig_type);
 
 	/* set up output file */
 	__ops_setup_memory_write(&cinfo, signed_cleartext, len);
@@ -1115,8 +1122,8 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 		__ops_writer_use_armored_sig(cinfo) &&
 		__ops_sig_add_birthtime(sig, time(NULL));
 
-	if (rtn == false) {
-		return false;
+	if (rtn == 0) {
+		return 0;
 	}
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
@@ -1130,7 +1137,6 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 
 	return rtn;
 }
-#endif
 
 /**
 \ingroup HighLevel_Sign
@@ -1140,16 +1146,16 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 \param seckey Secret Key to use for signing
 \param use_armour Write armoured text, if set.
 \param overwrite May overwrite existing file, if set.
-\return true if OK; else false;
+\return 1 if OK; else 0;
 
 */
-bool 
+unsigned 
 __ops_sign_file(const char *input_filename,
 		const char *output_filename,
 		const __ops_seckey_t *seckey,
 		const char *hashname,
-		const bool use_armour,
-		const bool overwrite)
+		const unsigned use_armour,
+		const unsigned overwrite)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
@@ -1169,13 +1175,13 @@ __ops_sign_file(const char *input_filename,
 		(void) fprintf(stderr,
 			"__ops_sign_file: unknown hash algorithm: \"%s\"\n",
 			hashname);
-		return false;
+		return 0;
 	}
 
 	/* read input file into buf */
 	mem_buf = __ops_fileread(input_filename, &errnum);
 	if (errnum) {
-		return false;
+		return 0;
 	}
 
 	/* setup output file */
@@ -1183,7 +1189,7 @@ __ops_sign_file(const char *input_filename,
 			use_armour, overwrite);
 	if (fd_out < 0) {
 		__ops_memory_free(mem_buf);
-		return false;
+		return 0;
 	}
 
 	/* set up signature */
@@ -1238,7 +1244,7 @@ __ops_sign_file(const char *input_filename,
 	__ops_create_sig_delete(sig);
 	__ops_memory_free(mem_buf);
 
-	return true;
+	return 1;
 }
 
 #if 0
@@ -1260,7 +1266,7 @@ __ops_sign_buf(const void *input,
 		const size_t input_len,
 		const __ops_sig_type_t sig_type,
 		const __ops_seckey_t * seckey,
-		const bool use_armour)
+		const unsigned use_armour)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */

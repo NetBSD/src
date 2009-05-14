@@ -36,6 +36,7 @@ typedef struct netpgp_t {
 	void	*pubring;	/* public key ring */
 	char	*secringfile;	/* name of secret key ring file */
 	void	*secring;	/* secret key ring */
+	char	*hashalg;	/* hash algorithm to use */
 } netpgp_t;
 
 /* begin and end */
@@ -47,6 +48,10 @@ int netpgp_set_debug(const char *);
 int netpgp_get_debug(const char *);
 const char *netpgp_get_info(const char *);
 int netpgp_list_packets(netpgp_t *, char *, int, char *);
+
+/* variables */
+int netpgp_setvar(netpgp_t *, const char *, const char *);
+char *netpgp_getvar(netpgp_t *, const char *);
 
 /* key management */
 int netpgp_list_keys(netpgp_t *);

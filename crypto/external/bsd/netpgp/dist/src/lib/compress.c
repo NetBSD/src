@@ -64,7 +64,7 @@
 #include "packet-parse.h"
 #include "errors.h"
 #include "netpgpdefs.h"
-#include "parse_local.h"
+#include "crypto.h"
 #include "memory.h"
 #include "writer.h"
 
@@ -124,13 +124,15 @@ zlib_compressed_data_reader(void *dest, size_t length,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "zlib_compressed_data_reader: length %" PRIsize "d\n", length);
+		(void) fprintf(stderr,
+			"zlib_compressed_data_reader: length %" PRIsize "d\n",
+			length);
 	}
 
 	if (z->region->length_read == z->region->length) {
 		if (z->inflate_ret != Z_STREAM_END) {
 			OPS_ERROR(cbinfo->errors, OPS_E_P_DECOMPRESSION_ERROR,
-				"Compressed data didn't end when region ended.");
+			"Compressed data didn't end when region ended.");
 		}
 	}
 	for (cc = 0 ; cc < length ; cc += len) {
@@ -151,9 +153,9 @@ zlib_compressed_data_reader(void *dest, size_t length,
 				} else {
 					n = sizeof(z->in);
 				}
-
-				if (!__ops_stacked_limited_read(z->in, n, z->region,
-						     errors, readinfo, cbinfo)) {
+				if (!__ops_stacked_limited_read(z->in, n,
+						z->region,
+						errors, readinfo, cbinfo)) {
 					return -1;
 				}
 
@@ -171,7 +173,8 @@ zlib_compressed_data_reader(void *dest, size_t length,
 				}
 			} else if (ret != Z_OK) {
 				(void) fprintf(stderr, "ret=%d\n", ret);
-				OPS_ERROR(cbinfo->errors, OPS_E_P_DECOMPRESSION_ERROR, z->zstream.msg);
+				OPS_ERROR(cbinfo->errors,
+				OPS_E_P_DECOMPRESSION_ERROR, z->zstream.msg);
 			}
 			z->inflate_ret = ret;
 		}
@@ -214,7 +217,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 	if (bz->region->length_read == bz->region->length) {
 		if (bz->inflate_ret != BZ_STREAM_END) {
 			OPS_ERROR(cbinfo->errors, OPS_E_P_DECOMPRESSION_ERROR,
-				"Compressed data didn't end when region ended.");
+			"Compressed data didn't end when region ended.");
 		}
 	}
 	for (cc = 0 ; cc < length ; cc += len) {
@@ -234,13 +237,16 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 				} else
 					n = sizeof(bz->in);
 
-				if (!__ops_stacked_limited_read((unsigned char *) bz->in, n, bz->region,
-						     errors, readinfo, cbinfo))
+				if (!__ops_stacked_limited_read(
+						(unsigned char *) bz->in,
+						n, bz->region,
+						errors, readinfo, cbinfo))
 					return -1;
 
 				bz->bzstream.next_in = bz->in;
-				bz->bzstream.avail_in = bz->region->indeterminate
-					? bz->region->last_read : n;
+				bz->bzstream.avail_in =
+					(bz->region->indeterminate) ?
+					 bz->region->last_read : n;
 			}
 			ret = BZ2_bzDecompress(&bz->bzstream);
 			if (ret == BZ_STREAM_END) {
@@ -354,20 +360,22 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 		if (ret != Z_OK) {
 			OPS_ERROR_1(&parse_info->errors,
 				OPS_E_P_DECOMPRESSION_ERROR,
-				"Cannot initialise ZIP or ZLIB stream for decompression: error=%d", ret);
+"Cannot initialise ZIP or ZLIB stream for decompression: error=%d", ret);
 			return 0;
 		}
-		__ops_reader_push(parse_info, zlib_compressed_data_reader, NULL, &z);
+		__ops_reader_push(parse_info, zlib_compressed_data_reader,
+					NULL, &z);
 		break;
 
 	case OPS_C_BZIP2:
 		if (ret != BZ_OK) {
 			OPS_ERROR_1(&parse_info->errors,
 				OPS_E_P_DECOMPRESSION_ERROR,
-				"Cannot initialise BZIP2 stream for decompression: error=%d", ret);
+"Cannot initialise BZIP2 stream for decompression: error=%d", ret);
 			return 0;
 		}
-		__ops_reader_push(parse_info, bzip2_compressed_data_reader, NULL, &bz);
+		__ops_reader_push(parse_info, bzip2_compressed_data_reader,
+					NULL, &bz);
 		break;
 
 	default:
@@ -390,10 +398,10 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 \param data Data to write out
 \param len Length of data
 \param cinfo Write settings
-\return true if OK; else false
+\return 1 if OK; else 0
 */
 
-bool 
+unsigned 
 __ops_write_compressed(const unsigned char *data,
 		     const unsigned int len,
 		     __ops_createinfo_t *cinfo)
@@ -415,14 +423,14 @@ __ops_write_compressed(const unsigned char *data,
 	if (deflateInit(&zip->stream, level) != Z_OK) {
 		(void) fprintf(stderr,
 			"__ops_write_compressed: can't initialise\n");
-		return false;
+		return 0;
 	}
 	/* do necessary transformation */
 	/* copy input to maintain const'ness of src */
 	if (zip->src != NULL || zip->dst != NULL) {
 		(void) fprintf(stderr, 
 			"__ops_write_compressed: non-null streams\n");
-		return false;
+		return 0;
 	}
 
 	sz_in = len * sizeof(unsigned char);
@@ -446,7 +454,8 @@ __ops_write_compressed(const unsigned char *data,
 
 	/* write it out */
 	return (__ops_write_ptag(OPS_PTAG_CT_COMPRESSED, cinfo) &&
-		__ops_write_length((unsigned)(zip->stream.total_out + 1), cinfo) &&
+		__ops_write_length((unsigned)(zip->stream.total_out + 1),
+							cinfo) &&
 		__ops_write_scalar(OPS_C_ZLIB, 1, cinfo) &&
 		__ops_write(zip->dst, (unsigned)zip->stream.total_out, cinfo));
 }

@@ -125,7 +125,6 @@
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "version.h"
-#include "parse_local.h"
 
 
 /**
@@ -251,7 +250,7 @@ typedef struct {
 	/* base64 stuff */
 	unsigned        buffered;
 	unsigned char   buffer[3];
-	bool   		eof64;
+	unsigned   		eof64;
 	unsigned long   checksum;
 	unsigned long   read_checksum;
 	/* unarmoured text blocks */
@@ -391,7 +390,7 @@ read_char(dearmour_t * dearmour,
 		__ops_error_t **errors,
 		__ops_reader_t *readinfo,
 		__ops_callback_data_t *cbinfo,
-		bool skip)
+		unsigned skip)
 {
 	unsigned char   c[1];
 
@@ -424,7 +423,7 @@ eat_whitespace(int first,
 	       __ops_error_t **errors,
 	       __ops_reader_t *readinfo,
 	       __ops_callback_data_t *cbinfo,
-	       bool skip)
+	       unsigned skip)
 {
 	int             c = first;
 
@@ -439,7 +438,7 @@ read_and_eat_whitespace(dearmour_t *dearmour,
 			__ops_error_t **errors,
 			__ops_reader_t *readinfo,
 			__ops_callback_data_t *cbinfo,
-			bool skip)
+			unsigned skip)
 {
 	int             c;
 
@@ -468,12 +467,12 @@ unarmoured_read_char(dearmour_t *dearmour,
 			__ops_error_t **errors,
 			__ops_reader_t *readinfo,
 			__ops_callback_data_t *cbinfo,
-			bool skip)
+			unsigned skip)
 {
 	int             c;
 
 	do {
-		c = read_char(dearmour, errors, readinfo, cbinfo, false);
+		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
 		if (c < 0) {
 			return c;
 		}
@@ -570,12 +569,12 @@ process_dash_escaped(dearmour_t *dearmour,
 		int             c;
 		unsigned        count;
 
-		if ((c = read_char(dearmour, errors, readinfo, cbinfo, true)) < 0) {
+		if ((c = read_char(dearmour, errors, readinfo, cbinfo, 1)) < 0) {
 			return -1;
 		}
 		if (dearmour->prev_nl && c == '-') {
 			if ((c = read_char(dearmour, errors, readinfo, cbinfo,
-						false)) < 0) {
+						0)) < 0) {
 				return -1;
 			}
 			if (c != ' ') {
@@ -586,7 +585,7 @@ process_dash_escaped(dearmour_t *dearmour,
 				}
 				for (count = 2; count < 5; ++count) {
 					if ((c = read_char(dearmour, errors,
-						readinfo, cbinfo, false)) < 0) {
+						readinfo, cbinfo, 0)) < 0) {
 						return -1;
 					}
 					if (c != '-') {
@@ -600,7 +599,7 @@ process_dash_escaped(dearmour_t *dearmour,
 			}
 			/* otherwise we read the next character */
 			if ((c = read_char(dearmour, errors, readinfo, cbinfo,
-						false)) < 0) {
+						0)) < 0) {
 				return -1;
 			}
 		}
@@ -683,7 +682,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 	unsigned        nbuf;
 	unsigned        size;
 	char           *buf;
-	bool   		first = true;
+	unsigned   		first = 1;
 	int             rtn = 1;
 
 	buf = NULL;
@@ -692,7 +691,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 	for (;;) {
 		int             c;
 
-		if ((c = read_char(dearmour, errors, readinfo, cbinfo, true)) < 0) {
+		if ((c = read_char(dearmour, errors, readinfo, cbinfo, 1)) < 0) {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Unexpected EOF");
 			rtn = -1;
 			break;
@@ -751,7 +750,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 				}
 				nbuf = 0;
 			}
-			first = false;
+			first = 0;
 		} else {
 			if (size <= nbuf + 1) {
 				size += size + 80;
@@ -776,9 +775,9 @@ read4(dearmour_t *dearmour, __ops_error_t **errors,
 	unsigned long   l = 0;
 
 	for (n = 0; n < 4; ++n) {
-		c = read_char(dearmour, errors, readinfo, cbinfo, true);
+		c = read_char(dearmour, errors, readinfo, cbinfo, 1);
 		if (c < 0) {
-			dearmour->eof64 = true;
+			dearmour->eof64 = 1;
 			return -1;
 		}
 		if (c == '-' || c == '=') {
@@ -832,7 +831,7 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 	int             c;
 	int             ret;
 
-	if (dearmour->buffered != 0) {
+	if (dearmour->buffered) {
 		(void) fprintf(stderr, "decode64: bad dearmour->buffered\n");
 		return 0;
 	}
@@ -849,7 +848,7 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 			return 0;
 		}
 		dearmour->buffered = 2;
-		dearmour->eof64 = true;
+		dearmour->eof64 = 1;
 		l >>= 2;
 	} else if (n == 2) {
 		if (c != '=') {
@@ -858,9 +857,9 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 			return 0;
 		}
 		dearmour->buffered = 1;
-		dearmour->eof64 = true;
+		dearmour->eof64 = 1;
 		l >>= 4;
-		c = read_char(dearmour, errors, readinfo, cbinfo, false);
+		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '=') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
 					"Badly terminated base64");
@@ -893,13 +892,13 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 			return 0;
 		}
 		c = read_and_eat_whitespace(dearmour, errors, readinfo, cbinfo,
-				true);
+				1);
 		if (c != '\n') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
 				"No newline at base64 end");
 			return 0;
 		}
-		c = read_char(dearmour, errors, readinfo, cbinfo, false);
+		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '=') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
 				"No checksum at base64 end");
@@ -915,16 +914,16 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 					"Error in checksum");
 			return 0;
 		}
-		c = read_char(dearmour, errors, readinfo, cbinfo, true);
+		c = read_char(dearmour, errors, readinfo, cbinfo, 1);
 		if (dearmour->allow_trailing_whitespace)
 			c = eat_whitespace(c, dearmour, errors, readinfo, cbinfo,
-					true);
+					1);
 		if (c != '\n') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
 					"Badly terminated checksum");
 			return 0;
 		}
-		c = read_char(dearmour, errors, readinfo, cbinfo, false);
+		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '-') {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
 					"Bad base64 trailer (2)");
@@ -934,12 +933,12 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 	if (c == '-') {
 		for (n = 0; n < 4; ++n)
 			if (read_char(dearmour, errors, readinfo, cbinfo,
-						false) != '-') {
+						0) != '-') {
 				OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
 						"Bad base64 trailer");
 				return 0;
 			}
-		dearmour->eof64 = true;
+		dearmour->eof64 = 1;
 	} else {
 		if (!dearmour->buffered) {
 			(void) fprintf(stderr, "decode64: not buffered\n");
@@ -968,7 +967,7 @@ base64(dearmour_t * dearmour)
 {
 	dearmour->state = BASE64;
 	dearmour->checksum = CRC24_INIT;
-	dearmour->eof64 = false;
+	dearmour->eof64 = 0;
 	dearmour->buffered = 0;
 }
 
@@ -984,7 +983,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 	dearmour_t *dearmour = __ops_reader_get_arg(readinfo);
 	__ops_packet_t content;
 	int             ret;
-	bool   first;
+	unsigned   first;
 	unsigned char  *dest = dest_;
 	int             saved = length;
 
@@ -1013,7 +1012,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 			 */
 			while (!dearmour->seen_nl) {
 				if ((c = unarmoured_read_char(dearmour, errors,
-						readinfo, cbinfo, true)) < 0) {
+						readinfo, cbinfo, 1)) < 0) {
 					return 0;
 				}
 			}
@@ -1027,7 +1026,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 			/* Find and consume the 5 leading '-' */
 			for (count = 0; count < 5; ++count) {
 				if ((c = unarmoured_read_char(dearmour, errors,
-						readinfo, cbinfo, false)) < 0) {
+						readinfo, cbinfo, 0)) < 0) {
 					return 0;
 				}
 				if (c != '-') {
@@ -1038,7 +1037,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
 			/* Now find the block type */
 			for (n = 0; n < sizeof(buf) - 1;) {
 				if ((c = unarmoured_read_char(dearmour, errors,
-						readinfo, cbinfo, false)) < 0) {
+						readinfo, cbinfo, 0)) < 0) {
 					return 0;
 				}
 				if (c == '-') {
@@ -1055,7 +1054,7 @@ got_minus:
 			/* Consume trailing '-' */
 			for (count = 1; count < 5; ++count) {
 				if ((c = unarmoured_read_char(dearmour, errors,
-						readinfo, cbinfo, false)) < 0) {
+						readinfo, cbinfo, 0)) < 0) {
 					return 0;
 				}
 				if (c != '-') {
@@ -1066,12 +1065,12 @@ got_minus:
 
 			/* Consume final NL */
 			if ((c = unarmoured_read_char(dearmour, errors, readinfo,
-						cbinfo, true)) < 0) {
+						cbinfo, 1)) < 0) {
 				return 0;
 			}
 			if (dearmour->allow_trailing_whitespace) {
 				if ((c = eat_whitespace(c, dearmour, errors,
-						readinfo, cbinfo, true)) < 0) {
+						readinfo, cbinfo, 1)) < 0) {
 					return 0;
 				}
 			}
@@ -1124,7 +1123,7 @@ got_minus:
 			break;
 
 		case BASE64:
-			first = true;
+			first = 1;
 			while (length > 0) {
 				if (!dearmour->buffered) {
 					if (!dearmour->eof64) {
@@ -1156,7 +1155,7 @@ got_minus:
 				*dest = dearmour->buffer[--dearmour->buffered];
 				++dest;
 				--length;
-				first = false;
+				first = 0;
 			}
 			if (dearmour->eof64 && !dearmour->buffered) {
 				dearmour->state = AT_TRAILER_NAME;
@@ -1166,7 +1165,7 @@ got_minus:
 		case AT_TRAILER_NAME:
 			for (n = 0; n < sizeof(buf) - 1;) {
 				if ((c = read_char(dearmour, errors, readinfo,
-						cbinfo, false)) < 0) {
+						cbinfo, 0)) < 0) {
 					return -1;
 				}
 				if (c == '-') {
@@ -1189,7 +1188,7 @@ got_minus2:
 			/* Consume trailing '-' */
 			for (count = 1; count < 5; ++count) {
 				if ((c = read_char(dearmour, errors, readinfo,
-						cbinfo, false)) < 0) {
+						cbinfo, 0)) < 0) {
 					return -1;
 				}
 				if (c != '-') {
@@ -1201,12 +1200,12 @@ got_minus2:
 
 			/* Consume final NL */
 			if ((c = read_char(dearmour, errors, readinfo, cbinfo,
-						true)) < 0) {
+						1)) < 0) {
 				return -1;
 			}
 			if (dearmour->allow_trailing_whitespace) {
 				if ((c = eat_whitespace(c, dearmour, errors,
-						readinfo, cbinfo, true)) < 0) {
+						readinfo, cbinfo, 1)) < 0) {
 					return 0;
 				}
 			}
@@ -1270,25 +1269,25 @@ __ops_reader_push_dearmour(__ops_parseinfo_t * parse_info)
  * be fixed so that these flags work correctly.
  * 
  * // Allow headers in armoured data that are not separated from the data by a
- * blank line bool without_gap,
+ * blank line unsigned without_gap,
  * 
- * // Allow no blank line at the start of armoured data bool no_gap,
+ * // Allow no blank line at the start of armoured data unsigned no_gap,
  * 
  * //Allow armoured data to have trailing whitespace where we strictly would not
- * expect it			      bool trailing_whitespace
+ * expect it			      unsigned trailing_whitespace
  */
 {
 	dearmour_t *dearmour;
 
 	dearmour = calloc(1, sizeof(*dearmour));
-	dearmour->seen_nl = true;
+	dearmour->seen_nl = 1;
 	/*
 	    dearmour->allow_headers_without_gap=without_gap;
 	    dearmour->allow_no_gap=no_gap;
 	    dearmour->allow_trailing_whitespace=trailing_whitespace;
 	*/
-	dearmour->expect_sig = false;
-	dearmour->got_sig = false;
+	dearmour->expect_sig = 0;
+	dearmour->got_sig = 0;
 
 	__ops_reader_push(parse_info, armoured_data_reader,
 			armoured_data_destroyer, dearmour);
@@ -1342,10 +1341,10 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 			return -1;
 		}
 		encrypted->decrypt->decrypt_resync(encrypted->decrypt);
-		encrypted->prevplain = false;
+		encrypted->prevplain = 0;
 	} else if (readinfo->parent->reading_v3_secret &&
 		   readinfo->parent->reading_mpi_len) {
-		encrypted->prevplain = true;
+		encrypted->prevplain = 1;
 	}
 	while (length > 0) {
 		if (encrypted->decryptc) {
@@ -1487,7 +1486,7 @@ __ops_reader_pop_decrypt(__ops_parseinfo_t * pinfo)
 /**************************************************************************/
 
 typedef struct {
-	/* boolean: false once we've done the preamble/MDC checks */
+	/* boolean: 0 once we've done the preamble/MDC checks */
 	/* and are reading from the plaintext */
 	int             passed_checks;
 	unsigned char  *plaintext;
@@ -1843,7 +1842,7 @@ __ops_teardown_memory_write(__ops_createinfo_t * cinfo, __ops_memory_t * mem)
    \param mem Memory to read from
    \param arg Reader-specific arg
    \param callback Callback to use with reader
-   \param accumulate Set if we need to accumulate as we read. (Usually false unless doing signature verification)
+   \param accumulate Set if we need to accumulate as we read. (Usually 0 unless doing signature verification)
    \note It is the caller's responsiblity to free parse_info
    \sa __ops_teardown_memory_read()
 */
@@ -1851,7 +1850,7 @@ void
 __ops_setup_memory_read(__ops_parseinfo_t ** pinfo, __ops_memory_t * mem,
 		      void *vp,
 		      __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *),
-		      bool accumulate)
+		      unsigned accumulate)
 {
 	/*
          * initialise needed structures for reading
@@ -1864,7 +1863,7 @@ __ops_setup_memory_read(__ops_parseinfo_t ** pinfo, __ops_memory_t * mem,
 			      __ops_memory_get_length(mem));
 
 	if (accumulate)
-		(*pinfo)->readinfo.accumulate = true;
+		(*pinfo)->readinfo.accumulate = 1;
 }
 
 /**
@@ -1893,7 +1892,7 @@ __ops_teardown_memory_read(__ops_parseinfo_t * pinfo, __ops_memory_t * mem)
 */
 int 
 __ops_setup_file_write(__ops_createinfo_t **cinfo, const char *filename,
-			bool allow_overwrite)
+			unsigned allow_overwrite)
 {
 	int             fd = 0;
 	int             flags = 0;
@@ -1906,7 +1905,7 @@ __ops_setup_file_write(__ops_createinfo_t **cinfo, const char *filename,
 		fd = STDOUT_FILENO;
 	} else {
 		flags = O_WRONLY | O_CREAT;
-		if (allow_overwrite == true)
+		if (allow_overwrite)
 			flags |= O_TRUNC;
 		else
 			flags |= O_EXCL;
@@ -1983,7 +1982,7 @@ __ops_teardown_file_append(__ops_createinfo_t * cinfo, int fd)
    \param filename Name of file to read
    \param vp Reader-specific arg
    \param callback Callback to use when reading
-   \param accumulate Set if we need to accumulate as we read. (Usually false unless doing signature verification)
+   \param accumulate Set if we need to accumulate as we read. (Usually 0 unless doing signature verification)
    \note It is the caller's responsiblity to free parse_info and to close fd
    \sa __ops_teardown_file_read()
 */
@@ -1992,7 +1991,7 @@ int
 __ops_setup_file_read(__ops_parseinfo_t ** pinfo, const char *filename,
 		    void *vp,
 		    __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *),
-		    bool accumulate)
+		    unsigned accumulate)
 {
 	int             fd = 0;
 	/*
@@ -2017,7 +2016,7 @@ __ops_setup_file_read(__ops_parseinfo_t ** pinfo, const char *filename,
 #endif
 
 	if (accumulate) {
-		(*pinfo)->readinfo.accumulate = true;
+		(*pinfo)->readinfo.accumulate = 1;
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
@@ -2224,8 +2223,8 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	return OPS_RELEASE_MEMORY;
 }
 
-bool 
-__ops_reader_set_accumulate(__ops_parseinfo_t *pinfo, bool state)
+unsigned 
+__ops_reader_set_accumulate(__ops_parseinfo_t *pinfo, unsigned state)
 {
 	pinfo->readinfo.accumulate = state;
 	return state;

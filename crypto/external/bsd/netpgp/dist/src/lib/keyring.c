@@ -72,8 +72,8 @@
 #include "netpgpsdk.h"
 #include "readerwriter.h"
 #include "netpgpdefs.h"
-#include "keyring_local.h"
-#include "parse_local.h"
+#include "packet.h"
+#include "crypto.h"
 #include "validate.h"
 
 
@@ -146,8 +146,9 @@ __ops_keydata_free(__ops_keydata_t *keydata)
 const __ops_pubkey_t *
 __ops_get_pubkey(const __ops_keydata_t * keydata)
 {
-	return (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) ? &keydata->key.pubkey :
-		&keydata->key.seckey.pubkey;
+	return (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) ?
+				&keydata->key.pubkey :
+				&keydata->key.seckey.pubkey;
 }
 
 /**
@@ -156,7 +157,7 @@ __ops_get_pubkey(const __ops_keydata_t * keydata)
 \brief Check whether this is a secret key or not.
 */
 
-bool 
+unsigned 
 __ops_is_key_secret(const __ops_keydata_t * data)
 {
 	return data->type != OPS_PTAG_CT_PUBLIC_KEY;
@@ -169,13 +170,15 @@ __ops_is_key_secret(const __ops_keydata_t * data)
 
  \note This is not a copy, do not free it after use.
 
- \note This returns a const. If you need to be able to write to this pointer, use __ops_get_writable_seckey
+ \note This returns a const.  If you need to be able to write to this
+ pointer, use __ops_get_writable_seckey
 */
 
 const __ops_seckey_t *
 __ops_get_seckey(const __ops_keydata_t * data)
 {
-	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.seckey : NULL;
+	return (data->type == OPS_PTAG_CT_SECRET_KEY) ?
+				&data->key.seckey : NULL;
 }
 
 /**
@@ -185,28 +188,30 @@ __ops_get_seckey(const __ops_keydata_t * data)
 
   \note This is not a copy, do not free it after use.
 
-  \note If you do not need to be able to modify this key, there is an equivalent read-only function __ops_get_seckey.
+  \note If you do not need to be able to modify this key, there is an
+  equivalent read-only function __ops_get_seckey.
 */
 
 __ops_seckey_t *
 __ops_get_writable_seckey(__ops_keydata_t * data)
 {
-	return (data->type == OPS_PTAG_CT_SECRET_KEY) ? &data->key.seckey : NULL;
+	return (data->type == OPS_PTAG_CT_SECRET_KEY) ?
+				&data->key.seckey : NULL;
 }
 
 typedef struct {
-	const __ops_keydata_t *key;
-	char           *pphrase;
+	const __ops_keydata_t	*key;
+	char			*pphrase;
 	__ops_seckey_t *seckey;
-}               decrypt_t;
+} decrypt_t;
 
 static __ops_parse_cb_return_t 
 decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &pkt->u;
-	decrypt_t  *decrypt = __ops_parse_cb_get_arg(cbinfo);
+	const __ops_parser_content_union_t	*content = &pkt->u;
+	decrypt_t				*decrypt;
 
-	__OPS_USED(cbinfo);
+	decrypt = __ops_parse_cb_get_arg(cbinfo);
 
 	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
@@ -282,7 +287,7 @@ __ops_decrypt_seckey(const __ops_keydata_t * key,
 
 	__ops_keydata_reader_set(pinfo, key);
 	__ops_parse_cb_set(pinfo, decrypt_cb, &decrypt);
-	pinfo->readinfo.accumulate = true;
+	pinfo->readinfo.accumulate = 1;
 
 	__ops_parse(pinfo, 0);
 
@@ -296,9 +301,9 @@ __ops_decrypt_seckey(const __ops_keydata_t * key,
 \param key Keydata to get secret key from
 */
 void 
-__ops_set_seckey(__ops_parser_content_union_t * content, const __ops_keydata_t * key)
+__ops_set_seckey(__ops_parser_content_union_t *cont, const __ops_keydata_t *key)
 {
-	*content->get_seckey.seckey = &key->key.seckey;
+	*cont->get_seckey.seckey = &key->key.seckey;
 }
 
 /**
@@ -308,7 +313,7 @@ __ops_set_seckey(__ops_parser_content_union_t * content, const __ops_keydata_t *
 \return Pointer to Key ID inside keydata
 */
 const unsigned char *
-__ops_get_key_id(const __ops_keydata_t * key)
+__ops_get_key_id(const __ops_keydata_t *key)
 {
 	return key->key_id;
 }
@@ -320,7 +325,7 @@ __ops_get_key_id(const __ops_keydata_t * key)
 \return Num of user ids
 */
 unsigned 
-__ops_get_user_id_count(const __ops_keydata_t * key)
+__ops_get_user_id_count(const __ops_keydata_t *key)
 {
 	return key->nuids;
 }
@@ -342,22 +347,22 @@ __ops_get_user_id(const __ops_keydata_t * key, unsigned subscript)
    \ingroup HighLevel_Supported
    \brief Checks whether key's algorithm and type are supported by OpenPGP::SDK
    \param keydata Key to be checked
-   \return true if key algorithm and type are supported by OpenPGP::SDK; false if not
+   \return 1 if key algorithm and type are supported by OpenPGP::SDK; 0 if not
 */
 
-bool 
+unsigned 
 __ops_is_key_supported(const __ops_keydata_t *keydata)
 {
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
 		if (keydata->key.pubkey.alg == OPS_PKA_RSA) {
-			return true;
+			return 1;
 		}
 	} else if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
 		if (keydata->key.pubkey.alg == OPS_PKA_DSA) {
-			return true;
+			return 1;
 		}
 	}
-	return false;
+	return 0;
 }
 
 
@@ -371,19 +376,11 @@ __ops_is_key_supported(const __ops_keydata_t *keydata)
 
     \note Index starts at 0
 
-    \note This returns a pointer to the original key, not a copy. You do not need to free the key after use.
+    \note This returns a pointer to the original key, not a copy.  You
+    do not need to free the key after use.
 
     \return Pointer to the required key; or NULL if index too large.
 
-    Example code:
-    \code
-    void example(const __ops_keyring_t* keyring)
-    {
-    __ops_keydata_t* keydata=NULL;
-    keydata=__ops_keyring_get_key_by_index(keyring, 0);
-    ...
-    }
-    \endcode
 */
 
 const __ops_keydata_t *
@@ -517,9 +514,9 @@ __ops_add_signed_userid_to_keydata(__ops_keydata_t * keydata, const __ops_user_i
 \brief Add selfsigned User ID to key
 \param keydata Key to which to add user ID
 \param userid Self-signed User ID to add
-\return true if OK; else false
+\return 1 if OK; else 0
 */
-bool 
+unsigned 
 __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_t * userid)
 {
 	__ops_subpacket_t    sigpacket;
@@ -546,7 +543,7 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 	__ops_sig_start_key_sig(sig, &keydata->key.seckey.pubkey, userid, OPS_CERT_POSITIVE);
 	__ops_sig_add_birthtime(sig, time(NULL));
 	__ops_sig_add_issuer_key_id(sig, keydata->key_id);
-	__ops_sig_add_primary_user_id(sig, true);
+	__ops_sig_add_primary_user_id(sig, 1);
 	__ops_sig_hashed_subpackets_end(sig);
 
 	__ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
@@ -567,7 +564,7 @@ __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_
 	__ops_memory_free(mem_userid);
 	__ops_memory_free(mem_sig);
 
-	return true;
+	return 1;
 }
 
 /**
@@ -590,29 +587,10 @@ __ops_keydata_init(__ops_keydata_t * keydata, const __ops_content_tag_t type)
 	}
 }
 
-/**
-    Example Usage:
-    \code
 
-    // definition of variables
-    __ops_keyring_t keyring;
-    char* filename="~/.gnupg/pubring.gpg";
-
-    // Read keyring from file
-    __ops_keyring_fileread(&keyring,filename);
-
-    // do actions using keyring
-    ...
-
-    // Free memory alloc-ed in __ops_keyring_fileread()
-    __ops_keyring_free(keyring);
-    \endcode
-*/
-
-
-static          __ops_parse_cb_return_t
-cb_keyring_read(const __ops_packet_t * pkt,
-		__ops_callback_data_t * cbinfo)
+static __ops_parse_cb_return_t
+cb_keyring_read(const __ops_packet_t *pkt,
+		__ops_callback_data_t *cbinfo)
 {
 	__OPS_USED(cbinfo);
 
@@ -640,10 +618,10 @@ cb_keyring_read(const __ops_packet_t * pkt,
    \brief Reads a keyring from a file
 
    \param keyring Pointer to an existing __ops_keyring_t struct
-   \param armour true if file is armoured; else false
+   \param armour 1 if file is armoured; else 0
    \param filename Filename of keyring to be read
 
-   \return __ops true if OK; false on error
+   \return __ops 1 if OK; 0 on error
 
    \note Keyring struct must already exist.
 
@@ -657,24 +635,14 @@ cb_keyring_read(const __ops_packet_t * pkt,
    \sa __ops_keyring_read_from_mem()
    \sa __ops_keyring_free()
 
-   Example code:
-   \code
-   __ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
-   bool armoured=false;
-   __ops_keyring_fileread(keyring, armoured, "~/.gnupg/pubring.gpg");
-   ...
-   __ops_keyring_free(keyring);
-   free (keyring);
-
-   \endcode
 */
 
-bool 
-__ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char *filename)
+unsigned 
+__ops_keyring_fileread(__ops_keyring_t * keyring, const unsigned armour, const char *filename)
 {
 	__ops_parseinfo_t *pinfo;
 	int             fd;
-	bool   res = true;
+	unsigned   res = 1;
 
 	pinfo = __ops_parseinfo_new();
 
@@ -695,7 +663,7 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char 
 	if (fd < 0) {
 		__ops_parseinfo_delete(pinfo);
 		perror(filename);
-		return false;
+		return 0;
 	}
 #ifdef USE_MMAP_FOR_FILES
 	__ops_reader_set_mmap(pinfo, fd);
@@ -709,9 +677,9 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char 
 		__ops_reader_push_dearmour(pinfo);
 	}
 	if (__ops_parse_and_accumulate(keyring, pinfo) == 0) {
-		res = false;
+		res = 0;
 	} else {
-		res = true;
+		res = 1;
 	}
 	__ops_print_errors(__ops_parseinfo_get_errors(pinfo));
 
@@ -732,10 +700,10 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char 
    \brief Reads a keyring from memory
 
    \param keyring Pointer to existing __ops_keyring_t struct
-   \param armour true if file is armoured; else false
+   \param armour 1 if file is armoured; else 0
    \param mem Pointer to a __ops_memory_t struct containing keyring to be read
 
-   \return __ops true if OK; false on error
+   \return __ops 1 if OK; 0 on error
 
    \note Keyring struct must already exist.
 
@@ -748,37 +716,27 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const bool armour, const char 
 
    \sa __ops_keyring_fileread
    \sa __ops_keyring_free
-
-   Example code:
-   \code
-   __ops_memory_t* mem; // Filled with keyring packets
-   __ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
-   bool armoured=false;
-   __ops_keyring_read_from_mem(keyring, armoured, mem);
-   ...
-   __ops_keyring_free(keyring);
-   free (keyring);
-   \endcode
 */
-static bool 
-__ops_keyring_read_from_mem(__ops_keyring_t * keyring, const bool armour, __ops_memory_t * mem)
+static unsigned 
+__ops_keyring_read_from_mem(__ops_keyring_t * keyring, const unsigned armour, __ops_memory_t * mem)
 {
 	__ops_parseinfo_t *pinfo = NULL;
-	bool   res = true;
+	unsigned   res = 1;
 
 	pinfo = __ops_parseinfo_new();
 	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 
-	__ops_setup_memory_read(&pinfo, mem, NULL, cb_keyring_read, false);
+	__ops_setup_memory_read(&pinfo, mem, NULL, cb_keyring_read, 0);
 
 	if (armour) {
 		__ops_reader_push_dearmour(pinfo);
 	}
-	res = (__ops_parse_and_accumulate(keyring, pinfo) != 0);
+	res = __ops_parse_and_accumulate(keyring, pinfo);
 	__ops_print_errors(__ops_parseinfo_get_errors(pinfo));
 
-	if (armour)
+	if (armour) {
 		__ops_reader_pop_dearmour(pinfo);
+	}
 
 	/* don't call teardown_memory_read because memory was passed in */
 	__ops_parseinfo_delete(pinfo);
@@ -815,18 +773,9 @@ __ops_keyring_free(__ops_keyring_t * keyring)
 
    \return Pointer to key, if found; NULL, if not found
 
-   \note This returns a pointer to the key inside the given keyring, not a copy. Do not free it after use.
+   \note This returns a pointer to the key inside the given keyring,
+   not a copy.  Do not free it after use.
 
-   Example code:
-   \code
-   void example(__ops_keyring_t* keyring)
-   {
-   __ops_keydata_t* keydata=NULL;
-   unsigned char keyid[OPS_KEY_ID_SIZE]; // value set elsewhere
-   keydata=__ops_keyring_find_key_by_id(keyring,keyid);
-   ...
-   }
-   \endcode
 */
 const __ops_keydata_t *
 __ops_keyring_find_key_by_id(const __ops_keyring_t * keyring,
@@ -904,17 +853,9 @@ str2keyid(const char *userid, unsigned char *keyid, size_t len)
 
    \return Pointer to Key, if found; NULL, if not found
 
-   \note This returns a pointer to the key inside the keyring, not a copy. Do not free it.
+   \note This returns a pointer to the key inside the keyring, not a
+   copy.  Do not free it.
 
-   Example code:
-   \code
-   void example(__ops_keyring_t* keyring)
-   {
-   __ops_keydata_t* keydata=NULL;
-   keydata=__ops_keyring_find_key_by_userid(keyring,"user@domain.com");
-   ...
-   }
-   \endcode
 */
 const __ops_keydata_t *
 __ops_keyring_find_key_by_userid(const __ops_keyring_t *keyring,
@@ -1005,23 +946,7 @@ __ops_keyring_find_key_by_userid(const __ops_keyring_t *keyring,
    \param keyring Keyring to use
 
    \return none
-
-   Example code:
-   \code
-   void example()
-   {
-   __ops_keyring_t* keyring=calloc(1, sizeof(*keyring));
-   bool armoured=false;
-   __ops_keyring_fileread(keyring, armoured, "~/.gnupg/pubring.gpg");
-
-   __ops_keyring_list(keyring);
-
-   __ops_keyring_free(keyring);
-   free (keyring);
-   }
-   \endcode
 */
-
 void
 __ops_keyring_list(const __ops_keyring_t * keyring)
 {
@@ -1054,11 +979,11 @@ __ops_export_key(const __ops_keydata_t *keydata, unsigned char *passphrase)
 
 	__ops_setup_memory_write(&cinfo, &mem, 128);
 	if (__ops_get_keydata_content_type(keydata) == OPS_PTAG_CT_PUBLIC_KEY) {
-		__ops_write_transferable_pubkey(keydata, true, cinfo);
+		__ops_write_transferable_pubkey(keydata, 1, cinfo);
 	} else {
 		__ops_write_transferable_seckey(keydata,
 				    passphrase,
-			    strlen((char *)passphrase), true, cinfo);
+			    strlen((char *)passphrase), 1, cinfo);
 	}
 	printf("%s", (char *) __ops_memory_get_data(mem));
 	__ops_teardown_memory_write(cinfo, mem);

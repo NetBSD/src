@@ -63,13 +63,13 @@
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "memory.h"
-#include "keyring_local.h"
-#include "parse_local.h"
+#include "packet.h"
+#include "crypto.h"
 #include "validate.h"
 
 
 /* Does the signed hash match the given hash? */
-static          bool
+static          unsigned
 check_binary_sig(const unsigned len,
 		       const unsigned char *data,
 		       const __ops_sig_t *sig,
@@ -111,7 +111,7 @@ check_binary_sig(const unsigned len,
 	default:
 		fprintf(stderr, "Invalid signature version %d\n",
 				sig->info.version);
-		return false;
+		return 0;
 	}
 
 	n = hash.finish(&hash, hashout);
@@ -195,7 +195,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	const __ops_keydata_t	*signer;
 	validate_key_cb_t	*key = __ops_parse_cb_get_arg(cbinfo);
 	__ops_error_t		**errors = __ops_parse_cb_get_errors(cbinfo);
-	bool			 valid = false;
+	unsigned			 valid = 0;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("%s\n", __ops_show_packet_tag(pkt->tag));
@@ -347,7 +347,7 @@ validate_data_cb(const __ops_packet_t * pkt,
 	const __ops_keydata_t	*signer;
 	validate_data_cb_t	*data = __ops_parse_cb_get_arg(cbinfo);
 	__ops_error_t		**errors = __ops_parse_cb_get_errors(cbinfo);
-	bool			 valid = false;
+	unsigned			 valid = 0;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("validate_data_cb: %s\n",
@@ -485,10 +485,10 @@ __ops_keydata_reader_set(__ops_parseinfo_t *pinfo,
  * \ingroup HighLevel_Verify
  * \brief Indicicates whether any errors were found
  * \param result Validation result to check
- * \return false if any invalid signatures or unknown signers
- 	or no valid signatures; else true
+ * \return 0 if any invalid signatures or unknown signers
+ 	or no valid signatures; else 1
  */
-static bool 
+static unsigned 
 validate_result_status(__ops_validation_t *val)
 {
 	return val->validc && !val->invalidc && !val->unknownc;
@@ -501,11 +501,11 @@ validate_result_status(__ops_validation_t *val)
  * \param key Key to validate
  * \param keyring Keyring to use for validation
  * \param cb_get_passphrase Callback to use to get passphrase
- * \return true if all signatures OK; else false
+ * \return 1 if all signatures OK; else 0
  * \note It is the caller's responsiblity to free result after use.
  * \sa __ops_validate_result_free()
  */
-bool 
+unsigned 
 __ops_validate_key_sigs(__ops_validation_t * result,
 	const __ops_keydata_t * key,
 	const __ops_keyring_t * keyring,
@@ -525,7 +525,7 @@ __ops_validate_key_sigs(__ops_validation_t * result,
 	carg.keyring = keyring;
 
 	__ops_parse_cb_set(pinfo, __ops_validate_key_cb, &carg);
-	pinfo->readinfo.accumulate = true;
+	pinfo->readinfo.accumulate = 1;
 	__ops_keydata_reader_set(pinfo, key);
 
 	/* Note: Coverity incorrectly reports an error that carg.rarg */
@@ -554,7 +554,7 @@ __ops_validate_key_sigs(__ops_validation_t * result,
    \note It is the caller's responsibility to free result after use.
    \sa __ops_validate_result_free()
 */
-bool 
+unsigned 
 __ops_validate_all_sigs(__ops_validation_t *result,
 	    const __ops_keyring_t *ring,
 	    __ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *,
@@ -601,14 +601,14 @@ __ops_validate_result_free(__ops_validation_t *result)
    \param filename Name of file to be validated
    \param armoured Treat file as armoured, if set
    \param keyring Keyring to use
-   \return true if signatures validate successfully;
-   	false if signatures fail or there are no signatures
+   \return 1 if signatures validate successfully;
+   	0 if signatures fail or there are no signatures
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
    \note It is the caller's responsiblity to call
    	__ops_validate_result_free(result) after use.
 */
-bool 
+unsigned 
 __ops_validate_file(__ops_validation_t *result,
 			const char *infile,
 			const char *outfile,
@@ -629,7 +629,7 @@ __ops_validate_file(__ops_validation_t *result,
 
 	if (stat(infile, &st) < 0) {
 		(void) fprintf(stderr, "can't validate \"%s\"\n", infile);
-		return false;
+		return 0;
 	}
 	origsize = st.st_size;
 	cc = snprintf(origfile, sizeof(origfile), "%s", infile);
@@ -642,9 +642,9 @@ __ops_validate_file(__ops_validation_t *result,
 	}
 
 	fd_in = __ops_setup_file_read(&parse, infile, &validation,
-				validate_data_cb, true);
+				validate_data_cb, 1);
 	if (fd_in < 0) {
-		return false;
+		return 0;
 	}
 
 	/* setup output filename */
@@ -654,10 +654,10 @@ __ops_validate_file(__ops_validation_t *result,
 			outfile = NULL;
 		}
 		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo,
-						NULL, false);
+						NULL, 0);
 		if (fd_out < 0) {
 			__ops_teardown_file_read(parse, fd_in);
-			return false;
+			return 0;
 		}
 	}
 
@@ -701,14 +701,14 @@ __ops_validate_file(__ops_validation_t *result,
    \param mem Memory to be validated
    \param armoured Treat data as armoured, if set
    \param keyring Keyring to use
-   \return true if signature validates successfully; false if not
+   \return 1 if signature validates successfully; 0 if not
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
    \note It is the caller's responsiblity to call
    	__ops_validate_result_free(result) after use.
 */
 
-bool 
+unsigned 
 __ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
 			const int armoured, const __ops_keyring_t *keyring)
 {
@@ -716,7 +716,7 @@ __ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
 	validate_data_cb_t	 validation;
 
 	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb,
-			true);
+			1);
 
 	/* Set verification reader and handling options */
 	(void) memset(&validation, 0x0, sizeof(validation));

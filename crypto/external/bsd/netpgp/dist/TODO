@@ -1,6 +1,6 @@
 To Do
 =====
-hash algorithm selection
+RCS Ids
 64-bit offsets
 detached verification
 need a netpgp_set_{pub,sec}key()? vs _init()?
@@ -51,3 +51,5 @@ add a --help option
 sha256 digests
 print out size of key in --list-keys
 decryption - print encrypted key info
+get rid of local files
+hash algorithm selection

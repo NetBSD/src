@@ -50,8 +50,8 @@
 /** \file
  */
 
-#ifndef OPS_KEYRING_H
-#define OPS_KEYRING_H
+#ifndef KEYRING_H_
+#define KEYRING_H_
 
 #include "packet.h"
 #include "packet-parse.h"
@@ -75,12 +75,12 @@ void            __ops_keydata_free(__ops_keydata_t *);
 void            __ops_keyring_free(__ops_keyring_t *);
 void            __ops_dump_keyring(const __ops_keyring_t *);
 const __ops_pubkey_t *__ops_get_pubkey(const __ops_keydata_t *);
-bool   __ops_is_key_secret(const __ops_keydata_t *);
+unsigned   __ops_is_key_secret(const __ops_keydata_t *);
 const __ops_seckey_t *__ops_get_seckey(const __ops_keydata_t *);
 __ops_seckey_t *__ops_get_writable_seckey(__ops_keydata_t *);
 __ops_seckey_t *__ops_decrypt_seckey(const __ops_keydata_t *, const char *);
 
-bool   __ops_keyring_fileread(__ops_keyring_t *, const bool, const char *);
+unsigned   __ops_keyring_fileread(__ops_keyring_t *, const unsigned, const char *);
 
 char           *__ops_malloc_passphrase(char *);
 
@@ -91,14 +91,14 @@ void            __ops_set_seckey(__ops_parser_content_union_t *, const __ops_key
 const unsigned char *__ops_get_key_id(const __ops_keydata_t *);
 unsigned        __ops_get_user_id_count(const __ops_keydata_t *);
 const unsigned char *__ops_get_user_id(const __ops_keydata_t *, unsigned);
-bool   __ops_is_key_supported(const __ops_keydata_t *);
+unsigned   __ops_is_key_supported(const __ops_keydata_t *);
 const __ops_keydata_t *__ops_keyring_get_key_by_index(const __ops_keyring_t *, int);
 
 __ops_user_id_t  *__ops_add_userid_to_keydata(__ops_keydata_t *, const __ops_user_id_t *);
 __ops_subpacket_t   *__ops_add_packet_to_keydata(__ops_keydata_t *, const __ops_subpacket_t *);
 void            __ops_add_signed_userid_to_keydata(__ops_keydata_t *, const __ops_user_id_t *, const __ops_subpacket_t *);
 
-bool   __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t *, __ops_user_id_t *);
+unsigned   __ops_add_selfsigned_userid_to_keydata(__ops_keydata_t *, __ops_user_id_t *);
 
 __ops_keydata_t  *__ops_keydata_new(void);
 void            __ops_keydata_init(__ops_keydata_t *, const __ops_content_tag_t);
@@ -113,8 +113,8 @@ void            __ops_print_pubkeydata(const __ops_keydata_t *);
 void            __ops_print_pubkey(const __ops_pubkey_t *);
 
 void            __ops_print_seckeydata(const __ops_keydata_t *);
-void            __ops_list_packets(char *, bool, __ops_keyring_t *, __ops_parse_cb_t *);
+void            __ops_list_packets(char *, unsigned, __ops_keyring_t *, __ops_parse_cb_t *);
 
 int		__ops_export_key(const __ops_keydata_t *, unsigned char *);
 
-#endif /* OPS_KEYRING_H */
+#endif /* KEYRING_H_ */

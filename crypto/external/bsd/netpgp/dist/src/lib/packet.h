@@ -51,8 +51,8 @@
  * packet related headers.
  */
 
-#ifndef OPS_PACKET_H
-#define OPS_PACKET_H
+#ifndef PACKET_H_
+#define PACKET_H_
 
 #include <time.h>
 #include <openssl/bn.h>
@@ -307,7 +307,7 @@ typedef struct {
  */
 typedef struct {
 	unsigned        new_format;	/* !< Whether this packet tag is new
-					 * (true) or old format (false) */
+					 * (1) or old format (0) */
 	unsigned        type;	/* !< content_tag value - See
 					 * #__ops_content_tag_t for meanings */
 	__ops_ptag_of_lt_t length_type;	/* !< Length type (#__ops_ptag_of_lt_t)
@@ -502,7 +502,7 @@ void   __ops_calc_mdc_hash(const unsigned char *,
 			const unsigned char *,
 			const unsigned int,
 			unsigned char *);
-bool   __ops_is_hash_alg_supported(const __ops_hash_alg_t *);
+unsigned   __ops_is_hash_alg_supported(const __ops_hash_alg_t *);
 
 /* Maximum block size for symmetric crypto */
 #define OPS_MAX_BLOCK_SIZE	16
@@ -678,7 +678,7 @@ typedef struct {
 
 /** Signature Subpacket : Revocable */
 typedef struct {
-	bool   revocable;
+	unsigned   revocable;
 }               __ops_ss_revocable_t;
 
 /** Signature Subpacket : Time */
@@ -785,12 +785,12 @@ typedef struct {
 	__ops_hash_alg_t	hash_alg;
 	__ops_pubkey_alg_t	key_alg;
 	unsigned char		keyid[OPS_KEY_ID_SIZE];
-	bool			nested;
+	unsigned			nested;
 }               __ops_one_pass_sig_t;
 
 /** Signature Subpacket : Primary User ID */
 typedef struct {
-	bool   primary_user_id;
+	unsigned   primary_user_id;
 }               __ops_ss_primary_user_id_t;
 
 /** Signature Subpacket : Regexp */
@@ -1069,4 +1069,43 @@ void            __ops_pk_sesskey_free(__ops_pk_sesskey_t *);
 
 int             __ops_print_packet(const __ops_packet_t *);
 
-#endif
+#define DECLARE_ARRAY(type,arr)	\
+	unsigned n##arr; unsigned n##arr##_allocated; type *arr
+
+#define EXPAND_ARRAY(str, arr) do {					\
+	if (str->n##arr == str->n##arr##_allocated) {			\
+		str->n##arr##_allocated=str->n##arr##_allocated*2+10;	\
+		str->arr=realloc(str->arr,				\
+			str->n##arr##_allocated*sizeof(*str->arr));	\
+	}								\
+} while(/*CONSTCOND*/0)
+
+/** __ops_keydata_key_t
+ */
+typedef union {
+	__ops_pubkey_t pubkey;
+	__ops_seckey_t seckey;
+}               __ops_keydata_key_t;
+
+
+/** sigpacket_t */
+typedef struct {
+	__ops_user_id_t		*userid;
+	__ops_subpacket_t	*packet;
+}               sigpacket_t;
+
+/* XXX: gonna have to expand this to hold onto subkeys, too... */
+/** \struct __ops_keydata
+ * \todo expand to hold onto subkeys
+ */
+struct __ops_keydata {
+	DECLARE_ARRAY(__ops_user_id_t, uids);
+	DECLARE_ARRAY(__ops_subpacket_t, packets);
+	DECLARE_ARRAY(sigpacket_t, sigs);
+	unsigned char		key_id[8];
+	__ops_fingerprint_t	fingerprint;
+	__ops_content_tag_t	type;
+	__ops_keydata_key_t	key;
+};
+
+#endif /* PACKET_H_ */

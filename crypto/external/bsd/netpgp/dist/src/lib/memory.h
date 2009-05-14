@@ -49,8 +49,8 @@
 
 /** \file
  */
-#ifndef OPS_MEMORY_H
-#define OPS_MEMORY_H
+#ifndef MEMORY_H_
+#define MEMORY_H_
 
 #include <sys/types.h>
 
@@ -82,4 +82,4 @@ void           *__ops_memory_get_data(__ops_memory_t *);
 
 void            __ops_random(void *, size_t);
 
-#endif
+#endif /* MEMORY_H_ */

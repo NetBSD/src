@@ -69,7 +69,7 @@
 #include <openssl/des.h>
 #endif
 
-#include "parse_local.h"
+#include "crypto.h"
 #include "netpgpdefs.h"
 
 
@@ -548,9 +548,9 @@ __ops_encrypt_se(__ops_crypt_t * encrypt, void *outvoid, const void *invoid,
 \ingroup HighLevel_Supported
 \brief Is this Symmetric Algorithm supported?
 \param alg Symmetric Algorithm to check
-\return true if supported; else false
+\return 1 if supported; else 0
 */
-bool 
+unsigned 
 __ops_is_sa_supported(__ops_symm_alg_t alg)
 {
 	switch (alg) {
@@ -561,12 +561,12 @@ __ops_is_sa_supported(__ops_symm_alg_t alg)
 #ifndef OPENSSL_NO_IDEA
 	case OPS_SA_IDEA:
 #endif
-		return true;
+		return 1;
 
 	default:
 		fprintf(stderr, "\nWarning: %s not supported\n",
 			__ops_show_symm_alg(alg));
-		return false;
+		return 0;
 	}
 }
 

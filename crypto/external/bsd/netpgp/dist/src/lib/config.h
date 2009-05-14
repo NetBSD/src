@@ -76,9 +76,6 @@
 /* Define to 1 if you have the <openssl/sha.h> header file. */
 #define HAVE_OPENSSL_SHA_H 1
 
-/* Define to 1 if you have the <stdbool.h> header file. */
-#define HAVE_STDBOOL_H 1
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
@@ -128,13 +125,13 @@
 #define PACKAGE_NAME "netpgp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netpgp 20090506"
+#define PACKAGE_STRING "netpgp 20090512"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netpgp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20090506"
+#define PACKAGE_VERSION "20090512"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

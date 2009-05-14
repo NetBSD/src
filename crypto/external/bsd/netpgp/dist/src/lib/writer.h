@@ -50,8 +50,8 @@
 /** \file
  */
 
-#ifndef OPS_WRITER_H
-#define OPS_WRITER_H
+#ifndef WRITER_H_
+#define WRITER_H_
 
 #include "types.h"
 #include "packet.h"
@@ -69,12 +69,12 @@
  */
 
 typedef struct __ops_writer_info __ops_writer_info_t;
-typedef bool 
+typedef unsigned 
 __ops_writer_t(const unsigned char *,
 	     unsigned,
 	     __ops_error_t **,
 	     __ops_writer_info_t *);
-typedef bool 
+typedef unsigned 
 __ops_writer_finaliser_t(__ops_error_t **, __ops_writer_info_t *);
 typedef void    __ops_writer_destroyer_t(__ops_writer_info_t *);
 
@@ -89,7 +89,7 @@ struct __ops_writer_info {
 
 
 void           *__ops_writer_get_arg(__ops_writer_info_t *);
-bool 
+unsigned 
 __ops_stacked_write(const void *, unsigned,
 		  __ops_error_t **,
 		  __ops_writer_info_t *);
@@ -108,26 +108,26 @@ __ops_writer_push(__ops_createinfo_t *,
 		void *);
 void            __ops_writer_pop(__ops_createinfo_t *);
 void            __ops_writer_generic_destroyer(__ops_writer_info_t *);
-bool 
+unsigned 
 __ops_writer_passthrough(const unsigned char *,
 		       unsigned,
 		       __ops_error_t **,
 		       __ops_writer_info_t *);
 
 void            __ops_writer_set_fd(__ops_createinfo_t *, int);
-bool   __ops_writer_close(__ops_createinfo_t *);
+unsigned   __ops_writer_close(__ops_createinfo_t *);
 
-bool 
+unsigned 
 __ops_write(const void *, unsigned, __ops_createinfo_t *);
-bool   __ops_write_length(unsigned, __ops_createinfo_t *);
-bool   __ops_write_ptag(__ops_content_tag_t, __ops_createinfo_t *);
-bool __ops_write_scalar(unsigned, unsigned, __ops_createinfo_t *);
-bool   __ops_write_mpi(const BIGNUM *, __ops_createinfo_t *);
-bool   __ops_write_encrypted_mpi(const BIGNUM *, __ops_crypt_t *, __ops_createinfo_t *);
+unsigned   __ops_write_length(unsigned, __ops_createinfo_t *);
+unsigned   __ops_write_ptag(__ops_content_tag_t, __ops_createinfo_t *);
+unsigned __ops_write_scalar(unsigned, unsigned, __ops_createinfo_t *);
+unsigned   __ops_write_mpi(const BIGNUM *, __ops_createinfo_t *);
+unsigned   __ops_write_encrypted_mpi(const BIGNUM *, __ops_crypt_t *, __ops_createinfo_t *);
 
 void            writer_info_delete(__ops_writer_info_t *);
-bool   writer_info_finalise(__ops_error_t **, __ops_writer_info_t *);
+unsigned   writer_info_finalise(__ops_error_t **, __ops_writer_info_t *);
 
 void __ops_push_stream_enc_se_ip(__ops_createinfo_t *, const __ops_keydata_t *);
 
-#endif
+#endif /* WRITER_H_ */

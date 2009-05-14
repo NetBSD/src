@@ -50,8 +50,8 @@
 /** \file
  */
 
-#ifndef OPS_PACKET_TO_TEXT_H
-#define OPS_PACKET_TO_TEXT_H
+#ifndef PACKET_SHOW_H_
+#define PACKET_SHOW_H_
 
 #include "packet.h"
 
@@ -110,4 +110,4 @@ __ops_show_ss_key_server_prefs(unsigned char octet,
 
 __ops_text_t     *__ops_showall_ss_notation_data_flags(__ops_ss_notation_data_t ss_notation_data);
 
-#endif				/* OPS_PACKET_TO_TEXT_H */
+#endif /* PACKET_SHOW_H_ */

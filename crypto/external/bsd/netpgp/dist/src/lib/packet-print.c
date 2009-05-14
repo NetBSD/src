@@ -65,8 +65,7 @@
 #include "signature.h"
 #include "readerwriter.h"
 #include "netpgpdefs.h"
-#include "keyring_local.h"
-#include "parse_local.h"
+#include "packet.h"
 
 static int      indent = 0;
 
@@ -608,11 +607,11 @@ __ops_print_packet(const __ops_packet_t * pkt)
 {
 	const __ops_parser_content_union_t	*content = &pkt->u;
 	__ops_text_t				*text;
-	static bool				 unarmoured;
+	static unsigned				 unarmoured;
 	const char				*str;
 
 	if (unarmoured && pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
-		unarmoured = false;
+		unarmoured = 0;
 		puts("UNARMOURED TEXT ends");
 	}
 	if (pkt->tag == OPS_PARSER_PTAG) {
@@ -1157,7 +1156,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 		if (!unarmoured) {
 			print_tagname("UNARMOURED TEXT");
-			unarmoured = true;
+			unarmoured = 1;
 		}
 		putchar('[');
 		print_escaped(content->unarmoured_text.data,
@@ -1207,12 +1206,12 @@ cb_list_packets(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 */
 void 
 __ops_list_packets(char *filename,
-			bool armour,
+			unsigned armour,
 			__ops_keyring_t *keyring,
 			__ops_parse_cb_t *cb_get_passphrase)
 {
 	__ops_parseinfo_t	*pinfo = NULL;
-	const bool		 accumulate = true;
+	const unsigned		 accumulate = 1;
 	int			 fd = 0;
 
 	fd = __ops_setup_file_read(&pinfo, filename, NULL, cb_list_packets,

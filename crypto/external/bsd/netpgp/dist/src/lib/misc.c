@@ -72,10 +72,7 @@
 #include "netpgpsdk.h"
 #include "netpgpdefs.h"
 #include "memory.h"
-#include "keyring_local.h"
-#include "parse_local.h"
 #include "readerwriter.h"
-#include "loccreate.h"
 #include "version.h"
 
 #ifdef WIN32
@@ -120,23 +117,27 @@ accumulate_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 		       sizeof(keyring->keys[keyring->nkeys]));
 
 		__ops_keyid(keyring->keys[keyring->nkeys].key_id,
-			OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, pubkey);
-		__ops_fingerprint(&keyring->keys[keyring->nkeys].fingerprint, pubkey);
+				OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, pubkey);
+		__ops_fingerprint(&keyring->keys[keyring->nkeys].fingerprint,
+				pubkey);
 
 		keyring->keys[keyring->nkeys].type = pkt->tag;
 
 		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
 			keyring->keys[keyring->nkeys].key.pubkey = *pubkey;
 		else
-			keyring->keys[keyring->nkeys].key.seckey = content->seckey;
+			keyring->keys[keyring->nkeys].key.seckey =
+							content->seckey;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "User ID: %s\n", content->user_id.user_id);
+			(void) fprintf(stderr, "User ID: %s\n",
+					content->user_id.user_id);
 		}
 		if (!cur) {
-			OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No user id found");
+			OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID,
+					"No user id found");
 			return OPS_KEEP_MEMORY;
 		}
 		__ops_add_userid_to_keydata(cur, &content->user_id);
@@ -199,7 +200,7 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 	keyring->nkeys -= 1;
 
 	__ops_parse_cb_push(parse, accumulate_cb, &accumulate);
-	parse->readinfo.accumulate = true;
+	parse->readinfo.accumulate = 1;
 	rtn = __ops_parse(parse, 0);
 
 	keyring->nkeys += 1;
@@ -307,7 +308,8 @@ static __ops_errcode_name_map_t errcode_name_map[] = {
 const char     *
 __ops_errcode(const __ops_errcode_t errcode)
 {
-	return (__ops_str_from_map((int) errcode, (__ops_map_t *) errcode_name_map));
+	return (__ops_str_from_map((int) errcode,
+			(__ops_map_t *) errcode_name_map));
 }
 
 /**
@@ -323,8 +325,8 @@ __ops_errcode(const __ops_errcode_t errcode)
  */
 
 void 
-__ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode, int sys_errno,
-	       const char *file, int line, const char *fmt,...)
+__ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode,
+		int sys_errno, const char *file, int line, const char *fmt,...)
 {
 	/* first get the varargs and generate the comment */
 	__ops_error_t  *err;
@@ -369,11 +371,12 @@ void
 __ops_print_error(__ops_error_t * err)
 {
 	printf("%s:%d: ", err->file, err->line);
-	if (err->errcode == OPS_E_SYSTEM_ERROR)
+	if (err->errcode == OPS_E_SYSTEM_ERROR) {
 		printf("system error %d returned from %s()\n", err->sys_errno,
 		       err->comment);
-	else
+	} else {
 		printf("%s, %s\n", __ops_errcode(err->errcode), err->comment);
+	}
 }
 
 /**
@@ -386,13 +389,14 @@ __ops_print_errors(__ops_error_t * errstack)
 {
 	__ops_error_t    *err;
 
-	for (err = errstack; err != NULL; err = err->next)
+	for (err = errstack; err != NULL; err = err->next) {
 		__ops_print_error(err);
+	}
 }
 
 /**
 \ingroup Core_Errors
-\brief Return true if given error is present anywhere on stack
+\brief Return 1 if given error is present anywhere on stack
 \param errstack Error stack to check
 \param errcode Error code to look for
 \return 1 if found; else 0
@@ -402,8 +406,9 @@ __ops_has_error(__ops_error_t * errstack, __ops_errcode_t errcode)
 {
 	__ops_error_t    *err;
 	for (err = errstack; err != NULL; err = err->next) {
-		if (err->errcode == errcode)
+		if (err->errcode == errcode) {
 			return 1;
+		}
 	}
 	return 0;
 }
@@ -414,9 +419,10 @@ __ops_has_error(__ops_error_t * errstack, __ops_errcode_t errcode)
 \param errstack Error stack to free
 */
 void 
-__ops_free_errors(__ops_error_t * errstack)
+__ops_free_errors(__ops_error_t *errstack)
 {
 	__ops_error_t    *next;
+
 	while (errstack != NULL) {
 		next = errstack->next;
 		free(errstack->comment);
@@ -436,7 +442,7 @@ __ops_free_errors(__ops_error_t * errstack)
  */
 
 void 
-__ops_fingerprint(__ops_fingerprint_t * fp, const __ops_pubkey_t * key)
+__ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 {
 	if (key->version == 2 || key->version == 3) {
 		unsigned char  *bn;
@@ -469,11 +475,11 @@ __ops_fingerprint(__ops_fingerprint_t * fp, const __ops_pubkey_t * key)
 		md5.finish(&md5, fp->fingerprint);
 		fp->length = 16;
 	} else {
-		__ops_memory_t   *mem = __ops_memory_new();
-		__ops_hash_t      sha1;
-		size_t          l;
+		__ops_memory_t	*mem = __ops_memory_new();
+		__ops_hash_t	 sha1;
+		size_t		 len;
 
-		__ops_build_pubkey(mem, key, false);
+		__ops_build_pubkey(mem, key, 0);
 
 		if (__ops_get_debug_level(__FILE__)) {
 			fprintf(stderr, "--- creating key fingerprint\n");
@@ -481,15 +487,15 @@ __ops_fingerprint(__ops_fingerprint_t * fp, const __ops_pubkey_t * key)
 		__ops_hash_sha1(&sha1);
 		sha1.init(&sha1);
 
-		l = __ops_memory_get_length(mem);
+		len = __ops_memory_get_length(mem);
 
 		__ops_hash_add_int(&sha1, 0x99, 1);
-		__ops_hash_add_int(&sha1, l, 2);
-		sha1.add(&sha1, __ops_memory_get_data(mem), l);
+		__ops_hash_add_int(&sha1, len, 2);
+		sha1.add(&sha1, __ops_memory_get_data(mem), len);
 		sha1.finish(&sha1, fp->fingerprint);
 
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "--- finished creating key fingerprint\n");
+			fprintf(stderr, "finished making key fingerprint\n");
 		}
 		fp->length = 20;
 
@@ -746,19 +752,19 @@ __ops_calc_mdc_hash(const unsigned char *preamble,
 \ingroup HighLevel_Supported
 \brief Is this Hash Algorithm supported?
 \param hash_alg Hash Algorithm to check
-\return true if supported; else false
+\return 1 if supported; else 0
 */
-bool 
+unsigned 
 __ops_is_hash_alg_supported(const __ops_hash_alg_t *hash_alg)
 {
 	switch (*hash_alg) {
 	case OPS_HASH_MD5:
 	case OPS_HASH_SHA1:
 	case OPS_HASH_SHA256:
-		return true;
+		return 1;
 
 	default:
-		return false;
+		return 0;
 	}
 }
 
@@ -1077,12 +1083,13 @@ __ops_reader_push_sum16(__ops_parseinfo_t * pinfo)
 unsigned short 
 __ops_reader_pop_sum16(__ops_parseinfo_t * pinfo)
 {
-	sum16_t    *arg = __ops_reader_get_arg(__ops_parse_get_rinfo(pinfo));
-	unsigned short  sum = arg->sum;
+	unsigned short	 sum;
+	sum16_t		*arg;
 
+	arg = __ops_reader_get_arg(__ops_parse_get_rinfo(pinfo));
+	sum = arg->sum;
 	__ops_reader_pop(pinfo);
 	free(arg);
-
 	return sum;
 }
 

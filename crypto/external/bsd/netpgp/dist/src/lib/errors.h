@@ -50,8 +50,8 @@
 /** \file
  */
 
-#ifndef OPS_ERRORS
-#define OPS_ERRORS
+#ifndef ERRORS_H_
+#define ERRORS_H_
 
 #include <errno.h>
 
@@ -164,4 +164,4 @@ int             __ops_has_error(__ops_error_t * errstack, __ops_errcode_t errcod
 	__ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg,arg2,arg3,arg4); \
 } while(/*CONSTCOND*/0)
 
-#endif				/* OPS_ERRORS */
+#endif /* ERRORS_H_ */

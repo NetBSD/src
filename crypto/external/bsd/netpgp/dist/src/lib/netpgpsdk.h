@@ -26,14 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef NETPGPSDK_NETPGPSDK_H_
-#define NETPGPSDK_NETPGPSDK_H_
-
-/*
- * This is a simple, catch-all header file.  Programs which want to
- * use the netpgpsdk library can simply include this one header file,
- * and all the subsidiary ones will be handled.
- */
+#ifndef NETPGPSDK_H_
+#define NETPGPSDK_H_
 
 #include "keyring.h"
 #include "crypto.h"
@@ -51,18 +45,21 @@ typedef struct __ops_validation_t {
 
 void            __ops_validate_result_free(__ops_validation_t *);
 
-bool 
+unsigned 
 __ops_validate_key_sigs(__ops_validation_t *,
-			    const __ops_keydata_t *,
-			    const __ops_keyring_t *,
-			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_callback_data_t *));
+		const __ops_keydata_t *,
+		const __ops_keyring_t *,
+		__ops_parse_cb_return_t cb(const __ops_packet_t *,
+					__ops_callback_data_t *));
 
-bool
+unsigned
 __ops_validate_all_sigs(__ops_validation_t *,
-			    const __ops_keyring_t *,
-			    __ops_parse_cb_return_t cb(const __ops_packet_t *, __ops_callback_data_t *));
+		const __ops_keyring_t *,
+		__ops_parse_cb_return_t cb(const __ops_packet_t *,
+					__ops_callback_data_t *));
 
-bool   __ops_check_sig(const unsigned char *, unsigned, const __ops_sig_t *, const __ops_pubkey_t *);
+unsigned   __ops_check_sig(const unsigned char *,
+		unsigned, const __ops_sig_t *, const __ops_pubkey_t *);
 
 const char     *__ops_get_info(const char *type);
 
