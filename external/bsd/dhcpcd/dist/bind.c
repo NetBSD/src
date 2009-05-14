@@ -49,6 +49,9 @@
 #  define _PATH_DEVNULL "/dev/null"
 #endif
 
+/* We do things after aquiring the lease, so ensure we have enough time for them */
+#define DHCP_MIN_LEASE 20
+
 #ifndef THERE_IS_NO_FORK
 pid_t
 daemonise(void)
@@ -164,6 +167,12 @@ bind_interface(void *arg)
 			syslog(LOG_INFO, "%s: leased %s for infinity",
 			    iface->name, inet_ntoa(lease->addr));
 		} else {
+			if (lease->leasetime < DHCP_MIN_LEASE) {
+				syslog(LOG_WARNING,
+				    "%s: minimum lease is %d seconds",
+				    iface->name, DHCP_MIN_LEASE);
+				lease->leasetime = DHCP_MIN_LEASE;
+			}
 			if (lease->rebindtime == 0)
 				lease->rebindtime = lease->leasetime * T2;
 			else if (lease->rebindtime >= lease->leasetime) {
