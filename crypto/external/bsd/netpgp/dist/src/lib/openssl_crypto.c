@@ -86,7 +86,7 @@
 #include "keyring.h"
 #include "readerwriter.h"
 #include "netpgpdefs.h"
-#include "keyring_local.h"
+#include "packet.h"
 
 
 static void 
@@ -495,7 +495,7 @@ __ops_hash_sha224(__ops_hash_t * hash)
 	*hash = sha224;
 }
 
-bool 
+unsigned 
 __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 	       const __ops_dsa_sig_t * sig,
 	       const __ops_dsa_pubkey_t * dsa)
@@ -545,7 +545,7 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 	osig->r = osig->s = NULL;
 	DSA_SIG_free(osig);
 
-	return ret != 0;
+	return ret;
 }
 
 /**
@@ -766,10 +766,10 @@ __ops_text_from_hash(__ops_hash_t * hash)
  \param numbits Modulus size
  \param e Public Exponent
  \param keydata Pointer to keydata struct to hold new key
- \return true if key generated successfully; otherwise false
+ \return 1 if key generated successfully; otherwise 0
  \note It is the caller's responsibility to call __ops_keydata_free(keydata)
 */
-bool 
+unsigned 
 __ops_rsa_generate_keypair(const int numbits,
 			const unsigned long e,
 			__ops_keydata_t *keydata)
@@ -841,7 +841,7 @@ __ops_rsa_generate_keypair(const int numbits,
 		    !__ops_write_mpi(seckey->key.rsa.p, cinfo) ||
 		    !__ops_write_mpi(seckey->key.rsa.q, cinfo) ||
 		    !__ops_write_mpi(seckey->key.rsa.u, cinfo)) {
-			return false;
+			return 0;
 		}
 		break;
 
@@ -850,7 +850,7 @@ __ops_rsa_generate_keypair(const int numbits,
 
 	default:
 		(void) fprintf(stderr, "Bad seckey->pubkey.alg\n");
-		return false;
+		return 0;
 	}
 
 	/* close rather than pop, since its the only one on the stack */
@@ -864,7 +864,7 @@ __ops_rsa_generate_keypair(const int numbits,
 		test_seckey(seckey);
 	}
 
-	return true;
+	return 1;
 }
 
 /**
@@ -887,8 +887,8 @@ __ops_rsa_create_selfsigned_keypair(const int numbits,
 	__ops_keydata_t  *keydata = NULL;
 
 	keydata = __ops_keydata_new();
-	if (__ops_rsa_generate_keypair(numbits, e, keydata) != true ||
-	    __ops_add_selfsigned_userid_to_keydata(keydata, userid) != true) {
+	if (__ops_rsa_generate_keypair(numbits, e, keydata) != 1 ||
+	    __ops_add_selfsigned_userid_to_keydata(keydata, userid) != 1) {
 		__ops_keydata_free(keydata);
 		return NULL;
 	}

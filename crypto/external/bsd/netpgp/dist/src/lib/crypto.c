@@ -61,7 +61,6 @@
 #include "crypto.h"
 #include "readerwriter.h"
 #include "memory.h"
-#include "parse_local.h"
 #include "netpgpdefs.h"
 #include "signature.h"
 
@@ -169,7 +168,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf,
 \ingroup Core_MPI
 \brief RSA-encrypt an MPI
 */
-bool 
+unsigned 
 __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 		    const size_t sz_encoded_m_buf,
 		    const __ops_pubkey_t * pubkey,
@@ -181,18 +180,18 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 
 	if (sz_encoded_m_buf != (size_t) BN_num_bytes(pubkey->key.rsa.n)) {
 		(void) fprintf(stderr, "sz_encoded_m_buf wrong\n");
-		return false;
+		return 0;
 	}
 
 	n = __ops_rsa_public_encrypt(encmpibuf, encoded_m_buf,
 				sz_encoded_m_buf, &pubkey->key.rsa);
 	if (n == -1) {
 		(void) fprintf(stderr, "__ops_rsa_public_encrypt failure\n");
-		return false;
+		return 0;
 	}
 
 	if (n <= 0)
-		return false;
+		return 0;
 
 	skp->rsa.encrypted_m = BN_bin2bn(encmpibuf, n, NULL);
 
@@ -204,7 +203,7 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 		}
 		fprintf(stderr, "\n");
 	}
-	return true;
+	return 1;
 }
 
 static          __ops_parse_cb_return_t
@@ -218,14 +217,14 @@ Encrypt a file
 \param pub_key Public Key to encrypt file for
 \param use_armour Write armoured text, if set
 \param allow_overwrite Allow output file to be overwrwritten if it exists
-\return true if OK; else false
+\return 1 if OK; else 0
 */
-bool 
+unsigned 
 __ops_encrypt_file(const char *infile,
 			const char *outfile,
 			const __ops_keydata_t * pub_key,
-			const bool use_armour,
-			const bool allow_overwrite)
+			const unsigned use_armour,
+			const unsigned allow_overwrite)
 {
 	__ops_createinfo_t *create;
 	unsigned char  *buf;
@@ -241,11 +240,11 @@ __ops_encrypt_file(const char *infile,
 #endif
 	if (fd_in < 0) {
 		perror(infile);
-		return false;
+		return 0;
 	}
 	fd_out = __ops_setup_file_write(&create, outfile, allow_overwrite);
 	if (fd_out < 0) {
-		return false;
+		return 0;
 	}
 
 	/* set armoured/not armoured here */
@@ -271,7 +270,7 @@ __ops_encrypt_file(const char *infile,
 		}
 		if (n < 0) {
 			(void) fprintf(stderr, "Problem in read\n");
-			return false;
+			return 0;
 		}
 		done += n;
 	}
@@ -284,7 +283,7 @@ __ops_encrypt_file(const char *infile,
 	free(buf);
 	__ops_teardown_file_write(create, fd_out);
 
-	return true;
+	return 1;
 }
 
 /**
@@ -298,12 +297,12 @@ __ops_encrypt_file(const char *infile,
    \param cb_get_passphrase Callback to use to get passphrase
 */
 
-bool 
+unsigned 
 __ops_decrypt_file(const char *infile,
 			const char *outfile,
 			__ops_keyring_t *keyring,
-			const bool use_armour,
-			const bool allow_overwrite,
+			const unsigned use_armour,
+			const unsigned allow_overwrite,
 			__ops_parse_cb_t *cb_get_passphrase)
 {
 	__ops_parseinfo_t	*parse = NULL;
@@ -315,10 +314,10 @@ __ops_decrypt_file(const char *infile,
 	fd_in = __ops_setup_file_read(&parse, infile,
 				    NULL,
 				    callback_write_parsed,
-				    false);
+				    0);
 	if (fd_in < 0) {
 		perror(infile);
-		return false;
+		return 0;
 	}
 
 	/* setup output filename */
@@ -328,7 +327,7 @@ __ops_decrypt_file(const char *infile,
 		if (fd_out < 0) {
 			perror(outfile);
 			__ops_teardown_file_read(parse, fd_in);
-			return false;
+			return 0;
 		}
 	} else {
 		unsigned	filenamelen;
@@ -349,7 +348,7 @@ __ops_decrypt_file(const char *infile,
 			perror(filename);
 			(void) free(filename);
 			__ops_teardown_file_read(parse, fd_in);
-			return false;
+			return 0;
 		}
 		if (filename) {
 			(void) free(filename);
@@ -383,14 +382,14 @@ __ops_decrypt_file(const char *infile,
 	__ops_teardown_file_read(parse, fd_in);
 	/* \todo cleardown crypt */
 
-	return true;
+	return 1;
 }
 
 static          __ops_parse_cb_return_t
 callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
 	const __ops_parser_content_union_t	*content = &pkt->u;
-	static bool				 skipping;
+	static unsigned				 skipping;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("callback_write_parsed: ");
@@ -398,14 +397,14 @@ callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	}
 	if (pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT && skipping) {
 		puts("...end of skip");
-		skipping = false;
+		skipping = 0;
 	}
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 		printf("OPS_PTAG_CT_UNARMOURED_TEXT\n");
 		if (!skipping) {
 			puts("Skipping...");
-			skipping = true;
+			skipping = 1;
 		}
 		fwrite(content->unarmoured_text.data, 1,
 		       content->unarmoured_text.length, stdout);

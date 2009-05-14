@@ -88,6 +88,7 @@ enum optdefs {
 	HOMEDIR,
 	NUMBITS,
 	DETACHED,
+	HASH_ALG,
 
 	/* debug */
 	OPS_DEBUG
@@ -128,6 +129,9 @@ static struct option options[] = {
 	{"numbits",	required_argument, 	NULL,	NUMBITS},
 	{"detach",	no_argument,		NULL,	DETACHED},
 	{"detached",	no_argument,		NULL,	DETACHED},
+	{"hash-alg",	required_argument, 	NULL,	HASH_ALG},
+	{"hash",	required_argument, 	NULL,	HASH_ALG},
+	{"algorithm",	required_argument, 	NULL,	HASH_ALG},
 
 	/* debug */
 	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
@@ -223,6 +227,7 @@ main(int argc, char **argv)
 		print_usage(usage, p.progname);
 		exit(EXIT_ERROR);
 	}
+	netpgp_setvar(&netpgp, "hash", "SHA256");
 
 	/* set default homedir */
 	(void) snprintf(homedir, sizeof(homedir), "%s/.gnupg", getenv("HOME"));
@@ -305,6 +310,15 @@ main(int argc, char **argv)
 			p.numbits = atoi(optarg);
 			break;
 
+		case HASH_ALG:
+			if (optarg == NULL) {
+				(void) fprintf(stderr,
+				"No hash algorithm argument provided\n");
+				exit(EXIT_ERROR);
+			}
+			netpgp_setvar(&netpgp, "hash", optarg);
+			break;
+
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);
 			break;
@@ -325,10 +339,13 @@ main(int argc, char **argv)
 	 * now do the required action for each of the files on the command
 	 * line
 	 */
+	ret = EXIT_SUCCESS;
 	if (optind == argc) {
-		ret = netpgp_cmd(&netpgp, &p, NULL);
+		if (!netpgp_cmd(&netpgp, &p, NULL)) {
+			ret = EXIT_FAILURE;
+		}
 	} else {
-		for (ret = EXIT_SUCCESS, i = optind; i < argc; i++) {
+		for (i = optind; i < argc; i++) {
 			if (!netpgp_cmd(&netpgp, &p, argv[i])) {
 				ret = EXIT_FAILURE;
 			}
