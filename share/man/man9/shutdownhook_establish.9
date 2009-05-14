@@ -1,4 +1,4 @@
-.\" $NetBSD: shutdownhook_establish.9,v 1.8 2003/02/14 15:20:22 grant Exp $
+.\" $NetBSD: shutdownhook_establish.9,v 1.9 2009/05/14 23:14:33 dyoung Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd November 13, 1995
+.Dd May 14, 2009
 .Dt SHUTDOWNHOOK_ESTABLISH 9
 .Os
 .Sh NAME
@@ -45,6 +45,10 @@
 .Ft void
 .Fn shutdownhook_disestablish "void *cookie"
 .Sh DESCRIPTION
+.Em The
+.Em Xr shutdownhook_establish 9
+.Em API is deprecated.
+.Pp
 The
 .Fn shutdownhook_establish
 function adds
