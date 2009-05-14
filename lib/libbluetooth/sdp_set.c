@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_set.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: sdp_set.c,v 1.2 2009/05/14 19:12:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_set.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: sdp_set.c,v 1.2 2009/05/14 19:12:45 plunky Exp $");
 
 #include <bluetooth.h>
 #include <limits.h>
@@ -220,7 +220,7 @@ _sdp_set_ext(uint8_t type, const sdp_data_t *data, ssize_t len)
 		} else if (p + 4 + len > data->end)
 			return false;
 
-		if (len > UINT32_MAX)
+		if ((size_t)len > UINT32_MAX)
 			return false;
 
 		be32enc(p, (uint32_t)len);
