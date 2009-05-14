@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.57 2008/10/11 17:28:03 christos Exp $
+# $NetBSD: network,v 1.58 2009/05/14 15:33:36 roy Exp $
 #
 
 # PROVIDE: network
@@ -36,7 +36,9 @@ network_start()
 		# DHCP later, as we will probably get the
 		# hostname at that time.
 		#
-		if ! checkyesno dhclient && [ -z "$(hostname)" ]; then
+		if ! checkyesno dhclient && ! checkyesno dhcpcd && \
+			[ -z "$(hostname)" ]
+		then
 			warn "\$hostname not set."
 		fi
 	fi
@@ -266,7 +268,10 @@ network_start()
 					( eval "${args#*!}" )
 					;;
 				dhcp)
-					/sbin/dhcpcd -n ${dhcpcd_flags} $int
+					if ! checkyesno dhcpcd; then
+						/sbin/dhcpcd -n \
+							${dhcpcd_flags} $int
+					fi
 					;;
 				*)
 					# Pass args to ifconfig.  Note
@@ -442,7 +447,9 @@ network_stop()
 			eval args=\$ifconfig_$int
 			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
 				echo -n " $int"
-				/sbin/dhcpcd -k $int 2> /dev/null
+				if [ -f /var/run/dhcpcd-$int.pid ]; then
+					/sbin/dhcpcd -k $int 2> /dev/null
+				fi
 				/sbin/ifconfig $int down
 				if /sbin/ifconfig $int destroy 2>/dev/null && \
 				   checkyesno ipfilter; then
@@ -462,5 +469,6 @@ network_stop()
 
 load_rc_config $name
 load_rc_config_var dhclient dhclient
+load_rc_config_var dhcpcd dhcpcd
 load_rc_config_var ipfilter ipfilter
 run_rc_command "$1"
