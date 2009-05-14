@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.79 2007/12/28 00:48:43 dholland Exp $ */
+/*	$NetBSD: mbr.c,v 1.80 2009/05/14 16:23:38 sborrill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1682,11 +1682,12 @@ convert_mbr_chs(int cyl, int head, int sec,
  */
 
 int
-guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)
+guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, daddr_t *sec)
 {
 	struct mbr_sector *mbrs = &mbri->mbr;
 	struct mbr_partition *parts = &mbrs->mbr_parts[0];
-	int xcylinders, xheads, xsectors, i, j;
+	int xcylinders, xheads, i, j;
+	daddr_t xsectors;
 	int c1, h1, s1, c2, h2, s2;
 	unsigned long a1, a2;
 	uint64_t num, denom;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.48 2009/04/07 10:45:04 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.49 2009/05/14 16:23:38 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -234,7 +234,7 @@ message fssizesok
 {Akzeptieren. Freier Speicherplatz: %d %s, %d freie Partitionen.}
 
 message fssizesbad
-{Reduzieren der Partitionsgrößen um %d %s (%d Sektoren).}
+{Reduzieren der Partitionsgrößen um %d %s (%u Sektoren).}
 
 message startoutsidedisk
 {Der Startwert, den Sie angegeben haben, liegt jenseits des Endes der
@@ -249,6 +249,12 @@ Die Größe Ihrer Partition wurde auf %d %s verringert.
 Drücken Sie die Eingabetaste um fortzufahren.
 }
 
+message toobigdisklabel
+{
+Diese Platte ist zu groß für eine
+disklabel-Partitionstabelle und kann deswegen weder für
+boot- noch für root-Partitionen benutzt werden}
+
 message fspart
 {Nachfolgend sehen Sie Ihre BSD-Disklabel-Partitionen:
 (Dies ist die letzte Chance, diese zu ändern.)
@@ -261,7 +267,7 @@ message fspart_header
 }
 
 message fspart_row
-{%9d %9d %10d %-10s %-5s %-5s %s}
+{%9lu %9lu %10lu %-10s %-5s %-5s %s}
 
 message show_all_unused_partitions
 {Alle unbenutzten Partitionen anzeigen}

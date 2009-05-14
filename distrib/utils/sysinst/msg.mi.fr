@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.105 2009/04/07 10:45:04 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.106 2009/05/14 16:23:38 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -234,7 +234,7 @@ message fssizesok
 {Taille de la partition acceptée. Libre: espace %d %s, %d partition}
 
 message fssizesbad
-{Réduire la taille de la partition de %d %s (%d secteurs).}
+{Réduire la taille de la partition de %d %s (%u secteurs).}
 
 message startoutsidedisk
 {La valeur que vous avez spécifiée est en dehors du disque
@@ -243,6 +243,13 @@ message startoutsidedisk
 message endoutsidedisk
 {Avec cette valeur, la fin de la partition est en dehors du disque.
 La taille de la partition a été tronquée à %d %s.
+}
+
+message toobigdisklabel
+{
+Ce disque est trop grand pour qu'une table de partition soit utilisée.
+Il ne peut donc pas être utilisé en tant que disque démarrable ou
+contenir la partition racine.
 }
 
 message fspart
@@ -256,7 +263,7 @@ message fspart_header
 }
 
 message fspart_row
-{%9d %9d %10d %-10s %-5s %-5s %s}
+{%9lu %9lu %10lu %-10s %-5s %-5s %s}
 
 message show_all_unused_partitions
 {Afficher les partitions libres}
