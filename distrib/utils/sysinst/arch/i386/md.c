@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.121 2009/04/07 10:45:05 tsutsui Exp $ */
+/*	$NetBSD: md.c,v 1.122 2009/05/14 16:23:38 sborrill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -496,7 +496,8 @@ md_bios_info(dev)
 	size_t len;
 	struct biosdisk_info *bip;
 	struct nativedisk_info *nip = NULL, *nat;
-	int cyl, head, sec;
+	int cyl, head;
+	daddr_t sec;
 
 	if (disklist == NULL) {
 		if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0)
