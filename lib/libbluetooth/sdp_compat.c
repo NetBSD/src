@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_compat.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: sdp_compat.c,v 1.2 2009/05/14 19:12:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -77,7 +77,7 @@
 #define SDP_COMPAT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_compat.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: sdp_compat.c,v 1.2 2009/05/14 19:12:45 plunky Exp $");
 
 #include <errno.h>
 #include <sdp.h>
@@ -170,7 +170,7 @@ sdp_search(void *xss, uint32_t plen, uint16_t const *pp, uint32_t alen,
 	struct sdp_compat *sc = xss;
 	sdp_data_t seq, ssp, ail, rsp, value;
 	uint16_t attr;
-	int i;
+	size_t i;
 	bool rv;
 
 	if (sc == NULL)
@@ -224,7 +224,7 @@ sdp_search(void *xss, uint32_t plen, uint16_t const *pp, uint32_t alen,
 		while (vlen > 0 && sdp_get_attr(&seq, &attr, &value)) {
 			vp->attr = attr;
 			if (vp->value != NULL) {
-				if (value.end - value.next > vp->vlen) {
+				if (value.end - value.next > (ssize_t)vp->vlen) {
 					vp->flags = SDP_ATTR_TRUNCATED;
 				} else {
 					vp->flags = SDP_ATTR_OK;

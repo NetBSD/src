@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_session.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: sdp_session.c,v 1.2 2009/05/14 19:12:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_session.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: sdp_session.c,v 1.2 2009/05/14 19:12:45 plunky Exp $");
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -194,7 +194,7 @@ _sdp_send_pdu(struct sdp_session *ss, uint8_t pid, struct iovec *iov, int num)
 		nw = writev(ss->s, iov, num);
 	} while (nw == -1 && errno == EINTR);
 
-	if (nw != sizeof(pdu) + len) {
+	if ((size_t)nw != sizeof(pdu) + len) {
 		errno = EIO;
 		return false;
 	}
@@ -228,7 +228,7 @@ _sdp_recv_pdu(struct sdp_session *ss, uint8_t pid)
 	if (nr == -1)
 		return -1;
 
-	if (nr < sizeof(pdu)) {
+	if ((size_t)nr < sizeof(pdu)) {
 		errno = EIO;
 		return -1;
 	}
@@ -238,7 +238,7 @@ _sdp_recv_pdu(struct sdp_session *ss, uint8_t pid)
 
 	if (pid != pdu.pid
 	    || ss->tid != pdu.tid
-	    || nr != sizeof(pdu) + pdu.len) {
+	    || (size_t)nr != sizeof(pdu) + pdu.len) {
 		if (pdu.pid == SDP_PDU_ERROR_RESPONSE
 		    && pdu.len == sizeof(uint16_t))
 			errno = _sdp_errno(be16dec(ss->ibuf));
