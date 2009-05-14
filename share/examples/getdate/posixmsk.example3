@@ -1,0 +1,9 @@
+# $NetBSD: posixmsk.example3,v 1.1 2009/05/14 02:37:36 ginsbach Exp $
+#
+# The Open Group Base Specifications Issue 7 / IEEE Std 1003.1-2008
+# Example 3
+#
+%m/%d/%y
+%d.%m.%y
+%y-%m-%d
+%A %H:%M:%S

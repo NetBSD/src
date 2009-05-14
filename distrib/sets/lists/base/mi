@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.808 2009/05/08 23:28:46 christos Exp $
+# $NetBSD: mi,v 1.809 2009/05/14 02:37:35 ginsbach Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1787,6 +1787,7 @@
 ./usr/share/examples/emul/ultrix/etc		base-sys-examples
 ./usr/share/examples/fstab			base-fstab-examples
 ./usr/share/examples/ftpd			base-netutil-examples
+./usr/share/examples/getdate			base-sys-examples
 ./usr/share/examples/hostapd			base-netutil-examples
 ./usr/share/examples/ipf			base-netutil-examples
 ./usr/share/examples/isdn			base-isdn-examples
