@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.10 2009/05/14 21:27:55 jnemeth Exp $
+.\" $NetBSD: pmf.9,v 1.11 2009/05/14 23:05:21 dyoung Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -140,6 +140,16 @@ The following message types are defined:
 .Bl -tag -width compact
 .It Fn pmf_device_register "dev" "suspend" "resume"
 Register a device with the power management framework.
+.Fa suspend
+and
+.Fa resume
+are passed
+.Fa dev
+and they return
+.Dv true
+on success and
+.Dv false
+on failure.
 If either
 .Fa suspend
 or
@@ -153,7 +163,25 @@ Returns
 .Dv false
 if there was an error.
 .It Fn pmf_device_register1 "dev" "suspend" "resume" "shutdown"
-Like pmf_device_register, but additionally registers a shutdown handler.
+Like
+.Fn pmf_device_register ,
+but additionally registers a shutdown handler.
+During system shutdown,
+.Fn pmf_system_shutdown
+calls
+.Fa shutdown
+on
+.Fa dev
+with the
+.Xr reboot 2
+.Dq howto
+in the second argument.
+.Fa shutdown
+should return
+.Dv true
+on success and
+.Dv false
+on failure.
 .It Fn pmf_device_deregister "dev"
 Deregister a device with the power management framework.
 .It Fn pmf_device_suspend "dev"
