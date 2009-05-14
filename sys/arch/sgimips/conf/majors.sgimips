@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.22 2009/02/12 06:33:56 rumble Exp $
+#	$NetBSD: majors.sgimips,v 1.23 2009/05/14 01:12:58 macallan Exp $
 #
 # Device majors for sgimips
 #
@@ -68,7 +68,7 @@ device-major	sequencer	char 75			sequencer
 device-major	uscanner	char 76			uscanner
 device-major	ksyms		char 77			ksyms
 device-major	lpt		char 78			lpt
-
+device-major    sysmon          char 79                 sysmon_envsys | sysmon_wdog
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
