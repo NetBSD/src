@@ -50,8 +50,8 @@
 /** \file
  */
 
-#ifndef OPS_CREATE_H
-#define OPS_CREATE_H
+#ifndef CREATE_H_
+#define CREATE_H_
 
 #include "types.h"
 #include "packet.h"
@@ -59,6 +59,7 @@
 #include "errors.h"
 #include "keyring.h"
 #include "writer.h"
+#include "memory.h"
 
 /**
  * \ingroup Create
@@ -72,39 +73,41 @@ struct __ops_createinfo {
 __ops_createinfo_t *__ops_createinfo_new(void);
 void            __ops_createinfo_delete(__ops_createinfo_t *);
 
-int             __ops_filewrite(const char *, const char *, const size_t, const bool);
+int             __ops_filewrite(const char *, const char *, const size_t, const unsigned);
 
-bool   __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *, unsigned char *);
-bool __ops_write_struct_user_id(__ops_user_id_t *, __ops_createinfo_t *);
-bool __ops_write_struct_pubkey(const __ops_pubkey_t *, __ops_createinfo_t *);
+__ops_memory_t   *__ops_fileread(const char *, int *);
+void __ops_build_pubkey(__ops_memory_t *, const __ops_pubkey_t *, unsigned);
 
-bool __ops_write_ss_header(unsigned, __ops_content_tag_t, __ops_createinfo_t *);
-bool __ops_write_struct_seckey(const __ops_seckey_t *,
+unsigned   __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *, unsigned char *);
+unsigned __ops_write_struct_user_id(__ops_user_id_t *, __ops_createinfo_t *);
+unsigned __ops_write_struct_pubkey(const __ops_pubkey_t *, __ops_createinfo_t *);
+unsigned __ops_write_ss_header(unsigned, __ops_content_tag_t, __ops_createinfo_t *);
+unsigned __ops_write_struct_seckey(const __ops_seckey_t *,
 			    const unsigned char *,
 			    const size_t,
 			    __ops_createinfo_t *);
-bool 
+unsigned 
 __ops_write_one_pass_sig(const __ops_seckey_t *,
 		       const __ops_hash_alg_t,
 		       const __ops_sig_type_t,
 		       __ops_createinfo_t *);
-bool 
+unsigned 
 __ops_write_litdata(const unsigned char *,
 				const int,
 				const __ops_litdata_type_t,
 				__ops_createinfo_t *);
 __ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_keydata_t *);
-bool __ops_write_pk_sesskey(__ops_createinfo_t *, __ops_pk_sesskey_t *);
-bool   __ops_write_transferable_pubkey(const __ops_keydata_t *, bool, __ops_createinfo_t *);
-bool   __ops_write_transferable_seckey(const __ops_keydata_t *, const unsigned char *, const size_t, bool, __ops_createinfo_t *);
+unsigned __ops_write_pk_sesskey(__ops_createinfo_t *, __ops_pk_sesskey_t *);
+unsigned   __ops_write_transferable_pubkey(const __ops_keydata_t *, unsigned, __ops_createinfo_t *);
+unsigned   __ops_write_transferable_seckey(const __ops_keydata_t *, const unsigned char *, const size_t, unsigned, __ops_createinfo_t *);
 
 void            __ops_fast_create_user_id(__ops_user_id_t *, unsigned char *);
-bool   __ops_write_user_id(const unsigned char *, __ops_createinfo_t *);
+unsigned   __ops_write_user_id(const unsigned char *, __ops_createinfo_t *);
 void            __ops_fast_create_rsa_pubkey(__ops_pubkey_t *, time_t, BIGNUM *, BIGNUM *);
-bool   __ops_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *, __ops_createinfo_t *);
+unsigned   __ops_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *, __ops_createinfo_t *);
 void            __ops_fast_create_rsa_seckey(__ops_seckey_t *, time_t, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *);
-bool   encode_m_buf(const unsigned char *, size_t, const __ops_pubkey_t *, unsigned char *);
-bool   __ops_fileread_litdata(const char *, const __ops_litdata_type_t, __ops_createinfo_t *);
-bool   __ops_write_symm_enc_data(const unsigned char *, const int, __ops_createinfo_t *);
+unsigned   encode_m_buf(const unsigned char *, size_t, const __ops_pubkey_t *, unsigned char *);
+unsigned   __ops_fileread_litdata(const char *, const __ops_litdata_type_t, __ops_createinfo_t *);
+unsigned   __ops_write_symm_enc_data(const unsigned char *, const int, __ops_createinfo_t *);
 
-#endif				/* OPS_CREATE_H */
+#endif				/* CREATE_H_ */

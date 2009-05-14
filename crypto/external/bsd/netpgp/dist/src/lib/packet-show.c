@@ -423,7 +423,7 @@ __ops_text_free(__ops_text_t * text)
 	free(text);
 }
 
-/* XXX: should this (and many others) be bool? */
+/* XXX: should this (and many others) be unsigned? */
 /* ! generic function which adds text derived from single octet map to text */
 static unsigned int 
 add_str_from_octet_map(__ops_text_t * text, char *str,
