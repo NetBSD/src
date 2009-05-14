@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.142 2009/04/07 10:45:04 tsutsui Exp $	*/
+/*	$NetBSD: defs.h,v 1.143 2009/05/14 16:23:38 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -198,14 +198,14 @@ struct ptn_info {
 	struct ptn_size {
 		int	ptn_id;
 		char	mount[20];
-		int	dflt_size;
-		int	size;
+		daddr_t	dflt_size;
+		daddr_t	size;
 		int	limit;
 		int	changed;
 	}		ptn_sizes[MAXPARTITIONS + 1];	/* +1 for delete code */
 	menu_ent	ptn_menus[MAXPARTITIONS + 1];	/* +1 for unit chg */
 	int		free_parts;
-	int		free_space;
+	daddr_t		free_space;
 	struct ptn_size	*pool_part;
 	char		exit_msg[70];
 };
@@ -239,13 +239,14 @@ int rootpart;				/* partition we install into */
 const char *disktype;		/* ST506, SCSI, ... */
 
 /* Area of disk we can allocate, start and size in disk sectors. */
-int ptstart, ptsize;
+daddr_t ptstart, ptsize;
 /* If we have an MBR boot partition, start and size in sectors */
 int bootstart, bootsize;
 
 /* Actual values for current disk - set by find_disks() or md_get_info() */
 int sectorsize;
-int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
+int dlcyl, dlhead, dlsec, dlcylsize;
+daddr_t dlsize;
 int current_cylsize;
 unsigned int root_limit;		/* BIOS (etc) read limit */
 
@@ -449,11 +450,11 @@ void	unwind_mounts(void);
 
 /* from bsddisklabel.c */
 int	make_bsd_partitions(void);
-int	save_ptn(int, int, int, int, const char *);
+int	save_ptn(int, daddr_t, daddr_t, int, const char *);
 void	set_ptn_titles(menudesc *, int, void *);
 void	set_ptn_menu(struct ptn_info *);
 int	set_ptn_size(menudesc *, void *);
-void	get_ptn_sizes(int, int, int);
+void	get_ptn_sizes(daddr_t, daddr_t, int);
 
 /* from aout2elf.c */
 int move_aout_libs(void);
