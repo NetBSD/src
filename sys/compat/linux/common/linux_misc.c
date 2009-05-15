@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.207 2009/03/29 19:21:19 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.208 2009/05/15 17:02:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.207 2009/03/29 19:21:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.208 2009/05/15 17:02:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -485,7 +485,7 @@ linux_to_bsd_mmap_args(struct sys_mmap_args *cma, const struct linux_sys_mmap_ar
 		SCARG(cma, prot) |= VM_PROT_READ;
 	SCARG(cma, flags) = flags;
 	SCARG(cma, fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
-	SCARG(cma, pad) = 0;
+	SCARG(cma, PAD) = 0;
 }
 
 #define	LINUX_MREMAP_MAYMOVE	1
