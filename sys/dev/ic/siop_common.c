@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.48 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.49 2009/05/15 17:55:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.48 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.49 2009/05/15 17:55:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ siop_common_attach(struct siop_common_softc *sc)
 		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE,
 		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev, 
+			aprint_error_dev(sc->sc_dev, 
 			    "unable to allocate script DMA memory, "
 			    "error = %d\n", error);
 			return error;
@@ -86,21 +86,21 @@ siop_common_attach(struct siop_common_softc *sc)
 		    (void **)&sc->sc_script,
 		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev, "unable to map script DMA memory, "
+			aprint_error_dev(sc->sc_dev, "unable to map script DMA memory, "
 			    "error = %d\n", error);
 			return error;
 		}
 		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1,
 		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev, "unable to create script DMA map, "
+			aprint_error_dev(sc->sc_dev, "unable to create script DMA map, "
 			    "error = %d\n", error);
 			return error;
 		}
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
 		    sc->sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev, "unable to load script DMA map, "
+			aprint_error_dev(sc->sc_dev, "unable to load script DMA map, "
 			    "error = %d\n", error);
 			return error;
 		}
@@ -109,7 +109,7 @@ siop_common_attach(struct siop_common_softc *sc)
 		sc->ram_size = PAGE_SIZE;
 	}
 
-	sc->sc_adapt.adapt_dev = &sc->sc_dev;
+	sc->sc_adapt.adapt_dev = sc->sc_dev;
 	sc->sc_adapt.adapt_nchannels = 1;
 	sc->sc_adapt.adapt_openings = 0;
 	sc->sc_adapt.adapt_ioctl = siop_ioctl;
@@ -368,7 +368,7 @@ siop_wdtr_neg(struct siop_common_cmd *siop_cmd)
 			siop_target->offset = siop_target->period = 0;
 			siop_update_xfer_mode(sc, target);
 			printf("%s: rejecting invalid wide negotiation from "
-			    "target %d (%d)\n", device_xname(&sc->sc_dev), target,
+			    "target %d (%d)\n", device_xname(sc->sc_dev), target,
 			    tables->msg_in[3]);
 			tables->t_msgout.count = siop_htoc32(sc, 1);
 			tables->msg_out[0] = MSG_MESSAGE_REJECT;
@@ -426,7 +426,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 	int i;
 
 #ifdef DEBUG_NEG
-	printf("%s: answer on ppr negotiation:", device_xname(&sc->sc_dev));
+	printf("%s: answer on ppr negotiation:", device_xname(sc->sc_dev));
 	for (i = 0; i < 8; i++)
 		printf(" 0x%x", tables->msg_in[i]);
 	printf("\n");
@@ -440,7 +440,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 		if (options != MSG_EXT_PPR_DT) {
 			/* should't happen */
 			printf("%s: ppr negotiation for target %d: "
-			    "no DT option\n", device_xname(&sc->sc_dev), target);
+			    "no DT option\n", device_xname(sc->sc_dev), target);
 			siop_target->status = TARST_ASYNC;
 			siop_target->flags &= ~(TARF_DT | TARF_ISDT);
 			siop_target->offset = 0;
@@ -452,7 +452,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 		    sync > sc->dt_maxsync) {
 			printf("%s: ppr negotiation for target %d: "
 			    "offset (%d) or sync (%d) out of range\n",
-			    device_xname(&sc->sc_dev), target, offset, sync);
+			    device_xname(sc->sc_dev), target, offset, sync);
 			/* should not happen */
 			siop_target->offset = 0;
 			siop_target->period = 0;
@@ -474,7 +474,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 			if ((siop_target->flags & TARF_ISDT) == 0) {
 				printf("%s: ppr negotiation for target %d: "
 				    "sync (%d) incompatible with adapter\n",
-				    device_xname(&sc->sc_dev), target, sync);
+				    device_xname(sc->sc_dev), target, sync);
 				/*
 				 * we didn't find it in our table, do async
 				 * send reject msg, start SDTR/WDTR neg
@@ -489,7 +489,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 		if (tables->msg_in[6] != 1) {
 			printf("%s: ppr negotiation for target %d: "
 			    "transfer width (%d) incompatible with dt\n",
-			    device_xname(&sc->sc_dev), target, tables->msg_in[6]);
+			    device_xname(sc->sc_dev), target, tables->msg_in[6]);
 			/* DT mode can only be done with wide transfers */
 			siop_target->status = TARST_ASYNC;
 			goto reject;
@@ -515,7 +515,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 	} else {
 		/* target initiated PPR negotiation, shouldn't happen */
 		printf("%s: rejecting invalid PPR negotiation from "
-		    "target %d\n", device_xname(&sc->sc_dev), target);
+		    "target %d\n", device_xname(sc->sc_dev), target);
 reject:
 		tables->t_msgout.count = siop_htoc32(sc, 1);
 		tables->msg_out[0] = MSG_MESSAGE_REJECT;
@@ -704,7 +704,9 @@ int
 siop_ioctl(struct scsipi_channel *chan, u_long cmd, void *arg,
     int flag, struct proc *p)
 {
-	struct siop_common_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct siop_common_softc *sc;
+
+	sc = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (cmd) {
 	case SCBUSIORESET:
@@ -738,7 +740,7 @@ siop_ma(struct siop_common_cmd *siop_cmd)
 
 	offset = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCRATCHA + 1);
 	if (offset >= SIOP_NSG) {
-		aprint_error_dev(&sc->sc_dev, "bad offset in siop_sdp (%d)\n",
+		aprint_error_dev(sc->sc_dev, "bad offset in siop_sdp (%d)\n",
 		    offset);
 		return;
 	}
@@ -976,31 +978,31 @@ siop_modechange(struct siop_common_softc *sc)
 		switch(sc->mode) {
 		case STEST4_MODE_DIF:
 			printf("%s: switching to differential mode\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
 			    stest2 | STEST2_DIF);
 			break;
 		case STEST4_MODE_SE:
 			printf("%s: switching to single-ended mode\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
 			    stest2 & ~STEST2_DIF);
 			break;
 		case STEST4_MODE_LVD:
 			printf("%s: switching to LVD mode\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
 			    stest2 & ~STEST2_DIF);
 			break;
 		default:
-			aprint_error_dev(&sc->sc_dev, "invalid SCSI mode 0x%x\n",
+			aprint_error_dev(sc->sc_dev, "invalid SCSI mode 0x%x\n",
 			    sc->mode);
 			return 0;
 		}
 		return 1;
 	}
 	printf("%s: timeout waiting for DIFFSENSE to stabilise\n",
-	    device_xname(&sc->sc_dev));
+	    device_xname(sc->sc_dev));
 	return 0;
 }
 
