@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.36 2008/06/11 02:09:16 kiyohara Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.37 2009/05/15 17:55:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -129,7 +129,7 @@ struct siop_common_target {
 
 /* Driver internal state */
 struct siop_common_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct scsipi_channel sc_chan;
 	struct scsipi_adapter sc_adapt;
 	int features;			/* chip's features */

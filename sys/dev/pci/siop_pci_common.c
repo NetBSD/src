@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.29 2009/02/13 21:12:14 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.30 2009/05/15 17:55:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.29 2009/02/13 21:12:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.30 2009/05/15 17:55:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 #ifdef SIOP_SYMLED    /* XXX Should be a devprop! */
 	siop_sc->features |= SF_CHIP_LED0;
 #endif
-	dict = device_properties(&siop_sc->sc_dev);
+	dict = device_properties(siop_sc->sc_dev);
 	if (prop_dictionary_get_bool(dict, "use_pciclock", &use_pciclock))
 		if (use_pciclock)
 			siop_sc->features |= SF_CHIP_USEPCIC;
@@ -299,7 +299,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 		siop_sc->sc_rh = ioh;
 		siop_sc->sc_raddr = ioaddr;
 	} else {
-		aprint_error_dev(&siop_sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(siop_sc->sc_dev, "unable to map device registers\n");
 		return 0;
 	}
 
@@ -313,32 +313,32 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 			bar = 0x1c;
 			break;
 		default:
-			aprint_error_dev(&siop_sc->sc_dev, "invalid memory type %d\n",
+			aprint_error_dev(siop_sc->sc_dev, "invalid memory type %d\n",
 			    memtype);
 			return 0;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &siop_sc->sc_ramt, &siop_sc->sc_ramh,
 		    &siop_sc->sc_scriptaddr, NULL) == 0) {
-			aprint_normal_dev(&siop_sc->sc_dev, "using on-board RAM\n");
+			aprint_normal_dev(siop_sc->sc_dev, "using on-board RAM\n");
 		} else {
-			aprint_error_dev(&siop_sc->sc_dev, "can't map on-board RAM\n");
+			aprint_error_dev(siop_sc->sc_dev, "can't map on-board RAM\n");
 			siop_sc->features &= ~SF_CHIP_RAM;
 		}
 	}
 
 	if (pci_intr_map(pa, &intrhandle) != 0) {
-		aprint_error_dev(&siop_sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(siop_sc->sc_dev, "couldn't map interrupt\n");
 		return 0;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	pci_sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
 	    intr, siop_sc);
 	if (pci_sc->sc_ih != NULL) {
-		aprint_normal_dev(&siop_sc->sc_dev, "interrupting at %s\n",
+		aprint_normal_dev(siop_sc->sc_dev, "interrupting at %s\n",
 		    intrstr ? intrstr : "unknown interrupt");
 	} else {
-		aprint_error_dev(&siop_sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(siop_sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
