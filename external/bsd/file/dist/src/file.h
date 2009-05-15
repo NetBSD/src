@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.3 2009/05/15 12:06:09 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -447,6 +447,9 @@ static const char *rcsid(const char *p) { \
 #endif
 #else
 #define FILE_RCSID(id)
+#endif
+#ifndef __RCSID
+#define __RCSID(a)
 #endif
 
 #endif /* __file_h__ */
