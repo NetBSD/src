@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.158 2008/10/30 21:37:55 mrg Exp $
+# $NetBSD: mi,v 1.159 2009/05/15 02:34:07 ginsbach Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -659,6 +659,9 @@
 ./usr/share/examples/fstab/fstab.wd0.cobalt	misc-fstab-examples	share
 ./usr/share/examples/ftpd/ftpd.conf		misc-netutil-examples	share
 ./usr/share/examples/ftpd/ftpusers		misc-netutil-examples	share
+./usr/share/examples/getdate/datemsk.template	misc-sys-examples	share
+./usr/share/examples/getdate/posixmsk.example3	misc-sys-examples	share
+./usr/share/examples/getdate/posixmsk.example4	misc-sys-examples	share
 ./usr/share/examples/hostapd/hostapd.conf	misc-netutil-examples	share
 ./usr/share/examples/ipf/BASIC.NAT		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/BASIC_1.FW		misc-ipf-examples	ipfilter,share

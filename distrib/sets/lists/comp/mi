@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1260 2009/05/14 02:37:36 ginsbach Exp $
+#	$NetBSD: mi,v 1.1261 2009/05/15 02:34:07 ginsbach Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10983,6 +10983,8 @@
 ./usr/share/man/html3/getcurx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getcury.html		comp-c-htmlman		html
 ./usr/share/man/html3/getcwd.html		comp-c-htmlman		html
+./usr/share/man/html3/getdate.html		comp-c-htmlman		html
+./usr/share/man/html3/getdate_err.html		comp-c-htmlman		html
 ./usr/share/man/html3/getdevmajor.html		comp-c-htmlman		html
 ./usr/share/man/html3/getdirentries.html	comp-c-htmlman		html
 ./usr/share/man/html3/getdiskbyname.html	comp-c-htmlman		html
