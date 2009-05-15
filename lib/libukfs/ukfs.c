@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.26 2009/05/02 15:20:08 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.27 2009/05/15 15:54:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -414,7 +414,7 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 	if (fd == -1)
 		goto out;
 
-	xfer = rump_sys_pread(fd, buf, bufsize, 0, off);
+	xfer = rump_sys_pread(fd, buf, bufsize, off);
 	rump_sys_close(fd);
 
  out:
@@ -430,7 +430,7 @@ ssize_t
 ukfs_read_fd(struct ukfs *ukfs, int fd, off_t off, uint8_t *buf, size_t buflen)
 {
 
-	return rump_sys_pread(fd, buf, buflen, 0, off);
+	return rump_sys_pread(fd, buf, buflen, off);
 }
 
 ssize_t
@@ -446,7 +446,7 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 		goto out;
 
 	/* write and commit */
-	xfer = rump_sys_pwrite(fd, buf, bufsize, 0, off);
+	xfer = rump_sys_pwrite(fd, buf, bufsize, off);
 	if (xfer > 0)
 		rump_sys_fsync(fd);
 
@@ -467,7 +467,7 @@ ukfs_write_fd(struct ukfs *ukfs, int fd, off_t off, uint8_t *buf, size_t buflen,
 {
 	ssize_t xfer;
 
-	xfer = rump_sys_pwrite(fd, buf, buflen, 0, off);
+	xfer = rump_sys_pwrite(fd, buf, buflen, off);
 	if (xfer > 0 && dosync)
 		rump_sys_fsync(fd);
 

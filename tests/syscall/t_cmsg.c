@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.6 2009/05/08 13:03:46 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.7 2009/05/15 15:54:03 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -142,7 +142,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	    sizeof(MAGICSTRING))
 		atf_tc_fail_errno("file write"); /* XXX: errno */
 	/* reset offset */
-	rump_sys_lseek(fd, 0, 0, SEEK_SET);
+	rump_sys_lseek(fd, 0, SEEK_SET);
 
 	cmp = malloc(CMSG_LEN(sizeof(int)));
 
