@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.21 2009/02/15 01:31:43 erh Exp $
+#	$NetBSD: dot.profile,v 1.22 2009/05/15 23:57:50 ad Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 export PATH=${PATH}:/usr/X11R7/bin:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
@@ -23,5 +23,5 @@ export ENV=/root/.shrc
 
 # Do not display in 'su -' case
 if [ -z "$SU_FROM" ]; then
-        echo "We recommend creating a non-root account and using su(1) for root access."
+        echo "We recommend that you create a non-root account and use su(1) for root access."
 fi
