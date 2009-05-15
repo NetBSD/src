@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.373 2009/05/12 14:16:53 cegger Exp $ */
+/*	$NetBSD: wd.c,v 1.374 2009/05/15 23:49:28 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.373 2009/05/12 14:16:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.374 2009/05/15 23:49:28 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -133,6 +133,7 @@ int	wdactivate(device_t, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
+static void	wdlastclose(struct wd_softc *);
 static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
@@ -456,7 +457,20 @@ int
 wddetach(device_t self, int flags)
 {
 	struct wd_softc *sc = device_private(self);
-	int s, bmaj, cmaj, i, mn;
+	int bmaj, cmaj, i, mn, rc, s;
+
+	rc = 0;
+	mutex_enter(&sc->sc_dk.dk_openlock);
+	if (sc->sc_dk.dk_openmask == 0)
+		;	/* nothing to do */
+	else if ((flags & DETACH_FORCE) == 0)
+		rc = EBUSY;
+	else
+		wdlastclose(sc);
+	mutex_exit(&sc->sc_dk.dk_openlock);
+
+	if (rc != 0)
+		return rc;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
@@ -1001,6 +1015,20 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	return error;
 }
 
+/* 
+ * Caller must hold wd->sc_dk.dk_openlock.
+ */
+static void
+wdlastclose(struct wd_softc *wd)
+{
+	wd_flushcache(wd, AT_WAIT);
+
+	if (! (wd->sc_flags & WDF_KLABEL))
+		wd->sc_flags &= ~WDF_LOADED;
+
+	wd->atabus->ata_delref(wd->drvp);
+}
+
 int
 wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
@@ -1023,14 +1051,8 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	if (wd->sc_dk.dk_openmask == 0) {
-		wd_flushcache(wd, AT_WAIT);
-
-		if (! (wd->sc_flags & WDF_KLABEL))
-			wd->sc_flags &= ~WDF_LOADED;
-
-		wd->atabus->ata_delref(wd->drvp);
-	}
+	if (wd->sc_dk.dk_openmask == 0)
+		wdlastclose(wd);
 
 	mutex_exit(&wd->sc_dk.dk_openlock);
 	return 0;
