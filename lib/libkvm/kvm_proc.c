@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.82 2009/03/29 01:02:49 mrg Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.83 2009/05/16 11:56:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.82 2009/03/29 01:02:49 mrg Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.83 2009/05/16 11:56:47 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -860,7 +860,7 @@ kvm_getprocs(kd, op, arg, cnt)
 	size_t size;
 	int mib[4], st, nprocs;
 
-	if (ISKMEM(kd)) {
+	if (ISALIVE(kd)) {
 		size = 0;
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_PROC;
@@ -884,10 +884,6 @@ kvm_getprocs(kd, op, arg, cnt)
 			return (NULL);
 		}
 		nprocs = (int) (size / sizeof(struct kinfo_proc));
-	} else if (ISSYSCTL(kd)) {
-		_kvm_err(kd, kd->program, "kvm_open called with KVM_NO_FILES, "
-		    "can't use kvm_getprocs");
-		return (NULL);
 	} else {
 		struct nlist nl[4], *p;
 
