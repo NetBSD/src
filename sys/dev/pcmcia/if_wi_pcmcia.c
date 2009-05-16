@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.78.4.2 2009/05/04 08:13:14 yamt Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.78.4.3 2009/05/16 10:41:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.78.4.2 2009/05/04 08:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.78.4.3 2009/05/16 10:41:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.78.4.2 2009/05/04 08:13:14 yamt E
 #include <dev/microcode/wi/spectrum24t_cf.h>
 #endif
 
-static int	wi_pcmcia_match(struct device *, struct cfdata *, void *);
+static int	wi_pcmcia_match(device_t, cfdata_t, void *);
 static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
-static void	wi_pcmcia_attach(struct device *, struct device *, void *);
-static int	wi_pcmcia_detach(struct device *, int);
+static void	wi_pcmcia_attach(device_t, device_t, void *);
+static int	wi_pcmcia_detach(device_t, int);
 static int	wi_pcmcia_enable(struct wi_softc *);
 static void	wi_pcmcia_disable(struct wi_softc *);
 
@@ -251,7 +251,7 @@ static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
-wi_pcmcia_match(struct device *parent, struct cfdata *match,
+wi_pcmcia_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -322,7 +322,7 @@ wi_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 static void
-wi_pcmcia_attach(struct device  *parent, struct device *self,
+wi_pcmcia_attach(struct device  *parent, device_t self,
     void *aux)
 {
 	struct wi_pcmcia_softc *psc = (void *)self;
@@ -392,7 +392,7 @@ fail:
 }
 
 static int
-wi_pcmcia_detach(struct device *self, int flags)
+wi_pcmcia_detach(device_t self, int flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)self;
 	int error;

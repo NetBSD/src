@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.8 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.8.4.1 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.8 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.8.4.1 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,8 +75,8 @@ struct iavc_pci_softc {
 
 static const struct iavc_pci_product *find_cardname(struct pci_attach_args *);
 
-static int iavc_pci_probe(struct device *, struct cfdata *, void *);
-static void iavc_pci_attach(struct device *, struct device *, void *);
+static int iavc_pci_probe(device_t, cfdata_t, void *);
+static void iavc_pci_attach(device_t, device_t, void *);
 
 int iavc_pci_intr(void *);
 
@@ -108,8 +108,7 @@ find_cardname(struct pci_attach_args * pa)
 }
 
 static int
-iavc_pci_probe(struct device * parent,
-	struct cfdata * match, void *aux)
+iavc_pci_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -120,11 +119,10 @@ iavc_pci_probe(struct device * parent,
 }
 
 static void
-iavc_pci_attach(struct device * parent,
-	struct device * self, void *aux)
+iavc_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct iavc_pci_softc *psc = (void *) self;
-	struct iavc_softc *sc = (void *) self;
+	struct iavc_pci_softc *psc = device_private(self);
+	struct iavc_softc *sc = &psc->sc_iavc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const struct iavc_pci_product *pp;
@@ -332,9 +330,9 @@ iavc_pci_intr(void *arg)
 
 #if 0
 static int
-iavc_pci_detach(struct device * self, int flags)
+iavc_pci_detach(device_t self, int flags)
 {
-	struct iavc_pci_softc *psc = (void *) self;
+	struct iavc_pci_softc *psc = device_private(self);
 
 	bus_space_unmap(psc->sc_iavc.sc_mem_bt, psc->sc_iavc.sc_mem_bh,
 	    psc->mem_size);
@@ -353,9 +351,9 @@ iavc_pci_detach(struct device * self, int flags)
 }
 
 static int
-iavc_pci_activate(struct device * self, enum devact act)
+iavc_pci_activate(device_t self, enum devact act)
 {
-	struct iavc_softc *psc = (struct iavc_softc *) self;
+	struct iavc_softc *psc = device_private(self);
 	int error, s;
 
 	error = 0;

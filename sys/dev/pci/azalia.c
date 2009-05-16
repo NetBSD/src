@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.54.4.2 2009/05/04 08:12:54 yamt Exp $	*/
+/*	$NetBSD: azalia.c,v 1.54.4.3 2009/05/16 10:41:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.54.4.2 2009/05/04 08:12:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.54.4.3 2009/05/16 10:41:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -153,7 +153,7 @@ typedef struct azalia_t {
 
 
 /* prototypes */
-static int	azalia_pci_match(device_t, struct cfdata *, void *);
+static int	azalia_pci_match(device_t, cfdata_t, void *);
 static void	azalia_pci_attach(device_t, device_t, void *);
 static int	azalia_pci_activate(device_t, enum devact);
 static int	azalia_pci_detach(device_t, int);
@@ -281,7 +281,7 @@ static const char *pin_devices[16] = {
  * ================================================================ */
 
 static int
-azalia_pci_match(device_t parent, struct cfdata *match, void *aux)
+azalia_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 

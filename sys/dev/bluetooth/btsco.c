@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.20.2.1 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: btsco.c,v 1.20.2.2 2009/05/16 10:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.20.2.1 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.20.2.2 2009/05/16 10:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -134,7 +134,7 @@ struct btsco_softc {
 #define BTSCO_LISTEN		(1 << 1)
 
 /* autoconf(9) glue */
-static int  btsco_match(device_t, struct cfdata *, void *);
+static int  btsco_match(device_t, cfdata_t, void *);
 static void btsco_attach(device_t, device_t, void *);
 static int  btsco_detach(device_t, int);
 
@@ -259,7 +259,7 @@ static void btsco_intr(void *);
  */
 
 static int
-btsco_match(device_t self, struct cfdata *cfdata, void *aux)
+btsco_match(device_t self, cfdata_t cfdata, void *aux)
 {
 	prop_dictionary_t dict = aux;
 	prop_object_t obj;

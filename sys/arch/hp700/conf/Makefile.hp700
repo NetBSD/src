@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.13.10.1 2009/05/04 08:11:06 yamt Exp $
+# $NetBSD: Makefile.hp700,v 1.13.10.2 2009/05/16 10:41:12 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -100,7 +100,7 @@ copypage.o: assym.h hppa/asm.h
 db_machdep.o machdep.o pmap.o vm_machdep.o: Makefile
 
 # depends on KGDBDEV, KGDBRATE, DDB, etc.
-com_gsc.o clock.o pdc.o autoconf.o machdep.o: Makefile  
+com_gsc.o clock.o pdc.o autoconf.o machdep.o: Makefile
 
 ##
 ## (7) misc settings

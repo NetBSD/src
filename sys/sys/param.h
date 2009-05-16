@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.316.2.2 2009/05/04 08:14:35 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.316.2.3 2009/05/16 10:41:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -340,7 +340,7 @@
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 #define	rounddown(x,y)	(((x)/(y))*(y))
-#define	roundup2(x, m)	(((x) + m - 1) & ~(m - 1))
+#define	roundup2(x, m)	(((x) + (m) - 1) & ~((m) - 1))
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */

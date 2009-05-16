@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.45.4.2 2009/05/04 08:12:41 yamt Exp $	*/
+/*	$NetBSD: cac.c,v 1.45.4.3 2009/05/16 10:41:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.45.4.2 2009/05/04 08:12:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.45.4.3 2009/05/16 10:41:22 yamt Exp $");
 
 #include "bio.h"
 
@@ -80,7 +80,7 @@ static void	cac_l0_submit(struct cac_softc *, struct cac_ccb *);
 static void	*cac_sdh;	/* shutdown hook */
 
 #if NBIO > 0
-int		cac_ioctl(struct device *, u_long, void *);
+int		cac_ioctl(device_t, u_long, void *);
 int		cac_ioctl_vol(struct cac_softc *, struct bioc_vol *);
 int		cac_create_sensors(struct cac_softc *);
 void		cac_sensor_refresh(struct sysmon_envsys *, envsys_data_t *);
@@ -433,7 +433,7 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 static void
 cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 {
-	struct device *dv;
+	device_t dv;
 	void *context;
 	int error;
 
@@ -592,7 +592,7 @@ const int cac_stat[] = { BIOC_SVONLINE, BIOC_SVOFFLINE, BIOC_SVOFFLINE,
     BIOC_SVOFFLINE, BIOC_SVBUILDING };
 
 int
-cac_ioctl(struct device *dev, u_long cmd, void *addr)
+cac_ioctl(device_t dev, u_long cmd, void *addr)
 {
 	struct cac_softc	*sc = (struct cac_softc *)dev;
 	struct bioc_inq *bi;

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.20.80.1 2009/05/04 08:10:26 yamt Exp $ */
+/* $NetBSD: podulebus.c,v 1.20.80.2 2009/05/16 10:41:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.20.80.1 2009/05/04 08:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.20.80.2 2009/05/16 10:41:11 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -237,10 +237,10 @@ poduleexamine(podule_t *podule, struct device *dev, int slottype)
 		podule->slottype = slottype;
 		if (slottype == SLOT_NET)
 			printf("netslot%d at %s : ", podule->podulenum - MAX_PODULES,
-			    dev->dv_xname);
+			    device_xname(dev));
 		else
 			printf("podule%d  at %s : ", podule->podulenum,
-			    dev->dv_xname);
+			    device_xname(dev));
 
 		/* Is it Acorn conformant ? */
 

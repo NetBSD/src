@@ -154,6 +154,24 @@ MODULE_DEPEND(i915, drm, 1, 1, 1);
 #elif defined(__OpenBSD__)
 CFDRIVER_DECL(i915, DV_TTY, NULL);
 #elif defined(__NetBSD__)
+static bool
+i915drm_suspend(device_t self PMF_FN_ARGS)
+{
+	drm_device_t *dev = device_private(self);
+
+	i915_save_state(dev);
+	return true;	
+}
+
+static bool
+i915drm_resume(device_t self PMF_FN_ARGS)
+{
+	drm_device_t *dev = device_private(self);
+
+	i915_restore_state(dev);
+	return true;	
+}
+
 static int
 i915drm_probe(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -165,16 +183,16 @@ static void
 i915drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	i915_configure(dev);
 
-	pmf_device_register(self, NULL, NULL);
+	pmf_device_register(self, i915drm_suspend, i915drm_resume);
 
 	drm_attach(self, pa, i915_pciidlist);
 }
 
-CFATTACH_DECL(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
+CFATTACH_DECL_NEW(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
 	drm_detach, drm_activate);
 
 #ifdef _MODULE

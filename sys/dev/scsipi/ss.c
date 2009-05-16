@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.73.4.1 2009/05/04 08:13:18 yamt Exp $	*/
+/*	$NetBSD: ss.c,v 1.73.4.2 2009/05/16 10:41:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.73.4.1 2009/05/04 08:13:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.73.4.2 2009/05/16 10:41:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.73.4.1 2009/05/04 08:13:18 yamt Exp $");
 #define MODE_NONREWIND	1
 #define MODE_CONTROL	3
 
-static int	ssmatch(struct device *, struct cfdata *, void *);
-static void	ssattach(struct device *, struct device *, void *);
-static int	ssdetach(struct device *self, int flags);
-static int	ssactivate(struct device *self, enum devact act);
+static int	ssmatch(device_t, cfdata_t, void *);
+static void	ssattach(device_t, device_t, void *);
+static int	ssdetach(device_t self, int flags);
+static int	ssactivate(device_t self, enum devact act);
 
 CFATTACH_DECL(ss, sizeof(struct ss_softc),
     ssmatch, ssattach, ssdetach, ssactivate);
@@ -123,7 +123,7 @@ static const struct scsipi_inquiry_pattern ss_patterns[] = {
 };
 
 static int
-ssmatch(struct device *parent, struct cfdata *match,
+ssmatch(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -142,7 +142,7 @@ ssmatch(struct device *parent, struct cfdata *match,
  * special handlers into the ss_softc structure
  */
 static void
-ssattach(struct device *parent, struct device *self, void *aux)
+ssattach(device_t parent, device_t self, void *aux)
 {
 	struct ss_softc *ss = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -186,7 +186,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ssdetach(struct device *self, int flags)
+ssdetach(device_t self, int flags)
 {
 	struct ss_softc *ss = device_private(self);
 	int s, cmaj, mn;
@@ -217,7 +217,7 @@ ssdetach(struct device *self, int flags)
 }
 
 static int
-ssactivate(struct device *self, enum devact act)
+ssactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 

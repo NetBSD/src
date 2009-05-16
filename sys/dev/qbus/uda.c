@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.58.4.1 2009/05/04 08:13:16 yamt Exp $	*/
+/*	$NetBSD: uda.c,v 1.58.4.2 2009/05/16 10:41:42 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.58.4.1 2009/05/04 08:13:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.58.4.2 2009/05/16 10:41:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -116,10 +116,10 @@ struct	uda_softc {
 
 static	int udamatch(device_t, cfdata_t, void *);
 static	void udaattach(device_t, device_t, void *);
-static	void udareset(device_t );
+static	void udareset(device_t);
 static	void udaintr(void *);
 static	int udaready(struct uba_unit *);
-static	void udactlrdone(device_t );
+static	void udactlrdone(device_t);
 static	int udaprint(void *, const char *);
 static	void udasaerror(device_t, int);
 static	void udago(device_t, struct mscp_xi *);

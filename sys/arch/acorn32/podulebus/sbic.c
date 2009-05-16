@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.13.20.1 2009/05/04 08:10:26 yamt Exp $ */
+/* $NetBSD: sbic.c,v 1.13.20.2 2009/05/16 10:41:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,7 +114,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.13.20.1 2009/05/04 08:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.13.20.2 2009/05/16 10:41:11 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -586,7 +586,7 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 			TAILQ_REMOVE(&dev->ready_list, acb, chain);
 		} else {
 			printf("%s: can't find matching acb\n",
-			    dev->sc_dev.dv_xname);
+			    device_xname(&dev->sc_dev));
 #ifdef DDB
 			Debugger();
 #endif
@@ -643,7 +643,7 @@ sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, const char *where)
 	GET_SBIC_csr(regs, csr);
 
 	printf ("%s: abort %s: csr = 0x%02x, asr = 0x%02x\n",
-	    dev->sc_dev.dv_xname, where, csr, asr);
+	    device_xname(&dev->sc_dev), where, csr, asr);
 
 
 #if 0
@@ -665,7 +665,7 @@ sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, const char *where)
 			/* But we don't know what direction it needs to go */
 			GET_SBIC_data(regs, asr);
 			printf("%s: abort %s: clearing data buffer 0x%02x\n",
-			       dev->sc_dev.dv_xname, where, asr);
+			       device_xname(&dev->sc_dev), where, asr);
 			GET_SBIC_asr(regs, asr);
 			/* Not the read direction, then */
 			if (asr & SBIC_ASR_DBR)
@@ -674,7 +674,7 @@ sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, const char *where)
 		}
 		WAIT_CIP(regs);
 		printf("%s: sbicabort - sending ABORT command\n",
-		    dev->sc_dev.dv_xname);
+		    device_xname(&dev->sc_dev));
 		SET_SBIC_cmd(regs, SBIC_CMD_ABORT);
 		WAIT_CIP(regs);
 
@@ -683,13 +683,13 @@ sbicabort(struct sbic_softc *dev, sbic_regmap_p regs, const char *where)
 			/* ok, get more drastic.. */
 
 			printf("%s: sbicabort - asr %x, trying to reset\n",
-			    dev->sc_dev.dv_xname, asr);
+			    device_xname(&dev->sc_dev), asr);
 			sbicreset(dev);
 			dev->sc_flags &= ~SBICF_SELECTED;
 			return -1;
 		}
 		printf("%s: sbicabort - sending DISC command\n",
-		    dev->sc_dev.dv_xname);
+		    device_xname(&dev->sc_dev));
 		SET_SBIC_cmd(regs, SBIC_CMD_DISC);
 
 		do {
@@ -763,7 +763,7 @@ sbicinit(struct sbic_softc *dev)
 		shift_nosync += 8;
 
 		DBGPRINTF(("%s: Inhibiting synchronous transfer %02x\n",
-		    dev->sc_dev.dv_xname, inhibit_sync), inhibit_sync);
+		    device_xname(&dev->sc_dev), inhibit_sync), inhibit_sync);
 
 		for (i = 0; i < 8; ++i)
 			if (inhibit_sync & (1 << i))
@@ -889,7 +889,7 @@ sbicerror(struct sbic_softc *dev, sbic_regmap_p regs, u_char csr)
 	if (dev->sc_nexus->xs->xs_control & XS_CTL_SILENT)
 		return;
 
-	printf("%s: ", dev->sc_dev.dv_xname);
+	printf("%s: ", device_xname(&dev->sc_dev));
 	printf("csr == 0x%02x\n", csr);	/* XXX */
 }
 
@@ -1978,7 +1978,7 @@ sbicmsgin(struct sbic_softc *dev)
 					      dev->sc_sync[dev->target].period));
 			printf("%s: target %d now synchronous,"
 			       " period=%dns, offset=%d.\n",
-			       dev->sc_dev.dv_xname, dev->target,
+			       device_xname(&dev->sc_dev), dev->target,
 			       dev->sc_msg[3] * 4, dev->sc_msg[4]);
 		} else {
 
@@ -2240,7 +2240,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 
 		if (dev->sc_nexus) {
 			DBGPRINTF(("%s: reselect %s with active command\n",
-			    dev->sc_dev.dv_xname,
+			    device_xname(&dev->sc_dev),
 			    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY"),
 			    reselect_debug > 1);
 #if defined(DDB) && defined (DEBUG)
@@ -2273,7 +2273,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		}
 		if (acb == NULL) {
 			printf("%s: reselect %s targ %d not in nexus_list %p\n",
-			    dev->sc_dev.dv_xname,
+			    device_xname(&dev->sc_dev),
 			    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY", newtarget,
 			    &dev->nexus_list.tqh_first);
 			panic("bad reselect in sbic");
@@ -2379,7 +2379,7 @@ sbictimeout(struct sbic_softc *dev)
 	if (dev->sc_dmatimo) {
 		if (dev->sc_dmatimo > 1) {
 			printf("%s: DMA timeout #%d\n",
-			    dev->sc_dev.dv_xname, dev->sc_dmatimo - 1);
+			    device_xname(&dev->sc_dev), dev->sc_dmatimo - 1);
 			GET_SBIC_asr(&dev->sc_sbicp, asr);
 			if (asr & SBIC_ASR_INT) {
 				/* We need to service a missed IRQ */
@@ -2536,7 +2536,7 @@ sbic_dump(struct sbic_softc *dev)
 		GET_SBIC_csr(regs, csr);
 	else
 		csr = 0;
-	printf("%s@%p regs %p asr %x csr %x\n", dev->sc_dev.dv_xname,
+	printf("%s@%p regs %p asr %x csr %x\n", device_xname(&dev->sc_dev),
 	    dev, regs, asr, csr);
 	if ((acb = dev->free_list.tqh_first)) {
 		printf("Free list:\n");

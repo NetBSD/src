@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.15.4.2 2009/05/04 08:12:49 yamt Exp $	*/
+/*	$NetBSD: tcom.c,v 1.15.4.3 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.15.4.2 2009/05/04 08:12:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.15.4.3 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,15 +103,15 @@ struct tcom_softc {
 	bus_space_handle_t sc_statusioh;
 };
 
-int tcomprobe(struct device *, cfdata_t, void *);
-void tcomattach(struct device *, device_t, void *);
+int tcomprobe(device_t, cfdata_t, void *);
+void tcomattach(device_t, device_t, void *);
 int tcomintr(void *);
 
 CFATTACH_DECL_NEW(tcom, sizeof(struct tcom_softc),
     tcomprobe, tcomattach, NULL, NULL);
 
 int
-tcomprobe(struct device *parent, cfdata_t self, void *aux)
+tcomprobe(device_t parent, cfdata_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -180,7 +180,7 @@ out:
 }
 
 void
-tcomattach(struct device *parent, device_t self, void *aux)
+tcomattach(device_t parent, device_t self, void *aux)
 {
 	struct tcom_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;

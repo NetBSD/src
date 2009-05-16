@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43.4.1 2009/05/04 08:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43.4.2 2009/05/16 10:41:50 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -854,7 +854,7 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
 	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_BIND, req, so,
 	    sin6, NULL);
 	if (error)
-		return (error);
+		return (EACCES);
 
 	if (minport > maxport) {	/* sanity check */
 		u_int16_t swp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.16.4.1 2009/05/04 08:13:02 yamt Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.16.4.2 2009/05/16 10:41:40 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.16.4.1 2009/05/04 08:13:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.16.4.2 2009/05/16 10:41:40 yamt Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.16.4.1 2009/05/04 08:13:02 yamt Exp $");
 /*
  * Prototypes and count for the pci_device structure
  */
-static	int ubsec_probe(struct device *, struct cfdata *, void *);
-static	void ubsec_attach(struct device *, struct device *, void *);
+static	int ubsec_probe(device_t, cfdata_t, void *);
+static	void ubsec_attach(device_t, device_t, void *);
 static	void ubsec_reset_board(struct ubsec_softc *);
 static	void ubsec_init_board(struct ubsec_softc *);
 static	void ubsec_init_pciregs(struct pci_attach_args *pa);
@@ -287,8 +287,7 @@ ubsec_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ubsec_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+ubsec_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -299,9 +298,9 @@ ubsec_probe(struct device *parent, struct cfdata *match,
 }
 
 static void
-ubsec_attach(struct device *parent, struct device *self, void *aux)
+ubsec_attach(device_t parent, device_t self, void *aux)
 {
-	struct ubsec_softc *sc = (struct ubsec_softc *)self;
+	struct ubsec_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	const struct ubsec_product *up;
 	pci_chipset_tag_t pc = pa->pa_pc;

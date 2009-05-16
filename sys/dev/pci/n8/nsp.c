@@ -105,8 +105,8 @@
 
 #include "nspvar.h"
 
-static int nsp_probe(struct device *parent, struct cfdata *match, void *aux);
-static void nsp_attach(struct device *parent, struct device *self, void *aux);
+static int nsp_probe(device_t parent, cfdata_t match, void *aux);
+static void nsp_attach(device_t parent, device_t self, void *aux);
 static int nsp_detach(device_t dev, int flags);
 
 
@@ -265,7 +265,7 @@ nsp_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-nsp_probe(struct device *parent, struct cfdata *match, void *aux)
+nsp_probe(device_t parent, cfdata_t match, void *aux)
 {
 	static int		once=0;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -314,7 +314,7 @@ n8_sessionInit(struct nsp_softc *sc)
 }
 
 static void
-nsp_attach(struct device *parent, struct device *self, void *aux)
+nsp_attach(device_t parent, device_t self, void *aux)
 {
 	struct nsp_softc *sc;
 	struct pci_attach_args *pa = aux;
@@ -326,7 +326,7 @@ nsp_attach(struct device *parent, struct device *self, void *aux)
 	int res;
 	int ind;
 
-	sc = (struct nsp_softc *)self;
+	sc = device_private(self);
 
 	mutex_init(&sc->sc_intrlock, MUTEX_DEFAULT, IPL_NET);
 
@@ -348,13 +348,13 @@ nsp_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s, rev. %d\n", nspp->nsp_name,
 	    PCI_REVISION(pa->pa_class));
 
-	printf("NetOctave Encryption Processor - %s\n", sc->device.dv_xname);
+	printf("NetOctave Encryption Processor - %s\n", device_xname(&sc->device));
 
 	n8_sessionInit(sc);
 
 	NSPcount_g = 1;
 	if (n8_driverInit(N8_EA_POOL_SIZE, N8_PK_POOL_SIZE)) {
-	    DBG(("%s: Failed driver init\n", sc->device.dv_xname));
+	    DBG(("%s: Failed driver init\n", device_xname(&sc->device)));
 	    NSPcount_g = 0;
 	    return;
 	}
@@ -385,8 +385,7 @@ nsp_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_mapreg_map(pa, NSP_BAR0, PCI_MAPREG_MEM_TYPE_64BIT, 0,
 		&sc->mem_tag, &sc->mem_handle, NULL, &sc->mem_size)) {
-		aprint_error("%s: can't map mem space %d\n",
-		    sc->device.dv_xname, 0);
+		aprint_error_dev(&sc->device, "can't map mem space %d\n", 0);
 		return;
 	}
 
@@ -513,7 +512,7 @@ nsp_detach(device_t dev, int flags)
 	int res;
 	int ind;
 
-	sc = (struct nsp_softc *)dev;
+	sc = device_private(dev);
 	mutex_enter(&sc->sc_intrlock);
 	DBG(("nsp.%d detach\n", sc->unit));
 

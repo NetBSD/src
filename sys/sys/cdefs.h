@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.66.18.1 2009/05/04 08:14:34 yamt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.66.18.2 2009/05/16 10:41:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -214,7 +214,7 @@
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
 #elif defined(__PCC__)
-#define	__packed	_Pragma("packed")
+#define	__packed	_Pragma("packed 1")
 #define	__aligned(x)   	_Pragma("aligned " __STRING(x))
 #define	__section(x)   	_Pragma("section " ## x)
 #elif defined(__lint__)

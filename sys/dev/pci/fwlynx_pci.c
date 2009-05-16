@@ -1,4 +1,4 @@
-/*	$NetBSD: fwlynx_pci.c,v 1.13.4.1 2008/05/16 02:24:43 yamt Exp $	*/
+/*	$NetBSD: fwlynx_pci.c,v 1.13.4.2 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.13.4.1 2008/05/16 02:24:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.13.4.2 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,14 +53,14 @@ struct fwlynx_pci_softc {
 	void *psc_ih;
 };
 
-static int fwlynx_pci_match(struct device *, struct cfdata *, void *);
-static void fwlynx_pci_attach(struct device *, struct device *, void *);
+static int fwlynx_pci_match(device_t, cfdata_t, void *);
+static void fwlynx_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(fwlynx_pci, sizeof(struct fwlynx_pci_softc),
     fwlynx_pci_match, fwlynx_pci_attach, NULL, NULL);
 
 static int
-fwlynx_pci_match(struct device *parent, struct cfdata *match, void *aux)
+fwlynx_pci_match(device_t parent, cfdata_t match, void *aux)
 {
         struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -72,10 +72,10 @@ fwlynx_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-fwlynx_pci_attach(struct device *parent, struct device *self, void *aux)
+fwlynx_pci_attach(device_t parent, device_t self, void *aux)
 {
         struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-	struct fwlynx_pci_softc *psc = (struct fwlynx_pci_softc *) self;
+	struct fwlynx_pci_softc *psc = device_private(self);
         char devinfo[256];
 	char const *intrstr;
 	pci_intr_handle_t ih;

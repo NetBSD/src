@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.360.4.2 2009/05/04 08:12:35 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.360.4.3 2009/05/16 10:41:19 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.360.4.2 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.360.4.3 2009/05/16 10:41:19 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -126,13 +126,14 @@ int wdcdebug_wd_mask = 0x0;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-int	wdprobe(struct device *, struct cfdata *, void *);
-void	wdattach(struct device *, struct device *, void *);
-int	wddetach(struct device *, int);
-int	wdactivate(struct device *, enum devact);
+int	wdprobe(device_t, cfdata_t, void *);
+void	wdattach(device_t, device_t, void *);
+int	wddetach(device_t, int);
+int	wdactivate(device_t, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
+static void	wdlastclose(struct wd_softc *);
 static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
@@ -274,7 +275,7 @@ wd_lookup_quirks(const char *name)
 }
 
 int
-wdprobe(struct device *parent, struct cfdata *match, void *aux)
+wdprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct ata_device *adev = aux;
 
@@ -290,7 +291,7 @@ wdprobe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-wdattach(struct device *parent, struct device *self, void *aux)
+wdattach(device_t parent, device_t self, void *aux)
 {
 	struct wd_softc *wd = device_private(self);
 	struct ata_device *adev= aux;
@@ -434,7 +435,7 @@ wd_suspend(device_t dv PMF_FN_ARGS)
 }
 
 int
-wdactivate(struct device *self, enum devact act)
+wdactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -453,10 +454,23 @@ wdactivate(struct device *self, enum devact act)
 }
 
 int
-wddetach(struct device *self, int flags)
+wddetach(device_t self, int flags)
 {
 	struct wd_softc *sc = device_private(self);
-	int s, bmaj, cmaj, i, mn;
+	int bmaj, cmaj, i, mn, rc, s;
+
+	rc = 0;
+	mutex_enter(&sc->sc_dk.dk_openlock);
+	if (sc->sc_dk.dk_openmask == 0)
+		;	/* nothing to do */
+	else if ((flags & DETACH_FORCE) == 0)
+		rc = EBUSY;
+	else
+		wdlastclose(sc);
+	mutex_exit(&sc->sc_dk.dk_openlock);
+
+	if (rc != 0)
+		return rc;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
@@ -1001,6 +1015,20 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	return error;
 }
 
+/* 
+ * Caller must hold wd->sc_dk.dk_openlock.
+ */
+static void
+wdlastclose(struct wd_softc *wd)
+{
+	wd_flushcache(wd, AT_WAIT);
+
+	if (! (wd->sc_flags & WDF_KLABEL))
+		wd->sc_flags &= ~WDF_LOADED;
+
+	wd->atabus->ata_delref(wd->drvp);
+}
+
 int
 wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
@@ -1023,14 +1051,8 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	if (wd->sc_dk.dk_openmask == 0) {
-		wd_flushcache(wd, AT_WAIT);
-
-		if (! (wd->sc_flags & WDF_KLABEL))
-			wd->sc_flags &= ~WDF_LOADED;
-
-		wd->atabus->ata_delref(wd->drvp);
-	}
+	if (wd->sc_dk.dk_openmask == 0)
+		wdlastclose(wd);
 
 	mutex_exit(&wd->sc_dk.dk_openlock);
 	return 0;

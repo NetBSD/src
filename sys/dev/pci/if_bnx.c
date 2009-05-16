@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.18.10.1 2009/05/04 08:12:56 yamt Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.18.10.2 2009/05/16 10:41:34 yamt Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.18.10.1 2009/05/04 08:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.18.10.2 2009/05/16 10:41:34 yamt Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -145,6 +145,11 @@ static const struct bnx_product {
 	  PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S,
 	  0, 0,
 	  "Broadcom NetXtreme II BCM5708 1000Base-SX"
+	},
+	{
+	  PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709,
+	  0, 0,
+	  "Broadcom NetXtreme II BCM5709 1000Base-SX"
 	},
 };
 

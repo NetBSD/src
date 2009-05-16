@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.76.4.2 2009/05/04 08:12:41 yamt Exp $ */
+/*	$NetBSD: gem.c,v 1.76.4.3 2009/05/16 10:41:23 yamt Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.76.4.2 2009/05/04 08:12:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.76.4.3 2009/05/16 10:41:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -115,9 +115,9 @@ int		gem_add_rxbuf(struct gem_softc *sc, int idx);
 void		gem_setladrf(struct gem_softc *);
 
 /* MII methods & callbacks */
-static int	gem_mii_readreg(struct device *, int, int);
-static void	gem_mii_writereg(struct device *, int, int, int);
-static void	gem_mii_statchg(struct device *);
+static int	gem_mii_readreg(device_t, int, int);
+static void	gem_mii_writereg(device_t, int, int, int);
+static void	gem_mii_statchg(device_t);
 
 static int	gem_ifflags_cb(struct ethercom *);
 
@@ -2219,7 +2219,7 @@ gem_mifinit(struct gem_softc *sc)
  *
  */
 static int
-gem_mii_readreg(struct device *self, int phy, int reg)
+gem_mii_readreg(device_t self, int phy, int reg)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2249,7 +2249,7 @@ gem_mii_readreg(struct device *self, int phy, int reg)
 }
 
 static void
-gem_mii_writereg(struct device *self, int phy, int reg, int val)
+gem_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct gem_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -2281,7 +2281,7 @@ gem_mii_writereg(struct device *self, int phy, int reg, int val)
 }
 
 static void
-gem_mii_statchg(struct device *dev)
+gem_mii_statchg(device_t dev)
 {
 	struct gem_softc *sc = (void *)dev;
 #ifdef GEM_DEBUG

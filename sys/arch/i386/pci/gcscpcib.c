@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.4.18.1 2009/05/04 08:11:17 yamt Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.4.18.2 2009/05/16 10:41:15 yamt Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.4.18.1 2009/05/04 08:11:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.4.18.2 2009/05/16 10:41:15 yamt Exp $");
 
 #include "gpio.h"
 
@@ -103,7 +103,7 @@ struct gcscpcib_softc {
 #endif
 };
 
-static int	gcscpcib_match(device_t, struct cfdata *, void *);
+static int	gcscpcib_match(device_t, cfdata_t, void *);
 static void	gcscpcib_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(gcscpcib, sizeof(struct gcscpcib_softc),
@@ -125,7 +125,7 @@ static void	gcscpcib_gpio_pin_ctl(void *, int, int);
 #endif
 
 static int
-gcscpcib_match(device_t parent, struct cfdata *match, void *aux)
+gcscpcib_match(device_t parent, cfdata_t match, void *aux)
 { 
 	struct pci_attach_args *pa = aux;
 

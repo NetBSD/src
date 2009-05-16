@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.4 2007/10/19 12:01:18 ad Exp $ */
+/* $NetBSD: splash.c,v 1.4.20.1 2009/05/16 10:41:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.4 2007/10/19 12:01:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.4.20.1 2009/05/16 10:41:44 yamt Exp $");
 
 #include "opt_splash.h"
 
@@ -373,7 +373,7 @@ splash_progress_render(struct splash_progress *sp)
 }
 
 static int
-splash_progress_stop(struct device *dev)
+splash_progress_stop(device_t dev)
 {
 	struct splash_progress *sp;
 
@@ -397,7 +397,7 @@ splash_progress_init(struct splash_progress *sp)
 	sp->sp_force = 0;
 	splash_progress_state = sp;
 	splash_progress_render(sp);
-	config_finalize_register((struct device *)sp, splash_progress_stop);
+	config_finalize_register((device_t)sp, splash_progress_stop);
 
 	return;
 }

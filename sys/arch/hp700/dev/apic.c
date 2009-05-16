@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.2.2.2 2009/05/04 08:11:06 yamt Exp $	*/
+/*	$NetBSD: apic.c,v 1.2.2.3 2009/05/16 10:41:12 yamt Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -107,13 +107,13 @@ apic_attach(struct elroy_softc *sc)
 
 	data = apic_read(r, APIC_VERSION);
 	sc->sc_nints = (data & APIC_VERSION_NENT) >> APIC_VERSION_NENT_SHIFT;
-	printf(" APIC ver %x, %d pins",
+	aprint_normal(" APIC ver %x, %d pins",
 	    data & APIC_VERSION_MASK, sc->sc_nints);
 
 	sc->sc_irq = malloc(sc->sc_nints * sizeof(int), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (sc->sc_irq == NULL)
-		panic("apic_attach: cannot allocate irq table\n");
+		panic("apic_attach: can't allocate irq table\n");
 
 	apic_get_int_tbl(sc);
 
@@ -190,7 +190,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 		}
 
 		evcnt_attach_dynamic(cnt, EVCNT_TYPE_INTR, NULL,
-		    sc->sc_dv.dv_xname, "irq" /* XXXNH */);
+		    device_xname(sc->sc_dv), "irq" /* XXXNH */);
 		biv = apic_intr_list[irq];
 		while (biv->next)
 			biv = biv->next;
@@ -199,7 +199,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 		return arg;
 	}
 
-	if ((iv = hp700_intr_establish(&sc->sc_dv, pri, apic_intr,
+	if ((iv = hp700_intr_establish(sc->sc_dv, pri, apic_intr,
 	     aiv, &int_reg_cpu, irq))) {
 		ent0 = (31 - irq) & APIC_ENT0_VEC;
 		ent0 |= apic_get_int_ent0(sc, line);

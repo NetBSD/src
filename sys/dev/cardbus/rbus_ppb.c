@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.21.4.2 2009/05/04 08:12:36 yamt Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.21.4.3 2009/05/16 10:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.21.4.2 2009/05/04 08:12:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.21.4.3 2009/05/16 10:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.21.4.2 2009/05/04 08:12:36 yamt Exp $
 
 struct ppb_softc;
 
-static int  ppb_cardbus_match(struct device *, struct cfdata *, void *);
-static void ppb_cardbus_attach(struct device *, struct device *, void *);
-static int  ppb_cardbus_detach(struct device * self, int flags);
+static int  ppb_cardbus_match(device_t, cfdata_t, void *);
+static void ppb_cardbus_attach(device_t, device_t, void *);
+static int  ppb_cardbus_detach(device_t  self, int flags);
 /*static*/ void ppb_cardbus_setup(struct ppb_softc * sc);
 /*static*/ int  ppb_cardbus_enable(struct ppb_softc * sc);
 /*static*/ void ppb_cardbus_disable(struct ppb_softc * sc);
-static int  ppb_activate(struct device *, enum devact);
+static int  ppb_activate(device_t, enum devact);
 int rppbprint(void *, const char *);
 int rbus_intr_fixup(pci_chipset_tag_t, int, int, int);
 void rbus_do_header_fixup(pci_chipset_tag_t, pcitag_t, void *);
@@ -116,7 +116,7 @@ int rbus_ppb_debug = 0;   /* hack with kdb */
 #endif
 
 static int
-ppb_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+ppb_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -814,7 +814,7 @@ ppb_cardbus_disable(struct ppb_softc * sc)
 }
 
 static int
-ppb_cardbus_detach(struct device *self, int flags)
+ppb_cardbus_detach(device_t self, int flags)
 {
   /* struct ppb_softc *sc = device_private(self);*/
 	struct ppb_cardbus_softc *csc = device_private(self);
@@ -853,7 +853,7 @@ ppb_cardbus_detach(struct device *self, int flags)
 }
 
 int
-ppb_activate(struct device *self, enum devact act)
+ppb_activate(device_t self, enum devact act)
 {
   printf("ppb_activate called\n");
   return 0;

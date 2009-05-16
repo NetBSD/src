@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.111.2.1 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.111.2.2 2009/05/16 10:41:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.111.2.1 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.111.2.2 2009/05/16 10:41:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -303,8 +303,9 @@ slopen(dev_t dev, struct tty *tp)
 	struct sl_softc *sc;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE_SLIP,
+	    KAUTH_REQ_NETWORK_INTERFACE_SLIP_ADD, NULL, NULL, NULL);
+	if (error)
 		return error;
 
 	if (tp->t_linesw == &slip_disc)

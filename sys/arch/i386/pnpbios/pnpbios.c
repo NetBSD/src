@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.62.4.1 2009/05/04 08:11:17 yamt Exp $ */
+/* $NetBSD: pnpbios.c,v 1.62.4.2 2009/05/16 10:41:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.62.4.1 2009/05/04 08:11:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.62.4.2 2009/05/16 10:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,10 +126,8 @@ static int	pnpbios_sendmessage(int);
 /* configuration stuff */
 static void *	pnpbios_mapit(paddr_t, u_long, int);
 static void *	pnpbios_find(void);
-static int	pnpbios_match(struct device *,
-			    struct cfdata *, void *);
-static void	pnpbios_attach(struct device *,
-			    struct device *, void *);
+static int	pnpbios_match(device_t, cfdata_t, void *);
+static void	pnpbios_attach(device_t, device_t, void *);
 static void	pnpbios_printres(struct pnpresources *);
 static int	pnpbios_print(void *aux, const char *);
 static void	pnpbios_id_to_string(uint32_t, char *);
@@ -761,7 +759,7 @@ pnpbios_print(void *aux, const char *pnp)
 }
 
 void
-pnpbios_print_devres(struct device *dev, struct pnpbiosdev_attach_args *aa)
+pnpbios_print_devres(device_t dev, struct pnpbiosdev_attach_args *aa)
 {
 
 	aprint_normal_dev(dev, "");

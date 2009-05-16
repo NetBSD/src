@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.4.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.4.2 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.4.1 2009/05/04 08:11:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.4.2 2009/05/16 10:41:13 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -228,7 +228,7 @@ hp700_led_blinker(void *arg)
 #define HP700_HEARTBEAT_CYCLES	(_HP700_LED_FREQ / 8)
 	if (led_cycle == (0 * HP700_HEARTBEAT_CYCLES) ||
 	    led_cycle == (2 * HP700_HEARTBEAT_CYCLES)) {
-		_hp700_led_on_cycles[HP700_LED_HEARTBEAT] = 
+		_hp700_led_on_cycles[HP700_LED_HEARTBEAT] =
 			HP700_HEARTBEAT_CYCLES;
 	}
 
@@ -309,14 +309,14 @@ bad:
 
 /****************************************************************/
 
-struct device *boot_device = NULL;
+device_t boot_device = NULL;
 
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	int pagezero_cookie;
-	struct device *pdev;
+	device_t pdev;
 
 	if ((pdev = device_parent(dev)) == NULL ||
 	    device_parent(pdev) == NULL)
@@ -324,36 +324,36 @@ device_register(struct device *dev, void *aux)
 	pagezero_cookie = hp700_pagezero_map();
 
 	/*
-	 * The boot device is described in PAGE0->mem_boot. We need to do it 
-	 * this way as the MD device path (DP) information in struct confargs 
-	 * is only available in hp700 MD devices. So boot_device is used to 
+	 * The boot device is described in PAGE0->mem_boot. We need to do it
+	 * this way as the MD device path (DP) information in struct confargs
+	 * is only available in hp700 MD devices. So boot_device is used to
 	 * propagate information down the device tree.
-	 * 
-	 * If the boot device is a GSC network device all we need to compare 
-	 * is the HPA or device path (DP) to get the boot device. 
-	 * If the boot device is a SCSI device below a GSC attached SCSI 
-	 * controller PAGE0->mem_boot.pz_hpa contains the HPA of the SCSI 
-	 * controller. In that case we remember the the pointer to the 
-	 * controller's struct dev in boot_device. The SCSI device is located 
+	 *
+	 * If the boot device is a GSC network device all we need to compare
+	 * is the HPA or device path (DP) to get the boot device.
+	 * If the boot device is a SCSI device below a GSC attached SCSI
+	 * controller PAGE0->mem_boot.pz_hpa contains the HPA of the SCSI
+	 * controller. In that case we remember the the pointer to the
+	 * controller's struct dev in boot_device. The SCSI device is located
 	 * later, see below.
 	 */
 	if ((device_is_a(pdev, "gsc") || device_is_a(pdev, "phantomas"))
-	    && (hppa_hpa_t)PAGE0->mem_boot.pz_hpa == 
+	    && (hppa_hpa_t)PAGE0->mem_boot.pz_hpa ==
 	    ((struct gsc_attach_args *)aux)->ga_ca.ca_hpa)
 		/* This is (the controller of) the boot device. */
 		boot_device = dev;
 	/*
-	 * If the boot device is a PCI device the HPA is the address where the 
-	 * firmware has maped the PCI memory of the PCI device. This is quite 
-	 * device dependent, so we compare the DP. It encodes the bus routing 
-	 * information to the PCI bus bridge in the DP head and the PCI device 
-	 * and PCI function in the last two DP components. So we compare the 
-	 * head of the DP when a PCI bridge attaches and remember the struct 
-	 * dev of the PCI bridge in boot_dev if it machtes. Later, when PCI 
-	 * devices are attached, we look if this PCI device hangs below the 
-	 * boot PCI bridge. If yes we compare the PCI device and PCI function 
-	 * to the DP tail. In case of a network boot we found the boot device 
-	 * on a match. In case of a SCSI boot device we have to do the same 
+	 * If the boot device is a PCI device the HPA is the address where the
+	 * firmware has maped the PCI memory of the PCI device. This is quite
+	 * device dependent, so we compare the DP. It encodes the bus routing
+	 * information to the PCI bus bridge in the DP head and the PCI device
+	 * and PCI function in the last two DP components. So we compare the
+	 * head of the DP when a PCI bridge attaches and remember the struct
+	 * dev of the PCI bridge in boot_dev if it machtes. Later, when PCI
+	 * devices are attached, we look if this PCI device hangs below the
+	 * boot PCI bridge. If yes we compare the PCI device and PCI function
+	 * to the DP tail. In case of a network boot we found the boot device
+	 * on a match. In case of a SCSI boot device we have to do the same
 	 * check when SCSI devices are attached like on GSC SCSI controllers.
 	 */
 	if (device_is_a(dev, "dino")) {
@@ -368,7 +368,7 @@ device_register(struct device *dev, void *aux)
 			if (PAGE0->mem_boot.pz_dp.dp_bc[i] < 0)
 				continue;
 			/* and compare the rest. */
-			if (PAGE0->mem_boot.pz_dp.dp_bc[i] 
+			if (PAGE0->mem_boot.pz_dp.dp_bc[i]
 			    != ca->ca_dp.dp_bc[n]) {
 				hp700_pagezero_unmap(pagezero_cookie);
 				return;
@@ -399,10 +399,10 @@ device_register(struct device *dev, void *aux)
 	    == PAGE0->mem_boot.pz_dp.dp_mod)
 		/* This is (the controller of) the boot device. */
 		boot_device = dev;
-	/* 
-	 * When SCSI devices are attached, we look if the SCSI device hangs 
-	 * below the controller remembered in boot_device. If so, we compare 
-	 * the SCSI ID and LUN with the DP layer information. If they match 
+	/*
+	 * When SCSI devices are attached, we look if the SCSI device hangs
+	 * below the controller remembered in boot_device. If so, we compare
+	 * the SCSI ID and LUN with the DP layer information. If they match
 	 * we found the boot device.
 	 */
 	if (device_is_a(pdev, "scsibus")
@@ -436,7 +436,7 @@ cpu_rootconf(void)
 	}
 	printf("%d dp_layers ", PAGE0->mem_boot.pz_dp.dp_mod);
 	for (n = 0 ; n < 6 ; n++) {
-		printf( "0x%x%c", PAGE0->mem_boot.pz_dp.dp_layers[n], 
+		printf( "0x%x%c", PAGE0->mem_boot.pz_dp.dp_layers[n],
 		    n < 5 ? '/' : ' ');
 	}
 	printf("dp_flags 0x%x pz_class 0x%x\n", PAGE0->mem_boot.pz_dp.dp_flags,
@@ -459,8 +459,8 @@ static struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
 static struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
 
 void
-pdc_scanbus(struct device *self, struct confargs *ca,
-    void (*callback)(struct device *, struct confargs *))
+pdc_scanbus(device_t self, struct confargs *ca,
+    void (*callback)(device_t, struct confargs *))
 {
 	int i;
 

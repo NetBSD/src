@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.57.4.1 2009/05/04 08:14:34 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.57.4.2 2009/05/16 10:41:52 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.57.4.1 2009/05/04 08:14:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.57.4.2 2009/05/16 10:41:52 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,6 +170,27 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 		}
 
+		break;
+
+	case KAUTH_SYSTEM_FS_QUOTA:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_GET:
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF:
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE:
+		case KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	case KAUTH_SYSTEM_FS_RESERVEDSPACE:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
 		break;
 
 	case KAUTH_SYSTEM_MOUNT:
@@ -849,6 +870,58 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
+	case KAUTH_NETWORK_INTERFACE_PPP:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_INTERFACE_PPP_ADD:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	case KAUTH_NETWORK_INTERFACE_SLIP:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_INTERFACE_SLIP_ADD:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	case KAUTH_NETWORK_INTERFACE_STRIP:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_INTERFACE_STRIP_ADD:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	case KAUTH_NETWORK_INTERFACE_TUN:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_INTERFACE_TUN_ADD:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
 	case KAUTH_NETWORK_NFS:
 		switch (req) {
 		case KAUTH_REQ_NETWORK_NFS_EXPORT:
@@ -1015,6 +1088,25 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 			result = KAUTH_RESULT_ALLOW;
 		break;
 
+	case KAUTH_DEVICE_BLUETOOTH_BCSP:
+	case KAUTH_DEVICE_BLUETOOTH_BTUART: {
+		enum kauth_device_req req;
+
+		req = (enum kauth_device_req)arg0;
+		switch (req) {
+		case KAUTH_REQ_DEVICE_BLUETOOTH_BCSP_ADD:
+		case KAUTH_REQ_DEVICE_BLUETOOTH_BTUART_ADD:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+		}
+
 	case KAUTH_DEVICE_RAWIO_SPEC:
 	case KAUTH_DEVICE_RAWIO_PASSTHRU:
 		/*
@@ -1049,6 +1141,13 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 
+		break;
+
+	case KAUTH_DEVICE_RND_ADDDATA:
+	case KAUTH_DEVICE_RND_GETPRIV:
+	case KAUTH_DEVICE_RND_SETPRIV:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
 		break;
 
 	default:

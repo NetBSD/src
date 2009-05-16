@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.19 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: dinode.h,v 1.19.74.1 2009/05/16 10:41:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -96,7 +96,7 @@ struct ufs1_dinode {
 	int32_t		di_gen;		/* 108: Generation number. */
 	u_int32_t	di_uid;		/* 112: File owner. */
 	u_int32_t	di_gid;		/* 116: File group. */
-	int32_t		di_spare[2];	/* 120: Reserved; currently unused */
+	u_int64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
 };
 
 struct ufs2_dinode {
@@ -122,7 +122,8 @@ struct ufs2_dinode {
 	int64_t		di_extb[NXADDR];/*  96: External attributes block. */
 	int64_t		di_db[NDADDR];	/* 112: Direct disk blocks. */
 	int64_t		di_ib[NIADDR];	/* 208: Indirect disk blocks. */
-	int64_t		di_spare[3];	/* 232: Reserved; currently unused */
+	u_int64_t	di_modrev;	/* 232: i_modrev for NFSv4 */
+	int64_t		di_spare[2];	/* 240: Reserved; currently unused */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.2 2009/05/04 08:14:37 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.3 2009/05/16 10:41:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.2 2009/05/04 08:14:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.3 2009/05/16 10:41:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,11 +408,8 @@ ext2fs_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, 
-			NULL)) &&
-			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-			(error = VOP_ACCESS(vp, VWRITE, cred))))
+		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred);
+		if (error)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))

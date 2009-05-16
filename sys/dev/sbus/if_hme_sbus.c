@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.23.4.2 2009/05/04 08:13:17 yamt Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.23.4.3 2009/05/16 10:41:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.23.4.2 2009/05/04 08:13:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.23.4.3 2009/05/16 10:41:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,14 +63,14 @@ struct hmesbus_softc {
 	struct	sbusdev		hsc_sbus;	/* SBus device */
 };
 
-int	hmematch_sbus(struct device *, struct cfdata *, void *);
-void	hmeattach_sbus(struct device *, struct device *, void *);
+int	hmematch_sbus(device_t, cfdata_t, void *);
+void	hmeattach_sbus(device_t, device_t, void *);
 
 CFATTACH_DECL(hme_sbus, sizeof(struct hmesbus_softc),
     hmematch_sbus, hmeattach_sbus, NULL, NULL);
 
 int
-hmematch_sbus(struct device *parent, struct cfdata *cf, void *aux)
+hmematch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -80,7 +80,7 @@ hmematch_sbus(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-hmeattach_sbus(struct device *parent, struct device *self, void *aux)
+hmeattach_sbus(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct hmesbus_softc *hsc = (void *)self;

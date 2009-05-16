@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.1.10.2 2009/05/04 08:12:55 yamt Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.1.10.3 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.1.10.2 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.1.10.3 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ struct gcscaudio_softc {
 };
 
 /* for cfattach */
-static int gcscaudio_match(device_t, struct cfdata *, void *);
+static int gcscaudio_match(device_t, cfdata_t, void *);
 static void gcscaudio_attach(device_t, device_t, void *);
 
 /* for audio_hw_if */
@@ -230,7 +230,7 @@ static const struct audio_format gcscaudio_formats_6ch = {
 };
 
 static int
-gcscaudio_match(device_t parent, struct cfdata *match, void *aux)
+gcscaudio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 

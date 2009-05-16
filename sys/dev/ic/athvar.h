@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.24.4.1 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: athvar.h,v 1.24.4.2 2009/05/16 10:41:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -307,7 +307,7 @@ struct ath_softc {
 
 int	ath_attach(u_int16_t, struct ath_softc *);
 int	ath_detach(struct ath_softc *);
-int	ath_activate(struct device *, enum devact);
+int	ath_activate(device_t, enum devact);
 bool	ath_resume(struct ath_softc *);
 void	ath_suspend(struct ath_softc *);
 int	ath_intr(void *);

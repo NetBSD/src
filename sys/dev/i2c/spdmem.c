@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.7.4.2 2009/05/04 08:12:39 yamt Exp $ */
+/* $NetBSD: spdmem.c,v 1.7.4.3 2009/05/16 10:41:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7.4.2 2009/05/04 08:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7.4.3 2009/05/16 10:41:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -413,7 +413,7 @@ spdmem_read(struct spdmem_softc *sc, uint8_t reg)
 {
 	uint8_t val;
 
-	iic_acquire_bus(sc->sc_tag,0);
+	iic_acquire_bus(sc->sc_tag, 0);
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
 		 &val, 1, 0);
 	iic_release_bus(sc->sc_tag, 0);

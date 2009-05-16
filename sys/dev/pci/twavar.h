@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.7.40.1 2008/05/16 02:24:45 yamt Exp $ */
+/*	$NetBSD: twavar.h,v 1.7.40.2 2009/05/16 10:41:40 yamt Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #include "locators.h"
 
 struct twa_callbacks {
-	void	(*tcb_openings)(struct device *, int);
+	void	(*tcb_openings)(device_t, int);
 };
 
 struct twa_drive {

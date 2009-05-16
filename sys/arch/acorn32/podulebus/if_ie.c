@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.19.20.1 2009/05/04 08:10:26 yamt Exp $ */
+/* $NetBSD: if_ie.c,v 1.19.20.2 2009/05/16 10:41:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.19.20.1 2009/05/04 08:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.19.20.2 2009/05/16 10:41:11 yamt Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -450,7 +450,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	/* Fill in my application form to attach to the inet system */
 
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy( ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
@@ -685,7 +685,7 @@ iewatchdog(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	++ifp->if_oerrors;
 	iereset(sc);
 }
@@ -873,13 +873,13 @@ ieinit(struct ie_softc *sc)
     if ( command_and_wait(sc, IE_CU_START, &scb, &cmd, ptr, sizeof cmd,
 	IE_STAT_COMPL) )
     {
-	printf ( "%s: command failed: timeout\n", sc->sc_dev.dv_xname );
+	printf ( "%s: command failed: timeout\n", device_xname(&sc->sc_dev));
 	return 0;
     }
 
     if ( !(cmd.com.ie_cmd_status & IE_STAT_OK) )
     {
-	printf ( "%s: command failed: !IE_STAT_OK\n", sc->sc_dev.dv_xname );
+	printf ( "%s: command failed: !IE_STAT_OK\n", device_xname(&sc->sc_dev));
 	return 0;
     }
 
@@ -895,13 +895,13 @@ ieinit(struct ie_softc *sc)
     if ( command_and_wait(sc, IE_CU_START, &scb, &iasetup_cmd, ptr, sizeof cmd,
 	IE_STAT_COMPL) )
     {
-	printf ( "%s: iasetup failed : timeout\n", sc->sc_dev.dv_xname );
+	printf ( "%s: iasetup failed : timeout\n", device_xname(&sc->sc_dev));
 	return 0;
     }
 
     if ( !(cmd.com.ie_cmd_status & IE_STAT_OK) )
     {
-	printf ( "%s: iasetup failed : !IE_STAT_OK\n", sc->sc_dev.dv_xname );
+	printf ( "%s: iasetup failed : !IE_STAT_OK\n", device_xname(&sc->sc_dev));
 	return 0;
     }
 

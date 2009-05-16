@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.40.4.1 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.40.4.2 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.40.4.1 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.40.4.2 2009/05/16 10:41:25 yamt Exp $");
 
 #define	PCICISADEBUG
 
@@ -269,7 +269,7 @@ pcic_isa_probe_interrupts(struct pcic_softc *sc, struct pcic_handle *h)
  * which irq lines are actually hooked up to our pcic
  */
 void
-pcic_isa_config_interrupts(struct device *self)
+pcic_isa_config_interrupts(device_t self)
 {
 	struct pcic_softc *sc;
 	struct pcic_isa_softc *isc;

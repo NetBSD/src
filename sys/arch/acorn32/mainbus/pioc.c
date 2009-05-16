@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.12.80.1 2009/05/04 08:10:26 yamt Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.12.80.2 2009/05/16 10:41:11 yamt Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.12.80.1 2009/05/04 08:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.12.80.2 2009/05/16 10:41:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ piocattach(struct device *parent, struct device *self, void *aux)
 	if (id != PIOC_CM_ID_665)
 		piocgetid(iot, ioh, PIOC_CM_ENTER_666, &id, &rev);
 	
-	printf("\n%s: ", self->dv_xname);
+	printf("\n%s: ", device_xname(self));
 
 	/* Do we recognise it ? */
 	switch (id) {
@@ -344,7 +344,7 @@ piocattach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(iot, ioh, PIOC_CM_SELECT_REG, PIOC_CM_EXIT);
 
 #ifdef PIOC_DEBUG
-	printf("%s: ", self->dv_xname);
+	printf("%s: ", device_xname(self));
 
 	for (loop = 0; loop < PIOC_CM_REGS; ++loop)
 		printf("%02x ", sc->sc_config[loop]);

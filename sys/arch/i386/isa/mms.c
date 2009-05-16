@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.50.4.1 2009/05/04 08:11:17 yamt Exp $	*/
+/*	$NetBSD: mms.c,v 1.50.4.2 2009/05/16 10:41:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.50.4.1 2009/05/04 08:11:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.50.4.2 2009/05/16 10:41:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct mms_softc {		/* driver status information */
 
 	int sc_enabled; /* device is open */
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 };
 
 static int mmsprobe(device_t, cfdata_t, void *);

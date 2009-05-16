@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.11.4.1 2009/05/04 08:12:57 yamt Exp $
+ * $NetBSD: if_lmc.h,v 1.11.4.2 2009/05/16 10:41:35 yamt Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1677,7 +1677,7 @@ static void fbsd_dmamap_load(void *, bus_dma_segment_t *, int, int);
 #endif /* __FreeBSD__ */
 
 #if defined(__NetBSD__)
-static int nbsd_match(struct device *, struct cfdata *, void *);
+static int nbsd_match(struct device *, cfdata_t, void *);
 static void nbsd_attach(struct device *, struct device *, void *);
 static int nbsd_detach(struct device *, int);
 #endif /* __NetBSD__ */
@@ -1691,7 +1691,7 @@ int if_lmc_lkmentry(struct lkm_table *, int, int);
 
 #if defined(__bsdi__)
 static int bsdi_match(pci_devaddr_t *);
-static int bsdi_probe(struct device *, struct cfdata *, void *);
+static int bsdi_probe(struct device *, cfdata_t, void *);
 static void bsdi_attach(struct device *, struct device *, void *);
 #endif /* __bsdi__ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.26.4.2 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.26.4.3 2009/05/16 10:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.26.4.2 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.26.4.3 2009/05/16 10:41:19 yamt Exp $");
 
 #include "bio.h"
 #include "rnd.h"
@@ -92,8 +92,8 @@ struct ld_ataraid_softc {
 	void	(*sc_iodone)(struct buf *);
 };
 
-static int	ld_ataraid_match(struct device *, struct cfdata *, void *);
-static void	ld_ataraid_attach(struct device *, struct device *, void *);
+static int	ld_ataraid_match(device_t, cfdata_t, void *);
+static void	ld_ataraid_attach(device_t, device_t, void *);
 
 static int	ld_ataraid_dump(struct ld_softc *, void *, int, int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.51.4.1 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.4.1 2009/05/16 10:41:33 yamt Exp $");
 
 #include "midi.h"
 
@@ -89,8 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $");
 #define BA1WRITE4(sc, r, x) bus_space_write_4((sc)->ba1t, (sc)->ba1h, (r), (x))
 
 /* IF functions for audio driver */
-static int  cs4280_match(struct device *, struct cfdata *, void *);
-static void cs4280_attach(struct device *, struct device *, void *);
+static int  cs4280_match(device_t, cfdata_t, void *);
+static void cs4280_attach(device_t, device_t, void *);
 static int  cs4280_intr(void *);
 static int  cs4280_query_encoding(void *, struct audio_encoding *);
 static int  cs4280_set_params(void *, int, int, audio_params_t *,
@@ -218,8 +218,7 @@ static struct audio_device cs4280_device = {
 
 
 static int
-cs4280_match(struct device *parent, struct cfdata *match,
-    void *aux)
+cs4280_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -236,7 +235,7 @@ cs4280_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-cs4280_attach(struct device *parent, struct device *self, void *aux)
+cs4280_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs428x_softc *sc;
 	struct pci_attach_args *pa;
@@ -248,7 +247,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t mem;
 	int error;
 
-	sc = (struct cs428x_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	aprint_naive(": Audio controller\n");

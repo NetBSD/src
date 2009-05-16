@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.7.4.1 2009/05/04 08:11:08 yamt Exp $	*/
+/*	$NetBSD: pdc.h,v 1.7.4.2 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -624,7 +624,7 @@ struct pdc_lan_station_id {	/* PDC_LAN_STATION_ID */
  * Interesting values for Hex1-Hex4 and the resulting LED displays:
  *
  *	FnFF			CnFF:
- *	 0	- - - - -		Counts in binary from 0x0 - 0xF 
+ *	 0	- - - - -		Counts in binary from 0x0 - 0xF
  *	 2	o - - - -		for corresponding values of `n'.
  *	 4	o o - - -
  *	 6	o o o - -

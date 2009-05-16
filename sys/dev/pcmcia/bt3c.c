@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.18 2008/04/06 18:55:33 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.18.4.1 2009/05/16 10:41:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.18 2008/04/06 18:55:33 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.18.4.1 2009/05/16 10:41:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,7 +132,7 @@ struct bt3c_softc {
 #define BT3C_XMIT		(1 << 1)	/* transmit active */
 #define BT3C_ENABLED		(1 << 2)	/* enabled */
 
-static int bt3c_match(device_t, struct cfdata *, void *);
+static int bt3c_match(device_t, cfdata_t, void *);
 static void bt3c_attach(device_t, device_t, void *);
 static int bt3c_detach(device_t, int);
 static bool bt3c_suspend(device_t PMF_FN_PROTO);
@@ -584,7 +584,7 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	int32_t addr, data;
 	int err, sum, len;
 	firmware_handle_t fh;
-	struct cfdata *cf = device_cfdata(sc->sc_dev);
+	cfdata_t cf = device_cfdata(sc->sc_dev);
 	size_t size;
 
 	err = firmware_open(cf->cf_name,
@@ -924,7 +924,7 @@ bt3c_stats(device_t self, struct bt_stats *dest, int flush)
  */
 
 static int
-bt3c_match(device_t parent, struct cfdata *match, void *aux)
+bt3c_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 

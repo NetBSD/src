@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.53.4.2 2009/05/04 08:13:18 yamt Exp $	*/
+/*	$NetBSD: uk.c,v 1.53.4.3 2009/05/16 10:41:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.53.4.2 2009/05/04 08:13:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.53.4.3 2009/05/16 10:41:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,10 @@ struct uk_softc {
 	struct scsipi_periph *sc_periph; /* all the inter level info */
 };
 
-static int	ukmatch(struct device *, struct cfdata *, void *);
-static void	ukattach(struct device *, struct device *, void *);
-static int	ukactivate(struct device *, enum devact);
-static int	ukdetach(struct device *, int);
+static int	ukmatch(device_t, cfdata_t, void *);
+static void	ukattach(device_t, device_t, void *);
+static int	ukactivate(device_t, enum devact);
+static int	ukdetach(device_t, int);
 
 
 CFATTACH_DECL(uk, sizeof(struct uk_softc), ukmatch, ukattach, ukdetach,
@@ -79,7 +79,7 @@ const struct cdevsw uk_cdevsw = {
 };
 
 static int
-ukmatch(struct device *parent, struct cfdata *match,
+ukmatch(device_t parent, cfdata_t match,
     void *aux)
 {
 
@@ -91,7 +91,7 @@ ukmatch(struct device *parent, struct cfdata *match,
  * a device suitable for this driver.
  */
 static void
-ukattach(struct device *parent, struct device *self, void *aux)
+ukattach(device_t parent, device_t self, void *aux)
 {
 	struct uk_softc *uk = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -109,7 +109,7 @@ ukattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ukactivate(struct device *self, enum devact act)
+ukactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -128,7 +128,7 @@ ukactivate(struct device *self, enum devact act)
 }
 
 static int
-ukdetach(struct device *self, int flags)
+ukdetach(device_t self, int flags)
 {
 	/*struct uk_softc *uk = device_private(self);*/
 	int cmaj, mn;

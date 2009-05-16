@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.22.40.1 2008/05/16 02:24:27 yamt Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.22.40.2 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * frob the controller.
  */
 struct isa_dma_state {
-	struct device *ids_dev;		/* associated device (for dv_xname) */
+	device_t ids_dev;		/* associated device (for dv_xname) */
 	bus_space_tag_t ids_bst;	/* bus space tag for DMA controller */
 	bus_space_handle_t ids_dma1h;	/* handle for DMA controller #1 */
 	bus_space_handle_t ids_dma2h;	/* handle for DMA controller #2 */
@@ -95,7 +95,7 @@ struct proc;
 struct malloc_type;
 
 void	   _isa_dmainit(struct isa_dma_state *, bus_space_tag_t,
-	       bus_dma_tag_t, struct device *);
+	       bus_dma_tag_t, device_t);
 
 int	   _isa_dmacascade(struct isa_dma_state *, int);
 

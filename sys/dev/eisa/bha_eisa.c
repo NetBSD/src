@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.30.4.1 2008/05/16 02:23:57 yamt Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.30.4.2 2009/05/16 10:41:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.30.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.30.4.2 2009/05/16 10:41:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.30.4.1 2008/05/16 02:23:57 yamt Exp $
 #define	BHA_EISA_IOCONF		0x0c
 
 static int	bha_eisa_address(bus_space_tag_t, bus_space_handle_t, int *);
-static int	bha_eisa_match(struct device *, struct cfdata *, void *);
-static void	bha_eisa_attach(struct device *, struct device *, void *);
+static int	bha_eisa_match(device_t, cfdata_t, void *);
+static void	bha_eisa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(bha_eisa, sizeof(struct bha_softc),
     bha_eisa_match, bha_eisa_attach, NULL, NULL);
@@ -99,7 +99,7 @@ bha_eisa_address(bus_space_tag_t iot, bus_space_handle_t ioh, int *portp)
  * the actual probe routine to check it out.
  */
 static int
-bha_eisa_match(struct device *parent, struct cfdata *match,
+bha_eisa_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -136,7 +136,7 @@ bha_eisa_match(struct device *parent, struct cfdata *match,
  * Attach all the sub-devices we can find
  */
 static void
-bha_eisa_attach(struct device *parent, struct device *self, void *aux)
+bha_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct bha_softc *sc = device_private(self);

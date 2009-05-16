@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.140.4.1 2009/05/04 08:14:18 yamt Exp $	*/
+/*	$NetBSD: in6.c,v 1.140.4.2 2009/05/16 10:41:50 yamt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.140.4.1 2009/05/04 08:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.140.4.2 2009/05/16 10:41:50 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -349,7 +349,7 @@ in6_mask2len(struct in6_addr *mask, u_char *lim0)
 
 static int
 in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
-    struct lwp *l, int privileged)
+    struct lwp *l)
 {
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia = NULL;
@@ -381,8 +381,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSDEFIFACE_IN6:
 	case SIOCSIFINFO_FLAGS:
 	case SIOCSIFINFO_IN6:
-		if (!privileged)
-			return EPERM;
+		/* Privileged. */
 		/* FALLTHROUGH */
 	case OSIOCGIFINFO_IN6:
 	case SIOCGIFINFO_IN6:
@@ -409,8 +408,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	switch (cmd) {
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
-		if (!privileged)
-			return EPERM;
+		/* Privileged. */
 		/* FALLTHROUGH */
 	case SIOCGLIFADDR:
 		return in6_lifaddr_ioctl(so, cmd, data, ifp, l);
@@ -507,8 +505,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
 		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6))
 			return EAFNOSUPPORT;
-		if (!privileged)
-			return EPERM;
+		/* Privileged. */
 
 		break;
 
@@ -778,15 +775,32 @@ int
 in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
     struct lwp *l)
 {
-	int error, privileged, s;
+	int error, s;
 
-	privileged = 0;
-	if (l && !kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL))
-		privileged++;
+	switch (cmd) {
+	case SIOCSNDFLUSH_IN6:
+	case SIOCSPFXFLUSH_IN6:
+	case SIOCSRTRFLUSH_IN6:
+	case SIOCSDEFIFACE_IN6:
+	case SIOCSIFINFO_FLAGS:
+	case SIOCSIFINFO_IN6:
+
+	case SIOCALIFADDR:
+	case SIOCDLIFADDR:
+
+	case SIOCDIFADDR_IN6:
+#ifdef OSIOCAIFADDR_IN6
+	case OSIOCAIFADDR_IN6:
+#endif
+	case SIOCAIFADDR_IN6:
+		if (l == NULL || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL))
+			return EPERM;
+		break;
+	}
 
 	s = splnet();
-	error = in6_control1(so , cmd, data, ifp, l, privileged);
+	error = in6_control1(so , cmd, data, ifp, l);
 	splx(s);
 	return error;
 }

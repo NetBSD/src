@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.87.4.1 2009/05/04 08:12:39 yamt Exp $ */
+/*      $NetBSD: ac97.c,v 1.87.4.2 2009/05/16 10:41:21 yamt Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.87.4.1 2009/05/04 08:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.87.4.2 2009/05/16 10:41:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1209,13 +1209,13 @@ ac97_setup_source_info(struct ac97_softc *as)
 
 /* backward compatibility */
 int
-ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
+ac97_attach(struct ac97_host_if *host_if, device_t sc_dev)
 {
 	return ac97_attach_type(host_if, sc_dev, AC97_CODEC_TYPE_AUDIO);
 }
 
 int
-ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
+ac97_attach_type(struct ac97_host_if *host_if, device_t sc_dev, int type)
 {
 	struct ac97_softc *as;
 	int error, i, j;

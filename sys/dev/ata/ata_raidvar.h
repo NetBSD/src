@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.5.34.1 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.5.34.2 2009/05/16 10:41:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
 #define	ATA_RAID_MAX_DISKS	8
 
 struct ataraid_disk_info {
-	struct device *adi_dev;		/* disk's device */
+	device_t adi_dev;		/* disk's device */
 	int	adi_status;		/* disk's status */
 	u_int	adi_sectors;
 	u_int	adi_compsize;		/* in sectors */
@@ -79,7 +79,7 @@ struct ataraid_disk_info {
 struct ataraid_array_info {
 	TAILQ_ENTRY(ataraid_array_info) aai_list;
 
-	struct device *aai_ld;		/* associated logical disk */
+	device_t aai_ld;		/* associated logical disk */
 
 	u_int	aai_type;		/* array type */
 	u_int	aai_arrayno;		/* array number */
@@ -119,7 +119,7 @@ struct wd_softc;
 typedef TAILQ_HEAD(, ataraid_array_info) ataraid_array_info_list_t;
 extern ataraid_array_info_list_t ataraid_array_info_list;
 
-void	ata_raid_check_component(struct device *);
+void	ata_raid_check_component(device_t);
 const char *ata_raid_type_name(u_int);
 
 struct ataraid_array_info *ata_raid_get_array_info(u_int, u_int);

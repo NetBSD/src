@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.70.4.1 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.70.4.2 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.1 2009/05/04 08:12:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.2 2009/05/16 10:41:23 yamt Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -1800,7 +1800,7 @@ mb86960_disable(struct mb86960_softc *sc)
  *	Handle device activation/deactivation requests.
  */
 int
-mb86960_activate(struct device *self, enum devact act)
+mb86960_activate(device_t self, enum devact act)
 {
 	struct mb86960_softc *sc = (struct mb86960_softc *)self;
 	int rv, s;

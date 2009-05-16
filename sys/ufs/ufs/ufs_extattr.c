@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.21.4.1 2009/05/04 08:14:38 yamt Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.21.4.2 2009/05/16 10:41:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21.4.1 2009/05/04 08:14:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.21.4.2 2009/05/16 10:41:53 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -265,7 +265,6 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	memset(&cnp, 0, sizeof(cnp));
 	cnp.cn_nameiop = LOOKUP;
 	cnp.cn_flags = ISLASTCN | lockparent;
-	cnp.cn_lwp = l;
 	cnp.cn_cred = l->l_cred;
 	cnp.cn_pnbuf = PNBUF_GET();
 	cnp.cn_nameptr = cnp.cn_pnbuf;

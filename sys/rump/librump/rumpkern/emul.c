@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.38.2.1 2009/05/04 08:14:29 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.38.2.2 2009/05/16 10:41:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.38.2.1 2009/05/04 08:14:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.38.2.2 2009/05/16 10:41:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -425,6 +425,10 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		} else if (strcmp(thrstore, "nfssilly") == 0) {
 			printf("rump warning: threads not enabled, not enabling"
 			   " nfs silly rename\n");
+			return 0;
+		} else if (strcmp(thrstore, "unpgc") == 0) {
+			printf("rump warning: threads not enabled, not enabling"
+			   " UNP garbage collection\n");
 			return 0;
 		} else
 			panic("threads not available, setenv RUMP_THREADS 1");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.58.4.2 2009/05/04 08:12:43 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.58.4.3 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58.4.2 2009/05/04 08:12:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58.4.3 2009/05/16 10:41:23 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -111,7 +111,7 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
 	u_int8_t romdata[16];
-	int memsize, i, useword;
+	int memsize, i, useword, dmawidth;
 
 	/*
 	 * Detect it again unless caller specified it; this gives us
@@ -132,21 +132,28 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 	case NE2000_TYPE_NE1000:
 		memsize = 8192;
 		useword = 0;
+		dmawidth = NE2000_DMAWIDTH_8BIT;
 		break;
 	case NE2000_TYPE_NE2000:
 	case NE2000_TYPE_AX88190:		/* XXX really? */
 	case NE2000_TYPE_AX88790:
 		memsize = 8192 * 2;
 		useword = 1;
+		dmawidth = NE2000_DMAWIDTH_16BIT;
 		break;
 	case NE2000_TYPE_DL10019:
 	case NE2000_TYPE_DL10022:
 		memsize = 8192 * 3;
 		useword = 1;
+		dmawidth = NE2000_DMAWIDTH_16BIT;
 		break;
 	}
 
 	nsc->sc_useword = useword;
+	if (nsc->sc_dmawidth == NE2000_DMAWIDTH_UNKNOWN)
+		nsc->sc_dmawidth = dmawidth;
+	else
+		dmawidth = nsc->sc_dmawidth;
 
 	dsc->cr_proto = ED_CR_RD2;
 	if (nsc->sc_type == NE2000_TYPE_AX88190 ||
@@ -164,7 +171,8 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 	 *
 	 * NE1000 gets byte-wide DMA, NE2000 gets word-wide DMA.
 	 */
-	dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS | (useword ? ED_DCR_WTS : 0);
+	dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS |
+	    ((dmawidth == NE2000_DMAWIDTH_16BIT) ? ED_DCR_WTS : 0);
 
 	dsc->test_mem = ne2000_test_mem;
 	dsc->ring_copy = ne2000_ring_copy;
@@ -261,7 +269,8 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 			    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
 			NIC_BARRIER(nict, nich);
 			/* Select word transfer. */
-			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
+			bus_space_write_1(nict, nich, ED_P0_DCR,
+			    ((dmawidth == NE2000_DMAWIDTH_16BIT) ? ED_DCR_WTS : 0));
 			NIC_BARRIER(nict, nich);
 			ne2000_readmem(nict, nich, asict, asich,
 			    AX88190_NODEID_OFFSET, dsc->sc_enaddr,
@@ -308,7 +317,9 @@ ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asi
 	static u_int8_t test_pattern[32] = "THIS is A memory TEST pattern";
 	u_int8_t test_buffer[32], tmp;
 	int i, rv = NE2000_TYPE_UNKNOWN;
+	int dmawidth = NE2000_DMAWIDTH_16BIT;
 
+ restart:
 	/* Reset the board. */
 #ifdef GWETHER
 	bus_space_write_1(asict, asich, NE2000_ASIC_RESET, 0);
@@ -424,8 +435,8 @@ ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asi
 
 	if (memcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
 		/* not an NE1000 - try NE2000 */
-		bus_space_write_1(nict, nich, ED_P0_DCR,
-		    ED_DCR_WTS | ED_DCR_FT1 | ED_DCR_LS);
+		bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS
+		    | ((dmawidth == NE2000_DMAWIDTH_16BIT) ? ED_DCR_WTS : 0));
 		bus_space_write_1(nict, nich, ED_P0_PSTART,
 		    16384 >> ED_PAGE_SHIFT);
 		bus_space_write_1(nict, nich, ED_P0_PSTOP,
@@ -440,13 +451,20 @@ ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asi
 		ne2000_readmem(nict, nich, asict, asich, 16384, test_buffer,
 		    sizeof(test_buffer), 1);
 
-		if (memcmp(test_pattern, test_buffer, sizeof(test_pattern)))
+		if (memcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
+			if (dmawidth == NE2000_DMAWIDTH_16BIT) {
+				/* try 8bit dma */
+				dmawidth = NE2000_DMAWIDTH_8BIT;
+				goto restart;
+			}
 			goto out;	/* not an NE2000 either */
+		}
 
 		rv = NE2000_TYPE_NE2000;
 	} else {
 		/* We're an NE1000. */
 		rv = NE2000_TYPE_NE1000;
+		dmawidth = NE2000_DMAWIDTH_8BIT;
 	}
 
 	/* Clear any pending interrupts that might have occurred above. */
@@ -804,23 +822,25 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 	struct dp8390_softc *dp = &np->sc_dp8390;
 	bus_space_tag_t nict = dp->sc_regt;
 	bus_space_handle_t nich = dp->sc_regh;
-	int i, useword;
+	int i, useword, dmawidth;
 
 #ifdef GWETHER
 	/* Not supported (yet?) */
 	return -1;
 #endif
 
-	if (np->sc_type == 0)
+	if (np->sc_type == NE2000_TYPE_UNKNOWN)
 		np->sc_type = ne2000_detect(nict, nich,
 			np->sc_asict, np->sc_asich);
-	if (np->sc_type == 0)
+	if (np->sc_type == NE2000_TYPE_UNKNOWN)
 		return -1;
 
 	useword = np->sc_useword;
+	dmawidth = np->sc_dmawidth;
 
 	dp->cr_proto = ED_CR_RD2;
-	dp->dcr_reg = ED_DCR_FT1 | ED_DCR_LS | (useword ? ED_DCR_WTS : 0);
+	dp->dcr_reg = ED_DCR_FT1 | ED_DCR_LS |
+	    ((dmawidth == NE2000_DMAWIDTH_16BIT) ? ED_DCR_WTS : 0);
 	dp->rcr_proto = 0;
 
 	dp->test_mem = ne2000_test_mem;
@@ -876,7 +896,8 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 				ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
 			NIC_BARRIER(nict, nich);
 			/* Select word transfer */
-			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
+			bus_space_write_1(nict, nich, ED_P0_DCR,
+			    ((dmawidth == NE2000_DMAWIDTH_16BIT) ? ED_DCR_WTS : 0));
 			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,
 				AX88190_NODEID_OFFSET, kip->myenetaddr,
 				ETHER_ADDR_LEN, useword);

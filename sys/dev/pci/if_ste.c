@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.35.4.1 2008/05/16 02:24:44 yamt Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.35.4.2 2009/05/16 10:41:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.35.4.1 2008/05/16 02:24:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.35.4.2 2009/05/16 10:41:35 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -225,7 +225,7 @@ static int	ste_mii_readreg(device_t, int, int);
 static void	ste_mii_writereg(device_t, int, int, int);
 static void	ste_mii_statchg(device_t);
 
-static int	ste_match(device_t, struct cfdata *, void *);
+static int	ste_match(device_t, cfdata_t, void *);
 static void	ste_attach(device_t, device_t, void *);
 
 int	ste_copy_small = 0;
@@ -283,7 +283,7 @@ ste_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ste_match(device_t parent, struct cfdata *cf, void *aux)
+ste_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

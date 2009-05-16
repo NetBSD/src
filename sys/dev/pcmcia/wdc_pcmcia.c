@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.110.4.2 2009/05/04 08:13:15 yamt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.110.4.3 2009/05/16 10:41:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.110.4.2 2009/05/04 08:13:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.110.4.3 2009/05/16 10:41:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -353,7 +353,7 @@ wdc_pcmcia_detach(device_t self, int flags)
 }
 
 static int
-wdc_pcmcia_enable(struct device *self, int onoff)
+wdc_pcmcia_enable(device_t self, int onoff)
 {
 	struct wdc_pcmcia_softc *sc = device_private(self);
 	int error;

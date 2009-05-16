@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.79.4.1 2009/05/04 08:13:50 yamt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.79.4.2 2009/05/16 10:41:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -335,6 +335,7 @@ long long strtoll(const char *, char **, int);
 unsigned long long strtoull(const char *, char **, int);
 uintmax_t strtoumax(const char *, char **, int);
 int	 snprintb(char *, size_t, const char *, uint64_t);
+int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
 		   void *);
 uint32_t crc32(uint32_t, const uint8_t *, size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.42.4.2 2009/05/04 08:14:29 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.42.4.3 2009/05/16 10:41:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.2 2009/05/04 08:14:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.3 2009/05/16 10:41:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -421,6 +421,16 @@ rump_get_curlwp(void)
 		l = &lwp0;
 
 	return l;
+}
+
+void
+rump_set_curlwp(struct lwp *l)
+{
+
+	/* clear current */
+	rumpuser_set_curlwp(NULL);
+	/* set new */
+	rumpuser_set_curlwp(l);
 }
 
 kauth_cred_t

@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.80.4.1 2009/05/04 08:11:06 yamt Exp $
+# $NetBSD: GENERIC,v 1.80.4.2 2009/05/16 10:41:12 yamt Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.80.4.1 $"
+#ident 		"GENERIC-$Revision: 1.80.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -59,7 +59,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -251,7 +251,7 @@ gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
 #weisa*	at mainbus0		# 7xx
 #weisa*	at gsc?			# C*, B*
 
-# 
+#
 elroy*	at astro?
 
 # PCI bus support
@@ -276,7 +276,7 @@ eisa*	at mongoose?
 # Console Devices
 
 # Human Interface Loop
-#hil*		at gsc? 
+#hil*		at gsc?
 #hkbd*		at hil? code 0	# keyboard
 #hms*		at hil? code 1	# mice & trackballs
 

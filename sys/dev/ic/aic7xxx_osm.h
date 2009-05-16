@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.20.4.1 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.20.4.2 2009/05/16 10:41:22 yamt Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -508,7 +508,7 @@ static __inline void	ahc_platform_dump_card_state(struct ahc_softc *);
 static __inline void
 ahc_print_path(struct ahc_softc *ahc, struct scb *scb)
 {
-	printf("%s:", device_xname(&ahc->sc_dev));
+	printf("%s:", device_xname(ahc->sc_dev));
 }
 
 static __inline void
@@ -526,7 +526,7 @@ void	  ahc_platform_free(struct ahc_softc *);
 int	  ahc_map_int(struct ahc_softc *);
 int	  ahc_attach(struct ahc_softc *);
 int	  ahc_softc_comp(struct ahc_softc *, struct ahc_softc *);
-int	  ahc_detach(struct device *, int);
+int	  ahc_detach(struct ahc_softc *, int);
 
 /****************************** Interrupts ************************************/
 void			ahc_platform_intr(void *);

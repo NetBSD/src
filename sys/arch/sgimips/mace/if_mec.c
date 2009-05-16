@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.18.4.2 2009/05/04 08:11:50 yamt Exp $ */
+/* $NetBSD: if_mec.c,v 1.18.4.3 2009/05/16 10:41:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.4.2 2009/05/04 08:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.4.3 2009/05/16 10:41:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -998,7 +998,7 @@ mec_start(struct ifnet *ifp)
 	firsttx = MEC_NEXTTX(sc->sc_txlast);
 
 	DPRINTF(MEC_DEBUG_START,
-	    ("mec_start: opending = %d, firsttx = %d\n", opending, firsttx));
+	    ("%s: opending = %d, firsttx = %d\n", __func__, opending, firsttx));
 
 	while (sc->sc_txpending < MEC_NTXDESC - 1) {
 		/* Grab a packet off the queue. */
@@ -1025,8 +1025,8 @@ mec_start(struct ifnet *ifp)
 		len = m0->m_pkthdr.len;
 
 		DPRINTF(MEC_DEBUG_START,
-		    ("mec_start: len = %d, nexttx = %d, txpending = %d\n",
-		    len, nexttx, sc->sc_txpending));
+		    ("%s: len = %d, nexttx = %d, txpending = %d\n",
+		    __func__, len, nexttx, sc->sc_txpending));
 
 		if (len <= MEC_TXD_BUFSIZE) {
 			/*
@@ -1034,7 +1034,8 @@ mec_start(struct ifnet *ifp)
 			 * just copy it into there. Maybe it's faster than
 			 * checking alignment and calling bus_dma(9) etc.
 			 */
-			DPRINTF(MEC_DEBUG_START, ("mec_start: short packet\n"));
+			DPRINTF(MEC_DEBUG_START, ("%s: short packet\n",
+			    __func__));
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 			/*
@@ -1059,7 +1060,8 @@ mec_start(struct ifnet *ifp)
 			 * If the packet won't fit the static buffer in txdesc,
 			 * we have to use the concatenate pointers to handle it.
 			 */
-			DPRINTF(MEC_DEBUG_START, ("mec_start: long packet\n"));
+			DPRINTF(MEC_DEBUG_START, ("%s: long packet\n",
+			    __func__));
 			txs->txs_flags = MEC_TXS_TXDPTR;
 
 			/*
@@ -1158,7 +1160,7 @@ mec_start(struct ifnet *ifp)
 				 * is uint64_t aligned.
 				 */ 
 				DPRINTF(MEC_DEBUG_START|MEC_DEBUG_TXSEGS,
-				    ("mec_start: re-allocating mbuf\n"));
+				    ("%s: re-allocating mbuf\n", __func__));
 
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
@@ -1353,8 +1355,8 @@ mec_start(struct ifnet *ifp)
 			bus_dma_segment_t *segs = dmamap->dm_segs;
 
 			DPRINTF(MEC_DEBUG_TXSEGS,
-			    ("mec_start: nsegs = %d, pseg = %d, nptr = %d\n",
-			    dmamap->dm_nsegs, pseg, nptr));
+			    ("%s: nsegs = %d, pseg = %d, nptr = %d\n",
+			    __func__, dmamap->dm_nsegs, pseg, nptr));
 
 			switch (nptr) {
 			case 3:
@@ -1399,16 +1401,20 @@ mec_start(struct ifnet *ifp)
 		txd->txd_cmd = txdcmd;
 
 		DPRINTF(MEC_DEBUG_START,
-		    ("mec_start: txd_cmd    = 0x%016llx\n", txd->txd_cmd));
+		    ("%s: txd_cmd    = 0x%016llx\n",
+		    __func__, txd->txd_cmd));
 		DPRINTF(MEC_DEBUG_START,
-		    ("mec_start: txd_ptr[0] = 0x%016llx\n", txd->txd_ptr[0]));
+		    ("%s: txd_ptr[0] = 0x%016llx\n",
+		    __func__, txd->txd_ptr[0]));
 		DPRINTF(MEC_DEBUG_START,
-		    ("mec_start: txd_ptr[1] = 0x%016llx\n", txd->txd_ptr[1]));
+		    ("%s: txd_ptr[1] = 0x%016llx\n",
+		    __func__, txd->txd_ptr[1]));
 		DPRINTF(MEC_DEBUG_START,
-		    ("mec_start: txd_ptr[2] = 0x%016llx\n", txd->txd_ptr[2]));
+		    ("%s: txd_ptr[2] = 0x%016llx\n",
+		    __func__, txd->txd_ptr[2]));
 		DPRINTF(MEC_DEBUG_START,
-		    ("mec_start: len = %d (0x%04x), buflen = %d (0x%02x)\n",
-		    len, len, buflen, buflen));
+		    ("%s: len = %d (0x%04x), buflen = %d (0x%02x)\n",
+		    __func__, len, len, buflen, buflen));
 
 		/* sync TX descriptor */
 		MEC_TXDESCSYNC(sc, nexttx,
@@ -1451,7 +1457,7 @@ mec_stop(struct ifnet *ifp, int disable)
 	struct mec_txsoft *txs;
 	int i;
 
-	DPRINTF(MEC_DEBUG_STOP, ("mec_stop\n"));
+	DPRINTF(MEC_DEBUG_STOP, ("%s\n", __func__));
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1583,7 +1589,7 @@ mec_intr(void *arg)
 	uint32_t statreg, statack, txptr;
 	int handled, sent;
 
-	DPRINTF(MEC_DEBUG_INTR, ("mec_intr: called\n"));
+	DPRINTF(MEC_DEBUG_INTR, ("%s: called\n", __func__));
 
 	handled = sent = 0;
 
@@ -1591,7 +1597,7 @@ mec_intr(void *arg)
 		statreg = bus_space_read_8(st, sh, MEC_INT_STATUS);
 
 		DPRINTF(MEC_DEBUG_INTR,
-		    ("mec_intr: INT_STAT = 0x%08x\n", statreg));
+		    ("%s: INT_STAT = 0x%08x\n", __func__, statreg));
 
 		statack = statreg & MEC_INT_STATUS_MASK;
 		if (statack == 0)
@@ -1621,7 +1627,7 @@ mec_intr(void *arg)
 				 */
 				bus_space_write_8(st, sh, MEC_TX_ALIAS, 0);
 				DPRINTF(MEC_DEBUG_INTR,
-				    ("mec_intr: disable TX_INT\n"));
+				    ("%s: disable TX_INT\n", __func__));
 			}
 #ifdef MEC_EVENT_COUNTERS
 			if ((statack & MEC_INT_TX_EMPTY) != 0)
@@ -1637,8 +1643,8 @@ mec_intr(void *arg)
 		     MEC_INT_TX_ABORT |
 		     MEC_INT_RX_FIFO_UNDERFLOW |
 		     MEC_INT_RX_DMA_UNDERFLOW)) {
-			printf("%s: mec_intr: interrupt status = 0x%08x\n",
-			    device_xname(sc->sc_dev), statreg);
+			printf("%s: %s: interrupt status = 0x%08x\n",
+			    device_xname(sc->sc_dev), __func__, statreg);
 			mec_init(ifp);
 			break;
 		}
@@ -1670,7 +1676,7 @@ mec_rxintr(struct mec_softc *sc)
 	int i;
 	uint32_t crc;
 
-	DPRINTF(MEC_DEBUG_RXINTR, ("mec_rxintr: called\n"));
+	DPRINTF(MEC_DEBUG_RXINTR, ("%s: called\n", __func__));
 
 	for (i = sc->sc_rxptr;; i = MEC_NEXTRX(i)) {
 		rxd = &sc->sc_rxdesc[i];
@@ -1679,10 +1685,10 @@ mec_rxintr(struct mec_softc *sc)
 		rxstat = rxd->rxd_stat;
 
 		DPRINTF(MEC_DEBUG_RXINTR,
-		    ("mec_rxintr: rxstat = 0x%016llx, rxptr = %d\n",
-		    rxstat, i));
-		DPRINTF(MEC_DEBUG_RXINTR, ("mec_rxintr: rxfifo = 0x%08x\n",
-		    (u_int)bus_space_read_8(st, sh, MEC_RX_FIFO)));
+		    ("%s: rxstat = 0x%016llx, rxptr = %d\n",
+		    __func__, rxstat, i));
+		DPRINTF(MEC_DEBUG_RXINTR, ("%s: rxfifo = 0x%08x\n",
+		    __func__, (u_int)bus_space_read_8(st, sh, MEC_RX_FIFO)));
 
 		if ((rxstat & MEC_RXSTAT_RECEIVED) == 0) {
 			MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
@@ -1695,7 +1701,7 @@ mec_rxintr(struct mec_softc *sc)
 		    len > (MCLBYTES - MEC_ETHER_ALIGN)) {
 			/* invalid length packet; drop it. */
 			DPRINTF(MEC_DEBUG_RXINTR,
-			    ("mec_rxintr: wrong packet\n"));
+			    ("%s: wrong packet\n", __func__));
  dropit:
 			ifp->if_ierrors++;
 			rxd->rxd_stat = 0;
@@ -1717,8 +1723,8 @@ mec_rxintr(struct mec_softc *sc)
 		     MEC_RXSTAT_INVALID   |
 		     MEC_RXSTAT_CRCERROR  |
 		     MEC_RXSTAT_VIOLATION)) {
-			printf("%s: mec_rxintr: status = 0x%016llx\n",
-			    device_xname(sc->sc_dev), rxstat);
+			printf("%s: %s: status = 0x%016llx\n",
+			    device_xname(sc->sc_dev), __func__, rxstat);
 			goto dropit;
 		}
 
@@ -1894,7 +1900,7 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 	int i;
 	u_int col;
 
-	DPRINTF(MEC_DEBUG_TXINTR, ("mec_txintr: called\n"));
+	DPRINTF(MEC_DEBUG_TXINTR, ("%s: called\n", __func__));
 
 	for (i = sc->sc_txdirty; i != txptr && sc->sc_txpending != 0;
 	    i = MEC_NEXTTX(i), sc->sc_txpending--) {
@@ -1905,8 +1911,8 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 
 		txstat = txd->txd_stat;
 		DPRINTF(MEC_DEBUG_TXINTR,
-		    ("mec_txintr: dirty = %d, txstat = 0x%016llx\n",
-		    i, txstat));
+		    ("%s: dirty = %d, txstat = 0x%016llx\n",
+		    __func__, i, txstat));
 		if ((txstat & MEC_TXSTAT_SENT) == 0) {
 			MEC_TXCMDSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			break;
@@ -1936,8 +1942,8 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 	/* update the dirty TX buffer pointer */
 	sc->sc_txdirty = i;
 	DPRINTF(MEC_DEBUG_INTR,
-	    ("mec_txintr: sc_txdirty = %2d, sc_txpending = %2d\n",
-	    sc->sc_txdirty, sc->sc_txpending));
+	    ("%s: sc_txdirty = %2d, sc_txpending = %2d\n",
+	    __func__, sc->sc_txdirty, sc->sc_txpending));
 
 	/* cancel the watchdog timer if there are no pending TX packets */
 	if (sc->sc_txpending == 0)

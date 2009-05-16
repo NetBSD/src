@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.17.4.1 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.17.4.2 2009/05/16 10:41:25 yamt Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.17.4.1 2009/05/04 08:12:48 yamt Exp $
+ * $Id: if_ntwoc_isa.c,v 1.17.4.2 2009/05/16 10:41:25 yamt Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.4.1 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.4.2 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.4.1 2009/05/04 08:12:48 yamt E
 #endif
 
 #if __NetBSD_Version__ >= 104160000
-static	void ntwoc_isa_config_interrupts(struct device *);
+static	void ntwoc_isa_config_interrupts(device_t);
 #else
 #define	SCA_BASECLOCK	9830400
 #endif
@@ -84,8 +84,8 @@ struct ntwoc_isa_softc {
 	struct sca_softc sc_sca;	/* the SCA itself */
 };
 
-static  int ntwoc_isa_probe(struct device *, struct cfdata *, void *);
-static  void ntwoc_isa_attach(struct device *, struct device *, void *);
+static  int ntwoc_isa_probe(device_t, cfdata_t, void *);
+static  void ntwoc_isa_attach(device_t, device_t, void *);
 
 static	void ntwoc_isa_clock_callback(void *, int, int);
 static	void ntwoc_isa_dtr_callback(void *, int, int);
@@ -186,7 +186,7 @@ ntwoc_isa_set_off(struct sca_softc *sca)
 }
 
 static int
-ntwoc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+ntwoc_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
 	bus_space_tag_t iot, memt;
@@ -381,7 +381,7 @@ out:
  * we win! attach the card
  */
 static void
-ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
+ntwoc_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ntwoc_isa_softc *sc;
 	struct isa_attach_args *ia;
@@ -802,7 +802,7 @@ ntwoc_isa_setup_memory(struct sca_softc *sc)
  * get the base clock frequency
  */
 static void
-ntwoc_isa_config_interrupts(struct device *self)
+ntwoc_isa_config_interrupts(device_t self)
 {
 	struct ntwoc_isa_softc *sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.61.2.1 2009/05/04 08:13:19 yamt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.61.2.2 2009/05/16 10:41:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.61.2.1 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.61.2.2 2009/05/16 10:41:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ static void	sunkbd_wskbd_cngetc(void *, u_int *, int *);
 static void	sunkbd_wskbd_cnpollc(void *, int);
 static void	sunkbd_wskbd_cnbell(void *, u_int, u_int, u_int);
 static void	sunkbd_bell_off(void *v);
-static void	kbd_enable(struct device *); /* deferred keyboard init */
+static void	kbd_enable(device_t); /* deferred keyboard init */
 
 const struct wskbd_accessops sunkbd_wskbd_accessops = {
 	wssunkbd_enable,
@@ -1015,7 +1015,7 @@ sunkbd_wskbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 }
 
 void
-kbd_enable(struct device *dev)
+kbd_enable(device_t dev)
 {
 	struct kbd_softc *k = device_private(dev);
 	struct wskbddev_attach_args a;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.19.40.2 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.19.40.3 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -192,6 +192,12 @@
 #define HME_MACI_MACADDR2	(198*4)		/* MAC address */
 #define HME_MACI_MACADDR1	(199*4)
 #define HME_MACI_MACADDR0	(200*4)
+#define HME_MACI_STAT_RCNT	(201*4)		/* RX frame count */
+#define HME_MACI_STAT_LCNT	(202*4)		/* Length error count */
+#define HME_MACI_STAT_ACNT	(203*4)		/* Align error count */
+#define HME_MACI_STAT_CCNT	(204*4)		/* FCS error count */
+#define HME_MACI_STATE		(205*4)		/* RX_MAC state machine */
+#define HME_MACI_STAT_CVCNT	(206*4)		/* Code violation count */
 #define HME_MACI_HASHTAB3	(208*4)		/* Address hash table */
 #define HME_MACI_HASHTAB2	(209*4)
 #define HME_MACI_HASHTAB1	(210*4)

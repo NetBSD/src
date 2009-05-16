@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.201.4.3 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.201.4.4 2009/05/16 10:41:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201.4.3 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201.4.4 2009/05/16 10:41:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -2207,16 +2207,20 @@ nfs_clearcommit(struct mount *mp)
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type != VREG)
 			continue;
+		mutex_enter(&vp->v_interlock);
+		if (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) {
+			mutex_exit(&vp->v_interlock);
+			continue;
+		}
 		np = VTONFS(vp);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		mutex_enter(&vp->v_uobj.vmobjlock);
 		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
-		mutex_exit(&vp->v_uobj.vmobjlock);
+		mutex_exit(&vp->v_interlock);
 	}
 	mutex_exit(&mntvnode_lock);
 	mutex_enter(&nmp->nm_lock);

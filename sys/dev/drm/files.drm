@@ -1,4 +1,4 @@
-# $NetBSD: files.drm,v 1.2.38.1 2009/05/04 08:12:37 yamt Exp $
+# $NetBSD: files.drm,v 1.2.38.2 2009/05/16 10:41:20 yamt Exp $
 
 # direct rendering modules
 define drmbase
@@ -37,10 +37,5 @@ file   external/bsd/drm/dist/bsd-core/drm_scatter.c       drmbase & drm_external
 file   external/bsd/drm/dist/bsd-core/drm_sysctl.c        drmbase & drm_external
 file   external/bsd/drm/dist/bsd-core/drm_vm.c            drmbase & drm_external
 
-makeoptions	drmbase		CPPFLAGS+="-I$S/dev/drm"
-
-# XXXMRG want to use the first two, but the second two work.
-#makeoptions	drmbase & !drm_external		CPPFLAGS+="-I$S/dev/drm"
-#makeoptions	drmbase & drm_external		CPPFLAGS+="-I$S/external/bsd/drm/dist/bsd-core -I$S/external/bsd/drm/dist/shared-core"
-#makeoptions	drm_noexternal			CPPFLAGS+="-I$S/dev/drm"
-#makeoptions	drm_external			CPPFLAGS+="-I$S/external/bsd/drm/dist/bsd-core -I$S/external/bsd/drm/dist/shared-core"
+makeoptions	drmbase & !drm_external		CPPFLAGS+="-I$S/dev/drm"
+makeoptions	drmbase & drm_external		CPPFLAGS+="-I$S/external/bsd/drm/dist/bsd-core -I$S/external/bsd/drm/dist/shared-core"

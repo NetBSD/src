@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.76.4.1 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.76.4.2 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76.4.1 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76.4.2 2009/05/16 10:41:25 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -121,8 +121,8 @@ struct eg_softc {
 #endif
 };
 
-int egprobe(struct device *, struct cfdata *, void *);
-void egattach(struct device *, struct device *, void *);
+int egprobe(device_t, cfdata_t, void *);
+void egattach(device_t, device_t, void *);
 
 CFATTACH_DECL(eg, sizeof(struct eg_softc),
     egprobe, egattach, NULL, NULL);
@@ -298,8 +298,7 @@ egreadPCB(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t *pcb)
  */
 
 int
-egprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+egprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -384,7 +383,7 @@ egprobe(struct device *parent, struct cfdata *match,
 }
 
 void
-egattach(struct device *parent, struct device *self, void *aux)
+egattach(device_t parent, device_t self, void *aux)
 {
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
