@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.16 2009/04/11 23:05:26 christos Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.17 2009/05/16 23:58:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.16 2009/04/11 23:05:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.17 2009/05/16 23:58:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -344,10 +344,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 	char *name;
 	int mqd, error, oflag;
 
-	/* Check access mode flags */
 	oflag = SCARG(uap, oflag);
-	if ((oflag & O_ACCMODE) == 0)
-		return EINVAL;
 
 	/* Get the name from the user-space */
 	name = kmem_zalloc(MQ_NAMELEN, KM_SLEEP);
