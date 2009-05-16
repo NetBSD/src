@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2009/05/13 14:33:42 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2009/05/16 16:06:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2009/05/13 14:33:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/05/16 16:06:06 mjf Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1455,12 +1455,20 @@ cpu_dumpsize(void)
  * an LPMC, or a TOC.  The check type is passed in as a trap
  * type, one of T_HPMC, T_LPMC, or T_INTERRUPT (for TOC).
  */
-static char pim_data_buffer[4096];	/* XXX assumed to be big enough */
+static char pim_data_buffer[896] __attribute__((__aligned__(8)));
 static char in_check = 0;
-void
-hppa_machine_check(int check_type)
+
+#define	PIM_WORD(name, word, bits)			\
+do {							\
+	snprintb(bitmask_buffer, sizeof(bitmask_buffer),\
+	    bits, word);				\
+	printf("%s %s", name, bitmask_buffer);		\
+} while (/* CONSTCOND */ 0)
+
+
+static inline void
+hppa_pim_dump(int check_type)
 {
-	int pdc_pim_type;
 	struct hp700_pim_hpmc *hpmc;
 	struct hp700_pim_lpmc *lpmc;
 	struct hp700_pim_toc *toc;
@@ -1470,37 +1478,20 @@ hppa_machine_check(int check_type)
 	int reg_i, reg_j, reg_k;
 	char bitmask_buffer[64];
 	const char *name;
-	int error;
-#define	PIM_WORD(name, word, bits)			\
-do {							\
-	snprintb(bitmask_buffer, sizeof(bitmask_buffer),\
-	    bits, word);				\
-	printf("%s %s", name, bitmask_buffer);		\
-} while (/* CONSTCOND */ 0)
 
-	/* Do an fcacheall(). */
-	fcacheall();
-
-	/* Dispatch on the check type. */
 	regs = NULL;
 	checks = NULL;
 	switch (check_type) {
 	case T_HPMC:
-		name = "HPMC";
-		pdc_pim_type = PDC_PIM_HPMC;
 		hpmc = (struct hp700_pim_hpmc *) pim_data_buffer;
 		regs = &hpmc->pim_hpmc_regs;
 		checks = &hpmc->pim_hpmc_checks;
 		break;
 	case T_LPMC:
-		name = "LPMC";
-		pdc_pim_type = PDC_PIM_LPMC;
 		lpmc = (struct hp700_pim_lpmc *) pim_data_buffer;
 		checks = &lpmc->pim_lpmc_checks;
 		break;
 	case T_INTERRUPT:
-		name = "TOC";
-		pdc_pim_type = PDC_PIM_TOC;
 		toc = (struct hp700_pim_toc *) pim_data_buffer;
 		regs = &toc->pim_toc_regs;
 		break;
@@ -1508,11 +1499,6 @@ do {							\
 		panic("unknown machine check type");
 		/* NOTREACHED */
 	}
-	printf("\nmachine check: %s", name);
-	error = pdc_call((iodcio_t)pdc, 0, PDC_PIM, pdc_pim_type,
-		&pdc_pim, pim_data_buffer, sizeof(pim_data_buffer));
-	if (error < 0)
-		printf(" - WARNING: could not transfer PIM info (%d)", error);
 
 	/* If we have register arrays, display them. */
 	if (regs != NULL) {
@@ -1538,7 +1524,8 @@ do {							\
 		}
 
 		/* Print out some interesting registers. */
-		printf("\n\n\tIIA 0x%x:0x%08x 0x%x:0x%08x",
+		printf("\n\n\tIIA head 0x%x:0x%08x\n"
+			"\tIIA tail 0x%x:0x%08x",
 			regs->pim_regs_cr17, regs->pim_regs_cr18,
 			regs->pim_regs_iisq_tail, regs->pim_regs_iioq_tail);
 		PIM_WORD("\n\tIPSW", regs->pim_regs_cr22, PSW_BITS);
@@ -1569,6 +1556,164 @@ do {							\
 		printf("\n\tPath Info 0x%08x",
 			checks->pim_check_path_info);
 	}
+}
+
+static inline void
+hppa_pim64_dump(int check_type)
+{
+	struct hp700_pim64_hpmc *hpmc;
+	struct hp700_pim64_lpmc *lpmc;
+	struct hp700_pim64_toc *toc;
+	struct hp700_pim64_regs *regs;
+	struct hp700_pim64_checks *checks;
+	int reg_i, reg_j, reg_k;
+	uint64_t *regarray;
+	char bitmask_buffer[64];
+	const char *name;
+
+	regs = NULL;
+	checks = NULL;
+	switch (check_type) {
+	case T_HPMC:
+		hpmc = (struct hp700_pim64_hpmc *) pim_data_buffer;
+		regs = &hpmc->pim_hpmc_regs;
+		checks = &hpmc->pim_hpmc_checks;
+		break;
+	case T_LPMC:
+		lpmc = (struct hp700_pim64_lpmc *) pim_data_buffer;
+		checks = &lpmc->pim_lpmc_checks;
+		break;
+	case T_INTERRUPT:
+		toc = (struct hp700_pim64_toc *) pim_data_buffer;
+		regs = &toc->pim_toc_regs;
+		break;
+	default:
+		panic("unknown machine check type");
+		/* NOTREACHED */
+	}
+
+	/* If we have register arrays, display them. */
+	if (regs != NULL) {
+		for (reg_i = 0; reg_i < 3; reg_i++) {
+			if (reg_i == 0) {
+				name = "General";
+				regarray = &regs->pim_regs_r0;
+				reg_j = 32;
+			} else if (reg_i == 1) {
+				name = "Control";
+				regarray = &regs->pim_regs_cr0;
+				reg_j = 32;
+			} else {
+				name = "Space";
+				regarray = &regs->pim_regs_sr0;
+				reg_j = 8;
+			}
+			printf("\n\n\t%s Registers:", name);
+			for (reg_k = 0; reg_k < reg_j; reg_k++) {
+				printf("%s",
+					(reg_k & 1) ? " " : "\n\t");
+				if (!(reg_k & 1))
+					printf("%2d: ", reg_k);
+				printf("0x%016lx",
+					(unsigned long)regarray[reg_k]);
+			}
+
+		}
+
+		/* Print out some interesting registers. */
+		printf("\n\n\tIIA head 0x%lx:0x%016lx\n"
+		    "\tIIA tail 0x%lx:0x%016lx",
+		    (unsigned long)regs->pim_regs_cr17,
+		    (unsigned long)regs->pim_regs_cr18,
+		    (unsigned long)regs->pim_regs_iisq_tail,
+		    (unsigned long)regs->pim_regs_iioq_tail);
+		PIM_WORD("\n\tIPSW", regs->pim_regs_cr22, PSW_BITS);
+		printf("\n\tSP 0x%lx:0x%016lx\n\tFP 0x%lx:0x%016lx",
+		    (unsigned long)regs->pim_regs_sr0,
+		    (unsigned long)regs->pim_regs_r30,
+		    (unsigned long)regs->pim_regs_sr0,
+		    (unsigned long)regs->pim_regs_r3);
+	}
+
+	/* If we have check words, display them. */
+	if (checks != NULL) {
+		PIM_WORD("\n\n\tCheck Type", checks->pim_check_type,
+			PIM_CHECK_BITS);
+		PIM_WORD("\n\tCPU State", checks->pim_check_cpu_state,
+			PIM_CPU_BITS PIM_CPU_HPMC_BITS);
+		PIM_WORD("\n\tCache Check", checks->pim_check_cache,
+			PIM_CACHE_BITS);
+		PIM_WORD("\n\tTLB Check", checks->pim_check_tlb,
+			PIM_TLB_BITS);
+		PIM_WORD("\n\tBus Check", checks->pim_check_bus,
+			PIM_BUS_BITS);
+		PIM_WORD("\n\tAssist Check", checks->pim_check_assist,
+			PIM_ASSIST_BITS);
+		printf("\tAssist State %u", checks->pim_check_assist_state);
+		printf("\n\tSystem Responder 0x%016lx",
+		    (unsigned long)checks->pim_check_responder);
+		printf("\n\tSystem Requestor 0x%016lx",
+		    (unsigned long)checks->pim_check_requestor);
+		printf("\n\tPath Info 0x%08x",
+		    checks->pim_check_path_info);
+	}
+}
+
+void
+hppa_machine_check(int check_type)
+{
+	int pdc_pim_type;
+	const char *name;
+	int error;
+
+	/* Do an fcacheall(). */
+	fcacheall();
+
+	/* Dispatch on the check type. */
+	switch (check_type) {
+	case T_HPMC:
+		name = "HPMC";
+		pdc_pim_type = PDC_PIM_HPMC;
+		break;
+	case T_LPMC:
+		name = "LPMC";
+		pdc_pim_type = PDC_PIM_LPMC;
+		break;
+	case T_INTERRUPT:
+		name = "TOC";
+		pdc_pim_type = PDC_PIM_TOC;
+		break;
+	default:
+		panic("unknown machine check type");
+		/* NOTREACHED */
+	}
+
+	error = pdc_call((iodcio_t)pdc, 0, PDC_PIM, pdc_pim_type,
+		&pdc_pim, pim_data_buffer, sizeof(pim_data_buffer));
+	if (error < 0)
+		printf(" - WARNING: could not transfer PIM info (%d)", error);
+
+	CTASSERT(pdc_pim.count <= sizeof(pim_data_buffer));
+
+	/*
+	 * Reset IO and log errors.
+	 *
+	 * This seems to be needed in order to output to the console
+	 * if we take a HPMC interrupt. This PDC procedure may not be
+	 * implemented by some machines.
+	 */
+	error = pdc_call((iodcio_t)pdc, 0, PDC_IO, 0, 0, 0, 0);
+	if (error  != PDC_ERR_OK && error != PDC_ERR_NOPROC)
+		/* This seems futile if we can't print to the console. */
+		panic("PDC_IO failed");
+
+	printf("\nmachine check: %s", name);
+
+	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+		hppa_pim64_dump(check_type);
+	else
+		hppa_pim_dump(check_type);
+
 	printf("\n");
 
 	/* If this is our first check, panic. */
