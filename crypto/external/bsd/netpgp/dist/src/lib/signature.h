@@ -60,42 +60,35 @@
 typedef struct __ops_create_sig __ops_create_sig_t;
 
 __ops_create_sig_t *__ops_create_sig_new(void);
-void            __ops_create_sig_delete(__ops_create_sig_t *);
+void __ops_create_sig_delete(__ops_create_sig_t *);
 
-unsigned
-__ops_check_useridcert_sig(const __ops_pubkey_t *,
-			  const __ops_user_id_t *,
+unsigned __ops_check_useridcert_sig(const __ops_pubkey_t *,
+			  const __ops_userid_t *,
 			  const __ops_sig_t *,
 			  const __ops_pubkey_t *,
 			  const unsigned char *);
-unsigned
-__ops_check_userattrcert_sig(const __ops_pubkey_t *,
-			  const __ops_user_attribute_t *,
+unsigned __ops_check_userattrcert_sig(const __ops_pubkey_t *,
+			  const __ops_userattr_t *,
 			  const __ops_sig_t *,
 			  const __ops_pubkey_t *,
 			  const unsigned char *);
-unsigned
-__ops_check_subkey_sig(const __ops_pubkey_t *,
+unsigned __ops_check_subkey_sig(const __ops_pubkey_t *,
 			   const __ops_pubkey_t *,
 			   const __ops_sig_t *,
 			   const __ops_pubkey_t *,
 			   const unsigned char *);
-unsigned
-__ops_check_direct_sig(const __ops_pubkey_t *,
+unsigned __ops_check_direct_sig(const __ops_pubkey_t *,
 			   const __ops_sig_t *,
 			   const __ops_pubkey_t *,
 			   const unsigned char *);
-unsigned
-__ops_check_hash_sig(__ops_hash_t *,
+unsigned __ops_check_hash_sig(__ops_hash_t *,
 			 const __ops_sig_t *,
 			 const __ops_pubkey_t *);
-void 
-__ops_sig_start_key_sig(__ops_create_sig_t *,
+void __ops_sig_start_key_sig(__ops_create_sig_t *,
 				  const __ops_pubkey_t *,
-				  const __ops_user_id_t *,
+				  const __ops_userid_t *,
 				  __ops_sig_type_t);
-void 
-__ops_start_sig(__ops_create_sig_t *,
+void __ops_start_sig(__ops_create_sig_t *,
 			const __ops_seckey_t *,
 			const __ops_hash_alg_t,
 			const __ops_sig_type_t);
@@ -103,11 +96,12 @@ __ops_start_sig(__ops_create_sig_t *,
 void __ops_sig_add_data(__ops_create_sig_t *, const void *, size_t);
 __ops_hash_t *__ops_sig_get_hash(__ops_create_sig_t *);
 unsigned   __ops_sig_hashed_subpackets_end(__ops_create_sig_t *);
-unsigned __ops_write_sig(__ops_create_sig_t *, const __ops_pubkey_t *,
-		    const __ops_seckey_t *, __ops_createinfo_t *);
+unsigned __ops_write_sig(__ops_output_t *, __ops_create_sig_t *,
+			const __ops_pubkey_t *, const __ops_seckey_t *);
 unsigned   __ops_sig_add_birthtime(__ops_create_sig_t *, time_t);
-unsigned __ops_sig_add_issuer_key_id(__ops_create_sig_t *, const unsigned char *);
-void __ops_sig_add_primary_user_id(__ops_create_sig_t *, unsigned);
+unsigned __ops_sig_add_issuer_key_id(__ops_create_sig_t *,
+			const unsigned char *);
+void __ops_sig_add_primary_userid(__ops_create_sig_t *, unsigned);
 
 /* Standard Interface */
 unsigned   __ops_sign_file_as_cleartext(const char *,
@@ -123,13 +117,14 @@ unsigned   __ops_sign_file(const char *,
 			const unsigned);
 
 /* armoured stuff */
-unsigned        __ops_crc24(unsigned, unsigned char);
+unsigned __ops_crc24(unsigned, unsigned char);
 
-void            __ops_reader_push_dearmour(__ops_parseinfo_t *);
+void __ops_reader_push_dearmour(__ops_parseinfo_t *);
 
-void            __ops_reader_pop_dearmour(__ops_parseinfo_t *);
-unsigned __ops_writer_push_clearsigned(__ops_createinfo_t *, __ops_create_sig_t *);
-void            __ops_writer_push_armoured_message(__ops_createinfo_t *);
+void __ops_reader_pop_dearmour(__ops_parseinfo_t *);
+unsigned __ops_writer_push_clearsigned(__ops_output_t *,
+				__ops_create_sig_t *);
+void            __ops_writer_push_armor_msg(__ops_output_t *);
 
 typedef enum {
 	OPS_PGP_MESSAGE = 1,
@@ -142,17 +137,27 @@ typedef enum {
 
 #define CRC24_INIT 0xb704ceL
 
-unsigned 
-__ops_writer_push_clearsigned(__ops_createinfo_t *, __ops_create_sig_t *);
-void   __ops_writer_push_armoured_message(__ops_createinfo_t *);
-unsigned   __ops_writer_use_armored_sig(__ops_createinfo_t *);
+unsigned __ops_writer_push_clearsigned(__ops_output_t *,
+					__ops_create_sig_t *);
+void __ops_writer_push_armor_msg(__ops_output_t *);
+unsigned __ops_writer_use_armored_sig(__ops_output_t *);
 
-void   __ops_writer_push_armoured(__ops_createinfo_t *, __ops_armor_type_t);
+void __ops_writer_push_armoured(__ops_output_t *, __ops_armor_type_t);
 
 unsigned __ops_sign_buf_as_cleartext(const char *,
-			const size_t,
-			__ops_memory_t **,
-			const __ops_seckey_t *,
-			const char *);
+				const size_t,
+				__ops_memory_t **,
+				const __ops_seckey_t *,
+				const char *);
+
+__ops_memory_t   *__ops_sign_buf(const void *,
+				const size_t,
+				const __ops_sig_type_t,
+				const __ops_seckey_t *,
+				const unsigned);
+
+unsigned __ops_keyring_read_from_mem(__ops_keyring_t *,
+				const unsigned,
+				__ops_memory_t *);
 
 #endif /* SIGNATURE_H_ */

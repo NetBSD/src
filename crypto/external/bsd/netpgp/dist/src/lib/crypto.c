@@ -48,6 +48,18 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: crypto.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+#endif
+
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -75,9 +87,9 @@
 \note only RSA at present
 */
 int 
-__ops_decrypt_and_unencode_mpi(unsigned char *buf,
+__ops_decrypt_decode_mpi(unsigned char *buf,
 				unsigned buflen,
-				const BIGNUM * encmpi,
+				const BIGNUM *encmpi,
 				const __ops_seckey_t *seckey)
 {
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
@@ -146,7 +158,7 @@ __ops_decrypt_and_unencode_mpi(unsigned char *buf,
 	}
 
 	/* Skip the zero */
-	++i;
+	i += 1;
 
 	/* this is the unencoded m buf */
 	if ((unsigned) (n - i) <= buflen) {
@@ -197,11 +209,11 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		int             i;
-		fprintf(stderr, "encrypted mpi buf     : ");
+		(void) fprintf(stderr, "encrypted mpi buf     : ");
 		for (i = 0; i < 16; i++) {
-			fprintf(stderr, "%2x ", encmpibuf[i]);
+			(void) fprintf(stderr, "%2x ", encmpibuf[i]);
 		}
-		fprintf(stderr, "\n");
+		(void) fprintf(stderr, "\n");
 	}
 	return 1;
 }
@@ -214,7 +226,7 @@ callback_write_parsed(const __ops_packet_t *, __ops_callback_data_t *);
 Encrypt a file
 \param infile Name of file to be encrypted
 \param outfile Name of file to write to. If NULL, name is constructed from infile
-\param pub_key Public Key to encrypt file for
+\param pubkey Public Key to encrypt file for
 \param use_armour Write armoured text, if set
 \param allow_overwrite Allow output file to be overwrwritten if it exists
 \return 1 if OK; else 0
@@ -222,16 +234,18 @@ Encrypt a file
 unsigned 
 __ops_encrypt_file(const char *infile,
 			const char *outfile,
-			const __ops_keydata_t * pub_key,
+			const __ops_keydata_t *pubkey,
 			const unsigned use_armour,
 			const unsigned allow_overwrite)
 {
-	__ops_createinfo_t *create;
-	unsigned char  *buf;
-	size_t          bufsz;
-	size_t		done;
-	int             fd_in = 0;
-	int             fd_out = 0;
+	__ops_output_t	*create;
+	struct stat	 st;
+	unsigned char	*buf;
+	size_t		 bufsz;
+	size_t		 done;
+	int		 fd_in = 0;
+	int		 fd_out = 0;
+	int		 n;
 
 #ifdef O_BINARY
 	fd_in = open(infile, O_RDONLY | O_BINARY);
@@ -249,38 +263,32 @@ __ops_encrypt_file(const char *infile,
 
 	/* set armoured/not armoured here */
 	if (use_armour) {
-		__ops_writer_push_armoured_message(create);
+		__ops_writer_push_armor_msg(create);
 	}
 
 	/* Push the encrypted writer */
-	__ops_writer_push_encrypt_se_ip(create, pub_key);
+	__ops_writer_push_encrypt_se_ip(create, pubkey);
 
-	/* Do the writing */
-
-	buf = NULL;
-	bufsz = 16;
-	done = 0;
-	for (;;) {
-		int             n = 0;
-
-		buf = realloc(buf, done + bufsz);
-
-		if ((n = read(fd_in, buf + done, bufsz)) == 0) {
+	/* Do the reading */
+	(void) fstat(fd_in, &st);
+	bufsz = (size_t)st.st_size;
+	buf = calloc(1, bufsz);
+	for (done = 0 ; done < bufsz ; done += n) {
+		if ((n = read(fd_in, buf + done, bufsz - done)) == 0) {
 			break;
 		}
 		if (n < 0) {
 			(void) fprintf(stderr, "Problem in read\n");
 			return 0;
 		}
-		done += n;
 	}
 
 	/* This does the writing */
-	__ops_write(buf, done, create);
+	__ops_write(create, buf, done);
 
 	/* tidy up */
-	close(fd_in);
-	free(buf);
+	(void) close(fd_in);
+	(void) free(buf);
 	__ops_teardown_file_write(create, fd_out);
 
 	return 1;
@@ -322,7 +330,7 @@ __ops_decrypt_file(const char *infile,
 
 	/* setup output filename */
 	if (outfile) {
-		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo, outfile,
+		fd_out = __ops_setup_file_write(&parse->cbinfo.output, outfile,
 				allow_overwrite);
 		if (fd_out < 0) {
 			perror(outfile);
@@ -342,7 +350,7 @@ __ops_decrypt_file(const char *infile,
 			filename[filenamelen] = 0x0;
 		}
 
-		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo,
+		fd_out = __ops_setup_file_write(&parse->cbinfo.output,
 					filename, allow_overwrite);
 		if (fd_out < 0) {
 			perror(filename);
@@ -377,7 +385,7 @@ __ops_decrypt_file(const char *infile,
 	}
 
 	if (filename) {
-		__ops_teardown_file_write(parse->cbinfo.cinfo, fd_out);
+		__ops_teardown_file_write(parse->cbinfo.output, fd_out);
 	}
 	__ops_teardown_file_read(parse, fd_in);
 	/* \todo cleardown crypt */

@@ -51,6 +51,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: signature.c,v 1.12 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -82,10 +91,10 @@ struct __ops_create_sig {
 	__ops_hash_t		 hash;
 	__ops_sig_t		 sig;
 	__ops_memory_t		*mem;
-	__ops_createinfo_t	*info;/* !< how to do the writing */
-	unsigned		 hashed_count_offset;
-	unsigned		 hashed_data_length;
-	unsigned 		 unhashed_count_offset;
+	__ops_output_t		*output;/* !< how to do the writing */
+	unsigned		 hashoff;	/* hashed count offset */
+	unsigned		 hashlen;
+	unsigned 		 unhashoff;
 };
 
 /**
@@ -110,8 +119,8 @@ __ops_create_sig_new(void)
 void 
 __ops_create_sig_delete(__ops_create_sig_t *sig)
 {
-	__ops_createinfo_delete(sig->info);
-	sig->info = NULL;
+	__ops_output_delete(sig->output);
+	sig->output = NULL;
 	free(sig);
 }
 
@@ -137,10 +146,13 @@ static int
 rsa_sign(__ops_hash_t *hash,
 	const __ops_rsa_pubkey_t *pubrsa,
 	const __ops_rsa_seckey_t *secrsa,
-	__ops_createinfo_t *opt)
+	__ops_output_t *out)
 {
 	unsigned char   hashbuf[NETPGP_BUFSIZ];
 	unsigned char   sigbuf[NETPGP_BUFSIZ];
+	unsigned char  *prefix;
+	unsigned        prefixsize;
+	unsigned        expected;
 	unsigned        hashsize;
 	unsigned        keysize;
 	unsigned        n;
@@ -149,8 +161,14 @@ rsa_sign(__ops_hash_t *hash,
 
 	if (strcmp(hash->name, "SHA1") == 0) {
 		hashsize = OPS_SHA1_HASH_SIZE + sizeof(prefix_sha1);
+		prefix = prefix_sha1;
+		prefixsize = sizeof(prefix_sha1);
+		expected = OPS_SHA1_HASH_SIZE;
 	} else {
 		hashsize = OPS_SHA256_HASH_SIZE + sizeof(prefix_sha256);
+		prefix = prefix_sha256;
+		prefixsize = sizeof(prefix_sha256);
+		expected = OPS_SHA256_HASH_SIZE;
 	}
 	keysize = (BN_num_bits(pubrsa->n) + 7) / 8;
 	if (keysize > sizeof(hashbuf)) {
@@ -172,26 +190,14 @@ rsa_sign(__ops_hash_t *hash,
 	}
 	hashbuf[n++] = 0;
 
-	if (strcmp(hash->name, "SHA1") == 0) {
-		(void) memcpy(&hashbuf[n], prefix_sha1, sizeof(prefix_sha1));
-		n += sizeof(prefix_sha1);
-		t = hash->finish(hash, &hashbuf[n]);
-		if (t != OPS_SHA1_HASH_SIZE) {
-			(void) fprintf(stderr, "rsa_sign: short SHA1 hash\n");
-			return 0;
-		}
-	} else {
-		(void) memcpy(&hashbuf[n], prefix_sha256,
-				sizeof(prefix_sha256));
-		n += sizeof(prefix_sha256);
-		t = hash->finish(hash, &hashbuf[n]);
-		if (t != OPS_SHA256_HASH_SIZE) {
-			(void) fprintf(stderr, "rsa_sign: short SHA256 hash\n");
-			return 0;
-		}
+	(void) memcpy(&hashbuf[n], prefix, prefixsize);
+	n += prefixsize;
+	if ((t = hash->finish(hash, &hashbuf[n])) != expected) {
+		(void) fprintf(stderr, "rsa_sign: short %s hash\n", hash->name);
+		return 0;
 	}
 
-	__ops_write(&hashbuf[n], 2, opt);
+	__ops_write(out, &hashbuf[n], 2);
 
 	n += t;
 	if (n != keysize) {
@@ -201,7 +207,7 @@ rsa_sign(__ops_hash_t *hash,
 
 	t = __ops_rsa_private_encrypt(sigbuf, hashbuf, keysize, secrsa, pubrsa);
 	bn = BN_bin2bn(sigbuf, (int)t, NULL);
-	__ops_write_mpi(bn, opt);
+	__ops_write_mpi(out, bn);
 	BN_free(bn);
 	return 1;
 }
@@ -210,7 +216,7 @@ static int
 dsa_sign(__ops_hash_t * hash,
 	 const __ops_dsa_pubkey_t *dsa,
 	 const __ops_dsa_seckey_t *sdsa,
-	 __ops_createinfo_t *cinfo)
+	 __ops_output_t *output)
 {
 	unsigned char   hashbuf[NETPGP_BUFSIZ];
 	unsigned        hashsize;
@@ -230,14 +236,14 @@ dsa_sign(__ops_hash_t * hash,
 		return 0;
 	}
 
-	__ops_write(&hashbuf[0], 2, cinfo);
+	__ops_write(output, &hashbuf[0], 2);
 
 	/* write signature to buf */
 	dsasig = __ops_dsa_sign(hashbuf, hashsize, sdsa, dsa);
 
 	/* convert and write the sig out to memory */
-	__ops_write_mpi(dsasig->r, cinfo);
-	__ops_write_mpi(dsasig->s, cinfo);
+	__ops_write_mpi(output, dsasig->r);
+	__ops_write_mpi(output, dsasig->s);
 	DSA_SIG_free(dsasig);
 	return 1;
 }
@@ -360,10 +366,10 @@ hash_add_key(__ops_hash_t *hash, const __ops_pubkey_t *key)
 	size_t		 len;
 
 	__ops_build_pubkey(mem, key, 0);
-	len = __ops_memory_get_length(mem);
+	len = __ops_mem_len(mem);
 	__ops_hash_add_int(hash, 0x99, 1);
 	__ops_hash_add_int(hash, len, 2);
-	hash->add(hash, __ops_memory_get_data(mem), len);
+	hash->add(hash, __ops_mem_data(mem), len);
 	__ops_memory_free(mem);
 }
 
@@ -383,7 +389,7 @@ init_key_sig(__ops_hash_t * hash, const __ops_sig_t * sig,
 }
 
 static void 
-hash_add_trailer(__ops_hash_t * hash, const __ops_sig_t * sig,
+hash_add_trailer(__ops_hash_t *hash, const __ops_sig_t *sig,
 		 const unsigned char *raw_packet)
 {
 	if (sig->info.version == OPS_V4) {
@@ -418,7 +424,6 @@ __ops_check_sig(const unsigned char *hash, unsigned length,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("__ops_check_sig: (length %d) hash=", length);
-		/* hashout[0]=0; */
 		hexdump(hash, length, "");
 	}
 	ret = 0;
@@ -478,21 +483,21 @@ finalise_sig(__ops_hash_t * hash,
  */
 unsigned
 __ops_check_useridcert_sig(const __ops_pubkey_t * key,
-			  const __ops_user_id_t * id,
+			  const __ops_userid_t * id,
 			  const __ops_sig_t * sig,
 			  const __ops_pubkey_t * signer,
 			  const unsigned char *raw_packet)
 {
 	__ops_hash_t	hash;
-	size_t          user_id_len = strlen((char *) id->user_id);
+	size_t          userid_len = strlen((char *) id->userid);
 
 	init_key_sig(&hash, sig, key);
 
 	if (sig->info.version == OPS_V4) {
 		__ops_hash_add_int(&hash, 0xb4, 1);
-		__ops_hash_add_int(&hash, user_id_len, 4);
+		__ops_hash_add_int(&hash, userid_len, 4);
 	}
-	hash.add(&hash, id->user_id, user_id_len);
+	hash.add(&hash, id->userid, userid_len);
 
 	return finalise_sig(&hash, sig, signer, raw_packet);
 }
@@ -511,7 +516,7 @@ __ops_check_useridcert_sig(const __ops_pubkey_t * key,
  */
 unsigned
 __ops_check_userattrcert_sig(const __ops_pubkey_t * key,
-				const __ops_user_attribute_t *attribute,
+				const __ops_userattr_t *attribute,
 				const __ops_sig_t *sig,
 				const __ops_pubkey_t *signer,
 				const unsigned char *raw_packet)
@@ -592,9 +597,9 @@ __ops_check_direct_sig(const __ops_pubkey_t * key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_hash_sig(__ops_hash_t * hash,
-			 const __ops_sig_t * sig,
-			 const __ops_pubkey_t * signer)
+__ops_check_hash_sig(__ops_hash_t *hash,
+			 const __ops_sig_t *sig,
+			 const __ops_pubkey_t *signer)
 {
 	return (sig->info.hash_alg == hash->alg) ?
 		finalise_sig(hash, sig, signer, NULL) :
@@ -608,17 +613,17 @@ start_sig_in_mem(__ops_create_sig_t * sig)
 	/* thing to get counts before writing. */
 	sig->mem = __ops_memory_new();
 	__ops_memory_init(sig->mem, 100);
-	__ops_writer_set_memory(sig->info, sig->mem);
+	__ops_writer_set_memory(sig->output, sig->mem);
 
 	/* write nearly up to the first subpacket */
-	__ops_write_scalar((unsigned)sig->sig.info.version, 1, sig->info);
-	__ops_write_scalar((unsigned)sig->sig.info.type, 1, sig->info);
-	__ops_write_scalar((unsigned)sig->sig.info.key_alg, 1, sig->info);
-	__ops_write_scalar((unsigned)sig->sig.info.hash_alg, 1, sig->info);
+	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.version, 1);
+	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.type, 1);
+	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.key_alg, 1);
+	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.hash_alg, 1);
 
 	/* dummy hashed subpacket count */
-	sig->hashed_count_offset = __ops_memory_get_length(sig->mem);
-	__ops_write_scalar(0, 2, sig->info);
+	sig->hashoff = __ops_mem_len(sig->mem);
+	__ops_write_scalar(sig->output, 0, 2);
 }
 
 /**
@@ -632,12 +637,12 @@ start_sig_in_mem(__ops_create_sig_t * sig)
  * \param type Signature type
  */
 void 
-__ops_sig_start_key_sig(__ops_create_sig_t * sig,
-				  const __ops_pubkey_t * key,
-				  const __ops_user_id_t * id,
+__ops_sig_start_key_sig(__ops_create_sig_t *sig,
+				  const __ops_pubkey_t *key,
+				  const __ops_userid_t *id,
 				  __ops_sig_type_t type)
 {
-	sig->info = __ops_createinfo_new();
+	sig->output = __ops_output_new();
 
 	/* XXX:  refactor with check (in several ways - check should
 	 * probably use the buffered writer to construct packets
@@ -647,13 +652,13 @@ __ops_sig_start_key_sig(__ops_create_sig_t * sig,
 	sig->sig.info.key_alg = key->alg;
 	sig->sig.info.type = type;
 
-	sig->hashed_data_length = (unsigned)-1;
+	sig->hashlen = (unsigned)-1;
 
 	init_key_sig(&sig->hash, &sig->sig, key);
 
 	__ops_hash_add_int(&sig->hash, 0xb4, 1);
-	__ops_hash_add_int(&sig->hash, strlen((char *) id->user_id), 4);
-	sig->hash.add(&sig->hash, id->user_id, strlen((char *) id->user_id));
+	__ops_hash_add_int(&sig->hash, strlen((char *) id->userid), 4);
+	sig->hash.add(&sig->hash, id->userid, strlen((char *) id->userid));
 
 	start_sig_in_mem(sig);
 }
@@ -675,7 +680,7 @@ __ops_start_sig(__ops_create_sig_t *sig,
 	      const __ops_hash_alg_t hash,
 	      const __ops_sig_type_t type)
 {
-	sig->info = __ops_createinfo_new();
+	sig->output = __ops_output_new();
 
 	/* XXX:  refactor with check (in several ways - check should
 	 * probably use the buffered writer to construct packets
@@ -685,7 +690,7 @@ __ops_start_sig(__ops_create_sig_t *sig,
 	sig->sig.info.hash_alg = hash;
 	sig->sig.info.type = type;
 
-	sig->hashed_data_length = (unsigned)-1;
+	sig->hashlen = (unsigned)-1;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "initialising hash for sig in mem\n");
@@ -704,13 +709,8 @@ __ops_start_sig(__ops_create_sig_t *sig,
  * \param length The amount of plaintext data.
  */
 void 
-__ops_sig_add_data(__ops_create_sig_t * sig, const void *buf,
-		       size_t length)
+__ops_sig_add_data(__ops_create_sig_t *sig, const void *buf, size_t length)
 {
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr,
-			"__ops_sig_add_data adds to hash\n");
-	}
 	sig->hash.add(&sig->hash, buf, length);
 }
 
@@ -725,13 +725,13 @@ __ops_sig_add_data(__ops_create_sig_t * sig, const void *buf,
 unsigned 
 __ops_sig_hashed_subpackets_end(__ops_create_sig_t * sig)
 {
-	sig->hashed_data_length = __ops_memory_get_length(sig->mem)
-	- sig->hashed_count_offset - 2;
-	__ops_memory_place_int(sig->mem, sig->hashed_count_offset,
-			     sig->hashed_data_length, 2);
+	sig->hashlen = __ops_mem_len(sig->mem)
+	- sig->hashoff - 2;
+	__ops_memory_place_int(sig->mem, sig->hashoff,
+			     sig->hashlen, 2);
 	/* dummy unhashed subpacket count */
-	sig->unhashed_count_offset = __ops_memory_get_length(sig->mem);
-	return __ops_write_scalar(0, 2, sig->info);
+	sig->unhashoff = __ops_mem_len(sig->mem);
+	return __ops_write_scalar(sig->output, 0, 2);
 }
 
 /**
@@ -747,13 +747,13 @@ __ops_sig_hashed_subpackets_end(__ops_create_sig_t * sig)
  */
 
 unsigned 
-__ops_write_sig(__ops_create_sig_t * sig,
+__ops_write_sig(__ops_output_t *output, 
+			__ops_create_sig_t * sig,
 			const __ops_pubkey_t *key,
-			const __ops_seckey_t *seckey,
-			__ops_createinfo_t *info)
+			const __ops_seckey_t *seckey)
 {
-	size_t	l = __ops_memory_get_length(sig->mem);
-	unsigned	rtn = 0;
+	unsigned	ret = 0;
+	size_t		len = __ops_mem_len(sig->mem);
 
 	/* check key not decrypted */
 	switch (seckey->pubkey.alg) {
@@ -781,33 +781,29 @@ __ops_write_sig(__ops_create_sig_t * sig,
 		return 0;
 	}
 
-	if (sig->hashed_data_length == (unsigned) -1) {
+	if (sig->hashlen == (unsigned) -1) {
 		(void) fprintf(stderr,
 			"ops_write_sig: bad hashed data len\n");
 		return 0;
 	}
 
-	__ops_memory_place_int(sig->mem, sig->unhashed_count_offset,
-			     l - sig->unhashed_count_offset - 2, 2);
+	__ops_memory_place_int(sig->mem, sig->unhashoff,
+			     len - sig->unhashoff - 2, 2);
 
 	/* add the packet from version number to end of hashed subpackets */
-
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr,
-"--- Adding packet to hash from version number to hashed subpkts\n");
+		(void) fprintf(stderr, "ops_write_sig: hashed packet info\n");
 	}
-	sig->hash.add(&sig->hash, __ops_memory_get_data(sig->mem),
-		      sig->unhashed_count_offset);
+	sig->hash.add(&sig->hash, __ops_mem_data(sig->mem), sig->unhashoff);
 
 	/* add final trailer */
 	__ops_hash_add_int(&sig->hash, (unsigned)sig->sig.info.version, 1);
 	__ops_hash_add_int(&sig->hash, 0xff, 1);
 	/* +6 for version, type, pk alg, hash alg, hashed subpacket length */
-	__ops_hash_add_int(&sig->hash, sig->hashed_data_length + 6, 4);
+	__ops_hash_add_int(&sig->hash, sig->hashlen + 6, 4);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr,
-"--- Finished adding packet to hash from version number to hashed subpkts\n");
+		(void) fprintf(stderr, "ops_write_sig: done writing hashed\n");
 	}
 	/* XXX: technically, we could figure out how big the signature is */
 	/* and write it directly to the output instead of via memory. */
@@ -816,7 +812,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
 		if (!rsa_sign(&sig->hash, &key->key.rsa, &seckey->key.rsa,
-				sig->info)) {
+				sig->output)) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: rsa_sign failure\n");
 			return 0;
@@ -825,7 +821,7 @@ __ops_write_sig(__ops_create_sig_t * sig,
 
 	case OPS_PKA_DSA:
 		if (!dsa_sign(&sig->hash, &key->key.dsa, &seckey->key.dsa,
-				sig->info)) {
+				sig->output)) {
 			(void) fprintf(stderr,
 				"__ops_write_sig: dsa_sign failure\n");
 			return 0;
@@ -838,18 +834,18 @@ __ops_write_sig(__ops_create_sig_t * sig,
 		return 0;
 	}
 
-	rtn = __ops_write_ptag(OPS_PTAG_CT_SIGNATURE, info);
-	if (rtn) {
-		l = __ops_memory_get_length(sig->mem);
-		rtn = __ops_write_length(l, info) &&
-			__ops_write(__ops_memory_get_data(sig->mem), l, info);
+	ret = __ops_write_ptag(output, OPS_PTAG_CT_SIGNATURE);
+	if (ret) {
+		len = __ops_mem_len(sig->mem);
+		ret = __ops_write_length(output, len) &&
+			__ops_write(output, __ops_mem_data(sig->mem), len);
 	}
 	__ops_memory_free(sig->mem);
 
-	if (rtn == 0) {
-		OPS_ERROR(&info->errors, OPS_E_W, "Cannot write signature");
+	if (ret == 0) {
+		OPS_ERROR(&output->errors, OPS_E_W, "Cannot write signature");
 	}
-	return rtn;
+	return ret;
 }
 
 /**
@@ -863,9 +859,8 @@ __ops_write_sig(__ops_create_sig_t * sig,
 unsigned 
 __ops_sig_add_birthtime(__ops_create_sig_t * sig, time_t when)
 {
-	return __ops_write_ss_header(5, OPS_PTAG_SS_CREATION_TIME,
-				sig->info) &&
-		__ops_write_scalar((unsigned)when, 4, sig->info);
+	return __ops_write_ss_header(sig->output, 5, OPS_PTAG_SS_CREATION_TIME) &&
+		__ops_write_scalar(sig->output, (unsigned)when, 4);
 }
 
 /**
@@ -881,9 +876,9 @@ unsigned
 __ops_sig_add_issuer_key_id(__ops_create_sig_t * sig,
 				const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
-	return __ops_write_ss_header(OPS_KEY_ID_SIZE + 1,
-				OPS_PTAG_SS_ISSUER_KEY_ID, sig->info) &&
-		__ops_write(keyid, OPS_KEY_ID_SIZE, sig->info);
+	return __ops_write_ss_header(sig->output, OPS_KEY_ID_SIZE + 1,
+				OPS_PTAG_SS_ISSUER_KEY_ID) &&
+		__ops_write(sig->output, keyid, OPS_KEY_ID_SIZE);
 }
 
 /**
@@ -895,11 +890,11 @@ __ops_sig_add_issuer_key_id(__ops_create_sig_t * sig,
  * \param primary
  */
 void 
-__ops_sig_add_primary_user_id(__ops_create_sig_t * sig,
+__ops_sig_add_primary_userid(__ops_create_sig_t * sig,
 				  unsigned primary)
 {
-	__ops_write_ss_header(2, OPS_PTAG_SS_PRIMARY_USER_ID, sig->info);
-	__ops_write_scalar(primary, 1, sig->info);
+	__ops_write_ss_header(sig->output, 2, OPS_PTAG_SS_PRIMARY_USER_ID);
+	__ops_write_scalar(sig->output, primary, 1);
 }
 
 /**
@@ -917,63 +912,55 @@ __ops_sig_get_hash(__ops_create_sig_t * sig)
 }
 
 static int 
-open_output_file(__ops_createinfo_t ** cinfo,
-			const char *input_filename,
-			const char *output_filename,
-			const unsigned use_armour,
+open_output_file(__ops_output_t **output,
+			const char *inname,
+			const char *outname,
+			const unsigned armored,
 			const unsigned overwrite)
 {
-	int             fd_out;
+	int             fd;
 
 	/* setup output file */
-
-	if (output_filename) {
-		fd_out = __ops_setup_file_write(cinfo, output_filename,
-					overwrite);
+	if (outname) {
+		fd = __ops_setup_file_write(output, outname, overwrite);
 	} else {
-		char           *myfilename = NULL;
-		unsigned        filenamelen = strlen(input_filename) + 4 + 1;
+		unsigned        flen = strlen(inname) + 4 + 1;
+		char           *f = NULL;
 
-		myfilename = calloc(1, filenamelen);
-		if (use_armour) {
-			(void) snprintf(myfilename, filenamelen, "%s.asc",
-					input_filename);
-		} else {
-			(void) snprintf(myfilename, filenamelen, "%s.gpg",
-					input_filename);
-		}
-		fd_out = __ops_setup_file_write(cinfo, myfilename, overwrite);
-		free(myfilename);
+		f = calloc(1, flen);
+		(void) snprintf(f, flen, "%s.%s", inname,
+					(armored) ? "asc" : "gpg");
+		fd = __ops_setup_file_write(output, f, overwrite);
+		(void) free(f);
 	}
-
-	return fd_out;
+	return fd;
 }
 
 /**
    \ingroup HighLevel_Sign
    \brief Sign a file with a Cleartext Signature
-   \param input_filename Name of file to be signed
-   \param output_filename Filename to be created. If NULL, filename will be constructed from the input_filename.
+   \param inname Name of file to be signed
+   \param outname Filename to be created. If NULL, filename will be constructed from the inname.
    \param seckey Secret Key to sign with
    \param overwrite Allow output file to be overwritten, if set
    \return 1 if OK, else 0
 
 */
 unsigned 
-__ops_sign_file_as_cleartext(const char *input_filename,
-			const char *output_filename,
+__ops_sign_file_as_cleartext(const char *inname,
+			const char *outname,
 			const __ops_seckey_t *seckey,
 			const char *hashname,
 			const unsigned overwrite)
 {
-	__ops_createinfo_t	*cinfo = NULL;
 	__ops_create_sig_t	*sig = NULL;
 	__ops_sig_type_t	 sig_type = OPS_SIG_BINARY;
 	__ops_hash_alg_t	 hash_alg;
+	__ops_output_t		*output = NULL;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE];
 	unsigned char		 buf[MAXBUF];
-	unsigned			 rtn = 0;
-	unsigned			 use_armour = 1;
+	unsigned		 ret = 0;
+	unsigned		 armored = 1;
 	int			 fd_out = 0;
 	int			 fd_in = 0;
 
@@ -988,17 +975,16 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 
 	/* open file to sign */
 #ifdef O_BINARY
-	fd_in = open(input_filename, O_RDONLY | O_BINARY);
+	fd_in = open(inname, O_RDONLY | O_BINARY);
 #else
-	fd_in = open(input_filename, O_RDONLY);
+	fd_in = open(inname, O_RDONLY);
 #endif
 	if (fd_in < 0) {
 		return 0;
 	}
 
 	/* set up output file */
-	fd_out = open_output_file(&cinfo, input_filename, output_filename,
-			use_armour, overwrite);
+	fd_out = open_output_file(&output, inname, outname, armored, overwrite);
 	if (fd_out < 0) {
 		close(fd_in);
 		return 0;
@@ -1008,13 +994,13 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 	sig = __ops_create_sig_new();
 	if (!sig) {
 		close(fd_in);
-		__ops_teardown_file_write(cinfo, fd_out);
+		__ops_teardown_file_write(output, fd_out);
 		return 0;
 	}
 
 	/* \todo could add more error detection here */
 	__ops_start_sig(sig, seckey, hash_alg, sig_type);
-	if (__ops_writer_push_clearsigned(cinfo, sig) != 1) {
+	if (__ops_writer_push_clearsigned(output, sig) != 1) {
 		return 0;
 	}
 
@@ -1031,32 +1017,32 @@ __ops_sign_file_as_cleartext(const char *input_filename,
 				"__ops_sign_file_as_cleartext: bad read\n");
 			return 0;
 		}
-		__ops_write(buf, (unsigned)n, cinfo);
+		__ops_write(output, buf, (unsigned)n);
 	}
 	close(fd_in);
 
 	/* add signature with subpackets: */
 	/* - creation time */
 	/* - key id */
-	rtn = __ops_writer_use_armored_sig(cinfo) &&
+	ret = __ops_writer_use_armored_sig(output) &&
 			__ops_sig_add_birthtime(sig, time(NULL));
-	if (rtn == 0) {
-		__ops_teardown_file_write(cinfo, fd_out);
+	if (ret == 0) {
+		__ops_teardown_file_write(output, fd_out);
 		return 0;
 	}
+
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
-
-	rtn = __ops_sig_add_issuer_key_id(sig, keyid) &&
+	ret = __ops_sig_add_issuer_key_id(sig, keyid) &&
 		__ops_sig_hashed_subpackets_end(sig) &&
-		__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo);
+		__ops_write_sig(output, sig, &seckey->pubkey, seckey);
 
-	__ops_teardown_file_write(cinfo, fd_out);
+	__ops_teardown_file_write(output, fd_out);
 
-	if (rtn == 0) {
-		OPS_ERROR(&cinfo->errors, OPS_E_W,
+	if (ret == 0) {
+		OPS_ERROR(&output->errors, OPS_E_W,
 				"Cannot sign file as cleartext");
 	}
-	return rtn;
+	return ret;
 }
 
 /**
@@ -1064,27 +1050,27 @@ __ops_sign_file_as_cleartext(const char *input_filename,
  * \brief Sign a buffer with a Cleartext signature
  * \param cleartext Text to be signed
  * \param len Length of text
- * \param signed_cleartext __ops_memory_t struct in which to write the signed cleartext
+ * \param signed __ops_memory_t struct in which to write the signed cleartext
  * \param seckey Secret key with which to sign the cleartext
  * \return 1 if OK; else 0
 
- * \note It is the calling function's responsibility to free signed_cleartext
- * \note signed_cleartext should be a NULL pointer when passed in
+ * \note It is the calling function's responsibility to free signed
+ * \note signed should be a NULL pointer when passed in
 
  */
 unsigned 
 __ops_sign_buf_as_cleartext(const char *cleartext,
 			const size_t len,
-			__ops_memory_t **signed_cleartext,
+			__ops_memory_t **signedtext,
 			const __ops_seckey_t *seckey,
 			const char *hashname)
 {
-	__ops_createinfo_t	*cinfo = NULL;
 	__ops_create_sig_t	*sig = NULL;
 	__ops_sig_type_t	 sig_type = OPS_SIG_BINARY;
 	__ops_hash_alg_t	 hash_alg;
+	__ops_output_t		*output = NULL;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE];
-	unsigned			 rtn = 0;
+	unsigned		 ret = 0;
 
 	/* check the hash algorithm */
 	hash_alg = __ops_str_to_hash_alg(hashname);
@@ -1096,7 +1082,7 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 	}
 
 
-	if (*signed_cleartext != 0x0) {
+	if (*signedtext != 0x0) {
 		(void) fprintf(stderr,
 			"__ops_sign_buf_as_cleartext: non-null cleartext\n");
 		return 0;
@@ -1111,60 +1097,60 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 	__ops_start_sig(sig, seckey, hash_alg, sig_type);
 
 	/* set up output file */
-	__ops_setup_memory_write(&cinfo, signed_cleartext, len);
+	__ops_setup_memory_write(&output, signedtext, len);
 
 	/* Do the signing */
 	/* add signature with subpackets: */
 	/* - creation time */
 	/* - key id */
-	rtn = __ops_writer_push_clearsigned(cinfo, sig) &&
-		__ops_write(cleartext, len, cinfo) &&
-		__ops_writer_use_armored_sig(cinfo) &&
+	ret = __ops_writer_push_clearsigned(output, sig) &&
+		__ops_write(output, cleartext, len) &&
+		__ops_writer_use_armored_sig(output) &&
 		__ops_sig_add_birthtime(sig, time(NULL));
 
-	if (rtn == 0) {
+	if (ret == 0) {
 		return 0;
 	}
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
-	rtn = __ops_sig_add_issuer_key_id(sig, keyid) &&
+	ret = __ops_sig_add_issuer_key_id(sig, keyid) &&
 		__ops_sig_hashed_subpackets_end(sig) &&
-		__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo) &&
-		__ops_writer_close(cinfo);
+		__ops_write_sig(output, sig, &seckey->pubkey, seckey) &&
+		__ops_writer_close(output);
 
-	/* Note: the calling function must free signed_cleartext */
-	__ops_createinfo_delete(cinfo);
+	/* Note: the calling function must free signed */
+	__ops_output_delete(output);
 
-	return rtn;
+	return ret;
 }
 
 /**
 \ingroup HighLevel_Sign
 \brief Sign a file
-\param input_filename Input filename
-\param output_filename Output filename. If NULL, a name is constructed from the input filename.
+\param inname Input filename
+\param outname Output filename. If NULL, a name is constructed from the input filename.
 \param seckey Secret Key to use for signing
-\param use_armour Write armoured text, if set.
+\param armored Write armoured text, if set.
 \param overwrite May overwrite existing file, if set.
 \return 1 if OK; else 0;
 
 */
 unsigned 
-__ops_sign_file(const char *input_filename,
-		const char *output_filename,
+__ops_sign_file(const char *inname,
+		const char *outname,
 		const __ops_seckey_t *seckey,
 		const char *hashname,
-		const unsigned use_armour,
+		const unsigned armored,
 		const unsigned overwrite)
 {
 	/* \todo allow choice of hash algorithams */
 	/* enforce use of SHA1 for now */
 
 	__ops_create_sig_t	*sig = NULL;
-	__ops_createinfo_t	*cinfo = NULL;
 	__ops_hash_alg_t	 hash_alg;
 	__ops_sig_type_t	 sig_type = OPS_SIG_BINARY;
 	__ops_memory_t		*mem_buf = NULL;
+	__ops_output_t		*output = NULL;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE];
 	__ops_hash_t		*hash = NULL;
 	int			 errnum;
@@ -1179,14 +1165,13 @@ __ops_sign_file(const char *input_filename,
 	}
 
 	/* read input file into buf */
-	mem_buf = __ops_fileread(input_filename, &errnum);
+	mem_buf = __ops_fileread(inname, &errnum);
 	if (errnum) {
 		return 0;
 	}
 
 	/* setup output file */
-	fd_out = open_output_file(&cinfo, input_filename, output_filename,
-			use_armour, overwrite);
+	fd_out = open_output_file(&output, inname, outname, armored, overwrite);
 	if (fd_out < 0) {
 		__ops_memory_free(mem_buf);
 		return 0;
@@ -1197,58 +1182,47 @@ __ops_sign_file(const char *input_filename,
 	__ops_start_sig(sig, seckey, hash_alg, sig_type);
 
 	/* set armoured/not armoured here */
-	if (use_armour) {
-		__ops_writer_push_armoured_message(cinfo);
+	if (armored) {
+		__ops_writer_push_armor_msg(output);
 	}
 
-	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "** Writing out one pass sig\n");
-	}
 	/* write one_pass_sig */
-	__ops_write_one_pass_sig(seckey, hash_alg, sig_type, cinfo);
+	__ops_write_one_pass_sig(output, seckey, hash_alg, sig_type);
 
 	/* hash file contents */
 	hash = __ops_sig_get_hash(sig);
-	hash->add(hash, __ops_memory_get_data(mem_buf),
-			__ops_memory_get_length(mem_buf));
+	hash->add(hash, __ops_mem_data(mem_buf), __ops_mem_len(mem_buf));
 
 	/* output file contents as Literal Data packet */
-
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "** Writing out data now\n");
 	}
-	__ops_write_litdata(__ops_memory_get_data(mem_buf),
-		(const int)__ops_memory_get_length(mem_buf),
-		OPS_LDT_BINARY, cinfo);
+	__ops_write_litdata(output, __ops_mem_data(mem_buf),
+		(const int)__ops_mem_len(mem_buf),
+		OPS_LDT_BINARY);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "** After Writing out data now\n");
 	}
-	/* add subpackets to signature */
-	/* - creation time */
-	/* - key id */
 
+	/* add creation time to signature */
 	__ops_sig_add_birthtime(sig, time(NULL));
-
+	/* add key id to signature */
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	__ops_sig_add_issuer_key_id(sig, keyid);
-
 	__ops_sig_hashed_subpackets_end(sig);
 
 	/* write out sig */
-	__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo);
-
-	__ops_teardown_file_write(cinfo, fd_out);
+	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
 
 	/* tidy up */
+	__ops_teardown_file_write(output, fd_out);
 	__ops_create_sig_delete(sig);
 	__ops_memory_free(mem_buf);
 
 	return 1;
 }
 
-#if 0
-/* XXX commented out until I work out what header file to put this one in */
 /**
 \ingroup HighLevel_Sign
 \brief Signs a buffer
@@ -1256,7 +1230,7 @@ __ops_sign_file(const char *input_filename,
 \param input_len Length of input text
 \param sig_type Signature type
 \param seckey Secret Key
-\param use_armour Write armoured text, if set
+\param armored Write armoured text, if set
 \return New __ops_memory_t struct containing signed text
 \note It is the caller's responsibility to call __ops_memory_free(me)
 
@@ -1265,41 +1239,37 @@ __ops_memory_t   *
 __ops_sign_buf(const void *input,
 		const size_t input_len,
 		const __ops_sig_type_t sig_type,
-		const __ops_seckey_t * seckey,
-		const unsigned use_armour)
+		const __ops_seckey_t *seckey,
+		const unsigned armored)
 {
-	/* \todo allow choice of hash algorithams */
-	/* enforce use of SHA1 for now */
-
-	unsigned char   keyid[OPS_KEY_ID_SIZE];
-	__ops_create_sig_t *sig = NULL;
-	__ops_createinfo_t *cinfo = NULL;
-	__ops_memory_t   *mem = __ops_memory_new();
-	__ops_hash_alg_t hash_alg = OPS_HASH_SHA1;
-	__ops_litdata_type_t ld_type;
-	__ops_hash_t     *hash = NULL;
+	__ops_litdata_type_t	 ld_type;
+	__ops_create_sig_t	*sig = NULL;
+	__ops_hash_alg_t	 hash_alg = OPS_HASH_SHA1;
+	__ops_output_t		*output = NULL;
+	__ops_memory_t		*mem = __ops_memory_new();
+	unsigned char		 keyid[OPS_KEY_ID_SIZE];
+	__ops_hash_t		*hash = NULL;
 
 	/* setup literal data packet type */
 	ld_type = (sig_type == OPS_SIG_BINARY) ? OPS_LDT_BINARY : OPS_LDT_TEXT;
-
 
 	/* set up signature */
 	sig = __ops_create_sig_new();
 	__ops_start_sig(sig, seckey, hash_alg, sig_type);
 
 	/* setup writer */
-	__ops_setup_memory_write(&cinfo, &mem, input_len);
+	__ops_setup_memory_write(&output, &mem, input_len);
 
 	/* set armoured/not armoured here */
-	if (use_armour) {
-		__ops_writer_push_armoured_message(cinfo);
+	if (armored) {
+		__ops_writer_push_armor_msg(output);
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "** Writing out one pass sig\n");
 	}
 	/* write one_pass_sig */
-	__ops_write_one_pass_sig(seckey, hash_alg, sig_type, cinfo);
+	__ops_write_one_pass_sig(output, seckey, hash_alg, sig_type);
 
 	/* hash file contents */
 	hash = __ops_sig_get_hash(sig);
@@ -1308,31 +1278,27 @@ __ops_sign_buf(const void *input,
 	/* output file contents as Literal Data packet */
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "** Writing out data now\n");
+		(void) fprintf(stderr, "** Writing out data now\n");
 	}
-	__ops_write_litdata(input, input_len, ld_type, cinfo);
+	__ops_write_litdata(output, input, (const int)input_len, ld_type);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "** After Writing out data now\n");
 	}
-	/* add subpackets to signature */
-	/* - creation time */
-	/* - key id */
 
+	/* add creation time to signature */
 	__ops_sig_add_birthtime(sig, time(NULL));
-
+	/* add key id to signature */
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	__ops_sig_add_issuer_key_id(sig, keyid);
-
 	__ops_sig_hashed_subpackets_end(sig);
 
 	/* write out sig */
-	__ops_write_sig(sig, &seckey->pubkey, seckey, cinfo);
+	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
 
 	/* tidy up */
-	__ops_writer_close(cinfo);
+	__ops_writer_close(output);
 	__ops_create_sig_delete(sig);
 
 	return mem;
 }
-#endif

@@ -54,6 +54,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: packet-show.c,v 1.6 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -263,15 +272,15 @@ static __ops_map_t compression_alg_map[] =
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_bit_map_t ss_notation_data_map_byte0[] =
+static __ops_bit_map_t ss_notation_map_byte0[] =
 {
 	{0x80, "Human-readable"},
 	{0x00, NULL},
 };
 
-static __ops_bit_map_t *ss_notation_data_map[] =
+static __ops_bit_map_t *ss_notation_map[] =
 {
-	ss_notation_data_map_byte0,
+	ss_notation_map_byte0,
 };
 
 static __ops_bit_map_t ss_feature_map_byte0[] =
@@ -369,26 +378,27 @@ add_str(__ops_list_t * list, const char *str)
 }
 
 static const char *
-str_from_bitfield_or_null(unsigned char octet, __ops_bit_map_t * map)
+str_from_bitfield_or_null(unsigned char octet, __ops_bit_map_t *map)
 {
 	__ops_bit_map_t  *row;
 
-	for (row = map; row->string != NULL; row++)
-		if (row->mask == octet)
+	for (row = map; row->string != NULL; row++) {
+		if (row->mask == octet) {
 			return row->string;
-
+		}
+	}
 	return NULL;
 }
 
 static const char *
-str_from_bitfield(unsigned char octet, __ops_bit_map_t * map)
+str_from_bitfield(unsigned char octet, __ops_bit_map_t *map)
 {
 	const char     *str;
-	str = str_from_bitfield_or_null(octet, map);
-	if (str)
+
+	if ((str = str_from_bitfield_or_null(octet, map)) != NULL) {
 		return str;
-	else
-		return "Unknown";
+	}
+	return "Unknown";
 }
 
 /* ! generic function to initialise __ops_text_t structure */
@@ -419,13 +429,12 @@ __ops_text_free(__ops_text_t * text)
 	list_free_strings(&text->unknown);
 	list_free(&text->unknown);
 
-	/* finally, free the text structure itself */
-	free(text);
+	(void) free(text);
 }
 
 /* XXX: should this (and many others) be unsigned? */
 /* ! generic function which adds text derived from single octet map to text */
-static unsigned int 
+static unsigned
 add_str_from_octet_map(__ops_text_t * text, char *str,
 		       unsigned char octet)
 {
@@ -443,11 +452,12 @@ add_str_from_octet_map(__ops_text_t * text, char *str,
 		 */
 		unsigned        len = 2 + 2 + 1;	/* 2 for "0x", 2 for
 							 * single octet in hex
-							 * format, 1 for NULL */
+							 * format, 1 for NUL */
 		str = calloc(1, len);
-		snprintf(str, len, "0x%x", octet);
-		if (!add_str(&text->unknown, str))
+		(void) snprintf(str, len, "0x%x", octet);
+		if (!add_str(&text->unknown, str)) {
 			return 0;
+		}
 	}
 	return 1;
 }
@@ -469,18 +479,17 @@ add_str_from_bit_map(__ops_text_t * text, const char *str, unsigned char bit)
 		/*
 		 * value not recognised and there was a problem adding it to
 		 * the unknown list
-		 */
-		/*
 		 * 2 chars of the string are the format definition, this will
 		 * be replaced in the output by 2 chars of hex, so the length
 		 * will be correct
 		 */
 		unsigned        len = strlen(fmt_unknown) + 1;
-		str = calloc(1, len);
 
-		snprintf(__UNCONST(str), len, fmt_unknown, bit);
-		if (!add_str(&text->unknown, str))
+		str = calloc(1, len);
+		(void) snprintf(__UNCONST(str), len, fmt_unknown, bit);
+		if (!add_str(&text->unknown, str)) {
 			return 0;
+		}
 	}
 	return 1;
 }
@@ -494,8 +503,8 @@ add_str_from_bit_map(__ops_text_t * text, const char *str, unsigned char bit)
  */
 
 static __ops_text_t *
-text_from_bytemapped_octets(__ops_data_t * data,
-			    const char *(*text_fn) (unsigned char octet))
+text_from_bytemapped_octets(__ops_data_t *data,
+			    const char *(*text_fn)(unsigned char octet))
 {
 
 	__ops_text_t     *text = NULL;
@@ -507,8 +516,9 @@ text_from_bytemapped_octets(__ops_data_t * data,
 	 * strings
 	 */
 	text = calloc(1, sizeof(__ops_text_t));
-	if (!text)
+	if (!text) {
 		return NULL;
+	}
 
 	__ops_text_init(text);
 
@@ -518,7 +528,8 @@ text_from_bytemapped_octets(__ops_data_t * data,
 		str = (*text_fn) (data->contents[i]);
 
 		/* ! and add to text */
-		if (!add_str_from_octet_map(text, strdup(str), data->contents[i])) {
+		if (!add_str_from_octet_map(text, strdup(str),
+						data->contents[i])) {
 			__ops_text_free(text);
 			return NULL;
 		}
@@ -527,7 +538,6 @@ text_from_bytemapped_octets(__ops_data_t * data,
 	 * ! All values have been added to either the known or the unknown
 	 * list
 	 */
-	/* ! Return text */
 	return text;
 }
 
@@ -541,32 +551,32 @@ static __ops_text_t *
 showall_octets_bits(__ops_data_t * data, __ops_bit_map_t ** map,
 		    size_t nmap)
 {
-	__ops_text_t     *text = NULL;
-	const char     *str;
-	unsigned        i;
-	int             j = 0;
-	unsigned char   mask, bit;
+	unsigned char	 mask, bit;
+	__ops_text_t	*text = NULL;
+	const char	*str;
+	unsigned         i;
+	int              j = 0;
 
 	/*
 	 * ! allocate and initialise __ops_text_t structure to store derived
 	 * strings
 	 */
 	text = calloc(1, sizeof(__ops_text_t));
-	if (!text)
+	if (!text) {
 		return NULL;
+	}
 
 	__ops_text_init(text);
 
 	/* ! for each octet in field ... */
 	for (i = 0; i < data->len; i++) {
 		/* ! for each bit in octet ... */
-		for (j = 0, mask = 0x80; j < 8; j++, mask = (unsigned)mask >> 1) {
+		mask = 0x80;
+		for (j = 0; j < 8; j++, mask = (unsigned)mask >> 1) {
 			bit = data->contents[i] & mask;
 			if (bit) {
-				if (i >= nmap)
-					str = "Unknown";
-				else
-					str = str_from_bitfield(bit, map[i]);
+				str = (i >= nmap) ? "Unknown" :
+					str_from_bitfield(bit, map[i]);
 				if (!add_str_from_bit_map(text, str, bit)) {
 					__ops_text_free(text);
 					return NULL;
@@ -590,13 +600,14 @@ showall_octets_bits(__ops_data_t * data, __ops_bit_map_t ** map,
 const char     *
 __ops_show_packet_tag(__ops_packet_tag_t packet_tag)
 {
-	const char     *rtn;
+	const char     *ret;
 
-	rtn = show_packet_tag(packet_tag, packet_tag_map);
-	if (!rtn)
-		rtn = "Unknown Tag";
+	ret = show_packet_tag(packet_tag, packet_tag_map);
+	if (!ret) {
+		ret = "Unknown Tag";
+	}
 
-	return rtn;
+	return ret;
 }
 
 /**
@@ -749,8 +760,9 @@ __ops_showall_ss_skapref(__ops_ss_skapref_t ss_skapref)
 static const char *
 __ops_show_ss_feature(unsigned char octet, unsigned offset)
 {
-	if (offset >= OPS_ARRAY_SIZE(ss_feature_map))
+	if (offset >= OPS_ARRAY_SIZE(ss_feature_map)) {
 		return "Unknown";
+	}
 	return str_from_bitfield(octet, ss_feature_map[offset]);
 }
 
@@ -766,20 +778,22 @@ __ops_show_ss_feature(unsigned char octet, unsigned offset)
 __ops_text_t     *
 __ops_showall_ss_features(__ops_ss_features_t ss_features)
 {
-	__ops_text_t     *text = NULL;
-	const char     *str;
-	unsigned        i;
-	int             j = 0;
-	unsigned char   mask, bit;
+	unsigned char	 mask, bit;
+	__ops_text_t	*text = NULL;
+	const char	*str;
+	unsigned	 i;
+	int		 j = 0;
 
 	text = calloc(1, sizeof(__ops_text_t));
-	if (!text)
+	if (!text) {
 		return NULL;
+	}
 
 	__ops_text_init(text);
 
 	for (i = 0; i < ss_features.data.len; i++) {
-		for (j = 0, mask = 0x80; j < 8; j++, mask = (unsigned)mask >> 1) {
+		mask = 0x80;
+		for (j = 0; j < 8; j++, mask = (unsigned)mask >> 1) {
 			bit = ss_features.data.contents[i] & mask;
 			if (bit) {
 				str = __ops_show_ss_feature(bit, i);
@@ -817,19 +831,19 @@ __ops_show_ss_key_flag(unsigned char octet, __ops_bit_map_t * map)
 __ops_text_t     *
 __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
 {
-	__ops_text_t     *text = NULL;
-	const char     *str;
-	int             i = 0;
-	unsigned char   mask, bit;
+	unsigned char    mask, bit;
+	__ops_text_t	*text = NULL;
+	const char	*str;
+	int              i = 0;
 
 	text = calloc(1, sizeof(__ops_text_t));
-	if (!text)
+	if (!text) {
 		return NULL;
+	}
 
 	__ops_text_init(text);
 
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
-
 	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
 		bit = ss_key_flags.data.contents[0] & mask;
 		if (bit) {
@@ -857,8 +871,7 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_ss_key_server_prefs(unsigned char prefs,
-			     __ops_bit_map_t * map)
+__ops_show_ss_key_server_prefs(unsigned char prefs, __ops_bit_map_t * map)
 {
 	return str_from_bitfield(prefs, map);
 }
@@ -872,16 +885,18 @@ __ops_show_ss_key_server_prefs(unsigned char prefs,
  *
 */
 __ops_text_t     *
-__ops_showall_ss_key_server_prefs(__ops_ss_key_server_prefs_t ss_key_server_prefs)
+__ops_showall_ss_key_server_prefs(
+		__ops_ss_key_server_prefs_t ss_key_server_prefs)
 {
-	__ops_text_t     *text = NULL;
-	const char     *str;
-	int             i = 0;
-	unsigned char   mask, bit;
+	unsigned char	 mask, bit;
+	__ops_text_t	*text = NULL;
+	const char	*str;
+	int              i = 0;
 
 	text = calloc(1, sizeof(__ops_text_t));
-	if (!text)
+	if (!text) {
 		return NULL;
+	}
 
 	__ops_text_init(text);
 
@@ -909,13 +924,14 @@ __ops_showall_ss_key_server_prefs(__ops_ss_key_server_prefs_t ss_key_server_pref
  * \ingroup Core_Print
  *
  * returns set of descriptions of the given SS Notation Data Flags
- * \param ss_notation_data Signature Sub-Packet Notation Data
+ * \param ss_notation Signature Sub-Packet Notation Data
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_notation_data_flags(__ops_ss_notation_data_t ss_notation_data)
+__ops_showall_ss_notation_flags(__ops_ss_notation_t ss_notation)
 {
-	return showall_octets_bits(&ss_notation_data.flags, ss_notation_data_map,
-				   OPS_ARRAY_SIZE(ss_notation_data_map));
+	return showall_octets_bits(&ss_notation.flags,
+				ss_notation_map,
+				OPS_ARRAY_SIZE(ss_notation_map));
 }

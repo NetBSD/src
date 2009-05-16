@@ -52,6 +52,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: packet-print.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #include <string.h>
 #include <stdio.h>
 
@@ -400,7 +409,7 @@ __ops_print_pubkeydata(const __ops_keydata_t * key)
 	printf("\n");
 
 	for (i = 0; i < key->nuids; i++) {
-		printf("uid              %s\n", key->uids[i].user_id);
+		printf("uid              %s\n", key->uids[i].userid);
 	}
 }
 
@@ -473,13 +482,13 @@ __ops_print_seckeydata(const __ops_keydata_t * key)
 
 	if (key->nuids == 1) {
 		/* print on same line as other info */
-		printf("%s\n", key->uids[0].user_id);
+		printf("%s\n", key->uids[0].userid);
 	} else {
 		/* print all uids on separate line  */
 		unsigned int    i;
 		printf("\n");
 		for (i = 0; i < key->nuids; i++) {
-			printf("uid              %s\n", key->uids[i].user_id);
+			printf("uid              %s\n", key->uids[i].userid);
 		}
 	}
 }
@@ -688,7 +697,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_CT_USER_ID:
 		/* XXX: how do we print UTF-8? */
 		print_tagname("USER ID");
-		print_utf8_string("user_id", content->user_id.user_id);
+		print_utf8_string("userid", content->userid.userid);
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE:
@@ -782,8 +791,8 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_CT_USER_ATTRIBUTE:
 		print_tagname("USER ATTRIBUTE");
 		print_hexdump("User Attribute",
-			      content->user_attribute.data.contents,
-			      content->user_attribute.data.len);
+			      content->userattr.data.contents,
+			      content->userattr.data.len);
 		break;
 
 	case OPS_PTAG_RAW_SS:
@@ -873,7 +882,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
 		start_subpacket(pkt->tag);
 		print_boolean("Primary User ID",
-			      content->ss_primary_user_id.primary_user_id);
+			      content->ss_primary_userid.primary_userid);
 		end_subpacket();
 		break;
 
@@ -941,17 +950,17 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		printf("Notation Data:\n");
 
 		indent++;
-		print_data("Flags", &content->ss_notation_data.flags);
-		text = __ops_showall_ss_notation_data_flags(
-				content->ss_notation_data);
+		print_data("Flags", &content->ss_notation.flags);
+		text = __ops_showall_ss_notation_flags(
+				content->ss_notation);
 		print_text_breakdown(text);
 		__ops_text_free(text);
 
 		/* xxx - TODO: print out UTF - rachel */
 
-		print_data("Name", &content->ss_notation_data.name);
+		print_data("Name", &content->ss_notation.name);
 
-		print_data("Value", &content->ss_notation_data.value);
+		print_data("Value", &content->ss_notation.value);
 
 		indent--;
 		end_subpacket();
@@ -975,14 +984,13 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_SS_SIGNERS_USER_ID:
 		start_subpacket(pkt->tag);
 		print_utf8_string("Signer's User ID",
-			content->ss_signer.user_id);
+			content->ss_signer.userid);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_KEY_SERVER:
 		start_subpacket(pkt->tag);
-		print_string("Preferred Key Server",
-			     content->ss_pref_keyserv.name);
+		print_string("Preferred Key Server", content->ss_keyserv.name);
 		end_subpacket();
 		break;
 
@@ -1004,16 +1012,16 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_SS_USERDEFINED10:
 		start_subpacket(pkt->tag);
 		print_hexdump("Internal or user-defined",
-			      content->ss_userdefined.data.contents,
-			      content->ss_userdefined.data.len);
+			      content->ss_userdef.data.contents,
+			      content->ss_userdef.data.len);
 		end_subpacket();
 		break;
 
 	case OPS_PTAG_SS_RESERVED:
 		start_subpacket(pkt->tag);
 		print_hexdump("Reserved",
-			      content->ss_userdefined.data.contents,
-			      content->ss_userdefined.data.len);
+			      content->ss_userdef.data.contents,
+			      content->ss_userdef.data.len);
 		end_subpacket();
 		break;
 

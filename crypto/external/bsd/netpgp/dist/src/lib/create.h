@@ -49,7 +49,6 @@
 
 /** \file
  */
-
 #ifndef CREATE_H_
 #define CREATE_H_
 
@@ -65,49 +64,57 @@
  * \ingroup Create
  * This struct contains the required information about how to write this stream
  */
-struct __ops_createinfo {
-	__ops_writer_info_t winfo;
-	__ops_error_t    *errors;	/* !< an error stack */
+struct __ops_output_t {
+	__ops_writer_t	 writer;
+	__ops_error_t	*errors;	/* error stack */
 };
 
-__ops_createinfo_t *__ops_createinfo_new(void);
-void            __ops_createinfo_delete(__ops_createinfo_t *);
+__ops_output_t *__ops_output_new(void);
+void __ops_output_delete(__ops_output_t *);
 
-int             __ops_filewrite(const char *, const char *, const size_t, const unsigned);
+int __ops_filewrite(const char *, const char *, const size_t, const unsigned);
 
 __ops_memory_t   *__ops_fileread(const char *, int *);
 void __ops_build_pubkey(__ops_memory_t *, const __ops_pubkey_t *, unsigned);
 
-unsigned   __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *, unsigned char *);
-unsigned __ops_write_struct_user_id(__ops_user_id_t *, __ops_createinfo_t *);
-unsigned __ops_write_struct_pubkey(const __ops_pubkey_t *, __ops_createinfo_t *);
-unsigned __ops_write_ss_header(unsigned, __ops_content_tag_t, __ops_createinfo_t *);
+unsigned __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *, unsigned char *);
+unsigned __ops_write_struct_userid(__ops_output_t *, __ops_userid_t *);
+unsigned __ops_write_ss_header(__ops_output_t *, unsigned, __ops_content_tag_t);
 unsigned __ops_write_struct_seckey(const __ops_seckey_t *,
 			    const unsigned char *,
 			    const size_t,
-			    __ops_createinfo_t *);
-unsigned 
-__ops_write_one_pass_sig(const __ops_seckey_t *,
-		       const __ops_hash_alg_t,
-		       const __ops_sig_type_t,
-		       __ops_createinfo_t *);
-unsigned 
-__ops_write_litdata(const unsigned char *,
+			    __ops_output_t *);
+unsigned __ops_write_one_pass_sig(__ops_output_t *,
+				const __ops_seckey_t *,
+				const __ops_hash_alg_t,
+				const __ops_sig_type_t);
+unsigned __ops_write_litdata(__ops_output_t *, 
+				const unsigned char *,
 				const int,
-				const __ops_litdata_type_t,
-				__ops_createinfo_t *);
+				const __ops_litdata_type_t);
 __ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_keydata_t *);
-unsigned __ops_write_pk_sesskey(__ops_createinfo_t *, __ops_pk_sesskey_t *);
-unsigned   __ops_write_transferable_pubkey(const __ops_keydata_t *, unsigned, __ops_createinfo_t *);
-unsigned   __ops_write_transferable_seckey(const __ops_keydata_t *, const unsigned char *, const size_t, unsigned, __ops_createinfo_t *);
+unsigned __ops_write_pk_sesskey(__ops_output_t *, __ops_pk_sesskey_t *);
+unsigned __ops_write_transferable_pubkey(__ops_output_t *,
+				const __ops_keydata_t *, unsigned);
+unsigned   __ops_write_transferable_seckey(__ops_output_t *,
+				const __ops_keydata_t *,
+				const unsigned char *,
+				const size_t,
+				unsigned);
 
-void            __ops_fast_create_user_id(__ops_user_id_t *, unsigned char *);
-unsigned   __ops_write_user_id(const unsigned char *, __ops_createinfo_t *);
-void            __ops_fast_create_rsa_pubkey(__ops_pubkey_t *, time_t, BIGNUM *, BIGNUM *);
-unsigned   __ops_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *, __ops_createinfo_t *);
-void            __ops_fast_create_rsa_seckey(__ops_seckey_t *, time_t, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *);
-unsigned   encode_m_buf(const unsigned char *, size_t, const __ops_pubkey_t *, unsigned char *);
-unsigned   __ops_fileread_litdata(const char *, const __ops_litdata_type_t, __ops_createinfo_t *);
-unsigned   __ops_write_symm_enc_data(const unsigned char *, const int, __ops_createinfo_t *);
+void __ops_fast_create_userid(__ops_userid_t *, unsigned char *);
+unsigned __ops_write_userid(const unsigned char *, __ops_output_t *);
+void __ops_fast_create_rsa_pubkey(__ops_pubkey_t *, time_t, BIGNUM *, BIGNUM *);
+unsigned __ops_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *,
+				__ops_output_t *);
+void __ops_fast_create_rsa_seckey(__ops_seckey_t *, time_t, BIGNUM *,
+				BIGNUM *, BIGNUM *, BIGNUM *,
+				BIGNUM *, BIGNUM *);
+unsigned encode_m_buf(const unsigned char *, size_t, const __ops_pubkey_t *,
+				unsigned char *);
+unsigned __ops_fileread_litdata(const char *, const __ops_litdata_type_t,
+				__ops_output_t *);
+unsigned __ops_write_symm_enc_data(const unsigned char *, const int,
+				__ops_output_t *);
 
-#endif				/* CREATE_H_ */
+#endif /* CREATE_H_ */

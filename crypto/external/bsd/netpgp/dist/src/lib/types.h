@@ -53,42 +53,36 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
-/** Special type for intermediate function casting, avoids warnings on
-    some platforms
-*/
-typedef void    (*__ops_void_fptr) (void);
-#define __ops_fcast(f) ((__ops_void_fptr)f)
-
 /** __ops_map_t
  */
 typedef struct {
 	int             type;
 	const char     *string;
-}               __ops_map_t;
+} __ops_map_t;
 
 /** __ops_errcode_name_map_t */
-typedef __ops_map_t __ops_errcode_name_map_t;
+typedef __ops_map_t		__ops_errcode_name_map_t;
 
-typedef struct _ops_crypt_t __ops_crypt_t;
+typedef struct _ops_crypt_t	__ops_crypt_t;
 
 /** __ops_hash_t */
-typedef struct _ops_hash_t __ops_hash_t;
+typedef struct _ops_hash_t	__ops_hash_t;
 
 /** Revocation Reason type */
-typedef unsigned char __ops_ss_rr_code_t;
+typedef unsigned char		__ops_ss_rr_code_t;
 
 /** __ops_packet_t */
-typedef struct __ops_packet_t __ops_packet_t;
+typedef struct __ops_packet_t	__ops_packet_t;
 
 /** Writer flags */
 typedef enum {
 	OPS_WF_DUMMY
-}               __ops_writer_flags_t;
+} __ops_writer_flags_t;
 
 /**
  * \ingroup Create
  * Contains the required information about how to write
  */
-typedef struct __ops_createinfo __ops_createinfo_t;
+typedef struct __ops_output_t	__ops_output_t;
 
 #endif /* TYPES_H_ */

@@ -62,24 +62,24 @@ typedef struct __ops_memory_t {
 	unsigned char  *buf;
 	size_t          length;
 	size_t          allocated;
-}               __ops_memory_t;
+} __ops_memory_t;
 
 
 __ops_memory_t   *__ops_memory_new(void);
-void            __ops_memory_free(__ops_memory_t *);
-void            __ops_memory_init(__ops_memory_t *, size_t);
-void            __ops_memory_pad(__ops_memory_t *, size_t);
-void            __ops_memory_add(__ops_memory_t *, const unsigned char *, size_t);
+void __ops_memory_free(__ops_memory_t *);
+void __ops_memory_init(__ops_memory_t *, size_t);
+void __ops_memory_pad(__ops_memory_t *, size_t);
+void __ops_memory_add(__ops_memory_t *, const unsigned char *, size_t);
 void __ops_memory_place_int(__ops_memory_t *, unsigned, unsigned, size_t);
-void            __ops_memory_make_packet(__ops_memory_t *, __ops_content_tag_t);
-void            __ops_memory_clear(__ops_memory_t *);
-void            __ops_memory_release(__ops_memory_t *);
+void __ops_memory_make_packet(__ops_memory_t *, __ops_content_tag_t);
+void __ops_memory_clear(__ops_memory_t *);
+void __ops_memory_release(__ops_memory_t *);
 
-void            __ops_writer_set_memory(__ops_createinfo_t *, __ops_memory_t *);
+void __ops_writer_set_memory(__ops_output_t *, __ops_memory_t *);
 
-size_t          __ops_memory_get_length(const __ops_memory_t *);
-void           *__ops_memory_get_data(__ops_memory_t *);
+size_t __ops_mem_len(const __ops_memory_t *);
+void *__ops_mem_data(__ops_memory_t *);
 
-void            __ops_random(void *, size_t);
+void __ops_random(void *, size_t);
 
 #endif /* MEMORY_H_ */

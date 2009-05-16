@@ -51,6 +51,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: keyring.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -110,7 +119,7 @@ __ops_keydata_free(__ops_keydata_t *keydata)
 	unsigned        n;
 
 	for (n = 0; n < keydata->nuids; ++n) {
-		__ops_user_id_free(&keydata->uids[n]);
+		__ops_userid_free(&keydata->uids[n]);
 	}
 	(void) free(keydata->uids);
 	keydata->uids = NULL;
@@ -286,7 +295,7 @@ __ops_decrypt_seckey(const __ops_keydata_t * key,
 	pinfo = __ops_parseinfo_new();
 
 	__ops_keydata_reader_set(pinfo, key);
-	__ops_parse_cb_set(pinfo, decrypt_cb, &decrypt);
+	__ops_set_callback(pinfo, decrypt_cb, &decrypt);
 	pinfo->readinfo.accumulate = 1;
 
 	__ops_parse(pinfo, 0);
@@ -325,7 +334,7 @@ __ops_get_key_id(const __ops_keydata_t *key)
 \return Num of user ids
 */
 unsigned 
-__ops_get_user_id_count(const __ops_keydata_t *key)
+__ops_get_userid_count(const __ops_keydata_t *key)
 {
 	return key->nuids;
 }
@@ -338,9 +347,9 @@ __ops_get_user_id_count(const __ops_keydata_t *key)
 \return Pointer to requested user id
 */
 const unsigned char *
-__ops_get_user_id(const __ops_keydata_t * key, unsigned subscript)
+__ops_get_userid(const __ops_keydata_t * key, unsigned subscript)
 {
-	return key->uids[subscript].user_id;
+	return key->uids[subscript].userid;
 }
 
 /**
@@ -397,17 +406,17 @@ __ops_keyring_get_key_by_index(const __ops_keyring_t * keyring, int subscript)
 \brief Copy user id, including contents
 \param dst Destination User ID
 \param src Source User ID
-\note If dst already has a user_id, it will be freed.
+\note If dst already has a userid, it will be freed.
 */
 void 
-__ops_copy_userid(__ops_user_id_t * dst, const __ops_user_id_t * src)
+__ops_copy_userid(__ops_userid_t * dst, const __ops_userid_t * src)
 {
-	size_t          len = strlen((char *) src->user_id);
-	if (dst->user_id)
-		free(dst->user_id);
-	dst->user_id = calloc(1, len + 1);
+	size_t          len = strlen((char *) src->userid);
+	if (dst->userid)
+		free(dst->userid);
+	dst->userid = calloc(1, len + 1);
 
-	(void) memcpy(dst->user_id, src->user_id, len);
+	(void) memcpy(dst->userid, src->userid, len);
 }
 
 /* \todo check where pkt pointers are copied */
@@ -436,17 +445,17 @@ __ops_copy_packet(__ops_subpacket_t * dst, const __ops_subpacket_t * src)
 \param userid User ID to add
 \return Pointer to new User ID
 */
-__ops_user_id_t  *
-__ops_add_userid_to_keydata(__ops_keydata_t * keydata, const __ops_user_id_t * userid)
+__ops_userid_t  *
+__ops_add_userid(__ops_keydata_t * keydata, const __ops_userid_t * userid)
 {
-	__ops_user_id_t  *new_uid = NULL;
+	__ops_userid_t  *new_uid = NULL;
 
 	EXPAND_ARRAY(keydata, uids);
 
 	/* initialise new entry in array */
 	new_uid = &keydata->uids[keydata->nuids];
 
-	new_uid->user_id = NULL;
+	new_uid->userid = NULL;
 
 	/* now copy it */
 	__ops_copy_userid(new_uid, userid);
@@ -463,7 +472,7 @@ __ops_add_userid_to_keydata(__ops_keydata_t * keydata, const __ops_user_id_t * u
 \return Pointer to new packet
 */
 __ops_subpacket_t   *
-__ops_add_packet_to_keydata(__ops_keydata_t * keydata, const __ops_subpacket_t * packet)
+__ops_add_subpacket(__ops_keydata_t * keydata, const __ops_subpacket_t * packet)
 {
 	__ops_subpacket_t   *new_pkt = NULL;
 
@@ -485,17 +494,19 @@ __ops_add_packet_to_keydata(__ops_keydata_t * keydata, const __ops_subpacket_t *
 \ingroup Core_Keys
 \brief Add signed User ID to key
 \param keydata Key to which to add signed User ID
-\param user_id User ID to add
+\param userid User ID to add
 \param sigpacket Packet to add
 */
 void 
-__ops_add_signed_userid_to_keydata(__ops_keydata_t * keydata, const __ops_user_id_t * user_id, const __ops_subpacket_t * sigpacket)
+__ops_add_signed_userid(__ops_keydata_t *keydata,
+		const __ops_userid_t *userid,
+		const __ops_subpacket_t *sigpacket)
 {
 	__ops_subpacket_t	*pkt = NULL;
-	__ops_user_id_t		*uid = NULL;
+	__ops_userid_t		*uid = NULL;
 
-	uid = __ops_add_userid_to_keydata(keydata, user_id);
-	pkt = __ops_add_packet_to_keydata(keydata, sigpacket);
+	uid = __ops_add_userid(keydata, userid);
+	pkt = __ops_add_subpacket(keydata, sigpacket);
 
 	/*
          * add entry in sigs array to link the userid and sigpacket
@@ -517,50 +528,47 @@ __ops_add_signed_userid_to_keydata(__ops_keydata_t * keydata, const __ops_user_i
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_add_selfsigned_userid_to_keydata(__ops_keydata_t * keydata, __ops_user_id_t * userid)
+__ops_add_selfsigned_userid(__ops_keydata_t *keydata, __ops_userid_t *userid)
 {
-	__ops_subpacket_t    sigpacket;
-
-	__ops_memory_t   *mem_userid = NULL;
-	__ops_createinfo_t *cinfo_userid = NULL;
-
-	__ops_memory_t   *mem_sig = NULL;
-	__ops_createinfo_t *cinfo_sig = NULL;
-
-	__ops_create_sig_t *sig = NULL;
+	__ops_create_sig_t	*sig = NULL;
+	__ops_subpacket_t	 sigpacket;
+	__ops_memory_t		*mem_userid = NULL;
+	__ops_output_t		*useridoutput = NULL;
+	__ops_memory_t		*mem_sig = NULL;
+	__ops_output_t		*sigoutput = NULL;
 
 	/*
          * create signature packet for this userid
          */
 
 	/* create userid pkt */
-	__ops_setup_memory_write(&cinfo_userid, &mem_userid, 128);
-	__ops_write_struct_user_id(userid, cinfo_userid);
+	__ops_setup_memory_write(&useridoutput, &mem_userid, 128);
+	__ops_write_struct_userid(useridoutput, userid);
 
 	/* create sig for this pkt */
-
 	sig = __ops_create_sig_new();
-	__ops_sig_start_key_sig(sig, &keydata->key.seckey.pubkey, userid, OPS_CERT_POSITIVE);
+	__ops_sig_start_key_sig(sig, &keydata->key.seckey.pubkey, userid,
+					OPS_CERT_POSITIVE);
 	__ops_sig_add_birthtime(sig, time(NULL));
 	__ops_sig_add_issuer_key_id(sig, keydata->key_id);
-	__ops_sig_add_primary_user_id(sig, 1);
+	__ops_sig_add_primary_userid(sig, 1);
 	__ops_sig_hashed_subpackets_end(sig);
 
-	__ops_setup_memory_write(&cinfo_sig, &mem_sig, 128);
-	__ops_write_sig(sig, &keydata->key.seckey.pubkey, &keydata->key.seckey, cinfo_sig);
+	__ops_setup_memory_write(&sigoutput, &mem_sig, 128);
+	__ops_write_sig(sigoutput, sig, &keydata->key.seckey.pubkey,
+				&keydata->key.seckey);
 
 	/* add this packet to keydata */
-
-	sigpacket.length = __ops_memory_get_length(mem_sig);
-	sigpacket.raw = __ops_memory_get_data(mem_sig);
+	sigpacket.length = __ops_mem_len(mem_sig);
+	sigpacket.raw = __ops_mem_data(mem_sig);
 
 	/* add userid to keydata */
-	__ops_add_signed_userid_to_keydata(keydata, userid, &sigpacket);
+	__ops_add_signed_userid(keydata, userid, &sigpacket);
 
 	/* cleanup */
 	__ops_create_sig_delete(sig);
-	__ops_createinfo_delete(cinfo_userid);
-	__ops_createinfo_delete(cinfo_sig);
+	__ops_output_delete(useridoutput);
+	__ops_output_delete(sigoutput);
 	__ops_memory_free(mem_userid);
 	__ops_memory_free(mem_sig);
 
@@ -671,7 +679,7 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const unsigned armour, const c
 	__ops_reader_set_fd(pinfo, fd);
 #endif
 
-	__ops_parse_cb_set(pinfo, cb_keyring_read, NULL);
+	__ops_set_callback(pinfo, cb_keyring_read, NULL);
 
 	if (armour) {
 		__ops_reader_push_dearmour(pinfo);
@@ -693,7 +701,6 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const unsigned armour, const c
 	return res;
 }
 
-#if 0
 /**
    \ingroup HighLevel_KeyringRead
 
@@ -717,11 +724,13 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const unsigned armour, const c
    \sa __ops_keyring_fileread
    \sa __ops_keyring_free
 */
-static unsigned 
-__ops_keyring_read_from_mem(__ops_keyring_t * keyring, const unsigned armour, __ops_memory_t * mem)
+unsigned 
+__ops_keyring_read_from_mem(__ops_keyring_t * keyring,
+				const unsigned armour,
+				__ops_memory_t * mem)
 {
-	__ops_parseinfo_t *pinfo = NULL;
-	unsigned   res = 1;
+	__ops_parseinfo_t	*pinfo = NULL;
+	unsigned		 res = 1;
 
 	pinfo = __ops_parseinfo_new();
 	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
@@ -743,7 +752,6 @@ __ops_keyring_read_from_mem(__ops_keyring_t * keyring, const unsigned armour, __
 
 	return res;
 }
-#endif
 
 /**
    \ingroup HighLevel_KeyringRead
@@ -858,8 +866,7 @@ str2keyid(const char *userid, unsigned char *keyid, size_t len)
 
 */
 const __ops_keydata_t *
-__ops_keyring_find_key_by_userid(const __ops_keyring_t *keyring,
-			       const char *userid)
+__ops_find_key_by_userid(const __ops_keyring_t *keyring, const char *userid)
 {
 	const __ops_keydata_t	*kp;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE + 1];
@@ -876,11 +883,12 @@ __ops_keyring_find_key_by_userid(const __ops_keyring_t *keyring,
 		for (i = 0; i < keyring->keys[n].nuids; i++) {
 			if (__ops_get_debug_level(__FILE__)) {
 				printf("[%d][%d] userid %s, last '%d'\n",
-					n, i, keyring->keys[n].uids[i].user_id,
-					keyring->keys[n].uids[i].user_id[len]);
+					n, i, keyring->keys[n].uids[i].userid,
+					keyring->keys[n].uids[i].userid[len]);
 			}
-			if (strncmp((char *) keyring->keys[n].uids[i].user_id, userid, len) == 0 &&
-			    keyring->keys[n].uids[i].user_id[len] == ' ') {
+			if (strncmp((char *) keyring->keys[n].uids[i].userid,
+					userid, len) == 0 &&
+			    keyring->keys[n].uids[i].userid[len] == ' ') {
 				return &keyring->keys[n];
 			}
 		}
@@ -904,11 +912,11 @@ __ops_keyring_find_key_by_userid(const __ops_keyring_t *keyring,
 			for (i = 0; i < keyring->keys[n].nuids; i++) {
 				if (__ops_get_debug_level(__FILE__)) {
 					printf("keyid \"%s\" len %" PRIsize "u, keyid[len] '%c'\n",
-					       (char *) keyring->keys[n].uids[i].user_id,
-					       len, keyring->keys[n].uids[i].user_id[len]);
+					       (char *) keyring->keys[n].uids[i].userid,
+					       len, keyring->keys[n].uids[i].userid[len]);
 				}
-				if (strncasecmp((char *) keyring->keys[n].uids[i].user_id, userid, len) == 0 &&
-				    keyring->keys[n].uids[i].user_id[len] == ' ') {
+				if (strncasecmp((char *) keyring->keys[n].uids[i].userid, userid, len) == 0 &&
+				    keyring->keys[n].uids[i].userid[len] == ' ') {
 					return &keyring->keys[n];
 				}
 			}
@@ -921,7 +929,7 @@ __ops_keyring_find_key_by_userid(const __ops_keyring_t *keyring,
 			 * look for the rightmost '<', in case there is one
 			 * in the comment field
 			 */
-			if ((cp = strrchr((char *) keyring->keys[n].uids[i].user_id, '<')) != NULL) {
+			if ((cp = strrchr((char *) keyring->keys[n].uids[i].userid, '<')) != NULL) {
 				if (__ops_get_debug_level(__FILE__)) {
 					printf("cp ,%s, userid ,%s, len %" PRIsize "u ,%c,\n",
 					       cp + 1, userid, len, *(cp + len + 1));
@@ -974,18 +982,17 @@ __ops_get_keydata_content_type(const __ops_keydata_t * keydata)
 int
 __ops_export_key(const __ops_keydata_t *keydata, unsigned char *passphrase)
 {
-	__ops_createinfo_t	*cinfo;
+	__ops_output_t	*output;
 	__ops_memory_t		*mem;
 
-	__ops_setup_memory_write(&cinfo, &mem, 128);
+	__ops_setup_memory_write(&output, &mem, 128);
 	if (__ops_get_keydata_content_type(keydata) == OPS_PTAG_CT_PUBLIC_KEY) {
-		__ops_write_transferable_pubkey(keydata, 1, cinfo);
+		__ops_write_transferable_pubkey(output, keydata, 1);
 	} else {
-		__ops_write_transferable_seckey(keydata,
-				    passphrase,
-			    strlen((char *)passphrase), 1, cinfo);
+		__ops_write_transferable_seckey(output, keydata, passphrase,
+					strlen((char *)passphrase), 1);
 	}
-	printf("%s", (char *) __ops_memory_get_data(mem));
-	__ops_teardown_memory_write(cinfo, mem);
+	printf("%s", (char *) __ops_mem_data(mem));
+	__ops_teardown_memory_write(output, mem);
 	return 1;
 }

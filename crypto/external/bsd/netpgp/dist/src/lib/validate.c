@@ -48,12 +48,25 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: validate.c,v 1.10 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 
 #include <string.h>
 #include <stdio.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "packet-parse.h"
 #include "packet-show.h"
@@ -191,16 +204,18 @@ add_sig_to_list(const __ops_sig_info_t *sig, __ops_sig_info_t **sigs,
 __ops_parse_cb_return_t
 __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &pkt->u;
-	const __ops_keydata_t	*signer;
-	validate_key_cb_t	*key = __ops_parse_cb_get_arg(cbinfo);
-	__ops_error_t		**errors = __ops_parse_cb_get_errors(cbinfo);
-	unsigned			 valid = 0;
+	const __ops_parser_content_union_t	 *content = &pkt->u;
+	const __ops_keydata_t			 *signer;
+	validate_key_cb_t			 *key;
+	__ops_error_t				**errors;
+	unsigned		 		  valid = 0;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("%s\n", __ops_show_packet_tag(pkt->tag));
 	}
 
+	key = __ops_parse_cb_get_arg(cbinfo);
+	errors = __ops_parse_cb_get_errors(cbinfo);
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
 		if (key->pubkey.version != 0) {
@@ -212,8 +227,9 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		if (key->subkey.version)
+		if (key->subkey.version) {
 			__ops_pubkey_free(&key->subkey);
+		}
 		key->subkey = content->pubkey;
 		return OPS_KEEP_MEMORY;
 
@@ -223,23 +239,23 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:
-		if (key->user_id.user_id)
-			__ops_user_id_free(&key->user_id);
-		key->user_id = content->user_id;
+		if (key->userid.userid)
+			__ops_userid_free(&key->userid);
+		key->userid = content->userid;
 		key->last_seen = ID;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ATTRIBUTE:
-		if (content->user_attribute.data.len == 0) {
+		if (content->userattr.data.len == 0) {
 			(void) fprintf(stderr,
 			"__ops_validate_key_cb: user attribute length 0");
 			return OPS_FINISHED;
 		}
 		printf("user attribute, length=%d\n",
-			(int) content->user_attribute.data.len);
-		if (key->user_attribute.data.len)
-			__ops_user_attribute_free(&key->user_attribute);
-		key->user_attribute = content->user_attribute;
+			(int) content->userattr.data.len);
+		if (key->userattr.data.len)
+			__ops_userattr_free(&key->userattr);
+		key->userattr = content->userattr;
 		key->last_seen = ATTRIBUTE;
 		return OPS_KEEP_MEMORY;
 
@@ -262,15 +278,17 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		case OPS_SIG_REV_CERT:
 			valid = (key->last_seen == ID) ?
 			    __ops_check_useridcert_sig(&key->pubkey,
-					&key->user_id,
+					&key->userid,
 					&content->sig,
 					__ops_get_pubkey(signer),
-				key->rarg->key->packets[key->rarg->packet].raw):
+					key->reader->key->packets[
+						key->reader->packet].raw) :
 			    __ops_check_userattrcert_sig(&key->pubkey,
-					&key->user_attribute,
+					&key->userattr,
 					&content->sig,
 				       __ops_get_pubkey(signer),
-				key->rarg->key->packets[key->rarg->packet].raw);
+					key->reader->key->packets[
+						key->reader->packet].raw);
 			break;
 
 		case OPS_SIG_SUBKEY:
@@ -278,17 +296,20 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 			 * XXX: we should also check that the signer is the
 			 * key we are validating, I think.
 			 */
-			valid = __ops_check_subkey_sig(&key->pubkey, &key->subkey,
+			valid = __ops_check_subkey_sig(&key->pubkey,
+				&key->subkey,
 				&content->sig,
 				__ops_get_pubkey(signer),
-				key->rarg->key->packets[key->rarg->packet].raw);
+				key->reader->key->packets[
+					key->reader->packet].raw);
 			break;
 
 		case OPS_SIG_DIRECT:
 			valid = __ops_check_direct_sig(&key->pubkey,
 				&content->sig,
 				__ops_get_pubkey(signer),
-				key->rarg->key->packets[key->rarg->packet].raw);
+				key->reader->key->packets[
+					key->reader->packet].raw);
 			break;
 
 		case OPS_SIG_STANDALONE:
@@ -340,19 +361,20 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 }
 
 __ops_parse_cb_return_t
-validate_data_cb(const __ops_packet_t * pkt,
-			__ops_callback_data_t * cbinfo)
+validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &pkt->u;
-	const __ops_keydata_t	*signer;
-	validate_data_cb_t	*data = __ops_parse_cb_get_arg(cbinfo);
-	__ops_error_t		**errors = __ops_parse_cb_get_errors(cbinfo);
-	unsigned			 valid = 0;
+	const __ops_parser_content_union_t	 *content = &pkt->u;
+	const __ops_keydata_t			 *signer;
+	validate_data_cb_t			 *data;
+	__ops_error_t				**errors;
+	unsigned				  valid = 0;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("validate_data_cb: %s\n",
-			__ops_show_packet_tag(pkt->tag));
+				__ops_show_packet_tag(pkt->tag));
 	}
+	data = __ops_parse_cb_get_arg(cbinfo);
+	errors = __ops_parse_cb_get_errors(cbinfo);
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
 		/*
@@ -369,12 +391,11 @@ validate_data_cb(const __ops_packet_t * pkt,
 		data->data.litdata_body = content->litdata_body;
 		data->use = LITERAL_DATA;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
-			       data->data.litdata_body.length);
+				       data->data.litdata_body.length);
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
-		data->data.cleartext_body =
-				content->cleartext_body;
+		data->data.cleartext_body = content->cleartext_body;
 		data->use = SIGNED_CLEARTEXT;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
 			       data->data.litdata_body.length);
@@ -417,8 +438,8 @@ validate_data_cb(const __ops_packet_t * pkt,
 		case OPS_SIG_BINARY:
 		case OPS_SIG_TEXT:
 			valid = check_binary_sig(
-					__ops_memory_get_length(data->mem),
-					__ops_memory_get_data(data->mem),
+					__ops_mem_len(data->mem),
+					__ops_mem_data(data->mem),
 					&content->sig,
 					__ops_get_pubkey(signer));
 			break;
@@ -452,7 +473,29 @@ validate_data_cb(const __ops_packet_t * pkt,
 	case OPS_PTAG_CT_ARMOUR_HEADER:
 	case OPS_PTAG_CT_ARMOUR_TRAILER:
 	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
+		break;
+
 	case OPS_PARSER_PACKET_END:
+#if 0
+		/* check we have seen some data */
+		/* if not, need to read from synthetic literal data */
+		if (data->detachname) {
+			unsigned char	*detached;
+			size_t	 	 len = 0;
+
+			printf("Reading detached sig from %s\n",
+				data->detachname);
+			data->data.litdata_body = content->litdata_body;
+			data->use = LITERAL_DATA;
+			detached = readfile(data->detachname, &len);
+			if (detached != NULL) {
+				__ops_memory_add(data->mem, detached, len);
+				(void) free(detached);
+				pkt->tag = OPS_PTAG_CT_LITERAL_DATA_BODY;
+				return OPS_KEEP_MEMORY;
+			}
+		}
+#endif
 		break;
 
 	default:
@@ -469,8 +512,7 @@ keydata_destroyer(__ops_reader_t * readinfo)
 }
 
 void 
-__ops_keydata_reader_set(__ops_parseinfo_t *pinfo,
-			const __ops_keydata_t *key)
+__ops_keydata_reader_set(__ops_parseinfo_t *pinfo, const __ops_keydata_t *key)
 {
 	validate_reader_t *data = calloc(1, sizeof(*data));
 
@@ -506,40 +548,40 @@ validate_result_status(__ops_validation_t *val)
  * \sa __ops_validate_result_free()
  */
 unsigned 
-__ops_validate_key_sigs(__ops_validation_t * result,
-	const __ops_keydata_t * key,
-	const __ops_keyring_t * keyring,
+__ops_validate_key_sigs(__ops_validation_t *result,
+	const __ops_keydata_t *key,
+	const __ops_keyring_t *keyring,
 	__ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *,
 						__ops_callback_data_t *))
 {
 	__ops_parseinfo_t	*pinfo;
-	validate_key_cb_t	 carg;
+	validate_key_cb_t	 keysigs;
 
-	(void) memset(&carg, 0x0, sizeof(carg));
-	carg.result = result;
-	carg.cb_get_passphrase = cb_get_passphrase;
+	(void) memset(&keysigs, 0x0, sizeof(keysigs));
+	keysigs.result = result;
+	keysigs.cb_get_passphrase = cb_get_passphrase;
 
 	pinfo = __ops_parseinfo_new();
 	/* __ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED); */
 
-	carg.keyring = keyring;
+	keysigs.keyring = keyring;
 
-	__ops_parse_cb_set(pinfo, __ops_validate_key_cb, &carg);
+	__ops_set_callback(pinfo, __ops_validate_key_cb, &keysigs);
 	pinfo->readinfo.accumulate = 1;
 	__ops_keydata_reader_set(pinfo, key);
 
-	/* Note: Coverity incorrectly reports an error that carg.rarg */
+	/* Note: Coverity incorrectly reports an error that keysigs.reader */
 	/* is never used. */
-	carg.rarg = pinfo->readinfo.arg;
+	keysigs.reader = pinfo->readinfo.arg;
 
 	__ops_parse(pinfo, 0);
 
-	__ops_pubkey_free(&carg.pubkey);
-	if (carg.subkey.version) {
-		__ops_pubkey_free(&carg.subkey);
+	__ops_pubkey_free(&keysigs.pubkey);
+	if (keysigs.subkey.version) {
+		__ops_pubkey_free(&keysigs.subkey);
 	}
-	__ops_user_id_free(&carg.user_id);
-	__ops_user_attribute_free(&carg.user_attribute);
+	__ops_userid_free(&keysigs.userid);
+	__ops_userattr_free(&keysigs.userattr);
 
 	__ops_parseinfo_delete(pinfo);
 
@@ -615,14 +657,15 @@ __ops_validate_file(__ops_validation_t *result,
 			const int armoured,
 			const __ops_keyring_t *keyring)
 {
-	__ops_parseinfo_t	*parse = NULL;
 	validate_data_cb_t	 validation;
+	__ops_parseinfo_t	*parse = NULL;
 	struct stat		 st;
-	int64_t		 	 origsize;
+	int64_t		 	 sigsize;
 	char			*filename;
 	char			 origfile[MAXPATHLEN];
-	int			 fd_out = 0;
-	int			 fd_in;
+	char			*detachname;
+	int			 outfd = 0;
+	int			 infd;
 	int			 cc;
 
 #define SIG_OVERHEAD	284 /* XXX - depends on sig size? */
@@ -631,20 +674,28 @@ __ops_validate_file(__ops_validation_t *result,
 		(void) fprintf(stderr, "can't validate \"%s\"\n", infile);
 		return 0;
 	}
-	origsize = st.st_size;
+	sigsize = st.st_size;
+	detachname = NULL;
 	cc = snprintf(origfile, sizeof(origfile), "%s", infile);
 	if (strcmp(&origfile[cc - 4], ".sig") == 0) {
 		origfile[cc - 4] = 0x0;
-		if (stat(origfile, &st) == 0 &&
-		    st.st_size - SIG_OVERHEAD < origsize) {
-			parse->synthlit = strdup(origfile);
+		if (stat(origfile, &st) == 0) {
+			if (st.st_size > sigsize - SIG_OVERHEAD) {
+				detachname = strdup(origfile);
+			}
 		}
 	}
 
-	fd_in = __ops_setup_file_read(&parse, infile, &validation,
+	(void) memset(&validation, 0x0, sizeof(validation));
+
+	infd = __ops_setup_file_read(&parse, infile, &validation,
 				validate_data_cb, 1);
-	if (fd_in < 0) {
+	if (infd < 0) {
 		return 0;
+	}
+
+	if (detachname) {
+		validation.detachname = strdup(detachname);
 	}
 
 	/* setup output filename */
@@ -653,23 +704,21 @@ __ops_validate_file(__ops_validation_t *result,
 		if (strcmp(outfile, "-") == 0) {
 			outfile = NULL;
 		}
-		fd_out = __ops_setup_file_write(&parse->cbinfo.cinfo,
-						NULL, 0);
-		if (fd_out < 0) {
-			__ops_teardown_file_read(parse, fd_in);
+		outfd = __ops_setup_file_write(&parse->cbinfo.output, NULL, 0);
+		if (outfd < 0) {
+			__ops_teardown_file_read(parse, infd);
 			return 0;
 		}
 	}
 
 	/* Set verification reader and handling options */
-	(void) memset(&validation, 0x0, sizeof(validation));
 	validation.result = result;
 	validation.keyring = keyring;
 	validation.mem = __ops_memory_new();
 	__ops_memory_init(validation.mem, 128);
-	/* Note: Coverity incorrectly reports an error that carg.rarg */
+	/* Note: Coverity incorrectly reports an error that validation.reader */
 	/* is never used. */
-	validation.rarg = parse->readinfo.arg;
+	validation.reader = parse->readinfo.arg;
 
 	if (armoured) {
 		__ops_reader_push_dearmour(parse);
@@ -678,18 +727,11 @@ __ops_validate_file(__ops_validation_t *result,
 	/* Do the verification */
 	__ops_parse(parse, 0);
 
-	if (__ops_get_debug_level(__FILE__)) {
-		printf("valid=%d, invalid=%d, unknown=%d\n",
-		       result->validc,
-		       result->invalidc,
-		       result->unknownc);
-	}
-
 	/* Tidy up */
 	if (armoured) {
 		__ops_reader_pop_dearmour(parse);
 	}
-	__ops_teardown_file_read(parse, fd_in);
+	__ops_teardown_file_read(parse, infd);
 
 	return validate_result_status(result);
 }
@@ -709,14 +751,15 @@ __ops_validate_file(__ops_validation_t *result,
 */
 
 unsigned 
-__ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
-			const int armoured, const __ops_keyring_t *keyring)
+__ops_validate_mem(__ops_validation_t *result,
+			__ops_memory_t *mem,
+			const int armoured,
+			const __ops_keyring_t *keyring)
 {
-	__ops_parseinfo_t	*pinfo = NULL;
 	validate_data_cb_t	 validation;
+	__ops_parseinfo_t	*pinfo = NULL;
 
-	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb,
-			1);
+	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb, 1);
 
 	/* Set verification reader and handling options */
 	(void) memset(&validation, 0x0, sizeof(validation));
@@ -724,9 +767,9 @@ __ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
 	validation.keyring = keyring;
 	validation.mem = __ops_memory_new();
 	__ops_memory_init(validation.mem, 128);
-	/* Note: Coverity incorrectly reports an error that carg.rarg */
+	/* Note: Coverity incorrectly reports an error that validation.reader */
 	/* is never used. */
-	validation.rarg = pinfo->readinfo.arg;
+	validation.reader = pinfo->readinfo.arg;
 
 	if (armoured) {
 		__ops_reader_push_dearmour(pinfo);
@@ -734,12 +777,6 @@ __ops_validate_mem(__ops_validation_t *result, __ops_memory_t *mem,
 
 	/* Do the verification */
 	__ops_parse(pinfo, 0);
-	if (__ops_get_debug_level(__FILE__)) {
-		printf("valid=%d, invalid=%d, unknown=%d\n",
-		       result->validc,
-		       result->invalidc,
-		       result->unknownc);
-	}
 
 	/* Tidy up */
 	if (armoured) {
