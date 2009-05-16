@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.5 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.6 2009/05/16 22:20:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -49,7 +49,6 @@ pthread__sp(void)
 }
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[1])
-#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[34])
 
 /*
  * Set initial, sane values for registers whose values aren't just
@@ -58,68 +57,5 @@ pthread__sp(void)
  */
 #define _INITCONTEXT_U_MD(ucp)						\
 	(ucp)->uc_mcontext.__gregs[_REG_MSR] = 0xd032;
-
-/*
- * Usable stack space below the ucontext_t.
- *    For a good time, see comments in pthread_switch.S and
- *    ../i386/pthread_switch.S about STACK_SWITCH.
- */
-#define STACKSPACE	16	/* room for 4 integer values */
-
-/*
- * Conversions between struct reg and struct mcontext. Used by
- * libpthread_dbg.
- */
-
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
-	memcpy((reg)->fixreg, (uc)->uc_mcontext.__gregs, 32 * 4);	\
-	(reg)->cr = (uc)->uc_mcontext.__gregs[_REG_CR];			\
-	(reg)->lr = (uc)->uc_mcontext.__gregs[_REG_LR];			\
-	(reg)->pc = (uc)->uc_mcontext.__gregs[_REG_PC];			\
-	(reg)->ctr = (uc)->uc_mcontext.__gregs[_REG_CTR];		\
-	(reg)->xer = (uc)->uc_mcontext.__gregs[_REG_XER];		\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	memcpy((uc)->uc_mcontext.__gregs, (reg)->fixreg, 32 * 4);	\
-	(uc)->uc_mcontext.__gregs[_REG_CR] = (reg)->cr;			\
-	(uc)->uc_mcontext.__gregs[_REG_LR] = (reg)->lr;			\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->pc;			\
-	(uc)->uc_mcontext.__gregs[_REG_CTR] = (reg)->ctr;		\
-	(uc)->uc_mcontext.__gregs[_REG_XER] = (reg)->xer;		\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc) do {	       		\
-	memcpy((freg)->fpreg, (uc)->uc_mcontext.__fpregs.__fpu_regs,	\
-		32 * 4);	       					\
-	(freg)->fpscr = (uc)->uc_mcontext.__fpregs.__fpu_fpscr;		\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {	       		\
-	memcpy((uc)->uc_mcontext.__fpregs.__fpu_regs, (freg)->fpreg,	\
-		32 * 4);						\
-	(uc)->uc_mcontext.__fpregs.__fpu_fpscr = (freg)->fpscr;		\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_UCONTEXT_XREG_FLAG	_UC_POWERPC_VEC
-
-#define PTHREAD_UCONTEXT_TO_XREG(xreg, uc) do {				\
-	memcpy(((struct vreg *)(xreg))->vreg,				\
-		(uc)->uc_mcontext.__vrf.__vrs,				\
-		16 * _NVR);						\
-	((struct vreg *)(xreg))->vscr = (uc)->uc_mcontext.__vrf.__vscr;	\
-	((struct vreg *)(xreg))->vrsave = (uc)->uc_mcontext.__vrf.__vrsave; \
-	} while (/*CONSTCOND*/0)
-	
-#define PTHREAD_XREG_TO_UCONTEXT(uc, xreg) do {				\
-	memcpy((uc)->uc_mcontext.__vrf.__vrs,				\
-		((struct vreg *)(xreg))->vreg,				\
-		16 * _NVR);						\
-	(uc)->uc_mcontext.__vrf.__vscr = ((struct vreg *)(xreg))->vscr;	\
-	(uc)->uc_mcontext.__vrf.__vrsave = ((struct vreg *)(xreg))->vrsave; \
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_POWERPC_VEC) & ~_UC_USER; \
-	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_POWERPC_MD_H */
