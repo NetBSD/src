@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.162 2009/05/12 11:42:12 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.163 2009/05/16 12:02:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.162 2009/05/12 11:42:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.163 2009/05/16 12:02:00 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2182,21 +2182,21 @@ fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 static int
 sysctl_doeproc(SYSCTLFN_ARGS)
 {
-	struct eproc *eproc;
-	struct kinfo_proc2 *kproc2;
-	struct kinfo_proc *dp;
+	union {
+		struct kinfo_proc kproc;
+		struct kinfo_proc2 kproc2;
+	} *kbuf;
 	struct proc *p, *next, *marker;
-	char *where, *dp2;
+	char *where, *dp;
 	int type, op, arg, error;
-	u_int elem_size, elem_count;
+	u_int elem_size, kelem_size, elem_count;
 	size_t buflen, needed;
 	bool match, zombie, mmmbrains;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
-	dp = oldp;
-	dp2 = where = oldp;
+	dp = where = oldp;
 	buflen = where != NULL ? *oldlenp : 0;
 	error = 0;
 	needed = 0;
@@ -2210,7 +2210,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			arg = name[1];
 		else
 			arg = 0;		/* Quell compiler warning */
-		elem_size = elem_count = 0;	/* Ditto */
+		elem_count = 0;	/* Ditto */
+		kelem_size = elem_size = sizeof(kbuf->kproc);
 	} else {
 		if (namelen != 4)
 			return (EINVAL);
@@ -2218,17 +2219,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		arg = name[1];
 		elem_size = name[2];
 		elem_count = name[3];
+		kelem_size = sizeof(kbuf->kproc2);
 	}
 
 	sysctl_unlock();
 
-	if (type == KERN_PROC) {
-		eproc = kmem_alloc(sizeof(*eproc), KM_SLEEP);
-		kproc2 = NULL;
-	} else {
-		eproc = NULL;
-		kproc2 = kmem_alloc(sizeof(*kproc2), KM_SLEEP);
-	}
+	kbuf = kmem_alloc(sizeof(*kbuf), KM_SLEEP);
 	marker = kmem_alloc(sizeof(*marker), KM_SLEEP);
 	marker->p_flag = PK_MARKER;
 
@@ -2342,51 +2338,32 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			LIST_INSERT_AFTER(p, marker, p_list);
 		}
 
-		if (type == KERN_PROC) {
-			if (buflen >= sizeof(struct kinfo_proc)) {
-				fill_eproc(p, eproc, zombie);
-				mutex_exit(p->p_lock);
-				mutex_exit(proc_lock);
-				error = dcopyout(l, p, &dp->kp_proc,
-				    sizeof(struct proc));
-				mutex_enter(proc_lock);
-				if (error) {
-					goto bah;
-				}
-				error = dcopyout(l, eproc, &dp->kp_eproc,
-				    sizeof(*eproc));
-				if (error) {
-					goto bah;
-				}
-				dp++;
-				buflen -= sizeof(struct kinfo_proc);
+		if (buflen >= elem_size &&
+		    (type == KERN_PROC || elem_count > 0)) {
+			if (type == KERN_PROC) {
+				kbuf->kproc.kp_proc = *p;
+				fill_eproc(p, &kbuf->kproc.kp_eproc, zombie);
 			} else {
-				mutex_exit(p->p_lock);
-			}
-			needed += sizeof(struct kinfo_proc);
-		} else { /* KERN_PROC2 */
-			if (buflen >= elem_size && elem_count > 0) {
-				fill_kproc2(p, kproc2, zombie);
-				mutex_exit(p->p_lock);
-				mutex_exit(proc_lock);
-				/*
-				 * Copy out elem_size, but not larger than
-				 * the size of a struct kinfo_proc2.
-				 */
-				error = dcopyout(l, kproc2, dp2,
-				    min(sizeof(*kproc2), elem_size));
-				mutex_enter(proc_lock);
-				if (error) {
-					goto bah;
-				}
-				dp2 += elem_size;
-				buflen -= elem_size;
+				fill_kproc2(p, &kbuf->kproc2, zombie);
 				elem_count--;
-			} else {
-				mutex_exit(p->p_lock);
 			}
-			needed += elem_size;
+			mutex_exit(p->p_lock);
+			mutex_exit(proc_lock);
+			/*
+			 * Copy out elem_size, but not larger than kelem_size
+			 */
+			error = dcopyout(l, kbuf, dp,
+			    min(kelem_size, elem_size));
+			mutex_enter(proc_lock);
+			if (error) {
+				goto bah;
+			}
+			dp += elem_size;
+			buflen -= elem_size;
+		} else {
+			mutex_exit(p->p_lock);
 		}
+		needed += elem_size;
 
 		/*
 		 * Release reference to process.
@@ -2401,10 +2378,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	mutex_exit(proc_lock);
 
 	if (where != NULL) {
-		if (type == KERN_PROC)
-			*oldlenp = (char *)dp - where;
-		else
-			*oldlenp = dp2 - where;
+		*oldlenp = dp - where;
 		if (needed > *oldlenp) {
 			error = ENOMEM;
 			goto out;
@@ -2413,10 +2387,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		needed += KERN_PROCSLOP;
 		*oldlenp = needed;
 	}
-	if (kproc2)
-		kmem_free(kproc2, sizeof(*kproc2));
-	if (eproc)
-		kmem_free(eproc, sizeof(*eproc));
+	if (kbuf)
+		kmem_free(kbuf, sizeof(*kbuf));
 	if (marker)
 		kmem_free(marker, sizeof(*marker));
 	sysctl_relock();
@@ -2429,10 +2401,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
  cleanup:
 	mutex_exit(proc_lock);
  out:
-	if (kproc2)
-		kmem_free(kproc2, sizeof(*kproc2));
-	if (eproc)
-		kmem_free(eproc, sizeof(*eproc));
+	if (kbuf)
+		kmem_free(kbuf, sizeof(*kbuf));
 	if (marker)
 		kmem_free(marker, sizeof(*marker));
 	sysctl_relock();
