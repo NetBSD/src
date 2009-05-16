@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.70 2008/06/28 10:29:37 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.71 2009/05/16 22:21:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -230,16 +230,6 @@ int	pthread__simple_locked_p(__cpu_simple_lock_t *) PTHREAD_HIDE;
 #define	pthread__simple_lock_init(alp)	(*pthread__lock_ops->plo_init)(alp)
 #define	pthread__simple_lock_try(alp)	(*pthread__lock_ops->plo_try)(alp)
 #define	pthread__simple_unlock(alp)	(*pthread__lock_ops->plo_unlock)(alp)
-
-#ifndef _getcontext_u
-int	_getcontext_u(ucontext_t *) PTHREAD_HIDE;
-#endif
-#ifndef _setcontext_u
-int	_setcontext_u(const ucontext_t *) PTHREAD_HIDE;
-#endif
-#ifndef _swapcontext_u
-int	_swapcontext_u(ucontext_t *, const ucontext_t *) PTHREAD_HIDE;
-#endif
 
 void	pthread__testcancel(pthread_t) PTHREAD_HIDE;
 int	pthread__find(pthread_t) PTHREAD_HIDE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.5 2009/05/16 22:20:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -50,7 +50,6 @@ pthread__sp(void)
 }
 
 #define	pthread__uc_sp(ucp)	((ucp)->uc_mcontext.__gregs[_REG_SP])
-#define	pthread__uc_pc(ucp)	((ucp)->uc_mcontext.__gregs[_REG_PC])
 
 /*
  * Set initial, sane values for registers whose values aren't just
@@ -66,73 +65,5 @@ pthread__sp(void)
 #define _INITCONTEXT_U_MD(ucp)						\
 	(ucp)->uc_mcontext.__gregs[_REG_CPSR] = 0x10;
 #endif
-
-/*
- * Usable stack space below the ucontext_t.
- *    For a good time, see comments in pthread_switch.S and
- *    ../i386/pthread_switch.S about STACK_SWITCH.
- */
-#define	STACKSPACE		(6 * sizeof(long))
-
-/*
- * Conversions between struct reg and struct mcontext.  Used by
- * libpthread_dbg.
- */
-
-#define	PTHREAD_ARM_UCONTEXT_TO_REG(reg, uc)				\
-do {									\
-	int _reg_;							\
-									\
-	for (_reg_ = 0; _reg_ <= 12; _reg_++)				\
-		(reg)->r[_reg_] =					\
-		    (uc)->uc_mcontext.__gregs[_REG_R0 + _reg_];		\
-	(reg)->r_sp = (uc)->uc_mcontext.__gregs[_REG_SP];		\
-	(reg)->r_lr = (uc)->uc_mcontext.__gregs[_REG_LR];		\
-	(reg)->r_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-	(reg)->r_cpsr = (uc)->uc_mcontext.__gregs[_REG_CPSR];		\
-} while (/*CONSTCOND*/0)
-
-#ifdef __APCS_26__
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc) PTHREAD_ARM_UCONTEXT_TO_REG((reg), (uc))
-#else
-/* Need to signal in the CPSR that this is 32-bit ARM */
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc)				\
-do {									\
-	PTHREAD_ARM_UCONTEXT_TO_REG((reg), (uc));			\
-	if ((uc)->uc_flags & _UC_USER)					\
-		(reg)->r_cpsr = 0x10;					\
-} while (/*CONSTCOND*/0)
-#endif
-
-
-#define	PTHREAD_REG_TO_UCONTEXT(uc, reg)				\
-do {									\
-	int _reg_;							\
-									\
-	for (_reg_ = 0; _reg_ <= 12; _reg_++)				\
-		(uc)->uc_mcontext.__gregs[_REG_R0 + _reg_] =		\
-		    (reg)->r[_reg_];					\
-	(uc)->uc_mcontext.__gregs[_REG_SP] = (reg)->r_sp;		\
-	(uc)->uc_mcontext.__gregs[_REG_LR] = (reg)->r_lr;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->r_pc;		\
-	(uc)->uc_mcontext.__gregs[_REG_CPSR] = (reg)->r_cpsr;		\
-} while (/*CONSTCOND*/0)
-
-/*
- * XXX Need to deal with VFP.
- */
-#define	PTHREAD_UCONTEXT_TO_FPREG(freg, uc)				\
-do {									\
-	(freg)->fpr_fpsr = (uc)->uc_mcontext.__fpu.__fpregs.__fp_fpsr;	\
-	memcpy((freg)->fpr, (uc)->uc_mcontext.__fpu.__fpregs.__fp_fr,	\
-	    sizeof((freg)->fpr));					\
-} while (/*CONSTCOND*/0)
-
-#define	PTHREAD_FPREG_TO_UCONTEXT(uc, freg)				\
-do {									\
-	(uc)->uc_mcontext.__fpu.__fpregs.__fp_fpsr = (freg)->fpr_fpsr;	\
-	memcpy((uc)->uc_mcontext.__fpu.__fpregs.__fp_fr, (freg)->fpr,	\
-	    sizeof((uc)->uc_mcontext.__fpu.__fpregs.__fp_fr));		\
-} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_ARM_MD_H */

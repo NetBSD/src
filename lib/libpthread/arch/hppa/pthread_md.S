@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_md.c,v 1.6 2009/03/29 09:30:05 ad Exp $	*/
+/*	$NetBSD: pthread_md.S,v 1.1 2009/05/16 22:20:40 ad Exp $	*/
 
-/*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Wayne Knowles
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,47 +29,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_md.c,v 1.6 2009/03/29 09:30:05 ad Exp $");
+#include <machine/asm.h>
 
-#include <sys/param.h>
-#include <sys/sysctl.h>
+LEAF_ENTRY(pthread__ras_simple_lock_init)
+	ldi	1,%ret0			/* 1 == unlocked */
+	stw	%ret0,0(%arg0)
+	stw	%ret0,4(%arg0)
+	stw	%ret0,8(%arg0)
+	stw	%ret0,12(%arg0)
+	bv,n	%r0(%rp)
+EXIT(pthread__ras_simple_lock_init)
 
-#include <machine/sysarch.h>
-#include <machine/cpu.h>
+	.global pthread__lock_ras_start
+	.global pthread__lock_ras_end
 
-#include "pthread.h"
-#include "pthread_int.h"
+LEAF_ENTRY(pthread__ras_simple_lock_try)
+	ldo	15(%arg0),%arg0
+	depi	0,31,4,%arg0
 
-int (*_md_getcontext_u)(ucontext_t *);
-int (*_md_setcontext_u)(const ucontext_t *);
-int (*_md_swapcontext_u)(ucontext_t *, const ucontext_t *);
+pthread__lock_ras_start:
+	ldw	0(%arg0),%ret0
+	stw	%r0,0(%arg0)		/* 0 == locked */
+pthread__lock_ras_end:
 
-/*
- * Initialize the function pointers for get/setcontext to the
- * old-fp-save (s87) or new-fxsave (xmm) FP routines.
- */
-void
-pthread__i386_init(void)
-{
-	int mib[2];
-	size_t len;
-	int use_fxsave;
+	comiclr,= 0,%ret0,%ret0		/* if locked return 0 */
+	ldi	1,%ret0			/* else return 1 */
+	bv,n	%r0(%rp)
+EXIT(pthread__ras_simple_lock_try)
 
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_OSFXSR;
 
-	len = sizeof(use_fxsave);
-	sysctl(mib, 2, &use_fxsave, &len, NULL, 0);
-
-	if (use_fxsave) {
-		_md_getcontext_u = _getcontext_u_xmm;
-		_md_setcontext_u = _setcontext_u_xmm;
-		_md_swapcontext_u = _swapcontext_u_xmm;
-	} else {
-		_md_getcontext_u = _getcontext_u_s87;
-		_md_setcontext_u = _setcontext_u_s87;
-		_md_swapcontext_u = _swapcontext_u_s87;
-	}
-
-}
+LEAF_ENTRY(pthread__ras_simple_unlock)
+	ldo	15(%arg0),%arg0
+	depi	0,31,4,%arg0
+	ldi	1,%ret0			/* 1 == unlocked */
+	bv	%r0(%rp)
+	stw	%ret0,0(%arg0)
+EXIT(pthread__ras_simple_unlock)

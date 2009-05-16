@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.7 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.8 2009/05/16 22:20:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,64 +43,5 @@ pthread__sp(void)
 }
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
-#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_EPC])
-
-/*
- * Usable stack space below the ucontext_t.
- *    For a good time, see comments in pthread_switch.S and
- *    ../i386/pthread_switch.S about STACK_SWITCH.
- */
-#define STACKSPACE	(6*4)		/* 6 integer values */
-
-/*
- * Conversions between struct reg and struct mcontext. Used by
- * libpthread_dbg.  Note that in the "reg" structure, the indices
- * are the same as are used in the "frame" structure in the kernel.
- * These do NOT, in all cases, match the indices used in the
- * "mcontext" structure.
- */
-#include <mips/regnum.h>
-
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc)				\
-do {									\
-	memcpy(&(reg)->r_regs[_R_AST], &(uc)->uc_mcontext.__gregs[_REG_AT],\
-	    sizeof(__greg_t) * 31);					\
-	(reg)->r_regs[_R_MULLO] = (uc)->uc_mcontext.__gregs[_REG_MDLO];	\
-	(reg)->r_regs[_R_MULHI] = (uc)->uc_mcontext.__gregs[_REG_MDHI];	\
-	(reg)->r_regs[_R_CAUSE] = (uc)->uc_mcontext.__gregs[_REG_CAUSE];\
-	(reg)->r_regs[_R_PC] = (uc)->uc_mcontext.__gregs[_REG_EPC];	\
-	(reg)->r_regs[_R_SR] = (uc)->uc_mcontext.__gregs[_REG_SR];	\
-} while (/*CONSTCOND*/0)
-
-#define PTHREAD_REG_TO_UCONTEXT(uc, reg)				\
-do {									\
-	memcpy(&(uc)->uc_mcontext.__gregs[_REG_AT], &(reg)->r_regs[_R_AST],\
-	    sizeof(__greg_t) * 31);					\
-	(uc)->uc_mcontext.__gregs[_REG_MDLO] = (reg)->r_regs[_R_MULLO];	\
-	(uc)->uc_mcontext.__gregs[_REG_MDHI] = (reg)->r_regs[_R_MULHI];	\
-	(uc)->uc_mcontext.__gregs[_REG_CAUSE] = (reg)->r_regs[_R_CAUSE];\
-	(uc)->uc_mcontext.__gregs[_REG_EPC] = (reg)->r_regs[_R_PC];	\
-	(uc)->uc_mcontext.__gregs[_REG_SR] = (reg)->r_regs[_R_SR];	\
-									\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
-} while (/*CONSTCOND*/0)
-
-#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)       			\
-do {									\
-	memcpy((freg), &(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs,	\
-	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs));	\
-	(freg)->r_regs[_R_FSR - _FPBASE] =				\
-	    (uc)->uc_mcontext.__fpregs.__fp_csr;			\
-} while (/*CONSTCOND*/0)
-
-#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg)				\
-do {						       	       		\
-	memcpy(&(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs, (freg),	\
-	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs));	\
-	(uc)->uc_mcontext.__fpregs.__fp_csr =				\
-	    (freg)->r_regs[_R_FSR - _FPBASE];				\
-									\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
-} while (/*CONSTCOND*/0)
 
 #endif /* !_LIB_PTHREAD_MIPS_MD_H */
