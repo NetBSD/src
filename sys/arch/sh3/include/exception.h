@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.11 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: exception.h,v 1.12 2009/05/16 10:11:50 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@
 #define	SH4_INTEVT_IRQ13	0x3a0
 #define	SH4_INTEVT_IRQ14	0x3c0
 #define	SH4_INTEVT_IRQ15	0x3e0
+
+#define	SH4_INTEVT_GPIO		0x620
 
 #define	SH4_INTEVT_PCISERR	0xa00
 #define	SH4_INTEVT_PCIDMA3	0xa20
