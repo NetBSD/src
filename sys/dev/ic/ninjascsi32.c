@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.18 2008/07/09 19:08:44 joerg Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.19 2009/05/16 05:26:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.18 2008/07/09 19:08:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.19 2009/05/16 05:26:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1280,7 +1280,7 @@ njsc32_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct scsipi_xfer_mode *xm;
 	struct njsc32_target *target;
 
-	sc = (void *)chan->chan_adapter->adapt_dev;
+	sc = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -1444,7 +1444,9 @@ static int
 njsc32_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd,
     void *addr, int flag, struct proc *p)
 {
-	struct njsc32_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct njsc32_softc *sc;
+
+	sc = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (cmd) {
 	case SCBUSIORESET:
