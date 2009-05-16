@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.19 2009/03/18 17:06:41 cegger Exp $	*/
+/*	$NetBSD: sfas.c,v 1.20 2009/05/16 16:40:58 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.19 2009/03/18 17:06:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.20 2009/05/16 16:40:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -739,7 +739,7 @@ sfas_setup_nexus(struct sfas_softc *dev, struct nexus *nexus, struct sfas_pendin
 /* Setup the nexus struct. */
 	nexus->ID	   = ((mode & SFAS_SELECT_R) ? 0xC0 : 0x80) | lun;
 	nexus->clen	   = clen;
-	memcpy( nexus->cbuf, cbuf, nexus->clen);
+	memcpy(nexus->cbuf, cbuf, nexus->clen);
 	nexus->cbuf[1] |= lun << 5;		/* Fix the lun bits */
 	nexus->cur_link	   = 0;
 	nexus->dma_len	   = 0;
@@ -1123,7 +1123,7 @@ sfas_midaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 				    && left)
 				dev->sc_bump_va[len-(left--)] = *rp->sfas_fifo;
 
-			      memcpy( dev->sc_buf, dev->sc_bump_va, len-left);
+			      memcpy(dev->sc_buf, dev->sc_bump_va, len-left);
 			    }
 			  } else {
 			    /* Count any unsent bytes and flush them. */
@@ -1237,7 +1237,7 @@ sfas_postaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 			dev->sc_dma_len = len;
 
 			if (nexus->state == SFAS_NS_DATA_OUT)
-			  memcpy( dev->sc_bump_va, dev->sc_buf, dev->sc_dma_len);
+			  memcpy(dev->sc_bump_va, dev->sc_buf, dev->sc_dma_len);
 		  } else {
 			dev->sc_dma_buf = dev->sc_dma_blk_ptr;
 			dev->sc_dma_len = dev->sc_dma_blk_len;
