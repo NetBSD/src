@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.13 2009/01/18 10:18:32 lukem Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.14 2009/05/16 23:59:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.13 2009/01/18 10:18:32 lukem Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.14 2009/05/16 23:59:56 rmind Exp $");
 #endif
 
 #include <stdio.h>
@@ -164,6 +164,8 @@ main(int argc, char **argv)
 			err(EXIT_FAILURE, "kvm_getlwps");
 		for (lwp = lwp_list, i = 0; i < count; lwp++, i++) {
 			if (lid && lid != lwp->l_lid)
+				continue;
+			if (lwp->l_stat == LSIDL || lwp->l_stat == LSZOMB)
 				continue;
 			thread_info(pid, lwp->l_lid);
 		}
