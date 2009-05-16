@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.10 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.11 2009/05/16 22:23:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@ pthread__sp(void)
 }
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_URSP])
-#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_RIP])
 
 /*
  * Set initial, sane values for registers whose values aren't just
@@ -63,38 +62,6 @@ pthread__sp(void)
 	(ucp)->uc_mcontext.__gregs[_REG_CS] = 0x1b,			\
 	(ucp)->uc_mcontext.__gregs[_REG_SS] = 0x23,			\
 	(ucp)->uc_mcontext.__gregs[_REG_RFL] = 0x202;
-
-/*
- * Usable stack space below the ucontext_t. 
- * See comment in pthread_switch.S about STACK_SWITCH.
- */
-#define STACKSPACE	64	/* room for 8 long values */
-
-/*
- * Conversions between struct reg and struct mcontext. Used by
- * libpthread_dbg.
- */
-
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc) \
-	memcpy(reg, (uc)->uc_mcontext.__gregs, _NGREG * sizeof (long));
-
-#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	memcpy((uc)->uc_mcontext.__gregs, reg, _NGREG * sizeof (long)); \
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER; 	\
-	} while (/*CONSTCOND*/0)
-
-
-#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)		       		\
-	(void)memcpy(&(freg)->fxstate,					\
-        (uc)->uc_mcontext.__fpregs, sizeof(struct fpreg))
-
-#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
-	(void)memcpy(							\
-        (uc)->uc_mcontext.__fpregs,					\
-	&(freg)->fxstate, sizeof(struct fpreg));			\
-	/*LINTED precision loss */					\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;	\
-	} while (/*CONSTCOND*/0)
 
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
 
