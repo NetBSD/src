@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.31 2009/05/09 03:33:10 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.32 2009/05/16 08:36:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.31 2009/05/09 03:33:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.32 2009/05/16 08:36:32 yamt Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -498,7 +498,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * set WRITE_WANTED to block out new readers, and let them
 	 * do the work of acquring the lock in rw_vector_enter().
 	 */
-	if (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0)) {
+	if (rcnt == 0 || decr == RW_READ_INCR) {
 		RW_DASSERT(rw, wcnt != 0);
 		RW_DASSERT(rw, (owner & RW_WRITE_WANTED) != 0);
 
