@@ -1,4 +1,4 @@
-/*	$NetBSD: pim.h,v 1.2 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: pim.h,v 1.3 2009/05/16 16:06:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * References:
  *
  * "PA/RISC 1.1 I/O Firmware Architecture Reference Specification",
+ * Version 1.0, August 22, 2001.
+ *
+ * "PA/RISC 2.0 I/O Firmware Architecture Reference Specification",
  * Version 1.0, August 22, 2001.
  */
 
@@ -259,6 +262,141 @@ struct hp700_pim_lpmc {
 /* The TOC PIM data. */
 struct hp700_pim_toc {
 	struct	hp700_pim_regs pim_toc_regs;
+	u_int	pim_toc_hversion_dep;
+	u_int	pim_toc_cpu_state;
+};
+
+struct hp700_pim64_regs {
+
+	/* The general registers. */
+	u_int64_t	pim_regs_r0;
+	u_int64_t	pim_regs_r1;
+	u_int64_t	pim_regs_r2;
+	u_int64_t	pim_regs_r3;
+	u_int64_t	pim_regs_r4;
+	u_int64_t	pim_regs_r5;
+	u_int64_t	pim_regs_r6;
+	u_int64_t	pim_regs_r7;
+	u_int64_t	pim_regs_r8;
+	u_int64_t	pim_regs_r9;
+	u_int64_t	pim_regs_r10;
+	u_int64_t	pim_regs_r11;
+	u_int64_t	pim_regs_r12;
+	u_int64_t	pim_regs_r13;
+	u_int64_t	pim_regs_r14;
+	u_int64_t	pim_regs_r15;
+	u_int64_t	pim_regs_r16;
+	u_int64_t	pim_regs_r17;
+	u_int64_t	pim_regs_r18;
+	u_int64_t	pim_regs_r19;
+	u_int64_t	pim_regs_r20;
+	u_int64_t	pim_regs_r21;
+	u_int64_t	pim_regs_r22;
+	u_int64_t	pim_regs_r23;
+	u_int64_t	pim_regs_r24;
+	u_int64_t	pim_regs_r25;
+	u_int64_t	pim_regs_r26;
+	u_int64_t	pim_regs_r27;
+	u_int64_t	pim_regs_r28;
+	u_int64_t	pim_regs_r29;
+	u_int64_t	pim_regs_r30;
+	u_int64_t	pim_regs_r31;
+
+	/* The control registers. */
+	u_int64_t	pim_regs_cr0;
+	u_int64_t	pim_regs_cr1;
+	u_int64_t	pim_regs_cr2;
+	u_int64_t	pim_regs_cr3;
+	u_int64_t	pim_regs_cr4;
+	u_int64_t	pim_regs_cr5;
+	u_int64_t	pim_regs_cr6;
+	u_int64_t	pim_regs_cr7;
+	u_int64_t	pim_regs_cr8;
+	u_int64_t	pim_regs_cr9;
+	u_int64_t	pim_regs_cr10;
+	u_int64_t	pim_regs_cr11;
+	u_int64_t	pim_regs_cr12;
+	u_int64_t	pim_regs_cr13;
+	u_int64_t	pim_regs_cr14;
+	u_int64_t	pim_regs_cr15;
+	u_int64_t	pim_regs_cr16;
+	u_int64_t	pim_regs_cr17;
+	u_int64_t	pim_regs_cr18;
+	u_int64_t	pim_regs_cr19;
+	u_int64_t	pim_regs_cr20;
+	u_int64_t	pim_regs_cr21;
+	u_int64_t	pim_regs_cr22;
+	u_int64_t	pim_regs_cr23;
+	u_int64_t	pim_regs_cr24;
+	u_int64_t	pim_regs_cr25;
+	u_int64_t	pim_regs_cr26;
+	u_int64_t	pim_regs_cr27;
+	u_int64_t	pim_regs_cr28;
+	u_int64_t	pim_regs_cr29;
+	u_int64_t	pim_regs_cr30;
+	u_int64_t	pim_regs_cr31;
+
+	/* The space registers. */
+	u_int64_t	pim_regs_sr0;
+	u_int64_t	pim_regs_sr1;
+	u_int64_t	pim_regs_sr2;
+	u_int64_t	pim_regs_sr3;
+	u_int64_t	pim_regs_sr4;
+	u_int64_t	pim_regs_sr5;
+	u_int64_t	pim_regs_sr6;
+	u_int64_t	pim_regs_sr7;
+
+	/* The back entries of the instruction address queues. */
+	u_int64_t	pim_regs_iisq_tail;
+	u_int64_t	pim_regs_iioq_tail;
+};
+
+struct hp700_pim64_checks {
+	/* The Check Type. */	
+	u_int	pim_check_type;
+
+	/*
+	 * The CPU State.  In addition to the common PIM_CPU_
+	 * bits defined below, some fields are HPMC-specific.
+	 */
+	u_int	pim_check_cpu_state;
+
+	/* The Cache Check word. */
+	u_int	pim_check_cache;
+
+	/* The TLB Check word. */
+	u_int	pim_check_tlb;
+
+	/* The Bus Check word. */
+	u_int	pim_check_bus;
+
+	/* The Assist Check word. */
+	u_int	pim_check_assist;
+
+	/* Additional information about the check. */
+	u_int	pim_check_assist_state;
+	u_int	pim_check_path_info;
+	u_int64_t	pim_check_responder;
+	u_int64_t	pim_check_requestor;
+};
+
+/* The PARISC 2.0 HPMC PIM data. */
+struct hp700_pim64_hpmc {
+	struct hp700_pim64_regs pim_hpmc_regs;
+	struct hp700_pim64_checks pim_hpmc_checks;
+	struct hp700_pim_fpregs pim_hpmc_fpregs;
+};
+
+/* The PARISC 2.0 LPMC PIM data. */
+struct hp700_pim64_lpmc {
+	u_int64_t pim_lmpc_hversion_dep[74];
+	struct hp700_pim64_checks pim_lpmc_checks;
+	struct hp700_pim_fpregs pim_lpmc_fpregs;
+};
+
+/* The PARISC 2.0 TOC PIM data. */
+struct hp700_pim64_toc {
+	struct	hp700_pim64_regs pim_toc_regs;
 	u_int	pim_toc_hversion_dep;
 	u_int	pim_toc_cpu_state;
 };
