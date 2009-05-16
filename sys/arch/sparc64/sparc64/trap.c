@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.156 2008/12/16 22:35:27 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.157 2009/05/16 19:15:34 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2008/12/16 22:35:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2009/05/16 19:15:34 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -98,15 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2008/12/16 22:35:27 christos Exp $");
 
 #ifndef offsetof
 #define	offsetof(s, f) ((size_t)&((s *)0)->f)
-#endif
-
-#ifdef DEBUG
-/* What trap level are we running? */
-#define tl() ({ \
-	int _l; \
-	__asm volatile("rdpr %%tl, %0" : "=r" (_l) :); \
-	_l; \
-})
 #endif
 
 #ifdef TRAPSTATS
@@ -467,13 +458,13 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 			((type == T_RWRET) ? "rwret" : T)));
 	}
 	if ((trapdebug & (TDB_FOLLOW | TDB_TRAP)) ||
-	    ((trapdebug & TDB_TL) && tl())) {
+	    ((trapdebug & TDB_TL) && gettl())) {
 		char sbuf[sizeof(PSTATE_BITS) + 64];
 
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
 		printf("trap: type 0x%x: lvl=%d pc=%lx &tf=%p",
-		       type, (int)tl(), pc, tf);
+		       type, gettl(), pc, tf);
 		snprintb(sbuf, sizeof(sbuf), PSTATE_BITS, pstate);
 		printf(" npc=%lx pstate=%s %s\n",
 		       (long)tf->tf_npc, sbuf, 
@@ -1031,7 +1022,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
-	if ((trapdebug & TDB_TL) && tl()) {
+	if ((trapdebug & TDB_TL) && gettl()) {
 		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 			"nsaved=%d\n",
 			(long)(curproc?curproc->p_pid:-1), tf, type,
@@ -1304,13 +1295,13 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
-	if ((trapdebug & TDB_TL) && tl()) {
+	if ((trapdebug & TDB_TL) && gettl()) {
 		char buf[768];
 		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
 
-		printf("%d tl %ld data_access_error(%lx, %lx, %lx, %p)="
+		printf("%d tl %d data_access_error(%lx, %lx, %lx, %p)="
 		       "%lx @ %lx %s\n",
-		       curproc ? curproc->p_pid : -1, (long)tl(),
+		       curproc ? curproc->p_pid : -1, gettl(),
 		       (long)type, (long)sfva, (long)afva, tf,
 		       (long)tf->tf_tstate, 
 		       (long)tf->tf_pc, buf);
@@ -1457,9 +1448,9 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
-	if ((trapdebug & TDB_TL) && tl()) {
+	if ((trapdebug & TDB_TL) && gettl()) {
 		printf("%d tl %d text_access_fault(%x, %lx, %p)\n",
-		       curproc?curproc->p_pid:-1, tl(), type, pc, tf); 
+		       curproc?curproc->p_pid:-1, gettl(), type, pc, tf); 
 		Debugger();
 	}
 	if (trapdebug & TDB_STOPCALL) { 
@@ -1600,10 +1591,10 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
-	if ((trapdebug & TDB_TL) && tl()) {
+	if ((trapdebug & TDB_TL) && gettl()) {
 		snprintb(buf, sizeof buf, SFSR_BITS, sfsr);
-		printf("%ld tl %ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
-		       (long)(curproc?curproc->p_pid:-1), (long)tl(),
+		printf("%d tl %d text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
+		       curproc?curproc->p_pid:-1, gettl(),
 		       (long)type, (long)pc, (long)afva, tf, 
 		       (long)tf->tf_tstate, (long)tf->tf_pc, buf); 
 		Debugger();

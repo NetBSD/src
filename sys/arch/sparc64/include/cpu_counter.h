@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.7 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.8 2009/05/16 19:15:34 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #ifdef _KERNEL
 
 #include <machine/cpu.h>
-#include <machine/ctlreg.h>
 
 #define	cpu_hascounter()	(1)
 
@@ -47,14 +46,14 @@ static __inline uint64_t
 cpu_counter(void)
 {
 
-	return (tick());
+	return (gettick());
 }
 
 static __inline uint32_t
 cpu_counter32(void)
 {
 
-	return (tick() & 0xffffffffUL);
+	return (gettick() & 0xffffffffUL);
 }
 
 static __inline uint64_t
