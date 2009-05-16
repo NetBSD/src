@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.6 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.7 2009/05/16 22:20:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@ pthread__sp(void)
 }
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
-#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
 /*
  * Set initial, sane values for registers whose values aren't just
@@ -52,31 +51,6 @@ pthread__sp(void)
  */
 #define _INITCONTEXT_U_MD(ucp)						\
 	(ucp)->uc_mcontext.__gregs[_REG_PSL] = 0x03c00000;
-
-#define	STACKSPACE	0
-/*
- * Conversions between struct reg and struct mcontext. Used by
- * libpthread_dbg.
- */
-
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
-	memcpy((reg), &(uc)->uc_mcontext.__gregs, 17 * sizeof(__greg_t)); \
-	(reg)->fp = (uc)->uc_mcontext.__gregs[_REG_FP];			\
-	(reg)->sp = (uc)->uc_mcontext.__gregs[_REG_SP];			\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	memcpy(&(uc)->uc_mcontext.__gregs, (reg), 17 * sizeof(__greg_t)); \
-	(uc)->uc_mcontext.__gregs[_REG_FP] = (reg)->fp;			\
-	(uc)->uc_mcontext.__gregs[_REG_SP] = (reg)->sp;			\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_UCONTEXT_TO_FPREG(reg, uc) do {				\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_FPREG_TO_UCONTEXT(uc, reg) do {				\
-	} while (/*CONSTCOND*/0)
 
 /* Don't need additional memory barriers. */
 #define	PTHREAD__ATOMIC_IS_MEMBAR

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2008/10/26 00:00:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.56 2009/05/16 22:21:18 ad Exp $
 #
 
 WARNS=	4
@@ -29,18 +29,7 @@ CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
 CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
 
 # XXX: This crappy poke at libc's internals needs to be fixed.
-# We need to put this *after our own includes, so that our "assym.h"
-# gets picked, instead of the libc one
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
-
-DPSRCS+=	assym.h
-CLEANFILES+=	assym.h
-
-assym.h: ${ARCHDIR}/genassym.cf pthread.h pthread_int.h pthread_md.h
-	${_MKTARGET_CREATE}
-	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
-	mv -f assym.h.tmp assym.h
 
 LIB=	pthread
 
@@ -64,9 +53,8 @@ SRCS+=	pthread_tsd.c
 SRCS+=	res_state.c
 SRCS+=	sem.c
 # Architecture-dependent files
-SRCS+=	_context_u.S
-.if exists(${ARCHDIR}/pthread_md.c)
-SRCS+= pthread_md.c
+.if exists(${ARCHDIR}/pthread_md.S)
+SRCS+= pthread_md.S
 .endif
 
 .if defined(PTHREAD__COMPAT)
@@ -98,10 +86,6 @@ pthread_mutex.po: pthread_mutex.o
 	cp pthread_mutex.o pthread_mutex.po
 
 COPTS.pthread.c += -Wno-stack-protector
-
-_context_u.po: _context_u.o
-	${_MKTARGET_CREATE}
-	cp _context_u.o _context_u.po
 
 MAN+=	affinity.3 pthread.3 \
 	pthread_attr.3 \
@@ -161,8 +145,6 @@ MLINKS+=	pthread_spin_lock.3 pthread_spin_trylock.3
 MLINKS+=	pthread_suspend_np.3 pthread_resume_np.3
 MLINKS+=	pthread_testcancel.3 pthread_setcancelstate.3
 MLINKS+=	pthread_testcancel.3 pthread_setcanceltype.3
-
-pthread_switch.S _context_u.S: assym.h
 
 .include <bsd.lib.mk>
 

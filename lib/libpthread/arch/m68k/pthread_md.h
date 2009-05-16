@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.6 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.7 2009/05/16 22:20:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,13 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Based on the i386 version.
- */
-
 #ifndef _LIB_PTHREAD_M68K_MD_H
 #define _LIB_PTHREAD_M68K_MD_H
-
 
 static inline long
 pthread__sp(void)
@@ -47,50 +42,6 @@ pthread__sp(void)
 }
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_A7])
-#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
-
-/*
- * Usable stack space below the ucontext_t. 
- * See comment in pthread_switch.S about STACK_SWITCH.
- */
-#define STACKSPACE	12	/* room for 3 integer values */
-
-/*
- * Conversions between struct reg and struct mcontext. Used by
- * libpthread_dbg.
- */
-
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
-	memcpy(&(reg)->r_regs, &(uc)->uc_mcontext.__gregs,		\
-		_REG_PC * sizeof(__greg_t));				\
-	(reg)->r_sr = (uc)->uc_mcontext.__gregs[_REG_PS];		\
-	(reg)->r_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	memcpy(&(uc)->uc_mcontext.__gregs, &(reg)->r_regs,		\
-		_REG_PC * sizeof(__greg_t));				\
-	(uc)->uc_mcontext.__gregs[_REG_PS] = (reg)->r_sr;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (reg)->r_pc;		\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc) do {       			\
-	memcpy(&(freg)->r_regs, &(uc)->uc_mcontext.__fpregs.__fp_fpregs,\
-		8 * 3 * sizeof(int));					\
-	(freg)->r_fpcr = (uc)->uc_mcontext.__fpregs.__fp_pcr;		\
-	(freg)->r_fpsr = (uc)->uc_mcontext.__fpregs.__fp_psr;		\
-	(freg)->r_fpiar = (uc)->uc_mcontext.__fpregs.__fp_piaddr;      	\
-	} while (/*CONSTCOND*/0)
-
-#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
-	memcpy(&(uc)->uc_mcontext.__fpregs.__fp_fpregs, &(freg)->r_regs,\
-		8 * 3 * sizeof(int));					\
-	(uc)->uc_mcontext.__fpregs.__fp_pcr = (freg)->r_fpcr;		\
-	(uc)->uc_mcontext.__fpregs.__fp_psr = (freg)->r_fpsr;		\
-	(uc)->uc_mcontext.__fpregs.__fp_piaddr = (freg)->r_fpiar;      	\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
-	} while (/*CONSTCOND*/0)
 
 /* m68k will not go SMP */
 #define	PTHREAD__ATOMIC_IS_MEMBAR
