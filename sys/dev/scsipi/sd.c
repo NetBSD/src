@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.281 2009/05/12 14:44:31 cegger Exp $	*/
+/*	$NetBSD: sd.c,v 1.282 2009/05/16 20:10:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.281 2009/05/12 14:44:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.282 2009/05/16 20:10:52 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -103,6 +103,7 @@ static void	sddone(struct scsipi_xfer *, int);
 static bool	sd_suspend(device_t PMF_FN_PROTO);
 static bool	sd_shutdown(device_t, int);
 static int	sd_interpret_sense(struct scsipi_xfer *);
+static void	sdlastclose(struct sd_softc *);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
 		    int, int *);
@@ -349,7 +350,20 @@ static int
 sddetach(device_t self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
-	int s, bmaj, cmaj, i, mn;
+	int s, bmaj, cmaj, i, mn, rc;
+
+	rc = 0;
+	mutex_enter(&sd->sc_dk.dk_openlock);
+	if (sd->sc_dk.dk_openmask == 0)
+		;	/* nothing to do */
+	else if ((flags & DETACH_FORCE) != 0)
+		rc = EBUSY;
+	else
+		sdlastclose(sd);
+	mutex_exit(&sd->sc_dk.dk_openlock);
+
+	if (rc != 0)
+		return rc;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&sd_bdevsw);
@@ -582,6 +596,42 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 /*
+ * Caller must hold sd->sc_dk.dk_openlock.
+ */
+static void
+sdlastclose(struct sd_softc *sd)
+{
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
+
+	/*
+	 * If the disk cache needs flushing, and the disk supports
+	 * it, do it now.
+	 */
+	if ((sd->flags & SDF_DIRTY) != 0) {
+		if (sd_flush(sd, 0)) {
+			aprint_error_dev(sd->sc_dev,
+				"cache synchronization failed\n");
+			sd->flags &= ~SDF_FLUSHING;
+		} else
+			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+	}
+
+	scsipi_wait_drain(periph);
+
+	if (periph->periph_flags & PERIPH_REMOVABLE)
+		scsipi_prevent(periph, SPAMR_ALLOW,
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+		    XS_CTL_IGNORE_NOT_READY |
+		    XS_CTL_SILENT);
+	periph->periph_flags &= ~PERIPH_OPEN;
+
+	scsipi_wait_drain(periph);
+
+	scsipi_adapter_delref(adapt);
+}
+
+/*
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
@@ -589,8 +639,6 @@ static int
 sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
-	struct scsipi_periph *periph = sd->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = SDPART(dev);
 
 	mutex_enter(&sd->sc_dk.dk_openlock);
@@ -605,33 +653,8 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	sd->sc_dk.dk_openmask =
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
-	if (sd->sc_dk.dk_openmask == 0) {
-		/*
-		 * If the disk cache needs flushing, and the disk supports
-		 * it, do it now.
-		 */
-		if ((sd->flags & SDF_DIRTY) != 0) {
-			if (sd_flush(sd, 0)) {
-				aprint_error_dev(sd->sc_dev,
-					"cache synchronization failed\n");
-				sd->flags &= ~SDF_FLUSHING;
-			} else
-				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
-		}
-
-		scsipi_wait_drain(periph);
-
-		if (periph->periph_flags & PERIPH_REMOVABLE)
-			scsipi_prevent(periph, SPAMR_ALLOW,
-			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-			    XS_CTL_IGNORE_NOT_READY |
-			    XS_CTL_SILENT);
-		periph->periph_flags &= ~PERIPH_OPEN;
-
-		scsipi_wait_drain(periph);
-
-		scsipi_adapter_delref(adapt);
-	}
+	if (sd->sc_dk.dk_openmask == 0)
+		sdlastclose(sd);
 
 	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (0);
