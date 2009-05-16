@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.378 2009/05/03 16:52:54 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.379 2009/05/16 08:29:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,12 +76,22 @@
  * change from a non-zero value to zero, again the interlock must be
  * held.
  *
- * Changing the usecount from a non-zero value to a non-zero value can
- * safely be done using atomic operations, without the interlock held.
+ * There's a flag bit, VC_XLOCK, embedded in v_usecount.
+ * To raise v_usecount, if the VC_XLOCK bit is set in it, the interlock
+ * must be held.
+ * To modify the VC_XLOCK bit, the interlock must be held.
+ * We always keep the usecount (v_usecount & VC_MASK) non-zero while the
+ * VC_XLOCK bit is set.
+ *
+ * Unless the VC_XLOCK bit is set, changing the usecount from a non-zero
+ * value to a non-zero value can safely be done using atomic operations,
+ * without the interlock held.
+ * Even if the VC_XLOCK bit is set, decreasing the usecount to a non-zero
+ * value can be done using atomic operations, without the interlock held.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.378 2009/05/03 16:52:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.379 2009/05/16 08:29:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -361,8 +371,10 @@ try_nextlist:
 	 * before doing this.  If the vnode gains another reference while
 	 * being cleaned out then we lose - retry.
 	 */
-	atomic_inc_uint(&vp->v_usecount);
+	atomic_add_int(&vp->v_usecount, 1 + VC_XLOCK);
 	vclean(vp, DOCLOSE);
+	KASSERT(vp->v_usecount >= 1 + VC_XLOCK);
+	atomic_add_int(&vp->v_usecount, -VC_XLOCK);
 	if (vp->v_usecount == 1) {
 		/* We're about to dirty it. */
 		vp->v_iflag &= ~VI_CLEAN;
@@ -1229,7 +1241,7 @@ vtryget(vnode_t *vp)
 		return false;
 	}
 	for (use = vp->v_usecount;; use = next) {
-		if (use == 0) { 
+		if (use == 0 || __predict_false((use & VC_XLOCK) != 0)) {
 			/* Need interlock held if first reference. */
 			return false;
 		}
@@ -1318,9 +1330,10 @@ vtryrele(vnode_t *vp)
 	u_int use, next;
 
 	for (use = vp->v_usecount;; use = next) {
-		if (use == 1) { 
+		if (use == 1) {
 			return false;
 		}
+		KASSERT((use & VC_MASK) > 1);
 		next = atomic_cas_uint(&vp->v_usecount, use, use - 1);
 		if (__predict_true(next == use)) {
 			return true;
