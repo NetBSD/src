@@ -68,66 +68,61 @@
  * the writer function prototype
  */
 
-typedef struct __ops_writer_info __ops_writer_info_t;
+typedef struct __ops_writer_t	__ops_writer_t;
 typedef unsigned 
-__ops_writer_t(const unsigned char *,
+__ops_writer_func_t(const unsigned char *,
 	     unsigned,
 	     __ops_error_t **,
-	     __ops_writer_info_t *);
+	     __ops_writer_t *);
 typedef unsigned 
-__ops_writer_finaliser_t(__ops_error_t **, __ops_writer_info_t *);
-typedef void    __ops_writer_destroyer_t(__ops_writer_info_t *);
+__ops_writer_finaliser_t(__ops_error_t **, __ops_writer_t *);
+typedef void    __ops_writer_destroyer_t(__ops_writer_t *);
 
 /** Writer settings */
-struct __ops_writer_info {
-	__ops_writer_t   *writer;	/* !< the writer itself */
-	__ops_writer_finaliser_t *finaliser;	/* !< the writer's finaliser */
-	__ops_writer_destroyer_t *destroyer;	/* !< the writer's destroyer */
-	void           *arg;	/* writer-specific argument */
-	__ops_writer_info_t *next;/* !< next writer in the stack */
+struct __ops_writer_t {
+	__ops_writer_func_t	 *writer;	/* the writer itself */
+	__ops_writer_finaliser_t *finaliser;	/* the writer's finaliser */
+	__ops_writer_destroyer_t *destroyer;	/* the writer's destroyer */
+	void			 *arg;	/* writer-specific argument */
+	__ops_writer_t	 *next;/* next writer in the stack */
 };
 
 
-void           *__ops_writer_get_arg(__ops_writer_info_t *);
-unsigned 
-__ops_stacked_write(const void *, unsigned,
+void *__ops_writer_get_arg(__ops_writer_t *);
+unsigned __ops_stacked_write(const void *, unsigned,
 		  __ops_error_t **,
-		  __ops_writer_info_t *);
+		  __ops_writer_t *);
 
-void 
-__ops_writer_set(__ops_createinfo_t *,
-	       __ops_writer_t *,
+void __ops_writer_set(__ops_output_t *,
+	       __ops_writer_func_t *,
 	       __ops_writer_finaliser_t *,
 	       __ops_writer_destroyer_t *,
 	       void *);
-void 
-__ops_writer_push(__ops_createinfo_t *,
-		__ops_writer_t *,
+void __ops_writer_push(__ops_output_t *,
+		__ops_writer_func_t *,
 		__ops_writer_finaliser_t *,
 		__ops_writer_destroyer_t *,
 		void *);
-void            __ops_writer_pop(__ops_createinfo_t *);
-void            __ops_writer_generic_destroyer(__ops_writer_info_t *);
-unsigned 
-__ops_writer_passthrough(const unsigned char *,
+void __ops_writer_pop(__ops_output_t *);
+void __ops_writer_generic_destroyer(__ops_writer_t *);
+unsigned __ops_writer_passthrough(const unsigned char *,
 		       unsigned,
 		       __ops_error_t **,
-		       __ops_writer_info_t *);
+		       __ops_writer_t *);
 
-void            __ops_writer_set_fd(__ops_createinfo_t *, int);
-unsigned   __ops_writer_close(__ops_createinfo_t *);
+void __ops_writer_set_fd(__ops_output_t *, int);
+unsigned __ops_writer_close(__ops_output_t *);
 
-unsigned 
-__ops_write(const void *, unsigned, __ops_createinfo_t *);
-unsigned   __ops_write_length(unsigned, __ops_createinfo_t *);
-unsigned   __ops_write_ptag(__ops_content_tag_t, __ops_createinfo_t *);
-unsigned __ops_write_scalar(unsigned, unsigned, __ops_createinfo_t *);
-unsigned   __ops_write_mpi(const BIGNUM *, __ops_createinfo_t *);
-unsigned   __ops_write_encrypted_mpi(const BIGNUM *, __ops_crypt_t *, __ops_createinfo_t *);
+unsigned __ops_write(__ops_output_t *, const void *, unsigned);
+unsigned __ops_write_length(__ops_output_t *, unsigned);
+unsigned __ops_write_ptag(__ops_output_t *, __ops_content_tag_t);
+unsigned __ops_write_scalar(__ops_output_t *, unsigned, unsigned);
+unsigned __ops_write_mpi(__ops_output_t *, const BIGNUM *);
 
-void            writer_info_delete(__ops_writer_info_t *);
-unsigned   writer_info_finalise(__ops_error_t **, __ops_writer_info_t *);
+void writer_info_delete(__ops_writer_t *);
+unsigned writer_info_finalise(__ops_error_t **, __ops_writer_t *);
 
-void __ops_push_stream_enc_se_ip(__ops_createinfo_t *, const __ops_keydata_t *);
+void __ops_push_stream_enc_se_ip(__ops_output_t *,
+				const __ops_keydata_t *);
 
 #endif /* WRITER_H_ */
