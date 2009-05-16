@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.25 2009/03/18 17:06:44 cegger Exp $	*/
+/*	$NetBSD: bios32.c,v 1.26 2009/05/16 16:52:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.25 2009/03/18 17:06:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.26 2009/05/16 16:52:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,7 @@ smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 	if (i == indx) {
 		if (va + len < end) {
 			ret = dest;
-			memcpy( ret, va, len);
+			memcpy(ret, va, len);
 			ret[len - 1] = '\0';
 		}
 	}
