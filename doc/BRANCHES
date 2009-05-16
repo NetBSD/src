@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.279 2009/04/30 16:54:03 snj Exp $
+#	$NetBSD: BRANCHES,v 1.280 2009/05/16 12:08:43 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -591,7 +591,7 @@ Description:	make nfs client mp-safe
 Status:		Active
 Start Date:	Sun Apr 27 2008
 End Date:	
-Base Tag:	yamt-nfs-mp-base2
+Base Tag:	yamt-nfs-mp-base4
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
