@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.8 2009/03/18 17:06:44 cegger Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.9 2009/05/16 16:52:03 cegger Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.8 2009/03/18 17:06:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.9 2009/05/16 16:52:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ glxsb_crypto_newsession(void *aux, uint32_t *sidp, struct cryptoini *cri)
 		if (ses == NULL)
 			return (ENOMEM);
 		if (sesn != 0) {
-			memcpy( ses, sc->sc_sessions, sesn * sizeof(*ses));
+			memcpy(ses, sc->sc_sessions, sesn * sizeof(*ses));
 			memset(sc->sc_sessions, 0, sesn * sizeof(*ses));
 			free(sc->sc_sessions, M_DEVBUF);
 		}
@@ -347,7 +347,7 @@ glxsb_crypto_newsession(void *aux, uint32_t *sidp, struct cryptoini *cri)
 	ses->ses_klen = cri->cri_klen;
 
 	/* Copy the key (Geode LX wants the primary key only) */
-	memcpy( ses->ses_key, cri->cri_key, sizeof(ses->ses_key));
+	memcpy(ses->ses_key, cri->cri_key, sizeof(ses->ses_key));
 
 	*sidp = GLXSB_SID(0, sesn);
 	return (0);
@@ -492,9 +492,9 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		control = SB_CTL_ENC;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			memcpy( op_iv, crd->crd_iv, sizeof(op_iv));
+			memcpy(op_iv, crd->crd_iv, sizeof(op_iv));
 		else
-			memcpy( op_iv, ses->ses_iv, sizeof(op_iv));
+			memcpy(op_iv, ses->ses_iv, sizeof(op_iv));
 
 		if ((crd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -511,7 +511,7 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 	} else {
 		control = SB_CTL_DEC;
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			memcpy( op_iv, crd->crd_iv, sizeof(op_iv));
+			memcpy(op_iv, crd->crd_iv, sizeof(op_iv));
 		else {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
@@ -557,7 +557,7 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 			cuio_copyback((struct uio *)crp->crp_buf,
 			    crd->crd_skip + offset, len, op_dst);
 		else
-			memcpy( (char *)crp->crp_buf + crd->crd_skip + offset, op_dst,
+			memcpy((char *)crp->crp_buf + crd->crd_skip + offset, op_dst,
 			    len);
 
 		offset += len;
@@ -576,11 +576,11 @@ glxsb_crypto_process(void *aux, struct cryptop *crp, int hint)
 		 * time.
 		 */
 		if (crd->crd_flags & CRD_F_ENCRYPT) {
-			memcpy( piv, op_dst + len - sizeof(op_iv), sizeof(op_iv));
+			memcpy(piv, op_dst + len - sizeof(op_iv), sizeof(op_iv));
 		} else {
 			/* Decryption, only need this if another iteration */
 			if (tlen > 0) {
-				memcpy( piv, op_src + len - sizeof(op_iv),
+				memcpy(piv, op_src + len - sizeof(op_iv),
 				    sizeof(op_iv));
 			}
 		}
