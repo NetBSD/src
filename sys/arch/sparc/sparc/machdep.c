@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.292 2009/04/16 16:55:00 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.293 2009/05/16 17:01:15 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.292 2009/04/16 16:55:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.293 2009/05/16 17:01:15 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -682,7 +682,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	/*
 	 * Get the floating point registers
 	 */
-	memcpy( f->__fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
+	memcpy(f->__fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
 	f->__fp_nqsize = sizeof(struct fp_qentry);
 	f->__fp_nqel = fps->fs_qsize;
 	f->__fp_fsr = fps->fs_fsr;
@@ -794,7 +794,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 			return (EINVAL);
 		}
-		memcpy( fps->fs_regs, f->__fpu_regs, sizeof(fps->fs_regs));
+		memcpy(fps->fs_regs, f->__fpu_regs, sizeof(fps->fs_regs));
 		fps->fs_qsize = f->__fp_nqel;
 		fps->fs_fsr = f->__fp_fsr;
 		if (f->__fp_q != NULL) {
@@ -919,7 +919,7 @@ cpu_reboot(int howto, char *user_boot_string)
 		i = strlen(user_boot_string);
 		if (i > sizeof(str) - sizeof(opts) - 1)
 			prom_boot(user_boot_string);	/* XXX */
-		memcpy( str, user_boot_string, i);
+		memcpy(str, user_boot_string, i);
 		if (opts[0] != '\0')
 			str[i] = ' ';
 	}
