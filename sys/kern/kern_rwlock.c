@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.21.2.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.21.2.3 2009/05/16 10:41:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.21.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.21.2.3 2009/05/16 10:41:48 yamt Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -498,7 +498,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * set WRITE_WANTED to block out new readers, and let them
 	 * do the work of acquring the lock in rw_vector_enter().
 	 */
-	if (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0)) {
+	if (rcnt == 0 || decr == RW_READ_INCR) {
 		RW_DASSERT(rw, wcnt != 0);
 		RW_DASSERT(rw, (owner & RW_WRITE_WANTED) != 0);
 
@@ -660,6 +660,7 @@ rw_downgrade(krwlock_t *rw)
 		}
 	}
 
+	RW_WANTLOCK(rw, RW_READER, false);
 	RW_LOCKED(rw, RW_READER);
 	RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
 	RW_DASSERT(rw, RW_COUNT(rw) != 0);
@@ -678,7 +679,7 @@ rw_tryupgrade(krwlock_t *rw)
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, RW_WRITER, true);
+	RW_ASSERT(rw, rw_read_held(rw));
 
 	for (owner = rw->rw_owner;; owner = next) {
 		RW_ASSERT(rw, (owner & RW_WRITE_LOCKED) == 0);
@@ -695,6 +696,7 @@ rw_tryupgrade(krwlock_t *rw)
 	}
 
 	RW_UNLOCKED(rw, RW_READER);
+	RW_WANTLOCK(rw, RW_WRITER, true);
 	RW_LOCKED(rw, RW_WRITER);
 	RW_DASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
 	RW_DASSERT(rw, RW_OWNER(rw) == curthread);

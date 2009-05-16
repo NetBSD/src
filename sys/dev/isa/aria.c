@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.29 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: aria.c,v 1.29.4.1 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29.4.1 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,8 @@ struct aria_softc {
 	int	sc_sendcmd_err;
 };
 
-int	ariaprobe(struct device *, struct cfdata *, void *);
-void	ariaattach(struct device *, struct device *, void *);
+int	ariaprobe(device_t, cfdata_t, void *);
+void	ariaattach(device_t, device_t, void *);
 void	ariaclose(void *);
 int	ariaopen(void *, int);
 int	ariareset(bus_space_tag_t, bus_space_handle_t);
@@ -238,7 +238,7 @@ const struct audio_hw_if aria_hw_if = {
  * Probe for the aria hardware.
  */
 int
-ariaprobe(struct device *parent, struct cfdata *cf, void *aux)
+ariaprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia;
@@ -395,7 +395,7 @@ aria_do_kludge(
  * pseudo-device driver.
  */
 void
-ariaattach(struct device *parent, struct device *self, void *aux)
+ariaattach(device_t parent, device_t self, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct aria_softc *sc;

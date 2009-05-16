@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.38.4.1 2008/05/16 02:24:45 yamt Exp $ */
+/*      $NetBSD: sv.c,v 1.38.4.2 2009/05/16 10:41:40 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.38.4.1 2008/05/16 02:24:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.38.4.2 2009/05/16 10:41:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ int	svdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-static int	sv_match(struct device *, struct cfdata *, void *);
-static void	sv_attach(struct device *, struct device *, void *);
+static int	sv_match(device_t, cfdata_t, void *);
+static void	sv_attach(device_t, device_t, void *);
 static int	sv_intr(void *);
 
 struct sv_dma {
@@ -261,8 +261,7 @@ sv_write_indirect(struct sv_softc *sc, uint8_t reg, uint8_t val)
 }
 
 static int
-sv_match(struct device *parent, struct cfdata *match,
-    void *aux)
+sv_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -297,14 +296,14 @@ pci_alloc_io(pci_chipset_tag_t pc, pcitag_t pt, int pcioffs,
  * Allocate IO addresses when all other configuration is done.
  */
 static void
-sv_defer(struct device *self)
+sv_defer(device_t self)
 {
 	struct sv_softc *sc;
 	pci_chipset_tag_t pc;
 	pcitag_t pt;
 	pcireg_t dmaio;
 
-	sc = (struct sv_softc *)self;
+	sc = device_private(self);
 	pc = sc->sc_pa.pa_pc;
 	pt = sc->sc_pa.pa_tag;
 	DPRINTF(("sv_defer: %p\n", sc));
@@ -342,7 +341,7 @@ sv_defer(struct device *self)
 }
 
 static void
-sv_attach(struct device *parent, struct device *self, void *aux)
+sv_attach(device_t parent, device_t self, void *aux)
 {
 	struct sv_softc *sc;
 	struct pci_attach_args *pa;
@@ -354,7 +353,7 @@ sv_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t reg;
 	struct audio_attach_args arg;
 
-	sc = (struct sv_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 	pc = pa->pa_pc;
 	pt = pa->pa_tag;

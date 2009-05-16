@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.22.10.1 2009/05/04 08:11:06 yamt Exp $
+#	$NetBSD: majors.hp700,v 1.22.10.2 2009/05/16 10:41:12 yamt Exp $
 #
 # Device majors for hp700
 #
@@ -47,5 +47,5 @@ device-major	ses		char 41			ses
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.

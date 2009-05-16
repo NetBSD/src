@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9.4.1 2009/05/04 08:11:08 yamt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.9.4.2 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -55,7 +55,7 @@ struct confargs {
 	int		ca_naddrs;	/* number of valid addr ents */
 	hppa_hpa_t	ca_hpabase;	/* HPA base to use or 0 for PDC */
 	int		ca_nmodules;	/* check for modules 0 to nmodules - 1 */
-}; 
+};
 
 #define	HP700CF_IRQ_UNDEF	(-1)
 #define	hp700cf_irq	cf_loc[GEDOENSCF_IRQ]
@@ -75,15 +75,13 @@ extern void (*cold_hook)(int);
 #define	HPPA_COLD_HOT	1
 #define	HPPA_COLD_OFF	2
 
-struct device;
-
 const char *hppa_mod_info(int, int);
 
-void	pdc_scanbus(struct device *, struct confargs *,
-    void (*)(struct device *, struct confargs *));
+void	pdc_scanbus(device_t, struct confargs *,
+    void (*)(device_t, struct confargs *));
 
 int	mbprint(void *, const char *);
-int	mbsubmatch(struct device *, struct cfdata *,
+int	mbsubmatch(device_t, struct cfdata *,
 			const int *, void *);
 int	clock_intr(void *);
 

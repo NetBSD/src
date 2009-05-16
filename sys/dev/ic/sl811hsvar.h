@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsvar.h,v 1.5 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.5.4.1 2009/05/16 10:41:24 yamt Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -92,6 +92,6 @@ void slhci_preinit(struct slhci_softc *, PowerFunc, bus_space_tag_t,
     bus_space_handle_t, uint16_t, uint8_t);
 int  slhci_attach(struct slhci_softc *);
 int  slhci_detach(struct slhci_softc *, int);
-int  slhci_activate(struct device *, enum devact);
+int  slhci_activate(device_t, enum devact);
 int  slhci_intr(void *);
 

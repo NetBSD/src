@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.70.4.1 2009/05/04 08:13:14 yamt Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.70.4.2 2009/05/16 10:41:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.70.4.1 2009/05/04 08:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.70.4.2 2009/05/16 10:41:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -278,7 +278,7 @@ static int ray_alloc_ccs(struct ray_softc *, bus_size_t *, u_int, u_int);
 static bus_size_t ray_fill_in_tx_ccs(struct ray_softc *, size_t,
     u_int, u_int);
 static int ray_validate_config(struct pcmcia_config_entry *);
-static void ray_attach(struct device *, struct device *, void *);
+static void ray_attach(device_t, device_t, void *);
 static ray_cmd_func_t ray_ccs_done(struct ray_softc *, bus_size_t);
 static void ray_check_ccs(void *);
 static void ray_check_scheduled(void *);
@@ -288,8 +288,8 @@ static void ray_cmd_ran(struct ray_softc *, int);
 static int ray_cmd_is_running(struct ray_softc *, int);
 static int ray_cmd_is_scheduled(struct ray_softc *, int);
 static void ray_cmd_done(struct ray_softc *, int);
-static int ray_detach(struct device *, int);
-static int ray_activate(struct device *, enum devact);
+static int ray_detach(device_t, int);
+static int ray_activate(device_t, enum devact);
 static void ray_disable(struct ray_softc *);
 static void ray_download_params(struct ray_softc *);
 static int ray_enable(struct ray_softc *);
@@ -303,7 +303,7 @@ static int ray_intr(void *);
 static void ray_intr_start(struct ray_softc *);
 static int ray_ioctl(struct ifnet *, u_long, void *);
 static int ray_issue_cmd(struct ray_softc *, bus_size_t, u_int);
-static int ray_match(struct device *, struct cfdata *, void *);
+static int ray_match(device_t, cfdata_t, void *);
 static int ray_media_change(struct ifnet *);
 static void ray_media_status(struct ifnet *, struct ifmediareq *);
 static ray_cmd_func_t ray_rccs_intr(struct ray_softc *, bus_size_t);
@@ -469,7 +469,7 @@ CFATTACH_DECL(ray, sizeof(struct ray_softc),
  */
 
 static int
-ray_match(struct device *parent, struct cfdata *match,
+ray_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -498,7 +498,7 @@ ray_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 static void
-ray_attach(struct device *parent, struct device *self, void *aux)
+ray_attach(device_t parent, device_t self, void *aux)
 {
 	struct ray_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -619,7 +619,7 @@ fail:
 }
 
 static int
-ray_activate(struct device *dev, enum devact act)
+ray_activate(device_t dev, enum devact act)
 {
 	struct ray_softc *sc = (struct ray_softc *)dev;
 	struct ifnet *ifp = &sc->sc_if;
@@ -643,7 +643,7 @@ ray_activate(struct device *dev, enum devact act)
 }
 
 static int
-ray_detach(struct device *self, int flags)
+ray_detach(device_t self, int flags)
 {
 	struct ray_softc *sc;
 	struct ifnet *ifp;

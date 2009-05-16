@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.63.4.1 2009/05/04 08:12:54 yamt Exp $
+ * $Id: ahc_pci.c,v 1.63.4.2 2009/05/16 10:41:32 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.63.4.1 2009/05/04 08:12:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.63.4.2 2009/05/16 10:41:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,7 +744,7 @@ ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
 }
 
 static int
-ahc_pci_probe(device_t parent, struct cfdata *match, void *aux)
+ahc_pci_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;
@@ -784,7 +784,8 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	struct ahc_pci_busdata *bd;
 	bool               override_ultra;
 
-	ahc_set_name(ahc, device_xname(&ahc->sc_dev));
+	ahc->sc_dev = self;
+	ahc_set_name(ahc, device_xname(ahc->sc_dev));
 	ahc->parent_dmat = pa->pa_dmat;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -956,7 +957,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	ahc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		aprint_error_dev(&ahc->sc_dev,
+		aprint_error_dev(ahc->sc_dev,
 		    "couldn't establish interrupt\n");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -1062,7 +1063,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 			 * property is set.
 			 */ 
 			usetd = prop_dictionary_get(
-					device_properties(&ahc->sc_dev),
+					device_properties(ahc->sc_dev),
 					"aic7xxx-use-target-defaults");
 			if (usetd != NULL) {
 				KASSERT(prop_object_type(usetd) ==
@@ -1140,7 +1141,7 @@ ahc_pci_resume(device_t dev PMF_FN_ARGS)
 #endif
 }
 
-CFATTACH_DECL(ahc_pci, sizeof(struct ahc_softc),
+CFATTACH_DECL_NEW(ahc_pci, sizeof(struct ahc_softc),
     ahc_pci_probe, ahc_pci_attach, NULL, NULL);
 
 static int
@@ -1748,7 +1749,7 @@ ahc_aha29160C_setup(struct ahc_softc *ahc)
 static int
 ahc_raid_setup(struct ahc_softc *ahc)
 {
-	aprint_normal_dev(&ahc->sc_dev, "RAID functionality unsupported\n");
+	aprint_normal_dev(ahc->sc_dev, "RAID functionality unsupported\n");
 	return (ENXIO);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.8 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.8.74.1 2009/05/16 10:41:52 yamt Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -28,6 +28,7 @@
  * _POSIX_C_SOURCE == 199309L	IEEE Std 1003.1b-1993
  * _POSIX_C_SOURCE == 199506L	ISO/IEC 9945-1:1996
  * _POSIX_C_SOURCE == 200112L	IEEE Std 1003.1-2001
+ * _POSIX_C_SOURCE == 200809L   IEEE Std 1003.1-2008
  *
  * X/Open macros:
  * _XOPEN_SOURCE		System Interfaces and Headers, Issue 4, Ver 2
@@ -35,6 +36,7 @@
  * _XOPEN_SOURCE == 500		System Interfaces and Headers, Issue 5
  * _XOPEN_SOURCE == 520		Networking Services (XNS), Issue 5.2
  * _XOPEN_SOURCE == 600		IEEE Std 1003.1-2001, XSI option
+ * _XOPEN_SOURCE == 700		IEEE Std 1003.1-2008, XSI option
  *
  * NetBSD macros:
  * _NETBSD_SOURCE == 1		Make all NetBSD features available.

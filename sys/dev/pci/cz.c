@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.48.4.1 2009/05/04 08:12:55 yamt Exp $	*/
+/*	$NetBSD: cz.c,v 1.48.4.2 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.48.4.1 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.48.4.2 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,9 +261,7 @@ do {									\
  *	Determine if the given PCI device is a Cyclades-Z board.
  */
 static int
-cz_match(struct device *parent,
-    struct cfdata *match,
-    void *aux)
+cz_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -283,12 +281,10 @@ cz_match(struct device *parent,
  *	A Cyclades-Z board was found; attach it.
  */
 static void
-cz_attach(struct device *parent,
-    struct device *self,
-    void *aux)
+cz_attach(device_t parent, device_t self, void *aux)
 {
 	extern const struct cdevsw cz_cdevsw;	/* XXX */
-	struct cz_softc *cz = (void *) self;
+	struct cz_softc *cz = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.23.4.2 2009/05/04 08:12:54 yamt Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.23.4.3 2009/05/16 10:41:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.23.4.2 2009/05/04 08:12:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.23.4.3 2009/05/16 10:41:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,8 +441,7 @@ aac_pci_intr_set(struct aac_softc *sc, int (*hand)(void*), void *arg)
 }
 
 static int
-aac_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+aac_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -455,7 +454,7 @@ aac_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-aac_pci_attach(struct device *parent, struct device *self, void *aux)
+aac_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;
@@ -470,7 +469,7 @@ aac_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	pa = aux;
 	pc = pa->pa_pc;
-	pcisc = (struct aac_pci_softc *)self;
+	pcisc = device_private(self);
 	pcisc->sc_pc = pc;
 	sc = &pcisc->sc_aac;
 	state = 0;

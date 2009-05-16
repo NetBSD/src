@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.69.2.1 2009/05/04 08:13:47 yamt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.69.2.2 2009/05/16 10:41:48 yamt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -485,7 +485,9 @@ function parseline() {
 		}
 		if (argtype[argc] == "")
 			parserr($f, "argument definition")
-		if (argtype[argc] == "off_t") {
+		if (argtype[argc] == "off_t"  \
+		  || argtype[argc] == "dev_t" \
+		  || argtype[argc] == "time_t") {
 			if ((argalign % 2) != 0 && sysalign &&
 			    funcname != "sys_posix_fadvise") # XXX for now
 				parserr($f, "a padding argument")
@@ -520,7 +522,8 @@ function printproto(wrap) {
 
 	printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
 	for (i = 1; i < argc; i++)
-		printf("%s, ", argtype[i]) > rumpcallshdr
+		if (argname[i] != "PAD")
+			printf("%s, ", argtype[i]) > rumpcallshdr
 	printf("%s)", argtype[argc]) > rumpcallshdr
 	if (wantrename)
 		printf(" __RENAME(rump_%s)", funcname) > rumpcallshdr
@@ -605,13 +608,15 @@ function putent(type, compatwrap) {
 	# need a local prototype, we export the re-re-named one in .h
 	printf("\n%s rump_%s(", returntype, funcname) > rumpcalls
 	for (i = 1; i < argc; i++) {
-		printf("%s, ", argtype[i]) > rumpcalls
+		if (argname[i] != "PAD")
+			printf("%s, ", argtype[i]) > rumpcalls
 	}
 	printf("%s);", argtype[argc]) > rumpcalls
 
 	printf("\n%s\nrump_%s(", returntype, funcname) > rumpcalls
 	for (i = 1; i < argc; i++) {
-		printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
+		if (argname[i] != "PAD")
+			printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
 	}
 	printf("%s %s)\n", argtype[argc], argname[argc]) > rumpcalls
 	printf("{\n\tregister_t retval = 0;\n\tint error = 0;\n") > rumpcalls
@@ -624,8 +629,13 @@ function putent(type, compatwrap) {
 		printf("\tstruct %s%s_args callarg;\n\n",compatwrap_,funcname) \
 		    > rumpcalls
 		for (i = 1; i <= argc; i++) {
-			printf("\tSPARG(&callarg, %s) = %s;\n", \
-			    argname[i], argname[i]) > rumpcalls
+			if (argname[i] == "PAD") {
+				printf("\tSPARG(&callarg, %s) = 0;\n", \
+				    argname[i]) > rumpcalls
+			} else {
+				printf("\tSPARG(&callarg, %s) = %s;\n", \
+				    argname[i], argname[i]) > rumpcalls
+			}
 		}
 		printf("\n") > rumpcalls
 	} else {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.111.4.2 2009/05/04 08:12:29 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.111.4.3 2009/05/16 10:41:17 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -269,10 +269,6 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
 	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
-.endif
-
-.if !target(config_time.h)
-BUILDSYMLINKS+=	config_time.src config_time.h
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)

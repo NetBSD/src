@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.105 2008/04/07 19:26:44 cegger Exp $ */
+/* $NetBSD: isp_pci.c,v 1.105.4.1 2009/05/16 10:41:35 yamt Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.105 2008/04/07 19:26:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.105.4.1 2009/05/16 10:41:35 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -389,8 +389,8 @@ static struct ispmdvec mdvec_2400 = {
 #define	PCI_DFLT_LTNCY	0x40
 #define	PCI_DFLT_LNSZ	0x10
 
-static int isp_pci_probe(struct device *, struct cfdata *, void *);
-static void isp_pci_attach(struct device *, struct device *, void *);
+static int isp_pci_probe(device_t, cfdata_t, void *);
+static void isp_pci_attach(device_t, device_t, void *);
 
 struct isp_pcisoftc {
 	struct ispsoftc		pci_isp;
@@ -407,7 +407,7 @@ CFATTACH_DECL(isp_pci, sizeof (struct isp_pcisoftc),
     isp_pci_probe, isp_pci_attach, NULL, NULL);
 
 static int
-isp_pci_probe(struct device *parent, struct cfdata *match, void *aux)
+isp_pci_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	switch (pa->pa_id) {
@@ -455,12 +455,12 @@ isp_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-isp_pci_attach(struct device *parent, struct device *self, void *aux)
+isp_pci_attach(device_t parent, device_t self, void *aux)
 {
 	static const char nomem[] = "\n%s: no mem for sdparam table\n";
 	uint32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
-	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
+	struct isp_pcisoftc *pcs = device_private(self);
 	struct ispsoftc *isp = &pcs->pci_isp;
 	bus_space_tag_t st, iot, memt;
 	bus_space_handle_t sh, ioh, memh;

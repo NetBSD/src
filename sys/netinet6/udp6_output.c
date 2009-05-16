@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.35.4.2 2009/05/04 08:14:19 yamt Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.35.4.3 2009/05/16 10:41:50 yamt Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.35.4.2 2009/05/04 08:14:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.35.4.3 2009/05/16 10:41:50 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -128,7 +128,6 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	u_int16_t fport;
 	int error = 0;
 	struct ip6_pktopts *optp, opt;
-	int priv;
 	int af = AF_INET6, hlen = sizeof(struct ip6_hdr);
 #ifdef INET
 	struct ip *ip;
@@ -136,11 +135,6 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	int flags = 0;
 #endif
 	struct sockaddr_in6 tmp;
-
-	priv = 0;
-	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL))
-		priv = 1;
 
 	if (addr6) {
 		if (addr6->m_len != sizeof(*sin6)) {
@@ -173,7 +167,7 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 	if (control) {
 		if ((error = ip6_setpktopts(control, &opt,
-		    in6p->in6p_outputopts, priv, IPPROTO_UDP)) != 0)
+		    in6p->in6p_outputopts, l->l_cred, IPPROTO_UDP)) != 0)
 			goto release;
 		optp = &opt;
 	} else

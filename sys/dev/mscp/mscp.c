@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.29.4.1 2009/05/04 08:12:53 yamt Exp $	*/
+/*	$NetBSD: mscp.c,v 1.29.4.2 2009/05/16 10:41:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.29.4.1 2009/05/04 08:12:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.29.4.2 2009/05/16 10:41:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -165,7 +165,7 @@ int	mscp_aeb_xor = 0x8000bb80;
 void
 mscp_dorsp(struct mscp_softc *mi)
 {
-	struct device *drive;
+	device_t drive;
 	struct mscp_device *me = mi->mi_me;
 	struct mscp_ctlr *mc = mi->mi_mc;
 	struct buf *bp;
@@ -214,7 +214,7 @@ loop:
 	 */
 	if (mp->mscp_unit >= mi->mi_driveno) { /* Must expand drive table */
 		int tmpno = (mp->mscp_unit + 32) & ~31;
-		struct device **tmp = (struct device **)
+		device_t *tmp = (device_t *)
 		    malloc(tmpno * sizeof(tmp[0]), M_DEVBUF, M_NOWAIT|M_ZERO);
 		/* XXX tmp should be checked for NULL */
 		if (mi->mi_driveno) {

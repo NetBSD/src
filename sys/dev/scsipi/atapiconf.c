@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.77.4.1 2009/05/04 08:13:17 yamt Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.77.4.2 2009/05/16 10:41:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.77.4.1 2009/05/04 08:13:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.77.4.2 2009/05/16 10:41:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ atapi_probe_device(struct atapibus_softc *sc, int target,
 {
 	struct scsipi_channel *chan = sc->sc_channel;
 	const struct scsi_quirk_inquiry_pattern *finger;
-	struct cfdata *cf;
+	cfdata_t cf;
 	int priority, quirks;
 
 	finger = scsipi_inqmatch(

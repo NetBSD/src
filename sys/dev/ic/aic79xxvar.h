@@ -1065,7 +1065,7 @@ struct ahd_softc {
 	struct device 		  sc_dev;
 
 	struct scsipi_channel	  sc_channel;
-	struct device *		  sc_child;
+	device_t 		  sc_child;
 	struct scsipi_adapter	  sc_adapter;
 
 	bus_space_tag_t           tags[2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.9.4.2 2009/05/04 08:12:55 yamt Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.9.4.3 2009/05/16 10:41:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.2 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.3 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,8 @@ struct pci_genfb_softc {
 	int sc_want_wsfb;
 };
 
-static int	pci_genfb_match(struct device *, struct cfdata *, void *);
-static void	pci_genfb_attach(struct device *, struct device *, void *);
+static int	pci_genfb_match(device_t, cfdata_t, void *);
+static void	pci_genfb_attach(device_t, device_t, void *);
 static int	pci_genfb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	pci_genfb_mmap(void *, void *, off_t, int);
@@ -88,7 +88,7 @@ CFATTACH_DECL(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
 
 static int
-pci_genfb_match(struct device *parent, struct cfdata *match, void *aux)
+pci_genfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int matchlvl = 1;
@@ -110,9 +110,9 @@ pci_genfb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pci_genfb_attach(struct device *parent, struct device *self, void *aux)
+pci_genfb_attach(device_t parent, device_t self, void *aux)
 {
-	struct pci_genfb_softc *sc = (struct pci_genfb_softc *)self;
+	struct pci_genfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct genfb_ops ops;
 	int idx, bar, type;
@@ -222,7 +222,6 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct pci_genfb_softc *sc = v;
 	struct range *r;
-	struct lwp *me;
 	int i;
 
 	if (offset == 0)
@@ -247,13 +246,10 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = curlwp;
-	if (me != NULL) {
-		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			aprint_normal_dev(&sc->sc_gen.sc_dev, "mmap() rejected.\n");
-			return -1;
-		}
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		aprint_normal_dev(&sc->sc_gen.sc_dev, "mmap() rejected.\n");
+		return -1;
 	}
 
 #ifdef WSFB_FAKE_VGA_FB

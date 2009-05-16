@@ -1,4 +1,4 @@
-/*	$NetBSD: phantomas.c,v 1.4.4.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: phantomas.c,v 1.4.4.2 2009/05/16 10:41:12 yamt Exp $	*/
 /*	$OpenBSD: phantomas.c,v 1.1 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
@@ -42,18 +42,18 @@
 #include <hp700/dev/cpudevs.h>
 
 struct phantomas_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 };
 
-int	phantomasmatch(struct device *, struct cfdata *, void *);
-void	phantomasattach(struct device *, struct device *, void *);
-static void phantomas_callback(struct device *self, struct confargs *ca);
+int	phantomasmatch(device_t, cfdata_t, void *);
+void	phantomasattach(device_t, device_t, void *);
+static void phantomas_callback(device_t self, struct confargs *ca);
 
-CFATTACH_DECL(phantomas, sizeof(struct phantomas_softc),
+CFATTACH_DECL_NEW(phantomas, sizeof(struct phantomas_softc),
     phantomasmatch, phantomasattach, NULL, NULL);
 
 int
-phantomasmatch(struct device *parent, struct cfdata *cfdata, void *aux)
+phantomasmatch(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -65,20 +65,22 @@ phantomasmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 void
-phantomasattach(struct device *parent, struct device *self, void *aux)
+phantomasattach(device_t parent, device_t self, void *aux)
 {
+	struct phantomas_softc *sc = device_private(self);
 	struct confargs *ca = aux, nca;
 
+	sc->sc_dev = self;
 	nca = *ca;
 	nca.ca_hpabase = 0;
 	nca.ca_nmodules = MAXMODBUS;
 
-	printf("\n");
+	aprint_normal("\n");
 	pdc_scanbus(self, &nca, phantomas_callback);
 }
 
 static void
-phantomas_callback(struct device *self, struct confargs *ca)
+phantomas_callback(device_t self, struct confargs *ca)
 {
 
 	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);

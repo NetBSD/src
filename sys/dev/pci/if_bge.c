@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.145.10.1 2009/05/04 08:12:56 yamt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.145.10.2 2009/05/16 10:41:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.145.10.1 2009/05/04 08:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.145.10.2 2009/05/16 10:41:34 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -4192,8 +4192,14 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 		  DELAY(1000);
 	}
 
-	aprint_error_dev(sc->bge_dev,
-	    "block failed to stop: reg 0x%lx, bit 0x%08x\n", (u_long)reg, bit);
+	/*
+	 * Doesn't print only when the register is BGE_SRS_MODE. It occurs
+	 * on some environment (and once after boot?)
+	 */
+	if (reg != BGE_SRS_MODE)
+		aprint_error_dev(sc->bge_dev,
+		    "block failed to stop: reg 0x%lx, bit 0x%08x\n",
+		    (u_long)reg, bit);
 }
 
 /*

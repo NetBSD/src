@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.52.4.1 2009/05/04 08:12:33 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.52.4.2 2009/05/16 10:41:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,9 +46,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.52.4.1 2009/05/04 08:12:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.52.4.2 2009/05/16 10:41:18 yamt Exp $");
 
 #include "opt_md.h"
+#include "opt_tftproot.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,6 +119,8 @@ extern struct cfdriver md_cd;
 CFATTACH_DECL_NEW(md, sizeof(struct md_softc),
 	0, md_attach, 0, NULL);
 
+extern size_t md_root_size;
+
 /*
  * This is called if we are configured as a pseudo-device
  */
@@ -127,6 +130,14 @@ mdattach(int n)
 	int i;
 	cfdata_t cf;
 
+#ifdef TFTPROOT
+	/* 
+	 * Attachement of md0 must be done after md_root_setconf(), 
+	 * because the RAMdisk is not loaded yet.
+	 */
+	if (md_root_size == 0)
+		return;
+#endif
 	if (config_cfattach_attach("md", &md_ca)) {
 		printf("md: cfattach_attach failed\n");
 		return;

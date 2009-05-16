@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.14.20.2 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.14.20.3 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -58,11 +58,11 @@ struct daic_isa_softc {
 
 /* local functions */
 #ifdef __BROKEN_INDIRECT_CONFIG
-static int daic_isa_probe(struct device *, void *, void *);
+static int daic_isa_probe(device_t, void *, void *);
 #else
-static int daic_isa_probe(struct device *, struct cfdata *, void *);
+static int daic_isa_probe(device_t, cfdata_t, void *);
 #endif
-static void daic_isa_attach(struct device *, struct device *, void *);
+static void daic_isa_attach(device_t, device_t, void *);
 static int daic_isa_intr(void *);
 
 CFATTACH_DECL(daic_isa, sizeof(struct daic_isa_softc),
@@ -74,11 +74,11 @@ daic_isa_probe(parent, match, aux)
 #else
 daic_isa_probe(parent, cf, aux)
 #endif
-	struct device *parent;
+	device_t parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
-	struct cfdata *cf;
+	cfdata_t cf;
 #endif
 	void *aux;
 {
@@ -120,7 +120,7 @@ bad:
 }
 
 static void
-daic_isa_attach(struct device *parent, struct device *self, void *aux)
+daic_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct daic_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

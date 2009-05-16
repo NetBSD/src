@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.40.4.2 2009/05/04 08:12:51 yamt Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.40.4.3 2009/05/16 10:41:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.40.4.2 2009/05/04 08:12:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.40.4.3 2009/05/16 10:41:27 yamt Exp $");
 
 #include "rnd.h"
 
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.40.4.2 2009/05/04 08:12:51 yamt Exp $")
 
 #define	EDLABELDEV(dev) (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
-static int     ed_mca_probe  (struct device *, struct cfdata *, void *);
-static void    ed_mca_attach (struct device *, struct device *, void *);
+static int     ed_mca_probe  (device_t, cfdata_t, void *);
+static void    ed_mca_attach (device_t, device_t, void *);
 
 CFATTACH_DECL(ed_mca, sizeof(struct ed_softc),
     ed_mca_probe, ed_mca_attach, NULL, NULL);
@@ -115,7 +115,7 @@ static struct dkdriver eddkdriver = { edmcastrategy, minphys };
  * Just check if it's possible to identify the disk.
  */
 static int
-ed_mca_probe(struct device *parent, struct cfdata *cf,
+ed_mca_probe(device_t parent, cfdata_t cf,
     void *aux)
 {
 	u_int16_t cmd_args[2];
@@ -135,7 +135,7 @@ ed_mca_probe(struct device *parent, struct cfdata *cf,
 }
 
 static void
-ed_mca_attach(struct device *parent, struct device *self, void *aux)
+ed_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct ed_softc *ed = device_private(self);
 	struct edc_mca_softc *sc = device_private(parent);

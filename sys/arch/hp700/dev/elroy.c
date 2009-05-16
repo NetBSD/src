@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.2.2.2 2009/05/04 08:11:06 yamt Exp $	*/
+/*	$NetBSD: elroy.c,v 1.2.2.3 2009/05/16 10:41:12 yamt Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -47,126 +47,152 @@
 #define	ELROY_MEM_CHUNK		0x800000
 #define	ELROY_MEM_WINDOW	(2 * ELROY_MEM_CHUNK)
 
-int	elroy_match(struct device *, struct cfdata *, void *);
-void	elroy_attach(struct device *, struct device *, void *);
+int	elroy_match(device_t, cfdata_t, void *);
+void	elroy_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(elroy, sizeof(struct elroy_softc), elroy_match, elroy_attach,
+CFATTACH_DECL_NEW(elroy, sizeof(struct elroy_softc), elroy_match, elroy_attach,
     NULL, NULL);
 
 extern struct cfdriver elroy_cd;
 
-void elroy_write32(volatile uint32_t *, uint32_t v);
+void elroy_write32(volatile uint32_t *, uint32_t);
 uint32_t elroy_read32(volatile uint32_t *);
-void elroy_attach_hook(struct device *, struct device *self,
-    struct pcibus_attach_args *pba);
-int elroy_maxdevs(void *v, int bus);
-pcitag_t elroy_make_tag(void *v, int bus, int dev, int func);
-void elroy_decompose_tag(void *v, pcitag_t tag, int *bus, int *dev, int *func);
-pcireg_t elroy_conf_read(void *v, pcitag_t tag, int reg);
-void elroy_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data);
+void elroy_attach_hook(device_t, device_t, struct pcibus_attach_args *);
+int elroy_maxdevs(void *, int);
+pcitag_t elroy_make_tag(void *, int, int, int);
+void elroy_decompose_tag(void *, pcitag_t, int *, int *, int *);
+pcireg_t elroy_conf_read(void *, pcitag_t, int);
+void elroy_conf_write(void *, pcitag_t, int, pcireg_t);
 
-
-/* 45678901234567890123456789012345678901234567890123456789012345678901234567 */
-int elroy_iomap(void *v, bus_addr_t bpa, bus_size_t size,
-    int flags, bus_space_handle_t *bshp);
-int elroy_memmap(void *v, bus_addr_t bpa, bus_size_t size,
-    int flags, bus_space_handle_t *bshp);
-int elroy_subregion(void *v, bus_space_handle_t bsh, bus_size_t offset,
-    bus_size_t size, bus_space_handle_t *nbshp);
+int elroy_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+int elroy_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+int elroy_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t,
+    bus_space_handle_t *);
 int elroy_ioalloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t,
     bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 int elroy_memalloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t,
     bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
-void elroy_unmap(void *v, bus_space_handle_t bsh, bus_size_t size);
-void elroy_free(void *v, bus_space_handle_t bh, bus_size_t size);
-void elroy_barrier(void *v, bus_space_handle_t, bus_size_t o, bus_size_t l, int op);
-void * elroy_alloc_parent(struct device *self, struct pci_attach_args *pa, int io);
-void * elroy_vaddr(void *v, bus_space_handle_t);
+void elroy_unmap(void *, bus_space_handle_t, bus_size_t);
+void elroy_free(void *, bus_space_handle_t, bus_size_t);
+void elroy_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
+void *elroy_alloc_parent(device_t, struct pci_attach_args *, int);
+void *elroy_vaddr(void *, bus_space_handle_t);
 
-uint8_t elroy_r1(void *, bus_space_handle_t, bus_size_t o);
-uint16_t elroy_r2(void *, bus_space_handle_t, bus_size_t o);
-uint32_t elroy_r4(void *, bus_space_handle_t, bus_size_t o);
-uint64_t elroy_r8(void *, bus_space_handle_t, bus_size_t o);
-void elroy_w1(void *, bus_space_handle_t, bus_size_t o, uint8_t vv);
-void elroy_w2(void *, bus_space_handle_t, bus_size_t o, uint16_t vv);
-void elroy_w4(void *, bus_space_handle_t, bus_size_t o, uint32_t vv);
-void elroy_w8(void *, bus_space_handle_t, bus_size_t o, uint64_t vv);
-void elroy_rm_1(void *, bus_space_handle_t, bus_size_t o, uint8_t *a, bus_size_t c);
-void elroy_rm_2(void *, bus_space_handle_t, bus_size_t o, uint16_t *a, bus_size_t c);
-void elroy_rm_4(void *, bus_space_handle_t, bus_size_t o, uint32_t *a, bus_size_t c);
-void elroy_rm_8(void *, bus_space_handle_t, bus_size_t o, uint64_t *a, bus_size_t c);
-void elroy_wm_1(void *, bus_space_handle_t, bus_size_t o, const uint8_t *a, bus_size_t c);
-void elroy_wm_2(void *, bus_space_handle_t, bus_size_t o, const uint16_t *a, bus_size_t c);
-void elroy_wm_4(void *, bus_space_handle_t, bus_size_t o, const uint32_t *a, bus_size_t c);
-void elroy_wm_8(void *, bus_space_handle_t, bus_size_t o, const uint64_t *a, bus_size_t c);
-void elroy_sm_1(void *, bus_space_handle_t, bus_size_t o, uint8_t, bus_size_t c);
-void elroy_sm_2(void *, bus_space_handle_t, bus_size_t o, uint16_t, bus_size_t c);
-void elroy_sm_4(void *, bus_space_handle_t, bus_size_t o, uint32_t, bus_size_t c);
-void elroy_sm_8(void *, bus_space_handle_t, bus_size_t o, uint64_t, bus_size_t c);
-void elroy_rrm_2(void *, bus_space_handle_t, bus_size_t o, uint16_t *, bus_size_t c);
-void elroy_rrm_4(void *, bus_space_handle_t, bus_size_t o, uint32_t *, bus_size_t c);
-void elroy_rrm_8(void *, bus_space_handle_t, bus_size_t o, uint64_t *, bus_size_t c);
-void elroy_wrm_2(void *, bus_space_handle_t, bus_size_t o, const uint16_t *a, bus_size_t c);
-void elroy_wrm_4(void *, bus_space_handle_t, bus_size_t o, const uint32_t *a, bus_size_t c);
-void elroy_wrm_8(void *, bus_space_handle_t, bus_size_t o, const uint64_t *a, bus_size_t c);
-void elroy_rr_1(void *, bus_space_handle_t, bus_size_t o, uint8_t *a, bus_size_t c);
-void elroy_rr_2(void *, bus_space_handle_t, bus_size_t o, uint16_t *a, bus_size_t c);
-void elroy_rr_4(void *, bus_space_handle_t, bus_size_t o, uint32_t *a, bus_size_t c);
-void elroy_rr_8(void *, bus_space_handle_t, bus_size_t o, uint64_t *a, bus_size_t c);
-void elroy_wr_1(void *, bus_space_handle_t, bus_size_t o, const uint8_t *a, bus_size_t c);
-void elroy_wr_2(void *, bus_space_handle_t, bus_size_t o, const uint16_t *a, bus_size_t c);
-void elroy_wr_4(void *, bus_space_handle_t, bus_size_t o, const uint32_t *a, bus_size_t c);
-void elroy_wr_8(void *, bus_space_handle_t, bus_size_t o, const uint64_t *a, bus_size_t c);
-void elroy_rrr_2(void *, bus_space_handle_t, bus_size_t o,
-    uint16_t *a, bus_size_t c);
-void elroy_rrr_4(void *, bus_space_handle_t, bus_size_t o,
-    uint32_t *a, bus_size_t c);
-void elroy_rrr_8(void *, bus_space_handle_t, bus_size_t o,
-    uint64_t *a, bus_size_t c);
-void elroy_wrr_2(void *, bus_space_handle_t, bus_size_t o,
-    const uint16_t *a, bus_size_t c);
-void elroy_wrr_4(void *, bus_space_handle_t, bus_size_t o,
-    const uint32_t *a, bus_size_t c);
-void elroy_wrr_8(void *, bus_space_handle_t, bus_size_t o,
-    const uint64_t *a, bus_size_t c);
-void elroy_sr_1(void *, bus_space_handle_t, bus_size_t o, uint8_t vv, bus_size_t c);
-void elroy_sr_2(void *, bus_space_handle_t, bus_size_t o, uint16_t vv, bus_size_t c);
-void elroy_sr_4(void *, bus_space_handle_t, bus_size_t o, uint32_t vv, bus_size_t c);
-void elroy_sr_8(void *, bus_space_handle_t, bus_size_t o, uint64_t vv, bus_size_t c);
-void elroy_cp_1(void *, bus_space_handle_t, bus_size_t o1,
-	  bus_space_handle_t, bus_size_t o2, bus_size_t c);
-void elroy_cp_2(void *, bus_space_handle_t, bus_size_t o1,
-	  bus_space_handle_t, bus_size_t o2, bus_size_t c);
-void elroy_cp_4(void *, bus_space_handle_t, bus_size_t o1,
-	  bus_space_handle_t, bus_size_t o2, bus_size_t c);
-void elroy_cp_8(void *, bus_space_handle_t, bus_size_t o1,
-	  bus_space_handle_t, bus_size_t o2, bus_size_t c);
-int elroy_dmamap_create(void *, bus_size_t size, int nsegments,
-    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp);
-void elroy_dmamap_destroy(void *v, bus_dmamap_t);
-int elroy_dmamap_load(void *, bus_dmamap_t, void *addr, bus_size_t size,
-    struct proc *, int flags);
-int elroy_dmamap_load_mbuf(void *, bus_dmamap_t, struct mbuf *m, int flags);
-int elroy_dmamap_load_uio(void *, bus_dmamap_t, struct uio *uio, int flags);
-int elroy_dmamap_load_raw(void *, bus_dmamap_t, bus_dma_segment_t *segs,
-    int nsegs, bus_size_t size, int flags);
+uint8_t elroy_r1(void *, bus_space_handle_t, bus_size_t);
+uint16_t elroy_r2(void *, bus_space_handle_t, bus_size_t);
+uint32_t elroy_r4(void *, bus_space_handle_t, bus_size_t);
+uint64_t elroy_r8(void *, bus_space_handle_t, bus_size_t);
+void elroy_w1(void *, bus_space_handle_t, bus_size_t, uint8_t);
+void elroy_w2(void *, bus_space_handle_t, bus_size_t, uint16_t);
+void elroy_w4(void *, bus_space_handle_t, bus_size_t, uint32_t);
+void elroy_w8(void *, bus_space_handle_t, bus_size_t, uint64_t);
+
+void elroy_rm_1(void *, bus_space_handle_t, bus_size_t, uint8_t *,
+    bus_size_t);
+void elroy_rm_2(void *, bus_space_handle_t, bus_size_t, uint16_t *,
+    bus_size_t);
+void elroy_rm_4(void *, bus_space_handle_t, bus_size_t, uint32_t *,
+    bus_size_t);
+void elroy_rm_8(void *, bus_space_handle_t, bus_size_t, uint64_t *,
+    bus_size_t);
+void elroy_wm_1(void *, bus_space_handle_t, bus_size_t, const uint8_t *,
+    bus_size_t);
+void elroy_wm_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *,
+    bus_size_t);
+void elroy_wm_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *,
+    bus_size_t);
+void elroy_wm_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *,
+    bus_size_t);
+void elroy_sm_1(void *, bus_space_handle_t, bus_size_t, uint8_t,
+    bus_size_t);
+void elroy_sm_2(void *, bus_space_handle_t, bus_size_t, uint16_t,
+    bus_size_t);
+void elroy_sm_4(void *, bus_space_handle_t, bus_size_t, uint32_t,
+    bus_size_t);
+void elroy_sm_8(void *, bus_space_handle_t, bus_size_t, uint64_t,
+    bus_size_t);
+
+void elroy_rrm_2(void *, bus_space_handle_t, bus_size_t, uint16_t *,
+    bus_size_t);
+void elroy_rrm_4(void *, bus_space_handle_t, bus_size_t, uint32_t *,
+    bus_size_t);
+void elroy_rrm_8(void *, bus_space_handle_t, bus_size_t, uint64_t *,
+    bus_size_t);
+void elroy_wrm_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *,
+    bus_size_t);
+void elroy_wrm_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *,
+    bus_size_t);
+void elroy_wrm_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *,
+    bus_size_t);
+void elroy_rr_1(void *, bus_space_handle_t, bus_size_t, uint8_t *,
+    bus_size_t);
+void elroy_rr_2(void *, bus_space_handle_t, bus_size_t, uint16_t *,
+    bus_size_t);
+void elroy_rr_4(void *, bus_space_handle_t, bus_size_t, uint32_t *,
+    bus_size_t);
+void elroy_rr_8(void *, bus_space_handle_t, bus_size_t, uint64_t *,
+    bus_size_t);
+void elroy_wr_1(void *, bus_space_handle_t, bus_size_t, const uint8_t *,
+    bus_size_t);
+void elroy_wr_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *,
+    bus_size_t);
+void elroy_wr_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *,
+    bus_size_t);
+void elroy_wr_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *,
+    bus_size_t);
+
+void elroy_rrr_2(void *, bus_space_handle_t, bus_size_t, uint16_t *,
+    bus_size_t);
+void elroy_rrr_4(void *, bus_space_handle_t, bus_size_t, uint32_t *,
+    bus_size_t);
+void elroy_rrr_8(void *, bus_space_handle_t, bus_size_t, uint64_t *,
+    bus_size_t);
+void elroy_wrr_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *,
+    bus_size_t);
+void elroy_wrr_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *,
+    bus_size_t);
+void elroy_wrr_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *,
+    bus_size_t);
+void elroy_sr_1(void *, bus_space_handle_t, bus_size_t, uint8_t,
+    bus_size_t);
+void elroy_sr_2(void *, bus_space_handle_t, bus_size_t, uint16_t,
+    bus_size_t);
+void elroy_sr_4(void *, bus_space_handle_t, bus_size_t, uint32_t,
+    bus_size_t);
+void elroy_sr_8(void *, bus_space_handle_t, bus_size_t, uint64_t,
+    bus_size_t);
+void elroy_cp_1(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+    bus_size_t, bus_size_t);
+void elroy_cp_2(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+    bus_size_t, bus_size_t);
+void elroy_cp_4(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+    bus_size_t, bus_size_t);
+void elroy_cp_8(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t,
+    bus_size_t, bus_size_t);
+
+int elroy_dmamap_create(void *, bus_size_t, int, bus_size_t, bus_size_t,
+    int, bus_dmamap_t *);
+void elroy_dmamap_destroy(void *, bus_dmamap_t);
+int elroy_dmamap_load(void *, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int);
+int elroy_dmamap_load_mbuf(void *, bus_dmamap_t, struct mbuf *, int);
+int elroy_dmamap_load_uio(void *, bus_dmamap_t, struct uio *, int);
+int elroy_dmamap_load_raw(void *, bus_dmamap_t, bus_dma_segment_t *,
+    int, bus_size_t, int);
 void elroy_dmamap_unload(void *, bus_dmamap_t);
-void elroy_dmamap_sync(void *, bus_dmamap_t, bus_addr_t off,
-    bus_size_t len, int ops);
-int elroy_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs,
-    int nsegs, int *rsegs, int flags);
-void elroy_dmamem_free(void *, bus_dma_segment_t *segs, int nsegs);
-int elroy_dmamem_map(void *, bus_dma_segment_t *segs, int nsegs, size_t size,
-    void **, int flags);
-void elroy_dmamem_unmap(void *, void *, size_t size);
-paddr_t elroy_dmamem_mmap(void *, bus_dma_segment_t *, int nsegs, off_t off,
-    int prot, int flags);
-
-void elroy_attach(struct device *, struct device *self, void *);
+void elroy_dmamap_sync(void *, bus_dmamap_t, bus_addr_t, bus_size_t,
+    int);
+int elroy_dmamem_alloc(void *, bus_size_t, bus_size_t, bus_size_t,
+    bus_dma_segment_t *, int, int *, int);
+void elroy_dmamem_free(void *, bus_dma_segment_t *, int);
+int elroy_dmamem_map(void *, bus_dma_segment_t *, int, size_t,
+    void **, int);
+void elroy_dmamem_unmap(void *, void *, size_t);
+paddr_t elroy_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t,
+    int, int);
 
 int
-elroy_match(struct device *parent, struct cfdata *cf, void *aux)
+elroy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -192,7 +218,7 @@ elroy_read32(volatile uint32_t *p)
 }
 
 void
-elroy_attach_hook(struct device *parent, struct device *self,
+elroy_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 
@@ -399,7 +425,7 @@ elroy_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op)
 
 #if NCARDBUS > 0
 void *
-elroy_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
+elroy_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 {
 #if 0	/* TODO */
 
@@ -1020,7 +1046,7 @@ const struct hppa_bus_space_tag elroy_iomemt = {
 	NULL, elroy_unmap, elroy_subregion, NULL, elroy_free,
 	elroy_barrier, elroy_vaddr,
 	elroy_r1,    elroy_r2,    elroy_r4,    elroy_r8,
-	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,  
+	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,
 	elroy_rm_1,  elroy_rm_2,  elroy_rm_4,  elroy_rm_8,
 	elroy_wm_1,  elroy_wm_2,  elroy_wm_4,  elroy_wm_8,
 	elroy_sm_1,  elroy_sm_2,  elroy_sm_4,  elroy_sm_8,
@@ -1175,20 +1201,21 @@ const struct hppa_pci_chipset_tag elroy_pc = {
 };
 
 void
-elroy_attach(struct device *parent, struct device *self, void *aux)
+elroy_attach(device_t parent, device_t self, void *aux)
 {
-	struct elroy_softc *sc = (struct elroy_softc *)self;
+	struct elroy_softc *sc = device_private(self);
 	struct confargs *ca = (struct confargs *)aux;
 	struct pcibus_attach_args pba;
 	volatile struct elroy_regs *r;
 	const char *p = NULL, *q;
 	int i;
 
+	sc->sc_dv = self;
 	sc->sc_hpa = ca->ca_hpa;
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmatag;
 	if (bus_space_map(sc->sc_bt, ca->ca_hpa, ca->ca_hpasz, 0, &sc->sc_bh)) {
-		printf(": can't map space\n");
+		aprint_error(": can't map space\n");
 		return;
 	}
 
@@ -1205,7 +1232,7 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 
 		snprintb(buf, sizeof(buf), ELROY_STATUS_BITS,
 		    htole32(r->status));
-		printf(": reset failed; status %s\n", buf);
+		aprint_error(": reset failed; status %s\n", buf);
 		return;
 	}
 
@@ -1240,9 +1267,9 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	printf(": %s TR%d.%d%s", p, sc->sc_ver >> 4, sc->sc_ver & 0xf, q);
+	aprint_normal(": %s TR%d.%d%s", p, sc->sc_ver >> 4, sc->sc_ver & 0xf, q);
 	apic_attach(sc);
-	printf("\n");
+	aprint_normal("\n");
 
 	elroy_write32(&r->imask, htole32(0xffffffff << 30));
 	elroy_write32(&r->ibase, htole32(ELROY_BASE_RE));
@@ -1276,12 +1303,10 @@ le64toh(r->eio_base), le64toh(r->eio_mask));
 	sc->sc_dmatag._cookie = sc;
 
 	memset(&pba, 0, sizeof(pba));
-// 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;
 	pba.pba_memt = &sc->sc_memt;
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
-// 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0; /* (le32toh(elroy_read32(&r->busnum)) & 0xff) >> 4; */
  	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 

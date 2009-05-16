@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.13.4.1 2008/05/16 02:24:42 yamt Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.13.4.2 2009/05/16 10:41:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct auvia_softc_chan {
 };
 
 struct auvia_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	char sc_revision[8];
 	u_int	sc_flags;

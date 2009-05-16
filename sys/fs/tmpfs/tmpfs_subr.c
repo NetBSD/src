@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.46.10.2 2009/05/04 08:13:44 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.46.10.3 2009/05/16 10:41:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.10.2 2009/05/04 08:13:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.10.3 2009/05/16 10:41:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.10.2 2009/05/04 08:13:44 yamt Ex
 #include <uvm/uvm.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/genfs/genfs.h>
 #include <fs/tmpfs/tmpfs.h>
 #include <fs/tmpfs/tmpfs_fifoops.h>
 #include <fs/tmpfs/tmpfs_specops.h>
@@ -1184,14 +1185,9 @@ tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	/* XXX: The following comes from UFS code, and can be found in
-	 * several other file systems.  Shouldn't this be centralized
-	 * somewhere? */
-	if (kauth_cred_geteuid(cred) != node->tn_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
-	    (error = VOP_ACCESS(vp, VWRITE, cred))))
-		return error;
+	error = genfs_can_chtimes(vp, vaflags, node->tn_uid, cred);
+	if (error)
+		return (error);
 
 	if (atime->tv_sec != VNOVAL && atime->tv_nsec != VNOVAL)
 		node->tn_status |= TMPFS_NODE_ACCESSED;

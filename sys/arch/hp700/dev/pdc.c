@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.23.18.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: pdc.c,v 1.23.18.2 2009/05/16 10:41:12 yamt Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.23.18.1 2009/05/04 08:11:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.23.18.2 2009/05/16 10:41:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.23.18.1 2009/05/04 08:11:07 yamt Exp $");
 
 typedef
 struct pdc_softc {
-	struct device sc_dv;
+	device_t sc_dv;
 	struct tty *sc_tty;
 	struct callout sc_to;
 } pdcsoftc_t;
@@ -68,10 +68,10 @@ iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
 int CONADDR;
 
-int pdcmatch(struct device *, struct cfdata *, void *);
-void pdcattach(struct device *, struct device *, void *);
+int pdcmatch(device_t, cfdata_t, void *);
+void pdcattach(device_t, device_t, void *);
 
-CFATTACH_DECL(pdc, sizeof(pdcsoftc_t),
+CFATTACH_DECL_NEW(pdc, sizeof(pdcsoftc_t),
     pdcmatch, pdcattach, NULL, NULL);
 
 extern struct cfdriver pdc_cd;
@@ -118,7 +118,9 @@ pdc_init(void)
 
 	pagezero_cookie = hp700_pagezero_map();
 
-	/* XXX locore've done it XXX pdc = (pdcio_t)PAGE0->mem_pdc; */
+	/*
+	 * locore has updated pdc with (pdcio_t)PAGE0->mem_pdc
+	 */
 	pz_kbd = &PAGE0->mem_kbd;
 	pz_cons = &PAGE0->mem_cons;
 
@@ -150,7 +152,7 @@ pdc_init(void)
 }
 
 int
-pdcmatch(struct device *parent, struct cfdata *cf, void *aux)
+pdcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -162,16 +164,17 @@ pdcmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pdcattach(struct device *parent, struct device *self, void *aux)
+pdcattach(device_t parent, device_t self, void *aux)
 {
-	struct pdc_softc *sc = (struct pdc_softc *)self;
+	struct pdc_softc *sc = device_private(self);
 
+	sc->sc_dv = self;
 	pdc_attached = 1;
 
 	if (!pdc)
 		pdc_init();
 
-	printf("\n");
+	aprint_normal("\n");
 
 	callout_init(&sc->sc_to, 0);
 }
@@ -275,12 +278,12 @@ pdcwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 pdcpoll(dev_t dev, int events, struct lwp *l)
-{  
+{
 	struct pdc_softc *sc = device_lookup_private(&pdc_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
-}  
+}
 
 int
 pdcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -438,7 +441,7 @@ pdccnputc(dev_t dev, int c)
 		delay(250000);
 #if 0
 		/*
-		 * It's not a good idea to use the output to print 
+		 * It's not a good idea to use the output to print
 		 * an output error.
 		 */
 		printf("pdccnputc: output error: %d\n", err);
@@ -454,28 +457,27 @@ pdccnpollc(dev_t dev, int on)
 static int
 pdcgettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
-	int pagezero_cookie;
+	int error;
 
-	pagezero_cookie = hp700_pagezero_map();
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_READ,
+	error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_READ,
 	    &tod, 0, 0, 0, 0, 0);
-	hp700_pagezero_unmap(pagezero_cookie);
 
-	tvp->tv_sec = tod.sec;
-	tvp->tv_usec = tod.usec;
-	return 0;
+	if (error == 0) {
+		tvp->tv_sec = tod.sec;
+		tvp->tv_usec = tod.usec;
+	}
+	return error;
 }
 
 static int
 pdcsettod(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
-	int pagezero_cookie;
+	int error;
 
 	tod.sec = tvp->tv_sec;
 	tod.usec = tvp->tv_usec;
 
-	pagezero_cookie = hp700_pagezero_map();
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE, &tod);
-	hp700_pagezero_unmap(pagezero_cookie);
-	return 0;
+	error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_WRITE,
+	    tod.sec, tod.usec);
+	return error;
 }

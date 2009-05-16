@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.12.4.1 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.12.4.2 2009/05/16 10:41:19 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.12.4.1 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.12.4.2 2009/05/16 10:41:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,7 +132,7 @@ struct bcsp_softc {
 #define	BCSP_ENABLED	(1 << 1)	/* is enabled */
 
 void bcspattach(int);
-static int bcsp_match(device_t, struct cfdata *, void *);
+static int bcsp_match(device_t, cfdata_t, void *);
 static void bcsp_attach(device_t, device_t, void *);
 static int bcsp_detach(device_t, int);
 
@@ -246,7 +246,7 @@ bcspattach(int num __unused)
  */
 /* ARGSUSED */
 static int
-bcsp_match(device_t self __unused, struct cfdata *cfdata __unused,
+bcsp_match(device_t self __unused, cfdata_t cfdata __unused,
 	   void *arg __unused)
 {
 
@@ -373,14 +373,15 @@ bcspopen(dev_t device __unused, struct tty *tp)
 {
 	struct bcsp_softc *sc;
 	device_t dev;
-	struct cfdata *cfdata;
+	cfdata_t cfdata;
 	struct lwp *l = curlwp;		/* XXX */
 	int error, unit, s;
 	static char name[] = "bcsp";
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		return error;
+	error = kauth_authorize_device(l->l_cred, KAUTH_DEVICE_BLUETOOTH_BCSP,
+	    KAUTH_ARG(KAUTH_REQ_DEVICE_BLUETOOTH_BCSP_ADD), NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	s = spltty();
 
@@ -435,7 +436,7 @@ static int
 bcspclose(struct tty *tp, int flag __unused)
 {
 	struct bcsp_softc *sc = tp->t_sc;
-	struct cfdata *cfdata;
+	cfdata_t cfdata;
 	int s;
 
 	/* terminate link-establishment */

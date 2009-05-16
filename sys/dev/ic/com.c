@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.279.2.2 2009/05/04 08:12:41 yamt Exp $ */
+/* $NetBSD: com.c,v 1.279.2.3 2009/05/16 10:41:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279.2.2 2009/05/04 08:12:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279.2.3 2009/05/16 10:41:22 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1860,6 +1860,8 @@ comintr(void *arg)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
+
+	KASSERT(regsp != NULL);
 
 	mutex_spin_enter(&sc->sc_lock);
 	iir = CSR_READ_1(regsp, COM_REG_IIR);

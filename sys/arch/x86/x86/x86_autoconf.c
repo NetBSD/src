@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.34.4.1 2009/05/04 08:12:11 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.34.4.2 2009/05/16 10:41:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.1 2009/05/04 08:12:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.2 2009/05/16 10:41:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ findroot(void)
 
 	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
-			struct cfdata *cd;
+			cfdata_t cd;
 			size_t len;
 
 			if (device_class(dv) != DV_DISK)

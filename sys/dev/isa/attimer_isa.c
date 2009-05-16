@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer_isa.c,v 1.10.4.1 2008/05/16 02:24:26 yamt Exp $	*/
+/*	$NetBSD: attimer_isa.c,v 1.10.4.2 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.10.4.1 2008/05/16 02:24:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.10.4.2 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.10.4.1 2008/05/16 02:24:26 yamt Ex
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-static int	attimer_isa_match(device_t, struct cfdata *, void *);
+static int	attimer_isa_match(device_t, cfdata_t, void *);
 static void	attimer_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(attimer_isa, sizeof(struct attimer_softc),

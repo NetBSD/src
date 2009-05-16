@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.128.4.1 2009/05/04 08:12:56 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.128.4.2 2009/05/16 10:41:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.128.4.1 2009/05/04 08:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.128.4.2 2009/05/16 10:41:34 yamt Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5450,7 +5450,7 @@ tulip_pci_match(
 static int
 tulip_probe(
     struct device *parent,
-    struct cfdata *cf,
+    cfdata_t cf,
     void *aux)
 {
     struct isa_attach_args * const ia = (struct isa_attach_args *) aux;
@@ -5572,7 +5572,7 @@ struct cfdriver decd = {
 static int
 tulip_pci_probe(
     struct device *parent,
-    struct cfdata *match,
+    cfdata_t match,
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -5632,7 +5632,7 @@ tulip_pci_attach(
 					(sc)->tulip_pci_devno = pa->d_agent))
 #endif
 #if defined(__NetBSD__)
-    tulip_softc_t * const sc = (tulip_softc_t *) self;
+    tulip_softc_t * const sc = device_private(self);
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     const int unit = sc->tulip_dev.dv_unit;
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))

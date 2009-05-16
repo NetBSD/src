@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.21 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.21.4.1 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.21 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.21.4.1 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.21 2008/04/08 20:08:49 cegger Exp $");
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
-int	aic_isa_probe(struct device *, struct cfdata *, void *);
+int	aic_isa_probe(device_t, cfdata_t, void *);
 
 struct aic_isa_softc {
 	struct	aic_softc sc_aic;	/* real "aic" softc */
@@ -98,8 +98,7 @@ CFATTACH_DECL(aic_isa, sizeof(struct aic_isa_softc),
  * returns non-zero value if a controller is found.
  */
 int
-aic_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+aic_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -142,7 +141,7 @@ aic_isa_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-aic_isa_attach(struct device *parent, struct device *self, void *aux)
+aic_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aic_isa_softc *isc = (void *)self;

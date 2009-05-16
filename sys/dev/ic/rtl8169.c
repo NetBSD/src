@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.102.2.2 2009/05/04 08:12:43 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.102.2.3 2009/05/16 10:41:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.2 2009/05/04 08:12:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.3 2009/05/16 10:41:24 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -166,12 +166,12 @@ static void re_watchdog(struct ifnet *);
 static int re_enable(struct rtk_softc *);
 static void re_disable(struct rtk_softc *);
 
-static int re_gmii_readreg(struct device *, int, int);
-static void re_gmii_writereg(struct device *, int, int, int);
+static int re_gmii_readreg(device_t, int, int);
+static void re_gmii_writereg(device_t, int, int, int);
 
-static int re_miibus_readreg(struct device *, int, int);
-static void re_miibus_writereg(struct device *, int, int, int);
-static void re_miibus_statchg(struct device *);
+static int re_miibus_readreg(device_t, int, int);
+static void re_miibus_writereg(device_t, int, int, int);
+static void re_miibus_statchg(device_t);
 
 static void re_reset(struct rtk_softc *);
 
@@ -610,7 +610,7 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8102E:
 		case RTK_HWREV_8102EL:
-		case RTK_HWREV_8102EL_SPIN2:
+		case RTK_HWREV_8103E:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
 			break;

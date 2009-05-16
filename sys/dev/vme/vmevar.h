@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.12 2005/12/11 12:24:07 christos Exp $ */
+/* $NetBSD: vmevar.h,v 1.12.74.1 2009/05/16 10:41:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -154,7 +154,7 @@ typedef struct vme_chipset_tag {
  */
 
 struct vme_attach_args;
-typedef void (*vme_slaveconf_callback)(struct device *,
+typedef void (*vme_slaveconf_callback)(device_t,
 				       struct vme_attach_args *);
 
 struct vmebus_attach_args {

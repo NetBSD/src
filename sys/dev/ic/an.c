@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.51.4.1 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: an.c,v 1.51.4.2 2009/05/16 10:41:22 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.51.4.1 2009/05/04 08:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.51.4.2 2009/05/16 10:41:22 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -426,7 +426,7 @@ an_detach(struct an_softc *sc)
 }
 
 int
-an_activate(struct device *self, enum devact act)
+an_activate(device_t self, enum devact act)
 {
 	struct an_softc *sc = (struct an_softc *)self;
 	int s, error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.10.32.1 2009/05/04 08:12:44 yamt Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.10.32.2 2009/05/16 10:41:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -75,7 +75,7 @@ struct tcic_handle {
 		int		speed;		/* in ns */
 	} io[TCIC_IO_WINS];
 	int	ih_irq;
-	struct device *pcmcia;
+	device_t pcmcia;
 
 	int shutdown;
 	struct lwp *event_thread;

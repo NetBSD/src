@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.3.4.2 2009/05/04 08:13:01 yamt Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.3.4.3 2009/05/16 10:41:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.3.4.2 2009/05/04 08:13:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.3.4.3 2009/05/16 10:41:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +373,6 @@ r128fb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct r128fb_softc *sc = vd->cookie;
-	struct lwp *me;
 	paddr_t pa;
 
 	/* 'regular' framebuffer mmap()ing */
@@ -387,14 +386,11 @@ r128fb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = curlwp;
-	if (me != NULL) {
-		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			aprint_normal("%s: mmap() rejected.\n",
-			    device_xname(sc->sc_dev));
-			return -1;
-		}
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		aprint_normal("%s: mmap() rejected.\n",
+		    device_xname(sc->sc_dev));
+		return -1;
 	}
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {

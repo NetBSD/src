@@ -1,4 +1,4 @@
-/*	$NetBSD: mach64_drv.c,v 1.3.12.1 2009/05/04 08:13:07 yamt Exp $	*/
+/*	$NetBSD: mach64_drv.c,v 1.3.12.2 2009/05/16 10:41:41 yamt Exp $	*/
 
 /* mach64_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach64_drv.c,v 1.3.12.1 2009/05/04 08:13:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach64_drv.c,v 1.3.12.2 2009/05/16 10:41:41 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -123,14 +123,14 @@ MODULE_DEPEND(mach64, drm, 1, 1, 1);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 static int
-mach64drm_probe(struct device *parent, struct cfdata *match, void *aux)
+mach64drm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	return drm_probe(pa, mach64_pciidlist);
 }
 
 static void
-mach64drm_attach(struct device *parent, struct device *self, void *aux)
+mach64drm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	drm_device_t *dev = device_private(self);

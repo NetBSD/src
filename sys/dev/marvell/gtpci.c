@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.19 2008/04/11 06:25:25 he Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.19.4.1 2009/05/16 10:41:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.19 2008/04/11 06:25:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.19.4.1 2009/05/16 10:41:27 yamt Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -65,7 +65,7 @@ static int	gtpci_error_intr(void *);
 
 static void	gtpci_bus_init(struct gtpci_chipset *);
 
-static void	gtpci_bus_attach_hook(struct device *, struct device *,
+static void	gtpci_bus_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 static int	gtpci_bus_maxdevs(pci_chipset_tag_t, int);
 
@@ -87,8 +87,8 @@ struct gtpci_softc {
 };
 
 static int gtpci_cfprint(void *, const char *);
-static int gtpci_match(struct device *, struct cfdata *, void *);
-static void gtpci_attach(struct device *, struct device *, void *);
+static int gtpci_match(device_t, cfdata_t, void *);
+static void gtpci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(gtpci, sizeof(struct gtpci_softc),
     gtpci_match, gtpci_attach, NULL, NULL);
@@ -194,7 +194,7 @@ static const struct pci_init {
 };
 
 int
-gtpci_match(struct device *parent, struct cfdata *self, void *aux)
+gtpci_match(device_t parent, cfdata_t self, void *aux)
 {
 	struct gt_softc * const gt = device_private(parent);
 	struct gt_attach_args * const ga = aux;
@@ -216,7 +216,7 @@ gtpci_cfprint(void *aux, const char *pnp)
 }
 
 void
-gtpci_attach(struct device *parent, struct device *self, void *aux)
+gtpci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args pba;
 	struct gt_attach_args * const ga = aux;
@@ -452,7 +452,7 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 }
 
 void
-gtpci_bus_attach_hook(struct device *parent, struct device *self,
+gtpci_bus_attach_hook(device_t parent, device_t self,
 	struct pcibus_attach_args *pba)
 {
 	struct gtpci_chipset *gtpc = (struct gtpci_chipset *) pba->pba_pc;

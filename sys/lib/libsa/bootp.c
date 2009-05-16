@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.32.4.1 2009/05/04 08:13:51 yamt Exp $	*/
+/*	$NetBSD: bootp.c,v 1.32.4.2 2009/05/16 10:41:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -372,21 +372,21 @@ vend_rfc1048(u_char *cp, u_int len)
 		if (tag == TAG_END)
 			break;
 
-		if (tag == TAG_SUBNET_MASK) {
+		if (tag == TAG_SUBNET_MASK && size >= sizeof(smask)) {
 			(void)memcpy(&smask, cp, sizeof(smask));
 		}
-		if (tag == TAG_GATEWAY) {
+		if (tag == TAG_GATEWAY && size >= sizeof(gateip.s_addr)) {
 			(void)memcpy(&gateip.s_addr, cp, sizeof(gateip.s_addr));
 		}
-		if (tag == TAG_SWAPSERVER) {
+		if (tag == TAG_SWAPSERVER && size >= sizeof(rootip.s_addr)) {
 			/* let it override bp_siaddr */
 			(void)memcpy(&rootip.s_addr, cp, sizeof(rootip.s_addr));
 		}
-		if (tag == TAG_ROOTPATH) {
+	        if (tag == TAG_ROOTPATH && size < sizeof(rootpath)) {
 			strncpy(rootpath, (char *)cp, sizeof(rootpath));
 			rootpath[size] = '\0';
 		}
-		if (tag == TAG_HOSTNAME) {
+		if (tag == TAG_HOSTNAME && size < sizeof(hostname)) {
 			strncpy(hostname, (char *)cp, sizeof(hostname));
 			hostname[size] = '\0';
 		}
@@ -396,13 +396,15 @@ vend_rfc1048(u_char *cp, u_int len)
 				return -1;
 			dhcp_ok = 1;
 		}
-		if (tag == TAG_SERVERID) {
+		if (tag == TAG_SERVERID &&
+		    size >= sizeof(dhcp_serverip.s_addr))
+		{
 			(void)memcpy(&dhcp_serverip.s_addr, cp, 
 			      sizeof(dhcp_serverip.s_addr));
 		}
 #endif
 #ifdef SUPPORT_LINUX
-		if (tag == TAG_LINUX_CMDLINE) {
+		if (tag == TAG_LINUX_CMDLINE && size < sizeof(linuxcmdline)) {
 			strncpy(linuxcmdline, (char *)cp, sizeof(linuxcmdline));
 			linuxcmdline[size] = '\0';
 		}

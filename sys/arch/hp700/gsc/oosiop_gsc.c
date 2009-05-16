@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop_gsc.c,v 1.5.4.1 2008/05/16 02:22:23 yamt Exp $	*/
+/*	$NetBSD: oosiop_gsc.c,v 1.5.4.2 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.5.4.1 2008/05/16 02:22:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.5.4.2 2009/05/16 10:41:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ oosiop_gsc_match(device_t parent, cfdata_t cf, void *aux)
 	    ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI)
 		return 0;
 
-	if (bus_space_map(ga->ga_iot, ga->ga_hpa, 
+	if (bus_space_map(ga->ga_iot, ga->ga_hpa,
 	    OOSIOP_GSC_OFFSET + OOSIOP_NREGS, 0, &ioh))
 		return 0;
 
@@ -151,7 +151,7 @@ oosiop_gsc_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(sc->sc_bst, ga->ga_hpa,
 	    OOSIOP_GSC_OFFSET + OOSIOP_NREGS, 0, &ioh))
 		panic("%s: couldn't map I/O ports", __func__);
-	if (bus_space_subregion(sc->sc_bst, ioh, 
+	if (bus_space_subregion(sc->sc_bst, ioh,
 	    OOSIOP_GSC_OFFSET, OOSIOP_NREGS, &sc->sc_bsh))
 		panic("%s: couldn't get chip ports", __func__);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.98.2.2 2009/05/04 08:14:19 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.98.2.3 2009/05/16 10:41:50 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98.2.2 2009/05/04 08:14:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98.2.3 2009/05/16 10:41:50 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -404,22 +404,16 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
 	struct ip6_pktopts opt, *optp = NULL;
 	struct ifnet *oifp = NULL;
 	int type, code;		/* for ICMPv6 output statistics only */
-	int priv = 0;
 	int scope_ambiguous = 0;
 	struct in6_addr *in6a;
 
 	in6p = sotoin6pcb(so);
 
-	priv = 0;
-	if (curlwp && !kauth_authorize_generic(curlwp->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL))
-		priv = 1;
-
 	dst = &dstsock->sin6_addr;
 	if (control) {
 		if ((error = ip6_setpktopts(control, &opt,
 		    in6p->in6p_outputopts,
-		    priv, so->so_proto->pr_protocol)) != 0) {
+		    kauth_cred_get(), so->so_proto->pr_protocol)) != 0) {
 			goto bad;
 		}
 		optp = &opt;
@@ -619,12 +613,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int s;
 	int error = 0;
-	int priv;
-
-	priv = 0;
-	if (l && !kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL))
-		priv++;
 
 	if (req == PRU_CONTROL)
 		return in6_control(so, (u_long)m, (void *)nam,
@@ -641,11 +629,13 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 
 	switch (req) {
 	case PRU_ATTACH:
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_SOCKET, KAUTH_REQ_NETWORK_SOCKET_RAWSOCK,
+		    NULL, NULL, NULL);
 		sosetlock(so);
 		if (in6p != NULL)
 			panic("rip6_attach");
-		if (!priv) {
-			error = EACCES;
+		if (error) {
 			break;
 		}
 		s = splsoftnet();

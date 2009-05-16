@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.81.4.1 2009/05/04 08:12:57 yamt Exp $ */
+/* $NetBSD: if_ti.c,v 1.81.4.2 2009/05/16 10:41:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.81.4.1 2009/05/04 08:12:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.81.4.2 2009/05/16 10:41:35 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -149,8 +149,8 @@ static const struct ti_type ti_devs[] = {
 };
 
 static const struct ti_type *ti_type_match(struct pci_attach_args *);
-static int ti_probe(struct device *, struct cfdata *, void *);
-static void ti_attach(struct device *, struct device *, void *);
+static int ti_probe(device_t, cfdata_t, void *);
+static void ti_attach(device_t, device_t, void *);
 static void ti_shutdown(void *);
 static void ti_txeof_tigon1(struct ti_softc *);
 static void ti_txeof_tigon2(struct ti_softc *);
@@ -1603,7 +1603,7 @@ ti_type_match(struct pci_attach_args *pa)
  * against our list and return its name if we find a match.
  */
 static int
-ti_probe(struct device *parent, struct cfdata *match, void *aux)
+ti_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct ti_type		*t;
@@ -1614,7 +1614,7 @@ ti_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ti_attach(struct device *parent, struct device *self, void *aux)
+ti_attach(device_t parent, device_t self, void *aux)
 {
 	u_int32_t		command;
 	struct ifnet		*ifp;
@@ -1636,7 +1636,7 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s (rev. 0x%02x)\n", t->ti_name, PCI_REVISION(pa->pa_class));
 
-	sc = (struct ti_softc *)self;
+	sc = device_private(self);
 
 	/*
 	 * Map control/status registers.

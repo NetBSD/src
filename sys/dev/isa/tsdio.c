@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.5.4.2 2009/05/04 08:12:49 yamt Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.5.4.3 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.5.4.2 2009/05/04 08:12:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.5.4.3 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,16 +44,16 @@ __KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.5.4.2 2009/05/04 08:12:49 yamt Exp $");
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/tsdiovar.h>
 
-int	tsdio_probe(struct device *, struct cfdata *, void *);
-void	tsdio_attach(struct device *, struct device *, void *);
-int	tsdio_search(struct device *, struct cfdata *, const int *, void *);
+int	tsdio_probe(device_t, cfdata_t, void *);
+void	tsdio_attach(device_t, device_t, void *);
+int	tsdio_search(device_t, cfdata_t, const int *, void *);
 int	tsdio_print(void *, const char *);
 
 CFATTACH_DECL(tsdio, sizeof(struct tsdio_softc),
     tsdio_probe, tsdio_attach, NULL, NULL);
 
 int
-tsdio_probe(struct device *parent, struct cfdata *cf, void *aux)
+tsdio_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -101,7 +101,7 @@ tsdio_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-tsdio_attach(struct device *parent, struct device *self, void *aux)
+tsdio_attach(device_t parent, device_t self, void *aux)
 {
 	struct tsdio_softc *sc = (struct tsdio_softc *) self;
 	struct isa_attach_args *ia = aux;
@@ -126,7 +126,7 @@ tsdio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-tsdio_search(struct device *parent, struct cfdata *cf, const int *l, void *aux)
+tsdio_search(device_t parent, cfdata_t cf, const int *l, void *aux)
 {
 	struct tsdio_softc *sc = (struct tsdio_softc *)parent;
 	struct tsdio_attach_args sa;

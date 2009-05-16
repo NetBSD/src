@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.10 2008/04/04 17:03:42 tsutsui Exp $ */
+/* $NetBSD: i82596var.h,v 1.10.4.1 2009/05/16 10:41:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -156,6 +156,7 @@ struct iee_softc {
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_shmem_map;
 	bus_dma_segment_t sc_dma_segs;
+	int sc_dma_rsegs;
 	bus_dmamap_t sc_rx_map[IEE_NRFD];
 	bus_dmamap_t sc_tx_map[IEE_NCB];
 	struct mbuf *sc_rx_mbuf[IEE_NRFD];
@@ -167,6 +168,22 @@ struct iee_softc {
 	uint8_t sc_cf[14];
 	int sc_flags;
 	int sc_cl_align;
+	int sc_scp_off;
+	int sc_scp_sz;
+	int sc_iscp_off;
+	int sc_iscp_sz;
+	int sc_scb_off;
+	int sc_scb_sz;
+	int sc_rfd_off;
+	int sc_rfd_sz;
+	int sc_rbd_off;
+	int sc_rbd_sz;
+	int sc_cb_off;
+	int sc_cb_sz;
+	int sc_tbd_off;
+	int sc_tbd_sz;
+	int sc_shmem_sz;
+	uint32_t sc_sysbus;
 	uint32_t sc_crc_err;
 	uint32_t sc_align_err;
 	uint32_t sc_resource_err;
@@ -189,69 +206,70 @@ struct iee_softc {
 
 /* Flags */
 #define IEE_NEED_SWAP	0x01
-#define	IEE_WANT_MCAST	0x02
+#define IEE_WANT_MCAST	0x02
+#define IEE_REV_A	0x04
 
-#define IEE_SWAP(x)	((sc->sc_flags & IEE_NEED_SWAP) == 0 ? x : 	\
-			(((x) << 16) | ((x) >> 16)))
+/*
+ * Rev A1 chip doesn't have 32-bit BE mode and all 32 bit pointers are
+ * treated as two 16-bit big endian entities.
+ */
+#define IEE_SWAPA32(x)	((sc->sc_flags & (IEE_NEED_SWAP|IEE_REV_A)) ==	\
+			    (IEE_NEED_SWAP|IEE_REV_A) ?			\
+			    (((x) << 16) | ((x) >> 16)) : (x))
+/*
+ * The SCB absolute address and statistical counters are
+ * always treated as two 16-bit big endian entities
+ * even in 32-bit BE mode supported by Rev B and C chips.
+ */
+#define IEE_SWAP32(x)	((sc->sc_flags & IEE_NEED_SWAP) != 0 ? 		\
+			    (((x) << 16) | ((x) >> 16)) : (x))
 #define IEE_PHYS_SHMEM(x) ((uint32_t) (sc->sc_shmem_map->dm_segs[0].ds_addr \
 			+ (x)))
 
+#define SC_SCP(sc)	((struct iee_scp *)((sc)->sc_shmem_addr +	\
+			    (sc)->sc_scp_off))
+#define SC_ISCP(sc)	((struct iee_iscp *)((sc)->sc_shmem_addr +	\
+			    (sc)->sc_iscp_off))
+#define SC_SCB(sc)	((struct iee_scb *)((sc)->sc_shmem_addr +	\
+			    (sc)->sc_scb_off))
+#define SC_RFD(sc, n)	((struct iee_rfd *)((sc)->sc_shmem_addr +	\
+			    (sc)->sc_rfd_off +				\
+			    (n) * (sc)->sc_rfd_sz))
+#define SC_RBD(sc, n)	((struct iee_rbd *)((sc)->sc_shmem_addr +	\
+			    (sc)->sc_rbd_off +				\
+			    (n) * (sc)->sc_rbd_sz))
+#define SC_CB(sc, n)	((struct iee_cb *)((sc)->sc_shmem_addr +	\
+			    (sc)->sc_cb_off +				\
+			    (n) * (sc)->sc_cb_sz))
+#define SC_TBD(sc, n)	((struct iee_tbd *)((sc)->sc_shmem_addr +	\
+			    (sc)->sc_tbd_off +				\
+			    (n) * (sc)->sc_tbd_sz))
 
-/* Offsets in shared memory */
-#define IEE_SCP_SZ	(((sizeof(struct iee_scp) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
-#define IEE_SCP_OFF	0
-
-#define IEE_ISCP_SZ	(((sizeof(struct iee_iscp) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
-#define IEE_ISCP_OFF	IEE_SCP_SZ
-
-#define IEE_SCB_SZ	(((sizeof(struct iee_scb) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
-#define IEE_SCB_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ)
-
-#define IEE_RFD_SZ	(((sizeof(struct iee_rfd) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
-#define IEE_RFD_LIST_SZ	(IEE_RFD_SZ * IEE_NRFD)
-#define IEE_RFD_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ)
-
-#define IEE_RBD_SZ	(((sizeof(struct iee_rbd) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
-#define IEE_RBD_LIST_SZ	(IEE_RBD_SZ * IEE_NRFD)
-#define IEE_RBD_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ		\
-			+ IEE_RFD_SZ * IEE_NRFD)
-
-#define IEE_CB_SZ	(((sizeof(struct iee_cb) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
-#define IEE_CB_LIST_SZ	(IEE_CB_SZ * IEE_NCB)
-#define IEE_CB_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ		\
-			+ IEE_RFD_SZ * IEE_NRFD + IEE_RBD_SZ * IEE_NRFD)
-
-#define IEE_TBD_SZ	(((sizeof(struct iee_tbd) - 1) / (sc)->sc_cl_align + 1)\
-			* (sc)->sc_cl_align)
-#define IEE_TBD_LIST_SZ	(IEE_TBD_SZ * IEE_NTBD * IEE_NCB)
-#define IEE_TBD_OFF	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ		\
-			+ IEE_RFD_SZ * IEE_NRFD + IEE_RBD_SZ * IEE_NRFD	\
-			+ IEE_CB_SZ * IEE_NCB)
-
-#define IEE_SHMEM_MAX	(IEE_SCP_SZ + IEE_ISCP_SZ + IEE_SCB_SZ		\
-			+ IEE_RFD_SZ * IEE_NRFD + IEE_RBD_SZ * IEE_NRFD	\
-			+ IEE_CB_SZ * IEE_NCB + IEE_TBD_SZ * IEE_NTBD * IEE_NCB)
-
-
-#define SC_SCP		((struct iee_scp*)((sc)->sc_shmem_addr + IEE_SCP_OFF))
-#define SC_ISCP		((struct iee_iscp*)((sc)->sc_shmem_addr + IEE_ISCP_OFF))
-#define SC_SCB		((struct iee_scb*)((sc)->sc_shmem_addr + IEE_SCB_OFF))
-#define SC_RFD(n)	((struct iee_rfd*)((sc)->sc_shmem_addr + IEE_RFD_OFF \
-				+ (n) * IEE_RFD_SZ))
-#define SC_RBD(n)	((struct iee_rbd*)((sc)->sc_shmem_addr + IEE_RBD_OFF \
-				+ (n) * IEE_RBD_SZ))
-#define SC_CB(n)	((struct iee_cb*)((sc)->sc_shmem_addr + IEE_CB_OFF \
-				+ (n) * IEE_CB_SZ))
-#define SC_TBD(n)	((struct iee_tbd*)((sc)->sc_shmem_addr + IEE_TBD_OFF \
-				+ (n) * IEE_TBD_SZ))
-
-
+#define IEE_SCPSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_shmem_map,		\
+	    (sc)->sc_scb_off, (sc)->sc_scp_sz, (ops))
+#define IEE_ISCPSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_shmem_map,		\
+	    (sc)->sc_iscp_off, (sc)->sc_iscp_sz, (ops))
+#define IEE_SCBSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_shmem_map,		\
+	    (sc)->sc_scb_off, (sc)->sc_scb_sz, (ops))
+#define IEE_RFDSYNC(sc, n, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_shmem_map,		\
+	    (sc)->sc_rfd_off + (n) * (sc)->sc_rfd_sz,			\
+	    (sc)->sc_rfd_sz, (ops))
+#define IEE_RBDSYNC(sc, n, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_shmem_map,		\
+	    (sc)->sc_rbd_off + (n) * (sc)->sc_rbd_sz,			\
+	    (sc)->sc_rbd_sz, (ops))
+#define IEE_CBSYNC(sc, n, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_shmem_map,		\
+	    (sc)->sc_cb_off + (n) * (sc)->sc_cb_sz,			\
+	    (sc)->sc_cb_sz, (ops))
+#define IEE_TBDSYNC(sc, n, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_shmem_map,		\
+	    (sc)->sc_tbd_off + (n) * (sc)->sc_tbd_sz,			\
+	    (sc)->sc_tbd_sz, (ops))
 
 void iee_attach(struct iee_softc *, uint8_t *, int *, int, int);
 void iee_detach(struct iee_softc *, int);

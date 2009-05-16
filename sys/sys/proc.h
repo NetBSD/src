@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.274.2.2 2009/05/04 08:14:35 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.274.2.3 2009/05/16 10:41:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ struct proc {
 			p_specdataref;	/*    subsystem proc-specific data */
 
 	int		p_exitsig;	/* l: signal to send to parent on exit */
-	int		p_flag;		/* p: P_* flags */
+	int		p_flag;		/* p: PK_* flags */
 	int		p_sflag;	/* p: PS_* flags */
 	int		p_slflag;	/* s, l: PSL_* flags */
 	int		p_lflag;	/* l: PL_* flags */

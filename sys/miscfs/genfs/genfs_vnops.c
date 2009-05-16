@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.166.2.2 2009/05/04 08:14:04 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.166.2.3 2009/05/16 10:41:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.166.2.2 2009/05/04 08:14:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.166.2.3 2009/05/16 10:41:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -665,3 +665,31 @@ genfs_can_mount(vnode_t *devvp, mode_t accessmode, kauth_cred_t cred)
 
 	return (error);
 }
+
+int
+genfs_can_chtimes(vnode_t *vp, u_int vaflags, uid_t owner_uid,
+    kauth_cred_t cred)
+{
+	int error;
+
+	/* Must be root, or... */
+	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
+	if (!error)
+		return (0);
+
+	/* must be owner, or... */
+	if (kauth_cred_geteuid(cred) == owner_uid)
+		return (0);
+
+	/* set the times to the current time, and... */
+	if ((vaflags & VA_UTIMES_NULL) == 0)
+		return (EPERM);
+
+	/* have write access. */
+	error = VOP_ACCESS(vp, VWRITE, cred);
+	if (error)
+		return (error);
+
+	return (0);
+}
+

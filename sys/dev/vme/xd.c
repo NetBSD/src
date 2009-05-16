@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.75.4.1 2009/05/04 08:13:25 yamt Exp $	*/
+/*	$NetBSD: xd.c,v 1.75.4.2 2009/05/16 10:41:46 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.75.4.1 2009/05/04 08:13:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.75.4.2 2009/05/16 10:41:46 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -241,10 +241,10 @@ void	xd_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
 int	xdcintr(void *);
 
 /* autoconf */
-int	xdcmatch(struct device *, struct cfdata *, void *);
-void	xdcattach(struct device *, struct device *, void *);
-int	xdmatch(struct device *, struct cfdata *, void *);
-void	xdattach(struct device *, struct device *, void *);
+int	xdcmatch(device_t, cfdata_t, void *);
+void	xdcattach(device_t, device_t, void *);
+int	xdmatch(device_t, cfdata_t, void *);
+void	xdattach(device_t, device_t, void *);
 static	int xdc_probe(void *, bus_space_tag_t, bus_space_handle_t);
 
 static	void xddummystrat(struct buf *);
@@ -451,8 +451,8 @@ xdc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 }
 
 int xdcmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+	device_t parent;
+	cfdata_t cf;
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
@@ -475,10 +475,7 @@ int xdcmatch(parent, cf, aux)
  * xdcattach: attach controller
  */
 void
-xdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+xdcattach(device_t parent, device_t self, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -681,7 +678,7 @@ xdcattach(parent, self, aux)
  * call xdattach!).
  */
 int
-xdmatch(struct device *parent, struct cfdata *cf, void *aux)
+xdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct xdc_attach_args *xa = aux;
 
@@ -700,10 +697,7 @@ xdmatch(struct device *parent, struct cfdata *cf, void *aux)
  * from xdopen/xdstrategy.
  */
 void
-xdattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+xdattach(device_t parent, device_t self, void *aux)
 {
 	struct xd_softc *xd = device_private(self);
 	struct xdc_softc *xdc = device_private(parent);
@@ -1163,7 +1157,7 @@ xdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		xa.driveno = xd->xd_drive;
 		xa.fullmode = XD_SUB_WAIT;
 		xa.booting = 0;
-		xdattach((struct device *) xd->parent, (struct device *) xd, &xa);
+		xdattach((device_t) xd->parent, (device_t) xd, &xa);
 		if (xd->state == XD_DRIVE_UNKNOWN) {
 			return (EIO);
 		}
@@ -1268,7 +1262,7 @@ xdstrategy(bp)
 		xa.driveno = xd->xd_drive;
 		xa.fullmode = XD_SUB_WAIT;
 		xa.booting = 0;
-		xdattach((struct device *)xd->parent, (struct device *)xd, &xa);
+		xdattach((device_t)xd->parent, (device_t)xd, &xa);
 		if (xd->state == XD_DRIVE_UNKNOWN) {
 			bp->b_error = EIO;
 			goto done;

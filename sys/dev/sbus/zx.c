@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.21.4.2 2009/05/04 08:13:17 yamt Exp $	*/
+/*	$NetBSD: zx.c,v 1.21.4.3 2009/05/16 10:41:43 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.2 2009/05/04 08:13:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.3 2009/05/16 10:41:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.2 2009/05/04 08:13:17 yamt Exp $");
     ZX_ATTR_OE_ENABLE | ZX_ATTR_FORCE_WID)
 
 static void	zx_attach(device_t, device_t, void *);
-static int	zx_match(device_t, struct cfdata *, void *);
+static int	zx_match(device_t, cfdata_t, void *);
 
 static void	zx_blank(device_t);
 static int	zx_cmap_put(struct zx_softc *);
@@ -196,7 +196,7 @@ static struct vcons_screen zx_console_screen;
 #endif /* NWSDISPLAY > 0 */
 
 static int
-zx_match(device_t parent, struct cfdata *cf, void *aux)
+zx_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa;
 
@@ -218,7 +218,7 @@ zx_attach(device_t parent, device_t self, void *args)
 	struct rasops_info *ri = &zx_console_screen.scr_ri;
 	unsigned long defattr;
 #endif
-	int isconsole;
+	int isconsole, width, height;
 
 	sc = device_private(self);
 	sc->sc_dv = self;
@@ -324,6 +324,8 @@ zx_attach(device_t parent, device_t self, void *args)
 		zx_defaultscreen.capabilities = WSSCREEN_WSCOLORS;
 		zx_defaultscreen.nrows = ri->ri_rows;
 		zx_defaultscreen.ncols = ri->ri_cols;
+		zx_fillrect(sc, 0, 0, width, height,
+		     ri->ri_devcmap[defattr >> 16], ZX_STD_ROP);
 		wsdisplay_cnattach(&zx_defaultscreen, ri, 0, 0, defattr);	
 	} else {
 		/* 

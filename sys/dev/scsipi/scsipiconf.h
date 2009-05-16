@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.110.32.2 2009/05/04 08:13:18 yamt Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.110.32.3 2009/05/16 10:41:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ typedef enum {
 	ADAPTER_REQ_SET_XFER_MODE	/* set xfer mode */
 } scsipi_adapter_req_t;
 
-
+#ifdef _KERNEL
 /*
  * scsipi_periphsw:
  *
@@ -186,7 +186,7 @@ struct scsipi_inquiry_pattern;
  *	structure contains the channel number.
  */
 struct scsipi_adapter {
-	struct device *adapt_dev;	/* pointer to adapter's device */
+	device_t adapt_dev;	/* pointer to adapter's device */
 	int	adapt_nchannels;	/* number of adapter channels */
 	int	adapt_refcnt;		/* adapter's reference count */
 	int	adapt_openings;		/* total # of command openings */
@@ -198,12 +198,13 @@ struct scsipi_adapter {
 	void	(*adapt_minphys)(struct buf *);
 	int	(*adapt_ioctl)(struct scsipi_channel *, u_long,
 		    void *, int, struct proc *);
-	int	(*adapt_enable)(struct device *, int);
+	int	(*adapt_enable)(device_t, int);
 	int	(*adapt_getgeom)(struct scsipi_periph *,
 			struct disk_parms *, u_long);
 	int	(*adapt_accesschk)(struct scsipi_periph *,
 			struct scsipi_inquiry_pattern *);
 };
+#endif
 
 /* adapt_flags */
 #define SCSIPI_ADAPT_POLL_ONLY	0x01 /* Adaptor can't do interrupts. */
@@ -256,6 +257,7 @@ struct scsipi_bustype {
 #define	SCSIPI_CHAN_PERIPH_BUCKETS	16
 #define	SCSIPI_CHAN_PERIPH_HASHMASK	(SCSIPI_CHAN_PERIPH_BUCKETS - 1)
 
+#ifdef _KERNEL
 struct scsipi_channel {
 	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
 	const char *chan_name;	/* this channel's name */
@@ -295,6 +297,7 @@ struct scsipi_channel {
 	void (*chan_init_cb)(struct scsipi_channel *, void *);
 	void *chan_init_cb_arg;
 };
+#endif
 
 /* chan_flags */
 #define	SCSIPI_CHAN_OPENINGS	0x01	/* use chan_openings */
@@ -328,6 +331,7 @@ struct scsipi_channel {
 #define	PERIPH_NTAGWORDS	((256 / 8) / sizeof(u_int32_t))
 
 
+#ifdef _KERNEL
 /*
  * scsipi_periph:
  *
@@ -342,7 +346,7 @@ struct scsipi_channel {
  *	still be an improvement.
  */
 struct scsipi_periph {
-	struct device *periph_dev;	/* pointer to peripherial's device */
+	device_t periph_dev;	/* pointer to peripherial's device */
 	struct scsipi_channel *periph_channel; /* channel we're connected to */
 
 					/* link in channel's table of periphs */
@@ -387,6 +391,7 @@ struct scsipi_periph {
 	struct scsipi_xfer *periph_xscheck;
 
 };
+#endif
 
 /*
  * Macro to return the current xfer mode of a periph.

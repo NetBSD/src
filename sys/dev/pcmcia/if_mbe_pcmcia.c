@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.44.4.1 2008/05/16 02:24:57 yamt Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.44.4.2 2009/05/16 10:41:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.44.4.1 2008/05/16 02:24:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.44.4.2 2009/05/16 10:41:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ fail:
 }
 
 int
-mbe_pcmcia_detach(struct device *self, int flags)
+mbe_pcmcia_detach(device_t self, int flags)
 {
 	struct mbe_pcmcia_softc *psc = device_private(self);
 	int error;

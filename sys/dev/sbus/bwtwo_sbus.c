@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.20.4.2 2009/05/04 08:13:17 yamt Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.20.4.3 2009/05/16 10:41:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.20.4.2 2009/05/04 08:13:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.20.4.3 2009/05/16 10:41:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.20.4.2 2009/05/04 08:13:17 yamt Exp
 #include <dev/sun/pfourreg.h>
 
 /* autoconfiguration driver */
-static void	bwtwoattach_sbus (struct device *, struct device *, void *);
-static int	bwtwomatch_sbus (struct device *, struct cfdata *, void *);
+static void	bwtwoattach_sbus (device_t, device_t, void *);
+static int	bwtwomatch_sbus (device_t, cfdata_t, void *);
 
 /* Allocate an `sbusdev' in addition to the bwtwo softc */
 struct bwtwo_sbus_softc {
@@ -122,7 +122,7 @@ static void	bwtwo_set_video (struct bwtwo_softc *, int);
  * Match a bwtwo.
  */
 static int
-bwtwomatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
+bwtwomatch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -134,7 +134,7 @@ bwtwomatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-bwtwoattach_sbus(struct device *parent, struct device *self, void *args)
+bwtwoattach_sbus(device_t parent, device_t self, void *args)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct sbusdev *sd = &((struct bwtwo_sbus_softc *)self)->bss_sd;

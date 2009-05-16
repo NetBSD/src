@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.10.2 2009/05/04 08:10:26 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.10.3 2009/05/16 10:41:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37.10.2 2009/05/04 08:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37.10.3 2009/05/16 10:41:11 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -282,7 +282,7 @@ void fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct fd_type *fd_nvtotype(char *, int, int);
+struct fd_type *fd_nvtotype(const char *, int, int);
 void fd_set_motor(struct fdc_softc *fdc, int reset);
 void fd_motor_off(void *arg);
 void fd_motor_on(void *arg);
@@ -408,7 +408,7 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		if (type >= 0 && fa.fa_drive < 2)
-			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
+			fa.fa_deftype = fd_nvtotype(device_xname(&fdc->sc_dev),
 			    type, fa.fa_drive);
 		else
 			fa.fa_deftype = NULL;		/* unknown */
@@ -500,7 +500,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&fd->sc_dk, fd->sc_dev.dv_xname, &fddkdriver);
+	disk_init(&fd->sc_dk, device_xname(&fd->sc_dev), &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/* Needed to power off if the motor is on when we halt. */
@@ -512,7 +512,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
  * none/unknown/unusable.
  */
 struct fd_type *
-fd_nvtotype(char *fdc, int nvraminfo, int drive)
+fd_nvtotype(const char *fdc, int nvraminfo, int drive)
 {
 	int type;
 
@@ -849,7 +849,7 @@ fdcstatus(struct device *dv, int n, const char *s)
 		n = 2;
 	}
 
-	printf("%s: %s", dv->dv_xname, s);
+	printf("%s: %s", device_xname(dv), s);
 	fdcpstatus(n, fdc);
 }
 

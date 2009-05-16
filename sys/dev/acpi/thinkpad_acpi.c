@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.13.2.2 2009/05/04 08:12:34 yamt Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.13.2.3 2009/05/16 10:41:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.13.2.2 2009/05/04 08:12:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.13.2.3 2009/05/16 10:41:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,7 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_DISPLAY_ALL \
 	(THINKPAD_DISPLAY_LCD | THINKPAD_DISPLAY_CRT | THINKPAD_DISPLAY_DVI)
 
-static int	thinkpad_match(device_t, struct cfdata *, void *);
+static int	thinkpad_match(device_t, cfdata_t, void *);
 static void	thinkpad_attach(device_t, device_t, void *);
 
 static ACPI_STATUS thinkpad_mask_init(thinkpad_softc_t *, uint32_t);
@@ -136,7 +136,7 @@ static const char * const thinkpad_ids[] = {
 };
 
 static int
-thinkpad_match(device_t parent, struct cfdata *match, void *opaque)
+thinkpad_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
 	ACPI_INTEGER ver;

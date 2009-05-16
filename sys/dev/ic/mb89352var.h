@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.11.4.1 2008/05/16 02:24:05 yamt Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.11.4.2 2009/05/16 10:41:23 yamt Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -154,7 +154,7 @@ struct spc_softc {
 #define SPC_DOINGDMA	0x04	/* doing DMA */
 #define SPC_INACTIVE	0x80	/* The FIFO data path is active! */
 	uint8_t	sc_selid;	/* Reselection ID */
-	struct device *sc_child;/* Our child */
+	device_t sc_child;/* Our child */
 
 	/* Message stuff */
 	uint8_t	sc_msgpriq;	/* Messages we want to send */

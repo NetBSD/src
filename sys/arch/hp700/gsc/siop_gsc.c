@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_gsc.c,v 1.7 2008/03/30 12:32:13 skrll Exp $	*/
+/*	$NetBSD: siop_gsc.c,v 1.7.4.1 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: siop_gsc.c,v 1.4 2007/08/23 21:01:22 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.7 2008/03/30 12:32:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.7.4.1 2009/05/16 10:41:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.7 2008/03/30 12:32:13 skrll Exp $");
 #define	SIOP_GSC_RESET	0x0000
 #define	SIOP_GSC_OFFSET	0x0100
 
-int siop_gsc_match(struct device *, struct cfdata *, void *);
-void siop_gsc_attach(struct device *, struct device *, void *);
+int siop_gsc_match(device_t, cfdata_t, void *);
+void siop_gsc_attach(device_t, device_t, void *);
 int siop_gsc_intr(void *);
 void siop_gsc_reset(struct siop_common_softc *);
 
@@ -62,11 +62,11 @@ struct siop_gsc_softc {
 	struct hppa_bus_space_tag sc_bustag;
 };
 
-CFATTACH_DECL(siop_gsc, sizeof(struct siop_gsc_softc),
+CFATTACH_DECL_NEW(siop_gsc, sizeof(struct siop_gsc_softc),
     siop_gsc_match, siop_gsc_attach, NULL, NULL);
 
 int
-siop_gsc_match(struct device *parent, struct cfdata *match, void *aux)
+siop_gsc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -78,16 +78,17 @@ siop_gsc_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-siop_gsc_attach(struct device *parent, struct device *self, void *aux)
+siop_gsc_attach(device_t parent, device_t self, void *aux)
 {
-	struct siop_gsc_softc *gsc = (struct siop_gsc_softc *)self;
-        struct siop_softc *sc = &gsc->sc_siop;
+	struct siop_gsc_softc *gsc = device_private(self);
+	struct siop_softc *sc = &gsc->sc_siop;
 	struct gsc_attach_args *ga = aux;
 
+	sc->sc_c.sc_dev = self;
 	gsc->sc_iot = ga->ga_iot;
 	if (bus_space_map(gsc->sc_iot, ga->ga_hpa,
 	    IOMOD_HPASIZE, 0, &gsc->sc_ioh)) {
-		printf(": cannot map io space\n");
+		aprint_error(": can't map io space\n");
 		return;
 	}
 
@@ -118,12 +119,12 @@ siop_gsc_attach(struct device *parent, struct device *self, void *aux)
 	DELAY(1000);
 	siop_gsc_reset(&sc->sc_c);
 
-	printf(": NCR53C720 rev %d\n", bus_space_read_1(sc->sc_c.sc_rt,
+	aprint_normal(": NCR53C720 rev %d\n", bus_space_read_1(sc->sc_c.sc_rt,
 	    sc->sc_c.sc_rh, SIOP_CTEST3) >> 4);
 
 	siop_attach(sc);
 
-	(void)hp700_intr_establish(&sc->sc_c.sc_dev, IPL_BIO,
+	(void)hp700_intr_establish(self, IPL_BIO,
 	    siop_intr, sc, ga->ga_int_reg, ga->ga_irq);
 
 }

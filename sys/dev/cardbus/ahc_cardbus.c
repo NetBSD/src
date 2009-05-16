@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.23.10.2 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.23.10.3 2009/05/16 10:41:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.23.10.2 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.23.10.3 2009/05/16 10:41:19 yamt Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -85,17 +85,16 @@ struct ahc_cardbus_softc {
 	bus_size_t sc_size;
 };
 
-int	ahc_cardbus_match(struct device *, struct cfdata *, void *);
-void	ahc_cardbus_attach(struct device *, struct device *, void *);
-int	ahc_cardbus_detach(struct device *, int);
-int	ahc_activate(struct device *self, enum devact act);
+int	ahc_cardbus_match(device_t, cfdata_t, void *);
+void	ahc_cardbus_attach(device_t, device_t, void *);
+int	ahc_cardbus_detach(device_t, int);
+int	ahc_activate(device_t self, enum devact act);
 
-CFATTACH_DECL(ahc_cardbus, sizeof(struct ahc_cardbus_softc),
+CFATTACH_DECL_NEW(ahc_cardbus, sizeof(struct ahc_cardbus_softc),
     ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, ahc_activate);
 
 int
-ahc_cardbus_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ahc_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -107,8 +106,7 @@ ahc_cardbus_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ahc_cardbus_attach(struct device *parent, struct device *self,
-    void *aux)
+ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	struct ahc_cardbus_softc *csc = device_private(self);
@@ -123,6 +121,7 @@ ahc_cardbus_attach(struct device *parent, struct device *self,
 	u_char sblkctl;
 
 
+	ahc->sc_dev = self;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
@@ -169,7 +168,7 @@ ahc_cardbus_attach(struct device *parent, struct device *self,
 		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, reg);
 	}
 
-	ahc_set_name(ahc, device_xname(&ahc->sc_dev));
+	ahc_set_name(ahc, device_xname(ahc->sc_dev));
 
 	ahc->parent_dmat = ca->ca_dmat;
 	ahc->tag = bst;
@@ -257,14 +256,14 @@ ahc_cardbus_attach(struct device *parent, struct device *self,
 }
 
 int
-ahc_cardbus_detach(struct device *self, int flags)
+ahc_cardbus_detach(device_t self, int flags)
 {
 	struct ahc_cardbus_softc *csc = device_private(self);
 	struct ahc_softc *ahc = &csc->sc_ahc;
 
 	int rv;
 
-	rv = ahc_detach((void *)ahc, flags);
+	rv = ahc_detach(ahc, flags);
 	if (rv)
 		return rv;
 
@@ -289,9 +288,9 @@ ahc_cardbus_detach(struct device *self, int flags)
 
 
 int
-ahc_activate(struct device *self, enum devact act)
+ahc_activate(device_t self, enum devact act)
 {
-	struct ahc_cardbus_softc *csc = (void*)self;
+	struct ahc_cardbus_softc *csc = device_private(self);
 	struct ahc_softc *ahc = &csc->sc_ahc;
 	int s, rv = 0;
 
