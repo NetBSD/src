@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.225.4.2 2009/05/04 08:12:45 yamt Exp $	*/
+/*	$NetBSD: wi.c,v 1.225.4.3 2009/05/16 10:41:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.225.4.2 2009/05/04 08:12:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.225.4.3 2009/05/16 10:41:24 yamt Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -605,7 +605,7 @@ wi_detach(struct wi_softc *sc)
 
 #ifdef __NetBSD__
 int
-wi_activate(struct device *self, enum devact act)
+wi_activate(device_t self, enum devact act)
 {
 	struct wi_softc *sc = (struct wi_softc *)self;
 	int rv = 0, s;

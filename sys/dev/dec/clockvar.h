@@ -1,4 +1,4 @@
-/* $NetBSD: clockvar.h,v 1.9 2008/01/03 23:02:25 joerg Exp $ */
+/* $NetBSD: clockvar.h,v 1.9.10.1 2009/05/16 10:41:19 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -38,7 +38,7 @@
  * chip-dependent routines.
  */
 struct clockfns {
-	void	(*cf_init)(struct device *);
+	void	(*cf_init)(device_t);
 };
 
-void clockattach(struct device *, const struct clockfns *);
+void clockattach(device_t, const struct clockfns *);

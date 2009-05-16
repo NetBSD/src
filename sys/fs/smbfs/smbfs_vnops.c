@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.63.10.2 2009/05/04 08:13:44 yamt Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.63.10.3 2009/05/16 10:41:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.63.10.2 2009/05/04 08:13:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.63.10.3 2009/05/16 10:41:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,13 +436,10 @@ smbfs_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL)
 		atime = &vap->va_atime;
 	if (mtime != atime) {
-                if (kauth_cred_geteuid(ap->a_cred) !=
-		    VTOSMBFS(vp)->sm_args.uid &&
-                    (error = kauth_authorize_generic(ap->a_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) &&
-                    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-                    (error = VOP_ACCESS(ap->a_vp, VWRITE, ap->a_cred))))
-                        return (error);
+		error = genfs_can_chtimes(ap->a_vp, vap->va_vaflags,
+		    VTOSMBFS(vp)->sm_args.uid, ap->a_cred);
+		if (error)
+			return (error);
 
 #if 0
 		if (mtime == NULL)

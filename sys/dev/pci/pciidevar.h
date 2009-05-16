@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.36.10.1 2009/05/04 08:13:01 yamt Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.36.10.2 2009/05/16 10:41:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -213,7 +213,7 @@ void pciide_irqack(struct ata_channel *);
 
 /* Attach compat interrupt handler, returning handle or NULL if failed. */
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
-void	*pciide_machdep_compat_intr_establish(struct device *,
+void	*pciide_machdep_compat_intr_establish(device_t,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
 #endif
 

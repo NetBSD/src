@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.2.2.2 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: uturn.c,v 1.2.2.3 2009/05/16 10:41:12 yamt Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -48,22 +48,22 @@ struct uturn_regs {
 };
 
 struct uturn_softc {
-	struct device sc_dv;
+	device_t sc_dv;
 
 	struct uturn_regs volatile *sc_regs;
 };
 
-int	uturnmatch(struct device *, struct cfdata *, void *);
-void	uturnattach(struct device *, struct device *, void *);
-static void uturn_callback(struct device *self, struct confargs *ca);
+int	uturnmatch(device_t, cfdata_t, void *);
+void	uturnattach(device_t, device_t, void *);
+static void uturn_callback(device_t self, struct confargs *ca);
 
-CFATTACH_DECL(uturn, sizeof(struct uturn_softc),
+CFATTACH_DECL_NEW(uturn, sizeof(struct uturn_softc),
     uturnmatch, uturnattach, NULL, NULL);
 
 extern struct cfdriver uturn_cd;
 
 int
-uturnmatch(struct device *parent, struct cfdata *cf, void *aux)
+uturnmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -80,20 +80,21 @@ uturnmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-uturnattach(struct device *parent, struct device *self, void *aux)
+uturnattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux, nca;
-	struct uturn_softc *sc = (struct uturn_softc *)self;
+	struct uturn_softc *sc = device_private(self);
 	bus_space_handle_t ioh;
 
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
-		printf(": can't map IO space\n");
+		aprint_error(": can't map IO space\n");
 		return;
 	}
 
+	sc->sc_dv = self;
 	sc->sc_regs = (struct uturn_regs *)ca->ca_hpa;
 
-	printf(": %s rev %d\n",
+	aprint_normal(": %s rev %d\n",
 	    ca->ca_type.iodc_revision < 0x10? "U2" : "UTurn",
 	    ca->ca_type.iodc_revision & 0xf);
 
@@ -132,7 +133,7 @@ uturnattach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-uturn_callback(struct device *self, struct confargs *ca)
+uturn_callback(device_t self, struct confargs *ca)
 {
 
 	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);

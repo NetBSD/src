@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.60.4.1 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: ast.c,v 1.60.4.2 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.60.4.1 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.60.4.2 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,16 +64,15 @@ struct ast_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int astprobe(struct device *, struct cfdata *, void *);
-void astattach(struct device *, struct device *, void *);
+int astprobe(device_t, cfdata_t, void *);
+void astattach(device_t, device_t, void *);
 int astintr(void *);
 
 CFATTACH_DECL(ast, sizeof(struct ast_softc),
     astprobe, astattach, NULL, NULL);
 
 int
-astprobe(struct device *parent, struct cfdata *self,
-    void *aux)
+astprobe(device_t parent, cfdata_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -143,7 +142,7 @@ out:
 }
 
 void
-astattach(struct device *parent, struct device *self, void *aux)
+astattach(device_t parent, device_t self, void *aux)
 {
 	struct ast_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;

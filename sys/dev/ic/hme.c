@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.64.4.2 2009/05/04 08:12:41 yamt Exp $	*/
+/*	$NetBSD: hme.c,v 1.64.4.3 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.64.4.2 2009/05/04 08:12:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.64.4.3 2009/05/16 10:41:23 yamt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -99,9 +99,9 @@ void		hme_reset(struct hme_softc *);
 void		hme_setladrf(struct hme_softc *);
 
 /* MII methods & callbacks */
-static int	hme_mii_readreg(struct device *, int, int);
-static void	hme_mii_writereg(struct device *, int, int, int);
-static void	hme_mii_statchg(struct device *);
+static int	hme_mii_readreg(device_t, int, int);
+static void	hme_mii_writereg(device_t, int, int, int);
+static void	hme_mii_statchg(device_t);
 
 int		hme_mediachange(struct ifnet *);
 
@@ -258,8 +258,15 @@ hme_config(struct hme_softc *sc)
 
 	hme_mifinit(sc);
 
+	/*
+	 * Some HME's have an MII connector, as well as RJ45.  Try attaching
+	 * the RJ45 (internal) PHY first, so that the MII PHY is always
+	 * instance 1.
+	 */
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-			MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
+			HME_PHYAD_INTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
+	mii_attach(&sc->sc_dev, mii, 0xffffffff,
+			HME_PHYAD_EXTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
@@ -292,10 +299,16 @@ hme_config(struct hme_softc *sc)
 		}
 
 		/*
-		 * XXX - we can really do the following ONLY if the
-		 * phy indeed has the auto negotiation capability!!
+		 * Set the default media to auto negotiation if the phy has
+		 * the auto negotiation capability.
+		 * XXX; What to do otherwise?
 		 */
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0))
+			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+/*
+		else
+			ifmedia_set(&sc->sc_mii.mii_media, sc->sc_defaultmedia);
+*/
 	}
 
 	/* claim 802.1q capability */
@@ -535,7 +548,7 @@ hme_init(struct hme_softc *sc)
 			  HME_SEB_STAT_TXALL |
 			  HME_SEB_STAT_TXPERR |
 			  HME_SEB_STAT_RCNTEXP |
-			  /*HME_SEB_STAT_MIFIRQ |*/
+			  HME_SEB_STAT_MIFIRQ |
 			  HME_SEB_STAT_ALL_ERRORS ));
 
 	switch (sc->sc_burst) {
@@ -980,7 +993,8 @@ hme_tint(struct hme_softc *sc)
 	 */
 	ifp->if_collisions +=
 		bus_space_read_4(t, mac, HME_MACI_NCCNT) +
-		bus_space_read_4(t, mac, HME_MACI_FCCNT) +
+		bus_space_read_4(t, mac, HME_MACI_FCCNT);
+	ifp->if_oerrors +=
 		bus_space_read_4(t, mac, HME_MACI_EXCNT) +
 		bus_space_read_4(t, mac, HME_MACI_LTCNT);
 
@@ -1030,6 +1044,9 @@ hme_tint(struct hme_softc *sc)
 int
 hme_rint(struct hme_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mac = sc->sc_mac;
 	void *xdr = sc->sc_rb.rb_rxd;
 	unsigned int nrbuf = sc->sc_rb.rb_nrbuf;
 	unsigned int ri;
@@ -1061,12 +1078,25 @@ hme_rint(struct hme_softc *sc)
 
 	sc->sc_rb.rb_rdtail = ri;
 
+	/* Read error counters ... */
+	ifp->if_ierrors +=
+	    bus_space_read_4(t, mac, HME_MACI_STAT_LCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_STAT_ACNT) +
+	    bus_space_read_4(t, mac, HME_MACI_STAT_CCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_STAT_CVCNT);
+
+	/* ... then clear the hardware counters. */
+	bus_space_write_4(t, mac, HME_MACI_STAT_LCNT, 0);
+	bus_space_write_4(t, mac, HME_MACI_STAT_ACNT, 0);
+	bus_space_write_4(t, mac, HME_MACI_STAT_CCNT, 0);
+	bus_space_write_4(t, mac, HME_MACI_STAT_CVCNT, 0);
 	return (1);
 }
 
 int
 hme_eint(struct hme_softc *sc, u_int status)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	char bits[128];
 
 	if ((status & HME_SEB_STAT_MIFIRQ) != 0) {
@@ -1080,6 +1110,21 @@ hme_eint(struct hme_softc *sc, u_int status)
 			device_xname(&sc->sc_dev), cf, st, sm);
 		return (1);
 	}
+
+	/* Receive error counters rolled over */
+	if (status & HME_SEB_STAT_ACNTEXP)
+		ifp->if_ierrors += 0xff;
+	if (status & HME_SEB_STAT_CCNTEXP)
+		ifp->if_ierrors += 0xff;
+	if (status & HME_SEB_STAT_LCNTEXP)
+		ifp->if_ierrors += 0xff;
+	if (status & HME_SEB_STAT_CVCNTEXP)
+		ifp->if_ierrors += 0xff;
+
+	/* RXTERR locks up the interface, so do a reset */
+	if (status & HME_SEB_STAT_RXTERR)
+		hme_reset(sc);
+
 	snprintb(bits, sizeof(bits), HME_SEB_STAT_BITS, status);
 	printf("%s: status=%s\n", device_xname(&sc->sc_dev), bits);
 		
@@ -1162,7 +1207,7 @@ hme_mifinit(struct hme_softc *sc)
  * MII interface
  */
 static int
-hme_mii_readreg(struct device *self, int phy, int reg)
+hme_mii_readreg(device_t self, int phy, int reg)
 {
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1233,7 +1278,7 @@ out:
 }
 
 static void
-hme_mii_writereg(struct device *self, int phy, int reg, int val)
+hme_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1300,7 +1345,7 @@ out:
 }
 
 static void
-hme_mii_statchg(struct device *dev)
+hme_mii_statchg(device_t dev)
 {
 	struct hme_softc *sc = (void *)dev;
 	bus_space_tag_t t = sc->sc_bustag;

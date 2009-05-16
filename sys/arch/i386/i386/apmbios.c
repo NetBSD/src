@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.10.4.2 2009/05/04 08:11:15 yamt Exp $ */
+/*	$NetBSD: apmbios.c,v 1.10.4.3 2009/05/16 10:41:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.10.4.2 2009/05/04 08:11:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.10.4.3 2009/05/16 10:41:14 yamt Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -85,8 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.10.4.2 2009/05/04 08:11:15 yamt Exp $"
 #define	DPRINTF(f, x)
 #endif
 
-static void	apmbiosattach(struct device *, struct device *, void *);
-static int	apmbiosmatch(struct device *, struct cfdata *, void *);
+static void	apmbiosattach(device_t, device_t, void *);
+static int	apmbiosmatch(device_t, cfdata_t, void *);
 
 #if 0
 static void	apm_devpowmgt_enable(int, u_int);
@@ -427,8 +427,7 @@ apm_busprobe(void)
 }
 
 static int
-apmbiosmatch(struct device *parent, struct cfdata *match,
-	     void *aux)
+apmbiosmatch(device_t parent, cfdata_t match, void *aux)
 {
 	/* There can be only one! */
 	if (apm_inited)
@@ -466,8 +465,7 @@ apmbiosmatch(struct device *parent, struct cfdata *match,
 #endif
 
 static void
-apmbiosattach(struct device *parent, struct device *self,
-	      void *aux)
+apmbiosattach(device_t parent, device_t self, void *aux)
 {
 	struct apm_softc *apmsc = device_private(self);
 	struct bioscallregs regs;

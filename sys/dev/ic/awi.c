@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.78.4.2 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: awi.c,v 1.78.4.3 2009/05/16 10:41:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.78.4.2 2009/05/04 08:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.78.4.3 2009/05/16 10:41:22 yamt Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -367,7 +367,7 @@ awi_detach(struct awi_softc *sc)
 
 #ifdef __NetBSD__
 int
-awi_activate(struct device *self, enum devact act)
+awi_activate(device_t self, enum devact act)
 {
 	struct awi_softc *sc = (struct awi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;

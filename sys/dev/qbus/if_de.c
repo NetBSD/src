@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.23.4.1 2009/05/04 08:13:15 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.23.4.2 2009/05/16 10:41:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.23.4.1 2009/05/04 08:13:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.23.4.2 2009/05/16 10:41:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -180,7 +180,7 @@ static	void deattach(device_t, device_t, void *);
 static	void dewait(struct de_softc *, const char *);
 static	int deinit(struct ifnet *);
 static	int deioctl(struct ifnet *, u_long, void *);
-static	void dereset(device_t );
+static	void dereset(device_t);
 static	void destop(struct ifnet *, int);
 static	void destart(struct ifnet *);
 static	void derecv(struct de_softc *);

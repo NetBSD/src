@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.16.4.2 2009/05/04 08:13:19 yamt Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.16.4.3 2009/05/16 10:41:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.16.4.2 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.16.4.3 2009/05/16 10:41:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ const struct cdevsw bwtwo_cdevsw = {
 };
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
-static void	bwtwounblank(struct device *);
+static void	bwtwounblank(device_t);
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
@@ -174,7 +174,7 @@ static struct vcons_screen bw2_console_screen;
 int
 bwtwo_pfour_probe(void *vaddr, void *arg)
 {
-	struct cfdata *cf = arg;
+	cfdata_t cf = arg;
 
 	switch (fb_pfour_id(vaddr)) {
 	case PFOUR_ID_BW:
@@ -356,7 +356,7 @@ bwtwoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 }
 
 static void
-bwtwounblank(struct device *dev)
+bwtwounblank(device_t dev)
 {
 	struct bwtwo_softc *sc = device_private(dev);
 

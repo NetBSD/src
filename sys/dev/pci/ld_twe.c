@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.29.20.2 2009/05/04 08:12:58 yamt Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.29.20.3 2009/05/16 10:41:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.29.20.2 2009/05/04 08:12:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.29.20.3 2009/05/16 10:41:35 yamt Exp $");
 
 #include "rnd.h"
 
@@ -221,7 +221,7 @@ ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
 	} else {
 		ccb->ccb_tx.tx_handler = ld_twe_handler;
 		ccb->ccb_tx.tx_context = bp;
-		ccb->ccb_tx.tx_dv = (struct device *)sc;
+		ccb->ccb_tx.tx_dv = sc->sc_ld.sc_dv;
 		twe_ccb_enqueue(twe, ccb);
 		rv = 0;
 	}
@@ -247,7 +247,7 @@ ld_twe_handler(struct twe_ccb *ccb, int error)
 
 	tx = &ccb->ccb_tx;
 	bp = tx->tx_context;
-	sc = (struct ld_twe_softc *)tx->tx_dv;
+	sc = device_private(tx->tx_dv);
 	twe = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	twe_ccb_unmap(twe, ccb);
@@ -321,7 +321,7 @@ ld_twe_flush(struct ld_softc *ld, int flags)
 }
 
 static void
-ld_twe_adjqparam(struct device *self, int openings)
+ld_twe_adjqparam(device_t self, int openings)
 {
 	struct ld_twe_softc *sc = device_private(self);
 	struct ld_softc *ld = &sc->sc_ld;

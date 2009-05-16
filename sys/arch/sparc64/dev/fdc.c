@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.21.4.2 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: fdc.c,v 1.21.4.3 2009/05/16 10:41:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.21.4.2 2009/05/04 08:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.21.4.3 2009/05/16 10:41:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -314,8 +314,6 @@ struct fd_softc {
 	int sc_cylin;		/* where we think the head is */
 	int sc_opts;		/* user-set options */
 
-	void	*sc_sdhook;	/* shutdownhook cookie */
-
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct bufq_state *sc_q;/* pending I/O requests */
@@ -325,6 +323,8 @@ struct fd_softc {
 /* floppy driver configuration */
 int	fdmatch(struct device *, struct cfdata *, void *);
 void	fdattach(struct device *, struct device *, void *);
+bool	fdshutdown(device_t, int);
+bool	fdsuspend(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
@@ -967,8 +967,24 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	fd_set_properties(fd);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
-	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+	if (!pmf_device_register1(self, fdsuspend, NULL, fdshutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
+
+bool fdshutdown(device_t self, int how)
+{
+	struct fd_softc *fd = device_private(self);
+
+	fd_motor_off(fd);
+	return true;
+}
+
+bool fdsuspend(device_t self PMF_FN_ARGS)
+{
+
+	return fdshutdown(self, boothowto);
+}
+
 
 inline struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)

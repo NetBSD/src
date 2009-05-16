@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.18.2 2009/05/04 08:11:08 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.18.3 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,22 +65,23 @@ extern volatile int astpending;
 /* The softnet mask. */
 extern int softnetmask;
 
-/* 
+/*
  * Add a mask to cpl, and return the old value of cpl.
  */
-static __inline int  
+static __inline int
 splraise(register int ncpl)
 {
 	register int ocpl = cpl;
 
-	cpl = ocpl | ncpl;      
+	cpl = ocpl | ncpl;
+	__insn_barrier();
 
-	return (ocpl);  
+	return (ocpl);
 }
 
 /* spllower() is in locore.S */
 void spllower(int);
- 
+
 /*
  * Miscellaneous
  */

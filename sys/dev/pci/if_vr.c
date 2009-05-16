@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.92.4.2 2009/05/04 08:12:58 yamt Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.92.4.3 2009/05/16 10:41:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.92.4.2 2009/05/04 08:12:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.92.4.3 2009/05/16 10:41:35 yamt Exp $");
 
 #include "rnd.h"
 
@@ -1396,7 +1396,7 @@ vr_stop(struct ifnet *ifp, int disable)
 		vr_rxdrain(sc);
 }
 
-static int	vr_probe(device_t, struct cfdata *, void *);
+static int	vr_probe(device_t, cfdata_t, void *);
 static void	vr_attach(device_t, device_t, void *);
 static void	vr_shutdown(void *);
 
@@ -1417,7 +1417,7 @@ vr_lookup(struct pci_attach_args *pa)
 }
 
 static int
-vr_probe(device_t parent, struct cfdata *match, void *aux)
+vr_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.16.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.16.2 2009/05/16 10:41:12 yamt Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -46,34 +46,34 @@
  *
  * 	Utah $Hdr: mem.c 1.9 94/12/16$
  */
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.16.1 2009/05/04 08:11:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.16.2 2009/05/16 10:41:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,17 +140,17 @@ struct l2_mioc {
 };
 
 struct mem_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	volatile struct vi_trs *sc_vp;
 	volatile struct l2_mioc *sc_l2;
 };
 
-int	memmatch(struct device *, struct cfdata *, void *);
-void	memattach(struct device *, struct device *, void *);
+int	memmatch(device_t, cfdata_t, void *);
+void	memattach(device_t, device_t, void *);
 
-CFATTACH_DECL(mem, sizeof(struct mem_softc),
-    memmatch, memattach, NULL, NULL);
+CFATTACH_DECL_NEW(mem, sizeof(struct mem_softc), memmatch, memattach,
+    NULL, NULL);
 
 extern struct cfdriver mem_cd;
 
@@ -169,7 +169,7 @@ static void *zeropage;
 kmutex_t vmmap_lock;
 
 int
-memmatch(struct device *parent, struct cfdata *cf, void *aux)
+memmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -180,15 +180,17 @@ memmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-memattach(struct device *parent, struct device *self, void *aux)
+memattach(device_t parent, device_t self, void *aux)
 {
 	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
 	struct confargs *ca = aux;
-	struct mem_softc *sc = (struct mem_softc *)self;
+	struct mem_softc *sc = device_private(self);
 	int err, pagezero_cookie;
 	char bits[128];
 
-	printf (":");
+	sc->sc_dev = self;
+
+	aprint_normal(":");
 
 	pagezero_cookie = hp700_pagezero_map();
 
@@ -219,11 +221,11 @@ memattach(struct device *parent, struct device *self, void *aux)
 				settimeout = 0;
 				break;
 			}
-			if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+			if (device_cfdata(self)->cf_flags & 1)
 				settimeout = !settimeout;
 
 			snprintb(bits, sizeof(bits), VIPER_BITS, VI_CTRL);
-			printf (" viper rev %x, ctrl %s",
+			aprint_normal(" viper rev %x, ctrl %s",
 			    sc->sc_vp->vi_status.hw_rev, bits);
 
 			s = splhigh();
@@ -257,13 +259,13 @@ memattach(struct device *parent, struct device *self, void *aux)
 
 	hp700_pagezero_unmap(pagezero_cookie);
 
-	printf (" size %d", pdc_minit.max_spa / (1024*1024));
+	aprint_normal(" size %d", pdc_minit.max_spa / (1024*1024));
 	if (pdc_minit.max_spa % (1024*1024))
-		printf (".%d", pdc_minit.max_spa % (1024*1024));
-	printf ("MB");
+		aprint_normal(".%d", pdc_minit.max_spa % (1024*1024));
+	aprint_normal("MB");
 
 	/* L2 cache controller is a part of the memory controller on PCXL2 */
-	if (hppa_cpu_info->hci_type == hpcxl2) {
+	if (hppa_cpu_info->hci_cputype == hpcxl2) {
 		sc->sc_l2 = (struct l2_mioc *)ca->ca_hpa;
 #ifdef DEBUG
 		snprintb(bits, sizeof(bits), SLTCV_BITS, sc->sc_l2->sltcv);
@@ -272,10 +274,10 @@ memattach(struct device *parent, struct device *self, void *aux)
 		/* sc->sc_l2->sltcv |= SLTCV_UP4COUT; */
 		if (sc->sc_l2->sltcv & SLTCV_ENABLE) {
 			uint32_t tagmask = sc->sc_l2->tagmask >> 20;
-			printf(", %dMB L2 cache", tagmask + 1);
+			aprint_normal(", %dMB L2 cache", tagmask + 1);
 		}
 	}
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void
@@ -371,8 +373,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
 				return (0);
-			} 
-			/* 
+			}
+			/*
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 */

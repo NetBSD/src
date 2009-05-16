@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.21.4.1 2009/05/04 08:12:47 yamt Exp $	*/
+/*	$NetBSD: sbp.c,v 1.21.4.2 2009/05/16 10:41:24 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.21.4.1 2009/05/04 08:12:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.21.4.2 2009/05/16 10:41:24 yamt Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -438,7 +438,7 @@ struct sbp_softc {
 #define SBP_UNLOCK(sbp)	fw_mtx_unlock(&(sbp)->mtx)
 
 #if defined(__NetBSD__)
-int sbpmatch (device_t, struct cfdata *, void *);
+int sbpmatch (device_t, cfdata_t, void *);
 void sbpattach (device_t parent, device_t self, void *aux);
 int sbpdetach (device_t self, int flags);
 #endif
@@ -579,7 +579,7 @@ END_DEBUG
 }
 #elif defined(__NetBSD__)
 int
-sbpmatch(device_t parent, struct cfdata *cf, void *aux)
+sbpmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 

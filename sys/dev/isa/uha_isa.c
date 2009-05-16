@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.33.4.2 2009/05/04 08:12:49 yamt Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.33.4.3 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.33.4.2 2009/05/04 08:12:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.33.4.3 2009/05/16 10:41:26 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.33.4.2 2009/05/04 08:12:49 yamt Exp $"
 
 #define	UHA_ISA_IOSIZE	16
 
-int	uha_isa_probe(struct device *, struct cfdata *, void *);
-void	uha_isa_attach(struct device *, struct device *, void *);
+int	uha_isa_probe(device_t, cfdata_t, void *);
+void	uha_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(uha_isa, sizeof(struct uha_softc),
     uha_isa_probe, uha_isa_attach, NULL, NULL);
@@ -78,8 +78,7 @@ void	u14_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 int
-uha_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+uha_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -134,7 +133,7 @@ uha_isa_probe(struct device *parent, struct cfdata *match,
  * Attach all the sub-devices we can find
  */
 void
-uha_isa_attach(struct device *parent, struct device *self, void *aux)
+uha_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *sc = (void *)self;

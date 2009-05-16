@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.266.10.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266.10.3 2009/05/16 10:41:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.2 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.3 2009/05/16 10:41:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -867,29 +867,30 @@ nfs_lookup(void *v)
 		 * investigate the vnode returned by cache_lookup_raw.
 		 * if it isn't appropriate, do an rpc.
 		 */
-
 		newvp = *vpp;
+		if ((flags & ISDOTDOT) != 0) {
+			VOP_UNLOCK(dvp, 0);
+		}
+		error = vn_lock(newvp, LK_EXCLUSIVE);
+		if ((flags & ISDOTDOT) != 0) {
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+		}
+		if (error != 0) {
+			/* newvp has been reclaimed. */
+			vrele(newvp);
+			*vpp = NULLVP;
+			goto dorpc;
+		}
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred)
 		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
 			nfsstats.lookupcache_hits++;
-			if ((flags & ISDOTDOT) != 0) {
-				VOP_UNLOCK(dvp, 0);
-			}
-			error = vn_lock(newvp, LK_EXCLUSIVE);
-			if ((flags & ISDOTDOT) != 0) {
-				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-			}
-			if (error != 0) {
-				/* newvp has been revoked. */
-				goto dorpc;
-			}
 			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 				cnp->cn_flags |= SAVENAME;
 			KASSERT(newvp->v_type != VNON);
 			return (0);
 		}
 		cache_purge1(newvp, NULL, PURGE_PARENTS);
-		vrele(newvp);
+		vput(newvp);
 		*vpp = NULLVP;
 	}
 dorpc:

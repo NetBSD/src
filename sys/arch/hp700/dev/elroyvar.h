@@ -1,4 +1,4 @@
-/*	$NetBSD: elroyvar.h,v 1.2.2.2 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: elroyvar.h,v 1.2.2.3 2009/05/16 10:41:12 yamt Exp $	*/
 
 /*	$OpenBSD: elroyvar.h,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
 
@@ -22,11 +22,10 @@
 #include <machine/pdc.h>
 
 struct elroy_softc {
-	struct  device sc_dv;
+	device_t sc_dv;
 
 	int sc_ver;
 	hppa_hpa_t sc_hpa;
-// 	struct hp700_int_reg sc_int_reg;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	bus_dma_tag_t sc_dmat;
@@ -48,13 +47,13 @@ struct elroy_softc {
 	struct hppa_bus_dma_tag sc_dmatag;
 };
 
-void apic_attach(struct elroy_softc *sc);
-int apic_intr(void *v);
-int apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp);
-const char *apic_intr_string(void *v, pci_intr_handle_t ih);
-void *apic_intr_establish(void *v, pci_intr_handle_t ih, int pri,
-    int (*handler)(void *), void *arg);
-void apic_intr_disestablish(void *v, void *cookie);
+void apic_attach(struct elroy_softc *);
+int apic_intr(void *);
+int apic_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+const char *apic_intr_string(void *, pci_intr_handle_t);
+void *apic_intr_establish(void *, pci_intr_handle_t, int,
+    int (*)(void *), void *);
+void apic_intr_disestablish(void *, void *);
 
-void elroy_write32(volatile uint32_t *p, uint32_t v);
-uint32_t elroy_read32(volatile uint32_t *p);
+void elroy_write32(volatile uint32_t *, uint32_t);
+uint32_t elroy_read32(volatile uint32_t *);

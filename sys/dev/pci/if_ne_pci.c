@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.31.4.1 2008/05/16 02:24:43 yamt Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.31.4.2 2009/05/16 10:41:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.31.4.1 2008/05/16 02:24:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.31.4.2 2009/05/16 10:41:35 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -73,8 +73,8 @@ struct ne_pci_softc {
 	void *sc_ih;				/* interrupt handle */
 };
 
-static int	ne_pci_match(struct device *, struct cfdata *, void *);
-static void	ne_pci_attach(struct device *, struct device *, void *);
+static int	ne_pci_match(device_t, cfdata_t, void *);
+static void	ne_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ne_pci, sizeof(struct ne_pci_softc),
     ne_pci_match, ne_pci_attach, NULL, NULL);
@@ -172,8 +172,7 @@ ne_pci_lookup(const struct pci_attach_args *pa)
 #define PCI_CBIO	0x10		/* Configuration Base IO Address */
 
 static int
-ne_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ne_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -184,7 +183,7 @@ ne_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-ne_pci_attach(struct device *parent, struct device *self, void *aux)
+ne_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct ne_pci_softc *psc = device_private(self);
 	struct ne2000_softc *nsc = &psc->sc_ne2000;

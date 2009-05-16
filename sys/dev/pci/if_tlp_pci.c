@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.104.4.2 2009/05/04 08:12:58 yamt Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.104.4.3 2009/05/16 10:41:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.104.4.2 2009/05/04 08:12:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.104.4.3 2009/05/16 10:41:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ struct tulip_pci_softc {
 #define	TULIP_PCI_SHAREDROM	0x04	/* ROM is shared */
 #define	TULIP_PCI_SLAVEROM	0x08	/* slave of shared ROM */
 
-static int	tlp_pci_match(device_t, struct cfdata *, void *);
+static int	tlp_pci_match(device_t, cfdata_t, void *);
 static void	tlp_pci_attach(device_t, device_t, void *);
 static int	tlp_pci_detach(device_t, int);
 

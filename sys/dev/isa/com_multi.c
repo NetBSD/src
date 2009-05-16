@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.26.4.1 2008/05/16 02:24:26 yamt Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.26.4.2 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.26.4.1 2008/05/16 02:24:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.26.4.2 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ int
 com_multi_probe(device_t parent, cfdata_t match, void *aux)
 {
 	int iobase;
-	struct cfdata *cf = match;
+	cfdata_t cf = match;
 	struct commulti_attach_args *ca = aux;
 
 	if (cf->cf_loc[COMMULTICF_SLAVE] != COMMULTICF_SLAVE_DEFAULT &&

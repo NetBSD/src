@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.10 2008/03/15 00:57:15 matt Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.10.4.1 2009/05/16 10:41:20 yamt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -109,6 +109,6 @@ struct	dz_softc {
 void	dzattach(struct dz_softc *, struct evcnt *, int);
 void	dzrint(void *);
 void	dzxint(void *);
-void	dzreset(struct device *);
+void	dzreset(device_t);
 
 #endif /* _DEV_DEC_DZVAR_H_ */

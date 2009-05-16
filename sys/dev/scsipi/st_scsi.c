@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.26.52.1 2008/05/16 02:25:06 yamt Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.26.52.2 2009/05/16 10:41:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.26.52.1 2008/05/16 02:25:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.26.52.2 2009/05/16 10:41:44 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.26.52.1 2008/05/16 02:25:06 yamt Exp $
 #include <dev/scsipi/scsi_tape.h>
 #include <dev/scsipi/stvar.h>
 
-static int	st_scsibus_match(struct device *, struct cfdata *, void *);
-static void	st_scsibus_attach(struct device *, struct device *, void *);
+static int	st_scsibus_match(device_t, cfdata_t, void *);
+static void	st_scsibus_attach(device_t, device_t, void *);
 static int	st_scsibus_ops(struct st_softc *, int, int);
 static int	st_scsibus_read_block_limits(struct st_softc *, int);
 static int	st_scsibus_mode_sense(struct st_softc *, int);
@@ -84,7 +84,7 @@ static const struct scsipi_inquiry_pattern st_scsibus_patterns[] = {
 };
 
 static int
-st_scsibus_match(struct device *parent, struct cfdata *match,
+st_scsibus_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -101,7 +101,7 @@ st_scsibus_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-st_scsibus_attach(struct device *parent, struct device *self, void *aux)
+st_scsibus_attach(device_t parent, device_t self, void *aux)
 {
 	struct st_softc *st = device_private(self);
 

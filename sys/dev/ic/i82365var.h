@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.28 2007/12/05 07:58:30 ad Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.28.16.1 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -50,7 +50,7 @@ struct pcic_event {
 #define	PCIC_EVENT_REMOVAL	1
 
 struct pcic_handle {
-	struct device *ph_parent;
+	device_t ph_parent;
 	bus_space_tag_t ph_bus_t;	/* I/O or MEM?  I don't mind */
 	bus_space_handle_t ph_bus_h;
 	u_int8_t (*ph_read)(struct pcic_handle *, int);
@@ -76,7 +76,7 @@ struct pcic_handle {
 		int		width;
 	} io[PCIC_IO_WINS];
 	int	ih_irq;
-	struct device *pcmcia;
+	device_t pcmcia;
 
 	int shutdown;
 	struct lwp *event_thread;

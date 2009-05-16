@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.104.4.1 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: mcd.c,v 1.104.4.2 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.104.4.1 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.104.4.2 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,8 @@ int mcd_getqchan(struct mcd_softc *, union mcd_qchninfo *, int);
 int mcd_setlock(struct mcd_softc *, int);
 
 int mcd_find(bus_space_tag_t, bus_space_handle_t, struct mcd_softc *);
-int mcdprobe(struct device *, struct cfdata *, void *);
-void mcdattach(struct device *, struct device *, void *);
+int mcdprobe(device_t, cfdata_t, void *);
+void mcdattach(device_t, device_t, void *);
 
 CFATTACH_DECL(mcd, sizeof(struct mcd_softc),
     mcdprobe, mcdattach, NULL, NULL);
@@ -235,7 +235,7 @@ struct dkdriver mcddkdriver = { mcdstrategy, NULL, };
 #define DELAY_GETREPLY		100000	/* 100000 * 25us */
 
 void
-mcdattach(struct device *parent, struct device *self, void *aux)
+mcdattach(device_t parent, device_t self, void *aux)
 {
 	struct mcd_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -909,8 +909,7 @@ mcd_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct mcd_softc *sc)
 }
 
 int
-mcdprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+mcdprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct mcd_softc sc;

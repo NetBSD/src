@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.20.4.1 2009/05/04 08:12:49 yamt Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.20.4.2 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.20.4.1 2009/05/04 08:12:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.20.4.2 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,8 @@ int	tcic_isa_debug = 1;
 #define	DPRINTF(arg)
 #endif
 
-int	tcic_isa_probe(struct device *, struct cfdata *, void *);
-void	tcic_isa_attach(struct device *, struct device *, void *);
+int	tcic_isa_probe(device_t, cfdata_t, void *);
+void	tcic_isa_attach(device_t, device_t, void *);
 
 void	*tcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
 	    struct pcmcia_function *, int, int (*) (void *), void *);
@@ -140,8 +140,7 @@ static const struct pcmcia_chip_functions tcic_isa_functions = {
 };
 
 int
-tcic_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+tcic_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -215,7 +214,7 @@ tcic_isa_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-tcic_isa_attach(struct device *parent, struct device *self, void *aux)
+tcic_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct tcic_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

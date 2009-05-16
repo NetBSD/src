@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.17 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.17.4.1 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.17 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.17.4.1 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,16 +105,15 @@ static int slave_iobases[8] = {
 	0x208
 };
 
-int addcomprobe(struct device *, struct cfdata *, void *);
-void addcomattach(struct device *, struct device *, void *);
+int addcomprobe(device_t, cfdata_t, void *);
+void addcomattach(device_t, device_t, void *);
 int addcomintr(void *);
 
 CFATTACH_DECL(addcom_isa, sizeof(struct addcom_softc),
     addcomprobe, addcomattach, NULL, NULL);
 
 int
-addcomprobe(struct device *parent, struct cfdata *self,
-    void *aux)
+addcomprobe(device_t parent, cfdata_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -185,7 +184,7 @@ out:
 }
 
 void
-addcomattach(struct device *parent, struct device *self, void *aux)
+addcomattach(device_t parent, device_t self, void *aux)
 {
 	struct addcom_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

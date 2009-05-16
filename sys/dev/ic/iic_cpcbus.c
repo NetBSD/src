@@ -1,4 +1,4 @@
-/*	$NetBSD: iic_cpcbus.c,v 1.9.4.1 2008/05/16 02:24:04 yamt Exp $	*/
+/*	$NetBSD: iic_cpcbus.c,v 1.9.4.2 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_cpcbus.c,v 1.9.4.1 2008/05/16 02:24:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_cpcbus.c,v 1.9.4.2 2009/05/16 10:41:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,14 +47,14 @@ struct iic_cpcbus_softc {
 	void *sc_ih;
 };
 
-static int	iic_cpcbus_match(struct device *, struct cfdata *, void *);
-static void	iic_cpcbus_attach(struct device *, struct device *, void *);
+static int	iic_cpcbus_match(device_t, cfdata_t, void *);
+static void	iic_cpcbus_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(iic_cpcbus, sizeof(struct iic_cpcbus_softc),
     iic_cpcbus_match, iic_cpcbus_attach, NULL, NULL);
 
 int
-iic_cpcbus_match(struct device *parent, struct cfdata *cf, void *aux)
+iic_cpcbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 
@@ -62,7 +62,7 @@ iic_cpcbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-iic_cpcbus_attach(struct device *parent, struct device *self, void *aux)
+iic_cpcbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 	struct iic_cpcbus_softc *sc = (struct iic_cpcbus_softc *)self;

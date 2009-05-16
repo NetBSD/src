@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.14.20.2 2009/05/04 08:13:19 yamt Exp $ */
+/*	$NetBSD: cgthree.c,v 1.14.20.3 2009/05/16 10:41:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.14.20.2 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.14.20.3 2009/05/16 10:41:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.14.20.2 2009/05/04 08:13:19 yamt Exp $
 #include "opt_wsemul.h"
 #endif
 
-static void	cgthreeunblank(struct device *);
+static void	cgthreeunblank(device_t);
 static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
 static void	cgthree_set_video(struct cgthree_softc *, int);
 static int	cgthree_get_video(struct cgthree_softc *);
@@ -336,7 +336,7 @@ cgthreeioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgthreeunblank(struct device *dev)
+cgthreeunblank(device_t dev)
 {
 
 	cgthree_set_video(device_private(dev), 1);

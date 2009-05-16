@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.53.4.1 2009/05/04 08:11:17 yamt Exp $	*/
+/*	$NetBSD: lms.c,v 1.53.4.2 2009/05/16 10:41:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.53.4.1 2009/05/04 08:11:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.53.4.2 2009/05/16 10:41:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ struct lms_softc {		/* driver status information */
 	int sc_enabled; /* device is open */
 	int oldbuttons;	/* mouse button status */
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 };
 
 static int lmsprobe(device_t, cfdata_t, void *);

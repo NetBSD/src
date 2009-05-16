@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.43.4.2 2009/05/04 08:13:14 yamt Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.43.4.3 2009/05/16 10:41:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.43.4.2 2009/05/04 08:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.43.4.3 2009/05/16 10:41:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -178,11 +178,11 @@ int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
  */
 #define MEMORY_MAPPED
 
-int	cnw_match(struct device *, struct cfdata *, void *);
-void	cnw_attach(struct device *, struct device *, void *);
-int	cnw_detach(struct device *, int);
+int	cnw_match(device_t, cfdata_t, void *);
+void	cnw_attach(device_t, device_t, void *);
+int	cnw_detach(device_t, int);
 
-int	cnw_activate(struct device *, enum devact);
+int	cnw_activate(device_t, enum devact);
 
 struct cnw_softc {
 	struct device sc_dev;		    /* Device glue (must be first) */
@@ -461,7 +461,7 @@ cnw_disable(struct cnw_softc *sc)
  * Match the hardware we handle.
  */
 int
-cnw_match(struct device *parent, struct cfdata *match,
+cnw_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -480,7 +480,7 @@ cnw_match(struct device *parent, struct cfdata *match,
  * Attach the card.
  */
 void
-cnw_attach(struct device  *parent, struct device *self, void *aux)
+cnw_attach(struct device  *parent, device_t self, void *aux)
 {
 	struct cnw_softc *sc = (void *) self;
 	struct pcmcia_attach_args *pa = aux;
@@ -1176,7 +1176,7 @@ cnw_setkey(struct cnw_softc *sc, int key)
 }
 
 int
-cnw_activate(struct device *self, enum devact act)
+cnw_activate(device_t self, enum devact act)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)self;
 	int rv = 0, s;
@@ -1196,7 +1196,7 @@ cnw_activate(struct device *self, enum devact act)
 }
 
 int
-cnw_detach(struct device *self, int flags)
+cnw_detach(device_t self, int flags)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

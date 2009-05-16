@@ -1,4 +1,4 @@
-/* $NetBSD: splash.h,v 1.1 2006/02/18 19:00:23 jmcneill Exp $ */
+/* $NetBSD: splash.h,v 1.1.76.1 2009/05/16 10:41:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,7 +54,7 @@ struct splash_info {
 
 #ifdef SPLASHSCREEN_PROGRESS
 struct splash_progress {
-	struct device *sp_dev; /* XXX needed for config_finalize */
+	device_t sp_dev; /* XXX needed for config_finalize */
 	int	sp_top;
 	int	sp_left;
 	int	sp_width;

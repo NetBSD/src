@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.27.10.1 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.27.10.2 2009/05/16 10:41:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27.10.1 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27.10.2 2009/05/16 10:41:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,11 +419,9 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if ((ptyfs->ptyfs_flags & SF_SNAPSHOT) != 0)
 			return EPERM;
-		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
-		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred)) != 0))
+		error = genfs_can_chtimes(vp, vap->va_vaflags, ptyfs->ptyfs_uid,
+		    cred);
+		if (error)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))

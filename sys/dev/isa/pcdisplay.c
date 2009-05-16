@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.34.20.1 2009/05/04 08:12:48 yamt Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.34.20.2 2009/05/16 10:41:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.34.20.1 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.34.20.2 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ struct pcdisplay_softc {
 static int pcdisplayconsole, pcdisplay_console_attached;
 static struct pcdisplay_config pcdisplay_console_dc;
 
-int	pcdisplay_match(struct device *, struct cfdata *, void *);
-void	pcdisplay_attach(struct device *, struct device *, void *);
+int	pcdisplay_match(device_t, cfdata_t, void *);
+void	pcdisplay_attach(device_t, device_t, void *);
 
 static int pcdisplay_is_console(bus_space_tag_t);
 static int pcdisplay_probe_col(bus_space_tag_t, bus_space_tag_t);
@@ -219,8 +219,7 @@ pcdisplay_init(struct pcdisplay_config *dc, bus_space_tag_t iot, bus_space_tag_t
 }
 
 int
-pcdisplay_match(struct device *parent, struct cfdata *match,
-    void *aux)
+pcdisplay_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int mono;
@@ -280,7 +279,7 @@ pcdisplay_match(struct device *parent, struct cfdata *match,
 }
 
 void
-pcdisplay_attach(struct device *parent, struct device *self, void *aux)
+pcdisplay_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct pcdisplay_softc *sc = (struct pcdisplay_softc *)self;

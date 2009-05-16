@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.102.4.1 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: i82365.c,v 1.102.4.2 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.102.4.1 2009/05/04 08:12:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.102.4.2 2009/05/16 10:41:23 yamt Exp $");
 
 #define	PCICDEBUG
 
@@ -241,7 +241,7 @@ pcic_attach(struct pcic_softc *sc)
 		chip = i / 2;
 		socket = i % 2;
 
-		h->ph_parent = (struct device *)sc;
+		h->ph_parent = (device_t)sc;
 		h->chip = chip;
 		h->socket = socket;
 		h->sock = chip * PCIC_CHIP_OFFSET + socket * PCIC_SOCKET_OFFSET;

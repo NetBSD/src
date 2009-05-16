@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.114.2.2 2009/05/04 08:12:33 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.114.2.3 2009/05/16 10:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.2 2009/05/04 08:12:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.3 2009/05/16 10:41:18 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -117,7 +117,7 @@ static int acpi_dbgr = 0x00;
 
 static ACPI_TABLE_DESC	acpi_initial_tables[128];
 
-static int	acpi_match(device_t, struct cfdata *, void *);
+static int	acpi_match(device_t, cfdata_t, void *);
 static void	acpi_attach(device_t, device_t, void *);
 static void	acpi_childdet(device_t, device_t);
 static int	acpi_detach(device_t, int);
@@ -369,7 +369,7 @@ acpi_OsGetRootPointer(void)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpi_match(device_t parent, struct cfdata *match, void *aux)
+acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	/*
 	 * XXX Check other locators?  Hard to know -- machine

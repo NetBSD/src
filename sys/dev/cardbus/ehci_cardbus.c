@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.20.4.2 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.20.4.3 2009/05/16 10:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.20.4.2 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.20.4.3 2009/05/16 10:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ extern int ehcidebug;
 #define DPRINTF(x)
 #endif
 
-int	ehci_cardbus_match(device_t, struct cfdata *, void *);
+int	ehci_cardbus_match(device_t, cfdata_t, void *);
 void	ehci_cardbus_attach(device_t, device_t, void *);
 int	ehci_cardbus_detach(device_t, int);
 
@@ -89,7 +89,7 @@ static TAILQ_HEAD(, usb_cardbus) ehci_cardbus_alldevs =
 	TAILQ_HEAD_INITIALIZER(ehci_cardbus_alldevs);
 
 int
-ehci_cardbus_match(device_t parent, struct cfdata *match, void *aux)
+ehci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 

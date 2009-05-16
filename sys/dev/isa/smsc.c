@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.7.4.1 2008/05/16 02:24:28 yamt Exp $ */
+/*	$NetBSD: smsc.c,v 1.7.4.2 2009/05/16 10:41:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.7.4.1 2008/05/16 02:24:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.7.4.2 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-smsc_detach(struct device *self, int flags)
+smsc_detach(device_t self, int flags)
 {
 	struct smsc_softc *sc = device_private(self);
 

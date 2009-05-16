@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.28.20.2 2009/05/04 08:13:19 yamt Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.28.20.3 2009/05/16 10:41:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.28.20.2 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.28.20.3 2009/05/16 10:41:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.28.20.2 2009/05/04 08:13:19 yamt Exp $");
 #define	PXG_I860_START_OFFSET	0x380000	/* i860 start register */
 #define	PXG_I860_RESET_OFFSET	0x3c0000	/* i860 stop register */
 
-static void	pxg_attach(struct device *, struct device *, void *);
+static void	pxg_attach(device_t, device_t, void *);
 static int	pxg_intr(void *);
-static int	pxg_match(struct device *, struct cfdata *, void *);
+static int	pxg_match(device_t, cfdata_t, void *);
 
 static void	pxg_init(struct stic_info *);
 static int	pxg_ioctl(struct stic_info *, u_long, void *, int, struct lwp *);

@@ -1,7 +1,7 @@
-/*	$NetBSD: mutex.h,v 1.15.4.1 2008/05/16 02:25:51 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.15.4.2 2009/05/16 10:41:53 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -128,9 +128,8 @@
  *	mutex_exit()
  *
  * Two additional stubs may be implemented that handle only the spinlock
- * case, primarily for the scheduler.  These should not be documented for
- * or used by device drivers.  __HAVE_SPIN_MUTEX_STUBS should be defined
- * if these are provided:
+ * case, primarily for the scheduler.  __HAVE_SPIN_MUTEX_STUBS should be
+ * defined if these are provided:
  *
  *	mutex_spin_enter()
  *	mutex_spin_exit()

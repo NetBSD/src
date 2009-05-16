@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950var.h,v 1.3.74.1 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: mb86950var.h,v 1.3.74.2 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -87,5 +87,5 @@ void    mb86950_config(struct mb86950_softc *, int *, int, int);
 int     mb86950_intr(void *);
 int     mb86950_enable(struct mb86950_softc *);
 void    mb86950_disable(struct mb86950_softc *);
-int     mb86950_activate(struct device *, enum devact);
+int     mb86950_activate(device_t, enum devact);
 int     mb86950_detach(struct mb86950_softc *);

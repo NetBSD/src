@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.11.4.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: lasi.c,v 1.11.4.2 2009/05/16 10:41:12 yamt Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.4.1 2009/05/04 08:11:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.4.2 2009/05/16 10:41:12 yamt Exp $");
 
 #undef LASIDEBUG
 
@@ -73,7 +73,7 @@ struct lasi_trs {
 #define	LASI_REG_MISC	0x10c000
 
 struct lasi_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	
 	struct hp700_int_reg sc_int_reg;
 
@@ -81,10 +81,10 @@ struct lasi_softc {
 	struct lasi_trs volatile *sc_trs;
 };
 
-int	lasimatch(struct device *, struct cfdata *, void *);
-void	lasiattach(struct device *, struct device *, void *);
+int	lasimatch(device_t, cfdata_t, void *);
+void	lasiattach(device_t, device_t, void *);
 
-CFATTACH_DECL(lasi, sizeof(struct lasi_softc),
+CFATTACH_DECL_NEW(lasi, sizeof(struct lasi_softc),
     lasimatch, lasiattach, NULL, NULL);
 
 extern struct cfdriver lasi_cd;
@@ -131,7 +131,7 @@ lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 }
 
 int
-lasimatch(struct device *parent, struct cfdata *cf, void *aux)
+lasimatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -153,14 +153,15 @@ lasimatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-lasiattach(struct device *parent, struct device *self, void *aux)
+lasiattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct lasi_softc *sc = (struct lasi_softc *)self;
+	struct lasi_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
 	int s, in;
 
+	sc->sc_dev = self;
 	/*
 	 * Map the LASI interrupt registers.
 	 */
@@ -179,7 +180,7 @@ lasiattach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX should we reset the chip here? */
 
-	printf (": rev %d.%d\n", (sc->sc_hw->lasi_version & 0xf0) >> 4,
+	aprint_normal(": rev %d.%d\n", (sc->sc_hw->lasi_version & 0xf0) >> 4,
 		sc->sc_hw->lasi_version & 0xf);
 
 	/* interrupts guts */

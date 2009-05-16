@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.57.4.2 2009/05/04 08:13:17 yamt Exp $	*/
+/*	$NetBSD: be.c,v 1.57.4.3 2009/05/16 10:41:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.57.4.2 2009/05/04 08:13:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.57.4.3 2009/05/16 10:41:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -159,8 +159,8 @@ struct be_softc {
 #endif
 };
 
-int	bematch(struct device *, struct cfdata *, void *);
-void	beattach(struct device *, struct device *, void *);
+int	bematch(device_t, cfdata_t, void *);
+void	beattach(device_t, device_t, void *);
 
 void	beinit(struct be_softc *);
 void	bestart(struct ifnet *);
@@ -188,9 +188,9 @@ int	be_ifmedia_upd(struct ifnet *);
 void	be_mcreset(struct be_softc *);
 
 /* MII methods & callbacks */
-static int	be_mii_readreg(struct device *, int, int);
-static void	be_mii_writereg(struct device *, int, int, int);
-static void	be_mii_statchg(struct device *);
+static int	be_mii_readreg(device_t, int, int);
+static void	be_mii_writereg(device_t, int, int, int);
+static void	be_mii_statchg(device_t);
 
 /* MII helpers */
 static void	be_mii_sync(struct be_softc *);
@@ -209,7 +209,7 @@ CFATTACH_DECL(be, sizeof(struct be_softc),
     bematch, beattach, NULL, NULL);
 
 int
-bematch(struct device *parent, struct cfdata *cf, void *aux)
+bematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -217,7 +217,7 @@ bematch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-beattach(struct device *parent, struct device *self, void *aux)
+beattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *qec = (struct qec_softc *)parent;
@@ -1319,7 +1319,7 @@ be_mii_sendbits(struct be_softc *sc, int phy, u_int32_t data, int nbits)
 }
 
 static int
-be_mii_readreg(struct device *self, int phy, int reg)
+be_mii_readreg(device_t self, int phy, int reg)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int val = 0, i;
@@ -1347,7 +1347,7 @@ be_mii_readreg(struct device *self, int phy, int reg)
 }
 
 void
-be_mii_writereg(struct device *self, int phy, int reg, int val)
+be_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int i;
@@ -1373,12 +1373,12 @@ be_mii_reset(struct be_softc *sc, int phy)
 {
 	int n;
 
-	be_mii_writereg((struct device *)sc, phy, MII_BMCR,
+	be_mii_writereg((device_t)sc, phy, MII_BMCR,
 			BMCR_LOOP | BMCR_PDOWN | BMCR_ISO);
-	be_mii_writereg((struct device *)sc, phy, MII_BMCR, BMCR_RESET);
+	be_mii_writereg((device_t)sc, phy, MII_BMCR, BMCR_RESET);
 
 	for (n = 16; n >= 0; n--) {
-		int bmcr = be_mii_readreg((struct device *)sc, phy, MII_BMCR);
+		int bmcr = be_mii_readreg((device_t)sc, phy, MII_BMCR);
 		if ((bmcr & BMCR_RESET) == 0)
 			break;
 		DELAY(20);
@@ -1405,7 +1405,7 @@ be_tick(void *arg)
 }
 
 void
-be_mii_statchg(struct device *self)
+be_mii_statchg(device_t self)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1613,7 +1613,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	if (sc->sc_mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)((struct device *)sc);
+		(*mii->mii_statchg)((device_t)sc);
 		sc->sc_mii_active = mii->mii_media_active;
 	}
 	return (0);
@@ -1635,7 +1635,7 @@ be_intphy_status(struct be_softc *sc)
 	/*
 	 * Internal transceiver; do the work here.
 	 */
-	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
+	bmcr = be_mii_readreg((device_t)sc, BE_PHY_INTERNAL, MII_BMCR);
 
 	switch (bmcr & (BMCR_S100 | BMCR_FDX)) {
 	case (BMCR_S100 | BMCR_FDX):
@@ -1653,8 +1653,8 @@ be_intphy_status(struct be_softc *sc)
 	}
 
 	/* Read twice in case the register is latched */
-	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
-	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
+	bmsr = be_mii_readreg((device_t)sc, BE_PHY_INTERNAL, MII_BMSR)|
+	       be_mii_readreg((device_t)sc, BE_PHY_INTERNAL, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		media_status |=  IFM_ACTIVE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.16.4.1 2009/05/04 08:12:54 yamt Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.16.4.2 2009/05/16 10:41:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -183,13 +183,13 @@ int agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 int agp_amd_match(const struct pci_attach_args *);
 int agp_amd64_match(const struct pci_attach_args *);
 
-int agp_ali_attach(struct device *, struct device *, void *);
-int agp_amd_attach(struct device *, struct device *, void *);
-int agp_i810_attach(struct device *, struct device *, void *);
-int agp_intel_attach(struct device *, struct device *, void *);
-int agp_via_attach(struct device *, struct device *, void *);
-int agp_sis_attach(struct device *, struct device *, void *);
-int agp_amd64_attach(struct device *, struct device *, void *);
+int agp_ali_attach(device_t, device_t, void *);
+int agp_amd_attach(device_t, device_t, void *);
+int agp_i810_attach(device_t, device_t, void *);
+int agp_intel_attach(device_t, device_t, void *);
+int agp_via_attach(device_t, device_t, void *);
+int agp_sis_attach(device_t, device_t, void *);
+int agp_amd64_attach(device_t, device_t, void *);
 
 int agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *, void **,
 		     bus_addr_t *, bus_dma_segment_t *, int, int *);

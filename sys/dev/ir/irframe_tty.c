@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.52.4.2 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.52.4.3 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.52.4.2 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.52.4.3 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -196,8 +196,8 @@ static struct linesw irframet_disc = {
 };
 
 /* glue to attach irframe device */
-static void irframet_attach(struct device *, struct device *, void *);
-static int irframet_detach(struct device *, int);
+static void irframet_attach(device_t, device_t, void *);
+static int irframet_detach(device_t, int);
 
 CFATTACH_DECL_NEW(irframet, sizeof(struct irframet_softc),
 	NULL, irframet_attach, irframet_detach, NULL);
@@ -240,7 +240,7 @@ irframet_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-irframet_detach(struct device *dev, int flags)
+irframet_detach(device_t dev, int flags)
 {
 	struct irframet_softc *sc = device_private(dev);
 	int rc;
@@ -269,7 +269,7 @@ irframetopen(dev_t dev, struct tty *tp)
 	struct lwp *l = curlwp;		/* XXX */
 	struct irframet_softc *sc;
 	int error, s;
-	struct cfdata *cfdata;
+	cfdata_t cfdata;
 	struct ir_attach_args ia;
 	device_t d;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29.4.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.29.4.2 2009/05/16 10:41:13 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ hppa_vtop:			/* a vtop translation table addr (pa=va) */
  */
 ENTRY_NOPROFILE(start,0)
 /*
- *	bootapiver <= 2 
+ *	bootapiver <= 2
  *		start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
  *	bootapiver == 3
@@ -211,7 +211,10 @@ ENTRY_NOPROFILE(start,0)
 	ldil	L%esym,%r1
 	stw	%arg3,R%esym(%r1)
 
-	/* Put page aligned %arg3 into %t3. It is the start of available memory. */
+	/*
+	 * Put page aligned %arg3 into %t3. It is the start of available
+	 * memory.
+	 */
 	ldo	NBPG-1(%arg3), %t3
 	dep	%r0, 31, PGSHIFT, %t3
 
@@ -253,8 +256,8 @@ $start_zero_tf:
 	/*
 	 * Setup various pointers.
 	 *
-	 * First free memory is %t3 plus normal U space. The last page of USPACE
-	 * is the redzone if DIAGNOSTIC (see param.h).
+	 * First free memory is %t3 plus normal U space. The last page of
+	 * USPACE is the redzone if DIAGNOSTIC (see param.h).
 	 */
 	ldil	L%USPACE, %r4
 	add	%t3, %r4, %r4
@@ -606,9 +609,9 @@ spllower_dispatch:
 spllower_out:
 	/*
 	 * Now return, storing %eiem in the delay slot.
-	 * (hp700_intr_dispatch leaves it zero).  I think 
-	 * doing this in the delay slot is important to 
-	 * prevent recursion, but I might be being too 
+	 * (hp700_intr_dispatch leaves it zero).  I think
+	 * doing this in the delay slot is important to
+	 * prevent recursion, but I might be being too
 	 * paranoid.
 	 */
 	bv	%r0(%rp)
@@ -658,11 +661,11 @@ ENTRY(hp700_intr_ipending_new,HPPA_FRAME_SIZE)
 	copy	%r0, %ret0
 
 	/*
-	 * The top of this loop finds the next set bit in 
-	 * the request register.  Note that if the bvb does 
-	 * not branch, the addib is nullified, and control 
-	 * falls out of the loop.  If the bvb does branch, 
-	 * the addib runs with the mtsar in its delay slot.  
+	 * The top of this loop finds the next set bit in
+	 * the request register.  Note that if the bvb does
+	 * not branch, the addib is nullified, and control
+	 * falls out of the loop.  If the bvb does branch,
+	 * the addib runs with the mtsar in its delay slot.
 	 * If the addib branches, the mtsar is nullified.
 	 */
 $hp700_inew_loop:
@@ -671,8 +674,8 @@ $hp700_inew_loop:
 	addib,<,n -1, %arg2, $hp700_inew_done
 
 	/*
-	 * If the map entry for this bit has INT_REG_BIT_REG 
-	 * set, branch to descend into the next interrupt 
+	 * If the map entry for this bit has INT_REG_BIT_REG
+	 * set, branch to descend into the next interrupt
 	 * register.  Otherwise, set the bits in our ipending_new
 	 * value and loop.
 	 */
@@ -717,7 +720,7 @@ $hp700_inew_descend:
 
 	/*
 	 * Read the interrupt request register and make
-	 * our recursive call.  The read also serves to 
+	 * our recursive call.  The read also serves to
 	 * acknowledge the interrupt to the I/O subsystem.
 	 */
 	ldw	INT_REG_REQ(%arg0), %arg1
@@ -771,7 +774,7 @@ EXIT(cpu_die)
 ENTRY(cpu_switchto,128)
 	/* start stack calling convention */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
-	copy	%r3, %r1 
+	copy	%r3, %r1
 	copy	%sp, %r3
 	stwm	%r1, HPPA_FRAME_SIZE+16*4(%sp)
 					/* Frame marker and callee saves */
@@ -835,7 +838,7 @@ kstack_ok:
 	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc U_PCB+PCB_KSP(%t3) */
 
 	/*
-	 * Save the callee-save registers. We don't need to do 
+	 * Save the callee-save registers. We don't need to do
 	 * r3 here as it was done during stack calling convention.
 	 */
 	stw	%r4,   1*4(%r3)
@@ -936,11 +939,11 @@ ALTENTRY(hppa_fpu_nop1)
 	b,n	switch_return
 
 	/*
-	 * We do have a hardware FPU.  If the LWP 
+	 * We do have a hardware FPU.  If the LWP
 	 * that we just switched to has its state in the
-	 * FPU, enable the FPU, else disable it, so if 
-	 * the LWP does try to use the coprocessor 
-	 * we'll get an assist emulation trap to swap 
+	 * FPU, enable the FPU, else disable it, so if
+	 * the LWP does try to use the coprocessor
+	 * we'll get an assist emulation trap to swap
 	 * states.
 	 */
 	ldil	L%fpu_cur_uspace, %t1

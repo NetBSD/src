@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsunvar.h,v 1.6 2008/03/29 19:15:36 tsutsui Exp $ */
+/*	$NetBSD: kbdsunvar.h,v 1.6.4.1 2009/05/16 10:41:45 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,8 +84,8 @@ struct kbd_sun_softc {
 	 * underlying lower level driver and used as a back door when
 	 * opening and closing the internal device.
 	 */
-	int (*k_deviopen)(struct device *, int);
-	int (*k_deviclose)(struct device *, int);
+	int (*k_deviopen)(device_t, int);
+	int (*k_deviclose)(device_t, int);
 
 	/*
 	 * Callback provided by the lower layer (actual device driver).

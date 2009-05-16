@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.26.20.1 2009/05/04 08:11:28 yamt Exp $	*/
+/*	$NetBSD: mesh.c,v 1.26.20.2 2009/05/16 10:41:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.26.20.1 2009/05/04 08:11:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.26.20.2 2009/05/16 10:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -97,7 +97,7 @@ struct mesh_scb {
 #define MESH_DMA_ACTIVE	0x01
 
 struct mesh_softc {
-	struct device sc_dev;		/* us as a device */
+	device_t sc_dev;		/* us as a device */
 	struct scsipi_channel sc_channel;
 	struct scsipi_adapter sc_adapter;
 
@@ -136,8 +136,8 @@ struct mesh_softc {
 static inline int mesh_read_reg(struct mesh_softc *, int);
 static inline void mesh_set_reg(struct mesh_softc *, int, int);
 
-int mesh_match(struct device *, struct cfdata *, void *);
-void mesh_attach(struct device *, struct device *, void *);
+int mesh_match(device_t, cfdata_t, void *);
+void mesh_attach(device_t, device_t, void *);
 void mesh_shutdownhook(void *);
 int mesh_intr(void *);
 void mesh_error(struct mesh_softc *, struct mesh_scb *, int, int);
@@ -179,11 +179,11 @@ void mesh_minphys(struct buf *);
 
 #define MESH_PHASE_MASK	(MESH_STATUS0_MSG | MESH_STATUS0_CD | MESH_STATUS0_IO)
 
-CFATTACH_DECL(mesh, sizeof(struct mesh_softc),
+CFATTACH_DECL_NEW(mesh, sizeof(struct mesh_softc),
     mesh_match, mesh_attach, NULL, NULL);
 
 int
-mesh_match(struct device *parent, struct cfdata *cf, void *aux)
+mesh_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -200,9 +200,9 @@ mesh_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-mesh_attach(struct device *parent, struct device *self, void *aux)
+mesh_attach(device_t parent, device_t self, void *aux)
 {
-	struct mesh_softc *sc = (void *)self;
+	struct mesh_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	int i;
 	u_int *reg;
@@ -218,12 +218,12 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_meshid = mesh_read_reg(sc, MESH_MESH_ID) & 0x1f;
 #if 0
 	if (sc->sc_meshid != (MESH_SIGNATURE & 0x1f) {
-		printf(": unknown MESH ID (0x%x)\n", sc->sc_meshid);
+		aprint_error(": unknown MESH ID (0x%x)\n", sc->sc_meshid);
 		return;
 	}
 #endif
 	if (OF_getprop(ca->ca_node, "clock-frequency", &sc->sc_freq, 4) != 4) {
-		printf(": cannot get clock-frequency\n");
+		aprint_error(": cannot get clock-frequency\n");
 		return;
 	}
 	sc->sc_freq /= 1000000;	/* in MHz */
@@ -240,10 +240,10 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	mesh_reset(sc);
 	mesh_bus_reset(sc);
 
-	printf(" irq %d: %dMHz, SCSI ID %d\n",
+	aprint_normal(" irq %d: %dMHz, SCSI ID %d\n",
 		sc->sc_irq, sc->sc_freq, sc->sc_id);
 
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_dev = self;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = 7;
 	sc->sc_adapter.adapt_max_periph = 1;
@@ -258,7 +258,7 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.chan_nluns = 8;
 	sc->sc_channel.chan_id = sc->sc_id;
 
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint);
 
 	intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc);
 
@@ -319,7 +319,7 @@ mesh_intr(void *arg)
 
 	intr = mesh_read_reg(sc, MESH_INTERRUPT);
 	if (intr == 0) {
-		DPRINTF("%s: stray interrupt\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: stray interrupt\n", device_xname(sc->sc_dev));
 		return 0;
 	}
 
@@ -344,7 +344,7 @@ mesh_intr(void *arg)
 
 	scb = sc->sc_nexus;
 	if (scb == NULL) {
-		DPRINTF("%s: NULL nexus\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: NULL nexus\n", device_xname(sc->sc_dev));
 		return 1;
 	}
 
@@ -382,7 +382,7 @@ mesh_intr(void *arg)
 
 	if (intr & MESH_INTR_ERROR) {
 		printf("%s: error %02x %02x\n",
-			sc->sc_dev.dv_xname, error, exception);
+			device_xname(sc->sc_dev), error, exception);
 		mesh_error(sc, scb, error, 0);
 		return 1;
 	}
@@ -397,7 +397,7 @@ mesh_intr(void *arg)
 		/* phase mismatch */
 		if (exception & MESH_EXC_PHASEMM) {
 			DPRINTF("%s: PHASE MISMATCH; nextstate = %d -> ",
-				sc->sc_dev.dv_xname, sc->sc_nextstate);
+				device_xname(sc->sc_dev), sc->sc_nextstate);
 			sc->sc_nextstate = status0 & MESH_PHASE_MASK;
 
 			DPRINTF("%d, resid = %d\n",
@@ -431,7 +431,7 @@ mesh_intr(void *arg)
 		break;
 
 	default:
-		printf("%s: unknown state (%d)\n", sc->sc_dev.dv_xname,
+		printf("%s: unknown state (%d)\n", device_xname(sc->sc_dev),
 		    sc->sc_nextstate);
 		scb->xs->error = XS_DRIVER_STUFFUP;
 		mesh_done(sc, scb);
@@ -444,7 +444,7 @@ void
 mesh_error(struct mesh_softc *sc, struct mesh_scb *scb, int error, int exception)
 {
 	if (error & MESH_ERR_SCSI_RESET) {
-		printf("%s: SCSI RESET\n", sc->sc_dev.dv_xname);
+		printf("%s: SCSI RESET\n", device_xname(sc->sc_dev));
 
 		/* Wait until the RST signal is deasserted. */
 		while (mesh_read_reg(sc, MESH_BUS_STATUS1) & MESH_STATUS1_RST);
@@ -453,12 +453,12 @@ mesh_error(struct mesh_softc *sc, struct mesh_scb *scb, int error, int exception
 	}
 
 	if (error & MESH_ERR_PARITY_ERR0) {
-		printf("%s: parity error\n", sc->sc_dev.dv_xname);
+		printf("%s: parity error\n", device_xname(sc->sc_dev));
 		scb->xs->error = XS_DRIVER_STUFFUP;
 	}
 
 	if (error & MESH_ERR_DISCONNECT) {
-		printf("%s: unexpected disconnect\n", sc->sc_dev.dv_xname);
+		printf("%s: unexpected disconnect\n", device_xname(sc->sc_dev));
 		if (sc->sc_nextstate != MESH_COMPLETE)
 			scb->xs->error = XS_DRIVER_STUFFUP;
 	}
@@ -756,7 +756,7 @@ extended_msg:
 	  }
 	default:
 		printf("%s target %d: rejecting extended message 0x%x\n",
-			sc->sc_dev.dv_xname, scb->target, sc->sc_imsg[0]);
+			device_xname(sc->sc_dev), scb->target, sc->sc_imsg[0]);
 		goto reject;
 	}
 
@@ -950,7 +950,7 @@ mesh_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *a
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct mesh_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct mesh_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	struct mesh_scb *scb;
 	u_int flags;
 	int s;
@@ -1011,9 +1011,10 @@ mesh_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *a
 			return;
 
 		if (mesh_poll(sc, xs)) {
-			printf("%s: timeout\n", sc->sc_dev.dv_xname);
+			printf("%s: timeout\n", device_xname(sc->sc_dev));
 			if (mesh_poll(sc, xs))
-				printf("%s: timeout again\n", sc->sc_dev.dv_xname);
+				printf("%s: timeout again\n",
+				    device_xname(sc->sc_dev));
 		}
 		return;
 
@@ -1106,12 +1107,13 @@ mesh_timeout(void *arg)
 {
 	struct mesh_scb *scb = arg;
 	struct mesh_softc *sc =
-	    (void *)scb->xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(scb->xs->xs_periph->periph_channel->chan_adapter->adapt_dev);
 	int s;
 	int status0, status1;
 	int intr, error, exception, imsk;
 
-	printf("%s: timeout state %d\n", sc->sc_dev.dv_xname, sc->sc_nextstate);
+	printf("%s: timeout state %d\n", device_xname(sc->sc_dev),
+	    sc->sc_nextstate);
 
 	intr = mesh_read_reg(sc, MESH_INTERRUPT);
 	imsk = mesh_read_reg(sc, MESH_INTR_MASK);
@@ -1121,7 +1123,7 @@ mesh_timeout(void *arg)
 	status1 = mesh_read_reg(sc, MESH_BUS_STATUS1);
 
 	printf("%s: intr/msk %02x/%02x, exc %02x, err %02x, st0/1 %02x/%02x\n",
-		sc->sc_dev.dv_xname,
+		device_xname(sc->sc_dev),
 		intr, imsk, exception, error, status0, status1);
 
 	s = splbio();

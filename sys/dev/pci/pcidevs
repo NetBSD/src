@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.937.4.2 2009/05/04 08:12:59 yamt Exp $
+$NetBSD: pcidevs,v 1.937.4.3 2009/05/16 10:41:36 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1290,6 +1290,7 @@ product ATI RS480_HB		0x5950	RS480 Host Bridge
 product ATI RD580		0x5952	RD580 CrossFire Xpress 3200 Host Bridge
 product ATI RADEON_RV370_5954	0x5954	Radeon Xpress 200G Series
 product ATI RD790_NB 		0x5956	RD790 North Bridge (Dual Slot)
+product ATI RX780_790_HB	0x5957	RX780/RX790 Chipset Host Bridge
 product ATI RADEON_RV280_5960	0x5960	Radeon 9200PRO 5960
 product ATI RADEON_RV280_5961	0x5961	Radeon 9200 5961
 product ATI RADEON_RV280_5962	0x5962	Radeon 9200 5962
@@ -1347,6 +1348,7 @@ product ATI RADEON_X700		0x5e4b	Radeon X700 Pro
 product ATI RADEON_X700_S	0x5e6b	Radeon X700 Pro Secondary
 product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
 product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
+product ATI RADEON_X1600	0x71c5	Radeon Mobility X1600
 product ATI RADEON_RS300_7834	0x7834	Radeon 9100 PRO IGP
 product ATI RADEON_RS300_7835	0x7835	Radeon 9200 IGP
 product ATI RS690_HB		0x7911	RS690 Host Bridge
@@ -4091,6 +4093,7 @@ product VIATECH VT8237A_HB	0x337b	VT8237A Host Bridge
 product VIATECH KT880_4		0x4269	KT880 CPU to PCI Bridge
 product VIATECH VT3351_HB_4351	0x4351	VT3351 Host Bridge
 product VIATECH CX700M2_IDE	0x5324	CX700M2/VX700 IDE Controller
+product VIATECH VT8237A_SATA_2	0x5337	VT8237A Integrated SATA Controller
 product VIATECH VT3351_IOAPIC	0x5351	VT3351 I/O APIC Interrupt Controller
 product VIATECH VT8237S_SATA	0x5372	VT8237S Integrated SATA Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.20.32.2 2009/05/04 08:12:39 yamt Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.20.32.3 2009/05/16 10:41:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,9 +76,9 @@ struct iop_initiator {
 	LIST_ENTRY(iop_initiator) ii_list;
 	LIST_ENTRY(iop_initiator) ii_hash;
 
-	void	(*ii_intr)(struct device *, struct iop_msg *, void *);
-	int	(*ii_reconfig)(struct device *);
-	void	(*ii_adjqparam)(struct device *, int);
+	void	(*ii_intr)(device_t, struct iop_msg *, void *);
+	int	(*ii_reconfig)(device_t);
+	void	(*ii_adjqparam)(device_t, int);
 
 	struct	device *ii_dv;
 	kcondvar_t ii_cv;

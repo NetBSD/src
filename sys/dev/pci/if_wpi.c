@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.37.4.2 2009/05/04 08:12:58 yamt Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.37.4.3 2009/05/16 10:41:35 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.37.4.2 2009/05/04 08:12:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.37.4.3 2009/05/16 10:41:35 yamt Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -99,7 +99,7 @@ static size_t wpi_firmware_users;
 static uint8_t *wpi_firmware_image;
 static size_t wpi_firmware_size;
 
-static int  wpi_match(device_t, struct cfdata *, void *);
+static int  wpi_match(device_t, cfdata_t, void *);
 static void wpi_attach(device_t, device_t, void *);
 static int  wpi_detach(device_t , int);
 static int  wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
@@ -179,7 +179,7 @@ CFATTACH_DECL_NEW(wpi, sizeof (struct wpi_softc), wpi_match, wpi_attach,
 	wpi_detach, NULL);
 
 static int
-wpi_match(device_t parent, struct cfdata *match __unused, void *aux)
+wpi_match(device_t parent, cfdata_t match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: param.h,v 1.2 2003/04/28 23:16:18 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.2.108.1 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.

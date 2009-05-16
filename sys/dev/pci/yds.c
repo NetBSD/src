@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.42.4.1 2009/05/04 08:13:02 yamt Exp $	*/
+/*	$NetBSD: yds.c,v 1.42.4.2 2009/05/16 10:41:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.42.4.1 2009/05/04 08:13:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.42.4.2 2009/05/16 10:41:40 yamt Exp $");
 
 #include "mpu.h"
 
@@ -182,7 +182,7 @@ static int     yds_reset_codec(void *);
 static u_int	yds_get_dstype(int);
 static int	yds_download_mcode(struct yds_softc *);
 static int	yds_allocate_slots(struct yds_softc *);
-static void	yds_configure_legacy(struct device *);
+static void	yds_configure_legacy(device_t);
 static void	yds_enable_dsp(struct yds_softc *);
 static int	yds_disable_dsp(struct yds_softc *);
 static int	yds_ready_codec(struct yds_codec_softc *);

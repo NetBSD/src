@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.899.2.2 2009/05/04 08:12:29 yamt Exp $
+#	$NetBSD: files,v 1.899.2.3 2009/05/16 10:41:17 yamt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20090214
+version 	20090313
 
 #
 # device classes

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.42.4.2 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.42.4.3 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.2 2009/05/04 08:11:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.3 2009/05/16 10:41:13 yamt Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -89,15 +89,15 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.2 2009/05/04 08:11:07 yamt Exp $"
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 
 struct mainbus_softc {
-	struct  device sc_dv;
+	device_t sc_dv;
 
 	hppa_hpa_t sc_hpa;
 };
 
-int	mbmatch(struct device *, struct cfdata *, void *);
-void	mbattach(struct device *, struct device *, void *);
+int	mbmatch(device_t, cfdata_t, void *);
+void	mbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
     mbmatch, mbattach, NULL, NULL);
 
 extern struct cfdriver mainbus_cd;
@@ -169,7 +169,7 @@ int mbus_dmamem_map(void *, bus_dma_segment_t *, int, size_t, void **, int);
 void mbus_dmamem_unmap(void *, void *, size_t);
 paddr_t mbus_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
 int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp, 
+    bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp,
     int *segp, int first);
 
 int
@@ -183,7 +183,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 #endif /* USE_BTLB */
 
 	/*
-	 * We must be called with a page-aligned address in 
+	 * We must be called with a page-aligned address in
 	 * I/O space, and with a multiple of the page size.
 	 */
 	KASSERT((bpa & PGOFSET) == 0);
@@ -212,7 +212,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 			if (btlb_size > hppa_btlb_size_max)
 				btlb_size = hppa_btlb_size_max;
 			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_insert(pmap_kernel()->pmap_space, 
+			error = hppa_btlb_insert(pmap_kernel()->pmap_space,
 			    bpa, bpa, &btlb_size,
 			    pmap_kernel()->pmap_pid |
 			    pmap_prot(pmap_kernel(), VM_PROT_READ | VM_PROT_WRITE));
@@ -252,7 +252,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 #endif /* USE_BTLB */
 
 	/*
-	 * We must be called with a page-aligned address in 
+	 * We must be called with a page-aligned address in
 	 * I/O space, and with a multiple of the page size.
 	 */
 	bpa = *bpap = bsh;
@@ -277,7 +277,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 			if (btlb_size > hppa_btlb_size_max)
 				btlb_size = hppa_btlb_size_max;
 			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_purge(pmap_kernel()->pmap_space, 
+			error = hppa_btlb_purge(pmap_kernel()->pmap_space,
 						bpa, &btlb_size);
 			if (error == 0) {
 				bpa += btlb_size;
@@ -600,7 +600,7 @@ mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t 
 void mbus_rrm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t*a, bus_size_t c);
 void mbus_rrm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t*a, bus_size_t c);
 void mbus_rrm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t*a, bus_size_t c);
-	       
+
 void mbus_wrm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c);
 void mbus_wrm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c);
 void mbus_wrm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c);
@@ -888,7 +888,7 @@ mbus_dmamap_destroy(void *v, bus_dmamap_t map)
  * load DMA map with a linear buffer.
  */
 int
-mbus_dmamap_load(void *v, bus_dmamap_t map, void *buf, bus_size_t buflen, 
+mbus_dmamap_load(void *v, bus_dmamap_t map, void *buf, bus_size_t buflen,
     struct proc *p, int flags)
 {
 	vaddr_t lastaddr;
@@ -1079,7 +1079,7 @@ mbus_dmamap_unload(void *v, bus_dmamap_t map)
 }
 
 void
-mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len, 
+mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
     int ops)
 {
 	int i;
@@ -1238,7 +1238,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	segs[0]._ds_mlist = mlist;
 
 	/*
-	 * We now have physical pages, but no kernel virtual addresses 
+	 * We now have physical pages, but no kernel virtual addresses
 	 * yet. These may be allocated in bus_dmamap_map.  Hence we
 	 * save any alignment and boundary requirements in this DMA
 	 * segment.
@@ -1369,7 +1369,7 @@ mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
 
 int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp, 
+    bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp,
     int *segp, int first)
 {
 	bus_size_t sgsize;
@@ -1461,7 +1461,7 @@ const struct hppa_bus_dma_tag hppa_dmatag = {
 };
 
 int
-mbmatch(struct device *parent, struct cfdata *cf, void *aux)
+mbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* there will be only one */
@@ -1472,7 +1472,7 @@ mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mb_module_callback(struct device *self, struct confargs *ca)
+mb_module_callback(device_t self, struct confargs *ca)
 {
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
@@ -1481,7 +1481,7 @@ mb_module_callback(struct device *self, struct confargs *ca)
 }
 
 static void
-mb_cpu_mem_callback(struct device *self, struct confargs *ca)
+mb_cpu_mem_callback(device_t self, struct confargs *ca)
 {
 	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY))
@@ -1490,12 +1490,14 @@ mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 }
 
 void
-mbattach(struct device *parent, struct device *self, void *aux)
+mbattach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
 	hppa_hpa_t hpabase;
+
+	sc->sc_dv = self;
 
 	mb_attached = 1;
 
@@ -1504,9 +1506,9 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		panic("mbattach: PDC_HPA failed");
 
 	/*
-	 * Map all of Fixed Physical, Local Broadcast, and 
+	 * Map all of Fixed Physical, Local Broadcast, and
 	 * Global Broadcast space.  These spaces are adjacent
-	 * and in that order and run to the end of the address 
+	 * and in that order and run to the end of the address
 	 * space.
 	 */
 	/*
@@ -1514,7 +1516,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
  	 * be a great idea.  I'm not sure which yet.
 	 */
 	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, 0 - pdc_hpa.hpa, 0, &ioh))
-		panic("mbattach: cannot map mainbus IO space");
+		panic("mbattach: can't map mainbus IO space");
 
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
@@ -1643,8 +1645,7 @@ mbprint(void *aux, const char *pnp)
 }
 
 int
-mbsubmatch(struct device *parent, struct cfdata *cf,
-	   const int *ldesc, void *aux)
+mbsubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 	int ret;

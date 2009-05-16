@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.46.4.1 2009/05/04 08:13:17 yamt Exp $	*/
+/*	$NetBSD: magma.c,v 1.46.4.2 2009/05/16 10:41:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.46.4.1 2009/05/04 08:13:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.46.4.2 2009/05/16 10:41:43 yamt Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -302,7 +302,7 @@ cd1400_enable_transmitter(struct cd1400 *cd, int channel)
  */
 
 int
-magma_match(struct device *parent, struct cfdata *cf, void *aux)
+magma_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct magma_board_info *card;
@@ -330,7 +330,7 @@ magma_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-magma_attach(struct device *parent, struct device *self, void *aux)
+magma_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct magma_softc *sc = device_private(self);
@@ -819,7 +819,7 @@ chkbpp:
  */
 
 int
-mtty_match(struct device *parent, struct cfdata *cf, void *args)
+mtty_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct magma_softc *sc = device_private(parent);
 
@@ -827,7 +827,7 @@ mtty_match(struct device *parent, struct cfdata *cf, void *args)
 }
 
 void
-mtty_attach(struct device *parent, struct device *dev, void *args)
+mtty_attach(device_t parent, device_t dev, void *args)
 {
 	struct magma_softc *sc = device_private(parent);
 	struct mtty_softc *ms = device_private(dev);
@@ -1388,7 +1388,7 @@ mtty_param(struct tty *tp, struct termios *t)
  */
 
 int
-mbpp_match(struct device *parent, struct cfdata *cf, void *args)
+mbpp_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct magma_softc *sc = device_private(parent);
 
@@ -1396,7 +1396,7 @@ mbpp_match(struct device *parent, struct cfdata *cf, void *args)
 }
 
 void
-mbpp_attach(struct device *parent, struct device *dev, void *args)
+mbpp_attach(device_t parent, device_t dev, void *args)
 {
 	struct magma_softc *sc = device_private(parent);
 	struct mbpp_softc *ms = device_private(dev);

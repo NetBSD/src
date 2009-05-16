@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.123.2.2 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.123.2.3 2009/05/16 10:41:50 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.123.2.2 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.123.2.3 2009/05/16 10:41:50 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -257,7 +257,7 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 	error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req, so, sin,
 	    NULL);
 	if (error)
-		return (error);
+		return (EACCES);
 
 	if (mymin > mymax) {	/* sanity check */
 		u_int16_t swp;
@@ -303,7 +303,9 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	if (sin->sin_family != AF_INET)
 		return (EAFNOSUPPORT);
 
-	if (!in_nullhost(sin->sin_addr)) {
+	if (IN_MULTICAST(sin->sin_addr.s_addr)) {
+		/* Always succeed; port reuse handled in in_pcbbind_port(). */
+	} else if (!in_nullhost(sin->sin_addr)) {
 		struct in_ifaddr *ia = NULL;
 
 		INADDR_TO_IA(sin->sin_addr, ia);
@@ -364,7 +366,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		error = kauth_authorize_network(cred, KAUTH_NETWORK_BIND, req,
 		    so, sin, NULL);
 		if (error)
-			return (error);
+			return (EACCES);
 
 #ifdef INET6
 		memset(&mapped, 0, sizeof(mapped));

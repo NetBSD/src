@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.12.4.1 2009/05/16 10:41:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.12.4.1 2009/05/16 10:41:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $")
 #define IWIC_PCI_IOBA (PCI_MAPREG_START+0x04)
 
 static int iwic_pci_intr(void *sc);
-static int iwic_pci_probe(struct device * dev, struct cfdata * match, void *aux);
-static void iwic_pci_attach(struct device * parent, struct device * dev, void *aux);
-static int iwic_pci_activate(struct device * dev, enum devact);
+static int iwic_pci_probe(device_t  dev, cfdata_t  match, void *aux);
+static void iwic_pci_attach(device_t  parent, device_t  dev, void *aux);
+static int iwic_pci_activate(device_t  dev, enum devact);
 
 CFATTACH_DECL(iwic_pci, sizeof(struct iwic_softc),
     iwic_pci_probe, iwic_pci_attach, NULL, iwic_pci_activate);
@@ -211,8 +211,8 @@ iwic_find_card(const struct pci_attach_args * pa)
  *	iwic PCI probe
  *---------------------------------------------------------------------------*/
 static int
-iwic_pci_probe(struct device * dev,
-	struct cfdata * match, void *aux)
+iwic_pci_probe(device_t  dev,
+	cfdata_t  match, void *aux)
 {
 	if (iwic_find_card(aux))
 		return 1;
@@ -223,9 +223,9 @@ iwic_pci_probe(struct device * dev,
  *	PCI attach
  *---------------------------------------------------------------------------*/
 static void
-iwic_pci_attach(struct device * parent, struct device * dev, void *aux)
+iwic_pci_attach(device_t  parent, device_t  dev, void *aux)
 {
-	struct iwic_softc *sc = (void *) dev;
+	struct iwic_softc *sc = device_private(dev);
 	struct iwic_bchan *bchan;
 	pci_intr_handle_t ih;
 	const char *intrstr;
@@ -316,7 +316,7 @@ iwic_pci_intr(void *p)
 }
 
 static int
-iwic_pci_activate(struct device * dev, enum devact act)
+iwic_pci_activate(device_t  dev, enum devact act)
 {
 	int error = EOPNOTSUPP;
 

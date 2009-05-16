@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.44.2.1 2009/05/04 08:12:43 yamt Exp $ */
+/* $NetBSD: pckbc.c,v 1.44.2.2 2009/05/16 10:41:24 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.44.2.1 2009/05/04 08:12:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.44.2.2 2009/05/16 10:41:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot)
 	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
 	void *sdata;
-	struct device *child;
+	device_t child;
 	int alloced = 0;
 
 	pa.pa_tag = t;

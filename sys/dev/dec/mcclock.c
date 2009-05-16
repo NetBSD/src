@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.21.4.1 2009/05/04 08:12:36 yamt Exp $ */
+/* $NetBSD: mcclock.c,v 1.21.4.2 2009/05/16 10:41:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21.4.1 2009/05/04 08:12:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21.4.2 2009/05/16 10:41:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21.4.1 2009/05/04 08:12:36 yamt Exp $"
 #endif
 
 
-void	mcclock_init(struct device *);
+void	mcclock_init(device_t);
 int	mcclock_get(todr_chip_handle_t, volatile struct timeval *);
 int	mcclock_set(todr_chip_handle_t, volatile struct timeval *);
 
@@ -84,7 +84,7 @@ mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
 }
 
 void
-mcclock_init(struct device *dev)
+mcclock_init(device_t dev)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 	int rate;

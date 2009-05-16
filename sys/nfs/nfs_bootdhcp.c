@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.38.2.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.38.2.3 2009/05/16 10:41:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.38.2.2 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.38.2.3 2009/05/16 10:41:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -325,12 +325,12 @@ bootpcheck(struct mbuf *m, void *context)
 	 * Is this a valid reply?
 	 */
 	if (m->m_pkthdr.len < BOOTP_SIZE_MIN) {
-		DPRINTF(("bootpcheck: short packet %d < %ld\n", 
+		DPRINTF(("bootpcheck: short packet %d < %zu\n", 
 		    m->m_pkthdr.len, BOOTP_SIZE_MIN));
 		return (-1);
 	}
 	if (m->m_pkthdr.len > BOOTP_SIZE_MAX) {
-		DPRINTF(("Bootpcheck: long packet %d > %ld\n", 
+		DPRINTF(("Bootpcheck: long packet %d > %zu\n", 
 		   m->m_pkthdr.len, BOOTP_SIZE_MAX));
 		return (-1);
 	}

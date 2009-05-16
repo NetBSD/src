@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.16.4.1 2009/05/04 08:11:18 yamt Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.16.4.2 2009/05/16 10:41:15 yamt Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.4.1 2009/05/04 08:11:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.4.2 2009/05/16 10:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.16.4.1 2009/05/04 08:11:18 yamt Ex
 #include <dev/isa/wssreg.h>
 #include <dev/isa/wssvar.h>
 
-int wss_pnpbios_match(struct device *, struct cfdata *, void *);
-void wss_pnpbios_attach(struct device *, struct device *, void *);
+int wss_pnpbios_match(device_t, cfdata_t, void *);
+void wss_pnpbios_attach(device_t, device_t, void *);
 int wss_pnpbios_hints_index(const char *);
 
 
@@ -88,8 +88,8 @@ wss_pnpbios_hints_index(const char *idstr)
 }
 
 int
-wss_pnpbios_match(struct device *parent,
-    struct cfdata *match, void *aux)
+wss_pnpbios_match(device_t parent,
+    cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -100,10 +100,10 @@ wss_pnpbios_match(struct device *parent,
 }
 
 void
-wss_pnpbios_attach(struct device *parent, struct device *self,
+wss_pnpbios_attach(device_t parent, device_t self,
     void *aux)
 {
-	struct wss_softc *sc = (void *)self;
+	struct wss_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 	struct audio_attach_args arg;
 	struct wss_pnpbios_hint *wph;

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.51.4.2 2009/05/04 08:12:55 yamt Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.51.4.3 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.51.4.2 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.51.4.3 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.51.4.2 2009/05/04 08:12:55 yamt Exp $")
 #include <dev/pci/emuxkivar.h>
 
 /* autoconf goo */
-static int	emuxki_match(struct device *, struct cfdata *, void *);
-static void	emuxki_attach(struct device *, struct device *, void *);
-static int	emuxki_detach(struct device *, int);
+static int	emuxki_match(device_t, cfdata_t, void *);
+static void	emuxki_attach(device_t, device_t, void *);
+static int	emuxki_detach(device_t, int);
 
 /* DMA mem mgmt */
 static struct dmamem *dmamem_alloc(bus_dma_tag_t, size_t, bus_size_t,
@@ -380,8 +380,7 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 }
 
 static int
-emuxki_match(struct device *parent, struct cfdata *match,
-    void *aux)
+emuxki_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -400,7 +399,7 @@ emuxki_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-emuxki_attach(struct device *parent, struct device *self, void *aux)
+emuxki_attach(device_t parent, device_t self, void *aux)
 {
 	struct emuxki_softc *sc;
 	struct pci_attach_args *pa;
@@ -408,7 +407,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 
-	sc = (struct emuxki_softc *) self;
+	sc = device_private(self);
 	pa = aux;
 	aprint_naive(": Audio controller\n");
 
@@ -481,11 +480,11 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-emuxki_detach(struct device *self, int flags)
+emuxki_detach(device_t self, int flags)
 {
 	struct emuxki_softc *sc;
 
-	sc = (struct emuxki_softc *)self;
+	sc = device_private(self);
 	if (sc->sc_audev != NULL) /* Test in case audio didn't attach */
 		config_detach(sc->sc_audev, 0);
 
@@ -2332,7 +2331,7 @@ emuxki_round_blocksize(void *addr, int blksize,
 	if (sc == NULL)
 		return blksize;
 
-	au = (void *)sc->sc_audev;
+	au = device_private(sc->sc_audev);
 	if (au == NULL)
 		return blksize;
 

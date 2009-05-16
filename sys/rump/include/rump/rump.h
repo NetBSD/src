@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.16.2.2 2009/05/04 08:14:29 yamt Exp $	*/
+/*	$NetBSD: rump.h,v 1.16.2.3 2009/05/16 10:41:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,6 @@ struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
 void			rump_freecn(struct componentname *, int);
 #define RUMPCN_ISLOOKUP 0x01
 #define RUMPCN_FREECRED 0x02
-#define RUMPCN_HASNTBUF 0x04
 int			rump_namei(uint32_t, uint32_t, const char *,
 				   struct vnode **, struct vnode **,
 				   struct componentname **);
@@ -139,6 +138,7 @@ int	rump_vfs_getmp(const char *, struct mount **);
 struct lwp	*rump_newproc_switch(void);
 struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
 struct lwp	*rump_get_curlwp(void);
+void		rump_set_curlwp(struct lwp *);
 void		rump_clear_curlwp(void);
 
 void		rump_rcvp_set(struct vnode *, struct vnode *);

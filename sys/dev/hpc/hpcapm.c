@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.13.20.1 2009/05/04 08:12:38 yamt Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.13.20.2 2009/05/16 10:41:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.13.20.1 2009/05/04 08:12:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.13.20.2 2009/05/16 10:41:21 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -61,8 +61,8 @@ int	hpcapm_debug = HPCAPMDEBUG_CONF;
 #endif
 
 /* Definition of the driver for autoconfig. */
-static int	hpcapm_match(struct device *, struct cfdata *, void *);
-static void	hpcapm_attach(struct device *, struct device *, void *);
+static int	hpcapm_match(device_t, cfdata_t, void *);
+static void	hpcapm_attach(device_t, device_t, void *);
 static int	hpcapm_hook(void *, int, long, void *);
 
 static void	hpcapm_disconnect(void *);
@@ -106,16 +106,16 @@ struct apm_accessops hpcapm_accessops = {
 extern struct cfdriver hpcapm_cd;
 
 static int
-hpcapm_match(struct device *parent,
-	     struct cfdata *cf, void *aux)
+hpcapm_match(device_t parent,
+	     cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-hpcapm_attach(struct device *parent,
-	      struct device *self, void *aux)
+hpcapm_attach(device_t parent,
+	      device_t self, void *aux)
 {
 	struct apmhpc_softc *sc;
 	struct apmdev_attach_args aaa;

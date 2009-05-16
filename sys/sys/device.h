@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.109.4.1 2009/05/04 08:14:34 yamt Exp $ */
+/* $NetBSD: device.h,v 1.109.4.2 2009/05/16 10:41:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -300,27 +300,18 @@ struct cfattach {
 };
 LIST_HEAD(cfattachlist, cfattach);
 
-#define	CFATTACH_DECL3(name, ddsize, matfn, attfn, detfn, actfn, \
-	rescanfn, chdetfn, __flags) \
+#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn) \
 struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_name		= ___STRING(name),			\
 	.ca_devsize		= ddsize,				\
-	.ca_flags		= (__flags),				\
+	.ca_flags		= 0,					\
 	.ca_match 		= matfn,				\
 	.ca_attach		= attfn,				\
 	.ca_detach		= detfn,				\
 	.ca_activate		= actfn,				\
-	.ca_rescan		= rescanfn,				\
-	.ca_childdetached	= chdetfn,				\
+	.ca_rescan		= NULL,					\
+	.ca_childdetached	= NULL,					\
 }
-
-#define	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn,	\
-	rescanfn, chdetfn)						\
-	CFATTACH_DECL3(name, ddsize, matfn, attfn, detfn, actfn,	\
-	    rescanfn, chdetfn, 0)
-
-#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
-	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
 
 #define	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn, __flags) \

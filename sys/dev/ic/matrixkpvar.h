@@ -40,8 +40,8 @@ struct matrixkp_softc {
 #define	MXKP_NODEBOUNCE	0x1
 	u_int32_t sc_flags;
 	u_int32_t sc_enabled;
-	struct device *sc_dev;
-	struct device *sc_wskbddev;
+	device_t sc_dev;
+	device_t sc_wskbddev;
 	struct callout sc_callout;
 };
 

@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.12.60.1 2009/05/04 08:11:49 yamt Exp $
+# $NetBSD: files.hpc,v 1.12.60.2 2009/05/16 10:41:16 yamt Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
@@ -25,3 +25,6 @@ device	pi1ppc: parport
 attach	pi1ppc at hpc
 file	arch/sgimips/hpc/pi1ppc.c	pi1ppc
 
+device	panel : sysmon_power, sysmon_taskq
+attach	panel at hpc
+file	arch/sgimips/hpc/panel.c	panel

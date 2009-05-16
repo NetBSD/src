@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.16.24.1 2009/05/04 08:12:39 yamt Exp $
+#	$NetBSD: files.i2c,v 1.16.24.2 2009/05/16 10:41:21 yamt Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -105,6 +105,11 @@ file	dev/i2c/xbseeprom.c		xbseeprom
 device	spdmem
 attach	spdmem at iic
 file	dev/i2c/spdmem.c		spdmem
+
+# Memory Temp Sensor
+device	sdtemp: sysmon_envsys
+attach	sdtemp at iic
+file	dev/i2c/sdtemp.c		sdtemp
 
 # ADM1021
 device	admtemp: sysmon_envsys

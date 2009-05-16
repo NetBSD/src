@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.17.62.1 2008/05/16 02:25:06 yamt Exp $ */
+/*	$NetBSD: stvar.h,v 1.17.62.2 2009/05/16 10:41:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -178,8 +178,8 @@ struct st_softc {
 			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN |	\
 			 ST_2FM_AT_EOD | ST_PER_ACTION | ST_POSUPDATED)
 
-void	stattach(struct device *, struct st_softc *, void *);
-int	stactivate(struct device *, enum devact);
-int	stdetach(struct device *, int);
+void	stattach(device_t, struct st_softc *, void *);
+int	stactivate(device_t, enum devact);
+int	stdetach(device_t, int);
 
 extern struct cfdriver st_cd;

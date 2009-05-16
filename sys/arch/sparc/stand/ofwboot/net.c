@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3.62.1 2008/05/16 02:23:15 yamt Exp $	*/
+/*	$NetBSD: net.c,v 1.3.62.2 2009/05/16 10:41:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -116,24 +116,31 @@ net_close(struct of_dev *op)
 		}
 }
 
+static void
+net_clear_params(void)
+{
+	
+	myip.s_addr = 0;
+	netmask = 0;
+	gateip.s_addr = 0;
+	*hostname = '\0';
+	rootip.s_addr = 0;
+	*rootpath = '\0';
+}
+
 int
 net_mountroot_bootparams(void)
 {
 
+	net_clear_params();
+
 	/* Get our IP address.  (rarp.c) */
 	if (rarp_getipaddress(netdev_sock) == -1)
 		return (errno);
-
-	printf("Using BOOTPARAMS protocol: ");
-	printf("ip address: %s", inet_ntoa(myip));
-
-	/* Get our hostname, server IP address. */
+	printf("Using BOOTPARAMS protocol:\n  ip addr=%s\n", inet_ntoa(myip));
 	if (bp_whoami(netdev_sock))
 		return (errno);
-
-	printf(", hostname: %s\n", hostname);
-
-	/* Get the root pathname. */
+	printf("  hostname=%s\n", hostname);
 	if (bp_getfile(netdev_sock, "root", &rootip, rootpath))
 		return (errno);
 
@@ -143,22 +150,27 @@ net_mountroot_bootparams(void)
 int
 net_mountroot_bootp(void)
 {
+	int attempts;
 
-	bootp(netdev_sock);
-
+	/* We need a few attempts here as some DHCP servers
+	 * require >1 packet and my wireless bridge is always
+	 * in learning mode until the 2nd attempt ... */
+	for (attempts = 0; attempts < 3; attempts++) {
+		net_clear_params();
+		bootp(netdev_sock);
+		if (myip.s_addr != 0)
+			break;
+	}
 	if (myip.s_addr == 0)
 		return(ENOENT);
 
-	printf("Using BOOTP protocol: ");
-	printf("ip address: %s", inet_ntoa(myip));
-
+	printf("Using BOOTP protocol:\n ip addr=%s\n", inet_ntoa(myip));
 	if (hostname[0])
-		printf(", hostname: %s", hostname);
+		printf("  hostname=%s\n", hostname);
 	if (netmask)
-		printf(", netmask: %s", intoa(netmask));
+		printf("  netmask=%s\n", intoa(netmask));
 	if (gateip.s_addr)
-		printf(", gateway: %s", inet_ntoa(gateip));
-	printf("\n");
+		printf("  gateway=%s\n", inet_ntoa(gateip));
 
 	return (0);
 }
@@ -167,21 +179,9 @@ int
 net_tftp_bootp(int **sock)
 {
 
-	bootp(netdev_sock);
-
+	net_mountroot_bootp();
 	if (myip.s_addr == 0)
 		return(ENOENT);
-
-	printf("Using BOOTP protocol: ");
-	printf("ip address: %s", inet_ntoa(myip));
-
-	if (hostname[0])
-		printf(", hostname: %s", hostname);
-	if (netmask)
-		printf(", netmask: %s", intoa(netmask));
-	if (gateip.s_addr)
-		printf(", gateway: %s", inet_ntoa(gateip));
-	printf("\n");
 
 	*sock = &netdev_sock;
 	return (0);
@@ -211,7 +211,7 @@ net_mountroot(void)
 	if (error != 0)
 		return (error);
 
-	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
+	printf("  root addr=%s\n  path=%s\n", inet_ntoa(rootip), rootpath);
 
 	/* Get the NFS file handle (mount). */
 	if (nfs_mount(netdev_sock, rootip, rootpath) != 0)

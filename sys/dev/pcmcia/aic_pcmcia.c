@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.37.4.1 2009/05/04 08:13:14 yamt Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.37.4.2 2009/05/16 10:41:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.37.4.1 2009/05/04 08:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.37.4.2 2009/05/16 10:41:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,11 @@ struct aic_pcmcia_softc {
 #define	AIC_PCMCIA_ATTACHED	3
 };
 
-int	aic_pcmcia_match(struct device *, struct cfdata *, void *);
+int	aic_pcmcia_match(device_t, cfdata_t, void *);
 int	aic_pcmcia_validate_config(struct pcmcia_config_entry *);
-void	aic_pcmcia_attach(struct device *, struct device *, void *);
-int	aic_pcmcia_detach(struct device *, int);
-int	aic_pcmcia_enable(struct device *, int);
+void	aic_pcmcia_attach(device_t, device_t, void *);
+int	aic_pcmcia_detach(device_t, int);
+int	aic_pcmcia_enable(device_t, int);
 
 CFATTACH_DECL(aic_pcmcia, sizeof(struct aic_pcmcia_softc),
     aic_pcmcia_match, aic_pcmcia_attach, aic_pcmcia_detach, aic_activate);
@@ -85,7 +85,7 @@ const size_t aic_pcmcia_nproducts =
     sizeof(aic_pcmcia_products) / sizeof(aic_pcmcia_products[0]);
 
 int
-aic_pcmcia_match(struct device *parent, struct cfdata *match,
+aic_pcmcia_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -107,7 +107,7 @@ aic_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 void
-aic_pcmcia_attach(struct device *parent, struct device *self,
+aic_pcmcia_attach(device_t parent, device_t self,
     void *aux)
 {
 	struct aic_pcmcia_softc *psc = (void *)self;
@@ -155,7 +155,7 @@ fail:
 }
 
 int
-aic_pcmcia_detach(struct device *self, int flags)
+aic_pcmcia_detach(device_t self, int flags)
 {
 	struct aic_pcmcia_softc *sc = (void *)self;
 	int error;
@@ -173,7 +173,7 @@ aic_pcmcia_detach(struct device *self, int flags)
 }
 
 int
-aic_pcmcia_enable(struct device *self, int onoff)
+aic_pcmcia_enable(device_t self, int onoff)
 {
 	struct aic_pcmcia_softc *sc = (void *)self;
 	int error;

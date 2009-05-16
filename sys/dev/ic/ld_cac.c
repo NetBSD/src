@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.20.4.2 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.20.4.3 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.20.4.2 2009/05/04 08:12:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.20.4.3 2009/05/16 10:41:23 yamt Exp $");
 
 #include "rnd.h"
 
@@ -178,7 +178,7 @@ ld_cac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 }
 
 void
-ld_cac_done(struct device *dv, void *context, int error)
+ld_cac_done(device_t dv, void *context, int error)
 {
 	struct buf *bp;
 	struct ld_cac_softc *sc;

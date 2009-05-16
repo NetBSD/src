@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.33.4.1 2009/05/04 08:12:53 yamt Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.33.4.2 2009/05/16 10:41:31 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.33.4.1 2009/05/04 08:12:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.33.4.2 2009/05/16 10:41:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,16 +81,16 @@ struct mt_softc {
 #define MT_OFFLINE	0
 #define MT_ONLINE	1
 
-int	mtmatch(struct device *, struct cfdata *, void *);
-void	mtattach(struct device *, struct device *, void *);
-void	mtdgram(struct device *, struct mscp *, struct mscp_softc *);
-void	mtiodone(struct device *, struct buf *);
-int	mtonline(struct device *, struct mscp *);
-int	mtgotstatus(struct device *, struct mscp *);
-int	mtioerror(struct device *, struct mscp *, struct buf *);
+int	mtmatch(device_t, cfdata_t, void *);
+void	mtattach(device_t, device_t, void *);
+void	mtdgram(device_t, struct mscp *, struct mscp_softc *);
+void	mtiodone(device_t, struct buf *);
+int	mtonline(device_t, struct mscp *);
+int	mtgotstatus(device_t, struct mscp *);
+int	mtioerror(device_t, struct mscp *, struct buf *);
 void	mtfillin(struct buf *, struct mscp *);
 int	mtcmd(struct mt_softc *, int, int, int);
-void	mtcmddone(struct device *, struct mscp *);
+void	mtcmddone(device_t, struct mscp *);
 int	mt_putonline(struct mt_softc *);
 
 struct	mscp_device mt_device = {
@@ -137,7 +137,7 @@ const struct cdevsw mt_cdevsw = {
  */
 
 int
-mtmatch(struct device *parent, struct cfdata *cf, void *aux)
+mtmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
@@ -154,7 +154,7 @@ mtmatch(struct device *parent, struct cfdata *cf, void *aux)
  * The attach routine only checks and prints drive type.
  */
 void
-mtattach(struct device *parent, struct device *self, void *aux)
+mtattach(device_t parent, device_t self, void *aux)
 {
 	struct	mt_softc *mt = device_private(self);
 	struct	drive_attach_args *da = aux;
@@ -286,7 +286,7 @@ mtwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 void
-mtiodone(struct device *usc, struct buf *bp)
+mtiodone(device_t usc, struct buf *bp)
 {
 
 	biodone(bp);
@@ -315,7 +315,7 @@ mtfillin(struct buf *bp, struct mscp *mp)
  * Handle an error datagram.
  */
 void
-mtdgram(struct device *usc, struct mscp *mp, struct mscp_softc *mi)
+mtdgram(device_t usc, struct mscp *mp, struct mscp_softc *mi)
 {
 	if (mscp_decodeerror(usc == NULL?"unconf mt" : device_xname(usc), mp, mi))
 		return;
@@ -326,7 +326,7 @@ mtdgram(struct device *usc, struct mscp *mp, struct mscp_softc *mi)
  * trying to use it.
  */
 int
-mtonline(struct device *usc, struct mscp *mp)
+mtonline(device_t usc, struct mscp *mp)
 {
 	struct mt_softc *mt = (void *)usc;
 
@@ -341,7 +341,7 @@ mtonline(struct device *usc, struct mscp *mp)
  * We got some (configured) unit's status.  Return DONE.
  */
 int
-mtgotstatus(struct device *usc, struct mscp *mp)
+mtgotstatus(device_t usc, struct mscp *mp)
 {
 	return (MSCP_DONE);
 }
@@ -371,7 +371,7 @@ static const char *mt_ioerrs[] = {
  */
 /*ARGSUSED*/
 int
-mtioerror(struct device *usc, struct mscp *mp, struct buf *bp)
+mtioerror(device_t usc, struct mscp *mp, struct buf *bp)
 {
 	struct mt_softc *mt = (void *)usc;
 	int st = mp->mscp_status & M_ST_MASK;
@@ -516,7 +516,7 @@ mtcmd(struct mt_softc *mt, int cmd, int count, int complete)
  * Called from bus routines whenever a non-data transfer is finished.
  */
 void
-mtcmddone(struct device *usc, struct mscp *mp)
+mtcmddone(device_t usc, struct mscp *mp)
 {
 	struct mt_softc *mt = (void *)usc;
 

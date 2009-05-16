@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.51.4.1 2008/05/16 02:24:27 yamt Exp $	*/
+/*	$NetBSD: isavar.h,v 1.51.4.2 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ struct isa_pnpname {
 struct isa_knowndev {
 	TAILQ_ENTRY(isa_knowndev) ik_list;
 	uintptr_t ik_key;
-	struct device *ik_claimed;
+	device_t ik_claimed;
 
 	/*
 	 * The rest of these fields correspond to isa_attach_args

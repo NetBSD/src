@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.59 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.59.4.1 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -182,7 +182,7 @@ struct sbdsp_softc {
 #define SBMPU_EXTERNAL	1
 #define SBMPU_INTERNAL	0
 #define SBMPU_NONE	-1
-	struct device *sc_mpudev;
+	device_t sc_mpudev;
 	bus_space_tag_t sc_mpu_iot;	/* tag */
 	bus_space_handle_t sc_mpu_ioh;	/* handle */
 #endif

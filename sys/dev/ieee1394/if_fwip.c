@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.14.4.1 2009/05/04 08:12:47 yamt Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.14.4.2 2009/05/16 10:41:24 yamt Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14.4.1 2009/05/04 08:12:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14.4.2 2009/05/16 10:41:24 yamt Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14.4.1 2009/05/04 08:12:47 yamt Exp $"
 #define TX_MAX_QUEUE	(FWMAXQUEUE - 1)
 
 #if defined(__NetBSD__)
-int fwipmatch (device_t, struct cfdata *, void *);
+int fwipmatch (device_t, cfdata_t, void *);
 void fwipattach (device_t, device_t, void *);
 int fwipdetach (device_t, int);
 int fwipactivate (device_t, enum devact);
@@ -243,7 +243,7 @@ fwip_probe(device_t dev)
 }
 #elif defined(__NetBSD__)
 int
-fwipmatch(device_t parent, struct cfdata *cf, void *aux)
+fwipmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 

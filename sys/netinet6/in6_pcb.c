@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.97.2.1 2009/05/04 08:14:18 yamt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.97.2.2 2009/05/16 10:41:50 yamt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.97.2.1 2009/05/04 08:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.97.2.2 2009/05/16 10:41:50 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -283,7 +283,7 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_BIND,
 		    req, so, sin6, NULL);
 		if (error)
-			return (error);
+			return (EACCES);
 	}
 
 	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {

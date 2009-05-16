@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.13.80.2 2009/05/04 08:10:26 yamt Exp $	*/
+/*	$NetBSD: csc.c,v 1.13.80.3 2009/05/16 10:41:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.13.80.2 2009/05/04 08:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.13.80.3 2009/05/16 10:41:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ cscattach(struct device *pdp, struct device *dp, void *auxp)
 
 #if CSC_POLL == 0
 	evcnt_attach_dynamic(&sc->sc_softc.sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    dp->dv_xname, "intr");
+	    device_xname(dp), "intr");
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    csc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.13 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.13.42.1 2009/05/16 10:41:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -119,8 +119,8 @@ uint32_t gt_read_mpp(void);
 int	gt_cfprint(void *, const char *);
 
 /* int     gt_bs_extent_init(struct discovery_bus_space *, char *);  AKB */
-int	gt_mii_read(struct device *, struct device *, int, int);
-void	gt_mii_write(struct device *, struct device *, int, int, int);
+int	gt_mii_read(device_t, device_t, int, int);
+void	gt_mii_write(device_t, device_t, int, int, int);
 int	gtget_macaddr(struct gt_softc *,int, char *);
 void	gt_watchdog_service(void);
 bus_addr_t gt_dma_phys_to_bus_mem(bus_dma_tag_t, bus_addr_t);

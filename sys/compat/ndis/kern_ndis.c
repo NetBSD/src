@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.14.10.1 2009/05/04 08:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.14.10.2 2009/05/16 10:41:17 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -467,7 +467,7 @@ ndis_create_kthreads(void)
 	mtx_init(&ndis_thr_mtx, "NDIS thread lock", NULL, MTX_SPIN);
 #else /* __NetBSD__ */
 	simple_lock_init(&ndis_thr_mtx);
-	//lockinit(&ndis_thr_mtx, PWAIT, "NDIS thread lock", 0, 0/*LK_CANRECURSE*//*LK_SPIN*/);
+	//lockinit(&ndis_thr_mtx, PWAIT, "NDIS thread lock", 0, 0);
 #endif	
 	mtx_init(&ndis_req_mtx, "NDIS request lock", MTX_NDIS_LOCK, MTX_DEF);
 
@@ -938,7 +938,7 @@ ndis_status_func(ndis_handle adapter, ndis_status status, void *sbuf,
 #endif
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: status: %x\n", 
-		       sc->ndis_dev->dv_xname, status);
+		       device_xname(sc->ndis_dev), status);
 	return;
 }
 
@@ -963,7 +963,7 @@ ndis_statusdone_func(ndis_handle adapter)
 #endif
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: status complete\n",
-		       sc->ndis_dev->dv_xname);
+		       device_xname(sc->ndis_dev));
 	return;
 }
 
@@ -1012,7 +1012,7 @@ ndis_resetdone_func(ndis_handle adapter, ndis_status status,
 
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: reset done...\n",
-		       sc->ndis_dev->dv_xname);
+		       device_xname(sc->ndis_dev));
 	wakeup(sc);
 	return;
 }
@@ -1145,7 +1145,7 @@ ndis_create_sysctls(void *arg)
 
 	/* Create the sysctl tree. */
 	sysctl_createv(&sc->sysctllog, 0, NULL, &ndis_node, CTLFLAG_READWRITE, CTLTYPE_NODE,
-					sc->ndis_dev->dv_xname, NULL, NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+					device_xname(sc->ndis_dev), NULL, NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 
 	/* Store the number of the ndis mib */	
 	sc->ndis_sysctl_mib = ndis_node->sysctl_num;

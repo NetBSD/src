@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.46 2008/04/04 12:20:48 tsutsui Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.46.4.1 2009/05/16 10:41:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.46 2008/04/04 12:20:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.46.4.1 2009/05/16 10:41:35 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -413,9 +413,9 @@ static int	pcn_intr(void *);
 static void	pcn_txintr(struct pcn_softc *);
 static int	pcn_rxintr(struct pcn_softc *);
 
-static int	pcn_mii_readreg(struct device *, int, int);
-static void	pcn_mii_writereg(struct device *, int, int, int);
-static void	pcn_mii_statchg(struct device *);
+static int	pcn_mii_readreg(device_t, int, int);
+static void	pcn_mii_writereg(device_t, int, int, int);
+static void	pcn_mii_statchg(device_t);
 
 static void	pcn_79c970_mediainit(struct pcn_softc *);
 static int	pcn_79c970_mediachange(struct ifnet *);

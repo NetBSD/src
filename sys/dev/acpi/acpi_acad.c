@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.33 2008/03/23 18:38:57 xtraeme Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.33.4.1 2009/05/16 10:41:18 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.33 2008/03/23 18:38:57 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.33.4.1 2009/05/16 10:41:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ static const char * const acad_hid[] = {
 #define AACAD_CLEAR(sc, f)	(void)((sc)->sc_flags &= ~(f))
 #define AACAD_ISSET(sc, f)	((sc)->sc_flags & (f))
 
-static int acpiacad_match(device_t, struct cfdata *, void *);
+static int acpiacad_match(device_t, cfdata_t, void *);
 static void acpiacad_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(acpiacad, sizeof(struct acpiacad_softc),
@@ -102,7 +102,7 @@ static bool acpiacad_resume(device_t PMF_FN_PROTO);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpiacad_match(device_t parent, struct cfdata *match, void *aux)
+acpiacad_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 

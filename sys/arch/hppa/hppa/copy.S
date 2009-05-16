@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.6.18.2 2009/05/04 08:11:13 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.6.18.3 2009/05/16 10:41:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,8 +157,8 @@ EXIT(_copy_on_fault)
  *     size_t size, size_t *rsize)
  *
  * Do a space to space size bounded string copy and return actual copy size in
- * rsize. If the copy ran out of space before '\0' is seen return ENAMETOOLONG 
- * 
+ * rsize. If the copy ran out of space before '\0' is seen return ENAMETOOLONG
+ *
  */
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
@@ -328,7 +328,7 @@ EXIT(hppa_ktext_stw)
 ENTRY(hppa_ktext_stb, HPPA_FRAME_SIZE)
 
 	/*
-	 * Make the deposit location for the byte in the 
+	 * Make the deposit location for the byte in the
 	 * aligned word.
 	 */
 	ldi     7, %t2
@@ -345,3 +345,45 @@ ENTRY(hppa_ktext_stb, HPPA_FRAME_SIZE)
 	b	hppa_ktext_stw
 	copy	%t2, %arg1
 EXIT(hppa_ktext_stb)
+
+STRONG_ALIAS(ucas_int,ucas_32)
+STRONG_ALIAS(ucas_ptr,ucas_32)
+
+	.global ucas_ras_start
+	.global ucas_ras_end
+
+/*
+ * Compare-and-swap the pointer in the user-space.
+ *
+ * int	ucasword(volatile void *uptr, void *old, void *new, void *ret);
+ */
+LEAF_ENTRY(ucas_32)
+	ldil	L%VM_MAXUSER_ADDRESS, %t1
+	comb,>>= %arg0, %t1, 1f
+
+	/* setup fault handler */
+	mfctl	CR_CURLWP, %r31
+	ldw	L_ADDR(%r31), %r31
+	ldil	L%_copy_on_fault, %t2
+	ldo	R%_copy_on_fault(%t2), %t2
+	stw	%t2, PCB_ONFAULT+U_PCB(%r31)
+
+	ldw	U_PCB+PCB_SPACE(%r31), %t1
+	mtsp	%t1, %sr1
+
+ucas_ras_start:
+	ldw	0(%sr1, %arg0), %t1
+	comb,<>	%arg1, %t1, 2f
+	 copy	%t1,%ret0
+ucas_ras_end:
+	stw	%arg2, 0(%sr1, %arg0)
+	copy	%arg1, %ret0
+2:
+	stw	%ret0,	0(%sr1, %arg3)
+	bv	0(%rp)
+	 copy	%r0, %ret0
+
+1:
+	bv	0(%rp)
+	 ldi	-1, %ret0
+EXIT(ucas_32)

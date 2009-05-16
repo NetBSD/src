@@ -1,9 +1,9 @@
-/* $NetBSD: eapvar.h,v 1.2 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: eapvar.h,v 1.2.74.1 2009/05/16 10:41:33 yamt Exp $ */
 
 struct eap_gameport_args {
 	bus_space_tag_t gpa_iot;
 	bus_space_handle_t gpa_ioh;
 };
 
-struct device *eap_joy_attach(struct device *, struct eap_gameport_args *);
-int eap_joy_detach(struct device *, struct eap_gameport_args *);
+device_t eap_joy_attach(device_t, struct eap_gameport_args *);
+int eap_joy_detach(device_t, struct eap_gameport_args *);

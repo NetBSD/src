@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.38.10.2 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.38.10.3 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -364,7 +364,7 @@ do {									\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 void	fxp_attach(struct fxp_softc *);
-int	fxp_activate(struct device *, enum devact);
+int	fxp_activate(device_t, enum devact);
 int	fxp_detach(struct fxp_softc *);
 int	fxp_intr(void *);
 

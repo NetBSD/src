@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.46.4.1 2008/05/16 02:24:27 yamt Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.46.4.2 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.46.4.1 2008/05/16 02:24:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.46.4.2 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ struct le_isa_params {
 };
 
 int lance_isa_probe(struct isa_attach_args *, struct le_isa_params *, int);
-void le_isa_attach(struct device *, struct le_softc *,
+void le_isa_attach(device_t, struct le_softc *,
     struct isa_attach_args *, struct le_isa_params *);
 
 int le_isa_intredge(void *);
@@ -295,7 +295,7 @@ le_bicc_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-le_isa_attach(struct device *parent, struct le_softc *lesc,
+le_isa_attach(device_t parent, struct le_softc *lesc,
     struct isa_attach_args *ia, struct le_isa_params *p)
 {
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;

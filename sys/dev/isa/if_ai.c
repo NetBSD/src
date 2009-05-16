@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.27.4.2 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.27.4.3 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.27.4.2 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.27.4.3 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ static int 	check_ie_present(struct ie_softc*, bus_space_tag_t,
 static int	ai_find_mem_size(struct ai_softc*, bus_space_tag_t,
 					bus_size_t);
 
-int ai_match(struct device *, struct cfdata *, void *);
-void ai_attach(struct device *, struct device *, void *);
+int ai_match(device_t, cfdata_t, void *);
+void ai_attach(device_t, device_t, void *);
 
 /*
  * AT&T StarLan support routines
@@ -206,7 +206,7 @@ ai_write_24 (struct ie_softc *sc, int offset, int addr)
 }
 
 int
-ai_match(struct device *parent, struct cfdata *cf, void *aux)
+ai_match(device_t parent, cfdata_t cf, void *aux)
 {
 	int rv = 0;
 	u_int8_t val, type;
@@ -302,7 +302,7 @@ out:
 }
 
 void
-ai_attach(struct device *parent, struct device *self, void *aux)
+ai_attach(device_t parent, device_t self, void *aux)
 {
 	struct ai_softc *asc = (void *)self;
 	struct ie_softc *sc = &asc->sc_ie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.91.4.1 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.91.4.2 2009/05/16 10:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91.4.1 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91.4.2 2009/05/16 10:41:19 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91.4.1 2009/05/04 08:12:35 yamt Exp $"
 
 STATIC void cardbusattach(device_t, device_t, void *);
 STATIC int cardbusdetach(device_t, int);
-STATIC int cardbusmatch(device_t, struct cfdata *, void *);
+STATIC int cardbusmatch(device_t, cfdata_t, void *);
 int cardbus_rescan(device_t, const char *, const int *);
 void cardbus_childdetached(device_t, device_t);
 static int cardbusprint(void *, const char *);
@@ -103,7 +103,7 @@ struct cfdriver cardbus_cd = {
 
 
 STATIC int
-cardbusmatch(device_t parent, struct cfdata *cf, void *aux)
+cardbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);

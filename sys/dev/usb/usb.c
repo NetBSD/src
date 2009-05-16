@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.112.2.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.112.2.3 2009/05/16 10:41:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112.2.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112.2.3 2009/05/16 10:41:45 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -153,7 +153,7 @@ Static void usb_copy_old_devinfo(struct usb_device_info_old *, const struct usb_
 
 Static const char *usbrev_str[] = USBREV_STR;
 
-static int usb_match(device_t, struct cfdata *, void *);
+static int usb_match(device_t, cfdata_t, void *);
 static void usb_attach(device_t, device_t, void *);
 static int usb_detach(device_t, int);
 static int usb_activate(device_t, enum devact);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.6 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6.78.1 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -61,15 +61,15 @@
  */
 
 /*
- * Definitions for the hp700 that are completely private 
+ * Definitions for the hp700 that are completely private
  * to the machine-dependent code.  Anything needed by
  * machine-independent code is covered in cpu.h or in
  * other headers.
  */
 
 /*
- * XXX there is a lot of stuff in various headers under 
- * hp700/include and hppa/include, and a lot of one-off 
+ * XXX there is a lot of stuff in various headers under
+ * hp700/include and hppa/include, and a lot of one-off
  * `extern's in C files that could probably be moved here.
  */
 

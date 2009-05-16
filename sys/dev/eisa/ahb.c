@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.50.4.2 2009/05/04 08:12:37 yamt Exp $	*/
+/*	$NetBSD: ahb.c,v 1.50.4.3 2009/05/16 10:41:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.50.4.2 2009/05/04 08:12:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.50.4.3 2009/05/16 10:41:20 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -137,8 +137,8 @@ static int	ahb_create_ecbs(struct ahb_softc *, struct ahb_ecb *, int);
 
 static int	ahb_init_ecb(struct ahb_softc *, struct ahb_ecb *);
 
-static int	ahbmatch(struct device *, struct cfdata *, void *);
-static void	ahbattach(struct device *, struct device *, void *);
+static int	ahbmatch(device_t, cfdata_t, void *);
+static void	ahbattach(device_t, device_t, void *);
 
 CFATTACH_DECL(ahb, sizeof(struct ahb_softc),
     ahbmatch, ahbattach, NULL, NULL);
@@ -151,7 +151,7 @@ CFATTACH_DECL(ahb, sizeof(struct ahb_softc),
  * the actual probe routine to check it out.
  */
 static int
-ahbmatch(struct device *parent, struct cfdata *match,
+ahbmatch(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -182,7 +182,7 @@ ahbmatch(struct device *parent, struct cfdata *match,
  * Attach all the sub-devices we can find
  */
 static void
-ahbattach(struct device *parent, struct device *self, void *aux)
+ahbattach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct ahb_softc *sc = device_private(self);

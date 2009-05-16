@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.178.4.2 2009/05/04 08:12:33 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.178.4.3 2009/05/16 10:41:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.2 2009/05/04 08:12:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.3 2009/05/16 10:41:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -309,7 +309,7 @@ vnd_detach(device_t self, int flags)
 static struct vnd_softc *
 vnd_spawn(int unit)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
 	cf->cf_name = vnd_cd.cd_name;
@@ -567,7 +567,7 @@ vnode_strategy_probe(struct vnd_softc *vnd)
 	 * physical block number.
 	 */
 	error = 0;
-	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
+	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_BMAP(vnd->sc_vp, 0, NULL, &nbn, NULL);
 	VOP_UNLOCK(vnd->sc_vp, 0);
 
@@ -811,7 +811,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 		int off, nra;
 
 		nra = 0;
-		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
+		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
 		VOP_UNLOCK(vnd->sc_vp, 0);
 

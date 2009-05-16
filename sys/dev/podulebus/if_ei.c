@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.14 2008/04/05 20:08:52 cegger Exp $ */
+/* $NetBSD: if_ei.c,v 1.14.4.1 2009/05/16 10:41:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.14 2008/04/05 20:08:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.14.4.1 2009/05/16 10:41:42 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -69,8 +69,8 @@ static void ei_write16(struct ie_softc *, int, u_int16_t);
 static void ei_write24(struct ie_softc *, int, int);
 
 /* autoconfiguration glue */
-static int ei_match(struct device *, struct cfdata *, void *);
-static void ei_attach(struct device *, struct device *, void *);
+static int ei_match(device_t, cfdata_t, void *);
+static void ei_attach(device_t, device_t, void *);
 
 struct ei_softc {
 	struct	ie_softc sc_ie;
@@ -103,7 +103,7 @@ ei_cli(struct ei_softc *sc)
 }
 
 static int
-ei_match(struct device *parent, struct cfdata *cf, void *aux)
+ei_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -111,7 +111,7 @@ ei_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ei_attach(struct device *parent, struct device *self, void *aux)
+ei_attach(device_t parent, device_t self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct ei_softc *sc = device_private(self);

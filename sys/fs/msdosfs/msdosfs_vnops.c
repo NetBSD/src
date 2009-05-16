@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.50.2.2 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.50.2.3 2009/05/16 10:41:47 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.50.2.2 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.50.2.3 2009/05/16 10:41:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,11 +377,9 @@ msdosfs_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
-		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred))))
+		error = genfs_can_chtimes(ap->a_vp, vap->va_vaflags,
+		    pmp->pm_uid, cred);
+		if (error)
 			return (error);
 		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
 		    vap->va_atime.tv_sec != VNOVAL)

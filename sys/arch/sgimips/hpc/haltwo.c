@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.14.20.1 2009/05/04 08:11:50 yamt Exp $ */
+/* $NetBSD: haltwo.c,v 1.14.20.2 2009/05/16 10:41:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.14.20.1 2009/05/04 08:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.14.20.2 2009/05/16 10:41:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,6 +609,7 @@ haltwo_query_devinfo(void *v, mixer_devinfo_t *dev)
 		dev->prev = dev->next = AUDIO_MIXER_LAST;
 		strcpy(dev->label.name, AudioNmaster);
 		dev->un.v.num_channels = 2;
+		dev->un.v.delta = 16;
 		strcpy(dev->un.v.units.name, AudioNvolume);
 		break;
 

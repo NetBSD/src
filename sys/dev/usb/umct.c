@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.24.4.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: umct.c,v 1.24.4.3 2009/05/16 10:41:45 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.24.4.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.24.4.3 2009/05/16 10:41:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ static const struct usb_devno umct_devs[] = {
 };
 #define umct_lookup(v, p) usb_lookup(umct_devs, v, p)
 
-int umct_match(device_t, struct cfdata *, void *);
+int umct_match(device_t, cfdata_t, void *);
 void umct_attach(device_t, device_t, void *);
 void umct_childdet(device_t, device_t);
 int umct_detach(device_t, int);

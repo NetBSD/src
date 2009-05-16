@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.17.4.1 2008/05/16 02:24:33 yamt Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.17.4.2 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.17.4.1 2008/05/16 02:24:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.17.4.2 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,15 +61,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.17.4.1 2008/05/16 02:24:33 yamt E
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-int	tr_isapnp_match(struct device *, struct cfdata *, void *);
-void	tr_isapnp_attach(struct device *, struct device *, void *);
+int	tr_isapnp_match(device_t, cfdata_t, void *);
+void	tr_isapnp_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(tr_isapnp, sizeof(struct tr_softc),
     tr_isapnp_match, tr_isapnp_attach, NULL, NULL);
 
 int
-tr_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+tr_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -81,8 +80,7 @@ tr_isapnp_match(struct device *parent, struct cfdata *match,
 
 
 void
-tr_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+tr_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct tr_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;

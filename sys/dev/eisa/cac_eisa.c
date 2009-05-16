@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.18.20.1 2008/05/16 02:23:57 yamt Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.18.20.2 2009/05/16 10:41:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.18.20.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.18.20.2 2009/05/16 10:41:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.18.20.1 2008/05/16 02:23:57 yamt Exp 
 #define CAC_EISA_IOSIZE			0x0017
 #define CAC_EISA_IOCONF			0x38
 
-static void	cac_eisa_attach(struct device *, struct device *, void *);
-static int	cac_eisa_match(struct device *, struct cfdata *, void *);
+static void	cac_eisa_attach(device_t, device_t, void *);
+static int	cac_eisa_match(device_t, cfdata_t, void *);
 
 static struct	cac_ccb *cac_eisa_l0_completed(struct cac_softc *);
 static int	cac_eisa_l0_fifo_full(struct cac_softc *);
@@ -113,7 +113,7 @@ static struct cac_eisa_type {
 };
 
 static int
-cac_eisa_match(struct device *parent, struct cfdata *match,
+cac_eisa_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct eisa_attach_args *ea;
@@ -129,7 +129,7 @@ cac_eisa_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-cac_eisa_attach(struct device *parent, struct device *self, void *aux)
+cac_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct eisa_attach_args *ea;
 	bus_space_handle_t ioh;

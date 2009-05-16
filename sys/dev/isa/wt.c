@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.79.4.1 2009/05/04 08:12:49 yamt Exp $	*/
+/*	$NetBSD: wt.c,v 1.79.4.2 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.79.4.1 2009/05/04 08:12:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.79.4.2 2009/05/16 10:41:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,8 +181,8 @@ static int	wtwritefm(struct wt_softc *sc);
 static u_char	wtsoft(struct wt_softc *sc, int mask, int bits);
 static int	wtintr(void *sc);
 
-int	wtprobe(struct device *, struct cfdata *, void *);
-void	wtattach(struct device *, struct device *, void *);
+int	wtprobe(device_t, cfdata_t, void *);
+void	wtattach(device_t, device_t, void *);
 
 CFATTACH_DECL(wt, sizeof(struct wt_softc),
     wtprobe, wtattach, NULL, NULL);
@@ -193,8 +193,7 @@ extern struct cfdriver wt_cd;
  * Probe for the presence of the device.
  */
 int
-wtprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+wtprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -258,7 +257,7 @@ done:
  * Device is found, configure it.
  */
 void
-wtattach(struct device *parent, struct device *self, void *aux)
+wtattach(device_t parent, device_t self, void *aux)
 {
 	struct wt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.15.40.1 2009/05/04 08:12:53 yamt Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.15.40.2 2009/05/16 10:41:31 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -113,34 +113,34 @@ struct mscp_xi {
 
 struct	mscp_ctlr {
 	void	(*mc_ctlrdone)		/* controller operation complete */
-	   (struct device *);
+	   (device_t);
 	void	(*mc_go)		/* device-specific start routine */
-	   (struct device *, struct mscp_xi *);
+	   (device_t, struct mscp_xi *);
 	void	(*mc_saerror)		/* ctlr error handling */
-	   (struct device *, int);
+	   (device_t, int);
 };
 
 struct mscp_softc;
 
 struct	mscp_device {
 	void	(*me_dgram)	/* error datagram */
-	   (struct device *, struct mscp *, struct mscp_softc *);
+	   (device_t, struct mscp *, struct mscp_softc *);
 	void	(*me_iodone)	/* normal I/O is done */
-	   (struct device *, struct buf *);
+	   (device_t, struct buf *);
 	int	(*me_online)	/* drive on line */
-	   (struct device *, struct mscp *);
+	   (device_t, struct mscp *);
 	int	(*me_gotstatus) /* got unit status */
-	   (struct device *, struct mscp *);
+	   (device_t, struct mscp *);
 	void	(*me_replace)	/* replace done */
-	   (struct device *, struct mscp *);
+	   (device_t, struct mscp *);
 	int	(*me_ioerr)	/* read or write failed */
-	   (struct device *, struct mscp *, struct buf *);
+	   (device_t, struct mscp *, struct buf *);
 	void	(*me_bb)	/* B_BAD io done */
-	   (struct device *, struct mscp *, struct buf *);
+	   (device_t, struct mscp *, struct buf *);
 	void	(*me_fillin)	/* Fill in mscp info for this drive */
 	   (struct buf *,struct mscp *);
 	void	(*me_cmddone)	/* Non-data transfer operation is done */
-	   (struct device *, struct mscp *);
+	   (device_t, struct mscp *);
 };
 
 /*
@@ -286,7 +286,7 @@ void	mscp_dorsp(struct mscp_softc *);
 int	mscp_decodeerror(const char *, struct mscp *, struct mscp_softc *);
 int	mscp_print(void *, const char *);
 void	mscp_hexdump(struct mscp *);
-void	mscp_strategy(struct buf *, struct device *);
+void	mscp_strategy(struct buf *, device_t);
 void	mscp_printtype(int, int);
 int	mscp_waitstep(struct mscp_softc *, int, int);
 void	mscp_dgo(struct mscp_softc *, struct mscp_xi *);

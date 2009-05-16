@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.24.4.1 2009/05/04 08:12:56 yamt Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.24.4.2 2009/05/16 10:41:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.24.4.1 2009/05/04 08:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.24.4.2 2009/05/16 10:41:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,15 +74,14 @@ struct hme_pci_softc {
 	void			*hsc_ih;
 };
 
-int	hmematch_pci(struct device *, struct cfdata *, void *);
-void	hmeattach_pci(struct device *, struct device *, void *);
+int	hmematch_pci(device_t, cfdata_t, void *);
+void	hmeattach_pci(device_t, device_t, void *);
 
 CFATTACH_DECL(hme_pci, sizeof(struct hme_pci_softc),
     hmematch_pci, hmeattach_pci, NULL, NULL);
 
 int
-hmematch_pci(struct device *parent, struct cfdata *cf,
-    void *aux)
+hmematch_pci(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -122,10 +121,10 @@ hmevpdoff(bus_space_tag_t romt, bus_space_handle_t romh, int vpdoff, int dev)
 #endif
 
 void
-hmeattach_pci(struct device *parent, struct device *self, void *aux)
+hmeattach_pci(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct hme_pci_softc *hsc = (void *)self;
+	struct hme_pci_softc *hsc = device_private(self);
 	struct hme_softc *sc = &hsc->hsc_hme;
 	pci_intr_handle_t ih;
 	pcireg_t csr;

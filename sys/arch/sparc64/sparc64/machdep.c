@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220.2.2 2009/05/04 08:11:58 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.220.2.3 2009/05/16 10:41:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.2 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.3 2009/05/16 10:41:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1303,7 +1303,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * Don't really need to do anything, but flush any pending
 		 * writes anyway. 
 		 */
-		__asm("membar #Sync" : );
+		membar_sync();
 	}
 	if (ops & BUS_DMASYNC_POSTREAD) {
 		/* Invalidate the vcache */

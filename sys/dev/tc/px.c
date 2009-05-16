@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.32.4.2 2009/05/04 08:13:19 yamt Exp $	*/
+/* 	$NetBSD: px.c,v 1.32.4.3 2009/05/16 10:41:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.32.4.2 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.32.4.3 2009/05/16 10:41:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,11 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.32.4.2 2009/05/04 08:13:19 yamt Exp $");
 
 #define	PXF_QUEUE	0x01
 
-static void	px_attach(struct device *, struct device *, void *);
+static void	px_attach(device_t, device_t, void *);
 static void	px_init(struct stic_info *, int);
 static int	px_ioctl(struct stic_info *, u_long, void *, int,
 			 struct lwp *);
-static int	px_match(struct device *, struct cfdata *, void *);
+static int	px_match(device_t, cfdata_t, void *);
 
 static int	px_intr(void *);
 static uint32_t	*px_pbuf_get(struct stic_info *);

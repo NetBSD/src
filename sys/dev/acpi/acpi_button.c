@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.25 2007/12/09 20:27:52 jmcneill Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.25.14.1 2009/05/16 10:41:18 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.25 2007/12/09 20:27:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.25.14.1 2009/05/16 10:41:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static const char * const sleep_button_hid[] = {
 
 #define	ACPIBUT_F_VERBOSE		0x01	/* verbose events */
 
-static int	acpibut_match(device_t, struct cfdata *, void *);
+static int	acpibut_match(device_t, cfdata_t, void *);
 static void	acpibut_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(acpibut, sizeof(struct acpibut_softc),
@@ -85,7 +85,7 @@ static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpibut_match(device_t parent, struct cfdata *match, void *aux)
+acpibut_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 

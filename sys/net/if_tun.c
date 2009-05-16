@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.106.2.1 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.106.2.2 2009/05/16 10:41:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.106.2.1 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.106.2.2 2009/05/16 10:41:49 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -283,8 +283,9 @@ tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tun_softc *tp;
 	int	s, error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE_TUN,
+	    KAUTH_REQ_NETWORK_INTERFACE_TUN_ADD, NULL, NULL, NULL);
+	if (error)
 		return (error);
 
 	s = splnet();

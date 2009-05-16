@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.32.4.1 2009/05/04 08:12:33 yamt Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.32.4.2 2009/05/16 10:41:18 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -236,22 +236,22 @@ struct acpi_resources {
  *	when the resources are parsed.
  */
 struct acpi_resource_parse_ops {
-	void	(*init)(struct device *, void *, void **);
-	void	(*fini)(struct device *, void *);
+	void	(*init)(device_t, void *, void **);
+	void	(*fini)(device_t, void *);
 
-	void	(*ioport)(struct device *, void *, uint32_t, uint32_t);
-	void	(*iorange)(struct device *, void *, uint32_t, uint32_t,
+	void	(*ioport)(device_t, void *, uint32_t, uint32_t);
+	void	(*iorange)(device_t, void *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 
-	void	(*memory)(struct device *, void *, uint32_t, uint32_t);
-	void	(*memrange)(struct device *, void *, uint32_t, uint32_t,
+	void	(*memory)(device_t, void *, uint32_t, uint32_t);
+	void	(*memrange)(device_t, void *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 
-	void	(*irq)(struct device *, void *, uint32_t, uint32_t);
-	void	(*drq)(struct device *, void *, uint32_t);
+	void	(*irq)(device_t, void *, uint32_t, uint32_t);
+	void	(*drq)(device_t, void *, uint32_t);
 
-	void	(*start_dep)(struct device *, void *, int);
-	void	(*end_dep)(struct device *, void *);
+	void	(*start_dep)(device_t, void *, int);
+	void	(*end_dep)(device_t, void *);
 };
 
 extern struct acpi_softc *acpi_softc;
@@ -276,9 +276,9 @@ ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
 const char*	acpi_name(ACPI_HANDLE);
 
-ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, const char *,
+ACPI_STATUS	acpi_resource_parse(device_t, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
-void		acpi_resource_print(struct device *, struct acpi_resources *);
+void		acpi_resource_print(device_t, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);
 ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
 

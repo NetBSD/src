@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.48.40.1 2009/05/04 08:12:56 yamt Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.48.40.2 2009/05/16 10:41:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -685,7 +685,7 @@ struct _tulip_softc_t {
     char tulip_boardid[16];		/* buffer for board ID */
     u_int8_t tulip_rombuf[128];
 #if defined(__NetBSD__)
-    struct device *tulip_pci_busno;	/* needed for multiport boards */
+    device_t tulip_pci_busno;	/* needed for multiport boards */
 #else
     u_int8_t tulip_pci_busno;		/* needed for multiport boards */
 #endif

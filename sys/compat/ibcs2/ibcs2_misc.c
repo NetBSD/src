@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.103.2.1 2009/05/04 08:12:19 yamt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.103.2.2 2009/05/16 10:41:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103.2.1 2009/05/04 08:12:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103.2.2 2009/05/16 10:41:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1230,7 +1230,7 @@ xenix_sys_chsize(struct lwp *l, const struct xenix_sys_chsize_args *uap, registe
 	struct sys_ftruncate_args sa;
 
 	SCARG(&sa, fd) = SCARG(uap, fd);
-	SCARG(&sa, pad) = 0;
+	SCARG(&sa, PAD) = 0;
 	SCARG(&sa, length) = SCARG(uap, size);
 	return sys_ftruncate(l, &sa, retval);
 }

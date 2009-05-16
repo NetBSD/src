@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.26.2.1 2009/05/04 08:14:16 yamt Exp $	*/
+/*	$NetBSD: hci.h,v 1.26.2.2 2009/05/16 10:41:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.26.2.1 2009/05/04 08:14:16 yamt Exp $
+ * $Id: hci.h,v 1.26.2.2 2009/05/16 10:41:50 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2263,7 +2263,7 @@ hci_filter_clr(uint8_t bit, struct hci_filter *filter)
 }
 
 static __inline int
-hci_filter_test(uint8_t bit, struct hci_filter *filter)
+hci_filter_test(uint8_t bit, const struct hci_filter *filter)
 {
 	uint8_t off = bit - 1;
 

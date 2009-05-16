@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.1.4.2 2009/05/04 08:13:18 yamt Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.1.4.3 2009/05/16 10:41:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.1.4.2 2009/05/04 08:13:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.1.4.3 2009/05/16 10:41:44 yamt Exp $");
 
 #include "rnd.h"
 
@@ -77,7 +77,7 @@ struct ld_sdmmc_softc {
 	struct ld_sdmmc_task sc_task;
 };
 
-static int ld_sdmmc_match(device_t, struct cfdata *, void *);
+static int ld_sdmmc_match(device_t, cfdata_t, void *);
 static void ld_sdmmc_attach(device_t, device_t, void *);
 static int ld_sdmmc_detach(device_t, int);
 
@@ -93,7 +93,7 @@ CFATTACH_DECL_NEW(ld_sdmmc, sizeof(struct ld_sdmmc_softc),
 
 /* ARGSUSED */
 static int
-ld_sdmmc_match(device_t parent, struct cfdata *match, void *aux)
+ld_sdmmc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sdmmc_softc *sdmsc = device_private(parent);
 

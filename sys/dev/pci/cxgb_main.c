@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.11.10.1 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.11.10.2 2009/05/16 10:41:33 yamt Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_main.c,v 1.36 2007/09/11 23:49:27 kmacy Exp $");
@@ -166,7 +166,7 @@ static int cxgb_controller_attach(device_t);
 static int cxgb_controller_detach(device_t);
 #endif
 #ifdef __NetBSD__
-static int cxgb_controller_match(device_t dev, struct cfdata *match, void *context);
+static int cxgb_controller_match(device_t dev, cfdata_t match, void *context);
 static void cxgb_controller_attach(device_t parent, device_t dev, void *context);
 static int cxgb_controller_detach(device_t dev, int flags);
 #endif
@@ -223,7 +223,7 @@ static int cxgb_port_detach(device_t);
 #endif
 
 #ifdef __NetBSD__
-static int cxgb_port_match(device_t dev, struct cfdata *match, void *context);
+static int cxgb_port_match(device_t dev, cfdata_t match, void *context);
 static void cxgb_port_attach(device_t dev, device_t self, void *context);
 static int cxgb_port_detach(device_t dev, int flags);
 #endif
@@ -479,7 +479,7 @@ static const struct adapter_info *cxgb_get_adapter_info(struct pci_attach_args *
     return (ai);
 }
 
-static int cxgb_controller_match(device_t dev, struct cfdata *match, void *context)
+static int cxgb_controller_match(device_t dev, cfdata_t match, void *context)
 {
     struct pci_attach_args *pa = context;
     const struct adapter_info *ai;
@@ -585,7 +585,7 @@ cxgb_controller_attach(device_t parent, device_t dev, void *context)
     sc = device_get_softc(dev);
 #endif
 #ifdef __NetBSD__
-    sc = (struct adapter *)dev;  // device is first thing in adapter
+    sc = device_private(dev);
 #endif
     sc->dev = dev;
 #ifdef __NetBSD__
@@ -894,7 +894,7 @@ cxgb_controller_detach(device_t dev, int flags)
     sc = device_get_softc(dev);
 #endif
 #ifdef __NetBSD__
-    sc = (struct adapter *)dev;
+    sc = device_private(dev);
 #endif
 
     cxgb_free(sc);
@@ -1146,7 +1146,7 @@ cxgb_port_probe(device_t dev)
 }
 #endif
 #ifdef __NetBSD__
-static int cxgb_port_match(device_t dev, struct cfdata *match, void *context)
+static int cxgb_port_match(device_t dev, cfdata_t match, void *context)
 {
     return (100);
 }

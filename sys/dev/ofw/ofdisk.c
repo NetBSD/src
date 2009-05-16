@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.40.4.1 2009/05/04 08:12:53 yamt Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.40.4.2 2009/05/16 10:41:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.40.4.1 2009/05/04 08:12:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.40.4.2 2009/05/16 10:41:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -63,8 +63,8 @@ struct ofdisk_softc {
 
 #define	OFDISK_FLOPPY_P(of)		((of)->sc_flags & OFDF_ISFLOPPY)
 
-static int ofdisk_match (struct device *, struct cfdata *, void *);
-static void ofdisk_attach (struct device *, struct device *, void *);
+static int ofdisk_match (device_t, cfdata_t, void *);
+static void ofdisk_attach (device_t, device_t, void *);
 
 CFATTACH_DECL(ofdisk, sizeof(struct ofdisk_softc),
     ofdisk_match, ofdisk_attach, NULL, NULL);
@@ -98,7 +98,7 @@ void ofdisk_getdefaultlabel (struct ofdisk_softc *, struct disklabel *);
 void ofdisk_getdisklabel (dev_t);
 
 static int
-ofdisk_match(struct device *parent, struct cfdata *match, void *aux)
+ofdisk_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[8];
@@ -116,7 +116,7 @@ ofdisk_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ofdisk_attach(struct device *parent, struct device *self, void *aux)
+ofdisk_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofdisk_softc *of = device_private(self);
 	struct ofbus_attach_args *oba = aux;

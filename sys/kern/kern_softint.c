@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.16.2.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.16.2.3 2009/05/16 10:41:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.3 2009/05/16 10:41:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -210,7 +210,7 @@ typedef struct softhand {
 	void			(*sh_func)(void *);
 	void			*sh_arg;
 	softint_t		*sh_isr;
-	u_int			sh_flags;
+	volatile u_int		sh_flags;
 } softhand_t;
 
 typedef struct softcpu {

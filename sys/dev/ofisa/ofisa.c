@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.18.20.1 2009/05/04 08:12:53 yamt Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.18.20.2 2009/05/16 10:41:31 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.18.20.1 2009/05/04 08:12:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.18.20.2 2009/05/16 10:41:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.18.20.1 2009/05/04 08:12:53 yamt Exp $")
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
 
-static int	ofisamatch(struct device *, struct cfdata *, void *);
-static void	ofisaattach(struct device *, struct device *, void *);
+static int	ofisamatch(device_t, cfdata_t, void *);
+static void	ofisaattach(device_t, device_t, void *);
 
 CFATTACH_DECL(ofisa, sizeof(struct device),
     ofisamatch, ofisaattach, NULL, NULL);
@@ -76,7 +76,7 @@ ofisaprint(void *aux, const char *pnp)
 }
 
 int
-ofisamatch(struct device *parent, struct cfdata *cf, void *aux)
+ofisamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	static const char *const compatible_strings[] = { "pnpPNP,a00", NULL };
@@ -94,7 +94,7 @@ ofisamatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ofisaattach(struct device *parent, struct device *self, void *aux)
+ofisaattach(device_t parent, device_t self, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	struct isabus_attach_args iba;

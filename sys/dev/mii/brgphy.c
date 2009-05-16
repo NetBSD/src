@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.37.4.2 2009/05/04 08:12:52 yamt Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.37.4.3 2009/05/16 10:41:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.2 2009/05/04 08:12:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.3 2009/05/16 10:41:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ static const struct mii_phydesc brgphys[] = {
 };
 
 static int
-brgphymatch(struct device *parent, struct cfdata *match,
+brgphymatch(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -199,7 +199,7 @@ brgphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-brgphyattach(struct device *parent, struct device *self, void *aux)
+brgphyattach(device_t parent, device_t self, void *aux)
 {
 	struct brgphy_softc *bsc = device_private(self);
 	struct mii_softc *sc = &bsc->sc_mii;

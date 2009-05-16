@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.86.4.1 2009/05/04 08:13:14 yamt Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.86.4.2 2009/05/16 10:41:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.86.4.1 2009/05/04 08:13:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.86.4.2 2009/05/16 10:41:42 yamt Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -80,11 +80,11 @@ int	pcmcia_verbose = 1;
 int	pcmcia_verbose = 0;
 #endif
 
-int	pcmcia_match(struct device *, struct cfdata *, void *);
-void	pcmcia_attach(struct device *, struct device *, void *);
+int	pcmcia_match(device_t, cfdata_t, void *);
+void	pcmcia_attach(device_t, device_t, void *);
 int	pcmcia_detach(device_t, int);
-int	pcmcia_rescan(struct device *, const char *, const int *);
-void	pcmcia_childdetached(struct device *, struct device *);
+int	pcmcia_rescan(device_t, const char *, const int *);
+void	pcmcia_childdetached(device_t, device_t);
 int	pcmcia_print(void *, const char *);
 
 CFATTACH_DECL3_NEW(pcmcia, sizeof(struct pcmcia_softc),
@@ -110,7 +110,7 @@ pcmcia_ccr_write(struct pcmcia_function *pf, int ccr, int val)
 }
 
 int
-pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
+pcmcia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 
@@ -122,7 +122,7 @@ pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pcmcia_attach(struct device *parent, struct device *self, void *aux)
+pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct pcmcia_softc *sc = device_private(self);
@@ -155,7 +155,7 @@ pcmcia_detach(device_t self, int flags)
 }
 
 int
-pcmcia_card_attach(struct device *dev)
+pcmcia_card_attach(device_t dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;
@@ -216,7 +216,7 @@ done:
 }
 
 int
-pcmcia_rescan(struct device *self, const char *ifattr,
+pcmcia_rescan(device_t self, const char *ifattr,
     const int *locators)
 {
 	struct pcmcia_softc *sc = device_private(self);
@@ -257,7 +257,7 @@ pcmcia_rescan(struct device *self, const char *ifattr,
 }
 
 void
-pcmcia_card_detach(struct device *dev, int flags)
+pcmcia_card_detach(device_t dev, int flags)
 	/* flags:		 DETACH_* flags */
 {
 	struct pcmcia_softc *sc = device_private(dev);
@@ -293,7 +293,7 @@ pcmcia_card_detach(struct device *dev, int flags)
 }
 
 void
-pcmcia_childdetached(struct device *self, struct device *child)
+pcmcia_childdetached(device_t self, device_t child)
 {
 	struct pcmcia_softc *sc = device_private(self);
 	struct pcmcia_function *pf;
@@ -314,7 +314,7 @@ pcmcia_childdetached(struct device *self, struct device *child)
 }
 
 void
-pcmcia_card_deactivate(struct device *dev)
+pcmcia_card_deactivate(device_t dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;
@@ -427,7 +427,7 @@ pcmcia_product_lookup(struct pcmcia_attach_args *pa, const void *tab, size_t nen
 }
 
 void
-pcmcia_socket_settype(struct device *dev, int type)
+pcmcia_socket_settype(device_t dev, int type)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 
@@ -449,7 +449,7 @@ pcmcia_function_init(struct pcmcia_function *pf, struct pcmcia_config_entry *cfe
 }
 
 void
-pcmcia_socket_enable(struct device *dev)
+pcmcia_socket_enable(device_t dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 
@@ -460,7 +460,7 @@ pcmcia_socket_enable(struct device *dev)
 }
 
 void
-pcmcia_socket_disable(struct device *dev)
+pcmcia_socket_disable(device_t dev)
 {
 	struct pcmcia_softc *sc = device_private(dev);
 

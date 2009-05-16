@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.6.4.1 2009/05/04 08:12:36 yamt Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.6.4.2 2009/05/16 10:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.6.4.1 2009/05/04 08:12:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.6.4.2 2009/05/16 10:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static const struct njata32_cardbus_product *njata_cardbus_lookup
 		    (const struct cardbus_attach_args *);
 static int	njata_cardbus_match(device_t, cfdata_t, void *);
 static void	njata_cardbus_attach(device_t, device_t, void *);
-static int	njata_cardbus_detach(struct device *, int);
+static int	njata_cardbus_detach(device_t, int);
 
 CFATTACH_DECL_NEW(njata_cardbus, sizeof(struct njata32_cardbus_softc),
     njata_cardbus_match, njata_cardbus_attach, njata_cardbus_detach, NULL);

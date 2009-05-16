@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_drv.c,v 1.3.12.1 2009/05/04 08:13:07 yamt Exp $	*/
+/*	$NetBSD: mga_drv.c,v 1.3.12.2 2009/05/16 10:41:41 yamt Exp $	*/
 
 /* mga_drv.c -- Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.3.12.1 2009/05/04 08:13:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.3.12.2 2009/05/16 10:41:41 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_drv.c,v 1.12 2006/05/17 06:36:28 anholt Exp $");
 */
@@ -178,14 +178,14 @@ MODULE_DEPEND(mga, drm, 1, 1, 1);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 static int
-mgadrm_probe(struct device *parent, struct cfdata *match, void *aux)
+mgadrm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	return drm_probe(pa, mga_pciidlist);
 }
 
 static void
-mgadrm_attach(struct device *parent, struct device *self, void *aux)
+mgadrm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	drm_device_t *dev = device_private(self);

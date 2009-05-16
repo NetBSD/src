@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselvar.h,v 1.2 2001/12/16 22:30:27 thorpej Exp $	*/
+/*	$NetBSD: weaselvar.h,v 1.2.118.1 2009/05/16 10:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
 #include <dev/sysmon/sysmonvar.h>
 
 struct weasel_handle {
-	struct device *wh_parent;	/* backpointer to parent */
+	device_t wh_parent;	/* backpointer to parent */
 
 	bus_space_tag_t wh_st;
 	bus_space_handle_t wh_sh;

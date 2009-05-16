@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27.4.1 2009/05/04 08:11:08 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.4.2 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -62,6 +62,7 @@
 
 /* types */
 enum hppa_cpu_type {
+	hpc_unknown,
 	hpcx,	/* PA7000 (x)		PA 1.0 */
 	hpcxs,	/* PA7000 (s)		PA 1.1a */
 	hpcxt,	/* PA7100 (t)		PA 1.1b */
@@ -88,15 +89,15 @@ struct hppa_cpu_info {
 
 	/* The type and PA-RISC specification of the chip. */
 	const char hci_chip_type[8];
-	enum hppa_cpu_type hci_type;
-	int  hci_cpuid;
+	enum hppa_cpu_type hci_cputype;
+	int  hci_cpuversion;
 	int  hci_features;		/* CPU types and features */
 #define	HPPA_FTRS_TLBU		0x00000001
 #define	HPPA_FTRS_BTLBU		0x00000002
 #define	HPPA_FTRS_HVT		0x00000004
 #define	HPPA_FTRS_W32B		0x00000008
 
-	const char *hci_chip_spec; 
+	const char *hci_chip_spec;
 
 	int (*desidhash)(void);
 	const u_int *itlbh, *dtlbh, *itlbnah, *dtlbnah, *tlbdh;

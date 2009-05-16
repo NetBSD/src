@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.13.56.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.13.56.2 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.13.56.1 2009/05/04 08:11:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.13.56.2 2009/05/16 10:41:13 yamt Exp $");
 
 #define GSCDEBUG
 
@@ -93,16 +93,16 @@ __KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.13.56.1 2009/05/04 08:11:07 yamt Exp $"
 #include <hp700/gsc/gscbusvar.h>
 #include <hp700/hp700/machdep.h>
 
-int	gscmatch(struct device *, struct cfdata *, void *);
-void	gscattach(struct device *, struct device *, void *);
+int	gscmatch(device_t, cfdata_t, void *);
+void	gscattach(device_t, device_t, void *);
 
 struct gsc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct gsc_attach_args sc_ga;
 	void *sc_ih;
 };
 
-CFATTACH_DECL(gsc, sizeof(struct gsc_softc),
+CFATTACH_DECL_NEW(gsc, sizeof(struct gsc_softc),
     gscmatch, gscattach, NULL, NULL);
 
 /*
@@ -111,11 +111,11 @@ CFATTACH_DECL(gsc, sizeof(struct gsc_softc),
  * to fix up the module's attach arguments, then we match
  * and attach it.
  */
-static void gsc_module_callback(struct device *, struct confargs *);
+static void gsc_module_callback(device_t, struct confargs *);
 static void
-gsc_module_callback(struct device *self, struct confargs *ca)
+gsc_module_callback(device_t self, struct confargs *ca)
 {
-	struct gsc_softc *sc = (struct gsc_softc *)self;
+	struct gsc_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
 
 	/* Make the GSC attach args. */
@@ -129,7 +129,7 @@ gsc_module_callback(struct device *self, struct confargs *ca)
 }
 
 int
-gscmatch(struct device *parent, struct cfdata *cf, void *aux)
+gscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -137,23 +137,24 @@ gscmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-gscattach(struct device *parent, struct device *self, void *aux)
+gscattach(device_t parent, device_t self, void *aux)
 {
-	struct gsc_softc *sc = (struct gsc_softc *)self;
+	struct gsc_softc *sc = device_private(self);
 	struct gsc_attach_args *ga = aux;
 
+	sc->sc_dev = self;
 	sc->sc_ga = *ga;
 
 #ifdef USELEDS
 	if (machine_ledaddr)
-		printf(": %sleds", machine_ledword? "word" : "");
+		aprint_normal(": %sleds", machine_ledword? "word" : "");
 #endif
 
-	printf ("\n");
+	aprint_normal("\n");
 
 	/* Add the I/O subsystem's interrupt register. */
 	ga->ga_int_reg->int_reg_dev = parent->dv_xname;
-	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NONE,	 NULL,
+	sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_NONE,	 NULL,
 	    ga->ga_int_reg, &int_reg_cpu, ga->ga_irq);
 
 	ga->ga_ca.ca_nmodules = MAXMODBUS;

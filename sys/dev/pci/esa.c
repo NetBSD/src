@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.48.4.2 2009/05/04 08:12:55 yamt Exp $ */
+/* $NetBSD: esa.c,v 1.48.4.3 2009/05/16 10:41:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48.4.2 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48.4.3 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -99,7 +99,7 @@ static struct audio_device esa_device = {
 	"esa"
 };
 
-static int		esa_match(device_t, struct cfdata *, void *);
+static int		esa_match(device_t, cfdata_t, void *);
 static void		esa_attach(device_t, device_t, void *);
 static int		esa_detach(device_t, int);
 static void		esa_childdet(device_t, device_t);
@@ -974,7 +974,7 @@ esa_freemem(struct esa_softc *sc, struct esa_dma *p)
  */
 
 static int
-esa_match(device_t dev, struct cfdata *match, void *aux)
+esa_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 

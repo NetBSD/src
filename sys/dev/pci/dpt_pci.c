@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.21.4.1 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.21.4.1 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,15 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $");
 #define	PCI_CBMA	0x14	/* Configuration base memory address */
 #define	PCI_CBIO	0x10	/* Configuration base I/O address */
 
-static int	dpt_pci_match(struct device *, struct cfdata *, void *);
-static void	dpt_pci_attach(struct device *, struct device *, void *);
+static int	dpt_pci_match(device_t, cfdata_t, void *);
+static void	dpt_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(dpt_pci, sizeof(struct dpt_softc),
     dpt_pci_match, dpt_pci_attach, NULL, NULL);
 
 static int
-dpt_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+dpt_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -78,7 +77,7 @@ dpt_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-dpt_pci_attach(struct device *parent, struct device *self, void *aux)
+dpt_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct dpt_softc *sc;
@@ -90,7 +89,7 @@ dpt_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": Storage controller\n");
 
-	sc = (struct dpt_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	aprint_normal(": ");

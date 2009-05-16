@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.28.4.2 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.28.4.3 2009/05/16 10:41:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.28.4.2 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.28.4.3 2009/05/16 10:41:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,8 @@ static void	ix_eeprom_outbits(bus_space_tag_t, bus_space_handle_t, int, int);
 static int	ix_eeprom_inbits (bus_space_tag_t, bus_space_handle_t);
 static void	ix_eeprom_clock  (bus_space_tag_t, bus_space_handle_t, int);
 
-int ix_match(struct device *, struct cfdata *, void *);
-void ix_attach(struct device *, struct device *, void *);
+int ix_match(device_t, cfdata_t, void *);
+void ix_attach(device_t, device_t, void *);
 
 /*
  * EtherExpress/16 support routines
@@ -468,7 +468,7 @@ ix_mediastatus(struct ie_softc *sc, struct ifmediareq *ifmr)
 }
 
 int
-ix_match(struct device *parent, struct cfdata *cf, void *aux)
+ix_match(device_t parent, cfdata_t cf, void *aux)
 {
 	int i;
 	int rv = 0;
@@ -672,7 +672,7 @@ out:
 }
 
 void
-ix_attach(struct device *parent, struct device *self, void *aux)
+ix_attach(device_t parent, device_t self, void *aux)
 {
 	struct ix_softc *isc = (void *)self;
 	struct ie_softc *sc = &isc->sc_ie;

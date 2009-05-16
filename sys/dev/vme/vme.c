@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.19.20.1 2009/05/04 08:13:25 yamt Exp $ */
+/* $NetBSD: vme.c,v 1.19.20.2 2009/05/16 10:41:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19.20.1 2009/05/04 08:13:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19.20.2 2009/05/16 10:41:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static int vmesubmatch1(struct device*, struct cfdata*,
 			     const int *, void*);
 static int vmesubmatch(struct device*, struct cfdata*,
 			    const int *, void*);
-int vmematch(struct device *, struct cfdata *, void *);
+int vmematch(device_t, cfdata_t, void *);
 void vmeattach(struct device*, struct device*,void*);
 static struct extent *vme_select_map(struct vmebus_softc*, vme_am_t);
 
@@ -123,7 +123,7 @@ vmeprint(struct vme_attach_args *v, char *dummy)
  * devices are attached.
  */
 static int
-vmesubmatch1(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
+vmesubmatch1(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -140,7 +140,7 @@ vmesubmatch1(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux
 }
 
 static int
-vmesubmatch(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
+vmesubmatch(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
@@ -161,13 +161,13 @@ vmesubmatch(struct device *bus, struct cfdata *dev, const int *ldesc, void *aux)
 }
 
 int
-vmematch(struct device *parent, struct cfdata *match, void *aux)
+vmematch(device_t parent, cfdata_t match, void *aux)
 {
 	return (1);
 }
 
 void
-vmeattach(struct device *parent, struct device *self, void *aux)
+vmeattach(device_t parent, device_t self, void *aux)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc *)self;
 
@@ -227,7 +227,7 @@ vmeattach(struct device *parent, struct device *self, void *aux)
 
 #ifdef notyet
 int
-vmedetach(struct device *dev)
+vmedetach(device_t dev)
 {
 	struct vmebus_softc *sc = (struct vmebus_softc*)dev;
 

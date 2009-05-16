@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.10.2.1 2009/05/04 08:11:07 yamt Exp $	*/
+/*	$NetBSD: harmony.c,v 1.10.2.2 2009/05/16 10:41:13 yamt Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -208,7 +208,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(sc->sc_bt, ga->ga_hpa, HARMONY_NREGS, 0,
 	    &sc->sc_bh) != 0) {
-		printf(": couldn't map registers\n");
+		aprint_error(": couldn't map registers\n");
 		return;
 	}
 
@@ -219,7 +219,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	case ID_REV_NOTS:
 		break;
 	default:
-		printf(": unknown id == 0x%02x\n",
+		aprint_error(": unknown id == 0x%02x\n",
 		    (cntl & ID_REV_MASK) >> ID_REV_SHIFT);
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
 		return;
@@ -228,14 +228,14 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct harmony_empty),
 	    PAGE_SIZE, 0, &sc->sc_empty_seg, 1, &sc->sc_empty_rseg,
 	    BUS_DMA_NOWAIT) != 0) {
-		printf(": couldn't alloc DMA memory\n");
+		aprint_error(": could not alloc DMA memory\n");
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_empty_seg, 1,
 	    sizeof(struct harmony_empty), (void **)&sc->sc_empty_kva,
 	    BUS_DMA_NOWAIT) != 0) {
-		printf(": couldn't map DMA memory\n");
+		aprint_error(": couldn't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
 		    sc->sc_empty_rseg);
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, HARMONY_NREGS);
@@ -244,7 +244,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct harmony_empty), 1,
 	    sizeof(struct harmony_empty), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_empty_map) != 0) {
-		printf(": can't create DMA map\n");
+		aprint_error(": can't create DMA map\n");
 		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_empty_kva,
 		    sizeof(struct harmony_empty));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_empty_seg,
@@ -254,7 +254,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_empty_map, sc->sc_empty_kva,
 	    sizeof(struct harmony_empty), NULL, BUS_DMA_NOWAIT) != 0) {
-		printf(": can't load DMA map\n");
+		aprint_error(": can't load DMA map\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_empty_map);
 		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_empty_kva,
 		    sizeof(struct harmony_empty));
@@ -296,11 +296,11 @@ harmony_attach(device_t parent, device_t self, void *aux)
 
 	cntl = READ_REG(sc, HARMONY_CNTL);
 	rev = (cntl & CNTL_CODEC_REV_MASK) >> CNTL_CODEC_REV_SHIFT;
-	printf(": rev %u", rev);
+	aprint_normal(": rev %u", rev);
 
 	if (sc->sc_teleshare)
 		printf(", teleshare");
-	printf("\n");
+	aprint_normal("\n");
 
 	if ((rev & CS4215_REV_VER) >= CS4215_REV_VER_E)
 		sc->sc_hasulinear8 = 1;
@@ -1387,7 +1387,7 @@ harmony_try_more(struct harmony_softc *sc, int curadd, int bufmask,
 	if (cur < d->d_map->dm_segs[0].ds_addr ||
 	    cur >= (d->d_map->dm_segs[0].ds_addr + c->c_segsz))
 		panic("%s: bad current %x < %lx || %x > %lx",
-		    device_xname(sc->sc_dv), cur, 
+		    device_xname(sc->sc_dv), cur,
 		    d->d_map->dm_segs[0].ds_addr, cur,
 		    d->d_map->dm_segs[0].ds_addr + c->c_segsz);
 #endif /* DIAGNOSTIC */

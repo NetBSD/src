@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10.4.1 2009/05/04 08:12:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10.4.2 2009/05/16 10:41:25 yamt Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -85,11 +85,11 @@ static struct ndis_pci_type ndis_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-/*static*/ int  ndis_probe_pci(struct device *parent, 
-				struct cfdata *match,
+/*static*/ int  ndis_probe_pci(device_t parent, 
+				cfdata_t match,
 				void *aux);
-/*static*/ void ndis_attach_pci(struct device *parent,
-				struct device *self,
+/*static*/ void ndis_attach_pci(device_t parent,
+				device_t self,
 				void *aux);
 extern void ndis_attach		(void *);
 extern int ndis_shutdown	(device_t);
@@ -145,7 +145,7 @@ void load_ndisdrv(void *arg)
 }
 
 /*static*/ int
-ndis_probe_pci(struct device *parent, struct cfdata *match, void *aux)
+ndis_probe_pci(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int vendor  = PCI_VENDOR(pa->pa_id);
@@ -187,7 +187,7 @@ ndis_probe_pci(struct device *parent, struct cfdata *match, void *aux)
 #define MAX_RESOURCES 7
 
 /*static*/ 
-void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
+void ndis_attach_pci(device_t parent, device_t self, void *aux)
 {
 	struct ndis_softc *sc = (struct ndis_softc*)self;
 	struct pci_attach_args *pa = aux;

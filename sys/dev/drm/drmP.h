@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.17.2.2 2009/05/04 08:12:37 yamt Exp $ */
+/* $NetBSD: drmP.h,v 1.17.2.3 2009/05/16 10:41:20 yamt Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -961,10 +961,10 @@ d_poll_t drm_poll;
 d_mmap_t drm_mmap;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 int	drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist);
-void	drm_attach(struct device *kdev, struct pci_attach_args *pa,
+void	drm_attach(device_t kdev, struct pci_attach_args *pa,
 		drm_pci_id_list_t *idlist);
-int	drm_detach(struct device *self, int flags);
-int	drm_activate(struct device *self, enum devact act);
+int	drm_detach(device_t self, int flags);
+int	drm_activate(device_t self, enum devact act);
 dev_type_ioctl(drm_ioctl);
 dev_type_open(drm_open);
 dev_type_close(drm_close);

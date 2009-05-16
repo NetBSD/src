@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.4.14.2 2009/05/04 08:12:39 yamt Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.4.14.3 2009/05/16 10:41:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.4.14.2 2009/05/04 08:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.4.14.3 2009/05/16 10:41:21 yamt Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -106,7 +106,7 @@ struct dbcool_power_control {
 struct chip_id;
 
 struct dbcool_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
 	struct chip_id *sc_chip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.2.40.1 2009/05/04 08:12:41 yamt Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.2.40.2 2009/05/16 10:41:22 yamt Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.2 2005/09/07 04:00:16 mickey Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct ciss_softc {
 	struct ciss_ld **sc_lds;
 
 	/* scsi ioctl from sd device */
-	int			(*sc_ioctl)(struct device *, u_long, void *);
+	int			(*sc_ioctl)(device_t, u_long, void *);
 
 	struct sysmon_envsys    *sc_sme;
 	envsys_data_t		*sc_sensor;

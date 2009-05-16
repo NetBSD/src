@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.18.4.2 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.18.4.3 2009/05/16 10:41:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.18.4.2 2009/05/04 08:12:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.18.4.3 2009/05/16 10:41:23 yamt Exp $");
 
 #include "rnd.h"
 
@@ -305,7 +305,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, daddr_t blkno,
 			}
 		}
 	} else {
-		ac->ac_device = (struct device *)sc;
+		ac->ac_device = (device_t)sc;
 		ac->ac_context = bp;
 		ac->ac_intr = ld_aac_intr;
 		aac_ccb_enqueue(aac, ac);

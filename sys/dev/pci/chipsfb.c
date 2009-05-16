@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.14.4.1 2008/05/16 02:24:43 yamt Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.14.4.2 2009/05/16 10:41:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.14.4.1 2008/05/16 02:24:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.14.4.2 2009/05/16 10:41:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,8 @@ static struct vcons_screen chipsfb_console_screen;
 
 extern const u_char rasops_cmap[768];
 
-static int	chipsfb_match(struct device *, struct cfdata *, void *);
-static void	chipsfb_attach(struct device *, struct device *, void *);
+static int	chipsfb_match(device_t, cfdata_t, void *);
+static void	chipsfb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(chipsfb, sizeof(struct chipsfb_softc), chipsfb_match,
     chipsfb_attach, NULL, NULL);
@@ -249,7 +249,7 @@ chipsfb_wait_idle(struct chipsfb_softc *sc)
 }
 
 static int
-chipsfb_match(struct device *parent, struct cfdata *match, void *aux)
+chipsfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -266,9 +266,9 @@ chipsfb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-chipsfb_attach(struct device *parent, struct device *self, void *aux)
+chipsfb_attach(device_t parent, device_t self, void *aux)
 {
-	struct chipsfb_softc *sc = (void *)self;
+	struct chipsfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
@@ -865,7 +865,6 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct chipsfb_softc *sc = vd->cookie;
-	struct lwp *me;
 	paddr_t pa;
 
 	/* 'regular' framebuffer mmap()ing */
@@ -879,13 +878,10 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	me = curlwp;
-	if (me != NULL) {
-		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			aprint_normal_dev(&sc->sc_dev, "mmap() rejected.\n");
-			return -1;
-		}
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		aprint_normal_dev(&sc->sc_dev, "mmap() rejected.\n");
+		return -1;
 	}
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
