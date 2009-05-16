@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.113 2009/03/18 17:06:46 cegger Exp $	*/
+/*	$NetBSD: zs.c,v 1.114 2009/05/16 16:55:24 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.113 2009/03/18 17:06:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.114 2009/05/16 16:55:24 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -475,8 +475,8 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
-		memcpy( cs->cs_creg, zs_init_reg, 16);
-		memcpy( cs->cs_preg, zs_init_reg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		/* XXX: Consult PROM properties for this?! */
 		cs->cs_defspeed = zs_get_speed(cs);
