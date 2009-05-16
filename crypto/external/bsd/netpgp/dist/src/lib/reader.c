@@ -48,6 +48,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: reader.c,v 1.12 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -683,7 +692,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 	unsigned        size;
 	char           *buf;
 	unsigned   		first = 1;
-	int             rtn = 1;
+	int             ret = 1;
 
 	buf = NULL;
 	nbuf = size = 0;
@@ -693,7 +702,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 
 		if ((c = read_char(dearmour, errors, readinfo, cbinfo, 1)) < 0) {
 			OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "Unexpected EOF");
-			rtn = -1;
+			ret = -1;
 			break;
 		}
 		if (c == '\n') {
@@ -718,7 +727,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 					 * armour
 					 */
 					OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "No colon in armour header");
-					rtn = -1;
+					ret = -1;
 					break;
 				} else {
 					if (first &&
@@ -732,7 +741,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 						 */
 						buf[nbuf] = '\n';
 						push_back(dearmour, (unsigned char *) buf, nbuf + 1);
-						rtn = -1;
+						ret = -1;
 						break;
 					}
 				}
@@ -740,12 +749,12 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 				*s = '\0';
 				if (s[1] != ' ') {
 					OPS_ERROR(errors, OPS_E_R_BAD_FORMAT, "No space in armour header");
-					rtn = -1;
+					ret = -1;
 					goto end;
 				}
 				if (!add_header(dearmour, buf, s + 2)) {
 					OPS_ERROR_1(errors, OPS_E_R_BAD_FORMAT, "Invalid header %s", buf);
-					rtn = -1;
+					ret = -1;
 					goto end;
 				}
 				nbuf = 0;
@@ -763,7 +772,7 @@ parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
 end:
 	(void) free(buf);
 
-	return rtn;
+	return ret;
 }
 
 static int 
@@ -1379,7 +1388,7 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 				return -1;
 			}
 			if (!encrypted->region->indeterminate) {
-				n -= encrypted->region->length_read;
+				n -= encrypted->region->readc;
 				if (n == 0)
 					return saved - length;
 				if (n > sizeof(buffer))
@@ -1530,7 +1539,7 @@ se_ip_data_reader(void *dest_, size_t len, __ops_error_t ** errors,
 
 		__ops_init_subregion(&decrypted_region, NULL);
 		decrypted_region.length =
-			se_ip->region->length - se_ip->region->length_read;
+			se_ip->region->length - se_ip->region->readc;
 		buf = calloc(1, decrypted_region.length);
 
 		/* read entire SE IP packet */
@@ -1798,40 +1807,40 @@ __ops_reader_set_memory(__ops_parseinfo_t * pinfo, const void *buffer,
 
 /**
  \ingroup Core_Writers
- \brief Create and initialise cinfo and mem; Set for writing to mem
- \param cinfo Address where new cinfo pointer will be set
+ \brief Create and initialise output and mem; Set for writing to mem
+ \param output Address where new output pointer will be set
  \param mem Address when new mem pointer will be set
  \param bufsz Initial buffer size (will automatically be increased when necessary)
- \note It is the caller's responsiblity to free cinfo and mem.
+ \note It is the caller's responsiblity to free output and mem.
  \sa __ops_teardown_memory_write()
 */
 void 
-__ops_setup_memory_write(__ops_createinfo_t ** cinfo, __ops_memory_t ** mem, size_t bufsz)
+__ops_setup_memory_write(__ops_output_t ** output, __ops_memory_t ** mem, size_t bufsz)
 {
 	/*
          * initialise needed structures for writing to memory
          */
 
-	*cinfo = __ops_createinfo_new();
+	*output = __ops_output_new();
 	*mem = __ops_memory_new();
 
 	__ops_memory_init(*mem, bufsz);
 
-	__ops_writer_set_memory(*cinfo, *mem);
+	__ops_writer_set_memory(*output, *mem);
 }
 
 /**
    \ingroup Core_Writers
-   \brief Closes writer and frees cinfo and mem
-   \param cinfo
+   \brief Closes writer and frees output and mem
+   \param output
    \param mem
    \sa __ops_setup_memory_write()
 */
 void 
-__ops_teardown_memory_write(__ops_createinfo_t * cinfo, __ops_memory_t * mem)
+__ops_teardown_memory_write(__ops_output_t * output, __ops_memory_t * mem)
 {
-	__ops_writer_close(cinfo);/* new */
-	__ops_createinfo_delete(cinfo);
+	__ops_writer_close(output);/* new */
+	__ops_output_delete(output);
 	__ops_memory_free(mem);
 }
 
@@ -1857,10 +1866,10 @@ __ops_setup_memory_read(__ops_parseinfo_t ** pinfo, __ops_memory_t * mem,
          */
 
 	*pinfo = __ops_parseinfo_new();
-	__ops_parse_cb_set(*pinfo, callback, vp);
+	__ops_set_callback(*pinfo, callback, vp);
 	__ops_reader_set_memory(*pinfo,
-			      __ops_memory_get_data(mem),
-			      __ops_memory_get_length(mem));
+			      __ops_mem_data(mem),
+			      __ops_mem_len(mem));
 
 	if (accumulate)
 		(*pinfo)->readinfo.accumulate = 1;
@@ -1882,16 +1891,16 @@ __ops_teardown_memory_read(__ops_parseinfo_t * pinfo, __ops_memory_t * mem)
 
 /**
  \ingroup Core_Writers
- \brief Create and initialise cinfo and mem; Set for writing to file
- \param cinfo Address where new cinfo pointer will be set
+ \brief Create and initialise output and mem; Set for writing to file
+ \param output Address where new output pointer will be set
  \param filename File to write to
  \param allow_overwrite Allows file to be overwritten, if set.
  \return Newly-opened file descriptor
- \note It is the caller's responsiblity to free cinfo and to close fd.
+ \note It is the caller's responsiblity to free output and to close fd.
  \sa __ops_teardown_file_write()
 */
 int 
-__ops_setup_file_write(__ops_createinfo_t **cinfo, const char *filename,
+__ops_setup_file_write(__ops_output_t **output, const char *filename,
 			unsigned allow_overwrite)
 {
 	int             fd = 0;
@@ -1918,23 +1927,23 @@ __ops_setup_file_write(__ops_createinfo_t **cinfo, const char *filename,
 			return fd;
 		}
 	}
-	*cinfo = __ops_createinfo_new();
-	__ops_writer_set_fd(*cinfo, fd);
+	*output = __ops_output_new();
+	__ops_writer_set_fd(*output, fd);
 	return fd;
 }
 
 /**
    \ingroup Core_Writers
    \brief Closes writer, frees info, closes fd
-   \param cinfo
+   \param output
    \param fd
 */
 void 
-__ops_teardown_file_write(__ops_createinfo_t * cinfo, int fd)
+__ops_teardown_file_write(__ops_output_t * output, int fd)
 {
-	__ops_writer_close(cinfo);
+	__ops_writer_close(output);
 	close(fd);
-	__ops_createinfo_delete(cinfo);
+	__ops_output_delete(output);
 }
 
 /**
@@ -1942,7 +1951,7 @@ __ops_teardown_file_write(__ops_createinfo_t * cinfo, int fd)
    \brief As __ops_setup_file_write, but appends to file
 */
 int 
-__ops_setup_file_append(__ops_createinfo_t ** cinfo, const char *filename)
+__ops_setup_file_append(__ops_output_t ** output, const char *filename)
 {
 	int             fd;
 	/*
@@ -1958,9 +1967,9 @@ __ops_setup_file_append(__ops_createinfo_t ** cinfo, const char *filename)
 		perror(filename);
 		return fd;
 	}
-	*cinfo = __ops_createinfo_new();
+	*output = __ops_output_new();
 
-	__ops_writer_set_fd(*cinfo, fd);
+	__ops_writer_set_fd(*output, fd);
 
 	return fd;
 }
@@ -1970,9 +1979,9 @@ __ops_setup_file_append(__ops_createinfo_t ** cinfo, const char *filename)
    \brief As __ops_teardown_file_write()
 */
 void 
-__ops_teardown_file_append(__ops_createinfo_t * cinfo, int fd)
+__ops_teardown_file_append(__ops_output_t * output, int fd)
 {
-	__ops_teardown_file_write(cinfo, fd);
+	__ops_teardown_file_write(output, fd);
 }
 
 /**
@@ -1986,17 +1995,15 @@ __ops_teardown_file_append(__ops_createinfo_t * cinfo, int fd)
    \note It is the caller's responsiblity to free parse_info and to close fd
    \sa __ops_teardown_file_read()
 */
-
 int 
-__ops_setup_file_read(__ops_parseinfo_t ** pinfo, const char *filename,
-		    void *vp,
-		    __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *),
-		    unsigned accumulate)
+__ops_setup_file_read(__ops_parseinfo_t **pinfo,
+			const char *filename,
+			void *vp,
+			__ops_parse_cb_return_t callback(const __ops_packet_t *,
+						__ops_callback_data_t *),
+			unsigned accumulate)
 {
-	int             fd = 0;
-	/*
-         * initialise needed structures for reading
-         */
+	int	fd;
 
 #ifdef O_BINARY
 	fd = open(filename, O_RDONLY | O_BINARY);
@@ -2008,7 +2015,7 @@ __ops_setup_file_read(__ops_parseinfo_t ** pinfo, const char *filename,
 		return fd;
 	}
 	*pinfo = __ops_parseinfo_new();
-	__ops_parse_cb_set(*pinfo, callback, vp);
+	__ops_set_callback(*pinfo, callback, vp);
 #ifdef USE_MMAP_FOR_FILES
 	__ops_reader_set_mmap(*pinfo, fd);
 #else
@@ -2054,14 +2061,14 @@ litdata_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
 		/* if writer enabled, use it */
-		if (cbinfo->cinfo) {
+		if (cbinfo->output) {
 			if (__ops_get_debug_level(__FILE__)) {
 				printf("litdata_cb: length is %d\n",
 				  content->litdata_body.length);
 			}
-			__ops_write(content->litdata_body.data,
-				  content->litdata_body.length,
-				  cbinfo->cinfo);
+			__ops_write(cbinfo->output,
+					content->litdata_body.data,
+					content->litdata_body.length);
 		}
 		break;
 
@@ -2233,8 +2240,11 @@ __ops_reader_set_accumulate(__ops_parseinfo_t *pinfo, unsigned state)
 /**************************************************************************/
 
 static int 
-hash_reader(void *dest, size_t length, __ops_error_t **errors,
-	    __ops_reader_t *readinfo, __ops_callback_data_t *cbinfo)
+hash_reader(void *dest,
+		size_t length,
+		__ops_error_t **errors,
+		__ops_reader_t *readinfo,
+		__ops_callback_data_t *cbinfo)
 {
 	__ops_hash_t	*hash = __ops_reader_get_arg(readinfo);
 	int		 r;

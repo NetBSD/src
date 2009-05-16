@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.8 2009/05/14 03:59:53 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.9 2009/05/16 06:30:38 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 12, 2009
+.Dd May 15, 2009
 .Dt NETPGP 1
 .Os
 .Sh NAME
@@ -52,6 +52,7 @@
 .Op Fl Fl numbits Ns = Ns Ar numbits
 .Op Fl Fl sign
 .Op Fl Fl userid Ns = Ns Ar userid
+.Op Fl Fl verbose
 .Op Fl Fl verify
 .Op Fl Fl version
 .Ar file ...
@@ -200,21 +201,22 @@ that a key belongs to a certain individual.
 The trust for a signed key is given by the other signers of that key.
 The 16 hexadecimal digit user identity should be used when specifying
 user identities - email addresses and names are provided as aliases.
+.It Fl Fl verbose
+This option can be used to view information during
+the process of the
+.Nm
+requests.
 .El
 .Sh PASS PHRASES
-The pass phrase cannot be changed once it has been chosen, and will
+The pass phrase cannot be changed by
+.Nm
+once it has been chosen, and will
 be used for the life of the key, so a wise choice is advised.
 The pass phrase should not be an easily guessable word or phrase,
 or related to information that can be gained through
 .Dq social engineering
 using search engines, or other public information retrieval methods.
 .Pp
-The
-.Nm
-utility includes an option to provide the pass phrase as a command
-line option.
-The use of this option is strongly discouraged, since it could
-lead to involuntary information disclosure.
 .Xr getpass 3
 will be used to obtain the pass phrase from the user if it is
 needed,
