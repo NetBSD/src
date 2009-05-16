@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.49 2009/05/15 17:55:44 tsutsui Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.50 2009/05/16 03:57:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.49 2009/05/15 17:55:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.50 2009/05/16 03:57:57 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,21 +86,24 @@ siop_common_attach(struct siop_common_softc *sc)
 		    (void **)&sc->sc_script,
 		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
-			aprint_error_dev(sc->sc_dev, "unable to map script DMA memory, "
+			aprint_error_dev(sc->sc_dev,
+			    "unable to map script DMA memory, "
 			    "error = %d\n", error);
 			return error;
 		}
 		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1,
 		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
 		if (error) {
-			aprint_error_dev(sc->sc_dev, "unable to create script DMA map, "
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create script DMA map, "
 			    "error = %d\n", error);
 			return error;
 		}
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
 		    sc->sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			aprint_error_dev(sc->sc_dev, "unable to load script DMA map, "
+			aprint_error_dev(sc->sc_dev,
+			    "unable to load script DMA map, "
 			    "error = %d\n", error);
 			return error;
 		}
@@ -137,7 +140,7 @@ siop_common_attach(struct siop_common_softc *sc)
 	sc->dt_maxsync = 0;
 	sc->st_minsync = 255;
 	sc->dt_minsync = 255;
-	for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++) {
+	for (i = 0; i < __arraycount(scf_period); i++) {
 		if (sc->clock_period != scf_period[i].clock)
 			continue;
 		if (sc->st_maxsync < scf_period[i].period)
@@ -147,7 +150,7 @@ siop_common_attach(struct siop_common_softc *sc)
 	}
 	if (sc->st_maxsync == 255 || sc->st_minsync == 0)
 		panic("siop: can't find my sync parameters");
-	for (i = 0; i < sizeof(dt_scf_period) / sizeof(dt_scf_period[0]); i++) {
+	for (i = 0; i < __arraycount(dt_scf_period); i++) {
 		if (sc->clock_period != dt_scf_period[i].clock)
 			continue;
 		if (sc->dt_maxsync < dt_scf_period[i].period)
@@ -300,9 +303,9 @@ siop_setuptables(struct siop_common_cmd *siop_cmd)
 	siop_cmd->siop_tables->t_msgout.count = siop_htoc32(sc, msgoffset);
 	if (sc->targets[target]->status == TARST_ASYNC) {
 		if ((sc->targets[target]->flags & TARF_DT) &&
-			(sc->mode == STEST4_MODE_LVD)) {
+		    (sc->mode == STEST4_MODE_LVD)) {
 			sc->targets[target]->status = TARST_PPR_NEG;
-			 siop_ppr_msg(siop_cmd, msgoffset, sc->dt_minsync,
+			siop_ppr_msg(siop_cmd, msgoffset, sc->dt_minsync,
 			    sc->maxoff);
 		} else if (sc->targets[target]->flags & TARF_WIDE) {
 			sc->targets[target]->status = TARST_WIDE_NEG;
@@ -368,7 +371,8 @@ siop_wdtr_neg(struct siop_common_cmd *siop_cmd)
 			siop_target->offset = siop_target->period = 0;
 			siop_update_xfer_mode(sc, target);
 			printf("%s: rejecting invalid wide negotiation from "
-			    "target %d (%d)\n", device_xname(sc->sc_dev), target,
+			    "target %d (%d)\n", device_xname(sc->sc_dev),
+			    target,
 			    tables->msg_in[3]);
 			tables->t_msgout.count = siop_htoc32(sc, 1);
 			tables->msg_out[0] = MSG_MESSAGE_REJECT;
@@ -458,9 +462,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 			siop_target->period = 0;
 			goto reject;
 		} else {
-			for (i = 0; i <
-			    sizeof(dt_scf_period) / sizeof(dt_scf_period[0]);
-			    i++) {
+			for (i = 0; i < __arraycount(dt_scf_period); i++) {
 				if (sc->clock_period != dt_scf_period[i].clock)
 					continue;
 				if (dt_scf_period[i].period == sync) {
@@ -489,7 +491,8 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 		if (tables->msg_in[6] != 1) {
 			printf("%s: ppr negotiation for target %d: "
 			    "transfer width (%d) incompatible with dt\n",
-			    device_xname(sc->sc_dev), target, tables->msg_in[6]);
+			    device_xname(sc->sc_dev),
+			    target, tables->msg_in[6]);
 			/* DT mode can only be done with wide transfers */
 			siop_target->status = TARST_ASYNC;
 			goto reject;
@@ -548,8 +551,7 @@ siop_sdtr_neg(struct siop_common_cmd *siop_cmd)
 		if (offset > maxoffset || sync < sc->st_minsync ||
 			sync > sc->st_maxsync)
 			goto reject;
-		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]);
-		    i++) {
+		for (i = 0; i < __arraycount(scf_period); i++) {
 			if (sc->clock_period != scf_period[i].clock)
 				continue;
 			if (scf_period[i].period == sync) {
@@ -600,8 +602,7 @@ reject:
 		if (sync < sc->st_minsync)
 			sync = sc->st_minsync;
 		/* look for sync period */
-		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]);
-		    i++) {
+		for (i = 0; i < __arraycount(scf_period); i++) {
 			if (sc->clock_period != scf_period[i].clock)
 				continue;
 			if (scf_period[i].period == sync) {
@@ -659,6 +660,7 @@ end:
 void
 siop_sdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 {
+
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_SDTR_LEN;
 	siop_cmd->siop_tables->msg_out[offset + 2] = MSG_EXT_SDTR;
@@ -671,6 +673,7 @@ siop_sdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 void
 siop_wdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int wide)
 {
+
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_WDTR_LEN;
 	siop_cmd->siop_tables->msg_out[offset + 2] = MSG_EXT_WDTR;
@@ -682,6 +685,7 @@ siop_wdtr_msg(struct siop_common_cmd *siop_cmd, int offset, int wide)
 void
 siop_ppr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 {
+
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_PPR_LEN;
 	siop_cmd->siop_tables->msg_out[offset + 2] = MSG_EXT_PPR;
@@ -697,6 +701,7 @@ siop_ppr_msg(struct siop_common_cmd *siop_cmd, int offset, int ssync, int soff)
 void
 siop_minphys(struct buf *bp)
 {
+
 	minphys(bp);
 }
 
@@ -885,6 +890,7 @@ siop_iwr(struct siop_common_cmd *siop_cmd)
 	int offset;
 	scr_table_t *table; /* table with IWR */
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
+
 	/* handle ignore wide residue messages */
 
 	/* if target isn't wide, reject */
@@ -960,6 +966,7 @@ siop_modechange(struct siop_common_softc *sc)
 {
 	int retry;
 	int sist0, sist1, stest2;
+
 	for (retry = 0; retry < 5; retry++) {
 		/*
 		 * datasheet says to wait 100ms and re-read SIST1,
@@ -1010,6 +1017,7 @@ void
 siop_resetbus(struct siop_common_softc *sc)
 {
 	int scntl1;
+
 	scntl1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1,
 	    scntl1 | SCNTL1_RST);
@@ -1028,7 +1036,6 @@ siop_update_xfer_mode(struct siop_common_softc *sc, int target)
 	xm.xm_mode = 0;
 	xm.xm_period = 0;
 	xm.xm_offset = 0;
-
 
 	if (siop_target->flags & TARF_ISWIDE)
 		xm.xm_mode |= PERIPH_CAP_WIDE16;
