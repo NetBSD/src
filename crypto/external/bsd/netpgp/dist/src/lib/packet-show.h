@@ -61,53 +61,51 @@ typedef struct {
 	unsigned int    size;	/* num of array slots allocated */
 	unsigned int    used;	/* num of array slots currently used */
 	char          **strings;
-}               __ops_list_t;
+} __ops_list_t;
 
 /** __ops_text_t
  */
 typedef struct {
 	__ops_list_t      known;
 	__ops_list_t      unknown;
-}               __ops_text_t;
+} __ops_text_t;
 
 /** __ops_bit_map_t
  */
 typedef struct {
 	unsigned char   mask;
 	const char     *string;
-}               __ops_bit_map_t;
+} __ops_bit_map_t;
 
-void            __ops_text_init(__ops_text_t * text);
-void            __ops_text_free(__ops_text_t * text);
+void __ops_text_init(__ops_text_t *);
+void __ops_text_free(__ops_text_t *);
 
-const char     *__ops_show_packet_tag(__ops_packet_tag_t packet_tag);
-const char     *__ops_show_ss_type(__ops_ss_type_t ss_type);
+const char *__ops_show_packet_tag(__ops_packet_tag_t);
+const char *__ops_show_ss_type(__ops_ss_type_t);
 
-const char     *__ops_show_sig_type(__ops_sig_type_t sig_type);
-const char     *__ops_show_pka(__ops_pubkey_alg_t pka);
+const char *__ops_show_sig_type(__ops_sig_type_t);
+const char *__ops_show_pka(__ops_pubkey_alg_t);
 
-__ops_text_t     *__ops_showall_ss_zpref(__ops_ss_zpref_t ss_zpref);
-const char     *__ops_show_ss_zpref(unsigned char octet);
+__ops_text_t *__ops_showall_ss_zpref(__ops_ss_zpref_t);
+const char *__ops_show_ss_zpref(unsigned char);
 
-__ops_text_t     *__ops_showall_ss_hashpref(__ops_ss_hashpref_t ss_hashpref);
-const char     *__ops_show_hash_alg(unsigned char octet);
-const char     *__ops_show_symm_alg(unsigned char hash);
+__ops_text_t *__ops_showall_ss_hashpref(__ops_ss_hashpref_t);
+const char *__ops_show_hash_alg(unsigned char);
+const char *__ops_show_symm_alg(unsigned char);
 
-__ops_text_t     *__ops_showall_ss_skapref(__ops_ss_skapref_t ss_skapref);
-const char     *__ops_show_ss_skapref(unsigned char octet);
+__ops_text_t *__ops_showall_ss_skapref(__ops_ss_skapref_t);
+const char *__ops_show_ss_skapref(unsigned char);
 
-const char     *__ops_show_ss_rr_code(__ops_ss_rr_code_t ss_rr_code);
+const char *__ops_show_ss_rr_code(__ops_ss_rr_code_t);
 
-__ops_text_t     *__ops_showall_ss_features(__ops_ss_features_t ss_features);
+__ops_text_t *__ops_showall_ss_features(__ops_ss_features_t);
 
-__ops_text_t     *__ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags);
-const char     *__ops_show_ss_key_flag(unsigned char octet, __ops_bit_map_t * map);
+__ops_text_t *__ops_showall_ss_key_flags(__ops_ss_key_flags_t);
+const char *__ops_show_ss_key_flag(unsigned char, __ops_bit_map_t *);
 
-__ops_text_t     *__ops_showall_ss_key_server_prefs(__ops_ss_key_server_prefs_t ss_key_server_prefs);
-const char     *
-__ops_show_ss_key_server_prefs(unsigned char octet,
-			     __ops_bit_map_t * map);
+__ops_text_t *__ops_showall_ss_key_server_prefs(__ops_ss_key_server_prefs_t);
+const char *__ops_show_ss_key_server_prefs(unsigned char, __ops_bit_map_t *);
 
-__ops_text_t     *__ops_showall_ss_notation_data_flags(__ops_ss_notation_data_t ss_notation_data);
+__ops_text_t *__ops_showall_ss_notation_flags(__ops_ss_notation_t);
 
 #endif /* PACKET_SHOW_H_ */

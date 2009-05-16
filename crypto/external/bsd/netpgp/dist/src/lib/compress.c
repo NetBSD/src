@@ -51,6 +51,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: compress.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #ifdef HAVE_ZLIB_H
 #include <zlib.h>
 #endif
@@ -78,7 +87,7 @@ typedef struct {
 	z_stream        zstream;/* ZIP and ZLIB */
 	size_t          offset;
 	int             inflate_ret;
-}               z_decompress_t;
+} z_decompress_t;
 
 typedef struct {
 	__ops_compression_type_t type;
@@ -88,13 +97,13 @@ typedef struct {
 	bz_stream       bzstream;	/* BZIP2 */
 	size_t          offset;
 	int             inflate_ret;
-}               bz_decompress_t;
+} bz_decompress_t;
 
 typedef struct {
 	z_stream        stream;
 	unsigned char  *src;
 	unsigned char  *dst;
-}               compress_t;
+} compress_t;
 
 /*
  * \todo remove code duplication between this and
@@ -129,7 +138,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 			length);
 	}
 
-	if (z->region->length_read == z->region->length) {
+	if (z->region->readc == z->region->length) {
 		if (z->inflate_ret != Z_STREAM_END) {
 			OPS_ERROR(cbinfo->errors, OPS_E_P_DECOMPRESSION_ERROR,
 			"Compressed data didn't end when region ended.");
@@ -146,7 +155,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 				unsigned        n = z->region->length;
 
 				if (!z->region->indeterminate) {
-					n -= z->region->length_read;
+					n -= z->region->readc;
 					if (n > sizeof(z->in)) {
 						n = sizeof(z->in);
 					}
@@ -166,7 +175,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 			ret = inflate(&z->zstream, Z_SYNC_FLUSH);
 			if (ret == Z_STREAM_END) {
 				if (!z->region->indeterminate &&
-				    z->region->length_read != z->region->length) {
+				    z->region->readc != z->region->length) {
 					OPS_ERROR(cbinfo->errors,
 						OPS_E_P_DECOMPRESSION_ERROR,
 						"Compressed stream ended before packet end.");
@@ -214,7 +223,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 	    bz->bzstream.next_out == &bz->out[bz->offset]) {
 		return 0;
 	}
-	if (bz->region->length_read == bz->region->length) {
+	if (bz->region->readc == bz->region->length) {
 		if (bz->inflate_ret != BZ_STREAM_END) {
 			OPS_ERROR(cbinfo->errors, OPS_E_P_DECOMPRESSION_ERROR,
 			"Compressed data didn't end when region ended.");
@@ -231,7 +240,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 				unsigned        n = bz->region->length;
 
 				if (!bz->region->indeterminate) {
-					n -= bz->region->length_read;
+					n -= bz->region->readc;
 					if (n > sizeof(bz->in))
 						n = sizeof(bz->in);
 				} else
@@ -251,7 +260,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 			ret = BZ2_bzDecompress(&bz->bzstream);
 			if (ret == BZ_STREAM_END) {
 				if (!bz->region->indeterminate &&
-				    bz->region->length_read != bz->region->length)
+				    bz->region->readc != bz->region->length)
 					OPS_ERROR(cbinfo->errors,
 						OPS_E_P_DECOMPRESSION_ERROR,
 						"Compressed stream ended before packet end.");
@@ -397,14 +406,14 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 \brief Writes Compressed packet
 \param data Data to write out
 \param len Length of data
-\param cinfo Write settings
+\param output Write settings
 \return 1 if OK; else 0
 */
 
 unsigned 
-__ops_write_compressed(const unsigned char *data,
+__ops_writez(const unsigned char *data,
 		     const unsigned int len,
-		     __ops_createinfo_t *cinfo)
+		     __ops_output_t *out)
 {
 	compress_t	*zip = calloc(1, sizeof(compress_t));
 	size_t		 sz_in = 0;
@@ -421,15 +430,13 @@ __ops_write_compressed(const unsigned char *data,
 	/* all other fields set to zero by use of calloc */
 
 	if (deflateInit(&zip->stream, level) != Z_OK) {
-		(void) fprintf(stderr,
-			"__ops_write_compressed: can't initialise\n");
+		(void) fprintf(stderr, "__ops_writez: can't initialise\n");
 		return 0;
 	}
 	/* do necessary transformation */
 	/* copy input to maintain const'ness of src */
 	if (zip->src != NULL || zip->dst != NULL) {
-		(void) fprintf(stderr, 
-			"__ops_write_compressed: non-null streams\n");
+		(void) fprintf(stderr, "__ops_writez: non-null streams\n");
 		return 0;
 	}
 
@@ -453,9 +460,8 @@ __ops_write_compressed(const unsigned char *data,
 	} while (r != Z_STREAM_END);
 
 	/* write it out */
-	return (__ops_write_ptag(OPS_PTAG_CT_COMPRESSED, cinfo) &&
-		__ops_write_length((unsigned)(zip->stream.total_out + 1),
-							cinfo) &&
-		__ops_write_scalar(OPS_C_ZLIB, 1, cinfo) &&
-		__ops_write(zip->dst, (unsigned)zip->stream.total_out, cinfo));
+	return (__ops_write_ptag(out, OPS_PTAG_CT_COMPRESSED) &&
+		__ops_write_length(out, (unsigned)(zip->stream.total_out + 1))&&
+		__ops_write_scalar(out, OPS_C_ZLIB, 1) &&
+		__ops_write(out, zip->dst, (unsigned)zip->stream.total_out));
 }

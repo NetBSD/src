@@ -48,6 +48,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: symmetric.c,v 1.6 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #include "crypto.h"
 #include "packet-show.h"
 
@@ -74,23 +83,24 @@
 
 
 static void 
-std_set_iv(__ops_crypt_t * crypt, const unsigned char *iv)
+std_set_iv(__ops_crypt_t *crypt, const unsigned char *iv)
 {
 	(void) memcpy(crypt->iv, iv, crypt->blocksize);
 	crypt->num = 0;
 }
 
 static void 
-std_set_key(__ops_crypt_t * crypt, const unsigned char *key)
+std_set_key(__ops_crypt_t *crypt, const unsigned char *key)
 {
 	(void) memcpy(crypt->key, key, crypt->keysize);
 }
 
 static void 
-std_resync(__ops_crypt_t * decrypt)
+std_resync(__ops_crypt_t *decrypt)
 {
-	if ((size_t) decrypt->num == decrypt->blocksize)
+	if ((size_t) decrypt->num == decrypt->blocksize) {
 		return;
+	}
 
 	memmove(decrypt->civ + decrypt->blocksize - decrypt->num, decrypt->civ,
 		(unsigned)decrypt->num);
@@ -100,7 +110,7 @@ std_resync(__ops_crypt_t * decrypt)
 }
 
 static void 
-std_finish(__ops_crypt_t * crypt)
+std_finish(__ops_crypt_t *crypt)
 {
 	if (crypt->encrypt_key) {
 		free(crypt->encrypt_key);
@@ -113,10 +123,11 @@ std_finish(__ops_crypt_t * crypt)
 }
 
 static void 
-cast5_init(__ops_crypt_t * crypt)
+cast5_init(__ops_crypt_t *crypt)
 {
-	if (crypt->encrypt_key)
-		free(crypt->encrypt_key);
+	if (crypt->encrypt_key) {
+		(void) free(crypt->encrypt_key);
+	}
 	crypt->encrypt_key = calloc(1, sizeof(CAST_KEY));
 	CAST_set_key(crypt->encrypt_key, (int)crypt->keysize, crypt->key);
 	crypt->decrypt_key = calloc(1, sizeof(CAST_KEY));
@@ -124,19 +135,19 @@ cast5_init(__ops_crypt_t * crypt)
 }
 
 static void 
-cast5_block_encrypt(__ops_crypt_t * crypt, void *out, const void *in)
+cast5_block_encrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	CAST_ecb_encrypt(in, out, crypt->encrypt_key, CAST_ENCRYPT);
 }
 
 static void 
-cast5_block_decrypt(__ops_crypt_t * crypt, void *out, const void *in)
+cast5_block_decrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	CAST_ecb_encrypt(in, out, crypt->encrypt_key, CAST_DECRYPT);
 }
 
 static void 
-cast5_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+cast5_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
 	CAST_cfb64_encrypt(in, out, (long)count,
 			   crypt->encrypt_key, crypt->iv, &crypt->num,
@@ -144,7 +155,7 @@ cast5_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count
 }
 
 static void 
-cast5_cfb_decrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+cast5_cfb_decrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
 	CAST_cfb64_encrypt(in, out, (long)count,
 			   crypt->encrypt_key, crypt->iv, &crypt->num,
@@ -172,7 +183,7 @@ static __ops_crypt_t cast5 =
 
 #ifndef OPENSSL_NO_IDEA
 static void 
-idea_init(__ops_crypt_t * crypt)
+idea_init(__ops_crypt_t *crypt)
 {
 	if (crypt->keysize != IDEA_KEY_LENGTH) {
 		(void) fprintf(stderr, "idea_init: keysize wrong\n");
@@ -196,19 +207,19 @@ idea_init(__ops_crypt_t * crypt)
 }
 
 static void 
-idea_block_encrypt(__ops_crypt_t * crypt, void *out, const void *in)
+idea_block_encrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	idea_ecb_encrypt(in, out, crypt->encrypt_key);
 }
 
 static void 
-idea_block_decrypt(__ops_crypt_t * crypt, void *out, const void *in)
+idea_block_decrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	idea_ecb_encrypt(in, out, crypt->decrypt_key);
 }
 
 static void 
-idea_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+idea_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
 	idea_cfb64_encrypt(in, out, (long)count,
 			   crypt->encrypt_key, crypt->iv, &crypt->num,
@@ -216,7 +227,7 @@ idea_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
 }
 
 static void 
-idea_cfb_decrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+idea_cfb_decrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
 	idea_cfb64_encrypt(in, out, (long)count,
 			   crypt->decrypt_key, crypt->iv, &crypt->num,
@@ -246,35 +257,41 @@ static const __ops_crypt_t idea =
 #define KEYBITS_AES128 128
 
 static void 
-aes128_init(__ops_crypt_t * crypt)
+aes128_init(__ops_crypt_t *crypt)
 {
-	if (crypt->encrypt_key)
-		free(crypt->encrypt_key);
+	if (crypt->encrypt_key) {
+		(void) free(crypt->encrypt_key);
+	}
 	crypt->encrypt_key = calloc(1, sizeof(AES_KEY));
-	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES128, crypt->encrypt_key))
+	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES128,
+			crypt->encrypt_key)) {
 		fprintf(stderr, "aes128_init: Error setting encrypt_key\n");
+	}
 
-	if (crypt->decrypt_key)
-		free(crypt->decrypt_key);
+	if (crypt->decrypt_key) {
+		(void) free(crypt->decrypt_key);
+	}
 	crypt->decrypt_key = calloc(1, sizeof(AES_KEY));
-	if (AES_set_decrypt_key(crypt->key, KEYBITS_AES128, crypt->decrypt_key))
+	if (AES_set_decrypt_key(crypt->key, KEYBITS_AES128,
+				crypt->decrypt_key)) {
 		fprintf(stderr, "aes128_init: Error setting decrypt_key\n");
+	}
 }
 
 static void 
-aes_block_encrypt(__ops_crypt_t * crypt, void *out, const void *in)
+aes_block_encrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	AES_encrypt(in, out, crypt->encrypt_key);
 }
 
 static void 
-aes_block_decrypt(__ops_crypt_t * crypt, void *out, const void *in)
+aes_block_decrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	AES_decrypt(in, out, crypt->decrypt_key);
 }
 
 static void 
-aes_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+aes_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
 	AES_cfb128_encrypt(in, out, (unsigned long)count,
 			   crypt->encrypt_key, crypt->iv, &crypt->num,
@@ -282,7 +299,7 @@ aes_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
 }
 
 static void 
-aes_cfb_decrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+aes_cfb_decrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
 {
 	AES_cfb128_encrypt(in, out, (unsigned long)count,
 			   crypt->encrypt_key, crypt->iv, &crypt->num,
@@ -311,19 +328,24 @@ static const __ops_crypt_t aes128 =
 #define KEYBITS_AES256 256
 
 static void 
-aes256_init(__ops_crypt_t * crypt)
+aes256_init(__ops_crypt_t *crypt)
 {
-	if (crypt->encrypt_key)
-		free(crypt->encrypt_key);
+	if (crypt->encrypt_key) {
+		(void) free(crypt->encrypt_key);
+	}
 	crypt->encrypt_key = calloc(1, sizeof(AES_KEY));
-	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES256, crypt->encrypt_key))
+	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES256,
+			crypt->encrypt_key)) {
 		fprintf(stderr, "aes256_init: Error setting encrypt_key\n");
+	}
 
 	if (crypt->decrypt_key)
 		free(crypt->decrypt_key);
 	crypt->decrypt_key = calloc(1, sizeof(AES_KEY));
-	if (AES_set_decrypt_key(crypt->key, KEYBITS_AES256, crypt->decrypt_key))
+	if (AES_set_decrypt_key(crypt->key, KEYBITS_AES256,
+			crypt->decrypt_key)) {
 		fprintf(stderr, "aes256_init: Error setting decrypt_key\n");
+	}
 }
 
 static const __ops_crypt_t aes256 =
@@ -351,35 +373,38 @@ tripledes_init(__ops_crypt_t * crypt)
 	DES_key_schedule *keys;
 	int             n;
 
-	if (crypt->encrypt_key)
-		free(crypt->encrypt_key);
+	if (crypt->encrypt_key) {
+		(void) free(crypt->encrypt_key);
+	}
 	keys = crypt->encrypt_key = calloc(1, 3 * sizeof(DES_key_schedule));
 
-	for (n = 0; n < 3; ++n)
+	for (n = 0; n < 3; ++n) {
 		DES_set_key((DES_cblock *)(void *)(crypt->key + n * 8),
 			&keys[n]);
+	}
 }
 
 static void 
-tripledes_block_encrypt(__ops_crypt_t * crypt, void *out,
-			const void *in)
+tripledes_block_encrypt(__ops_crypt_t * crypt, void *out, const void *in)
 {
 	DES_key_schedule *keys = crypt->encrypt_key;
 
-	DES_ecb3_encrypt(__UNCONST(in), out, &keys[0], &keys[1], &keys[2], DES_ENCRYPT);
+	DES_ecb3_encrypt(__UNCONST(in), out, &keys[0], &keys[1], &keys[2],
+			DES_ENCRYPT);
 }
 
 static void 
-tripledes_block_decrypt(__ops_crypt_t * crypt, void *out,
-			const void *in)
+tripledes_block_decrypt(__ops_crypt_t * crypt, void *out, const void *in)
 {
 	DES_key_schedule *keys = crypt->encrypt_key;
 
-	DES_ecb3_encrypt(__UNCONST(in), out, &keys[0], &keys[1], &keys[2], DES_DECRYPT);
+	DES_ecb3_encrypt(__UNCONST(in), out, &keys[0], &keys[1], &keys[2],
+			DES_DECRYPT);
 }
 
 static void 
-tripledes_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+tripledes_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in,
+			size_t count)
 {
 	DES_key_schedule *keys = crypt->encrypt_key;
 
@@ -389,7 +414,8 @@ tripledes_cfb_encrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t c
 }
 
 static void 
-tripledes_cfb_decrypt(__ops_crypt_t * crypt, void *out, const void *in, size_t count)
+tripledes_cfb_decrypt(__ops_crypt_t * crypt, void *out, const void *in,
+			size_t count)
 {
 	DES_key_schedule *keys = crypt->encrypt_key;
 
@@ -533,11 +559,14 @@ __ops_encrypt_se(__ops_crypt_t * encrypt, void *outvoid, const void *invoid,
 	 */
 	while (count-- > 0) {
 		if ((size_t) encrypt->num == encrypt->blocksize) {
-			(void) memcpy(encrypt->siv, encrypt->civ, encrypt->blocksize);
-			encrypt->block_encrypt(encrypt, encrypt->civ, encrypt->civ);
+			(void) memcpy(encrypt->siv, encrypt->civ,
+					encrypt->blocksize);
+			encrypt->block_encrypt(encrypt, encrypt->civ,
+					encrypt->civ);
 			encrypt->num = 0;
 		}
-		encrypt->civ[encrypt->num] = *out++ = encrypt->civ[encrypt->num] ^ *in++;
+		encrypt->civ[encrypt->num] = *out++ =
+				encrypt->civ[encrypt->num] ^ *in++;
 		++encrypt->num;
 	}
 
@@ -574,9 +603,9 @@ size_t
 __ops_encrypt_se_ip(__ops_crypt_t * crypt, void *out, const void *in,
 		  size_t count)
 {
-	if (!__ops_is_sa_supported(crypt->alg))
-		/* XXX - agc changed from -1 to 0 */
+	if (!__ops_is_sa_supported(crypt->alg)) {
 		return 0;
+	}
 
 	crypt->cfb_encrypt(crypt, out, in, count);
 
@@ -588,9 +617,9 @@ size_t
 __ops_decrypt_se_ip(__ops_crypt_t * crypt, void *out, const void *in,
 		  size_t count)
 {
-	if (!__ops_is_sa_supported(crypt->alg))
-		/* XXX - agc changed from -1 to 0 */
+	if (!__ops_is_sa_supported(crypt->alg)) {
 		return 0;
+	}
 
 	crypt->cfb_decrypt(crypt, out, in, count);
 

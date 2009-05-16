@@ -51,6 +51,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.10 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #ifdef HAVE_OPENSSL_MD5_H
 #include <openssl/md5.h>
 #endif
@@ -769,15 +778,15 @@ __ops_text_from_hash(__ops_hash_t * hash)
  \return 1 if key generated successfully; otherwise 0
  \note It is the caller's responsibility to call __ops_keydata_free(keydata)
 */
-unsigned 
-__ops_rsa_generate_keypair(const int numbits,
-			const unsigned long e,
-			__ops_keydata_t *keydata)
+static unsigned 
+rsa_generate_keypair(__ops_keydata_t *keydata,
+			const int numbits,
+			const unsigned long e)
 {
 	__ops_seckey_t *seckey = NULL;
 	RSA            *rsa = NULL;
 	BN_CTX         *ctx = BN_CTX_new();
-	__ops_createinfo_t *cinfo;
+	__ops_output_t *output;
 	__ops_memory_t   *mem;
 
 	__ops_keydata_init(keydata, OPS_PTAG_CT_SECRET_KEY);
@@ -823,30 +832,30 @@ __ops_rsa_generate_keypair(const int numbits,
 
 	/* Generate checksum */
 
-	cinfo = NULL;
+	output = NULL;
 	mem = NULL;
 
-	__ops_setup_memory_write(&cinfo, &mem, 128);
+	__ops_setup_memory_write(&output, &mem, 128);
 
-	__ops_push_skey_checksum_writer(cinfo, seckey);
+	__ops_push_skey_checksum_writer(output, seckey);
 
 	switch (seckey->pubkey.alg) {
 		/* case OPS_PKA_DSA: */
-		/* return __ops_write_mpi(key->key.dsa.x,info); */
+		/* return __ops_write_mpi(output, key->key.dsa.x); */
 
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		if (!__ops_write_mpi(seckey->key.rsa.d, cinfo) ||
-		    !__ops_write_mpi(seckey->key.rsa.p, cinfo) ||
-		    !__ops_write_mpi(seckey->key.rsa.q, cinfo) ||
-		    !__ops_write_mpi(seckey->key.rsa.u, cinfo)) {
+		if (!__ops_write_mpi(output, seckey->key.rsa.d) ||
+		    !__ops_write_mpi(output, seckey->key.rsa.p) ||
+		    !__ops_write_mpi(output, seckey->key.rsa.q) ||
+		    !__ops_write_mpi(output, seckey->key.rsa.u)) {
 			return 0;
 		}
 		break;
 
 		/* case OPS_PKA_ELGAMAL: */
-		/* return __ops_write_mpi(key->key.elgamal.x,info); */
+		/* return __ops_write_mpi(output, key->key.elgamal.x); */
 
 	default:
 		(void) fprintf(stderr, "Bad seckey->pubkey.alg\n");
@@ -854,8 +863,8 @@ __ops_rsa_generate_keypair(const int numbits,
 	}
 
 	/* close rather than pop, since its the only one on the stack */
-	__ops_writer_close(cinfo);
-	__ops_teardown_memory_write(cinfo, mem);
+	__ops_writer_close(output);
+	__ops_teardown_memory_write(output, mem);
 
 	/* should now have checksum in seckey struct */
 
@@ -876,19 +885,19 @@ __ops_rsa_generate_keypair(const int numbits,
  \return The new keypair or NULL
 
  \note It is the caller's responsibility to call __ops_keydata_free(keydata)
- \sa __ops_rsa_generate_keypair()
+ \sa rsa_generate_keypair()
  \sa __ops_keydata_free()
 */
 __ops_keydata_t  *
-__ops_rsa_create_selfsigned_keypair(const int numbits,
-			const unsigned long e,
-			__ops_user_id_t *userid)
+__ops_rsa_new_selfsign_keypair(const int numbits,
+				const unsigned long e,
+				__ops_userid_t *userid)
 {
 	__ops_keydata_t  *keydata = NULL;
 
 	keydata = __ops_keydata_new();
-	if (__ops_rsa_generate_keypair(numbits, e, keydata) != 1 ||
-	    __ops_add_selfsigned_userid_to_keydata(keydata, userid) != 1) {
+	if (!rsa_generate_keypair(keydata, numbits, e) ||
+	    !__ops_add_selfsigned_userid(keydata, userid)) {
 		__ops_keydata_free(keydata);
 		return NULL;
 	}
@@ -898,18 +907,18 @@ __ops_rsa_create_selfsigned_keypair(const int numbits,
 DSA_SIG        *
 __ops_dsa_sign(unsigned char *hashbuf,
 		unsigned hashsize,
-		const __ops_dsa_seckey_t *sdsa,
-		const __ops_dsa_pubkey_t *dsa)
+		const __ops_dsa_seckey_t *secdsa,
+		const __ops_dsa_pubkey_t *pubdsa)
 {
 	DSA_SIG        *dsasig;
 	DSA            *odsa;
 
 	odsa = DSA_new();
-	odsa->p = dsa->p;
-	odsa->q = dsa->q;
-	odsa->g = dsa->g;
-	odsa->pub_key = dsa->y;
-	odsa->priv_key = sdsa->x;
+	odsa->p = pubdsa->p;
+	odsa->q = pubdsa->q;
+	odsa->g = pubdsa->g;
+	odsa->pub_key = pubdsa->y;
+	odsa->priv_key = secdsa->x;
 
 	dsasig = DSA_do_sign(hashbuf, (int)hashsize, odsa);
 

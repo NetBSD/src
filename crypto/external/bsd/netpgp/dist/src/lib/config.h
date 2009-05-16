@@ -28,9 +28,6 @@
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #define HAVE_LIBCRYPTO 1
 
-/* Define to 1 if you have the <libgen.h> header file. */
-#define HAVE_LIBGEN_H 1
-
 /* Define to 1 if you have the `z' library (-lz). */
 #define HAVE_LIBZ 1
 
@@ -125,13 +122,13 @@
 #define PACKAGE_NAME "netpgp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netpgp 20090512"
+#define PACKAGE_STRING "netpgp 20090515"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netpgp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20090512"
+#define PACKAGE_VERSION "20090515"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

@@ -50,48 +50,49 @@
 #define VALIDATE_H_	1
 
 typedef struct {
-	const __ops_keydata_t *key;
-	unsigned        packet;
-	unsigned        offset;
-}               validate_reader_t;
+	const __ops_keydata_t	*key;
+	unsigned	         packet;
+	unsigned	         offset;
+} validate_reader_t;
 
 /** Struct used with the validate_key_cb callback */
 typedef struct {
-	__ops_pubkey_t pubkey;
-	__ops_pubkey_t subkey;
-	__ops_seckey_t seckey;
+	__ops_pubkey_t		 pubkey;
+	__ops_pubkey_t		 subkey;
+	__ops_seckey_t		 seckey;
 	enum {
 		ATTRIBUTE = 1,
 		ID
-	}               last_seen;
-	__ops_user_id_t   user_id;
-	__ops_user_attribute_t user_attribute;
-	unsigned char   hash[OPS_MAX_HASH_SIZE];
-	const __ops_keyring_t *keyring;
-	validate_reader_t *rarg;
-	__ops_validation_t *result;
-	__ops_parse_cb_return_t(*cb_get_passphrase) (const __ops_packet_t *, __ops_callback_data_t *);
-}               validate_key_cb_t;
+	}               	 last_seen;
+	__ops_userid_t		 userid;
+	__ops_userattr_t	 userattr;
+	unsigned char   	 hash[OPS_MAX_HASH_SIZE];
+	const __ops_keyring_t	*keyring;
+	validate_reader_t	*reader;
+	__ops_validation_t	*result;
+	__ops_parse_cb_return_t(*cb_get_passphrase) (const __ops_packet_t *,
+						__ops_callback_data_t *);
+} validate_key_cb_t;
 
 /** Struct use with the validate_data_cb callback */
 typedef struct {
 	enum {
 		LITERAL_DATA,
 		SIGNED_CLEARTEXT
-	} use;
+	}				 use;
 	union {
-		__ops_litdata_body_t litdata_body;
-		__ops_cleartext_body_t cleartext_body;
+		__ops_litdata_body_t	 litdata_body;
+		__ops_cleartext_body_t	 cleartext_body;
 	} data;
-	unsigned char   hash[OPS_MAX_HASH_SIZE];	/* <! the hash */
-	__ops_memory_t   *mem;
-	const __ops_keyring_t *keyring;	/* <! keyring to use */
-	validate_reader_t *rarg;	/* <! reader-specific arg */
-	__ops_validation_t *result;	/* <! where to put the result */
-}               validate_data_cb_t;	/* <! used with
-					 * validate_data_cb callback */
+	unsigned char			 hash[OPS_MAX_HASH_SIZE];
+	__ops_memory_t			*mem;
+	const __ops_keyring_t		*keyring;
+	validate_reader_t		*reader;/* reader-specific arg */
+	__ops_validation_t		*result;
+	char				*detachname;
+} validate_data_cb_t;
 
-void	__ops_keydata_reader_set(__ops_parseinfo_t *, const __ops_keydata_t *);
+void __ops_keydata_reader_set(__ops_parseinfo_t *, const __ops_keydata_t *);
 
 __ops_parse_cb_return_t __ops_validate_key_cb(const __ops_packet_t *,
 					__ops_callback_data_t *);

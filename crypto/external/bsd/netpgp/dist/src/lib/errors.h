@@ -121,29 +121,31 @@ typedef enum {
 
 /** one entry in a linked list of errors */
 typedef struct __ops_error {
-	__ops_errcode_t   errcode;
-	int             sys_errno;	/* !< irrelevent unless errcode ==
+	__ops_errcode_t		errcode;
+	int			sys_errno;	/* irrelevent unless errcode ==
 					 * OPS_E_SYSTEM_ERROR */
-	char           *comment;
-	const char     *file;
-	int             line;
-	struct __ops_error *next;
-}               __ops_error_t;
+	char			*comment;
+	const char		*file;
+	int			 line;
+	struct __ops_error	*next;
+} __ops_error_t;
 
 const char     *__ops_errcode(const __ops_errcode_t errcode);
 
 void 
-__ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode, int sys_errno,
-	       const char *file, int line, const char *comment,...);
-void            __ops_print_error(__ops_error_t * err);
-void            __ops_print_errors(__ops_error_t * errstack);
-void            __ops_free_errors(__ops_error_t * errstack);
-int             __ops_has_error(__ops_error_t * errstack, __ops_errcode_t errcode);
+__ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode,
+		int sys_errno,
+		const char *file, int line, const char *comment,...);
+void __ops_print_error(__ops_error_t * err);
+void __ops_print_errors(__ops_error_t * errstack);
+void __ops_free_errors(__ops_error_t * errstack);
+int  __ops_has_error(__ops_error_t * errstack, __ops_errcode_t errcode);
 
-#define OPS_SYSTEM_ERROR_1(err,code,syscall,fmt,arg)	do {		\
-	__ops_push_error(err,OPS_E_SYSTEM_ERROR,errno,__FILE__,__LINE__,syscall);\
+#define OPS_SYSTEM_ERROR_1(err,code,sys,fmt,arg)	do {		\
+	__ops_push_error(err,OPS_E_SYSTEM_ERROR,errno,__FILE__,__LINE__,sys);\
 	__ops_push_error(err,code,0,__FILE__,__LINE__,fmt,arg);		\
 } while(/*CONSTCOND*/0)
+
 #define OPS_MEMORY_ERROR(err) {						\
 	fprintf(stderr, "Memory error\n");				\
 }				/* \todo placeholder for better error

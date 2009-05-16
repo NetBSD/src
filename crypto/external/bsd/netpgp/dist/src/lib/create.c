@@ -51,6 +51,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: create.c,v 1.11 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -83,17 +92,18 @@
  * \ingroup Core_Create
  * \param length
  * \param type
- * \param info
+ * \param output
  * \return 1 if OK, otherwise 0
  */
 
 unsigned 
-__ops_write_ss_header(unsigned length, __ops_content_tag_t type,
-		    __ops_createinfo_t *info)
+__ops_write_ss_header(__ops_output_t *output,
+			unsigned length,
+			__ops_content_tag_t type)
 {
-	return __ops_write_length(length, info) &&
-		__ops_write_scalar((unsigned)(type -
-			OPS_PTAG_SIGNATURE_SUBPACKET_BASE), 1, info);
+	return __ops_write_length(output, length) &&
+		__ops_write_scalar(output, (unsigned)(type -
+			OPS_PTAG_SIGNATURE_SUBPACKET_BASE), 1);
 }
 
 /*
@@ -104,50 +114,49 @@ __ops_write_ss_header(unsigned length, __ops_content_tag_t type,
 /**
  * \ingroup Core_Create
  *
- * __ops_fast_create_user_id() sets id->user_id to the given user_id.
- * This is fast because it is only copying a char*. However, if user_id
+ * __ops_fast_create_userid() sets id->userid to the given userid.
+ * This is fast because it is only copying a char*. However, if userid
  * is changed or freed in the future, this could have injurious results.
  * \param id
- * \param user_id
+ * \param userid
  */
 
 void 
-__ops_fast_create_user_id(__ops_user_id_t * id, unsigned char *user_id)
+__ops_fast_create_userid(__ops_userid_t * id, unsigned char *userid)
 {
-	id->user_id = user_id;
+	id->userid = userid;
 }
 
 /**
  * \ingroup Core_WritePackets
  * \brief Writes a User Id packet
  * \param id
- * \param info
+ * \param output
  * \return 1 if OK, otherwise 0
  */
 unsigned 
-__ops_write_struct_user_id(__ops_user_id_t *id,
-			 __ops_createinfo_t *info)
+__ops_write_struct_userid(__ops_output_t *output, __ops_userid_t *id)
 {
-	return __ops_write_ptag(OPS_PTAG_CT_USER_ID, info) &&
-		__ops_write_length(strlen((char *) id->user_id), info) &&
-		__ops_write(id->user_id, strlen((char *) id->user_id), info);
+	return __ops_write_ptag(output, OPS_PTAG_CT_USER_ID) &&
+		__ops_write_length(output, strlen((char *) id->userid)) &&
+		__ops_write(output, id->userid, strlen((char *) id->userid));
 }
 
 /**
  * \ingroup Core_WritePackets
  * \brief Write a User Id packet.
- * \param user_id
- * \param info
+ * \param userid
+ * \param output
  *
- * \return return value from __ops_write_struct_user_id()
+ * \return return value from __ops_write_struct_userid()
  */
 unsigned 
-__ops_write_user_id(const unsigned char *user_id, __ops_createinfo_t *info)
+__ops_write_userid(const unsigned char *userid, __ops_output_t *output)
 {
-	__ops_user_id_t   id;
+	__ops_userid_t   id;
 
-	id.user_id = __UNCONST(user_id);
-	return __ops_write_struct_user_id(&id, info);
+	id.userid = __UNCONST(userid);
+	return __ops_write_struct_userid(output, &id);
 }
 
 /**
@@ -187,7 +196,7 @@ seckey_length(const __ops_seckey_t *key)
 		return len + pubkey_length(&key->pubkey);
 	default:
 		(void) fprintf(stderr,
-			"pubkey_length: unknown key algorithm\n");
+			"seckey_length: unknown key algorithm\n");
 	}
 	return 0;
 }
@@ -216,39 +225,39 @@ __ops_fast_create_rsa_pubkey(__ops_pubkey_t *key, time_t t,
  */
 static unsigned 
 write_pubkey_body(const __ops_pubkey_t * key,
-		      __ops_createinfo_t * info)
+		      __ops_output_t * output)
 {
-	if (!(__ops_write_scalar((unsigned)key->version, 1, info) &&
-	      __ops_write_scalar((unsigned)key->birthtime, 4, info))) {
+	if (!(__ops_write_scalar(output, (unsigned)key->version, 1) &&
+	      __ops_write_scalar(output, (unsigned)key->birthtime, 4))) {
 		return 0;
 	}
 
 	if (key->version != 4 &&
-	    !__ops_write_scalar(key->days_valid, 2, info)) {
+	    !__ops_write_scalar(output, key->days_valid, 2)) {
 		return 0;
 	}
 
-	if (!__ops_write_scalar((unsigned)key->alg, 1, info)) {
+	if (!__ops_write_scalar(output, (unsigned)key->alg, 1)) {
 		return 0;
 	}
 
 	switch (key->alg) {
 	case OPS_PKA_DSA:
-		return __ops_write_mpi(key->key.dsa.p, info) &&
-			__ops_write_mpi(key->key.dsa.q, info) &&
-			__ops_write_mpi(key->key.dsa.g, info) &&
-			__ops_write_mpi(key->key.dsa.y, info);
+		return __ops_write_mpi(output, key->key.dsa.p) &&
+			__ops_write_mpi(output, key->key.dsa.q) &&
+			__ops_write_mpi(output, key->key.dsa.g) &&
+			__ops_write_mpi(output, key->key.dsa.y);
 
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		return __ops_write_mpi(key->key.rsa.n, info) &&
-			__ops_write_mpi(key->key.rsa.e, info);
+		return __ops_write_mpi(output, key->key.rsa.n) &&
+			__ops_write_mpi(output, key->key.rsa.e);
 
 	case OPS_PKA_ELGAMAL:
-		return __ops_write_mpi(key->key.elgamal.p, info) &&
-			__ops_write_mpi(key->key.elgamal.g, info) &&
-			__ops_write_mpi(key->key.elgamal.y, info);
+		return __ops_write_mpi(output, key->key.elgamal.p) &&
+			__ops_write_mpi(output, key->key.elgamal.g) &&
+			__ops_write_mpi(output, key->key.elgamal.y);
 
 	default:
 		(void) fprintf(stderr,
@@ -259,14 +268,14 @@ write_pubkey_body(const __ops_pubkey_t * key,
 }
 
 /*
- * Note that we support v3 keys here because they're needed for for
+ * Note that we support v3 keys here because they're needed for
  * verification - the writer doesn't allow them, though
  */
 static unsigned 
 write_seckey_body(const __ops_seckey_t * key,
 		      const unsigned char *passphrase,
 		      const size_t pplen,
-		      __ops_createinfo_t * info)
+		      __ops_output_t * output)
 {
 	/* RFC4880 Section 5.5.3 Secret-Key Packet Formats */
 
@@ -277,14 +286,14 @@ write_seckey_body(const __ops_seckey_t * key,
 	unsigned int    done = 0;
 	unsigned int    i = 0;
 
-	if (!write_pubkey_body(&key->pubkey, info)) {
+	if (!write_pubkey_body(&key->pubkey, output)) {
 		return 0;
 	}
 	if (key->s2k_usage != OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		(void) fprintf(stderr, "write_seckey_body: s2k usage\n");
 		return 0;
 	}
-	if (!__ops_write_scalar((unsigned)key->s2k_usage, 1, info)) {
+	if (!__ops_write_scalar(output, (unsigned)key->s2k_usage, 1)) {
 		return 0;
 	}
 
@@ -292,7 +301,7 @@ write_seckey_body(const __ops_seckey_t * key,
 		(void) fprintf(stderr, "write_seckey_body: algorithm\n");
 		return 0;
 	}
-	if (!__ops_write_scalar((unsigned)key->alg, 1, info)) {
+	if (!__ops_write_scalar(output, (unsigned)key->alg, 1)) {
 		return 0;
 	}
 
@@ -302,7 +311,7 @@ write_seckey_body(const __ops_seckey_t * key,
 		(void) fprintf(stderr, "write_seckey_body: s2k spec\n");
 		return 0;
 	}
-	if (!__ops_write_scalar((unsigned)key->s2k_specifier, 1, info)) {
+	if (!__ops_write_scalar(output, (unsigned)key->s2k_specifier, 1)) {
 		return 0;
 	}
 
@@ -310,7 +319,7 @@ write_seckey_body(const __ops_seckey_t * key,
 		(void) fprintf(stderr, "write_seckey_body: hash alg\n");
 		return 0;
 	}
-	if (!__ops_write_scalar((unsigned)key->hash_alg, 1, info)) {
+	if (!__ops_write_scalar(output, (unsigned)key->hash_alg, 1)) {
 		return 0;
 	}
 
@@ -322,7 +331,7 @@ write_seckey_body(const __ops_seckey_t * key,
 	case OPS_S2KS_SALTED:
 		/* 8-octet salt value */
 		__ops_random(__UNCONST(&key->salt[0]), OPS_SALT_SIZE);
-		if (!__ops_write(key->salt, OPS_SALT_SIZE, info)) {
+		if (!__ops_write(output, key->salt, OPS_SALT_SIZE)) {
 			return 0;
 		}
 		break;
@@ -339,7 +348,7 @@ write_seckey_body(const __ops_seckey_t * key,
 		return 0;
 	}
 
-	if (!__ops_write(&key->iv[0], __ops_block_size(key->alg), info)) {
+	if (!__ops_write(output, &key->iv[0], __ops_block_size(key->alg))) {
 		return 0;
 	}
 
@@ -436,20 +445,20 @@ write_seckey_body(const __ops_seckey_t * key,
 
 		(void) fprintf(stderr, "turning encryption on...\n");
 	}
-	__ops_writer_push_encrypt_crypt(info, &crypted);
+	__ops_writer_push_encrypt_crypt(output, &crypted);
 
 	switch (key->pubkey.alg) {
 		/* case OPS_PKA_DSA: */
-		/* return __ops_write_mpi(key->key.dsa.x,info); */
+		/* return __ops_write_mpi(output, key->key.dsa.x); */
 
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
 
-		if (!__ops_write_mpi(key->key.rsa.d, info) ||
-		    !__ops_write_mpi(key->key.rsa.p, info) ||
-		    !__ops_write_mpi(key->key.rsa.q, info) ||
-		    !__ops_write_mpi(key->key.rsa.u, info)) {
+		if (!__ops_write_mpi(output, key->key.rsa.d) ||
+		    !__ops_write_mpi(output, key->key.rsa.p) ||
+		    !__ops_write_mpi(output, key->key.rsa.q) ||
+		    !__ops_write_mpi(output, key->key.rsa.u)) {
 			if (__ops_get_debug_level(__FILE__)) {
 				(void) fprintf(stderr,
 					"4 x mpi not written - problem\n");
@@ -459,19 +468,39 @@ write_seckey_body(const __ops_seckey_t * key,
 		break;
 
 		/* case OPS_PKA_ELGAMAL: */
-		/* return __ops_write_mpi(key->key.elgamal.x,info); */
+		/* return __ops_write_mpi(output, key->key.elgamal.x); */
 
 	default:
 		return 0;
 	}
 
-	if (!__ops_write(key->checkhash, OPS_CHECKHASH_SIZE, info)) {
+	if (!__ops_write(output, key->checkhash, OPS_CHECKHASH_SIZE)) {
 		return 0;
 	}
 
-	__ops_writer_pop(info);
+	__ops_writer_pop(output);
 
 	return 1;
+}
+
+/**
+ * \ingroup Core_WritePackets
+ * \brief Writes a Public Key packet
+ * \param key
+ * \param output
+ * \return 1 if OK, otherwise 0
+ */
+static unsigned 
+write_struct_pubkey(__ops_output_t *output, const __ops_pubkey_t *key)
+{
+	if (key->version != 4) {
+		(void) fprintf(stderr,
+			"write_struct_pubkey: wrong key version\n");
+		return 0;
+	}
+	return __ops_write_ptag(output, OPS_PTAG_CT_PUBLIC_KEY) &&
+		__ops_write_length(output, 1 + 4 + 1 + pubkey_length(key)) &&
+		write_pubkey_body(key, output);
 }
 
 
@@ -482,46 +511,44 @@ write_seckey_body(const __ops_seckey_t * key,
 
    \param keydata Key to be written
    \param armoured Flag is set for armoured output
-   \param info Output stream
+   \param output Output stream
 
 */
 
 unsigned 
-__ops_write_transferable_pubkey(const __ops_keydata_t * keydata, unsigned armoured, __ops_createinfo_t * info)
+__ops_write_transferable_pubkey(__ops_output_t *output,
+			const __ops_keydata_t *keydata,
+			unsigned armoured)
 {
-	unsigned   rtn;
 	unsigned int    i = 0, j = 0;
 
 	if (armoured) {
-		__ops_writer_push_armoured(info, OPS_PGP_PUBLIC_KEY_BLOCK);
+		__ops_writer_push_armoured(output, OPS_PGP_PUBLIC_KEY_BLOCK);
 	}
 	/* public key */
-	rtn = __ops_write_struct_pubkey(&keydata->key.seckey.pubkey, info);
-	if (rtn != 1) {
-		return rtn;
+	if (!write_struct_pubkey(output, &keydata->key.seckey.pubkey)) {
+		return 0;
 	}
 
 	/* TODO: revocation signatures go here */
 
 	/* user ids and corresponding signatures */
 	for (i = 0; i < keydata->nuids; i++) {
-		__ops_user_id_t  *uid = &keydata->uids[i];
+		__ops_userid_t  *uid = &keydata->uids[i];
 
-		rtn = __ops_write_struct_user_id(uid, info);
-		if (!rtn) {
-			return rtn;
+		if (!__ops_write_struct_userid(output, uid)) {
+			return 0;
 		}
 
 		/* find signature for this packet if it exists */
 		for (j = 0; j < keydata->nsigs; j++) {
 			sigpacket_t    *sig = &keydata->sigs[i];
 
-			if (strcmp((char *) sig->userid->user_id,
-					(char *) uid->user_id) == 0) {
-				rtn = __ops_write(sig->packet->raw,
-						sig->packet->length, info);
-				if (!rtn) {
-					return !rtn;
+			if (strcmp((char *) sig->userid->userid,
+					(char *) uid->userid) == 0) {
+				if (!__ops_write(output, sig->packet->raw,
+						sig->packet->length)) {
+					return 0;
 				}
 			}
 		}
@@ -535,10 +562,10 @@ __ops_write_transferable_pubkey(const __ops_keydata_t * keydata, unsigned armour
 	 */
 
 	if (armoured) {
-		writer_info_finalise(&info->errors, &info->winfo);
-		__ops_writer_pop(info);
+		writer_info_finalise(&output->errors, &output->writer);
+		__ops_writer_pop(output);
 	}
-	return rtn;
+	return 1;
 }
 
 /**
@@ -550,49 +577,47 @@ __ops_write_transferable_pubkey(const __ops_keydata_t * keydata, unsigned armour
    \param passphrase
    \param pplen
    \param armoured Flag is set for armoured output
-   \param info Output stream
+   \param output Output stream
 
 */
 
 unsigned 
-__ops_write_transferable_seckey(const __ops_keydata_t *keydata,
-	const unsigned char *passphrase, const size_t pplen,
-	unsigned armoured, __ops_createinfo_t * info)
+__ops_write_transferable_seckey(__ops_output_t *output,
+				const __ops_keydata_t *keydata,
+				const unsigned char *passphrase,
+				const size_t pplen,
+				unsigned armoured)
 {
 	unsigned	i = 0, j = 0;
-	unsigned		rtn;
 
 	if (armoured) {
-		__ops_writer_push_armoured(info, OPS_PGP_PRIVATE_KEY_BLOCK);
+		__ops_writer_push_armoured(output, OPS_PGP_PRIVATE_KEY_BLOCK);
 	}
 	/* public key */
-	rtn = __ops_write_struct_seckey(&keydata->key.seckey, passphrase,
-			pplen, info);
-	if (rtn != 1) {
-		return rtn;
+	if (!__ops_write_struct_seckey(&keydata->key.seckey, passphrase,
+			pplen, output)) {
+		return 0;
 	}
 
 	/* TODO: revocation signatures go here */
 
 	/* user ids and corresponding signatures */
 	for (i = 0; i < keydata->nuids; i++) {
-		__ops_user_id_t  *uid = &keydata->uids[i];
+		__ops_userid_t  *uid = &keydata->uids[i];
 
-		rtn = __ops_write_struct_user_id(uid, info);
-		if (!rtn) {
-			return rtn;
+		if (!__ops_write_struct_userid(output, uid)) {
+			return 0;
 		}
 
 		/* find signature for this packet if it exists */
 		for (j = 0; j < keydata->nsigs; j++) {
 			sigpacket_t    *sig = &keydata->sigs[i];
 
-			if (strcmp((char *) sig->userid->user_id,
-					(char *) uid->user_id) == 0) {
-				rtn = __ops_write(sig->packet->raw,
-						sig->packet->length, info);
-				if (!rtn) {
-					return !rtn;
+			if (strcmp((char *) sig->userid->userid,
+					(char *) uid->userid) == 0) {
+				if (!__ops_write(output, sig->packet->raw,
+						sig->packet->length)) {
+					return 0;
 				}
 			}
 		}
@@ -606,31 +631,10 @@ __ops_write_transferable_seckey(const __ops_keydata_t *keydata,
 	 */
 
 	if (armoured) {
-		writer_info_finalise(&info->errors, &info->winfo);
-		__ops_writer_pop(info);
+		writer_info_finalise(&output->errors, &output->writer);
+		__ops_writer_pop(output);
 	}
-	return rtn;
-}
-
-/**
- * \ingroup Core_WritePackets
- * \brief Writes a Public Key packet
- * \param key
- * \param info
- * \return 1 if OK, otherwise 0
- */
-unsigned 
-__ops_write_struct_pubkey(const __ops_pubkey_t * key,
-			    __ops_createinfo_t * info)
-{
-	if (key->version != 4) {
-		(void) fprintf(stderr,
-			"__ops_write_struct_pubkey: wrong key version\n");
-		return 0;
-	}
-	return __ops_write_ptag(OPS_PTAG_CT_PUBLIC_KEY, info) &&
-		__ops_write_length(1 + 4 + 1 + pubkey_length(key), info) &&
-		write_pubkey_body(key, info);
+	return 1;
 }
 
 /**
@@ -639,7 +643,7 @@ __ops_write_struct_pubkey(const __ops_pubkey_t * key,
  * \param t Creation time
  * \param n RSA public modulus
  * \param e RSA public encryption exponent
- * \param info Writer settings
+ * \param output Writer settings
  *
  * \return 1 if OK, otherwise 0
  */
@@ -647,12 +651,12 @@ __ops_write_struct_pubkey(const __ops_pubkey_t * key,
 unsigned 
 __ops_write_rsa_pubkey(time_t t, const BIGNUM * n,
 			 const BIGNUM * e,
-			 __ops_createinfo_t * info)
+			 __ops_output_t * output)
 {
 	__ops_pubkey_t key;
 
 	__ops_fast_create_rsa_pubkey(&key, t, __UNCONST(n), __UNCONST(e));
-	return __ops_write_struct_pubkey(&key, info);
+	return write_struct_pubkey(output, &key);
 }
 
 /**
@@ -663,19 +667,19 @@ __ops_write_rsa_pubkey(time_t t, const BIGNUM * n,
  */
 
 void 
-__ops_build_pubkey(__ops_memory_t * out, const __ops_pubkey_t * key,
+__ops_build_pubkey(__ops_memory_t *out, const __ops_pubkey_t *key,
 		     unsigned make_packet)
 {
-	__ops_createinfo_t *info;
+	__ops_output_t *output;
 
-	info = __ops_createinfo_new();
+	output = __ops_output_new();
 	__ops_memory_init(out, 128);
-	__ops_writer_set_memory(info, out);
-	write_pubkey_body(key, info);
+	__ops_writer_set_memory(output, out);
+	write_pubkey_body(key, output);
 	if (make_packet) {
 		__ops_memory_make_packet(out, OPS_PTAG_CT_PUBLIC_KEY);
 	}
-	__ops_createinfo_delete(info);
+	__ops_output_delete(output);
 }
 
 /**
@@ -721,14 +725,14 @@ __ops_fast_create_rsa_seckey(__ops_seckey_t * key, time_t t,
  * \param key The secret key
  * \param passphrase The passphrase
  * \param pplen Length of passphrase
- * \param info
+ * \param output
  * \return 1 if OK; else 0
  */
 unsigned 
 __ops_write_struct_seckey(const __ops_seckey_t * key,
 			    const unsigned char *passphrase,
 			    const size_t pplen,
-			    __ops_createinfo_t * info)
+			    __ops_output_t * output)
 {
 	int             length = 0;
 
@@ -808,41 +812,41 @@ __ops_write_struct_seckey(const __ops_seckey_t * key,
 	/* secret key and public key MPIs */
 	length += seckey_length(key);
 
-	return __ops_write_ptag(OPS_PTAG_CT_SECRET_KEY, info) &&
-		/* __ops_write_length(1+4+1+1+seckey_length(key)+2,info) && */
-		__ops_write_length((unsigned)length, info) &&
-		write_seckey_body(key, passphrase, pplen, info);
+	return __ops_write_ptag(output, OPS_PTAG_CT_SECRET_KEY) &&
+		/* __ops_write_length(output,1+4+1+1+seckey_length(key)+2) && */
+		__ops_write_length(output, (unsigned)length) &&
+		write_seckey_body(key, passphrase, pplen, output);
 }
 
 /**
  * \ingroup Core_Create
  *
- * \brief Create a new __ops_createinfo_t structure.
+ * \brief Create a new __ops_output_t structure.
  *
  * \return the new structure.
- * \note It is the responsiblity of the caller to call __ops_createinfo_delete().
- * \sa __ops_createinfo_delete()
+ * \note It is the responsiblity of the caller to call __ops_output_delete().
+ * \sa __ops_output_delete()
  */
-__ops_createinfo_t *
-__ops_createinfo_new(void)
+__ops_output_t *
+__ops_output_new(void)
 {
-	return calloc(1, sizeof(__ops_createinfo_t));
+	return calloc(1, sizeof(__ops_output_t));
 }
 
 /**
  * \ingroup Core_Create
- * \brief Delete an __ops_createinfo_t strucut and associated resources.
+ * \brief Delete an __ops_output_t strucut and associated resources.
  *
- * Delete an __ops_createinfo_t structure. If a writer is active, then
+ * Delete an __ops_output_t structure. If a writer is active, then
  * that is also deleted.
  *
  * \param info the structure to be deleted.
  */
 void 
-__ops_createinfo_delete(__ops_createinfo_t * info)
+__ops_output_delete(__ops_output_t *output)
 {
-	writer_info_delete(&info->winfo);
-	(void) free(info);
+	writer_info_delete(&output->writer);
+	(void) free(output);
 }
 
 /**
@@ -988,10 +992,10 @@ __ops_create_pk_sesskey(const __ops_keydata_t * key)
          * can be any, we're hardcoding RSA for now
          */
 
-	const __ops_pubkey_t *pub_key = __ops_get_pubkey(key);
+	const __ops_pubkey_t *pubkey = __ops_get_pubkey(key);
 #define SZ_UNENCODED_M_BUF CAST_KEY_LENGTH+1+2
 	unsigned char   unencoded_m_buf[SZ_UNENCODED_M_BUF];
-	const size_t    sz_encoded_m_buf = BN_num_bytes(pub_key->key.rsa.n);
+	const size_t    sz_encoded_m_buf = BN_num_bytes(pubkey->key.rsa.n);
 	unsigned char  *encoded_m_buf = calloc(1, sz_encoded_m_buf);
 
 	__ops_pk_sesskey_t *sesskey = calloc(1, sizeof(*sesskey));
@@ -1048,11 +1052,11 @@ __ops_create_pk_sesskey(const __ops_keydata_t * key)
 		}
 		printf("\n");
 	}
-	encode_m_buf(&unencoded_m_buf[0], SZ_UNENCODED_M_BUF, pub_key,
+	encode_m_buf(&unencoded_m_buf[0], SZ_UNENCODED_M_BUF, pubkey,
 			&encoded_m_buf[0]);
 
 	/* and encrypt it */
-	if (!__ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pub_key,
+	if (!__ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pubkey,
 			&sesskey->parameters)) {
 		(void) free(encoded_m_buf);
 		return NULL;
@@ -1069,8 +1073,7 @@ __ops_create_pk_sesskey(const __ops_keydata_t * key)
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_write_pk_sesskey(__ops_createinfo_t * info,
-			 __ops_pk_sesskey_t * pksk)
+__ops_write_pk_sesskey(__ops_output_t *output, __ops_pk_sesskey_t *pksk)
 {
 	if (pksk == NULL) {
 		(void) fprintf(stderr,
@@ -1083,13 +1086,14 @@ __ops_write_pk_sesskey(__ops_createinfo_t * info,
 		return 0;
 	}
 
-	return __ops_write_ptag(OPS_PTAG_CT_PK_SESSION_KEY, info) &&
-		__ops_write_length((unsigned)(1 + 8 + 1 + BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2), info) &&
-		__ops_write_scalar((unsigned)pksk->version, 1, info) &&
-		__ops_write(pksk->key_id, 8, info) &&
-		__ops_write_scalar((unsigned)pksk->alg, 1, info) &&
-		__ops_write_mpi(pksk->parameters.rsa.encrypted_m, info)
-	/* ??	&& __ops_write_scalar(0, 2, info); */
+	return __ops_write_ptag(output, OPS_PTAG_CT_PK_SESSION_KEY) &&
+		__ops_write_length(output, (unsigned)(1 + 8 + 1 +
+			BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2)) &&
+		__ops_write_scalar(output, (unsigned)pksk->version, 1) &&
+		__ops_write(output, pksk->key_id, 8) &&
+		__ops_write_scalar(output, (unsigned)pksk->alg, 1) &&
+		__ops_write_mpi(output, pksk->parameters.rsa.encrypted_m)
+	/* ??	&& __ops_write_scalar(output, 0, 2); */
 		;
 }
 
@@ -1097,17 +1101,17 @@ __ops_write_pk_sesskey(__ops_createinfo_t * info,
 \ingroup Core_WritePackets
 \brief Writes MDC packet
 \param hashed Hash for MDC
-\param info Write settings
+\param output Write settings
 \return 1 if OK; else 0
 */
 
 unsigned 
-__ops_write_mdc(const unsigned char *hashed, __ops_createinfo_t *info)
+__ops_write_mdc(const unsigned char *hashed, __ops_output_t *output)
 {
 	/* write it out */
-	return __ops_write_ptag(OPS_PTAG_CT_MDC, info) &&
-		__ops_write_length(OPS_SHA1_HASH_SIZE, info) &&
-		__ops_write(hashed, OPS_SHA1_HASH_SIZE, info);
+	return __ops_write_ptag(output, OPS_PTAG_CT_MDC) &&
+		__ops_write_length(output, OPS_SHA1_HASH_SIZE) &&
+		__ops_write(output, hashed, OPS_SHA1_HASH_SIZE);
 }
 
 /**
@@ -1116,14 +1120,14 @@ __ops_write_mdc(const unsigned char *hashed, __ops_createinfo_t *info)
 \param data Buffer to write out
 \param maxlen Max length of buffer
 \param type Literal Data Type
-\param info Write settings
+\param output Write settings
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_write_litdata(const unsigned char *data,
-				const int maxlen,
-				const __ops_litdata_type_t type,
-				__ops_createinfo_t * info)
+__ops_write_litdata(__ops_output_t * output,
+			const unsigned char *data,
+			const int maxlen,
+			const __ops_litdata_type_t type)
 {
 	/*
          * RFC4880 does not specify a meaning for filename or date.
@@ -1131,12 +1135,12 @@ __ops_write_litdata(const unsigned char *data,
          * We will not implement them.
          */
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
-	return __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info) &&
-		__ops_write_length((unsigned)(1 + 1 + 4 + maxlen), info) &&
-		__ops_write_scalar((unsigned)type, 1, info) &&
-		__ops_write_scalar(0, 1, info) &&
-		__ops_write_scalar(0, 4, info) &&
-		__ops_write(data, (unsigned)maxlen, info);
+	return __ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA) &&
+		__ops_write_length(output, (unsigned)(1 + 1 + 4 + maxlen)) &&
+		__ops_write_scalar(output, (unsigned)type, 1) &&
+		__ops_write_scalar(output, 0, 1) &&
+		__ops_write_scalar(output, 0, 4) &&
+		__ops_write(output, data, (unsigned)maxlen);
 }
 
 /**
@@ -1144,14 +1148,14 @@ __ops_write_litdata(const unsigned char *data,
 \brief Writes Literal Data packet from contents of file
 \param filename Name of file to read from
 \param type Literal Data Type
-\param info Write settings
+\param output Write settings
 \return 1 if OK; else 0
 */
 
 unsigned 
 __ops_fileread_litdata(const char *filename,
 				 const __ops_litdata_type_t type,
-				 __ops_createinfo_t * info)
+				 __ops_output_t * output)
 {
 	unsigned char    buf[1024];
 	unsigned char	*mmapped;
@@ -1159,7 +1163,7 @@ __ops_fileread_litdata(const char *filename,
 	struct stat	 st;
 	size_t           len = 0;
 	int              fd = 0;
-	unsigned   		 rtn;
+	unsigned   	 ret;
 
 #ifdef O_BINARY
 	fd = open(filename, O_RDONLY | O_BINARY);
@@ -1192,13 +1196,13 @@ __ops_fileread_litdata(const char *filename,
 	(void) close(fd);
 
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
-	len = __ops_memory_get_length(mem);
-	rtn = __ops_write_ptag(OPS_PTAG_CT_LITERAL_DATA, info) &&
-		__ops_write_length(1 + 1 + 4 + len, info) &&
-		__ops_write_scalar((unsigned)type, 1, info) &&
-		__ops_write_scalar(0, 1, info)	/* filename */ &&
-		__ops_write_scalar(0, 4, info)	/* date */ &&
-		__ops_write(__ops_memory_get_data(mem), len, info);
+	len = __ops_mem_len(mem);
+	ret = __ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA) &&
+		__ops_write_length(output, 1 + 1 + 4 + len) &&
+		__ops_write_scalar(output, (unsigned)type, 1) &&
+		__ops_write_scalar(output, 0, 1)	/* filename */ &&
+		__ops_write_scalar(output, 0, 4)	/* date */ &&
+		__ops_write(output, __ops_mem_data(mem), len);
 
 #ifdef USE_MMAP_FOR_FILES
 	if (mmapped != MAP_FAILED) {
@@ -1209,7 +1213,7 @@ __ops_fileread_litdata(const char *filename,
 	if (mmapped == NULL) {
 		__ops_memory_free(mem);
 	}
-	return rtn;
+	return ret;
 }
 
 /**
@@ -1308,14 +1312,14 @@ __ops_filewrite(const char *filename, const char *buf,
 \brief Write Symmetrically Encrypted packet
 \param data Data to encrypt
 \param len Length of data
-\param info Write settings
+\param output Write settings
 \return 1 if OK; else 0
 \note Hard-coded to use AES256
 */
 unsigned 
 __ops_write_symm_enc_data(const unsigned char *data,
 				       const int len,
-				       __ops_createinfo_t * info)
+				       __ops_output_t * output)
 {
 			/* buffer to write encrypted data to */
 	unsigned char  *encrypted = (unsigned char *) NULL;
@@ -1333,13 +1337,13 @@ __ops_write_symm_enc_data(const unsigned char *data,
 	done = __ops_encrypt_se(&crypt_info, encrypted, data, (unsigned)len);
 	if (done != len) {
 		(void) fprintf(stderr,
-"__ops_write_symm_enc_data: done != len\n");
+			"__ops_write_symm_enc_data: done != len\n");
 		return 0;
 	}
 
-	return __ops_write_ptag(OPS_PTAG_CT_SE_DATA, info) &&
-		__ops_write_length(1 + encrypted_sz, info) &&
-		__ops_write(data, (unsigned)len, info);
+	return __ops_write_ptag(output, OPS_PTAG_CT_SE_DATA) &&
+		__ops_write_length(output, 1 + encrypted_sz) &&
+		__ops_write(output, data, (unsigned)len);
 }
 
 /**
@@ -1348,28 +1352,24 @@ __ops_write_symm_enc_data(const unsigned char *data,
 \param seckey Secret Key to use
 \param hash_alg Hash Algorithm to use
 \param sig_type Signature type
-\param info Write settings
+\param output Write settings
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_write_one_pass_sig(const __ops_seckey_t * seckey,
-		       const __ops_hash_alg_t hash_alg,
-		       const __ops_sig_type_t sig_type,
-		       __ops_createinfo_t * info)
+__ops_write_one_pass_sig(__ops_output_t *output, 
+			const __ops_seckey_t *seckey,
+			const __ops_hash_alg_t hash_alg,
+			const __ops_sig_type_t sig_type)
 {
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
 
-	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "calling __ops_keyid in write_one_pass_sig: this calls sha1_init\n");
-	}
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
-
-	return __ops_write_ptag(OPS_PTAG_CT_ONE_PASS_SIGNATURE, info) &&
-		__ops_write_length(1 + 1 + 1 + 1 + 8 + 1, info) &&
-		__ops_write_scalar(3, 1, info)	/* version */ &&
-		__ops_write_scalar((unsigned)sig_type, 1, info) &&
-		__ops_write_scalar((unsigned)hash_alg, 1, info) &&
-		__ops_write_scalar((unsigned)seckey->pubkey.alg, 1, info) &&
-		__ops_write(keyid, 8, info) &&
-		__ops_write_scalar(1, 1, info);
+	return __ops_write_ptag(output, OPS_PTAG_CT_ONE_PASS_SIGNATURE) &&
+		__ops_write_length(output, 1 + 1 + 1 + 1 + 8 + 1) &&
+		__ops_write_scalar(output, 3, 1)	/* version */ &&
+		__ops_write_scalar(output, (unsigned)sig_type, 1) &&
+		__ops_write_scalar(output, (unsigned)hash_alg, 1) &&
+		__ops_write_scalar(output, (unsigned)seckey->pubkey.alg, 1) &&
+		__ops_write(output, keyid, 8) &&
+		__ops_write_scalar(output, 1, 1);
 }

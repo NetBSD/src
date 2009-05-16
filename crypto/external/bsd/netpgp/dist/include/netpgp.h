@@ -37,10 +37,12 @@ typedef struct netpgp_t {
 	char	*secringfile;	/* name of secret key ring file */
 	void	*secring;	/* secret key ring */
 	char	*hashalg;	/* hash algorithm to use */
+	char	*verbose;	/* lippiness */
 } netpgp_t;
 
 /* begin and end */
-int netpgp_init(netpgp_t *, char *, char *, char *);	/* userid, pubring, secring */
+int netpgp_init(netpgp_t *, char *, char *, char *);
+			/* userid, pubring, secring */
 int netpgp_end(netpgp_t *);
 
 /* debugging, reflection and information */

@@ -51,6 +51,15 @@
  */
 #include "config.h"
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+#if defined(__NetBSD__)
+__COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
+__RCSID("$NetBSD: misc.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+#endif
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,17 +95,20 @@ typedef struct {
 /**
  * \ingroup Core_Callbacks
  */
-static          __ops_parse_cb_return_t
-accumulate_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
+static __ops_parse_cb_return_t
+accumulate_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	accumulate_t *accumulate = __ops_parse_cb_get_arg(cbinfo);
-	const __ops_parser_content_union_t *content = &pkt->u;
-	__ops_keyring_t  *keyring = accumulate->keyring;
-	__ops_keydata_t  *cur = NULL;
-	const __ops_pubkey_t *pubkey;
+	const __ops_parser_content_union_t	*content = &pkt->u;
+	const __ops_pubkey_t			*pubkey;
+	__ops_keyring_t				*keyring;
+	__ops_keydata_t				*keydata = NULL;
+	accumulate_t				*accumulate;
 
-	if (keyring->nkeys >= 0)
-		cur = &keyring->keys[keyring->nkeys];
+	accumulate = __ops_parse_cb_get_arg(cbinfo);
+	keyring = accumulate->keyring;
+	if (keyring->nkeys >= 0) {
+		keydata = &keyring->keys[keyring->nkeys];
+	}
 
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
@@ -105,60 +117,52 @@ accumulate_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "New key - tag %d\n", pkt->tag);
 		}
-		++keyring->nkeys;
+		keyring->nkeys += 1;
 		EXPAND_ARRAY(keyring, keys);
 
-		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
-			pubkey = &content->pubkey;
-		else
-			pubkey = &content->seckey.pubkey;
+		pubkey = (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
+					&content->pubkey :
+					&content->seckey.pubkey;
 
-		(void) memset(&keyring->keys[keyring->nkeys], 0x0,
-		       sizeof(keyring->keys[keyring->nkeys]));
-
-		__ops_keyid(keyring->keys[keyring->nkeys].key_id,
-				OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, pubkey);
-		__ops_fingerprint(&keyring->keys[keyring->nkeys].fingerprint,
-				pubkey);
-
-		keyring->keys[keyring->nkeys].type = pkt->tag;
-
-		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY)
-			keyring->keys[keyring->nkeys].key.pubkey = *pubkey;
-		else
-			keyring->keys[keyring->nkeys].key.seckey =
-							content->seckey;
+		keydata = &keyring->keys[keyring->nkeys];
+		(void) memset(keydata, 0x0, sizeof(*keydata));
+		__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
+					pubkey);
+		__ops_fingerprint(&keydata->fingerprint, pubkey);
+		keydata->type = pkt->tag;
+		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) {
+			keydata->key.pubkey = *pubkey;
+		} else {
+			keydata->key.seckey = content->seckey;
+		}
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "User ID: %s\n",
-					content->user_id.user_id);
+					content->userid.userid);
 		}
-		if (!cur) {
-			OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID,
-					"No user id found");
+		if (keydata) {
+			__ops_add_userid(keydata, &content->userid);
 			return OPS_KEEP_MEMORY;
 		}
-		__ops_add_userid_to_keydata(cur, &content->user_id);
+		OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No userid found");
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_PACKET_END:
-		if (!cur)
-			return OPS_RELEASE_MEMORY;
-		__ops_add_packet_to_keydata(cur, &content->packet);
-		return OPS_KEEP_MEMORY;
+		if (keydata) {
+			__ops_add_subpacket(keydata, &content->packet);
+			return OPS_KEEP_MEMORY;
+		}
+		return OPS_RELEASE_MEMORY;
 
 	case OPS_PARSER_ERROR:
 		(void) fprintf(stderr, "Error: %s\n", content->error.error);
 		return OPS_FINISHED;
 
 	case OPS_PARSER_ERRCODE:
-		switch (content->errcode.errcode) {
-		default:
-			fprintf(stderr, "parse error: %s\n",
+		(void) fprintf(stderr, "parse error: %s\n",
 				__ops_errcode(content->errcode.errcode));
-		}
 		break;
 
 	default:
@@ -185,7 +189,7 @@ int
 __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 {
 	accumulate_t	accumulate;
-	int             rtn;
+	int             ret;
 
 	if (parse->readinfo.accumulate) {
 		(void) fprintf(stderr,
@@ -201,11 +205,11 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 
 	__ops_parse_cb_push(parse, accumulate_cb, &accumulate);
 	parse->readinfo.accumulate = 1;
-	rtn = __ops_parse(parse, 0);
+	ret = __ops_parse(parse, 0);
 
 	keyring->nkeys += 1;
 
-	return rtn;
+	return ret;
 }
 
 static void 
@@ -221,7 +225,7 @@ dump_one_keydata(const __ops_keydata_t * key)
 
 	printf("\n\nUIDs\n====\n\n");
 	for (n = 0; n < key->nuids; ++n)
-		printf("%s\n", key->uids[n].user_id);
+		printf("%s\n", key->uids[n].userid);
 
 	printf("\nPackets\n=======\n");
 	for (n = 0; n < key->npackets; ++n) {
@@ -487,11 +491,11 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 		__ops_hash_sha1(&sha1);
 		sha1.init(&sha1);
 
-		len = __ops_memory_get_length(mem);
+		len = __ops_mem_len(mem);
 
 		__ops_hash_add_int(&sha1, 0x99, 1);
 		__ops_hash_add_int(&sha1, len, 2);
-		sha1.add(&sha1, __ops_memory_get_data(mem), len);
+		sha1.add(&sha1, __ops_mem_data(mem), len);
 		sha1.finish(&sha1, fp->fingerprint);
 
 		if (__ops_get_debug_level(__FILE__)) {
@@ -552,10 +556,10 @@ void
 __ops_hash_add_int(__ops_hash_t * hash, unsigned n, unsigned length)
 {
 	while (length--) {
-		unsigned char   c[1];
+		unsigned char   c;
 
-		c[0] = n >> (length * 8);
-		hash->add(hash, c, 1);
+		c = n >> (length * 8);
+		hash->add(hash, &c, 1);
 	}
 }
 
@@ -702,7 +706,7 @@ __ops_calc_mdc_hash(const unsigned char *preamble,
 			const unsigned int sz_plaintext,
 			unsigned char *hashed)
 {
-	unsigned char	c[1];
+	unsigned char	c;
 	__ops_hash_t	hash;
 
 	if (__ops_get_debug_level(__FILE__)) {
@@ -727,11 +731,11 @@ __ops_calc_mdc_hash(const unsigned char *preamble,
 	/* plaintext */
 	hash.add(&hash, plaintext, sz_plaintext);
 	/* MDC packet tag */
-	c[0] = 0xD3;
-	hash.add(&hash, &c[0], 1);
+	c = 0xD3;
+	hash.add(&hash, &c, 1);
 	/* MDC packet len */
-	c[0] = OPS_SHA1_HASH_SIZE;
-	hash.add(&hash, &c[0], 1);
+	c = OPS_SHA1_HASH_SIZE;
+	hash.add(&hash, &c, 1);
 
 	/* finish */
 	hash.finish(&hash, hashed);
@@ -939,7 +943,7 @@ __ops_memory_free(__ops_memory_t * mem)
    \return Number of bytes in data
 */
 size_t 
-__ops_memory_get_length(const __ops_memory_t * mem)
+__ops_mem_len(const __ops_memory_t * mem)
 {
 	return mem->length;
 }
@@ -949,15 +953,15 @@ __ops_memory_get_length(const __ops_memory_t * mem)
    \brief Get data stored in __ops_memory_t struct
    \return Pointer to data
 */
-void           *
-__ops_memory_get_data(__ops_memory_t * mem)
+void *
+__ops_mem_data(__ops_memory_t *mem)
 {
 	return mem->buf;
 }
 
 typedef struct {
 	unsigned short  sum;
-}               sum16_t;
+} sum16_t;
 
 
 /**
