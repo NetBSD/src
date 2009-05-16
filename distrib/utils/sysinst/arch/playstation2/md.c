@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2008/10/07 09:58:15 abs Exp $ */
+/*	$NetBSD: md.c,v 1.23 2009/05/16 10:40:17 nonaka Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,8 @@
 int
 md_get_info()
 {
-	int cyl, head, sec;
+	int cyl, head;
+	daddr_t sec;
 
 	read_mbr(diskdev, &mbr);
 

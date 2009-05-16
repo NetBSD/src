@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2009/04/22 17:21:47 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2009/05/16 10:40:17 nonaka Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -175,7 +175,8 @@ int
 md_bios_info(dev)
 	char *dev;
 {
-	int cyl, head, sec;
+	int cyl, head;
+	daddr_t sec;
 
 	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
 	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
