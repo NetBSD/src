@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.30 2009/05/15 17:55:44 tsutsui Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.31 2009/05/16 03:57:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.30 2009/05/15 17:55:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.31 2009/05/16 03:57:57 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ static const struct siop_product_desc siop_products[] = {
 };
 
 const struct siop_product_desc *
-siop_lookup_product(u_int32_t id, int rev)
+siop_lookup_product(uint32_t id, int rev)
 {
 	const struct siop_product_desc *pp;
 	const struct siop_product_desc *rp = NULL;
@@ -299,7 +299,8 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 		siop_sc->sc_rh = ioh;
 		siop_sc->sc_raddr = ioaddr;
 	} else {
-		aprint_error_dev(siop_sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(siop_sc->sc_dev,
+		    "unable to map device registers\n");
 		return 0;
 	}
 
@@ -313,16 +314,19 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 			bar = 0x1c;
 			break;
 		default:
-			aprint_error_dev(siop_sc->sc_dev, "invalid memory type %d\n",
+			aprint_error_dev(siop_sc->sc_dev,
+			    "invalid memory type %d\n",
 			    memtype);
 			return 0;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &siop_sc->sc_ramt, &siop_sc->sc_ramh,
 		    &siop_sc->sc_scriptaddr, NULL) == 0) {
-			aprint_normal_dev(siop_sc->sc_dev, "using on-board RAM\n");
+			aprint_normal_dev(siop_sc->sc_dev,
+			    "using on-board RAM\n");
 		} else {
-			aprint_error_dev(siop_sc->sc_dev, "can't map on-board RAM\n");
+			aprint_error_dev(siop_sc->sc_dev,
+			    "can't map on-board RAM\n");
 			siop_sc->features &= ~SF_CHIP_RAM;
 		}
 	}
@@ -338,7 +342,8 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 		aprint_normal_dev(siop_sc->sc_dev, "interrupting at %s\n",
 		    intrstr ? intrstr : "unknown interrupt");
 	} else {
-		aprint_error_dev(siop_sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(siop_sc->sc_dev,
+		    "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
