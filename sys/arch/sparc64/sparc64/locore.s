@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.288 2008/12/15 06:44:56 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.289 2009/05/16 19:19:04 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4936,10 +4936,9 @@ ENTRY_NOPROFILE(print_itlb)
 	.align	8
 start:
 dostart:
-	wrpr	%g0, 0, %tick	! XXXXXXX clear %tick register for now
 	mov	1, %g1
 	sllx	%g1, 63, %g1
-	wr	%g1, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr as well
+	wr	%g1, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr for now
 	/*
 	 * Startup.
 	 *
@@ -5182,7 +5181,6 @@ ENTRY(cpu_mp_startup)
 	mov	1, %o0
 	sllx	%o0, 63, %o0
 	wr	%o0, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr for now
-	wrpr	%g0, 0, %tick	! XXXXXXX clear %tick register as well
 	wrpr    %g0, 0, %cleanwin
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 	wrpr	%g0, WSTATE_KERN, %wstate
