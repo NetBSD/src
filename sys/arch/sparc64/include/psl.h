@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.40 2008/03/02 15:07:02 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.41 2009/05/16 19:15:34 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,13 +251,44 @@
 /*
  * Inlines for manipulating privileged registers
  */
+static __inline uint64_t
+gettick(void)
+{
+#ifdef __arch64__
+	uint64_t tick;
+
+	__asm volatile("rdpr %%tick, %0" : "=r" (tick));
+	return tick;
+#else
+	uint32_t tick_hi, tick_lo;
+
+	__asm volatile("rdpr %%tick, %0; srl %0,0,%1; srlx %0,32,%0"
+		: "=r" (tick_hi), "=r" (tick_lo));
+	return ((uint64_t)tick_hi << 32) | tick_lo;
+#endif
+}
+
+static __inline void
+settick(uint64_t newtick)
+{
+#ifdef __arch64__
+	__asm volatile("wrpr %0, 0, %%tick" : : "r" (newtick) : "memory");
+#else
+	uint32_t tick_hi = newtick >> 32, tick_lo = newtick;
+
+	__asm volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0, 0, %%tick"
+		       : "=&r" (tick_hi) /* scratch register */
+		       : "r" (tick_hi), "r" (tick_lo) : "memory");
+#endif
+}
+
 static __inline int
 getpstate(void)
 {
 	int pstate;
 
 	__asm volatile("rdpr %%pstate,%0" : "=r" (pstate));
-	return (pstate);
+	return pstate;
 }
 
 static __inline void
@@ -267,12 +298,21 @@ setpstate(int newpstate)
 }
 
 static __inline int
+gettl(void)
+{
+	int tl;
+
+	__asm volatile("rdpr %%tl, %0" : "=r" (tl));
+	return tl;
+}
+
+static __inline int
 getcwp(void)
 {
 	int cwp;
 
 	__asm volatile("rdpr %%cwp,%0" : "=r" (cwp));
-	return (cwp);
+	return cwp;
 }
 
 static __inline void
@@ -284,10 +324,18 @@ setcwp(int newcwp)
 static __inline uint64_t
 getver(void)
 {
+#ifdef __arch64__
 	uint64_t ver;
 
 	__asm volatile("rdpr %%ver,%0" : "=r" (ver));
-	return (ver);
+	return ver;
+#else
+	uint32_t ver_hi, ver_lo;
+
+	__asm volatile("rdpr %%ver,%0; srl %0,0,%1; srlx %0,32,%0"
+		       : "=r" (ver_hi), "=r" (ver_lo));
+	return (uint64_t)ver_hi << 32 | ver_lo;
+#endif
 }
 
 static __inline int
@@ -296,7 +344,7 @@ intr_disable(void)
 	int pstate = getpstate();
 
 	setpstate(pstate & ~PSTATE_IE);
-	return (pstate);
+	return pstate;
 }
 
 static __inline void
@@ -388,10 +436,10 @@ splraiseipl(ipl_cookie_t icookie)
 	 * NetBSD/sparc64's IPL_* constants equate directly to the
 	 * corresponding PIL_* names; no need to map them here.
 	 */
-	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil));
+	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil));
 	if (newpil <= oldpil)
 		return (oldpil);
-	__asm __volatile("wrpr %0,0,%%pil" : : "r" (newpil) : "memory");
+	__asm volatile("wrpr %0,0,%%pil" : : "r" (newpil) : "memory");
 	return (oldpil);
 }
 

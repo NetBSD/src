@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.44 2007/03/31 13:04:21 hannken Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.45 2009/05/16 19:15:34 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1159,24 +1159,6 @@ casxa(paddr_t loc, int asi, uint64_t value, uint64_t oldvalue)
 #define membar_load() __asm volatile("membar #LoadLoad | #LoadStore" : :)
 #define membar_store() __asm volatile("membar #LoadStore | #StoreStore" : :)
 
-#ifdef __arch64__
-/* read 64-bit %tick register */
-#define	tick() ({ \
-	register u_long _tick_tmp; \
-	__asm volatile("rdpr %%tick, %0" : "=r" (_tick_tmp) :); \
-	_tick_tmp; \
-})
-#else
-/* read 64-bit %tick register on 32-bit system */
-#define	tick() ({ \
-	register u_int _tick_hi = 0, _tick_lo = 0; \
-	__asm volatile("rdpr %%tick, %0; srl %0,0,%1; srlx %0,32,%0 " \
-		: "=r" (_tick_hi), "=r" (_tick_lo) : ); \
-	(((uint64_t)_tick_hi)<<32)|((uint64_t)_tick_lo); \
-})
-#endif
-
-extern void next_tick(long);
 #endif
 
 #endif /* _SPARC_CTLREG_H_ */

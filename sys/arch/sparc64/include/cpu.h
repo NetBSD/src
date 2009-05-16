@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84 2008/10/05 01:53:05 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.85 2009/05/16 19:15:34 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -343,6 +343,7 @@ struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
 void	switchtoctx(int);
+void	next_tick(long);
 /* trap.c */
 void	kill_user_windows(struct lwp *);
 int	rwindow_save(struct lwp *);
