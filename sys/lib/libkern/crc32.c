@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.4.8.2 2009/05/13 17:22:15 jym Exp $	*/
+/*	$NetBSD: crc32.c,v 1.4.8.3 2009/05/16 01:25:32 jym Exp $	*/
 
 /* crc32.c -- compute the CRC-32 of a data stream
  *
@@ -19,8 +19,6 @@
 #include <sys/param.h>
 #include <machine/endian.h>
 
-#define z_ptrdiff_t int32_t
-
 typedef uint32_t u4;
 
 /* Definitions for doing the crc four data bytes at a time. */
@@ -30,6 +28,7 @@ typedef uint32_t u4;
 /* ========================================================================
  * Tables of CRC-32s of all single-byte values, made by make_crc_table().
  */
+#include <lib/libkern/libkern.h>
 #include "crc32.h"
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -40,10 +39,7 @@ typedef uint32_t u4;
 #define DOLIT32 DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4; DOLIT4
 
 /* ========================================================================= */
-uint32_t crc32(
-    uint32_t crc,
-    const unsigned char *buf,
-    unsigned len)
+uint32_t crc32(uint32_t crc, const uint8_t *buf, size_t len)
 {
     register u4 c;
     register const u4 *buf4;
@@ -52,7 +48,7 @@ uint32_t crc32(
 
     c = (u4)crc;
     c = ~c;
-    while (len && ((z_ptrdiff_t)buf & 3)) {
+    while (len && ((uintptr_t)buf & 3)) {
         c = crc_table[0][(c ^ *buf++) & 0xff] ^ (c >> 8);
         len--;
     }
@@ -84,10 +80,7 @@ uint32_t crc32(
 #define DOBIG32 DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4
 
 /* ========================================================================= */
-uint32_t crc32(
-    uint32_t crc,
-    const unsigned char *buf,
-    unsigned len)
+uint32_t crc32(uint32_t crc, const uint8_t *buf, size_t len)
 {
     register u4 c;
     register const u4 *buf4;
@@ -96,7 +89,7 @@ uint32_t crc32(
 
     c = REV((u4)crc);
     c = ~c;
-    while (len && ((z_ptrdiff_t)buf & 3)) {
+    while (len && ((uintptr_t)buf & 3)) {
         c = crc_table[4][(c >> 24) ^ *buf++] ^ (c << 8);
         len--;
     }
