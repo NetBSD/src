@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:28 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2009/05/16 10:17:38 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/03/18 10:22:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/05/16 10:17:38 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -237,6 +237,8 @@ initSH3(void *pc)	/* XXX return address */
 	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709);
 #elif defined(SH7709A)
 	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
+#elif defined(SH7706)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7706);
 #else
 #error "unsupported SH3 variants"
 #endif
@@ -245,6 +247,12 @@ initSH3(void *pc)	/* XXX return address */
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);	
 #elif defined(SH7750S)
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750S);
+#elif defined(SH7750R)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750R);
+#elif defined(SH7751)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7751);
+#elif defined(SH7751R)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7751R);
 #else
 #error "unsupported SH4 variants"
 #endif
@@ -268,7 +276,7 @@ initSH3(void *pc)	/* XXX return address */
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#	/*
+	/*
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */
@@ -706,10 +714,14 @@ intc_intr(int ssr, int spc, int ssp)
 		break;
 	case CPU_PRODUCT_7709:
 	case CPU_PRODUCT_7709A:
+	case CPU_PRODUCT_7706:
 		evtcode = _reg_read_4(SH7709_INTEVT2);
 		break;
 	case CPU_PRODUCT_7750:
 	case CPU_PRODUCT_7750S:
+	case CPU_PRODUCT_7750R:
+	case CPU_PRODUCT_7751:
+	case CPU_PRODUCT_7751R:
 		evtcode = _reg_read_4(SH4_INTEVT);
 		break;
 	default:
