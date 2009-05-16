@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.22 2009/03/18 17:06:41 cegger Exp $	*/
+/*	$NetBSD: esc.c,v 1.23 2009/05/16 16:40:58 cegger Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.22 2009/03/18 17:06:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.23 2009/05/16 16:40:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -818,7 +818,7 @@ esc_setup_nexus(struct esc_softc *dev, struct nexus *nexus, struct esc_pending *
 /* Setup the nexus struct. */
 	nexus->ID	   = ((mode & ESC_SELECT_R) ? 0xC0 : 0x80) | lun;
 	nexus->clen	   = clen;
-	memcpy( nexus->cbuf, cbuf, nexus->clen);
+	memcpy(nexus->cbuf, cbuf, nexus->clen);
 	nexus->cbuf[1] |= lun << 5;		/* Fix the lun bits */
 	nexus->cur_link	   = 0;
 	nexus->dma_len	   = 0;
@@ -1202,7 +1202,7 @@ esc_midaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 				    && left)
 				dev->sc_bump_va[len-(left--)] = *rp->esc_fifo;
 
-			      memcpy( dev->sc_buf, dev->sc_bump_va, len-left);
+			      memcpy(dev->sc_buf, dev->sc_bump_va, len-left);
 			    }
 			  } else {
 			    /* Count any unsent bytes and flush them. */
@@ -1317,7 +1317,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 			dev->sc_dma_len = len;
 
 			if (nexus->state == ESC_NS_DATA_OUT)
-			  memcpy( dev->sc_bump_va, dev->sc_buf, dev->sc_dma_len);
+			  memcpy(dev->sc_bump_va, dev->sc_buf, dev->sc_dma_len);
 		  } else {
 			dev->sc_dma_buf = dev->sc_dma_blk_ptr;
 			dev->sc_dma_len = dev->sc_dma_blk_len;
