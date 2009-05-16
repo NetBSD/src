@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.75 2009/05/12 08:23:01 cegger Exp $ */
+/* $NetBSD: tga.c,v 1.76 2009/05/16 13:04:26 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.75 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.76 2009/05/16 13:04:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ int	tgamatch(device_t, cfdata_t, void *);
 void	tgaattach(device_t, device_t, void *);
 int	tgaprint(void *, const char *);
 
-CFATTACH_DECL(tga, sizeof(struct tga_softc),
+CFATTACH_DECL_NEW(tga, sizeof(struct tga_softc),
     tgamatch, tgaattach, NULL, NULL);
 
 static void tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc,
@@ -390,6 +390,8 @@ tgaattach(device_t parent, device_t self, void *aux)
 	u_int8_t rev;
 	int console;
 
+	sc->sc_dev = self;
+
 #if defined(__alpha__) || defined(arc)
 	console = (pa->pa_tag == tga_console_dc.dc_pcitag);
 #else
@@ -405,24 +407,24 @@ tgaattach(device_t parent, device_t self, void *aux)
 		tga_init(pa->pa_memt, pa->pa_pc, pa->pa_tag, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == 0) {
-		printf(": couldn't map memory space; punt!\n");
+		aprint_error(": couldn't map memory space; punt!\n");
 		return;
 	}
 
 	/* XXX say what's going on. */
 	intrstr = NULL;
 	if (pci_intr_map(pa, &intrh)) {
-		printf(": couldn't map interrupt");
+		aprint_error(": couldn't map interrupt");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrh);
 	sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY, tga_intr,
 	    sc->sc_dc);
 	if (sc->sc_intr == NULL) {
-		printf(": couldn't establish interrupt");
+		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf("at %s", intrstr);
-		printf("\n");
+			aprint_error("at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 
@@ -431,21 +433,21 @@ tgaattach(device_t parent, device_t self, void *aux)
 	case 0x1:
 	case 0x2:
 	case 0x3:
-		printf(": DC21030 step %c", 'A' + rev - 1);
+		aprint_normal(": DC21030 step %c", 'A' + rev - 1);
 		break;
 	case 0x20:
-		printf(": TGA2 abstract software model");
+		aprint_normal(": TGA2 abstract software model");
 		break;
 	case 0x21:
 	case 0x22:
-		printf(": TGA2 pass %d", rev - 0x20);
+		aprint_normal(": TGA2 pass %d", rev - 0x20);
 		break;
 
 	default:
-		printf("unknown stepping (0x%x)", rev);
+		aprint_normal("unknown stepping (0x%x)", rev);
 		break;
 	}
-	printf(", ");
+	aprint_normal(", ");
 
 	/*
 	 * Get RAMDAC function vectors and call the RAMDAC functions
@@ -483,17 +485,17 @@ tgaattach(device_t parent, device_t self, void *aux)
 	TGAWREG(sc->sc_dc, TGA_REG_SISR, 0x00000001); /* XXX */
 
 	if (sc->sc_dc->dc_tgaconf == NULL) {
-		printf("unknown board configuration\n");
+		aprint_error("unknown board configuration\n");
 		return;
 	}
-	printf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
-	printf("%s: %d x %d, %dbpp, %s RAMDAC\n", device_xname(&sc->sc_dev),
+	aprint_normal("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
+	aprint_normal_dev(self, "%d x %d, %dbpp, %s RAMDAC\n",
 	    sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_tgaconf->tgac_phys_depth,
 	    sc->sc_dc->dc_ramdac_funcs->ramdac_name);
 
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev),
+		aprint_normal_dev(self, "interrupting at %s\n",
 		    intrstr);
 
 	aa.console = console;
@@ -507,9 +509,9 @@ tgaattach(device_t parent, device_t self, void *aux)
 }
 
 static void
-tga_config_interrupts (device_t d)
+tga_config_interrupts(device_t self)
 {
-	struct tga_softc *sc = (struct tga_softc *)d;
+	struct tga_softc *sc = device_private(self);
 	sc->sc_dc->dc_intrenabled = 1;
 }
 
