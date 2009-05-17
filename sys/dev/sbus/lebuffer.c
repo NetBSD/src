@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.32 2009/05/12 14:43:59 cegger Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.33 2009/05/17 00:28:35 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.32 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.33 2009/05/17 00:28:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ lebufattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct lebuf_softc *sc = (void *)self;
+	struct sbus_softc *sbsc = device_private(parent);
 	int node;
 	int sbusburst;
 	bus_space_tag_t bt = sa->sa_bustag;
@@ -102,7 +103,7 @@ lebufattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Get transfer burst size from PROM
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	sbusburst = sbsc->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
@@ -121,7 +122,7 @@ lebufattach(device_t parent, device_t self, void *aux)
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sax;
-		sbus_setup_attach_args((struct sbus_softc *)parent,
+		sbus_setup_attach_args(sbsc,
 				       bt, dt, node, &sax);
 		(void)config_found(&sc->sc_dev, (void *)&sax, lebufprint);
 		sbus_destroy_attach_args(&sax);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.28 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.29 2009/05/17 00:28:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.28 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.29 2009/05/17 00:28:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 	struct sbus_attach_args *sa = aux;
 	struct hmesbus_softc *hsc = (void *)self;
 	struct hme_softc *sc = &hsc->hsc_hme;
+	struct sbus_softc *sbsc = device_private(parent);
 	struct sbusdev *sd = &hsc->hsc_sbus;
 	u_int32_t burst, sbusburst;
 	int node;
@@ -164,7 +165,7 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 	 * Get transfer burst size from PROM and pass it on
 	 * to the back-end driver.
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	sbusburst = sbsc->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
