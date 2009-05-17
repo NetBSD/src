@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.69 2009/05/12 23:03:24 elad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.70 2009/05/17 11:34:21 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.69 2009/05/12 23:03:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.70 2009/05/17 11:34:21 cegger Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -454,7 +454,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSDRVSPEC:
 		if (ifd->ifd_cmd >= bridge_control_table_size) {
 			error = EINVAL;
-			break;
+			return error;
 		}
 
 		bc = &bridge_control_table[ifd->ifd_cmd];
@@ -476,6 +476,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCGDRVSPEC:
 	case SIOCSDRVSPEC:
+		KASSERT(bc != NULL);
 		if (cmd == SIOCGDRVSPEC &&
 		    (bc->bc_flags & BC_F_COPYOUT) == 0) {
 			error = EINVAL;
