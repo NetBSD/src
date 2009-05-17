@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.18 2009/04/16 14:08:18 tsutsui Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.19 2009/05/17 00:40:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct hme_ring {
 };
 
 struct hme_softc {
-	struct device	sc_dev;		/* boilerplate device view */
+	device_t	sc_dev;		/* boilerplate device view */
 	struct ethercom	sc_ethercom;	/* Ethernet common part */
 	struct mii_data	sc_mii;		/* MII media control */
 	struct callout	sc_tick_ch;	/* tick callout */
