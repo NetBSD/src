@@ -1,4 +1,4 @@
-.\"	$NetBSD: tl.4,v 1.19 2004/12/08 18:33:32 peter Exp $
+.\"	$NetBSD: tl.4,v 1.20 2009/05/17 02:52:03 fair Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 17, 1997
+.Dd May 16, 2009
 .Dt TL 4
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Sh SYNOPSIS
 .Cd "tl* at pci? dev ? function ?"
 .Pp
-Configuration of PHYs are necessary.
+Configuration of PHYs is necessary.
 See
 .Xr mii 4 .
 .Sh DESCRIPTION
@@ -50,9 +50,13 @@ Supported cards include:
 .Pp
 .Bl -tag -width xxxxxx -offset indent
 .It Compaq Netelligent
-in baseboard and PCI variants (10BASE-T-only variant untested).
+in baseboard and
+.Tn PCI
+variants (10BASE-T-only variant untested).
 .It Compaq NetFlex 3/P
-in baseboard variant only (the PCI variant doesn't use the same chip !).
+in baseboard variant only (the
+.Tn PCI
+variant doesn't use the same chip!).
 .It \&It Baseboard Compaq Deskpro 4000 5233MMX Ethernet
 (This has been tested on the Deskpro 4000M only).
 .It TI TravelMate 5000 series laptop docking station's Ethernet board .
@@ -69,17 +73,15 @@ Refer to those manual pages for more information.
 .Pp
 The
 .Nm
-driver don't have full automatic media selection.
-By default it will do an NWay
-on the UTP port for negotiation of the speed and duplex mode with the
+driver doesn't have full automatic media selection.
+By default it will do an Nway
+.Pq Tn IEEE 802.3u
+negotiation on the 10BASE-T port for the speed and duplex mode with the
 link partner.
-If the AUI or BNC port is used, an explicit medium must be
+If the AUI or BNC port is used, an explicit media type must be
 specified to
-.Xr ifconfig 8
-or in your
-.Pa /etc/ifconfig.tl?
-file.
-.in -4
+.Xr ifconfig 8 .
+.\" .in -4
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr mii 4 ,
