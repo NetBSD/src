@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.120 2008/07/02 16:45:20 matt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.121 2009/05/17 05:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.120 2008/07/02 16:45:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.121 2009/05/17 05:54:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,22 +593,22 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	switch (com) {
 
 	case FIONBIO:
-		FILE_LOCK(fp);
+		mutex_enter(&fp->f_lock);
 		if (*(int *)data != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		FILE_UNLOCK(fp);
+		mutex_exit(&fp->f_lock);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data);
 		break;
 
 	case FIOASYNC:
-		FILE_LOCK(fp);
+		mutex_enter(&fp->f_lock);
 		if (*(int *)data != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		FILE_UNLOCK(fp);
+		mutex_exit(&fp->f_lock);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data);
 		break;
 
