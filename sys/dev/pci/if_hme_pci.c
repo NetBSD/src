@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.29 2009/05/17 00:40:43 tsutsui Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.30 2009/05/17 01:33:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.29 2009/05/17 00:40:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.30 2009/05/17 01:33:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ hmematch_pci(device_t parent, cfdata_t cf, void *aux)
 
 #if HME_USE_LOCAL_MAC_ADDRESS
 static inline int
-hmepromvalid(u_int8_t* buf)
+hmepromvalid(uint8_t* buf)
 {
 	return buf[0] == 0x18 && buf[1] == 0x00 &&	/* structure length */
 	    buf[2] == 0x00 &&				/* revision */
@@ -133,16 +133,16 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 #if HME_USE_LOCAL_MAC_ADDRESS
 	struct pci_attach_args	ebus_pa;
 	pcireg_t		ebus_cl, ebus_id;
-	u_int8_t		*enaddr;
+	uint8_t			*enaddr;
 	bus_space_tag_t		romt;
 	bus_space_handle_t	romh;
 	bus_size_t		romsize;
-	u_int8_t		buf[64];
+	uint8_t			buf[64];
 	int			dataoff, vpdoff;
 	struct pci_vpd		*vpd;
-	static const u_int8_t promhdr[] = { 0x55, 0xaa };
+	static const uint8_t promhdr[] = { 0x55, 0xaa };
 #define PROMHDR_PTR_DATA	0x18
-	static const u_int8_t promdat[] = {
+	static const uint8_t promdat[] = {
 		0x50, 0x43, 0x49, 0x52,		/* "PCIR" */
 		PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
 		PCI_PRODUCT_SUN_HMENETWORK & 0xff,
