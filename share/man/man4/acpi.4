@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.29 2008/09/21 11:12:36 wiz Exp $
+.\" $NetBSD: acpi.4,v 1.30 2009/05/17 00:37:53 fair Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 21, 2008
+.Dd May 16, 2009
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -64,7 +64,8 @@
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support for
-.Tn ACPI
+Advanced Configuration and Power Interface
+.Pq Tn ACPI
 devices and includes several
 .Tn ACPI
 device drivers.
@@ -74,28 +75,47 @@ The
 implementation of
 .Tn ACPI
 integrates Intel's ACPI Component Architecture
-(aka ACPI-CA) for the OS-independent part.
-The ACPI-CA provides
-OS-neutral ACPI functionalities such as ACPI BIOS table support,
-an ACPI event framework and an AML (ACPI Machine Language) interpreter.
+.Pq Tn ACPI-CA
+for the OS-independent part.
+The
+.Tn ACPI-CA
+provides OS-neutral
+.Tn ACPI
+functionalities such as
+.Tn ACPI
+.Tn BIOS
+table support,
+an
+.Tn ACPI
+event framework and an ACPI Machine Language
+.Pq Tn AML
+interpreter.
 .Pp
 Options:
 .Bl -tag -width ACPI_DSDT_FILE__filename_XX -offset 3n
 .It Dv ACPI_DEBUG
-Enable ACPI debugging message outputs.
+Enable
+.Tn ACPI
+debugging message outputs.
 .It Dv ACPI_ACTIVATE_DEV
-Determine if the ACPI driver should attempt to activate
-inactive devices.
+Determine if the
+.Tn ACPI
+driver should attempt to activate inactive devices.
 The default is off.
 .It Dv ACPICA_PEDANTIC
-Force strict conformance to the ACPI specification in the
-ACPI-CA.
+Force strict conformance to the
+.Tn ACPI
+specification in the
+.Tn ACPI-CA .
 Do not enable this option unless you are debugging.
 .It Dv ACPI_DSDT_OVERRIDE
-Force a given DSDT instead of the BIOS-supplied version.
+Force a given Differentiated System Description Table
+.Pq Tn DSDT
+instead of the BIOS-supplied version.
 Use
 .Dv ACPI_DSDT_FILE
-to specify a DSDT.
+to specify a
+.Tn DSDT .
 .It Dv ACPI_DSDT_FILE="filename"
 If
 .Dv ACPI_DSDT_FILE
@@ -104,24 +124,33 @@ is not specified, default to
 in the build directory.
 .El
 .Ss sysctl support
-Two
+These
 .Xr sysctl 8
-settings are especially relevant for
+variables are directly relevant for
 .Nm :
-.Li hw.acpi_supported_states
-and
-.Li machdep.acpi_vbios_reset .
-.Li hw.acpi_supported_states
-is a list of the supported states (see
+.Bl -inset -width hw.acpi.supported_states
+.It Li hw.acpi.root
+is the
+.Tn ACPI
+root pointer.
+.It Li hw.acpi.supported_states
+is a list of the supported
+.Tn ACPI
+states (see
 .Xr sysctl 7 ) .
-.Li machdep.acpi_vbios_reset
+.It Li machdep.acpi_vbios_reset
 defines the handling of the graphics card.
-The supported values for this are:
-.Bl -tag -width 2
+The supported values are:
+.Bl -tag -width '2' -offset indent
 .It 0
-No attempt to reset the VGA controller is done.
+No attempt to reset the
+.Tn VGA
+controller will be made.
 .It 1
-Call the VGA BIOS when still in real mode.
+Call the
+.Tn VGA
+.Tn BIOS
+when still in real mode.
 This can result in direct reboots.
 In that case, use
 .Sq 2
@@ -131,7 +160,11 @@ from the
 .Pa pkgsrc/sysutils/vbetool
 package.
 .It 2
-Call the VGA BIOS using the in-kernel x86 emulator.
+Call the
+.Tn VGA
+.Tn BIOS
+using the in-kernel x86 emulator.
+.El
 .El
 .Sh SUPPORTED DEVICES
 .Nx
