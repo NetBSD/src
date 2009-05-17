@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahd.4,v 1.4 2009/05/17 00:53:36 fair Exp $
+.\"	$NetBSD: ahd.4,v 1.5 2009/05/17 06:45:47 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -43,7 +43,7 @@ For one or more PCI/PCI-X cards:
 To compile in debugging code:
 .Bd -ragged -offset indent -compact
 .Cd options AHD_DEBUG
-.Cd options AHD_DEBUG_OPTS=<bitmask of options>
+.Cd options AHD_DEBUG_OPTS=\*[Lt]bitmask of options\*[Gt]
 .Cd options AHD_REG_PRETTY_PRINT
 .Ed
 .Pp
@@ -106,7 +106,7 @@ option compiles in support for human-readable bit definitions for each register
 that is printed by the debugging code.
 However, it also bloats the compiled
 size of the driver by approximately 215KB.
-.Pp
+.\" .Pp
 .\" Individual controllers may be configured to operate in the target role
 .\" through the
 .\" .Dv AHD_TMODE_ENABLE
@@ -163,7 +163,7 @@ support
 .\" .Xr da 4 ,
 .Xr intro 4 ,
 .\" .Xr sa 4 ,
-.Xr scsi 4
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr ses 4 ,
 .Xr st 4
