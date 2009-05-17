@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.79 2009/03/16 20:48:13 njoly Exp $
+	$NetBSD: syscalls.master,v 1.80 2009/05/17 05:54:22 pooka Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -363,10 +363,10 @@
 172	UNIMPL
 173	STD		{ netbsd32_ssize_t|netbsd32||pread(int fd, \
 			    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-			    int pad, off_t offset); }
+			    int PAD, off_t offset); }
 174	STD		{ netbsd32_ssize_t|netbsd32||pwrite(int fd, \
 			    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-			    int pad, off_t offset); }
+			    int PAD, off_t offset); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
 175	COMPAT_30	{ int|netbsd32||ntp_gettime( \
 			    netbsd32_ntptimeval50p_t ntvp); }
@@ -417,14 +417,14 @@
 			    netbsd32_longp basep); }
 197	STD		{ netbsd32_voidp|netbsd32||mmap(netbsd32_voidp addr, \
 			    netbsd32_size_t len, int prot, int flags, int fd, \
-			    netbsd32_long pad, off_t pos); }
+			    netbsd32_long PAD, off_t pos); }
 198	INDIR		{ quad_t|netbsd32||___syscall(quad_t code, \
 			    ... register32_t args[NETBSD32_SYS_MAXSYSARGS]); }
-199	STD		{ off_t|netbsd32||lseek(int fd, int pad, off_t offset, \
+199	STD		{ off_t|netbsd32||lseek(int fd, int PAD, off_t offset, \
 			    int whence); }
-200	STD		{ int|netbsd32||truncate(netbsd32_charp path, int pad, \
+200	STD		{ int|netbsd32||truncate(netbsd32_charp path, int PAD, \
 			    off_t length); }
-201	STD		{ int|netbsd32||ftruncate(int fd, int pad, \
+201	STD		{ int|netbsd32||ftruncate(int fd, int PAD, \
 			    off_t length); }
 202	STD		{ int|netbsd32||__sysctl(netbsd32_intp name, \
 			    u_int namelen, netbsd32_voidp old, \
@@ -609,10 +609,10 @@
 288	STD		{ int|netbsd32||fktrace(int fd, int ops, int facs, \
 			    int pid); }
 289	STD		{ netbsd32_ssize_t|netbsd32||preadv(int fd, \
-			    netbsd32_iovecp_t iovp, int iovcnt, int pad, \
+			    netbsd32_iovecp_t iovp, int iovcnt, int PAD, \
 			    off_t offset); }
 290	STD		{ netbsd32_ssize_t|netbsd32||pwritev(int fd, \
-			    netbsd32_iovecp_t iovp, int iovcnt, int pad, \
+			    netbsd32_iovecp_t iovp, int iovcnt, int PAD, \
 			    off_t offset); }
 291	STD		{ int|netbsd32|14|sigaction(int signum, \
 			    netbsd32_sigactionp_t nsa, \
@@ -878,7 +878,7 @@
 414	UNIMPL
 415	UNIMPL
 
-416	STD 		{ int|netbsd32|50|posix_fadvise(int fd, int pad, \
+416	STD 		{ int|netbsd32|50|posix_fadvise(int fd, int PAD, \
 			    off_t offset, off_t len, int advice); }
 417	STD 		{ int|netbsd32|50|select(int nd, \
 			    netbsd32_fd_setp_t in,  netbsd32_fd_setp_t ou, \
