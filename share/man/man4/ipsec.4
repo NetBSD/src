@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.30 2006/10/11 10:14:31 hubertf Exp $
+.\"	$NetBSD: ipsec.4,v 1.31 2009/05/17 02:22:43 fair Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 12, 2005
+.Dd May 16, 2009
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Cd options IPSEC_DEBUG
 .Sh DESCRIPTION
 .Nm
-is a security protocol in Internet Protocol layer.
+is a security protocol in Internet Protocol (IP) layer.
 .Nm
 is defined for both IPv4 and IPv6
 .Po
@@ -54,21 +54,30 @@ and
 .Xr inet6 4
 .Pc .
 .Nm
-consists of two sub-protocols, namely
-ESP
-.Pq encapsulated security payload
-and AH
-.Pq authentication header .
-ESP protects IP payload from wire-tapping by encrypting it by
+consists of two sub-protocols:
+.Pp
+.Bl -hang
+.It Em Encapsulated Security Payload Pq ESP
+protects IP payload from wire-tapping (interception) by encrypting it with
 secret key cryptography algorithms.
-AH guarantees integrity of IP packet
+.It Em Authentication Header Pq AH
+guarantees integrity of IP packet
 and protects it from intermediate alteration or impersonation,
 by attaching cryptographic checksum computed by one-way hash functions.
+.El
+.Pp
 .Nm
-has two operation modes: transport mode and tunnel mode.
-Transport mode is for protecting peer-to-peer communication between end nodes.
-Tunnel mode includes IP-in-IP encapsulation operation
-and is designed for security gateways, like VPN configurations.
+has two operation modes:
+.Pp
+.Bl -hang
+.It Em Transport mode
+is for protecting peer-to-peer communication between end nodes.
+.It Em Tunnel mode
+includes IP-in-IP encapsulation operation
+and is designed for security gateways, as in Virtual Private Network
+.Pq Tn VPN
+configurations.
+.El
 .Pp
 The following kernel options are available:
 .Bl -ohang
@@ -86,8 +95,7 @@ and
 Kernel binary will not be subject to export control in most of countries,
 even if compiled with
 .Em IPSEC .
-For example, it should be okay to export it from within the United States
-to the outside.
+For example, it should be okay to export it from the United States of America.
 .Em INET6
 and
 .Em IPSEC
@@ -116,7 +124,7 @@ This option assumes
 .It Cd options IPSEC_NAT_T
 Includes support for
 .Tn IPsec
-Network Address Translator traversal (NAT-T), as described in RFCs 3947
+Network Address Translator Traversal (NAT-T), as described in RFCs 3947
 and 3948.
 This feature might be patent-encumbered in some countries.
 This option assumes
@@ -205,15 +213,15 @@ means
 .Dq Li require
 in the syntax.
 .Bl -column net.inet6.ipsec6.esp_trans_deflev integerxxx
-.It Sy Name	Type	Changeable
-.It net.inet.ipsec.esp_trans_deflev	integer	yes
-.It net.inet.ipsec.esp_net_deflev	integer	yes
-.It net.inet.ipsec.ah_trans_deflev	integer	yes
-.It net.inet.ipsec.ah_net_deflev	integer	yes
-.It net.inet6.ipsec6.esp_trans_deflev	integer	yes
-.It net.inet6.ipsec6.esp_net_deflev	integer	yes
-.It net.inet6.ipsec6.ah_trans_deflev	integer	yes
-.It net.inet6.ipsec6.ah_net_deflev	integer	yes
+.It Sy Name Ta Sy Type Ta Sy Changeable
+.It net.inet.ipsec.esp_trans_deflev Ta integer Ta yes
+.It net.inet.ipsec.esp_net_deflev Ta integer Ta yes
+.It net.inet.ipsec.ah_trans_deflev Ta integer Ta yes
+.It net.inet.ipsec.ah_net_deflev Ta integer Ta yes
+.It net.inet6.ipsec6.esp_trans_deflev Ta integer Ta yes
+.It net.inet6.ipsec6.esp_net_deflev Ta integer Ta yes
+.It net.inet6.ipsec6.ah_trans_deflev Ta integer Ta yes
+.It net.inet6.ipsec6.ah_net_deflev Ta integer Ta yes
 .El
 .Pp
 If kernel finds no matching policy system wide default value is applied.
@@ -227,25 +235,25 @@ which asks the kernel to drop the packet.
 .Li 1
 means
 .Dq Li none .
-.Bl -column net.inet6.ipsec6.def_policy integerxxx
-.It Sy Name	Type	Changeable
-.It net.inet.ipsec.def_policy	integer	yes
-.It net.inet6.ipsec6.def_policy	integer	yes
+.Bl -column net.inet6.ipsec6.esp_trans_deflev integerxxx
+.It Sy Name Ta Sy Type Ta Sy Changeable
+.It net.inet.ipsec.def_policy Ta integer Ta yes
+.It net.inet6.ipsec6.def_policy Ta integer Ta yes
 .El
 .\"
 .Ss Miscellaneous sysctl variables
 The following variables are accessible via
 .Xr sysctl 8 ,
 for tweaking kernel IPsec behavior:
-.Bl -column net.inet6.ipsec6.inbound_call_ike integerxxx
-.It Sy Name	Type	Changeable
-.It net.inet.ipsec.ah_cleartos	integer	yes
-.It net.inet.ipsec.ah_offsetmask	integer	yes
-.It net.inet.ipsec.dfbit	integer	yes
-.It net.inet.ipsec.ecn	integer	yes
-.It net.inet.ipsec.debug	integer	yes
-.It net.inet6.ipsec6.ecn	integer	yes
-.It net.inet6.ipsec6.debug	integer	yes
+.Bl -column net.inet6.ipsec6.esp_trans_deflev integerxxx
+.It Sy Name Ta Sy Type Ta Sy Changeable
+.It net.inet.ipsec.ah_cleartos Ta integer Ta yes
+.It net.inet.ipsec.ah_offsetmask Ta integer Ta yes
+.It net.inet.ipsec.dfbit Ta integer Ta yes
+.It net.inet.ipsec.ecn Ta integer Ta yes
+.It net.inet.ipsec.debug Ta integer Ta yes
+.It net.inet6.ipsec6.ecn Ta integer Ta yes
+.It net.inet6.ipsec6.debug Ta integer Ta yes
 .El
 .Pp
 The variables are interpreted as follows:
