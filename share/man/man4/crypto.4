@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.14 2008/05/02 18:11:05 martin Exp $
+.\"	$NetBSD: crypto.4,v 1.15 2009/05/17 01:23:27 fair Exp $
 .\" 
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 29, 2008
+.Dd May 16, 2009
 .Dt CRYPTO 4
 .Os
 .Sh NAME
@@ -77,12 +77,14 @@ driver gives user-mode applications access to hardware-accelerated
 cryptographic transforms, as implemented by the
 .Xr opencrypto 9
 in-kernel interface.
+.Pp
 The
 .Cm swcrypto
 driver is a software-only implementation of the
 .Xr opencrypto 9
 interface, and must be included to use the interface without hardware
 acceleration.
+.Pp
 The
 .Pa /dev/crypto
 special device provides an
@@ -92,6 +94,7 @@ User-mode applications should open the special device,
 then issue
 .Xr ioctl 2
 calls on the descriptor.
+.Pp
 The
 .Nm
 device provides two distinct modes of operation: one mode for
@@ -106,7 +109,8 @@ to be performed, use of the device requires a basic series of steps:
 .Pp
 .Bl -enum
 .It
-Open a file descriptor for the device.  See
+Open a file descriptor for the device.
+See
 .Xr open 2 .
 .It
 If any symmetric operation will be performed,
@@ -116,7 +120,8 @@ or multiple sessions, with
 .Dv CIOCNGSESSION .
 Most applications will require at least one symmetric session.
 Since cipher and MAC keys are tied to sessions, many
-applications will require more.  Asymmetric operations do not use sessions.
+applications will require more.
+Asymmetric operations do not use sessions.
 .It
 Submit requests, synchronously with
 .Dv CIOCCRYPT
@@ -170,6 +175,7 @@ registering with
 .Xr opencrypto 9 ,
 as providers of a given algorithm, some or all of the following
 symmetric-key privacy algorithms may be available:
+.Pp
 .Bl -tag -compact -width CRYPTO_RIPEMD160_HMAC -offset indent
 .It CRYPTO_DES_CBC
 .It CRYPTO_3DES_CBC
@@ -182,6 +188,7 @@ symmetric-key privacy algorithms may be available:
 .Ss Integrity-check operations
 Contingent upon hardware support, some or all of the following
 keyed one-way hash algorithms may be available:
+.Pp
 .Bl -tag -compact -width CRYPTO_RIPEMD160_HMAC -offset indent
 .It CRYPTO_RIPEMD160_HMAC
 .It CRYPTO_MD5_KPDK
@@ -192,6 +199,7 @@ keyed one-way hash algorithms may be available:
 .It CRYPTO_MD5
 .It CRYPTO_SHA1
 .El
+.Pp
 The
 .Em CRYPTO_MD5
 and
@@ -204,11 +212,11 @@ as symmetric-key hash algorithms with a zero-length key.
 .\"
 .It Dv CRIOGET Fa int *fd
 This operation is deprecated and will be removed after
-.Nx 5.0.
+.Nx 5.0 .
 It clones the fd argument to
 .Xr ioctl 4 ,
-yielding a new file descriptor for the creation of sessions.  Because the
-device now clones on open, this operation is unnecessary.
+yielding a new file descriptor for the creation of sessions.
+Because the device now clones on open, this operation is unnecessary.
 .\"
 .It Dv CIOCGSESSION Fa struct session_op *sessp
 .Bd -literal
@@ -233,8 +241,8 @@ The special value 0 for either privacy or integrity
 is reserved to indicate that the indicated operation (privacy or integrity)
 is not desired for this session.
 .Pp
-Multiple sessions may be bound to a single file descriptor.  The session
-ID returned in
+Multiple sessions may be bound to a single file descriptor.
+The session ID returned in
 .Fa sessp-\*[Gt]ses
 is supplied as a required field in the symmetric-operation structure
 .Fa crypt_op
@@ -289,10 +297,10 @@ struct session_n_op {
 };
 
 .Ed
-Create one or more sessions.  Takes a counted array of
+Create one or more sessions.
+Takes a counted array of
 .Fa session_n_op
-structures
-in
+structures in
 .Fa sgop .
 For each requested session (array element n), the session number is returned in
 .Fa sgop-\*[Gt]sessions[n].ses
@@ -374,14 +382,16 @@ Each operation is assigned a unique request id returned in the
 field.
 .Pp
 Each operation can accept an opaque value from the user to be passed back
-to the user when the operation completes ((e.g. to track context for the
-request).  The opaque field is
+to the user when the operation completes
+(e.g., to track context for the request).
+The opaque field is
 .Fa cr_mop-\*[Gt]reqs[n].opaque.
 .Pp
 If a problem occurs with starting any of the operations then that
 operation's
 .Fa cr_mop-\*[Gt]reqs[n].status
-field is filled with the error code.  The failure of an operation does not
+field is filled with the error code.
+The failure of an operation does not
 prevent the other operations from being started.
 .Pp
 The
@@ -397,7 +407,8 @@ The
 and
 .Fa mackey
 fields of the
-operation structure are currently unused.  They are intended for use to
+operation structure are currently unused.
+They are intended for use to
 immediately rekey an existing session before processing a new request.
 .It Dv CIOCFSESSION Fa void
 Destroys the /dev/crypto session associated with the file-descriptor
@@ -422,6 +433,7 @@ array of session identifiers.
 Contingent upon hardware support, the following asymmetric
 (public-key/private-key; or key-exchange subroutine) operations may
 also be available:
+.Pp
 .Bl -column "CRK_DH_COMPUTE_KEY" "Input parameter" "Output parameter" -offset indent -compact
 .It Em "Algorithm" Ta "Input parameter" Ta "Output parameter"
 .It Em " " Ta "Count" Ta "Count"
@@ -509,7 +521,8 @@ struct crypt_n_kop {
 .Ed
 This is the asynchronous version of
 .Dv CIOCFKEY,
-which starts one or more key operations.  See
+which starts one or more key operations.
+See
 .Dv CIOCNCRYPTM
 above and
 .Dv CIOCNCRYPTRETM
@@ -528,8 +541,9 @@ When requests are submitted with the
 .Dv CIOCNCRYPTM
 or
 .Dv CIOCNFKEYM
-commands, result retrieval is asynchronous (the submit ioctls return
-immediately).  Use the
+commands, result retrieval is asynchronous
+(the submit ioctls return immediately).
+Use the
 .Xr select 2
 or
 .Xr poll 2
@@ -559,8 +573,9 @@ The request has completed, and its results have been copied out to
 the original
 .Fa crypt_n_op or
 .Fa crypt_n_kop
-structure used to start the request.  The copyout occurs during this
-ioctl, so the calling process must be the process that started the request.
+structure used to start the request.
+The copyout occurs during this ioctl,
+so the calling process must be the process that started the request.
 .It EINPROGRESS
 The request has not yet completed.
 .It EINVAL
@@ -576,7 +591,8 @@ struct cryptret {
 };
 
 .Ed
-Retrieve a number of completed requests.  This ioctl accepts a count and
+Retrieve a number of completed requests.
+This ioctl accepts a count and
 an array (each array element is a
 .Fa crypt_result_t
 structure as used by
@@ -588,7 +604,8 @@ results of completed requests.
 This ioctl fills in the
 .Fa cret-\*[Gt]results[n].reqid field ,
 so that the request which has completed
-may be identified by the application.  Note that the results may include
+may be identified by the application.
+Note that the results may include
 requests submitted both as symmetric and asymmetric operations.
 .El
 .Pp
@@ -606,7 +623,8 @@ which in turn is based on code which appeared in
 .Pp
 The "new API" for asynchronous operation with multiple basic operations
 per system call (the "N" ioctl variants) was contributed by Coyote Point
-Systems, Inc. and first appeared in
+Systems, Inc.
+and first appeared in
 .Nx 5.0 .
 .Sh BUGS
 Error checking and reporting is weak.
@@ -622,7 +640,7 @@ session: if you request a
 .No non- Ns Dv NULL
 algorithm, you must supply a suitably-sized buffer.
 .Pp
-The scheme for passing arguments for asymmetric requests is Baroque.
+The scheme for passing arguments for asymmetric requests is baroque.
 .Pp
 The naming inconsistency between
 .Dv CRIOGET
