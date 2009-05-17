@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.1.1.4 2009/02/14 17:19:08 joerg Exp $	*/
+/*	$NetBSD: audit.c,v 1.1.1.5 2009/05/17 21:21:07 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: audit.c,v 1.1.1.4 2009/02/14 17:19:08 joerg Exp $");
+__RCSID("$NetBSD: audit.c,v 1.1.1.5 2009/05/17 21:21:07 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -202,7 +202,7 @@ check_and_read_pkg_vulnerabilities(void)
 		if (now < 0)
 			warnx("pkg-vulnerabilities is from the future");
 		else if (now > 86400 * 7)
-			warnx("pkg-vulnerabilities is out of day (%ld days old)",
+			warnx("pkg-vulnerabilities is out of date (%ld days old)",
 			    (long)(now / 86400));
 		else if (verbose >= 2)
 			warnx("pkg-vulnerabilities is %ld day%s old",

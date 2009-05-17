@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1.1.5 2009/04/24 14:17:13 joerg Exp $	*/
+/*	$NetBSD: show.c,v 1.1.1.6 2009/05/17 21:21:08 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: show.c,v 1.1.1.5 2009/04/24 14:17:13 joerg Exp $");
+__RCSID("$NetBSD: show.c,v 1.1.1.6 2009/05/17 21:21:08 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -334,6 +334,8 @@ show_summary(struct pkg_meta *meta, package_t *plist, const char *binpkgfile)
 		"HOMEPAGE",
 		"PKGTOOLS_VERSION",
 		"BUILD_DATE",
+		"PREV_PKGPATH",
+		"SUPERSEDES",
 		NULL
 	};
 	
