@@ -1,11 +1,11 @@
-.\"	$NetBSD: crypto.4,v 1.15 2009/05/17 01:23:27 fair Exp $
-.\" 
+.\"	$NetBSD: crypto.4,v 1.16 2009/05/17 06:50:59 wiz Exp $
+.\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Coyote Point Systems, Inc.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -14,7 +14,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -214,7 +214,7 @@ as symmetric-key hash algorithms with a zero-length key.
 This operation is deprecated and will be removed after
 .Nx 5.0 .
 It clones the fd argument to
-.Xr ioctl 4 ,
+.Xr ioctl 2 ,
 yielding a new file descriptor for the creation of sessions.
 Because the device now clones on open, this operation is unnecessary.
 .\"
@@ -322,7 +322,7 @@ struct crypt_op {
 .Ed
 Request a symmetric-key (or hash) operation.
 The file descriptor argument to
-.Xr ioctl 4
+.Xr ioctl 2
 must have been bound to a valid session.
 To encrypt, set
 .Fa cr_op-\*[Gt]op
@@ -367,15 +367,16 @@ struct crypt_n_op {
     void * mac;
     void * iv;
 };
-    
-.Ed    
+
+.Ed
 This is the asynchronous version of CIOCCRYPT, which allows multiple
 symmetric-key (or hash) operations to be started (see CIOCRYPT
 above for the details for each operation).
 .Pp
 The
 .Fa cr_mop-\*[Gt]count
-field specifies the number of operations provided in the cr_mop->reqs array.
+field specifies the number of operations provided in the
+cr_mop-\*[Gt]reqs array.
 .Pp
 Each operation is assigned a unique request id returned in the
 .Fa cr_mop-\*[Gt]reqs[n].reqid
@@ -385,7 +386,7 @@ Each operation can accept an opaque value from the user to be passed back
 to the user when the operation completes
 (e.g., to track context for the request).
 The opaque field is
-.Fa cr_mop-\*[Gt]reqs[n].opaque.
+.Fa cr_mop-\*[Gt]reqs[n].opaque .
 .Pp
 If a problem occurs with starting any of the operations then that
 operation's
@@ -398,7 +399,7 @@ The
 .Xr select 2
 or
 .Xr poll 2
-functions must be used on the device file descriptor to detect that      
+functions must be used on the device file descriptor to detect that
 some operation has completed; results are then retrieved with
 .Dv CIOCNCRYPTRETM .
 .Pp
@@ -413,7 +414,7 @@ immediately rekey an existing session before processing a new request.
 .It Dv CIOCFSESSION Fa void
 Destroys the /dev/crypto session associated with the file-descriptor
 argument.
-.It Dv CIOCNFSESSION Fa struct crypt_sfop *sfop;
+.It Dv CIOCNFSESSION Fa struct crypt_sfop *sfop ;
 .Bd -literal
 struct crypt_sfop {
     size_t count;
@@ -520,7 +521,7 @@ struct crypt_n_kop {
 
 .Ed
 This is the asynchronous version of
-.Dv CIOCFKEY,
+.Dv CIOCFKEY ,
 which starts one or more key operations.
 See
 .Dv CIOCNCRYPTM
@@ -566,7 +567,8 @@ be used with extreme care if the number of requests pending on this
 file descriptor may be large.
 .Pp
 The
-.Fa cres-\*[Gt]status field is set as follows:
+.Fa cres-\*[Gt]status
+field is set as follows:
 .Bl -tag -width EINPROGRESS
 .It 0
 The request has completed, and its results have been copied out to
@@ -608,7 +610,6 @@ may be identified by the application.
 Note that the results may include
 requests submitted both as symmetric and asymmetric operations.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr hifn 4 ,
 .Xr ubsec 4 ,
@@ -623,8 +624,7 @@ which in turn is based on code which appeared in
 .Pp
 The "new API" for asynchronous operation with multiple basic operations
 per system call (the "N" ioctl variants) was contributed by Coyote Point
-Systems, Inc.
-and first appeared in
+Systems, Inc. and first appeared in
 .Nx 5.0 .
 .Sh BUGS
 Error checking and reporting is weak.
