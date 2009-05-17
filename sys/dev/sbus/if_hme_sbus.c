@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.30 2009/05/17 00:40:44 tsutsui Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.31 2009/05/17 01:33:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.30 2009/05/17 00:40:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.31 2009/05/17 01:33:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 	struct hme_softc *sc = &hsc->hsc_hme;
 	struct sbus_softc *sbsc = device_private(parent);
 	struct sbusdev *sd = &hsc->hsc_sbus;
-	u_int32_t burst, sbusburst;
+	uint32_t burst, sbusburst;
 	int node;
 
 	sc->sc_dev = self;
