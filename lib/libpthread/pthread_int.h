@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.71 2009/05/16 22:21:18 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.72 2009/05/17 14:49:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ struct	__pthread_st {
 	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
 	pthread_mutex_t	*pt_droplock;	/* Drop this lock if cancelled */
 	pthread_cond_t	pt_joiners;	/* Threads waiting to join. */
+	void		*(*pt_func)(void *);/* Function to call at start. */
+	void		*pt_arg;	/* Argumen to pass at start. */
 
 	/* Threads to defer waking, usually until pthread_mutex_unlock(). */
 	lwpid_t		pt_waiters[PTHREAD__UNPARK_MAX];
