@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.109 2009/04/01 10:13:24 drochner Exp $	*/
+/*	$NetBSD: pthread.c,v 1.110 2009/05/17 14:49:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.109 2009/04/01 10:13:24 drochner Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.110 2009/05/17 14:49:00 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -62,7 +62,7 @@ static int	pthread__cmp(struct __pthread_st *, struct __pthread_st *);
 RB_PROTOTYPE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 #endif
 
-static void	pthread__create_tramp(pthread_t, void *(*)(void *), void *);
+static void	pthread__create_tramp(void *);
 static void	pthread__initthread(pthread_t);
 static void	pthread__scrubthread(pthread_t, char *, int);
 static int	pthread__stackid_setup(void *, size_t, pthread_t *);
@@ -406,8 +406,11 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 * Create the new LWP.
 	 */
 	pthread__scrubthread(newthread, name, nattr.pta_flags);
-	makecontext(&newthread->pt_uc, pthread__create_tramp, 3,
-	    newthread, startfunc, arg);
+	newthread->pt_func = startfunc;
+	newthread->pt_arg = arg;
+	_lwp_makecontext(&newthread->pt_uc, pthread__create_tramp,
+	    newthread, newthread, newthread->pt_stack.ss_sp,
+	    newthread->pt_stack.ss_size);
 
 	flag = LWP_DETACHED;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0 ||
@@ -440,22 +443,21 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 
 static void
-pthread__create_tramp(pthread_t self, void *(*start)(void *), void *arg)
+pthread__create_tramp(void *cookie)
 {
+	pthread_t self;
 	void *retval;
 
-	/*
-	 * Set up identity register.
-	 * XXX Race: could receive a signal before this.
-	 */
-	(void)_lwp_setprivate(self);
+	self = cookie;
 
 	/*
 	 * Throw away some stack in a feeble attempt to reduce cache
 	 * thrash.  May help for SMT processors.  XXX We should not
 	 * be allocating stacks on fixed 2MB boundaries.  Needs a
-	 * thread register or decent thread local storage.  Note
-	 * that pt_lid may not be set by this point, but we don't
+	 * thread register or decent thread local storage.
+	 *
+	 * Note that we may race with the kernel in _lwp_create(),
+	 * and so pt_lid can be unset at this point, but we don't
 	 * care.
 	 */
 	(void)alloca(((unsigned)self->pt_lid & 7) << 8);
@@ -471,7 +473,7 @@ pthread__create_tramp(pthread_t self, void *(*start)(void *), void *arg)
 		err(1, "_lwp_ctl");
 	}
 
-	retval = (*start)(arg);
+	retval = (*self->pt_func)(self->pt_arg);
 
 	pthread_exit(retval);
 
