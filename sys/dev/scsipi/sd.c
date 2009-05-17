@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.282 2009/05/16 20:10:52 dyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.283 2009/05/17 18:11:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.282 2009/05/16 20:10:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.283 2009/05/17 18:11:34 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -356,7 +356,7 @@ sddetach(device_t self, int flags)
 	mutex_enter(&sd->sc_dk.dk_openlock);
 	if (sd->sc_dk.dk_openmask == 0)
 		;	/* nothing to do */
-	else if ((flags & DETACH_FORCE) != 0)
+	else if ((flags & DETACH_FORCE) == 0)
 		rc = EBUSY;
 	else
 		sdlastclose(sd);
