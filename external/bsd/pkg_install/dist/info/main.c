@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.4 2009/03/02 22:31:21 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.5 2009/05/17 21:21:08 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.4 2009/03/02 22:31:21 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.5 2009/05/17 21:21:08 joerg Exp $");
 
 /*
  *
@@ -52,8 +52,6 @@ Boolean File2Pkg = FALSE;
 Boolean Quiet = FALSE;
 char   *InfoPrefix = "";
 char   *BuildInfoVariable = "";
-char    PlayPen[MaxPathSize];
-size_t  PlayPenSize = sizeof(PlayPen);
 size_t  termwidth = 0;
 lpkg_head_t pkgs;
 

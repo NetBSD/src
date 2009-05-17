@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.4 2009/04/24 14:16:59 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.5 2009/05/17 21:21:07 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd April 24, 2009
+.Dd May 13, 2009
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -44,6 +44,9 @@
 .Ek
 .Bk -words
 .Op Fl D Ar displayfile
+.Ek
+.Bk -words
+.Op Fl F Ar compression
 .Ek
 .Bk -words
 .Op Fl g Ar group
@@ -160,6 +163,13 @@ or, if preceded by
 the argument itself.
 .It Fl E
 Add an empty views file to the package.
+.It Fl F Ar compression
+Use
+.Ar compression
+as compression algorithm.
+This overrides the heuristic to guess the compression type from the
+output name.
+Currently supported values are bzip2, gzip and none.
 .It Fl f Ar packlist
 Fetch
 .Pq packing list

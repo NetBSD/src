@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.6 2009/04/25 21:38:18 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.7 2009/05/17 21:21:07 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.6 2009/04/25 21:38:18 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.7 2009/05/17 21:21:07 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ static void set_unset_variable(char **, Boolean);
 void 
 usage(void)
 {
-	(void) fprintf(stderr, "usage: %s [-bqSvV] [-C config] [-d lsdir] [-K pkg_dbdir] [-s sfx] command args ...\n"
+	(void) fprintf(stderr, "usage: %s [-bqSVv] [-C config] [-d lsdir] [-K pkg_dbdir] [-s sfx] command [args ...]\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
 	    " rebuild-tree                - rebuild +REQUIRED_BY files from forward deps\n"
