@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.165 2009/04/11 23:05:26 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.166 2009/05/17 05:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.165 2009/04/11 23:05:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.166 2009/05/17 05:54:42 yamt Exp $");
 
 #include "veriexec.h"
 
@@ -428,9 +428,9 @@ unionread:
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
-	FILE_LOCK(fp);
+	mutex_enter(&fp->f_lock);
 	fp->f_offset = auio.uio_offset;
-	FILE_UNLOCK(fp);
+	mutex_exit(&fp->f_lock);
 	VOP_UNLOCK(vp, 0);
 	if (error)
 		return (error);
@@ -450,10 +450,10 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
-		FILE_LOCK(fp);
+		mutex_enter(&fp->f_lock);
 		fp->f_data = vp;
 		fp->f_offset = 0;
-		FILE_UNLOCK(fp);
+		mutex_exit(&fp->f_lock);
 		vrele(tvp);
 		goto unionread;
 	}
