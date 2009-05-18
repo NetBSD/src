@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.11 2009/05/18 20:03:30 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.12 2009/05/18 21:39:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -122,4 +122,9 @@ share/man/man7/sysctl.7				1.22 via patch
 	Document PROC_PID_LIMIT_SBSIZE.  From Greg A. Woods in PR lib/36463.
 	Wording is taken from getrlimit(2).
 	[snj, ticket #765]
+
+sys/arch/vax/include/mtpr.h			1.21, 1.22
+
+	Add "memory" clobber to mtpr for barrier.  See also kern/38637.
+	[mhitch, ticket #767]
 
