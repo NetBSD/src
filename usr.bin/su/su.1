@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.48 2007/10/27 18:43:37 christos Exp $
+.\"	$NetBSD: su.1,v 1.49 2009/05/18 09:37:44 wiz Exp $
 .\"
 .Dd October 27, 2007
 .Dt SU 1
@@ -36,14 +36,14 @@
 .Nd substitute user identity
 .Sh SYNOPSIS
 .Nm
-.Op Fl Kdflm
+.Op Fl dfKlm
 .Op Fl c Ar login-class
 .Oo
 .Ar login Ns Op : Ns Ar group
 .Op Ar "shell arguments"
 .Oc
 .Nm
-.Op Fl Kdflm
+.Op Fl dfKlm
 .Op Fl c Ar login-class
 .Oo
 .Ns : Ns Ar group
@@ -129,8 +129,6 @@ this is the traditional behavior of
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl K
-Do not attempt to use Kerberos to authenticate the user.
 .It Fl c
 Specify a login class.
 You may only override the default class if you're already root.
@@ -155,6 +153,8 @@ this option unsets
 .Ev ENV ,
 thus preventing the shell from executing the startup file pointed to by
 this variable.
+.It Fl K
+Do not attempt to use Kerberos to authenticate the user.
 .It Fl l
 Simulate a full login.
 The environment is discarded except for
