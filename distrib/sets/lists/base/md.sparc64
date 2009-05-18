@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.43 2009/05/12 18:07:54 plunky Exp $
+# $NetBSD: md.sparc64,v 1.44 2009/05/18 13:40:10 plunky Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -196,7 +196,7 @@
 ./usr/lib/sparc/libusbhid.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libusbhid.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libutil.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libutil.so.7.16			base-compat-shlib	compat,pic
+./usr/lib/sparc/libutil.so.7.17			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libwrap.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libwrap.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libz.so.1			base-compat-shlib	compat,pic
