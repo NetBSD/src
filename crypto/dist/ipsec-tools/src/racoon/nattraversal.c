@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.6.6.1 2009/04/20 13:27:12 tteras Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.6.6.2 2009/05/18 17:01:07 tteras Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -287,7 +287,7 @@ natt_fill_options (struct ph1natt_options *opts, int version)
 void
 natt_float_ports (struct ph1handle *iph1)
 {
-	if (! (iph1->natt_flags && NAT_DETECTED) )
+	if (! (iph1->natt_flags & NAT_DETECTED) )
 		return;
 	if (! iph1->natt_options->float_port){
 		/* Drafts 00 / 01, just schedule keepalive */
