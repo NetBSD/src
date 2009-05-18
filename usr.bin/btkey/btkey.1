@@ -1,4 +1,4 @@
-.\"	$NetBSD: btkey.1,v 1.3 2009/03/10 19:36:33 joerg Exp $
+.\"	$NetBSD: btkey.1,v 1.4 2009/05/18 12:03:06 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Iain Hibbert
 .\" All rights reserved.
@@ -33,12 +33,12 @@
 .Nd Bluetooth Link Key management utility
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCrRwW
+.Op Fl CcRrWw
 .Op Fl k Ar key
 .Fl a Ar address
 .Fl d Ar device
 .Nm
-.Fl lL
+.Fl Ll
 .Op Fl d Ar device
 .Sh DESCRIPTION
 The
@@ -76,10 +76,10 @@ The options are as follows:
 .It Fl a Ar address
 Specify the remote device address.
 May be given as a BDADDR or a name.
-.It Fl c
-Clear key from file.
 .It Fl C
 Clear key from device.
+.It Fl c
+Clear key from file.
 .It Fl d Ar device
 Specify the local device address.
 May be given as a BDADDR or a name.
@@ -87,23 +87,29 @@ May be given as a BDADDR or a name.
 Supply a Link Key as a string of hexadecimal digits.
 Up to 32 digits will be processed and the resulting key
 will be zero padded to 16 octets.
-.It Fl l
-List keys stored in file.
 .It Fl L
 List keys stored in device.
-.It Fl r
-Read key from file.
+.It Fl l
+List keys stored in file.
 .It Fl R
 Read key from device.
-.It Fl w
-Write key to file.
+.It Fl r
+Read key from file.
 .It Fl W
 Write key to device.
+.It Fl w
+Write key to file.
 .El
 .Pp
 Super-user privileges are required to read or write link keys.
+.Sh EXIT STATUS
+.Ex -std
+.Sh FILES
+.Bl -item -compact
+.It
+.Pa /var/db/bthcid.keys
+.El
 .Sh EXAMPLES
-.Pp
 Read key for mouse at ubt0 from file and write to device
 .Pp
 .Dl btkey -d ubt0 -a mouse -rW
@@ -115,14 +121,6 @@ Write new key for keyboard at ubt0 to file
 Clear key for phone at bt3c0 from file and device
 .Pp
 .Dl btkey -d bt3c0 -a phone -cC
-.Pp
-.Sh EXIT STATUS
-.Ex -std
-.Sh FILES
-.Bl -item -compact
-.It
-.Pa /var/db/bthcid.keys
-.El
 .Sh SEE ALSO
 .Xr btpin 1 ,
 .Xr btconfig 8 ,
