@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.289 2009/05/16 19:19:04 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.290 2009/05/18 11:42:30 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9795,61 +9795,6 @@ ENTRY(send_softint)
 1:
 	retl
 	 wrpr	%g1, 0, %pstate		! restore PSTATE.IE
-
-/*
- * Here is a very good random number generator.  This implementation is
- * based on _Two Fast Implementations of the `Minimal Standard' Random
- * Number Generator_, David G. Carta, Communications of the ACM, Jan 1990,
- * Vol 33 No 1.
- */
-/*
- * This should be rewritten using the mulx instr. if I ever understand what it
- * does.
- */
-	.data
-randseed:
-	.word	1
-	.text
-ENTRY(random)
-	sethi	%hi(16807), %o1
-	wr	%o1, %lo(16807), %y
-	 sethi	%hi(randseed), %o5
-	 ld	[%o5 + %lo(randseed)], %o0
-	 andcc	%g0, 0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %o0, %o2
-	mulscc  %o2, %g0, %o2
-	rd	%y, %o3
-	srl	%o2, 16, %o1
-	set	0xffff, %o4
-	and	%o4, %o2, %o0
-	sll	%o0, 15, %o0
-	srl	%o3, 17, %o3
-	or	%o3, %o0, %o0
-	addcc	%o0, %o1, %o0
-	bneg	1f
-	 sethi	%hi(0x7fffffff), %o1
-	retl
-	 st	%o0, [%o5 + %lo(randseed)]
-1:
-	or	%o1, %lo(0x7fffffff), %o1
-	add	%o0, 1, %o0
-	and	%o1, %o0, %o0
-	retl
-	 st	%o0, [%o5 + %lo(randseed)]
 
 
 #define MICROPERSEC	(1000000)
