@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2009/05/16 16:06:06 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2009/05/18 05:19:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/05/16 16:06:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/05/18 05:19:15 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -265,7 +265,6 @@ struct cpu_info cpu_info_store = {
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-
 void delay_init(void);
 static inline void fall(int, int, int, int, int);
 void dumpsys(void);
@@ -358,7 +357,7 @@ const struct hppa_cpu_info cpu_types[] = {
 #endif
 #ifdef HP8200_CPU
 	{ "PA8200", "Vulcan", "PCXU+",
-	  hpcxup,HPPA_CPU_PCXUP, HPPA_FTRS_W32B, "2.0",
+	  hpcxup, HPPA_CPU_PCXUP, HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
