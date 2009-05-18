@@ -365,19 +365,6 @@ send_rebind(void *arg)
 }
 
 void
-start_rebind(void *arg)
-{
-	struct interface *iface = arg;
-
-	syslog(LOG_ERR, "%s: failed to renew, attmepting to rebind",
-	    iface->name);
-	iface->state->state = DHS_REBIND;
-	delete_timeout(send_renew, iface);
-	iface->state->lease.server.s_addr = 0;
-	send_rebind(iface);
-}
-
-void
 start_expire(void *arg)
 {
 	struct interface *iface = arg;
@@ -413,10 +400,11 @@ log_dhcp(int lvl, const char *msg,
 
 	if (strcmp(msg, "NAK:") == 0)
 		a = get_option_string(dhcp, DHO_MESSAGE);
-	else {
+	else if (dhcp->yiaddr != 0) {
 		addr.s_addr = dhcp->yiaddr;
 		a = xstrdup(inet_ntoa(addr));
-	}
+	} else
+		a = NULL;
 	r = get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID);
 	if (dhcp->servername[0] && r == 0)
 		syslog(lvl, "%s: %s %s from %s `%s'", iface->name, msg, a,
@@ -424,8 +412,10 @@ log_dhcp(int lvl, const char *msg,
 	else if (r == 0)
 		syslog(lvl, "%s: %s %s from %s",
 		    iface->name, msg, a, inet_ntoa(addr));
-	else
+	else if (a != NULL)
 		syslog(lvl, "%s: %s %s", iface->name, msg, a);
+	else
+		syslog(lvl, "%s: %s", iface->name, msg);
 	free(a);
 }
 
@@ -457,15 +447,16 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 	/* We may have found a BOOTP server */
 	if (get_option_uint8(&type, dhcp, DHO_MESSAGETYPE) == -1) 
 		type = 0;
-	else if (get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID) == -1) {
-		/* We should ignore invalid NAK messages without a ServerID */
-		syslog(LOG_WARNING, "%s: ignoring DHCP message; no Server ID",
-		    iface->name);
-		return;
-	}
 
-	/* We should restart on a NAK */
 	if (type == DHCP_NAK) {
+		/* For NAK, only check if we require the ServerID */
+		if (has_option_mask(ifo->requiremask, DHO_SERVERID) &&
+		    get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID) == -1)
+		{
+			log_dhcp(LOG_WARNING, "reject NAK", iface, dhcp);
+			return;
+		}
+		/* We should restart on a NAK */
 		log_dhcp(LOG_WARNING, "NAK:", iface, dhcp);
 		drop_config(iface, "NAK");
 		unlink(iface->leasefile);
@@ -482,27 +473,31 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 		return;
 	}
 
-	/* No NAK, so reset the backoff */
-	state->nakoff = 1;
-
 	/* Ensure that all required options are present */
 	for (i = 1; i < 255; i++) {
 		if (has_option_mask(ifo->requiremask, i) &&
 		    get_option_uint8(&tmp, dhcp, i) != 0)
 		{
-			log_dhcp(LOG_WARNING, "reject", iface, dhcp);
+			/* If we are bootp, then ignore the need for serverid.
+			 * To ignore bootp, require dhcp_message_type instead. */
+			if (type == 0 && i == DHO_SERVERID)
+				continue;
+			log_dhcp(LOG_WARNING, "reject DHCP", iface, dhcp);
 			return;
 		}
-	}
+	}		
+
+	/* No NAK, so reset the backoff */
+	state->nakoff = 1;
 
 	if ((type == 0 || type == DHCP_OFFER) &&
 	    state->state == DHS_DISCOVER)
 	{
 		lease->frominfo = 0;
 		lease->addr.s_addr = dhcp->yiaddr;
-		lease->server.s_addr = 0;
+		lease->server.s_addr = INADDR_ANY;
 		if (type != 0)
-			lease->server.s_addr = addr.s_addr;
+			get_option_addr(&lease->server.s_addr, dhcp, DHO_SERVERID);
 		log_dhcp(LOG_INFO, "offered", iface, dhcp);
 		free(state->offer);
 		state->offer = dhcp;
@@ -869,6 +864,21 @@ start_renew(void *arg)
 	iface->state->xid = arc4random();
 	open_sockets(iface);
 	send_renew(iface);
+}
+
+void
+start_rebind(void *arg)
+{
+	struct interface *iface = arg;
+
+	syslog(LOG_ERR, "%s: failed to renew, attmepting to rebind",
+	    iface->name);
+	iface->state->state = DHS_REBIND;
+	delete_timeout(send_renew, iface);
+	iface->state->lease.server.s_addr = 0;
+	if (iface->raw_fd == -1)
+		open_sockets(iface);
+	send_rebind(iface);
 }
 
 static void
@@ -1596,31 +1606,31 @@ main(int argc, char **argv)
 		    PACKAGE " will not work correctly unless run as root");
 
 	if (sig != 0) {
-		i = -1;
 		pid = read_pid();
 		if (pid != 0)
 			syslog(LOG_INFO, "sending signal %d to pid %d",
 			    sig, pid);
-
-		if (!pid || (i = kill(pid, sig))) {
+		if (pid == 0 || kill(pid, sig) != 0) {
 			if (sig != SIGALRM)
 				syslog(LOG_ERR, ""PACKAGE" not running");
 			unlink(pidfile);
+			if (sig != SIGALRM)
+				exit(EXIT_FAILURE);
+		} else {
+			if (sig == SIGALRM)
+				exit(EXIT_SUCCESS);
+			/* Spin until it exits */
+			syslog(LOG_INFO, "waiting for pid %d to exit", pid);
+			ts.tv_sec = 0;
+			ts.tv_nsec = 100000000; /* 10th of a second */
+			for(i = 0; i < 100; i++) {
+				nanosleep(&ts, NULL);
+				if (read_pid() == 0)
+					exit(EXIT_SUCCESS);
+			}
+			syslog(LOG_ERR, "pid %d failed to exit", pid);
 			exit(EXIT_FAILURE);
 		}
-		if (sig == SIGALRM)
-			exit(EXIT_SUCCESS);
-		/* Spin until it exits */
-		syslog(LOG_INFO, "waiting for pid %d to exit", pid);
-		ts.tv_sec = 0;
-		ts.tv_nsec = 100000000; /* 10th of a second */
-		for(i = 0; i < 100; i++) {
-			nanosleep(&ts, NULL);
-			if (read_pid() == 0)
-				exit(EXIT_SUCCESS);
-		}
-		syslog(LOG_ERR, "pid %d failed to exit", pid);
-		exit(EXIT_FAILURE);
 	}
 
 	if (!(options & DHCPCD_TEST)) {
