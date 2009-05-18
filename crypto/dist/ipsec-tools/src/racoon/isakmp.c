@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.54 2009/04/20 13:24:36 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.55 2009/05/18 17:40:38 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -206,13 +206,15 @@ isakmp_handler(ctx, so_isakmp)
 	union {
 		char		buf[sizeof (isakmp) + 4];
 		u_int32_t	non_esp[2];
-		char		lbuf[sizeof(struct udphdr) + 
+		struct		{
+				     struct udphdr udp;
 #ifdef __linux
-				     sizeof(struct iphdr) + 
+				     struct iphdr ip;
 #else
-				     sizeof(struct ip) + 
+				     struct ip ip;
 #endif
-				     sizeof(isakmp) + 4];
+				     char buf[sizeof(isakmp) + 4];
+				} lbuf;
 	} x;
 	struct sockaddr_storage remote;
 	struct sockaddr_storage local;
@@ -248,22 +250,13 @@ isakmp_handler(ctx, so_isakmp)
 
 	/* Lucent IKE in UDP encapsulation */
 	{
-		struct udphdr *udp;
 #ifdef __linux__
-		struct iphdr *ip;
-
-		udp = (struct udphdr *)&x.lbuf[0];
-		if (ntohs(udp->dest) == 501) {
-			ip = (struct iphdr *)(x.lbuf + sizeof(*udp));
-			extralen += sizeof(*udp) + ip->ihl;
+		if (ntohs(x.lbuf.udp.dest) == 501) {
+			extralen += sizeof(x.lbuf.udp) + x.lbuf.ip.ihl;
 		}
 #else
-		struct ip *ip;
-
-		udp = (struct udphdr *)&x.lbuf[0];
-		if (ntohs(udp->uh_dport) == 501) {
-			ip = (struct ip *)(x.lbuf + sizeof(*udp));
-			extralen += sizeof(*udp) + ip->ip_hl;
+		if (ntohs(lbuf.udp.uh_dport) == 501) {
+			extralen += sizeof(x.lbuf.udp) + x.lbuf.ip.ip_hl;
 		}
 #endif
 	}	
