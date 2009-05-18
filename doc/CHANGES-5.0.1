@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.10 2009/05/14 00:29:37 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.11 2009/05/18 20:03:30 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -98,4 +98,28 @@ usr.sbin/postinstall/postinstall		1.97
 	Fetch /etc/dhcpcd.conf from the correct place when building the
 	system from source.
 	[jnemeth, ticket #756]
+
+sys/kern/sys_mqueue.c				1.17
+
+	sys_mq_open: remove broken access flag check.
+	Noted by Stathis Kamperis.
+	[rmind, ticket #762]
+
+usr.sbin/schedctl/schedctl.c			1.14
+
+	Skip LSIDL and LSZOMB threads when retrieving info.
+	[rmind, ticket #763]
+
+sys/arch/sparc/include/psl.h			1.45
+
+	Add memory clobbers to the inline assembler modifying/testing the %psr
+	register, to avoid the compiler reordering instructions out of critical
+	sections. Should fix PR port-sparc/41372.
+	[martin, ticket #764]
+
+share/man/man7/sysctl.7				1.22 via patch
+
+	Document PROC_PID_LIMIT_SBSIZE.  From Greg A. Woods in PR lib/36463.
+	Wording is taken from getrlimit(2).
+	[snj, ticket #765]
 
