@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.44 2007/02/19 02:57:40 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.44.62.1 2009/05/18 19:55:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -252,7 +252,7 @@ getmid(void)
 static __inline void
 setpsr(int newpsr)
 {
-	__asm volatile("wr %0,0,%%psr" : : "r" (newpsr));
+	__asm volatile("wr %0,0,%%psr" : : "r" (newpsr) : "memory");
 	__asm volatile("nop; nop; nop");
 }
 
@@ -266,7 +266,7 @@ spl0(void)
 	 * which gives us the same value as the old psr but with all
 	 * the old PIL bits turned off.
 	 */
-	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr) : : "memory");
 	oldipl = psr & PSR_PIL;
 	__asm volatile("wr %0,%1,%%psr" : : "r" (psr), "r" (oldipl));
 
@@ -290,7 +290,7 @@ static __inline void name(void) \
 	psr &= ~PSR_PIL; \
 	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
-	__asm volatile("nop; nop; nop"); \
+	__asm volatile("nop; nop; nop" : : : "memory"); \
 }
 
 _SPLSET(spllowerschedclock, IPL_SCHED)
@@ -324,7 +324,7 @@ splraiseipl(ipl_cookie_t icookie)
 	psr = (psr & ~oldipl) | newipl;
 
 	__asm volatile("wr %0,0,%%psr" : : "r" (psr));
-	__asm volatile("nop; nop; nop");
+	__asm volatile("nop; nop; nop" : : : "memory");
 
 	return (oldipl);
 }
@@ -345,7 +345,7 @@ splx(int newipl)
 {
 	int psr;
 
-	__asm volatile("rd %%psr,%0" : "=r" (psr));
+	__asm volatile("rd %%psr,%0" : "=r" (psr) : : "memory");
 	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr & ~PSR_PIL), "rn" (newipl));
 	__asm volatile("nop; nop; nop");
