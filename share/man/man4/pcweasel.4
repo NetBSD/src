@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcweasel.4,v 1.4 2007/11/23 11:40:50 xtraeme Exp $
+.\"	$NetBSD: pcweasel.4,v 1.5 2009/05/18 12:31:01 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -41,49 +41,54 @@
 .Cd "pseudo-device pcweasel"
 .Cd "weasel* at pci? dev ? function ?"
 .Pp
-Note that the appropriate display device must also be enabled.  See
+Note that the appropriate display device must also be enabled.
+See
 .Xr pcdisplay 4
 for more information.
 .Sh DESCRIPTION
 The PC-Weasel is a serial console board for use primarily on
-Intel-based PC-class systems.  It addresses a problem that
-nearly everyone who has deployed a PC-class server has experienced:
-the total lack of remote management capability on PC-class hardware.
+Intel-based PC-class systems.
+It addresses a problem that nearly everyone who has deployed a
+PC-class server has experienced: the total lack of remote management
+capability on PC-class hardware.
 .Pp
 In addition to serial console support, the PC-Weasel provides the
 ability to remotely reset the system (by means of a hardware reset
 signal), and provides a watchdog timer function.
 .Pp
 The PC-Weasel works by emulating the original IBM Monochrome
-Display Adapter (MDA).  Writes to the display's character
-cells are translated into ANSI terminal sequences which are
-then sent out the PC-Weasel's serial port.  Incoming characters
-are translated into PC keyboard scan codes and then fed (by means
-of a cable) into the system's keyboard controller.  The system
-believes it is using a display console.  This is particularly
-important in the event that one needs access to BIOS configuration
-menus.
+Display Adapter (MDA).
+Writes to the display's character cells are translated into ANSI
+terminal sequences which are then sent out the PC-Weasel's serial
+port.
+Incoming characters are translated into PC keyboard scan codes and
+then fed (by means of a cable) into the system's keyboard controller.
+The system believes it is using a display console.
+This is particularly important in the event that one needs access
+to BIOS configuration menus.
 .Pp
 The PC-Weasel also includes a ST16550 serial port, which may
-be configured as any one of the system's serial ports.  Typical
-usage is to configure the port as
+be configured as any one of the system's serial ports.
+Typical usage is to configure the port as
 .Em com0
-at ISA I/O address 0x3f8.  When the PC-Weasel detects activity
-on the ST16550, the serial port is automatically connected to
-the ST16550 so that the serial port may be used as normal.  When
-the PC-Weasel detects activity on the internal UART used for MDA
-emulation, the serial port is automatically reconnected to the
-emulation UART.  This allows the boot program and kernel to be
-configured to use the serial port directly (which is more efficient
-than using the MDA emulation mode), yet allows the MDA emulation
-to be reestablished as soon as the kernel loses control of the
-system.
+at ISA I/O address 0x3f8.
+When the PC-Weasel detects activity on the ST16550, the serial port
+is automatically connected to the ST16550 so that the serial port
+may be used as normal.
+When the PC-Weasel detects activity on the internal UART used for
+MDA emulation, the serial port is automatically reconnected to the
+emulation UART.
+This allows the boot program and kernel to be configured to use
+the serial port directly (which is more efficient than using the
+MDA emulation mode), yet allows the MDA emulation to be reestablished
+as soon as the kernel loses control of the system.
 .Pp
 The
 .Nm
 driver provides support for the additional features present on
-the PC-Weasel.  At the moment, this includes support for the
-watchdog timer function.  Use of the
+the PC-Weasel.
+At the moment, this includes support for the watchdog timer function.
+Use of the
 .Nm
 driver is not required in order for the system to function with
 a PC-Weasel installed so long as only the MDA emulation and
@@ -98,8 +103,8 @@ driver first appeared in
 .Nx 1.5.1 .
 .Sh AUTHORS
 The PC-Weasel was invented by Herb Peyerl and Jonathan Levine
-at Canada Connect Corporation.  It is now produced by Middle
-Digital, Inc., http://www.realweasel.com/
+at Canada Connect Corporation.
+It is now produced by Middle Digital, Inc., http://www.realweasel.com/
 .Pp
 The
 .Nm
