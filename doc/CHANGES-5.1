@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.14 2009/05/18 20:02:52 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.15 2009/05/18 20:17:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -551,4 +551,9 @@ usr.bin/paste/paste.c				1.15
 	on it being null-terminated. This caused e.g. paste -d '\0' a b to
 	print a '0' at the beginning of each line. Closes PR 41159.
 	[dholland, ticket #766]
+
+dist/wpa/src/drivers/driver_bsd.c		1.6
+
+	Use new way of associating, which fixes wpa with ral(4)
+	[roy, ticket #755]
 
