@@ -53,15 +53,15 @@ struct com_dino_softc {
 };
 
 struct com_dino_regs {
-	u_int8_t	reset;
-	u_int8_t	pad0[3];
-	u_int8_t	test;
+	uint8_t		reset;
+	uint8_t		pad0[3];
+	uint8_t		test;
 #define	COM_DINO_PAR_LOOP	0x01
 #define	COM_DINO_CLK_SEL	0x02
-	u_int8_t	pad1[3];
-	u_int32_t	iodc;
-	u_int8_t	pad2[0x54];
-	u_int8_t	dither;
+	uint8_t		pad1[3];
+	uint32_t	iodc;
+	uint8_t		pad2[0x54];
+	uint8_t		dither;
 };
 
 int	com_dino_match(device_t, cfdata_t, void *);
