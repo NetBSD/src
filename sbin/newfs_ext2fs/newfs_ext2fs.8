@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_ext2fs.8,v 1.4 2009/03/01 21:52:59 wiz Exp $
+.\"	$NetBSD: newfs_ext2fs.8,v 1.5 2009/05/18 12:17:54 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -182,8 +182,6 @@ If
 .Ar size
 is negative the specified size is subtracted from the default size
 (reserving space at the end of the partition).
-.It Fl v Ar volname
-This specifies a volume name for the file system.
 .It Fl V Ar verbose
 This controls the amount of information written to stdout:
 .Bl -tag -width 3n -offset indent -compact
@@ -205,6 +203,8 @@ If
 is specifed
 .Nm
 stops before outputting the progress bar.
+.It Fl v Ar volname
+This specifies a volume name for the file system.
 .It Fl Z
 Pre-zeros the file system image created with
 .Fl F .
