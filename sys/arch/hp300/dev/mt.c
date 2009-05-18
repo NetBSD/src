@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.46 2009/01/13 13:35:51 yamt Exp $	*/
+/*	$NetBSD: mt.c,v 1.47 2009/05/18 20:41:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.46 2009/01/13 13:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.47 2009/05/18 20:41:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ struct	mt_softc {
 	tpr_t	sc_ttyp;
 	struct bufq_state *sc_tab;/* buf queue */
 	int	sc_active;
-	struct buf sc_bufstore;	/* XXX buffer storage */
 };
 
 #ifdef DEBUG
@@ -922,8 +921,7 @@ mtread(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
-	return physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_READ, minphys, uio);
+	return physio(mtstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
 static int
@@ -931,8 +929,7 @@ mtwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
-	return physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_WRITE, minphys, uio);
+	return physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 static int
