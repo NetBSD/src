@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.49 2009/03/11 19:26:09 joerg Exp $
+.\"	$NetBSD: boot.8,v 1.50 2009/05/18 12:26:15 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,10 +136,12 @@ When using a short or 0 timeout, it is often useful to interrupt the boot
 by holding down a shift key, as some BIOSes and BIOS extensions will drain the
 keystroke buffer at various points during POST.
 .Pp
-If present, the file /boot.cfg will be used to configure the behaviour of the
-boot loader including setting the timeout, choosing a console device, altering
-the banner text and displaying a menu allowing boot commands to be easily
-chosen. See
+If present, the file
+.Pa /boot.cfg
+will be used to configure the behaviour of the boot loader including
+setting the timeout, choosing a console device, altering the banner
+text and displaying a menu allowing boot commands to be easily chosen.
+See
 .Xr boot.cfg 5 .
 .Pp
 The
@@ -173,7 +175,8 @@ error messages should be self-explanatory.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
-.\" NOTE: much of this text is duplicated in the MI boot.8.  Some of it is
+.\" NOTE: much of this text is duplicated in the MI boot.8.
+.\" Some of it is
 .\" also duplicated in the i386-specific dosboot.8 and pxeboot.8;
 .\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
@@ -202,8 +205,8 @@ installation:
 .Pp
 .Bl -hang -compact
 .It hd
-Hard disks as numbered by the BIOS. This includes
-ST506, IDE, ESDI, RLL disks on a WD100[2367] or
+Hard disks as numbered by the BIOS.
+This includes ST506, IDE, ESDI, RLL disks on a WD100[2367] or
 lookalike controller(s), and SCSI disks
 on SCSI controllers recognized by the BIOS.
 .It fd
