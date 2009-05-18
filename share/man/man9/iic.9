@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.9,v 1.3 2007/02/02 07:37:06 wiz Exp $
+.\"	$NetBSD: iic.9,v 1.4 2009/05/18 12:49:11 wiz Exp $
 .\"	$OpenBSD: iic.9,v 1.3 2004/08/24 05:48:22 david Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
 .Fa "const void *cmdbuf"
 .Fa "size_t cmdlen"
 .Fa "void *buf"
-.Fa "size_t len"
+.Fa "size_t buflen"
 .Fa "int flags"
 .Fc
 .Ft int
@@ -163,7 +163,7 @@ flag was passed to
 .Fn iic_acquire_bus ,
 it must also be passed to
 .Fn iic_release_bus .
-.It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len" "flags"
+.It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "buflen" "flags"
 Perform a series of I2C transactions on the bus.
 .Fn iic_exec
 initiates the operation by sending a START condition on the I2C
@@ -200,7 +200,7 @@ This is equivalent to
 I2C_OP_WRITE_WITH_STOP with
 .Fa cmdlen
 of 1 and
-.Fa len
+.Fa buflen
 of 1.
 .It Fn iic_smbus_read_byte "ic" "addr" "cmd" "datap" "flags"
 Perform an SMBus READ BYTE operation.
@@ -208,7 +208,7 @@ This is equivalent to
 I2C_OP_READ_WITH_STOP with
 .Fa cmdlen
 of 1 and
-.Fa len
+.Fa buflen
 of 1.
 .It Fn iic_smbus_receive_byte "ic" "addr" "datap" "flags"
 Perform an SMBus RECEIVE BYTE operation.
@@ -216,7 +216,7 @@ This is equivalent to
 I2C_OP_READ_WITH_STOP with
 .Fa cmdlen
 of 0 and
-.Fa len
+.Fa buflen
 of 1.
 .El
 .Sh CONTROLLER INTERFACE
