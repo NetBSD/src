@@ -138,7 +138,7 @@ com_dino_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	ca->ca_irq = 11;
+	ca->ca_irq = 10;
 
 	sc_comdino->sc_ih = dino_intr_establish(sc_dino, ca->ca_irq, IPL_TTY,
 	    comintr, sc);
