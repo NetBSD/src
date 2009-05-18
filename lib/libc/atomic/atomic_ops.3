@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_ops.3,v 1.2 2009/05/18 12:37:28 wiz Exp $
+.\"	$NetBSD: atomic_ops.3,v 1.3 2009/05/18 12:40:21 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,7 @@
 The
 .Nm atomic_ops
 family of functions provide atomic memory operations.
-There are 7 classes of atomic memory operations available
-:
+There are 7 classes of atomic memory operations available:
 .Pp
 .Bl -tag -width "atomic_swap(3)"
 .It Xr atomic_add 3
@@ -65,7 +64,6 @@ These functions perform atomic swap.
 .Pp
 .Bl -tag -width aa
 .It Synchronization mechanisms
-.Pp
 Where the architecture does not provide hardware support for atomic compare
 and swap (CAS), atomicity is provided by a restartable sequence or by a
 spinlock.
@@ -74,7 +72,6 @@ of the interface.
 The following architectures can be assumed to provide CAS in hardware:
 alpha, amd64, i386, powerpc, powerpc64, sparc64.
 .It Scope and restrictions
-.Pp
 If hardware CAS is available, the atomic operations are globally atomic:
 operations within a memory region shared between processes are
 guaranteed to be performed atomically.
@@ -97,7 +94,6 @@ some other synchronization mechanism.
 Intermixing of atomic operations with other synchronization mechanisms
 for the same memory location results in undefined behavior.
 .It Visibility and ordering of memory accesses
-.Pp
 If hardware CAS is available, stores to the target memory location by an
 atomic operation will reach global visibility before the operation
 completes.
@@ -115,7 +111,6 @@ to an atomic operation must use memory barriers.
 See
 .Xr membar_ops 3 .
 .It Performance
-.Pp
 Because atomic memory operations require expensive synchronization at the
 hardware level, applications should take care to minimize their use.
 In certain cases, it may be more appropriate to use a mutex, especially
