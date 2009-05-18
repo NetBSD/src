@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.14 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.15 2009/05/18 17:40:38 tteras Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -398,8 +398,9 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 	u_int *tolen;
 {
 	int otolen;
-	u_int len;
-	struct sockaddr_storage ss;
+	socklen_t slen;
+	int len;
+	union sockaddr_any sa;
 	struct msghdr m;
 	struct cmsghdr *cm;
 	struct iovec iov[2];
@@ -412,8 +413,8 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 	struct sockaddr_in6 *sin6;
 #endif
 
-	len = sizeof(ss);
-	if (getsockname(s, (struct sockaddr *)&ss, &len) < 0) {
+	slen = sizeof(sa);
+	if (getsockname(s, &sa.sa, &slen) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"getsockname (%s)\n", strerror(errno));
 		return -1;
@@ -446,7 +447,7 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 			"cmsg %d %d\n", cm->cmsg_level, cm->cmsg_type);)
 #endif
 #if defined(INET6) && defined(INET6_ADVAPI)
-		if (ss.ss_family == AF_INET6
+		if (sa.sa.sa_family == AF_INET6
 		 && cm->cmsg_level == IPPROTO_IPV6
 		 && cm->cmsg_type == IPV6_PKTINFO
 		 && otolen >= sizeof(*sin6)) {
@@ -465,14 +466,13 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 				sin6->sin6_scope_id = pi->ipi6_ifindex;
 			else
 				sin6->sin6_scope_id = 0;
-			sin6->sin6_port =
-				((struct sockaddr_in6 *)&ss)->sin6_port;
+			sin6->sin6_port = sa.sin6.sin6_port;
 			otolen = -1;	/* "to" already set */
 			continue;
 		}
 #endif
 #ifdef __linux__
-		if (ss.ss_family == AF_INET
+		if (sa.sa.sa_family == AF_INET
 		 && cm->cmsg_level == IPPROTO_IP
 		 && cm->cmsg_type == IP_PKTINFO
 		 && otolen >= sizeof(sin)) {
@@ -483,14 +483,13 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 			sin->sin_family = AF_INET;
 			memcpy(&sin->sin_addr, &pi->ipi_addr,
 				sizeof(sin->sin_addr));
-			sin->sin_port =
-				((struct sockaddr_in *)&ss)->sin_port;
+			sin->sin_port = sa.sin.sin_port;
 			otolen = -1;	/* "to" already set */
 			continue;
 		}
 #endif
 #if defined(INET6) && defined(IPV6_RECVDSTADDR)
-		if (ss.ss_family == AF_INET6
+		if (sa.sa.sa_family == AF_INET6
 		      && cm->cmsg_level == IPPROTO_IPV6
 		      && cm->cmsg_type == IPV6_RECVDSTADDR
 		      && otolen >= sizeof(*sin6)) {
@@ -501,14 +500,13 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 			sin6->sin6_len = sizeof(*sin6);
 			memcpy(&sin6->sin6_addr, CMSG_DATA(cm),
 				sizeof(sin6->sin6_addr));
-			sin6->sin6_port =
-				((struct sockaddr_in6 *)&ss)->sin6_port;
+			sin6->sin6_port = sa.sin6.sin6_port;
 			otolen = -1;	/* "to" already set */
 			continue;
 		}
 #endif
 #ifndef __linux__
-		if (ss.ss_family == AF_INET
+		if (sa.sa.sa_family == AF_INET
 		 && cm->cmsg_level == IPPROTO_IP
 		 && cm->cmsg_type == IP_RECVDSTADDR
 		 && otolen >= sizeof(*sin)) {
@@ -519,7 +517,7 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 			sin->sin_len = sizeof(*sin);
 			memcpy(&sin->sin_addr, CMSG_DATA(cm),
 				sizeof(sin->sin_addr));
-			sin->sin_port = ((struct sockaddr_in *)&ss)->sin_port;
+			sin->sin_port = sa.sin.sin_port;
 			otolen = -1;	/* "to" already set */
 			continue;
 		}
@@ -539,7 +537,8 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 	struct sockaddr *dst;
 {
 	struct sockaddr_storage ss;
-	u_int len;
+	socklen_t slen;
+	int len = 0;
 	int i;
 
 	if (src->sa_family != dst->sa_family) {
@@ -548,8 +547,8 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 		return -1;
 	}
 
-	len = sizeof(ss);
-	if (getsockname(s, (struct sockaddr *)&ss, &len) < 0) {
+	slen = sizeof(ss);
+	if (getsockname(s, (struct sockaddr *)&ss, &slen) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"getsockname (%s)\n", strerror(errno));
 		return -1;
