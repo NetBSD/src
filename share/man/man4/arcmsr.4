@@ -1,4 +1,4 @@
-.\"	$NetBSD: arcmsr.4,v 1.7 2008/03/03 15:35:22 xtraeme Exp $
+.\"	$NetBSD: arcmsr.4,v 1.8 2009/05/18 13:57:54 wiz Exp $
 .\"	$OpenBSD: arc.4,v 1.10 2007/11/04 08:18:17 dlg Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines <xtraeme@netbsd.org>
@@ -107,7 +107,8 @@ error will be reported by
 When a RAID 1 or 1+0 volume is created, either through the
 .Xr bioctl 8
 command or controller's firmware, the volume won't be accessible until
-the initialization is done. A way to get access to the
+the initialization is done.
+A way to get access to the
 .Xr sd 4
 device that corresponds to that volume without rebooting, is to issue
 the following command (once the initialization is finished):
@@ -152,6 +153,9 @@ The
 .Nm
 driver was originally written for
 .Ox
-by David Gwynne. It was ported to
+by
+.An David Gwynne .
+It was ported to
 .Nx
-and extended by Juan Romero Pardines.
+and extended by
+.An Juan Romero Pardines .
