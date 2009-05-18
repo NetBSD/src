@@ -1,4 +1,4 @@
-.\"	$NetBSD: bio.4,v 1.8 2008/05/25 20:57:48 wiz Exp $
+.\"	$NetBSD: bio.4,v 1.9 2009/05/18 14:07:09 wiz Exp $
 .\"	$OpenBSD: bio.4,v 1.19 2006/09/20 22:22:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
@@ -82,7 +82,8 @@ Retrieve number of volumes and physical disks for a specific device.
 .It Dv BIOCDISK
 Retrieve detailed information for the specified physical disk.
 Information returned can include status, size, channel, target, lun,
-vendor name, serial number, and processor device (ses or safte).
+vendor name, serial number, and processor device (ses).
+.\" or safte
 .It Dv BIOCDISK_NOVOL
 Is just the same as
 .Em BIOCDISK
@@ -99,21 +100,25 @@ Control the alarm beeper on the device.
 Supported states are: disable alarm, enable alarm, silence alarm, status and
 test alarm.
 .Pp
-Note:  These options might not be supported on all hardware.
+Note: These options might not be supported on all hardware.
 .It Dv BIOCBLINK
 Blink an LED of the specified physical disk.
 Supported blink states are: blink LED, unblink LED and blink alarm LED.
 .Pp
-Note:  This option is only supported if the disk is governed by ses(4) or
-safte(4) and the hardware supports hardware blinking.
+Note: This option is only supported if the disk is governed by
+.Xr ses 4
+.\" or
+.\" .Xr safte 4
+and the hardware supports hardware blinking.
 .It Dv BIOCSETSTATE
 Alter the state of specified physical disk.
 Supported states are: create/remove hot-spare, create/remove pass through
 disk, start/stop consistency check in a volume, online disk and offline disk.
 .Pp
-Note:  These options might not be supported on all hardware.
+Note: These options might not be supported on all hardware.
 .It Dv BIOCVOLOPS
-For operations in volume sets. It's able to create and remove a volume
+For operations in volume sets.
+It's able to create and remove a volume
 set in a supported RAID controller.
 .Pp
 Note: this ioctl might not be supported on all hardware.
