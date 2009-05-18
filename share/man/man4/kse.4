@@ -1,4 +1,4 @@
-.\"	$NetBSD: kse.4,v 1.6 2007/10/19 05:11:07 nisimura Exp $
+.\"	$NetBSD: kse.4,v 1.7 2009/05/18 09:27:11 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Tohru Nishimura.
 .\"
@@ -39,12 +39,14 @@
 The
 .Nm
 driver supports Ethernet interfaces based on the Micrel 8842/8841
-PCI Ethernet chips.  The 8842 has 2 Ethernet ports which behave as
-a managed switch to bridge each other.  It works like a T-shape
-connector of Ethernet data flow in which an Ethernet controller
-sits at the leg of the T.  Frames can flow between the two ports
-while traffic destined for the 8842 reaches the EMAC. The 8841 is
-a plain 10/100 Ethernet.
+PCI Ethernet chips.
+The 8842 has 2 Ethernet ports which behave as a managed switch to
+bridge each other.
+It works like a T-shape connector of Ethernet data flow in which
+an Ethernet controller sits at the leg of the T.
+Frames can flow between the two ports while traffic destined for
+the 8842 reaches the EMAC.
+The 8841 is a plain 10/100 Ethernet.
 The
 .Nm
 driver distinguishs and handles them according to the HW model.
@@ -60,12 +62,16 @@ The
 driver was written by
 .An Tohru Nishimura .
 .Sh BUGS
-__STRICT_ALIGNMENT case is not written.  8842 media selection
-keeps "auto" and indicates "up 100baseTX-FX flow" when either of
-two ports is found link-up.  There is no functional provision to
-see and control the media selection of them this moment.  Advanced
-features like flow volume bound, VLAN tag insertion/removal, QoS
-DiffServ are not implemented and remain uncontrollable by the
+__STRICT_ALIGNMENT case is not written.
+8842 media selection keeps
+.Dq auto
+and indicates
+.Dq up 100baseTX-FX flow
+when either of two ports is found link-up.
+There is no functional provision to see and control the media
+selection of them this moment.
+Advanced features like flow volume bound, VLAN tag insertion/removal,
+QoS DiffServ are not implemented and remain uncontrollable by the
 .Nm
 driver.
 UDP4CSUM is not very useful since the HW has an implementation
