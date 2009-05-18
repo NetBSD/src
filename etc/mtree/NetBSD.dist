@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.400 2009/05/14 02:37:35 ginsbach Exp $
+#	$NetBSD: NetBSD.dist,v 1.401 2009/05/18 12:50:41 njoly Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -492,7 +492,6 @@
 ./usr/include/nfs
 ./usr/include/ntfs
 ./usr/include/objc
-./usr/include/openpgpsdk
 ./usr/include/openssl
 ./usr/include/prop
 ./usr/include/protocols
