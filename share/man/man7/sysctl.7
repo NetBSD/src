@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.16.2.1 2009/02/02 18:25:57 snj Exp $
+.\"	$NetBSD: sysctl.7,v 1.16.2.1.2.1 2009/05/18 19:58:19 bouyer Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 21, 2008
+.Dd May 18, 2009
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1699,7 +1699,14 @@ function.
 The maximum number of simultaneous processes for this user id.
 .It Li proc.pid.rlimit.descriptors ( PROC_PID_LIMIT_NOFILE )
 The maximum number of open files for this process.
-.\" XXX proc.pid.rlimit.sbsize
+.It Li proc.pid.rlimit.sbsize ( PROC_PID_LIMIT_SBSIZE )
+The maximum size (in bytes) of the socket buffers
+set by the
+.Xr setsockopt 2
+.Dv SO_RCVBUF
+and
+.Dv SO_SNDBUF
+options.
 .El
 .Pp
 The fifth level name is one of
