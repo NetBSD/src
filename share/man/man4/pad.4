@@ -1,4 +1,4 @@
-.\" $NetBSD: pad.4,v 1.1 2007/11/11 17:45:19 jmcneill Exp $
+.\" $NetBSD: pad.4,v 1.2 2009/05/18 12:06:01 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -45,12 +45,6 @@ is a pseudo-device driver which provides support for feeding back PCM data
 from a consumer of the
 .Xr audio 4
 API to userland.
-.Sh EXAMPLES
-The following example streams an MP3 to an Apple AirTunes compatible device:
-.Bd -literal -offset indent
-$ rtunes - < /dev/pad0 &
-$ mpg123 -a /dev/sound1 mozart.mp3
-.Ed
 .Sh FILES
 The
 .Nm
@@ -64,6 +58,12 @@ and feeds the raw PCM output to
 .It
 .Pa /dev/padN
 .El
+.Sh EXAMPLES
+The following example streams an MP3 to an Apple AirTunes compatible device:
+.Bd -literal -offset indent
+$ rtunes - \*[Lt] /dev/pad0 \*[Am]
+$ mpg123 -a /dev/sound1 mozart.mp3
+.Ed
 .Sh SEE ALSO
 .Xr audio 4
 .Sh HISTORY
