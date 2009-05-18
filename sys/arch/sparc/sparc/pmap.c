@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.327 2009/05/18 01:36:11 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.328 2009/05/18 02:28:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.327 2009/05/18 01:36:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.328 2009/05/18 02:28:35 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3807,6 +3807,7 @@ pmap_bootstrap4m(void *top)
 	     va += NBPG, off += NBPG) {
 		paddr_t pa = PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
 		prom_printf("going to pmap_kenter_pa(va=%p, pa=%p)\n", va, pa);
+		pmap_kremove(va, NBPG);
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	}
 
