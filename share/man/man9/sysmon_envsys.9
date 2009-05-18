@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.22 2009/05/18 12:13:44 wiz Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.23 2009/05/18 12:14:48 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,10 +72,10 @@ structure and takes care of initialization of some private features.
 Once we have the object we could start initializing sensors (see the
 .Sx SENSOR DETAILS
 section for more information) and attaching
-them to the device, this is acomplished by the
+them to the device, this is accomplished by the
 .Fn sysmon_envsys_sensor_attach
 function.
-This function attachs the envsys_data_t (sensor) specified
+This function attaches the envsys_data_t (sensor) specified
 as second argument into the sysmon_envsys object specified in the
 first argument.
 .Pp
@@ -462,7 +462,7 @@ only meant to disable setting critical limits from userland.
 .Ar value_min
 .Em or
 .Ar value_avg
-.Em members, they should be marked as valid with the appropiate flag .
+.Em members, they should be marked as valid with the appropriate flag .
 .Pp
 .It
 If
@@ -531,7 +531,7 @@ The
 framework expects to have the values converted to
 a unit that can be converted to another one easily.
 That means the user
-should convert the value returned by the driver to the appropiate unit.
+should convert the value returned by the driver to the appropriate unit.
 For example voltage sensors to
 .Sy mV ,
 temperature sensors to
@@ -552,7 +552,7 @@ and
 .Pp
 .Em PLEASE NOTE THAT YOU MUST AVOID USING FLOATING POINT OPERATIONS
 .Em IN KERNEL WHEN CONVERTING THE DATA RETURNED BY THE DRIVER TO THE
-.Em APPROPIATE UNIT, IT'S NOT ALLOWED .
+.Em APPROPRIATE UNIT, IT'S NOT ALLOWED .
 .Pp
 .El
 .Ss HOW TO ENABLE AUTOMATIC MONITORING IN SENSORS
