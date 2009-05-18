@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.102 2009/03/10 23:58:20 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.103 2009/05/18 00:25:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.102 2009/03/10 23:58:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.103 2009/05/18 00:25:15 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -99,8 +99,8 @@ strayintr(struct clockframe *fp)
 	int timesince;
 
 	snprintb(bits, sizeof(bits), PSR_BITS, fp->psr);
-	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
-	    fp->ipl, fp->pc, fp->npc, bits);
+	printf("stray interrupt cpu%d ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
+	    cpu_number(), fp->ipl, fp->pc, fp->npc, bits);
 
 	timesince = time_uptime - straytime;
 	if (timesince <= 10) {
