@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.10 2009/04/26 04:54:27 lukem Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.11 2009/05/18 05:51:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ofctl.c,v 1.10 2009/04/26 04:54:27 lukem Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.11 2009/05/18 05:51:53 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -564,7 +564,8 @@ ofname(int node, char *buf, size_t buflen)
 	int len;
 
 	len = OF_getprop(node, "name", name, sizeof(name));
-	assert(len > 0);
+	if (len <= 0)
+		name[0] = '\0';
 	off += snprintf(buf + off, buflen - off, "/%s", name);
 
 	reglen = OF_getprop(node, "reg", reg_buf, sizeof(reg_buf));
