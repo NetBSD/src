@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.6 2006/03/04 02:56:21 uwe Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.7 2009/05/18 11:39:30 nakayama Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,9 @@ typedef uint64_t cell_t;
 #define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
 #define ADR2CELL(x)	(cell_t)(u_int)(int)(x)
 #endif
+#define HDQ2CELL_HI(x)	(cell_t)(0)
+#define HDQ2CELL_LO(x)	(cell_t)(x)
+#define CELL2HDQ(hi,lo)	(lo)
 #else /* SUN4U */
 /* All cells are 4 byte slots */
 typedef uint32_t cell_t;
