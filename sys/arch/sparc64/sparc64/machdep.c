@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.238 2009/05/18 20:20:42 dyoung Exp $ */
+/*	$NetBSD: machdep.c,v 1.239 2009/05/18 20:22:16 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2009/05/18 20:20:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2009/05/18 20:22:16 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -557,7 +557,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
-int	waittime = -1;
+static int	waittime = -1;
 struct pcb dumppcb;
 
 void
