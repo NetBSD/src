@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.15 2009/05/18 20:17:53 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.16 2009/05/18 21:23:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -556,4 +556,24 @@ dist/wpa/src/drivers/driver_bsd.c		1.6
 
 	Use new way of associating, which fixes wpa with ral(4)
 	[roy, ticket #755]
+
+external/bsd/dhcpcd/dist/README				patch
+external/bsd/dhcpcd/dist/bind.c				patch
+external/bsd/dhcpcd/dist/config.h			patch
+external/bsd/dhcpcd/dist/dhcpcd.c			patch
+external/bsd/dhcpcd/dist/dhcpcd.conf			patch
+external/bsd/dhcpcd/dist/net.c				patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-mtu		patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf	patch
+	
+	Update dhcpcd to 5.0.4:
+	* ServerID requirement in DHCP messages can be toggled in dhcpcd.conf
+	* If MTU is requested, don't apply if less than 576
+	* Enforce a minimum lease time of 20 seconds
+	* -n option now starts dhcpcd if not already started
+	* 29-lookup-hostname hook installed by default, but skipped in
+	  dhcpcd.conf
+	* Fix warning about missing dirs if we don't have any existing state
+	[roy, ticket #759]
 
