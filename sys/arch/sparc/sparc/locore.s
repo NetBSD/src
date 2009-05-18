@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.244 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.245 2009/05/18 01:36:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2537,11 +2537,10 @@ softintr_common:
 	 * XXX Must not happen for fast soft interrupts!
 	 */
 	cmp	%l3, IPL_VM
-	bgeu	0f
+	bne	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
-0:
 #endif
 
 	b	3f
@@ -2565,7 +2564,7 @@ softintr_common:
 
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_VM
-	bgeu	0f
+	bne	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
@@ -2732,7 +2731,7 @@ sparc_interrupt_common:
 #if defined(MULTIPROCESSOR)
 	/* Grab the kernel lock for interrupt levels =< IPL_VM */
 	cmp	%l3, IPL_VM
-	bgeu	3f
+	bne	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
@@ -2772,7 +2771,7 @@ sparc_interrupt_common:
 4:
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_VM
-	bgeu	0f
+	bne	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
@@ -4602,12 +4601,12 @@ _C_LABEL(cpu_hatch):
 	wr	%g6, 0, %tbr
 	nop; nop; nop			! paranoia
 
-	/* Set up a stack */
+	/* Set up a stack. We use the bottom half of the interrupt stack */
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
 	sethi	%hi(_EINTSTACKP), %o0
 	ld	[%o0 + %lo(_EINTSTACKP)], %o0
-	set	USPACE - CCFSZ - 80, %sp
-	add	%sp, %o0, %sp
+	set	(INT_STACK_SIZE/2) + CCFSZ + 80, %sp
+	sub	%o0, %sp, %sp
 
 	/* Enable traps */
 	rd	%psr, %l0
