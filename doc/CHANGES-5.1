@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.16 2009/05/18 21:23:58 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.17 2009/05/18 21:38:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -576,4 +576,9 @@ external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf	patch
 	  dhcpcd.conf
 	* Fix warning about missing dirs if we don't have any existing state
 	[roy, ticket #759]
+
+sys/arch/vax/include/mtpr.h			1.21, 1.22
+
+	Add "memory" clobber to mtpr for barrier.  See also kern/38637.
+	[mhitch, ticket #767]
 
