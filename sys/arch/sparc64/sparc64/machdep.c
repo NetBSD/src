@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.237 2009/05/16 03:23:23 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.238 2009/05/18 20:20:42 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2009/05/16 03:23:23 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2009/05/18 20:20:42 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -229,9 +229,9 @@ cpu_startup(void)
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	register struct trapframe64 *tf = l->l_md.md_tf;
-	register struct fpstate64 *fs;
-	register int64_t tstate;
+	struct trapframe64 *tf = l->l_md.md_tf;
+	struct fpstate64 *fs;
+	int64_t tstate;
 	int pstate = PSTATE_USER;
 #ifdef __arch64__
 	Elf_Ehdr *eh = pack->ep_hdr;
@@ -561,7 +561,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(register int howto, char *user_boot_string)
+cpu_reboot(int howto, char *user_boot_string)
 {
 	int i;
 	static char str[128];
@@ -673,7 +673,7 @@ void
 cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
-	register int nblks, dumpblks;
+	int nblks, dumpblks;
 
 	if (dumpdev == NODEV)
 		/* No usable dump device */
@@ -722,12 +722,12 @@ void
 dumpsys(void)
 {
 	const struct bdevsw *bdev;
-	register int psize;
+	int psize;
 	daddr_t blkno;
-	register int (*dump)(dev_t, daddr_t, void *, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int j, error = 0;
 	uint64_t todo;
-	register struct mem_region *mp;
+	struct mem_region *mp;
 
 	/* copy registers to dumppcb and flush windows */
 	memset(&dumppcb, 0, sizeof(struct pcb));
