@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.191 2006/11/27 17:55:12 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.191.2.1 2009/05/18 18:26:29 bouyer Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd November 27, 2006
+.Dd May 18, 2009
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1781,6 +1781,14 @@ grow.
 This imposes a limit on the amount of physical memory to be given to
 a process; if memory is tight, the system will prefer to take memory
 from processes that are exceeding their declared resident set size.
+.It Li PROC_PID_LIMIT_SBSIZE
+The maximum size (in bytes) of the socket buffers
+set by the
+.Xr setsockopt 2
+.Dv SO_RCVBUF
+and
+.Dv SO_SNDBUF
+options.
 .It Li PROC_PID_LIMIT_MEMLOCK
 The maximum size (in bytes) which a process may lock into memory
 using the
