@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.21 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: driver.9,v 1.22 2009/05/18 08:58:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -174,13 +174,9 @@ This convention is mandated by the autoconfiguration framework.
 .Pp
 During system bootstrap, the autoconfiguration framework searches the
 system for devices.
-For each device driver, its match function is called
-.Po
-via its
+For each device driver, its match function is called (via its
 .Em cfattach
-structure
-.Pc
-to match the driver with a device instance.
+structure) to match the driver with a device instance.
 The match function is called with three arguments.
 This first argument
 .Fa parent
@@ -225,11 +221,9 @@ Generally, only a single driver exists for a device, so the match
 function returns 1 for a positive match.
 .Pp
 The autoconfiguration framework will call the attach function
-.Po
-via its
+(via its
 .Em cfattach
-structure
-.Pc
+structure)
 of the driver which returns the highest value from its match function.
 The attach function is called with three arguments.
 The attach function performs the necessary process to initialise the
@@ -257,20 +251,15 @@ enabled.
 If interrupts are required during initialisation, then the attach
 function should make use of
 .Fn config_interrupts
-.Po
-see
-.Xr autoconf 9
-.Pc .
+(see
+.Xr autoconf 9 ) .
 .Pp
 Some devices can be removed from the system without requiring a system
 reboot.
 The autoconfiguration framework calls the driver's detach function
-.Po
-via its
+(via its
 .Em cfattach
-structure
-.Pc
-during device detachment.
+structure) during device detachment.
 If the device does not support detachment, then the driver does not
 have to provide a detach function.
 The detach function is used to relinquish resources allocated to the
@@ -282,13 +271,11 @@ It is the same structure as passed to the attach function.
 The second argument
 .Fa flags
 contains detachment flags.
-Valid values are DETACH_FORCE
-.Po
-force detachment; hardware gone
-.Pc and DETACH_QUIET
-.Po
-do not print a notice
-.Pc .
+Valid values are
+.Dv DETACH_FORCE
+(force detachment; hardware gone) and
+.Dv DETACH_QUIET
+(do not print a notice).
 .Pp
 The autoconfiguration framework may call the driver's activate function
 to notify the driver of a change in the resources that have been
@@ -302,17 +289,18 @@ It is the same argument as passed to the attach function.
 The second argument
 .Fa act
 describes the action.
-Valid actions are DVACT_ACTIVATE
-.Po
-activate the device
-.Pc and DVACT_DEACTIVATE
-.Po
-deactivate the device
-.Pc .
+Valid actions are
+.Dv DVACT_ACTIVATE
+(activate the device) and
+.Dv DVACT_DEACTIVATE
+(deactivate the device).
 If the action is not supported the activate function should return
-EOPNOTSUPP.
-The DVACT_DEACTIVATE call will only be made if the DVACT_ACTIVATE call
-was successful.
+.Er EOPNOTSUPP .
+The
+.Dv DVACT_DEACTIVATE
+call will only be made if the
+.Dv DVACT_ACTIVATE
+call was successful.
 The activate function is called in interrupt context.
 .Pp
 Most drivers will want to make use of interrupt facilities.
