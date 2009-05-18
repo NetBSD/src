@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.38 2009/04/20 13:23:54 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.39 2009/05/18 17:07:15 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -135,7 +135,6 @@ isakmp_info_recv(iph1, msg0)
 	struct isakmp_gen *nd;
 	u_int8_t np;
 	int encrypted;
-	int flag;
 
 	plog(LLV_DEBUG, LOCATION, NULL, "receive Information.\n");
 
@@ -315,11 +314,8 @@ isakmp_info_recv(iph1, msg0)
 				"received unexpected payload type %s.\n",
 				s_isakmp_nptype(gen->np));
 		}
-		if(error < 0) {
+		if (error < 0)
 			break;
-		} else {
-			flag |= error;
-		}
 	}
     end:
 	if (msg != NULL)
