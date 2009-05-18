@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.34 2009/03/18 10:22:37 cegger Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.35 2009/05/18 12:15:26 nakayama Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.34 2009/03/18 10:22:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.35 2009/05/18 12:15:26 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,7 +89,7 @@ get_memory_handle(void)
 	u_int chosen;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
-		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
+		prom_printf("get_memory_handle: cannot get /chosen\r\n");
 		return -1;
 	}
 	if (OF_getprop(chosen, "memory", &memh, sizeof(memh)) == -1) {
@@ -152,7 +152,7 @@ prom_vtop(vaddr_t vaddr)
 	args.method = ADR2CELL(&"translate");
 	args.ihandle = HDL2CELL(mmuh);
 	args.vaddr = ADR2CELL(vaddr);
-	if(openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1)
 		return -1;
 #if 0
 	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\r\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\r\n",
@@ -160,7 +160,7 @@ prom_vtop(vaddr_t vaddr)
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(uint32_t)args.phys_lo); 
+	return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
 }
 
 /* 
@@ -198,7 +198,7 @@ prom_claim_virt(vaddr_t vaddr, int len)
 	args.vaddr = ADR2CELL(vaddr);
 	if (openfirmware(&args) == -1)
 		return -1;
-	return (paddr_t)args.retaddr;
+	return (vaddr_t)args.retaddr;
 }
 
 /* 
@@ -209,7 +209,6 @@ prom_claim_virt(vaddr_t vaddr, int len)
 vaddr_t
 prom_alloc_virt(int len, int align)
 {
-	static int retaddr;
 	struct {
 		cell_t name;
 		cell_t nargs;
@@ -233,10 +232,9 @@ prom_alloc_virt(int len, int align)
 	args.ihandle = HDL2CELL(mmuh);
 	args.align = align;
 	args.len = len;
-	args.retaddr = ADR2CELL(&retaddr);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return retaddr; /* Kluge till we go 64-bit */
+	return (vaddr_t)args.retaddr;
 }
 
 /* 
@@ -339,14 +337,14 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 	args.mode = mode;
 	args.size = size;
 	args.vaddr = ADR2CELL(vaddr);
-	args.phys_hi = HDL2CELL(paddr>>32); 
-	args.phys_lo = HDL2CELL(paddr);
+	args.phys_hi = HDQ2CELL_HI(paddr);
+	args.phys_lo = HDQ2CELL_LO(paddr);
 
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.status)
 		return -1;
-	return args.retaddr;
+	return (int)args.retaddr;
 }
 
 
@@ -384,7 +382,7 @@ prom_alloc_phys(int len, int align)
 	args.len = len;
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(uint32_t)args.phys_lo);
+	return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
 }
 
 /* 
@@ -421,11 +419,11 @@ prom_claim_phys(paddr_t phys, int len)
 	args.ihandle = HDL2CELL(memh);
 	args.align = 0;
 	args.len = len;
-	args.phys_hi = HDL2CELL(phys>>32);
-	args.phys_lo = HDL2CELL(phys);
+	args.phys_hi = HDQ2CELL_HI(phys);
+	args.phys_lo = HDQ2CELL_LO(phys);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(uint32_t)args.rphys_lo);
+	return (paddr_t)CELL2HDQ(args.rphys_hi, args.rphys_lo);
 }
 
 /* 
@@ -457,8 +455,8 @@ prom_free_phys(paddr_t phys, int len)
 	args.method = ADR2CELL(&"release");
 	args.ihandle = HDL2CELL(memh);
 	args.len = len;
-	args.phys_hi = HDL2CELL(phys>>32);
-	args.phys_lo = HDL2CELL(phys);
+	args.phys_hi = HDQ2CELL_HI(phys);
+	args.phys_lo = HDQ2CELL_LO(phys);
 	return openfirmware(&args);
 }
 
@@ -517,8 +515,7 @@ prom_get_msgbuf(int len, int align)
 			args.align = align;
 			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
-				return (((paddr_t)args.phys_hi<<32)|
-					(uint32_t)args.phys_lo);
+				return (paddr_t)CELL2HDQ(args.phys_hi, args.phys_lo);
 			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
