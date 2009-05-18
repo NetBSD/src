@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.19 2009/03/11 19:26:09 joerg Exp $
+.\"	$NetBSD: dosboot.8,v 1.20 2009/05/18 14:46:51 wiz Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -42,14 +42,14 @@
 .Nm
 is an
 .Tn MS-DOS
-program.  It is a boot loader for
+program.
+It is a boot loader for
 .Nx Ns Tn /i386
 designed to permit
 .Nx
 to be booted directly from
 .Tn MS-DOS .
-By default, it boots a file with
-name
+By default, it boots a file with name
 .Pa NETBSD
 in the current
 .Tn MS-DOS
@@ -60,10 +60,6 @@ shares common code with the standard boot loader,
 .Pp
 The recognized options are:
 .Bl -tag -width -ads -offset 04n
-.It Fl u
-Boot from a UFS filesystem instead of an
-.Tn MS-DOS
-filesystem.
 .It Fl c
 Execute
 .Ar command
@@ -72,9 +68,13 @@ Execute
 Enter interactive mode.
 .Nm
 will present a prompt, allowing input of commands (see below).
-.Pp
-.It Pa path
-Specifies the kernel file. In
+.It Fl u
+Boot from a UFS filesystem instead of an
+.Tn MS-DOS
+filesystem.
+.It Ar path
+Specifies the kernel file.
+In
 .Tn MS-DOS
 mode (default) a normal
 .Tn MS-DOS
@@ -85,13 +85,14 @@ or after a
 .Ic mode ufs
 command), a path in a
 .Nx
-filesystem
-is expected. By default, the file is looked up in partition 'a' of
-the first harddisk. Another device or partition can be specified
+filesystem is expected.
+By default, the file is looked up in partition
+.Sq a
+of the first harddisk.
+Another device or partition can be specified
 by prepending a block device name in terms of
 .Nx ,
-followed
-by a colon (see
+followed by a colon (see
 .Xr boot 8
 and examples).
 .It Fl adqsv
@@ -125,8 +126,10 @@ Print an overview about commands and arguments.
 .It Ic ls Op Pa path
 Print a directory listing of
 .Pa path ,
-containing inode number, filename and file type. This command works in
-UFS mode only. path can contain a device specification.
+containing inode number, filename and file type.
+This command works in UFS mode only.
+.Pa path
+can contain a device specification.
 .It Ic mode Va fstype
 Switch filesystem type;
 .Va fstype
@@ -155,7 +158,7 @@ kernel located on
 .Tn MS-DOS
 drive D, one would issue:
 .Bd -literal -offset indent
-dosboot D:\\NODOS\\NETBSD
+dosboot D:\eNODOS\eNETBSD
 .Ed
 .Pp
 To boot from a
@@ -176,8 +179,8 @@ command first appeared in
 .Nx 1.3 .
 .Sh BUGS
 .Nm
-assumes that the processor is in real mode at startup. It does not work
-well in the presence of
+assumes that the processor is in real mode at startup.
+It does not work well in the presence of
 .Tn MS-DOS
 extenders and memory managers.
 .Pp
