@@ -1,4 +1,4 @@
-/* $NetBSD: udf_bswap.h,v 1.6 2009/05/18 20:52:24 reinoud Exp $	*/
+/* $NetBSD: udf_bswap.h,v 1.7 2009/05/18 21:09:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -51,24 +51,21 @@ static __inline uint64_t udf_rw64(uint64_t);
 
 
 static __inline uint16_t
-udf_rw16(a)
-	uint16_t a;
+udf_rw16(uint16_t a)
 {
 	return bswap16(a);
 }
 
 
 static __inline uint32_t
-udf_rw32(a)
-	uint32_t a;
+udf_rw32(uint32_t a)
 {
 	return bswap32(a);
 }
 
 
 static __inline uint64_t
-udf_rw64(a)
-	uint64_t a;
+udf_rw64(uint64_t a)
 {
 	return bswap64(a);
 }
