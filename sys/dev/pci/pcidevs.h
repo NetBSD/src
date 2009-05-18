@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.988 2009/05/13 14:49:57 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.989 2009/05/18 09:06:54 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.988 2009/05/13 14:49:20 cegger Exp
+ *	NetBSD: pcidevs,v 1.989 2009/05/18 09:06:22 skrll Exp
  */
 
 /*
@@ -2007,6 +2007,7 @@
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
+#define	PCI_PRODUCT_HP_VISUALIZE_FX4	0x1008		/* Visualize FX4 */
 #define	PCI_PRODUCT_HP_TACHYON_TL	0x1028		/* Tachyon TL FC Controller */
 #define	PCI_PRODUCT_HP_TACHYON_TS	0x102A		/* Tachyon TS FC Controller */
 #define	PCI_PRODUCT_HP_TACHYON_XL2	0x1030		/* Tachyon XL2 FC Controller */
@@ -2927,9 +2928,10 @@
 #define	PCI_PRODUCT_NATIONALINST_MXI3	0x2c30		/* MXI-3 PCI Extender */
 
 /* National Semiconductor products */
+#define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_PC87415	0x0002		/* PC87415 IDE */
 #define	PCI_PRODUCT_NS_PC87560	0x000e		/* 87560 Legacy I/O */
-#define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
+#define	PCI_PRODUCT_NS_USB	0x0012		/* USB */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_NS_CS5535_HB	0x0028		/* CS5535 Host-PCI Bridge */
@@ -2938,12 +2940,12 @@
 #define	PCI_PRODUCT_NS_CS5535_AUDIO	0x002e		/* CS5535 Audio Controller */
 #define	PCI_PRODUCT_NS_CS5535_USB	0x002f		/* CS5535 USB Host Controller */
 #define	PCI_PRODUCT_NS_CS5535_VIDEO	0x0030		/* CS5535 Video Controller */
-#define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 #define	PCI_PRODUCT_NS_SC1100_IDE	0x0502		/* SC1100 PCI IDE */
 #define	PCI_PRODUCT_NS_SC1100_AUDIO	0x0503		/* SC1100 XpressAUDIO */
 #define	PCI_PRODUCT_NS_SC1100_ISA	0x0510		/* SC1100 PCI-ISA Bridge */
 #define	PCI_PRODUCT_NS_SC1100_ACPI	0x0511		/* SC1100 SMI/ACPI */
 #define	PCI_PRODUCT_NS_SC1100_XBUS	0x0515		/* SC1100 X-Bus */
+#define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
 /* Philips products */
 #define	PCI_PRODUCT_PHILIPS_SAA7130HL	0x7130		/* SAA7130HL PCI Video Broadcast Decoder */
