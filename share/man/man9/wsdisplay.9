@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.21 2008/04/30 13:10:59 martin Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.22 2009/05/18 00:07:47 snj Exp $
 .\"
 .\" Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,7 @@ The
 .Fa show_screen
 member defines a function for mapping a screen onto the physical
 display.
-This function is used for between switching screens.
+This function is used for switching between screens.
 The
 .Fa load_font
 member defines a function for loading a new font into the display.
@@ -163,21 +163,18 @@ points to the virtual screen on which these operations were executed.
 A structure used to attach the
 .Xr wsdisplay 4
 child device for the simple bit-mapped interface.
-If the full terminal-emulation interface is to be used, then
-.Em struct wsemuldisplaydev_attach_args
-should be used instead.
 It has the following members:
 .Bd -literal
 	const struct wsdisplay_accessops *accessops;
 	void *accesscookie;
 .Ed
+If the full terminal-emulation interface is to be used, then
+.Em struct wsemuldisplaydev_attach_args
+should be used instead.
 .It Fa struct wsemuldisplaydev_attach_args
 A structure used to attach the
 .Xr wsdisplay 4
 child device for the full terminal emulation interface.
-If the simple bit-mapped interface is to be used, then
-.Em struct wsdisplaydev_attach_args
-should be used instead.
 It has the following members:
 .Bd -literal
 	int console;
@@ -185,6 +182,9 @@ It has the following members:
 	const struct wsdisplay_accessops *accessops;
 	void *accesscookie;
 .Ed
+If the simple bit-mapped interface is to be used, then
+.Em struct wsdisplaydev_attach_args
+should be used instead.
 .It Fa struct wsdisplay_emulops
 A structure used to specify the display emulation functions.
 All displays intending to provide terminal emulation must provide

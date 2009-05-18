@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.90 2009/05/04 20:42:34 wiz Exp $
+.\" $NetBSD: usb.4,v 1.91 2009/05/18 00:07:47 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -307,7 +307,7 @@ The bus enumeration of the
 bus proceeds in several steps:
 .Bl -enum
 .It
-Any device specific driver can to attach to the device.
+Any device specific driver can attach to the device.
 .It
 If none is found, any device class specific driver can attach.
 .It
@@ -434,7 +434,7 @@ The
 .Va requests
 field is indexed by the transfer kind, i.e.
 .Va UE_* ,
-and indicates how many transfers of each kind that has been completed
+and indicates how many transfers of each kind have been completed
 by the controller.
 .It Dv USB_REQUEST Fa "struct usb_ctl_request"
 This command can be used to execute arbitrary requests on the control pipe.
