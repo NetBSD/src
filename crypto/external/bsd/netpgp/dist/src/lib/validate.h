@@ -70,7 +70,7 @@ typedef struct {
 	const __ops_keyring_t	*keyring;
 	validate_reader_t	*reader;
 	__ops_validation_t	*result;
-	__ops_parse_cb_return_t(*cb_get_passphrase) (const __ops_packet_t *,
+	__ops_parse_cb_return_t(*getpassphrase) (const __ops_packet_t *,
 						__ops_callback_data_t *);
 } validate_key_cb_t;
 
