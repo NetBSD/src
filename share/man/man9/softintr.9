@@ -1,4 +1,4 @@
-.\"	$NetBSD: softintr.9,v 1.18 2008/10/06 13:51:38 pooka Exp $
+.\"	$NetBSD: softintr.9,v 1.19 2009/05/18 14:05:15 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,13 +93,14 @@ connection with a particular kind of device activity: they are
 only meant as a guide.
 .Pp
 The four priority levels map directly to scheduler priority
-levels, and where the architecture implements 'fast' software
-interrupts, they also map onto interrupt priorities. 
+levels, and where the architecture implements
+.Dq fast
+software interrupts, they also map onto interrupt priorities.
 The interrupt priorities are intended to be hidden from machine
 independent code, which should in general use thread-safe mechanisms
 to synchronize with software interrupts (for example: mutexes).
 .Pp
-Software interrupts run with limited machine context. 
+Software interrupts run with limited machine context.
 In particular, they do not possess any address space context.
 They should not try to operate on user space addresses, or to use
 virtual memory facilities other than those noted as interrupt
