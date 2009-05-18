@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsfont.9,v 1.13 2008/04/30 13:10:59 martin Exp $
+.\"     $NetBSD: wsfont.9,v 1.14 2009/05/18 00:07:47 snj Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,8 +146,8 @@ If
 .Fn wsfont_find
 is called with any of the parameters as 0, it indicates that we don't
 care about that aspect of the font.
-If the font is found a (nonnegative-valued) cookie is returned which
-can used with the other functions.
+If the font is found, a (nonnegative-valued) cookie is returned which
+can be used with the other functions.
 .Pp
 The
 .Fa bitorder
@@ -202,7 +202,7 @@ A later call to
 .Fn wsfont_unlock
 will free resources used by temporary copies.
 .Pp
-The address of the wsdisplay_font pointer for the specified font is return in
+The address of the wsdisplay_font pointer for the specified font is returned in
 the
 .Fa ptr
 argument.
@@ -218,7 +218,7 @@ Remap the unicode character
 .Fa c
 to glyph for font
 .Fa font .
-Returns the glyph or success or -1 on error.
+Returns the glyph on success or \-1 on error.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
