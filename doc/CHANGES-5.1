@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.13 2009/05/14 00:28:55 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.14 2009/05/18 20:02:52 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -479,4 +479,76 @@ usr.sbin/postinstall/postinstall		1.97
 	Fetch /etc/dhcpcd.conf from the correct place when building
 	the system from source.
 	[jnemeth, ticket #756]
+
+etc/rc.d/network				1.58
+
+	Only start dhcpcd per interface if not running the full dhcpcd daemon.
+	Only stop dhcpcd pre interface if it's running for the interface.
+	Fixes PR bin/40320
+	[roy, ticket #757]
+
+distrib/utils/sysinst/arch/i386/md.c		1.122
+distrib/utils/sysinst/bsddisklabel.c		1.52
+distrib/utils/sysinst/defs.h			1.143
+distrib/utils/sysinst/disks.c			1.105
+distrib/utils/sysinst/mbr.c			1.80
+distrib/utils/sysinst/mbr.h			1.23
+distrib/utils/sysinst/msg.mi.de			1.49
+distrib/utils/sysinst/msg.mi.en			1.155
+distrib/utils/sysinst/msg.mi.es			1.26
+distrib/utils/sysinst/msg.mi.fr			1.106
+distrib/utils/sysinst/msg.mi.pl			1.65
+distrib/utils/sysinst/savenewlabel.c		1.6
+
+	Support drives over 1TB in size in sysinst.
+	Error if drive is over 2TB in size (and thus over the disklabel limit).
+	[sborrill, ticket #758]
+
+sys/dev/pci/if_bnx.c				1.21
+
+	Protect against spurious "bnx0: Double mbuf allocation failure!"
+	panics.
+	[kefren, ticket #760]
+
+sys/arch/x86/include/cacheinfo.h		1.11, 1.12
+usr.sbin/cpuctl/arch/i386.c			1.18, 1.19 via patch
+
+	Extend CPU probe of Intel processors to handle extended-models:
+	new Intel 45nm processors, Core i7, Atom, and the 45nm Xeon MP.
+	Properly decode several new Intel cache descriptors, as listed in the
+	most recent (March 2009) edition of Intel's Application Note 485.
+	Addresses PR bin/41289 and bin/41290
+	[pgoyette, ticket #761]
+
+sys/kern/sys_mqueue.c				1.17
+
+	sys_mq_open: remove broken access flag check.
+	Noted by Stathis Kamperis.
+	[rmind, ticket #762]
+
+usr.sbin/schedctl/schedctl.c			1.14
+
+	Skip LSIDL and LSZOMB threads when retrieving info.
+	[rmind, ticket #763]
+
+sys/arch/sparc/include/psl.h                    1.45
+
+        Add memory clobbers to the inline assembler modifying/testing the %psr
+	register, to avoid the compiler reordering instructions out of critical
+	sections. Should fix PR port-sparc/41372.
+	[martin, ticket #764]
+
+share/man/man7/sysctl.7				1.22 via patch
+
+	Document PROC_PID_LIMIT_SBSIZE.  From Greg A. Woods in PR lib/36463.
+	Wording is taken from getrlimit(2).
+	[snj, ticket #765]
+
+usr.bin/paste/paste.c				1.15
+
+	Null-terminate the delimiter list string after processing escapes
+	(which can shorten it) because the code that issues delimiters depends
+	on it being null-terminated. This caused e.g. paste -d '\0' a b to
+	print a '0' at the beginning of each line. Closes PR 41159.
+	[dholland, ticket #766]
 
