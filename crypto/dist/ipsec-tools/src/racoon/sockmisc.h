@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.h,v 1.9 2009/02/11 15:18:59 vanhu Exp $	*/
+/*	$NetBSD: sockmisc.h,v 1.10 2009/05/18 17:40:38 tteras Exp $	*/
 
 /* Id: sockmisc.h,v 1.9 2005/10/05 16:55:41 manubsd Exp */
 
@@ -43,12 +43,14 @@
 				   "Tom Lendacky" <toml@us.ibm.com> */
 #endif
 
+union sockaddr_any {
+	struct sockaddr sa;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+};
+
 struct netaddr {
-	union {
-		struct sockaddr sa;
-		struct sockaddr_in sin;
-		struct sockaddr_in6 sin6;
-	} sa;
+	union sockaddr_any sa;
 	unsigned long prefix;
 };
 
