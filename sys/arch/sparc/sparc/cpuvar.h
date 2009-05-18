@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.76 2009/03/10 23:58:20 martin Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.77 2009/05/18 01:36:11 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -416,7 +416,7 @@ struct cpu_info {
 
 #define CPU_INFO_ITERATOR		int
 #ifdef MULTIPROCESSOR
-#define CPU_INFO_FOREACH(cii, cp)	cii = 0; cp = &cpus[cii].ci, cii < sparc_ncpus; cii++
+#define CPU_INFO_FOREACH(cii, cp)	cii = 0; cp = cpus[cii], cii < sparc_ncpus; cii++
 #else
 #define	CPU_INFO_FOREACH(cii, cp)	(void)cii, cp = curcpu(); cp != NULL; cp = NULL
 #endif
@@ -473,11 +473,7 @@ extern int bootmid;			/* Module ID of boot CPU */
 #define CPU_MID2CPUNO(mid)		((mid) != 0 ? (mid) - 8 : 0)
 
 #ifdef MULTIPROCESSOR
-union cpu_info_pg {
-	struct cpu_info ci;	/* cpu info (aliased (per cpu) to CPUINFO_VA */
-	char pad[32 * 1024];	/* XXX: force 32K alignment for now */
-};				/* SMP capable cpu types */
-extern union cpu_info_pg *cpus;
+extern struct cpu_info *cpus[];
 extern u_int cpu_ready_mask;		/* the set of CPUs marked as READY */
 #endif
 
