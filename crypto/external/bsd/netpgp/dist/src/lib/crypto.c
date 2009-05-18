@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.10 2009/05/18 03:55:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -311,7 +311,7 @@ __ops_decrypt_file(const char *infile,
 			__ops_keyring_t *keyring,
 			const unsigned use_armour,
 			const unsigned allow_overwrite,
-			__ops_parse_cb_t *cb_get_passphrase)
+			__ops_cbfunc_t *cb_get_passphrase)
 {
 	__ops_parseinfo_t	*parse = NULL;
 	char			*filename = NULL;
@@ -369,7 +369,7 @@ __ops_decrypt_file(const char *infile,
 
 	/* setup keyring and passphrase callback */
 	parse->cbinfo.cryptinfo.keyring = keyring;
-	parse->cbinfo.cryptinfo.cb_get_passphrase = cb_get_passphrase;
+	parse->cbinfo.cryptinfo.getpassphrase = cb_get_passphrase;
 
 	/* Set up armour/passphrase options */
 	if (use_armour) {
@@ -425,7 +425,7 @@ callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		return get_seckey_cb(pkt, cbinfo);
 
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-		return cbinfo->cryptinfo.cb_get_passphrase(pkt, cbinfo);
+		return cbinfo->cryptinfo.getpassphrase(pkt, cbinfo);
 
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
 		return litdata_cb(pkt, cbinfo);

@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.10 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.11 2009/05/18 03:55:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -348,8 +348,8 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		break;
 
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-		if (key->cb_get_passphrase) {
-			return key->cb_get_passphrase(pkt, cbinfo);
+		if (key->getpassphrase) {
+			return key->getpassphrase(pkt, cbinfo);
 		}
 		break;
 
@@ -358,6 +358,32 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		return OPS_FINISHED;
 	}
 	return OPS_RELEASE_MEMORY;
+}
+
+static unsigned char *
+readfile(const char *f, size_t *len)
+{
+	unsigned char	*buf;
+	struct stat	 st;
+	FILE		*fp;
+	int		 cc;
+	int		 n;
+
+	if ((fp = fopen(f, "r")) == NULL) {
+		(void) fprintf(stderr,
+			"readfile: can't open \"%s\" for reading\n", f);
+		return NULL;
+	}
+	(void) fstat(fileno(fp), &st);
+	*len = (size_t)st.st_size;
+	if ((buf = calloc(1, *len)) != NULL) {
+		for (n = 0 ;
+		     (cc = read(fileno(fp), &buf[n], *len - n)) > 0 ;
+		     n += cc) {
+		}
+	}
+	(void) fclose(fp);
+	return buf;
 }
 
 __ops_parse_cb_return_t
@@ -437,8 +463,26 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		switch (content->sig.info.type) {
 		case OPS_SIG_BINARY:
 		case OPS_SIG_TEXT:
-			valid = check_binary_sig(
-					__ops_mem_len(data->mem),
+			if (__ops_mem_len(data->mem) == 0 &&
+			    data->detachname) {
+				/* check we have seen some data */
+				/* if not, need to read from detached name */
+				unsigned char	*detached;
+				size_t	 	 len = 0;
+
+				printf(
+				"netpgp: assuming signed data in \"%s\"\n",
+					data->detachname);
+				detached = readfile(data->detachname, &len);
+				if (detached != NULL) {
+					data->mem = __ops_memory_new();
+					__ops_memory_init(data->mem, len);
+					__ops_memory_add(data->mem, detached,
+							len);
+					(void) free(detached);
+				}
+			}
+			valid = check_binary_sig(__ops_mem_len(data->mem),
 					__ops_mem_data(data->mem),
 					&content->sig,
 					__ops_get_pubkey(signer));
@@ -476,26 +520,6 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		break;
 
 	case OPS_PARSER_PACKET_END:
-#if 0
-		/* check we have seen some data */
-		/* if not, need to read from synthetic literal data */
-		if (data->detachname) {
-			unsigned char	*detached;
-			size_t	 	 len = 0;
-
-			printf("Reading detached sig from %s\n",
-				data->detachname);
-			data->data.litdata_body = content->litdata_body;
-			data->use = LITERAL_DATA;
-			detached = readfile(data->detachname, &len);
-			if (detached != NULL) {
-				__ops_memory_add(data->mem, detached, len);
-				(void) free(detached);
-				pkt->tag = OPS_PTAG_CT_LITERAL_DATA_BODY;
-				return OPS_KEEP_MEMORY;
-			}
-		}
-#endif
 		break;
 
 	default:
@@ -559,7 +583,7 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 
 	(void) memset(&keysigs, 0x0, sizeof(keysigs));
 	keysigs.result = result;
-	keysigs.cb_get_passphrase = cb_get_passphrase;
+	keysigs.getpassphrase = cb_get_passphrase;
 
 	pinfo = __ops_parseinfo_new();
 	/* __ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED); */
@@ -679,10 +703,9 @@ __ops_validate_file(__ops_validation_t *result,
 	cc = snprintf(origfile, sizeof(origfile), "%s", infile);
 	if (strcmp(&origfile[cc - 4], ".sig") == 0) {
 		origfile[cc - 4] = 0x0;
-		if (stat(origfile, &st) == 0) {
-			if (st.st_size > sigsize - SIG_OVERHEAD) {
-				detachname = strdup(origfile);
-			}
+		if (stat(origfile, &st) == 0 &&
+		    st.st_size > sigsize - SIG_OVERHEAD) {
+			detachname = strdup(origfile);
 		}
 	}
 
@@ -694,9 +717,7 @@ __ops_validate_file(__ops_validation_t *result,
 		return 0;
 	}
 
-	if (detachname) {
-		validation.detachname = strdup(detachname);
-	}
+	validation.detachname = detachname;
 
 	/* setup output filename */
 	filename = NULL;

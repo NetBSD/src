@@ -122,13 +122,13 @@
 #define PACKAGE_NAME "netpgp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netpgp 20090515"
+#define PACKAGE_STRING "netpgp 20090517"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netpgp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20090515"
+#define PACKAGE_VERSION "20090517"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

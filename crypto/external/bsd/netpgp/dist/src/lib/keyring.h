@@ -120,7 +120,7 @@ void __ops_print_pubkey(const __ops_pubkey_t *);
 
 void __ops_print_seckeydata(const __ops_keydata_t *);
 void __ops_list_packets(char *, unsigned, __ops_keyring_t *,
-				__ops_parse_cb_t *);
+				__ops_cbfunc_t *);
 
 int __ops_export_key(const __ops_keydata_t *, unsigned char *);
 

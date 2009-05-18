@@ -31,6 +31,11 @@ cp d e
 /usr/bin/netpgp --encrypt d
 /usr/bin/netpgp --decrypt d.gpg
 diff e d && echo "No differences found"
+echo "======> sign/verify detached signature file"
+cat configure configure configure configure configure configure > f
+/usr/bin/netpgp --sign --detached f
+ls -l f f.sig
+/usr/bin/netpgp --verify f.sig
 echo "======> version information"
 /usr/bin/netpgp --version
-rm -f a a.gpg b b.gpg c c.gpg d d.gpg e
+rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig
