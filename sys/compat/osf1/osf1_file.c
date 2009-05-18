@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.32 2009/01/13 11:35:24 rtr Exp $ */
+/* $NetBSD: osf1_file.c,v 1.33 2009/05/18 12:39:02 njoly Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.32 2009/01/13 11:35:24 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.33 2009/05/18 12:39:02 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -387,7 +387,7 @@ osf1_sys_truncate(struct lwp *l, const struct osf1_sys_truncate_args *uap, regis
 	struct sys_truncate_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
-	SCARG(&a, pad) = 0;
+	SCARG(&a, PAD) = 0;
 	SCARG(&a, length) = SCARG(uap, length);
 
 	return sys_truncate(l, &a, retval);
