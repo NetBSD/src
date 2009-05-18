@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.29 2009/05/11 19:31:33 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.30 2009/05/18 18:31:18 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -243,4 +243,16 @@ share/man/man8/afterboot.8			1.39
 
 	Fix typo, from Shannon -jj Behrens in PR 41375.
 	[dholland, ticket #1314]
+
+sys/arch/sparc/include/psl.h			1.45
+
+	Add memory clobbers to the inline assembler modifying/testing the %psr
+	register, to avoid the compiler reordering instructions out of critical
+	sections. Should fix PR port-sparc/41372.
+	[martin, ticket #1317]
+
+lib/libc/gen/sysctl.3				patch
+
+	document PROC_PID_LIMIT_SBSIZE. Addresses PR 36463.
+	[snj, ticket #1318]           
 
