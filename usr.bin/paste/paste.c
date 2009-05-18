@@ -1,4 +1,4 @@
-/*	$NetBSD: paste.c,v 1.12 2006/04/01 06:36:58 rtr Exp $	*/
+/*	$NetBSD: paste.c,v 1.12.6.1 2009/05/18 18:30:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n"
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: paste.c,v 1.12 2006/04/01 06:36:58 rtr Exp $");
+__RCSID("$NetBSD: paste.c,v 1.12.6.1 2009/05/18 18:30:02 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -222,6 +222,7 @@ tr(char *arg)
 
 	if (!cnt)
 		errx(1, "no delimiters specified.");
+	*arg = '\0';
 	return(cnt);
 }
 
