@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.10 2009/05/18 03:55:42 agc Exp $");
 #endif
 
 #include <string.h>
@@ -1216,7 +1216,7 @@ void
 __ops_list_packets(char *filename,
 			unsigned armour,
 			__ops_keyring_t *keyring,
-			__ops_parse_cb_t *cb_get_passphrase)
+			__ops_cbfunc_t *cb_get_passphrase)
 {
 	__ops_parseinfo_t	*pinfo = NULL;
 	const unsigned		 accumulate = 1;
@@ -1226,7 +1226,7 @@ __ops_list_packets(char *filename,
 		accumulate);
 	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 	pinfo->cryptinfo.keyring = keyring;
-	pinfo->cryptinfo.cb_get_passphrase = cb_get_passphrase;
+	pinfo->cryptinfo.getpassphrase = cb_get_passphrase;
 	if (armour) {
 		__ops_reader_push_dearmour(pinfo);
 	}

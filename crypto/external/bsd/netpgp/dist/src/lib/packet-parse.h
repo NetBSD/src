@@ -76,9 +76,9 @@ typedef enum {
 	OPS_FINISHED
 } __ops_parse_cb_return_t;
 
-typedef struct __ops_parse_cb_info_t	 __ops_callback_data_t;
+typedef struct __ops_callback_data_t	 __ops_callback_data_t;
 
-typedef __ops_parse_cb_return_t __ops_parse_cb_t(const __ops_packet_t *,
+typedef __ops_parse_cb_return_t __ops_cbfunc_t(const __ops_packet_t *,
 					__ops_callback_data_t *);
 
 __ops_parse_cb_return_t
@@ -117,8 +117,8 @@ void __ops_parseinfo_delete(__ops_parseinfo_t *);
 __ops_error_t *__ops_parseinfo_get_errors(__ops_parseinfo_t *);
 __ops_crypt_t *__ops_parse_get_decrypt(__ops_parseinfo_t *);
 
-void __ops_set_callback(__ops_parseinfo_t *, __ops_parse_cb_t *, void *);
-void __ops_parse_cb_push(__ops_parseinfo_t *, __ops_parse_cb_t *, void *);
+void __ops_set_callback(__ops_parseinfo_t *, __ops_cbfunc_t *, void *);
+void __ops_parse_cb_push(__ops_parseinfo_t *, __ops_cbfunc_t *, void *);
 void *__ops_parse_cb_get_arg(__ops_callback_data_t *);
 void *__ops_parse_cb_get_errors(__ops_callback_data_t *);
 void __ops_reader_set(__ops_parseinfo_t *, __ops_reader_func_t *,

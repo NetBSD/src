@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.11 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.12 2009/05/18 03:55:42 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -3060,182 +3060,6 @@ __ops_decrypt_se_ip_data(__ops_content_tag_t tag, __ops_region_t *region,
 	return r;
 }
 
-#if 0
-static int
-parse_detached(__ops_parseinfo_t *pinfo, unsigned long *pktlen)
-{
-	__ops_packet_t	pkt;
-	__ops_region_t	region;
-	unsigned char	ptag[1];
-	struct stat	st;
-	unsigned	indeterminate = 0;
-	int		ret;
-
-	(void) memset(&pkt, 0x0, sizeof(pkt));
-	pkt.u.ptag.position = pinfo->readinfo.position;
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr,
-			"__ops_parse_packet: base_read returned %d\n",
-			ret);
-	}
-	ptag = (OPS_PTAG_ALWAYS_SET | OPS_PTAG_NEW_FORMAT);
-	*pktlen = 0;
-	if (!(*ptag & OPS_PTAG_ALWAYS_SET)) {
-		pkt.u.error.error = "Format error (ptag bit not set)";
-		CALLBACK(&pinfo->cbinfo, OPS_PARSER_ERROR, &pkt);
-		return 0;
-	}
-	pkt.u.ptag.new_format = !!(*ptag & OPS_PTAG_NEW_FORMAT);
-	if (pkt.u.ptag.new_format) {
-		pkt.u.ptag.type =
-			*ptag & OPS_PTAG_NF_CONTENT_TAG_MASK;
-		pkt.u.ptag.length_type = 0;
-		if (!read_new_length(&pkt.u.ptag.length, pinfo)) {
-			return 0;
-		}
-	} else {
-		unsigned   rb;
-
-		rb = 0;
-		pkt.u.ptag.type = ((unsigned)*ptag &
-				OPS_PTAG_OF_CONTENT_TAG_MASK)
-			>> OPS_PTAG_OF_CONTENT_TAG_SHIFT;
-		pkt.u.ptag.length_type =
-			*ptag & OPS_PTAG_OF_LENGTH_TYPE_MASK;
-		switch (pkt.u.ptag.length_type) {
-		case OPS_PTAG_OLD_LEN_1:
-			rb = _read_scalar(&pkt.u.ptag.length, 1, pinfo);
-			break;
-
-		case OPS_PTAG_OLD_LEN_2:
-			rb = _read_scalar(&pkt.u.ptag.length, 2, pinfo);
-			break;
-
-		case OPS_PTAG_OLD_LEN_4:
-			rb = _read_scalar(&pkt.u.ptag.length, 4, pinfo);
-			break;
-
-		case OPS_PTAG_OLD_LEN_INDETERMINATE:
-			pkt.u.ptag.length = 0;
-			indeterminate = 1;
-			rb = 1;
-			break;
-		}
-		if (!rb) {
-			return 0;
-		}
-	}
-
-	CALLBACK(&pinfo->cbinfo, OPS_PARSER_PTAG, &pkt);
-
-	__ops_init_subregion(&region, NULL);
-	region.length = pkt.u.ptag.length;
-	region.indeterminate = indeterminate;
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "__ops_parse_packet: type %d\n",
-			       pkt.u.ptag.type);
-	}
-	switch (pkt.u.ptag.type) {
-	case OPS_PTAG_CT_SIGNATURE:
-		ret = parse_sig(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_PUBLIC_KEY:
-	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		ret = parse_pubkey(pkt.u.ptag.type, &region,
-				pinfo);
-		break;
-
-	case OPS_PTAG_CT_TRUST:
-		ret = parse_trust(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_USER_ID:
-		ret = parse_userid(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_COMPRESSED:
-		ret = parse_compressed(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
-		ret = parse_one_pass(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_LITERAL_DATA:
-		ret = parse_litdata(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_USER_ATTRIBUTE:
-		ret = parse_userattr(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_SECRET_KEY:
-		ret = parse_seckey(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_SECRET_SUBKEY:
-		ret = parse_seckey(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_PK_SESSION_KEY:
-		ret = parse_pk_sesskey(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_SE_DATA:
-		ret = parse_se_data(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_SE_IP_DATA:
-		ret = parse_se_ip_data(&region, pinfo);
-		break;
-
-	case OPS_PTAG_CT_MDC:
-		ret = parse_mdc(&region, pinfo);
-		break;
-
-	default:
-		OPS_ERROR_1(&pinfo->errors, OPS_E_P_UNKNOWN_TAG,
-			    "Unknown content tag 0x%x",
-			    pkt.u.ptag.type);
-		ret = 0;
-	}
-
-	/* Ensure that the entire packet has been consumed */
-
-	if (region.length != region.readc && !region.indeterminate) {
-		if (!consume_packet(&region, pinfo, 0)) {
-			ret = -1;
-		}
-	}
-
-	/* also consume it if there's been an error? */
-	/* \todo decide what to do about an error on an */
-	/* indeterminate packet */
-	if (ret == 0) {
-		if (!consume_packet(&region, pinfo, 0)) {
-			ret = -1;
-		}
-	}
-	/* set pktlen */
-
-	*pktlen = pinfo->readinfo.alength;
-
-	/* do callback on entire packet, if desired and there was no error */
-
-	if (ret > 0 && pinfo->readinfo.accumulate) {
-		pkt.u.packet.length = pinfo->readinfo.alength;
-		pkt.u.packet.raw = pinfo->readinfo.accumulated;
-		pinfo->readinfo.accumulated = NULL;
-		pinfo->readinfo.asize = 0;
-		CALLBACK(&pinfo->cbinfo, OPS_PARSER_PACKET_END, &pkt);
-	}
-	pinfo->readinfo.alength = 0;
-
-	return (ret < 0) ? -1 : (ret) ? 1 : 0;
-}
-#endif
-
 /**
    \ingroup Core_ReadPackets
    \brief Read a Symmetrically Encrypted packet
@@ -3646,9 +3470,9 @@ This is used when adding the first callback in a stack of callbacks.
 */
 
 void 
-__ops_set_callback(__ops_parseinfo_t *pinfo, __ops_parse_cb_t *cb, void *arg)
+__ops_set_callback(__ops_parseinfo_t *pinfo, __ops_cbfunc_t *cb, void *arg)
 {
-	pinfo->cbinfo.cb = cb;
+	pinfo->cbinfo.cbfunc = cb;
 	pinfo->cbinfo.arg = arg;
 	pinfo->cbinfo.errors = &pinfo->errors;
 }
@@ -3659,7 +3483,7 @@ __ops_set_callback(__ops_parseinfo_t *pinfo, __ops_parse_cb_t *cb, void *arg)
 \sa __ops_set_callback()
 */
 void 
-__ops_parse_cb_push(__ops_parseinfo_t *pinfo, __ops_parse_cb_t *cb, void *arg)
+__ops_parse_cb_push(__ops_parseinfo_t *pinfo, __ops_cbfunc_t *cb, void *arg)
 {
 	__ops_callback_data_t *cbinfo = calloc(1, sizeof(*cbinfo));
 
@@ -3694,10 +3518,9 @@ __ops_parse_cb_get_errors(__ops_callback_data_t *cbinfo)
 \return Return value from callback, if present; else OPS_FINISHED
 */
 __ops_parse_cb_return_t 
-__ops_parse_cb(const __ops_packet_t *pkt,
-	     __ops_callback_data_t *cbinfo)
+__ops_parse_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	return (cbinfo->cb) ? cbinfo->cb(pkt, cbinfo) : OPS_FINISHED;
+	return (cbinfo->cbfunc) ? cbinfo->cbfunc(pkt, cbinfo) : OPS_FINISHED;
 }
 
 /**
