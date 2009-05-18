@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.21 2009/05/04 19:28:03 wiz Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.22 2009/05/18 12:13:44 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ This returns a zero'ed pointer to a sysmon_envsys
 structure and takes care of initialization of some private features.
 .Pp
 Once we have the object we could start initializing sensors (see the
-.Em SENSOR DETAILS
+.Sx SENSOR DETAILS
 section for more information) and attaching
 them to the device, this is acomplished by the
 .Fn sysmon_envsys_sensor_attach
@@ -163,7 +163,7 @@ driver is registered, only do it if you need the data in your driver
 to check for a specific condition.
 .Pp
 The timeout value for the monitoring events on a device may be changed via the
-.Em ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2
 or the
 .Xr envstat 8
@@ -177,7 +177,7 @@ function must be used.
 If there were monitoring events registered for the
 driver, they all will be destroyed before the device is unregistered and
 its sensors will be detached; finally the
-.Em sysmon_envsys
+.Nm
 object will be freed, so there's no need to call
 .Fn sysmon_envsys_destroy
 if we are going to unregister a device.
@@ -232,15 +232,15 @@ If
 is not running, the system will be powered off via the
 .Xr cpu_reboot 9
 call with the
-.Em RB_POWERDOWN
+.Dv RB_POWERDOWN
 flag.
 .Pp
 .El
 .Em NOTE :
 If a
-.Em SME_CLASS_ACADAPTER
+.Dv SME_CLASS_ACADAPTER
 or
-.Em SME_CLASS_BATTERY
+.Dv SME_CLASS_BATTERY
 class don't have the sensors required, the
 .Em low-power
 event will never be sent, and the graceful shutdown won't be possible.
@@ -299,9 +299,9 @@ a condition is met periodically and will send an event to the
 .Xr powerd 8
 daemon (if running).
 The monitoring event will be registered when this flag is
-.Em true
+.Dv true
 and one or more of the
-.Em ENVSYS_FMONFOO
+.Dv ENVSYS_FMONFOO
 flags were set in the
 .Ar flags
 member.
@@ -357,9 +357,9 @@ values in
 .Ar value_cur
 to report its current capacity to userland.
 Mandatory if
-.Em sme_class
+.Fa sme_class
 is set to
-.Em SME_CLASS_BATTERY .
+.Dv SME_CLASS_BATTERY .
 .It ENVSYS_BATTERY_CHARGE
 For Battery device classes.
 This sensor is equivalent to the Indicator type, it's a boolean.
@@ -369,9 +369,9 @@ if the battery is currently charging or
 .Sy false
 otherwise.
 Mandatory if
-.Em sme_class
+.Fa sme_class
 is set to
-.Em SME_CLASS_BATTERY .
+.Dv SME_CLASS_BATTERY .
 .El
 .It
 When initializing or refreshing the sensor, the
@@ -451,7 +451,7 @@ or
 .Ar ENVSYS_BATTERY_CAPACITY .
 .It ENVSYS_FMONNOTSUPP
 Disallows to set a critical limit via the
-.Em ENVSYS_SETDICTIONARY
+.Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
 This flag has not any effect for monitoring flags set in the driver and it's
 only meant to disable setting critical limits from userland.
@@ -560,7 +560,7 @@ The following example illustrates how to enable automatic monitoring
 in a virtual driver for a
 .Em critical
 state in the first sensor
-.Em (sc_sensor[0]) :
+.Fa ( sc_sensor[0] ) :
 .Pp
 .Bd -literal
 int
