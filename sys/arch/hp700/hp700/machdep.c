@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2009/05/18 05:19:15 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2009/05/18 05:20:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2009/05/18 05:19:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/05/18 05:20:46 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1022,7 +1022,6 @@ int
 hpti_g(vaddr_t hpt, vsize_t hptsize)
 {
 
-printf("%s: called %p %08x\n", __func__, (void *)hpt, (uint32_t)hptsize);
 	return pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_CONFIG,
 	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
 }
