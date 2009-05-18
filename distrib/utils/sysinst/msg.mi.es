@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.21.14.2 2009/01/22 22:45:15 snj Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.21.14.3 2009/05/18 19:35:14 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -230,7 +230,7 @@ message fssizesok
 {Aceptar los tamaños de las particiones.  Espacio libre %d %s, %d particiones libres.}
 
 message fssizesbad
-{Reducir los tamaños de las particiones en %d %s (%d sectores).}
+{Reducir los tamaños de las particiones en %d %s (%u sectores).}
 
 message startoutsidedisk
 {El valor del comienzo que ha especificado está mas allá del final del disco.
@@ -241,6 +241,13 @@ message endoutsidedisk
 El tamaño de la partición se ha truncado a %d %s.
 
 Presione Intro para continuar
+}
+
+message toobigdisklabel
+{
+This disk is too large for a disklabel partition table to be used
+and hence cannot be used as a bootable disk or to hold the root
+partition.
 }
 
 message fspart
@@ -255,7 +262,7 @@ message fspart_header
 }
 
 message fspart_row
-{%10d %9d %10d %-10s %-5s %-5s %s}
+{%10lu %9lu %10lu %-10s %-5s %-5s %s}
 
 message show_all_unused_partitions
 {Mostrar todas las particiones no usadas}
