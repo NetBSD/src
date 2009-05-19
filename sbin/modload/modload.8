@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.30 2009/05/19 22:35:41 wiz Exp $
+.\" $NetBSD: modload.8,v 1.31 2009/05/19 22:39:52 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -41,15 +41,15 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f
-.Op Fl b Ar name=val
-.Op Fl i Ar name=val
-.Op Fl s Ar name=val
+.Op Fl b Ar var=boolean
+.Op Fl i Ar var=integer
+.Op Fl s Ar var=string
 .Ar module
 .Nm
 .Fl p
-.Op Fl b Ar name=val
-.Op Fl i Ar name=val
-.Op Fl s Ar name=val
+.Op Fl b Ar var=boolean
+.Op Fl i Ar var=integer
+.Op Fl s Ar var=string
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,11 +63,11 @@ If not found there, the default system module areas are searched.
 The options to
 .Nm
 are as follows:
-.Bl -tag -width xbxnamexvalx
-.It Fl b Ar name=val
+.Bl -tag -width xbxvarxbooleanx
+.It Fl b Ar var=boolean
 Pass the module a boolean property with the name
-.Ar name .
-.Ar val
+.Ar var .
+.Ar boolean
 may be either
 .Dv true
 or
@@ -80,19 +80,19 @@ This option disables compatibility checks.
 .Em Note :
 an incompatible module can cause system instability, including data
 loss or corruption.
-.It Fl i Ar name=val
+.It Fl i Ar var=integer
 Pass the module an integer property with the name
-.Ar name
+.Ar var
 and integral value
-.Ar val .
+.Ar integer .
 .It Fl p
 Output a property list suitable for loading along with a module.
 When using this option, you do not need to specify a module.
-.It Fl s Ar name=val
+.It Fl s Ar var=string
 Pass the module a string property with the name
-.Ar name
+.Ar var
 and string value
-.Ar val .
+.Ar string .
 .El
 .Sh DIAGNOSTICS
 The
