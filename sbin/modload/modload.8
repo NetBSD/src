@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.28 2008/11/17 02:32:09 uwe Exp $
+.\" $NetBSD: modload.8,v 1.29 2009/05/19 22:09:59 jnemeth Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd November 12, 2008
+.Dd May 19, 2009
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl b Ar name=val
 .Op Fl f
 .Op Fl i Ar name=val
+.Op Fl p
 .Op Fl s Ar name=val
 .Ar module
 .Sh DESCRIPTION
@@ -80,6 +81,9 @@ This option disables compatibility checks.
 .Em Note :
 an incompatible module can cause system instability, including data
 loss or corruption.
+.It Fl p
+Output a property list suitable for loading along with a module.
+When using this option, you do not need to specify a module.
 .It Fl s
 Pass the module a string property with the name
 .Ar name
