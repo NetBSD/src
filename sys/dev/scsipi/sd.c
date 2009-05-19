@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.283 2009/05/17 18:11:34 dyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.284 2009/05/19 19:56:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.283 2009/05/17 18:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.284 2009/05/19 19:56:11 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -126,12 +126,11 @@ static int	sd_setcache(struct sd_softc *, int);
 
 static int	sdmatch(device_t, cfdata_t, void *);
 static void	sdattach(device_t, device_t, void *);
-static int	sdactivate(device_t, enum devact);
 static int	sddetach(device_t, int);
 static void	sd_set_properties(struct sd_softc *);
 
 CFATTACH_DECL3_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
-    sdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
+    NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver sd_cd;
 
@@ -325,25 +324,6 @@ sdattach(device_t parent, device_t self, void *aux)
 	dkwedge_discover(&sd->sc_dk);
 
 	sd_set_properties(sd);
-}
-
-static int
-sdactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
 }
 
 static int
