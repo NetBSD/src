@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.1 2009/05/09 15:04:25 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.2 2009/05/19 23:43:27 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.1 2009/05/09 15:04:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.2 2009/05/19 23:43:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,17 +282,20 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 	if (sdtemp_read_16(sc, SDTEMP_REG_LOWER_LIM, &sc->sc_low_lim) == 0 &&
 	    sc->sc_low_lim != 0) {
-		aprint_normal("low limit %d ", sc->sc_low_lim);
+		sc->sc_low_lim >>= 4;
+		aprint_normal("low limit %dC ", sc->sc_low_lim);
 		i++;
 	}
 	if (sdtemp_read_16(sc, SDTEMP_REG_UPPER_LIM, &sc->sc_high_lim) == 0 &&
 	    sc->sc_high_lim != 0) {
-		aprint_normal("high limit %d ", sc->sc_high_lim);
+		sc->sc_high_lim >>= 4;
+		aprint_normal("high limit %dC ", sc->sc_high_lim);
 		i++;
 	}
 	if (sdtemp_read_16(sc, SDTEMP_REG_CRIT_LIM, &sc->sc_crit_lim) == 0 &&
 	    sc->sc_crit_lim != 0) {
-		aprint_normal("critical limit %d ", sc->sc_crit_lim);
+		sc->sc_crit_lim >>= 4;
+		aprint_normal("critical limit %dC ", sc->sc_crit_lim);
 		i++;
 	}
 	iic_release_bus(sc->sc_tag, 0);
