@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2009/03/14 14:45:54 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72 2009/05/19 18:39:27 phx Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -157,9 +157,6 @@ struct clockframe {
 
 extern int astpending;		/* need trap before returning to user mode */
 #define setsoftast()		(astpending = 1)
-
-/* include support for software interrupts */
-#include <machine/mtpr.h>
 
 /*
  * The rest of this should probably be moved to ../amiga/amigacpu.h,

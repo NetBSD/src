@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.51 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: mfc.c,v 1.52 2009/05/19 18:39:26 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.51 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.52 2009/05/19 18:39:26 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,8 @@ struct mfcs_softc {
 	u_short	inbuf[SERIBUF_SIZE];
 	char	*ptr, *end;
 	char	outbuf[SEROBUF_SIZE];
-	struct vbl_node vbl_node;
+	struct	vbl_node vbl_node;
+	void	*mfcs_si;
 };
 #endif
 
@@ -214,6 +215,7 @@ int	mfcsmctl(dev_t, int, int);
 void	mfcsxintr(int);
 void	mfcseint(int, int);
 void	mfcsmint(register int);
+void	mfcs_intr_soft(void *);
 #endif
 
 #if NMFCP > 0
@@ -441,11 +443,8 @@ mfcsattach(struct device *pdp, struct device *dp, void *auxp)
 	scc = device_private(pdp);
 	ma = auxp;
 
-	if (dp) {
-		printf (": input fifo %d output fifo %d\n", SERIBUF_SIZE,
-		    SEROBUF_SIZE);
-		alloc_sicallback();
-	}
+	printf (": input fifo %d output fifo %d\n", SERIBUF_SIZE,
+	    SEROBUF_SIZE);
 
 	unit = ma->unit;
 	mfcs_active |= 1 << unit;
@@ -454,6 +453,7 @@ mfcsattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_regs = rp = scc->sc_regs;
 	sc->sc_duart = (struct duart_regs *) ((unit & 1) ? 
 	    __UNVOLATILE(&rp->du_mr1b) : __UNVOLATILE(&rp->du_mr1a));
+	sc->mfcs_si = softint_establish(SOFTINT_SERIAL, mfcs_intr_soft, sc);
 	/*
 	 * should have only one vbl routine to handle all ports?
 	 */
@@ -1001,10 +1001,7 @@ mfcintr(void *arg)
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 			scc->imask &= ~0x01;
 			regs->du_imr = scc->imask;
-			add_sicallback (tp->t_linesw ?
-			    (sifunc_t)tp->t_linesw->l_start
-			    : (sifunc_t)mfcsstart, tp, NULL);
-
+			softint_schedule(sc->mfcs_si);
 		}
 		else
 			regs->du_tba = *sc->ptr++;
@@ -1016,9 +1013,7 @@ mfcintr(void *arg)
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 			scc->imask &= ~0x10;
 			regs->du_imr = scc->imask;
-			add_sicallback (tp->t_linesw ?
-			    (sifunc_t)tp->t_linesw->l_start
-			    : (sifunc_t)mfcsstart, tp, NULL);
+			softint_schedule(sc->mfcs_si);
 		}
 		else
 			regs->du_tbb = *sc->ptr++;
@@ -1158,4 +1153,16 @@ mfcsmint(int unit)
 			sc->sc_regs->du_btrst = 0x0a << (unit & 1);
 		}
 	}
+}
+
+void
+mfcs_intr_soft(void *arg)
+{
+	struct mfcs_softc *sc = (struct mfcs_softc *)arg;
+	struct tty *tp = sc->sc_tty;
+
+	if (tp->t_linesw)
+		tp->t_linesw->l_start(tp);
+	else
+		mfcsstart(tp);
 }
