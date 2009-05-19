@@ -89,13 +89,12 @@ char *__ops_malloc_passphrase(char *);
 void __ops_keyring_list(const __ops_keyring_t *);
 
 void __ops_set_seckey(__ops_parser_content_union_t *, const __ops_keydata_t *);
+void __ops_seckey_forget(__ops_seckey_t *);
 
 const unsigned char *__ops_get_key_id(const __ops_keydata_t *);
 unsigned __ops_get_userid_count(const __ops_keydata_t *);
 const unsigned char *__ops_get_userid(const __ops_keydata_t *, unsigned);
 unsigned __ops_is_key_supported(const __ops_keydata_t *);
-const __ops_keydata_t *__ops_keyring_get_key_by_index(const __ops_keyring_t *,
-							int);
 
 __ops_userid_t *__ops_add_userid(__ops_keydata_t *, const __ops_userid_t *);
 __ops_subpacket_t *__ops_add_subpacket(__ops_keydata_t *,
@@ -111,7 +110,6 @@ void __ops_keydata_init(__ops_keydata_t *, const __ops_content_tag_t);
 
 void __ops_copy_userid(__ops_userid_t *, const __ops_userid_t *);
 void __ops_copy_packet(__ops_subpacket_t *, const __ops_subpacket_t *);
-unsigned __ops_get_keydata_content_type(const __ops_keydata_t *);
 
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_parseinfo_t *);
 

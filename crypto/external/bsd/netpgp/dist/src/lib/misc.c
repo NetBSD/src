@@ -57,8 +57,12 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2009/05/19 05:13:10 agc Exp $");
 #endif
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -731,7 +735,7 @@ __ops_calc_mdc_hash(const unsigned char *preamble,
 	/* plaintext */
 	hash.add(&hash, plaintext, sz_plaintext);
 	/* MDC packet tag */
-	c = 0xD3;
+	c = MDC_PKT_TAG;
 	hash.add(&hash, &c, 1);
 	/* MDC packet len */
 	c = OPS_SHA1_HASH_SIZE;
@@ -876,7 +880,11 @@ __ops_memory_clear(__ops_memory_t *mem)
 void 
 __ops_memory_release(__ops_memory_t *mem)
 {
-	(void) free(mem->buf);
+	if (mem->mmapped) {
+		(void) munmap(mem->buf, mem->length);
+	} else {
+		(void) free(mem->buf);
+	}
 	mem->buf = NULL;
 	mem->length = 0;
 }
@@ -934,7 +942,7 @@ void
 __ops_memory_free(__ops_memory_t * mem)
 {
 	__ops_memory_release(mem);
-	free(mem);
+	(void) free(mem);
 }
 
 /**
@@ -957,6 +965,44 @@ void *
 __ops_mem_data(__ops_memory_t *mem)
 {
 	return mem->buf;
+}
+
+/* read a gile into an __ops_memory_t */
+int
+__ops_mem_readfile(__ops_memory_t *mem, const char *f)
+{
+	struct stat	 st;
+	FILE		*fp;
+	int		 cc;
+
+	if ((fp = fopen(f, "rb")) == NULL) {
+		(void) fprintf(stderr,
+				"__ops_mem_readfile: can't open \"%s\"\n", f);
+		return 0;
+	}
+	(void) fstat(fileno(fp), &st);
+	mem->allocated = (size_t)st.st_size;
+	mem->buf = mmap(NULL, mem->allocated, PROT_READ,
+				MAP_FILE | MAP_PRIVATE, fileno(fp), 0);
+	if (mem->buf == MAP_FAILED) {
+		/* mmap failed for some reason - try to allocate memory */
+		if ((mem->buf = calloc(1, mem->allocated)) == NULL) {
+			(void) fprintf(stderr, "__ops_mem_readfile: calloc\n");
+			(void) fclose(fp);
+			return 0;
+		}
+		/* read into contents of mem */
+		for (mem->length = 0 ;
+		     (cc = read(fileno(fp), &mem->buf[mem->length],
+					mem->allocated - mem->length)) > 0 ;
+		     mem->length += (size_t)cc) {
+		}
+	} else {
+		mem->length = mem->allocated;
+		mem->mmapped = 1;
+	}
+	(void) fclose(fp);
+	return (mem->allocated == mem->length);
 }
 
 typedef struct {
