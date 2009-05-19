@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.87 2009/03/18 16:00:21 cegger Exp $ */
+/* $NetBSD: udf_subr.c,v 1.88 2009/05/19 15:08:42 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.87 2009/03/18 16:00:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.88 2009/05/19 15:08:42 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2232,7 +2232,7 @@ udf_create_parentfid(struct udf_mount *ump, struct fileid_desc *fid,
 	fid->file_char = UDF_FILE_CHAR_DIR | UDF_FILE_CHAR_PAR;
 	fid->icb = *parent;
 	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
-	fid->tag.desc_crc_len = fidsize - UDF_DESC_TAG_LENGTH;
+	fid->tag.desc_crc_len = udf_rw16(fidsize - UDF_DESC_TAG_LENGTH);
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
 
 	return fidsize;
@@ -4914,11 +4914,11 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 
 		/* only reuse entries that are wiped */
 		/* check if the len + loc are marked zero */
-		if (udf_rw32(fid->icb.len != 0))
+		if (udf_rw32(fid->icb.len) != 0)
 			continue;
 		if (udf_rw32(fid->icb.loc.lb_num) != 0)
 			continue;
-		if (udf_rw16(fid->icb.loc.part_num != 0))
+		if (udf_rw16(fid->icb.loc.part_num) != 0)
 			continue;
 #endif	/* UDF_COMPLETE_DELETE */
 
@@ -4986,7 +4986,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	unix_to_udf_name((char *) fid->data + udf_rw16(fid->l_iu),
 		&fid->l_fi, cnp->cn_nameptr, cnp->cn_namelen, &osta_charspec);
 
-	fid->tag.desc_crc_len = chosen_size - UDF_DESC_TAG_LENGTH;
+	fid->tag.desc_crc_len = udf_rw16(chosen_size - UDF_DESC_TAG_LENGTH);
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
 
 	/* writeout FID/update parent directory */
