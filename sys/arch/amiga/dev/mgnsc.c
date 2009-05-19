@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.43 2008/06/13 08:13:37 cegger Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.44 2009/05/19 18:39:26 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.43 2008/06/13 08:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.44 2009/05/19 18:39:26 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,8 @@ mgnscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_ctest7 = SIOP_CTEST7_TT1;
 	sc->sc_dcntl = 0x00;
 
-	alloc_sicallback();
+	sc->sc_siop_si = softint_establish(SOFTINT_BIO,
+	    (void (*)(void *))siopintr, sc);
 
 	/*
 	 * Fill in the scsipi_adapter.
@@ -167,9 +168,8 @@ mgnscattach(struct device *pdp, struct device *dp, void *auxp)
 /*
  * Level 6 interrupt processing for the Magnum/40 SCSI. Because the
  * level 6 interrupt is above splbio, the interrupt status is saved
- * and an sicallback to the level 2 interrupt handler scheduled.
- * This way, the actual processing of the interrupt can be deferred
- * until splbio is unblocked.
+ * and a softint scheduled.  This way, the actual processing of the
+ * interrupt can be deferred until splbio is unblocked.
  */
 
 int
@@ -199,7 +199,7 @@ mgnsc_dmaintr(void *arg)
 	rp->siop_sien = 0;
 	rp->siop_dien = 0;
 	sc->sc_flags |= SIOP_INTDEFER | SIOP_INTSOFF;
-	add_sicallback((sifunc_t)siopintr, sc, NULL);
+	softint_schedule(sc->sc_siop_si);
 	return (1);
 }
 

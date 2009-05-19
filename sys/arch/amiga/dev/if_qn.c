@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.33 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: if_qn.c,v 1.34 2009/05/19 18:39:26 phx Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.33 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.34 2009/05/19 18:39:26 phx Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -114,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.33 2009/03/18 17:06:42 cegger Exp $");
 #endif
 
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>

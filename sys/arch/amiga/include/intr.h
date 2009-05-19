@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2009/05/19 18:39:27 phx Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #define _AMIGA_INTR_H_
 
 #include <amiga/amiga/isr.h>
-#include <amiga/include/mtpr.h>
 #include <m68k/psl.h>
 
 #define	IPL_NONE	0

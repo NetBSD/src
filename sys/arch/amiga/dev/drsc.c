@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.29 2008/06/13 08:13:37 cegger Exp $ */
+/*	$NetBSD: drsc.c,v 1.30 2009/05/19 18:39:26 phx Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.29 2008/06/13 08:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.30 2009/05/19 18:39:26 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.29 2008/06/13 08:13:37 cegger Exp $");
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
 #include <amiga/amiga/drcustom.h>
+#include <m68k/include/asm_single.h>
 
 #include <machine/cpu.h>	/* is_xxx(), */
 
@@ -133,7 +134,8 @@ drscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_clock_freq = 50;		/* Clock = 50MHz */
 	sc->sc_ctest7 = 0x02;
 
-	alloc_sicallback();
+	sc->sc_siop_si = softint_establish(SOFTINT_BIO,
+	    (void (*)(void *))siopintr, sc);
 
 	/*
 	 * Fill in the scsipi_adapter.
@@ -178,9 +180,9 @@ drscattach(struct device *pdp, struct device *dp, void *auxp)
 /*
  * Level 4 interrupt processing for the MacroSystem DraCo mainboard
  * SCSI.  Because the level 4 interrupt is above splbio, the
- * interrupt status is saved and an sicallback to the level 2 interrupt
- * handler scheduled.  This way, the actual processing of the interrupt
- * can be deferred until splbio is unblocked.
+ * interrupt status is saved and a softint scheduled.  This way,
+ * the actual processing of the interrupt can be deferred until
+ * splbio is unblocked.
  */
 
 void
@@ -224,7 +226,7 @@ drsc_handler(void)
 		printf("%s: intpen still 0x%x\n", sc->sc_dev.dv_xname,
 		    *draco_intpen);
 #endif
-	add_sicallback((sifunc_t)siopintr, sc, NULL);
+	softint_schedule(sc->sc_siop_si);
 #endif
 	return;
 }

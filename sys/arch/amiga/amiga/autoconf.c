@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.103 2009/03/18 15:14:29 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.104 2009/05/19 18:39:26 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2009/03/18 15:14:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104 2009/05/19 18:39:26 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2009/03/18 15:14:29 cegger Exp $"
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
+#ifdef DRACO
+#include <amiga/amiga/drcustom.h>
+#endif
 
 static void findroot(void);
 void mbattach(struct device *, struct device *, void *);
