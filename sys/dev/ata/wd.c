@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.374 2009/05/15 23:49:28 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.375 2009/05/19 19:56:10 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.374 2009/05/15 23:49:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.375 2009/05/19 19:56:10 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -129,7 +129,6 @@ int wdcdebug_wd_mask = 0x0;
 int	wdprobe(device_t, cfdata_t, void *);
 void	wdattach(device_t, device_t, void *);
 int	wddetach(device_t, int);
-int	wdactivate(device_t, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
@@ -138,7 +137,7 @@ static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
 CFATTACH_DECL3_NEW(wd, sizeof(struct wd_softc),
-    wdprobe, wdattach, wddetach, wdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
+    wdprobe, wdattach, wddetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver wd_cd;
 
@@ -435,25 +434,6 @@ wd_suspend(device_t dv PMF_FN_ARGS)
 }
 
 int
-wdactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVATE.
-		 */
-		break;
-	}
-	return (rv);
-}
-
-int
 wddetach(device_t self, int flags)
 {
 	struct wd_softc *sc = device_private(self);
@@ -548,8 +528,10 @@ wdstrategy(struct buf *bp)
 		goto done;
 	}
 
-	/* If device invalidated (e.g. media change, door open), error. */
-	if ((wd->sc_flags & WDF_LOADED) == 0) {
+	/* If device invalidated (e.g. media change, door open,
+	 * device suspension), then error.
+	 */
+	if ((wd->sc_flags & WDF_LOADED) == 0 || !device_is_active(wd->sc_dev)) {
 		bp->b_error = EIO;
 		goto done;
 	}
