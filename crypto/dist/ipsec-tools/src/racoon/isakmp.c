@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.55 2009/05/18 17:40:38 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.56 2009/05/19 09:34:52 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -255,7 +255,7 @@ isakmp_handler(ctx, so_isakmp)
 			extralen += sizeof(x.lbuf.udp) + x.lbuf.ip.ihl;
 		}
 #else
-		if (ntohs(lbuf.udp.uh_dport) == 501) {
+		if (ntohs(x.lbuf.udp.uh_dport) == 501) {
 			extralen += sizeof(x.lbuf.udp) + x.lbuf.ip.ip_hl;
 		}
 #endif
