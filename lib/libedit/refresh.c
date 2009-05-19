@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.30 2009/03/31 17:38:27 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.31 2009/05/19 21:45:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.30 2009/03/31 17:38:27 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.31 2009/05/19 21:45:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: refresh.c,v 1.30 2009/03/31 17:38:27 christos Exp $");
 
 #include "el.h"
 
+private void	re_nextline(EditLine *);
 private void	re_addc(EditLine *, int);
 private void	re_update_line(EditLine *, char *, char *, int);
 private void	re_insert (EditLine *, char *, int, int, char *, int);
@@ -88,6 +89,37 @@ re_printstr(EditLine *el, const char *str, char *f, char *t)
 #define	ELRE_DEBUG(a, b)
 #endif
 
+/* re_nextline():
+ *	Move to the next line or scroll
+ */
+private void
+re_nextline(EditLine *el)
+{
+	el->el_refresh.r_cursor.h = 0;	/* reset it. */
+
+	/*
+	 * If we would overflow (input is longer than terminal size),
+	 * emulate scroll by dropping first line and shuffling the rest.
+	 * We do this via pointer shuffling - it's safe in this case
+	 * and we avoid memcpy().
+	 */
+	if (el->el_refresh.r_cursor.v + 1 >= el->el_term.t_size.v) {
+		int i, lins = el->el_term.t_size.v;
+		char *firstline = el->el_vdisplay[0];
+
+		for(i = 1; i < lins; i++)
+			el->el_vdisplay[i - 1] = el->el_vdisplay[i];
+
+		firstline[0] = '\0';		/* empty the string */	
+		el->el_vdisplay[i - 1] = firstline;
+	} else
+		el->el_refresh.r_cursor.v++;
+
+	ELRE_ASSERT(el->el_refresh.r_cursor.v >= el->el_term.t_size.v,
+	    (__F, "\r\nre_putc: overflow! r_cursor.v == %d > %d\r\n",
+	    el->el_refresh.r_cursor.v, el->el_term.t_size.v),
+	    abort());
+}
 
 /* re_addc():
  *	Draw c, expanding tabs, control chars etc.
@@ -103,10 +135,8 @@ re_addc(EditLine *el, int c)
 	if (c == '\n') {				/* expand the newline */
 		int oldv = el->el_refresh.r_cursor.v;
 		re_putc(el, '\0', 0);			/* assure end of line */
-		if (oldv == el->el_refresh.r_cursor.v) { /* XXX */
-			el->el_refresh.r_cursor.h = 0;	/* reset cursor pos */
-			el->el_refresh.r_cursor.v++;
-		}
+		if (oldv == el->el_refresh.r_cursor.v)	/* XXX */
+			re_nextline(el);
 		return;
 	}
 	if (c == '\t') {				/* expand the tab */
@@ -146,33 +176,12 @@ re_putc(EditLine *el, int c, int shift)
 
 	el->el_refresh.r_cursor.h++;	/* advance to next place */
 	if (el->el_refresh.r_cursor.h >= el->el_term.t_size.h) {
-		el->el_vdisplay[el->el_refresh.r_cursor.v][el->el_term.t_size.h] = '\0';
 		/* assure end of line */
-		el->el_refresh.r_cursor.h = 0;	/* reset it. */
-
-		/*
-		 * If we would overflow (input is longer than terminal size),
-		 * emulate scroll by dropping first line and shuffling the rest.
-		 * We do this via pointer shuffling - it's safe in this case
-		 * and we avoid memcpy().
-		 */
-		if (el->el_refresh.r_cursor.v + 1 >= el->el_term.t_size.v) {
-			int i, lins = el->el_term.t_size.v;
-			char *firstline = el->el_vdisplay[0];
-
-			for(i=1; i < lins; i++)
-				el->el_vdisplay[i-1] = el->el_vdisplay[i];
-
-			firstline[0] = '\0';		/* empty the string */	
-			el->el_vdisplay[i-1] = firstline;
-		} else
-			el->el_refresh.r_cursor.v++;
-
-		ELRE_ASSERT(el->el_refresh.r_cursor.v >= el->el_term.t_size.v,
-		    (__F, "\r\nre_putc: overflow! r_cursor.v == %d > %d\r\n",
-		    el->el_refresh.r_cursor.v, el->el_term.t_size.v),
-		    abort());
+		el->el_vdisplay[el->el_refresh.r_cursor.v][el->el_term.t_size.h]
+		    = '\0';
+		re_nextline(el);
 	}
+
 }
 
 
@@ -1045,11 +1054,11 @@ re_fastputc(EditLine *el, int c)
 			int i, lins = el->el_term.t_size.v;
 			char *firstline = el->el_display[0];
 	
-			for(i=1; i < lins; i++)
-				el->el_display[i-1] = el->el_display[i];
+			for(i = 1; i < lins; i++)
+				el->el_display[i - 1] = el->el_display[i];
 
 			re__copy_and_pad(firstline, "", 0);
-			el->el_display[i-1] = firstline;
+			el->el_display[i - 1] = firstline;
 		} else {
 			el->el_cursor.v++;
 			el->el_refresh.r_oldcv++;
