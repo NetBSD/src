@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2009/05/19 22:39:52 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2009/05/19 22:55:24 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.6 2009/05/19 22:39:52 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2009/05/19 22:55:24 jnemeth Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -104,7 +104,7 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "Failed to process properties");
 
 	if (output_props)
-		puts(propsstr);
+		fputs(propsstr, stdout);
 	else {
 		if (argc != 1)
 			usage();
