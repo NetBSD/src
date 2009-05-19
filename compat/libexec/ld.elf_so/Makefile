@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/02/20 02:43:02 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.7 2009/05/19 20:27:22 christos Exp $
 
 NOMAN=	# defined
 
@@ -6,8 +6,6 @@ NOMAN=	# defined
 .include <bsd.obj.mk>
 
 .if ${MKPIC} != "no"
-
-SHLINKINSTALLDIR=	/usr/libexec
 
 LDFLAGS+=		-m32
 
