@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.58 2009/03/18 17:06:42 cegger Exp $ */
+/*	$NetBSD: if_ed.c,v 1.59 2009/05/19 18:39:26 phx Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.58 2009/03/18 17:06:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.59 2009/05/19 18:39:26 phx Exp $");
 
 #include "bpfilter.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.58 2009/03/18 17:06:42 cegger Exp $");
 #endif
 
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
