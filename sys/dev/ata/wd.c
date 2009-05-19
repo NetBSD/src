@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.375 2009/05/19 19:56:10 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.376 2009/05/19 23:43:44 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.375 2009/05/19 19:56:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.376 2009/05/19 23:43:44 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -132,7 +132,7 @@ int	wddetach(device_t, int);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
-static void	wdlastclose(struct wd_softc *);
+static int	wdlastclose(device_t);
 static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
@@ -439,17 +439,7 @@ wddetach(device_t self, int flags)
 	struct wd_softc *sc = device_private(self);
 	int bmaj, cmaj, i, mn, rc, s;
 
-	rc = 0;
-	mutex_enter(&sc->sc_dk.dk_openlock);
-	if (sc->sc_dk.dk_openmask == 0)
-		;	/* nothing to do */
-	else if ((flags & DETACH_FORCE) == 0)
-		rc = EBUSY;
-	else
-		wdlastclose(sc);
-	mutex_exit(&sc->sc_dk.dk_openlock);
-
-	if (rc != 0)
+	if ((rc = disk_predetach(&sc->sc_dk, wdlastclose, self, flags)) != 0)
 		return rc;
 
 	/* locate the major number */
@@ -1000,15 +990,19 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 /* 
  * Caller must hold wd->sc_dk.dk_openlock.
  */
-static void
-wdlastclose(struct wd_softc *wd)
+static int
+wdlastclose(device_t self)
 {
+	struct wd_softc *wd = device_private(self);
+
 	wd_flushcache(wd, AT_WAIT);
 
 	if (! (wd->sc_flags & WDF_KLABEL))
 		wd->sc_flags &= ~WDF_LOADED;
 
 	wd->atabus->ata_delref(wd->drvp);
+
+	return 0;
 }
 
 int
@@ -1034,7 +1028,7 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	if (wd->sc_dk.dk_openmask == 0)
-		wdlastclose(wd);
+		wdlastclose(wd->sc_dev);
 
 	mutex_exit(&wd->sc_dk.dk_openlock);
 	return 0;
