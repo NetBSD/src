@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.22 2009/05/19 15:07:20 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.23 2009/05/19 16:24:05 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.22 2009/05/19 15:07:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.23 2009/05/19 16:24:05 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1682,9 +1682,10 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 	}
 
 	/* adjust logblks recorded count */
-	flags = UDF_EXT_FLAGS(udf_rw32(icb->len));
+	len = udf_rw32(icb->len);
+	flags = UDF_EXT_FLAGS(len);
 	if (flags == UDF_EXT_ALLOCATED)
-		logblks_rec += (UDF_EXT_LEN(icb->len) + lb_size -1) / lb_size;
+		logblks_rec += (UDF_EXT_LEN(len) + lb_size -1) / lb_size;
 	*logblks_rec_p = udf_rw64(logblks_rec);
 
 	/* adjust l_ad and crclen when needed */
