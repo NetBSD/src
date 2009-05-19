@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239 2009/05/18 20:22:16 dyoung Exp $ */
+/*	$NetBSD: machdep.c,v 1.240 2009/05/19 22:03:16 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2009/05/18 20:22:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2009/05/19 22:03:16 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -557,12 +557,12 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
-static int	waittime = -1;
 struct pcb dumppcb;
 
 void
 cpu_reboot(int howto, char *user_boot_string)
 {
+	static bool syncdone = false;
 	int i;
 	static char str[128];
 
@@ -576,13 +576,13 @@ cpu_reboot(int howto, char *user_boot_string)
 	fb_unblank();
 #endif
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0 && !syncdone) {
 		extern struct lwp lwp0;
 
 		/* XXX protect against curlwp->p_stats.foo refs in sync() */
 		if (curlwp == NULL)
 			curlwp = &lwp0;
-		waittime = 0;
+		syncdone = true;
 		vfs_shutdown();
 
 		/*
