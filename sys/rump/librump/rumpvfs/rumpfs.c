@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.16 2009/05/03 19:00:18 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.17 2009/05/19 13:42:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.16 2009/05/03 19:00:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.17 2009/05/19 13:42:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -162,7 +162,7 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 	int (**vpops)(void *);
 	int rv;
 
-	if (vt == VREG || vt == VCHR) {
+	if (vt == VREG || vt == VCHR || vt == VBLK) {
 		vt = VBLK;
 		vpops = spec_vnodeop_p;
 	} else {
