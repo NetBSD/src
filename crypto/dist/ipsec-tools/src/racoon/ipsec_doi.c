@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.42 2009/05/18 17:40:38 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.43 2009/05/19 09:34:52 tteras Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -4305,7 +4305,7 @@ ipsecdoi_id2str(id)
 	case IPSECDOI_ID_IPV4_ADDR_RANGE:
 
 #ifndef __linux__
-+		saddr.sa.sa_len = sizeof(struct sockaddr_in);
+		saddr.sa.sa_len = sizeof(struct sockaddr_in);
 #endif
 		saddr.sa.sa_family = AF_INET;
 		saddr.sin.sin_port = IPSEC_PORT_ANY;
