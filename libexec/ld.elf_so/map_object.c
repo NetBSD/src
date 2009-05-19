@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.37 2009/01/06 04:01:46 mrg Exp $	 */
+/*	$NetBSD: map_object.c,v 1.38 2009/05/19 20:44:52 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.37 2009/01/06 04:01:46 mrg Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.38 2009/05/19 20:44:52 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -91,7 +91,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	size_t		 nclear;
 #endif
 
-	if (sb != NULL && sb->st_size < sizeof (Elf_Ehdr)) {
+	if (sb != NULL && sb->st_size < (off_t)sizeof (Elf_Ehdr)) {
 		_rtld_error("%s: unrecognized file format1", path);
 		return NULL;
 	}

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.88 2009/03/16 02:24:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.89 2009/05/19 20:44:52 christos Exp $
 
-WARNS?=2	# XXX: too many sign-compare issues in xmalloc.c
+WARNS?=4
 
 # We are not building this with PIE
 PIE_CFLAGS=

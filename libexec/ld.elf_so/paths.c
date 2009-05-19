@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.39 2008/06/05 00:03:20 ad Exp $	 */
+/*	$NetBSD: paths.c,v 1.40 2009/05/19 20:44:52 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.39 2008/06/05 00:03:20 ad Exp $");
+__RCSID("$NetBSD: paths.c,v 1.40 2009/05/19 20:44:52 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -357,7 +357,7 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 		(void)close(fd);
 		return;
 	}
-	if (sz >= sizeof(small)) {
+	if (sz >= (ssize_t)sizeof(small)) {
 		if (fstat(fd, &st) == -1) {
 			/* Complain */
 			xwarn("fstat: %s", fname);
@@ -414,8 +414,8 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 {
 	const char *node, *ep;
 	struct sysctlnode query, *result, *newresult;
-	int mib[CTL_MAXNAME], i, r;
-	size_t res_size, n;
+	int mib[CTL_MAXNAME], r;
+	size_t res_size, n, i;
 	u_int miblen = 0;
 
 	/* Start with 16 entries, will grow it up as needed. */
@@ -426,7 +426,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 
 	ep = name + strlen(name);
 	do {
-		i = -1;
+		i = ~0ul;
 		while (*name == '/' || *name == '.')
 			name++;
 		if (name >= ep)
@@ -463,7 +463,7 @@ _rtld_sysctl(const char *name, void *oldp, size_t *oldlen)
 			}
 	} while (name < ep && miblen <= CTL_MAXNAME);
 
-	if (name < ep || i == -1)
+	if (name < ep || i == ~0ul)
 		goto bad;
 	r = SYSCTL_TYPE(result[i].sysctl_flags);
 

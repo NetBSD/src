@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.19 2007/11/24 18:32:26 christos Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.20 2009/05/19 20:44:52 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xprintf.c,v 1.19 2007/11/24 18:32:26 christos Exp $");
+__RCSID("$NetBSD: xprintf.c,v 1.20 2009/05/19 20:44:52 christos Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -92,16 +92,18 @@ xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)
 				char digits[sizeof(int) * 3], *dp = digits;
 #define	SARG() \
 (size & SZ_LONG ? va_arg(ap, long) : \
-((size & SZ_SIZE_T ? va_arg(ap, size_t) : \
+((size & SZ_SIZE_T ? (long)va_arg(ap, size_t) : \
 va_arg(ap, int))))
 #define	UARG() \
 (size & SZ_LONG ? va_arg(ap, unsigned long) : \
 ((size & SZ_SIZE_T ? va_arg(ap, size_t) : \
 va_arg(ap, unsigned int))))
-#define	ARG()	(size & SZ_UNSIGNED ? UARG() : SARG())
 
 				if (fmt[1] == 'd') {
-					sval = ARG();
+					if (size & SZ_UNSIGNED)
+						sval = UARG();
+					else
+						sval = SARG();
 					if (sval < 0) {
 						if ((sval << 1) == 0) {
 							/*
@@ -126,7 +128,10 @@ va_arg(ap, unsigned int))))
 						uval = sval;
 					}
 				} else {
-					uval = ARG();
+					if (size & SZ_UNSIGNED)
+						uval = UARG();
+					else
+						uval = SARG();
 				}
 				do {
 					*dp++ = '0' + (uval % 10);
