@@ -67,17 +67,17 @@ typedef unsigned __ops_hash_finish_t(__ops_hash_t *, unsigned char *);
 
 /** _ops_hash_t */
 struct _ops_hash_t {
-	__ops_hash_alg_t	 alg;
-	size_t			 size;
-	const char		*name;
-	__ops_hash_init_t	*init;
-	__ops_hash_add_t	*add;
-	__ops_hash_finish_t	*finish;
-	void		 	*data;
+	__ops_hash_alg_t	 alg;		/* algorithm */
+	size_t			 size;		/* size */
+	const char		*name;		/* what it's known as */
+	__ops_hash_init_t	*init;		/* initialisation func */
+	__ops_hash_add_t	*add;		/* add text func */
+	__ops_hash_finish_t	*finish;	/* finalise func */
+	void		 	*data;		/* blob for data */
 };
 
-typedef void __ops_crypt_set_iv_t(__ops_crypt_t *, const unsigned char *);
-typedef void __ops_crypt_set_key_t(__ops_crypt_t *, const unsigned char *);
+typedef void __ops_setiv_func_t(__ops_crypt_t *, const unsigned char *);
+typedef void __ops_setkey_func_t(__ops_crypt_t *, const unsigned char *);
 typedef void __ops_crypt_init_t(__ops_crypt_t *);
 typedef void __ops_crypt_resync_t(__ops_crypt_t *);
 typedef void __ops_blkenc_t(__ops_crypt_t *, void *, const void *);
@@ -93,8 +93,8 @@ struct _ops_crypt_t {
 	__ops_symm_alg_t		alg;
 	size_t				blocksize;
 	size_t				keysize;
-	__ops_crypt_set_iv_t		*set_iv;/* Call before decrypt init! */
-	__ops_crypt_set_key_t		*set_key;/* Call this before init! */
+	__ops_setiv_func_t		*set_iv;/* Call before decrypt init! */
+	__ops_setkey_func_t		*set_key;/* Call this before init! */
 	__ops_crypt_init_t		*base_init;
 	__ops_crypt_resync_t		*decrypt_resync;
 	/* encrypt/decrypt one block  */
@@ -186,7 +186,7 @@ unsigned   __ops_decrypt_file(const char *, const char *, __ops_keyring_t *,
 			const unsigned, const unsigned, __ops_cbfunc_t *);
 
 /* Keys */
-__ops_keydata_t  *__ops_rsa_new_selfsign_keypair(const int,
+__ops_keydata_t  *__ops_rsa_new_selfsign_key(const int,
 			const unsigned long, __ops_userid_t *);
 
 int __ops_dsa_size(const __ops_dsa_pubkey_t *);
@@ -209,7 +209,7 @@ struct __ops_reader_t {
 };
 
 
-/** __ops_cryptinfo
+/** __ops_cryptinfo_t
  Encrypt/decrypt settings
 */
 struct __ops_cryptinfo_t {
@@ -229,11 +229,11 @@ struct __ops_callback_data_t {
 	__ops_cryptinfo_t	 cryptinfo;	/* used when decrypting */
 };
 
-/** __ops_parse_hash_info_t */
+/** __ops_hashtype_t */
 typedef struct {
 	__ops_hash_t	hash;	/* hashes we should hash data with */
 	unsigned char	keyid[OPS_KEY_ID_SIZE];
-} __ops_parse_hash_info_t;
+} __ops_hashtype_t;
 
 #define NTAGS	0x100	/* == 256 */
 
@@ -270,12 +270,10 @@ struct __ops_parseinfo_t {
 	__ops_crypt_t		 decrypt;
 	__ops_cryptinfo_t	 cryptinfo;
 	size_t			 nhashes;
-	__ops_parse_hash_info_t *hashes;
+	__ops_hashtype_t        *hashes;
 	unsigned		 reading_v3_secret:1;
 	unsigned		 reading_mpi_len:1;
 	unsigned		 exact_read:1;
-	void			*synthsig;	/* synthetic sig */
-	void			*synthlit;	/* synthetic literal data */
 };
 
 #endif /* CRYPTO_H_ */

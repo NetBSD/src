@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.11 2009/05/18 03:55:42 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.12 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -360,32 +360,6 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	return OPS_RELEASE_MEMORY;
 }
 
-static unsigned char *
-readfile(const char *f, size_t *len)
-{
-	unsigned char	*buf;
-	struct stat	 st;
-	FILE		*fp;
-	int		 cc;
-	int		 n;
-
-	if ((fp = fopen(f, "r")) == NULL) {
-		(void) fprintf(stderr,
-			"readfile: can't open \"%s\" for reading\n", f);
-		return NULL;
-	}
-	(void) fstat(fileno(fp), &st);
-	*len = (size_t)st.st_size;
-	if ((buf = calloc(1, *len)) != NULL) {
-		for (n = 0 ;
-		     (cc = read(fileno(fp), &buf[n], *len - n)) > 0 ;
-		     n += cc) {
-		}
-	}
-	(void) fclose(fp);
-	return buf;
-}
-
 __ops_parse_cb_return_t
 validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
@@ -467,20 +441,11 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 			    data->detachname) {
 				/* check we have seen some data */
 				/* if not, need to read from detached name */
-				unsigned char	*detached;
-				size_t	 	 len = 0;
-
 				printf(
 				"netpgp: assuming signed data in \"%s\"\n",
 					data->detachname);
-				detached = readfile(data->detachname, &len);
-				if (detached != NULL) {
-					data->mem = __ops_memory_new();
-					__ops_memory_init(data->mem, len);
-					__ops_memory_add(data->mem, detached,
-							len);
-					(void) free(detached);
-				}
+				data->mem = __ops_memory_new();
+				__ops_mem_readfile(data->mem, data->detachname);
 			}
 			valid = check_binary_sig(__ops_mem_len(data->mem),
 					__ops_mem_data(data->mem),

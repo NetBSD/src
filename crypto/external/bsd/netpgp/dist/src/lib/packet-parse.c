@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.12 2009/05/18 03:55:42 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.13 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2240,7 +2240,7 @@ static void
 parse_hash_init(__ops_parseinfo_t *pinfo, __ops_hash_alg_t type,
 		    const unsigned char *keyid)
 {
-	__ops_parse_hash_info_t *hash;
+	__ops_hashtype_t *hash;
 
 	pinfo->hashes = realloc(pinfo->hashes,
 			      (pinfo->nhashes + 1) * sizeof(*pinfo->hashes));
@@ -3348,12 +3348,6 @@ __ops_parse(__ops_parseinfo_t *pinfo, int perrors)
 	unsigned long   pktlen;
 	int             r;
 
-	if (pinfo->synthlit) {
-#if 0
-		r = __ops_parse_packet(pinfo->synthsig, &pktlen);
-		r = __ops_parse_packet(pinfo->synthlit, &pktlen);
-#endif
-	}
 	do {
 		r = __ops_parse_packet(pinfo, &pktlen);
 	} while (r != -1);

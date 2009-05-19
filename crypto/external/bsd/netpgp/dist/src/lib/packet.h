@@ -67,6 +67,7 @@
 typedef struct {
 	size_t          len;
 	unsigned char  *contents;
+	uint8_t		mmapped;	/* contents need an munmap(2) */
 } __ops_data_t;
 
 /************************************/
@@ -1106,5 +1107,7 @@ struct __ops_keydata {
 	__ops_content_tag_t	type;
 	__ops_keydata_key_t	key;
 };
+
+#define MDC_PKT_TAG	0xd3
 
 #endif /* PACKET_H_ */

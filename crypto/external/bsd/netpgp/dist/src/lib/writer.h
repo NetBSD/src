@@ -104,7 +104,6 @@ void __ops_writer_push(__ops_output_t *,
 		__ops_writer_destroyer_t *,
 		void *);
 void __ops_writer_pop(__ops_output_t *);
-void __ops_writer_generic_destroyer(__ops_writer_t *);
 unsigned __ops_writer_passthrough(const unsigned char *,
 		       unsigned,
 		       __ops_error_t **,

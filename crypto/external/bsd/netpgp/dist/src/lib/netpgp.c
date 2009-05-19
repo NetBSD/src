@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.13 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.14 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -99,6 +99,7 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 	char		 buf[BUFSIZ];
 	FILE		*fp;
 
+	__OPS_USED(netpgp);
 	(void) snprintf(buf, sizeof(buf), "%s/.gnupg/gpg.conf", homedir);
 	if ((fp = fopen(buf, "r")) == NULL) {
 		return 0;
@@ -167,104 +168,13 @@ psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
 	}
 }
 
-/* sign a file, and put the signature in a separate file */
-static int
-sign_detached(char *f, char *sigfile, __ops_seckey_t *seckey,
-		const char *hashstr)
-{
-	__ops_create_sig_t	*sig;
-	__ops_hash_alg_t	 alg;
-	__ops_output_t		*output;
-	unsigned char	 	 keyid[OPS_KEY_ID_SIZE];
-	unsigned char		*mmapped;
-	struct stat		 st;
-	time_t			 t;
-	char			 fname[MAXPATHLEN];
-	int			 fd;
-
-	/* find out which hash algorithm to use */
-	alg = __ops_str_to_hash_alg(hashstr);
-	if (alg == OPS_HASH_UNKNOWN) {
-		(void) fprintf(stderr,"Unknown hash algorithm: %s\n", hashstr);
-		return 0;
-	}
-
-	/* create a new signature */
-	sig = __ops_create_sig_new();
-	__ops_start_sig(sig, seckey, alg, OPS_SIG_BINARY);
-
-	/* read the contents of 'f' */
-	fd = open(f, O_RDONLY);
-	if (fd < 0) {
-		(void) fprintf(stderr, "can't open file \"%s\" to sign\n",
-			f);
-		return 0;
-	}
-	/* attempt to mmap(2) the file - if that fails, fall back to
-	 * standard read(2) */
-	mmapped = MAP_FAILED;
-	if (fstat(fd, &st) == 0) {
-		mmapped = mmap(NULL, (size_t)st.st_size, PROT_READ,
-					MAP_FILE | MAP_PRIVATE, fd, 0);
-	}
-	if (mmapped == MAP_FAILED) {
-		for (;;) {
-			unsigned char	buf[8192];
-			int 		n;
-
-			if ((n = read(fd, buf, sizeof(buf))) == 0) {
-				break;
-			}
-			if (n < 0) {
-				(void) fprintf(stderr, "short read \"%s\"\n",
-						f);
-				(void) close(fd);
-				return 0;
-			}
-			__ops_sig_add_data(sig, buf, (unsigned)n);
-		}
-	} else {
-		__ops_sig_add_data(sig, mmapped, (unsigned)st.st_size);
-		(void) munmap(mmapped, (unsigned)st.st_size);
-	}
-	(void) close(fd);
-
-	/* calculate the signature */
-	t = time(NULL);
-	__ops_sig_add_birthtime(sig, t);
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
-		&seckey->pubkey);
-	__ops_sig_add_issuer_key_id(sig, keyid);
-	__ops_sig_hashed_subpackets_end(sig);
-
-	/* write the signature to the detached file */
-	if (sigfile == NULL) {
-		(void) snprintf(fname, sizeof(fname), "%s.sig", f);
-		sigfile = fname;
-	}
-	fd = open(sigfile, O_CREAT|O_TRUNC|O_WRONLY, 0666);
-	if (fd < 0) {
-		(void) fprintf(stderr, "can't write signature to \"%s\"\n",
-				sigfile);
-		return 0;
-	}
-
-	output = __ops_output_new();
-	__ops_writer_set_fd(output, fd);
-	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
-	__ops_seckey_free(seckey);
-	(void) close(fd);
-
-	return 1;
-}
-
 /***************************************************************************/
 /* exported functions start here */
 /***************************************************************************/
 
 /* initialise a netpgp_t structure */
 int
-netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
+netpgp_init(netpgp_t *netpgp, char *userid, char *fpubring, char *fsecring)
 {
 	__ops_keyring_t	*keyring;
 	char		*homedir;
@@ -296,30 +206,30 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *pubring, char *secring)
 		return 0;
 	}
 	(void) netpgp_setvar(netpgp, "userid", id);
-	if (pubring == NULL) {
+	if (fpubring == NULL) {
 		(void) snprintf(ringname, sizeof(ringname),
 			"%s/.gnupg/pubring.gpg", homedir);
-		pubring = ringname;
+		fpubring = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_fileread(keyring, 0, pubring)) {
-		(void) fprintf(stderr, "Cannot read pub keyring %s\n", pubring);
+	if (!__ops_keyring_fileread(keyring, 0, fpubring)) {
+		(void) fprintf(stderr, "Can't read pub keyring %s\n", fpubring);
 		return 0;
 	}
 	netpgp->pubring = keyring;
-	netpgp->pubringfile = strdup(pubring);
-	if (secring == NULL) {
+	netpgp->pubringfile = strdup(fpubring);
+	if (fsecring == NULL) {
 		(void) snprintf(ringname, sizeof(ringname),
 				"%s/.gnupg/secring.gpg", homedir);
-		secring = ringname;
+		fsecring = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_fileread(keyring, 0, secring)) {
-		(void) fprintf(stderr, "Cannot read sec keyring %s\n", secring);
+	if (!__ops_keyring_fileread(keyring, 0, fsecring)) {
+		(void) fprintf(stderr, "Can't read sec keyring %s\n", fsecring);
 		return 0;
 	}
 	netpgp->secring = keyring;
-	netpgp->secringfile = strdup(secring);
+	netpgp->secringfile = strdup(fsecring);
 	netpgp->userid = strdup(userid);
 	return 1;
 }
@@ -410,30 +320,28 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 
 	(void) memset(&uid, 0x0, sizeof(uid));
 	uid.userid = (unsigned char *) id;
-	keypair = __ops_rsa_new_selfsign_keypair(numbits,
-				(const unsigned long)65537, &uid);
+	keypair = __ops_rsa_new_selfsign_key(numbits, 65537UL, &uid);
 	if (keypair == NULL) {
 		(void) fprintf(stderr, "Cannot generate key\n");
 		return 0;
 	}
 	/* write public key */
 	fd = __ops_setup_file_append(&create, netpgp->pubringfile);
-	__ops_write_transferable_pubkey(create, keypair, 0);
+	__ops_write_xfer_pubkey(create, keypair, 0);
 	__ops_teardown_file_write(create, fd);
 	__ops_keyring_free(netpgp->pubring);
-	if (!__ops_keyring_fileread(netpgp->pubring, 0,
-				netpgp->pubringfile)) {
-		(void) fprintf(stderr, "Cannot re-read keyring %s\n",
+	if (!__ops_keyring_fileread(netpgp->pubring, 0, netpgp->pubringfile)) {
+		(void) fprintf(stderr, "Cannot read pubring %s\n",
 				netpgp->pubringfile);
 		return 0;
 	}
 	/* write secret key */
 	fd = __ops_setup_file_append(&create, netpgp->secringfile);
-	__ops_write_transferable_seckey(create, keypair, NULL, 0, 0);
+	__ops_write_xfer_seckey(create, keypair, NULL, 0, 0);
 	__ops_teardown_file_write(create, fd);
 	__ops_keyring_free(netpgp->secring);
 	if (!__ops_keyring_fileread(netpgp->secring, 0, netpgp->secringfile)) {
-		fprintf(stderr, "Cannot re-read keyring %s\n",
+		(void) fprintf(stderr, "Can't read secring %s\n",
 				netpgp->secringfile);
 		return 0;
 	}
@@ -510,36 +418,35 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 	if (cleartext) {
 		__ops_sign_file_as_cleartext(f, out, seckey, hashalg, 1U);
 	} else if (detached) {
-		sign_detached(f, out, seckey, hashalg);
+		__ops_sign_detached(f, out, seckey, hashalg);
 	} else {
 		__ops_sign_file(f, out, seckey, hashalg, (unsigned)armored, 1);
 	}
 	(void) memset(passphrase, 0x0, sizeof(passphrase));
+	__ops_seckey_forget(seckey);
 	return 1;
 }
 
 /* verify a file */
 int
-netpgp_verify_file(netpgp_t *netpgp, char *infile, const char *outfile,
-			int armored)
+netpgp_verify_file(netpgp_t *netpgp, char *in, const char *out, int armored)
 {
 	__ops_validation_t	result;
 
 	(void) memset(&result, 0x0, sizeof(result));
-	if (__ops_validate_file(&result, infile, outfile, armored,
-				netpgp->pubring)) {
-		psuccess(stderr, infile, &result, netpgp->pubring);
+	if (__ops_validate_file(&result, in, out, armored, netpgp->pubring)) {
+		psuccess(stderr, in, &result, netpgp->pubring);
 		return 1;
 	}
 	if (result.validc + result.invalidc + result.unknownc == 0) {
 		(void) fprintf(stderr,
 		"\"%s\": No signatures found - is this a signed file?\n",
-			infile);
-		return 0;
-	}
-	(void) fprintf(stderr,
+			in);
+	} else {
+		(void) fprintf(stderr,
 "\"%s\": verification failure: %d invalid signatures, %d unknown signatures\n",
-		infile, result.invalidc, result.unknownc);
+			in, result.invalidc, result.unknownc);
+	}
 	return 0;
 }
 

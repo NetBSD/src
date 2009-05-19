@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.10 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -202,16 +202,23 @@ __ops_get_seckey(const __ops_keydata_t * data)
 */
 
 __ops_seckey_t *
-__ops_get_writable_seckey(__ops_keydata_t * data)
+__ops_get_writable_seckey(__ops_keydata_t *data)
 {
 	return (data->type == OPS_PTAG_CT_SECRET_KEY) ?
 				&data->key.seckey : NULL;
 }
 
+/* utility function to dispose of a seckey */
+void
+__ops_seckey_forget(__ops_seckey_t *seckey)
+{
+	(void) memset(seckey, 0x0, sizeof(*seckey));
+}
+
 typedef struct {
 	const __ops_keydata_t	*key;
 	char			*pphrase;
-	__ops_seckey_t *seckey;
+	__ops_seckey_t		*seckey;
 } decrypt_t;
 
 static __ops_parse_cb_return_t 
@@ -374,32 +381,6 @@ __ops_is_key_supported(const __ops_keydata_t *keydata)
 	return 0;
 }
 
-
-/**
-    \ingroup HighLevel_KeyringFind
-
-    \brief Returns key inside a keyring, chosen by index
-
-    \param keyring Pointer to existing keyring
-    \param index Index of required key
-
-    \note Index starts at 0
-
-    \note This returns a pointer to the original key, not a copy.  You
-    do not need to free the key after use.
-
-    \return Pointer to the required key; or NULL if index too large.
-
-*/
-
-const __ops_keydata_t *
-__ops_keyring_get_key_by_index(const __ops_keyring_t * keyring, int subscript)
-{
-	if (subscript >= keyring->nkeys)
-		return NULL;
-	return &keyring->keys[subscript];
-}
-
 /* \todo check where userid pointers are copied */
 /**
 \ingroup Core_Keys
@@ -549,10 +530,10 @@ __ops_add_selfsigned_userid(__ops_keydata_t *keydata, __ops_userid_t *userid)
 	sig = __ops_create_sig_new();
 	__ops_sig_start_key_sig(sig, &keydata->key.seckey.pubkey, userid,
 					OPS_CERT_POSITIVE);
-	__ops_sig_add_birthtime(sig, time(NULL));
-	__ops_sig_add_issuer_key_id(sig, keydata->key_id);
-	__ops_sig_add_primary_userid(sig, 1);
-	__ops_sig_hashed_subpackets_end(sig);
+	__ops_add_birthtime(sig, time(NULL));
+	__ops_add_issuer_keyid(sig, keydata->key_id);
+	__ops_add_primary_userid(sig, 1);
+	__ops_end_hashed_subpkts(sig);
 
 	__ops_setup_memory_write(&sigoutput, &mem_sig, 128);
 	__ops_write_sig(sigoutput, sig, &keydata->key.seckey.pubkey,
@@ -972,8 +953,8 @@ __ops_keyring_list(const __ops_keyring_t * keyring)
 	}
 }
 
-unsigned
-__ops_get_keydata_content_type(const __ops_keydata_t * keydata)
+static unsigned
+get_contents_type(const __ops_keydata_t *keydata)
 {
 	return keydata->type;
 }
@@ -986,10 +967,10 @@ __ops_export_key(const __ops_keydata_t *keydata, unsigned char *passphrase)
 	__ops_memory_t		*mem;
 
 	__ops_setup_memory_write(&output, &mem, 128);
-	if (__ops_get_keydata_content_type(keydata) == OPS_PTAG_CT_PUBLIC_KEY) {
-		__ops_write_transferable_pubkey(output, keydata, 1);
+	if (get_contents_type(keydata) == OPS_PTAG_CT_PUBLIC_KEY) {
+		__ops_write_xfer_pubkey(output, keydata, 1);
 	} else {
-		__ops_write_transferable_seckey(output, keydata, passphrase,
+		__ops_write_xfer_seckey(output, keydata, passphrase,
 					strlen((char *)passphrase), 1);
 	}
 	printf("%s", (char *) __ops_mem_data(mem));

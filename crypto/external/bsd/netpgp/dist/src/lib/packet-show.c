@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.6 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.7 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -377,33 +377,20 @@ add_str(__ops_list_t * list, const char *str)
 	return 1;
 }
 
+/* find a bitfield in a map - serial search */
 static const char *
-str_from_bitfield_or_null(unsigned char octet, __ops_bit_map_t *map)
+find_bitfield(__ops_bit_map_t *map, unsigned char octet)
 {
 	__ops_bit_map_t  *row;
 
-	for (row = map; row->string != NULL; row++) {
-		if (row->mask == octet) {
-			return row->string;
-		}
+	for (row = map; row->string != NULL && row->mask != octet ; row++) {
 	}
-	return NULL;
-}
-
-static const char *
-str_from_bitfield(unsigned char octet, __ops_bit_map_t *map)
-{
-	const char     *str;
-
-	if ((str = str_from_bitfield_or_null(octet, map)) != NULL) {
-		return str;
-	}
-	return "Unknown";
+	return (row->string) ? row->string : "Unknown";
 }
 
 /* ! generic function to initialise __ops_text_t structure */
 void 
-__ops_text_init(__ops_text_t * text)
+__ops_text_init(__ops_text_t *text)
 {
 	list_init(&text->known);
 	list_init(&text->unknown);
@@ -435,10 +422,9 @@ __ops_text_free(__ops_text_t * text)
 /* XXX: should this (and many others) be unsigned? */
 /* ! generic function which adds text derived from single octet map to text */
 static unsigned
-add_str_from_octet_map(__ops_text_t * text, char *str,
-		       unsigned char octet)
+add_str_from_octet_map(__ops_text_t *map, char *str, unsigned char octet)
 {
-	if (str && !add_str(&text->known, str)) {
+	if (str && !add_str(&map->known, str)) {
 		/*
 		 * value recognised, but there was a problem adding it to the
 		 * list
@@ -455,7 +441,7 @@ add_str_from_octet_map(__ops_text_t * text, char *str,
 							 * format, 1 for NUL */
 		str = calloc(1, len);
 		(void) snprintf(str, len, "0x%x", octet);
-		if (!add_str(&text->unknown, str)) {
+		if (!add_str(&map->unknown, str)) {
 			return 0;
 		}
 	}
@@ -464,11 +450,11 @@ add_str_from_octet_map(__ops_text_t * text, char *str,
 
 /* ! generic function which adds text derived from single bit map to text */
 static unsigned int 
-add_str_from_bit_map(__ops_text_t * text, const char *str, unsigned char bit)
+add_bitmap_entry(__ops_text_t *map, const char *str, unsigned char bit)
 {
 	const char     *fmt_unknown = "Unknown bit(0x%x)";
 
-	if (str && !add_str(&text->known, str)) {
+	if (str && !add_str(&map->known, str)) {
 		/*
 		 * value recognised, but there was a problem adding it to the
 		 * list
@@ -487,7 +473,7 @@ add_str_from_bit_map(__ops_text_t * text, const char *str, unsigned char bit)
 
 		str = calloc(1, len);
 		(void) snprintf(__UNCONST(str), len, fmt_unknown, bit);
-		if (!add_str(&text->unknown, str)) {
+		if (!add_str(&map->unknown, str)) {
 			return 0;
 		}
 	}
@@ -576,8 +562,8 @@ showall_octets_bits(__ops_data_t * data, __ops_bit_map_t ** map,
 			bit = data->contents[i] & mask;
 			if (bit) {
 				str = (i >= nmap) ? "Unknown" :
-					str_from_bitfield(bit, map[i]);
-				if (!add_str_from_bit_map(text, str, bit)) {
+					find_bitfield(map[i], bit);
+				if (!add_bitmap_entry(text, str, bit)) {
 					__ops_text_free(text);
 					return NULL;
 				}
@@ -763,7 +749,7 @@ __ops_show_ss_feature(unsigned char octet, unsigned offset)
 	if (offset >= OPS_ARRAY_SIZE(ss_feature_map)) {
 		return "Unknown";
 	}
-	return str_from_bitfield(octet, ss_feature_map[offset]);
+	return find_bitfield(ss_feature_map[offset], octet);
 }
 
 /**
@@ -797,7 +783,7 @@ __ops_showall_ss_features(__ops_ss_features_t ss_features)
 			bit = ss_features.data.contents[i] & mask;
 			if (bit) {
 				str = __ops_show_ss_feature(bit, i);
-				if (!add_str_from_bit_map(text, str, bit)) {
+				if (!add_bitmap_entry(text, str, bit)) {
 					__ops_text_free(text);
 					return NULL;
 				}
@@ -817,7 +803,7 @@ __ops_showall_ss_features(__ops_ss_features_t ss_features)
 const char     *
 __ops_show_ss_key_flag(unsigned char octet, __ops_bit_map_t * map)
 {
-	return str_from_bitfield(octet, map);
+	return find_bitfield(map, octet);
 }
 
 /**
@@ -848,7 +834,7 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
 		bit = ss_key_flags.data.contents[0] & mask;
 		if (bit) {
 			str = __ops_show_ss_key_flag(bit, &ss_key_flags_map[0]);
-			if (!add_str_from_bit_map(text, strdup(str), bit)) {
+			if (!add_bitmap_entry(text, strdup(str), bit)) {
 				__ops_text_free(text);
 				return NULL;
 			}
@@ -871,9 +857,9 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_ss_key_server_prefs(unsigned char prefs, __ops_bit_map_t * map)
+__ops_show_keyserv_pref(unsigned char prefs, __ops_bit_map_t * map)
 {
-	return str_from_bitfield(prefs, map);
+	return find_bitfield(map, prefs);
 }
 
 /**
@@ -885,8 +871,7 @@ __ops_show_ss_key_server_prefs(unsigned char prefs, __ops_bit_map_t * map)
  *
 */
 __ops_text_t     *
-__ops_showall_ss_key_server_prefs(
-		__ops_ss_key_server_prefs_t ss_key_server_prefs)
+__ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t prefs)
 {
 	unsigned char	 mask, bit;
 	__ops_text_t	*text = NULL;
@@ -903,11 +888,11 @@ __ops_showall_ss_key_server_prefs(
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
 
 	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
-		bit = ss_key_server_prefs.data.contents[0] & mask;
+		bit = prefs.data.contents[0] & mask;
 		if (bit) {
-			str = __ops_show_ss_key_server_prefs(bit,
-					       &ss_key_server_prefs_map[0]);
-			if (!add_str_from_bit_map(text, strdup(str), bit)) {
+			str = __ops_show_keyserv_pref(bit,
+						ss_key_server_prefs_map);
+			if (!add_bitmap_entry(text, strdup(str), bit)) {
 				__ops_text_free(text);
 				return NULL;
 			}
@@ -929,7 +914,7 @@ __ops_showall_ss_key_server_prefs(
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_notation_flags(__ops_ss_notation_t ss_notation)
+__ops_showall_notation(__ops_ss_notation_t ss_notation)
 {
 	return showall_octets_bits(&ss_notation.flags,
 				ss_notation_map,

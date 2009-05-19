@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.10 2009/05/18 03:55:42 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.11 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -238,58 +238,34 @@ __ops_encrypt_file(const char *infile,
 			const unsigned use_armour,
 			const unsigned allow_overwrite)
 {
-	__ops_output_t	*create;
-	struct stat	 st;
-	unsigned char	*buf;
-	size_t		 bufsz;
-	size_t		 done;
-	int		 fd_in = 0;
+	__ops_output_t	*output;
+	__ops_memory_t	*inmem;
 	int		 fd_out = 0;
-	int		 n;
 
-#ifdef O_BINARY
-	fd_in = open(infile, O_RDONLY | O_BINARY);
-#else
-	fd_in = open(infile, O_RDONLY);
-#endif
-	if (fd_in < 0) {
-		perror(infile);
+	inmem = __ops_memory_new();
+	if (!__ops_mem_readfile(inmem, infile)) {
 		return 0;
 	}
-	fd_out = __ops_setup_file_write(&create, outfile, allow_overwrite);
+	fd_out = __ops_setup_file_write(&output, outfile, allow_overwrite);
 	if (fd_out < 0) {
+		__ops_memory_free(inmem);
 		return 0;
 	}
 
 	/* set armoured/not armoured here */
 	if (use_armour) {
-		__ops_writer_push_armor_msg(create);
+		__ops_writer_push_armor_msg(output);
 	}
 
 	/* Push the encrypted writer */
-	__ops_writer_push_encrypt_se_ip(create, pubkey);
-
-	/* Do the reading */
-	(void) fstat(fd_in, &st);
-	bufsz = (size_t)st.st_size;
-	buf = calloc(1, bufsz);
-	for (done = 0 ; done < bufsz ; done += n) {
-		if ((n = read(fd_in, buf + done, bufsz - done)) == 0) {
-			break;
-		}
-		if (n < 0) {
-			(void) fprintf(stderr, "Problem in read\n");
-			return 0;
-		}
-	}
+	__ops_push_enc_se_ip(output, pubkey);
 
 	/* This does the writing */
-	__ops_write(create, buf, done);
+	__ops_write(output, __ops_mem_data(inmem), __ops_mem_len(inmem));
 
 	/* tidy up */
-	(void) close(fd_in);
-	(void) free(buf);
-	__ops_teardown_file_write(create, fd_out);
+	__ops_memory_free(inmem);
+	__ops_teardown_file_write(output, fd_out);
 
 	return 1;
 }
@@ -393,7 +369,7 @@ __ops_decrypt_file(const char *infile,
 	return 1;
 }
 
-static          __ops_parse_cb_return_t
+static __ops_parse_cb_return_t
 callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
 	const __ops_parser_content_union_t	*content = &pkt->u;
