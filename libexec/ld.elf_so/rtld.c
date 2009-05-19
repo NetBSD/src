@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.123 2008/10/26 07:11:54 mrg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.124 2009/05/19 20:44:52 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.123 2008/10/26 07:11:54 mrg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.124 2009/05/19 20:44:52 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -92,7 +92,7 @@ Elf_Sym		_rtld_sym_zero = {
     .st_info	= ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE),
     .st_shndx	= SHN_ABS,
 };
-int		_rtld_pagesz;	/* Page size, as provided by kernel */
+unsigned int	_rtld_pagesz;	/* Page size, as provided by kernel */
 
 Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
@@ -898,7 +898,7 @@ dlsym(void *handle, const char *name)
 
 			/* Search the object and all the libraries loaded by it. */
 			fake.next = NULL;
-			fake.obj = (Obj_Entry *)obj;
+			fake.obj = __UNCONST(obj);
 			fake.name = 0;
 			def = _rtld_symlook_needed(name, hash, &fake, &defobj,
 			    false);

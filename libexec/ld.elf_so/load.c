@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.35 2007/12/07 20:34:04 ad Exp $	 */
+/*	$NetBSD: load.c,v 1.36 2009/05/19 20:44:52 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.35 2007/12/07 20:34:04 ad Exp $");
+__RCSID("$NetBSD: load.c,v 1.36 2009/05/19 20:44:52 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -185,7 +185,8 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed, int 
 {
 	Library_Xform *x = _rtld_xforms;
 	Obj_Entry *o = NULL;
-	size_t i, j;
+	size_t j;
+	ssize_t i;
 	bool got = false;
 	union {
 		int i;
