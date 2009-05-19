@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.88 2009/05/19 15:08:42 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.89 2009/05/19 16:06:56 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.88 2009/05/19 15:08:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.89 2009/05/19 16:06:56 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -5596,7 +5596,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 
 	/* initialise pointer to location */
 	memset(&node_icb_loc, 0, sizeof(struct long_ad));
-	node_icb_loc.len = lb_size;
+	node_icb_loc.len = udf_rw32(lb_size);
 	node_icb_loc.loc.lb_num   = udf_rw32(lb_num);
 	node_icb_loc.loc.part_num = udf_rw16(vpart_num);
 
