@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.2 2009/05/19 05:50:58 skrll Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -92,10 +92,10 @@
 #define R_PARISC_BASEREL14DR    108
 #define R_PARISC_SEGREL64       112
 #define R_PARISC_PLTOFF14WR     115
-#define R_PARISC_PLTOFF14DR     116    
-#define R_PARISC_PLTOFF16F      117    
-#define R_PARISC_PLTOFF16WF     118    
-#define R_PARISC_PLTOFF16DF     119    
+#define R_PARISC_PLTOFF14DR     116
+#define R_PARISC_PLTOFF16F      117
+#define R_PARISC_PLTOFF16WF     118
+#define R_PARISC_PLTOFF16DF     119
 #define R_PARISC_LTOFF_FPTR64   120
 #define R_PARISC_LTOFF_FPTR14WR 123
 #define R_PARISC_LTOFF_FPTR14DR 124
@@ -112,11 +112,11 @@
 #define R_PARISC_LTOFF_TP14R    166
 #define R_PARISC_LTOFF_TP14F    167
 #define R_PARISC_TPREL64        216
-#define R_PARISC_TPREL14WR      219    	  
-#define R_PARISC_TPREL14DR      220    	  
-#define R_PARISC_TPREL16F       221    	  
-#define R_PARISC_TPREL16WF      222    	  
-#define R_PARISC_TPREL16DF      223    	  
+#define R_PARISC_TPREL14WR      219
+#define R_PARISC_TPREL14DR      220
+#define R_PARISC_TPREL16F       221
+#define R_PARISC_TPREL16WF      222
+#define R_PARISC_TPREL16DF      223
 #define R_PARISC_LTOFF_TP64     224
 #define R_PARISC_LTOFF_TP14WR   227
 #define R_PARISC_LTOFF_TP14DR   228
