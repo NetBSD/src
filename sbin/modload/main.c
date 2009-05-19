@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2008/11/12 12:35:53 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2009/05/19 22:09:59 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2008/11/12 12:35:53 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2009/05/19 22:09:59 jnemeth Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -60,6 +60,7 @@ main(int argc, char **argv)
 {
 	modctl_load_t cmdargs;
 	prop_dictionary_t props;
+	bool output_props = false;
 	char *propsstr;
 	int ch;
 	int flags;
@@ -67,7 +68,7 @@ main(int argc, char **argv)
 	flags = 0;
 	props = prop_dictionary_create();
 
-	while ((ch = getopt(argc, argv, "b:fi:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:fi:ps:")) != -1) {
 		switch (ch) {
 		case 'b':
 			parse_param(props, optarg, parse_bool_param);
@@ -79,6 +80,10 @@ main(int argc, char **argv)
 
 		case 'i':
 			parse_param(props, optarg, parse_int_param);
+			break;
+
+		case 'p':
+			output_props = true;
 			break;
 
 		case 's':
@@ -93,20 +98,24 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
-	if (argc != 1)
-		usage();
 
 	propsstr = prop_dictionary_externalize(props);
 	if (propsstr == NULL)
 		errx(EXIT_FAILURE, "Failed to process properties");
 
-	cmdargs.ml_filename = argv[0];
-	cmdargs.ml_flags = flags;
-	cmdargs.ml_props = propsstr;
-	cmdargs.ml_propslen = strlen(propsstr);
+	if (output_props)
+		puts(propsstr);
+	else {
+		if (argc != 1)
+			usage();
+		cmdargs.ml_filename = argv[0];
+		cmdargs.ml_flags = flags;
+		cmdargs.ml_props = propsstr;
+		cmdargs.ml_propslen = strlen(propsstr);
 
-	if (modctl(MODCTL_LOAD, &cmdargs)) {
-		err(EXIT_FAILURE, NULL);
+		if (modctl(MODCTL_LOAD, &cmdargs)) {
+			err(EXIT_FAILURE, NULL);
+		}
 	}
 
 	free(propsstr);
@@ -192,7 +201,7 @@ usage(void)
 	(void)fprintf(stderr,
 	    "Usage: %s [-b var=boolean] [-f] [-i var=integer] "
 	    "[-s var=string]\n"
-	    "       <module_name>\n",
+	    "       {-p|<module_name>}\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
