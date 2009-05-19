@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.95 2009/04/04 07:30:10 ad Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.96 2009/05/19 23:42:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.95 2009/04/04 07:30:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.96 2009/05/19 23:42:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -214,6 +214,25 @@ disk_attach(struct disk *diskp)
 	 * Set up the stats collection.
 	 */
 	diskp->dk_stats = iostat_alloc(IOSTAT_DISK, diskp, diskp->dk_name);
+}
+
+int
+disk_predetach(struct disk *dk, int (*lastclose)(device_t),
+    device_t self, int flags)
+{
+	int rc;
+
+	rc = 0;
+	mutex_enter(&dk->dk_openlock);
+	if (dk->dk_openmask == 0)
+		;	/* nothing to do */
+	else if ((flags & DETACH_FORCE) == 0)
+		rc = EBUSY;
+	else if (lastclose != NULL)
+		rc = (*lastclose)(self);
+	mutex_exit(&dk->dk_openlock);
+
+	return rc;
 }
 
 /*
