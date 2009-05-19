@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.compat,v 1.4 2009/03/12 17:16:58 abs Exp $
+#	$NetBSD: Makefile.compat,v 1.5 2009/05/19 20:27:50 christos Exp $
 
 COPTS+=			-m32
 CPUFLAGS+=		-m32
@@ -40,7 +40,7 @@ NOCHECKVER=	# defined
 LIBC_DIR=	${NETBSDSRCDIR}/compat/lib/libc
 
 # ld.elf_so
-SHLINKINSTALLDIR=	/usr/libexec
+SHLINKINSTALLDIR=	/libexec
 
 # XXX
 EXTRALIBDIRS=	${DESTDIR}${LIBDIR} ${DESTDIR}${LIBDIR}/i18n ${DESTDIR}${LIBDIR}/security
