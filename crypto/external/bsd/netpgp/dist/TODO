@@ -1,16 +1,14 @@
 To Do
 =====
-RCS Ids
 64-bit offsets
-detached verification
+separate from libcrypto?
 need a netpgp_set_{pub,sec}key()? vs _init()?
-default compression when signing
+default compression when signing?
 get rid of ops_memory after used literal_data_body
 sort out callback - ops_export_key, packet-parse callback etc
 Simplify IO
 Make into SHA1Init, SHA1End, SHA1File style of calls
 Multiple recipients for encryption
-Look at inefficiencies - read() etc
 
 Done
 ====
@@ -53,3 +51,6 @@ print out size of key in --list-keys
 decryption - print encrypted key info
 get rid of local files
 hash algorithm selection
+detached verification
+RCS Ids
+Look at inefficiencies - read() etc
