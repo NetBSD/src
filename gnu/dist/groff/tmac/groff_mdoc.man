@@ -2874,7 +2874,8 @@ Currently
 style references are not accommodated.
 .Pp
 It is recommended that the cross references are sorted on the section
-number, then alphabetically on the names within a section, and placed
+number, then alphabetically (case-insensitive) on the names within
+a section, and placed
 in that order and comma separated.
 Example:
 .Pp
