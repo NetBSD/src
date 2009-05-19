@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.284 2009/05/19 19:56:11 dyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.285 2009/05/19 23:43:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.284 2009/05/19 19:56:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.285 2009/05/19 23:43:44 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -103,7 +103,7 @@ static void	sddone(struct scsipi_xfer *, int);
 static bool	sd_suspend(device_t PMF_FN_PROTO);
 static bool	sd_shutdown(device_t, int);
 static int	sd_interpret_sense(struct scsipi_xfer *);
-static void	sdlastclose(struct sd_softc *);
+static int	sdlastclose(device_t);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
 		    int, int *);
@@ -332,17 +332,7 @@ sddetach(device_t self, int flags)
 	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn, rc;
 
-	rc = 0;
-	mutex_enter(&sd->sc_dk.dk_openlock);
-	if (sd->sc_dk.dk_openmask == 0)
-		;	/* nothing to do */
-	else if ((flags & DETACH_FORCE) == 0)
-		rc = EBUSY;
-	else
-		sdlastclose(sd);
-	mutex_exit(&sd->sc_dk.dk_openlock);
-
-	if (rc != 0)
+	if ((rc = disk_predetach(&sd->sc_dk, sdlastclose, self, flags)) != 0)
 		return rc;
 
 	/* locate the major number */
@@ -578,9 +568,10 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 /*
  * Caller must hold sd->sc_dk.dk_openlock.
  */
-static void
-sdlastclose(struct sd_softc *sd)
+static int
+sdlastclose(device_t self)
 {
+	struct sd_softc *sd = device_private(self);
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -609,6 +600,8 @@ sdlastclose(struct sd_softc *sd)
 	scsipi_wait_drain(periph);
 
 	scsipi_adapter_delref(adapt);
+
+	return 0;
 }
 
 /*
@@ -634,7 +627,7 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0)
-		sdlastclose(sd);
+		sdlastclose(sd->sc_dev);
 
 	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (0);
