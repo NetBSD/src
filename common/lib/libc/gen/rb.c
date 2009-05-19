@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.3 2008/06/30 20:54:19 matt Exp $ */
+/* $NetBSD: rb.c,v 1.4 2009/05/19 22:48:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,6 @@
  */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <sys/types.h>
 #include <sys/types.h>
 #include <stddef.h>
 #include <assert.h>
