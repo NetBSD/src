@@ -95,13 +95,13 @@ void __ops_start_sig(__ops_create_sig_t *,
 
 void __ops_sig_add_data(__ops_create_sig_t *, const void *, size_t);
 __ops_hash_t *__ops_sig_get_hash(__ops_create_sig_t *);
-unsigned   __ops_sig_hashed_subpackets_end(__ops_create_sig_t *);
+unsigned   __ops_end_hashed_subpkts(__ops_create_sig_t *);
 unsigned __ops_write_sig(__ops_output_t *, __ops_create_sig_t *,
 			const __ops_pubkey_t *, const __ops_seckey_t *);
-unsigned   __ops_sig_add_birthtime(__ops_create_sig_t *, time_t);
-unsigned __ops_sig_add_issuer_key_id(__ops_create_sig_t *,
+unsigned   __ops_add_birthtime(__ops_create_sig_t *, time_t);
+unsigned __ops_add_issuer_keyid(__ops_create_sig_t *,
 			const unsigned char *);
-void __ops_sig_add_primary_userid(__ops_create_sig_t *, unsigned);
+void __ops_add_primary_userid(__ops_create_sig_t *, unsigned);
 
 /* Standard Interface */
 unsigned   __ops_sign_file_as_cleartext(const char *,
@@ -115,6 +115,8 @@ unsigned   __ops_sign_file(const char *,
 			const char *,
 			const unsigned,
 			const unsigned);
+
+int __ops_sign_detached(char *, char *, __ops_seckey_t *, const char *);
 
 /* armoured stuff */
 unsigned __ops_crc24(unsigned, unsigned char);

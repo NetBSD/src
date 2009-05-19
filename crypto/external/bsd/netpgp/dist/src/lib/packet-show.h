@@ -103,9 +103,9 @@ __ops_text_t *__ops_showall_ss_features(__ops_ss_features_t);
 __ops_text_t *__ops_showall_ss_key_flags(__ops_ss_key_flags_t);
 const char *__ops_show_ss_key_flag(unsigned char, __ops_bit_map_t *);
 
-__ops_text_t *__ops_showall_ss_key_server_prefs(__ops_ss_key_server_prefs_t);
-const char *__ops_show_ss_key_server_prefs(unsigned char, __ops_bit_map_t *);
+__ops_text_t *__ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t);
+const char *__ops_show_keyserv_pref(unsigned char, __ops_bit_map_t *);
 
-__ops_text_t *__ops_showall_ss_notation_flags(__ops_ss_notation_t);
+__ops_text_t *__ops_showall_notation(__ops_ss_notation_t);
 
 #endif /* PACKET_SHOW_H_ */

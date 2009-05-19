@@ -62,6 +62,7 @@ typedef struct __ops_memory_t {
 	unsigned char  *buf;
 	size_t          length;
 	size_t          allocated;
+	unsigned	mmapped;
 } __ops_memory_t;
 
 
@@ -79,6 +80,7 @@ void __ops_writer_set_memory(__ops_output_t *, __ops_memory_t *);
 
 size_t __ops_mem_len(const __ops_memory_t *);
 void *__ops_mem_data(__ops_memory_t *);
+int __ops_mem_readfile(__ops_memory_t *, const char *);
 
 void __ops_random(void *, size_t);
 

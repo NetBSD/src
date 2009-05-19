@@ -75,12 +75,12 @@ unsigned __ops_write_se_ip_pktset(const unsigned char *,
 		       const unsigned int,
 		       __ops_crypt_t *,
 		       __ops_output_t *);
-void __ops_writer_push_encrypt_crypt(__ops_output_t *, __ops_crypt_t *);
-void __ops_writer_push_encrypt_se_ip(__ops_output_t *,
+void __ops_push_enc_crypt(__ops_output_t *, __ops_crypt_t *);
+void __ops_push_enc_se_ip(__ops_output_t *,
 			const __ops_keydata_t *);
 
 /* Secret Key checksum */
-void __ops_push_skey_checksum_writer(__ops_output_t *, __ops_seckey_t *);
+void __ops_push_checksum_writer(__ops_output_t *, __ops_seckey_t *);
 unsigned __ops_pop_skey_checksum_writer(__ops_output_t *);
 
 

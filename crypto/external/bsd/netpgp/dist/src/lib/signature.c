@@ -57,8 +57,11 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.12 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.13 2009/05/19 05:13:10 agc Exp $");
 #endif
+
+#include <sys/types.h>
+#include <sys/param.h>
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -723,7 +726,7 @@ __ops_sig_add_data(__ops_create_sig_t *sig, const void *buf, size_t length)
  */
 
 unsigned 
-__ops_sig_hashed_subpackets_end(__ops_create_sig_t * sig)
+__ops_end_hashed_subpkts(__ops_create_sig_t * sig)
 {
 	sig->hashlen = __ops_mem_len(sig->mem)
 	- sig->hashoff - 2;
@@ -851,13 +854,13 @@ __ops_write_sig(__ops_output_t *output,
 /**
  * \ingroup Core_Signature
  *
- * __ops_sig_add_birthtime() adds a creation time to the signature.
+ * __ops_add_birthtime() adds a creation time to the signature.
  *
  * \param sig
  * \param when
  */
 unsigned 
-__ops_sig_add_birthtime(__ops_create_sig_t * sig, time_t when)
+__ops_add_birthtime(__ops_create_sig_t * sig, time_t when)
 {
 	return __ops_write_ss_header(sig->output, 5, OPS_PTAG_SS_CREATION_TIME) &&
 		__ops_write_scalar(sig->output, (unsigned)when, 4);
@@ -873,7 +876,7 @@ __ops_sig_add_birthtime(__ops_create_sig_t * sig, time_t when)
  */
 
 unsigned 
-__ops_sig_add_issuer_key_id(__ops_create_sig_t * sig,
+__ops_add_issuer_keyid(__ops_create_sig_t * sig,
 				const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
 	return __ops_write_ss_header(sig->output, OPS_KEY_ID_SIZE + 1,
@@ -890,8 +893,7 @@ __ops_sig_add_issuer_key_id(__ops_create_sig_t * sig,
  * \param primary
  */
 void 
-__ops_sig_add_primary_userid(__ops_create_sig_t * sig,
-				  unsigned primary)
+__ops_add_primary_userid(__ops_create_sig_t * sig, unsigned primary)
 {
 	__ops_write_ss_header(sig->output, 2, OPS_PTAG_SS_PRIMARY_USER_ID);
 	__ops_write_scalar(sig->output, primary, 1);
@@ -958,11 +960,10 @@ __ops_sign_file_as_cleartext(const char *inname,
 	__ops_hash_alg_t	 hash_alg;
 	__ops_output_t		*output = NULL;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE];
-	unsigned char		 buf[MAXBUF];
 	unsigned		 ret = 0;
 	unsigned		 armored = 1;
 	int			 fd_out = 0;
-	int			 fd_in = 0;
+	__ops_memory_t		*mem;
 
 	/* check the hash algorithm */
 	hash_alg = __ops_str_to_hash_alg(hashname);
@@ -973,27 +974,23 @@ __ops_sign_file_as_cleartext(const char *inname,
 		return 0;
 	}
 
-	/* open file to sign */
-#ifdef O_BINARY
-	fd_in = open(inname, O_RDONLY | O_BINARY);
-#else
-	fd_in = open(inname, O_RDONLY);
-#endif
-	if (fd_in < 0) {
+	/* read the file to be signed */
+	mem = __ops_memory_new();
+	if (!__ops_mem_readfile(mem, inname)) {
 		return 0;
 	}
 
 	/* set up output file */
 	fd_out = open_output_file(&output, inname, outname, armored, overwrite);
 	if (fd_out < 0) {
-		close(fd_in);
+		__ops_memory_free(mem);
 		return 0;
 	}
 
 	/* set up signature */
 	sig = __ops_create_sig_new();
 	if (!sig) {
-		close(fd_in);
+		__ops_memory_free(mem);
 		__ops_teardown_file_write(output, fd_out);
 		return 0;
 	}
@@ -1005,35 +1002,22 @@ __ops_sign_file_as_cleartext(const char *inname,
 	}
 
 	/* Do the signing */
-	for (;;) {
-		int             n = 0;
-
-		n = read(fd_in, buf, sizeof(buf));
-		if (n == 0) {
-			break;
-		}
-		if (n < 0) {
-			(void) fprintf(stderr,
-				"__ops_sign_file_as_cleartext: bad read\n");
-			return 0;
-		}
-		__ops_write(output, buf, (unsigned)n);
-	}
-	close(fd_in);
+	__ops_write(output, __ops_mem_data(mem), __ops_mem_len(mem));
+	__ops_memory_free(mem);
 
 	/* add signature with subpackets: */
 	/* - creation time */
 	/* - key id */
 	ret = __ops_writer_use_armored_sig(output) &&
-			__ops_sig_add_birthtime(sig, time(NULL));
+			__ops_add_birthtime(sig, time(NULL));
 	if (ret == 0) {
 		__ops_teardown_file_write(output, fd_out);
 		return 0;
 	}
 
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
-	ret = __ops_sig_add_issuer_key_id(sig, keyid) &&
-		__ops_sig_hashed_subpackets_end(sig) &&
+	ret = __ops_add_issuer_keyid(sig, keyid) &&
+		__ops_end_hashed_subpkts(sig) &&
 		__ops_write_sig(output, sig, &seckey->pubkey, seckey);
 
 	__ops_teardown_file_write(output, fd_out);
@@ -1106,15 +1090,15 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 	ret = __ops_writer_push_clearsigned(output, sig) &&
 		__ops_write(output, cleartext, len) &&
 		__ops_writer_use_armored_sig(output) &&
-		__ops_sig_add_birthtime(sig, time(NULL));
+		__ops_add_birthtime(sig, time(NULL));
 
 	if (ret == 0) {
 		return 0;
 	}
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
-	ret = __ops_sig_add_issuer_key_id(sig, keyid) &&
-		__ops_sig_hashed_subpackets_end(sig) &&
+	ret = __ops_add_issuer_keyid(sig, keyid) &&
+		__ops_end_hashed_subpkts(sig) &&
 		__ops_write_sig(output, sig, &seckey->pubkey, seckey) &&
 		__ops_writer_close(output);
 
@@ -1149,12 +1133,11 @@ __ops_sign_file(const char *inname,
 	__ops_create_sig_t	*sig = NULL;
 	__ops_hash_alg_t	 hash_alg;
 	__ops_sig_type_t	 sig_type = OPS_SIG_BINARY;
-	__ops_memory_t		*mem_buf = NULL;
+	__ops_memory_t		*infile = NULL;
 	__ops_output_t		*output = NULL;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE];
 	__ops_hash_t		*hash = NULL;
-	int			 errnum;
-	int			 fd_out = 0;
+	int			 fd = 0;
 
 	hash_alg = __ops_str_to_hash_alg(hashname);
 	if (hash_alg == OPS_HASH_UNKNOWN) {
@@ -1165,15 +1148,15 @@ __ops_sign_file(const char *inname,
 	}
 
 	/* read input file into buf */
-	mem_buf = __ops_fileread(inname, &errnum);
-	if (errnum) {
+	infile = __ops_memory_new();
+	if (!__ops_mem_readfile(infile, inname)) {
 		return 0;
 	}
 
 	/* setup output file */
-	fd_out = open_output_file(&output, inname, outname, armored, overwrite);
-	if (fd_out < 0) {
-		__ops_memory_free(mem_buf);
+	fd = open_output_file(&output, inname, outname, armored, overwrite);
+	if (fd < 0) {
+		__ops_memory_free(infile);
 		return 0;
 	}
 
@@ -1191,14 +1174,14 @@ __ops_sign_file(const char *inname,
 
 	/* hash file contents */
 	hash = __ops_sig_get_hash(sig);
-	hash->add(hash, __ops_mem_data(mem_buf), __ops_mem_len(mem_buf));
+	hash->add(hash, __ops_mem_data(infile), __ops_mem_len(infile));
 
 	/* output file contents as Literal Data packet */
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "** Writing out data now\n");
 	}
-	__ops_write_litdata(output, __ops_mem_data(mem_buf),
-		(const int)__ops_mem_len(mem_buf),
+	__ops_write_litdata(output, __ops_mem_data(infile),
+		(const int)__ops_mem_len(infile),
 		OPS_LDT_BINARY);
 
 	if (__ops_get_debug_level(__FILE__)) {
@@ -1206,19 +1189,19 @@ __ops_sign_file(const char *inname,
 	}
 
 	/* add creation time to signature */
-	__ops_sig_add_birthtime(sig, time(NULL));
+	__ops_add_birthtime(sig, time(NULL));
 	/* add key id to signature */
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
-	__ops_sig_add_issuer_key_id(sig, keyid);
-	__ops_sig_hashed_subpackets_end(sig);
+	__ops_add_issuer_keyid(sig, keyid);
+	__ops_end_hashed_subpkts(sig);
 
 	/* write out sig */
 	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
 
 	/* tidy up */
-	__ops_teardown_file_write(output, fd_out);
+	__ops_teardown_file_write(output, fd);
 	__ops_create_sig_delete(sig);
-	__ops_memory_free(mem_buf);
+	__ops_memory_free(infile);
 
 	return 1;
 }
@@ -1287,11 +1270,11 @@ __ops_sign_buf(const void *input,
 	}
 
 	/* add creation time to signature */
-	__ops_sig_add_birthtime(sig, time(NULL));
+	__ops_add_birthtime(sig, time(NULL));
 	/* add key id to signature */
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
-	__ops_sig_add_issuer_key_id(sig, keyid);
-	__ops_sig_hashed_subpackets_end(sig);
+	__ops_add_issuer_keyid(sig, keyid);
+	__ops_end_hashed_subpkts(sig);
 
 	/* write out sig */
 	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
@@ -1301,4 +1284,67 @@ __ops_sign_buf(const void *input,
 	__ops_create_sig_delete(sig);
 
 	return mem;
+}
+
+/* sign a file, and put the signature in a separate file */
+int
+__ops_sign_detached(char *f,
+			char *sigfile,
+			__ops_seckey_t *seckey,
+			const char *hash)
+{
+	__ops_create_sig_t	*sig;
+	__ops_hash_alg_t	 alg;
+	__ops_output_t		*output;
+	__ops_memory_t		*mem;
+	unsigned char	 	 keyid[OPS_KEY_ID_SIZE];
+	time_t			 t;
+	char			 fname[MAXPATHLEN];
+	int			 fd;
+
+	/* find out which hash algorithm to use */
+	alg = __ops_str_to_hash_alg(hash);
+	if (alg == OPS_HASH_UNKNOWN) {
+		(void) fprintf(stderr,"Unknown hash algorithm: %s\n", hash);
+		return 0;
+	}
+
+	/* create a new signature */
+	sig = __ops_create_sig_new();
+	__ops_start_sig(sig, seckey, alg, OPS_SIG_BINARY);
+
+	/* read the contents of 'f', and add that to the signature */
+	mem = __ops_memory_new();
+	if (!__ops_mem_readfile(mem, f)) {
+		return 0;
+	}
+	__ops_sig_add_data(sig, __ops_mem_data(mem), __ops_mem_len(mem));
+	__ops_memory_free(mem);
+
+	/* calculate the signature */
+	t = time(NULL);
+	__ops_add_birthtime(sig, t);
+	__ops_keyid(keyid, sizeof(keyid), sizeof(keyid), &seckey->pubkey);
+	__ops_add_issuer_keyid(sig, keyid);
+	__ops_end_hashed_subpkts(sig);
+
+	/* write the signature to the detached file */
+	if (sigfile == NULL) {
+		(void) snprintf(fname, sizeof(fname), "%s.sig", f);
+		sigfile = fname;
+	}
+	fd = open(sigfile, O_CREAT|O_TRUNC|O_WRONLY, 0666);
+	if (fd < 0) {
+		(void) fprintf(stderr, "can't write signature to \"%s\"\n",
+				sigfile);
+		return 0;
+	}
+
+	output = __ops_output_new();
+	__ops_writer_set_fd(output, fd);
+	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
+	__ops_seckey_free(seckey);
+	(void) close(fd);
+
+	return 1;
 }

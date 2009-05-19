@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.10 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.11 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_MD5_H
@@ -506,13 +506,13 @@ __ops_hash_sha224(__ops_hash_t * hash)
 
 unsigned 
 __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
-	       const __ops_dsa_sig_t * sig,
-	       const __ops_dsa_pubkey_t * dsa)
+	       const __ops_dsa_sig_t *sig,
+	       const __ops_dsa_pubkey_t *dsa)
 {
+	unsigned	qlen;
 	DSA_SIG        *osig;
 	DSA            *odsa;
 	int             ret;
-	unsigned int    qlen;
 
 	osig = DSA_SIG_new();
 	osig->r = sig->r;
@@ -533,8 +533,8 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 		}
 		(void) fprintf(stderr, "\n");
 		printf("hash_length=%" PRIsize "d\n", hash_length);
+		printf("Q=%u\n", BN_num_bytes(odsa->q));
 	}
-	/* printf("Q=%d\n", BN_num_bytes(odsa->q)); */
 	if ((qlen = BN_num_bytes(odsa->q)) < hash_length) {
 		hash_length = qlen;
 	}
@@ -543,8 +543,7 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 		(void) fprintf(stderr, "ret=%d\n", ret);
 	}
 	if (ret < 0) {
-		(void) fprintf(stderr,
-			"__ops_do_verify: DSA_do_verify failed\n");
+		(void) fprintf(stderr, "__ops_dsa_verify: DSA verification\n");
 		return 0;
 	}
 
@@ -563,19 +562,21 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
    \param out Where to write decrypted data to
    \param in Encrypted data
    \param length Length of encrypted data
-   \param rsa RSA public key
+   \param pubkey RSA public key
    \return size of recovered message digest
 */
 int 
-__ops_rsa_public_decrypt(unsigned char *out, const unsigned char *in,
-		       size_t length, const __ops_rsa_pubkey_t * rsa)
+__ops_rsa_public_decrypt(unsigned char *out,
+			const unsigned char *in,
+			size_t length,
+			const __ops_rsa_pubkey_t *pubkey)
 {
 	RSA            *orsa;
 	int             n;
 
 	orsa = RSA_new();
-	orsa->n = rsa->n;
-	orsa->e = rsa->e;
+	orsa->n = pubkey->n;
+	orsa->e = pubkey->e;
 
 	n = RSA_public_decrypt((int)length, in, out, orsa, RSA_NO_PADDING);
 
@@ -591,28 +592,28 @@ __ops_rsa_public_decrypt(unsigned char *out, const unsigned char *in,
    \param out Where to write signature
    \param in Data to sign
    \param length Length of data
-   \param srsa RSA secret key
-   \param rsa RSA public key
+   \param seckey RSA secret key
+   \param pubkey RSA public key
    \return number of bytes decrypted
 */
 int 
 __ops_rsa_private_encrypt(unsigned char *out,
 			const unsigned char *in,
 			size_t length,
-			const __ops_rsa_seckey_t *srsa,
-			const __ops_rsa_pubkey_t *rsa)
+			const __ops_rsa_seckey_t *seckey,
+			const __ops_rsa_pubkey_t *pubkey)
 {
 	RSA            *orsa;
 	int             n;
 
 	orsa = RSA_new();
-	orsa->n = rsa->n;	/* XXX: do we need n? */
-	orsa->d = srsa->d;
-	orsa->p = srsa->q;
-	orsa->q = srsa->p;
+	orsa->n = pubkey->n;	/* XXX: do we need n? */
+	orsa->d = seckey->d;
+	orsa->p = seckey->q;
+	orsa->q = seckey->p;
 
 	/* debug */
-	orsa->e = rsa->e;
+	orsa->e = pubkey->e;
 	/* If this isn't set, it's very likely that the programmer hasn't */
 	/* decrypted the secret key. RSA_check_key segfaults in that case. */
 	/* Use __ops_decrypt_seckey() to do that. */
@@ -640,34 +641,36 @@ __ops_rsa_private_encrypt(unsigned char *out,
 \param out Where to write the plaintext
 \param in Encrypted data
 \param length Length of encrypted data
-\param srsa RSA secret key
-\param rsa RSA public key
+\param seckey RSA secret key
+\param pubkey RSA public key
 \return size of recovered plaintext
 */
 int 
-__ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
-			size_t length, const __ops_rsa_seckey_t * srsa,
-			const __ops_rsa_pubkey_t * rsa)
+__ops_rsa_private_decrypt(unsigned char *out,
+			const unsigned char *in,
+			size_t length,
+			const __ops_rsa_seckey_t *seckey,
+			const __ops_rsa_pubkey_t *pubkey)
 {
-	RSA            *orsa;
+	RSA            *keypair;
 	int             n;
 	char            errbuf[1024];
 
-	orsa = RSA_new();
-	orsa->n = rsa->n;	/* XXX: do we need n? */
-	orsa->d = srsa->d;
-	orsa->p = srsa->q;
-	orsa->q = srsa->p;
+	keypair = RSA_new();
+	keypair->n = pubkey->n;	/* XXX: do we need n? */
+	keypair->d = seckey->d;
+	keypair->p = seckey->q;
+	keypair->q = seckey->p;
 
 	/* debug */
-	orsa->e = rsa->e;
-	if (RSA_check_key(orsa) != 1) {
+	keypair->e = pubkey->e;
+	if (RSA_check_key(keypair) != 1) {
 		(void) fprintf(stderr, "RSA_check_key is not set\n");
 		return 0;
 	}
 	/* end debug */
 
-	n = RSA_private_decrypt((int)length, in, out, orsa, RSA_NO_PADDING);
+	n = RSA_private_decrypt((int)length, in, out, keypair, RSA_NO_PADDING);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("__ops_rsa_private_decrypt: n=%d\n",n);
@@ -676,11 +679,12 @@ __ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
 	errbuf[0] = '\0';
 	if (n == -1) {
 		unsigned long   err = ERR_get_error();
+
 		ERR_error_string(err, &errbuf[0]);
-		fprintf(stderr, "openssl error : %s\n", errbuf);
+		(void) fprintf(stderr, "openssl error : %s\n", errbuf);
 	}
-	orsa->n = orsa->d = orsa->p = orsa->q = NULL;
-	RSA_free(orsa);
+	keypair->n = keypair->d = keypair->p = keypair->q = NULL;
+	RSA_free(keypair);
 
 	return n;
 }
@@ -691,13 +695,13 @@ __ops_rsa_private_decrypt(unsigned char *out, const unsigned char *in,
    \param out Where to write the encrypted data
    \param in Plaintext
    \param length Size of plaintext
-   \param rsa RSA Public Key
+   \param pubkey RSA Public Key
 */
 int 
 __ops_rsa_public_encrypt(unsigned char *out,
 			const unsigned char *in,
 			size_t length,
-			const __ops_rsa_pubkey_t *rsa)
+			const __ops_rsa_pubkey_t *pubkey)
 {
 	RSA            *orsa;
 	int             n;
@@ -705,8 +709,8 @@ __ops_rsa_public_encrypt(unsigned char *out,
 	/* printf("__ops_rsa_public_encrypt: length=%ld\n", length); */
 
 	orsa = RSA_new();
-	orsa->n = rsa->n;
-	orsa->e = rsa->e;
+	orsa->n = pubkey->n;
+	orsa->e = pubkey->e;
 
 	/* printf("len: %ld\n", length); */
 	/* __ops_print_bn("n: ", orsa->n); */
@@ -732,7 +736,7 @@ __ops_rsa_public_encrypt(unsigned char *out,
    \sa __ops_init()
 */
 void 
-__ops_crypto_init()
+__ops_crypto_init(void)
 {
 #ifdef DMALLOC
 	CRYPTO_malloc_debug_init();
@@ -748,7 +752,7 @@ __ops_crypto_init()
    \sa __ops_finish()
 */
 void 
-__ops_crypto_finish()
+__ops_crypto_finish(void)
 {
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state((unsigned long)0);
@@ -837,7 +841,7 @@ rsa_generate_keypair(__ops_keydata_t *keydata,
 
 	__ops_setup_memory_write(&output, &mem, 128);
 
-	__ops_push_skey_checksum_writer(output, seckey);
+	__ops_push_checksum_writer(output, seckey);
 
 	switch (seckey->pubkey.alg) {
 		/* case OPS_PKA_DSA: */
@@ -889,7 +893,7 @@ rsa_generate_keypair(__ops_keydata_t *keydata,
  \sa __ops_keydata_free()
 */
 __ops_keydata_t  *
-__ops_rsa_new_selfsign_keypair(const int numbits,
+__ops_rsa_new_selfsign_key(const int numbits,
 				const unsigned long e,
 				__ops_userid_t *userid)
 {

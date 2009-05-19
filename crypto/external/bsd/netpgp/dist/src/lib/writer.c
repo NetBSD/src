@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.8 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.9 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,7 +88,6 @@ __RCSID("$NetBSD: writer.c,v 1.8 2009/05/16 06:30:38 agc Exp $");
 #include "signature.h"
 #include "packet.h"
 #include "packet-parse.h"
-
 #include "readerwriter.h"
 #include "memory.h"
 #include "netpgpdefs.h"
@@ -99,41 +98,41 @@ __RCSID("$NetBSD: writer.c,v 1.8 2009/05/16 06:30:38 agc Exp $");
  * return 1 if OK, otherwise 0
  */
 static unsigned 
-base_write(const void *src, unsigned length, __ops_output_t *out)
+base_write(const void *src, unsigned len, __ops_output_t *out)
 {
-	return out->writer.writer(src, length, &out->errors, &out->writer);
+	return out->writer.writer(src, len, &out->errors, &out->writer);
 }
 
 /**
  * \ingroup Core_WritePackets
  *
  * \param src
- * \param length
+ * \param len
  * \param output
  * \return 1 if OK, otherwise 0
  */
 
 unsigned 
-__ops_write(__ops_output_t *output, const void *src, unsigned length)
+__ops_write(__ops_output_t *output, const void *src, unsigned len)
 {
-	return base_write(src, length, output);
+	return base_write(src, len, output);
 }
 
 /**
  * \ingroup Core_WritePackets
  * \param n
- * \param length
+ * \param len
  * \param output
  * \return 1 if OK, otherwise 0
  */
 
 unsigned 
-__ops_write_scalar(__ops_output_t *output, unsigned n, unsigned length)
+__ops_write_scalar(__ops_output_t *output, unsigned n, unsigned len)
 {
 	unsigned char   c;
 
-	while (length-- > 0) {
-		c = n >> (length * 8);
+	while (len-- > 0) {
+		c = n >> (len * 8);
 		if (!base_write(&c, 1, output)) {
 			return 0;
 		}
@@ -181,27 +180,27 @@ __ops_write_ptag(__ops_output_t *output, __ops_content_tag_t tag)
 
 /**
  * \ingroup Core_WritePackets
- * \param length
+ * \param len
  * \param output
  * \return 1 if OK, otherwise 0
  */
 
 unsigned 
-__ops_write_length(__ops_output_t *output, unsigned length)
+__ops_write_length(__ops_output_t *output, unsigned len)
 {
 	unsigned char   c[2];
 
-	if (length < 192) {
-		c[0] = length;
+	if (len < 192) {
+		c[0] = len;
 		return base_write(c, 1, output);
 	}
-	if (length < 8192 + 192) {
-		c[0] = ((length - 192) >> 8) + 192;
-		c[1] = (length - 192) % 256;
+	if (len < 8192 + 192) {
+		c[0] = ((len - 192) >> 8) + 192;
+		c[1] = (len - 192) % 256;
 		return base_write(c, 2, output);
 	}
 	return __ops_write_scalar(output, 0xff, 1) &&
-		__ops_write_scalar(output, length, 4);
+		__ops_write_scalar(output, len, 4);
 }
 
 /*
@@ -363,16 +362,16 @@ __ops_writer_get_arg(__ops_writer_t *writer)
  * Write to the next writer down in the stack.
  *
  * \param src The data to write.
- * \param length The length of src.
+ * \param len The length of src.
  * \param errors A place to store errors.
  * \param writer The writer_info structure.
  * \return Success - if 0, then errors should contain the error.
  */
 unsigned 
-__ops_stacked_write(const void *src, unsigned length,
+__ops_stacked_write(const void *src, unsigned len,
 		  __ops_error_t ** errors, __ops_writer_t *writer)
 {
-	return writer->next->writer(src, length, errors, writer->next);
+	return writer->next->writer(src, len, errors, writer->next);
 }
 
 /**
@@ -383,8 +382,8 @@ __ops_stacked_write(const void *src, unsigned length,
  *
  * \param writer the info structure.
  */
-void 
-__ops_writer_generic_destroyer(__ops_writer_t *writer)
+static void 
+generic_destroyer(__ops_writer_t *writer)
 {
 	(void) free(__ops_writer_get_arg(writer));
 }
@@ -397,50 +396,50 @@ __ops_writer_generic_destroyer(__ops_writer_t *writer)
  */
 unsigned 
 __ops_writer_passthrough(const unsigned char *src,
-		       unsigned length,
+		       unsigned len,
 		       __ops_error_t **errors,
 		       __ops_writer_t *writer)
 {
-	return __ops_stacked_write(src, length, errors, writer);
+	return __ops_stacked_write(src, len, errors, writer);
 }
 
 /**************************************************************************/
 
 /**
- * \struct dash_escaped_t
+ * \struct dashesc_t
  */
 typedef struct {
 	unsigned   		 seen_nl:1;
 	unsigned		 seen_cr:1;
 	__ops_create_sig_t	*sig;
 	__ops_memory_t		*trailing;
-} dash_escaped_t;
+} dashesc_t;
 
 static unsigned 
-dash_escaped_writer(const unsigned char *src,
-		    unsigned length,
+dash_esc_writer(const unsigned char *src,
+		    unsigned len,
 		    __ops_error_t **errors,
 		    __ops_writer_t *writer)
 {
-	dash_escaped_t *dash = __ops_writer_get_arg(writer);
+	dashesc_t	*dash = __ops_writer_get_arg(writer);
 	unsigned        n;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i = 0;
 
-		fprintf(stderr, "dash_escaped_writer writing %d:\n", length);
-		for (i = 0; i < length; i++) {
+		(void) fprintf(stderr, "dash_esc_writer writing %d:\n", len);
+		for (i = 0; i < len; i++) {
 			fprintf(stderr, "0x%02x ", src[i]);
-			if (!((i + 1) % 16)) {
-				fprintf(stderr, "\n");
-			} else if (!((i + 1) % 8)) {
-				fprintf(stderr, "  ");
+			if (((i + 1) % 16) == 0) {
+				(void) fprintf(stderr, "\n");
+			} else if (((i + 1) % 8) == 0) {
+				(void) fprintf(stderr, "  ");
 			}
 		}
-		fprintf(stderr, "\n");
+		(void) fprintf(stderr, "\n");
 	}
 	/* XXX: make this efficient */
-	for (n = 0; n < length; ++n) {
+	for (n = 0; n < len; ++n) {
 		unsigned        l;
 
 		if (dash->seen_nl) {
@@ -487,7 +486,7 @@ dash_escaped_writer(const unsigned char *src,
 static void 
 dash_escaped_destroyer(__ops_writer_t * writer)
 {
-	dash_escaped_t	*dash;
+	dashesc_t	*dash;
 
 	dash = __ops_writer_get_arg(writer);
 	__ops_memory_free(dash->trailing);
@@ -507,7 +506,7 @@ __ops_writer_push_clearsigned(__ops_output_t * output,
 	static const char     header[] =
 		"-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: ";
 	const char     *hash = __ops_text_from_hash(__ops_sig_get_hash(sig));
-	dash_escaped_t *dash = calloc(1, sizeof(*dash));
+	dashesc_t      *dash = calloc(1, sizeof(*dash));
 	unsigned	ret;
 
 	ret = (__ops_write(output, header, sizeof(header) - 1) &&
@@ -523,7 +522,7 @@ __ops_writer_push_clearsigned(__ops_output_t * output,
 	dash->seen_nl = 1;
 	dash->sig = sig;
 	dash->trailing = __ops_memory_new();
-	__ops_writer_push(output, dash_escaped_writer, NULL,
+	__ops_writer_push(output, dash_esc_writer, NULL,
 			dash_escaped_destroyer, dash);
 	return ret;
 }
@@ -536,20 +535,21 @@ typedef struct {
 	unsigned        pos;
 	unsigned char   t;
 	unsigned        checksum;
-}               base64_t;
+} base64_t;
 
 static const char     b64map[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static unsigned 
 base64_writer(const unsigned char *src,
-	      unsigned length, __ops_error_t ** errors,
-	      __ops_writer_t * writer)
+	      unsigned len,
+	      __ops_error_t **errors,
+	      __ops_writer_t *writer)
 {
-	base64_t   *base64 = __ops_writer_get_arg(writer);
-	unsigned        n;
+	base64_t	*base64 = __ops_writer_get_arg(writer);
+	unsigned         n;
 
-	for (n = 0; n < length;) {
+	for (n = 0; n < len;) {
 		base64->checksum = __ops_crc24(base64->checksum, src[n]);
 		if (base64->pos == 0) {
 			/* XXXXXX00 00000000 00000000 */
@@ -594,12 +594,11 @@ base64_writer(const unsigned char *src,
 }
 
 static unsigned 
-sig_finaliser(__ops_error_t ** errors,
-		    __ops_writer_t * writer)
+sig_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 {
-	base64_t   *base64 = __ops_writer_get_arg(writer);
-	static const char     trailer[] = "\r\n-----END PGP SIGNATURE-----\r\n";
-	unsigned char   c[3];
+	static const char   trail[] = "\r\n-----END PGP SIGNATURE-----\r\n";
+	unsigned char	    c[3];
+	base64_t	   *base64 = __ops_writer_get_arg(writer);
 
 	if (base64->pos) {
 		if (!__ops_stacked_write(&b64map[base64->t], 1, errors,
@@ -630,7 +629,7 @@ sig_finaliser(__ops_error_t ** errors,
 		return 0;
 	}
 
-	return __ops_stacked_write(trailer, sizeof(trailer) - 1, errors, writer);
+	return __ops_stacked_write(trail, sizeof(trail) - 1, errors, writer);
 }
 
 /**
@@ -644,14 +643,14 @@ typedef struct {
 
 static unsigned 
 linebreak_writer(const unsigned char *src,
-		 unsigned length,
+		 unsigned len,
 		 __ops_error_t ** errors,
 		 __ops_writer_t * writer)
 {
 	linebreak_t *linebreak = __ops_writer_get_arg(writer);
 	unsigned        n;
 
-	for (n = 0; n < length; ++n, ++linebreak->pos) {
+	for (n = 0; n < len; ++n, ++linebreak->pos) {
 		if (src[n] == '\r' || src[n] == '\n') {
 			linebreak->pos = 0;
 		}
@@ -691,7 +690,7 @@ __ops_writer_use_armored_sig(__ops_output_t * output)
 		return 0;
 	}
 	__ops_writer_push(output, linebreak_writer, NULL,
-			__ops_writer_generic_destroyer,
+			generic_destroyer,
 			calloc(1, sizeof(linebreak_t)));
 	base64 = calloc(1, sizeof(*base64));
 	if (!base64) {
@@ -700,13 +699,12 @@ __ops_writer_use_armored_sig(__ops_output_t * output)
 	}
 	base64->checksum = CRC24_INIT;
 	__ops_writer_push(output, base64_writer, sig_finaliser,
-			__ops_writer_generic_destroyer, base64);
+			generic_destroyer, base64);
 	return 1;
 }
 
 static unsigned 
-armoured_message_finaliser(__ops_error_t ** errors,
-			   __ops_writer_t * writer)
+armoured_message_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 {
 	/* TODO: This is same as sig_finaliser apart from trailer. */
 	base64_t   *base64 = __ops_writer_get_arg(writer);
@@ -761,12 +759,13 @@ __ops_writer_push_armor_msg(__ops_output_t * output)
 	base64 = calloc(1, sizeof(*base64));
 	base64->checksum = CRC24_INIT;
 	__ops_writer_push(output, base64_writer, armoured_message_finaliser,
-		__ops_writer_generic_destroyer, base64);
+		generic_destroyer, base64);
 }
 
 static unsigned 
-armoured_finaliser(__ops_armor_type_t type, __ops_error_t ** errors,
-		   __ops_writer_t * writer)
+armoured_finaliser(__ops_armor_type_t type,
+			__ops_error_t **errors,
+			__ops_writer_t *writer)
 {
 	static const char     tail_pubkey[] =
 			"\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n";
@@ -828,15 +827,13 @@ armoured_finaliser(__ops_armor_type_t type, __ops_error_t ** errors,
 }
 
 static unsigned 
-armoured_pubkey_finaliser(__ops_error_t ** errors,
-			      __ops_writer_t * writer)
+armored_pubkey_fini(__ops_error_t **errors, __ops_writer_t *writer)
 {
 	return armoured_finaliser(OPS_PGP_PUBLIC_KEY_BLOCK, errors, writer);
 }
 
 static unsigned 
-armoured_private_key_finaliser(__ops_error_t ** errors,
-			       __ops_writer_t * writer)
+armored_privkey_fini(__ops_error_t **errors, __ops_writer_t *writer)
 {
 	return armoured_finaliser(OPS_PGP_PRIVATE_KEY_BLOCK, errors, writer);
 }
@@ -847,7 +844,7 @@ armoured_private_key_finaliser(__ops_error_t ** errors,
  \brief Push Armoured Writer on stack (generic)
 */
 void 
-__ops_writer_push_armoured(__ops_output_t * output, __ops_armor_type_t type)
+__ops_writer_push_armoured(__ops_output_t *output, __ops_armor_type_t type)
 {
 	static char     hdr_pubkey[] =
 			"-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: "
@@ -867,13 +864,13 @@ __ops_writer_push_armoured(__ops_output_t * output, __ops_armor_type_t type)
 	case OPS_PGP_PUBLIC_KEY_BLOCK:
 		header = hdr_pubkey;
 		sz_hdr = sizeof(hdr_pubkey) - 1;
-		finaliser = armoured_pubkey_finaliser;
+		finaliser = armored_pubkey_fini;
 		break;
 
 	case OPS_PGP_PRIVATE_KEY_BLOCK:
 		header = hdr_private_key;
 		sz_hdr = sizeof(hdr_private_key) - 1;
-		finaliser = armoured_private_key_finaliser;
+		finaliser = armored_privkey_fini;
 		break;
 
 	default:
@@ -885,13 +882,13 @@ __ops_writer_push_armoured(__ops_output_t * output, __ops_armor_type_t type)
 	__ops_write(output, header, sz_hdr);
 
 	__ops_writer_push(output, linebreak_writer, NULL,
-			__ops_writer_generic_destroyer,
+			generic_destroyer,
 			calloc(1, sizeof(linebreak_t)));
 
 	base64 = calloc(1, sizeof(*base64));
 	base64->checksum = CRC24_INIT;
 	__ops_writer_push(output, base64_writer, finaliser,
-			__ops_writer_generic_destroyer, base64);
+			generic_destroyer, base64);
 }
 
 /**************************************************************************/
@@ -899,7 +896,7 @@ __ops_writer_push_armoured(__ops_output_t * output, __ops_armor_type_t type)
 typedef struct {
 	__ops_crypt_t    *crypt;
 	int             free_crypt;
-}               crypt_t;
+} crypt_t;
 
 /*
  * This writer simply takes plaintext as input,
@@ -908,53 +905,53 @@ typedef struct {
  */
 static unsigned 
 encrypt_writer(const unsigned char *src,
-	       unsigned length,
-	       __ops_error_t ** errors,
-	       __ops_writer_t * writer)
+	       unsigned len,
+	       __ops_error_t **errors,
+	       __ops_writer_t *writer)
 {
 
 #define BUFSZ 1024		/* arbitrary number */
 	unsigned char   encbuf[BUFSZ];
-	unsigned        remaining = length;
+	unsigned        remaining;
 	unsigned        done = 0;
+	crypt_t		*pgp_encrypt;
 
-	crypt_t    *pgp_encrypt = (crypt_t *) __ops_writer_get_arg(writer);
-
+	remaining = len;
+	pgp_encrypt = (crypt_t *) __ops_writer_get_arg(writer);
 	if (!__ops_is_sa_supported(pgp_encrypt->crypt->alg)) {
 		(void) fprintf(stderr, "encrypt_writer: not supported\n");
 		return 0;
 	}
 
 	while (remaining) {
-		unsigned        len = remaining < BUFSZ ? remaining : BUFSZ;
-		/* memcpy(buf,src,len); // \todo copy needed here? */
+		unsigned        size = (remaining < BUFSZ) ? remaining : BUFSZ;
 
+		/* memcpy(buf,src,size); // \todo copy needed here? */
 		pgp_encrypt->crypt->cfb_encrypt(pgp_encrypt->crypt, encbuf,
-					src + done, len);
+					src + done, size);
 
 		if (__ops_get_debug_level(__FILE__)) {
 			int             i = 0;
 
-			fprintf(stderr, "WRITING:\nunencrypted: ");
+			(void) fprintf(stderr, "WRITING:\nunencrypted: ");
 			for (i = 0; i < 16; i++) {
-				fprintf(stderr, "%2x ", src[done + i]);
+				(void) fprintf(stderr, "%2x ", src[done + i]);
 			}
-			fprintf(stderr, "\n");
-			fprintf(stderr, "encrypted:   ");
+			(void) fprintf(stderr, "\nencrypted:   ");
 			for (i = 0; i < 16; i++) {
-				fprintf(stderr, "%2x ", encbuf[i]);
+				(void) fprintf(stderr, "%2x ", encbuf[i]);
 			}
-			fprintf(stderr, "\n");
+			(void) fprintf(stderr, "\n");
 		}
-		if (!__ops_stacked_write(encbuf, len, errors, writer)) {
+		if (!__ops_stacked_write(encbuf, size, errors, writer)) {
 			if (__ops_get_debug_level(__FILE__)) {
 				fprintf(stderr,
-"encrypted_writer got error from stacked write, returning\n");
+					"encrypted_writer: stacked write\n");
 			}
 			return 0;
 		}
-		remaining -= len;
-		done += len;
+		remaining -= size;
+		done += size;
 	}
 
 	return 1;
@@ -966,9 +963,9 @@ encrypt_destroyer(__ops_writer_t * writer)
 	crypt_t    *pgp_encrypt = (crypt_t *) __ops_writer_get_arg(writer);
 
 	if (pgp_encrypt->free_crypt) {
-		free(pgp_encrypt->crypt);
+		(void) free(pgp_encrypt->crypt);
 	}
-	free(pgp_encrypt);
+	(void) free(pgp_encrypt);
 }
 
 /**
@@ -976,12 +973,10 @@ encrypt_destroyer(__ops_writer_t * writer)
 \brief Push Encrypted Writer onto stack (create SE packets)
 */
 void 
-__ops_writer_push_encrypt_crypt(__ops_output_t *output,
-			      __ops_crypt_t *pgp_crypt)
+__ops_push_enc_crypt(__ops_output_t *output, __ops_crypt_t *pgp_crypt)
 {
 	/* Create encrypt to be used with this writer */
 	/* Remember to free this in the destroyer */
-
 	crypt_t    *pgp_encrypt = calloc(1, sizeof(*pgp_encrypt));
 
 	/* Setup the encrypt */
@@ -1012,7 +1007,7 @@ static void     encrypt_se_ip_destroyer(__ops_writer_t *);
 \brief Push Encrypted SE IP Writer onto stack
 */
 void 
-__ops_writer_push_encrypt_se_ip(__ops_output_t *output,
+__ops_push_enc_se_ip(__ops_output_t *output,
 			      const __ops_keydata_t *pubkey)
 {
 	unsigned char	*iv = NULL;
@@ -1022,8 +1017,9 @@ __ops_writer_push_encrypt_se_ip(__ops_output_t *output,
 	/* Remember to free this in the destroyer */
 	encrypt_se_ip_t *se_ip = calloc(1, sizeof(*se_ip));
 
-	/* Create and write encrypted PK session key */
 	__ops_pk_sesskey_t *encrypted_pk_sesskey;
+
+	/* Create and write encrypted PK session key */
 	encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey);
 	__ops_write_pk_sesskey(output, encrypted_pk_sesskey);
 
@@ -1068,7 +1064,7 @@ encrypt_se_ip_writer(const unsigned char *src,
 	/* create literal data packet from source data */
 	__ops_write_litdata(litoutput, src, (const int)len, OPS_LDT_BINARY);
 	if (__ops_mem_len(litmem) <= len) {
-		(void) fprintf(stderr, "encrypt_se_ip_writer: bad length\n");
+		(void) fprintf(stderr, "encrypt_se_ip_writer: bad len\n");
 		return 0;
 	}
 
@@ -1081,7 +1077,7 @@ encrypt_se_ip_writer(const unsigned char *src,
 			       se_ip->crypt, output);
 	if (__ops_mem_len(localmem) <= __ops_mem_len(zmem)) {
 		(void) fprintf(stderr,
-				"encrypt_se_ip_writer: bad comp length\n");
+				"encrypt_se_ip_writer: bad comp len\n");
 		return 0;
 	}
 
@@ -1114,7 +1110,7 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 		       __ops_output_t *output)
 {
 	__ops_output_t	*mdcoutput;
-	__ops_memory_t	*mdcmem;
+	__ops_memory_t	*mdc;
 	unsigned char	 hashed[OPS_SHA1_HASH_SIZE];
 	unsigned char	*preamble;
 	const size_t	 sz_mdc = 1 + 1 + OPS_SHA1_HASH_SIZE;
@@ -1146,7 +1142,7 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 	}
 
 	/* now construct MDC packet and add to the end of the buffer */
-	__ops_setup_memory_write(&mdcoutput, &mdcmem, sz_mdc);
+	__ops_setup_memory_write(&mdcoutput, &mdc, sz_mdc);
 	__ops_calc_mdc_hash(preamble, sz_preamble, data, len, &hashed[0]);
 	__ops_write_mdc(hashed, mdcoutput);
 
@@ -1154,7 +1150,7 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 		unsigned int    i = 0;
 		size_t          sz_plaintext = len;
 		size_t          sz_mdc2 = 1 + 1 + OPS_SHA1_HASH_SIZE;
-		unsigned char  *mdc = NULL;
+		unsigned char  *digest = NULL;
 
 		(void) fprintf(stderr, "\nplaintext: ");
 		for (i = 0; i < sz_plaintext; i++) {
@@ -1163,24 +1159,23 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 		(void) fprintf(stderr, "\n");
 
 		(void) fprintf(stderr, "\nmdc: ");
-		mdc = __ops_mem_data(mdcmem);
+		digest = __ops_mem_data(mdc);
 		for (i = 0; i < sz_mdc2; i++) {
-			(void) fprintf(stderr, " 0x%02x", mdc[i]);
+			(void) fprintf(stderr, " 0x%02x", digest[i]);
 		}
 		(void) fprintf(stderr, "\n");
 	}
 
 	/* and write it out */
-	__ops_writer_push_encrypt_crypt(output, crypted);
+	__ops_push_enc_crypt(output, crypted);
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr,
 			"writing %" PRIsize "u + %d + %" PRIsize "u\n",
-			sz_preamble, len, __ops_mem_len(mdcmem));
+			sz_preamble, len, __ops_mem_len(mdc));
 	}
 	if (!__ops_write(output, preamble, sz_preamble) ||
 	    !__ops_write(output, data, len) ||
-	    !__ops_write(output, __ops_mem_data(mdcmem),
-	    		__ops_mem_len(mdcmem))) {
+	    !__ops_write(output, __ops_mem_data(mdc), __ops_mem_len(mdc))) {
 		/* \todo fix cleanup here and in old code functions */
 		return 0;
 	}
@@ -1188,7 +1183,7 @@ __ops_write_se_ip_pktset(const unsigned char *data,
 	__ops_writer_pop(output);
 
 	/* cleanup  */
-	__ops_teardown_memory_write(mdcoutput, mdcmem);
+	__ops_teardown_memory_write(mdcoutput, mdc);
 	(void) free(preamble);
 
 	return 1;
@@ -1199,7 +1194,7 @@ typedef struct {
 } writer_fd_t;
 
 static unsigned 
-fd_writer(const unsigned char *src, unsigned length,
+fd_writer(const unsigned char *src, unsigned len,
 	  __ops_error_t **errors,
 	  __ops_writer_t *writer)
 {
@@ -1207,13 +1202,13 @@ fd_writer(const unsigned char *src, unsigned length,
 	int              n;
 
 	writerfd = __ops_writer_get_arg(writer);
-	n = write(writerfd->fd, src, length);
+	n = write(writerfd->fd, src, len);
 	if (n == -1) {
 		OPS_SYSTEM_ERROR_1(errors, OPS_E_W_WRITE_FAILED, "write",
 				   "file descriptor %d", writerfd->fd);
 		return 0;
 	}
-	if ((unsigned) n != length) {
+	if ((unsigned) n != len) {
 		OPS_ERROR_1(errors, OPS_E_W_WRITE_TOO_SHORT,
 			    "file descriptor %d", writerfd->fd);
 		return 0;
@@ -1251,15 +1246,16 @@ __ops_writer_set_fd(__ops_output_t *output, int fd)
 }
 
 static unsigned 
-memory_writer(const unsigned char *src, unsigned length,
-	      __ops_error_t **errors,
-	      __ops_writer_t *writer)
+memory_writer(const unsigned char *src,
+		unsigned len,
+		__ops_error_t **errors,
+		__ops_writer_t *writer)
 {
 	__ops_memory_t   *mem;
 
 	__OPS_USED(errors);
 	mem = __ops_writer_get_arg(writer);
-	__ops_memory_add(mem, src, length);
+	__ops_memory_add(mem, src, len);
 	return 1;
 }
 
@@ -1284,14 +1280,14 @@ __ops_writer_set_memory(__ops_output_t *output, __ops_memory_t *mem)
 /**************************************************************************/
 
 typedef struct {
-	__ops_hash_alg_t hash_alg;
-	__ops_hash_t      hash;
-	unsigned char  *hashed;
+	__ops_hash_alg_t	 hash_alg;
+	__ops_hash_t		 hash;
+	unsigned char		*hashed;
 } skey_checksum_t;
 
 static unsigned 
 skey_checksum_writer(const unsigned char *src,
-	const unsigned length,
+	const unsigned len,
 	__ops_error_t **errors,
 	__ops_writer_t *writer)
 {
@@ -1300,9 +1296,9 @@ skey_checksum_writer(const unsigned char *src,
 
 	sum = __ops_writer_get_arg(writer);
 	/* add contents to hash */
-	sum->hash.add(&sum->hash, src, length);
+	sum->hash.add(&sum->hash, src, len);
 	/* write to next stacked writer */
-	ret = __ops_stacked_write(src, length, errors, writer);
+	ret = __ops_stacked_write(src, len, errors, writer);
 	/* tidy up and return */
 	return ret;
 }
@@ -1321,7 +1317,7 @@ skey_checksum_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 }
 
 static void 
-skey_checksum_destroyer(__ops_writer_t * writer)
+skey_checksum_destroyer(__ops_writer_t *writer)
 {
 	skey_checksum_t *sum;
 
@@ -1335,8 +1331,7 @@ skey_checksum_destroyer(__ops_writer_t * writer)
 \param seckey
 */
 void 
-__ops_push_skey_checksum_writer(__ops_output_t *output,
-		__ops_seckey_t *seckey)
+__ops_push_checksum_writer(__ops_output_t *output, __ops_seckey_t *seckey)
 {
 	/* XXX: push a SHA-1 checksum writer (and change s2k to 254). */
 	skey_checksum_t *sum;
@@ -1369,7 +1364,7 @@ typedef struct {
 
 static unsigned 
 str_enc_se_ip_writer(const unsigned char *src,
-			    unsigned length,
+			    unsigned len,
 			    __ops_error_t **errors,
 			    __ops_writer_t *writer);
 
@@ -1428,15 +1423,15 @@ __ops_push_stream_enc_se_ip(__ops_output_t *output,
 }
 
 
+/* calculate the partial data length */
 static unsigned int 
-__ops_calc_partial_data_length(unsigned int len)
+__ops_partial_data_len(unsigned int len)
 {
 	unsigned int    mask = MAX_PARTIAL_DATA_LENGTH;
 	int             i;
 
 	if (len == 0) {
-		(void) fprintf(stderr,
-				"__ops_calc_partial_data_length: 0 len\n");
+		(void) fprintf(stderr, "__ops_partial_data_len: 0 len\n");
 		return 0;
 	}
 	if (len > MAX_PARTIAL_DATA_LENGTH) {
@@ -1452,7 +1447,7 @@ __ops_calc_partial_data_length(unsigned int len)
 }
 
 static unsigned 
-__ops_write_partial_data_length(unsigned int len, __ops_output_t *output)
+__ops_write_partial_len(unsigned int len, __ops_output_t *output)
 {
 	/* len must be a power of 2 from 0 to 30 */
 	unsigned char   c;
@@ -1473,9 +1468,9 @@ stream_write_litdata(__ops_output_t *output,
 			unsigned len)
 {
 	while (len > 0) {
-		size_t          pdlen = __ops_calc_partial_data_length(len);
+		size_t          pdlen = __ops_partial_data_len(len);
 
-		__ops_write_partial_data_length(pdlen, output);
+		__ops_write_partial_len(pdlen, output);
 		__ops_write(output, data, pdlen);
 		data += pdlen;
 		len -= pdlen;
@@ -1494,7 +1489,7 @@ stream_write_litdata_first(__ops_output_t *output,
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
 
 	size_t          sz_towrite = 1 + 1 + 4 + len;
-	size_t          sz_pd = __ops_calc_partial_data_length(sz_towrite);
+	size_t          sz_pd = __ops_partial_data_len(sz_towrite);
 
 	if (sz_pd < 512) {
 		(void) fprintf(stderr,
@@ -1503,7 +1498,7 @@ stream_write_litdata_first(__ops_output_t *output,
 	}
 
 	__ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA);
-	__ops_write_partial_data_length(sz_pd, output);
+	__ops_write_partial_len(sz_pd, output);
 	__ops_write_scalar(output, (unsigned)type, 1);
 	__ops_write_scalar(output, 0, 1);
 	__ops_write_scalar(output, 0, 4);
@@ -1525,18 +1520,18 @@ stream_write_litdata_last(__ops_output_t * output,
 }
 
 static unsigned
-stream_write_se_ip(__ops_output_t * output,
+stream_write_se_ip(__ops_output_t *output,
 			const unsigned char *data,
 			unsigned int len,
-			str_enc_se_ip_t * se_ip)
+			str_enc_se_ip_t *se_ip)
 {
 	size_t          pdlen;
 
 	while (len > 0) {
-		pdlen = __ops_calc_partial_data_length(len);
-		__ops_write_partial_data_length(pdlen, output);
+		pdlen = __ops_partial_data_len(len);
+		__ops_write_partial_len(pdlen, output);
 
-		__ops_writer_push_encrypt_crypt(output, se_ip->crypt);
+		__ops_push_enc_crypt(output, se_ip->crypt);
 		__ops_write(output, data, pdlen);
 		__ops_writer_pop(output);
 
@@ -1552,7 +1547,7 @@ static unsigned
 stream_write_se_ip_first(__ops_output_t *output,
 			const unsigned char *data,
 			unsigned int len,
-			str_enc_se_ip_t * se_ip)
+			str_enc_se_ip_t *se_ip)
 {
 	unsigned char  *preamble;
 	size_t          sz_preamble;
@@ -1562,7 +1557,7 @@ stream_write_se_ip_first(__ops_output_t *output,
 	sz_preamble = se_ip->crypt->blocksize + 2;
 	sz_towrite = sz_preamble + 1 + len;
 	preamble = calloc(1, sz_preamble);
-	sz_pd = __ops_calc_partial_data_length(sz_towrite);
+	sz_pd = __ops_partial_data_len(sz_towrite);
 	if (sz_pd < 512) {
 		(void) fprintf(stderr,
 			"stream_write_se_ip_first: bad sz_pd\n");
@@ -1570,10 +1565,10 @@ stream_write_se_ip_first(__ops_output_t *output,
 	}
 
 	__ops_write_ptag(output, OPS_PTAG_CT_SE_IP_DATA);
-	__ops_write_partial_data_length(sz_pd, output);
+	__ops_write_partial_len(sz_pd, output);
 	__ops_write_scalar(output, SE_IP_DATA_VERSION, 1);
 
-	__ops_writer_push_encrypt_crypt(output, se_ip->crypt);
+	__ops_push_enc_crypt(output, se_ip->crypt);
 
 	__ops_random(preamble, se_ip->crypt->blocksize);
 	preamble[se_ip->crypt->blocksize] =
@@ -1603,10 +1598,10 @@ stream_write_se_ip_first(__ops_output_t *output,
 }
 
 static unsigned
-stream_write_se_ip_last(__ops_output_t * output,
+stream_write_se_ip_last(__ops_output_t *output,
 			const unsigned char *data,
 			unsigned int len,
-			str_enc_se_ip_t * se_ip)
+			str_enc_se_ip_t *se_ip)
 {
 	__ops_output_t	*mdcoutput;
 	__ops_memory_t	*mdcmem;
@@ -1618,7 +1613,7 @@ stream_write_se_ip_last(__ops_output_t * output,
 	se_ip->hash.add(&se_ip->hash, data, len);
 
 	/* MDC packet tag */
-	c = 0xD3;
+	c = MDC_PKT_TAG;
 	se_ip->hash.add(&se_ip->hash, &c, 1);
 
 	/* MDC packet len */
@@ -1635,7 +1630,7 @@ stream_write_se_ip_last(__ops_output_t * output,
 	__ops_write_length(output, sz_buf);
 
 	/* encode everting */
-	__ops_writer_push_encrypt_crypt(output, se_ip->crypt);
+	__ops_push_enc_crypt(output, se_ip->crypt);
 
 	__ops_write(output, data, len);
 	__ops_write(output, __ops_mem_data(mdcmem), __ops_mem_len(mdcmem));
@@ -1649,7 +1644,7 @@ stream_write_se_ip_last(__ops_output_t * output,
 
 static unsigned 
 str_enc_se_ip_writer(const unsigned char *src,
-			    unsigned length,
+			    unsigned len,
 			    __ops_error_t **errors,
 			    __ops_writer_t *writer)
 {
@@ -1660,7 +1655,7 @@ str_enc_se_ip_writer(const unsigned char *src,
 						 * is not yet written */
 		size_t          datalength;
 
-		__ops_memory_add(se_ip->mem_data, src, length);
+		__ops_memory_add(se_ip->mem_data, src, len);
 		datalength = __ops_mem_len(se_ip->mem_data);
 
 		/* 4.2.2.4. Partial Body Lengths */
@@ -1680,7 +1675,7 @@ str_enc_se_ip_writer(const unsigned char *src,
 				__ops_mem_data(se_ip->litmem),
 				__ops_mem_len(se_ip->litmem), se_ip);
 	} else {
-		stream_write_litdata(se_ip->litoutput, src, length);
+		stream_write_litdata(se_ip->litoutput, src, len);
 		stream_write_se_ip(se_ip->se_ip_out,
 				__ops_mem_data(se_ip->litmem),
 				__ops_mem_len(se_ip->litmem), se_ip);

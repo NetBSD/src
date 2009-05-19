@@ -74,7 +74,6 @@ void __ops_output_delete(__ops_output_t *);
 
 int __ops_filewrite(const char *, const char *, const size_t, const unsigned);
 
-__ops_memory_t   *__ops_fileread(const char *, int *);
 void __ops_build_pubkey(__ops_memory_t *, const __ops_pubkey_t *, unsigned);
 
 unsigned __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *, unsigned char *);
@@ -94,9 +93,9 @@ unsigned __ops_write_litdata(__ops_output_t *,
 				const __ops_litdata_type_t);
 __ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_keydata_t *);
 unsigned __ops_write_pk_sesskey(__ops_output_t *, __ops_pk_sesskey_t *);
-unsigned __ops_write_transferable_pubkey(__ops_output_t *,
+unsigned __ops_write_xfer_pubkey(__ops_output_t *,
 				const __ops_keydata_t *, unsigned);
-unsigned   __ops_write_transferable_seckey(__ops_output_t *,
+unsigned   __ops_write_xfer_seckey(__ops_output_t *,
 				const __ops_keydata_t *,
 				const unsigned char *,
 				const size_t,

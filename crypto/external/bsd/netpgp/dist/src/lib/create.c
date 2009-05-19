@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.11 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.12 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -445,7 +445,7 @@ write_seckey_body(const __ops_seckey_t * key,
 
 		(void) fprintf(stderr, "turning encryption on...\n");
 	}
-	__ops_writer_push_encrypt_crypt(output, &crypted);
+	__ops_push_enc_crypt(output, &crypted);
 
 	switch (key->pubkey.alg) {
 		/* case OPS_PKA_DSA: */
@@ -516,7 +516,7 @@ write_struct_pubkey(__ops_output_t *output, const __ops_pubkey_t *key)
 */
 
 unsigned 
-__ops_write_transferable_pubkey(__ops_output_t *output,
+__ops_write_xfer_pubkey(__ops_output_t *output,
 			const __ops_keydata_t *keydata,
 			unsigned armoured)
 {
@@ -582,7 +582,7 @@ __ops_write_transferable_pubkey(__ops_output_t *output,
 */
 
 unsigned 
-__ops_write_transferable_seckey(__ops_output_t *output,
+__ops_write_xfer_seckey(__ops_output_t *output,
 				const __ops_keydata_t *keydata,
 				const unsigned char *passphrase,
 				const size_t pplen,
@@ -1155,116 +1155,25 @@ __ops_write_litdata(__ops_output_t * output,
 unsigned 
 __ops_fileread_litdata(const char *filename,
 				 const __ops_litdata_type_t type,
-				 __ops_output_t * output)
+				 __ops_output_t *output)
 {
-	unsigned char    buf[1024];
-	unsigned char	*mmapped;
 	__ops_memory_t	*mem = NULL;
-	struct stat	 st;
-	size_t           len = 0;
-	int              fd = 0;
 	unsigned   	 ret;
-
-#ifdef O_BINARY
-	fd = open(filename, O_RDONLY | O_BINARY);
-#else
-	fd = open(filename, O_RDONLY);
-#endif
-	if (fd < 0)
-		return 0;
+	size_t		 len;
 
 	mem = __ops_memory_new();
-	mmapped = MAP_FAILED;
-#ifdef USE_MMAP_FOR_FILES
-	if (fstat(fd, &st) == 0) {
-		mem->length = (unsigned)st.st_size;
-		mmapped = mem->buf = mmap(NULL, (size_t)st.st_size, PROT_READ,
-					MAP_FILE | MAP_PRIVATE, fd, 0);
+	if (!__ops_mem_readfile(mem, filename)) {
+		return 0;
 	}
-#endif
-	if (mmapped == MAP_FAILED) {
-		__ops_memory_init(mem, (size_t)st.st_size);
-		for (;;) {
-			ssize_t         n = 0;
-
-			if ((n = read(fd, buf, sizeof(buf))) == 0) {
-				break;
-			}
-			__ops_memory_add(mem, buf, (unsigned)n);
-		}
-	}
-	(void) close(fd);
-
-	/* \todo do we need to check text data for <cr><lf> line endings ? */
 	len = __ops_mem_len(mem);
 	ret = __ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA) &&
 		__ops_write_length(output, 1 + 1 + 4 + len) &&
 		__ops_write_scalar(output, (unsigned)type, 1) &&
-		__ops_write_scalar(output, 0, 1)	/* filename */ &&
-		__ops_write_scalar(output, 0, 4)	/* date */ &&
+		__ops_write_scalar(output, 0, 1) /* filename */ &&
+		__ops_write_scalar(output, 0, 4) /* date */ &&
 		__ops_write(output, __ops_mem_data(mem), len);
-
-#ifdef USE_MMAP_FOR_FILES
-	if (mmapped != MAP_FAILED) {
-		munmap(mmapped, mem->length);
-		mmapped = buf;
-	}
-#endif
-	if (mmapped == NULL) {
-		__ops_memory_free(mem);
-	}
+	__ops_memory_free(mem);
 	return ret;
-}
-
-/**
-   \ingroup HighLevel_General
-
-   \brief Reads contents of file into new __ops_memory_t struct.
-
-   \param filename Filename to read from
-   \param errnum Pointer to error
-   \return new __ops_memory_t pointer containing the contents of the file
-
-   \note If there was an error opening the file or reading from it,
-   	errnum is set to the cause
-   \note It is the caller's responsibility to call __ops_memory_free(mem)
-*/
-__ops_memory_t   *
-__ops_fileread(const char *filename, int *errnum)
-{
-	__ops_memory_t   *mem = NULL;
-	unsigned char    buf[1024];
-	struct stat	 st;
-	int              fd = 0;
-
-	*errnum = 0;
-#ifdef O_BINARY
-	fd = open(filename, O_RDONLY | O_BINARY);
-#else
-	fd = open(filename, O_RDONLY);
-#endif
-	if (fd < 0) {
-		*errnum = errno;
-		return 0;
-	}
-	mem = __ops_memory_new();
-	(void) fstat(fd, &st);
-	__ops_memory_init(mem, (unsigned)st.st_size);
-	for (;;) {
-		ssize_t         n = 0;
-
-		n = read(fd, buf, sizeof(buf));
-		if (n < 0) {
-			*errnum = errno;
-			break;
-		}
-		if (!n) {
-			break;
-		}
-		__ops_memory_add(mem, buf, (unsigned)n);
-	}
-	(void) close(fd);
-	return mem;
 }
 
 /**

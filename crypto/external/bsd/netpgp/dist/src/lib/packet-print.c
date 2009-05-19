@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.10 2009/05/18 03:55:42 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.11 2009/05/19 05:13:10 agc Exp $");
 #endif
 
 #include <string.h>
@@ -924,8 +924,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		print_data("Key Server Preferences",
 			   &content->ss_key_server_prefs.data);
 
-		text = __ops_showall_ss_key_server_prefs(
-				content->ss_key_server_prefs);
+		text = __ops_show_keyserv_prefs(content->ss_key_server_prefs);
 		print_text_breakdown(text);
 		__ops_text_free(text);
 
@@ -951,8 +950,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 
 		indent++;
 		print_data("Flags", &content->ss_notation.flags);
-		text = __ops_showall_ss_notation_flags(
-				content->ss_notation);
+		text = __ops_showall_notation(content->ss_notation);
 		print_text_breakdown(text);
 		__ops_text_free(text);
 
