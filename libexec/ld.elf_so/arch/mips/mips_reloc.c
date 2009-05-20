@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.53 2008/07/24 04:39:25 matt Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.54 2009/05/20 22:31:46 christos Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.53 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.54 2009/05/20 22:31:46 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,8 +94,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 	void *where;
 	const Elf_Sym *symtab = NULL, *sym;
 	Elf_Addr *got = NULL;
-	Elf_Word local_gotno = 0, symtabno = 0, gotsym = 0;
-	int i;
+	Elf_Word local_gotno = 0, symtabno = 0, gotsym = 0, i;
 
 	for (; dynp->d_tag != DT_NULL; dynp++) {
 		switch (dynp->d_tag) {
@@ -136,7 +135,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		++got;
 	}
 
-	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
+	rellim = (const Elf_Rel *)((const char *)rel + relsz);
 	for (; rel < rellim; rel++) {
 		where = (void *)(relocbase + rel->r_offset);
 
@@ -164,7 +163,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 	Elf_Addr *got = obj->pltgot;
 	const Elf_Sym *sym, *def;
 	const Obj_Entry *defobj;
-	int i;
+	Elf_Word i;
 #ifdef SUPPORT_OLD_BROKEN_LD
 	int broken;
 #endif
@@ -370,7 +369,7 @@ int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Sym *sym = obj->symtab + obj->gotsym;
-	int i;
+	Elf_Word i;
 
 	for (i = obj->gotsym; i < obj->symtabno; i++, sym++) {
 		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
