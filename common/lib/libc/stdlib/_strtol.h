@@ -1,4 +1,4 @@
-/* $NetBSD: _strtol.h,v 1.1 2008/08/20 12:42:26 joerg Exp $ */
+/* $NetBSD: _strtol.h,v 1.2 2009/05/20 22:03:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,7 +57,10 @@ _FUNCNAME(const char *nptr, char **endptr, int base)
 	if (base && (base < 2 || base > 36)) {
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 		errno = EINVAL;
-		return(0);
+		if (endptr != NULL)
+			/* LINTED interface specification */
+			*endptr = __UNCONST(nptr);
+		return 0;
 #else
 		panic("%s: invalid base %d", __func__, base);
 #endif
