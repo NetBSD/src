@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.5 2009/02/03 03:01:02 mrg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.6 2009/05/20 16:20:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.5 2009/02/03 03:01:02 mrg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.6 2009/05/20 16:20:01 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,7 +94,7 @@ Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail = &_rtld_objlist;
 				/* Link field of last object in list */
 Obj_Entry *_rtld_objmain;	/* The main program shared object */
-int _rtld_pagesz;
+unsigned int _rtld_pagesz;
 
 Search_Path *_rtld_default_paths;
 Search_Path *_rtld_paths;
