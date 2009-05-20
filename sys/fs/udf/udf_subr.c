@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.90 2009/05/20 13:25:50 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.91 2009/05/20 15:30:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.90 2009/05/20 13:25:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.91 2009/05/20 15:30:26 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -5420,7 +5420,7 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 {
 	union dscrptr *dscr;
 	struct long_ad *loc;
-	int extnr, flags, error;
+	int extnr, error;
 
 	DPRINTF(NODE, ("udf_writeout_node called\n"));
 
@@ -5435,8 +5435,7 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 	}
 
 	/* lock node */
-	flags = waitfor ? 0 : IN_CALLBACK_ULK;
-	UDF_LOCK_NODE(udf_node, flags);
+	UDF_LOCK_NODE(udf_node, 0);
 
 	/* at least one descriptor writeout */
 	udf_node->outstanding_nodedscr = 1;
