@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.96 2009/05/19 23:42:05 dyoung Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.97 2009/05/20 03:26:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.96 2009/05/19 23:42:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.97 2009/05/20 03:26:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -217,7 +217,7 @@ disk_attach(struct disk *diskp)
 }
 
 int
-disk_predetach(struct disk *dk, int (*lastclose)(device_t),
+disk_begindetach(struct disk *dk, int (*lastclose)(device_t),
     device_t self, int flags)
 {
 	int rc;

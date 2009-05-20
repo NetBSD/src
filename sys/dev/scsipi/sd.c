@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.285 2009/05/19 23:43:44 dyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.286 2009/05/20 03:26:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.285 2009/05/19 23:43:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.286 2009/05/20 03:26:21 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -332,7 +332,7 @@ sddetach(device_t self, int flags)
 	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn, rc;
 
-	if ((rc = disk_predetach(&sd->sc_dk, sdlastclose, self, flags)) != 0)
+	if ((rc = disk_begindetach(&sd->sc_dk, sdlastclose, self, flags)) != 0)
 		return rc;
 
 	/* locate the major number */
