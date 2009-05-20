@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.89 2009/05/19 20:44:52 christos Exp $
+#	$NetBSD: Makefile,v 1.90 2009/05/20 19:38:38 ad Exp $
+#
+# NOTE: when changing ld.so, ensure that ldd still compiles.
+#
 
 WARNS?=4
 
