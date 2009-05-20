@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.31 2009/05/20 03:50:39 dyoung Exp $
+.\"	$NetBSD: disk.9,v 1.32 2009/05/20 06:38:39 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -202,7 +202,7 @@ The functions typically called by device drivers are
 .Fn disk_attach ,
 .Fn disk_begindetach ,
 .Fn disk_detach ,
-.Fn disk_destroy,
+.Fn disk_destroy ,
 .Fn disk_busy ,
 .Fn disk_unbusy ,
 and
@@ -440,7 +440,7 @@ foodone(xfer)
 	[ . . . ]
 
 	/*
-	 * Get number of bytes transfered.  If there is no buf
+	 * Get number of bytes transferred.  If there is no buf
 	 * associated with the xfer, we are being called at the
 	 * end of a non-I/O command.
 	 */
