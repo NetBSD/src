@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.376 2009/05/19 23:43:44 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.377 2009/05/20 03:26:21 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.376 2009/05/19 23:43:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.377 2009/05/20 03:26:21 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -439,7 +439,7 @@ wddetach(device_t self, int flags)
 	struct wd_softc *sc = device_private(self);
 	int bmaj, cmaj, i, mn, rc, s;
 
-	if ((rc = disk_predetach(&sc->sc_dk, wdlastclose, self, flags)) != 0)
+	if ((rc = disk_begindetach(&sc->sc_dk, wdlastclose, self, flags)) != 0)
 		return rc;
 
 	/* locate the major number */
