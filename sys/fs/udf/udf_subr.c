@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.89 2009/05/19 16:06:56 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.90 2009/05/20 13:25:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.89 2009/05/19 16:06:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.90 2009/05/20 13:25:50 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2955,7 +2955,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		goto out;
 
 	DPRINTF(VOLUMES, ("VAT format accepted, marking it closed\n"));
-	ump->logvol_integrity->lvint_next_unique_id = unique_id;
+	ump->logvol_integrity->lvint_next_unique_id = udf_rw64(unique_id);
 	ump->logvol_integrity->integrity_type = udf_rw32(UDF_INTEGRITY_CLOSED);
 	ump->logvol_integrity->time           = *mtime;
 
@@ -3572,7 +3572,7 @@ udf_validate_session_start(struct udf_mount *ump)
 		vrs = (struct vrs_desc *) (buffer + 2048);
 		vrs->struct_type = 0;
 		vrs->version     = 1;
-		if (ump->logical_vol->tag.descriptor_ver == 2) {
+		if (udf_rw16(ump->logical_vol->tag.descriptor_ver) == 2) {
 			memcpy(vrs->identifier,VRS_NSR02, 5);
 		} else {
 			memcpy(vrs->identifier,VRS_NSR03, 5);
@@ -5636,7 +5636,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	udf_create_logvol_dscr(ump, udf_node, &node_icb_loc, &dscr);
 
 	/* choose a fe or an efe for it */
-	if (ump->logical_vol->tag.descriptor_ver == 2) {
+	if (udf_rw16(ump->logical_vol->tag.descriptor_ver) == 2) {
 		udf_node->fe = &dscr->fe;
 		fid_size = udf_create_new_fe(ump, udf_node->fe,
 			udf_file_type, &udf_node->loc,
