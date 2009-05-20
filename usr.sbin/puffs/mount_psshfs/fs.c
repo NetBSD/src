@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.18 2009/02/23 18:43:46 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.19 2009/05/20 13:56:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.18 2009/02/23 18:43:46 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.19 2009/05/20 13:56:36 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -84,7 +84,7 @@ static const struct extunit {
 }};
 	
 int
-psshfs_handshake(struct puffs_usermount *pu)
+psshfs_handshake(struct puffs_usermount *pu, int fd)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
@@ -100,10 +100,10 @@ psshfs_handshake(struct puffs_usermount *pu)
 	pb = psbuf_makeout();
 	psbuf_put_1(pb, SSH_FXP_INIT);
 	psbuf_put_4(pb, SFTP_PROTOVERSION);
-	DO_IO(psbuf_write, pu, pb, pctx->sshfd, &done, rv);
+	DO_IO(psbuf_write, pu, pb, fd, &done, rv);
 
 	puffs_framebuf_recycle(pb);
-	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
+	DO_IO(psbuf_read, pu, pb, fd, &done, rv);
 	if (psbuf_get_type(pb) != SSH_FXP_VERSION)
 		reterr((stderr, "invalid server response: %d",
 		    psbuf_get_type(pb)), EPROTO);
@@ -118,7 +118,7 @@ psshfs_handshake(struct puffs_usermount *pu)
 			break;
 		if (psbuf_get_str(pb, &val, NULL) != 0)
 			break;
-		
+
 		for (extu = exttable; extu->ext; extu++)
 			if (strcmp(ext, extu->ext) == 0
 			    && strcmp(val, extu->val) == 0)
@@ -130,10 +130,10 @@ psshfs_handshake(struct puffs_usermount *pu)
 	psbuf_put_1(pb, SSH_FXP_REALPATH);
 	psbuf_put_4(pb, NEXTREQ(pctx));
 	psbuf_put_str(pb, pctx->mountpath);
-	DO_IO(psbuf_write, pu, pb, pctx->sshfd, &done, rv);
+	DO_IO(psbuf_write, pu, pb, fd, &done, rv);
 
 	puffs_framebuf_recycle(pb);
-	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
+	DO_IO(psbuf_read, pu, pb, fd, &done, rv);
 	if (psbuf_get_type(pb) != SSH_FXP_NAME)
 		reterr((stderr, "invalid server realpath response for \"%s\"",
 		    pctx->mountpath), EPROTO);
@@ -145,10 +145,10 @@ psshfs_handshake(struct puffs_usermount *pu)
 	/* stat the rootdir so that we know it's a dir */
 	psbuf_recycleout(pb);
 	psbuf_req_str(pb, SSH_FXP_LSTAT, NEXTREQ(pctx), rootpath);
-	DO_IO(psbuf_write, pu, pb, pctx->sshfd, &done, rv);
+	DO_IO(psbuf_write, pu, pb, fd, &done, rv);
 
 	puffs_framebuf_recycle(pb);
-	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
+	DO_IO(psbuf_read, pu, pb, fd, &done, rv);
 
 	rv = psbuf_expect_attrs(pb, &va);
 	if (rv)
@@ -187,7 +187,7 @@ psshfs_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 
 	psbuf_req_str(pb, SSH_FXP_EXTENDED, reqid, "statvfs@openssh.com");
 	psbuf_put_str(pb, pctx->mountpath);
-	GETRESPONSE(pb);
+	GETRESPONSE(pb, pctx->sshfd);
 
 	type = psbuf_get_type(pb);
 	if (type != SSH_FXP_EXTENDED_REPLY) {
@@ -222,6 +222,11 @@ psshfs_fs_unmount(struct puffs_usermount *pu, int flags)
 
 	kill(pctx->sshpid, SIGTERM);
 	close(pctx->sshfd);
+	if (pctx->numconnections == 2) {
+		kill(pctx->sshpid_data, SIGTERM);
+		close(pctx->sshfd_data);
+	}
+
 	return 0;
 }
 

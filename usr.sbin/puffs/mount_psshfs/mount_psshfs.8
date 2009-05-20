@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.19 2009/02/26 07:14:36 wiz Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.20 2009/05/20 13:56:36 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 25, 2009
+.Dd May 20, 2009
 .Dt MOUNT_PSSHFS 8
 .Os
 .Sh NAME
@@ -56,6 +56,19 @@ will be used.
 The following command line options are available:
 .Pp
 .Bl -tag -width xxx
+.It Fl c Ar nconnect
+Opens
+.Ar nconnect
+connections to the server.
+Currently, the value has to be 1 or 2.
+If 2 is specified, a second connection is opened for the reading
+and writing of data, while directory operations are performed on
+their own connection.
+This can greatly increase directory operation performance (ls,
+mkdir, etc.) if
+.Nm
+completely saturates the available bandwidth by doing bulk data copying.
+The default is 1.
 .It Fl e
 Makes the mounted file system NFS exportable.
 If this option is used, it is very important to understand that

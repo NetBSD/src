@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.45 2007/12/13 14:59:00 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.46 2009/05/20 13:56:36 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.45 2007/12/13 14:59:00 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.46 2009/05/20 13:56:36 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -134,7 +134,7 @@ closehandles(struct puffs_usermount *pu, struct psshfs_node *psn, int which)
 		reqid = NEXTREQ(pctx);
 		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
 		    psn->fhand_r, psn->fhand_r_len);
-		puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb1, 1, 0);
+		puffs_framev_enqueue_justsend(pu, pctx->sshfd_data, pb1, 1, 0);
 		free(psn->fhand_r);
 		psn->fhand_r = NULL;
 	}
@@ -146,7 +146,7 @@ closehandles(struct puffs_usermount *pu, struct psshfs_node *psn, int which)
 		reqid = NEXTREQ(pctx);
 		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
 		    psn->fhand_w, psn->fhand_w_len);
-		puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb2, 1, 0);
+		puffs_framev_enqueue_justsend(pu, pctx->sshfd_data, pb2, 1, 0);
 		free(psn->fhand_w);
 		psn->fhand_w = NULL;
 	}
@@ -220,7 +220,7 @@ getpathattr(struct puffs_usermount *pu, const char *path, struct vattr *vap)
 	PSSHFSAUTOVAR(pu);
 
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
-	GETRESPONSE(pb);
+	GETRESPONSE(pb, pctx->sshfd);
 
 	rv = psbuf_expect_attrs(pb, vap);
 
@@ -307,7 +307,7 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 		reqid = NEXTREQ(pctx);
 		psbuf_recycleout(pb);
 		psbuf_req_data(pb, SSH_FXP_READDIR, reqid, dhand, dhandlen);
-		GETRESPONSE(pb);
+		GETRESPONSE(pb, pctx->sshfd);
 
 		/* check for EOF */
 		if (psbuf_get_type(pb) == SSH_FXP_STATUS) {

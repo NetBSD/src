@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.50 2009/02/23 18:43:46 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.51 2009/05/20 13:56:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.50 2009/02/23 18:43:46 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.51 2009/05/20 13:56:36 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: psshfs.c,v 1.50 2009/02/23 18:43:46 pooka Exp $");
 
 #include "psshfs.h"
 
-static int	pssh_connect(struct psshfs_ctx *);
+static int	pssh_connect(struct puffs_usermount *, int);
 static void	psshfs_loopfn(struct puffs_usermount *);
 static void	usage(void);
 static void	add_ssharg(char ***, int *, char *);
@@ -87,7 +87,7 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s "
-	    "[-es] [-F configfile] [-O sshopt=value] [-o opts] "
+	    "[-ceprst] [-F configfile] [-O sshopt=value] [-o opts] "
 	    "user@host:path mountpath\n",
 	    getprogname());
 	exit(1);
@@ -116,8 +116,8 @@ main(int argc, char *argv[])
 	char *hostpath;
 	int mntflags, pflags, ch;
 	int detach;
-	int exportfs, refreshival;
-	int nargs, x;
+	int exportfs, refreshival, numconnections;
+	int nargs;
 
 	setprogname(argv[0]);
 
@@ -125,6 +125,7 @@ main(int argc, char *argv[])
 		usage();
 
 	mntflags = pflags = exportfs = nargs = 0;
+	numconnections = 1;
 	detach = 1;
 	refreshival = DEFAULTREFRESH;
 	notfn = puffs_framev_unmountonclose;
@@ -133,8 +134,17 @@ main(int argc, char *argv[])
 	add_ssharg(&sshargs, &nargs, "-axs");
 	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
 
-	while ((ch = getopt(argc, argv, "eF:o:O:pr:st:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:eF:o:O:pr:st:")) != -1) {
 		switch (ch) {
+		case 'c':
+			numconnections = atoi(optarg);
+			if (numconnections < 1 || numconnections > 2) {
+				fprintf(stderr, "%s: only 1 or 2 connections "
+				    "permitted currently\n", getprogname());
+				usage();
+				/*NOTREACHED*/
+			}
+			break;
 		case 'e':
 			exportfs = 1;
 			break;
@@ -214,6 +224,7 @@ main(int argc, char *argv[])
 	memset(&pctx, 0, sizeof(pctx));
 	pctx.mounttime = time(NULL);
 	pctx.refreshival = refreshival;
+	pctx.numconnections = numconnections;
 
 	userhost = argv[0];
 	hostpath = strchr(userhost, ':');
@@ -234,25 +245,28 @@ main(int argc, char *argv[])
 		return errno;
 	puffs_setroot(pu, pn_root);
 
+	puffs_framev_init(pu, psbuf_read, psbuf_write, psbuf_cmp, NULL, notfn);
+
 	signal(SIGHUP, takehup);
 	puffs_ml_setloopfn(pu, psshfs_loopfn);
-	if (pssh_connect(&pctx) == -1)
-		err(1, "can't connect");
+	if (pssh_connect(pu, PSSHFD_META) == -1)
+		err(1, "can't connect meta");
+	if (puffs_framev_addfd(pu, pctx.sshfd,
+	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
+		err(1, "framebuf addfd meta");
+	if (numconnections == 2) {
+		if (pssh_connect(pu, PSSHFD_DATA) == -1)
+			err(1, "can't connect data");
+		if (puffs_framev_addfd(pu, pctx.sshfd_data,
+		    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
+			err(1, "framebuf addfd data");
+	} else {
+		pctx.sshfd_data = pctx.sshfd;
+	}
 
 	if (exportfs)
 		puffs_setfhsize(pu, sizeof(struct psshfs_fid),
 		    PUFFS_FHFLAG_NFSV2 | PUFFS_FHFLAG_NFSV3);
-
-	if (psshfs_handshake(pu) != 0)
-		errx(1, "psshfs_handshake");
-	x = 1;
-	if (ioctl(pctx.sshfd, FIONBIO, &x) == -1)
-		err(1, "nonblocking descriptor");
-
-	puffs_framev_init(pu, psbuf_read, psbuf_write, psbuf_cmp, NULL, notfn);
-	if (puffs_framev_addfd(pu, pctx.sshfd,
-	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
-		err(1, "framebuf addfd");
 
 	rva = &pn_root->pn_va;
 	rva->va_fileid = pctx.nextino++;
@@ -280,36 +294,43 @@ void
 psshfs_notify(struct puffs_usermount *pu, int fd, int what)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
-	int x, nretry;
+	int x, nretry, which, newfd;
+
+	if (fd == pctx->sshfd) {
+		which = PSSHFD_META;
+	} else {
+		assert(fd == pctx->sshfd_data);
+		which = PSSHFD_DATA;
+	}
 
 	if (puffs_getstate(pu) != PUFFS_STATE_RUNNING)
 		return;
 
 	if (what != (PUFFS_FBIO_READ | PUFFS_FBIO_WRITE)) {
-		puffs_framev_removefd(pu, pctx->sshfd, ECONNRESET);
+		puffs_framev_removefd(pu, fd, ECONNRESET);
 		return;
 	}
-	close(pctx->sshfd);
+	close(fd);
 
 	for (nretry = 0;;nretry++) {
-		if (pssh_connect(pctx) == -1)
+		if ((newfd = pssh_connect(pu, which)) == -1)
 			goto retry2;
 
-		if (psshfs_handshake(pu) != 0)
+		if (psshfs_handshake(pu, newfd) != 0)
 			goto retry1;
 
 		x = 1;
-		if (ioctl(pctx->sshfd, FIONBIO, &x) == -1)
+		if (ioctl(newfd, FIONBIO, &x) == -1)
 			goto retry1;
 
-		if (puffs_framev_addfd(pu, pctx->sshfd,
+		if (puffs_framev_addfd(pu, newfd,
 		    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
 			goto retry1;
 
 		break;
  retry1:
 		fprintf(stderr, "reconnect failed... ");
-		close(pctx->sshfd);
+		close(newfd);
  retry2:
 		if (nretry < RETRY_MAX) {
 			fprintf(stderr, "retrying\n");
@@ -322,12 +343,24 @@ psshfs_notify(struct puffs_usermount *pu, int fd, int what)
 }
 
 static int
-pssh_connect(struct psshfs_ctx *pctx)
+pssh_connect(struct puffs_usermount *pu, int which)
 {
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	char **sshargs = pctx->sshargs;
 	int fds[2];
 	pid_t pid;
-	int dnfd;
+	int dnfd, x;
+	int *sshfd;
+	pid_t *sshpid;
+
+	if (which == PSSHFD_META) {
+		sshfd = &pctx->sshfd;
+		sshpid = &pctx->sshpid;
+	} else {
+		assert(which == PSSHFD_DATA);
+		sshfd = &pctx->sshfd_data;
+		sshpid = &pctx->sshpid_data;
+	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == -1)
 		return -1;
@@ -350,15 +383,22 @@ pssh_connect(struct psshfs_ctx *pctx)
 			dup2(dnfd, STDERR_FILENO);
 
 		execvp(sshargs[0], sshargs);
+		/*NOTREACHED*/
 		break;
 	default:
-		pctx->sshpid = pid;
-		pctx->sshfd = fds[1];
+		*sshpid = pid;
+		*sshfd = fds[1];
 		close(fds[0]);
 		break;
 	}
 
-	return 0;
+	if (psshfs_handshake(pu, *sshfd) != 0)
+		errx(1, "psshfs_handshake %d", which);
+	x = 1;
+	if (ioctl(*sshfd, FIONBIO, &x) == -1)
+		err(1, "nonblocking descriptor %d", which);
+
+	return *sshfd;
 }
 
 static void *
