@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1261 2009/05/15 02:34:07 ginsbach Exp $
+#	$NetBSD: mi,v 1.1262 2009/05/20 22:48:05 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8397,6 +8397,7 @@
 ./usr/share/man/cat9/disk_busy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_detach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/disk_begindetach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_detatch.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/disk_find.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_init.0		comp-sys-catman		.cat
@@ -13725,6 +13726,7 @@
 ./usr/share/man/html9/disk_busy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk_destroy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk_detach.html		comp-sys-htmlman	html
+./usr/share/man/html9/disk_begindetach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/disk_find.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk_unbusy.html		comp-sys-htmlman	html
@@ -19200,6 +19202,7 @@
 ./usr/share/man/man9/disk_busy.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_detach.9		comp-sys-man		.man
+./usr/share/man/man9/disk_begindetach.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_detatch.9		comp-obsolete		obsolete
 ./usr/share/man/man9/disk_find.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_init.9		comp-sys-man		.man

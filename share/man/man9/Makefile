@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.281 2009/05/10 10:59:21 tsutsui Exp $
+#       $NetBSD: Makefile,v 1.282 2009/05/20 22:48:05 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -217,7 +217,7 @@ MLINKS+=curproc.9 curcpu.9
 MLINKS+=delay.9 DELAY.9
 MLINKS+=disk.9 disk_attach.9 disk.9 disk_detach.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9 disk.9 disk_find.9 \
-	disk.9 disk_init.9 disk.9 disk_destroy.9
+	disk.9 disk_init.9 disk.9 disk_destroy.9 disk.9 disk_begindetach.9
 MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
 	disklabel.9 setdisklabel.9 disklabel.9 bounds_check_with_label.9
 MLINKS+=dofileread.9 dofilewrite.9 \
