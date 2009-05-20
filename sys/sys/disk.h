@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.53 2009/05/19 23:42:05 dyoung Exp $	*/
+/*	$NetBSD: disk.h,v 1.54 2009/05/20 03:26:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ extern	int disk_count;			/* number of disks in global disklist */
 struct proc;
 
 void	disk_attach(struct disk *);
-int	disk_predetach(struct disk *, int (*)(device_t), device_t, int);
+int	disk_begindetach(struct disk *, int (*)(device_t), device_t, int);
 void	disk_detach(struct disk *);
 void	disk_init(struct disk *, const char *, const struct dkdriver *);
 void	disk_destroy(struct disk *);
