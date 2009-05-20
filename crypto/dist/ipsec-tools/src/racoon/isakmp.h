@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.h,v 1.6 2009/04/20 13:24:36 tteras Exp $	*/
+/*	$NetBSD: isakmp.h,v 1.7 2009/05/20 07:54:50 vanhu Exp $	*/
 
 /* Id: isakmp.h,v 1.11 2005/04/25 22:19:39 manubsd Exp */
 
@@ -133,7 +133,7 @@ struct isakmp {
 /* Exchange Type */
 #define ISAKMP_ETYPE_NONE	0	/* NONE */
 #define ISAKMP_ETYPE_BASE	1	/* Base */
-#define ISAKMP_ETYPE_IDENT	2	/* Identity Proteciton */
+#define ISAKMP_ETYPE_IDENT	2	/* Identity Protection */
 #define ISAKMP_ETYPE_AUTH	3	/* Authentication Only */
 #define ISAKMP_ETYPE_AGG	4	/* Aggressive */
 #define ISAKMP_ETYPE_INFO	5	/* Informational */
