@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.52 2009/05/20 14:08:21 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.53 2009/05/20 14:39:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.52 2009/05/20 14:08:21 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.53 2009/05/20 14:39:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -316,13 +316,6 @@ psshfs_notify(struct puffs_usermount *pu, int fd, int what)
 		if ((newfd = pssh_connect(pu, which)) == -1)
 			goto retry2;
 
-		if (psshfs_handshake(pu, newfd) != 0)
-			goto retry1;
-
-		x = 1;
-		if (ioctl(newfd, FIONBIO, &x) == -1)
-			goto retry1;
-
 		if (puffs_framev_addfd(pu, newfd,
 		    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
 			goto retry1;
@@ -333,7 +326,7 @@ psshfs_notify(struct puffs_usermount *pu, int fd, int what)
 		close(newfd);
  retry2:
 		if (nretry < RETRY_MAX) {
-			fprintf(stderr, "retrying\n");
+			fprintf(stderr, "retry (%d left)\n", RETRY_MAX-nretry);
 			sleep(nretry);
 		} else {
 			fprintf(stderr, "retry count exceeded, going south\n");
