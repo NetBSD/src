@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.53 2009/05/20 14:39:42 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.54 2009/05/20 15:04:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,10 +41,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.53 2009/05/20 14:39:42 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.54 2009/05/20 15:04:36 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <err.h>
@@ -294,7 +295,7 @@ void
 psshfs_notify(struct puffs_usermount *pu, int fd, int what)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
-	int x, nretry, which, newfd;
+	int nretry, which, newfd, dummy;
 
 	if (fd == pctx->sshfd) {
 		which = PSSHFD_META;
@@ -311,6 +312,10 @@ psshfs_notify(struct puffs_usermount *pu, int fd, int what)
 		return;
 	}
 	close(fd);
+
+	/* deal with zmobies, beware of half-eaten brain */
+	while (waitpid(-1, &dummy, WNOHANG) > 0)
+		continue;
 
 	for (nretry = 0;;nretry++) {
 		if ((newfd = pssh_connect(pu, which)) == -1)
