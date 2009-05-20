@@ -19,12 +19,12 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: hilinfo.c 1.3 94/04/04$
- *	$NetBSD: hilinfo.c,v 1.5 2002/05/30 18:01:03 thorpej Exp $
+ *	$NetBSD: hilinfo.c,v 1.6 2009/05/20 08:16:52 he Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hilinfo.c,v 1.5 2002/05/30 18:01:03 thorpej Exp $");
+__RCSID("$NetBSD: hilinfo.c,v 1.6 2009/05/20 08:16:52 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ struct _hilbuf16 sc;
 struct hil_info {
 	u_char	hil_lo;
 	u_char	hil_hi;
-	char	*hil_name;
+	const char	*hil_name;
 } info[] = {
 	{0xA0,	0xFF,	"keyboard"},
 	{0x60,	0x6B,	"mouse"},
@@ -58,7 +58,7 @@ struct hil_info {
 
 int	getinfo __P((void));
 int	main __P((int, char **));
-char   *tname __P((void));
+const char   *tname __P((void));
 void	printall __P((void));
 void	usage __P((void));
 
@@ -141,7 +141,7 @@ printall()
 	printf("\n");
 }
 
-char *
+const char *
 tname()
 {
 	struct hil_info *hp;
