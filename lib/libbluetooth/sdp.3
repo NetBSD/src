@@ -1,4 +1,4 @@
-.\" $NetBSD: sdp.3,v 1.2 2009/05/12 10:32:45 wiz Exp $
+.\" $NetBSD: sdp.3,v 1.3 2009/05/20 17:22:56 plunky Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,7 +118,7 @@ not currently enforced.
 .Bl -tag -width xxxx
 .It Fn sdp_open "laddr" "raddr"
 Open a SDP session to a remote Bluetooth device.
-.Ar laddr
+.Fa laddr
 refers to the local bluetooth device address and may be
 .Dv NULL
 in which case it will default to
@@ -126,7 +126,7 @@ in which case it will default to
 .It Fn sdp_open_local "control"
 Open a SDP session to a server using a local socket.
 The
-.Ar control
+.Fa control
 socket path may be given as
 .Dv NULL
 in which case the default control path
@@ -137,55 +137,55 @@ Close SDP session and release all resources.
 .It Fn sdp_service_search "ss" "ssp" "handlep" "num"
 Perform a complete ServiceSearch transaction on the SDP session.
 At most
-.Ar num
+.Fa num
 service record handles matching the ServiceSearchPattern
-.Ar ssp
+.Fa ssp
 will be returned in the array pointed to by
-.Ar handlep .
+.Fa handlep .
 .It Fn sdp_service_attribute "ss" "handle" "ail" "response"
 Perform a complete ServiceAttribute transaction on the SDP session.
 The ServiceRecord with ServiceRecordHandle
-.Ar handle
+.Fa handle
 will be parsed using the AttributeIDList
-.Ar ail .
+.Fa ail .
 If the transaction succeeds, the
-.Ar response
+.Fa response
 data buffer will contain a validated data element list of attribute
 ID/value pairs from the selected record.
 .It Fn sdp_service_search_attribute "ss" "ssp" "ail" "response"
 Perform a complete ServiceSearchAttribute transaction on the SDP session.
 All ServiceRecords matching the ServiceSearchPattern
-.Ar ssp
+.Fa ssp
 will be parsed using the AttributeIDList
-.Ar ail .
+.Fa ail .
 If the transaction succeeds, the
-.Ar response
+.Fa response
 data buffer will contain a valid data element list of sequences, where
 each sequence is the attribute ID/value list from a matched record.
 .It Fn sdp_record_insert "ss" "bdaddr" "handlep" "record"
 Insert a ServiceRecord
-.Ar record .
+.Fa record .
 If
-.Ar bdaddr
+.Fa bdaddr
 is given, the service record will be restricted to clients connecting
 through the Bluetooth controller with that BD_ADDR.
 When the
-.Ar handlep
+.Fa handlep
 pointer is non NULL, the resulting ServiceRecordHandle will be written
 to the address given.
 The record will be valid while the session is active and will be
 purged when the session is closed.
 .It Fn sdp_record_update "ss" "handle" "record"
 Update a ServiceRecord that is owned by this session.
-.Ar handle
+.Fa handle
 is the identifier returned by the
 .Fn sdp_record_insert
 call, and
-.Ar record
+.Fa record
 is the updated ServiceRecord as described above.
 .It Fn sdp_record_remove "ss" "handle"
 Remove a ServiceRecord owned by this session.
-.Ar handle
+.Fa handle
 is the identifier returned by the
 .Fn sdp_record_insert
 call.
@@ -214,7 +214,7 @@ on failure.
 For service lookup and record manipulation routines, a boolean value is
 returned indicating success or failure.
 On failure,
-.Ar errno
+.Va errno
 will be set to indicate the error.
 .Sh FILES
 .Pa /var/run/sdp
@@ -229,7 +229,7 @@ A provided function argument was not valid.
 A response from the remote server was not understood.
 .It Bq Er ENOATTR
 The record
-.Ar handle
+.Fa handle
 did not exist on the server.
 .El
 .Sh SEE ALSO
