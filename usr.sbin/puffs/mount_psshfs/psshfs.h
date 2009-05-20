@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.35 2009/02/23 18:43:46 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.36 2009/05/20 13:56:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -65,25 +65,25 @@ PUFFSOP_PROTOS(psshfs);
 	puffs_framebuf_destroy(pb);					\
 	return (rv)
 
-#define GETRESPONSE(pb)							\
+#define GETRESPONSE(pb, fd)						\
 do {									\
-	if (puffs_framev_enqueue_cc(pcc, pctx->sshfd, pb, 0) == -1) {	\
+	if (puffs_framev_enqueue_cc(pcc, fd, pb, 0) == -1) 	{	\
 		rv = errno;						\
 		goto out;						\
 	}								\
 } while (/*CONSTCOND*/0)
 
-#define JUSTSEND(pb)							\
+#define JUSTSEND(pb,fd)							\
 do {									\
-	if (puffs_framev_enqueue_justsend(pu,pctx->sshfd,pb,1,0) == -1){\
+	if (puffs_framev_enqueue_justsend(pu, fd, pb, 1, 0) == -1) {	\
 		rv = errno;						\
 		goto out;						\
 	}								\
 } while (/*CONSTCOND*/0)
 
-#define SENDCB(pb, f, a)						\
+#define SENDCB(pb, fd, f, a)						\
 do {									\
-	if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb,f,a,0) == -1) {	\
+	if (puffs_framev_enqueue_cb(pu, fd, pb, f, a, 0) == -1) {	\
 		rv = errno;						\
 		goto out;						\
 	}								\
@@ -153,8 +153,12 @@ struct psshfs_node {
 #define HANDLE_WRITE	0x2
 
 struct psshfs_ctx {
+	int numconnections;
 	int sshfd;
+	int sshfd_data;
 	pid_t sshpid;
+	pid_t sshpid_data;
+
 	const char *mountpath;
 	char **sshargs;
 
@@ -173,8 +177,10 @@ struct psshfs_ctx {
 
 	int refreshival;
 };
+#define PSSHFD_META 0
+#define PSSHFD_DATA 1
 
-int	psshfs_handshake(struct puffs_usermount *);
+int	psshfs_handshake(struct puffs_usermount *, int);
 
 int	psbuf_read(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
 int	psbuf_write(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
