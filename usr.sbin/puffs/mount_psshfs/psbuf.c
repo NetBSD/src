@@ -1,7 +1,7 @@
-/*      $NetBSD: psbuf.c,v 1.13 2008/09/06 12:29:57 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.14 2009/05/20 14:08:21 pooka Exp $        */
 
 /*
- * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.13 2008/09/06 12:29:57 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.14 2009/05/20 14:08:21 pooka Exp $");
 #endif /* !lint */
 
 /*

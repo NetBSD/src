@@ -1,7 +1,7 @@
-/*	$NetBSD: psshfs.h,v 1.36 2009/05/20 13:56:36 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.37 2009/05/20 14:08:21 pooka Exp $	*/
 
 /*
- * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
