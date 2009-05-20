@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2009/05/20 03:36:36 dyoung Exp $
+#	$NetBSD: Makefile,v 1.7 2009/05/20 03:41:25 dyoung Exp $
+
+.include <bsd.own.mk>
 
 # Makefile for xen tags file
 
@@ -10,9 +12,9 @@
 
 TXEN=	${SYSDIR}/arch/xen/tags
 
-SXEN!=	${TOOL_AWK:Uawk} '($$2 ~ /^arch.*\.[c]$$/) {print "${SYSDIR}/" $$2}' \
+SXEN!=	${TOOL_AWK} '($$2 ~ /^arch.*\.[c]$$/) {print "${SYSDIR}/" $$2}' \
 		${SYSDIR}/arch/xen/conf/files.xen
-AXEN!=	${TOOL_AWK:Uawk} '($$2 ~ /^arch.*\.[sS]$$/) {print "${SYSDIR}/" $$2}' \
+AXEN!=	${TOOL_AWK} '($$2 ~ /^arch.*\.[sS]$$/) {print "${SYSDIR}/" $$2}' \
 		${SYSDIR}/arch/xen/conf/files.xen
 AXEN+=	${SYSDIR}/arch/xen/${XEN_BUILD}/*.[sS]
 
@@ -24,7 +26,7 @@ tags:
 	-echo ${SXEN} | xargs ctags -wadtf ${TXEN}
 	${FINDCOMM} | xargs ctags -wadtf ${TXEN}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AXEN} | \
-	    ${TOOL_SED:Used} -e \
+	    ${TOOL_SED} -e \
 		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TXEN}
 	sort -o ${TXEN} ${TXEN}
