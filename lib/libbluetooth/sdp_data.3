@@ -1,4 +1,4 @@
-.\" $NetBSD: sdp_data.3,v 1.1 2009/05/12 10:05:06 plunky Exp $
+.\" $NetBSD: sdp_data.3,v 1.2 2009/05/20 17:22:56 plunky Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -166,9 +166,9 @@ typedef struct {
 .Ed
 .Pp
 Where
-.Ar next
+.Fa next
 points to the next available byte, and
-.Ar end
+.Fa end
 points to the first address past end of the data area, such that
 .Qq end = next + length .
 .Pp
@@ -215,7 +215,7 @@ UUID with 16-bit value given.
 If the UUID matches, the function will return
 .Dv true
 and the
-.Ar next
+.Fa next
 field of the SDP data buffer will be advanced to the next element.
 Otherwise
 .Dv false
@@ -225,16 +225,16 @@ routines examine the next data element in the data buffer for an
 element of the given type.
 If the type matches, the function will extract the typed value to
 the address given and advance the
-.Ar next
+.Fa next
 field of the SDP data buffer to the next element then return
 .Dv true .
 Otherwise
 .Dv false
 will be returned.
 Note, these functions will not modify the
-.Ar data
+.Fa data
 argument unless the correct type was found, and will update the
-.Ar data
+.Fa data
 argument first to allow discarding in the case where a
 .Dv sdp_data_t
 was being returned.
@@ -247,14 +247,14 @@ the function will return
 otherwise
 .Dv true
 will be returned and the
-.Ar next
+.Fa next
 field of the SDP data pointer will be advanced.
 In the case of
 .Fn sdp_put_seq
 and
 .Fn sdp_put_alt ,
 the
-.Ar length
+.Fa length
 argument may be -1, in which case the generated sequence header will
 describe all the remaining buffer space.
 For
@@ -262,7 +262,7 @@ For
 and
 .Fn sdp_put_url
 the
-.Ar length
+.Fa length
 argument may be -1 in which case the string pointer is treated as
 nul terminated.
 .It The Fn sdp_set_xxxx
@@ -279,7 +279,7 @@ In the case of
 and
 .Fn sdp_set_alt ,
 the
-.Ar length
+.Fa length
 argument may be -1, in which case the sequence header will be
 adjusted to describe the entire data space where possible.
 .It The Fn sdp_data_xxxx
