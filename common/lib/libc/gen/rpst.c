@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.1 2009/05/19 12:39:56 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.2 2009/05/20 10:56:29 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,14 +43,18 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.1 2009/05/19 12:39:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.2 2009/05/20 10:56:29 yamt Exp $");
 #include <sys/param.h>
 #else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.1 2009/05/19 12:39:56 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.2 2009/05/20 10:56:29 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
+#if 1
 #define	KASSERT	assert
+#else
+#define	KASSERT(a)
+#endif
 #endif /* defined(_KERNEL) */
 
 #include <sys/rpst.h>
@@ -93,6 +97,25 @@ rpst_height2max(unsigned int height)
 }
 
 /*
+ * rpst_level2mask: calculate the mask for the given level in the tree.
+ *
+ * the mask used to index root's children is level 0.
+ */
+
+static uint64_t
+rpst_level2mask(const struct rpst_tree *t, unsigned int level)
+{
+	uint64_t mask;
+
+	if (t->t_height < level) {
+		mask = 0;
+	} else {
+		mask = UINT64_C(1) << (t->t_height - level);
+	}
+	return mask;
+}
+
+/*
  * rpst_startmask: calculate the mask for the start of a search.
  * (ie. the mask for the top-most bit)
  */
@@ -100,8 +123,10 @@ rpst_height2max(unsigned int height)
 static uint64_t
 rpst_startmask(const struct rpst_tree *t)
 {
+	const uint64_t mask = rpst_level2mask(t, 0);
 
-	return UINT64_C(1) << t->t_height;
+	KASSERT((mask | (mask - 1)) == rpst_height2max(t->t_height));
+	return mask;
 }
 
 /*
@@ -156,6 +181,8 @@ next:
 	KASSERT(*where == cur);
 	idx = (n->n_x & mask) != 0;
 	where = &cur->n_children[idx];
+	KASSERT((*where) == NULL || ((((*where)->n_x & mask) != 0) == idx));
+	KASSERT((*where) == NULL || (*where)->n_y >= cur->n_y);
 	mask >>= 1;
 	goto next;
 }
@@ -196,12 +223,15 @@ next:
 	cur = *where;
 	KASSERT(cur != NULL);
 	if (cur == n) {
+		KASSERT(pn == NULL || pn->n_y <= n->n_y);
 		*parentp = pn;
 		return where;
 	}
 	idx = (n->n_x & mask) != 0;
 	pn = cur;
 	where = &cur->n_children[idx];
+	KASSERT((*where) == NULL || ((((*where)->n_x & mask) != 0) == idx));
+	KASSERT((*where) == NULL || (*where)->n_y >= cur->n_y);
 	mask >>= 1;
 	goto next;
 }
@@ -277,16 +307,6 @@ rpst_iterator_match_p(const struct rpst_node *n, const struct rpst_iterator *it)
 	return true;
 }
 
-static uint64_t
-rpst_level2mask(const struct rpst_tree *t, unsigned int level)
-{
-
-	if (t->t_height < level) {
-		return 0;
-	}
-	return UINT64_C(1) << (t->t_height - level);
-}
-
 struct rpst_node *
 rpst_iterate_first(struct rpst_tree *t, uint64_t max_y, uint64_t min_x,
     uint64_t max_x, struct rpst_iterator *it)
@@ -295,17 +315,46 @@ rpst_iterate_first(struct rpst_tree *t, uint64_t max_y, uint64_t min_x,
 
 	KASSERT(min_x <= max_x);
 	n = t->t_root;
-	if (n == NULL) {
+	if (n == NULL || n->n_y > max_y) {
 		return NULL;
 	}
 	it->it_tree = t;
 	it->it_cur = n;
-	it->it_idx = 0;
+	it->it_idx = (min_x & rpst_startmask(t)) != 0;
 	it->it_level = 0;
 	it->it_max_y = max_y;
 	it->it_min_x = min_x;
 	it->it_max_x = max_x;
 	return rpst_iterate_next(it);
+}
+
+static unsigned int
+rpst_node_on_edge_p(const struct rpst_node *n, uint64_t val, uint64_t mask)
+{
+
+	return ((n->n_x ^ val) & ((-mask) << 1)) == 0;
+}
+
+static uint64_t
+rpst_maxidx(const struct rpst_node *n, uint64_t max_x, uint64_t mask)
+{
+
+	if (rpst_node_on_edge_p(n, max_x, mask)) {
+		return (max_x & mask) != 0;
+	} else {
+		return 1;
+	}
+}
+
+static uint64_t
+rpst_minidx(const struct rpst_node *n, uint64_t min_x, uint64_t mask)
+{
+
+	if (rpst_node_on_edge_p(n, min_x, mask)) {
+		return (min_x & mask) != 0;
+	} else {
+		return 0;
+	}
 }
 
 struct rpst_node *
@@ -327,11 +376,12 @@ rpst_iterate_next(struct rpst_iterator *it)
 	idx = it->it_idx;
 	level = it->it_level;
 	mask = rpst_level2mask(t, level);
-	maxidx = (max_x & mask) != 0;
+	maxidx = rpst_maxidx(n, max_x, mask);
 	KASSERT(n == t->t_root || rpst_iterator_match_p(n, it));
 next:
 	KASSERT(mask == rpst_level2mask(t, level));
-	KASSERT(maxidx == ((max_x & mask) != 0));
+	KASSERT(idx >= rpst_minidx(n, min_x, mask));
+	KASSERT(maxidx == rpst_maxidx(n, max_x, mask));
 	KASSERT(idx <= maxidx + 2);
 	KASSERT(n != NULL);
 #if 0
@@ -361,9 +411,9 @@ next:
 		}
 		KASSERT(level > 0);
 		level--;
-		mask = rpst_level2mask(t, level);
-		maxidx = (max_x & mask) != 0;
 		n = next;
+		mask = rpst_level2mask(t, level);
+		maxidx = rpst_maxidx(n, max_x, mask);
 		idx = where - n->n_children + 1;
 		KASSERT(idx < 2 + 1);
 		goto next;
@@ -375,11 +425,16 @@ next:
 		idx++;
 		goto next;
 	}
+	KASSERT(next->n_y >= n->n_y);
 	level++;
 	mask >>= 1;
-	maxidx = (max_x & mask) != 0;
 	n = next;
-	idx = (min_x & mask) != 0;
+	idx = rpst_minidx(n, min_x, mask);
+	maxidx = rpst_maxidx(n, max_x, mask);
+#if 0
+	printf("%s: visit %p idx=%u level=%u mask=%llx\n",
+	    __func__, n, idx, level, mask);
+#endif
 	goto next;
 }
 
@@ -414,35 +469,92 @@ static void
 rpst_dump_tree(const struct rpst_tree *t)
 {
 
-	printf("pst %p bits=%u\n", (const void *)t, t->t_height);
+	printf("pst %p height=%u\n", (const void *)t, t->t_height);
 	rpst_dump_node(t->t_root, 0);
 }
 
 struct testnode {
 	struct rpst_node n;
 	struct testnode *next;
+	bool failed;
+	bool found;
 };
 
-int
-main(int argc, char *argv[])
+struct rpst_tree t;
+struct testnode *h = NULL;
+
+static uintmax_t
+tvdiff(const struct timeval *tv1, const struct timeval *tv2)
 {
-	struct rpst_tree t;
-	struct testnode *h = NULL;
+
+	return (uintmax_t)tv1->tv_sec * 1000000 + tv1->tv_usec -
+	    tv2->tv_sec * 1000000 - tv2->tv_usec;
+}
+
+static unsigned int
+query(uint64_t max_y, uint64_t min_x, uint64_t max_x)
+{
 	struct testnode *n;
 	struct rpst_node *rn;
-	unsigned int i = 500000;
 	struct rpst_iterator it;
 	struct timeval start;
 	struct timeval end;
 	unsigned int done;
 
+	printf("quering max_y=%" PRIu64 " min_x=%" PRIu64 " max_x=%" PRIu64
+	    "\n",
+	    max_y, min_x, max_x);
+	done = 0;
+	gettimeofday(&start, NULL);
+	for (rn = rpst_iterate_first(&t, max_y, min_x, max_x, &it);
+	    rn != NULL;
+	    rn = rpst_iterate_next(&it)) {
+		done++;
+#if 0
+		printf("found %p x=%" PRIu64 " y=%" PRIu64 "\n",
+		    (void *)rn, rn->n_x, rn->n_y);
+#endif
+		n = (void *)rn;
+		assert(!n->found);
+		n->found = true;
+	}
+	gettimeofday(&end, NULL);
+	printf("%u nodes found in %ju usecs\n", done,
+	    tvdiff(&end, &start));
+
+	gettimeofday(&start, NULL);
+	for (n = h; n != NULL; n = n->next) {
+		assert(n->failed ||
+		    n->found == rpst_iterator_match_p(&n->n, &it));
+		n->found = false;
+	}
+	gettimeofday(&end, NULL);
+	printf("(linear search took %ju usecs)\n", tvdiff(&end, &start));
+	return done;
+}
+
+int
+main(int argc, char *argv[])
+{
+	struct testnode *n;
+	unsigned int i;
+	struct rpst_iterator it;
+	struct timeval start;
+	struct timeval end;
+	uint64_t min_y = UINT64_MAX;
+	uint64_t max_y = 0;
+	uint64_t min_x = UINT64_MAX;
+	uint64_t max_x = 0;
+	uint64_t w;
+	unsigned int done;
+	unsigned int fail;
+	unsigned int num = 500000;
+
 	rpst_init_tree(&t);
 	rpst_dump_tree(&t);
 	assert(NULL == rpst_iterate_first(&t, UINT64_MAX, 0, UINT64_MAX, &it));
 
-	done = 0;
-	gettimeofday(&start, NULL);
-	while (i > 0) {
+	for (i = 0; i < num; i++) {
 		n = malloc(sizeof(*n));
 		if (i > 499000) {
 			n->n.n_x = 10;
@@ -454,54 +566,82 @@ main(int argc, char *argv[])
 			n->n.n_x = random();
 			n->n.n_y = random();
 		}
-#if 0
-		printf("[%u] insert %p x=%" PRIu64 " y=%" PRIu64 "\n",
-		    i, n, n->n.n_x, n->n.n_y);
-#endif
-		rpst_insert_node(&t, &n->n);
+		if (n->n.n_y < min_y) {
+			min_y = n->n.n_y;
+		}
+		if (n->n.n_y > max_y) {
+			max_y = n->n.n_y;
+		}
+		if (n->n.n_x < min_x) {
+			min_x = n->n.n_x;
+		}
+		if (n->n.n_x > max_x) {
+			max_x = n->n.n_x;
+		}
+		n->found = false;
+		n->failed = false;
 		n->next = h;
 		h = n;
-		i--;
-		done++;
 	}
-	gettimeofday(&end, NULL);
-	printf("%u nodes inserted in %ju usecs\n", done,
-	    (uintmax_t)end.tv_sec * 1000000 + end.tv_usec -
-	    start.tv_sec * 1000000 - start.tv_usec);
 
 	done = 0;
+	fail = 0;
 	gettimeofday(&start, NULL);
-	for (rn = rpst_iterate_first(&t, 100000000, 10, 1000000, &it);
-	    rn != NULL;
-	    rn = rpst_iterate_next(&it)) {
-		done++;
+	for (n = h; n != NULL; n = n->next) {
+		struct rpst_node *o;
 #if 0
-		printf("found %p x=%" PRIu64 " y=%" PRIu64 "\n",
-		    (void *)rn, rn->n_x, rn->n_y);
+		printf("insert %p x=%" PRIu64 " y=%" PRIu64 "\n",
+		    n, n->n.n_x, n->n.n_y);
 #endif
+		o = rpst_insert_node(&t, &n->n);
+		if (o == NULL) {
+			done++;
+		} else {
+			n->failed = true;
+			fail++;
+		}
 	}
 	gettimeofday(&end, NULL);
-	printf("%u nodes found in %ju usecs\n", done,
-	    (uintmax_t)end.tv_sec * 1000000 + end.tv_usec -
-	    start.tv_sec * 1000000 - start.tv_usec);
+	printf("%u nodes inserted and %u insertion failed in %ju usecs\n",
+	    done, fail,
+	    tvdiff(&end, &start));
+
+	assert(min_y == 0 || 0 == query(min_y - 1, 0, UINT64_MAX));
+	assert(max_x == UINT64_MAX ||
+	    0 == query(UINT64_MAX, max_x + 1, UINT64_MAX));
+	assert(min_x == 0 || 0 == query(UINT64_MAX, 0, min_x - 1));
+
+	done = query(max_y, min_x, max_x);
+	assert(done == num - fail);
+
+	done = query(UINT64_MAX, 0, UINT64_MAX);
+	assert(done == num - fail);
+
+	w = max_x - min_x;
+	query(max_y / 2, min_x, max_x);
+	query(max_y, min_x + w / 2, max_x);
+	query(max_y / 2, min_x + w / 2, max_x);
+	query(max_y / 2, min_x, max_x - w / 2);
+	query(max_y / 2, min_x + w / 3, max_x - w / 3);
+	query(max_y - 1, min_x + 1, max_x - 1);
+	query(UINT64_MAX, 10, 10);
 
 	done = 0;
 	gettimeofday(&start, NULL);
-	while (h != NULL) {
-		n = h;
-		h = n->next;
+	for (n = h; n != NULL; n = n->next) {
+		if (n->failed) {
+			continue;
+		}
 #if 0
-		printf("[%u] remove %p x=%" PRIu64 " y=%" PRIu64 "\n",
+		printf("remove %p x=%" PRIu64 " y=%" PRIu64 "\n",
 		    n, n->n.n_x, n->n.n_y);
 #endif
 		rpst_remove_node(&t, &n->n);
-		i++;
 		done++;
 	}
 	gettimeofday(&end, NULL);
 	printf("%u nodes removed in %ju usecs\n", done,
-	    (uintmax_t)end.tv_sec * 1000000 + end.tv_usec -
-	    start.tv_sec * 1000000 - start.tv_usec);
+	    tvdiff(&end, &start));
 
 	rpst_dump_tree(&t);
 }
