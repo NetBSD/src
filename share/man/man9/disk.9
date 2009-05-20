@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.30 2009/04/08 12:51:43 joerg Exp $
+.\"	$NetBSD: disk.9,v 1.31 2009/05/20 03:50:39 dyoung Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -30,13 +30,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 14, 2009
+.Dd May 19, 2009
 .Dt DISK 9
 .Os
 .Sh NAME
 .Nm disk ,
 .Nm disk_init ,
 .Nm disk_attach ,
+.Nm disk_begindetach ,
 .Nm disk_detach ,
 .Nm disk_destroy ,
 .Nm disk_busy ,
@@ -52,6 +53,8 @@
 .Fn disk_init "struct disk *" "const char *name" "const struct dkdriver *driver"
 .Ft void
 .Fn disk_attach "struct disk *"
+.Ft void
+.Fn disk_begindetach "struct disk *" "int (*lastclose)(device_t)" "device_t self" "int flags"
 .Ft void
 .Fn disk_detach "struct disk *"
 .Ft void
@@ -137,6 +140,22 @@ Attach a disk; allocate storage for the disklabel, set the
 .Dq attached time
 timestamp, insert the disk into the disklist, and increment the
 system disk count.
+.It Fn disk_begindetach
+Check whether the disk is open, and if not, return 0.
+If the disk is open, and
+.Dv DETACH_FORCE
+is not set in
+.Fa flags ,
+return
+.Dv EBUSY .
+Otherwise, call the provided
+.Fa lastclose
+routine
+.Po
+if not
+.Dv NULL
+.Pc
+and return its exit code.
 .It Fn disk_detach
 Detach a disk; free storage for the disklabel, remove the disk
 from the disklist, and decrement the system disk count.
@@ -181,6 +200,7 @@ is not
 The functions typically called by device drivers are
 .Fn disk_init
 .Fn disk_attach ,
+.Fn disk_begindetach ,
 .Fn disk_detach ,
 .Fn disk_destroy,
 .Fn disk_busy ,
