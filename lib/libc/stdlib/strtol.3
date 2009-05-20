@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.22 2003/09/08 17:54:33 wiz Exp $
+.\"	$NetBSD: strtol.3,v 1.23 2009/05/20 22:01:34 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 11, 2002
+.Dd May 20, 2009
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -186,6 +186,14 @@ In these cases,
 .Va errno
 is set to
 .Er ERANGE .
+If the
+.Fa base
+argument is not supported then
+.Va errno
+is set to
+.Er EINVAL
+and the functions return
+.Dv 0 .
 .Sh EXAMPLES
 Ensuring that a string is a valid number (i.e., in range and containing no
 trailing characters) requires clearing
@@ -250,6 +258,15 @@ ival = lval;
 .Ed
 .Sh ERRORS
 .Bl -tag -width Er
+.It Bq Er EINVAL
+The 
+.Ar base
+is not between 
+.Dv 2
+and
+.Dv 36
+and does not contain the special value
+.Dv 0.
 .It Bq Er ERANGE
 The given string was out of range; the value converted has been clamped.
 .El
