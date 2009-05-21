@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2009/05/08 09:33:57 skrll Exp $
+# $NetBSD: GENERIC,v 1.89 2009/05/21 20:59:41 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.89 $"
 
 maxusers	32		# estimated number of users
 
@@ -33,10 +33,10 @@ options 	HP7100_CPU,HP7150_CPU	# PCX-T
 options 	HP7100LC_CPU		# PCX-L
 options 	HP7200_CPU,HP7250_CPU	# PCX-T'
 options 	HP7300LC_CPU		# PCX-L2
-#options 	HP8000_CPU		# PCX-U  (in 32bit mode)
-#options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
-#options 	HP8500_CPU		# PCX-W  (in 32bit mode)
-#options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
+options 	HP8000_CPU		# PCX-U  (in 32bit mode)
+options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
+options 	HP8500_CPU		# PCX-W  (in 32bit mode)
+options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
 
 # CPU-related options.
 options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
@@ -240,6 +240,7 @@ uturn0	at mainbus0		# U2/UTurn Runway IOA
 uturn1	at mainbus0
 lasi*	at uturn?		# LASI on [CJ]*
 dino*	at uturn?		# PCI bus bridge
+wax*	at uturn?		# Wax on [CD]*
 astro*	at mainbus0		# Astro memory & I/O controller
 
 # GSC bus support
