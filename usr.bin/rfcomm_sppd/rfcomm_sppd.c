@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.10 2009/05/12 18:43:35 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.11 2009/05/21 14:44:01 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,9 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.10 2009/05/12 18:43:35 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.11 2009/05/21 14:44:01 plunky Exp $");
+
+#include <sys/param.h>
 
 #include <bluetooth.h>
 #include <ctype.h>
@@ -83,8 +85,6 @@ __RCSID("$NetBSD: rfcomm_sppd.c,v 1.10 2009/05/12 18:43:35 plunky Exp $");
 #include <unistd.h>
 
 #include <netbt/rfcomm.h>
-
-#define max(a, b)	((a) > (b) ? (a) : (b))
 
 int open_tty(const char *);
 int open_client(bdaddr_t *, bdaddr_t *, int, const char *);
@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 	openlog(getprogname(), LOG_PERROR | LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "Starting on %s...", (tty ? tty : "stdio"));
 
-	n = max(tty_in, rfcomm) + 1;
+	n = MAX(tty_in, rfcomm) + 1;
 	while (!done) {
 		FD_ZERO(&rdset);
 		FD_SET(tty_in, &rdset);
