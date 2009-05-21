@@ -83,7 +83,7 @@
 .ie '\*(.T'cp1047' \
 .  do mso cp1047.tmac
 .el \
-.  if '\*(.T'ascii' \
+.  ie '\*(.T'ascii' \
 .    do mso ascii.tmac
 .  el \
 .    do mso latin1.tmac
