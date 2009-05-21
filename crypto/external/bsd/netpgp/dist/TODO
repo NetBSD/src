@@ -3,12 +3,7 @@ To Do
 separate verify program
 separate from libcrypto?
 64-bit offsets
-need a netpgp_set_{pub,sec}key()? vs _init()?
 default compression when signing?
-get rid of ops_memory after used literal_data_body
-sort out callback - ops_export_key, packet-parse callback etc
-Simplify IO
-Make into SHA1Init, SHA1End, SHA1File style of calls
 Multiple recipients for encryption
 
 Done
@@ -56,3 +51,4 @@ detached verification
 RCS Ids
 Look at inefficiencies - read() etc
 cat command to display a verified file without signature
+get rid of ops_memory after used literal_data_body
