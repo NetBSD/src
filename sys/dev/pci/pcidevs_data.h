@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.3 2009/05/05 18:21:41 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.4 2009/05/21 01:14:44 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.3 2009/05/05 18:17:57 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.4 2009/05/21 01:13:49 snj Exp
  */
 
 /*
@@ -7696,16 +7696,28 @@ static const struct pci_product pci_products[] = {
 	    "i82801H IGP (MV) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_D_BM_LF,
+	    "i82801J (LF) LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567V,
-	    "i82567V LAN controller",
+	    "i82567V LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82574L,
 	    "i82574L 1000baseT Ethernet",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567LM_3,
+	    "i82567LM-3 LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567LF_3,
+	    "i82567LF-3 LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
-	    "82801I mobile (AMT) LAN controller",
+	    "82801I Mobile (AMT) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -14580,4 +14592,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3044;
+const int pci_nproducts = 3047;

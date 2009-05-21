@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.3 2009/05/05 18:21:41 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.4 2009/05/21 01:14:44 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.3 2009/05/05 18:17:57 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.4 2009/05/21 01:13:49 snj Exp
  */
 
 /*
@@ -2217,9 +2217,12 @@
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
-#define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN controller */
+#define	PCI_PRODUCT_INTEL_82801J_D_BM_LF	0x10cd		/* i82801J (LF) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82574L	0x10d3		/* i82574L 1000baseT Ethernet */
-#define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I mobile (AMT) LAN controller */
+#define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82567LF_3	0x10df		/* i82567LF-3 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
