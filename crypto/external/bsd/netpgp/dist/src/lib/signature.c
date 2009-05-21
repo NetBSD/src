@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.13 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.14 2009/05/21 00:33:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,16 +85,14 @@ __RCSID("$NetBSD: signature.c,v 1.13 2009/05/19 05:13:10 agc Exp $");
 #include "validate.h"
 #include "netpgpdefs.h"
 
-#define MAXBUF 1024		/* <! Standard buffer size to use */
-
 /** \ingroup Core_Create
  * needed for signature creation
  */
-struct __ops_create_sig {
+struct __ops_create_sig_t {
 	__ops_hash_t		 hash;
 	__ops_sig_t		 sig;
 	__ops_memory_t		*mem;
-	__ops_output_t		*output;/* !< how to do the writing */
+	__ops_output_t		*output;	/* how to do the writing */
 	unsigned		 hashoff;	/* hashed count offset */
 	unsigned		 hashlen;
 	unsigned 		 unhashoff;
@@ -355,11 +353,8 @@ rsa_verify(__ops_hash_alg_t type,
 		}
 		printf("\n");
 	}
-	if (memcmp(&hashbuf_from_sig[n], prefix, plen) != 0 ||
-	    memcmp(&hashbuf_from_sig[n + plen], hash, hash_length) != 0) {
-		return 0;
-	}
-	return 1;
+	return (memcmp(&hashbuf_from_sig[n], prefix, plen) == 0 &&
+	        memcmp(&hashbuf_from_sig[n + plen], hash, hash_length) == 0);
 }
 
 static void 
@@ -427,7 +422,7 @@ __ops_check_sig(const unsigned char *hash, unsigned length,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("__ops_check_sig: (length %d) hash=", length);
-		hexdump(hash, length, "");
+		hexdump(stdout, hash, length, "");
 	}
 	ret = 0;
 	switch (sig->info.key_alg) {
@@ -485,10 +480,10 @@ finalise_sig(__ops_hash_t * hash,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_useridcert_sig(const __ops_pubkey_t * key,
-			  const __ops_userid_t * id,
-			  const __ops_sig_t * sig,
-			  const __ops_pubkey_t * signer,
+__ops_check_useridcert_sig(const __ops_pubkey_t *key,
+			  const __ops_userid_t *id,
+			  const __ops_sig_t *sig,
+			  const __ops_pubkey_t *signer,
 			  const unsigned char *raw_packet)
 {
 	__ops_hash_t	hash;
@@ -550,10 +545,10 @@ __ops_check_userattrcert_sig(const __ops_pubkey_t * key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_subkey_sig(const __ops_pubkey_t * key,
-			   const __ops_pubkey_t * subkey,
-			   const __ops_sig_t * sig,
-			   const __ops_pubkey_t * signer,
+__ops_check_subkey_sig(const __ops_pubkey_t *key,
+			   const __ops_pubkey_t *subkey,
+			   const __ops_sig_t *sig,
+			   const __ops_pubkey_t *signer,
 			   const unsigned char *raw_packet)
 {
 	__ops_hash_t      hash;
@@ -576,9 +571,9 @@ __ops_check_subkey_sig(const __ops_pubkey_t * key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_direct_sig(const __ops_pubkey_t * key,
-			   const __ops_sig_t * sig,
-			   const __ops_pubkey_t * signer,
+__ops_check_direct_sig(const __ops_pubkey_t *key,
+			   const __ops_sig_t *sig,
+			   const __ops_pubkey_t *signer,
 			   const unsigned char *raw_packet)
 {
 	__ops_hash_t      hash;
@@ -610,7 +605,7 @@ __ops_check_hash_sig(__ops_hash_t *hash,
 }
 
 static void 
-start_sig_in_mem(__ops_create_sig_t * sig)
+start_sig_in_mem(__ops_create_sig_t *sig)
 {
 	/* since this has subpackets and stuff, we have to buffer the whole */
 	/* thing to get counts before writing. */
@@ -726,12 +721,10 @@ __ops_sig_add_data(__ops_create_sig_t *sig, const void *buf, size_t length)
  */
 
 unsigned 
-__ops_end_hashed_subpkts(__ops_create_sig_t * sig)
+__ops_end_hashed_subpkts(__ops_create_sig_t *sig)
 {
-	sig->hashlen = __ops_mem_len(sig->mem)
-	- sig->hashoff - 2;
-	__ops_memory_place_int(sig->mem, sig->hashoff,
-			     sig->hashlen, 2);
+	sig->hashlen = __ops_mem_len(sig->mem) - sig->hashoff - 2;
+	__ops_memory_place_int(sig->mem, sig->hashoff, sig->hashlen, 2);
 	/* dummy unhashed subpacket count */
 	sig->unhashoff = __ops_mem_len(sig->mem);
 	return __ops_write_scalar(sig->output, 0, 2);
@@ -751,7 +744,7 @@ __ops_end_hashed_subpkts(__ops_create_sig_t * sig)
 
 unsigned 
 __ops_write_sig(__ops_output_t *output, 
-			__ops_create_sig_t * sig,
+			__ops_create_sig_t *sig,
 			const __ops_pubkey_t *key,
 			const __ops_seckey_t *seckey)
 {
@@ -764,16 +757,14 @@ __ops_write_sig(__ops_output_t *output,
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
 		if (seckey->key.rsa.d == NULL) {
-			(void) fprintf(stderr,
-				"__ops_write_sig: null rsa.d\n");
+			(void) fprintf(stderr, "__ops_write_sig: null rsa.d\n");
 			return 0;
 		}
 		break;
 
 	case OPS_PKA_DSA:
 		if (seckey->key.dsa.x == NULL) {
-			(void) fprintf(stderr,
-				"__ops_write_sig: null dsa.x\n");
+			(void) fprintf(stderr, "__ops_write_sig: null dsa.x\n");
 			return 0;
 		}
 		break;
@@ -786,7 +777,7 @@ __ops_write_sig(__ops_output_t *output,
 
 	if (sig->hashlen == (unsigned) -1) {
 		(void) fprintf(stderr,
-			"ops_write_sig: bad hashed data len\n");
+				"ops_write_sig: bad hashed data len\n");
 		return 0;
 	}
 
@@ -862,7 +853,8 @@ __ops_write_sig(__ops_output_t *output,
 unsigned 
 __ops_add_birthtime(__ops_create_sig_t * sig, time_t when)
 {
-	return __ops_write_ss_header(sig->output, 5, OPS_PTAG_SS_CREATION_TIME) &&
+	return __ops_write_ss_header(sig->output, 5,
+					OPS_PTAG_SS_CREATION_TIME) &&
 		__ops_write_scalar(sig->output, (unsigned)when, 4);
 }
 

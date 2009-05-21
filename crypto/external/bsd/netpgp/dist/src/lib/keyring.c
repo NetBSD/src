@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.10 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.11 2009/05/21 00:33:31 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -947,7 +947,7 @@ __ops_keyring_list(const __ops_keyring_t * keyring)
 		if (__ops_is_key_secret(key)) {
 			__ops_print_seckeydata(key);
 		} else {
-			__ops_print_pubkeydata(key);
+			__ops_print_pubkeydata(stdout, key);
 		}
 		(void) fputc('\n', stdout);
 	}

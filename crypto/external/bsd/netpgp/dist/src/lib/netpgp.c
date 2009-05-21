@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.14 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.15 2009/05/21 00:33:31 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -112,7 +112,8 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 			(void) memcpy(userid, &buf[(int)matchv[1].rm_so],
 				MIN((unsigned)(matchv[1].rm_eo -
 						matchv[1].rm_so), length));
-			printf("netpgp: default key set to \"%.*s\"\n",
+			(void) fprintf(stderr,
+				"netpgp: default key set to \"%.*s\"\n",
 				(int)(matchv[1].rm_eo - matchv[1].rm_so),
 				&buf[(int)matchv[1].rm_so]);
 		}
@@ -164,7 +165,7 @@ psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
 			userid_to_id(res->valid_sigs[i].signer_id, id));
 		pubkey = __ops_keyring_find_key_by_id(pubring,
 			(const unsigned char *) res->valid_sigs[i].signer_id);
-		__ops_print_pubkeydata(pubkey);
+		__ops_print_pubkeydata(fp, pubkey);
 	}
 }
 
@@ -404,7 +405,7 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 	}
 	do {
 		/* print out the user id */
-		__ops_print_pubkeydata(keypair);
+		__ops_print_pubkeydata(stderr, keypair);
 		/* get the passphrase */
 		get_pass_phrase(passphrase, sizeof(passphrase));
 		/* now decrypt key */
