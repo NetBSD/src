@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.49 2009/05/12 14:17:31 cegger Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.50 2009/05/21 17:32:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.49 2009/05/12 14:17:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.50 2009/05/21 17:32:32 dyoung Exp $");
 
 #include "opt_cardslot.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.49 2009/05/12 14:17:31 cegger Exp $")
 
 
 
+STATIC void cardslotchilddet(device_t, device_t);
 STATIC void cardslotattach(device_t, device_t, void *);
 STATIC int cardslotdetach(device_t, int);
 
@@ -76,7 +77,7 @@ static int cardslot_16_submatch(device_t, cfdata_t,
 				     const int *, void *);
 
 CFATTACH_DECL3_NEW(cardslot, sizeof(struct cardslot_softc),
-    cardslotmatch, cardslotattach, cardslotdetach, NULL, NULL, NULL,
+    cardslotmatch, cardslotattach, cardslotdetach, NULL, NULL, cardslotchilddet,
     DVF_DETACH_SHUTDOWN);
 
 STATIC int
@@ -93,7 +94,19 @@ cardslotmatch(device_t parent, cfdata_t cf,
 	return 1;
 }
 
+STATIC void
+cardslotchilddet(device_t self, device_t child)
+{
+	struct cardslot_softc *sc = device_private(self);
 
+	KASSERT(sc->sc_cb_softc == device_private(child) ||
+	    sc->sc_16_softc == child);
+
+	if (sc->sc_cb_softc == device_private(child))
+		sc->sc_cb_softc = NULL;
+	else if (sc->sc_16_softc == child)
+		sc->sc_16_softc = NULL;
+}
 
 STATIC void
 cardslotattach(device_t parent, device_t self,
