@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.11 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.12 2009/05/21 00:33:31 agc Exp $");
 #endif
 
 #include <string.h>
@@ -151,32 +151,22 @@ print_time(const char *name, time_t t)
 }
 
 static void 
-showtime_short(time_t t)
+print_time_short(FILE *fp, time_t t)
 {
 	struct tm      *tm;
 
 	tm = gmtime(&t);
-	printf("%04d-%02d-%02d",
+	(void) fprintf(fp, "%04d-%02d-%02d",
 		tm->tm_year + 1900,
 		tm->tm_mon + 1,
 		tm->tm_mday);
 }
 
 static void 
-print_time_short(time_t t)
-{
-	showtime_short(t);
-}
-
-static void 
-print_string_and_value(const char *name, const char *str,
-		       unsigned char value)
+print_string_and_value(const char *name, const char *str, unsigned char value)
 {
 	print_name(name);
-
-	printf("%s", str);
-	printf(" (0x%x)", value);
-	printf("\n");
+	printf("%s (0x%x)\n", str, value);
 }
 
 static void 
@@ -219,7 +209,7 @@ print_packet_hex(const __ops_subpacket_t *pkt)
 	     cur < (pkt->raw + pkt->length);
 	     cur += blksz, i++) {
 		rem = pkt->raw + pkt->length - cur;
-		hexdump(cur, (rem <= blksz) ? rem : blksz, "");
+		hexdump(stdout, cur, (rem <= blksz) ? rem : blksz, "");
 		printf(" ");
 		if (i % 8 == 0) {
 			printf("\n");
@@ -394,22 +384,22 @@ numkeybits(const __ops_pubkey_t *pubkey)
    \param key Ptr to public key
 */
 void
-__ops_print_pubkeydata(const __ops_keydata_t * key)
+__ops_print_pubkeydata(FILE *fp, const __ops_keydata_t * key)
 {
 	unsigned int    i;
 
-	printf("pub %d/%s ",
+	(void) fprintf(fp, "pub %d/%s ",
 		numkeybits(&key->key.pubkey),
 		__ops_show_pka(key->key.pubkey.alg));
-	hexdump(key->key_id, OPS_KEY_ID_SIZE, "");
-	printf(" ");
-	print_time_short(key->key.pubkey.birthtime);
-	printf("\nKey fingerprint: ");
-	hexdump(key->fingerprint.fingerprint, 20, " ");
-	printf("\n");
-
+	hexdump(fp, key->key_id, OPS_KEY_ID_SIZE, "");
+	(void) fprintf(fp, " ");
+	print_time_short(fp, key->key.pubkey.birthtime);
+	(void) fprintf(fp, "\nKey fingerprint: ");
+	hexdump(fp, key->fingerprint.fingerprint, 20, " ");
+	(void) fprintf(fp, "\n");
 	for (i = 0; i < key->nuids; i++) {
-		printf("uid              %s\n", key->uids[i].userid);
+		(void) fprintf(fp, "uid              %s\n",
+			key->uids[i].userid);
 	}
 }
 
@@ -474,10 +464,10 @@ __ops_print_seckeydata(const __ops_keydata_t * key)
 	__ops_show_pka(key->key.pubkey.alg);
 	printf(" ");
 
-	hexdump(key->key_id, OPS_KEY_ID_SIZE, "");
+	hexdump(stdout, key->key_id, OPS_KEY_ID_SIZE, "");
 	printf(" ");
 
-	print_time_short(key->key.pubkey.birthtime);
+	print_time_short(stdout, key->key.pubkey.birthtime);
 	printf(" ");
 
 	if (key->nuids == 1) {
@@ -598,7 +588,7 @@ start_subpacket(int type)
 	print_indent();
 	printf("-- %s (type 0x%02x)\n",
 	       __ops_show_ss_type(type),
-	       type - OPS_PTAG_SIGNATURE_SUBPACKET_BASE);
+	       type - OPS_PTAG_SIG_SUBPKT_BASE);
 }
 
 static void 
@@ -676,7 +666,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		printf("  data body length=%d\n",
 		       content->se_data_body.length);
 		printf("    data=");
-		hexdump(content->se_data_body.data,
+		hexdump(stdout, content->se_data_body.data,
 			content->se_data_body.length, "");
 		printf("\n");
 		break;
@@ -766,7 +756,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 			(unsigned)content->compressed.type);
 		break;
 
-	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
+	case OPS_PTAG_CT_1_PASS_SIG:
 		print_tagname("ONE PASS SIGNATURE");
 
 		print_unsigned_int("Version",
@@ -788,7 +778,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 				   content->one_pass_sig.nested);
 		break;
 
-	case OPS_PTAG_CT_USER_ATTRIBUTE:
+	case OPS_PTAG_CT_USER_ATTR:
 		print_tagname("USER ATTRIBUTE");
 		print_hexdump("User Attribute",
 			      content->userattr.data.contents,
@@ -803,7 +793,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		start_subpacket(pkt->tag);
 		print_unsigned_int("Raw Signature Subpacket: tag",
 			(unsigned)(content->ss_raw.tag -
-		   	OPS_PTAG_SIGNATURE_SUBPACKET_BASE));
+		   	OPS_PTAG_SIG_SUBPKT_BASE));
 		print_hexdump("Raw Data",
 			      content->ss_raw.raw,
 			      content->ss_raw.length);
@@ -822,7 +812,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		end_subpacket();
 		break;
 
-	case OPS_PTAG_SS_KEY_EXPIRATION_TIME:
+	case OPS_PTAG_SS_KEY_EXPIRY:
 		start_subpacket(pkt->tag);
 		print_duration("Key Expiration Time", content->ss_time.time);
 		end_subpacket();
@@ -854,7 +844,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		printf(", algid=0x%x",
 		       content->ss_revocation_key.algid);
 		printf(", fingerprint=");
-		hexdump(content->ss_revocation_key.fingerprint, 20, "");
+		hexdump(stdout, content->ss_revocation_key.fingerprint, 20, "");
 		printf("\n");
 		end_subpacket();
 		break;
@@ -897,7 +887,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		end_subpacket();
 		break;
 
-	case OPS_PTAG_SS_PREFERRED_COMPRESSION:
+	case OPS_PTAG_SS_PREF_COMPRESS:
 		start_subpacket(pkt->tag);
 		print_data("Preferred Compression Algorithms",
 			   &content->ss_zpref.data);
@@ -919,7 +909,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		end_subpacket();
 		break;
 
-	case OPS_PTAG_SS_KEY_SERVER_PREFS:
+	case OPS_PTAG_SS_KEYSERV_PREFS:
 		start_subpacket(pkt->tag);
 		print_data("Key Server Preferences",
 			   &content->ss_key_server_prefs.data);
@@ -986,7 +976,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		end_subpacket();
 		break;
 
-	case OPS_PTAG_SS_PREFERRED_KEY_SERVER:
+	case OPS_PTAG_SS_PREF_KEYSERV:
 		start_subpacket(pkt->tag);
 		print_string("Preferred Key Server", content->ss_keyserv.name);
 		end_subpacket();
