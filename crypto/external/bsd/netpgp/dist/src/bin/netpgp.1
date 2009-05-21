@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.10 2009/05/21 00:33:31 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.11 2009/05/21 09:21:35 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Fl Fl decrypt
 .Op options
 .Ar file ...
-.sp
+.Pp
 .Nm
 .Fl Fl sign
 .Op Fl Fl armor
@@ -63,9 +63,9 @@
 .Fl Fl clearsign
 .Op options
 .Ar file ...
-.sp
+.Pp
 .Nm
-.Fl Fl export-key ,
+.Fl Fl export-key
 .Op options
 .Ar file ...
 .Nm
@@ -81,17 +81,17 @@
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl list-keys 
+.Fl Fl list-keys
 .Op options
 .Ar file ...
-.sp
+.Pp
 .Nm
 .Fl Fl list-packets
 .Nm
 .Fl Fl version
-.sp
+.Pp
 where the options for all commands are:
-.sp
+.Pp
 .Op Fl Fl homedir Ns = Ns Ar home-directory
 .br
 .Op Fl Fl keyring Ns = Ns Ar keyring
@@ -115,7 +115,7 @@ The private key is kept secret, and known only to the user
 who created the identity.
 The secret key is protected with a passphrase.
 .Pp
-In rough terms, a digital signature 
+In rough terms, a digital signature
 is a digest of a file's contents,
 encrypted with the user's private key.
 Since together, the private and public keys identify the user
@@ -125,7 +125,8 @@ signature no longer matches.
 .Pp
 As a corollary, the file can be transformed using a user's public key,
 into text such that the contents can only be viewed by someone
-with the corresponding private key. This is called encryption.
+with the corresponding private key.
+This is called encryption.
 .Pp
 The
 .Nm
@@ -141,7 +142,8 @@ Key and keyring management commands available are:
 .Fl Fl export-key ,
 .Fl Fl find-key ,
 .Fl Fl generate-key ,
-.Fl Fl import-key , and
+.Fl Fl import-key ,
+and
 .Fl Fl list-keys .
 Keyrings are collections of public keys belonging to other users.
 By using other means of identification, it is possible to establish
@@ -239,7 +241,7 @@ or options may be given.
 This option, however it is spelled, wraps the signature as an
 ASCII-encoded piece of text, for ease of use.
 .It Fl Fl detached
-when signing a file, place the resulting signature in a separate
+When signing a file, place the resulting signature in a separate
 file from the one being signed.
 .It Fl Fl hash-alg Ar hash-algorithm
 can be used to specify the hash algorithm (sometimes called
@@ -271,7 +273,7 @@ Due to advances in computing power every year, this number should
 be reviewed, and increased when it becomes easier to factor 2048
 bit numbers.
 .It Fl Fl output
-specifies a filename to which verified otuput from a signed file
+specifies a filename to which verified output from a signed file
 may be redirected.
 The default is to send the verified output to stdout,
 and this may also be specified using the
@@ -320,7 +322,6 @@ Since the public and private key pair can be used to verify
 a person's identity, and since identity theft can have
 far-reaching consequences, users are strongly encouraged to
 enter their pass phrases only when prompted by the application.
-.Pp
 .Sh SIGNING AND VERIFICATION
 Signing and verification of a file is best viewed using the following example:
 .Bd -literal
@@ -345,13 +346,13 @@ uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
 .Ed
 .Pp
 In the example above, a signature is made on a single file called
-.Dq a
+.Dq Pa a
 using a user identity corresponding to
 .Dq agc@netbsd.org
 The key located for the user identity is displayed, and
 the user is prompted to type in their passphrase.
 The resulting file, called
-.Dq a.gpg
+.Dq Pa a.gpg
 is placed in the same directory.
 The second part of the example shows a verification of the signed file
 taking place.
@@ -360,10 +361,10 @@ by a fuller description of the public key of the signatory.
 In both cases, the exit value from the utility was a successful one.
 .Pp
 If a detached signature of a file called
-.Dq a
+.Dq Pa a
 is requested, the signature would be placed
 in a file called
-.Dq a.sig .
+.Dq Pa a.sig .
 .Pp
 To encrypt a file, the user's public key is used.
 Subsequent decryption of the file requires that the secret
@@ -405,6 +406,7 @@ The
 command first appeared in
 .Nx 6.0 .
 .Sh AUTHORS
+.An -nosplit
 .An Ben Laurie ,
 .An Rachel Willmer ,
 and overhauled and rewritten by
