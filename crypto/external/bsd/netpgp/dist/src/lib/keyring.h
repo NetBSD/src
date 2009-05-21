@@ -113,7 +113,7 @@ void __ops_copy_packet(__ops_subpacket_t *, const __ops_subpacket_t *);
 
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_parseinfo_t *);
 
-void __ops_print_pubkeydata(const __ops_keydata_t *);
+void __ops_print_pubkeydata(FILE *, const __ops_keydata_t *);
 void __ops_print_pubkey(const __ops_pubkey_t *);
 
 void __ops_print_seckeydata(const __ops_keydata_t *);

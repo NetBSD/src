@@ -175,7 +175,7 @@ typedef enum {
 	OPS_PTAG_CT_SIGNATURE = 2,	/* Signature Packet */
 	OPS_PTAG_CT_SK_SESSION_KEY = 3,	/* Symmetric-Key Encrypted Session
 					 * Key Packet */
-	OPS_PTAG_CT_ONE_PASS_SIGNATURE = 4,	/* One-Pass Signature
+	OPS_PTAG_CT_1_PASS_SIG = 4,	/* One-Pass Signature
 						 * Packet */
 	OPS_PTAG_CT_SECRET_KEY = 5,	/* Secret Key Packet */
 	OPS_PTAG_CT_PUBLIC_KEY = 6,	/* Public Key Packet */
@@ -189,7 +189,7 @@ typedef enum {
 	OPS_PTAG_CT_PUBLIC_SUBKEY = 14,	/* Public Subkey Packet */
 	OPS_PTAG_CT_RESERVED2 = 15,	/* reserved */
 	OPS_PTAG_CT_RESERVED3 = 16,	/* reserved */
-	OPS_PTAG_CT_USER_ATTRIBUTE = 17,	/* User Attribute Packet */
+	OPS_PTAG_CT_USER_ATTR = 17,	/* User Attribute Packet */
 	OPS_PTAG_CT_SE_IP_DATA = 18,	/* Sym. Encrypted and Integrity
 					 * Protected Data Packet */
 	OPS_PTAG_CT_MDC = 19,	/* Modification Detection Code Packet */
@@ -203,7 +203,7 @@ typedef enum {
 
 	/* signature subpackets (0x200-2ff) (type+0x200) */
 	/* only those we can parse are listed here */
-	OPS_PTAG_SIGNATURE_SUBPACKET_BASE = 0x200,	/* Base for signature
+	OPS_PTAG_SIG_SUBPKT_BASE = 0x200,	/* Base for signature
 							 * subpacket types - All
 							 * signature type values
 							 * are relative to this
@@ -212,12 +212,11 @@ typedef enum {
 	OPS_PTAG_SS_EXPIRATION_TIME = 0x200 + 3,	/* signature
 							 * expiration time */
 
-	OPS_PTAG_SS_EXPORTABLE_CERTIFICATION = 0x200 + 4,	/* exportable
-								 * certification */
+	OPS_PTAG_SS_EXPORT_CERT = 0x200 + 4,	/* exportable certification */
 	OPS_PTAG_SS_TRUST = 0x200 + 5,	/* trust signature */
 	OPS_PTAG_SS_REGEXP = 0x200 + 6,	/* regular expression */
 	OPS_PTAG_SS_REVOCABLE = 0x200 + 7,	/* revocable */
-	OPS_PTAG_SS_KEY_EXPIRATION_TIME = 0x200 + 9,	/* key expiration
+	OPS_PTAG_SS_KEY_EXPIRY = 0x200 + 9,	/* key expiration
 							 * time */
 	OPS_PTAG_SS_RESERVED = 0x200 + 10,	/* reserved */
 	OPS_PTAG_SS_PREFERRED_SKA = 0x200 + 11,	/* preferred symmetric
@@ -227,12 +226,12 @@ typedef enum {
 	OPS_PTAG_SS_NOTATION_DATA = 0x200 + 20,	/* notation data */
 	OPS_PTAG_SS_PREFERRED_HASH = 0x200 + 21,	/* preferred hash
 							 * algs */
-	OPS_PTAG_SS_PREFERRED_COMPRESSION = 0x200 + 22,	/* preferred
+	OPS_PTAG_SS_PREF_COMPRESS = 0x200 + 22,	/* preferred
 							 * compression
 							 * algorithms */
-	OPS_PTAG_SS_KEY_SERVER_PREFS = 0x200 + 23,	/* key server
+	OPS_PTAG_SS_KEYSERV_PREFS = 0x200 + 23,	/* key server
 							 * preferences */
-	OPS_PTAG_SS_PREFERRED_KEY_SERVER = 0x200 + 24,	/* Preferred Key
+	OPS_PTAG_SS_PREF_KEYSERV = 0x200 + 24,	/* Preferred Key
 							 * Server */
 	OPS_PTAG_SS_PRIMARY_USER_ID = 0x200 + 25,	/* primary User ID */
 	OPS_PTAG_SS_POLICY_URI = 0x200 + 26,	/* Policy URI */

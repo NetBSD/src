@@ -11,31 +11,37 @@ env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../bin && \
 echo "======> sign/verify 180938 file"
 cp configure a
 /usr/bin/netpgp --sign a
-/usr/bin/netpgp --verify a.gpg
+/usr/bin/netpgp --verify a.gpg && echo "[Verified OK]"
 echo "======> attempt to verify an unsigned file"
-/usr/bin/netpgp --verify a 
+/usr/bin/netpgp --verify a  && echo "[Verified OK]"
 echo "======> encrypt/decrypt 10809 file"
 cp src/bin/netpgp.1 b
 /usr/bin/netpgp --encrypt b
 /usr/bin/netpgp --decrypt b.gpg
-diff src/bin/netpgp.1 b && echo "No differences found"
+diff src/bin/netpgp.1 b && echo "[No differences found]"
 echo "======> encrypt/decrypt 180938 file"
 cp configure c
 /usr/bin/netpgp --encrypt c
 /usr/bin/netpgp --decrypt c.gpg
-diff configure c && echo "No differences found"
+diff configure c && echo "[No differences found]"
 echo "======> encrypt/decrypt bigass file"
 cat configure configure configure configure configure configure > d
 ls -l d
 cp d e
 /usr/bin/netpgp --encrypt d
 /usr/bin/netpgp --decrypt d.gpg
-diff e d && echo "No differences found"
+diff e d && echo "[No differences found]"
 echo "======> sign/verify detached signature file"
 cat configure configure configure configure configure configure > f
 /usr/bin/netpgp --sign --detached f
 ls -l f f.sig
-/usr/bin/netpgp --verify f.sig
+/usr/bin/netpgp --verify f.sig && echo "[Verified OK]"
+echo "======> cat signature - verified cat command"
+/usr/bin/netpgp --cat a.gpg > a2
+diff a a2 && echo "[No differences found]"
+echo "======> another cat signature - verified cat command"
+/usr/bin/netpgp --cat --output=a3 a.gpg
+diff a a3 && echo "[No differences found]"
 echo "======> version information"
 /usr/bin/netpgp --version
-rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig
+rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig a2 a3
