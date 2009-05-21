@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24.20.1 2009/05/03 17:51:02 snj Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.24.20.2 2009/05/21 01:13:49 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -482,6 +482,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TXCW	0x0178	/* Transmit Configuration Word (TBI mode) */
 	/* See MII ANAR_X bits. */
+#define	TXCW_SYM_PAUSE	(1U << 7)	/* sym pause request */
+#define	TXCW_ASYM_PAUSE	(1U << 8)	/* asym pause request */
 #define	TXCW_TxConfig	(1U << 30)	/* Tx Config */
 #define	TXCW_ANE	(1U << 31)	/* Autonegotiate */
 
@@ -738,6 +740,9 @@ struct livengood_tcpip_ctxdesc {
 #define ICH_FLASH_SECTOR_SIZE      4096
 #define ICH_GFPREG_BASE_MASK       0x1FFF
 #define ICH_FLASH_LINEAR_ADDR_MASK 0x00FFFFFF
+
+#define ICH_NVM_SIG_WORD	0x13
+#define ICH_NVM_SIG_MASK	0xc000
 
 #define	NVM_INIT_CONTROL2_REG	0x000f
 #define	NVM_INIT_CTRL2_MNGM	0x6000
