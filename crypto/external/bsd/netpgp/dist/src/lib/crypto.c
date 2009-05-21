@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.11 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.12 2009/05/21 00:33:31 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -140,7 +140,7 @@ __ops_decrypt_decode_mpi(unsigned char *buf,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf(" decrypted=%d ", n);
-		hexdump(mpibuf, (unsigned)n, "");
+		hexdump(stdout, mpibuf, (unsigned)n, "");
 		printf("\n");
 	}
 	/* Decode EME-PKCS1_V1_5 (RFC 2437). */

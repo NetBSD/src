@@ -57,7 +57,7 @@
 #include "create.h"
 #include "memory.h"
 
-typedef struct __ops_create_sig __ops_create_sig_t;
+typedef struct __ops_create_sig_t	 __ops_create_sig_t;
 
 __ops_create_sig_t *__ops_create_sig_new(void);
 void __ops_create_sig_delete(__ops_create_sig_t *);

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.12 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.13 2009/05/21 00:33:31 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ __ops_write_ss_header(__ops_output_t *output,
 {
 	return __ops_write_length(output, length) &&
 		__ops_write_scalar(output, (unsigned)(type -
-			OPS_PTAG_SIGNATURE_SUBPACKET_BASE), 1);
+				OPS_PTAG_SIG_SUBPKT_BASE), 1);
 }
 
 /*
@@ -1273,7 +1273,7 @@ __ops_write_one_pass_sig(__ops_output_t *output,
 	unsigned char   keyid[OPS_KEY_ID_SIZE];
 
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
-	return __ops_write_ptag(output, OPS_PTAG_CT_ONE_PASS_SIGNATURE) &&
+	return __ops_write_ptag(output, OPS_PTAG_CT_1_PASS_SIG) &&
 		__ops_write_length(output, 1 + 1 + 1 + 1 + 8 + 1) &&
 		__ops_write_scalar(output, 3, 1)	/* version */ &&
 		__ops_write_scalar(output, (unsigned)sig_type, 1) &&

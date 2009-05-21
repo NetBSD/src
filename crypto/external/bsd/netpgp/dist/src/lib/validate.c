@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.12 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.13 2009/05/21 00:33:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -66,6 +66,10 @@ __RCSID("$NetBSD: validate.c,v 1.12 2009/05/19 05:13:10 agc Exp $");
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 #include "packet-parse.h"
@@ -80,13 +84,17 @@ __RCSID("$NetBSD: validate.c,v 1.12 2009/05/19 05:13:10 agc Exp $");
 #include "crypto.h"
 #include "validate.h"
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 
 /* Does the signed hash match the given hash? */
-static          unsigned
+static unsigned
 check_binary_sig(const unsigned len,
-		       const unsigned char *data,
-		       const __ops_sig_t *sig,
-		    const __ops_pubkey_t *signer)
+		const unsigned char *data,
+		const __ops_sig_t *sig,
+		const __ops_pubkey_t *signer)
 {
 	unsigned char   hashout[OPS_MAX_HASH_SIZE];
 	unsigned char   trailer[6];
@@ -118,11 +126,11 @@ check_binary_sig(const unsigned len,
 		trailer[3] = hashedlen >> 16;
 		trailer[4] = hashedlen >> 8;
 		trailer[5] = hashedlen;
-		hash.add(&hash, &trailer[0], 6);
+		hash.add(&hash, trailer, 6);
 		break;
 
 	default:
-		fprintf(stderr, "Invalid signature version %d\n",
+		(void) fprintf(stderr, "Invalid signature version %d\n",
 				sig->info.version);
 		return 0;
 	}
@@ -245,7 +253,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		key->last_seen = ID;
 		return OPS_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_USER_ATTRIBUTE:
+	case OPS_PTAG_CT_USER_ATTR:
 		if (content->userattr.data.len == 0) {
 			(void) fprintf(stderr,
 			"__ops_validate_key_cb: user attribute length 0");
@@ -420,7 +428,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 			printf("\n");
 			printf("  type=%02x signer_id=",
 				content->sig.info.type);
-			hexdump(content->sig.info.signer_id,
+			hexdump(stdout, content->sig.info.signer_id,
 				sizeof(content->sig.info.signer_id), "");
 			printf("\n");
 		}
@@ -461,8 +469,6 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 
 		}
 
-		__ops_memory_free(data->mem);
-
 		if (valid) {
 			add_sig_to_list(&content->sig.info,
 					&data->result->valid_sigs,
@@ -481,7 +487,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PTAG_CT_SIGNATURE_HEADER:
 	case OPS_PTAG_CT_ARMOUR_HEADER:
 	case OPS_PTAG_CT_ARMOUR_TRAILER:
-	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
+	case OPS_PTAG_CT_1_PASS_SIG:
 		break;
 
 	case OPS_PARSER_PACKET_END:
@@ -649,8 +655,8 @@ __ops_validate_file(__ops_validation_t *result,
 	validate_data_cb_t	 validation;
 	__ops_parseinfo_t	*parse = NULL;
 	struct stat		 st;
+	unsigned		 ret;
 	int64_t		 	 sigsize;
-	char			*filename;
 	char			 origfile[MAXPATHLEN];
 	char			*detachname;
 	int			 outfd = 0;
@@ -684,19 +690,6 @@ __ops_validate_file(__ops_validation_t *result,
 
 	validation.detachname = detachname;
 
-	/* setup output filename */
-	filename = NULL;
-	if (outfile) {
-		if (strcmp(outfile, "-") == 0) {
-			outfile = NULL;
-		}
-		outfd = __ops_setup_file_write(&parse->cbinfo.output, NULL, 0);
-		if (outfd < 0) {
-			__ops_teardown_file_read(parse, infd);
-			return 0;
-		}
-	}
-
 	/* Set verification reader and handling options */
 	validation.result = result;
 	validation.keyring = keyring;
@@ -719,7 +712,44 @@ __ops_validate_file(__ops_validation_t *result,
 	}
 	__ops_teardown_file_read(parse, infd);
 
-	return validate_result_status(result);
+	ret = validate_result_status(result);
+
+	/* this is triggered only for --cat output */
+	if (outfile) {
+		/* need to send validated output somewhere */
+		if (strcmp(outfile, "-") == 0) {
+			outfd = STDOUT_FILENO;
+		} else {
+			outfd = open(outfile, O_WRONLY | O_CREAT, 0666);
+		}
+		if (outfd < 0) {
+			/* even if the signature was good, we can't
+			* write the file, so send back a bad return
+			* code */
+			ret = 0;
+		} else if (validate_result_status(result)) {
+			unsigned	 len;
+			char		*cp;
+			int		 i;
+
+			len = __ops_mem_len(validation.mem);
+			cp = __ops_mem_data(validation.mem);
+			for (i = 0 ; i < (int)len ; i += cc) {
+				cc = write(outfd, &cp[i], len - i);
+				if (cc < 0) {
+					(void) fprintf(stderr,
+						"netpgp: short write\n");
+					ret = 0;
+					break;
+				}
+			}
+			if (strcmp(outfile, "-") != 0) {
+				(void) close(outfd);
+			}
+		}
+	}
+	__ops_memory_free(validation.mem);
+	return ret;
 }
 
 /**
@@ -769,6 +799,7 @@ __ops_validate_mem(__ops_validation_t *result,
 		__ops_reader_pop_dearmour(pinfo);
 	}
 	__ops_teardown_memory_read(pinfo, mem);
+	__ops_memory_free(validation.mem);
 
 	return validate_result_status(result);
 }

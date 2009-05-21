@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.13 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.14 2009/05/21 00:33:31 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -1089,10 +1089,10 @@ __ops_parser_content_free(__ops_packet_t *c)
 	case OPS_PTAG_CT_COMPRESSED:
 	case OPS_PTAG_SS_CREATION_TIME:
 	case OPS_PTAG_SS_EXPIRATION_TIME:
-	case OPS_PTAG_SS_KEY_EXPIRATION_TIME:
+	case OPS_PTAG_SS_KEY_EXPIRY:
 	case OPS_PTAG_SS_TRUST:
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
-	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
+	case OPS_PTAG_CT_1_PASS_SIG:
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
 	case OPS_PTAG_SS_REVOCABLE:
 	case OPS_PTAG_SS_REVOCATION_KEY:
@@ -1143,7 +1143,7 @@ __ops_parser_content_free(__ops_packet_t *c)
 		__ops_userid_free(&c->u.ss_signer);
 		break;
 
-	case OPS_PTAG_CT_USER_ATTRIBUTE:
+	case OPS_PTAG_CT_USER_ATTR:
 		__ops_userattr_free(&c->u.userattr);
 		break;
 
@@ -1155,7 +1155,7 @@ __ops_parser_content_free(__ops_packet_t *c)
 		ss_hashpref_free(&c->u.ss_hashpref);
 		break;
 
-	case OPS_PTAG_SS_PREFERRED_COMPRESSION:
+	case OPS_PTAG_SS_PREF_COMPRESS:
 		ss_zpref_free(&c->u.ss_zpref);
 		break;
 
@@ -1163,7 +1163,7 @@ __ops_parser_content_free(__ops_packet_t *c)
 		ss_key_flags_free(&c->u.ss_key_flags);
 		break;
 
-	case OPS_PTAG_SS_KEY_SERVER_PREFS:
+	case OPS_PTAG_SS_KEYSERV_PREFS:
 		ss_key_server_prefs_free(&c->u.ss_key_server_prefs);
 		break;
 
@@ -1183,7 +1183,7 @@ __ops_parser_content_free(__ops_packet_t *c)
 		ss_policy_free(&c->u.ss_policy);
 		break;
 
-	case OPS_PTAG_SS_PREFERRED_KEY_SERVER:
+	case OPS_PTAG_SS_PREF_KEYSERV:
 		ss_keyserv_free(&c->u.ss_keyserv);
 		break;
 
@@ -1456,7 +1456,7 @@ parse_userattr(__ops_region_t *region, __ops_parseinfo_t *pinfo)
 	if (!read_data(&pkt.u.userattr.data, region, pinfo))
 		return 0;
 
-	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_USER_ATTRIBUTE, &pkt);
+	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_USER_ATTR, &pkt);
 
 	return 1;
 }
@@ -1696,7 +1696,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 	t7 = 1 << (c & 7);
 
 	pkt.critical = (unsigned)c >> 7;
-	pkt.tag = OPS_PTAG_SIGNATURE_SUBPACKET_BASE + (c & 0x7f);
+	pkt.tag = OPS_PTAG_SIG_SUBPKT_BASE + (c & 0x7f);
 
 	/* Application wants it delivered raw */
 	if (pinfo->ss_raw[t8] & t7) {
@@ -1713,7 +1713,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 	switch (pkt.tag) {
 	case OPS_PTAG_SS_CREATION_TIME:
 	case OPS_PTAG_SS_EXPIRATION_TIME:
-	case OPS_PTAG_SS_KEY_EXPIRATION_TIME:
+	case OPS_PTAG_SS_KEY_EXPIRY:
 		if (!limited_read_time(&pkt.u.ss_time.time, &subregion, pinfo))
 			return 0;
 		if (pkt.tag == OPS_PTAG_SS_CREATION_TIME) {
@@ -1757,7 +1757,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		}
 		break;
 
-	case OPS_PTAG_SS_PREFERRED_COMPRESSION:
+	case OPS_PTAG_SS_PREF_COMPRESS:
 		if (!read_data(&pkt.u.ss_zpref.data,
 				&subregion, pinfo)) {
 			return 0;
@@ -1777,7 +1777,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		}
 		break;
 
-	case OPS_PTAG_SS_KEY_SERVER_PREFS:
+	case OPS_PTAG_SS_KEYSERV_PREFS:
 		if (!read_data(&pkt.u.ss_key_server_prefs.data, &subregion,
 				pinfo)) {
 			return 0;
@@ -1843,7 +1843,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		}
 		break;
 
-	case OPS_PTAG_SS_PREFERRED_KEY_SERVER:
+	case OPS_PTAG_SS_PREF_KEYSERV:
 		if (!read_string(&pkt.u.ss_keyserv.name, &subregion,
 				pinfo)) {
 			return 0;
@@ -2294,7 +2294,7 @@ parse_one_pass(__ops_region_t * region, __ops_parseinfo_t * pinfo)
 		return 0;
 	}
 	pkt.u.one_pass_sig.nested = !!c;
-	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_ONE_PASS_SIGNATURE, &pkt);
+	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_1_PASS_SIG, &pkt);
 	/* XXX: we should, perhaps, let the app choose whether to hash or not */
 	parse_hash_init(pinfo, pkt.u.one_pass_sig.hash_alg,
 			    pkt.u.one_pass_sig.keyid);
@@ -3236,7 +3236,7 @@ __ops_parse_packet(__ops_parseinfo_t *pinfo, unsigned long *pktlen)
 		ret = parse_compressed(&region, pinfo);
 		break;
 
-	case OPS_PTAG_CT_ONE_PASS_SIGNATURE:
+	case OPS_PTAG_CT_1_PASS_SIG:
 		ret = parse_one_pass(&region, pinfo);
 		break;
 
@@ -3244,7 +3244,7 @@ __ops_parse_packet(__ops_parseinfo_t *pinfo, unsigned long *pktlen)
 		ret = parse_litdata(&region, pinfo);
 		break;
 
-	case OPS_PTAG_CT_USER_ATTRIBUTE:
+	case OPS_PTAG_CT_USER_ATTR:
 		ret = parse_userattr(&region, pinfo);
 		break;
 
@@ -3379,18 +3379,18 @@ __ops_parse_options(__ops_parseinfo_t *pinfo,
 
 		for (n = 0; n < 256; ++n) {
 			__ops_parse_options(pinfo,
-				OPS_PTAG_SIGNATURE_SUBPACKET_BASE + n,
+				OPS_PTAG_SIG_SUBPKT_BASE + n,
 				type);
 		}
 		return;
 	}
-	if (tag < OPS_PTAG_SIGNATURE_SUBPACKET_BASE ||
-	    tag > OPS_PTAG_SIGNATURE_SUBPACKET_BASE + NTAGS - 1) {
+	if (tag < OPS_PTAG_SIG_SUBPKT_BASE ||
+	    tag > OPS_PTAG_SIG_SUBPKT_BASE + NTAGS - 1) {
 		(void) fprintf(stderr, "__ops_parse_options: bad tag\n");
 		return;
 	}
-	t8 = (tag - OPS_PTAG_SIGNATURE_SUBPACKET_BASE) / 8;
-	t7 = 1 << ((tag - OPS_PTAG_SIGNATURE_SUBPACKET_BASE) & 7);
+	t8 = (tag - OPS_PTAG_SIG_SUBPKT_BASE) / 8;
+	t7 = 1 << ((tag - OPS_PTAG_SIG_SUBPKT_BASE) & 7);
 	switch (type) {
 	case OPS_PARSE_RAW:
 		pinfo->ss_raw[t8] |= t7;

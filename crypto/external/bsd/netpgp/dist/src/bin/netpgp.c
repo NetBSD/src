@@ -103,7 +103,7 @@ enum optdefs {
 	SIGN,
 	CLEARSIGN,
 	VERIFY,
-	VERIFY_SHOW,
+	VERIFY_CAT,
 	LIST_PACKETS,
 	VERSION_CMD,
 	HELP_CMD,
@@ -116,6 +116,7 @@ enum optdefs {
 	NUMBITS,
 	DETACHED,
 	HASH_ALG,
+	OUTPUT,
 	VERBOSE,
 
 	/* debug */
@@ -139,8 +140,11 @@ static struct option options[] = {
 	{"sign",	no_argument,		NULL,	SIGN},
 	{"clearsign",	no_argument,		NULL,	CLEARSIGN},
 	{"verify",	no_argument,		NULL,	VERIFY},
-	{"verify-show",	no_argument,		NULL,	VERIFY_SHOW},
-	{"verifyshow",	no_argument,		NULL,	VERIFY_SHOW},
+	{"cat",		no_argument,		NULL,	VERIFY_CAT},
+	{"vericat",	no_argument,		NULL,	VERIFY_CAT},
+	{"verify-cat",	no_argument,		NULL,	VERIFY_CAT},
+	{"verify-show",	no_argument,		NULL,	VERIFY_CAT},
+	{"verifyshow",	no_argument,		NULL,	VERIFY_CAT},
 
 	{"list-packets", no_argument,		NULL,	LIST_PACKETS},
 
@@ -161,6 +165,7 @@ static struct option options[] = {
 	{"hash",	required_argument, 	NULL,	HASH_ALG},
 	{"algorithm",	required_argument, 	NULL,	HASH_ALG},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
+	{"output",	required_argument, 	NULL,	OUTPUT},
 
 	/* debug */
 	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
@@ -176,6 +181,7 @@ typedef struct prog_t {
 	char	 pubring_name[MAXBUF + 1];	/* pubring filename */
 	char	 secring_name[MAXBUF + 1];	/* secret ring file */
 	char	*progname;			/* program name */
+	char	*output;			/* output file name */
 	int	 overwrite;			/* overwrite files? */
 	int	 numbits;			/* # of bits */
 	int	 armour;			/* ASCII armor */
@@ -224,8 +230,8 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 					1, p->detached);
 	case VERIFY:
 		return netpgp_verify_file(netpgp, f, NULL, p->armour);
-	case VERIFY_SHOW:
-		return netpgp_verify_file(netpgp, f, "-", p->armour);
+	case VERIFY_CAT:
+		return netpgp_verify_file(netpgp, f, p->output, p->armour);
 	case LIST_PACKETS:
 		return netpgp_list_packets(netpgp, f, p->armour, NULL);
 	case HELP_CMD:
@@ -268,6 +274,7 @@ main(int argc, char **argv)
 	p.progname = argv[0];
 	p.numbits = DEFAULT_NUMBITS;
 	p.overwrite = 1;
+	p.output = strdup("-");	/* default --cat to stdout */
 	if (argc < 2) {
 		print_usage(usage, p.progname);
 		exit(EXIT_ERROR);
@@ -293,7 +300,7 @@ main(int argc, char **argv)
 		case SIGN:
 		case CLEARSIGN:
 		case VERIFY:
-		case VERIFY_SHOW:
+		case VERIFY_CAT:
 		case LIST_PACKETS:
 		case HELP_CMD:
 			p.cmd = options[optindex].val;
@@ -366,6 +373,16 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			netpgp_setvar(&netpgp, "hash", optarg);
+			break;
+
+		case OUTPUT:
+			if (optarg == NULL) {
+				(void) fprintf(stderr,
+				"No output filename argument provided\n");
+				exit(EXIT_ERROR);
+			}
+			(void) free(p.output);
+			p.output = strdup(optarg);
 			break;
 
 		case OPS_DEBUG:

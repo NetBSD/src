@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.12 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.13 2009/05/21 00:33:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2217,7 +2217,7 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	if (cbinfo->cryptinfo.keydata == NULL) {
 		(void) fprintf(stderr, "get_passphrase_cb: NULL keydata\n");
 	} else {
-		__ops_print_pubkeydata(cbinfo->cryptinfo.keydata);
+		__ops_print_pubkeydata(stderr, cbinfo->cryptinfo.keydata);
 	}
 	switch (pkt->tag) {
 	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:

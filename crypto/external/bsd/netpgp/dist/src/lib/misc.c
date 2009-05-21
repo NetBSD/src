@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.10 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2009/05/21 00:33:31 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -222,10 +222,10 @@ dump_one_keydata(const __ops_keydata_t * key)
 	unsigned        n;
 
 	printf("Key ID: ");
-	hexdump(key->key_id, OPS_KEY_ID_SIZE, "");
+	hexdump(stdout, key->key_id, OPS_KEY_ID_SIZE, "");
 
 	printf("\nFingerpint: ");
-	hexdump(key->fingerprint.fingerprint, key->fingerprint.length, "");
+	hexdump(stdout, key->fingerprint.fingerprint, key->fingerprint.length, "");
 
 	printf("\n\nUIDs\n====\n\n");
 	for (n = 0; n < key->nuids; ++n)
@@ -234,7 +234,7 @@ dump_one_keydata(const __ops_keydata_t * key)
 	printf("\nPackets\n=======\n");
 	for (n = 0; n < key->npackets; ++n) {
 		printf("\n%03d: ", n);
-		hexdump(key->packets[n].raw, key->packets[n].length, "");
+		hexdump(stdout, key->packets[n].raw, key->packets[n].length, "");
 	}
 	printf("\n\n");
 }
@@ -1049,13 +1049,13 @@ __ops_str_from_map(int type, __ops_map_t *map)
 }
 
 void 
-hexdump(const unsigned char *src, size_t length, const char *sep)
+hexdump(FILE *fp, const unsigned char *src, size_t length, const char *sep)
 {
 	unsigned i;
 
 	for (i = 0 ; i < length ; i += 2) {
-		printf("%02x", *src++);
-		printf("%02x%s", *src++, sep);
+		(void) fprintf(fp, "%02x", *src++);
+		(void) fprintf(fp, "%02x%s", *src++, sep);
 	}
 }
 

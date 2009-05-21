@@ -1,7 +1,8 @@
 To Do
 =====
-64-bit offsets
+separate verify program
 separate from libcrypto?
+64-bit offsets
 need a netpgp_set_{pub,sec}key()? vs _init()?
 default compression when signing?
 get rid of ops_memory after used literal_data_body
@@ -54,3 +55,4 @@ hash algorithm selection
 detached verification
 RCS Ids
 Look at inefficiencies - read() etc
+cat command to display a verified file without signature
