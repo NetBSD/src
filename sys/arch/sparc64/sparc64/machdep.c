@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.240 2009/05/19 22:03:16 dyoung Exp $ */
+/*	$NetBSD: machdep.c,v 1.241 2009/05/21 08:07:18 jnemeth Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2009/05/19 22:03:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2009/05/21 08:07:18 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2011,3 +2011,10 @@ cpu_intr_p(void)
 
 	return curcpu()->ci_idepth >= 0;
 }
+
+#ifdef MODULAR
+void
+module_init_md(void)
+{
+}
+#endif
