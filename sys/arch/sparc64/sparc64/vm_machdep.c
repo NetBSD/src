@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.87 2009/03/16 23:11:15 dsl Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.88 2009/05/21 13:24:38 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.87 2009/03/16 23:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2009/05/21 13:24:38 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -261,9 +261,14 @@ cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size
 	if (stack != NULL)
 		tf2->tf_out[6] = (uint64_t)(u_long)stack + stacksize;
 
-	/* Set return values in child mode */
+	/*
+	 * Set return values in child mode and clear condition code,
+	 * in case we end up running a signal handler before returning
+	 * to userland.
+	 */
 	tf2->tf_out[0] = 0;
 	tf2->tf_out[1] = 1;
+	tf2->tf_tstate &= ~TSTATE_CCR;
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
