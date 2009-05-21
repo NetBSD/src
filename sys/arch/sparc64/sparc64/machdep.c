@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241 2009/05/21 08:07:18 jnemeth Exp $ */
+/*	$NetBSD: machdep.c,v 1.242 2009/05/21 08:13:43 jnemeth Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2009/05/21 08:07:18 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2009/05/21 08:13:43 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2009/05/21 08:07:18 jnemeth Exp $"
 #include <sys/exec.h>
 #include <sys/ucontext.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #include <uvm/uvm.h>
 
