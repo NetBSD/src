@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.44 2009/03/16 02:46:48 lukem Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.45 2009/05/22 21:47:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.44 2009/03/16 02:46:48 lukem Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.45 2009/05/22 21:47:46 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -560,7 +560,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		 */
 		ptr[0] += value - (Elf_Addr)obj->pltgot;
 
-	} else if (offset <= (1L<<20) && offset >= -(1L<<20)) {
+	} else if (offset <= (1L<<20) && (Elf_SOff)offset >= -(1L<<20)) {
 		/* 
 		 * We're within 1MB -- we can use a direct branch insn.
 		 *
@@ -578,7 +578,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		 */
 		where[1] = BAA | ((offset >> 2) &0x3fffff);
 		__asm volatile("iflush %0+4" : : "r" (where));
-	} else if (value >= 0 && value < (1L<<32)) {
+	} else if (value < (1L<<32)) {
 		/* 
 		 * We're within 32-bits of address zero.
 		 *
@@ -599,7 +599,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
 
-	} else if (value <= 0 && value > -(1L<<32)) {
+	} else if ((Elf_SOff)value <= 0 && (Elf_SOff)value > -(1L<<32)) {
 		/* 
 		 * We're within 32-bits of address -1.
 		 *
@@ -622,7 +622,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
 
-	} else if (offset <= (1L<<32) && offset >= -((1L<<32) - 4)) {
+	} else if (offset <= (1L<<32) && (Elf_SOff)offset >= -((1L<<32) - 4)) {
 		/* 
 		 * We're within 32-bits -- we can use a direct call insn 
 		 *
@@ -645,7 +645,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
 
-	} else if (offset >= 0 && offset < (1L<<44)) {
+	} else if (offset < (1L<<44)) {
 		/* 
 		 * We're within 44 bits.  We can generate this pattern:
 		 *
@@ -670,7 +670,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
 
-	} else if (offset < 0 && offset > -(1L<<44)) {
+	} else if ((Elf_SOff)offset < 0 && (Elf_SOff)offset > -(1L<<44)) {
 		/* 
 		 * We're within 44 bits.  We can generate this pattern:
 		 *
