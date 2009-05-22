@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.108 2009/05/07 16:04:25 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.109 2009/05/22 08:34:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.108 2009/05/07 16:04:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.109 2009/05/22 08:34:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -552,4 +552,11 @@ rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
 	rump_sysproxy = proxy;
 
 	return 0;
+}
+
+int
+rump_getversion()
+{
+
+	return __NetBSD_Version__;
 }
