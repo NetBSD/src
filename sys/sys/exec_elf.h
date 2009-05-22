@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.96 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.97 2009/05/22 21:44:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ typedef	uint8_t  	Elf_Byte;
 typedef	uint32_t	Elf32_Addr;
 #define	ELF32_FSZ_ADDR	4
 typedef	uint32_t	Elf32_Off;
+typedef	int32_t		Elf32_SOff;
 #define	ELF32_FSZ_OFF	4
 typedef	int32_t		Elf32_Sword;
 #define	ELF32_FSZ_SWORD	4
@@ -76,6 +77,7 @@ typedef	uint16_t	Elf32_Half;
 typedef	uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
 typedef	uint64_t	Elf64_Off;
+typedef	int64_t		Elf64_SOff;
 #define	ELF64_FSZ_OFF	8
 typedef	int32_t		Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
@@ -765,6 +767,7 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Sword	Elf32_Sword
 #define	Elf_Addr	Elf32_Addr
 #define	Elf_Off		Elf32_Off
+#define	Elf_SOff	Elf32_SOff
 #define	Elf_Nhdr	Elf32_Nhdr
 
 #define	ELF_R_SYM	ELF32_R_SYM
@@ -784,6 +787,7 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Sword	Elf64_Sword
 #define	Elf_Addr	Elf64_Addr
 #define	Elf_Off		Elf64_Off
+#define	Elf_SOff	Elf64_SOff
 #define	Elf_Nhdr	Elf64_Nhdr
 
 #define	ELF_R_SYM	ELF64_R_SYM
