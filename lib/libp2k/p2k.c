@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.13 2009/05/03 20:26:42 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.14 2009/05/22 10:53:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -346,7 +346,7 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct vnode *vp;
 	enum vtype vtype;
 	voff_t vsize;
-	dev_t rdev;
+	uint64_t rdev; /* XXX: uint64_t because of stack overwrite in compat */
 	int rv;
 
 	rv = rump_vfs_fhtovp(mp, fid, &vp);
@@ -354,7 +354,7 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 		return rv;
 
 	puffs_newinfo_setcookie(pni, vp);
-	rump_getvninfo(vp, &vtype, &vsize, &rdev);
+	rump_getvninfo(vp, &vtype, &vsize, (void *)&rdev);
 	puffs_newinfo_setvtype(pni, vtype);
 	puffs_newinfo_setsize(pni, vsize);
 	puffs_newinfo_setrdev(pni, rdev);
@@ -381,7 +381,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct vnode *vp;
 	enum vtype vtype;
 	voff_t vsize;
-	dev_t rdev;
+	uint64_t rdev; /* XXX: uint64_t because of stack overwrite in compat */
 	int rv;
 
 	cn = makecn(pcn);
@@ -397,13 +397,38 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	VUL(vp);
 
 	puffs_newinfo_setcookie(pni, vp);
-	rump_getvninfo(vp, &vtype, &vsize, &rdev);
+	rump_getvninfo(vp, &vtype, &vsize, (void *)&rdev);
 	puffs_newinfo_setvtype(pni, vtype);
 	puffs_newinfo_setsize(pni, vsize);
 	puffs_newinfo_setrdev(pni, rdev);
 
 	return 0;
 }
+
+#define VERS_TIMECHANGE 599000700
+static int
+needcompat(void)
+{
+
+	return __NetBSD_Version__ < VERS_TIMECHANGE
+	    && rump_getversion() >= VERS_TIMECHANGE;
+}
+
+#define DOCOMPAT(va, va_compat)						\
+do {									\
+	if (needcompat()) {						\
+		va_compat = rump_vattr_init();				\
+		rump_vattr50_to_vattr(va, va_compat);			\
+	} else {							\
+		va_compat = __UNCONST(va);				\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define UNDOCOMPAT(va_compat)						\
+do {									\
+	if (needcompat())						\
+		rump_vattr_free(va_compat);				\
+} while (/*CONSTCOND*/0)
 
 /*ARGSUSED*/
 int
@@ -412,19 +437,24 @@ p2k_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *vap)
 {
 	struct componentname *cn;
+	struct vattr *va_x;
 	struct vnode *vp;
 	int rv;
+
+	DOCOMPAT(vap, va_x);
 
 	cn = makecn(pcn);
 	VLE(opc);
 	rump_vp_incref(opc);
-	rv = RUMP_VOP_CREATE(opc, &vp, cn, __UNCONST(vap));
+	rv = RUMP_VOP_CREATE(opc, &vp, cn, va_x);
 	AUL(opc);
 	freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
 		puffs_newinfo_setcookie(pni, vp);
 	}
+
+	UNDOCOMPAT(va_x);
 
 	return rv;
 }
@@ -436,19 +466,24 @@ p2k_node_mknod(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *vap)
 {
 	struct componentname *cn;
+	struct vattr *va_x;
 	struct vnode *vp;
 	int rv;
+
+	DOCOMPAT(vap, va_x);
 
 	cn = makecn(pcn);
 	VLE(opc);
 	rump_vp_incref(opc);
-	rv = RUMP_VOP_MKNOD(opc, &vp, cn, __UNCONST(vap));
+	rv = RUMP_VOP_MKNOD(opc, &vp, cn, va_x);
 	AUL(opc);
 	freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
 		puffs_newinfo_setcookie(pni, vp);
 	}
+
+	UNDOCOMPAT(va_x);
 
 	return rv;
 }
@@ -509,13 +544,25 @@ p2k_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct vattr *vap, const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
+	struct vattr *va_x;
 	int rv;
+
+	if (needcompat()) {
+		va_x = rump_vattr_init();
+	} else {
+		va_x = vap;
+	}
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_GETATTR(opc, vap, cred);
+	rv = RUMP_VOP_GETATTR(opc, va_x, cred);
 	VUL(opc);
 	cred_destroy(cred);
+
+	if (needcompat()) {
+		rump_vattr_to_vattr50(va_x, vap);
+		rump_vattr_free(va_x);
+	}
 
 	return rv;
 }
@@ -526,13 +573,18 @@ p2k_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *vap, const struct puffs_cred *pcr)
 {
 	kauth_cred_t cred;
+	struct vattr *va_x;
 	int rv;
+
+	DOCOMPAT(vap, va_x);
 
 	cred = cred_create(pcr);
 	VLE(opc);
-	rv = RUMP_VOP_SETATTR(opc, __UNCONST(vap), cred);
+	rv = RUMP_VOP_SETATTR(opc, va_x, cred);
 	VUL(opc);
 	cred_destroy(cred);
+
+	UNDOCOMPAT(va_x);
 
 	return rv;
 }
@@ -662,19 +714,24 @@ p2k_node_mkdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *vap)
 {
 	struct componentname *cn;
+	struct vattr *va_x;
 	struct vnode *vp;
 	int rv;
+
+	DOCOMPAT(vap, va_x);
 
 	cn = makecn(pcn);
 	VLE(opc);
 	rump_vp_incref(opc);
-	rv = RUMP_VOP_MKDIR(opc, &vp, cn, __UNCONST(vap));
+	rv = RUMP_VOP_MKDIR(opc, &vp, cn, va_x);
 	AUL(opc);
 	freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
 		puffs_newinfo_setcookie(pni, vp);
 	}
+
+	UNDOCOMPAT(va_x);
 
 	return rv;
 }
@@ -707,20 +764,24 @@ p2k_node_symlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *vap, const char *link_target)
 {
 	struct componentname *cn;
+	struct vattr *va_x;
 	struct vnode *vp;
 	int rv;
+
+	DOCOMPAT(vap, va_x);
 
 	cn = makecn(pcn_src);
 	VLE(opc);
 	rump_vp_incref(opc);
-	rv = RUMP_VOP_SYMLINK(opc, &vp, cn,
-	    __UNCONST(vap), __UNCONST(link_target));
+	rv = RUMP_VOP_SYMLINK(opc, &vp, cn, va_x, __UNCONST(link_target));
 	AUL(opc);
 	freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
 		puffs_newinfo_setcookie(pni, vp);
 	}
+
+	UNDOCOMPAT(va_x);
 
 	return rv;
 }
