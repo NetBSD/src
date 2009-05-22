@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/08 16:27:51 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/05/22 19:08:06 christos Exp $
 
-# The two four of these are libraries and have to be built first.
+# The libraries have to be built first.
 
 SUBDIR=	lib .WAIT bin doc
 
