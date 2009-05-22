@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.21 2009/05/22 10:51:54 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.22 2009/05/22 12:47:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,7 @@ struct componentname;
 struct vfsops;
 struct fid;
 struct statvfs;
+struct stat;
 
 /* yetch */
 #if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
