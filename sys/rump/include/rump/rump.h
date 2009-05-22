@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.18 2009/05/07 16:04:25 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.19 2009/05/22 08:34:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,8 @@ int	rump_module_init(struct modinfo *, prop_dictionary_t props);
 int	rump_module_fini(struct modinfo *);
 
 int		rump__init(int);
+int		rump_getversion(void);
+
 struct mount	*rump_mnt_init(struct vfsops *, int);
 int		rump_mnt_mount(struct mount *, const char *, void *, size_t *);
 void		rump_mnt_destroy(struct mount *);
