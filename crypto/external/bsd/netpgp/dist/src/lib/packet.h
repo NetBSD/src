@@ -67,7 +67,7 @@
 typedef struct {
 	size_t          len;
 	unsigned char  *contents;
-	uint8_t		mmapped;	/* contents need an munmap(2) */
+	unsigned char	mmapped;	/* contents need an munmap(2) */
 } __ops_data_t;
 
 /************************************/

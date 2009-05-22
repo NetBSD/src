@@ -1,5 +1,6 @@
 To Do
 =====
+new package for 1.99.3
 separate verify program
 separate from libcrypto?
 64-bit offsets
