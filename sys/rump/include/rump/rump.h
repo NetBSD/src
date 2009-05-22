@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.20 2009/05/22 08:59:32 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.21 2009/05/22 10:51:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -161,6 +161,13 @@ int		rump_sysproxy_socket_setup_server(int);
  */
 int		rump_sys___stat30(const char *, struct stat *);
 int		rump_sys___lstat30(const char *, struct stat *);
+
+/*
+ * Other compat glue (for sniffing purposes)
+ * XXX: (lack of) types
+ */
+void		rump_vattr50_to_vattr(const struct vattr *, struct vattr *);
+void		rump_vattr_to_vattr50(const struct vattr *, struct vattr *);
 
 /*
  * Begin rump syscall conditionals.  Yes, something a little better
