@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.18 2009/05/21 01:20:31 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.19 2009/05/22 21:57:20 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -591,4 +591,21 @@ sys/dev/pci/if_wmreg.h				1.25, 1.27 via patch
 	Sync wm(4) driver with HEAD, adding support for more devices and
 	fixing some bugs (including a NULL pointer dereference).
 	[bouyer, ticket #771]
+
+distrib/utils/sysinst/arch/arc/md.c		1.32
+distrib/utils/sysinst/arch/bebox/md.c		1.52
+distrib/utils/sysinst/arch/cobalt/md.c		1.3
+distrib/utils/sysinst/arch/evbmips/md.c		1.5
+distrib/utils/sysinst/arch/evbppc/md.c		1.28
+distrib/utils/sysinst/arch/hpcarm/md.c		1.6
+distrib/utils/sysinst/arch/hpcmips/md.c		1.44
+distrib/utils/sysinst/arch/landisk/md.c		1.6
+distrib/utils/sysinst/arch/ofppc/md.c		1.5
+distrib/utils/sysinst/arch/playstation2/md.c	1.23
+distrib/utils/sysinst/arch/prep/md.c		1.30
+distrib/utils/sysinst/arch/sandpoint/md.c	1.29
+distrib/utils/sysinst/arch/zaurus/md.c		1.4
+
+	Catch up with ticket 755.
+	[sborrill, ticket #773]
 
