@@ -1090,7 +1090,10 @@
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
-/* #undef WORDS_BIGENDIAN */
+#include <sys/endian.h>
+#ifdef _BYTE_ORDER == _BIG_ENDIAN
+#define WORDS_BIGENDIAN	1
+#endif
 
 /* Define to 1 if on AIX 3.
    System headers sometimes define this.
