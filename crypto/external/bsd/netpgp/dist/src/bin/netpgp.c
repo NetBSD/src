@@ -218,20 +218,22 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case GENERATE_KEY:
 		return netpgp_generate_key(netpgp, p->userid, p->numbits);
 	case ENCRYPT:
-		return netpgp_encrypt_file(netpgp, p->userid, f, NULL,
+		return netpgp_encrypt_file(netpgp, p->userid, f, p->output,
 					p->armour);
 	case DECRYPT:
-		return netpgp_decrypt_file(netpgp, f, NULL, p->armour);
+		return netpgp_decrypt_file(netpgp, f, p->output, p->armour);
 	case SIGN:
-		return netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour,
-					0, p->detached);
+		return netpgp_sign_file(netpgp, p->userid, f, p->output,
+					p->armour, 0, p->detached);
 	case CLEARSIGN:
-		return netpgp_sign_file(netpgp, p->userid, f, NULL, p->armour,
-					1, p->detached);
+		return netpgp_sign_file(netpgp, p->userid, f, p->output,
+					p->armour, 1, p->detached);
 	case VERIFY:
 		return netpgp_verify_file(netpgp, f, NULL, p->armour);
 	case VERIFY_CAT:
-		return netpgp_verify_file(netpgp, f, p->output, p->armour);
+		return netpgp_verify_file(netpgp, f,
+					(p->output) ? p->output : "-",
+					p->armour);
 	case LIST_PACKETS:
 		return netpgp_list_packets(netpgp, f, p->armour, NULL);
 	case HELP_CMD:
@@ -274,7 +276,7 @@ main(int argc, char **argv)
 	p.progname = argv[0];
 	p.numbits = DEFAULT_NUMBITS;
 	p.overwrite = 1;
-	p.output = strdup("-");	/* default --cat to stdout */
+	p.output = NULL;
 	if (argc < 2) {
 		print_usage(usage, p.progname);
 		exit(EXIT_ERROR);
@@ -381,7 +383,9 @@ main(int argc, char **argv)
 				"No output filename argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			(void) free(p.output);
+			if (p.output) {
+				(void) free(p.output);
+			}
 			p.output = strdup(optarg);
 			break;
 
