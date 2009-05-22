@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.27 2009/05/15 15:54:03 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.28 2009/05/22 08:59:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -590,18 +590,57 @@ ukfs_chdir(struct ukfs *ukfs, const char *path)
 	return rv;
 }
 
+/*
+ * If we want to use post-time_t file systems on pre-time_t hosts,
+ * we must translate the stat structure.  Since we don't currently
+ * have a general method for making compat calls in rump, special-case
+ * this one.
+ *
+ * Note that this does not allow making system calls to older rump
+ * kernels from newer hosts.
+ */
+#define VERS_TIMECHANGE 599000700
+
+static int
+needcompat(void)
+{
+
+#ifdef __NetBSD__
+	return __NetBSD_Version__ < VERS_TIMECHANGE
+	    && rump_getversion() >= VERS_TIMECHANGE;
+#else
+	return 0;
+#endif
+}
+
 int
 ukfs_stat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
 {
+	int rv;
 
-	STDCALL(ukfs, rump_sys_stat(filename, file_stat));
+	precall(ukfs);
+	if (needcompat())
+		rv = rump_sys___stat30(filename, file_stat);
+	else
+		rv = rump_sys_stat(filename, file_stat);
+	postcall(ukfs);
+
+	return rv;
 }
 
 int
 ukfs_lstat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
 {
+	int rv;
 
-	STDCALL(ukfs, rump_sys_lstat(filename, file_stat));
+	precall(ukfs);
+	if (needcompat())
+		rv = rump_sys___lstat30(filename, file_stat);
+	else
+		rv = rump_sys_lstat(filename, file_stat);
+	postcall(ukfs);
+
+	return rv;
 }
 
 int
