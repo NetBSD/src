@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.6 2009/03/19 09:14:37 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.7 2009/05/22 08:59:32 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -8,7 +8,8 @@ LIB=	rumpvfs
 .PATH:	${RUMPTOP}/librump/rumpvfs				\
 	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
-	${RUMPTOP}/../miscfs/specfs
+	${RUMPTOP}/../miscfs/specfs				\
+	${RUMPTOP}/../compat/common
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -31,6 +32,9 @@ SRCS+=	genfs_vfsops.c genfs_vnops.c spec_vnops.c
 # sys/kern bufq
 SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 	bufq_readprio.c
+
+# compat syscalls
+SRCS+=	vfs_syscalls_50.c compat.c
 
 SRCS+=	rumpvnode_if.c
 
