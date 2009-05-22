@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.97 2009/05/13 23:44:26 jnemeth Exp $
+# $NetBSD: postinstall,v 1.98 2009/05/22 15:23:17 pgoyette Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -811,6 +811,7 @@ additem makedev "/dev/MAKEDEV being up to date"
 do_makedev()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_makedev   fix|check"
+	failed=0
 
 	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
 			# generate MAKEDEV from source if source is available
@@ -826,11 +827,16 @@ do_makedev()
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV
+	failed=$(( ${failed} + $? ))
+
 	find_file_in_dirlist MAKEDEV.local "MAKEDEV.local" \
 	    "${SRC_DIR}/etc" "${SRC_DIR}/dev" \
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV.local
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
