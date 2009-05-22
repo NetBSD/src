@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.2 2009/05/20 10:56:29 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.3 2009/05/22 11:38:05 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,10 +43,10 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.2 2009/05/20 10:56:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.3 2009/05/22 11:38:05 yamt Exp $");
 #include <sys/param.h>
 #else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.2 2009/05/20 10:56:29 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.3 2009/05/22 11:38:05 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -168,7 +168,7 @@ next:
 		*where = n;
 		return NULL;
 	}
-	if (n->n_y == cur->n_y && n->n_x != cur->n_x) {
+	if (n->n_y == cur->n_y && n->n_x == cur->n_x) {
 		return cur;
 	}
 	if (n->n_y < cur->n_y) {
