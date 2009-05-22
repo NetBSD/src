@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.19 2009/05/22 08:34:14 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.20 2009/05/22 08:59:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -155,6 +155,12 @@ typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 int		rump_sysproxy_set(rump_sysproxy_t, void *);
 int		rump_sysproxy_socket_setup_client(int);
 int		rump_sysproxy_socket_setup_server(int);
+
+/*
+ * compat syscalls.  these are currently hand-"generated"
+ */
+int		rump_sys___stat30(const char *, struct stat *);
+int		rump_sys___lstat30(const char *, struct stat *);
 
 /*
  * Begin rump syscall conditionals.  Yes, something a little better
