@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.45 2009/05/23 15:31:21 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.46 2009/05/23 15:59:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -72,10 +72,12 @@
 
 /*
  * VFS exports list management.
+ *
+ * Lock order: vfs_busy -> mnt_updating -> netexport_lock.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.45 2009/05/23 15:31:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.46 2009/05/23 15:59:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,10 +209,7 @@ netexport_fini(void)
 
 	KASSERT(mp != NULL);
 
-	for (;;) {
-		if (CIRCLEQ_EMPTY(&netexport_list)) {
-			break;
-		}
+	while (!CIRCLEQ_EMPTY(&netexport_list)) {
 		netexport_wrlock();
 		ne = CIRCLEQ_FIRST(&netexport_list);
 		mp = ne->ne_mount;
