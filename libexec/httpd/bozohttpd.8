@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.14 2009/05/23 02:26:03 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.15 2009/05/23 20:26:18 wiz Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.91 2009/05/23 00:55:22 mrg Exp $
 .\"
@@ -34,14 +34,14 @@
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl HVXbefnrus
+.Op Fl befHnrsuVX
 .Op Fl C Ar suffix cgihandler
-.Op Fl I Ar port
-.Op Fl M Ar suffix type encoding encoding11
-.Op Fl S Ar server_software
 .Op Fl c Ar cgibin
+.Op Fl I Ar port
 .Op Fl i Ar address
+.Op Fl M Ar suffix type encoding encoding11
 .Op Fl p Ar pubdir
+.Op Fl S Ar server_software
 .Op Fl t Ar chrootdir
 .Op Fl v Ar virtualroot
 .Op Fl x Ar index
