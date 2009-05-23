@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.121 2009/05/10 14:19:28 elad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.122 2009/05/23 22:29:14 ad Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -742,6 +742,7 @@ all)
 	makedev drvctl
 	makedev video
 	makedev altmem
+	makedev zfs
 	makedev local # do this last
 	;;
 
@@ -1934,6 +1935,11 @@ putter)
 	mkdev putter c %putter_chr% 0 600
 	mkdev pud c %putter_chr% 1 600
 	lndev putter puffs
+	;;
+
+zfs)
+	mkdev zfs c %zfs_chr% 0 600
+	mkdir -m 755 /dev/zpool
 	;;
 
 midevend)
