@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.14 2009/05/23 02:26:03 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.15 2009/05/23 08:26:26 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp $	*/
 
@@ -1111,7 +1111,7 @@ process_request(http_req *request)
 			/* This should take care of the first unaligned chunk */
 			if ((cur_byte_pos & (page_size - 1)) != 0)
 				sz = cur_byte_pos & ~page_size;
-			if (mmapsz < szleft)
+			if ((off_t)mmapsz < szleft)
 				sz = mmapsz;
 			else
 				sz = szleft;
