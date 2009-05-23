@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.44 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.45 2009/05/23 15:31:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,10 +75,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.44 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.45 2009/05/23 15:31:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -147,6 +148,7 @@ static void netexport_wrlock(void);
 static void netexport_wrunlock(void);
 static int nfs_export_update_30(struct mount *mp, const char *path, void *);
 
+static krwlock_t netexport_lock;
 
 /*
  * PUBLIC INTERFACE
@@ -155,11 +157,11 @@ static int nfs_export_update_30(struct mount *mp, const char *path, void *);
 /*
  * Declare and initialize the file system export hooks.
  */
-static void nfs_export_unmount(struct mount *);
+static void netexport_unmount(struct mount *);
 
 struct vfs_hooks nfs_export_hooks = {
 	{ NULL, NULL },
-	.vh_unmount = nfs_export_unmount,
+	.vh_unmount = netexport_unmount,
 	.vh_reexport = nfs_export_update_30,
 };
 
@@ -171,7 +173,7 @@ struct vfs_hooks nfs_export_hooks = {
  * information, although it theorically should.
  */
 static void
-nfs_export_unmount(struct mount *mp)
+netexport_unmount(struct mount *mp)
 {
 	struct netexport *ne;
 
@@ -188,6 +190,44 @@ nfs_export_unmount(struct mount *mp)
 	netexport_wrunlock();
 	kmem_free(ne, sizeof(*ne));
 }
+
+void
+netexport_init(void)
+{
+
+	rw_init(&netexport_lock);
+}
+
+void
+netexport_fini(void)
+{
+	struct netexport *ne;
+	struct mount *mp;
+	int error;
+
+	KASSERT(mp != NULL);
+
+	for (;;) {
+		if (CIRCLEQ_EMPTY(&netexport_list)) {
+			break;
+		}
+		netexport_wrlock();
+		ne = CIRCLEQ_FIRST(&netexport_list);
+		mp = ne->ne_mount;
+		error = vfs_busy(mp, NULL);
+		netexport_wrunlock();
+		if (error != 0) {
+			kpause("nfsfini", false, hz, NULL);
+			continue;
+		}
+		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
+		netexport_unmount(mp);
+		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
+		vfs_unbusy(mp, false, NULL);
+	}
+	rw_destroy(&netexport_lock);
+}
+
 
 /*
  * Atomically set the NFS exports list of the given file system, replacing
@@ -241,7 +281,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	vput(vp);
 	if (error != 0)
 		return error;
-
+	mutex_enter(&mp->mnt_updating);	/* mnt_flag */
 	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
@@ -282,6 +322,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 out:
 	netexport_wrunlock();
+	mutex_exit(&mp->mnt_updating);	/* mnt_flag */
 	vfs_unbusy(mp, false, NULL);
 	return error;
 }
@@ -797,8 +838,6 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 
 	return np;
 }
-
-krwlock_t netexport_lock;
 
 void
 netexport_rdlock(void)
