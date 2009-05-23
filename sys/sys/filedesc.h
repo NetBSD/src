@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.53 2008/11/18 11:36:58 pooka Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.54 2009/05/23 18:28:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 #define	NDENTRYSHIFT	5		/* bits per entry */
 #define	NDLOSLOTS(x)	(((x) + NDENTRIES - 1) >> NDENTRYSHIFT)
 #define	NDHISLOTS(x)	((NDLOSLOTS(x) + NDENTRIES - 1) >> NDENTRYSHIFT)
-#define	NDFDFILE	3		/* first 3 descriptors are free */
+#define	NDFDFILE	6		/* first 6 descriptors are free */
 
 /*
  * Process-private descriptor reference, one for each descriptor slot
@@ -182,6 +182,7 @@ void	fd_abort(struct proc *, file_t *, unsigned);
 filedesc_t *fd_copy(void);
 filedesc_t *fd_init(filedesc_t *);
 void	fd_share(proc_t *);
+void	fd_hold(void);
 void	fd_clear(void);
 void	fd_free(void);
 void	fd_remove(filedesc_t *, unsigned);
@@ -214,7 +215,6 @@ int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
 int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
     struct proc *);
 
-void	ffree(file_t *);
 int	closef(file_t *);
 file_t *fgetdummy(void);
 void	fputdummy(file_t *);
