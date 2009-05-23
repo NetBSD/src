@@ -2,8 +2,8 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_create 1.5 89/07/24 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_create.3,v 1.10 2009/04/09 00:06:44 joerg Exp $
-.Dd May 7, 1993
+.\"	$NetBSD: rpc_clnt_create.3,v 1.11 2009/05/23 18:57:25 christos Exp $
+.Dd May 23, 2009
 .Dt RPC_CLNT_CREATE 3
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Ft "CLIENT *"
 .Fn clnt_create_vers "const char * host" "const rpcprog_t prognum" "rpcvers_t *vers_outp" "const rpcvers_t vers_low" "const rpcvers_t vers_high" "char *nettype"
 .Ft void
-.Fn clnt_destroy "CLIENT *" "clnt"
+.Fn clnt_destroy "CLIENT * clnt"
 .Ft "CLIENT *"
 .Fn clnt_dg_create "const int fildes" "const struct netbuf *svcaddr" "const rpcprog_t prognum" "const rpcvers_t versnum" "const u_int sendsz" "const u_int recvsz"
 .Ft void
