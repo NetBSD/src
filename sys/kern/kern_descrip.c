@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.190 2009/04/04 10:12:51 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.191 2009/05/23 18:28:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.190 2009/04/04 10:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.191 2009/05/23 18:28:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,16 +346,25 @@ fd_getfile(unsigned fd)
 		return NULL;
 	}
 
-	/*
-	 * Now get a reference to the descriptor.   Issue a memory
-	 * barrier to ensure that we acquire the file pointer _after_
-	 * adding a reference.  If no memory barrier, we could fetch
-	 * a stale pointer.
-	 */
-	atomic_inc_uint(&ff->ff_refcnt);
+	/* Now get a reference to the descriptor. */
+	if (fdp->fd_refcnt == 1) {
+		/*
+		 * Single threaded: don't need to worry about concurrent
+		 * access (other than earlier calls to kqueue, which may
+		 * hold a reference to the descriptor).
+		 */
+		ff->ff_refcnt++;
+	} else {
+		/*
+		 * Issue a memory barrier to ensure that we acquire the file
+		 * pointer _after_ adding a reference.  If no memory
+		 * barrier, we could fetch a stale pointer.
+		 */
+		atomic_inc_uint(&ff->ff_refcnt);
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
+		membar_enter();
 #endif
+	}
 
 	/*
 	 * If the file is not open or is being closed then put the
@@ -386,6 +395,20 @@ fd_putfile(unsigned fd)
 	KASSERT(ff != NULL);
 	KASSERT((ff->ff_refcnt & FR_MASK) > 0);
 	KASSERT(fd >= NDFDFILE || ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
+
+	if (fdp->fd_refcnt == 1) {
+		/*
+		 * Single threaded: don't need to worry about concurrent
+		 * access (other than earlier calls to kqueue, which may
+		 * hold a reference to the descriptor).
+		 */
+		if (__predict_false((ff->ff_refcnt & FR_CLOSING) != 0)) {
+			fd_close(fd);
+			return;
+		}
+		ff->ff_refcnt--;
+		return;
+	}
 
 	/*
 	 * Ensure that any use of the file is complete and globally
@@ -747,7 +770,9 @@ closef(file_t *fp)
 	} else {
 		error = 0;
 	}
-	ffree(fp);
+	KASSERT(fp->f_count == 0);
+	KASSERT(fp->f_cred != NULL);
+	pool_cache_put(file_cache, fp);
 
 	return error;
 }
@@ -761,14 +786,10 @@ fd_alloc(proc_t *p, int want, int *result)
 	filedesc_t *fdp;
 	int i, lim, last, error;
 	u_int off, new;
-	fdfile_t *ff;
 
 	KASSERT(p == curproc || p == &proc0);
 
 	fdp = p->p_fd;
-	ff = pool_cache_get(fdfile_cache, PR_WAITOK);
-	KASSERT(ff->ff_refcnt == 0);
-	KASSERT(ff->ff_file == NULL);
 
 	/*
 	 * Search for a free descriptor starting at the higher
@@ -802,10 +823,10 @@ fd_alloc(proc_t *p, int want, int *result)
 		}
 		if (fdp->fd_ofiles[i] == NULL) {
 			KASSERT(i >= NDFDFILE);
-			fdp->fd_ofiles[i] = ff;
-		} else {
-		   	pool_cache_put(fdfile_cache, ff);
+			fdp->fd_ofiles[i] =
+			    pool_cache_get(fdfile_cache, PR_WAITOK);
 		}
+		KASSERT(fdp->fd_ofiles[i]->ff_refcnt == 0);
 		KASSERT(fdp->fd_ofiles[i]->ff_file == NULL);
 		fd_used(fdp, i);
 		if (want <= fdp->fd_freefile) {
@@ -821,7 +842,6 @@ fd_alloc(proc_t *p, int want, int *result)
 	/* No space in current array.  Let the caller expand and retry. */
 	error = (fdp->fd_nfiles >= lim) ? EMFILE : ENOSPC;
 	mutex_exit(&fdp->fd_lock);
-	pool_cache_put(fdfile_cache, ff);
 	return error;
 }
 
@@ -943,7 +963,7 @@ fd_tryexpand(proc_t *p)
 	 * to other threads.
 	 */
 	if (oldnfiles > NDFILE) {
-		if ((fdp->fd_refcnt | p->p_nlwps) > 1) {
+		if (fdp->fd_refcnt > 1) {
 			fdp->fd_ofiles[-2] = (void *)fdp->fd_discard;
 			fdp->fd_discard = fdp->fd_ofiles - 2;
 		} else {
@@ -988,6 +1008,7 @@ fd_tryexpand(proc_t *p)
 int
 fd_allocfile(file_t **resultfp, int *resultfd)
 {
+	kauth_cred_t cred;
 	file_t *fp;
 	proc_t *p;
 	int error;
@@ -1002,29 +1023,32 @@ fd_allocfile(file_t **resultfp, int *resultfd)
 	}
 
 	fp = pool_cache_get(file_cache, PR_WAITOK);
+	if (fp == NULL) {
+		return ENFILE;
+	}
 	KASSERT(fp->f_count == 0);
 	KASSERT(fp->f_msgcount == 0);
 	KASSERT(fp->f_unpcount == 0);
-	fp->f_cred = kauth_cred_get();
-	kauth_cred_hold(fp->f_cred);
 
-	if (__predict_false(atomic_inc_uint_nv(&nfiles) >= maxfiles)) {
-		fd_abort(p, fp, *resultfd);
-		tablefull("file", "increase kern.maxfiles or MAXFILES");
-		return ENFILE;
+	/* Replace cached credentials if not what we need. */
+	cred = curlwp->l_cred;
+	if (__predict_false(cred != fp->f_cred)) {
+		kauth_cred_free(fp->f_cred);
+		kauth_cred_hold(cred);
+		fp->f_cred = cred;
 	}
 
 	/*
 	 * Don't allow recycled files to be scanned.
+	 * See uipc_usrreq.c.
 	 */
-	if ((fp->f_flag & FSCAN) != 0) {
+	if (__predict_false((fp->f_flag & FSCAN) != 0)) {
 		mutex_enter(&fp->f_lock);
 		atomic_and_uint(&fp->f_flag, ~FSCAN);
 		mutex_exit(&fp->f_lock);
 	}
 
 	fp->f_advice = 0;
-	fp->f_msgcount = 0;
 	fp->f_offset = 0;
 	*resultfp = fp;
 
@@ -1092,22 +1116,10 @@ fd_abort(proc_t *p, file_t *fp, unsigned fd)
 	mutex_exit(&fdp->fd_lock);
 
 	if (fp != NULL) {
-		ffree(fp);
+		KASSERT(fp->f_count == 0);
+		KASSERT(fp->f_cred != NULL);
+		pool_cache_put(file_cache, fp);
 	}
-}
-
-/*
- * Free a file descriptor.
- */
-void
-ffree(file_t *fp)
-{
-
-	KASSERT(fp->f_count == 0);
-
-	atomic_dec_uint(&nfiles);
-	kauth_cred_free(fp->f_cred);
-	pool_cache_put(file_cache, fp);
 }
 
 static int
@@ -1116,10 +1128,18 @@ file_ctor(void *arg, void *obj, int flags)
 	file_t *fp = obj;
 
 	memset(fp, 0, sizeof(*fp));
-	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mutex_enter(&filelist_lock);
+	if (__predict_false(nfiles >= maxfiles)) {
+		mutex_exit(&filelist_lock);
+		tablefull("file", "increase kern.maxfiles or MAXFILES");
+		return ENFILE;
+	}
+	nfiles++;
 	LIST_INSERT_HEAD(&filehead, fp, f_list);
+	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
+	fp->f_cred = curlwp->l_cred;
+	kauth_cred_hold(fp->f_cred);
 	mutex_exit(&filelist_lock);
 
 	return 0;
@@ -1131,9 +1151,11 @@ file_dtor(void *arg, void *obj)
 	file_t *fp = obj;
 
 	mutex_enter(&filelist_lock);
+	nfiles--;
 	LIST_REMOVE(fp, f_list);
 	mutex_exit(&filelist_lock);
 
+	kauth_cred_free(fp->f_cred);
 	mutex_destroy(&fp->f_lock);
 }
 
@@ -1257,6 +1279,16 @@ fd_share(struct proc *p2)
 	fdp = curlwp->l_fd;
 	p2->p_fd = fdp;
 	atomic_inc_uint(&fdp->fd_refcnt);
+}
+
+/*
+ * Acquire a hold on a filedesc structure.
+ */
+void
+fd_hold(void)
+{
+
+	atomic_inc_uint(&curlwp->l_fd->fd_refcnt);
 }
 
 /*
