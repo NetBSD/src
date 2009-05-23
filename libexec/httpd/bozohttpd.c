@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.c,v 1.13 2009/04/18 21:22:03 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.14 2009/05/23 02:26:03 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.c,v 1.155 2009/04/18 20:53:58 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20090418"
+#define SERVER_SOFTWARE		"bozohttpd/20090522"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -179,6 +179,7 @@ static	int	rflag;		/* make sure referrer = me unless url = / */
 static	int	sflag;		/* log to stderr even if it is not a TTY */
 static	char	*vpath;		/* virtual directory base */
 
+	size_t	page_size;	/* page size */
 	char	*slashdir;	/* www slash directory */
 
 	const char *server_software = SERVER_SOFTWARE;
@@ -349,7 +350,15 @@ main(int argc, char **argv)
 
 #ifndef NO_DAEMON_MODE
 		case 'b':
-			bflag = 1;
+			/*
+			 * test suite support - undocumented
+			 * bflag == 2 (aka, -b -b) means to
+			 * only process 1 per kid
+			 */
+			if (bflag)
+				bflag = 2;
+			else
+				bflag = 1;
 			break;
 
 		case 'e':
@@ -468,6 +477,12 @@ main(int argc, char **argv)
 	slashdir = argv[0];
 	debug((DEBUG_OBESE, "myname is %s, slashdir is %s", myname, slashdir));
 
+#ifdef _SC_PAGESIZE
+	page_size = (long)sysconf(_SC_PAGESIZE);
+#else
+	page_size = 4096;
+#endif
+
 	/*
 	 * initialise ssl and daemon mode if necessary.
 	 */
@@ -515,14 +530,6 @@ main(int argc, char **argv)
 			error(1, "setuid(%d): %s", uid, strerror(errno));
 
 	/*
-	 * be sane, don't start serving up files from a
-	 * hierarchy we don't have permission to get to.
-	 */
-	if (tflag != NULL)
-		if (chdir("/") == -1)
-			error(1, "chdir /: %s", strerror(errno));
-
-	/*
 	 * read and process the HTTP request.
 	 */
 	do {
@@ -530,9 +537,8 @@ main(int argc, char **argv)
 		if (request) {
 			process_request(request);
 			clean_request(request);
-			return (0);
 		}
-	} while (bflag && 0);
+	} while (bflag);
 
 	return (0);
 }
@@ -871,34 +877,6 @@ next_header:
 		}
 	}
 
-	if (request->hr_range != NULL) {
-		debug((DEBUG_FAT, "hr_range: %s", request->hr_range));
-		/* support only simple ranges %d- and %d-%d */
-		if (strchr(request->hr_range, ',') == NULL) {
-			const char *rstart, *dash;
-
-			rstart = strchr(request->hr_range, '=');
-			if (rstart != NULL) {
-				rstart++;
-				dash = strchr(rstart, '-');
-				if (dash != NULL && dash != rstart) {
-					dash++;
-					request->hr_have_range = 1;
-					request->hr_first_byte_pos =
-					    strtoll(rstart, NULL, 10);
-					if (request->hr_first_byte_pos < 0)
-						request->hr_first_byte_pos = 0;
-					if (*dash != '\0') {
-						request->hr_last_byte_pos =
-						    strtoll(dash, NULL, 10);
-						if (request->hr_last_byte_pos < 0)
-							request->hr_last_byte_pos = -1;
-					}
-				}
-			}
-		}
-	}
-
 	debug((DEBUG_FAT, "read_request returns url %s in request", 
 	       request->hr_file));
 	return (request);
@@ -957,23 +935,42 @@ addmerge_header(http_req *request, char *val, char *str, ssize_t len)
 static int
 mmap_and_write_part(int fd, off_t first_byte_pos, size_t sz)
 {
-	size_t mappedsz; 
+	size_t mappedsz, wroffset;
+	off_t mappedoffset;
 	char *addr;
-	void *oaddr;
+	void *mappedaddr;
 
-	addr = mmap(0, sz, PROT_READ, MAP_SHARED, fd, first_byte_pos);
+	/*
+	 * we need to ensure that both the size *and* offset arguments to
+	 * mmap() are page-aligned.  our formala for this is:
+	 *
+	 *    input offset: first_byte_pos
+	 *    input size: sz
+	 *
+	 *    mapped offset = page align truncate (input offset)
+	 *    mapped size   =
+	 *        page align extend (input offset - mapped offset + input size)
+	 *    write offset  = input offset - mapped offset
+	 *
+	 * we use the write offset in all writes
+	 */
+	mappedoffset = first_byte_pos & ~(page_size - 1);
+	mappedsz = (first_byte_pos - mappedoffset + sz + page_size - 1) &
+		  ~(page_size - 1);
+	wroffset = first_byte_pos - mappedoffset;
+
+	addr = mmap(0, mappedsz, PROT_READ, MAP_SHARED, fd, mappedoffset);
 	if (addr == (char *)-1) {
 		warning("mmap failed: %s", strerror(errno));
 		return -1;
 	}
-	oaddr = addr;
-	mappedsz = sz;
+	mappedaddr = addr;
 
 #ifdef MADV_SEQUENTIAL
 	(void)madvise(addr, sz, MADV_SEQUENTIAL);
 #endif
 	while (sz > WRSZ) {
-		if (bozowrite(STDOUT_FILENO, addr, WRSZ) != WRSZ) {
+		if (bozowrite(STDOUT_FILENO, addr + wroffset, WRSZ) != WRSZ) {
 			warning("write failed: %s", strerror(errno));
 			goto out;
 		}
@@ -981,13 +978,13 @@ mmap_and_write_part(int fd, off_t first_byte_pos, size_t sz)
 		sz -= WRSZ;
 		addr += WRSZ;
 	}
-	if (sz && (size_t)bozowrite(STDOUT_FILENO, addr, sz) != sz) {
+	if (sz && (size_t)bozowrite(STDOUT_FILENO, addr + wroffset, sz) != sz) {
 		warning("final write failed: %s", strerror(errno));
 		goto out;
 	}
 	debug((DEBUG_OBESE, "wrote %d bytes", (int)sz));
  out:
-	if (munmap(oaddr, mappedsz) < 0) {
+	if (munmap(mappedaddr, mappedsz) < 0) {
 		warning("munmap failed");
 		return -1;
 	}
@@ -1051,7 +1048,7 @@ process_request(http_req *request)
 				(void)http_error(404, request, "no file");
 		} else
 			(void)http_error(500, request, "open file");
-		return;
+		goto cleanup_nofd;
 	}
 	if (fstat(fd, &sb) < 0) {
 		(void)http_error(500, request, "can't fstat");
@@ -1101,26 +1098,41 @@ process_request(http_req *request)
 
 	if (request->hr_method != HTTP_HEAD) {
 		off_t szleft, cur_byte_pos;
+		static size_t mmapsz = MMAPSZ;
 
 		szleft =
 		     request->hr_last_byte_pos - request->hr_first_byte_pos + 1;
 		cur_byte_pos = request->hr_first_byte_pos;
 
+ retry:
 		while (szleft) {
 			size_t sz;
 
-			if (MMAPSZ < szleft)
-				sz = MMAPSZ;
+			/* This should take care of the first unaligned chunk */
+			if ((cur_byte_pos & (page_size - 1)) != 0)
+				sz = cur_byte_pos & ~page_size;
+			if (mmapsz < szleft)
+				sz = mmapsz;
 			else
 				sz = szleft;
-			if (mmap_and_write_part(fd, cur_byte_pos, sz))
+			if (mmap_and_write_part(fd, cur_byte_pos, sz)) {
+				if (errno == ENOMEM) {
+					mmapsz /= 2;
+					if (mmapsz >= page_size)
+						goto retry;
+				}
 				goto cleanup;
+			}
 			cur_byte_pos += sz;
 			szleft -= sz;
 		}
 	}
-cleanup:
+ cleanup:
 	close(fd);
+ cleanup_nofd:
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	/*close(STDERR_FILENO);*/
 }
 
 /*
@@ -1821,6 +1833,7 @@ warning(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	if (sflag || isatty(STDERR_FILENO)) {
+		//fputs("warning: ", stderr);
 		vfprintf(stderr, fmt, ap);
 		fputs("\n", stderr);
 	} else
@@ -1835,6 +1848,7 @@ error(int code, const char *fmt, ...)
 
 	va_start(ap, fmt);
 	if (sflag || isatty(STDERR_FILENO)) {
+		//fputs("error: ", stderr);
 		vfprintf(stderr, fmt, ap);
 		fputs("\n", stderr);
 	} else
@@ -2016,13 +2030,7 @@ bozodgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
 			buflen *= 2;
 			debug((DEBUG_EXPLODING, "bozodgetln: "
 			    "reallocating buffer to buflen %zu", buflen));
-			nbuffer = realloc(buffer, buflen);
-			if (nbuffer == NULL) {
-				free(buffer);
-				buflen = 0;
-				buffer = NULL;
-				return NULL;
-			}
+			nbuffer = bozorealloc(buffer, buflen);
 			buffer = nbuffer;
 		}
 

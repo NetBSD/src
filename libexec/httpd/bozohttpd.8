@@ -1,6 +1,6 @@
-.\"	$NetBSD: bozohttpd.8,v 1.13 2009/04/18 21:22:03 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.14 2009/05/23 02:26:03 mrg Exp $
 .\"
-.\"	$eterna: bozohttpd.8,v 1.87 2009/04/18 20:53:58 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.91 2009/05/23 00:55:22 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2009 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 17, 2009
+.Dd May 22, 2009
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl HVXbenrus
+.Op Fl HVXbefnrus
 .Op Fl C Ar suffix cgihandler
 .Op Fl I Ar port
 .Op Fl M Ar suffix type encoding encoding11
@@ -97,7 +97,7 @@ directory is expected to contain the CGI programs to be used.
 looks for URL's in the form of
 .Em /cgi-bin/\*[Lt]scriptname\*[Gt]
 where
-.Em Aq scriptname
+.Aq scriptname
 is a valid CGI program in the
 .Ar cgibin
 directory.
@@ -114,6 +114,12 @@ to not clear the environment when used with either the
 or
 .Fl U
 options.
+.It Fl f
+This option stops the
+.Fl b
+flag from
+.Nm
+detaching from the tty and going into the background.
 .It Fl H
 This option causes directory index mode to hide files and directories
 that start with a period, except for
@@ -370,8 +376,7 @@ Compile
 with
 .Dq -DDO_HTPASSWD
 on the compiler command line to enable this support.
-It may require
-linking with the crypt library, using
+It may require linking with the crypt library, using
 .Dq -lcrypt .
 .Ss SSL SUPPORT
 .Nm
@@ -453,7 +458,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20090418.
+version 20090522.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green
