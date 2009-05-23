@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.3 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.4 2009/05/23 13:39:54 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -124,6 +124,7 @@ uturnattach(device_t parent, device_t self, void *aux)
 	case HPPA_BOARD_HP869:
 
 	case HPPA_BOARD_HP800D:
+	case HPPA_BOARD_HP821:
 		nca.ca_hpabase = ((struct iomod *)ioh)->io_io_low << 16;
 		pdc_scanbus(self, &nca, uturn_callback);
 		break;
