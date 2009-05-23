@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1232 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1233 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -276,4 +276,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[plunky 20090512]
 	dhcpcd(8): Import dhcpcd-5.0.4 [roy 20090514]
 	hp700: com at dino now works [skrll 20090518]
-	httpd: updated to bozohttpd 20090522.  [mrg 20090522]
+	httpd(8): Import bozohttpd-20090522. [mrg 20090522]
