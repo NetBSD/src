@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2009/03/16 02:24:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2009/05/23 02:26:03 mrg Exp $
 #
-#	$eterna: Makefile,v 1.26 2005/09/27 20:09:20 mrg Exp $
+#	$eterna: Makefile,v 1.27 2009/05/22 21:51:38 mrg Exp $
 
 # compile-time options are:
 #	DEBUG			/* include debugging support */
@@ -20,8 +20,6 @@ SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 
 LDADD=	-lcrypt
 DPADD=	${LIBCRYPT}
-
-.include <bsd.own.mk>
 
 .if ${MKCRYPTO} != "no"
 
