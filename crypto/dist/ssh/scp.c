@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.35 2009/02/16 20:53:54 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.36 2009/05/23 14:43:36 stacktic Exp $	*/
 /* $OpenBSD: scp.c,v 1.163 2008/06/13 18:55:22 dtucker Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.35 2009/02/16 20:53:54 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.36 2009/05/23 14:43:36 stacktic Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -631,7 +631,7 @@ source(int argc, char **argv)
 		if ((fd = open(name, O_RDONLY|O_NONBLOCK, 0)) < 0)
 			goto syserr;
 		if (strchr(name, '\n') != NULL) {
-			strvisx(encname, name, sizeof(encname), VIS_NL);
+			strvisx(encname, name, len, VIS_NL);
 			name = encname;
 		}
 		if (fstat(fd, &stb) < 0) {
