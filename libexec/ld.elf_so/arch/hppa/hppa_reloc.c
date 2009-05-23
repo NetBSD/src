@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.27 2008/07/24 04:39:25 matt Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.28 2009/05/23 17:50:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.27 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.28 2009/05/23 17:50:34 mjf Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -183,7 +183,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
                         break;
 		}
 	}
-	relalim = (const Elf_Rela *)((caddr_t)relafirst + relasz);
+	relalim = (const Elf_Rela *)((const char *)relafirst + relasz);
 
 	for (rela = relafirst; rela < relalim; rela++) {
 		symnum = ELF_R_SYM(rela->r_info);
@@ -525,7 +525,7 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 			 */
 			func_pc = ((Elf_Addr)(obj->pltgot)) - 16;
 			func_sl = (Elf_Addr)
-			    ((caddr_t)rela - (caddr_t)(obj->pltrela));
+			    ((const char *)rela - (const char *)(obj->pltrela));
 		}
 		rdbg(("lazy bind %s(%p) --> old=(%p,%p) new=(%p,%p)",
 		    obj->path,
@@ -585,10 +585,12 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
-	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	const Elf_Rela *rela;
 	Elf_Addr new_value;
 	int err;
 
+	rela = (const Elf_Rela *)((const char *)obj->pltrela + reloff);
+	
 	assert(ELF_R_SYM(rela->r_info) != 0);
 
 	err = _rtld_relocate_plt_object(obj, rela, &new_value); 
