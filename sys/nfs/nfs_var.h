@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.86 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.87 2009/05/23 15:31:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -305,4 +305,6 @@ int netexport_check(const fsid_t *, struct mbuf *, struct mount **, int *,
     kauth_cred_t *);
 void netexport_rdlock(void);
 void netexport_rdunlock(void);
+void netexport_init(void);
+void netexport_fini(void);
 #endif /* _KERNEL */

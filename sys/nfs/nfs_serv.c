@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.145 2009/05/23 14:45:18 ad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.146 2009/05/23 15:31:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.145 2009/05/23 14:45:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.146 2009/05/23 15:31:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,6 @@ static const struct syscall_package nfsserver_syscalls[] = {
 static int
 nfsserver_modcmd(modcmd_t cmd, void *arg)
 {
-	extern krwlock_t netexport_lock;		/* XXX */
 	extern struct vfs_hooks nfs_export_hooks;	/* XXX */
 	int error;
 
@@ -119,7 +118,7 @@ nfsserver_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 		nfs_init();	/* XXX for monolithic kernel */
-		rw_init(&netexport_lock);
+		netexport_init();
 		nfsrv_initcache();	/* Init the server request cache */
 		nfsrv_init(0);		/* Init server data structures */
 		vfs_hooks_attach(&nfs_export_hooks);
@@ -130,11 +129,19 @@ nfsserver_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0) {
 			return error;
 		}
-		nfs_timer_srvfini();
+		/*
+		 * Kill export list before detaching VFS hooks, so we
+		 * we don't leak state due to a concurrent umount().
+		 */
+		netexport_fini();
 		vfs_hooks_detach(&nfs_export_hooks);
+
+		/* Kill timer before server goes away. */
+		nfs_timer_srvfini();
 		nfsrv_fini();
+
+		/* Server uses server cache, so kill cache last. */
 		nfsrv_finicache();
-		rw_destroy(&netexport_lock);
 		return 0;
 	default:
 		return ENOTTY;
