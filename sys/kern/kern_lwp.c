@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.129 2009/04/04 22:34:03 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.130 2009/05/23 18:21:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.129 2009/04/04 22:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.130 2009/05/23 18:21:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1722,6 +1722,18 @@ lwp_ctl_exit(void)
 	mutex_destroy(&lp->lp_lock);
 	kmem_free(lp, sizeof(*lp));
 	p->p_lwpctl = NULL;
+}
+
+/*
+ * Return the current LWP's "preemption counter".  Used to detect
+ * preemption across operations that can tolerate preemption without
+ * crashing, but which may generate incorrect results if preempted.
+ */
+uint64_t
+lwp_pctr(void)
+{
+
+	return curlwp->l_ncsw;
 }
 
 #if defined(DDB)
