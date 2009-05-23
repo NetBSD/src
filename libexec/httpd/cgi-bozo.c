@@ -1,4 +1,4 @@
-/*	$eterna: cgi-bozo.c,v 1.30 2009/04/18 12:39:28 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.32 2009/05/22 21:51:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -163,10 +163,6 @@ process_cgi(http_req *request)
 
 	nph = strncmp(command, "nph-", 4) == 0;
 
-	debug((DEBUG_FAT,
-	    "process_cgi: path `%s' cmd `%s' info `%s' query `%s' nph `%d'",
-	    path, command, strornull(info), strornull(query), nph));
-
 	type = request->hr_content_type;
 	clen = request->hr_content_length;
 
@@ -179,6 +175,10 @@ process_cgi(http_req *request)
 	    (request->hr_remoteaddr && *request->hr_remoteaddr ? 1 : 0) +
 	    auth_cgi_count(request) +
 	    (request->hr_serverport && *request->hr_serverport ? 1 : 0);
+
+	debug((DEBUG_FAT,
+	    "process_cgi: path `%s' cmd `%s' info `%s' query `%s' nph `%d' envpsize `%d'",
+	    path, command, strornull(info), strornull(query), nph, envpsize));
 
 	envp = bozomalloc(sizeof(*envp) * envpsize);
 	for (ix = 0; ix < envpsize; ix++)
@@ -206,7 +206,7 @@ process_cgi(http_req *request)
 		spsetenv(env, headp->h_value, curenvp++);
 		free(env);
 	}
-		
+
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH "/usr/bin:/bin"
 #endif
@@ -263,6 +263,7 @@ process_cgi(http_req *request)
 		close(2);
 		close(sv[1]);
 		closelog();
+		daemon_closefds();
 
 		if (-1 == execve(path, argv, envp))
 			error(1, "child exec failed: %s: %s",

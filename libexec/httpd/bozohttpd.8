@@ -1,4 +1,4 @@
-.\"	$eterna: bozohttpd.8,v 1.87 2009/04/18 20:53:58 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.91 2009/05/23 00:55:22 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2009 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 17, 2009
+.Dd May 22, 2009
 .Dt BOZOHTTPD 8
 .Os BOZOS
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl HVXbenrus
+.Op Fl HVXbefnrus
 .Op Fl C Ar suffix cgihandler
 .Op Fl I Ar port
 .Op Fl M Ar suffix type encoding encoding11
@@ -95,7 +95,7 @@ directory is expected to contain the CGI programs to be used.
 looks for URL's in the form of
 .Em /cgi-bin/\*[Lt]scriptname\*[Gt]
 where
-.Em Aq scriptname
+.Aq scriptname
 is a valid CGI program in the
 .Ar cgibin
 directory.
@@ -112,6 +112,12 @@ to not clear the environment when used with either the
 or
 .Fl U
 options.
+.It Fl f
+This option stops the
+.Fl b
+flag from
+.Nm
+detaching from the tty and going into the background.
 .It Fl H
 This option causes directory index mode to hide files and directories
 that start with a period, except for
@@ -367,9 +373,20 @@ Compile
 .Nm
 with
 .Dq -DDO_HTPASSWD
-on the compiler command line to enable this support.  It may require
-linking with the crypt library, using
+on the compiler command line to enable this support.
+It may require linking with the crypt library, using
 .Dq -lcrypt .
+.Ss SSL SUPPORT
+.Nm
+has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
+default.
+It requires linking with the crypto and ssl library, using
+.Dq -lcrypto -lssl .
+To disable SSL SUPPORT compile
+.Nm
+with
+.Dq -DNO_SSL_SUPPORT
+on the compiler command line.
 .Sh FILES
 .Nm
 looks for a couple of special files in directories that allow certain features
@@ -396,16 +413,6 @@ symbolic link is found,
 .Nm
 will redirect to the absolute url pointed to by this symlink.
 This is useful to redirect to different servers.
-.Sh SSL SUPPORT
-.Nm
-has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
-default. It requires linking with the crypto and ssl library, using
-.Dq -lcrypto -lssl .
-To disable SSL SUPPORT compile
-.Nm
-with
-.Dq -DNO_SSL_SUPPORT
-on the compiler command line.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an
 .Xr inetd.conf 5
@@ -443,7 +450,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20090418.
+version 20090522.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green
@@ -517,7 +524,7 @@ Luke Mewburn
 provided many various fixes, including cgi-bin fixes and enhancements,
 HTTP basic authorisation support and much code clean up
 .It
-Jeremey Reed
+Jeremy C. Reed
 .Aq reed@netbsd.org
 provided several clean up fixes, and man page updates
 .It

@@ -1,4 +1,4 @@
-#	$eterna: Makefile,v 1.26 2005/09/27 20:09:20 mrg Exp $
+#	$eterna: Makefile,v 1.27 2009/05/22 21:51:38 mrg Exp $
 #
 # berkeley (netbsd) makefile.  see Makefile.boot for other systems.
 
@@ -16,7 +16,7 @@
 # for setting CFLAGS relevant to your make, eg
 #   % make COPTS="-DDEBUG -DDO_HTPASSWD"
 
-PROG=	bozohttpd
+PROG?=	bozohttpd
 MAN=	bozohttpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
@@ -24,10 +24,12 @@ SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 WARNS=	3
 
 check:
-	cd $(.CURDIR)/testsuite; $(MAKE) check
+	cd $(.CURDIR)/testsuite && $(MAKE) check
 
+.if ${PROG} == "bozohttpd"
 clean:
-	cd $(.CURDIR)/testsuite; $(MAKE) clean
+	cd $(.CURDIR)/testsuite && $(MAKE) clean
+.endif
 
 CRYPTOLIBS=	-lcrypto -lssl
 CRYPTODEPS=	$(LIBCRYPTO) $(LIBSSL)
