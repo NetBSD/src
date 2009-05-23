@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lock.c,v 1.147 2008/11/12 12:36:16 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.148 2009/05/23 17:08:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.147 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.148 2009/05/23 17:08:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.147 2008/11/12 12:36:16 ad Exp $");
 #include <sys/cpu.h>
 #include <sys/syslog.h>
 #include <sys/atomic.h>
+#include <sys/lwp.h>
 
 #include <machine/stdarg.h>
 #include <machine/lock.h>
@@ -59,6 +60,8 @@ void
 assert_sleepable(void)
 {
 	const char *reason;
+	uint64_t pctr;
+	bool idle;
 
 	if (panicstr != NULL) {
 		return;
@@ -66,14 +69,23 @@ assert_sleepable(void)
 
 	LOCKDEBUG_BARRIER(kernel_lock, 1);
 
+	/*
+	 * Avoid disabling/re-enabling preemption here since this
+	 * routine may be called in delicate situatations.
+	 */
+	do {
+		pctr = lwp_pctr();
+		idle = CURCPU_IDLE_P();
+	} while (pctr != lwp_pctr());
+
 	reason = NULL;
-	if (CURCPU_IDLE_P() && !cold) {
+	if (idle && !cold) {
 		reason = "idle";
 	}
 	if (cpu_intr_p()) {
 		reason = "interrupt";
 	}
-	if ((curlwp->l_pflag & LP_INTR) != 0) {
+	if (cpu_softintr_p()) {
 		reason = "softint";
 	}
 

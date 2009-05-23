@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.117 2009/02/04 21:17:39 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.118 2009/05/23 17:08:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -173,6 +173,8 @@ struct lwp {
 	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
 	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
 	_TAILQ_HEAD(,struct lockdebug,volatile) l_ld_locks;/* !: locks held by LWP */
+	int		l_tcgen;	/* !: for timecounter removal */
+	int		l_unused2;	/* !: for future use */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
@@ -306,6 +308,7 @@ void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
 u_int	lwp_unsleep(lwp_t *, bool);
+uint64_t lwp_pctr(void);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
