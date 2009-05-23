@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.144 2009/04/10 18:58:50 bouyer Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.145 2009/05/23 14:45:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.144 2009/04/10 18:58:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.145 2009/05/23 14:45:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,8 @@ nfsserver_modcmd(modcmd_t cmd, void *arg)
 		}
 		nfs_init();	/* XXX for monolithic kernel */
 		rw_init(&netexport_lock);
-		nfsrv_init(0);		/* Init server data structures */
 		nfsrv_initcache();	/* Init the server request cache */
+		nfsrv_init(0);		/* Init server data structures */
 		vfs_hooks_attach(&nfs_export_hooks);
 		nfs_timer_srvinit(nfsrv_timer);
 		return 0;
@@ -132,8 +132,8 @@ nfsserver_modcmd(modcmd_t cmd, void *arg)
 		}
 		nfs_timer_srvfini();
 		vfs_hooks_detach(&nfs_export_hooks);
-		nfsrv_finicache();
 		nfsrv_fini();
+		nfsrv_finicache();
 		rw_destroy(&netexport_lock);
 		return 0;
 	default:
