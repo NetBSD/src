@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/05/23 02:26:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2009/05/23 06:45:28 mrg Exp $
 #
 #	$eterna: Makefile,v 1.27 2009/05/22 21:51:38 mrg Exp $
 
@@ -20,6 +20,8 @@ SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 
 LDADD=	-lcrypt
 DPADD=	${LIBCRYPT}
+
+.include <bsd.own.mk>
 
 .if ${MKCRYPTO} != "no"
 
