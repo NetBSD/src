@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.147 2009/04/10 19:04:14 bouyer Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.148 2009/05/23 14:44:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.147 2009/04/10 19:04:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.148 2009/05/23 14:44:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,6 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 			fd_putfile(nfsdarg.sock);
 			return (ENOTSOCK);
 		}
-		if (error)
-			return (error);
 		/*
 		 * Get the client address for connected sockets.
 		 */
