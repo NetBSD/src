@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.h,v 1.10 2009/04/18 21:22:03 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.11 2009/05/23 02:26:03 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.h,v 1.26 2009/04/18 07:38:56 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.27 2009/05/22 21:51:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -201,9 +201,11 @@ extern	char	*iflag;
 
 extern	void	daemon_init(void);
 extern	void	daemon_fork(void);
+extern	void	daemon_closefds(void);
 #else
 #define daemon_init()				/* nothing */
 #define daemon_fork()				/* nothing */
+#define daemon_closefds()			/* nothing */
 #endif /* NO_DAEMON_MODE */
 
 
@@ -214,6 +216,7 @@ extern	const char *public_html;
 
 int	user_transform(http_req *, int *);
 #else
+#define uflag					0
 #define user_transform(a, b)			0
 #endif /* NO_USER_SUPPORT */
 

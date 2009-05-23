@@ -1,6 +1,6 @@
-/*	$NetBSD: daemon-bozo.c,v 1.6 2009/04/18 21:22:03 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.7 2009/05/23 02:26:03 mrg Exp $	*/
 
-/*	$eterna: daemon-bozo.c,v 1.16 2009/04/18 13:06:45 mrg Exp $	*/
+/*	$eterna: daemon-bozo.c,v 1.17 2009/05/22 21:51:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Matthew R. Green
@@ -52,8 +52,22 @@
 	char	*iflag;		/* bind address; default INADDR_ANY */
 static	int	*sock;		/* bound sockets */
 static	int	nsock;		/* number of above */
+static	struct pollfd *fds;	/* current poll fd set */
+static	int	request_times;	/* how many times this proc has processed
+				   a request */
 
+static	void	daemon_runchild(int);
 static	void	sigchild(int);	/* SIGCHLD handler */
+
+#ifndef POLLRDNORM
+#define POLLRDNORM 0
+#endif
+#ifndef POLLRDBAND
+#define POLLRDBAND 0
+#endif
+#ifndef INFTIM
+#define INFTIM -1
+#endif
 
 /* ARGSUSED */
 static void
@@ -90,6 +104,7 @@ daemon_init()
 	for (r = r0; r != NULL; r = r->ai_next)
 		nsock++;
 	sock = bozomalloc(nsock * sizeof *sock);
+	fds = bozomalloc(nsock * sizeof *fds);
 	for (i = 0, r = r0; r != NULL; r = r->ai_next) {
 		sock[i] = socket(r->ai_family, SOCK_STREAM, 0);
 		if (sock[i] == -1)
@@ -102,6 +117,9 @@ daemon_init()
 			continue;
 		if (listen(sock[i], SOMAXCONN) == -1)
 			continue;
+		fds[i].events = POLLIN | POLLPRI | POLLRDNORM |
+				POLLRDBAND | POLLERR;
+		fds[i].fd = sock[i];
 		i++;
 	}
 	if (i == 0)
@@ -112,6 +130,28 @@ daemon_init()
 	signal(SIGCHLD, sigchild);
 }
 
+void
+daemon_closefds(void)
+{
+	int i;
+
+	for (i = 0; i < nsock; i++)
+		close(sock[i]);
+}
+
+static void
+daemon_runchild(int fd)
+{
+
+	request_times++;
+
+	/* setup stdin/stdout/stderr */
+	dup2(fd, 0);
+	dup2(fd, 1);
+	/*dup2(fd, 2);*/
+	close(fd);
+}
+
 /*
  * the parent never returns from this function, only children that
  * are ready to run... XXXMRG - still true in fork-lesser bozo?
@@ -119,27 +159,13 @@ daemon_init()
 void
 daemon_fork()
 {
-	struct pollfd *fds = NULL;
-	int i, j;
+	int i;
 
-#ifndef POLLRDNORM
-#define POLLRDNORM 0
-#endif
-#ifndef POLLRDBAND
-#define POLLRDBAND 0
-#endif
-#ifndef INFTIM
-#define INFTIM -1
-#endif
-
-	fds = bozomalloc(nsock * sizeof *fds);
-	for (i = 0; i < nsock; i++) {
-		if (sock[i] == -1)
-			continue;
-		fds[i].events = POLLIN | POLLPRI | POLLRDNORM |
-				POLLRDBAND | POLLERR;
-		fds[i].fd = sock[i];
-	}
+	debug((DEBUG_FAT, "%s: pid %u request_times %d", __func__, getpid(),
+	       request_times));
+	/* if we've handled 5 files, exit and let someone else work */
+	if (request_times > 5 || (bflag == 2 && request_times > 0))
+		exit(0);
 
 	while (bflag) {
 		struct	sockaddr_storage ss;
@@ -173,7 +199,8 @@ again:
 		for (i = 0; i < nsock; i++) {
 			if (fds[i].revents & (POLLNVAL|POLLERR|POLLHUP)) {
 				warning("poll on fd %d pid %d revents %d: %s",
-				    fds[i].fd, getpid(), fds[i].revents, strerror(errno));
+				    fds[i].fd, getpid(), fds[i].revents,
+				    strerror(errno));
 				warning("nsock = %d", nsock);
 				close(sock[i]);
 				nsock--;
@@ -206,33 +233,30 @@ again:
 
 				continue;
 			}
+
+			if (request_times > 0) {
+				daemon_runchild(fd);
+				return;
+			}
+
 			switch (fork()) {
 			case -1: /* eep, failure */
-				warning("fork() failed, sleeping for 10 seconds: %s",
-				    strerror(errno));
+				warning("fork() failed, sleeping for "
+					"10 seconds: %s", strerror(errno));
 				close(fd);
 				sleep(10);
-				continue;
+				break;
 
 			case 0: /* child */
-				/* setup stdin/stdout/stderr */
-				dup2(fd, 0);
-				dup2(fd, 1);
-				/*dup2(fd, 2);*/
-				free(fds);
-				free(sock);
-				close(fd);
-				for (j = 0; j < nsock; j++)
-					close(sock[j]);
+				daemon_runchild(fd);
 				return;
 
 			default: /* parent */
 				close(fd);
-				continue;
+				break;
 			}
 		}
 	}
-	free(fds);
 }
 
 #endif /* NO_DAEMON_MODE */
