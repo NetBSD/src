@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.12 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.13 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpgame.c,v 1.12 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: dumpgame.c,v 1.13 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: dumpgame.c,v 1.12 2009/05/24 19:18:44 dholland Exp $");
 #include "trek.h"
 
 /***  THIS CONSTANT MUST CHANGE AS THE DATA SPACES CHANGE ***/
-# define	VERSION		2
+#define VERSION		2
 
 struct dump
 {
