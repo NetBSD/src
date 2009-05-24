@@ -1,4 +1,4 @@
-.\" $NetBSD: uftdi.4,v 1.14 2009/05/09 11:17:22 wiz Exp $
+.\" $NetBSD: uftdi.4,v 1.15 2009/05/24 16:32:58 nisimura Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,8 +76,9 @@ driver supports the following adapters:
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for various serial adapters based on the FTDI
-FT8U100AX and FT8U232AM chips.
+driver provides support for various serial adapters based on the FTDI USB
+UART IC family.  Supported chip models are FT8U100AX, FT8U232AM, FT232BM,
+FT232R, dual channel FT2232D, dual channel FT2232H, and quad channel FT4232H.
 .Pp
 The device is accessed through the
 .Xr ucom 4
