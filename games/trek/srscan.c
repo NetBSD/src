@@ -1,4 +1,4 @@
-/*	$NetBSD: srscan.c,v 1.6 2003/08/07 09:37:54 agc Exp $	*/
+/*	$NetBSD: srscan.c,v 1.7 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: srscan.c,v 1.6 2003/08/07 09:37:54 agc Exp $");
+__RCSID("$NetBSD: srscan.c,v 1.7 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,7 @@ const char	*const Color[4] =
 };
 
 void
-srscan(f)
-int	f;
+srscan(int f)
 {
 	int		i, j;
 	int		statinfo;

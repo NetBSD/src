@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.12 2004/01/27 20:30:31 jsm Exp $	*/
+/*	$NetBSD: getpar.c,v 1.13 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.12 2004/01/27 20:30:31 jsm Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.13 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,7 @@ static int testterm(void);
  **/
 
 int
-getintpar(s)
-	const char	*s;
+getintpar(const char *s)
 {
 	int	i;
 	int		n;
@@ -75,8 +74,8 @@ getintpar(s)
  **	get floating parameter
  **/
 
-double getfltpar(s)
-	const char	*s;
+double
+getfltpar(const char *s)
 {
 	int		i;
 	double			d;
@@ -107,8 +106,7 @@ const struct cvntab	Yntab[] =
 };
 
 int
-getynpar(s)
-	const char	*s;
+getynpar(const char *s)
 {
 	const struct cvntab	*r;
 
@@ -121,9 +119,8 @@ getynpar(s)
  **	get coded parameter
  **/
 
-const struct cvntab *getcodpar(s, tab)
-	const char		*s;
-	const struct cvntab	tab[];
+const struct cvntab *
+getcodpar(const char *s, const struct cvntab tab[])
 {
 	char				input[100];
 	const struct cvntab		*r;
@@ -200,11 +197,7 @@ const struct cvntab *getcodpar(s, tab)
  **/
 
 void
-getstrpar(s, r, l, t)
-	const char	*s;
-	char	*r;
-	int	l;
-	const char	*t;
+getstrpar(const char *s, char *r, int l, const char *t)
 {
 	int	i;
 	char		format[20];
@@ -234,7 +227,7 @@ getstrpar(s, r, l, t)
  **/
 
 int
-testnl()
+testnl(void)
 {
 	char		c;
 
@@ -256,8 +249,7 @@ testnl()
  **/
 
 void
-skiptonl(c)
-int	c;
+skiptonl(int c)
 {
 	while (c != '\n')
 		if (!(c = cgetc(0)))
@@ -272,7 +264,7 @@ int	c;
  **/
 
 static int
-testterm()
+testterm(void)
 {
 	char		c;
 
@@ -295,8 +287,7 @@ testterm()
 */
 
 int
-readdelim(d)
-char	d;
+readdelim(int d)
 {
 	char	c;
 

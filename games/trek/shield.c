@@ -1,4 +1,4 @@
-/*	$NetBSD: shield.c,v 1.8 2003/08/07 09:37:54 agc Exp $	*/
+/*	$NetBSD: shield.c,v 1.9 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: shield.c,v 1.8 2003/08/07 09:37:54 agc Exp $");
+__RCSID("$NetBSD: shield.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,7 @@ const struct cvntab Udtab[] =
 };
 
 void
-shield(f)
-int	f;
+shield(int f)
 {
 	int		i;
 	const struct cvntab	*r;

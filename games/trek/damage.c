@@ -1,4 +1,4 @@
-/*	$NetBSD: damage.c,v 1.6 2003/08/07 09:37:50 agc Exp $	*/
+/*	$NetBSD: damage.c,v 1.7 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)damage.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: damage.c,v 1.6 2003/08/07 09:37:50 agc Exp $");
+__RCSID("$NetBSD: damage.c,v 1.7 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,12 +52,13 @@ __RCSID("$NetBSD: damage.c,v 1.6 2003/08/07 09:37:50 agc Exp $");
 **
 **	Note that the repair of the device occurs on a DATE, meaning
 **	that the dock() and undock() have to reschedule the event.
+**
+**  dev1 -- device index
+**  dam -- time to repair
 */
 
 void
-damage(dev1, dam)
-int	dev1;		/*  device index */
-double	dam;		/* time to repair */
+damage(int dev1, double dam)
 {
 	int		i;
 	struct event	*e;

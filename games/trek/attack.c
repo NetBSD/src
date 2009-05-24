@@ -1,4 +1,4 @@
-/*	$NetBSD: attack.c,v 1.5 2003/08/07 09:37:49 agc Exp $	*/
+/*	$NetBSD: attack.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)attack.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: attack.c,v 1.5 2003/08/07 09:37:49 agc Exp $");
+__RCSID("$NetBSD: attack.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,11 +70,12 @@ __RCSID("$NetBSD: attack.c,v 1.5 2003/08/07 09:37:49 agc Exp $");
 **	entry for the particular device.
 **
 **	Casualties can also occur.
+**
+**  resting -- set if attack while resting
 */
 
 void
-attack(resting)
-int	resting;	/* set if attack while resting */
+attack(int resting)
 {
 	int		hit, i, l;
 	int		maxhit, tothit, shldabsb;

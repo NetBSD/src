@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpme.c,v 1.5 2003/08/07 09:37:51 agc Exp $	*/
+/*	$NetBSD: dumpme.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpme.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpme.c,v 1.5 2003/08/07 09:37:51 agc Exp $");
+__RCSID("$NetBSD: dumpme.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: dumpme.c,v 1.5 2003/08/07 09:37:51 agc Exp $");
 */
 
 void
-dumpme(flag)
-int	flag;
+dumpme(int flag)
 {
 	int		f;
 	double		x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: destruct.c,v 1.8 2007/12/15 19:44:44 perry Exp $	*/
+/*	$NetBSD: destruct.c,v 1.9 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)destruct.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: destruct.c,v 1.8 2007/12/15 19:44:44 perry Exp $");
+__RCSID("$NetBSD: destruct.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,7 @@ __RCSID("$NetBSD: destruct.c,v 1.8 2007/12/15 19:44:44 perry Exp $");
 
 /*ARGSUSED*/
 void
-destruct(v)
-	int v __unused;
+destruct(int v __unused)
 {
 	char		checkpass[15];
 	int	i, j;

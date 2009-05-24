@@ -1,4 +1,4 @@
-/*	$NetBSD: torped.c,v 1.9 2007/12/15 19:44:45 perry Exp $	*/
+/*	$NetBSD: torped.c,v 1.10 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: torped.c,v 1.9 2007/12/15 19:44:45 perry Exp $");
+__RCSID("$NetBSD: torped.c,v 1.10 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,7 @@ static int randcourse(int);
 
 /*ARGSUSED*/
 void
-torped(v)
-	int v __unused;
+torped(int v __unused)
 {
 	int		ix, iy;
 	double		x, y, dx, dy;
@@ -230,8 +229,7 @@ torped(v)
 */
 
 static int
-randcourse(n)
-int	n;
+randcourse(int n)
 {
 	double			r;
 	int		d;
