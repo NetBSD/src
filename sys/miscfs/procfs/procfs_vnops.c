@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.173 2008/12/17 20:51:36 cegger Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.174 2009/05/24 21:41:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.173 2008/12/17 20:51:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.174 2009/05/24 21:41:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1338,7 +1338,7 @@ procfs_readdir(void *v)
 			return ESRCH;
 		}
 
-		nfd = p->p_fd->fd_nfiles;
+		nfd = p->p_fd->fd_dt->dt_nfiles;
 
 		lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 		if (i >= lim) {

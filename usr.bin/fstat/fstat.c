@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.88 2009/04/12 06:36:12 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.89 2009/05/24 21:41:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.88 2009/04/12 06:36:12 lukem Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.89 2009/05/24 21:41:44 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,6 +313,7 @@ dofiles(struct kinfo_proc2 *p)
 	int i;
 	struct filedesc filed;
 	struct cwdinfo cwdi;
+	struct fdtab dt;
 
 	Uname = user_from_uid(p->p_uid, 0);
 	Pid = p->p_pid;
@@ -321,16 +322,20 @@ dofiles(struct kinfo_proc2 *p)
 	if (p->p_fd == 0 || p->p_cwdi == 0)
 		return;
 	if (!KVM_READ(p->p_fd, &filed, sizeof (filed))) {
-		warnx("can't read filedesc at %#llx for pid %d", (unsigned long long)p->p_fd, Pid);
+		warnx("can't read filedesc at %p for pid %d", (void *)(uintptr_t)p->p_fd, Pid);
 		return;
 	}
 	if (!KVM_READ(p->p_cwdi, &cwdi, sizeof(cwdi))) {
-		warnx("can't read cwdinfo at %#llx for pid %d", (unsigned long long)p->p_cwdi, Pid);
+		warnx("can't read cwdinfo at %p for pid %d", (void *)(uintptr_t)p->p_cwdi, Pid);
 		return;
 	}
-	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
+	if (!KVM_READ(filed.fd_dt, &dt, sizeof(dt))) {
+		warnx("can't read dtab at %p for pid %d", filed.fd_dt, Pid);
+		return;
+	}
+	if ((unsigned)filed.fd_lastfile >= dt.dt_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
-		dprintf("filedesc corrupted at %#llx for pid %d", (unsigned long long)p->p_fd, Pid);
+		dprintf("filedesc corrupted at %p for pid %d", (void *)(uintptr_t)p->p_fd, Pid);
 		return;
 	}
 	/*
@@ -355,10 +360,10 @@ dofiles(struct kinfo_proc2 *p)
 	 */
 #define FPSIZE	(sizeof (fdfile_t *))
 	ALLOC_OFILES(filed.fd_lastfile+1);
-	if (!KVM_READ(filed.fd_ofiles, ofiles,
+	if (!KVM_READ(&filed.fd_dt->dt_ff, ofiles,
 	    (filed.fd_lastfile+1) * FPSIZE)) {
 		dprintf("can't read file structures at %p for pid %d",
-		    filed.fd_ofiles, Pid);
+		    &filed.fd_dt->dt_ff, Pid);
 		return;
 	}
 	for (i = 0; i <= filed.fd_lastfile; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.106 2009/03/15 17:22:37 cegger Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.107 2009/05/24 21:41:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.106 2009/03/15 17:22:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.107 2009/05/24 21:41:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,12 +276,13 @@ fdesc_lookup(void *v)
 	struct lwp *l = curlwp;
 	const char *pname = cnp->cn_nameptr;
 	struct proc *p = l->l_proc;
-	filedesc_t *fdp = p->p_fd;
-	int numfiles = fdp->fd_nfiles;
 	unsigned fd = 0;
 	int error;
 	struct vnode *fvp;
 	const char *ln;
+	fdtab_t *dt;
+
+	dt = curlwp->l_fd->fd_dt;
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
@@ -370,7 +371,7 @@ fdesc_lookup(void *v)
 		fd = 0;
 		while (*pname >= '0' && *pname <= '9') {
 			fd = 10 * fd + *pname++ - '0';
-			if (fd >= numfiles)
+			if (fd >= dt->dt_nfiles)
 				break;
 		}
 
@@ -379,14 +380,11 @@ fdesc_lookup(void *v)
 			goto bad;
 		}
 
-		mutex_enter(&fdp->fd_lock);
-		if (fd >= numfiles ||fdp->fd_ofiles[fd] == NULL ||
-		    fdp->fd_ofiles[fd]->ff_file == NULL) {
-			mutex_exit(&fdp->fd_lock);
+		if (fd >= dt->dt_nfiles || dt->dt_ff[fd] == NULL ||
+		    dt->dt_ff[fd]->ff_file == NULL) {
 			error = EBADF;
 			goto bad;
 		}
-		mutex_exit(&fdp->fd_lock);
 
 		error = fdesc_allocvp(Fdesc, FD_DESC+fd, dvp->v_mount, &fvp);
 		if (error)
@@ -650,12 +648,12 @@ fdesc_readdir(void *v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
-	filedesc_t *fdp;
 	off_t i;
 	int j;
 	int error;
 	off_t *cookies = NULL;
 	int ncookies;
+	fdtab_t *dt;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
@@ -668,7 +666,7 @@ fdesc_readdir(void *v)
 		break;
 	}
 
-	fdp = curproc->p_fd;
+	dt = curlwp->l_fd->fd_dt;
 
 	if (uio->uio_resid < UIO_MX)
 		return EINVAL;
@@ -709,14 +707,11 @@ fdesc_readdir(void *v)
 			case FD_STDIN:
 			case FD_STDOUT:
 			case FD_STDERR:
-				if (fdp == NULL)
-					continue;
 				if ((ft->ft_fileno - FD_STDIN) >=
-				    fdp->fd_nfiles)
+				    dt->dt_nfiles)
 					continue;
-				membar_consumer();
-				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN]
-				    == NULL || fdp->fd_ofiles[ft->ft_fileno -
+				if (dt->dt_ff[ft->ft_fileno - FD_STDIN]
+				    == NULL || dt->dt_ff[ft->ft_fileno -
 				    FD_STDIN]->ff_file == NULL)
 					continue;
 				break;
@@ -733,16 +728,15 @@ fdesc_readdir(void *v)
 				*cookies++ = i + 1;
 		}
 	} else {
-		int nfdp = fdp ? fdp->fd_nfiles : 0;
 		membar_consumer();
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, nfdp + 2);
+			ncookies = min(ncookies, dt->dt_nfiles + 2);
 			cookies = malloc(ncookies * sizeof(off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 			*ap->a_ncookies = ncookies;
 		}
-		for (; i - 2 < nfdp && uio->uio_resid >= UIO_MX; i++) {
+		for (; i - 2 < dt->dt_nfiles && uio->uio_resid >= UIO_MX; i++) {
 			switch (i) {
 			case 0:
 			case 1:
@@ -754,10 +748,9 @@ fdesc_readdir(void *v)
 				break;
 
 			default:
-				KASSERT(fdp != NULL);
 				j = (int)i - 2;
-				if (fdp == NULL || fdp->fd_ofiles[j] == NULL ||
-				    fdp->fd_ofiles[j]->ff_file == NULL)
+				if (dt->dt_ff[j] == NULL ||
+				    dt->dt_ff[j]->ff_file == NULL)
 					continue;
 				d.d_fileno = j + FD_STDIN;
 				d.d_namlen = sprintf(d.d_name, "%d", j);
