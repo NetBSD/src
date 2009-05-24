@@ -1,4 +1,4 @@
-/*	$NetBSD: compkl.c,v 1.6 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: compkl.c,v 1.7 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)compkl.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: compkl.c,v 1.6 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: compkl.c,v 1.7 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,13 +50,14 @@ __RCSID("$NetBSD: compkl.c,v 1.6 2004/01/27 20:30:30 jsm Exp $");
 **
 **	This routine is used every time the Enterprise or the Klingons
 **	move.
+**
+**  f -- set if new quadrant
 */
 
 static void sortkl(void);
 
 void
-compkldist(f)
-int	f;		/* set if new quadrant */
+compkldist(int f)
 {
 	int		i, dx, dy;
 	double		d;
@@ -98,7 +99,7 @@ int	f;		/* set if new quadrant */
 */
 
 static void
-sortkl()
+sortkl(void)
 {
 	struct kling		t;
 	int		f, i, m;

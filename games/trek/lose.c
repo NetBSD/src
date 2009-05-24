@@ -1,4 +1,4 @@
-/*	$NetBSD: lose.c,v 1.7 2003/08/07 09:37:52 agc Exp $	*/
+/*	$NetBSD: lose.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lose.c,v 1.7 2003/08/07 09:37:52 agc Exp $");
+__RCSID("$NetBSD: lose.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,7 @@ const char	*const Losemsg[] =
 };
 
 void
-lose(why)
-int	why;
+lose(int why)
 {
 	Game.killed = 1;
 	sleep(1);
