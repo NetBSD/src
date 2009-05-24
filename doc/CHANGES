@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1233 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1234 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -275,5 +275,11 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		into libbluetooth, retiring the separate libsdp.
 		[plunky 20090512]
 	dhcpcd(8): Import dhcpcd-5.0.4 [roy 20090514]
+	libc: Add the getdate(3) and getdate_err value, conforming to
+		IEEE Std 1003.1 (``POSIX.1'') and the Open Group Base
+		Specifications X/Open System Interfaces extension (``XSI'').
+		[ginsbach 20090514]
 	hp700: com at dino now works [skrll 20090518]
 	httpd(8): Import bozohttpd-20090522. [mrg 20090522]
+	libc: Add %s (seconds since the Epoch) to strptime(3) for symmetry
+		with strftime(3). [ginsbach 20090524]
