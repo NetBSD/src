@@ -1,4 +1,4 @@
-/*	$NetBSD: attack.c,v 1.8 2009/05/24 21:55:24 dholland Exp $	*/
+/*	$NetBSD: attack.c,v 1.9 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)attack.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: attack.c,v 1.8 2009/05/24 21:55:24 dholland Exp $");
+__RCSID("$NetBSD: attack.c,v 1.9 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,8 @@ attack(int resting)
 	klmove(0);
 	if (Ship.cond == DOCKED) {
 		if (!resting)
-			printf("Starbase shields protect the %s\n", Ship.shipname);
+			printf("Starbase shields protect the %s\n",
+				Ship.shipname);
 		return;
 	}
 	/* setup shield effectiveness */
@@ -120,7 +121,8 @@ attack(int resting)
 		hit = Etc.klingon[i].power * pow(dustfac, tothe) * Param.hitfac;
 		/* deplete his energy */
 		dustfac = Etc.klingon[i].power;
-		Etc.klingon[i].power = dustfac * Param.phasfac * (1.0 + (franf() - 0.5) * 0.2);
+		Etc.klingon[i].power = dustfac * Param.phasfac *
+			(1.0 + (franf() - 0.5) * 0.2);
 		/* see how much of hit shields will absorb */
 		shldabsb = 0;
 		if (Ship.shldup || Move.shldchg) {
@@ -134,7 +136,8 @@ attack(int resting)
 		/* actually do the hit */
 		printf("\aHIT: %d units", hit);
 		if (!damaged(SRSCAN))
-			printf(" from %d,%d", Etc.klingon[i].x, Etc.klingon[i].y);
+			printf(" from %d,%d",
+				Etc.klingon[i].x, Etc.klingon[i].y);
 		cas = (shldabsb * 100) / hit;
 		hit -= shldabsb;
 		if (shldabsb > 0)
@@ -155,12 +158,14 @@ attack(int resting)
 				cas -= Param.damprob[l];
 			l -= 1;
 			/* compute amount of damage */
-			extradm = (hit * Param.damfac[l]) / (75 + ranf(25)) + 0.5;
+			extradm = (hit * Param.damfac[l]) /
+				(75 + ranf(25)) + 0.5;
 			/* damage the device */
 			damage(l, extradm);
 			if (damaged(SHIELD)) {
 				if (Ship.shldup)
-					printf("Sulu: Shields knocked down, captain.\n");
+					printf("Sulu: Shields knocked down, "
+					       "captain.\n");
 				Ship.shldup = 0;
 				Move.shldchg = 0;
 			}
@@ -173,7 +178,8 @@ attack(int resting)
 	if (maxhit >= 200 || tothit >= 500) {
 		cas = tothit * 0.015 * franf();
 		if (cas >= 2) {
-			printf("McCoy: we suffered %d casualties in that attack.\n",
+			printf("McCoy: we suffered %d casualties in that "
+			       "attack.\n",
 				cas);
 			Game.deaths += cas;
 			Ship.crew -= cas;
