@@ -1,4 +1,4 @@
-/*	$NetBSD: autover.c,v 1.5 2003/08/07 09:37:49 agc Exp $	*/
+/*	$NetBSD: autover.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)autover.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: autover.c,v 1.5 2003/08/07 09:37:49 agc Exp $");
+__RCSID("$NetBSD: autover.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: autover.c,v 1.5 2003/08/07 09:37:49 agc Exp $");
 */
 
 void
-autover()
+autover(void)
 {
 	double			dist;
 	int		course;

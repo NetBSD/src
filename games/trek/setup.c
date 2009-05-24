@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.10 2009/03/31 18:48:16 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.11 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.10 2009/03/31 18:48:16 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.11 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ const struct cvntab	Skitab[] =
 };
 
 void
-setup()
+setup(void)
 {
 	const struct cvntab		*r;
 	int		i, j;

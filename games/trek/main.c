@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,9 +160,7 @@ jmp_buf env;
 int main(int, char **);
 
 int
-main(argc, argv)
-int	argc;
-char	**argv;
+main(int argc, char **argv)
 {
 	time_t		curtime;
 	long			vect;

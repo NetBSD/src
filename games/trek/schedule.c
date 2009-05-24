@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.7 2009/03/31 18:48:16 christos Exp $	*/
+/*	$NetBSD: schedule.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: schedule.c,v 1.7 2009/03/31 18:48:16 christos Exp $");
+__RCSID("$NetBSD: schedule.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,11 +54,8 @@ __RCSID("$NetBSD: schedule.c,v 1.7 2009/03/31 18:48:16 christos Exp $");
 **	The address of the slot is returned.
 */
 
-struct event *schedule(type, offset, x, y, z)
-int	type;
-double	offset;
-char	x, y;
-char	z;
+struct event *
+schedule(int type, double offset, int x, int y, int z)
 {
 	struct event	*e;
 	int		i;
@@ -96,9 +93,7 @@ char	z;
 */
 
 void
-reschedule(e1, offset)
-struct event	*e1;
-double		offset;
+reschedule(struct event *e1, double offset)
 {
 	double			date;
 	struct event	*e;
@@ -123,8 +118,7 @@ double		offset;
 */
 
 void
-unschedule(e1)
-struct event	*e1;
+unschedule(struct event *e1)
 {
 	struct event	*e;
 
@@ -149,10 +143,8 @@ struct event	*e1;
 **	figure.
 */
 
-struct event *xsched(ev1, factor, x, y, z)
-int	ev1;
-int	factor;
-int	x, y, z;
+struct event *
+xsched(int ev1, int factor, int x, int y, int z)
 {
 	int	ev;
 
@@ -169,10 +161,7 @@ int	x, y, z;
 */
 
 void
-xresched(e1, ev1, factor)
-struct event	*e1;
-int		ev1;
-int		factor;
+xresched(struct event *e1, int ev1, int factor)
 {
 	int		ev;
 	struct event	*e;
