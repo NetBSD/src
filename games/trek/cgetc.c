@@ -1,4 +1,4 @@
-/*	$NetBSD: cgetc.c,v 1.7 2007/12/15 19:44:44 perry Exp $	*/
+/*	$NetBSD: cgetc.c,v 1.8 2009/05/24 18:22:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,15 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)cgetc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cgetc.c,v 1.7 2007/12/15 19:44:44 perry Exp $");
+__RCSID("$NetBSD: cgetc.c,v 1.8 2009/05/24 18:22:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
-char	cgetc(i)
-int	i __unused;
+char
+cgetc(int i __unused)
 {
-	return ( getchar() );
+	return getchar();
 }
