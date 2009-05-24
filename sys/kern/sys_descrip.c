@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.12 2009/03/28 21:42:19 rmind Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.13 2009/05/24 21:41:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.12 2009/03/28 21:42:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.13 2009/05/24 21:41:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
-	ff = fdp->fd_ofiles[fd];
+	ff = fdp->fd_dt->dt_ff[fd];
 
 	if ((cmd & F_FSCTL)) {
 		error = fcntl_forfs(fd, fp, cmd, SCARG(uap, arg));
