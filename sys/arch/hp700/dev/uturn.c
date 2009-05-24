@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.4 2009/05/23 13:39:54 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.5 2009/05/24 06:53:34 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -41,10 +41,10 @@
 #include <hp700/dev/cpudevs.h>
 
 struct uturn_regs {
-	u_int64_t	resv0[2];
-	u_int64_t	status;		/* 0x10: */
-	u_int64_t	resv1[5];
-	u_int64_t	debug;		/* 0x40: */
+	uint64_t	resv0[2];
+	uint64_t	status;		/* 0x10: */
+	uint64_t	resv1[5];
+	uint64_t	debug;		/* 0x40: */
 };
 
 struct uturn_softc {

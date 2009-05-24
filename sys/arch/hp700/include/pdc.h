@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.9 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.10 2009/05/24 06:53:35 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -571,15 +571,15 @@ struct pdc_pat_io_num {	/* PDC_PAT_IO */
 };
 
 struct pdc_pat_pci_rt {	/* PDC_PAT_IO_GET_PCI_RT */
-	u_int8_t	type;		/* 0x8b */
-	u_int8_t	len;
-	u_int8_t	itype;		/* 0 -- vectored int */
-	u_int8_t	trigger;	/* polarity/level */
-	u_int8_t	pin;		/* PCI pin number */
-	u_int8_t	bus;
-	u_int8_t	seg;		/* reserved */
-	u_int8_t	line;
-	u_int64_t	addr;		/* io sapic address */
+	uint8_t		type;		/* 0x8b */
+	uint8_t		len;
+	uint8_t		itype;		/* 0 -- vectored int */
+	uint8_t		trigger;	/* polarity/level */
+	uint8_t		pin;		/* PCI pin number */
+	uint8_t		bus;
+	uint8_t		seg;		/* reserved */
+	uint8_t		line;
+	uint64_t	addr;		/* io sapic address */
 };
 
 struct pdc_memmap {	/* PDC_MEMMAP */
@@ -603,8 +603,8 @@ struct pdc_system_map_find_addr {	/* PDC_SYSTEM_MAP_FIND_ADDR */
 };
 
 struct pdc_lan_station_id {	/* PDC_LAN_STATION_ID */
-	u_int8_t addr[6];
-	u_int8_t filler1[2];
+	uint8_t	addr[6];
+	uint8_t	filler1[2];
 	u_int	filler2[30];
 };
 
@@ -660,10 +660,10 @@ struct pdc_chassis_lcd {
 	u_int	cmd_addr;
 	u_int	data_addr;
 	u_int	delay;
-	u_int8_t line[2];
-	u_int8_t enabled;
-	u_int8_t heartbeat[3];
-	u_int8_t disk[3];
+	uint8_t	line[2];
+	uint8_t	enabled;
+	uint8_t	heartbeat[3];
+	uint8_t disk[3];
 	u_int	filler[25];
 };
 

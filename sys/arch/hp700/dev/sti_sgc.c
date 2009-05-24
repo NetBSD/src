@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.16 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.17 2009/05/24 06:53:34 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.16 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.17 2009/05/24 06:53:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 	struct confargs *ca = aux;
 	bus_space_handle_t romh;
 	paddr_t rom;
-	u_int32_t id, romend;
+	uint32_t id, romend;
 	u_char devtype;
 	int rv = 0, romunmapped = 0;
 
@@ -224,7 +224,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 	struct sti_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	paddr_t rom;
-	u_int32_t romlen;
+	uint32_t romlen;
 	int rv;
 	int pagezero_cookie;
 
