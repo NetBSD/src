@@ -1,4 +1,4 @@
-/*	$NetBSD: snova.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: snova.c,v 1.7 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)snova.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: snova.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: snova.c,v 1.7 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,23 +75,19 @@ snova(int x, int y)
 
 	f = 0;
 	ix = x;
-	if (ix < 0)
-	{
+	if (ix < 0) {
 		/* choose a quadrant */
-		while (1)
-		{
+		while (1) {
 			qx = ranf(NQUADS);
 			qy = ranf(NQUADS);
 			q = &Quad[qx][qy];
 			if (q->stars > 0)
 				break;
 		}
-		if (Ship.quadx == qx && Ship.quady == qy)
-		{
+		if (Ship.quadx == qx && Ship.quady == qy) {
 			/* select a particular star */
 			n = ranf(q->stars);
-			for (ix = 0; ix < NSECTS; ix++)
-			{
+			for (ix = 0; ix < NSECTS; ix++) {
 				for (iy = 0; iy < NSECTS; iy++)
 					if (Sect[ix][iy] == STAR || Sect[ix][iy] == INHABIT)
 						if ((n -= 1) <= 0)
@@ -101,9 +97,7 @@ snova(int x, int y)
 			}
 			f = 1;
 		}
-	}
-	else
-	{
+	} else {
 		/* current quadrant */
 		iy = y;
 		qx = Ship.quadx;
@@ -111,25 +105,20 @@ snova(int x, int y)
 		q = &Quad[qx][qy];
 		f = 1;
 	}
-	if (f)
-	{
+	if (f) {
 		/* supernova is in same quadrant as Enterprise */
 		printf("\nRED ALERT: supernova occuring at %d,%d\n", ix, iy);
 		dx = ix - Ship.sectx;
 		dy = iy - Ship.secty;
-		if (dx * dx + dy * dy <= 2)
-		{
+		if (dx * dx + dy * dy <= 2) {
 			printf("***  Emergency override attem");
 			sleep(1);
 			printf("\n");
 			lose(L_SNOVA);
 		}
 		q->scanned = 1000;
-	}
-	else
-	{
-		if (!damaged(SSRADIO))
-		{
+	} else {
+		if (!damaged(SSRADIO)) {
 			q->scanned = 1000;
 			printf("\nUhura: Captain, Starfleet Command reports a supernova\n");
 			printf("  in quadrant %d,%d.  Caution is advised\n", qx, qy);
@@ -140,22 +129,20 @@ snova(int x, int y)
 	dx = q->klings;
 	dy = q->stars;
 	Now.klings -= dx;
-	if (x >= 0)
-	{
+	if (x >= 0) {
 		/* Enterprise caused supernova */
 		Game.kills += dy;
 		if (q->bases)
 			killb(qx, qy);
 		Game.killk += dx;
-	}
-	else
+	} else {
 		if (q->bases)
 			killb(qx, qy);
+	}
 	killd(qx, qy, (x >= 0));
 	q->stars = -1;
 	q->klings = 0;
-	if (Now.klings <= 0)
-	{
+	if (Now.klings <= 0) {
 		printf("Lucky devil, that supernova destroyed the last klingon\n");
 		win();
 	}

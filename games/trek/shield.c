@@ -1,4 +1,4 @@
-/*	$NetBSD: shield.c,v 1.9 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: shield.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: shield.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: shield.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,7 @@ __RCSID("$NetBSD: shield.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
 **	so you get partial hits.
 */
 
-const struct cvntab Udtab[] =
-{
+const struct cvntab Udtab[] = {
 	{ "u",		"p",		(cmdfun)1,	0 },
 	{ "d",		"own",		(cmdfun)0,	0 },
 	{ NULL,		NULL,		NULL,		0 }
@@ -78,8 +77,7 @@ shield(int f)
 
 	if (f > 0 && (Ship.shldup || damaged(SRSCAN)))
 		return;
-	if (f < 0)
-	{
+	if (f < 0) {
 		/* cloaking device */
 		if (Ship.ship == QUEENE) {
 			printf("Ye Faire Queene does not have the cloaking device.\n");
@@ -90,9 +88,7 @@ shield(int f)
 		ind = CLOAK;
 		dev3 = "it";
 		stat = &Ship.cloaked;
-	}
-	else
-	{
+	} else {
 		/* shields */
 		device = "Shields";
 		dev2 = "are";
@@ -100,24 +96,19 @@ shield(int f)
 		ind = SHIELD;
 		stat = &Ship.shldup;
 	}
-	if (damaged(ind))
-	{
+	if (damaged(ind)) {
 		if (f <= 0)
 			out(ind);
 		return;
 	}
-	if (Ship.cond == DOCKED)
-	{
+	if (Ship.cond == DOCKED) {
 		printf("%s %s down while docked\n", device, dev2);
 		return;
 	}
-	if (f <= 0 && !testnl())
-	{
+	if (f <= 0 && !testnl()) {
 		r = getcodpar("Up or down", Udtab);
 		i = (long) r->value;
-	}
-	else
-	{
+	} else {
 		if (*stat)
 			(void)sprintf(s, "%s %s up.  Do you want %s down", device, dev2, dev3);
 		else
@@ -126,8 +117,7 @@ shield(int f)
 			return;
 		i = !*stat;
 	}
-	if (*stat == i)
-	{
+	if (*stat == i) {
 		printf("%s already ", device);
 		if (i)
 			printf("up\n");

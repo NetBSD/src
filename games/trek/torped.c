@@ -1,4 +1,4 @@
-/*	$NetBSD: torped.c,v 1.11 2009/05/24 20:43:09 dholland Exp $	*/
+/*	$NetBSD: torped.c,v 1.12 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: torped.c,v 1.11 2009/05/24 20:43:09 dholland Exp $");
+__RCSID("$NetBSD: torped.c,v 1.12 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,15 +79,13 @@ torped(int v __unused)
 	int		burst;
 	int		n;
 
-	if (Ship.cloaked)
-	{
+	if (Ship.cloaked) {
 		printf("Federation regulations do not permit attack while cloaked.\n");
 		return;
 	}
 	if (check_out(TORPED))
 		return;
-	if (Ship.torped <= 0)
-	{
+	if (Ship.torped <= 0) {
 		printf("All photon torpedos expended\n");
 		return;
 	}
@@ -99,27 +97,21 @@ torped(int v __unused)
 	burst = -1;
 
 	/* need at least three torpedoes for a burst */
-	if (Ship.torped < 3)
-	{
+	if (Ship.torped < 3) {
 		printf("No-burst mode selected\n");
 		burst = 0;
-	}
-	else
-	{
+	} else {
 		/* see if the user wants one */
-		if (!testnl())
-		{
+		if (!testnl()) {
 			k = ungetc(cgetc(0), stdin);
 			if (k >= '0' && k <= '9')
 				burst = 1;
 		}
 	}
-	if (burst < 0)
-	{
+	if (burst < 0) {
 		burst = getynpar("Do you want a burst");
 	}
-	if (burst)
-	{
+	if (burst) {
 		burst = getintpar("burst angle");
 		if (burst <= 0)
 			return;
@@ -130,16 +122,15 @@ torped(int v __unused)
 	}
 	sectsize = NSECTS;
 	n = -1;
-	if (burst)
-	{
+	if (burst) {
 		n = 1;
 		course -= burst;
 	}
-	for (; n && n <= 3; n++)
-	{
+	for (; n && n <= 3; n++) {
 		/* select a nice random course */
 		course2 = course + randcourse(n);
-		angle = course2 * 0.0174532925;			/* convert to radians */
+		/* convert to radians */
+		angle = course2 * 0.0174532925;
 		dx = -cos(angle);
 		dy =  sin(angle);
 		bigger = fabs(dx);
@@ -156,18 +147,15 @@ torped(int v __unused)
 		if (n > 0)
 			printf(", torpedo number %d", n);
 		printf(":\n%6.1f\t%4.1f\n", x, y);
-		while (1)
-		{
+		while (1) {
 			ix = x += dx;
 			iy = y += dy;
-			if (x < 0.0 || x >= sectsize || y < 0.0 || y >= sectsize)
-			{
+			if (x < 0.0 || x >= sectsize || y < 0.0 || y >= sectsize) {
 				printf("Torpedo missed\n");
 				break;
 			}
 			printf("%6.1f\t%4.1f\n", x, y);
-			switch (Sect[ix][iy])
-			{
+			switch (Sect[ix][iy]) {
 			  case EMPTY:
 				continue;
 
@@ -176,13 +164,11 @@ torped(int v __unused)
 				break;
 
 			  case KLINGON:
-				for (k = 0; k < Etc.nkling; k++)
-				{
+				for (k = 0; k < Etc.nkling; k++) {
 					if (Etc.klingon[k].x != ix || Etc.klingon[k].y != iy)
 						continue;
 					Etc.klingon[k].power -= 500 + ranf(501);
-					if (Etc.klingon[k].power > 0)
-					{
+					if (Etc.klingon[k].power > 0) {
 						printf("*** Hit on Klingon at %d,%d: extensive damages\n",
 							ix, iy);
 						break;
@@ -236,21 +222,18 @@ randcourse(int n)
 	int		d;
 
 	d = ((franf() + franf()) - 1.0) * 20;
-	if (abs(d) > 12)
-	{
+	if (abs(d) > 12) {
 		printf("Photon tubes misfire");
 		if (n < 0)
 			printf("\n");
 		else
 			printf(" on torpedo %d\n", n);
-		if (ranf(2))
-		{
+		if (ranf(2)) {
 			damage(TORPED, 0.2 * abs(d) * (franf() + 1.0));
 		}
 		d *= 1.0 + 2.0 * franf();
 	}
-	if (Ship.shldup || Ship.cond == DOCKED)
-	{
+	if (Ship.shldup || Ship.cond == DOCKED) {
 		r = Ship.shield;
 		r = 1.0 + r / Param.shield;
 		if (Ship.cond == DOCKED)

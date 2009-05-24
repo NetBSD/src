@@ -1,4 +1,4 @@
-/*	$NetBSD: initquad.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: initquad.c,v 1.7 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initquad.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initquad.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: initquad.c,v 1.7 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,7 @@ initquad(int f)
 	nholes = q->holes;
 
 	/* have we blundered into a battle zone w/ shields down? */
-	if (Etc.nkling > 0 && !f)
-	{
+	if (Etc.nkling > 0 && !f) {
 		printf("Condition RED\n");
 		Ship.cond = RED;
 		if (!damaged(COMPUTER))
@@ -95,8 +94,7 @@ initquad(int f)
 	Sect[Ship.sectx][Ship.secty] = Ship.ship;
 
 	/* initialize Klingons */
-	for (i = 0; i < Etc.nkling; i++)
-	{
+	for (i = 0; i < Etc.nkling; i++) {
 		sector(&rx, &ry);
 		Sect[rx][ry] = KLINGON;
 		Etc.klingon[i].x = rx;
@@ -107,8 +105,7 @@ initquad(int f)
 	compkldist(1);
 
 	/* initialize star base */
-	if (nbases > 0)
-	{
+	if (nbases > 0) {
 		sector(&rx, &ry);
 		Sect[rx][ry] = BASE;
 		Etc.starbase.x = rx;
@@ -116,23 +113,20 @@ initquad(int f)
 	}
 
 	/* initialize inhabited starsystem */
-	if (q->qsystemname != 0)
-	{
+	if (q->qsystemname != 0) {
 		sector(&rx, &ry);
 		Sect[rx][ry] = INHABIT;
 		nstars -= 1;
 	}
 
 	/* initialize black holes */
-	for (i = 0; i < nholes; i++)
-	{
+	for (i = 0; i < nholes; i++) {
 		sector(&rx, &ry);
 		Sect[rx][ry] = HOLE;
 	}
 
 	/* initialize stars */
-	for (i = 0; i < nstars; i++)
-	{
+	for (i = 0; i < nstars; i++) {
 		sector(&rx, &ry);
 		Sect[rx][ry] = STAR;
 	}
@@ -145,8 +139,7 @@ sector(int *x, int *y)
 {
 	int	i, j;
 
-	do
-	{
+	do {
 		i = ranf(NSECTS);
 		j = ranf(NSECTS);
 	} while (Sect[i][j] != EMPTY);

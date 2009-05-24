@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.13 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.14 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpgame.c,v 1.13 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: dumpgame.c,v 1.14 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,8 +47,7 @@ __RCSID("$NetBSD: dumpgame.c,v 1.13 2009/05/24 20:39:43 dholland Exp $");
 /***  THIS CONSTANT MUST CHANGE AS THE DATA SPACES CHANGE ***/
 #define VERSION		2
 
-struct dump
-{
+struct dump {
 	char	*area;
 	int	count;
 };
@@ -56,8 +55,7 @@ struct dump
 static int readdump(int);
 
 
-struct dump	Dump_template[] =
-{
+struct dump Dump_template[] = {
 	{ (char *)&Ship,	sizeof (Ship) },
 	{ (char *)&Now,		sizeof (Now) },
 	{ (char *)&Param,	sizeof (Param) },
@@ -97,8 +95,7 @@ dumpgame(int v __unused)
 	write(fd, &version, sizeof version);
 
 	/* output the main data areas */
-	for (d = Dump_template; d->area; d++)
-	{
+	for (d = Dump_template; d->area; d++) {
 		write(fd, &d->area, sizeof d->area);
 		i = d->count;
 		write(fd, d->area, i);
@@ -128,8 +125,7 @@ restartgame(void)
 	if ((fd = open("trek.dump", O_RDONLY)) < 0 ||
 	    read(fd, &version, sizeof version) != sizeof version ||
 	    version != VERSION ||
-	    readdump(fd))
-	{
+	    readdump(fd)) {
 		printf("cannot restart\n");
 		if (fd >= 0)
 			close(fd);
@@ -160,8 +156,7 @@ readdump(int fd1)
 
 	fd = fd1;
 
-	for (d = Dump_template; d->area; d++)
-	{
+	for (d = Dump_template; d->area; d++) {
 		if (read(fd, &junk, sizeof junk) != (sizeof junk))
 			return (1);
 		if ((char *)junk != d->area)

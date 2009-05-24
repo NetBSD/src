@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: win.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: win.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: win.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,13 +74,11 @@ win(void)
 
 	/* decide if she gets a promotion */
 	if (Game.helps == 0 && Game.killb == 0 && Game.killinhab == 0 && 5 * Game.kills + Game.deaths < 100 &&
-			s >= 1000 && Ship.ship == ENTERPRISE)
-	{
+			s >= 1000 && Ship.ship == ENTERPRISE) {
 		printf("In fact, you are promoted one step in rank,\n");
-		if (Game.skill >= 6)
+		if (Game.skill >= 6) {
 			printf("to the exalted rank of Commodore Emeritus\n");
-		else
-		{
+		} else {
 			p = &Skitab[Game.skill - 1];
 			printf("from %s%s ", p->abrev, p->full);
 			p++;

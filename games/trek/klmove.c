@@ -1,4 +1,4 @@
-/*	$NetBSD: klmove.c,v 1.7 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: klmove.c,v 1.8 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)klmove.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: klmove.c,v 1.7 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: klmove.c,v 1.8 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,7 @@ klmove(int fl)
 	if (Trace)
 		printf("klmove: fl = %d, Etc.nkling = %d\n", fl, Etc.nkling);
 #endif
-	for (n = 0; n < Etc.nkling; n++)
-	{
+	for (n = 0; n < Etc.nkling; n++) {
 		k = &Etc.klingon[n];
 		i = 100;
 		if (fl)
@@ -103,8 +102,7 @@ klmove(int fl)
 			bigger = 1.0;
 		dx = dx / bigger + 0.5;
 		dy = dy / bigger + 0.5;
-		if (motion < 0)
-		{
+		if (motion < 0) {
 			motion = -motion;
 			dx = -dx;
 			dy = -dy;
@@ -113,12 +111,10 @@ klmove(int fl)
 		/* try to move the klingon */
 		nextx = k->x;
 		nexty = k->y;
-		for (; motion > 0; motion--)
-		{
+		for (; motion > 0; motion--) {
 			lookx = nextx + dx;
 			looky = nexty + dy;
-			if (lookx < 0 || lookx >= NSECTS || looky < 0 || looky >= NSECTS)
-			{
+			if (lookx < 0 || lookx >= NSECTS || looky < 0 || looky >= NSECTS) {
 				/* new quadrant */
 				qx = Ship.quadx;
 				qy = Ship.quady;
@@ -135,8 +131,7 @@ klmove(int fl)
 				if (qx < 0 || qx >= NQUADS || qy < 0 || qy >= NQUADS ||
 						Quad[qx][qy].stars < 0 || Quad[qx][qy].klings > MAXKLQUAD - 1)
 					break;
-				if (!damaged(SRSCAN))
-				{
+				if (!damaged(SRSCAN)) {
 					printf("Klingon at %d,%d escapes to quadrant %d,%d\n",
 						k->x, k->y, qx, qy);
 					motion = Quad[qx][qy].scanned;
@@ -154,17 +149,14 @@ klmove(int fl)
 				k = 0;
 				break;
 			}
-			if (Sect[lookx][looky] != EMPTY)
-			{
+			if (Sect[lookx][looky] != EMPTY) {
 				lookx = nextx + fudgex;
 				if (lookx < 0 || lookx >= NSECTS)
 					lookx = nextx + dx;
-				if (Sect[lookx][looky] != EMPTY)
-				{
+				if (Sect[lookx][looky] != EMPTY) {
 					fudgex = -fudgex;
 					looky = nexty + fudgey;
-					if (looky < 0 || looky >= NSECTS || Sect[lookx][looky] != EMPTY)
-					{
+					if (looky < 0 || looky >= NSECTS || Sect[lookx][looky] != EMPTY) {
 						fudgey = -fudgey;
 						break;
 					}
@@ -173,8 +165,7 @@ klmove(int fl)
 			nextx = lookx;
 			nexty = looky;
 		}
-		if (k && (k->x != nextx || k->y != nexty))
-		{
+		if (k && (k->x != nextx || k->y != nexty)) {
 			if (!damaged(SRSCAN))
 				printf("Klingon at %d,%d moves to %d,%d\n",
 					k->x, k->y, nextx, nexty);

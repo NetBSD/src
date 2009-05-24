@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.12 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: computer.c,v 1.13 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: computer.c,v 1.12 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: computer.c,v 1.13 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,8 +90,7 @@ __RCSID("$NetBSD: computer.c,v 1.12 2009/05/24 19:18:44 dholland Exp $");
 **	command processor.
 */
 
-struct cvntab	Cputab[] =
-{
+struct cvntab Cputab[] = {
 	{ "ch",		"art",			(cmdfun)1,		0 },
 	{ "t",		"rajectory",		(cmdfun)2,		0 },
 	{ "c",		"ourse",		(cmdfun)3,		0 },
@@ -124,11 +123,9 @@ computer(int v __unused)
 
 	if (check_out(COMPUTER))
 		return;
-	while (1)
-	{
+	while (1) {
 		r = getcodpar("\nRequest", Cputab);
-		switch ((long)r->value)
-		{
+		switch ((long)r->value) {
 
 		  case 1:			/* star chart */
 			printf("Computer record of galaxy for all long range sensor scans\n\n");
@@ -137,13 +134,10 @@ computer(int v __unused)
 			for (i = 0; i < NQUADS; i++)
 				printf("-%d- ", i);
 			printf("\n");
-			for (i = 0; i < NQUADS; i++)
-			{
+			for (i = 0; i < NQUADS; i++) {
 				printf("%d ", i);
-				for (j = 0; j < NQUADS; j++)
-				{
-					if (i == Ship.quadx && j == Ship.quady)
-					{
+				for (j = 0; j < NQUADS; j++) {
+					if (i == Ship.quadx && j == Ship.quady) {
 						printf("$$$ ");
 						continue;
 					}
@@ -170,18 +164,15 @@ computer(int v __unused)
 			break;
 
 		  case 2:			/* trajectory */
-			if (check_out(SRSCAN))
-			{
+			if (check_out(SRSCAN)) {
 				break;
 			}
-			if (Etc.nkling <= 0)
-			{
+			if (Etc.nkling <= 0) {
 				printf("No Klingons in this quadrant\n");
 				break;
 			}
 			/* for each Klingon, give the course & distance */
-			for (i = 0; i < Etc.nkling; i++)
-			{
+			for (i = 0; i < Etc.nkling; i++) {
 				printf("Klingon at %d,%d", Etc.klingon[i].x, Etc.klingon[i].y);
 				course = kalc(Ship.quadx, Ship.quady, Etc.klingon[i].x, Etc.klingon[i].y, &dist);
 				prkalc(course, dist);
@@ -189,13 +180,10 @@ computer(int v __unused)
 			break;
 
 		  case 3:			/* course calculation */
-			if (readdelim('/'))
-			{
+			if (readdelim('/')) {
 				tqx = Ship.quadx;
 				tqy = Ship.quady;
-			}
-			else
-			{
+			} else {
 				ix = getintpar("Quadrant");
 				if (ix < 0 || ix >= NSECTS)
 					break;
@@ -212,8 +200,7 @@ computer(int v __unused)
 			if (iy < 0 || iy >= NSECTS)
 				break;
 			course = kalc(tqx, tqy, ix, iy, &dist);
-			if (r->value2)
-			{
+			if (r->value2) {
 				warp(-1, course, dist);
 				break;
 			}
@@ -262,14 +249,12 @@ computer(int v __unused)
 			j = 1;
 			printf("\n");
 			/* scan the event list */
-			for (i = 0; i < MAXEVENTS; i++)
-			{
+			for (i = 0; i < MAXEVENTS; i++) {
 				e = &Event[i];
 				/* ignore hidden entries */
 				if (e->evcode & E_HIDDEN)
 					continue;
-				switch (e->evcode & E_EVENT)
-				{
+				switch (e->evcode & E_EVENT) {
 
 				  case E_KDESB:
 					printf("Klingon is attacking starbase in quadrant %d,%d\n",
@@ -291,15 +276,15 @@ computer(int v __unused)
 
 		}
 
-		/* skip to next semicolon or newline.  Semicolon
+		/*
+		 * Skip to next semicolon or newline.  Semicolon
 		 * means get new computer request; newline means
-		 * exit computer mode. */
-		while ((i = cgetc(0)) != ';')
-		{
+		 * exit computer mode.
+		 */
+		while ((i = cgetc(0)) != ';') {
 			if (i == '\0')
 				exit(1);
-			if (i == '\n')
-			{
+			if (i == '\n') {
 				ungetc(i, stdin);
 				return;
 			}

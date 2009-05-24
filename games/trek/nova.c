@@ -1,4 +1,4 @@
-/*	$NetBSD: nova.c,v 1.7 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: nova.c,v 1.8 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)nova.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: nova.c,v 1.7 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: nova.c,v 1.8 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,7 @@ nova(int x, int y)
 
 	if (Sect[x][y] != STAR || Quad[Ship.quadx][Ship.quady].stars < 0)
 		return;
-	if (ranf(100) < 15)
-	{
+	if (ranf(100) < 15) {
 		printf("Spock: Star at %d,%d failed to nova.\n", x, y);
 		return;
 	}
@@ -74,26 +73,22 @@ nova(int x, int y)
 	}
 	printf("Spock: Star at %d,%d gone nova\n", x, y);
 
-	if (ranf(4) != 0)
+	if (ranf(4) != 0) {
 		Sect[x][y] = EMPTY;
-	else
-	{
+	} else {
 		Sect[x][y] = HOLE;
 		Quad[Ship.quadx][Ship.quady].holes += 1;
 	}
 	Quad[Ship.quadx][Ship.quady].stars -= 1;
 	Game.kills += 1;
-	for (i = x - 1; i <= x + 1; i++)
-	{
+	for (i = x - 1; i <= x + 1; i++) {
 		if (i < 0 || i >= NSECTS)
 			continue;
-		for (j = y - 1; j <= y + 1; j++)
-		{
+		for (j = y - 1; j <= y + 1; j++) {
 			if (j < 0 || j >= NSECTS)
 				continue;
 			se = Sect[i][j];
-			switch (se)
-			{
+			switch (se) {
 
 			  case EMPTY:
 			  case HOLE:

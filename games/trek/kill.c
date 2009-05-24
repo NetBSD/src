@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.9 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: kill.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: kill.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: kill.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,7 @@ killk(int ix, int iy)
 
 	/* find the Klingon in the Klingon list */
 	for (i = 0; i < Etc.nkling; i++)
-		if (ix == Etc.klingon[i].x && iy == Etc.klingon[i].y)
-		{
+		if (ix == Etc.klingon[i].x && iy == Etc.klingon[i].y) {
 			/* purge him from the list */
 			Etc.nkling -= 1;
 			for (; i < Etc.nkling; i++)
@@ -122,17 +121,13 @@ killb(int qx, int qy)
 		if (qx == b->x && qy == b->y)
 			break;
 	*b = Now.base[Now.bases];
-	if (qx == Ship.quadx && qy == Ship.quady)
-	{
+	if (qx == Ship.quadx && qy == Ship.quady) {
 		Sect[Etc.starbase.x][Etc.starbase.y] = EMPTY;
 		if (Ship.cond == DOCKED)
 			undock(0);
 		printf("Starbase at %d,%d destroyed\n", Etc.starbase.x, Etc.starbase.y);
-	}
-	else
-	{
-		if (!damaged(SSRADIO))
-		{
+	} else {
+		if (!damaged(SSRADIO)) {
 			printf("Uhura: Starfleet command reports that the starbase in\n");
 			printf("   quadrant %d,%d has been destroyed\n", qx, qy);
 		}
@@ -156,8 +151,7 @@ kills(int x, int y, int f)
 	struct event	*e;
 	const char	*name;
 
-	if (f)
-	{
+	if (f) {
 		/* current quadrant */
 		q = &Quad[Ship.quadx][Ship.quady];
 		Sect[x][y] = EMPTY;
@@ -168,14 +162,11 @@ kills(int x, int y, int f)
 			name, x, y);
 		if (f < 0)
 			Game.killinhab += 1;
-	}
-	else
-	{
+	} else {
 		/* different quadrant */
 		q = &Quad[x][y];
 	}
-	if (q->qsystemname & Q_DISTRESSED)
-	{
+	if (q->qsystemname & Q_DISTRESSED) {
 		/* distressed starsystem */
 		e = &Event[q->qsystemname & Q_SYSTEM];
 		printf("Distress call for %s invalidated\n",
@@ -202,16 +193,13 @@ killd(int x, int y, int f)
 	struct quad	*q;
 
 	q = &Quad[x][y];
-	for (i = 0; i < MAXEVENTS; i++)
-	{
+	for (i = 0; i < MAXEVENTS; i++) {
 		e = &Event[i];
 		if (e->x != x || e->y != y)
 			continue;
-		switch (e->evcode)
-		{
+		switch (e->evcode) {
 		  case E_KDESB:
-			if (f)
-			{
+			if (f) {
 				printf("Distress call for starbase in %d,%d nullified\n",
 					x, y);
 				unschedule(e);
@@ -220,15 +208,12 @@ killd(int x, int y, int f)
 
 		  case E_ENSLV:
 		  case E_REPRO:
-			if (f)
-			{
+			if (f) {
 				printf("Distress call for %s in quadrant %d,%d nullified\n",
 					Systemname[e->systemname], x, y);
 				q->qsystemname = e->systemname;
 				unschedule(e);
-			}
-			else
-			{
+			} else {
 				e->evcode |= E_GHOST;
 			}
 		}

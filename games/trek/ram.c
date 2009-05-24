@@ -1,4 +1,4 @@
-/*	$NetBSD: ram.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: ram.c,v 1.7 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ram.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ram.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: ram.c,v 1.7 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,7 @@ ram(int ix, int iy)
 
 	printf("\07RED ALERT\07: collision imminent\n");
 	c = Sect[ix][iy];
-	switch (c)
-	{
+	switch (c) {
 
 	  case KLINGON:
 		printf("%s rams Klingon at %d,%d\n", Ship.shipname, ix, iy);
@@ -94,8 +93,7 @@ ram(int ix, int iy)
 	printf("McCoy: Take it easy Jim; we had %d casualties.\n", i);
 
 	/* damage devices with an 80% probability */
-	for (i = 0; i < NDEV; i++)
-	{
+	for (i = 0; i < NDEV; i++) {
 		if (ranf(100) < 20)
 			continue;
 		damage(i, (2.5 * (franf() + franf()) + 1.0) * Param.damfac[i]);

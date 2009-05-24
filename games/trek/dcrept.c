@@ -1,4 +1,4 @@
-/*	$NetBSD: dcrept.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: dcrept.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dcrept.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dcrept.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: dcrept.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,13 +63,10 @@ dcrept(int v __unused)
 	struct event	*e;
 
 	/* set up the magic factors to output the time till fixed */
-	if (Ship.cond == DOCKED)
-	{
+	if (Ship.cond == DOCKED) {
 		m1 = 1.0 / Param.dockfac;
 		m2 = 1.0;
-	}
-	else
-	{
+	} else {
 		m1 = 1.0;
 		m2 = Param.dockfac;
 	}
@@ -77,15 +74,13 @@ dcrept(int v __unused)
 	f = 1;
 
 	/* scan for damages */
-	for (i = 0; i < MAXEVENTS; i++)
-	{
+	for (i = 0; i < MAXEVENTS; i++) {
 		e = &Event[i];
 		if (e->evcode != E_FIXDV)
 			continue;
 
 		/* output the title first time */
-		if (f)
-		{
+		if (f) {
 			printf("\t\t\t  repair times\n");
 			printf("device\t\t\tin flight  docked\n");
 			f = 0;

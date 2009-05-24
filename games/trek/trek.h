@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.13 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: trek.h,v 1.14 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -52,8 +52,8 @@
 #define NQUADS		8	/* dimension of galazy in quadrants */
 #define NINHAB		32	/* number of quadrants which are inhabited */
 
-struct quad		/* definition for each quadrant */
-{
+/* definition for each quadrant */
+struct quad {
 	unsigned char	bases;	/* number of bases in this quadrant */
 	char	klings;		/* number of Klingons in this quadrant */
 	char	holes;		/* number of black holes in this quadrant */
@@ -65,7 +65,8 @@ struct quad		/* definition for each quadrant */
 #define Q_DISTRESSED	0200
 #define Q_SYSTEM	077
 
-/*  systemname conventions:
+/*
+ *  systemname conventions:
  *	1 -> NINHAB	index into Systemname table for live system.
  *	+ Q_DISTRESSED	distressed starsystem -- systemname & Q_SYSTEM
  *			is the index into the Event table which will
@@ -77,7 +78,7 @@ struct quad		/* definition for each quadrant */
  *	-1		not yet scanned ("...")
  *	1000		supernova ("///")
  *	1001		starbase + ??? (".1.")
-*/
+ */
 
 /* ascii names of systems */
 extern const char	*const Systemname[NINHAB];
@@ -121,8 +122,7 @@ extern char	Sect[NSECTS][NSECTS];
 #define SHUTTLE		13	/* shuttlecraft */
 
 /* device names */
-struct device
-{
+struct device {
 	const char	*name;		/* device name */
 	const char	*person;	/* the person who fixes it */
 };
@@ -148,14 +148,15 @@ extern const struct device	Device[NDEV];
 #define E_HIDDEN	0200	/* event unreportable because ssradio out */
 #define E_EVENT		077	/* mask to get event code */
 
-struct event
-{
+struct event {
 	unsigned char 	x, y;		/* coordinates */
 	double		date;		/* trap stardate */
 	char		evcode;		/* event type */
 	unsigned char	systemname;	/* starsystem name */
 };
-/* systemname conventions:
+
+/*
+ * systemname conventions:
  *	1 -> NINHAB	index into Systemname table for reported distress calls
  *
  * evcode conventions:
@@ -165,14 +166,15 @@ struct event
  *	0		unallocated
  */
 
-#define MAXEVENTS	25	/* max number of concurrently pending events */
+/* max number of concurrently pending events */
+#define MAXEVENTS	25
 
-extern struct event	Event[MAXEVENTS];	/* dynamic event list; one entry per pending event */
+/* dynamic event list; one entry per pending event */
+extern struct event	Event[MAXEVENTS];
 
 /*****************************  KLINGONS  *******************************/
 
-struct kling
-{
+struct kling {
 	unsigned char	x, y;	/* coordinates */
 	int	power;		/* power left */
 	double	dist;		/* distance to Enterprise */
@@ -199,8 +201,7 @@ struct kling
 /* phaser banks */
 #define NBANKS		6	/* number of phaser banks */
 
-struct xy
-{
+struct xy {
 	unsigned char	x, y;		/* coordinates */
 };
 
@@ -212,8 +213,7 @@ struct xy
 
 
 /* information regarding the state of the starship */
-struct Ship_struct
-{
+struct Ship_struct {
 	double	warp;		/* warp factor */
 	double	warp2;		/* warp factor squared */
 	double	warp3;		/* warp factor cubed */
@@ -231,6 +231,7 @@ struct Ship_struct
 	int	sectx;		/* sector x coord */
 	int	secty;		/* sector y coord */
 	unsigned char	cond;	/* condition code */
+	/* sinsbad is set if SINS is working but not calibrated */
 	char	sinsbad;	/* Space Inertial Navigation System condition */
 	const char *shipname;	/* name of current starship */
 	char	ship;		/* current starship */
@@ -238,11 +239,9 @@ struct Ship_struct
 };
 extern struct Ship_struct Ship;
 
-/* sinsbad is set if SINS is working but not calibrated */
 
 /* game related information, mostly scoring */
-struct Game_struct
-{
+struct Game_struct {
 	int	killk;		/* number of klingons killed */
 	int	deaths;		/* number of deaths onboard Enterprise */
 	char	negenbar;	/* number of hits on negative energy barrier */
@@ -261,8 +260,7 @@ struct Game_struct
 extern struct Game_struct Game;
 
 /* per move information */
-struct Move_struct
-{
+struct Move_struct {
 	char	free;		/* set if a move is free */
 	char	endgame;	/* end of game flag */
 	char	shldchg;	/* set if shields changed this move */
@@ -273,8 +271,7 @@ struct Move_struct
 extern struct Move_struct Move;
 
 /* parametric information */
-struct Param_struct
-{
+struct Param_struct {
 	unsigned char	bases;	/* number of starbases */
 	char	klings;		/* number of klingons */
 	double	date;		/* stardate */
@@ -310,8 +307,7 @@ extern struct Param_struct Param;
 /* Sum of damage probabilities must add to 1000 */
 
 /* other information kept in a snapshot */
-struct Now_struct
-{
+struct Now_struct {
 	unsigned char	bases;	/* number of starbases */
 	char	klings;		/* number of klingons */
 	double	date;		/* stardate */
@@ -324,8 +320,7 @@ struct Now_struct
 extern struct Now_struct Now;
 
 /* Other stuff, not dumped in a snapshot */
-struct Etc_struct
-{
+struct Etc_struct {
 	struct kling	klingon[MAXKLQUAD];	/* sorted Klingon list */
 	short		nkling;			/* number of Klingons in this sector */
 						/* < 0 means automatic override mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.7 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.7 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,13 +70,11 @@ score(void)
 	s += (t = -400 * r);
 	if (t != 0)
 		printf("Penalty for %d klingons remaining\t%6d\n", Now.klings, t);
-	if (Move.endgame > 0)
-	{
+	if (Move.endgame > 0) {
 		s += (t = 100 * (u = Game.skill));
 		printf("Bonus for winning a %s%s game\t\t%6d\n", Skitab[u - 1].abrev, Skitab[u - 1].full, t);
 	}
-	if (Game.killed)
-	{
+	if (Game.killed) {
 		s -= 500;
 		printf("Penalty for getting killed\t\t  -500\n");
 	}
@@ -92,8 +90,7 @@ score(void)
 	s += (t = -150 * (u = Game.killinhab));
 	if (t != 0)
 		printf("%d inhabited starsystems destroyed\t%6d\n", u, t);
-	if (Ship.ship != ENTERPRISE)
-	{
+	if (Ship.ship != ENTERPRISE) {
 		s -= 200;
 		printf("penalty for abandoning ship\t\t  -200\n");
 	}

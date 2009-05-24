@@ -1,4 +1,4 @@
-/*	$NetBSD: checkcond.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: checkcond.c,v 1.7 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)checkcond.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: checkcond.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: checkcond.c,v 1.7 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,13 +91,11 @@ checkcond(void)
 	if (Ship.cond == DOCKED)
 		return;
 
-	if (Etc.nkling > 0)
-	{
+	if (Etc.nkling > 0) {
 		Ship.cond = RED;
 		return;
 	}
-	if (Ship.energy < Param.energylow)
-	{
+	if (Ship.energy < Param.energylow) {
 		Ship.cond = YELLOW;
 		return;
 	}
