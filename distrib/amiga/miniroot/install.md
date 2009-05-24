@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.26 2008/04/30 13:10:47 martin Exp $
+#	$NetBSD: install.md,v 1.27 2009/05/24 22:59:18 mlelstv Exp $
 #
 #
 # Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -329,8 +329,7 @@ md_lib_is_aout() {
 	test -h $1 && return 1
 	test -f $1 || return 1
 
-	r=`file $1 | sed -n -e '/ELF/p'`
-	test -z "$r" || return 1
+	[ "`dd if=$1 bs=1 skip=1 count=3 2> /dev/null`" = "ELF" ] && return 1
 	return 0
 }
 
