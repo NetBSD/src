@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpme.c,v 1.7 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: dumpme.c,v 1.8 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpme.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpme.c,v 1.7 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: dumpme.c,v 1.8 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,10 @@ dumpme(int flag)
 	if (f) {
 		printf("%s falls into a black hole.\n", Ship.shipname);
 	} else {
-		printf("Computer applies full reverse power to avoid hitting the\n");
-		printf("   negative energy barrier.  A space warp was entered.\n");
+		printf("Computer applies full reverse power to avoid hitting "
+		       "the\n");
+		printf("   negative energy barrier.  A space warp was "
+		       "entered.\n");
 	}
 	/* bump repair dates forward */
 	for (i = 0; i < MAXEVENTS; i++) {

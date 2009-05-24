@@ -1,4 +1,4 @@
-/*	$NetBSD: shield.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: shield.c,v 1.11 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: shield.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: shield.c,v 1.11 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,8 @@ shield(int f)
 	if (f < 0) {
 		/* cloaking device */
 		if (Ship.ship == QUEENE) {
-			printf("Ye Faire Queene does not have the cloaking device.\n");
+			printf("Ye Faire Queene does not have the "
+			       "cloaking device.\n");
 			return;
 		}
 		device = "Cloaking device";
@@ -110,9 +111,11 @@ shield(int f)
 		i = (long) r->value;
 	} else {
 		if (*stat)
-			(void)sprintf(s, "%s %s up.  Do you want %s down", device, dev2, dev3);
+			(void)sprintf(s, "%s %s up.  Do you want %s down",
+				device, dev2, dev3);
 		else
-			(void)sprintf(s, "%s %s down.  Do you want %s up", device, dev2, dev3);
+			(void)sprintf(s, "%s %s down.  Do you want %s up",
+				device, dev2, dev3);
 		if (!getynpar(s))
 			return;
 		i = !*stat;

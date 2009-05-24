@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: schedule.c,v 1.11 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: schedule.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: schedule.c,v 1.11 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,8 @@ schedule(int type, double offset, int x, int y, int z)
 		/* got a slot */
 #ifdef xTRACE
 		if (Trace)
-			printf("schedule: type %d @ %.2f slot %d parm %d %d %d\n",
+			printf("schedule: type %d @ %.2f "
+			       "slot %d parm %d %d %d\n",
 				type, date, i, x, y, z);
 #endif
 		e->evcode = type;
@@ -146,9 +147,11 @@ struct event *
 xsched(int ev1, int factor, int x, int y, int z)
 {
 	int	ev;
+	double when;
 
 	ev = ev1;
-	return (schedule(ev, -Param.eventdly[ev] * Param.time * log(franf()) / factor, x, y, z));
+	when = -Param.eventdly[ev] * Param.time * log(franf()) / factor;
+	return (schedule(ev, when, x, y, z));
 }
 
 
@@ -164,8 +167,10 @@ xresched(struct event *e1, int ev1, int factor)
 {
 	int		ev;
 	struct event	*e;
+	double when;
 
 	ev = ev1;
 	e = e1;
-	reschedule(e, -Param.eventdly[ev] * Param.time * log(franf()) / factor);
+	when = -Param.eventdly[ev] * Param.time * log(franf()) / factor;
+	reschedule(e, when);
 }
