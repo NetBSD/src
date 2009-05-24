@@ -1,4 +1,4 @@
-/*	$NetBSD: torped.c,v 1.13 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: torped.c,v 1.14 2009/05/24 23:20:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: torped.c,v 1.13 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: torped.c,v 1.14 2009/05/24 23:20:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ torped(int v __unused)
 	} else {
 		/* see if the user wants one */
 		if (!testnl()) {
-			k = ungetc(cgetc(0), stdin);
+			k = ungetc(getchar(), stdin);
 			if (k >= '0' && k <= '9')
 				burst = 1;
 		}
