@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.32 2009/05/01 20:15:05 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.33 2009/05/24 02:25:43 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.32 2009/05/01 20:15:05 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.33 2009/05/24 02:25:43 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -248,6 +248,36 @@ literal:
 		case 'S':	/* The seconds. */
 			bp = conv_num(bp, &tm->tm_sec, 0, 61);
 			LEGAL_ALT(ALT_O);
+			continue;
+
+#ifndef TIME_MAX
+#define TIME_MAX	INT64_MAX
+#endif
+		case 's':	/* seconds since the epoch */
+			{
+				time_t sse = 0;
+				uint64_t rulim = TIME_MAX;
+
+				if (*bp < '0' || *bp > '9') {
+					bp = NULL;
+					continue;
+				}
+
+				do {
+					sse *= 10;
+					sse += *bp++ - '0';
+					rulim /= 10;
+				} while ((sse * 10 <= TIME_MAX) &&
+					 rulim && *bp >= '0' && *bp <= '9');
+
+				if (sse < 0 || (uint64_t)sse > TIME_MAX) {
+					bp = NULL;
+					continue;
+				}
+
+				if (localtime_r(&sse, tm) == NULL)
+					bp = NULL;
+			}
 			continue;
 
 		case 'U':	/* The week of year, beginning on sunday. */
