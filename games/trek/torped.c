@@ -1,4 +1,4 @@
-/*	$NetBSD: torped.c,v 1.10 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: torped.c,v 1.11 2009/05/24 20:43:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: torped.c,v 1.10 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: torped.c,v 1.11 2009/05/24 20:43:09 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ torped(int v __unused)
 			{
 			  case EMPTY:
 				continue;
-	
+
 			  case HOLE:
 				printf("Torpedo disappears into a black hole\n");
 				break;
@@ -191,19 +191,20 @@ torped(int v __unused)
 					break;
 				}
 				break;
-	
+
 			  case STAR:
 				nova(ix, iy);
 				break;
-	
+
 			  case INHABIT:
 				kills(ix, iy, -1);
 				break;
-	
+
 			  case BASE:
 				killb(Ship.quadx, Ship.quady);
 				Game.killb += 1;
 				break;
+
 			  default:
 				printf("Unknown object %c at %d,%d destroyed\n",
 					Sect[ix][iy], ix, iy);
