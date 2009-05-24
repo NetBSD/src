@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.33 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.34 2009/05/24 09:17:59 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -237,9 +237,9 @@ ENTRY_NOPROFILE(start,0)
 	/* XXX - we should create a real trapframe for lwp0 */
 	copy	%t3, %t2
 	ldi	NBPG+TRAPFRAME_SIZEOF, %t1
-$start_zero_tf:
+L$start_zero_tf:
 	stws,ma %r0, 4(%t2)
-	addib,>= -8, %t1, $start_zero_tf
+	addib,>= -8, %t1, L$start_zero_tf
 	stws,ma %r0, 4(%t2)	/* XXX could use ,bc here, but gas is broken */
 
 	/*
@@ -283,13 +283,13 @@ $start_zero_tf:
 	 * turn on virtual memory.
 	 */
 	copy	%sp, %arg0
-	ldil	L%$qisnowon, %rp
-	ldo	R%$qisnowon(%rp), %rp
+	ldil	L%qisnowon, %rp
+	ldo	R%qisnowon(%rp), %rp
 
 	b	kernel_setup
 	ldi	PSW_Q|PSW_I, %arg1
 
-$qisnowon:
+qisnowon:
 	copy	%r4, %arg0
 	copy	%r5, %arg1
 	/*
@@ -309,8 +309,8 @@ $qisnowon:
 	 */
 	mtctl	%r0, %pcsq
 	mtctl	%r0, %pcsq
-	ldil	L%$virtual_mode, %t1
-	ldo	R%$virtual_mode(%t1), %t1
+	ldil	L%virtual_mode, %t1
+	ldo	R%virtual_mode(%t1), %t1
 	mtctl	%t1, %pcoq
 	ldo	4(%t1), %t1
 	mtctl	%t1, %pcoq
@@ -326,7 +326,7 @@ $qisnowon:
 	nop
 	nop
 
-$virtual_mode:
+virtual_mode:
 
 	ldil	L%kernelmapped, %t1
 	stw	%t1, R%kernelmapped(%t1)
@@ -336,12 +336,12 @@ $virtual_mode:
 	/* have to call debugger from here, from virtual mode */
 	ldil	L%boothowto, %r1
 	ldw	R%boothowto(%r1), %r1
-	bb,>=	%r1, 25, $noddb
+	bb,>=	%r1, 25, L$noddb
 	nop
 
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_KGDB
 	nop
-$noddb:
+L$noddb:
 #endif
 
 	.import main,code
@@ -395,8 +395,8 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	/*
 	 * load address of interrupt vector table
 	 */
-	ldil	L%$ivaaddr,%t2
-	ldo	R%$ivaaddr(%t2),%t2
+	ldil	L%ivaaddr,%t2
+	ldo	R%ivaaddr(%t2),%t2
 	mtctl	%t2,%iva
 
 	/*
@@ -668,10 +668,10 @@ ENTRY(hp700_intr_ipending_new,HPPA_FRAME_SIZE)
 	 * the addib runs with the mtsar in its delay slot.
 	 * If the addib branches, the mtsar is nullified.
 	 */
-$hp700_inew_loop:
+L$hp700_inew_loop:
 	mtsar	%arg2
-	bvb,>=,n %arg1, $hp700_inew_loop
-	addib,<,n -1, %arg2, $hp700_inew_done
+	bvb,>=,n %arg1, L$hp700_inew_loop
+	addib,<,n -1, %arg2, L$hp700_inew_done
 
 	/*
 	 * If the map entry for this bit has INT_REG_BIT_REG
@@ -683,11 +683,11 @@ $hp700_inew_loop:
 	ldil	L%INT_REG_BIT_REG, %t2
 	ldo	R%INT_REG_BIT_REG(%t2), %t2
 	and	%t1, %t2, %t3
-	combt,=,n	%t2, %t3, $hp700_inew_descend
-	addib,>= -1, %arg2, $hp700_inew_loop
+	combt,=,n	%t2, %t3, L$hp700_inew_descend
+	addib,>= -1, %arg2, L$hp700_inew_loop
 	or	%t1, %ret0, %ret0
 
-$hp700_inew_done:
+L$hp700_inew_done:
 
 	/* End stack calling convention. */
 	ldw	HPPA_FRAME_CRP(%r3), %rp
@@ -695,7 +695,7 @@ $hp700_inew_done:
 	bv	%r0(%rp)
 	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
 
-$hp700_inew_descend:
+L$hp700_inew_descend:
 
 	/*
 	 * If the next interrupt register index is zero,
@@ -704,7 +704,7 @@ $hp700_inew_descend:
 	 * never descend into since it's the root.)
 	 */
 	andcm,<> %t1, %t2, %t1
-	b,n	$hp700_inew_unused
+	b,n	L$hp700_inew_unused
 
 	/* Save our state. */
 	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)
@@ -734,10 +734,10 @@ $hp700_inew_descend:
 	ldw	HPPA_FRAME_ARG(3)(%r3), %ret1
 	or	%ret1, %ret0, %ret0
 
-$hp700_inew_unused:
-	addib,>= -1, %arg2, $hp700_inew_loop
+L$hp700_inew_unused:
+	addib,>= -1, %arg2, L$hp700_inew_loop
 	nop
-	b,n	$hp700_inew_done
+	b,n	L$hp700_inew_done
 EXIT(hp700_intr_ipending_new)
 
 /*
@@ -999,7 +999,7 @@ ENTRY_NOPROFILE(lwp_trampoline,HPPA_FRAME_SIZE)
 	 */
 	mfctl	CR_CURLWP, %t2
 	.call
-	b	$syscall_return
+	b	syscall_return
 	ldw	L_MD(%t2), %t3
 EXIT(lwp_trampoline)
 
