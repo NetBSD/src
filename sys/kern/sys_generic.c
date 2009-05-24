@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.122 2009/05/17 10:08:38 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.123 2009/05/24 21:41:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.122 2009/05/17 10:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.123 2009/05/24 21:41:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +543,7 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		goto out;
 	}
 
-	ff = fdp->fd_ofiles[SCARG(uap, fd)];
+	ff = fdp->fd_dt->dt_ff[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
 		ff->ff_exclose = false;

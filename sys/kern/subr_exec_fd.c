@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.1 2008/11/18 13:01:41 pooka Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.2 2009/05/24 21:41:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.1 2008/11/18 13:01:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.2 2009/05/24 21:41:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -51,6 +51,7 @@ fd_closeexec(void)
 	filedesc_t *fdp;
 	fdfile_t *ff;
 	lwp_t *l;
+	fdtab_t *dt;
 	int fd;
 
 	l = curlwp;
@@ -73,9 +74,10 @@ fd_closeexec(void)
 		return;
 	}
 	fdp->fd_exclose = false;
+	dt = fdp->fd_dt;
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
-		if ((ff = fdp->fd_ofiles[fd]) == NULL) {
+		if ((ff = dt->dt_ff[fd]) == NULL) {
 			KASSERT(fd >= NDFDFILE);
 			continue;
 		}
@@ -111,6 +113,7 @@ fd_checkstd(void)
 	struct nameidata nd;
 	filedesc_t *fdp;
 	file_t *fp;
+	fdtab_t *dt;
 	struct proc *pp;
 	int fd, i, error, flags = FREAD|FWRITE;
 	char closed[CHECK_UPTO * 3 + 1], which[3 + 1];
@@ -119,10 +122,11 @@ fd_checkstd(void)
 	closed[0] = '\0';
 	if ((fdp = p->p_fd) == NULL)
 		return (0);
+	dt = fdp->fd_dt;
 	for (i = 0; i < CHECK_UPTO; i++) {
 		KASSERT(i >= NDFDFILE ||
-		    fdp->fd_ofiles[i] == (fdfile_t *)fdp->fd_dfdfile[i]);
-		if (fdp->fd_ofiles[i]->ff_file != NULL)
+		    dt->dt_ff[i] == (fdfile_t *)fdp->fd_dfdfile[i]);
+		if (dt->dt_ff[i]->ff_file != NULL)
 			continue;
 		snprintf(which, sizeof(which), ",%d", i);
 		strlcat(closed, which, sizeof(closed));

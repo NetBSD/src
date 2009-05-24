@@ -1,7 +1,7 @@
-/*	$NetBSD: init_sysctl.c,v 1.163 2009/05/16 12:02:00 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.164 2009/05/24 21:41:26 ad Exp $ */
 
 /*-
- * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.163 2009/05/16 12:02:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.164 2009/05/24 21:41:26 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -1970,6 +1970,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 	size_t len, needed, elem_size, out_size;
 	int error, arg, elem_count;
 	fdfile_t *ff;
+	fdtab_t *dt;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -2089,20 +2090,18 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			/* XXX Do we need to check permission per file? */
 			fd = p->p_fd;
 			mutex_enter(&fd->fd_lock);
-			for (i = 0; i < fd->fd_nfiles; i++) {
-				if ((ff = fd->fd_ofiles[i]) == NULL) {
+			dt = fd->fd_dt;
+			for (i = 0; i < dt->dt_nfiles; i++) {
+				if ((ff = dt->dt_ff[i]) == NULL) {
 					continue;
 				}
-				mutex_enter(&ff->ff_lock);
 				if ((fp = ff->ff_file) == NULL) {
-					mutex_exit(&ff->ff_lock);
 					continue;
 				}
 				if (len >= elem_size && elem_count > 0) {
 					mutex_enter(&fp->f_lock);
 					fill_file(&kf, fp, ff, i, p->p_pid);
 					mutex_exit(&fp->f_lock);
-					mutex_exit(&ff->ff_lock);
 					mutex_exit(&fd->fd_lock);
 					error = dcopyout(l, &kf, dp, out_size);
 					mutex_enter(&fd->fd_lock);
@@ -2110,8 +2109,6 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 						break;
 					dp += elem_size;
 					len -= elem_size;
-				} else {
-					mutex_exit(&ff->ff_lock);
 				}
 				needed += elem_size;
 				if (elem_count > 0 && elem_count != INT_MAX)
