@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 2008/01/18 10:03:27 skrll Exp $	*/
+/*	$NetBSD: pcb.h,v 1.7 2009/05/24 06:53:35 skrll Exp $	*/
 
 /*	$OpenBSD: pcb.h,v 1.6 2000/01/12 07:24:35 mickey Exp $	*/
 
@@ -40,7 +40,7 @@
 #include <machine/reg.h>
 
 struct pcb {
-	u_int64_t	pcb_fpregs[HPPA_NFPREGS+1];
+	uint64_t	pcb_fpregs[HPPA_NFPREGS+1];
 					/* not in the trapframe */
 	u_int		pcb_onfault;	/* SW copy fault handler */
 	pa_space_t	pcb_space;	/* copy pmap_space, for asm's sake */

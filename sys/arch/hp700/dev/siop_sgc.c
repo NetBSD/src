@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_sgc.c,v 1.4 2009/05/15 17:55:44 tsutsui Exp $	*/
+/*	$NetBSD: siop_sgc.c,v 1.5 2009/05/24 06:53:34 skrll Exp $	*/
 
 /*	$OpenBSD: siop_sgc.c,v 1.1 2007/08/05 19:09:52 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.4 2009/05/15 17:55:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.5 2009/05/24 06:53:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,10 +51,10 @@ void siop_sgc_attach(device_t, device_t, void *);
 int siop_sgc_intr(void *);
 void siop_sgc_reset(struct siop_common_softc *);
 
-u_int8_t siop_sgc_r1(void *, bus_space_handle_t, bus_size_t);
-u_int16_t siop_sgc_r2(void *, bus_space_handle_t, bus_size_t);
-void siop_sgc_w1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
-void siop_sgc_w2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
+uint8_t siop_sgc_r1(void *, bus_space_handle_t, bus_size_t);
+uint16_t siop_sgc_r2(void *, bus_space_handle_t, bus_size_t);
+void siop_sgc_w1(void *, bus_space_handle_t, bus_size_t, uint8_t);
+void siop_sgc_w2(void *, bus_space_handle_t, bus_size_t, uint16_t);
 
 struct siop_sgc_softc {
 	struct siop_softc sc_siop;
@@ -149,33 +149,33 @@ siop_sgc_reset(struct siop_common_softc *sc)
 	    (0xc << STIME0_SEL_SHIFT));
 }
 
-u_int8_t
+uint8_t
 siop_sgc_r1(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	return *(volatile u_int8_t *)(h + (o ^ 3));
+	return *(volatile uint8_t *)(h + (o ^ 3));
 }
 
-u_int16_t
+uint16_t
 siop_sgc_r2(void *v, bus_space_handle_t h, bus_size_t o)
 {
 	if (o == SIOP_SIST0) {
-		u_int16_t reg;
+		uint16_t reg;
 
 		reg = siop_sgc_r1(v, h, SIOP_SIST0);
 		reg |= siop_sgc_r1(v, h, SIOP_SIST1) << 8;
 		return reg;
 	}
-	return *(volatile u_int16_t *)(h + (o ^ 2));
+	return *(volatile uint16_t *)(h + (o ^ 2));
 }
 
 void
-siop_sgc_w1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv)
+siop_sgc_w1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv)
 {
-	*(volatile u_int8_t *)(h + (o ^ 3)) = vv;
+	*(volatile uint8_t *)(h + (o ^ 3)) = vv;
 }
 
 void
-siop_sgc_w2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv)
+siop_sgc_w2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv)
 {
-	*(volatile u_int16_t *)(h + (o ^ 2)) = vv;
+	*(volatile uint16_t *)(h + (o ^ 2)) = vv;
 }
