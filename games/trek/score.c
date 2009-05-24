@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.8 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.9 2009/05/24 22:57:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.8 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.9 2009/05/24 22:57:37 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,11 @@ score(void)
 	double		r;
 
 	printf("\n*** Your score:\n");
+
 	s = t = Param.klingpwr / 4 * (u = Game.killk);
 	if (t != 0)
 		printf("%d Klingons killed\t\t\t%6d\n", u, t);
+
 	r = Now.date - Param.date;
 	if (r < 1.0)
 		r = 1.0;
@@ -65,43 +67,54 @@ score(void)
 	s += (t = 400 * r);
 	if (t != 0)
 		printf("Kill rate %.2f Klingons/stardate  \t%6d\n", r, t);
+
 	r = Now.klings;
 	r /= Game.killk + 1;
 	s += (t = -400 * r);
 	if (t != 0)
 		printf("Penalty for %d klingons remaining\t%6d\n", Now.klings,
 			t);
+
 	if (Move.endgame > 0) {
 		s += (t = 100 * (u = Game.skill));
 		printf("Bonus for winning a %s%s game\t\t%6d\n",
 			Skitab[u - 1].abrev, Skitab[u - 1].full, t);
 	}
+
 	if (Game.killed) {
 		s -= 500;
 		printf("Penalty for getting killed\t\t  -500\n");
 	}
+
 	s += (t = -100 * (u = Game.killb));
 	if (t != 0)
 		printf("%d starbases killed\t\t\t%6d\n", u, t);
+
 	s += (t = -100 * (u = Game.helps));
 	if (t != 0)
 		printf("%d calls for help\t\t\t%6d\n", u, t);
+
 	s += (t = -5 * (u = Game.kills));
 	if (t != 0)
 		printf("%d stars destroyed\t\t\t%6d\n", u, t);
+
 	s += (t = -150 * (u = Game.killinhab));
 	if (t != 0)
 		printf("%d inhabited starsystems destroyed\t%6d\n", u, t);
+
 	if (Ship.ship != ENTERPRISE) {
 		s -= 200;
 		printf("penalty for abandoning ship\t\t  -200\n");
 	}
+
 	s += (t = 3 * (u = Game.captives));
 	if (t != 0)
 		printf("%d Klingons captured\t\t\t%6d\n", u, t);
+
 	s += (t = -(u = Game.deaths));
 	if (t != 0)
 		printf("%d casualties\t\t\t\t%6d\n", u, t);
+
 	printf("\n***  TOTAL\t\t\t%14ld\n", s);
 	return (s);
 }
