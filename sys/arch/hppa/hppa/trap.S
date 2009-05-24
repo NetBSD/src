@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.29 2009/05/24 09:13:37 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.30 2009/05/24 09:17:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -107,9 +107,9 @@
 
 	.section .data
 	.align	64
-$trap_tmp_save:
+L$trap_tmp_save:
 	.block	TF_PHYS
-	.size	$trap_tmp_save, .-$trap_tmp_save
+	.size	L$trap_tmp_save, .-L$trap_tmp_save
 
 	.align	64
 	.export emergency_stack_start, data
@@ -134,10 +134,10 @@ emergency_stack_end:
 	.export	gateway_page, entry
 gateway_page:
 	nop				/* @ 0.C0000000 (Nothing)  */
-	gate,n	$bsd_syscall,%r0	/* @ 0.C0000004 (HPUX/BSD) */
+	gate,n	bsd_syscall,%r0	/* @ 0.C0000004 (HPUX/BSD) */
 #ifdef COMPAT_OSF1
-	bl,n	$osf_syscall,%r0
-	bl,n	$osf_syscall,%r0
+	bl,n	osf_syscall,%r0
+	bl,n	osf_syscall,%r0
 #else
 	nop				/* @ 0.C0000008 (HPOSF UNIX) */
 	nop				/* @ 0.C000000C (HPOSF Mach) */
@@ -148,7 +148,7 @@ gateway_page:
 	nop
 
 #ifdef COMPAT_OSF1
-$osf_syscall:
+osf_syscall:
 	/*
 	 * Ripped screaming from OSF/MkLinux:
 	 *
@@ -163,11 +163,11 @@ $osf_syscall:
 	stw	%r22, HPPA_FRAME_ARG(4)(%sp)
 	stw	%r21, HPPA_FRAME_ARG(5)(%sp)
 	stw	%r29, HPPA_FRAME_SL(%sp)
-	gate	$bsd_syscall,%r0
+	gate	bsd_syscall,%r0
 	copy	%r1, %r22
 #endif /* COMPAT_OSF1 */
 
-$bsd_syscall:
+bsd_syscall:
 	/*
 	 * set up a space register and a protection id so that
 	 * we can access kernel memory
@@ -182,10 +182,10 @@ $bsd_syscall:
 	/*
 	 * now call the syscall handler
 	 */
-	.import $syscall,code
+	.import syscall_entry,code
 	.call
-	ldil	L%$syscall, %t2
-	be	R%$syscall(%sr1, %t2)
+	ldil	L%syscall_entry, %t2
+	be	R%syscall_entry(%sr1, %t2)
 	nop ! nop ! nop ! nop
 	.size	gateway_page, .-gateway_page
 
@@ -193,11 +193,11 @@ $bsd_syscall:
 	.export	gateway_page_end, entry
 gateway_page_end:
 
-	.export $syscall,entry
+	.export syscall_entry,entry
 	.proc
 	.callinfo calls
 	.entry
-$syscall:
+syscall_entry:
 	/*
 	 * %r1:		eiem
 	 * %ret0:	process protection id
@@ -422,11 +422,11 @@ $syscall:
 	.procend
 	/* FALLTHROUGH */
 
-	.export	$syscall_return, entry
+	.export	syscall_return, entry
 	.proc
 	.callinfo no_calls
 	.entry
-$syscall_return:
+syscall_return:
 	/* t3 == VA trapframe */
 	/* check for AST ? XXX */
 
@@ -439,8 +439,8 @@ $syscall_return:
 	 *	hopefully no page fault would happen on or after the copy,
 	 *	and interrupts are disabled.
 	 */
-	ldil	L%$trap_tmp_save, %t2
-	ldo	R%$trap_tmp_save(%t2), %t2
+	ldil	L%L$trap_tmp_save, %t2
+	ldo	R%L$trap_tmp_save(%t2), %t2
 
 	ldw  0(%t3), %r1 ! ldw  4(%t3), %t1 ! stw %r1,  0(%t2) ! stw %t1,  4(%t2)
 	ldw  8(%t3), %r1 ! ldw 12(%t3), %t1 ! stw %r1,  8(%t2) ! stw %t1, 12(%t2)
@@ -532,8 +532,8 @@ $syscall_return:
 	 * since we don't use it anyway.
 	 */
 	ssm	0, %r0
-	ldil	L%$trap_tmp_save, %t3
-	ldo	R%$trap_tmp_save(%t3), %t3
+	ldil	L%L$trap_tmp_save, %t3
+	ldo	R%L$trap_tmp_save(%t3), %t3
 	nop ! nop ! nop ! nop ! nop
 	rsm	RESET_PSW, %r0
 
@@ -567,14 +567,14 @@ $syscall_return:
 	nop
 	.exit
 	.procend
-	.size	$syscall, .-$syscall
-$syscall_end:
+	.size	syscall_entry, .- syscall_entry
 
 /*
  * interrupt vector table
  */
-#define	TLABEL(name)	$trap$name
-#define	TELABEL(num)	__CONCAT(trap_ep_,num)
+#define	TLABEL(name)		__CONCAT(trap_,name)
+#define TRAPLABEL(name,num)	__CONCAT(TLABEL(name),num)
+#define	TELABEL(num)		__CONCAT(trap_ep_,num)
 
 #define TRAP(name,num) \
 	mtctl	%r1, %tr7		! \
@@ -585,21 +585,21 @@ $syscall_end:
 	.align	32
 
 #define	ATRAP(name,num) \
-	.export	TLABEL(name)$num, entry	! \
-	.label	TLABEL(name)$num	! \
-	TRAP(all,num)			! \
-	.size	TLABEL(name)$num, .-TLABEL(name)$num
+	.export	TRAPLABEL(name,num), entry	! \
+	.label	TRAPLABEL(name,num)		! \
+	TRAP(all,num)				! \
+	.size	TRAPLABEL(name,num), .-TRAPLABEL(name,num)
 
 #define	CTRAP(name,num,pre) \
-	.export	TLABEL(name)$num, entry	! \
-	.label	TLABEL(name)$num	! \
+	.export	TRAPLABEL(name,num), entry	! \
+	.label	TRAPLABEL(name,num)		! \
 	pre				! \
 	TRAP(name,num)			! \
-	.size	TLABEL(name)$num, .-TLABEL(name)$num
+	.size	TRAPLABEL(name,num), .-TRAPLABEL(name,num)
 
 #define	STRAP(name,num,pre) \
-	.export	TLABEL(name)$num, entry	! \
-	.label	TLABEL(name)$num	! \
+	.export	TRAPLABEL(name,num), entry	! \
+	.label	TRAPLABEL(name,num)		! \
 	pre				! \
 	mtctl	%r1, %tr7		! \
 	.export	TELABEL(num), entry	! \
@@ -610,13 +610,13 @@ $syscall_end:
 	bv	0(%r1)			! \
 	ldi	num, %r1		! \
 	.align	32			! \
-	.size	TLABEL(name)$num, .-TLABEL(name)$num
+	.size	TRAPLABEL(name,num), .-TRAPLABEL(name,num)
 
 #define	LDILDO(name)			! \
 	.export	name, entry		! \
 	.label	name			! \
-	ldil	L%$name,%r1		! \
-	ldo	R%$name(%r1), %r1
+	ldil	L%TLABEL(name),%r1	! \
+	ldo	R%TLABEL(name)(%r1), %r1
 
 #ifdef HP7000_CPU
 LDILDO(itlb_x)
@@ -670,9 +670,9 @@ LDILDO(tlbd_u)
 	nop
 
 	.align NBPG
-	.export $ivaaddr, entry
+	.export ivaaddr, entry
 	.export os_hpmc, entry
-$ivaaddr:
+ivaaddr:
 	ATRAP(null,T_NONEXIST)		/*  0. invalid interrupt vector */
 os_hpmc:
 	CTRAP(hpmc,T_HPMC,HPMCPRE)	/*  1. high priority machine check */
@@ -704,43 +704,43 @@ os_hpmc:
 	ATRAP(dacc,T_DATACC)		/* 26. data access rights trap */
 	ATRAP(dpid,T_DATAPID)		/* 27. data protection ID trap */
 	ATRAP(dalgn,T_DATALIGN)		/* 28. unaligned data ref trap */
-	ATRAP(unk29,29)
-	ATRAP(unk30,30)
-	ATRAP(unk31,31)
-	ATRAP(unk32,32)
-	ATRAP(unk33,33)
-	ATRAP(unk34,34)
-	ATRAP(unk35,35)
-	ATRAP(unk36,36)
-	ATRAP(unk37,37)
-	ATRAP(unk38,38)
-	ATRAP(unk39,39)
-	ATRAP(unk40,40)
-	ATRAP(unk41,41)
-	ATRAP(unk42,42)
-	ATRAP(unk43,43)
-	ATRAP(unk44,44)
-	ATRAP(unk45,45)
-	ATRAP(unk46,46)
-	ATRAP(unk47,47)
-	ATRAP(unk48,48)
-	ATRAP(unk49,49)
-	ATRAP(unk50,50)
-	ATRAP(unk51,51)
-	ATRAP(unk52,52)
-	ATRAP(unk53,53)
-	ATRAP(unk54,54)
-	ATRAP(unk55,55)
-	ATRAP(unk56,56)
-	ATRAP(unk57,57)
-	ATRAP(unk58,58)
-	ATRAP(unk59,59)
-	ATRAP(unk60,60)
-	ATRAP(unk61,61)
-	ATRAP(unk62,62)
-	ATRAP(unk63,63)
+	ATRAP(unk,29)
+	ATRAP(unk,30)
+	ATRAP(unk,31)
+	ATRAP(unk,32)
+	ATRAP(unk,33)
+	ATRAP(unk,34)
+	ATRAP(unk,35)
+	ATRAP(unk,36)
+	ATRAP(unk,37)
+	ATRAP(unk,38)
+	ATRAP(unk,39)
+	ATRAP(unk,40)
+	ATRAP(unk,41)
+	ATRAP(unk,42)
+	ATRAP(unk,43)
+	ATRAP(unk,44)
+	ATRAP(unk,45)
+	ATRAP(unk,46)
+	ATRAP(unk,47)
+	ATRAP(unk,48)
+	ATRAP(unk,49)
+	ATRAP(unk,50)
+	ATRAP(unk,51)
+	ATRAP(unk,52)
+	ATRAP(unk,53)
+	ATRAP(unk,54)
+	ATRAP(unk,55)
+	ATRAP(unk,56)
+	ATRAP(unk,57)
+	ATRAP(unk,58)
+	ATRAP(unk,59)
+	ATRAP(unk,60)
+	ATRAP(unk,61)
+	ATRAP(unk,62)
+	ATRAP(unk,63)
 					/* 64 */
-	.size	$ivaaddr, .-$ivaaddr
+	.size	ivaaddr, .-ivaaddr
 
 /*
  * This is the locore support for HPMC and TOC machine checks.
@@ -797,8 +797,8 @@ ALTENTRY(os_hpmc_cont)
 	mtsp	%r1, %sr7
 
 	/* Reload the Interruption Vector Address. */
-	ldil	L%$ivaaddr, %r1
-	ldo	R%$ivaaddr(%r1), %r1
+	ldil	L%ivaaddr, %r1
+	ldo	R%ivaaddr(%r1), %r1
 	mtctl	%r1, %iva
 
 	/* Reload the HPT base and mask. */
@@ -830,7 +830,7 @@ ALTENTRY(os_hpmc_cont)
 	stwm	%r1, HPPA_FRAME_SIZE(%sp)
 
 	/* If this is a TOC, remap the kernel. */
-	comib,<>,n T_INTERRUPT, %arg0, $check_do_rfi
+	comib,<>,n T_INTERRUPT, %arg0, L$check_do_rfi
 
 	/* Clear kernelmapped. */
 	ldil	L%kernelmapped, %r1
@@ -853,7 +853,7 @@ ALTENTRY(os_hpmc_cont)
 	/* Disable the interrupt queues. */
 	rsm	RESET_PSW, %r0
 
-$check_do_rfi:
+L$check_do_rfi:
 
 	/* Load IPSW. */
 	ldil	L%kpsw, %r1
@@ -908,7 +908,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 * If the opcode field is 0xe, then it's an FPU instruction.
 	 */
 	extru	%arg0, 5, 6, %r1
-	comib,=,n 4, %r1, $emulate_sfu
+	comib,=,n 4, %r1, L$emulate_sfu
 	comib,=,n 0xe, %r1, hppa_fpu_nop0
 
 	/*
@@ -918,7 +918,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 * coprocessor.
 	 */
 	extru	%arg0, 25, 3, %r1
-	comib,<<,n 1, %r1, $emulate_coproc
+	comib,<<,n 1, %r1, L$emulate_coproc
 
 	/*
 	 * If we're still here, this is a FPU 
@@ -949,7 +949,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 * an FPU coprocessor.
 	 */
 ALTENTRY(hppa_fpu_nop0)
-	b,n	$emulate_fpu
+	b,n	L$emulate_fpu
 
 	/*
 	 * We have a hardware FPU.  If it is enabled,
@@ -957,7 +957,7 @@ ALTENTRY(hppa_fpu_nop0)
 	 */
 	mfctl	%ccr, %arg0
 	extru,= %arg0, 25, 2, %r1
-	b,n	$emulate_fpu
+	b,n	L$emulate_fpu
 
 	/*
 	 * The hardware FPU is disabled, so we need to swap 
@@ -1002,7 +1002,7 @@ ALTENTRY(hppa_fpu_nop0)
 	 * (courtesy of CTRAP), and %arg0 is saved in %tr2
 	 * (courtesy of the sfu/coprocessor dispatcher).
 	 */
-$emulate_sfu:
+L$emulate_sfu:
 	/*
 	 * Currently we just restore %arg0 and
 	 * trap with an illegal instruction.
@@ -1017,7 +1017,7 @@ $emulate_sfu:
 	 * (courtesy of CTRAP), and %t1 is saved in %tr2
 	 * (courtesy of the sfu/coprocessor dispatcher).
 	 */
-$emulate_coproc:
+L$emulate_coproc:
 	/*
 	 * Currently we just restore %arg0 and
 	 * trap with an illegal instruction.
@@ -1032,7 +1032,7 @@ $emulate_coproc:
 	 * (courtesy of CTRAP), and %t1 is saved in %tr2
 	 * (courtesy of the sfu/coprocessor dispatcher).
 	 */
-$emulate_fpu:
+L$emulate_fpu:
 	/*
 	 * We get back to C via the normal generic trap 
 	 * mechanism, as opposed to switching to a special 
@@ -1052,8 +1052,8 @@ $emulate_fpu:
 	 * sfu and non-FPU instructions again, it assumes
 	 * that these kinds of instructions have already 
 	 * been translated into some other trap type (as 
-	 * they have, by the above $emulate_sfu and 
-	 * $emulate_coproc), and all T_EMULATION | T_USER 
+	 * they have, by the above L$emulate_sfu and 
+	 * L$emulate_coproc), and all T_EMULATION | T_USER 
 	 * traps are FPU instructions that need emulating.
 	 *
 	 * So we just restore %arg0 and trap with
@@ -1089,7 +1089,7 @@ LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
 	 */
 	mfctl	%ccr, %r1
 	depi	3, 25, 2, %r1
-	comb,=	%r0, %arg0, $fpu_swap_in
+	comb,=	%r0, %arg0, L$fpu_swap_in
 	mtctl	%r1, %ccr
 
 	/*
@@ -1142,7 +1142,7 @@ LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
 	fdc,m	%r1(%arg0)
 	sync
 
-$fpu_swap_in:
+L$fpu_swap_in:
 
 	/*
 	 * Stash the incoming user structure in
@@ -1158,7 +1158,7 @@ $fpu_swap_in:
 	 * past the swap-in code if it is zero.
 	 */
 	ldil	L%fpu_cur_uspace, %r1
-	comb,=	%r0, %arg1, $fpu_no_swap_in
+	comb,=	%r0, %arg1, L$fpu_no_swap_in
 	stw	%arg1, R%fpu_cur_uspace(%r1)
 
 	/*
@@ -1210,7 +1210,7 @@ $fpu_swap_in:
 	fdc,m	%r1(%arg1)
 	sync
 
-$fpu_swap_done:
+L$fpu_swap_done:
 
 	/* Increment the switch count and return. */
 	ldil	L%fpu_csw, %r1
@@ -1219,12 +1219,12 @@ $fpu_swap_done:
 	bv	%r0(%rp)
 	stw	%arg0, R%fpu_csw(%r1)
 
-$fpu_no_swap_in:
+L$fpu_no_swap_in:
 
 	/* We didn't swap any FPU state in, so disable the FPU. */
 	mfctl	%ccr, %r1
 	depi	0, 25, 2, %r1
-	b	$fpu_swap_done
+	b	L$fpu_swap_done
 	mtctl	%r1, %ccr
 EXIT(hppa_fpu_swap)
 
@@ -1315,9 +1315,9 @@ itlb_c:
  * %r24 = undefined
  * %r25 = undefined
  */
-LEAF_ENTRY_NOPROFILE($tlbd_s)
-ALTENTRY($tlbd_t)
-ALTENTRY($tlbd_x)
+LEAF_ENTRY_NOPROFILE(TLABEL(tlbd_s))
+ALTENTRY(TLABEL(tlbd_t))
+ALTENTRY(TLABEL(tlbd_x))
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL(1, TLABEL(all))
 	mfsp	%sr1, %r16
@@ -1328,7 +1328,7 @@ ALTENTRY($tlbd_x)
 	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
-EXIT($tlbd_s)
+EXIT(TLABEL(tlbd_s))
 
 /*
  * This is a handler for interruption 6, "Instruction TLB miss fault",
@@ -1345,9 +1345,9 @@ EXIT($tlbd_s)
  * %r24 = undefined
  * %r25 = undefined
  */
-LEAF_ENTRY_NOPROFILE($itlb_s)
-ALTENTRY($itlb_t)
-ALTENTRY($itlb_x)
+LEAF_ENTRY_NOPROFILE(TLABEL(itlb_s))
+ALTENTRY(TLABEL(itlb_t))
+ALTENTRY(TLABEL(itlb_x))
 	TLB_STATS_PRE(itlb)
 	TLB_PULL(0, TLABEL(all))
 	extru,=	%r25, 5, 1, %r0	/* gate needs a kernel pid */
@@ -1360,7 +1360,7 @@ ALTENTRY($itlb_x)
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
-EXIT($itlb_s)
+EXIT(TLABEL(itlb_s))
 
 /*
  * This is a handler for interruption 15, "Data TLB miss fault",
@@ -1377,9 +1377,9 @@ EXIT($itlb_s)
  * %r24 = undefined
  * %r25 = undefined
  */
-LEAF_ENTRY_NOPROFILE($dtlb_s)
-ALTENTRY($dtlb_t)
-ALTENTRY($dtlb_x)
+LEAF_ENTRY_NOPROFILE(TLABEL(dtlb_s))
+ALTENTRY(TLABEL(dtlb_t))
+ALTENTRY(TLABEL(dtlb_x))
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL(0, TLABEL(all))
 	mfsp	%sr1, %r16
@@ -1390,16 +1390,16 @@ ALTENTRY($dtlb_x)
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-EXIT($dtlb_s)
+EXIT(TLABEL(dtlb_s))
 
-LEAF_ENTRY_NOPROFILE($dtlbna_s)
-ALTENTRY($itlbna_s)
-ALTENTRY($dtlbna_t)
-ALTENTRY($itlbna_t)
-ALTENTRY($dtlbna_x)
-ALTENTRY($itlbna_x)
+LEAF_ENTRY_NOPROFILE(TLABEL(dtlbna_s))
+ALTENTRY(TLABEL(itlbna_s))
+ALTENTRY(TLABEL(dtlbna_t))
+ALTENTRY(TLABEL(itlbna_t))
+ALTENTRY(TLABEL(dtlbna_x))
+ALTENTRY(TLABEL(itlbna_x))
 	TLB_STATS_PRE(dtlb)
-	TLB_PULL(0, $dtlbna_t_fake)
+	TLB_PULL(0, L$dtlbna_t_fake)
 	mfsp	%sr1, %r16
 	mtsp	%r8, %sr1
 	idtlba	%r17,(%sr1, %r9)
@@ -1408,8 +1408,8 @@ ALTENTRY($itlbna_x)
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-$dtlbna_s_fake:
-$dtlbna_t_fake:
+L$dtlbna_s_fake:
+L$dtlbna_t_fake:
 	/* parse prober/w insns, have to decent to trap() to set regs proper */
 	mfctl	%iir, %r16
 	extru	%r16, 6, 6, %r24
@@ -1430,7 +1430,7 @@ $dtlbna_t_fake:
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-EXIT($dtlbna_s)
+EXIT(TLABEL(dtlbna_s))
 
 #endif /* defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU) */
 
@@ -1500,7 +1500,7 @@ EXIT($dtlbna_s)
  */
 
 	.align	32
-LEAF_ENTRY_NOPROFILE($tlbd_l)
+LEAF_ENTRY_NOPROFILE(TLABEL(tlbd_l))
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
 	IDTLBAF(17)
@@ -1516,7 +1516,7 @@ LEAF_ENTRY_NOPROFILE($tlbd_l)
 	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
-EXIT($tlbd_l)
+EXIT(TLABEL(tlbd_l))
 
 /*
  * This is a handler for interruption 6, "Instruction TLB miss fault",
@@ -1538,7 +1538,7 @@ EXIT($tlbd_l)
  * we found a post-silicon bug that makes cr28
  * unreliable for the itlb miss handler
  */
-LEAF_ENTRY_NOPROFILE($itlb_l)
+LEAF_ENTRY_NOPROFILE(TLABEL(itlb_l))
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
 	extru,=	%r25, 5, 1, %r0	/* gate needs a kernel pid */
@@ -1548,18 +1548,18 @@ LEAF_ENTRY_NOPROFILE($itlb_l)
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
-EXIT($itlb_l)
+EXIT(TLABEL(itlb_l))
 
-LEAF_ENTRY_NOPROFILE($dtlbna_l)
-ALTENTRY($itlbna_l)
+LEAF_ENTRY_NOPROFILE(TLABEL(dtlbna_l))
+ALTENTRY(TLABEL(itlbna_l))
 	TLB_STATS_PRE(dtlb)
-	TLB_PULL_L(0, $dtlbna_l_fake)
+	TLB_PULL_L(0, L$dtlbna_l_fake)
 	IDTLBAF(17)
 	IDTLBPF(25)
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-$dtlbna_l_fake:
+L$dtlbna_l_fake:
 	/* parse prober/w insns, have to decent to trap() to set regs proper */
 	mfctl	%iir, %r16
 	extru	%r16, 6, 6, %r24
@@ -1577,9 +1577,9 @@ $dtlbna_l_fake:
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-EXIT($dtlbna_l)
+EXIT(TLABEL(dtlbna_l))
 
-LEAF_ENTRY_NOPROFILE($dtlb_l)
+LEAF_ENTRY_NOPROFILE(TLABEL(dtlb_l))
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
 	IDTLBAF(17)
@@ -1597,7 +1597,7 @@ LEAF_ENTRY_NOPROFILE($dtlb_l)
 
 	ldo	PAGE_SIZE(%r9), %r9
 	extru,<> %r9, 20, 5, %r0
-	b,n	$dtlb_done_l	/* skip if no simple advance */
+	b,n	L$dtlb_done_l	/* skip if no simple advance */
 	/* do not check the PT overlap since the above
 	 * check already guaranties that */
 
@@ -1605,7 +1605,7 @@ LEAF_ENTRY_NOPROFILE($dtlb_l)
 	extru	%r9, 19, 10, %r16		/* %r24 was loaded in the TLB_PULL_L */
 	ldwx,s	%r16(%r24), %r17		/* va -> pa:prot */
 	sh2addl	%r16, %r24, %r25
-	combt,=,n %r0, %r17, $dtlb_done_l
+	combt,=,n %r0, %r17, L$dtlb_done_l
 	copy	%r17, %r16
 	depi	0, 21, 1, %r17
 	sub,=	%r16, %r17, %r0			/* do not store if unchanged */
@@ -1623,12 +1623,12 @@ LEAF_ENTRY_NOPROFILE($dtlb_l)
 	stw	%r16, 0(%r24)
 	stw	%r25, 4(%r24)
 	stw	%r17, 8(%r24)
-$dtlb_done_l:
+L$dtlb_done_l:
 #endif
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-EXIT($dtlb_l)
+EXIT(TLABEL(dtlb_l))
 #endif /* defined(HP7100LC_CPU) || defined(HP7300LC_CPU) */
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
@@ -1651,7 +1651,7 @@ EXIT($dtlb_l)
 	depdi	0, 44, 30, %r25			! \
 	depd	%r16, 14, 15, %r25
 
-LEAF_ENTRY_NOPROFILE($tlbd_u)
+LEAF_ENTRY_NOPROFILE(TLABEL(tlbd_u))
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
 	TLB_PCX2PCXU
@@ -1659,9 +1659,9 @@ LEAF_ENTRY_NOPROFILE($tlbd_u)
 	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
-EXIT($tlbd_u)
+EXIT(TLABEL(tlbd_u))
 
-LEAF_ENTRY_NOPROFILE($itlb_u)
+LEAF_ENTRY_NOPROFILE(TLABEL(itlb_u))
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
 	extru,=	%r25, 5, 1, %r0	/* gate needs a kernel pid */
@@ -1671,18 +1671,18 @@ LEAF_ENTRY_NOPROFILE($itlb_u)
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
-EXIT($itlb_u)
+EXIT(TLABEL(itlb_u))
 
-LEAF_ENTRY_NOPROFILE($dtlbna_u)
-ALTENTRY($itlbna_u)
+LEAF_ENTRY_NOPROFILE(TLABEL(dtlbna_u))
+ALTENTRY(TLABEL(itlbna_u))
 	TLB_STATS_PRE(dtlb)
-	TLB_PULL_L(0, $dtlbna_u_fake)
+	TLB_PULL_L(0, L$dtlbna_u_fake)
 	TLB_PCX2PCXU
 	idtlbt	%r17, %r25
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-$dtlbna_u_fake:
+L$dtlbna_u_fake:
 	/* parse prober/w insns, have to decent to trap() to set regs proper */
 	mfctl	%iir, %r16
 	extru	%r16, 6, 6, %r24
@@ -1699,9 +1699,9 @@ $dtlbna_u_fake:
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-EXIT($dtlbna_u)
+EXIT(TLABEL(dtlbna_u))
 
-LEAF_ENTRY_NOPROFILE($dtlb_u)
+LEAF_ENTRY_NOPROFILE(TLABEL(dtlb_u))
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
 	TLB_PCX2PCXU
@@ -1709,7 +1709,7 @@ LEAF_ENTRY_NOPROFILE($dtlb_u)
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
-EXIT($dtlb_u)
+EXIT(TLABEL(dtlb_u))
 
 	.level	1.1
 #endif /* HP8000_CPU */
@@ -1919,8 +1919,8 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	/* do not overwrite %tr4(%cr28) it contains the contents of r24 */
 	mtctl	%t3, %tr2
 
-	ldil	L%$trap_tmp_save, %t3
-	ldo	R%$trap_tmp_save(%t3), %t3
+	ldil	L%L$trap_tmp_save, %t3
+	ldo	R%L$trap_tmp_save(%t3), %t3
 	stw	%t1, TF_R22(%t3)	/* use ,bc */
 	stw	%t2, TF_R21(%t3)
 
@@ -1987,7 +1987,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	/* Nullify if pcoqh & HPPA_PC_PRIV_MASK != 0. */
 	dep,<>	%t1, 31, 2, %r0
 	/* Branch if (pcoqh & ~PAGE_MASK) != SYSCALLGATE */
-	comb,<> %t1, %t2, $trap_from_kernel
+	comb,<> %t1, %t2, L$trap_from_kernel
 	/* Finish aligning the assumed kernel sp. */
 	dep	%r0, 31, 6, %sp
 
@@ -1996,11 +1996,11 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	depi	1, TFF_LAST_POS, 1, %r1
 	ldw	U_PCB+PCB_UVA(%t2), %sp
 #ifdef DIAGNOSTIC
-	b	$trap_have_stack
+	b	L$trap_have_stack
 #endif
 	ldo	NBPG(%sp), %sp
 
-$trap_from_kernel:
+L$trap_from_kernel:
 #ifdef DIAGNOSTIC
 	/*
 	 * Use the emergency stack if we have taken some kind
@@ -2013,11 +2013,11 @@ $trap_from_kernel:
 	dep	%r0, 31, PGSHIFT, %t2
 	comb,=,n %t1, %t2, 0
 	ldo	NBPG(%t1), %t1
-	comb,<>	%t1, %t2, $trap_have_stack
+	comb,<>	%t1, %t2, L$trap_have_stack
 	mfctl	%tr2, %t1
 	mfctl	%isr, %t2
-	comib,<>,n HPPA_SID_KERNEL, %t2, $trap_have_stack
-#define _CHECK_TRAP_TYPE(tt) ldi tt, %t2 ! comb,= %r1, %t2, $trap_kstack_fault
+	comib,<>,n HPPA_SID_KERNEL, %t2, L$trap_have_stack
+#define _CHECK_TRAP_TYPE(tt) ldi tt, %t2 ! comb,= %r1, %t2, L$trap_kstack_fault
 	_CHECK_TRAP_TYPE(T_ITLBMISS)
 	_CHECK_TRAP_TYPE(T_DTLBMISS)
 	_CHECK_TRAP_TYPE(T_ITLBMISSNA)
@@ -2026,15 +2026,15 @@ $trap_from_kernel:
 	_CHECK_TRAP_TYPE(T_DATACC)
 	_CHECK_TRAP_TYPE(T_DATAPID)
 	ldi	T_DATALIGN, %t2
-	comb,<>,n %r1, %t2, $trap_have_stack
+	comb,<>,n %r1, %t2, L$trap_have_stack
 #undef _CHECK_TRAP_TYPE
-$trap_kstack_fault:
+L$trap_kstack_fault:
 	ldil	L%emergency_stack_start, %sp
 	ldo	R%emergency_stack_start(%sp), %sp
-$trap_have_stack:
+L$trap_have_stack:
 #endif
-	ldil	L%$trapnowvirt, %t2
-	ldo	R%$trapnowvirt(%t2), %t2
+	ldil	L%trapnowvirt, %t2
+	ldo	R%trapnowvirt(%t2), %t2
 	mtctl	%t2, %pcoq
 	stw	%t1, TF_IIOQH(%t3)
 	ldo	4(%t2), %t2
@@ -2064,14 +2064,14 @@ $trap_have_stack:
 
 #if defined(DDB) || defined(KGDB)
 	/*
-	 * Match the offset from %sp for the trapframe with $syscall
+	 * Match the offset from %sp for the trapframe with syscall_entry
 	 */
 	ldo	HPPA_FRAME_MAXARGS+HPPA_FRAME_SIZE-1(%sp),%sp
 	depi	0, 31, 6, %sp
 #endif
 	rfir
 	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop
-$trapnowvirt:
+trapnowvirt:
 	/*
 	 * t3 contains the virtual address of the trapframe
 	 * sp is loaded w/ the right VA (we did not need it being physical)
@@ -2136,8 +2136,8 @@ $trapnowvirt:
 	/*
 	 * Copy partially saved state from the store into the frame
 	 */
-	ldil	L%$trap_tmp_save, %t2
-	ldo	R%$trap_tmp_save(%t2), %t2
+	ldil	L%L$trap_tmp_save, %t2
+	ldo	R%L$trap_tmp_save(%t2), %t2
 	/* use ,bc each line */
 	ldw  0(%t2), %r1 ! ldw  4(%t2), %t1 ! stw %r1,  0(%t3) ! stw %t1,  4(%t3)
 	ldw  8(%t2), %r1 ! ldw 12(%t2), %t1 ! stw %r1,  8(%t3) ! stw %t1, 12(%t3)
@@ -2234,20 +2234,22 @@ $trapnowvirt:
 	ldw	-HPPA_FRAME_SIZE+4(%sp), %t3
 	/* see if curlwp has changed */
 	ldw	TF_FLAGS(%t3), %arg0
-	bb,>=,n	%arg0, TFF_LAST_POS, $trap_return
+	bb,>=,n	%arg0, TFF_LAST_POS, L$trap_return
 	nop
 
 	mfctl	CR_CURLWP, %t2
 	ldw	L_MD(%t2), %t3
 
-$trap_return:
-	ldil	L%$syscall_return, %t1
-	ldo	R%$syscall_return(%t1), %t1
+L$trap_return:
+	ldil	L%syscall_return, %t1
+	ldo	R%syscall_return(%t1), %t1
 	bv,n	%r0(%t1)
 	nop
 
-	.export	$trap$all$end, entry
-$trap$all$end:
+#if 0
+	.export	T$trap$all$end, entry
+T$trap$all$end:
+#endif
 EXIT(TLABEL(all))
 
 	.align	32
@@ -2256,41 +2258,41 @@ ENTRY_NOPROFILE(TLABEL(ibrk),0)
 	/* If called by a user process then always pass it to trap() */
 	mfctl	%pcoq, %r8
 	extru,=	%r8, 31, 2, %r0
-	b,n	$ibrk_bad
+	b,n	L$ibrk_bad
 
 	/* don't accept breaks from data segments */
 	.import etext
 	ldil	L%etext, %r9
 	ldo	R%etext(%r9), %r9
-	comb,>>=,n %r8, %r9, $ibrk_bad
+	comb,>>=,n %r8, %r9, L$ibrk_bad
 
 	mfctl	%iir, %r8
 	extru	%r8, 31, 5, %r9
-	comib,<>,n HPPA_BREAK_KERNEL, %r9, $ibrk_bad
+	comib,<>,n HPPA_BREAK_KERNEL, %r9, L$ibrk_bad
 
 	/* now process all those `break' calls we make */
 	extru	%r8, 18, 13, %r9
-	comib,=,n HPPA_BREAK_GET_PSW, %r9, $ibrk_getpsw
-	comib,=,n HPPA_BREAK_SET_PSW, %r9, $ibrk_setpsw
+	comib,=,n HPPA_BREAK_GET_PSW, %r9, L$ibrk_getpsw
+	comib,=,n HPPA_BREAK_SET_PSW, %r9, L$ibrk_setpsw
 
-$ibrk_bad:
+L$ibrk_bad:
 	/* illegal (unimplemented) break entry point */
 	b	TLABEL(all)
 	nop
 
-$ibrk_getpsw:
-	b	$ibrk_exit
+L$ibrk_getpsw:
+	b	L$ibrk_exit
 	mfctl	%ipsw, %ret0
 
-$ibrk_setpsw:
+L$ibrk_setpsw:
 	mfctl	%ipsw, %ret0
-	b	$ibrk_exit
+	b	L$ibrk_exit
 	mtctl	%arg0, %ipsw
 
 	/* insert other fast breaks here */
 	nop ! nop
 
-$ibrk_exit:
+L$ibrk_exit:
 	/* skip the break */
 	mtctl	%r0, %pcoq
 	mfctl	%pcoq, %r9
