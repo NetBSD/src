@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.41 2008/07/24 04:39:25 matt Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.42 2009/05/24 20:35:41 he Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.41 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.42 2009/05/24 20:35:41 he Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -123,7 +123,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			break;
 		}
 	}
-	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	relalim = (const Elf_Rela *)((const uint8_t *)rela + relasz);
 	for (; rela < relalim; rela++) {
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
 		*where = (Elf_Addr)(relocbase + rela->r_addend);
