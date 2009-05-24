@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.31 2008/07/24 04:39:25 matt Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.32 2009/05/24 18:29:03 he Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.31 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.32 2009/05/24 18:29:03 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -187,7 +187,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			break;
 		}
 	}
-	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	relalim = (const Elf_Rela *)((const uint8_t *)rela + relasz);
 	for (; rela < relalim; rela++) {
 		where = (Elf_Addr *)(relocbase + rela->r_offset);
 		/* XXX For some reason I see a few GLOB_DAT relocs here. */
@@ -475,7 +475,8 @@ out:
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
-	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	const Elf_Rela *rela = 
+	    (const Elf_Rela *)((const uint8_t *)obj->pltrela + reloff);
 	Elf_Addr result;
 	int err;
 
