@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.25 2009/05/01 21:34:45 wiz Exp $
+.\"	$NetBSD: strptime.3,v 1.26 2009/05/24 02:25:43 ginsbach Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -164,6 +164,14 @@ the time as %H:%M.
 .It Cm \&%S
 the seconds [0,61];
 leading zeros are permitted but not required.
+.It Cm \&%s
+the number of seconds since the Epoch, UTC (see
+.Xr mktime 3 ) .
+.Po
+A
+.Nx
+extension.
+.Pc
 .It Cm \&%t
 any white-space, including none.
 .It Cm \&%T
