@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/01/28 07:03:59 dholland Exp $
+#	$NetBSD: Makefile,v 1.13 2009/05/24 23:20:22 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	trek
@@ -9,7 +9,7 @@ SRCS=	abandon.c attack.c autover.c capture.c check_out.c checkcond.c \
 	lose.c lrscan.c main.c move.c nova.c out.c phaser.c play.c ram.c \
 	ranf.c rest.c schedule.c score.c setup.c setwarp.c \
 	shield.c snova.c srscan.c systemname.c torped.c \
-	visual.c warp.c win.c cgetc.c
+	visual.c warp.c win.c
 MAN=	trek.6
 DPADD=	${LIBM}
 LDADD=	-lm

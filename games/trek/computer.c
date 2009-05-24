@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.14 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: computer.c,v 1.15 2009/05/24 23:20:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: computer.c,v 1.14 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: computer.c,v 1.15 2009/05/24 23:20:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,8 +293,8 @@ computer(int v __unused)
 		 * means get new computer request; newline means
 		 * exit computer mode.
 		 */
-		while ((i = cgetc(0)) != ';') {
-			if (i == '\0')
+		while ((i = getchar()) != ';') {
+			if (i == EOF)
 				exit(1);
 			if (i == '\n') {
 				ungetc(i, stdin);

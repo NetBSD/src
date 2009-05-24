@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.14 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: getpar.c,v 1.15 2009/05/24 23:20:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.14 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.15 2009/05/24 23:20:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ getcodpar(const char *s, const struct cvntab tab[])
 			printf("%s: ", s);
 		if (f) {
 			/* throw out the newline */
-			cgetc(0);
+			getchar();
 		}
 		scanf("%*[ \t;]");
 		if ((c = scanf("%99[^ \t;\n]", input)) < 0)
@@ -202,7 +202,7 @@ getstrpar(const char *s, char *r, int l, const char *t)
 		if ((f = testnl()) && s)
 			printf("%s: ", s);
 		if (f)
-			cgetc(0);
+			getchar();
 		scanf("%*[\t ;]");
 		i = scanf(format, r);
 		if (i < 0)
@@ -220,15 +220,19 @@ getstrpar(const char *s, char *r, int l, const char *t)
 int
 testnl(void)
 {
-	char		c;
+	int c;
 
-	while ((c = cgetc(0)) != '\n')
+	while ((c = getchar()) != '\n') {
+		if (c == EOF) {
+			exit(1);
+		}
 		if ((c >= '0' && c <= '9') || c == '.' || c == '!' ||
 		    (c >= 'A' && c <= 'Z') ||
 		    (c >= 'a' && c <= 'z') || c == '-') {
 			ungetc(c, stdin);
 			return(0);
 		}
+	}
 	ungetc(c, stdin);
 	return (1);
 }
@@ -241,9 +245,12 @@ testnl(void)
 void
 skiptonl(int c)
 {
-	while (c != '\n')
-		if (!(c = cgetc(0)))
-			return;
+	while (c != '\n') {
+		c = getchar();
+		if (c == EOF) {
+			exit(1);
+		}
+	}
 	ungetc('\n', stdin);
 	return;
 }
@@ -256,10 +263,12 @@ skiptonl(int c)
 static int
 testterm(void)
 {
-	char		c;
+	int c;
 
-	if (!(c = cgetc(0)))
-		return (1);
+	c = getchar();
+	if (c == EOF) {
+		exit(1);
+	}
 	if (c == '.')
 		return (0);
 	if (c == '\n' || c == ';')
@@ -279,15 +288,15 @@ testterm(void)
 int
 readdelim(int d)
 {
-	char	c;
+	int c;
 
-	while ((c = cgetc(0)) != '\0') {
+	while ((c = getchar()) != EOF) {
 		if (c == d)
 			return (1);
 		if (c == ' ')
 			continue;
 		ungetc(c, stdin);
-		break;
+		return 0;
 	}
-	return (0);
+	exit(1);
 }
