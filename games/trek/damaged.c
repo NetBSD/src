@@ -1,4 +1,4 @@
-/*	$NetBSD: damaged.c,v 1.7 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: damaged.c,v 1.8 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)damaged.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: damaged.c,v 1.7 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: damaged.c,v 1.8 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,7 @@ damaged(int dev)
 
 	d = dev;
 
-	for (i = 0; i < MAXEVENTS; i++)
-	{
+	for (i = 0; i < MAXEVENTS; i++) {
 		e = &Event[i];
 		if (e->evcode != E_FIXDV)
 			continue;

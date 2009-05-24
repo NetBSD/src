@@ -1,4 +1,4 @@
-/*	$NetBSD: capture.c,v 1.9 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: capture.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)capture.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: capture.c,v 1.9 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: capture.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,7 @@ capture(int v __unused)
 	double			x;
 
 	/* check for not cloaked */
-	if (Ship.cloaked)
-	{
+	if (Ship.cloaked) {
 		printf("Ship-ship communications out when cloaked\n");
 		return;
 	}
@@ -74,8 +73,7 @@ capture(int v __unused)
 		return;
 	}
 	/* find out if there are any at all */
-	if (Etc.nkling <= 0)
-	{
+	if (Etc.nkling <= 0) {
 		printf("Uhura: Getting no response, sir\n");
 		return;
 	}
@@ -96,8 +94,7 @@ capture(int v __unused)
 	if (Trace)
 		printf("Prob = %d (%.4f)\n", i, x);
 #endif
-	if (i > ranf(100))
-	{
+	if (i > ranf(100)) {
 		/* guess what, he surrendered!!! */
 		printf("Klingon at %d,%d surrenders\n", k->x, k->y);
 		i = ranf(Param.klingcrew);

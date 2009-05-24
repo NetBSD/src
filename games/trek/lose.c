@@ -1,4 +1,4 @@
-/*	$NetBSD: lose.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: lose.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lose.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: lose.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: lose.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
 
 extern jmp_buf	env;
 
-const char	*const Losemsg[] =
-{
+const char	*const Losemsg[] = {
 	"You ran out of time",
 	"You ran out of energy",
 	"You have been destroyed",
@@ -77,9 +76,7 @@ lose(int why)
 	Game.killed = 1;
 	sleep(1);
 	printf("\n%s\n", Losemsg[why - 1]);
-	switch (why)
-	{
-
+	switch (why) {
 	  case L_NOTIME:
 		Game.killed = 0;
 		break;

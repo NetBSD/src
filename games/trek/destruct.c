@@ -1,4 +1,4 @@
-/*	$NetBSD: destruct.c,v 1.9 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: destruct.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)destruct.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: destruct.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: destruct.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,7 @@ destruct(int v __unused)
 	printf("\n\07 --- WORKING ---\07\n");
 	sleep(3);
 	/* output the count 10 9 8 7 6 */
-	for (i = 10; i > 5; i--)
-	{
+	for (i = 10; i > 5; i--) {
 		for (j = 10;  j > i; j--)
 			printf("   ");
 		printf("%d\n", i);
@@ -97,8 +96,7 @@ destruct(int v __unused)
 	printf("Password verified; self destruct sequence continues:\n");
 	sleep(2);
 	/* output count 5 4 3 2 1 0 */
-	for (i = 5; i >= 0; i--)
-	{
+	for (i = 5; i >= 0; i--) {
 		sleep(1);
 		for (j = 5; j > i; j--)
 			printf("   ");
@@ -110,8 +108,7 @@ destruct(int v __unused)
 	/* let's see what we can blow up!!!! */
 	zap = 20.0 * Ship.energy;
 	Game.deaths += Ship.crew;
-	for (i = 0; i < Etc.nkling; )
-	{
+	for (i = 0; i < Etc.nkling; ) {
 		if (Etc.klingon[i].power * Etc.klingon[i].dist <= zap)
 			killk(Etc.klingon[i].x, Etc.klingon[i].y);
 		else

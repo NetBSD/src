@@ -1,4 +1,4 @@
-/*	$NetBSD: damage.c,v 1.7 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: damage.c,v 1.8 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)damage.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: damage.c,v 1.7 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: damage.c,v 1.8 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,16 +77,14 @@ damage(int dev1, double dam)
 		dam *= Param.dockfac;
 	/* set the damage flag */
 	f = damaged(dev);
-	if (!f)
-	{
+	if (!f) {
 		/* new damages -- schedule a fix */
 		schedule(E_FIXDV, dam, 0, 0, dev);
 		return;
 	}
 	/* device already damaged -- add to existing damages */
 	/* scan for old damages */
-	for (i = 0; i < MAXEVENTS; i++)
-	{
+	for (i = 0; i < MAXEVENTS; i++) {
 		e = &Event[i];
 		if (e->evcode != E_FIXDV || e->systemname != dev)
 			continue;
