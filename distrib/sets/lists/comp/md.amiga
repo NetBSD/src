@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.56 2008/08/22 13:42:19 lukem Exp $
+# $NetBSD: md.amiga,v 1.57 2009/05/24 20:53:22 mlelstv Exp $
 ./usr/include/amiga				comp-c-include
 ./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
 ./usr/include/amiga/ansi.h			comp-c-include
@@ -31,7 +31,7 @@
 ./usr/include/amiga/lock.h			comp-c-include
 ./usr/include/amiga/math.h			comp-c-include
 ./usr/include/amiga/mcontext.h			comp-c-include
-./usr/include/amiga/mtpr.h			comp-c-include
+./usr/include/amiga/mtpr.h			comp-obsolete		obsolete
 ./usr/include/amiga/mutex.h			comp-c-include
 ./usr/include/amiga/param.h			comp-c-include
 ./usr/include/amiga/pcb.h			comp-c-include
