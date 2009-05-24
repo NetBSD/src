@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.35 2009/05/23 15:13:57 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.36 2009/05/24 15:00:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,15 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.35 2009/05/23 15:13:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.36 2009/05/24 15:00:24 ad Exp $");
 
 #include "opt_modular.h"
 
-#define	ELFSIZE		ARCH_ELFSIZE
-
-#include <sys/systm.h>
-#include <sys/kobj.h>
-#include <sys/errno.h>
+#include <sys/kobj_impl.h>
 
 #ifdef MODULAR
 
@@ -84,65 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.35 2009/05/23 15:13:57 ad Exp $");
 #include <sys/fcntl.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
-#include <sys/exec.h>
-#include <sys/exec_elf.h>
 
 #include <machine/stdarg.h>
 
 #include <uvm/uvm_extern.h>
-
-typedef struct {
-	void		*addr;
-	Elf_Off		size;
-	int		flags;
-	int		sec;		/* Original section */
-	const char	*name;
-} progent_t;
-
-typedef struct {
-	Elf_Rel		*rel;
-	int 		nrel;
-	int 		sec;
-	size_t		size;
-} relent_t;
-
-typedef struct {
-	Elf_Rela	*rela;
-	int		nrela;
-	int		sec;
-	size_t		size;
-} relaent_t;
-
-typedef enum kobjtype {
-	KT_UNSET,
-	KT_VNODE,
-	KT_MEMORY
-} kobjtype_t;
-
-struct kobj {
-	char		ko_name[MAXMODNAME];
-	kobjtype_t	ko_type;
-	void		*ko_source;
-	ssize_t		ko_memsize;
-	vaddr_t		ko_address;	/* Relocation address */
-	Elf_Shdr	*ko_shdr;
-	progent_t	*ko_progtab;
-	relaent_t	*ko_relatab;
-	relent_t	*ko_reltab;
-	Elf_Sym		*ko_symtab;	/* Symbol table */
-	char		*ko_strtab;	/* String table */
-	char		*ko_shstrtab;	/* Section name string table */
-	size_t		ko_size;	/* Size of text/data/bss */
-	size_t		ko_symcnt;	/* Number of symbols */
-	size_t		ko_strtabsz;	/* Number of bytes in string table */
-	size_t		ko_shstrtabsz;	/* Number of bytes in scn str table */
-	size_t		ko_shdrsz;
-	int		ko_nrel;
-	int		ko_nrela;
-	int		ko_nprogtab;
-	bool		ko_ksyms;
-	bool		ko_loaded;
-};
 
 static int	kobj_relocate(kobj_t, bool);
 static int	kobj_checksyms(kobj_t, bool);
