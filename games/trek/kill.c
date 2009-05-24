@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: kill.c,v 1.11 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: kill.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: kill.c,v 1.11 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,11 +125,14 @@ killb(int qx, int qy)
 		Sect[Etc.starbase.x][Etc.starbase.y] = EMPTY;
 		if (Ship.cond == DOCKED)
 			undock(0);
-		printf("Starbase at %d,%d destroyed\n", Etc.starbase.x, Etc.starbase.y);
+		printf("Starbase at %d,%d destroyed\n",
+			Etc.starbase.x, Etc.starbase.y);
 	} else {
 		if (!damaged(SSRADIO)) {
-			printf("Uhura: Starfleet command reports that the starbase in\n");
-			printf("   quadrant %d,%d has been destroyed\n", qx, qy);
+			printf("Uhura: Starfleet command reports that the "
+			       "starbase in\n");
+			printf("   quadrant %d,%d has been destroyed\n",
+				qx, qy);
 		}
 		else
 			schedule(E_KATSB | E_GHOST, TOOLARGE, qx, qy, 0);
@@ -200,7 +203,8 @@ killd(int x, int y, int f)
 		switch (e->evcode) {
 		  case E_KDESB:
 			if (f) {
-				printf("Distress call for starbase in %d,%d nullified\n",
+				printf("Distress call for starbase in "
+				       "%d,%d nullified\n",
 					x, y);
 				unschedule(e);
 			}
@@ -209,7 +213,8 @@ killd(int x, int y, int f)
 		  case E_ENSLV:
 		  case E_REPRO:
 			if (f) {
-				printf("Distress call for %s in quadrant %d,%d nullified\n",
+				printf("Distress call for %s in quadrant "
+				       "%d,%d nullified\n",
 					Systemname[e->systemname], x, y);
 				q->qsystemname = e->systemname;
 				unschedule(e);

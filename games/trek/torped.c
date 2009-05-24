@@ -1,4 +1,4 @@
-/*	$NetBSD: torped.c,v 1.12 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: torped.c,v 1.13 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: torped.c,v 1.12 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: torped.c,v 1.13 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,8 @@ torped(int v __unused)
 	int		n;
 
 	if (Ship.cloaked) {
-		printf("Federation regulations do not permit attack while cloaked.\n");
+		printf("Federation regulations do not permit attack while "
+		       "cloaked.\n");
 		return;
 	}
 	if (check_out(TORPED))
@@ -150,7 +151,8 @@ torped(int v __unused)
 		while (1) {
 			ix = x += dx;
 			iy = y += dy;
-			if (x < 0.0 || x >= sectsize || y < 0.0 || y >= sectsize) {
+			if (x < 0.0 || x >= sectsize ||
+			    y < 0.0 || y >= sectsize) {
 				printf("Torpedo missed\n");
 				break;
 			}
@@ -160,16 +162,20 @@ torped(int v __unused)
 				continue;
 
 			  case HOLE:
-				printf("Torpedo disappears into a black hole\n");
+				printf("Torpedo disappears into a black "
+				       "hole\n");
 				break;
 
 			  case KLINGON:
 				for (k = 0; k < Etc.nkling; k++) {
-					if (Etc.klingon[k].x != ix || Etc.klingon[k].y != iy)
+					if (Etc.klingon[k].x != ix ||
+					    Etc.klingon[k].y != iy)
 						continue;
 					Etc.klingon[k].power -= 500 + ranf(501);
 					if (Etc.klingon[k].power > 0) {
-						printf("*** Hit on Klingon at %d,%d: extensive damages\n",
+						printf("*** Hit on Klingon at "
+						       "%d,%d: extensive "
+						       "damages\n",
 							ix, iy);
 						break;
 					}

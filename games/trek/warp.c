@@ -1,4 +1,4 @@
-/*	$NetBSD: warp.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: warp.c,v 1.11 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)warp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: warp.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: warp.c,v 1.11 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ warp(int fl, int c, double d)
 	double		frac;
 	int		percent;
 	int		i;
+	double repairs;
 
 	if (Ship.cond == DOCKED) {
 		printf("%s is docked\n", Ship.shipname);
@@ -101,7 +102,8 @@ warp(int fl, int c, double d)
 	power = (dist + 0.05) * Ship.warp3;
 	percent = 100 * power / Ship.energy + 0.5;
 	if (percent >= 85) {
-		printf("Scotty: That would consume %d%% of our remaining energy.\n",
+		printf("Scotty: That would consume %d%% of our remaining "
+		       "energy.\n",
 			percent);
 		if (!getynpar("Are you sure that is wise"))
 			return;
@@ -125,7 +127,8 @@ warp(int fl, int c, double d)
 		frac = franf();
 		dist *= frac;
 		time *= frac;
-		damage(WARP, (frac + 1.0) * Ship.warp * (franf() + 0.25) * 0.20);
+		repairs = (frac + 1.0) * Ship.warp * (franf() + 0.25) * 0.20;
+		damage(WARP, repairs);
 	}
 
 	/* do the move */
@@ -157,7 +160,8 @@ warp(int fl, int c, double d)
 			/* positive time warp */
 			time = (Ship.warp - 8.0) * dist * (franf() + 1.0);
 			Now.date += time;
-			printf("Positive time portal entered -- it is now Stardate %.2f\n",
+			printf("Positive time portal entered -- "
+			       "it is now Stardate %.2f\n",
 				Now.date);
 			for (i = 0; i < MAXEVENTS; i++) {
 				percent = Event[i].evcode;
@@ -175,7 +179,8 @@ warp(int fl, int c, double d)
 		memcpy(p, Event, sizeof Event);
 		p += sizeof Event;
 		memcpy(p, &Now, sizeof Now);
-		printf("Negative time portal entered -- it is now Stardate %.2f\n",
+		printf("Negative time portal entered -- "
+		       "it is now Stardate %.2f\n",
 			Now.date);
 		for (i = 0; i < MAXEVENTS; i++)
 			if (Event[i].evcode == E_FIXDV)
@@ -186,7 +191,8 @@ warp(int fl, int c, double d)
 	/* test for just a lot of damage */
 	if (percent < 80)
 		lose(L_TOOFAST);
-	printf("Equilibrium restored -- extreme damage occurred to ship systems\n");
+	printf("Equilibrium restored -- "
+	       "extreme damage occurred to ship systems\n");
 	for (i = 0; i < NDEV; i++)
 		damage(i, (3.0 * (franf() + franf()) + 1.0) * Param.damfac[i]);
 	Ship.shldup = 0;

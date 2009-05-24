@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.11 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: help.c,v 1.12 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.11 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: help.c,v 1.12 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,8 @@ help(int v __unused)
 				if (dx < 0 || dx >= NSECTS)
 					continue;
 				dy = Etc.starbase.y + ranf(3) - 1;
-				if (dy < 0 || dy >= NSECTS || Sect[dx][dy] != EMPTY)
+				if (dy < 0 || dy >= NSECTS ||
+				    Sect[dx][dy] != EMPTY)
 					continue;
 				break;
 			}

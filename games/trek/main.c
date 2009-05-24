@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,8 @@ main(int argc, char **argv)
 		f_log = fopen(av[0], opencode);
 	*/
 
-	printf("\n   * * *   S T A R   T R E K   * * *\n\nPress return to continue.\n");
+	printf("\n   * * *   S T A R   T R E K   * * *\n\n"
+	       "Press return to continue.\n");
 
 	if (setjmp(env)) {
 		if ( !getynpar("Another game") )

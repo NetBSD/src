@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.13 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: computer.c,v 1.14 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: computer.c,v 1.13 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: computer.c,v 1.14 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,8 @@ computer(int v __unused)
 		switch ((long)r->value) {
 
 		  case 1:			/* star chart */
-			printf("Computer record of galaxy for all long range sensor scans\n\n");
+			printf("Computer record of galaxy for all long range "
+			       "sensor scans\n\n");
 			printf("  ");
 			/* print top header */
 			for (i = 0; i < NQUADS; i++)
@@ -137,7 +138,8 @@ computer(int v __unused)
 			for (i = 0; i < NQUADS; i++) {
 				printf("%d ", i);
 				for (j = 0; j < NQUADS; j++) {
-					if (i == Ship.quadx && j == Ship.quady) {
+					if (i == Ship.quadx &&
+					    j == Ship.quady) {
 						printf("$$$ ");
 						continue;
 					}
@@ -152,7 +154,8 @@ computer(int v __unused)
 						if (q->scanned < 0)
 							printf("... ");
 						else
-							printf("%3d ", q->scanned);
+							printf("%3d ",
+								q->scanned);
 				}
 				printf("%d\n", i);
 			}
@@ -173,8 +176,11 @@ computer(int v __unused)
 			}
 			/* for each Klingon, give the course & distance */
 			for (i = 0; i < Etc.nkling; i++) {
-				printf("Klingon at %d,%d", Etc.klingon[i].x, Etc.klingon[i].y);
-				course = kalc(Ship.quadx, Ship.quady, Etc.klingon[i].x, Etc.klingon[i].y, &dist);
+				printf("Klingon at %d,%d",
+					Etc.klingon[i].x, Etc.klingon[i].y);
+				course = kalc(Ship.quadx, Ship.quady,
+					      Etc.klingon[i].x,
+					      Etc.klingon[i].y, &dist);
 				prkalc(course, dist);
 			}
 			break;
@@ -205,7 +211,8 @@ computer(int v __unused)
 				break;
 			}
 			printf("%d,%d/%d,%d to %d,%d/%d,%d",
-				Ship.quadx, Ship.quady, Ship.sectx, Ship.secty, tqx, tqy, ix, iy);
+				Ship.quadx, Ship.quady, Ship.sectx, Ship.secty,
+				tqx, tqy, ix, iy);
 			prkalc(course, dist);
 			break;
 
@@ -219,7 +226,8 @@ computer(int v __unused)
 				break;
 			dist *= 10.0;
 			cost = pow(0.90, dist) * 98.0 + 0.5;
-			printf("Phasers are %d%% effective at that range\n", cost);
+			printf("Phasers are %d%% effective at that range\n",
+				cost);
 			break;
 
 		  case 6:			/* warp cost (time/energy) */
@@ -231,7 +239,8 @@ computer(int v __unused)
 				warpfact = Ship.warp;
 			cost = (dist + 0.05) * warpfact * warpfact * warpfact;
 			time = Param.warptime * dist / (warpfact * warpfact);
-			printf("Warp %.2f distance %.2f cost %.2f stardates %d (%d w/ shlds up) units\n",
+			printf("Warp %.2f distance %.2f cost %.2f "
+			       "stardates %d (%d w/ shlds up) units\n",
 				warpfact, dist, time, cost, cost + cost);
 			break;
 
@@ -257,15 +266,18 @@ computer(int v __unused)
 				switch (e->evcode & E_EVENT) {
 
 				  case E_KDESB:
-					printf("Klingon is attacking starbase in quadrant %d,%d\n",
+					printf("Klingon is attacking starbase "
+					       "in quadrant %d,%d\n",
 						e->x, e->y);
 					j = 0;
 					break;
 
 				  case E_ENSLV:
 				  case E_REPRO:
-					printf("Starsystem %s in quadrant %d,%d is distressed\n",
-						Systemname[e->systemname], e->x, e->y);
+					printf("Starsystem %s in quadrant "
+					       "%d,%d is distressed\n",
+						Systemname[e->systemname],
+						e->x, e->y);
 					j = 0;
 					break;
 				}

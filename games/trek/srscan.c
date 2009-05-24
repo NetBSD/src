@@ -1,4 +1,4 @@
-/*	$NetBSD: srscan.c,v 1.8 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: srscan.c,v 1.9 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: srscan.c,v 1.8 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: srscan.c,v 1.9 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,8 @@ srscan(int f)
 					printf(", CLOAKED");
 				break;
 			  case 2:
-				printf("position      %d,%d/%d,%d",Ship.quadx, Ship.quady, Ship.sectx, Ship.secty);
+				printf("position      %d,%d/%d,%d", Ship.quadx,
+					Ship.quady, Ship.sectx, Ship.secty);
 				break;
 			  case 3:
 				printf("warp factor   %.1f", Ship.warp);
@@ -149,7 +150,8 @@ srscan(int f)
 			  case 9:
 				printf("life support  ");
 				if (damaged(LIFESUP)) {
-					printf("damaged, reserves = %.2f", Ship.reserves);
+					printf("damaged, reserves = %.2f",
+						Ship.reserves);
 					break;
 				}
 				printf("active");

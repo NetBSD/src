@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.14 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: trek.h,v 1.15 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -232,7 +232,7 @@ struct Ship_struct {
 	int	secty;		/* sector y coord */
 	unsigned char	cond;	/* condition code */
 	/* sinsbad is set if SINS is working but not calibrated */
-	char	sinsbad;	/* Space Inertial Navigation System condition */
+	char	sinsbad;	/* Space Inertial Navigation System condition*/
 	const char *shipname;	/* name of current starship */
 	char	ship;		/* current starship */
 	int	distressed;	/* number of distress calls */
@@ -321,13 +321,14 @@ extern struct Now_struct Now;
 
 /* Other stuff, not dumped in a snapshot */
 struct Etc_struct {
-	struct kling	klingon[MAXKLQUAD];	/* sorted Klingon list */
-	short		nkling;			/* number of Klingons in this sector */
-						/* < 0 means automatic override mode */
-	char		fast;			/* set if speed > 300 baud */
-	struct xy	starbase;	/* starbase in current quadrant */
-	char		snapshot[sizeof Quad + sizeof Event + sizeof Now];	/* snapshot for time warp */
-	char		statreport;		/* set to get a status report on a srscan */
+	struct kling klingon[MAXKLQUAD];/* sorted Klingon list */
+	short nkling;			/* number of Klingons in this sector */
+					/* < 0 means automatic override mode */
+	char fast;			/* set if speed > 300 baud */
+	struct xy starbase;		/* starbase in current quadrant */
+	char snapshot[sizeof Quad + sizeof Event + sizeof Now];
+					/* snapshot for time warp */
+	char statreport;	/* set to get a status report on a srscan */
 };
 extern struct Etc_struct Etc;
 

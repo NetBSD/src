@@ -1,4 +1,4 @@
-/*	$NetBSD: ram.c,v 1.7 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: ram.c,v 1.8 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ram.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ram.c,v 1.7 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: ram.c,v 1.8 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,8 @@ ram(int ix, int iy)
 	  case INHABIT:
 		printf("Yeoman Rand: Captain, isn't it getting hot in here?\n");
 		sleep(2);
-		printf("Spock: Hull temperature approaching 550 Degrees Kelvin.\n");
+		printf("Spock: Hull temperature approaching 550 Degrees "
+		       "Kelvin.\n");
 		lose(L_STAR);
 
 	  case BASE:

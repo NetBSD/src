@@ -1,4 +1,4 @@
-/*	$NetBSD: phaser.c,v 1.13 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: phaser.c,v 1.14 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: phaser.c,v 1.13 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: phaser.c,v 1.14 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,8 @@ phaser(int v __unused)
 		return;
 	}
 	if (Ship.cloaked) {
-		printf("Sulu: Captain, surely you must realize that we cannot fire\n");
+		printf("Sulu: Captain, surely you must realize that we cannot "
+		       "fire\n");
 		printf("  phasers with the cloaking device up.\n");
 		return;
 	}
@@ -190,7 +191,8 @@ phaser(int v __unused)
 	} else {
 		/* automatic distribution of power */
 		if (Etc.nkling <= 0) {
-			printf("Sulu: But there are no Klingons in this quadrant\n");
+			printf("Sulu: But there are no Klingons in this "
+			       "quadrant\n");
 			return;
 		}
 		printf("Phasers locked on target.  ");
@@ -215,7 +217,8 @@ phaser(int v __unused)
 				k = &Etc.klingon[i];
 				b = &bank[i];
 				distfactor = k->dist;
-				anglefactor = ALPHA * BETA * OMEGA / (distfactor * distfactor + EPSILON);
+				anglefactor = ALPHA * BETA * OMEGA /
+					(distfactor * distfactor + EPSILON);
 				anglefactor *= GAMMA;
 				distfactor = k->power;
 				distfactor /= anglefactor;

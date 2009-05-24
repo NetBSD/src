@@ -1,4 +1,4 @@
-/*	$NetBSD: dock.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: dock.c,v 1.10 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dock.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dock.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: dock.c,v 1.10 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,8 @@ dock(int v __unused)
 		}
 	}
 	if (!ok) {
-		printf("Chekov: But captain, we are not adjacent to a starbase.\n");
+		printf("Chekov: But captain, we are not adjacent to a "
+		       "starbase.\n");
 		return;
 	}
 

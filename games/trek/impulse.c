@@ -1,4 +1,4 @@
-/*	$NetBSD: impulse.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: impulse.c,v 1.10 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)impulse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: impulse.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: impulse.c,v 1.10 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,8 @@ impulse(int v __unused)
 	power = 20 + 100 * dist;
 	percent = 100 * power / Ship.energy + 0.5;
 	if (percent >= 85) {
-		printf("Scotty: That would consume %d%% of our remaining energy.\n",
+		printf("Scotty: That would consume %d%% of our remaining "
+		       "energy.\n",
 			percent);
 		if (!getynpar("Are you sure that is wise"))
 			return;
