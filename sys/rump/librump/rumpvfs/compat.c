@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.2 2009/05/22 10:51:54 pooka Exp $	*/
+/*	$NetBSD: compat.c,v 1.3 2009/05/24 20:10:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,10 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.2 2009/05/22 10:51:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3 2009/05/24 20:10:50 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
 
