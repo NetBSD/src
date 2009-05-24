@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1234 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1235 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -283,3 +283,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	httpd(8): Import bozohttpd-20090522. [mrg 20090522]
 	libc: Add %s (seconds since the Epoch) to strptime(3) for symmetry
 		with strftime(3). [ginsbach 20090524]
+	kernel: File descriptor access performance improvements.
+		[ad 20090524]
