@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.50 2009/05/21 20:59:11 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.51 2009/05/24 15:27:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.50 2009/05/21 20:59:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.51 2009/05/24 15:27:08 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -195,7 +195,6 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	 */
 	*bshp = bpa;
 
-printf("%s: bpa 0x%016llx size 0x%016llx\n", __func__, (unsigned long long)bpa, (unsigned long long)size);
 	/*
 	 * Loop while there is space left to map.
 	 */
@@ -230,7 +229,7 @@ printf("%s: bpa 0x%016llx size 0x%016llx\n", __func__, (unsigned long long)bpa, 
 		/*
 		 * Enter another single-page mapping.
 		 */
-		pmap_kenter_pa(bpa, bpa, VM_PROT_READ | VM_PROT_WRITE | PMAP_NC);
+		pmap_kenter_pa(bpa, bpa, VM_PROT_READ | VM_PROT_WRITE);
 		bpa += PAGE_SIZE;
 		frames--;
 	}
@@ -1498,20 +1497,6 @@ mbattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	hppa_hpa_t hpabase;
 
-	struct iomod_openbsd {
-/* SRS (Supervisor Register Set) */
-        u_int   io_eir;         /* (WO) interrupt CPU; set bits in EIR CR */
-        u_int   io_eim;         /* (WO) External Interrupt Message address */
-        u_int   io_dc_rw;       /* write address of IODC to read IODC data */
-        u_int   io_ii_rw;       /* read/clear external intrpt msg (bit-26) */
-        u_int   io_dma_link;    /* pointer to "next quad" in DMA chain */
-        u_int   io_dma_command; /* (RO) chain command to exec on "next quad" */
-        u_int   io_dma_address; /* (RO) start of DMA */
-        u_int   io_dma_count;   /* (RO) number of bytes remaining to xfer */
-        u_int   io_flex;        /* (WO) HPA flex addr, LSB: bus master flag */
-	} *fred;
-
-
 	sc->sc_dv = self;
 
 	mb_attached = 1;
@@ -1536,19 +1521,8 @@ mbattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
 	 */
-#if 0
-	fred = (struct iomod_openbsd *)HPPA_LBCAST;
-
-        fred->io_flex =
-		(pdc_hpa.hpa & FLEX_MASK) | DMA_ENABLE;
-#else
-	fred = (struct iomod_openbsd *)HPPA_LBCAST;
-	printf("fred->io_flex %p\n", &fred->io_flex);
 	((struct iomod *)(pdc_hpa.hpa & FLEX_MASK))[FPA_IOMOD].io_flex =
 		(void *)((pdc_hpa.hpa & FLEX_MASK) | DMA_ENABLE);
-#endif
-
-
 
 	sc->sc_hpa = pdc_hpa.hpa;
 	aprint_normal(" [flex %lx]\n", pdc_hpa.hpa & FLEX_MASK);
