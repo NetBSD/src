@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.10 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: win.c,v 1.11 2009/05/24 23:00:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: win.c,v 1.10 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: win.c,v 1.11 2009/05/24 23:00:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ void
 win(void)
 {
 	long		s;
-	const struct cvntab	*p = NULL;
+	const struct cvntab *p;
 
 	sleep(1);
 	printf("\nCongratulations, you have saved the Federation\n");
