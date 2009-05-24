@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.8 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,13 +122,11 @@ move(int ramflag, int course, double time, double speed)
 			Now.eventptr[E_LRTB], Now.eventptr[E_LRTB]->evcode,
 			Now.eventptr[E_LRTB]->date, evtime);
 #endif
-	if (time > evtime && Etc.nkling < 3)
-	{
+	if (time > evtime && Etc.nkling < 3) {
 		/* then we got a LRTB */
 		evtime += 0.005;
 		time = evtime;
-	}
-	else
+	} else
 		evtime = -1.0e50;
 	dist = time * speed;
 
@@ -144,16 +142,14 @@ move(int ramflag, int course, double time, double speed)
 #endif
 	Move.free = 0;
 
-	for (i = 0; i < n; i++)
-	{
+	for (i = 0; i < n; i++) {
 		ix = (x += dx);
 		iy = (y += dy);
 #ifdef xTRACE
 		if (Trace)
 			printf("ix = %d, x = %.2f, iy = %d, y = %.2f\n", ix, x, iy, y);
 #endif
-		if (x < 0.0 || y < 0.0 || x >= sectsize || y >= sectsize)
-		{
+		if (x < 0.0 || y < 0.0 || x >= sectsize || y >= sectsize) {
 			/* enter new quadrant */
 			dx = Ship.quadx * NSECTS + Ship.sectx + dx * xn;
 			dy = Ship.quady * NSECTS + Ship.secty + dy * xn;
@@ -190,11 +186,9 @@ move(int ramflag, int course, double time, double speed)
 			n = 0;
 			break;
 		}
-		if (Sect[ix][iy] != EMPTY)
-		{
+		if (Sect[ix][iy] != EMPTY) {
 			/* we just hit something */
-			if (!damaged(COMPUTER) && ramflag <= 0)
-			{
+			if (!damaged(COMPUTER) && ramflag <= 0) {
 				ix = x - dx;
 				iy = y - dy;
 				printf("Computer reports navigation error; %s stopped at %d,%d\n",
@@ -203,8 +197,7 @@ move(int ramflag, int course, double time, double speed)
 				break;
 			}
 			/* test for a black hole */
-			if (Sect[ix][iy] == HOLE)
-			{
+			if (Sect[ix][iy] == HOLE) {
 				/* get dumped elsewhere in the galaxy */
 				dumpme(1);
 				initquad(0);
@@ -215,14 +208,15 @@ move(int ramflag, int course, double time, double speed)
 			break;
 		}
 	}
-	if (n > 0)
-	{
+	if (n > 0) {
 		dx = Ship.sectx - ix;
 		dy = Ship.secty - iy;
 		dist = sqrt(dx * dx + dy * dy) / NSECTS;
 		time = dist / speed;
-		if (evtime > time)
-			time = evtime;		/* spring the LRTB trap */
+		if (evtime > time) {
+			/* spring the LRTB trap */
+			time = evtime;
+		}
 		Ship.sectx = ix;
 		Ship.secty = iy;
 	}

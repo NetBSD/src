@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.10 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: play.c,v 1.11 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play.c,v 1.10 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: play.c,v 1.11 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,7 @@ __RCSID("$NetBSD: play.c,v 1.10 2009/05/24 19:18:44 dholland Exp $");
 
 extern jmp_buf env;
 
-const struct cvntab	Comtab[] =
-{
+const struct cvntab	Comtab[] = {
 	{ "abandon",		"",		abandon,	0 },
 	{ "ca",			"pture",	capture,	0 },
 	{ "cl",			"oak",		shield,		-1 },
@@ -97,8 +96,7 @@ play(void)
 {
 	const struct cvntab		*r;
 
-	while (1)
-	{
+	while (1) {
 		Move.free = 1;
 		Move.time = 0.0;
 		Move.shldchg = 0;

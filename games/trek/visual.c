@@ -1,4 +1,4 @@
-/*	$NetBSD: visual.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: visual.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)visual.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: visual.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: visual.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,7 @@ __RCSID("$NetBSD: visual.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
 */
 
 /* This struct[] has the delta x, delta y for particular directions */
-struct xy	Visdelta[11] =
-{
+struct xy	Visdelta[11] = {
 	{ -1,	-1 },
 	{ -1,	 0 },
 	{ -1,	 1 },

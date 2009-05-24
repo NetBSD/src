@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.10 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: help.c,v 1.11 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.10 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: help.c,v 1.11 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,9 @@ __RCSID("$NetBSD: help.c,v 1.10 2009/05/24 19:18:44 dholland Exp $");
 **	to drop you.  After that, it's your problem.
 */
 
-const char	*const Cntvect[3] =
-{"first", "second", "third"};
+const char *const Cntvect[3] = {
+	"first", "second", "third"
+};
 
 /*ARGSUSED*/
 void
@@ -97,11 +98,9 @@ help(int v __unused)
 
 	/* find the closest base */
 	dist = TOOLARGE;
-	if (Quad[Ship.quadx][Ship.quady].bases <= 0)
-	{
+	if (Quad[Ship.quadx][Ship.quady].bases <= 0) {
 		/* there isn't one in this quadrant */
-		for (i = 0; i < Now.bases; i++)
-		{
+		for (i = 0; i < Now.bases; i++) {
 			/* compute distance */
 			dx = Now.base[i].x - Ship.quadx;
 			dy = Now.base[i].y - Ship.quady;
@@ -109,8 +108,7 @@ help(int v __unused)
 			x = sqrt(x);
 
 			/* see if better than what we already have */
-			if (x < dist)
-			{
+			if (x < dist) {
 				dist = x;
 				l = i;
 			}
@@ -120,9 +118,7 @@ help(int v __unused)
 		Ship.quadx = Now.base[l].x;
 		Ship.quady = Now.base[l].y;
 		initquad(1);
-	}
-	else
-	{
+	} else {
 		dist = 0.0;
 	}
 
@@ -134,15 +130,12 @@ help(int v __unused)
 	x = pow(1.0 - pow(0.94, dist), 0.3333333);
 
 	/* attempt to rematerialize */
-	for (i = 0; i < 3; i++)
-	{
+	for (i = 0; i < 3; i++) {
 		sleep(2);
 		printf("%s attempt to rematerialize ", Cntvect[i]);
-		if (franf() > x)
-		{
+		if (franf() > x) {
 			/* ok, that's good.  let's see if we can set her down */
-			for (j = 0; j < 5; j++)
-			{
+			for (j = 0; j < 5; j++) {
 				dx = Etc.starbase.x + ranf(3) - 1;
 				if (dx < 0 || dx >= NSECTS)
 					continue;
@@ -151,8 +144,7 @@ help(int v __unused)
 					continue;
 				break;
 			}
-			if (j < 5)
-			{
+			if (j < 5) {
 				/* found an empty spot */
 				printf("succeeds\n");
 				Ship.sectx = dx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.9 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: schedule.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: schedule.c,v 1.9 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: schedule.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,7 @@ schedule(int type, double offset, int x, int y, int z)
 	double			date;
 
 	date = Now.date + offset;
-	for (i = 0; i < MAXEVENTS; i++)
-	{
+	for (i = 0; i < MAXEVENTS; i++) {
 		e = &Event[i];
 		if (e->evcode)
 			continue;

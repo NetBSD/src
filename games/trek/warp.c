@@ -1,4 +1,4 @@
-/*	$NetBSD: warp.c,v 1.9 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: warp.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)warp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: warp.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: warp.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,7 @@ warp(int fl, int c, double d)
 		printf("%s is docked\n", Ship.shipname);
 		return;
 	}
-	if (damaged(WARP))
-	{
+	if (damaged(WARP)) {
 		out(WARP);
 		return;
 	}
@@ -101,8 +100,7 @@ warp(int fl, int c, double d)
 	/* check to see that we are not using an absurd amount of power */
 	power = (dist + 0.05) * Ship.warp3;
 	percent = 100 * power / Ship.energy + 0.5;
-	if (percent >= 85)
-	{
+	if (percent >= 85) {
 		printf("Scotty: That would consume %d%% of our remaining energy.\n",
 			percent);
 		if (!getynpar("Are you sure that is wise"))
@@ -115,8 +113,7 @@ warp(int fl, int c, double d)
 
 	/* check to see that that value is not ridiculous */
 	percent = 100 * time / Now.time + 0.5;
-	if (percent >= 85)
-	{
+	if (percent >= 85) {
 		printf("Spock: That would take %d%% of our remaining time.\n",
 			percent);
 		if (!getynpar("Are you sure that is wise"))
@@ -124,8 +121,7 @@ warp(int fl, int c, double d)
 	}
 
 	/* compute how far we will go if we get damages */
-	if (Ship.warp > 6.0 && ranf(100) < 20 + 15 * (Ship.warp - 6.0))
-	{
+	if (Ship.warp > 6.0 && ranf(100) < 20 + 15 * (Ship.warp - 6.0)) {
 		frac = franf();
 		dist *= frac;
 		time *= frac;
@@ -148,26 +144,22 @@ warp(int fl, int c, double d)
 	sleep(2);
 	printf("Crew experiencing extreme sensory distortion\n");
 	sleep(4);
-	if (ranf(100) >= 100 * dist)
-	{
+	if (ranf(100) >= 100 * dist) {
 		printf("Equilibrium restored -- all systems normal\n");
 		return;
 	}
 
 	/* select a bizzare thing to happen to us */
 	percent = ranf(100);
-	if (percent < 70)
-	{
+	if (percent < 70) {
 		/* time warp */
-		if (percent < 35 || !Game.snap)
-		{
+		if (percent < 35 || !Game.snap) {
 			/* positive time warp */
 			time = (Ship.warp - 8.0) * dist * (franf() + 1.0);
 			Now.date += time;
 			printf("Positive time portal entered -- it is now Stardate %.2f\n",
 				Now.date);
-			for (i = 0; i < MAXEVENTS; i++)
-			{
+			for (i = 0; i < MAXEVENTS; i++) {
 				percent = Event[i].evcode;
 				if (percent == E_FIXDV || percent == E_LRTB)
 					Event[i].date += time;

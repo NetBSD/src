@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2009/05/24 21:44:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2009/05/24 21:44:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,16 +182,13 @@ main(int argc, char **argv)
 	opencode = 'w';
 	prio = PRIO;
 
-	if (tcgetattr(1, &argp) == 0)
-	{
+	if (tcgetattr(1, &argp) == 0) {
 		if (cfgetispeed(&argp) < B1200)
 			Etc.fast++;
 	}
 
-	while (ac > 1 && av[0][0] == '-')
-	{
-		switch (av[0][1])
-		{
+	while (ac > 1 && av[0][0] == '-') {
+		switch (av[0][1]) {
 		  case 'a':	/* append to log file */
 			opencode = 'a';
 			break;
@@ -228,20 +225,19 @@ main(int argc, char **argv)
 	}
 	if (ac > 2)
 		errx(1, "arg count");
-		/*
+	/*
 	if (ac > 1)
 		f_log = fopen(av[0], opencode);
-		*/
+	*/
 
 	printf("\n   * * *   S T A R   T R E K   * * *\n\nPress return to continue.\n");
 
-	if (setjmp(env))
-	{
+	if (setjmp(env)) {
 		if ( !getynpar("Another game") )
 			exit(0);
 	}
-	do
-	{
+
+	do {
 		setup();
 		play();
 	} while (getynpar("Another game"));
