@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.c,v 1.8 2003/08/07 09:37:51 agc Exp $	*/
+/*	$NetBSD: externs.c,v 1.9 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)externs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: externs.c,v 1.8 2003/08/07 09:37:51 agc Exp $");
+__RCSID("$NetBSD: externs.c,v 1.9 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include "trek.h"
 
 /*
 **	global variable definitions

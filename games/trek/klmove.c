@@ -1,4 +1,4 @@
-/*	$NetBSD: klmove.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: klmove.c,v 1.7 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)klmove.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: klmove.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: klmove.c,v 1.7 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,10 +78,10 @@ klmove(int fl)
 	double			bigger;
 	int			i;
 
-#	ifdef xTRACE
+#ifdef xTRACE
 	if (Trace)
 		printf("klmove: fl = %d, Etc.nkling = %d\n", fl, Etc.nkling);
-#	endif
+#endif
 	for (n = 0; n < Etc.nkling; n++)
 	{
 		k = &Etc.klingon[n];
