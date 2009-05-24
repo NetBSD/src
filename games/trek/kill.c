@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.8 2009/03/31 18:48:16 christos Exp $	*/
+/*	$NetBSD: kill.c,v 1.9 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: kill.c,v 1.8 2009/03/31 18:48:16 christos Exp $");
+__RCSID("$NetBSD: kill.c,v 1.9 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,7 @@ __RCSID("$NetBSD: kill.c,v 1.8 2009/03/31 18:48:16 christos Exp $");
 */
 
 void
-killk(ix, iy)
-int	ix, iy;
+killk(int ix, int iy)
 {
 	int		i;
 
@@ -100,8 +99,7 @@ int	ix, iy;
 */
 
 void
-killb(qx, qy)
-int	qx, qy;
+killb(int qx, int qy)
 {
 	struct quad	*q;
 	struct xy	*b;
@@ -146,12 +144,13 @@ int	qx, qy;
 
 /**
  **	kill an inhabited starsystem
+ **
+ ** x, y are quad coords if f == 0, else sector coords
+ ** f != 0 -- this quad;  f < 0 -- Enterprise's fault
  **/
 
 void
-kills(x, y, f)
-int	x, y;	/* quad coords if f == 0, else sector coords */
-int	f;	/* f != 0 -- this quad;  f < 0 -- Enterprise's fault */
+kills(int x, int y, int f)
 {
 	struct quad	*q;
 	struct event	*e;
@@ -190,12 +189,13 @@ int	f;	/* f != 0 -- this quad;  f < 0 -- Enterprise's fault */
 
 /**
  **	"kill" a distress call
+ **
+ ** x, y are quadrant coordinates
+ ** f is set if user is to be informed
  **/
 
 void
-killd(x, y, f)
-int	x, y;		/* quadrant coordinates */
-int	f;		/* set if user is to be informed */
+killd(int x, int y, int f)
 {
 	struct event	*e;
 	int		i;

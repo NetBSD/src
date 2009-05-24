@@ -1,4 +1,4 @@
-/*	$NetBSD: klmove.c,v 1.5 2003/08/07 09:37:52 agc Exp $	*/
+/*	$NetBSD: klmove.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)klmove.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: klmove.c,v 1.5 2003/08/07 09:37:52 agc Exp $");
+__RCSID("$NetBSD: klmove.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,7 @@ __RCSID("$NetBSD: klmove.c,v 1.5 2003/08/07 09:37:52 agc Exp $");
 */
 
 void
-klmove(fl)
-int	fl;
+klmove(int fl)
 {
 	int			n;
 	struct kling	*k;
