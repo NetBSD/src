@@ -1,4 +1,4 @@
-/*	$NetBSD: capture.c,v 1.10 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: capture.c,v 1.11 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)capture.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: capture.c,v 1.10 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: capture.c,v 1.11 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,8 @@ capture(int v __unused)
 		printf("Klingon at %d,%d surrenders\n", k->x, k->y);
 		i = ranf(Param.klingcrew);
 		if ( i > 0 )
-			printf("%d klingons commit suicide rather than be taken captive\n", Param.klingcrew - i);
+			printf("%d klingons commit suicide rather than be "
+			       "taken captive\n", Param.klingcrew - i);
 		if (i > Ship.brigfree)
 			i = Ship.brigfree;
 		Ship.brigfree -= i;

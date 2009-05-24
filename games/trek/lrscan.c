@@ -1,4 +1,4 @@
-/*	$NetBSD: lrscan.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: lrscan.c,v 1.10 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lrscan.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lrscan.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: lrscan.c,v 1.10 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,8 @@ lrscan(int v __unused)
 	if (check_out(LRSCAN)) {
 		return;
 	}
-	printf("Long range scan for quadrant %d,%d\n\n", Ship.quadx, Ship.quady);
+	printf("Long range scan for quadrant %d,%d\n\n",
+		Ship.quadx, Ship.quady);
 
 	/* print the header on top */
 	for (j = Ship.quady - 1; j <= Ship.quady + 1; j++) {

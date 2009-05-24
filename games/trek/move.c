@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.10 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.10 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,8 @@ move(int ramflag, int course, double time, double speed)
 	evtime = Now.eventptr[E_LRTB]->date - Now.date;
 #ifdef xTRACE
 	if (Trace)
-		printf("E.ep = %p, ->evcode = %d, ->date = %.2f, evtime = %.2f\n",
+		printf("E.ep = %p, ->evcode = %d, ->date = %.2f, "
+		       "evtime = %.2f\n",
 			Now.eventptr[E_LRTB], Now.eventptr[E_LRTB]->evcode,
 			Now.eventptr[E_LRTB]->date, evtime);
 #endif
@@ -138,7 +139,8 @@ move(int ramflag, int course, double time, double speed)
 	n = xn + 0.5;
 #ifdef xTRACE
 	if (Trace)
-		printf("dx = %.2f, dy = %.2f, xn = %.2f, n = %d\n", dx, dy, xn, n);
+		printf("dx = %.2f, dy = %.2f, xn = %.2f, n = %d\n",
+			dx, dy, xn, n);
 #endif
 	Move.free = 0;
 
@@ -147,7 +149,8 @@ move(int ramflag, int course, double time, double speed)
 		iy = (y += dy);
 #ifdef xTRACE
 		if (Trace)
-			printf("ix = %d, x = %.2f, iy = %d, y = %.2f\n", ix, x, iy, y);
+			printf("ix = %d, x = %.2f, iy = %d, y = %.2f\n",
+				ix, x, iy, y);
 #endif
 		if (x < 0.0 || y < 0.0 || x >= sectsize || y >= sectsize) {
 			/* enter new quadrant */
@@ -191,7 +194,8 @@ move(int ramflag, int course, double time, double speed)
 			if (!damaged(COMPUTER) && ramflag <= 0) {
 				ix = x - dx;
 				iy = y - dy;
-				printf("Computer reports navigation error; %s stopped at %d,%d\n",
+				printf("Computer reports navigation error; "
+				       "%s stopped at %d,%d\n",
 					Ship.shipname, ix, iy);
 				Ship.energy -= Param.stopengy * speed;
 				break;

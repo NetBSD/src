@@ -1,4 +1,4 @@
-/*	$NetBSD: snova.c,v 1.8 2009/05/24 21:55:24 dholland Exp $	*/
+/*	$NetBSD: snova.c,v 1.9 2009/05/24 22:55:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)snova.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: snova.c,v 1.8 2009/05/24 21:55:24 dholland Exp $");
+__RCSID("$NetBSD: snova.c,v 1.9 2009/05/24 22:55:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,8 @@ snova(int x, int y)
 			n = ranf(q->stars);
 			for (ix = 0; ix < NSECTS; ix++) {
 				for (iy = 0; iy < NSECTS; iy++)
-					if (Sect[ix][iy] == STAR || Sect[ix][iy] == INHABIT)
+					if (Sect[ix][iy] == STAR ||
+					    Sect[ix][iy] == INHABIT)
 						if ((n -= 1) <= 0)
 							break;
 				if (n <= 0)
@@ -120,8 +121,10 @@ snova(int x, int y)
 	} else {
 		if (!damaged(SSRADIO)) {
 			q->scanned = 1000;
-			printf("\nUhura: Captain, Starfleet Command reports a supernova\n");
-			printf("  in quadrant %d,%d.  Caution is advised\n", qx, qy);
+			printf("\nUhura: Captain, Starfleet Command reports "
+			       "a supernova\n");
+			printf("  in quadrant %d,%d.  Caution is advised\n",
+				qx, qy);
 		}
 	}
 
@@ -143,7 +146,8 @@ snova(int x, int y)
 	q->stars = -1;
 	q->klings = 0;
 	if (Now.klings <= 0) {
-		printf("Lucky devil, that supernova destroyed the last klingon\n");
+		printf("Lucky devil, that supernova destroyed the last "
+		       "klingon\n");
 		win();
 	}
 	return;
