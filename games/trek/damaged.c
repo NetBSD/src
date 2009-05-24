@@ -1,4 +1,4 @@
-/*	$NetBSD: damaged.c,v 1.6 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: damaged.c,v 1.7 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)damaged.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: damaged.c,v 1.6 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: damaged.c,v 1.7 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include "trek.h"
 
 /*  DAMAGED -- check for device damaged
 **

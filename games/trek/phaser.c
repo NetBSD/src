@@ -1,4 +1,4 @@
-/*	$NetBSD: phaser.c,v 1.11 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: phaser.c,v 1.12 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: phaser.c,v 1.11 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: phaser.c,v 1.12 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,11 +45,11 @@ __RCSID("$NetBSD: phaser.c,v 1.11 2009/05/24 19:18:44 dholland Exp $");
 
 /* factors for phaser hits; see description below */
 
-# define	ALPHA		3.0		/* spread */
-# define	BETA		3.0		/* franf() */
-# define	GAMMA		0.30		/* cos(angle) */
-# define	EPSILON		150.0		/* dist ** 2 */
-# define	OMEGA		10.596		/* overall scaling factor */
+#define ALPHA		3.0		/* spread */
+#define BETA		3.0		/* franf() */
+#define GAMMA		0.30		/* cos(angle) */
+#define EPSILON		150.0		/* dist ** 2 */
+#define OMEGA		10.596		/* overall scaling factor */
 
 /* OMEGA ~= 100 * (ALPHA + 1) * (BETA + 1) / (EPSILON + 1) */
 
@@ -244,14 +244,14 @@ phaser(int v __unused)
 				b->angle = atan2(dy, dx);
 				b->spread = 0.0;
 				b->units = ((n - i) / tot) * extra;
-#				ifdef xTRACE
+#ifdef xTRACE
 				if (Trace)
 				{
 					printf("b%d hr%d u%d df%.2f af%.2f\n",
 						i, hitreqd[i], b->units,
 						distfactor, anglefactor);
 				}
-#				endif
+#endif
 				extra -= b->units;
 				hit = b->units - hitreqd[i];
 				if (hit > 0)
@@ -285,7 +285,7 @@ phaser(int v __unused)
 		}
 	}
 
-#	ifdef xTRACE
+#ifdef xTRACE
 	if (Trace)
 	{
 		for (i = 0; i < NBANKS; i++)
@@ -298,7 +298,7 @@ phaser(int v __unused)
 				printf("\n");
 		}
 	}
-#	endif
+#endif
 
 	/* actually fire the shots */
 	Move.free = 0;

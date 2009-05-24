@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.8 2008/01/28 01:15:55 dholland Exp $	*/
+/*	$NetBSD: events.c,v 1.9 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)events.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: events.c,v 1.8 2008/01/28 01:15:55 dholland Exp $");
+__RCSID("$NetBSD: events.c,v 1.9 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,11 +125,11 @@ events(int timewarp)
 		/* check for out of time */
 		if (Now.time <= 0.0)
 			lose(L_NOTIME);
-#		ifdef xTRACE
+#ifdef xTRACE
 		if (evnum >= 0 && Trace)
 			printf("xdate = %.2f, evcode %d params %d %d %d\n",
 				xdate, e->evcode, e->x, e->y, e->systemname);
-#		endif
+#endif
 
 		/* if evnum < 0, no events occurred  */
 		if (evnum < 0)

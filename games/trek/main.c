@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: main.c,v 1.14 2009/05/24 19:18:44 dholland Exp $");
 #include "trek.h"
 #include "getpar.h"
 
-# define	PRIO		00	/* default priority */
+#define PRIO		00	/* default priority */
 
 uid_t	Mother	= 51 + (51 << 8);
 
@@ -204,13 +204,13 @@ main(int argc, char **argv)
 			Etc.fast = 0;
 			break;
 
-#		ifdef xTRACE
+#ifdef xTRACE
 		  case 't':	/* trace */
 			if (getuid() != Mother)
 				goto badflag;
 			Trace++;
 			break;
-#		endif
+#endif
 
 		  case 'p':	/* set priority */
 			if (getuid() != Mother)

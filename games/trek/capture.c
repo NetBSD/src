@@ -1,4 +1,4 @@
-/*	$NetBSD: capture.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: capture.c,v 1.9 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)capture.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: capture.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: capture.c,v 1.9 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,10 +92,10 @@ capture(int v __unused)
 	x /= k->power * Etc.nkling;
 	x *= Param.srndrprob;
 	i = x;
-#	ifdef xTRACE
+#ifdef xTRACE
 	if (Trace)
 		printf("Prob = %d (%.4f)\n", i, x);
-#	endif
+#endif
 	if (i > ranf(100))
 	{
 		/* guess what, he surrendered!!! */
