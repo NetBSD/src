@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_gsc.c,v 1.13 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.14 2009/05/24 06:53:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_gsc.c,v 1.13 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_gsc.c,v 1.14 2009/05/24 06:53:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ int
 osiop_gsc_intr(void *arg)
 {
 	struct osiop_softc *sc = arg;
-	u_int8_t istat;
+	uint8_t istat;
 
 	/* This is potentially nasty, since the IRQ is level triggered... */
 	if (sc->sc_flags & OSIOP_INTSOFF)

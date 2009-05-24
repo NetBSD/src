@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.17 2009/04/30 15:34:24 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.18 2009/05/24 06:53:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17 2009/04/30 15:34:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.18 2009/05/24 06:53:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,8 +141,8 @@ const int _frame_reg_positions[32] = {
 void
 hppa_fpu_bootstrap(u_int ccr_enable)
 {
-	u_int32_t junk[2];
-	u_int32_t vers[2];
+	uint32_t junk[2];
+	uint32_t vers[2];
 	extern u_int hppa_fpu_nop0;
 	extern u_int hppa_fpu_nop1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.14 2009/05/12 19:35:59 skrll Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.15 2009/05/24 06:53:34 skrll Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.14 2009/05/12 19:35:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.15 2009/05/24 06:53:34 skrll Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -60,12 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.14 2009/05/12 19:35:59 skrll Exp $");
 /* EISA Bus Adapter registers definitions */
 #define	MONGOOSE_MONGOOSE	0x10000
 struct mongoose_regs {
-	u_int8_t	version;
-	u_int8_t	lock;
-	u_int8_t	liowait;
-	u_int8_t	clock;
-	u_int8_t	reserved[0xf000 - 4];
-	u_int8_t	intack;
+	uint8_t	version;
+	uint8_t	lock;
+	uint8_t	liowait;
+	uint8_t	clock;
+	uint8_t	reserved[0xf000 - 4];
+	uint8_t	intack;
 };
 
 #define	MONGOOSE_CTRL		0x00000
@@ -73,91 +73,91 @@ struct mongoose_regs {
 struct mongoose_ctrl {
 	struct dma0 {
 		struct {
-			u_int32_t	addr : 8;
-			u_int32_t	count: 8;
+			uint32_t	addr : 8;
+			uint32_t	count: 8;
 		} ch[4];
-		u_int8_t	command;
-		u_int8_t	request;
-		u_int8_t	mask_channel;
-		u_int8_t	mode;
-		u_int8_t	clr_byte_ptr;
-		u_int8_t	master_clear;
-		u_int8_t	mask_clear;
-		u_int8_t	master_write;
-		u_int8_t	pad[8];
+		uint8_t	command;
+		uint8_t	request;
+		uint8_t	mask_channel;
+		uint8_t	mode;
+		uint8_t	clr_byte_ptr;
+		uint8_t	master_clear;
+		uint8_t	mask_clear;
+		uint8_t	master_write;
+		uint8_t	pad[8];
 	}	dma0;
 
-	u_int8_t	irr0;		/* 0x20 */
-	u_int8_t	imr0;
-	u_int8_t	iack;		/* 0x22 -- 2 b2b reads generate
+	uint8_t	irr0;		/* 0x20 */
+	uint8_t	imr0;
+	uint8_t	iack;		/* 0x22 -- 2 b2b reads generate
 					(e)isa Iack cycle & returns int level */
-	u_int8_t	pad0[29];
+	uint8_t	pad0[29];
 
 	struct timers {
-		u_int8_t	sysclk;
-		u_int8_t	refresh;
-		u_int8_t	spkr;
-		u_int8_t	ctrl;
-		u_int32_t	pad;
+		uint8_t	sysclk;
+		uint8_t	refresh;
+		uint8_t	spkr;
+		uint8_t	ctrl;
+		uint32_t	pad;
 	}	tmr[2];			/* 0x40 -- timers control */
-	u_int8_t	pad1[16];
+	uint8_t	pad1[16];
 
-	u_int16_t	inmi;		/* 0x60 NMI control */
-	u_int8_t	pad2[30];
+	uint16_t	inmi;		/* 0x60 NMI control */
+	uint8_t	pad2[30];
 	struct {
-		u_int8_t	pad0;
-		u_int8_t	ch2;
-		u_int8_t	ch3;
-		u_int8_t	ch1;
-		u_int8_t	pad1;
-		u_int8_t	pad2[3];
-		u_int8_t	ch0;
-		u_int8_t	pad4;
-		u_int8_t	ch6;
-		u_int8_t	ch7;
-		u_int8_t	ch5;
-		u_int8_t	pad5[3];
-		u_int8_t	pad6[16];
+		uint8_t	pad0;
+		uint8_t	ch2;
+		uint8_t	ch3;
+		uint8_t	ch1;
+		uint8_t	pad1;
+		uint8_t	pad2[3];
+		uint8_t	ch0;
+		uint8_t	pad4;
+		uint8_t	ch6;
+		uint8_t	ch7;
+		uint8_t	ch5;
+		uint8_t	pad5[3];
+		uint8_t	pad6[16];
 	} pr;				/* 0x80 */
 
-	u_int8_t	irr1;		/* 0xa0 */
-	u_int8_t	imr1;
-	u_int8_t	pad3[30];
+	uint8_t	irr1;		/* 0xa0 */
+	uint8_t	imr1;
+	uint8_t	pad3[30];
 
 	struct dma1 {
 		struct {
-			u_int32_t	addr : 8;
-			u_int32_t	pad0 : 8;
-			u_int32_t	count: 8;
-			u_int32_t	pad1 : 8;
+			uint32_t	addr : 8;
+			uint32_t	pad0 : 8;
+			uint32_t	count: 8;
+			uint32_t	pad1 : 8;
 		} ch[4];
-		u_int8_t	command;
-		u_int8_t	pad0;
-		u_int8_t	request;
-		u_int8_t	pad1;
-		u_int8_t	mask_channel;
-		u_int8_t	pad2;
-		u_int8_t	mode;
-		u_int8_t	pad3;
-		u_int8_t	clr_byte_ptr;
-		u_int8_t	pad4;
-		u_int8_t	master_clear;
-		u_int8_t	pad5;
-		u_int8_t	mask_clear;
-		u_int8_t	pad6;
-		u_int8_t	master_write;
-		u_int8_t	pad7;
+		uint8_t	command;
+		uint8_t	pad0;
+		uint8_t	request;
+		uint8_t	pad1;
+		uint8_t	mask_channel;
+		uint8_t	pad2;
+		uint8_t	mode;
+		uint8_t	pad3;
+		uint8_t	clr_byte_ptr;
+		uint8_t	pad4;
+		uint8_t	master_clear;
+		uint8_t	pad5;
+		uint8_t	mask_clear;
+		uint8_t	pad6;
+		uint8_t	master_write;
+		uint8_t	pad7;
 	}	dma1;			/* 0xc0 */
 
-	u_int8_t	master_req;	/* 0xe0 master request register */
-	u_int8_t	pad4[31];
+	uint8_t	master_req;	/* 0xe0 master request register */
+	uint8_t	pad4[31];
 
-	u_int8_t	pad5[0x3d0];	/* 0x4d0 */
-	u_int8_t	pic0;		/* 0 - edge, 1 - level */
-	u_int8_t	pic1;
-	u_int8_t	pad6[0x460];
-	u_int8_t	nmi;
-	u_int8_t	nmi_ext;
+	uint8_t	pad5[0x3d0];	/* 0x4d0 */
+	uint8_t	pic0;		/* 0 - edge, 1 - level */
+	uint8_t	pic1;
+	uint8_t	pad6[0x460];
+	uint8_t	nmi;
+	uint8_t	nmi_ext;
 #define	MONGOOSE_NMI_BUSRESET	0x01
 #define	MONGOOSE_NMI_IOPORT_EN	0x02
 #define	MONGOOSE_NMI_EN		0x04
@@ -221,22 +221,22 @@ int mg_eisa_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int mg_eisa_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 void mg_eisa_memunmap(void *, bus_space_handle_t, bus_size_t);
 void mg_isa_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
-u_int16_t mg_isa_r2(void *, bus_space_handle_t, bus_size_t);
-u_int32_t mg_isa_r4(void *, bus_space_handle_t, bus_size_t);
-void mg_isa_w2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
-void mg_isa_w4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
-void mg_isa_rm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-void mg_isa_rm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
-void mg_isa_wm_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
-void mg_isa_wm_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
-void mg_isa_sm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
-void mg_isa_sm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
-void mg_isa_rr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-void mg_isa_rr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
-void mg_isa_wr_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
-void mg_isa_wr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
-void mg_isa_sr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
-void mg_isa_sr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
+uint16_t mg_isa_r2(void *, bus_space_handle_t, bus_size_t);
+uint32_t mg_isa_r4(void *, bus_space_handle_t, bus_size_t);
+void mg_isa_w2(void *, bus_space_handle_t, bus_size_t, uint16_t);
+void mg_isa_w4(void *, bus_space_handle_t, bus_size_t, uint32_t);
+void mg_isa_rm_2(void *, bus_space_handle_t, bus_size_t, uint16_t *, bus_size_t);
+void mg_isa_rm_4(void *, bus_space_handle_t, bus_size_t, uint32_t *, bus_size_t);
+void mg_isa_wm_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *, bus_size_t);
+void mg_isa_wm_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *, bus_size_t);
+void mg_isa_sm_2(void *, bus_space_handle_t, bus_size_t, uint16_t, bus_size_t);
+void mg_isa_sm_4(void *, bus_space_handle_t, bus_size_t, uint32_t, bus_size_t);
+void mg_isa_rr_2(void *, bus_space_handle_t, bus_size_t, uint16_t *, bus_size_t);
+void mg_isa_rr_4(void *, bus_space_handle_t, bus_size_t, uint32_t *, bus_size_t);
+void mg_isa_wr_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *, bus_size_t);
+void mg_isa_wr_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *, bus_size_t);
+void mg_isa_sr_2(void *, bus_space_handle_t, bus_size_t, uint16_t, bus_size_t);
+void mg_isa_sr_4(void *, bus_space_handle_t, bus_size_t, uint32_t, bus_size_t);
 
 int	mgmatch(device_t, cfdata_t, void *);
 void	mgattach(device_t, device_t, void *);
@@ -281,7 +281,7 @@ mg_intr_establish(void *v, int irq, int type, int pri,
 {
 	struct hppa_isa_iv *iv;
 	struct mongoose_softc *sc = v;
-	volatile u_int8_t *imr, *pic;
+	volatile uint8_t *imr, *pic;
 
 	if (!sc || irq < 0 || irq >= MONGOOSE_NINTS ||
 	    (0 <= irq && irq < MONGOOSE_NINTS && sc->sc_iv[irq].iv_handler))
@@ -327,7 +327,7 @@ mg_intr_disestablish(void *v, void *cookie)
 	struct hppa_isa_iv *iv = cookie;
 	struct mongoose_softc *sc = v;
  	int irq = iv - sc->sc_iv;
- 	volatile u_int8_t *imr;
+ 	volatile uint8_t *imr;
 
 	if (!sc || !cookie)
 		return;
@@ -400,97 +400,97 @@ mg_isa_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op
 	sync_caches();
 }
 
-u_int16_t
+uint16_t
 mg_isa_r2(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	u_int16_t r = *((volatile u_int16_t *)(h + o));
+	uint16_t r = *((volatile uint16_t *)(h + o));
 
 	return le16toh(r);
 }
 
-u_int32_t
+uint32_t
 mg_isa_r4(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	u_int32_t r = *((volatile u_int32_t *)(h + o));
+	uint32_t r = *((volatile uint32_t *)(h + o));
 
 	return le32toh(r);
 }
 
 void
-mg_isa_w2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv)
+mg_isa_w2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv)
 {
-	*((volatile u_int16_t *)(h + o)) = htole16(vv);
+	*((volatile uint16_t *)(h + o)) = htole16(vv);
 }
 
 void
-mg_isa_w4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv)
+mg_isa_w4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv)
 {
-	*((volatile u_int32_t *)(h + o)) = htole32(vv);
+	*((volatile uint32_t *)(h + o)) = htole32(vv);
 }
 
 void
-mg_isa_rm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
+mg_isa_rm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(a++) = le16toh(*(volatile u_int16_t *)h);
+		*(a++) = le16toh(*(volatile uint16_t *)h);
 }
 
 void
-mg_isa_rm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
+mg_isa_rm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(a++) = le32toh(*(volatile u_int32_t *)h);
+		*(a++) = le32toh(*(volatile uint32_t *)h);
 }
 
 void
-mg_isa_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
+mg_isa_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_size_t c)
 {
-	u_int16_t r;
+	uint16_t r;
 
 	h += o;
 	while (c--) {
 		r = *(a++);
-		*(volatile u_int16_t *)h = htole16(r);
+		*(volatile uint16_t *)h = htole16(r);
 	}
 }
 
 void
-mg_isa_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
+mg_isa_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_size_t c)
 {
-	u_int32_t r;
+	uint32_t r;
 
 	h += o;
 	while (c--) {
 		r = *(a++);
-		*(volatile u_int32_t *)h = htole32(r);
+		*(volatile uint32_t *)h = htole32(r);
 	}
 }
 
 void
-mg_isa_sm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
+mg_isa_sm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c)
 {
 	vv = htole16(vv);
 	h += o;
 	while (c--)
-		*(volatile u_int16_t *)h = vv;
+		*(volatile uint16_t *)h = vv;
 }
 
 void
-mg_isa_sm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
+mg_isa_sm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c)
 {
 	vv = htole32(vv);
 	h += o;
 	while (c--)
-		*(volatile u_int32_t *)h = vv;
+		*(volatile uint32_t *)h = vv;
 }
 
 void
-mg_isa_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
+mg_isa_rr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c)
 {
-	u_int16_t r;
-	volatile u_int16_t *p;
+	uint16_t r;
+	volatile uint16_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -501,10 +501,10 @@ mg_isa_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_
 }
 
 void
-mg_isa_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
+mg_isa_rr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c)
 {
-	u_int32_t r;
-	volatile u_int32_t *p;
+	uint32_t r;
+	volatile uint32_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -515,10 +515,10 @@ mg_isa_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_
 }
 
 void
-mg_isa_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
+mg_isa_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_size_t c)
 {
-	u_int16_t r;
-	volatile u_int16_t *p;
+	uint16_t r;
+	volatile uint16_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -529,10 +529,10 @@ mg_isa_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus
 }
 
 void
-mg_isa_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
+mg_isa_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_size_t c)
 {
-	u_int32_t r;
-	volatile u_int32_t *p;
+	uint32_t r;
+	volatile uint32_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -543,9 +543,9 @@ mg_isa_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus
 }
 
 void
-mg_isa_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
+mg_isa_sr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c)
 {
-	volatile u_int16_t *p;
+	volatile uint16_t *p;
 
 	vv = htole16(vv);
 	h += o;
@@ -555,9 +555,9 @@ mg_isa_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_
 }
 
 void
-mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
+mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c)
 {
-	volatile u_int32_t *p;
+	volatile uint32_t *p;
 
 	vv = htole32(vv);
 	h += o;
@@ -619,9 +619,9 @@ mgattach(device_t parent, device_t self, void *aux)
 
 	/* determine eisa board id */
 	{
-		u_int8_t id[4], *p;
+		uint8_t id[4], *p;
 		/* XXX this is awful */
-		p = (u_int8_t *)(ioh + EISA_SLOTOFF_VID);
+		p = (uint8_t *)(ioh + EISA_SLOTOFF_VID);
 		id[0] = *p++;
 		id[1] = *p++;
 		id[2] = *p++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.18 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.19 2009/05/24 06:53:35 skrll Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.18 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.19 2009/05/24 06:53:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.18 2009/05/08 09:33:58 skrll Exp $")
 
 #ifdef __for_reference_only
 struct ie_gsc_regs {
-	u_int32_t	ie_reset;
-	u_int32_t	ie_port;
-	u_int32_t	ie_attn;
+	uint32_t	ie_reset;
+	uint32_t	ie_port;
+	uint32_t	ie_attn;
 };
 #endif
 
@@ -391,7 +391,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t seg;
 	int rseg;
 	int rv;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+	uint8_t myaddr[ETHER_ADDR_LEN];
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
