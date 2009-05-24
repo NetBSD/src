@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.28 2009/04/30 20:10:31 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.29 2009/05/24 09:13:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -569,13 +569,6 @@ $syscall_return:
 	.procend
 	.size	$syscall, .-$syscall
 $syscall_end:
-
-
-#define	DTRAP(name,num) \
-	.export	TLABEL(name)$num, entry	! \
-	.label	TLABEL(name)$num	! \
-	b	cpu_die			! \
-	.align 32
 
 /*
  * interrupt vector table
