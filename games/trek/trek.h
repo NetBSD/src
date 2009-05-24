@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.12 2009/03/31 18:48:16 christos Exp $	*/
+/*	$NetBSD: trek.h,v 1.13 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,9 +48,9 @@
 /*********************  GALAXY  **************************/
 
 /* galactic parameters */
-# define	NSECTS		10	/* dimensions of quadrant in sectors */
-# define	NQUADS		8	/* dimension of galazy in quadrants */
-# define	NINHAB		32	/* number of quadrants which are inhabited */
+#define NSECTS		10	/* dimensions of quadrant in sectors */
+#define NQUADS		8	/* dimension of galazy in quadrants */
+#define NINHAB		32	/* number of quadrants which are inhabited */
 
 struct quad		/* definition for each quadrant */
 {
@@ -62,8 +62,8 @@ struct quad		/* definition for each quadrant */
 	char	qsystemname;	/* starsystem name (see below) */
 };
 
-# define	Q_DISTRESSED	0200
-# define	Q_SYSTEM	077
+#define Q_DISTRESSED	0200
+#define Q_SYSTEM	077
 
 /*  systemname conventions:
  *	1 -> NINHAB	index into Systemname table for live system.
@@ -86,14 +86,14 @@ extern const char	*const Systemname[NINHAB];
 extern struct quad	Quad[NQUADS][NQUADS];
 
 /* defines for sector map  (below) */
-# define	EMPTY		'.'
-# define	STAR		'*'
-# define	BASE		'#'
-# define	ENTERPRISE	'E'
-# define	QUEENE		'Q'
-# define	KLINGON		'K'
-# define	INHABIT		'@'
-# define	HOLE		' '
+#define EMPTY		'.'
+#define STAR		'*'
+#define BASE		'#'
+#define ENTERPRISE	'E'
+#define QUEENE		'Q'
+#define KLINGON		'K'
+#define INHABIT		'@'
+#define HOLE		' '
 
 /* current sector map */
 extern char	Sect[NSECTS][NSECTS];
@@ -102,23 +102,23 @@ extern char	Sect[NSECTS][NSECTS];
 
 /************************ DEVICES ******************************/
 
-# define	NDEV		16	/* max number of devices */
+#define	NDEV		16	/* max number of devices */
 
 /* device tokens */
-# define	WARP		0	/* warp engines */
-# define	SRSCAN		1	/* short range scanners */
-# define	LRSCAN		2	/* long range scanners */
-# define	PHASER		3	/* phaser control */
-# define	TORPED		4	/* photon torpedo control */
-# define	IMPULSE		5	/* impulse engines */
-# define	SHIELD		6	/* shield control */
-# define	COMPUTER	7	/* on board computer */
-# define	SSRADIO		8	/* subspace radio */
-# define	LIFESUP		9	/* life support systems */
-# define	SINS		10	/* Space Inertial Navigation System */
-# define	CLOAK		11	/* cloaking device */
-# define	XPORTER		12	/* transporter */
-# define	SHUTTLE		13	/* shuttlecraft */
+#define WARP		0	/* warp engines */
+#define SRSCAN		1	/* short range scanners */
+#define LRSCAN		2	/* long range scanners */
+#define PHASER		3	/* phaser control */
+#define TORPED		4	/* photon torpedo control */
+#define IMPULSE		5	/* impulse engines */
+#define SHIELD		6	/* shield control */
+#define COMPUTER	7	/* on board computer */
+#define SSRADIO		8	/* subspace radio */
+#define LIFESUP		9	/* life support systems */
+#define SINS		10	/* Space Inertial Navigation System */
+#define CLOAK		11	/* cloaking device */
+#define XPORTER		12	/* transporter */
+#define SHUTTLE		13	/* shuttlecraft */
 
 /* device names */
 struct device
@@ -131,22 +131,22 @@ extern const struct device	Device[NDEV];
 
 /***************************  EVENTS  ****************************/
 
-# define	NEVENTS		12	/* number of different event types */
+#define	NEVENTS		12	/* number of different event types */
 
-# define	E_LRTB		1	/* long range tractor beam */
-# define	E_KATSB		2	/* Klingon attacks starbase */
-# define	E_KDESB		3	/* Klingon destroys starbase */
-# define	E_ISSUE		4	/* distress call is issued */
-# define	E_ENSLV		5	/* Klingons enslave a quadrant */
-# define	E_REPRO		6	/* a Klingon is reproduced */
-# define	E_FIXDV		7	/* fix a device */
-# define	E_ATTACK	8	/* Klingon attack during rest period */
-# define	E_SNAP		9	/* take a snapshot for time warp */
-# define	E_SNOVA		10	/* supernova occurs */
+#define E_LRTB		1	/* long range tractor beam */
+#define E_KATSB		2	/* Klingon attacks starbase */
+#define E_KDESB		3	/* Klingon destroys starbase */
+#define E_ISSUE		4	/* distress call is issued */
+#define E_ENSLV		5	/* Klingons enslave a quadrant */
+#define E_REPRO		6	/* a Klingon is reproduced */
+#define E_FIXDV		7	/* fix a device */
+#define E_ATTACK	8	/* Klingon attack during rest period */
+#define E_SNAP		9	/* take a snapshot for time warp */
+#define E_SNOVA		10	/* supernova occurs */
 
-# define	E_GHOST		0100	/* ghost of a distress call if ssradio out */
-# define	E_HIDDEN	0200	/* event that is unreportable because ssradio out */
-# define	E_EVENT		077	/* mask to get event code */
+#define E_GHOST		0100	/* ghost of a distress call if ssradio out */
+#define E_HIDDEN	0200	/* event unreportable because ssradio out */
+#define E_EVENT		077	/* mask to get event code */
 
 struct event
 {
@@ -165,7 +165,7 @@ struct event
  *	0		unallocated
  */
 
-# define	MAXEVENTS	25	/* max number of concurrently pending events */
+#define MAXEVENTS	25	/* max number of concurrently pending events */
 
 extern struct event	Event[MAXEVENTS];	/* dynamic event list; one entry per pending event */
 
@@ -180,24 +180,24 @@ struct kling
 	char	srndreq;	/* set if surrender has been requested */
 };
 
-# define	MAXKLQUAD	9	/* maximum klingons per quadrant */
+#define MAXKLQUAD	9	/* maximum klingons per quadrant */
 
 /********************** MISCELLANEOUS ***************************/
 
 /* condition codes */
-# define	GREEN		0
-# define	DOCKED		1
-# define	YELLOW		2
-# define	RED		3
+#define GREEN		0
+#define DOCKED		1
+#define YELLOW		2
+#define RED		3
 
 /* starbase coordinates */
-# define	MAXBASES	9	/* maximum number of starbases in galaxy */
+#define MAXBASES	9	/* maximum number of starbases in galaxy */
 
 /*  distress calls  */
-# define	MAXDISTR	5	/* maximum concurrent distress calls */
+#define MAXDISTR	5	/* maximum concurrent distress calls */
 
 /* phaser banks */
-# define	NBANKS		6	/* number of phaser banks */
+#define NBANKS		6	/* number of phaser banks */
 
 struct xy
 {
@@ -342,35 +342,35 @@ extern struct Etc_struct Etc;
  */
 
 /* Klingon move indicies */
-# define	KM_OB		0	/* Old quadrant, Before attack */
-# define	KM_OA		1	/* Old quadrant, After attack */
-# define	KM_EB		2	/* Enter quadrant, Before attack */
-# define	KM_EA		3	/* Enter quadrant, After attack */
-# define	KM_LB		4	/* Leave quadrant, Before attack */
-# define	KM_LA		5	/* Leave quadrant, After attack */
+#define KM_OB		0	/* Old quadrant, Before attack */
+#define KM_OA		1	/* Old quadrant, After attack */
+#define KM_EB		2	/* Enter quadrant, Before attack */
+#define KM_EA		3	/* Enter quadrant, After attack */
+#define KM_LB		4	/* Leave quadrant, Before attack */
+#define KM_LA		5	/* Leave quadrant, After attack */
 
 /* you lose codes */
-# define	L_NOTIME	1	/* ran out of time */
-# define	L_NOENGY	2	/* ran out of energy */
-# define	L_DSTRYD	3	/* destroyed by a Klingon */
-# define	L_NEGENB	4	/* ran into the negative energy barrier */
-# define	L_SUICID	5	/* destroyed in a nova */
-# define	L_SNOVA		6	/* destroyed in a supernova */
-# define	L_NOLIFE	7	/* life support died (so did you) */
-# define	L_NOHELP	8	/* you could not be rematerialized */
-# define	L_TOOFAST	9	/* pretty stupid going at warp 10 */
-# define	L_STAR		10	/* ran into a star */
-# define	L_DSTRCT	11	/* self destructed */
-# define	L_CAPTURED	12	/* captured by Klingons */
-# define	L_NOCREW	13	/* you ran out of crew */
+#define L_NOTIME	1	/* ran out of time */
+#define L_NOENGY	2	/* ran out of energy */
+#define L_DSTRYD	3	/* destroyed by a Klingon */
+#define L_NEGENB	4	/* ran into the negative energy barrier */
+#define L_SUICID	5	/* destroyed in a nova */
+#define L_SNOVA		6	/* destroyed in a supernova */
+#define L_NOLIFE	7	/* life support died (so did you) */
+#define L_NOHELP	8	/* you could not be rematerialized */
+#define L_TOOFAST	9	/* pretty stupid going at warp 10 */
+#define L_STAR		10	/* ran into a star */
+#define L_DSTRCT	11	/* self destructed */
+#define L_CAPTURED	12	/* captured by Klingons */
+#define L_NOCREW	13	/* you ran out of crew */
 
 /******************  COMPILE OPTIONS  ***********************/
 
 /* Trace info */
-# define	xTRACE		1
+#define xTRACE		1
 extern int	Trace;
 
-# define 	TOOLARGE	(DBL_MAX / 2)	/* < DOUBLE_MAX for everyone */
+#define TOOLARGE	(DBL_MAX / 2)	/* < DOUBLE_MAX for everyone */
 
 /* abandon.c */
 void abandon(int);

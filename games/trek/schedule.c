@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.8 2009/05/24 19:18:44 dholland Exp $	*/
+/*	$NetBSD: schedule.c,v 1.9 2009/05/24 20:39:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: schedule.c,v 1.8 2009/05/24 19:18:44 dholland Exp $");
+__RCSID("$NetBSD: schedule.c,v 1.9 2009/05/24 20:39:43 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,11 +68,11 @@ schedule(int type, double offset, int x, int y, int z)
 		if (e->evcode)
 			continue;
 		/* got a slot */
-#		ifdef xTRACE
+#ifdef xTRACE
 		if (Trace)
 			printf("schedule: type %d @ %.2f slot %d parm %d %d %d\n",
 				type, date, i, x, y, z);
-#		endif
+#endif
 		e->evcode = type;
 		e->date = date;
 		e->x = x;
@@ -102,11 +102,11 @@ reschedule(struct event *e1, double offset)
 
 	date = Now.date + offset;
 	e->date = date;
-#	ifdef xTRACE
+#ifdef xTRACE
 	if (Trace)
 		printf("reschedule: type %d parm %d %d %d @ %.2f\n",
 			e->evcode, e->x, e->y, e->systemname, date);
-#	endif
+#endif
 	return;
 }
 
@@ -124,11 +124,11 @@ unschedule(struct event *e1)
 
 	e = e1;
 
-#	ifdef xTRACE
+#ifdef xTRACE
 	if (Trace)
 		printf("unschedule: type %d @ %.2f parm %d %d %d\n",
 			e->evcode, e->date, e->x, e->y, e->systemname);
-#	endif
+#endif
 	Now.eventptr[e->evcode & E_EVENT] = 0;
 	e->date = TOOLARGE;
 	e->evcode = 0;
