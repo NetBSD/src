@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.13 2009/05/21 00:33:32 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.14 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -130,10 +130,10 @@ __RCSID("$NetBSD: reader.c,v 1.13 2009/05/21 00:33:32 agc Exp $");
 #include "packet-show.h"
 #include "packet.h"
 #include "keyring.h"
-
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "version.h"
+#include "netpgpdigest.h"
 
 
 /**
@@ -2049,7 +2049,7 @@ __ops_teardown_file_read(__ops_parseinfo_t * pinfo, int fd)
 __ops_parse_cb_return_t
 litdata_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t *content = &pkt->u;
+	const __ops_contents_t *content = &pkt->u;
 
 	__OPS_USED(cbinfo);
 
@@ -2086,7 +2086,7 @@ litdata_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 __ops_parse_cb_return_t
 pk_sesskey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 {
-	const __ops_parser_content_union_t *content = &pkt->u;
+	const __ops_contents_t *content = &pkt->u;
 
 	__OPS_USED(cbinfo);
 
@@ -2105,7 +2105,7 @@ pk_sesskey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 			return 0;
 		}
 		cbinfo->cryptinfo.keydata =
-			__ops_keyring_find_key_by_id(cbinfo->cryptinfo.keyring,
+			__ops_getkeybyid(cbinfo->cryptinfo.keyring,
 				content->pk_sesskey.key_id);
 		if (!cbinfo->cryptinfo.keydata)
 			break;
@@ -2136,19 +2136,18 @@ pk_sesskey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 __ops_parse_cb_return_t
 get_seckey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 {
-	const __ops_parser_content_union_t *content = &pkt->u;
-	const __ops_seckey_t *secret;
-	__ops_packet_t seckey;
+	const __ops_contents_t	*content = &pkt->u;
+	const __ops_seckey_t	*secret;
+	__ops_packet_t		 seckey;
 
 	__OPS_USED(cbinfo);
-
 	if (__ops_get_debug_level(__FILE__)) {
 		__ops_print_packet(pkt);
 	}
 	switch (pkt->tag) {
-	case OPS_PARSER_CMD_GET_SECRET_KEY:
+	case OPS_GET_SECKEY:
 		cbinfo->cryptinfo.keydata =
-			__ops_keyring_find_key_by_id(cbinfo->cryptinfo.keyring,
+			__ops_getkeybyid(cbinfo->cryptinfo.keyring,
 				content->get_seckey.pk_sesskey->key_id);
 		if (!cbinfo->cryptinfo.keydata ||
 		    !__ops_is_key_secret(cbinfo->cryptinfo.keydata)) {
@@ -2162,8 +2161,7 @@ get_seckey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 				(void) memset(&seckey, 0x0, sizeof(seckey));
 				seckey.u.skey_passphrase.passphrase =
 					&cbinfo->cryptinfo.passphrase;
-				CALLBACK(cbinfo,
-				OPS_PARSER_CMD_GET_SK_PASSPHRASE, &seckey);
+				CALLBACK(cbinfo, OPS_GET_PASSPHRASE, &seckey);
 				if (!cbinfo->cryptinfo.passphrase) {
 					fprintf(stderr,
 						"can't get passphrase\n");
@@ -2209,7 +2207,7 @@ __ops_malloc_passphrase(char *pp)
 __ops_parse_cb_return_t
 get_passphrase_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t	*content = &pkt->u;
+	const __ops_contents_t	*content = &pkt->u;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		__ops_print_packet(pkt);
@@ -2220,7 +2218,7 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		__ops_print_pubkeydata(stderr, cbinfo->cryptinfo.keydata);
 	}
 	switch (pkt->tag) {
-	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
+	case OPS_GET_PASSPHRASE:
 		*(content->skey_passphrase.passphrase) =
 			__ops_malloc_passphrase(getpass("netpgp passphrase: "));
 		return OPS_KEEP_MEMORY;
