@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2009/05/25 00:12:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2009/05/25 00:12:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,6 @@ __RCSID("$NetBSD: main.c,v 1.17 2009/05/24 22:55:03 dholland Exp $");
 #include "getpar.h"
 
 #define PRIO		00	/* default priority */
-
-uid_t	Mother	= 51 + (51 << 8);
 
 /*
 **	 ####  #####    #    ####          #####  ####   #####  #   #
@@ -203,20 +201,15 @@ main(int argc, char **argv)
 
 #ifdef xTRACE
 		  case 't':	/* trace */
-			if (getuid() != Mother)
-				goto badflag;
 			Trace++;
 			break;
 #endif
 
 		  case 'p':	/* set priority */
-			if (getuid() != Mother)
-				goto badflag;
 			prio = atoi(av[0] + 2);
 			break;
 
 		  default:
-		  badflag:
 			printf("Invalid option: %s\n", av[0]);
 
 		}
