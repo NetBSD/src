@@ -1,4 +1,4 @@
-/*	$NetBSD: comp.c,v 1.10 2006/03/19 00:29:27 christos Exp $	*/
+/*	$NetBSD: comp.c,v 1.11 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: comp.c,v 1.10 2006/03/19 00:29:27 christos Exp $");
+__RCSID("$NetBSD: comp.c,v 1.11 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: comp.c,v 1.10 2006/03/19 00:29:27 christos Exp $");
 # define	V_VALUABLE	40
 
 void
-calcmove()
+calcmove(void)
 {
 	CARD		card;
 	int		*value;
@@ -401,8 +401,7 @@ play_it:
  * Return true if the given player could conceivably win with his next card.
  */
 int
-onecard(pp)
-	const PLAY	*pp;
+onecard(const PLAY *pp)
 {
 	CARD	bat, spd, card;
 
@@ -434,9 +433,7 @@ onecard(pp)
 }
 
 int
-canplay(pp, op, card)
-	const PLAY	*pp, *op;
-	CARD	card;
+canplay(const PLAY *pp, const PLAY *op, CARD card)
 {
 	switch (card) {
 	  case C_200:

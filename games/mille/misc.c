@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 2003/08/07 09:37:25 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.12 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.11 2003/08/07 09:37:25 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ error(const char *str, ...)
 }
 
 CARD
-getcard()
+getcard(void)
 {
 	int	c, c1;
 
@@ -120,8 +120,7 @@ cont:		;
 }
 
 int
-check_ext(forcomp)
-	bool	forcomp;
+check_ext(bool forcomp)
 {
 
 
@@ -176,8 +175,7 @@ done:
  * also allowed.  Return TRUE if the answer was yes, FALSE if no.
  */
 int
-getyn(promptno)
-	int	promptno;
+getyn(int promptno)
 {
 	char	c;
 
@@ -221,7 +219,7 @@ getyn(promptno)
  * it.  Exit appropriately.
  */
 void
-check_more()
+check_more(void)
 {
 	On_exit = TRUE;
 	if (Player[PLAYER].total >= 5000 || Player[COMP].total >= 5000)
@@ -248,7 +246,7 @@ check_more()
 }
 
 int
-readch()
+readch(void)
 {
 	int	cnt;
 	static char	c;

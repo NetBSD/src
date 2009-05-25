@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.16 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: mille.c,v 1.17 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.16 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: mille.c,v 1.17 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,7 @@ __RCSID("$NetBSD: mille.c,v 1.16 2008/08/08 16:10:47 drochner Exp $");
  */
 
 int
-main(ac, av)
-	int	ac;
-	char	*av[];
+main(int ac, char *av[])
 {
 	bool	restore;
 
@@ -139,8 +137,7 @@ main(ac, av)
  * quit.
  */
 void
-rub(dummy)
-	int dummy __unused;
+rub(int dummy __unused)
 {
 	(void)signal(SIGINT, SIG_IGN);
 	if (getyn(REALLYPROMPT))
@@ -152,8 +149,7 @@ rub(dummy)
  *	Time to go beddy-by
  */
 void
-die(code)
-	int code;
+die(int code)
 {
 
 	(void)signal(SIGINT, SIG_IGN);
