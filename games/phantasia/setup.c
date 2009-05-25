@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.18 2008/01/16 23:23:25 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.19 2009/05/25 23:08:45 dholland Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -68,9 +68,7 @@ static const char *const files[] = {		/* all files to create */
 const char *monsterfile = "monsters.asc";
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *const *filename; /* for pointing to file names */
 	int		fd;		/* file descriptor */
@@ -229,8 +227,7 @@ main(argc, argv)
 / ************************************************************************/
 
 void
-Error(str, file)
-	const char	*str, *file;
+Error(const char *str, const char *file)
 {
     fprintf(stderr, "Error: ");
     fprintf(stderr, str, file);
@@ -262,7 +259,7 @@ Error(str, file)
 / ************************************************************************/
 
 double
-drandom()
+drandom(void)
 {
     if (sizeof(int) != 2)
 	return((double) (random() & 0x7fff) / 32768.0);

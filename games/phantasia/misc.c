@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15 2008/01/28 06:20:15 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.16 2009/05/25 23:08:45 dholland Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -10,7 +10,7 @@
 
 
 void
-movelevel()
+movelevel(void)
 {
 	const struct charstats *statptr; /* for pointing into Stattable */
 	double  new;		/* new level */
@@ -63,9 +63,7 @@ movelevel()
 }
 
 const char   *
-descrlocation(playerp, shortflag)
-	struct player *playerp;
-	phbool  shortflag;
+descrlocation(struct player *playerp, phbool shortflag)
 {
 	double  circle;		/* corresponding circle for coordinates */
 	int     quadrant;	/* quandrant of grid */
@@ -143,7 +141,7 @@ descrlocation(playerp, shortflag)
 }
 
 void
-tradingpost()
+tradingpost(void)
 {
 	double  numitems;	/* number of items to purchase */
 	double  cost;		/* cost of purchase */
@@ -400,7 +398,7 @@ tradingpost()
 }
 
 void
-displaystats()
+displaystats(void)
 {
 	mvprintw(0, 0, "%s%s\n", Player.p_name, descrlocation(&Player, FALSE));
 	mvprintw(1, 0, "Level :%7.0f   Energy  :%9.0f(%9.0f)  Mana :%9.0f  Users:%3d\n",
@@ -412,7 +410,7 @@ displaystats()
 }
 
 void
-allstatslist()
+allstatslist(void)
 {
 	static const char *const flags[] = /* to print value of some bools */
 	{
@@ -445,9 +443,7 @@ allstatslist()
 }
 
 const char   *
-descrtype(playerp, shortflag)
-	struct player *playerp;
-	phbool  shortflag;
+descrtype(struct player *playerp, phbool shortflag)
 {
 	int     type;		/* for caluculating result subscript */
 	static const char *const results[] =/* description table */
@@ -509,9 +505,7 @@ descrtype(playerp, shortflag)
 }
 
 long
-findname(name, playerp)
-	const char   *name;
-	struct player *playerp;
+findname(const char *name, struct player *playerp)
 {
 	long    loc = 0;	/* location in the file */
 
@@ -529,7 +523,7 @@ findname(name, playerp)
 }
 
 long
-allocrecord()
+allocrecord(void)
 {
 	long    loc = 0L;	/* location in file */
 
@@ -551,9 +545,7 @@ allocrecord()
 }
 
 void
-freerecord(playerp, loc)
-	struct player *playerp;
-	long    loc;
+freerecord(struct player *playerp, long loc)
 {
 	playerp->p_name[0] = CH_MARKDELETE;
 	playerp->p_status = S_NOTUSED;
@@ -561,7 +553,7 @@ freerecord(playerp, loc)
 }
 
 void
-leavegame()
+leavegame(void)
 {
 
 	if (Player.p_level < 1.0)
@@ -577,8 +569,7 @@ leavegame()
 }
 
 void
-death(how)
-	const char   *how;
+death(const char *how)
 {
 	FILE   *fp;		/* for updating various files */
 	int     ch;		/* input */
@@ -682,9 +673,7 @@ death(how)
 }
 
 void
-writerecord(playerp, place)
-	struct player *playerp;
-	long    place;
+writerecord(struct player *playerp, long place)
 {
 	fseek(Playersfp, place, SEEK_SET);
 	fwrite((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
@@ -692,8 +681,7 @@ writerecord(playerp, place)
 }
 
 double
-explevel(experience)
-	double  experience;
+explevel(double experience)
 {
 	if (experience < 1.1e7)
 		return (floor(pow((experience / 1000.0), 0.4875)));
@@ -702,8 +690,7 @@ explevel(experience)
 }
 
 void
-truncstring(string)
-	char   *string;
+truncstring(char *string)
 {
 	int     length;		/* length of string */
 
@@ -713,10 +700,7 @@ truncstring(string)
 }
 
 void
-altercoordinates(xnew, ynew, operation)
-	double  xnew;
-	double  ynew;
-	int     operation;
+altercoordinates(double xnew, double ynew, int operation)
 {
 	switch (operation) {
 	case A_FORCED:		/* move with no checks */
@@ -766,16 +750,14 @@ altercoordinates(xnew, ynew, operation)
 }
 
 void
-readrecord(playerp, loc)
-	struct player *playerp;
-	long    loc;
+readrecord(struct player *playerp, long loc)
 {
 	fseek(Playersfp, loc, SEEK_SET);
 	fread((char *) playerp, SZ_PLAYERSTRUCT, 1, Playersfp);
 }
 
 void
-adjuststats()
+adjuststats(void)
 {
 	double  dtemp;		/* for temporary calculations */
 
@@ -866,8 +848,7 @@ adjuststats()
 }
 
 void
-initplayer(playerp)
-	struct player *playerp;
+initplayer(struct player *playerp)
 {
 	playerp->p_experience =
 	    playerp->p_level =
@@ -926,7 +907,7 @@ initplayer(playerp)
 }
 
 void
-readmessage()
+readmessage(void)
 {
 	move(3, 0);
 	clrtoeol();
@@ -936,8 +917,7 @@ readmessage()
 }
 
 void
-error(whichfile)
-	const char   *whichfile;
+error(const char *whichfile)
 {
 	int     (*funcp)(const char *,...);
 
@@ -954,8 +934,7 @@ error(whichfile)
 }
 
 double
-distance(x_1, x_2, y_1, y_2)
-	double  x_1, x_2, y_1, y_2;
+distance(double x_1, double x_2, double y_1, double y_2)
 {
 	double  deltax, deltay;
 
@@ -965,8 +944,7 @@ distance(x_1, x_2, y_1, y_2)
 }
 
 void
-ill_sig(whichsig)
-	int     whichsig;
+ill_sig(int whichsig)
 {
 	clear();
 	if (!(whichsig == SIGINT || whichsig == SIGQUIT))
@@ -976,8 +954,7 @@ ill_sig(whichsig)
 }
 
 const char *
-descrstatus(playerp)
-	struct player *playerp;
+descrstatus(struct player *playerp)
 {
 	switch (playerp->p_status) {
 	case S_PLAYING:
@@ -1013,7 +990,7 @@ descrstatus(playerp)
 }
 
 double
-drandom()
+drandom(void)
 {
 	if (sizeof(int) != 2)
 		/* use only low bits */
@@ -1023,9 +1000,7 @@ drandom()
 }
 
 void
-collecttaxes(gold, gems)
-	double  gold;
-	double  gems;
+collecttaxes(double gold, double gems)
 {
 	FILE   *fp;		/* to update Goldfile */
 	double  dtemp;		/* for temporary calculations */
