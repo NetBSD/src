@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.18 2009/05/25 23:34:50 dholland Exp $	*/
+/*	$NetBSD: mille.c,v 1.19 2009/05/25 23:41:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -39,10 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.18 2009/05/25 23:34:50 dholland Exp $");
+__RCSID("$NetBSD: mille.c,v 1.19 2009/05/25 23:41:23 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <time.h>
 #include "mille.h"
 #include <signal.h>
 
@@ -91,7 +92,7 @@ main(int ac, char *av[])
 	leaveok(Miles, TRUE);
 	clearok(curscr, TRUE);
 #ifndef PROF
-	srandom(getpid());
+	srandom((long) time(NULL));
 #else
 	srandom(0);
 #endif
