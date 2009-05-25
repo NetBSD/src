@@ -1,4 +1,4 @@
-/*	$NetBSD: gamesupport.c,v 1.9 2005/02/15 12:58:21 jsm Exp $	*/
+/*	$NetBSD: gamesupport.c,v 1.10 2009/05/25 23:08:45 dholland Exp $	*/
 
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
@@ -9,8 +9,7 @@
 #include <curses.h>
 
 void
-changestats(ingameflag)
-	phbool  ingameflag;
+changestats(phbool ingameflag)
 {
 	static char flag[2] =	/* for printing values of bools */
 	{'F', 'T'};
@@ -440,7 +439,7 @@ BALTER:
 }
 
 void
-monstlist()
+monstlist(void)
 {
 	int     count = 0;	/* count in file */
 
@@ -454,7 +453,7 @@ monstlist()
 }
 
 void
-scorelist()
+scorelist(void)
 {
 	struct scoreboard sbuf;	/* for reading entries */
 	FILE   *fp;		/* to open the file */
@@ -468,7 +467,7 @@ scorelist()
 }
 
 void
-activelist()
+activelist(void)
 {
 	fseek(Playersfp, 0L, SEEK_SET);
 	printf("Current characters on file are:\n\n");
@@ -482,7 +481,7 @@ activelist()
 }
 
 void
-purgeoldplayers()
+purgeoldplayers(void)
 {
 	int     today;		/* day of year for today */
 	int     daysold;	/* how many days since the character has been
@@ -511,7 +510,7 @@ purgeoldplayers()
 }
 
 void
-enterscore()
+enterscore(void)
 {
 	struct scoreboard sbuf;	/* buffer to read in scoreboard entries */
 	FILE   *fp;		/* to open scoreboard file */

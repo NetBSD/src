@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2009/05/25 23:08:45 dholland Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -63,9 +63,7 @@
 int	main(int, char **);
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char **argv)
 {
 	bool    noheader = FALSE;	/* set if don't want header */
 	bool    headeronly = FALSE;	/* set if only want header */
@@ -270,7 +268,7 @@ main(argc, argv)
 }
 
 void
-initialstate()
+initialstate(void)
 {
 	struct stat sb;
 
@@ -321,7 +319,7 @@ initialstate()
 }
 
 long
-rollnewplayer()
+rollnewplayer(void)
 {
 	int     chartype;	/* character type */
 	int     ch;		/* input */
@@ -411,7 +409,7 @@ rollnewplayer()
 }
 
 void
-procmain()
+procmain(void)
 {
 	int     ch;		/* input */
 	double  x;		/* desired new x coordinate */
@@ -621,7 +619,7 @@ procmain()
 }
 
 void
-titlelist()
+titlelist(void)
 {
 	FILE   *fp;		/* used for opening various files */
 	bool    councilfound = FALSE;	/* set if we find a member of the
@@ -726,7 +724,7 @@ titlelist()
 }
 
 long
-recallplayer()
+recallplayer(void)
 {
 	long    loc = 0L;	/* location in player file */
 	int     loop;		/* loop counter */
@@ -785,7 +783,7 @@ recallplayer()
 }
 
 void
-neatstuff()
+neatstuff(void)
 {
 	double  temp;		/* for temporary calculations */
 	int     ch;		/* input */
@@ -887,8 +885,7 @@ neatstuff()
 }
 
 void
-genchar(type)
-	int     type;
+genchar(int type)
 {
 	int     subscript;	/* used for subscripting into Stattable */
 	const struct charstats *statptr; /* for pointing into Stattable */
@@ -924,7 +921,7 @@ genchar(type)
 }
 
 void
-playinit()
+playinit(void)
 {
 	/* catch/ingnore signals */
 
@@ -1007,8 +1004,7 @@ playinit()
 }
 
 void
-cleanup(doexit)
-	int    doexit;
+cleanup(int doexit)
 {
 	if (Windows) {
 		move(LINES - 2, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.11 2007/12/15 19:44:42 perry Exp $	*/
+/*	$NetBSD: io.c,v 1.12 2009/05/25 23:08:45 dholland Exp $	*/
 
 /*
  * io.c - input/output routines for Phantasia
@@ -10,9 +10,7 @@
 #include <curses.h>
 
 void
-getstring(cp, mx)
-	char   *cp;
-	int     mx;
+getstring(char *cp, int mx)
 {
 	char   *inptr;		/* pointer into string for next string */
 	int     x, y;		/* original x, y coordinates on screen */
@@ -62,15 +60,14 @@ getstring(cp, mx)
 }
 
 void
-more(where)
-	int     where;
+more(int where)
 {
 	mvaddstr(where, 0, "-- more --");
 	getanswer(" ", FALSE);
 }
 
 double
-infloat()
+infloat(void)
 {
 	double  result;		/* return value */
 
@@ -83,7 +80,7 @@ infloat()
 }
 
 int
-inputoption()
+inputoption(void)
 {
 	++Player.p_age;		/* increase age */
 
@@ -99,7 +96,7 @@ inputoption()
 }
 
 void
-interrupt()
+interrupt(void)
 {
 	char    line[81];	/* a place to store data already on screen */
 	int     loop;		/* counter */
@@ -155,9 +152,7 @@ interrupt()
 }
 
 int
-getanswer(choices, def)
-	const char   *choices;
-	phbool  def;
+getanswer(const char *choices, phbool def)
 {
 	int     ch;		/* input */
 	volatile int	loop;	/* counter */
@@ -240,8 +235,7 @@ getanswer(choices, def)
 }
 
 void
-catchalarm(dummy)
-	int dummy __unused;
+catchalarm(int dummy __unused)
 {
 	longjmp(Timeoenv, 1);
 }
