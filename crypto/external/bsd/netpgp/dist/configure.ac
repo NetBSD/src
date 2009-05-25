@@ -1,7 +1,7 @@
-dnl $Id: configure.ac,v 1.10 2009/05/22 02:28:54 agc Exp $
+dnl $Id: configure.ac,v 1.11 2009/05/25 06:43:31 agc Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
-AC_INIT([netpgp],[20090521],[Alistair Crooks <agc@netbsd.org> c0596823])
+AC_INIT([netpgp],[20090525],[Alistair Crooks <agc@netbsd.org> c0596823])
 AC_CONFIG_SRCDIR([src/bin/netpgp.c])
 AC_CONFIG_HEADER(src/lib/config.h)
 AC_ARG_PROGRAM

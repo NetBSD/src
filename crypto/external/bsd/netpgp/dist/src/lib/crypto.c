@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.12 2009/05/21 00:33:31 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.13 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -372,8 +372,8 @@ __ops_decrypt_file(const char *infile,
 static __ops_parse_cb_return_t
 callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t	*content = &pkt->u;
-	static unsigned				 skipping;
+	const __ops_contents_t	*content = &pkt->u;
+	static unsigned		 skipping;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("callback_write_parsed: ");
@@ -397,10 +397,10 @@ callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PTAG_CT_PK_SESSION_KEY:
 		return pk_sesskey_cb(pkt, cbinfo);
 
-	case OPS_PARSER_CMD_GET_SECRET_KEY:
+	case OPS_GET_SECKEY:
 		return get_seckey_cb(pkt, cbinfo);
 
-	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
+	case OPS_GET_PASSPHRASE:
 		return cbinfo->cryptinfo.getpassphrase(pkt, cbinfo);
 
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:

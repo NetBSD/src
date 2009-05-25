@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.15 2009/05/21 00:33:31 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.16 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ get_pass_phrase(char *phrase, size_t size)
 static char    *
 userid_to_id(const unsigned char *userid, char *id)
 {
-	static const char *hexes = "0123456789ABCDEF";
+	static const char *hexes = "0123456789abcdef";
 	int		   i;
 
 	for (i = 0; i < 8 ; i++) {
@@ -163,7 +163,7 @@ psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
 			ctime(&res->valid_sigs[i].birthtime),
 			__ops_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
-		pubkey = __ops_keyring_find_key_by_id(pubring,
+		pubkey = __ops_getkeybyid(pubring,
 			(const unsigned char *) res->valid_sigs[i].signer_id);
 		__ops_print_pubkeydata(fp, pubkey);
 	}
@@ -271,7 +271,7 @@ netpgp_find_key(netpgp_t *netpgp, char *id)
 		(void) fprintf(stderr, "NULL id to search for\n");
 		return 0;
 	}
-	return __ops_find_key_by_userid(netpgp->pubring, id) != NULL;
+	return __ops_getkeybyname(netpgp->pubring, id) != NULL;
 }
 
 /* export a given key */
@@ -283,7 +283,7 @@ netpgp_export_key(netpgp_t *netpgp, char *userid)
 	if (userid == NULL) {
 		userid = netpgp->userid;
 	}
-	keypair = __ops_find_key_by_userid(netpgp->pubring, userid);
+	keypair = __ops_getkeybyname(netpgp->pubring, userid);
 	if (keypair == NULL) {
 		(void) fprintf(stderr,
 			"Cannot find own key \"%s\" in keyring\n", userid);
@@ -362,7 +362,7 @@ netpgp_encrypt_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armo
 		userid = netpgp->userid;
 	}
 	suffix = (armored) ? ".asc" : ".gpg";
-	keypair = __ops_find_key_by_userid(netpgp->pubring, userid);
+	keypair = __ops_getkeybyname(netpgp->pubring, userid);
 	if (keypair == NULL) {
 		(void) fprintf(stderr, "Userid '%s' not found in keyring\n",
 					userid);
@@ -397,7 +397,7 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 		userid = netpgp->userid;
 	}
 	/* get key with which to sign */
-	keypair = __ops_find_key_by_userid(netpgp->secring, userid);
+	keypair = __ops_getkeybyname(netpgp->secring, userid);
 	if (keypair == NULL) {
 		(void) fprintf(stderr, "Userid '%s' not found in keyring\n",
 				userid);

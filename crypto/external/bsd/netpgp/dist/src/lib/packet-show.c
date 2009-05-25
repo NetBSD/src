@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.8 2009/05/21 00:33:31 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.9 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -144,8 +144,8 @@ static __ops_map_t packet_tag_map[] =
 	{OPS_PTAG_CT_SE_IP_DATA_HEADER, "CT: Sym Encrypted IP Data Header"},
 	{OPS_PTAG_CT_SE_IP_DATA_BODY, "CT: Sym Encrypted IP Data Body"},
 	{OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY, "CT: Encrypted PK Session Key"},
-	{OPS_PARSER_CMD_GET_SK_PASSPHRASE, "CMD: Get Secret Key Passphrase"},
-	{OPS_PARSER_CMD_GET_SECRET_KEY, "CMD: Get Secret Key"},
+	{OPS_GET_PASSPHRASE, "CMD: Get Secret Key Passphrase"},
+	{OPS_GET_SECKEY, "CMD: Get Secret Key"},
 	{OPS_PARSER_ERROR, "OPS_PARSER_ERROR"},
 	{OPS_PARSER_ERRCODE, "OPS_PARSER_ERRCODE"},
 

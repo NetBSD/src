@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.12 2009/05/21 00:33:31 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.13 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <string.h>
@@ -75,19 +75,11 @@ __RCSID("$NetBSD: packet-print.c,v 1.12 2009/05/21 00:33:31 agc Exp $");
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "packet.h"
+#include "netpgpdigest.h"
 
 static int      indent = 0;
 
 /* static functions */
-
-/* printhex is now print_hex for consistency */
-static void 
-print_hex(const unsigned char *src, size_t length)
-{
-	while (length-- > 0) {
-		printf("%02X", *src++);
-	}
-}
 
 static void 
 print_indent(void)
@@ -114,22 +106,22 @@ print_hexdump(const char *name, const unsigned char *data, unsigned int len)
 	print_name(name);
 
 	printf("len=%d, data=0x", len);
-	print_hex(data, len);
+	hexdump(stdout, data, len, "");
 	printf("\n");
 }
 
 static void 
-print_hexdump_data(const char *name, const unsigned char *data, unsigned len)
+hexdump_data(const char *name, const unsigned char *data, unsigned len)
 {
 	print_name(name);
 
 	printf("0x");
-	print_hex(data, len);
+	hexdump(stdout, data, len, "");
 	printf("\n");
 }
 
 static void 
-print_unsigned_int(const char *name, unsigned int val)
+print_uint(const char *name, unsigned int val)
 {
 	print_name(name);
 	printf("%d\n", val);
@@ -151,7 +143,7 @@ print_time(const char *name, time_t t)
 }
 
 static void 
-print_time_short(FILE *fp, time_t t)
+ptime(FILE *fp, time_t t)
 {
 	struct tm      *tm;
 
@@ -393,9 +385,9 @@ __ops_print_pubkeydata(FILE *fp, const __ops_keydata_t * key)
 		__ops_show_pka(key->key.pubkey.alg));
 	hexdump(fp, key->key_id, OPS_KEY_ID_SIZE, "");
 	(void) fprintf(fp, " ");
-	print_time_short(fp, key->key.pubkey.birthtime);
+	ptime(fp, key->key.pubkey.birthtime);
 	(void) fprintf(fp, "\nKey fingerprint: ");
-	hexdump(fp, key->fingerprint.fingerprint, 20, " ");
+	hexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, " ");
 	(void) fprintf(fp, "\n");
 	for (i = 0; i < key->nuids; i++) {
 		(void) fprintf(fp, "uid              %s\n",
@@ -411,14 +403,13 @@ void
 __ops_print_pubkey(const __ops_pubkey_t * pubkey)
 {
 	printf("------- PUBLIC KEY ------\n");
-	print_unsigned_int("Version", (unsigned)pubkey->version);
+	print_uint("Version", (unsigned)pubkey->version);
 	print_time("Creation Time", pubkey->birthtime);
-	if (pubkey->version == OPS_V3)
-		print_unsigned_int("Days Valid", pubkey->days_valid);
-
+	if (pubkey->version == OPS_V3) {
+		print_uint("Days Valid", pubkey->days_valid);
+	}
 	print_string_and_value("Algorithm", __ops_show_pka(pubkey->alg),
 			       pubkey->alg);
-
 	switch (pubkey->alg) {
 	case OPS_PKA_DSA:
 		print_bn("p", pubkey->key.dsa.p);
@@ -467,7 +458,7 @@ __ops_print_seckeydata(const __ops_keydata_t * key)
 	hexdump(stdout, key->key_id, OPS_KEY_ID_SIZE, "");
 	printf(" ");
 
-	print_time_short(stdout, key->key.pubkey.birthtime);
+	ptime(stdout, key->key.pubkey.birthtime);
 	printf(" ");
 
 	if (key->nuids == 1) {
@@ -604,10 +595,10 @@ end_subpacket(void)
 int 
 __ops_print_packet(const __ops_packet_t * pkt)
 {
-	const __ops_parser_content_union_t	*content = &pkt->u;
-	__ops_text_t				*text;
-	static unsigned				 unarmoured;
-	const char				*str;
+	const __ops_contents_t	*content = &pkt->u;
+	static unsigned		 unarmoured;
+	__ops_text_t		*text;
+	const char		*str;
 
 	if (unarmoured && pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
 		unarmoured = 0;
@@ -693,7 +684,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_CT_SIGNATURE:
 		print_tagname("SIGNATURE");
 		print_indent();
-		print_unsigned_int("Signature Version",
+		print_uint("Signature Version",
 				   (unsigned)content->sig.info.version);
 		if (content->sig.info.birthtime_set) {
 			print_time("Signature Creation Time",
@@ -705,7 +696,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 				       content->sig.info.type);
 
 		if (content->sig.info.signer_id_set) {
-			print_hexdump_data("Signer ID",
+			hexdump_data("Signer ID",
 					   content->sig.info.signer_id,
 				  sizeof(content->sig.info.signer_id));
 		}
@@ -716,13 +707,10 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		print_string_and_value("Hash Algorithm",
 			__ops_show_hash_alg(content->sig.info.hash_alg),
 			content->sig.info.hash_alg);
-
-		print_unsigned_int("Hashed data len",
-			content->sig.info.v4_hashed_data_length);
-
+		print_uint("Hashed data len",
+			content->sig.info.v4_hashlen);
 		print_indent();
-		print_hexdump_data("hash2", &content->sig.hash2[0], 2);
-
+		hexdump_data("hash2", &content->sig.hash2[0], 2);
 		switch (content->sig.info.key_alg) {
 		case OPS_PKA_RSA:
 		case OPS_PKA_RSA_SIGN_ONLY:
@@ -752,15 +740,14 @@ __ops_print_packet(const __ops_packet_t * pkt)
 
 	case OPS_PTAG_CT_COMPRESSED:
 		print_tagname("COMPRESSED");
-		print_unsigned_int("Compressed Data Type",
+		print_uint("Compressed Data Type",
 			(unsigned)content->compressed.type);
 		break;
 
 	case OPS_PTAG_CT_1_PASS_SIG:
 		print_tagname("ONE PASS SIGNATURE");
 
-		print_unsigned_int("Version",
-			(unsigned)content->one_pass_sig.version);
+		print_uint("Version", (unsigned)content->one_pass_sig.version);
 		print_string_and_value("Signature Type",
 		    __ops_show_sig_type(content->one_pass_sig.sig_type),
 				       content->one_pass_sig.sig_type);
@@ -770,12 +757,10 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		print_string_and_value("Public Key Algorithm",
 			__ops_show_pka(content->one_pass_sig.key_alg),
 			content->one_pass_sig.key_alg);
-		print_hexdump_data("Signer ID",
+		hexdump_data("Signer ID",
 				   content->one_pass_sig.keyid,
 				   sizeof(content->one_pass_sig.keyid));
-
-		print_unsigned_int("Nested",
-				   content->one_pass_sig.nested);
+		print_uint("Nested", content->one_pass_sig.nested);
 		break;
 
 	case OPS_PTAG_CT_USER_ATTR:
@@ -791,7 +776,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 			return 0;
 		}
 		start_subpacket(pkt->tag);
-		print_unsigned_int("Raw Signature Subpacket: tag",
+		print_uint("Raw Signature Subpacket: tag",
 			(unsigned)(content->ss_raw.tag -
 		   	OPS_PTAG_SIG_SUBPKT_BASE));
 		print_hexdump("Raw Data",
@@ -821,10 +806,8 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_SS_TRUST:
 		start_subpacket(pkt->tag);
 		print_string("Trust Signature", "");
-		print_unsigned_int("Level",
-				   (unsigned)content->ss_trust.level);
-		print_unsigned_int("Amount",
-				   (unsigned)content->ss_trust.amount);
+		print_uint("Level", (unsigned)content->ss_trust.level);
+		print_uint("Amount", (unsigned)content->ss_trust.amount);
 		end_subpacket();
 		break;
 
@@ -839,12 +822,13 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		/* not yet tested */
 		printf("  revocation key: class=0x%x",
 		       content->ss_revocation_key.class);
-		if (content->ss_revocation_key.class & 0x40)
+		if (content->ss_revocation_key.class & 0x40) {
 			printf(" (sensitive)");
-		printf(", algid=0x%x",
-		       content->ss_revocation_key.algid);
+		}
+		printf(", algid=0x%x", content->ss_revocation_key.algid);
 		printf(", fingerprint=");
-		hexdump(stdout, content->ss_revocation_key.fingerprint, 20, "");
+		hexdump(stdout, content->ss_revocation_key.fingerprint,
+				OPS_FINGERPRINT_SIZE, "");
 		printf("\n");
 		end_subpacket();
 		break;
@@ -852,8 +836,8 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
 		start_subpacket(pkt->tag);
 		print_hexdump("Issuer Key Id",
-			      &content->ss_issuer_key_id.key_id[0],
-			      sizeof(content->ss_issuer_key_id.key_id));
+			      &content->ss_issuer.key_id[0],
+			      sizeof(content->ss_issuer.key_id));
 		end_subpacket();
 		break;
 
@@ -1047,21 +1031,20 @@ __ops_print_packet(const __ops_packet_t * pkt)
 	case OPS_PTAG_CT_SIGNATURE_HEADER:
 		print_tagname("SIGNATURE");
 		print_indent();
-		print_unsigned_int("Signature Version",
+		print_uint("Signature Version",
 				   (unsigned)content->sig.info.version);
-		if (content->sig.info.birthtime_set)
+		if (content->sig.info.birthtime_set) {
 			print_time("Signature Creation Time",
 				content->sig.info.birthtime);
-
+		}
 		print_string_and_value("Signature Type",
 			    __ops_show_sig_type(content->sig.info.type),
 				       content->sig.info.type);
-
-		if (content->sig.info.signer_id_set)
-			print_hexdump_data("Signer ID",
-					   content->sig.info.signer_id,
-				  sizeof(content->sig.info.signer_id));
-
+		if (content->sig.info.signer_id_set) {
+			hexdump_data("Signer ID",
+				content->sig.info.signer_id,
+				sizeof(content->sig.info.signer_id));
+		}
 		print_string_and_value("Public Key Algorithm",
 			__ops_show_pka(content->sig.info.key_alg),
 				     content->sig.info.key_alg);
@@ -1073,7 +1056,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:
 		print_indent();
-		print_hexdump_data("hash2", &content->sig.hash2[0], 2);
+		hexdump_data("hash2", &content->sig.hash2[0], 2);
 
 		switch (content->sig.info.key_alg) {
 		case OPS_PKA_RSA:
@@ -1112,8 +1095,8 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		}
 		break;
 
-	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
-		print_tagname("OPS_PARSER_CMD_GET_SK_PASSPHRASE");
+	case OPS_GET_PASSPHRASE:
+		print_tagname("OPS_GET_PASSPHRASE");
 		break;
 
 	case OPS_PTAG_CT_SECRET_KEY:
@@ -1170,7 +1153,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 		__ops_print_pk_sesskey(pkt->tag, &content->pk_sesskey);
 		break;
 
-	case OPS_PARSER_CMD_GET_SECRET_KEY:
+	case OPS_GET_SECKEY:
 		__ops_print_pk_sesskey(OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY,
 				    content->get_seckey.pk_sesskey);
 		break;

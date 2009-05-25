@@ -56,7 +56,6 @@
 
 #include <time.h>
 #include <openssl/bn.h>
-#include <openssl/sha.h>
 
 #include "types.h"
 #include "errors.h"
@@ -278,9 +277,8 @@ typedef enum {
 	OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY = 0x300 + 15,
 
 	/* commands to the callback */
-	OPS_PARSER_CMD_GET_SK_PASSPHRASE = 0x400,
-	OPS_PARSER_CMD_GET_SECRET_KEY = 0x400 + 1,
-
+	OPS_GET_PASSPHRASE = 0x400,
+	OPS_GET_SECKEY = 0x400 + 1,
 
 	/* Errors */
 	OPS_PARSER_ERROR = 0x500,	/* Internal Use: Parser Error */
@@ -459,7 +457,8 @@ typedef enum {
 } __ops_s2k_specifier_t;
 
 /** Symmetric Key Algorithm Numbers.
- * OpenPGP assigns a unique Algorithm Number to each algorithm that is part of OpenPGP.
+ * OpenPGP assigns a unique Algorithm Number to each algorithm that is
+ * part of OpenPGP.
  *
  * This lists algorithm numbers for symmetric key algorithms.
  *
@@ -478,7 +477,8 @@ typedef enum {
 } __ops_symm_alg_t;
 
 /** Hashing Algorithm Numbers.
- * OpenPGP assigns a unique Algorithm Number to each algorithm that is part of OpenPGP.
+ * OpenPGP assigns a unique Algorithm Number to each algorithm that is
+ * part of OpenPGP.
  *
  * This lists algorithm numbers for hash algorithms.
  *
@@ -512,13 +512,6 @@ unsigned   __ops_is_hash_alg_supported(const __ops_hash_alg_t *);
 /* Salt size for hashing */
 #define OPS_SALT_SIZE		8
 
-/* SHA1 Hash Size \todo is this the same as OPS_CHECKHASH_SIZE?? */
-#define OPS_SHA1_HASH_SIZE 	SHA_DIGEST_LENGTH
-#define OPS_SHA256_HASH_SIZE	SHA256_DIGEST_LENGTH
-
-/* Hash size for secret key check */
-#define OPS_CHECKHASH_SIZE	OPS_SHA1_HASH_SIZE
-
 /* Max hash size */
 #define OPS_MAX_HASH_SIZE	64
 
@@ -535,7 +528,7 @@ typedef struct {
 	unsigned char			iv[OPS_MAX_BLOCK_SIZE];
 	__ops_seckey_union_t		key;
 	unsigned			checksum;
-	unsigned char			checkhash[OPS_CHECKHASH_SIZE];
+	unsigned char		       *checkhash;
 } __ops_seckey_t;
 
 /** Structure to hold one trust packet's data */
@@ -625,6 +618,7 @@ typedef union {
 } __ops_sig_union_t;
 
 #define OPS_KEY_ID_SIZE		8
+#define OPS_FINGERPRINT_SIZE	20
 
 /** Struct to hold a signature packet.
  *
@@ -642,8 +636,8 @@ typedef struct {
 	__ops_hash_alg_t hash_alg;	/* hashing algorithm
 						 * number */
 	__ops_sig_union_t sig;	/* signature parameters */
-	size_t          v4_hashed_data_length;
-	unsigned char  *v4_hashed_data;
+	size_t          v4_hashlen;
+	unsigned char  *v4_hashed;
 	unsigned   birthtime_set:1;
 	unsigned   signer_id_set:1;
 } __ops_sig_info_t;
@@ -654,7 +648,7 @@ typedef struct __ops_sig_t {
 	/* The following fields are only used while parsing the signature */
 	unsigned char   hash2[2];	/* high 2 bytes of hashed value -
 					 * for quick test */
-	size_t          v4_hashed_data_start;	/* only valid if accumulate
+	size_t          v4_hashstart;	/* only valid if accumulate
 						 * is set */
 	__ops_hash_t     *hash;	/* if set, the hash filled in for the data
 				 * so far */
@@ -753,7 +747,7 @@ typedef struct {
 	__ops_data_t      sig;
 } __ops_ss_embedded_sig_t;
 
-/** __ops_packet_t */
+/** __ops_subpacket_t */
 
 typedef struct __ops_subpacket_t {
 	size_t          length;
@@ -784,7 +778,7 @@ typedef struct {
 	__ops_hash_alg_t	hash_alg;
 	__ops_pubkey_alg_t	key_alg;
 	unsigned char		keyid[OPS_KEY_ID_SIZE];
-	unsigned			nested;
+	unsigned		nested;
 } __ops_one_pass_sig_t;
 
 /** Signature Subpacket : Primary User ID */
@@ -811,7 +805,7 @@ typedef struct {
 typedef struct {
 	unsigned char   class;
 	unsigned char   algid;
-	unsigned char   fingerprint[20];
+	unsigned char   fingerprint[OPS_FINGERPRINT_SIZE];
 } __ops_ss_revocation_key_t;
 
 /** Signature Subpacket : Revocation Reason */
@@ -845,7 +839,8 @@ typedef struct {
 
 /** __ops_mdc_t */
 typedef struct {
-	unsigned char   data[20];	/* size of SHA1 hash */
+	unsigned	 length;
+	unsigned char   *data;
 } __ops_mdc_t;
 
 /** __ops_header_var_t */
@@ -982,7 +977,7 @@ typedef union {
 	__ops_ss_trust_t		ss_trust;
 	__ops_ss_revocable_t		ss_revocable;
 	__ops_ss_time_t			ss_time;
-	__ops_ss_key_id_t		ss_issuer_key_id;
+	__ops_ss_key_id_t		ss_issuer;
 	__ops_ss_notation_t		ss_notation;
 	__ops_subpacket_t		packet;
 	__ops_compressed_t		compressed;
@@ -1020,53 +1015,53 @@ typedef union {
 	__ops_se_ip_data_body_t		se_ip_data_body;
 	__ops_se_data_body_t		se_data_body;
 	__ops_get_seckey_t		get_seckey;
-} __ops_parser_content_union_t;
+} __ops_contents_t;
 
 /** __ops_packet_t */
 struct __ops_packet_t {
-	__ops_content_tag_t		tag;		/* type of contents */
-	unsigned char			critical;	/* for sig subpackets */
-	__ops_parser_content_union_t	u;		/* union for contents */
+	__ops_content_tag_t	tag;		/* type of contents */
+	unsigned char		critical;	/* for sig subpackets */
+	__ops_contents_t	u;		/* union for contents */
 };
 
 /** __ops_fingerprint_t */
 typedef struct {
-	unsigned char   fingerprint[20];
+	unsigned char   fingerprint[OPS_FINGERPRINT_SIZE];
 	unsigned        length;
 } __ops_fingerprint_t;
 
-void            __ops_init(void);
-void            __ops_finish(void);
-void		__ops_keyid(unsigned char *, const size_t, const int,
+void __ops_init(void);
+void __ops_finish(void);
+void __ops_keyid(unsigned char *, const size_t, const int,
 				const __ops_pubkey_t *);
-void            __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);
-void            __ops_pubkey_free(__ops_pubkey_t *);
-void            __ops_userid_free(__ops_userid_t *);
-void            __ops_userattr_free(__ops_userattr_t *);
-void            __ops_sig_free(__ops_sig_t *);
-void            __ops_trust_free(__ops_trust_t *);
-void            __ops_ss_skapref_free(__ops_ss_skapref_t *);
-void            __ops_ss_hashpref_free(__ops_ss_hashpref_t *);
-void            __ops_ss_zpref_free(__ops_ss_zpref_t *);
-void            __ops_ss_key_flags_free(__ops_ss_key_flags_t *);
-void            __ops_ss_key_server_prefs_free(__ops_ss_key_server_prefs_t *);
-void            __ops_ss_features_free(__ops_ss_features_t *);
-void            __ops_ss_notation_free(__ops_ss_notation_t *);
-void            __ops_ss_policy_free(__ops_ss_policy_t *);
-void            __ops_ss_keyserv_free(__ops_ss_keyserv_t *);
-void            __ops_ss_regexp_free(__ops_ss_regexp_t *);
-void            __ops_ss_userdef_free(__ops_ss_userdef_t *);
-void            __ops_ss_reserved_free(__ops_ss_unknown_t *);
-void            __ops_ss_revocation_free(__ops_ss_revocation_t *);
-void            __ops_ss_sig_target_free(__ops_ss_sig_target_t *);
-void            __ops_ss_embedded_sig_free(__ops_ss_embedded_sig_t *);
+void __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);
+void __ops_pubkey_free(__ops_pubkey_t *);
+void __ops_userid_free(__ops_userid_t *);
+void __ops_userattr_free(__ops_userattr_t *);
+void __ops_sig_free(__ops_sig_t *);
+void __ops_trust_free(__ops_trust_t *);
+void __ops_ss_skapref_free(__ops_ss_skapref_t *);
+void __ops_ss_hashpref_free(__ops_ss_hashpref_t *);
+void __ops_ss_zpref_free(__ops_ss_zpref_t *);
+void __ops_ss_key_flags_free(__ops_ss_key_flags_t *);
+void __ops_ss_key_server_prefs_free(__ops_ss_key_server_prefs_t *);
+void __ops_ss_features_free(__ops_ss_features_t *);
+void __ops_ss_notation_free(__ops_ss_notation_t *);
+void __ops_ss_policy_free(__ops_ss_policy_t *);
+void __ops_ss_keyserv_free(__ops_ss_keyserv_t *);
+void __ops_ss_regexp_free(__ops_ss_regexp_t *);
+void __ops_ss_userdef_free(__ops_ss_userdef_t *);
+void __ops_ss_reserved_free(__ops_ss_unknown_t *);
+void __ops_ss_revocation_free(__ops_ss_revocation_t *);
+void __ops_ss_sig_target_free(__ops_ss_sig_target_t *);
+void __ops_ss_embedded_sig_free(__ops_ss_embedded_sig_t *);
 
-void            __ops_subpacket_free(__ops_subpacket_t *);
-void            __ops_parser_content_free(__ops_packet_t *);
-void            __ops_seckey_free(__ops_seckey_t *);
-void            __ops_pk_sesskey_free(__ops_pk_sesskey_t *);
+void __ops_subpacket_free(__ops_subpacket_t *);
+void __ops_parser_content_free(__ops_packet_t *);
+void __ops_seckey_free(__ops_seckey_t *);
+void __ops_pk_sesskey_free(__ops_pk_sesskey_t *);
 
-int             __ops_print_packet(const __ops_packet_t *);
+int __ops_print_packet(const __ops_packet_t *);
 
 #define DECLARE_ARRAY(type,arr)	\
 	unsigned n##arr; unsigned n##arr##_allocated; type *arr
@@ -1097,7 +1092,7 @@ typedef struct {
 /** \struct __ops_keydata
  * \todo expand to hold onto subkeys
  */
-struct __ops_keydata {
+struct __ops_keydata_t {
 	DECLARE_ARRAY(__ops_userid_t, uids);
 	DECLARE_ARRAY(__ops_subpacket_t, packets);
 	DECLARE_ARRAY(sigpacket_t, sigs);

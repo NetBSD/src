@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.9 2009/05/19 05:13:10 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.10 2009/05/25 06:43:33 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -92,6 +92,7 @@ __RCSID("$NetBSD: writer.c,v 1.9 2009/05/19 05:13:10 agc Exp $");
 #include "memory.h"
 #include "netpgpdefs.h"
 #include "version.h"
+#include "netpgpdigest.h"
 
 
 /*
@@ -1339,7 +1340,7 @@ __ops_push_checksum_writer(__ops_output_t *output, __ops_seckey_t *seckey)
 	sum = calloc(1, sizeof(*sum));
 	/* configure the arg */
 	sum->hash_alg = seckey->hash_alg;
-	sum->hashed = &seckey->checkhash[0];
+	sum->hashed = seckey->checkhash;
 	/* init the hash */
 	__ops_hash_any(&sum->hash, sum->hash_alg);
 	sum->hash.init(&sum->hash);

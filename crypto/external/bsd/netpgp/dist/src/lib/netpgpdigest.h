@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Alistair Crooks (agc@NetBSD.org)
+ * by Alistair Crooks (agc@netbsd.org)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,42 +26,30 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
- * All rights reserved.
- * Contributors: Ben Laurie, Rachel Willmer. The Contributors have asserted
- * their moral rights under the UK Copyright Design and Patents Act 1988 to
- * be recorded as the authors of this copyright work.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License.
- *
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-#ifndef VERSION_H_
-#define VERSION_H_	1
+#ifndef NETPGPDIGEST_H_
+#define NETPGPDIGEST_H_
 
-#ifndef NETPGP_AUTOCONF_VERSION
-#define NETPGP_AUTOCONF_VERSION	PACKAGE_VERSION
+/* header file to define the sizes for various digest arrays */
+
+#ifdef HAVE_OPENSSL_MD5_H
+#include <openssl/md5.h>
 #endif
 
-#ifndef NETPGP_MAINTAINER
-#define NETPGP_MAINTAINER	PACKAGE_BUGREPORT
+#ifdef HAVE_OPENSSL_SHA_H
+#include <openssl/sha.h>
 #endif
 
-/* development versions have .99 suffix */
-#define NETPGP_BASE_VERSION	"1.99.4"
+/* Apple */
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+#undef MD5_DIGEST_LENGTH
+#undef SHA_DIGEST_LENGTH
+#define COMMON_DIGEST_FOR_OPENSSL	1
+#include <CommonCrypto/CommonDigest.h>
+#endif
 
-#define NETPGP_VERSION_CAT(a, b)	"NetPGP portable " a "/[" b "]"
-#define NETPGP_VERSION_STRING \
-	NETPGP_VERSION_CAT(NETPGP_BASE_VERSION, NETPGP_AUTOCONF_VERSION)
+/* SHA1 Hash Size */
+#define OPS_SHA1_HASH_SIZE 	SHA_DIGEST_LENGTH
+#define OPS_SHA256_HASH_SIZE	SHA256_DIGEST_LENGTH
+#define OPS_CHECKHASH_SIZE	OPS_SHA1_HASH_SIZE
 
-#endif /* !VERSION_H_ */
+#endif /* NETPGPDIGEST_H_ */

@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.13 2009/05/21 00:33:32 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.14 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -117,11 +117,10 @@ check_binary_sig(const unsigned len,
 		break;
 
 	case OPS_V4:
-		hash.add(&hash, sig->info.v4_hashed_data,
-				sig->info.v4_hashed_data_length);
+		hash.add(&hash, sig->info.v4_hashed, sig->info.v4_hashlen);
 		trailer[0] = 0x04;	/* version */
 		trailer[1] = 0xFF;
-		hashedlen = sig->info.v4_hashed_data_length;
+		hashedlen = sig->info.v4_hashlen;
 		trailer[2] = hashedlen >> 24;
 		trailer[3] = hashedlen >> 16;
 		trailer[4] = hashedlen >> 8;
@@ -181,7 +180,7 @@ keydata_reader(void *dest, size_t length, __ops_error_t ** errors,
 static void 
 free_sig_info(__ops_sig_info_t * sig)
 {
-	(void) free(sig->v4_hashed_data);
+	(void) free(sig->v4_hashed);
 	(void) free(sig);
 }
 
@@ -189,9 +188,8 @@ static void
 copy_sig_info(__ops_sig_info_t * dst, const __ops_sig_info_t * src)
 {
 	(void) memcpy(dst, src, sizeof(*src));
-	dst->v4_hashed_data = calloc(1, src->v4_hashed_data_length);
-	(void) memcpy(dst->v4_hashed_data, src->v4_hashed_data,
-		src->v4_hashed_data_length);
+	dst->v4_hashed = calloc(1, src->v4_hashlen);
+	(void) memcpy(dst->v4_hashed, src->v4_hashed, src->v4_hashlen);
 }
 
 static void 
@@ -212,11 +210,11 @@ add_sig_to_list(const __ops_sig_info_t *sig, __ops_sig_info_t **sigs,
 __ops_parse_cb_return_t
 __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t	 *content = &pkt->u;
-	const __ops_keydata_t			 *signer;
-	validate_key_cb_t			 *key;
-	__ops_error_t				**errors;
-	unsigned		 		  valid = 0;
+	const __ops_contents_t	 *content = &pkt->u;
+	const __ops_keydata_t	 *signer;
+	validate_key_cb_t	 *key;
+	__ops_error_t		**errors;
+	unsigned		  valid = 0;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("%s\n", __ops_show_packet_tag(pkt->tag));
@@ -270,7 +268,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
 
-		signer = __ops_keyring_find_key_by_id(key->keyring,
+		signer = __ops_getkeybyid(key->keyring,
 					 content->sig.info.signer_id);
 		if (!signer) {
 			add_sig_to_list(&content->sig.info,
@@ -355,7 +353,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PARSER_PACKET_END:
 		break;
 
-	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
+	case OPS_GET_PASSPHRASE:
 		if (key->getpassphrase) {
 			return key->getpassphrase(pkt, cbinfo);
 		}
@@ -371,11 +369,11 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 __ops_parse_cb_return_t
 validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t	 *content = &pkt->u;
-	const __ops_keydata_t			 *signer;
-	validate_data_cb_t			 *data;
-	__ops_error_t				**errors;
-	unsigned				  valid = 0;
+	const __ops_contents_t	 *content = &pkt->u;
+	const __ops_keydata_t	 *signer;
+	validate_data_cb_t	 *data;
+	__ops_error_t		**errors;
+	unsigned		  valid = 0;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("validate_data_cb: %s\n",
@@ -416,23 +414,16 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned i = 0;
-
 			printf("\n*** hashed data:\n");
-			for (i = 0;
-			     i < content->sig.info.v4_hashed_data_length;
-			     i++) {
-				printf("0x%02x ",
-				content->sig.info.v4_hashed_data[i]);
-			}
+			hexdump(stdout, content->sig.info.v4_hashed,
+					content->sig.info.v4_hashlen, " ");
 			printf("\n");
-			printf("  type=%02x signer_id=",
-				content->sig.info.type);
+			printf("type=%02x signer_id=", content->sig.info.type);
 			hexdump(stdout, content->sig.info.signer_id,
 				sizeof(content->sig.info.signer_id), "");
 			printf("\n");
 		}
-		signer = __ops_keyring_find_key_by_id(data->keyring,
+		signer = __ops_getkeybyid(data->keyring,
 					 content->sig.info.signer_id);
 		if (!signer) {
 			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,

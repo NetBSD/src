@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.11 2009/05/21 00:33:31 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.12 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: keyring.c,v 1.11 2009/05/21 00:33:31 agc Exp $");
 #include "packet.h"
 #include "crypto.h"
 #include "validate.h"
+#include "netpgpdigest.h"
 
 
 
@@ -184,7 +185,7 @@ __ops_is_key_secret(const __ops_keydata_t * data)
 */
 
 const __ops_seckey_t *
-__ops_get_seckey(const __ops_keydata_t * data)
+__ops_get_seckey(const __ops_keydata_t *data)
 {
 	return (data->type == OPS_PTAG_CT_SECRET_KEY) ?
 				&data->key.seckey : NULL;
@@ -224,8 +225,8 @@ typedef struct {
 static __ops_parse_cb_return_t 
 decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t	*content = &pkt->u;
-	decrypt_t				*decrypt;
+	const __ops_contents_t	*content = &pkt->u;
+	decrypt_t		*decrypt;
 
 	decrypt = __ops_parse_cb_get_arg(cbinfo);
 
@@ -238,7 +239,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PTAG_CT_TRUST:
 		break;
 
-	case OPS_PARSER_CMD_GET_SK_PASSPHRASE:
+	case OPS_GET_PASSPHRASE:
 		*content->skey_passphrase.passphrase = decrypt->pphrase;
 		return OPS_KEEP_MEMORY;
 
@@ -265,6 +266,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 
 	case OPS_PTAG_CT_SECRET_KEY:
 		decrypt->seckey = calloc(1, sizeof(*decrypt->seckey));
+		decrypt->seckey->checkhash = calloc(1, OPS_CHECKHASH_SIZE);
 		*decrypt->seckey = content->seckey;
 		return OPS_KEEP_MEMORY;
 
@@ -317,7 +319,7 @@ __ops_decrypt_seckey(const __ops_keydata_t * key,
 \param key Keydata to get secret key from
 */
 void 
-__ops_set_seckey(__ops_parser_content_union_t *cont, const __ops_keydata_t *key)
+__ops_set_seckey(__ops_contents_t *cont, const __ops_keydata_t *key)
 {
 	*cont->get_seckey.seckey = &key->key.seckey;
 }
@@ -767,7 +769,7 @@ __ops_keyring_free(__ops_keyring_t * keyring)
 
 */
 const __ops_keydata_t *
-__ops_keyring_find_key_by_id(const __ops_keyring_t * keyring,
+__ops_getkeybyid(const __ops_keyring_t * keyring,
 			   const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
 	int	n;
@@ -776,7 +778,7 @@ __ops_keyring_find_key_by_id(const __ops_keyring_t * keyring,
 		if (__ops_get_debug_level(__FILE__)) {
 			int	i;
 
-			printf("__ops_keyring_find_key_by_id: keyring keyid ");
+			printf("__ops_getkeybyid: keyring keyid ");
 			for (i = 0 ; i < OPS_KEY_ID_SIZE ; i++) {
 				printf("%02x", keyring->keys[n].key_id[i]);
 			}
@@ -847,83 +849,89 @@ str2keyid(const char *userid, unsigned char *keyid, size_t len)
 
 */
 const __ops_keydata_t *
-__ops_find_key_by_userid(const __ops_keyring_t *keyring, const char *userid)
+__ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
 {
 	const __ops_keydata_t	*kp;
+	__ops_keydata_t		*keyp;
+	__ops_userid_t		*uidp;
 	unsigned char		 keyid[OPS_KEY_ID_SIZE + 1];
 	unsigned int    	 i = 0;
 	size_t          	 len;
 	char	                *cp;
 	int             	 n = 0;
 
-	if (!keyring)
+	if (!keyring) {
 		return NULL;
-
-	len = strlen(userid);
-	for (n = 0; n < keyring->nkeys; ++n) {
-		for (i = 0; i < keyring->keys[n].nuids; i++) {
+	}
+	len = strlen(name);
+	for (n = 0, keyp = keyring->keys; n < keyring->nkeys; ++n, keyp++) {
+		for (i = 0, uidp = keyp->uids; i < keyp->nuids; i++, uidp++) {
 			if (__ops_get_debug_level(__FILE__)) {
-				printf("[%d][%d] userid %s, last '%d'\n",
-					n, i, keyring->keys[n].uids[i].userid,
-					keyring->keys[n].uids[i].userid[len]);
+				printf("[%d][%d] name %s, last '%d'\n",
+					n, i, uidp->userid, uidp->userid[len]);
 			}
-			if (strncmp((char *) keyring->keys[n].uids[i].userid,
-					userid, len) == 0 &&
-			    keyring->keys[n].uids[i].userid[len] == ' ') {
-				return &keyring->keys[n];
+			if (strncmp((char *) uidp->userid, name, len) == 0 &&
+			    uidp->userid[len] == ' ') {
+				return keyp;
 			}
 		}
 	}
 
-	if (strchr(userid, '@') == NULL) {
+	if (strchr(name, '@') == NULL) {
 		/* no '@' sign */
-		/* first try userid as a keyid */
+		/* first try name as a keyid */
 		(void) memset(keyid, 0x0, sizeof(keyid));
-		str2keyid(userid, keyid, sizeof(keyid));
+		str2keyid(name, keyid, sizeof(keyid));
 		if (__ops_get_debug_level(__FILE__)) {
-			printf("userid \"%s\", keyid %02x%02x%02x%02x\n",
-				userid,
+			printf("name \"%s\", keyid %02x%02x%02x%02x\n",
+				name,
 				keyid[0], keyid[1], keyid[2], keyid[3]);
 		}
-		if ((kp = __ops_keyring_find_key_by_id(keyring, keyid)) != NULL) {
+		if ((kp = __ops_getkeybyid(keyring, keyid)) != NULL) {
 			return kp;
 		}
 		/* match on full name */
-		for (n = 0; n < keyring->nkeys; n++) {
-			for (i = 0; i < keyring->keys[n].nuids; i++) {
+		keyp = keyring->keys;
+		for (n = 0; n < keyring->nkeys; ++n, keyp++) {
+			uidp = keyp->uids;
+			for (i = 0 ; i < keyp->nuids; i++, uidp++) {
 				if (__ops_get_debug_level(__FILE__)) {
-					printf("keyid \"%s\" len %" PRIsize "u, keyid[len] '%c'\n",
-					       (char *) keyring->keys[n].uids[i].userid,
-					       len, keyring->keys[n].uids[i].userid[len]);
+					printf("keyid \"%s\" len %"
+						PRIsize "u, keyid[len] '%c'\n",
+					       (char *) uidp->userid,
+					       len, uidp->userid[len]);
 				}
-				if (strncasecmp((char *) keyring->keys[n].uids[i].userid, userid, len) == 0 &&
-				    keyring->keys[n].uids[i].userid[len] == ' ') {
-					return &keyring->keys[n];
+				if (strncasecmp((char *) uidp->userid, name,
+					len) == 0 && uidp->userid[len] == ' ') {
+					return keyp;
 				}
 			}
 		}
 	}
 	/* match on <email@address> */
-	for (n = 0; n < keyring->nkeys; n++) {
-		for (i = 0; i < keyring->keys[n].nuids; i++) {
+	for (n = 0, keyp = keyring->keys; n < keyring->nkeys; ++n, keyp++) {
+		for (i = 0, uidp = keyp->uids; i < keyp->nuids; i++, uidp++) {
 			/*
 			 * look for the rightmost '<', in case there is one
 			 * in the comment field
 			 */
-			if ((cp = strrchr((char *) keyring->keys[n].uids[i].userid, '<')) != NULL) {
+			cp = strrchr((char *) uidp->userid, '<');
+			if (cp != NULL) {
 				if (__ops_get_debug_level(__FILE__)) {
-					printf("cp ,%s, userid ,%s, len %" PRIsize "u ,%c,\n",
-					       cp + 1, userid, len, *(cp + len + 1));
+					printf("cp ,%s, name ,%s, len %"
+						PRIsize "u ,%c,\n",
+						cp + 1,
+						name,
+						len,
+						*(cp + len + 1));
 				}
-				if (strncasecmp(cp + 1, userid, len) == 0 &&
+				if (strncasecmp(cp + 1, name, len) == 0 &&
 				    *(cp + len + 1) == '>') {
-					return &keyring->keys[n];
+					return keyp;
 				}
 			}
 		}
 	}
-
-	/* printf("end: n=%d,i=%d\n",n,i); */
 	return NULL;
 }
 

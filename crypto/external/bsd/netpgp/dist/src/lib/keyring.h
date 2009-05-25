@@ -56,7 +56,7 @@
 #include "packet.h"
 #include "packet-parse.h"
 
-typedef struct __ops_keydata __ops_keydata_t;
+typedef struct __ops_keydata_t	__ops_keydata_t;
 
 /** \struct __ops_keyring_t
  * A keyring
@@ -68,9 +68,9 @@ typedef struct __ops_keyring_t {
 	__ops_keydata_t	*keys;
 } __ops_keyring_t;
 
-const __ops_keydata_t *__ops_keyring_find_key_by_id(const __ops_keyring_t *,
+const __ops_keydata_t *__ops_getkeybyid(const __ops_keyring_t *,
 					const unsigned char *);
-const __ops_keydata_t *__ops_find_key_by_userid(const __ops_keyring_t *,
+const __ops_keydata_t *__ops_getkeybyname(const __ops_keyring_t *,
 					const char *);
 void __ops_keydata_free(__ops_keydata_t *);
 void __ops_keyring_free(__ops_keyring_t *);
@@ -88,7 +88,7 @@ char *__ops_malloc_passphrase(char *);
 
 void __ops_keyring_list(const __ops_keyring_t *);
 
-void __ops_set_seckey(__ops_parser_content_union_t *, const __ops_keydata_t *);
+void __ops_set_seckey(__ops_contents_t *, const __ops_keydata_t *);
 void __ops_seckey_forget(__ops_seckey_t *);
 
 const unsigned char *__ops_get_key_id(const __ops_keydata_t *);
