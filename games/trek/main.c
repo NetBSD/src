@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2009/05/25 00:29:08 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2009/05/25 00:37:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,13 +39,12 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2009/05/25 00:29:08 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2009/05/25 00:37:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <setjmp.h>
-#include <termios.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
@@ -165,8 +164,6 @@ int main(int, char **);
 int
 main(int argc, char **argv)
 {
-	time_t		curtime;
-	long			vect;
 	int ch;
 
 	/* Revoke setgid privileges */
@@ -175,9 +172,7 @@ main(int argc, char **argv)
 	/* Default to fast mode */
 	Etc.fast = 1;
 
-	time(&curtime);
-	vect = (long) curtime;
-	srand(vect);
+	srandom((long) time(NULL));
 
 	while ((ch = getopt(argc, argv, "fst")) != -1) {
 		switch (ch) {
