@@ -1,4 +1,4 @@
-/*	$NetBSD: phantglobs.h,v 1.9 2003/05/08 13:03:49 wiz Exp $	*/
+/*	$NetBSD: phantglobs.h,v 1.10 2009/05/25 22:35:01 dholland Exp $	*/
 
 /*
  * phantglobs.h - global declarations for Phantasia
@@ -73,7 +73,7 @@ void	awardtreasure(void);
 void	battleplayer(long);
 void	callmonster(int);
 void	cancelmonster(void);
-void	catchalarm(int) __attribute__((__noreturn__));
+void	catchalarm(int) __dead;
 void	changestats(bool);
 void	checkbattle(void);
 void	checktampered(void);
