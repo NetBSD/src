@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2009/05/25 00:20:22 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2009/05/25 00:25:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2009/05/25 00:20:22 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2009/05/25 00:25:58 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,6 +154,12 @@ __RCSID("$NetBSD: main.c,v 1.19 2009/05/25 00:20:22 dholland Exp $");
 
 jmp_buf env;
 
+static void
+usage(const char *av0)
+{
+	errx(1, "Usage: %s [-fs]", av0);
+}
+
 int main(int, char **);
 
 int
@@ -161,16 +167,12 @@ main(int argc, char **argv)
 {
 	time_t		curtime;
 	long			vect;
-	int		ac;
-	char		**av;
 	struct	termios		argp;
+	int ch;
 
 	/* Revoke setgid privileges */
 	setgid(getgid());
 
-	av = argv;
-	ac = argc;
-	av++;
 	time(&curtime);
 	vect = (long) curtime;
 	srand(vect);
@@ -180,8 +182,8 @@ main(int argc, char **argv)
 			Etc.fast++;
 	}
 
-	while (ac > 1 && av[0][0] == '-') {
-		switch (av[0][1]) {
+	while ((ch = getopt(argc, argv, "fst")) != -1) {
+		switch (ch) {
 		  case 'f':	/* set fast mode */
 			Etc.fast++;
 			break;
@@ -197,14 +199,11 @@ main(int argc, char **argv)
 #endif
 
 		  default:
-			printf("Invalid option: %s\n", av[0]);
-
+			usage(argv[0]);
 		}
-		ac--;
-		av++;
 	}
-	if (ac > 2)
-		errx(1, "arg count");
+	if (optind < argc)
+		usage(argv[0]);
 
 	printf("\n   * * *   S T A R   T R E K   * * *\n\n"
 	       "Press return to continue.\n");
