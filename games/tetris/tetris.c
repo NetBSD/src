@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.19 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: tetris.c,v 1.20 2009/05/25 00:46:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -193,7 +193,7 @@ main(argc, argv)
 		}
 	}
 
-	sprintf(key_msg,
+	snprintf(key_msg, sizeof(key_msg),
 "%s - left   %s - rotate   %s - right   %s - drop   %s - pause   %s - quit",
 		key_write[0], key_write[1], key_write[2], key_write[3],
 		key_write[4], key_write[5]);
