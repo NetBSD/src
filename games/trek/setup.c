@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.12 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.13 2009/05/25 00:37:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.12 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.13 2009/05/25 00:37:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ setup(void)
 		d = 0;
 		for (i = 0; Game.passwd[i]; i++)
 			d += Game.passwd[i] << i;
-		srand(d);
+		srandom(d);
 	}
 	Param.bases = Now.bases = ranf(6 - Game.skill) + 2;
 	if (Game.skill == 6)
