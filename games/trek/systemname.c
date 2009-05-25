@@ -1,4 +1,4 @@
-/*	$NetBSD: systemname.c,v 1.8 2009/05/24 20:39:43 dholland Exp $	*/
+/*	$NetBSD: systemname.c,v 1.9 2009/05/25 00:05:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)systemname.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: systemname.c,v 1.8 2009/05/24 20:39:43 dholland Exp $");
+__RCSID("$NetBSD: systemname.c,v 1.9 2009/05/25 00:05:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <stddef.h>
 #include "trek.h"
 
 /*
@@ -65,6 +66,6 @@ systemname(const struct quad *q1)
 
 	i &= Q_SYSTEM;
 	if (i == 0)
-		return (0);
+		return NULL;
 	return (Systemname[i]);
 }
