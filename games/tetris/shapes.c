@@ -1,4 +1,4 @@
-/*	$NetBSD: shapes.c,v 1.7 2006/10/22 08:09:24 mrg Exp $	*/
+/*	$NetBSD: shapes.c,v 1.8 2009/05/25 04:33:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,9 +79,7 @@ const struct shape shapes[] = {
  * taking the current board into account.
  */
 int
-fits_in(shape, pos)
-	const struct shape *shape;
-	int pos;
+fits_in(const struct shape *shape, int pos)
 {
 	const int *o = shape->off;
 
@@ -96,9 +94,7 @@ fits_in(shape, pos)
  * if `onoff' is 1, and off if `onoff' is 0.
  */
 void
-place(shape, pos, onoff)
-	const struct shape *shape;
-	int pos, onoff;
+place(const struct shape *shape, int pos, int onoff)
 {
 	const int *o = shape->off;
 
