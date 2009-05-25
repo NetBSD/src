@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.h,v 1.4 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: scores.h,v 1.5 2009/05/25 08:33:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,41 @@
 /*
  * Tetris scores.
  */
+
+/* Header for high score file. */
+#define HSH_MAGIC_SIZE 8
+struct highscore_header {
+	char hsh_magic[HSH_MAGIC_SIZE];
+	uint32_t hsh_endiantag;
+	uint32_t hsh_version;
+};
+
+/* Current on-disk high score record. */
+struct highscore_ondisk {
+	char hso_name[20];
+	int32_t hso_score;
+	int32_t hso_level;
+	int32_t hso_pad;
+	int64_t hso_time;
+};
+
+/* 5.99.x after time_t change, on 32-bit machines */
+struct highscore_ondisk_599 {
+	char hso599_name[20];
+	int32_t hso599_score;
+	int32_t hso599_level;
+	int32_t hso599_time[2];
+};
+
+/* 5.0 and earlier on-disk high score record. */
+struct highscore_ondisk_50 {
+	char hso50_name[20];
+	int32_t hso50_score;
+	int32_t hso50_level;
+	int32_t hso50_time;
+};
+
+/* In-memory high score record. */
 struct highscore {
 	char	hs_name[20];	/* login name */
 	int	hs_score;	/* raw score */
