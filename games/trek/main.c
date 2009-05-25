@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2009/05/25 00:12:32 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2009/05/25 00:20:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2009/05/25 00:12:32 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2009/05/25 00:20:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: main.c,v 1.18 2009/05/25 00:12:32 dholland Exp $");
 #include "trek.h"
 #include "getpar.h"
 
-#define PRIO		00	/* default priority */
 
 /*
 **	 ####  #####    #    ####          #####  ####   #####  #   #
@@ -162,8 +161,6 @@ main(int argc, char **argv)
 {
 	time_t		curtime;
 	long			vect;
-	char		opencode;
-	int			prio;
 	int		ac;
 	char		**av;
 	struct	termios		argp;
@@ -177,8 +174,6 @@ main(int argc, char **argv)
 	time(&curtime);
 	vect = (long) curtime;
 	srand(vect);
-	opencode = 'w';
-	prio = PRIO;
 
 	if (tcgetattr(1, &argp) == 0) {
 		if (cfgetispeed(&argp) < B1200)
@@ -187,10 +182,6 @@ main(int argc, char **argv)
 
 	while (ac > 1 && av[0][0] == '-') {
 		switch (av[0][1]) {
-		  case 'a':	/* append to log file */
-			opencode = 'a';
-			break;
-
 		  case 'f':	/* set fast mode */
 			Etc.fast++;
 			break;
@@ -205,10 +196,6 @@ main(int argc, char **argv)
 			break;
 #endif
 
-		  case 'p':	/* set priority */
-			prio = atoi(av[0] + 2);
-			break;
-
 		  default:
 			printf("Invalid option: %s\n", av[0]);
 
@@ -218,10 +205,6 @@ main(int argc, char **argv)
 	}
 	if (ac > 2)
 		errx(1, "arg count");
-	/*
-	if (ac > 1)
-		f_log = fopen(av[0], opencode);
-	*/
 
 	printf("\n   * * *   S T A R   T R E K   * * *\n\n"
 	       "Press return to continue.\n");
