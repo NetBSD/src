@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.15 2009/05/24 23:20:22 dholland Exp $	*/
+/*	$NetBSD: getpar.c,v 1.16 2009/05/25 00:39:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.15 2009/05/24 23:20:22 dholland Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.16 2009/05/25 00:39:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,8 +145,8 @@ getcodpar(const char *s, const struct cvntab tab[])
 		/* if command list, print four per line */
 		if (input[0] == '?' && input[1] == 0) {
 			c = 4;
-			for (r = tab; r->abrev; r++) {
-				strcpy(input, r->abrev);
+			for (r = tab; r->abbrev; r++) {
+				strcpy(input, r->abbrev);
 				strcat(input, r->full);
 				printf("%14.14s", input);
 				if (--c > 0)
@@ -160,9 +160,9 @@ getcodpar(const char *s, const struct cvntab tab[])
 		}
 
 		/* search for in table */
-		for (r = tab; r->abrev; r++) {
+		for (r = tab; r->abbrev; r++) {
 			p = input;
-			for (q = r->abrev; *q; q++)
+			for (q = r->abbrev; *q; q++)
 				if (*p++ != *q)
 					break;
 			if (!*q) {
@@ -175,7 +175,7 @@ getcodpar(const char *s, const struct cvntab tab[])
 		}
 
 		/* check for not found */
-		if (!r->abrev) {
+		if (!r->abbrev) {
 			printf("invalid input; ? for valid inputs\n");
 			skiptonl(0);
 		} else

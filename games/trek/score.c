@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.10 2009/05/25 00:03:18 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.11 2009/05/25 00:39:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.10 2009/05/25 00:03:18 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.11 2009/05/25 00:39:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ score(void)
 	if (Move.endgame > 0) {
 		s += (t = 100 * (u = Game.skill));
 		scoreitem(t, "Bonus for winning a %s%s game",
-			Skitab[u - 1].abrev, Skitab[u - 1].full);
+			Skitab[u - 1].abbrev, Skitab[u - 1].full);
 	}
 
 	if (Game.killed) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: srscan.c,v 1.9 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: srscan.c,v 1.10 2009/05/25 00:39:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: srscan.c,v 1.9 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: srscan.c,v 1.10 2009/05/25 00:39:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,9 +166,9 @@ srscan(int f)
 		p = &Lentab[Game.length - 1];
 		if (Game.length > 2)
 			p--;
-		printf("Length, Skill %s%s, ", p->abrev, p->full);
+		printf("Length, Skill %s%s, ", p->abbrev, p->full);
 		p = &Skitab[Game.skill - 1];
-		printf("%s%s\n", p->abrev, p->full);
+		printf("%s%s\n", p->abbrev, p->full);
 		return;
 	}
 	printf("  ");
