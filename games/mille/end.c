@@ -1,4 +1,4 @@
-/*	$NetBSD: end.c,v 1.8 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: end.c,v 1.9 2009/05/25 23:34:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)end.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: end.c,v 1.8 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: end.c,v 1.9 2009/05/25 23:34:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"mille.h"
+#include "mille.h"
 
 /*
  * @(#)end.c	1.1 (Berkeley) 4/1/82
@@ -85,7 +85,7 @@ finalscore(PLAY *pp)
 	}
 }
 
-# ifdef EXTRAP
+#ifdef EXTRAP
 static int	Last_tot[2];	/* last tot used for extrapolate	*/
 
 /*
@@ -150,4 +150,4 @@ undoex(void)
 		pp->hand_tot -= Last_tot[i++];
 	}
 }
-# endif
+#endif /* EXTRAP */

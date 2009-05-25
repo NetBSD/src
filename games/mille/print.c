@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.13 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.14 2009/05/25 23:34:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,18 +34,18 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.13 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.14 2009/05/25 23:34:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"mille.h"
+#include "mille.h"
 
 /*
  * @(#)print.c	1.1 (Berkeley) 4/1/82
  */
 
-# define	COMP_STRT	20
-# define	CARD_STRT	2
+#define COMP_STRT	20
+#define CARD_STRT	2
 
 void
 prboard(void)
