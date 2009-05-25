@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.15 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: move.c,v 1.16 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.15 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: move.c,v 1.16 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: move.c,v 1.15 2004/11/05 21:30:32 dsl Exp $");
 #define	CTRL(c)		(c - 'A' + 1)
 
 void
-domove()
+domove(void)
 {
 	PLAY	*pp;
 	int	i, j;
@@ -168,7 +168,7 @@ acc:
  * the game is over
  */
 void
-check_go()
+check_go(void)
 {
 	CARD	card;
 	PLAY	*pp, *op;
@@ -199,8 +199,7 @@ check_go()
 }
 
 int
-playcard(pp)
-	PLAY	*pp;
+playcard(PLAY *pp)
 {
 	int	v;
 	CARD	card;
@@ -349,7 +348,7 @@ protected:
 }
 
 void
-getmove()
+getmove(void)
 {
 	char	c;
 #ifdef EXTRAP
@@ -483,8 +482,7 @@ ret:
  * return whether or not the player has picked
  */
 int
-haspicked(pp)
-	const PLAY	*pp;
+haspicked(const PLAY *pp)
 {
 	int	card;
 
@@ -503,8 +501,7 @@ haspicked(pp)
 }
 
 void
-account(card)
-	CARD	card; 
+account(CARD card)
 {
 	CARD	oppos;
 
@@ -529,8 +526,7 @@ account(card)
 }
 
 void
-prompt(promptno)
-	int	promptno;
+prompt(int promptno)
 {
 	static const char	*const names[] = {
 				">>:Move:",
@@ -561,8 +557,7 @@ prompt(promptno)
 }
 
 void
-sort(hand)
-	CARD	*hand;
+sort(CARD *hand)
 {
 	CARD	*cp, *tp;
 	CARD	temp;

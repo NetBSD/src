@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.13 2009/05/25 23:17:31 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.14 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.13 2009/05/25 23:17:31 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.14 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ typedef	struct stat	STAT;
  *	Returns FALSE if it couldn't be done.
  */
 bool
-save()
+save(void)
 {
 	char	*sp;
 	int	outfd;
@@ -141,8 +141,7 @@ over:
  * be cleaned up before the game starts.
  */
 bool
-rest_f(file)
-	const char	*file;
+rest_f(const char *file)
 {
 
 	char	*sp;
