@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.9 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: table.c,v 1.10 2009/05/25 23:34:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -39,17 +39,17 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.9 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: table.c,v 1.10 2009/05/25 23:34:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# define	DEBUG
+#define DEBUG
 
 /*
  * @(#)table.c	1.1 (Berkeley) 4/1/82
  */
 
-# include	"mille.h"
+#include "mille.h"
 
 int	main(int, char **);
 

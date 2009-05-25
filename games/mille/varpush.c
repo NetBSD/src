@@ -1,4 +1,4 @@
-/*	$NetBSD: varpush.c,v 1.9 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: varpush.c,v 1.10 2009/05/25 23:34:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,12 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)varpush.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: varpush.c,v 1.9 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: varpush.c,v 1.10 2009/05/25 23:34:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	<paths.h>
-# include	"mille.h"
+#include <paths.h>
+#include "mille.h"
 
 /*
  * @(#)varpush.c	1.1 (Berkeley) 4/1/82
