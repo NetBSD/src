@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2009/05/25 23:08:45 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2009/05/25 23:14:33 dholland Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -647,7 +647,8 @@ titlelist(void)
 		    Other.p_status != S_NOTUSED)
 			/* found the king */
 		{
-			sprintf(Databuf, "The present ruler is %s  Level:%.0f",
+			snprintf(Databuf, SZ_DATABUF,
+			    "The present ruler is %s  Level:%.0f",
 			    Other.p_name, Other.p_level);
 			mvaddstr(4, 40 - strlen(Databuf) / 2, Databuf);
 			kingfound = TRUE;
@@ -662,7 +663,9 @@ titlelist(void)
 		if (Other.p_specialtype == SC_VALAR && Other.p_status != S_NOTUSED)
 			/* found the valar */
 		{
-			sprintf(Databuf, "The Valar is %s   Login:  %s", Other.p_name, Other.p_login);
+			snprintf(Databuf, SZ_DATABUF,
+				"The Valar is %s   Login:  %s",
+				Other.p_name, Other.p_login);
 			mvaddstr(6, 40 - strlen(Databuf) / 2, Databuf);
 			break;
 		}
@@ -678,7 +681,8 @@ titlelist(void)
 				councilfound = TRUE;
 			}
 			/* This assumes a finite (<=5) number of C.O.W.: */
-			sprintf(Databuf, "%s   Login:  %s", Other.p_name, Other.p_login);
+			snprintf(Databuf, SZ_DATABUF,
+				"%s   Login:  %s", Other.p_name, Other.p_login);
 			mvaddstr(Lines++, 40 - strlen(Databuf) / 2, Databuf);
 		}
 	/* search for the two highest players */
@@ -708,7 +712,8 @@ titlelist(void)
 				strcpy(nxtname, Other.p_name);
 			}
 	mvaddstr(15, 28, "Highest characters are:");
-	sprintf(Databuf, "%s  Level:%.0f   and   %s  Level:%.0f",
+	snprintf(Databuf, SZ_DATABUF,
+	    "%s  Level:%.0f   and   %s  Level:%.0f",
 	    hiname, hilvl, nxtname, nxtlvl);
 	mvaddstr(17, 40 - strlen(Databuf) / 2, Databuf);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.12 2008/01/28 05:55:10 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.13 2009/05/25 23:17:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.12 2008/01/28 05:55:10 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.13 2009/05/25 23:17:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ rest_f(file)
 	/*
 	 * initialize some necessary values
 	 */
-	(void)sprintf(Initstr, "%s [%s]\n", file, buf);
+	(void)snprintf(Initstr, INITSTR_SIZE, "%s [%s]\n", file, buf);
 	Fromfile = file;
 	return !On_exit;
 }

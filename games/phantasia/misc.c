@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.16 2009/05/25 23:08:45 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.17 2009/05/25 23:14:33 dholland Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -133,9 +133,11 @@ descrlocation(struct player *playerp, phbool shortflag)
 							}
 
 	if (shortflag)
-		sprintf(Databuf, "%.29s", label);
+		snprintf(Databuf, SZ_DATABUF, "%.29s", label);
 	else
-		sprintf(Databuf, " is in %s  (%.0f,%.0f)", label, playerp->p_x, playerp->p_y);
+		snprintf(Databuf, SZ_DATABUF, 
+			" is in %s  (%.0f,%.0f)",
+			label, playerp->p_x, playerp->p_y);
 
 	return (Databuf);
 }

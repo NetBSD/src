@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.13 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: mille.h,v 1.14 2009/05/25 23:17:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -211,7 +211,8 @@ typedef struct {
 
 extern bool	Debug, Finished, Next, On_exit, Order, Saved;
 
-extern char	Initstr[];
+#define INITSTR_SIZE 100
+extern char	Initstr[INITSTR_SIZE];
 extern const char	*C_fmt, *const *C_name, *Fromfile;
 
 extern int	Card_no, End, Handstart, Movetype, Numgos,
