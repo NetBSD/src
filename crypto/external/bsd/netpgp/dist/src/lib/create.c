@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.13 2009/05/21 00:33:31 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.14 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: create.c,v 1.13 2009/05/21 00:33:31 agc Exp $");
 #include "readerwriter.h"
 #include "memory.h"
 #include "netpgpdefs.h"
+#include "netpgpdigest.h"
 
 /**
  * \ingroup Core_Create
@@ -800,7 +801,7 @@ __ops_write_struct_seckey(const __ops_seckey_t * key,
 		break;
 
 	case 254:
-		length += 20;
+		length += OPS_CHECKHASH_SIZE;
 		break;
 
 	default:

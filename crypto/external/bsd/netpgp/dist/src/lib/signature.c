@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.14 2009/05/21 00:33:32 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.15 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -84,6 +84,8 @@ __RCSID("$NetBSD: signature.c,v 1.14 2009/05/21 00:33:32 agc Exp $");
 #include "readerwriter.h"
 #include "validate.h"
 #include "netpgpdefs.h"
+#include "netpgpdigest.h"
+
 
 /** \ingroup Core_Create
  * needed for signature creation
@@ -392,12 +394,12 @@ hash_add_trailer(__ops_hash_t *hash, const __ops_sig_t *sig,
 {
 	if (sig->info.version == OPS_V4) {
 		if (raw_packet) {
-			hash->add(hash, raw_packet + sig->v4_hashed_data_start,
-				  sig->info.v4_hashed_data_length);
+			hash->add(hash, raw_packet + sig->v4_hashstart,
+				  sig->info.v4_hashlen);
 		}
 		__ops_hash_add_int(hash, (unsigned)sig->info.version, 1);
 		__ops_hash_add_int(hash, 0xff, 1);
-		__ops_hash_add_int(hash, sig->info.v4_hashed_data_length, 4);
+		__ops_hash_add_int(hash, sig->info.v4_hashlen, 4);
 	} else {
 		__ops_hash_add_int(hash, (unsigned)sig->info.type, 1);
 		__ops_hash_add_int(hash, (unsigned)sig->info.birthtime, 4);

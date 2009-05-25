@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.11 2009/05/21 00:33:31 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: misc.c,v 1.11 2009/05/21 00:33:31 agc Exp $");
 #include "memory.h"
 #include "readerwriter.h"
 #include "version.h"
+#include "netpgpdigest.h"
 
 #ifdef WIN32
 #define vsnprintf _vsnprintf
@@ -102,11 +103,11 @@ typedef struct {
 static __ops_parse_cb_return_t
 accumulate_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_parser_content_union_t	*content = &pkt->u;
-	const __ops_pubkey_t			*pubkey;
-	__ops_keyring_t				*keyring;
-	__ops_keydata_t				*keydata = NULL;
-	accumulate_t				*accumulate;
+	const __ops_contents_t	*content = &pkt->u;
+	const __ops_pubkey_t	*pubkey;
+	__ops_keyring_t		*keyring;
+	__ops_keydata_t		*keydata = NULL;
+	accumulate_t		*accumulate;
 
 	accumulate = __ops_parse_cb_get_arg(cbinfo);
 	keyring = accumulate->keyring;
@@ -225,16 +226,18 @@ dump_one_keydata(const __ops_keydata_t * key)
 	hexdump(stdout, key->key_id, OPS_KEY_ID_SIZE, "");
 
 	printf("\nFingerpint: ");
-	hexdump(stdout, key->fingerprint.fingerprint, key->fingerprint.length, "");
+	hexdump(stdout, key->fingerprint.fingerprint, key->fingerprint.length,
+		"");
 
 	printf("\n\nUIDs\n====\n\n");
-	for (n = 0; n < key->nuids; ++n)
+	for (n = 0; n < key->nuids; ++n) {
 		printf("%s\n", key->uids[n].userid);
-
+	}
 	printf("\nPackets\n=======\n");
 	for (n = 0; n < key->npackets; ++n) {
 		printf("\n%03d: ", n);
-		hexdump(stdout, key->packets[n].raw, key->packets[n].length, "");
+		hexdump(stdout, key->packets[n].raw, key->packets[n].length,
+			"");
 	}
 	printf("\n\n");
 }
@@ -505,7 +508,7 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 		if (__ops_get_debug_level(__FILE__)) {
 			fprintf(stderr, "finished making key fingerprint\n");
 		}
-		fp->length = 20;
+		fp->length = OPS_FINGERPRINT_SIZE;
 
 		__ops_memory_free(mem);
 	}
