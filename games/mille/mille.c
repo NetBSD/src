@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.17 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: mille.c,v 1.18 2009/05/25 23:34:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -39,12 +39,12 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.17 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: mille.c,v 1.18 2009/05/25 23:34:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"mille.h"
-# include	<signal.h>
+#include "mille.h"
+#include <signal.h>
 
 /*
  * @(#)mille.c	1.3 (Berkeley) 5/10/83
@@ -90,11 +90,11 @@ main(int ac, char *av[])
 	leaveok(Score, TRUE);
 	leaveok(Miles, TRUE);
 	clearok(curscr, TRUE);
-# ifndef PROF
+#ifndef PROF
 	srandom(getpid());
-# else
+#else
 	srandom(0);
-# endif
+#endif
 	cbreak();
 	noecho();
 	signal(SIGINT, rub);

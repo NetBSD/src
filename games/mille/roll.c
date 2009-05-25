@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.8 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: roll.c,v 1.9 2009/05/25 23:34:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: roll.c,v 1.8 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: roll.c,v 1.9 2009/05/25 23:34:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"mille.h"
+#include "mille.h"
 
 /*
  *	This routine rolls ndie nside-sided dice.
