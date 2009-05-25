@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.3 2009/05/22 11:38:05 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.4 2009/05/25 14:16:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,10 +43,10 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.3 2009/05/22 11:38:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.4 2009/05/25 14:16:54 yamt Exp $");
 #include <sys/param.h>
 #else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.3 2009/05/22 11:38:05 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.4 2009/05/25 14:16:54 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -262,6 +262,16 @@ next:
 			selected_idx = i;
 		}
 	}
+	/*
+	 * now we have:
+	 *
+	 *          \ <- where
+	 *           cur
+	 *           / \
+	 *          A  selected
+	 *              / \
+	 *             B   C
+	 */
 	*where = selected;
 	if (selected == NULL) {
 		return;
@@ -272,7 +282,27 @@ next:
 	memcpy(tmp, selected->n_children, sizeof(tmp));
 	memcpy(selected->n_children, cur->n_children, sizeof(tmp));
 	memcpy(cur->n_children, tmp, sizeof(tmp));
+	/*
+	 *          \ <- where
+	 *          selected
+	 *           / \
+	 *          A  selected
+	 *
+	 *              cur
+	 *              / \
+	 *             B   C
+	 */
 	where = &selected->n_children[selected_idx];
+	/*
+	 *          \
+	 *          selected
+	 *           / \ <- where
+	 *          A  selected
+	 *
+	 *              cur
+	 *              / \
+	 *             B   C
+	 */
 	goto next;
 }
 
