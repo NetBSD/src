@@ -26,35 +26,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- * Copyright (c) 2005-2008 Nominet UK (www.nic.uk)
- * All rights reserved.
- * Contributors: Ben Laurie, Rachel Willmer. The Contributors have asserted
- * their moral rights under the UK Copyright Design and Patents Act 1988 to
- * be recorded as the authors of this copyright work.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License.
- *
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
-/**
- \file Command line program to perform netpgp operations
-*/
+/* Command line program to perform netpgp operations */
 #include <sys/types.h>
 #include <sys/param.h>
 
 #include <getopt.h>
-#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,34 +39,40 @@
 
 #include <netpgp.h>
 
+/*
+ * 2048 is the absolute minimum, really - we should really look at
+ * bumping this to 4096 or even higher - agc, 20090522
+ */
 #define DEFAULT_NUMBITS 2048
 
-#define MAXBUF 1024
+/*
+ * Similraily, SHA1 is now looking as though it should not be used.
+ * Let's pre-empt this by specifying SHA256 - gpg interoperates just
+ * fine with SHA256 - agc, 20090522
+ */
+#define DEFAULT_HASH_ALG	"SHA256"
 
 static const char *usage =
 	" --help OR\n"
-	"\t--list-keys [options] OR\n"
+	"\t--encrypt [--output=file] [options] files... OR\n"
+	"\t--decrypt [--output=file] [options] files... OR\n\n"
+	"\t--sign [--armor] [--detach] [--hash=alg] [--output=file]\n"
+		"\t\t[options] files... OR\n"
+	"\t--verify [options] files... OR\n"
+	"\t--cat [--output=file] [options] files... OR\n"
+	"\t--clearsign [--output=file] [options] files... OR\n\n"
+	"\t--export-keys [options] OR\n"
+	"\t--find-key [options] OR\n"
+	"\t--generate-key [options] OR\n"
+	"\t--import-key [options] OR\n"
+	"\t--list-keys [options] OR\n\n"
 	"\t--list-packets [options] OR\n"
-	"\t--encrypt [options] files... OR\n"
-	"\t--decrypt [options] files... OR\n"
-	"\t--sign [--detach] [options] files... OR\n"
-	"\t--clearsign [options] files... OR\n"
-	"\t--verify [options] files...\n"
+	"\t--version\n"
 	"where options are:\n"
+	"\t[--homedir=<homedir>] AND/OR\n"
 	"\t[--keyring=<keyring>] AND/OR\n"
 	"\t[--userid=<userid>] AND/OR\n"
-	"\t[--armour] AND/OR\n"
-	"\t[--homedir=<homedir>]\n";
-static const char *usage_find_key =
-	"%s --find-key --userid=<userid> [--keyring=<keyring>] \n";
-static const char *usage_export_key =
-	"%s --export-key --userid=<userid> [--keyring=<keyring>] \n";
-static const char *usage_encrypt =
-"%s --encrypt --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
-static const char *usage_sign =
-"%s --sign --userid=<userid> [--armour] [--homedir=<homedir>] files...\n";
-static const char *usage_clearsign =
-"%s --clearsign --userid=<userid> [--homedir=<homedir>] files...\n";
+	"\t[--verbose]\n";
 
 enum optdefs {
 	/* commands */
@@ -124,17 +107,16 @@ enum optdefs {
 
 };
 
-
 #define EXIT_ERROR	2
 
 static struct option options[] = {
-	/* commands */
+	/* key-management commands */
 	{"list-keys",	no_argument,		NULL,	LIST_KEYS},
 	{"find-key",	no_argument,		NULL,	FIND_KEY},
 	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
 	{"import-key",	no_argument,		NULL,	IMPORT_KEY},
 	{"generate-key", no_argument,		NULL,	GENERATE_KEY},
-
+	/* file manipulation commands */
 	{"encrypt",	no_argument,		NULL,	ENCRYPT},
 	{"decrypt",	no_argument,		NULL,	DECRYPT},
 	{"sign",	no_argument,		NULL,	SIGN},
@@ -145,12 +127,12 @@ static struct option options[] = {
 	{"verify-cat",	no_argument,		NULL,	VERIFY_CAT},
 	{"verify-show",	no_argument,		NULL,	VERIFY_CAT},
 	{"verifyshow",	no_argument,		NULL,	VERIFY_CAT},
-
+	/* file listing commands */
 	{"list-packets", no_argument,		NULL,	LIST_PACKETS},
-
+	/* debugging commands */
 	{"help",	no_argument,		NULL,	HELP_CMD},
 	{"version",	no_argument,		NULL,	VERSION_CMD},
-
+	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
 	/* options */
 	{"keyring",	required_argument, 	NULL,	KEYRING},
 	{"userid",	required_argument, 	NULL,	USERID},
@@ -166,20 +148,16 @@ static struct option options[] = {
 	{"algorithm",	required_argument, 	NULL,	HASH_ALG},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
 	{"output",	required_argument, 	NULL,	OUTPUT},
-
-	/* debug */
-	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
-
 	{ NULL,		0,			NULL,	0},
 };
 
 /* gather up program variables into one struct */
 typedef struct prog_t {
-	char	 keyring[MAXBUF + 1];		/* name of keyring */
+	char	 keyring[MAXPATHLEN + 1];		/* name of keyring */
 	char	*userid;			/* user identifier */
-	char	 myring_name[MAXBUF + 1];	/* myring filename */
-	char	 pubring_name[MAXBUF + 1];	/* pubring filename */
-	char	 secring_name[MAXBUF + 1];	/* secret ring file */
+	char	 myring_name[MAXPATHLEN + 1];	/* myring filename */
+	char	 pubring_name[MAXPATHLEN + 1];	/* pubring filename */
+	char	 secring_name[MAXPATHLEN + 1];	/* secret ring file */
 	char	*progname;			/* program name */
 	char	*output;			/* output file name */
 	int	 overwrite;			/* overwrite files? */
@@ -281,18 +259,15 @@ main(int argc, char **argv)
 		print_usage(usage, p.progname);
 		exit(EXIT_ERROR);
 	}
-	netpgp_setvar(&netpgp, "hash", "SHA256");
-
+	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
 	/* set default homedir */
 	(void) snprintf(homedir, sizeof(homedir), "%s/.gnupg", getenv("HOME"));
-
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
 		case LIST_KEYS:
 			p.cmd = options[optindex].val;
 			break;
-
 		case FIND_KEY:
 		case EXPORT_KEY:
 		case IMPORT_KEY:
@@ -307,14 +282,12 @@ main(int argc, char **argv)
 		case HELP_CMD:
 			p.cmd = options[optindex].val;
 			break;
-
 		case VERSION_CMD:
 			printf(
 "%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
 				netpgp_get_info("version"),
 				netpgp_get_info("maintainer"));
 			exit(EXIT_SUCCESS);
-
 			/* options */
 		case KEYRING:
 			if (optarg == NULL) {
@@ -324,7 +297,6 @@ main(int argc, char **argv)
 			}
 			snprintf(p.keyring, sizeof(p.keyring), "%s", optarg);
 			break;
-
 		case USERID:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
@@ -337,19 +309,15 @@ main(int argc, char **argv)
 			}
 			p.userid = optarg;
 			break;
-
 		case ARMOUR:
 			p.armour = 1;
 			break;
-
 		case DETACHED:
 			p.detached = 1;
 			break;
-
 		case VERBOSE:
 			give_it_large(&netpgp);
 			break;
-
 		case HOMEDIR:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
@@ -358,7 +326,6 @@ main(int argc, char **argv)
 			}
 			(void) snprintf(homedir, sizeof(homedir), "%s", optarg);
 			break;
-
 		case NUMBITS:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
@@ -367,7 +334,6 @@ main(int argc, char **argv)
 			}
 			p.numbits = atoi(optarg);
 			break;
-
 		case HASH_ALG:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
@@ -376,7 +342,6 @@ main(int argc, char **argv)
 			}
 			netpgp_setvar(&netpgp, "hash", optarg);
 			break;
-
 		case OUTPUT:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
@@ -388,27 +353,20 @@ main(int argc, char **argv)
 			}
 			p.output = strdup(optarg);
 			break;
-
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);
 			break;
-
 		default:
 			p.cmd = HELP_CMD;
 			break;
 		}
 	}
-
 	/* initialise, and read keys from file */
 	if (!netpgp_init(&netpgp, p.userid, NULL, NULL)) {
 		printf("can't initialise\n");
 		exit(EXIT_ERROR);
 	}
-
-	/*
-	 * now do the required action for each of the files on the command
-	 * line
-	 */
+	/* now do the required action for each of the command line args */
 	ret = EXIT_SUCCESS;
 	if (optind == argc) {
 		if (!netpgp_cmd(&netpgp, &p, NULL)) {

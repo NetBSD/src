@@ -57,15 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.11 2009/05/19 05:13:10 agc Exp $");
-#endif
-
-#ifdef HAVE_OPENSSL_MD5_H
-#include <openssl/md5.h>
-#endif
-
-#ifdef HAVE_OPENSSL_SHA_H
-#include <openssl/sha.h>
+__RCSID("$NetBSD: openssl_crypto.c,v 1.12 2009/05/25 06:43:32 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -80,21 +72,14 @@ __RCSID("$NetBSD: openssl_crypto.c,v 1.11 2009/05/19 05:13:10 agc Exp $");
 #include <openssl/err.h>
 #endif
 
-
 #include <stdlib.h>
-
-/* Apple */
-#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
-#undef MD5_DIGEST_LENGTH
-#undef SHA_DIGEST_LENGTH
-#define COMMON_DIGEST_FOR_OPENSSL	1
-#include <CommonCrypto/CommonDigest.h>
-#endif
+/* Hash size for secret key check */
 
 #include "crypto.h"
 #include "keyring.h"
 #include "readerwriter.h"
 #include "netpgpdefs.h"
+#include "netpgpdigest.h"
 #include "packet.h"
 
 
