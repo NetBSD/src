@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.h,v 1.11 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: getpar.h,v 1.12 2009/05/25 00:39:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,7 +35,7 @@ typedef void (*cmdfun)(int);
 
 /* used for getcodpar() parameter list */
 struct cvntab {
-	const char	*abrev;
+	const char	*abbrev;
 	const char	*full;
 	cmdfun	value;
 	int	value2;
