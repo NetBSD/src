@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.43 2009/05/24 14:54:17 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.44 2009/05/25 22:33:00 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.43 2009/05/24 14:54:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.44 2009/05/25 22:33:00 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.43 2009/05/24 14:54:17 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/kthread.h>
 #include <sys/sysctl.h>
+#include <sys/namei.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -558,7 +559,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	const int maxdepth = 6;
 	modinfo_t *mi;
 	module_t *mod, *mod2;
-	char buf[MAXMODNAME];
+	char buf[MAXMODNAME], *path;
 	const char *s, *p;
 	int error;
 	size_t len;
@@ -566,6 +567,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	KASSERT(mutex_owned(&module_lock));
 
 	error = 0;
+	path=NULL;
 
 	/*
 	 * Avoid recursing too far.
@@ -616,11 +618,21 @@ module_do_load(const char *name, bool isdep, int flags,
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_load_file(&mod->mod_kobj, name, module_base,
-		    autoload);
+		path = PNBUF_GET();
+		if (!autoload) {
+			snprintf(path, MAXPATHLEN, "%s", name);
+			error = kobj_load_file(&mod->mod_kobj, path, FOLLOW);
+		}
+		if (autoload || (error == ENOENT)) {
+			snprintf(path, MAXPATHLEN, "%s/%s/%s.kmod",
+			    module_base, name, name);
+			error = kobj_load_file(&mod->mod_kobj, path,
+			    FOLLOW | NOCHROOT);
+		}
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
+			PNBUF_PUT(path);
 			if (autoload) {
 				module_print("Cannot load kernel object `%s'"
 				    " error=%d", name, error);
@@ -789,6 +801,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		module_thread_kick();
 	}
 	depth--;
+	if (path != NULL)
+		PNBUF_PUT(path);
 	return 0;
 
  fail:
@@ -797,6 +811,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	TAILQ_REMOVE(&pending, mod, mod_chain);
 	kmem_free(mod, sizeof(*mod));
 	depth--;
+	if (path != NULL)
+		PNBUF_PUT(path);
 	return error;
 }
 
