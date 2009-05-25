@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.16 2009/05/24 23:20:22 dholland Exp $	*/
+/*	$NetBSD: trek.h,v 1.17 2009/05/25 00:07:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -447,7 +447,7 @@ void killd(int, int , int);
 void klmove(int);
 
 /* lose.c */
-void lose(int) __attribute__((__noreturn__));
+void lose(int) __dead;
 
 /* lrscan.c */
 void lrscan(int);
@@ -465,8 +465,8 @@ void out(int);
 void phaser(int);
 
 /* play.c */
-void myreset(int) __attribute__((__noreturn__));
-void play(void) __attribute__((__noreturn__));
+void myreset(int) __dead;
+void play(void) __dead;
 
 /* ram.c */
 void ram(int, int );
@@ -517,4 +517,4 @@ void dowarp(int);
 void warp(int, int, double);
 
 /* win.c */
-void win(void) __attribute__((__noreturn__));
+void win(void) __dead;
