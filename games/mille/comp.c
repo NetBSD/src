@@ -1,4 +1,4 @@
-/*	$NetBSD: comp.c,v 1.12 2009/05/25 23:34:50 dholland Exp $	*/
+/*	$NetBSD: comp.c,v 1.13 2009/05/25 23:44:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: comp.c,v 1.12 2009/05/25 23:34:50 dholland Exp $");
+__RCSID("$NetBSD: comp.c,v 1.13 2009/05/25 23:44:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ calcmove(void)
 	int		*value;
 	PLAY		*pp, *op;
 	bool		foundend, cango, canstop, foundlow;
-	unsgn int	i, count200, badcount, nummin, nummax, diff;
+	unsigned int	i, count200, badcount, nummin, nummax, diff;
 	int		curmin, curmax;
 	CARD		safe, oppos;
 	int		valbuf[HAND_SZ], count[NUM_CARDS];

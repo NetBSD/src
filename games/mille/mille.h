@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.15 2009/05/25 23:34:50 dholland Exp $	*/
+/*	$NetBSD: mille.h,v 1.16 2009/05/25 23:44:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -52,7 +52,6 @@
  * Miscellaneous constants
  */
 
-#define unsgn		unsigned
 #define CARD		short
 
 #define HAND_SZ		7	/* number of cards in a hand	*/
