@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.22 2008/01/28 01:38:59 dholland Exp $	*/
+/*	$NetBSD: screen.c,v 1.23 2009/05/25 04:33:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -123,8 +123,7 @@ static struct tinfo *info;
  * Routine used by tputs().
  */
 int
-put(c)
-	int c;
+put(int c)
 {
 
 	return (putchar(c));
@@ -150,7 +149,7 @@ moveto(int r, int c)
  * Set up from termcap.
  */
 void
-scr_init()
+scr_init(void)
 {
 	static int bsflag, xsflag, sgnum;
 #ifdef unneeded
@@ -217,8 +216,7 @@ scr_init()
 static jmp_buf scr_onstop;
 
 static void
-stopset(sig)
-	int sig;
+stopset(int sig)
 {
 	sigset_t set;
 
@@ -231,8 +229,7 @@ stopset(sig)
 }
 
 static void
-scr_stop(sig)
-	int sig;
+scr_stop(int sig)
 {
 	sigset_t set;
 
@@ -249,7 +246,7 @@ scr_stop(sig)
  * Set up screen mode.
  */
 void
-scr_set()
+scr_set(void)
 {
 	struct winsize ws;
 	struct termios newtt;
@@ -316,7 +313,7 @@ scr_set()
  * End screen mode.
  */
 void
-scr_end()
+scr_end(void)
 {
 	sigset_t nsigset, osigset;
 
@@ -341,8 +338,7 @@ scr_end()
 }
 
 void
-stop(why)
-	const char *why;
+stop(const char *why)
 {
 
 	if (isset)
@@ -355,7 +351,7 @@ stop(why)
  * Clear the screen, forgetting the current contents in the process.
  */
 void
-scr_clear()
+scr_clear(void)
 {
 
 	putpad(CLstr);
@@ -373,7 +369,7 @@ typedef cell regcell;
  * Update the screen.
  */
 void
-scr_update()
+scr_update(void)
 {
 	cell *bp, *sp;
 	regcell so, cur_so = 0;
@@ -485,9 +481,7 @@ scr_update()
  * (We need its length in case we have to overwrite with blanks.)
  */
 void
-scr_msg(s, set)
-	char *s;
-	int set;
+scr_msg(char *s, int set)
 {
 	
 	if (set || CEstr == NULL) {
