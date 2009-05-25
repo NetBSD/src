@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.20 2009/05/25 00:46:01 dholland Exp $	*/
+/*	$NetBSD: tetris.c,v 1.21 2009/05/25 04:33:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@ static	void	setup_board(void);
  * right edges are set.
  */
 static void
-setup_board()
+setup_board(void)
 {
 	int i;
 	cell *p;
@@ -100,7 +100,7 @@ setup_board()
  * Elide any full active rows.
  */
 static void
-elide()
+elide(void)
 {
 	int i, j, base;
 	cell *p;
@@ -125,9 +125,7 @@ elide()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int pos, c;
 	const char *keys;
@@ -321,8 +319,7 @@ main(argc, argv)
 }
 
 void
-onintr(signo)
-	int signo __unused;
+onintr(int signo __unused)
 {
 	scr_clear();
 	scr_end();
@@ -330,7 +327,7 @@ onintr(signo)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: tetris [-ps] [-k keys] [-l level]\n");
 	exit(1);
