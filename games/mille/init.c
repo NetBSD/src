@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.9 2003/08/07 09:37:25 agc Exp $	*/
+/*	$NetBSD: init.c,v 1.10 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.9 2003/08/07 09:37:25 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.10 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: init.c,v 1.9 2003/08/07 09:37:25 agc Exp $");
  */
 
 void
-init()
+init(void)
 {
 	PLAY	*pp;
 	int	i, j;
@@ -89,7 +89,7 @@ init()
 }
 
 void
-shuffle()
+shuffle(void)
 {
 	int	i, r;
 	CARD	temp;
@@ -108,7 +108,7 @@ shuffle()
 }
 
 void
-newboard()
+newboard(void)
 {
 	int		i;
 	PLAY		*pp;
@@ -167,7 +167,7 @@ newboard()
 }
 
 void
-newscore()
+newscore(void)
 {
 	int		i, new;
 	PLAY		*pp;

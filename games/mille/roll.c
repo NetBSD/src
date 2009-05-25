@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.7 2003/08/07 09:37:26 agc Exp $	*/
+/*	$NetBSD: roll.c,v 1.8 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: roll.c,v 1.7 2003/08/07 09:37:26 agc Exp $");
+__RCSID("$NetBSD: roll.c,v 1.8 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,7 @@ __RCSID("$NetBSD: roll.c,v 1.7 2003/08/07 09:37:26 agc Exp $");
  */
 
 int
-roll(ndie, nsides)
-	int	ndie, nsides; 
+roll(int ndie, int nsides)
 {
 
 	int		tot;

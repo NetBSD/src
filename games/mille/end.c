@@ -1,4 +1,4 @@
-/*	$NetBSD: end.c,v 1.7 2003/08/07 09:37:25 agc Exp $	*/
+/*	$NetBSD: end.c,v 1.8 2009/05/25 23:24:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)end.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: end.c,v 1.7 2003/08/07 09:37:25 agc Exp $");
+__RCSID("$NetBSD: end.c,v 1.8 2009/05/25 23:24:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: end.c,v 1.7 2003/08/07 09:37:25 agc Exp $");
  * the end-of-games points to the user who deserves it (if any).
  */
 void
-finalscore(pp)
-	PLAY	*pp;
+finalscore(PLAY *pp)
 {
 	int	temp, tot, num;
 
@@ -93,8 +92,9 @@ static int	Last_tot[2];	/* last tot used for extrapolate	*/
  *	print out the score as if it was final, and add the totals for
  * the end-of-games points to the user who deserves it (if any).
  */
-extrapolate(pp)
-reg PLAY	*pp; {
+void
+extrapolate(PLAY *pp)
+{
 
 	reg int		x, num, tot, count;
 
@@ -137,7 +137,9 @@ reg PLAY	*pp; {
 	Last_tot[num] = tot;
 }
 
-undoex() {
+void
+undoex(void)
+{
 
 	reg PLAY	*pp;
 	reg int		i;
