@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.4 2009/05/25 14:16:54 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.5 2009/05/25 14:54:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,10 +43,10 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.4 2009/05/25 14:16:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.5 2009/05/25 14:54:06 yamt Exp $");
 #include <sys/param.h>
 #else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.4 2009/05/25 14:16:54 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.5 2009/05/25 14:54:06 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -130,6 +130,22 @@ rpst_startmask(const struct rpst_tree *t)
 }
 
 /*
+ * rpst_update_parents: update n_parent of children
+ */
+
+static inline void
+rpst_update_parents(struct rpst_node *n)
+{
+	int i;
+
+	for (i = 0; i < 2; i++) {
+		if (n->n_children[i] != NULL) {
+			n->n_children[i]->n_parent = n;
+		}
+	}
+}
+
+/*
  * rpst_enlarge_tree: enlarge tree so that 'index' can be stored
  */
 
@@ -144,7 +160,9 @@ rpst_enlarge_tree(struct rpst_tree *t, uint64_t idx)
 			rpst_remove_node(t, n);
 			memset(&n->n_children, 0, sizeof(n->n_children));
 			n->n_children[0] = t->t_root;
+			t->t_root->n_parent = n;
 			t->t_root = n;
+			n->n_parent = NULL;
 		}
 		t->t_height++;
 	}
@@ -157,23 +175,32 @@ rpst_enlarge_tree(struct rpst_tree *t, uint64_t idx)
 static struct rpst_node *
 rpst_insert_node1(struct rpst_node **where, struct rpst_node *n, uint64_t mask)
 {
+	struct rpst_node *parent;
 	struct rpst_node *cur;
 	unsigned int idx;
 
 	KASSERT((n->n_x & ((-mask) << 1)) == 0);
+	parent = NULL;
 next:
 	cur = *where;
 	if (cur == NULL) {
+		n->n_parent = parent;
 		memset(&n->n_children, 0, sizeof(n->n_children));
 		*where = n;
 		return NULL;
 	}
+	KASSERT(cur->n_parent == parent);
 	if (n->n_y == cur->n_y && n->n_x == cur->n_x) {
 		return cur;
 	}
 	if (n->n_y < cur->n_y) {
-		/* swap cur and n */
+		/*
+		 * swap cur and n.
+		 * note that n is not in tree.
+		 */
 		memcpy(n->n_children, cur->n_children, sizeof(n->n_children));
+		n->n_parent = cur->n_parent;
+		rpst_update_parents(n);
 		*where = n;
 		n = cur;
 		cur = *where;
@@ -181,6 +208,7 @@ next:
 	KASSERT(*where == cur);
 	idx = (n->n_x & mask) != 0;
 	where = &cur->n_children[idx];
+	parent = cur;
 	KASSERT((*where) == NULL || ((((*where)->n_x & mask) != 0) == idx));
 	KASSERT((*where) == NULL || (*where)->n_y >= cur->n_y);
 	mask >>= 1;
@@ -207,33 +235,26 @@ rpst_insert_node(struct rpst_tree *t, struct rpst_node *n)
  * rpst_find_pptr: find a pointer to the given node.
  *
  * also, return the parent node via parentp.  (NULL for the root node.)
- *
- * XXX is it better to simply make each nodes have a pointer to parent?
  */
 
-static struct rpst_node **
-rpst_find_pptr(struct rpst_node **where, struct rpst_node *n, uint64_t mask,
+static inline struct rpst_node **
+rpst_find_pptr(struct rpst_tree *t, struct rpst_node *n,
     struct rpst_node **parentp)
 {
-	struct rpst_node *pn = NULL;
-	struct rpst_node *cur;
-	unsigned int idx;
+	struct rpst_node * const parent = n->n_parent;
+	unsigned int i;
 
-next:
-	cur = *where;
-	KASSERT(cur != NULL);
-	if (cur == n) {
-		KASSERT(pn == NULL || pn->n_y <= n->n_y);
-		*parentp = pn;
-		return where;
+	*parentp = parent;
+	if (parent == NULL) {
+		return &t->t_root;
 	}
-	idx = (n->n_x & mask) != 0;
-	pn = cur;
-	where = &cur->n_children[idx];
-	KASSERT((*where) == NULL || ((((*where)->n_x & mask) != 0) == idx));
-	KASSERT((*where) == NULL || (*where)->n_y >= cur->n_y);
-	mask >>= 1;
-	goto next;
+	for (i = 0; i < 2 - 1; i++) {
+		if (parent->n_children[i] == n) {
+			break;
+		}
+	}
+	KASSERT(parent->n_children[i] == n);
+	return &parent->n_children[i];
 }
 
 /*
@@ -241,22 +262,23 @@ next:
  */
 
 static void
-rpst_remove_node_at(struct rpst_node **where)
+rpst_remove_node_at(struct rpst_node *parent, struct rpst_node **where,
+    struct rpst_node *cur)
 {
 	struct rpst_node *tmp[2];
-	struct rpst_node *cur;
 	struct rpst_node *selected;
-	unsigned int selected_idx;
+	unsigned int selected_idx = 0; /* XXX gcc */
 	unsigned int i;
 
-	cur = *where;
 	KASSERT(cur != NULL);
+	KASSERT(parent == cur->n_parent);
 next:
 	selected = NULL;
 	for (i = 0; i < 2; i++) {
 		struct rpst_node *c;
 
 		c = cur->n_children[i];
+		KASSERT(c == NULL || c->n_parent == cur);
 		if (selected == NULL || (c != NULL && c->n_y < selected->n_y)) {
 			selected = c;
 			selected_idx = i;
@@ -265,6 +287,7 @@ next:
 	/*
 	 * now we have:
 	 *
+	 *      parent
 	 *          \ <- where
 	 *           cur
 	 *           / \
@@ -282,7 +305,11 @@ next:
 	memcpy(tmp, selected->n_children, sizeof(tmp));
 	memcpy(selected->n_children, cur->n_children, sizeof(tmp));
 	memcpy(cur->n_children, tmp, sizeof(tmp));
+	rpst_update_parents(cur);
+	rpst_update_parents(selected);
+	selected->n_parent = parent;
 	/*
+	 *      parent
 	 *          \ <- where
 	 *          selected
 	 *           / \
@@ -294,15 +321,20 @@ next:
 	 */
 	where = &selected->n_children[selected_idx];
 	/*
+	 *      parent
 	 *          \
 	 *          selected
 	 *           / \ <- where
-	 *          A  selected
+	 *          A  selected (*)
 	 *
-	 *              cur
+	 *              cur (**)
 	 *              / \
 	 *             B   C
+	 *
+	 * (*) this 'selected' will be overwritten in the next iteration.
+	 * (**) cur->n_parent is bogus.
 	 */
+	parent = selected;
 	goto next;
 }
 
@@ -316,9 +348,8 @@ rpst_remove_node(struct rpst_tree *t, struct rpst_node *n)
 	struct rpst_node *parent;
 	struct rpst_node **where;
 
-	where = rpst_find_pptr(&t->t_root, n, rpst_startmask(t), &parent);
-	KASSERT(*where == n);
-	rpst_remove_node_at(where);
+	where = rpst_find_pptr(t, n, &parent);
+	rpst_remove_node_at(parent, where, n);
 }
 
 static bool __unused
@@ -432,7 +463,7 @@ next:
 	} else if (idx == maxidx + 2) { /* back to the parent */
 		struct rpst_node **where;
 
-		where = rpst_find_pptr(&t->t_root, n, rpst_startmask(t), &next);
+		where = rpst_find_pptr(t, n, &next);
 		if (next == NULL) {
 			KASSERT(level == 0);
 			KASSERT(t->t_root == n);
@@ -455,6 +486,7 @@ next:
 		idx++;
 		goto next;
 	}
+	KASSERT(next->n_parent == n);
 	KASSERT(next->n_y >= n->n_y);
 	level++;
 	mask >>= 1;

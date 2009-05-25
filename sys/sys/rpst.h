@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.h,v 1.1 2009/05/19 12:39:56 yamt Exp $	*/
+/*	$NetBSD: rpst.h,v 1.2 2009/05/25 14:54:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -41,6 +41,7 @@ struct rpst_tree {
 };
 
 struct rpst_node {
+	struct rpst_node *n_parent;
 	struct rpst_node *n_children[2];
 	uint64_t n_y;
 	uint64_t n_x;
