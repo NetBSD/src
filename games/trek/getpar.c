@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.16 2009/05/25 00:39:45 dholland Exp $	*/
+/*	$NetBSD: getpar.c,v 1.17 2009/05/25 00:43:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.16 2009/05/25 00:39:45 dholland Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.17 2009/05/25 00:43:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ getstrpar(const char *s, char *r, int l, const char *t)
 
 	if (t == 0)
 		t = " \t\n;";
-	(void)sprintf(format, "%%%d[^%s]", l, t);
+	(void)snprintf(format, sizeof(format), "%%%d[^%s]", l, t);
 	while (1) {
 		if ((f = testnl()) && s)
 			printf("%s: ", s);
