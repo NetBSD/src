@@ -1,4 +1,4 @@
-/*	$NetBSD: types.c,v 1.9 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: types.c,v 1.10 2009/05/25 23:34:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)types.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: types.c,v 1.9 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: types.c,v 1.10 2009/05/25 23:34:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"mille.h"
+#include "mille.h"
 
 /*
  * @(#)types.c	1.1 (Berkeley) 4/1/82
