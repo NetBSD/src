@@ -1,4 +1,4 @@
-.\"	$NetBSD: phantasia.6,v 1.11 2004/01/03 13:32:23 wiz Exp $
+.\"	$NetBSD: phantasia.6,v 1.12 2009/05/26 00:58:59 dholland Exp $
 .\"
 .Dd April 1, 2001
 .Dt PHANTASIA 6
@@ -11,19 +11,18 @@
 .Op Fl abHmpSsx
 .Sh DESCRIPTION
 .Nm
-is a role playing game which allows players to roll up characters of
+is a role-playing game that allows players to roll up characters of
 various types to fight monsters and other players.
 Progression of characters is based upon gaining experience from fighting
 monsters (and other players).
 .Pp
-Most of the game is menu driven and self-explanatory (more or less).
+Most of the game is menu-driven and self-explanatory (more or less).
 The screen is cursor updated, so be sure to set up the
 .Ev TERM
 variable in your environment.
 .Pp
 The options provide for a variety of functions to support the game.
 They are:
-.Pp
 .Bl -tag -width aaa -offset indent
 .It Fl a
 Get a listing of all character names on file.
@@ -37,9 +36,9 @@ Get a monster listing.
 Purge old characters.
 .It Fl S
 Turn on wizard options, if allowed, if running as
-.Dq root .
+.Em root .
 .It Fl s
-Invokes
+Invoke
 .Nm
 without header information.
 .It Fl x
@@ -48,11 +47,11 @@ Examine/change a particular character on file.
 .Pp
 The characters are saved on a common file, in order to make the game
 interactive between players.
-The characters are given a password in order to retrieve them later.
+Each character is given a password which allows later retrieval.
 Only characters above
 .Em level
 zero are saved.
-Characters unused for awhile will be purged.
+Characters unused for a while will be purged.
 Characters are only placed on the scoreboard when they die.
 .Sh PARTICULARS
 .Ss Normal Play
@@ -63,14 +62,25 @@ parentheses.
 The character is placed randomly near the center of a Cartesian
 system.
 Most commands are selected with a single letter or digit.
-For example, one may move by hitting 'W', 'S', 'N', or 'E',
-(lower case may also be used, at no time is the game case dependent).
-One may also use 'H', 'J', 'K', 'L',
-for movement, similar to
+For example, one may move by hitting
+.Sq W ,
+.Sq S ,
+.Sq N ,
+or
+.Sq E ,
+(lower case may also be used; at no time is the game case-dependent).
+One may also use
+.Sq H ,
+.Sq J ,
+.Sq K ,
+and
+.Sq L ,
+for movement, as with
 .Xr vi 1 .
 To move to a specific (x, y) coordinate, use the
 .Ic move
-('1') command.
+.Pq Sq 1
+command.
 The distance a character can move is calculated by
 1 plus 1.5 per
 .Em level .
@@ -79,10 +89,11 @@ allowed distance in that direction.
 .Pp
 A player may see who else is playing by using the
 .Ic players
-('2') option.
+.Pq Sq 2
+option.
 One may see the coordinates of those who are the same
-distance or closer to the origin as he/she.
-.Em Kings ,
+distance or closer to the origin as the player.
+.Em Kings
 and
 .Em council of the wise
 can see and can be seen by everyone.
@@ -92,34 +103,41 @@ removes these restrictions.
 .Pp
 One can talk to other players with the
 .Ic talk
-('3') option.
+.Pq Sq 3
+option.
 In general, this is a line or so of text.
-To remove a current
-message, just type
+To remove the current message, just type
 .Aq return
 when prompted for a message.
 .Pp
 The
 .Ic stats
-('4') option shows additional characteristics of a player.
+.Pq Sq 4
+option shows additional characteristics of a player.
 .Pp
-One may leave the game either with the
+One may leave the game with the
 .Ic quit
-('5') option.
+.Pq Sq 5
+option.
 .Pp
 One may rest by default.
 Resting lets one regain maximum
 .Em energy level ,
 and also lets one find
-.Em mana
-(more is found for larger levels and further distances from the origin).
+.Em mana .
+More mana is found at larger levels and further distances from the origin.
 .Pp
-One may call a monster by hitting '9' or 'C'.
+One may call a monster by hitting
+.Sq 9
+or
+.Sq C .
 .Pp
-Use 'X' to examine other players.
+Use
+.Sq X
+to examine other players.
 .Pp
 One may quit or execute a sub-shell by hitting interrupt.
-Quitting during battle results in death for obvious reasons.
+Quitting during battle results in death, for obvious reasons.
 .Pp
 Several other options become available as the player progresses in
 .Em level
@@ -177,7 +195,7 @@ Otherwise, nothing happens, and the chance to
 is lost.
 .El
 .Ss Character Statistics
-.Bl -tag -width quickness -offset indent
+.Bl -tag -width energyXlevel -offset indent
 .It Em strength
 determines how much damage a character can inflict.
 .It Em quickness
@@ -236,10 +254,7 @@ This adds up to a well-equipped fighter.
 very high
 .Em quickness
 and above average
-.Em magic level
-are
-.Em elves
-selling points.
+.Em magic level .
 .It Em dwarf
 very high
 .Em strength
@@ -287,7 +302,7 @@ Experimento	25	27	100	35	25	2
 .\" .El
 .Pp
 Not only are the starting characteristics different for the different
-character types, the characteristics progress at different rates for the
+character types, but the characteristics progress at different rates for the
 different types as the character goes up in
 .Em level .
 .Em Experimentoes Ns '
@@ -338,7 +353,7 @@ Players cannot collect
 find trading posts, or discover the
 .Em grail
 while cloaked.
-Calling a monster uncloaks, as well as choosing this option while cloaked.
+Calling a monster uncloaks, as does choosing this option while cloaked.
 .It Ic teleport
 .Em magic level necessary :
 40 (plus level 12)
@@ -409,7 +424,7 @@ Used during monster combat.
 Throws up a shield to protect from damage.
 The shield is added to actual energy level, and is a fixed number, based
 upon maximum energy.
-Normally, damage occurs first to the shield, and then to the players actual
+Normally, damage occurs first to the shield and then to the players actual
 .Em energy level .
 .It Ic transform
 .Em magic level necessary :
@@ -490,7 +505,7 @@ or
 Allows the player to pick which monster to fight.
 .El
 .Ss Monsters
-Monsters get bigger as one moves farther from the origin (0,0).
+Monsters get bigger farther from the origin (0,0).
 Rings of distance 125 from the origin determine the size.
 A monster's
 .Em experience ,
@@ -503,16 +518,16 @@ is increased 50% per size over one, and
 .Em quickness
 remains the same, regardless of size.
 .Pp
-Also, nastier monsters are found as one progress farther out from the origin.
+Also, nastier monsters are found as one progresses farther out from the origin.
 Monsters also may flock.
 The percent chance of that happening is designated as
 .Em flock%
 in the monster listing.
 Monsters outside the first ring
 may carry treasure, as determined by their treasure type.
-Flocking monsters, and bigger monsters increase the chances of treasure.
+Flocking monsters, and bigger monsters, increase the chances of treasure.
 .Pp
-Certain monsters have special abilities; they are as follows:
+Certain monsters have special abilities, as follows:
 .Bl -tag -width "Assorted Faeries"
 .It Em Unicorn
 can only be subdued if the player is in possession of a
@@ -620,7 +635,7 @@ end when either he or the player dies.
 His characteristics are calculated based upon the player's.
 The player is given the chance to ally with him.
 No magic, except
-.Ic force field
+.Ic force field ,
 works when battling
 .Em Morgoth .
 .It Em Troll
@@ -767,7 +782,7 @@ but bigger.
 .It Type nine
 .Em golden crown
 \- allows the player to become
-.Em king ,
+.Em king
 by going to (0,0).
 .br
 .Em blessing
@@ -828,7 +843,7 @@ The chance of a cursed treasure is based upon treasure type.
 The more valuable treasures have a greater chance of being cursed.
 A cursed treasure knocks
 .Em energy level
-very low, and adds 0.25
+very low and adds 0.25
 .Em poison .
 .Ss Rings
 .Em Rings
@@ -840,16 +855,16 @@ They come in four different flavors.
 All
 .Em rings
 rest the player to maximum and cause him/her to hit much harder
-in battle with monsters (assuming one has chosen to use the
+in battle with monsters (assuming the
 .Em ring
-for battle.)
+is being used for battle.)
 .Pp
 Two types of
 .Em rings
 are cursed and come either from
 .Em nazguls
 or
-.Em Dark Lord .
+.Em Dark Lords .
 After a few times of using these types, the player falls
 under the control of the
 .Em ring ,
@@ -961,7 +976,8 @@ Members of the council cannot have
 Members of the council have a few extra options which they can exercise.
 These are exercised with the
 .Ic intervene
-('8') option.
+.Pq Sq 8
+option.
 All
 .Ic intervene
 options cost 1000 mana.
@@ -1031,7 +1047,7 @@ The valar is then bumped back to the council of the wise.
 .Ss Wizard
 The
 .Em wizard
-is usually the owner of the game, and the one who maintains
+is usually the owner of the game and the one who maintains
 the associated files.
 The
 .Em wizard
@@ -1049,7 +1065,9 @@ abilities are outlined below.
 .It Ic change players
 When examining a player, (game invoked with
 .Fl x ,
-or use 'X' from within game), the
+or
+.Sq X
+is used from within game), the
 .Em wizard
 may also change the player.
 .It Ic intervention
@@ -1134,10 +1152,10 @@ There is a maximum amount of
 .Em mana
 and
 .Em charms
-a player may posses, based upon
+a player may possess, based upon
 .Em level .
 .Em Quicksilver
-is always limited to to a maximum of 99.
+is always limited to a maximum of 99.
 .Pp
 .Em Books
 bought at a
