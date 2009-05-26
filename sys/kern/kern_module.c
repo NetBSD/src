@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.44 2009/05/25 22:33:00 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.45 2009/05/26 08:34:23 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.44 2009/05/25 22:33:00 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.45 2009/05/26 08:34:23 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -563,6 +563,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	const char *s, *p;
 	int error;
 	size_t len;
+	bool nochroot;
 
 	KASSERT(mutex_owned(&module_lock));
 
@@ -620,14 +621,15 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 		path = PNBUF_GET();
 		if (!autoload) {
+			nochroot = false;
 			snprintf(path, MAXPATHLEN, "%s", name);
-			error = kobj_load_file(&mod->mod_kobj, path, FOLLOW);
+			error = kobj_load_file(&mod->mod_kobj, path, nochroot);
 		}
 		if (autoload || (error == ENOENT)) {
+			nochroot = true;
 			snprintf(path, MAXPATHLEN, "%s/%s/%s.kmod",
 			    module_base, name, name);
-			error = kobj_load_file(&mod->mod_kobj, path,
-			    FOLLOW | NOCHROOT);
+			error = kobj_load_file(&mod->mod_kobj, path, nochroot);
 		}
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
