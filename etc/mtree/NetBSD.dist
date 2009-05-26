@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.401 2009/05/18 12:50:41 njoly Exp $
+#	$NetBSD: NetBSD.dist,v 1.402 2009/05/26 21:58:32 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -479,6 +479,7 @@
 ./usr/include/miscfs/union
 ./usr/include/msdosfs
 ./usr/include/net
+./usr/include/net/agr
 ./usr/include/netatalk
 ./usr/include/netbt
 ./usr/include/netinet
