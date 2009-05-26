@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1262 2009/05/20 22:48:05 dyoung Exp $
+#	$NetBSD: mi,v 1.1263 2009/05/26 08:04:11 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4354,6 +4354,14 @@
 ./usr/share/man/cat3/SHA1Init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Transform.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SHA1Update.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_Data.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_End.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_File.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_FileChunk.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_Final.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_Init.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_Transform.0		comp-c-catman		.cat
+./usr/share/man/cat3/SHA224_Update.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SHA256_Data.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SHA256_End.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SHA256_File.0		comp-c-catman		.cat
@@ -9859,6 +9867,14 @@
 ./usr/share/man/html3/SHA1Init.html		comp-c-htmlman		html
 ./usr/share/man/html3/SHA1Transform.html	comp-c-htmlman		html
 ./usr/share/man/html3/SHA1Update.html		comp-c-htmlman		html
+./usr/share/man/html3/SHA224_Data.html		comp-c-htmlman		html
+./usr/share/man/html3/SHA224_End.html		comp-c-htmlman		html
+./usr/share/man/html3/SHA224_File.html		comp-c-htmlman		html
+./usr/share/man/html3/SHA224_FileChunk.html	comp-c-htmlman		html
+./usr/share/man/html3/SHA224_Final.html		comp-c-htmlman		html
+./usr/share/man/html3/SHA224_Init.html		comp-c-htmlman		html
+./usr/share/man/html3/SHA224_Transform.html	comp-c-htmlman		html
+./usr/share/man/html3/SHA224_Update.html	comp-c-htmlman		html
 ./usr/share/man/html3/SHA256_Data.html		comp-c-htmlman		html
 ./usr/share/man/html3/SHA256_End.html		comp-c-htmlman		html
 ./usr/share/man/html3/SHA256_File.html		comp-c-htmlman		html
@@ -15164,6 +15180,14 @@
 ./usr/share/man/man3/SHA1Init.3			comp-c-man		.man
 ./usr/share/man/man3/SHA1Transform.3		comp-c-man		.man
 ./usr/share/man/man3/SHA1Update.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_Data.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_End.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_File.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_FileChunk.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_Final.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_Init.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_Transform.3		comp-c-man		.man
+./usr/share/man/man3/SHA224_Update.3		comp-c-man		.man
 ./usr/share/man/man3/SHA256_Data.3		comp-c-man		.man
 ./usr/share/man/man3/SHA256_End.3		comp-c-man		.man
 ./usr/share/man/man3/SHA256_File.3		comp-c-man		.man

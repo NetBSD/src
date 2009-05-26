@@ -1,5 +1,7 @@
-#	$NetBSD: shlib_version,v 1.15 2009/01/11 03:07:47 christos Exp $
+#	$NetBSD: shlib_version,v 1.16 2009/05/26 08:04:12 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
+# Things to do on the next major bump:
+# - Make openssl/sha.h and sha2.h compatible.
 major=5
-minor=0
+minor=1
