@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.8 2009/03/27 13:46:35 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.9 2009/05/26 19:03:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.8 2009/03/27 13:46:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.9 2009/05/26 19:03:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -167,6 +167,8 @@ virtif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 	rv = ether_ioctl(ifp, cmd, data);
+	if (rv == ENETRESET)
+		rv = 0;
 	splx(s);
 
 	return rv;
