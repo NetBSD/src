@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.12 2009/05/18 21:39:23 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.13 2009/05/26 04:23:05 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -127,4 +127,11 @@ sys/arch/vax/include/mtpr.h			1.21, 1.22
 
 	Add "memory" clobber to mtpr for barrier.  See also kern/38637.
 	[mhitch, ticket #767]
+
+dist/ntp/ntpd/ntp_crypto.c			1.15
+
+	Fix CVE-2009-1252: Buffer overflow in ntpd crypto code. A remote
+	attacker can send a specially constructed request packet that
+	would overflow the sprintf()'ed buffer causing ntpd to crash.
+	[dholland, ticket #777]
 
