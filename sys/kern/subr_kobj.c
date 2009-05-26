@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.37 2009/05/25 22:33:00 jnemeth Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.38 2009/05/26 08:34:23 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.37 2009/05/25 22:33:00 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.38 2009/05/26 08:34:23 jnemeth Exp $");
 
 #include "opt_modular.h"
 
@@ -103,7 +103,7 @@ extern struct vm_map *module_map;
  *	Load an object located in the file system.
  */
 int
-kobj_load_file(kobj_t *kop, const char *path, const uint32_t flags)
+kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
 {
 	struct nameidata nd;
 	kauth_cred_t cred;
@@ -117,7 +117,8 @@ kobj_load_file(kobj_t *kop, const char *path, const uint32_t flags)
 		return ENOMEM;
 	}
 
-	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, path);
+	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
+	    UIO_SYSSPACE, path);
 	error = vn_open(&nd, FREAD, 0);
 
  	if (error != 0) {
@@ -1105,7 +1106,7 @@ kobj_free(kobj_t ko, void *base, size_t size)
 #else	/* MODULAR */
 
 int
-kobj_load_file(kobj_t *kop, const char *name, const uint32_t flags)
+kobj_load_file(kobj_t *kop, const char *name, const bool nochroot)
 {
 
 	return ENOSYS;
