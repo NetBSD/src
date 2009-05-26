@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2008/11/29 15:23:32 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2009/05/26 21:58:31 pooka Exp $
 
 PROG=	ifconfig
-
-CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/
 
 DPADD+=${LIBUTIL}
 DPADD+=${LIBPROP}
