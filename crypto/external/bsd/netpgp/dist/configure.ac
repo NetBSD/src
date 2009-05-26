@@ -1,10 +1,10 @@
-# $Id: configure.ac,v 1.12 2009/05/26 04:27:29 lukem Exp $
+# $Id: configure.ac,v 1.13 2009/05/26 05:03:08 lukem Exp $
 #
 # Process this file with autoconf to produce a configure script.
 
 AC_INIT([netpgp], [20090525], [Alistair Crooks <agc@netbsd.org> c0596823])
 AC_PREREQ([2.62])
-AC_REVISION([$Revision: 1.12 $])
+AC_REVISION([$Revision: 1.13 $])
 
 AS_SHELL_SANITIZE
 
@@ -42,8 +42,8 @@ AC_SUBST([WARNCFLAGS])
 #
 AC_HEADER_STDC
 AC_CHECK_HEADERS([CommonCrypto/CommonDigest.h])
-AC_CHECK_HEADERS([bzlib.h dmalloc.h direct.h errno.h fcntl.h])
-AC_CHECK_HEADERS([inttypes.h limits.h malloc.h zlib.h])
+AC_CHECK_HEADERS([dmalloc.h direct.h errno.h fcntl.h \
+                 inttypes.h limits.h malloc.h zlib.h])
 AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/cast.h openssl/des.h \
                   openssl/dsa.h openssl/err.h openssl/idea.h openssl/md5.h \
                   openssl/rand.h openssl/rsa.h openssl/sha.h openssl/err.h \
@@ -51,17 +51,26 @@ AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/cast.h openssl/des.h \
 AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/mman.h sys/param.h \
                   sys/resource.h sys/uio.h])
 
+AC_CHECK_HEADERS([bzlib.h],
+                 [],
+                 [AC_MSG_FAILURE([missing <bzlib.h>; is bzip2 installed?])])
+
 # Checks for typedefs, structures, and compiler characteristics.
 #
-AC_TYPE_UINT8_T
+AC_TYPE_LONG_LONG_INT
+AC_TYPE_SIZE_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
 
 AC_CHECK_TYPES([SHA256_CTX],
                [],
                [AC_MSG_FAILURE([missing SHA256_CTX; is openssl 0.9.8 or newer installed?])],
-               [[#include <openssl/sha.h>]])
+              [[
+#include <sys/types.h>
+#include <openssl/sha.h>
+]])
 
 # Checks for library functions.
 #
