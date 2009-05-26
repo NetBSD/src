@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.473 2009/05/13 02:50:31 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.474 2009/05/26 08:04:11 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -13,9 +13,9 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
-./lib/libc.so.12.167				base-sys-shlib		dynamicroot
+./lib/libc.so.12.168				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
-./lib/libcrypto.so.5.0				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.5.1				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
 ./lib/libedit.so.3.0				base-sys-shlib		dynamicroot
 ./lib/libevent.so.3.0				base-sys-shlib		dynamicroot
@@ -60,10 +60,10 @@
 ./usr/lib/libbluetooth.so.4.1			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
-./usr/lib/libc.so.12.167			base-sys-shlib
+./usr/lib/libc.so.12.168			base-sys-shlib
 ./usr/lib/libcom_err.so.6.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
-./usr/lib/libcrypto.so.5.0			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.5.1			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.7.0			base-sys-shlib
 ./usr/lib/libdes.so.8.0				base-crypto-shlib	crypto
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm

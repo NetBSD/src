@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.50 2009/05/20 16:22:22 christos Exp $
+# $NetBSD: md.amd64,v 1.51 2009/05/26 08:04:11 joerg Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -64,13 +64,13 @@
 ./usr/lib/i386/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/i386/libc.so.12.167			base-compat-shlib	compat,pic
+./usr/lib/i386/libc.so.12.168			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcom_err.so.6			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libcom_err.so.6.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8			base-compat-shlib	compat,pic
