@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2009/05/25 23:14:33 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2009/05/26 00:27:23 dholland Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -29,6 +29,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <err.h>
 #include <pwd.h>
 
 /*
@@ -271,6 +272,7 @@ void
 initialstate(void)
 {
 	struct stat sb;
+	struct passwd *pw;
 
 	Beyond = FALSE;
 	Marsh = FALSE;
@@ -283,8 +285,13 @@ initialstate(void)
 	Echo = TRUE;
 
 	/* setup login name */
-	if ((Login = getlogin()) == NULL)
-		Login = getpwuid(getuid())->pw_name;
+	if ((Login = getlogin()) == NULL) {
+		pw = getpwuid(getuid());
+		if (pw == NULL) {
+			errx(1, "Who are you?");
+		}
+		Login = pw->pw_name;
+	}
 
 	/* open some files */
 	if ((Playersfp = fopen(_PATH_PEOPLE, "r+")) == NULL)
