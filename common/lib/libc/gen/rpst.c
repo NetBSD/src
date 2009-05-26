@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.6 2009/05/26 22:37:50 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.7 2009/05/26 22:38:18 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,10 +43,10 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.6 2009/05/26 22:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.7 2009/05/26 22:38:18 yamt Exp $");
 #include <sys/param.h>
 #else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.6 2009/05/26 22:37:50 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.7 2009/05/26 22:38:18 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -377,6 +377,9 @@ rpst_iterate_first(struct rpst_tree *t, uint64_t max_y, uint64_t min_x,
 	KASSERT(min_x <= max_x);
 	n = t->t_root;
 	if (n == NULL || n->n_y > max_y) {
+		return NULL;
+	}
+	if (rpst_height2max(t->t_height) < min_x) {
 		return NULL;
 	}
 	it->it_tree = t;
