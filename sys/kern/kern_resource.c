@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.151 2009/03/29 01:02:50 mrg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.152 2009/05/26 06:57:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.151 2009/03/29 01:02:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.152 2009/05/26 06:57:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,11 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	kauth_cred_t cred = l->l_cred;
 
 	KASSERT(mutex_owned(chgp->p_lock));
+
+	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
+	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&
+	    kauth_cred_getuid(cred) != kauth_cred_geteuid(chgp->p_cred))
+		return (EPERM);
 
 	if (n > PRIO_MAX)
 		n = PRIO_MAX;
