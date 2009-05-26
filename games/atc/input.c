@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.22 2007/12/15 19:44:38 perry Exp $	*/
+/*	$NetBSD: input.c,v 1.23 2009/05/26 00:00:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.22 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: input.c,v 1.23 2009/05/26 00:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,8 @@ push(int ruleno, int ch)
 	int	newstate, newpos;
 
 	assert(level < (MAXDEPTH - 1));
-	(void)sprintf(T_STR, st[T_STATE].rule[ruleno].str, tval);
+	(void)snprintf(T_STR, sizeof(T_STR),
+		st[T_STATE].rule[ruleno].str, tval);
 	T_RULE = ruleno;
 	T_CH = ch;
 	newstate = st[T_STATE].rule[ruleno].to_state;
