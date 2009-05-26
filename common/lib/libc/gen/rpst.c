@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.7 2009/05/26 22:38:18 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.8 2009/05/26 22:38:51 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,10 +43,10 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.7 2009/05/26 22:38:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.8 2009/05/26 22:38:51 yamt Exp $");
 #include <sys/param.h>
 #else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.7 2009/05/26 22:38:18 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.8 2009/05/26 22:38:51 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -455,7 +455,6 @@ next:
 	if (idx == maxidx + 1) { /* visit the current node */
 		idx++;
 		if (min_x <= n->n_x && n->n_x <= max_x) {
-			it->it_tree = t;
 			it->it_cur = n;
 			it->it_idx = idx;
 			it->it_level = level;
