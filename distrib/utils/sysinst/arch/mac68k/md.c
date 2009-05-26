@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.53 2008/10/07 09:58:15 abs Exp $ */
+/*	$NetBSD: md.c,v 1.54 2009/05/26 20:29:04 sborrill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
+#include <machine/int_fmtio.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -1083,7 +1084,7 @@ md_make_bsd_partitions(void)
 	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", bsddiskname);
 	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
 	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
+	(void)fprintf (f, "\t:sc#%d:su#%" PRIu32 ":\\\n", dlhead*dlsec, (uint32_t)dlsize);
 	(void)fprintf (f, "\t:se#%d:%s\\\n", blk_size, doessf);
 	for (i=0; i<8; i++) {
 		if (bsdlabel[i].pi_fstype == FS_HFS)
