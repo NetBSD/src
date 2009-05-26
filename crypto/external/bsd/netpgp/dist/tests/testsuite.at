@@ -1,0 +1,6 @@
+# $Id: testsuite.at,v 1.1 2009/05/26 04:27:30 lukem Exp $
+
+AT_INIT([netpgp])
+
+m4_include([init.at])
+m4_include([verify.at])
