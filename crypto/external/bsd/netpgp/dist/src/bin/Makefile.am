@@ -1,4 +1,4 @@
-## $Id: Makefile.am,v 1.1 2009/05/26 04:27:29 lukem Exp $
+## $NetBSD: Makefile.am,v 1.2 2009/05/26 05:42:25 lukem Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
 
