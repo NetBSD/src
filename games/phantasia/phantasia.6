@@ -1,4 +1,4 @@
-.\"	$NetBSD: phantasia.6,v 1.12 2009/05/26 00:58:59 dholland Exp $
+.\"	$NetBSD: phantasia.6,v 1.13 2009/05/26 01:34:32 dholland Exp $
 .\"
 .Dd April 1, 2001
 .Dt PHANTASIA 6
@@ -11,92 +11,90 @@
 .Op Fl abHmpSsx
 .Sh DESCRIPTION
 .Nm
-is a role-playing game that allows players to roll up characters of
+is a role-playing game that allows players to create characters of
 various types to fight monsters and other players.
 Progression of characters is based upon gaining experience from fighting
-monsters (and other players).
+monsters and other players.
 .Pp
-Most of the game is menu-driven and self-explanatory (more or less).
+Most of the game is menu-driven and more or less self-explanatory.
 The screen is cursor updated, so be sure to set up the
 .Ev TERM
 variable in your environment.
-.Pp
-The options provide for a variety of functions to support the game.
-They are:
+.Sh OPTIONS
 .Bl -tag -width aaa -offset indent
 .It Fl a
-Get a listing of all character names on file.
+List all character names on file.
 .It Fl b
 Show scoreboard of top characters per login.
 .It Fl H
 Print header only.
 .It Fl m
-Get a monster listing.
+List monsters.
 .It Fl p
 Purge old characters.
 .It Fl S
-Turn on wizard options, if allowed, if running as
-.Em root .
+Turn on wizard mode, if allowed.
+(Wizard mode is restricted to the super-user.)
 .It Fl s
-Invoke
-.Nm
-without header information.
+Skip printing the header.
 .It Fl x
 Examine/change a particular character on file.
 .El
+.Sh PARTICULARS
 .Pp
-The characters are saved on a common file, in order to make the game
-interactive between players.
-Each character is given a password which allows later retrieval.
+The game is multiplayer and game data is saved in a shared common
+location.
+Characters are password-protected to prevent abuse.
 Only characters above
 .Em level
 zero are saved.
-Characters unused for a while will be purged.
+Characters that are left unused for sufficiently long will be purged.
 Characters are only placed on the scoreboard when they die.
-.Sh PARTICULARS
+.Pp
+The world is based on a Cartesian coordinate system.
+New characters are placed randomly near the origin (center).
 .Ss Normal Play
 A number of the player's more important statistics are almost always
 displayed on the screen, with maximums (where applicable) in
 parentheses.
 .Pp
-The character is placed randomly near the center of a Cartesian
-system.
 Most commands are selected with a single letter or digit.
 For example, one may move by hitting
 .Sq W ,
 .Sq S ,
 .Sq N ,
 or
-.Sq E ,
-(lower case may also be used; at no time is the game case-dependent).
+.Sq E .
+Lower case may also be used; the game is not case-sensitive.
 One may also use
 .Sq H ,
 .Sq J ,
 .Sq K ,
 and
-.Sq L ,
+.Sq L
 for movement, as with
 .Xr vi 1 .
 To move to a specific (x, y) coordinate, use the
 .Ic move
 .Pq Sq 1
 command.
-The distance a character can move is calculated by
+A character can move a maximum distance of
 1 plus 1.5 per
-.Em level .
-Moving in a compass direction will move the player the maximum
+.Em level
+at once.
+Entering a compass direction will move the player the maximum
 allowed distance in that direction.
 .Pp
-A player may see who else is playing by using the
+The
 .Ic players
 .Pq Sq 2
-option.
-One may see the coordinates of those who are the same
-distance or closer to the origin as the player.
+command shows who else is playing.
+The exact position is shown for those who are a similar distance or
+not as far from the origin.
 .Em Kings
 and
 .Em council of the wise
-can see and can be seen by everyone.
+can see and be seen by everyone.
 A
 .Em palantir
 removes these restrictions.
@@ -105,7 +103,7 @@ One can talk to other players with the
 .Ic talk
 .Pq Sq 3
 option.
-In general, this is a line or so of text.
+This sends a line of text to everyone.
 To remove the current message, just type
 .Aq return
 when prompted for a message.
@@ -115,10 +113,10 @@ The
 .Pq Sq 4
 option shows additional characteristics of a player.
 .Pp
-One may leave the game with the
+The
 .Ic quit
 .Pq Sq 5
-option.
+command exits the game.
 .Pp
 One may rest by default.
 Resting lets one regain maximum
@@ -139,7 +137,7 @@ to examine other players.
 One may quit or execute a sub-shell by hitting interrupt.
 Quitting during battle results in death, for obvious reasons.
 .Pp
-Several other options become available as the player progresses in
+Several further commands become available as the player progresses in
 .Em level
 and
 .Em magic ,
