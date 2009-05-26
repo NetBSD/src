@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.48 2009/05/26 00:46:22 ad Exp $	*/
+/*	$NetBSD: mt.c,v 1.49 2009/05/26 06:38:26 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.48 2009/05/26 00:46:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.49 2009/05/26 06:38:26 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,6 @@ mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 mtcommand(dev_t dev, int cmd, int cnt)
 {
-	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 	int error = 0;
 	buf_t *bp;
 
