@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.109 2009/05/12 22:22:46 elad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.110 2009/05/26 00:17:56 pooka Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.109 2009/05/12 22:22:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.110 2009/05/26 00:17:56 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.109 2009/05/12 22:22:46 elad Exp $");
 #include <sys/proc.h>
 #include <sys/kauth.h>
 #include <sys/domain.h>
+#include <sys/once.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -130,15 +131,26 @@ int ip6_anonportmax = IPV6PORT_ANONMAX;
 int ip6_lowportmin  = IPV6PORT_RESERVEDMIN;
 int ip6_lowportmax  = IPV6PORT_RESERVEDMAX;
 
-POOL_INIT(in6pcb_pool, sizeof(struct in6pcb), 0, 0, 0, "in6pcbpl", NULL,
-    IPL_SOFTNET);
+static struct pool in6pcb_pool;
+
+static int
+in6pcb_poolinit(void)
+{
+
+	pool_init(&in6pcb_pool, sizeof(struct in6pcb), 0, 0, 0, "in6pcbpl",
+	    NULL, IPL_SOFTNET);
+	return 0;
+}
 
 void
 in6_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
+	static ONCE_DECL(control);
 
 	in_pcbinit(table, bindhashsize, connecthashsize);
 	table->inpt_lastport = (u_int16_t)ip6_anonportmax;
+
+	RUN_ONCE(&control, in6pcb_poolinit);
 }
 
 int
