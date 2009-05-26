@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.22 2009/05/22 12:47:39 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.23 2009/05/26 15:44:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -188,6 +188,10 @@ void		rump_vattr_to_vattr50(const struct vattr *, struct vattr *);
 #define setsockopt(a,b,c,d,e) rump_sys_setsockopt(a,b,c,d,e)
 #define shutdown(a,b) rump_sys_shutdown(a,b)
 #endif /* RUMP_SYS_NETWORKING */
+
+#ifdef RUMP_SYS_IOCTL
+#define ioctl(...) rump_sys_ioctl(__VA_ARGS__)
+#endif /* RUMP_SYS_IOCTL */
 
 #ifdef RUMP_SYS_CLOSE
 #define close(a) rump_sys_close(a)
