@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.8 2009/05/26 22:38:51 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.9 2009/05/26 22:39:15 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,10 +43,10 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.8 2009/05/26 22:38:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.9 2009/05/26 22:39:15 yamt Exp $");
 #include <sys/param.h>
 #else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.8 2009/05/26 22:38:51 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.9 2009/05/26 22:39:15 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -146,7 +146,7 @@ rpst_update_parents(struct rpst_node *n)
 }
 
 /*
- * rpst_enlarge_tree: enlarge tree so that 'index' can be stored
+ * rpst_enlarge_tree: enlarge tree so that 'idx' can be stored
  */
 
 static void
