@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.192 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.193 2009/05/26 00:42:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.192 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.193 2009/05/26 00:42:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1410,7 +1410,6 @@ fd_copy(void)
 		ff = *ffp;
 		if (ff == NULL || (fp = ff->ff_file) == NULL) {
 			/* Descriptor unused, or descriptor half open. */
-			KASSERT(!fd_isused(fdp, i));
 			KASSERT(!fd_isused(newfdp, i));
 			continue;
 		}
