@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.293 2009/05/16 17:01:15 cegger Exp $ */
+/*	$NetBSD: machdep.c,v 1.294 2009/05/26 03:30:24 macallan Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.293 2009/05/16 17:01:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.294 2009/05/26 03:30:24 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1914,8 +1914,8 @@ bus_space_translate_address_generic(struct openprom_range *ranges, int nranges,
 	return (EINVAL);
 }
 
-int
-sparc_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+static int
+sparc_bus_map_iodev(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
 	      vaddr_t va, bus_space_handle_t *hp)
 {
 	vaddr_t v;
@@ -1981,19 +1981,31 @@ static	vaddr_t iobase;
 	return (0);
 }
 
-int
-sparc_bus_map_large(bus_space_tag_t t, int slot, bus_size_t offset,
+static int
+sparc_bus_map_large(bus_space_tag_t t, bus_addr_t ba,
 		    bus_size_t size, int flags, bus_space_handle_t *hp)
 {
-	bus_addr_t pa = BUS_ADDR(slot,offset);
 	vaddr_t v = 0;
 
 	if (uvm_map(kernel_map, &v, size, NULL, 0, PAGE_SIZE,
 	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_NORMAL,
 			0)) == 0) {
-		return sparc_bus_map(t, pa, size, flags, v, hp);
+		return sparc_bus_map_iodev(t, ba, size, flags, v, hp);
 	}
 	return -1;
+}
+
+int
+sparc_bus_map(bus_space_tag_t t, bus_addr_t ba,
+		    bus_size_t size, int flags, vaddr_t va,
+		    bus_space_handle_t *hp)
+{
+
+	if (flags & BUS_SPACE_MAP_LARGE) {
+		return sparc_bus_map_large(t, ba, size, flags, hp);
+	} else
+		return sparc_bus_map_iodev(t, ba, size, flags, va, hp);
+		
 }
 
 int
@@ -2003,8 +2015,8 @@ sparc_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 
 	/*
 	 * XXX
-	 * mappings from sparc_bus_map_large() probably need additional care
-	 * here
+	 * mappings with BUS_SPACE_MAP_LARGE need additional care here
+	 * we can just check if the VA is in the IODEV range
 	 */
 
 	pmap_kremove(va, round_page(size));
