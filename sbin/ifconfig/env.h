@@ -11,4 +11,14 @@ int getifflags(prop_dictionary_t, prop_dictionary_t, unsigned short *);
 const char *getifinfo(prop_dictionary_t, prop_dictionary_t, unsigned short *);
 prop_dictionary_t prop_dictionary_augment(prop_dictionary_t, prop_dictionary_t);
 
+/*
+ * XXX: this really doesn't belong in here, but env.h is conveniently
+ * included from all source modules *after* system headers, so it
+ * allows us to be lazy.  See Makefile for more details.
+ */
+#ifdef RUMP_ACTION
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+#endif /* RUMP_ACTION */
+
 #endif /* _IFCONFIG_ENV_H */
