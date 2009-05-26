@@ -1,0 +1,20 @@
+# $Id: init.at,v 1.1 2009/05/26 04:27:30 lukem Exp $
+
+AT_SETUP([init])
+
+# remove any previous testsuite run $TESTROOT
+AT_CHECK([rm -rf $TESTROOT], [0], [ignore], [ignore])
+
+# create $TESTROOT as fake $HOME
+AT_CHECK([mkdir -p $TESTROOT], [0], [ignore], [ignore])
+
+#XXX provide pubkey.asc and privkey.asc for this
+# import public key for tests
+AT_CHECK([$NETPGP --homedir $TESTROOT --import < $TOPSRCDIR/files/pubkey.asc],
+    [0], [ignore], [ignore])
+
+# import private key for tests
+AT_CHECK([$NETPGP --homedir $TESTROOT --import < $TOPSRCDIR/files/privkey.asc],
+    [0], [ignore], [ignore])
+
+AT_CLEANUP
