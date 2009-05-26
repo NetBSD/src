@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.13 2009/05/26 04:23:05 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.14 2009/05/26 19:19:08 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -134,4 +134,15 @@ dist/ntp/ntpd/ntp_crypto.c			1.15
 	attacker can send a specially constructed request packet that
 	would overflow the sprintf()'ed buffer causing ntpd to crash.
 	[dholland, ticket #777]
+
+sys/arch/sparc64/sparc64/vm_machdep.c		1.88
+
+	When preparing the initial trap frame for a new forked lwp,
+	explicitly clear condition code. Otherwise we might catch a signal
+	(handlers are inherited from the parent) before we ever return to
+	userland. The current trapframe is converted into a ucontext and
+	after the signal handler returns, the lwp stays in userland and
+	directly uses the ucontext to return to the fork call.
+	Fixes PR 41302.
+	[martin, ticket #774]
 
