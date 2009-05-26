@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.19 2007/12/15 19:44:38 perry Exp $	*/
+/*	$NetBSD: log.c,v 1.20 2009/05/26 00:00:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.19 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: log.c,v 1.20 2009/05/26 00:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,13 +84,14 @@ timestr(int t)
 	static char	s[80];
 
 	if (DAY(t) > 0)
-		(void)sprintf(s, "%dd+%02dhrs", DAY(t), HOUR(t));
+		(void)snprintf(s, sizeof(s), "%dd+%02dhrs", DAY(t), HOUR(t));
 	else if (HOUR(t) > 0)
-		(void)sprintf(s, "%d:%02d:%02d", HOUR(t), MIN(t), SEC(t));
+		(void)snprintf(s, sizeof(s), "%d:%02d:%02d", HOUR(t), MIN(t),
+			SEC(t));
 	else if (MIN(t) > 0)
-		(void)sprintf(s, "%d:%02d", MIN(t), SEC(t));
+		(void)snprintf(s, sizeof(s), "%d:%02d", MIN(t), SEC(t));
 	else if (SEC(t) > 0)
-		(void)sprintf(s, ":%02d", SEC(t));
+		(void)snprintf(s, sizeof(s), ":%02d", SEC(t));
 	else
 		*s = '\0';
 

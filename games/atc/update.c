@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.19 2007/12/15 19:44:38 perry Exp $	*/
+/*	$NetBSD: update.c,v 1.20 2009/05/26 00:00:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.19 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: update.c,v 1.20 2009/05/26 00:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,8 @@ update(int dummy __unused)
 			if (too_close(p1, p2, 1)) {
 				static char	buf[80];
 
-				(void)sprintf(buf, "collided with plane '%c'.",
+				(void)snprintf(buf, sizeof(buf),
+					"collided with plane '%c'.",
 					name(p2));
 				loser(p1, buf);
 			}
@@ -222,29 +223,34 @@ const char *
 command(const PLANE *pp)
 {
 	static char	buf[50], *bp, *comm_start;
+	size_t bpsize;
 
 	buf[0] = '\0';
 	bp = buf;
-	(void)sprintf(bp, "%c%d%c%c%d: ", name(pp), pp->altitude, 
+	bpsize = sizeof(buf);
+	(void)snprintf(bp, bpsize, "%c%d%c%c%d: ", name(pp), pp->altitude, 
 		(pp->fuel < LOWFUEL) ? '*' : ' ',
 		(pp->dest_type == T_AIRPORT) ? 'A' : 'E', pp->dest_no);
 
 	comm_start = bp = strchr(buf, '\0');
+	bpsize = buf + sizeof(buf) - bp;
 	if (pp->altitude == 0)
-		(void)sprintf(bp, "Holding @ A%d", pp->orig_no);
+		(void)snprintf(bp, bpsize, "Holding @ A%d", pp->orig_no);
 	else if (pp->new_dir >= MAXDIR || pp->new_dir < 0)
-		(void)strcpy(bp, "Circle");
+		(void)snprintf(bp, bpsize, "Circle");
 	else if (pp->new_dir != pp->dir)
-		(void)sprintf(bp, "%d", dir_deg(pp->new_dir));
+		(void)snprintf(bp, bpsize, "%d", dir_deg(pp->new_dir));
 
 	bp = strchr(buf, '\0');
+	bpsize = buf + sizeof(buf) - bp;
 	if (pp->delayd)
-		(void)sprintf(bp, " @ B%d", pp->delayd_no);
+		(void)snprintf(bp, bpsize, " @ B%d", pp->delayd_no);
 
 	bp = strchr(buf, '\0');
+	bpsize = buf + sizeof(buf) - bp;
 	if (*comm_start == '\0' && 
 	    (pp->status == S_UNMARKED || pp->status == S_IGNORED))
-		(void)strcpy(bp, "---------");
+		(void)snprintf(bp, bpsize, "---------");
 	return (buf);
 }
 
