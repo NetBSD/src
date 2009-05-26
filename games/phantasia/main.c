@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/05/26 00:27:23 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2009/05/26 00:30:16 dholland Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 		Timeout = TRUE;
 
 	/* update some important player statistics */
-	strcpy(Player.p_login, Login);
+	strlcpy(Player.p_login, Login, sizeof(Player.p_login));
 	time(&seconds);
 	Player.p_lastused = localtime(&seconds)->tm_yday;
 	Player.p_status = S_PLAYING;
