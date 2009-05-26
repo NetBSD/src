@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.35 2009/05/16 13:36:44 pgoyette Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.36 2009/05/26 01:42:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -424,6 +424,7 @@
 #define	MSR_NB_CFG	0xc001001f
 #define		NB_CFG_DISIOREQLOCK	0x0000000000000004ULL
 #define		NB_CFG_DISDATMSK	0x0000001000000000ULL
+#define		NB_CFG_INITAPICCPUIDLO	(1ULL << 54)
 
 #define	MSR_LS_CFG	0xc0011020
 #define		LS_CFG_DIS_LS2_SQUISH	0x02000000
