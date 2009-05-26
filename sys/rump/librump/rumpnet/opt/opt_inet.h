@@ -1,3 +1,4 @@
-/*	$NetBSD: opt_inet.h,v 1.1 2008/10/15 13:00:40 pooka Exp $	*/
+/*	$NetBSD: opt_inet.h,v 1.2 2009/05/26 23:43:39 pooka Exp $	*/
 
-#define INET
+#define INET  1
+#define INET6 1
