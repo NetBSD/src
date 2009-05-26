@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.218 2009/04/21 22:46:39 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.219 2009/05/26 16:03:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.218 2009/04/21 22:46:39 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.219 2009/05/26 16:03:24 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -540,6 +540,9 @@ main(int argc, char **argv)
 	prop_dictionary_t env, oenv;
 	const char *ifname;
 
+#ifdef RUMP_ACTION
+	rump_init();
+#endif
 	memset(match, 0, sizeof(match));
 
 	init_afs();
