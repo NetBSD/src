@@ -1,10 +1,10 @@
-# $Id: configure.ac,v 1.13 2009/05/26 05:03:08 lukem Exp $
+# $NetBSD: configure.ac,v 1.14 2009/05/26 05:40:03 lukem Exp $
 #
 # Process this file with autoconf to produce a configure script.
 
 AC_INIT([netpgp], [20090525], [Alistair Crooks <agc@netbsd.org> c0596823])
 AC_PREREQ([2.62])
-AC_REVISION([$Revision: 1.13 $])
+AC_REVISION([$Revision: 1.14 $])
 
 AS_SHELL_SANITIZE
 
@@ -68,8 +68,16 @@ AC_CHECK_TYPES([SHA256_CTX],
                [],
                [AC_MSG_FAILURE([missing SHA256_CTX; is openssl 0.9.8 or newer installed?])],
               [[
+#if defined(HAVE_SYS_TYPES_H)
 #include <sys/types.h>
+#endif
+#if defined(HAVE_OPENSSL_SHA_H)
 #include <openssl/sha.h>
+#endif
+#if defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#define COMMON_DIGEST_FOR_OPENSSL 1
+#include <CommonCrypto/CommonDigest.h>
+#endif
 ]])
 
 # Checks for library functions.
