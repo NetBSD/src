@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1263 2009/05/26 08:04:11 joerg Exp $
+#	$NetBSD: mi,v 1.1264 2009/05/26 21:58:31 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1454,6 +1454,7 @@
 ./usr/include/net/slcompress.h			comp-c-include
 ./usr/include/net/slip.h			comp-c-include
 ./usr/include/net/zlib.h			comp-c-include
+./usr/include/net/agr/if_agrioctl.h		comp-c-include
 ./usr/include/net80211/_ieee80211.h		comp-c-include
 ./usr/include/net80211/ieee80211.h		comp-c-include
 ./usr/include/net80211/ieee80211_channel.h	comp-obsolete		obsolete
