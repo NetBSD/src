@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.28 2009/05/12 13:20:05 cegger Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.29 2009/05/26 03:32:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.28 2009/05/12 13:20:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.29 2009/05/26 03:32:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,8 @@ cgsixattach(device_t parent, device_t self, void *aux)
 			sa->sa_slot,
 			sa->sa_offset + CGSIX_RAM_OFFSET,
 			sc->sc_ramsize,
-			BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+			BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+			&bh) != 0) {
 		aprint_error_dev(self, "cannot map pixels\n");
 		return;
 	}
