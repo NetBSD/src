@@ -1,5 +1,3 @@
-## $Id: Makefile.am,v 1.1 2009/05/26 04:27:29 lukem Exp $
+## $NetBSD: Makefile.am,v 1.2 2009/05/26 05:41:41 lukem Exp $
 
-netpgpincdir		= $(includedir)
-
-netpgpinc_HEADERS	= netpgp.h
+include_HEADERS		= netpgp.h
