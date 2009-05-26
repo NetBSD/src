@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.149 2009/05/18 18:31:00 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.150 2009/05/26 05:18:28 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3079,4 +3079,11 @@ lib/libc/gen/sysctl.3				patch
 
 	document PROC_PID_LIMIT_SBSIZE. Addresses PR 36463.
 	[snj, ticket #1318]
+
+dist/ntp/ntpd/ntp_crypto.c			1.15
+
+	Fix CVE-2009-1252: Buffer overflow in ntpd crypto code. A remote
+	attacker can send a specially constructed request packet that
+	would overflow the sprintf()'ed buffer causing ntpd to crash.
+	[mrg, ticket #1320]
 
