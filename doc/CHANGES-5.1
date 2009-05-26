@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.19 2009/05/22 21:57:20 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.20 2009/05/26 04:22:23 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -608,4 +608,11 @@ distrib/utils/sysinst/arch/zaurus/md.c		1.4
 
 	Catch up with ticket 755.
 	[sborrill, ticket #773]
+
+dist/ntp/ntpd/ntp_crypto.c			1.15
+
+	Fix CVE-2009-1252: Buffer overflow in ntpd crypto code. A remote
+	attacker can send a specially constructed request packet that
+	would overflow the sprintf()'ed buffer causing ntpd to crash.
+	[dholland, ticket #777]
 
