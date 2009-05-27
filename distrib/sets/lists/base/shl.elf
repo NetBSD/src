@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.174 2009/05/12 18:29:53 plunky Exp $
+# $NetBSD: shl.elf,v 1.175 2009/05/27 00:42:00 agc Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -183,7 +183,7 @@
 ./usr/lib/libmenu.so				base-sys-shlib
 ./usr/lib/libmenu.so.6				base-sys-shlib
 ./usr/lib/libnetpgp.so				base-crypto-shlib	crypto
-./usr/lib/libnetpgp.so.0			base-crypto-shlib	crypto
+./usr/lib/libnetpgp.so.1			base-crypto-shlib	crypto
 ./usr/lib/libobjc.so				base-sys-shlib		gcc
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc
 ./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
