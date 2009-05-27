@@ -1,4 +1,4 @@
-/*	comvar.h,v 1.55.8.3 2008/01/09 01:52:50 matt Exp	*/
+/*	$NetBSD: comvar.h,v 1.66 2009/05/27 23:01:07 rjs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
