@@ -30,6 +30,7 @@
 /* Command line program to perform netpgp operations */
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <getopt.h>
 #include <stdio.h>
@@ -246,6 +247,31 @@ give_it_large(netpgp_t *netpgp)
 	netpgp_setvar(netpgp, "verbose", num);
 }
 
+/* set the home directory value to "home/subdir" */
+static int
+set_homedir(netpgp_t *netpgp, char *home, const char *subdir)
+{
+	struct stat	st;
+	char		d[MAXPATHLEN];
+
+	if (home == NULL) {
+		(void) fprintf(stderr, "NULL HOME directory\n");
+		return 0;
+	}
+	(void) snprintf(d, sizeof(d), "%s%s", home, (subdir) ? subdir : "");
+	if (stat(d, &st) == 0) {
+		if ((st.st_mode & S_IFMT) == S_IFDIR) {
+			netpgp_setvar(netpgp, "homedir", d);
+			return 1;
+		}
+		(void) fprintf(stderr, "netpgp: homedir \"%s\" is not a dir\n",
+					d);
+		return 0;
+	}
+	(void) fprintf(stderr, "netpgp: warning homedir \"%s\" not found\n", d);
+	return 1;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -268,7 +294,7 @@ main(int argc, char **argv)
 	}
 	/* set some defaults */
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
-	netpgp_setvar(&netpgp, "homedir", getenv("HOME"));
+	set_homedir(&netpgp, getenv("HOME"), "/.gnupg");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -334,7 +360,7 @@ main(int argc, char **argv)
 				"No home directory argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			netpgp_setvar(&netpgp, "homedir", optarg);
+			set_homedir(&netpgp, optarg, NULL);
 			break;
 		case NUMBITS:
 			if (optarg == NULL) {
