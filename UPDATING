@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.195 2009/05/01 23:08:25 perry Exp $
+$NetBSD: UPDATING,v 1.196 2009/05/27 18:02:57 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -69,6 +69,10 @@ Recent changes:
 	   removed.  The automatic rotation of the accounting file by
 	   /etc/daily limits the bad consequences of failure to remove
 	   the file.
+	8. Application software that writes time_t to binary files on
+	   disk will break or need attention. Most notably: if you are
+	   using PostgreSQL < 8.4, you need to dump your databases,
+	   rebuild PostgreSQL with the new time_t, then restore.
 
 20081219:
 	config(1) has been updated, and one of the files it creates -
