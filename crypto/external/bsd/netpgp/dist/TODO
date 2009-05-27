@@ -1,6 +1,5 @@
 To Do
 =====
-new package for 1.99.4
 separate verify program
 separate from libcrypto?
 64-bit offsets
@@ -53,3 +52,4 @@ RCS Ids
 Look at inefficiencies - read() etc
 cat command to display a verified file without signature
 get rid of ops_memory after used literal_data_body
+new package for 1.99.4

@@ -29,20 +29,18 @@
 #ifndef NETPGP_H_
 #define NETPGP_H_
 
-/* structure used to hold key information */
+/* structure used to hold (key,value) pair information */
 typedef struct netpgp_t {
-	char	*userid;	/* user id we're doing this as */
-	char	*pubringfile;	/* name of public key ring file */
-	void	*pubring;	/* public key ring */
-	char	*secringfile;	/* name of secret key ring file */
-	void	*secring;	/* secret key ring */
-	char	*hashalg;	/* hash algorithm to use */
-	char	*verbose;	/* lippiness */
+	unsigned	  c;		/* # of elements used */
+	unsigned	  size;		/* size of array */
+	char		**name;		/* key names */
+	char		**value;	/* value information */
+	void		 *pubring;	/* public key ring */
+	void		 *secring;	/* s3kr1t key ring */
 } netpgp_t;
 
 /* begin and end */
-int netpgp_init(netpgp_t *, char *, char *, char *);
-			/* userid, pubring, secring */
+int netpgp_init(netpgp_t *);
 int netpgp_end(netpgp_t *);
 
 /* debugging, reflection and information */
@@ -63,9 +61,9 @@ int netpgp_import_key(netpgp_t *, char *);
 int netpgp_generate_key(netpgp_t *, char *, int);
 
 /* file management */
-int netpgp_encrypt_file(netpgp_t *, char *, char *, char *, int);
-int netpgp_decrypt_file(netpgp_t *, char *, char *, int);
-int netpgp_sign_file(netpgp_t *, char *, char *, char *, int, int, int);
-int netpgp_verify_file(netpgp_t *, char *, const char *, int);
+int netpgp_encrypt_file(netpgp_t *, const char *, const char *, char *, int);
+int netpgp_decrypt_file(netpgp_t *, const char *, char *, int);
+int netpgp_sign_file(netpgp_t *, const char *, const char *, char *, int, int, int);
+int netpgp_verify_file(netpgp_t *, const char *, const char *, int);
 
 #endif /* !NETPGP_H_ */

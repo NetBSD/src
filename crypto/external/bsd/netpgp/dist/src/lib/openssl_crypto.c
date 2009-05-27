@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.12 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.13 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: openssl_crypto.c,v 1.12 2009/05/25 06:43:32 agc Exp $");
 
 
 static void 
-test_seckey(const __ops_seckey_t * seckey)
+test_seckey(const __ops_seckey_t *seckey)
 {
 	RSA            *test = RSA_new();
 
@@ -103,7 +103,7 @@ test_seckey(const __ops_seckey_t * seckey)
 }
 
 static void 
-md5_init(__ops_hash_t * hash)
+md5_init(__ops_hash_t *hash)
 {
 	if (hash->data) {
 		(void) fprintf(stderr, "md5_init: hash data non-null\n");
@@ -113,13 +113,13 @@ md5_init(__ops_hash_t * hash)
 }
 
 static void 
-md5_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
+md5_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 {
 	MD5_Update(hash->data, data, length);
 }
 
 static unsigned 
-md5_finish(__ops_hash_t * hash, unsigned char *out)
+md5_finish(__ops_hash_t *hash, unsigned char *out)
 {
 	MD5_Final(out, hash->data);
 	free(hash->data);
@@ -143,13 +143,13 @@ static __ops_hash_t md5 = {
    \param hash Hash to initialise
 */
 void 
-__ops_hash_md5(__ops_hash_t * hash)
+__ops_hash_md5(__ops_hash_t *hash)
 {
 	*hash = md5;
 }
 
 static void 
-sha1_init(__ops_hash_t * hash)
+sha1_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "***\n***\nsha1_init\n***\n");
@@ -162,7 +162,7 @@ sha1_init(__ops_hash_t * hash)
 }
 
 static void 
-sha1_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
+sha1_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i;
@@ -182,7 +182,7 @@ sha1_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha1_finish(__ops_hash_t * hash, unsigned char *out)
+sha1_finish(__ops_hash_t *hash, unsigned char *out)
 {
 	SHA1_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -214,13 +214,13 @@ static __ops_hash_t sha1 = {
    \param hash Hash to initialise
 */
 void 
-__ops_hash_sha1(__ops_hash_t * hash)
+__ops_hash_sha1(__ops_hash_t *hash)
 {
 	*hash = sha1;
 }
 
 static void 
-sha256_init(__ops_hash_t * hash)
+sha256_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "***\n***\nsha256_init\n***\n");
@@ -233,7 +233,7 @@ sha256_init(__ops_hash_t * hash)
 }
 
 static void 
-sha256_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
+sha256_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i;
@@ -252,7 +252,7 @@ sha256_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha256_finish(__ops_hash_t * hash, unsigned char *out)
+sha256_finish(__ops_hash_t *hash, unsigned char *out)
 {
 	SHA256_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -301,7 +301,7 @@ sha384_init(__ops_hash_t *hash)
 }
 
 static void 
-sha384_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
+sha384_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i;
@@ -320,7 +320,7 @@ sha384_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha384_finish(__ops_hash_t * hash, unsigned char *out)
+sha384_finish(__ops_hash_t *hash, unsigned char *out)
 {
 	SHA384_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -356,7 +356,7 @@ __ops_hash_sha384(__ops_hash_t *hash)
  * SHA512
  */
 static void 
-sha512_init(__ops_hash_t * hash)
+sha512_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "***\n***\nsha512_init\n***\n");
@@ -369,7 +369,7 @@ sha512_init(__ops_hash_t * hash)
 }
 
 static void 
-sha512_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
+sha512_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i;
@@ -388,7 +388,7 @@ sha512_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha512_finish(__ops_hash_t * hash, unsigned char *out)
+sha512_finish(__ops_hash_t *hash, unsigned char *out)
 {
 	SHA512_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -415,7 +415,7 @@ static __ops_hash_t sha512 = {
 };
 
 void 
-__ops_hash_sha512(__ops_hash_t * hash)
+__ops_hash_sha512(__ops_hash_t *hash)
 {
 	*hash = sha512;
 }
@@ -425,7 +425,7 @@ __ops_hash_sha512(__ops_hash_t * hash)
  */
 
 static void 
-sha224_init(__ops_hash_t * hash)
+sha224_init(__ops_hash_t *hash)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "***\n***\nsha1_init\n***\n");
@@ -438,7 +438,7 @@ sha224_init(__ops_hash_t * hash)
 }
 
 static void 
-sha224_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
+sha224_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned int    i;
@@ -457,7 +457,7 @@ sha224_add(__ops_hash_t * hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha224_finish(__ops_hash_t * hash, unsigned char *out)
+sha224_finish(__ops_hash_t *hash, unsigned char *out)
 {
 	SHA224_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -484,7 +484,7 @@ static __ops_hash_t sha224 = {
 };
 
 void 
-__ops_hash_sha224(__ops_hash_t * hash)
+__ops_hash_sha224(__ops_hash_t *hash)
 {
 	*hash = sha224;
 }
@@ -753,7 +753,7 @@ __ops_crypto_finish(void)
    \return Hash name
 */
 const char     *
-__ops_text_from_hash(__ops_hash_t * hash)
+__ops_text_from_hash(__ops_hash_t *hash)
 {
 	return hash->name;
 }
