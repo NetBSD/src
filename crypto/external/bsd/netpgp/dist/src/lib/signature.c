@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.15 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.16 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -216,7 +216,7 @@ rsa_sign(__ops_hash_t *hash,
 }
 
 static int 
-dsa_sign(__ops_hash_t * hash,
+dsa_sign(__ops_hash_t *hash,
 	 const __ops_dsa_pubkey_t *dsa,
 	 const __ops_dsa_seckey_t *sdsa,
 	 __ops_output_t *output)
@@ -374,14 +374,14 @@ hash_add_key(__ops_hash_t *hash, const __ops_pubkey_t *key)
 }
 
 static void 
-initialise_hash(__ops_hash_t * hash, const __ops_sig_t * sig)
+initialise_hash(__ops_hash_t *hash, const __ops_sig_t *sig)
 {
 	__ops_hash_any(hash, sig->info.hash_alg);
 	hash->init(hash);
 }
 
 static void 
-init_key_sig(__ops_hash_t * hash, const __ops_sig_t * sig,
+init_key_sig(__ops_hash_t *hash, const __ops_sig_t *sig,
 		   const __ops_pubkey_t *key)
 {
 	initialise_hash(hash, sig);
@@ -448,9 +448,9 @@ __ops_check_sig(const unsigned char *hash, unsigned length,
 }
 
 static unsigned 
-hash_and_check_sig(__ops_hash_t * hash,
-			 const __ops_sig_t * sig,
-			 const __ops_pubkey_t * signer)
+hash_and_check_sig(__ops_hash_t *hash,
+			 const __ops_sig_t *sig,
+			 const __ops_pubkey_t *signer)
 {
 	unsigned char   hashout[OPS_MAX_HASH_SIZE];
 	unsigned	n;
@@ -460,9 +460,9 @@ hash_and_check_sig(__ops_hash_t * hash,
 }
 
 static unsigned 
-finalise_sig(__ops_hash_t * hash,
-		   const __ops_sig_t * sig,
-		   const __ops_pubkey_t * signer,
+finalise_sig(__ops_hash_t *hash,
+		   const __ops_sig_t *sig,
+		   const __ops_pubkey_t *signer,
 		   const unsigned char *raw_packet)
 {
 	hash_add_trailer(hash, sig, raw_packet);
@@ -515,7 +515,7 @@ __ops_check_useridcert_sig(const __ops_pubkey_t *key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_userattrcert_sig(const __ops_pubkey_t * key,
+__ops_check_userattrcert_sig(const __ops_pubkey_t *key,
 				const __ops_userattr_t *attribute,
 				const __ops_sig_t *sig,
 				const __ops_pubkey_t *signer,
@@ -853,7 +853,7 @@ __ops_write_sig(__ops_output_t *output,
  * \param when
  */
 unsigned 
-__ops_add_birthtime(__ops_create_sig_t * sig, time_t when)
+__ops_add_birthtime(__ops_create_sig_t *sig, time_t when)
 {
 	return __ops_write_ss_header(sig->output, 5,
 					OPS_PTAG_SS_CREATION_TIME) &&
@@ -870,7 +870,7 @@ __ops_add_birthtime(__ops_create_sig_t * sig, time_t when)
  */
 
 unsigned 
-__ops_add_issuer_keyid(__ops_create_sig_t * sig,
+__ops_add_issuer_keyid(__ops_create_sig_t *sig,
 				const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
 	return __ops_write_ss_header(sig->output, OPS_KEY_ID_SIZE + 1,
@@ -887,7 +887,7 @@ __ops_add_issuer_keyid(__ops_create_sig_t * sig,
  * \param primary
  */
 void 
-__ops_add_primary_userid(__ops_create_sig_t * sig, unsigned primary)
+__ops_add_primary_userid(__ops_create_sig_t *sig, unsigned primary)
 {
 	__ops_write_ss_header(sig->output, 2, OPS_PTAG_SS_PRIMARY_USER_ID);
 	__ops_write_scalar(sig->output, primary, 1);
@@ -902,7 +902,7 @@ __ops_add_primary_userid(__ops_create_sig_t * sig, unsigned primary)
  * \return The hash structure.
  */
 __ops_hash_t     *
-__ops_sig_get_hash(__ops_create_sig_t * sig)
+__ops_sig_get_hash(__ops_create_sig_t *sig)
 {
 	return &sig->hash;
 }
@@ -1282,7 +1282,7 @@ __ops_sign_buf(const void *input,
 
 /* sign a file, and put the signature in a separate file */
 int
-__ops_sign_detached(char *f,
+__ops_sign_detached(const char *f,
 			char *sigfile,
 			__ops_seckey_t *seckey,
 			const char *hash)

@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.12 2009/05/22 02:28:54 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.13 2009/05/27 00:38:26 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,6 +96,8 @@
 .Pp
 where the options for all commands are:
 .Pp
+.Op Fl Fl coredumps
+.br
 .Op Fl Fl homedir Ns = Ns Ar home-directory
 .br
 .Op Fl Fl keyring Ns = Ns Ar keyring
@@ -300,6 +302,19 @@ This option can be used to view information during
 the process of the
 .Nm
 requests.
+.It Fl Fl coredumps
+in normal processing,
+if an error occurs, the contents of memory are saved to disk, and can
+be read using tools to analyse behaviour.
+Unfortuinately this can disclose information to people viewing
+the core dump, such as secret keys, and passphrases protecting
+those keys.
+In normal operation,
+.Nm
+will turn off the ability to save core dumps on persistent storage,
+but selecting this option will allow core dumps to be written to disk.
+This option should be used wisely, and any core dumps should
+be deleted in a secure manner when no longer needed.
 .El
 .Sh PASS PHRASES
 The pass phrase cannot be changed by
