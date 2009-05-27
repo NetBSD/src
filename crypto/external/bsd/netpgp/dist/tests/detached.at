@@ -1,4 +1,4 @@
-# $NetBSD: detached.at,v 1.1 2009/05/27 14:42:07 agc Exp $
+# $NetBSD: detached.at,v 1.2 2009/05/27 22:13:06 agc Exp $
 
 AT_SETUP([detached signature and verification])
 
@@ -11,7 +11,5 @@ AT_CHECK([$NETPGP --homedir $testhomedir --sign --detached file2],
 # Verify detached sig file
 AT_CHECK([$NETPGP --homedir $testhomedir --verify file2.sig],
     [0], [ignore], [ignore])
-
-# XXXTODO: deliberately corrupt file2.gpg and attempt to verify
 
 AT_CLEANUP
