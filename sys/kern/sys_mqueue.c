@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.12.4.1.2.1 2009/05/18 19:50:13 bouyer Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.12.4.1.2.2 2009/05/27 21:33:50 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.4.1.2.1 2009/05/18 19:50:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.4.1.2.2 2009/05/27 21:33:50 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,8 +85,6 @@ static LIST_HEAD(, mqueue)	mqueue_head =
 
 static int	mq_poll_fop(file_t *, int);
 static int	mq_close_fop(file_t *);
-
-#define	FNOVAL	-1
 
 static const struct fileops mqops = {
 	.fo_read = fbadop_read,
@@ -166,57 +164,28 @@ mqueue_lookup(char *name)
 }
 
 /*
- * Check access against message queue.
- */
-static inline int
-mqueue_access(struct lwp *l, struct mqueue *mq, int access)
-{
-	mode_t acc_mode = 0;
-
-	KASSERT(mutex_owned(&mq->mq_mtx));
-	KASSERT(access != FNOVAL);
-
-	/* Note the difference between VREAD/VWRITE and FREAD/FWRITE */
-	if (access & FREAD)
-		acc_mode |= VREAD;
-	if (access & FWRITE)
-		acc_mode |= VWRITE;
-
-	return vaccess(VNON, mq->mq_mode, mq->mq_euid, mq->mq_egid,
-	    acc_mode, l->l_cred);
-}
-
-/*
- * Get the mqueue from the descriptor.
- *  => locks the message queue, if found
- *  => increments the reference on file entry
+ * mqueue_get: get the mqueue from the descriptor.
+ *  => locks the message queue, if found.
+ *  => holds a reference on the file descriptor.
  */
 static int
-mqueue_get(struct lwp *l, mqd_t mqd, int access, file_t **fpr)
+mqueue_get(mqd_t mqd, file_t **fpr)
 {
-	file_t *fp;
 	struct mqueue *mq;
+	file_t *fp;
 
-	/* Get the file and descriptor */
 	fp = fd_getfile((int)mqd);
-	if (fp == NULL)
+	if (__predict_false(fp == NULL)) {
 		return EBADF;
-
-	/* Increment the reference of file entry, and lock the mqueue */
-	mq = fp->f_data;
-	*fpr = fp;
-	mutex_enter(&mq->mq_mtx);
-	if (access == FNOVAL) {
-		KASSERT(mutex_owned(&mq->mq_mtx));
-		return 0;
 	}
-
-	/* Check the access mode and permission */
-	if ((fp->f_flag & access) != access || mqueue_access(l, mq, access)) {
-		mutex_exit(&mq->mq_mtx);
+	if (__predict_false(fp->f_type != DTYPE_MQUEUE)) {
 		fd_putfile((int)mqd);
-		return EPERM;
+		return EBADF;
 	}
+	mq = fp->f_data;
+	mutex_enter(&mq->mq_mtx);
+
+	*fpr = fp;
 	return 0;
 }
 
@@ -347,6 +316,12 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 			return EMFILE;
 		}
 
+		/* Empty name is invalid */
+		if (name[0] == '\0') {
+			kmem_free(name, MQ_NAMELEN);
+			return EINVAL;
+		}
+	
 		/* Check for mqueue attributes */
 		if (SCARG(uap, attr)) {
 			error = copyin(SCARG(uap, attr), &attr,
@@ -383,7 +358,9 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 
 		strlcpy(mq_new->mq_name, name, MQ_NAMELEN);
 		memcpy(&mq_new->mq_attrib, &attr, sizeof(struct mq_attr));
-		mq_new->mq_attrib.mq_flags = oflag;
+
+		CTASSERT((O_MASK & (MQ_UNLINK | MQ_RECEIVE)) == 0);
+		mq_new->mq_attrib.mq_flags = (O_MASK & oflag);
 
 		/* Store mode and effective UID with GID */
 		mq_new->mq_mode = ((SCARG(uap, mode) &
@@ -408,6 +385,8 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 	mutex_enter(&mqlist_mtx);
 	mq = mqueue_lookup(name);
 	if (mq) {
+		mode_t acc_mode;
+
 		KASSERT(mutex_owned(&mq->mq_mtx));
 
 		/* Check if mqueue is not marked as unlinking */
@@ -420,8 +399,20 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 			error = EEXIST;
 			goto exit;
 		}
-		/* Check the permission */
-		if (mqueue_access(l, mq, fp->f_flag)) {
+
+		/*
+		 * Check the permissions.  Note the difference between
+		 * VREAD/VWRITE and FREAD/FWRITE.
+		 */
+		acc_mode = 0;
+		if (fp->f_flag & FREAD) {
+			acc_mode |= VREAD;
+		}
+		if (fp->f_flag & FWRITE) {
+			acc_mode |= VWRITE;
+		}
+		if (vaccess(VNON, mq->mq_mode, mq->mq_euid, mq->mq_egid,
+		    acc_mode, l->l_cred)) {
 			error = EACCES;
 			goto exit;
 		}
@@ -490,7 +481,7 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 	int error;
 
 	/* Get the message queue */
-	error = mqueue_get(l, mqdes, FREAD, &fp);
+	error = mqueue_get(mqdes, &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
@@ -645,7 +636,7 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 	msg->msg_prio = msg_prio;
 
 	/* Get the mqueue */
-	error = mqueue_get(l, mqdes, FWRITE, &fp);
+	error = mqueue_get(mqdes, &fp);
 	if (error) {
 		mqueue_freemsg(msg, size);
 		return error;
@@ -782,7 +773,7 @@ sys_mq_notify(struct lwp *l, const struct sys_mq_notify_args *uap,
 			return error;
 	}
 
-	error = mqueue_get(l, SCARG(uap, mqdes), FNOVAL, &fp);
+	error = mqueue_get(SCARG(uap, mqdes), &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
@@ -821,7 +812,7 @@ sys_mq_getattr(struct lwp *l, const struct sys_mq_getattr_args *uap,
 	int error;
 
 	/* Get the message queue */
-	error = mqueue_get(l, SCARG(uap, mqdes), FNOVAL, &fp);
+	error = mqueue_get(SCARG(uap, mqdes), &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
@@ -852,7 +843,7 @@ sys_mq_setattr(struct lwp *l, const struct sys_mq_setattr_args *uap,
 	nonblock = (attr.mq_flags & O_NONBLOCK);
 
 	/* Get the message queue */
-	error = mqueue_get(l, SCARG(uap, mqdes), FNOVAL, &fp);
+	error = mqueue_get(SCARG(uap, mqdes), &fp);
 	if (error)
 		return error;
 	mq = fp->f_data;
@@ -910,7 +901,8 @@ sys_mq_unlink(struct lwp *l, const struct sys_mq_unlink_args *uap,
 	}
 
 	/* Check the permissions */
-	if (mqueue_access(l, mq, FWRITE)) {
+	if (kauth_cred_geteuid(l->l_cred) != mq->mq_euid &&
+	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		mutex_exit(&mq->mq_mtx);
 		error = EACCES;
 		goto error;
