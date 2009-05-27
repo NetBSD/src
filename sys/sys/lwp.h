@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.118 2009/05/23 17:08:05 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.119 2009/05/27 12:08:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -180,6 +180,14 @@ struct lwp {
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
 };
+
+/*
+ * USER_TO_UAREA/UAREA_TO_USER: macros to convert between
+ * the lowest address of the uarea (UAREA) and lwp::l_addr (USER).
+ *
+ * the default is just a cast.  MD code can modify it by defining
+ * either these macros or UAREA_USER_OFFSET in <machine/proc.h>.
+ */
 
 #if !defined(USER_TO_UAREA)
 #if !defined(UAREA_USER_OFFSET)
