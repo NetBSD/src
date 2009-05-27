@@ -1,10 +1,12 @@
-# $Id: atlocal.in,v 1.2 2009/05/27 01:54:22 lukem Exp $
+# $NetBSD: atlocal.in,v 1.3 2009/05/27 06:47:57 lukem Exp $
 
 TOPSRCDIR=@abs_top_srcdir@
 export TOPSRCDIR
 
-TESTROOT=@abs_builddir@/root
-export TESTROOT
-
 NETPGP=@abs_top_builddir@/src/bin/netpgp
 export NETPGP
+
+testhomedir=@abs_builddir@/homedir
+testpublickey=@abs_srcdir@/key-public.asc
+testprivatekey=@abs_srcdir@/key-private.asc
+testuserid=C7AB5F325F918728
