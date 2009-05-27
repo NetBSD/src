@@ -1,14 +1,14 @@
-.\" $NetBSD: gcq.3,v 1.2 2009/05/27 17:47:46 snj Exp $
+.\" $NetBSD: gcq.3,v 1.3 2009/05/27 19:23:28 wiz Exp $
 .\"
 .\" Not (c) 2007 Matthew Orgass
-.\" This file is public domain, meaning anyone can make any use of part or all 
-.\" of this file including copying into other works without credit.  Any use, 
-.\" modified or not, is solely the responsibility of the user.  If this file 
-.\" is part of a collection then use in the collection is governed by the 
+.\" This file is public domain, meaning anyone can make any use of part or all
+.\" of this file including copying into other works without credit.  Any use,
+.\" modified or not, is solely the responsibility of the user.  If this file
+.\" is part of a collection then use in the collection is governed by the
 .\" terms of the collection.
 .\"
 .Dd May 1, 2007
-.Dt gcq 3
+.Dt GCQ 3
 .Os
 .Sh NAME
 .Nm GCQ_INIT ,
@@ -232,7 +232,7 @@ The generic circular queue is a doubly linked list designed for efficient
 merge operations and unconditional removal.
 All basic operations can be performed with or without use of a separate head,
 allowing easy replacement of any pointers where efficient removal is desired.
-The meaning of the data type will not change; direct use and defined 
+The meaning of the data type will not change; direct use and defined
 operations can be mixed when convenient.
 The basic type is:
 .Bd -literal -offset indent
@@ -242,7 +242,7 @@ struct gcq {
 };
 .Ed
 .Pp
-The structure must first be initialized such that the 
+The structure must first be initialized such that the
 .Va q_next
 and
 .Va q_prev
@@ -251,7 +251,7 @@ members point to the beginning of the
 This can be done with
 .Fn gcq_init
 and
-.Fn gcq_init_head 
+.Fn gcq_init_head
 or with constant initializers
 .Fn GCQ_INIT
 and
@@ -269,19 +269,19 @@ The structure containing the
 can be retrieved by pointer arithmetic in the
 .Fn GCQ_ITEM
 macro.
-List traversal normally requires knowledge of the list head to safely 
+List traversal normally requires knowledge of the list head to safely
 retrieve list items.
 .Pp
-Capitalized operation names are macros and should be assumed to cause multiple 
+Capitalized operation names are macros and should be assumed to cause multiple
 evaluation of arguments.
 .Li TYPED
-variants of macros set a typed pointer variable instead of or in addition to 
+variants of macros set a typed pointer variable instead of or in addition to
 .Vt struct gcq *
 arguments.
-Additional type specific inlines and macros around some GCQ operations can be 
+Additional type specific inlines and macros around some GCQ operations can be
 useful.
 .Pp
-A few assertions are provided when 
+A few assertions are provided when
 .Dv DIAGNOSTIC
 is defined in the kernel or
 .Dv _DIAGNOSTIC
@@ -311,18 +311,18 @@ turning the supplied
 into
 .Vt struct gcq_head * .
 .Fn gcq_q
-returns its 
+returns its
 .Vt struct gcq *
 argument and is used for type checking in
 .Fn GCQ_ITEM .
 There are no functions for retrieving the raw
 .Va q_prev
-and 
-.Va q_next 
+and
+.Va q_next
 pointers as these are usually clearer when used directly (if at all).
 .Pp
 .Fn gcq_remove
-returns the element removed and is always a valid operation after 
+returns the element removed and is always a valid operation after
 initialization.
 .Fn gcq_onlist
 returns
@@ -334,14 +334,14 @@ otherwise.
 is the negation of this operation performed on a head.
 .Fn gcq_linked
 tests if
-.Li "prev->q_next == next && next->q_prev == prev" .
+.Li "prev-\*[Gt]q_next == next \*[Am]\*[Am] next-\*[Gt]q_prev == prev" .
 .Pp
 .Fn gcq_tie
 ties
 .Va src
 after
 .Va dst
-such that that if the old lists are DST, DST2 and SRC, SRC2, the new list is 
+such that that if the old lists are DST, DST2 and SRC, SRC2, the new list is
 DST, SRC, SRC2, DST2.
 If
 .Va dst
@@ -359,12 +359,12 @@ then the result is the same as
 .Fn gcq_tie
 is equivalent to
 .Fn gcq_tie_after
-except that the latter must only be used with arguments on separate lists or 
+except that the latter must only be used with arguments on separate lists or
 not on lists and asserts that
-.Li "src != dst && dst->q_prev != src" .
+.Li "src != dst \*[Am]\*[Am] dst-\*[Gt]q_prev != src" .
 .Fn gcq_tie_before
-performs the same operation on 
-.Li dst->q_prev .
+performs the same operation on
+.Li dst-\*[Gt]q_prev .
 .Pp
 .Fn gcq_merge
 moves any elements on list
@@ -379,14 +379,14 @@ or
 .Fn gcq_merge_tail .
 If
 .Dv GCQ_UNCONDITIONAL_MERGE
-is defined prior to header inclusion then the merge operations will always 
+is defined prior to header inclusion then the merge operations will always
 perform a tie then remove
-.Va src 
+.Va src
 from the new list, which may reduce code size slightly.
 .Pp
 .Fn gcq_clear
 initializes all elements currently linked with
-.Va q 
+.Va q
 and is normally used with a head as
 .Fn gcq_remove_all .
 .Pp
@@ -397,7 +397,7 @@ are slightly optimized versions of
 .Fn gcq_tie
 for the case where
 .Va off
-is not on a list and include assertions to this effect, which are also useful 
+is not on a list and include assertions to this effect, which are also useful
 to detect missing initialization.
 .Fn gcq_insert_head
 and
@@ -411,7 +411,7 @@ set
 .Va var
 to a pointer to the first or last
 .Vt struct gcq
-in the list 
+in the list
 or
 .Dv NULL
 if the list is empty and return
@@ -419,7 +419,7 @@ if the list is empty and return
 if empty and
 .Dv true
 otherwise.
-The boolean return is to emphasise that it is not normally safe and useful to 
+The boolean return is to emphasise that it is not normally safe and useful to
 directly pass the raw first/next/etc. pointer to another function.
 The macros are written such that the
 .Dv NULL
@@ -427,7 +427,7 @@ values will be optimized out if not otherwise used.
 .Li DEQUEUED
 variants also remove the member from the list.
 .Li COND
-variants take an additional condition that is evaluated when the macro would 
+variants take an additional condition that is evaluated when the macro would
 otherwise return
 .Dv true .
 If the condition is false
@@ -439,9 +439,9 @@ is set to
 and no dequeue is performed.
 .Pp
 .Fn GCQ_GOT_NEXT
-and variants take pointers to the current position, list head, and starting 
+and variants take pointers to the current position, list head, and starting
 point as arguments.
-The list head will be skipped when it is reached unless it is equal to the 
+The list head will be skipped when it is reached unless it is equal to the
 starting point; upon reaching the starting point
 .Va var
 will be set to
@@ -452,9 +452,9 @@ The next and prev macros also assert that
 .Va current
 is on the list unless it is equal to
 .Va start .
-These macros are the only provided method for iterating through the list from 
+These macros are the only provided method for iterating through the list from
 an arbitrary point.
-Traversal macros are only provided for list heads, however 
+Traversal macros are only provided for list heads, however
 .Fn gcq_head
 can be used to treat any item as a head.
 .Pp
@@ -471,12 +471,12 @@ The plain
 .Fn GCQ_FOREACH
 uses a single variable.
 .Li NVAR
-variants save the next pointer at the top of the loop so that the current 
+variants save the next pointer at the top of the loop so that the current
 element can be removed without adjusting
 .Va var .
 This is useful when
 .Va var
-is passed to a function that might remove it but will not otherwise modify 
+is passed to a function that might remove it but will not otherwise modify
 the list.
 When the head is reached both
 .Va var
@@ -491,20 +491,20 @@ and
 asserts that
 .Va nvar
 does not point to itself when starting the next loop.
-This assertion takes place after the variable is tested against the head so 
+This assertion takes place after the variable is tested against the head so
 it is safe to remove all elements from the list.
 .Li RO
 variants also set
 .Va nvar
 but assert that the two variables are linked at the end of each iteration.
-This is useful when calling a function that is not supposed to remove the 
+This is useful when calling a function that is not supposed to remove the
 element passed.
 .Li DEQUEUED
 variants are like
 .Li NVAR
 but remove each element before the code block is executed.
 .Li TYPED
-variants are equivalent to the untyped versions except that they take three 
+variants are equivalent to the untyped versions except that they take three
 extra arguments: a typed pointer, the type name, and the member name of the
 .Vt struct gcq
 used in this list.
@@ -514,7 +514,7 @@ is set to
 when the head is reached.
 .Pp
 .Fn GCQ_FIND
-is a foreach loop that does nothing except break when the supplied condition 
+is a foreach loop that does nothing except break when the supplied condition
 is true.
 .Li REV
 and
@@ -523,8 +523,8 @@ variants are available.
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
 .Xr gcc 1 ,
-.Xr assert 3 ,
 .Xr _DIAGASSERT 3 ,
+.Xr assert 3 ,
 .Xr queue 3 ,
 .Xr KASSERT 9
 .Sh HISTORY
