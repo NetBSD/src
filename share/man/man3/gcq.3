@@ -1,4 +1,4 @@
-.\" $NetBSD: gcq.3,v 1.1 2007/08/15 03:53:08 kiyohara Exp $
+.\" $NetBSD: gcq.3,v 1.2 2009/05/27 17:47:46 snj Exp $
 .\"
 .\" Not (c) 2007 Matthew Orgass
 .\" This file is public domain, meaning anyone can make any use of part or all 
@@ -230,10 +230,10 @@
 .Sh DESCRIPTION
 The generic circular queue is a doubly linked list designed for efficient
 merge operations and unconditional removal.
-All basic operations can be perfomed with or without use of a separate head,
+All basic operations can be performed with or without use of a separate head,
 allowing easy replacement of any pointers where efficient removal is desired.
 The meaning of the data type will not change; direct use and defined 
-operations can be mixed when convienient.
+operations can be mixed when convenient.
 The basic type is:
 .Bd -literal -offset indent
 struct gcq {
@@ -298,7 +298,7 @@ can be used to turn them off.
 is a wrapper around the used assertion function.
 None of the operations accept
 .Dv NULL
-arguements, however this is not tested by assertion.
+arguments, however this is not tested by assertion.
 .Pp
 The head is separately named for type checking but contains only a
 .Vt struct gcq ,
@@ -500,11 +500,11 @@ but assert that the two variables are linked at the end of each iteration.
 This is useful when calling a function that is not supposed to remove the 
 element passed.
 .Li DEQUEUED
-varients are like
+variants are like
 .Li NVAR
 but remove each element before the code block is executed.
 .Li TYPED
-variants are equvalent to the untyped versions except that they take three 
+variants are equivalent to the untyped versions except that they take three 
 extra arguments: a typed pointer, the type name, and the member name of the
 .Vt struct gcq
 used in this list.
