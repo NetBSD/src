@@ -1,4 +1,4 @@
-.\"	$NetBSD: pud.4,v 1.1 2007/11/21 19:10:23 pooka Exp $
+.\"	$NetBSD: pud.4,v 1.2 2009/05/27 19:24:00 snj Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ Registering a character device is mandatory, supporting the block
 device interface for same major device is optional.
 The major number must be available, i.e. another driver must not
 be registered to handle the operation.
-After succesful registration the userspace daemon is supposed to
+After successful registration the userspace daemon is supposed to
 handle the driver methods the kernel passes down to it.
 .Sh SEE ALSO
 .Xr puffs 4 ,

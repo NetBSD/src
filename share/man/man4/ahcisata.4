@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahcisata.4,v 1.3 2009/03/02 10:08:51 mjf Exp $
+.\"	$NetBSD: ahcisata.4,v 1.4 2009/05/27 19:23:59 snj Exp $
 .\"
 .\" Copyright (c) 2006 Manuel Bouyer.
 .\"
@@ -38,15 +38,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the SATA controllers compliants to the Serial ATA Advanced
+driver supports SATA controllers compliant with the Serial ATA Advanced
 Host Controller Interface Revision 1.0 or 1.1 specification,
-and provides the interface with the hardware for the
+and provides the interface to the hardware for the
 .Xr ata 4
 driver.
 .Pp
 The
 .Nm
-driver will only attach if the contoller has been put in AHCI mode by the
+driver will only attach if the controller has been put in AHCI mode by the
 BIOS; if the controller is in pciide-compatible mode, it will be handled
 by the appropriate driver
 .Xr ( piixide 4
