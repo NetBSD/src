@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.328 2009/05/18 02:28:35 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.329 2009/05/27 02:19:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.328 2009/05/18 02:28:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.329 2009/05/27 02:19:50 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3502,6 +3502,23 @@ pmap_bootstrap4m(void *top)
 	 */
 	p = (vaddr_t)top;
 
+#if defined(MULTIPROCESSOR)
+	/*
+	 * allocate the rest of the cpu_info{} area.  note we waste the
+	 * first one to get a VA space.
+	 */
+	cpuinfo_len = ((sizeof(struct cpu_info) + NBPG - 1) & ~PGOFSET);
+	if (sparc_ncpus > 1) {
+		p = (p + NBPG - 1) & ~PGOFSET;
+		cpuinfo_data = (uint8_t *)p;
+		p += (cpuinfo_len * sparc_ncpus);
+
+		/* XXX we waste the first one */
+		memset(cpuinfo_data + cpuinfo_len, 0, cpuinfo_len * (sparc_ncpus - 1));
+	} else
+		cpuinfo_data = (uint8_t *)CPUINFO_VA;
+#endif
+
 	/*
 	 * Intialize the kernel pmap.
 	 */
@@ -3538,22 +3555,6 @@ pmap_bootstrap4m(void *top)
 	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
 	memset((void *)ci, 0, (u_int)p - (u_int)ci);
-
-#if defined(MULTIPROCESSOR)
-	/*
-	 * allocate the rest of the cpu_info{} area.  note we waste the
-	 * first one to get a VA space.
-	 */
-	p = (p + NBPG - 1) & ~PGOFSET;
-	cpuinfo_data = (uint8_t *)p;
-	cpuinfo_len = ((sizeof(struct cpu_info) + NBPG - 1) & ~PGOFSET);
-	p += (cpuinfo_len * sparc_ncpus);
-	prom_printf("extra cpus: %p, p: %p, gap start: %p, gap end: %p\n",
-	    cpuinfo_data, p, etext_gap_start, etext_gap_end);
-
-	/* XXX we waste the first one */
-	memset(cpuinfo_data + cpuinfo_len, 0, cpuinfo_len * (sparc_ncpus - 1));
-#endif
 
 	/*
 	 * Set up the `constants' for the call to vm_init()
@@ -3799,16 +3800,23 @@ pmap_bootstrap4m(void *top)
 
 #ifdef MULTIPROCESSOR
 	/*
+	 * Initialise any cpu-specific data now.
+	 */
+	cpu_init_system();
+
+	/*
 	 * Remap cpu0 from CPUINFO_VA to the new correct value, wasting the
-	 * backing pages we allocated above XXX.
+	 * backing page we allocated above XXX.
 	 */
 	for (off = 0, va = (vaddr_t)cpuinfo_data;
-	     off < sizeof(struct cpu_info);
+	     sparc_ncpus > 1 && off < sizeof(struct cpu_info);
 	     va += NBPG, off += NBPG) {
 		paddr_t pa = PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
 		prom_printf("going to pmap_kenter_pa(va=%p, pa=%p)\n", va, pa);
 		pmap_kremove(va, NBPG);
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		cache_flush_page(va, 0);
+		cache_flush_page(CPUINFO_VA, 0);
 	}
 
 	/*
@@ -3820,6 +3828,8 @@ pmap_bootstrap4m(void *top)
 		cpus[i]->ci_self = cpus[i];
 		prom_printf("set cpu%d ci_self address: %p\n", i, cpus[i]);
 	}
+#else
+	cpus[0] = (struct cpu_info *)CPUINFO_VA;
 #endif
 
 	pmap_update(pmap_kernel());
