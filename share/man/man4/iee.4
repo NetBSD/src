@@ -1,4 +1,4 @@
-.\"	$NetBSD: iee.4,v 1.4 2009/05/05 16:25:36 tsutsui Exp $
+.\"	$NetBSD: iee.4,v 1.5 2009/05/27 19:23:59 snj Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -73,7 +73,7 @@ based on-board Ethernet on EWS4800/350.
 .Ss hp700
 The
 .Nm
-interface suports
+interface supports
 .Tn Intel
 .Tn i82596DX
 on ASP/ASP2 based machines and the
@@ -85,7 +85,7 @@ jumper or automatically depending on machine model.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "iee%d: iee_intr: receive error %d, rfd_status=0x%.4x, rfd_count=0x%.4x."
-An error during frame reception occured.
+An error during frame reception occurred.
 The frame was dropped.
 .It "iee%d: iee_intr: can't allocate mbuf."
 .It "iee%d: iee_intr: can't alloc mbuf cluster."
