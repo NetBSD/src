@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.10 2009/05/25 06:43:33 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.11 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -256,10 +256,10 @@ writer_info_delete(__ops_writer_t *writer)
  * \param arg The argument for the writer and destroyer
  */
 void 
-__ops_writer_set(__ops_output_t * output,
-	       __ops_writer_func_t * writer,
-	       __ops_writer_finaliser_t * finaliser,
-	       __ops_writer_destroyer_t * destroyer,
+__ops_writer_set(__ops_output_t *output,
+	       __ops_writer_func_t *writer,
+	       __ops_writer_finaliser_t *finaliser,
+	       __ops_writer_destroyer_t *destroyer,
 	       void *arg)
 {
 	if (output->writer.writer) {
@@ -284,10 +284,10 @@ __ops_writer_set(__ops_output_t * output,
  * \param arg The argument for the writer and destroyer
  */
 void 
-__ops_writer_push(__ops_output_t * output,
-		__ops_writer_func_t * writer,
-		__ops_writer_finaliser_t * finaliser,
-		__ops_writer_destroyer_t * destroyer,
+__ops_writer_push(__ops_output_t *output,
+		__ops_writer_func_t *writer,
+		__ops_writer_finaliser_t *finaliser,
+		__ops_writer_destroyer_t *destroyer,
 		void *arg)
 {
 	__ops_writer_t *copy = calloc(1, sizeof(*copy));
@@ -306,7 +306,7 @@ __ops_writer_push(__ops_output_t * output,
 }
 
 void 
-__ops_writer_pop(__ops_output_t * output)
+__ops_writer_pop(__ops_output_t *output)
 {
 	__ops_writer_t *next;
 
@@ -335,7 +335,7 @@ __ops_writer_pop(__ops_output_t * output)
  * \param output The output structure
  */
 unsigned 
-__ops_writer_close(__ops_output_t * output)
+__ops_writer_close(__ops_output_t *output)
 {
 	unsigned   ret = writer_info_finalise(&output->errors, &output->writer);
 
@@ -485,7 +485,7 @@ dash_esc_writer(const unsigned char *src,
  * \param writer
  */
 static void 
-dash_escaped_destroyer(__ops_writer_t * writer)
+dash_escaped_destroyer(__ops_writer_t *writer)
 {
 	dashesc_t	*dash;
 
@@ -501,8 +501,7 @@ dash_escaped_destroyer(__ops_writer_t * writer)
  * \param sig
  */
 unsigned 
-__ops_writer_push_clearsigned(__ops_output_t * output,
-			    __ops_create_sig_t * sig)
+__ops_writer_push_clearsigned(__ops_output_t *output, __ops_create_sig_t *sig)
 {
 	static const char     header[] =
 		"-----BEGIN PGP SIGNED MESSAGE-----\r\nHash: ";
@@ -599,19 +598,20 @@ sig_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 {
 	static const char   trail[] = "\r\n-----END PGP SIGNATURE-----\r\n";
 	unsigned char	    c[3];
-	base64_t	   *base64 = __ops_writer_get_arg(writer);
+	base64_t	   *base64;
 
+	base64 = __ops_writer_get_arg(writer);
 	if (base64->pos) {
 		if (!__ops_stacked_write(&b64map[base64->t], 1, errors,
 				writer)) {
 			return 0;
 		}
-		if (base64->pos == 1 && !__ops_stacked_write("==", 2, errors,
-				writer)) {
+		if (base64->pos == 1 &&
+		    !__ops_stacked_write("==", 2, errors, writer)) {
 			return 0;
 		}
-		if (base64->pos == 2 && !__ops_stacked_write("=", 1, errors,
-				writer)) {
+		if (base64->pos == 2 &&
+		    !__ops_stacked_write("=", 1, errors, writer)) {
 			return 0;
 		}
 	}
@@ -638,7 +638,7 @@ sig_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
  */
 typedef struct {
 	unsigned        pos;
-}               linebreak_t;
+} linebreak_t;
 
 #define BREAKPOS	76
 
@@ -676,7 +676,7 @@ linebreak_writer(const unsigned char *src,
  * \param output
  */
 unsigned 
-__ops_writer_use_armored_sig(__ops_output_t * output)
+__ops_writer_use_armored_sig(__ops_output_t *output)
 {
 	static const char     header[] =
 			"\r\n-----BEGIN PGP SIGNATURE-----\r\nVersion: "
@@ -708,10 +708,11 @@ static unsigned
 armoured_message_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 {
 	/* TODO: This is same as sig_finaliser apart from trailer. */
-	base64_t   *base64 = __ops_writer_get_arg(writer);
-	static const char     trailer[] = "\r\n-----END PGP MESSAGE-----\r\n";
-	unsigned char   c[3];
+	static const char	*trailer = "\r\n-----END PGP MESSAGE-----\r\n";
+	unsigned char		 c[3];
+	base64_t		*base64;
 
+	base64 = __ops_writer_get_arg(writer);
 	if (base64->pos) {
 		if (!__ops_stacked_write(&b64map[base64->t], 1, errors,
 				writer)) {
@@ -750,7 +751,7 @@ armoured_message_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
  \todo replace with generic function
 */
 void 
-__ops_writer_push_armor_msg(__ops_output_t * output)
+__ops_writer_push_armor_msg(__ops_output_t *output)
 {
 	static const char	 header[] = "-----BEGIN PGP MESSAGE-----\r\n";
 	base64_t		*base64;
@@ -792,9 +793,7 @@ armoured_finaliser(__ops_armor_type_t type,
 		(void) fprintf(stderr, "armoured_finaliser: unusual type\n");
 		return 0;
 	}
-
 	base64 = __ops_writer_get_arg(writer);
-
 	if (base64->pos) {
 		if (!__ops_stacked_write(&b64map[base64->t], 1, errors,
 				writer)) {
@@ -813,9 +812,7 @@ armoured_finaliser(__ops_armor_type_t type,
 	if (!__ops_stacked_write("\r\n=", 3, errors, writer)) {
 		return 0;
 	}
-
 	base64->pos = 0;		/* get ready to write the checksum */
-
 	c[0] = base64->checksum >> 16;
 	c[1] = base64->checksum >> 8;
 	c[2] = base64->checksum;
@@ -823,7 +820,6 @@ armoured_finaliser(__ops_armor_type_t type,
 	if (!base64_writer(c, 3, errors, writer)) {
 		return 0;
 	}
-
 	return __ops_stacked_write(tail, sz_tail, errors, writer);
 }
 
@@ -879,13 +875,10 @@ __ops_writer_push_armoured(__ops_output_t *output, __ops_armor_type_t type)
 			"__ops_writer_push_armoured: unusual type\n");
 		return;
 	}
-
 	__ops_write(output, header, sz_hdr);
-
 	__ops_writer_push(output, linebreak_writer, NULL,
 			generic_destroyer,
 			calloc(1, sizeof(linebreak_t)));
-
 	base64 = calloc(1, sizeof(*base64));
 	base64->checksum = CRC24_INIT;
 	__ops_writer_push(output, base64_writer, finaliser,
@@ -910,7 +903,6 @@ encrypt_writer(const unsigned char *src,
 	       __ops_error_t **errors,
 	       __ops_writer_t *writer)
 {
-
 #define BUFSZ 1024		/* arbitrary number */
 	unsigned char   encbuf[BUFSZ];
 	unsigned        remaining;
@@ -923,8 +915,7 @@ encrypt_writer(const unsigned char *src,
 		(void) fprintf(stderr, "encrypt_writer: not supported\n");
 		return 0;
 	}
-
-	while (remaining) {
+	while (remaining > 0) {
 		unsigned        size = (remaining < BUFSZ) ? remaining : BUFSZ;
 
 		/* memcpy(buf,src,size); // \todo copy needed here? */
@@ -959,7 +950,7 @@ encrypt_writer(const unsigned char *src,
 }
 
 static void 
-encrypt_destroyer(__ops_writer_t * writer)
+encrypt_destroyer(__ops_writer_t *writer)
 {
 	crypt_t    *pgp_encrypt = (crypt_t *) __ops_writer_get_arg(writer);
 
@@ -978,12 +969,12 @@ __ops_push_enc_crypt(__ops_output_t *output, __ops_crypt_t *pgp_crypt)
 {
 	/* Create encrypt to be used with this writer */
 	/* Remember to free this in the destroyer */
-	crypt_t    *pgp_encrypt = calloc(1, sizeof(*pgp_encrypt));
+	crypt_t    *pgp_encrypt;
 
+	pgp_encrypt = calloc(1, sizeof(*pgp_encrypt));
 	/* Setup the encrypt */
 	pgp_encrypt->crypt = pgp_crypt;
 	pgp_encrypt->free_crypt = 0;
-
 	/* And push writer on stack */
 	__ops_writer_push(output, encrypt_writer, NULL, encrypt_destroyer,
 			pgp_encrypt);
@@ -1095,7 +1086,7 @@ encrypt_se_ip_writer(const unsigned char *src,
 }
 
 static void 
-encrypt_se_ip_destroyer(__ops_writer_t * writer)
+encrypt_se_ip_destroyer(__ops_writer_t *writer)
 {
 	encrypt_se_ip_t	*se_ip;
 
@@ -1218,7 +1209,7 @@ fd_writer(const unsigned char *src, unsigned len,
 }
 
 static void 
-writer_fd_destroyer(__ops_writer_t * writer)
+writer_fd_destroyer(__ops_writer_t *writer)
 {
 	(void) free(__ops_writer_get_arg(writer));
 }
@@ -1370,7 +1361,7 @@ str_enc_se_ip_writer(const unsigned char *src,
 			    __ops_writer_t *writer);
 
 static unsigned 
-str_enc_se_ip_finaliser(__ops_error_t ** errors,
+str_enc_se_ip_finaliser(__ops_error_t **errors,
 			       __ops_writer_t * writer);
 
 static void     str_enc_se_ip_destroyer(__ops_writer_t *writer);
@@ -1479,7 +1470,7 @@ stream_write_litdata(__ops_output_t *output,
 	return 1;
 }
 
-static          unsigned
+static unsigned
 stream_write_litdata_first(__ops_output_t *output,
 				const unsigned char *data,
 				unsigned int len,
@@ -1489,15 +1480,16 @@ stream_write_litdata_first(__ops_output_t *output,
 	/* \todo add date */
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
 
-	size_t          sz_towrite = 1 + 1 + 4 + len;
-	size_t          sz_pd = __ops_partial_data_len(sz_towrite);
+	size_t          sz_towrite;
+	size_t          sz_pd;
 
+	sz_towrite = 1 + 1 + 4 + len;
+	sz_pd = __ops_partial_data_len(sz_towrite);
 	if (sz_pd < 512) {
 		(void) fprintf(stderr,
 			"stream_write_litdata_first: bad sz_pd\n");
 		return 0;
 	}
-
 	__ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA);
 	__ops_write_partial_len(sz_pd, output);
 	__ops_write_scalar(output, (unsigned)type, 1);
@@ -1512,7 +1504,7 @@ stream_write_litdata_first(__ops_output_t *output,
 }
 
 static unsigned
-stream_write_litdata_last(__ops_output_t * output,
+stream_write_litdata_last(__ops_output_t *output,
 				const unsigned char *data,
 				unsigned int len)
 {
@@ -1551,11 +1543,13 @@ stream_write_se_ip_first(__ops_output_t *output,
 			str_enc_se_ip_t *se_ip)
 {
 	unsigned char  *preamble;
+	size_t          blocksize;
 	size_t          sz_preamble;
 	size_t          sz_towrite;
 	size_t          sz_pd;
 
-	sz_preamble = se_ip->crypt->blocksize + 2;
+	blocksize = se_ip->crypt->blocksize;
+	sz_preamble = blocksize + 2;
 	sz_towrite = sz_preamble + 1 + len;
 	preamble = calloc(1, sz_preamble);
 	sz_pd = __ops_partial_data_len(sz_towrite);
@@ -1564,37 +1558,25 @@ stream_write_se_ip_first(__ops_output_t *output,
 			"stream_write_se_ip_first: bad sz_pd\n");
 		return 0;
 	}
-
 	__ops_write_ptag(output, OPS_PTAG_CT_SE_IP_DATA);
 	__ops_write_partial_len(sz_pd, output);
 	__ops_write_scalar(output, SE_IP_DATA_VERSION, 1);
-
 	__ops_push_enc_crypt(output, se_ip->crypt);
 
-	__ops_random(preamble, se_ip->crypt->blocksize);
-	preamble[se_ip->crypt->blocksize] =
-			preamble[se_ip->crypt->blocksize - 2];
-	preamble[se_ip->crypt->blocksize + 1] =
-			preamble[se_ip->crypt->blocksize - 1];
-
+	__ops_random(preamble, blocksize);
+	preamble[blocksize] = preamble[blocksize - 2];
+	preamble[blocksize + 1] = preamble[blocksize - 1];
 	__ops_hash_any(&se_ip->hash, OPS_HASH_SHA1);
 	se_ip->hash.init(&se_ip->hash);
-
 	__ops_write(output, preamble, sz_preamble);
 	se_ip->hash.add(&se_ip->hash, preamble, sz_preamble);
-
 	__ops_write(output, data, sz_pd - sz_preamble - 1);
 	se_ip->hash.add(&se_ip->hash, data, sz_pd - sz_preamble - 1);
-
 	data += (sz_pd - sz_preamble - 1);
 	sz_towrite -= sz_pd;
-
 	__ops_writer_pop(output);
-
 	stream_write_se_ip(output, data, sz_towrite, se_ip);
-
 	(void) free(preamble);
-
 	return 1;
 }
 

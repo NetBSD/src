@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.12 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -218,7 +218,7 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 }
 
 static void 
-dump_one_keydata(const __ops_keydata_t * key)
+dump_one_keydata(const __ops_keydata_t *key)
 {
 	unsigned        n;
 
@@ -246,7 +246,7 @@ dump_one_keydata(const __ops_keydata_t * key)
 /** __ops_dump_keyring
 */
 void 
-__ops_dump_keyring(const __ops_keyring_t * keyring)
+__ops_dump_keyring(const __ops_keyring_t *keyring)
 {
 	int             n;
 
@@ -336,7 +336,7 @@ __ops_errcode(const __ops_errcode_t errcode)
  */
 
 void 
-__ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode,
+__ops_push_error(__ops_error_t **errstack, __ops_errcode_t errcode,
 		int sys_errno, const char *file, int line, const char *fmt,...)
 {
 	/* first get the varargs and generate the comment */
@@ -379,7 +379,7 @@ __ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode,
 \param err Error to print
 */
 void 
-__ops_print_error(__ops_error_t * err)
+__ops_print_error(__ops_error_t *err)
 {
 	printf("%s:%d: ", err->file, err->line);
 	if (err->errcode == OPS_E_SYSTEM_ERROR) {
@@ -396,7 +396,7 @@ __ops_print_error(__ops_error_t * err)
 \param errstack Error stack to print
 */
 void 
-__ops_print_errors(__ops_error_t * errstack)
+__ops_print_errors(__ops_error_t *errstack)
 {
 	__ops_error_t    *err;
 
@@ -413,7 +413,7 @@ __ops_print_errors(__ops_error_t * errstack)
 \return 1 if found; else 0
 */
 int 
-__ops_has_error(__ops_error_t * errstack, __ops_errcode_t errcode)
+__ops_has_error(__ops_error_t *errstack, __ops_errcode_t errcode)
 {
 	__ops_error_t    *err;
 	for (err = errstack; err != NULL; err = err->next) {
@@ -560,7 +560,7 @@ __ops_keyid(unsigned char *keyid, const size_t idlen, const int last,
 \param length Length of int in bytes
 */
 void 
-__ops_hash_add_int(__ops_hash_t * hash, unsigned n, unsigned length)
+__ops_hash_add_int(__ops_hash_t *hash, unsigned n, unsigned length)
 {
 	while (length--) {
 		unsigned char   c;
@@ -577,7 +577,7 @@ __ops_hash_add_int(__ops_hash_t * hash, unsigned n, unsigned length)
 \param alg Hash algorithm to use
 */
 void 
-__ops_hash_any(__ops_hash_t * hash, __ops_hash_alg_t alg)
+__ops_hash_any(__ops_hash_t *hash, __ops_hash_alg_t alg)
 {
 	switch (alg) {
 	case OPS_HASH_MD5:
@@ -942,7 +942,7 @@ __ops_memory_new(void)
 */
 
 void 
-__ops_memory_free(__ops_memory_t * mem)
+__ops_memory_free(__ops_memory_t *mem)
 {
 	__ops_memory_release(mem);
 	(void) free(mem);
@@ -954,7 +954,7 @@ __ops_memory_free(__ops_memory_t * mem)
    \return Number of bytes in data
 */
 size_t 
-__ops_mem_len(const __ops_memory_t * mem)
+__ops_mem_len(const __ops_memory_t *mem)
 {
 	return mem->length;
 }
@@ -1091,8 +1091,8 @@ __ops_finish(void)
 }
 
 static int 
-sum16_reader(void *dest_, size_t length, __ops_error_t ** errors,
-	     __ops_reader_t * readinfo, __ops_callback_data_t * cbinfo)
+sum16_reader(void *dest_, size_t length, __ops_error_t **errors,
+	     __ops_reader_t *readinfo, __ops_callback_data_t *cbinfo)
 {
 	const unsigned char	*dest = dest_;
 	sum16_t			*arg = __ops_reader_get_arg(readinfo);
@@ -1121,7 +1121,7 @@ sum16_destroyer(__ops_reader_t *readinfo)
 */
 
 void 
-__ops_reader_push_sum16(__ops_parseinfo_t * pinfo)
+__ops_reader_push_sum16(__ops_parseinfo_t *pinfo)
 {
 	sum16_t    *arg = calloc(1, sizeof(*arg));
 
@@ -1134,7 +1134,7 @@ __ops_reader_push_sum16(__ops_parseinfo_t * pinfo)
    \return sum
 */
 unsigned short 
-__ops_reader_pop_sum16(__ops_parseinfo_t * pinfo)
+__ops_reader_pop_sum16(__ops_parseinfo_t *pinfo)
 {
 	unsigned short	 sum;
 	sum16_t		*arg;
