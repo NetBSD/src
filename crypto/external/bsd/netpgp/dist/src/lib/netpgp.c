@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.17 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.18 2009/05/27 05:42:25 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -100,7 +100,7 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 	FILE		*fp;
 
 	__OPS_USED(netpgp);
-	(void) snprintf(buf, sizeof(buf), "%s/.gnupg/gpg.conf", homedir);
+	(void) snprintf(buf, sizeof(buf), "%s/gpg.conf", homedir);
 	if ((fp = fopen(buf, "r")) == NULL) {
 		(void) fprintf(stderr, "conffile: can't open '%s'\n", buf);
 		return 0;
@@ -210,8 +210,7 @@ readkeyring(netpgp_t *netpgp, const char *name)
 
 	homedir = netpgp_getvar(netpgp, "homedir");
 	if ((filename = netpgp_getvar(netpgp, name)) == NULL) {
-		(void) snprintf(f, sizeof(f), "%s/.gnupg/%s.gpg",
-					homedir, name);
+		(void) snprintf(f, sizeof(f), "%s/%s.gpg", homedir, name);
 		filename = f;
 	}
 	keyring = calloc(1, sizeof(*keyring));
@@ -255,8 +254,8 @@ netpgp_init(netpgp_t *netpgp)
 		(void) fprintf(stderr, "netpgp: warning: core dumps enabled\n");
 	}
 	if ((homedir = netpgp_getvar(netpgp, "homedir")) == NULL) {
-		netpgp_setvar(netpgp, "homedir", getenv("HOME"));
-		homedir = netpgp_getvar(netpgp, "homedir");
+		(void) fprintf(stderr, "netpgp: bad homedir\n");
+		return 0;
 	}
 	if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
 		(void) memset(id, 0x0, sizeof(id));
@@ -568,10 +567,10 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 	char		 ringname[MAXPATHLEN];
 	char		*homedir;
 
-	homedir = getenv("HOME");
+	homedir = netpgp_getvar(netpgp, "homedir");
 	if (pubringname == NULL) {
 		(void) snprintf(ringname, sizeof(ringname),
-				"%s/.gnupg/pubring.gpg", homedir);
+				"%s/pubring.gpg", homedir);
 		pubringname = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
