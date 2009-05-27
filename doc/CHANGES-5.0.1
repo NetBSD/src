@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.14 2009/05/26 19:19:08 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.15 2009/05/27 21:46:08 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -145,4 +145,19 @@ sys/arch/sparc64/sparc64/vm_machdep.c		1.88
 	directly uses the ucontext to return to the fork call.
 	Fixes PR 41302.
 	[martin, ticket #774]
+
+sys/kern/sys_mqueue.c				1.18
+
+	- Slightly rework the way permissions are checked. Neither
+	mq_receive() nor mq_send() should fail due to permissions.
+	- Check for empty message queue name (POSIX does not allow this
+	for regular files, and it's weird), check for DTYPE_MQUEUE, fix
+	permission check in mq_unlink(), clean up.
+	[rmind, ticket #779]
+
+sys/kern/kern_physio.c				1.91
+
+	Remove a race where physio_done() may use memory already
+	freed.  Fixes PR kern/39536.
+	[hannken, ticket #781]
 
