@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.81 2009/04/28 20:56:40 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.82 2009/05/27 23:44:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.81 2009/04/28 20:56:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.82 2009/05/27 23:44:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -77,7 +77,7 @@ static struct sysctllog *domain_sysctllog;
 static void sysctl_net_setup(void);
 
 void
-domaininit(void)
+domaininit(bool addroute)
 {
 	__link_set_decl(domains, struct domain);
 	struct domain * const * dpp;
@@ -95,7 +95,7 @@ domaininit(void)
 		else
 			domain_attach(*dpp);
 	}
-	if (rt_domain)
+	if (rt_domain && addroute)
 		domain_attach(rt_domain);
 
 	callout_init(&pffasttimo_ch, CALLOUT_MPSAFE);
