@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.98 2009/05/16 17:01:15 cegger Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.99 2009/05/27 04:08:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98 2009/05/16 17:01:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2009/05/27 04:08:06 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -207,6 +207,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 		write_user_windows();
 		opcb->pcb_psr = getpsr();
 	}
+#ifdef DIAGNOSTIC
+	else if (l1 != &lwp0)	/* XXX is this valid? */
+		panic("cpu_lwp_fork: curlwp");
+#endif
 
 	memcpy((void *)npcb, (void *)opcb, sizeof(struct pcb));
 	if (l1->l_md.md_fpstate != NULL) {
@@ -271,14 +275,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_int)npcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (int)func;		/* Function to call */
-	rp->rw_local[1] = (int)arg;		/* and its argument */
-	rp->rw_local[2] = (int)l2;		/* the new LWP */
 
-	npcb->pcb_pc = (int)lwp_trampoline - 8;
-	npcb->pcb_sp = (int)rp;
-	npcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
-	npcb->pcb_wim = 1;		/* Fence at window #1 */
+	cpu_setfunc(l2, func, arg);
 }
 
 /*
