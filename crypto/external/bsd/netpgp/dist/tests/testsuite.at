@@ -1,6 +1,8 @@
-# $NetBSD: testsuite.at,v 1.2 2009/05/27 06:47:57 lukem Exp $
+# $NetBSD: testsuite.at,v 1.3 2009/05/27 14:42:07 agc Exp $
 
 AT_INIT([netpgp])
 
 m4_include([init.at])
 m4_include([verify.at])
+m4_include([detached.at])
+m4_include([crypt.at])

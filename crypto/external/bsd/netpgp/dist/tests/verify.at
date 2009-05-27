@@ -1,6 +1,6 @@
-# $NetBSD: verify.at,v 1.3 2009/05/27 07:00:32 lukem Exp $
+# $NetBSD: verify.at,v 1.4 2009/05/27 14:42:07 agc Exp $
 
-AT_SETUP([check-verify])
+AT_SETUP([check signatures and verification])
 
 cp ${TOPSRCDIR}/configure file1
 
@@ -13,6 +13,10 @@ AT_CHECK([$NETPGP --homedir $testhomedir --sign file1],
 AT_CHECK([$NETPGP --homedir $testhomedir --verify file1.gpg],
     [0], [ignore], [ignore])
 
+# Cat the verified file
+AT_CHECK([$NETPGP --homedir $testhomedir --cat --output=file2 file1.gpg],
+    [0], [ignore], [ignore])
+
 # Fail to verify an unsigned file
 # XXX: determine how to expand $testuserid instead of hard-coding
 AT_CHECK([$NETPGP --homedir $testhomedir --verify file1],
@@ -20,8 +24,5 @@ AT_CHECK([$NETPGP --homedir $testhomedir --verify file1],
 [netpgp: default key set to "C7AB5F325F918728"
 "file1": No signatures found - is this a signed file?
 ])
-
-# XXXTODO: deliberately corrupt file1.gpg and attempt to verify
-
 
 AT_CLEANUP
