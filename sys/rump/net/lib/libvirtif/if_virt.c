@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.9 2009/05/26 19:03:05 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.10 2009/05/27 23:41:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.9 2009/05/26 19:03:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.10 2009/05/27 23:41:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.9 2009/05/26 19:03:05 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+#include "rump_net_private.h"
 
 /*
  * Virtual interface for userspace purposes.  Uses tap(4) to
@@ -252,4 +253,50 @@ virtif_sender(void *arg)
 	}
 
 	mutex_exit(softnet_lock);
+}
+
+/*
+ * dummyif is a nada-interface.
+ * As it requires nothing external, it can be used for testing
+ * interface configuration.
+ */
+static int	dummyif_init(struct ifnet *);
+static void	dummyif_start(struct ifnet *);
+
+void
+rump_dummyif_create()
+{
+	struct ifnet *ifp;
+	struct ethercom *ec;
+	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
+
+	enaddr[2] = arc4random() & 0xff;
+	enaddr[5] = arc4random() & 0xff;
+
+	ec = kmem_zalloc(sizeof(*ec), KM_SLEEP);
+
+	ifp = &ec->ec_if;
+	strlcpy(ifp->if_xname, "dummy0", sizeof(ifp->if_xname));
+	ifp->if_softc = ifp;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_init = dummyif_init;
+	ifp->if_ioctl = virtif_ioctl;
+	ifp->if_start = dummyif_start;
+
+	if_attach(ifp);
+	ether_ifattach(ifp, enaddr);
+}
+
+static int
+dummyif_init(struct ifnet *ifp)
+{
+
+	ifp->if_flags |= IFF_RUNNING;
+	return 0;
+}
+
+static void
+dummyif_start(struct ifnet *ifp)
+{
+
 }
