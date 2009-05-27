@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.236 2009/03/18 16:00:22 cegger Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.237 2009/05/27 17:41:03 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.236 2009/03/18 16:00:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.237 2009/05/27 17:41:03 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -409,6 +409,9 @@ tcp_init(void)
 
 	/* Initialize reassembly queue */
 	tcpipqent_init();
+
+	/* SACK */
+	tcp_sack_init();
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
