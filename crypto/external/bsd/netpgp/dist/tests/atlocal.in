@@ -1,9 +1,9 @@
-# $Id: atlocal.in,v 1.1 2009/05/26 04:27:30 lukem Exp $
+# $Id: atlocal.in,v 1.2 2009/05/27 01:54:22 lukem Exp $
 
 TOPSRCDIR=@abs_top_srcdir@
 export TOPSRCDIR
 
-TESTROOT=@abs_top_builddir@/$AUTOTEST_PATH/root
+TESTROOT=@abs_builddir@/root
 export TESTROOT
 
 NETPGP=@abs_top_builddir@/src/bin/netpgp
