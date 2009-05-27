@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.51 2009/05/24 15:27:08 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.52 2009/05/27 09:30:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.51 2009/05/24 15:27:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52 2009/05/27 09:30:14 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1521,11 +1521,11 @@ mbattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
 	 */
-	((struct iomod *)(pdc_hpa.hpa & FLEX_MASK))[FPA_IOMOD].io_flex =
-		(void *)((pdc_hpa.hpa & FLEX_MASK) | DMA_ENABLE);
+	((struct iomod *)(pdc_hpa.hpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
+		(void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
 	sc->sc_hpa = pdc_hpa.hpa;
-	aprint_normal(" [flex %lx]\n", pdc_hpa.hpa & FLEX_MASK);
+	aprint_normal(" [flex %lx]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
 	memset(&nca, 0, sizeof(nca));
