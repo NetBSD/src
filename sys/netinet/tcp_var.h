@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.159 2009/01/29 20:38:22 pooka Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.160 2009/05/27 17:41:03 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -885,6 +885,7 @@ tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
 tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq);
 
+void	 tcp_sack_init(void);
 void	 tcp_new_dsack(struct tcpcb *, tcp_seq, u_int32_t);
 void	 tcp_sack_option(struct tcpcb *, const struct tcphdr *,
 	    const u_char *, int);
