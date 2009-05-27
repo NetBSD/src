@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.4 2008/11/23 23:48:48 njoly Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.5 2009/05/27 12:20:37 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -69,7 +69,7 @@ struct linux_siginfo {
 			linux_uid_t _uid;
 			int _status;
 			linux_clock_t _utime;
-			clock_t _stime;
+			linux_clock_t _stime;
 		} _sigchld;
 
 		struct {
