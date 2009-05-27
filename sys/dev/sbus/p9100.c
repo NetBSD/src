@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.44 2009/05/27 00:35:34 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.45 2009/05/27 15:13:22 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.44 2009/05/27 00:35:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.45 2009/05/27 15:13:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,12 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.44 2009/05/27 00:35:34 macallan Exp $");
 
 #include "opt_wsemul.h"
 #include "rasops_glue.h"
+#include "opt_pnozz.h"
 
 #include "tctrl.h"
 #if NTCTRL > 0
 #include <machine/tctrl.h>
-#include <sparc/dev/tctrlvar.h>/*XXX*/
+#include <sparc/dev/tctrlvar.h>	/*XXX*/
 #endif
 
 #ifdef PNOZZ_DEBUG
@@ -106,17 +107,12 @@ struct p9100_softc {
 	bus_size_t	sc_ctl_psize;	/*   for device mmap() */
 	bus_space_handle_t sc_ctl_memh;	/*   bus space handle */
 
-#if 0
-	bus_addr_t	sc_cmd_paddr;	/* phys address description */
-	bus_size_t	sc_cmd_psize;	/*   for device mmap() */
-	bus_space_handle_t sc_cmd_memh;	/*   bus space handle */
-#endif
 	bus_addr_t	sc_fb_paddr;	/* phys address description */
 	bus_size_t	sc_fb_psize;	/*   for device mmap() */
 	bus_space_handle_t sc_fb_memh;	/*   bus space handle */
 
 	volatile uint32_t sc_junk;
-	uint32_t sc_mono_width;	/* for setup_mono */
+	uint32_t 	sc_mono_width;	/* for setup_mono */
 
 	uint32_t	sc_width;
 	uint32_t	sc_height;	/* panel width / height */
@@ -128,11 +124,12 @@ struct p9100_softc {
 
 	struct pnozz_cursor sc_cursor;
 
-	int sc_mode;
-	int sc_video, sc_powerstate;
-	uint32_t sc_bg;
+	int 		sc_mode;
+	int 		sc_video, sc_powerstate;
+	uint32_t 	sc_bg;
 	volatile uint32_t sc_last_offset;
 	struct vcons_data vd;
+	uint8_t		sc_dac_power;
 };
 
 
@@ -154,7 +151,8 @@ const struct wsscreen_descr *_p9100_scrlist[] = {
 };
 
 struct wsscreen_list p9100_screenlist = {
-	sizeof(_p9100_scrlist) / sizeof(struct wsscreen_descr *), _p9100_scrlist
+	sizeof(_p9100_scrlist) / sizeof(struct wsscreen_descr *),
+	_p9100_scrlist
 };
 
 /* autoconfiguration driver */
@@ -162,7 +160,6 @@ static int	p9100_sbus_match(device_t, cfdata_t, void *);
 static void	p9100_sbus_attach(device_t, device_t, void *);
 
 static void	p9100unblank(device_t);
-static void	p9100_shutdown(void *);
 
 CFATTACH_DECL_NEW(pnozz, sizeof(struct p9100_softc),
     p9100_sbus_match, p9100_sbus_attach, NULL, NULL);
@@ -220,8 +217,6 @@ static void	p9100_putchar(void *, int, int, u_int, long);
 static void	p9100_cursor(void *, int, int, int);
 static int	p9100_allocattr(void *, int, int, int, long *);
 
-/*static void	p9100_scroll(void *, void *, int);*/
-
 static int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 static int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 static int	p9100_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -230,7 +225,7 @@ static paddr_t	p9100_mmap(void *, void *, off_t, int);
 /*static int	p9100_load_font(void *, void *, struct wsdisplay_font *);*/
 
 static void	p9100_init_screen(void *, struct vcons_screen *, int,
-	    long *);
+		    long *);
 #endif
 
 static void	p9100_init_cursor(struct p9100_softc *);
@@ -244,7 +239,8 @@ static int	p9100_intr(void *);
 #endif
 
 /* power management stuff */
-static void p9100_power_hook(int, void *);
+static bool p9100_suspend(device_t PMF_FN_PROTO);
+static bool p9100_resume(device_t PMF_FN_PROTO);
 
 #if NTCTRL > 0
 static void p9100_set_extvga(void *, int);
@@ -308,8 +304,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	/*
 	 * When the ROM has mapped in a p9100 display, the address
 	 * maps only the video RAM, so in any case we have to map the
-	 * registers ourselves.  We only need the video RAM if we are
-	 * going to print characters via rconsole.
+	 * registers ourselves.
 	 */
 
 	if (sa->sa_npromvaddrs != 0)
@@ -340,12 +335,20 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 		return;
 	}
 
+	/*
+	 * we need to map the framebuffer even though we never write to it,
+	 * thanks to some weirdness in the SPARCbook's SBus glue for the
+	 * P9100 - all register accesses need to be 'latched in' whenever we
+	 * go to another 0x80 aligned 'page' by reading the framebuffer at the
+	 * same offset
+	 */
 	if (fb->fb_pixels == NULL) {
 		if (sbus_bus_map(sc->sc_bustag,
 		    sa->sa_reg[2].oa_space,
 		    sa->sa_reg[2].oa_base,
 		    sc->sc_fb_psize,
-		    BUS_SPACE_MAP_LINEAR, &sc->sc_fb_memh) != 0) {
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+		    &sc->sc_fb_memh) != 0) {
 			printf("%s: cannot map framebuffer\n",
 			    self->dv_xname);
 			return;
@@ -382,77 +385,9 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	}
 #endif
 
-	/*
-	 * When the ROM has mapped in a p9100 display, the address
-	 * maps only the video RAM, so in any case we have to map the
-	 * registers ourselves.  We only need the video RAM if we are
-	 * going to print characters via rconsole.
-	 */
-	if (sbus_bus_map(sc->sc_bustag,
-			 sa->sa_reg[0].oa_space,
-			 sa->sa_reg[0].oa_base,
-			 /*
-			  * XXX for some reason the SBus resources don't cover
-			  * all registers, so we just map what we need
-			  */
-			 /*sc->sc_ctl_psize*/ 0x8000,
-			 /*BUS_SPACE_MAP_LINEAR*/0, &sc->sc_ctl_memh) != 0) {
-		aprint_error_dev(self, "cannot map control registers\n");
-		return;
-	}
-
-	if (sa->sa_npromvaddrs != 0)
-		fb->fb_pixels = (void *)sa->sa_promvaddrs[0];
-
-	if (fb->fb_pixels == NULL) {
-		if (sbus_bus_map(sc->sc_bustag,
-				sa->sa_reg[2].oa_space,
-				sa->sa_reg[2].oa_base,
-				sc->sc_fb_psize,
-				BUS_SPACE_MAP_LINEAR, &sc->sc_fb_memh) != 0) {
-			aprint_error_dev(self, "cannot map framebuffer\n");
-			return;
-		}
-		fb->fb_pixels = (char *)sc->sc_fb_memh;
-	} else {
-		sc->sc_fb_memh = (bus_space_handle_t) fb->fb_pixels;
-	}
-
-#if 0
-	/*
-	 * we set our own depth and OBP won't hand us anything else than 8 bit
-	 * anyway
-	 */
-	i = p9100_ctl_read_4(sc, 0x0004);
-	switch ((i >> 26) & 7) {
-	    case 5: 
-	    	fb->fb_type.fb_depth = 32;
-		sc->sc_depth = 4;
-		sc->sc_depthshift = 2;
-		break;
-	    case 7: 
-	    	fb->fb_type.fb_depth = 24;
-		/* bitch and moan */
-		break;
-	    case 3:
-	    	fb->fb_type.fb_depth = 16;
-		sc->sc_depth = 2;
-		sc->sc_depthshift = 1;
-		break;
-	    case 2:
-	    	fb->fb_type.fb_depth = 8;
-		sc->sc_depth = 1;
-		sc->sc_depthshift = 0;
-		break;
-	    default: {
-		panic("pnozz: can't determine screen depth (0x%02x)", i);
-	    }
-	}
-#else
     	fb->fb_type.fb_depth = 8;
 	sc->sc_depth = 1;
 	sc->sc_depthshift = 0;
-#endif	
 
 	/* check the RAMDAC */
 	ver = p9100_ramdac_read_ctl(sc, DAC_VERSION);
@@ -489,8 +424,11 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	if (isconsole)
 		p9100_set_video(sc, 1);
 
-	if (shutdownhook_establish(p9100_shutdown, sc) == NULL) {
-		panic("%s: could not establish shutdown hook",
+	/* register with power management */
+	sc->sc_video = 1;
+	sc->sc_powerstate = PWR_RESUME;
+	if (!pmf_device_register(self, p9100_suspend, p9100_resume)) {
+		panic("%s: could not register with PMF",
 		      device_xname(sc->sc_dev));
 	}
 
@@ -534,45 +472,20 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	config_found(self, &aa, wsemuldisplaydevprint);
 #endif
 	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
-	printf(": rev %d / %x, %dx%d, depth %d mem %x",
-	       (i & 7), ver, fb->fb_type.fb_width, fb->fb_type.fb_height,
-	       fb->fb_type.fb_depth, (unsigned int)sc->sc_fb_psize);
+	printf("%s: rev %d / %x, %dx%d, depth %d mem %x\n",
+		device_xname(self),
+		(i & 7), ver, fb->fb_type.fb_width, fb->fb_type.fb_height,
+		fb->fb_type.fb_depth, (unsigned int)sc->sc_fb_psize);
 	/* cursor sprite handling */
 	p9100_init_cursor(sc);
 
 	/* attach the fb */
 	fb_attach(fb, isconsole);
 
-	/* register with power management */
-	sc->sc_video = 1;
-	sc->sc_powerstate = PWR_RESUME;
-	powerhook_establish(device_xname(sc->sc_dev), p9100_power_hook, sc);
-
 #if NTCTRL > 0
 	/* register callback for external monitor status change */
 	tadpole_register_callback(p9100_set_extvga, sc);
 #endif
-}
-
-static void
-p9100_shutdown(void *arg)
-{
-	struct p9100_softc *sc = arg;
-
-#ifdef RASTERCONSOLE
-	sc->sc_cmap.cm_map[0][0] = 0xff;
-	sc->sc_cmap.cm_map[0][1] = 0xff;
-	sc->sc_cmap.cm_map[0][2] = 0xff;
-	sc->sc_cmap.cm_map[1][0] = 0;
-	sc->sc_cmap.cm_map[1][1] = 0;
-	sc->sc_cmap.cm_map[1][2] = 0x00;
-	p9100loadcmap(sc, 0, 2);
-	sc->sc_cmap.cm_map[255][0] = 0;
-	sc->sc_cmap.cm_map[255][1] = 0;
-	sc->sc_cmap.cm_map[255][2] = 0;
-	p9100loadcmap(sc, 255, 1);
-#endif
-	p9100_set_video(sc, 1);
 }
 
 int
@@ -974,7 +887,7 @@ p9100unblank(device_t dev)
 {
 	struct p9100_softc *sc = device_private(dev);
 
-	p9100_set_video((struct p9100_softc *)dev, 1);
+	p9100_set_video(sc, 1);
 
 	/*
 	 * Check if we're in terminal mode. If not force the console screen
@@ -1016,27 +929,40 @@ p9100_get_video(struct p9100_softc *sc)
 	return (p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1) & VIDEO_ENABLED) != 0;
 }
 
-static void
-p9100_power_hook(int why, void *cookie)
+static bool
+p9100_suspend(device_t dev PMF_FN_ARGS)
 {
-	struct p9100_softc *sc = cookie;
+	struct p9100_softc *sc = device_private(dev);
 
-	if (why == sc->sc_powerstate)
-		return;
+	if (sc->sc_powerstate == PWR_SUSPEND)
+		return TRUE;
 
-	switch(why)
-	{
-		case PWR_SUSPEND:
-		case PWR_STANDBY:
-			sc->sc_video = p9100_get_video(sc);
-			p9100_set_video(sc, 0);
-			sc->sc_powerstate = why;
-			break;
-		case PWR_RESUME:
-			p9100_set_video(sc, sc->sc_video);
-			sc->sc_powerstate = why;
-			break;
-	}
+	sc->sc_video = p9100_get_video(sc);
+	sc->sc_dac_power = p9100_ramdac_read_ctl(sc, DAC_POWER_MGT);
+	p9100_ramdac_write_ctl(sc, DAC_POWER_MGT,
+		DAC_POWER_SCLK_DISABLE |
+		DAC_POWER_DDOT_DISABLE |
+		DAC_POWER_SYNC_DISABLE |
+		DAC_POWER_ICLK_DISABLE |
+		DAC_POWER_IPWR_DISABLE);
+	p9100_set_video(sc, 0);
+	sc->sc_powerstate = PWR_SUSPEND;
+	return TRUE;
+}
+
+static bool
+p9100_resume(device_t dev PMF_FN_ARGS)
+{
+	struct p9100_softc *sc = device_private(dev);
+
+	if (sc->sc_powerstate == PWR_RESUME)
+		return TRUE;
+
+	p9100_ramdac_write_ctl(sc, DAC_POWER_MGT, sc->sc_dac_power);	
+	p9100_set_video(sc, sc->sc_video);
+
+	sc->sc_powerstate = PWR_RESUME;
+	return TRUE;
 }
 
 /*
@@ -1107,15 +1033,7 @@ p9100mmap(dev_t dev, off_t off, int prot)
 			prot,
 			BUS_SPACE_MAP_LINEAR));
 	}
-#if 0
-	off -= sc->sc_ctl_psize;
 
-	return (bus_space_mmap(sc->sc_bustag,
-		sc->sc_cmd_paddr,
-		off,
-		prot,
-		BUS_SPACE_MAP_LINEAR));
-#endif
 	return EINVAL;
 }
 
