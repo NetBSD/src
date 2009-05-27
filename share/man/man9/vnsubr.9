@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.34 2008/04/30 13:10:59 martin Exp $
+.\"     $NetBSD: vnsubr.9,v 1.35 2009/05/27 23:01:27 jnemeth Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 9, 2008
+.Dd May 27, 2009
 .Dt VNSUBR 9
 .Os
 .Sh NAME
@@ -79,7 +79,7 @@
 .Ft int
 .Fn vn_readdir "file_t *fp" "char *buf" "int segflg" "u_int count" "int *done" "struct lwp *l" "off_t **cookies" "int *ncookies"
 .Ft int
-.Fn vn_stat "struct vnode *vp" "struct stat *sb" "struct lwp *l"
+.Fn vn_stat "struct vnode *vp" "struct stat *sb"
 .Ft int
 .Fn vn_writechk "struct vnode *vp"
 .Sh DESCRIPTION
@@ -224,16 +224,13 @@ should be NULL is they aren't required to be returned by
 .Fn vn_readdir .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
-.It Fn vn_stat "vp" "sb" "l"
+.It Fn vn_stat "vp" "sb"
 Common code for a vnode stat operation.
 The vnode is specified by the argument
 .Fa vp ,
 and
 .Fa sb
 is the buffer to return the stat information.
-The argument
-.Fa l
-is the calling lwp.
 .Fn vn_stat
 basically calls the vnode operation
 .Xr VOP_GETATTR 9
