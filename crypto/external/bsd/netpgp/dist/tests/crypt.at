@@ -1,0 +1,27 @@
+# $NetBSD: crypt.at,v 1.1 2009/05/27 14:42:07 agc Exp $
+
+AT_SETUP([encryption and decryption])
+
+cp ${TOPSRCDIR}/configure file1
+
+# Sign the file
+# XXX: this prompts for a passphrase when the userid doesn't have one
+AT_CHECK([$NETPGP --homedir $testhomedir --encrypt file1],
+    [0], [ignore], [ignore])
+
+# Verify the signed file
+AT_CHECK([$NETPGP --homedir $testhomedir --decrypt file1.gpg],
+    [0], [ignore], [ignore])
+
+# Fail to verify an unsigned file
+# XXX: determine how to expand $testuserid instead of hard-coding
+#AT_CHECK([$NETPGP --homedir $testhomedir --decrypt file1],
+#    [1], [ignore],
+#[netpgp: default key set to "C7AB5F325F918728"
+#"file1": No signatures found - is this an encrypted file?
+#])
+
+# XXXTODO: deliberately corrupt file1.gpg and attempt to verify
+
+
+AT_CLEANUP
