@@ -1,11 +1,13 @@
-# $Id: verify.at,v 1.1 2009/05/26 04:27:30 lukem Exp $
+# $NetBSD: verify.at,v 1.2 2009/05/27 06:47:57 lukem Exp $
 
 AT_SETUP([check-verify])
 
 cp ${TOPSRCDIR}/configure a
 
-AT_CHECK([$NETPGP --sign a], [0], [ignore], [ignore])
+AT_CHECK([$NETPGP --homedir $testhomedir --sign a],
+    [0], [ignore], [ignore])
 
-AT_CHECK([$NETPGP --verify a.pgp], [0], [ignore], [ignore])
+AT_CHECK([$NETPGP --homedir $testhomedir --verify a.gpg],
+    [0], [ignore], [ignore])
 
 AT_CLEANUP
