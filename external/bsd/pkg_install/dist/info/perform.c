@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:17:07 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.9 2009/05/27 22:41:35 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:17:07 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.9 2009/05/27 22:41:35 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -287,11 +287,14 @@ read_meta_data_from_pkgdb(const char *pkg)
 }
 
 static void
-build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta)
+build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta, int limit)
 {
 	char *iter, *eol, *next;
 	lpkg_t *lpp;
 	struct pkg_meta *meta_dep;
+
+	if (limit == 65536)
+		errx(1, "Cycle in the dependency tree, bailing out");
 
 	if (meta->is_installed == 0 || meta->meta_required_by == NULL)
 		return;
@@ -316,12 +319,14 @@ build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta)
 		lpp = alloc_lpkg(iter);
 		if (next != eol)
 			*eol = '\n';
-		TAILQ_INSERT_TAIL(reqby, lpp, lp_link);
+
 		meta_dep = read_meta_data_from_pkgdb(lpp->lp_name);
 		if (meta_dep == NULL)
 			continue;
-		build_full_reqby(reqby, meta_dep);
+		build_full_reqby(reqby, meta_dep, limit + 1);
 		free_pkg_meta(meta_dep);
+
+		TAILQ_INSERT_TAIL(reqby, lpp, lp_link);
 	}
 }
 
@@ -438,7 +443,7 @@ pkg_do(const char *pkg)
 		if ((Flags & SHOW_FULL_REQBY) && meta->is_installed) {
 			lpkg_head_t reqby;
 			TAILQ_INIT(&reqby);
-			build_full_reqby(&reqby, meta);
+			build_full_reqby(&reqby, meta, 0);
 			show_list(&reqby, "Full required by list:\n");
 		}
 		if (Flags & SHOW_DESC) {
