@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84 2008/02/27 18:26:16 xtraeme Exp $ */
+/*	$NetBSD: cpu.h,v 1.85 2009/05/27 01:35:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,12 +140,11 @@ void	sparc_softintr_init(void);
  * process as soon as possible.
  */
 #define cpu_signotify(l) do {						\
-	struct cpu_info *_ci = (l)->l_cpu;				\
-	_ci->ci_want_ast = 1;						\
+	(l)->l_cpu->ci_want_ast = 1;					\
 									\
 	/* Just interrupt the target CPU, so it can notice its AST */	\
-	if (_ci->ci_cpuid != cpu_number())				\
-		XCALL0(sparc_noop, 1U << _ci->ci_cpuid);		\
+	if ((l)->l_cpu->ci_cpuid != cpu_number())			\
+		XCALL0(sparc_noop, 1U << (l)->l_cpu->ci_cpuid);		\
 } while (/*CONSTCOND*/0)
 
 /* CPU architecture version */
