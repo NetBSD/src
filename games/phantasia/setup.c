@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.19 2009/05/25 23:08:45 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.20 2009/05/27 17:44:38 dholland Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -12,10 +12,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "include.h"
-
-#ifndef __dead /* Not NetBSD */
-#define __dead
-#endif
 
 int main(int, char *[]);
 void Error(const char *, const char *) __dead;
