@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.27 2007/09/19 04:33:45 dyoung Exp $	*/
+/*	$NetBSD: domain.h,v 1.28 2009/05/27 23:44:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -94,7 +94,7 @@ STAILQ_HEAD(domainhead,domain);
 #define	DOMAIN_FOREACH(dom)	STAILQ_FOREACH(dom, &domains, dom_link)
 extern struct domainhead domains;
 void domain_attach(struct domain *);
-void domaininit(void);
+void domaininit(bool);
 #endif
 
 #endif /* !_SYS_DOMAIN_H_ */
