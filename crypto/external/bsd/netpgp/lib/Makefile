@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2009/05/26 05:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2009/05/27 04:47:08 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ CPPFLAGS+= -I${.CURDIR} -I${EXTDIST}/include
 MAN= libnetpgp.3
 WARNS=4
 
-EXTDIST=${NETBSDSRCDIR}/crypto/external/bsd/netpgp/dist
+EXTDIST=${.CURDIR}/../dist
 
 .PATH: ${EXTDIST}/include ${EXTDIST}/src/lib
 
