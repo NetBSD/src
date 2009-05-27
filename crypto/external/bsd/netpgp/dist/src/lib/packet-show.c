@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.9 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.10 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -318,7 +318,7 @@ static __ops_bit_map_t ss_key_server_prefs_map[] =
  */
 
 static void 
-list_init(__ops_list_t * list)
+list_init(__ops_list_t *list)
 {
 	list->size = 0;
 	list->used = 0;
@@ -326,7 +326,7 @@ list_init(__ops_list_t * list)
 }
 
 static void 
-list_free_strings(__ops_list_t * list)
+list_free_strings(__ops_list_t *list)
 {
 	unsigned        i;
 
@@ -337,7 +337,7 @@ list_free_strings(__ops_list_t * list)
 }
 
 static void 
-list_free(__ops_list_t * list)
+list_free(__ops_list_t *list)
 {
 	if (list->strings)
 		free(list->strings);
@@ -345,7 +345,7 @@ list_free(__ops_list_t * list)
 }
 
 static unsigned int 
-list_resize(__ops_list_t * list)
+list_resize(__ops_list_t *list)
 {
 	/*
 	 * We only resize in one direction - upwards. Algorithm used : double
@@ -366,7 +366,7 @@ list_resize(__ops_list_t * list)
 }
 
 static unsigned int 
-add_str(__ops_list_t * list, const char *str)
+add_str(__ops_list_t *list, const char *str)
 {
 	if (list->size == list->used)
 		if (!list_resize(list))
@@ -404,7 +404,7 @@ __ops_text_init(__ops_text_t *text)
  * \param text Pointer to a previously allocated structure. This structure and its contents will be freed.
  */
 void 
-__ops_text_free(__ops_text_t * text)
+__ops_text_free(__ops_text_t *text)
 {
 	/* Strings in "known" array will be constants, so don't free them */
 	list_free(&text->known);
@@ -534,7 +534,7 @@ text_from_bytemapped_octets(__ops_data_t *data,
  *
  */
 static __ops_text_t *
-showall_octets_bits(__ops_data_t * data, __ops_bit_map_t ** map,
+showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map,
 		    size_t nmap)
 {
 	unsigned char	 mask, bit;
@@ -801,7 +801,7 @@ __ops_showall_ss_features(__ops_ss_features_t ss_features)
  * \return
 */
 const char     *
-__ops_show_ss_key_flag(unsigned char octet, __ops_bit_map_t * map)
+__ops_show_ss_key_flag(unsigned char octet, __ops_bit_map_t *map)
 {
 	return find_bitfield(map, octet);
 }
@@ -857,7 +857,7 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_keyserv_pref(unsigned char prefs, __ops_bit_map_t * map)
+__ops_show_keyserv_pref(unsigned char prefs, __ops_bit_map_t *map)
 {
 	return find_bitfield(map, prefs);
 }

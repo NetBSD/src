@@ -1,4 +1,4 @@
-# $Id: init.at,v 1.1 2009/05/26 04:27:30 lukem Exp $
+# $Id: init.at,v 1.2 2009/05/27 00:38:27 agc Exp $
 
 AT_SETUP([init])
 
@@ -10,11 +10,11 @@ AT_CHECK([mkdir -p $TESTROOT], [0], [ignore], [ignore])
 
 #XXX provide pubkey.asc and privkey.asc for this
 # import public key for tests
-AT_CHECK([$NETPGP --homedir $TESTROOT --import < $TOPSRCDIR/files/pubkey.asc],
+AT_CHECK([$NETPGP --homedir=$TESTROOT --import < $TOPSRCDIR/files/pubkey.asc],
     [0], [ignore], [ignore])
 
 # import private key for tests
-AT_CHECK([$NETPGP --homedir $TESTROOT --import < $TOPSRCDIR/files/privkey.asc],
+AT_CHECK([$NETPGP --homedir=$TESTROOT --import < $TOPSRCDIR/files/privkey.asc],
     [0], [ignore], [ignore])
 
 AT_CLEANUP

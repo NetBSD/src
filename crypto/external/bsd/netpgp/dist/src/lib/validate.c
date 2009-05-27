@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.14 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.15 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -143,9 +143,9 @@ check_binary_sig(const unsigned len,
 }
 
 static int 
-keydata_reader(void *dest, size_t length, __ops_error_t ** errors,
-	       __ops_reader_t * readinfo,
-	       __ops_callback_data_t * cbinfo)
+keydata_reader(void *dest, size_t length, __ops_error_t **errors,
+	       __ops_reader_t *readinfo,
+	       __ops_callback_data_t *cbinfo)
 {
 	validate_reader_t *reader = __ops_reader_get_arg(readinfo);
 
@@ -178,14 +178,14 @@ keydata_reader(void *dest, size_t length, __ops_error_t ** errors,
 }
 
 static void 
-free_sig_info(__ops_sig_info_t * sig)
+free_sig_info(__ops_sig_info_t *sig)
 {
 	(void) free(sig->v4_hashed);
 	(void) free(sig);
 }
 
 static void 
-copy_sig_info(__ops_sig_info_t * dst, const __ops_sig_info_t * src)
+copy_sig_info(__ops_sig_info_t *dst, const __ops_sig_info_t *src)
 {
 	(void) memcpy(dst, src, sizeof(*src));
 	dst->v4_hashed = calloc(1, src->v4_hashlen);
@@ -492,7 +492,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 }
 
 static void 
-keydata_destroyer(__ops_reader_t * readinfo)
+keydata_destroyer(__ops_reader_t *readinfo)
 {
 	free(__ops_reader_get_arg(readinfo));
 }

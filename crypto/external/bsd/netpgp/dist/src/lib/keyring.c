@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.12 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.13 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -154,7 +154,7 @@ __ops_keydata_free(__ops_keydata_t *keydata)
 */
 
 const __ops_pubkey_t *
-__ops_get_pubkey(const __ops_keydata_t * keydata)
+__ops_get_pubkey(const __ops_keydata_t *keydata)
 {
 	return (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) ?
 				&keydata->key.pubkey :
@@ -168,7 +168,7 @@ __ops_get_pubkey(const __ops_keydata_t * keydata)
 */
 
 unsigned 
-__ops_is_key_secret(const __ops_keydata_t * data)
+__ops_is_key_secret(const __ops_keydata_t *data)
 {
 	return data->type != OPS_PTAG_CT_PUBLIC_KEY;
 }
@@ -291,8 +291,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 \return secret key
 */
 __ops_seckey_t *
-__ops_decrypt_seckey(const __ops_keydata_t * key,
-				 const char *pphrase)
+__ops_decrypt_seckey(const __ops_keydata_t *key, const char *pphrase)
 {
 	__ops_parseinfo_t *pinfo;
 	decrypt_t   decrypt;
@@ -356,7 +355,7 @@ __ops_get_userid_count(const __ops_keydata_t *key)
 \return Pointer to requested user id
 */
 const unsigned char *
-__ops_get_userid(const __ops_keydata_t * key, unsigned subscript)
+__ops_get_userid(const __ops_keydata_t *key, unsigned subscript)
 {
 	return key->uids[subscript].userid;
 }
@@ -392,7 +391,7 @@ __ops_is_key_supported(const __ops_keydata_t *keydata)
 \note If dst already has a userid, it will be freed.
 */
 void 
-__ops_copy_userid(__ops_userid_t * dst, const __ops_userid_t * src)
+__ops_copy_userid(__ops_userid_t *dst, const __ops_userid_t *src)
 {
 	size_t          len = strlen((char *) src->userid);
 	if (dst->userid)
@@ -411,7 +410,7 @@ __ops_copy_userid(__ops_userid_t * dst, const __ops_userid_t * src)
 \note If dst already has a packet, it will be freed.
 */
 void 
-__ops_copy_packet(__ops_subpacket_t * dst, const __ops_subpacket_t * src)
+__ops_copy_packet(__ops_subpacket_t *dst, const __ops_subpacket_t *src)
 {
 	if (dst->raw) {
 		(void) free(dst->raw);
@@ -429,7 +428,7 @@ __ops_copy_packet(__ops_subpacket_t * dst, const __ops_subpacket_t * src)
 \return Pointer to new User ID
 */
 __ops_userid_t  *
-__ops_add_userid(__ops_keydata_t * keydata, const __ops_userid_t * userid)
+__ops_add_userid(__ops_keydata_t *keydata, const __ops_userid_t *userid)
 {
 	__ops_userid_t  *new_uid = NULL;
 
@@ -455,7 +454,7 @@ __ops_add_userid(__ops_keydata_t * keydata, const __ops_userid_t * userid)
 \return Pointer to new packet
 */
 __ops_subpacket_t   *
-__ops_add_subpacket(__ops_keydata_t * keydata, const __ops_subpacket_t * packet)
+__ops_add_subpacket(__ops_keydata_t *keydata, const __ops_subpacket_t *packet)
 {
 	__ops_subpacket_t   *new_pkt = NULL;
 
@@ -565,7 +564,7 @@ __ops_add_selfsigned_userid(__ops_keydata_t *keydata, __ops_userid_t *userid)
 \param type OPS_PTAG_CT_PUBLIC_KEY or OPS_PTAG_CT_SECRET_KEY
 */
 void 
-__ops_keydata_init(__ops_keydata_t * keydata, const __ops_content_tag_t type)
+__ops_keydata_init(__ops_keydata_t *keydata, const __ops_content_tag_t type)
 {
 	if (keydata->type != OPS_PTAG_CT_RESERVED) {
 		(void) fprintf(stderr,
@@ -629,11 +628,13 @@ cb_keyring_read(const __ops_packet_t *pkt,
 */
 
 unsigned 
-__ops_keyring_fileread(__ops_keyring_t * keyring, const unsigned armour, const char *filename)
+__ops_keyring_fileread(__ops_keyring_t *keyring,
+			const unsigned armour,
+			const char *filename)
 {
-	__ops_parseinfo_t *pinfo;
-	int             fd;
-	unsigned   res = 1;
+	__ops_parseinfo_t	*pinfo;
+	unsigned		 res = 1;
+	int			 fd;
 
 	pinfo = __ops_parseinfo_new();
 
@@ -708,9 +709,9 @@ __ops_keyring_fileread(__ops_keyring_t * keyring, const unsigned armour, const c
    \sa __ops_keyring_free
 */
 unsigned 
-__ops_keyring_read_from_mem(__ops_keyring_t * keyring,
+__ops_keyring_read_from_mem(__ops_keyring_t *keyring,
 				const unsigned armour,
-				__ops_memory_t * mem)
+				__ops_memory_t *mem)
 {
 	__ops_parseinfo_t	*pinfo = NULL;
 	unsigned		 res = 1;
@@ -746,7 +747,7 @@ __ops_keyring_read_from_mem(__ops_keyring_t * keyring,
    \note This does not free keyring itself, just the memory alloc-ed in it.
  */
 void 
-__ops_keyring_free(__ops_keyring_t * keyring)
+__ops_keyring_free(__ops_keyring_t *keyring)
 {
 	free(keyring->keys);
 	keyring->keys = NULL;
@@ -769,7 +770,7 @@ __ops_keyring_free(__ops_keyring_t * keyring)
 
 */
 const __ops_keydata_t *
-__ops_getkeybyid(const __ops_keyring_t * keyring,
+__ops_getkeybyid(const __ops_keyring_t *keyring,
 			   const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
 	int	n;
@@ -944,8 +945,8 @@ __ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
 
    \return none
 */
-void
-__ops_keyring_list(const __ops_keyring_t * keyring)
+int
+__ops_keyring_list(const __ops_keyring_t *keyring)
 {
 	int             n;
 	__ops_keydata_t  *key;
@@ -959,6 +960,7 @@ __ops_keyring_list(const __ops_keyring_t * keyring)
 		}
 		(void) fputc('\n', stdout);
 	}
+	return 1;
 }
 
 static unsigned

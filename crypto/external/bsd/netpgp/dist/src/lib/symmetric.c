@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.6 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.7 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -368,7 +368,7 @@ static const __ops_crypt_t aes256 =
 /* Triple DES */
 
 static void 
-tripledes_init(__ops_crypt_t * crypt)
+tripledes_init(__ops_crypt_t *crypt)
 {
 	DES_key_schedule *keys;
 	int             n;
@@ -385,7 +385,7 @@ tripledes_init(__ops_crypt_t * crypt)
 }
 
 static void 
-tripledes_block_encrypt(__ops_crypt_t * crypt, void *out, const void *in)
+tripledes_block_encrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	DES_key_schedule *keys = crypt->encrypt_key;
 
@@ -394,7 +394,7 @@ tripledes_block_encrypt(__ops_crypt_t * crypt, void *out, const void *in)
 }
 
 static void 
-tripledes_block_decrypt(__ops_crypt_t * crypt, void *out, const void *in)
+tripledes_block_decrypt(__ops_crypt_t *crypt, void *out, const void *in)
 {
 	DES_key_schedule *keys = crypt->encrypt_key;
 
@@ -414,7 +414,7 @@ tripledes_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in,
 }
 
 static void 
-tripledes_cfb_decrypt(__ops_crypt_t * crypt, void *out, const void *in,
+tripledes_cfb_decrypt(__ops_crypt_t *crypt, void *out, const void *in,
 			size_t count)
 {
 	DES_key_schedule *keys = crypt->encrypt_key;
@@ -471,7 +471,7 @@ get_proto(__ops_symm_alg_t alg)
 }
 
 int 
-__ops_crypt_any(__ops_crypt_t * crypt, __ops_symm_alg_t alg)
+__ops_crypt_any(__ops_crypt_t *crypt, __ops_symm_alg_t alg)
 {
 	const __ops_crypt_t *ptr = get_proto(alg);
 
@@ -501,14 +501,14 @@ __ops_key_size(__ops_symm_alg_t alg)
 }
 
 void 
-__ops_encrypt_init(__ops_crypt_t * encrypt)
+__ops_encrypt_init(__ops_crypt_t *encrypt)
 {
 	/* \todo should there be a separate __ops_encrypt_init? */
 	__ops_decrypt_init(encrypt);
 }
 
 void 
-__ops_decrypt_init(__ops_crypt_t * decrypt)
+__ops_decrypt_init(__ops_crypt_t *decrypt)
 {
 	decrypt->base_init(decrypt);
 	decrypt->block_encrypt(decrypt, decrypt->siv, decrypt->iv);
@@ -517,7 +517,7 @@ __ops_decrypt_init(__ops_crypt_t * decrypt)
 }
 
 size_t
-__ops_decrypt_se(__ops_crypt_t * decrypt, void *outvoid, const void *invoid,
+__ops_decrypt_se(__ops_crypt_t *decrypt, void *outvoid, const void *invoid,
 		size_t count)
 {
 	unsigned char  *out = outvoid;
@@ -546,7 +546,7 @@ __ops_decrypt_se(__ops_crypt_t * decrypt, void *outvoid, const void *invoid,
 }
 
 size_t 
-__ops_encrypt_se(__ops_crypt_t * encrypt, void *outvoid, const void *invoid,
+__ops_encrypt_se(__ops_crypt_t *encrypt, void *outvoid, const void *invoid,
 	       size_t count)
 {
 	unsigned char  *out = outvoid;
@@ -600,7 +600,7 @@ __ops_is_sa_supported(__ops_symm_alg_t alg)
 }
 
 size_t 
-__ops_encrypt_se_ip(__ops_crypt_t * crypt, void *out, const void *in,
+__ops_encrypt_se_ip(__ops_crypt_t *crypt, void *out, const void *in,
 		  size_t count)
 {
 	if (!__ops_is_sa_supported(crypt->alg)) {
@@ -614,7 +614,7 @@ __ops_encrypt_se_ip(__ops_crypt_t * crypt, void *out, const void *in,
 }
 
 size_t 
-__ops_decrypt_se_ip(__ops_crypt_t * crypt, void *out, const void *in,
+__ops_decrypt_se_ip(__ops_crypt_t *crypt, void *out, const void *in,
 		  size_t count)
 {
 	if (!__ops_is_sa_supported(crypt->alg)) {

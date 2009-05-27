@@ -130,16 +130,16 @@ typedef struct __ops_error {
 	struct __ops_error	*next;
 } __ops_error_t;
 
-const char     *__ops_errcode(const __ops_errcode_t errcode);
+const char     *__ops_errcode(const __ops_errcode_t);
 
 void 
-__ops_push_error(__ops_error_t ** errstack, __ops_errcode_t errcode,
-		int sys_errno,
-		const char *file, int line, const char *comment,...);
-void __ops_print_error(__ops_error_t * err);
-void __ops_print_errors(__ops_error_t * errstack);
-void __ops_free_errors(__ops_error_t * errstack);
-int  __ops_has_error(__ops_error_t * errstack, __ops_errcode_t errcode);
+__ops_push_error(__ops_error_t **, __ops_errcode_t,
+		int,
+		const char *, int, const char *,...);
+void __ops_print_error(__ops_error_t *);
+void __ops_print_errors(__ops_error_t *);
+void __ops_free_errors(__ops_error_t *);
+int  __ops_has_error(__ops_error_t *, __ops_errcode_t);
 
 #define OPS_SYSTEM_ERROR_1(err,code,sys,fmt,arg)	do {		\
 	__ops_push_error(err,OPS_E_SYSTEM_ERROR,errno,__FILE__,__LINE__,sys);\

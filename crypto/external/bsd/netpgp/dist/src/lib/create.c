@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.14 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.15 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -123,7 +123,7 @@ __ops_write_ss_header(__ops_output_t *output,
  */
 
 void 
-__ops_fast_create_userid(__ops_userid_t * id, unsigned char *userid)
+__ops_fast_create_userid(__ops_userid_t *id, unsigned char *userid)
 {
 	id->userid = userid;
 }
@@ -225,8 +225,7 @@ __ops_fast_create_rsa_pubkey(__ops_pubkey_t *key, time_t t,
  * verification - the writer doesn't allow them, though
  */
 static unsigned 
-write_pubkey_body(const __ops_pubkey_t * key,
-		      __ops_output_t * output)
+write_pubkey_body(const __ops_pubkey_t *key, __ops_output_t *output)
 {
 	if (!(__ops_write_scalar(output, (unsigned)key->version, 1) &&
 	      __ops_write_scalar(output, (unsigned)key->birthtime, 4))) {
@@ -273,10 +272,10 @@ write_pubkey_body(const __ops_pubkey_t * key,
  * verification - the writer doesn't allow them, though
  */
 static unsigned 
-write_seckey_body(const __ops_seckey_t * key,
+write_seckey_body(const __ops_seckey_t *key,
 		      const unsigned char *passphrase,
 		      const size_t pplen,
-		      __ops_output_t * output)
+		      __ops_output_t *output)
 {
 	/* RFC4880 Section 5.5.3 Secret-Key Packet Formats */
 
@@ -519,7 +518,7 @@ write_struct_pubkey(__ops_output_t *output, const __ops_pubkey_t *key)
 unsigned 
 __ops_write_xfer_pubkey(__ops_output_t *output,
 			const __ops_keydata_t *keydata,
-			unsigned armoured)
+			const unsigned armoured)
 {
 	unsigned int    i = 0, j = 0;
 
@@ -650,9 +649,9 @@ __ops_write_xfer_seckey(__ops_output_t *output,
  */
 
 unsigned 
-__ops_write_rsa_pubkey(time_t t, const BIGNUM * n,
-			 const BIGNUM * e,
-			 __ops_output_t * output)
+__ops_write_rsa_pubkey(time_t t, const BIGNUM *n,
+			 const BIGNUM *e,
+			 __ops_output_t *output)
 {
 	__ops_pubkey_t key;
 
@@ -703,9 +702,9 @@ __ops_build_pubkey(__ops_memory_t *out, const __ops_pubkey_t *key,
  * \param e The RSA public parameter e */
 
 void 
-__ops_fast_create_rsa_seckey(__ops_seckey_t * key, time_t t,
-			     BIGNUM * d, BIGNUM * p, BIGNUM * q, BIGNUM * u,
-			       BIGNUM * n, BIGNUM * e)
+__ops_fast_create_rsa_seckey(__ops_seckey_t *key, time_t t,
+			     BIGNUM *d, BIGNUM *p, BIGNUM *q, BIGNUM *u,
+			       BIGNUM *n, BIGNUM *e)
 {
 	__ops_fast_create_rsa_pubkey(&key->pubkey, t, n, e);
 
@@ -730,10 +729,10 @@ __ops_fast_create_rsa_seckey(__ops_seckey_t * key, time_t t,
  * \return 1 if OK; else 0
  */
 unsigned 
-__ops_write_struct_seckey(const __ops_seckey_t * key,
+__ops_write_struct_seckey(const __ops_seckey_t *key,
 			    const unsigned char *passphrase,
 			    const size_t pplen,
-			    __ops_output_t * output)
+			    __ops_output_t *output)
 {
 	int             length = 0;
 
@@ -858,7 +857,7 @@ __ops_output_delete(__ops_output_t *output)
  \return 1 if OK; else 0
 */
 unsigned 
-__ops_calc_sesskey_checksum(__ops_pk_sesskey_t * sesskey, unsigned char cs[2])
+__ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, unsigned char cs[2])
 {
 	unsigned int    i = 0;
 	unsigned long   checksum = 0;
@@ -884,7 +883,7 @@ __ops_calc_sesskey_checksum(__ops_pk_sesskey_t * sesskey, unsigned char cs[2])
 }
 
 static unsigned 
-create_unencoded_m_buf(__ops_pk_sesskey_t * sesskey, unsigned char *m_buf)
+create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, unsigned char *m_buf)
 {
 	int             i = 0;
 
@@ -981,7 +980,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 \note Currently hard-coded to use RSA
 */
 __ops_pk_sesskey_t *
-__ops_create_pk_sesskey(const __ops_keydata_t * key)
+__ops_create_pk_sesskey(const __ops_keydata_t *key)
 {
 	/*
          * Creates a random session key and encrypts it for the given key
@@ -1125,7 +1124,7 @@ __ops_write_mdc(const unsigned char *hashed, __ops_output_t *output)
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_write_litdata(__ops_output_t * output,
+__ops_write_litdata(__ops_output_t *output,
 			const unsigned char *data,
 			const int maxlen,
 			const __ops_litdata_type_t type)

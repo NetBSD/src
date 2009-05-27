@@ -116,7 +116,7 @@ unsigned   __ops_sign_file(const char *,
 			const unsigned,
 			const unsigned);
 
-int __ops_sign_detached(char *, char *, __ops_seckey_t *, const char *);
+int __ops_sign_detached(const char *, char *, __ops_seckey_t *, const char *);
 
 /* armoured stuff */
 unsigned __ops_crc24(unsigned, unsigned char);

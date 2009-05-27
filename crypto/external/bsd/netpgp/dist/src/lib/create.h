@@ -94,12 +94,12 @@ unsigned __ops_write_litdata(__ops_output_t *,
 __ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_keydata_t *);
 unsigned __ops_write_pk_sesskey(__ops_output_t *, __ops_pk_sesskey_t *);
 unsigned __ops_write_xfer_pubkey(__ops_output_t *,
-				const __ops_keydata_t *, unsigned);
+				const __ops_keydata_t *, const unsigned);
 unsigned   __ops_write_xfer_seckey(__ops_output_t *,
 				const __ops_keydata_t *,
 				const unsigned char *,
 				const size_t,
-				unsigned);
+				const unsigned);
 
 void __ops_fast_create_userid(__ops_userid_t *, unsigned char *);
 unsigned __ops_write_userid(const unsigned char *, __ops_output_t *);

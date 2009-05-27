@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.15 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.16 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2321,15 +2321,14 @@ parse_hash_data(__ops_parseinfo_t *pinfo, const void *data,
 static int 
 parse_litdata(__ops_region_t *region, __ops_parseinfo_t *pinfo)
 {
-	__ops_packet_t	 pkt;
 	__ops_memory_t	*mem;
+	__ops_packet_t	 pkt;
 	unsigned char	 c = 0x0;
 
 	if (!limread(&c, 1, region, pinfo)) {
 		return 0;
 	}
 	pkt.u.litdata_header.format = c;
-
 	if (!limread(&c, 1, region, pinfo)) {
 		return 0;
 	}
@@ -2338,13 +2337,10 @@ parse_litdata(__ops_region_t *region, __ops_parseinfo_t *pinfo)
 		return 0;
 	}
 	pkt.u.litdata_header.filename[c] = '\0';
-
 	if (!limited_read_time(&pkt.u.litdata_header.mtime, region, pinfo)) {
 		return 0;
 	}
-
 	CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_LITERAL_DATA_HEADER, &pkt);
-
 	mem = pkt.u.litdata_body.mem = __ops_memory_new();
 	__ops_memory_init(pkt.u.litdata_body.mem,
 			(unsigned)(region->length * 1.01) + 12);
@@ -2357,10 +2353,8 @@ parse_litdata(__ops_region_t *region, __ops_parseinfo_t *pinfo)
 			return 0;
 		}
 		pkt.u.litdata_body.length = readc;
-		parse_hash_data(pinfo, pkt.u.litdata_body.data,
-			region->length);
-		CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_LITERAL_DATA_BODY,
-			&pkt);
+		parse_hash_data(pinfo, pkt.u.litdata_body.data, region->length);
+		CALLBACK(&pinfo->cbinfo, OPS_PTAG_CT_LITERAL_DATA_BODY, &pkt);
 	}
 
 	/* XXX - get rid of mem here? */

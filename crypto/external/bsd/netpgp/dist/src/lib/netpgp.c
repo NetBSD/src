@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.16 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.17 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -102,6 +102,7 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 	__OPS_USED(netpgp);
 	(void) snprintf(buf, sizeof(buf), "%s/.gnupg/gpg.conf", homedir);
 	if ((fp = fopen(buf, "r")) == NULL) {
+		(void) fprintf(stderr, "conffile: can't open '%s'\n", buf);
 		return 0;
 	}
 	(void) memset(&keyre, 0x0, sizeof(keyre));
@@ -150,7 +151,7 @@ userid_to_id(const unsigned char *userid, char *id)
 
 /* print out the successful signature information */
 static void
-psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
+psuccess(FILE *fp, const char *f, __ops_validation_t *res, __ops_keyring_t *ring)
 {
 	const __ops_keydata_t	*pubkey;
 	unsigned		 i;
@@ -163,10 +164,63 @@ psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
 			ctime(&res->valid_sigs[i].birthtime),
 			__ops_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
-		pubkey = __ops_getkeybyid(pubring,
+		pubkey = __ops_getkeybyid(ring,
 			(const unsigned char *) res->valid_sigs[i].signer_id);
 		__ops_print_pubkeydata(fp, pubkey);
 	}
+}
+
+/* check there's enough space in the arrays */
+static void
+size_arrays(netpgp_t *netpgp, unsigned needed)
+{
+	if (netpgp->size == 0) {
+		/* only get here first time around */
+		netpgp->size = needed;
+		netpgp->name = calloc(sizeof(char *), needed);
+		netpgp->value = calloc(sizeof(char *), needed);
+	} else if (netpgp->c == netpgp->size) {
+		/* only uses 'needed' when filled array */
+		netpgp->size += needed;
+		netpgp->name = realloc(netpgp->name, sizeof(char *) * needed);
+		netpgp->value = realloc(netpgp->value, sizeof(char *) * needed);
+	}
+}
+
+/* find the name in the array */
+static int
+findvar(netpgp_t *netpgp, const char *name)
+{
+	unsigned	i;
+
+	for (i = 0 ; i < netpgp->c && strcmp(netpgp->name[i], name) != 0; i++) {
+	}
+	return (i == netpgp->c) ? -1 : (int)i;
+}
+
+/* read a keyring and return it */
+static void *
+readkeyring(netpgp_t *netpgp, const char *name)
+{
+	__ops_keyring_t	*keyring;
+	const unsigned	 noarmor = 0;
+	char		 f[MAXPATHLEN];
+	char		*filename;
+	char		*homedir;
+
+	homedir = netpgp_getvar(netpgp, "homedir");
+	if ((filename = netpgp_getvar(netpgp, name)) == NULL) {
+		(void) snprintf(f, sizeof(f), "%s/.gnupg/%s.gpg",
+					homedir, name);
+		filename = f;
+	}
+	keyring = calloc(1, sizeof(*keyring));
+	if (!__ops_keyring_fileread(keyring, noarmor, filename)) {
+		(void) fprintf(stderr, "Can't read %s %s\n", name, filename);
+		return NULL;
+	}
+	netpgp_setvar(netpgp, name, filename);
+	return keyring;
 }
 
 /***************************************************************************/
@@ -175,63 +229,59 @@ psuccess(FILE *fp, char *f, __ops_validation_t *res, __ops_keyring_t *pubring)
 
 /* initialise a netpgp_t structure */
 int
-netpgp_init(netpgp_t *netpgp, char *userid, char *fpubring, char *fsecring)
+netpgp_init(netpgp_t *netpgp)
 {
-	__ops_keyring_t	*keyring;
-	char		*homedir;
-	char		 ringname[MAXPATHLEN];
-	char		 id[MAX_ID_LENGTH];
+	char	*userid;
+	char	*homedir;
+	char	 id[MAX_ID_LENGTH];
+	int	 coredumps;
 
 #ifdef HAVE_SYS_RESOURCE_H
 	struct rlimit	limit;
 
-	(void) memset(&limit, 0x0, sizeof(limit));
-	if (setrlimit(RLIMIT_CORE, &limit) != 0) {
-		(void) fprintf(stderr,
+	coredumps = netpgp_getvar(netpgp, "coredumps") != NULL;
+	if (!coredumps) {
+		(void) memset(&limit, 0x0, sizeof(limit));
+		if (setrlimit(RLIMIT_CORE, &limit) != 0) {
+			(void) fprintf(stderr,
 			"netpgp_init: warning - can't turn off core dumps\n");
+			coredumps = 1;
+		}
 	}
 #else
-	(void) fprintf(stderr,
-		"netpgp_init: warning - no way of switching off core dumps\n");
+	coredumps = 1;
 #endif
-	homedir = getenv("HOME");
-	if (userid == NULL) {
+	if (coredumps) {
+		(void) fprintf(stderr, "netpgp: warning: core dumps enabled\n");
+	}
+	if ((homedir = netpgp_getvar(netpgp, "homedir")) == NULL) {
+		netpgp_setvar(netpgp, "homedir", getenv("HOME"));
+		homedir = netpgp_getvar(netpgp, "homedir");
+	}
+	if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
 		(void) memset(id, 0x0, sizeof(id));
-		conffile(netpgp, homedir, id, sizeof(id));
+		(void) conffile(netpgp, homedir, id, sizeof(id));
 		if (id[0] != 0x0) {
-			userid = id;
+			netpgp_setvar(netpgp, "userid", userid = id);
 		}
 	}
 	if (userid == NULL) {
-		(void) fprintf(stderr, "Cannot find user id\n");
+		if (netpgp_getvar(netpgp, "userid checks") == NULL) {
+			(void) fprintf(stderr, "Cannot find user id\n");
+			return 0;
+		}
+		(void) fprintf(stderr, "Skipping user id check\n");
+	} else {
+		(void) netpgp_setvar(netpgp, "userid", id);
+	}
+	if ((netpgp->pubring = readkeyring(netpgp, "pubring")) == NULL) {
+		(void) fprintf(stderr, "Can't read pub keyring\n");
 		return 0;
 	}
-	(void) netpgp_setvar(netpgp, "userid", id);
-	if (fpubring == NULL) {
-		(void) snprintf(ringname, sizeof(ringname),
-			"%s/.gnupg/pubring.gpg", homedir);
-		fpubring = ringname;
-	}
-	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_fileread(keyring, 0, fpubring)) {
-		(void) fprintf(stderr, "Can't read pub keyring %s\n", fpubring);
+	if ((netpgp->secring = readkeyring(netpgp, "secring")) == NULL) {
+		(void) fprintf(stderr, "Can't read sec keyring\n");
 		return 0;
 	}
-	netpgp->pubring = keyring;
-	netpgp->pubringfile = strdup(fpubring);
-	if (fsecring == NULL) {
-		(void) snprintf(ringname, sizeof(ringname),
-				"%s/.gnupg/secring.gpg", homedir);
-		fsecring = ringname;
-	}
-	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_fileread(keyring, 0, fsecring)) {
-		(void) fprintf(stderr, "Can't read sec keyring %s\n", fsecring);
-		return 0;
-	}
-	netpgp->secring = keyring;
-	netpgp->secringfile = strdup(fsecring);
-	netpgp->userid = strdup(userid);
 	return 1;
 }
 
@@ -239,19 +289,28 @@ netpgp_init(netpgp_t *netpgp, char *userid, char *fpubring, char *fsecring)
 int
 netpgp_end(netpgp_t *netpgp)
 {
+	unsigned	i;
+
+	for (i = 0 ; i < netpgp->c ; i++) {
+		if (netpgp->name[i] != NULL) {
+			(void) free(netpgp->name[i]);
+		}
+		if (netpgp->value[i] != NULL) {
+			(void) free(netpgp->value[i]);
+		}
+	}
+	if (netpgp->name != NULL) {
+		(void) free(netpgp->name);
+	}
+	if (netpgp->value != NULL) {
+		(void) free(netpgp->value);
+	}
 	if (netpgp->pubring != NULL) {
 		__ops_keyring_free(netpgp->pubring);
-	}
-	if (netpgp->pubringfile != NULL) {
-		(void) free(netpgp->pubringfile);
 	}
 	if (netpgp->secring != NULL) {
 		__ops_keyring_free(netpgp->secring);
 	}
-	if (netpgp->secringfile != NULL) {
-		(void) free(netpgp->secringfile);
-	}
-	(void) free(netpgp->userid);
 	return 1;
 }
 
@@ -259,8 +318,7 @@ netpgp_end(netpgp_t *netpgp)
 int
 netpgp_list_keys(netpgp_t *netpgp)
 {
-	__ops_keyring_list(netpgp->pubring);
-	return 1;
+	return __ops_keyring_list(netpgp->pubring);
 }
 
 /* find a key in a keyring */
@@ -281,7 +339,7 @@ netpgp_export_key(netpgp_t *netpgp, char *userid)
 	const __ops_keydata_t	*keypair;
 
 	if (userid == NULL) {
-		userid = netpgp->userid;
+		userid = netpgp_getvar(netpgp, "userid");
 	}
 	keypair = __ops_getkeybyname(netpgp->pubring, userid);
 	if (keypair == NULL) {
@@ -289,25 +347,25 @@ netpgp_export_key(netpgp_t *netpgp, char *userid)
 			"Cannot find own key \"%s\" in keyring\n", userid);
 		return 0;
 	}
-	__ops_export_key(keypair, NULL);
-	return 1;
+	return __ops_export_key(keypair, NULL);
 }
 
 /* import a key into our keyring */
 int
 netpgp_import_key(netpgp_t *netpgp, char *f)
 {
-	int	done;
+	const unsigned	noarmor = 0;
+	const unsigned	armor = 1;
+	int		done;
 
-	if ((done = __ops_keyring_fileread(netpgp->pubring, 0, f)) == 0) {
-		done = __ops_keyring_fileread(netpgp->pubring, 1, f);
+	if ((done = __ops_keyring_fileread(netpgp->pubring, noarmor, f)) == 0) {
+		done = __ops_keyring_fileread(netpgp->pubring, armor, f);
 	}
 	if (!done) {
 		(void) fprintf(stderr, "Cannot import key from file %s\n", f);
 		return 0;
 	}
-	__ops_keyring_list(netpgp->pubring);
-	return 1;
+	return __ops_keyring_list(netpgp->pubring);
 }
 
 /* generate a new key */
@@ -317,33 +375,42 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	__ops_keydata_t		*keypair;
 	__ops_userid_t		 uid;
 	__ops_output_t		*create;
+	const unsigned		 noarmor = 0;
+	char			*ringfile;
 	int             	 fd;
 
 	(void) memset(&uid, 0x0, sizeof(uid));
+	/* generate a new key for 'id' */
 	uid.userid = (unsigned char *) id;
 	keypair = __ops_rsa_new_selfsign_key(numbits, 65537UL, &uid);
 	if (keypair == NULL) {
 		(void) fprintf(stderr, "Cannot generate key\n");
 		return 0;
 	}
-	/* write public key */
-	fd = __ops_setup_file_append(&create, netpgp->pubringfile);
-	__ops_write_xfer_pubkey(create, keypair, 0);
-	__ops_teardown_file_write(create, fd);
-	__ops_keyring_free(netpgp->pubring);
-	if (!__ops_keyring_fileread(netpgp->pubring, 0, netpgp->pubringfile)) {
-		(void) fprintf(stderr, "Cannot read pubring %s\n",
-				netpgp->pubringfile);
+	/* write public key, and try to re-read it */
+	ringfile = netpgp_getvar(netpgp, "pubring"); 
+	fd = __ops_setup_file_append(&create, ringfile);
+	if (!__ops_write_xfer_pubkey(create, keypair, noarmor)) {
+		(void) fprintf(stderr, "Cannot write pubkey\n");
 		return 0;
 	}
-	/* write secret key */
-	fd = __ops_setup_file_append(&create, netpgp->secringfile);
-	__ops_write_xfer_seckey(create, keypair, NULL, 0, 0);
+	__ops_teardown_file_write(create, fd);
+	__ops_keyring_free(netpgp->pubring);
+	if (!__ops_keyring_fileread(netpgp->pubring, noarmor, ringfile)) {
+		(void) fprintf(stderr, "Cannot read pubring %s\n", ringfile);
+		return 0;
+	}
+	/* write secret key, and try to re-read it */
+	ringfile = netpgp_getvar(netpgp, "sec ring file"); 
+	fd = __ops_setup_file_append(&create, ringfile);
+	if (!__ops_write_xfer_seckey(create, keypair, NULL, 0, noarmor)) {
+		(void) fprintf(stderr, "Cannot write seckey\n");
+		return 0;
+	}
 	__ops_teardown_file_write(create, fd);
 	__ops_keyring_free(netpgp->secring);
-	if (!__ops_keyring_fileread(netpgp->secring, 0, netpgp->secringfile)) {
-		(void) fprintf(stderr, "Can't read secring %s\n",
-				netpgp->secringfile);
+	if (!__ops_keyring_fileread(netpgp->secring, noarmor, ringfile)) {
+		(void) fprintf(stderr, "Can't read secring %s\n", ringfile);
 		return 0;
 	}
 	__ops_keydata_free(keypair);
@@ -352,14 +419,19 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 
 /* encrypt a file */
 int
-netpgp_encrypt_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armored)
+netpgp_encrypt_file(netpgp_t *netpgp,
+			const char *userid,
+			const char *f,
+			char *out,
+			int armored)
 {
 	const __ops_keydata_t	*keypair;
+	const unsigned		 overwrite = 1;
 	const char		*suffix;
 	char			 outname[MAXPATHLEN];
 
 	if (userid == NULL) {
-		userid = netpgp->userid;
+		userid = netpgp_getvar(netpgp, "userid");
 	}
 	suffix = (armored) ? ".asc" : ".gpg";
 	keypair = __ops_getkeybyname(netpgp->pubring, userid);
@@ -372,29 +444,39 @@ netpgp_encrypt_file(netpgp_t *netpgp, char *userid, char *f, char *out, int armo
 		(void) snprintf(outname, sizeof(outname), "%s%s", f, suffix);
 		out = outname;
 	}
-	return (int)__ops_encrypt_file(f, out, keypair, (unsigned)armored, 1U);
+	return (int)__ops_encrypt_file(f, out, keypair, (unsigned)armored,
+					overwrite);
 }
 
 /* decrypt a file */
 int
-netpgp_decrypt_file(netpgp_t *netpgp, char *f, char *out, int armored)
+netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 {
+	const unsigned	overwrite = 1;
+
 	return __ops_decrypt_file(f, out, netpgp->secring, (unsigned)armored,
-		1U, get_passphrase_cb);
+				overwrite, get_passphrase_cb);
 }
 
 /* sign a file */
 int
-netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
-		int armored, int cleartext, int detached)
+netpgp_sign_file(netpgp_t *netpgp,
+		const char *userid,
+		const char *f,
+		char *out,
+		int armored,
+		int cleartext,
+		int detached)
 {
 	const __ops_keydata_t	*keypair;
 	__ops_seckey_t		*seckey;
+	const unsigned		 overwrite = 1;
 	char			*hashalg;
 	char			 passphrase[MAX_PASSPHRASE_LENGTH];
+	int			 ret;
 
 	if (userid == NULL) {
-		userid = netpgp->userid;
+		userid = netpgp_getvar(netpgp, "userid");
 	}
 	/* get key with which to sign */
 	keypair = __ops_getkeybyname(netpgp->secring, userid);
@@ -403,6 +485,7 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 				userid);
 		return 0;
 	}
+	ret = 1;
 	do {
 		/* print out the user id */
 		__ops_print_pubkeydata(stderr, keypair);
@@ -417,20 +500,22 @@ netpgp_sign_file(netpgp_t *netpgp, char *userid, char *f, char *out,
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
 	if (cleartext) {
-		__ops_sign_file_as_cleartext(f, out, seckey, hashalg, 1U);
+		ret = __ops_sign_file_as_cleartext(f, out, seckey, hashalg,
+						overwrite);
 	} else if (detached) {
-		__ops_sign_detached(f, out, seckey, hashalg);
+		ret = __ops_sign_detached(f, out, seckey, hashalg);
 	} else {
-		__ops_sign_file(f, out, seckey, hashalg, (unsigned)armored, 1);
+		ret = __ops_sign_file(f, out, seckey, hashalg,
+					(unsigned)armored, overwrite);
 	}
 	(void) memset(passphrase, 0x0, sizeof(passphrase));
 	__ops_seckey_forget(seckey);
-	return 1;
+	return ret;
 }
 
 /* verify a file */
 int
-netpgp_verify_file(netpgp_t *netpgp, char *in, const char *out, int armored)
+netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armored)
 {
 	__ops_validation_t	result;
 
@@ -474,77 +559,65 @@ netpgp_get_info(const char *type)
 	return __ops_get_info(type);
 }
 
+/* list all the packets in a file */
 int
 netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 {
 	__ops_keyring_t	*keyring;
+	const unsigned	 noarmor = 0;
 	char		 ringname[MAXPATHLEN];
 	char		*homedir;
 
 	homedir = getenv("HOME");
 	if (pubringname == NULL) {
 		(void) snprintf(ringname, sizeof(ringname),
-			"%s/.gnupg/pubring.gpg", homedir);
+				"%s/.gnupg/pubring.gpg", homedir);
 		pubringname = ringname;
 	}
 	keyring = calloc(1, sizeof(*keyring));
-	if (!__ops_keyring_fileread(keyring, 0, pubringname)) {
+	if (!__ops_keyring_fileread(keyring, noarmor, pubringname)) {
 		(void) fprintf(stderr, "Cannot read pub keyring %s\n",
 			pubringname);
 		return 0;
 	}
 	netpgp->pubring = keyring;
-	netpgp->pubringfile = strdup(pubringname);
-	__ops_list_packets(f, (unsigned)armour, keyring, get_passphrase_cb);
-	return 1;
+	netpgp_setvar(netpgp, "pubring", pubringname);
+	return __ops_list_packets(f, (unsigned)armour, keyring,
+					get_passphrase_cb);
 }
 
 /* set a variable */
 int
 netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 {
-	if (strcmp(name, "hash") == 0 || strcmp(name, "algorithm") == 0) {
-		if (netpgp->hashalg) {
-			(void) free(netpgp->hashalg);
-			netpgp->hashalg = NULL;
+	int	i;
+
+	if ((i = findvar(netpgp, name)) < 0) {
+		/* add the element to the array */
+		size_arrays(netpgp, netpgp->size + 15);
+		netpgp->name[i = netpgp->c++] = strdup(name);
+	} else {
+		/* replace the element in the array */
+		if (netpgp->value[i]) {
+			(void) free(netpgp->value[i]);
+			netpgp->value[i] = NULL;
 		}
+	}
+	/* sanity checks for range of values */
+	if (strcmp(name, "hash") == 0 || strcmp(name, "algorithm") == 0) {
 		if (__ops_str_to_hash_alg(value) == OPS_HASH_UNKNOWN) {
 			return 0;
 		}
-		netpgp->hashalg = strdup(value);
-		return 1;
 	}
-	if (strcmp(name, "userid") == 0 || strcmp(name, "user") == 0) {
-		if (netpgp->userid) {
-			(void) free(netpgp->userid);
-			netpgp->userid = NULL;
-		}
-		netpgp->userid = strdup(value);
-		return 1;
-	}
-	if (strcmp(name, "verbose") == 0) {
-		if (netpgp->verbose) {
-			(void) free(netpgp->verbose);
-			netpgp->verbose = NULL;
-		}
-		netpgp->verbose = strdup(value);
-		return 1;
-	}
-	return 0;
+	netpgp->value[i] = strdup(value);
+	return 1;
 }
 
 /* get a variable's value (NULL if not set) */
 char *
 netpgp_getvar(netpgp_t *netpgp, const char *name)
 {
-	if (strcmp(name, "hash") == 0 || strcmp(name, "algorithm") == 0) {
-		return netpgp->hashalg;
-	}
-	if (strcmp(name, "userid") == 0 || strcmp(name, "user") == 0) {
-		return netpgp->userid;
-	}
-	if (strcmp(name, "verbose") == 0) {
-		return netpgp->verbose;
-	}
-	return NULL;
+	int	i;
+
+	return ((i = findvar(netpgp, name)) < 0) ? NULL : netpgp->value[i];
 }

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.13 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.14 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <string.h>
@@ -169,13 +169,13 @@ print_tagname(const char *str)
 }
 
 static void 
-print_data(const char *name, const __ops_data_t * data)
+print_data(const char *name, const __ops_data_t *data)
 {
 	print_hexdump(name, data->contents, data->len);
 }
 
 static void 
-print_bn(const char *name, const BIGNUM * bn)
+print_bn(const char *name, const BIGNUM *bn)
 {
 	print_indent();
 	printf("%s=", name);
@@ -273,7 +273,7 @@ print_boolean(const char *name, unsigned char boolval)
 }
 
 static void 
-print_text_breakdown(__ops_text_t * text)
+print_text_breakdown(__ops_text_t *text)
 {
 	const char     *prefix = ".. ";
 	unsigned        i;
@@ -376,7 +376,7 @@ numkeybits(const __ops_pubkey_t *pubkey)
    \param key Ptr to public key
 */
 void
-__ops_print_pubkeydata(FILE *fp, const __ops_keydata_t * key)
+__ops_print_pubkeydata(FILE *fp, const __ops_keydata_t *key)
 {
 	unsigned int    i;
 
@@ -400,7 +400,7 @@ __ops_print_pubkeydata(FILE *fp, const __ops_keydata_t * key)
 \param pubkey
 */
 void
-__ops_print_pubkey(const __ops_pubkey_t * pubkey)
+__ops_print_pubkey(const __ops_pubkey_t *pubkey)
 {
 	printf("------- PUBLIC KEY ------\n");
 	print_uint("Version", (unsigned)pubkey->version);
@@ -449,7 +449,7 @@ __ops_print_pubkey(const __ops_pubkey_t * pubkey)
 */
 
 void
-__ops_print_seckeydata(const __ops_keydata_t * key)
+__ops_print_seckeydata(const __ops_keydata_t *key)
 {
 	printf("sec ");
 	__ops_show_pka(key->key.pubkey.alg);
@@ -593,7 +593,7 @@ end_subpacket(void)
 \param contents
 */
 int 
-__ops_print_packet(const __ops_packet_t * pkt)
+__ops_print_packet(const __ops_packet_t *pkt)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	static unsigned		 unarmoured;
@@ -1168,7 +1168,7 @@ __ops_print_packet(const __ops_packet_t * pkt)
 }
 
 static __ops_parse_cb_return_t 
-cb_list_packets(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
+cb_list_packets(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
 	__OPS_USED(cbinfo);
 
@@ -1183,7 +1183,7 @@ cb_list_packets(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 \param keyring
 \param cb_get_passphrase
 */
-void 
+int 
 __ops_list_packets(char *filename,
 			unsigned armour,
 			__ops_keyring_t *keyring,
@@ -1203,4 +1203,5 @@ __ops_list_packets(char *filename,
 	}
 	__ops_parse(pinfo, 1);
 	__ops_teardown_file_read(pinfo, fd);
+	return 1;
 }

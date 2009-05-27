@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.14 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.15 2009/05/27 00:38:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -188,7 +188,7 @@ __ops_reader_push(__ops_parseinfo_t *pinfo,
  * \param pinfo Parse settings
  */
 void 
-__ops_reader_pop(__ops_parseinfo_t * pinfo)
+__ops_reader_pop(__ops_parseinfo_t *pinfo)
 {
 	__ops_reader_t *next = pinfo->readinfo.next;
 
@@ -203,7 +203,7 @@ __ops_reader_pop(__ops_parseinfo_t * pinfo)
  * \return Pointer to reader info's arg
  */
 void           *
-__ops_reader_get_arg(__ops_reader_t * readinfo)
+__ops_reader_get_arg(__ops_reader_t *readinfo)
 {
 	return readinfo->arg;
 }
@@ -273,7 +273,7 @@ typedef struct {
 }               dearmour_t;
 
 static void 
-push_back(dearmour_t * dearmour, const unsigned char *buf,
+push_back(dearmour_t *dearmour, const unsigned char *buf,
 	  unsigned length)
 {
 	unsigned        n;
@@ -395,7 +395,7 @@ set_lastseen_headerline(dearmour_t *dearmour, char *hdr, __ops_error_t **errors)
 }
 
 static int 
-read_char(dearmour_t * dearmour,
+read_char(dearmour_t *dearmour,
 		__ops_error_t **errors,
 		__ops_reader_t *readinfo,
 		__ops_callback_data_t *cbinfo,
@@ -660,7 +660,7 @@ process_dash_escaped(dearmour_t *dearmour,
 }
 
 static int 
-add_header(dearmour_t * dearmour, const char *key, const char *value)
+add_header(dearmour_t *dearmour, const char *key, const char *value)
 {
 	int	n;
 
@@ -685,7 +685,7 @@ add_header(dearmour_t * dearmour, const char *key, const char *value)
 
 /* \todo what does a return value of 0 indicate? 1 is good, -1 is bad */
 static int 
-parse_headers(dearmour_t * dearmour, __ops_error_t ** errors,
+parse_headers(dearmour_t *dearmour, __ops_error_t **errors,
 	      __ops_reader_t * readinfo, __ops_callback_data_t * cbinfo)
 {
 	unsigned        nbuf;
@@ -972,7 +972,7 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 }
 
 static void 
-base64(dearmour_t * dearmour)
+base64(dearmour_t *dearmour)
 {
 	dearmour->state = BASE64;
 	dearmour->checksum = CRC24_INIT;
@@ -985,9 +985,9 @@ base64(dearmour_t * dearmour)
 /* packets... it also calls back for the text between the blocks. */
 
 static int 
-armoured_data_reader(void *dest_, size_t length, __ops_error_t ** errors,
-		     __ops_reader_t * readinfo,
-		     __ops_callback_data_t * cbinfo)
+armoured_data_reader(void *dest_, size_t length, __ops_error_t **errors,
+		     __ops_reader_t *readinfo,
+		     __ops_callback_data_t *cbinfo)
 {
 	dearmour_t *dearmour = __ops_reader_get_arg(readinfo);
 	__ops_packet_t content;
@@ -1257,7 +1257,7 @@ reloop:
 }
 
 static void 
-armoured_data_destroyer(__ops_reader_t * readinfo)
+armoured_data_destroyer(__ops_reader_t *readinfo)
 {
 	(void) free(__ops_reader_get_arg(readinfo));
 }
@@ -1269,7 +1269,7 @@ armoured_data_destroyer(__ops_reader_t * readinfo)
  * \sa __ops_reader_pop_dearmour()
  */
 void 
-__ops_reader_push_dearmour(__ops_parseinfo_t * parse_info)
+__ops_reader_push_dearmour(__ops_parseinfo_t *parse_info)
 /*
  * This function originally had these parameters to cater for packets which
  * didn't strictly match the RFC. The initial 0.5 release is only going to
@@ -1309,7 +1309,7 @@ __ops_reader_push_dearmour(__ops_parseinfo_t * parse_info)
  * \sa __ops_reader_push_dearmour()
  */
 void 
-__ops_reader_pop_dearmour(__ops_parseinfo_t * pinfo)
+__ops_reader_pop_dearmour(__ops_parseinfo_t *pinfo)
 {
 	dearmour_t *dearmour;
 
@@ -1331,9 +1331,9 @@ typedef struct {
 } encrypted_t;
 
 static int 
-encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
-		      __ops_reader_t * readinfo,
-		      __ops_callback_data_t * cbinfo)
+encrypted_data_reader(void *dest, size_t length, __ops_error_t **errors,
+		      __ops_reader_t *readinfo,
+		      __ops_callback_data_t *cbinfo)
 {
 	encrypted_t *encrypted = __ops_reader_get_arg(readinfo);
 	int             saved = length;
@@ -1452,7 +1452,7 @@ encrypted_data_reader(void *dest, size_t length, __ops_error_t ** errors,
 }
 
 static void 
-encrypted_data_destroyer(__ops_reader_t * readinfo)
+encrypted_data_destroyer(__ops_reader_t *readinfo)
 {
 	(void) free(__ops_reader_get_arg(readinfo));
 }
@@ -1463,8 +1463,8 @@ encrypted_data_destroyer(__ops_reader_t * readinfo)
  * \sa __ops_reader_pop_decrypt()
  */
 void 
-__ops_reader_push_decrypt(__ops_parseinfo_t * pinfo, __ops_crypt_t * decrypt,
-			__ops_region_t * region)
+__ops_reader_push_decrypt(__ops_parseinfo_t *pinfo, __ops_crypt_t *decrypt,
+			__ops_region_t *region)
 {
 	encrypted_t	*encrypted;
 	
@@ -1482,7 +1482,7 @@ __ops_reader_push_decrypt(__ops_parseinfo_t * pinfo, __ops_crypt_t * decrypt,
  * \sa __ops_reader_push_decrypt()
  */
 void 
-__ops_reader_pop_decrypt(__ops_parseinfo_t * pinfo)
+__ops_reader_pop_decrypt(__ops_parseinfo_t *pinfo)
 {
 	encrypted_t	*encrypted;
 
@@ -1512,9 +1512,9 @@ typedef struct {
   Then passes up plaintext as requested
 */
 static int 
-se_ip_data_reader(void *dest_, size_t len, __ops_error_t ** errors,
-		  __ops_reader_t * readinfo,
-		  __ops_callback_data_t * cbinfo)
+se_ip_data_reader(void *dest_, size_t len, __ops_error_t **errors,
+		  __ops_reader_t *readinfo,
+		  __ops_callback_data_t *cbinfo)
 {
 	unsigned int    n = 0;
 	__ops_region_t    decrypted_region;
@@ -1644,7 +1644,7 @@ se_ip_data_reader(void *dest_, size_t len, __ops_error_t ** errors,
 }
 
 static void 
-se_ip_data_destroyer(__ops_reader_t * readinfo)
+se_ip_data_destroyer(__ops_reader_t *readinfo)
 {
 	decrypt_se_ip_t *se_ip = __ops_reader_get_arg(readinfo);
 	(void) free(se_ip->plaintext);
@@ -1671,7 +1671,7 @@ __ops_reader_push_se_ip_data(__ops_parseinfo_t *pinfo, __ops_crypt_t *decrypt,
    \ingroup Internal_Readers_SEIP
  */
 void 
-__ops_reader_pop_se_ip_data(__ops_parseinfo_t * pinfo)
+__ops_reader_pop_se_ip_data(__ops_parseinfo_t *pinfo)
 {
 	/*
 	 * decrypt_se_ip_t
@@ -1729,7 +1729,7 @@ fd_reader(void *dest, size_t length, __ops_error_t **errors,
 }
 
 static void 
-reader_fd_destroyer(__ops_reader_t * readinfo)
+reader_fd_destroyer(__ops_reader_t *readinfo)
 {
 	(void) free(__ops_reader_get_arg(readinfo));
 }
@@ -1740,7 +1740,7 @@ reader_fd_destroyer(__ops_reader_t * readinfo)
 */
 
 void 
-__ops_reader_set_fd(__ops_parseinfo_t * pinfo, int fd)
+__ops_reader_set_fd(__ops_parseinfo_t *pinfo, int fd)
 {
 	mmap_reader_t *reader = calloc(1, sizeof(*reader));
 
@@ -1757,8 +1757,8 @@ typedef struct {
 }               reader_mem_t;
 
 static int 
-mem_reader(void *dest, size_t length, __ops_error_t ** errors,
-	   __ops_reader_t * readinfo, __ops_callback_data_t * cbinfo)
+mem_reader(void *dest, size_t length, __ops_error_t **errors,
+	   __ops_reader_t *readinfo, __ops_callback_data_t *cbinfo)
 {
 	reader_mem_t *reader = __ops_reader_get_arg(readinfo);
 	unsigned        n;
@@ -1781,7 +1781,7 @@ mem_reader(void *dest, size_t length, __ops_error_t ** errors,
 }
 
 static void 
-mem_destroyer(__ops_reader_t * readinfo)
+mem_destroyer(__ops_reader_t *readinfo)
 {
 	(void) free(__ops_reader_get_arg(readinfo));
 }
@@ -1792,7 +1792,7 @@ mem_destroyer(__ops_reader_t * readinfo)
 */
 
 void 
-__ops_reader_set_memory(__ops_parseinfo_t * pinfo, const void *buffer,
+__ops_reader_set_memory(__ops_parseinfo_t *pinfo, const void *buffer,
 		      size_t length)
 {
 	reader_mem_t *mem = calloc(1, sizeof(*mem));
@@ -1815,7 +1815,7 @@ __ops_reader_set_memory(__ops_parseinfo_t * pinfo, const void *buffer,
  \sa __ops_teardown_memory_write()
 */
 void 
-__ops_setup_memory_write(__ops_output_t ** output, __ops_memory_t ** mem, size_t bufsz)
+__ops_setup_memory_write(__ops_output_t **output, __ops_memory_t **mem, size_t bufsz)
 {
 	/*
          * initialise needed structures for writing to memory
@@ -1837,7 +1837,7 @@ __ops_setup_memory_write(__ops_output_t ** output, __ops_memory_t ** mem, size_t
    \sa __ops_setup_memory_write()
 */
 void 
-__ops_teardown_memory_write(__ops_output_t * output, __ops_memory_t * mem)
+__ops_teardown_memory_write(__ops_output_t *output, __ops_memory_t *mem)
 {
 	__ops_writer_close(output);/* new */
 	__ops_output_delete(output);
@@ -1856,7 +1856,7 @@ __ops_teardown_memory_write(__ops_output_t * output, __ops_memory_t * mem)
    \sa __ops_teardown_memory_read()
 */
 void 
-__ops_setup_memory_read(__ops_parseinfo_t ** pinfo, __ops_memory_t * mem,
+__ops_setup_memory_read(__ops_parseinfo_t **pinfo, __ops_memory_t *mem,
 		      void *vp,
 		      __ops_parse_cb_return_t callback(const __ops_packet_t *, __ops_callback_data_t *),
 		      unsigned accumulate)
@@ -1883,7 +1883,7 @@ __ops_setup_memory_read(__ops_parseinfo_t ** pinfo, __ops_memory_t * mem,
    \sa __ops_setup_memory_read()
 */
 void 
-__ops_teardown_memory_read(__ops_parseinfo_t * pinfo, __ops_memory_t * mem)
+__ops_teardown_memory_read(__ops_parseinfo_t *pinfo, __ops_memory_t *mem)
 {
 	__ops_parseinfo_delete(pinfo);
 	__ops_memory_free(mem);
@@ -1939,7 +1939,7 @@ __ops_setup_file_write(__ops_output_t **output, const char *filename,
    \param fd
 */
 void 
-__ops_teardown_file_write(__ops_output_t * output, int fd)
+__ops_teardown_file_write(__ops_output_t *output, int fd)
 {
 	__ops_writer_close(output);
 	close(fd);
@@ -1951,7 +1951,7 @@ __ops_teardown_file_write(__ops_output_t * output, int fd)
    \brief As __ops_setup_file_write, but appends to file
 */
 int 
-__ops_setup_file_append(__ops_output_t ** output, const char *filename)
+__ops_setup_file_append(__ops_output_t **output, const char *filename)
 {
 	int             fd;
 	/*
@@ -1979,7 +1979,7 @@ __ops_setup_file_append(__ops_output_t ** output, const char *filename)
    \brief As __ops_teardown_file_write()
 */
 void 
-__ops_teardown_file_append(__ops_output_t * output, int fd)
+__ops_teardown_file_append(__ops_output_t *output, int fd)
 {
 	__ops_teardown_file_write(output, fd);
 }
@@ -2040,7 +2040,7 @@ __ops_setup_file_read(__ops_parseinfo_t **pinfo,
    \sa __ops_setup_file_read()
 */
 void 
-__ops_teardown_file_read(__ops_parseinfo_t * pinfo, int fd)
+__ops_teardown_file_read(__ops_parseinfo_t *pinfo, int fd)
 {
 	close(fd);
 	__ops_parseinfo_delete(pinfo);
@@ -2049,9 +2049,7 @@ __ops_teardown_file_read(__ops_parseinfo_t * pinfo, int fd)
 __ops_parse_cb_return_t
 litdata_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
-	const __ops_contents_t *content = &pkt->u;
-
-	__OPS_USED(cbinfo);
+	const __ops_contents_t	*content = &pkt->u;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("litdata_cb: ");
@@ -2074,6 +2072,7 @@ litdata_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 
 	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
 		/* ignore */
+printf("LITERAL_DATA_HEADER: filename ,%s,\n", content->litdata_header.filename);
 		break;
 
 	default:
@@ -2084,7 +2083,7 @@ litdata_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 }
 
 __ops_parse_cb_return_t
-pk_sesskey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
+pk_sesskey_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
 	const __ops_contents_t *content = &pkt->u;
 
@@ -2134,7 +2133,7 @@ pk_sesskey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
 */
 
 __ops_parse_cb_return_t
-get_seckey_cb(const __ops_packet_t * pkt, __ops_callback_data_t * cbinfo)
+get_seckey_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	const __ops_seckey_t	*secret;
@@ -2271,7 +2270,7 @@ __ops_reader_push_hash(__ops_parseinfo_t *pinfo, __ops_hash_t *hash)
    \brief Pop hashed data reader from stack
 */
 void 
-__ops_reader_pop_hash(__ops_parseinfo_t * pinfo)
+__ops_reader_pop_hash(__ops_parseinfo_t *pinfo)
 {
 	__ops_reader_pop(pinfo);
 }
@@ -2297,7 +2296,7 @@ mmap_reader(void *dest, size_t length, __ops_error_t **errors,
 
 /* tear down the mmap, close the fd */
 static void 
-mmap_destroyer(__ops_reader_t * readinfo)
+mmap_destroyer(__ops_reader_t *readinfo)
 {
 	mmap_reader_t *mem = __ops_reader_get_arg(readinfo);
 
@@ -2308,7 +2307,7 @@ mmap_destroyer(__ops_reader_t * readinfo)
 
 /* set up the file to use mmap-ed memory if available, file IO otherwise */
 void 
-__ops_reader_set_mmap(__ops_parseinfo_t * pinfo, int fd)
+__ops_reader_set_mmap(__ops_parseinfo_t *pinfo, int fd)
 {
 	mmap_reader_t	*mem = calloc(1, sizeof(*mem));
 	struct stat	 st;
