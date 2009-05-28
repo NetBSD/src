@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.16 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.17 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -363,9 +363,10 @@ static void
 hash_add_key(__ops_hash_t *hash, const __ops_pubkey_t *key)
 {
 	__ops_memory_t	*mem = __ops_memory_new();
+	const unsigned 	 dontmakepacket = 0;
 	size_t		 len;
 
-	__ops_build_pubkey(mem, key, 0);
+	__ops_build_pubkey(mem, key, dontmakepacket);
 	len = __ops_mem_len(mem);
 	__ops_hash_add_int(hash, 0x99, 1);
 	__ops_hash_add_int(hash, len, 2);

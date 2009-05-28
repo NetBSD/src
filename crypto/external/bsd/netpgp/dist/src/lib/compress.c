@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.9 2009/05/16 06:30:38 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.10 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -300,6 +300,7 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 {
 	z_decompress_t z;
 	bz_decompress_t bz;
+	const int	printerrors = 1;
 	int             ret;
 
 	switch (type) {
@@ -394,7 +395,7 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 		return 0;
 	}
 
-	ret = __ops_parse(parse_info, 0);
+	ret = __ops_parse(parse_info, !printerrors);
 
 	__ops_reader_pop(parse_info);
 
