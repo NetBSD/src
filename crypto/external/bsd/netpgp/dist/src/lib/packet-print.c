@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.14 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.15 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #include <string.h>
@@ -1191,6 +1191,7 @@ __ops_list_packets(char *filename,
 {
 	__ops_parseinfo_t	*pinfo = NULL;
 	const unsigned		 accumulate = 1;
+	const int		 printerrors = 1;
 	int			 fd = 0;
 
 	fd = __ops_setup_file_read(&pinfo, filename, NULL, cb_list_packets,
@@ -1201,7 +1202,7 @@ __ops_list_packets(char *filename,
 	if (armour) {
 		__ops_reader_push_dearmour(pinfo);
 	}
-	__ops_parse(pinfo, 1);
+	__ops_parse(pinfo, printerrors);
 	__ops_teardown_file_read(pinfo, fd);
 	return 1;
 }

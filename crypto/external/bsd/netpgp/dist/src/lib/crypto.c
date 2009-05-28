@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.13 2009/05/25 06:43:32 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -290,6 +290,7 @@ __ops_decrypt_file(const char *infile,
 			__ops_cbfunc_t *cb_get_passphrase)
 {
 	__ops_parseinfo_t	*parse = NULL;
+	const int		 printerrors = 1;
 	char			*filename = NULL;
 	int			 fd_in = 0;
 	int			 fd_out = 0;
@@ -353,7 +354,7 @@ __ops_decrypt_file(const char *infile,
 	}
 
 	/* Do it */
-	__ops_parse(parse, 1);
+	__ops_parse(parse, printerrors);
 
 	/* Unsetup */
 	if (use_armour) {
