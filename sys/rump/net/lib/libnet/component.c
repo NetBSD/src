@@ -1,7 +1,9 @@
-/*	$NetBSD: rump_net_private.h,v 1.3 2009/05/28 00:02:16 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1 2009/05/28 00:02:16 pooka Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ *
+ * Development of this software was supported by The Nokia Foundation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,25 +27,23 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_NET_PRIVATE_H_
-#define _SYS_RUMP_NET_PRIVATE_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2009/05/28 00:02:16 pooka Exp $");
 
-void		rump_net_init(void);
-void		rump_netisr_init(void);
+#include <sys/param.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
 
-#define DOMAINADD(dom)							\
-do {									\
-	if (!pffinddomain(dom.dom_family)) {				\
-		domain_attach(&dom);					\
-        }								\
-} while (/*CONSTCOND*/0)
+#include <net/if.h>
+#include <net/route.h>
 
-void 		rump_net_net_init(void);
-void 		rump_net_inet_init(void);
-void 		rump_net_local_init(void);
-void 		rump_net_sockin_init(void);
-void 		rump_net_virtif_init(void);
+#include "rump_net_private.h"
 
-void		rump_dummyif_create(void);
+void
+rump_net_net_init()
+{
+	extern struct domain routedomain;
 
-#endif /* _SYS_RUMP_NET_PRIVATE_H_ */
+	loopattach(0);
+	DOMAINADD(routedomain);
+}
