@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.36 2009/05/28 06:49:30 jnemeth Exp $
+.\"     $NetBSD: vnsubr.9,v 1.37 2009/05/28 09:32:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,7 +156,9 @@ Common code to mark the vnode
 .Fa vp
 as being the text of a running process.
 .It Fn vn_setrecurse "vp"
-Common code to enable LK_CANRECURSE on the vnode lock for vnode
+Common code to enable
+.Dv LK_CANRECURSE
+on the vnode lock for vnode
 .Fa vp .
 .Fn vn_setrecurse
 returns the new
@@ -191,7 +193,10 @@ Common code to package up an I/O request on a vnode into a uio and
 then perform the I/O.
 The argument
 .Fa rw
-specifies whether the I/O is a read (UIO_READ) or write (UIO_WRITE)
+specifies whether the I/O is a read
+.Pq Dv UIO_READ
+or write
+.Pq Dv UIO_WRITE
 operation.
 The vnode is specified by
 .Fa vp .
@@ -203,13 +208,11 @@ are the calling lwp and its credentials.
 If
 .Fa ioflg
 contains
-.Dq IO_NODELOCKED ,
+.Dv IO_NODELOCKED ,
 it is expected that the vnode is locked.
 .Fa ioflg
 will be passed to
-.Fn VOP_READ
-/
-.Fn VOP_WRITE .
+.Fn VOP_READ Ns No / Ns Fn VOP_WRITE .
 The remaining arguments specify the uio parameters.
 For further information on these parameters see
 .Xr uiomove 9 .
@@ -230,7 +233,9 @@ Both
 .Fa cookies
 and
 .Fa ncookies
-should be NULL is they aren't required to be returned by
+should be
+.Dv NULL
+is they aren't required to be returned by
 .Fn vn_readdir .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
