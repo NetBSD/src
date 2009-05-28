@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:16:43 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.9 2009/05/28 09:00:54 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.8 2009/04/24 14:16:43 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.9 2009/05/28 09:00:54 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -601,7 +601,7 @@ copy_data_to_disk(struct archive *reader, struct archive *writer,
  * Any misordered, missing or unlisted file in the package is an error.
  */
 
-static const int extract_flags = /* ARCHIVE_EXTRACT_OWNER | */
+static const int extract_flags = ARCHIVE_EXTRACT_OWNER |
     ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_UNLINK |
     ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS | ARCHIVE_EXTRACT_XATTR;
 
