@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.13 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -218,7 +218,7 @@ __ops_seckey_forget(__ops_seckey_t *seckey)
 
 typedef struct {
 	const __ops_keydata_t	*key;
-	char			*pphrase;
+	char			*passphrase;
 	__ops_seckey_t		*seckey;
 } decrypt_t;
 
@@ -229,7 +229,6 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	decrypt_t		*decrypt;
 
 	decrypt = __ops_parse_cb_get_arg(cbinfo);
-
 	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
 	case OPS_PTAG_CT_USER_ID:
@@ -240,7 +239,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		break;
 
 	case OPS_GET_PASSPHRASE:
-		*content->skey_passphrase.passphrase = decrypt->pphrase;
+		*content->skey_passphrase.passphrase = decrypt->passphrase;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_ERRCODE:
@@ -287,27 +286,26 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 \ingroup Core_Keys
 \brief Decrypts secret key from given keydata with given passphrase
 \param key Key from which to get secret key
-\param pphrase Passphrase to use to decrypt secret key
+\param passphrase Passphrase to use to decrypt secret key
 \return secret key
 */
 __ops_seckey_t *
-__ops_decrypt_seckey(const __ops_keydata_t *key, const char *pphrase)
+__ops_decrypt_seckey(const __ops_keydata_t *key, const char *passphrase)
 {
-	__ops_parseinfo_t *pinfo;
-	decrypt_t   decrypt;
+	__ops_parseinfo_t	*parse;
+	const int		 printerrors = 1;
+	decrypt_t		 decrypt;
 
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
-	decrypt.pphrase = strdup(pphrase);
-
-	pinfo = __ops_parseinfo_new();
-
-	__ops_keydata_reader_set(pinfo, key);
-	__ops_set_callback(pinfo, decrypt_cb, &decrypt);
-	pinfo->readinfo.accumulate = 1;
-
-	__ops_parse(pinfo, 0);
-
+	decrypt.passphrase = strdup(passphrase);
+	parse = __ops_parseinfo_new();
+	__ops_keydata_reader_set(parse, key);
+	__ops_set_callback(parse, decrypt_cb, &decrypt);
+	parse->readinfo.accumulate = 1;
+	__ops_parse(parse, !printerrors);
+	(void) memset(decrypt.passphrase, 0x0, strlen(decrypt.passphrase));
+	(void) free(decrypt.passphrase);
 	return decrypt.seckey;
 }
 
@@ -632,11 +630,11 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 			const unsigned armour,
 			const char *filename)
 {
-	__ops_parseinfo_t	*pinfo;
+	__ops_parseinfo_t	*parse;
 	unsigned		 res = 1;
 	int			 fd;
 
-	pinfo = __ops_parseinfo_new();
+	parse = __ops_parseinfo_new();
 
 	/* add this for the moment, */
 	/*
@@ -644,8 +642,8 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	 * later
 	 */
 
-	/* __ops_parse_options(pinfo,OPS_PTAG_SS_ALL,OPS_PARSE_RAW); */
-	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
+	/* __ops_parse_options(parse,OPS_PTAG_SS_ALL,OPS_PARSE_RAW); */
+	__ops_parse_options(parse, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 
 #ifdef O_BINARY
 	fd = open(filename, O_RDONLY | O_BINARY);
@@ -653,34 +651,34 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	fd = open(filename, O_RDONLY);
 #endif
 	if (fd < 0) {
-		__ops_parseinfo_delete(pinfo);
+		__ops_parseinfo_delete(parse);
 		perror(filename);
 		return 0;
 	}
 #ifdef USE_MMAP_FOR_FILES
-	__ops_reader_set_mmap(pinfo, fd);
+	__ops_reader_set_mmap(parse, fd);
 #else
-	__ops_reader_set_fd(pinfo, fd);
+	__ops_reader_set_fd(parse, fd);
 #endif
 
-	__ops_set_callback(pinfo, cb_keyring_read, NULL);
+	__ops_set_callback(parse, cb_keyring_read, NULL);
 
 	if (armour) {
-		__ops_reader_push_dearmour(pinfo);
+		__ops_reader_push_dearmour(parse);
 	}
-	if (__ops_parse_and_accumulate(keyring, pinfo) == 0) {
+	if (__ops_parse_and_accumulate(keyring, parse) == 0) {
 		res = 0;
 	} else {
 		res = 1;
 	}
-	__ops_print_errors(__ops_parseinfo_get_errors(pinfo));
+	__ops_print_errors(__ops_parseinfo_get_errors(parse));
 
 	if (armour)
-		__ops_reader_pop_dearmour(pinfo);
+		__ops_reader_pop_dearmour(parse);
 
 	close(fd);
 
-	__ops_parseinfo_delete(pinfo);
+	__ops_parseinfo_delete(parse);
 
 	return res;
 }
@@ -713,27 +711,23 @@ __ops_keyring_read_from_mem(__ops_keyring_t *keyring,
 				const unsigned armour,
 				__ops_memory_t *mem)
 {
-	__ops_parseinfo_t	*pinfo = NULL;
+	__ops_parseinfo_t	*parse = NULL;
+	const unsigned		 noaccum = 0;
 	unsigned		 res = 1;
 
-	pinfo = __ops_parseinfo_new();
-	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
-
-	__ops_setup_memory_read(&pinfo, mem, NULL, cb_keyring_read, 0);
-
+	parse = __ops_parseinfo_new();
+	__ops_parse_options(parse, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
+	__ops_setup_memory_read(&parse, mem, NULL, cb_keyring_read, noaccum);
 	if (armour) {
-		__ops_reader_push_dearmour(pinfo);
+		__ops_reader_push_dearmour(parse);
 	}
-	res = __ops_parse_and_accumulate(keyring, pinfo);
-	__ops_print_errors(__ops_parseinfo_get_errors(pinfo));
-
+	res = __ops_parse_and_accumulate(keyring, parse);
+	__ops_print_errors(__ops_parseinfo_get_errors(parse));
 	if (armour) {
-		__ops_reader_pop_dearmour(pinfo);
+		__ops_reader_pop_dearmour(parse);
 	}
-
 	/* don't call teardown_memory_read because memory was passed in */
-	__ops_parseinfo_delete(pinfo);
-
+	__ops_parseinfo_delete(parse);
 	return res;
 }
 
@@ -749,7 +743,7 @@ __ops_keyring_read_from_mem(__ops_keyring_t *keyring,
 void 
 __ops_keyring_free(__ops_keyring_t *keyring)
 {
-	free(keyring->keys);
+	(void)free(keyring->keys);
 	keyring->keys = NULL;
 	keyring->nkeys = 0;
 	keyring->nkeys_allocated = 0;

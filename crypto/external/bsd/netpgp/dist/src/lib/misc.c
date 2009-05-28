@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.13 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -194,6 +194,7 @@ int
 __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 {
 	accumulate_t	accumulate;
+	const int	printerrors = 1;
 	int             ret;
 
 	if (parse->readinfo.accumulate) {
@@ -210,7 +211,7 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 
 	__ops_parse_cb_push(parse, accumulate_cb, &accumulate);
 	parse->readinfo.accumulate = 1;
-	ret = __ops_parse(parse, 0);
+	ret = __ops_parse(parse, !printerrors);
 
 	keyring->nkeys += 1;
 

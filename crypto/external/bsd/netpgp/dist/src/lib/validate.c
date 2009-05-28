@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.15 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.16 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -542,6 +542,7 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 {
 	__ops_parseinfo_t	*pinfo;
 	validate_key_cb_t	 keysigs;
+	const int		 printerrors = 1;
 
 	(void) memset(&keysigs, 0x0, sizeof(keysigs));
 	keysigs.result = result;
@@ -560,7 +561,7 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 	/* is never used. */
 	keysigs.reader = pinfo->readinfo.arg;
 
-	__ops_parse(pinfo, 0);
+	__ops_parse(pinfo, !printerrors);
 
 	__ops_pubkey_free(&keysigs.pubkey);
 	if (keysigs.subkey.version) {
@@ -646,6 +647,7 @@ __ops_validate_file(__ops_validation_t *result,
 	validate_data_cb_t	 validation;
 	__ops_parseinfo_t	*parse = NULL;
 	struct stat		 st;
+	const int		 printerrors = 1;
 	unsigned		 ret;
 	int64_t		 	 sigsize;
 	char			 origfile[MAXPATHLEN];
@@ -695,7 +697,7 @@ __ops_validate_file(__ops_validation_t *result,
 	}
 
 	/* Do the verification */
-	__ops_parse(parse, 0);
+	__ops_parse(parse, !printerrors);
 
 	/* Tidy up */
 	if (armoured) {
@@ -765,6 +767,7 @@ __ops_validate_mem(__ops_validation_t *result,
 {
 	validate_data_cb_t	 validation;
 	__ops_parseinfo_t	*pinfo = NULL;
+	const int		 printerrors = 1;
 
 	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb, 1);
 
@@ -783,7 +786,7 @@ __ops_validate_mem(__ops_validation_t *result,
 	}
 
 	/* Do the verification */
-	__ops_parse(pinfo, 0);
+	__ops_parse(pinfo, !printerrors);
 
 	/* Tidy up */
 	if (armoured) {
