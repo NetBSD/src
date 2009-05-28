@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.21 2009/04/30 07:01:26 skrll Exp $
+#	$NetBSD: files.hp700,v 1.22 2009/05/28 08:41:29 skrll Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -94,6 +94,11 @@ device	phantomas: gedoens
 attach	phantomas at gedoens
 file	arch/hp700/dev/phantomas.c	phantomas
 
+# GeckoBOA BC GSC+ port
+device	gecko: gedoens
+attach	gecko at gedoens
+file	arch/hp700/dev/gecko.c		gecko
+
 # U2/Uturn, Runway to GSC Bus bridge & IOA
 device	uturn: gedoens
 attach	uturn at gedoens
@@ -145,6 +150,16 @@ file	arch/hp700/dev/sti_sgc.c	sti_gedoens
 
 attach	siop at gedoens with siop_gedoens
 file	arch/hp700/dev/siop_sgc.c	siop_gedoens
+
+device	ssio {[irq = -1]}
+attach	ssio at pci
+file	arch/hp700/dev/ssio.c			ssio
+
+attach	com at ssio with com_ssio
+file	arch/hp700/dev/com_ssio.c		com_ssio
+
+attach	lpt at ssio with lpt_ssio
+file	arch/hp700/dev/lpt_ssio.c		lpt_ssio
 
 ###
 
