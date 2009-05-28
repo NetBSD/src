@@ -1,8 +1,8 @@
-# $NetBSD: cat.at,v 1.1 2009/05/27 22:13:06 agc Exp $
+# $NetBSD: cat.at,v 1.2 2009/05/28 00:28:38 lukem Exp $
 
 AT_SETUP([attached signature and verification])
 
-cp ${TOPSRCDIR}/libtool file3
+AT_CHECK([cp $abs_top_builddir/libtool file3], [0], [ignore], [ignore])
 
 # Make signature
 AT_CHECK([$NETPGP --homedir $testhomedir --sign file3],
