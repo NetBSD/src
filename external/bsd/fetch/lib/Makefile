@@ -14,12 +14,15 @@ CPPFLAGS+=	-I.
 CPPFLAGS+=	-DNETBSD 
 CPPFLAGS+=	-DFTP_COMBINE_CWDS
 CPPFLAGS+=	-DINET6
+
+.if (${MKCRYPTO} != "no")
 CPPFLAGS+=	-DWITH_SSL
 
 LDADD=		-lssl -lcrypto
 
 LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/lib/libssl \
 		crypto	${NETBSDSRCDIR}/lib/libcrypto
+.endif
 
 CLEANFILES+=	ftperr.h httperr.h
 
