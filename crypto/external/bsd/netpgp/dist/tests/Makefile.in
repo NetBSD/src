@@ -165,6 +165,9 @@ EXTRA_DIST = \
 
 TESTSUITE_DEPS = \
 	init.at \
+	cat.at \
+	crypt.at \
+	detached.at \
 	verify.at \
 	package.m4 \
 	testsuite.at
