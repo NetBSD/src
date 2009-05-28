@@ -1,4 +1,4 @@
-## $NetBSD: Makefile.am,v 1.2 2009/05/26 05:42:25 lukem Exp $
+## $NetBSD: Makefile.am,v 1.3 2009/05/28 00:27:03 lukem Exp $
 
 TESTSUITE	= testsuite
 AUTOTEST	= $(AUTOM4TE) --language=autotest
@@ -9,6 +9,9 @@ EXTRA_DIST	= \
 
 TESTSUITE_DEPS	= \
 	init.at \
+	cat.at \
+	crypt.at \
+	detached.at \
 	verify.at \
 	package.m4 \
 	testsuite.at
