@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.15 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.16 2009/05/28 01:52:43 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1607,9 +1607,9 @@ se_ip_data_reader(void *dest_, size_t len, __ops_error_t **errors,
 			fprintf(stderr, "\n");
 		}
 		__ops_calc_mdc_hash(preamble, sz_preamble, plaintext,
-				sz_plaintext, &hashed[0]);
+				sz_plaintext, hashed);
 
-		if (memcmp(mdc_hash, hashed, OPS_SHA1_HASH_SIZE)) {
+		if (memcmp(mdc_hash, hashed, OPS_SHA1_HASH_SIZE) != 0) {
 			OPS_ERROR(errors, OPS_E_V_BAD_HASH,
 					"Bad hash in MDC packet");
 			(void) free(buf);
