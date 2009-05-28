@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1235 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1236 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -91,6 +91,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		known interface as Linux does for managing LVM. [haad 20081222]
 	gcscaudio(4): Add AMD Geode CS5536 audio driver, from SHIMIZU Ryo.
 		[jmcneill 20081228]
+	rump: i386 and amd64 can use kernel module binaries [pooka 20081230]
 	mount_cd9660(8): Add nocasetrans option as a synonym for nomaplcase.
 		[christos 20090103]
 	rc.d(8): Add a script for rndctl(8). [apb 20090104]
@@ -253,6 +254,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.0.0. [roy 20090428]
 	rc.d(8): Add an rc.d script for dhcpcd(8). [roy 20090428]
 	ichlpcib(4): Attach 82801IEM LPC Interface Bridge too. [njoly 20090429]
+	rump: Add support for remote system calls [pooka 20090429]
 	sh3: Add some support for SH7706. [nonaka 20090430]
 	hppa: Merge the nick-hppapmap branch which includes a port of the
 		OpenBSD pmap, improves support for machines without the
@@ -285,3 +287,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		with strftime(3). [ginsbach 20090524]
 	kernel: File descriptor access performance improvements.
 		[ad 20090524]
+	rumpnet: Add IPv6 support [pooka 20090527]
