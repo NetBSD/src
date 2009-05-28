@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.193 2009/05/26 00:42:33 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.194 2009/05/28 22:17:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.193 2009/05/26 00:42:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.194 2009/05/28 22:17:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -979,7 +979,8 @@ fd_tryexpand(proc_t *p)
 	/* Copy the existing descriptor table and zero the new portion. */
 	i = sizeof(fdfile_t *) * oldnfiles;
 	memcpy(newdt->dt_ff, dt->dt_ff, i);
-	memset((uint8_t *)newdt->dt_ff + i, 0, numfiles * sizeof(fdfile_t *) - i);
+	memset((uint8_t *)newdt->dt_ff + i, 0,
+	    numfiles * sizeof(fdfile_t *) - i);
 
 	/*
 	 * Link old descriptor array into list to be discarded.  We defer
