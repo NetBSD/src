@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.33 2009/05/18 12:39:02 njoly Exp $ */
+/* $NetBSD: osf1_file.c,v 1.34 2009/05/28 14:48:20 njoly Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.33 2009/05/18 12:39:02 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.34 2009/05/28 14:48:20 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -245,7 +245,7 @@ out:
 	free(buf, M_TEMP);
 out1:
 	fd_putfile(fd);
-	if (SCARG(uap, basep) != NULL)
+	if (error == 0 && SCARG(uap, basep) != NULL)
 		error = copyout(&eofflag, SCARG(uap, basep), sizeof(long));
 	return error;
 }
