@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.23 2008/06/13 13:24:10 rafal Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.24 2009/05/29 14:15:44 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.23 2008/06/13 13:24:10 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.24 2009/05/29 14:15:44 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,14 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.23 2008/06/13 13:24:10 rafal Exp $");
 #include "locators.h"
 
 /* prototypes */
-static int	sa11x0_match(struct device *, struct cfdata *, void *);
-static void	sa11x0_attach(struct device *, struct device *, void *);
-static int 	sa11x0_search(struct device *, struct cfdata *,
-				const int *, void *);
+static int	sa11x0_match(device_t, cfdata_t, void *);
+static void	sa11x0_attach(device_t, device_t, void *);
+static int 	sa11x0_search(device_t, cfdata_t, const int *, void *);
 static int	sa11x0_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(saip, sizeof(struct sa11x0_softc),
+CFATTACH_DECL_NEW(saip, sizeof(struct sa11x0_softc),
     sa11x0_match, sa11x0_attach, NULL, NULL);
 
 extern struct bus_space sa11x0_bs_tag;
@@ -123,17 +122,18 @@ sa11x0_print(void *aux, const char *name)
 }
 
 int
-sa11x0_match(struct device *parent, struct cfdata *match, void *aux)
+sa11x0_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 void
-sa11x0_attach(struct device *parent, struct device *self, void *aux)
+sa11x0_attach(device_t parent, device_t self, void *aux)
 {
-	struct sa11x0_softc *sc = (struct sa11x0_softc*)self;
+	struct sa11x0_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_iot = &sa11x0_bs_tag;
 
 	/* Map the SAIP */
@@ -197,10 +197,9 @@ sa11x0_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-sa11x0_search(struct device *parent, struct cfdata *cf, const int *ldesc,
-    void *aux)
+sa11x0_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct sa11x0_softc *sc = (struct sa11x0_softc *)parent;
+	struct sa11x0_softc *sc = device_private(parent);
 	struct sa11x0_attach_args sa;
 
 	sa.sa_sc = sc;
