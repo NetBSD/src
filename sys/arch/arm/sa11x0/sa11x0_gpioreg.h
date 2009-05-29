@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.3 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.4 2009/05/29 14:06:53 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -88,3 +88,10 @@ port	name 		desc
 26	RCLK_OUT	internal clock /2
 27	32KHZ_OUT	Raw 32.768kHz osc output
  */
+
+#define GPIO_ALT_SSP_TXD	(1 << 10)
+#define GPIO_ALT_SSP_RXD	(1 << 11)
+#define GPIO_ALT_SSP_SCLK	(1 << 12)
+#define GPIO_ALT_SSP_SFRM	(1 << 13)
+#define GPIO_ALT_SSP_CLK	(1 << 19)
+
