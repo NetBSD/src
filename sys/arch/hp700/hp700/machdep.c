@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2009/05/29 08:39:05 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2009/05/29 08:44:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/05/29 08:39:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2009/05/29 08:44:29 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1656,7 +1656,7 @@ hppa_machine_check(int check_type)
 {
 	int pdc_pim_type;
 	const char *name;
-	int error;
+	int pimerror, error;
 
 	/* Do an fcacheall(). */
 	fcacheall();
@@ -1680,12 +1680,10 @@ hppa_machine_check(int check_type)
 		/* NOTREACHED */
 	}
 
-	error = pdc_call((iodcio_t)pdc, 0, PDC_PIM, pdc_pim_type,
-		&pdc_pim, pim_data_buffer, sizeof(pim_data_buffer));
-	if (error < 0)
-		printf(" - WARNING: could not transfer PIM info (%d)", error);
+	pimerror = pdc_call((iodcio_t)pdc, 0, PDC_PIM, pdc_pim_type,
+	    &pdc_pim, pim_data_buffer, sizeof(pim_data_buffer));
 
-	CTASSERT(pdc_pim.count <= sizeof(pim_data_buffer));
+	KASSERT(pdc_pim.count <= sizeof(pim_data_buffer));
 
 	/*
 	 * Reset IO and log errors.
@@ -1695,16 +1693,20 @@ hppa_machine_check(int check_type)
 	 * implemented by some machines.
 	 */
 	error = pdc_call((iodcio_t)pdc, 0, PDC_IO, 0, 0, 0, 0);
-	if (error  != PDC_ERR_OK && error != PDC_ERR_NOPROC)
+	if (error != PDC_ERR_OK && error != PDC_ERR_NOPROC)
 		/* This seems futile if we can't print to the console. */
 		panic("PDC_IO failed");
 
 	printf("\nmachine check: %s", name);
 
-	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
-		hppa_pim64_dump(check_type);
-	else
-		hppa_pim_dump(check_type);
+	if (pimerror < 0) {
+		printf(" - WARNING: could not transfer PIM info (%d)", pimerror);
+	} else {
+		if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+			hppa_pim64_dump(check_type);
+		else
+			hppa_pim_dump(check_type);
+	}
 
 	printf("\n");
 
