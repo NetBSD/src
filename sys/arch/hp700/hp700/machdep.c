@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2009/05/18 05:20:46 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2009/05/29 08:37:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2009/05/18 05:20:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/05/29 08:37:34 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -792,9 +792,8 @@ cpuid(void)
 	cpu_revision = (*cpu_desidhash)();
 
 	/* force strong ordering for now */
-	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B) {
+	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
 		kpsw |= PSW_O;
-	}
 
 	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
 
