@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.989 2009/05/18 09:06:54 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.990 2009/05/29 06:13:56 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.989 2009/05/18 09:06:22 skrll Exp
+ *	NetBSD: pcidevs,v 1.990 2009/05/29 06:12:31 skrll Exp
  */
 
 /*
@@ -2006,15 +2006,26 @@
 #define	PCI_PRODUCT_HEURICON_PMPPC	0x000e		/* PM/PPC */
 
 /* Hewlett-Packard products */
-#define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
+#define	PCI_PRODUCT_HP_VISUALIZE_EG	0x1005		/* Visualize EG */
+#define	PCI_PRODUCT_HP_VISUALIZE_FX6	0x1006		/* Visualize FX6 */
 #define	PCI_PRODUCT_HP_VISUALIZE_FX4	0x1008		/* Visualize FX4 */
+#define	PCI_PRODUCT_HP_VISUALIZE_FX2	0x100a		/* Visualize FX2 */
 #define	PCI_PRODUCT_HP_TACHYON_TL	0x1028		/* Tachyon TL FC Controller */
+#define	PCI_PRODUCT_HP_TACHYON_XL2	0x1029		/* Tachyon XL2 FC Controller */
 #define	PCI_PRODUCT_HP_TACHYON_TS	0x102A		/* Tachyon TS FC Controller */
-#define	PCI_PRODUCT_HP_TACHYON_XL2	0x1030		/* Tachyon XL2 FC Controller */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
 #define	PCI_PRODUCT_HP_J2585B	0x1031		/* J2585B */
-#define	PCI_PRODUCT_HP_82557B	0x1200		/* 82557B 10/100 NIC */
+#define	PCI_PRODUCT_HP_DIVA	0x1048		/* Diva Serial Multiport */
+#define	PCI_PRODUCT_HP_ELROY	0x1054		/* Elroy Ropes-PCI */
+#define	PCI_PRODUCT_HP_VISUALIZE_FXE	0x108b		/* Visualize FXe */
+#define	PCI_PRODUCT_HP_TOPTOOLS	0x10c1		/* TopTools Communications Port */
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
+#define	PCI_PRODUCT_HP_SMARTIRQ	0x10ed		/* NetServer SmartIRQ */
+#define	PCI_PRODUCT_HP_82557B	0x1200		/* 82557B 10/100 NIC */
+#define	PCI_PRODUCT_HP_PLUTO	0x1229		/* Pluto MIO */
+#define	PCI_PRODUCT_HP_ZX1_IOC	0x122a		/* zx1 IOC */
+#define	PCI_PRODUCT_HP_MERCURY	0x122e		/* Mercury Ropes-PCI */
+#define	PCI_PRODUCT_HP_QUICKSILVER	0x12b4		/* QuickSilver Ropes-PCI */
 
 #define	PCI_PRODUCT_HP_HPSAV100	0x3210		/* Smart Array V100 */
 #define	PCI_PRODUCT_HP_HPSAE200I_1	0x3211		/* Smart Array E200i */
