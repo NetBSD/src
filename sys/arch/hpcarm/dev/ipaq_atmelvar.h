@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelvar.h,v 1.3 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: ipaq_atmelvar.h,v 1.4 2009/05/29 14:15:44 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 struct atmelgpio_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct ipaq_softc	*sc_parent;
