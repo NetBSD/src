@@ -1,3 +1,5 @@
+/*	$NetBSD: u3g.c,v 1.7 2009/05/29 18:49:21 plunky Exp $	*/
+
 /*
  * Copyright (c) 2008 AnyWi Technologies
  *   Author: Andrea Guzzo <aguzzo@anywi.com>
@@ -18,6 +20,9 @@
  *
  * $FreeBSD$
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.7 2009/05/29 18:49:21 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

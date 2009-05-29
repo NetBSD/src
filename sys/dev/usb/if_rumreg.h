@@ -1,3 +1,4 @@
+/*	$NetBSD: if_rumreg.h,v 1.3 2009/05/29 18:49:21 plunky Exp $	*/
 /*	$OpenBSD: if_rumreg.h,v 1.13 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
