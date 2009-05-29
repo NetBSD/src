@@ -1,4 +1,4 @@
-/*      $NetBSD: j720pcic.c,v 1.5 2008/04/28 20:23:21 martin Exp $        */
+/*      $NetBSD: j720pcic.c,v 1.6 2009/05/29 14:15:45 rjs Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 PCMCIA support. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.5 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.6 2009/05/29 14:15:45 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.5 2008/04/28 20:23:21 martin Exp $");
 
 #include "sacpcic.h"
 
-static int	sacpcic_match(struct device *, struct cfdata *, void *);
-static void	sacpcic_attach(struct device *, struct device *, void *);
+static int	sacpcic_match(device_t, cfdata_t, void *);
+static void	sacpcic_attach(device_t, device_t, void *);
 
 static void	j720_socket_setup(struct sapcic_socket *);
 static void	j720_set_power(struct sapcic_socket *, int);
@@ -85,23 +85,23 @@ static struct platid_data sacpcic_platid_table[] = {
 	{ NULL, NULL }
 };
 
-CFATTACH_DECL(sacpcic, sizeof(struct sacpcic_softc),
+CFATTACH_DECL_NEW(sacpcic, sizeof(struct sacpcic_softc),
     sacpcic_match, sacpcic_attach, NULL, NULL);
 
 
 static int
-sacpcic_match(struct device *parent, struct cfdata *cf, void *aux)
+sacpcic_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-sacpcic_attach(struct device *parent, struct device *self, void *aux)
+sacpcic_attach(device_t parent, device_t self, void *aux)
 {
 
-	sacpcic_attach_common((struct sacc_softc *)parent,
-	    (struct sacpcic_softc *)self, aux, j720_socket_setup);
+	sacpcic_attach_common(device_private(parent),
+	    device_private(self), aux, j720_socket_setup);
 }
 
 static void

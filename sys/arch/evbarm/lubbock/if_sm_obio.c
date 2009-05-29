@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_obio.c,v 1.2 2008/04/28 20:23:17 martin Exp $ */
+/*	$NetBSD: if_sm_obio.c,v 1.3 2009/05/29 14:15:44 rjs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.2 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.3 2009/05/29 14:15:44 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ smc_obio_intr(void *arg)
 #endif /* SM_OBIO_INTR_PARANOIA */
 
 int
-sm_obio_match(struct device *parent, struct cfdata *match, void *aux)
+sm_obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct obio_attach_args *oba = aux;
 	bus_space_tag_t iot = &smobio8_bs_tag;
@@ -177,7 +177,7 @@ sm_obio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-sm_obio_attach(struct device *parent, struct device *self, void *aux)
+sm_obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct sm_obio_softc *isc = (struct sm_obio_softc *)self;
 	struct smc91cxx_softc *sc = &isc->sc_smc;
@@ -228,10 +228,9 @@ sm_obio_attach(struct device *parent, struct device *self, void *aux)
 	smc91cxx_attach(sc, NULL);
 
 	/* Establish the interrupt handler. */
-	isc->sc_ih = obio_intr_establish((struct obio_softc *)parent,
+	isc->sc_ih = obio_intr_establish(device_private(parent),
 					 oba->oba_intr, IPL_NET, smintr, sc);
 
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "couldn't establish interrupt handler\n");
 }

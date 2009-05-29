@@ -1,4 +1,4 @@
-/*	$NetBSD: sed1356var.h,v 1.3 2006/06/27 13:30:19 peter Exp $	*/
+/*	$NetBSD: sed1356var.h,v 1.4 2009/05/29 14:15:45 rjs Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -36,7 +36,7 @@
 #include <dev/hpc/hpcfbio.h>
 
 struct sed1356_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_regh;
 	struct sa11x0_softc	*sc_parent;
