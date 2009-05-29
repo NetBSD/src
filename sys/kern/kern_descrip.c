@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.194 2009/05/28 22:17:04 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.195 2009/05/29 00:10:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.194 2009/05/28 22:17:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.195 2009/05/29 00:10:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1253,11 +1253,11 @@ fd_init(filedesc_t *fdp)
 	for (fd = NDFDFILE; fd < NDFILE; fd++) {
 		KASSERT(fdp->fd_dtbuiltin.dt_ff[fd] == NULL);
 	}
+	KASSERT(fdp->fd_himap == fdp->fd_dhimap);
+	KASSERT(fdp->fd_lomap == fdp->fd_dlomap);
 #endif	/* DIAGNOSTIC */
 
 	fdp->fd_refcnt = 1;
-	fdp->fd_himap = fdp->fd_dhimap;
-	fdp->fd_lomap = fdp->fd_dlomap;
 
 	return fdp;
 }
@@ -1278,6 +1278,8 @@ filedesc_ctor(void *arg, void *obj, int flag)
 	fdp->fd_lastkqfile = -1;
 	fdp->fd_dt = &fdp->fd_dtbuiltin;
 	fdp->fd_dtbuiltin.dt_nfiles = NDFILE;
+	fdp->fd_himap = fdp->fd_dhimap;
+	fdp->fd_lomap = fdp->fd_dlomap;
 
 	CTASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
 	for (i = 0, ffp = fdp->fd_dt->dt_ff; i < NDFDFILE; i++, ffp++) {
@@ -1544,6 +1546,8 @@ fd_free(void)
 	fdp->fd_exclose = false;
 	memset(&fdp->fd_startzero, 0, sizeof(*fdp) -
 	    offsetof(filedesc_t, fd_startzero));
+	fdp->fd_himap = fdp->fd_dhimap;
+	fdp->fd_lomap = fdp->fd_dlomap;
 	KASSERT(fdp->fd_dtbuiltin.dt_nfiles == NDFILE);
 	KASSERT(fdp->fd_dtbuiltin.dt_link == NULL);
 	KASSERT(fdp->fd_dt == &fdp->fd_dtbuiltin);
