@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.176 2009/05/24 12:27:50 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.177 2009/05/29 23:27:08 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.176 2009/05/24 12:27:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.177 2009/05/29 23:27:08 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1511,8 +1511,8 @@ config_detach(device_t dev, int flags)
 	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
 	    (dev->dv_flags & DVF_DETACH_SHUTDOWN) == 0) {
 		rv = EBUSY;	/* XXX EOPNOTSUPP? */
-	} else if (ca->ca_activate != NULL)
-		rv = config_deactivate(dev);
+	} else if ((rv = config_deactivate(dev)) == EOPNOTSUPP)
+		rv = 0;	/* Do not treat EOPNOTSUPP as an error */
 
 	/*
 	 * Try to detach the device.  If that's not possible, then
