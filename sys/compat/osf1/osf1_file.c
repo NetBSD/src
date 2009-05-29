@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.35 2009/05/28 15:21:26 njoly Exp $ */
+/* $NetBSD: osf1_file.c,v 1.36 2009/05/29 09:32:41 njoly Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.35 2009/05/28 15:21:26 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.36 2009/05/29 09:32:41 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -142,7 +142,7 @@ osf1_sys_getdirentries(struct lwp *l, const struct osf1_sys_getdirentries_args *
 	struct uio auio;
 	struct iovec aiov;
 	struct osf1_dirent idb;
-	off_t off;              /* true file offset */
+	off_t off, off1;        /* true file offset */
 	int buflen, error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies, fd;
@@ -164,7 +164,7 @@ osf1_sys_getdirentries(struct lwp *l, const struct osf1_sys_getdirentries_args *
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	off = fp->f_offset;
+	off = off1 = fp->f_offset;
 again:
 	aiov.iov_base = buf;
 	aiov.iov_len = buflen;
@@ -244,7 +244,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	if (SCARG(uap, basep) != NULL)
-		error = copyout(&eofflag, SCARG(uap, basep), sizeof(long));
+		error = copyout(&off1, SCARG(uap, basep), sizeof(long));
 out1:
 	fd_putfile(fd);
 	return error;
