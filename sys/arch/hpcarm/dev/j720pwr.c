@@ -1,4 +1,4 @@
-/*	$NetBSD: j720pwr.c,v 1.4 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: j720pwr.c,v 1.5 2009/05/29 14:15:45 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 power management. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.4 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.5 2009/05/29 14:15:45 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.4 2008/04/28 20:23:21 martin Exp $");
 #include <hpcarm/dev/j720sspvar.h>
 
 #ifdef DEBUG
-#define DPRINTF(arg)	printf arg
+#define DPRINTF(arg)	aprint_normal arg
 #else
 #define DPRINTF(arg)	/* nothing */
 #endif
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.4 2008/04/28 20:23:21 martin Exp $");
 #define arraysize(ary)	(sizeof(ary) / sizeof(ary[0]))
 
 struct j720pwr_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	struct j720ssp_softc	*sc_ssp;
 
@@ -71,8 +71,8 @@ struct j720pwr_softc {
 #define J720PWR_SLEEPING	0x02
 };
 
-static int	j720pwr_match(struct device *, struct cfdata *, void *);
-static void	j720pwr_attach(struct device *, struct device *, void *);
+static int	j720pwr_match(device_t, cfdata_t, void *);
+static void	j720pwr_attach(device_t, device_t, void *);
 
 static void	j720pwr_sleep(void *);
 static int	j720pwr_suspend_hook(void *, int, long, void *);
@@ -100,12 +100,12 @@ static const struct {
 	{   0,  430,	APM_BATT_FLAG_CRITICAL	},
 };
 
-CFATTACH_DECL(j720pwr, sizeof(struct j720pwr_softc),
+CFATTACH_DECL_NEW(j720pwr, sizeof(struct j720pwr_softc),
     j720pwr_match, j720pwr_attach, NULL, NULL);
 
 
 static int
-j720pwr_match(struct device *parent, struct cfdata *cf, void *aux)
+j720pwr_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_7XX))
@@ -117,15 +117,16 @@ j720pwr_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-j720pwr_attach(struct device *parent, struct device *self, void *aux)
+j720pwr_attach(device_t parent, device_t self, void *aux)
 {
-	struct j720pwr_softc *sc = (struct j720pwr_softc *)self;
+	struct j720pwr_softc *sc = device_private(self);
 	extern void (*__sleep_func)(void *);
 	extern void *__sleep_ctx;
 
-	printf("\n");
+	aprint_normal("\n");
 
-	sc->sc_ssp = (struct j720ssp_softc *)parent;
+	sc->sc_dev = self;
+	sc->sc_ssp = device_private(parent);
 	sc->sc_state = 0;
 
 	/* Register apm sleep function. */

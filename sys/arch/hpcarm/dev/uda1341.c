@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.13 2009/03/14 21:04:09 dsl Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.14 2009/05/29 14:15:45 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.13 2009/03/14 21:04:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.14 2009/05/29 14:15:45 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,17 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.13 2009/03/14 21:04:09 dsl Exp $");
 #include <arm/sa11x0/sa11x0_sspreg.h>
 
 struct uda1341_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct ipaq_softc	*sc_parent;
 };
 
-static	int	uda1341_match(struct device *, struct cfdata *, void *);
-static	void	uda1341_attach(struct device *, struct device *, void *);
+static	int	uda1341_match(device_t, cfdata_t, void *);
+static	void	uda1341_attach(device_t, device_t, void *);
 static	int	uda1341_print(void *, const char *);
-static	int	uda1341_search(struct device *, struct cfdata *,
-			       const int *, void *);
+static	int	uda1341_search(device_t, cfdata_t, const int *, void *);
 
 static	void	uda1341_output_high(struct uda1341_softc *);
 static	void	uda1341_output_low(struct uda1341_softc *);
@@ -70,14 +69,20 @@ static	void	uda1341_init(struct uda1341_softc *);
 static	void	uda1341_reset(struct uda1341_softc *);
 static	void	uda1341_reginit(struct uda1341_softc *);
 
+#if 0
 static	int	L3_getbit(struct uda1341_softc *);
+#endif
 static	void	L3_sendbit(struct uda1341_softc *, int);
+#if 0
 static	uint8_t L3_getbyte(struct uda1341_softc *, int);
+#endif
 static	void	L3_sendbyte(struct uda1341_softc *, uint8_t, int);
+#if 0
 static	int	L3_read(struct uda1341_softc *, uint8_t, uint8_t *, int);
+#endif
 static	int	L3_write(struct uda1341_softc *, uint8_t, uint8_t *, int);
 
-CFATTACH_DECL(uda, sizeof(struct uda1341_softc),
+CFATTACH_DECL_NEW(uda, sizeof(struct uda1341_softc),
     uda1341_match, uda1341_attach, NULL, NULL);
 
 /*
@@ -111,23 +116,24 @@ static struct {
 	bus_space_write_4(sc->sc_iot, sc->sc_parent->sc_ssph, reg, val)
 
 static int
-uda1341_match(struct device *parent, struct cfdata *cf, void *aux)
+uda1341_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 static void
-uda1341_attach(struct device *parent, struct device *self, void *aux)
+uda1341_attach(device_t parent, device_t self, void *aux)
 {
-	struct uda1341_softc *sc = (struct uda1341_softc *)self;
-	struct ipaq_softc *psc = (struct ipaq_softc *)parent;
+	struct uda1341_softc *sc = device_private(self);
+	struct ipaq_softc *psc = device_private(parent);
 
-	printf("\n");
-	printf("%s: UDA1341 CODEC\n",  sc->sc_dev.dv_xname);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "UDA1341 CODEC\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
-	sc->sc_parent = (struct ipaq_softc *)parent;
+	sc->sc_parent = psc;
 
 	uda1341_L3_init(sc);
 	uda1341_init(sc);
@@ -145,7 +151,7 @@ uda1341_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-uda1341_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+uda1341_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, uda1341_print);
@@ -236,8 +242,7 @@ uda1341_init(struct uda1341_softc *sc)
 }
 
 static void
-uda1341_reset(sc)
-	struct uda1341_softc *sc;
+uda1341_reset(struct uda1341_softc *sc)
 {       
 	uint8_t command;
 
@@ -312,6 +317,7 @@ uda1341_reginit(struct uda1341_softc *sc)
 	L3_write(sc, command, (uint8_t *) &EXTEND_REG, 2);
 }
 
+#if 0
 static int
 L3_getbit(struct uda1341_softc *sc)
 {
@@ -328,6 +334,7 @@ L3_getbit(struct uda1341_softc *sc)
 
 	return (data);
 }
+#endif
 
 static void
 L3_sendbit(struct uda1341_softc *sc, int bit)
@@ -344,6 +351,7 @@ L3_sendbit(struct uda1341_softc *sc, int bit)
 	delay(L3_CLK_HIGH);
 }
 
+#if 0
 static uint8_t
 L3_getbyte(struct uda1341_softc *sc, int mode)
 {
@@ -370,6 +378,7 @@ L3_getbyte(struct uda1341_softc *sc, int mode)
 
 	return (data);
 }
+#endif
 
 static void
 L3_sendbyte(struct uda1341_softc *sc, uint8_t data, int mode)
@@ -400,6 +409,7 @@ L3_sendbyte(struct uda1341_softc *sc, uint8_t data, int mode)
 	delay(L3_MODE_HOLD);
 }
 
+#if 0
 static int
 L3_read(struct uda1341_softc *sc, uint8_t addr, uint8_t *data, int len)
 {
@@ -419,6 +429,7 @@ L3_read(struct uda1341_softc *sc, uint8_t addr, uint8_t *data, int len)
 
 	return len;
 }
+#endif
 
 static int
 L3_write(struct uda1341_softc *sc, uint8_t addr, uint8_t *data, int len)

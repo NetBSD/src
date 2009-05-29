@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_var.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
+/*	$NetBSD: lubbock_var.h,v 1.2 2009/05/29 14:15:44 rjs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -45,7 +45,7 @@
 #define N_OBIO_IRQ  8
 
 struct obio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_obioreg_ioh;
 	void	*sc_ih;		/* interrupt handler for obio on pxaip */
