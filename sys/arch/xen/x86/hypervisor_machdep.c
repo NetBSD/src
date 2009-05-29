@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.11.8.1 2009/02/09 00:03:55 jym Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.11.8.2 2009/05/29 17:30:51 jym Exp $	*/
 
 /*
  *
@@ -59,11 +59,10 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.11.8.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.11.8.2 2009/05/29 17:30:51 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -424,10 +423,11 @@ build_p2m_frame_list_list(void) {
          * A L1 page contains the list of MFN we are looking for
          */
         max_pfn = xen_start_info.nr_pages;
-        fpp = PAGE_SIZE / sizeof(paddr_t);
+        fpp = PAGE_SIZE / sizeof(unsigned long);
 
         /* we only need one L3 page */
-        l3_p2m_page = kmem_alloc(PAGE_SIZE, KM_NOSLEEP);
+        l3_p2m_page = (vaddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE,
+	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
         if (l3_p2m_page == NULL)
                 panic("could not allocate memory for l3_p2m_page");
 
@@ -437,7 +437,9 @@ build_p2m_frame_list_list(void) {
          */
         l2_p2m_page_size = howmany(max_pfn, fpp);
 
-        l2_p2m_page = kmem_alloc(l2_p2m_page_size * PAGE_SIZE, KM_NOSLEEP);
+        l2_p2m_page = (vaddr_t *)uvm_km_alloc(kernel_map,
+	    l2_p2m_page_size * PAGE_SIZE,
+	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
         if (l2_p2m_page == NULL)
                 panic("could not allocate memory for l2_p2m_page");
 
@@ -457,7 +459,7 @@ update_p2m_frame_list_list(void) {
         unsigned long max_pfn;
 
         max_pfn = xen_start_info.nr_pages;
-        fpp = PAGE_SIZE / sizeof(paddr_t);
+        fpp = PAGE_SIZE / sizeof(unsigned long);
 
         for (i = 0; i < l2_p2m_page_size; i++) {
                 /*
@@ -481,7 +483,7 @@ update_p2m_frame_list_list(void) {
 
         HYPERVISOR_shared_info->arch.pfn_to_mfn_frame_list_list =
                                         vtomfn((vaddr_t)l3_p2m_page);
-        HYPERVISOR_shared_info->arch.max_pfn = max_pfn;
 
+        HYPERVISOR_shared_info->arch.max_pfn = max_pfn;
 }
 #endif /* XEN3 */
