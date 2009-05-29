@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.174 2009/04/07 18:42:30 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.175 2009/05/29 04:57:04 darran Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.174 2009/04/07 18:42:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.175 2009/05/29 04:57:04 darran Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2366,6 +2366,8 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct sockaddr_dl *sdl;
 	int s, error;
 
 	s = splnet();
@@ -2387,6 +2389,18 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
+	case SIOCINITIFADDR:
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			sdl = satosdl(ifp->if_dl->ifa_addr);
+			(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, 
+					LLADDR(satosdl(ifa->ifa_addr)),
+					ifp->if_addrlen);
+			/* unicast address is first multicast entry */
+			wm_set_filter(sc);
+			error = 0;
+			break;
+		}
+		/* Fall through for rest */
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
