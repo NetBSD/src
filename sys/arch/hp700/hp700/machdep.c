@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2009/05/29 08:37:34 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2009/05/29 08:39:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2009/05/29 08:37:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2009/05/29 08:39:05 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1516,8 +1516,8 @@ hppa_pim_dump(int check_type)
 			printf("\n\n\t%s Registers:", name);
 			for (reg_k = 0; reg_k < reg_j; reg_k++)
 				printf("%s0x%08x",
-					(reg_k & 3) ? " " : "\n\t",
-					regarray[reg_k]);
+				    (reg_k & 3) ? " " : "\n",
+				    regarray[reg_k]);
 		}
 
 		/* Print out some interesting registers. */
@@ -1605,28 +1605,23 @@ hppa_pim64_dump(int check_type)
 				regarray = &regs->pim_regs_sr0;
 				reg_j = 8;
 			}
-			printf("\n\n\t%s Registers:", name);
-			for (reg_k = 0; reg_k < reg_j; reg_k++) {
-				printf("%s",
-					(reg_k & 1) ? " " : "\n\t");
-				if (!(reg_k & 1))
-					printf("%2d: ", reg_k);
-				printf("0x%016lx",
-					(unsigned long)regarray[reg_k]);
-			}
-
+			printf("\n\n%s Registers:", name);
+			for (reg_k = 0; reg_k < reg_j; reg_k++)
+				printf("%s0x%016lx",
+				   (reg_k & 3) ? " " : "\n", 
+				   (unsigned long)regarray[reg_k]);
 		}
 
 		/* Print out some interesting registers. */
-		printf("\n\n\tIIA head 0x%lx:0x%016lx\n"
-		    "\tIIA tail 0x%lx:0x%016lx",
+		printf("\n\nIIA head 0x%lx:0x%016lx\n"
+	            "IIA tail 0x%lx:0x%016lx",
 		    (unsigned long)regs->pim_regs_cr17,
 		    (unsigned long)regs->pim_regs_cr18,
 		    (unsigned long)regs->pim_regs_iisq_tail,
 		    (unsigned long)regs->pim_regs_iioq_tail);
-		PIM_WORD("\n\tIPSW", regs->pim_regs_cr22, PSW_BITS);
-		printf("\n\tSP 0x%lx:0x%016lx\n\tFP 0x%lx:0x%016lx",
-		    (unsigned long)regs->pim_regs_sr0,
+		PIM_WORD("\nIPSW", regs->pim_regs_cr22, PSW_BITS);
+		printf("\nSP 0x%lx:0x%016lx\nFP 0x%lx:0x%016lx",
+       		    (unsigned long)regs->pim_regs_sr0,
 		    (unsigned long)regs->pim_regs_r30,
 		    (unsigned long)regs->pim_regs_sr0,
 		    (unsigned long)regs->pim_regs_r3);
@@ -1634,25 +1629,25 @@ hppa_pim64_dump(int check_type)
 
 	/* If we have check words, display them. */
 	if (checks != NULL) {
-		PIM_WORD("\n\n\tCheck Type", checks->pim_check_type,
+		PIM_WORD("\n\nCheck Type", checks->pim_check_type,
 			PIM_CHECK_BITS);
-		PIM_WORD("\n\tCPU State", checks->pim_check_cpu_state,
+		PIM_WORD("\nCPU State", checks->pim_check_cpu_state,
 			PIM_CPU_BITS PIM_CPU_HPMC_BITS);
-		PIM_WORD("\n\tCache Check", checks->pim_check_cache,
+		PIM_WORD("\nCache Check", checks->pim_check_cache,
 			PIM_CACHE_BITS);
-		PIM_WORD("\n\tTLB Check", checks->pim_check_tlb,
+		PIM_WORD("\nTLB Check", checks->pim_check_tlb,
 			PIM_TLB_BITS);
-		PIM_WORD("\n\tBus Check", checks->pim_check_bus,
+		PIM_WORD("\nBus Check", checks->pim_check_bus,
 			PIM_BUS_BITS);
-		PIM_WORD("\n\tAssist Check", checks->pim_check_assist,
+		PIM_WORD("\nAssist Check", checks->pim_check_assist,
 			PIM_ASSIST_BITS);
-		printf("\tAssist State %u", checks->pim_check_assist_state);
-		printf("\n\tSystem Responder 0x%016lx",
-		    (unsigned long)checks->pim_check_responder);
-		printf("\n\tSystem Requestor 0x%016lx",
-		    (unsigned long)checks->pim_check_requestor);
-		printf("\n\tPath Info 0x%08x",
-		    checks->pim_check_path_info);
+		printf("Assist State %u", checks->pim_check_assist_state);
+		printf("\nSystem Responder 0x%016lx",
+		        (unsigned long)checks->pim_check_responder);
+		printf("\nSystem Requestor 0x%016lx",
+		        (unsigned long)checks->pim_check_requestor);
+		printf("\nPath Info 0x%08x",
+		        checks->pim_check_path_info);
 	}
 }
 
