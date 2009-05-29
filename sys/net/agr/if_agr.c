@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.22 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.23 2009/05/29 04:57:05 darran Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.22 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.23 2009/05/29 04:57:05 darran Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.22 2008/11/07 00:20:18 dyoung Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_ether.h>
 
 #if defined(INET)
 #include <netinet/in.h>
@@ -109,6 +110,9 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 {
 	struct agr_port *port;
 	struct ifnet *ifp;
+#if NVLAN > 0
+	struct m_tag *mtag;
+#endif
 
 	port = ifp_port->if_agrprivate;
 	KASSERT(port);
@@ -121,6 +125,27 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 
 	ifp->if_ipackets++;
 	m->m_pkthdr.rcvif = ifp;
+
+#define DNH_DEBUG
+#if NVLAN > 0
+	/* got a vlan packet? */
+	if ((mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
+#ifdef DNH_DEBUG 
+		printf("%s: vlan tag %d attached\n",
+			ifp->if_xname,
+			htole16((*(u_int *)(mtag + 1)) & 0xffff));
+		printf("%s: vlan input\n", ifp->if_xname);
+#endif
+		vlan_input(ifp, m);
+		return;
+#ifdef DNH_DEBUG 
+	} else {
+		struct ethercom *ec = (void *)ifp;
+		printf("%s: no vlan tag attached, ec_nvlans=%d\n",
+			ifp->if_xname, ec->ec_nvlans);
+#endif
+	}
+#endif
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
@@ -212,6 +237,95 @@ agrport_ioctl(struct agr_port *port, u_long cmd, void *arg)
 /*
  * INTERNAL FUNCTIONS
  */
+
+/*
+ * Enable vlan hardware assist for the specified port.
+ */
+static int
+agr_vlan_add(struct agr_port *port, void *arg)
+{
+	struct ifnet *ifp = port->port_ifp;
+	struct ethercom *ec_port = (void *)ifp;
+	struct ifreq ifr;
+	int error=0;
+
+	if (ec_port->ec_nvlans++ == 0 &&
+	    (ec_port->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
+		struct ifnet *p = port->port_ifp;
+		/*
+		 * Enable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
+		if (p->if_flags & IFF_UP) {
+			ifr.ifr_flags = p->if_flags;
+			error = (*p->if_ioctl)(p, SIOCSIFFLAGS,
+			    (void *) &ifr);
+			if (error) {
+				if (ec_port->ec_nvlans-- == 1)
+					ec_port->ec_capenable &=
+					    ~ETHERCAP_VLAN_MTU;
+				return (error);
+			}
+		}
+	}
+
+	return error;
+}
+
+/*
+ * Disable vlan hardware assist for the specified port.
+ */
+static int
+agr_vlan_del(struct agr_port *port, void *arg)
+{
+	struct ethercom *ec_port = (void *)port->port_ifp;
+	struct ifreq ifr;
+
+	/* Disable vlan support */
+	if (ec_port->ec_nvlans-- == 1) {
+		/*
+		 * Disable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+		if (port->port_ifp->if_flags & IFF_UP) {
+			ifr.ifr_flags = port->port_ifp->if_flags;
+			(void) (*port->port_ifp->if_ioctl)(port->port_ifp,
+			    SIOCSIFFLAGS, (void *) &ifr);
+		}
+	}
+
+	return 0;
+}
+
+
+/*
+ * Check for vlan attach/detach.
+ * ec->ec_nvlans is directly modified by the vlan driver.
+ * We keep a local count in sc (sc->sc_nvlans) to detect
+ * when the vlan driver attaches or detaches.
+ * Note the agr interface must be up for this to work.
+ */
+static void
+agr_vlan_check(struct ifnet *ifp, struct agr_softc *sc)
+{
+	struct ethercom *ec = (void *)ifp;
+	int error;
+
+	/* vlans in sync? */
+	if (sc->sc_nvlans == ec->ec_nvlans) {
+		return;
+	}
+
+	if (sc->sc_nvlans == 0) {
+		/* vlan added */
+		error = agr_port_foreach(sc, agr_vlan_add, NULL);
+		sc->sc_nvlans = ec->ec_nvlans;
+	} else if (ec->ec_nvlans == 0) {
+		/* vlan removed */
+		error = agr_port_foreach(sc, agr_vlan_del, NULL);
+		sc->sc_nvlans = 0;
+	}
+}
 
 static int
 agr_clone_create(struct if_clone *ifc, int unit)
@@ -532,6 +646,11 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 * start to modify ifp_port.
 	 */
 
+	/* XXX this should probably be SIOCALIFADDR but that doesn't 
+	 * appear to work (ENOTTY). We want to change the mac address
+	 * of each port to that of the first port. No need for arps 
+	 * since there are no inet addresses assigned to the ports.
+	 */
 	error = (*ifp_port->if_ioctl)(ifp_port, SIOCINITIFADDR, ifp->if_dl);
 
 	if (error) {
@@ -850,6 +969,12 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 
 	case SIOCSIFFLAGS:
+		/* Check for a change in vlan status.  This ioctl is the 
+		 * only way we can tell that a vlan has attached or detached.
+		 * Note the agr interface must be up.
+		 */
+		agr_vlan_check(ifp, sc);
+
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		agr_config_promisc(sc);
