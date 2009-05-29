@@ -1,3 +1,4 @@
+/*	$NetBSD: if_rumvar.h,v 1.5 2009/05/29 18:49:21 plunky Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
