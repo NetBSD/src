@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.144 2009/04/23 17:37:51 njoly Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.145 2009/05/29 14:19:13 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.144 2009/04/23 17:37:51 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.145 2009/05/29 14:19:13 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -298,8 +298,8 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
-		/* XXX is that right? */
-		lsi->lsi_status = WEXITSTATUS(ksi->ksi_status);
+		lsi->lsi_status =
+		    native_to_linux_si_status(ksi->ksi_code, ksi->ksi_status);
 		break;
 	case LINUX_SIGIO:
 		lsi->lsi_band = ksi->ksi_band;
