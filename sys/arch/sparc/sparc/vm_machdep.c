@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99 2009/05/27 04:08:06 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.100 2009/05/29 22:06:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2009/05/27 04:08:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2009/05/29 22:06:56 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -275,8 +275,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_int)npcb + TOPFRAMEOFF);
+	/**rp = *(struct rwindow *)((u_int)opcb + TOPFRAMEOFF);*/
+	rp->rw_local[0] = (int)func;		/* Function to call */
+	rp->rw_local[1] = (int)arg;		/* and its argument */
+	rp->rw_local[2] = (int)l2;		/* new LWP */
 
-	cpu_setfunc(l2, func, arg);
+	npcb->pcb_pc = (int)lwp_trampoline - 8;
+	npcb->pcb_sp = (int)rp;
+	npcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
+	npcb->pcb_wim = 1;		/* Fence at window #1 */
 }
 
 /*
@@ -329,9 +336,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (int)func;		/* Function to call */
 	rp->rw_local[1] = (int)arg;		/* and its argument */
-	rp->rw_local[2] = (int)l;		/* new lwp */
 
-	pcb->pcb_pc = (int)lwp_trampoline - 8;
+	pcb->pcb_pc = (int)lwp_setfunc_trampoline - 8;
 	pcb->pcb_sp = (int)rp;
 	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
 	pcb->pcb_wim = 1;		/* Fence at window #1 */
