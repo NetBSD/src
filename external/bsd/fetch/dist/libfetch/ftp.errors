@@ -1,4 +1,4 @@
-# $NetBSD: ftp.errors,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $
+# $NetBSD: ftp.errors,v 1.1.1.2.8.1 2009/05/30 15:58:17 snj Exp $
 # $FreeBSD: ftp.errors,v 1.6 2002/10/30 06:06:16 des Exp $
 #
 # This list is taken from RFC 959.

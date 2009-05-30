@@ -1,5 +1,5 @@
 # $FreeBSD: http.errors,v 1.5 2001/05/23 18:52:02 des Exp $
-# $NetBSD: http.errors,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $
+# $NetBSD: http.errors,v 1.1.1.2.8.1 2009/05/30 15:58:17 snj Exp $
 #
 # This list is taken from RFC 2068.
 #
@@ -16,7 +16,7 @@
 301 MOVED	Moved Permanently
 302 MOVED	Moved Temporarily
 303 MOVED	See Other
-304 OK		Not Modified
+304 UNCHANGED	Not Modified
 305 INFO	Use Proxy
 307 MOVED	Temporary Redirect
 400 PROTO	Bad Request
