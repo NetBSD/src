@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.178.2.1 2008/12/06 22:09:18 snj Exp $
+$NetBSD: UPDATING,v 1.178.2.1.2.1 2009/05/30 16:30:24 snj Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,17 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20090530:
+	pkg_install now depends on the pkgdb cache for automatic conflict
+	detection.  It is recommented to rebuild the cache with
+	``pkg_admin rebuild''.
+
+	audit-packages.conf(5) has been superseded by pkg_install.conf(5).
+	The default configuration is the same.  Support for pkg_view(1) has
+	been retired.  The functionality of audit-packages(1) and
+	download-vulnerability-list(1) has moved into pkg_admin(1), wrapper
+	scripts that handle the common use cases are provided.
 
 20081205:
 	If you build with MKX11=no, you should remove /etc/rc.d/xdm and
