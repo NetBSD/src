@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.1.6.1 2009/05/30 16:40:31 snj Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd August 23, 2007
+.Dd April 10, 2009
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -28,12 +28,14 @@
 .Op Fl AfILnRuVv
 .Op Fl K Ar pkg_dbdir
 .Op Fl m Ar machine
+.Op Fl P Ar destdir
 .Op Fl p Ar prefix
-.Op Fl s Ar verification-type
-.Op Fl t Ar template
 .Op Fl W Ar viewbase
 .Op Fl w Ar view
-.Ar \fR[[ftp|http]://[\fIuser\fR[:\fIpassword]\fR@]\fIhost\fR[:\fIport\fR]][/\fIpath/\fR]pkg-name ...
+.Ar Oo Oo Li ftp|http Oc Ns Li :// Ns Oo Ar user Oc Ns \
+Oo Li \&: Ns Ar password Oc \
+Ns Li @ Oc Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns \
+Oo Li / Ns Ar path/ Oc Ns Ar pkg-name ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -60,8 +62,8 @@ You are advised to verify the competence and identity of those who
 provide installable package files.
 For extra protection, use the digital signatures provided where possible
 (see the
-.Fl s
-option), or, failing that, use
+.Xr pkg_install.conf 5 ) ,
+or, failing that, use
 .Xr tar 1
 to extract the package file, and inspect its contents and scripts
 to ensure it poses no danger to your system's integrity.
@@ -88,19 +90,18 @@ The following command line arguments are supported:
 .Bl -tag -width indent
 .It Ar pkg-name [ ... ]
 The named packages are installed.
+.Nm
+will first try to use
 .Ar pkg-name
-may be either a URL or a local pathname,
-a package name of "-" will cause
+as full URL or path name without any wildcard processing.
+If that fails,
 .Nm
-to read from stdin.
-If the packages are not found in the current
-working directory,
-.Nm
-will search them in each directory named by the
-.Ev PKG_PATH
-environment variable.
-Any dependencies required by the installed package will be searched
-in the same location that the original package was installed from.
+will try to match packages using wildcard processing.
+If that fails as well and
+.Ar pkg-name
+does not contain any /, the entries of the
+.Dv PKG_PATH
+variable are searched using the wildcard processing rules.
 .It Fl A
 Mark package as installed automatically, as dependency of another
 package.
@@ -143,6 +144,11 @@ Override the machine architecture returned by uname with
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
+.It Fl P Ar destdir
+Prefix all file and directory names with
+.Ar destdir .
+For packages without install scripts this has the same behavior as
+using chroot.
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -160,57 +166,15 @@ into
 .Ar pkgdb .
 .It Fl R
 Do not record the installation of a package.
+This implies
+.Fl I .
 This means that you cannot deinstall it later, so only use this option if
 you know what you are doing!
-.It Fl s Ar verification-type
-Use a callout to an external program to verify the binary package
-being installed against an existing detached signature file.
-The signature file must reside in the same directory
-as the binary package.
-At the present time, the following verification types
-are defined: none, gpg and pgp5.
-The signature will be verified at install time, and the results
-will be displayed.
-If the signature type is anything other than none, the user will be asked if
-.Nm
-should proceed to install the binary package.
-The user must then take the decision whether to proceed or not, depending
-upon the amount of trust that is placed in the signatory of the binary
-package.
-Please note that, at the current time, it is not possible to use
-the verification feature when using
-.Nm
-to add a binary package via a URL - the package, and the related
-detached signature file, must be local
-for the verification to work.
-.It Fl t Ar template
-Use
-.Ar template
-as the input to
-.Xr mktemp 3
-when creating a
-.Dq staging area .
-By default, this is the string
-.Pa /var/tmp/instmp.XXXXXX ,
-but it may be necessary to override it in the situation where
-space in your
-.Pa /var/tmp
-directory is limited.
-Be sure to leave some number of
-.Sq X
-characters for
-.Xr mktemp 3
-to fill in with a unique ID.
-.Pp
-You can get a performance boost by setting the staging area
-.Ar template
-to reside on the same disk partition as target directories for package
-file installation; often this is
-.Pa /usr .
 .It Fl u
-If the package that's being installed is already installed, either
-in the same or a different version, an update is performed.
-If this is specified twice, then any dependant packages that are
+If the package that's being installed is already installed,
+an update is performed.
+It is currently not possible to update to an identical version.
+If this is specified twice, then any dependent packages that are
 too old will also be updated to fulfill the dependency.
 See below for a more detailed description of the process.
 .It Fl V
@@ -275,11 +239,10 @@ passive mode
 ftp.
 .Sh TECHNICAL DETAILS
 .Nm
-extracts each package's
-.Dq packing list
-into a special staging directory in /var/tmp (or $PKG_TMPDIR if set)
-and then runs through the following sequence to fully extract the contents
-of the package:
+extracts each package's meta data (including the
+.Dq packing list )
+to memory and then runs through the following sequence to fully extract
+the contents of the package:
 .Bl -enum -offset indent
 .It
 A check is made to determine if the package or another version of it
@@ -305,40 +268,6 @@ was not installed, and restores the
 .Pa +REQUIRED_BY
 file afterwards.
 .It
-A check is made to determine if the package conflicts (from
-.Cm @pkgcfl
-directives, see
-.Xr pkg_create 1 )
-with an already recorded as installed package.
-If it is, installation is terminated.
-.It
-All package dependencies (from
-.Cm @pkgdep
-directives, see
-.Xr pkg_create 1 )
-are read from the packing list.
-If any of these required packages are not currently installed,
-an attempt is made to find and install it;
-if the missing package cannot be found or installed,
-the installation is terminated.
-If the
-.Fl u
-option was specified twice, any required packages that are installed,
-but which have a version number that is considered to be too old,
-are also updated.
-The dependant packages are found according to the normal
-.Ev PKG_PATH
-rules.
-.It
-A search is made for any
-.Cm @option
-directives which control how the package is added to the system.
-The only currently implemented option is
-.Cm @option preserve ,
-which tells pkg_add to move any existing files out of the way,
-preserving the previous contents (which are also resurrected on
-pkg_delete, so caveat emptor).
-.It
 The package build information is extracted from the
 .Pa +BUILD_INFO
 file and compared against the result of
@@ -358,6 +287,36 @@ is then checked for
 If the package was built with ABI dependency recommendations ignored,
 a warning will be issued.
 .It
+A check is made to determine if the package conflicts (from
+.Cm @pkgcfl
+directives, see
+.Xr pkg_create 1 )
+with an already recorded as installed package or if an installed package
+conflicts with the package.
+If it is, installation is terminated.
+.It
+The file list of the package is compared to the file lists of the
+installed packages.
+If there is any overlap, the installation is terminated.
+.It
+All package dependencies (from
+.Cm @pkgdep
+directives, see
+.Xr pkg_create 1 )
+are read from the packing list.
+If any of these required packages are not currently installed,
+an attempt is made to find and install it;
+if the missing package cannot be found or installed,
+the installation is terminated.
+If the
+.Fl u
+option was specified twice, any required packages that are installed,
+but which have a version number that is considered to be too old,
+are also updated.
+The dependent packages are found according to the normal
+.Ev PKG_PATH
+rules.
+.It
 If the package contains an
 .Ar install
 script, it is executed with the following arguments:
@@ -373,8 +332,7 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-It is used as a guide for moving (or copying, as necessary) files from
-the staging area into their final locations.
+The files from the file list are extracted to the chosen prefix.
 .It
 If an
 .Ar install
@@ -403,8 +361,6 @@ path shown above).
 .It
 If the package is a depoted package, then add it to the default view.
 .It
-The staging area is deleted and the program terminates.
-.It
 Finally, if we were upgrading a package, any
 .Pa +REQUIRED_BY
 file that was moved aside before upgrading was started is now moved
@@ -432,6 +388,13 @@ meta-data files, and with the
 .Ev PKG_REFCOUNT_DBDIR
 environment variable set to the location of the package reference counts
 database directory.
+If the
+.Fl P
+flag was given to
+.Nm ,
+.Ev PKG_DESTDIR
+will be set to
+.Ar destdir .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_TMPDIR
 .It Ev LOCALBASE
@@ -453,24 +416,22 @@ The default package database directory is
 .It Ev PKG_PATH
 The value of the
 .Ev PKG_PATH
-is used if a given package can't be found, it's usually set to
+variable overrides the
+.Xr pkg_install.conf 5
+variable of the same name.
+It is used if a given package can't be found, it's usually set to
 .Pa /usr/pkgsrc/packages/All .
 The environment variable
 should be a series of entries separated by semicolons.
 Each entry consists of a directory name or URL.
 The current directory may be indicated implicitly by an empty directory
 name, or explicitly by a single period.
-FTP URLs may not end with a slash.
 .It Ev PKG_REFCOUNT_DBDIR
 Location of the package reference counts database directory.
 The default location is the path to the package database directory with
 .Dq .refcount
 appended to the path, e.g.
 .Pa /var/db/pkg.refcount .
-.It Ev PKG_TMPDIR
-Staging directory for installing packages, defaults to /var/tmp.
-Set to directory with lots of free disk if you run out of
-space when installing a binary package.
 .It Ev PKG_VIEW
 The default view can be specified in the
 .Ev PKG_VIEW
@@ -528,10 +489,20 @@ like this:
 (The quotes are needed because semicolon
 .Pq Sq \&;
 is a shell meta-character.)
-If you do this, consider installing and using the
-.Pa security/audit-packages
-package and running it after every
+If you do this, consider using the audit capabilities in
+.Xr pkg_admin 1
+and running it after every
 .Nm .
+.Sh CONFIGURATION VARIABLES
+The following variables change the behavior of
+.Nm
+and are described in
+.Xr pkg_install.conf 5 :
+.Bl -tag -width CERTIFICATE_ANCHOR_PKGS
+.It Ev CERTIFICATE_ANCHOR_PKGS
+.It Ev CERTIFICATE_CHAIN
+.It Ev VERIFIED_INSTALLATION
+.El
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
@@ -540,6 +511,7 @@ package and running it after every
 .Xr tar 1 ,
 .Xr mktemp 3 ,
 .Xr sysconf 3 ,
+.Xr pkg_install.conf 5 ,
 .Xr pkgsrc 7
 .Sh AUTHORS
 .Bl -tag -width indent -compact
@@ -553,21 +525,10 @@ refinements.
 wildcard dependency processing, pkgdb, upgrading, etc.
 .It Thomas Klausner
 HTTP support.
+.It Joerg Sonnenberger
+Rewrote most of the code base to work without external commands.
 .El
 .Sh BUGS
-Hard links between files in a distribution are only preserved if either
-(1) the staging area is on the same file system as the target directory of
-all the links to the file, or (2) all the links to the file are bracketed by
-.Cm @cwd
-directives in the contents file,
-.Em and
-and the link names are extracted with a single
-.Cm tar
-command (not split between
-invocations due to exec argument-space limitations--this depends on the
-value returned by
-.Fn sysconf _SC_ARG_MAX ) .
-.Pp
 Package upgrading needs a lot more work to be really universal.
 .Pp
 Sure to be others.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.1.1.1.6.1 2009/05/30 16:40:33 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,9 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
-#endif
+__RCSID("$NetBSD: pkgdb.c,v 1.1.1.1.6.1 2009/05/30 16:40:33 snj Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -46,6 +44,8 @@ __RCSID("$NetBSD: pkgdb.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
 #include <db1/db.h>
 #elif HAVE_DB_H
 #include <db.h>
+#else
+#include <nbcompat/db.h>
 #endif
 #if HAVE_ERR_H
 #include <err.h>
@@ -65,11 +65,6 @@ __RCSID("$NetBSD: pkgdb.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
 #if HAVE_STRING_H
 #include <string.h>
 #endif
-#if defined(HAVE_DBOPEN) || (defined(HAVE___DB185_OPEN) && defined(HAVE_DB_185_H))
-#define	HAVE_DBLIB	1
-#else
-#define	HAVE_DBLIB	0
-#endif
 
 #include "lib.h"
 
@@ -85,13 +80,10 @@ __RCSID("$NetBSD: pkgdb.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
 /* just in case we change the environment variable name */
 #define PKG_DBDIR		"PKG_DBDIR"
 
-#if HAVE_DBLIB
 static DB   *pkgdbp;
-#endif
 static char *pkgdb_dir = NULL;
 static char  pkgdb_cache[MaxPathSize];
 
-#if HAVE_DBLIB
 /*
  *  Open the pkg-database
  *  Return value:
@@ -272,18 +264,6 @@ pkgdb_remove_pkg(const char *pkg)
 	return ret;
 }
 
-#else /* !HAVE_DBLIB */
-
-int	pkgdb_open(int mode) { return 1; }
-void	pkgdb_close(void) {}
-int	pkgdb_store(const char *key, const char *val) { return 0; }
-char   *pkgdb_retrieve(const char *key) { return NULL; }
-int	pkgdb_dump(void) { return 0; }
-int	pkgdb_remove(const char *key) { return 0; }
-int	pkgdb_remove_pkg(const char *pkg) { return 1; }
-
-#endif /* HAVE_DBLIB */
-
 /*
  *  Return the location of the package reference counts database directory.
  */
@@ -341,10 +321,5 @@ _pkgdb_setPKGDB_DIR(const char *dir)
 char *
 pkgdb_pkg_file(const char *pkg, const char *file)
 {
-	char *buf;
-
-	if (asprintf(&buf, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkg, file) == -1)
-		err(EXIT_FAILURE, "asprintf failed");
-
-	return buf;
+	return xasprintf("%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkg, file);
 }

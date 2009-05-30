@@ -1,7 +1,18 @@
-# $NetBSD: Makefile,v 1.1 2008/09/30 19:19:56 joerg Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2009/05/30 16:40:34 snj Exp $
 
 PROG= pkg_admin
-SRCS= audit.c check.c config.c main.c
+SRCS= audit.c check.c main.c
+
+SCRIPTS=	audit-packages.sh download-vulnerability-list.sh
+CLEANFILES=	audit-packages.sh download-vulnerability-list.sh
+
+audit-packages.sh: audit-packages.sh.in
+	sed -e 's|@PKG_ADMIN@|/usr/sbin/pkg_admin|' \
+	    ${DIST}/admin/audit-packages.sh.in > $@
+
+download-vulnerability-list.sh: download-vulnerability-list.sh.in
+	sed -e 's|@PKG_ADMIN@|/usr/sbin/pkg_admin|' \
+	    ${DIST}/admin/download-vulnerability-list.sh.in > $@
 
 LINK_PKGVUL=	yes
 
