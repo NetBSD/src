@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85 2009/05/16 19:15:34 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.86 2009/05/30 16:52:32 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -338,7 +338,6 @@ int	probeset(paddr_t, int, int, uint64_t);
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )
 
-void 	lwp_trampoline(void);
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
