@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 2008/11/19 18:35:59 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 2009/05/30 17:52:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27 2008/11/19 18:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 2009/05/30 17:52:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct trapframe *tf;
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
+	extern void lwp_trampoline(void);
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
@@ -171,8 +172,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
+	extern void setfunc_trampoline(void);
 
-	sf->sf_pc = (u_int)lwp_trampoline;
+	sf->sf_pc = (u_int)setfunc_trampoline;
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
