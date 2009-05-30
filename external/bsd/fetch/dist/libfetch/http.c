@@ -1,8 +1,8 @@
-/*	$NetBSD: http.c,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.1.1.2.4.1 2009/05/30 16:01:24 snj Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
- * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
+ * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,10 +63,13 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __linux__
-/* Keep this down to Linux, it can create surprises else where. */
+#if defined(__linux__) || defined(__MINT__)
+/* Keep this down to Linux or MiNT, it can create surprises elsewhere. */
 #define _GNU_SOURCE
 #endif
+
+/* Needed for gmtime_r on Interix */
+#define _REENTRANT
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -83,10 +86,8 @@
 #include <locale.h>
 #include <stdarg.h>
 #ifndef NETBSD
-#include <nbcompat/netdb.h>
 #include <nbcompat/stdio.h>
 #else
-#include <netdb.h>
 #include <stdio.h>
 #endif
 #include <stdlib.h>
@@ -94,10 +95,16 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <arpa/inet.h>
-
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+
+#ifndef NETBSD
+#include <nbcompat/netdb.h>
+#else
+#include <netdb.h>
+#endif
+
+#include <arpa/inet.h>
 
 #include "fetch.h"
 #include "common.h"
@@ -112,6 +119,7 @@
 #define HTTP_MOVED_PERM		301
 #define HTTP_MOVED_TEMP		302
 #define HTTP_SEE_OTHER		303
+#define HTTP_NOT_MODIFIED	304
 #define HTTP_TEMP_REDIRECT	307
 #define HTTP_NEED_AUTH		401
 #define HTTP_NEED_PROXY_AUTH	407
@@ -745,6 +753,21 @@ http_get_proxy(struct url * url, const char *flags)
 	return (NULL);
 }
 
+static void
+set_if_modified_since(conn_t *conn, time_t last_modified)
+{
+	static const char weekdays[] = "SunMonTueWedThuFriSat";
+	static const char months[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+	struct tm tm;
+	char buf[80];
+	gmtime_r(&last_modified, &tm);
+	snprintf(buf, sizeof(buf), "%.3s, %02d %.3s %4d %02d:%02d:%02d GMT",
+	    weekdays + tm.tm_wday * 3, tm.tm_mday, months + tm.tm_mon * 3,
+	    tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	http_cmd(conn, "If-Modified-Since: %s", buf);
+}
+
+
 /*****************************************************************************
  * Core
  */
@@ -761,7 +784,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 {
 	conn_t *conn;
 	struct url *url, *new;
-	int chunked, direct, need_auth, noredirect, verbose;
+	int chunked, direct, if_modified_since, need_auth, noredirect, verbose;
 	int e, i, n, val;
 	off_t offset, clength, length, size;
 	time_t mtime;
@@ -773,6 +796,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 	direct = CHECK_FLAG('d');
 	noredirect = CHECK_FLAG('A');
 	verbose = CHECK_FLAG('v');
+	if_modified_since = CHECK_FLAG('i');
 
 	if (direct && purl) {
 		fetchFreeURL(purl);
@@ -841,6 +865,9 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 			    op, url->doc);
 		}
 
+		if (if_modified_since && url->last_modified > 0)
+			set_if_modified_since(conn, url->last_modified);
+
 		/* virtual host */
 		http_cmd(conn, "Host: %s", host);
 
@@ -904,6 +931,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 		switch (http_get_reply(conn)) {
 		case HTTP_OK:
 		case HTTP_PARTIAL:
+		case HTTP_NOT_MODIFIED:
 			/* fine */
 			break;
 		case HTTP_MOVED_PERM:
@@ -1036,7 +1064,10 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 		}
 
 		/* we have a hit or an error */
-		if (conn->err == HTTP_OK || conn->err == HTTP_PARTIAL || HTTP_ERROR(conn->err))
+		if (conn->err == HTTP_OK ||
+		    conn->err == HTTP_PARTIAL ||
+		    conn->err == HTTP_NOT_MODIFIED ||
+		    HTTP_ERROR(conn->err))
 			break;
 
 		/* all other cases: we got a redirect */
@@ -1088,6 +1119,11 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 	/* report back real offset and size */
 	URL->offset = offset;
 	URL->length = clength;
+
+	if (conn->err == HTTP_NOT_MODIFIED) {
+		http_seterr(HTTP_NOT_MODIFIED);
+		return (NULL);
+	}
 
 	/* wrap it up in a fetchIO */
 	if ((f = http_funopen(conn, chunked)) == NULL) {
