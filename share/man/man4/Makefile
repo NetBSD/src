@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.350.2.16 2007/10/15 05:09:54 riz Exp $
+#	$NetBSD: Makefile,v 1.350.2.17 2009/05/30 06:27:00 snj Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -78,7 +78,7 @@ MAN+=	aha.4 ai.4 aic.4 ast.4 ate.4 boca.4 cs.4 cy.4 ec.4 ef.4 \
 	wds.4 we.4 wss.4 wt.4
 
 # machine-independent PCMCIA devices
-MAN+=	pcic.4 tcic.4 pcmcom.4 xi.4
+MAN+=	pcic.4 tcic.4 pcmcom.4 xi.4 xirc.4
 
 # machine-independent obio (mac68k and macppc) devices
 MAN+=	adb.4 akbd.4 ams.4 mc.4
