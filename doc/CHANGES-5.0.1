@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.15 2009/05/27 21:46:08 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.16 2009/05/30 16:51:50 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -160,4 +160,136 @@ sys/kern/kern_physio.c				1.91
 	Remove a race where physio_done() may use memory already
 	freed.  Fixes PR kern/39536.
 	[hannken, ticket #781]
+
+src/external/bsd/fetch/dist/libfetch/common.c	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/common.h	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/errlist.sh	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/fetch.3	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/fetch.c	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/fetch.cat3	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/fetch.h	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/file.c	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/ftp.c	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/ftp.errors	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/http.c	libfetch-2-23
+src/external/bsd/fetch/dist/libfetch/http.errors libfetch-2-23
+
+	Pull up libfetch-2.23:
+	- if-not-modified support
+	- document that struct URL is not part of the ABI
+	- fetchRestartCalls cleanup for signal handlers
+	- allow HTTP basic auth to be specified in the URL, allow : as part of
+	  the cleartext password
+	- fix a file descriptor leak in the file:// iteration code
+	[joerg, ticket #670]
+
+UPDATING					patch
+distrib/sets/lists/base/mi			patch
+distrib/sets/lists/etc/mi			patch
+distrib/sets/lists/man/mi			patch
+external/bsd/pkg_install/Makefile.inc		patch
+external/bsd/pkg_install/prepare-import.sh	patch
+external/bsd/pkg_install/dist/add/add.h		pkg_install-20090528
+external/bsd/pkg_install/dist/add/main.c	pkg_install-20090528
+external/bsd/pkg_install/dist/add/perform.c	pkg_install-20090528
+external/bsd/pkg_install/dist/add/pkg_add.1	pkg_install-20090528
+external/bsd/pkg_install/dist/admin/admin.h	pkg_install-20090528
+external/bsd/pkg_install/dist/admin/audit.c	pkg_install-20090528
+external/bsd/pkg_install/dist/admin/check.c	pkg_install-20090528
+external/bsd/pkg_install/dist/admin/main.c	pkg_install-20090528
+external/bsd/pkg_install/dist/admin/pkg_admin.1	pkg_install-20090528
+external/bsd/pkg_install/dist/bpm/bpm.1		pkg_install-20090528
+external/bsd/pkg_install/dist/create/build.c	pkg_install-20090528
+external/bsd/pkg_install/dist/create/create.h	pkg_install-20090528
+external/bsd/pkg_install/dist/create/main.c	pkg_install-20090528
+external/bsd/pkg_install/dist/create/perform.c	pkg_install-20090528
+external/bsd/pkg_install/dist/create/pkg_create.1 pkg_install-20090528
+external/bsd/pkg_install/dist/create/pl.c	pkg_install-20090528
+external/bsd/pkg_install/dist/create/util.c	pkg_install-20090528
+external/bsd/pkg_install/dist/delete/pkg_delete.1 pkg_install-20090528
+external/bsd/pkg_install/dist/info/info.h	pkg_install-20090528
+external/bsd/pkg_install/dist/info/main.c	pkg_install-20090528
+external/bsd/pkg_install/dist/info/perform.c	pkg_install-20090528
+external/bsd/pkg_install/dist/info/pkg_info.1	pkg_install-20090528
+external/bsd/pkg_install/dist/info/show.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/automatic.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/config.h.in	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/conflicts.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/decompress.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/dewey.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/fexec.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/file.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/global.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/iterate.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/lib.h		pkg_install-20090528
+external/bsd/pkg_install/dist/lib/lpkg.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/opattern.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/pkg_io.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/pkg_summary.5	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/pkgdb.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/plist.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/str.c		pkg_install-20090528
+external/bsd/pkg_install/dist/lib/var.c		pkg_install-20090528
+external/bsd/pkg_install/dist/lib/version.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/version.h	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/vulnerabilities-file.c pkg_install-20090528
+external/bsd/pkg_install/dist/admin/audit-packages.sh.in pkg_install-20090528
+external/bsd/pkg_install/dist/admin/download-vulnerability-list.sh.in pkg_install-20090528
+external/bsd/pkg_install/dist/delete/pkg_delete.c pkg_install-20090528
+external/bsd/pkg_install/dist/lib/gpgsig.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/license.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/parse-config.c pkg_install-20090528
+external/bsd/pkg_install/dist/lib/pkcs7.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in pkg_install-20090528
+external/bsd/pkg_install/dist/lib/pkg_signature.c: pkg_install-20090528
+external/bsd/pkg_install/dist/lib/remove.c	pkg_install-20090528
+external/bsd/pkg_install/dist/lib/xwrapper.c	pkg_install-20090528
+external/bsd/pkg_install/dist/x509/pkgsrc.cnf	pkg_install-20090528
+external/bsd/pkg_install/dist/x509/pkgsrc.sh	pkg_install-20090528
+external/bsd/pkg_install/dist/x509/signing.txt	pkg_install-20090528
+external/bsd/pkg_install/lib/Makefile		patch
+external/bsd/pkg_install/sbin/Makefile		patch
+external/bsd/pkg_install/sbin/Makefile.inc	patch
+external/bsd/pkg_install/sbin/pkg_add/Makefile	patch
+external/bsd/pkg_install/sbin/pkg_admin/Makefile patch
+external/bsd/pkg_install/sbin/pkg_create/Makefile patch
+external/bsd/pkg_install/sbin/pkg_delete/Makefile patch
+external/bsd/pkg_install/sbin/pkg_info/Makefile	patch
+external/bsd/pkg_install/dist/add/extract.c	removed
+external/bsd/pkg_install/dist/add/futil.c	removed
+external/bsd/pkg_install/dist/add/verify.c	removed
+external/bsd/pkg_install/dist/add/verify.h	removed
+external/bsd/pkg_install/dist/admin/config.c	removed
+external/bsd/pkg_install/dist/audit-packages/AUTHORS removed
+external/bsd/pkg_install/dist/audit-packages/COPYING removed
+external/bsd/pkg_install/dist/audit-packages/README removed
+external/bsd/pkg_install/dist/audit-packages/audit-packages.1.in removed
+external/bsd/pkg_install/dist/audit-packages/audit-packages.c removed
+external/bsd/pkg_install/dist/audit-packages/audit-packages.conf.5.in removed
+external/bsd/pkg_install/dist/audit-packages/audit-packages.conf.in removed
+external/bsd/pkg_install/dist/audit-packages/download-vulnerability-list.1.in removed
+external/bsd/pkg_install/dist/audit-packages/download-vulnerability-list.sh.in removed
+external/bsd/pkg_install/dist/delete/delete.h	removed
+external/bsd/pkg_install/dist/delete/main.c	removed
+external/bsd/pkg_install/dist/delete/perform.c	removed
+external/bsd/pkg_install/dist/lib/ftpio.c	removed
+external/bsd/pkg_install/dist/lib/path.c	removed
+external/bsd/pkg_install/dist/lib/path.h	removed
+external/bsd/pkg_install/dist/lib/pen.c		removed
+external/bsd/pkg_install/dist/lib/pexec.c	removed
+external/bsd/pkg_install/dist/view/linkfarm.1	removed
+external/bsd/pkg_install/dist/view/linkfarm.sh.in removed
+external/bsd/pkg_install/dist/view/pkg_view.1	removed
+external/bsd/pkg_install/dist/view/pkg_view.sh.in removed
+external/bsd/pkg_install/sbin/audit-packages/Makefile removed
+external/bsd/pkg_install/sbin/pkg_view/Makefile	removed
+
+	Merge pkg_install-20090528 from HEAD.
+	[joerg, ticket #784]
+
+usr.sbin/puffs/mount_sysctlfs/sysctlfs.c	1.11
+
+	Fix a crash while trying to read nodes on amd64, reported in
+	PR/41494.
+	[njoly, ticket #783]
 
