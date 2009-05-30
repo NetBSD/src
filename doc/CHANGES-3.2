@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.168 2009/05/13 19:39:56 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.169 2009/05/30 06:50:57 snj Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5252,4 +5252,40 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.35
 
 	Do not forget to detach rnd(4) device when removing a xennet device.
 	[jym, ticket #2013]
+
+sbin/reboot/reboot.8				1.22
+
+	Add a caveat about reboot(8) not running shutdown scripts.
+	This addresses (at least partially) PR/35067.
+	[jnemeth, ticket #2016]
+
+distrib/sets/lists/man/mi			1.1004 via patch
+share/man/man4/Makefile				1.430 via patch
+share/man/man4/com.4				1.13
+share/man/man4/xi.4				1.11
+share/man/man4/xirc.4				1.1
+
+	xi now attaches at xirc, not pcmcia
+	PR/36310 -- Joerg Niendorf
+	[jnemeth, ticket #2017]
+
+sbin/fdisk/fdisk.c				1.104 via patch
+
+	PR/36223: Milos Negovanovic: Don't ask if we want to install
+	mbr_bootselect with -f.
+	[jnemeth, ticket #2018]
+
+sbin/shutdown/Makefile				1.9
+sbin/shutdown/shutdown.c			1.45-1.48
+
+	Fix PRs 31531 and 36626.  Shutdown now executes /etc/rc.shutdown
+	with ruid = 0.
+	[jnemeth, ticket #2019]
+
+
+sbin/newfs/mkfs.c				1.104
+
+	PR/37155 - Marcelo Schmidt -- specifying too large of a size
+	causes segvs.
+	[jnemeth, ticket #2020]
 
