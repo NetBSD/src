@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
-#else
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -32,7 +26,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "B:C:D:EFI:K:L:OP:RS:T:UVb:c:d:f:g:i:k:ln:p:r:s:u:v";
+static const char Options[] = "B:C:D:EF:I:K:L:OP:S:T:UVb:c:d:f:g:i:k:ln:p:r:s:u:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -53,21 +47,20 @@ char   *SrcDir = NULL;
 char   *DefaultOwner = NULL;
 char   *DefaultGroup = NULL;
 char   *realprefix = NULL;
-char    PlayPen[MaxPathSize];
-size_t  PlayPenSize = sizeof(PlayPen);
+char   *CompressionType = NULL;
 int	update_pkgdb = 1;
 int	create_views = 0;
 int     PlistOnly = 0;
 int     RelativeLinks = 0;
-int     ReorderDirs = 0;
 Boolean File2Pkg = FALSE;
 
 static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: pkg_create [-ElORUVv] [-B build-info-file] [-b build-version-file]\n"
-            "                  [-C cpkgs] [-D displayfile] [-I realprefix] [-i iscript]\n"
+	    "usage: pkg_create [-ElOUVv] [-B build-info-file] [-b build-version-file]\n"
+            "                  [-C cpkgs] [-D displayfile] [-F compression] \n"
+	    "                  [-I realprefix] [-i iscript]\n"
             "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir]\n"
             "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
             "                  [-S size-all-file] [-s size-pkg-file]\n"
@@ -98,16 +91,16 @@ main(int argc, char **argv)
 			create_views = 1;
 			break;
 
+		case 'F':
+			CompressionType = optarg;
+			break;
+
 		case 'I':
 			realprefix = optarg;
 			break;
 
 		case 'O':
 			PlistOnly = 1;
-			break;
-
-		case 'R':
-			ReorderDirs = 1;
 			break;
 
 		case 'U':

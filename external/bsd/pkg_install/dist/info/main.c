@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
-#else
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
 
 /*
  *
@@ -50,7 +44,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
 #include "lib.h"
 #include "info.h"
 
-static const char Options[] = ".aBbcDde:E:fFhIiK:kLl:mNnpQ:qRsSuvVX";
+static const char Options[] = ".aBbcDde:E:fFhIiK:kLl:mNnpQ:qrRsSuvVX";
 
 int     Flags = 0;
 enum which Which = WHICH_LIST;
@@ -58,8 +52,6 @@ Boolean File2Pkg = FALSE;
 Boolean Quiet = FALSE;
 char   *InfoPrefix = "";
 char   *BuildInfoVariable = "";
-char    PlayPen[MaxPathSize];
-size_t  PlayPenSize = sizeof(PlayPen);
 size_t  termwidth = 0;
 lpkg_head_t pkgs;
 
@@ -67,7 +59,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n%s\n",
-	    "usage: pkg_info [-BbcDdFfhIikLmNnpqRSsVvX] [-e package] [-E package]",
+	    "usage: pkg_info [-BbcDdFfhIikLmNnpqrRSsVvX] [-e package] [-E package]",
 	    "                [-K pkg_dbdir] [-l prefix] pkg-name ...",
 	    "       pkg_info [-a | -u] [flags]",
 	    "       pkg_info [-Q variable] pkg-name ...");
@@ -178,6 +170,10 @@ main(int argc, char **argv)
 			Quiet = TRUE;
 			break;
 
+		case 'r':
+			Flags |= SHOW_FULL_REQBY;
+			break;
+
 		case 'R':
 			Flags |= SHOW_REQBY;
 			break;
@@ -248,14 +244,6 @@ main(int argc, char **argv)
 		usage();
 	}
 
-	/* Don't do FTP stuff when operating on all pkgs */
-	if (Which != WHICH_LIST && getenv("PKG_PATH") != 0) {
-		warnx("disabling PKG_PATH when operating on all packages.");
-		unsetenv("PKG_PATH");
-	}
-
-	path_create(getenv("PKG_PATH"));
-
 	/* Set some reasonable defaults */
 	if (!Flags)
 		Flags = SHOW_COMMENT | SHOW_DESC | SHOW_REQBY 
@@ -271,11 +259,9 @@ main(int argc, char **argv)
 
 			s = pkgdb_retrieve(CheckPkg);
 
-			if (s) {
-				CheckPkg = strdup(s);
-			} else {
+			if (s == NULL)
 				errx(EXIT_FAILURE, "No matching pkg for %s.", CheckPkg);
-			}
+			CheckPkg = xstrdup(s);
 
 			pkgdb_close();
 		}

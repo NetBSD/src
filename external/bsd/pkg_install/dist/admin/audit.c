@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.1.1.2 2008/10/02 20:49:40 joerg Exp $	*/
+/*	$NetBSD: audit.c,v 1.1.1.2.8.1 2009/05/30 16:21:35 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,9 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-__RCSID("$NetBSD: audit.c,v 1.1.1.2 2008/10/02 20:49:40 joerg Exp $");
-#endif
+__RCSID("$NetBSD: audit.c,v 1.1.1.2.8.1 2009/05/30 16:21:35 snj Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -78,11 +76,14 @@ __RCSID("$NetBSD: audit.c,v 1.1.1.2 2008/10/02 20:49:40 joerg Exp $");
 static int check_eol = 0;
 static int check_signature = 0;
 static const char *limit_vul_types = NULL;
+static int update_pkg_vuln = 0;
 
 static struct pkg_vulnerabilities *pv;
 
+static const char audit_options[] = "est:";
+
 static void
-parse_options(int argc, char **argv)
+parse_options(int argc, char **argv, const char *options)
 {
 	int ch;
 
@@ -96,7 +97,7 @@ parse_options(int argc, char **argv)
 	++argc;
 	--argv;
 
-	while ((ch = getopt(argc, argv, "est:")) != -1) {
+	while ((ch = getopt(argc, argv, options)) != -1) {
 		switch (ch) {
 		case 'e':
 			check_eol = 1;
@@ -106,6 +107,9 @@ parse_options(int argc, char **argv)
 			break;
 		case 't':
 			limit_vul_types = optarg;
+			break;
+		case 'u':
+			update_pkg_vuln = 1;
 			break;
 		default:
 			usage();
@@ -117,66 +121,10 @@ parse_options(int argc, char **argv)
 }
 
 static int
-check_ignored_entry(size_t i)
-{
-	const char *iter, *next;
-	size_t entry_len, url_len;
-
-	if (ignore_advisories == NULL)
-		return 0;
-
-	url_len = strlen(pv->advisory[i]);
-
-	for (iter = ignore_advisories; *iter; iter = next) {
-		if ((next = strchr(iter, '\n')) == NULL) {
-			entry_len = strlen(iter);
-			next = iter + entry_len;
-		} else {
-			entry_len = next - iter;
-			++next;
-		}
-		if (url_len != entry_len)
-			continue;
-		if (strncmp(pv->advisory[i], iter, entry_len) == 0)
-			return 1;
-	}
-	return 0;
-}
-
-static int
 check_exact_pkg(const char *pkg)
 {
-	int ret;
-	size_t i;
-
-	ret = 0;
-	for (i = 0; i < pv->entries; ++i) {
-		if (check_ignored_entry(i))
-			continue;
-		if (limit_vul_types != NULL &&
-		    strcmp(limit_vul_types, pv->classification[i]))
-			continue;
-		if (!pkg_match(pv->vulnerability[i], pkg))
-			continue;
-		if (strcmp("eol", pv->classification[i]) == 0) {
-			if (!check_eol)
-				continue;
-			if (quiet)
-				puts(pkg);
-			else
-				printf("Package %s has reached end-of-life (eol), "
-				    "see %s/eol-packages\n", pkg,
-				    tnf_vulnerability_base);
-			continue;
-		}
-		if (quiet)
-			puts(pkg);
-		else
-			printf("Package %s has a %s vulnerability, see %s\n",
-			    pkg, pv->classification[i], pv->advisory[i]);
-		ret = 1;
-	}
-	return ret;
+	return audit_package(pv, pkg, limit_vul_types, check_eol,
+	    quiet ? 0 : 1);
 }
 
 static int
@@ -254,7 +202,7 @@ check_and_read_pkg_vulnerabilities(void)
 		if (now < 0)
 			warnx("pkg-vulnerabilities is from the future");
 		else if (now > 86400 * 7)
-			warnx("pkg-vulnerabilities is out of day (%ld days old)",
+			warnx("pkg-vulnerabilities is out of date (%ld days old)",
 			    (long)(now / 86400));
 		else if (verbose >= 2)
 			warnx("pkg-vulnerabilities is %ld day%s old",
@@ -269,7 +217,7 @@ audit_pkgdb(int argc, char **argv)
 {
 	int rv;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, audit_options);
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();
@@ -293,7 +241,7 @@ audit_pkg(int argc, char **argv)
 {
 	int rv;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, audit_options);
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();
@@ -313,7 +261,7 @@ audit_batch(int argc, char **argv)
 {
 	int rv;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, audit_options);
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();
@@ -330,7 +278,7 @@ audit_batch(int argc, char **argv)
 void
 check_pkg_vulnerabilities(int argc, char **argv)
 {
-	parse_options(argc, argv);
+	parse_options(argc, argv, "s");
 	if (argc != optind + 1)
 		usage();
 
@@ -343,19 +291,52 @@ fetch_pkg_vulnerabilities(int argc, char **argv)
 {
 	struct pkg_vulnerabilities *pv_check;
 	char *buf, *decompressed_input;
-	size_t buf_len, decompressed_len;
+	size_t buf_len, buf_fetched, decompressed_len;
+	ssize_t cur_fetched;
+	struct url *url;
 	struct url_stat st;
 	fetchIO *f;
 	int fd;
+	struct stat sb;
+	char my_flags[20];
+	const char *flags;
 
-	parse_options(argc, argv);
+	parse_options(argc, argv, "su");
 	if (argc != optind)
 		usage();
 
 	if (verbose >= 2)
 		fprintf(stderr, "Fetching %s\n", pkg_vulnerabilities_url);
 
-	f = fetchXGetURL(pkg_vulnerabilities_url, &st, "");
+	url = fetchParseURL(pkg_vulnerabilities_url);
+	if (url == NULL)
+		errx(EXIT_FAILURE,
+		    "Could not parse location of pkg_vulnerabilities: %s",
+		    fetchLastErrString);
+
+	flags = fetch_flags;
+	if (update_pkg_vuln) {
+		fd = open(pkg_vulnerabilities_file, O_RDONLY);
+		if (fd != -1 && fstat(fd, &sb) != -1) {
+			url->last_modified = sb.st_mtime;
+			snprintf(my_flags, sizeof(my_flags), "%si",
+			    fetch_flags);
+			flags = my_flags;
+		} else
+			update_pkg_vuln = 0;
+		if (fd != -1)
+			close(fd);
+	}
+
+	f = fetchXGet(url, &st, flags);
+	if (f == NULL && update_pkg_vuln &&
+	    fetchLastErrCode == FETCH_UNCHANGED) {
+		if (verbose >= 1)
+			fprintf(stderr, "%s is not newer\n",
+			    pkg_vulnerabilities_url);
+		exit(EXIT_SUCCESS);
+	}
+
 	if (f == NULL)
 		errx(EXIT_FAILURE, "Could not fetch vulnerability file: %s",
 		    fetchLastErrString);
@@ -364,13 +345,22 @@ fetch_pkg_vulnerabilities(int argc, char **argv)
 		errx(EXIT_FAILURE, "pkg-vulnerabilities is too large");
 
 	buf_len = st.size;
-	if ((buf = malloc(buf_len + 1)) == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	buf = xmalloc(buf_len + 1);
+	buf_fetched = 0;
 
-	if (fetchIO_read(f, buf, buf_len) != buf_len)
-		errx(EXIT_FAILURE,
-		    "Failure during fetch of pkg-vulnerabilities: %s",
-		    fetchLastErrString);
+	while (buf_fetched < buf_len) {
+		cur_fetched = fetchIO_read(f, buf + buf_fetched,
+		    buf_len - buf_fetched);
+		if (cur_fetched == 0)
+			errx(EXIT_FAILURE,
+			    "Truncated pkg-vulnerabilities received");
+		else if (cur_fetched == -1)
+			errx(EXIT_FAILURE,
+			    "IO error while fetching pkg-vulnerabilities: %s",
+			    fetchLastErrString);
+		buf_fetched += cur_fetched;
+	}
+	
 	buf[buf_len] = '\0';
 
 	if (decompress_buffer(buf, buf_len, &decompressed_input,
@@ -458,9 +448,7 @@ check_pkg_history1(const char *pkg, const char *pattern)
 		open_brace = inner_brace;
 	}
 
-	expanded_pkg = malloc(strlen(pattern)); /* {} are going away... */
-	if (expanded_pkg == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	expanded_pkg = xmalloc(strlen(pattern)); /* {} are going away... */
 
 	prefix_len = open_brace - pattern;
 	suffix = close_brace + 1;
@@ -495,6 +483,8 @@ check_pkg_history(const char *pkg)
 	size_t i;
 
 	for (i = 0; i < pv->entries; ++i) {
+		if (!quick_pkg_match(pv->vulnerability[i], pkg))
+			continue;
 		if (strcmp("eol", pv->classification[i]) == 0)
 			continue;
 		if (check_pkg_history1(pkg, pv->vulnerability[i]) == 0)
@@ -508,7 +498,7 @@ check_pkg_history(const char *pkg)
 void
 audit_history(int argc, char **argv)
 {
-	parse_options(argc, argv);
+	parse_options(argc, argv, "st:");
 	argv += optind;
 
 	check_and_read_pkg_vulnerabilities();

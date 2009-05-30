@@ -1,4 +1,4 @@
-/*	$NetBSD: opattern.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: opattern.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
-#else
-__RCSID("$NetBSD: opattern.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: opattern.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -119,11 +113,35 @@ simple_match(const char *pattern, const char *pkg)
 }
 
 /*
+ * Performs a fast check if pattern can ever match pkg.
+ * Returns 1 if a match is possible and 0 otherwise.
+ */
+int
+quick_pkg_match(const char *pattern, const char *pkg)
+{
+#define simple(x) (isalnum((unsigned char)(x)) || (x) == '-')
+	if (!simple(pattern[0]))
+		return 1;
+	if (pattern[0] != pkg[0])
+		return 0;
+
+	if (!simple(pattern[1]))
+		return 1;
+	if (pattern[1] != pkg[1])
+		return 0;
+	return 1;
+#undef simple
+}
+
+/*
  * Match pkg against pattern, return 1 if matching, 0 else
  */
 int
 pkg_match(const char *pattern, const char *pkg)
 {
+	if (!quick_pkg_match(pattern, pkg))
+		return 0;
+
 	if (strchr(pattern, '{') != (char *) NULL) {
 		/* emulate csh-type alternates */
 		return alternate_match(pattern, pkg);
@@ -154,8 +172,7 @@ pkg_match(const char *pattern, const char *pkg)
 		char *pattern_ver;
 		int retval;
 
-		if (asprintf(&pattern_ver, "%s-[0-9]*", pattern) == -1)
-			errx(EXIT_FAILURE, "Out of memory");
+		pattern_ver = xasprintf("%s-[0-9]*", pattern);
 		retval = glob_match(pattern_ver, pkg);
 		free(pattern_ver);
 		return retval;

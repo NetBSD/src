@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: str.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
-#else
-__RCSID("$NetBSD: str.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: str.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -105,45 +99,4 @@ int
 ispkgpattern(const char *pkg)
 {
 	return strpbrk(pkg, "<>[]?*{") != NULL;
-}
-
-/*
- * Strip off any .tgz, .tbz or .t[bg]z suffix from fname,
- * and copy into buffer "buf", the suffix is stored in "sfx"
- * if "sfx" is not NULL. If no suffix is found, "sfx" is set
- * to an empty string. 
- */
-void
-strip_txz(char *buf, char *sfx, const char *fname)
-{
-	static const char *const suffixes[] = {
-		".tgz", ".tbz", ".t[bg]z", 0};
-	const char *const *suffixp;
-	size_t len;
-
-	len = strlen(fname);
-	assert(len < PKG_PATTERN_MAX);
-
-	if (sfx)
-		sfx[0] = '\0';
-
-	for (suffixp = suffixes; *suffixp; suffixp++) {
-		size_t suffixlen = strlen(*suffixp);
-
-		if (memcmp(&fname[len - suffixlen], *suffixp, suffixlen))
-			continue;
-
-		/* matched! */
-		memcpy(buf, fname, len - suffixlen);
-		buf[len - suffixlen] = 0;
-		if (sfx) {
-			if (suffixlen >= PKG_SUFFIX_MAX)
-				errx(EXIT_FAILURE, "too long suffix '%s'", fname);
-			memcpy(sfx, *suffixp, suffixlen+1);
-			return;
-		}
-	}
-
-	/* not found */
-	memcpy(buf, fname, len+1);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $ */
+/* $NetBSD: info.h,v 1.1.1.1.10.1 2009/05/30 16:21:36 snj Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -70,6 +70,7 @@ struct pkg_meta {
 	char *meta_preserve;
 	char *meta_views;
 	char *meta_installed_info;
+	int is_installed;
 };
 
 #ifndef MAXINDEXSIZE
@@ -99,6 +100,7 @@ struct pkg_meta {
 #define SHOW_BLD_DEPENDS	0x20000
 #define SHOW_BI_VAR		0x40000
 #define SHOW_SUMMARY		0x80000
+#define SHOW_FULL_REQBY		0x100000
 
 enum which {
     WHICH_ALL,
@@ -112,8 +114,6 @@ extern Boolean File2Pkg;
 extern Boolean Quiet;
 extern char *InfoPrefix;
 extern char *BuildInfoVariable;
-extern char PlayPen[];
-extern size_t PlayPenSize;
 extern size_t termwidth;
 extern lpkg_head_t pkgs;
 
@@ -128,6 +128,7 @@ void	show_depends(const char *, package_t *);
 void	show_bld_depends(const char *, package_t *);
 void	show_index(const char *, const char *);
 void	show_summary(struct pkg_meta *, package_t *, const char *);
+void	show_list(lpkg_head_t *, const char *);
 
 int     pkg_perform(lpkg_head_t *);
 

@@ -95,13 +95,10 @@ make_memory_file(const char *archive_name, void *data, size_t len,
 {
 	struct memory_file *file;
 
-	if ((file = malloc(sizeof(*file))) == NULL)
-		err(2, "malloc failed");
-
+	file = xmalloc(sizeof(*file));
 	file->name = archive_name;
 	file->owner = owner;
 	file->group = group;
-
 	file->data = data;
 	file->len = len;
 
@@ -126,9 +123,7 @@ load_memory_file(const char *disk_name,
 	struct memory_file *file;
 	int fd;
 
-	if ((file = malloc(sizeof(*file))) == NULL)
-		err(2, "malloc failed");
-
+	file = xmalloc(sizeof(*file));
 	file->name = archive_name;
 	file->owner = owner;
 	file->group = group;
@@ -144,9 +139,9 @@ load_memory_file(const char *disk_name,
 
 	if ((file->st.st_mode & S_IFMT) != S_IFREG)
 		errx(1, "meta data file %s is not regular file", disk_name);
-	if (file->st.st_size > SSIZE_MAX ||
-	    (file->data = malloc(file->st.st_size)) == NULL)
-		errx(2, "cannot allocate memory for file %s", disk_name);
+	if (file->st.st_size > SSIZE_MAX)
+		errx(2, "meta data file too large: %s", disk_name);
+	file->data = xmalloc(file->st.st_size);
 
 	if (read(fd, file->data, file->st.st_size) != file->st.st_size)
 		err(2, "cannot read file into memory %s", disk_name);

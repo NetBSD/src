@@ -1,3 +1,5 @@
+/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
+
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +38,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
+__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -64,47 +66,52 @@ __RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp
 
 #include "lib.h"
 
-/*
- * We explicitely initialize this to NULL to stop Mac OS X Leopard's linker
- * from turning this into a common symbol which causes a link failure.
- */
-const char *gpg_cmd = NULL;
+static const char pgp_msg_start[] = "-----BEGIN PGP SIGNED MESSAGE-----\n";
+static const char pgp_msg_end[] = "-----BEGIN PGP SIGNATURE-----\n";
+static const char pkcs7_begin[] = "-----BEGIN PKCS7-----\n";
+static const char pkcs7_end[] = "-----END PKCS7-----\n";
+
+static void
+verify_signature_pkcs7(const char *input)
+{
+#ifdef HAVE_SSL
+	const char *begin_pkgvul, *end_pkgvul, *begin_sig, *end_sig;
+
+	if (strncmp(input, pgp_msg_start, strlen(pgp_msg_start)) == 0) {
+		begin_pkgvul = input + strlen(pgp_msg_start);
+		if ((end_pkgvul = strstr(begin_pkgvul, pgp_msg_end)) == NULL)
+			errx(EXIT_FAILURE, "Invalid PGP signature");
+		if ((begin_sig = strstr(end_pkgvul, pkcs7_begin)) == NULL)
+			errx(EXIT_FAILURE, "No PKCS7 signature");
+	} else {
+		begin_pkgvul = input;
+		if ((begin_sig = strstr(begin_pkgvul, pkcs7_begin)) == NULL)
+			errx(EXIT_FAILURE, "No PKCS7 signature");
+		end_pkgvul = begin_sig;		
+	}
+	if ((end_sig = strstr(begin_sig, pkcs7_end)) == NULL)
+		errx(EXIT_FAILURE, "Invalid PKCS7 signature");
+	end_sig += strlen(pkcs7_end);
+
+	if (easy_pkcs7_verify(begin_pkgvul, end_pkgvul - begin_pkgvul,
+	    begin_sig, end_sig - begin_sig, certs_pkg_vulnerabilities, 0))
+		errx(EXIT_FAILURE, "Unable to verify PKCS7 signature");
+#else
+	errx(EXIT_FAILURE, "OpenSSL support is not compiled in");
+#endif
+}
 
 static void
 verify_signature(const char *input, size_t input_len)
 {
-	pid_t child;
-	int fd[2], status;
-
-	if (gpg_cmd == NULL)
-		errx(EXIT_FAILURE, "GPG variable not set in configuration file");
-
-	if (pipe(fd) == -1)
-		err(EXIT_FAILURE, "cannot create input pipes");
-
-	child = vfork();
-	if (child == -1)
-		err(EXIT_FAILURE, "cannot fork GPG process");
-	if (child == 0) {
-		close(fd[1]);
-		close(STDIN_FILENO);
-		if (dup2(fd[0], STDIN_FILENO) == -1) {
-			static const char err_msg[] =
-			    "cannot redirect stdin of GPG process\n";
-			write(STDERR_FILENO, err_msg, sizeof(err_msg) - 1);
-			_exit(255);
-		}
-		close(fd[0]);
-		execlp(gpg_cmd, gpg_cmd, "--verify", "-", (char *)NULL);
-		_exit(255);
-	}
-	close(fd[0]);
-	if (write(fd[1], input, input_len) != input_len)
-		errx(EXIT_FAILURE, "Short read from GPG");
-	close(fd[1]);
-	waitpid(child, &status, 0);
-	if (status)
-		errx(EXIT_FAILURE, "GPG could not verify the signature");
+	if (gpg_cmd == NULL && certs_pkg_vulnerabilities == NULL)
+		errx(EXIT_FAILURE,
+		    "At least GPG or CERTIFICATE_ANCHOR_PKGVULN "
+		    "must be configured");
+	if (gpg_cmd != NULL)
+		inline_gpg_verify(input, input_len, gpg_keyring_pkgvuln);
+	if (certs_pkg_vulnerabilities != NULL)
+		verify_signature_pkcs7(input);
 }
 
 static void *
@@ -128,9 +135,27 @@ static const char *
 sha512_hash_finish(void *ctx)
 {
 	static char hash[SHA512_DIGEST_STRING_LENGTH];
+	unsigned char digest[SHA512_DIGEST_LENGTH];
 	SHA512_CTX *hash_ctx = ctx;
+	int i;
 
-	SHA512_End(hash_ctx, hash);
+	SHA512_Final(digest, hash_ctx);
+	for (i = 0; i < SHA512_DIGEST_LENGTH; ++i) {
+		unsigned char c;
+
+		c = digest[i] / 16;
+		if (c < 10)
+			hash[2 * i] = '0' + c;
+		else
+			hash[2 * i] = 'a' - 10 + c;
+
+		c = digest[i] % 16;
+		if (c < 10)
+			hash[2 * i + 1] = '0' + c;
+		else
+			hash[2 * i + 1] = 'a' - 10 + c;
+	}
+	hash[2 * i] = '\0';
 
 	return hash;
 }
@@ -183,6 +208,7 @@ verify_hash(const char *input, const char *hash_line)
 	const struct hash_algorithm *hash;
 	void *ctx;
 	const char *last_start, *next, *hash_value;
+	int in_pgp_msg;
 
 	for (hash = hash_algorithms; hash->name != NULL; ++hash) {
 		if (strncmp(hash_line, hash->name, hash->name_len))
@@ -211,19 +237,27 @@ verify_hash(const char *input, const char *hash_line)
 		errx(EXIT_FAILURE, "Invalid #CHECKSUM");
 
 	ctx = (*hash->init)();
+	if (strncmp(input, pgp_msg_start, strlen(pgp_msg_start)) == 0) {
+		input += strlen(pgp_msg_start);
+		in_pgp_msg = 1;
+	} else {
+		in_pgp_msg = 0;
+	}
 	for (last_start = input; *input != '\0'; input = next) {
 		if ((next = strchr(input, '\n')) == NULL)
 			errx(EXIT_FAILURE, "Missing newline in pkg-vulnerabilities");
 		++next;
+		if (in_pgp_msg && strncmp(input, pgp_msg_end, strlen(pgp_msg_end)) == 0)
+			break;
+		if (!in_pgp_msg && strncmp(input, pkcs7_begin, strlen(pkcs7_begin)) == 0)
+			break;
 		if (*input == '\n' ||
-		    strncmp(input, "-----BEGIN", 10) == 0 ||
 		    strncmp(input, "Hash:", 5) == 0 ||
 		    strncmp(input, "# $NetBSD", 9) == 0 ||
 		    strncmp(input, "#CHECKSUM", 9) == 0) {
 			(*hash->update)(ctx, last_start, input - last_start);
 			last_start = next;
-		} else if (strncmp(input, "Version:", 8) == 0)
-			break;
+		}
 	}
 	(*hash->update)(ctx, last_start, input - last_start);
 	hash_value = (*hash->finish)(ctx);
@@ -280,27 +314,21 @@ add_vulnerability(struct pkg_vulnerabilities *pv, size_t *allocated, const char 
 			*allocated *= 2;
 		else
 			errx(EXIT_FAILURE, "Too many vulnerabilities");
-		pv->vulnerability = realloc(pv->vulnerability,
+		pv->vulnerability = xrealloc(pv->vulnerability,
 		    sizeof(char *) * *allocated);
-		pv->classification = realloc(pv->classification,
+		pv->classification = xrealloc(pv->classification,
 		    sizeof(char *) * *allocated);
-		pv->advisory = realloc(pv->advisory,
+		pv->advisory = xrealloc(pv->advisory,
 		    sizeof(char *) * *allocated);
-		if (pv->vulnerability == NULL ||
-		    pv->classification == NULL || pv->advisory == NULL)
-			errx(EXIT_FAILURE, "realloc failed");
 	}
 
-	if ((pv->vulnerability[pv->entries] = malloc(len_pattern + 1)) == NULL)
-		errx(EXIT_FAILURE, "malloc failed");
+	pv->vulnerability[pv->entries] = xmalloc(len_pattern + 1);
 	memcpy(pv->vulnerability[pv->entries], start_pattern, len_pattern);
 	pv->vulnerability[pv->entries][len_pattern] = '\0';
-	if ((pv->classification[pv->entries] = malloc(len_class + 1)) == NULL)
-		errx(EXIT_FAILURE, "malloc failed");
+	pv->classification[pv->entries] = xmalloc(len_class + 1);
 	memcpy(pv->classification[pv->entries], start_class, len_class);
 	pv->classification[pv->entries][len_class] = '\0';
-	if ((pv->advisory[pv->entries] = malloc(len_url + 1)) == NULL)
-		errx(EXIT_FAILURE, "malloc failed");
+	pv->advisory[pv->entries] = xmalloc(len_url + 1);
 	memcpy(pv->advisory[pv->entries], start_url, len_url);
 	pv->advisory[pv->entries][len_url] = '\0';
 
@@ -334,12 +362,13 @@ read_pkg_vulnerabilities(const char *path, int ignore_missing, int check_sum)
 	input_len = (size_t)st.st_size;
 	if (input_len < 4)
 		err(EXIT_FAILURE, "Input too short for a pkg_vulnerability file");
-	if ((input = malloc(input_len + 1)) == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	input = xmalloc(input_len + 1);
 	if ((bytes_read = read(fd, input, input_len)) == -1)
 		err(1, "Failed to read input");
 	if (bytes_read != st.st_size)
 		errx(1, "Unexpected short read");
+
+	close(fd);
 
 	if (decompress_buffer(input, input_len, &decompressed_input,
 	    &decompressed_len)) {
@@ -361,10 +390,9 @@ parse_pkg_vulnerabilities(const char *input, size_t input_len, int check_sum)
 	char *end;
 	const char *iter, *next;
 	size_t allocated_vulns;
+	int in_pgp_msg;
 
-	pv = malloc(sizeof(*pv));
-	if (pv == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	pv = xmalloc(sizeof(*pv));
 
 	allocated_vulns = pv->entries = 0;
 	pv->vulnerability = NULL;
@@ -377,13 +405,19 @@ parse_pkg_vulnerabilities(const char *input, size_t input_len, int check_sum)
 	if (check_sum)
 		verify_signature(input, input_len);
 
-	for (iter = input; *iter; iter = next) {
+	if (strncmp(input, pgp_msg_start, strlen(pgp_msg_start)) == 0) {
+		iter = input + strlen(pgp_msg_start);
+		in_pgp_msg = 1;
+	} else {
+		iter = input;
+		in_pgp_msg = 0;
+	}
+
+	for (; *iter; iter = next) {
 		if ((next = strchr(iter, '\n')) == NULL)
 			errx(EXIT_FAILURE, "Missing newline in pkg-vulnerabilities");
 		++next;
 		if (*iter == '\0' || *iter == '\n')
-			continue;
-		if (strncmp(iter, "-----BEGIN", 10) == 0)
 			continue;
 		if (strncmp(iter, "Hash:", 5) == 0)
 			continue;
@@ -430,7 +464,9 @@ parse_pkg_vulnerabilities(const char *input, size_t input_len, int check_sum)
 		++next;
 		if (*iter == '\0' || *iter == '\n')
 			continue;
-		if (strncmp(iter, "Version:", 5) == 0)
+		if (in_pgp_msg && strncmp(iter, pgp_msg_end, strlen(pgp_msg_end)) == 0)
+			break;
+		if (!in_pgp_msg && strncmp(iter, pkcs7_begin, strlen(pkcs7_begin)) == 0)
 			break;
 		if (*iter == '#' &&
 		    (iter[1] == '\0' || iter[1] == '\n' || isspace((unsigned char)iter[1])))
@@ -456,15 +492,12 @@ parse_pkg_vulnerabilities(const char *input, size_t input_len, int check_sum)
 	}
 
 	if (pv->entries != allocated_vulns) {
-		pv->vulnerability = realloc(pv->vulnerability,
+		pv->vulnerability = xrealloc(pv->vulnerability,
 		    sizeof(char *) * pv->entries);
-		pv->classification = realloc(pv->classification,
+		pv->classification = xrealloc(pv->classification,
 		    sizeof(char *) * pv->entries);
-		pv->advisory = realloc(pv->advisory,
+		pv->advisory = xrealloc(pv->advisory,
 		    sizeof(char *) * pv->entries);
-		if (pv->vulnerability == NULL ||
-		    pv->classification == NULL || pv->advisory == NULL)
-			errx(EXIT_FAILURE, "realloc failed");
 	}
 
 	return pv;
@@ -484,4 +517,74 @@ free_pkg_vulnerabilities(struct pkg_vulnerabilities *pv)
 	free(pv->classification);
 	free(pv->advisory);
 	free(pv);
+}
+
+static int
+check_ignored_entry(struct pkg_vulnerabilities *pv, size_t i)
+{
+	const char *iter, *next;
+	size_t entry_len, url_len;
+
+	if (ignore_advisories == NULL)
+		return 0;
+
+	url_len = strlen(pv->advisory[i]);
+
+	for (iter = ignore_advisories; *iter; iter = next) {
+		if ((next = strchr(iter, '\n')) == NULL) {
+			entry_len = strlen(iter);
+			next = iter + entry_len;
+		} else {
+			entry_len = next - iter;
+			++next;
+		}
+		if (url_len != entry_len)
+			continue;
+		if (strncmp(pv->advisory[i], iter, entry_len) == 0)
+			return 1;
+	}
+	return 0;
+}
+
+int
+audit_package(struct pkg_vulnerabilities *pv, const char *pkgname,
+    const char *limit_vul_types, int check_eol, int output_type)
+{
+	FILE *output = output_type == 1 ? stdout : stderr;
+	size_t i;
+	int retval;
+
+	retval = 0;
+
+	for (i = 0; i < pv->entries; ++i) {
+		if (check_ignored_entry(pv, i))
+			continue;
+		if (limit_vul_types != NULL &&
+		    strcmp(limit_vul_types, pv->classification[i]))
+			continue;
+		if (!pkg_match(pv->vulnerability[i], pkgname))
+			continue;
+		if (strcmp("eol", pv->classification[i]) == 0) {
+			if (!check_eol)
+				continue;
+			if (output_type == 0) {
+				puts(pkgname);
+				continue;
+			}
+			fprintf(output,
+			    "Package %s has reached end-of-life (eol), "
+			    "see %s/eol-packages\n", pkgname,
+			    tnf_vulnerability_base);
+			continue;
+		}
+		retval = 1;
+		if (output_type == 0) {
+			puts(pkgname);
+		} else {
+			fprintf(output,
+			    "Package %s has a %s vulnerability, see %s\n",
+			    pkgname, pv->classification[i], pv->advisory[i]);
+		}
+	}
+	return retval;
 }

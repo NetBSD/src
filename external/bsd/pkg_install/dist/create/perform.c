@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
-#else
-__RCSID("$NetBSD: perform.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: perform.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -40,6 +34,9 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -91,13 +88,45 @@ register_depends(package_t *plist, char *deps, int build_only)
 }
 
 /*
+ *  Expect "fname" to point at a file, and read it into
+ *  the buffer returned.
+ */
+static char   *
+fileGetContents(char *fname)
+{
+	char   *contents;
+	struct stat sb;
+	int     fd;
+
+	if (stat(fname, &sb) == FAIL) {
+		cleanup(0);
+		errx(2, "can't stat '%s'", fname);
+	}
+
+	contents = xmalloc((size_t) (sb.st_size) + 1);
+	fd = open(fname, O_RDONLY, 0);
+	if (fd == FAIL) {
+		cleanup(0);
+		errx(2, "unable to open '%s' for reading", fname);
+	}
+	if (read(fd, contents, (size_t) sb.st_size) != (size_t) sb.st_size) {
+		cleanup(0);
+		errx(2, "short read on '%s' - did not get %lld bytes",
+		    fname, (long long) sb.st_size);
+	}
+	close(fd);
+	contents[(size_t) sb.st_size] = '\0';
+	return contents;
+}
+
+/*
  * Get a string parameter as a file spec or as a "contents follow -" spec
  */
 static void
 get_dash_string(char **s)
 {
 	if (**s == '-')
-		*s = strdup(*s + 1);
+		*s = xstrdup(*s + 1);
 	else
 		*s = fileGetContents(*s); 
 }
@@ -114,8 +143,7 @@ pkg_perform(const char *pkg)
 
 	/* Break the package name into base and desired suffix (if any) */
 	if ((cp = strrchr(pkg, '.')) != NULL) {
-		if ((allocated_pkg = malloc(cp - pkg + 1)) == NULL)
-			err(2, "malloc failed");
+		allocated_pkg = xmalloc(cp - pkg + 1);
 		memcpy(allocated_pkg, pkg, cp - pkg);
 		allocated_pkg[cp - pkg] = '\0';
 		suffix = cp + 1;
@@ -140,6 +168,7 @@ pkg_perform(const char *pkg)
 		if (!pkg_in)
 			errx(2, "unable to open contents file '%s' for input", Contents);
 	}
+
 	plist.head = plist.tail = NULL;
 
 	/* If a SrcDir override is set, add it now */

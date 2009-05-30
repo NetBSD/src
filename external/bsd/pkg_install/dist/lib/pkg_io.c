@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -51,8 +51,16 @@ __RCSID("$NetBSD: pkg_io.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
 
 #include "lib.h"
 
+struct pkg_path {
+	TAILQ_ENTRY(pkg_path) pl_link;
+	char *pl_path;
+};
+
+static char *orig_cwd, *last_toplevel;
+static TAILQ_HEAD(, pkg_path) pkg_path = TAILQ_HEAD_INITIALIZER(pkg_path);
+
 struct fetch_archive {
-	const char *url;
+	struct url *url;
 	fetchIO *fetch;
 	char buffer[32768];
 };
@@ -62,7 +70,7 @@ fetch_archive_open(struct archive *a, void *client_data)
 {
 	struct fetch_archive *f = client_data;
 
-	f->fetch = fetchGetURL(f->url, "");
+	f->fetch = fetchGet(f->url, fetch_flags);
 	if (f->fetch == NULL)
 		return ENOENT;
 	return 0;
@@ -85,55 +93,240 @@ fetch_archive_close(struct archive *a, void *client_data)
 
 	if (f->fetch != NULL)
 		fetchIO_close(f->fetch);
+	free(f);
 	return 0;
 }
 
-struct archive *
-open_remote_archive(const char *url, void **cookie)
+static struct archive *
+open_archive_by_url(struct url *url)
 {
 	struct fetch_archive *f;
-	struct archive *archive;
+	struct archive *a;
 
-	f = malloc(sizeof(*f));
-	if (f == NULL)
-		err(2, "cannot allocate memory for remote archive");
+	f = xmalloc(sizeof(*f));
 	f->url = url;
 
-	archive = archive_read_new();
-	archive_read_support_compression_all(archive);
-	archive_read_support_format_all(archive);
-	if (archive_read_open(archive, f, fetch_archive_open, fetch_archive_read,
-	    fetch_archive_close))
-		errx(2, "cannot open archive: %s", archive_error_string(archive));
+	a = archive_read_new();
+	archive_read_support_compression_all(a);
+	archive_read_support_format_all(a);
+	if (archive_read_open(a, f, fetch_archive_open, fetch_archive_read,
+	    fetch_archive_close)) {
+		archive_read_finish(a);
+		return NULL;
+	}
 
-	*cookie = f;
-
-	return archive;
-}
-
-void
-close_remote_archive(void *cookie)
-{
-	free(cookie);
+	return a;
 }
 
 struct archive *
-open_local_archive(const char *path, void **cookie)
+open_archive(const char *url)
 {
-	struct archive *archive;
+	struct url *u;
+	struct archive *a;
 
-	archive = archive_read_new();
-	archive_read_support_compression_all(archive);
-	archive_read_support_format_all(archive);
-	if (archive_read_open_filename(archive, path, 1024))
-		errx(2, "cannot open archive: %s",
-		    archive_error_string(archive));
-	*cookie = NULL;
+	if (!IS_URL(url)) {
+		a = archive_read_new();
+		archive_read_support_compression_all(a);
+		archive_read_support_format_all(a);
+		if (archive_read_open_filename(a, url, 1024)) {
+			archive_read_close(a);
+			return NULL;
+		}
+		return a;
+	}
 
-	return archive;
+	if ((u = fetchParseURL(url)) == NULL)
+		return NULL;
+
+	a = open_archive_by_url(u);
+
+	fetchFreeURL(u);
+	return a;
+}
+
+static int
+strip_suffix(char *filename)
+{
+	size_t len;
+
+	len = strlen(filename);
+	if (len <= 4)
+		return 0;
+	if (strcmp(filename + len - 4, ".tgz") == 0 ||
+	    strcmp(filename + len - 4, ".tbz") == 0) {
+		filename[len - 4] = '\0';
+		return 1;
+	} else
+		return 0;
+}
+
+static int
+find_best_package(struct url *url, const char *pattern, struct url **best_url)
+{
+	char *cur_match, *url_pattern, *best_match = NULL;
+	struct url_list ue;
+	size_t i;
+
+	if (*best_url) {
+		if ((best_match = fetchUnquoteFilename(*best_url)) == NULL)
+			return -1;
+	} else
+		best_match = NULL; 
+
+	if (best_match && strip_suffix(best_match) == 0) {
+		free(best_match);
+		return -1;
+	}
+
+	for (i = 0; pattern[i] != '\0'; ++i) {
+		if (!isalnum((unsigned char)(pattern[i])) &&
+		    (pattern[i]) != '-')
+			break;
+	}
+	url_pattern = xasprintf("%*.*s*", (int)i, (int)i, pattern);
+
+	fetchInitURLList(&ue);
+	if (fetchList(&ue, url, url_pattern, fetch_flags)) {
+		char *base_url;
+		base_url = fetchStringifyURL(url);
+		warnx("Can't process %s/%s: %s", base_url, url_pattern,
+		    fetchLastErrString);
+		free(base_url);
+		free(url_pattern);
+		fetchFreeURLList(&ue);
+		return -1;
+	}
+	free(url_pattern);
+
+	for (i = 0; i < ue.length; ++i) {
+		cur_match = fetchUnquoteFilename(ue.urls + i);
+
+		if (cur_match == NULL) {
+			free(best_match);
+			fetchFreeURLList(&ue);
+			return -1;
+		}
+		if (strip_suffix(cur_match) == 0) {
+			free(cur_match);
+			continue;	
+		}
+		if (pkg_order(pattern, cur_match, best_match) == 1) {
+			if (*best_url)
+				fetchFreeURL(*best_url);
+			*best_url = fetchCopyURL(ue.urls + i);
+			free(best_match);
+			best_match = cur_match;
+			cur_match = NULL;
+			if (*best_url == NULL) {
+				free(best_match);
+				return -1;
+			}
+		}
+		free(cur_match);
+	}
+	free(best_match);
+	fetchFreeURLList(&ue);
+	return 0;
 }
 
 void
-close_local_archive(void *cookie)
+process_pkg_path(void)
 {
+	char cwd[PATH_MAX];
+	int relative_path;
+	struct pkg_path *pl;
+	const char *start, *next;
+	size_t len;
+
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		errx(EXIT_FAILURE, "getcwd failed");
+
+	orig_cwd = xstrdup(cwd);
+
+	if (config_pkg_path == NULL)
+		return;
+
+	for (start = config_pkg_path; *start; start = next) {
+		len = strcspn(start, ";");
+		if (*(next = start + len) != '\0')
+			++next;
+
+		relative_path = !IS_FULLPATH(start) && !IS_URL(start);
+		pl = xmalloc(sizeof(*pl));
+		pl->pl_path = xasprintf("%s%s%*.*s",
+		    relative_path ? cwd : "", len && relative_path ? "/" : "",
+		    (int)len, (int)len, start);
+		TAILQ_INSERT_TAIL(&pkg_path, pl, pl_link);
+	}
+}
+
+struct archive *
+find_archive(const char *fname, int top_level)
+{
+	struct archive *a;
+	struct pkg_path *pl;
+	struct url *url, *best_match;
+	char *full_fname, *last_slash;
+	int search_path;
+
+	search_path = 0;
+	if (IS_FULLPATH(fname) || IS_URL(fname)) {
+		full_fname = xstrdup(fname);
+	} else {
+		if (strchr(fname, '/') == NULL)
+			search_path = 1;
+		full_fname = xasprintf("%s/%s", orig_cwd, fname);
+	}
+
+	last_slash = strrchr(full_fname, '/');
+	if (top_level) {
+		free(last_toplevel);
+		*last_slash = '\0';
+		last_toplevel = xstrdup(full_fname);
+		*last_slash = '/';
+	}
+
+	a = open_archive(full_fname);
+	if (a != NULL) {
+		free(full_fname);
+		return a;
+	}
+
+	fname = last_slash + 1;
+	*last_slash = '\0';
+
+	best_match = NULL;
+	url = fetchParseURL(full_fname);
+	if (url != NULL) {
+		find_best_package(url, fname, &best_match);
+		/* XXX Check return value and complain */
+		fetchFreeURL(url);
+	}
+
+	if (search_path && best_match == NULL) {
+		if (last_toplevel) {
+			url = fetchParseURL(last_toplevel);
+			if (url != NULL) {
+				find_best_package(url, fname, &best_match);
+				/* XXX Check return value and complain */
+				fetchFreeURL(url);
+			}
+		}
+		TAILQ_FOREACH(pl, &pkg_path, pl_link) {
+			url = fetchParseURL(pl->pl_path);
+			if (url != NULL) {
+				find_best_package(url, fname, &best_match);
+				/* XXX Check return value and complain */
+				fetchFreeURL(url);
+			}
+		}
+	}	
+
+	free(full_fname);
+
+	if (best_match == NULL)
+		return NULL;
+	a = open_archive_by_url(best_match);
+	fetchFreeURL(best_match);
+	return a;
 }

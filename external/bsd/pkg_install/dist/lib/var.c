@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -39,9 +39,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-__RCSID("$NetBSD: var.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $");
-#endif
+__RCSID("$NetBSD: var.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -128,11 +126,11 @@ var_get(const char *fname, const char *variable)
 
 		thislen = line+len - p;
 		if (value) {
-			value = realloc(value, valuelen+thislen+2);
+			value = xrealloc(value, valuelen+thislen+2);
 			value[valuelen++] = '\n';
 		}
 		else {
-			value = malloc(thislen+1);
+			value = xmalloc(thislen+1);
 		}
 		sprintf(value+valuelen, "%.*s", (int)thislen, p);
 		valuelen += thislen;
@@ -171,11 +169,11 @@ var_get_memory(const char *buf, const char *variable)
 
 		thislen = buf + len - data;
 		if (value) {
-			value = realloc(value, valuelen+thislen+2);
+			value = xrealloc(value, valuelen+thislen+2);
 			value[valuelen++] = '\n';
 		}
 		else {
-			value = malloc(thislen+1);
+			value = xmalloc(thislen+1);
 		}
 		sprintf(value + valuelen, "%.*s", (int)thislen, data);
 		valuelen += thislen;
@@ -214,9 +212,8 @@ var_set(const char *fname, const char *variable, const char *value)
 			return 0; /* Nothing to do */
 	}
 
-	tmpname = malloc(strlen(fname)+8);
-	sprintf(tmpname, "%s.XXXXXX", fname);
-	if ((fd=mkstemp(tmpname)) < 0) {
+	tmpname = xasprintf("%s.XXXXXX", fname);
+	if ((fd = mkstemp(tmpname)) < 0) {
 		free(tmpname);
 		if (fp != NULL)
 			fclose(fp);
