@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.7 2002/01/28 21:34:48 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.8 2009/05/30 05:56:52 skrll Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -43,5 +43,25 @@
 #define	R_68K_GLOB_DAT	20
 #define	R_68K_JMP_SLOT	21
 #define	R_68K_RELATIVE	22
+
+/* TLS relocations */
+#define R_68K_TLS_GD32		25
+#define R_68K_TLS_GD16		26
+#define R_68K_TLS_GD8		27
+#define R_68K_TLS_LDM32		28
+#define R_68K_TLS_LDM16		29
+#define R_68K_TLS_LDM8		30
+#define R_68K_TLS_LDO32		31
+#define R_68K_TLS_LDO16		32
+#define R_68K_TLS_LDO8		33
+#define R_68K_TLS_IE32		34
+#define R_68K_TLS_IE16		35
+#define R_68K_TLS_IE8		36
+#define R_68K_TLS_LE32		37
+#define R_68K_TLS_LE16		38
+#define R_68K_TLS_LE8		39
+#define R_68K_TLS_DTPMOD32	40
+#define R_68K_TLS_DTPREL32	41
+#define R_68K_TLS_TPREL32	42
 
 #define	R_TYPE(name)	__CONCAT(R_68K_,name)
