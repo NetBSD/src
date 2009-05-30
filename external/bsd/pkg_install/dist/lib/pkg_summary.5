@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_summary.5,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $
+.\"	$NetBSD: pkg_summary.5,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation
 .\"
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 29, 2007
+.Dd April 11, 2009
 .Dt PKG_SUMMARY 5
 .Os
 .Sh NAME
@@ -67,8 +67,10 @@ If missing, this package has no dependencies.
 (required) A more detailed description of the package.
 .\" DIGEST
 .It Ev FILE_NAME
-(optional) The name of the binary package file.  If not given,
-PKGNAME.tgz can be assumed.
+(optional) The name of the binary package file.
+If not given,
+.Pa PKGNAME.tgz
+can be assumed.
 .It Ev FILE_SIZE
 (optional) The size of the binary package file, in bytes.
 .It Ev HOMEPAGE
@@ -92,6 +94,12 @@ If missing, the package does not support options.
 (required) The path of the package directory within pkgsrc.
 .It Ev PKGTOOLS_VERSION
 (required) The version of the package tools used to create the package.
+.It Ev PREV_PKGPATH
+(optional) The previous path of the package directory within pkgsrc when
+a package was moved.
+(See
+.Ev SUPERSEDES
+below for a renamed package.)
 .It Ev PROVIDES
 (optional) A list of shared libraries provided by the package,
 including major version number, one per line.
@@ -102,6 +110,10 @@ major version number, one per line.
 If missing, this package does not require shared libraries.
 .It Ev SIZE_PKG
 (required) The size of the package when installed, in bytes.
+.It Ev SUPERSEDES
+(optional) A list of dewey patterns of previous packages this
+package replaces, one per line.
+This is used for package renaming.
 .El
 .Pp
 The

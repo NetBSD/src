@@ -1,4 +1,4 @@
-/* $NetBSD: dewey.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $ */
+/* $NetBSD: dewey.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $ */
 
 /*
  * Copyright © 2002 Alistair G. Crooks.  All rights reserved.
@@ -173,7 +173,7 @@ mkcomponent(arr_t *ap, const char *num)
 	return 1;
 }
 
-/* make a version number string into an array of comparable 64bit ints */
+/* make a version number string into an array of comparable ints */
 static int
 mkversion(arr_t *ap, const char *num)
 {
@@ -226,8 +226,7 @@ static int
 vtest(arr_t *lhs, int tst, arr_t *rhs)
 {
 	int cmp;
-	int     c;
-	int     i;
+	unsigned int c, i;
 
 	for (i = 0, c = MAX(lhs->c, rhs->c) ; i < c ; i++) {
 		if ((cmp = DIGIT(lhs->v, lhs->c, i) - DIGIT(rhs->v, rhs->c, i)) != 0) {
@@ -307,7 +306,7 @@ dewey_match(const char *pattern, const char *pkg)
 	if (sep2) {
 		char ver[PKG_PATTERN_MAX];
 
-		strlcpy(ver, sep, MIN(sizeof(ver), sep2-sep+1));
+		strlcpy(ver, sep, MIN((ssize_t)sizeof(ver), sep2-sep+1));
 		if (dewey_cmp(version, op, ver))
 			return 1;
 	}

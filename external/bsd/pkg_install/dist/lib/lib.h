@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -64,8 +64,6 @@
 #include <unistd.h>
 #endif
 
-#include "path.h"
-
 /* Macros */
 #define SUCCESS	(0)
 #define	FAIL	(-1)
@@ -86,55 +84,16 @@
 #define DEF_UMASK 022
 #endif
 
-/* Usually "rm", but often "echo" during debugging! */
-#define REMOVE_CMD	"rm"
-
-/* Usually "rm", but often "echo" during debugging! */
-#define RMDIR_CMD	"rmdir"
-
-/* Define tar as a string, in case it's called gtar or something */
-#ifndef TAR_CMD
-#define TAR_CMD	"tar"
-#endif
-
-/* Define pax as a string, used to copy files from staging area */              
-#ifndef PAX_CMD        
-#define PAX_CMD "pax"
-#endif
-
-/* Define gzip and bzip2, used to unpack binary packages */
-#ifndef GZIP_CMD
-#define GZIP_CMD "gzip"
-#endif
-
-#ifndef BZIP2_CMD
-#define BZIP2_CMD "bzip2"
-#endif
-
-/* Define ftp as a string, in case the ftp client is called something else */
-#ifndef FTP_CMD
-#define FTP_CMD "ftp"
-#endif
-
-#ifndef CHOWN_CMD
-#define CHOWN_CMD "chown"
-#endif
-
-#ifndef CHMOD_CMD
-#define CHMOD_CMD "chmod"
-#endif
-
-#ifndef CHGRP_CMD
-#define CHGRP_CMD "chgrp"
-#endif
-
-/* some operating systems don't have this */
-#ifndef MAXPATHLEN
-#define MAXPATHLEN	1024
+#ifndef	PATH_MAX
+#  ifdef MAXPATHLEN
+#    define PATH_MAX	MAXPATHLEN
+#  else
+#    define PATH_MAX	1024
+#  endif
 #endif
 
 enum {
-	MaxPathSize = MAXPATHLEN
+	MaxPathSize = PATH_MAX
 };
 
 /* The names of our "special" files */
@@ -144,6 +103,7 @@ enum {
 #define INSTALL_FNAME		"+INSTALL"
 #define DEINSTALL_FNAME		"+DEINSTALL"
 #define REQUIRED_BY_FNAME	"+REQUIRED_BY"
+#define REQUIRED_BY_FNAME_TMP	"+REQUIRED_BY.tmp"
 #define DISPLAY_FNAME		"+DISPLAY"
 #define MTREE_FNAME		"+MTREE_DIRS"
 #define BUILD_VERSION_FNAME	"+BUILD_VERSION"
@@ -153,21 +113,20 @@ enum {
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
 #define PRESERVE_FNAME		"+PRESERVE"
 #define VIEWS_FNAME		"+VIEWS"
+#define VIEWS_FNAME_TMP		"+VIEWS.tmp"
 #define DEPOT_FNAME		"+DEPOT"
 
 /* The names of special variables */
 #define AUTOMATIC_VARNAME	"automatic"
 
-/*
- * files which we expect to be in every package, passed to
- * tar --fast-read.
- */
-#define ALL_FNAMES              CONTENTS_FNAME" "COMMENT_FNAME" "DESC_FNAME" "MTREE_FNAME" "BUILD_VERSION_FNAME" "BUILD_INFO_FNAME" "SIZE_PKG_FNAME" "SIZE_ALL_FNAME
-
-#define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
+/* Prefix for extended PLIST cmd */
+#define CMD_CHAR		'@'	
 
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
+
+/* The name of the "destdir" environment variable given to scripts */
+#define PKG_DESTDIR_VNAME	"PKG_DESTDIR"
 
 /*
  * The name of the "metadatadir" environment variable given to scripts.
@@ -206,12 +165,11 @@ typedef enum pl_ent_t {
 	PLIST_SRC,		/* 10 */
 	PLIST_DISPLAY,		/* 11 */
 	PLIST_PKGDEP,		/* 12 */
-	PLIST_MTREE,		/* 13 */
-	PLIST_DIR_RM,		/* 14 */
-	PLIST_IGNORE_INST,	/* 15 */
-	PLIST_OPTION,		/* 16 */
-	PLIST_PKGCFL,		/* 17 */
-	PLIST_BLDDEP		/* 18 */
+	PLIST_DIR_RM,		/* 13 */
+	PLIST_OPTION,		/* 14 */
+	PLIST_PKGCFL,		/* 15 */
+	PLIST_BLDDEP,		/* 16 */
+	PLIST_PKGDIR		/* 17 */
 }       pl_ent_t;
 
 /* Enumerated constants for build info */
@@ -260,7 +218,7 @@ typedef struct _lfile_t {
 TAILQ_HEAD(_lfile_head_t, _lfile_t);
 typedef struct _lfile_head_t lfile_head_t;
 #define	LFILE_ADD(lfhead,lfp,str) do {		\
-	lfp = malloc(sizeof(lfile_t));		\
+	lfp = xmalloc(sizeof(lfile_t));		\
 	lfp->lf_name = str;			\
 	TAILQ_INSERT_TAIL(lfhead,lfp,lf_link);	\
 	} while(0)
@@ -272,14 +230,6 @@ typedef struct _lpkg_t {
 }       lpkg_t;
 TAILQ_HEAD(_lpkg_head_t, _lpkg_t);
 typedef struct _lpkg_head_t lpkg_head_t;
-
-/* This structure describes a pipe to a child process */
-typedef struct {
-	int fds[2];	/* pipe, 0=child stdin, 1=parent output */
-	FILE *fp;	/* output from parent process */
-	pid_t pid;	/* process id of child process */
-	void (*cleanup)(void);	/* called on non-zero child exit status */
-} pipe_to_system_t;
 
 struct pkg_vulnerabilities {
 	size_t	entries;
@@ -296,25 +246,17 @@ struct pkg_vulnerabilities {
 #define IS_FULLPATH(str)	((str) != NULL && (str)[0] == '/')
 
 /* Conflict handling (conflicts.c) */
-int	some_installed_package_conflicts_with(const char *, char **, char **);
+int	some_installed_package_conflicts_with(const char *, const char *, char **, char **);
 
 
 /* Prototypes */
 /* Misc */
 void    cleanup(int);
-char   *make_playpen(char *, size_t, size_t);
-char   *where_playpen(void);
-void    leave_playpen(char *);
-uint64_t min_free(const char *);
-void    save_dirs(char **, char **);
-void    restore_dirs(char *, char *);
 void    show_version(void);
 int	fexec(const char *, ...);
 int	fexec_skipempty(const char *, ...);
 int	fcexec(const char *, const char *, ...);
 int	pfcexec(const char *, const char *, const char **);
-pipe_to_system_t	*pipe_to_system_begin(const char *, char *const *, void (*)(void));
-int	pipe_to_system_end(pipe_to_system_t *);
 
 /* variables file handling */
 
@@ -335,7 +277,7 @@ const char *suffix_of(const char *);
 int     pkg_match(const char *, const char *);
 int	pkg_order(const char *, const char *, const char *);
 int     ispkgpattern(const char *);
-void	strip_txz(char *, char *, const char *);
+int	quick_pkg_match(const char *, const char *);
 
 /* Iterator functions */
 int	iterate_pkg_generic_src(int (*)(const char *, void *), void *,
@@ -361,35 +303,23 @@ Boolean isfile(const char *);
 Boolean isbrokenlink(const char *);
 Boolean isempty(const char *);
 int     URLlength(const char *);
-char   *fileGetURL(const char *);
-const char *fileURLFilename(const char *, char *, int);
-const char *fileURLHost(const char *, char *, int);
-char   *fileFindByPath(const char *);
-char   *fileGetContents(char *);
-Boolean make_preserve_name(char *, size_t, char *, char *);
-void    write_file(char *, char *);
-void    copy_file(char *, char *, char *);
-void    move_file(char *, char *, char *);
-void    move_files(const char *, const char *, const char *);
+Boolean make_preserve_name(char *, size_t, const char *, const char *);
 void    remove_files(const char *, const char *);
-int     delete_hierarchy(char *, Boolean, Boolean);
-int     unpack(const char *, const lfile_head_t *);
-void    format_cmd(char *, size_t, char *, char *, char *);
+int     format_cmd(char *, size_t, const char *, const char *, const char *);
 
-/* ftpio.c: FTP handling */
-int	expandURL(char *, const char *);
-int	unpackURL(const char *, const char *);
-int	ftp_cmd(const char *, const char *);
-int	ftp_start(const char *);
-void	ftp_stop(void);
+int	recursive_remove(const char *, int);
+
+void	add_pkgdir(const char *, const char *, const char *);
+void	delete_pkgdir(const char *, const char *, const char *);
+int	has_pkgdir(const char *);
 
 /* pkg_io.c: Local and remote archive handling */
 struct archive;
+struct archive_entry;
 
-struct archive *open_remote_archive(const char *, void **);
-void	close_remote_archive(void *);
-struct archive *open_local_archive(const char *, void **);
-void	close_local_archive(void *);
+struct archive *open_archive(const char *);
+struct archive *find_archive(const char *, int);
+void	process_pkg_path(void);
 
 /* Packing list */
 plist_t *new_plist_entry(void);
@@ -404,11 +334,11 @@ void    add_plist(package_t *, pl_ent_t, const char *);
 void    add_plist_top(package_t *, pl_ent_t, const char *);
 void    delete_plist(package_t *, Boolean, pl_ent_t, char *);
 void    write_plist(package_t *, FILE *, char *);
-void	stringify_plist(package_t *, char **, size_t *, char *);
+void	stringify_plist(package_t *, char **, size_t *, const char *);
 void	parse_plist(package_t *, const char *);
 void    read_plist(package_t *, FILE *);
 void    append_plist(package_t *, FILE *);
-int     delete_package(Boolean, Boolean, package_t *, Boolean);
+int     delete_package(Boolean, package_t *, Boolean, const char *);
 
 /* Package Database */
 int     pkgdb_open(int);
@@ -438,11 +368,75 @@ struct pkg_vulnerabilities *parse_pkg_vulnerabilities(const char *, size_t, int)
 /* Read pkg_vulnerabilities from file */
 struct pkg_vulnerabilities *read_pkg_vulnerabilities(const char *, int, int);
 void free_pkg_vulnerabilities(struct pkg_vulnerabilities *);
+int audit_package(struct pkg_vulnerabilities *, const char *, const char *,
+    int, int);
+
+/* Parse configuration file */
+void pkg_install_config(void);
+/* Print configuration variable */
+void pkg_install_show_variable(const char *);
+
+/* Package signature creation and validation */
+int pkg_verify_signature(struct archive **, struct archive_entry **, char **);
+int pkg_full_signature_check(struct archive **);
+#ifdef HAVE_SSL
+void pkg_sign_x509(const char *, const char *, const char *, const char *);
+#endif
+
+void pkg_sign_gpg(const char *, const char *);
+
+#ifdef HAVE_SSL
+/* PKCS7 signing/verification */
+int easy_pkcs7_verify(const char *, size_t, const char *, size_t,
+    const char *, int);
+int easy_pkcs7_sign(const char *, size_t, char **, size_t *, const char *,
+    const char *);
+#endif
+
+int inline_gpg_verify(const char *, size_t, const char *);
+int detached_gpg_verify(const char *, size_t, const char *, size_t,
+    const char *);
+int detached_gpg_sign(const char *, size_t, char **, size_t *, const char *,
+    const char *);
+
+/* License handling */
+int add_licenses(const char *);
+int acceptable_license(const char *);
+int acceptable_pkg_license(const char *);
+void load_license_lists(void);
+
+/* Helper functions for memory allocation */
+char *xstrdup(const char *);
+void *xrealloc(void *, size_t);
+void *xcalloc(size_t, size_t);
+void *xmalloc(size_t);
+char *xasprintf(const char *, ...);
 
 /* Externs */
 extern Boolean Verbose;
 extern Boolean Fake;
 extern Boolean Force;
+extern const char *cert_chain_file;
+extern const char *certs_packages;
+extern const char *certs_pkg_vulnerabilities;
+extern const char *check_vulnerabilities;
+extern const char *config_file;
+extern const char *config_pkg_path;
+extern const char *verified_installation;
 extern const char *gpg_cmd;
+extern const char *gpg_keyring_pkgvuln;
+extern const char *gpg_keyring_sign;
+extern const char *gpg_keyring_verify;
+extern const char *gpg_sign_as;
+extern char fetch_flags[];
+
+extern const char *pkg_vulnerabilities_dir;
+extern const char *pkg_vulnerabilities_file;
+extern const char *pkg_vulnerabilities_url;
+extern const char *ignore_advisories;
+extern const char tnf_vulnerability_base[];
+
+extern const char *acceptable_licenses;
+extern const char *default_acceptable_licenses;
 
 #endif				/* _INST_LIB_LIB_H_ */

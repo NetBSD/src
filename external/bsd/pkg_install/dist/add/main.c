@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:25 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:35 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
-#else
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:25 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:35 snj Exp $");
 
 /*
  *
@@ -47,10 +41,10 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:25 joerg Exp $");
 #endif
 #include "lib.h"
 #include "add.h"
-#include "verify.h"
 
-static char Options[] = "AIK:LRVW:fhm:np:s:t:uvw:";
+static char Options[] = "AIK:LP:RVW:fhm:np:t:uvw:";
 
+char   *Destdir = NULL;
 char   *OverrideMachine = NULL;
 char   *Prefix = NULL;
 char   *View = NULL;
@@ -60,20 +54,15 @@ Boolean NoInstall = FALSE;
 Boolean NoRecord = FALSE;
 Boolean Automatic = FALSE;
 
-char   *Mode = NULL;
-char   *Owner = NULL;
-char   *Group = NULL;
-char   *PkgName = NULL;
-char   *Directory = NULL;
-char    FirstPen[MaxPathSize];
 int     Replace = 0;
 
 static void
 usage(void)
 {
-	(void) fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: pkg_add [-AfhILnRuVv] [-K pkg_dbdir] [-m machine] [-p prefix]",
-	    "               [-s verification-type] [-t template] [-W viewbase] [-w view]",
+	(void) fprintf(stderr, "%s\n%s\n%s\n%s\n",
+	    "usage: pkg_add [-AfhILnRuVv] [-C config] [-P destdir] [-K pkg_dbdir]",
+	    "               [-m machine] [-p prefix] [-s verification-type",
+	    "               [-W viewbase] [-w view]\n",
 	    "               [[ftp|http]://[user[:password]@]host[:port]][/path/]pkg-name ...");
 	exit(1);
 }
@@ -83,14 +72,19 @@ main(int argc, char **argv)
 {
 	int     ch, error=0;
 	lpkg_head_t pkgs;
-	struct rlimit rlim;
-	int rc;
 
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1) {
 		switch (ch) {
 		case 'A':
 			Automatic = TRUE;
+			break;
+
+		case 'C':
+			config_file = optarg;
+
+		case 'P':
+			Destdir = optarg;
 			break;
 
 		case 'f':
@@ -126,14 +120,6 @@ main(int argc, char **argv)
 			Prefix = optarg;
 			break;
 
-		case 's':
-			set_verification(optarg);
-			break;
-
-		case 't':
-			strlcpy(FirstPen, optarg, sizeof(FirstPen));
-			break;
-
 		case 'u':
 			Replace++;
 			break;
@@ -164,7 +150,9 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	path_create(getenv("PKG_PATH"));
+	pkg_install_config();
+
+	process_pkg_path();
 	TAILQ_INIT(&pkgs);
 
 	if (argc == 0) {
@@ -183,22 +171,6 @@ main(int argc, char **argv)
 			lpp = alloc_lpkg(*argv);
 
 		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
-	}
-	
-	/* Increase # of max. open file descriptors as high as possible */
-	/* XXX: Why is this necessary? */
-	rc = getrlimit(RLIMIT_NOFILE, &rlim);
-	if (rc == -1) {
-	  	warn("cannot retrieve max. number of open files resource limit");
-	} else {
-	   	rlim.rlim_cur = rlim.rlim_max;
-		rc = setrlimit(RLIMIT_NOFILE, &rlim);
-		if (rc == -1) {
-		  	warn("cannot increase max. number of open files resource limit, try 'ulimit'");
-		} else {
-		  	if (Verbose)
-		  		printf("increasing RLIMIT_NOFILE to max. %ld open files\n", (long)rlim.rlim_cur);
-		}
 	}
 
 	error += pkg_perform(&pkgs);
