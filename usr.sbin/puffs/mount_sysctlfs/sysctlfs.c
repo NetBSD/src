@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.9 2008/09/12 14:40:47 christos Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.9.4.1 2009/05/30 16:49:35 snj Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.9 2008/09/12 14:40:47 christos Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.9.4.1 2009/05/30 16:49:35 snj Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -629,7 +629,10 @@ sysctlfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 		return EISDIR;
 
 	doprint(sfs, &pn->pn_po, localbuf, sizeof(localbuf));
-	xfer = MIN(*resid, strlen(localbuf) - offset);
+	if (strlen(localbuf) < offset)
+		xfer = 0;
+	else
+		xfer = MIN(*resid, strlen(localbuf) - offset);
 
 	if (xfer <= 0)
 		return 0;
