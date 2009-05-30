@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.6 2001/12/09 23:05:58 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.7 2009/05/30 05:56:53 skrll Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -62,5 +62,31 @@
 #define R_SPARC_7		43
 #define R_SPARC_5		44
 #define R_SPARC_6		45
+
+/* TLS relocations */
+#define R_SPARC_TLS_GD_HI22	56
+#define R_SPARC_TLS_GD_LO10	57
+#define R_SPARC_TLS_GD_ADD	58
+#define R_SPARC_TLS_GD_CALL	59
+#define R_SPARC_TLS_LDM_HI22	60
+#define R_SPARC_TLS_LDM_LO10	61
+#define R_SPARC_TLS_LDM_ADD	62
+#define R_SPARC_TLS_LDM_CALL	63
+#define R_SPARC_TLS_LDO_HIX22	64
+#define R_SPARC_TLS_LDO_LOX10	65
+#define R_SPARC_TLS_LDO_ADD	66
+#define R_SPARC_TLS_IE_HI22	67
+#define R_SPARC_TLS_IE_LO10	68
+#define R_SPARC_TLS_IE_LD	69
+#define R_SPARC_TLS_IE_LDX	70
+#define R_SPARC_TLS_IE_ADD	71
+#define R_SPARC_TLS_LE_HIX22	72
+#define R_SPARC_TLS_LE_LOX10	73
+#define R_SPARC_TLS_DTPMOD32	74
+#define R_SPARC_TLS_DTPMOD64	75
+#define R_SPARC_TLS_DTPOFF32	76
+#define R_SPARC_TLS_DTPOFF64	77
+#define R_SPARC_TLS_TPOFF32	78
+#define R_SPARC_TLS_TPOFF64	79
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)

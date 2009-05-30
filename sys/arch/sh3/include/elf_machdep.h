@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.9 2006/11/25 07:32:53 riz Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10 2009/05/30 05:56:53 skrll Exp $	*/
 
 #if !defined(_BYTE_ORDER) && !defined(HAVE_NBTOOL_CONFIG_H)
 #error Define _BYTE_ORDER!
@@ -62,6 +62,17 @@
 #define	R_SH_GNU_VTENTRY	35
 #define	R_SH_LOOP_START		36
 #define	R_SH_LOOP_END		37
+
+/* TLS relocations */
+#define	R_SH_TLS_GD_32		144
+#define	R_SH_TLS_LD_32		145
+#define	R_SH_TLS_LDO_32		146
+#define	R_SH_TLS_IE_32		147
+#define	R_SH_TLS_LE_32		148
+#define	R_SH_TLS_DTPMOD32	149
+#define	R_SH_TLS_DTPOFF32	150
+#define	R_SH_TLS_TPOFF32	151
+
 #define	R_SH_GOT32		160
 #define	R_SH_PLT32		161
 #define	R_SH_COPY		162

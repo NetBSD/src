@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.7 2006/09/08 19:09:19 he Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.8 2009/05/30 05:56:52 skrll Exp $	*/
 
 #if defined(__ARMEB__)
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
@@ -54,7 +54,12 @@
 #define R_ARM_XPC25		15
 #define R_ARM_THM_XPC22		16
 
-/* 17-31 are reserved for ARM Linux. */
+/* TLS relocations */
+#define R_ARM_TLS_DTPMOD32	17	/* ID of module containing symbol */
+#define R_ARM_TLS_DTPOFF32	18	/* Offset in TLS block */
+#define R_ARM_TLS_TPOFF32	19	/* Offset in static TLS block */
+
+/* 20-31 are reserved for ARM Linux. */
 #define R_ARM_COPY		20
 #define R_ARM_GLOB_DAT		21
 #define	R_ARM_JUMP_SLOT		22
@@ -76,6 +81,16 @@
 #define R_ARM_GNU_VTINHERIT	101
 #define R_ARM_THM_PC11		102
 #define R_ARM_THM_PC9		103
+
+/* More TLS relocations */
+#define R_ARM_TLS_GD32		104	/* PC-rel 32 bit for global dynamic */
+#define R_ARM_TLS_LDM32		105	/* PC-rel 32 bit for local dynamic */
+#define R_ARM_TLS_LDO32		106	/* 32 bit offset relative to TLS */
+#define R_ARM_TLS_IE32		107	/* PC-rel 32 bit for GOT entry of */
+#define R_ARM_TLS_LE32		108
+#define R_ARM_TLS_LDO12		109
+#define R_ARM_TLS_LE12		110
+#define R_ARM_TLS_IE12GP	111
 
 /* 112-127 are reserved for private experiments. */
 
