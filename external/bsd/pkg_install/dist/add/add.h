@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.1.1.1 2008/09/30 19:00:25 joerg Exp $ */
+/* $NetBSD: add.h,v 1.1.1.1.6.1 2009/05/30 16:40:31 snj Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -25,6 +25,7 @@
 #ifndef _INST_ADD_H_INCLUDE
 #define _INST_ADD_H_INCLUDE
 
+extern char *Destdir;
 extern char *OverrideMachine;
 extern char *Prefix;
 extern char *View;
@@ -35,15 +36,8 @@ extern Boolean NoRecord;
 extern Boolean Force;
 extern Boolean Automatic;
 extern int Replace;
-extern char *Mode;
-extern char *Owner;
-extern char *Group;
-extern char *Directory;
-extern char *PkgName;
-extern char FirstPen[];
 
 int     make_hierarchy(char *);
-int     extract_plist(char *, package_t *);
 void    apply_perms(char *, char **, int);
 
 int     pkg_perform(lpkg_head_t *);

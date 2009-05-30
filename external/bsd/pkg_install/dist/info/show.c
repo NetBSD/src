@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: show.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
-#else
-__RCSID("$NetBSD: show.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: show.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -96,13 +90,11 @@ static const show_t showv[] = {
 	{PLIST_SRC, "@src: %s", "\tSRC to: %s"},
 	{PLIST_DISPLAY, "@display %s", "\tInstall message file: %s"},
 	{PLIST_PKGDEP, "@pkgdep %s", "\tPackage depends on: %s"},
-	{PLIST_MTREE, "@mtree %s", "\tPackage mtree file: %s"},
-	{PLIST_DIR_RM, "@dirrm %s", "\tDeinstall directory remove: %s"},
-	{PLIST_IGNORE_INST, "@ignore_inst ??? doesn't belong here",
-	"\tIgnore next file installation directive (doesn't belong)"},
+	{PLIST_DIR_RM, "@dirrm %s", "\tObsolete deinstall directory removal hint: %s"},
 	{PLIST_OPTION, "@option %s", "\tPackage has option: %s"},
 	{PLIST_PKGCFL, "@pkgcfl %s", "\tPackage conflicts with: %s"},
 	{PLIST_BLDDEP, "@blddep %s", "\tPackage depends exactly on: %s"},
+	{PLIST_PKGDIR, "@pkgdir %s", "\tManaged directory: %s"},
 	{-1, NULL, NULL}
 };
 
@@ -189,10 +181,6 @@ show_plist(const char *title, package_t *plist, pl_ent_t type)
 				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose);
 				ign = TRUE;
 				break;
-			case PLIST_IGNORE_INST:
-				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
-				ign = TRUE;
-				break;
 			case PLIST_CWD:
 			case PLIST_CMD:
 			case PLIST_SRC:
@@ -201,11 +189,11 @@ show_plist(const char *title, package_t *plist, pl_ent_t type)
 			case PLIST_NAME:
 			case PLIST_DISPLAY:
 			case PLIST_PKGDEP:
-			case PLIST_MTREE:
 			case PLIST_DIR_RM:
 			case PLIST_OPTION:
 			case PLIST_PKGCFL:
 			case PLIST_BLDDEP:
+			case PLIST_PKGDIR:
 				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
 				break;
 			default:
@@ -346,6 +334,8 @@ show_summary(struct pkg_meta *meta, package_t *plist, const char *binpkgfile)
 		"HOMEPAGE",
 		"PKGTOOLS_VERSION",
 		"BUILD_DATE",
+		"PREV_PKGPATH",
+		"SUPERSEDES",
 		NULL
 	};
 	
@@ -372,7 +362,10 @@ show_summary(struct pkg_meta *meta, package_t *plist, const char *binpkgfile)
 	print_string_as_var("COMMENT", meta->meta_comment);
 	print_string_as_var("SIZE_PKG", meta->meta_size_pkg);
 
-	var_copy_list(meta->meta_build_info, bi_vars);
+	if (meta->meta_build_info)
+		var_copy_list(meta->meta_build_info, bi_vars);
+	else
+		warnx("Build information missing");
 
 	if (binpkgfile != NULL && stat(binpkgfile, &st) == 0) {
 	    const char *base;
@@ -407,4 +400,22 @@ print_string_as_var(const char *var, const char *str)
 		printf("%s=%s\n", var, str);
 
 	return 0;
+}
+
+void
+show_list(lpkg_head_t *pkghead, const char *title)
+{
+	lpkg_t *lpp;
+
+	if (!Quiet)
+		printf("%s%s", InfoPrefix, title);
+
+	while ((lpp = TAILQ_FIRST(pkghead)) != NULL) {
+		TAILQ_REMOVE(pkghead, lpp, lp_link);
+		puts(lpp->lp_name);
+		free_lpkg(lpp);
+	}
+
+	if (!Quiet)
+		printf("\n");
 }
