@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.280 2009/05/16 12:08:43 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.281 2009/05/30 06:58:12 snj Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -184,7 +184,7 @@ Notes:		Branch contains only security/critical fixes to
 
 Branch:		netbsd-3
 Description:	The NetBSD 3 release branch
-Status:		Active
+Status:		Terminated
 Start Date:	16 Mar 2005
 End Date:
 Base Tag:	netbsd-3-base
