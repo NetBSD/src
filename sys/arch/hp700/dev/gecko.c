@@ -75,17 +75,15 @@ gecko_attach(device_t parent, device_t self, void *aux)
 	}
 	regs = bus_space_vaddr(ca->ca_iot, sc->sc_ioh);
 
-#if 1
-	printf(": %x-%x", regs->io_io_low, regs->io_io_high);
-#endif
+	aprint_verbose(": %x-%x", regs->io_io_low, regs->io_io_high);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	nca = *ca;
-	nca.ca_hpabase = 0;
+	nca.ca_hpabase = regs->io_io_low;
 	nca.ca_nmodules = MAXMODBUS;
 
-	pdc_scanbus(self, &nca, gecko_callback /*regs->io_io_low */);
+	pdc_scanbus(self, &nca, gecko_callback);
 }
 
 static void
