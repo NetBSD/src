@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.88.2.2 2006/01/05 22:29:10 riz Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.88.2.3 2009/05/30 06:48:20 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.88.2.2 2006/01/05 22:29:10 riz Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.88.2.3 2009/05/30 06:48:20 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		calc_memfree();
 		if (fssize * sectorsize > memleft)
 			fssize = memleft / sectorsize;
-		if ((membase = mkfs_malloc(fssize * sectorsize)) == 0)
+		if ((membase = mkfs_malloc(fssize * sectorsize)) == NULL)
 			exit(12);
 	}
 #endif
@@ -458,7 +458,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		errx(1, "cylinder group summary doesn't fit in sectors");
 	fscs_0 = mmap(0, 2 * sblock.fs_fsize, PROT_READ|PROT_WRITE,
 			MAP_ANON|MAP_PRIVATE, -1, 0);
-	if (fscs_0 == NULL)
+	if (fscs_0 == MAP_FAILED)
 		exit(39);
 	memset(fscs_0, 0, 2 * sblock.fs_fsize);
 	fs_csaddr = sblock.fs_csaddr;
@@ -554,7 +554,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	for (;;) {
 		iobuf = mmap(0, iobuf_memsize, PROT_READ|PROT_WRITE,
 				MAP_ANON|MAP_PRIVATE, -1, 0);
-		if (iobuf != NULL)
+		if (iobuf != MAP_FAILED)
 			break;
 		if (iobuf_memsize != iobufsize) {
 			/* Try again with the smaller size */
@@ -1517,6 +1517,7 @@ static void *
 mkfs_malloc(size_t size)
 {
 	u_long pgsz;
+	caddr_t *memory;
 
 	if (size == 0)
 		return (NULL);
@@ -1528,7 +1529,8 @@ mkfs_malloc(size_t size)
 	if (size > memleft)
 		size = memleft;
 	memleft -= size;
-	return (mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
-	    -1, 0));
+	memory = mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+	    -1, 0);
+	return memory != MAP_FAILED ? memory : NULL;
 }
 #endif	/* MFS */
