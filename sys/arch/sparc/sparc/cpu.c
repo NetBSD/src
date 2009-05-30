@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.215 2009/05/27 02:19:49 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.216 2009/05/30 01:19:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.215 2009/05/27 02:19:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.216 2009/05/30 01:19:29 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -424,7 +424,7 @@ cpu_attach_non_boot(struct cpu_softc *sc, struct cpu_info *cpi, int node)
 	}
 
 	/*
-	 * Note: `eintstack' is set in init_cpuinfo() above.
+	 * Note: `eintstack' is set in cpu_attach_non_boot() above.
 	 * The %wim register will be initialized in cpu_hatch().
 	 */
 	cpi->ci_curlwp = cpi->ci_data.cpu_idlelwp;
@@ -2015,16 +2015,17 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("%-4s %-10s %-8s %-10s %-10s %-10s\n",
-		    "CPU#", "CPUINFO", "FLAGS", "CURLWP", "CURPROC", "FPLWP");
+	db_printf("%-4s %-10s %-8s %-10s %-10s %-10s %-10s\n",
+	    "CPU#", "CPUINFO", "FLAGS", "CURLWP", "CURPROC", "FPLWP", "CPCB");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%-4d %-10p %-8x %-10p %-10p %-10p\n",
+		db_printf("%-4d %-10p %-8x %-10p %-10p %-10p %-10p\n",
 		    ci->ci_cpuid,
 		    ci,
 		    ci->flags,
 		    ci->ci_curlwp,
 		    ci->ci_curlwp == NULL ? NULL : ci->ci_curlwp->l_proc,
-		    ci->fplwp);
+		    ci->fplwp,
+		    ci->curpcb);
 	}
 }
 #endif
