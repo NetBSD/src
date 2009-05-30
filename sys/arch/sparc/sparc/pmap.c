@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322 2008/01/02 11:48:29 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.322.20.1 2009/05/30 16:57:18 snj Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322 2008/01/02 11:48:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.20.1 2009/05/30 16:57:18 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -964,6 +964,7 @@ void	pm_check_u(char *, struct pmap *);
 
 static u_long va2pa_offset;
 #define PMAP_BOOTSTRAP_VA2PA(v) ((paddr_t)((u_long)(v) - va2pa_offset))
+#define PMAP_BOOTSTRAP_PA2VA(p) ((vaddr_t)((u_long)(p) + va2pa_offset))
 
 /*
  * Grab physical memory list.
@@ -1115,7 +1116,7 @@ pmap_page_upload(void)
 			if (end < chop)
 				chop = end;
 #ifdef DEBUG
-			printf("bootstrap gap: start %lx, chop %lx, end %lx\n",
+			prom_printf("bootstrap gap: start %lx, chop %lx, end %lx\n",
 				start, chop, end);
 #endif
 			uvm_page_physload(
@@ -1389,7 +1390,7 @@ mmu_setup4m_L1(int regtblptd, struct pmap *kpmap)
 
 		case SRMMU_TEPTE:
 #ifdef DEBUG
-			printf("mmu_setup4m_L1: "
+			prom_printf("mmu_setup4m_L1: "
 			       "converting region 0x%x from L1->L3\n", i);
 #endif
 			/*
@@ -1444,7 +1445,7 @@ mmu_setup4m_L2(int segtblptd, struct regmap *rp)
 
 		case SRMMU_TEPTE:
 #ifdef DEBUG
-			printf("mmu_setup4m_L2: converting L2 entry at segment 0x%x to L3\n",i);
+			prom_printf("mmu_setup4m_L2: converting L2 entry at segment 0x%x to L3\n",i);
 #endif
 			/*
 			 * This segment entry covers 256KB of memory -- or
@@ -2056,10 +2057,11 @@ void
 ctx_alloc(struct pmap *pm)
 {
 	union ctxinfo *c;
-	int cnum, i, doflush;
+	int cnum, i = 0, doflush;
 	struct regmap *rp;
 	int gap_start, gap_end;
 	vaddr_t va;
+	struct cpu_info *cpi;
 
 /*XXX-GCC!*/gap_start=gap_end=0;
 #ifdef DEBUG
@@ -2205,17 +2207,7 @@ ctx_alloc(struct pmap *pm)
 		 * Note on multi-threaded processes: a context must remain
 		 * valid as long as any thread is still running on a CPU.
 		 */
-#if defined(MULTIPROCESSOR)
-		for (i = 0; i < sparc_ncpus; i++)
-#else
-		i = 0;
-#endif
-		{
-			struct cpu_info *cpi = cpus[i];
-#if defined(MULTIPROCESSOR)
-			if (cpi == NULL)
-				continue;
-#endif
+		for (CPU_INFO_FOREACH(i, cpi)) {
 			setpgt4m(&cpi->ctx_tbl[cnum],
 				 (pm->pm_reg_ptps_pa[i] >> SRMMU_PPNPASHIFT) |
 					SRMMU_TEPTD);
@@ -2236,6 +2228,7 @@ void
 ctx_free(struct pmap *pm)
 {
 	union ctxinfo *c;
+	struct cpu_info *cpi;
 	int ctx;
 
 	c = pm->pm_ctx;
@@ -2259,17 +2252,7 @@ ctx_free(struct pmap *pm)
 
 		cache_flush_context(ctx);
 		tlb_flush_context(ctx, PMAP_CPUSET(pm));
-#if defined(MULTIPROCESSOR)
-		for (i = 0; i < sparc_ncpus; i++)
-#else
-		i = 0;
-#endif
-		{
-			struct cpu_info *cpi = cpus[i];
-#if defined(MULTIPROCESSOR)
-			if (cpi == NULL)
-				continue;
-#endif
+		for (CPU_INFO_FOREACH(i, cpi)) {
 			setpgt4m(&cpi->ctx_tbl[ctx], SRMMU_TEINVALID);
 		}
 	}
@@ -3014,7 +2997,8 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	}
 
 	pmap_page_upload();
-	curlwp = &lwp0;
+	mutex_init(&demap_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&ctx_lock, MUTEX_DEFAULT, IPL_SCHED);
 }
 
 #if defined(SUN4) || defined(SUN4C)
@@ -3209,14 +3193,12 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 
 	p = i;			/* retract to first free phys */
 
-	mutex_init(&demap_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * All contexts are free except the kernel's.
 	 *
 	 * XXX sun4c could use context 0 for users?
 	 */
-	mutex_init(&ctx_lock, MUTEX_DEFAULT, IPL_SCHED);
 	ci->c_pmap = pmap_kernel();
 	ctx_freelist = ci + 1;
 	for (i = 1; i < ncontext; i++) {
@@ -3481,6 +3463,11 @@ pmap_bootstrap4m(void *top)
 	paddr_t pagetables_start_pa;
 	extern char etext[];
 	extern char kernel_text[];
+	vaddr_t va;
+#ifdef MULTIPROCESSOR
+	vsize_t off;
+	struct vm_page *pg;
+#endif
 
 	/*
 	 * Compute `va2pa_offset'.
@@ -3549,7 +3536,6 @@ pmap_bootstrap4m(void *top)
 	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
 	bzero((void *)ci, (u_int)p - (u_int)ci);
-
 
 	/*
 	 * Set up the `constants' for the call to vm_init()
@@ -3699,12 +3685,9 @@ pmap_bootstrap4m(void *top)
 
 	p = q;			/* retract to first free phys */
 
-	mutex_init(&demap_lock, MUTEX_DEFAULT, IPL_VM);
-
 	/*
 	 * Set up the ctxinfo structures (freelist of contexts)
 	 */
-	mutex_init(&ctx_lock, MUTEX_DEFAULT, IPL_SCHED);
 	ci->c_pmap = pmap_kernel();
 	ctx_freelist = ci + 1;
 	for (i = 1; i < ncontext; i++) {
@@ -3775,7 +3758,7 @@ pmap_bootstrap4m(void *top)
 		 */
 		int size = pagetables_end - pagetables_start;
 		if (CACHEINFO.c_vactype != VAC_NONE) {
-			vaddr_t va = (vaddr_t)pagetables_start;
+			va = (vaddr_t)pagetables_start;
 			while (size > 0) {
 				cache_flush_page(va, 0);
 				va += NBPG;
@@ -3795,6 +3778,64 @@ pmap_bootstrap4m(void *top)
 	 * Now switch to kernel pagetables (finally!)
 	 */
 	mmu_install_tables(&cpuinfo);
+
+#ifdef MULTIPROCESSOR
+	/* Allocate VA for all the cpu_info structurs */
+	cpus = (union cpu_info_pg*)uvm_km_alloc(kernel_map,
+	    sizeof cpus[sparc_ncpus], 32*1024, UVM_KMF_VAONLY);
+	/*
+	 * Add an alias mapping for the CPUINFO_VA allocation created
+	 * early during bootstrap for the first CPU
+	 */
+	off = 0;
+	for (va = (vaddr_t)&cpus[0].ci;
+	     off < sizeof(struct cpu_info);
+	     va += NBPG, off += NBPG) {
+		paddr_t pa = PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+	}
+	/*
+	 * Now allocate memory for all other CPUs cpu_info and map
+	 * it into the coresponding space in the cpus array. We will
+	 * later duplicate the mapping into CPUINFO_VA.
+	 */
+	for (i = 1; i < sparc_ncpus; i++) {
+		off = 0;
+		for (va = (vaddr_t)&cpus[i].ci;
+		     off < sizeof(struct cpu_info);
+		     va += NBPG, off += NBPG) {
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
+			paddr_t pa = VM_PAGE_TO_PHYS(pg);
+			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		}
+	}
+
+	/* clear new cpu infos */
+	prom_printf("clearing other cpus cpu info\n");
+	memset(&cpus[1].ci, 0, (sparc_ncpus-1)*sizeof(union cpu_info_pg));
+
+	/* setup self refernces, and cpu "cpuinfo" */
+	prom_printf("setting cpus self reference and mapping\n");
+	for (i = 0; i < sparc_ncpus; i++) {
+
+		prom_printf("going to set cpu%d ci_self address: %p\n", i, &cpus[i].ci);
+		cpus[i].ci.ci_self = &cpus[i].ci;
+
+		/* mapped above. */
+		if (i == 0)
+			continue;
+
+		off = 0;
+		for (va = (vaddr_t)&cpus[i].ci;
+		     off < sizeof(struct cpu_info);
+		     va += NBPG, off += NBPG) {
+			paddr_t pa = PMAP_BOOTSTRAP_VA2PA(va + off);
+			prom_printf("going to pmap_kenter_pa(va=%p, pa=%p)\n", va, pa);
+			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		}
+	}
+#endif
+	pmap_update(pmap_kernel());
 }
 
 static u_long prom_ctxreg;
@@ -3804,7 +3845,7 @@ mmu_install_tables(struct cpu_info *sc)
 {
 
 #ifdef DEBUG
-	printf("pmap_bootstrap: installing kernel page tables...");
+	prom_printf("pmap_bootstrap: installing kernel page tables...");
 #endif
 	setcontext4m(0);	/* paranoia? %%%: Make 0x3 a define! below */
 
@@ -3821,7 +3862,7 @@ mmu_install_tables(struct cpu_info *sc)
 	tlb_flush_all_real();
 
 #ifdef DEBUG
-	printf("done.\n");
+	prom_printf("done.\n");
 #endif
 }
 
@@ -3838,23 +3879,6 @@ srmmu_restore_prom_ctx(void)
 #endif /* SUN4M || SUN4D */
 
 #if defined(MULTIPROCESSOR)
-/*
- * Globalize the boot CPU's cpu_info structure.
- */
-void
-pmap_globalize_boot_cpuinfo(struct cpu_info *cpi)
-{
-	vaddr_t va;
-	vsize_t off;
-
-	off = 0;
-	for (va = (vaddr_t)cpi; off < sizeof(*cpi); va += NBPG, off += NBPG) {
-		paddr_t pa = PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-	}
-	pmap_update(pmap_kernel());
-}
-
 /*
  * Allocate per-CPU page tables. One region, segment and page table
  * is needed to map CPUINFO_VA to different physical addresses on
@@ -4085,10 +4109,6 @@ pmap_quiet_check(struct pmap *pm)
 			n = 0;
 #endif
 			{
-#if defined(MULTIPROCESSOR)
-				if (cpus[n] == NULL)
-					continue;
-#endif
 				if (pm->pm_reg_ptps[n][vr] != SRMMU_TEINVALID)
 					printf("pmap_chk: spurious PTP in user "
 						"region %d on CPU %d\n", vr, n);
@@ -4202,10 +4222,6 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		{
 			int *upt, *kpt;
 
-#if defined(MULTIPROCESSOR)
-			if (cpus[n] == NULL)
-				continue;
-#endif
 			upt = pool_get(&L1_pool, flags);
 			pm->pm_reg_ptps[n] = upt;
 			pm->pm_reg_ptps_pa[n] = VA2PA((char *)upt);
@@ -4256,10 +4272,6 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		n = 0;
 #endif
 		{
-#if defined(MULTIPROCESSOR)
-			if (cpus[n] == NULL)
-				continue;
-#endif
 			int *pt = pm->pm_reg_ptps[n];
 			pm->pm_reg_ptps[n] = NULL;
 			pm->pm_reg_ptps_pa[n] = 0;
@@ -4435,7 +4447,7 @@ pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp, struct segmap *sp,
 #ifdef MULTIPROCESSOR
 		/* Invalidate level 1 PTP entries on all CPUs */
 		for (; n < sparc_ncpus; n++) {
-			if (cpus[n] == NULL)
+			if ((cpus[n].ci.flags & CPUFLG_HATCHED) == 0)
 				continue;
 #endif
 			setpgt4m(&pm->pm_reg_ptps[n][vr], SRMMU_TEINVALID);
@@ -6272,7 +6284,7 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 #endif
 		{
 #if defined(MULTIPROCESSOR)
-			if (cpus[i] == NULL)
+			if ((cpus[i].ci.flags & CPUFLG_HATCHED) == 0)
 				continue;
 #endif
 			setpgt4m(&pm->pm_reg_ptps[i][vr],

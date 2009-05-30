@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.229 2008/07/17 14:39:26 cegger Exp $ */
+/*	$NetBSD: autoconf.c,v 1.229.4.1 2009/05/30 16:57:18 snj Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.229 2008/07/17 14:39:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.229.4.1 2009/05/30 16:57:18 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -279,6 +279,7 @@ bootstrap(void)
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
+	curlwp = &lwp0;
 
 #if defined(SUN4M) || defined(SUN4D)
 	/* Switch to sparc v8 multiply/divide functions on v8 machines */
@@ -314,18 +315,6 @@ bootstrap(void)
 	initmsgbuf((void *)KERNBASE, 8192);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
-		if (bi_sym->ssym < KERNBASE) {
-			/* Assume low-loading boot loader */
-			bi_sym->ssym += KERNBASE;
-			bi_sym->esym += KERNBASE;
-		}
-		ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
-		    (int *)bi_sym->esym);
-	}
-#endif
-
 #if defined(SUN4M)
 	/*
 	 * sun4m bootstrap is complex and is totally different for "normal" 4m
@@ -351,6 +340,19 @@ bootstrap(void)
 		*((unsigned char *)INTRREG_VA) = 0;
 	}
 #endif /* SUN4 || SUN4C */
+
+
+#if NKSYMS || defined(DDB) || defined(LKM)
+	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
+		if (bi_sym->ssym < KERNBASE) {
+			/* Assume low-loading boot loader */
+			bi_sym->ssym += KERNBASE;
+			bi_sym->esym += KERNBASE;
+		}
+		ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
+		    (int *)bi_sym->esym);
+	}
+#endif
 }
 
 #if defined(SUN4M) && !defined(MSIIEP)
