@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $	*/
+/*	$NetBSD: common.h,v 1.1.1.2.8.1 2009/05/30 15:58:17 snj Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -46,7 +46,8 @@
 #endif
 
 #if !defined(__sun) && !defined(__hpux) && !defined(__INTERIX) && \
-    !defined(__digital__) && !defined(__linux) && !defined(__sgi)
+    !defined(__digital__) && !defined(__linux) && !defined(__MINT__) && \
+    !defined(__sgi)
 #define HAVE_SA_LEN
 #endif
 

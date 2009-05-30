@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.2.8.1 2009/05/30 15:58:17 snj Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -42,8 +42,8 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 
-#include <arpa/inet.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -728,6 +728,7 @@ fetch_add_entry(struct url_list *ue, struct url *base, const char *name,
 
 	tmp->offset = 0;
 	tmp->length = 0;
+	tmp->last_modified = -1;
 
 	++ue->length;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: file.c,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2.8.1 2009/05/30 15:58:17 snj Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
- * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
+ * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,12 @@ fetchXGetFile(struct url *u, struct url_stat *us, const char *flags)
 {
 	char *path;
 	fetchIO *f;
-	int fd, *cookie;
+	struct url_stat local_us;
+	int if_modified_since, fd, *cookie;
+
+	if_modified_since = CHECK_FLAG('i');
+	if (if_modified_since && us == NULL)
+		us = &local_us;
 
 	if ((path = fetchUnquotePath(u)) == NULL) {
 		fetch_syserr();
@@ -95,6 +100,15 @@ fetchXGetFile(struct url *u, struct url_stat *us, const char *flags)
 
 	if (us && fetch_stat_file(fd, us) == -1) {
 		close(fd);
+		fetch_syserr();
+		return NULL;
+	}
+
+	if (if_modified_since && u->last_modified > 0 &&
+	    u->last_modified >= us->mtime) {
+		close(fd);
+		fetchLastErrCode = FETCH_UNCHANGED;
+		snprintf(fetchLastErrString, MAXERRSTRING, "Unchanged");
 		return NULL;
 	}
 
@@ -239,6 +253,8 @@ fetchListFile(struct url_list *ue, struct url *u, const char *pattern, const cha
 			continue;
 		fetch_add_entry(ue, u, de->d_name, 0);
 	}
+
+	closedir(dir);
 
 	return 0;
 }
