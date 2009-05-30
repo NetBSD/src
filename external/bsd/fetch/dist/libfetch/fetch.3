@@ -24,9 +24,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: fetch.3,v 1.64 2007/12/18 11:03:26 des Exp $
-.\" $NetBSD: fetch.3,v 1.1.1.3 2008/10/29 16:18:13 joerg Exp $
+.\" $NetBSD: fetch.3,v 1.1.1.3.2.1 2009/05/30 16:01:24 snj Exp $
 .\"
-.Dd April 25, 2008
+.Dd February 4, 2009
 .Dt FETCH 3
 .Os
 .Sh NAME
@@ -148,8 +148,8 @@ takes a URL in the form of a null-terminated string and splits it into
 its components function according to the Common Internet Scheme Syntax
 detailed in RFC 1738.
 A regular expression which produces this syntax is:
-.Bd -literal
-    \*[Lt]scheme\*[Gt]:(//(\*[Lt]user\*[Gt](:\*[Lt]pwd\*[Gt])?@)?\*[Lt]host\*[Gt](:\*[Lt]port\*[Gt])?)?/(\*[Lt]document\*[Gt])?
+.Bd -literal -offset indent
+\*[Lt]scheme\*[Gt]:(//(\*[Lt]user\*[Gt](:\*[Lt]pwd\*[Gt])?@)?\*[Lt]host\*[Gt](:\*[Lt]port\*[Gt])?)?/(\*[Lt]document\*[Gt])?
 .Ed
 .Pp
 If the URL does not seem to begin with a scheme name, it is assumed to be a local path.
@@ -194,6 +194,7 @@ struct url {
     char	*doc;
     off_t	 offset;
     size_t	 length;
+    time_t	 last_modified;
 };
 .Ed
 .Pp
@@ -204,6 +205,9 @@ and
 .Fn fetchParseURL
 should be freed using
 .Fn fetchFreeURL .
+The size of
+.Vt struct URL
+is not part of the ABI.
 .Pp
 .Fn fetchXGetURL ,
 .Fn fetchGetURL ,
@@ -326,6 +330,19 @@ or
 functions is read-only, and that a stream returned by one of the
 .Fn fetchPutXXX
 functions is write-only.
+.Sh PROTOCOL INDEPENDENT FLAGS
+If the
+.Ql i
+(if-modified-since) flag is specified, the library will try to fetch
+the content only if it is newer than
+.Va last_modified .
+For HTTP an
+.Li If-Modified-Since
+HTTP header is sent.
+For FTP a
+.Li MTDM
+command is sent first and compared locally.
+For FILE the source file is compared.
 .Sh FILE SCHEME
 .Fn fetchXGetFile ,
 .Fn fetchGetFile ,

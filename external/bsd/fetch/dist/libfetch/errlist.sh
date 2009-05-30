@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: errlist.sh,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $
+# $NetBSD: errlist.sh,v 1.1.1.2.4.1 2009/05/30 16:01:24 snj Exp $
 
 printf "static struct fetcherr $1[] = {\n"
 while read code type msg; do
