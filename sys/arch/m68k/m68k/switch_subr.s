@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.21 2007/10/17 19:55:12 garbled Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.22 2009/05/30 17:52:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -388,6 +388,19 @@ ENTRY_NOPROFILE(lwp_trampoline)
 	movl	%a0,%sp@-		| old lpw
 	jbsr	_C_LABEL(lwp_startup)
 	addql	#8,%sp
+	movl	%a3,%sp@-		| push function arg
+	jbsr	%a2@			| call function
+	addql	#4,%sp			| pop arg
+	movl	%sp@(FR_SP),%a0		| grab and load
+	movl	%a0,%usp		|   user SP
+	moveml	%sp@+,#0x7FFF		| restore most user regs
+	addql	#8,%sp			| toss SP and stack adjust
+	jra	_ASM_LABEL(rei)		| and return
+
+/*
+ * Very similar to lwp_trampoline, but do not call lwp_startup
+ */
+ENTRY_NOPROFILE(setfunc_trampoline)
 	movl	%a3,%sp@-		| push function arg
 	jbsr	%a2@			| call function
 	addql	#4,%sp			| pop arg
