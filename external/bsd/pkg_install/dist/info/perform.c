@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,13 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
-#else
-__RCSID("$NetBSD: perform.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: perform.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -126,7 +120,7 @@ static const struct pkg_meta_desc {
 	int entry_mask;
 	int required_file;
 } pkg_meta_descriptors[] = {
-	{ offsetof(struct pkg_meta, meta_contents), CONTENTS_FNAME ,
+	{ offsetof(struct pkg_meta, meta_contents), CONTENTS_FNAME,
 	    LOAD_CONTENTS, 1},
 	{ offsetof(struct pkg_meta, meta_comment), COMMENT_FNAME,
 	    LOAD_COMMENT, 1 },
@@ -174,10 +168,10 @@ free_pkg_meta(struct pkg_meta *meta)
 
 #ifndef BOOTSTRAP
 static struct pkg_meta *
-read_meta_data_from_archive(struct archive *archive)
+read_meta_data_from_archive(struct archive *archive,
+    struct archive_entry *entry)
 {
 	struct pkg_meta *meta;
-	struct archive_entry *entry;
 	const char *fname;
 	const struct pkg_meta_desc *descr, *last_descr;
 	char **target;
@@ -186,13 +180,16 @@ read_meta_data_from_archive(struct archive *archive)
 
 	found_required = 0;
 
-	if ((meta = malloc(sizeof(*meta))) == NULL)
-		err(2, "cannot allocate meta data header");
-
-	memset(meta, 0, sizeof(*meta));
+	meta = xcalloc(1, sizeof(*meta));
 
 	last_descr = 0;
+	if (entry != NULL) {
+		r = ARCHIVE_OK;
+		goto has_entry;
+	}
+
 	while ((r = archive_read_next_header(archive, &entry)) == ARCHIVE_OK) {
+has_entry:
 		fname = archive_entry_pathname(entry);
 
 		for (descr = pkg_meta_descriptors; descr->entry_filename;
@@ -223,8 +220,7 @@ read_meta_data_from_archive(struct archive *archive)
 		size = archive_entry_size(entry);
 		if (size > SSIZE_MAX - 1)
 			errx(2, "package meta data too large to process");
-		if ((*target = malloc(size + 1)) == NULL)
-			err(2, "cannot allocate meta data");
+		*target = xmalloc(size + 1);
 		if (archive_read_data(archive, *target, size) != size)
 			errx(2, "cannot read package meta data");
 		(*target)[size] = '\0';
@@ -234,12 +230,12 @@ read_meta_data_from_archive(struct archive *archive)
 		if (descr->required_file)
 			--found_required;
 	}
-	if (found_required != 0) {
-		free_pkg_meta(meta);
-		return NULL;
-	}
 
-	archive_read_finish(archive);
+	meta->is_installed = 0;
+	if (found_required != 0 && r != ARCHIVE_OK && r != ARCHIVE_EOF) {
+		free_pkg_meta(meta);
+		meta = NULL;
+	}
 
 	return meta;
 }
@@ -255,10 +251,7 @@ read_meta_data_from_pkgdb(const char *pkg)
 	int fd;
 	struct stat st;
 
-	if ((meta = malloc(sizeof(*meta))) == NULL)
-		err(2, "cannot allocate meta data header");
-
-	memset(meta, 0, sizeof(*meta));
+	meta = xcalloc(1, sizeof(*meta));
 
 	for (descr = pkg_meta_descriptors; descr->entry_filename; ++descr) {
 		if ((descr->entry_mask & desired_meta_data) == 0)
@@ -281,15 +274,60 @@ read_meta_data_from_pkgdb(const char *pkg)
 			errx(1, "meta data is not regular file");
 		if (st.st_size > SSIZE_MAX - 1)
 			err(2, "meta data file too large to process");
-		if ((*target = malloc(st.st_size + 1)) == NULL)
-			err(2, "cannot allocate meta data");
+		*target = xmalloc(st.st_size + 1);
 		if (read(fd, *target, st.st_size) != st.st_size)
 			err(2, "cannot read meta data");
 		(*target)[st.st_size] = '\0';
 		close(fd);
 	}
 
+	meta->is_installed = 1;
+
 	return meta;
+}
+
+static void
+build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta, int limit)
+{
+	char *iter, *eol, *next;
+	lpkg_t *lpp;
+	struct pkg_meta *meta_dep;
+
+	if (limit == 65536)
+		errx(1, "Cycle in the dependency tree, bailing out");
+
+	if (meta->is_installed == 0 || meta->meta_required_by == NULL)
+		return;
+
+	for (iter = meta->meta_required_by; *iter != '\0'; iter = next) {
+		eol = iter + strcspn(iter, "\n");
+		if (*eol == '\n')
+			next = eol + 1;
+		else
+			next = eol;
+		if (iter == eol)
+			continue;
+		TAILQ_FOREACH(lpp, reqby, lp_link) {
+			if (strlen(lpp->lp_name) != eol - iter)
+				continue;
+			if (memcmp(lpp->lp_name, iter, eol - iter) == 0)
+				break;
+		}
+		if (lpp != NULL)
+			continue;
+		*eol = '\0';
+		lpp = alloc_lpkg(iter);
+		if (next != eol)
+			*eol = '\n';
+
+		meta_dep = read_meta_data_from_pkgdb(lpp->lp_name);
+		if (meta_dep == NULL)
+			continue;
+		build_full_reqby(reqby, meta_dep, limit + 1);
+		free_pkg_meta(meta_dep);
+
+		TAILQ_INSERT_TAIL(reqby, lpp, lp_link);
+	}
 }
 
 static lfile_head_t files;
@@ -302,30 +340,30 @@ pkg_do(const char *pkg)
 	int     code = 0;
 	const char   *binpkgfile = NULL;
 
-	if (IS_URL(pkg)) {
-#ifdef BOOTSTRAP
-		errx(2, "Remote access not supported during bootstrap");
-#else
-		struct archive *archive;
-		void *remote_archive_cookie;
-
-		archive = open_remote_archive(pkg, &remote_archive_cookie);
-
-		meta = read_meta_data_from_archive(archive);
-		close_remote_archive(remote_archive_cookie);
-#endif
-	} else if (fexists(pkg) && isfile(pkg)) {
+	if (IS_URL(pkg) || (fexists(pkg) && isfile(pkg))) {
 #ifdef BOOTSTRAP
 		errx(2, "Binary packages not supported during bootstrap");
 #else
 		struct archive *archive;
-		void *remote_archive_cookie;
+		struct archive_entry *entry;
+		char *pkgname;
 
-		archive = open_local_archive(pkg, &remote_archive_cookie);
+		archive = open_archive(pkg);
+		if (archive == NULL) {
+			warnx("can't find package `%s', skipped", pkg);
+			return -1;
+		}
+		pkgname = NULL;
+		entry = NULL;
+		pkg_verify_signature(&archive, &entry, &pkgname);
+		if (archive == NULL)
+			return -1;
+		free(pkgname);
 
-		meta = read_meta_data_from_archive(archive);
-		close_local_archive(remote_archive_cookie);
-		binpkgfile = pkg;
+		meta = read_meta_data_from_archive(archive, entry);
+		archive_read_finish(archive);
+		if (!IS_URL(pkg))
+			binpkgfile = pkg;
 #endif
 	} else {
 		/*
@@ -365,15 +403,19 @@ pkg_do(const char *pkg)
 		show_index(meta->meta_comment, tmp);
 	} else if (Flags & SHOW_BI_VAR) {
 		if (strcspn(BuildInfoVariable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-		    == strlen(BuildInfoVariable))
-			show_var(meta->meta_installed_info, BuildInfoVariable);
-		else
-			show_var(meta->meta_build_info, BuildInfoVariable);
+		    == strlen(BuildInfoVariable)) {
+			if (meta->meta_installed_info)
+				show_var(meta->meta_installed_info, BuildInfoVariable);
+		} else {
+			if (meta->meta_build_info)
+				show_var(meta->meta_build_info, BuildInfoVariable);
+			else
+				warnx("Build information missing");
+		}
 	} else {
 		package_t plist;
 		
 		/* Read the contents list */
-		plist.head = plist.tail = NULL;
 		parse_plist(&plist, meta->meta_contents);
 
 		/* Start showing the package contents */
@@ -397,6 +439,12 @@ pkg_do(const char *pkg)
 		}
 		if ((Flags & SHOW_REQBY) && meta->meta_required_by) {
 			show_file(meta->meta_required_by, "Required by:\n", TRUE);
+		}
+		if ((Flags & SHOW_FULL_REQBY) && meta->is_installed) {
+			lpkg_head_t reqby;
+			TAILQ_INIT(&reqby);
+			build_full_reqby(&reqby, meta, 0);
+			show_list(&reqby, "Full required by list:\n");
 		}
 		if (Flags & SHOW_DESC) {
 			show_file(meta->meta_desc, "Description:\n", TRUE);
@@ -500,8 +548,7 @@ CheckForPkg(const char *pkgname)
 	if (arg.got_match == 0 && !ispkgpattern(pkgname)) {
 		char *pattern;
 
-		if (asprintf(&pattern, "%s-[0-9]*", pkgname) == -1)
-			errx(EXIT_FAILURE, "asprintf failed");
+		pattern = xasprintf("%s-[0-9]*", pkgname);
 
 		arg.pattern = pattern;
 		arg.got_match = 0;
@@ -536,9 +583,7 @@ CheckForBestPkg(const char *pkgname)
 		if (ispkgpattern(pkgname))
 			return 1;
 
-		if (asprintf(&pattern, "%s-[0-9]*", pkgname) == -1)
-			errx(EXIT_FAILURE, "asprintf failed");
-
+		pattern = xasprintf("%s-[0-9]*", pkgname);
 		best_match = find_best_matching_installed_pkg(pattern);
 		free(pattern);
 	}
@@ -592,7 +637,7 @@ pkg_perform(lpkg_head_t *pkghead)
 		desired_meta_data |= LOAD_SIZE_ALL;
 	if (Flags & (SHOW_SUMMARY | SHOW_DESC))
 		desired_meta_data |= LOAD_DESC;
-	if (Flags & SHOW_REQBY)
+	if (Flags & (SHOW_REQBY | SHOW_FULL_REQBY))
 		desired_meta_data |= LOAD_REQUIRED_BY;
 	if (Flags & SHOW_DISPLAY)
 		desired_meta_data |= LOAD_DISPLAY;

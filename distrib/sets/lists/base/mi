@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.7 2009/05/01 01:48:41 snj Exp $
+# $NetBSD: mi,v 1.780.2.8 2009/05/30 16:40:30 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1397,7 +1397,7 @@
 ./usr/sbin/kvm_mkdb				base-obsolete		obsolete
 ./usr/sbin/lastlogin				base-sysutil-bin
 ./usr/sbin/link					base-sysutil-bin
-./usr/sbin/linkfarm				base-pkgutil-bin
+./usr/sbin/linkfarm				base-obsolete		obsolete
 ./usr/sbin/lmcconfig				base-netutil-bin
 ./usr/sbin/lmtp					base-obsolete		obsolete
 ./usr/sbin/lockstat				base-sysutil-bin
@@ -1476,7 +1476,7 @@
 ./usr/sbin/pkg_create				base-pkgutil-bin
 ./usr/sbin/pkg_delete				base-pkgutil-bin
 ./usr/sbin/pkg_info				base-pkgutil-bin
-./usr/sbin/pkg_view				base-pkgutil-bin
+./usr/sbin/pkg_view				base-obsolete		obsolete
 ./usr/sbin/portmap				base-obsolete		obsolete
 ./usr/sbin/postalias				base-postfix-bin	postfix
 ./usr/sbin/postcat				base-postfix-bin	postfix

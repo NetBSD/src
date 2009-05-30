@@ -36,9 +36,6 @@
 /* Define to 1 if you have the <fnmatch.h> header file. */
 #undef HAVE_FNMATCH_H
 
-/* Define to 1 if you have the `getrlimit' function. */
-#undef HAVE_GETRLIMIT
-
 /* Define to 1 if you have the <glob.h> header file. */
 #undef HAVE_GLOB_H
 
@@ -65,9 +62,6 @@
 
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
-
-/* Define to 1 if you have the `setrlimit' function. */
-#undef HAVE_SETRLIMIT
 
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
@@ -140,9 +134,6 @@
 
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
-
-/* Define to 1 if you have the `tgetent' function. */
-#undef HAVE_TGETENT
 
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H

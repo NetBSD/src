@@ -1,10 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2008/09/30 19:19:57 joerg Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2009/05/30 16:40:34 snj Exp $
 # Original from FreeBSD, no rcs id
 
 PROG= pkg_info
 SRCS= main.c perform.c show.c
-
-LINK_ARCHIVE=	yes
 
 .include <bsd.init.mk>
 

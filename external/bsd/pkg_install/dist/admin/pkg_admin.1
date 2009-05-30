@@ -1,6 +1,6 @@
-.\"	$NetBSD: pkg_admin.1,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.1.1.1.6.1 2009/05/30 16:40:31 snj Exp $
 .\"
-.\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2007
+.Dd April 25, 2009
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Nd perform various administrative tasks to the pkg system
 .Sh SYNOPSIS
 .Nm
-.Op Fl bqSvV
+.Op Fl bqSVv
 .Op Fl C Ar config
 .Op Fl d Ar lsdir
 .Op Fl K Ar pkg_dbdir
@@ -56,7 +56,7 @@ Packages System.
 The following command-line options are supported:
 .Bl -tag -width indent
 .It Fl b
-Print only the basenames when matching package names for
+Print only the base names when matching package names for
 .Cm lsall
 and
 .Cm lsbest .
@@ -137,7 +137,7 @@ but check only the given package names or patterns.
 Like
 .Cm audit-pkg ,
 but read the package names or patterns one per line from the given files.
-.It Cm audit-history Oo Fl t Ar type Oc Oo Ar pkgbase Oc ...
+.It Cm audit-history Oo Fl s Oc Oo Fl t Ar type Oc Oo Ar pkgbase Oc ...
 Print all vulnerabilities for the given base package names.
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
@@ -160,12 +160,28 @@ A warning message is printed if the expected checksum differs from the
 checksum of the file on disk.
 Symbolic links are also checked, ensuring that the targets on disk are
 the same as the contents recorded at package installation time.
+.It Cm check-license Ar condition
+Check if
+.Ar condition
+can be fulfilled with the currently set of accepted licenses.
+Prints either yes or no to stdout if the condition can be parsed,
+otherwise it exits with error.
 .It Cm check-pkg-vulnerabilities Oo Fl s Oc Ar file
-Check format and hashes in the pkg-vulnerabilties file
+Check format and hashes in the pkg-vulnerabilities file
 .Ar file .
 If
 .Fl s
 is given, also check the embedded signature.
+.It Cm check-signature Ar file ...
+Reports if
+.Ar file
+is a correctly signed package.
+.It Cm check-single-license Ar liccense
+Check if
+.Ar license
+is a valid license name and if it is in the set of acceptable licenses.
+Prints either yes or no to stdout if the condition can be parsed,
+otherwise it exits with error.
 .It Cm config-var Ar variable
 Print the current value of
 .Ar variable
@@ -178,13 +194,17 @@ This should be used only by
 .It Cm dump
 Dump the contents of the package database, similar to
 .Cm pkg_info -F .
-Columns are printed for the keyfield used in the pkgdb - the filename -,
+Columns are printed for the key field used in the pkgdb - the filename -,
 and the data field - the package the file belongs to.
-.It Cm fetch-pkg-vulnerabilities Op Fl s
+.It Cm fetch-pkg-vulnerabilities Oo Fl su Oc
 Fetch a new pkg-vulnerabilities file, check the format and if
 .Fl s
 is given the signature.
 If all checks are passed, write it to pkgdb.
+If
+.Fl u
+is given, the fetch is conditional and the file transfer is only done if
+the remote version is newer than the one in pkgdb.
 .It Cm lsall Ar /dir/pkgpattern
 .It Cm lsbest Ar /dir/pkgpattern
 List all/best package matching pattern in the given directory
@@ -261,6 +281,20 @@ to remove a variable.
 Packages that are not installed directly by the user but pulled in as
 dependencies are marked by setting
 .Dq automatic=YES .
+.It Cm gpg-sign-package pkg
+Sign the binary package
+.Ar pkg
+using GPG.
+.It Cm x509-sign-package pkg spkg key cert
+Sign the binary package
+.Ar pkg
+using the key
+.Ar key
+and the certificate
+.Ar cert ,
+using
+.Ar spkg
+as output file.
 .It Cm unset Ar variable pkg ...
 Remove an installation variable.
 .El
@@ -275,6 +309,20 @@ is the location of the package database directory.
 The default package database directory is
 .Pa /var/db/pkg .
 .El
+.Sh CONFIGURATION VARIABLES
+The following variables change the behavior of
+.Nm
+and are described in
+.Xr pkg_install.conf 5 :
+.Bl -tag -width CERTIFICATE_ANCHOR_PKGS
+.It Ev CERTIFICATE_ANCHOR_PKGS
+.It Ev CERTIFICATE_ANCHOR_PKGVULN
+.It Ev CERTIFICATE_CHAIN
+.It Ev GPG
+.It Ev PKGVULNDIR
+.It Ev PKGVULNURL
+.It Ev IGNORE_URL
+.El
 .Sh FILES
 .Bl -tag -width /var/db/pkg/pkgdb.byfile.db -compact
 .It Pa /var/db/pkg/pkgdb.byfile.db
@@ -286,6 +334,7 @@ The default package database directory is
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
 .Xr pkg_view 1 ,
+.Xr pkg_install.conf 5 ,
 .Xr pkgsrc 7
 .Sh HISTORY
 The

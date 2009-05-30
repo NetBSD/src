@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.6.1 2009/05/30 16:40:31 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,9 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
+__RCSID("$NetBSD: main.c,v 1.1.1.1.6.1 2009/05/30 16:40:31 snj Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -74,6 +72,10 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
 #include <string.h>
 #endif
 
+#ifndef BOOTSTRAP
+#include <archive.h>
+#endif
+
 #include "admin.h"
 #include "lib.h"
 
@@ -89,7 +91,7 @@ static void set_unset_variable(char **, Boolean);
 void 
 usage(void)
 {
-	(void) fprintf(stderr, "usage: %s [-bqSvV] [-C config] [-d lsdir] [-K pkg_dbdir] [-s sfx] command args ...\n"
+	(void) fprintf(stderr, "usage: %s [-bqSVv] [-C config] [-d lsdir] [-K pkg_dbdir] [-s sfx] command [args ...]\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
 	    " rebuild-tree                - rebuild +REQUIRED_BY files from forward deps\n"
@@ -98,10 +100,6 @@ usage(void)
 	    " delete pkg ...              - delete file entries for pkg in database\n"
 	    " set variable=value pkg ...  - set installation variable for package\n"
 	    " unset variable pkg ...      - unset installation variable for package\n"
-#ifdef PKGDB_DEBUG
-	    " addkey key value            - add key and value\n"
-	    " delkey key                  - delete reference to key\n"
-#endif
 	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
 	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
 	    " dump                        - dump database\n"
@@ -112,7 +110,12 @@ usage(void)
 	    " audit-pkg [-es] [-t type] ...   - check listed packages for vulnerabilities\n"
 	    " audit-batch [-es] [-t type] ... - check packages in listed files for vulnerabilities\n"
 	    " audit-history [-t type] ...     - print all advisories for package names\n"
-	    " config-var name                 - print current value of the configuration variable\n",
+	    " check-license <condition>       - check if condition is acceptable\n"
+	    " check-single-license <license>  - check if license is acceptable\n"
+	    " config-var name                 - print current value of the configuration variable\n"
+	    " check-signature ...             - verify the signature of packages\n"
+	    " x509-sign-package pkg spkg key cert  - create X509 signature\n"
+	    " gpg-sign-package pkg spkg       - create GPG signature\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -174,6 +177,10 @@ add_pkg(const char *pkgdir, void *vp)
 				(*cnt)++;
 			}
 			break;
+		case PLIST_PKGDIR:
+			add_pkgdir(PkgName, dirp, p->name);
+			(*cnt)++;
+			break;
 		case PLIST_CWD:
 			if (strcmp(p->name, ".") != 0) {
 				dirp = p->name;
@@ -196,9 +203,7 @@ add_pkg(const char *pkgdir, void *vp)
 		case PLIST_UNEXEC:
 		case PLIST_DISPLAY:
 		case PLIST_PKGDEP:
-		case PLIST_MTREE:
 		case PLIST_DIR_RM:
-		case PLIST_IGNORE_INST:
 		case PLIST_OPTION:
 		case PLIST_PKGCFL:
 		case PLIST_BLDDEP:
@@ -341,7 +346,6 @@ rebuild_tree(void)
 int 
 main(int argc, char *argv[])
 {
-	const char     *config_file = SYSCONFDIR"/pkg_install.conf";
 	Boolean		 use_default_sfx = TRUE;
 	Boolean 	 show_basename_only = FALSE;
 	char		 lsdir[MaxPathSize];
@@ -407,7 +411,7 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	pkg_install_config(config_file);
+	pkg_install_config();
 
 	if (use_default_sfx)
 		(void) snprintf(sfx, sizeof(sfx), "%s", DEFAULT_SFX);
@@ -522,6 +526,37 @@ main(int argc, char *argv[])
 		if (argv == NULL || argv[1] != NULL)
 			errx(EXIT_FAILURE, "config-var takes exactly one argument");
 		pkg_install_show_variable(argv[0]);
+	} else if (strcasecmp(argv[0], "check-license") == 0) {
+		if (argv[1] == NULL)
+			errx(EXIT_FAILURE, "check-license takes exactly one argument");
+
+		load_license_lists();
+
+		switch (acceptable_pkg_license(argv[1])) {
+		case 0:
+			puts("no");
+			return 0;
+		case 1:
+			puts("yes");
+			return 0;
+		case -1:
+			errx(EXIT_FAILURE, "invalid license condition");
+		}
+	} else if (strcasecmp(argv[0], "check-single-license") == 0) {
+		if (argv[1] == NULL)
+			errx(EXIT_FAILURE, "check-license takes exactly one argument");
+		load_license_lists();
+
+		switch (acceptable_license(argv[1])) {
+		case 0:
+			puts("no");
+			return 0;
+		case 1:
+			puts("yes");
+			return 0;
+		case -1:
+			errx(EXIT_FAILURE, "invalid license");
+		}
 	}
 #ifndef BOOTSTRAP
 	else if (strcasecmp(argv[0], "fetch-pkg-vulnerabilities") == 0) {
@@ -536,48 +571,39 @@ main(int argc, char *argv[])
 		audit_batch(--argc, ++argv);
 	} else if (strcasecmp(argv[0], "audit-history") == 0) {
 		audit_history(--argc, ++argv);
-	}
+	} else if (strcasecmp(argv[0], "check-signature") == 0) {
+		struct archive *pkg;
+		int rc;
+
+		rc = 0;
+		for (--argc, ++argv; argc > 0; --argc, ++argv) {
+			pkg = open_archive(*argv);
+			if (pkg == NULL) {
+				warnx("%s could not be opened", *argv);
+				continue;
+			}
+			if (pkg_full_signature_check(&pkg))
+				rc = 1;
+			if (!pkg)
+				archive_read_finish(pkg);
+		}
+		return rc;
+	} else if (strcasecmp(argv[0], "x509-sign-package") == 0) {
+#ifdef HAVE_SSL
+		--argc;
+		++argv;
+		if (argc != 4)
+			errx(EXIT_FAILURE, "x509-sign-package takes exactly four arguments");
+		pkg_sign_x509(argv[0], argv[1], argv[2], argv[3]);
+#else
+		errx(EXIT_FAILURE, "OpenSSL support is not included");
 #endif
-#ifdef PKGDB_DEBUG
-	else if (strcasecmp(argv[0], "delkey") == 0) {
-		int     rc;
-
-		if (!pkgdb_open(ReadWrite))
-			err(EXIT_FAILURE, "cannot open pkgdb");
-
-		rc = pkgdb_remove(argv[2]);
-		if (rc) {
-			if (errno)
-				perror("pkgdb_remove");
-			else
-				printf("Key not present in pkgdb.\n");
-		}
-		
-		pkgdb_close();
-
-	} else if (strcasecmp(argv[0], "addkey") == 0) {
-
-		int     rc;
-
-		if (!pkgdb_open(ReadWrite)) {
-			err(EXIT_FAILURE, "cannot open pkgdb");
-		}
-
-		rc = pkgdb_store(argv[2], argv[3]);
-		switch (rc) {
-		case -1:
-			perror("pkgdb_store");
-			break;
-		case 1:
-			printf("Key already present.\n");
-			break;
-		default:
-			/* 0: everything ok */
-			break;
-		}
-
-		pkgdb_close();
-
+	} else if (strcasecmp(argv[0], "gpg-sign-package") == 0) {
+		--argc;
+		++argv;
+		if (argc != 2)
+			errx(EXIT_FAILURE, "gpg-sign-package takes exactly two arguments");
+		pkg_sign_gpg(argv[0], argv[1]);
 	}
 #endif
 	else {
@@ -631,7 +657,7 @@ set_unset_variable(char **argv, Boolean unset)
 		if ((eq=strchr(argv[0], '=')) == NULL)
 			usage();
 		
-		variable = malloc(eq-argv[0]+1);
+		variable = xmalloc(eq-argv[0]+1);
 		strlcpy(variable, argv[0], eq-argv[0]+1);
 		
 		arg.variable = variable;
@@ -663,8 +689,7 @@ set_unset_variable(char **argv, Boolean unset)
 				warnx("no matching pkg for `%s'", *argv);
 				ret++;
 			} else {
-				if (asprintf(&pattern, "%s-[0-9]*", *argv) == -1)
-					errx(EXIT_FAILURE, "asprintf failed");
+				pattern = xasprintf("%s-[0-9]*", *argv);
 
 				if (match_installed_pkgs(pattern, set_installed_info_var, &arg) == -1)
 					errx(EXIT_FAILURE, "Cannot process pkdbdb");

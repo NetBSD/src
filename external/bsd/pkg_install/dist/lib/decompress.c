@@ -1,3 +1,5 @@
+/*	$NetBSD: decompress.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
+
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -37,7 +39,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: decompress.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
+__RCSID("$NetBSD: decompress.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $");
 
 #ifdef BOOTSTRAP
 #include "lib.h"
@@ -71,8 +73,7 @@ decompress_bzip2(const char *in, size_t in_len, char **out, size_t *out_len)
 		*out_len = in_len * 10;
 	else
 		*out_len = in_len;
-	if ((*out = malloc(*out_len + 1)) == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	*out = xmalloc(*out_len + 1);
 
 	stream.next_in = (char *)in;
 	stream.avail_in = in_len;
@@ -92,9 +93,7 @@ decompress_bzip2(const char *in, size_t in_len, char **out, size_t *out_len)
 			if (BZ2_bzDecompressEnd(&stream) != Z_OK)
 				errx(EXIT_FAILURE, "inflateEnd failed");
 			output_produced = *out_len - stream.avail_out;
-			*out = realloc(*out, output_produced + 1);
-			if (*out == NULL)
-				err(EXIT_FAILURE, "realloc failed");
+			*out = xrealloc(*out, output_produced + 1);
 			*out_len = output_produced;
 			(*out)[*out_len] = '\0';
 			return;
@@ -104,7 +103,7 @@ decompress_bzip2(const char *in, size_t in_len, char **out, size_t *out_len)
 				*out_len *= 2;
 			else
 				errx(EXIT_FAILURE, "input too large");
-			*out = realloc(*out, *out_len + 1);
+			*out = xrealloc(*out, *out_len + 1);
 			stream.next_out = *out + output_produced;
 			stream.avail_out = *out_len - output_produced;
 			break;
@@ -124,8 +123,7 @@ decompress_zlib(const char *in, size_t in_len, char **out, size_t *out_len)
 		*out_len = in_len * 10;
 	else
 		*out_len = in_len;
-	if ((*out = malloc(*out_len + 1)) == NULL)
-		err(EXIT_FAILURE, "malloc failed");
+	*out = xmalloc(*out_len + 1);
 
 	stream.next_in = (unsigned char *)in;
 	stream.avail_in = in_len;
@@ -145,9 +143,7 @@ decompress_zlib(const char *in, size_t in_len, char **out, size_t *out_len)
 			if (inflateEnd(&stream) != Z_OK)
 				errx(EXIT_FAILURE, "inflateEnd failed");
 			output_produced = *out_len - stream.avail_out;
-			*out = realloc(*out, output_produced + 1);
-			if (*out == NULL)
-				err(EXIT_FAILURE, "realloc failed");
+			*out = xrealloc(*out, output_produced + 1);
 			*out_len = output_produced;
 			(*out)[*out_len] = '\0';
 			return;
@@ -159,7 +155,7 @@ decompress_zlib(const char *in, size_t in_len, char **out, size_t *out_len)
 				errx(EXIT_FAILURE, "input too large");
 			else
 				*out_len = SSIZE_MAX - 1;
-			*out = realloc(*out, *out_len + 1);
+			*out = xrealloc(*out, *out_len + 1);
 			stream.next_out = (unsigned char *)*out + output_produced;
 			stream.avail_out = *out_len - output_produced;
 			break;

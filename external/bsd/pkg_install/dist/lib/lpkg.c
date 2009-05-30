@@ -1,4 +1,4 @@
-/*	$NetBSD: lpkg.c,v 1.1.1.1 2008/09/30 19:00:27 joerg Exp $	*/
+/*	$NetBSD: lpkg.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -46,10 +46,8 @@ alloc_lpkg(const char *pkgname)
 {
 	lpkg_t *lpp;
 
-	if ((lpp = malloc(sizeof(*lpp))) == 0)
-		err(EXIT_FAILURE, "cannot allocate recursion data");
-	if ((lpp->lp_name = strdup(pkgname)) == 0)
-		err(EXIT_FAILURE, "cannot allocate recursion data");
+	lpp = xmalloc(sizeof(*lpp));
+	lpp->lp_name = xstrdup(pkgname);
 	return (lpp);
 }
 

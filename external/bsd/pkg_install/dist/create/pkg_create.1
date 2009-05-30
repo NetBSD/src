@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd August 10, 2007
+.Dd May 13, 2009
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl ElORUVv
+.Op Fl ElOUVv
 .Bk -words
 .Op Fl B Ar build-info-file
 .Ek
@@ -44,6 +44,9 @@
 .Ek
 .Bk -words
 .Op Fl D Ar displayfile
+.Ek
+.Bk -words
+.Op Fl F Ar compression
 .Ek
 .Bk -words
 .Op Fl g Ar group
@@ -160,6 +163,13 @@ or, if preceded by
 the argument itself.
 .It Fl E
 Add an empty views file to the package.
+.It Fl F Ar compression
+Use
+.Ar compression
+as compression algorithm.
+This overrides the heuristic to guess the compression type from the
+output name.
+Currently supported values are bzip2, gzip and none.
 .It Fl f Ar packlist
 Fetch
 .Pq packing list
@@ -256,10 +266,6 @@ as the initial directory
 .Pq base
 to start from in selecting files for
 the package.
-.It Fl R
-Re-order any directories in the pkg/PLIST file into reverse alphabetic
-order, so that child directories will automatically be removed before
-parent directories.
 .It Fl S Ar size-all-file
 Store the given file for later querying with the
 .Xr pkg_info 1
@@ -419,21 +425,12 @@ Set default group ownership for all subsequently extracted files to
 Use without an arg to set back to default (extraction)
 group ownership.
 .It Cm @comment Ar string
-Imbed a comment in the packing list.
+Embed a comment in the packing list.
 Useful in trying to document some particularly hairy sequence that
 may trip someone up later.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
 copy it anywhere), as it's used for some special purpose.
-.It Cm @ignore_inst
-Similar to
-.Cm @ignore ,
-but the ignoring of the next file is delayed one evaluation cycle.
-This makes it possible to use this directive in the
-.Ar packinglist
-file, so you can pack a
-specialized datafile in with a distribution for your install script (or
-something) yet have the installer ignore it.
 .It Cm @name Ar name
 Set the name of the package.
 This is mandatory and is usually put at the top.
@@ -444,20 +441,18 @@ Note that
 will derive this field from the
 .Ar pkg-name
 and add it automatically if none is given.
-.It Cm @dirrm Ar name
+.It Cm @pkgdir Ar name
 Declare directory
 .Pa name
-to be deleted at deinstall time.
-By default, directories created by a package installation are not deleted
-when the package is deinstalled; this provides an explicit directory cleanup
-method.
-This directive should appear at the end of the package list.
-If more than one
-.Cm @dirrm
-directives are used, the directories are removed in the order specified.
-The
+as managed.
+If it does not exist at installation time, it is created.
+If this directory is no longer referenced by packages and the last
+file or directory in it is deleted, the directory is removed as well.
+.It Cm @dirrm Ar name
+This command is supported for compatibility only.
+If directory
 .Pa name
-directory will not be removed unless it is empty.
+exists, it will be deleted at deinstall time.
 .It Cm @display Ar name
 Declare
 .Pa name
@@ -514,13 +509,3 @@ refined it for
 .Nx
 wildcard dependency processing, pkgdb, pkg size recording etc.
 .El
-.Sh BUGS
-Hard links between files in a distribution must be bracketed by
-.Cm @cwd
-directives in order to be preserved as hard links when the package is
-extracted.
-They additionally must not end up being split between
-.Cm tar
-invocations due to exec argument-space limitations (this depends on the
-value returned by
-.Fn sysconf _SC_ARG_MAX ) .

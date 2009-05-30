@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: build.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#ifndef lint
-#if 0
-static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
-#else
-__RCSID("$NetBSD: build.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
-#endif
-#endif
+__RCSID("$NetBSD: build.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $");
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -136,7 +130,8 @@ write_entry(struct archive *archive, struct archive_entry *entry)
 	}
 
 	if (archive_write_header(archive, entry)) {
-		errx(2, "cannot write to archive: %s",
+		errx(2, "cannot write %s to archive: %s",
+		    archive_entry_pathname(entry),
 		    archive_error_string(archive));
 	}
 
@@ -244,15 +239,28 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 	archive_entry_linkresolver_set_strategy(resolver,
 	    archive_format(archive));
 
-	if (strcmp(suffix, "tbz") == 0 || strcmp(suffix, "tar.bz2") == 0)
-		archive_write_set_compression_bzip2(archive);
-	else if (strcmp(suffix, "tgz") == 0 || strcmp(suffix, "tar.gz") == 0)
-		archive_write_set_compression_gzip(archive);
-	else
-		archive_write_set_compression_none(archive);
+	if (CompressionType == NULL) {
+		if (strcmp(suffix, "tbz") == 0 ||
+		    strcmp(suffix, "tar.bz2") == 0)
+			CompressionType = "bzip2";
+		else if (strcmp(suffix, "tgz") == 0 ||
+		    strcmp(suffix, "tar.gz") == 0)
+			CompressionType = "gzip";
+		else
+			CompressionType = "none";
+	}
 
-	if (asprintf(&archive_name, "%s.%s", pkg, suffix) == -1)
-		err(2, "cannot compute output name");
+	if (strcmp(CompressionType, "bzip2") == 0)
+		archive_write_set_compression_bzip2(archive);
+	else if (strcmp(CompressionType, "gzip") == 0)
+		archive_write_set_compression_gzip(archive);
+	else if (strcmp(CompressionType, "none") == 0)
+		archive_write_set_compression_none(archive);
+	else
+		errx(1, "Unspported compression type for -F: %s",
+		    CompressionType);
+
+	archive_name = xasprintf("%s.%s", pkg, suffix);
 
 	if (archive_write_open_file(archive, archive_name))
 		errx(2, "cannot create archive: %s", archive_error_string(archive));
@@ -327,7 +335,6 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 		errx(2, "cannot finish archive: %s", archive_error_string(archive));
 	archive_write_finish(archive);
 
-	chdir(initial_cwd);
 	free(initial_cwd);
 }
 
