@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.78 2009/05/27 02:19:49 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.79 2009/05/31 20:09:44 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -325,6 +325,12 @@ struct cpu_info {
 	/*bus_space_handle_t*/ long ci_mxccregs;
 
 	u_int	ci_tt;			/* Last trap (if tracing) */
+
+	/*
+	 * Start/End VA's of this cpu_info region; we upload the other pages
+	 * in this region that aren't part of the cpu_info to uvm.
+	 */
+	vaddr_t	ci_free_sva1, ci_free_eva1, ci_free_sva2, ci_free_eva2;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.329 2009/05/27 02:19:50 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.330 2009/05/31 20:09:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.329 2009/05/27 02:19:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.330 2009/05/31 20:09:44 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1148,6 +1148,28 @@ pmap_page_upload(void)
 			atop(start),
 			atop(end), VM_FREELIST_DEFAULT);
 	}
+
+#if defined(MULTIPROCESSOR)
+	{
+		CPU_INFO_ITERATOR cpunum;
+		struct cpu_info *cpi;
+
+		for (CPU_INFO_FOREACH(cpunum, cpi)) {
+			if (cpi->ci_free_sva1)
+				uvm_page_physload(atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_sva1)),
+						  atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_eva1)),
+						  atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_sva1)),
+						  atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_eva1)),
+						  VM_FREELIST_DEFAULT);
+			if (cpi->ci_free_sva2)
+				uvm_page_physload(atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_sva2)),
+						  atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_eva2)),
+						  atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_sva2)),
+						  atop(PMAP_BOOTSTRAP_VA2PA(cpi->ci_free_eva2)),
+						  VM_FREELIST_DEFAULT);
+		}
+	}
+#endif
 }
 
 /*
@@ -3467,8 +3489,11 @@ pmap_bootstrap4m(void *top)
 	vaddr_t va;
 #ifdef MULTIPROCESSOR
 	vsize_t off;
-	size_t cpuinfo_len;
+	size_t cpuinfo_len = sizeof(struct cpu_info);
 	uint8_t *cpuinfo_data;
+	int align = PAGE_SIZE;
+	vaddr_t sva, cpuinfo_va;
+	vsize_t sz;
 #endif
 
 	/*
@@ -3502,22 +3527,7 @@ pmap_bootstrap4m(void *top)
 	 */
 	p = (vaddr_t)top;
 
-#if defined(MULTIPROCESSOR)
-	/*
-	 * allocate the rest of the cpu_info{} area.  note we waste the
-	 * first one to get a VA space.
-	 */
-	cpuinfo_len = ((sizeof(struct cpu_info) + NBPG - 1) & ~PGOFSET);
-	if (sparc_ncpus > 1) {
-		p = (p + NBPG - 1) & ~PGOFSET;
-		cpuinfo_data = (uint8_t *)p;
-		p += (cpuinfo_len * sparc_ncpus);
-
-		/* XXX we waste the first one */
-		memset(cpuinfo_data + cpuinfo_len, 0, cpuinfo_len * (sparc_ncpus - 1));
-	} else
-		cpuinfo_data = (uint8_t *)CPUINFO_VA;
-#endif
+	p = (p + NBPG - 1) & ~PGOFSET;
 
 	/*
 	 * Intialize the kernel pmap.
@@ -3615,6 +3625,35 @@ pmap_bootstrap4m(void *top)
 	/* Round to next page and mark end of pre-wired kernel space */
 	p = (p + NBPG - 1) & ~PGOFSET;
 	pagetables_end = p;
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Allocate aligned KVA.  `cpuinfo' resides at a fixed virtual
+	 * address. Since we need to access an other CPU's cpuinfo
+	 * structure occasionally, this must be done at a virtual address
+	 * that's cache congruent to the fixed address CPUINFO_VA.
+	 *
+	 * NOTE: we're using the cache properties of the boot CPU to
+	 * determine the alignment (XXX).
+	 */
+	if (sparc_ncpus > 1) {
+		if (CACHEINFO.c_totalsize > align) {
+			/* Need a power of two */
+			while (align <= CACHEINFO.c_totalsize)
+				align <<= 1;
+			align >>= 1;
+		}
+		sz = sizeof(struct cpu_info);
+
+		sz = (sz + PAGE_SIZE - 1) & -PAGE_SIZE;
+		cpuinfo_len = sz + align - PAGE_SIZE;
+
+		/* Grab as much space as we need */
+		cpuinfo_data = (uint8_t *)p;
+		p += (cpuinfo_len * sparc_ncpus);
+	} else
+		cpuinfo_data = (uint8_t *)CPUINFO_VA;
+#endif
 
 	avail_start = PMAP_BOOTSTRAP_VA2PA(p);
 
@@ -3798,35 +3837,63 @@ pmap_bootstrap4m(void *top)
 	 */
 	mmu_install_tables(&cpuinfo);
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	/*
 	 * Initialise any cpu-specific data now.
 	 */
 	cpu_init_system();
 
 	/*
-	 * Remap cpu0 from CPUINFO_VA to the new correct value, wasting the
-	 * backing page we allocated above XXX.
-	 */
-	for (off = 0, va = (vaddr_t)cpuinfo_data;
-	     sparc_ncpus > 1 && off < sizeof(struct cpu_info);
-	     va += NBPG, off += NBPG) {
-		paddr_t pa = PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
-		prom_printf("going to pmap_kenter_pa(va=%p, pa=%p)\n", va, pa);
-		pmap_kremove(va, NBPG);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		cache_flush_page(va, 0);
-		cache_flush_page(CPUINFO_VA, 0);
-	}
-
-	/*
 	 * Setup the cpus[] array and the ci_self links.
 	 */
 	prom_printf("setting cpus self reference\n");
 	for (i = 0; i < sparc_ncpus; i++) {
-		cpus[i] = (struct cpu_info *)(cpuinfo_data + (cpuinfo_len * i));
+		sva = (vaddr_t) (cpuinfo_data + (cpuinfo_len * i));
+		cpuinfo_va = sva +
+		   (((CPUINFO_VA & (align - 1)) + align - sva) & (align - 1));
+
+		/*
+		 * Either remap from CPUINFO_VA to the new correct value
+		 * or clear out this cpuinfo.
+		 */
+		if (i == 0) {
+			for (off = 0, va = cpuinfo_va;
+			     sparc_ncpus > 1 && off < sizeof(struct cpu_info);
+			     va += NBPG, off += NBPG) {
+				paddr_t pa =
+				    PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
+
+				prom_printf("going to pmap_kenter_pa"
+					    "(va=%p, pa=%p)\n", va, pa);
+				pmap_kremove(va, NBPG);
+				pmap_kenter_pa(va, pa,
+					       VM_PROT_READ | VM_PROT_WRITE);
+			}
+
+		} else
+			memset((void *)cpuinfo_va, 0, sizeof(struct cpu_info));
+
+		cpus[i] = (struct cpu_info *)cpuinfo_va;
 		cpus[i]->ci_self = cpus[i];
 		prom_printf("set cpu%d ci_self address: %p\n", i, cpus[i]);
+
+		/* Unmap and prepare to return unused pages */
+		if (cpuinfo_va != sva) {
+			cpus[i]->ci_free_sva1 = sva;
+			cpus[i]->ci_free_eva1 = cpuinfo_va;
+			for (va = cpus[i]->ci_free_sva1;
+			     va < cpus[i]->ci_free_eva1;
+			     va += NBPG)
+				setpte4m(va, 0);
+		}
+		if (cpuinfo_va + sz != sva + cpuinfo_len) {
+			cpus[i]->ci_free_sva2 = cpuinfo_va + sz;
+			cpus[i]->ci_free_eva2 = sva + cpuinfo_len;
+			for (va = cpus[i]->ci_free_sva2;
+			     va < cpus[i]->ci_free_eva2;
+			     va += NBPG)
+				setpte4m(va, 0);
+		}
 	}
 #else
 	cpus[0] = (struct cpu_info *)CPUINFO_VA;

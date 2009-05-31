@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.216 2009/05/30 01:19:29 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.217 2009/05/31 20:09:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.216 2009/05/30 01:19:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.217 2009/05/31 20:09:44 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -102,7 +102,7 @@ char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
-struct cpu_info *cpus[_MAXNCPU];	/* we only support 4 CPUs. */
+struct cpu_info *cpus[_MAXNCPU+1];	/* we only support 4 CPUs. */
 
 /* The CPU configuration driver. */
 static void cpu_mainbus_attach(struct device *, struct device *, void *);
@@ -1123,6 +1123,35 @@ getcacheinfo_obp(struct cpu_info *sc, int node)
 	struct cacheinfo *ci = &sc->cacheinfo;
 	int i, l;
 
+#if defined(MULTIPROCESSOR)
+	/*
+	 * We really really want the cache info early for MP systems,
+	 * so figure out the boot node, if we can.
+	 *
+	 * XXX this loop stolen from mainbus_attach()
+	 */
+	if (node == 0 && CPU_ISSUN4M && bootmid != 0) {
+		const char *cp;
+		char namebuf[32];
+		int mid, node2;
+
+		for (node2 = firstchild(findroot());
+		     node2;
+		     node2 = nextsibling(node2)) {
+			cp = prom_getpropstringA(node2, "device_type",
+					    namebuf, sizeof namebuf);
+			if (strcmp(cp, "cpu") != 0)
+				continue;
+
+			mid = prom_getpropint(node2, "mid", -1);
+			if (mid == bootmid) {
+				node = node2;
+				break;
+			}
+		}
+	}
+#endif
+
 	if (node == 0)
 		/* Bootstrapping */
 		return;
@@ -1862,6 +1891,9 @@ getcpuinfo(struct cpu_info *sc, int node)
 		if (sc->cacheinfo.c_vactype == VAC_UNKNOWN)
 			sc->cacheinfo.c_vactype = mp->minfo->vactype;
 
+		if (sc->master && mp->minfo->getmid != NULL)
+			bootmid = mp->minfo->getmid();
+
 		mp->minfo->getcacheinfo(sc, node);
 
 		if (node && sc->hz == 0 && !CPU_ISSUN4/*XXX*/) {
@@ -1874,9 +1906,6 @@ getcpuinfo(struct cpu_info *sc, int node)
 						    "clock-frequency", 0);
 			}
 		}
-
-		if (sc->master && mp->minfo->getmid != NULL)
-			bootmid = mp->minfo->getmid();
 
 		/*
 		 * Copy CPU/MMU/Cache specific routines into cpu_info.
