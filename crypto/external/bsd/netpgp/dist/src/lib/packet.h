@@ -1086,7 +1086,7 @@ typedef union {
 typedef struct {
 	__ops_userid_t		*userid;
 	__ops_subpacket_t	*packet;
-}               sigpacket_t;
+} sigpacket_t;
 
 /* XXX: gonna have to expand this to hold onto subkeys, too... */
 /** \struct __ops_keydata
@@ -1096,7 +1096,7 @@ struct __ops_keydata_t {
 	DECLARE_ARRAY(__ops_userid_t, uids);
 	DECLARE_ARRAY(__ops_subpacket_t, packets);
 	DECLARE_ARRAY(sigpacket_t, sigs);
-	unsigned char		key_id[8];
+	unsigned char		key_id[OPS_KEY_ID_SIZE];
 	__ops_fingerprint_t	fingerprint;
 	__ops_content_tag_t	type;
 	__ops_keydata_key_t	key;

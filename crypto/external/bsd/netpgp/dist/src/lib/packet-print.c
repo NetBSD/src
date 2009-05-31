@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.15 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.16 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #include <string.h>
@@ -376,21 +376,22 @@ numkeybits(const __ops_pubkey_t *pubkey)
    \param key Ptr to public key
 */
 void
-__ops_print_pubkeydata(FILE *fp, const __ops_keydata_t *key)
+__ops_print_pubkeydata(__ops_io_t *io, const __ops_keydata_t *key)
 {
 	unsigned int    i;
 
-	(void) fprintf(fp, "pub %d/%s ",
+	(void) fprintf(io->errs, "pub %d/%s ",
 		numkeybits(&key->key.pubkey),
 		__ops_show_pka(key->key.pubkey.alg));
-	hexdump(fp, key->key_id, OPS_KEY_ID_SIZE, "");
-	(void) fprintf(fp, " ");
-	ptime(fp, key->key.pubkey.birthtime);
-	(void) fprintf(fp, "\nKey fingerprint: ");
-	hexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, " ");
-	(void) fprintf(fp, "\n");
+	hexdump(io->errs, key->key_id, OPS_KEY_ID_SIZE, "");
+	(void) fprintf(io->errs, " ");
+	ptime(io->errs, key->key.pubkey.birthtime);
+	(void) fprintf(io->errs, "\nKey fingerprint: ");
+	hexdump(io->errs, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE,
+		" ");
+	(void) fprintf(io->errs, "\n");
 	for (i = 0; i < key->nuids; i++) {
-		(void) fprintf(fp, "uid              %s\n",
+		(void) fprintf(io->errs, "uid              %s\n",
 			key->uids[i].userid);
 	}
 }
@@ -1167,8 +1168,8 @@ __ops_print_packet(const __ops_packet_t *pkt)
 	return 1;
 }
 
-static __ops_parse_cb_return_t 
-cb_list_packets(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
+static __ops_cb_ret_t 
+cb_list_packets(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	__OPS_USED(cbinfo);
 
@@ -1184,7 +1185,8 @@ cb_list_packets(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 \param cb_get_passphrase
 */
 int 
-__ops_list_packets(char *filename,
+__ops_list_packets(__ops_io_t *io,
+			char *filename,
 			unsigned armour,
 			__ops_keyring_t *keyring,
 			__ops_cbfunc_t *cb_get_passphrase)
@@ -1194,8 +1196,8 @@ __ops_list_packets(char *filename,
 	const int		 printerrors = 1;
 	int			 fd = 0;
 
-	fd = __ops_setup_file_read(&pinfo, filename, NULL, cb_list_packets,
-		accumulate);
+	fd = __ops_setup_file_read(io, &pinfo, filename, NULL, cb_list_packets,
+				accumulate);
 	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 	pinfo->cryptinfo.keyring = keyring;
 	pinfo->cryptinfo.getpassphrase = cb_get_passphrase;

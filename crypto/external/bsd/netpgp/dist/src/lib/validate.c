@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.16 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.17 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -145,7 +145,7 @@ check_binary_sig(const unsigned len,
 static int 
 keydata_reader(void *dest, size_t length, __ops_error_t **errors,
 	       __ops_reader_t *readinfo,
-	       __ops_callback_data_t *cbinfo)
+	       __ops_cbdata_t *cbinfo)
 {
 	validate_reader_t *reader = __ops_reader_get_arg(readinfo);
 
@@ -207,25 +207,27 @@ add_sig_to_list(const __ops_sig_info_t *sig, __ops_sig_info_t **sigs,
 }
 
 
-__ops_parse_cb_return_t
-__ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
+__ops_cb_ret_t
+__ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	 *content = &pkt->u;
 	const __ops_keydata_t	 *signer;
 	validate_key_cb_t	 *key;
 	__ops_error_t		**errors;
+	__ops_io_t		 *io;
 	unsigned		  valid = 0;
 
+	io = cbinfo->io;
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("%s\n", __ops_show_packet_tag(pkt->tag));
+		(void) fprintf(io->errs, "%s\n",
+				__ops_show_packet_tag(pkt->tag));
 	}
-
-	key = __ops_parse_cb_get_arg(cbinfo);
-	errors = __ops_parse_cb_get_errors(cbinfo);
+	key = __ops_callback_arg(cbinfo);
+	errors = __ops_callback_errors(cbinfo);
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
 		if (key->pubkey.version != 0) {
-			(void) fprintf(stderr,
+			(void) fprintf(io->errs,
 				"__ops_validate_key_cb: version bad\n");
 			return OPS_FINISHED;
 		}
@@ -245,22 +247,24 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:
-		if (key->userid.userid)
+		if (key->userid.userid) {
 			__ops_userid_free(&key->userid);
+		}
 		key->userid = content->userid;
 		key->last_seen = ID;
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ATTR:
 		if (content->userattr.data.len == 0) {
-			(void) fprintf(stderr,
+			(void) fprintf(io->errs,
 			"__ops_validate_key_cb: user attribute length 0");
 			return OPS_FINISHED;
 		}
-		printf("user attribute, length=%d\n",
+		(void) fprintf(io->outs, "user attribute, length=%d\n",
 			(int) content->userattr.data.len);
-		if (key->userattr.data.len)
+		if (key->userattr.data.len) {
 			__ops_userattr_free(&key->userattr);
+		}
 		key->userattr = content->userattr;
 		key->last_seen = ATTRIBUTE;
 		return OPS_KEEP_MEMORY;
@@ -268,7 +272,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
 
-		signer = __ops_getkeybyid(key->keyring,
+		signer = __ops_getkeybyid(io, key->keyring,
 					 content->sig.info.signer_id);
 		if (!signer) {
 			add_sig_to_list(&content->sig.info,
@@ -366,21 +370,23 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	return OPS_RELEASE_MEMORY;
 }
 
-__ops_parse_cb_return_t
-validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
+__ops_cb_ret_t
+validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	 *content = &pkt->u;
 	const __ops_keydata_t	 *signer;
 	validate_data_cb_t	 *data;
 	__ops_error_t		**errors;
+	__ops_io_t		 *io;
 	unsigned		  valid = 0;
 
+	io = cbinfo->io;
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("validate_data_cb: %s\n",
+		(void) fprintf(io->errs, "validate_data_cb: %s\n",
 				__ops_show_packet_tag(pkt->tag));
 	}
-	data = __ops_parse_cb_get_arg(cbinfo);
-	errors = __ops_parse_cb_get_errors(cbinfo);
+	data = __ops_callback_arg(cbinfo);
+	errors = __ops_callback_errors(cbinfo);
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
 		/*
@@ -395,14 +401,14 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 
 	case OPS_PTAG_CT_LITERAL_DATA_BODY:
 		data->data.litdata_body = content->litdata_body;
-		data->use = LITERAL_DATA;
+		data->type = LITERAL_DATA;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
 				       data->data.litdata_body.length);
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
 		data->data.cleartext_body = content->cleartext_body;
-		data->use = SIGNED_CLEARTEXT;
+		data->type = SIGNED_CLEARTEXT;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
 			       data->data.litdata_body.length);
 		return OPS_KEEP_MEMORY;
@@ -414,16 +420,17 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
 		if (__ops_get_debug_level(__FILE__)) {
-			printf("\n*** hashed data:\n");
-			hexdump(stdout, content->sig.info.v4_hashed,
+			(void) fprintf(io->outs, "\n*** hashed data:\n");
+			hexdump(io->outs, content->sig.info.v4_hashed,
 					content->sig.info.v4_hashlen, " ");
-			printf("\n");
-			printf("type=%02x signer_id=", content->sig.info.type);
-			hexdump(stdout, content->sig.info.signer_id,
+			(void) fprintf(io->outs, "\n");
+			(void) fprintf(io->outs, "type=%02x signer_id=",
+					content->sig.info.type);
+			hexdump(io->outs, content->sig.info.signer_id,
 				sizeof(content->sig.info.signer_id), "");
-			printf("\n");
+			(void) fprintf(io->outs, "\n");
 		}
-		signer = __ops_getkeybyid(data->keyring,
+		signer = __ops_getkeybyid(io, data->keyring,
 					 content->sig.info.signer_id);
 		if (!signer) {
 			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
@@ -440,7 +447,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 			    data->detachname) {
 				/* check we have seen some data */
 				/* if not, need to read from detached name */
-				printf(
+				(void) fprintf(io->outs,
 				"netpgp: assuming signed data in \"%s\"\n",
 					data->detachname);
 				data->mem = __ops_memory_new();
@@ -494,7 +501,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 static void 
 keydata_destroyer(__ops_reader_t *readinfo)
 {
-	free(__ops_reader_get_arg(readinfo));
+	(void) free(__ops_reader_get_arg(readinfo));
 }
 
 void 
@@ -505,7 +512,6 @@ __ops_keydata_reader_set(__ops_parseinfo_t *pinfo, const __ops_keydata_t *key)
 	data->key = key;
 	data->packet = 0;
 	data->offset = 0;
-
 	__ops_reader_set(pinfo, keydata_reader, keydata_destroyer, data);
 }
 
@@ -537,8 +543,8 @@ unsigned
 __ops_validate_key_sigs(__ops_validation_t *result,
 	const __ops_keydata_t *key,
 	const __ops_keyring_t *keyring,
-	__ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *,
-						__ops_callback_data_t *))
+	__ops_cb_ret_t cb_get_passphrase(const __ops_packet_t *,
+						__ops_cbdata_t *))
 {
 	__ops_parseinfo_t	*pinfo;
 	validate_key_cb_t	 keysigs;
@@ -586,8 +592,8 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 unsigned 
 __ops_validate_all_sigs(__ops_validation_t *result,
 	    const __ops_keyring_t *ring,
-	    __ops_parse_cb_return_t cb_get_passphrase(const __ops_packet_t *,
-	    					__ops_callback_data_t *))
+	    __ops_cb_ret_t cb_get_passphrase(const __ops_packet_t *,
+	    					__ops_cbdata_t *))
 {
 	int	n;
 
@@ -638,7 +644,8 @@ __ops_validate_result_free(__ops_validation_t *result)
    	__ops_validate_result_free(result) after use.
 */
 unsigned 
-__ops_validate_file(__ops_validation_t *result,
+__ops_validate_file(__ops_io_t *io,
+			__ops_validation_t *result,
 			const char *infile,
 			const char *outfile,
 			const int armoured,
@@ -659,7 +666,7 @@ __ops_validate_file(__ops_validation_t *result,
 #define SIG_OVERHEAD	284 /* XXX - depends on sig size? */
 
 	if (stat(infile, &st) < 0) {
-		(void) fprintf(stderr, "can't validate \"%s\"\n", infile);
+		(void) fprintf(io->errs, "can't validate \"%s\"\n", infile);
 		return 0;
 	}
 	sigsize = st.st_size;
@@ -675,7 +682,7 @@ __ops_validate_file(__ops_validation_t *result,
 
 	(void) memset(&validation, 0x0, sizeof(validation));
 
-	infd = __ops_setup_file_read(&parse, infile, &validation,
+	infd = __ops_setup_file_read(io, &parse, infile, &validation,
 				validate_data_cb, 1);
 	if (infd < 0) {
 		return 0;
@@ -730,7 +737,7 @@ __ops_validate_file(__ops_validation_t *result,
 			for (i = 0 ; i < (int)len ; i += cc) {
 				cc = write(outfd, &cp[i], len - i);
 				if (cc < 0) {
-					(void) fprintf(stderr,
+					(void) fprintf(io->errs,
 						"netpgp: short write\n");
 					ret = 0;
 					break;
@@ -760,7 +767,8 @@ __ops_validate_file(__ops_validation_t *result,
 */
 
 unsigned 
-__ops_validate_mem(__ops_validation_t *result,
+__ops_validate_mem(__ops_io_t *io,
+			__ops_validation_t *result,
 			__ops_memory_t *mem,
 			const int armoured,
 			const __ops_keyring_t *keyring)
@@ -769,8 +777,7 @@ __ops_validate_mem(__ops_validation_t *result,
 	__ops_parseinfo_t	*pinfo = NULL;
 	const int		 printerrors = 1;
 
-	__ops_setup_memory_read(&pinfo, mem, &validation, validate_data_cb, 1);
-
+	__ops_setup_memory_read(io, &pinfo, mem, &validation, validate_data_cb,				1);
 	/* Set verification reader and handling options */
 	(void) memset(&validation, 0x0, sizeof(validation));
 	validation.result = result;

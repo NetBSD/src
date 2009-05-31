@@ -89,10 +89,13 @@ void __ops_setup_memory_write(__ops_output_t **, __ops_memory_t **, size_t);
 void __ops_teardown_memory_write(__ops_output_t *, __ops_memory_t *);
 
 /* memory reading */
-void __ops_setup_memory_read(__ops_parseinfo_t **, __ops_memory_t *,
-		      void *,
-		      __ops_parse_cb_return_t callback(const __ops_packet_t *,
-		      			__ops_callback_data_t *), unsigned);
+void __ops_setup_memory_read(__ops_io_t *,
+				__ops_parseinfo_t **,
+				__ops_memory_t *,
+				void *,
+				__ops_cb_ret_t callback(const __ops_packet_t *,
+					__ops_cbdata_t *),
+				unsigned);
 void __ops_teardown_memory_read(__ops_parseinfo_t *, __ops_memory_t *);
 
 /* file writing */
@@ -104,21 +107,21 @@ int __ops_setup_file_append(__ops_output_t **, const char *);
 void __ops_teardown_file_append(__ops_output_t *, int);
 
 /* file reading */
-int __ops_setup_file_read(__ops_parseinfo_t **, const char *, void *,
-		    __ops_parse_cb_return_t callback(const __ops_packet_t *,
-		    			__ops_callback_data_t *),
+int __ops_setup_file_read(__ops_io_t *,
+			__ops_parseinfo_t **,
+			const char *,
+			void *,
+			__ops_cb_ret_t callback(const __ops_packet_t *,
+		    			__ops_cbdata_t *),
 			unsigned);
 void __ops_teardown_file_read(__ops_parseinfo_t *, int);
 
 unsigned __ops_reader_set_accumulate(__ops_parseinfo_t *, unsigned);
 
 /* useful callbacks */
-__ops_parse_cb_return_t litdata_cb(const __ops_packet_t *,
-			__ops_callback_data_t *);
-__ops_parse_cb_return_t pk_sesskey_cb(const __ops_packet_t *,
-			__ops_callback_data_t *);
-__ops_parse_cb_return_t get_seckey_cb(const __ops_packet_t *,
-			__ops_callback_data_t *);
+__ops_cb_ret_t litdata_cb(const __ops_packet_t *, __ops_cbdata_t *);
+__ops_cb_ret_t pk_sesskey_cb(const __ops_packet_t *, __ops_cbdata_t *);
+__ops_cb_ret_t get_seckey_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
 /* from reader_fd.c */
 void __ops_reader_set_fd(__ops_parseinfo_t *, int);

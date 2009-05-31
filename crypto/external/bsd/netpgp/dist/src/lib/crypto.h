@@ -179,11 +179,16 @@ struct __ops_key_data;
 void __ops_writer_push_encrypt(__ops_output_t *,
 			const struct __ops_key_data *);
 
-unsigned   __ops_encrypt_file(const char *, const char *,
+unsigned   __ops_encrypt_file(__ops_io_t *, const char *, const char *,
 			const __ops_keydata_t *,
 			const unsigned, const unsigned);
-unsigned   __ops_decrypt_file(const char *, const char *, __ops_keyring_t *,
-			const unsigned, const unsigned, __ops_cbfunc_t *);
+unsigned   __ops_decrypt_file(__ops_io_t *,
+			const char *,
+			const char *,
+			__ops_keyring_t *,
+			const unsigned,
+			const unsigned,
+			__ops_cbfunc_t *);
 
 /* Keys */
 __ops_keydata_t  *__ops_rsa_new_selfsign_key(const int,
@@ -219,13 +224,14 @@ struct __ops_cryptinfo_t {
 	__ops_cbfunc_t		*getpassphrase;
 };
 
-/** __ops_callback_data_t */
-struct __ops_callback_data_t {
+/** __ops_cbdata_t */
+struct __ops_cbdata_t {
 	__ops_cbfunc_t		*cbfunc;	/* callback function */
 	void			*arg;	/* args to pass to callback func */
 	__ops_error_t		**errors; /* address of error stack */
-	__ops_callback_data_t	*next;
+	__ops_cbdata_t		*next;
 	__ops_output_t		*output;/* used if writing out parsed info */
+	__ops_io_t		*io;		/* error/output messages */
 	__ops_cryptinfo_t	 cryptinfo;	/* used when decrypting */
 };
 
@@ -261,12 +267,13 @@ typedef struct {
 
 struct __ops_parseinfo_t {
 	unsigned char		 ss_raw[NTAGS / 8];
-		/* 1 bit / signature-subpacket type; set to get raw data */
+		/* 1 bit / sig-subpkt type; set to get raw data */
 	unsigned char		 ss_parsed[NTAGS / 8];
-		/* 1 bit / signature-subpacket type; set to get parsed data */
+		/* 1 bit / sig-subpkt type; set to get parsed data */
 	__ops_reader_t	 	 readinfo;
-	__ops_callback_data_t	 cbinfo;
+	__ops_cbdata_t		 cbinfo;
 	__ops_error_t		*errors;
+	void			*io;		/* io streams */
 	__ops_crypt_t		 decrypt;
 	__ops_cryptinfo_t	 cryptinfo;
 	size_t			 nhashes;
