@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.50.8.1 2009/05/13 17:17:50 jym Exp $	*/
+/*	$NetBSD: segments.h,v 1.50.8.2 2009/05/31 14:32:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -197,6 +197,7 @@ void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
 void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
+void update_descriptor(union descriptor *, union descriptor *);
 
 #if !defined(XEN)
 void idt_init(void);
