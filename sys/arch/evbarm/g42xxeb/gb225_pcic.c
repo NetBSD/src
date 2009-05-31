@@ -120,7 +120,7 @@ opcic_read_card_status(struct opcic_socket *so)
 {
 	struct opcic_softc *sc = (struct opcic_softc *)(so->ss.sc);
 	struct opio_softc *osc = 
-	    (struct opio_softc *) device_parent(&sc->sc_pc.sc_dev);
+	    device_private(device_parent(sc->sc_pc.sc_dev));
 
 	return bus_space_read_1(osc->sc_iot, osc->sc_ioh,
 	    GB225_CFDET + 2 * so->ss.socket);
@@ -184,7 +184,7 @@ opcic_attach(struct device *parent, struct device *self, void *aux)
 		paa.iosize = 0x4000000;
 
 		sc->sc_socket[i].ss.pcmcia =
-		    (struct device *)config_found_ia(&sc->sc_pc.sc_dev,
+		    config_found_ia(sc->sc_pc.sc_dev,
 		    "pcmciabus", &paa, opcic_print);
 
 #ifndef DONT_USE_CARD_DETECT_INTR
@@ -284,9 +284,9 @@ opcic_write(struct sapcic_socket *__so, int which, int arg)
 	struct opcic_socket *so = (struct opcic_socket *)__so;
 	struct opcic_softc *sc = (struct opcic_softc *)so->ss.sc;
 	struct opio_softc *psc = 
-	    (struct opio_softc *) device_parent(&sc->sc_pc.sc_dev);
+	     device_private(device_parent(sc->sc_pc.sc_dev));
 	struct obio_softc *bsc = 
-	    (struct obio_softc *) device_parent(&psc->sc_dev);
+	     device_private(device_parent(&psc->sc_dev));
 
 	switch (which) {
 	case SAPCIC_CONTROL_RESET:
@@ -317,7 +317,7 @@ opcic_set_power(struct sapcic_socket *__so, int arg)
 	struct opcic_socket *so = (struct opcic_socket *)__so;
 	struct opcic_softc *sc = (struct opcic_softc *)so->ss.sc;
 	struct opio_softc *psc = 
-	    (struct opio_softc *) device_parent(&sc->sc_pc.sc_dev);
+	    device_private(device_parent(sc->sc_pc.sc_dev));
  	int shift, save;
 	volatile uint8_t *p;
 
@@ -352,9 +352,9 @@ opcic_intr_establish(struct sapcic_socket *so, int level,
 {
 	struct opcic_softc *sc = (struct opcic_softc *)so->sc;
 	struct opio_softc *psc = 
-	    (struct opio_softc *) device_parent(&sc->sc_pc.sc_dev);
+	    device_private(device_parent(sc->sc_pc.sc_dev));
 	struct obio_softc *bsc = 
-	    (struct obio_softc *) device_parent(&psc->sc_dev);
+	    device_private(device_parent(&psc->sc_dev));
 	int irq;
 
 	DPRINTF(("opcic_intr_establish %d\n", so->socket));
@@ -369,7 +369,7 @@ opcic_intr_disestablish(struct sapcic_socket *so, void *ih)
 {
 	struct opcic_softc *sc = (struct opcic_softc *)so->sc;
 	struct opio_softc *psc = 
-	    (struct opio_softc *) device_parent(&sc->sc_pc.sc_dev);
+	    device_private(device_parent(sc->sc_pc.sc_dev));
 	struct obio_softc *bsc = 
 	    (struct obio_softc *) device_parent(&psc->sc_dev);
 	int (* func)(void *) = ((struct obio_handler *)ih)->func;
