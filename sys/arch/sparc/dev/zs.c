@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.115 2009/05/22 03:51:30 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.116 2009/05/31 17:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.115 2009/05/22 03:51:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.116 2009/05/31 17:09:03 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -401,6 +401,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	int ch0_is_cons = 0;
 #endif
 
+	memset(&zsc_args, 0, sizeof zsc_args);
 	if (zsd == NULL) {
 		aprint_error(": configuration incomplete\n");
 		return;
@@ -424,6 +425,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		int hwflags;
 
 		zsc_args.channel = channel;
+		zsc_args.hwflags = 0;
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
