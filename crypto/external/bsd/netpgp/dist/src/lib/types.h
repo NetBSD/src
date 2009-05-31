@@ -47,11 +47,13 @@
  * limitations under the License.
  */
 
-/** \file
- */
-
 #ifndef TYPES_H_
 #define TYPES_H_
+
+typedef struct __ops_io_t {
+	void	*outs;	/* output file stream */
+	void	*errs;	/* file stream to put error messages */
+} __ops_io_t;
 
 /** __ops_map_t
  */

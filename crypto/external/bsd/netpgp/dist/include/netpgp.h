@@ -37,6 +37,7 @@ typedef struct netpgp_t {
 	char		**value;	/* value information */
 	void		 *pubring;	/* public key ring */
 	void		 *secring;	/* s3kr1t key ring */
+	void		 *io;		/* the io struct for results/errs */
 } netpgp_t;
 
 /* begin and end */

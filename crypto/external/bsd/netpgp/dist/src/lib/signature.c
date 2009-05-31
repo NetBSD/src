@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.17 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.18 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -944,7 +944,8 @@ open_output_file(__ops_output_t **output,
 
 */
 unsigned 
-__ops_sign_file_as_cleartext(const char *inname,
+__ops_sign_file_as_cleartext(__ops_io_t *io,
+			const char *inname,
 			const char *outname,
 			const __ops_seckey_t *seckey,
 			const char *hashname,
@@ -963,7 +964,7 @@ __ops_sign_file_as_cleartext(const char *inname,
 	/* check the hash algorithm */
 	hash_alg = __ops_str_to_hash_alg(hashname);
 	if (hash_alg == OPS_HASH_UNKNOWN) {
-		(void) fprintf(stderr,
+		(void) fprintf(io->errs,
 			"__ops_sign_file_as_cleartext: unknown hash algorithm"
 			": \"%s\"\n", hashname);
 		return 0;
@@ -1115,7 +1116,8 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 
 */
 unsigned 
-__ops_sign_file(const char *inname,
+__ops_sign_file(__ops_io_t *io,
+		const char *inname,
 		const char *outname,
 		const __ops_seckey_t *seckey,
 		const char *hashname,
@@ -1136,7 +1138,7 @@ __ops_sign_file(const char *inname,
 
 	hash_alg = __ops_str_to_hash_alg(hashname);
 	if (hash_alg == OPS_HASH_UNKNOWN) {
-		(void) fprintf(stderr,
+		(void) fprintf(io->errs,
 			"__ops_sign_file: unknown hash algorithm: \"%s\"\n",
 			hashname);
 		return 0;
@@ -1173,14 +1175,14 @@ __ops_sign_file(const char *inname,
 
 	/* output file contents as Literal Data packet */
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "** Writing out data now\n");
+		fprintf(io->errs, "** Writing out data now\n");
 	}
 	__ops_write_litdata(output, __ops_mem_data(infile),
 		(const int)__ops_mem_len(infile),
 		OPS_LDT_BINARY);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "** After Writing out data now\n");
+		fprintf(io->errs, "** After Writing out data now\n");
 	}
 
 	/* add creation time to signature */
@@ -1283,7 +1285,8 @@ __ops_sign_buf(const void *input,
 
 /* sign a file, and put the signature in a separate file */
 int
-__ops_sign_detached(const char *f,
+__ops_sign_detached(__ops_io_t *io,
+			const char *f,
 			char *sigfile,
 			__ops_seckey_t *seckey,
 			const char *hash)
@@ -1300,7 +1303,7 @@ __ops_sign_detached(const char *f,
 	/* find out which hash algorithm to use */
 	alg = __ops_str_to_hash_alg(hash);
 	if (alg == OPS_HASH_UNKNOWN) {
-		(void) fprintf(stderr,"Unknown hash algorithm: %s\n", hash);
+		(void) fprintf(io->errs,"Unknown hash algorithm: %s\n", hash);
 		return 0;
 	}
 
@@ -1330,7 +1333,7 @@ __ops_sign_detached(const char *f,
 	}
 	fd = open(sigfile, O_CREAT|O_TRUNC|O_WRONLY, 0666);
 	if (fd < 0) {
-		(void) fprintf(stderr, "can't write signature to \"%s\"\n",
+		(void) fprintf(io->errs, "can't write signature to \"%s\"\n",
 				sigfile);
 		return 0;
 	}

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.17 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.18 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -139,17 +139,12 @@ limread_data(__ops_data_t *data, unsigned int len,
  * \return 1 on success, 0 on failure
  */
 static int 
-read_data(__ops_data_t *data, __ops_region_t *subregion,
-	  __ops_parseinfo_t *pinfo)
+read_data(__ops_data_t *data, __ops_region_t *region, __ops_parseinfo_t *pinfo)
 {
-	int	len;
+	int	cc;
 
-	len = subregion->length - subregion->readc;
-
-	if (len >= 0) {
-		return (limread_data(data, (unsigned)len, subregion, pinfo));
-	}
-	return 0;
+	cc = region->length - region->readc;
+	return (cc >= 0) ? limread_data(data, (unsigned)cc, region, pinfo) : 0;
 }
 
 /**
@@ -180,7 +175,7 @@ read_unsig_str(unsigned char **str, __ops_region_t *subregion,
 static int 
 read_string(char **str, __ops_region_t *subregion, __ops_parseinfo_t *pinfo)
 {
-	return (read_unsig_str((unsigned char **) str, subregion, pinfo));
+	return read_unsig_str((unsigned char **) str, subregion, pinfo);
 }
 
 void 
@@ -225,7 +220,7 @@ __ops_init_subregion(__ops_region_t *subregion, __ops_region_t *region)
 
 static int 
 sub_base_read(void *dest, size_t length, __ops_error_t **errors,
-	      __ops_reader_t *readinfo, __ops_callback_data_t *cbinfo)
+	      __ops_reader_t *readinfo, __ops_cbdata_t *cbinfo)
 {
 	size_t          n;
 
@@ -281,7 +276,7 @@ sub_base_read(void *dest, size_t length, __ops_error_t **errors,
 
 int 
 __ops_stacked_read(void *dest, size_t length, __ops_error_t **errors,
-		 __ops_reader_t *readinfo, __ops_callback_data_t *cbinfo)
+		 __ops_reader_t *readinfo, __ops_cbdata_t *cbinfo)
 {
 	return sub_base_read(dest, length, errors, readinfo->next, cbinfo);
 }
@@ -306,7 +301,7 @@ full_read(unsigned char *dest,
 		int *last_read,
 		__ops_error_t **errors,
 		__ops_reader_t *readinfo,
-		__ops_callback_data_t *cbinfo)
+		__ops_cbdata_t *cbinfo)
 {
 	size_t          t;
 	int             r = 0;	/* preset in case some loon calls with length
@@ -398,7 +393,7 @@ __ops_limited_read(unsigned char *dest,
 			__ops_region_t *region,
 			__ops_error_t **errors,
 			__ops_reader_t *readinfo,
-			__ops_callback_data_t *cbinfo)
+			__ops_cbdata_t *cbinfo)
 {
 	size_t	r;
 	int	lr;
@@ -438,7 +433,7 @@ __ops_stacked_limited_read(unsigned char *dest, unsigned length,
 			 __ops_region_t *region,
 			 __ops_error_t **errors,
 			 __ops_reader_t *readinfo,
-			 __ops_callback_data_t *cbinfo)
+			 __ops_cbdata_t *cbinfo)
 {
 	return __ops_limited_read(dest, length, region, errors,
 				readinfo->next, cbinfo);
@@ -2625,7 +2620,7 @@ parse_seckey(__ops_region_t *region, __ops_parseinfo_t *pinfo)
 			}
 		}
 
-		(void) memset(passphrase, 0x0, passlen);
+		__ops_forget(passphrase, passlen);
 		(void) free(passphrase);
 
 		__ops_crypt_any(&decrypt, pkt.u.seckey.alg);
@@ -2929,10 +2924,11 @@ static int
 __ops_decrypt_se_data(__ops_content_tag_t tag, __ops_region_t *region,
 		    __ops_parseinfo_t *pinfo)
 {
-	__ops_crypt_t	*decrypt = __ops_parse_get_decrypt(pinfo);
+	__ops_crypt_t	*decrypt;
 	const int	 printerrors = 1;
 	int		 r = 1;
 
+	decrypt = __ops_get_decrypt(pinfo);
 	if (decrypt) {
 		unsigned char   buf[OPS_MAX_BLOCK_SIZE + 2] = "";
 		size_t          b = decrypt->blocksize;
@@ -2990,10 +2986,11 @@ static int
 __ops_decrypt_se_ip_data(__ops_content_tag_t tag, __ops_region_t *region,
 		       __ops_parseinfo_t *pinfo)
 {
-	__ops_crypt_t	*decrypt = __ops_parse_get_decrypt(pinfo);
+	__ops_crypt_t	*decrypt;
 	const int	 printerrors = 1;
 	int		 r = 1;
 
+	decrypt = __ops_get_decrypt(pinfo);
 	if (decrypt) {
 		__ops_reader_push_decrypt(pinfo, decrypt, region);
 		__ops_reader_push_se_ip_data(pinfo, decrypt, region);
@@ -3397,8 +3394,8 @@ __ops_parseinfo_new(void)
 void 
 __ops_parseinfo_delete(__ops_parseinfo_t *pinfo)
 {
-	__ops_callback_data_t	*cbinfo;
-	__ops_callback_data_t	*next;
+	__ops_cbdata_t	*cbinfo;
+	__ops_cbdata_t	*next;
 
 	for (cbinfo = pinfo->cbinfo.next; cbinfo; cbinfo = next) {
 		next = cbinfo->next;
@@ -3420,7 +3417,7 @@ __ops_parseinfo_delete(__ops_parseinfo_t *pinfo)
 \return Pointer to the reader_info inside the parse_info
 */
 __ops_reader_t *
-__ops_parse_get_rinfo(__ops_parseinfo_t *pinfo)
+__ops_readinfo(__ops_parseinfo_t *pinfo)
 {
 	return &pinfo->readinfo;
 }
@@ -3429,7 +3426,7 @@ __ops_parse_get_rinfo(__ops_parseinfo_t *pinfo)
 \ingroup Core_ReadPackets
 \brief Sets the parse_info's callback
 This is used when adding the first callback in a stack of callbacks.
-\sa __ops_parse_cb_push()
+\sa __ops_callback_push()
 */
 
 void 
@@ -3446,11 +3443,12 @@ __ops_set_callback(__ops_parseinfo_t *pinfo, __ops_cbfunc_t *cb, void *arg)
 \sa __ops_set_callback()
 */
 void 
-__ops_parse_cb_push(__ops_parseinfo_t *pinfo, __ops_cbfunc_t *cb, void *arg)
+__ops_callback_push(__ops_parseinfo_t *pinfo, __ops_cbfunc_t *cb, void *arg)
 {
-	__ops_callback_data_t *cbinfo = calloc(1, sizeof(*cbinfo));
+	__ops_cbdata_t *cbinfo = calloc(1, sizeof(*cbinfo));
 
-	*cbinfo = pinfo->cbinfo;
+	(void) memcpy(cbinfo, &pinfo->cbinfo, sizeof(*cbinfo));
+	cbinfo->io = pinfo->io;
 	pinfo->cbinfo.next = cbinfo;
 	__ops_set_callback(pinfo, cb, arg);
 }
@@ -3459,8 +3457,8 @@ __ops_parse_cb_push(__ops_parseinfo_t *pinfo, __ops_cbfunc_t *cb, void *arg)
 \ingroup Core_ReadPackets
 \brief Returns callback's arg
 */
-void           *
-__ops_parse_cb_get_arg(__ops_callback_data_t *cbinfo)
+void *
+__ops_callback_arg(__ops_cbdata_t *cbinfo)
 {
 	return cbinfo->arg;
 }
@@ -3469,8 +3467,8 @@ __ops_parse_cb_get_arg(__ops_callback_data_t *cbinfo)
 \ingroup Core_ReadPackets
 \brief Returns callback's errors
 */
-void           *
-__ops_parse_cb_get_errors(__ops_callback_data_t *cbinfo)
+void *
+__ops_callback_errors(__ops_cbdata_t *cbinfo)
 {
 	return cbinfo->errors;
 }
@@ -3480,8 +3478,8 @@ __ops_parse_cb_get_errors(__ops_callback_data_t *cbinfo)
 \brief Calls the parse_cb_info's callback if present
 \return Return value from callback, if present; else OPS_FINISHED
 */
-__ops_parse_cb_return_t 
-__ops_parse_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
+__ops_cb_ret_t 
+__ops_callback(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	return (cbinfo->cbfunc) ? cbinfo->cbfunc(pkt, cbinfo) : OPS_FINISHED;
 }
@@ -3491,11 +3489,10 @@ __ops_parse_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 \brief Calls the next callback  in the stack
 \return Return value from callback
 */
-__ops_parse_cb_return_t 
-__ops_parse_stacked_cb(const __ops_packet_t *pkt,
-		     __ops_callback_data_t *cbinfo)
+__ops_cb_ret_t 
+__ops_stacked_callback(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
-	return __ops_parse_cb(pkt, cbinfo->next);
+	return __ops_callback(pkt, cbinfo->next);
 }
 
 /**
@@ -3510,7 +3507,7 @@ __ops_parseinfo_get_errors(__ops_parseinfo_t *pinfo)
 }
 
 __ops_crypt_t    *
-__ops_parse_get_decrypt(__ops_parseinfo_t *pinfo)
+__ops_get_decrypt(__ops_parseinfo_t *pinfo)
 {
 	return (pinfo->decrypt.alg) ? &pinfo->decrypt : NULL;
 }
