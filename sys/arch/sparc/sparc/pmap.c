@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.330 2009/05/31 20:09:44 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.331 2009/05/31 20:28:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.330 2009/05/31 20:09:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.331 2009/05/31 20:28:51 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3636,6 +3636,7 @@ pmap_bootstrap4m(void *top)
 	 * NOTE: we're using the cache properties of the boot CPU to
 	 * determine the alignment (XXX).
 	 */
+	sz = sizeof(struct cpu_info);
 	if (sparc_ncpus > 1) {
 		if (CACHEINFO.c_totalsize > align) {
 			/* Need a power of two */
@@ -3643,7 +3644,6 @@ pmap_bootstrap4m(void *top)
 				align <<= 1;
 			align >>= 1;
 		}
-		sz = sizeof(struct cpu_info);
 
 		sz = (sz + PAGE_SIZE - 1) & -PAGE_SIZE;
 		cpuinfo_len = sz + align - PAGE_SIZE;
