@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16.4.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16.4.2 2009/05/31 14:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16.4.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16.4.2 2009/05/31 14:32:34 jym Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -591,7 +591,7 @@ int
 x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 {
 #ifdef i386
-	struct segment_descriptor sd;
+	union  descriptor usd;
 	struct pcb *pcb;
 	vaddr_t base;
 	int error;
@@ -604,28 +604,30 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 			return error;
 	}
 
-	sd.sd_lobase = base & 0xffffff;
-	sd.sd_hibase = (base >> 24) & 0xff;
-	sd.sd_lolimit = 0xffff;
-	sd.sd_hilimit = 0xf;
-	sd.sd_type = SDT_MEMRWA;
-	sd.sd_dpl = SEL_UPL;
-	sd.sd_p = 1;
-	sd.sd_xx = 0;
-	sd.sd_def32 = 1;
-	sd.sd_gran = 1;
+	usd.sd.sd_lobase = base & 0xffffff;
+	usd.sd.sd_hibase = (base >> 24) & 0xff;
+	usd.sd.sd_lolimit = 0xffff;
+	usd.sd.sd_hilimit = 0xf;
+	usd.sd.sd_type = SDT_MEMRWA;
+	usd.sd.sd_dpl = SEL_UPL;
+	usd.sd.sd_p = 1;
+	usd.sd.sd_xx = 0;
+	usd.sd.sd_def32 = 1;
+	usd.sd.sd_gran = 1;
 
 	kpreempt_disable();
 	pcb = &l->l_addr->u_pcb;
 	if (which == 'f') {
-		memcpy(&pcb->pcb_fsd, &sd, sizeof(sd));
+		memcpy(&pcb->pcb_fsd, &usd.sd,
+		    sizeof(struct segment_descriptor));
 		if (l == curlwp) {
-			memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
+			update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &usd);
 		}
 	} else /* which == 'g' */ {
-		memcpy(&pcb->pcb_gsd, &sd, sizeof(sd));
+		memcpy(&pcb->pcb_gsd, &usd.sd,
+		    sizeof(struct segment_descriptor));
 		if (l == curlwp) {
-			memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
+			update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &usd);
 		}
 	}
 	kpreempt_enable();

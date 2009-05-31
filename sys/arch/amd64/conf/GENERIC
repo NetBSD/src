@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.237.2.1 2009/05/13 17:16:08 jym Exp $
+# $NetBSD: GENERIC,v 1.237.2.2 2009/05/31 14:32:33 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.237.2.1 $"
+#ident 		"GENERIC-$Revision: 1.237.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -783,9 +783,13 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*   at uhmodem? portno ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-#wd* at umass?
+wd* at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?

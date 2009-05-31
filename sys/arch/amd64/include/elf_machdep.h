@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.2 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.2.8.1 2009/05/31 14:32:33 jym Exp $	*/
 
 #ifdef __x86_64__
 
@@ -35,6 +35,16 @@
 #define R_X86_64_PC16		13
 #define R_X86_64_8		14
 #define R_X86_64_PC8		15
+
+/* TLS relocations */
+#define R_X86_64_DTPMOD64	16
+#define R_X86_64_DTPOFF64	17
+#define R_X86_64_TPOFF64	18
+#define R_X86_64_TLSGD		19
+#define R_X86_64_TLSLD		20
+#define R_X86_64_DTPOFF32	21
+#define R_X86_64_GOTTPOFF	22
+#define R_X86_64_TPOFF32	23
 
 #define	R_TYPE(name)	__CONCAT(R_X86_64_,name)
 
