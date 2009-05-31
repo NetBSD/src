@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -93,15 +93,16 @@ __RCSID("$NetBSD: misc.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
 #define vsnprintf _vsnprintf
 #endif
 
+
 typedef struct {
 	__ops_keyring_t  *keyring;
-}               accumulate_t;
+} accumulate_t;
 
 /**
  * \ingroup Core_Callbacks
  */
-static __ops_parse_cb_return_t
-accumulate_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
+static __ops_cb_ret_t
+accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	const __ops_pubkey_t	*pubkey;
@@ -109,7 +110,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 	__ops_keydata_t		*keydata = NULL;
 	accumulate_t		*accumulate;
 
-	accumulate = __ops_parse_cb_get_arg(cbinfo);
+	accumulate = __ops_callback_arg(cbinfo);
 	keyring = accumulate->keyring;
 	if (keyring->nkeys >= 0) {
 		keydata = &keyring->keys[keyring->nkeys];
@@ -176,7 +177,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 
 	/* XXX: we now exclude so many things, we should either drop this or */
 	/* do something to pass on copies of the stuff we keep */
-	return __ops_parse_stacked_cb(pkt, cbinfo);
+	return __ops_stacked_callback(pkt, cbinfo);
 }
 
 /**
@@ -209,51 +210,13 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 	/* Kinda weird, but to do with counting, and we put it back after */
 	keyring->nkeys -= 1;
 
-	__ops_parse_cb_push(parse, accumulate_cb, &accumulate);
+	__ops_callback_push(parse, accumulate_cb, &accumulate);
 	parse->readinfo.accumulate = 1;
 	ret = __ops_parse(parse, !printerrors);
 
 	keyring->nkeys += 1;
 
 	return ret;
-}
-
-static void 
-dump_one_keydata(const __ops_keydata_t *key)
-{
-	unsigned        n;
-
-	printf("Key ID: ");
-	hexdump(stdout, key->key_id, OPS_KEY_ID_SIZE, "");
-
-	printf("\nFingerpint: ");
-	hexdump(stdout, key->fingerprint.fingerprint, key->fingerprint.length,
-		"");
-
-	printf("\n\nUIDs\n====\n\n");
-	for (n = 0; n < key->nuids; ++n) {
-		printf("%s\n", key->uids[n].userid);
-	}
-	printf("\nPackets\n=======\n");
-	for (n = 0; n < key->npackets; ++n) {
-		printf("\n%03d: ", n);
-		hexdump(stdout, key->packets[n].raw, key->packets[n].length,
-			"");
-	}
-	printf("\n\n");
-}
-
-/* XXX: not a maintained part of the API - use __ops_keyring_list() */
-/** __ops_dump_keyring
-*/
-void 
-__ops_dump_keyring(const __ops_keyring_t *keyring)
-{
-	int             n;
-
-	for (n = 0; n < keyring->nkeys; ++n) {
-		dump_one_keydata(&keyring->keys[n]);
-	}
 }
 
 
@@ -417,6 +380,7 @@ int
 __ops_has_error(__ops_error_t *errstack, __ops_errcode_t errcode)
 {
 	__ops_error_t    *err;
+
 	for (err = errstack; err != NULL; err = err->next) {
 		if (err->errcode == errcode) {
 			return 1;
@@ -437,8 +401,8 @@ __ops_free_errors(__ops_error_t *errstack)
 
 	while (errstack != NULL) {
 		next = errstack->next;
-		free(errstack->comment);
-		free(errstack);
+		(void) free(errstack->comment);
+		(void) free(errstack);
 		errstack = next;
 	}
 }
@@ -1093,7 +1057,7 @@ __ops_finish(void)
 
 static int 
 sum16_reader(void *dest_, size_t length, __ops_error_t **errors,
-	     __ops_reader_t *readinfo, __ops_callback_data_t *cbinfo)
+	     __ops_reader_t *readinfo, __ops_cbdata_t *cbinfo)
 {
 	const unsigned char	*dest = dest_;
 	sum16_t			*arg = __ops_reader_get_arg(readinfo);
@@ -1140,7 +1104,7 @@ __ops_reader_pop_sum16(__ops_parseinfo_t *pinfo)
 	unsigned short	 sum;
 	sum16_t		*arg;
 
-	arg = __ops_reader_get_arg(__ops_parse_get_rinfo(pinfo));
+	arg = __ops_reader_get_arg(__ops_readinfo(pinfo));
 	sum = arg->sum;
 	__ops_reader_pop(pinfo);
 	free(arg);
@@ -1216,4 +1180,23 @@ __ops_get_info(const char *type)
 		return NETPGP_MAINTAINER;
 	}
 	return "[unknown]";
+}
+
+void
+netpgp_log(const char *fmt, ...)
+{
+	va_list	 vp;
+	time_t	 t;
+	char	 buf[BUFSIZ * 2];
+	char	*cp;
+	int	 cc;
+
+	(void) time(&t);
+	cp = ctime(&t);
+	cc = snprintf(buf, sizeof(buf), "%.24s: netpgp: ", cp);
+	va_start(vp, fmt);
+	(void) vsnprintf(&buf[cc], sizeof(buf) - cc, fmt, vp);
+	va_end(vp);
+	/* do something with message */
+	/* put into log buffer? */
 }

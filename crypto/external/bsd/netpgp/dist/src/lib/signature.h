@@ -104,19 +104,25 @@ unsigned __ops_add_issuer_keyid(__ops_create_sig_t *,
 void __ops_add_primary_userid(__ops_create_sig_t *, unsigned);
 
 /* Standard Interface */
-unsigned   __ops_sign_file_as_cleartext(const char *,
+unsigned   __ops_sign_file_as_cleartext(__ops_io_t *,
+			const char *,
 			const char *,
 			const __ops_seckey_t *,
 			const char *,
 			const unsigned);
-unsigned   __ops_sign_file(const char *,
+unsigned   __ops_sign_file(__ops_io_t *,
+			const char *,
 			const char *,
 			const __ops_seckey_t *,
 			const char *,
 			const unsigned,
 			const unsigned);
 
-int __ops_sign_detached(const char *, char *, __ops_seckey_t *, const char *);
+int __ops_sign_detached(__ops_io_t *,
+			const char *,
+			char *,
+			__ops_seckey_t *,
+			const char *);
 
 /* armoured stuff */
 unsigned __ops_crc24(unsigned, unsigned char);
@@ -124,9 +130,8 @@ unsigned __ops_crc24(unsigned, unsigned char);
 void __ops_reader_push_dearmour(__ops_parseinfo_t *);
 
 void __ops_reader_pop_dearmour(__ops_parseinfo_t *);
-unsigned __ops_writer_push_clearsigned(__ops_output_t *,
-				__ops_create_sig_t *);
-void            __ops_writer_push_armor_msg(__ops_output_t *);
+unsigned __ops_writer_push_clearsigned(__ops_output_t *, __ops_create_sig_t *);
+void __ops_writer_push_armor_msg(__ops_output_t *);
 
 typedef enum {
 	OPS_PGP_MESSAGE = 1,
@@ -158,7 +163,8 @@ __ops_memory_t   *__ops_sign_buf(const void *,
 				const __ops_seckey_t *,
 				const unsigned);
 
-unsigned __ops_keyring_read_from_mem(__ops_keyring_t *,
+unsigned __ops_keyring_read_from_mem(__ops_io_t *,
+				__ops_keyring_t *,
 				const unsigned,
 				__ops_memory_t *);
 

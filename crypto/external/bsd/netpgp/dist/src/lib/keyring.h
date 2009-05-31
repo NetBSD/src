@@ -68,9 +68,11 @@ typedef struct __ops_keyring_t {
 	__ops_keydata_t	*keys;
 } __ops_keyring_t;
 
-const __ops_keydata_t *__ops_getkeybyid(const __ops_keyring_t *,
+const __ops_keydata_t *__ops_getkeybyid(__ops_io_t *,
+					const __ops_keyring_t *,
 					const unsigned char *);
-const __ops_keydata_t *__ops_getkeybyname(const __ops_keyring_t *,
+const __ops_keydata_t *__ops_getkeybyname(__ops_io_t *,
+					const __ops_keyring_t *,
 					const char *);
 void __ops_keydata_free(__ops_keydata_t *);
 void __ops_keyring_free(__ops_keyring_t *);
@@ -84,12 +86,10 @@ __ops_seckey_t *__ops_decrypt_seckey(const __ops_keydata_t *, const char *);
 unsigned   __ops_keyring_fileread(__ops_keyring_t *, const unsigned,
 					const char *);
 
-char *__ops_malloc_passphrase(char *);
-
-int __ops_keyring_list(const __ops_keyring_t *);
+int __ops_keyring_list(__ops_io_t *, const __ops_keyring_t *);
 
 void __ops_set_seckey(__ops_contents_t *, const __ops_keydata_t *);
-void __ops_seckey_forget(__ops_seckey_t *);
+void __ops_forget(void *, unsigned);
 
 const unsigned char *__ops_get_key_id(const __ops_keydata_t *);
 unsigned __ops_get_userid_count(const __ops_keydata_t *);
@@ -113,11 +113,15 @@ void __ops_copy_packet(__ops_subpacket_t *, const __ops_subpacket_t *);
 
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_parseinfo_t *);
 
-void __ops_print_pubkeydata(FILE *, const __ops_keydata_t *);
+void __ops_print_pubkeydata(__ops_io_t *, const __ops_keydata_t *);
 void __ops_print_pubkey(const __ops_pubkey_t *);
 
 void __ops_print_seckeydata(const __ops_keydata_t *);
-int __ops_list_packets(char *, unsigned, __ops_keyring_t *, __ops_cbfunc_t *);
+int __ops_list_packets(__ops_io_t *,
+			char *,
+			unsigned,
+			__ops_keyring_t *,
+			__ops_cbfunc_t *);
 
 int __ops_export_key(const __ops_keydata_t *, unsigned char *);
 

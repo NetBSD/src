@@ -69,8 +69,7 @@
  */
 
 typedef struct __ops_writer_t	__ops_writer_t;
-typedef unsigned 
-__ops_writer_func_t(const unsigned char *,
+typedef unsigned __ops_writer_func_t(const unsigned char *,
 	     unsigned,
 	     __ops_error_t **,
 	     __ops_writer_t *);
@@ -84,7 +83,8 @@ struct __ops_writer_t {
 	__ops_writer_finaliser_t *finaliser;	/* the writer's finaliser */
 	__ops_writer_destroyer_t *destroyer;	/* the writer's destroyer */
 	void			 *arg;	/* writer-specific argument */
-	__ops_writer_t	 *next;/* next writer in the stack */
+	__ops_writer_t	 	 *next;	/* next writer in the stack */
+	__ops_io_t		 *io;	/* IO for errors and output */
 };
 
 

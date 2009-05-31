@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.15 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: keyring.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
 #include <unistd.h>
 #endif
 
+#include "types.h"
 #include "keyring.h"
 #include "packet-parse.h"
 #include "signature.h"
@@ -209,11 +210,11 @@ __ops_get_writable_seckey(__ops_keydata_t *data)
 				&data->key.seckey : NULL;
 }
 
-/* utility function to dispose of a seckey */
+/* utility function to zero out memory */
 void
-__ops_seckey_forget(__ops_seckey_t *seckey)
+__ops_forget(void *vp, unsigned size)
 {
-	(void) memset(seckey, 0x0, sizeof(*seckey));
+	(void) memset(vp, 0x0, size);
 }
 
 typedef struct {
@@ -222,13 +223,13 @@ typedef struct {
 	__ops_seckey_t		*seckey;
 } decrypt_t;
 
-static __ops_parse_cb_return_t 
-decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
+static __ops_cb_ret_t 
+decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	decrypt_t		*decrypt;
 
-	decrypt = __ops_parse_cb_get_arg(cbinfo);
+	decrypt = __ops_callback_arg(cbinfo);
 	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
 	case OPS_PTAG_CT_USER_ID:
@@ -239,8 +240,13 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
 		break;
 
 	case OPS_GET_PASSPHRASE:
+#if 1
 		*content->skey_passphrase.passphrase = decrypt->passphrase;
 		return OPS_KEEP_MEMORY;
+#else
+		cbinfo->cryptinfo.keydata = decrypt->key;
+		return get_passphrase_cb(pkt, cbinfo);
+#endif
 
 	case OPS_PARSER_ERRCODE:
 		switch (content->errcode.errcode) {
@@ -304,7 +310,7 @@ __ops_decrypt_seckey(const __ops_keydata_t *key, const char *passphrase)
 	__ops_set_callback(parse, decrypt_cb, &decrypt);
 	parse->readinfo.accumulate = 1;
 	__ops_parse(parse, !printerrors);
-	(void) memset(decrypt.passphrase, 0x0, strlen(decrypt.passphrase));
+	__ops_forget(decrypt.passphrase, strlen(decrypt.passphrase));
 	(void) free(decrypt.passphrase);
 	return decrypt.seckey;
 }
@@ -576,9 +582,8 @@ __ops_keydata_init(__ops_keydata_t *keydata, const __ops_content_tag_t type)
 }
 
 
-static __ops_parse_cb_return_t
-cb_keyring_read(const __ops_packet_t *pkt,
-		__ops_callback_data_t *cbinfo)
+static __ops_cb_ret_t
+cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	__OPS_USED(cbinfo);
 
@@ -707,7 +712,8 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
    \sa __ops_keyring_free
 */
 unsigned 
-__ops_keyring_read_from_mem(__ops_keyring_t *keyring,
+__ops_keyring_read_from_mem(__ops_io_t *io,
+				__ops_keyring_t *keyring,
 				const unsigned armour,
 				__ops_memory_t *mem)
 {
@@ -717,7 +723,8 @@ __ops_keyring_read_from_mem(__ops_keyring_t *keyring,
 
 	parse = __ops_parseinfo_new();
 	__ops_parse_options(parse, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
-	__ops_setup_memory_read(&parse, mem, NULL, cb_keyring_read, noaccum);
+	__ops_setup_memory_read(io, &parse, mem, NULL, cb_keyring_read,
+					noaccum);
 	if (armour) {
 		__ops_reader_push_dearmour(parse);
 	}
@@ -764,7 +771,7 @@ __ops_keyring_free(__ops_keyring_t *keyring)
 
 */
 const __ops_keydata_t *
-__ops_getkeybyid(const __ops_keyring_t *keyring,
+__ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 			   const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
 	int	n;
@@ -773,15 +780,17 @@ __ops_getkeybyid(const __ops_keyring_t *keyring,
 		if (__ops_get_debug_level(__FILE__)) {
 			int	i;
 
-			printf("__ops_getkeybyid: keyring keyid ");
+			(void) fprintf(io->errs,
+				"__ops_getkeybyid: keyring keyid ");
 			for (i = 0 ; i < OPS_KEY_ID_SIZE ; i++) {
-				printf("%02x", keyring->keys[n].key_id[i]);
+				(void) fprintf(io->errs, "%02x",
+					keyring->keys[n].key_id[i]);
 			}
-			printf(", keyid ");
+			(void) fprintf(io->errs, ", keyid ");
 			for (i = 0 ; i < OPS_KEY_ID_SIZE ; i++) {
-				printf("%02x", keyid[i]);
+				(void) fprintf(io->errs, "%02x", keyid[i]);
 			}
-			printf("\n");
+			(void) fprintf(io->errs, "\n");
 		}
 		if (memcmp(keyring->keys[n].key_id, keyid, OPS_KEY_ID_SIZE) == 0) {
 			return &keyring->keys[n];
@@ -844,7 +853,9 @@ str2keyid(const char *userid, unsigned char *keyid, size_t len)
 
 */
 const __ops_keydata_t *
-__ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
+__ops_getkeybyname(__ops_io_t *io,
+			const __ops_keyring_t *keyring,
+			const char *name)
 {
 	const __ops_keydata_t	*kp;
 	__ops_keydata_t		*keyp;
@@ -862,7 +873,8 @@ __ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
 	for (n = 0, keyp = keyring->keys; n < keyring->nkeys; ++n, keyp++) {
 		for (i = 0, uidp = keyp->uids; i < keyp->nuids; i++, uidp++) {
 			if (__ops_get_debug_level(__FILE__)) {
-				printf("[%d][%d] name %s, last '%d'\n",
+				(void) fprintf(io->outs,
+					"[%d][%d] name %s, last '%d'\n",
 					n, i, uidp->userid, uidp->userid[len]);
 			}
 			if (strncmp((char *) uidp->userid, name, len) == 0 &&
@@ -878,11 +890,12 @@ __ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
 		(void) memset(keyid, 0x0, sizeof(keyid));
 		str2keyid(name, keyid, sizeof(keyid));
 		if (__ops_get_debug_level(__FILE__)) {
-			printf("name \"%s\", keyid %02x%02x%02x%02x\n",
+			(void) fprintf(io->outs,
+				"name \"%s\", keyid %02x%02x%02x%02x\n",
 				name,
 				keyid[0], keyid[1], keyid[2], keyid[3]);
 		}
-		if ((kp = __ops_getkeybyid(keyring, keyid)) != NULL) {
+		if ((kp = __ops_getkeybyid(io, keyring, keyid)) != NULL) {
 			return kp;
 		}
 		/* match on full name */
@@ -891,7 +904,8 @@ __ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
 			uidp = keyp->uids;
 			for (i = 0 ; i < keyp->nuids; i++, uidp++) {
 				if (__ops_get_debug_level(__FILE__)) {
-					printf("keyid \"%s\" len %"
+					(void) fprintf(io->outs,
+						"keyid \"%s\" len %"
 						PRIsize "u, keyid[len] '%c'\n",
 					       (char *) uidp->userid,
 					       len, uidp->userid[len]);
@@ -913,7 +927,8 @@ __ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
 			cp = strrchr((char *) uidp->userid, '<');
 			if (cp != NULL) {
 				if (__ops_get_debug_level(__FILE__)) {
-					printf("cp ,%s, name ,%s, len %"
+					(void) fprintf(io->errs,
+						"cp ,%s, name ,%s, len %"
 						PRIsize "u ,%c,\n",
 						cp + 1,
 						name,
@@ -940,19 +955,19 @@ __ops_getkeybyname(const __ops_keyring_t *keyring, const char *name)
    \return none
 */
 int
-__ops_keyring_list(const __ops_keyring_t *keyring)
+__ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 {
-	int             n;
-	__ops_keydata_t  *key;
+	__ops_keydata_t		*key;
+	int			 n;
 
-	printf("%d keys\n", keyring->nkeys);
+	(void) fprintf(io->outs, "%d keys\n", keyring->nkeys);
 	for (n = 0, key = &keyring->keys[n]; n < keyring->nkeys; ++n, ++key) {
 		if (__ops_is_key_secret(key)) {
 			__ops_print_seckeydata(key);
 		} else {
-			__ops_print_pubkeydata(stdout, key);
+			__ops_print_pubkeydata(io, key);
 		}
-		(void) fputc('\n', stdout);
+		(void) fputc('\n', io->outs);
 	}
 	return 1;
 }

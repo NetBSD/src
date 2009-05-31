@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.15 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.16 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -367,10 +367,10 @@ write_seckey_body(const __ops_seckey_t *key,
 			unsigned int    j = 0;
 			unsigned char   zero = 0;
 			int             needed;
-			int             use;
+			int             size;
 
 			needed = CAST_KEY_LENGTH - done;
-			use = MIN(needed, OPS_SHA1_HASH_SIZE);
+			size = MIN(needed, OPS_SHA1_HASH_SIZE);
 
 			__ops_hash_any(&hash, key->hash_alg);
 			hash.init(&hash);
@@ -398,8 +398,8 @@ write_seckey_body(const __ops_seckey_t *key,
 			 * the leftmost octets
 			 */
 			(void) memcpy(sesskey + (i * OPS_SHA1_HASH_SIZE),
-					hashed, (unsigned)use);
-			done += use;
+					hashed, (unsigned)size);
+			done += size;
 			if (done > CAST_KEY_LENGTH) {
 				(void) fprintf(stderr,
 					"write_seckey_body: short add\n");

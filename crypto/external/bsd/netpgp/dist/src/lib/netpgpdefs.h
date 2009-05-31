@@ -68,7 +68,7 @@ int             __ops_get_debug_level(const char *);
 
 #define CALLBACK(cbinfo, t, pc)	do {					\
 	(pc)->tag = (t);						\
-	if (__ops_parse_cb((pc), (cbinfo)) == OPS_RELEASE_MEMORY) {	\
+	if (__ops_callback((pc), (cbinfo)) == OPS_RELEASE_MEMORY) {	\
 		__ops_parser_content_free(pc);				\
 	}								\
 } while(/* CONSTCOND */0)

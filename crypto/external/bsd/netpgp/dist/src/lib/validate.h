@@ -70,8 +70,8 @@ typedef struct {
 	const __ops_keyring_t	*keyring;
 	validate_reader_t	*reader;
 	__ops_validation_t	*result;
-	__ops_parse_cb_return_t(*getpassphrase) (const __ops_packet_t *,
-						__ops_callback_data_t *);
+	__ops_cb_ret_t(*getpassphrase) (const __ops_packet_t *,
+						__ops_cbdata_t *);
 } validate_key_cb_t;
 
 /** Struct use with the validate_data_cb callback */
@@ -79,7 +79,7 @@ typedef struct {
 	enum {
 		LITERAL_DATA,
 		SIGNED_CLEARTEXT
-	}				 use;
+	} type;
 	union {
 		__ops_litdata_body_t	 litdata_body;
 		__ops_cleartext_body_t	 cleartext_body;
@@ -94,15 +94,21 @@ typedef struct {
 
 void __ops_keydata_reader_set(__ops_parseinfo_t *, const __ops_keydata_t *);
 
-__ops_parse_cb_return_t __ops_validate_key_cb(const __ops_packet_t *,
-					__ops_callback_data_t *);
+__ops_cb_ret_t __ops_validate_key_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
-unsigned   __ops_validate_file(__ops_validation_t *, const char *, const char *,
-			const int, const __ops_keyring_t *);
-unsigned   __ops_validate_mem(__ops_validation_t *, __ops_memory_t *, const int,
+unsigned   __ops_validate_file(__ops_io_t *,
+			__ops_validation_t *,
+			const char *,
+			const char *,
+			const int,
 			const __ops_keyring_t *);
 
-__ops_parse_cb_return_t validate_data_cb(const __ops_packet_t *,
-				__ops_callback_data_t *);
+unsigned   __ops_validate_mem(__ops_io_t *,
+			__ops_validation_t *,
+			__ops_memory_t *,
+			const int,
+			const __ops_keyring_t *);
+
+__ops_cb_ret_t validate_data_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
 #endif /* !VALIDATE_H_ */

@@ -1,5 +1,6 @@
 To Do
 =====
+error logging
 separate verify program
 separate key management program
 separate from libcrypto?

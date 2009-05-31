@@ -49,18 +49,19 @@ unsigned
 __ops_validate_key_sigs(__ops_validation_t *,
 		const __ops_keydata_t *,
 		const __ops_keyring_t *,
-		__ops_parse_cb_return_t cb(const __ops_packet_t *,
-					__ops_callback_data_t *));
+		__ops_cb_ret_t cb(const __ops_packet_t *, __ops_cbdata_t *));
 
 unsigned
 __ops_validate_all_sigs(__ops_validation_t *,
 		const __ops_keyring_t *,
-		__ops_parse_cb_return_t cb(const __ops_packet_t *,
-					__ops_callback_data_t *));
+		__ops_cb_ret_t cb(const __ops_packet_t *, __ops_cbdata_t *));
 
 unsigned   __ops_check_sig(const unsigned char *,
 		unsigned, const __ops_sig_t *, const __ops_pubkey_t *);
 
 const char     *__ops_get_info(const char *type);
+
+void netpgp_log(const char *, ...);
+
 
 #endif
