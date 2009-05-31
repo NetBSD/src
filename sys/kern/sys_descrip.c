@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.13 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.14 2009/05/31 22:15:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.13 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.14 2009/05/31 22:15:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,6 +614,9 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 {
 	file_t *fp;
 	int error;
+	CTASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
+	CTASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
+	CTASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
 	if ((fp = fd_getfile(fd)) == NULL) {
 		return EBADF;
@@ -632,9 +635,6 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	case POSIX_FADV_NORMAL:
 	case POSIX_FADV_RANDOM:
 	case POSIX_FADV_SEQUENTIAL:
-		KASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
-		KASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
-		KASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
 		/*
 		 * We ignore offset and size.  must lock the file to
