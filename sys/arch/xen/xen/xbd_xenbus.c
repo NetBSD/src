@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.38.2.2 2009/05/13 17:18:50 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38.2.3 2009/05/31 20:15:37 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.2 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.3 2009/05/31 20:15:37 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -260,7 +260,7 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		panic("%s: can't alloc ring", device_xname(self));
 	sc->sc_ring.sring = ring;
 
-	/* initialize shared structures and tell backend that we are ready */
+	/* resume shared structures and tell backend that we are ready */
 	xbd_xenbus_resume(self, PMF_F_NONE);
 
 #if NRND > 0
@@ -346,14 +346,13 @@ xbd_xenbus_suspend(device_t dev PMF_FN_ARGS) {
 		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 			tsleep(xbd_xenbus_suspend, PRIBIO, "xbdsuspend", hz/2);
 
+	hypervisor_mask_event(sc->sc_evtchn);
 	sc->sc_backend_status = BLKIF_STATE_SUSPENDED;
+	event_remove_handler(sc->sc_evtchn, xbd_handler, sc);
+
 	splx(s);
 
-	hypervisor_mask_event(sc->sc_evtchn);
-	if (event_remove_handler(sc->sc_evtchn, xbd_handler, sc) != 0)
-		aprint_error_dev(dev,
-				 "can't remove handler: xbd_handler\n");
-
+	xenbus_device_suspend(sc->sc_xbusd);
 	aprint_verbose_dev(dev, "removed event channel %d\n", sc->sc_evtchn);
 
 	return true;
@@ -370,6 +369,14 @@ xbd_xenbus_resume(device_t dev PMF_FN_ARGS)
 	const char *errmsg;
 
 	sc = device_private(dev);
+
+	if (sc->sc_backend_status == BLKIF_STATE_SUSPENDED) {
+		/*
+		 * Device was suspended, so ensure that access associated to
+		 * the block I/O ring is revoked.
+		 */
+		xengnt_revoke_access(sc->sc_ring_gntref);
+	}
 	sc->sc_ring_gntref = GRANT_INVALID_REF;
 	ring = sc->sc_ring.sring;
 
@@ -381,7 +388,6 @@ xbd_xenbus_resume(device_t dev PMF_FN_ARGS)
 	 * for the block device
 	 */
 	xen_acquire_reader_ptom_lock();
-
 	(void)pmap_extract_ma(pmap_kernel(), (vaddr_t)ring, &ma);
 	error = xenbus_grant_ring(sc->sc_xbusd, ma, &sc->sc_ring_gntref);
 	xen_release_ptom_lock();
@@ -437,12 +443,10 @@ again:
 		 * already initialized - we use a shortcut
 		 */
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
+		xenbus_device_resume(sc->sc_xbusd);
 		hypervisor_enable_event(sc->sc_evtchn);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 	}
-
-// XXX JYM
-	printf("read_otherend_details '%s' (%d)\n", sc->sc_xbusd->xbusd_otherend, sc->sc_xbusd->xbusd_otherend_id);
 
 	return true;
 
