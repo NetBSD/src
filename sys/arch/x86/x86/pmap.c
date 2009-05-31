@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.2 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.3 2009/05/31 20:15:36 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.2 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.3 2009/05/31 20:15:36 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -741,6 +741,54 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
 	    (kernel && (pmap->pm_kernel_cpus & ci->ci_cpumask) != 0));
 }
 
+/*
+ * Flush the content of APDP_PDE
+ */
+static inline
+void pmap_unmap_apdp_pde(void) {
+
+	int i;
+
+	for (i = 0; i < PDP_SIZE; i++) {
+		pmap_pte_set(&APDP_PDE[i], 0);
+#ifdef PAE
+		/* clear shadow entry too */
+    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
+#endif
+	}
+
+}
+
+/*
+ * Flush all APDP entries found in pmaps
+ * Required during Xen save/restore operations, as it does not
+ * handle alternative recursive mappings properly
+ */
+void
+pmap_unmap_all_apdp_pdes(void) {
+
+	// XXX JYM PAE
+
+	int s;
+	struct pmap *pm;
+
+	s = splvm();
+
+	mutex_enter(&pmaps_lock);
+	LIST_FOREACH(pm, &pmaps, pm_list) {
+		xpq_queue_pte_update(
+		    xpmap_ptom(pmap_pdirpa(pm, PDIR_SLOT_APTE)),
+		    0);
+	}
+	xpq_flush_queue();
+
+	mutex_exit(&pmaps_lock);
+
+	splx(s);
+
+}
+
+
 static void
 pmap_apte_flush(struct pmap *pmap)
 {
@@ -932,7 +980,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		KASSERT(curcpu()->ci_pmap == pmap2);
 #endif
 #if defined(MULTIPROCESSOR)
-		pmap_pte_set(APDP_PDE, 0);
+		pmap_unmap_apdp_pde();
 		pmap_pte_flush();
 		pmap_apte_flush(pmap2);
 #endif
@@ -2308,13 +2356,7 @@ pmap_destroy(struct pmap *pmap)
 	xen_acquire_reader_ptom_lock();
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
 		kpreempt_disable();
-		for (i = 0; i < PDP_SIZE; i++) {
-	        	pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-			/* clear shadow entry too */
-	    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-		}
+		pmap_unmap_apdp_pde();
 		pmap_pte_flush();
 	        pmap_apte_flush(pmap_kernel());
 	        kpreempt_enable();
@@ -2780,14 +2822,7 @@ pmap_load(void)
 	 * been freed
 	 */
 	if (*APDP_PDE) {
-		int i;
-		for (i = 0; i < PDP_SIZE; i++) {
-			pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-			/* clear shadow entry too */
-			pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-		}
+		pmap_unmap_apdp_pde();
 	}
 	/* lldt() does pmap_pte_flush() */
 #else /* XEN */
@@ -3026,11 +3061,10 @@ vtophys(vaddr_t va)
 #ifdef XEN
 /*
  * pmap_extract_ma: extract a MA for the given VA
- */
-
-/*
- * XXX JYM replace functions calling pmap_extract_ma by wrappers, as they are
- * NOT safe in regards to ptom locking
+ * When used directly in a Xen domain, caller must ensure that this function
+ * should not be used in a context where a reference to a MFN could be kept
+ * between a suspend, resume, or migrate.
+ * XXX JYM revisit for locking (MFNs may be invalid after a migration)
  */
 bool
 pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)

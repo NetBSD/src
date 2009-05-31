@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12.4.2 2009/05/13 17:18:50 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.3 2009/05/31 20:15:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.2 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.3 2009/05/31 20:15:37 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -139,6 +139,8 @@ unsigned long *xpmap_phys_to_machine_mapping;
  *
  * The thread responsible for the domU suspension will acquire an exclusive
  * (writer) lock.
+ *
+ * XXX JYM the locking will need revisit - rwlock(9) is currently inadequate
  */
 static krwlock_t xen_ptom_lock;
 
@@ -149,17 +151,17 @@ xen_init_ptom_lock(void) {
 
 void
 xen_release_ptom_lock(void) {
-	rw_exit(&xen_ptom_lock);
+	/* rw_exit(&xen_ptom_lock); */
 }
 
 void
 xen_acquire_reader_ptom_lock(void) {
-	rw_enter(&xen_ptom_lock, RW_READER);
+	/* rw_enter(&xen_ptom_lock, RW_READER); */
 }
 
 void
 xen_acquire_writer_ptom_lock(void) {
-	rw_enter(&xen_ptom_lock, RW_WRITER);
+	/* rw_enter(&xen_ptom_lock, RW_WRITER); */
 }
 
 void xen_failsafe_handler(void);

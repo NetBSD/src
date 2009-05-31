@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.2 2009/05/13 17:18:50 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.3 2009/05/31 20:15:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.2 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.3 2009/05/31 20:15:37 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -246,7 +246,7 @@ sysctl_xen_sleepstate_setup(void) {
 	 * it should not call this function to register
 	 * machdep.sleep_state sysctl
 	 */
-	KASSERT( !(xen_start_info.flags & SIF_INITDOMAIN) );
+	KASSERT( !(xendomain_is_dom0()) );
 
 	ret = sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
 	     CTLTYPE_INT, "sleep_state", NULL, sysctl_xen_sleepstate, 0,
@@ -286,6 +286,13 @@ xen_prepare_suspend(void) {
 	xen_suspendclocks();
 
 	xen_acquire_writer_ptom_lock();
+
+	/*
+	 * Xen lazy evaluation of recursive mappings requires
+	 * to flush the APDP entries
+	 */
+	pmap_unmap_all_apdp_pdes();
+
 	/*
 	 * save/restore code does not translate these MFNs to their
 	 * associated PFNs, so we must do it
