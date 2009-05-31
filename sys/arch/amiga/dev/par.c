@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.36 2007/10/17 19:53:17 garbled Exp $ */
+/*	$NetBSD: par.c,v 1.37 2009/05/31 23:07:18 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.36 2007/10/17 19:53:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.37 2009/05/31 23:07:18 phx Exp $");
 
 /*
  * parallel port interface
@@ -156,7 +156,7 @@ paropen(dev_t dev, int flags, int mode, struct lwp *l)
 		return(ENXIO);
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW) {
-		printf("paropen(%x, %x): flags %x, ",
+		printf("paropen(%llx, %x): flags %x, ",
 		    dev, flags, sc->sc_flags);
 		printf ("port = $%x\n", ((ciab.pra ^ CIAB_PRA_SEL)
 		    & (CIAB_PRA_SEL|CIAB_PRA_BUSY|CIAB_PRA_POUT)));
@@ -191,7 +191,7 @@ parclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
   if (pardebug & PDB_FOLLOW)
-    printf("parclose(%x, %x): flags %x\n",
+    printf("parclose(%llx, %x): flags %x\n",
 	   dev, flags, sc->sc_flags);
 #endif
   sc->sc_flags &= ~(PARF_OPEN|PARF_OREAD|PARF_OWRITE);
@@ -232,7 +232,7 @@ parread(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parread(%x, %p)\n", dev, uio);
+		printf("parread(%llx, %p)\n", dev, uio);
 #endif
 	return (parrw(dev, uio));
 }
@@ -244,7 +244,7 @@ parwrite(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parwrite(%x, %p)\n", dev, uio);
+		printf("parwrite(%llx, %p)\n", dev, uio);
 #endif
 	return (parrw(dev, uio));
 }
@@ -271,7 +271,7 @@ parrw(dev_t dev, register struct uio *uio)
 
 #ifdef DEBUG
   if (pardebug & (PDB_FOLLOW|PDB_IO))
-    printf("parrw(%x, %p, %c): burst %d, timo %d, resid %x\n",
+    printf("parrw(%llx, %p, %c): burst %d, timo %d, resid %x\n",
 	   dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 	   sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
