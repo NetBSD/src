@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.2 2009/05/13 17:18:51 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.3 2009/05/31 20:15:37 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -214,11 +214,9 @@ xvifattach(int n)
 	    0, 0, &mlist, NB_XMIT_PAGES_BATCH, 0) != 0)
 		panic("xennetback_init: uvm_pglistalloc");
 
-	xen_acquire_reader_ptom_lock();
 	for (i = 0, pg = mlist.tqh_first; pg != NULL;
 	    pg = pg->pageq.queue.tqe_next, i++)
 		mcl_pages[i] = xpmap_ptom(VM_PAGE_TO_PHYS(pg)) >> PAGE_SHIFT;
-	xen_release_ptom_lock();
 
 
 	if (i != NB_XMIT_PAGES_BATCH)
@@ -862,7 +860,6 @@ xennetback_ifsoftstart(void *arg)
 		return;
 	}
 
-	xen_acquire_reader_ptom_lock();
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		XENPRINTF(("pkt\n"));
 		req_prod = xneti->xni_rxring.sring->req_prod;
@@ -1087,7 +1084,6 @@ xennetback_ifsoftstart(void *arg)
 			break;
 		}
 	}
-	xen_release_ptom_lock();
 	splx(s);
 }
 

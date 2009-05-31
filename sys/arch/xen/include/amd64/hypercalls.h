@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.5 2008/11/13 01:45:48 cegger Exp $ */
+/* $NetBSD: hypercalls.h,v 1.5.4.1 2009/05/31 20:15:36 jym Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -406,4 +406,9 @@ HYPERVISOR_machine_check(struct xen_mc *mc)
 	return _hypercall1(int, mca, mc);
 }
 
+static inline int
+HYPERVISOR_sysctl(void *sysctl)
+{
+	return _hypercall1(int, sysctl, sysctl);
+}
 #endif /* __HYPERCALL_H__ */

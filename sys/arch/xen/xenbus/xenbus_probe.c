@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.27.2.1 2009/02/09 00:03:55 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.27.2.2 2009/05/31 20:15:37 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.2 2009/05/31 20:15:37 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -72,6 +72,13 @@ static struct xenbus_device *xenbus_lookup_device_path(const char *);
 /* power management, for save/restore */
 static bool xenbus_suspend(device_t PMF_FN_PROTO);
 static bool xenbus_resume(device_t PMF_FN_PROTO);
+
+/* routines gathering device information from XenStore */
+static int  read_otherend_details(struct xenbus_device *,
+				  const char *, const char *);
+static int  read_backend_details (struct xenbus_device *);
+static int  read_frontend_details(struct xenbus_device *);
+static void free_otherend_details(struct xenbus_device *);
 
 CFATTACH_DECL_NEW(xenbus, 0, xenbus_match, xenbus_attach,
     NULL, NULL);
@@ -130,6 +137,29 @@ xenbus_resume(device_t dev PMF_FN_ARGS) {
 	return true;
 }
 
+/*
+ * Suspend a xenbus device
+ */
+bool
+xenbus_device_suspend(struct xenbus_device *dev) {
+	free_otherend_details(dev);
+
+	return true;
+}
+
+/*
+ * Resume a xenbus device
+ */
+bool
+xenbus_device_resume(struct xenbus_device *dev) {
+
+	if (dev->xbusd_type == XENBUS_FRONTEND_DEVICE) {
+		read_backend_details(dev);
+	}
+
+	return true;
+}
+
 void
 xenbus_backend_register(struct xenbus_backend_driver *xbakd)
 {
@@ -180,8 +210,7 @@ read_otherend_details(struct xenbus_device *xendev,
 		printf("missing other end from %s\n", xendev->xbusd_path);
 		xenbus_dev_fatal(xendev, -ENOENT, "missing other end from %s",
 				 xendev->xbusd_path);
-		free(xendev->xbusd_otherend, M_DEVBUF);
-		xendev->xbusd_otherend = NULL;
+		free_otherend_details(xendev);
 		return ENOENT;
 	}
 
@@ -201,15 +230,12 @@ read_frontend_details(struct xenbus_device *xendev)
 	return read_otherend_details(xendev, "frontend-id", "frontend");
 }
 
-#if unused
 static void
 free_otherend_details(struct xenbus_device *dev)
 {
 	free(dev->xbusd_otherend, M_DEVBUF);
 	dev->xbusd_otherend = NULL;
 }
-#endif
-
 
 static void
 free_otherend_watch(struct xenbus_device *dev)
@@ -269,8 +295,18 @@ otherend_changed(struct xenbus_watch *watch,
 		    xdev->xbusd_u.b.b_cookie : xdev->xbusd_u.f.f_dev, state);
 }
 
+#ifdef unused
 static int
 talk_to_otherend(struct xenbus_device *dev)
+{
+	return xenbus_watch_path2(dev, dev->xbusd_otherend, "state",
+				  &dev->xbusd_otherend_watch,
+				  otherend_changed);
+}
+#endif
+
+static int
+watch_otherend(struct xenbus_device *dev)
 {
 	free_otherend_watch(dev);
 
@@ -382,7 +418,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 		}
 		SLIST_INSERT_HEAD(&xenbus_device_list,
 		    xbusd, xbusd_entries);
-		talk_to_otherend(xbusd);
+		watch_otherend(xbusd);
 	}
 	free(dir, M_DEVBUF);
 	return err;
@@ -489,7 +525,7 @@ xenbus_free_device(struct xenbus_device *xbusd)
 	KASSERT(xenbus_lookup_device_path(xbusd->xbusd_path) == xbusd);
 	SLIST_REMOVE(&xenbus_device_list, xbusd, xenbus_device, xbusd_entries);
 	free_otherend_watch(xbusd);
-	free(xbusd->xbusd_otherend, M_DEVBUF);
+	free_otherend_details(xbusd);
 	xenbus_switch_state(xbusd, NULL, XenbusStateClosed);
 	free(xbusd, M_DEVBUF);
 	return 0;

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.2 2009/05/13 17:18:50 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.3 2009/05/31 20:15:37 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.2 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.3 2009/05/31 20:15:37 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -393,20 +393,21 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tx_ring.sring = tx_ring;
 	sc->sc_rx_ring.sring = rx_ring;
 
+	/* resume shared structures and tell backend that we are ready */
+	xennet_xenbus_resume(self, PMF_F_NONE);
+
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
 
-	/* initialize shared structures and tell backend that we are ready */
-	xennet_xenbus_resume(self, PMF_F_NONE);
-
 	if (!pmf_device_register(self,
-			         xennet_xenbus_suspend,
+				 xennet_xenbus_suspend,
 				 xennet_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
+
 }
 
 static int
@@ -477,6 +478,16 @@ xennet_xenbus_resume(device_t dev PMF_FN_ARGS)
 	paddr_t ma;
 	const char *errmsg;
 
+	/* invalidate the RX and TX rings */
+	if (sc->sc_backend_status == BEST_SUSPENDED) {
+		/*
+		 * Device was suspended, so ensure that access associated to
+		 * the previous RX and TX rings are revoked.
+		 */
+		xengnt_revoke_access(sc->sc_tx_ring_gntref);
+		xengnt_revoke_access(sc->sc_rx_ring_gntref);
+	}
+
 	sc->sc_tx_ring_gntref = GRANT_INVALID_REF;
 	sc->sc_rx_ring_gntref = GRANT_INVALID_REF;
 
@@ -546,6 +557,11 @@ again:
 		return false;
 	}
 	xennet_alloc_rx_buffer(sc);
+
+	if (sc->sc_backend_status == BEST_SUSPENDED) {
+		xenbus_device_resume(sc->sc_xbusd);
+	}
+
 	sc->sc_backend_status = BEST_CONNECTED;
 
 	return true;
@@ -562,22 +578,34 @@ xennet_xenbus_suspend(device_t dev PMF_FN_ARGS)
 	int s;
 	struct xennet_xenbus_softc *sc = device_private(dev);
 
-	/* xennet_stop() is called by pmf(9) before xennet_xenbus_suspend() */
+	/*
+	 * xennet_stop() is called by pmf(9) before xennet_xenbus_suspend(),
+	 * so we do not mask event channel here
+	 */
 
 	s = splnet();
-
 	/* process any outstanding TX responses, then collect RX packets */
 	xennet_handler(sc);
 	while (sc->sc_tx_ring.sring->rsp_prod != sc->sc_tx_ring.rsp_cons) {
 		tsleep(xennet_xenbus_suspend, PRIBIO, "xnet_suspend", hz/2);
 		xennet_handler(sc);
 	}
-	xennet_free_rx_buffer(sc);
+	
+	/*
+	 * dom0 may still use references to the grants we gave away
+	 * earlier during RX buffers allocation. So we do not free RX buffers
+	 * here, as dom0 does not expect the guest domain to suddenly revoke
+	 * access to these grants.
+	 */
 
 	sc->sc_backend_status = BEST_SUSPENDED;
+	event_remove_handler(sc->sc_evtchn, &xennet_handler, sc);
+
 	splx(s);
 
-	event_remove_handler(sc->sc_evtchn, &xennet_handler, sc);
+	xenbus_device_suspend(sc->sc_xbusd);
+	aprint_verbose_dev(dev, "removed event channel %d\n", sc->sc_evtchn);
+
 	return true;
 }
 
@@ -786,11 +814,6 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	 * RX buffers to catch-up with backend's consumption
 	 */
 	req->rxreq_gntref = GRANT_INVALID_REF;
-
-	/*
-	 * ring needs more requests to be pushed in, allocate some
-	 * RX buffers to catch-up with backend's consumption
-	 */
 	if (sc->sc_free_rxreql >= SC_NLIVEREQ(sc) &&
 	    __predict_true(sc->sc_backend_status == BEST_CONNECTED)) {
 		xennet_alloc_rx_buffer(sc);
@@ -836,6 +859,7 @@ again:
 		else
 			ifp->if_opackets++;
 		xengnt_revoke_access(req->txreq_gntref);
+
 		m_freem(req->txreq_m);
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.11 2008/10/29 13:35:35 cegger Exp $ */
+/* $NetBSD: xenbus.h,v 1.11.6.1 2009/05/31 20:15:36 jym Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -257,6 +257,8 @@ void xenbus_dev_error(struct xenbus_device *dev, int err, const char *fmt,
 void xenbus_dev_fatal(struct xenbus_device *dev, int err, const char *fmt,
 		      ...);
 
+bool xenbus_device_suspend(struct xenbus_device *);
+bool xenbus_device_resume(struct xenbus_device *);
 
 #endif /* _ASM_XEN_XENBUS_H */
 

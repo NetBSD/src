@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.14.2.1 2009/02/09 00:03:55 jym Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.14.2.2 2009/05/31 20:15:37 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.2 2009/05/31 20:15:37 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	if (error)
 		return (error);
 
+	xen_acquire_reader_ptom_lock();
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pg->pageq.queue.tqe_next) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
@@ -125,6 +126,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		}
 #endif
 	}
+
 	/* Get the new contiguous memory extent */
 #ifdef XEN3
 	xenguest_handle(res.extent_start) = &mfn;
@@ -169,10 +171,13 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 			uvm_pagefree(pg);
 		}
 	}
+
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
 	xpq_flush_queue();
 	splx(s);
+
+	xen_release_ptom_lock();
 	return 0;
 
 failed:

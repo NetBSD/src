@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21.2.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.2 2009/05/31 20:15:36 jym Exp $	*/
 
 /*
  *
@@ -400,6 +400,7 @@ void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+void	pmap_unmap_all_apdp_pdes(void);
 
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.42.2.2 2009/05/13 17:18:50 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.42.2.3 2009/05/31 20:15:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.2 2009/05/13 17:18:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42.2.3 2009/05/31 20:15:37 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -192,7 +192,7 @@ events_init(void)
 	ctrl_if_init();
 #endif
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
-	aprint_verbose("debug virtual interrupt using event channel %d\n",
+	aprint_verbose("VIRQ_DEBUG interrupt using event channel %d\n",
 	    debug_port);
 	/*
 	 * Don't call event_set_handler(), we'll use a shortcut. Just set

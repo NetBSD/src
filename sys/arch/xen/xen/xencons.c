@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.31.2.1 2009/02/09 00:03:55 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.31.2.2 2009/05/31 20:15:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.1 2009/02/09 00:03:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.2 2009/05/31 20:15:37 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -228,13 +228,13 @@ xencons_suspend(device_t dev PMF_FN_ARGS) {
 
 	int evtch;
 
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 		evtch = unbind_virq_from_evtch(VIRQ_CONSOLE);
 		hypervisor_mask_event(evtch);
 		if (event_remove_handler(evtch, xencons_intr,
 		    xencons_console_device) != 0)
 			aprint_error_dev(dev,
-				       	 "can't remove handler: xencons_intr\n");
+			    "can't remove handler: xencons_intr\n");
 	} else {
 #ifdef XEN3
 		evtch = xen_start_info.console_evtchn;
@@ -242,7 +242,7 @@ xencons_suspend(device_t dev PMF_FN_ARGS) {
 		if (event_remove_handler(evtch, xencons_handler,
 		    xencons_console_device) != 0)
 			aprint_error_dev(dev,
-				       	 "can't remove handler: xencons_handler\n");
+			    "can't remove handler: xencons_handler\n");
 #endif
 	}
 
