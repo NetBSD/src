@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.10 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.11 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -113,7 +113,7 @@ static int
 zlib_compressed_data_reader(void *dest, size_t length,
 			    __ops_error_t **errors,
 			    __ops_reader_t *readinfo,
-			    __ops_callback_data_t *cbinfo)
+			    __ops_cbdata_t *cbinfo)
 {
 	z_decompress_t *z = __ops_reader_get_arg(readinfo);
 	size_t           len;
@@ -207,7 +207,7 @@ static int
 bzip2_compressed_data_reader(void *dest, size_t length,
 			     __ops_error_t **errors,
 			     __ops_reader_t *readinfo,
-			     __ops_callback_data_t *cbinfo)
+			     __ops_cbdata_t *cbinfo)
 {
 	bz_decompress_t *bz = __ops_reader_get_arg(readinfo);
 	size_t		len;

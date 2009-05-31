@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.15 2009/05/31 23:26:20 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: crypto.c,v 1.14 2009/05/28 01:52:43 agc Exp $");
 
 #include <string.h>
 
+#include "types.h"
 #include "crypto.h"
 #include "readerwriter.h"
 #include "memory.h"
@@ -218,8 +219,8 @@ __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 	return 1;
 }
 
-static          __ops_parse_cb_return_t
-callback_write_parsed(const __ops_packet_t *, __ops_callback_data_t *);
+static          __ops_cb_ret_t
+callback_write_parsed(const __ops_packet_t *, __ops_cbdata_t *);
 
 /**
 \ingroup HighLevel_Crypto
@@ -232,7 +233,8 @@ Encrypt a file
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_encrypt_file(const char *infile,
+__ops_encrypt_file(__ops_io_t *io,
+			const char *infile,
 			const char *outfile,
 			const __ops_keydata_t *pubkey,
 			const unsigned use_armour,
@@ -242,6 +244,7 @@ __ops_encrypt_file(const char *infile,
 	__ops_memory_t	*inmem;
 	int		 fd_out = 0;
 
+	__OPS_USED(io);
 	inmem = __ops_memory_new();
 	if (!__ops_mem_readfile(inmem, infile)) {
 		return 0;
@@ -282,7 +285,8 @@ __ops_encrypt_file(const char *infile,
 */
 
 unsigned 
-__ops_decrypt_file(const char *infile,
+__ops_decrypt_file(__ops_io_t *io,
+			const char *infile,
 			const char *outfile,
 			__ops_keyring_t *keyring,
 			const unsigned use_armour,
@@ -296,7 +300,7 @@ __ops_decrypt_file(const char *infile,
 	int			 fd_out = 0;
 
 	/* setup for reading from given input file */
-	fd_in = __ops_setup_file_read(&parse, infile,
+	fd_in = __ops_setup_file_read(io, &parse, infile,
 				    NULL,
 				    callback_write_parsed,
 				    0);
@@ -304,7 +308,6 @@ __ops_decrypt_file(const char *infile,
 		perror(infile);
 		return 0;
 	}
-
 	/* setup output filename */
 	if (outfile) {
 		fd_out = __ops_setup_file_write(&parse->cbinfo.output, outfile,
@@ -315,9 +318,9 @@ __ops_decrypt_file(const char *infile,
 			return 0;
 		}
 	} else {
-		unsigned	filenamelen;
-		int             suffixlen = 4;
+		const int	suffixlen = 4;
 		const char     *suffix = infile + strlen(infile) - suffixlen;
+		unsigned	filenamelen;
 
 		if (strcmp(suffix, ".gpg") == 0 ||
 		    strcmp(suffix, ".asc") == 0) {
@@ -370,8 +373,8 @@ __ops_decrypt_file(const char *infile,
 	return 1;
 }
 
-static __ops_parse_cb_return_t
-callback_write_parsed(const __ops_packet_t *pkt, __ops_callback_data_t *cbinfo)
+static __ops_cb_ret_t
+callback_write_parsed(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	static unsigned		 skipping;
