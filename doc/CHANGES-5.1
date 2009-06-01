@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.24 2009/06/01 17:26:39 liamjfoy Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.25 2009/06/01 17:29:29 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -803,10 +803,11 @@ sys/fs/udf/udf_strat_sequential.c		1.10
 sys/fs/udf/udf_subr.c				1.90
 sys/fs/udf/udf_subr.c				1.91
 
-	Descriptor version is 16 bit and not 8 so use udf_rw16() to access them.
-	UniqueID was written in the logical volume integrity without byteswapping for
-	bigendian machines.
+	Descriptor version is 16 bit and not 8 so use udf_rw16() to access
+	them.  UniqueID was written in the logical volume integrity without
+	byteswapping for big endian machines.
 
-	Retire IN_CALLBACK_ULK flagging since its not used anymore and the old
-	assertions on it would trigger without cause.
+	Retire IN_CALLBACK_ULK flagging since its not used anymore and the
+	old assertions on it would trigger without cause.
 	[reinoud, ticket #772]
+
