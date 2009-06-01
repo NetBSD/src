@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.157 2009/05/13 22:56:42 wiz Exp $
+.\"	$NetBSD: make.1,v 1.158 2009/06/01 23:28:39 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd April 11, 2009
+.Dd June 1, 2009
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1664,7 +1664,7 @@ could be built, unless
 is built by another part of the dependency graph,
 the following is a dependency loop:
 .Bd -literal
-\&.ORDER a b
+\&.ORDER: a b
 b: a
 .Ed
 .Pp
