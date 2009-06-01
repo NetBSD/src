@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.23 2009/05/30 17:01:33 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.24 2009/06/01 17:26:39 liamjfoy Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -797,3 +797,16 @@ sys/arch/sparc/sparc/timer_sun4m.c		1.17 via patch
 	post-vmlocking2 kernels have a chance to work.
 	[mrg, ticket #776]
 
+sys/fs/udf/udf_strat_direct.c			1.10
+sys/fs/udf/udf_strat_rmw.c			1.19
+sys/fs/udf/udf_strat_sequential.c		1.10
+sys/fs/udf/udf_subr.c				1.90
+sys/fs/udf/udf_subr.c				1.91
+
+	Descriptor version is 16 bit and not 8 so use udf_rw16() to access them.
+	UniqueID was written in the logical volume integrity without byteswapping for
+	bigendian machines.
+
+	Retire IN_CALLBACK_ULK flagging since its not used anymore and the old
+	assertions on it would trigger without cause.
+	[reinoud, ticket #772]
