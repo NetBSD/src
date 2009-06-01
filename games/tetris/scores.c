@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.16 2009/05/25 08:33:57 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.17 2009/06/01 04:03:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -586,7 +586,7 @@ static void
 putscores(int sd)
 {
 	struct highscore_header header;
-	struct highscore_ondisk buf[nscores];
+	struct highscore_ondisk buf[MAXHISCORES];
 	int i;
 
 	if (sd == -1) {
