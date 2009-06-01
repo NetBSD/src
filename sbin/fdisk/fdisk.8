@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.59 2008/01/20 15:04:09 dsl Exp $
+.\"	$NetBSD: fdisk.8,v 1.60 2009/06/01 19:57:33 christos Exp $
 .\"
-.Dd January 20, 2008
+.Dd June 1, 2009
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -124,6 +124,14 @@ program will enter an interactive conversational mode.
 This mode is designed not to change any data unless you explicitly tell it to;
 .Nm
 selects defaults for its questions to guarantee that behaviour.
+.Pp
+If partition data is going to be updated, and disk carries GUID Partition
+Tables the
+.Nm
+will remove both primary and backup GPT headers from the disk.
+See
+.Xr gpt 8
+for information on how to manipulate GUID Partition Tables.
 .Pp
 .Nm
 will calculate the correct
@@ -559,6 +567,7 @@ Default location of i386 bootselect for extended partitions
 .Xr disktab 5 ,
 .Xr boot 8 ,
 .Xr disklabel 8 ,
+.Xr gpt 8 ,
 .Xr installboot 8 ,
 .Xr mbr 8 ,
 .Xr mbrlabel 8
