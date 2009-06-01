@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.16 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.17 2009/06/01 07:10:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.16 2009/04/30 07:01:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.17 2009/06/01 07:10:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		}
 #endif
 
-		tf->tf_ipsw	= gr[0];
+		tf->tf_ipsw	= gr[0] |
+		    (hppa_cpu_info->hci_features & HPPA_FTRS_W32B ? PSW_O : 0);
 		tf->tf_r1	= gr[1];
 		tf->tf_rp	= gr[2];
 		tf->tf_r3	= gr[3];
