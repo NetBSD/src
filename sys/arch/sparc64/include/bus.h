@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.58 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.59 2009/06/01 01:14:06 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -307,7 +307,8 @@ bus_intr_establish(bus_space_tag_t t, int p, int l, int	(*h)(void *), void *a)
 #define	BUS_SPACE_MAP_BUS2		0x0200
 #define	BUS_SPACE_MAP_BUS3		0x0400
 #define	BUS_SPACE_MAP_BUS4		0x0800
-
+/* sparc uses this, it's not supposed to do anything on sparc64 */
+#define BUS_SPACE_MAP_LARGE		0
 
 /* flags for bus_space_barrier() */
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
