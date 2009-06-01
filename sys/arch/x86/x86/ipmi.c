@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.33 2009/04/24 17:42:03 ad Exp $ */
+/*	$NetBSD: ipmi.c,v 1.34 2009/06/01 20:08:44 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.33 2009/04/24 17:42:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.34 2009/06/01 20:08:44 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1779,12 +1779,9 @@ ipmi_thread(void *cookie)
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 		sc->sc_sensor[i].monitor = true;
 		/*
-		 * Monitor critical/critical-over/warning-over states
-		 * in the sensors.
+		 * Monitor threshold limits in the sensors.
 		 */
-		sc->sc_sensor[i].flags |= ENVSYS_FMONCRITICAL;
-		sc->sc_sensor[i].flags |= ENVSYS_FMONCRITOVER;
-		sc->sc_sensor[i].flags |= ENVSYS_FMONWARNOVER;
+		sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
 		(void)strlcpy(sc->sc_sensor[i].desc, ipmi_s->i_envdesc,
 		    sizeof(sc->sc_sensor[i].desc));
 		if (sysmon_envsys_sensor_attach(sc->sc_envsys,
