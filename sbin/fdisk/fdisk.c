@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.120 2009/04/20 17:06:55 drochner Exp $ */
+/*	$NetBSD: fdisk.c,v 1.121 2009/06/01 19:57:33 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.120 2009/04/20 17:06:55 drochner Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.121 2009/06/01 19:57:33 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -61,13 +61,16 @@ __RCSID("$NetBSD: fdisk.c,v 1.120 2009/04/20 17:06:55 drochner Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H
 #include <sys/disklabel.h>
+#include <sys/disklabel_gpt.h>
 #include <sys/bootblock.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <disktab.h>
 #include <util.h>
+#include <zlib.h>
 #else
 #include <nbinclude/sys/disklabel.h>
+#include <nbinclude/sys/disklabel_gpt.h>
 #include <nbinclude/sys/bootblock.h>
 #include "../../include/disktab.h"
 /* We enforce -F, so none of these possibly undefined items can be needed */
@@ -105,6 +108,8 @@ __RCSID("$NetBSD: fdisk.c,v 1.120 2009/04/20 17:06:55 drochner Exp $");
 #define	SCAN_ENTER	0x1c
 #define	SCAN_F1		0x3b
 #define	SCAN_1		0x2
+
+#define GPT_TYPE(offs) ((offs) == GPT_HDR_BLKNO ?  "primary" : "secondary")
 
 #define	MAX_BIOS_DISKS	16	/* Going beyond F12 is hard though! */
 
@@ -197,6 +202,8 @@ int F_flag = 0;
 int F_flag = 1;
 #endif
 
+struct gpt_hdr gpt1, gpt2;	/* GUID partition tables */
+
 struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
 int bootsize;		/* actual size of bootcode */
 int boot_installed;	/* 1 if we've copied code into the mbr */
@@ -235,6 +242,8 @@ int	write_disk(daddr_t, void *);
 int	get_params(void);
 int	read_s0(daddr_t, struct mbr_sector *);
 int	write_mbr(void);
+int	read_gpt(daddr_t, struct gpt_hdr *);
+int	delete_gpt(struct gpt_hdr *);
 int	yesno(const char *, ...);
 int	decimal(const char *, int, int, int, int);
 #define DEC_SEC		1		/* asking for a sector number */
@@ -288,7 +297,8 @@ main(int argc, char *argv[])
 
 	int csysid;	/* For the s_flag. */
 	unsigned int cstart, csize;
-	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
+	a_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
+	i_flag = B_flag = 0;
 	v_flag = 0;
 	E_flag = 0;
 	csysid = cstart = csize = 0;
@@ -434,6 +444,9 @@ main(int argc, char *argv[])
 		/* must have been a blank disk */
 		init_sector0(1);
 
+	read_gpt(GPT_HDR_BLKNO, &gpt1);
+	read_gpt(disksectors - 1, &gpt2);
+
 #if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 	get_geometry();
 #else
@@ -499,10 +512,23 @@ main(int argc, char *argv[])
 			       "yet.  This is your last chance.\n");
 			if (u_flag)
 				print_s0(-1);
-			if (yesno("Should we write new partition table?"))
+			if (gpt1.hdr_size != 0 || gpt2.hdr_size != 0)
+				printf("\nWARNING: The disk is carrying "
+				       "GUID Partition Tables.\n"
+				       "         If you continue, "
+				       "GPT headers will be deleted.\n\n");
+			if (yesno("Should we write new partition table?")) {
+				delete_gpt(&gpt1);
+				delete_gpt(&gpt2);
 				write_mbr();
-		} else
+			}
+		} else {
+			if (delete_gpt(&gpt1) > 0)
+				warnx("Primary GPT header was deleted");
+			if (delete_gpt(&gpt2) > 0)
+				warnx("Secondary GPT header was deleted");
 			write_mbr();
+		}
 	}
 
 	exit(0);
@@ -2772,4 +2798,67 @@ get_type(int type)
 	if (ptr == 0)
 		return ("unknown");
 	return (ptr->name);
+}
+
+int
+read_gpt(daddr_t offset, struct gpt_hdr *gptp)
+{
+	char buf[512];
+	struct gpt_hdr *hdr = (void *)buf;
+	const char *tabletype = GPT_TYPE(offset);
+
+	if (read_disk(offset, buf) == -1) {
+		warn("Can't read %s GPT header", tabletype);
+		return -1;
+	}
+	(void)memcpy(gptp, buf, GPT_HDR_SIZE);
+
+	/* GPT CRC should be calculated with CRC field preset to zero */
+	hdr->hdr_crc_self = 0;
+
+	if (memcmp(gptp->hdr_sig, GPT_HDR_SIG, sizeof(gptp->hdr_sig))
+	    || gptp->hdr_lba_self != (uint64_t)offset
+	    || crc32(0, (void *)hdr, gptp->hdr_size) != gptp->hdr_crc_self) {
+		/* not a GPT */
+		(void)memset(gptp, 0, GPT_HDR_SIZE);
+	}
+
+	if (v_flag && gptp->hdr_size != 0) {
+		printf("Found %s GPT header CRC %"PRIu32" "
+		    "at sector %"PRIdaddr", backup at %"PRIdaddr"\n",
+		    tabletype, gptp->hdr_crc_self, offset, gptp->hdr_lba_alt);
+	}
+	return gptp->hdr_size;
+
+}
+
+int
+delete_gpt(struct gpt_hdr *gptp)
+{
+	char buf[512];
+	struct gpt_hdr *hdr = (void *)buf;
+
+	if (gptp->hdr_size == 0)
+		return 0;
+
+	/* don't accidently overwrite something important */
+	if (gptp->hdr_lba_self != GPT_HDR_BLKNO &&
+	    gptp->hdr_lba_self != (uint64_t)disksectors - 1) {
+		warnx("given GPT header location doesn't seem correct");
+		return -1;
+	}
+
+	(void)memcpy(buf, gptp, GPT_HDR_SIZE);
+	/*
+	 * Don't really delete GPT, just "disable" it, so it can
+	 * be recovered later in case of mistake or something
+	 */
+	(void)memset(hdr->hdr_sig, 0, sizeof(gptp->hdr_sig));
+	if (write_disk(gptp->hdr_lba_self, hdr) == -1) {
+		warn("can't delete %s GPT header",
+		    GPT_TYPE(gptp->hdr_lba_self));
+		return -1;
+	}
+	(void)memset(gptp, 0, GPT_HDR_SIZE);
+	return 1;
 }
