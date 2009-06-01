@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.11 2009/02/09 20:27:21 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.12 2009/06/01 20:08:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.11 2009/02/09 20:27:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.12 2009/06/01 20:08:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1688,9 +1688,7 @@ dbcool_attach_sensor(struct dbcool_softc *sc, const struct sysctlnode *me,
 	sc->sc_regs[idx] = &sc->sc_chip->table[idx].reg;
 	sc->sc_nom_volt[idx] = sc->sc_chip->table[idx].nom_volt_index;
 
-	sc->sc_sensor[idx].flags |= ENVSYS_FMONCRITUNDER;
-	if (sc->sc_chip->table[idx].type != DBC_FAN)
-		sc->sc_sensor[idx].flags |= ENVSYS_FMONCRITOVER;
+	sc->sc_sensor[idx].flags |= ENVSYS_FMONLIMITS;
 
 	error = sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[idx]);
 	if (error)

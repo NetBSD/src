@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.23 2008/08/22 11:27:50 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.24 2009/06/01 20:08:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -132,10 +132,7 @@ enum envsys_battery_capacity_states {
 
 /* monitoring flags */
 #define ENVSYS_FMONCRITICAL	0x00000020	/* monitor a critical state */
-#define ENVSYS_FMONCRITUNDER	0x00000040	/* monitor a critunder state */
-#define ENVSYS_FMONCRITOVER	0x00000080	/* monitor a critover state */
-#define ENVSYS_FMONWARNUNDER	0x00000100	/* monitor a warnunder state */
-#define ENVSYS_FMONWARNOVER	0x00000200	/* monitor a warnover state */
+#define ENVSYS_FMONLIMITS	0x00000040	/* monitor limits/thresholds */
 #define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
 #define ENVSYS_FNEED_REFRESH	0x00001000	/* sensor needs refreshing */
