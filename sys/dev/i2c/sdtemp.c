@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.2 2009/05/19 23:43:27 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.3 2009/06/01 20:08:44 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.2 2009/05/19 23:43:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.3 2009/06/01 20:08:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,12 +245,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	/* Initialize sensor data. */
 	sc->sc_sensor->units =  ENVSYS_STEMP;
 	sc->sc_sensor->state = ENVSYS_SINVALID;
-#ifdef ENVSYS_FMONLIMITS
 	sc->sc_sensor->flags |= ENVSYS_FMONLIMITS;
-#else
-	sc->sc_sensor->flags |= ENVSYS_FMONWARNOVER | ENVSYS_FMONWARNUNDER |
-				ENVSYS_FMONCRITOVER;
-#endif
 	(void)strlcpy(sc->sc_sensor->desc, device_xname(self),
 	    sizeof(sc->sc_sensor->desc));
 
