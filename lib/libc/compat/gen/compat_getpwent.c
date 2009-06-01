@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getpwent.c,v 1.2 2009/01/11 02:46:25 christos Exp $	*/
+/*	$NetBSD: compat_getpwent.c,v 1.3 2009/06/01 06:04:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getpwent.c,v 1.2 2009/01/11 02:46:25 christos Exp $");
+__RCSID("$NetBSD: compat_getpwent.c,v 1.3 2009/06/01 06:04:37 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -81,6 +81,10 @@ static struct passwd50 *
 cvt(struct passwd *p)
 {
 	struct passwd50 *q = (void *)p;
+
+	if (q == NULL) {
+		return NULL;
+	}
 	q->pw_change = (int32_t)p->pw_change;
 	q->pw_class = p->pw_class;
 	q->pw_gecos = p->pw_gecos;
