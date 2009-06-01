@@ -1,4 +1,4 @@
-.\"	$NetBSD: madvise.2,v 1.24 2008/04/22 10:42:16 rmind Exp $
+.\"	$NetBSD: madvise.2,v 1.25 2009/06/01 22:04:54 yamt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)madvise.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd April 19, 2008
+.Dd June 2, 2009
 .Dt MADVISE 2
 .Os
 .Sh NAME
@@ -62,24 +62,23 @@ behavior.
 Is a hint that pages will be accessed randomly, and prefetching
 is likely not advantageous.
 .It Dv MADV_SEQUENTIAL
-Causes the VM system to depress the priority of
+Is a hint that pages will be accessed sequentially, from the lower address to
+higher address.
+It might cause the VM system to depress the priority of
 pages immediately preceding a given page when it is faulted in.
 .It Dv MADV_WILLNEED
-Causes pages that are in a given virtual address range
-to temporarily have higher priority, and if they are in
+Is a hint that pages will be accessed in the near future.
+It might cause the VM system to make pages that are in a given virtual
+address range to temporarily have higher priority, and if they are in
 memory, decrease the likelihood of them being freed.
-Additionally,
-the pages that are already in memory will be immediately mapped into
-the process, thereby eliminating unnecessary overhead of going through
+It might immediately map the pages that are already in memory into the
+process, thereby eliminating unnecessary overhead of going through
 the entire process of faulting the pages in.
-This WILL NOT fault
-pages in from backing store, but quickly map the pages already in memory
-into the calling process.
+It might or might not fault pages in from backing store.
 .It Dv MADV_DONTNEED
-Allows the VM system to decrease the in-memory priority
+Is a hint that pages will not be accessed in the near future.
+It might allow the VM system to decrease the in-memory priority
 of pages in the specified range.
-Additionally future references to
-this address range will incur a page fault.
 .It Dv MADV_FREE
 Gives the VM system the freedom to free pages,
 and tells the system that information in the specified page range
