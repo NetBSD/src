@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.63 2009/04/07 21:49:36 dyoung Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.64 2009/06/01 20:08:45 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.63 2009/04/07 21:49:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.64 2009/06/01 20:08:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -444,8 +444,7 @@ do {									\
 		     PENVSYS_EVENT_CRITICAL,
 		     "critical");
 
-	SEE_REGEVENT(ENVSYS_FMONCRITUNDER | ENVSYS_FMONCRITOVER |
-		     ENVSYS_FMONWARNUNDER | ENVSYS_FMONWARNOVER,
+	SEE_REGEVENT(ENVSYS_FMONLIMITS,
 		     PENVSYS_EVENT_HW_LIMITS,
 		     "hw-range-limits");
 
