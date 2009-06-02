@@ -55,7 +55,10 @@
 #define PACKET_H_
 
 #include <time.h>
+
+#ifdef HAVE_OPENSSL_BN_H
 #include <openssl/bn.h>
+#endif
 
 #include "types.h"
 #include "errors.h"
