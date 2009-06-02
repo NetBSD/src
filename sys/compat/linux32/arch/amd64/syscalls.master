@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50 2009/01/30 13:55:51 njoly Exp $
+	$NetBSD: syscalls.master,v 1.51 2009/06/02 16:54:39 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -144,8 +144,8 @@
 65	NOARGS	{ int|sys||getpgrp(void); }
 66	NOARGS	{ int|sys||setsid(void); }
 67	UNIMPL	sigaction
-68	UNIMPL	siggetmask
-69	UNIMPL	sigsetmask
+68	STD	{ int|linux32_sys||siggetmask(void); }
+69	STD	{ int|linux32_sys||sigsetmask(linux32_old_sigset_t mask); }
 70	STD	{ int|linux32_sys||setreuid16(linux32_uid16_t ruid, \
 		    linux32_uid16_t euid); }
 71	STD	{ int|linux32_sys||setregid16(linux32_gid16_t rgid, \
