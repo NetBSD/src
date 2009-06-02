@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.121 2009/06/01 19:57:33 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.122 2009/06/02 21:15:53 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.121 2009/06/01 19:57:33 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.122 2009/06/02 21:15:53 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -109,7 +109,6 @@ __RCSID("$NetBSD: fdisk.c,v 1.121 2009/06/01 19:57:33 christos Exp $");
 #define	SCAN_F1		0x3b
 #define	SCAN_1		0x2
 
-#define GPT_TYPE(offs) ((offs) == GPT_HDR_BLKNO ?  "primary" : "secondary")
 
 #define	MAX_BIOS_DISKS	16	/* Going beyond F12 is hard though! */
 
@@ -118,6 +117,8 @@ __RCSID("$NetBSD: fdisk.c,v 1.121 2009/06/01 19:57:33 christos Exp $");
 #define	DEFAULT_DISK(n)	(DEFAULT_ACTIVE - MAX_BIOS_DISKS + (n))
 
 #endif
+
+#define GPT_TYPE(offs) ((offs) == GPT_HDR_BLKNO ?  "primary" : "secondary")
 
 #define LBUF 100
 static char lbuf[LBUF];
