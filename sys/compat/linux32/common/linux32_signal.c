@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.11 2009/03/18 16:00:17 cegger Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.12 2009/06/02 16:54:39 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.11 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.12 2009/06/02 16:54:39 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -406,4 +406,45 @@ linux32_sys_rt_sigpending(struct lwp *l, const struct linux32_sys_rt_sigpending_
 	sigpending1(l, &bss);
 	native_to_linux32_sigset(&lss, &bss);
 	return copyout(&lss, SCARG_P32(uap, set), sizeof(lss));
+}
+
+int
+linux32_sys_siggetmask(struct lwp *l, const void *v, register_t *retval)
+{
+	struct proc *p = l->l_proc;
+	sigset_t bss;
+	linux32_old_sigset_t lss;
+	int error;
+
+	mutex_enter(p->p_lock);
+	error = sigprocmask1(l, SIG_SETMASK, 0, &bss);
+	mutex_exit(p->p_lock);
+	if (error)
+		return error;
+	native_to_linux32_old_sigset(&lss, &bss);
+	*retval = lss;
+	return 0;
+}
+
+int
+linux32_sys_sigsetmask(struct lwp *l, const struct linux32_sys_sigsetmask_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_old_sigset_t) mask;
+	} */
+	sigset_t nbss, obss;
+	linux32_old_sigset_t nlss, olss;
+	struct proc *p = l->l_proc;
+	int error;
+
+	nlss = SCARG(uap, mask);
+	linux32_old_to_native_sigset(&nbss, &nlss);
+	mutex_enter(p->p_lock);
+	error = sigprocmask1(l, SIG_SETMASK, &nbss, &obss);
+	mutex_exit(p->p_lock);
+	if (error)
+		return error;
+	native_to_linux32_old_sigset(&olss, &obss);
+	*retval = olss;
+	return 0;
 }
