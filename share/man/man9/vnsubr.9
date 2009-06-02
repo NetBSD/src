@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.37 2009/05/28 09:32:17 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.38 2009/06/02 18:09:34 jnemeth Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 28, 2009
+.Dd June 2, 2009
 .Dt VNSUBR 9
 .Os
 .Sh NAME
@@ -186,7 +186,7 @@ checks  permissions and invokes the
 or
 .Xr VOP_CREATE 9
 vnode operations.
-If the operation is successful zero is returned,
+If the operation is successful zero is returned and the vnode is locked,
 otherwise an appropriate error code is returned.
 .It Fn vn_rdwr "rw" "vp" "base" "len" "offset" "segflg" "ioflg" "cred" "aresid" "l"
 Common code to package up an I/O request on a vnode into a uio and
@@ -235,7 +235,7 @@ and
 .Fa ncookies
 should be
 .Dv NULL
-is they aren't required to be returned by
+if they aren't required to be returned by
 .Fn vn_readdir .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
