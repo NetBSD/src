@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15 2008/10/21 12:16:59 ad Exp $     */
+/*	$NetBSD: syscall.c,v 1.16 2009/06/02 23:21:37 pooka Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2009/06/02 23:21:37 pooka Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2008/10/21 12:16:59 ad Exp $");
 #include <machine/userret.h>
 
 #ifdef TRAPDEBUG
-extern const char * const syscallnames[];
 int startsysc = 0;
 #define TDB(a) if (startsysc) printf a
 #else
