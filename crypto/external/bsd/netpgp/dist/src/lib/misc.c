@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.15 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2009/06/02 15:10:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -73,7 +73,9 @@ __RCSID("$NetBSD: misc.c,v 1.15 2009/05/31 23:26:20 agc Exp $");
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
+#endif
 
 #include "errors.h"
 #include "packet.h"
