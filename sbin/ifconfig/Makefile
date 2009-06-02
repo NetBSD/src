@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2009/05/26 16:03:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.43 2009/06/02 23:41:35 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -28,7 +28,8 @@ COPTS.ifconfig.c+= -fno-loop-optimize
 # to figure out where ioctl's go in the kernel.
 #
 .ifdef RUMP_ACTION
-CPPFLAGS+=	-DRUMP_SYS_NETWORKING -DRUMP_SYS_IOCTL -DRUMP_ACTION
+CPPFLAGS+=	-DRUMP_SYS_NETWORKING -DRUMP_SYS_IOCTL -DRUMP_SYS_CLOSE
+CPPFLAGS+=	-DRUMP_ACTION
 LDADD+=		-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
 LDADD+=		-lrump -lrumpuser -lpthread
 DBG=		-g
