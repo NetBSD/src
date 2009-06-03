@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.56 2009/05/03 16:53:54 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.57 2009/06/03 16:06:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.56 2009/05/03 16:53:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.57 2009/06/03 16:06:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -564,4 +564,38 @@ uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
 {
 
 	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
+}
+
+/*
+ * Mapping and vm space locking routines.
+ * XXX: these don't work for non-local vmspaces
+ */
+int
+uvm_vslock(struct vmspace *vs, void *addr, size_t len, vm_prot_t access)
+{
+
+	KASSERT(vs == &rump_vmspace);
+	return 0;
+}
+
+void
+uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
+{
+
+	KASSERT(vs == &rump_vmspace);
+}
+
+void
+vmapbuf(struct buf *bp, vsize_t len)
+{
+
+	bp->b_saveaddr = bp->b_data;
+}
+
+void
+vunmapbuf(struct buf *bp, vsize_t len)
+{
+
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = 0;
 }
