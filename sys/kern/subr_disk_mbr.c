@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.35 2009/01/28 15:26:28 reinoud Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.36 2009/06/03 15:07:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.35 2009/01/28 15:26:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.36 2009/06/03 15:07:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.35 2009/01/28 15:26:28 reinoud E
 
 #include <sys/kauth.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_mbr.h"
+#endif /* _KERNEL_OPT */
 
 typedef struct mbr_partition mbr_partition_t;
 
