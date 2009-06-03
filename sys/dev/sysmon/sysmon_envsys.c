@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.85 2008/08/22 11:27:50 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.86 2009/06/03 11:43:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.85 2008/08/22 11:27:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.86 2009/06/03 11:43:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -640,6 +640,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	prop_array_t array = NULL;
 	prop_dictionary_t dict, dict2;
 	envsys_data_t *edata = NULL;
+	sme_event_drv_t *this_evdrv;
 	int error = 0;
 
 	KASSERT(sme != NULL);
@@ -698,11 +699,13 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		/*
 		 * Create all objects in sensor's dictionary.
 		 */
-		evdv = kmem_zalloc(sizeof(*evdv), KM_SLEEP);
-		evdv->evdrv = sme_add_sensor_dictionary(sme, array,
-				    	      		dict, edata);
-		if (evdv->evdrv)
+		this_evdrv = sme_add_sensor_dictionary(sme, array,
+						       dict, edata);
+		if (this_evdrv) {
+			evdv = kmem_zalloc(sizeof(*evdv), KM_SLEEP);
+			evdv->evdrv = this_evdrv;
 			SLIST_INSERT_HEAD(&sme_evdrv_list, evdv, evdrv_head);
+		}
 	}
 
 	/* 
