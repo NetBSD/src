@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.27 2009/03/29 10:51:53 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.28 2009/06/03 22:54:51 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.27 2009/03/29 10:51:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.28 2009/06/03 22:54:51 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -253,6 +253,7 @@ kmem_free(void *p, size_t size)
 
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
+	KASSERT(p != NULL);
 	KASSERT(size > 0);
 
 	size += SIZE_SIZE;
