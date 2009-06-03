@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.13 2009/03/18 16:00:17 cegger Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.14 2009/06/03 14:17:18 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.13 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.14 2009/06/03 14:17:18 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 {
 	memset(st32, 0, sizeof(*st32));
 	st32->lst_dev = linux_fakedev(st->st_dev, 0);
-	st32->__lst_ino = st->st_ino;
+	st32->lst_ino = st->st_ino;
 	st32->lst_mode = st->st_mode;
 	if (st->st_nlink >= (1 << 15))
 		st32->lst_nlink = (1 << 15) - 1;
@@ -103,7 +103,7 @@ linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 	st32->lst_ctime_nsec = st->st_ctimensec;
 #endif
 #ifdef LINUX32_STAT64_HAS_BROKEN_ST_INO
-	st32->lst_ino = st->st_ino;
+	st32->__lst_ino = st->st_ino;
 #endif
 
 	return;
