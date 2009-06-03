@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.14 2009/06/03 14:17:18 njoly Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.15 2009/06/03 15:13:26 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.14 2009/06/03 14:17:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.15 2009/06/03 15:13:26 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,11 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.14 2009/06/03 14:17:18 njoly Exp 
 #include <compat/linux32/common/linux32_socketcall.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-static inline void linux32_from_stat(struct stat *, struct linux32_stat64 *);
+static inline void bsd_to_linux32_stat64(struct stat *, struct linux32_stat64 *);
 
 #define linux_fakedev(x,y) (x)
+
 static inline void
-linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
+bsd_to_linux32_stat64(struct stat *st, struct linux32_stat64 *st32)
 {
 	memset(st32, 0, sizeof(*st32));
 	st32->lst_dev = linux_fakedev(st->st_dev, 0);
@@ -105,8 +106,6 @@ linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 #ifdef LINUX32_STAT64_HAS_BROKEN_ST_INO
 	st32->__lst_ino = st->st_ino;
 #endif
-
-	return;
 }
 
 int
@@ -114,23 +113,18 @@ linux32_sys_stat64(struct lwp *l, const struct linux32_sys_stat64_args *uap, reg
 {
 	/* {
 	        syscallarg(netbsd32_charp) path;
-	        syscallarg(linux32_statp) sp;
+	        syscallarg(linux32_stat64p) sp;
 	} */
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
-	struct linux32_stat64 *st32p;
-	const char *path = SCARG_P32(uap, path);
 	
-	error = do_sys_stat(path, FOLLOW, &st);
+	error = do_sys_stat(SCARG_P32(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
-	linux32_from_stat(&st, &st32);
-
-	st32p = SCARG_P32(uap, sp);
-
-	return copyout(&st32, st32p, sizeof(*st32p));
+	bsd_to_linux32_stat64(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
 }
 
 int
@@ -143,18 +137,13 @@ linux32_sys_lstat64(struct lwp *l, const struct linux32_sys_lstat64_args *uap, r
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
-	struct linux32_stat64 *st32p;
-	const char *path = SCARG_P32(uap, path);
 	
-	error = do_sys_stat(path, NOFOLLOW, &st);
+	error = do_sys_stat(SCARG_P32(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 
-	linux32_from_stat(&st, &st32);
-
-	st32p = SCARG_P32(uap, sp);
-
-	return copyout(&st32, st32p, sizeof(*st32p));
+	bsd_to_linux32_stat64(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
 }
 
 int
@@ -167,15 +156,11 @@ linux32_sys_fstat64(struct lwp *l, const struct linux32_sys_fstat64_args *uap, r
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
-	struct linux32_stat64 *st32p;
 
 	error = do_sys_fstat(SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
 
-	linux32_from_stat(&st, &st32);
-
-	st32p = SCARG_P32(uap, sp);
-
-	return copyout(&st32, st32p, sizeof(*st32p));
+	bsd_to_linux32_stat64(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
 }
