@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34 2009/05/24 09:17:59 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.35 2009/06/03 21:08:51 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -982,6 +982,7 @@ ENTRY_NOPROFILE(lwp_trampoline,HPPA_FRAME_SIZE)
 	.import	lwp_startup, code
 	CALL(lwp_startup, %r1)
 
+ALTENTRY(setfunc_trampoline)
 	/* get trampoline func (%t3) and arg (%arg0) */
 	ldw	HPPA_FRAME_ARG(3)(%sp), %arg0
 	ldw	HPPA_FRAME_ARG(2)(%sp), %t3
