@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.40 2009/06/01 20:08:44 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.41 2009/06/03 22:34:18 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.40 2009/06/01 20:08:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.41 2009/06/03 22:34:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,6 +586,7 @@ acpitz_init_envsys(device_t dv)
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor.monitor = true;
 	sc->sc_sensor.flags = ENVSYS_FMONLIMITS;
+	sc->sc_sensor.units = ENVSYS_STEMP;
 	strlcpy(sc->sc_sensor.desc, "temperature", sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
