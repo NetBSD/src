@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.9 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.10 2009/06/04 05:27:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.9 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.10 2009/06/04 05:27:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ extern char *plyr[];
  * Initialize screen display.
  */
 void
-cursinit()
+cursinit(void)
 {
 
 	if (!initscr()) {
@@ -75,7 +75,7 @@ cursinit()
  * Restore screen display.
  */
 void
-cursfini()
+cursfini(void)
 {
 
 	leaveok(stdscr, FALSE);
@@ -89,7 +89,7 @@ cursfini()
  * Initialize board display.
  */
 void
-bdisp_init()
+bdisp_init(void)
 {
 	int i, j;
 
@@ -121,8 +121,7 @@ bdisp_init()
  * Update who is playing whom.
  */
 void
-bdwho(update)
-	int update;
+bdwho(int update)
 {
 	int i;
 
@@ -144,7 +143,7 @@ bdwho(update)
  * Update the board display after a move.
  */
 void
-bdisp()
+bdisp(void)
 {
 	int i, j, c;
 	struct spotstr *sp;
@@ -173,8 +172,7 @@ bdisp()
  * Dump board display to a file.
  */
 void
-bdump(fp)
-	FILE *fp;
+bdump(FILE *fp)
 {
 	int i, j, c;
 	struct spotstr *sp;
@@ -212,8 +210,7 @@ bdump(fp)
  * Display a transcript entry
  */
 void
-dislog(str)
-	const char *str;
+dislog(const char *str)
 {
 
 	if (++lastline >= SCRNH - 1) {
@@ -232,8 +229,7 @@ dislog(str)
  */
 
 void
-ask(str)
-	const char *str;
+ask(const char *str)
 {
 	int len = strlen(str);
 
@@ -245,9 +241,7 @@ ask(str)
 }
 
 int
-getline(buf, size)
-	char *buf;
-	int size;
+getline(char *buf, int size)
 {
 	char *cp, *end;
 	int c;

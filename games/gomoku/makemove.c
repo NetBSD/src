@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.8 2006/05/11 00:17:07 mrg Exp $	*/
+/*	$NetBSD: makemove.c,v 1.9 2009/06/04 05:27:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.8 2006/05/11 00:17:07 mrg Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.9 2009/06/04 05:27:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,7 @@ const int	weight[5] = { 0, 1, 7, 22, 100 };
  *	TIE	The game is a tie.
  */
 int
-makemove(us, mv)
-	int us, mv;
+makemove(int us, int mv)
 {
 	struct spotstr *sp, *fsp;
 	union comboval *cp;
@@ -217,8 +216,7 @@ makemove(us, mv)
  * fix up the overlap array due to updating spot osp.
  */
 void
-update_overlap(osp)
-	struct spotstr *osp;
+update_overlap(struct spotstr *osp)
 {
 	struct spotstr *sp, *sp1, *sp2;
 	int i, f, r, r1, d, d1, n;

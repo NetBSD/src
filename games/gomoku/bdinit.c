@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.5 2003/08/07 09:37:15 agc Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.6 2009/06/04 05:27:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.5 2003/08/07 09:37:15 agc Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.6 2009/06/04 05:27:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,8 +45,7 @@ __RCSID("$NetBSD: bdinit.c,v 1.5 2003/08/07 09:37:15 agc Exp $");
 #include "gomoku.h"
 
 void
-bdinit(bp)
-	struct spotstr *bp;
+bdinit(struct spotstr *bp)
 {
 	int i, j, r;
 	struct spotstr *sp;
@@ -172,7 +171,7 @@ bdinit(bp)
  * common open spaces shared between the two frames.
  */
 void
-init_overlap()
+init_overlap(void)
 {
 	struct spotstr *sp1, *sp2;
 	struct combostr *cbp;
