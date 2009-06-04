@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.11 2009/06/04 05:43:29 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.12 2009/06/04 05:52:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -272,11 +272,11 @@ void	bdisp_init(void);
 void	cursfini(void);
 void	cursinit(void);
 void	bdwho(int);
-void	panic(const char *) __attribute__((__noreturn__));
+void	panic(const char *) __dead;
 void	glog(const char *);
 void	dlog(const char *);
-void	quit(void) __attribute__((__noreturn__));
-void	quitsig(int) __attribute__((__noreturn__));
+void	quit(void) __dead;
+void	quitsig(int) __dead;
 void	whatsup(int);
 int	readinput(FILE *);
 const char   *stoc(int);
