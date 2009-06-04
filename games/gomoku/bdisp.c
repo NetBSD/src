@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.10 2009/06/04 05:27:04 dholland Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.11 2009/06/04 05:43:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.10 2009/06/04 05:27:04 dholland Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.11 2009/06/04 05:43:29 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,9 +153,9 @@ bdisp(void)
 			move(BSZ1 - j, 2 * i + 1);
 			sp = &board[i + j * BSZ1];
 			if (debug > 1 && sp->s_occ == EMPTY) {
-				if (sp->s_flg & IFLAGALL)
+				if (sp->s_flags & IFLAGALL)
 					c = '+';
-				else if (sp->s_flg & CFLAGALL)
+				else if (sp->s_flags & CFLAGALL)
 					c = '-';
 				else
 					c = '.';
@@ -186,9 +186,9 @@ bdump(FILE *fp)
 		for (i = 1; i < BSZ1; i++) {
 			sp = &board[i + j * BSZ1];
 			if (debug > 1 && sp->s_occ == EMPTY) {
-				if (sp->s_flg & IFLAGALL)
+				if (sp->s_flags & IFLAGALL)
 					c = '+';
-				else if (sp->s_flg & CFLAGALL)
+				else if (sp->s_flags & CFLAGALL)
 					c = '-';
 				else
 					c = '.';
