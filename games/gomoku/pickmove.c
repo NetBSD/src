@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.17 2009/06/04 06:41:50 dholland Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.18 2009/06/04 07:01:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.17 2009/06/04 06:41:50 dholland Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.18 2009/06/04 07:01:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -515,7 +515,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		    combocnt--;
 		}
 #ifdef DEBUG
-		if (c == 1 && debug > 1 || debug > 5) {
+		if ((c == 1 && debug > 1) || debug > 5) {
 		    markcombo(ncbp);
 		    bdisp();
 		    whatsup(0);
@@ -758,7 +758,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		updatecombo(ncbp, curcolor);
 	    }
 #ifdef DEBUG
-	    if (c == 1 && debug > 1 || debug > 4) {
+	    if ((c == 1 && debug > 1) || debug > 4) {
 		markcombo(ncbp);
 		bdisp();
 		whatsup(0);
@@ -1327,11 +1327,11 @@ void
 markcombo(struct combostr *ocbp)
 {
 	struct combostr *cbp, *tcbp, **cbpp;
-	struct elist *ep, *nep, **epp;
+	struct elist *ep, *nep;
 	struct spotstr *sp;
 	int s, d, m, i;
 	int nframes;
-	int r, n, flags, cmask, omask;
+	int cmask, omask;
 
 	/* should never happen but check anyway */
 	if ((nframes = ocbp->c_nframes) >= MAXDEPTH)
@@ -1350,7 +1350,7 @@ markcombo(struct combostr *ocbp)
 	 */
 	ep = &einfo[nframes];
 	cbpp = &ecombo[nframes];
-	for (cbp = ocbp; tcbp = cbp->c_link[1]; cbp = cbp->c_link[0]) {
+	for (cbp = ocbp; (tcbp = cbp->c_link[1]) != NULL; cbp = cbp->c_link[0]) {
 		ep--;
 		ep->e_combo = cbp;
 		*--cbpp = cbp->c_link[1];
@@ -1444,7 +1444,7 @@ clearcombo(struct combostr *cbp, int open)
 	struct combostr *tcbp;
 	int d, n, mask;
 
-	for (; tcbp = cbp->c_link[1]; cbp = cbp->c_link[0]) {
+	for (; (tcbp = cbp->c_link[1]) != NULL; cbp = cbp->c_link[0]) {
 		clearcombo(tcbp, cbp->c_flags & C_OPEN_1);
 		open = cbp->c_flags & C_OPEN_0;
 	}

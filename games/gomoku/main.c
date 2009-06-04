@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2009/06/04 06:47:36 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2009/06/04 07:01:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2009/06/04 06:47:36 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2009/06/04 07:01:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -350,26 +350,28 @@ readinput(FILE *fp)
 void
 whatsup(int signum)
 {
-	int i, pnum, n, s1, s2, d1, d2;
+	int i, n, s1, s2, d1, d2;
 	struct spotstr *sp;
 	FILE *fp;
 	char *str;
 	struct elist *ep;
 	struct combostr *cbp;
+	char input[128];
+	char tmp[128];
 
 	if (!interactive)
 		quit();
 top:
 	ask("cmd? ");
-	if (!getline(fmtbuf, sizeof(fmtbuf)))
+	if (!getline(input, sizeof(input)))
 		quit();
-	switch (*fmtbuf) {
+	switch (*input) {
 	case '\0':
 		goto top;
 	case 'q':		/* conservative quit */
 		quit();
 	case 'd':		/* set debug level */
-		debug = fmtbuf[1] - '0';
+		debug = input[1] - '0';
 		debuglog("Debug set to %d", debug);
 		sleep(1);
 	case 'c':
@@ -382,7 +384,7 @@ top:
 		}
 		goto top;
 	case 's':		/* suggest a move */
-		i = fmtbuf[1] == 'b' ? BLACK : WHITE;
+		i = input[1] == 'b' ? BLACK : WHITE;
 		debuglog("suggest %c %s", i == BLACK ? 'B' : 'W',
 			stoc(pickmove(i)));
 		goto top;
@@ -392,12 +394,12 @@ top:
 		bdisp();
 		goto top;
 	case 'l':		/* print move history */
-		if (fmtbuf[1] == '\0') {
+		if (input[1] == '\0') {
 			for (i = 0; i < movenum - 1; i++)
 				debuglog("%s", stoc(movelog[i]));
 			goto top;
 		}
-		if ((fp = fopen(fmtbuf + 1, "w")) == NULL)
+		if ((fp = fopen(input + 1, "w")) == NULL)
 			goto top;
 		for (i = 0; i < movenum - 1; i++) {
 			fprintf(fp, "%s", stoc(movelog[i]));
@@ -410,14 +412,17 @@ top:
 		fclose(fp);
 		goto top;
 	case 'o':
+		/* avoid use w/o initialization on invalid input */
+		d1 = s1 = 0;
+
 		n = 0;
-		for (str = fmtbuf + 1; *str; str++)
+		for (str = input + 1; *str; str++)
 			if (*str == ',') {
 				for (d1 = 0; d1 < 4; d1++)
 					if (str[-1] == pdir[d1])
 						break;
 				str[-1] = '\0';
-				sp = &board[s1 = ctos(fmtbuf + 1)];
+				sp = &board[s1 = ctos(input + 1)];
 				n = (sp->s_frame[d1] - frames) * FAREA;
 				*str++ = '\0';
 				break;
@@ -433,12 +438,12 @@ top:
 		    stoc(s2), pdir[d2], overlap[n]);
 		goto top;
 	case 'p':
-		sp = &board[i = ctos(fmtbuf + 1)];
+		sp = &board[i = ctos(input + 1)];
 		debuglog("V %s %x/%d %d %x/%d %d %d %x", stoc(i),
 			sp->s_combo[BLACK].s, sp->s_level[BLACK],
 			sp->s_nforce[BLACK],
 			sp->s_combo[WHITE].s, sp->s_level[WHITE],
-			sp->s_nforce[WHITE], sp->s_wval, sp->s_flg);
+			sp->s_nforce[WHITE], sp->s_wval, sp->s_flags);
 		debuglog("FB %s %x %x %x %x", stoc(i),
 			sp->s_fval[BLACK][0].s, sp->s_fval[BLACK][1].s,
 			sp->s_fval[BLACK][2].s, sp->s_fval[BLACK][3].s);
@@ -447,7 +452,7 @@ top:
 			sp->s_fval[WHITE][2].s, sp->s_fval[WHITE][3].s);
 		goto top;
 	case 'e':	/* e {b|w} [0-9] spot */
-		str = fmtbuf + 1;
+		str = input + 1;
 		if (*str >= '0' && *str <= '9')
 			n = *str++ - '0';
 		else
@@ -461,12 +466,11 @@ top:
 				if (cbp->c_nframes != n)
 					break;
 			}
-			printcombo(cbp, fmtbuf);
-			debuglog("%s", fmtbuf);
+			printcombo(cbp, tmp, sizeof(tmp));
+			debuglog("%s", tmp);
 		}
 		goto top;
 	default:
-syntax:
 		debuglog("Options are:");
 		debuglog("q    - quit");
 		debuglog("c    - continue");
