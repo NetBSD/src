@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.16 2009/06/04 06:27:47 dholland Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.17 2009/06/04 06:41:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.16 2009/06/04 06:27:47 dholland Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.17 2009/06/04 06:41:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -409,6 +409,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	int baseB, fcnt, emask, bmask, n;
 	union comboval ocb, fcb;
 	struct combostr **scbpp, *fcbp;
+	char tmp[128];
 
 	/* try to combine a new frame with those found so far */
 	ocb.s = s;
@@ -494,13 +495,13 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		combocnt++;
 
 		if ((c == 1 && debug > 1) || debug > 3) {
-		    debuglog(fmtbuf, "%c c %d %d m %x %x o %d %d",
+		    debuglog("%c c %d %d m %x %x o %d %d",
 			"bw"[curcolor],
 			ncbp->c_framecnt[0], ncbp->c_framecnt[1],
 			ncbp->c_emask[0], ncbp->c_emask[1],
 			ncbp->c_voff[0], ncbp->c_voff[1]);
-		    printcombo(ncbp, fmtbuf);
-		    debuglog("%s", fmtbuf);
+		    printcombo(ncbp, tmp, sizeof(tmp));
+		    debuglog("%s", tmp);
 		}
 		if (c > 1) {
 		    /* record the empty spots that will complete this combo */
@@ -641,6 +642,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	int baseB, fcnt, emask, verts;
 	union comboval ocb;
 	struct overlap_info vertices[1];
+	char tmp[128];
 
 	ocb.s = s;
 	baseB = ocb.c.a + ocb.c.b - 1;
@@ -744,8 +746,8 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		    ncbp->c_framecnt[0], ncbp->c_framecnt[1],
 		    ncbp->c_emask[0], ncbp->c_emask[1],
 		    ncbp->c_voff[0], ncbp->c_voff[1]);
-		printcombo(ncbp, fmtbuf);
-		debuglog("%s", fmtbuf);
+		printcombo(ncbp, tmp, sizeof(tmp));
+		debuglog("%s", tmp);
 	    }
 	    if (c > 1) {
 		/* record the empty spots that will complete this combo */
@@ -782,10 +784,11 @@ makeempty(struct combostr *ocbp)
 	struct spotstr *sp;
 	int s, d, m, emask, i;
 	int nframes;
+	char tmp[128];
 
 	if (debug > 2) {
-		printcombo(ocbp, fmtbuf);
-		debuglog("E%c %s", "bw"[curcolor], fmtbuf);
+		printcombo(ocbp, tmp, sizeof(tmp));
+		debuglog("E%c %s", "bw"[curcolor], tmp);
 	}
 
 	/* should never happen but check anyway */
@@ -1196,17 +1199,18 @@ sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 
 #ifdef DEBUG
 	if (debug > 3) {
-		char *str;
+		char buf[128];
+		size_t pos;
 
 		debuglog("sortc: %s%c l%d", stoc(fcbp->c_vertex),
 			pdir[fcbp->c_dir], curlevel);
-		str = fmtbuf;
+		pos = 0;
 		for (cpp = cbpp; cpp < cbpp + curlevel; cpp++) {
-			sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
-				pdir[(*cpp)->c_dir]);
-			str += strlen(str);
+			snprintf(buf + pos, sizeof(buf) - pos, " %s%c",
+				stoc((*cpp)->c_vertex), pdir[(*cpp)->c_dir]);
+			pos += strlen(buf + pos);
 		}
-		debuglog("%s", fmtbuf);
+		debuglog("%s", buf);
 	}
 #endif /* DEBUG */
 
@@ -1254,26 +1258,29 @@ inserted:
 		/* we found a match */
 #ifdef DEBUG
 		if (debug > 3) {
-			char *str;
+			char buf[128];
+			size_t pos;
 
 			debuglog("sort1: n%d", n);
-			str = fmtbuf;
+			pos = 0;
 			for (cpp = scbpp; cpp < scbpp + n; cpp++) {
-				sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
+				snprintf(buf + pos, sizeof(buf) - pos, " %s%c",
+					stoc((*cpp)->c_vertex),
 					pdir[(*cpp)->c_dir]);
-				str += strlen(str);
+				pos += strlen(buf + pos);
 			}
-			debuglog("%s", fmtbuf);
-			printcombo(cbp, fmtbuf);
-			debuglog("%s", fmtbuf);
-			str = fmtbuf;
+			debuglog("%s", buf);
+			printcombo(cbp, buf, sizeof(buf));
+			debuglog("%s", buf);
 			cbpp--;
+			pos = 0;
 			for (cpp = cbpp; cpp < cbpp + n; cpp++) {
-				sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
+				snprintf(buf + pos, sizeof(buf) - pos, " %s%c",
+					stoc((*cpp)->c_vertex),
 					pdir[(*cpp)->c_dir]);
-				str += strlen(str);
+				pos += strlen(buf + pos);
 			}
-			debuglog("%s", fmtbuf);
+			debuglog("%s", buf);
 		}
 #endif /* DEBUG */
 		return (1);
@@ -1294,21 +1301,25 @@ inserted:
 }
 
 /*
- * Print the combo into string 'str'.
+ * Print the combo into string buffer 'buf'.
  */
 void
-printcombo(struct combostr *cbp, char *str)
+printcombo(struct combostr *cbp, char *buf, size_t max)
 {
 	struct combostr *tcbp;
+	size_t pos = 0;
 
-	sprintf(str, "%x/%d", cbp->c_combo.s, cbp->c_nframes);
-	str += strlen(str);
+	snprintf(buf + pos, max - pos, "%x/%d",
+		cbp->c_combo.s, cbp->c_nframes);
+	pos += strlen(buf + pos);
+
 	for (; (tcbp = cbp->c_link[1]) != NULL; cbp = cbp->c_link[0]) {
-		sprintf(str, " %s%c%x", stoc(tcbp->c_vertex), pdir[tcbp->c_dir],
-			cbp->c_flags);
-		str += strlen(str);
+		snprintf(buf + pos, max - pos, " %s%c%x",
+			stoc(tcbp->c_vertex), pdir[tcbp->c_dir], cbp->c_flags);
+		pos += strlen(buf + pos);
 	}
-	sprintf(str, " %s%c", stoc(cbp->c_vertex), pdir[cbp->c_dir]);
+	snprintf(buf + pos, max - pos, " %s%c",
+		stoc(cbp->c_vertex), pdir[cbp->c_dir]);
 }
 
 #ifdef DEBUG
