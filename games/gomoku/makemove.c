@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.9 2009/06/04 05:27:04 dholland Exp $	*/
+/*	$NetBSD: makemove.c,v 1.10 2009/06/04 05:43:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.9 2009/06/04 05:27:04 dholland Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.10 2009/06/04 05:43:29 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ makemove(int us, int mv)
 	    for (f = 5; --f >= 0; fsp -= d) {		/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    goto nextr;
-		if (fsp->s_flg & bmask)
+		if (fsp->s_flags & bmask)
 		    continue;
 
 		/* remove this frame from the sorted list of frames */
@@ -129,7 +129,7 @@ makemove(int us, int mv)
 			sp->s_wval -= val;
 		    else {
 			/* this frame is now blocked, adjust values */
-			fsp->s_flg |= bmask;
+			fsp->s_flags |= bmask;
 			fsp->s_fval[BLACK][r].s = MAXCOMBO;
 			fsp->s_fval[WHITE][r].s = MAXCOMBO;
 			while (--i >= 0) {
@@ -232,7 +232,7 @@ update_overlap(struct spotstr *osp)
 	    for (f = 0; f < 6; f++, sp1 -= d) {		/* for each frame */
 		if (sp1->s_occ == BORDER)
 		    break;
-		if (sp1->s_flg & bmask)
+		if (sp1->s_flags & bmask)
 		    continue;
 		/*
 		 * Update all other frames that intersect the current one
@@ -246,7 +246,7 @@ update_overlap(struct spotstr *osp)
 		for (i = f + 1; i < 6; i++, sp2 -= d) {
 		    if (sp2->s_occ == BORDER)
 			break;
-		    if (sp2->s_flg & bmask)
+		    if (sp2->s_flags & bmask)
 			continue;
 		    /*
 		     * count the number of empty spots to see if there is
@@ -293,7 +293,7 @@ update_overlap(struct spotstr *osp)
 		    for (i = 6; --i >= 0; sp -= d1) {	/* for each spot */
 			if (sp->s_occ == BORDER)
 			    break;
-			if (sp->s_flg & bmask1)
+			if (sp->s_flags & bmask1)
 			    continue;
 			b = sp->s_frame[r1] - frames;
 			str[b] = 0;
