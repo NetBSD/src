@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2009/06/04 05:27:04 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2009/06/04 06:27:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,13 +42,14 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2009/06/04 05:27:04 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2009/06/04 06:27:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
 #include <err.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -176,10 +177,8 @@ again:
 		else if (strcmp(buf, "white") == 0)
 			color = WHITE;
 		else {
-			sprintf(fmtbuf,
-			    "Huh?  Expected `black' or `white', got `%s'\n",
+			panic("Huh?  Expected `black' or `white', got `%s'\n",
 			    buf);
-			panic(fmtbuf);
 		}
 	}
 
@@ -256,7 +255,7 @@ again:
 					ask("save file name? ");
 					(void)getline(buf, sizeof(buf));
 					if ((fp = fopen(buf, "w")) == NULL) {
-						glog("cannot create save file");
+						misclog("cannot create save file");
 						goto getinput;
 					}
 					for (i = 0; i < movenum - 1; i++)
@@ -267,7 +266,7 @@ again:
 				}
 				if (curmove != RESIGN &&
 				    board[curmove].s_occ != EMPTY) {
-					glog("Illegal move");
+					misclog("Illegal move");
 					goto getinput;
 				}
 			}
@@ -278,8 +277,7 @@ again:
 			break;
 		}
 		if (interactive) {
-			sprintf(fmtbuf, fmt[color], movenum, stoc(curmove));
-			glog(fmtbuf);
+			misclog(fmt[color], movenum, stoc(curmove));
 		}
 		if ((i = makemove(color, curmove)) != MOVEOK)
 			break;
@@ -316,7 +314,7 @@ again:
 				ask("save file name? ");
 				(void)getline(buf, sizeof(buf));
 				if ((fp = fopen(buf, "w")) == NULL) {
-					glog("cannot create save file");
+					misclog("cannot create save file");
 					goto replay;
 				}
 				for (i = 0; i < movenum - 1; i++)
@@ -372,8 +370,7 @@ top:
 		quit();
 	case 'd':		/* set debug level */
 		debug = fmtbuf[1] - '0';
-		sprintf(fmtbuf, "Debug set to %d", debug);
-		dlog(fmtbuf);
+		debuglog("Debug set to %d", debug);
 		sleep(1);
 	case 'c':
 		break;
@@ -386,9 +383,8 @@ top:
 		goto top;
 	case 's':		/* suggest a move */
 		i = fmtbuf[1] == 'b' ? BLACK : WHITE;
-		sprintf(fmtbuf, "suggest %c %s", i == BLACK ? 'B' : 'W',
+		debuglog("suggest %c %s", i == BLACK ? 'B' : 'W',
 			stoc(pickmove(i)));
-		dlog(fmtbuf);
 		goto top;
 	case 'f':		/* go forward a move */
 		board[movelog[movenum - 1]].s_occ = movenum & 1 ? BLACK : WHITE;
@@ -398,7 +394,7 @@ top:
 	case 'l':		/* print move history */
 		if (fmtbuf[1] == '\0') {
 			for (i = 0; i < movenum - 1; i++)
-				dlog(stoc(movelog[i]));
+				debuglog("%s", stoc(movelog[i]));
 			goto top;
 		}
 		if ((fp = fopen(fmtbuf + 1, "w")) == NULL)
@@ -433,28 +429,22 @@ top:
 			if (str[-1] == pdir[d2])
 				break;
 		n += sp->s_frame[d2] - frames;
-		str = fmtbuf;
-		sprintf(str, "overlap %s%c,", stoc(s1), pdir[d1]);
-		str += strlen(str);
-		sprintf(str, "%s%c = %x", stoc(s2), pdir[d2], overlap[n]);
-		dlog(fmtbuf);
+		debuglog("overlap %s%c,%s%c = %x", stoc(s1), pdir[d1],
+		    stoc(s2), pdir[d2], overlap[n]);
 		goto top;
 	case 'p':
 		sp = &board[i = ctos(fmtbuf + 1)];
-		sprintf(fmtbuf, "V %s %x/%d %d %x/%d %d %d %x", stoc(i),
+		debuglog("V %s %x/%d %d %x/%d %d %d %x", stoc(i),
 			sp->s_combo[BLACK].s, sp->s_level[BLACK],
 			sp->s_nforce[BLACK],
 			sp->s_combo[WHITE].s, sp->s_level[WHITE],
 			sp->s_nforce[WHITE], sp->s_wval, sp->s_flg);
-		dlog(fmtbuf);
-		sprintf(fmtbuf, "FB %s %x %x %x %x", stoc(i),
+		debuglog("FB %s %x %x %x %x", stoc(i),
 			sp->s_fval[BLACK][0].s, sp->s_fval[BLACK][1].s,
 			sp->s_fval[BLACK][2].s, sp->s_fval[BLACK][3].s);
-		dlog(fmtbuf);
-		sprintf(fmtbuf, "FW %s %x %x %x %x", stoc(i),
+		debuglog("FW %s %x %x %x %x", stoc(i),
 			sp->s_fval[WHITE][0].s, sp->s_fval[WHITE][1].s,
 			sp->s_fval[WHITE][2].s, sp->s_fval[WHITE][3].s);
-		dlog(fmtbuf);
 		goto top;
 	case 'e':	/* e {b|w} [0-9] spot */
 		str = fmtbuf + 1;
@@ -472,16 +462,16 @@ top:
 					break;
 			}
 			printcombo(cbp, fmtbuf);
-			dlog(fmtbuf);
+			debuglog("%s", fmtbuf);
 		}
 		goto top;
 	default:
 syntax:
-		dlog("Options are:");
-		dlog("q    - quit");
-		dlog("c    - continue");
-		dlog("d#   - set debug level to #");
-		dlog("p#   - print values at #");
+		debuglog("Options are:");
+		debuglog("q    - quit");
+		debuglog("c    - continue");
+		debuglog("d#   - set debug level to #");
+		debuglog("p#   - print values at #");
 		goto top;
 	}
 }
@@ -491,27 +481,39 @@ syntax:
  * Display debug info.
  */
 void
-dlog(const char *str)
+debuglog(const char *fmt, ...)
 {
+	va_list ap;
+	char buf[128];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 
 	if (debugfp)
-		fprintf(debugfp, "%s\n", str);
+		fprintf(debugfp, "%s\n", buf);
 	if (interactive)
-		dislog(str);
+		dislog(buf);
 	else
-		fprintf(stderr, "%s\n", str);
+		fprintf(stderr, "%s\n", buf);
 }
 
 void
-glog(const char *str)
+misclog(const char *fmt, ...)
 {
+	va_list ap;
+	char buf[128];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 
 	if (debugfp)
-		fprintf(debugfp, "%s\n", str);
+		fprintf(debugfp, "%s\n", buf);
 	if (interactive)
-		dislog(str);
+		dislog(buf);
 	else
-		printf("%s\n", str);
+		printf("%s\n", buf);
 }
 
 void
@@ -534,9 +536,16 @@ quitsig(int dummy __unused)
  * Die gracefully.
  */
 void
-panic(const char *str)
+panic(const char *fmt, ...)
 {
-	fprintf(stderr, "%s: %s\n", prog, str);
+	va_list ap;
+
+	fprintf(stderr, "%s: ", prog);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
+
 	fputs("resign\n", stdout);
 	quit();
 }
