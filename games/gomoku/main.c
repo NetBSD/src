@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2009/06/04 05:27:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2009/06/04 05:27:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,7 @@ const char	*plyr[2];			/* who's who */
 int	main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char buf[128];
 	int color, curmove, i, ch;
@@ -335,8 +333,7 @@ again:
 }
 
 int
-readinput(fp)
-	FILE *fp;
+readinput(FILE *fp)
 {
 	char *cp;
 	int c;
@@ -353,8 +350,7 @@ readinput(fp)
  * Handle strange situations.
  */
 void
-whatsup(signum)
-	int signum;
+whatsup(int signum)
 {
 	int i, pnum, n, s1, s2, d1, d2;
 	struct spotstr *sp;
@@ -495,8 +491,7 @@ syntax:
  * Display debug info.
  */
 void
-dlog(str)
-	const char *str;
+dlog(const char *str)
 {
 
 	if (debugfp)
@@ -508,8 +503,7 @@ dlog(str)
 }
 
 void
-glog(str)
-	const char *str;
+glog(const char *str)
 {
 
 	if (debugfp)
@@ -521,7 +515,7 @@ glog(str)
 }
 
 void
-quit()
+quit(void)
 {
 	if (interactive) {
 		bdisp();		/* show final board */
@@ -531,8 +525,7 @@ quit()
 }
 
 void
-quitsig(dummy)
-	int dummy __unused;
+quitsig(int dummy __unused)
 {
 	quit();
 }
@@ -541,8 +534,7 @@ quitsig(dummy)
  * Die gracefully.
  */
 void
-panic(str)
-	const char *str;
+panic(const char *str)
 {
 	fprintf(stderr, "%s: %s\n", prog, str);
 	fputs("resign\n", stdout);
