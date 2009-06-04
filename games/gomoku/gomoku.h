@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.10 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.11 2009/06/04 05:43:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -175,7 +175,7 @@ struct combostr {
 	u_short		c_vertex;	/* C:intersection or F:frame head */
 	u_char		c_nframes;	/* number of frames in the combo */
 	u_char		c_dir;		/* C:loop frame or F:frame direction */
-	u_char		c_flg;		/* C:combo flags */
+	u_char		c_flags;	/* C:combo flags */
 	u_char		c_frameindex;	/* C:intersection frame index */
 	u_char		c_framecnt[2];	/* number of frames left to attach */
 	u_char		c_emask[2];	/* C:bit mask of completion spots for
@@ -183,7 +183,7 @@ struct combostr {
 	u_char		c_voff[2];	/* C:vertex offset within frame */
 };
 
-/* flag values for c_flg */
+/* flag values for c_flags */
 #define C_OPEN_0	0x01		/* link[0] is an open ended frame */
 #define C_OPEN_1	0x02		/* link[1] is an open ended frame */
 #define C_LOOP		0x04		/* link[1] intersects previous frame */
@@ -211,7 +211,7 @@ struct	elist {
 struct	spotstr {
 	short		s_occ;		/* color of occupant */
 	short		s_wval;		/* weighted value */
-	int		s_flg;		/* flags for graph walks */
+	int		s_flags;	/* flags for graph walks */
 	struct combostr	*s_frame[4];	/* level 1 combo for frame[dir] */
 	union comboval	s_fval[2][4];	/* combo value for [color][frame] */
 	union comboval	s_combo[2];	/* minimum combo value for BLK & WHT */
@@ -222,7 +222,7 @@ struct	spotstr {
 	int		dummy[2];	/* XXX */
 };
 
-/* flag values for s_flg */
+/* flag values for s_flags */
 #define CFLAG		0x000001	/* frame is part of a combo */
 #define CFLAGALL	0x00000F	/* all frame directions marked */
 #define IFLAG		0x000010	/* legal intersection point */
@@ -237,7 +237,7 @@ struct	spotstr {
 /*
  * This structure is used to store overlap information between frames.
  */
-struct	ovlp_info {
+struct overlap_info {
 	int		o_intersect;	/* intersection spot */
 	struct combostr	*o_fcombo;	/* the connecting combo */
 	u_char		o_link;		/* which link to update (0 or 1) */
@@ -295,7 +295,7 @@ void	makecombo(struct combostr *, struct spotstr *, int, int);
 void	makecombo2(struct combostr *, struct spotstr *, int, int);
 int	sortcombo(struct combostr **, struct combostr **, struct combostr *);
 int	checkframes(struct combostr *, struct combostr *, struct spotstr *,
-		    int, struct ovlp_info *);
+		    int, struct overlap_info *);
 void	addframes(int);
 void	scanframes(int);
 int	better(const struct spotstr *, const struct spotstr *, int);
