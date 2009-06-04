@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2009/04/22 15:23:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2009/06/04 12:19:35 christos Exp $
 
 PROG=	crash
 MAN=	crash.8
+RUMPKERNEL=	yes	# XXX: Avoid -mcmodel=kernel
 
 LDADD+=	-lkvm -ledit -ltermcap
 DPADD+=	${LIBKVM} ${LIBEDIT} ${LIBTERMCAP}
