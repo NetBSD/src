@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.12 2006/03/20 12:32:21 rtr Exp $	*/
+/*	$NetBSD: support.c,v 1.13 2009/06/04 04:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.12 2006/03/20 12:32:21 rtr Exp $");
+__RCSID("$NetBSD: support.c,v 1.13 2009/06/04 04:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ plyrhand(const CARD hand[], const char *s)
 	BOOLEAN win;
 
 	prhand(hand, CINHAND, Playwin, FALSE);
-	(void) sprintf(prompt, "Your %s scores ", s);
+	(void) snprintf(prompt, sizeof(prompt), "Your %s scores ", s);
 	i = scorehand(hand, turnover, CINHAND, strcmp(s, "crib") == 0, explain);
 	if ((j = number(0, 29, prompt)) == 19)
 		j = 0;
