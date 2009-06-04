@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.13 2007/12/15 19:44:39 perry Exp $	*/
+/*	$NetBSD: score.c,v 1.14 2009/06/04 04:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.13 2007/12/15 19:44:39 perry Exp $");
+__RCSID("$NetBSD: score.c,v 1.14 2009/06/04 04:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,8 @@ scorehand(const CARD hand[], CARD starter, int n, BOOLEAN crb,
 	hscore += i;
 	if (do_explain) {
 		if (i > 0) {
-			(void) sprintf(buf, "%d points in fifteens", i);
+			(void) snprintf(buf, sizeof(buf),
+			    "%d points in fifteens", i);
 			strcat(explan, buf);
 		} else
 			strcat(explan, "No fifteens");
@@ -162,7 +163,8 @@ scorehand(const CARD hand[], CARD starter, int n, BOOLEAN crb,
 	hscore += i;
 	if (do_explain) {
 		if (i > 0) {
-			(void) sprintf(buf, ", %d points in pairs, %d in runs",
+			(void) snprintf(buf, sizeof(buf),
+			    ", %d points in pairs, %d in runs",
 			    pairpoints, runpoints);
 			strcat(explan, buf);
 		} else
