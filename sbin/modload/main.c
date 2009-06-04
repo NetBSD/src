@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2009/05/19 22:55:24 jnemeth Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2009/06/04 02:57:01 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2009/05/19 22:55:24 jnemeth Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2009/06/04 02:57:01 jnemeth Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -54,21 +54,26 @@ static void	parse_param(prop_dictionary_t, const char *,
 static void	parse_string_param(prop_dictionary_t, const char *,
 				   const char *);
 static void	usage(void) __dead;
+static void	merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
 int
 main(int argc, char **argv)
 {
 	modctl_load_t cmdargs;
-	prop_dictionary_t props;
-	bool output_props = false;
+	prop_dictionary_t ext_props, props;
+	bool merge_props, output_props;
+	const char *ext_file;
 	char *propsstr;
 	int ch;
 	int flags;
 
-	flags = 0;
+	ext_file = NULL;
+	ext_props = NULL;
 	props = prop_dictionary_create();
+	merge_props = output_props = false;
+	flags = 0;
 
-	while ((ch = getopt(argc, argv, "b:fi:ps:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:fi:m:ps:")) != -1) {
 		switch (ch) {
 		case 'b':
 			parse_param(props, optarg, parse_bool_param);
@@ -80,6 +85,11 @@ main(int argc, char **argv)
 
 		case 'i':
 			parse_param(props, optarg, parse_int_param);
+			break;
+
+		case 'm':
+			merge_props = true;
+			ext_file = optarg;
 			break;
 
 		case 'p':
@@ -103,9 +113,22 @@ main(int argc, char **argv)
 	if (propsstr == NULL)
 		errx(EXIT_FAILURE, "Failed to process properties");
 
-	if (output_props)
+	if (output_props) {
+		if (merge_props) {
+			ext_props =
+			    prop_dictionary_internalize_from_file(ext_file);
+			if (ext_props == NULL) {
+				errx(EXIT_FAILURE, "Failed to read existing "
+				    "property list");
+			}
+
+			free(propsstr);
+			merge_dicts(ext_props, props);
+			propsstr = prop_dictionary_externalize(ext_props);
+		}
+				
 		fputs(propsstr, stdout);
-	else {
+	} else {
 		if (argc != 1)
 			usage();
 		cmdargs.ml_filename = argv[0];
@@ -201,8 +224,36 @@ usage(void)
 	(void)fprintf(stderr,
 	    "Usage: %s [-f] [-b var=boolean] [-i var=integer] "
 	    "[-s var=string] module\n"
-	    "       %s -p [-b var=boolean] [-i var=integer] "
+	    "       %s -p [-m plist] [-b var=boolean] [-i var=integer] "
 	    "[-s var=string]\n",
 	    getprogname(), getprogname());
 	exit(EXIT_FAILURE);
+}
+
+static void
+merge_dicts(prop_dictionary_t existing_dict, const prop_dictionary_t new_dict)
+{
+	prop_dictionary_keysym_t props_keysym;
+	prop_object_iterator_t props_iter;
+	prop_object_t props_obj;
+	const char *props_key;
+
+	props_iter = prop_dictionary_iterator(new_dict);
+	if (props_iter == NULL) {
+		errx(EXIT_FAILURE, "Failed to iterate new property list");
+	}
+
+	while ((props_obj = prop_object_iterator_next(props_iter)) != NULL) {
+		props_keysym = (prop_dictionary_keysym_t)props_obj;
+		props_key = prop_dictionary_keysym_cstring_nocopy(props_keysym);
+		props_obj = prop_dictionary_get_keysym(new_dict, props_keysym);
+		if ((props_obj == NULL) || !prop_dictionary_set(existing_dict,
+		    props_key, props_obj)) {
+			errx(EXIT_FAILURE, "Failed to copy "
+			    "existing property list");
+		}
+	}
+	prop_object_iterator_release(props_iter);
+
+	return;
 }
