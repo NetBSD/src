@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.14 2009/06/04 06:41:50 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.15 2009/06/04 06:47:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -246,7 +246,6 @@ struct overlap_info {
 };
 
 extern	const char	*letters;
-extern	char	fmtbuf[];
 extern	const char	pdir[];
 
 extern	const int     dd[4];
