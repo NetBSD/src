@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.12 2009/06/04 05:52:30 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.13 2009/06/04 06:27:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -272,9 +272,9 @@ void	bdisp_init(void);
 void	cursfini(void);
 void	cursinit(void);
 void	bdwho(int);
-void	panic(const char *) __dead;
-void	glog(const char *);
-void	dlog(const char *);
+void	panic(const char *, ...) __printflike(1, 2) __dead;
+void	misclog(const char *, ...) __printflike(1, 2);
+void	debuglog(const char *, ...) __printflike(1, 2);
 void	quit(void) __dead;
 void	quitsig(int) __dead;
 void	whatsup(int);

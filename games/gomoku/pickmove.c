@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.15 2009/06/04 05:43:29 dholland Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.16 2009/06/04 06:27:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.15 2009/06/04 05:43:29 dholland Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.16 2009/06/04 06:27:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,13 +100,12 @@ pickmove(int us)
 			continue;
 		if (debug && (sp->s_combo[BLACK].c.a == 1 ||
 		    sp->s_combo[WHITE].c.a == 1)) {
-			sprintf(fmtbuf, "- %s %x/%d %d %x/%d %d %d", stoc(sp - board),
+			debuglog("- %s %x/%d %d %x/%d %d %d", stoc(sp - board),
 				sp->s_combo[BLACK].s, sp->s_level[BLACK],
 				sp->s_nforce[BLACK],
 				sp->s_combo[WHITE].s, sp->s_level[WHITE],
 				sp->s_nforce[WHITE],
 				sp->s_wval);
-			dlog(fmtbuf);
 		}
 		/* pick the best black move */
 		if (better(sp, sp1, BLACK))
@@ -117,20 +116,18 @@ pickmove(int us)
 	}
 
 	if (debug) {
-		sprintf(fmtbuf, "B %s %x/%d %d %x/%d %d %d",
+		debuglog("B %s %x/%d %d %x/%d %d %d",
 			stoc(sp1 - board),
 			sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
 			sp1->s_nforce[BLACK],
 			sp1->s_combo[WHITE].s, sp1->s_level[WHITE],
 			sp1->s_nforce[WHITE], sp1->s_wval);
-		dlog(fmtbuf);
-		sprintf(fmtbuf, "W %s %x/%d %d %x/%d %d %d",
+		debuglog("W %s %x/%d %d %x/%d %d %d",
 			stoc(sp2 - board),
 			sp2->s_combo[WHITE].s, sp2->s_level[WHITE],
 			sp2->s_nforce[WHITE],
 			sp2->s_combo[BLACK].s, sp2->s_level[BLACK],
 			sp2->s_nforce[BLACK], sp2->s_wval);
-		dlog(fmtbuf);
 		/*
 		 * Check for more than one force that can't
 		 * all be blocked with one move.
@@ -138,7 +135,7 @@ pickmove(int us)
 		sp = (us == BLACK) ? sp2 : sp1;
 		m = sp - board;
 		if (sp->s_combo[!us].c.a == 1 && !BIT_TEST(forcemap, m))
-			dlog("*** Can't be blocked");
+			debuglog("*** Can't be blocked");
 	}
 	if (us == BLACK) {
 		Ocp = &sp1->s_combo[BLACK];
@@ -329,9 +326,8 @@ scanframes(int color)
 	d = 2;
 	while (d <= ((movenum + 1) >> 1) && combolen > n) {
 		if (debug) {
-			sprintf(fmtbuf, "%cL%d %d %d %d", "BW"[color],
+			debuglog("%cL%d %d %d %d", "BW"[color],
 				d, combolen - n, combocnt, elistcnt);
-			dlog(fmtbuf);
 			refresh();
 		}
 		n = combolen;
@@ -388,15 +384,13 @@ scanframes(int color)
 
 #ifdef DEBUG
 	if (combocnt) {
-		sprintf(fmtbuf, "scanframes: %c combocnt %d", "BW"[color],
+		debuglog("scanframes: %c combocnt %d", "BW"[color],
 			combocnt);
-		dlog(fmtbuf);
 		whatsup(0);
 	}
 	if (elistcnt) {
-		sprintf(fmtbuf, "scanframes: %c elistcnt %d", "BW"[color],
+		debuglog("scanframes: %c elistcnt %d", "BW"[color],
 			elistcnt);
-		dlog(fmtbuf);
 		whatsup(0);
 	}
 #endif
@@ -500,14 +494,13 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		combocnt++;
 
 		if ((c == 1 && debug > 1) || debug > 3) {
-		    sprintf(fmtbuf, "%c c %d %d m %x %x o %d %d",
+		    debuglog(fmtbuf, "%c c %d %d m %x %x o %d %d",
 			"bw"[curcolor],
 			ncbp->c_framecnt[0], ncbp->c_framecnt[1],
 			ncbp->c_emask[0], ncbp->c_emask[1],
 			ncbp->c_voff[0], ncbp->c_voff[1]);
-		    dlog(fmtbuf);
 		    printcombo(ncbp, fmtbuf);
-		    dlog(fmtbuf);
+		    debuglog("%s", fmtbuf);
 		}
 		if (c > 1) {
 		    /* record the empty spots that will complete this combo */
@@ -665,9 +658,8 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		sp = &board[vertices[0].o_intersect];
 #ifdef DEBUG
 		if (sp->s_occ != EMPTY) {
-		    sprintf(fmtbuf, "loop: %c %s", "BW"[curcolor],
+		    debuglog("loop: %c %s", "BW"[curcolor],
 			stoc(sp - board));
-		    dlog(fmtbuf);
 		    whatsup(0);
 		}
 #endif
@@ -747,14 +739,13 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	    }
 
 	    if ((c == 1 && debug > 1) || debug > 3) {
-		sprintf(fmtbuf, "%c v%d i%d d%d c %d %d m %x %x o %d %d",
+		debuglog("%c v%d i%d d%d c %d %d m %x %x o %d %d",
 		    "bw"[curcolor], verts, ncbp->c_frameindex, ncbp->c_dir,
 		    ncbp->c_framecnt[0], ncbp->c_framecnt[1],
 		    ncbp->c_emask[0], ncbp->c_emask[1],
 		    ncbp->c_voff[0], ncbp->c_voff[1]);
-		dlog(fmtbuf);
 		printcombo(ncbp, fmtbuf);
-		dlog(fmtbuf);
+		debuglog("%s", fmtbuf);
 	    }
 	    if (c > 1) {
 		/* record the empty spots that will complete this combo */
@@ -793,9 +784,8 @@ makeempty(struct combostr *ocbp)
 	int nframes;
 
 	if (debug > 2) {
-		sprintf(fmtbuf, "E%c ", "bw"[curcolor]);
-		printcombo(ocbp, fmtbuf + 3);
-		dlog(fmtbuf);
+		printcombo(ocbp, fmtbuf);
+		debuglog("E%c %s", "bw"[curcolor], fmtbuf);
 	}
 
 	/* should never happen but check anyway */
@@ -917,14 +907,13 @@ makeempty(struct combostr *ocbp)
 			}
 			nep->e_fval.s = ep->e_fval.s;
 			if (debug > 2) {
-				sprintf(fmtbuf, "e %s o%d i%d c%d m%x %x",
+				debuglog("e %s o%d i%d c%d m%x %x",
 					stoc(sp - board),
 					nep->e_off,
 					nep->e_frameindex,
 					nep->e_framecnt,
 					nep->e_emask,
 					nep->e_fval.s);
-				dlog(fmtbuf);
 			}
 
 			/* sort by the number of frames in the combo */
@@ -1209,16 +1198,15 @@ sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 	if (debug > 3) {
 		char *str;
 
-		sprintf(fmtbuf, "sortc: %s%c l%d", stoc(fcbp->c_vertex),
+		debuglog("sortc: %s%c l%d", stoc(fcbp->c_vertex),
 			pdir[fcbp->c_dir], curlevel);
-		dlog(fmtbuf);
 		str = fmtbuf;
 		for (cpp = cbpp; cpp < cbpp + curlevel; cpp++) {
 			sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
 				pdir[(*cpp)->c_dir]);
 			str += strlen(str);
 		}
-		dlog(fmtbuf);
+		debuglog("%s", fmtbuf);
 	}
 #endif /* DEBUG */
 
@@ -1268,17 +1256,16 @@ inserted:
 		if (debug > 3) {
 			char *str;
 
-			sprintf(fmtbuf, "sort1: n%d", n);
-			dlog(fmtbuf);
+			debuglog("sort1: n%d", n);
 			str = fmtbuf;
 			for (cpp = scbpp; cpp < scbpp + n; cpp++) {
 				sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
 					pdir[(*cpp)->c_dir]);
 				str += strlen(str);
 			}
-			dlog(fmtbuf);
+			debuglog("%s", fmtbuf);
 			printcombo(cbp, fmtbuf);
-			dlog(fmtbuf);
+			debuglog("%s", fmtbuf);
 			str = fmtbuf;
 			cbpp--;
 			for (cpp = cbpp; cpp < cbpp + n; cpp++) {
@@ -1286,7 +1273,7 @@ inserted:
 					pdir[(*cpp)->c_dir]);
 				str += strlen(str);
 			}
-			dlog(fmtbuf);
+			debuglog("%s", fmtbuf);
 		}
 #endif /* DEBUG */
 		return (1);
