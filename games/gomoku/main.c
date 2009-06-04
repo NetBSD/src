@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2009/06/04 06:27:47 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2009/06/04 06:47:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2009/06/04 06:27:47 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2009/06/04 06:47:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,6 @@ FILE	*debugfp;		/* file for debug output */
 FILE	*inputfp;		/* file for debug input */
 
 const char	pdir[4]		= "-\\|/";
-char	fmtbuf[128];
 
 struct	spotstr	board[BAREA];		/* info for board */
 struct	combostr frames[FAREA];		/* storage for all frames */
@@ -333,14 +332,15 @@ again:
 int
 readinput(FILE *fp)
 {
-	char *cp;
 	int c;
+	char buf[128];
+	size_t pos;
 
-	cp = fmtbuf;
-	while ((c = getc(fp)) != EOF && c != '\n')
-		*cp++ = c;
-	*cp = '\0';
-	return (ctos(fmtbuf));
+	pos = 0;
+	while ((c = getc(fp)) != EOF && c != '\n' && pos < sizeof(buf) - 1)
+		buf[pos++] = c;
+	buf[pos] = '\0';
+	return ctos(buf);
 }
 
 #ifdef DEBUG
