@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.21 2007/12/15 19:44:39 perry Exp $	*/
+/*	$NetBSD: io.c,v 1.22 2009/06/04 04:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.21 2007/12/15 19:44:39 perry Exp $");
+__RCSID("$NetBSD: io.c,v 1.22 2009/06/04 04:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,7 +367,7 @@ msg(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	(void)vsnprintf(&Msgbuf[Newpos], sizeof(Msgbuf)-Newpos, fmt, ap);
 	Newpos = strlen(Msgbuf);
 	va_end(ap);
 	endmsg();
@@ -383,7 +383,7 @@ addmsg(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	(void)vsnprintf(&Msgbuf[Newpos], sizeof(Msgbuf)-Newpos, fmt, ap);
 	Newpos = strlen(Msgbuf);
 	va_end(ap);
 }
