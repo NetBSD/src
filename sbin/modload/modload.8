@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.31 2009/05/19 22:39:52 wiz Exp $
+.\" $NetBSD: modload.8,v 1.32 2009/06/04 02:57:01 jnemeth Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd May 19, 2009
+.Dd June 3, 2009
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Ar module
 .Nm
 .Fl p
+.Op Fl m Ar plist
 .Op Fl b Ar var=boolean
 .Op Fl i Ar var=integer
 .Op Fl s Ar var=string
@@ -85,6 +86,11 @@ Pass the module an integer property with the name
 .Ar var
 and integral value
 .Ar integer .
+.It Fl m Ar plist
+When used in conjuction with
+.Fl p
+merge new options with an existing property list contained in
+.Ar plist .
 .It Fl p
 Output a property list suitable for loading along with a module.
 When using this option, you do not need to specify a module.
