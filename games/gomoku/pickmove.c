@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.13 2008/01/28 07:01:01 dholland Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.14 2009/06/04 05:27:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.13 2008/01/28 07:01:01 dholland Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.14 2009/06/04 05:27:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,7 @@ int	tmpmap[MAPSZ];			/* map for blocking <1,x> combos */
 int	nforce;				/* count of opponent <1,x> combos */
 
 int
-pickmove(us)
-	int us;
+pickmove(int us)
 {
 	struct spotstr *sp, *sp1, *sp2;
 	union comboval *Ocp, *Tcp;
@@ -166,10 +165,7 @@ pickmove(us)
  * Return true if spot 'sp' is better than spot 'sp1' for color 'us'.
  */
 int
-better(sp, sp1, us)
-	const struct spotstr *sp;
-	const struct spotstr *sp1;
-	int us;
+better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 {
 	int them, s, s1;
 
@@ -227,8 +223,7 @@ int	curlevel;	/* implicit parameter to makecombo() */
  * Also, try to combine frames to find more complex (chained) moves.
  */
 void
-scanframes(color)
-	int color;
+scanframes(int color)
 {
 	struct combostr *cbp, *ecbp;
 	struct spotstr *sp;
@@ -412,11 +407,7 @@ scanframes(color)
  * within the frame 'ocbp' and combo value 's'.
  */
 void
-makecombo2(ocbp, osp, off, s)
-	struct combostr *ocbp;
-	struct spotstr *osp;
-	int off;
-	int s;
+makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 {
 	struct spotstr *fsp;
 	struct combostr *ncbp;
@@ -546,8 +537,7 @@ makecombo2(ocbp, osp, off, s)
  * combinations of 'level' number of frames.
  */
 void
-addframes(level)
-	int level;
+addframes(int level)
 {
 	struct combostr *cbp, *ecbp;
 	struct spotstr *sp, *fsp;
@@ -647,11 +637,7 @@ addframes(level)
  * within the frame 'ocbp' and combo value 's'.
  */
 void
-makecombo(ocbp, osp, off, s)
-	struct combostr *ocbp;
-	struct spotstr *osp;
-	int off;
-	int s;
+makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 {
 	struct combostr *cbp, *ncbp;
 	struct spotstr *sp;
@@ -798,8 +784,7 @@ struct combostr	*ecombo[MAXDEPTH];	/* separate from elist to save space */
  * in 'ocbp' that will complete the combo.
  */
 void
-makeempty(ocbp)
-	struct combostr *ocbp;
+makeempty(struct combostr *ocbp)
 {
 	struct combostr *cbp, *tcbp, **cbpp;
 	struct elist *ep, *nep;
@@ -957,9 +942,7 @@ makeempty(ocbp)
  * would be trying to "complete" the combo or trying to block it.
  */
 void
-updatecombo(cbp, color)
-	struct combostr *cbp;
-	int color;
+updatecombo(struct combostr *cbp, int color)
 {
 	struct spotstr *sp;
 	struct combostr *tcbp;
@@ -1048,9 +1031,7 @@ updatecombo(cbp, color)
  * Add combo to the end of the list.
  */
 void
-appendcombo(cbp, color)
-	struct combostr *cbp;
-	int color __unused;
+appendcombo(struct combostr *cbp, int color __unused)
 {
 	struct combostr *pcbp, *ncbp;
 
@@ -1079,12 +1060,8 @@ appendcombo(cbp, color)
  * 's' is the combo value for frame 'fcpb'.
  */
 int
-checkframes(cbp, fcbp, osp, s, vertices)
-	struct combostr *cbp;
-	struct combostr *fcbp;
-	struct spotstr *osp;
-	int s;
-	struct ovlp_info *vertices;
+checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
+	    int s, struct ovlp_info *vertices)
 {
 	struct combostr *tcbp, *lcbp;
 	int i, n, mask, flg, verts, loop, myindex, fcnt;
@@ -1221,10 +1198,8 @@ checkframes(cbp, fcbp, osp, s, vertices)
  * Otherwise, add the new combo to the hash list.
  */
 int
-sortcombo(scbpp, cbpp, fcbp)
-	struct combostr **scbpp;
-	struct combostr **cbpp;
-	struct combostr *fcbp;
+sortcombo(struct combostr **scbpp, struct combostr **cbpp,
+	  struct combostr *fcbp)
 {
 	struct combostr **spp, **cpp;
 	struct combostr *cbp, *ecbp;
@@ -1335,9 +1310,7 @@ inserted:
  * Print the combo into string 'str'.
  */
 void
-printcombo(cbp, str)
-	struct combostr *cbp;
-	char *str;
+printcombo(struct combostr *cbp, char *str)
 {
 	struct combostr *tcbp;
 
@@ -1353,8 +1326,7 @@ printcombo(cbp, str)
 
 #ifdef DEBUG
 void
-markcombo(ocbp)
-	struct combostr *ocbp;
+markcombo(struct combostr *ocbp)
 {
 	struct combostr *cbp, *tcbp, **cbpp;
 	struct elist *ep, *nep, **epp;
@@ -1468,9 +1440,7 @@ markcombo(ocbp)
 }
 
 void
-clearcombo(cbp, open)
-	struct combostr *cbp;
-	int open;
+clearcombo(struct combostr *cbp, int open)
 {
 	struct spotstr *sp;
 	struct combostr *tcbp;
@@ -1489,10 +1459,7 @@ clearcombo(cbp, open)
 }
 
 int
-list_eq(scbpp, cbpp, n)
-	struct combostr **scbpp;
-	struct combostr **cbpp;
-	int n;
+list_eq(struct combostr **scbpp, struct combostr **cbpp, int n)
 {
 	struct combostr **spp, **cpp;
 
