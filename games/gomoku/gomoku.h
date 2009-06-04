@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.13 2009/06/04 06:27:47 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.14 2009/06/04 06:41:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -290,7 +290,7 @@ void	makeempty(struct combostr *);
 void	appendcombo(struct combostr *, int);
 void	updatecombo(struct combostr *, int);
 void	markcombo(struct combostr *);
-void	printcombo(struct combostr *, char *);
+void	printcombo(struct combostr *, char *, size_t);
 void	makecombo(struct combostr *, struct spotstr *, int, int);
 void	makecombo2(struct combostr *, struct spotstr *, int, int);
 int	sortcombo(struct combostr **, struct combostr **, struct combostr *);
