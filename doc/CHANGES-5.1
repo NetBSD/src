@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.25 2009/06/01 17:29:29 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.26 2009/06/05 18:59:33 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -810,4 +810,55 @@ sys/fs/udf/udf_subr.c				1.91
 	Retire IN_CALLBACK_ULK flagging since its not used anymore and the
 	old assertions on it would trigger without cause.
 	[reinoud, ticket #772]
+
+sys/netinet/ip_carp.c				1.37
+
+	PR/38260: Improve carp logging.
+	[christos, ticket #785]
+
+sys/arch/sparc64/include/cpu.h			1.86
+sys/arch/sparc64/sparc64/locore.s		1.291
+sys/arch/sparc64/sparc64/vm_machdep.c		1.89
+
+	cpu_setfunc() can not use lwp_trampoline, as that has additional
+	lwp startup semantics. Use a simpler setfunc_trampoline instead.
+	[martin, ticket #786]
+
+sys/arch/m68k/include/m68k.h			1.14
+sys/arch/m68k/m68k/switch_subr.s		1.22
+sys/arch/m68k/m68k/vm_machdep.c			1.28
+
+	Do not use lwp_trampoline for cpu_setfunc, we do not want to call
+	lwp_startup() after a setfunc. Grow a simplified setfunc_trampoline
+	instead.
+	[martin, ticket #787]
+
+sys/dev/pci/if_wm.c				1.175 via patch
+sys/net/agr/ieee8023ad_lacp.c			1.9 via patch
+sys/net/agr/if_agr.c				1.23 via patch
+sys/net/agr/if_agrether.c			1.7 via patch
+sys/net/agr/if_agrvar_impl.h			1.8 via patch
+sys/net/if_ethersubr.c				1.172 via patch
+
+	Add vlan support and hardware offload capabilities to agr.
+	These changes allow vlans to be layered above agr, with the attach
+	and detach propogated to the member ports in the aggregation.
+	Note the agr interface must be up before the vlan is attached.
+
+	Adds SIOCSIFADDR support to the wm driver for setting the AF_LINK
+	address, necessary for agr to be able to set the mac addresses of
+	each port to the agr address (i.e. so it can receive all intended
+	traffic at the hardware level).
+
+	Adds support for disabling the LACP protocol by setting LINK1 on
+	the agr interface (e.g. ifconfig agr0 link1).
+	[darran, ticket #792]
+
+sys/arch/hp700/hp700/locore.S			1.35
+sys/arch/hp700/include/cpu.h			1.34
+sys/arch/hppa/hppa/vm_machdep.c			1.36
+
+	Do not use lwp_trampoline for cpu_setfunc, but a simplified
+	setfunc_trampoline that does not call lwp_startup().
+	[skrll, ticket #793]
 
