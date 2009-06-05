@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.13 2009/06/05 19:56:40 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.14 2009/06/05 21:52:31 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ struct cmd_function {
 };
 
 /* device-mapper */
-void dmgetdisklabel(struct disklabel *, dm_table_head_t *);
+void dmgetproperties(struct disk *, dm_table_head_t *);
 
 /* dm_ioctl.c */
 int dm_dev_create_ioctl(prop_dictionary_t);
