@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 2008/10/17 12:35:12 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.4.1 2009/06/05 18:54:58 snj Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33 2008/10/17 12:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.4.1 2009/06/05 18:54:58 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,11 +204,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	osp = sp;
 
-	/* lwp_trampoline's frame */
+	/* setfunc_trampoline's frame */
 	sp += HPPA_FRAME_SIZE;
 
 	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
+	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)setfunc_trampoline;
 
 	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
