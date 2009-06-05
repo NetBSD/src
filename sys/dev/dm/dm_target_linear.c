@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.4 2009/03/01 23:17:39 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.5 2009/06/05 19:56:40 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 #include <machine/int_fmtio.h>
 
+#include "netbsd-dm.h"
 #include "dm.h"
 
 /*
@@ -54,32 +55,28 @@
  * @argv[1] is physical data offset.
  */
 int
-dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
+dm_target_linear_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dict)
 {
 	dm_target_linear_config_t *tlc;
 	dm_pdev_t *dmp;
 
-	char **ap, *argv[3];
-
-	if(params == NULL)
-		return EINVAL;
+	const char *device;
+	uint64_t offset;
 	
-	/*
-	 * Parse a string, containing tokens delimited by white space,
-	 * into an argument vector
-	 */
-	for (ap = argv; ap < &argv[2] &&
-		 (*ap = strsep(&params, " \t")) != NULL;) {
-		if (**ap != '\0')
-			ap++;
-	}
+	if (prop_dictionary_get_cstring_nocopy(dict, DM_TARGET_LINEAR_DEVICE,
+		&device) == false)
+		return EINVAL;
+		
+	if (prop_dictionary_get_uint64(dict, DM_TARGET_LINEAR_OFFSET,
+		&offset) == false)
+		return EINVAL;
 
 	/* Insert dmp to global pdev list */
-	if ((dmp = dm_pdev_insert(argv[0])) == NULL)
+	if ((dmp = dm_pdev_insert(device)) == NULL)
 		return ENOENT;
 	
-	aprint_debug("Linear target init function called %s--%s!!\n",
-	    argv[0], argv[1]);
+	aprint_debug("Linear target init function called %s--%"PRIu64"!!\n",
+	    device, offset);
 	
 	if ((tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_NOSLEEP))
 	    == NULL)
@@ -89,7 +86,7 @@ dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
 	tlc->offset = 0; 	/* default settings */
 	
 	/* Check user input if it is not leave offset as 0. */
-	tlc->offset = atoi(argv[1]);
+	tlc->offset = offset;
 
 	*target_config = tlc;    
 
@@ -108,28 +105,16 @@ dm_target_linear_status(void *target_config)
 {
 	dm_target_linear_config_t *tlc;
 	char *params;
-	uint32_t i;
-	uint32_t count;
-	size_t prm_len;
-	
 	tlc = target_config;    
-	prm_len = 0;
-	count = 0;
-
-	/* count number of chars in offset */
-	for(i = tlc->offset; i != 0; i /= 10)
-		count++;
-	
+		
 	aprint_debug("Linear target status function called\n");
 
-	/* length of name + count of chars + one space and null char */
-	prm_len = strlen(tlc->pdev->name) + count + 2;
-
-	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
+	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_NOSLEEP)) == NULL)
 		return NULL;
 
-	aprint_debug("%s %"PRIu64, tlc->pdev->name, tlc->offset);
-	snprintf(params, prm_len,"%s %"PRIu64, tlc->pdev->name, tlc->offset);
+	aprint_normal("%s %"PRIu64, tlc->pdev->name, tlc->offset);
+	snprintf(params, DM_MAX_PARAMS_SIZE,"%s %"PRIu64, 
+		tlc->pdev->name, tlc->offset);
 	
 	return params;
 }
