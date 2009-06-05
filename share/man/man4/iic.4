@@ -1,0 +1,178 @@
+.\"	$NetBSD: iic.4,v 1.1 2009/06/05 07:21:14 hubertf Exp $
+.\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
+.\"
+.\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
+.\" Copyright (c) 2009 Hubert Feyrer <hubertf@NetBSD.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd June 4, 2009
+.Dt IIC 4
+.Os
+.Sh NAME
+.Nm iic
+.Nd Inter IC (I2C) bus
+.Sh SYNOPSIS
+.\"
+.\" Use the following commands in (t)csh to output the list below:
+.\" cd .../src/sys/arch
+.\" grep -h '^iic.*at' */conf/* | sort -u -k +3 | sed -e 's,[         ][      ]*, ,g' -e 's, *#.*,,' | sh -c 'while read iic at ic ; do printf ".Cd \"$iic $at %-20s # %s\"\n" "$ic" "`grep \"iic.*at.*$ic\" */conf/* | sed \"s,/.*,,\" | sort -u | tr \"\012\" \ `"  ; done' | uniq | tee /tmp/x
+.\" cat /tmp/x
+.\"
+.Cd "iic* at alipm?               # sparc64 "
+.Cd "iic* at amdpm?               # amd64 i386 "
+.Cd "iic* at armadillo9iic?       # evbarm "
+.Cd "iic0 at at91twi?             # evbarm "
+.Cd "iic0 at ausmbus0             # evbmips "
+.Cd "iic0 at cuda0                # macppc "
+.Cd "iic0 at gpiic?               # evbppc "
+.Cd "iic* at gtiic?               # evbppc "
+.Cd "iic* at gxiic?               # evbarm "
+.Cd "iic* at ichsmb?              # amd64 i386 "
+.Cd "iic0 at iociic0              # acorn26 "
+.Cd "iic0 at iomdiic?             # acorn32 "
+.Cd "iic0 at iopiic?              # evbarm iyonix "
+.Cd "iic* at ki2c?                # macppc "
+.Cd "iic* at nfsmb?               # amd64 i386 "
+.Cd "iic* at ociic?               # sandpoint "
+.Cd "iic* at piixpm?              # amd64 i386 "
+.Cd "iic0 at slugiic0             # evbarm "
+.Cd "iic* at viapcib?             # i386 "
+.Sh DESCRIPTION
+.Tn I2C
+is a two-wire bus developed by Philips used for connecting
+integrated circuits.
+It is commonly used for connecting devices such as EEPROMs,
+temperature sensors, fan controllers, real-time clocks, tuners,
+and other types of integrated circuits.
+.Pp
+The
+.Nm
+driver provides a uniform programming interface layer between
+.Tn I2C
+master controllers and various
+.Tn I2C
+slave devices.
+Each
+.Tn I2C
+master controller attaches an
+.Nm
+framework; several slave devices can then be attached to the
+.Nm
+bus.
+.Pp
+All
+.Tn I2C
+slave devices are uniquely identified by the address on the bus.
+The master accesses a particular slave device using its address.
+.\" Devices are found on the bus using a sophisticated scanning routine
+.\" which attempts to identify commonly available devices.
+.\" On other machines (such as sparc64 and macppc) where the machine ROM
+.\" supplies a list of I2C devices, that list is used instead.
+.Pp
+System Management Bus (SMBus) protocol is also supported by emulating
+it with the
+.Tn I2C
+commands.
+.Sh SUPPORTED MASTERS
+A wide list of I2C masters are supported, among them
+are:
+.\"
+.\" Generate the following list with these (t)csh commands:
+.\" cd .../src/sys/arch
+.\" grep -h '^iic.*at' */conf/* | awk '{print $3}' | sed 's,.$,,' | sort -u | sh -c 'while read i ; do echo .It Xr $i 4; n=`grep -h ^.Nd ../../share/man/man4/$i* | sed "s,^.Nd ,,"`; if [ -n "$n" ]; then echo $n ; else echo "" ; fi ; done' | tee /tmp/x
+.\" cat /tmp/x
+.\"
+.Bl -tag -width 18n -compact
+.It Xr alipm 4
+Acer Labs M7101 SMBus controller
+.It Xr amdpm 4
+AMD768 Power Management Controller and AMD8111 System Management Controller
+.It Xr armadillo9iic 4
+
+.It Xr at91twi 4
+
+.It Xr ausmbus 4
+
+.It Xr cuda 4
+support for CUDA microcontrollers found in many Power Macintosh and
+.It Xr gpiic 4
+
+.It Xr gtiic 4
+
+.It Xr gxiic 4
+
+.It Xr ichsmb 4
+Intel ICH SMBus controller
+.It Xr iociic 4
+
+.It Xr iomdiic 4
+
+.It Xr iopiic 4
+
+.It Xr ki2c 4
+
+.It Xr nfsmb 4
+NVIDIA nForce 2/3/4 SMBus controller and SMBus driver
+.It Xr ociic 4
+
+.It Xr piixpm 4
+Intel PIIX and compatible Power Management controller
+.It Xr slugiic 4
+
+.It Xr viapcib 4
+
+.El
+.Sh SUPPORTED SLAVES
+A wide list of slaves are supported, among them:
+.\" 
+.\" Create the following list with these commands:
+.\" cd .../src/sys/arch
+.\" grep -h '.* at iic.*' */conf/* | sed -e 's,^#,,' -e 's, .*,,' -e 's,.$,,' | sort -u | sh -c 'while read i ; do echo .It Xr $i 4 ; n=`grep ^.Nd ../../share/man/man4/$i* | sed "s,^.Nd ,,"` ; if [ -n "$n" ]; then echo $n ; else echo "" ; fi ; done' | tee /tmp/x
+.\" cat /tmp/x
+.\" 
+.Bl -tag -width 13n -compact
+.It Xr dbcool 4
+dbCool(tm) family of environmental monitors and fan controllers
+.It Xr rs5c372rtc 4
+RICOH RS5C372A and RS5C372B real-time clock
+.It Xr sgsmix 4
+driver for SGS 7433 Basic Audio Processor found in some Apple machines
+.It Xr spdmem 4
+Generic Memory Module Serial Presence Detect
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr iic 9
+.Sh HISTORY
+The
+.Tn I2C
+framework first appeared in
+.Nx 2.0 .
+.Ox
+support was added in
+.Ox 3.6 .
+This manpage first appeared in
+.Nx 6.0 ,
+it was ported from
+.Ox .
+.Sh AUTHORS
+The
+.Tn I2C
+framework was written by
+Steve C. Woodford and Jason R. Thorpe for
+.Nx
+and then ported to
+.Ox
+by
+.An Alexander Yurchenko Aq grange@openbsd.org .
