@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.16 2009/05/30 16:51:50 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.17 2009/06/05 18:58:54 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -292,4 +292,29 @@ usr.sbin/puffs/mount_sysctlfs/sysctlfs.c	1.11
 	Fix a crash while trying to read nodes on amd64, reported in
 	PR/41494.
 	[njoly, ticket #783]
+
+sys/arch/sparc64/include/cpu.h			1.86
+sys/arch/sparc64/sparc64/locore.s		1.291
+sys/arch/sparc64/sparc64/vm_machdep.c		1.89
+
+	cpu_setfunc() can not use lwp_trampoline, as that has additional
+	lwp startup semantics. Use a simpler setfunc_trampoline instead.
+	[martin, ticket #786]
+
+sys/arch/m68k/include/m68k.h			1.14
+sys/arch/m68k/m68k/switch_subr.s		1.22
+sys/arch/m68k/m68k/vm_machdep.c			1.28
+
+	Do not use lwp_trampoline for cpu_setfunc, we do not want to call
+	lwp_startup() after a setfunc. Grow a simplified setfunc_trampoline
+	instead.
+	[martin, ticket #787]
+
+sys/arch/hp700/hp700/locore.S			1.35
+sys/arch/hp700/include/cpu.h			1.34
+sys/arch/hppa/hppa/vm_machdep.c			1.36
+
+	Do not use lwp_trampoline for cpu_setfunc, but a simplified
+	setfunc_trampoline that does not call lwp_startup().
+	[skrll, ticket #793]
 
