@@ -1,4 +1,4 @@
-/*	$NetBSD: dm-ioctl.h,v 1.1.1.1 2008/12/22 00:18:43 haad Exp $	*/
+/*	$NetBSD: dm-ioctl.h,v 1.2 2009/06/05 20:11:21 haad Exp $	*/
 
 /*
  * Copyright (C) 2001 - 2003 Sistina Software (UK) Limited.
@@ -260,7 +260,7 @@ enum {
 #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
 
 #define DM_VERSION_MAJOR	4
-#define DM_VERSION_MINOR	14
+#define DM_VERSION_MINOR	15
 #define DM_VERSION_PATCHLEVEL	0
 #define DM_VERSION_EXTRA	"-ioctl (2008-04-23)"
 
