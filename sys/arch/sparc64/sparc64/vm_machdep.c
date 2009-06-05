@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.84.4.1 2009/05/26 19:19:53 snj Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.84.4.2 2009/06/05 18:28:34 snj Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84.4.1 2009/05/26 19:19:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84.4.2 2009/06/05 18:28:34 snj Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -162,6 +162,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 char cpu_forkname[] = "cpu_lwp_fork()";
 #endif
 
+void setfunc_trampoline(void);
 inline void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
@@ -171,9 +172,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (long)func;		/* Function to call */
 	rp->rw_local[1] = (long)arg;		/* and its argument */
-	rp->rw_local[2] = (long)l;		/* new lwp */
 
-	npcb->pcb_pc = (long)lwp_trampoline - 8;
+	npcb->pcb_pc = (long)setfunc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }
 
@@ -195,6 +195,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
+void lwp_trampoline(void);
 void
 cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	register struct lwp *l1, *l2;
@@ -284,7 +285,12 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
 	*rp = *(struct rwindow *)((u_long)opcb + TOPFRAMEOFF);
 
-	cpu_setfunc(l2, func, arg);
+	rp->rw_local[0] = (long)func;	/* Function to call */
+	rp->rw_local[1] = (long)arg;	/* and its argument */
+	rp->rw_local[2] = (long)l2;	/* new lwp */
+
+	npcb->pcb_pc = (long)lwp_trampoline - 8;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }
 
 static inline void
