@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2009/06/05 09:31:07 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2009/06/05 11:37:30 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,10 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.9 2009/06/05 09:31:07 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2009/06/05 11:37:30 jnemeth Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
+#include <sys/queue.h>
 
 #include <assert.h>
 #include <stdbool.h>
@@ -59,24 +60,40 @@ static void	merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 int
 main(int argc, char **argv)
 {
+	SIMPLEQ_HEAD(del_head, del_item) del_head;
 	modctl_load_t cmdargs;
 	prop_dictionary_t ext_props, props;
-	bool merge_props, output_props;
+	bool del_props, merge_props, output_props;
 	const char *ext_file;
 	char *propsstr;
 	int ch;
 	int flags;
 
+	struct del_item {
+		SIMPLEQ_ENTRY(del_item) del_items;
+		const char *del_key;
+	} *delp;
+
+	SIMPLEQ_INIT(&del_head);
 	ext_file = NULL;
 	ext_props = NULL;
 	props = prop_dictionary_create();
-	merge_props = output_props = false;
+	del_props = merge_props = output_props = false;
 	flags = 0;
 
-	while ((ch = getopt(argc, argv, "b:fi:m:ps:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:d:fi:m:ps:")) != -1) {
 		switch (ch) {
 		case 'b':
 			parse_param(props, optarg, parse_bool_param);
+			break;
+
+		case 'd':
+			del_props = true;
+			delp = malloc(sizeof(struct del_item));
+			if (delp == NULL)
+				errx(EXIT_FAILURE, "Out of memory");
+			delp->del_key = optarg;
+			SIMPLEQ_INSERT_TAIL(&del_head, delp, del_items);
 			break;
 
 		case 'f':
@@ -124,7 +141,16 @@ main(int argc, char **argv)
 
 			free(propsstr);
 			merge_dicts(ext_props, props);
+
+			if (del_props)
+				SIMPLEQ_FOREACH(delp, &del_head, del_items)
+					prop_dictionary_remove(ext_props,
+					    delp->del_key);
+
 			propsstr = prop_dictionary_externalize(ext_props);
+			if (propsstr == NULL)
+				errx(EXIT_FAILURE, "Failed to process "
+				    "properties");
 		}
 				
 		fputs(propsstr, stdout);
@@ -224,8 +250,8 @@ usage(void)
 	(void)fprintf(stderr,
 	    "Usage: %s [-f] [-b var=boolean] [-i var=integer] "
 	    "[-s var=string] module\n"
-	    "       %s -p [-b var=boolean] [-i var=integer] [-m plist] "
-	    "[-s var=string]\n",
+	    "       %s -p [-b var=boolean] [-d var] [-i var=integer] "
+	    "[-m plist]\n               [-s var=string]\n",
 	    getprogname(), getprogname());
 	exit(EXIT_FAILURE);
 }
