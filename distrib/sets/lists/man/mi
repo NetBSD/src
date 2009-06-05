@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1136 2009/05/09 15:04:25 pgoyette Exp $
+# $NetBSD: mi,v 1.1137 2009/06/05 07:21:14 hubertf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1074,6 +1074,7 @@
 ./usr/share/man/cat4/ifpci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igsfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iha.0			man-sys-catman		.cat
+./usr/share/man/cat4/iic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ikphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/imp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/inet.0			man-sys-catman		.cat
@@ -3639,6 +3640,7 @@
 ./usr/share/man/html4/ifpci.html		man-sys-htmlman		html
 ./usr/share/man/html4/igsfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/iha.html			man-sys-htmlman		html
+./usr/share/man/html4/iic.html			man-sys-htmlman		html
 ./usr/share/man/html4/ikphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/inet.html			man-sys-htmlman		html
 ./usr/share/man/html4/inet6.html		man-sys-htmlman		html
@@ -6044,6 +6046,7 @@
 ./usr/share/man/man4/ifpci.4			man-sys-man		.man
 ./usr/share/man/man4/igsfb.4			man-sys-man		.man
 ./usr/share/man/man4/iha.4			man-sys-man		.man
+./usr/share/man/man4/iic.4			man-sys-man		.man
 ./usr/share/man/man4/ikphy.4			man-sys-man		.man
 ./usr/share/man/man4/imp.4			man-obsolete		obsolete
 ./usr/share/man/man4/inet.4			man-sys-man		.man
