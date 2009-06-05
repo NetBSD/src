@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.169 2008/07/23 06:34:31 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.169.4.1 2009/06/05 18:49:42 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.169 2008/07/23 06:34:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.169.4.1 2009/06/05 18:49:42 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -735,6 +735,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 #endif
 
+#if NAGR > 0
+	if (ifp->if_agrprivate &&
+	    __predict_true(etype != ETHERTYPE_SLOWPROTOCOLS)) {
+		m->m_flags &= ~M_PROMISC;
+		agr_input(ifp, m);
+		return;
+	}
+#endif /* NAGR > 0 */
+
 	/*
 	 * If VLANs are configured on the interface, check to
 	 * see if the device performed the decapsulation and
@@ -752,15 +761,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 		return;
 	}
-
-#if NAGR > 0
-	if (ifp->if_agrprivate &&
-	    __predict_true(etype != ETHERTYPE_SLOWPROTOCOLS)) {
-		m->m_flags &= ~M_PROMISC;
-		agr_input(ifp, m);
-		return;
-	}
-#endif /* NAGR > 0 */
 
 	/*
 	 * Handle protocols that expect to have the Ethernet header

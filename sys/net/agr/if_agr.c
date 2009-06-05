@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.21 2008/05/19 02:53:47 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.21.8.1 2009/06/05 18:49:43 snj Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.21 2008/05/19 02:53:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.21.8.1 2009/06/05 18:49:43 snj Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.21 2008/05/19 02:53:47 yamt Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_ether.h>
 
 #if defined(INET)
 #include <netinet/in.h>
@@ -60,6 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.21 2008/05/19 02:53:47 yamt Exp $");
 #include <net/agr/if_agrioctl.h>
 #include <net/agr/if_agrsubr.h>
 #include <net/agr/if_agrethervar.h>
+
+#include "vlan.h"
+#if NVLAN > 0
+#include <net/if_vlanvar.h>
+#endif
 
 void agrattach(int);
 
@@ -81,6 +87,9 @@ static int agr_config_promisc(struct agr_softc *);
 static int agrport_config_promisc_callback(struct agr_port *, void *);
 static int agrport_config_promisc(struct agr_port *, bool);
 static int agrport_cleanup(struct agr_softc *, struct agr_port *);
+static int agr_vlan_add(struct agr_port *, void *);
+static int agr_vlan_del(struct agr_port *, void *);
+static void agr_vlan_check(struct ifnet *, struct agr_softc *);
 
 static struct if_clone agr_cloner =
     IF_CLONE_INITIALIZER("agr", agr_clone_create, agr_clone_destroy);
@@ -109,6 +118,9 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 {
 	struct agr_port *port;
 	struct ifnet *ifp;
+#if NVLAN > 0
+	struct m_tag *mtag;
+#endif
 
 	port = ifp_port->if_agrprivate;
 	KASSERT(port);
@@ -125,6 +137,15 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
 		bpf_mtap(ifp->if_bpf, m);
+	}
+#endif
+
+#if NVLAN > 0
+	/* got a vlan packet? */
+	if ((mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
+	    	/* vlan_input will call ether_input */
+		vlan_input(ifp, m);
+		return;
 	}
 #endif
 
@@ -212,6 +233,96 @@ agrport_ioctl(struct agr_port *port, u_long cmd, void *arg)
 /*
  * INTERNAL FUNCTIONS
  */
+
+/*
+ * Enable vlan hardware assist for the specified port.
+ */
+static int
+agr_vlan_add(struct agr_port *port, void *arg)
+{
+	struct ifnet *ifp = port->port_ifp;
+	struct ethercom *ec_port = (void *)ifp;
+	struct ifreq ifr;
+	int error=0;
+
+	if (ec_port->ec_nvlans++ == 0 &&
+	    (ec_port->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
+		struct ifnet *p = port->port_ifp;
+		/*
+		 * Enable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
+		if (p->if_flags & IFF_UP) {
+			ifr.ifr_flags = p->if_flags;
+			error = (*p->if_ioctl)(p, SIOCSIFFLAGS,
+			    (void *) &ifr);
+			if (error) {
+				if (ec_port->ec_nvlans-- == 1)
+					ec_port->ec_capenable &=
+					    ~ETHERCAP_VLAN_MTU;
+				return (error);
+			}
+		}
+	}
+
+	return error;
+}
+
+/*
+ * Disable vlan hardware assist for the specified port.
+ */
+static int
+agr_vlan_del(struct agr_port *port, void *arg)
+{
+	struct ethercom *ec_port = (void *)port->port_ifp;
+	struct ifreq ifr;
+
+	/* Disable vlan support */
+	if (ec_port->ec_nvlans-- == 1) {
+		/*
+		 * Disable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+		if (port->port_ifp->if_flags & IFF_UP) {
+			ifr.ifr_flags = port->port_ifp->if_flags;
+			(void) (*port->port_ifp->if_ioctl)(port->port_ifp,
+			    SIOCSIFFLAGS, (void *) &ifr);
+		}
+	}
+
+	return 0;
+}
+
+
+/*
+ * Check for vlan attach/detach.
+ * ec->ec_nvlans is directly modified by the vlan driver.
+ * We keep a local count in sc (sc->sc_nvlans) to detect
+ * when the vlan driver attaches or detaches.
+ * Note the agr interface must be up for this to work.
+ */
+static void
+agr_vlan_check(struct ifnet *ifp, struct agr_softc *sc)
+{
+	struct ethercom *ec = (void *)ifp;
+	int error;
+
+	/* vlans in sync? */
+	if (sc->sc_nvlans == ec->ec_nvlans) {
+		return;
+	}
+
+	if (sc->sc_nvlans == 0) {
+		/* vlan added */
+		error = agr_port_foreach(sc, agr_vlan_add, NULL);
+		sc->sc_nvlans = ec->ec_nvlans;
+	} else if (ec->ec_nvlans == 0) {
+		/* vlan removed */
+		error = agr_port_foreach(sc, agr_vlan_del, NULL);
+		sc->sc_nvlans = 0;
+	}
+}
+
 
 static int
 agr_clone_create(struct if_clone *ifc, int unit)
@@ -801,6 +912,7 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct agr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifcapreq *ifcr;
 	struct sockaddr *sa;
 	struct agrreq ar;
 	int error = 0;
@@ -839,6 +951,18 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFFLAGS:
 		agr_config_promisc(sc);
+
+		/* Check for a change in vlan status.  This ioctl is the 
+		 * only way we can tell that a vlan has attached or detached.
+		 * Note the agr interface must be up.
+		 */
+		agr_vlan_check(ifp, sc);
+		break;
+
+	case SIOCSIFCAP:
+		ifcr = data;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCSETAGR:
