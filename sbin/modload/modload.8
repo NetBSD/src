@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.33 2009/06/05 09:31:07 wiz Exp $
+.\" $NetBSD: modload.8,v 1.34 2009/06/05 11:37:30 jnemeth Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd June 3, 2009
+.Dd June 5, 2009
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -48,6 +48,7 @@
 .Nm
 .Fl p
 .Op Fl b Ar var=boolean
+.Op Fl d Ar var
 .Op Fl i Ar var=integer
 .Op Fl m Ar plist
 .Op Fl s Ar var=string
@@ -73,6 +74,14 @@ may be either
 .Dv true
 or
 .Dv false .
+.It Fl d Ar var
+When used in conjuction with
+.Fl m ,
+delete
+.Ar var
+from the
+.Ar plist
+specified.
 .It Fl f
 When a module is loaded, the kernel checks if the module is compatible
 with the running kernel and will refuse to load modules that are
@@ -94,6 +103,11 @@ merge new options with an existing property list contained in
 .It Fl p
 Output a property list suitable for loading along with a module.
 When using this option, you do not need to specify a module.
+Use
+.Fl m
+and
+.Fl d
+to read and modify an existing property list.
 .It Fl s Ar var=string
 Pass the module a string property with the name
 .Ar var
