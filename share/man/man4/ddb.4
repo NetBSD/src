@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.125 2009/04/10 15:16:06 joerg Exp $
+.\"	$NetBSD: ddb.4,v 1.126 2009/06/05 04:40:23 mrg Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -593,13 +593,33 @@ Print the struct buf at
 The
 .Cm /f
 does nothing at this time.
-.It Ic show event Ns Op Cm /f
+.It Ic show event Ns Oo Cm /f Oc Ns Oo Cm /i Oc Ns Oo Cm /m Oc Ns \
+Oo Cm /t Oc
 Print all the non-zero
 .Xr evcnt 9
 event counters.
-If
-.Cm /f
-is specified, all event counters with a count of zero are printed as well.
+Valid modifiers:
+.Bl -tag -width 3n
+.It Cm /f
+event counters with a count of zero are printed as well.
+.It Cm /i
+interrupted counters will be displayed.
+.It Cm /m
+is specified, misc counters will be displayed.
+.It Cm /t
+is specified, trap counters will be displayed.
+.El
+.Pp
+If none of
+.Cm /i ,
+.Cm /m
+or
+.Cm /t
+are specified, all are shown.
+You can combine any of these.
+For example, the modifier
+.Cm /itf
+will select both interrupt and trap events, including those that are non-zero.
 .It Ic show files Ar address
 Display information about the vnodes of the files that are currently
 open by the process associated with the proc structure at
