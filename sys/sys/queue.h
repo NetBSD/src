@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.45.14.1 2007/07/18 20:13:24 liamjfoy Exp $	*/
+/*	$NetBSD: queue.h,v 1.45.14.1.4.1 2009/06/05 16:21:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -496,6 +496,11 @@ struct {								\
 	for ((var) = ((head)->tqh_first);				\
 		(var);							\
 		(var) = ((var)->field.tqe_next))
+
+#define	TAILQ_FOREACH_SAFE(var, head, field, next)			\
+	for ((var) = ((head)->tqh_first);				\
+	        (var) != NULL && ((next) = TAILQ_NEXT(var, field), 1);	\
+		(var) = (next))
 
 #define	TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
 	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last));	\
