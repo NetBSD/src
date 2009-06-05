@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.7 2009/02/19 23:07:33 haad Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.8 2009/06/05 19:56:40 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
  * target specific config area.
  */
 int
-dm_target_zero_init(dm_dev_t *dmv, void **target_config, char *argv)
+dm_target_zero_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dict)
 {
 
 	printf("Zero target init function called!!\n");
