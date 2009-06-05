@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 2009/06/04 17:59:30 njoly Exp $
+	$NetBSD: syscalls.master,v 1.53 2009/06/05 16:45:33 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -196,7 +196,7 @@
 98	UNIMPL	profil
 99	STD	{ int|linux32_sys||statfs(netbsd32_charp path, \
 		    linux32_statfsp sp); }
-100	UNIMPL	fstatfs
+100	STD	{ int|linux32_sys||fstatfs(int fd, linux32_statfsp sp); }
 101	UNIMPL	ioperm
 102	STD	{ int|linux32_sys||socketcall(int what, netbsd32_voidp args); }
 103	UNIMPL	syslog
