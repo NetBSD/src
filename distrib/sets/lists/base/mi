@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.10.2.1 2008/11/02 17:48:10 snj Exp $
+# $NetBSD: mi,v 1.678.2.10.2.2 2009/06/05 18:12:09 snj Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -998,6 +998,7 @@
 ./usr/sbin/amd					base-amd-bin
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
+./usr/sbin/audit-packages			base-pkgutil-bin
 ./usr/sbin/authpf				base-pf-bin		pf
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
@@ -1027,6 +1028,7 @@
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
+./usr/sbin/download-vulnerability-list		base-pkgutil-bin
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dumpfs				base-sysutil-bin
 ./usr/sbin/dumplfs				base-sysutil-bin
@@ -1092,7 +1094,7 @@
 ./usr/sbin/kvm_mkdb				base-obsolete		obsolete
 ./usr/sbin/lastlogin				base-sysutil-bin
 ./usr/sbin/link					base-sysutil-bin
-./usr/sbin/linkfarm				base-pkgutil-bin
+./usr/sbin/linkfarm				base-obsolete		obsolete
 ./usr/sbin/lmcconfig				base-netutil-bin
 ./usr/sbin/lmtp					base-obsolete		obsolete
 ./usr/sbin/lockstat				base-sysutil-bin
@@ -1165,7 +1167,7 @@
 ./usr/sbin/pkg_create				base-pkgutil-bin
 ./usr/sbin/pkg_delete				base-pkgutil-bin
 ./usr/sbin/pkg_info				base-pkgutil-bin
-./usr/sbin/pkg_view				base-pkgutil-bin
+./usr/sbin/pkg_view				base-obsolete		obsolete
 ./usr/sbin/portmap				base-obsolete		obsolete
 ./usr/sbin/postalias				base-postfix-bin	postfix
 ./usr/sbin/postcat				base-postfix-bin	postfix
