@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.32 2009/06/04 02:57:01 jnemeth Exp $
+.\" $NetBSD: modload.8,v 1.33 2009/06/05 09:31:07 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -47,9 +47,9 @@
 .Ar module
 .Nm
 .Fl p
-.Op Fl m Ar plist
 .Op Fl b Ar var=boolean
 .Op Fl i Ar var=integer
+.Op Fl m Ar plist
 .Op Fl s Ar var=string
 .Sh DESCRIPTION
 The
@@ -88,7 +88,7 @@ and integral value
 .Ar integer .
 .It Fl m Ar plist
 When used in conjuction with
-.Fl p
+.Fl p ,
 merge new options with an existing property list contained in
 .Ar plist .
 .It Fl p
