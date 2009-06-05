@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.22 2009/03/24 21:46:37 bouyer Exp $
+# $NetBSD: mi,v 1.955.2.23 2009/06/05 17:19:27 snj Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -214,7 +214,7 @@
 ./usr/share/man/cat1/less.0			man-util-catman		.cat
 ./usr/share/man/cat1/lesskey.0			man-util-catman		.cat
 ./usr/share/man/cat1/limit.0			man-util-catman		.cat
-./usr/share/man/cat1/linkfarm.0			man-pkgutil-catman	.cat
+./usr/share/man/cat1/linkfarm.0			man-obsolete		obsolete
 ./usr/share/man/cat1/ln.0			man-util-catman		.cat
 ./usr/share/man/cat1/locale.0			man-util-catman		.cat
 ./usr/share/man/cat1/locate.0			man-util-catman		.cat
@@ -335,7 +335,7 @@
 ./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat1/pkg_delete.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat1/pkg_info.0			man-pkgutil-catman	.cat
-./usr/share/man/cat1/pkg_view.0			man-pkgutil-catman	.cat
+./usr/share/man/cat1/pkg_view.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pkill.0			man-util-catman		.cat
 ./usr/share/man/cat1/pmap.0			man-util-catman		.cat
 ./usr/share/man/cat1/pmc.0			man-util-catman		.cat
@@ -1553,6 +1553,7 @@
 ./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/core.0			man-sys-catman		.cat
+./usr/share/man/cat1/cpio.0			man-util-catman		.cat
 ./usr/share/man/cat5/crontab.0			man-cron-catman		.cat
 ./usr/share/man/cat5/daily.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/dhclient.conf.0		man-dhclient-catman	.cat
@@ -1655,6 +1656,7 @@
 ./usr/share/man/cat5/phones.0			man-sys-man		.cat
 ./usr/share/man/cat5/pim6dd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/pim6sd.conf.0		man-obsolete		obsolete
+./usr/share/man/cat5/pkg_install.conf.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat5/pkg_summary.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat5/postconf.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/primes.0			man-obsolete		obsolete
@@ -2633,7 +2635,7 @@
 ./usr/share/man/man1/less.1			man-util-man		.man
 ./usr/share/man/man1/lesskey.1			man-util-man		.man
 ./usr/share/man/man1/limit.1			man-util-man		.man
-./usr/share/man/man1/linkfarm.1			man-pkgutil-man		.man
+./usr/share/man/man1/linkfarm.1			man-obsolete		obsolete
 ./usr/share/man/man1/ln.1			man-util-man		.man
 ./usr/share/man/man1/locale.1			man-util-man		.man
 ./usr/share/man/man1/locate.1			man-util-man		.man
@@ -2754,7 +2756,7 @@
 ./usr/share/man/man1/pkg_create.1		man-pkgutil-man		.man
 ./usr/share/man/man1/pkg_delete.1		man-pkgutil-man		.man
 ./usr/share/man/man1/pkg_info.1			man-pkgutil-man		.man
-./usr/share/man/man1/pkg_view.1			man-pkgutil-man		.man
+./usr/share/man/man1/pkg_view.1			man-obsolete		obsolete
 ./usr/share/man/man1/pkill.1			man-util-man		.man
 ./usr/share/man/man1/pmap.1			man-util-man		.man
 ./usr/share/man/man1/pmc.1			man-util-man		.man
@@ -4074,6 +4076,7 @@
 ./usr/share/man/man5/phones.5			man-sys-man		.man
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/pim6sd.conf.5		man-obsolete		obsolete
+./usr/share/man/man5/pkg_install.conf.5		man-pkgutil-man		.man
 ./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		.man
 ./usr/share/man/man5/postconf.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
