@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.16 2009/01/20 12:00:59 njoly Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.17 2009/06/05 16:45:33 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.16 2009/01/20 12:00:59 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.17 2009/06/05 16:45:33 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -86,6 +86,28 @@ linux32_sys_statfs(struct lwp *l, const struct linux32_sys_statfs_args *uap, reg
 	}
 
 	STATVFSBUF_PUT(sb);
+	return error;
+}
+
+int
+linux32_sys_fstatfs(struct lwp *l, const struct linux32_sys_fstatfs_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(linux32_statfsp) sp;
+	} */
+	struct statvfs *sb;
+	struct linux_statfs ltmp;
+	int error;
+
+	sb = STATVFSBUF_GET();
+	error = do_sys_fstatvfs(l, SCARG(uap, fd), ST_WAIT, sb);
+	if (error == 0) {
+		bsd_to_linux_statfs(sb, &ltmp);
+		error = copyout(&ltmp, SCARG_P32(uap, sp), sizeof ltmp);
+	}
+	STATVFSBUF_PUT(sb);
+
 	return error;
 }
 
