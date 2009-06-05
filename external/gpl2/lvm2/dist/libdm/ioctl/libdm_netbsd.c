@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm_netbsd.c,v 1.1 2008/12/22 00:56:59 haad Exp $        */
+/*      $NetBSD: libdm_netbsd.c,v 1.2 2009/06/05 19:57:25 haad Exp $        */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <netbsd-dm.h>
@@ -47,12 +48,210 @@
 
 #include "lib.h"
 
+struct nbsd_dm_target_param {
+	char *name;
+	prop_dictionary_t (*parse)(char *);
+};
+
 #define DMI_SIZE 16 * 1024
 
 static int dm_list_versions(prop_dictionary_t, struct dm_ioctl *);
 static int dm_list_devices(prop_dictionary_t, struct dm_ioctl *);
 static int dm_dev_deps(prop_dictionary_t, struct dm_ioctl *);
 static int dm_table_status(prop_dictionary_t, struct dm_ioctl *);
+
+static prop_dictionary_t dm_parse_linear(char *);
+static prop_dictionary_t dm_parse_stripe(char *);
+static prop_dictionary_t dm_parse_mirror(char *);
+static prop_dictionary_t dm_parse_snapshot(char *);
+static prop_dictionary_t dm_parse_snapshot_origin(char *);
+
+static struct nbsd_dm_target_param dmt_parse[] = {
+	{"linear", dm_parse_linear},
+	{"striped", dm_parse_stripe},
+	{"mirror", dm_parse_mirror},
+	{"snapshot", dm_parse_snapshot},
+	{"snapshot-origin", dm_parse_snapshot_origin},
+	{NULL, NULL},
+};
+
+/*
+ * Parse params string to target specific proplib dictionary.
+ *
+ * <key>params</key>
+ * <dict>
+ *     <key>device</key>
+ *     <array>
+ *          <dict>
+ *              <key>device</key>
+ *              <string>/dev/wd1a</string>
+ *              <key>offset</key>
+ *              <integer>0x384</integer>
+ *          </dict>
+ *     </array>
+ * <!-- Other target config stuff -->
+ * </dict>
+ *
+ */
+prop_dictionary_t 
+nbsd_dm_parse_param(const char *target, const char *params)
+{
+	int i;
+	size_t slen, dlen;
+	prop_dictionary_t dict;
+	char *param;
+	
+	dict = NULL;
+	slen = strlen(target);
+
+	printf("Parsing target %s, string %s\n", target, params);
+
+	/* copy parameter string to new buffer */
+	param = dm_malloc(strlen(params) * sizeof(char));
+	strlcpy(param, params, strlen(params)+1);
+
+        for(i = 0; dmt_parse[i].name != NULL; i++) {
+		dlen = strlen(dmt_parse[i].name);
+		
+		if (slen != dlen)
+			continue;
+			
+		if (strncmp(target, dmt_parse[i].name, slen) == 0)
+			break;
+	}
+	
+        if (dmt_parse[i].name == NULL)
+                return NULL;
+
+	printf("target found %s, params %s\n", dmt_parse[i].name, params);
+	
+	dict = dmt_parse[i].parse(param);
+	
+	dm_free(param);
+	
+	return dict;
+}
+
+/*
+ * Example line sent to dm from lvm tools when using linear target.                                                                              
+ * start length linear device1 offset1
+ * 0 65536 linear /dev/hda 0 
+ */
+static prop_dictionary_t 
+dm_parse_linear(char *params)
+{
+	prop_dictionary_t dict;
+	char **ap, *argv[3];
+	
+	dict = prop_dictionary_create();
+	
+	if (params == NULL)
+		return dict;
+
+       	/*                                                                                                                                        
+	 * Parse a string, containing tokens delimited by white space,                                                                            
+	 * into an argument vector                                                                                                                
+	 */
+	for (ap = argv; ap < &argv[2] &&
+	    (*ap = strsep(&params, " \t")) != NULL;) {
+		if (**ap != '\0')
+	        	ap++;
+	}
+	printf("Linear target params parsing routine called %s -- %d \n", 
+		argv[1], strtol(argv[1], (char **)NULL, 10));
+	
+	prop_dictionary_set_cstring(dict, DM_TARGET_LINEAR_DEVICE, argv[0]);
+	prop_dictionary_set_uint64(dict, DM_TARGET_LINEAR_OFFSET, strtoll(argv[1], (char **)NULL, 10));
+		
+	return dict;
+}
+
+/*
+ * Example line sent to dm from lvm tools when using striped target.                                                                              
+ * start length striped #stripes chunk_size device1 offset1 ... deviceN offsetN                                                                   
+ * 0 65536 striped 2 512 /dev/hda 0 /dev/hdb 0                                                                                                    
+ */
+static prop_dictionary_t 
+dm_parse_stripe(char *params)
+{
+	prop_dictionary_t dict, dev_dict;
+	prop_array_t dev_array;
+	char **ap, *argv[10]; /* Limit number of disk stripes to 10 */
+
+	dict = prop_dictionary_create();
+	
+	if (params == NULL)
+		return dict;
+
+       	/*                                                                                                                                        
+	 * Parse a string, containing tokens delimited by white space,                                                                            
+	 * into an argument vector                                                                                                                
+	 */
+	for (ap = argv; ap < &argv[9] &&
+	    (*ap = strsep(&params, " \t")) != NULL;) {
+		if (**ap != '\0')
+	        	ap++;
+	}
+	printf("Stripe target params parsing routine called\n");
+	
+	prop_dictionary_set_uint64(dict, DM_TARGET_STRIPE_STRIPES, 
+		strtol(argv[0], (char **)NULL, 10));
+	prop_dictionary_set_uint64(dict, DM_TARGET_STRIPE_CHUNKSIZE,
+	 	strtol(argv[1], (char **)NULL, 10));
+	
+	dev_array = prop_array_create();
+	
+	dev_dict = prop_dictionary_create();
+	prop_dictionary_set_cstring(dev_dict, DM_TARGET_STRIPE_DEVICE, argv[2]);
+	prop_dictionary_set_uint64(dev_dict, DM_TARGET_STRIPE_OFFSET, 
+		strtol(argv[3], (char **)NULL, 10));
+
+	prop_array_add(dev_array, dev_dict);
+	prop_object_release(dev_dict);
+	
+	dev_dict = prop_dictionary_create();
+	prop_dictionary_set_cstring(dev_dict, DM_TARGET_STRIPE_DEVICE, argv[4]);
+	prop_dictionary_set_uint64(dev_dict, DM_TARGET_STRIPE_OFFSET, 
+		strtol(argv[5], (char **)NULL, 10));
+
+	prop_array_add(dev_array, dev_dict);
+	prop_object_release(dev_dict);
+		
+	prop_dictionary_set(dict, DM_TARGET_STRIPE_DEVARRAY, dev_array);
+	prop_object_release(dev_array);
+	
+	return dict;
+}
+
+static prop_dictionary_t 
+dm_parse_mirror(char *params)
+{
+	prop_dictionary_t dict;
+	
+	dict = prop_dictionary_create();
+	
+	return dict;
+}
+
+static prop_dictionary_t 
+dm_parse_snapshot(char *params)
+{
+	prop_dictionary_t dict;
+	
+	dict = prop_dictionary_create();
+	
+	return dict;
+}
+
+static prop_dictionary_t 
+dm_parse_snapshot_origin(char *params)
+{
+	prop_dictionary_t dict;
+	
+	dict = prop_dictionary_create();
+	
+	return dict;
+}
 
 int
 nbsd_get_dm_major(uint32_t *major,  int type)
