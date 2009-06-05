@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.246 2009/05/29 22:06:55 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.247 2009/06/05 01:36:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -117,6 +117,15 @@ BARF
 	ld	[%o0 + %lo(what)], %o1; \
 	inc	%o1; \
 	st	%o1, [%o0 + %lo(what)]
+
+#if EV_COUNT != 0
+# error "this code does not work with EV_COUNT != 0"
+#endif
+#if EV_STRUCTSIZE != 32
+# error "this code does not work with EV_STRUCTSIZE != 32"
+#else
+# define EV_STRUCTSHIFT	5
+#endif
 
 /*
  * Another handy macro: load one register window, given `base' address.
@@ -2518,11 +2527,13 @@ softintr_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
+	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+	sll	%l3, EV_STRUCTSHIFT, %o2
+	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]
-	inc	%o0
-	st	%o0, [%l4 + %l5]
+	inccc   %o1
+	addx    %o0, 0, %o0
+	std	%o0, [%l4 + %o2]
 	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
@@ -2670,11 +2681,13 @@ sparc_interrupt4m_bogus:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
+	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+	sll	%l3, EV_STRUCTSHIFT, %o2
+	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
-	inc	%o0
-	st	%o0, [%l4 + %l5]
+	inccc   %o1
+	addx    %o0, 0, %o0
+	std	%o0, [%l4 + %o2]
 
 	st	%fp, [%sp + CCFSZ + 16]
 
@@ -2715,11 +2728,13 @@ sparc_interrupt_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
+	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+	sll	%l3, EV_STRUCTSHIFT, %o2
+	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
-	inc	%o0
-	st	%o0, [%l4 + %l5]
+	inccc   %o1
+	addx    %o0, 0, %o0
+	std	%o0, [%l4 + %o2]
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
@@ -6319,31 +6334,6 @@ _C_LABEL(bootinfo):
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
 	.word	_C_LABEL(u0)	! KVA of proc0 uarea
-
-/* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"lev6"
-	.asciz	"lev7"
-	.asciz  "lev8"
-	.asciz	"lev9"
-	.asciz	"clock"
-	.asciz	"lev11"
-	.asciz	"lev12"
-	.asciz	"lev13"
-	.asciz	"prof"
-_C_LABEL(eintrnames):
-	_ALIGN
-_C_LABEL(intrcnt):
-	.skip	4*15
-_C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(romp), 4
