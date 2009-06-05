@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.286 2009/05/20 03:26:21 dyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.287 2009/06/05 21:52:32 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.286 2009/05/20 03:26:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.287 2009/06/05 21:52:32 haad Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1029,6 +1029,10 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 				return (EIO);
 		}
 	}
+
+	error = disk_ioctl(&sd->sc_dk, cmd, addr, flag, l); 
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (cmd) {
 	case DIOCGDINFO:
