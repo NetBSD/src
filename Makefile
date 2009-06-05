@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.246.2.3 2007/10/26 14:23:20 liamjfoy Exp $
+#	$NetBSD: Makefile,v 1.246.2.3.2.1 2009/06/05 17:01:43 snj Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -120,7 +120,7 @@ _SRC_TOP_OBJ_=
 .endfor
 .endif
 
-_SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin
+_SUBDIR=	tools lib include gnu external bin games libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share rescue sys etc .WAIT distrib regress
 
 #
@@ -206,7 +206,7 @@ BUILDTARGETS+=	do-gnu-lib-crtstuff${LIBGCC_EXT}
 BUILDTARGETS+=	do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
 BUILDTARGETS+=	do-lib-libc
-BUILDTARGETS+=	do-lib do-gnu-lib
+BUILDTARGETS+=	do-lib do-gnu-lib do-external-lib
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
 .if ${MKX11} != "no"
@@ -356,7 +356,7 @@ do-${targ}: .PHONY ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat lib/csu gnu/lib/crtstuff${LIBGCC_EXT} gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib
+.for dir in tools tools/compat lib/csu gnu/lib/crtstuff${LIBGCC_EXT} gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib external/lib
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
