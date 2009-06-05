@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.12 2009/06/05 19:56:40 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.13 2009/06/05 21:52:31 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -247,6 +247,8 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	disk_init(dmv->diskp, dmv->name, &dmdkdriver);
 	disk_attach(dmv->diskp);
+
+	dmv->diskp->dk_info = NULL;
 	
 	if ((r = dm_dev_insert(dmv)) != 0)		
 		dm_dev_free(dmv);
@@ -539,7 +541,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 		
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 
-	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
+	dmgetproperties(dmv->diskp, &dmv->table_head);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);

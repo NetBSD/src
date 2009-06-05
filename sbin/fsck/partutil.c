@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.4 2009/04/11 06:48:36 lukem Exp $	*/
+/*	$NetBSD: partutil.c,v 1.5 2009/06/05 21:52:31 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.4 2009/04/11 06:48:36 lukem Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.5 2009/06/05 21:52:31 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -38,30 +38,35 @@ __RCSID("$NetBSD: partutil.c,v 1.4 2009/04/11 06:48:36 lukem Exp $");
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+
 #include <disktab.h>
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <util.h>
 #include <unistd.h>
-#include <err.h>
+#include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+
+#include <prop/proplib.h>
 
 #include "partutil.h"
 
+
+/*
+ * Set what we need to know about disk geometry.
+ */
 static void
-label2geom(struct disk_geom *geo, const struct disklabel *lp)
+dict2geom(struct disk_geom *geo, prop_dictionary_t dict)
 {
-	geo->dg_secperunit = lp->d_secperunit;
-	geo->dg_secsize = lp->d_secsize;
-	geo->dg_nsectors = lp->d_nsectors;
-	geo->dg_ntracks = lp->d_ntracks;
-	geo->dg_ncylinders = lp->d_ncylinders;
-	geo->dg_secpercyl = lp->d_secpercyl;
-	geo->dg_pcylinders = lp->d_ncylinders;
-	geo->dg_sparespertrack = lp->d_sparespertrack;
-	geo->dg_sparespercyl = lp->d_sparespercyl;
-	geo->dg_acylinders = lp->d_acylinders;
+	memset(geo, 0, sizeof(struct disk_geom));
+	prop_dictionary_get_int64(dict, "sectors-per-unit", &geo->dg_secperunit);
+	prop_dictionary_get_uint32(dict, "sector-size", &geo->dg_secsize);
+	prop_dictionary_get_uint32(dict, "sectors-per-track", &geo->dg_nsectors);
+	prop_dictionary_get_uint32(dict, "tracks-per-cylinder", &geo->dg_ntracks);
+	prop_dictionary_get_uint32(dict, "cylinders-per-unit", &geo->dg_ncylinders);
 }
+
 
 static void
 part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
@@ -132,45 +137,32 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 {
 	struct disklabel lab;
 	struct disklabel *lp = &lab;
-	char parent[1024];
+	prop_dictionary_t disk_dict, geom_dict;
 
 	if (dt) {
 		lp = getdiskbyname(dt);
 		if (lp == NULL)
 			errx(1, "%s: unknown disk type", dt);
-		goto part;
 	}
 
-	if (ioctl(fd, DIOCGDINFO, lp) == -1) {
-		if (errno == ENOTTY) {
-			int pfd;
-			if (ioctl(fd, DIOCGWEDGEINFO, dkw) == -1) {
-				warn("ioctl (DIOCGWEDGEINFO)");
-				goto bad;
-			}
-			pfd = opendisk(dkw->dkw_parent, O_RDONLY,
-			    parent, sizeof(parent), 0);
-			if (pfd == -1) {
-				warn("Cannot open `%s'", dkw->dkw_parent);
-				goto bad;
-			}
-			if (ioctl(pfd, DIOCGDINFO, lp) != -1) {
-				(void)close(pfd);
-				goto label;
-			} else {
-				int serrno = errno;
-				(void)close(pfd);
-				errno = serrno;
-			}
-		}
-		warn("ioctl (DIOCGDINFO)");
-		goto bad;
+	/* Get disk description dictionary */
+	if (prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO, &disk_dict) != 0) {
+		warn("Please implement DIOCGDISKINFO for %s\n disk driver\n", s);
+		return (errno);
 	}
-part:
-	part2wedge(dkw, lp, s);
-label:
-	label2geom(geo, lp);
+	
+	geom_dict = prop_dictionary_get(disk_dict, "geometry");
+	dict2geom(geo, geom_dict);
+
+	/* Get info about partition/wedge */
+	if (ioctl(fd, DIOCGWEDGEINFO, dkw) == -1) {
+		warn("ioctl (DIOCGWEDGEINFO)");
+		printf("Using old disklabel method\n");
+		if (ioctl(fd, DIOCGDINFO, lp) == -1)
+			errx(errno, "Please implement DIOCGWEDGEINFO or DIOCGDINFO for disk device %s\n", s);
+
+		part2wedge(dkw, lp, s);
+	}
+
 	return 0;
-bad:
-	return -1;
 }
