@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.1 2009/06/05 07:21:14 hubertf Exp $
+.\"	$NetBSD: iic.4,v 1.2 2009/06/05 09:27:47 wiz Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -106,6 +106,7 @@ AMD768 Power Management Controller and AMD8111 System Management Controller
 
 .It Xr cuda 4
 support for CUDA microcontrollers found in many Power Macintosh and
+and compatible computers
 .It Xr gpiic 4
 
 .It Xr gtiic 4
@@ -135,12 +136,12 @@ Intel PIIX and compatible Power Management controller
 .El
 .Sh SUPPORTED SLAVES
 A wide list of slaves are supported, among them:
-.\" 
+.\"
 .\" Create the following list with these commands:
 .\" cd .../src/sys/arch
 .\" grep -h '.* at iic.*' */conf/* | sed -e 's,^#,,' -e 's, .*,,' -e 's,.$,,' | sort -u | sh -c 'while read i ; do echo .It Xr $i 4 ; n=`grep ^.Nd ../../share/man/man4/$i* | sed "s,^.Nd ,,"` ; if [ -n "$n" ]; then echo $n ; else echo "" ; fi ; done' | tee /tmp/x
 .\" cat /tmp/x
-.\" 
+.\"
 .Bl -tag -width 13n -compact
 .It Xr dbcool 4
 dbCool(tm) family of environmental monitors and fan controllers
@@ -167,10 +168,14 @@ This manpage first appeared in
 it was ported from
 .Ox .
 .Sh AUTHORS
+.An -nosplit
 The
 .Tn I2C
 framework was written by
-Steve C. Woodford and Jason R. Thorpe for
+.An Steve C. Woodford
+and
+.An Jason R. Thorpe
+for
 .Nx
 and then ported to
 .Ox
