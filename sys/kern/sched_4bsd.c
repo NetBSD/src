@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.24 2008/10/07 09:48:27 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.24.10.1 2009/06/06 22:13:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.24 2008/10/07 09:48:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.24.10.1 2009/06/06 22:13:04 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -288,17 +288,22 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
 void
 sched_pstats_hook(struct lwp *l, int batch)
 {
+	fixpt_t loadfac;
 
 	/*
 	 * If the LWP has slept an entire second, stop recalculating
 	 * its priority until it wakes up.
 	 */
 	KASSERT(lwp_locked(l, NULL));
-	if (l->l_slptime > 0) {
-		fixpt_t loadfac = 2 * (averunnable.ldavg[0]);
-		l->l_estcpu = decay_cpu(loadfac, l->l_estcpu);
-		resetpriority(l);
+	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
+	    l->l_stat == LSSUSPENDED) {
+		if (l->l_slptime > 1) {
+			return;
+		}
 	}
+	loadfac = 2 * (averunnable.ldavg[0]);
+	l->l_estcpu = decay_cpu(loadfac, l->l_estcpu);
+	resetpriority(l);
 }
 
 /*
