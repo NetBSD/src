@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.263 2009/06/05 21:52:32 haad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.264 2009/06/06 08:10:06 haad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.263 2009/06/05 21:52:32 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.264 2009/06/06 08:10:06 haad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1732,7 +1732,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * Add support for "regular" device ioctls here.
 	 */
 	
-	error = disk_ioctl(&rs->sc_dkdev, cmd, addr, flag, l); 
+	error = disk_ioctl(&rs->sc_dkdev, cmd, data, flag, l); 
 	if (error != EPASSTHROUGH)
 		return (error);
 
