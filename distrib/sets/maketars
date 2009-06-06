@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.64.6.2 2009/04/07 20:48:40 snj Exp $
+# $NetBSD: maketars,v 1.64.6.2.2.1 2009/06/06 22:10:49 bouyer Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -148,7 +148,8 @@ for setname in ${lists}; do
 		(
 			echo "/set uname=root gname=wheel"
 			${AWK} -f "${rundir}/join.awk" \
-				"${SDIR}/flist.${setname}.full" "${metalog}"
+				"${SDIR}/flist.${setname}.full" "${metalog}" \
+				    | ${SORT} -u
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
 		) > "${setlistdir}/set.${setname}"
 		# We deliberately do not add set.${setname} to ${metalog},

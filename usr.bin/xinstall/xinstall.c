@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.103.6.1 2009/06/06 22:10:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.103.6.1 2009/06/06 22:10:49 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $");
 #define BACKUP_SUFFIX ".old"
 
 int	dobackup, dodir, dostrip, dolink, dopreserve, dorename, dounpriv;
+int	haveopt_f, haveopt_g, haveopt_m, haveopt_o;
 int	numberedbackup;
 int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char	pathbuf[MAXPATHLEN];
@@ -92,7 +93,7 @@ char	*metafile;
 u_long	fileflags;
 char	*stripArgs;
 char	*afterinstallcmd;
-char	*suffix = BACKUP_SUFFIX;
+const char *suffix = BACKUP_SUFFIX;
 char	*destdir;
 
 enum {
@@ -124,7 +125,7 @@ void	install_dir(char *, u_int);
 int	main(int, char *[]);
 void	makelink(char *, char *);
 void	metadata_log(const char *, const char *, struct timeval *,
-	    const char *, const char *);
+	    const char *, const char *, off_t);
 int	parseid(char *, id_t *);
 void	strip(char *);
 void	usage(void);
@@ -183,10 +184,12 @@ main(int argc, char *argv[])
 			break;
 #if ! HAVE_NBTOOL_CONFIG_H
 		case 'f':
+			haveopt_f = 1;
 			fflags = optarg;
 			break;
 #endif
 		case 'g':
+			haveopt_g = 1;
 			group = optarg;
 			break;
 		case 'h':
@@ -221,6 +224,7 @@ main(int argc, char *argv[])
 				}
 			break;
 		case 'm':
+			haveopt_m = 1;
 			if (!(set = setmode(optarg)))
 				err(1, "Cannot set file mode `%s'", optarg);
 			mode = getmode(set, 0);
@@ -236,6 +240,7 @@ main(int argc, char *argv[])
 				    optarg);
 			break;
 		case 'o':
+			haveopt_o = 1;
 			owner = optarg;
 			break;
 		case 'p':
@@ -470,20 +475,29 @@ makelink(char *from_name, char *to_name)
 			if (stat(to_name, &to_sb))
 				err(1, "%s: stat", to_name);
 			if (S_ISREG(to_sb.st_mode)) {
-					/* XXX: only metalog hardlinked files */
+					/* XXX: hard links to anything
+					 * other than plain files are not
+					 * metalogged
+					 */
 				int omode;
 				char *oowner, *ogroup, *offlags;
 				char *dres;
 
-					/* XXX: use underlying perms */
+					/* XXX: use underlying perms,
+					 * unless overridden on command line.
+					 */
 				omode = mode;
-				mode = (to_sb.st_mode & 0777);
+				if (!haveopt_m)
+					mode = (to_sb.st_mode & 0777);
 				oowner = owner;
-				owner = NULL;
+				if (!haveopt_o)
+					owner = NULL;
 				ogroup = group;
-				group = NULL;
+				if (!haveopt_g)
+					group = NULL;
 				offlags = fflags;
-				fflags = NULL;
+				if (!haveopt_f)
+					fflags = NULL;
 				switch (digesttype) {
 				case DIGEST_MD5:
 					dres = MD5File(from_name, NULL);
@@ -497,7 +511,8 @@ makelink(char *from_name, char *to_name)
 				default:
 					dres = NULL;
 				}
-				metadata_log(to_name, "file", NULL, NULL, dres);
+				metadata_log(to_name, "file", NULL, NULL,
+				    dres, to_sb.st_size);
 				free(dres);
 				mode = omode;
 				owner = oowner;
@@ -515,7 +530,7 @@ makelink(char *from_name, char *to_name)
 			err(1, "%s: realpath", from_name);
 		do_symlink(src, to_name);
 			/* XXX: src may point outside of destdir */
-		metadata_log(to_name, "link", NULL, src, NULL);
+		metadata_log(to_name, "link", NULL, src, NULL, 0);
 		return;
 	}
 
@@ -557,7 +572,7 @@ makelink(char *from_name, char *to_name)
 
 		do_symlink(lnk, to_name);
 			/* XXX: lnk may point outside of destdir */
-		metadata_log(to_name, "link", NULL, lnk, NULL);
+		metadata_log(to_name, "link", NULL, lnk, NULL, 0);
 		return;
 	}
 
@@ -567,7 +582,7 @@ makelink(char *from_name, char *to_name)
 	 */
 	do_symlink(from_name, to_name);
 		/* XXX: from_name may point outside of destdir */
-	metadata_log(to_name, "link", NULL, from_name, NULL);
+	metadata_log(to_name, "link", NULL, from_name, NULL, 0);
 }
 
 /*
@@ -578,17 +593,18 @@ void
 install(char *from_name, char *to_name, u_int flags)
 {
 	struct stat	from_sb;
-#if ! HAVE_NBTOOL_CONFIG_H
 	struct stat	to_sb;
-#endif
 	struct timeval	tv[2];
+	off_t		size;
 	int		devnull, from_fd, to_fd, serrno, tmpmode;
 	char		*p, tmpl[MAXPATHLEN], *oto_name, *digestresult;
 
+	size = -1;
 	if (!dolink) {
 			/* ensure that from_sb & tv are sane if !dolink */
 		if (stat(from_name, &from_sb))
 			err(1, "%s: stat", from_name);
+		size = from_sb.st_size;
 #if BSD4_4 && !HAVE_NBTOOL_CONFIG_H
 		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
@@ -600,7 +616,8 @@ install(char *from_name, char *to_name, u_int flags)
 #endif
 	}
 
-	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
+	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL) != 0) {
+		devnull = 0;
 		if (!dolink) {
 			if (!S_ISREG(from_sb.st_mode))
 				errx(1, "%s: not a regular file", from_name);
@@ -612,12 +629,12 @@ install(char *from_name, char *to_name, u_int flags)
 			    (p = strrchr(from_name, '/')) ? ++p : from_name);
 			to_name = pathbuf;
 		}
-		devnull = 0;
 	} else {
+		devnull = 1;
+		size = 0;
 #if HAVE_STRUCT_STAT_ST_FLAGS
 		from_sb.st_flags = 0;	/* XXX */
 #endif
-		devnull = 1;
 	}
 
 	/*
@@ -678,6 +695,16 @@ install(char *from_name, char *to_name, u_int flags)
 		close(to_fd);
 		if ((to_fd = open(to_name, O_RDONLY, S_IRUSR | S_IWUSR)) < 0)
 			err(1, "stripping %s", to_name);
+
+		/*
+		 * Recalculate size and digestresult after stripping.
+		 */
+		if (fstat(to_fd, &to_sb) != 0)
+			err(1, "%s: fstat", to_name);
+		size = to_sb.st_size;
+		digestresult =
+		    copy(to_fd, to_name, -1, NULL, size);
+
 	}
 
 	if (afterinstallcmd != NULL) {
@@ -745,13 +772,15 @@ install(char *from_name, char *to_name, u_int flags)
 	}
 #endif
 
-	metadata_log(to_name, "file", tv, NULL, digestresult);
+	metadata_log(to_name, "file", tv, NULL, digestresult, size);
 	free(digestresult);
 }
 
 /*
  * copy --
- *	copy from one file to another
+ *	copy from one file to another, returning a digest.
+ *
+ *	If to_fd < 0, just calculate a digest, don't copy.
  */
 char *
 copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
@@ -775,6 +804,8 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		SHA1Init(&ctxSHA1);
 		break;
 	case DIGEST_NONE:
+		if (to_fd < 0)
+			return NULL; /* no need to do anything */
 	default:
 		break;
 	}
@@ -802,7 +833,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				warnx("madvise: %s", strerror(errno));
 #endif
 
-			if (write(to_fd, p, size) != size) {
+			if (to_fd >= 0 && write(to_fd, p, size) != size) {
 				serrno = errno;
 				(void)unlink(to_name);
 				errx(1, "%s: write: %s",
@@ -825,7 +856,8 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 		} else {
  mmap_failed:
 			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
-				if ((nw = write(to_fd, buf, nr)) != nr) {
+				if (to_fd >= 0 &&
+				    (nw = write(to_fd, buf, nr)) != nr) {
 					serrno = errno;
 					(void)unlink(to_name);
 					errx(1, "%s: write: %s", to_name,
@@ -873,7 +905,7 @@ strip(char *to_name)
 {
 	static const char exec_failure[] = ": exec of strip failed: ";
 	int	serrno, status;
-	const char *stripprog, *progname;
+	const char * volatile stripprog, *progname;
 	char *cmd;
 
 	if ((stripprog = getenv("STRIP")) == NULL) {
@@ -1036,17 +1068,18 @@ install_dir(char *path, u_int flags)
 	    || chmod(path, mode) == -1 )) {
                 warn("%s: chown/chmod", path);
 	}
-	metadata_log(path, "dir", NULL, NULL, NULL);
+	metadata_log(path, "dir", NULL, NULL, NULL, 0);
 }
 
 /*
  * metadata_log --
  *	if metafp is not NULL, output mtree(8) full path name and settings to
- *	metafp, to allow permissions to be set correctly by other tools.
+ *	metafp, to allow permissions to be set correctly by other tools,
+ *	or to allow integrity checks to be performed.
  */
 void
 metadata_log(const char *path, const char *type, struct timeval *tv,
-	const char *link, const char *digestresult)
+	const char *slink, const char *digestresult, off_t size)
 {
 	static const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 	const char	*p;
@@ -1084,23 +1117,26 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	strsvis(buf, p, VIS_CSTYLE, extra);		/* encode name */
 	p = buf;
 							/* print details */
-	fprintf(metafp, ".%s%s type=%s mode=%#o", *p ? "/" : "", p, type, mode);
-	if (link) {
-		strsvis(buf, link, VIS_CSTYLE, extra);	/* encode link */
-		fprintf(metafp, " link=%s", buf);
-	}
+	fprintf(metafp, ".%s%s type=%s", *p ? "/" : "", p, type);
 	if (owner)
 		fprintf(metafp, " uname=%s", owner);
 	if (group)
 		fprintf(metafp, " gname=%s", group);
-	if (fflags)
-		fprintf(metafp, " flags=%s", fflags);
-	if (tags)
-		fprintf(metafp, " tags=%s", tags);
+	fprintf(metafp, " mode=%#o", mode);
+	if (slink) {
+		strsvis(buf, slink, VIS_CSTYLE, extra);	/* encode link */
+		fprintf(metafp, " link=%s", buf);
+	}
+	if (*type == 'f') /* type=file */
+		fprintf(metafp, " size=%lld", (long long)size);
 	if (tv != NULL && dopreserve)
 		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
 	if (digestresult && digest)
 		fprintf(metafp, " %s=%s", digest, digestresult);
+	if (fflags)
+		fprintf(metafp, " flags=%s", fflags);
+	if (tags)
+		fprintf(metafp, " tags=%s", tags);
 	fputc('\n', metafp);
 	fflush(metafp);					/* flush output */
 							/* unlock log file */
