@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.73.4.10 2009/06/01 17:11:35 liamjfoy Exp $ */
+/* $NetBSD: udf_subr.c,v 1.73.4.11 2009/06/06 22:04:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.10 2009/06/01 17:11:35 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.11 2009/06/06 22:04:40 bouyer Exp $");
 #endif /* not lint */
 
 
@@ -2235,7 +2235,7 @@ udf_create_parentfid(struct udf_mount *ump, struct fileid_desc *fid,
 	fid->file_char = UDF_FILE_CHAR_DIR | UDF_FILE_CHAR_PAR;
 	fid->icb = *parent;
 	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
-	fid->tag.desc_crc_len = fidsize - UDF_DESC_TAG_LENGTH;
+	fid->tag.desc_crc_len = udf_rw16(fidsize - UDF_DESC_TAG_LENGTH);
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
 
 	return fidsize;
@@ -4919,11 +4919,11 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 
 		/* only reuse entries that are wiped */
 		/* check if the len + loc are marked zero */
-		if (udf_rw32(fid->icb.len != 0))
+		if (udf_rw32(fid->icb.len) != 0)
 			continue;
 		if (udf_rw32(fid->icb.loc.lb_num) != 0)
 			continue;
-		if (udf_rw16(fid->icb.loc.part_num != 0))
+		if (udf_rw16(fid->icb.loc.part_num) != 0)
 			continue;
 #endif	/* UDF_COMPLETE_DELETE */
 
@@ -4991,7 +4991,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	unix_to_udf_name((char *) fid->data + udf_rw16(fid->l_iu),
 		&fid->l_fi, cnp->cn_nameptr, cnp->cn_namelen, &osta_charspec);
 
-	fid->tag.desc_crc_len = chosen_size - UDF_DESC_TAG_LENGTH;
+	fid->tag.desc_crc_len = udf_rw16(chosen_size - UDF_DESC_TAG_LENGTH);
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
 
 	/* writeout FID/update parent directory */
@@ -5600,7 +5600,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 
 	/* initialise pointer to location */
 	memset(&node_icb_loc, 0, sizeof(struct long_ad));
-	node_icb_loc.len = lb_size;
+	node_icb_loc.len = udf_rw32(lb_size);
 	node_icb_loc.loc.lb_num   = udf_rw32(lb_num);
 	node_icb_loc.loc.part_num = udf_rw16(vpart_num);
 

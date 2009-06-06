@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.12.4.2 2009/02/18 00:37:00 snj Exp $ */
+/* $NetBSD: udf_create.c,v 1.12.4.3 2009/06/06 22:04:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.12.4.2 2009/02/18 00:37:00 snj Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.12.4.3 2009/06/06 22:04:40 bouyer Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1055,7 +1055,7 @@ udf_update_lvintd(int type)
 	assert(lvid);
 	assert(logvol);
 
-	lvid->integrity_type = udf_rw16(type);
+	lvid->integrity_type = udf_rw32(type);
 
 	num_partmappings = udf_rw32(logvol->n_pm);
 
@@ -1298,7 +1298,7 @@ udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
 	fid->file_char = UDF_FILE_CHAR_DIR | UDF_FILE_CHAR_PAR;
 	fid->icb = *parent;
 	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
-	fid->tag.desc_crc_len = fidsize - UDF_DESC_TAG_LENGTH;
+	fid->tag.desc_crc_len = udf_rw16(fidsize - UDF_DESC_TAG_LENGTH);
 
 	/* we have to do the fid here explicitly for simplicity */
 	udf_validate_tag_and_crc_sums((union dscrptr *) fid);
