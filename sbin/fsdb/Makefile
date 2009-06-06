@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2009/04/11 07:58:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2009/06/06 08:22:24 haad Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 WARNS?=	3	# XXX: sign-compare issues in ../fsck_ffs
@@ -22,9 +22,9 @@ SRCS+=	vfs_wapbl.c wapbl.c
 .PATH:	${NETBSDSRCDIR}/sys/kern
 CPPFLAGS+=-DWAPBL_DEBUG_PRINT=0
 
-LDADD+= -lutil -ledit -ltermcap
+LDADD+= -lutil -ledit -ltermcap -lprop
 .ifndef HOSTPROG
-DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMCAP}
+DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMCAP} ${LIBPROP}
 .endif
 
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
