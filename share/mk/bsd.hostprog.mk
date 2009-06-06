@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.53 2008/10/02 17:54:53 joerg Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.53.4.1 2009/06/06 22:10:49 bouyer Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -130,6 +130,7 @@ lint: ${LOBJS}
 .endif
 
 ##### Pull in related .mk logic
+LINKSMODE?= ${BINMODE}
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>
