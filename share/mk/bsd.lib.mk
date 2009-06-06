@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.289.2.2 2009/01/09 03:35:51 snj Exp $
+#	$NetBSD: bsd.lib.mk,v 1.289.2.2.2.1 2009/06/06 22:10:49 bouyer Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -714,6 +714,9 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif	# !target(libinstall)						# }
 
 ##### Pull in related .mk logic
+LINKSOWN?= ${LIBOWN}
+LINKSGRP?= ${LIBGRP}
+LINKSMODE?= ${LIBMODE}
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>
