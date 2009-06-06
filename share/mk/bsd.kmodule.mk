@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.13.2.1 2008/12/04 02:18:06 snj Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.13.2.2 2009/06/06 22:10:12 bouyer Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -93,6 +93,9 @@ lint: ${LOBJS}
 .endif
 
 ##### Pull in related .mk logic
+LINKSOWN?= ${KMODULEOWN}
+LINKSGRP?= ${KMODULEGRP}
+LINKSMODE?= ${KMODULEMODE}
 .include <bsd.man.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
