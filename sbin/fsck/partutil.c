@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.5 2009/06/05 21:52:31 haad Exp $	*/
+/*	$NetBSD: partutil.c,v 1.6 2009/06/06 17:47:50 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.5 2009/06/05 21:52:31 haad Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.6 2009/06/06 17:47:50 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -156,8 +156,6 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 
 	/* Get info about partition/wedge */
 	if (ioctl(fd, DIOCGWEDGEINFO, dkw) == -1) {
-		warn("ioctl (DIOCGWEDGEINFO)");
-		printf("Using old disklabel method\n");
 		if (ioctl(fd, DIOCGDINFO, lp) == -1)
 			errx(errno, "Please implement DIOCGWEDGEINFO or DIOCGDINFO for disk device %s\n", s);
 
