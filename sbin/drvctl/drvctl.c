@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.6.10.1 2009/05/03 22:49:51 snj Exp $ */
+/* $NetBSD: drvctl.c,v 1.6.10.2 2009/06/06 21:59:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,7 +36,7 @@
 #include <sys/ioctl.h>
 #include <sys/drvctlio.h>
 
-#define OPTS "QRSa:dlpr"
+#define OPTS "QRSa:dlnpr"
 
 #define	OPEN_MODE(mode)							\
 	(((mode) == 'd' || (mode) == 'r') ? O_RDWR			\
@@ -49,7 +50,7 @@ usage(void)
 
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
 	    "       %s -d device\n"
-	    "       %s -l [device]\n"
+	    "       %s [-n] -l [device]\n"
 	    "       %s -p device\n"
 	    "       %s -Q device\n"
 	    "       %s -R device\n"
@@ -62,6 +63,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+	bool nflag = false;
 	int c, mode;
 	char *attr = 0;
 	extern char *optarg;
@@ -94,6 +96,9 @@ main(int argc, char **argv)
 			break;
 		case 'a':
 			attr = optarg;
+			break;
+		case 'n':
+			nflag = true;
 			break;
 		case '?':
 		default:
@@ -152,9 +157,12 @@ main(int argc, char **argv)
 		if (laa.l_children > children)
 			err(6, "DRVLISTDEV: number of children grew");
 
-		for (i = 0; i < laa.l_children; i++) {
-			printf("%s%s%s\n", laa.l_devname, (argc ? " " : ""),
-			    laa.l_childname[i]);
+		for (i = 0; i < (int)laa.l_children; i++) {
+			if (!nflag) {
+				printf("%s ",
+				    (argc == 0) ? "root" : laa.l_devname);
+			}
+			printf("%s\n", laa.l_childname[i]);
 		}
 		break;
 	case 'r':
