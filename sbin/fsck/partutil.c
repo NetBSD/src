@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.6 2009/06/06 17:47:50 haad Exp $	*/
+/*	$NetBSD: partutil.c,v 1.7 2009/06/06 18:31:29 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.6 2009/06/06 17:47:50 haad Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.7 2009/06/06 18:31:29 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -52,6 +52,23 @@ __RCSID("$NetBSD: partutil.c,v 1.6 2009/06/06 17:47:50 haad Exp $");
 
 #include "partutil.h"
 
+/*
+ * Convert disklabel geometry info to disk_geom.
+ */
+static void
+label2geom(struct disk_geom *geo, const struct disklabel *lp)
+{
+	geo->dg_secperunit = lp->d_secperunit;
+	geo->dg_secsize = lp->d_secsize;
+	geo->dg_nsectors = lp->d_nsectors;
+	geo->dg_ntracks = lp->d_ntracks;
+	geo->dg_ncylinders = lp->d_ncylinders;
+	geo->dg_secpercyl = lp->d_secpercyl;
+	geo->dg_pcylinders = lp->d_ncylinders;
+	geo->dg_sparespertrack = lp->d_sparespertrack;
+	geo->dg_sparespercyl = lp->d_sparespercyl;
+	geo->dg_acylinders = lp->d_acylinders;
+}
 
 /*
  * Set what we need to know about disk geometry.
@@ -138,7 +155,10 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	struct disklabel lab;
 	struct disklabel *lp = &lab;
 	prop_dictionary_t disk_dict, geom_dict;
+	int error;
 
+	error = 0;
+	
 	if (dt) {
 		lp = getdiskbyname(dt);
 		if (lp == NULL)
@@ -146,18 +166,30 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	}
 
 	/* Get disk description dictionary */
-	if (prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO, &disk_dict) != 0) {
-		warn("Please implement DIOCGDISKINFO for %s\n disk driver\n", s);
-		return (errno);
+	if ((error = prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO,
+		    &disk_dict)) != 0) {
+		warn("Please implement DIOCGDISKINFO for %s disk driver\n", s);
+		
+		/*
+		 * Ask for disklabel if DIOCGDISKINFO failed. This is
+		 * compatibility call and can be removed when all devices
+		 * will support DIOCGDISKINFO.
+		 */
+		if ((error = ioctl(fd, DIOCGDINFO, lp)) == -1) {
+			printf("DIOCGDINFO on %s failed\n", s);
+			return (errno);
+		}
+		label2geom(geo, lp);
+	} else {
+		geom_dict = prop_dictionary_get(disk_dict, "geometry");
+		dict2geom(geo, geom_dict);
 	}
 	
-	geom_dict = prop_dictionary_get(disk_dict, "geometry");
-	dict2geom(geo, geom_dict);
-
 	/* Get info about partition/wedge */
 	if (ioctl(fd, DIOCGWEDGEINFO, dkw) == -1) {
 		if (ioctl(fd, DIOCGDINFO, lp) == -1)
-			errx(errno, "Please implement DIOCGWEDGEINFO or DIOCGDINFO for disk device %s\n", s);
+			errx(errno, "Please implement DIOCGWEDGEINFO or "
+			    "DIOCGDINFO for disk device %s\n", s);
 
 		part2wedge(dkw, lp, s);
 	}
