@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1264 2009/05/26 21:58:31 pooka Exp $
+#	$NetBSD: mi,v 1.1265 2009/06/06 18:48:09 hubertf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8563,6 +8563,12 @@
 ./usr/share/man/cat9/ieee80211_setmode.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/ieee80211_watchdog.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/iic.0			comp-sys-catman		.cat
+./usr/share/man/cat9/iic_acquire_bus.0		comp-sys-catman		.cat
+./usr/share/man/cat9/iic_exec.0			comp-sys-catman		.cat
+./usr/share/man/cat9/iic_release_bus.0		comp-sys-catman		.cat
+./usr/share/man/cat9/iic_smbus_read_byte.0	comp-sys-catman		.cat
+./usr/share/man/cat9/iic_smbus_receive_byte.0	comp-sys-catman		.cat
+./usr/share/man/cat9/iic_smbus_write_byte.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/imax.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/imin.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/in4_cksum.0		comp-sys-catman		.cat
@@ -13896,6 +13902,12 @@
 ./usr/share/man/html9/ieee80211_setmode.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ieee80211_watchdog.html	comp-sys-htmlman	html
 ./usr/share/man/html9/iic.html			comp-sys-htmlman	html
+./usr/share/man/html9/iic_acquire_bus.html	comp-sys-htmlman	html
+./usr/share/man/html9/iic_exec.html		comp-sys-htmlman	html
+./usr/share/man/html9/iic_release_bus.html	comp-sys-htmlman	html
+./usr/share/man/html9/iic_smbus_read_byte.html	comp-sys-htmlman	html
+./usr/share/man/html9/iic_smbus_receive_byte.html	comp-sys-htmlman	html
+./usr/share/man/html9/iic_smbus_write_byte.html	comp-sys-htmlman	html
 ./usr/share/man/html9/imax.html			comp-sys-htmlman	html
 ./usr/share/man/html9/imin.html			comp-sys-htmlman	html
 ./usr/share/man/html9/in4_cksum.html		comp-sys-htmlman	html
@@ -19384,6 +19396,12 @@
 ./usr/share/man/man9/ieee80211_setmode.9	comp-sys-man		.man
 ./usr/share/man/man9/ieee80211_watchdog.9	comp-sys-man		.man
 ./usr/share/man/man9/iic.9			comp-sys-man		.man
+./usr/share/man/man9/iic_acquire_bus.9		comp-sys-man		.man
+./usr/share/man/man9/iic_exec.9			comp-sys-man		.man
+./usr/share/man/man9/iic_release_bus.9		comp-sys-man		.man
+./usr/share/man/man9/iic_smbus_read_byte.9	comp-sys-man		.man
+./usr/share/man/man9/iic_smbus_receive_byte.9	comp-sys-man		.man
+./usr/share/man/man9/iic_smbus_write_byte.9	comp-sys-man		.man
 ./usr/share/man/man9/imax.9			comp-sys-man		.man
 ./usr/share/man/man9/imin.9			comp-sys-man		.man
 ./usr/share/man/man9/in4_cksum.9		comp-sys-man		.man
