@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.17 2009/06/05 18:58:54 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.18 2009/06/06 22:15:46 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -317,4 +317,30 @@ sys/arch/hppa/hppa/vm_machdep.c			1.36
 	Do not use lwp_trampoline for cpu_setfunc, but a simplified
 	setfunc_trampoline that does not call lwp_startup().
 	[skrll, ticket #793]
+
+distrib/common/parselist.awk			1.16
+distrib/sets/maketars				1.66
+share/dict/Makefile				1.17
+share/mk/bsd.README				1.249
+share/mk/bsd.hostprog.mk			1.55
+share/mk/bsd.kmodule.mk				1.19
+share/mk/bsd.lib.mk				1.298
+share/mk/bsd.links.mk				1.34
+share/mk/bsd.man.mk				1.100
+share/mk/bsd.prog.mk				1.241
+share/zoneinfo/Makefile				1.43
+usr.bin/xinstall/xinstall.c			1.106 - 1.108 via patch
+
+	Various METALOG fixes, including entries sorting to
+	fix inconsistent shared sets among builds as seen in
+	/pub/NetBSD-daily/netbsd-5/200904010000Z/shared/ and
+	/pub/NetBSD-daily/netbsd-5/200904010002Z/shared/ dirs.
+	Should fix PR 24457 and PR 41155.
+	[snj, ticket #790]
+
+sys/kern/sched_4bsd.c				1.25
+
+	sched_pstats_hook: fix estcpu decay.
+	this makes my desktop usable when running "make -j4".
+	[rmind, ticket #791]
 
