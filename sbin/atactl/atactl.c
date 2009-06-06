@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.53 2009/03/16 12:52:32 lukem Exp $	*/
+/*	$NetBSD: atactl.c,v 1.54 2009/06/06 09:18:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.53 2009/03/16 12:52:32 lukem Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.54 2009/06/06 09:18:55 mlelstv Exp $");
 #endif
 
 
@@ -856,9 +856,9 @@ void
 device_identify(int argc, char *argv[])
 {
 	struct ataparams *inqbuf;
-	char model[sizeof(inqbuf->atap_model)];
-	char revision[sizeof(inqbuf->atap_revision)];
-	char serial[sizeof(inqbuf->atap_serial)];
+	char model[sizeof(inqbuf->atap_model)+1];
+	char revision[sizeof(inqbuf->atap_revision)+1];
+	char serial[sizeof(inqbuf->atap_serial)+1];
 	int needswap = 0;
 
 	/* No arguments. */
