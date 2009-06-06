@@ -1,7 +1,8 @@
-/* $NetBSD: ecma167-udf.h,v 1.11 2008/07/25 15:37:56 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.11.4.1 2009/06/06 22:00:23 bouyer Exp $ */
 
 /*-
- * Copyright (c) 2003, 2004, 2005, 2006, 2008 Reinoud Zandijk
+ * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009
+ * 	Reinoud Zandijk * <reinoud@NetBSD.org>
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
  * All rights reserved.
  *
@@ -59,7 +60,7 @@
 */
 
 #ifndef __packed
-#define __packed __packed
+#define __packed __attribute__((packed))
 #endif
 
 
@@ -178,7 +179,7 @@ struct long_ad {
 	union {
 		uint8_t	bytes[6];
 		struct UDF_ADImp_use im_used;
-	} __packed impl;
+	} impl;
 } __packed;
 #define longad_uniqueid impl.im_used.unique_id
 
@@ -198,7 +199,7 @@ union icb {
 	struct short_ad	s_ad;
 	struct long_ad	l_ad;
 	struct ext_ad	e_ad;
-} __packed;
+};
 
 
 /* short/long/ext extent have flags encoded in length */
@@ -371,7 +372,7 @@ struct impvol_desc {
 	union {
 		struct udf_lv_info	lv_info;
 		char			impl_use[460];
-	} __packed _impl_use;
+	} _impl_use;
 } __packed;
 
 
@@ -386,7 +387,7 @@ struct logvol_desc {
 	union {
 		struct long_ad	fsd_loc;		/* to fileset descriptor SEQUENCE */
 		uint8_t		logvol_content_use[16];
-	} __packed _lvd_use;
+	} _lvd_use;
 	uint32_t		mt_l;			/* Partition map length */
 	uint32_t		n_pm;			/* Number of partition maps */
 	struct regid		imp_id;
@@ -477,7 +478,7 @@ union udf_pmap {
 	struct part_map_virt	pmv;
 	struct part_map_spare	pms;
 	struct part_map_meta	pmm;
-} __packed;
+};
 
 
 /* Sparing Map Entry [UDF 2.01/2.2.11] */
@@ -607,7 +608,7 @@ struct logvol_int_desc {
 	union {
 		struct logvolhdr  logvolhdr;
 		int8_t		  reserved[32];
-	} __packed _impl_use;
+	} _impl_use;
 	uint32_t		num_part;
 	uint32_t		l_iu;
 	uint32_t		tables[1];	/* Freespace table, Sizetable, Implementation use */
@@ -827,7 +828,7 @@ union dscrptr {
 	struct udf_sparing_table spt;
 	struct space_bitmap_desc sbd;
 	struct space_entry_desc	 sed;
-} __packed;
+};
 
 
 #endif /* !_FS_UDF_ECMA167_UDF_H_ */
