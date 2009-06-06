@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.26 2009/06/05 18:59:33 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.27 2009/06/06 22:15:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -861,4 +861,55 @@ sys/arch/hppa/hppa/vm_machdep.c			1.36
 	Do not use lwp_trampoline for cpu_setfunc, but a simplified
 	setfunc_trampoline that does not call lwp_startup().
 	[skrll, ticket #793]
+
+sbin/drvctl/drvctl.8				1.7 - 1.10
+sbin/drvctl/drvctl.c				1.7, 1.9, 1.10 via patch
+
+	fix sign-compare issues
+	Add flag -n to suppress the first column of drvctl -l output.
+	[dyoung, ticket #736]
+
+sys/fs/udf/ecma167-udf.h			1.12
+
+	Make ecma167 header file compilable by pcc
+	[reinoud, ticket #769]
+
+sbin/newfs_udf/udf_create.c			1.16
+sys/fs/udf/udf_allocation.c			1.22, 1.23
+sys/fs/udf/udf_bswap.h				1.6, 1.7
+sys/fs/udf/udf_subr.c				1.88, 1.89
+
+	Various fixes for big endian machines.
+	[reinoud, ticket #770]
+
+distrib/common/parselist.awk			1.16
+distrib/sets/maketars				1.66
+share/dict/Makefile				1.17
+share/mk/bsd.README				1.249
+share/mk/bsd.hostprog.mk			1.55
+share/mk/bsd.kmodule.mk				1.19
+share/mk/bsd.lib.mk				1.298
+share/mk/bsd.links.mk				1.34
+share/mk/bsd.man.mk				1.100
+share/mk/bsd.prog.mk				1.241
+share/zoneinfo/Makefile				1.43
+usr.bin/xinstall/xinstall.c			1.106 - 1.108 via patch
+
+	Various METALOG fixes, including entries sorting to
+	fix inconsistent shared sets among builds as seen in
+	/pub/NetBSD-daily/netbsd-5/200904010000Z/shared/ and
+	/pub/NetBSD-daily/netbsd-5/200904010002Z/shared/ dirs.
+	Should fix PR 24457 and PR 41155.
+	[snj, ticket #790]
+
+sys/kern/sched_4bsd.c				1.25
+
+	sched_pstats_hook: fix estcpu decay.
+	this makes my desktop usable when running "make -j4".
+	[rmind, ticket #791]
+
+sbin/atactl/atactl.c				1.54
+
+	make space for a trailing \0 in model,revision and serial buffers.
+	[mlelstv, ticket #794]
 
