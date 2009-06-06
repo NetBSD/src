@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.91 2008/11/11 03:55:40 matt Exp $
+$NetBSD: acronyms.comp,v 1.92 2009/06/06 06:46:42 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -237,6 +237,7 @@ OCR	optical character recognition
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 OOB	out of band
+OOM	out of memory
 OS	operating system
 OSD	open source definition
 OSF	open software foundation
