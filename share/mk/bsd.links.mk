@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.32 2006/09/11 22:24:09 dbj Exp $
+#	$NetBSD: bsd.links.mk,v 1.32.24.1 2009/06/06 22:10:12 bouyer Exp $
 
 .include <bsd.init.mk>
 
@@ -8,11 +8,22 @@ install:	linksinstall
 ##### Default values
 LINKS?=
 SYMLINKS?=
+LINKSOWN?=	${BINOWN}
+LINKSGRP?=	${BINGRP}
+LINKSMODE?=	${NONBINMODE}
 
 __linkinstall: .USE
 	${_MKSHMSG_INSTALL} ${.TARGET}; \
-	${_MKSHECHO} "${INSTALL_LINK} ${.ALLSRC} ${.TARGET}" && \
-	${INSTALL_LINK} ${.ALLSRC} ${.TARGET}
+	${_MKSHECHO} "${INSTALL_LINK} \
+	    -o ${LINKSOWN_${.ALLSRC:T}:U${LINKSOWN}} \
+	    -g ${LINKSGRP_${.ALLSRC:T}:U${LINKSGRP}} \
+	    -m ${LINKSMODE_${.ALLSRC:T}:U${LINKSMODE}} \
+	    ${.ALLSRC} ${.TARGET}" && \
+	${INSTALL_LINK} \
+	    -o ${LINKSOWN_${.ALLSRC:T}:U${LINKSOWN}} \
+	    -g ${LINKSGRP_${.ALLSRC:T}:U${LINKSGRP}} \
+	    -m ${LINKSMODE_${.ALLSRC:T}:U${LINKSMODE}} \
+	    ${.ALLSRC} ${.TARGET}
 
 ##### Install rules
 .PHONY:		linksinstall
