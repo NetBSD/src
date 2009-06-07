@@ -1,4 +1,4 @@
-.\"	$NetBSD: agr.4,v 1.5 2007/12/02 22:12:04 wiz Exp $
+.\"	$NetBSD: agr.4,v 1.6 2009/06/07 23:06:48 darran Exp $
 .\"
 .\" Copyright (c)2005, 2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -60,6 +60,10 @@ of DA/SA, TCI, and, if available, some upper layer protocol
 information like
 .Xr ip 4
 DA/SA.
+.It Cm link1
+Disable LACP.  Prevents any LACP or Marker messaging which leaves
+the ports in the default static configuration.  Set this prior to
+adding ports.
 .El
 .\" ------------------------------------------------------------
 .Sh EXAMPLES
@@ -110,11 +114,6 @@ driver was written by
 .An YAMAMOTO Takashi .
 .\" ------------------------------------------------------------
 .Sh BUGS
-The current implementation of the
-.Nm
-driver always attempts automatic configuration via LACP.
-There is no way to configure statically or use non IEEE 802.3 devices.
-.Pp
 There is no way to configure LACP administrative variables, including
 system and port priorities.
 The current implementation of the
