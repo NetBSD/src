@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $ */
+/* $NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $");
  * Each is separate from the other.  Every branch is tagged as to whether
  * it points to a leaf or a branch.  This is not an attribute of the object
  * but of the pointer to the object.  The low bit of the pointer is used as
- * the tag to determine wether it points to a leaf or branch identity, with
+ * the tag to determine whether it points to a leaf or branch identity, with
  * branch identities having the low bit set.
  * 
  * A node's branch identity has one rule: when traversing the tree from the
@@ -100,7 +100,7 @@ __RCSID("$NetBSD: ptree.c,v 1.4 2009/01/18 12:06:14 lukem Exp $");
  * match the first N bits) has children who first N bits match the mask nodes,
  * that mask node is converted from being a leaf node to being a one-way
  * branch-node.  The mask becomes fixed in position in the tree.  The mask
- * will alaways be the longest mask match for its descendants (unless they
+ * will always be the longest mask match for its descendants (unless they
  * traverse an even longer match).
  */
 
