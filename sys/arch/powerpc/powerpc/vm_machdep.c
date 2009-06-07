@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.76 2008/11/19 23:04:34 cegger Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.77 2009/06/07 23:21:26 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.76 2008/11/19 23:04:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77 2009/06/07 23:21:26 martin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -297,7 +297,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	extern void fork_trampoline(void);
+	extern void setfunc_trampoline(void);
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
 	struct callframe *cf;
@@ -305,7 +305,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	tf = trapframe(l);
 	cf = (struct callframe *) ((uintptr_t)tf & ~(CALLFRAMELEN-1));
-	cf->lr = (register_t)cpu_lwp_bootstrap;
+	cf->lr = (register_t)setfunc_trampoline;
 	cf--;
 	cf->sp = (register_t) (cf+1);
 	cf->r31 = (register_t) func;
