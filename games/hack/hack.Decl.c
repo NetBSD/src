@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.Decl.c,v 1.7 2009/06/07 20:31:10 dholland Exp $	*/
+/*	$NetBSD: hack.Decl.c,v 1.8 2009/06/07 21:04:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.Decl.c,v 1.7 2009/06/07 20:31:10 dholland Exp $");
+__RCSID("$NetBSD: hack.Decl.c,v 1.8 2009/06/07 21:04:54 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -92,7 +92,7 @@ struct monst    youmonst;	/* dummy; used as return value for boomhit */
 
 xchar           dlevel = 1;
 xchar           xupstair, yupstair, xdnstair, ydnstair;
-char           *save_cm = 0;
+const char *save_cm = NULL;
 const char *killer, *nomovemsg;
 
 long            moves = 1;
