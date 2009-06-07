@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.46 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.47 2009/06/07 13:37:29 phx Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.47 2009/06/07 13:37:29 phx Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -103,7 +103,9 @@ static void trap0(void *);
 struct bat battable[512];
 
 register_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
+#ifndef MSGBUFADDR
 paddr_t msgbuf_paddr;
+#endif
 
 void
 oea_init(void (*handler)(void))
@@ -722,20 +724,24 @@ oea_startup(const char *model)
 	void *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	u_int i;
 
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
 	KASSERT(curcpu()->ci_intstk != 0);
 	KASSERT(curcpu()->ci_intrdepth == -1);
 
+	sz = round_page(MSGBUFSIZE);
+#ifdef MSGBUFADDR
+	v = (void *) MSGBUFADDR;
+#else
 	/*
 	 * If the msgbuf is not in segment 0, allocate KVA for it and access
 	 * it via mapped pages.  [This prevents unneeded BAT switches.]
 	 */
-        sz = round_page(MSGBUFSIZE);
 	v = (void *) msgbuf_paddr;
 	if (msgbuf_paddr + sz > SEGMENT_LENGTH) {
+		u_int i;
+
 		minaddr = 0;
 		if (uvm_map(kernel_map, &minaddr, sz,
 				NULL, UVM_UNKNOWN_OFFSET, 0,
@@ -749,6 +755,7 @@ oea_startup(const char *model)
 		}
 		pmap_update(pmap_kernel());
 	}
+#endif
 	initmsgbuf(v, sz);
 
 	printf("%s%s", copyright, version);
