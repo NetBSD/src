@@ -1,4 +1,4 @@
-/*	$NetBSD: sshtty.c,v 1.1.1.1 2009/06/07 22:19:31 christos Exp $	*/
+/*	$NetBSD: sshtty.c,v 1.2 2009/06/07 22:38:48 christos Exp $	*/
 /* $OpenBSD: sshtty.c,v 1.13 2008/05/19 15:45:07 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,6 +36,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sshtty.c,v 1.2 2009/06/07 22:38:48 christos Exp $");
 #include <sys/types.h>
 #include <stdio.h>
 #include <termios.h>

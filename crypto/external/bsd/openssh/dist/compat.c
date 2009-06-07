@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: compat.c,v 1.78 2008/09/11 14:22:37 markus Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: compat.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -142,9 +144,12 @@ compat_datafellows(const char *version)
 		  "1.2.19*,"
 		  "1.2.20*,"
 		  "1.2.21*,"
-		  "1.2.22*",		SSH_BUG_IGNOREMSG },
+		  "1.2.22*",		SSH_BUG_IGNOREMSG|SSH_BUG_K5USER },
 		{ "1.3.2*",		/* F-Secure */
-					SSH_BUG_IGNOREMSG },
+					SSH_BUG_IGNOREMSG|SSH_BUG_K5USER },
+		{ "1.2.1*,"
+		  "1.2.2*,"
+		  "1.2.3*",		SSH_BUG_K5USER },
 		{ "*SSH Compatible Server*",			/* Netscreen */
 					SSH_BUG_PASSWORDPAD },
 		{ "*OSU_0*,"
@@ -169,6 +174,15 @@ compat_datafellows(const char *version)
 		    strlen(check[i].pat), 0) == 1) {
 			debug("match: %s pat %s", version, check[i].pat);
 			datafellows = check[i].bugs;
+			/* Check to see if the remote side is OpenSSH and not HPN */
+			if(strstr(version,"OpenSSH") != NULL)
+			{
+				if (strstr(version,"hpn") == NULL)
+				{
+					datafellows |= SSH_BUG_LARGEWINDOW;
+					debug("Remote is NON-HPN aware");
+				}
+			}
 			return;
 		}
 	}

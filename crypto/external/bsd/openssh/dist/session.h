@@ -1,4 +1,4 @@
-/*	$NetBSD: session.h,v 1.1.1.1 2009/06/07 22:19:19 christos Exp $	*/
+/*	$NetBSD: session.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: session.h,v 1.30 2008/05/08 12:21:16 djm Exp $ */
 
 /*
@@ -26,6 +26,8 @@
  */
 #ifndef SESSION_H
 #define SESSION_H
+
+#include <tzfile.h>
 
 #define TTYSZ 64
 typedef struct Session Session;

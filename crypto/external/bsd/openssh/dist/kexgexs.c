@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgexs.c,v 1.1.1.1 2009/06/07 22:19:10 christos Exp $	*/
+/*	$NetBSD: kexgexs.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: kexgexs.c,v 1.11 2009/01/01 21:17:36 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: kexgexs.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/param.h>
 
 #include <stdio.h>

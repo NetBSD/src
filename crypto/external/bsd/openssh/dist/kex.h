@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.h,v 1.1.1.1 2009/06/07 22:19:09 christos Exp $	*/
+/*	$NetBSD: kex.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: kex.h,v 1.46 2007/06/07 19:37:34 pvalchev Exp $ */
 
 /*
@@ -126,6 +126,8 @@ struct Kex {
 	int	(*host_key_index)(Key *);
 	void	(*kex[KEX_MAX])(Kex *);
 };
+
+void	kex_prop2buf(Buffer *, char *proposal[PROPOSAL_MAX]);
 
 Kex	*kex_setup(char *[PROPOSAL_MAX]);
 void	 kex_finish(Kex *);

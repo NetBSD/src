@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.1.1.1 2009/06/07 22:19:20 christos Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: sftp-client.c,v 1.86 2008/06/26 06:10:09 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -21,6 +21,8 @@
 /* XXX: remove all logging, only return status codes */
 /* XXX: copy between two remote sites */
 
+#include "includes.h"
+__RCSID("$NetBSD: sftp-client.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -907,6 +909,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 	TAILQ_HEAD(reqhead, request) requests;
 	struct request *req;
 
+	status = -1;
 	TAILQ_INIT(&requests);
 
 	a = do_stat(conn, remote_path, 0);

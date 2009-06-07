@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.1.1.1 2009/06/07 22:19:31 christos Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.2 2009/06/07 22:38:48 christos Exp $	*/
 /* $OpenBSD: xmalloc.c,v 1.27 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,6 +14,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: xmalloc.c,v 1.2 2009/06/07 22:38:48 christos Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdio.h>

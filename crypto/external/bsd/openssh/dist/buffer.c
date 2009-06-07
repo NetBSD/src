@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.1 2009/06/07 22:19:04 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: buffer.c,v 1.31 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,6 +13,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: buffer.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/param.h>
 
 #include <stdio.h>
@@ -126,7 +128,7 @@ restart:
 
 	/* Increase the size of the buffer and retry. */
 	newlen = roundup(buffer->alloc + len, BUFFER_ALLOCSZ);
-	if (newlen > BUFFER_MAX_LEN)
+	if (newlen > BUFFER_MAX_LEN_HPN)
 		fatal("buffer_append_space: alloc %u not supported",
 		    newlen);
 	buffer->buf = xrealloc(buffer->buf, 1, newlen);

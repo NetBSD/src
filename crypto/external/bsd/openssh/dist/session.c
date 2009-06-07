@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.1 2009/06/07 22:19:19 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: session.c,v 1.245 2009/01/22 09:46:01 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,6 +34,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: session.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -136,7 +138,9 @@ static Session *sessions = NULL;
 #define SUBSYSTEM_EXT		1
 #define SUBSYSTEM_INT_SFTP	2
 
+#ifdef HAVE_LOGIN_CAP
 login_cap_t *lc;
+#endif
 
 static int is_child = 0;
 
@@ -218,6 +222,7 @@ auth_input_request_forwarding(struct passwd * pw)
 	}
 
 	/* Allocate a channel for the authentication agent socket. */
+	/* this shouldn't matter if its hpn or not - cjr */
 	nc = channel_new("auth socket",
 	    SSH_CHANNEL_AUTH_SOCKET, sock, sock, -1,
 	    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
@@ -381,6 +386,58 @@ do_authenticated1(Authctxt *authctxt)
 				success = 1;
 			break;
 
+#if defined(AFS) || defined(KRB5)
+		case SSH_CMSG_HAVE_KERBEROS_TGT:
+			if (!options.kerberos_tgt_passing) {
+				verbose("Kerberos TGT passing disabled.");
+			} else {
+				char *kdata = packet_get_string(&dlen);
+				packet_check_eom();
+
+				/* XXX - 0x41, see creds_to_radix version */
+				if (kdata[0] != 0x41) {
+#ifdef KRB5
+					krb5_data tgt;
+					tgt.data = kdata;
+					tgt.length = dlen;
+
+					if (auth_krb5_tgt(s->authctxt, &tgt))
+						success = 1;
+					else
+						verbose("Kerberos v5 TGT refused for %.100s", s->authctxt->user);
+#endif /* KRB5 */
+				} else {
+#ifdef AFS
+					if (auth_krb4_tgt(s->authctxt, kdata))
+						success = 1;
+					else
+						verbose("Kerberos v4 TGT refused for %.100s", s->authctxt->user);
+#endif /* AFS */
+				}
+				xfree(kdata);
+			}
+			break;
+#endif /* AFS || KRB5 */
+
+#ifdef AFS
+		case SSH_CMSG_HAVE_AFS_TOKEN:
+			if (!options.afs_token_passing || !k_hasafs()) {
+				verbose("AFS token passing disabled.");
+			} else {
+				/* Accept AFS token. */
+				char *token = packet_get_string(&dlen);
+				packet_check_eom();
+
+				if (auth_afs_token(s->authctxt, token))
+					success = 1;
+				else
+					verbose("AFS token refused for %.100s",
+					    s->authctxt->user);
+				xfree(token);
+			}
+			break;
+#endif /* AFS */
+
 		case SSH_CMSG_EXEC_SHELL:
 		case SSH_CMSG_EXEC_CMD:
 			if (type == SSH_CMSG_EXEC_CMD) {
@@ -470,6 +527,13 @@ do_exec_no_pty(Session *s, const char *command)
 		fatal("do_exec_no_pty: no session");
 
 	session_proctitle(s);
+
+#ifdef notdef
+#if defined(USE_PAM)
+	if (options.use_pam && !use_privsep)
+		do_pam_setcred(1);
+#endif /* USE_PAM */
+#endif
 
 	/* Fork the child. */
 	switch ((pid = fork())) {
@@ -608,6 +672,14 @@ do_exec_pty(Session *s, const char *command)
 		fatal("do_exec_pty: no session");
 	ptyfd = s->ptyfd;
 	ttyfd = s->ttyfd;
+
+#if defined(USE_PAM)
+	if (options.use_pam) {
+		do_pam_set_tty(s->tty);
+		if (!use_privsep)
+			do_pam_setcred(1);
+	}
+#endif
 
 	/*
 	 * Create another descriptor of the pty master side for use as the
@@ -778,6 +850,19 @@ do_login(Session *s, const char *command)
 		    options.use_dns),
 		    (struct sockaddr *)&from, fromlen);
 
+#ifdef USE_PAM
+	/*
+	 * If password change is needed, do it now.
+	 * This needs to occur before the ~/.hushlogin check.
+	 */
+	if (options.use_pam && !use_privsep && s->authctxt->force_pwchange) {
+		display_loginmsg();
+		do_pam_chauthtok();
+		s->authctxt->force_pwchange = 0;
+		/* XXX - signal [net] parent to enable forwardings */
+	}
+#endif
+
 	if (check_quietlogin(s, command))
 		return;
 
@@ -796,8 +881,12 @@ do_motd(void)
 	char buf[256];
 
 	if (options.print_motd) {
+#ifdef HAVE_LOGIN_CAP
 		f = fopen(login_getcapstr(lc, "welcome", "/etc/motd",
 		    "/etc/motd"), "r");
+#else
+		f = fopen("/etc/motd", "r");
+#endif
 		if (f) {
 			while (fgets(buf, sizeof(buf), f))
 				fputs(buf, stdout);
@@ -821,8 +910,13 @@ check_quietlogin(Session *s, const char *command)
 	if (command != NULL)
 		return 1;
 	snprintf(buf, sizeof(buf), "%.200s/.hushlogin", pw->pw_dir);
+#ifdef HAVE_LOGIN_CAP
 	if (login_getcapbool(lc, "hushlogin", 0) || stat(buf, &st) >= 0)
 		return 1;
+#else
+	if (stat(buf, &st) >= 0)
+		return 1;
+#endif
 	return 0;
 }
 
@@ -870,6 +964,67 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
 	snprintf(env[i], strlen(name) + 1 + strlen(value) + 1, "%s=%s", name, value);
 }
 
+#ifdef HAVE_LOGIN_CAP
+/*
+ * Sets any environment variables specified in login.conf.
+ * Taken from:
+ *	NetBSD: login_cap.c,v 1.11 2001/07/22 13:34:01 wiz Exp 
+ * Modified to use child_set_env instead of setenv.
+ */
+static void
+lc_setuserenv(char ***env, u_int *envsize, login_cap_t *lc)
+{
+	const char *stop = ", \t";
+	int i, count;
+	char *ptr;
+	char **res;
+	char *str = login_getcapstr(lc, "setenv", NULL, NULL);
+		  
+	if (str == NULL || *str == '\0')
+		return;
+	
+	/* count the sub-strings */
+	for (i = 1, ptr = str; *ptr; i++) {
+		ptr += strcspn(ptr, stop);
+		if (*ptr)
+			ptr++;
+	}
+
+	/* allocate ptr array and string */
+	count = i;
+	res = malloc(count * sizeof(char *) + strlen(str) + 1);
+
+	if (!res)
+		return;
+	
+	ptr = (char *)res + count * sizeof(char *);
+	strcpy(ptr, str);
+
+	/* split string */
+	for (i = 0; *ptr && i < count; i++) {
+		res[i] = ptr;
+		ptr += strcspn(ptr, stop);
+		if (*ptr)
+			*ptr++ = '\0';
+	}
+	
+	res[i] = NULL;
+
+	for (i = 0; i < count && res[i]; i++) {
+		if (*res[i] != '\0') {
+			if ((ptr = strchr(res[i], '=')) != NULL)
+				*ptr++ = '\0';
+			else 
+				ptr = "";
+			child_set_env(env, envsize, res[i], ptr);
+		}
+	}
+	
+	free(res);
+	return;
+}
+#endif
+
 /*
  * Reads environment variables from the given file and adds/overrides them
  * into the environment.  If the file does not exist, this does nothing.
@@ -916,6 +1071,32 @@ read_environment_file(char ***env, u_int *envsize,
 	fclose(f);
 }
 
+#ifdef USE_PAM
+void copy_environment(char **, char ***, u_int *);
+void copy_environment(char **source, char ***env, u_int *envsize)
+{
+	char *var_name, *var_val;
+	int i;
+
+	if (source == NULL)
+		return;
+
+	for (i = 0; source[i] != NULL; i++) {
+		var_name = xstrdup(source[i]);
+		if ((var_val = strstr(var_name, "=")) == NULL) {
+			xfree(var_name);
+			continue;
+		}
+		*var_val++ = '\0';
+
+		debug3("Copy environment: %s=%s", var_name, var_val);
+		child_set_env(env, envsize, var_name, var_val);
+
+		xfree(var_name);
+	}
+}
+#endif
+
 static char **
 do_setup_env(Session *s, const char *shell)
 {
@@ -937,6 +1118,9 @@ do_setup_env(Session *s, const char *shell)
 #endif
 
 	if (!options.use_login) {
+#ifdef HAVE_LOGIN_CAP
+		lc_setuserenv(&env, &envsize, lc);
+#endif
 		/* Set basic environment. */
 		for (i = 0; i < s->num_env; i++)
 			child_set_env(&env, &envsize, s->env[i].name,
@@ -945,10 +1129,14 @@ do_setup_env(Session *s, const char *shell)
 		child_set_env(&env, &envsize, "USER", pw->pw_name);
 		child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
 		child_set_env(&env, &envsize, "HOME", pw->pw_dir);
+#ifdef HAVE_LOGIN_CAP
 		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETPATH) < 0)
 			child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
 		else
 			child_set_env(&env, &envsize, "PATH", getenv("PATH"));
+#else
+		child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
+#endif
 
 		snprintf(buf, sizeof buf, "%.200s/%.50s",
 			 _PATH_MAILDIR, pw->pw_name);
@@ -998,11 +1186,34 @@ do_setup_env(Session *s, const char *shell)
 	if (original_command)
 		child_set_env(&env, &envsize, "SSH_ORIGINAL_COMMAND",
 		    original_command);
+#ifdef KRB4
+	if (s->authctxt->krb4_ticket_file)
+		child_set_env(&env, &envsize, "KRBTKFILE",
+		    s->authctxt->krb4_ticket_file);
+#endif
 #ifdef KRB5
 	if (s->authctxt->krb5_ticket_file)
 		child_set_env(&env, &envsize, "KRB5CCNAME",
 		    s->authctxt->krb5_ticket_file);
 #endif
+#ifdef USE_PAM
+	/*
+	 * Pull in any environment variables that may have
+	 * been set by PAM.
+	 */
+	if (options.use_pam) {
+		char **p;
+
+		p = fetch_pam_child_environment();
+		copy_environment(p, &env, &envsize);
+		free_pam_environment(p);
+
+		p = fetch_pam_environment();
+		copy_environment(p, &env, &envsize);
+		free_pam_environment(p);
+	}
+#endif /* USE_PAM */
+
 	if (auth_sock_name != NULL)
 		child_set_env(&env, &envsize, SSH_AUTHSOCKET_ENV_NAME,
 		    auth_sock_name);
@@ -1100,9 +1311,14 @@ do_nologin(struct passwd *pw)
 	FILE *f = NULL;
 	char buf[1024];
 
+#ifdef HAVE_LOGIN_CAP
 	if (!login_getcapbool(lc, "ignorenologin", 0) && pw->pw_uid)
 		f = fopen(login_getcapstr(lc, "nologin", _PATH_NOLOGIN,
 		    _PATH_NOLOGIN), "r");
+#else
+	if (pw->pw_uid)
+		f = fopen(_PATH_NOLOGIN, "r");
+#endif
 	if (f) {
 		/* /etc/nologin exists.  Print its contents and exit. */
 		logit("User %.100s not allowed because %s exists",
@@ -1176,13 +1392,43 @@ do_setusercontext(struct passwd *pw)
 	char *chroot_path, *tmp;
 
 	if (getuid() == 0 || geteuid() == 0) {
+#ifdef HAVE_LOGIN_CAP
+# ifdef USE_PAM
+		if (options.use_pam) {
+			do_pam_setcred(use_privsep);
+		}
+# endif /* USE_PAM */
 		/* Prepare groups */
 		if (setusercontext(lc, pw, pw->pw_uid,
 		    (LOGIN_SETALL & ~(LOGIN_SETPATH|LOGIN_SETUSER))) < 0) {
 			perror("unable to set user context");
 			exit(1);
 		}
+#else
 
+		if (setlogin(pw->pw_name) < 0)
+			error("setlogin failed: %s", strerror(errno));
+		if (setgid(pw->pw_gid) < 0) {
+			perror("setgid");
+			exit(1);
+		}
+		/* Initialize the group list. */
+		if (initgroups(pw->pw_name, pw->pw_gid) < 0) {
+			perror("initgroups");
+			exit(1);
+		}
+		endgrent();
+# ifdef USE_PAM
+		/*
+		 * PAM credentials may take the form of supplementary groups.
+		 * These will have been wiped by the above initgroups() call.
+		 * Reestablish them here.
+		 */
+		if (options.use_pam) {
+			do_pam_setcred(use_privsep);
+		}
+# endif /* USE_PAM */
+#endif
 		if (options.chroot_directory != NULL &&
 		    strcasecmp(options.chroot_directory, "none") != 0) {
                         tmp = tilde_expand_filename(options.chroot_directory,
@@ -1194,11 +1440,16 @@ do_setusercontext(struct passwd *pw)
 			free(chroot_path);
 		}
 
+#ifdef HAVE_LOGIN_CAP
 		/* Set UID */
 		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETUSER) < 0) {
 			perror("unable to set user context (setuser)");
 			exit(1);
 		}
+#else
+		/* Permanently switch to the desired uid. */
+		permanently_set_uid(pw);
+#endif
 	}
 	if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
 		fatal("Failed to set uids to %u.", (u_int) pw->pw_uid);
@@ -1307,7 +1558,21 @@ do_child(Session *s, const char *command)
 	if (!options.use_login) {
 		do_nologin(pw);
 		do_setusercontext(pw);
+		/*
+		 * PAM session modules in do_setusercontext may have
+		 * generated messages, so if this in an interactive
+		 * login then display them too.
+		 */
+		if (!check_quietlogin(s, command))
+			display_loginmsg();
 	}
+#ifdef USE_PAM
+	if (options.use_pam && !is_pam_session_open()) {
+		debug3("PAM session not opened, exiting");
+		display_loginmsg();
+		exit(254);
+	}
+#endif
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is
@@ -1321,7 +1586,9 @@ do_child(Session *s, const char *command)
 	 */
 	env = do_setup_env(s, shell);
 
+#ifdef HAVE_LOGIN_CAP
 	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
+#endif
 
 	/* we have to stash the hostname before we close our socket. */
 	if (options.use_login)
@@ -1900,10 +2167,16 @@ session_set_fds(Session *s, int fdin, int fdout, int fderr, int is_tty)
 	 */
 	if (s->chanid == -1)
 		fatal("no channel for session %d", s->self);
+	if(options.hpn_disabled) 
 	channel_set_fds(s->chanid,
 	    fdout, fdin, fderr,
 	    fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
 	    1, is_tty, CHAN_SES_WINDOW_DEFAULT);
+	else 
+		channel_set_fds(s->chanid,
+		    fdout, fdin, fderr,
+	            fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+		    1, is_tty, options.hpn_buffer_size);
 }
 
 /*
@@ -2185,9 +2458,18 @@ session_tty_list(void)
 	for (i = 0; i < sessions_nalloc; i++) {
 		Session *s = &sessions[i];
 		if (s->used && s->ttyfd != -1) {
+			char *p;
 			if (buf[0] != '\0')
 				strlcat(buf, ",", sizeof buf);
-			strlcat(buf, strrchr(s->tty, '/') + 1, sizeof buf);
+			if ((p = strstr(s->tty, "/pts/")) != NULL)
+				p++;
+			else {
+				if ((p = strrchr(s->tty, '/')) != NULL)
+					p++;
+				else
+					p = s->tty;
+			}
+			strlcat(buf, p, sizeof buf);
 		}
 	}
 	if (buf[0] == '\0')
@@ -2294,6 +2576,10 @@ do_cleanup(Authctxt *authctxt)
 
 	if (authctxt == NULL || !authctxt->authenticated)
 		return;
+#ifdef KRB4
+	if (options.kerberos_ticket_cleanup)
+		krb4_cleanup_proc(authctxt);
+#endif
 #ifdef KRB5
 	if (options.kerberos_ticket_cleanup &&
 	    authctxt->krb5_ctx)
@@ -2303,6 +2589,13 @@ do_cleanup(Authctxt *authctxt)
 #ifdef GSSAPI
 	if (compat20 && options.gss_cleanup_creds)
 		ssh_gssapi_cleanup_creds();
+#endif
+
+#ifdef USE_PAM
+	if (options.use_pam) {
+		sshpam_cleanup();
+		sshpam_thread_cleanup();
+	}
 #endif
 
 	/* remove agent socket */

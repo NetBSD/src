@@ -1,4 +1,4 @@
-/*	$NetBSD: scard.h,v 1.1.1.1 2009/06/07 22:19:16 christos Exp $	*/
+/*	$NetBSD: scard.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: scard.h,v 1.14 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*

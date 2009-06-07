@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.1.1.1 2009/06/07 22:19:15 christos Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: progressmeter.c,v 1.37 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: progressmeter.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -66,6 +68,8 @@ static time_t last_update;	/* last progress update */
 static char *file;		/* name of the file being transferred */
 static off_t end_pos;		/* ending position of transfer */
 static off_t cur_pos;		/* transfer position as of last refresh */
+static off_t last_pos;
+static off_t max_delta_pos = 0;
 static volatile off_t *counter;	/* progress counter */
 static long stalled;		/* how long we have been stalled */
 static int bytes_per_second;	/* current speed in bytes per second */
@@ -126,11 +130,16 @@ refresh_progress_meter(void)
 	int hours, minutes, seconds;
 	int i, len;
 	int file_len;
+	off_t delta_pos;
 
 	transferred = *counter - cur_pos;
 	cur_pos = *counter;
 	now = time(NULL);
 	bytes_left = end_pos - cur_pos;
+
+	delta_pos = cur_pos - last_pos;
+	if (delta_pos > max_delta_pos) 
+		max_delta_pos = delta_pos;
 
 	if (bytes_left > 0)
 		elapsed = now - last_update;
@@ -156,7 +165,7 @@ refresh_progress_meter(void)
 
 	/* filename */
 	buf[0] = '\0';
-	file_len = win_size - 35;
+	file_len = win_size - 45;
 	if (file_len > 0) {
 		len = snprintf(buf, file_len + 1, "\r%s", file);
 		if (len < 0)
@@ -173,7 +182,7 @@ refresh_progress_meter(void)
 		percent = ((float)cur_pos / end_pos) * 100;
 	else
 		percent = 100;
-	snprintf(buf + strlen(buf), win_size - strlen(buf),
+	snprintf(buf + strlen(buf), win_size - strlen(buf-8),
 	    " %3d%% ", percent);
 
 	/* amount transferred */
@@ -184,6 +193,15 @@ refresh_progress_meter(void)
 	/* bandwidth usage */
 	format_rate(buf + strlen(buf), win_size - strlen(buf),
 	    (off_t)bytes_per_second);
+	strlcat(buf, "/s ", win_size);
+
+	/* instantaneous rate */
+	if (bytes_left > 0)
+		format_rate(buf + strlen(buf), win_size - strlen(buf),
+			    delta_pos);
+	else
+		format_rate(buf + strlen(buf), win_size - strlen(buf),
+			    max_delta_pos);
 	strlcat(buf, "/s ", win_size);
 
 	/* ETA */
@@ -222,6 +240,7 @@ refresh_progress_meter(void)
 
 	atomicio(vwrite, STDOUT_FILENO, buf, win_size - 1);
 	last_update = now;
+	last_pos = cur_pos;
 }
 
 /*ARGSUSED*/

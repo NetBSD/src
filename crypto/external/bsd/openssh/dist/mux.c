@@ -1,4 +1,4 @@
-/*	$NetBSD: mux.c,v 1.1.1.1 2009/06/07 22:19:13 christos Exp $	*/
+/*	$NetBSD: mux.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: mux.c,v 1.7 2008/06/13 17:21:20 dtucker Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
@@ -35,6 +35,8 @@
  *      sessions in master.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: mux.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -702,7 +704,7 @@ muxclient(const char *path)
 		fatal("%s: master returned too much data (%d > %lu)",
 		    __func__, i, (u_long)sizeof(int));
 	if (muxclient_terminate) {
-		debug2("Exiting on signal %d", muxclient_terminate);
+		debug2("Exiting on signal %ld", (long)muxclient_terminate);
 		exitval[0] = 255;
 	} else if (i < (int)sizeof(int)) {
 		debug2("Control master terminated unexpectedly");

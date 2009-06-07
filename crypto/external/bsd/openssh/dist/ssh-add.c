@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.1.1.1 2009/06/07 22:19:22 christos Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: ssh-add.c,v 1.90 2007/09/09 11:38:01 sobrado Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,6 +36,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: ssh-add.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>

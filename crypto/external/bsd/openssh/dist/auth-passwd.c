@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.1.1.1 2009/06/07 22:19:01 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth-passwd.c,v 1.43 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,6 +37,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -44,6 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "packet.h"
 #include "buffer.h"
@@ -58,18 +61,22 @@ extern Buffer loginmsg;
 extern ServerOptions options;
 int sys_auth_passwd(Authctxt *, const char *);
 
+#ifdef HAVE_LOGIN_CAP
 extern login_cap_t *lc;
+#endif
 
 #define DAY		(24L * 60 * 60) /* 1 day in seconds */
 #define TWO_WEEKS	(2L * 7 * DAY)	/* 2 weeks in seconds */
 
-static void
+#if defined(BSD_AUTH) || defined(USE_PAM)
+void
 disable_forwarding(void)
 {
 	no_port_forwarding_flag = 1;
 	no_agent_forwarding_flag = 1;
 	no_x11_forwarding_flag = 1;
 }
+#endif
 
 /*
  * Tries to authenticate the user using password.  Returns true if
@@ -85,6 +92,10 @@ auth_password(Authctxt *authctxt, const char *password)
 		ok = 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
+#ifdef USE_PAM
+	if (options.use_pam)
+		return (sshpam_auth_passwd(authctxt, password) && ok);
+#endif
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
@@ -96,6 +107,7 @@ auth_password(Authctxt *authctxt, const char *password)
 	return (sys_auth_passwd(authctxt, password) && ok);
 }
 
+#ifdef BSD_AUTH
 static void
 warn_expiry(Authctxt *authctxt, auth_session_t *as)
 {
@@ -106,12 +118,14 @@ warn_expiry(Authctxt *authctxt, auth_session_t *as)
 
 	pwtimeleft = auth_check_change(as);
 	actimeleft = auth_check_expire(as);
+#ifdef HAVE_LOGIN_CAP
 	if (authctxt->valid) {
 		pwwarntime = login_getcaptime(lc, "password-warn", TWO_WEEKS,
 		    TWO_WEEKS);
 		acwarntime = login_getcaptime(lc, "expire-warn", TWO_WEEKS,
 		    TWO_WEEKS);
 	}
+#endif
 	if (pwtimeleft != 0 && pwtimeleft < pwwarntime) {
 		daysleft = pwtimeleft / DAY + 1;
 		snprintf(buf, sizeof(buf),
@@ -152,3 +166,26 @@ sys_auth_passwd(Authctxt *authctxt, const char *password)
 		return (auth_close(as));
 	}
 }
+#else
+int
+sys_auth_passwd(Authctxt *authctxt, const char *password)
+{
+	struct passwd *pw = authctxt->pw;
+	char *encrypted_password;
+
+	/* Check for users with no password. */
+	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
+		return (1);
+
+	/* Encrypt the candidate password using the proper salt. */
+	encrypted_password = crypt(password,
+	    (pw->pw_passwd[0] && pw->pw_passwd[1]) ?
+	    pw->pw_passwd : "xx");
+
+	/*
+	 * Authentication is accepted if the encrypted passwords
+	 * are identical.
+	 */
+	return (strcmp(encrypted_password, pw->pw_passwd) == 0);
+}
+#endif
