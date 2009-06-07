@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.45 2009/05/26 08:34:23 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.46 2009/06/07 09:47:31 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.45 2009/05/26 08:34:23 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.46 2009/06/07 09:47:31 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -54,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.45 2009/05/26 08:34:23 jnemeth Exp
 #include <sys/kthread.h>
 #include <sys/sysctl.h>
 #include <sys/namei.h>
+#include <sys/lock.h>
+#include <sys/vnode.h>
+#include <sys/stat.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -90,6 +93,8 @@ static void	module_print(const char *, ...)
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
+static int	module_load_plist_file(const char *, const bool, void **,
+		    size_t *);
 
 /*
  * module_error:
@@ -559,16 +564,20 @@ module_do_load(const char *name, bool isdep, int flags,
 	const int maxdepth = 6;
 	modinfo_t *mi;
 	module_t *mod, *mod2;
+	prop_dictionary_t filedict;
+	void *plist;
 	char buf[MAXMODNAME], *path;
 	const char *s, *p;
 	int error;
-	size_t len;
+	size_t len, plistlen;
 	bool nochroot;
 
 	KASSERT(mutex_owned(&module_lock));
 
+	filedict = NULL;
+	path = NULL;
 	error = 0;
-	path=NULL;
+	nochroot = false;
 
 	/*
 	 * Avoid recursing too far.
@@ -775,10 +784,37 @@ module_do_load(const char *name, bool isdep, int flags,
 		goto fail2;
 	}
 
+	/*
+	 * Load and process <module>.prop if it exists.
+	 */
+	if (mod->mod_source == MODULE_SOURCE_FILESYS) {
+		error = module_load_plist_file(path, nochroot, &plist,
+		    &plistlen);
+		if (error != 0) {
+			module_print("plist load returned error %d for `%s'",
+			    error, path);
+		} else {
+			filedict = prop_dictionary_internalize(plist);
+			if (filedict == NULL) {
+				error = EINVAL;
+			}
+		}
+		if (plist != NULL) {
+			kmem_free(plist, PAGE_SIZE);
+		}
+		if ((error != 0) && (error != ENOENT)) {
+			goto fail;
+		}
+	}
+
 	KASSERT(module_active == NULL);
 	module_active = mod;
-	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
+	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, (filedict != NULL) ?
+	    filedict : props);
 	module_active = NULL;
+	if (filedict != NULL) {
+		prop_object_release(filedict);
+	}
 	if (error != 0) {
 		module_error("modcmd function returned error %d for `%s'",
 		    error, mi->mi_name);
@@ -1081,3 +1117,83 @@ module_print_list(void (*pr)(const char *, ...))
 	}
 }
 #endif	/* DDB */
+
+/*
+ * module_load_plist_file:
+ *
+ *	Load a plist located in the file system into memory.
+ */
+static int
+module_load_plist_file(const char *modpath, const bool nochroot,
+		       void **basep, size_t *length)
+{
+	struct nameidata nd;
+	struct stat sb;
+	void *base;
+	char *proppath;
+	size_t resid;
+	int error, pathlen;
+
+	base = NULL;
+	*length = 0;
+
+	proppath = PNBUF_GET();
+	strcpy(proppath, modpath);
+	pathlen = strlen(proppath);
+	if ((pathlen >= 5) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
+		strcpy(&proppath[pathlen - 5], ".prop");
+	} else if (pathlen < MAXPATHLEN - 5) {
+			strcat(proppath, ".prop");
+	} else {
+		error = ENOENT;
+		goto out1;
+	}
+
+	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
+	    UIO_SYSSPACE, proppath);
+
+	error = namei(&nd);
+	if (error != 0) {
+		goto out1;
+	}
+
+	error = vn_stat(nd.ni_vp, &sb);
+	if (sb.st_size >= (PAGE_SIZE - 1)) {	/* leave space for term \0 */
+		error = EINVAL;
+	}
+	if (error != 0) {
+		goto out1;
+	}
+
+	error = vn_open(&nd, FREAD, 0);
+ 	if (error != 0) {
+	 	goto out1;
+	}
+
+	base = kmem_alloc(PAGE_SIZE, KM_SLEEP);
+	if (base == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+
+	error = vn_rdwr(UIO_READ, nd.ni_vp, base, sb.st_size, 0,
+	    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid, curlwp);
+	*((uint8_t *)base + sb.st_size) = '\0';
+	if (error == 0 && resid != 0) {
+		error = EINVAL;
+	}
+	if (error != 0) {
+		kmem_free(base, PAGE_SIZE);
+		base = NULL;
+	}
+	*length = sb.st_size;
+
+out:
+	VOP_UNLOCK(nd.ni_vp, 0);
+	vn_close(nd.ni_vp, FREAD, kauth_cred_get());
+
+out1:
+	PNBUF_PUT(proppath);
+	*basep = base;
+	return error;
+}
