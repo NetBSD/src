@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.8 2009/06/07 20:30:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.8 2009/06/07 20:30:49 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -345,11 +345,11 @@ save_engravings(int fd)
 			ep = ep->nxt_engr;
 			continue;
 		}
-		bwrite(fd, (char *) &(ep->engr_lth), sizeof(ep->engr_lth));
-		bwrite(fd, (char *) ep, sizeof(struct engr) + ep->engr_lth);
+		bwrite(fd, &(ep->engr_lth), sizeof(ep->engr_lth));
+		bwrite(fd, ep, sizeof(struct engr) + ep->engr_lth);
 		ep = ep->nxt_engr;
 	}
-	bwrite(fd, (char *) nul, sizeof(unsigned));
+	bwrite(fd, nul, sizeof(unsigned));
 	head_engr = 0;
 }
 
