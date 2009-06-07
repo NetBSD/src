@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.10 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.h,v 1.11 2009/06/07 20:31:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -203,9 +203,9 @@ extern char SAVEF[];
 extern char fut_geno[60]; /* idem */
 extern char genocided[60]; /* defined in Decl.c */
 extern char lock[];
-extern char mlarge[];
+extern const char mlarge[];
 extern char morc;
-extern char nul[];
+extern const char nul[];
 extern char plname[PL_NSIZ], pl_character[PL_CSIZ];
 extern const char quitchars[];
 extern char sdir[]; /* defined in hack.c */

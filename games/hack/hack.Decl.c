@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.Decl.c,v 1.6 2003/04/02 18:36:35 jsm Exp $	*/
+/*	$NetBSD: hack.Decl.c,v 1.7 2009/06/07 20:31:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,11 +63,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.Decl.c,v 1.6 2003/04/02 18:36:35 jsm Exp $");
+__RCSID("$NetBSD: hack.Decl.c,v 1.7 2009/06/07 20:31:10 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
-char            nul[40];	/* contains zeros */
+const char      nul[40];	/* contains zeros */
 char            plname[PL_NSIZ];/* player name */
 char            lock[PL_NSIZ + 4] = "1lock";	/* long enough for login name
 						 * .99 */
