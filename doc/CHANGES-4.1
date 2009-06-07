@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.152 2009/06/05 18:13:40 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.153 2009/06/07 11:59:38 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3434,4 +3434,9 @@ usr.sbin/Makefile				patch
 	Pull up pkg_install-20090528, libarchive-2.5.5 and libfetch-2.23
 	with the associated build infrastructure as of 20090529 from HEAD. 
 	[joerg, ticket #1322]
+
+share/i18n/csmapper/CP/mapper.dir.CP.src	1.10 via patch
+
+	PR/39445, fix wrong charsets priority for CP932.
+	[tnozaki, ticket #1194]
 
