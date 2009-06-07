@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.1.1.1 2009/06/07 22:19:18 christos Exp $	*/
+/*	$NetBSD: servconf.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: servconf.h,v 1.87 2009/01/22 10:02:34 djm Exp $ */
 
 /*
@@ -57,6 +57,9 @@ typedef struct {
 	int     key_regeneration_time;	/* Server key lifetime (seconds). */
 	int     permit_root_login;	/* PERMIT_*, see above */
 	int     ignore_rhosts;	/* Ignore .rhosts and .shosts. */
+	int     ignore_root_rhosts;	/* Ignore .rhosts and .shosts for root;
+					   defaults to ignore_rhosts if not
+					   given. */
 	int     ignore_user_known_hosts;	/* Ignore ~/.ssh/known_hosts
 						 * for RhostsRsaAuth */
 	int     print_motd;	/* If true, print /etc/motd. */
@@ -89,8 +92,13 @@ typedef struct {
 						 * /etc/passwd */
 	int     kerberos_ticket_cleanup;	/* If true, destroy ticket
 						 * file on logout. */
+	int	kerberos_tgt_passing;		/* If true, permit Kerberos TGT
+						 * passing. */
 	int     kerberos_get_afs_token;		/* If true, try to get AFS token if
 						 * authenticated with Kerberos. */
+#ifdef AFS
+	int     afs_token_passing;      /* If true, permit AFS token passing. */
+#endif
 	int     gss_authentication;	/* If true, permit GSSAPI authentication */
 	int     gss_cleanup_creds;	/* If true, destroy cred cache on logout */
 	int     password_authentication;	/* If true, permit password
@@ -142,6 +150,12 @@ typedef struct {
 
 	char   *authorized_keys_file;	/* File containing public keys */
 	char   *authorized_keys_file2;
+
+	int	use_pam;		/* Enable auth via PAM */
+	int     none_enabled;           /* enable NONE cipher switch */
+	int     tcp_rcv_buf_poll;       /* poll tcp rcv window in autotuning kernels*/
+	int	hpn_disabled;		/* disable hpn functionality. false by default */
+	int	hpn_buffer_size;	/* set the hpn buffer size - default 3MB */
 
 	char   *adm_forced_command;
 

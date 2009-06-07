@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.1.1.1 2009/06/07 22:19:06 christos Exp $	*/
+/*	$NetBSD: cipher.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: cipher.c,v 1.82 2009/01/26 09:58:15 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,6 +36,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: cipher.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/md5.h>
@@ -51,6 +53,7 @@ extern const EVP_CIPHER *evp_ssh1_bf(void);
 extern const EVP_CIPHER *evp_ssh1_3des(void);
 extern void ssh1_3des_iv(EVP_CIPHER_CTX *, int, u_char *, int);
 extern const EVP_CIPHER *evp_aes_128_ctr(void);
+extern const EVP_CIPHER *evp_aes_ctr_mt(void);
 extern void ssh_aes_ctr_iv(EVP_CIPHER_CTX *, int, u_char *, u_int);
 
 struct Cipher {
@@ -78,13 +81,25 @@ struct Cipher {
 	{ "aes256-cbc",		SSH_CIPHER_SSH2, 16, 32, 0, 1, EVP_aes_256_cbc },
 	{ "rijndael-cbc@lysator.liu.se",
 				SSH_CIPHER_SSH2, 16, 32, 0, 1, EVP_aes_256_cbc },
+#ifdef AES_CTR_MT
+	{ "aes128-ctr",		SSH_CIPHER_SSH2, 16, 16, 0, 0, evp_aes_ctr_mt },
+	{ "aes192-ctr",		SSH_CIPHER_SSH2, 16, 24, 0, 0, evp_aes_ctr_mt },
+	{ "aes256-ctr",		SSH_CIPHER_SSH2, 16, 32, 0, 0, evp_aes_ctr_mt },
+#else
 	{ "aes128-ctr",		SSH_CIPHER_SSH2, 16, 16, 0, 0, evp_aes_128_ctr },
 	{ "aes192-ctr",		SSH_CIPHER_SSH2, 16, 24, 0, 0, evp_aes_128_ctr },
 	{ "aes256-ctr",		SSH_CIPHER_SSH2, 16, 32, 0, 0, evp_aes_128_ctr },
+#endif
+#ifdef ACSS
 	{ "acss@openssh.org",	SSH_CIPHER_SSH2, 16, 5, 0, 0, EVP_acss },
+#endif
 
 	{ NULL,			SSH_CIPHER_INVALID, 0, 0, 0, 0, NULL }
 };
+
+#ifndef ACSS
+static const EVP_CIPHER *EVP_acss(void) { return NULL; }
+#endif
 
 /*--*/
 
@@ -158,7 +173,8 @@ ciphers_valid(const char *names)
 	for ((p = strsep(&cp, CIPHER_SEP)); p && *p != '\0';
 	    (p = strsep(&cp, CIPHER_SEP))) {
 		c = cipher_by_name(p);
-		if (c == NULL || c->number != SSH_CIPHER_SSH2) {
+		if (c == NULL || (c->number != SSH_CIPHER_SSH2 && 
+c->number != SSH_CIPHER_NONE)) {
 			debug("bad cipher %s [%s]", p, names);
 			xfree(cipher_list);
 			return 0;
@@ -318,6 +334,7 @@ cipher_get_keyiv(CipherContext *cc, u_char *iv, u_int len)
 	int evplen;
 
 	switch (c->number) {
+	case SSH_CIPHER_NONE:
 	case SSH_CIPHER_SSH2:
 	case SSH_CIPHER_DES:
 	case SSH_CIPHER_BLOWFISH:
@@ -347,6 +364,7 @@ cipher_set_keyiv(CipherContext *cc, u_char *iv)
 	int evplen = 0;
 
 	switch (c->number) {
+	case SSH_CIPHER_NONE:
 	case SSH_CIPHER_SSH2:
 	case SSH_CIPHER_DES:
 	case SSH_CIPHER_BLOWFISH:

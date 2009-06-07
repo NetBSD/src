@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth-rhosts.c,v 1.43 2008/06/13 14:18:51 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,6 +15,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth-rhosts.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -288,7 +290,8 @@ auth_rhosts2_raw(struct passwd *pw, const char *client_user, const char *hostnam
 			continue;
 		}
 		/* Check if we have been configured to ignore .rhosts and .shosts files. */
-		if (options.ignore_rhosts) {
+		if ((pw->pw_uid == 0 && options.ignore_root_rhosts) ||
+		    (pw->pw_uid != 0 && options.ignore_rhosts)) {
 			auth_debug_add("Server has been configured to ignore %.100s.",
 			    rhosts_files[rhosts_file_index]);
 			continue;

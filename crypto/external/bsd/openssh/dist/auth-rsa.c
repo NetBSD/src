@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth-rsa.c,v 1.73 2008/07/02 12:03:51 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,6 +15,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth-rsa.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.h,v 1.1.1.1 2009/06/07 22:19:13 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.h,v 1.21 2008/11/04 08:22:13 djm Exp $ */
 
 /*
@@ -62,6 +62,15 @@ int mm_ssh_gssapi_userok(char *user);
 OM_uint32 mm_ssh_gssapi_checkmic(Gssctxt *, gss_buffer_t, gss_buffer_t);
 #endif
 
+#ifdef USE_PAM
+void mm_start_pam(struct Authctxt *);
+u_int mm_do_pam_account(void);
+void *mm_sshpam_init_ctx(struct Authctxt *);
+int mm_sshpam_query(void *, char **, char **, u_int *, char ***, u_int **);
+int mm_sshpam_respond(void *, u_int, char **);
+void mm_sshpam_free_ctx(void *);
+#endif
+
 struct Session;
 void mm_terminate(void);
 int mm_pty_allocate(int *, int *, char *, size_t);
@@ -106,6 +115,15 @@ void mm_jpake_key_confirm(struct jpake_group *, BIGNUM *, BIGNUM *,
 int mm_jpake_check_confirm(const BIGNUM *,
     const u_char *, u_int, const u_char *, u_int, const u_char *, u_int);
 
+/* auth_krb */
+#ifdef KRB4
+int mm_auth_krb4(struct Authctxt *, void *, char **, void *);
+#endif
+#ifdef KRB5
+/* auth and reply are really krb5_data objects, but we don't want to
+ * include all of the krb5 headers here */
+int mm_auth_krb5(void *authctxt, void *auth, char **client, void *reply);
+#endif
 
 /* zlib allocation hooks */
 

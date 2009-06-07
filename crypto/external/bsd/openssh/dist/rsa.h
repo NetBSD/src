@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa.h,v 1.1.1.1 2009/06/07 22:19:16 christos Exp $	*/
+/*	$NetBSD: rsa.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: rsa.h,v 1.16 2006/03/25 22:22:43 djm Exp $ */
 
 /*

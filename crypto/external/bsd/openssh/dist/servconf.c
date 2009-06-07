@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.1.1.1 2009/06/07 22:19:18 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: servconf.c,v 1.194 2009/01/22 10:02:34 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,6 +11,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: servconf.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -24,6 +26,14 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <time.h>
+
+#ifdef KRB4
+#include <krb.h>
+#ifdef AFS
+#include <kafs.h>
+#endif /* AFS */
+#endif /* KRB4 */
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -54,6 +64,11 @@ void
 initialize_server_options(ServerOptions *options)
 {
 	memset(options, 0, sizeof(*options));
+
+	/* Portable-specific options */
+	options->use_pam = -1;
+
+	/* Standard Options */
 	options->num_ports = 0;
 	options->ports_from_cmdline = 0;
 	options->listen_addrs = NULL;
@@ -65,6 +80,7 @@ initialize_server_options(ServerOptions *options)
 	options->key_regeneration_time = -1;
 	options->permit_root_login = PERMIT_NOT_SET;
 	options->ignore_rhosts = -1;
+	options->ignore_root_rhosts = -1;
 	options->ignore_user_known_hosts = -1;
 	options->print_motd = -1;
 	options->print_lastlog = -1;
@@ -84,6 +100,12 @@ initialize_server_options(ServerOptions *options)
 	options->kerberos_authentication = -1;
 	options->kerberos_or_local_passwd = -1;
 	options->kerberos_ticket_cleanup = -1;
+#if defined(AFS) || defined(KRB5)
+	options->kerberos_tgt_passing = -1;
+#endif
+#ifdef AFS
+	options->afs_token_passing = -1;
+#endif
 	options->kerberos_get_afs_token = -1;
 	options->gss_authentication=-1;
 	options->gss_cleanup_creds = -1;
@@ -122,11 +144,25 @@ initialize_server_options(ServerOptions *options)
 	options->adm_forced_command = NULL;
 	options->chroot_directory = NULL;
 	options->zero_knowledge_password_authentication = -1;
+	options->none_enabled = -1;
+	options->tcp_rcv_buf_poll = -1;
+	options->hpn_disabled = -1;
+	options->hpn_buffer_size = -1;
 }
 
 void
 fill_default_server_options(ServerOptions *options)
 {
+	/* needed for hpn socket tests */
+	int sock;
+	int socksize;
+	socklen_t socksizelen = sizeof(int);
+
+	/* Portable-specific options */
+	if (options->use_pam == -1)
+		options->use_pam = 0;
+
+	/* Standard Options */
 	if (options->protocol == SSH_PROTO_UNKNOWN)
 		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
 	if (options->num_host_key_files == 0) {
@@ -154,9 +190,11 @@ fill_default_server_options(ServerOptions *options)
 	if (options->key_regeneration_time == -1)
 		options->key_regeneration_time = 3600;
 	if (options->permit_root_login == PERMIT_NOT_SET)
-		options->permit_root_login = PERMIT_YES;
+		options->permit_root_login = PERMIT_NO;
 	if (options->ignore_rhosts == -1)
 		options->ignore_rhosts = 1;
+	if (options->ignore_root_rhosts == -1)
+		options->ignore_root_rhosts = options->ignore_rhosts;
 	if (options->ignore_user_known_hosts == -1)
 		options->ignore_user_known_hosts = 0;
 	if (options->print_motd == -1)
@@ -195,6 +233,14 @@ fill_default_server_options(ServerOptions *options)
 		options->kerberos_or_local_passwd = 1;
 	if (options->kerberos_ticket_cleanup == -1)
 		options->kerberos_ticket_cleanup = 1;
+#if defined(AFS) || defined(KRB5)
+	if (options->kerberos_tgt_passing == -1)
+		options->kerberos_tgt_passing = 0;
+#endif
+#ifdef AFS
+	if (options->afs_token_passing == -1)
+		options->afs_token_passing = 0;
+#endif
 	if (options->kerberos_get_afs_token == -1)
 		options->kerberos_get_afs_token = 0;
 	if (options->gss_authentication == -1)
@@ -251,14 +297,62 @@ fill_default_server_options(ServerOptions *options)
 	if (options->zero_knowledge_password_authentication == -1)
 		options->zero_knowledge_password_authentication = 0;
 
+	if (options->hpn_disabled == -1) 
+		options->hpn_disabled = 0;
+
+	if (options->hpn_buffer_size == -1) {
+		/* option not explicitly set. Now we have to figure out */
+		/* what value to use */
+		if (options->hpn_disabled == 1) {
+			options->hpn_buffer_size = CHAN_SES_WINDOW_DEFAULT;
+		} else {
+			/* get the current RCV size and set it to that */
+			/*create a socket but don't connect it */
+			/* we use that the get the rcv socket size */
+			sock = socket(AF_INET, SOCK_STREAM, 0);
+			getsockopt(sock, SOL_SOCKET, SO_RCVBUF, 
+				   &socksize, &socksizelen);
+			close(sock);
+			options->hpn_buffer_size = socksize;
+			debug ("HPN Buffer Size: %d", options->hpn_buffer_size);
+			
+		} 
+	} else {
+		/* we have to do this incase the user sets both values in a contradictory */
+		/* manner. hpn_disabled overrrides hpn_buffer_size*/
+		if (options->hpn_disabled <= 0) {
+			if (options->hpn_buffer_size == 0)
+				options->hpn_buffer_size = 1;
+			/* limit the maximum buffer to 64MB */
+			if (options->hpn_buffer_size > 64*1024) {
+				options->hpn_buffer_size = 64*1024*1024;
+			} else {
+				options->hpn_buffer_size *= 1024;
+			}
+		} else
+			options->hpn_buffer_size = CHAN_TCP_WINDOW_DEFAULT;
+	}
+
 	/* Turn privilege separation on by default */
 	if (use_privsep == -1)
 		use_privsep = 1;
+
+#ifndef HAVE_MMAP
+	if (use_privsep && options->compression == 1) {
+		error("This platform does not support both privilege "
+		    "separation and compression");
+		error("Compression disabled");
+		options->compression = 0;
+	}
+#endif
 }
 
 /* Keyword tokens. */
 typedef enum {
 	sBadOption,		/* == unknown option */
+	/* Portable-specific options */
+	sUsePAM,
+	/* Standard Options */
 	sPort, sHostKeyFile, sServerKeyBits, sLoginGraceTime, sKeyRegenerationTime,
 	sPermitRootLogin, sLogFacility, sLogLevel,
 	sRhostsRSAAuthentication, sRSAAuthentication,
@@ -282,6 +376,8 @@ typedef enum {
 	sMatch, sPermitOpen, sForceCommand, sChrootDirectory,
 	sUsePrivilegeSeparation, sAllowAgentForwarding,
 	sZeroKnowledgePasswordAuthentication,
+	sIgnoreRootRhosts,
+	sNoneEnabled, sTcpRcvBufPoll,sHPNDisabled, sHPNBufferSize,
 	sDeprecated, sUnsupported
 } ServerOpCodes;
 
@@ -295,6 +391,11 @@ static struct {
 	ServerOpCodes opcode;
 	u_int flags;
 } keywords[] = {
+#ifdef USE_PAM
+	{ "usepam", sUsePAM, SSHCFG_GLOBAL },
+#else
+	{ "usepam", sUnsupported, SSHCFG_GLOBAL },
+#endif
 	{ "port", sPort, SSHCFG_GLOBAL },
 	{ "hostkey", sHostKeyFile, SSHCFG_GLOBAL },
 	{ "hostdsakey", sHostKeyFile, SSHCFG_GLOBAL },		/* alias */
@@ -323,7 +424,11 @@ static struct {
 	{ "kerberosticketcleanup", sUnsupported, SSHCFG_GLOBAL },
 	{ "kerberosgetafstoken", sUnsupported, SSHCFG_GLOBAL },
 #endif
+#if defined(AFS) || defined(KRB5)
+	{ "kerberostgtpassing", sKerberosTgtPassing, SSHCFG_GLOBAL },
+#else
 	{ "kerberostgtpassing", sUnsupported, SSHCFG_GLOBAL },
+#endif
 	{ "afstokenpassing", sUnsupported, SSHCFG_GLOBAL },
 #ifdef GSSAPI
 	{ "gssapiauthentication", sGssAuthentication, SSHCFG_ALL },
@@ -347,6 +452,7 @@ static struct {
 	{ "printmotd", sPrintMotd, SSHCFG_GLOBAL },
 	{ "printlastlog", sPrintLastLog, SSHCFG_GLOBAL },
 	{ "ignorerhosts", sIgnoreRhosts, SSHCFG_GLOBAL },
+	{ "ignorerootrhosts", sIgnoreRootRhosts, SSHCFG_GLOBAL },
 	{ "ignoreuserknownhosts", sIgnoreUserKnownHosts, SSHCFG_GLOBAL },
 	{ "x11forwarding", sX11Forwarding, SSHCFG_ALL },
 	{ "x11displayoffset", sX11DisplayOffset, SSHCFG_ALL },
@@ -388,6 +494,10 @@ static struct {
 	{ "permitopen", sPermitOpen, SSHCFG_ALL },
 	{ "forcecommand", sForceCommand, SSHCFG_ALL },
 	{ "chrootdirectory", sChrootDirectory, SSHCFG_ALL },
+	{ "noneenabled", sNoneEnabled },
+	{ "hpndisabled", sHPNDisabled },
+	{ "hpnbuffersize", sHPNBufferSize },
+	{ "tcprcvbufpoll", sTcpRcvBufPoll },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -414,6 +524,7 @@ parse_token(const char *cp, const char *filename,
 
 	for (i = 0; keywords[i].name; i++)
 		if (strcasecmp(cp, keywords[i].name) == 0) {
+		        debug ("Config token is %s", keywords[i].name);
 			*flags = keywords[i].flags;
 			return keywords[i].opcode;
 		}
@@ -606,7 +717,7 @@ process_server_config_line(ServerOptions *options, char *line,
 	SyslogFacility *log_facility_ptr;
 	LogLevel *log_level_ptr;
 	ServerOpCodes opcode;
-	int port;
+	int port = 0;
 	u_int i, flags = 0;
 	size_t len;
 
@@ -640,6 +751,12 @@ process_server_config_line(ServerOptions *options, char *line,
 	}
 
 	switch (opcode) {
+	/* Portable-specific options */
+	case sUsePAM:
+		intptr = &options->use_pam;
+		goto parse_flag;
+
+	/* Standard Options */
 	case sBadOption:
 		return -1;
 	case sPort:
@@ -726,6 +843,7 @@ process_server_config_line(ServerOptions *options, char *line,
 		if (options->listen_addrs != NULL)
 			fatal("%s line %d: address family must be specified before "
 			    "ListenAddress.", filename, linenum);
+		value = 0;	/* silence compiler */
 		if (strcasecmp(arg, "inet") == 0)
 			value = AF_INET;
 		else if (strcasecmp(arg, "inet6") == 0)
@@ -805,6 +923,26 @@ process_server_config_line(ServerOptions *options, char *line,
 			*intptr = value;
 		break;
 
+	case sIgnoreRootRhosts:
+		intptr = &options->ignore_root_rhosts;
+		goto parse_flag;
+
+	case sNoneEnabled:
+		intptr = &options->none_enabled;
+		goto parse_flag;
+
+	case sTcpRcvBufPoll:
+		intptr = &options->tcp_rcv_buf_poll;
+		goto parse_flag;
+
+	case sHPNDisabled:
+		intptr = &options->hpn_disabled;
+		goto parse_flag;
+
+	case sHPNBufferSize:
+		intptr = &options->hpn_buffer_size;
+		goto parse_int;
+
 	case sIgnoreUserKnownHosts:
 		intptr = &options->ignore_user_known_hosts;
 		goto parse_flag;
@@ -839,6 +977,10 @@ process_server_config_line(ServerOptions *options, char *line,
 
 	case sKerberosTicketCleanup:
 		intptr = &options->kerberos_ticket_cleanup;
+		goto parse_flag;
+
+	case sKerberosTgtPassing:
+		intptr = &options->kerberos_tgt_passing;
 		goto parse_flag;
 
 	case sKerberosGetAFSToken:

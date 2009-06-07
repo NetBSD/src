@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.1 2009/06/07 22:19:11 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: misc.c,v 1.71 2009/02/21 19:32:04 tobias Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,12 +25,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: misc.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/param.h>
 
 #include <net/if.h>
+#include <net/if_tun.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
@@ -499,7 +502,7 @@ freeargs(arglist *args)
 char *
 tilde_expand_filename(const char *filename, uid_t uid)
 {
-	const char *path;
+	const char *path, *homedir;
 	char user[128], ret[MAXPATHLEN];
 	struct passwd *pw;
 	u_int len, slash;
@@ -517,15 +520,20 @@ tilde_expand_filename(const char *filename, uid_t uid)
 		user[slash] = '\0';
 		if ((pw = getpwnam(user)) == NULL)
 			fatal("tilde_expand_filename: No such user %s", user);
-	} else if ((pw = getpwuid(uid)) == NULL)	/* ~/path */
-		fatal("tilde_expand_filename: No such uid %ld", (long)uid);
+		homedir = pw->pw_dir;
+	} else {
+		if ((pw = getpwuid(uid)) == NULL)	/* ~/path */
+			fatal("tilde_expand_filename: No such uid %ld",
+			    (long)uid);
+		homedir = pw->pw_dir;
+	}
 
-	if (strlcpy(ret, pw->pw_dir, sizeof(ret)) >= sizeof(ret))
+	if (strlcpy(ret, homedir, sizeof(ret)) >= sizeof(ret))
 		fatal("tilde_expand_filename: Path too long");
 
 	/* Make sure directory has a trailing '/' */
-	len = strlen(pw->pw_dir);
-	if ((len == 0 || pw->pw_dir[len - 1] != '/') &&
+	len = strlen(homedir);
+	if ((len == 0 || homedir[len - 1] != '/') &&
 	    strlcat(ret, "/", sizeof(ret)) >= sizeof(ret))
 		fatal("tilde_expand_filename: Path too long");
 
@@ -629,17 +637,19 @@ int
 tun_open(int tun, int mode)
 {
 	struct ifreq ifr;
-	char name[100];
-	int fd = -1, sock;
+	int fd = -1, sock, flag;
+	const char *tunbase = mode == SSH_TUNMODE_ETHERNET ? "tap" : "tun";
 
 	/* Open the tunnel device */
 	if (tun <= SSH_TUNID_MAX) {
-		snprintf(name, sizeof(name), "/dev/tun%d", tun);
-		fd = open(name, O_RDWR);
+		snprintf(ifr.ifr_name, sizeof(ifr.ifr_name),
+		    "/dev/%s%d", tunbase, tun);
+		fd = open(ifr.ifr_name, O_RDWR);
 	} else if (tun == SSH_TUNID_ANY) {
 		for (tun = 100; tun >= 0; tun--) {
-			snprintf(name, sizeof(name), "/dev/tun%d", tun);
-			if ((fd = open(name, O_RDWR)) >= 0)
+			snprintf(ifr.ifr_name, sizeof(ifr.ifr_name),
+			    "/dev/%s%d", tunbase, tun);
+			if ((fd = open(ifr.ifr_name, O_RDWR)) >= 0)
 				break;
 		}
 	} else {
@@ -648,20 +658,31 @@ tun_open(int tun, int mode)
 	}
 
 	if (fd < 0) {
-		debug("%s: %s open failed: %s", __func__, name, strerror(errno));
+		debug("%s: %s open failed: %s", __func__, ifr.ifr_name,
+		    strerror(errno));
 		return (-1);
 	}
 
-	debug("%s: %s mode %d fd %d", __func__, name, mode, fd);
 
+	/* Turn on tunnel headers */
+	flag = 1;
+	if (mode != SSH_TUNMODE_ETHERNET &&
+	    ioctl(fd, TUNSIFHEAD, &flag) == -1) {
+		debug("%s: ioctl(%d, TUNSIFHEAD, 1): %s", __func__, fd,
+		    strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	debug("%s: %s mode %d fd %d", __func__, ifr.ifr_name, mode, fd);
 	/* Set the tunnel device operation mode */
-	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "tun%d", tun);
 	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
 		goto failed;
 
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1)
 		goto failed;
 
+#if 0
 	/* Set interface mode */
 	ifr.ifr_flags &= ~IFF_UP;
 	if (mode == SSH_TUNMODE_ETHERNET)
@@ -670,6 +691,7 @@ tun_open(int tun, int mode)
 		ifr.ifr_flags &= ~IFF_LINK0;
 	if (ioctl(sock, SIOCSIFFLAGS, &ifr) == -1)
 		goto failed;
+#endif
 
 	/* Bring interface up */
 	ifr.ifr_flags |= IFF_UP;
@@ -684,7 +706,7 @@ tun_open(int tun, int mode)
 		close(fd);
 	if (sock >= 0)
 		close(sock);
-	debug("%s: failed to set %s mode %d: %s", __func__, name,
+	debug("%s: failed to set %s mode %d: %s", __func__, ifr.ifr_name,
 	    mode, strerror(errno));
 	return (-1);
 }

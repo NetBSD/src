@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.1.1.1 2009/06/07 22:19:29 christos Exp $
+#	$NetBSD: sshd_config,v 1.2 2009/06/07 22:38:47 christos Exp $
 #	$OpenBSD: sshd_config,v 1.80 2008/07/02 02:24:18 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -36,8 +36,8 @@ Protocol 2
 
 # Authentication:
 
-#LoginGraceTime 2m
-#PermitRootLogin yes
+LoginGraceTime 600
+#PermitRootLogin no 
 #StrictModes yes
 #MaxAuthTries 6
 #MaxSessions 10
@@ -77,6 +77,8 @@ Protocol 2
 #AllowTcpForwarding yes
 #GatewayPorts no
 #X11Forwarding no
+# If you use xorg from pkgsrc then uncomment the following line.
+#XAuthLocation /usr/pkg/bin/xauth
 #X11DisplayOffset 10
 #X11UseLocalhost yes
 #PrintMotd yes
@@ -84,6 +86,7 @@ Protocol 2
 #TCPKeepAlive yes
 #UseLogin no
 #UsePrivilegeSeparation yes
+UsePam yes
 #PermitUserEnvironment no
 #Compression delayed
 #ClientAliveInterval 0
@@ -99,6 +102,20 @@ Protocol 2
 
 # override default of no subsystems
 Subsystem	sftp	/usr/libexec/sftp-server
+
+# the following are HPN related configuration options
+# tcp receive buffer polling. disable in non autotuning kernels
+#TcpRcvBufPoll yes
+ 
+# allow the use of the none cipher
+#NoneEnabled no
+
+# disable hpn performance boosts. 
+#HPNDisabled no
+
+# buffer size for hpn to non-hpn connections
+#HPNBufferSize 2048
+
 
 # Example of overriding settings on a per-user basis
 #Match User anoncvs

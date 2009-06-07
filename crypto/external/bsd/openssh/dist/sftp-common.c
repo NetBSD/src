@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.c,v 1.1.1.1 2009/06/07 22:19:20 christos Exp $	*/
+/*	$NetBSD: sftp-common.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: sftp-common.c,v 1.20 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sftp-common.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -35,6 +37,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #include "xmalloc.h"
 #include "buffer.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: compress.c,v 1.25 2006/08/06 01:13:32 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,6 +13,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: compress.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <stdarg.h>

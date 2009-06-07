@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.h,v 1.1.1.1 2009/06/07 22:19:27 christos Exp $	*/
+/*	$NetBSD: sshconnect.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: sshconnect.h,v 1.24 2007/09/04 11:15:56 djm Exp $ */
 
 /*

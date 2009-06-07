@@ -1,4 +1,4 @@
-#	$NetBSD: ssh_config,v 1.1.1.1 2009/06/07 22:19:25 christos Exp $
+#	$NetBSD: ssh_config,v 1.2 2009/06/07 22:38:47 christos Exp $
 #	$OpenBSD: ssh_config,v 1.25 2009/02/17 01:28:32 djm Exp $
 
 # This is the ssh client system-wide configuration file.  See
@@ -45,3 +45,5 @@
 #   TunnelDevice any:any
 #   PermitLocalCommand no
 #   VisualHostKey no
+# If you use xorg from pkgsrc then uncomment the following line.
+#   XAuthLocation /usr/pkg/bin/xauth

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth2-chall.c,v 1.34 2008/12/09 04:32:22 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth2-chall.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -39,15 +41,37 @@
 #include "packet.h"
 #include "dispatch.h"
 #include "log.h"
+#include "servconf.h"
+
+/* import */    
+extern ServerOptions options;
 
 static int auth2_challenge_start(Authctxt *);
 static int send_userauth_info_request(Authctxt *);
 static void input_userauth_info_response(int, u_int32_t, void *);
 
+#ifdef BSD_AUTH
 extern KbdintDevice bsdauth_device;
+#else
+#ifdef USE_PAM
+extern KbdintDevice sshpam_device;
+#endif
+#ifdef SKEY
+extern KbdintDevice skey_device;
+#endif
+#endif
 
 KbdintDevice *devices[] = {
+#ifdef BSD_AUTH
 	&bsdauth_device,
+#else
+#ifdef USE_PAM
+	&sshpam_device,
+#endif
+#ifdef SKEY
+	&skey_device,
+#endif
+#endif
 	NULL
 };
 
@@ -60,12 +84,33 @@ struct KbdintAuthctxt
 	u_int nreq;
 };
 
+#ifdef USE_PAM
+void remove_kbdint_device(const char *);
+void
+remove_kbdint_device(const char *devname)
+{
+	int i, j;
+
+	for (i = 0; devices[i] != NULL; i++)
+		if (strcmp(devices[i]->name, devname) == 0) {
+			for (j = i; devices[j] != NULL; j++)
+				devices[j] = devices[j+1];
+			i--;
+		}
+}
+#endif
+
 static KbdintAuthctxt *
 kbdint_alloc(const char *devs)
 {
 	KbdintAuthctxt *kbdintctxt;
 	Buffer b;
 	int i;
+
+#ifdef USE_PAM
+	if (!options.use_pam)
+		remove_kbdint_device("pam");
+#endif
 
 	kbdintctxt = xmalloc(sizeof(KbdintAuthctxt));
 	if (strcmp(devs, "") == 0) {
@@ -304,7 +349,26 @@ input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 void
 privsep_challenge_enable(void)
 {
+#if defined(BSD_AUTH) || defined(USE_PAM) || defined(SKEY)
+	int n = 0;
+#endif
+#ifdef BSD_AUTH
 	extern KbdintDevice mm_bsdauth_device;
+#endif
+#ifdef USE_PAM
+	extern KbdintDevice mm_sshpam_device;
+#endif
+#ifdef SKEY
+	extern KbdintDevice mm_skey_device;
+#endif
 	/* As long as SSHv1 has devices[0] hard coded this is fine */
-	devices[0] = &mm_bsdauth_device;
+#ifdef BSD_AUTH
+	devices[n++] = &mm_bsdauth_device;
+#endif
+#ifdef USE_PAM
+	devices[n++] = &mm_sshpam_device;
+#endif
+#ifdef SKEY
+	devices[n++] = &mm_skey_device;
+#endif
 }

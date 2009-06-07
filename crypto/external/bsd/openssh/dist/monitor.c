@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.1.1.1 2009/06/07 22:19:12 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.101 2009/02/12 03:26:22 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -26,6 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: monitor.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -43,6 +45,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef SKEY
+#include <skey.h>
+#endif
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -142,6 +147,22 @@ int mm_answer_jpake_step2(int, Buffer *);
 int mm_answer_jpake_key_confirm(int, Buffer *);
 int mm_answer_jpake_check_confirm(int, Buffer *);
 
+#ifdef USE_PAM
+int mm_answer_pam_start(int, Buffer *);
+int mm_answer_pam_account(int, Buffer *);
+int mm_answer_pam_init_ctx(int, Buffer *);
+int mm_answer_pam_query(int, Buffer *);
+int mm_answer_pam_respond(int, Buffer *);
+int mm_answer_pam_free_ctx(int, Buffer *);
+#endif
+
+#ifdef KRB4
+int mm_answer_krb4(int, Buffer *);
+#endif
+#ifdef KRB5
+int mm_answer_krb5(int, Buffer *);
+#endif
+
 #ifdef GSSAPI
 int mm_answer_gss_setup_ctx(int, Buffer *);
 int mm_answer_gss_accept_ctx(int, Buffer *);
@@ -185,10 +206,30 @@ struct mon_table mon_dispatch_proto20[] = {
     {MONITOR_REQ_AUTHSERV, MON_ONCE, mm_answer_authserv},
     {MONITOR_REQ_AUTH2_READ_BANNER, MON_ONCE, mm_answer_auth2_read_banner},
     {MONITOR_REQ_AUTHPASSWORD, MON_AUTH, mm_answer_authpassword},
+#ifdef USE_PAM
+    {MONITOR_REQ_PAM_START, MON_ONCE, mm_answer_pam_start},
+    {MONITOR_REQ_PAM_ACCOUNT, 0, mm_answer_pam_account},
+    {MONITOR_REQ_PAM_INIT_CTX, MON_ISAUTH, mm_answer_pam_init_ctx},
+    {MONITOR_REQ_PAM_QUERY, MON_ISAUTH, mm_answer_pam_query},
+    {MONITOR_REQ_PAM_RESPOND, MON_ISAUTH, mm_answer_pam_respond},
+    {MONITOR_REQ_PAM_FREE_CTX, MON_ONCE|MON_AUTHDECIDE, mm_answer_pam_free_ctx},
+#endif
+#ifdef BSD_AUTH
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
     {MONITOR_REQ_BSDAUTHRESPOND, MON_AUTH, mm_answer_bsdauthrespond},
+#endif
+#ifdef SKEY
+    {MONITOR_REQ_SKEYQUERY, MON_ISAUTH, mm_answer_skeyquery},
+    {MONITOR_REQ_SKEYRESPOND, MON_AUTH, mm_answer_skeyrespond},
+#endif
     {MONITOR_REQ_KEYALLOWED, MON_ISAUTH, mm_answer_keyallowed},
     {MONITOR_REQ_KEYVERIFY, MON_AUTH, mm_answer_keyverify},
+#ifdef KRB4
+    {MONITOR_REQ_KRB4, MON_ONCE|MON_AUTH, mm_answer_krb4},
+#endif
+#ifdef KRB5
+    {MONITOR_REQ_KRB5, MON_ONCE|MON_AUTH, mm_answer_krb5},
+#endif
 #ifdef GSSAPI
     {MONITOR_REQ_GSSSETUP, MON_ISAUTH, mm_answer_gss_setup_ctx},
     {MONITOR_REQ_GSSSTEP, MON_ISAUTH, mm_answer_gss_accept_ctx},
@@ -223,8 +264,28 @@ struct mon_table mon_dispatch_proto15[] = {
     {MONITOR_REQ_KEYALLOWED, MON_ISAUTH|MON_ALOG, mm_answer_keyallowed},
     {MONITOR_REQ_RSACHALLENGE, MON_ONCE, mm_answer_rsa_challenge},
     {MONITOR_REQ_RSARESPONSE, MON_ONCE|MON_AUTHDECIDE, mm_answer_rsa_response},
+#ifdef BSD_AUTH
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
     {MONITOR_REQ_BSDAUTHRESPOND, MON_AUTH, mm_answer_bsdauthrespond},
+#endif
+#ifdef SKEY
+    {MONITOR_REQ_SKEYQUERY, MON_ISAUTH, mm_answer_skeyquery},
+    {MONITOR_REQ_SKEYRESPOND, MON_AUTH, mm_answer_skeyrespond},
+#endif
+#ifdef USE_PAM
+    {MONITOR_REQ_PAM_START, MON_ONCE, mm_answer_pam_start},
+    {MONITOR_REQ_PAM_ACCOUNT, 0, mm_answer_pam_account},
+    {MONITOR_REQ_PAM_INIT_CTX, MON_ISAUTH, mm_answer_pam_init_ctx},
+    {MONITOR_REQ_PAM_QUERY, MON_ISAUTH, mm_answer_pam_query},
+    {MONITOR_REQ_PAM_RESPOND, MON_ISAUTH, mm_answer_pam_respond},
+    {MONITOR_REQ_PAM_FREE_CTX, MON_ONCE|MON_AUTHDECIDE, mm_answer_pam_free_ctx},
+#endif
+#ifdef KRB4
+    {MONITOR_REQ_KRB4, MON_ONCE|MON_AUTH, mm_answer_krb4},
+#endif
+#ifdef KRB5
+    {MONITOR_REQ_KRB5, MON_ONCE|MON_AUTH, mm_answer_krb5},
+#endif
     {0, 0, NULL}
 };
 
@@ -300,6 +361,18 @@ monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 			if (authctxt->pw->pw_uid == 0 &&
 			    !auth_root_allowed(auth_method))
 				authenticated = 0;
+#ifdef USE_PAM
+			/* PAM needs to perform account checks after auth */
+			if (options.use_pam && authenticated) {
+				Buffer m;
+
+				buffer_init(&m);
+				mm_request_receive_expect(pmonitor->m_sendfd,
+				    MONITOR_REQ_PAM_ACCOUNT, &m);
+				authenticated = mm_answer_pam_account(pmonitor->m_sendfd, &m);
+				buffer_free(&m);
+			}
+#endif
 		}
 
 		if (ent->flags & (MON_AUTHDECIDE|MON_ALOG)) {
@@ -597,6 +670,10 @@ mm_answer_pwnamallow(int sock, Buffer *m)
 		monitor_permit(mon_dispatch, MONITOR_REQ_AUTH2_READ_BANNER, 1);
 	}
 
+#ifdef USE_PAM
+	if (options.use_pam)
+		monitor_permit(mon_dispatch, MONITOR_REQ_PAM_START, 1);
+#endif
 
 	return (0);
 }
@@ -665,6 +742,7 @@ mm_answer_authpassword(int sock, Buffer *m)
 	return (authenticated);
 }
 
+#ifdef BSD_AUTH
 int
 mm_answer_bsdauthquery(int sock, Buffer *m)
 {
@@ -721,7 +799,188 @@ mm_answer_bsdauthrespond(int sock, Buffer *m)
 
 	return (authok != 0);
 }
+#endif
 
+#ifdef SKEY
+int
+mm_answer_skeyquery(int sock, Buffer *m)
+{
+	struct skey skey;
+	char challenge[1024];
+	u_int success;
+
+	success = skeychallenge(&skey, authctxt->user, challenge,
+	    sizeof(challenge)) < 0 ? 0 : 1;
+
+	buffer_clear(m);
+	buffer_put_int(m, success);
+	if (success)
+		buffer_put_cstring(m, challenge);
+
+	debug3("%s: sending challenge success: %u", __func__, success);
+	mm_request_send(sock, MONITOR_ANS_SKEYQUERY, m);
+
+	return (0);
+}
+
+int
+mm_answer_skeyrespond(int sock, Buffer *m)
+{
+	char *response;
+	int authok;
+
+	response = buffer_get_string(m, NULL);
+
+	authok = (options.challenge_response_authentication &&
+	    authctxt->valid &&
+	    skey_haskey(authctxt->pw->pw_name) == 0 &&
+	    skey_passcheck(authctxt->pw->pw_name, response) != -1);
+
+	xfree(response);
+
+	buffer_clear(m);
+	buffer_put_int(m, authok);
+
+	debug3("%s: sending authenticated: %d", __func__, authok);
+	mm_request_send(sock, MONITOR_ANS_SKEYRESPOND, m);
+
+	auth_method = "skey";
+
+	return (authok != 0);
+}
+#endif
+
+#ifdef USE_PAM
+int
+mm_answer_pam_start(int sock, Buffer *m)
+{
+	if (!options.use_pam)
+		fatal("UsePAM not set, but ended up in %s anyway", __func__);
+
+	start_pam(authctxt);
+
+	monitor_permit(mon_dispatch, MONITOR_REQ_PAM_ACCOUNT, 1);
+
+	return (0);
+}
+
+int
+mm_answer_pam_account(int sock, Buffer *m)
+{
+	u_int ret;
+
+	if (!options.use_pam)
+		fatal("UsePAM not set, but ended up in %s anyway", __func__);
+
+	ret = do_pam_account();
+
+	buffer_put_int(m, ret);
+	buffer_put_string(m, buffer_ptr(&loginmsg), buffer_len(&loginmsg));
+
+	mm_request_send(sock, MONITOR_ANS_PAM_ACCOUNT, m);
+
+	return (ret);
+}
+
+static void *sshpam_ctxt, *sshpam_authok;
+extern KbdintDevice sshpam_device;
+
+int
+mm_answer_pam_init_ctx(int sock, Buffer *m)
+{
+
+	debug3("%s", __func__);
+	authctxt->user = buffer_get_string(m, NULL);
+	sshpam_ctxt = (sshpam_device.init_ctx)(authctxt);
+	sshpam_authok = NULL;
+	buffer_clear(m);
+	if (sshpam_ctxt != NULL) {
+		monitor_permit(mon_dispatch, MONITOR_REQ_PAM_FREE_CTX, 1);
+		buffer_put_int(m, 1);
+	} else {
+		buffer_put_int(m, 0);
+	}
+	mm_request_send(sock, MONITOR_ANS_PAM_INIT_CTX, m);
+	return (0);
+}
+
+int
+mm_answer_pam_query(int sock, Buffer *m)
+{
+	char *name, *info, **prompts;
+	u_int num, *echo_on;
+	int i, ret;
+
+	debug3("%s", __func__);
+	sshpam_authok = NULL;
+	ret = (sshpam_device.query)(sshpam_ctxt, &name, &info, &num, &prompts, &echo_on);
+	if (ret == 0 && num == 0)
+		sshpam_authok = sshpam_ctxt;
+	if (num > 1 || name == NULL || info == NULL)
+		ret = -1;
+	buffer_clear(m);
+	buffer_put_int(m, ret);
+	buffer_put_cstring(m, name);
+	xfree(name);
+	buffer_put_cstring(m, info);
+	xfree(info);
+	buffer_put_int(m, num);
+	for (i = 0; i < num; ++i) {
+		buffer_put_cstring(m, prompts[i]);
+		xfree(prompts[i]);
+		buffer_put_int(m, echo_on[i]);
+	}
+	if (prompts != NULL)
+		xfree(prompts);
+	if (echo_on != NULL)
+		xfree(echo_on);
+	auth_method = "keyboard-interactive/pam";
+	mm_request_send(sock, MONITOR_ANS_PAM_QUERY, m);
+	return (0);
+}
+
+int
+mm_answer_pam_respond(int sock, Buffer *m)
+{
+	char **resp;
+	u_int num;
+	int i, ret;
+
+	debug3("%s", __func__);
+	sshpam_authok = NULL;
+	num = buffer_get_int(m);
+	if (num > 0) {
+		resp = xmalloc(num * sizeof(char *));
+		for (i = 0; i < num; ++i)
+			resp[i] = buffer_get_string(m, NULL);
+		ret = (sshpam_device.respond)(sshpam_ctxt, num, resp);
+		for (i = 0; i < num; ++i)
+			xfree(resp[i]);
+		xfree(resp);
+	} else {
+		ret = (sshpam_device.respond)(sshpam_ctxt, num, NULL);
+	}
+	buffer_clear(m);
+	buffer_put_int(m, ret);
+	mm_request_send(sock, MONITOR_ANS_PAM_RESPOND, m);
+	auth_method = "keyboard-interactive/pam";
+	if (ret == 0)
+		sshpam_authok = sshpam_ctxt;
+	return (0);
+}
+
+int
+mm_answer_pam_free_ctx(int sock, Buffer *m)
+{
+
+	debug3("%s", __func__);
+	(sshpam_device.free_ctx)(sshpam_ctxt);
+	buffer_clear(m);
+	mm_request_send(sock, MONITOR_ANS_PAM_FREE_CTX, m);
+	auth_method = "keyboard-interactive/pam";
+	return (sshpam_authok == sshpam_ctxt);
+}
+#endif
 
 static void
 mm_append_debug(Buffer *m)
@@ -1292,6 +1551,91 @@ mm_answer_rsa_response(int sock, Buffer *m)
 
 	return (success);
 }
+
+#ifdef KRB4
+int
+mm_answer_krb4(int socket, Buffer *m)
+{
+	KTEXT_ST auth, reply;
+	char  *client, *p;
+	int success;
+	u_int alen;
+
+	reply.length = auth.length = 0;
+ 
+	p = buffer_get_string(m, &alen);
+	if (alen >=  MAX_KTXT_LEN)
+		 fatal("%s: auth too large", __func__);
+	memcpy(auth.dat, p, alen);
+	auth.length = alen;
+	memset(p, 0, alen);
+	xfree(p);
+
+	success = options.kerberos_authentication &&
+	    authctxt->valid &&
+	    auth_krb4(authctxt, &auth, &client, &reply);
+
+	memset(auth.dat, 0, alen);
+	buffer_clear(m);
+	buffer_put_int(m, success);
+
+	if (success) {
+		buffer_put_cstring(m, client);
+		buffer_put_string(m, reply.dat, reply.length);
+		if (client)
+			xfree(client);
+		if (reply.length)
+			memset(reply.dat, 0, reply.length);
+	}
+
+	debug3("%s: sending result %d", __func__, success);
+	mm_request_send(socket, MONITOR_ANS_KRB4, m);
+
+	auth_method = "kerberos";
+
+	/* Causes monitor loop to terminate if authenticated */
+	return (success);
+}
+#endif
+
+#ifdef KRB5
+int
+mm_answer_krb5(int socket, Buffer *m)
+{
+	krb5_data tkt, reply;
+	char *client_user;
+	u_int len;
+	int success;
+
+	/* use temporary var to avoid size issues on 64bit arch */
+	tkt.data = buffer_get_string(m, &len);
+	tkt.length = len;
+
+	success = options.kerberos_authentication &&
+	    authctxt->valid &&
+	    auth_krb5(authctxt, &tkt, &client_user, &reply);
+
+	if (tkt.length)
+		xfree(tkt.data);
+
+	buffer_clear(m);
+	buffer_put_int(m, success);
+
+	if (success) {
+		buffer_put_cstring(m, client_user);
+		buffer_put_string(m, reply.data, reply.length);
+		if (client_user)
+			xfree(client_user);
+		if (reply.length)
+			xfree(reply.data);
+	}
+	mm_request_send(socket, MONITOR_ANS_KRB5, m);
+
+	auth_method = "kerberos";
+
+	return success;
+}
+#endif
 
 int
 mm_answer_term(int sock, Buffer *req)

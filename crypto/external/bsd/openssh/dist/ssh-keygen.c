@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.1.1.1 2009/06/07 22:19:23 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.173 2009/02/21 19:32:04 tobias Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,6 +13,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: ssh-keygen.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>

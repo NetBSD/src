@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-chall.c,v 1.1.1.1 2009/06/07 22:19:01 christos Exp $	*/
+/*	$NetBSD: auth-chall.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth-chall.c,v 1.12 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth-chall.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include "xmalloc.h"
@@ -31,6 +33,12 @@
 #include "hostfile.h"
 #include "auth.h"
 #include "log.h"
+#ifdef USE_PAM
+#include "buffer.h"
+#include "servconf.h"
+extern ServerOptions options;
+void remove_kbdint_device(const char *);
+#endif
 
 /* limited protocol v1 interface to kbd-interactive authentication */
 
@@ -43,6 +51,11 @@ get_challenge(Authctxt *authctxt)
 	char *challenge, *name, *info, **prompts;
 	u_int i, numprompts;
 	u_int *echo_on;
+
+#ifdef USE_PAM
+	if (!options.use_pam)
+		remove_kbdint_device("pam");
+#endif
 
 	device = devices[0]; /* we always use the 1st device for protocol 1 */
 	if (device == NULL)

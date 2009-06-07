@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.1.1.1 2009/06/07 22:19:28 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.170 2008/11/04 08:22:13 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sshconnect2.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -39,6 +41,10 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <vis.h>
+
+#ifdef KRB5
+#include <krb5.h>
+#endif
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -73,6 +79,12 @@
 extern char *client_version_string;
 extern char *server_version_string;
 extern Options options;
+extern Kex *xxx_kex;
+
+/* tty_flag is set in ssh.c. use this in ssh_userauth2 */
+/* if it is set then prevent the switch to the null cipher */
+
+extern int tty_flag;
 
 /*
  * SSH2 key exchange
@@ -183,7 +195,7 @@ struct Authctxt {
 	const char *host;
 	const char *service;
 	Authmethod *method;
-	int success;
+	sig_atomic_t success;
 	char *authlist;
 	/* pubkey */
 	Idlist keys;
@@ -219,6 +231,7 @@ int	userauth_pubkey(Authctxt *);
 int	userauth_passwd(Authctxt *);
 int	userauth_kbdint(Authctxt *);
 int	userauth_hostbased(Authctxt *);
+int	userauth_kerberos(Authctxt *);
 int	userauth_jpake(Authctxt *);
 
 void	userauth_jpake_cleanup(Authctxt *);
@@ -256,6 +269,13 @@ Authmethod authmethods[] = {
 		NULL,
 		&options.hostbased_authentication,
 		NULL},
+#if KRB5
+	{"kerberos-2@ssh.com",
+		userauth_kerberos,
+		NULL,
+		&options.kerberos_authentication,
+		NULL},
+#endif
 	{"publickey",
 		userauth_pubkey,
 		NULL,
@@ -345,6 +365,28 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 	pubkey_cleanup(&authctxt);
 	dispatch_range(SSH2_MSG_USERAUTH_MIN, SSH2_MSG_USERAUTH_MAX, NULL);
 
+	/* if the user wants to use the none cipher do it */
+	/* post authentication and only if the right conditions are met */
+	/* both of the NONE commands must be true and there must be no */
+	/* tty allocated */
+	if ((options.none_switch == 1) && (options.none_enabled == 1)) 
+	{
+		if (!tty_flag) /* no null on tty sessions */
+		{
+			debug("Requesting none rekeying...");
+			myproposal[PROPOSAL_ENC_ALGS_STOC] = "none";
+			myproposal[PROPOSAL_ENC_ALGS_CTOS] = "none";
+			kex_prop2buf(&xxx_kex->my,myproposal);
+			packet_request_rekeying();
+			fprintf(stderr, "WARNING: ENABLED NONE CIPHER\n");
+		}
+		else
+		{
+			/* requested NONE cipher when in a tty */
+			debug("Cannot switch to NONE cipher with tty allocated");
+			fprintf(stderr, "NONE cipher switch disabled when a TTY is allocated\n");
+		}
+	}
 	debug("Authentication succeeded (%s).", authctxt.method->name);
 }
 
@@ -408,7 +450,7 @@ input_userauth_banner(int type, u_int32_t seq, void *ctxt)
 		if (len > 65536)
 			len = 65536;
 		msg = xmalloc(len * 4 + 1); /* max expansion from strnvis() */
-		strnvis(msg, raw, len * 4 + 1, VIS_SAFE|VIS_OCTAL);
+		strvisx(msg, raw, len * 4 + 1, VIS_SAFE|VIS_OCTAL);
 		fprintf(stderr, "%s", msg);
 		xfree(msg);
 	}
@@ -555,8 +597,10 @@ userauth_gssapi(Authctxt *authctxt)
 		}
 	}
 
-	if (!ok)
+	if (!ok) {
+		ssh_gssapi_delete_ctx(&gssctxt);
 		return 0;
+	}
 
 	authctxt->methoddata=(void *)gssctxt;
 
@@ -1717,6 +1761,94 @@ userauth_jpake_cleanup(Authctxt *authctxt)
 	}
 }
 #endif /* JPAKE */
+
+#if KRB5
+static int
+ssh_krb5_helper(krb5_data *ap)
+{
+	krb5_context xcontext = NULL;	/* XXX share with ssh1 */
+	krb5_auth_context xauth_context = NULL;
+
+	krb5_context *context;
+	krb5_auth_context *auth_context;
+	krb5_error_code problem;
+	const char *tkfile;
+	struct stat buf;
+	krb5_ccache ccache = NULL;
+	const char *remotehost;
+	int ret;
+
+	memset(ap, 0, sizeof(*ap));
+
+	context = &xcontext;
+	auth_context = &xauth_context;
+
+	problem = krb5_init_context(context);
+	if (problem) {
+		debug("Kerberos v5: krb5_init_context failed");
+		ret = 0;
+		goto out;
+	}
+
+	tkfile = krb5_cc_default_name(*context);
+	if (strncmp(tkfile, "FILE:", 5) == 0)
+		tkfile += 5;
+
+	if (stat(tkfile, &buf) == 0 && getuid() != buf.st_uid) {
+		debug("Kerberos v5: could not get default ccache (permission denied).");
+		ret = 0;
+		goto out;
+	}
+
+	problem = krb5_cc_default(*context, &ccache);
+	if (problem) {
+		debug("Kerberos v5: krb5_cc_default failed: %s",
+		    krb5_get_err_text(*context, problem));
+		ret = 0;
+		goto out;
+	}
+
+	remotehost = get_canonical_hostname(1);
+
+	problem = krb5_mk_req(*context, auth_context, AP_OPTS_MUTUAL_REQUIRED,
+	    "host", remotehost, NULL, ccache, ap);
+	if (problem) {
+		debug("Kerberos v5: krb5_mk_req failed: %s",
+		    krb5_get_err_text(*context, problem));
+		ret = 0;
+		goto out;
+	}
+	ret = 1;
+
+ out:
+	if (ccache != NULL)
+		krb5_cc_close(*context, ccache);
+	if (*auth_context)
+		krb5_auth_con_free(*context, *auth_context);
+	if (*context)
+		krb5_free_context(*context);
+	return (ret);
+}
+
+int
+userauth_kerberos(Authctxt *authctxt)
+{
+	krb5_data ap;
+
+	if (ssh_krb5_helper(&ap) == 0)
+		return (0);
+
+	packet_start(SSH2_MSG_USERAUTH_REQUEST);
+	packet_put_cstring(authctxt->server_user);
+	packet_put_cstring(authctxt->service);
+	packet_put_cstring(authctxt->method->name);
+	packet_put_string(ap.data, ap.length);
+	packet_send();
+
+	krb5_data_free(&ap);
+	return (1);
+}
+#endif
 
 /* find auth method */
 

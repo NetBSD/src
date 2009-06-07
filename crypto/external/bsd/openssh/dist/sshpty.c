@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.c,v 1.1.1.1 2009/06/07 22:19:30 christos Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.2 2009/06/07 22:38:48 christos Exp $	*/
 /* $OpenBSD: sshpty.c,v 1.28 2007/09/11 23:49:09 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,6 +13,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sshpty.c,v 1.2 2009/06/07 22:38:48 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>

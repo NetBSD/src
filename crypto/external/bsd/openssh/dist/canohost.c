@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.1.1.1 2009/06/07 22:19:04 christos Exp $	*/
+/*	$NetBSD: canohost.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: canohost.c,v 1.64 2009/02/12 03:00:56 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,6 +13,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: canohost.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -25,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -94,8 +97,8 @@ get_remote_hostname(int sock, int use_dns)
 	 * of this software).
 	 */
 	for (i = 0; name[i]; i++)
-		if (isupper(name[i]))
-			name[i] = (char)tolower(name[i]);
+		if (isupper((unsigned char)name[i]))
+			name[i] = (char)tolower((unsigned char)name[i]);
 	/*
 	 * Map it back to an IP address and check that the given
 	 * address actually is an address of this host.  This is

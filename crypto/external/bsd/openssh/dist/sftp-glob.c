@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-glob.c,v 1.1.1.1 2009/06/07 22:19:20 christos Exp $	*/
+/*	$NetBSD: sftp-glob.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: sftp-glob.c,v 1.22 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sftp-glob.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 

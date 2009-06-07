@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_mm.h,v 1.1.1.1 2009/06/07 22:19:12 christos Exp $	*/
+/*	$NetBSD: monitor_mm.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: monitor_mm.h,v 1.5 2008/04/29 11:20:31 otto Exp $ */
 
 /*

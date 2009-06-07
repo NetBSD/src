@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.1.1.1 2009/06/07 22:19:22 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.159 2008/06/28 14:05:15 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,6 +35,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: ssh-agent.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -66,6 +68,7 @@
 #include "compat.h"
 #include "log.h"
 #include "misc.h"
+#include "getpeereid.h"
 
 #ifdef SMARTCARD
 #include "scard.h"
@@ -399,8 +402,7 @@ process_remove_all_identities(SocketEntry *e, int version)
 	Identity *id;
 
 	/* Loop over all identities and clear the keys. */
-	for (id = TAILQ_FIRST(&tab->idlist); id;
-	    id = TAILQ_FIRST(&tab->idlist)) {
+	while ((id = TAILQ_FIRST(&tab->idlist)) != NULL) {
 		TAILQ_REMOVE(&tab->idlist, id, next);
 		free_identity(id);
 	}

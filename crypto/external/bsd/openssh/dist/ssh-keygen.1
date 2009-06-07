@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh-keygen.1,v 1.1.1.1 2009/06/07 22:19:22 christos Exp $
+.\"	$NetBSD: ssh-keygen.1,v 1.2 2009/06/07 22:38:47 christos Exp $
 .\"	$OpenBSD: ssh-keygen.1,v 1.79 2008/07/24 23:55:30 sthen Exp $
 .\"
 .\"  -*- nroff -*-
@@ -38,7 +38,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 24 2008 $
+.Dd July 24 2008
 .Dt SSH-KEYGEN 1
 .Os
 .Sh NAME
@@ -140,7 +140,7 @@ or
 .Pa ~/.ssh/id_rsa .
 Additionally, the system administrator may use this to generate host keys,
 as seen in
-.Pa /etc/rc .
+.Pa /etc/rc.d/sshd .
 .Pp
 Normally this program generates the key and asks for a file in which
 to store the private key.
@@ -284,7 +284,7 @@ new passphrase.
 Silence
 .Nm ssh-keygen .
 Used by
-.Pa /etc/rc
+.Pa /etc/rc.d/sshd
 when creating a new key.
 .It Fl R Ar hostname
 Removes all keys belonging to

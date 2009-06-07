@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.1 2009/06/07 22:19:01 christos Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth-options.c,v 1.44 2009/01/22 10:09:16 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -11,6 +11,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth-options.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -19,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "match.h"

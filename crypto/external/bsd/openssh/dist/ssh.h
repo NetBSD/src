@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.h,v 1.1.1.1 2009/06/07 22:19:25 christos Exp $	*/
+/*	$NetBSD: ssh.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: ssh.h,v 1.78 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
@@ -86,6 +86,9 @@
 
 /* Used to identify ``EscapeChar none'' */
 #define SSH_ESCAPECHAR_NONE		-2
+
+/* Name of Kerberos service for SSH to use. */
+#define KRB4_SERVICE_NAME		"rcmd"
 
 /*
  * unprivileged user when UsePrivilegeSeparation=yes;

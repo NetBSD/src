@@ -1,4 +1,4 @@
-/*	$NetBSD: bufbn.c,v 1.1.1.1 2009/06/07 22:19:04 christos Exp $	*/
+/*	$NetBSD: bufbn.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: bufbn.c,v 1.6 2007/06/02 09:04:58 djm Exp $*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,12 +38,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: bufbn.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
 
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "buffer.h"

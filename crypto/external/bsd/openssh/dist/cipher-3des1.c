@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher-3des1.c,v 1.1.1.1 2009/06/07 22:19:06 christos Exp $	*/
+/*	$NetBSD: cipher-3des1.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: cipher-3des1.c,v 1.6 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: cipher-3des1.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>

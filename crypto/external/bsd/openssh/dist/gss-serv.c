@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv.c,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: gss-serv.c,v 1.22 2008/05/08 12:02:23 djm Exp $ */
 
 /*
@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: gss-serv.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -32,6 +34,7 @@
 #ifdef GSSAPI
 
 #include <string.h>
+#include <unistd.h>
 
 #include "xmalloc.h"
 #include "buffer.h"

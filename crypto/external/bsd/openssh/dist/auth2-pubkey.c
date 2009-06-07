@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.1.1.1 2009/06/07 22:19:03 christos Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth2-pubkey.c,v 1.19 2008/07/03 21:46:58 otto Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,7 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include "includes.h"
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-passwd.c,v 1.1.1.1 2009/06/07 22:19:03 christos Exp $	*/
+/*	$NetBSD: auth2-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth2-passwd.c,v 1.9 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth2-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>

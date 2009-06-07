@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.1.1.1 2009/06/07 22:19:13 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.64 2008/11/04 08:22:13 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -26,6 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: monitor_wrap.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -62,6 +64,10 @@
 #include "monitor_wrap.h"
 #include "atomicio.h"
 #include "monitor_fdpass.h"
+#ifdef USE_PAM
+#include "servconf.h"
+#include <security/pam_appl.h>
+#endif
 #include "misc.h"
 #include "jpake.h"
 
@@ -725,6 +731,138 @@ mm_session_pty_cleanup2(Session *s)
 	s->ttyfd = -1;
 }
 
+#ifdef USE_PAM
+void
+mm_start_pam(Authctxt *authctxt)
+{
+	Buffer m;
+
+	debug3("%s entering", __func__);
+	if (!options.use_pam)
+		fatal("UsePAM=no, but ended up in %s anyway", __func__);
+
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_START, &m);
+
+	buffer_free(&m);
+}
+
+u_int
+mm_do_pam_account(void)
+{
+	Buffer m;
+	u_int ret;
+	char *msg;
+
+	debug3("%s entering", __func__);
+	if (!options.use_pam)
+		fatal("UsePAM=no, but ended up in %s anyway", __func__);
+
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_ACCOUNT, &m);
+
+	mm_request_receive_expect(pmonitor->m_recvfd,
+	    MONITOR_ANS_PAM_ACCOUNT, &m);
+	ret = buffer_get_int(&m);
+	msg = buffer_get_string(&m, NULL);
+	buffer_append(&loginmsg, msg, strlen(msg));
+	xfree(msg);
+
+	buffer_free(&m);
+
+	debug3("%s returning %d", __func__, ret);
+
+	return (ret);
+}
+
+void *
+mm_sshpam_init_ctx(Authctxt *authctxt)
+{
+	Buffer m;
+	int success;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	buffer_put_cstring(&m, authctxt->user);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_INIT_CTX, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_INIT_CTX", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_INIT_CTX, &m);
+	success = buffer_get_int(&m);
+	if (success == 0) {
+		debug3("%s: pam_init_ctx failed", __func__);
+		buffer_free(&m);
+		return (NULL);
+	}
+	buffer_free(&m);
+	return (authctxt);
+}
+
+int
+mm_sshpam_query(void *ctx, char **name, char **info,
+    u_int *num, char ***prompts, u_int **echo_on)
+{
+	Buffer m;
+	u_int i;
+	int ret;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_QUERY, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_QUERY", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_QUERY, &m);
+	ret = buffer_get_int(&m);
+	debug3("%s: pam_query returned %d", __func__, ret);
+	*name = buffer_get_string(&m, NULL);
+	*info = buffer_get_string(&m, NULL);
+	*num = buffer_get_int(&m);
+	if (*num > PAM_MAX_NUM_MSG)
+		fatal("%s: received %u PAM messages, expected <= %u",
+		    __func__, *num, PAM_MAX_NUM_MSG);
+	*prompts = xcalloc((*num + 1), sizeof(char *));
+	*echo_on = xcalloc((*num + 1), sizeof(u_int));
+	for (i = 0; i < *num; ++i) {
+		(*prompts)[i] = buffer_get_string(&m, NULL);
+		(*echo_on)[i] = buffer_get_int(&m);
+	}
+	buffer_free(&m);
+	return (ret);
+}
+
+int
+mm_sshpam_respond(void *ctx, u_int num, char **resp)
+{
+	Buffer m;
+	u_int i;
+	int ret;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	buffer_put_int(&m, num);
+	for (i = 0; i < num; ++i)
+		buffer_put_cstring(&m, resp[i]);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_RESPOND, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_RESPOND", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_RESPOND, &m);
+	ret = buffer_get_int(&m);
+	debug3("%s: pam_respond returned %d", __func__, ret);
+	buffer_free(&m);
+	return (ret);
+}
+
+void
+mm_sshpam_free_ctx(void *ctxtp)
+{
+	Buffer m;
+
+	debug3("%s", __func__);
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_PAM_FREE_CTX, &m);
+	debug3("%s: waiting for MONITOR_ANS_PAM_FREE_CTX", __func__);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PAM_FREE_CTX, &m);
+	buffer_free(&m);
+}
+#endif /* USE_PAM */
+
 /* Request process termination */
 
 void
@@ -757,6 +895,7 @@ mm_ssh1_session_key(BIGNUM *num)
 	return (rsafail);
 }
 
+#if defined(BSD_AUTH) || defined(SKEY)
 static void
 mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
     char ***prompts, u_int **echo_on)
@@ -768,7 +907,9 @@ mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
 	*echo_on = xcalloc(*numprompts, sizeof(u_int));
 	(*echo_on)[0] = 0;
 }
+#endif
 
+#ifdef BSD_AUTH
 int
 mm_bsdauth_query(void *ctx, char **name, char **infotxt,
    u_int *numprompts, char ***prompts, u_int **echo_on)
@@ -825,7 +966,68 @@ mm_bsdauth_respond(void *ctx, u_int numresponses, char **responses)
 
 	return ((authok == 0) ? -1 : 0);
 }
+#endif
 
+#ifdef SKEY
+int
+mm_skey_query(void *ctx, char **name, char **infotxt,
+   u_int *numprompts, char ***prompts, u_int **echo_on)
+{
+	Buffer m;
+	u_int success;
+	char *challenge;
+
+	debug3("%s: entering", __func__);
+
+	buffer_init(&m);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_SKEYQUERY, &m);
+
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_SKEYQUERY,
+	    &m);
+	success = buffer_get_int(&m);
+	if (success == 0) {
+		debug3("%s: no challenge", __func__);
+		buffer_free(&m);
+		return (-1);
+	}
+
+	/* Get the challenge, and format the response */
+	challenge  = buffer_get_string(&m, NULL);
+	buffer_free(&m);
+
+	debug3("%s: received challenge: %s", __func__, challenge);
+
+	mm_chall_setup(name, infotxt, numprompts, prompts, echo_on);
+
+	xasprintf(*prompts, "%s%s", challenge, SKEY_PROMPT);
+	xfree(challenge);
+
+	return (0);
+}
+
+int
+mm_skey_respond(void *ctx, u_int numresponses, char **responses)
+{
+	Buffer m;
+	int authok;
+
+	debug3("%s: entering", __func__);
+	if (numresponses != 1)
+		return (-1);
+
+	buffer_init(&m);
+	buffer_put_cstring(&m, responses[0]);
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_SKEYRESPOND, &m);
+
+	mm_request_receive_expect(pmonitor->m_recvfd,
+	    MONITOR_ANS_SKEYRESPOND, &m);
+
+	authok = buffer_get_int(&m);
+	buffer_free(&m);
+
+	return ((authok == 0) ? -1 : 0);
+}
+#endif /* SKEY */
 
 void
 mm_ssh1_session_id(u_char session_id[16])
@@ -1187,3 +1389,74 @@ mm_jpake_check_confirm(const BIGNUM *k,
 	return success;
 }
 #endif /* JPAKE */
+
+#ifdef KRB4
+int
+mm_auth_krb4(Authctxt *authctxt, void *_auth, char **client, void *_reply)
+{
+	KTEXT auth, reply;
+ 	Buffer m;
+	u_int rlen;
+	int success = 0;
+	char *p;
+
+	debug3("%s entering", __func__);
+	auth = _auth;
+	reply = _reply;
+
+	buffer_init(&m);
+	buffer_put_string(&m, auth->dat, auth->length);
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_KRB4, &m);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_KRB4, &m);
+
+	success = buffer_get_int(&m);
+	if (success) {
+		*client = buffer_get_string(&m, NULL);
+		p = buffer_get_string(&m, &rlen);
+		if (rlen >= MAX_KTXT_LEN)
+			fatal("%s: reply from monitor too large", __func__);
+		reply->length = rlen;
+		memcpy(reply->dat, p, rlen);
+		memset(p, 0, rlen);
+		xfree(p);
+	}
+	buffer_free(&m);
+	return (success);
+}
+#endif
+
+#ifdef KRB5
+int
+mm_auth_krb5(void *ctx, void *argp, char **userp, void *resp)
+{
+	krb5_data *tkt, *reply;
+	Buffer m;
+	int success;
+
+	debug3("%s entering", __func__);
+	tkt = (krb5_data *) argp;
+	reply = (krb5_data *) resp;
+
+	buffer_init(&m);
+	buffer_put_string(&m, tkt->data, tkt->length);
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_KRB5, &m);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_KRB5, &m);
+
+	success = buffer_get_int(&m);
+	if (success) {
+		u_int len;
+
+		*userp = buffer_get_string(&m, NULL);
+		reply->data = buffer_get_string(&m, &len);
+		reply->length = len;
+	} else {
+		memset(reply, 0, sizeof(*reply));
+		*userp = NULL;
+	}
+
+	buffer_free(&m);
+	return (success);
+}
+#endif

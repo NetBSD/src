@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
+/*	$NetBSD: dh.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: dh.c,v 1.47 2008/06/26 09:19:39 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: dh.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/param.h>
 
 #include <openssl/bn.h>
@@ -32,11 +34,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "dh.h"
 #include "pathnames.h"
 #include "log.h"
 #include "misc.h"
+#include "random.h"
 
 static int
 parse_prime(int linenum, char *line, struct dhgroup *dhg)

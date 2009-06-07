@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.1.1.1 2009/06/07 22:19:11 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: misc.h,v 1.38 2008/06/12 20:38:28 dtucker Exp $ */
 
 /*
@@ -31,11 +31,17 @@ char	*cleanhostname(char *);
 char	*colon(char *);
 long	 convtime(const char *);
 char	*tilde_expand_filename(const char *, uid_t);
-char	*percent_expand(const char *, ...) __attribute__((__sentinel__));
+char	*percent_expand(const char *, ...)
+#if __GNUC_PREREQ__(4, 0)
+    __attribute__((__sentinel__))
+#endif
+    ;
 char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 void	 ms_subtract_diff(struct timeval *, int *);
 void	 ms_to_timeval(struct timeval *, int);
+
+long long strtonum(const char *, long long, long long, const char **);
 
 struct passwd *pwcopy(struct passwd *);
 const char *ssh_gai_strerror(int);
@@ -67,17 +73,35 @@ int	 tun_open(int, int);
 
 /* Functions to extract or store big-endian words of various sizes */
 u_int64_t	get_u64(const void *)
-    __attribute__((__bounded__( __minbytes__, 1, 8)));
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 8)))
+#endif
+    ;
 u_int32_t	get_u32(const void *)
-    __attribute__((__bounded__( __minbytes__, 1, 4)));
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 4)))
+#endif
+    ;
 u_int16_t	get_u16(const void *)
-    __attribute__((__bounded__( __minbytes__, 1, 2)));
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 2)))
+#endif
+    ;
 void		put_u64(void *, u_int64_t)
-    __attribute__((__bounded__( __minbytes__, 1, 8)));
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 8)))
+#endif
+    ;
 void		put_u32(void *, u_int32_t)
-    __attribute__((__bounded__( __minbytes__, 1, 4)));
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 4)))
+#endif
+    ;
 void		put_u16(void *, u_int16_t)
-    __attribute__((__bounded__( __minbytes__, 1, 2)));
+#ifdef __OpenBSD__
+    __attribute__((__bounded__( __minbytes__, 1, 2)))
+#endif
+    ;
 
 
 /* readpass.c */

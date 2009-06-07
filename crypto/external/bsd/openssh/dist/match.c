@@ -1,4 +1,4 @@
-/*	$NetBSD: match.c,v 1.1.1.1 2009/06/07 22:19:11 christos Exp $	*/
+/*	$NetBSD: match.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: match.c,v 1.27 2008/06/10 23:06:19 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,6 +36,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: match.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -139,8 +141,8 @@ match_pattern_list(const char *string, const char *pattern, u_int len,
 		for (subi = 0;
 		    i < len && subi < sizeof(sub) - 1 && pattern[i] != ',';
 		    subi++, i++)
-			sub[subi] = dolower && isupper(pattern[i]) ?
-			    (char)tolower(pattern[i]) : pattern[i];
+			sub[subi] = dolower && isupper((unsigned char)pattern[i]) ?
+			    (char)tolower((unsigned char)pattern[i]) : pattern[i];
 		/* If subpattern too long, return failure (no match). */
 		if (subi >= sizeof(sub) - 1)
 			return 0;
