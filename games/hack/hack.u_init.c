@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.u_init.c,v 1.9 2008/01/28 06:55:42 dholland Exp $	*/
+/*	$NetBSD: hack.u_init.c,v 1.10 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.u_init.c,v 1.9 2008/01/28 06:55:42 dholland Exp $");
+__RCSID("$NetBSD: hack.u_init.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -158,7 +158,7 @@ struct trobj    Wizard[] = {
 };
 
 void
-u_init()
+u_init(void)
 {
 	int    i;
 	char            exper = 'y', pc;
@@ -326,8 +326,7 @@ got_suffix:
 }
 
 void
-ini_inv(trop)
-	struct trobj *trop;
+ini_inv(struct trobj *trop)
 {
 	struct obj *obj;
 	while (trop->trolet) {
@@ -389,7 +388,7 @@ ini_inv(trop)
 
 #ifdef WIZARD
 void
-wiz_inv()
+wiz_inv(void)
 {
 	struct trobj *trop = &Extra_objs[0];
 	char  *ep = getenv("INVENT");
@@ -420,7 +419,7 @@ wiz_inv()
 #endif	/* WIZARD */
 
 void
-plnamesuffix()
+plnamesuffix(void)
 {
 	char  *p;
 	if ((p = strrchr(plname, '-')) != NULL) {
@@ -435,8 +434,7 @@ plnamesuffix()
 }
 
 int
-role_index(pc)
-	char            pc;
+role_index(int pc)
 {				/* must be called only from u_init() */
 	/* so that rolesyms[] is defined */
 	char  *cp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.8 2009/01/18 00:34:03 lukem Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.8 2009/01/18 00:34:03 lukem Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -73,8 +73,7 @@ __RCSID("$NetBSD: hack.o_init.c,v 1.8 2009/01/18 00:34:03 lukem Exp $");
 #include "hack.onames.h"	/* for LAST_GEM */
 
 int
-letindex(let)
-	char            let;
+letindex(int let)
 {
 	int             i = 0;
 	char            ch;
@@ -85,7 +84,7 @@ letindex(let)
 }
 
 void
-init_objects()
+init_objects(void)
 {
 	int             i, j, first, last, sum, end;
 	char            let;
@@ -138,8 +137,7 @@ check:
 }
 
 int
-probtype(let)
-	char            let;
+probtype(int let)
 {
 	int             i = bases[letindex(let)];
 	int             prob = rn2(100);
@@ -151,7 +149,7 @@ probtype(let)
 }
 
 void
-setgemprobs()
+setgemprobs(void)
 {
 	int             j, first;
 
@@ -170,14 +168,13 @@ setgemprobs()
 }
 
 void
-oinit()
+oinit(void)
 {				/* level dependent initialization */
 	setgemprobs();
 }
 
 void
-savenames(fd)
-	int             fd;
+savenames(int fd)
 {
 	int             i;
 	size_t          len;
@@ -197,8 +194,7 @@ savenames(fd)
 }
 
 void
-restnames(fd)
-	int             fd;
+restnames(int fd)
 {
 	int             i;
 	unsigned        len;
@@ -213,7 +209,7 @@ restnames(fd)
 }
 
 int
-dodiscovered()
+dodiscovered(void)
 {				/* free after Robert Viduya */
 	int             i, end;
 	int             ct = 0;
@@ -237,8 +233,7 @@ dodiscovered()
 }
 
 int
-interesting_to_discover(i)
-	int             i;
+interesting_to_discover(int i)
 {
 	return (
 		objects[i].oc_uname != NULL ||

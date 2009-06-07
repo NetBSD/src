@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkshop.c,v 1.8 2003/04/02 18:36:38 jsm Exp $	*/
+/*	$NetBSD: hack.mkshop.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkshop.c,v 1.8 2003/04/02 18:36:38 jsm Exp $");
+__RCSID("$NetBSD: hack.mkshop.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: hack.mkshop.c,v 1.8 2003/04/02 18:36:38 jsm Exp $");
 const schar shprobs[] = {3, 3, 5, 5, 10, 10, 14, 50}; /* their probabilities */
 
 void
-mkshop()
+mkshop(void)
 {
 	struct mkroom  *sroom;
 	int             sh, sx, sy, i = -1;
@@ -209,8 +209,7 @@ gottype:
 }
 
 void
-mkzoo(type)
-	int             type;
+mkzoo(int type)
 {
 	struct mkroom  *sroom;
 	struct monst   *mon;
@@ -275,7 +274,7 @@ mkzoo(type)
 }
 
 const struct permonst *
-morguemon()
+morguemon(void)
 {
 	int             i = rn2(100), hd = rn2(dlevel);
 
@@ -287,7 +286,7 @@ morguemon()
 }
 
 void
-mkswamp()
+mkswamp(void)
 {				/* Michiel Huisjes & Fred de Wilde */
 	struct mkroom  *sroom;
 	int             sx, sy, i, eelct = 0;
@@ -315,8 +314,7 @@ mkswamp()
 }
 
 int
-nexttodoor(sx, sy)
-	int sx, sy;
+nexttodoor(int sx, int sy)
 {
 	int		dx, dy;
 	struct rm      *lev;
@@ -329,39 +327,34 @@ nexttodoor(sx, sy)
 }
 
 int
-has_dnstairs(sroom)
-	struct mkroom  *sroom;
+has_dnstairs(struct mkroom *sroom)
 {
 	return (sroom->lx <= xdnstair && xdnstair <= sroom->hx &&
 		sroom->ly <= ydnstair && ydnstair <= sroom->hy);
 }
 
 int
-has_upstairs(sroom)
-	struct mkroom  *sroom;
+has_upstairs(struct mkroom *sroom)
 {
 	return (sroom->lx <= xupstair && xupstair <= sroom->hx &&
 		sroom->ly <= yupstair && yupstair <= sroom->hy);
 }
 
 int
-isbig(sroom)
-	struct mkroom  *sroom;
+isbig(struct mkroom *sroom)
 {
 	int             area = (sroom->hx - sroom->lx) * (sroom->hy - sroom->ly);
 	return (area > 20);
 }
 
 int
-dist2(x0, y0, x1, y1)
-	int x0, y0, x1, y1;
+dist2(int x0, int y0, int x1, int y1)
 {
 	return ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
 }
 
 int
-sq(a)
-	int             a;
+sq(int a)
 {
 	return (a * a);
 }

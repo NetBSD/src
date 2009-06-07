@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.wizard.c,v 1.7 2008/01/28 06:55:42 dholland Exp $	*/
+/*	$NetBSD: hack.wizard.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.wizard.c,v 1.7 2008/01/28 06:55:42 dholland Exp $");
+__RCSID("$NetBSD: hack.wizard.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
@@ -80,7 +80,7 @@ const char            wizapp[] = "@DNPTUVXcemntx";
 
 /* If he has found the Amulet, make the wizard appear after some time */
 void
-amulet()
+amulet(void)
 {
 	struct obj     *otmp;
 	struct monst   *mtmp;
@@ -102,8 +102,7 @@ amulet()
 }
 
 int
-wiz_hit(mtmp)
-	struct monst   *mtmp;
+wiz_hit(struct monst *mtmp)
 {
 	/* if we have stolen or found the amulet, we disappear */
 	if (mtmp->minvent && mtmp->minvent->olet == AMULET_SYM &&
@@ -150,8 +149,7 @@ hithim:
 }
 
 void
-inrange(mtmp)
-	struct monst   *mtmp;
+inrange(struct monst *mtmp)
 {
 	schar           tx, ty;
 
@@ -255,7 +253,7 @@ inrange(mtmp)
 }
 
 void
-aggravate()
+aggravate(void)
 {
 	struct monst   *mtmp;
 
@@ -267,8 +265,7 @@ aggravate()
 }
 
 void
-clonewiz(mtmp)
-	struct monst   *mtmp;
+clonewiz(struct monst *mtmp)
 {
 	struct monst   *mtmp2;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.6 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.6 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -90,7 +90,7 @@ const char           *const hu_stat[] = {
 };
 
 void
-init_uhunger()
+init_uhunger(void)
 {
 	u.uhunger = 900;
 	u.uhs = NOT_HUNGRY;
@@ -115,7 +115,7 @@ static struct {
 }               tin;
 
 int
-opentin()
+opentin(void)
 {
 	int             r;
 
@@ -151,7 +151,7 @@ opentin()
 }
 
 int
-Meatdone()
+Meatdone(void)
 {
 	u.usym = '@';
 	prme();
@@ -159,7 +159,7 @@ Meatdone()
 }
 
 int
-doeat()
+doeat(void)
 {
 	struct obj     *otmp;
 	struct objclass *ftmp;
@@ -340,7 +340,7 @@ eatx:
 
 /* called in hack.main.c */
 void
-gethungry()
+gethungry(void)
 {
 	--u.uhunger;
 	if (moves % 2) {
@@ -364,8 +364,7 @@ gethungry()
 
 /* called after vomiting and after performing feats of magic */
 void
-morehungry(num)
-	int num;
+morehungry(int num)
 {
 	u.uhunger -= num;
 	newuhs(TRUE);
@@ -373,15 +372,14 @@ morehungry(num)
 
 /* called after eating something (and after drinking fruit juice) */
 void
-lesshungry(num)
-	int num;
+lesshungry(int num)
 {
 	u.uhunger += num;
 	newuhs(FALSE);
 }
 
 int
-unfaint()
+unfaint(void)
 {
 	u.uhs = FAINTING;
 	flags.botl = 1;
@@ -389,8 +387,7 @@ unfaint()
 }
 
 void
-newuhs(incr)
-	boolean         incr;
+newuhs(boolean incr)
 {
 	int             newhs, h = u.uhunger;
 
@@ -449,16 +446,14 @@ newuhs(incr)
 		     ?  'a' + (otyp - DEAD_ACID_BLOB)\
 		     :	'@' + (otyp - DEAD_HUMAN))
 int
-poisonous(otmp)
-	struct obj     *otmp;
+poisonous(struct obj *otmp)
 {
 	return (strchr(POISONOUS, CORPSE_I_TO_C(otmp->otyp)) != 0);
 }
 
 /* returns 1 if some text was printed */
 int
-eatcorpse(otmp)
-	struct obj     *otmp;
+eatcorpse(struct obj *otmp)
 {
 	char            let = CORPSE_I_TO_C(otmp->otyp);
 	int             tp = 0;

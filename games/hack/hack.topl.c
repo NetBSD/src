@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.8 2008/01/28 06:55:42 dholland Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.8 2008/01/28 06:55:42 dholland Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -80,7 +80,7 @@ struct topl {
 #define	OTLMAX	20		/* max nr of old toplines remembered */
 
 int
-doredotopl()
+doredotopl(void)
 {
 	if (last_redone_topl)
 		last_redone_topl = last_redone_topl->next_topl;
@@ -94,7 +94,7 @@ doredotopl()
 }
 
 void
-redotoplin()
+redotoplin(void)
 {
 	home();
 	if (strchr(toplines, '\n'))
@@ -109,7 +109,7 @@ redotoplin()
 }
 
 void
-remember_topl()
+remember_topl(void)
 {
 	struct topl    *tl;
 	int             cnt = OTLMAX;
@@ -137,8 +137,7 @@ remember_topl()
 }
 
 void
-addtopl(s)
-	const char           *s;
+addtopl(const char *s)
 {
 	curs(tlx, tly);
 	if (tlx + (int)strlen(s) > CO)
@@ -149,9 +148,9 @@ addtopl(s)
 	flags.toplin = 1;
 }
 
+/* s = allowed chars besides space/return */
 void
-xmore(s)
-	const char *s;	/* allowed chars besides space/return */
+xmore(const char *s)
 {
 	if (flags.toplin) {
 		curs(tlx, tly);
@@ -174,20 +173,19 @@ xmore(s)
 }
 
 void
-more()
+more(void)
 {
 	xmore("");
 }
 
 void
-cmore(s)
-	const char           *s;
+cmore(const char *s)
 {
 	xmore(s);
 }
 
 void
-clrlin()
+clrlin(void)
 {
 	if (flags.toplin) {
 		home();
@@ -210,9 +208,7 @@ pline(const char *fmt, ...)
 }
 
 void
-vpline(line, ap)
-	const char *line;
-	va_list ap;
+vpline(const char *line, va_list ap)
 {
 	char            pbuf[BUFSZ];
 	char           *bp = pbuf, *tl;
@@ -275,9 +271,10 @@ vpline(line, ap)
 }
 
 void
-putsym(c)
-	char            c;
+putsym(int c1)
 {
+	char c = c1; /* XXX this hack prevents .o diffs -- remove later */
+
 	switch (c) {
 	case '\b':
 		backsp();
@@ -298,8 +295,7 @@ putsym(c)
 }
 
 void
-putstr(s)
-	const char           *s;
+putstr(const char *s)
 {
 	while (*s)
 		putsym(*s++);

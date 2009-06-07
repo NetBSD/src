@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.10 2009/05/06 02:59:12 ginsbach Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.11 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.10 2009/05/06 02:59:12 ginsbach Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.11 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: hack.end.c,v 1.10 2009/05/06 02:59:12 ginsbach Exp $");
 xchar           maxdlevel = 1;
 
 int
-dodone()
+dodone(void)
 {
 	done1(0);
 	return 0;
@@ -85,8 +85,7 @@ dodone()
 
 /*ARGSUSED*/
 void
-done1(n)
-	int n __unused;
+done1(int n __unused)
 {
 	(void) signal(SIGINT, SIG_IGN);
 	pline("Really quit?");
@@ -107,8 +106,7 @@ int             done_hup;
 
 /*ARGSUSED*/
 void
-done_intr(n)
-	int n __unused;
+done_intr(int n __unused)
 {
 	done_stopprint++;
 	(void) signal(SIGINT, SIG_IGN);
@@ -116,8 +114,7 @@ done_intr(n)
 }
 
 void
-done_hangup(n)
-	int n;
+done_hangup(int n)
 {
 	done_hup++;
 	(void) signal(SIGHUP, SIG_IGN);
@@ -125,8 +122,7 @@ done_hangup(n)
 }
 
 void
-done_in_by(mtmp)
-	struct monst   *mtmp;
+done_in_by(struct monst *mtmp)
 {
 	static char     buf[BUFSZ];
 	pline("You die ...");
@@ -151,8 +147,7 @@ done_in_by(mtmp)
  */
 /* Be careful not to call panic from here! */
 void
-done(st1)
-	const char           *st1;
+done(const char *st1)
 {
 
 #ifdef WIZARD
@@ -316,7 +311,7 @@ struct toptenentry {
 }              *tt_head;
 
 void
-topten()
+topten(void)
 {
 	int             uid = getuid();
 	int             rank, rank0 = -1, rank1 = 0;
@@ -483,7 +478,7 @@ unlock:
 }
 
 void
-outheader()
+outheader(void)
 {
 	char            linebuf[BUFSZ];
 	char           *bp;
@@ -577,8 +572,7 @@ outentry(int rank, struct toptenentry *t1, int so)
 }
 
 char           *
-itoa(a)
-	int             a;
+itoa(int a)
 {
 	static char     buf[12];
 	Sprintf(buf, "%d", a);
@@ -586,8 +580,7 @@ itoa(a)
 }
 
 const char           *
-ordin(n)
-	int             n;
+ordin(int n)
 {
 	int             dg = n % 10;
 
@@ -596,7 +589,7 @@ ordin(n)
 }
 
 void
-clearlocks()
+clearlocks(void)
 {
 	int x;
 	(void) signal(SIGHUP, SIG_IGN);
@@ -609,8 +602,7 @@ clearlocks()
 #ifdef NOSAVEONHANGUP
 /*ARGSUSED*/
 void
-hangup(n)
-	int n;
+hangup(int n __unused)
 {
 	(void) signal(SIGINT, SIG_IGN);
 	clearlocks();
@@ -619,8 +611,7 @@ hangup(n)
 #endif	/* NOSAVEONHANGUP */
 
 char           *
-eos(s)
-	char           *s;
+eos(char *s)
 {
 	while (*s)
 		s++;
@@ -629,8 +620,7 @@ eos(s)
 
 /* it is the callers responsibility to check that there is room for c */
 void
-charcat(s, c)
-	char           *s, c;
+charcat(char *s, int c)
 {
 	while (*s)
 		s++;
@@ -644,9 +634,7 @@ charcat(s, c)
  * if argc == -1).
  */
 void
-prscore(argc, argv)
-	int             argc;
-	char          **argv;
+prscore(int argc, char **argv)
 {
 	char          **players = NULL;
 	int             playerct;
