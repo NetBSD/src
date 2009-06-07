@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.5 2003/04/02 18:36:42 jsm Exp $	*/
+/*	$NetBSD: rnd.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rnd.c,v 1.5 2003/04/02 18:36:42 jsm Exp $");
+__RCSID("$NetBSD: rnd.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -73,29 +73,25 @@ __RCSID("$NetBSD: rnd.c,v 1.5 2003/04/02 18:36:42 jsm Exp $");
 #define RND(x)	((random()>>3) % x)
 
 int
-rn1(x, y)
-	int             x, y;
+rn1(int x, int y)
 {
 	return (RND(x) + y);
 }
 
 int
-rn2(x)
-	int             x;
+rn2(int x)
 {
 	return (RND(x));
 }
 
 int
-rnd(x)
-	int             x;
+rnd(int x)
 {
 	return (RND(x) + 1);
 }
 
 int
-d(n, x)
-	int             n, x;
+d(int n, int x)
 {
 	int tmp = n;
 

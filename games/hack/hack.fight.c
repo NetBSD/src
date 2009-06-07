@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.fight.c,v 1.8 2008/01/28 06:55:41 dholland Exp $	*/
+/*	$NetBSD: hack.fight.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.fight.c,v 1.8 2008/01/28 06:55:41 dholland Exp $");
+__RCSID("$NetBSD: hack.fight.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -74,8 +74,7 @@ static long     noisetime;
 
 /* hitmm returns 0 (miss), 1 (hit), or 2 (kill) */
 int
-hitmm(magr, mdef)
-	struct monst   *magr, *mdef;
+hitmm(struct monst *magr, struct monst *mdef)
 {
 	const struct permonst *pa = magr->data, *pd = mdef->data;
 	int             didhit;
@@ -144,8 +143,7 @@ hitmm(magr, mdef)
 
 /* drop (perhaps) a cadaver and remove monster */
 void
-mondied(mdef)
-	struct monst   *mdef;
+mondied(struct monst *mdef)
 {
 	const struct permonst *pd = mdef->data;
 	if (letter(pd->mlet) && rn2(3)) {
@@ -161,8 +159,7 @@ mondied(mdef)
 
 /* drop a rock and remove monster */
 void
-monstone(mdef)
-	struct monst   *mdef;
+monstone(struct monst *mdef)
 {
 	if (strchr(mlarge, mdef->data->mlet))
 		mksobj_at(ENORMOUS_ROCK, mdef->mx, mdef->my);
@@ -177,8 +174,7 @@ monstone(mdef)
 
 
 int
-fightm(mtmp)
-	struct monst   *mtmp;
+fightm(struct monst *mtmp)
 {
 	struct monst   *mon;
 	for (mon = fmon; mon; mon = mon->nmon)
@@ -192,9 +188,7 @@ fightm(mtmp)
 
 /* u is hit by sth, but not a monster */
 int
-thitu(tlev, dam, name)
-	int tlev, dam;
-	const char           *name;
+thitu(int tlev, int dam, const char *name)
 {
 	char            buf[BUFSZ];
 	setan(name, buf);
@@ -216,11 +210,9 @@ thitu(tlev, dam, name)
 
 char            mlarge[] = "bCDdegIlmnoPSsTUwY',&";
 
+/* return TRUE if mon still alive */
 boolean
-hmon(mon, obj, thrown)		/* return TRUE if mon still alive */
-	struct monst   *mon;
-	struct obj     *obj;
-	int thrown;
+hmon(struct monst *mon, struct obj *obj, int thrown)
 {
 	int tmp;
 	boolean         hittxt = FALSE;
@@ -348,8 +340,7 @@ hmon(mon, obj, thrown)		/* return TRUE if mon still alive */
 /* try to attack; return FALSE if monster evaded */
 /* u.dx and u.dy must be set */
 int
-attack(mtmp)
-	struct monst   *mtmp;
+attack(struct monst *mtmp)
 {
 	schar           tmp;
 	boolean         malive = TRUE;

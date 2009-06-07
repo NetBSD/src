@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.steal.c,v 1.5 2003/04/02 18:36:40 jsm Exp $	*/
+/*	$NetBSD: hack.steal.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,24 +63,25 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.steal.c,v 1.5 2003/04/02 18:36:40 jsm Exp $");
+__RCSID("$NetBSD: hack.steal.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
 
-long				/* actually returns something that fits in an
-				 * int */
-somegold()
+/*
+ * actually returns something that fits in an int
+ */
+long
+somegold(void)
 {
 	return ((u.ugold < 100) ? u.ugold :
 		(u.ugold > 10000) ? rnd(10000) : rnd((int) u.ugold));
 }
 
 void
-stealgold(mtmp)
-	struct monst   *mtmp;
+stealgold(struct monst *mtmp)
 {
 	struct gold    *gold = g_at(u.ux, u.uy);
 	long            tmp;
@@ -109,7 +110,7 @@ stealgold(mtmp)
 unsigned        stealoid;	/* object to be stolen */
 unsigned        stealmid;	/* monster doing the stealing */
 int
-stealarm()
+stealarm(void)
 {
 	struct monst   *mtmp;
 	struct obj     *otmp;
@@ -137,8 +138,7 @@ stealarm()
 /* (or at least, when N should flee now) */
 /* avoid stealing the object stealoid */
 int
-steal(mtmp)
-	struct monst   *mtmp;
+steal(struct monst *mtmp)
 {
 	struct obj     *otmp;
 	int		tmp;
@@ -226,17 +226,14 @@ steal(mtmp)
 }
 
 void
-mpickobj(mtmp, otmp)
-	struct monst   *mtmp;
-	struct obj     *otmp;
+mpickobj(struct monst *mtmp, struct obj *otmp)
 {
 	otmp->nobj = mtmp->minvent;
 	mtmp->minvent = otmp;
 }
 
 int
-stealamulet(mtmp)
-	struct monst   *mtmp;
+stealamulet(struct monst *mtmp)
 {
 	struct obj     *otmp;
 
@@ -256,9 +253,7 @@ stealamulet(mtmp)
 
 /* release the objects the killed animal has stolen */
 void
-relobj(mtmp, show)
-	struct monst   *mtmp;
-	int show;
+relobj(struct monst *mtmp, int show)
 {
 	struct obj     *otmp, *otmp2;
 

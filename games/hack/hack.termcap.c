@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.16 2008/01/28 06:55:42 dholland Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.17 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.16 2008/01/28 06:55:42 dholland Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.17 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -83,7 +83,7 @@ char           *CD;		/* tested in pri.c: docorner() */
 int             CO, LI;		/* used in pri.c and whatis.c */
 
 void
-startup()
+startup(void)
 {
 	char           *term;
 	
@@ -135,24 +135,27 @@ startup()
 }
 
 void
-start_screen()
+start_screen(void)
 {
 	xputs(TI);
 	xputs(VS);
 }
 
 void
-end_screen()
+end_screen(void)
 {
 	xputs(VE);
 	xputs(TE);
 }
 
-/* Cursor movements */
+/*
+ * Cursor movements
+ *
+ * x,y not xchar: perhaps xchar is unsigned and
+ * curx-x would be unsigned as well
+ */
 void
-curs(x, y)
-	int             x, y;	/* not xchar: perhaps xchar is unsigned and
-				 * curx-x would be unsigned as well */
+curs(int x, int y)
 {
 
 	if (y == cury && x == curx)
@@ -174,8 +177,7 @@ curs(x, y)
 }
 
 void
-nocmov(x, y)
-	int x, y;
+nocmov(int x, int y)
 {
 	if (cury > y) {
 		if (UP) {
@@ -223,8 +225,7 @@ nocmov(x, y)
 }
 
 void
-cmov(x, y)
-	int x, y;
+cmov(int x, int y)
 {
 	char buf[256];
 
@@ -268,14 +269,14 @@ cl_end(void)
 }
 
 void
-clear_screen()
+clear_screen(void)
 {
 	xputs(CL);
 	curx = cury = 1;
 }
 
 void
-home()
+home(void)
 {
 	char buf[256];
 	
@@ -289,35 +290,35 @@ home()
 }
 
 void
-standoutbeg()
+standoutbeg(void)
 {
 	if (SO)
 		xputs(SO);
 }
 
 void
-standoutend()
+standoutend(void)
 {
 	if (SE)
 		xputs(SE);
 }
 
 void
-backsp()
+backsp(void)
 {
 	xputs(BC_BS);
 	curx--;
 }
 
 void
-bell()
+bell(void)
 {
 	(void) putchar('\007');	/* curx does not change */
 	(void) fflush(stdout);
 }
 
 void
-delay_output()
+delay_output(void)
 {
 	
 	/* delay 50 ms - could also use a 'nap'-system call */
@@ -326,7 +327,7 @@ delay_output()
 }
 
 void
-cl_eos()
+cl_eos(void)
 {				/* free after Robert Viduya *//* must only be
 				 * called with curx = 1 */
 
