@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.10 2009/06/07 20:13:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.10 2009/06/07 20:13:18 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -217,9 +217,9 @@ vpline(const char *line, va_list ap)
 	if (!line || !*line)
 		return;
 	if (!strchr(line, '%'))
-		(void) strcpy(pbuf, line);
+		(void) strlcpy(pbuf, line, sizeof(pbuf));
 	else
-		(void) vsprintf(pbuf, line, ap);
+		(void) vsnprintf(pbuf, sizeof(pbuf), line, ap);
 	if (flags.toplin == 1 && !strcmp(pbuf, toplines))
 		return;
 	nscr();			/* %% */
