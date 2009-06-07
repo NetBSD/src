@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.137 2009/05/12 18:07:54 plunky Exp $
+#	$NetBSD: Makefile,v 1.138 2009/06/07 22:43:02 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -71,7 +71,6 @@ SUBDIR+=	libiscsi	# depends on libpthread
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	libssl		# depends on libcrypto
-SUBDIR+=	libssh		# depends on libcrypto
 .endif
 
 .if (${MKKERBEROS} != "no")
