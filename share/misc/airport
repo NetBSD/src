@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.32 2009/06/07 11:16:37 tonnerre Exp $
+#	$NetBSD: airport,v 1.33 2009/06/07 12:32:51 zafer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -4811,7 +4811,7 @@ MLT:Millinocket Municipal Airport, ME, USA
 MLU:Monroe Regional Airport, LA, USA
 MLV:Merluna, Queensland, Australia
 MLW:Monrovia (Spriggs Payne), Liberia
-MLX:Malatva, Turkey
+MLX:Malatya, Turkey
 MLY:Manley Hot Springs Airport, AK, USA
 MLZ:Melo, Uruguay
 MMA:Malmo, Sweden
