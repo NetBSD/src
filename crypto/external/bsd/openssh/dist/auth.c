@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth.c,v 1.80 2008/11/04 07:58:09 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -58,6 +60,10 @@
 #endif
 #include "monitor_wrap.h"
 
+#ifdef HAVE_LOGIN_CAP
+#include <login_cap.h>
+#endif
+
 /* import */
 extern ServerOptions options;
 extern int use_privsep;
@@ -78,6 +84,11 @@ int auth_debug_init;
 int
 allowed_user(struct passwd * pw)
 {
+#ifdef HAVE_LOGIN_CAP
+	extern login_cap_t *lc;
+	int match_name, match_ip;
+	char *cap_hlist, *hp;
+#endif
 	struct stat st;
 	const char *hostname = NULL, *ipaddr = NULL;
 	char *shell;
@@ -87,6 +98,115 @@ allowed_user(struct passwd * pw)
 	if (!pw || !pw->pw_name)
 		return 0;
 
+#ifdef HAVE_LOGIN_CAP
+	hostname = get_canonical_hostname(1);
+	ipaddr = get_remote_ipaddr();
+
+	lc = login_getclass(pw->pw_class);
+
+	/*
+	 * Check the deny list.
+	 */
+	cap_hlist = login_getcapstr(lc, "host.deny", NULL, NULL);
+	if (cap_hlist != NULL) {
+		hp = strtok(cap_hlist, ",");
+		while (hp != NULL) {
+			match_name = match_hostname(hostname,
+			    hp, strlen(hp));
+			match_ip = match_hostname(ipaddr,
+			    hp, strlen(hp));
+			/*
+			 * Only a positive match here causes a "deny".
+			 */
+			if (match_name > 0 || match_ip > 0) {
+				free(cap_hlist);
+				login_close(lc);
+				return 0;
+			}
+			hp = strtok(NULL, ",");
+		}
+		free(cap_hlist);
+	}
+
+	/*
+	 * Check the allow list.  If the allow list exists, and the
+	 * remote host is not in it, the user is implicitly denied.
+	 */
+	cap_hlist = login_getcapstr(lc, "host.allow", NULL, NULL);
+	if (cap_hlist != NULL) {
+		hp = strtok(cap_hlist, ",");
+		if (hp == NULL) {
+			/* Just in case there's an empty string... */
+			free(cap_hlist);
+			login_close(lc);
+			return 0;
+		}
+		while (hp != NULL) {
+			match_name = match_hostname(hostname,
+			    hp, strlen(hp));
+			match_ip = match_hostname(ipaddr,
+			    hp, strlen(hp));
+			/*
+			 * Negative match causes an immediate "deny".
+			 * Positive match causes us to break out
+			 * of the loop (allowing a fallthrough).
+			 */
+			if (match_name < 0 || match_ip < 0) {
+				free(cap_hlist);
+				login_close(lc);
+				return 0;
+			}
+			if (match_name > 0 || match_ip > 0)
+				break;
+			hp = strtok(NULL, ",");
+		}
+		free(cap_hlist);
+		if (hp == NULL) {
+			login_close(lc);
+			return 0;
+		}
+	}
+
+	login_close(lc);
+#endif
+
+#ifdef USE_PAM
+	if (!options.use_pam) {
+#endif
+	/*
+	 * password/account expiration.
+	 */
+	if (pw->pw_change || pw->pw_expire) {
+		struct timeval tv;
+
+		(void)gettimeofday(&tv, (struct timezone *)NULL);
+		if (pw->pw_expire) {
+			if (tv.tv_sec >= pw->pw_expire) {
+				logit("User %.100s not allowed because account has expired",
+				    pw->pw_name);
+				return 0;	/* expired */
+			}
+		}
+#ifdef _PASSWORD_CHGNOW
+		if (pw->pw_change == _PASSWORD_CHGNOW) {
+			logit("User %.100s not allowed because password needs to be changed",
+			    pw->pw_name);
+
+			return 0;	/* can't force password change (yet) */
+		}
+#endif
+		if (pw->pw_change) {
+			if (tv.tv_sec >= pw->pw_change) {
+				logit("User %.100s not allowed because password has expired",
+				    pw->pw_name);
+				return 0;	/* expired */
+			}
+		}
+	}
+#ifdef USE_PAM
+	}
+#endif
+
 	/*
 	 * Get the shell from the password data.  An empty shell field is
 	 * legal, and means /bin/sh.
@@ -94,6 +214,10 @@ allowed_user(struct passwd * pw)
 	shell = (pw->pw_shell[0] == '\0') ? _PATH_BSHELL : pw->pw_shell;
 
 	/* deny if shell does not exists or is not executable */
+	/*
+	 * XXX Should check to see if it is executable by the
+	 * XXX requesting user.  --thorpej
+	 */
 	if (stat(shell, &st) != 0) {
 		logit("User %.100s not allowed because shell %.100s does not exist",
 		    pw->pw_name, shell);
@@ -105,6 +229,11 @@ allowed_user(struct passwd * pw)
 		    pw->pw_name, shell);
 		return 0;
 	}
+	/*
+	 * XXX Consider nuking {Allow,Deny}{Users,Groups}.  We have the
+	 * XXX login_cap(3) mechanism which covers all other types of
+	 * XXX logins, too.
+	 */
 
 	if (options.num_deny_users > 0 || options.num_allow_users > 0 ||
 	    options.num_deny_groups > 0 || options.num_allow_groups > 0) {
@@ -425,8 +554,12 @@ auth_openkeyfile(const char *file, struct passwd *pw, int strict_modes)
 struct passwd *
 getpwnamallow(const char *user)
 {
-	extern login_cap_t *lc;
-	auth_session_t *as;
+#ifdef HAVE_LOGIN_CAP
+ 	extern login_cap_t *lc;
+#ifdef BSD_AUTH
+ 	auth_session_t *as;
+#endif
+#endif
 	struct passwd *pw;
 
 	parse_server_match_config(&options, user,
@@ -440,10 +573,12 @@ getpwnamallow(const char *user)
 	}
 	if (!allowed_user(pw))
 		return (NULL);
+#ifdef HAVE_LOGIN_CAP
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
 		debug("unable to get login class: %s", user);
 		return (NULL);
 	}
+#ifdef BSD_AUTH
 	if ((as = auth_open()) == NULL || auth_setpwd(as, pw) != 0 ||
 	    auth_approval(as, lc, pw->pw_name, "ssh") <= 0) {
 		debug("Approval failure for %s", user);
@@ -451,6 +586,8 @@ getpwnamallow(const char *user)
 	}
 	if (as != NULL)
 		auth_close(as);
+#endif
+#endif
 	if (pw != NULL)
 		return (pwcopy(pw));
 	return (NULL);

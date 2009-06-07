@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
+/*	$NetBSD: deattack.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: deattack.c,v 1.30 2006/09/16 19:53:37 djm Exp $ */
 /*
  * Cryptographic attack detector for ssh - source code
@@ -19,11 +19,14 @@
  * <http://www.core-sdi.com>
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: deattack.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "deattack.h"

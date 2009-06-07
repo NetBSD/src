@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: dns.c,v 1.25 2008/06/12 00:03:49 dtucker Exp $ */
 
 /*
@@ -26,6 +26,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: dns.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -37,6 +39,7 @@
 #include "key.h"
 #include "dns.h"
 #include "log.h"
+#include "getrrsetbyname.h"
 
 static const char *errset_text[] = {
 	"success",		/* 0 ERRSET_SUCCESS */

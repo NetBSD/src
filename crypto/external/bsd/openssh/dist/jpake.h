@@ -1,4 +1,4 @@
-/*	$NetBSD: jpake.h,v 1.1.1.1 2009/06/07 22:19:09 christos Exp $	*/
+/*	$NetBSD: jpake.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: jpake.h,v 1.1 2008/11/04 08:22:13 djm Exp $ */
 /*
  * Copyright (c) 2008 Damien Miller.  All rights reserved.

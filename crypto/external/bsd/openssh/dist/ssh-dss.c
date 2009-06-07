@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.1.1.1 2009/06/07 22:19:22 christos Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: ssh-dss.c,v 1.24 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: ssh-dss.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>

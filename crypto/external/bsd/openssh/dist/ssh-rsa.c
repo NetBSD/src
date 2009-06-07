@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.1.1.1 2009/06/07 22:19:24 christos Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: ssh-rsa.c,v 1.39 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2000, 2003 Markus Friedl <markus@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: ssh-rsa.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>

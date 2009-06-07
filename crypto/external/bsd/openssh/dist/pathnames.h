@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.1.1.1 2009/06/07 22:19:14 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: pathnames.h,v 1.17 2008/12/29 02:23:26 stevesk Exp $ */
 
 /*
@@ -107,9 +107,16 @@
 #define _PATH_RHOSTS_EQUIV		"/etc/hosts.equiv"
 
 /*
+ * X11 base directory
+ */
+#ifndef X11BASE
+#define X11BASE				"/usr/X11R6"
+#endif
+
+/*
  * Default location of askpass
  */
-#define _PATH_SSH_ASKPASS_DEFAULT	"/usr/X11R6/bin/ssh-askpass"
+#define _PATH_SSH_ASKPASS_DEFAULT	X11BASE "/bin/ssh-askpass"
 
 /* Location of ssh-keysign for hostbased authentication */
 #define _PATH_SSH_KEY_SIGN		"/usr/libexec/ssh-keysign"
@@ -128,7 +135,13 @@
 #define _PATH_LS			"ls"
 
 /* chroot directory for unprivileged user when UsePrivilegeSeparation=yes */
+#ifdef __OpenBSD__
 #define _PATH_PRIVSEP_CHROOT_DIR	"/var/empty"
+#else
+#define _PATH_PRIVSEP_CHROOT_DIR	"/var/chroot/sshd"
+#endif
+
+#define _PATH_URANDOM			"/dev/urandom"
 
 /* for passwd change */
 #define _PATH_PASSWD_PROG		"/usr/bin/passwd"

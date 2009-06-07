@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.1.1.1 2009/06/07 22:19:17 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: scp.c,v 1.164 2008/10/10 04:55:16 stevesk Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -72,6 +72,8 @@
  *
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: scp.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -123,7 +125,11 @@ int verbose_mode = 0;
 int showprogress = 1;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
+#ifdef RESCUEDIR
+char *ssh_program = RESCUEDIR "/ssh";
+#else
 char *ssh_program = _PATH_SSH_PROGRAM;
+#endif
 
 /* This is used to store the pid of ssh_program */
 pid_t do_cmd_pid = -1;
@@ -611,10 +617,11 @@ source(int argc, char **argv)
 	off_t i, statbytes;
 	size_t amt;
 	int fd = -1, haderr, indx;
-	char *last, *name, buf[2048], encname[MAXPATHLEN];
+	char *last, *name, buf[16384], encname[MAXPATHLEN];
 	int len;
 
 	for (indx = 0; indx < argc; ++indx) {
+		fd = -1;
 		name = argv[indx];
 		statbytes = 0;
 		len = strlen(name);
@@ -623,7 +630,7 @@ source(int argc, char **argv)
 		if ((fd = open(name, O_RDONLY|O_NONBLOCK, 0)) < 0)
 			goto syserr;
 		if (strchr(name, '\n') != NULL) {
-			strnvis(encname, name, sizeof(encname), VIS_NL);
+			strvisx(encname, name, sizeof(encname), VIS_NL);
 			name = encname;
 		}
 		if (fstat(fd, &stb) < 0) {
@@ -847,7 +854,7 @@ sink(int argc, char **argv)
 	mode_t mode, omode, mask;
 	off_t size, statbytes;
 	int setimes, targisdir, wrerrno = 0;
-	char ch, *cp, *np, *targ, *why, *vect[1], buf[2048];
+	char ch, *cp, *np, *targ, *why, *vect[1], buf[16384];
 	struct timeval tv[2];
 
 #define	atime	tv[0]
@@ -942,7 +949,7 @@ sink(int argc, char **argv)
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 
-		for (size = 0; isdigit(*cp);)
+		for (size = 0; isdigit((unsigned char)*cp);)
 			size = size * 10 + (*cp++ - '0');
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
