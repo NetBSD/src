@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-jpake.c,v 1.1.1.1 2009/06/07 22:19:03 christos Exp $	*/
+/*	$NetBSD: auth2-jpake.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth2-jpake.c,v 1.2 2008/11/07 23:34:48 dtucker Exp $ */
 /*
  * Copyright (c) 2008 Damien Miller.  All rights reserved.

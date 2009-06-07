@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
+/*	$NetBSD: auth.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth.h,v 1.62 2008/11/04 08:22:12 djm Exp $ */
 
 /*
@@ -33,7 +33,12 @@
 
 #include <openssl/rsa.h>
 
+#ifdef HAVE_LOGIN_CAP
+#include <login_cap.h>
+#endif
+#ifdef BSD_AUTH
 #include <bsd_auth.h>
+#endif
 #ifdef KRB5
 #include <krb5.h>
 #endif
@@ -56,9 +61,15 @@ struct Authctxt {
 	char		*style;
 	void		*kbdintctxt;
 	void		*jpake_ctx;
+#ifdef BSD_AUTH
 	auth_session_t	*as;
+#endif
+#ifdef KRB4
+	char		*krb4_ticket_file;
+#endif 
 #ifdef KRB5
 	krb5_context	 krb5_ctx;
+	krb5_auth_context krb5_auth_ctx;
 	krb5_ccache	 krb5_fwd_ccache;
 	krb5_principal	 krb5_user;
 	char		*krb5_ticket_file;
@@ -71,6 +82,10 @@ struct Authctxt {
  * case 'valid' is set to 0, but 'user' points to the username requested by
  * the client.
  */
+
+#ifdef USE_PAM
+#include "auth-pam.h"
+#endif
 
 struct Authmethod {
 	char	*name;
@@ -95,6 +110,7 @@ struct KbdintDevice
 	void	(*free_ctx)(void *ctx);
 };
 
+void 	 disable_forwarding(void);
 int      auth_rhosts(struct passwd *, const char *);
 int
 auth_rhosts2(struct passwd *, const char *, const char *, const char *);
@@ -111,6 +127,20 @@ int	 auth_rhosts_rsa_key_allowed(struct passwd *, char *, char *, Key *);
 int	 hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
 int	 user_key_allowed(struct passwd *, Key *);
 
+#ifdef KRB4
+#include <krb.h>
+int     auth_krb4(Authctxt *, KTEXT, char **, KTEXT);
+int	auth_krb4_password(Authctxt *, const char *);
+void    krb4_cleanup_proc(void *);
+
+#ifdef AFS
+#include <kafs.h>
+int     auth_krb4_tgt(Authctxt *, const char *);
+int     auth_afs_token(Authctxt *, const char *);
+#endif /* AFS */
+
+#endif /* KRB4 */
+
 #ifdef KRB5
 int	auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client, krb5_data *);
 int	auth_krb5_tgt(Authctxt *authctxt, krb5_data *tgt);
@@ -123,6 +153,7 @@ void	do_authentication2(Authctxt *);
 
 void	auth_log(Authctxt *, int, char *, char *);
 void	userauth_finish(Authctxt *, int, char *);
+void	userauth_send_banner(const char *);
 int	auth_root_allowed(char *);
 
 char	*auth2_read_banner(void);
@@ -170,4 +201,9 @@ struct passwd *fakepw(void);
 #define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
 #define SKEY_PROMPT "\nS/Key Password: "
+
+#if defined(KRB5) && !defined(HEIMDAL)
+#include <krb5.h>
+krb5_error_code ssh_krb5_cc_gen(krb5_context, krb5_ccache *);
+#endif
 #endif

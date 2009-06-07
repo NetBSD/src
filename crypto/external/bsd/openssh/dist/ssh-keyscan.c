@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.1.1.1 2009/06/07 22:19:24 christos Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: ssh-keyscan.c,v 1.78 2009/01/22 10:02:34 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
@@ -8,6 +8,8 @@
  * OpenBSD project by leaving this copyright notice intact.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>

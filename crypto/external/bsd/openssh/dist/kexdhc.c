@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdhc.c,v 1.1.1.1 2009/06/07 22:19:09 christos Exp $	*/
+/*	$NetBSD: kexdhc.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: kexdhc.c,v 1.11 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: kexdhc.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -44,7 +46,7 @@ void
 kexdh_client(Kex *kex)
 {
 	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
-	DH *dh;
+	DH *dh = NULL;	/* XXX: GCC */
 	Key *server_host_key;
 	u_char *server_host_key_blob = NULL, *signature = NULL;
 	u_char *kbuf, *hash;

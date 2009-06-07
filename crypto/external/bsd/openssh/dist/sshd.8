@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.1.1.1 2009/06/07 22:19:28 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.2 2009/06/07 22:38:47 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $OpenBSD: sshd.8,v 1.247 2008/10/03 13:08:12 jmc Exp $
-.Dd $Mdocdate: October 3 2008 $
+.Dd October 3 2008
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ over an insecure network.
 .Nm
 listens for connections from clients.
 It is normally started at boot from
-.Pa /etc/rc .
+.Pa /etc/rc.d/sshd .
 It forks a new
 daemon for each incoming connection.
 The forked daemons handle

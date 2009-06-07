@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.1.1.1 2009/06/07 22:19:11 christos Exp $	*/
+/*	$NetBSD: mac.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: mac.c,v 1.15 2008/06/13 00:51:47 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -24,6 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: mac.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -40,7 +42,9 @@
 #include "mac.h"
 #include "misc.h"
 
+#ifdef UMAC_HAS_BEEN_UNBROKEN
 #include "umac.h"
+#endif
 
 #define SSH_EVP		1	/* OpenSSL EVP-based MAC */
 #define SSH_UMAC	2	/* UMAC (not integrated with OpenSSL) */
@@ -59,7 +63,9 @@ struct {
 	{ "hmac-md5-96",		SSH_EVP, EVP_md5, 96, -1, -1 },
 	{ "hmac-ripemd160",		SSH_EVP, EVP_ripemd160, 0, -1, -1 },
 	{ "hmac-ripemd160@openssh.com",	SSH_EVP, EVP_ripemd160, 0, -1, -1 },
+#ifdef UMAC_HAS_BEEN_UNBROKEN
 	{ "umac-64@openssh.com",	SSH_UMAC, NULL, 0, 128, 64 },
+#endif
 	{ NULL,				0, NULL, 0, -1, -1 }
 };
 
@@ -110,9 +116,11 @@ mac_init(Mac *mac)
 			return -1;
 		HMAC_Init(&mac->evp_ctx, mac->key, mac->key_len, mac->evp_md);
 		return 0;
+#ifdef UMAC_HAS_BEEN_UNBROKEN
 	case SSH_UMAC:
 		mac->umac_ctx = umac_new(mac->key);
 		return 0;
+#endif
 	default:
 		return -1;
 	}
@@ -122,7 +130,10 @@ u_char *
 mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 {
 	static u_char m[EVP_MAX_MD_SIZE];
-	u_char b[4], nonce[8];
+	u_char b[4];
+#ifdef UMAC_HAS_BEEN_UNBROKEN
+	u_char nonce[8];
+#endif
 
 	if (mac->mac_len > sizeof(m))
 		fatal("mac_compute: mac too long %u %lu",
@@ -137,11 +148,13 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 		HMAC_Update(&mac->evp_ctx, data, datalen);
 		HMAC_Final(&mac->evp_ctx, m, NULL);
 		break;
+#ifdef UMAC_HAS_BEEN_UNBROKEN
 	case SSH_UMAC:
 		put_u64(nonce, seqno);
 		umac_update(mac->umac_ctx, data, datalen);
 		umac_final(mac->umac_ctx, m, nonce);
 		break;
+#endif
 	default:
 		fatal("mac_compute: unknown MAC type");
 	}
@@ -151,10 +164,13 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 void
 mac_clear(Mac *mac)
 {
+#ifdef UMAC_HAS_BEEN_UNBROKEN
 	if (mac->type == SSH_UMAC) {
 		if (mac->umac_ctx != NULL)
 			umac_delete(mac->umac_ctx);
-	} else if (mac->evp_md != NULL)
+	} else
+#endif
+	if (mac->evp_md != NULL)
 		HMAC_cleanup(&mac->evp_ctx);
 	mac->evp_md = NULL;
 	mac->umac_ctx = NULL;

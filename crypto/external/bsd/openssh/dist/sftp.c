@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.1.1.1 2009/06/07 22:19:21 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
 /* $OpenBSD: sftp.c,v 1.107 2009/02/02 11:15:14 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: sftp.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -46,6 +48,7 @@
 #include "buffer.h"
 #include "sftp-common.h"
 #include "sftp-client.h"
+#include "fmt_scaled.h"
 
 /* File to read commands from */
 FILE* infile;
@@ -57,7 +60,7 @@ int batchmode = 0;
 size_t copy_buffer_len = 32768;
 
 /* Number of concurrent outstanding requests */
-size_t num_requests = 64;
+size_t num_requests = 256;
 
 /* PID of ssh transport process */
 static pid_t sshpid = -1;
@@ -632,6 +635,8 @@ sdirent_comp(const void *aa, const void *bb)
 		return (rmul * NCMP(a->a.size, b->a.size));
 
 	fatal("Unknown ls sort type");
+	/*NOTREACHED*/
+	return 0;
 }
 
 /* sftp ls.1 replacement for directories */
@@ -936,7 +941,7 @@ makeargv(const char *arg, int *argcp)
 	state = MA_START;
 	i = j = 0;
 	for (;;) {
-		if (isspace(arg[i])) {
+		if (isspace((unsigned char)arg[i])) {
 			if (state == MA_UNQUOTED) {
 				/* Terminate current argument */
 				argvs[j++] = '\0';
@@ -1221,6 +1226,12 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 	char path_buf[MAXPATHLEN];
 	int err = 0;
 	glob_t g;
+
+	pflag = 0;	/* XXX gcc */
+	lflag = 0;	/* XXX gcc */
+	iflag = 0;	/* XXX gcc */
+	hflag = 0;	/* XXX gcc */
+	n_arg = 0;	/* XXX gcc */
 
 	path1 = path2 = NULL;
 	cmdnum = parse_args(&cmd, &pflag, &lflag, &iflag, &hflag, &n_arg,

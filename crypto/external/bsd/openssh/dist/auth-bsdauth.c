@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.1.1.1 2009/06/07 22:19:01 christos Exp $	*/
+/*	$NetBSD: auth-bsdauth.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: auth-bsdauth.c,v 1.11 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -24,8 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: auth-bsdauth.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
+#ifdef BSD_AUTH
 #include "xmalloc.h"
 #include "key.h"
 #include "hostfile.h"
@@ -131,3 +134,4 @@ KbdintDevice mm_bsdauth_device = {
 	mm_bsdauth_respond,
 	bsdauth_free_ctx
 };
+#endif

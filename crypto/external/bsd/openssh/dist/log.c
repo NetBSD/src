@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2009/06/07 22:19:10 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
 /* $OpenBSD: log.c,v 1.41 2008/06/10 04:50:25 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,6 +35,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: log.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include <sys/types.h>
 
 #include <stdarg.h>
@@ -296,9 +298,11 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 void
 do_log(LogLevel level, const char *fmt, va_list args)
 {
+#ifdef SYSLOG_DATA_INIT
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
+#endif
 	char msgbuf[MSGBUFSIZ];
-	char fmtbuf[MSGBUFSIZ];
+	char fmtbuf[4 * sizeof(msgbuf) + 1];
 	char *txt = NULL;
 	int pri = LOG_INFO;
 	int saved_errno = errno;
@@ -346,14 +350,20 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	} else {
 		vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
 	}
-	strnvis(fmtbuf, msgbuf, sizeof(fmtbuf), VIS_SAFE|VIS_OCTAL);
+	strvis(fmtbuf, msgbuf, VIS_SAFE|VIS_OCTAL);
 	if (log_on_stderr) {
 		snprintf(msgbuf, sizeof msgbuf, "%s\r\n", fmtbuf);
 		write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 	} else {
+#ifdef SYSLOG_DATA_INIT
 		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
 		syslog_r(pri, &sdata, "%.500s", fmtbuf);
 		closelog_r(&sdata);
+#else
+		openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
+		syslog(pri, "%.500s", fmtbuf);
+		closelog();
+#endif
 	}
 	errno = saved_errno;
 }
