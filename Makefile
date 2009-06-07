@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.270 2009/04/23 09:43:49 apb Exp $
+#	$NetBSD: Makefile,v 1.271 2009/06/07 22:46:12 christos Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -143,7 +143,8 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools lib include gnu external bin games libexec sbin usr.bin
+_SUBDIR=	tools lib include gnu external crypto/external bin games
+_SUBDIR+=	libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share rescue sys etc tests compat .WAIT distrib regress
 
 .for dir in ${_SUBDIR}
@@ -414,7 +415,7 @@ BUILD_COMPAT_LIBS=	compat/lib/csu ${BUILD_CC_LIB:S/^/compat\//} compat/lib/libc
 BUILD_COMPAT_LIBS=
 .endif
 
-.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib sys/rump/fs/lib sys/rump/net/lib sys/modules ${BUILD_COMPAT_LIBS}
+.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib crypto/external/lib sys/rump/fs/lib sys/rump/net/lib sys/modules ${BUILD_COMPAT_LIBS}
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
