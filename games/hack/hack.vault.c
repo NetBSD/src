@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.vault.c,v 1.7 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.vault.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,31 +63,35 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.vault.c,v 1.7 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hack.vault.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 #ifdef QUEST
 void
-setgd( /* mtmp */ )
-{				/* struct monst *mtmp; */
+setgd(void)
+{
 }
+
 int
-gd_move() {
+gd_move(void)
+{
 	return (2);
 }
+
 void
-gddead()
+gddead(void)
 {
 }
+
 void
-replgd(mtmp, mtmp2)
-	struct monst   *mtmp, *mtmp2;
+replgd(struct monst *mtmp __unused, struct monst *mtmp2 __unused)
 {
 }
+
 void
-invault()
+invault(void)
 {
 }
 
@@ -118,7 +122,7 @@ static void restfakecorr(void);
 static int goldincorridor(void);
 
 static void
-restfakecorr()
+restfakecorr(void)
 {
 	int		fcx, fcy, fcbeg;
 	struct rm      *crm;
@@ -142,7 +146,7 @@ restfakecorr()
 }
 
 static int
-goldincorridor()
+goldincorridor(void)
 {
 	int             fci;
 
@@ -153,7 +157,7 @@ goldincorridor()
 }
 
 void
-setgd()
+setgd(void)
 {
 	struct monst   *mtmp;
 	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
@@ -166,7 +170,7 @@ setgd()
 }
 
 void
-invault()
+invault(void)
 {
 	int tmp = inroom(u.ux, u.uy);
 	if (tmp < 0 || rooms[tmp].rtype != VAULT) {
@@ -257,7 +261,7 @@ fnd:
 }
 
 int
-gd_move()
+gd_move(void)
 {
 	int             x, y, dx, dy, gx, gy, nx, ny, typ;
 	struct fakecorridor *fcp;
@@ -361,14 +365,13 @@ newpos:
 }
 
 void
-gddead()
+gddead(void)
 {
 	guard = 0;
 }
 
 void
-replgd(mtmp, mtmp2)
-	struct monst   *mtmp, *mtmp2;
+replgd(struct monst *mtmp, struct monst *mtmp2)
 {
 	if (mtmp == guard)
 		guard = mtmp2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.dog.c,v 1.9 2008/01/28 06:55:41 dholland Exp $	*/
+/*	$NetBSD: hack.dog.c,v 1.10 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.dog.c,v 1.9 2008/01/28 06:55:41 dholland Exp $");
+__RCSID("$NetBSD: hack.dog.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -81,7 +81,7 @@ const struct permonst la_dog =
 
 
 void
-makedog()
+makedog(void)
 {
 	struct monst   *mtmp = makemon(&li_dog, u.ux, u.uy);
 	if (!mtmp)
@@ -90,8 +90,7 @@ makedog()
 }
 
 void
-initedog(mtmp)
-	struct monst   *mtmp;
+initedog(struct monst *mtmp)
 {
 	mtmp->mtame = mtmp->mpeaceful = 1;
 	EDOG(mtmp)->hungrytime = 1000 + moves;
@@ -108,7 +107,7 @@ struct monst   *fallen_down = 0;/* monsters that fell through a trapdoor */
 /* they will appear on the next level @ goes to, even if he goes up! */
 
 void
-losedogs()
+losedogs(void)
 {
 	struct monst   *mtmp;
 	while ((mtmp = mydogs) != NULL) {
@@ -126,7 +125,7 @@ losedogs()
 }
 
 void
-keepdogs()
+keepdogs(void)
 {
 	struct monst   *mtmp;
 	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
@@ -143,8 +142,7 @@ keepdogs()
 }
 
 void
-fall_down(mtmp)
-	struct monst   *mtmp;
+fall_down(struct monst *mtmp)
 {
 	relmon(mtmp);
 	mtmp->nmon = fallen_down;
@@ -162,8 +160,7 @@ fall_down(mtmp)
 #define	POISON	5
 #define	UNDEF	6
 int
-dogfood(obj)
-	struct obj     *obj;
+dogfood(struct obj *obj)
 {
 	switch (obj->olet) {
 	case FOOD_SYM:
@@ -473,8 +470,7 @@ newdogpos:
 
 /* return roomnumber or -1 */
 int
-inroom(x, y)
-	xchar           x, y;
+inroom(xchar x, xchar y)
 {
 #ifndef QUEST
 	struct mkroom  *croom = &rooms[0];
@@ -489,9 +485,7 @@ inroom(x, y)
 }
 
 int
-tamedog(mtmp, obj)
-	struct monst   *mtmp;
-	struct obj     *obj;
+tamedog(struct monst *mtmp, struct obj *obj)
 {
 	struct monst   *mtmp2;
 

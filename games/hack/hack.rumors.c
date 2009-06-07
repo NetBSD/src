@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rumors.c,v 1.5 2003/04/02 18:36:39 jsm Exp $	*/
+/*	$NetBSD: hack.rumors.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rumors.c,v 1.5 2003/04/02 18:36:39 jsm Exp $");
+__RCSID("$NetBSD: hack.rumors.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"	/* for RUMORFILE and BSD (strchr) */
@@ -74,8 +74,7 @@ int             n_used_rumors = -1;
 char           *usedbits;
 
 void
-init_rumors(rumf)
-	FILE           *rumf;
+init_rumors(FILE *rumf)
 {
 	int             i;
 	n_used_rumors = 0;
@@ -89,8 +88,7 @@ init_rumors(rumf)
 }
 
 int
-skipline(rumf)
-	FILE           *rumf;
+skipline(FILE *rumf)
 {
 	char            line[COLNO];
 	while (1) {
@@ -102,8 +100,7 @@ skipline(rumf)
 }
 
 void
-outline(rumf)
-	FILE           *rumf;
+outline(FILE *rumf)
 {
 	char            line[COLNO];
 	char           *ep;
@@ -116,7 +113,7 @@ outline(rumf)
 }
 
 void
-outrumor()
+outrumor(void)
 {
 	int             rn, i;
 	FILE           *rumf;
@@ -143,8 +140,7 @@ none:
 }
 
 int
-used(i)
-	int             i;
+used(int i)
 {
 	return (usedbits[i / CHARSZ] & (1 << (i % CHARSZ)));
 }

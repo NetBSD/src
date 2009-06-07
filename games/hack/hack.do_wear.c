@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_wear.c,v 1.5 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.do_wear.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,21 +63,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_wear.c,v 1.5 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.do_wear.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 
 void
-off_msg(otmp)
-	struct obj     *otmp;
+off_msg(struct obj *otmp)
 {
 	pline("You were wearing %s.", doname(otmp));
 }
 
 int
-doremarm()
+doremarm(void)
 {
 	struct obj     *otmp;
 	if (!uarm && !uarmh && !uarms && !uarmg) {
@@ -104,7 +103,7 @@ doremarm()
 }
 
 int
-doremring()
+doremring(void)
 {
 	if (!uleft && !uright) {
 		pline("Not wearing any ring.");
@@ -138,8 +137,7 @@ doremring()
 }
 
 int
-dorr(otmp)
-	struct obj     *otmp;
+dorr(struct obj *otmp)
 {
 	if (cursed(otmp))
 		return (0);
@@ -149,8 +147,7 @@ dorr(otmp)
 }
 
 int
-cursed(otmp)
-	struct obj     *otmp;
+cursed(struct obj *otmp)
 {
 	if (otmp->cursed) {
 		pline("You can't. It appears to be cursed.");
@@ -160,8 +157,7 @@ cursed(otmp)
 }
 
 int
-armoroff(otmp)
-	struct obj     *otmp;
+armoroff(struct obj *otmp)
 {
 	int             delay = -objects[otmp->otyp].oc_delay;
 	if (cursed(otmp))
@@ -186,7 +182,7 @@ armoroff(otmp)
 }
 
 int
-doweararm()
+doweararm(void)
 {
 	struct obj     *otmp;
 	int             delay;
@@ -251,7 +247,7 @@ doweararm()
 }
 
 int
-dowearring()
+dowearring(void)
 {
 	struct obj     *otmp;
 	long            mask = 0;
@@ -329,8 +325,7 @@ dowearring()
 }
 
 void
-ringoff(obj)
-	struct obj     *obj;
+ringoff(struct obj *obj)
 {
 	long            mask;
 	mask = obj->owornmask & W_RING;
@@ -368,7 +363,7 @@ ringoff(obj)
 }
 
 void
-find_ac()
+find_ac(void)
 {
 	int             uac = 10;
 	if (uarm)
@@ -392,7 +387,7 @@ find_ac()
 }
 
 void
-glibr()
+glibr(void)
 {
 	struct obj     *otmp;
 	int             xfl = 0;
@@ -421,7 +416,7 @@ glibr()
 }
 
 struct obj     *
-some_armor()
+some_armor(void)
 {
 	struct obj     *otmph = uarm;
 	if (uarmh && (!otmph || !rn2(4)))
@@ -434,7 +429,7 @@ some_armor()
 }
 
 void
-corrode_armor()
+corrode_armor(void)
 {
 	struct obj     *otmph = some_armor();
 	if (otmph) {

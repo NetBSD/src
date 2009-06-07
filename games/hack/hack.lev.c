@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.lev.c,v 1.9 2009/01/18 13:30:33 tnn Exp $	*/
+/*	$NetBSD: hack.lev.c,v 1.10 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.lev.c,v 1.9 2009/01/18 13:30:33 tnn Exp $");
+__RCSID("$NetBSD: hack.lev.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -79,9 +79,7 @@ __RCSID("$NetBSD: hack.lev.c,v 1.9 2009/01/18 13:30:33 tnn Exp $");
 boolean         level_exists[MAXLEVEL + 1];
 
 void
-savelev(fd, lev)
-	int             fd;
-	xchar           lev;
+savelev(int fd, xchar lev)
 {
 #ifndef NOWORM
 	struct wseg    *wtmp, *wtmp2;
@@ -130,10 +128,7 @@ savelev(fd, lev)
 }
 
 void
-bwrite(fd, loc, num)
-	int fd;
-	const void     *loc;
-	size_t          num;
+bwrite(int fd, const void *loc, size_t num)
 {
 	/* lint wants the 3rd arg of write to be an int; lint -p an unsigned */
 	if ((size_t)write(fd, loc, num) != num)
@@ -141,9 +136,7 @@ bwrite(fd, loc, num)
 }
 
 void
-saveobjchn(fd, otmp)
-	int fd;
-	struct obj     *otmp;
+saveobjchn(int fd, struct obj *otmp)
 {
 	struct obj     *otmp2;
 	unsigned        xl;
@@ -161,9 +154,7 @@ saveobjchn(fd, otmp)
 }
 
 void
-savemonchn(fd, mtmp)
-	int fd;
-	struct monst   *mtmp;
+savemonchn(int fd, struct monst *mtmp)
 {
 	struct monst   *mtmp2;
 	unsigned        xl;
@@ -186,9 +177,7 @@ savemonchn(fd, mtmp)
 }
 
 void
-savegoldchn(fd, gold)
-	int fd;
-	struct gold    *gold;
+savegoldchn(int fd, struct gold *gold)
 {
 	struct gold    *gold2;
 	while (gold) {
@@ -201,9 +190,7 @@ savegoldchn(fd, gold)
 }
 
 void
-savetrapchn(fd, trap)
-	int fd;
-	struct trap    *trap;
+savetrapchn(int fd, struct trap *trap)
 {
 	struct trap    *trap2;
 	while (trap) {
@@ -216,9 +203,7 @@ savetrapchn(fd, trap)
 }
 
 void
-getlev(fd, pid, lev)
-	int             fd, pid;
-	xchar           lev;
+getlev(int fd, int pid, xchar lev)
 {
 	struct gold    *gold;
 	struct trap    *trap;
@@ -320,10 +305,7 @@ getlev(fd, pid, lev)
 }
 
 void
-mread(fd, buf, len)
-	int fd;
-	char           *buf;
-	unsigned        len;
+mread(int fd, char *buf, unsigned len)
 {
 	int             rlen;
 
@@ -339,7 +321,7 @@ mread(fd, buf, len)
 }
 
 void
-mklev()
+mklev(void)
 {
 	if (getbones())
 		return;

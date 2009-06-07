@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.bones.c,v 1.6 2003/04/02 18:36:35 jsm Exp $	*/
+/*	$NetBSD: hack.bones.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.bones.c,v 1.6 2003/04/02 18:36:35 jsm Exp $");
+__RCSID("$NetBSD: hack.bones.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -75,7 +75,7 @@ char            bones[] = "bones_xx";
 
 /* save bones and possessions of a deceased adventurer */
 void
-savebones()
+savebones(void)
 {
 	int fd;
 	struct obj *otmp;
@@ -147,7 +147,7 @@ savebones()
 }
 
 int
-getbones()
+getbones(void)
 {
 	int fd, x, y, ok;
 

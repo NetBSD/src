@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkobj.c,v 1.6 2003/04/02 18:36:38 jsm Exp $	*/
+/*	$NetBSD: hack.mkobj.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkobj.c,v 1.6 2003/04/02 18:36:38 jsm Exp $");
+__RCSID("$NetBSD: hack.mkobj.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -72,8 +72,7 @@ __RCSID("$NetBSD: hack.mkobj.c,v 1.6 2003/04/02 18:36:38 jsm Exp $");
 char            mkobjstr[] = "))[[!!!!????%%%%/=**))[[!!!!????%%%%/=**(%";
 
 struct obj     *
-mkobj_at(let, x, y)
-	int let, x, y;
+mkobj_at(int let, int x, int y)
 {
 	struct obj     *otmp = mkobj(let);
 	otmp->ox = x;
@@ -84,8 +83,7 @@ mkobj_at(let, x, y)
 }
 
 void
-mksobj_at(otyp, x, y)
-	int otyp, x, y;
+mksobj_at(int otyp, int x, int y)
 {
 	struct obj     *otmp = mksobj(otyp);
 	otmp->ox = x;
@@ -95,8 +93,7 @@ mksobj_at(otyp, x, y)
 }
 
 struct obj     *
-mkobj(let)
-	int let;
+mkobj(int let)
 {
 	if (!let)
 		let = mkobjstr[rn2(sizeof(mkobjstr) - 1)];
@@ -113,8 +110,7 @@ mkobj(let)
 struct obj      zeroobj;
 
 struct obj     *
-mksobj(otyp)
-	int otyp;
+mksobj(int otyp)
 {
 	struct obj     *otmp;
 	char            let = objects[otyp].oc_olet;
@@ -193,15 +189,13 @@ mksobj(otyp)
 }
 
 int
-letter(c)
-	int c;
+letter(int c)
 {
 	return (('@' <= c && c <= 'Z') || ('a' <= c && c <= 'z'));
 }
 
 int
-weight(obj)
-	struct obj     *obj;
+weight(struct obj *obj)
 {
 	int             wt = objects[obj->otyp].oc_weight;
 	return (wt ? wt * obj->quan : (obj->quan + 1) / 2);

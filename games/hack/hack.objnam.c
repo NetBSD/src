@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.objnam.c,v 1.7 2008/01/28 06:55:42 dholland Exp $	*/
+/*	$NetBSD: hack.objnam.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.objnam.c,v 1.7 2008/01/28 06:55:42 dholland Exp $");
+__RCSID("$NetBSD: hack.objnam.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -75,8 +75,7 @@ __RCSID("$NetBSD: hack.objnam.c,v 1.7 2008/01/28 06:55:42 dholland Exp $");
 #define	PREFIX	15
 
 char           *
-strprepend(s, pref)
-	char           *s, *pref;
+strprepend(char *s, char *pref)
 {
 	int             i = strlen(pref);
 	if (i > PREFIX) {
@@ -89,8 +88,7 @@ strprepend(s, pref)
 }
 
 char           *
-sitoa(a)
-	int             a;
+sitoa(int a)
 {
 	static char     buf[13];
 	Sprintf(buf, (a < 0) ? "%d" : "+%d", a);
@@ -98,8 +96,7 @@ sitoa(a)
 }
 
 char           *
-typename(otyp)
-	int             otyp;
+typename(int otyp)
 {
 	static char     buf[BUFSZ];
 	struct objclass *ocl = &objects[otyp];
@@ -149,8 +146,7 @@ typename(otyp)
 }
 
 char           *
-xname(obj)
-	struct obj     *obj;
+xname(struct obj *obj)
 {
 	static char     bufr[BUFSZ];
 	char           *buf = &(bufr[PREFIX]);	/* leave room for "17 -3 " */
@@ -314,8 +310,7 @@ nopl:
 }
 
 char           *
-doname(obj)
-	struct obj     *obj;
+doname(struct obj *obj)
 {
 	char            prefix[PREFIX];
 	char           *bp = xname(obj);
@@ -374,9 +369,7 @@ setan(const char *str, char *buf)
 }
 
 char           *
-aobjnam(otmp, verb)
-	struct obj     *otmp;
-	const char           *verb;
+aobjnam(struct obj *otmp, const char *verb)
 {
 	char           *bp = xname(otmp);
 	char            prefix[PREFIX];
@@ -400,8 +393,7 @@ aobjnam(otmp, verb)
 }
 
 char           *
-Doname(obj)
-	struct obj     *obj;
+Doname(struct obj *obj)
 {
 	char           *s = doname(obj);
 
@@ -414,8 +406,7 @@ const char *const wrp[] = {"wand", "ring", "potion", "scroll", "gem"};
 const char wrpsym[] = {WAND_SYM, RING_SYM, POTION_SYM, SCROLL_SYM, GEM_SYM};
 
 struct obj     *
-readobjnam(bp)
-	char           *bp;
+readobjnam(char *bp)
 {
 	char           *p;
 	unsigned        ii;

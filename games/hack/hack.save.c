@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.save.c,v 1.10 2008/01/28 06:55:42 dholland Exp $	*/
+/*	$NetBSD: hack.save.c,v 1.11 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.save.c,v 1.10 2008/01/28 06:55:42 dholland Exp $");
+__RCSID("$NetBSD: hack.save.c,v 1.11 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -75,7 +75,7 @@ __RCSID("$NetBSD: hack.save.c,v 1.10 2008/01/28 06:55:42 dholland Exp $");
 
 
 int
-dosave()
+dosave(void)
 {
 	if (dosave0(0)) {
 		settty("Be seeing you ...\n");
@@ -86,8 +86,7 @@ dosave()
 
 #ifndef NOSAVEONHANGUP
 void
-hangup(n)
-	int n __unused;
+hangup(int n __unused)
 {
 	(void) dosave0(1);
 	exit(1);
@@ -96,8 +95,7 @@ hangup(n)
 
 /* returns 1 if save successful */
 int
-dosave0(hu)
-	int             hu;
+dosave0(int hu)
 {
 	int		fd, ofd;
 	int             tmp;	/* not ! */
@@ -158,8 +156,7 @@ dosave0(hu)
 }
 
 int
-dorecover(fd)
-	int fd;
+dorecover(int fd)
 {
 	int nfd;
 	int             tmp;	/* not a ! */
@@ -243,8 +240,7 @@ monfnd:
 }
 
 struct obj     *
-restobjchn(fd)
-	int fd;
+restobjchn(int fd)
 {
 	struct obj     *otmp, *otmp2 = NULL;
 	struct obj     *first = 0;
@@ -271,8 +267,7 @@ restobjchn(fd)
 }
 
 struct monst   *
-restmonchn(fd)
-	int fd;
+restmonchn(int fd)
 {
 	struct monst   *mtmp, *mtmp2 = NULL;
 	struct monst   *first = 0;

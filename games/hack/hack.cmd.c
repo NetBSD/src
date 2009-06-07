@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.cmd.c,v 1.8 2008/01/28 06:55:41 dholland Exp $	*/
+/*	$NetBSD: hack.cmd.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.cmd.c,v 1.8 2008/01/28 06:55:41 dholland Exp $");
+__RCSID("$NetBSD: hack.cmd.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -141,8 +141,7 @@ const struct ext_func_tab extcmdlist[] = {
 };
 
 void
-rhack(cmd)
-	const char  *cmd;
+rhack(const char *cmd)
 {
 	const struct func_tab *tlist = cmdlist;
 	boolean         firsttime = FALSE;
@@ -243,7 +242,7 @@ rush:
 }
 
 int
-doextcmd()
+doextcmd(void)
 {				/* here after # - now read a full-word
 				 * command */
 	char            buf[BUFSZ];
@@ -264,15 +263,13 @@ doextcmd()
 }
 
 char
-lowc(sym)
-	char            sym;
+lowc(int sym)
 {
 	return ((sym >= 'A' && sym <= 'Z') ? sym + 'a' - 'A' : sym);
 }
 
 char
-unctrl(sym)
-	char            sym;
+unctrl(int sym)
 {
 	return ((sym >= ('A' & 037) && sym <= ('Z' & 037)) ? sym + 0140 : sym);
 }
@@ -284,8 +281,7 @@ schar           ydir[10] = {0, -1, -1, -1, 0, 1, 1, 1, 0, 0};
 schar           zdir[10] = {0, 0, 0, 0, 0, 0, 0, 0, 1, -1};
 
 int
-movecmd(sym)			/* also sets u.dz, but returns false for <> */
-	char            sym;
+movecmd(int sym)		/* also sets u.dz, but returns false for <> */
 {
 	char  *dp;
 
@@ -299,8 +295,7 @@ movecmd(sym)			/* also sets u.dz, but returns false for <> */
 }
 
 int
-getdir(s)
-	boolean         s;
+getdir(boolean s)
 {
 	char            dirsym;
 
@@ -318,7 +313,7 @@ getdir(s)
 }
 
 void
-confdir()
+confdir(void)
 {
 	int x = rn2(8);
 	u.dx = xdir[x];
@@ -327,7 +322,7 @@ confdir()
 
 #ifdef QUEST
 int
-finddir()
+finddir(void)
 {
 	int    i, ui = u.di;
 	for (i = 0; i <= 8; i++) {
@@ -365,8 +360,7 @@ finddir()
 }
 
 int
-isroom(x, y)
-	int	x, y;
+isroom(int x, int y)
 {				/* what about POOL? */
 	return (isok(x, y) && (levl[x][y].typ == ROOM ||
 			       (levl[x][y].typ >= LDOOR && flags.run >= 6)));
@@ -374,8 +368,7 @@ isroom(x, y)
 #endif	/* QUEST */
 
 int
-isok(x, y)
-	int x, y;
+isok(int x, int y)
 {
 	/* x corresponds to curx, so x==1 is the first column. Ach. %% */
 	return (x >= 1 && x <= COLNO - 1 && y >= 0 && y <= ROWNO - 1);

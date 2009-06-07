@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.potion.c,v 1.6 2003/04/02 18:36:39 jsm Exp $	*/
+/*	$NetBSD: hack.potion.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,14 +63,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.potion.c,v 1.6 2003/04/02 18:36:39 jsm Exp $");
+__RCSID("$NetBSD: hack.potion.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 
 int
-dodrink()
+dodrink(void)
 {
 	struct obj     *otmp, *objs;
 	struct monst   *mtmp;
@@ -263,7 +263,7 @@ use_it:
 }
 
 void
-pluslvl()
+pluslvl(void)
 {
 	int num;
 
@@ -279,9 +279,7 @@ pluslvl()
 }
 
 void
-strange_feeling(obj, txt)
-	struct obj     *obj;
-	const char           *txt;
+strange_feeling(struct obj *obj, const char *txt)
 {
 	if (flags.beginner)
 		pline("You have a strange feeling for a moment, then it passes.");
@@ -297,9 +295,7 @@ const char           *const bottlenames[] = {
 };
 
 void
-potionhit(mon, obj)
-	struct monst   *mon;
-	struct obj     *obj;
+potionhit(struct monst *mon, struct obj *obj)
 {
 	const char           *botlnam = bottlenames[rn2(SIZE(bottlenames))];
 	boolean         uclose, isyou = (mon == &youmonst);
@@ -367,8 +363,7 @@ potionhit(mon, obj)
 }
 
 void
-potionbreathe(obj)
-	struct obj     *obj;
+potionbreathe(struct obj *obj)
 {
 	switch (obj->otyp) {
 	case POT_RESTORE_STRENGTH:
@@ -430,7 +425,7 @@ potionbreathe(obj)
  * --   become a jug? Etc.
  */
 int
-dodip()
+dodip(void)
 {
 	struct obj     *potion, *obj;
 
@@ -451,7 +446,7 @@ dodip()
 }
 
 void
-ghost_from_bottle()
+ghost_from_bottle(void)
 {
 	struct monst   *mtmp;
 

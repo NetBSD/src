@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.6 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.6 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -85,8 +85,7 @@ struct engr {
 }              *head_engr;
 
 struct engr    *
-engr_at(x, y)
-	xchar           x, y;
+engr_at(xchar x, xchar y)
 {
 	struct engr    *ep = head_engr;
 	while (ep) {
@@ -98,9 +97,7 @@ engr_at(x, y)
 }
 
 int
-sengr_at(s, x, y)
-	const char     *s;
-	xchar           x, y;
+sengr_at(const char *s, xchar x, xchar y)
 {
 	struct engr    *ep = engr_at(x, y);
 	char           *t;
@@ -121,16 +118,14 @@ sengr_at(s, x, y)
 }
 
 void
-u_wipe_engr(cnt)
-	int             cnt;
+u_wipe_engr(int cnt)
 {
 	if (!u.uswallow && !Levitation)
 		wipe_engr_at(u.ux, u.uy, cnt);
 }
 
 void
-wipe_engr_at(x, y, cnt)
-	xchar           x, y, cnt;
+wipe_engr_at(xchar x, xchar y, xchar cnt)
 {
 	struct engr    *ep = engr_at(x, y);
 	int             lth, pos;
@@ -158,8 +153,7 @@ wipe_engr_at(x, y, cnt)
 }
 
 void
-read_engr_at(x, y)
-	int             x, y;
+read_engr_at(int x, int y)
 {
 	struct engr    *ep = engr_at(x, y);
 	if (ep && ep->engr_txt[0]) {
@@ -181,9 +175,7 @@ read_engr_at(x, y)
 }
 
 void
-make_engr_at(x, y, s)
-	int             x, y;
-	const char     *s;
+make_engr_at(int x, int y, const char *s)
 {
 	struct engr    *ep;
 
@@ -203,7 +195,7 @@ make_engr_at(x, y, s)
 }
 
 int
-doengrave()
+doengrave(void)
 {
 	int             len;
 	char           *sp;
@@ -345,8 +337,7 @@ doengrave()
 }
 
 void
-save_engravings(fd)
-	int             fd;
+save_engravings(int fd)
 {
 	struct engr    *ep = head_engr;
 	while (ep) {
@@ -363,8 +354,7 @@ save_engravings(fd)
 }
 
 void
-rest_engravings(fd)
-	int             fd;
+rest_engravings(int fd)
 {
 	struct engr    *ep;
 	unsigned        lth;
@@ -382,8 +372,7 @@ rest_engravings(fd)
 }
 
 void
-del_engr(ep)
-	struct engr    *ep;
+del_engr(struct engr *ep)
 {
 	struct engr    *ept;
 	if (ep == head_engr)

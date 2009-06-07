@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkmaze.c,v 1.6 2003/04/02 18:36:38 jsm Exp $	*/
+/*	$NetBSD: hack.mkmaze.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkmaze.c,v 1.6 2003/04/02 18:36:38 jsm Exp $");
+__RCSID("$NetBSD: hack.mkmaze.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -73,7 +73,7 @@ const struct permonst hell_hound =
 {"hell hound", 'd', 12, 14, 2, 3, 6, 0};
 
 void
-makemaz()
+makemaz(void)
 {
 	int             x, y;
 	int		zx, zy;
@@ -152,8 +152,7 @@ makemaz()
 }
 
 void
-walkfrom(x, y)
-	int             x, y;
+walkfrom(int x, int y)
 {
 	int             q, a, dir;
 	int             dirs[4];
@@ -174,9 +173,7 @@ walkfrom(x, y)
 }
 
 void
-move(x, y, dir)
-	int            *x, *y;
-	int             dir;
+move(int *x, int *y, int dir)
 {
 	switch (dir) {
 	case 0:
@@ -195,9 +192,7 @@ move(x, y, dir)
 }
 
 int
-okay(x, y, dir)
-	int             x, y;
-	int             dir;
+okay(int x, int y, int dir)
 {
 	move(&x, &y, dir);
 	move(&x, &y, dir);
@@ -208,7 +203,7 @@ okay(x, y, dir)
 }
 
 coord
-mazexy()
+mazexy(void)
 {
 	coord           mm;
 	mm.x = 3 + 2 * rn2(COLNO / 2 - 2);

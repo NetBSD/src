@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.5 2003/04/02 18:36:33 jsm Exp $	*/
+/*	$NetBSD: alloc.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alloc.c,v 1.5 2003/04/02 18:36:33 jsm Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -80,8 +80,7 @@ __RCSID("$NetBSD: alloc.c,v 1.5 2003/04/02 18:36:33 jsm Exp $");
    from lint
 */
 long *
-alloc(n)
-	unsigned        n;
+alloc(unsigned n)
 {
 	long            dummy = ftell(stderr);
 	if (n)
@@ -92,8 +91,7 @@ alloc(n)
 #else
 
 long *
-alloc(lth)
-	unsigned lth;
+alloc(unsigned lth)
 {
 	char  *ptr;
 
@@ -103,9 +101,7 @@ alloc(lth)
 }
 
 long *
-enlarge(ptr, lth)
-	char  *ptr;
-	unsigned lth;
+enlarge(char *ptr, unsigned lth)
 {
 	char  *nptr;
 

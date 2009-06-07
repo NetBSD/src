@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.10 2009/05/06 02:59:12 ginsbach Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.11 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.10 2009/05/06 02:59:12 ginsbach Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.11 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -97,13 +97,13 @@ extern int locknum;
 
 
 void
-setrandom()
+setrandom(void)
 {
 	(void) srandom((int) time((time_t *) 0));
 }
 
 struct tm      *
-getlt()
+getlt(void)
 {
 	time_t          date;
 
@@ -112,13 +112,13 @@ getlt()
 }
 
 int
-getyear()
+getyear(void)
 {
 	return (1900 + getlt()->tm_year);
 }
 
 char           *
-getdatestr()
+getdatestr(void)
 {
 	static char     datestr[7];
 	struct tm      *lt = getlt();
@@ -129,7 +129,7 @@ getdatestr()
 }
 
 int
-phase_of_the_moon()
+phase_of_the_moon(void)
 {				/* 0-7, with 0: new, 4: full *//* moon
 				 * period: 29.5306 days */
 	/* year: 365.2422 days */
@@ -146,7 +146,7 @@ phase_of_the_moon()
 }
 
 int
-night()
+night(void)
 {
 	int             hour = getlt()->tm_hour;
 
@@ -154,7 +154,7 @@ night()
 }
 
 int
-midnight()
+midnight(void)
 {
 	return (getlt()->tm_hour == 0);
 }
@@ -162,8 +162,7 @@ midnight()
 struct stat     buf, hbuf;
 
 void
-gethdate(name)
-	char           *name;
+gethdate(char *name)
 {
 #if 0
 	/* old version - for people short of space */
@@ -226,8 +225,7 @@ uptodate(int fd)
 
 /* see whether we should throw away this xlock file */
 int
-veryold(fd)
-	int fd;
+veryold(int fd)
 {
 	int             i;
 	time_t          date;
@@ -266,7 +264,7 @@ veryold(fd)
 }
 
 void
-getlock()
+getlock(void)
 {
 	int             i = 0, fd;
 
@@ -374,7 +372,7 @@ static char    *mailbox;
 static long     laststattime;
 
 void
-getmailstatus()
+getmailstatus(void)
 {
 	if (!(mailbox = getenv("MAIL")))
 		return;
@@ -389,7 +387,7 @@ getmailstatus()
 }
 
 void
-ckmailstatus()
+ckmailstatus(void)
 {
 	if (!mailbox
 #ifdef MAILCKFREQ
@@ -413,7 +411,7 @@ ckmailstatus()
 }
 
 void
-newmail()
+newmail(void)
 {
 	/* produce a scroll of mail */
 	struct obj     *obj;
@@ -439,9 +437,7 @@ newmail()
 
 /* make md run through the cave */
 void
-mdrush(md, away)
-	struct monst   *md;
-	boolean         away;
+mdrush(struct monst *md, boolean away)
 {
 	int             uroom = inroom(u.ux, u.uy);
 	if (uroom >= 0) {
@@ -499,7 +495,7 @@ mdrush(md, away)
 }
 
 void
-readmail()
+readmail(void)
 {
 #ifdef DEF_MAILREADER		/* This implies that UNIX is defined */
 	char           *mr = 0;
@@ -521,10 +517,11 @@ readmail()
 }
 #endif	/* MAIL */
 
+/*
+ * normalize file name - we don't like ..'s or /'s
+ */
 void
-regularize(s)			/* normalize file name - we don't like ..'s
-				 * or /'s */
-	char           *s;
+regularize(char *s)
 {
 	char           *lp;
 

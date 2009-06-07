@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.11 2007/12/15 19:44:41 perry Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.12 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.11 2007/12/15 19:44:41 perry Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.12 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -80,7 +80,7 @@ __RCSID("$NetBSD: hack.pager.c,v 1.11 2007/12/15 19:44:41 perry Exp $");
 #include "extern.h"
 
 int
-dowhatis()
+dowhatis(void)
 {
 	FILE           *fp;
 	char            bufr[BUFSZ + 6];
@@ -130,18 +130,15 @@ dowhatis()
 static int      got_intrup;
 
 void
-intruph(n)
-	int n __unused;
+intruph(int n __unused)
 {
 	got_intrup++;
 }
 
 /* simple pager, also used from dohelp() */
+/* strip: nr of chars to be stripped from each line (0 or 1) */
 void
-page_more(fp, strip)
-	FILE           *fp;
-	int             strip;	/* nr of chars to be stripped from each line
-				 * (0 or 1) */
+page_more(FILE *fp, int strip)
 {
 	char           *bufr, *ep;
 	sig_t           prevsig = signal(SIGINT, intruph);
@@ -171,14 +168,14 @@ static boolean  whole_screen = TRUE;
 				 * map */
 
 void
-set_whole_screen()
+set_whole_screen(void)
 {				/* called in termcap as soon as LI is known */
 	whole_screen = (LI - ROWNO - 2 <= PAGMIN || !CD);
 }
 
 #ifdef NEWS
 int
-readnews()
+readnews(void)
 {
 	int             ret;
 
@@ -189,9 +186,9 @@ readnews()
 }
 #endif	/* NEWS */
 
+/* mode:  0: open  1: wait+close  2: close */
 void
-set_pager(mode)
-	int             mode;	/* 0: open  1: wait+close  2: close */
+set_pager(int mode)
 {
 	static boolean  so;
 	if (mode == 0) {
@@ -221,8 +218,7 @@ set_pager(mode)
 }
 
 int
-page_line(s)			/* returns 1 if we should quit */
-	const char           *s;
+page_line(const char *s)	/* returns 1 if we should quit */
 {
 	if (cury == LI - 1) {
 		if (!*s)
@@ -258,9 +254,7 @@ page_line(s)			/* returns 1 if we should quit */
  */
 
 void
-cornline(mode, text)
-	int             mode;
-	const char           *text;
+cornline(int mode, const char *text)
 {
 	static struct line {
 		struct line    *next_line;
@@ -354,7 +348,7 @@ cleanup:
 }
 
 int
-dohelp()
+dohelp(void)
 {
 	char            c;
 
@@ -366,11 +360,9 @@ dohelp()
 	return (0);
 }
 
+/* return: 0 - cannot open fnam; 1 - otherwise */
 int
-page_file(fnam, silent)		/* return: 0 - cannot open fnam; 1 -
-				 * otherwise */
-	const char           *fnam;
-	boolean         silent;
+page_file(const char *fnam, boolean silent)
 {
 #ifdef DEF_PAGER		/* this implies that UNIX is defined */
 	{
@@ -426,7 +418,7 @@ page_file(fnam, silent)		/* return: 0 - cannot open fnam; 1 -
 #ifdef UNIX
 #ifdef SHELL
 int
-dosh()
+dosh(void)
 {
 	char           *str;
 	if (child(0)) {

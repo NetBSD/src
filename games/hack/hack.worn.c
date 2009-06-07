@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.worn.c,v 1.5 2003/04/02 18:36:42 jsm Exp $	*/
+/*	$NetBSD: hack.worn.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.worn.c,v 1.5 2003/04/02 18:36:42 jsm Exp $");
+__RCSID("$NetBSD: hack.worn.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -109,9 +109,7 @@ struct worn {
 };
 
 void
-setworn(obj, mask)
-	struct obj     *obj;
-	long            mask;
+setworn(struct obj *obj, long mask)
 {
 	struct worn    *wp;
 	struct obj     *oobj;
@@ -142,8 +140,7 @@ setworn(obj, mask)
 
 /* called e.g. when obj is destroyed */
 void
-setnotworn(obj)
-	struct obj     *obj;
+setnotworn(struct obj *obj)
 {
 	struct worn    *wp;
 

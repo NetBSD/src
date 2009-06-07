@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.10 2008/01/28 06:55:41 dholland Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.11 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.10 2008/01/28 06:55:41 dholland Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.11 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -96,9 +96,7 @@ int main(int, char *[]);
 static void chdirx(const char *, boolean);
 
 int
-main(argc, argv)
-	int             argc;
-	char           *argv[];
+main(int argc, char *argv[])
 {
 	int             fd;
 #ifdef CHDIR
@@ -477,8 +475,7 @@ not_recovered:
 }
 
 void
-glo(foo)
-	int foo;
+glo(int foo)
 {
 	/* construct the string  xlock.n  */
 	char           *tf;
@@ -495,7 +492,7 @@ glo(foo)
  * It may still contain a suffix denoting pl_character.
  */
 void
-askname()
+askname(void)
 {
 	int             c, ct;
 	printf("\nWho are you? ");
@@ -535,9 +532,7 @@ impossible(const char *s, ...)
 
 #ifdef CHDIR
 static void
-chdirx(dir, wr)
-	const char     *dir;
-	boolean         wr;
+chdirx(const char *dir, boolean wr)
 {
 
 #ifdef SECURE
@@ -578,7 +573,7 @@ chdirx(dir, wr)
 #endif
 
 void
-stop_occupation()
+stop_occupation(void)
 {
 	if (occupation) {
 		pline("You stop %s.", occtxt);
