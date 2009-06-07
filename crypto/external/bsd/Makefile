@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2009/05/01 23:00:37 agc Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/07 22:39:35 christos Exp $
 
-SUBDIR+= netpgp
+SUBDIR+= netpgp openssh
 
 .include <bsd.subdir.mk>
