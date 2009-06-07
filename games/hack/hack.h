@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.11 2009/06/07 20:31:10 dholland Exp $	*/
+/*	$NetBSD: hack.h,v 1.12 2009/06/07 21:04:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -196,7 +196,7 @@ extern char *hname;
 extern const char *const hu_stat[]; /* in eat.c */
 extern const char *nomovemsg;
 extern const char *occtxt;
-extern char *save_cm;
+extern const char *save_cm;
 extern const char *killer;
 extern const char *const traps[];
 extern char SAVEF[];
