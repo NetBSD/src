@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.19 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.20 2009/06/07 01:52:48 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -607,6 +607,10 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 	char		*homedir;
 
 	io = netpgp->io;
+	if (f == NULL) {
+		(void) fprintf(io->errs, "No file containing packets\n");
+		return 0;
+	}
 	homedir = netpgp_getvar(netpgp, "homedir");
 	if (pubringname == NULL) {
 		(void) snprintf(ringname, sizeof(ringname),
