@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.195 2009/05/29 00:10:52 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.196 2009/06/07 09:39:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.195 2009/05/29 00:10:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.196 2009/06/07 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,12 @@ fd_checkmaps(filedesc_t *fdp)
 	u_int fd;
 
 	dt = fdp->fd_dt;
-
+	if (fdp->fd_refcnt == -1) {
+		/*
+		 * fd_free tears down the table without maintaining its bitmap.
+		 */
+		return;
+	}
 	for (fd = 0; fd < dt->dt_nfiles; fd++) {
 		if (fd < NDFDFILE) {
 			KASSERT(dt->dt_ff[fd] ==
@@ -1485,6 +1490,9 @@ fd_free(void)
 	 */
 	dt = fdp->fd_dt;
 	fd_checkmaps(fdp);
+#ifdef DEBUG
+	fdp->fd_refcnt = -1; /* see fd_checkmaps */
+#endif
 	for (fd = 0, nf = dt->dt_nfiles; fd < nf; fd++) {
 		ff = dt->dt_ff[fd];
 		KASSERT(fd >= NDFDFILE ||
@@ -1551,6 +1559,9 @@ fd_free(void)
 	KASSERT(fdp->fd_dtbuiltin.dt_nfiles == NDFILE);
 	KASSERT(fdp->fd_dtbuiltin.dt_link == NULL);
 	KASSERT(fdp->fd_dt == &fdp->fd_dtbuiltin);
+#ifdef DEBUG
+	fdp->fd_refcnt = 0; /* see fd_checkmaps */
+#endif
 	fd_checkmaps(fdp);
 	pool_cache_put(filedesc_cache, fdp);
 }
