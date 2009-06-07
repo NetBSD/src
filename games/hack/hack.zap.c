@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.zap.c,v 1.7 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.zap.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.zap.c,v 1.7 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hack.zap.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -80,9 +80,7 @@ const char           *const fl[] = {
 /* Routines for IMMEDIATE wands. */
 /* bhitm: monster mtmp was hit by the effect of wand otmp */
 void
-bhitm(mtmp, otmp)
-	struct monst   *mtmp;
-	struct obj     *otmp;
+bhitm(struct monst *mtmp, struct obj *otmp)
 {
 	wakeup(mtmp);
 	switch (otmp->otyp) {
@@ -134,10 +132,12 @@ bhitm(mtmp, otmp)
 	}
 }
 
+/*
+ * object obj was hit by the effect of wand otmp
+ * returns TRUE if sth was done
+ */
 int
-bhito(obj, otmp)		/* object obj was hit by the effect of wand
-				 * otmp */
-	struct obj     *obj, *otmp;	/* returns TRUE if sth was done */
+bhito(struct obj *obj, struct obj *otmp)
 {
 	int             res = TRUE;
 
@@ -190,7 +190,7 @@ bhito(obj, otmp)		/* object obj was hit by the effect of wand
 }
 
 int
-dozap()
+dozap(void)
 {
 	struct obj     *obj;
 	xchar           zx, zy;
@@ -337,8 +337,7 @@ dozap()
 }
 
 const char           *
-exclam(force)
-	int             force;
+exclam(int force)
 {
 	/* force == 0 occurs e.g. with sleep ray */
 	/*
@@ -349,11 +348,10 @@ exclam(force)
 }
 
 void
-hit(str, mtmp, force)
-	const char           *str;
-	struct monst   *mtmp;
-	const char           *force;	/* usually either "." or "!" */
+hit(const char *str, struct monst *mtmp, const char *force)
 {
+	/* force is usually either "." or "!" */
+
 	if (!cansee(mtmp->mx, mtmp->my))
 		pline("The %s hits it.", str);
 	else
@@ -361,9 +359,7 @@ hit(str, mtmp, force)
 }
 
 void
-miss(str, mtmp)
-	const char           *str;
-	struct monst   *mtmp;
+miss(const char *str, struct monst *mtmp)
 {
 	if (!cansee(mtmp->mx, mtmp->my))
 		pline("The %s misses it.", str);
@@ -382,13 +378,12 @@ miss(str, mtmp)
 /* check !u.uswallow before calling bhit() */
 
 struct monst   *
-bhit(ddx, ddy, range, sym, fhitm, fhito, obj)
-	int             ddx, ddy, range;	/* direction and range */
-	char            sym;	/* symbol displayed on path */
-	/* fns called when mon/obj hit */
-	void          (*fhitm)(struct monst *, struct obj *);
-	int	      (*fhito)(struct obj *, struct obj *);
-	struct obj     *obj;	/* 2nd arg to fhitm/fhito */
+bhit(int ddx, int ddy, int range,	/* direction and range */
+     int sym,				/* symbol displayed on path */
+     					/* fns called when mon/obj hit */
+     void (*fhitm)(struct monst *, struct obj *),
+     int (*fhito)(struct obj *, struct obj *),
+     struct obj *obj)			/* 2nd arg to fhitm/fhito */
 {
 	struct monst   *mtmp;
 	struct obj     *otmp;
@@ -481,8 +476,7 @@ boomhit(int dx, int dy)
 }
 
 char
-dirlet(dx, dy)
-	int dx, dy;
+dirlet(int dx, int dy)
 {
 	return
 		(dx == dy) ? '\\' : (dx && dy) ? '/' : dx ? '-' : '|';
@@ -492,10 +486,7 @@ dirlet(dx, dy)
 /* type == -1,-2,-3: bolts sent out by wizard */
 /* called with dx = dy = 0 with vertical bolts */
 void
-buzz(type, sx, sy, dx, dy)
-	int             type;
-	xchar           sx, sy;
-	int             dx, dy;
+buzz(int type, xchar sx, xchar sy, int dx, int dy)
 {
 	int             abstype = abs(type);
 	const char     *fltxt = (type == -1) ? "blaze of fire" : fl[abstype];
@@ -648,9 +639,7 @@ buzz(type, sx, sy, dx, dy)
 }
 
 int
-zhit(mon, type)			/* returns damage to mon */
-	struct monst   *mon;
-	int type;
+zhit(struct monst *mon, int type)		/* returns damage to mon */
 {
 	int             tmp = 0;
 
@@ -690,8 +679,7 @@ zhit(mon, type)			/* returns damage to mon */
 		     ?  'a' + (otyp - DEAD_ACID_BLOB)\
 		     :	'@' + (otyp - DEAD_HUMAN))
 int
-revive(obj)
-	struct obj     *obj;
+revive(struct obj *obj)
 {
 	struct monst   *mtmp = NULL;
 
@@ -708,8 +696,7 @@ revive(obj)
 }
 
 void
-rloco(obj)
-	struct obj     *obj;
+rloco(struct obj *obj)
 {
 	int tx, ty, otx, oty;
 
@@ -725,9 +712,10 @@ rloco(obj)
 		newsym(otx, oty);
 }
 
+/* fractured by pick-axe or wand of striking */
+/* no texts here! */
 void
-fracture_rock(obj)		/* fractured by pick-axe or wand of striking */
-	struct obj     *obj;	/* no texts here! */
+fracture_rock(struct obj *obj)	
 {
 	/* unpobj(obj); */
 	obj->otyp = ROCK;
@@ -739,7 +727,7 @@ fracture_rock(obj)		/* fractured by pick-axe or wand of striking */
 }
 
 void
-burn_scrolls()
+burn_scrolls(void)
 {
 	struct obj     *obj, *obj2;
 	int             cnt = 0;

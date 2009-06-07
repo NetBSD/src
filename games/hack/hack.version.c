@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.version.c,v 1.5 2003/04/02 18:36:41 jsm Exp $	*/
+/*	$NetBSD: hack.version.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.version.c,v 1.5 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("$NetBSD: hack.version.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include "date.h"
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: hack.version.c,v 1.5 2003/04/02 18:36:41 jsm Exp $");
 #include "extern.h"
 
 int
-doversion()
+doversion(void)
 {
 	pline("%s 1.0.3 - last edit %s.", (
 #ifdef QUEST

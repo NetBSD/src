@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.tty.c,v 1.12 2003/08/07 09:37:19 agc Exp $	*/
+/*	$NetBSD: hack.tty.c,v 1.13 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hack.tty.c,v 1.12 2003/08/07 09:37:19 agc Exp $");
+__RCSID("$NetBSD: hack.tty.c,v 1.13 2009/06/07 18:30:39 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -128,7 +128,7 @@ struct termios  inittyb, curttyb;
  * Called by startup() in termcap.c and after returning from ! or ^Z
  */
 void
-gettty()
+gettty(void)
 {
 	if (tcgetattr(0, &inittyb) < 0)
 		perror("Hack (gettty)");
@@ -148,8 +148,7 @@ gettty()
 
 /* reset terminal to original state */
 void
-settty(s)
-	const char           *s;
+settty(const char *s)
 {
 	clear_screen();
 	end_screen();
@@ -164,7 +163,7 @@ settty(s)
 }
 
 void
-setctty()
+setctty(void)
 {
 	if (tcsetattr(0, TCSADRAIN, &curttyb) < 0)
 		perror("Hack (setctty)");
@@ -172,7 +171,7 @@ setctty()
 
 
 void
-setftty()
+setftty(void)
 {
 	int             change = 0;
 	flags.cbreak = ON;
@@ -219,8 +218,7 @@ error(const char *fmt, ...)
  * resulting string is "\033".
  */
 void
-getlin(bufp)
-	char           *bufp;
+getlin(char *bufp)
 {
 	char           *obufp = bufp;
 	int             c;
@@ -268,14 +266,13 @@ getlin(bufp)
 }
 
 void
-getret()
+getret(void)
 {
 	cgetret("");
 }
 
 void
-cgetret(s)
-	const char           *s;
+cgetret(const char *s)
 {
 	putsym('\n');
 	if (flags.standout)
@@ -290,9 +287,9 @@ cgetret(s)
 
 char            morc;		/* tell the outside world what char he used */
 
+/* s = chars allowed besides space or return */
 void
-xwaitforspace(s)
-	const char *s;	/* chars allowed besides space or return */
+xwaitforspace(const char *s)
 {
 	int             c;
 
@@ -312,7 +309,7 @@ xwaitforspace(s)
 }
 
 char           *
-parse()
+parse(void)
 {
 	static char     inputline[COLNO];
 	int		foo;
@@ -348,7 +345,7 @@ parse()
 }
 
 char
-readchar()
+readchar(void)
 {
 	int             sym;
 
@@ -379,7 +376,7 @@ noteof:	;
 }
 
 void
-end_of_input()
+end_of_input(void)
 {
 	settty("End of input?\n");
 	clearlocks();

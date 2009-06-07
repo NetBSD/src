@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.options.c,v 1.7 2004/01/01 16:02:51 jsm Exp $	*/
+/*	$NetBSD: hack.options.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.options.c,v 1.7 2004/01/01 16:02:51 jsm Exp $");
+__RCSID("$NetBSD: hack.options.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -72,7 +72,7 @@ __RCSID("$NetBSD: hack.options.c,v 1.7 2004/01/01 16:02:51 jsm Exp $");
 #include "extern.h"
 
 void
-initoptions()
+initoptions(void)
 {
 	char           *opts;
 
@@ -89,9 +89,7 @@ initoptions()
 }
 
 void
-parseoptions(opts, from_env)
-	char           *opts;
-	boolean         from_env;
+parseoptions(char *opts, boolean from_env)
 {
 	char           *op, *op2;
 	unsigned        num;
@@ -237,7 +235,7 @@ bad:
 }
 
 int
-doset()
+doset(void)
 {
 	char            buf[BUFSZ];
 
