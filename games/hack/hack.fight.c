@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.fight.c,v 1.10 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.fight.c,v 1.11 2009/06/07 20:31:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.fight.c,v 1.10 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.fight.c,v 1.11 2009/06/07 20:31:10 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -209,7 +209,7 @@ thitu(int tlev, int dam, const char *name)
 	}
 }
 
-char            mlarge[] = "bCDdegIlmnoPSsTUwY',&";
+const char mlarge[] = "bCDdegIlmnoPSsTUwY',&";
 
 /* return TRUE if mon still alive */
 boolean
