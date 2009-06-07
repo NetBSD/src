@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.fight.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.fight.c,v 1.10 2009/06/07 20:13:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.fight.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.fight.c,v 1.10 2009/06/07 20:13:18 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -101,7 +101,7 @@ hitmm(struct monst *magr, struct monst *mdef)
 			seemimic(mdef);
 		if (magr->mimic)
 			seemimic(magr);
-		(void) sprintf(buf, "%s %s", Monnam(magr),
+		(void) snprintf(buf, sizeof(buf), "%s %s", Monnam(magr),
 			       didhit ? "hits" : "misses");
 		pline("%s %s.", buf, monnam(mdef));
 	} else {
@@ -191,7 +191,8 @@ int
 thitu(int tlev, int dam, const char *name)
 {
 	char            buf[BUFSZ];
-	setan(name, buf);
+
+	setan(name, buf, sizeof(buf));
 	if (u.uac + tlev <= rnd(20)) {
 		if (Blind)
 			pline("It misses.");
