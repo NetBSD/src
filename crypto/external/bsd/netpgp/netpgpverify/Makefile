@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/08 06:13:56 agc Exp $
+#	$NetBSD: Makefile,v 1.2 2009/06/08 06:29:33 agc Exp $
 
 PROG=		netpgpverify
 BINDIR=		/usr/bin
 SRCS=		verify.c
 
-CPPFLAGS+=	-I${.CURDIR}/../dist/include
+CPPFLAGS+=	-I${.CURDIR}/../dist/include -I${.CURDIR}/../lib
 
 LDADD+=		-lcrypto -lz -lbz2
 DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}
@@ -16,6 +16,8 @@ MAN=		netpgpverify.1
 # errors. For now, just set WARNS off.
 WARNS=		0
 
-.PATH: ${.CURDIR}/../dist/src/lib ${.CURDIR}/../dist/src/bin
+EXTDIST=${.CURDIR}/../dist
+
+.PATH: ${EXTDIST}/src/lib ${EXTDIST}/src/bin
 
 .include <bsd.prog.mk>
