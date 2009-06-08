@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.110 2009/06/08 14:22:01 gson Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.111 2009/06/08 21:58:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.110 2009/06/08 14:22:01 gson Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.111 2009/06/08 21:58:44 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1096,15 +1096,15 @@ backup(const char *to_name)
 void
 install_dir(char *path, u_int flags)
 {
-        char		*p;
-        struct stat	sb;
-        int		ch;
+	char		*p;
+	struct stat	sb;
+	int		ch;
 
-        for (p = path;; ++p)
-                if (!*p || (p != path && *p  == '/')) {
-                        ch = *p;
-                        *p = '\0';
-                        if (mkdir(path, 0777) < 0) {
+	for (p = path;; ++p)
+		if (!*p || (p != path && *p  == '/')) {
+			ch = *p;
+			*p = '\0';
+			if (mkdir(path, 0777) < 0) {
 				/*
 				 * Can't create; path exists or no perms.
 				 * stat() path to determine what's there now.
@@ -1115,14 +1115,16 @@ install_dir(char *path, u_int flags)
 					/* Not there; use mkdir()s error */
 					errno = sverrno;
 					err(1, "%s: mkdir", path);
-                                }
+				}
 				if (!S_ISDIR(sb.st_mode)) {
-					errx(1, "%s exists but is not a directory", path);
+					errx(1,
+					    "%s exists but is not a directory",
+					    path);
 				}
 			}
-                        if (!(*p = ch))
+			if (!(*p = ch))
 				break;
-                }
+		}
 
 	if (afterinstallcmd != NULL)
 		afterinstall(afterinstallcmd, path, 0);
@@ -1130,7 +1132,7 @@ install_dir(char *path, u_int flags)
 	if (!dounpriv && (
 	    ((flags & (HASUID | HASGID)) && chown(path, uid, gid) == -1)
 	    || chmod(path, mode) == -1 )) {
-                warn("%s: chown/chmod", path);
+		warn("%s: chown/chmod", path);
 	}
 	metadata_log(path, "dir", NULL, NULL, NULL, 0);
 }
