@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.109 2009/05/01 20:16:23 apb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.110 2009/06/08 14:22:01 gson Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.109 2009/05/01 20:16:23 apb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.110 2009/06/08 14:22:01 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -1104,13 +1104,21 @@ install_dir(char *path, u_int flags)
                 if (!*p || (p != path && *p  == '/')) {
                         ch = *p;
                         *p = '\0';
-                        if (stat(path, &sb)) {
-                                if (errno != ENOENT || mkdir(path, 0777) < 0) {
+                        if (mkdir(path, 0777) < 0) {
+				/*
+				 * Can't create; path exists or no perms.
+				 * stat() path to determine what's there now.
+				 */
+				int sverrno;
+				sverrno = errno;
+				if (stat(path, &sb) < 0) {
+					/* Not there; use mkdir()s error */
+					errno = sverrno;
 					err(1, "%s: mkdir", path);
                                 }
-                        }
-			else if (!S_ISDIR(sb.st_mode)) {
-				errx(1, "%s exists but is not a directory", path);
+				if (!S_ISDIR(sb.st_mode)) {
+					errx(1, "%s exists but is not a directory", path);
+				}
 			}
                         if (!(*p = ch))
 				break;
