@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpverify.1,v 1.1 2009/06/08 06:15:51 agc Exp $
+.\" $NetBSD: netpgpverify.1,v 1.2 2009/06/08 08:02:32 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,6 +65,19 @@ standalone program can be used.
 .Pp
 The following commands are used to sign and verify signatures:
 .Bl -tag -width Ar
+.It Fl Fl coredumps
+In normal processing,
+if an error occurs, the contents of memory are saved to disk, and can
+be read using tools to analyse behaviour.
+Unfortunately this can disclose information to people viewing
+the core dump, such as secret keys, and passphrases protecting
+those keys.
+In normal operation,
+.Nm
+will turn off the ability to save core dumps on persistent storage,
+but selecting this option will allow core dumps to be written to disk.
+This option should be used wisely, and any core dumps should
+be deleted in a secure manner when no longer needed.
 .It Fl Fl homedir Ar home-directory
 Keyrings are normally located, for historical reasons, within
 the user's home directory in a subdirectory called
@@ -86,19 +99,6 @@ This option can be used to view information during
 the process of the
 .Nm
 requests.
-.It Fl Fl coredumps
-in normal processing,
-if an error occurs, the contents of memory are saved to disk, and can
-be read using tools to analyse behaviour.
-Unfortuinately this can disclose information to people viewing
-the core dump, such as secret keys, and passphrases protecting
-those keys.
-In normal operation,
-.Nm
-will turn off the ability to save core dumps on persistent storage,
-but selecting this option will allow core dumps to be written to disk.
-This option should be used wisely, and any core dumps should
-be deleted in a secure manner when no longer needed.
 .El
 .Sh SIGNING AND VERIFICATION
 Signing and verification of a file is best viewed using the following example:
