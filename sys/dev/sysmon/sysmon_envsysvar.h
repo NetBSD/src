@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.28 2008/08/22 11:27:50 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.29 2009/06/08 00:55:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -65,15 +65,6 @@ enum sme_description_types {
 #define SME_EVENTS_DEFTIMEOUT	30
 
 /* 
- * struct used by a sensor description in a sysmon envsys device.
- */
-struct sme_sensor_names {
-	SLIST_ENTRY(sme_sensor_names) sme_names;
-	int	assigned;
-	char	desc[ENVSYS_DESCLEN];
-};
-
-/* 
  * struct used by a sysmon envsys event.
  */
 typedef struct sme_event {
@@ -137,8 +128,8 @@ void	sysmon_envsys_release(struct sysmon_envsys *, bool);
  * functions to handle sysmon envsys events.
  */
 int	sme_event_register(prop_dictionary_t, envsys_data_t *,
-			   struct sysmon_envsys *, const char *,
-			   int32_t, int, int);
+			   struct sysmon_envsys *, int32_t, int32_t,
+			   int32_t, int32_t, int, int, int);
 int	sme_event_unregister(struct sysmon_envsys *, const char *, int);
 void	sme_event_unregister_all(struct sysmon_envsys *);
 void	sme_event_drvadd(void *);
