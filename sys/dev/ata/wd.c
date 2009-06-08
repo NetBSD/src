@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.377 2009/05/20 03:26:21 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.378 2009/06/08 15:09:35 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.377 2009/05/20 03:26:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.378 2009/06/08 15:09:35 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -375,10 +375,10 @@ wdattach(device_t parent, device_t self, void *aux)
 	if ((wd->sc_flags & WDF_LBA48) != 0) {
 		aprint_verbose(" LBA48 addressing\n");
 		wd->sc_capacity =
-		    ((u_int64_t) wd->sc_params.__reserved6[11] << 48) |
-		    ((u_int64_t) wd->sc_params.__reserved6[10] << 32) |
-		    ((u_int64_t) wd->sc_params.__reserved6[9]  << 16) |
-		    ((u_int64_t) wd->sc_params.__reserved6[8]  << 0);
+		    ((u_int64_t) wd->sc_params.atap_max_lba[3] << 48) |
+		    ((u_int64_t) wd->sc_params.atap_max_lba[2] << 32) |
+		    ((u_int64_t) wd->sc_params.atap_max_lba[1] << 16) |
+		    ((u_int64_t) wd->sc_params.atap_max_lba[0] <<  0);
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		aprint_verbose(" LBA addressing\n");
 		wd->sc_capacity =
