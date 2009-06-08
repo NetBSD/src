@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.700 2009/06/05 11:31:51 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.701 2009/06/08 00:15:37 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -710,10 +710,10 @@ Notes:
 Next import will need $ Id removal..
 
 Package:	HPN-SSH
-Version:	5.0p1 13 v3
-Current Vers:	5.0p1 13 v3
+Version:	5.2p1 13 v6
+Current Vers:	5.2p1 13 v6
 Maintainer:	www.psc.edu
-Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.0p1-hpn13v3.diff.gz
+Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.2p1-hpn13v6.diff.gz
 Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
 Mailing List:
 Responsible:	christos
@@ -722,17 +722,17 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	5.0
+Version:	5.2
 Current Vers:	5.2 / portable 5.2p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
-License:	BSD or more free. See src/crypto/dist/ssh/LICENSE
+License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
 Notes:
-imported from OpenBSD usr.bin/ssh (it is not from the portable OpenSSH)
-into crypto/dist/openssh.  use openssh2netbsd before import.
+imported from OpenBSD ssh -- is not from the portable OpenSSH
+into crypto/external/bsd/openssh/dist.  use openssh2netbsd before import.
 local changes (should always try to bring them back to master openssh tree,
 markus is very cooperative about it):
 - default for PermitRootLogin is set to "no"
@@ -741,10 +741,21 @@ markus is very cooperative about it):
 - krb5 support re-added
 - hack in cipher.c #ifdef ACCS because we are missing EVP_acss
   when someone imports openssl, we can remove this.
-- uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
 - added moduli from portable openssh
 - added USE_PAM patches and auth_pam.[ch] from portable openssh
-- add the HPN patch 
+- conditionalize login_cap
+- conditionalize bsd_auth
+- restore krb5, krb4, afs, skey
+- bring in hpn patches, disable mt aes cipher, keep speedups and cipher none
+- fix ctype macro arguments
+- umac is broken, disable it
+- better ~homedir handling
+- netbsd style tunnels
+- urandom, xhome, chrootdir, rescuedir NetBSD handling
+- utmp/utmpx handling
+- handle tty posix_vdisable properly
+- handle setuid and unsetuid the posix way instead of setresuid()
+- add all missing functions
 - always bump major when importing to avoid api problems.
 
 Package:	OpenSSL
