@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.196 2009/06/07 09:39:02 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.197 2009/06/08 00:19:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.196 2009/06/07 09:39:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.197 2009/06/08 00:19:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1467,13 +1467,13 @@ fd_copy(void)
 void
 fd_free(void)
 {
-	filedesc_t *fdp;
 	fdfile_t *ff;
 	file_t *fp;
 	int fd, nf;
 	fdtab_t *dt;
-
-	fdp = curlwp->l_fd;
+	lwp_t * const l = curlwp;
+	filedesc_t * const fdp = l->l_fd;
+	const bool noadvlock = (l->l_proc->p_flag & PK_ADVLOCK) == 0;
 
 	KASSERT(fdp->fd_dt->dt_ff[0] == (fdfile_t *)fdp->fd_dfdfile[0]);
 	KASSERT(fdp->fd_dtbuiltin.dt_nfiles == NDFILE);
@@ -1502,9 +1502,11 @@ fd_free(void)
 		if ((fp = ff->ff_file) != NULL) {
 			/*
 			 * Must use fd_close() here if there is
-			 * a reference from kqueue.
+			 * a reference from kqueue or we might have posix
+			 * advisory locks.
 			 */
-			if (__predict_true(ff->ff_refcnt == 0)) {
+			if (__predict_true(ff->ff_refcnt == 0) &&
+			    (noadvlock || fp->f_type != DTYPE_VNODE)) {
 				ff->ff_file = NULL;
 				ff->ff_exclose = false;
 				ff->ff_allocated = false;
