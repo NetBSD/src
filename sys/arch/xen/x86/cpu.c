@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31 2008/12/23 20:06:16 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.32 2009/06/08 09:32:33 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2008/12/23 20:06:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2009/06/08 09:32:33 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2008/12/23 20:06:16 cegger Exp $");
 #include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -127,6 +128,7 @@ void	cpu_offline_md(void);
 struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
+	bool sc_wasonline;
 };
 
 int mp_cpu_start(struct cpu_info *, paddr_t);
@@ -233,12 +235,22 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
+		if ((boothowto & RB_MD1) != 0) {
+			aprint_error(": multiprocessor boot disabled\n");
+			if (!pmf_device_register(self, NULL, NULL))
+				aprint_error_dev(self,
+				   "couldn't establish power handler\n");
+			return;
+		}
+		aprint_naive(": Application Processor\n");
 		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
 		ci->ci_curldt = -1;
 		if (phycpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
 		phycpu_info[cpunum] = ci;
 	} else {
+		aprint_naive(": %s Processor\n",
+		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &phycpu_info_primary;
 		if (cpunum != 0) {
 			phycpu_info[0] = NULL;
