@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.74 2009/06/08 16:59:52 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.75 2009/06/08 17:00:40 christos Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -105,7 +105,7 @@ MLINKS+=resolver.3 dn_comp.3 \
 	resolver.3 res_pquery.3 \
 	resolver.3 res_query.3 \
 	resolver.3 res_querydomain.3 \
-	resolver.3 res_search.3
+	resolver.3 res_search.3 \
 	resolver.3 res_send.3 \
 	resolver.3 res_setservers.3 \
 	resolver.3 res_update.3
