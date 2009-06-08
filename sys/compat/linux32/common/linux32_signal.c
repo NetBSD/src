@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.12 2009/06/02 16:54:39 njoly Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.13 2009/06/08 13:34:23 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.12 2009/06/02 16:54:39 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.13 2009/06/08 13:34:23 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -447,4 +447,26 @@ linux32_sys_sigsetmask(struct lwp *l, const struct linux32_sys_sigsetmask_args *
 	native_to_linux32_old_sigset(&olss, &obss);
 	*retval = olss;
 	return 0;
+}
+
+int
+linux32_sys_rt_queueinfo(struct lwp *l, const struct linux32_sys_rt_queueinfo_args *uap, register_t *retval)
+{
+	/*
+		syscallarg(int) pid;
+		syscallarg(int) sig;
+		syscallarg(linux32_siginfop_t) uinfo;
+	*/
+	int error;
+	linux32_siginfo_t info;
+
+	error = copyin(SCARG_P32(uap, uinfo), &info, sizeof(info));
+	if (error)
+		return error;
+	if (info.lsi_code >= 0)
+		return EPERM;
+
+	/* XXX To really implement this we need to      */
+	/* XXX keep a list of queued signals somewhere. */
+	return linux32_sys_kill(l, (const void *)uap, retval);
 }
