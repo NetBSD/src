@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.53 2009/06/05 16:45:33 njoly Exp $
+	$NetBSD: syscalls.master,v 1.54 2009/06/08 13:34:23 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -310,7 +310,8 @@
 176	STD	{ int|linux32_sys||rt_sigpending(linux32_sigsetp_t set, \
 		    netbsd32_size_t sigsetsize); }
 177	UNIMPL	rt_sigtimedwait
-178	UNIMPL	rt_queueinfo
+178	STD	{ int|linux32_sys||rt_queueinfo(int pid, int sig, \
+		    linux32_siginfop_t uinfo); }
 179	STD	{ int|linux32_sys||rt_sigsuspend(linux32_sigsetp_t unewset, \
 		    netbsd32_size_t sigsetsize); }
 180	STD	{ netbsd32_ssize_t|linux32_sys||pread(int fd, \
