@@ -59,3 +59,4 @@ done
 
 mkdir -p $LIBC/net
 cp $LIBBIND/isc/base64.c $LIBC/net
+cp $LIBBIND/doc/resolver.man3 $LIBC/net/resolver.3
