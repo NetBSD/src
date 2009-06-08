@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.49 2009/03/10 20:46:15 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.50 2009/06/08 15:10:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.49 2009/03/10 20:46:15 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.50 2009/06/08 15:10:53 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -321,8 +321,9 @@ read_pop(c_macro_t *ma)
 	int i;
 
 	el_free(ma->macro[0]);
-	for (i = ma->level--; i > 0; i--)
-		ma->macro[i - 1] = ma->macro[i];
+	ma->level--;
+	for (i = 0; i < ma->level; i++)
+		ma->macro[i] = ma->macro[i + 1];
 	ma->offset = 0;
 }
 
