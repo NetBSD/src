@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.68 2009/05/29 14:19:13 njoly Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.69 2009/06/08 13:23:16 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.68 2009/05/29 14:19:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.69 2009/06/08 13:23:16 njoly Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -498,14 +498,19 @@ linux_sys_rt_sigsuspend(struct lwp *l, const struct linux_sys_rt_sigsuspend_args
 int
 linux_sys_rt_queueinfo(struct lwp *l, const struct linux_sys_rt_queueinfo_args *uap, register_t *retval)
 {
-	/* XXX XAX This isn't this really int, int, siginfo_t *, is it? */
-#if 0
-	struct linux_sys_rt_queueinfo_args /* {
+	/*
 		syscallarg(int) pid;
 		syscallarg(int) signum;
-		syscallarg(siginfo_t *) uinfo;
-	} */ *uap = v;
-#endif
+		syscallarg(linix_siginfo_t *) uinfo;
+	*/
+	int error;
+	linux_siginfo_t info;
+
+	error = copyin(SCARG(uap, uinfo), &info, sizeof(info));
+	if (error)
+		return error;
+	if (info.lsi_code >= 0)
+		return EPERM;
 
 	/* XXX To really implement this we need to	*/
 	/* XXX keep a list of queued signals somewhere.	*/
