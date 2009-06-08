@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.5 2009/05/27 12:20:37 njoly Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.6 2009/06/08 11:46:07 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -34,7 +34,7 @@
 #ifndef _AMD64_LINUX_SIGINFO_H
 #define _AMD64_LINUX_SIGINFO_H
 
-#define LINUX___ARCH_SI_PREAMBLE_SIZE (3 * sizeof(int))
+#define LINUX___ARCH_SI_PREAMBLE_SIZE (4 * sizeof(int))
 #define LINUX_SI_MAX_SIZE 128
 #define LINUX_SI_PAD_SIZE \
     ((LINUX_SI_MAX_SIZE - LINUX___ARCH_SI_PREAMBLE_SIZE) / sizeof(int))
@@ -45,7 +45,7 @@ typedef union linux_sigval {
 } linux_sigval_t;
 
 
-struct linux_siginfo {
+typedef struct linux_siginfo {
 	int lsi_signo;
 	int lsi_errno;
 	int lsi_code;
