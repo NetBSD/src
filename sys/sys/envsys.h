@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.24 2009/06/01 20:08:44 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.25 2009/06/08 00:55:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -137,9 +137,24 @@ enum envsys_battery_capacity_states {
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
 #define ENVSYS_FNEED_REFRESH	0x00001000	/* sensor needs refreshing */
 
+/*
+ * IOCTLs
+ */
 #define ENVSYS_GETDICTIONARY	_IOWR('E', 0, struct plistref)
 #define ENVSYS_SETDICTIONARY	_IOWR('E', 1, struct plistref)
 #define ENVSYS_REMOVEPROPS	_IOWR('E', 2, struct plistref)
+
+/*
+ * Properties that can be set in upropset
+ */
+#define	PROP_CRITMAX		0x0001
+#define	PROP_CRITMIN		0x0002
+#define	PROP_WARNMAX		0x0004
+#define	PROP_WARNMIN		0x0008
+#define	PROP_BATTCAP		0x0010
+#define	PROP_BATTWARN		0x0020
+#define	PROP_DESC		0x0040
+#define	PROP_RFACT		0x0080
 
 /*
  * Compatibility with old interface. Only ENVSYS_GTREDATA

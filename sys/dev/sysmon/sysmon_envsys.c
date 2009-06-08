@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.86 2009/06/03 11:43:15 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.87 2009/06/08 00:55:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.86 2009/06/03 11:43:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.87 2009/06/08 00:55:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -83,20 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.86 2009/06/03 11:43:15 pgoyette 
 #include <dev/sysmon/sysmon_taskq.h>
 
 kmutex_t sme_global_mtx;
-
-/*
- * Types of properties that can be set via userland.
- */
-enum {
-	USERPROP_DESC 		= 0x0001,
-	USERPROP_BATTCAP	= 0x0002,
-	USERPROP_CRITMAX	= 0x0004,
-	USERPROP_CRITMIN	= 0x0008,
-	USERPROP_RFACT		= 0x0010,
-	USERPROP_WARNMAX	= 0x0020,
-	USERPROP_WARNMIN	= 0x0040,
-	USERPROP_BATTWARN	= 0x0080
-};
 
 static prop_dictionary_t sme_propd;
 static uint32_t sysmon_envsys_next_sensor_index;
@@ -573,6 +559,10 @@ sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	sme->sme_nsensors++;
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
+
+	DPRINTF(("%s: (%s) attached #%d (%s), units=%d (%s)\n",
+	    __func__, sme->sme_name, edata->sensor, edata->desc,
+	    sdt_units[i].type, sdt_units[i].desc));
 
 	return 0;
 }
@@ -1057,53 +1047,49 @@ sme_remove_userprops(void)
 			KASSERT(sdict != NULL);
 
 			ptype = 0;
-			if (edata->upropset & USERPROP_BATTCAP) {
+			if (edata->upropset & PROP_BATTCAP) {
 				prop_dictionary_remove(sdict,
 				    "critical-capacity");
-				ptype = PENVSYS_EVENT_BATT_USER_LIMITS;
+				ptype = PENVSYS_EVENT_CAPACITY;
 			}
 
-			if (edata->upropset & USERPROP_BATTWARN) {
+			if (edata->upropset & PROP_BATTWARN) {
 				prop_dictionary_remove(sdict,
 				    "warning-capacity");
-				ptype = PENVSYS_EVENT_BATT_USER_LIMITS;
+				ptype = PENVSYS_EVENT_CAPACITY;
 			}
 			if (ptype != 0)
 				sme_event_unregister(sme, edata->desc, ptype);
 
 			ptype = 0;
-			if (edata->upropset & USERPROP_WARNMAX) {
-				prop_dictionary_remove(sdict,
-				    "warning-max");
-				ptype = PENVSYS_EVENT_USER_LIMITS;
+			if (edata->upropset & PROP_WARNMAX) {
+				prop_dictionary_remove(sdict, "warning-max");
+				ptype = PENVSYS_EVENT_LIMITS;
 			}
 
-			if (edata->upropset & USERPROP_WARNMIN) {
-				prop_dictionary_remove(sdict,
-				    "warning-min");
-				ptype = PENVSYS_EVENT_USER_LIMITS;
+			if (edata->upropset & PROP_WARNMIN) {
+				prop_dictionary_remove(sdict, "warning-min");
+				ptype = PENVSYS_EVENT_LIMITS;
 			}
 
-			if (edata->upropset & USERPROP_CRITMAX) {
-				prop_dictionary_remove(sdict,
-				    "critical-max");
-				ptype = PENVSYS_EVENT_USER_LIMITS;
+			if (edata->upropset & PROP_CRITMAX) {
+				prop_dictionary_remove(sdict, "critical-max");
+				ptype = PENVSYS_EVENT_LIMITS;
 			}
 
-			if (edata->upropset & USERPROP_CRITMIN) {
-				prop_dictionary_remove(sdict,
-				    "critical-min");
-				ptype = PENVSYS_EVENT_USER_LIMITS;
+			if (edata->upropset & PROP_CRITMIN) {
+				prop_dictionary_remove(sdict, "critical-min");
+				ptype = PENVSYS_EVENT_LIMITS;
 			}
 			if (ptype != 0)
 				sme_event_unregister(sme, edata->desc, ptype);
 
-			if (edata->upropset & USERPROP_RFACT) {
+			if (edata->upropset & PROP_RFACT) {
 				(void)sme_sensor_upint32(sdict, "rfact", 0);
 				edata->rfact = 0;
 			}
 
-			if (edata->upropset & USERPROP_DESC)
+			if (edata->upropset & PROP_DESC)
 				(void)sme_sensor_upstring(sdict,
 			  	    "description", edata->desc);
 
@@ -1512,9 +1498,9 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			if (sdt[j].type == edata->state)
 				break;
 
-		DPRINTFOBJ(("%s: state=%s type=%d flags=%d "
-		    "units=%d sensor=%d\n", __func__, sdt[j].desc,
-		    sdt[j].type, edata->flags, edata->units, edata->sensor));
+		DPRINTFOBJ(("%s: sensor #%d type=%d (%s) flags=%d\n",
+		    __func__, edata->sensor, sdt[j].type, sdt[j].desc,
+		    edata->flags));
 
 		error = sme_sensor_upstring(dict, "state", sdt[j].desc);
 		if (error)
@@ -1527,6 +1513,9 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		for (j = 0; sdt[j].type != -1; j++)
 			if (sdt[j].type == edata->units)
 				break;
+
+		DPRINTFOBJ(("%s: sensor #%d units=%d (%s)\n",
+		    __func__, edata->sensor, sdt[j].type, sdt[j].desc));
 
 		error = sme_sensor_upstring(dict, "type", sdt[j].desc);
 		if (error)
@@ -1664,7 +1653,8 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	prop_dictionary_t dict, tdict = NULL;
 	prop_object_t obj, obj1, obj2, tobj = NULL;
 	uint64_t refresh_timo = 0;
-	int32_t critval;
+	int32_t critmax = 0, warnmax = 0, warnmin = 0, critmin = 0;
+	int props = 0;
 	int i, error = 0;
 	const char *blah;
 	bool targetfound = false;
@@ -1766,7 +1756,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 
 			DPRINTF(("%s: sensor%d changed desc to: %s\n",
 			    __func__, edata->sensor, blah));
-			edata->upropset |= USERPROP_DESC;
+			edata->upropset |= PROP_DESC;
 			mutex_exit(&sme->sme_mtx);
 		}
 
@@ -1779,7 +1769,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			if (edata->flags & ENVSYS_FCHANGERFACT) {
 				mutex_enter(&sme->sme_mtx);
 				edata->rfact = prop_number_integer_value(obj2);
-				edata->upropset |= USERPROP_RFACT;
+				edata->upropset |= PROP_RFACT;
 				mutex_exit(&sme->sme_mtx);
 				DPRINTF(("%s: sensor%d changed rfact to %d\n",
 				    __func__, edata->sensor, edata->rfact));
@@ -1796,10 +1786,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 
 		/* 
 		 * did the user want to set a critical capacity event?
-		 *
-		 * NOTE: if sme_event_register returns EEXIST that means
-		 * the object is already there, but this is not a real
-		 * error, because the object might be updated.
 		 */
 		obj2 = prop_dictionary_get(udict, "critical-capacity");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
@@ -1810,30 +1796,12 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 				goto out;
 			}
 
-			critval = prop_number_integer_value(obj2);
-			error = sme_event_register(dict,
-					      edata,
-					      sme,
-					      "critical-capacity",
-					      critval,
-					      PENVSYS_EVENT_BATT_USERCAP,
-					      sdt[i].crittype);
-			if (error == EEXIST)
-				error = 0;
-			if (error)
-				goto out;
-
-			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= USERPROP_BATTCAP;
-			mutex_exit(&sme->sme_mtx);
+			critmin = prop_number_integer_value(obj2);
+			props |= PROP_BATTCAP;
 		}
 
 		/* 
 		 * did the user want to set a warning capacity event?
-		 *
-		 * NOTE: if sme_event_register returns EEXIST that means
-		 * the object is already there, but this is not a real
-		 * error, because the object might be updated.
 		 */
 		obj2 = prop_dictionary_get(udict, "warning-capacity");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
@@ -1844,22 +1812,8 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 				goto out;
 			}
 
-			critval = prop_number_integer_value(obj2);
-			error = sme_event_register(dict,
-					      edata,
-					      sme,
-					      "warning-capacity",
-					      critval,
-					      PENVSYS_EVENT_BATT_USERWARN,
-					      sdt[i].crittype);
-			if (error == EEXIST)
-				error = 0;
-			if (error)
-				goto out;
-
-			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= USERPROP_BATTWARN;
-			mutex_exit(&sme->sme_mtx);
+			warnmin = prop_number_integer_value(obj2);
+			props |= PROP_BATTWARN;
 		}
 
 		/* 
@@ -1869,27 +1823,14 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags & ENVSYS_FMONNOTSUPP) {
+			    edata->flags &
+				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
 				error = ENOTSUP;
 				goto out;
 			}
 
-			critval = prop_number_integer_value(obj2);
-			error = sme_event_register(dict,
-					      edata,
-					      sme,
-					      "critical-max",
-					      critval,
-					      PENVSYS_EVENT_USER_CRITMAX,
-					      sdt[i].crittype);
-			if (error == EEXIST)
-				error = 0;
-			if (error)
-				goto out;
-
-			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= USERPROP_CRITMAX;
-			mutex_exit(&sme->sme_mtx);
+			critmax = prop_number_integer_value(obj2);
+			props |= PROP_CRITMAX;
 		}
 
 		/* 
@@ -1899,27 +1840,14 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags & ENVSYS_FMONNOTSUPP) {
+			    edata->flags &
+				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
 				error = ENOTSUP;
 				goto out;
 			}
 
-			critval = prop_number_integer_value(obj2);
-			error = sme_event_register(dict,
-					      edata,
-					      sme,
-					      "warning-max",
-					      critval,
-					      PENVSYS_EVENT_USER_WARNMAX,
-					      sdt[i].crittype);
-			if (error == EEXIST)
-				error = 0;
-			if (error)
-				goto out;
-
-			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= USERPROP_WARNMAX;
-			mutex_exit(&sme->sme_mtx);
+			warnmax = prop_number_integer_value(obj2);
+			props |= PROP_WARNMAX;
 		}
 
 		/* 
@@ -1929,27 +1857,14 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags & ENVSYS_FMONNOTSUPP) {
+			    edata->flags &
+				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
 				error = ENOTSUP;
 				goto out;
 			}
 
-			critval = prop_number_integer_value(obj2);
-			error = sme_event_register(dict,
-					      edata,
-					      sme,
-					      "critical-min",
-					      critval,
-					      PENVSYS_EVENT_USER_CRITMIN,
-					      sdt[i].crittype);
-			if (error == EEXIST)
-				error = 0;
-			if (error) 
-				goto out;
-
-			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= USERPROP_CRITMIN;
-			mutex_exit(&sme->sme_mtx);
+			critmin = prop_number_integer_value(obj2);
+			props |= PROP_CRITMIN;
 		}
 
 		/* 
@@ -1959,18 +1874,25 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags & ENVSYS_FMONNOTSUPP) {
+			    edata->flags &
+				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
 				error = ENOTSUP;
 				goto out;
 			}
 
-			critval = prop_number_integer_value(obj2);
+			warnmin = prop_number_integer_value(obj2);
+			props |= PROP_WARNMIN;
+		}
+
+		if (props) {
 			error = sme_event_register(dict,
 					      edata,
 					      sme,
-					      "warning-min",
-					      critval,
-					      PENVSYS_EVENT_USER_WARNMIN,
+					      critmax, warnmax, warnmin,
+					      critmin, props,
+					      (edata->flags & ENVSYS_FPERCENT)?
+						PENVSYS_EVENT_CAPACITY:
+						PENVSYS_EVENT_LIMITS,
 					      sdt[i].crittype);
 			if (error == EEXIST)
 				error = 0;
@@ -1978,7 +1900,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 				goto out;
 
 			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= USERPROP_WARNMIN;
+			edata->upropset |= props;
 			mutex_exit(&sme->sme_mtx);
 		}
 
