@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.54 2009/06/06 09:18:55 mlelstv Exp $	*/
+/*	$NetBSD: atactl.c,v 1.55 2009/06/08 23:26:13 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.54 2009/06/06 09:18:55 mlelstv Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.55 2009/06/08 23:26:13 jakllsch Exp $");
 #endif
 
 
@@ -218,7 +218,7 @@ struct bitinfo ata_cmd_ext[] = {
 	{ ATA_CMDE_TL, "Time-limited Read/Write" },
 	{ ATA_CMDE_URGW, "URG bit for WRITE STREAM DMA/PIO" },
 	{ ATA_CMDE_URGR, "URG bit for READ STREAM DMA/PIO" },
-	{ ATA_CMDE_WWN, "World Wide name" },
+	{ ATA_CMDE_WWN, "World Wide Name" },
 	{ ATA_CMDE_WQFE, "WRITE DMA QUEUED FUA EXT command" },
 	{ ATA_CMDE_WFE, "WRITE DMA/MULTIPLE FUA EXT commands" },
 	{ ATA_CMDE_GPL, "General Purpose Logging feature set" },
@@ -859,6 +859,7 @@ device_identify(int argc, char *argv[])
 	char model[sizeof(inqbuf->atap_model)+1];
 	char revision[sizeof(inqbuf->atap_revision)+1];
 	char serial[sizeof(inqbuf->atap_serial)+1];
+	uint64_t capacity;
 	int needswap = 0;
 
 	/* No arguments. */
@@ -899,20 +900,45 @@ device_identify(int argc, char *argv[])
 	printf("Model: %s, Rev: %s, Serial #: %s\n",
 		model, revision, serial);
 
+	if (inqbuf->atap_cmd_ext != 0 && inqbuf->atap_cmd_ext != 0xffff &&
+	    inqbuf->atap_cmd_ext & ATA_CMDE_WWN)
+		printf("World Wide Name: %016" PRIX64 "\n",
+		    ((uint64_t)inqbuf->atap_wwn[0] << 48) |
+		    ((uint64_t)inqbuf->atap_wwn[1] << 32) |
+		    ((uint64_t)inqbuf->atap_wwn[2] << 16) |
+		    ((uint64_t)inqbuf->atap_wwn[3] <<  0));
+
 	printf("Device type: %s, %s\n", inqbuf->atap_config & WDC_CFG_ATAPI ?
 	       "ATAPI" : "ATA", inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" :
 	       "removable");
 
-	if ((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == 0)
-		printf("Cylinders: %d, heads: %d, sec/track: %d, total "
-		       "sectors: %d\n", inqbuf->atap_cylinders,
-		       inqbuf->atap_heads, inqbuf->atap_sectors,
-		       (inqbuf->atap_capacity[1] << 16) |
-		       inqbuf->atap_capacity[0]);
+	capacity = 0;
 
-	if (inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK)
+	if (inqbuf->atap_cmd2_en != 0 && inqbuf->atap_cmd2_en != 0xffff &&
+	    inqbuf->atap_cmd2_en & ATA_CMD2_LBA48) {
+		capacity =
+		    ((uint64_t)inqbuf->atap_max_lba[3] << 48) |
+		    ((uint64_t)inqbuf->atap_max_lba[2] << 32) |
+		    ((uint64_t)inqbuf->atap_max_lba[1] << 16) |
+		    ((uint64_t)inqbuf->atap_max_lba[0] <<  0);
+	} else if (inqbuf->atap_capabilities1 & WDC_CAP_LBA) {
+		capacity = (inqbuf->atap_capacity[1] << 16) |
+		    inqbuf->atap_capacity[0];
+	}
+	if ((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) != WDC_CFG_ATAPI) {
+		if (capacity == 0)
+			capacity = inqbuf->atap_cylinders *
+			    inqbuf->atap_heads * inqbuf->atap_sectors;
+		printf("Cylinders: %d, heads: %d, sec/track: %d, total "
+		       "sectors: %" PRIu64 "\n", inqbuf->atap_cylinders,
+		       inqbuf->atap_heads, inqbuf->atap_sectors, capacity);
+	}
+
+	if (((inqbuf->atap_sata_caps & SATA_NATIVE_CMDQ) ||
+	    (inqbuf->atap_cmd_set2 & ATA_CMD2_RWQ)) &&
+	    (inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK))
 		printf("Device supports command queue depth of %d\n",
-		       inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK);
+		    (inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK) + 1);
 
 	printf("Device capabilities:\n");
 	print_bitinfo("\t", "\n", inqbuf->atap_capabilities1, ata_caps);
@@ -945,15 +971,22 @@ device_identify(int argc, char *argv[])
 
 	if (inqbuf->atap_sata_caps != 0 && inqbuf->atap_sata_caps != 0xffff) {
 		printf("Serial ATA capabilities:\n");
-		print_bitinfo("\t", "\n", inqbuf->atap_sata_caps, ata_sata_caps);
+		print_bitinfo("\t", "\n",
+		    inqbuf->atap_sata_caps, ata_sata_caps);
+
 	}
 
-	if (inqbuf->atap_sata_features_supp != 0 && inqbuf->atap_sata_features_supp != 0xffff) {
+	if (inqbuf->atap_sata_features_supp != 0 &&
+	    inqbuf->atap_sata_features_supp != 0xffff) {
 		printf("Serial ATA features:\n");
-		if (inqbuf->atap_sata_features_en != 0 && inqbuf->atap_sata_features_en != 0xffff)
-			print_bitinfo2("\t", "\n", inqbuf->atap_sata_features_supp, inqbuf->atap_sata_features_en, ata_sata_feat);
+		if (inqbuf->atap_sata_features_en != 0 &&
+		    inqbuf->atap_sata_features_en != 0xffff)
+			print_bitinfo2("\t", "\n",
+			    inqbuf->atap_sata_features_supp,
+			    inqbuf->atap_sata_features_en, ata_sata_feat);
 		else
-			print_bitinfo("\t", "\n", inqbuf->atap_sata_features_supp, ata_sata_feat);
+			print_bitinfo("\t", "\n",
+			    inqbuf->atap_sata_features_supp, ata_sata_feat);
 	}
 
 	return;
