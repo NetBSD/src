@@ -66,7 +66,4 @@ diff a a3 && passed=$(expr $passed + 1)
 echo "======> version information"
 /usr/bin/netpgpverify --version
 rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig a2 a3
-echo "======> no list-packets file"
-/usr/bin/netpgp --list-packets || passed=$(expr $passed + 1)
-rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig a2 a3
 echo "Passed ${passed}/${total} tests"
