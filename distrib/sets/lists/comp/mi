@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1265 2009/06/06 18:48:09 hubertf Exp $
+#	$NetBSD: mi,v 1.1266 2009/06/08 17:15:23 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5452,6 +5452,8 @@
 ./usr/share/man/cat3/form_userptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/form_win.0			comp-c-catman		.cat
 ./usr/share/man/cat3/forms.0			comp-c-catman		.cat
+./usr/share/man/cat3/fp_nquery.0		comp-c-catman		.cat
+./usr/share/man/cat3/fp_resstat.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fparseln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fpclassify.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetmask.0		comp-c-catman		.cat
@@ -5695,6 +5697,7 @@
 ./usr/share/man/cat3/gsskrb5_extract_authz_data_from_sec_context.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/gsskrb5_register_acceptor_identity.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/gtty.0			comp-c-catman		.cat
+./usr/share/man/cat3/hostalias.0		comp-c-catman		.cat
 ./usr/share/man/cat3/halfdelay.0		comp-c-catman		.cat
 ./usr/share/man/cat3/has_colors.0		comp-c-catman		.cat
 ./usr/share/man/cat3/has_ic.0			comp-c-catman		.cat
@@ -6859,6 +6862,7 @@
 ./usr/share/man/cat3/ossaudio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/overlay.0			comp-c-catman		.cat
 ./usr/share/man/cat3/overwrite.0		comp-c-catman		.cat
+./usr/share/man/cat3/p_query.0			comp-c-catman		.cat
 ./usr/share/man/cat3/p2k.0			comp-puffs-catman	.cat
 ./usr/share/man/cat3/pair_content.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pam.0			comp-c-catman		.cat,pam
@@ -7250,11 +7254,31 @@
 ./usr/share/man/cat3/remque.0			comp-c-catman		.cat
 ./usr/share/man/cat3/request_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/request_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_findzonecut.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_getservers.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_hostalias.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_init.0			comp-c-catman		.cat
+./usr/share/man/cat3/res_isourserver.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_mkquery.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nclose.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_ndestroy.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nmkquery.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nmkupdate.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nquery.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nquerydomain.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nsearch.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nsend.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nsendsigned.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_nupdate.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_ourserver_p.0		comp-c-catman		.cat
+./usr/share/cat/cat3/res_pquery.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_query.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_querydomain.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_search.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_send.0			comp-c-catman		.cat
+./usr/share/man/cat3/res_setservers.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_update.0		comp-c-catman		.cat
 ./usr/share/man/cat3/reset_com_err_hook.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/reset_prog_mode.0		comp-c-catman		.cat
 ./usr/share/man/cat3/reset_shell_mode.0		comp-c-catman		.cat
@@ -10915,6 +10939,8 @@
 ./usr/share/man/html3/form_userptr.html		comp-c-htmlman		html
 ./usr/share/man/html3/form_win.html		comp-c-htmlman		html
 ./usr/share/man/html3/forms.html		comp-c-htmlman		html
+./usr/share/man/html3/fp_nquery.html		comp-c-htmlman		html
+./usr/share/man/html3/fp_resstat.html		comp-c-htmlman		html
 ./usr/share/man/html3/fparseln.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpclassify.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpgetmask.html		comp-c-htmlman		html
@@ -11156,6 +11182,7 @@
 ./usr/share/man/html3/gsskrb5_extract_authz_data_from_sec_context.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/gsskrb5_register_acceptor_identity.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/gtty.html			comp-c-htmlman		html
+./usr/share/man/html3/hostalias.html		comp-c-htmlman		html
 ./usr/share/man/html3/halfdelay.html		comp-c-htmlman		html
 ./usr/share/man/html3/has_colors.html		comp-c-htmlman		html
 ./usr/share/man/html3/has_ic.html		comp-c-htmlman		html
@@ -12281,6 +12308,7 @@
 ./usr/share/man/html3/ossaudio.html		comp-c-htmlman		html
 ./usr/share/man/html3/overlay.html		comp-c-htmlman		html
 ./usr/share/man/html3/overwrite.html		comp-c-htmlman		html
+./usr/share/man/html3/p_query.html		comp-c-htmlman		html
 ./usr/share/man/html3/p2k.html			comp-puffs-htmlman	html
 ./usr/share/man/html3/pair_content.html		comp-c-htmlman		html
 ./usr/share/man/html3/pam.html			comp-c-htmlman		html,pam
@@ -12667,11 +12695,30 @@
 ./usr/share/man/html3/remque.html		comp-c-htmlman		html
 ./usr/share/man/html3/request_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/request_set.html		comp-c-htmlman		html
-./usr/share/man/html3/res_init.html		comp-c-htmlman		html
+./usr/share/man/html3/res_close.html		comp-c-htmlman		html
+./usr/share/man/html3/res_findzonecut.html	comp-c-htmlman		html
+./usr/share/man/html3/res_getservers.html	comp-c-htmlman		html
+./usr/share/man/html3/res_hostalias.html	comp-c-htmlman		html
+./usr/share/man/html3/res_isourserver.html	comp-c-htmlman		html
 ./usr/share/man/html3/res_mkquery.html		comp-c-htmlman		html
+./usr/share/man/html3/res_nclose.html		comp-c-htmlman		html
+./usr/share/man/html3/res_ndestroy.html		comp-c-htmlman		html
+./usr/share/man/html3/res_nmkquery.html		comp-c-htmlman		html
+./usr/share/man/html3/res_nmkupdate.html	comp-c-htmlman		html
+./usr/share/man/html3/res_nquery.html		comp-c-htmlman		html
+./usr/share/man/html3/res_nquerydomain.html	comp-c-htmlman		html
+./usr/share/man/html3/res_nsearch.html		comp-c-htmlman		html
+./usr/share/man/html3/res_nsend.html		comp-c-htmlman		html
+./usr/share/man/html3/res_nsendsigned.html	comp-c-htmlman		html
+./usr/share/man/html3/res_nupdate.html		comp-c-htmlman		html
+./usr/share/man/html3/res_ourserver_p.html	comp-c-htmlman		html
+./usr/share/man/html3/res_pquery.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_query.html		comp-c-htmlman		html
+./usr/share/man/html3/res_querydomain.html	comp-c-htmlman		html
 ./usr/share/man/html3/res_search.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_send.html		comp-c-htmlman		html
+./usr/share/man/html3/res_setservers.html	comp-c-htmlman		html
+./usr/share/man/html3/res_update.html		comp-c-htmlman		html
 ./usr/share/man/html3/reset_com_err_hook.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/reset_prog_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/reset_shell_mode.html	comp-c-htmlman		html
@@ -16290,6 +16337,8 @@
 ./usr/share/man/man3/form_userptr.3		comp-c-man		.man
 ./usr/share/man/man3/form_win.3			comp-c-man		.man
 ./usr/share/man/man3/forms.3			comp-c-man		.man
+./usr/share/man/man3/fp_nquery.3		comp-c-man		.man
+./usr/share/man/man3/fp_resstat.3		comp-c-man		.man
 ./usr/share/man/man3/fparseln.3			comp-c-man		.man
 ./usr/share/man/man3/fpclassify.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetmask.3		comp-c-man		.man
@@ -16533,6 +16582,7 @@
 ./usr/share/man/man3/gsskrb5_extract_authz_data_from_sec_context.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/gsskrb5_register_acceptor_identity.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/gtty.3			comp-c-man		.man
+./usr/share/man/man3/hostalias.3		comp-c-man		.man
 ./usr/share/man/man3/halfdelay.3		comp-c-man		.man
 ./usr/share/man/man3/has_colors.3		comp-c-man		.man
 ./usr/share/man/man3/has_ic.3			comp-c-man		.man
@@ -17697,6 +17747,7 @@
 ./usr/share/man/man3/ossaudio.3			comp-c-man		.man
 ./usr/share/man/man3/overlay.3			comp-c-man		.man
 ./usr/share/man/man3/overwrite.3		comp-c-man		.man
+./usr/share/man/man3/p_query.3			comp-c-man		.man
 ./usr/share/man/man3/p2k.3			comp-puffs-man		.man
 ./usr/share/man/man3/pair_content.3		comp-c-man		.man
 ./usr/share/man/man3/pam.3			comp-c-man		.man,pam
@@ -18088,11 +18139,31 @@
 ./usr/share/man/man3/remque.3			comp-c-man		.man
 ./usr/share/man/man3/request_init.3		comp-c-man		.man
 ./usr/share/man/man3/request_set.3		comp-c-man		.man
+./usr/share/man/man3/res_close.3		comp-c-man		.man
+./usr/share/man/man3/res_findzonecut.3		comp-c-man		.man
+./usr/share/man/man3/res_getservers.3		comp-c-man		.man
+./usr/share/man/man3/res_hostalias.3		comp-c-man		.man
 ./usr/share/man/man3/res_init.3			comp-c-man		.man
+./usr/share/man/man3/res_isourserver.3		comp-c-man		.man
 ./usr/share/man/man3/res_mkquery.3		comp-c-man		.man
+./usr/share/man/man3/res_nclose.3		comp-c-man		.man
+./usr/share/man/man3/res_ndestroy.3		comp-c-man		.man
+./usr/share/man/man3/res_nmkquery.3		comp-c-man		.man
+./usr/share/man/man3/res_nmkupdate.3		comp-c-man		.man
+./usr/share/man/man3/res_nquery.3		comp-c-man		.man
+./usr/share/man/man3/res_nquerydomain.3		comp-c-man		.man
+./usr/share/man/man3/res_nsearch.3		comp-c-man		.man
+./usr/share/man/man3/res_nsend.3		comp-c-man		.man
+./usr/share/man/man3/res_nsendsigned.3		comp-c-man		.man
+./usr/share/man/man3/res_nupdate.3		comp-c-man		.man
+./usr/share/man/man3/res_ourserver_p.3		comp-c-man		.man
+./usr/share/man/man3/res_pquery.3		comp-c-man		.man
 ./usr/share/man/man3/res_query.3		comp-c-man		.man
+./usr/share/man/man3/res_querydomain.3		comp-c-man		.man
 ./usr/share/man/man3/res_search.3		comp-c-man		.man
 ./usr/share/man/man3/res_send.3			comp-c-man		.man
+./usr/share/man/man3/res_setservers.3		comp-c-man		.man
+./usr/share/man/man3/res_update.3		comp-c-man		.man
 ./usr/share/man/man3/reset_com_err_hook.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/reset_prog_mode.3		comp-c-man		.man
 ./usr/share/man/man3/reset_shell_mode.3		comp-c-man		.man
