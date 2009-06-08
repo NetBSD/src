@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.65 2009/06/08 00:55:35 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.66 2009/06/08 13:06:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.65 2009/06/08 00:55:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.66 2009/06/08 13:06:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -620,7 +620,7 @@ sme_events_worker(struct work *wk, void *arg)
 		else if __EXCEEDED_LIMIT(see->see_critmax, >)
 			edata->state = ENVSYS_SCRITOVER;
 		/* FALLTHROUGH */
-#undef __EXCEED_LIMIT
+#undef __EXCEEDED_LIMIT
 
 		if (edata->state == see->see_evsent)
 			break;
