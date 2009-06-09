@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64 2008/01/26 14:40:08 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.20.1 2009/06/09 17:45:00 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1090,6 +1090,21 @@ XLEAF(mips1_xcpt_return)
 END(mips1_lwp_trampoline)
 
 /*
+ * Like lwp_trampoline, but do not call lwp_startup
+ */
+LEAF(mips1_setfunc_trampoline)
+	addu	sp, sp, -CALLFRAME_SIZ
+
+	# Call the routine specified by cpu_setfunc()
+	jal	ra, s0			
+	move	a0, s1
+
+	j	mips1_xcpt_return
+	nop
+
+END(mips1_setfunc_trampoline)
+
+/*
  * void mips1_cpu_switch_resume(struct lwp *newlwp)
  *
  * Wiredown the USPACE of newproc with TLB entry#0 and #1.  Check
@@ -1249,6 +1264,7 @@ _C_LABEL(mips1_locoresw):
 	.word _C_LABEL(mips1_cpu_switch_resume)
 	.word _C_LABEL(mips1_lwp_trampoline)
 	.word _C_LABEL(nullop)			# idle
+	.word _C_LABEL(mips1_setfunc_trampoline)
 
 mips1_excpt_sw:
 	####
