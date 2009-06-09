@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.46 2009/06/07 09:47:31 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.47 2009/06/09 19:09:03 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.46 2009/06/07 09:47:31 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.47 2009/06/09 19:09:03 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -95,6 +95,7 @@ static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
 static int	module_load_plist_file(const char *, const bool, void **,
 		    size_t *);
+static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
 /*
  * module_error:
@@ -797,6 +798,10 @@ module_do_load(const char *name, bool isdep, int flags,
 			filedict = prop_dictionary_internalize(plist);
 			if (filedict == NULL) {
 				error = EINVAL;
+			} else if (!module_merge_dicts(filedict, props)) {
+				error = EINVAL;
+				prop_object_release(filedict);
+				filedict = NULL;
 			}
 		}
 		if (plist != NULL) {
@@ -810,7 +815,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	KASSERT(module_active == NULL);
 	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, (filedict != NULL) ?
-	    filedict : props);
+	    filedict : props);	/* props will have been merged with filedict */
 	module_active = NULL;
 	if (filedict != NULL) {
 		prop_object_release(filedict);
@@ -1196,4 +1201,38 @@ out1:
 	PNBUF_PUT(proppath);
 	*basep = base;
 	return error;
+}
+
+static bool
+module_merge_dicts(prop_dictionary_t existing_dict,
+		   const prop_dictionary_t new_dict)
+{
+	prop_dictionary_keysym_t props_keysym;
+	prop_object_iterator_t props_iter;
+	prop_object_t props_obj;
+	const char *props_key;
+	bool error;
+
+	error = false;
+	props_iter = prop_dictionary_iterator(new_dict);
+	if (props_iter == NULL) {
+		return false;
+	}
+
+	while ((props_obj = prop_object_iterator_next(props_iter)) != NULL) {
+		props_keysym = (prop_dictionary_keysym_t)props_obj;
+		props_key = prop_dictionary_keysym_cstring_nocopy(props_keysym);
+		props_obj = prop_dictionary_get_keysym(new_dict, props_keysym);
+		if ((props_obj == NULL) || !prop_dictionary_set(existing_dict,
+		    props_key, props_obj)) {
+			error = true;
+			goto out;
+		}
+	}
+	error = false;
+
+out:
+	prop_object_iterator_release(props_iter);
+
+	return !error;
 }
