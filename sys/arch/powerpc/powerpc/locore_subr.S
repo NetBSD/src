@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.37 2008/04/10 23:29:01 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.37.14.1 2009/06/09 17:52:58 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -287,6 +287,9 @@ _C_LABEL(cpu_lwp_bootstrap):
 	 * r3 (old lwp) and r4 (new lwp) are setup in cpu_switchto.
 	 */
 	bl	_C_LABEL(lwp_startup)
+
+	.globl	_C_LABEL(setfunc_trampoline)
+_C_LABEL(setfunc_trampoline):
 
 	mtlr	%r31
 	mr	%r3,%r30
