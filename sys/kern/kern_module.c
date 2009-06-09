@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.47 2009/06/09 19:09:03 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.48 2009/06/09 20:35:02 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.47 2009/06/09 19:09:03 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.48 2009/06/09 20:35:02 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -788,7 +788,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	/*
 	 * Load and process <module>.prop if it exists.
 	 */
-	if (mod->mod_source == MODULE_SOURCE_FILESYS) {
+	if (((flags & MODCTL_NO_PROP) == 0) &&
+	    (mod->mod_source == MODULE_SOURCE_FILESYS)) {
 		error = module_load_plist_file(path, nochroot, &plist,
 		    &plistlen);
 		if (error != 0) {
