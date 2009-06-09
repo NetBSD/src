@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.48 2009/05/12 18:07:55 plunky Exp $
+# $NetBSD: md.amd64,v 1.49 2009/06/09 04:35:25 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -526,6 +526,10 @@
 ./usr/lib/i386/libmenu.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libmenu_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libmenu_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libnetpgp.a			comp-c-lib		compat
+./usr/lib/i386/libnetpgp.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libnetpgp_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libnetpgp_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libobjc.a			comp-c-lib		compat
 ./usr/lib/i386/libobjc.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libobjc_p.a			comp-c-proflib		compat,profile
