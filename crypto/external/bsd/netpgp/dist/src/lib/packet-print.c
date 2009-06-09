@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.16 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.17 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #include <string.h>
@@ -376,7 +376,7 @@ numkeybits(const __ops_pubkey_t *pubkey)
    \param key Ptr to public key
 */
 void
-__ops_print_pubkeydata(__ops_io_t *io, const __ops_keydata_t *key)
+__ops_print_pubkeydata(__ops_io_t *io, const __ops_key_t *key)
 {
 	unsigned int    i;
 
@@ -390,7 +390,7 @@ __ops_print_pubkeydata(__ops_io_t *io, const __ops_keydata_t *key)
 	hexdump(io->errs, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE,
 		" ");
 	(void) fprintf(io->errs, "\n");
-	for (i = 0; i < key->nuids; i++) {
+	for (i = 0; i < key->uidc; i++) {
 		(void) fprintf(io->errs, "uid              %s\n",
 			key->uids[i].userid);
 	}
@@ -450,7 +450,7 @@ __ops_print_pubkey(const __ops_pubkey_t *pubkey)
 */
 
 void
-__ops_print_seckeydata(const __ops_keydata_t *key)
+__ops_print_seckeydata(const __ops_key_t *key)
 {
 	printf("sec ");
 	__ops_show_pka(key->key.pubkey.alg);
@@ -462,14 +462,14 @@ __ops_print_seckeydata(const __ops_keydata_t *key)
 	ptime(stdout, key->key.pubkey.birthtime);
 	printf(" ");
 
-	if (key->nuids == 1) {
+	if (key->uidc == 1) {
 		/* print on same line as other info */
 		printf("%s\n", key->uids[0].userid);
 	} else {
 		/* print all uids on separate line  */
 		unsigned int    i;
 		printf("\n");
-		for (i = 0; i < key->nuids; i++) {
+		for (i = 0; i < key->uidc; i++) {
 			printf("uid              %s\n", key->uids[i].userid);
 		}
 	}
@@ -553,12 +553,12 @@ __ops_print_pk_sesskey(__ops_content_tag_t tag,
 	       __ops_show_pka(key->alg));
 	switch (key->alg) {
 	case OPS_PKA_RSA:
-		print_bn("encrypted_m", key->parameters.rsa.encrypted_m);
+		print_bn("encrypted_m", key->params.rsa.encrypted_m);
 		break;
 
 	case OPS_PKA_ELGAMAL:
-		print_bn("g_to_k", key->parameters.elgamal.g_to_k);
-		print_bn("encrypted_m", key->parameters.elgamal.encrypted_m);
+		print_bn("g_to_k", key->params.elgamal.g_to_k);
+		print_bn("encrypted_m", key->params.elgamal.encrypted_m);
 		break;
 
 	default:
@@ -1009,7 +1009,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		end_subpacket();
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
+	case OPS_PTAG_CT_LITDATA_HEADER:
 		print_tagname("LITERAL DATA HEADER");
 		printf("  literal data header format=%c filename='%s'\n",
 		       content->litdata_header.format,
@@ -1019,7 +1019,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		printf("\n");
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA_BODY:
+	case OPS_PTAG_CT_LITDATA_BODY:
 		print_tagname("LITERAL DATA BODY");
 		printf("  literal data body length=%d\n",
 		       content->litdata_body.length);
@@ -1189,22 +1189,24 @@ __ops_list_packets(__ops_io_t *io,
 			char *filename,
 			unsigned armour,
 			__ops_keyring_t *keyring,
+			void *passfp,
 			__ops_cbfunc_t *cb_get_passphrase)
 {
-	__ops_parseinfo_t	*pinfo = NULL;
+	__ops_stream_t	*stream = NULL;
 	const unsigned		 accumulate = 1;
 	const int		 printerrors = 1;
 	int			 fd = 0;
 
-	fd = __ops_setup_file_read(io, &pinfo, filename, NULL, cb_list_packets,
+	fd = __ops_setup_file_read(io, &stream, filename, NULL, cb_list_packets,
 				accumulate);
-	__ops_parse_options(pinfo, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
-	pinfo->cryptinfo.keyring = keyring;
-	pinfo->cryptinfo.getpassphrase = cb_get_passphrase;
+	__ops_parse_options(stream, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
+	stream->cryptinfo.keyring = keyring;
+	stream->cbinfo.passfp = passfp;
+	stream->cryptinfo.getpassphrase = cb_get_passphrase;
 	if (armour) {
-		__ops_reader_push_dearmour(pinfo);
+		__ops_reader_push_dearmour(stream);
 	}
-	__ops_parse(pinfo, printerrors);
-	__ops_teardown_file_read(pinfo, fd);
+	__ops_parse(stream, printerrors);
+	__ops_teardown_file_read(stream, fd);
 	return 1;
 }

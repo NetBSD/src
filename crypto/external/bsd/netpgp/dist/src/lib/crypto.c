@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.15 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.16 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -185,7 +185,7 @@ unsigned
 __ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
 		    const size_t sz_encoded_m_buf,
 		    const __ops_pubkey_t * pubkey,
-		    __ops_pk_sesskey_parameters_t * skp)
+		    __ops_pk_sesskey_params_t * skp)
 {
 
 	unsigned char   encmpibuf[NETPGP_BUFSIZ];
@@ -236,7 +236,7 @@ unsigned
 __ops_encrypt_file(__ops_io_t *io,
 			const char *infile,
 			const char *outfile,
-			const __ops_keydata_t *pubkey,
+			const __ops_key_t *pubkey,
 			const unsigned use_armour,
 			const unsigned allow_overwrite)
 {
@@ -281,7 +281,7 @@ __ops_encrypt_file(__ops_io_t *io,
    \param keyring Keyring to use
    \param use_armour Expect armoured text, if set
    \param allow_overwrite Allow output file to overwritten, if set.
-   \param cb_get_passphrase Callback to use to get passphrase
+   \param getpassfunc Callback to use to get passphrase
 */
 
 unsigned 
@@ -291,9 +291,10 @@ __ops_decrypt_file(__ops_io_t *io,
 			__ops_keyring_t *keyring,
 			const unsigned use_armour,
 			const unsigned allow_overwrite,
-			__ops_cbfunc_t *cb_get_passphrase)
+			void *passfp,
+			__ops_cbfunc_t *getpassfunc)
 {
-	__ops_parseinfo_t	*parse = NULL;
+	__ops_stream_t	*parse = NULL;
 	const int		 printerrors = 1;
 	char			*filename = NULL;
 	int			 fd_in = 0;
@@ -349,7 +350,8 @@ __ops_decrypt_file(__ops_io_t *io,
 
 	/* setup keyring and passphrase callback */
 	parse->cbinfo.cryptinfo.keyring = keyring;
-	parse->cbinfo.cryptinfo.getpassphrase = cb_get_passphrase;
+	parse->cbinfo.passfp = passfp;
+	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
 
 	/* Set up armour/passphrase options */
 	if (use_armour) {
@@ -407,14 +409,14 @@ callback_write_parsed(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_GET_PASSPHRASE:
 		return cbinfo->cryptinfo.getpassphrase(pkt, cbinfo);
 
-	case OPS_PTAG_CT_LITERAL_DATA_BODY:
+	case OPS_PTAG_CT_LITDATA_BODY:
 		return litdata_cb(pkt, cbinfo);
 
 	case OPS_PTAG_CT_ARMOUR_HEADER:
 	case OPS_PTAG_CT_ARMOUR_TRAILER:
 	case OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY:
 	case OPS_PTAG_CT_COMPRESSED:
-	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
+	case OPS_PTAG_CT_LITDATA_HEADER:
 	case OPS_PTAG_CT_SE_IP_DATA_BODY:
 	case OPS_PTAG_CT_SE_IP_DATA_HEADER:
 	case OPS_PTAG_CT_SE_DATA_BODY:
