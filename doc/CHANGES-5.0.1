@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.18 2009/06/06 22:15:46 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.19 2009/06/09 18:08:51 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -343,4 +343,42 @@ sys/kern/sched_4bsd.c				1.25
 	sched_pstats_hook: fix estcpu decay.
 	this makes my desktop usable when running "make -j4".
 	[rmind, ticket #791]
+
+external/mit/xorg/server/drivers/xf86-video-s3/Makefile patch
+
+	Add missing object file to build a properly working s3 module.
+	Fixes PR xsrc/41206.
+	[ahoka, ticket #795]
+
+sys/arch/alpha/alpha/locore.s			1.114
+sys/arch/alpha/alpha/vm_machdep.c		1.100
+sys/arch/alpha/include/alpha.h			1.24
+
+	Do not use lwp_trampoline for cpu_setfunc, but a simplified
+	setfunc_trampoline that does not call lwp_startup() instead.
+	[martin, ticket #798]
+
+sys/arch/mips/include/locore.h			1.79
+sys/arch/mips/mips/locore_mips1.S		1.65
+sys/arch/mips/mips/mipsX_subr.S			1.28
+sys/arch/mips/mips/mips_machdep.c		1.211
+sys/arch/mips/mips/vm_machdep.c			1.123
+
+	Do not use the same trampoline for cpu_lwp_fork and
+	cpu_setfunc - only the former needs to call lwp_startup().
+	[martin, ticket #799]
+
+sys/arch/sparc/dev/zs.c				1.116
+
+	Properly initialize child attach args to zero - we could end
+	up with various devices having different ideas about being
+	console otherwise.
+	[martin, ticket #800]
+
+sys/arch/powerpc/powerpc/locore_subr.S		1.38
+sys/arch/powerpc/powerpc/vm_machdep.c		1.77
+
+	Do not use the same trampoline for cpu_setfunc and
+	cpu_lwp_fork, the latter does a lot more work.
+	[martin, ticket #801]
 
