@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.7 2009/05/29 04:57:05 darran Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.8 2009/06/09 22:26:49 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.7 2009/05/29 04:57:05 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.8 2009/06/09 22:26:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -98,7 +98,8 @@ agrether_ctor(struct agr_softc *sc, struct ifnet *ifp_port)
 	agr_mc_init(sc, &priv->aep_multiaddrs);
 
 	sc->sc_iftprivate = priv;
-	/* inherit ports capabilities
+	/*
+	 * inherit ports capabilities
 	 * XXX this really needs to be the intersection of all
 	 * ports capabilities, not just the latest port.
 	 * Okay if ports are the same.
