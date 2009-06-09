@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.7 2009/05/22 08:59:32 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.8 2009/06/09 14:20:42 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -8,7 +8,7 @@ LIB=	rumpvfs
 .PATH:	${RUMPTOP}/librump/rumpvfs				\
 	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
-	${RUMPTOP}/../miscfs/specfs				\
+	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
 	${RUMPTOP}/../compat/common
 
 #
@@ -25,6 +25,9 @@ SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
 
 # sys/miscfs/syncfs
 SRCS+=	sync_subr.c sync_vnops.c
+
+# sys/miscfs/deadfs
+SRCS+=	dead_vnops.c
 
 # sys/miscfs
 SRCS+=	genfs_vfsops.c genfs_vnops.c spec_vnops.c
