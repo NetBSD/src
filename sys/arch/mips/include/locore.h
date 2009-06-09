@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78 2007/10/17 19:55:36 garbled Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1 2009/06/09 17:48:20 snj Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -53,6 +53,7 @@ void	mips1_TBIS(vaddr_t);
 int	mips1_TLBUpdate(u_int, u_int);
 void	mips1_wbflush(void);
 void	mips1_lwp_trampoline(void);
+void	mips1_setfunc_trampoline(void);
 void	mips1_cpu_switch_resume(void);
 
 uint32_t tx3900_cp0_config_read(void);
@@ -68,6 +69,7 @@ void	mips3_TLBRead(int, struct tlb *);
 void	mips3_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips3_wbflush(void);
 void	mips3_lwp_trampoline(void);
+void	mips3_setfunc_trampoline(void);
 void	mips3_cpu_switch_resume(void);
 void	mips3_pagezero(void *dst);
 
@@ -81,6 +83,7 @@ void	mips5900_TLBRead(int, struct tlb *);
 void	mips5900_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips5900_wbflush(void);
 void	mips5900_lwp_trampoline(void);
+void	mips5900_setfunc_trampoline(void);
 void	mips5900_cpu_switch_resume(void);
 void	mips5900_pagezero(void *dst);
 #endif
@@ -96,6 +99,7 @@ void	mips32_TLBRead(int, struct tlb *);
 void	mips32_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips32_wbflush(void);
 void	mips32_lwp_trampoline(void);
+void	mips32_setfunc_trampoline(void);
 void	mips32_cpu_switch_resume(void);
 #endif
 
@@ -109,6 +113,7 @@ void	mips64_TLBRead(int, struct tlb *);
 void	mips64_TLBWriteIndexedVPS(int, struct tlb *);
 void	mips64_wbflush(void);
 void	mips64_lwp_trampoline(void);
+void	mips64_setfunc_trampoline(void);
 void	mips64_cpu_switch_resume(void);
 void	mips64_pagezero(void *dst);
 #endif
@@ -235,6 +240,7 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
 #define lwp_trampoline		mips1_lwp_trampoline
+#define setfunc_trampoline	mips1_setfunc_trampoline
 #elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && !defined(MIPS3_5900)
 #define MachSetPID		mips3_SetPID
 #define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
@@ -242,6 +248,7 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		mips3_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips3_TLBWriteIndexedVPS
 #define lwp_trampoline		mips3_lwp_trampoline
+#define setfunc_trampoline	mips3_setfunc_trampoline
 #define wbflush()		mips3_wbflush()
 #elif !defined(MIPS1) && !defined(MIPS3) &&  defined(MIPS32) && !defined(MIPS64)
 #define MachSetPID		mips32_SetPID
@@ -250,6 +257,7 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		mips32_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips32_TLBWriteIndexedVPS
 #define lwp_trampoline		mips32_lwp_trampoline
+#define setfunc_trampoline	mips32_setfunc_trampoline
 #define wbflush()		mips32_wbflush()
 #elif !defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) &&  defined(MIPS64)
  /* all common with mips3 */
@@ -259,6 +267,7 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		mips64_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips64_TLBWriteIndexedVPS
 #define lwp_trampoline		mips64_lwp_trampoline
+#define setfunc_trampoline	mips64_setfunc_trampoline
 #define wbflush()		mips64_wbflush()
 #elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && defined(MIPS3_5900)
 #define MachSetPID		mips5900_SetPID
@@ -267,6 +276,7 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		mips5900_TLBUpdate
 #define MachTLBWriteIndexedVPS	mips5900_TLBWriteIndexedVPS
 #define lwp_trampoline		mips5900_lwp_trampoline
+#define setfunc_trampoline	mips5900_setfunc_trampoline
 #define wbflush()		mips5900_wbflush()
 #else
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
@@ -275,6 +285,7 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
 #define lwp_trampoline		(mips_locoresw[1])
+#define setfunc_trampoline	(mips_locoresw[3])
 #endif
 
 #define CPU_IDLE		(mips_locoresw[2])

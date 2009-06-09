@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26 2007/10/17 19:55:39 garbled Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1 2009/06/09 17:48:20 snj Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1955,6 +1955,7 @@ LEAF(MIPSX(lwp_trampoline))
 	# saved if EXL=1.
 	#
 	.set	noat
+1:
 	mtc0	zero, MIPS_COP_0_STATUS		# disable int
 	COP0_SYNC
 	nop					# 3 op delay
@@ -2022,6 +2023,22 @@ LEAF(MIPSX(lwp_trampoline))
 	eret
 	.set	at
 END(MIPSX(lwp_trampoline))
+
+/*
+ * Like lwp_trampoline, but do not call lwp_startup
+ */
+LEAF(MIPSX(setfunc_trampoline))
+	addu	sp, sp, -CALLFRAME_SIZ
+
+	# Call the routine specified by cpu_setfunc()
+	jal	ra, s0			
+	move	a0, s1
+
+	j	1b
+	nop
+
+END(MIPSX(setfunc_trampoline))
+
 
 /*
  * void mipsN_cpu_switch_resume(struct lwp *newlwp)
@@ -2288,6 +2305,7 @@ _C_LABEL(MIPSX(locoresw)):
 	.word _C_LABEL(MIPSX(cpu_switch_resume))
 	.word _C_LABEL(MIPSX(lwp_trampoline))
 	.word _C_LABEL(nullop)
+	.word _C_LABEL(MIPSX(setfunc_trampoline))
 
 MIPSX(excpt_sw):
 	####
