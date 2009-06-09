@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.89 2009/05/07 16:03:24 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.90 2009/06/09 14:30:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.89 2009/05/07 16:03:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.90 2009/06/09 14:30:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -86,12 +86,6 @@ struct tty *constty;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
-
-u_long	bufmem_valimit;
-u_long	bufmem_hiwater;
-u_long	bufmem_lowater;
-u_long	bufmem;
-u_int	nbuf;
 
 const char *panicstr;
 const char ostype[] = "NetBSD";
