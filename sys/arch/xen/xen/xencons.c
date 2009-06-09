@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.31 2009/01/16 20:16:47 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.32 2009/06/09 16:08:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.32 2009/06/09 16:08:00 cegger Exp $");
 
 #include "opt_xen.h"
 
@@ -558,6 +558,10 @@ xencons_intr(void *p)
 	static char rbuf[16];
 	int len;
 	struct xencons_softc *sc = p;
+
+	if (sc == NULL)
+		/* Interrupt may happen during resume */
+		return 1;
 
 	if (sc->polling)
 		return 1;
