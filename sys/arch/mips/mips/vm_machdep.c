@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.4.1 2009/06/09 17:45:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.4.1 2009/06/09 17:45:01 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
 	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
-	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;	/* RA */
+	pcb->pcb_context[10] = (intptr_t)setfunc_trampoline;	/* RA */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
 #endif
