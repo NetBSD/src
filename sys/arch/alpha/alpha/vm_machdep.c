@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.96 2007/10/17 19:52:56 garbled Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.96.32.1 2009/06/09 17:40:04 snj Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2007/10/17 19:52:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96.32.1 2009/06/09 17:40:04 snj Exp $");
 #include "opt_coredump.h"
 
 #include <sys/param.h>
@@ -129,6 +129,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct user *up = l2->l_addr;
+	extern void lwp_trampoline(void);
 
 	l2->l_md.md_tf = l1->l_md.md_tf;
 	l2->l_md.md_flags = l1->l_md.md_flags & (MDP_FPUSED | MDP_FP_C);
@@ -194,7 +195,19 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2tf->tf_regs[FRAME_A3] = 0;		/* no error */
 		l2tf->tf_regs[FRAME_A4] = 1;		/* is child */
 
-		cpu_setfunc(l2, func, arg);
+		up = l2->l_addr;
+		up->u_pcb.pcb_hw.apcb_ksp =
+		    (u_int64_t)l2->l_md.md_tf;
+		up->u_pcb.pcb_context[0] =
+		    (u_int64_t)func;			/* s0: pc */
+		up->u_pcb.pcb_context[1] =
+		    (u_int64_t)exception_return;	/* s1: ra */
+		up->u_pcb.pcb_context[2] =
+		    (u_int64_t)arg;			/* s2: arg */
+		up->u_pcb.pcb_context[3] =
+		    (u_int64_t)l2;			/* s3: lwp */
+		up->u_pcb.pcb_context[7] =
+		    (u_int64_t)lwp_trampoline;		/* ra: assembly magic */
 	}
 }
 
@@ -205,6 +218,7 @@ cpu_setfunc(l, func, arg)
 	void *arg;
 {
 	struct user *up = l->l_addr;
+	extern void setfunc_trampoline(void);
 
 	up->u_pcb.pcb_hw.apcb_ksp =
 	    (u_int64_t)l->l_md.md_tf;
@@ -214,10 +228,8 @@ cpu_setfunc(l, func, arg)
 	    (u_int64_t)exception_return;	/* s1: ra */
 	up->u_pcb.pcb_context[2] =
 	    (u_int64_t)arg;			/* s2: arg */
-	up->u_pcb.pcb_context[3] =
-	    (u_int64_t)l;			/* s3: lwp */
 	up->u_pcb.pcb_context[7] =
-	    (u_int64_t)lwp_trampoline;		/* ra: assembly magic */
+	    (u_int64_t)setfunc_trampoline;	/* ra: assembly magic */
 }	
 
 /*
