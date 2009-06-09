@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.811 2009/06/03 18:47:05 bouyer Exp $
+# $NetBSD: mi,v 1.812 2009/06/09 00:58:14 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -835,6 +835,7 @@
 ./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netpgp				base-crypto-bin		crypto
+./usr/bin/netpgpverify				base-crypto-bin		crypto
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
