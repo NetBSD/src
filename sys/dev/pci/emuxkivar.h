@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.11 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.12 2009/06/09 11:01:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ struct emuxki_stream {
 #endif /* Not yet */
 
 struct emuxki_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	audio_device_t	sc_audv;
 	enum {
 		EMUXKI_SBLIVE = 0x00, EMUXKI_AUDIGY = 0x01,
@@ -251,7 +251,7 @@ struct emuxki_softc {
 
 	struct ac97_host_if	hostif;
 	struct ac97_codec_if	*codecif;
-	struct device		*sc_audev;
+	device_t		sc_audev;
 
 	struct emuxki_voice	*pvoice, *rvoice, *lvoice;
 };
