@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.138 2009/06/07 22:43:02 christos Exp $
+#	$NetBSD: Makefile,v 1.139 2009/06/09 05:20:15 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -79,6 +79,10 @@ SUBDIR+=	libkrb5		# depends on libcrypto and more
 
 SUBDIR+=	librefuse	# depends on libpuffs
 SUBDIR+=	librumpuser	# depends on libpthread
+
+# these depend on libcrypto*, libz and libbz2
+SUBDIR+=	../crypto/external/bsd/openssh/lib
+SUBDIR+=	../crypto/external/bsd/netpgp/lib
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
