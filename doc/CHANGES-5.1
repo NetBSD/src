@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.27 2009/06/06 22:15:22 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.28 2009/06/09 18:07:57 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -912,4 +912,55 @@ sbin/atactl/atactl.c				1.54
 
 	make space for a trailing \0 in model,revision and serial buffers.
 	[mlelstv, ticket #794]
+
+external/mit/xorg/server/drivers/xf86-video-s3/Makefile patch
+ 
+	Add missing object file to build a properly working s3 module.
+	Fixes PR xsrc/41206.
+	[ahoka, ticket #795]
+
+sys/netinet/ip_carp.c				1.38
+
+	Make ip_carp.c compile, fixing usage of CARP_LOG().
+	[taca, ticket #796]
+
+bin/df/df.c					1.86
+
+	Block numbers are measured in f_frsize units. Make -P option
+	use this instead of f_bsize. Also account for reserved blocks
+	like normal non-P output.
+	Fixes PR bin/41541.
+	[mlelstv, ticket #797]
+
+sys/arch/alpha/alpha/locore.s			1.114
+sys/arch/alpha/alpha/vm_machdep.c		1.100
+sys/arch/alpha/include/alpha.h			1.24
+
+	Do not use lwp_trampoline for cpu_setfunc, but a simplified
+	setfunc_trampoline that does not call lwp_startup() instead.
+	[martin, ticket #798]
+
+sys/arch/mips/include/locore.h			1.79
+sys/arch/mips/mips/locore_mips1.S		1.65
+sys/arch/mips/mips/mipsX_subr.S			1.28
+sys/arch/mips/mips/mips_machdep.c		1.211
+sys/arch/mips/mips/vm_machdep.c			1.123
+
+	Do not use the same trampoline for cpu_lwp_fork and
+	cpu_setfunc - only the former needs to call lwp_startup().
+	[martin, ticket #799]
+
+sys/arch/sparc/dev/zs.c				1.116
+
+	Properly initialize child attach args to zero - we could end
+	up with various devices having different ideas about being
+	console otherwise.
+	[martin, ticket #800]
+
+sys/arch/powerpc/powerpc/locore_subr.S		1.38
+sys/arch/powerpc/powerpc/vm_machdep.c		1.77
+
+	Do not use the same trampoline for cpu_setfunc and
+	cpu_lwp_fork, the latter does a lot more work.
+	[martin, ticket #801]
 
