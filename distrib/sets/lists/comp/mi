@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1266 2009/06/08 17:15:23 christos Exp $
+#	$NetBSD: mi,v 1.1267 2009/06/09 05:25:44 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7261,18 +7261,19 @@
 ./usr/share/man/cat3/res_init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/res_isourserver.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_mkquery.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nclose.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_ndestroy.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nmkquery.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nmkupdate.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nquery.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nquerydomain.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nsearch.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nsend.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nsendsigned.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_nupdate.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_ourserver_p.0		comp-c-catman		.cat
-./usr/share/cat/cat3/res_pquery.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nclose.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_ndestroy.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_ninit.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nmkquery.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nmkupdate.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nquery.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nquerydomain.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nsearch.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nsend.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nsendsigned.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_nupdate.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_ourserver_p.0		comp-c-catman		.cat
+./usr/share/man/cat3/res_pquery.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_query.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_querydomain.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_search.0		comp-c-catman		.cat
@@ -18148,6 +18149,7 @@
 ./usr/share/man/man3/res_mkquery.3		comp-c-man		.man
 ./usr/share/man/man3/res_nclose.3		comp-c-man		.man
 ./usr/share/man/man3/res_ndestroy.3		comp-c-man		.man
+./usr/share/man/man3/res_ninit.3		comp-c-man		.man
 ./usr/share/man/man3/res_nmkquery.3		comp-c-man		.man
 ./usr/share/man/man3/res_nmkupdate.3		comp-c-man		.man
 ./usr/share/man/man3/res_nquery.3		comp-c-man		.man
