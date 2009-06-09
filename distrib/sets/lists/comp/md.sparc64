@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.43 2009/05/12 18:07:55 plunky Exp $
+# $NetBSD: md.sparc64,v 1.44 2009/06/09 05:46:44 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -425,6 +425,10 @@
 ./usr/lib/sparc/libmenu.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libmenu_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libmenu_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libnetpgp.a			comp-c-lib		compat
+./usr/lib/sparc/libnetpgp.so			comp-sys-shlib		compat,pic
+./usr/lib/sparc/libnetpgp_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libnetpgp_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libobjc.a			comp-c-lib		compat
 ./usr/lib/sparc/libobjc.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libobjc_p.a			comp-c-proflib		compat,profile
