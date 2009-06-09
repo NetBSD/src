@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.17 2009/05/19 13:42:35 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.18 2009/06/09 14:20:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.17 2009/05/19 13:42:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.18 2009/06/09 14:20:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -59,14 +59,6 @@ static int rump_vop_mkdir(void *);
 static int rump_vop_inactive(void *);
 static int rump_vop_reclaim(void *);
 static int rump_vop_success(void *);
-
-int (**dead_vnodeop_p)(void *);
-const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
-	{ NULL, NULL }
-};
-const struct vnodeopv_desc dead_vnodeop_opv_desc =
-	{ &dead_vnodeop_p, dead_vnodeop_entries };
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
