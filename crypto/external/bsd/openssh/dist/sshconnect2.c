@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.3 2009/06/09 13:32:46 stacktic Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.170 2008/11/04 08:22:13 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.3 2009/06/09 13:32:46 stacktic Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -450,7 +450,7 @@ input_userauth_banner(int type, u_int32_t seq, void *ctxt)
 		if (len > 65536)
 			len = 65536;
 		msg = xmalloc(len * 4 + 1); /* max expansion from strnvis() */
-		strvisx(msg, raw, len * 4 + 1, VIS_SAFE|VIS_OCTAL);
+		strvisx(msg, raw, len, VIS_SAFE|VIS_OCTAL);
 		fprintf(stderr, "%s", msg);
 		xfree(msg);
 	}
