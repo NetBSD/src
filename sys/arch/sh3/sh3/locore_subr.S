@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.50 2009/02/13 22:41:03 apb Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.51 2009/06/09 00:24:51 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.50 2009/02/13 22:41:03 apb Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.51 2009/06/09 00:24:51 uwe Exp $")
 
 
 /*
@@ -460,7 +460,7 @@ ENTRY(copyout)
 	cmp/hi	r1,	r2		/* bomb if uaddr isn't in user space */
 	bt	2f
 
-	mov.l	.L_copyout_curpcb, r1	/* set fault hander */
+	mov.l	.L_copyout_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
 	mov.l	.L_copyout_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -516,7 +516,7 @@ ENTRY(copyin)
 	cmp/hi	r1,	r2		/* bomb if uaddr isn't in user space */
 	bt	2f
 
-	mov.l	.L_copyin_curpcb, r1	/* set fault hander */
+	mov.l	.L_copyin_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
 	mov.l	.L_copyin_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -526,7 +526,7 @@ ENTRY(copyin)
 
 	mov	#0,	r0
 1:
-	mov.l	.L_copyin_curpcb, r1	/* clear fault hander */
+	mov.l	.L_copyin_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
