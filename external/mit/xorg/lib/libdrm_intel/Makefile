@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.1 2009/06/09 03:05:37 mrg Exp $
+#      $NetBSD: Makefile,v 1.2 2009/06/09 05:02:13 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,11 +7,15 @@ LIB=	drm_intel
 
 SRCS=	intel_bufmgr.c intel_bufmgr_fake.c intel_bufmgr_gem.c mm.c
 
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}/libdrm
+
 INCS=	intel_bufmgr.h
 INCSDIR=${X11INCDIR}
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}/libdrm
+# XXX not yet
+#PKGCONFIG=	libdrm_intel
+#PKGDIST=	libdrm
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

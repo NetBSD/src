@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/09 03:05:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2009/06/09 05:02:13 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ LIB=	drm
 
 SRCS=	xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c
 
-INCS=	xf86drm.h intel_bufmgr.h xf86drmMode.h
+INCS=	xf86drm.h xf86drmMode.h
 INCSDIR=${X11INCDIR}/X11
 .PATH:	${X11SRCDIR.${LIB}}/libdrm/intel
 
