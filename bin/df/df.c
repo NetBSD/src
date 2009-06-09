@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.83 2008/07/20 00:52:39 lukem Exp $ */
+/*	$NetBSD: df.c,v 1.83.4.1 2009/06/09 17:35:38 snj Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.83 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: df.c,v 1.83.4.1 2009/06/09 17:35:38 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -473,9 +473,9 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		 */
 		(void)printf("%s %" PRId64 " %" PRId64 " %" PRId64 " %s %s\n",
 		    sfsp->f_mntfromname,
-		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
-		    fsbtoblk(used, sfsp->f_bsize, blocksize),
-		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize),
+		    fsbtoblk(sfsp->f_blocks, sfsp->f_frsize, blocksize),
+		    fsbtoblk(used, sfsp->f_frsize, blocksize),
+		    fsbtoblk(bavail, sfsp->f_frsize, blocksize),
 		    availblks == 0 ? full : strpct64((uint64_t) used,
 		    (uint64_t) availblks, 0), sfsp->f_mntonname);
 		/*
