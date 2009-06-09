@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.90 2009/04/20 21:33:49 mrg Exp $
+#	 $NetBSD: mi,v 1.91 2009/06/09 04:39:50 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5475,10 +5475,12 @@
 ./usr/X11R7/include/X11/dri/xf86dri.h			-unknown-	xorg
 ./usr/X11R7/include/X11/dri/xf86dristr.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/drm.h			-unknown-	xorg
+./usr/X11R7/include/X11/drm/drm_mode.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/drm_sarea.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/i915_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/mach64_drm.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/mga_drm.h			-unknown-	xorg
+./usr/X11R7/include/X11/drm/nouveau_drm.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/r128_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/r300_reg.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/radeon_drm.h		-unknown-	xorg
@@ -5486,6 +5488,7 @@
 ./usr/X11R7/include/X11/drm/sis_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/drm/via_3d_reg.h		-unknown-	xorg
 ./usr/X11R7/include/X11/drm/via_drm.h			-unknown-	xorg
+./usr/X11R7/include/X11/drm/xgi_drm.h			-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/MITMisc.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/Print.h		-obsolete-	obsolete
 ./usr/X11R7/include/X11/extensions/Printstr.h		-obsolete-	obsolete
@@ -5624,7 +5627,8 @@
 ./usr/X11R7/include/X11/keysym.h			-unknown-	xorg
 ./usr/X11R7/include/X11/keysymdef.h			-unknown-	xorg
 ./usr/X11R7/include/X11/xf86drm.h			-unknown-	xorg
-./usr/X11R7/include/X11/xf86mm.h			-unknown-	xorg
+./usr/X11R7/include/X11/xf86drmMode.h			-unknown-	xorg
+./usr/X11R7/include/X11/xf86mm.h			-obsolete-	obsolete
 ./usr/X11R7/include/X11/xpm.h				-unknown-	xorg
 ./usr/X11R7/include/expat.h				-unknown-	xorg
 ./usr/X11R7/include/expat_external.h			-unknown-	xorg
@@ -9272,6 +9276,7 @@
 ./usr/libdata/lint/llib-ldps.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-ldpstk.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-ldrm.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lexpat.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lexpat.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lfntstubs.ln			-unknown-	lint,x11

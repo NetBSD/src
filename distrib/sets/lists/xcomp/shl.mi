@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.14 2009/04/20 04:03:49 mrg Exp $
+#	$NetBSD: shl.mi,v 1.15 2009/06/09 04:39:50 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -90,6 +90,7 @@
 ./usr/X11R7/lib/libXxf86misc_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXxf86vm_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libdrm_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libexpat_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libfontconfig_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libfontenc_pic.a			-unknown-	xorg
