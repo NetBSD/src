@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.91 2009/06/09 04:39:50 mrg Exp $
+#	 $NetBSD: mi,v 1.92 2009/06/09 05:24:31 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9276,7 +9276,6 @@
 ./usr/libdata/lint/llib-ldps.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-ldpstk.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-ldrm.ln				-unknown-	lint,xorg
-./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lexpat.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lexpat.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lfntstubs.ln			-unknown-	lint,x11
