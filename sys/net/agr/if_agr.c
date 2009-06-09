@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.23 2009/05/29 04:57:05 darran Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.24 2009/06/09 22:21:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.23 2009/05/29 04:57:05 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.24 2009/06/09 22:21:54 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -646,7 +646,8 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 * start to modify ifp_port.
 	 */
 
-	/* XXX this should probably be SIOCALIFADDR but that doesn't 
+	/*
+	 * XXX this should probably be SIOCALIFADDR but that doesn't 
 	 * appear to work (ENOTTY). We want to change the mac address
 	 * of each port to that of the first port. No need for arps 
 	 * since there are no inet addresses assigned to the ports.
@@ -969,7 +970,8 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 
 	case SIOCSIFFLAGS:
-		/* Check for a change in vlan status.  This ioctl is the 
+		/*
+		 * Check for a change in vlan status.  This ioctl is the
 		 * only way we can tell that a vlan has attached or detached.
 		 * Note the agr interface must be up.
 		 */
