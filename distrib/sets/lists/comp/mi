@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1267 2009/06/09 05:25:44 snj Exp $
+#	$NetBSD: mi,v 1.1268 2009/06/09 05:44:42 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -12700,9 +12700,11 @@
 ./usr/share/man/html3/res_findzonecut.html	comp-c-htmlman		html
 ./usr/share/man/html3/res_getservers.html	comp-c-htmlman		html
 ./usr/share/man/html3/res_hostalias.html	comp-c-htmlman		html
+./usr/share/man/html3/res_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_isourserver.html	comp-c-htmlman		html
 ./usr/share/man/html3/res_mkquery.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_nclose.html		comp-c-htmlman		html
+./usr/share/man/html3/res_ninit.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_ndestroy.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_nmkquery.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_nmkupdate.html	comp-c-htmlman		html
