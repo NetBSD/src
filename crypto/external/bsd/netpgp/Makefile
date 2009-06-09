@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2009/04/23 06:31:55 agc Exp $
+#	$NetBSD: Makefile,v 1.2 2009/06/09 00:51:00 agc Exp $
 
 SUBDIR=		lib .WAIT
 
-SUBDIR+=	bin
+SUBDIR+=	netpgp netpgpverify
 
 .include <bsd.subdir.mk>

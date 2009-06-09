@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.17 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.18 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -155,7 +155,7 @@ keydata_reader(void *dest, size_t length, __ops_error_t **errors,
 		reader->packet += 1;
 		reader->offset = 0;
 	}
-	if (reader->packet == reader->key->npackets) {
+	if (reader->packet == reader->key->packetc) {
 		return 0;
 	}
 
@@ -211,7 +211,7 @@ __ops_cb_ret_t
 __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	 *content = &pkt->u;
-	const __ops_keydata_t	 *signer;
+	const __ops_key_t	 *signer;
 	validate_key_cb_t	 *key;
 	__ops_error_t		**errors;
 	__ops_io_t		 *io;
@@ -374,7 +374,7 @@ __ops_cb_ret_t
 validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	 *content = &pkt->u;
-	const __ops_keydata_t	 *signer;
+	const __ops_key_t	 *signer;
 	validate_data_cb_t	 *data;
 	__ops_error_t		**errors;
 	__ops_io_t		 *io;
@@ -395,13 +395,13 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		 */
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
+	case OPS_PTAG_CT_LITDATA_HEADER:
 		/* ignore */
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA_BODY:
+	case OPS_PTAG_CT_LITDATA_BODY:
 		data->data.litdata_body = content->litdata_body;
-		data->type = LITERAL_DATA;
+		data->type = LITDATA;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
 				       data->data.litdata_body.length);
 		return OPS_KEEP_MEMORY;
@@ -505,14 +505,14 @@ keydata_destroyer(__ops_reader_t *readinfo)
 }
 
 void 
-__ops_keydata_reader_set(__ops_parseinfo_t *pinfo, const __ops_keydata_t *key)
+__ops_keydata_reader_set(__ops_stream_t *stream, const __ops_key_t *key)
 {
 	validate_reader_t *data = calloc(1, sizeof(*data));
 
 	data->key = key;
 	data->packet = 0;
 	data->offset = 0;
-	__ops_reader_set(pinfo, keydata_reader, keydata_destroyer, data);
+	__ops_reader_set(stream, keydata_reader, keydata_destroyer, data);
 }
 
 /**
@@ -541,12 +541,12 @@ validate_result_status(__ops_validation_t *val)
  */
 unsigned 
 __ops_validate_key_sigs(__ops_validation_t *result,
-	const __ops_keydata_t *key,
+	const __ops_key_t *key,
 	const __ops_keyring_t *keyring,
 	__ops_cb_ret_t cb_get_passphrase(const __ops_packet_t *,
 						__ops_cbdata_t *))
 {
-	__ops_parseinfo_t	*pinfo;
+	__ops_stream_t	*stream;
 	validate_key_cb_t	 keysigs;
 	const int		 printerrors = 1;
 
@@ -554,20 +554,20 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 	keysigs.result = result;
 	keysigs.getpassphrase = cb_get_passphrase;
 
-	pinfo = __ops_parseinfo_new();
+	stream = __ops_parseinfo_new();
 	/* __ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED); */
 
 	keysigs.keyring = keyring;
 
-	__ops_set_callback(pinfo, __ops_validate_key_cb, &keysigs);
-	pinfo->readinfo.accumulate = 1;
-	__ops_keydata_reader_set(pinfo, key);
+	__ops_set_callback(stream, __ops_validate_key_cb, &keysigs);
+	stream->readinfo.accumulate = 1;
+	__ops_keydata_reader_set(stream, key);
 
 	/* Note: Coverity incorrectly reports an error that keysigs.reader */
 	/* is never used. */
-	keysigs.reader = pinfo->readinfo.arg;
+	keysigs.reader = stream->readinfo.arg;
 
-	__ops_parse(pinfo, !printerrors);
+	__ops_parse(stream, !printerrors);
 
 	__ops_pubkey_free(&keysigs.pubkey);
 	if (keysigs.subkey.version) {
@@ -576,7 +576,7 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 	__ops_userid_free(&keysigs.userid);
 	__ops_userattr_free(&keysigs.userattr);
 
-	__ops_parseinfo_delete(pinfo);
+	__ops_parseinfo_delete(stream);
 
 	return (!result->invalidc && !result->unknownc && result->validc);
 }
@@ -595,10 +595,10 @@ __ops_validate_all_sigs(__ops_validation_t *result,
 	    __ops_cb_ret_t cb_get_passphrase(const __ops_packet_t *,
 	    					__ops_cbdata_t *))
 {
-	int	n;
+	unsigned	n;
 
 	(void) memset(result, 0x0, sizeof(*result));
-	for (n = 0; n < ring->nkeys; ++n) {
+	for (n = 0; n < ring->keyc; ++n) {
 		__ops_validate_key_sigs(result, &ring->keys[n], ring,
 				cb_get_passphrase);
 	}
@@ -652,7 +652,7 @@ __ops_validate_file(__ops_io_t *io,
 			const __ops_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
-	__ops_parseinfo_t	*parse = NULL;
+	__ops_stream_t	*parse = NULL;
 	struct stat		 st;
 	const int		 printerrors = 1;
 	unsigned		 ret;
@@ -774,10 +774,10 @@ __ops_validate_mem(__ops_io_t *io,
 			const __ops_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
-	__ops_parseinfo_t	*pinfo = NULL;
+	__ops_stream_t	*stream = NULL;
 	const int		 printerrors = 1;
 
-	__ops_setup_memory_read(io, &pinfo, mem, &validation, validate_data_cb,				1);
+	__ops_setup_memory_read(io, &stream, mem, &validation, validate_data_cb,				1);
 	/* Set verification reader and handling options */
 	(void) memset(&validation, 0x0, sizeof(validation));
 	validation.result = result;
@@ -786,20 +786,20 @@ __ops_validate_mem(__ops_io_t *io,
 	__ops_memory_init(validation.mem, 128);
 	/* Note: Coverity incorrectly reports an error that validation.reader */
 	/* is never used. */
-	validation.reader = pinfo->readinfo.arg;
+	validation.reader = stream->readinfo.arg;
 
 	if (armoured) {
-		__ops_reader_push_dearmour(pinfo);
+		__ops_reader_push_dearmour(stream);
 	}
 
 	/* Do the verification */
-	__ops_parse(pinfo, !printerrors);
+	__ops_parse(stream, !printerrors);
 
 	/* Tidy up */
 	if (armoured) {
-		__ops_reader_pop_dearmour(pinfo);
+		__ops_reader_pop_dearmour(stream);
 	}
-	__ops_teardown_memory_read(pinfo, mem);
+	__ops_teardown_memory_read(stream, mem);
 	__ops_memory_free(validation.mem);
 
 	return validate_result_status(result);

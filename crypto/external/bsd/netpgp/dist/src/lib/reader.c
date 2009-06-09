@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.17 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.18 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -136,63 +136,82 @@ __RCSID("$NetBSD: reader.c,v 1.17 2009/05/31 23:26:20 agc Exp $");
 #include "netpgpdigest.h"
 
 
+/* get a pass phrase from the user */
+int
+__ops_getpassphrase(void *in, char *phrase, size_t size)
+{
+	char	*p;
+
+	if (in == NULL) {
+		while ((p = getpass("netpgp passphrase: ")) == NULL) {
+		}
+		(void) snprintf(phrase, size, "%s", p);
+	} else {
+		if (fgets(phrase, size, in) == NULL) {
+			return 0;
+		}
+		phrase[strlen(phrase) - 1] = 0x0;
+	}
+	return 1;
+}
+
 /**
  * \ingroup Internal_Readers_Generic
  * \brief Starts reader stack
- * \param pinfo Parse settings
+ * \param stream Parse settings
  * \param reader Reader to use
  * \param destroyer Destroyer to use
  * \param vp Reader-specific arg
  */
 void 
-__ops_reader_set(__ops_parseinfo_t *pinfo,
+__ops_reader_set(__ops_stream_t *stream,
 		__ops_reader_func_t *reader,
 		__ops_reader_destroyer_t *destroyer,
 		void *vp)
 {
-	pinfo->readinfo.reader = reader;
-	pinfo->readinfo.destroyer = destroyer;
-	pinfo->readinfo.arg = vp;
+	stream->readinfo.reader = reader;
+	stream->readinfo.destroyer = destroyer;
+	stream->readinfo.arg = vp;
 }
 
 /**
  * \ingroup Internal_Readers_Generic
  * \brief Adds to reader stack
- * \param pinfo Parse settings
+ * \param stream Parse settings
  * \param reader Reader to use
  * \param destroyer Reader's destroyer
  * \param vp Reader-specific arg
  */
 void 
-__ops_reader_push(__ops_parseinfo_t *pinfo,
+__ops_reader_push(__ops_stream_t *stream,
 		__ops_reader_func_t *reader,
 		__ops_reader_destroyer_t *destroyer,
 		void *vp)
 {
 	__ops_reader_t *readinfo = calloc(1, sizeof(*readinfo));
 
-	*readinfo = pinfo->readinfo;
-	(void) memset(&pinfo->readinfo, 0x0, sizeof(pinfo->readinfo));
-	pinfo->readinfo.next = readinfo;
-	pinfo->readinfo.parent = pinfo;
+	*readinfo = stream->readinfo;
+	(void) memset(&stream->readinfo, 0x0, sizeof(stream->readinfo));
+	stream->readinfo.next = readinfo;
+	stream->readinfo.parent = stream;
 
 	/* should copy accumulate flags from other reader? RW */
-	pinfo->readinfo.accumulate = readinfo->accumulate;
+	stream->readinfo.accumulate = readinfo->accumulate;
 
-	__ops_reader_set(pinfo, reader, destroyer, vp);
+	__ops_reader_set(stream, reader, destroyer, vp);
 }
 
 /**
  * \ingroup Internal_Readers_Generic
  * \brief Removes from reader stack
- * \param pinfo Parse settings
+ * \param stream Parse settings
  */
 void 
-__ops_reader_pop(__ops_parseinfo_t *pinfo)
+__ops_reader_pop(__ops_stream_t *stream)
 {
-	__ops_reader_t *next = pinfo->readinfo.next;
+	__ops_reader_t *next = stream->readinfo.next;
 
-	pinfo->readinfo = *next;
+	stream->readinfo = *next;
 	(void) free(next);
 }
 
@@ -237,7 +256,7 @@ typedef struct {
 
 		BEGIN_PGP_SIGNED_MESSAGE
 	} lastseen;
-	__ops_parseinfo_t *parse_info;
+	__ops_stream_t *parse_info;
 	unsigned	seen_nl:1;
 	unsigned	prev_nl:1;
 	unsigned	allow_headers_without_gap:1;
@@ -458,7 +477,7 @@ flush(dearmour_t *dearmour, __ops_cbdata_t *cbinfo)
 	if (dearmour->unarmoredc > 0) {
 		content.u.unarmoured_text.data = dearmour->unarmoured;
 		content.u.unarmoured_text.length = dearmour->unarmoredc;
-		CALLBACK(cbinfo, OPS_PTAG_CT_UNARMOURED_TEXT, &content);
+		CALLBACK(OPS_PTAG_CT_UNARMOURED_TEXT, cbinfo, &content);
 		dearmour->unarmoredc = 0;
 	}
 }
@@ -619,7 +638,7 @@ process_dash_escaped(dearmour_t *dearmour,
 			if (__ops_get_debug_level(__FILE__)) {
 				fprintf(stderr, "Got body:\n%s\n", body->data);
 			}
-			CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY,
+			CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY, cbinfo,
 						&content);
 			body->length = 0;
 		}
@@ -630,7 +649,7 @@ process_dash_escaped(dearmour_t *dearmour,
 				(void) fprintf(stderr, "Got body (2):\n%s\n",
 						body->data);
 			}
-			CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY,
+			CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY, cbinfo,
 					&content);
 			body->length = 0;
 		}
@@ -648,7 +667,7 @@ process_dash_escaped(dearmour_t *dearmour,
 
 	/* don't send that one character, because it's part of the trailer */
 	trailer->hash = hash;
-	CALLBACK(cbinfo, OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, &content2);
+	CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, cbinfo, &content2);
 	return total;
 }
 
@@ -1104,8 +1123,8 @@ got_minus:
 				__ops_dup_headers(
 				&content.u.cleartext_head.headers,
 				&dearmour->headers);
-				CALLBACK(cbinfo,
-					OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
+				CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
+					cbinfo,
 					&content);
 				ret = process_dash_escaped(dearmour, errors,
 						readinfo, cbinfo);
@@ -1118,7 +1137,7 @@ got_minus:
 						dearmour->headers;
 				(void) memset(&dearmour->headers, 0x0,
 						sizeof(dearmour->headers));
-				CALLBACK(cbinfo, OPS_PTAG_CT_ARMOUR_HEADER,
+				CALLBACK(OPS_PTAG_CT_ARMOUR_HEADER, cbinfo,
 						&content);
 				base64(dearmour);
 			}
@@ -1231,12 +1250,12 @@ got_minus2:
 						dearmour->headers;
 				(void) memset(&dearmour->headers, 0x0,
 						sizeof(dearmour->headers));
-				CALLBACK(cbinfo, OPS_PTAG_CT_ARMOUR_HEADER,
+				CALLBACK(OPS_PTAG_CT_ARMOUR_HEADER, cbinfo,
 						&content);
 				base64(dearmour);
 			} else {
 				content.u.armour_trailer.type = buf;
-				CALLBACK(cbinfo, OPS_PTAG_CT_ARMOUR_TRAILER,
+				CALLBACK(OPS_PTAG_CT_ARMOUR_TRAILER, cbinfo,
 						&content);
 				dearmour->state = OUTSIDE_BLOCK;
 			}
@@ -1262,9 +1281,9 @@ armoured_data_destroyer(__ops_reader_t *readinfo)
  * \sa __ops_reader_pop_dearmour()
  */
 void 
-__ops_reader_push_dearmour(__ops_parseinfo_t *parse_info)
+__ops_reader_push_dearmour(__ops_stream_t *parse_info)
 /*
- * This function originally had these parameters to cater for packets which
+ * This function originally had these params to cater for packets which
  * didn't strictly match the RFC. The initial 0.5 release is only going to
  * support strict checking. If it becomes desirable to support loose checking
  * of armoured packets and these params are reinstated, parse_headers() must
@@ -1298,17 +1317,17 @@ __ops_reader_push_dearmour(__ops_parseinfo_t *parse_info)
 /**
  * \ingroup Core_Readers_Armour
  * \brief Pops dearmour reader from stock
- * \param pinfo
+ * \param stream
  * \sa __ops_reader_push_dearmour()
  */
 void 
-__ops_reader_pop_dearmour(__ops_parseinfo_t *pinfo)
+__ops_reader_pop_dearmour(__ops_stream_t *stream)
 {
 	dearmour_t *dearmour;
 
-	dearmour = __ops_reader_get_arg(__ops_readinfo(pinfo));
+	dearmour = __ops_reader_get_arg(__ops_readinfo(stream));
 	(void) free(dearmour);
-	__ops_reader_pop(pinfo);
+	__ops_reader_pop(stream);
 }
 
 /**************************************************************************/
@@ -1460,7 +1479,7 @@ encrypted_data_destroyer(__ops_reader_t *readinfo)
  * \sa __ops_reader_pop_decrypt()
  */
 void 
-__ops_reader_push_decrypt(__ops_parseinfo_t *pinfo, __ops_crypt_t *decrypt,
+__ops_reader_push_decrypt(__ops_stream_t *stream, __ops_crypt_t *decrypt,
 			__ops_region_t *region)
 {
 	encrypted_t	*encrypted;
@@ -1469,7 +1488,7 @@ __ops_reader_push_decrypt(__ops_parseinfo_t *pinfo, __ops_crypt_t *decrypt,
 	encrypted->decrypt = decrypt;
 	encrypted->region = region;
 	__ops_decrypt_init(encrypted->decrypt);
-	__ops_reader_push(pinfo, encrypted_data_reader,
+	__ops_reader_push(stream, encrypted_data_reader,
 			encrypted_data_destroyer, encrypted);
 }
 
@@ -1479,14 +1498,14 @@ __ops_reader_push_decrypt(__ops_parseinfo_t *pinfo, __ops_crypt_t *decrypt,
  * \sa __ops_reader_push_decrypt()
  */
 void 
-__ops_reader_pop_decrypt(__ops_parseinfo_t *pinfo)
+__ops_reader_pop_decrypt(__ops_stream_t *stream)
 {
 	encrypted_t	*encrypted;
 
-	encrypted = __ops_reader_get_arg(__ops_readinfo(pinfo));
+	encrypted = __ops_reader_get_arg(__ops_readinfo(stream));
 	encrypted->decrypt->decrypt_finish(encrypted->decrypt);
 	(void) free(encrypted);
-	__ops_reader_pop(pinfo);
+	__ops_reader_pop(stream);
 }
 
 /**************************************************************************/
@@ -1657,14 +1676,14 @@ se_ip_data_destroyer(__ops_reader_t *readinfo)
    \ingroup Internal_Readers_SEIP
 */
 void 
-__ops_reader_push_se_ip_data(__ops_parseinfo_t *pinfo, __ops_crypt_t *decrypt,
+__ops_reader_push_se_ip_data(__ops_stream_t *stream, __ops_crypt_t *decrypt,
 			   __ops_region_t * region)
 {
 	decrypt_se_ip_t *se_ip = calloc(1, sizeof(*se_ip));
 
 	se_ip->region = region;
 	se_ip->decrypt = decrypt;
-	__ops_reader_push(pinfo, se_ip_data_reader, se_ip_data_destroyer,
+	__ops_reader_push(stream, se_ip_data_reader, se_ip_data_destroyer,
 				se_ip);
 }
 
@@ -1672,14 +1691,14 @@ __ops_reader_push_se_ip_data(__ops_parseinfo_t *pinfo, __ops_crypt_t *decrypt,
    \ingroup Internal_Readers_SEIP
  */
 void 
-__ops_reader_pop_se_ip_data(__ops_parseinfo_t *pinfo)
+__ops_reader_pop_se_ip_data(__ops_stream_t *stream)
 {
 	/*
 	 * decrypt_se_ip_t
-	 * *se_ip=__ops_reader_get_arg(__ops_readinfo(pinfo));
+	 * *se_ip=__ops_reader_get_arg(__ops_readinfo(stream));
 	 */
 	/* (void) free(se_ip); */
-	__ops_reader_pop(pinfo);
+	__ops_reader_pop(stream);
 }
 
 /**************************************************************************/
@@ -1741,12 +1760,12 @@ reader_fd_destroyer(__ops_reader_t *readinfo)
 */
 
 void 
-__ops_reader_set_fd(__ops_parseinfo_t *pinfo, int fd)
+__ops_reader_set_fd(__ops_stream_t *stream, int fd)
 {
 	mmap_reader_t *reader = calloc(1, sizeof(*reader));
 
 	reader->fd = fd;
-	__ops_reader_set(pinfo, fd_reader, reader_fd_destroyer, reader);
+	__ops_reader_set(stream, fd_reader, reader_fd_destroyer, reader);
 }
 
 /**************************************************************************/
@@ -1793,7 +1812,7 @@ mem_destroyer(__ops_reader_t *readinfo)
 */
 
 void 
-__ops_reader_set_memory(__ops_parseinfo_t *pinfo, const void *buffer,
+__ops_reader_set_memory(__ops_stream_t *stream, const void *buffer,
 		      size_t length)
 {
 	reader_mem_t *mem = calloc(1, sizeof(*mem));
@@ -1801,7 +1820,7 @@ __ops_reader_set_memory(__ops_parseinfo_t *pinfo, const void *buffer,
 	mem->buffer = buffer;
 	mem->length = length;
 	mem->offset = 0;
-	__ops_reader_set(pinfo, mem_reader, mem_destroyer, mem);
+	__ops_reader_set(stream, mem_reader, mem_destroyer, mem);
 }
 
 /**************************************************************************/
@@ -1848,7 +1867,7 @@ __ops_teardown_memory_write(__ops_output_t *output, __ops_memory_t *mem)
 /**
    \ingroup Core_Readers
    \brief Create parse_info and sets to read from memory
-   \param pinfo Address where new parse_info will be set
+   \param stream Address where new parse_info will be set
    \param mem Memory to read from
    \param arg Reader-specific arg
    \param callback Callback to use with reader
@@ -1858,35 +1877,35 @@ __ops_teardown_memory_write(__ops_output_t *output, __ops_memory_t *mem)
 */
 void 
 __ops_setup_memory_read(__ops_io_t *io,
-			__ops_parseinfo_t **pinfo,
+			__ops_stream_t **stream,
 			__ops_memory_t *mem,
 			void *vp,
 			__ops_cb_ret_t callback(const __ops_packet_t *,
 						__ops_cbdata_t *),
 			unsigned accumulate)
 {
-	*pinfo = __ops_parseinfo_new();
-	(*pinfo)->io = (*pinfo)->cbinfo.io = io;
-	__ops_set_callback(*pinfo, callback, vp);
-	__ops_reader_set_memory(*pinfo,
+	*stream = __ops_parseinfo_new();
+	(*stream)->io = (*stream)->cbinfo.io = io;
+	__ops_set_callback(*stream, callback, vp);
+	__ops_reader_set_memory(*stream,
 			      __ops_mem_data(mem),
 			      __ops_mem_len(mem));
 	if (accumulate) {
-		(*pinfo)->readinfo.accumulate = 1;
+		(*stream)->readinfo.accumulate = 1;
 	}
 }
 
 /**
    \ingroup Core_Readers
-   \brief Frees pinfo and mem
-   \param pinfo
+   \brief Frees stream and mem
+   \param stream
    \param mem
    \sa __ops_setup_memory_read()
 */
 void 
-__ops_teardown_memory_read(__ops_parseinfo_t *pinfo, __ops_memory_t *mem)
+__ops_teardown_memory_read(__ops_stream_t *stream, __ops_memory_t *mem)
 {
-	__ops_parseinfo_delete(pinfo);
+	__ops_parseinfo_delete(stream);
 	__ops_memory_free(mem);
 }
 
@@ -1988,7 +2007,7 @@ __ops_teardown_file_append(__ops_output_t *output, int fd)
 /**
    \ingroup Core_Readers
    \brief Creates parse_info, opens file, and sets to read from file
-   \param pinfo Address where new parse_info will be set
+   \param stream Address where new parse_info will be set
    \param filename Name of file to read
    \param vp Reader-specific arg
    \param callback Callback to use when reading
@@ -1998,7 +2017,7 @@ __ops_teardown_file_append(__ops_output_t *output, int fd)
 */
 int 
 __ops_setup_file_read(__ops_io_t *io,
-			__ops_parseinfo_t **pinfo,
+			__ops_stream_t **stream,
 			const char *filename,
 			void *vp,
 			__ops_cb_ret_t callback(const __ops_packet_t *,
@@ -2016,32 +2035,32 @@ __ops_setup_file_read(__ops_io_t *io,
 		(void) fprintf(io->errs, "can't open \"%s\"\n", filename);
 		return fd;
 	}
-	*pinfo = __ops_parseinfo_new();
-	(*pinfo)->io = (*pinfo)->cbinfo.io = io;
-	__ops_set_callback(*pinfo, callback, vp);
+	*stream = __ops_parseinfo_new();
+	(*stream)->io = (*stream)->cbinfo.io = io;
+	__ops_set_callback(*stream, callback, vp);
 #ifdef USE_MMAP_FOR_FILES
-	__ops_reader_set_mmap(*pinfo, fd);
+	__ops_reader_set_mmap(*stream, fd);
 #else
-	__ops_reader_set_fd(*pinfo, fd);
+	__ops_reader_set_fd(*stream, fd);
 #endif
 	if (accumulate) {
-		(*pinfo)->readinfo.accumulate = 1;
+		(*stream)->readinfo.accumulate = 1;
 	}
 	return fd;
 }
 
 /**
    \ingroup Core_Readers
-   \brief Frees pinfo and closes fd
-   \param pinfo
+   \brief Frees stream and closes fd
+   \param stream
    \param fd
    \sa __ops_setup_file_read()
 */
 void 
-__ops_teardown_file_read(__ops_parseinfo_t *pinfo, int fd)
+__ops_teardown_file_read(__ops_stream_t *stream, int fd)
 {
 	close(fd);
-	__ops_parseinfo_delete(pinfo);
+	__ops_parseinfo_delete(stream);
 }
 
 __ops_cb_ret_t
@@ -2055,7 +2074,7 @@ litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	}
 	/* Read data from packet into static buffer */
 	switch (pkt->tag) {
-	case OPS_PTAG_CT_LITERAL_DATA_BODY:
+	case OPS_PTAG_CT_LITDATA_BODY:
 		/* if writer enabled, use it */
 		if (cbinfo->output) {
 			if (__ops_get_debug_level(__FILE__)) {
@@ -2068,9 +2087,9 @@ litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		}
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
+	case OPS_PTAG_CT_LITDATA_HEADER:
 		/* ignore */
-printf("LITERAL_DATA_HEADER: filename ,%s,\n", content->litdata_header.filename);
+printf("LITDATA_HEADER: filename ,%s,\n", content->litdata_header.filename);
 		break;
 
 	default:
@@ -2159,7 +2178,7 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				(void) memset(&seckey, 0x0, sizeof(seckey));
 				seckey.u.skey_passphrase.passphrase =
 					&cbinfo->cryptinfo.passphrase;
-				CALLBACK(cbinfo, OPS_GET_PASSPHRASE, &seckey);
+				CALLBACK(OPS_GET_PASSPHRASE, cbinfo, &seckey);
 				if (!cbinfo->cryptinfo.passphrase) {
 					fprintf(stderr,
 						"can't get passphrase\n");
@@ -2192,8 +2211,12 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	__ops_io_t		*io;
+	FILE			*passfp;
 
 	io = cbinfo->io;
+	if ((passfp = cbinfo->passfp) != NULL) {
+		/* read from passfp and return */
+	}
 	if (__ops_get_debug_level(__FILE__)) {
 		__ops_print_packet(pkt);
 	}
@@ -2205,7 +2228,7 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	switch (pkt->tag) {
 	case OPS_GET_PASSPHRASE:
 		*(content->skey_passphrase.passphrase) =
-			strdup(getpass("netpgp passphrase: "));
+				strdup(getpass("netpgp passphrase: "));
 		return OPS_KEEP_MEMORY;
 	default:
 		break;
@@ -2214,9 +2237,9 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 }
 
 unsigned 
-__ops_reader_set_accumulate(__ops_parseinfo_t *pinfo, unsigned state)
+__ops_reader_set_accumulate(__ops_stream_t *stream, unsigned state)
 {
-	return pinfo->readinfo.accumulate = state;
+	return stream->readinfo.accumulate = state;
 }
 
 /**************************************************************************/
@@ -2244,10 +2267,10 @@ hash_reader(void *dest,
    \brief Push hashed data reader on stack
 */
 void 
-__ops_reader_push_hash(__ops_parseinfo_t *pinfo, __ops_hash_t *hash)
+__ops_reader_push_hash(__ops_stream_t *stream, __ops_hash_t *hash)
 {
 	hash->init(hash);
-	__ops_reader_push(pinfo, hash_reader, NULL, hash);
+	__ops_reader_push(stream, hash_reader, NULL, hash);
 }
 
 /**
@@ -2255,9 +2278,9 @@ __ops_reader_push_hash(__ops_parseinfo_t *pinfo, __ops_hash_t *hash)
    \brief Pop hashed data reader from stack
 */
 void 
-__ops_reader_pop_hash(__ops_parseinfo_t *pinfo)
+__ops_reader_pop_hash(__ops_stream_t *stream)
 {
-	__ops_reader_pop(pinfo);
+	__ops_reader_pop(stream);
 }
 
 /* read memory from the previously mmap-ed file */
@@ -2292,7 +2315,7 @@ mmap_destroyer(__ops_reader_t *readinfo)
 
 /* set up the file to use mmap-ed memory if available, file IO otherwise */
 void 
-__ops_reader_set_mmap(__ops_parseinfo_t *pinfo, int fd)
+__ops_reader_set_mmap(__ops_stream_t *stream, int fd)
 {
 	mmap_reader_t	*mem = calloc(1, sizeof(*mem));
 	struct stat	 st;
@@ -2304,10 +2327,10 @@ __ops_reader_set_mmap(__ops_parseinfo_t *pinfo, int fd)
 		mem->mem = mmap(NULL, (size_t)st.st_size, PROT_READ,
 				MAP_FILE | MAP_PRIVATE, fd, 0);
 		if (mem->mem == MAP_FAILED) {
-			__ops_reader_set(pinfo, fd_reader, reader_fd_destroyer,
+			__ops_reader_set(stream, fd_reader, reader_fd_destroyer,
 					mem);
 		} else {
-			__ops_reader_set(pinfo, mmap_reader, mmap_destroyer,
+			__ops_reader_set(stream, mmap_reader, mmap_destroyer,
 					mem);
 		}
 	}

@@ -66,10 +66,10 @@ int             __ops_get_debug_level(const char *);
 
 #define NETPGP_BUFSIZ	8192
 
-#define CALLBACK(cbinfo, t, pc)	do {					\
-	(pc)->tag = (t);						\
-	if (__ops_callback((pc), (cbinfo)) == OPS_RELEASE_MEMORY) {	\
-		__ops_parser_content_free(pc);				\
+#define CALLBACK(t, cbinfo, pkt)	do {				\
+	(pkt)->tag = (t);						\
+	if (__ops_callback(pkt, cbinfo) == OPS_RELEASE_MEMORY) {	\
+		__ops_parser_content_free(pkt);				\
 	}								\
 } while(/* CONSTCOND */0)
 

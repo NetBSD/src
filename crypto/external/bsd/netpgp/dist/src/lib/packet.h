@@ -185,7 +185,7 @@ typedef enum {
 	OPS_PTAG_CT_COMPRESSED = 8,	/* Compressed Data Packet */
 	OPS_PTAG_CT_SE_DATA = 9,/* Symmetrically Encrypted Data Packet */
 	OPS_PTAG_CT_MARKER = 10,/* Marker Packet */
-	OPS_PTAG_CT_LITERAL_DATA = 11,	/* Literal Data Packet */
+	OPS_PTAG_CT_LITDATA = 11,	/* Literal Data Packet */
 	OPS_PTAG_CT_TRUST = 12,	/* Trust Packet */
 	OPS_PTAG_CT_USER_ID = 13,	/* User ID Packet */
 	OPS_PTAG_CT_PUBLIC_SUBKEY = 14,	/* Public Subkey Packet */
@@ -259,8 +259,8 @@ typedef enum {
 	OPS_PTAG_SS_USERDEFINED10 = 0x200 + 110,
 
 	/* pseudo content types */
-	OPS_PTAG_CT_LITERAL_DATA_HEADER = 0x300,
-	OPS_PTAG_CT_LITERAL_DATA_BODY = 0x300 + 1,
+	OPS_PTAG_CT_LITDATA_HEADER = 0x300,
+	OPS_PTAG_CT_LITDATA_BODY = 0x300 + 1,
 	OPS_PTAG_CT_SIGNATURE_HEADER = 0x300 + 2,
 	OPS_PTAG_CT_SIGNATURE_FOOTER = 0x300 + 3,
 	OPS_PTAG_CT_ARMOUR_HEADER = 0x300 + 4,
@@ -358,7 +358,7 @@ typedef enum {
 	OPS_PKA_PRIVATE10 = 110	/* Private/Experimental Algorithm */
 } __ops_pubkey_alg_t;
 
-/** Structure to hold one DSA public key parameters.
+/** Structure to hold one DSA public key params.
  *
  * \see RFC4880 5.5.2
  */
@@ -379,7 +379,7 @@ typedef struct {
 	BIGNUM         *e;	/* RSA public encryption exponent e */
 } __ops_rsa_pubkey_t;
 
-/** Structure to hold an ElGamal public key parameters.
+/** Structure to hold an ElGamal public key params.
  *
  * \see RFC4880 5.5.2
  */
@@ -390,7 +390,7 @@ typedef struct {
 				 * with x being the secret) */
 } __ops_elgamal_pubkey_t;
 
-/** Union to hold public key parameters of any algorithm */
+/** Union to hold public key params of any algorithm */
 typedef union {
 	__ops_dsa_pubkey_t dsa;	/* A DSA public key */
 	__ops_rsa_pubkey_t rsa;	/* An RSA public key */
@@ -438,7 +438,7 @@ typedef struct {
 } __ops_dsa_seckey_t;
 
 /** __ops_seckey_union_t */
-typedef struct {
+typedef union {
 	__ops_rsa_seckey_t rsa;
 	__ops_dsa_seckey_t dsa;
 } __ops_seckey_union_t;
@@ -590,12 +590,12 @@ typedef enum {
 	OPS_SIG_3RD_PARTY = 0x50/* Third-Party Confirmation signature */
 } __ops_sig_type_t;
 
-/** Struct to hold parameters of an RSA signature */
+/** Struct to hold params of an RSA signature */
 typedef struct {
 	BIGNUM         *sig;	/* the signature value (m^d % n) */
 } __ops_rsa_sig_t;
 
-/** Struct to hold parameters of a DSA signature */
+/** Struct to hold params of a DSA signature */
 typedef struct {
 	BIGNUM         *r;	/* DSA value r */
 	BIGNUM         *s;	/* DSA value s */
@@ -612,7 +612,7 @@ typedef struct {
 	__ops_data_t      data;
 } __ops_unknown_sig_t;
 
-/** Union to hold signature parameters of any algorithm */
+/** Union to hold signature params of any algorithm */
 typedef union {
 	__ops_rsa_sig_t rsa;/* An RSA Signature */
 	__ops_dsa_sig_t dsa;/* A DSA Signature */
@@ -638,7 +638,7 @@ typedef struct {
 							 * algorithm number */
 	__ops_hash_alg_t hash_alg;	/* hashing algorithm
 						 * number */
-	__ops_sig_union_t sig;	/* signature parameters */
+	__ops_sig_union_t sig;	/* signature params */
 	size_t          v4_hashlen;
 	unsigned char  *v4_hashed;
 	unsigned   birthtime_set:1;
@@ -902,30 +902,30 @@ typedef enum {
 	OPS_PKSK_V3 = 3
 } __ops_pk_sesskey_version_t;
 
-/** __ops_pk_sesskey_parameters_rsa_t */
+/** __ops_pk_sesskey_params_rsa_t */
 typedef struct {
 	BIGNUM         *encrypted_m;
 	BIGNUM         *m;
-} __ops_pk_sesskey_parameters_rsa_t;
+} __ops_pk_sesskey_params_rsa_t;
 
-/** __ops_pk_sesskey_parameters_elgamal_t */
+/** __ops_pk_sesskey_params_elgamal_t */
 typedef struct {
 	BIGNUM         *g_to_k;
 	BIGNUM         *encrypted_m;
-} __ops_pk_sesskey_parameters_elgamal_t;
+} __ops_pk_sesskey_params_elgamal_t;
 
-/** __ops_pk_sesskey_parameters_t */
+/** __ops_pk_sesskey_params_t */
 typedef union {
-	__ops_pk_sesskey_parameters_rsa_t rsa;
-	__ops_pk_sesskey_parameters_elgamal_t elgamal;
-} __ops_pk_sesskey_parameters_t;
+	__ops_pk_sesskey_params_rsa_t rsa;
+	__ops_pk_sesskey_params_elgamal_t elgamal;
+} __ops_pk_sesskey_params_t;
 
 /** __ops_pk_sesskey_t */
 typedef struct {
 	__ops_pk_sesskey_version_t version;
 	unsigned char   key_id[OPS_KEY_ID_SIZE];
 	__ops_pubkey_alg_t alg;
-	__ops_pk_sesskey_parameters_t parameters;
+	__ops_pk_sesskey_params_t params;
 	__ops_symm_alg_t symm_alg;
 	unsigned char   key[OPS_MAX_KEY_SIZE];
 	unsigned short  checksum;
@@ -1066,14 +1066,14 @@ void __ops_pk_sesskey_free(__ops_pk_sesskey_t *);
 
 int __ops_print_packet(const __ops_packet_t *);
 
-#define DECLARE_ARRAY(type,arr)	\
-	unsigned n##arr; unsigned n##arr##_allocated; type *arr
+#define DYNARRAY(type, arr)	\
+	unsigned arr##c; unsigned arr##vsize; type *arr##s
 
 #define EXPAND_ARRAY(str, arr) do {					\
-	if (str->n##arr == str->n##arr##_allocated) {			\
-		str->n##arr##_allocated=str->n##arr##_allocated*2+10;	\
-		str->arr=realloc(str->arr,				\
-			str->n##arr##_allocated*sizeof(*str->arr));	\
+	if (str->arr##c == str->arr##vsize) {				\
+		str->arr##vsize = (str->arr##vsize * 2) + 10; 		\
+		str->arr##s = realloc(str->arr##s,			\
+			str->arr##vsize * sizeof(*str->arr##s));	\
 	}								\
 } while(/*CONSTCOND*/0)
 
@@ -1095,10 +1095,10 @@ typedef struct {
 /** \struct __ops_keydata
  * \todo expand to hold onto subkeys
  */
-struct __ops_keydata_t {
-	DECLARE_ARRAY(__ops_userid_t, uids);
-	DECLARE_ARRAY(__ops_subpacket_t, packets);
-	DECLARE_ARRAY(sigpacket_t, sigs);
+struct __ops_key_t {
+	DYNARRAY(__ops_userid_t, uid);
+	DYNARRAY(__ops_subpacket_t, packet);
+	DYNARRAY(sigpacket_t, sig);
 	unsigned char		key_id[OPS_KEY_ID_SIZE];
 	__ops_fingerprint_t	fingerprint;
 	__ops_content_tag_t	type;

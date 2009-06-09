@@ -50,7 +50,7 @@
 #define VALIDATE_H_	1
 
 typedef struct {
-	const __ops_keydata_t	*key;
+	const __ops_key_t	*key;
 	unsigned	         packet;
 	unsigned	         offset;
 } validate_reader_t;
@@ -77,7 +77,7 @@ typedef struct {
 /** Struct use with the validate_data_cb callback */
 typedef struct {
 	enum {
-		LITERAL_DATA,
+		LITDATA,
 		SIGNED_CLEARTEXT
 	} type;
 	union {
@@ -92,7 +92,7 @@ typedef struct {
 	char				*detachname;
 } validate_data_cb_t;
 
-void __ops_keydata_reader_set(__ops_parseinfo_t *, const __ops_keydata_t *);
+void __ops_keydata_reader_set(__ops_stream_t *, const __ops_key_t *);
 
 __ops_cb_ret_t __ops_validate_key_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
