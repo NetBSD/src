@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.20 2009/06/07 01:52:48 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.21 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -123,17 +123,6 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 	return 1;
 }
 
-/* wrapper to get a pass phrase from the user */
-static void
-get_pass_phrase(char *phrase, size_t size)
-{
-	char           *p;
-
-	while ((p = getpass("netpgp passphrase: ")) == NULL) {
-	}
-	(void) snprintf(phrase, size, "%s", p);
-}
-
 /* small function to pretty print an 8-character raw userid */
 static char    *
 userid_to_id(const unsigned char *userid, char *id)
@@ -156,7 +145,7 @@ resultp(__ops_io_t *io,
 	__ops_validation_t *res,
 	__ops_keyring_t *ring)
 {
-	const __ops_keydata_t	*pubkey;
+	const __ops_key_t	*pubkey;
 	unsigned		 i;
 	char			 id[MAX_ID_LENGTH + 1];
 
@@ -238,6 +227,7 @@ netpgp_init(netpgp_t *netpgp)
 	char		*homedir;
 	char		*userid;
 	char		*stream;
+	char		*passfd;
 	int		 coredumps;
 
 #ifdef HAVE_SYS_RESOURCE_H
@@ -300,6 +290,12 @@ netpgp_init(netpgp_t *netpgp)
 		(void) fprintf(io->errs, "Can't read sec keyring\n");
 		return 0;
 	}
+	if ((passfd = netpgp_getvar(netpgp, "pass-fd")) != NULL &&
+	    (netpgp->passfp = fdopen(atoi(passfd), "r")) == NULL) {
+		(void) fprintf(io->errs, "Can't open fd %s for reading\n",
+			passfd);
+		return 0;
+	}
 	return 1;
 }
 
@@ -358,7 +354,7 @@ netpgp_find_key(netpgp_t *netpgp, char *id)
 int
 netpgp_export_key(netpgp_t *netpgp, char *userid)
 {
-	const __ops_keydata_t	*keypair;
+	const __ops_key_t	*keypair;
 	__ops_io_t		*io;
 
 	io = netpgp->io;
@@ -399,7 +395,7 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 int
 netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 {
-	__ops_keydata_t		*keypair;
+	__ops_key_t		*keypair;
 	__ops_userid_t		 uid;
 	__ops_output_t		*create;
 	const unsigned		 noarmor = 0;
@@ -454,7 +450,7 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 			char *out,
 			int armored)
 {
-	const __ops_keydata_t	*keypair;
+	const __ops_key_t	*keypair;
 	const unsigned		 overwrite = 1;
 	const char		*suffix;
 	__ops_io_t		*io;
@@ -486,7 +482,7 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	const unsigned	overwrite = 1;
 
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
-				(unsigned)armored, overwrite,
+				(unsigned)armored, overwrite, netpgp->passfp,
 				get_passphrase_cb);
 }
 
@@ -500,12 +496,12 @@ netpgp_sign_file(netpgp_t *netpgp,
 		int cleartext,
 		int detached)
 {
-	const __ops_keydata_t	*keypair;
+	const __ops_key_t	*keypair;
 	__ops_seckey_t		*seckey;
 	const unsigned		 overwrite = 1;
 	__ops_io_t		*io;
 	char			*hashalg;
-	char			 passphrase[MAX_PASSPHRASE_LENGTH];
+	char			 pass[MAX_PASSPHRASE_LENGTH];
 	int			 ret;
 
 	io = netpgp->io;
@@ -524,9 +520,12 @@ netpgp_sign_file(netpgp_t *netpgp,
 		/* print out the user id */
 		__ops_print_pubkeydata(io, keypair);
 		/* get the passphrase */
-		get_pass_phrase(passphrase, sizeof(passphrase));
+		if (!__ops_getpassphrase(netpgp->passfp, pass, sizeof(pass))) {
+			(void) fprintf(io->errs, "Can't get passphrase\n");
+			return 0;
+		}
 		/* now decrypt key */
-		seckey = __ops_decrypt_seckey(keypair, passphrase);
+		seckey = __ops_decrypt_seckey(keypair, pass);
 		if (seckey == NULL) {
 			(void) fprintf(io->errs, "Bad passphrase\n");
 		}
@@ -542,7 +541,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 		ret = __ops_sign_file(io, f, out, seckey, hashalg,
 					(unsigned)armored, overwrite);
 	}
-	__ops_forget(passphrase, strlen(passphrase));
+	__ops_forget(pass, strlen(pass));
 	__ops_forget(seckey, sizeof(*seckey));
 	return ret;
 }
@@ -626,6 +625,7 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 	netpgp->pubring = keyring;
 	netpgp_setvar(netpgp, "pubring", pubringname);
 	return __ops_list_packets(io, f, (unsigned)armour, keyring,
+					netpgp->passfp,
 					get_passphrase_cb);
 }
 

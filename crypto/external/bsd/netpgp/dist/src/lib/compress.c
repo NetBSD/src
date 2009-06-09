@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.11 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.12 2009/06/09 00:51:01 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -290,12 +290,12 @@ bzip2_compressed_data_reader(void *dest, size_t length,
  * \ingroup Core_Compress
  *
  * \param *region 	Pointer to a region
- * \param *parse_info 	How to parse
+ * \param *stream 	How to parse
  * \param type Which compression type to expect
 */
 
 int 
-__ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
+__ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 	       __ops_compression_type_t type)
 {
 	z_decompress_t z;
@@ -338,7 +338,7 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 		break;
 
 	default:
-		OPS_ERROR_1(&parse_info->errors,
+		OPS_ERROR_1(&stream->errors,
 			OPS_E_ALG_UNSUPPORTED_COMPRESS_ALG,
 			"Compression algorithm %d is not yet supported", type);
 		return 0;
@@ -358,7 +358,7 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 		break;
 
 	default:
-		OPS_ERROR_1(&parse_info->errors,
+		OPS_ERROR_1(&stream->errors,
 			OPS_E_ALG_UNSUPPORTED_COMPRESS_ALG,
 			"Compression algorithm %d is not yet supported", type);
 		return 0;
@@ -368,36 +368,36 @@ __ops_decompress(__ops_region_t *region, __ops_parseinfo_t *parse_info,
 	case OPS_C_ZIP:
 	case OPS_C_ZLIB:
 		if (ret != Z_OK) {
-			OPS_ERROR_1(&parse_info->errors,
+			OPS_ERROR_1(&stream->errors,
 				OPS_E_P_DECOMPRESSION_ERROR,
 "Cannot initialise ZIP or ZLIB stream for decompression: error=%d", ret);
 			return 0;
 		}
-		__ops_reader_push(parse_info, zlib_compressed_data_reader,
+		__ops_reader_push(stream, zlib_compressed_data_reader,
 					NULL, &z);
 		break;
 
 	case OPS_C_BZIP2:
 		if (ret != BZ_OK) {
-			OPS_ERROR_1(&parse_info->errors,
+			OPS_ERROR_1(&stream->errors,
 				OPS_E_P_DECOMPRESSION_ERROR,
 "Cannot initialise BZIP2 stream for decompression: error=%d", ret);
 			return 0;
 		}
-		__ops_reader_push(parse_info, bzip2_compressed_data_reader,
+		__ops_reader_push(stream, bzip2_compressed_data_reader,
 					NULL, &bz);
 		break;
 
 	default:
-		OPS_ERROR_1(&parse_info->errors,
+		OPS_ERROR_1(&stream->errors,
 			OPS_E_ALG_UNSUPPORTED_COMPRESS_ALG,
 			"Compression algorithm %d is not yet supported", type);
 		return 0;
 	}
 
-	ret = __ops_parse(parse_info, !printerrors);
+	ret = __ops_parse(stream, !printerrors);
 
-	__ops_reader_pop(parse_info);
+	__ops_reader_pop(stream);
 
 	return ret;
 }

@@ -104,6 +104,7 @@ enum optdefs {
 	OUTPUT,
 	VERBOSE,
 	COREDUMPS,
+	PASSWDFD,
 
 	/* debug */
 	OPS_DEBUG
@@ -151,6 +152,7 @@ static struct option options[] = {
 	{"hash",	required_argument, 	NULL,	HASH_ALG},
 	{"algorithm",	required_argument, 	NULL,	HASH_ALG},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
+	{"pass-fd",	required_argument, 	NULL,	PASSWDFD},
 	{"output",	required_argument, 	NULL,	OUTPUT},
 	{ NULL,		0,			NULL,	0},
 };
@@ -377,6 +379,14 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			netpgp_setvar(&netpgp, "hash", optarg);
+			break;
+		case PASSWDFD:
+			if (optarg == NULL) {
+				(void) fprintf(stderr,
+				"No pass-fd argument provided\n");
+				exit(EXIT_ERROR);
+			}
+			netpgp_setvar(&netpgp, "pass-fd", optarg);
 			break;
 		case OUTPUT:
 			if (optarg == NULL) {

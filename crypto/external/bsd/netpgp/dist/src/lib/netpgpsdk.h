@@ -47,7 +47,7 @@ void            __ops_validate_result_free(__ops_validation_t *);
 
 unsigned 
 __ops_validate_key_sigs(__ops_validation_t *,
-		const __ops_keydata_t *,
+		const __ops_key_t *,
 		const __ops_keyring_t *,
 		__ops_cb_ret_t cb(const __ops_packet_t *, __ops_cbdata_t *));
 

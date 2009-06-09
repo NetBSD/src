@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.16 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.17 2009/06/09 00:51:01 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -517,7 +517,7 @@ write_struct_pubkey(__ops_output_t *output, const __ops_pubkey_t *key)
 
 unsigned 
 __ops_write_xfer_pubkey(__ops_output_t *output,
-			const __ops_keydata_t *keydata,
+			const __ops_key_t *keydata,
 			const unsigned armoured)
 {
 	unsigned int    i = 0, j = 0;
@@ -533,7 +533,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 	/* TODO: revocation signatures go here */
 
 	/* user ids and corresponding signatures */
-	for (i = 0; i < keydata->nuids; i++) {
+	for (i = 0; i < keydata->uidc; i++) {
 		__ops_userid_t  *uid = &keydata->uids[i];
 
 		if (!__ops_write_struct_userid(output, uid)) {
@@ -541,7 +541,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 		}
 
 		/* find signature for this packet if it exists */
-		for (j = 0; j < keydata->nsigs; j++) {
+		for (j = 0; j < keydata->sigc; j++) {
 			sigpacket_t    *sig = &keydata->sigs[i];
 
 			if (strcmp((char *) sig->userid->userid,
@@ -583,7 +583,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 
 unsigned 
 __ops_write_xfer_seckey(__ops_output_t *output,
-				const __ops_keydata_t *keydata,
+				const __ops_key_t *keydata,
 				const unsigned char *passphrase,
 				const size_t pplen,
 				unsigned armoured)
@@ -602,7 +602,7 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 	/* TODO: revocation signatures go here */
 
 	/* user ids and corresponding signatures */
-	for (i = 0; i < keydata->nuids; i++) {
+	for (i = 0; i < keydata->uidc; i++) {
 		__ops_userid_t  *uid = &keydata->uids[i];
 
 		if (!__ops_write_struct_userid(output, uid)) {
@@ -610,7 +610,7 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 		}
 
 		/* find signature for this packet if it exists */
-		for (j = 0; j < keydata->nsigs; j++) {
+		for (j = 0; j < keydata->sigc; j++) {
 			sigpacket_t    *sig = &keydata->sigs[i];
 
 			if (strcmp((char *) sig->userid->userid,
@@ -687,7 +687,7 @@ __ops_build_pubkey(__ops_memory_t *out, const __ops_pubkey_t *key,
  *
  * Create an RSA secret key structure. If a parameter is marked as
  * [OPTIONAL], then it can be omitted and will be calculated from
- * other parameters - or, in the case of e, will default to 0x10001.
+ * other params - or, in the case of e, will default to 0x10001.
  *
  * Parameters are _not_ copied, so will be freed if the structure is
  * freed.
@@ -980,7 +980,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 \note Currently hard-coded to use RSA
 */
 __ops_pk_sesskey_t *
-__ops_create_pk_sesskey(const __ops_keydata_t *key)
+__ops_create_pk_sesskey(const __ops_key_t *key)
 {
 	/*
          * Creates a random session key and encrypts it for the given key
@@ -1057,7 +1057,7 @@ __ops_create_pk_sesskey(const __ops_keydata_t *key)
 
 	/* and encrypt it */
 	if (!__ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pubkey,
-			&sesskey->parameters)) {
+			&sesskey->params)) {
 		(void) free(encoded_m_buf);
 		return NULL;
 	}
@@ -1088,11 +1088,11 @@ __ops_write_pk_sesskey(__ops_output_t *output, __ops_pk_sesskey_t *pksk)
 
 	return __ops_write_ptag(output, OPS_PTAG_CT_PK_SESSION_KEY) &&
 		__ops_write_length(output, (unsigned)(1 + 8 + 1 +
-			BN_num_bytes(pksk->parameters.rsa.encrypted_m) + 2)) &&
+			BN_num_bytes(pksk->params.rsa.encrypted_m) + 2)) &&
 		__ops_write_scalar(output, (unsigned)pksk->version, 1) &&
 		__ops_write(output, pksk->key_id, 8) &&
 		__ops_write_scalar(output, (unsigned)pksk->alg, 1) &&
-		__ops_write_mpi(output, pksk->parameters.rsa.encrypted_m)
+		__ops_write_mpi(output, pksk->params.rsa.encrypted_m)
 	/* ??	&& __ops_write_scalar(output, 0, 2); */
 		;
 }
@@ -1135,7 +1135,7 @@ __ops_write_litdata(__ops_output_t *output,
          * We will not implement them.
          */
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
-	return __ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA) &&
+	return __ops_write_ptag(output, OPS_PTAG_CT_LITDATA) &&
 		__ops_write_length(output, (unsigned)(1 + 1 + 4 + maxlen)) &&
 		__ops_write_scalar(output, (unsigned)type, 1) &&
 		__ops_write_scalar(output, 0, 1) &&
@@ -1166,7 +1166,7 @@ __ops_fileread_litdata(const char *filename,
 		return 0;
 	}
 	len = __ops_mem_len(mem);
-	ret = __ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA) &&
+	ret = __ops_write_ptag(output, OPS_PTAG_CT_LITDATA) &&
 		__ops_write_length(output, 1 + 1 + 4 + len) &&
 		__ops_write_scalar(output, (unsigned)type, 1) &&
 		__ops_write_scalar(output, 0, 1) /* filename */ &&

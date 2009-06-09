@@ -149,7 +149,7 @@ unsigned __ops_block_size(__ops_symm_alg_t);
 unsigned __ops_key_size(__ops_symm_alg_t);
 
 int __ops_decrypt_data(__ops_content_tag_t, __ops_region_t *,
-			__ops_parseinfo_t *);
+			__ops_stream_t *);
 
 int __ops_crypt_any(__ops_crypt_t *, __ops_symm_alg_t);
 void __ops_decrypt_init(__ops_crypt_t *);
@@ -160,19 +160,19 @@ size_t __ops_decrypt_se_ip(__ops_crypt_t *, void *, const void *, size_t);
 size_t __ops_encrypt_se_ip(__ops_crypt_t *, void *, const void *, size_t);
 unsigned __ops_is_sa_supported(__ops_symm_alg_t);
 
-void __ops_reader_push_decrypt(__ops_parseinfo_t *, __ops_crypt_t *,
+void __ops_reader_push_decrypt(__ops_stream_t *, __ops_crypt_t *,
 			__ops_region_t *);
-void __ops_reader_pop_decrypt(__ops_parseinfo_t *);
+void __ops_reader_pop_decrypt(__ops_stream_t *);
 
 /* Hash everything that's read */
-void __ops_reader_push_hash(__ops_parseinfo_t *, __ops_hash_t *);
-void __ops_reader_pop_hash(__ops_parseinfo_t *);
+void __ops_reader_push_hash(__ops_stream_t *, __ops_hash_t *);
+void __ops_reader_pop_hash(__ops_stream_t *);
 
 int __ops_decrypt_decode_mpi(unsigned char *, unsigned, const BIGNUM *,
 			const __ops_seckey_t *);
 unsigned __ops_rsa_encrypt_mpi(const unsigned char *, const size_t,
 			const __ops_pubkey_t *,
-			__ops_pk_sesskey_parameters_t *);
+			__ops_pk_sesskey_params_t *);
 
 /* Encrypt everything that's written */
 struct __ops_key_data;
@@ -180,7 +180,7 @@ void __ops_writer_push_encrypt(__ops_output_t *,
 			const struct __ops_key_data *);
 
 unsigned   __ops_encrypt_file(__ops_io_t *, const char *, const char *,
-			const __ops_keydata_t *,
+			const __ops_key_t *,
 			const unsigned, const unsigned);
 unsigned   __ops_decrypt_file(__ops_io_t *,
 			const char *,
@@ -188,10 +188,11 @@ unsigned   __ops_decrypt_file(__ops_io_t *,
 			__ops_keyring_t *,
 			const unsigned,
 			const unsigned,
+			void *,
 			__ops_cbfunc_t *);
 
 /* Keys */
-__ops_keydata_t  *__ops_rsa_new_selfsign_key(const int,
+__ops_key_t  *__ops_rsa_new_selfsign_key(const int,
 			const unsigned long, __ops_userid_t *);
 
 int __ops_dsa_size(const __ops_dsa_pubkey_t *);
@@ -210,7 +211,7 @@ struct __ops_reader_t {
 	unsigned		 alength;/* used buffer */
 	unsigned		 position;	/* reader-specific offset */
 	__ops_reader_t		*next;
-	__ops_parseinfo_t	*parent;/* parent parse_info structure */
+	__ops_stream_t	*parent;/* parent parse_info structure */
 };
 
 
@@ -220,7 +221,7 @@ struct __ops_reader_t {
 struct __ops_cryptinfo_t {
 	char			*passphrase;
 	__ops_keyring_t		*keyring;
-	const __ops_keydata_t	*keydata;
+	const __ops_key_t	*keydata;
 	__ops_cbfunc_t		*getpassphrase;
 };
 
@@ -232,6 +233,7 @@ struct __ops_cbdata_t {
 	__ops_cbdata_t		*next;
 	__ops_output_t		*output;/* used if writing out parsed info */
 	__ops_io_t		*io;		/* error/output messages */
+	void			*passfp;	/* fp for passphrase input */
 	__ops_cryptinfo_t	 cryptinfo;	/* used when decrypting */
 };
 
@@ -265,7 +267,7 @@ typedef struct {
  *  It has a linked list of errors.
  */
 
-struct __ops_parseinfo_t {
+struct __ops_stream_t {
 	unsigned char		 ss_raw[NTAGS / 8];
 		/* 1 bit / sig-subpkt type; set to get raw data */
 	unsigned char		 ss_parsed[NTAGS / 8];
@@ -276,7 +278,7 @@ struct __ops_parseinfo_t {
 	void			*io;		/* io streams */
 	__ops_crypt_t		 decrypt;
 	__ops_cryptinfo_t	 cryptinfo;
-	size_t			 nhashes;
+	size_t			 hashc;
 	__ops_hashtype_t        *hashes;
 	unsigned		 reading_v3_secret:1;
 	unsigned		 reading_mpi_len:1;

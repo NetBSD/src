@@ -1,10 +1,12 @@
-# $NetBSD: atlocal.in,v 1.3 2009/05/27 06:47:57 lukem Exp $
+# $NetBSD: atlocal.in,v 1.4 2009/06/09 00:51:04 agc Exp $
 
 TOPSRCDIR=@abs_top_srcdir@
 export TOPSRCDIR
 
-NETPGP=@abs_top_builddir@/src/bin/netpgp
+NETPGP=@abs_top_builddir@/src/netpgp/netpgp
 export NETPGP
+NETPGPVERIFY=@abs_top_builddir@/src/netpgpverify/netpgpverify
+export NETPGPVERIFY
 
 testhomedir=@abs_builddir@/homedir
 testpublickey=@abs_srcdir@/key-public.asc
