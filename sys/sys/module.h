@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.14 2008/11/25 15:14:07 ad Exp $	*/
+/*	$NetBSD: module.h,v 1.15 2009/06/09 20:35:02 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -139,7 +139,8 @@ void	module_print_list(void (*)(const char *, ...));
 typedef struct modctl_load {
 	const char *ml_filename;
 
-#define MODCTL_LOAD_FORCE 1
+#define MODCTL_NO_PROP		0x2
+#define MODCTL_LOAD_FORCE	0x1
 	int ml_flags;
 
 	const char *ml_props;

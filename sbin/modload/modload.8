@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.34 2009/06/05 11:37:30 jnemeth Exp $
+.\" $NetBSD: modload.8,v 1.35 2009/06/09 20:35:02 jnemeth Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd June 5, 2009
+.Dd June 9, 2009
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl f
 .Op Fl b Ar var=boolean
 .Op Fl i Ar var=integer
+.Op Fl P
 .Op Fl s Ar var=string
 .Ar module
 .Nm
@@ -51,6 +52,7 @@
 .Op Fl d Ar var
 .Op Fl i Ar var=integer
 .Op Fl m Ar plist
+.Op Fl P
 .Op Fl s Ar var=string
 .Sh DESCRIPTION
 The
@@ -100,6 +102,8 @@ When used in conjuction with
 .Fl p ,
 merge new options with an existing property list contained in
 .Ar plist .
+.It Fl P
+This option tells the kernel not to load an associated property list.
 .It Fl p
 Output a property list suitable for loading along with a module.
 When using this option, you do not need to specify a module.

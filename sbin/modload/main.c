@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2009/06/05 11:37:30 jnemeth Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2009/06/09 20:35:02 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 2009/06/05 11:37:30 jnemeth Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2009/06/09 20:35:02 jnemeth Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -81,8 +81,11 @@ main(int argc, char **argv)
 	del_props = merge_props = output_props = false;
 	flags = 0;
 
-	while ((ch = getopt(argc, argv, "b:d:fi:m:ps:")) != -1) {
+	while ((ch = getopt(argc, argv, "Pb:d:fi:m:ps:")) != -1) {
 		switch (ch) {
+		case 'P':
+			flags |= MODCTL_NO_PROP;
+			break;
 		case 'b':
 			parse_param(props, optarg, parse_bool_param);
 			break;
@@ -248,9 +251,9 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-f] [-b var=boolean] [-i var=integer] "
+	    "Usage: %s [-P] [-f] [-b var=boolean] [-i var=integer] "
 	    "[-s var=string] module\n"
-	    "       %s -p [-b var=boolean] [-d var] [-i var=integer] "
+	    "       %s -p [-P] [-b var=boolean] [-d var] [-i var=integer] "
 	    "[-m plist]\n               [-s var=string]\n",
 	    getprogname(), getprogname());
 	exit(EXIT_FAILURE);
