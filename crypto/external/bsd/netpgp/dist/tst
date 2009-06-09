@@ -22,10 +22,10 @@ cp configure a
 echo "======> attempt to verify an unsigned file"
 /usr/bin/netpgp --verify a || passed=$(expr $passed + 1)
 echo "======> encrypt/decrypt 10809 file"
-cp src/bin/netpgp.1 b
+cp src/netpgp/netpgp.1 b
 /usr/bin/netpgp --encrypt b
 /usr/bin/netpgp --decrypt b.gpg
-diff src/bin/netpgp.1 b && passed=$(expr $passed + 1)
+diff src/netpgp/netpgp.1 b && passed=$(expr $passed + 1)
 echo "======> encrypt/decrypt 180938 file"
 cp configure c
 /usr/bin/netpgp --encrypt c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/08 06:13:07 agc Exp $
+#	$NetBSD: Makefile,v 1.2 2009/06/09 00:56:15 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -13,8 +13,6 @@ DPADD+=		${LIBNETPGPDIR}/libnetpgp.a
 
 LDADD+=		-lcrypto -lz -lbz2
 DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}
-#LDADD+=		-lz -lbz2
-#DPADD+=		${LIBZ} ${LIBBZ2}
 
 MAN=		netpgp.1
 
@@ -23,6 +21,6 @@ MAN=		netpgp.1
 # errors. For now, just set WARNS off.
 WARNS=		0
 
-.PATH: ${.CURDIR}/../dist/src/bin
+.PATH: ${.CURDIR}/../dist/src/netpgp
 
 .include <bsd.prog.mk>
