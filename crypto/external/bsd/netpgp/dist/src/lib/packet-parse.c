@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.19 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.20 2009/06/09 19:32:11 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -167,7 +167,6 @@ read_unsig_str(unsigned char **str, __ops_region_t *subregion,
 				     &stream->readinfo, &stream->cbinfo)) {
 		return 0;
 	}
-	/* ! ensure the string is NULL-terminated */
 	(*str)[len] = '\0';
 	return 1;
 }
@@ -2620,7 +2619,6 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		}
 
 		__ops_forget(passphrase, passlen);
-		(void) free(passphrase);
 
 		__ops_crypt_any(&decrypt, pkt.u.seckey.alg);
 		if (__ops_get_debug_level(__FILE__)) {
