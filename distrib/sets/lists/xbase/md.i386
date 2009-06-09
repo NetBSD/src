@@ -1,0 +1,4 @@
+# $NetBSD: md.i386,v 1.19 2009/06/09 04:39:50 mrg Exp $
+./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg
+./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg
+./usr/X11R7/lib/libdrm_intel.so.0.0		-unknown-		xorg
