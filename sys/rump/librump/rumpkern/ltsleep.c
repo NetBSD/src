@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.13 2009/06/09 15:53:05 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.14 2009/06/09 23:26:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.13 2009/06/09 15:53:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.14 2009/06/09 23:26:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -61,7 +61,8 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	cv_init(&lts.cv, NULL);
 
 	mutex_enter(&sleepermtx);
-	simple_unlock(slock);
+	if (slock)
+		simple_unlock(slock);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
 
 	/* protected by sleepermtx */
