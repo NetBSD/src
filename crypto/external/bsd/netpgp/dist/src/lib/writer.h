@@ -121,7 +121,6 @@ unsigned __ops_write_mpi(__ops_output_t *, const BIGNUM *);
 void writer_info_delete(__ops_writer_t *);
 unsigned writer_info_finalise(__ops_error_t **, __ops_writer_t *);
 
-void __ops_push_stream_enc_se_ip(__ops_output_t *,
-				const __ops_keydata_t *);
+void __ops_push_stream_enc_se_ip(__ops_output_t *, const __ops_key_t *);
 
 #endif /* WRITER_H_ */

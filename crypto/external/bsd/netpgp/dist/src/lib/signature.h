@@ -127,9 +127,9 @@ int __ops_sign_detached(__ops_io_t *,
 /* armoured stuff */
 unsigned __ops_crc24(unsigned, unsigned char);
 
-void __ops_reader_push_dearmour(__ops_parseinfo_t *);
+void __ops_reader_push_dearmour(__ops_stream_t *);
 
-void __ops_reader_pop_dearmour(__ops_parseinfo_t *);
+void __ops_reader_pop_dearmour(__ops_stream_t *);
 unsigned __ops_writer_push_clearsigned(__ops_output_t *, __ops_create_sig_t *);
 void __ops_writer_push_armor_msg(__ops_output_t *);
 

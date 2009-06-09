@@ -32,8 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = netpgp$(EXEEXT)
-subdir = src/bin
+bin_PROGRAMS = netpgpverify$(EXEEXT)
+subdir = src/netpgpverify
 DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -46,9 +46,9 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_netpgp_OBJECTS = netpgp-netpgp.$(OBJEXT)
-netpgp_OBJECTS = $(am_netpgp_OBJECTS)
-netpgp_DEPENDENCIES = ../lib/libnetpgp.la
+am_netpgpverify_OBJECTS = netpgpverify-verify.$(OBJEXT)
+netpgpverify_OBJECTS = $(am_netpgpverify_OBJECTS)
+netpgpverify_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src/lib
 depcomp = $(SHELL) $(top_srcdir)/buildaux/depcomp
 am__depfiles_maybe = depfiles
@@ -61,8 +61,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(netpgp_SOURCES)
-DIST_SOURCES = $(netpgp_SOURCES)
+SOURCES = $(netpgpverify_SOURCES)
+DIST_SOURCES = $(netpgpverify_SOURCES)
 man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(dist_man_MANS) $(man1_MANS)
@@ -183,11 +183,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = $(WARNCFLAGS)
-netpgp_SOURCES = netpgp.c
-netpgp_CPPFLAGS = -I$(top_srcdir)/include
-netpgp_LDADD = ../lib/libnetpgp.la
-man1_MANS = netpgp.1
-dist_man_MANS = netpgp.1
+netpgpverify_SOURCES = verify.c
+netpgpverify_CPPFLAGS = -I$(top_srcdir)/include
+man1_MANS = netpgpverify.1
+dist_man_MANS = netpgpverify.1
 all: all-am
 
 .SUFFIXES:
@@ -201,9 +200,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  src/bin/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  src/netpgpverify/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  src/bin/Makefile
+	  $(AUTOMAKE) --foreign  src/netpgpverify/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -249,9 +248,9 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-netpgp$(EXEEXT): $(netpgp_OBJECTS) $(netpgp_DEPENDENCIES) 
-	@rm -f netpgp$(EXEEXT)
-	$(LINK) $(netpgp_OBJECTS) $(netpgp_LDADD) $(LIBS)
+netpgpverify$(EXEEXT): $(netpgpverify_OBJECTS) $(netpgpverify_DEPENDENCIES) 
+	@rm -f netpgpverify$(EXEEXT)
+	$(LINK) $(netpgpverify_OBJECTS) $(netpgpverify_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -259,7 +258,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netpgp-netpgp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netpgpverify-verify.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -282,19 +281,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-netpgp-netpgp.o: netpgp.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT netpgp-netpgp.o -MD -MP -MF $(DEPDIR)/netpgp-netpgp.Tpo -c -o netpgp-netpgp.o `test -f 'netpgp.c' || echo '$(srcdir)/'`netpgp.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/netpgp-netpgp.Tpo $(DEPDIR)/netpgp-netpgp.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netpgp.c' object='netpgp-netpgp.o' libtool=no @AMDEPBACKSLASH@
+netpgpverify-verify.o: verify.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgpverify_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT netpgpverify-verify.o -MD -MP -MF $(DEPDIR)/netpgpverify-verify.Tpo -c -o netpgpverify-verify.o `test -f 'verify.c' || echo '$(srcdir)/'`verify.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/netpgpverify-verify.Tpo $(DEPDIR)/netpgpverify-verify.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='verify.c' object='netpgpverify-verify.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netpgp-netpgp.o `test -f 'netpgp.c' || echo '$(srcdir)/'`netpgp.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgpverify_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netpgpverify-verify.o `test -f 'verify.c' || echo '$(srcdir)/'`verify.c
 
-netpgp-netpgp.obj: netpgp.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT netpgp-netpgp.obj -MD -MP -MF $(DEPDIR)/netpgp-netpgp.Tpo -c -o netpgp-netpgp.obj `if test -f 'netpgp.c'; then $(CYGPATH_W) 'netpgp.c'; else $(CYGPATH_W) '$(srcdir)/netpgp.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/netpgp-netpgp.Tpo $(DEPDIR)/netpgp-netpgp.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netpgp.c' object='netpgp-netpgp.obj' libtool=no @AMDEPBACKSLASH@
+netpgpverify-verify.obj: verify.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgpverify_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT netpgpverify-verify.obj -MD -MP -MF $(DEPDIR)/netpgpverify-verify.Tpo -c -o netpgpverify-verify.obj `if test -f 'verify.c'; then $(CYGPATH_W) 'verify.c'; else $(CYGPATH_W) '$(srcdir)/verify.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/netpgpverify-verify.Tpo $(DEPDIR)/netpgpverify-verify.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='verify.c' object='netpgpverify-verify.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netpgp-netpgp.obj `if test -f 'netpgp.c'; then $(CYGPATH_W) 'netpgp.c'; else $(CYGPATH_W) '$(srcdir)/netpgp.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(netpgpverify_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o netpgpverify-verify.obj `if test -f 'verify.c'; then $(CYGPATH_W) 'verify.c'; else $(CYGPATH_W) '$(srcdir)/verify.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

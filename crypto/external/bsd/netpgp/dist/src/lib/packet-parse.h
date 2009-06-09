@@ -84,7 +84,7 @@ typedef __ops_cb_ret_t __ops_cbfunc_t(const __ops_packet_t *,
 __ops_cb_ret_t
 get_passphrase_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
-typedef struct __ops_parseinfo_t	__ops_parseinfo_t;
+typedef struct __ops_stream_t	__ops_stream_t;
 typedef struct __ops_reader_t		__ops_reader_t;
 typedef struct __ops_cryptinfo_t	__ops_cryptinfo_t;
 
@@ -112,20 +112,20 @@ typedef int __ops_reader_func_t(void *, size_t, __ops_error_t **,
 
 typedef void __ops_reader_destroyer_t(__ops_reader_t *);
 
-__ops_parseinfo_t *__ops_parseinfo_new(void);
-void __ops_parseinfo_delete(__ops_parseinfo_t *);
-__ops_error_t *__ops_parseinfo_get_errors(__ops_parseinfo_t *);
-__ops_crypt_t *__ops_get_decrypt(__ops_parseinfo_t *);
+__ops_stream_t *__ops_parseinfo_new(void);
+void __ops_parseinfo_delete(__ops_stream_t *);
+__ops_error_t *__ops_parseinfo_get_errors(__ops_stream_t *);
+__ops_crypt_t *__ops_get_decrypt(__ops_stream_t *);
 
-void __ops_set_callback(__ops_parseinfo_t *, __ops_cbfunc_t *, void *);
-void __ops_callback_push(__ops_parseinfo_t *, __ops_cbfunc_t *, void *);
+void __ops_set_callback(__ops_stream_t *, __ops_cbfunc_t *, void *);
+void __ops_callback_push(__ops_stream_t *, __ops_cbfunc_t *, void *);
 void *__ops_callback_arg(__ops_cbdata_t *);
 void *__ops_callback_errors(__ops_cbdata_t *);
-void __ops_reader_set(__ops_parseinfo_t *, __ops_reader_func_t *,
+void __ops_reader_set(__ops_stream_t *, __ops_reader_func_t *,
 			__ops_reader_destroyer_t *, void *);
-void __ops_reader_push(__ops_parseinfo_t *, __ops_reader_func_t *,
+void __ops_reader_push(__ops_stream_t *, __ops_reader_func_t *,
 			__ops_reader_destroyer_t *, void *);
-void __ops_reader_pop(__ops_parseinfo_t *);
+void __ops_reader_pop(__ops_stream_t *);
 
 void *__ops_reader_get_arg(__ops_reader_t *);
 
@@ -133,9 +133,9 @@ __ops_cb_ret_t __ops_callback(const __ops_packet_t *,
 					__ops_cbdata_t *);
 __ops_cb_ret_t __ops_stacked_callback(const __ops_packet_t *,
 					__ops_cbdata_t *);
-__ops_reader_t *__ops_readinfo(__ops_parseinfo_t *);
+__ops_reader_t *__ops_readinfo(__ops_stream_t *);
 
-int __ops_parse(__ops_parseinfo_t *, int);
+int __ops_parse(__ops_stream_t *, int);
 
 /** Used to specify whether subpackets should be returned raw, parsed
 * or ignored.  */
@@ -145,7 +145,7 @@ typedef enum {
 	OPS_PARSE_IGNORE	/* Don't callback */
 } __ops_parse_type_t;
 
-void __ops_parse_options(__ops_parseinfo_t *, __ops_content_tag_t,
+void __ops_parse_options(__ops_stream_t *, __ops_content_tag_t,
 			__ops_parse_type_t);
 
 unsigned __ops_limited_read(unsigned char *, size_t, __ops_region_t *,
@@ -154,15 +154,15 @@ unsigned __ops_limited_read(unsigned char *, size_t, __ops_region_t *,
 unsigned __ops_stacked_limited_read(unsigned char *, unsigned,
 			__ops_region_t *, __ops_error_t **,
 			__ops_reader_t *, __ops_cbdata_t *);
-void __ops_parse_hash_init(__ops_parseinfo_t *, __ops_hash_alg_t,
+void __ops_parse_hash_init(__ops_stream_t *, __ops_hash_alg_t,
 			const unsigned char *);
-void __ops_parse_hash_data(__ops_parseinfo_t *, const void *, size_t);
-void __ops_parse_hash_finish(__ops_parseinfo_t *);
-__ops_hash_t *__ops_parse_hash_find(__ops_parseinfo_t *, const unsigned char *);
+void __ops_parse_hash_data(__ops_stream_t *, const void *, size_t);
+void __ops_parse_hash_finish(__ops_stream_t *);
+__ops_hash_t *__ops_parse_hash_find(__ops_stream_t *, const unsigned char *);
 
 __ops_reader_func_t    __ops_stacked_read;
 
-int __ops_decompress(__ops_region_t *, __ops_parseinfo_t *,
+int __ops_decompress(__ops_region_t *, __ops_stream_t *,
 			__ops_compression_type_t);
 unsigned __ops_writez(const unsigned char *, const unsigned int,
 			__ops_output_t *);

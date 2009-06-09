@@ -1,7 +1,7 @@
 To Do
 =====
+modify sets lists for netpgpverify
 error logging
-separate verify program
 separate key management program
 separate from libcrypto?
 64-bit offsets
@@ -55,3 +55,8 @@ Look at inefficiencies - read() etc
 cat command to display a verified file without signature
 get rid of ops_memory after used literal_data_body
 new package for 1.99.4
+separate verify program
+Add --passwd-fd n argument
+bring forward netpgpverify mods to netpgp
+move directory locations in package and cvs repo
+fix up tests for new directory locations

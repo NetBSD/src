@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.10 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.11 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -88,7 +88,7 @@ static __ops_map_t packet_tag_map[] =
 	{OPS_PTAG_CT_COMPRESSED, "Compressed Data"},
 	{OPS_PTAG_CT_SE_DATA, "Symmetrically Encrypted Data"},
 	{OPS_PTAG_CT_MARKER, "Marker"},
-	{OPS_PTAG_CT_LITERAL_DATA, "Literal Data"},
+	{OPS_PTAG_CT_LITDATA, "Literal Data"},
 	{OPS_PTAG_CT_TRUST, "Trust"},
 	{OPS_PTAG_CT_USER_ID, "User ID"},
 	{OPS_PTAG_CT_PUBLIC_SUBKEY, "Public Subkey"},
@@ -128,8 +128,8 @@ static __ops_map_t packet_tag_map[] =
 	{OPS_PTAG_SS_SIGNATURE_TARGET, "SS: Signature Target"},
 	{OPS_PTAG_SS_EMBEDDED_SIGNATURE, "SS: Embedded Signature"},
 
-	{OPS_PTAG_CT_LITERAL_DATA_HEADER, "CT: Literal Data Header"},
-	{OPS_PTAG_CT_LITERAL_DATA_BODY, "CT: Literal Data Body"},
+	{OPS_PTAG_CT_LITDATA_HEADER, "CT: Literal Data Header"},
+	{OPS_PTAG_CT_LITDATA_BODY, "CT: Literal Data Body"},
 	{OPS_PTAG_CT_SIGNATURE_HEADER, "CT: Signature Header"},
 	{OPS_PTAG_CT_SIGNATURE_FOOTER, "CT: Signature Footer"},
 	{OPS_PTAG_CT_ARMOUR_HEADER, "CT: Armour Header"},

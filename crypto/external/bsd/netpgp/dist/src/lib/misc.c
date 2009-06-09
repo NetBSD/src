@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.16 2009/06/02 15:10:07 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.17 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -109,14 +109,12 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	const __ops_contents_t	*content = &pkt->u;
 	const __ops_pubkey_t	*pubkey;
 	__ops_keyring_t		*keyring;
-	__ops_keydata_t		*keydata = NULL;
+	__ops_key_t		*keydata;
 	accumulate_t		*accumulate;
 
 	accumulate = __ops_callback_arg(cbinfo);
 	keyring = accumulate->keyring;
-	if (keyring->nkeys >= 0) {
-		keydata = &keyring->keys[keyring->nkeys];
-	}
+	keydata = (keyring->keyc > 0) ? &keyring->keys[keyring->keyc] : NULL;
 
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
@@ -125,14 +123,13 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "New key - tag %d\n", pkt->tag);
 		}
-		keyring->nkeys += 1;
-		EXPAND_ARRAY(keyring, keys);
+		EXPAND_ARRAY(keyring, key);
 
 		pubkey = (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
 					&content->pubkey :
 					&content->seckey.pubkey;
 
-		keydata = &keyring->keys[keyring->nkeys];
+		keydata = &keyring->keys[++keyring->keyc];
 		(void) memset(keydata, 0x0, sizeof(*keydata));
 		__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
 					pubkey);
@@ -194,7 +191,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 */
 
 int 
-__ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
+__ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_stream_t *parse)
 {
 	accumulate_t	accumulate;
 	const int	printerrors = 1;
@@ -209,14 +206,10 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_parseinfo_t *parse)
 	(void) memset(&accumulate, 0x0, sizeof(accumulate));
 
 	accumulate.keyring = keyring;
-	/* Kinda weird, but to do with counting, and we put it back after */
-	keyring->nkeys -= 1;
 
 	__ops_callback_push(parse, accumulate_cb, &accumulate);
 	parse->readinfo.accumulate = 1;
 	ret = __ops_parse(parse, !printerrors);
-
-	keyring->nkeys += 1;
 
 	return ret;
 }
@@ -1084,31 +1077,31 @@ sum16_destroyer(__ops_reader_t *readinfo)
 
 /**
    \ingroup Internal_Readers_Sum16
-   \param pinfo Parse settings
+   \param stream Parse settings
 */
 
 void 
-__ops_reader_push_sum16(__ops_parseinfo_t *pinfo)
+__ops_reader_push_sum16(__ops_stream_t *stream)
 {
 	sum16_t    *arg = calloc(1, sizeof(*arg));
 
-	__ops_reader_push(pinfo, sum16_reader, sum16_destroyer, arg);
+	__ops_reader_push(stream, sum16_reader, sum16_destroyer, arg);
 }
 
 /**
    \ingroup Internal_Readers_Sum16
-   \param pinfo Parse settings
+   \param stream Parse settings
    \return sum
 */
 unsigned short 
-__ops_reader_pop_sum16(__ops_parseinfo_t *pinfo)
+__ops_reader_pop_sum16(__ops_stream_t *stream)
 {
 	unsigned short	 sum;
 	sum16_t		*arg;
 
-	arg = __ops_reader_get_arg(__ops_readinfo(pinfo));
+	arg = __ops_reader_get_arg(__ops_readinfo(stream));
 	sum = arg->sum;
-	__ops_reader_pop(pinfo);
+	__ops_reader_pop(stream);
 	free(arg);
 	return sum;
 }

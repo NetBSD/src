@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.11 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.12 2009/06/09 00:51:03 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -999,8 +999,7 @@ static void     encrypt_se_ip_destroyer(__ops_writer_t *);
 \brief Push Encrypted SE IP Writer onto stack
 */
 void 
-__ops_push_enc_se_ip(__ops_output_t *output,
-			      const __ops_keydata_t *pubkey)
+__ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 {
 	unsigned char	*iv = NULL;
 	__ops_crypt_t	*encrypted;
@@ -1374,8 +1373,7 @@ static void     str_enc_se_ip_destroyer(__ops_writer_t *writer);
 \param pubkey
 */
 void 
-__ops_push_stream_enc_se_ip(__ops_output_t *output,
-				     const __ops_keydata_t *pubkey)
+__ops_push_stream_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 {
 	__ops_pk_sesskey_t	*encrypted_pk_sesskey;
 	const unsigned int	 bufsz = 1024;
@@ -1490,7 +1488,7 @@ stream_write_litdata_first(__ops_output_t *output,
 			"stream_write_litdata_first: bad sz_pd\n");
 		return 0;
 	}
-	__ops_write_ptag(output, OPS_PTAG_CT_LITERAL_DATA);
+	__ops_write_ptag(output, OPS_PTAG_CT_LITDATA);
 	__ops_write_partial_len(sz_pd, output);
 	__ops_write_scalar(output, (unsigned)type, 1);
 	__ops_write_scalar(output, 0, 1);

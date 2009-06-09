@@ -57,17 +57,17 @@
 /* if this is defined, we'll use mmap in preference to file ops */
 #define USE_MMAP_FOR_FILES      1
 
-void __ops_reader_set_fd(__ops_parseinfo_t *, int);
-void __ops_reader_set_mmap(__ops_parseinfo_t *, int);
-void __ops_reader_set_memory(__ops_parseinfo_t *, const void *, size_t);
+void __ops_reader_set_fd(__ops_stream_t *, int);
+void __ops_reader_set_mmap(__ops_stream_t *, int);
+void __ops_reader_set_memory(__ops_stream_t *, const void *, size_t);
 
 /* Do a sum mod 65536 of all bytes read (as needed for secret keys) */
-void __ops_reader_push_sum16(__ops_parseinfo_t *);
-unsigned short __ops_reader_pop_sum16(__ops_parseinfo_t *);
+void __ops_reader_push_sum16(__ops_stream_t *);
+unsigned short __ops_reader_pop_sum16(__ops_stream_t *);
 
-void __ops_reader_push_se_ip_data(__ops_parseinfo_t *, __ops_crypt_t *,
+void __ops_reader_push_se_ip_data(__ops_stream_t *, __ops_crypt_t *,
 				__ops_region_t *);
-void __ops_reader_pop_se_ip_data(__ops_parseinfo_t *);
+void __ops_reader_pop_se_ip_data(__ops_stream_t *);
 
 /* */
 unsigned __ops_write_mdc(const unsigned char *, __ops_output_t *);
@@ -77,7 +77,7 @@ unsigned __ops_write_se_ip_pktset(const unsigned char *,
 		       __ops_output_t *);
 void __ops_push_enc_crypt(__ops_output_t *, __ops_crypt_t *);
 void __ops_push_enc_se_ip(__ops_output_t *,
-			const __ops_keydata_t *);
+			const __ops_key_t *);
 
 /* Secret Key checksum */
 void __ops_push_checksum_writer(__ops_output_t *, __ops_seckey_t *);
@@ -90,13 +90,13 @@ void __ops_teardown_memory_write(__ops_output_t *, __ops_memory_t *);
 
 /* memory reading */
 void __ops_setup_memory_read(__ops_io_t *,
-				__ops_parseinfo_t **,
+				__ops_stream_t **,
 				__ops_memory_t *,
 				void *,
 				__ops_cb_ret_t callback(const __ops_packet_t *,
 					__ops_cbdata_t *),
 				unsigned);
-void __ops_teardown_memory_read(__ops_parseinfo_t *, __ops_memory_t *);
+void __ops_teardown_memory_read(__ops_stream_t *, __ops_memory_t *);
 
 /* file writing */
 int __ops_setup_file_write(__ops_output_t **, const char *, unsigned);
@@ -108,22 +108,21 @@ void __ops_teardown_file_append(__ops_output_t *, int);
 
 /* file reading */
 int __ops_setup_file_read(__ops_io_t *,
-			__ops_parseinfo_t **,
+			__ops_stream_t **,
 			const char *,
 			void *,
 			__ops_cb_ret_t callback(const __ops_packet_t *,
 		    			__ops_cbdata_t *),
 			unsigned);
-void __ops_teardown_file_read(__ops_parseinfo_t *, int);
+void __ops_teardown_file_read(__ops_stream_t *, int);
 
-unsigned __ops_reader_set_accumulate(__ops_parseinfo_t *, unsigned);
+unsigned __ops_reader_set_accumulate(__ops_stream_t *, unsigned);
 
 /* useful callbacks */
 __ops_cb_ret_t litdata_cb(const __ops_packet_t *, __ops_cbdata_t *);
 __ops_cb_ret_t pk_sesskey_cb(const __ops_packet_t *, __ops_cbdata_t *);
 __ops_cb_ret_t get_seckey_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
-/* from reader_fd.c */
-void __ops_reader_set_fd(__ops_parseinfo_t *, int);
+int __ops_getpassphrase(void *, char *, size_t);
 
 #endif /* READERWRITER_H_ */

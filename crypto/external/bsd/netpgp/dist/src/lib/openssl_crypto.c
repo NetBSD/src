@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.13 2009/05/27 00:38:27 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.14 2009/06/09 00:51:02 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -768,7 +768,7 @@ __ops_text_from_hash(__ops_hash_t *hash)
  \note It is the caller's responsibility to call __ops_keydata_free(keydata)
 */
 static unsigned 
-rsa_generate_keypair(__ops_keydata_t *keydata,
+rsa_generate_keypair(__ops_key_t *keydata,
 			const int numbits,
 			const unsigned long e)
 {
@@ -877,12 +877,12 @@ rsa_generate_keypair(__ops_keydata_t *keydata,
  \sa rsa_generate_keypair()
  \sa __ops_keydata_free()
 */
-__ops_keydata_t  *
+__ops_key_t  *
 __ops_rsa_new_selfsign_key(const int numbits,
 				const unsigned long e,
 				__ops_userid_t *userid)
 {
-	__ops_keydata_t  *keydata = NULL;
+	__ops_key_t  *keydata = NULL;
 
 	keydata = __ops_keydata_new();
 	if (!rsa_generate_keypair(keydata, numbits, e) ||

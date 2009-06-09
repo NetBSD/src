@@ -55,7 +55,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.1 2009/06/08 06:09:53 agc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.1 2009/06/09 00:51:03 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -198,13 +198,6 @@ enum {
 
 /* number of elements in an array */
 #define NETPGP_BUFSIZ	8192
-
-#define CALLBACK(cbdata, t, pkt)	do {				\
-	(pkt)->tag = (t);						\
-	if (__ops_callback(cbdata, pkt) == OPS_RELEASE_MEMORY) {	\
-		__ops_pkt_free(pkt);					\
-	}								\
-} while(/* CONSTCOND */0)
 
 /* this struct describes an area of memory allocated/mmapped */
 typedef struct __ops_memory_t {
@@ -434,7 +427,7 @@ typedef enum {
 	OPS_PTAG_CT_COMPRESSED = 8,	/* Compressed Data Packet */
 	OPS_PTAG_CT_SE_DATA = 9,/* Symmetrically Encrypted Data Packet */
 	OPS_PTAG_CT_MARKER = 10,/* Marker Packet */
-	OPS_PTAG_CT_LITERAL_DATA = 11,	/* Literal Data Packet */
+	OPS_PTAG_CT_LITDATA = 11,	/* Literal Data Packet */
 	OPS_PTAG_CT_TRUST = 12,	/* Trust Packet */
 	OPS_PTAG_CT_USER_ID = 13,	/* User ID Packet */
 	OPS_PTAG_CT_PUBLIC_SUBKEY = 14,	/* Public Subkey Packet */
@@ -508,8 +501,8 @@ typedef enum {
 	OPS_PTAG_SS_USERDEFINED10 = 0x200 + 110,
 
 	/* pseudo content types */
-	OPS_PTAG_CT_LITERAL_DATA_HEADER = 0x300,
-	OPS_PTAG_CT_LITERAL_DATA_BODY = 0x300 + 1,
+	OPS_PTAG_CT_LITDATA_HEADER = 0x300,
+	OPS_PTAG_CT_LITDATA_BODY = 0x300 + 1,
 	OPS_PTAG_CT_SIGNATURE_HEADER = 0x300 + 2,
 	OPS_PTAG_CT_SIGNATURE_FOOTER = 0x300 + 3,
 	OPS_PTAG_CT_ARMOUR_HEADER = 0x300 + 4,
@@ -604,7 +597,7 @@ typedef enum {
 	OPS_PKA_PRIVATE10 = 110	/* Private/Experimental Algorithm */
 } __ops_pubkey_alg_t;
 
-/** Structure to hold one DSA public key parameters.
+/** Structure to hold one DSA public key params.
  *
  * \see RFC4880 5.5.2
  */
@@ -625,7 +618,7 @@ typedef struct __ops_rsa_pubkey_t {
 	BIGNUM         *e;	/* RSA public encryption exponent e */
 } __ops_rsa_pubkey_t;
 
-/** Structure to hold an ElGamal public key parameters.
+/** Structure to hold an ElGamal public key params.
  *
  * \see RFC4880 5.5.2
  */
@@ -636,7 +629,7 @@ typedef struct __ops_elgamal_pubkey_t {
 				 * with x being the secret) */
 } __ops_elgamal_pubkey_t;
 
-/** Union to hold public key parameters of any algorithm */
+/** Union to hold public key params of any algorithm */
 typedef union {
 	__ops_dsa_pubkey_t dsa;	/* A DSA public key */
 	__ops_rsa_pubkey_t rsa;	/* An RSA public key */
@@ -834,12 +827,12 @@ typedef enum {
 	OPS_SIG_3RD_PARTY = 0x50/* Third-Party Confirmation signature */
 } __ops_signtype_t;
 
-/** Struct to hold parameters of an RSA signature */
+/** Struct to hold params of an RSA signature */
 typedef struct __ops_rsa_sig_t {
 	BIGNUM         *sig;	/* the signature value (m^d % n) */
 } __ops_rsa_sig_t;
 
-/** Struct to hold parameters of a DSA signature */
+/** Struct to hold params of a DSA signature */
 typedef struct __ops_dsa_sig_t {
 	BIGNUM         *r;	/* DSA value r */
 	BIGNUM         *s;	/* DSA value s */
@@ -856,7 +849,7 @@ typedef struct __ops_unknown_sig_t {
 	__ops_data_t      data;
 } __ops_unknown_sig_t;
 
-/** Union to hold signature parameters of any algorithm */
+/** Union to hold signature params of any algorithm */
 typedef union {
 	__ops_rsa_sig_t rsa;/* An RSA Signature */
 	__ops_dsa_sig_t dsa;/* A DSA Signature */
@@ -880,7 +873,7 @@ typedef struct __ops_signinfo_t {
 					/* Eight-octet key ID of signer */
 	__ops_pubkey_alg_t	key_alg; /* public key algorithm number */
 	__ops_hash_alg_t	hash_alg; /* hashing algorithm number */
-	__ops_sig_union_t	sig;	/* signature parameters */
+	__ops_sig_union_t	sig;	/* signature params */
 	size_t			v4_hashlen;
 	uint8_t			*v4_hashed;
 	unsigned		 gotbirthtime:1;
@@ -1156,30 +1149,30 @@ typedef enum {
 	OPS_PKSK_V3 = 3
 } __ops_pk_sesskey_version_t;
 
-/** __ops_pk_sesskey_parameters_rsa_t */
-typedef struct __ops_pk_sesskey_parameters_rsa_t {
+/** __ops_pk_sesskey_params_rsa_t */
+typedef struct __ops_pk_sesskey_params_rsa_t {
 	BIGNUM         *encrypted_m;
 	BIGNUM         *m;
-} __ops_pk_sesskey_parameters_rsa_t;
+} __ops_pk_sesskey_params_rsa_t;
 
-/** __ops_pk_sesskey_parameters_elgamal_t */
-typedef struct __ops_pk_sesskey_parameters_elgamal_t {
+/** __ops_pk_sesskey_params_elgamal_t */
+typedef struct __ops_pk_sesskey_params_elgamal_t {
 	BIGNUM         *g_to_k;
 	BIGNUM         *encrypted_m;
-} __ops_pk_sesskey_parameters_elgamal_t;
+} __ops_pk_sesskey_params_elgamal_t;
 
-/** __ops_pk_sesskey_parameters_t */
+/** __ops_pk_sesskey_params_t */
 typedef union {
-	__ops_pk_sesskey_parameters_rsa_t rsa;
-	__ops_pk_sesskey_parameters_elgamal_t elgamal;
-} __ops_pk_sesskey_parameters_t;
+	__ops_pk_sesskey_params_rsa_t rsa;
+	__ops_pk_sesskey_params_elgamal_t elgamal;
+} __ops_pk_sesskey_params_t;
 
 /** __ops_pk_sesskey_t */
 typedef struct __ops_pk_sesskey_t {
 	__ops_pk_sesskey_version_t	version;
 	uint8_t				keyid[OPS_KEY_ID_SIZE];
 	__ops_pubkey_alg_t		alg;
-	__ops_pk_sesskey_parameters_t	parameters;
+	__ops_pk_sesskey_params_t	params;
 	__ops_symm_alg_t		symm_alg;
 	uint8_t				key[OPS_MAX_KEY_SIZE];
 	uint16_t			checksum;
@@ -1456,7 +1449,7 @@ typedef struct __ops_reader_t {
 	unsigned	 alength;/* used buffer */
 	unsigned	 position;	/* reader-specific offset */
 	struct __ops_reader_t	*next;
-	struct __ops_stream_t *parent;/* parent parse_info structure */
+	struct __ops_stream_t *parent;/* parent stream structure */
 } __ops_reader_t;
 
 /** __ops_hashtype_t */
@@ -1523,7 +1516,7 @@ typedef struct validate_reader_t {
 /** Struct use with the validate_data_cb callback */
 typedef struct {
 	enum {
-		LITERAL_DATA,
+		LITDATA,
 		SIGNED_CLEARTEXT
 	} type;
 	union {
@@ -1790,7 +1783,7 @@ accumulate_cb(__ops_cbdata_t *cbdata, const __ops_packet_t *pkt)
 
 /**
 \ingroup Core_ReadPackets
-\brief Sets the parse_info's callback
+\brief Sets the stream's callback
 This is used when adding the first callback in a stack of callbacks.
 \sa __ops_callback_push()
 */
@@ -3192,13 +3185,13 @@ validate_data_cb(__ops_cbdata_t *cbdata, const __ops_packet_t *pkt)
 		 */
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
+	case OPS_PTAG_CT_LITDATA_HEADER:
 		/* ignore */
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA_BODY:
+	case OPS_PTAG_CT_LITDATA_BODY:
 		data->data.litdata_body = content->litdata_body;
-		data->type = LITERAL_DATA;
+		data->type = LITDATA;
 		__ops_memory_add(data->mem, data->data.litdata_body.data,
 				       data->data.litdata_body.length);
 		return OPS_KEEP_MEMORY;
@@ -4495,12 +4488,12 @@ bzip2_compressed_data_reader(void *dest, size_t length,
  * \ingroup Core_Compress
  *
  * \param *region 	Pointer to a region
- * \param *parse_info 	How to parse
+ * \param *stream 	How to parse
  * \param type Which compression type to expect
 */
 
 static int 
-__ops_decompress(__ops_region_t *region, __ops_stream_t *parse_info,
+__ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 	       __ops_ztype_t ztype)
 {
 	z_decompress_t z;
@@ -4543,7 +4536,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *parse_info,
 		break;
 
 	default:
-		OPS_ERROR_1(&parse_info->errors,
+		OPS_ERROR_1(&stream->errors,
 			OPS_E_ALG_UNSUPPORTED_COMPRESS_ALG,
 			"Compression algorithm %d is not yet supported", ztype);
 		return 0;
@@ -4563,7 +4556,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *parse_info,
 		break;
 
 	default:
-		OPS_ERROR_1(&parse_info->errors,
+		OPS_ERROR_1(&stream->errors,
 			OPS_E_ALG_UNSUPPORTED_COMPRESS_ALG,
 			"Compression algorithm %d is not yet supported", ztype);
 		return 0;
@@ -4573,43 +4566,43 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *parse_info,
 	case OPS_C_ZIP:
 	case OPS_C_ZLIB:
 		if (ret != Z_OK) {
-			OPS_ERROR_1(&parse_info->errors,
+			OPS_ERROR_1(&stream->errors,
 				OPS_E_P_DECOMPRESSION_ERROR,
 "Cannot initialise ZIP or ZLIB stream for decompression: error=%d", ret);
 			return 0;
 		}
-		__ops_reader_push(parse_info, zlib_compressed_data_reader,
+		__ops_reader_push(stream, zlib_compressed_data_reader,
 					NULL, &z);
 		break;
 
 	case OPS_C_BZIP2:
 		if (ret != BZ_OK) {
-			OPS_ERROR_1(&parse_info->errors,
+			OPS_ERROR_1(&stream->errors,
 				OPS_E_P_DECOMPRESSION_ERROR,
 "Cannot initialise BZIP2 stream for decompression: error=%d", ret);
 			return 0;
 		}
-		__ops_reader_push(parse_info, bzip2_compressed_data_reader,
+		__ops_reader_push(stream, bzip2_compressed_data_reader,
 					NULL, &bz);
 		break;
 
 	default:
-		OPS_ERROR_1(&parse_info->errors,
+		OPS_ERROR_1(&stream->errors,
 			OPS_E_ALG_UNSUPPORTED_COMPRESS_ALG,
 			"Compression algorithm %d is not yet supported", ztype);
 		return 0;
 	}
 
-	ret = __ops_parse(parse_info, !printerrors);
+	ret = __ops_parse(stream, !printerrors);
 
-	__ops_reader_pop(parse_info);
+	__ops_reader_pop(stream);
 
 	return ret;
 }
 
 /**************************************************************************/
 
-#define CALLBACK(cbdata, t, pkt)	do {				\
+#define CALLBACK(t, cbdata, pkt)	do {				\
 	(pkt)->tag = (t);						\
 	if (__ops_callback(cbdata, pkt) == OPS_RELEASE_MEMORY) {	\
 		__ops_pkt_free(pkt);					\
@@ -4618,7 +4611,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *parse_info,
 
 #define ERRP(cbdata, cont, err)	do {					\
 	cont.u.error.error = err;					\
-	CALLBACK(cbdata, OPS_PARSER_ERROR, &cont);			\
+	CALLBACK(OPS_PARSER_ERROR, cbdata, &cont);			\
 	return 0;							\
 	/*NOTREACHED*/							\
 } while(/*CONSTCOND*/0)
@@ -5514,12 +5507,12 @@ __ops_pk_sesskey_free(__ops_pk_sesskey_t *sk)
 {
 	switch (sk->alg) {
 	case OPS_PKA_RSA:
-		free_BN(&sk->parameters.rsa.encrypted_m);
+		free_BN(&sk->params.rsa.encrypted_m);
 		break;
 
 	case OPS_PKA_ELGAMAL:
-		free_BN(&sk->parameters.elgamal.g_to_k);
-		free_BN(&sk->parameters.elgamal.encrypted_m);
+		free_BN(&sk->params.elgamal.g_to_k);
+		free_BN(&sk->params.elgamal.encrypted_m);
 		break;
 
 	default:
@@ -5646,8 +5639,8 @@ __ops_pkt_free(__ops_packet_t *c)
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
 	case OPS_PTAG_SS_REVOCABLE:
 	case OPS_PTAG_SS_REVOCATION_KEY:
-	case OPS_PTAG_CT_LITERAL_DATA_HEADER:
-	case OPS_PTAG_CT_LITERAL_DATA_BODY:
+	case OPS_PTAG_CT_LITDATA_HEADER:
+	case OPS_PTAG_CT_LITDATA_BODY:
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 	case OPS_PTAG_CT_ARMOUR_TRAILER:
@@ -5900,9 +5893,9 @@ parse_pubkey(__ops_content_tag_t tag, __ops_region_t *region,
 {
 	__ops_packet_t pkt;
 
-	if (!parse_pubkey_data(&pkt.u.pubkey, region, stream))
+	if (!parse_pubkey_data(&pkt.u.pubkey, region, stream)) {
 		return 0;
-
+	}
 	/* XXX: this test should be done for all packets, surely? */
 	if (region->readc != region->length) {
 		OPS_ERROR_1(&stream->errors, OPS_E_R_UNCONSUMED_DATA,
@@ -5910,8 +5903,7 @@ parse_pubkey(__ops_content_tag_t tag, __ops_region_t *region,
 			    region->length - region->readc);
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, tag, &pkt);
-
+	CALLBACK(tag, &stream->cbdata, &pkt);
 	return 1;
 }
 
@@ -5933,7 +5925,6 @@ parse_userattr(__ops_region_t *region, __ops_stream_t *stream)
 	 * xxx- treat as raw data for now. Could break down further into
 	 * attribute sub-packets later - rachel
 	 */
-
 	if (region->readc != 0) {
 		/* We should not have read anything so far */
 		loggit("parse_userattr: bad length");
@@ -5942,7 +5933,7 @@ parse_userattr(__ops_region_t *region, __ops_stream_t *stream)
 	if (!read_data(&pkt.u.userattr.data, region, stream)) {
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_USER_ATTR, &pkt);
+	CALLBACK(OPS_PTAG_CT_USER_ATTR, &stream->cbdata, &pkt);
 	return 1;
 }
 
@@ -5981,20 +5972,19 @@ parse_userid(__ops_region_t *region, __ops_stream_t *stream)
 		return 0;
 	}
 	pkt.u.userid.userid[region->length] = '\0';
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_USER_ID, &pkt);
+	CALLBACK(OPS_PTAG_CT_USER_ID, &stream->cbdata, &pkt);
 	return 1;
 }
 
 static __ops_hash_t     *
-parse_hash_find(__ops_stream_t *stream,
-		    const uint8_t keyid[OPS_KEY_ID_SIZE])
+parse_hash_find(__ops_stream_t *stream, const uint8_t *keyid)
 {
-	size_t          n;
+	__ops_hashtype_t        *hp;
+	size_t          	 n;
 
-	for (n = 0; n < stream->hashc; ++n) {
-		if (memcmp(stream->hashes[n].keyid, keyid,
-					OPS_KEY_ID_SIZE) == 0) {
-			return &stream->hashes[n].hash;
+	for (n = 0, hp = stream->hashes; n < stream->hashc; n++, hp++) {
+		if (memcmp(hp->keyid, keyid, OPS_KEY_ID_SIZE) == 0) {
+			return &hp->hash;
 		}
 	}
 	return NULL;
@@ -6108,7 +6098,7 @@ parse_v3_sig(__ops_region_t *region,
 	if (pkt.u.sig.info.gotsigner) {
 		pkt.u.sig.hash = parse_hash_find(stream, pkt.u.sig.info.signer);
 	}
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_SIGNATURE, &pkt);
+	CALLBACK(OPS_PTAG_CT_SIGNATURE, &stream->cbdata, &pkt);
 	return 1;
 }
 
@@ -6171,7 +6161,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 				&subregion, stream)) {
 			return 0;
 		}
-		CALLBACK(&stream->cbdata, OPS_PTAG_RAW_SS, &pkt);
+		CALLBACK(OPS_PTAG_RAW_SS, &stream->cbdata, &pkt);
 		return 1;
 	}
 	switch (pkt.tag) {
@@ -6402,7 +6392,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 			    subregion.length - subregion.readc);
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, pkt.tag, &pkt);
+	CALLBACK(pkt.tag, &stream->cbdata, &pkt);
 	return 1;
 }
 
@@ -6508,7 +6498,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	}
 	pkt.u.sig.info.hash_alg = c;
 	/* XXX: check algorithm */
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_SIGNATURE_HEADER, &pkt);
+	CALLBACK(OPS_PTAG_CT_SIGNATURE_HEADER, &stream->cbdata, &pkt);
 
 	if (!parse_sig_subpkts(&pkt.u.sig, region, stream)) {
 		return 0;
@@ -6600,7 +6590,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 			    region->length - region->readc);
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_SIGNATURE_FOOTER, &pkt);
+	CALLBACK(OPS_PTAG_CT_SIGNATURE_FOOTER, &stream->cbdata, &pkt);
 	return 1;
 }
 
@@ -6660,7 +6650,7 @@ parse_compressed(__ops_region_t *region, __ops_stream_t *stream)
 
 	pkt.u.compressed.type = c;
 
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_COMPRESSED, &pkt);
+	CALLBACK(OPS_PTAG_CT_COMPRESSED, &stream->cbdata, &pkt);
 
 	/*
 	 * The content of a compressed data packet is more OpenPGP packets
@@ -6730,7 +6720,7 @@ parse_one_pass(__ops_region_t * region, __ops_stream_t * stream)
 		return 0;
 	}
 	pkt.u.one_pass_sig.nested = !!c;
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_1_PASS_SIG, &pkt);
+	CALLBACK(OPS_PTAG_CT_1_PASS_SIG, &stream->cbdata, &pkt);
 	/* XXX: we should, perhaps, let the app choose whether to hash or not */
 	parse_hash_init(stream, pkt.u.one_pass_sig.hash_alg,
 			    pkt.u.one_pass_sig.keyid);
@@ -6749,7 +6739,7 @@ parse_trust(__ops_region_t *region, __ops_stream_t *stream)
 	if (!read_data(&pkt.u.trust.data, region, stream)) {
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_TRUST, &pkt);
+	CALLBACK(OPS_PTAG_CT_TRUST, &stream->cbdata, &pkt);
 	return 1;
 }
 
@@ -6789,7 +6779,7 @@ parse_litdata(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limited_read_time(&pkt.u.litdata_header.mtime, region, stream)) {
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_LITERAL_DATA_HEADER, &pkt);
+	CALLBACK(OPS_PTAG_CT_LITDATA_HEADER, &stream->cbdata, &pkt);
 	mem = pkt.u.litdata_body.mem = __ops_new(sizeof(*mem));
 	__ops_memory_init(pkt.u.litdata_body.mem,
 			(unsigned)(region->length * 1.01) + 12);
@@ -6803,7 +6793,7 @@ parse_litdata(__ops_region_t *region, __ops_stream_t *stream)
 		}
 		pkt.u.litdata_body.length = readc;
 		parse_hash_data(stream, pkt.u.litdata_body.data, region->length);
-		CALLBACK(&stream->cbdata, OPS_PTAG_CT_LITERAL_DATA_BODY, &pkt);
+		CALLBACK(OPS_PTAG_CT_LITDATA_BODY, &stream->cbdata, &pkt);
 	}
 
 	/* XXX - get rid of mem here? */
@@ -6978,15 +6968,13 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		passphrase = NULL;
 		seckey.u.skey_passphrase.passphrase = &passphrase;
 		seckey.u.skey_passphrase.seckey = &pkt.u.seckey;
-		CALLBACK(&stream->cbdata, OPS_GET_PASSPHRASE, &seckey);
+		CALLBACK(OPS_GET_PASSPHRASE, &stream->cbdata, &seckey);
 		if (!passphrase) {
 			if (!consume_packet(region, stream, 0)) {
 				return 0;
 			}
-
-			CALLBACK(&stream->cbdata,
-				OPS_PTAG_CT_ENCRYPTED_SECRET_KEY, &pkt);
-
+			CALLBACK(OPS_PTAG_CT_ENCRYPTED_SECRET_KEY,
+					&stream->cbdata, &pkt);
 			return 1;
 		}
 		keysize = __ops_key_size(pkt.u.seckey.alg);
@@ -7176,7 +7164,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	if (!ret) {
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_SECRET_KEY, &pkt);
+	CALLBACK(OPS_PTAG_CT_SECRET_KEY, &stream->cbdata, &pkt);
 	return 1;
 }
 
@@ -7295,22 +7283,22 @@ parse_pk_sesskey(__ops_region_t *region, __ops_stream_t *stream)
 	pkt.u.pk_sesskey.alg = c;
 	switch (pkt.u.pk_sesskey.alg) {
 	case OPS_PKA_RSA:
-		if (!limread_mpi(&pkt.u.pk_sesskey.parameters.rsa.encrypted_m,
+		if (!limread_mpi(&pkt.u.pk_sesskey.params.rsa.encrypted_m,
 				      region, stream)) {
 			return 0;
 		}
-		enc_m = pkt.u.pk_sesskey.parameters.rsa.encrypted_m;
+		enc_m = pkt.u.pk_sesskey.params.rsa.encrypted_m;
 		break;
 
 	case OPS_PKA_ELGAMAL:
-		if (!limread_mpi(&pkt.u.pk_sesskey.parameters.elgamal.g_to_k,
+		if (!limread_mpi(&pkt.u.pk_sesskey.params.elgamal.g_to_k,
 				      region, stream) ||
 		    !limread_mpi(
-			&pkt.u.pk_sesskey.parameters.elgamal.encrypted_m,
+			&pkt.u.pk_sesskey.params.elgamal.encrypted_m,
 					 region, stream)) {
 			return 0;
 		}
-		enc_m = pkt.u.pk_sesskey.parameters.elgamal.encrypted_m;
+		enc_m = pkt.u.pk_sesskey.params.elgamal.encrypted_m;
 		break;
 
 	default:
@@ -7326,10 +7314,10 @@ parse_pk_sesskey(__ops_region_t *region, __ops_stream_t *stream)
 	sesskey.u.get_seckey.seckey = &secret;
 	sesskey.u.get_seckey.pk_sesskey = &pkt.u.pk_sesskey;
 
-	CALLBACK(&stream->cbdata, OPS_GET_SECKEY, &sesskey);
+	CALLBACK(OPS_GET_SECKEY, &stream->cbdata, &sesskey);
 
 	if (!secret) {
-		CALLBACK(&stream->cbdata, OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY,
+		CALLBACK(OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY, &stream->cbdata,
 			&pkt);
 		return 1;
 	}
@@ -7381,7 +7369,7 @@ parse_pk_sesskey(__ops_region_t *region, __ops_stream_t *stream)
 		return 0;
 	}
 	/* all is well */
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_PK_SESSION_KEY, &pkt);
+	CALLBACK(OPS_PTAG_CT_PK_SESSION_KEY, &stream->cbdata, &pkt);
 
 	__ops_crypt_any(&stream->decrypt, pkt.u.pk_sesskey.symm_alg);
 	iv = __ops_new(stream->decrypt.blocksize);
@@ -7445,7 +7433,7 @@ __ops_decrypt_se_data(__ops_content_tag_t tag, __ops_region_t *region,
 				return 0;
 			}
 			pkt.u.se_data_body.length = len;
-			CALLBACK(&stream->cbdata, tag, &pkt);
+			CALLBACK(tag, &stream->cbdata, &pkt);
 		}
 	}
 	return r;
@@ -7486,7 +7474,7 @@ __ops_decrypt_se_ip_data(__ops_content_tag_t tag, __ops_region_t *region,
 				return 0;
 			}
 			pkt.u.se_data_body.length = len;
-			CALLBACK(&stream->cbdata, tag, &pkt);
+			CALLBACK(tag, &stream->cbdata, &pkt);
 		}
 	}
 	return r;
@@ -7502,7 +7490,7 @@ parse_se_data(__ops_region_t *region, __ops_stream_t *stream)
 	__ops_packet_t pkt;
 
 	/* there's no info to go with this, so just announce it */
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_SE_DATA_HEADER, &pkt);
+	CALLBACK(OPS_PTAG_CT_SE_DATA_HEADER, &stream->cbdata, &pkt);
 
 	/*
 	 * The content of an encrypted data packet is more OpenPGP packets
@@ -7553,7 +7541,7 @@ parse_mdc(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(pkt.u.mdc.data, OPS_SHA1_HASH_SIZE, region, stream)) {
 		return 0;
 	}
-	CALLBACK(&stream->cbdata, OPS_PTAG_CT_MDC, &pkt);
+	CALLBACK(OPS_PTAG_CT_MDC, &stream->cbdata, &pkt);
 	(void) free(pkt.u.mdc.data);
 	return 1;
 }
@@ -7592,7 +7580,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
 
 	if (!(ptag & OPS_PTAG_ALWAYS_SET)) {
 		pkt.u.error.error = "Format error (ptag bit not set)";
-		CALLBACK(&stream->cbdata, OPS_PARSER_ERROR, &pkt);
+		CALLBACK(OPS_PARSER_ERROR, &stream->cbdata, &pkt);
 		return 0;
 	}
 	pkt.u.ptag.new_format = !!(ptag & OPS_PTAG_NEW_FORMAT);
@@ -7634,7 +7622,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
 		}
 	}
 
-	CALLBACK(&stream->cbdata, OPS_PARSER_PTAG, &pkt);
+	CALLBACK(OPS_PARSER_PTAG, &stream->cbdata, &pkt);
 
 	__ops_init_subregion(&region, NULL);
 	region.length = pkt.u.ptag.length;
@@ -7665,7 +7653,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
 		ret = parse_one_pass(&region, stream);
 		break;
 
-	case OPS_PTAG_CT_LITERAL_DATA:
+	case OPS_PTAG_CT_LITDATA:
 		ret = parse_litdata(&region, stream);
 		break;
 
@@ -7731,7 +7719,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
 		pkt.u.packet.raw = stream->readinfo.accumulated;
 		stream->readinfo.accumulated = NULL;
 		stream->readinfo.asize = 0;
-		CALLBACK(&stream->cbdata, OPS_PARSER_PACKET_END, &pkt);
+		CALLBACK(OPS_PARSER_PACKET_END, &stream->cbdata, &pkt);
 	}
 	stream->readinfo.alength = 0;
 
@@ -7812,7 +7800,7 @@ typedef struct {
 
 		BEGIN_PGP_SIGNED_MESSAGE
 	} lastseen;
-	__ops_stream_t *parse_info;
+	__ops_stream_t *stream;
 	unsigned	seen_nl:1;
 	unsigned	prev_nl:1;
 	unsigned	can_runon_data:1;
@@ -8029,7 +8017,7 @@ flush(dearmour_t *dearmour, __ops_cbdata_t *cbdata)
 	if (dearmour->unarmoredc > 0) {
 		content.u.unarmoured_text.data = dearmour->unarmoured;
 		content.u.unarmoured_text.length = dearmour->unarmoredc;
-		CALLBACK(cbdata, OPS_PTAG_CT_UNARMOURED_TEXT, &content);
+		CALLBACK(OPS_PTAG_CT_UNARMOURED_TEXT, cbdata, &content);
 		dearmour->unarmoredc = 0;
 	}
 }
@@ -8186,14 +8174,14 @@ process_dash_escaped(dearmour_t *dearmour,
 				hash->add(hash, (const uint8_t *)"\r", 1);
 			}
 			hash->add(hash, body->data, body->length);
-			CALLBACK(cbdata, OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY,
+			CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY, cbdata, 
 						&content);
 			body->length = 0;
 		}
 		body->data[body->length++] = c;
 		total += 1;
 		if (body->length == sizeof(body->data)) {
-			CALLBACK(cbdata, OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY,
+			CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY, cbdata,
 					&content);
 			body->length = 0;
 		}
@@ -8209,7 +8197,7 @@ process_dash_escaped(dearmour_t *dearmour,
 
 	/* don't send that one character, because it's part of the trailer */
 	trailer->hash = hash;
-	CALLBACK(cbdata, OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, &content2);
+	CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, cbdata, &content2);
 	return total;
 }
 
@@ -8665,8 +8653,8 @@ got_minus:
 				__ops_dup_headers(
 					&content.u.cleartext_head.headers,
 					&dearmour->headers);
-				CALLBACK(cbdata,
-					OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
+				CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
+					cbdata,
 					&content);
 				ret = process_dash_escaped(dearmour, errors,
 						readinfo, cbdata);
@@ -8679,7 +8667,7 @@ got_minus:
 						dearmour->headers;
 				(void) memset(&dearmour->headers, 0x0,
 						sizeof(dearmour->headers));
-				CALLBACK(cbdata, OPS_PTAG_CT_ARMOUR_HEADER,
+				CALLBACK(OPS_PTAG_CT_ARMOUR_HEADER, cbdata,
 						&content);
 				base64(dearmour);
 			}
@@ -8792,12 +8780,12 @@ got_minus2:
 						dearmour->headers;
 				(void) memset(&dearmour->headers, 0x0,
 						sizeof(dearmour->headers));
-				CALLBACK(cbdata, OPS_PTAG_CT_ARMOUR_HEADER,
+				CALLBACK(OPS_PTAG_CT_ARMOUR_HEADER, cbdata,
 						&content);
 				base64(dearmour);
 			} else {
 				content.u.armour_trailer.type = buf;
-				CALLBACK(cbdata, OPS_PTAG_CT_ARMOUR_TRAILER,
+				CALLBACK(OPS_PTAG_CT_ARMOUR_TRAILER, cbdata,
 						&content);
 				dearmour->state = OUTSIDE_BLOCK;
 			}
@@ -8819,13 +8807,13 @@ armoured_data_destroyer(__ops_reader_t *readinfo)
 /**
  * \ingroup Core_Readers_Armour
  * \brief Pushes dearmouring reader onto stack
- * \param parse_info Usual structure containing information about to how to do the parse
+ * \param stream Usual structure containing information about to how to do the parse
  * \sa __ops_reader_pop_dearmour()
  */
 static void 
-__ops_reader_push_dearmour(__ops_stream_t *parse_info)
+__ops_reader_push_dearmour(__ops_stream_t *stream)
 /*
- * This function originally had these parameters to cater for packets which
+ * This function originally had these params to cater for packets which
  * didn't strictly match the RFC. The initial 0.5 release is only going to
  * support strict checking. If it becomes desirable to support loose checking
  * of armoured packets and these params are reinstated, parse_headers() must
@@ -8852,7 +8840,7 @@ __ops_reader_push_dearmour(__ops_stream_t *parse_info)
 	dearmour->expect_sig = 0;
 	dearmour->got_sig = 0;
 
-	__ops_reader_push(parse_info, armoured_data_reader,
+	__ops_reader_push(stream, armoured_data_reader,
 			armoured_data_destroyer, dearmour);
 }
 
@@ -9200,7 +9188,7 @@ typedef struct mmap_reader_t {
  * \ingroup Core_Readers
  *
  * __ops_reader_fd() attempts to read up to "plength" bytes from the file
- * descriptor in "parse_info" into the buffer starting at "dest" using the
+ * descriptor in "stream" into the buffer starting at "dest" using the
  * rules contained in "flags"
  *
  * \param	dest	Pointer to previously allocated buffer
@@ -9302,13 +9290,13 @@ __ops_reader_set_memory(__ops_stream_t *stream, const void *buffer,
 
 /**
    \ingroup Core_Readers
-   \brief Create parse_info and sets to read from memory
-   \param stream Address where new parse_info will be set
+   \brief Create stream and sets to read from memory
+   \param stream Address where new stream will be set
    \param mem Memory to read from
    \param arg Reader-specific arg
    \param callback Callback to use with reader
    \param accumulate Set if we need to accumulate as we read. (Usually 0 unless doing signature verification)
-   \note It is the caller's responsiblity to free parse_info
+   \note It is the caller's responsiblity to free stream
    \sa __ops_teardown_memory_read()
 */
 static void 
@@ -9525,13 +9513,13 @@ __ops_print_pubkeydata(__ops_io_t *io, const __ops_key_t *key)
 
 /**
    \ingroup Core_Readers
-   \brief Creates parse_info, opens file, and sets to read from file
-   \param stream Address where new parse_info will be set
+   \brief Creates stream, opens file, and sets to read from file
+   \param stream Address where new stream will be set
    \param filename Name of file to read
    \param vp Reader-specific arg
    \param callback Callback to use when reading
    \param accumulate Set if we need to accumulate as we read. (Usually 0 unless doing signature verification)
-   \note It is the caller's responsiblity to free parse_info and to close fd
+   \note It is the caller's responsiblity to free stream and to close fd
    \sa __ops_teardown_file_read()
 */
 static int 
