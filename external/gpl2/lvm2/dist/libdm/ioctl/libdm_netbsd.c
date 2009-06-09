@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm_netbsd.c,v 1.2 2009/06/05 19:57:25 haad Exp $        */
+/*      $NetBSD: libdm_netbsd.c,v 1.3 2009/06/09 18:29:09 haad Exp $        */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ static prop_dictionary_t dm_parse_stripe(char *);
 static prop_dictionary_t dm_parse_mirror(char *);
 static prop_dictionary_t dm_parse_snapshot(char *);
 static prop_dictionary_t dm_parse_snapshot_origin(char *);
+static prop_dictionary_t dm_parse_default(char *);
 
 static struct nbsd_dm_target_param dmt_parse[] = {
 	{"linear", dm_parse_linear},
@@ -104,8 +105,6 @@ nbsd_dm_parse_param(const char *target, const char *params)
 	dict = NULL;
 	slen = strlen(target);
 
-	printf("Parsing target %s, string %s\n", target, params);
-
 	/* copy parameter string to new buffer */
 	param = dm_malloc(strlen(params) * sizeof(char));
 	strlcpy(param, params, strlen(params)+1);
@@ -119,11 +118,10 @@ nbsd_dm_parse_param(const char *target, const char *params)
 		if (strncmp(target, dmt_parse[i].name, slen) == 0)
 			break;
 	}
-	
-        if (dmt_parse[i].name == NULL)
-                return NULL;
 
-	printf("target found %s, params %s\n", dmt_parse[i].name, params);
+	/* Create default dictionary with key params and with string as a value */
+        if (dmt_parse[i].name == NULL)
+		dm_parse_default(param);
 	
 	dict = dmt_parse[i].parse(param);
 	
@@ -157,9 +155,7 @@ dm_parse_linear(char *params)
 		if (**ap != '\0')
 	        	ap++;
 	}
-	printf("Linear target params parsing routine called %s -- %d \n", 
-		argv[1], strtol(argv[1], (char **)NULL, 10));
-	
+		
 	prop_dictionary_set_cstring(dict, DM_TARGET_LINEAR_DEVICE, argv[0]);
 	prop_dictionary_set_uint64(dict, DM_TARGET_LINEAR_OFFSET, strtoll(argv[1], (char **)NULL, 10));
 		
@@ -192,7 +188,6 @@ dm_parse_stripe(char *params)
 		if (**ap != '\0')
 	        	ap++;
 	}
-	printf("Stripe target params parsing routine called\n");
 	
 	prop_dictionary_set_uint64(dict, DM_TARGET_STRIPE_STRIPES, 
 		strtol(argv[0], (char **)NULL, 10));
@@ -249,6 +244,18 @@ dm_parse_snapshot_origin(char *params)
 	prop_dictionary_t dict;
 	
 	dict = prop_dictionary_create();
+	
+	return dict;
+}
+
+static prop_dictionary_t 
+dm_parse_default(char *params)
+{
+	prop_dictionary_t dict;
+	
+	dict = prop_dictionary_create();
+
+	prop_dictionary_set_cstring(dict, DM_TABLE_PARAMS, params);
 	
 	return dict;
 }
