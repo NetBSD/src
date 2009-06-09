@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.18 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.19 2009/06/09 02:19:47 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2179,17 +2179,19 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				seckey.u.skey_passphrase.passphrase =
 					&cbinfo->cryptinfo.passphrase;
 				CALLBACK(OPS_GET_PASSPHRASE, cbinfo, &seckey);
-				if (!cbinfo->cryptinfo.passphrase) {
-					fprintf(stderr,
-						"can't get passphrase\n");
-					return 0;
-				}
 			}
 			/* then it must be encrypted */
-			secret = __ops_decrypt_seckey(cbinfo->cryptinfo.keydata,
-					cbinfo->cryptinfo.passphrase);
+			secret = __ops_decrypt_seckey(
+						cbinfo->cryptinfo.keydata,
+						cbinfo->cryptinfo.passphrase);
+			if (!secret) {
+				(void) __ops_forget(
+					cbinfo->cryptinfo.passphrase,
+					strlen(cbinfo->cryptinfo.passphrase));
+				cbinfo->cryptinfo.passphrase = NULL;
+				(void) fprintf(stderr, "Bad passphrase\n");
+			}
 		}
-
 		*content->get_seckey.seckey = secret;
 		break;
 
