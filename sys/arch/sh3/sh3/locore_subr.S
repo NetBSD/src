@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.48 2008/06/01 01:43:20 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.48.8.1 2009/06/10 17:15:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.48 2008/06/01 01:43:20 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.48.8.1 2009/06/10 17:15:00 bouyer Exp $")
 
 
 /*
@@ -669,7 +669,7 @@ ENTRY(copyinstr)
 	cmp/eq	#-1,	r0
 	bf	1b
 	mov.l	.L_copyinstr_VM_MAXUSER_ADDRESS, r1
-	cmp/hs	r1,	r5
+	cmp/hs	r1,	r4
 	bt	3f
 	mov	#ENAMETOOLONG, r3
 
