@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.564 2009/06/10 02:05:45 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.565 2009/06/10 04:11:01 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -844,7 +844,7 @@ X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 
 .for _proto in \
 	xcmisc xext xf86bigfont bigreqs input kb x fonts fixes scrnsaver \
-	xinerama print render resource record video xf86dga xf86misc \
+	xinerama dri2 render resource record video xf86dga xf86misc \
 	xf86vidmode composite damage trap gl randr fontcache xf86dri
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
