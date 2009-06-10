@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.14 2009/05/31 22:15:13 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.15 2009/06/10 01:56:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.14 2009/05/31 22:15:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.15 2009/06/10 01:56:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.14 2009/05/31 22:15:13 yamt Exp $"
 #include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_readahead.h>
 
 /*
  * Duplicate a file descriptor.
@@ -613,6 +615,7 @@ int
 do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 {
 	file_t *fp;
+	vnode_t *vp;
 	int error;
 	CTASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
 	CTASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
@@ -647,6 +650,11 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 		break;
 
 	case POSIX_FADV_WILLNEED:
+		vp = fp->f_data;
+		error = uvm_readahead(&vp->v_uobj, offset,
+		    len != 0 ? len : INT64_MAX - offset);
+		break;
+
 	case POSIX_FADV_DONTNEED:
 	case POSIX_FADV_NOREUSE:
 		/* Not implemented yet. */
