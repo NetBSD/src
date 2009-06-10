@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.16 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.17 2009/06/10 00:38:09 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -240,13 +240,8 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		break;
 
 	case OPS_GET_PASSPHRASE:
-#if 1
 		*content->skey_passphrase.passphrase = decrypt->passphrase;
 		return OPS_KEEP_MEMORY;
-#else
-		cbinfo->cryptinfo.keydata = decrypt->key;
-		return get_passphrase_cb(pkt, cbinfo);
-#endif
 
 	case OPS_PARSER_ERRCODE:
 		switch (content->errcode.errcode) {
@@ -298,18 +293,18 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 __ops_seckey_t *
 __ops_decrypt_seckey(const __ops_key_t *key, const char *passphrase)
 {
-	__ops_stream_t	*parse;
-	const int		 printerrors = 1;
-	decrypt_t		 decrypt;
+	__ops_stream_t	*stream;
+	const int	 printerrors = 1;
+	decrypt_t	 decrypt;
 
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
 	decrypt.passphrase = strdup(passphrase);
-	parse = __ops_parseinfo_new();
-	__ops_keydata_reader_set(parse, key);
-	__ops_set_callback(parse, decrypt_cb, &decrypt);
-	parse->readinfo.accumulate = 1;
-	__ops_parse(parse, !printerrors);
+	stream = __ops_parseinfo_new();
+	__ops_keydata_reader_set(stream, key);
+	__ops_set_callback(stream, decrypt_cb, &decrypt);
+	stream->readinfo.accumulate = 1;
+	__ops_parse(stream, !printerrors);
 	__ops_forget(decrypt.passphrase, strlen(decrypt.passphrase));
 	(void) free(decrypt.passphrase);
 	return decrypt.seckey;
@@ -372,14 +367,14 @@ __ops_get_userid(const __ops_key_t *key, unsigned subscript)
 */
 
 unsigned 
-__ops_is_key_supported(const __ops_key_t *keydata)
+__ops_is_key_supported(const __ops_key_t *key)
 {
-	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (keydata->key.pubkey.alg == OPS_PKA_RSA) {
+	if (key->type == OPS_PTAG_CT_PUBLIC_KEY) {
+		if (key->key.pubkey.alg == OPS_PKA_RSA) {
 			return 1;
 		}
-	} else if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (keydata->key.pubkey.alg == OPS_PKA_DSA) {
+	} else if (key->type == OPS_PTAG_CT_PUBLIC_KEY) {
+		if (key->key.pubkey.alg == OPS_PKA_DSA) {
 			return 1;
 		}
 	}
@@ -394,15 +389,17 @@ __ops_is_key_supported(const __ops_key_t *keydata)
 \param src Source User ID
 \note If dst already has a userid, it will be freed.
 */
-void 
+static __ops_userid_t * 
 __ops_copy_userid(__ops_userid_t *dst, const __ops_userid_t *src)
 {
 	size_t          len = strlen((char *) src->userid);
-	if (dst->userid)
-		free(dst->userid);
-	dst->userid = calloc(1, len + 1);
 
+	if (dst->userid) {
+		(void) free(dst->userid);
+	}
+	dst->userid = calloc(1, len + 1);
 	(void) memcpy(dst->userid, src->userid, len);
+	return dst;
 }
 
 /* \todo check where pkt pointers are copied */
@@ -413,7 +410,7 @@ __ops_copy_userid(__ops_userid_t *dst, const __ops_userid_t *src)
 \param src Source packet
 \note If dst already has a packet, it will be freed.
 */
-void 
+static __ops_subpacket_t * 
 __ops_copy_packet(__ops_subpacket_t *dst, const __ops_subpacket_t *src)
 {
 	if (dst->raw) {
@@ -422,32 +419,27 @@ __ops_copy_packet(__ops_subpacket_t *dst, const __ops_subpacket_t *src)
 	dst->raw = calloc(1, src->length);
 	dst->length = src->length;
 	(void) memcpy(dst->raw, src->raw, src->length);
+	return dst;
 }
 
 /**
 \ingroup Core_Keys
-\brief Add User ID to keydata
-\param keydata Key to which to add User ID
+\brief Add User ID to key
+\param key Key to which to add User ID
 \param userid User ID to add
 \return Pointer to new User ID
 */
 __ops_userid_t  *
-__ops_add_userid(__ops_key_t *keydata, const __ops_userid_t *userid)
+__ops_add_userid(__ops_key_t *key, const __ops_userid_t *userid)
 {
-	__ops_userid_t  *new_uid = NULL;
+	__ops_userid_t  *uidp = NULL;
 
-	EXPAND_ARRAY(keydata, uid);
-
+	EXPAND_ARRAY(key, uid);
 	/* initialise new entry in array */
-	new_uid = &keydata->uids[keydata->uidc];
-
-	new_uid->userid = NULL;
-
+	uidp = &key->uids[key->uidc++];
+	uidp->userid = NULL;
 	/* now copy it */
-	__ops_copy_userid(new_uid, userid);
-	keydata->uidc++;
-
-	return new_uid;
+	return __ops_copy_userid(uidp, userid);
 }
 
 /**
@@ -460,20 +452,16 @@ __ops_add_userid(__ops_key_t *keydata, const __ops_userid_t *userid)
 __ops_subpacket_t   *
 __ops_add_subpacket(__ops_key_t *keydata, const __ops_subpacket_t *packet)
 {
-	__ops_subpacket_t   *new_pkt = NULL;
+	__ops_subpacket_t   *subpktp = NULL;
 
 	EXPAND_ARRAY(keydata, packet);
 
 	/* initialise new entry in array */
-	new_pkt = &keydata->packets[keydata->packetc];
-	new_pkt->length = 0;
-	new_pkt->raw = NULL;
-
+	subpktp = &keydata->packets[keydata->packetc++];
+	subpktp->length = 0;
+	subpktp->raw = NULL;
 	/* now copy it */
-	__ops_copy_packet(new_pkt, packet);
-	keydata->packetc++;
-
-	return new_pkt;
+	return __ops_copy_packet(subpktp, packet);
 }
 
 /**
@@ -635,11 +623,11 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 			const unsigned armour,
 			const char *filename)
 {
-	__ops_stream_t	*parse;
+	__ops_stream_t	*stream;
 	unsigned		 res = 1;
 	int			 fd;
 
-	parse = __ops_parseinfo_new();
+	stream = __ops_parseinfo_new();
 
 	/* add this for the moment, */
 	/*
@@ -648,7 +636,7 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	 */
 
 	/* __ops_parse_options(parse,OPS_PTAG_SS_ALL,OPS_PARSE_RAW); */
-	__ops_parse_options(parse, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
+	__ops_parse_options(stream, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 
 #ifdef O_BINARY
 	fd = open(filename, O_RDONLY | O_BINARY);
@@ -656,34 +644,34 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	fd = open(filename, O_RDONLY);
 #endif
 	if (fd < 0) {
-		__ops_parseinfo_delete(parse);
+		__ops_parseinfo_delete(stream);
 		perror(filename);
 		return 0;
 	}
 #ifdef USE_MMAP_FOR_FILES
-	__ops_reader_set_mmap(parse, fd);
+	__ops_reader_set_mmap(stream, fd);
 #else
-	__ops_reader_set_fd(parse, fd);
+	__ops_reader_set_fd(stream, fd);
 #endif
 
-	__ops_set_callback(parse, cb_keyring_read, NULL);
+	__ops_set_callback(stream, cb_keyring_read, NULL);
 
 	if (armour) {
-		__ops_reader_push_dearmour(parse);
+		__ops_reader_push_dearmour(stream);
 	}
-	if (__ops_parse_and_accumulate(keyring, parse) == 0) {
+	if (__ops_parse_and_accumulate(keyring, stream) == 0) {
 		res = 0;
 	} else {
 		res = 1;
 	}
-	__ops_print_errors(__ops_parseinfo_get_errors(parse));
+	__ops_print_errors(__ops_parseinfo_get_errors(stream));
 
 	if (armour)
-		__ops_reader_pop_dearmour(parse);
+		__ops_reader_pop_dearmour(stream);
 
 	close(fd);
 
-	__ops_parseinfo_delete(parse);
+	__ops_parseinfo_delete(stream);
 
 	return res;
 }
@@ -717,24 +705,24 @@ __ops_keyring_read_from_mem(__ops_io_t *io,
 				const unsigned armour,
 				__ops_memory_t *mem)
 {
-	__ops_stream_t	*parse = NULL;
+	__ops_stream_t	*stream = NULL;
 	const unsigned		 noaccum = 0;
 	unsigned		 res = 1;
 
-	parse = __ops_parseinfo_new();
-	__ops_parse_options(parse, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
-	__ops_setup_memory_read(io, &parse, mem, NULL, cb_keyring_read,
+	stream = __ops_parseinfo_new();
+	__ops_parse_options(stream, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
+	__ops_setup_memory_read(io, &stream, mem, NULL, cb_keyring_read,
 					noaccum);
 	if (armour) {
-		__ops_reader_push_dearmour(parse);
+		__ops_reader_push_dearmour(stream);
 	}
-	res = __ops_parse_and_accumulate(keyring, parse);
-	__ops_print_errors(__ops_parseinfo_get_errors(parse));
+	res = __ops_parse_and_accumulate(keyring, stream);
+	__ops_print_errors(__ops_parseinfo_get_errors(stream));
 	if (armour) {
-		__ops_reader_pop_dearmour(parse);
+		__ops_reader_pop_dearmour(stream);
 	}
 	/* don't call teardown_memory_read because memory was passed in */
-	__ops_parseinfo_delete(parse);
+	__ops_parseinfo_delete(stream);
 	return res;
 }
 
@@ -773,9 +761,9 @@ const __ops_key_t *
 __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 			   const unsigned char keyid[OPS_KEY_ID_SIZE])
 {
-	unsigned	n;
+	unsigned	 n;
 
-	for (n = 0; keyring && n < keyring->keyc; n++) {
+	for (n = 1; keyring && n < keyring->keyc + 1; n++) {
 		if (__ops_get_debug_level(__FILE__)) {
 			int	i;
 
@@ -791,7 +779,8 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 			}
 			(void) fprintf(io->errs, "\n");
 		}
-		if (memcmp(keyring->keys[n].key_id, keyid, OPS_KEY_ID_SIZE) == 0) {
+		if (memcmp(keyring->keys[n].key_id, keyid,
+				OPS_KEY_ID_SIZE) == 0) {
 			return &keyring->keys[n];
 		}
 		if (memcmp(&keyring->keys[n].key_id[OPS_KEY_ID_SIZE / 2],
@@ -869,12 +858,14 @@ __ops_getkeybyname(__ops_io_t *io,
 		return NULL;
 	}
 	len = strlen(name);
-	for (n = 0, keyp = keyring->keys; n < keyring->keyc; ++n, keyp++) {
+	n = 1;
+	for (keyp = &keyring->keys[n]; n < keyring->keyc + 1; ++n, keyp++) {
 		for (i = 0, uidp = keyp->uids; i < keyp->uidc; i++, uidp++) {
 			if (__ops_get_debug_level(__FILE__)) {
 				(void) fprintf(io->outs,
 					"[%d][%d] name %s, last '%d'\n",
-					n, i, uidp->userid, uidp->userid[len]);
+					n, i, uidp->userid,
+					uidp->userid[len]);
 			}
 			if (strncmp((char *) uidp->userid, name, len) == 0 &&
 			    uidp->userid[len] == ' ') {
@@ -898,8 +889,8 @@ __ops_getkeybyname(__ops_io_t *io,
 			return kp;
 		}
 		/* match on full name */
-		keyp = keyring->keys;
-		for (n = 0; n < keyring->keyc; ++n, keyp++) {
+		keyp = &keyring->keys[1];
+		for (n = 1; n < keyring->keyc + 1; ++n, keyp++) {
 			uidp = keyp->uids;
 			for (i = 0 ; i < keyp->uidc; i++, uidp++) {
 				if (__ops_get_debug_level(__FILE__)) {
@@ -917,7 +908,8 @@ __ops_getkeybyname(__ops_io_t *io,
 		}
 	}
 	/* match on <email@address> */
-	for (n = 0, keyp = keyring->keys; n < keyring->keyc; ++n, keyp++) {
+	keyp = &keyring->keys[1];
+	for (n = 1; n < keyring->keyc + 1; ++n, keyp++) {
 		for (i = 0, uidp = keyp->uids; i < keyp->uidc; i++, uidp++) {
 			/*
 			 * look for the rightmost '<', in case there is one
@@ -960,7 +952,7 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 	unsigned		 n;
 
 	(void) fprintf(io->outs, "%d keys\n", keyring->keyc);
-	for (n = 0, key = &keyring->keys[n]; n < keyring->keyc; ++n, ++key) {
+	for (n = 0, key = &keyring->keys[n+1]; n < keyring->keyc; ++n, ++key) {
 		if (__ops_is_key_secret(key)) {
 			__ops_print_seckeydata(key);
 		} else {

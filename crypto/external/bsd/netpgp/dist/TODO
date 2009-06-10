@@ -1,8 +1,6 @@
 To Do
 =====
-modify sets lists for netpgpverify
 error logging
-separate key management program
 separate from libcrypto?
 64-bit offsets
 default compression when signing?
@@ -60,3 +58,6 @@ Add --passwd-fd n argument
 bring forward netpgpverify mods to netpgp
 move directory locations in package and cvs repo
 fix up tests for new directory locations
+separate key management program
+C++ guards in header file
+modify sets lists for netpgpverify
