@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1269 2009/06/09 12:16:06 njoly Exp $
+#	$NetBSD: mi,v 1.1270 2009/06/10 00:40:33 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2976,6 +2976,7 @@
 ./usr/libdata/debug/usr/bin/nbsvtool.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netgroup.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/bin/netpgp.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/bin/netpgpkeys.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netpgpverify.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netstat.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/newgrp.debug	comp-util-debug		debug
