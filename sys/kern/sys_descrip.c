@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.15 2009/06/10 01:56:34 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.16 2009/06/10 23:48:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.15 2009/06/10 01:56:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.16 2009/06/10 23:48:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -616,11 +616,19 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 {
 	file_t *fp;
 	vnode_t *vp;
+	off_t endoffset;
 	int error;
 	CTASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
 	CTASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
 	CTASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
+	if (len == 0) {
+		endoffset = INT64_MAX;
+	} else if (INT64_MAX - offset >= len) {
+		endoffset = offset + len;
+	} else {
+		return EINVAL;
+	}
 	if ((fp = fd_getfile(fd)) == NULL) {
 		return EBADF;
 	}
@@ -632,6 +640,17 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 		}
 		fd_putfile(fd);
 		return error;
+	}
+
+	switch (advice) {
+	case POSIX_FADV_WILLNEED:
+	case POSIX_FADV_DONTNEED:
+		vp = fp->f_data;
+		if (vp->v_type != VREG && vp->v_type != VBLK) {
+			fd_putfile(fd);
+			return 0;
+		}
+		break;
 	}
 
 	switch (advice) {
@@ -651,11 +670,16 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 
 	case POSIX_FADV_WILLNEED:
 		vp = fp->f_data;
-		error = uvm_readahead(&vp->v_uobj, offset,
-		    len != 0 ? len : INT64_MAX - offset);
+		error = uvm_readahead(&vp->v_uobj, offset, endoffset - offset);
 		break;
 
 	case POSIX_FADV_DONTNEED:
+		vp = fp->f_data;
+		mutex_enter(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, round_page(offset),
+		    trunc_page(endoffset), PGO_DEACTIVATE | PGO_CLEANIT);
+		break;
+
 	case POSIX_FADV_NOREUSE:
 		/* Not implemented yet. */
 		error = 0;
