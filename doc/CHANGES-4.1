@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.153 2009/06/07 11:59:38 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.154 2009/06/10 19:24:05 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3439,4 +3439,10 @@ share/i18n/csmapper/CP/mapper.dir.CP.src	1.10 via patch
 
 	PR/39445, fix wrong charsets priority for CP932.
 	[tnozaki, ticket #1194]
+
+sys/arch/sh3/sh3/locore_subr.S			1.52
+
+	Fix logic error in copyinstr() when deciding whether to return EFAULT
+	or ENAMETOOLONG.
+	[uwe, ticket #1323]
 
