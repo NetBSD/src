@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.38.2.1 2009/05/10 20:50:05 snj Exp $
+.\"	$NetBSD: afterboot.8,v 1.38.2.2 2009/06/10 17:17:38 bouyer Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -59,7 +59,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 2008
+.Dd May 18, 2009
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -193,7 +193,9 @@ variable in
 or edit the
 .Pa /etc/myname
 file to have it stick around for the next reboot.
-Note that hostname is supposed include a domainname, and that this should
+Note that
+.Dq Va hostname
+is supposed include a domainname, and that this should
 not be confused with YP (NIS)
 .Xr domainname 1 .
 If you are using
@@ -686,23 +688,24 @@ from the master so that the remote commands work.
 Check
 .Pa /etc/mail/aliases
 and update appropriately if you want e-mail to be routed
-to non-local address or to different users.
+to non-local addresses or to different users.
 .Pp
 Run
 .Xr newaliases 1
 after changes.
 .Ss Postfix
 .Nx
-comes also with Postfix in the base system.
-You may wish to set it up in favor of sendmail.
-Take a look to
+uses Postfix as its MTA.
+Postfix is started by default, but its initial configuration does not
+cause it to listen on the network for incoming connections.
+To configure Postfix, see
 .Pa /etc/postfix/main.cf
-and enable the daemon in
-.Pa /etc/rc.conf
-using "postfix=yes".
-It is very important to configure
+and
+.Pa /etc/postfix/master.cf .
+If you wish to use a different MTA (e.g., sendmail), install your MTA of
+choice and edit
 .Pa /etc/mailer.conf
-to point to Postfix binaries.
+to point to the proper binaries.
 .Ss DHCP server
 If this is a
 DHCP
@@ -964,7 +967,8 @@ utilities to run all the tests in an automated way:
 Should any problems appear when running the test suite, please let the
 .Nx
 developers know by sending a message to the appropriate mailing list or
-by sending a problem report.  For more details see:
+by sending a problem report.
+For more details see:
 .Bl -bullet -offset indent
 .It
 .Pa http://www.netbsd.org/mailinglists/
@@ -994,8 +998,6 @@ by sending a problem report.  For more details see:
 .Xr exports 5 ,
 .Xr fstab 5 ,
 .Xr group 5 ,
-.Xr krb.conf 5 ,
-.Xr krb.realms 5 ,
 .Xr mailer.conf 5 ,
 .Xr passwd 5 ,
 .Xr rc.conf 5 ,
