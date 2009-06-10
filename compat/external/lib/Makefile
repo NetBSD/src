@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/06/10 01:11:50 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2009/06/10 12:48:06 christos Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -8,9 +8,17 @@
 
 .include <bsd.own.mk>
 
-.if (${MKCRYPTO} != "no")
-SUBDIR+= ../bsd/netpgp/lib
-SUBDIR+= ../bsd/openssh/lib
+.if (${MKATF} != "no")
+SUBDIR+= ../bsd/atf/lib
 .endif
+
+.if (${MKCRYPTO} != "no")
+.if (${MKLDAP} != "no")
+SUBDIR+= ../bsd/openldap/lib
+.endif
+.endif
+
+SUBDIR+= ../bsd/bind/lib
+SUBDIR+= ../bsd/file/lib
 
 .include <bsd.subdir.mk>
