@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.92 2009/06/09 05:24:31 mrg Exp $
+#	 $NetBSD: mi,v 1.93 2009/06/10 04:37:27 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5543,6 +5543,8 @@
 ./usr/X11R7/include/X11/extensions/damagewire.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/dpms.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/dpmsstr.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/dri2proto.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/dri2tokens.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/extutil.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/fontcache.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/fontcacheP.h		-unknown-	xorg
@@ -6156,6 +6158,7 @@
 ./usr/X11R7/lib/pkgconfig/bigreqsproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/compositeproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/damageproto.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/dri2proto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/evieproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fixesproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	xorg
