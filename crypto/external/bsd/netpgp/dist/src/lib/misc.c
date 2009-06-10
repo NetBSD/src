@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.18 2009/06/10 00:38:09 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19 2009/06/10 16:01:37 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -114,20 +114,19 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	accumulate = __ops_callback_arg(cbinfo);
 	keyring = accumulate->keyring;
-	key = (keyring->keyc > 0) ? &keyring->keys[keyring->keyc] : NULL;
-
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_SECRET_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "New key - tag %d\n", pkt->tag);
+			(void) fprintf(stderr, "Creating key %d - tag %d\n",
+				keyring->keyc + 1, pkt->tag);
 		}
 		EXPAND_ARRAY(keyring, key);
 		pubkey = (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
 					&content->pubkey :
 					&content->seckey.pubkey;
-		key = &keyring->keys[++keyring->keyc];
+		key = &keyring->keys[keyring->keyc++];
 		(void) memset(key, 0x0, sizeof(*key));
 		__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
 					pubkey);
@@ -142,19 +141,22 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	case OPS_PTAG_CT_USER_ID:
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "User ID: %s\n",
-					content->userid.userid);
+			(void) fprintf(stderr, "User ID: %s for key %d\n",
+					content->userid.userid,
+					keyring->keyc - 1);
 		}
-		if (key) {
-			__ops_add_userid(key, &content->userid);
+		if (keyring->keyc > 0) {
+			__ops_add_userid(&keyring->keys[keyring->keyc - 1],
+						&content->userid);
 			return OPS_KEEP_MEMORY;
 		}
 		OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No userid found");
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_PACKET_END:
-		if (key) {
-			__ops_add_subpacket(key, &content->packet);
+		if (keyring->keyc > 0) {
+			__ops_add_subpacket(&keyring->keys[keyring->keyc - 1],
+						&content->packet);
 			return OPS_KEEP_MEMORY;
 		}
 		return OPS_RELEASE_MEMORY;
@@ -187,7 +189,6 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
  * \param keyring Pointer to an existing keyring
  * \param parse Options to use when parsing
 */
-
 int 
 __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_stream_t *parse)
 {
@@ -451,7 +452,7 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 		__ops_build_pubkey(mem, key, 0);
 
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "--- creating key fingerprint\n");
+			fprintf(stderr, "-> creating key fingerprint\n");
 		}
 		__ops_hash_sha1(&sha1);
 		sha1.init(&sha1);
@@ -464,7 +465,7 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
 		sha1.finish(&sha1, fp->fingerprint);
 
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "finished making key fingerprint\n");
+			fprintf(stderr, "<- finished making key fingerprint\n");
 		}
 		fp->length = OPS_FINGERPRINT_SIZE;
 
