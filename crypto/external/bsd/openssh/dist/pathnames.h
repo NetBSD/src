@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 2009/06/10 16:14:29 njoly Exp $	*/
 /* $OpenBSD: pathnames.h,v 1.17 2008/12/29 02:23:26 stevesk Exp $ */
 
 /*
@@ -122,7 +122,7 @@
 #define _PATH_SSH_KEY_SIGN		"/usr/libexec/ssh-keysign"
 
 /* xauth for X11 forwarding */
-#define _PATH_XAUTH			"/usr/X11R6/bin/xauth"
+#define _PATH_XAUTH			X11BASE "/bin/xauth"
 
 /* UNIX domain socket for X11 server; displaynum will replace %u */
 #define _PATH_UNIX_X "/tmp/.X11-unix/X%u"
