@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2009/06/09 20:35:02 jnemeth Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2009/06/10 03:30:32 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.11 2009/06/09 20:35:02 jnemeth Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2009/06/10 03:30:32 jnemeth Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -253,7 +253,7 @@ usage(void)
 	(void)fprintf(stderr,
 	    "Usage: %s [-P] [-f] [-b var=boolean] [-i var=integer] "
 	    "[-s var=string] module\n"
-	    "       %s -p [-P] [-b var=boolean] [-d var] [-i var=integer] "
+	    "       %s -p [-b var=boolean] [-d var] [-i var=integer] "
 	    "[-m plist]\n               [-s var=string]\n",
 	    getprogname(), getprogname());
 	exit(EXIT_FAILURE);
