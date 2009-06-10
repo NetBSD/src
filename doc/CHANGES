@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1238 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1239 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -291,3 +291,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	agr(4): Add support for layering vlans on top. Also allow LACP
 		to be disabled. [darran 20090529]
 	openssh: Import 5.2. [christos 20090707]
+	module: Add the capability to read an <module>.prop associated
+		with a module and merge a plist passed in by modload(8).
+		Also, add MODCTL_NO_PROP flag to prevent loading
+		<module>.prop. [jnemeth 20090709]
+	modload(8): Add various flags to assist in the creation and
+		maintenance of <module>.prop and/or to set MODCTL_NO_PROP.
+		[jnemeth 20090709]
