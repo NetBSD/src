@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.563 2009/05/04 21:32:31 ad Exp $
+#	$NetBSD: bsd.own.mk,v 1.564 2009/06/10 02:05:45 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -836,9 +836,9 @@ X11USRLIBDIR?=		${X11ROOTDIR}/lib
 X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 .for _lib in \
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
-	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xp Xpm XprintUtil \
+	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
-	fontenc xkbfile xkbui Xaw lbxutil Xfontcache XprintAppUtil
+	fontenc xkbfile xkbui Xaw lbxutil Xfontcache pciaccess
 X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 .endfor
 
