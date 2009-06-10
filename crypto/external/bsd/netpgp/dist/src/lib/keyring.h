@@ -105,9 +105,6 @@ unsigned __ops_add_selfsigned_userid(__ops_key_t *, __ops_userid_t *);
 __ops_key_t  *__ops_keydata_new(void);
 void __ops_keydata_init(__ops_key_t *, const __ops_content_tag_t);
 
-void __ops_copy_userid(__ops_userid_t *, const __ops_userid_t *);
-void __ops_copy_packet(__ops_subpacket_t *, const __ops_subpacket_t *);
-
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_stream_t *);
 
 void __ops_print_pubkeydata(__ops_io_t *, const __ops_key_t *);

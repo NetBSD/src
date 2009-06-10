@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.17 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.18 2009/06/10 00:38:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -109,12 +109,12 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	const __ops_contents_t	*content = &pkt->u;
 	const __ops_pubkey_t	*pubkey;
 	__ops_keyring_t		*keyring;
-	__ops_key_t		*keydata;
+	__ops_key_t		*key;
 	accumulate_t		*accumulate;
 
 	accumulate = __ops_callback_arg(cbinfo);
 	keyring = accumulate->keyring;
-	keydata = (keyring->keyc > 0) ? &keyring->keys[keyring->keyc] : NULL;
+	key = (keyring->keyc > 0) ? &keyring->keys[keyring->keyc] : NULL;
 
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
@@ -124,21 +124,19 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			(void) fprintf(stderr, "New key - tag %d\n", pkt->tag);
 		}
 		EXPAND_ARRAY(keyring, key);
-
 		pubkey = (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
 					&content->pubkey :
 					&content->seckey.pubkey;
-
-		keydata = &keyring->keys[++keyring->keyc];
-		(void) memset(keydata, 0x0, sizeof(*keydata));
-		__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
+		key = &keyring->keys[++keyring->keyc];
+		(void) memset(key, 0x0, sizeof(*key));
+		__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
 					pubkey);
-		__ops_fingerprint(&keydata->fingerprint, pubkey);
-		keydata->type = pkt->tag;
+		__ops_fingerprint(&key->fingerprint, pubkey);
+		key->type = pkt->tag;
 		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) {
-			keydata->key.pubkey = *pubkey;
+			key->key.pubkey = *pubkey;
 		} else {
-			keydata->key.seckey = content->seckey;
+			key->key.seckey = content->seckey;
 		}
 		return OPS_KEEP_MEMORY;
 
@@ -147,16 +145,16 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			(void) fprintf(stderr, "User ID: %s\n",
 					content->userid.userid);
 		}
-		if (keydata) {
-			__ops_add_userid(keydata, &content->userid);
+		if (key) {
+			__ops_add_userid(key, &content->userid);
 			return OPS_KEEP_MEMORY;
 		}
 		OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No userid found");
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_PACKET_END:
-		if (keydata) {
-			__ops_add_subpacket(keydata, &content->packet);
+		if (key) {
+			__ops_add_subpacket(key, &content->packet);
 			return OPS_KEEP_MEMORY;
 		}
 		return OPS_RELEASE_MEMORY;

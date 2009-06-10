@@ -29,6 +29,18 @@
 #ifndef NETPGP_H_
 #define NETPGP_H_
 
+#ifndef __BEGIN_DECLS
+#  if defined(__cplusplus)
+#  define __BEGIN_DECLS           extern "C" {
+#  define __END_DECLS             }
+#  else
+#  define __BEGIN_DECLS
+#  define __END_DECLS
+#  endif
+#endif
+
+__BEGIN_DECLS
+
 /* structure used to hold (key,value) pair information */
 typedef struct netpgp_t {
 	unsigned	  c;		/* # of elements used */
@@ -67,5 +79,7 @@ int netpgp_encrypt_file(netpgp_t *, const char *, const char *, char *, int);
 int netpgp_decrypt_file(netpgp_t *, const char *, char *, int);
 int netpgp_sign_file(netpgp_t *, const char *, const char *, char *, int, int, int);
 int netpgp_verify_file(netpgp_t *, const char *, const char *, int);
+
+__END_DECLS
 
 #endif /* !NETPGP_H_ */

@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.21 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.22 2009/06/10 00:38:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -529,6 +529,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 		if (seckey == NULL) {
 			(void) fprintf(io->errs, "Bad passphrase\n");
 		}
+		__ops_forget(pass, sizeof(pass));
 	} while (seckey == NULL);
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
@@ -541,7 +542,6 @@ netpgp_sign_file(netpgp_t *netpgp,
 		ret = __ops_sign_file(io, f, out, seckey, hashalg,
 					(unsigned)armored, overwrite);
 	}
-	__ops_forget(pass, strlen(pass));
 	__ops_forget(seckey, sizeof(*seckey));
 	return ret;
 }

@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.2 2009/06/10 00:38:09 agc Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.1 2009/06/10 00:38:10 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,51 +28,31 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd June 9, 2009
-.Dt NETPGP 1
+.Dt NETPGPKEYS 1
 .Os
 .Sh NAME
-.Nm netpgp
-.Nd signing, verification, encryption, and decryption utility
+.Nm netpgpkeys
+.Nd PGP key management utility
 .Sh SYNOPSIS
 .Nm
-.Fl Fl encrypt
-.Op Fl Fl output Ns = Ns Ar filename
+.Fl Fl export-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl decrypt
-.Op Fl Fl output Ns = Ns Ar filename
-.Op Fl Fl pass-fd Ns = Ns Ar fd
-.Op options
-.Ar file ...
-.Pp
-.Nm
-.Fl Fl sign
-.Op Fl Fl armor
-.Op Fl Fl detach
-.Op Fl Fl hash Ns = Ns Ar algorithm
-.Op Fl Fl output Ns = Ns Ar filename
-.Op Fl Fl pass-fd Ns = Ns Ar fd
+.Fl Fl find-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl verify
+.Fl Fl generate-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl cat
-.Op Fl Fl output Ns = Ns Ar filename
+.Fl Fl import-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl clearsign
-.Op Fl Fl output Ns = Ns Ar filename
-.Op Fl Fl pass-fd Ns = Ns Ar fd
+.Fl Fl list-keys
 .Op options
-.Ar file ...
-.Nm
-.Fl Fl list-packets
-.Op Fl Fl pass-fd Ns = Ns Ar fd
 .Ar file ...
 .Nm
 .Fl Fl version
@@ -89,13 +69,31 @@ where the options for all commands are:
 .br
 .Op Fl Fl verbose
 .Sh DESCRIPTION
+At the present time, the
+.Nm
+utility is still under development.
+Whilst the signing and verification, encryption and
+decryption parts of
+.Xr netpgp 1
+are considered mature,
+.Nm
+needs more work.
+Other key management utilities should be used in preference
+to this one.
+.Pp
 The
 .Nm
-command can digitally sign files and verify that the signatures
-attached to files were signed by a given user identifier.
-.Nm
-can also encrypt files using the public or private keys of
-users and, in the same manner, decrypt files which were encrypted.
+command is used for all forms of PGP key management,
+from generation of new keys to propagation of public
+keys to key servers, and importation of new public
+keys from other identities.
+.Pp
+The
+.Xr netpgp 1
+utility should be used for file management and transformation - encryption,
+decryption,
+signing and verification of files.
+.Pp
 .Pp
 For signing and encryption, a unique identity is needed.
 This identity is made up of a private and public key.
@@ -117,9 +115,23 @@ into text such that the contents can only be viewed by someone
 with the corresponding private key.
 This is called encryption.
 .Pp
-To manipulate keys themselves, a separate utility is provided, called
-.Xr netpgpkeys 1 .
+The
+.Nm
+utility can be used to generate a new key-pair for a user.
+As mentioned before,
+this key is in two parts, the public key (which is known
+by other people) and the private key.
 .Pp
+The other use of
+.Nm
+is to maintain keyrings.
+Key and keyring management commands available are:
+.Fl Fl export-key ,
+.Fl Fl find-key ,
+.Fl Fl generate-key ,
+.Fl Fl import-key ,
+and
+.Fl Fl list-keys .
 Keyrings are collections of public keys belonging to other users.
 By using other means of identification, it is possible to establish
 the bona fides of other users.
@@ -131,55 +143,27 @@ The other user will add our public key to their keyring.
 Keys can be listed, exported (i.e. made available to others),
 and imported (i.e. users who have signed our public key).
 .Pp
-The
-.Fl Fl list-packets
-command can be used for debugging purposes.
-.Pp
-The following commands are used to sign and verify signatures:
+Key and keyring management can be done with the
+following commands:
 .Bl -tag -width Ar
-.It Fl Fl cat
-The signature of the signed file named on the command line
-is verified against the contents of the file itself.
-If the two match, then the original contents
-are sent to standard out.
-If the signature does not match, no output is generated.
-.It Fl Fl clearsign
-The signature of the file named on the command line is calculated
-in the same manner as the
-.Fl Fl sign
-command, but the text is added to the file such that
-the text itself is not in binary format, but can be read by mere mortals.
-.It Fl Fl sign
-The private key is used to digitally sign the files named on the
-command line.
-The file and its attached signature are created with a
-.Dq Pa .gpg
-extension to the original file name.
-The user will be prompted for their pass phrase using
-.Xr getpass 3 .
-.It Fl Fl verify
-For each of the files named on the command line, the signature of the file
-is verified, checking the contents against the user's public signature.
-.El
-.Pp
-The following commands can be used to encrypt and decrypt files:
-.Bl -tag -width Ar
-.It Fl Fl decrypt
-Decrypt the file using the user's private key.
-The pass phrase will be optained by prompting the user
-to type it in, using
-.Xr getpass 3 .
-.It Fl Fl encrypt
-Use the user's public key to encrypt the files named on the command line.
-.It Fl Fl list-packets
-List all the
-.Dq packets
-in an encrypted or signed file.
-Internally,
-.Nm
-splits an encrypted or signed file into separate packets, and
-this option is used to give a verbose representation
-of these packets on standard output.
+.It Fl Fl export-key
+Display the current public key in a format suitable for export.
+This can be used to place the keyring on one of the
+public key servers, for example.
+.It Fl Fl find-key
+Find the appropriate public key from the current keyring.
+If no keyring is provided, the user's public keyring is used.
+.It Fl Fl generate-key
+This command is used to generate a new public and private key pair.
+The user id is taken from the command line, and the user will be
+prompted to provide a suitable pass phrase.
+.It Fl Fl import-key
+Import a public key as retrieved from one of the public key servers.
+This is in the form of a file which has previously been
+retrieved from elsewhere.
+.It Fl Fl list-keys
+List all the public keys in the current keyring.
+If no keyring is provided, the user's public keyring is used.
 .It Fl Fl version
 Print the version information from the
 .Xr libnetpgp 3
@@ -189,24 +173,6 @@ library.
 In addition to one of the preceding commands, a number of qualifiers
 or options may be given.
 .Bl -tag -width Ar
-.It Fl Fl armour , Fl armor
-This option, however it is spelled, wraps the signature as an
-ASCII-encoded piece of text, for ease of use.
-.It Fl Fl detached
-When signing a file, place the resulting signature in a separate
-file from the one being signed.
-.It Fl Fl hash-alg Ar hash-algorithm
-can be used to specify the hash algorithm (sometimes called
-a digest algorithm) which is used with RSA keys when signing
-text.
-The default hash algorithm is the
-.Dq SHA256
-algorithm.
-At the present time,
-.Dq SHA1
-may also be used, although it is recommended that
-SHA256 be used, due to recent advances in generating
-collisions for the SHA1 hashing algorithm.
 .It Fl Fl homedir Ar home-directory
 Keyrings are normally located, for historical reasons, within
 the user's home directory in a subdirectory called
@@ -216,13 +182,14 @@ find that sub-directory.
 .It Fl Fl keyring Ar keyring
 This option specifies an alternative keyring to be used.
 All keyring operations will be relative to this alternative keyring.
-.It Fl Fl output
-specifies a filename to which verified output from a signed file
-may be redirected.
-The default is to send the verified output to stdout,
-and this may also be specified using the
-.Dq -
-value.
+.It Fl Fl numbits Ar numbits
+specifies the number of bits to be used when generating a key.
+The default number of bits is 2048.
+This is considered the absolute
+minimum which should be chosen at the time of writing (2009).
+Due to advances in computing power every year, this number should
+be reviewed, and increased when it becomes easier to factor 2048
+bit numbers.
 .It Fl Fl userid Ar userid
 This option specifies the user identity to be used for all operations.
 This identity can either be in the form of the full name, or as an
@@ -269,8 +236,8 @@ This option should be used wisely, and any core dumps should
 be deleted in a secure manner when no longer needed.
 .El
 .Sh PASS PHRASES
-At the present time, the pass phrase cannot be changed by
-.Xr netpgpkeys 1
+The pass phrase cannot be changed by
+.Nm
 once it has been chosen, and will
 be used for the life of the key, so a wise choice is advised.
 The pass phrase should not be an easily guessable word or phrase,
@@ -293,68 +260,6 @@ Since the public and private key pair can be used to verify
 a person's identity, and since identity theft can have
 far-reaching consequences, users are strongly encouraged to
 enter their pass phrases only when prompted by the application.
-.Sh SIGNING AND VERIFICATION
-Signing and verification of a file is best viewed using the following example:
-.Bd -literal
-% netpgp --sign --userid=agc@netbsd.org a
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-netpgp passphrase:
-% netpgp --verify a.gpg
-Good signature for a.gpg made Thu Jan 29 03:06:00 2009
-using RSA (Encrypt or Sign) key 1B68DCFCC0596823
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
-%
-.Ed
-.Pp
-In the example above, a signature is made on a single file called
-.Dq Pa a
-using a user identity corresponding to
-.Dq agc@netbsd.org
-The key located for the user identity is displayed, and
-the user is prompted to type in their passphrase.
-The resulting file, called
-.Dq Pa a.gpg
-is placed in the same directory.
-The second part of the example shows a verification of the signed file
-taking place.
-The time and user identity of the signatory is displayed, followed
-by a fuller description of the public key of the signatory.
-In both cases, the exit value from the utility was a successful one.
-.Pp
-If a detached signature of a file called
-.Dq Pa a
-is requested, the signature would be placed
-in a file called
-.Dq Pa a.sig .
-.Pp
-To encrypt a file, the user's public key is used.
-Subsequent decryption of the file requires that the secret
-key is known.
-When decrypting, the key is displayed,
-and the passphrase protecting
-the secret key must be typed in to access the data in the encrypted file.
-.Bd -literal
-% netpgp --encrypt --userid=c0596823 a
-% netpgp --decrypt a.gpg
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-netpgp passphrase:
-%
-.Ed
 .Sh RETURN VALUES
 The
 .Nm
@@ -362,7 +267,7 @@ utility will return 0 for success,
 1 if the file's signature does not match what was expected,
 or 2 if any other error occurs.
 .Sh SEE ALSO
-.Xr netpgpkeys 1 ,
+.Xr netpgp 1 ,
 .Xr getpass 3 ,
 .\" .Xr libbz2 3 ,
 .Xr libnetpgp 3 ,
