@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.403 2009/06/03 18:47:06 bouyer Exp $
+#	$NetBSD: NetBSD.dist,v 1.404 2009/06/10 02:20:13 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -415,6 +415,7 @@
 ./usr/X11R7/share
 ./usr/X11R7/share/examples
 ./usr/X11R7/share/examples/ssh-askpass
+./usr/X11R7/share/pciids
 ./usr/bin
 ./usr/games
 ./usr/games/hide		gname=games mode=0750
