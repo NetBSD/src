@@ -79,6 +79,7 @@ enum optdefs {
 	VERBOSE,
 	COREDUMPS,
 	PASSWDFD,
+	RESULTS,
 
 	/* debug */
 	OPS_DEBUG
@@ -107,6 +108,7 @@ static struct option options[] = {
 	{"numbits",	required_argument, 	NULL,	NUMBITS},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
 	{"pass-fd",	required_argument, 	NULL,	PASSWDFD},
+	{"results",	required_argument, 	NULL,	RESULTS},
 	{ NULL,		0,			NULL,	0},
 };
 
@@ -291,6 +293,14 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			netpgp_setvar(&netpgp, "pass-fd", optarg);
+			break;
+		case RESULTS:
+			if (optarg == NULL) {
+				(void) fprintf(stderr,
+				"No output filename argument provided\n");
+				exit(EXIT_ERROR);
+			}
+			netpgp_setvar(&netpgp, "results", optarg);
 			break;
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);
