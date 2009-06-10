@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.19 2009/06/09 18:08:51 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.20 2009/06/10 17:18:51 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -381,4 +381,10 @@ sys/arch/powerpc/powerpc/vm_machdep.c		1.77
 	Do not use the same trampoline for cpu_setfunc and
 	cpu_lwp_fork, the latter does a lot more work.
 	[martin, ticket #801]
+
+share/man/man8/afterboot.8			1.40
+
+	Make some updates (most notably syncing the Postfix section
+	with reality). inspired by PR misc/39168.
+	[snj, ticket #804]
 
