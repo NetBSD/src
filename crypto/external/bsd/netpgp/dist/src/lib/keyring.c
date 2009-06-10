@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.17 2009/06/10 00:38:09 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.18 2009/06/10 16:01:37 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -763,7 +763,7 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 {
 	unsigned	 n;
 
-	for (n = 1; keyring && n < keyring->keyc + 1; n++) {
+	for (n = 0; keyring && n < keyring->keyc; n++) {
 		if (__ops_get_debug_level(__FILE__)) {
 			int	i;
 
@@ -858,8 +858,8 @@ __ops_getkeybyname(__ops_io_t *io,
 		return NULL;
 	}
 	len = strlen(name);
-	n = 1;
-	for (keyp = &keyring->keys[n]; n < keyring->keyc + 1; ++n, keyp++) {
+	n = 0;
+	for (keyp = &keyring->keys[n]; n < keyring->keyc; ++n, keyp++) {
 		for (i = 0, uidp = keyp->uids; i < keyp->uidc; i++, uidp++) {
 			if (__ops_get_debug_level(__FILE__)) {
 				(void) fprintf(io->outs,
@@ -889,8 +889,8 @@ __ops_getkeybyname(__ops_io_t *io,
 			return kp;
 		}
 		/* match on full name */
-		keyp = &keyring->keys[1];
-		for (n = 1; n < keyring->keyc + 1; ++n, keyp++) {
+		keyp = keyring->keys;
+		for (n = 0; n < keyring->keyc; ++n, keyp++) {
 			uidp = keyp->uids;
 			for (i = 0 ; i < keyp->uidc; i++, uidp++) {
 				if (__ops_get_debug_level(__FILE__)) {
@@ -908,8 +908,8 @@ __ops_getkeybyname(__ops_io_t *io,
 		}
 	}
 	/* match on <email@address> */
-	keyp = &keyring->keys[1];
-	for (n = 1; n < keyring->keyc + 1; ++n, keyp++) {
+	keyp = keyring->keys;
+	for (n = 0; n < keyring->keyc; ++n, keyp++) {
 		for (i = 0, uidp = keyp->uids; i < keyp->uidc; i++, uidp++) {
 			/*
 			 * look for the rightmost '<', in case there is one
@@ -951,14 +951,14 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 	__ops_key_t		*key;
 	unsigned		 n;
 
-	(void) fprintf(io->outs, "%d keys\n", keyring->keyc);
-	for (n = 0, key = &keyring->keys[n+1]; n < keyring->keyc; ++n, ++key) {
+	(void) fprintf(io->res, "%d keys\n", keyring->keyc);
+	for (n = 0, key = keyring->keys; n < keyring->keyc; ++n, ++key) {
 		if (__ops_is_key_secret(key)) {
-			__ops_print_seckeydata(key);
+			__ops_print_seckeydata(io, key);
 		} else {
 			__ops_print_pubkeydata(io, key);
 		}
-		(void) fputc('\n', io->outs);
+		(void) fputc('\n', io->res);
 	}
 	return 1;
 }
