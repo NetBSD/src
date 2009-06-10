@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/01 04:21:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/10 02:00:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,5 +28,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
 
 CPPFLAGS.mga_driver.c=	-Wno-error	# XXX fix me please
+CPPFLAGS.mga_dacG.c=	-Wno-error	# XXX fix me please
 
 .include "../Makefile.xf86-driver"
