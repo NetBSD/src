@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.1 2009/06/10 00:38:10 agc Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.2 2009/06/10 14:38:14 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ The
 .Nm
 command is used for all forms of PGP key management,
 from generation of new keys to propagation of public
-keys to key servers, and importation of new public
+keys to key servers, and import of new public
 keys from other identities.
 .Pp
 The
@@ -93,7 +93,6 @@ The
 utility should be used for file management and transformation - encryption,
 decryption,
 signing and verification of files.
-.Pp
 .Pp
 For signing and encryption, a unique identity is needed.
 This identity is made up of a private and public key.
@@ -225,7 +224,7 @@ requests.
 in normal processing,
 if an error occurs, the contents of memory are saved to disk, and can
 be read using tools to analyse behaviour.
-Unfortuinately this can disclose information to people viewing
+Unfortunately this can disclose information to people viewing
 the core dump, such as secret keys, and passphrases protecting
 those keys.
 In normal operation,
