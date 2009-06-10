@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.31 2009/06/09 04:39:50 mrg Exp $
+# $NetBSD: shl.mi,v 1.32 2009/06/10 07:52:36 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -76,7 +76,7 @@
 ./usr/X11R7/lib/libXevie.so.2.0			-unknown-		xorg
 ./usr/X11R7/lib/libXext.so.7.0			-unknown-		xorg
 ./usr/X11R7/lib/libXfixes.so.4.0		-unknown-		xorg
-./usr/X11R7/lib/libXfont.so.2.0			-unknown-		xorg
+./usr/X11R7/lib/libXfont.so.3.0			-unknown-		xorg
 ./usr/X11R7/lib/libXfontcache.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libXft.so.3.0			-unknown-		xorg
 ./usr/X11R7/lib/libXi.so.7.0			-unknown-		xorg

@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.25 2009/04/20 04:03:49 mrg Exp $
+# $NetBSD: shl.elf,v 1.26 2009/06/10 07:52:36 mrg Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -152,7 +152,7 @@
 ./usr/X11R7/lib/libXfixes.so			-unknown-		xorg
 ./usr/X11R7/lib/libXfixes.so.4			-unknown-		xorg
 ./usr/X11R7/lib/libXfont.so			-unknown-		xorg
-./usr/X11R7/lib/libXfont.so.2			-unknown-		xorg
+./usr/X11R7/lib/libXfont.so.3			-unknown-		xorg
 ./usr/X11R7/lib/libXfontcache.so		-unknown-		xorg
 ./usr/X11R7/lib/libXfontcache.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libXft.so			-unknown-		xorg

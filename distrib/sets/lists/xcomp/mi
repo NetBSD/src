@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.93 2009/06/10 04:37:27 mrg Exp $
+#	 $NetBSD: mi,v 1.94 2009/06/10 07:52:36 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5616,7 +5616,7 @@
 ./usr/X11R7/include/X11/fonts/fontenc.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontencc.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontmisc.h		-unknown-	xorg
-./usr/X11R7/include/X11/fonts/fontmod.h			-unknown-	xorg
+./usr/X11R7/include/X11/fonts/fontmod.h			-obsolete-	obsolete
 ./usr/X11R7/include/X11/fonts/fontproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontshow.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/fontstruct.h		-unknown-	xorg
