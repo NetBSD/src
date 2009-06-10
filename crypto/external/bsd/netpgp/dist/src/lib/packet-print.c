@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.17 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.18 2009/06/10 16:36:23 agc Exp $");
 #endif
 
 #include <string.h>
@@ -380,18 +380,18 @@ __ops_print_pubkeydata(__ops_io_t *io, const __ops_key_t *key)
 {
 	unsigned int    i;
 
-	(void) fprintf(io->errs, "pub %d/%s ",
-		numkeybits(&key->key.pubkey),
-		__ops_show_pka(key->key.pubkey.alg));
-	hexdump(io->errs, key->key_id, OPS_KEY_ID_SIZE, "");
-	(void) fprintf(io->errs, " ");
-	ptime(io->errs, key->key.pubkey.birthtime);
-	(void) fprintf(io->errs, "\nKey fingerprint: ");
-	hexdump(io->errs, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE,
+	(void) fprintf(io->res, "pub %d/%s ",
+			numkeybits(&key->key.pubkey),
+			__ops_show_pka(key->key.pubkey.alg));
+	hexdump(io->res, key->key_id, OPS_KEY_ID_SIZE, "");
+	(void) fprintf(io->res, " ");
+	ptime(io->res, key->key.pubkey.birthtime);
+	(void) fprintf(io->res, "\nKey fingerprint: ");
+	hexdump(io->res, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE,
 		" ");
-	(void) fprintf(io->errs, "\n");
+	(void) fprintf(io->res, "\n");
 	for (i = 0; i < key->uidc; i++) {
-		(void) fprintf(io->errs, "uid              %s\n",
+		(void) fprintf(io->res, "uid              %s\n",
 			key->uids[i].userid);
 	}
 }
@@ -450,27 +450,26 @@ __ops_print_pubkey(const __ops_pubkey_t *pubkey)
 */
 
 void
-__ops_print_seckeydata(const __ops_key_t *key)
+__ops_print_seckeydata(__ops_io_t *io, const __ops_key_t *key)
 {
-	printf("sec ");
-	__ops_show_pka(key->key.pubkey.alg);
-	printf(" ");
-
-	hexdump(stdout, key->key_id, OPS_KEY_ID_SIZE, "");
-	printf(" ");
-
-	ptime(stdout, key->key.pubkey.birthtime);
-	printf(" ");
-
+	(void) fprintf(io->res, "sec ");
+	__ops_show_pka(key->key.pubkey.alg); /* XXX - redirect to io */
+	(void) fprintf(io->res, " ");
+	hexdump(io->res, key->key_id, OPS_KEY_ID_SIZE, "");
+	(void) fprintf(io->res, " ");
+	ptime(io->res, key->key.pubkey.birthtime);
+	(void) fprintf(io->res, " ");
 	if (key->uidc == 1) {
 		/* print on same line as other info */
-		printf("%s\n", key->uids[0].userid);
+		(void) fprintf(io->res, "%s\n", key->uids[0].userid);
 	} else {
 		/* print all uids on separate line  */
 		unsigned int    i;
-		printf("\n");
+
+		(void) fprintf(io->res, "\n");
 		for (i = 0; i < key->uidc; i++) {
-			printf("uid              %s\n", key->uids[i].userid);
+			(void) fprintf(io->res, "uid              %s\n",
+					key->uids[i].userid);
 		}
 	}
 }
@@ -677,7 +676,6 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		break;
 
 	case OPS_PTAG_CT_USER_ID:
-		/* XXX: how do we print UTF-8? */
 		print_tagname("USER ID");
 		print_utf8_string("userid", content->userid.userid);
 		break;
@@ -929,8 +927,6 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		print_text_breakdown(text);
 		__ops_text_free(text);
 
-		/* xxx - TODO: print out UTF - rachel */
-
 		print_data("Name", &content->ss_notation.name);
 
 		print_data("Value", &content->ss_notation.value);
@@ -1005,7 +1001,6 @@ __ops_print_packet(const __ops_packet_t *pkt)
 			      1);
 		str = __ops_show_ss_rr_code(content->ss_revocation.code);
 		print_string(NULL, str);
-		/* xxx - todo : output text as UTF-8 string */
 		end_subpacket();
 		break;
 
