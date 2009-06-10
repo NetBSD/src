@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.813 2009/06/10 00:40:33 agc Exp $
+# $NetBSD: mi,v 1.814 2009/06/10 02:20:13 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -649,6 +649,7 @@
 ./usr/X11R7/share				base-x11-root
 ./usr/X11R7/share/examples			base-x11-root
 ./usr/X11R7/share/examples/ssh-askpass		base-x11-root
+./usr/X11R7/share/pciids			base-x11-root
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-mail-bin
 ./usr/bin/apply					base-util-bin
