@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.4 2009/01/23 19:34:37 pooka Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.5 2009/06/10 20:50:51 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -6,7 +6,7 @@
 LIB=		rumpnet
 
 .PATH:	${RUMPTOP}/librump/rumpnet				\
-	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
+	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../net					\
 	${RUMPTOP}/../compat/common
 
@@ -18,9 +18,6 @@ SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 
 # radix trie support
 SRCS+=	radix.c
-
-# src/lib/libkern
-SRCS+=	intoa.c
 
 # compat
 SRCS+=	rtsock_50.c

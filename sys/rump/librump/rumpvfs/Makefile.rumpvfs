@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.8 2009/06/09 14:20:42 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.9 2009/06/10 20:50:51 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -6,7 +6,7 @@
 LIB=	rumpvfs
 
 .PATH:	${RUMPTOP}/librump/rumpvfs				\
-	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
+	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
 	${RUMPTOP}/../compat/common
