@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.33 2009/06/05 18:12:51 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.34 2009/06/10 19:24:35 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -610,4 +610,10 @@ usr.sbin/Makefile				patch
 	Pull up pkg_install-20090528, libarchive-2.5.5 and libfetch-2.23
 	with the associated build infrastructure as of 20090529 from HEAD. 
 	[joerg, ticket #1322]
+
+sys/arch/sh3/sh3/locore_subr.S			1.52
+
+	Fix logic error in copyinstr() when deciding whether to return EFAULT
+	or ENAMETOOLONG.
+	[uwe, ticket #1323]
 
