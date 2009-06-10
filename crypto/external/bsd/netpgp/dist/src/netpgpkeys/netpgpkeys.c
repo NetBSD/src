@@ -41,22 +41,18 @@
 #include <netpgp.h>
 
 /*
- * Similraily, SHA1 is now looking as though it should not be used.
- * Let's pre-empt this by specifying SHA256 - gpg interoperates just
- * fine with SHA256 - agc, 20090522
+ * 2048 is the absolute minimum, really - we should really look at
+ * bumping this to 4096 or even higher - agc, 20090522
  */
-#define DEFAULT_HASH_ALG	"SHA256"
+#define DEFAULT_NUMBITS 2048
 
 static const char *usage =
 	" --help OR\n"
-	"\t--encrypt [--output=file] [options] files... OR\n"
-	"\t--decrypt [--output=file] [options] files... OR\n\n"
-	"\t--sign [--armor] [--detach] [--hash=alg] [--output=file]\n"
-		"\t\t[options] files... OR\n"
-	"\t--verify [options] files... OR\n"
-	"\t--cat [--output=file] [options] files... OR\n"
-	"\t--clearsign [--output=file] [options] files... OR\n"
-	"\t--list-packets [options] OR\n"
+	"\t--export-keys [options] OR\n"
+	"\t--find-key [options] OR\n"
+	"\t--generate-key [options] OR\n"
+	"\t--import-key [options] OR\n"
+	"\t--list-keys [options] OR\n"
 	"\t--version\n"
 	"where options are:\n"
 	"\t[--coredumps] AND/OR\n"
@@ -67,24 +63,19 @@ static const char *usage =
 
 enum optdefs {
 	/* commands */
-	ENCRYPT,
-	DECRYPT,
-	SIGN,
-	CLEARSIGN,
-	VERIFY,
-	VERIFY_CAT,
-	LIST_PACKETS,
+	LIST_KEYS = 1,
+	FIND_KEY,
+	EXPORT_KEY,
+	IMPORT_KEY,
+	GENERATE_KEY,
 	VERSION_CMD,
 	HELP_CMD,
 
 	/* options */
 	KEYRING,
 	USERID,
-	ARMOUR,
 	HOMEDIR,
-	DETACHED,
-	HASH_ALG,
-	OUTPUT,
+	NUMBITS,
 	VERBOSE,
 	COREDUMPS,
 	PASSWDFD,
@@ -97,19 +88,12 @@ enum optdefs {
 #define EXIT_ERROR	2
 
 static struct option options[] = {
-	/* file manipulation commands */
-	{"encrypt",	no_argument,		NULL,	ENCRYPT},
-	{"decrypt",	no_argument,		NULL,	DECRYPT},
-	{"sign",	no_argument,		NULL,	SIGN},
-	{"clearsign",	no_argument,		NULL,	CLEARSIGN},
-	{"verify",	no_argument,		NULL,	VERIFY},
-	{"cat",		no_argument,		NULL,	VERIFY_CAT},
-	{"vericat",	no_argument,		NULL,	VERIFY_CAT},
-	{"verify-cat",	no_argument,		NULL,	VERIFY_CAT},
-	{"verify-show",	no_argument,		NULL,	VERIFY_CAT},
-	{"verifyshow",	no_argument,		NULL,	VERIFY_CAT},
-	/* file listing commands */
-	{"list-packets", no_argument,		NULL,	LIST_PACKETS},
+	/* key-management commands */
+	{"list-keys",	no_argument,		NULL,	LIST_KEYS},
+	{"find-key",	no_argument,		NULL,	FIND_KEY},
+	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
+	{"import-key",	no_argument,		NULL,	IMPORT_KEY},
+	{"generate-key", no_argument,		NULL,	GENERATE_KEY},
 	/* debugging commands */
 	{"help",	no_argument,		NULL,	HELP_CMD},
 	{"version",	no_argument,		NULL,	VERSION_CMD},
@@ -120,16 +104,9 @@ static struct option options[] = {
 	{"userid",	required_argument, 	NULL,	USERID},
 	{"home",	required_argument, 	NULL,	HOMEDIR},
 	{"homedir",	required_argument, 	NULL,	HOMEDIR},
-	{"armor",	no_argument,		NULL,	ARMOUR},
-	{"armour",	no_argument,		NULL,	ARMOUR},
-	{"detach",	no_argument,		NULL,	DETACHED},
-	{"detached",	no_argument,		NULL,	DETACHED},
-	{"hash-alg",	required_argument, 	NULL,	HASH_ALG},
-	{"hash",	required_argument, 	NULL,	HASH_ALG},
-	{"algorithm",	required_argument, 	NULL,	HASH_ALG},
+	{"numbits",	required_argument, 	NULL,	NUMBITS},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
 	{"pass-fd",	required_argument, 	NULL,	PASSWDFD},
-	{"output",	required_argument, 	NULL,	OUTPUT},
 	{ NULL,		0,			NULL,	0},
 };
 
@@ -137,11 +114,8 @@ static struct option options[] = {
 typedef struct prog_t {
 	char	 keyring[MAXPATHLEN + 1];	/* name of keyring */
 	char	*progname;			/* program name */
-	char	*output;			/* output file name */
-	int	 overwrite;			/* overwrite files? */
-	int	 armour;			/* ASCII armor */
-	int	 detached;			/* use separate file */
-	int	 cmd;				/* netpgp command */
+	int	 numbits;			/* # of bits */
+	int	 cmd;				/* netpgpkeys command */
 } prog_t;
 
 
@@ -161,34 +135,19 @@ print_usage(const char *usagemsg, char *progname)
 static int
 netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 {
-	const int	cleartext = 1;
-
 	switch (p->cmd) {
-	case ENCRYPT:
-		return netpgp_encrypt_file(netpgp,
-					netpgp_getvar(netpgp, "userid"),
-					f, p->output,
-					p->armour);
-	case DECRYPT:
-		return netpgp_decrypt_file(netpgp, f, p->output, p->armour);
-	case SIGN:
-		return netpgp_sign_file(netpgp,
-					netpgp_getvar(netpgp, "userid"),
-					f, p->output,
-					p->armour, !cleartext, p->detached);
-	case CLEARSIGN:
-		return netpgp_sign_file(netpgp,
-					netpgp_getvar(netpgp, "userid"),
-					f, p->output,
-					p->armour, cleartext, p->detached);
-	case VERIFY:
-		return netpgp_verify_file(netpgp, f, NULL, p->armour);
-	case VERIFY_CAT:
-		return netpgp_verify_file(netpgp, f,
-					(p->output) ? p->output : "-",
-					p->armour);
-	case LIST_PACKETS:
-		return netpgp_list_packets(netpgp, f, p->armour, NULL);
+	case LIST_KEYS:
+		return netpgp_list_keys(netpgp);
+	case FIND_KEY:
+		return netpgp_find_key(netpgp, netpgp_getvar(netpgp, "userid"));
+	case EXPORT_KEY:
+		return netpgp_export_key(netpgp,
+				netpgp_getvar(netpgp, "userid"));
+	case IMPORT_KEY:
+		return netpgp_import_key(netpgp, f);
+	case GENERATE_KEY:
+		return netpgp_generate_key(netpgp,
+				netpgp_getvar(netpgp, "userid"), p->numbits);
 	case HELP_CMD:
 	default:
 		print_usage(usage, p->progname);
@@ -214,13 +173,14 @@ give_it_large(netpgp_t *netpgp)
 
 /* set the home directory value to "home/subdir" */
 static int
-set_homedir(netpgp_t *netpgp, char *home, const char *subdir)
+set_homedir(netpgp_t *netpgp, char *home, const char *subdir, char *progname)
 {
 	struct stat	st;
 	char		d[MAXPATHLEN];
 
 	if (home == NULL) {
-		(void) fprintf(stderr, "NULL HOME directory\n");
+		(void) fprintf(stderr, "%s: NULL HOME directory\n",
+					progname);
 		return 0;
 	}
 	(void) snprintf(d, sizeof(d), "%s%s", home, (subdir) ? subdir : "");
@@ -229,11 +189,12 @@ set_homedir(netpgp_t *netpgp, char *home, const char *subdir)
 			netpgp_setvar(netpgp, "homedir", d);
 			return 1;
 		}
-		(void) fprintf(stderr, "netpgp: homedir \"%s\" is not a dir\n",
-					d);
+		(void) fprintf(stderr, "%s: homedir \"%s\" is not a dir\n",
+					progname, d);
 		return 0;
 	}
-	(void) fprintf(stderr, "netpgp: warning homedir \"%s\" not found\n", d);
+	(void) fprintf(stderr, "%s: warning homedir \"%s\" not found\n",
+					progname, d);
 	return 1;
 }
 
@@ -250,29 +211,30 @@ main(int argc, char **argv)
 	(void) memset(&p, 0x0, sizeof(p));
 	(void) memset(&netpgp, 0x0, sizeof(netpgp));
 	p.progname = argv[0];
-	p.overwrite = 1;
-	p.output = NULL;
+	p.numbits = DEFAULT_NUMBITS;
 	if (argc < 2) {
 		print_usage(usage, p.progname);
 		exit(EXIT_ERROR);
 	}
 	/* set some defaults */
-	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
-	set_homedir(&netpgp, getenv("HOME"), "/.gnupg");
+	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", *argv);
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
+		case LIST_KEYS:
+			p.cmd = options[optindex].val;
+			break;
 		case COREDUMPS:
 			netpgp_setvar(&netpgp, "coredumps", "allowed");
 			p.cmd = options[optindex].val;
 			break;
-		case ENCRYPT:
-		case DECRYPT:
-		case SIGN:
-		case CLEARSIGN:
-		case VERIFY:
-		case VERIFY_CAT:
-		case LIST_PACKETS:
+		case GENERATE_KEY:
+			netpgp_setvar(&netpgp, "userid checks", "skip");
+			p.cmd = options[optindex].val;
+			break;
+		case FIND_KEY:
+		case EXPORT_KEY:
+		case IMPORT_KEY:
 		case HELP_CMD:
 			p.cmd = options[optindex].val;
 			break;
@@ -286,7 +248,8 @@ main(int argc, char **argv)
 		case KEYRING:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
-					"No keyring argument provided\n");
+					"%s: No keyring argument provided\n",
+					*argv);
 				exit(EXIT_ERROR);
 			}
 			snprintf(p.keyring, sizeof(p.keyring), "%s", optarg);
@@ -294,16 +257,11 @@ main(int argc, char **argv)
 		case USERID:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
-					"No userid argument provided\n");
+					"%s: no userid argument provided\n",
+					*argv);
 				exit(EXIT_ERROR);
 			}
 			netpgp_setvar(&netpgp, "userid", optarg);
-			break;
-		case ARMOUR:
-			p.armour = 1;
-			break;
-		case DETACHED:
-			p.detached = 1;
 			break;
 		case VERBOSE:
 			give_it_large(&netpgp);
@@ -311,37 +269,28 @@ main(int argc, char **argv)
 		case HOMEDIR:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
-				"No home directory argument provided\n");
+				"%s: no home directory argument provided\n",
+				*argv);
 				exit(EXIT_ERROR);
 			}
-			set_homedir(&netpgp, optarg, NULL);
+			set_homedir(&netpgp, optarg, NULL, *argv);
 			break;
-		case HASH_ALG:
+		case NUMBITS:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
-				"No hash algorithm argument provided\n");
+				"%s: no number of bits argument provided\n",
+				*argv);
 				exit(EXIT_ERROR);
 			}
-			netpgp_setvar(&netpgp, "hash", optarg);
+			p.numbits = atoi(optarg);
 			break;
 		case PASSWDFD:
 			if (optarg == NULL) {
 				(void) fprintf(stderr,
-				"No pass-fd argument provided\n");
+				"%s: no pass-fd argument provided\n", *argv);
 				exit(EXIT_ERROR);
 			}
 			netpgp_setvar(&netpgp, "pass-fd", optarg);
-			break;
-		case OUTPUT:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No output filename argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			if (p.output) {
-				(void) free(p.output);
-			}
-			p.output = strdup(optarg);
 			break;
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);
