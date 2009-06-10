@@ -110,7 +110,7 @@ int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_stream_t *);
 void __ops_print_pubkeydata(__ops_io_t *, const __ops_key_t *);
 void __ops_print_pubkey(const __ops_pubkey_t *);
 
-void __ops_print_seckeydata(const __ops_key_t *);
+void __ops_print_seckeydata(__ops_io_t *, const __ops_key_t *);
 int __ops_list_packets(__ops_io_t *,
 			char *,
 			unsigned,

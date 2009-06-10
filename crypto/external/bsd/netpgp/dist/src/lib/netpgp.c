@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.22 2009/06/10 00:38:09 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.23 2009/06/10 16:36:23 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -228,6 +228,7 @@ netpgp_init(netpgp_t *netpgp)
 	char		*userid;
 	char		*stream;
 	char		*passfd;
+	char		*results;
 	int		 coredumps;
 
 #ifdef HAVE_SYS_RESOURCE_H
@@ -294,6 +295,13 @@ netpgp_init(netpgp_t *netpgp)
 	    (netpgp->passfp = fdopen(atoi(passfd), "r")) == NULL) {
 		(void) fprintf(io->errs, "Can't open fd %s for reading\n",
 			passfd);
+		return 0;
+	}
+	if ((results = netpgp_getvar(netpgp, "results")) == NULL) {
+		io->res = io->errs;
+	} else if ((io->res = fopen(results, "w")) == NULL) {
+		(void) fprintf(io->errs, "Can't open results %s for writing\n",
+			results);
 		return 0;
 	}
 	return 1;
