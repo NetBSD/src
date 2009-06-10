@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.41 2009/06/10 18:34:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.42 2009/06/10 18:36:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.41 2009/06/10 18:34:49 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.42 2009/06/10 18:36:33 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -496,6 +496,9 @@ rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
 	return rv;
 }
 
+/*
+ * This is meant for safe debugging prints from the kernel.
+ */
 int
 rumpuser_dprintf(const char *format, ...)
 {
