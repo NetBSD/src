@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2008/07/20 00:52:39 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2009/06/10 03:24:27 ginsbach Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2009/06/10 03:24:27 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -1326,8 +1326,8 @@ strip_escapes(const char *s)
 	int i = 0;
 
 	REALLOC(file, filesz, MAXPATHLEN + 1, NULL);
-	/* assert: no trailing escape */
-	while ((file[i++] = (*s == '\\') != '\0' ? *++s : *s))
+	while ((i < (filesz - 1)) &&
+	       (file[i++] = (*s == '\\') != '\0' ? *++s : *s))
 		s++;
 	return file;
 }
