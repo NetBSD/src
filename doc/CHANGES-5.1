@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.28 2009/06/09 18:07:57 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.29 2009/06/10 17:19:08 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -963,4 +963,16 @@ sys/arch/powerpc/powerpc/vm_machdep.c		1.77
 	Do not use the same trampoline for cpu_setfunc and
 	cpu_lwp_fork, the latter does a lot more work.
 	[martin, ticket #801]
+
+sys/arch/sh3/sh3/locore_subr.S			1.52
+
+	Fix logic error in copyinstr() when deciding whether to return EFAULT
+	or ENAMETOOLONG.
+	[uwe, ticket #802]
+
+sbin/newfs/newfs.c				1.103
+
+	Issue a better error message if attempting to create a file system
+	on a block device.  Inspired by PR kern/41127.
+	[snj, ticket #803]
 
