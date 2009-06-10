@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.264 2009/06/06 08:10:06 haad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.265 2009/06/10 14:17:13 pooka Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.264 2009/06/06 08:10:06 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.265 2009/06/10 14:17:13 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1872,6 +1872,9 @@ raidinit(RF_Raid_t *raidPtr)
 	if (rs->sc_dev==NULL) {
 		printf("raid%d: config_attach_pseudo failed\n",
 		       raidPtr->raidid);
+		rs->sc_flags &= ~RAIDF_INITED;
+		free(cf, M_RAIDFRAME);
+		return;
 	}
 
 	/* disk_attach actually creates space for the CPU disklabel, among
