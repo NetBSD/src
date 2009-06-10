@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.40 2009/04/26 21:30:43 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.41 2009/06/10 18:34:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.40 2009/04/26 21:30:43 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.41 2009/06/10 18:34:49 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.40 2009/04/26 21:30:43 pooka Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -492,5 +493,18 @@ rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
 
 	if (opaque)
 		*opaque = kev.udata;
+	return rv;
+}
+
+int
+rumpuser_dprintf(const char *format, ...)
+{
+	va_list ap;
+	int rv;
+
+	va_start(ap, format);
+	rv = vprintf(format, ap);
+	va_end(ap);
+
 	return rv;
 }
