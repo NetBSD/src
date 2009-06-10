@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.129 2009/05/30 04:26:16 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.130 2009/06/10 01:55:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.129 2009/05/30 04:26:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.130 2009/06/10 01:55:33 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -849,13 +849,9 @@ sys_madvise(struct lwp *l, const struct sys_madvise_args *uap,
 		 * Activate all these pages, pre-faulting them in if
 		 * necessary.
 		 */
-		/*
-		 * XXX IMPLEMENT ME.
-		 * Should invent a "weak" mode for uvm_fault()
-		 * which would only do the PGO_LOCKED pgo_get().
-		 */
-
-		return (0);
+		error = uvm_map_willneed(&p->p_vmspace->vm_map,
+		    addr, addr + size);
+		break;
 
 	case MADV_DONTNEED:
 
