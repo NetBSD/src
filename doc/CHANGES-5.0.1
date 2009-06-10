@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.20 2009/06/10 17:18:51 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.21 2009/06/10 19:20:28 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -387,4 +387,10 @@ share/man/man8/afterboot.8			1.40
 	Make some updates (most notably syncing the Postfix section
 	with reality). inspired by PR misc/39168.
 	[snj, ticket #804]
+
+sys/arch/sh3/sh3/locore_subr.S			1.52
+
+	Fix logic error in copyinstr() when deciding whether to return EFAULT
+	or ENAMETOOLONG.
+	[uwe, ticket #802]
 
