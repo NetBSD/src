@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.57 2009/06/03 16:06:10 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.58 2009/06/10 11:41:43 he Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.57 2009/06/03 16:06:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.58 2009/06/10 11:41:43 he Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.57 2009/06/03 16:06:10 pooka Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_prot.h>
+#include <uvm/uvm_readahead.h>
 
 #include "rump_private.h"
 
@@ -447,6 +448,14 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 {
 
 	/* nada for now */
+}
+
+int
+uvm_readahead(struct uvm_object *uobj, off_t off, off_t size)
+{
+
+	/* nada for now */
+	return 0;
 }
 
 /*
