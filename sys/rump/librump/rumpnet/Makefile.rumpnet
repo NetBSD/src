@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.5 2009/06/10 20:50:51 pooka Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.6 2009/06/10 20:54:55 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -27,7 +27,6 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpnet/opt
-CPPFLAGS+=	-DMAXUSERS=32
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
