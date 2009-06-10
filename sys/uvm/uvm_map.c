@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.270 2009/05/03 16:52:54 pooka Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.271 2009/06/10 01:55:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.270 2009/05/03 16:52:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.271 2009/06/10 01:55:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.270 2009/05/03 16:52:54 pooka Exp $");
 #endif
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_readahead.h>
 
 #if defined(DDB) || defined(DEBUGPRINT)
 #include <uvm/uvm_ddb.h>
@@ -3330,6 +3331,57 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 	}
 
 	vm_map_unlock(map);
+	UVMHIST_LOG(maphist,"<- done (OK)",0,0,0,0);
+	return 0;
+}
+
+/*
+ * uvm_map_willneed: apply MADV_WILLNEED
+ */
+
+int
+uvm_map_willneed(struct vm_map *map, vaddr_t start, vaddr_t end)
+{
+	struct vm_map_entry *entry;
+	UVMHIST_FUNC("uvm_map_willneed"); UVMHIST_CALLED(maphist);
+	UVMHIST_LOG(maphist,"(map=0x%lx,start=0x%lx,end=0x%lx)",
+	    map, start, end, 0);
+
+	vm_map_lock_read(map);
+	VM_MAP_RANGE_CHECK(map, start, end);
+	if (!uvm_map_lookup_entry(map, start, &entry)) {
+		entry = entry->next;
+	}
+	while (entry->start < end) {
+		struct vm_amap * const amap = entry->aref.ar_amap;
+		struct uvm_object * const uobj = entry->object.uvm_obj;
+
+		KASSERT(entry != &map->header);
+		KASSERT(start < entry->end);
+		/*
+		 * XXX IMPLEMENT ME.
+		 * Should invent a "weak" mode for uvm_fault()
+		 * which would only do the PGO_LOCKED pgo_get().
+		 *
+		 * for now, we handle only the easy but common case.
+		 */
+		if (UVM_ET_ISOBJ(entry) && amap == NULL && uobj != NULL) {
+			off_t offset;
+			off_t size;
+
+			offset = entry->offset;
+			if (start < entry->start) {
+				offset += entry->start - start;
+			}
+			size = entry->offset + (entry->end - entry->start);
+			if (entry->end < end) {
+				size -= end - entry->end;
+			}
+			uvm_readahead(uobj, offset, size);
+		}
+		entry = entry->next;
+	}
+	vm_map_unlock_read(map);
 	UVMHIST_LOG(maphist,"<- done (OK)",0,0,0,0);
 	return 0;
 }
