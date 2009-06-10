@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/03/30 02:01:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/06/10 09:22:09 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,8 @@ SRCS.DRI=	radeon_dri.c
 CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
 
-SRCS.EXA=	radeon_exa.c
+SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
+		r600_textured_videofuncs.c r600_shader.c
 
 SRCS=	radeon_accel.c radeon_cursor.c radeon_dga.c \
 	radeon_driver.c radeon_video.c radeon_bios.c \
@@ -28,7 +29,8 @@ SRCS=	radeon_accel.c radeon_cursor.c radeon_dga.c \
 MAN=	radeon.4
 
 CPPFLAGS+=	-DDISABLE_EASF -DENABLE_ALL_SERVICE_FUNCTIONS \
-		-DATOM_BIOS -DATOM_BIOS_PARSER -DDRIVER_PARSER
+		-DATOM_BIOS -DATOM_BIOS_PARSER -DDRIVER_PARSER \
+		-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/AtomBios/includes \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/dri \
