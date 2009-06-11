@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.565 2009/06/10 04:11:01 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.566 2009/06/11 05:30:15 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -851,7 +851,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 
 .for _dir in \
 	xtrans fontconfig expat freetype evieext mkfontscale bdftopcf \
-	xkbcomp xorg-cf-files imake xorg-server xbiff xkbdata \
+	xkbcomp xorg-cf-files imake xorg-server xbiff xkbdata xkeyboard-config \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts \
 	fstobdf MesaDemos MesaGLUT MesaLib ico iceauth lbxproxy listres lndir \
