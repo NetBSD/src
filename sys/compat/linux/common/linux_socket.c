@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.99 2008/11/19 18:36:03 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.100 2009/06/11 19:57:58 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.99 2008/11/19 18:36:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.100 2009/06/11 19:57:58 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -408,6 +408,10 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	struct mbuf     *nam;
 	u_int8_t	*control;
 	struct mbuf     *ctl_mbuf = NULL;
+
+	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
+	if (error)
+		return error;
 
 	msg.msg_flags = MSG_IOVUSRSPACE;
 
