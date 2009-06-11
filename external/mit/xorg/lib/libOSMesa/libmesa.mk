@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.2 2008/11/24 01:31:57 cube Exp $
+#	$NetBSD: libmesa.mk,v 1.3 2009/06/11 01:47:08 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -71,7 +71,7 @@ SRCS.slang= \
 	slang_builtin.c	slang_codegen.c	slang_compile.c \
 	slang_compile_function.c slang_compile_operation.c \
 	slang_compile_struct.c slang_compile_variable.c slang_emit.c \
-	slang_ir.c slang_label.c slang_library_noise.c slang_link.c \
+	slang_ir.c slang_label.c slang_link.c \
 	slang_log.c slang_mem.c slang_preprocess.c slang_print.c \
 	slang_simplify.c slang_storage.c slang_typeinfo.c slang_vartable.c \
 	slang_utility.c
