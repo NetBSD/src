@@ -55,7 +55,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.1 2009/06/09 00:51:03 agc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.2 2009/06/11 17:05:18 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1357,7 +1357,7 @@ typedef struct __ops_crypt_t {
 	size_t			blocksize;
 	size_t			keysize;
 	void	(*set_iv)(struct __ops_crypt_t *, const uint8_t *);
-	void	(*set_key)(struct __ops_crypt_t *, const uint8_t *);
+	void	(*set_crypt_key)(struct __ops_crypt_t *, const uint8_t *);
 	void	(*base_init)(struct __ops_crypt_t *);
 	void	(*decrypt_resync)(struct __ops_crypt_t *);
 	/* encrypt/decrypt one block  */
@@ -7054,7 +7054,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 
 		__ops_crypt_any(&decrypt, pkt.u.seckey.alg);
 		decrypt.set_iv(&decrypt, pkt.u.seckey.iv);
-		decrypt.set_key(&decrypt, key);
+		decrypt.set_crypt_key(&decrypt, key);
 
 		/* now read encrypted data */
 
@@ -7374,7 +7374,7 @@ parse_pk_sesskey(__ops_region_t *region, __ops_stream_t *stream)
 	__ops_crypt_any(&stream->decrypt, pkt.u.pk_sesskey.symm_alg);
 	iv = __ops_new(stream->decrypt.blocksize);
 	stream->decrypt.set_iv(&stream->decrypt, iv);
-	stream->decrypt.set_key(&stream->decrypt, pkt.u.pk_sesskey.key);
+	stream->decrypt.set_crypt_key(&stream->decrypt, pkt.u.pk_sesskey.key);
 	__ops_encrypt_init(&stream->decrypt);
 	(void) free(iv);
 	return 1;
