@@ -56,6 +56,11 @@
 #include "packet.h"
 #include "packet-parse.h"
 
+enum {
+	MAX_ID_LENGTH		= 128,
+	MAX_PASSPHRASE_LENGTH	= 256
+};
+
 typedef struct __ops_key_t	__ops_key_t;
 
 /** \struct __ops_keyring_t
@@ -78,7 +83,7 @@ const __ops_pubkey_t *__ops_get_pubkey(const __ops_key_t *);
 unsigned   __ops_is_key_secret(const __ops_key_t *);
 const __ops_seckey_t *__ops_get_seckey(const __ops_key_t *);
 __ops_seckey_t *__ops_get_writable_seckey(__ops_key_t *);
-__ops_seckey_t *__ops_decrypt_seckey(const __ops_key_t *, const char *);
+__ops_seckey_t *__ops_decrypt_seckey(const __ops_key_t *);
 
 unsigned   __ops_keyring_fileread(__ops_keyring_t *, const unsigned,
 					const char *);
