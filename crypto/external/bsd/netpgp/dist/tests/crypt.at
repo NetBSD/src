@@ -1,4 +1,4 @@
-# $NetBSD: crypt.at,v 1.3 2009/05/28 00:29:06 lukem Exp $
+# $NetBSD: crypt.at,v 1.4 2009/06/11 02:28:50 lukem Exp $
 
 AT_SETUP([encryption and decryption])
 
@@ -6,20 +6,20 @@ AT_CHECK([cp ${TOPSRCDIR}/configure file1], [0], [ignore], [ignore])
 
 # Sign the file
 # XXX: this prompts for a passphrase when the userid doesn't have one
-AT_CHECK([$NETPGP --homedir $testhomedir --encrypt file1],
+AT_CHECK([netpgp --homedir $testhomedir --encrypt file1],
     [0], [ignore], [ignore])
 
 # Decrypt the encrypted file
-AT_CHECK([$NETPGP --homedir $testhomedir --decrypt file1.gpg],
+AT_CHECK([netpgp --homedir $testhomedir --decrypt file1.gpg],
     [0], [ignore], [ignore])
 
 # Decrypt and send to a different file
-AT_CHECK([$NETPGP --homedir $testhomedir --decrypt --output=file1.copy file1.gpg],
+AT_CHECK([netpgp --homedir $testhomedir --decrypt --output=file1.copy file1.gpg],
     [0], [ignore], [ignore], [ignore], [diff file1.copy file1])
 
 # deliberately corrupt file1.gpg and attempt to decrypt
 #sed -e 's|1|2|' file1.gpg > file2.gpg
-#AT_CHECK([$NETPGP --homedir $testhomedir --decrypt file2.gpg],
+#AT_CHECK([netpgp --homedir $testhomedir --decrypt file2.gpg],
 #    [0], [ignore],
 #[netpgp: default key set to "C7AB5F325F918728"
 #/usr/src/crypto/external/bsd/netpgp-hack/lib/../dist/src/lib/reader.c:1614: Unknown, Bad hash in MDC packet
