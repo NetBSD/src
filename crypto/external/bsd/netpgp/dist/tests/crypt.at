@@ -1,11 +1,10 @@
-# $NetBSD: crypt.at,v 1.4 2009/06/11 02:28:50 lukem Exp $
+# $NetBSD: crypt.at,v 1.5 2009/06/11 02:36:38 lukem Exp $
 
 AT_SETUP([encryption and decryption])
 
 AT_CHECK([cp ${TOPSRCDIR}/configure file1], [0], [ignore], [ignore])
 
 # Sign the file
-# XXX: this prompts for a passphrase when the userid doesn't have one
 AT_CHECK([netpgp --homedir $testhomedir --encrypt file1],
     [0], [ignore], [ignore])
 
