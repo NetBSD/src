@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.18 2009/05/31 23:26:20 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.19 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1011,7 +1011,7 @@ __ops_sign_file_as_cleartext(__ops_io_t *io,
 		return 0;
 	}
 
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	ret = __ops_add_issuer_keyid(sig, keyid) &&
 		__ops_end_hashed_subpkts(sig) &&
 		__ops_write_sig(output, sig, &seckey->pubkey, seckey);
@@ -1091,7 +1091,7 @@ __ops_sign_buf_as_cleartext(const char *cleartext,
 	if (ret == 0) {
 		return 0;
 	}
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
 
 	ret = __ops_add_issuer_keyid(sig, keyid) &&
 		__ops_end_hashed_subpkts(sig) &&
@@ -1188,7 +1188,7 @@ __ops_sign_file(__ops_io_t *io,
 	/* add creation time to signature */
 	__ops_add_birthtime(sig, time(NULL));
 	/* add key id to signature */
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	__ops_add_issuer_keyid(sig, keyid);
 	__ops_end_hashed_subpkts(sig);
 
@@ -1269,7 +1269,7 @@ __ops_sign_buf(const void *input,
 	/* add creation time to signature */
 	__ops_add_birthtime(sig, time(NULL));
 	/* add key id to signature */
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE, &seckey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	__ops_add_issuer_keyid(sig, keyid);
 	__ops_end_hashed_subpkts(sig);
 
@@ -1322,7 +1322,7 @@ __ops_sign_detached(__ops_io_t *io,
 	/* calculate the signature */
 	t = time(NULL);
 	__ops_add_birthtime(sig, t);
-	__ops_keyid(keyid, sizeof(keyid), sizeof(keyid), &seckey->pubkey);
+	__ops_keyid(keyid, sizeof(keyid), &seckey->pubkey);
 	__ops_add_issuer_keyid(sig, keyid);
 	__ops_end_hashed_subpkts(sig);
 
