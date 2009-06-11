@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.7 2009/06/11 01:47:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,9 @@ SRCS.glx=	glcontextmodes.c clientattrib.c compsize.c eval.c glxcmds.c \
 		indirect_transpose_matrix.c indirect_vertex_array.c \
 		indirect_vertex_program.c pixel.c pixelstore.c render2.c \
 		renderpix.c single2.c singlepix.c vertarr.c xfont.c \
-		glx_pbuffer.c glx_query.c glx_texture_compression.c
+		glx_pbuffer.c glx_query.c \
+		glxcurrent.c indirect_texture_compression.c \
+
 
 .PATH:		${X11SRCDIR.MesaLib}/src/mesa/glapi
 SRCS.glx+=	glapi.c glthread.c
@@ -28,7 +30,8 @@ SRCS.glx+=	glapi.c glthread.c
 
 .if ${X11DRI} != "no"
 # dri
-SRCS.dri=	XF86dri.c dri_glx.c
+SRCS.dri=	XF86dri.c dri_glx.c drisw_glx.c dri_common.c \
+		glxhash.c dri2_glx.c dri2.c
 .for fn in ${SRCS.dri}
 CPPFLAGS.${fn}=-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\"
 .endfor
@@ -42,6 +45,7 @@ SRCS.mesa=	dispatch.c
 
 .PATH:		${X11SRCDIR.MesaLib}/src/glw
 .PATH:		${X11SRCDIR.MesaLib}/include/GL
+.PATH:		${X11SRCDIR.MesaLib}/src/mesa/drivers/x11
 INCS=	GLwDrawA.h GLwDrawAP.h GLwMDrawA.h GLwMDrawAP.h gl.h gl_mangle.h \
 	glext.h glx.h glx_mangle.h glxext.h xmesa.h xmesa_x.h \
 	xmesa_xf86.h
@@ -55,10 +59,12 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/GL \
 		-I${DESTDIR}${X11INCDIR}/X11/drm \
 		-I${X11SRCDIR.MesaLib}/include \
 		-I${X11SRCDIR.MesaLib}/include/GL/internal \
-		-I${X11SRCDIR.MesaLib}/src/mesa/main \
+		-I${X11SRCDIR.MesaLib}/src/mesa \
 		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
 		-I${X11SRCDIR.MesaLib}/src/mesa \
 		${X11FLAGS.THREADLIB}
+
+#		-I${X11SRCDIR.dri2proto}/src/mesa \
 
 CFLAGS+=	-fno-strict-aliasing -fvisibility=hidden -pthread
 CPPFLAGS+=	-DUSE_SSE_SYSCTL_DETECTION \
