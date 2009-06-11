@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.73 2009/06/10 08:28:20 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.74 2009/06/11 05:34:22 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -130,7 +130,7 @@ XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
 
 # XXX oh yeah, fix me later
-XORG_VERSION_CURRENT="(((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)"
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((6) * 100000) + ((1) * 1000) + 901)"
 .endif
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
@@ -279,6 +279,8 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@sdkdir@,\\$$\{includedir\}/xorg,; \
 		s,@PIXMAN_CFLAGS@,,; \
 		s,@LIB_DIR@,/lib,; \
+		s,@INSTALL_LIB_DIR@,\\$$\{prefix\}/lib,; \
+		s,@INSTALL_INC_DIR@,\\$$\{prefix\}/include,; \
 		s,@XKBPROTO_REQUIRES@,kbproto,; \
 		s,@FREETYPE_REQUIRES@,freetype2,; \
 		s,@EXPAT_LIBS@,-lexpat,; \
@@ -288,6 +290,9 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@X11_EXTRA_DEPS@,,; \
 		s,@XTHREAD_CFLAGS@,-D_REENTRANT,; \
 		s,@XTHREADLIB@,-lpthread,; \
+		s,@GL_PC_REQ_PRIV@,x11 xext,; \
+		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
+		s,@GL_PC_CFLAGS@,,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-R\1 &%g' \
