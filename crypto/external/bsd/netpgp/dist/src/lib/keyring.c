@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.19 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.20 2009/06/11 04:57:52 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -228,6 +228,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	decrypt_t		*decrypt;
+	char			 pass[MAX_PASSPHRASE_LENGTH];
 
 	decrypt = __ops_callback_arg(cbinfo);
 	switch (pkt->tag) {
@@ -240,7 +241,8 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		break;
 
 	case OPS_GET_PASSPHRASE:
-		*content->skey_passphrase.passphrase = decrypt->passphrase;
+		(void) __ops_getpassphrase(NULL, pass, sizeof(pass));
+		*content->skey_passphrase.passphrase = strdup(pass);
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_ERRCODE:
@@ -291,7 +293,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 \return secret key
 */
 __ops_seckey_t *
-__ops_decrypt_seckey(const __ops_key_t *key, const char *passphrase)
+__ops_decrypt_seckey(const __ops_key_t *key)
 {
 	__ops_stream_t	*stream;
 	const int	 printerrors = 1;
@@ -299,14 +301,11 @@ __ops_decrypt_seckey(const __ops_key_t *key, const char *passphrase)
 
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
-	decrypt.passphrase = strdup(passphrase);
 	stream = __ops_new(sizeof(*stream));
 	__ops_keydata_reader_set(stream, key);
 	__ops_set_callback(stream, decrypt_cb, &decrypt);
 	stream->readinfo.accumulate = 1;
 	__ops_parse(stream, !printerrors);
-	__ops_forget(decrypt.passphrase, strlen(decrypt.passphrase));
-	(void) free(decrypt.passphrase);
 	return decrypt.seckey;
 }
 
