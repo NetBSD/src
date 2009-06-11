@@ -1,7 +1,6 @@
 To Do
 =====
-read input via fd's, per ver
-write output to fd's, per ver
+return userids from successful verify, and then print id out if required
 error logging
 separate from libcrypto?
 64-bit offsets
