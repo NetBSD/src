@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/06/11 01:47:51 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xrandr
 
-LDADD+=	-lXrandr -lXrender -lXext -lX11
-DPADD+=	${LIBXRANDR} ${LIBXRENDER} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXrandr -lXrender -lXext -lX11 -lm
+DPADD+=	${LIBXRANDR} ${LIBXRENDER} ${LIBXEXT} ${LIBX11} ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}}
 
