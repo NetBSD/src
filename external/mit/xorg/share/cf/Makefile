@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/09/17 03:56:06 cube Exp $
+#	$NetBSD: Makefile,v 1.6 2009/06/11 15:33:12 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ FILES=	Amoeba.cf DGUX.cf FreeBSD.cf Imake.cf Imake.rules Imake.tmpl \
 	sco.cf sco5.cf scoLib.rules sequent.cf sgi.cf sgiLib.rules \
 	sgiLib.tmpl sony.cf sun.cf sunLib.rules sunLib.tmpl \
 	sv3Lib.rules sv3Lib.tmpl sv4Lib.rules sv4Lib.tmpl svr3.cf \
-	svr4.cf ultrix.cf usl.cf version.def x386.cf xf86.rules \
+	svr4.cf ultrix.cf usl.cf x386.cf xf86.rules \
 	xf86.tmpl xf86site.def xfree86.cf xorg.cf xorgversion.def
 
 # Note: acts as '#define InstallEmptyHostDef'
@@ -31,7 +31,6 @@ FILES=	Amoeba.cf DGUX.cf FreeBSD.cf Imake.cf Imake.rules Imake.tmpl \
 FILES+=	host.def xorgsite.def
 
 BUILDSYMLINKS=\
-	${X11SRCDIR.xorg-server}//hw/xfree86/common/xf86Version.h version.def \
         ${X11SRCDIR.xorg-server}//hw/xfree86/common/xf86Date.h	date.def
 
 # Handle site.def specificly because it is provided in dist
