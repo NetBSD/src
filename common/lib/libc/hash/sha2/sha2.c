@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.12 2009/06/11 20:35:29 christos Exp $ */
+/* $NetBSD: sha2.c,v 1.13 2009/06/11 20:43:00 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.12 2009/06/11 20:35:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.13 2009/06/11 20:43:00 christos Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.12 2009/06/11 20:35:29 christos Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.13 2009/06/11 20:43:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -545,8 +545,8 @@ SHA224_256_Final(uint8_t digest[], SHA256_CTX *context, size_t len)
 			*context->buffer = 0x80;
 		}
 		/* Set the bit count: */
-		*(uint64_t *)(void *)&context->buffer[SHA256_SHORT_BLOCK_LENGTH]
-		    = context->bitcount;
+		memcpy(&context->buffer[SHA256_SHORT_BLOCK_LENGTH],
+		    &context->bitcount, sizeof(context->bitcount));
 
 		/* Final transform: */
 		SHA256_Transform(context, (uint32_t *)(void *)context->buffer);
@@ -879,10 +879,10 @@ SHA512_Last(SHA512_CTX *context)
 		*context->buffer = 0x80;
 	}
 	/* Store the length of input data (in bits): */
-	*(uint64_t *)(void *)&context->buffer[SHA512_SHORT_BLOCK_LENGTH] =
-	    context->bitcount[1];
-	*(uint64_t *)(void *)&context->buffer[SHA512_SHORT_BLOCK_LENGTH+8] =
-	    context->bitcount[0];
+	memcpy(&context->buffer[SHA512_SHORT_BLOCK_LENGTH],
+	    &context->bitcount[1], sizeof(context->bitcount[1]));
+	memcpy(&context->buffer[SHA512_SHORT_BLOCK_LENGTH + 8],
+	    &context->bitcount[0], sizeof(context->bitcount[0]));
 
 	/* Final transform: */
 	SHA512_Transform(context, (uint64_t *)(void *)context->buffer);
