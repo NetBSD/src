@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.13 2009/06/11 20:43:00 christos Exp $ */
+/* $NetBSD: sha2.c,v 1.14 2009/06/11 22:40:42 joerg Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -36,17 +36,21 @@
  *
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.13 2009/06/11 20:43:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.14 2009/06/11 22:40:42 joerg Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.13 2009/06/11 20:43:00 christos Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.14 2009/06/11 22:40:42 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -56,7 +60,51 @@ __RCSID("$NetBSD: sha2.c,v 1.13 2009/06/11 20:43:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/sha2.h>
-#include <sys/endian.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+#  if HAVE_SYS_ENDIAN_H
+#    include <sys/endian.h>
+#  else
+#   undef htobe32
+#   undef htobe64
+#   undef be32toh
+#   undef be64toh
+
+static uint32_t
+htobe32(uint32_t x)
+{
+	uint8_t p[4];
+	memcpy(p, &x, 4);
+
+	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+}
+
+static uint64_t
+htobe64(uint64_t x)
+{
+	uint8_t p[8];
+	uint32_t u, v;
+	memcpy(p, &x, 8);
+
+	u = ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+	v = ((p[4] << 24) | (p[5] << 16) | (p[6] << 8) | p[7]);
+
+	return ((((uint64_t)u) << 32) | v);
+}
+
+static uint32_t
+be32toh(uint32_t x)
+{
+	return htobe32(x);
+}
+
+static uint64_t
+be64toh(uint64_t x)
+{
+	return htobe64(x);
+}
+#  endif
+#endif
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 /* NOTE: Most of these are in sha2.h */
