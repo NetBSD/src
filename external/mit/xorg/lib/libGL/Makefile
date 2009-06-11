@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/06/11 05:10:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2009/06/11 15:25:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,11 +13,10 @@ SRCS.glx=	glcontextmodes.c clientattrib.c compsize.c eval.c glxcmds.c \
 		indirect_vertex_program.c pixel.c pixelstore.c render2.c \
 		renderpix.c single2.c singlepix.c vertarr.c xfont.c \
 		glx_pbuffer.c glx_query.c \
-		glxcurrent.c indirect_texture_compression.c \
-
+		glxcurrent.c indirect_texture_compression.c
 
 .PATH:		${X11SRCDIR.MesaLib}/src/mesa/glapi
-SRCS.glx+=	glapi.c glthread.c
+SRCS.glx+=	glapi.c glapi_getproc.c glthread.c
 
 # XXX see TODO
 #.if ${MACHINE_ARCH} == "i386"
