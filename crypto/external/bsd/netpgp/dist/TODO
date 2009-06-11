@@ -7,6 +7,8 @@ separate from libcrypto?
 64-bit offsets
 default compression when signing?
 Multiple recipients for encryption
+don't require passphrase for keys without one
+convert tests from ./tst to the autotest ./tests/
 
 Done
 ====
