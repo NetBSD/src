@@ -1,11 +1,11 @@
-# $NetBSD: verify.at,v 1.9 2009/06/11 02:55:35 lukem Exp $
+# $NetBSD: verify.at,v 1.10 2009/06/11 06:45:11 agc Exp $
 
 AT_SETUP([simple signature and verification])
 
 AT_CHECK([cp ${TOPSRCDIR}/configure file1], [0], [ignore], [ignore])
 
 # Sign the file
-AT_CHECK([echo '' | netpgp --pass-fd 0 --homedir $testhomedir --sign file1],
+AT_CHECK([netpgp --homedir $testhomedir --sign file1],
     [0], [ignore], [ignore])
 
 # Verify the signed file
