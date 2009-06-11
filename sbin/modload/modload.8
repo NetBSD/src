@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.36 2009/06/10 03:30:32 jnemeth Exp $
+.\" $NetBSD: modload.8,v 1.37 2009/06/11 08:11:52 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nd load a kernel module
 .Sh SYNOPSIS
 .Nm
-.Op Fl f
+.Op Fl fP
 .Op Fl b Ar var=boolean
 .Op Fl i Ar var=integer
 .Op Fl s Ar var=string
@@ -51,7 +51,6 @@
 .Op Fl d Ar var
 .Op Fl i Ar var=integer
 .Op Fl m Ar plist
-.Op Fl P
 .Op Fl s Ar var=string
 .Sh DESCRIPTION
 The
