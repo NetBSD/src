@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.217 2009/05/31 20:09:44 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.218 2009/06/11 14:42:47 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.217 2009/05/31 20:09:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.218 2009/06/11 14:42:47 tsutsui Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1942,6 +1942,7 @@ getcpuinfo(struct cpu_info *sc, int node)
 		sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
 		sc->vcache_flush_region = sc->sp_vcache_flush_region;
 		sc->vcache_flush_context = sc->sp_vcache_flush_context;
+		(*sc->cache_flush_all)();
 		return;
 	}
 	panic("Out of CPUs");
