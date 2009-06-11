@@ -1,22 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.8 2008/12/22 01:04:27 jmcneill Exp $
-
-# XXX old list
-.if 0
-.for _SL in	dix os mi composite damage miext/damage \
-		Xext/ext Xext/exts GL/glx GL/GLcore xkb dbe \
-		record randr render xtrap mfb iplan2p4 iplan2p8 \
-		cfb cfb16 cfb24 cfb32 fb xfixes miext/cw \
-		hw/xnest hw/vfb fontbase afb \
-		\
-		dix/xpstubs hw/sun hw/xfree86/xf86 hw/xfree86/xf86_os \
-		hw/xfree86/xf86config hw/xfree86/loader \
-		\
-		hw/netbsd/macppc hw/netbsd/hpc hw/netbsd/x68k \
-		hw/netbsd/mac68k hw/netbsd/amiga hw/netbsd/dec \
-		hw/netbsd/arm32vidc hw/netbsd/alpha hw/netbsd/dreamcast \
-		hw/netbsd/newsmips
-.endfor
-.endif
+#	$NetBSD: Makefile.Xserver,v 1.9 2009/06/11 05:43:15 mrg Exp $
 
 .for _SL in \
 	mi \
@@ -94,8 +76,6 @@ DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 
 LDADD.XORG_CORE=	${LDADD.dix} ${LDADD.config}
 DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
-
-LIBCWRAPPER=	${LIBDIR.os}/libc_wrapper.o
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/Xext \
