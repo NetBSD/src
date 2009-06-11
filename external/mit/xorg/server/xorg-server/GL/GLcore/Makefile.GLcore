@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.GLcore,v 1.1 2008/09/26 06:57:03 rtr Exp $
+#	$NetBSD: Makefile.GLcore,v 1.2 2009/06/11 05:43:15 mrg Exp $
 
 SRCS.GLcore= \
 	${SRCS.main} \
@@ -179,7 +179,6 @@ SRCS.slang= \
 	slang_emit.c \
 	slang_ir.c \
 	slang_label.c \
-	slang_library_noise.c \
 	slang_link.c \
 	slang_log.c \
 	slang_mem.c \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/06/11 05:43:19 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -6,7 +6,7 @@
 LIB=		render
 
 .PATH:		${X11SRCDIR.xorg-server}/render
-SRCS=		animcur.c filter.c glyph.c miglyph.c miindex.c mipict.c \
+SRCS=		animcur.c filter.c glyph.c matrix.c miindex.c mipict.c \
 		mirect.c mitrap.c mitri.c picture.c render.c renderedge.c
 
 CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/pixman-1 \

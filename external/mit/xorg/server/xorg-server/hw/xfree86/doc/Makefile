@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2009/06/11 05:43:17 mrg Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/doc
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/doc/man
 
-FILES=	README.DRI README.fonts README.rapidaccess
+FILES=	README.DRI README.rapidaccess
 
 FILESDIR=	${X11USRLIBDIR}/X11/doc
 

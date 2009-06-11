@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/02 21:18:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/11 05:43:18 mrg Exp $
 
 .include <bsd.own.mk>
 
 XORGSRC=	${X11SRCDIR.xorg-server}
 
-XORGINC_SUBDIR=	Xext afb cfb cfb dbe exa fb include mfb mi \
+XORGINC_SUBDIR=	Xext dbe exa fb include mi \
 		miext/damage miext/shadow randr render xkb record
 XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
 		os-support os-support/bus parser rac ramdac shadowfb \
@@ -21,15 +21,15 @@ XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
 .PATH: ${XORGSRC}/../include
 
 INCSDIR=${X11INCDIR}/xorg
-INCS=	BT.h IBM.h TI.h XIstubs.h afb.h assyntax.h atKeynames.h bstore.h \
-	bstorestr.h bt829.h cfb.h cfb16.h cfb32.h cfb8_16.h cfb8_32.h \
-	cfbmap.h cfbmskbits.h cfbunmap.h closestr.h closure.h colormap.h \
+INCS=	BT.h IBM.h TI.h XIstubs.h bstore.h \
+	bstorestr.h bt829.h \
+	closestr.h closure.h colormap.h \
 	colormapst.h compiler.h cursor.h cursorstr.h damage.h damagestr.h \
 	dbestruct.h dgaproc.h dix.h dixevents.h dixfont.h dixfontstr.h \
 	dixgrabs.h dixstruct.h dri.h dristruct.h edid.h exa.h exevents.h \
 	extension.h extinit.h extnsionst.h fb.h fbdevhw.h fboverlay.h \
-	fbpseudocolor.h fbrop.h fi1236.h fourcc.h gc.h gcstruct.h globals.h \
-	glyphstr.h i2c_def.h input.h inputstr.h mfb.h mfbmap.h mfbunmap.h \
+	fbrop.h fi1236.h fourcc.h gc.h gcstruct.h globals.h \
+	glyphstr.h i2c_def.h input.h inputstr.h \
 	mi.h mibank.h mibstore.h micmap.h micoord.h mifillarc.h mifpoly.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
 	mispans.h mistruct.h miwideline.h mizerarc.h msp3430.h opaque.h \
@@ -40,13 +40,15 @@ INCS=	BT.h IBM.h TI.h XIstubs.h afb.h assyntax.h atKeynames.h bstore.h \
 	tda9885.h uda1380.h validate.h vbe.h vbeModes.h vgaHW.h \
 	window.h windowstr.h xaa.h xaaWrapper.h xaalocal.h xaarop.h \
 	xkbDflts.h xkb.h set.h \
-	xf1bpp.h xf4bpp.h xf86.h xf86Crtc.h xf86Cursor.h xf86DDC.h \
-	xf86Modes.h xf86Module.h xf86OSmouse.h \
+	xf86.h xf86Crtc.h xf86Cursor.h xf86DDC.h \
+	xf86Modes.h xf86Module.h \
 	xf86Opt.h xf86Optrec.h xf86Parser.h xf86Pci.h xf86PciInfo.h \
 	xf86Priv.h xf86Privstr.h xf86RAC.h xf86RamDac.h xf86RandR12.h \
-	xf86Rename.h xf86Resources.h xf86Version.h xf86Xinput.h xf86_OSlib.h \
-	xf86_OSproc.h xf86_ansic.h xf86_libc.h xf86cmap.h xf86fbman.h \
+	xf86Rename.h xf86Resources.h xf86Xinput.h xf86_OSlib.h \
+	xf86_OSproc.h xf86cmap.h xf86fbman.h \
 	xf86i2c.h xf86int10.h xf86sbusBus.h xf86str.h xf86xv.h \
+	xkbstr.h xkbrules.h xserver-properties.h \
+	dixaccess.h privates.h ptrveloc.h registry.h xkbfile.h \
 	xf86xvmc.h xf86xvpriv.h xisb.h xorg-server.h xorgVersion.h xvdix.h \
 	xvmcext.h hotplug.h xkbsrv.h dix-config.h
 

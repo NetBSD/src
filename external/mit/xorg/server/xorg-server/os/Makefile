@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/15 15:55:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/11 05:43:19 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -7,9 +7,9 @@ LIB=	os
 
 .PATH:	${X11SRCDIR.xorg-server}/os
 SRCS=	WaitFor.c access.c auth.c connection.c io.c mitauth.c \
-	oscolor.c oscolor.h osdep.h osinit.c utils.c xdmauth.c \
+	oscolor.c osinit.c utils.c xdmauth.c \
 	xstrans.c xprintf.c log.c xdmcp.c \
-	rpcauth.c secauth.c
+	rpcauth.c backtrace.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
@@ -59,13 +59,6 @@ CPPFLAGS.xdmcp.c=	${XDMCP_DEFINES} -DBSD44SOCKETS
 
 COPTS.xdmauth.c=	-Wno-error	# XXX
 COPTS.xstrans.c=	-Wno-error	# XXX
-
-BUILDOBJS=		libc_wrapper.o
-.PATH:			${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
-CPPFLAGS.libc_wrapper.c=-DSELF_CONTAINED_WRAPPER \
-			-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support
-CLEANFILES+=		${BUILDOBJS}
-realall: ${BUILDOBJS}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

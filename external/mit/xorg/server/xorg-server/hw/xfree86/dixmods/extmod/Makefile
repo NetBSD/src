@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2008/08/15 15:55:06 rtr Exp $
+# $NetBSD: Makefile,v 1.6 2009/06/11 05:43:16 mrg Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
@@ -8,7 +8,7 @@ XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 LIB=	extmod
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
-SRCS=	xf86dga.c xf86dga2.c \
+SRCS=	xf86dga2.c \
 	xvmod.c \
 	xf86misc.c \
 	xf86vmode.c \
