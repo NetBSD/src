@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/11/06 22:28:26 veego Exp $
+#	$NetBSD: Makefile,v 1.8 2009/06/11 05:11:14 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -11,11 +11,15 @@ DIST=	${X11SRCDIR.pixman}/pixman
 
 SRCS=	pixman-access.c pixman-region16.c pixman-access-accessors.c \
 	pixman-region32.c pixman-image.c pixman-combine32.c \
-	pixman-combine64.c pixman-compose.c pixman-compose-accessors.c \
-	pixman-pict.c pixman-source.c pixman-transformed.c pixman-utils.c \
-	pixman-transformed-accessors.c pixman-edge.c \
+	pixman-combine64.c \
+	pixman-pict.c pixman-utils.c \
+	pixman-edge.c \
 	pixman-edge-accessors.c pixman-trap.c pixman-compute-region.c \
-	pixman-timer.c
+	pixman-general.c pixman-fast-path.c pixman-solid-fill.c \
+	pixman-conical-gradient.c pixman-linear-gradient.c \
+	pixman-radial-gradient.c pixman-bits-image.c \
+	pixman-timer.c pixman-matrix.c pixman-cpu.c \
+	pixman-gradient-walker.c pixman-implementation.c
 
 # XXX
 
