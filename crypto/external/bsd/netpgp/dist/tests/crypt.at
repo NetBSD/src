@@ -1,4 +1,4 @@
-# $NetBSD: crypt.at,v 1.5 2009/06/11 02:36:38 lukem Exp $
+# $NetBSD: crypt.at,v 1.6 2009/06/11 02:48:20 lukem Exp $
 
 AT_SETUP([encryption and decryption])
 
@@ -14,7 +14,8 @@ AT_CHECK([netpgp --homedir $testhomedir --decrypt file1.gpg],
 
 # Decrypt and send to a different file
 AT_CHECK([netpgp --homedir $testhomedir --decrypt --output=file1.copy file1.gpg],
-    [0], [ignore], [ignore], [ignore], [diff file1.copy file1])
+    [0], [ignore], [ignore])
+AT_CHECK([diff file1 file1.copy])
 
 # deliberately corrupt file1.gpg and attempt to decrypt
 #sed -e 's|1|2|' file1.gpg > file2.gpg
