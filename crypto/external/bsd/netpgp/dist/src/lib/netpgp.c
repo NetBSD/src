@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.24 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.25 2009/06/11 04:57:52 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -84,11 +84,6 @@ __RCSID("$NetBSD: netpgp.c,v 1.24 2009/06/11 01:12:42 agc Exp $");
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "crypto.h"
-
-enum {
-	MAX_ID_LENGTH		= 128,
-	MAX_PASSPHRASE_LENGTH	= 256
-};
 
 /* read any gpg config file */
 static int
@@ -509,7 +504,6 @@ netpgp_sign_file(netpgp_t *netpgp,
 	const unsigned		 overwrite = 1;
 	__ops_io_t		*io;
 	char			*hashalg;
-	char			 pass[MAX_PASSPHRASE_LENGTH];
 	int			 ret;
 
 	io = netpgp->io;
@@ -527,17 +521,11 @@ netpgp_sign_file(netpgp_t *netpgp,
 	do {
 		/* print out the user id */
 		__ops_print_pubkeydata(io, keypair);
-		/* get the passphrase */
-		if (!__ops_getpassphrase(netpgp->passfp, pass, sizeof(pass))) {
-			(void) fprintf(io->errs, "Can't get passphrase\n");
-			return 0;
-		}
 		/* now decrypt key */
-		seckey = __ops_decrypt_seckey(keypair, pass);
+		seckey = __ops_decrypt_seckey(keypair);
 		if (seckey == NULL) {
 			(void) fprintf(io->errs, "Bad passphrase\n");
 		}
-		__ops_forget(pass, sizeof(pass));
 	} while (seckey == NULL);
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
