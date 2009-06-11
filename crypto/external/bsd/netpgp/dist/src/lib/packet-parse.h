@@ -112,9 +112,8 @@ typedef int __ops_reader_func_t(void *, size_t, __ops_error_t **,
 
 typedef void __ops_reader_destroyer_t(__ops_reader_t *);
 
-__ops_stream_t *__ops_parseinfo_new(void);
-void __ops_parseinfo_delete(__ops_stream_t *);
-__ops_error_t *__ops_parseinfo_get_errors(__ops_stream_t *);
+void __ops_stream_delete(__ops_stream_t *);
+__ops_error_t *__ops_stream_get_errors(__ops_stream_t *);
 __ops_crypt_t *__ops_get_decrypt(__ops_stream_t *);
 
 void __ops_set_callback(__ops_stream_t *, __ops_cbfunc_t *, void *);

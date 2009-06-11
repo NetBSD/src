@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.23 2009/06/10 16:36:23 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.24 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -150,7 +150,7 @@ resultp(__ops_io_t *io,
 	char			 id[MAX_ID_LENGTH + 1];
 
 	for (i = 0; i < res->validc; i++) {
-		(void) fprintf(io->errs,
+		(void) fprintf(io->res,
 			"Good signature for %s made %susing %s key %s\n",
 			f,
 			ctime(&res->valid_sigs[i].birthtime),
@@ -558,7 +558,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 int
 netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armored)
 {
-	__ops_validation_t	result;
+	__ops_validation_t	 result;
 	__ops_io_t		*io;
 
 	(void) memset(&result, 0x0, sizeof(result));

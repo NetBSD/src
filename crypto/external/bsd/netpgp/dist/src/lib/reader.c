@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.19 2009/06/09 02:19:47 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.20 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1884,7 +1884,7 @@ __ops_setup_memory_read(__ops_io_t *io,
 						__ops_cbdata_t *),
 			unsigned accumulate)
 {
-	*stream = __ops_parseinfo_new();
+	*stream = __ops_new(sizeof(**stream));
 	(*stream)->io = (*stream)->cbinfo.io = io;
 	__ops_set_callback(*stream, callback, vp);
 	__ops_reader_set_memory(*stream,
@@ -1905,7 +1905,7 @@ __ops_setup_memory_read(__ops_io_t *io,
 void 
 __ops_teardown_memory_read(__ops_stream_t *stream, __ops_memory_t *mem)
 {
-	__ops_parseinfo_delete(stream);
+	__ops_stream_delete(stream);
 	__ops_memory_free(mem);
 }
 
@@ -2035,7 +2035,7 @@ __ops_setup_file_read(__ops_io_t *io,
 		(void) fprintf(io->errs, "can't open \"%s\"\n", filename);
 		return fd;
 	}
-	*stream = __ops_parseinfo_new();
+	*stream = __ops_new(sizeof(**stream));
 	(*stream)->io = (*stream)->cbinfo.io = io;
 	__ops_set_callback(*stream, callback, vp);
 #ifdef USE_MMAP_FOR_FILES
@@ -2060,7 +2060,7 @@ void
 __ops_teardown_file_read(__ops_stream_t *stream, int fd)
 {
 	close(fd);
-	__ops_parseinfo_delete(stream);
+	__ops_stream_delete(stream);
 }
 
 __ops_cb_ret_t
