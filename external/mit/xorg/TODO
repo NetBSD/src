@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.16 2008/10/05 18:39:28 cube Exp $
+$NetBSD: TODO,v 1.17 2009/06/11 05:43:15 mrg Exp $
 
 plan:
 	- build modular-xorg stuff with reach over
@@ -45,3 +45,7 @@ Xserver
 things to delete:
 - lbx is dead, kill it
 
+
+upgrade issues:
+	- xorg-server 1.6 needs libpciaccess, newer Xfont, newer Mesa and xkeyboard-config
+	- new Mesa has glslcompiler -- do we want it?

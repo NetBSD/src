@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/01/24 17:24:52 bouyer Exp $
+#	$NetBSD: Makefile,v 1.7 2009/06/11 05:43:16 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -59,10 +59,9 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.Xext} \
 	${LDADD.config} \
 	${LDADD.dbe} \
-	${LDADD.XTrap} \
 	${LDADD.record} \
-	${LDADD.render} \
 	${LDADD.randr} \
+	${LDADD.render} \
 	${LDADD.damageext} \
 	${LDADD.miext/damage} \
 	${LDADD.miext/shadow} \
@@ -70,7 +69,6 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.xkb} \
 	${LDADD.xkbstubs} \
 	${LDADD.composite} \
-	${LDADD.dix/xpstubs} \
 	${LDADD.os} \
 	-lXfont \
 	-lfreetype \
@@ -80,16 +78,18 @@ LDADD+=	${LDADD.dix} \
 	-lpixman-1 \
 	-lXdmcp \
 	-lz \
-	-lm
+	-lm \
+	-lcrypto
 
 DPADD+=	${DPADD.dix} ${DPADD.fb} ${DPADD.mi} ${DPADD.xfixes} \
-	${DPADD.Xext} ${DPADD.config} ${DPADD.dbe} ${DPADD.XTrap} \
+	${DPADD.Xext} ${DPADD.config} ${DPADD.dbe} \
 	${DPADD.record} ${DPADD.render} ${DPADD.randr} ${DPADD.damageext} \
 	${DPADD.miext/damage} ${DPADD.miext/shadow} ${DPADD.Xi} \
-	${DPADD.xkb} ${DPADD.composite} ${DPADD.dix/xpstubs} ${DPADD.os} \
+	${DPADD.xkb} ${DPADD.composite} ${DPADD.os} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
-	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM}
+	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} \
+	${LIBCRYPTO}
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386

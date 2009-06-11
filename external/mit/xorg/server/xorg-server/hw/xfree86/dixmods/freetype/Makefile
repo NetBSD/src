@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/10 06:28:16 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2009/06/11 05:43:16 mrg Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
@@ -7,6 +7,6 @@ XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
 LIB=	freetype
 
-SRCS=	ftmodule.c
+SRCS=	# ftmodule.c
 
 .include "../Makefile.dixmod"

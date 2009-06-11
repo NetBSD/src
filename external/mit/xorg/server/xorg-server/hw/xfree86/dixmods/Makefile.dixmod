@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.dixmod,v 1.4 2008/08/24 13:47:05 rtr Exp $
+#	$NetBSD: Makefile.dixmod,v 1.5 2009/06/11 05:43:16 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,8 @@ MKLINT=	no
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/afb \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/mfb \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/cfb \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/dbe \
+		-I${X11SRCDIR.xorg-server}/glx \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg

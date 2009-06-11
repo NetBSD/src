@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/06 10:33:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2009/06/11 05:43:16 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -23,21 +23,14 @@ CPPFLAGS+= \
 
 SUBDIR = \
 	GLcore \
-	afb \
-	cfb \
-	cfb32 \
 	dbe \
 	extmod \
 	fb \
-	freetype \
 	glx \
-	mfb \
 	record \
 	shadow \
-	type1 \
 	wfb \
-	xorgxkb \
-	xtrap
+	xorgxkb
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

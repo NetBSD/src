@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile.Xextmodule,v 1.5 2009/06/10 08:29:20 mrg Exp $
+#	$NetBSD: Makefile.Xextmodule,v 1.6 2009/06/11 05:43:15 mrg Exp $
 
-SRCS.Xextmodule=	bigreq.c mitmisc.c sync.c xcmisc.c
+SRCS.Xextmodule=	bigreq.c sync.c xcmisc.c
 SRCS.Xextmodule+=	xvmain.c xvdisp.c xvmc.c
 SRCS.Xextmodule+=	xres.c
 SRCS.Xextmodule+=	saver.c
-SRCS.Xextmodule+=	cup.c
-SRCS.Xextmodule+=	EVI.c sampleEVI.c
 SRCS.Xextmodule+=	mbuf.c
 SRCS.Xextmodule+=	dpms.c

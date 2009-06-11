@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/01/24 17:24:53 bouyer Exp $
+#	$NetBSD: Makefile,v 1.9 2009/06/11 05:43:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -52,10 +52,9 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.xfixes} \
 	${LDADD.Xext} \
 	${LDADD.dbe} \
-	${LDADD.XTrap} \
 	${LDADD.record} \
-	${LDADD.render} \
 	${LDADD.randr} \
+	${LDADD.render} \
 	${LDADD.damageext} \
 	${LDADD.miext/damage} \
 	${LDADD.cw/cw} \
@@ -64,11 +63,10 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.xkb} \
 	${LDADD.xkbstubs} \
 	${LDADD.composite} \
-	${LDADD.dix/xpstubs} \
 	${LDADD.os} \
 	-lXfont -lXext -lfontenc \
 	-lpixman-1 -lX11 -lXau \
-	-lXdmcp -lfreetype -lm
+	-lXdmcp -lfreetype -lm -lcrypto
 
 DPADD+=	${LDADD.dix} \
 	${DPADD.fb} \
@@ -77,7 +75,6 @@ DPADD+=	${LDADD.dix} \
 	${DPADD.xfixes} \
 	${DPADD.Xext} \
 	${DPADD.dbe} \
-	${DPADD.XTrap} \
 	${DPADD.record} \
 	${DPADD.render} \
 	${DPADD.randr} \
@@ -88,11 +85,10 @@ DPADD+=	${LDADD.dix} \
 	${DPADD.Xi} \
 	${DPADD.xkb} \
 	${DPADD.composite} \
-	${DPADD.dix/xpstubs} \
 	${DPADD.os} \
 	${LIBXFONT} ${LIBXEXT} ${LIBFONTENC} \
 	${LIBPIXMAN-1} ${LIBX11} ${LIBXAU} \
-	${LIBXDMCP} ${LIBFREETYPE} ${LIBM}
+	${LIBXDMCP} ${LIBFREETYPE} ${LIBM} ${LIBCRYPTO}
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386

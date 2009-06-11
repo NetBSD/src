@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.25 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.26 2009/06/11 05:43:16 mrg Exp $
 
-SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
+SUBDIR=		common init ddc dixmods doc dri dri2 dummy i2c int10 loader \
 		xf86modes exa \
-		xorgos rac ramdac scanpci pcidata shadowfb vbe vgahw \
-		x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp xf86config
+		xorgos ramdac pcidata shadowfb vbe vgahw \
+		x86emu xaa xf86config xf8_16bpp
 
 SUBDIR+=	.WAIT utils
 
@@ -20,7 +20,6 @@ SRCS=		xorg.c
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xorg-server}/fb \
-		-I${X11SRCDIR.xorg-server}/mfb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/os \
@@ -44,7 +43,6 @@ LDADD+=	${LDADD.hw/xfree86/loader}
 LDADD+=	${LDADD.hw/xfree86/common}
 LDADD+=	${LDADD.hw/xfree86/xorgos}
 #LDADD+=	${LDADD.osandcommon}
-LDADD+=	${LDADD.hw/xfree86/rac}
 LDADD+=	${LDADD.hw/xfree86/xf86config}
 LDADD+=	${LDADD.hw/xfree86/dixmods}
 LDADD+=	${LDADD.hw/xfree86/xf86modes}
@@ -63,7 +61,6 @@ LDADD+=	${LDADD.miext/shadow}
 LDADD+=	${LDADD.miext/cw}
 LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
-LDADD+=	${LDADD.dix/xpstubs}
 LDADD+=	${LDADD.os}
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
@@ -103,11 +100,9 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.composite} \
 	${DPADD.os} \
 	${DPADD.hw/xfree86/dixmods/fb} \
-	${DPADD.dix/xpstubs} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/init} \
 	${DPADD.hw/xfree86/loader} \
-	${DPADD.hw/xfree86/rac} \
 	${DPADD.hw/xfree86/xf86config} \
 	${DPADD.hw/xfree86/dixmods} \
 	${DPADD.hw/xfree86/xf86modes} \

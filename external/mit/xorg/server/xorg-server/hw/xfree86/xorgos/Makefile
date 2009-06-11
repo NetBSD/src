@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.14 2009/06/11 05:43:17 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -9,9 +9,9 @@ LIB=	xorgos
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bsd
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
 SRCS.bsd=	\
-		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_mouse.c \
-		kmod_noop.c libc_wrapper.c \
-		posix_tty.c sigio.c stdPci.c vidmem.c
+		bsd_VTsw.c bsd_bell.c bsd_init.c \
+		kmod_noop.c \
+		posix_tty.c sigio.c vidmem.c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/linux
 .if ${MACHINE_ARCH} == "x86_64"
@@ -97,11 +97,10 @@ SRCS.misc=	xf86_Util.c Delay.c
 
 # XXX .S not built from automake either
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-#SRCS.misc+=	BUSmemcpy.S IODelay.S SlowBcopy.S
-SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
-CPPFLAGS.BUSmemcpy.S=	-DUSE_GAS
-CPPFLAGS.IODelay.S=	-DUSE_GAS
-CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
+#SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
+#CPPFLAGS.BUSmemcpy.S=	-DUSE_GAS
+#CPPFLAGS.IODelay.S=	-DUSE_GAS
+#CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 .endif
 
 .if     ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
@@ -109,14 +108,14 @@ CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 	${MACHINE_ARCH} == "sparc" || ${MACHINE} == "netwinder" || \
 	${MACHINE} == "shark" || ${MACHINE} == "ofppc" || \
 	${MACHINE_ARCH} == "alpha"
-SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
+#SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
 
 # XXX namespace collision so avoid it, only has to be done for non-i386.
-BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
-		IODelay.c CIODelay.c \
-		SlowBcopy.c CSlowBcopy.c
+#BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
+#		IODelay.c CIODelay.c \
+#		SlowBcopy.c CSlowBcopy.c
 
 SRCS=	${SRCS.bsd} ${SRCS.bus} ${SRCS.misc} xorgos.c
 
