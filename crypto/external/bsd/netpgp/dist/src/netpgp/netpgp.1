@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.2 2009/06/10 00:38:09 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.3 2009/06/11 01:12:42 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 9, 2009
+.Dd June 10, 2009
 .Dt NETPGP 1
 .Os
 .Sh NAME
@@ -84,6 +84,8 @@ where the options for all commands are:
 .Op Fl Fl homedir Ns = Ns Ar home-directory
 .br
 .Op Fl Fl keyring Ns = Ns Ar keyring
+.br
+.Op Fl Fl results Ns = Ns Ar filename
 .br
 .Op Fl Fl userid Ns = Ns Ar userid
 .br
@@ -223,6 +225,10 @@ The default is to send the verified output to stdout,
 and this may also be specified using the
 .Dq -
 value.
+.It Fl Fl results Ar filename
+specifies a filename to which the results of the operation
+should be sent.
+The default is to send the results to stderr.
 .It Fl Fl userid Ar userid
 This option specifies the user identity to be used for all operations.
 This identity can either be in the form of the full name, or as an

@@ -1035,8 +1035,7 @@ typedef struct {
 
 void __ops_init(void);
 void __ops_finish(void);
-void __ops_keyid(unsigned char *, const size_t, const int,
-				const __ops_pubkey_t *);
+void __ops_keyid(unsigned char *, const size_t, const __ops_pubkey_t *);
 void __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);
 void __ops_pubkey_free(__ops_pubkey_t *);
 void __ops_userid_free(__ops_userid_t *);

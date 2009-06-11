@@ -44,16 +44,6 @@
 #define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
 #endif
 
-/*
- * These macros code ensures that you are casting what you intend to cast.
- * It works because in "a ? b : c", b and c must have the same type.
- * This is a copy of the macro defined in openssl/asn1.h.
- */
-#ifndef CHECKED_PTR_OF
-#define CHECKED_PTR_OF(type, p) ((void*) (/*CONSTCOND*/1 ? p : (type *)0))
-#endif
-#define CHECKED_INSTANCE_OF(type, p) (/*CONSTCOND*/1 ? p : (type)0)
-
 /* number of elements in an array */
 #define OPS_ARRAY_SIZE(a)       (sizeof(a)/sizeof(*(a)))
 
@@ -63,6 +53,8 @@ const char     *__ops_str_from_map(int, __ops_map_t *);
 
 int             __ops_set_debug_level(const char *);
 int             __ops_get_debug_level(const char *);
+
+void		*__ops_new(size_t);
 
 #define NETPGP_BUFSIZ	8192
 

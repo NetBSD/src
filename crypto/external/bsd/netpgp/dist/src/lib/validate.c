@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.18 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.19 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -554,7 +554,7 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 	keysigs.result = result;
 	keysigs.getpassphrase = cb_get_passphrase;
 
-	stream = __ops_parseinfo_new();
+	stream = __ops_new(sizeof(*stream));
 	/* __ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED); */
 
 	keysigs.keyring = keyring;
@@ -576,7 +576,7 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 	__ops_userid_free(&keysigs.userid);
 	__ops_userattr_free(&keysigs.userattr);
 
-	__ops_parseinfo_delete(stream);
+	__ops_stream_delete(stream);
 
 	return (!result->invalidc && !result->unknownc && result->validc);
 }

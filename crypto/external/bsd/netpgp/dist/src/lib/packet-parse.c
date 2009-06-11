@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.20 2009/06/09 19:32:11 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.21 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -3374,22 +3374,10 @@ __ops_parse_options(__ops_stream_t *stream,
 
 /**
 \ingroup Core_ReadPackets
-\brief Creates a new zero-ed __ops_stream_t struct
-\sa __ops_parseinfo_delete()
-*/
-__ops_stream_t *
-__ops_parseinfo_new(void)
-{
-	return calloc(1, sizeof(__ops_stream_t));
-}
-
-/**
-\ingroup Core_ReadPackets
 \brief Free __ops_stream_t struct and its contents
-\sa __ops_parseinfo_new()
 */
 void 
-__ops_parseinfo_delete(__ops_stream_t *stream)
+__ops_stream_delete(__ops_stream_t *stream)
 {
 	__ops_cbdata_t	*cbinfo;
 	__ops_cbdata_t	*next;
@@ -3498,7 +3486,7 @@ __ops_stacked_callback(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 \return parse_info's errors
 */
 __ops_error_t    *
-__ops_parseinfo_get_errors(__ops_stream_t *stream)
+__ops_stream_get_errors(__ops_stream_t *stream)
 {
 	return stream->errors;
 }

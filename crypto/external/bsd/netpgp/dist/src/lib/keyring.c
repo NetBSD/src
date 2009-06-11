@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.18 2009/06/10 16:01:37 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.19 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -300,7 +300,7 @@ __ops_decrypt_seckey(const __ops_key_t *key, const char *passphrase)
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
 	decrypt.passphrase = strdup(passphrase);
-	stream = __ops_parseinfo_new();
+	stream = __ops_new(sizeof(*stream));
 	__ops_keydata_reader_set(stream, key);
 	__ops_set_callback(stream, decrypt_cb, &decrypt);
 	stream->readinfo.accumulate = 1;
@@ -627,7 +627,7 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	unsigned		 res = 1;
 	int			 fd;
 
-	stream = __ops_parseinfo_new();
+	stream = __ops_new(sizeof(*stream));
 
 	/* add this for the moment, */
 	/*
@@ -644,7 +644,7 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	fd = open(filename, O_RDONLY);
 #endif
 	if (fd < 0) {
-		__ops_parseinfo_delete(stream);
+		__ops_stream_delete(stream);
 		perror(filename);
 		return 0;
 	}
@@ -664,14 +664,14 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	} else {
 		res = 1;
 	}
-	__ops_print_errors(__ops_parseinfo_get_errors(stream));
+	__ops_print_errors(__ops_stream_get_errors(stream));
 
 	if (armour)
 		__ops_reader_pop_dearmour(stream);
 
 	close(fd);
 
-	__ops_parseinfo_delete(stream);
+	__ops_stream_delete(stream);
 
 	return res;
 }
@@ -709,7 +709,7 @@ __ops_keyring_read_from_mem(__ops_io_t *io,
 	const unsigned		 noaccum = 0;
 	unsigned		 res = 1;
 
-	stream = __ops_parseinfo_new();
+	stream = __ops_new(sizeof(*stream));
 	__ops_parse_options(stream, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
 	__ops_setup_memory_read(io, &stream, mem, NULL, cb_keyring_read,
 					noaccum);
@@ -717,12 +717,12 @@ __ops_keyring_read_from_mem(__ops_io_t *io,
 		__ops_reader_push_dearmour(stream);
 	}
 	res = __ops_parse_and_accumulate(keyring, stream);
-	__ops_print_errors(__ops_parseinfo_get_errors(stream));
+	__ops_print_errors(__ops_stream_get_errors(stream));
 	if (armour) {
 		__ops_reader_pop_dearmour(stream);
 	}
 	/* don't call teardown_memory_read because memory was passed in */
-	__ops_parseinfo_delete(stream);
+	__ops_stream_delete(stream);
 	return res;
 }
 

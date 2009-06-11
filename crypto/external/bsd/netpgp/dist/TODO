@@ -1,5 +1,7 @@
 To Do
 =====
+read input via fd's, per ver
+write output to fd's, per ver
 error logging
 separate from libcrypto?
 64-bit offsets

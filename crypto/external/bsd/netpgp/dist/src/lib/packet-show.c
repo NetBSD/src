@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.11 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.12 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -310,8 +310,6 @@ static __ops_bit_map_t ss_key_server_prefs_map[] =
 	{0x80, "Key holder requests that this key only be modified or updated by the key holder or an administrator of the key server"},
 	{0x00, NULL},
 };
-
-#include "packet-show-cast.h"
 
 /*
  * Private functions
@@ -588,11 +586,10 @@ __ops_show_packet_tag(__ops_packet_tag_t packet_tag)
 {
 	const char     *ret;
 
-	ret = show_packet_tag(packet_tag, packet_tag_map);
+	ret = __ops_str_from_map(packet_tag, packet_tag_map);
 	if (!ret) {
 		ret = "Unknown Tag";
 	}
-
 	return ret;
 }
 
@@ -606,7 +603,7 @@ __ops_show_packet_tag(__ops_packet_tag_t packet_tag)
 const char     *
 __ops_show_ss_type(__ops_ss_type_t ss_type)
 {
-	return show_ss_type(ss_type, ss_type_map);
+	return __ops_str_from_map(ss_type, ss_type_map);
 }
 
 /**
@@ -619,7 +616,7 @@ __ops_show_ss_type(__ops_ss_type_t ss_type)
 const char     *
 __ops_show_ss_rr_code(__ops_ss_rr_code_t ss_rr_code)
 {
-	return show_ss_rr_code(ss_rr_code, ss_rr_code_map);
+	return __ops_str_from_map(ss_rr_code, ss_rr_code_map);
 }
 
 /**
@@ -632,7 +629,7 @@ __ops_show_ss_rr_code(__ops_ss_rr_code_t ss_rr_code)
 const char     *
 __ops_show_sig_type(__ops_sig_type_t sig_type)
 {
-	return show_sig_type(sig_type, sig_type_map);
+	return __ops_str_from_map(sig_type, sig_type_map);
 }
 
 /**
@@ -645,7 +642,7 @@ __ops_show_sig_type(__ops_sig_type_t sig_type)
 const char     *
 __ops_show_pka(__ops_pubkey_alg_t pka)
 {
-	return show_pka(pka, pubkey_alg_map);
+	return __ops_str_from_map(pka, pubkey_alg_map);
 }
 
 /**
@@ -686,7 +683,7 @@ __ops_showall_ss_zpref(__ops_ss_zpref_t ss_zpref)
 const char     *
 __ops_show_hash_alg(unsigned char hash)
 {
-	return show_hash_alg(hash);
+	return __ops_str_from_map(hash, hash_alg_map);
 }
 
 /**
@@ -707,7 +704,7 @@ __ops_showall_ss_hashpref(__ops_ss_hashpref_t ss_hashpref)
 const char     *
 __ops_show_symm_alg(unsigned char hash)
 {
-	return show_symm_alg(hash);
+	return __ops_str_from_map(hash, symm_alg_map);
 }
 
 /**

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.19 2009/06/10 16:01:37 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -120,7 +120,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "Creating key %d - tag %d\n",
-				keyring->keyc + 1, pkt->tag);
+				keyring->keyc, pkt->tag);
 		}
 		EXPAND_ARRAY(keyring, key);
 		pubkey = (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
@@ -128,8 +128,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 					&content->seckey.pubkey;
 		key = &keyring->keys[keyring->keyc++];
 		(void) memset(key, 0x0, sizeof(*key));
-		__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
-					pubkey);
+		__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey);
 		__ops_fingerprint(&key->fingerprint, pubkey);
 		key->type = pkt->tag;
 		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) {
@@ -138,7 +137,6 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			key->key.seckey = content->seckey;
 		}
 		return OPS_KEEP_MEMORY;
-
 	case OPS_PTAG_CT_USER_ID:
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "User ID: %s for key %d\n",
@@ -279,6 +277,19 @@ __ops_errcode(const __ops_errcode_t errcode)
 {
 	return (__ops_str_from_map((int) errcode,
 			(__ops_map_t *) errcode_name_map));
+}
+
+/* generic grab new storage function */
+void *
+__ops_new(size_t size)
+{
+	void	*vp;
+
+	if ((vp = calloc(1, size)) == NULL) {
+		(void) fprintf(stderr,
+			"allocation failure for %" PRIsize "u bytes", size);
+	}
+	return vp;
 }
 
 /**
@@ -481,8 +492,7 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
  */
 
 void 
-__ops_keyid(unsigned char *keyid, const size_t idlen, const int last,
-	const __ops_pubkey_t *key)
+__ops_keyid(unsigned char *keyid, const size_t idlen, const __ops_pubkey_t *key)
 {
 	if (key->version == 2 || key->version == 3) {
 		unsigned char   bn[NETPGP_BUFSIZ];
@@ -499,15 +509,14 @@ __ops_keyid(unsigned char *keyid, const size_t idlen, const int last,
 			return;
 		}
 		BN_bn2bin(key->key.rsa.n, bn);
-		(void) memcpy(keyid, (last == 0) ? bn : bn + n - idlen, idlen);
+		(void) memcpy(keyid, bn + n - idlen, idlen);
 	} else {
 		__ops_fingerprint_t finger;
 
 		__ops_fingerprint(&finger, key);
 		(void) memcpy(keyid,
-			(last == 0) ? finger.fingerprint :
 				finger.fingerprint + finger.length - idlen,
-			idlen);
+				idlen);
 	}
 }
 
