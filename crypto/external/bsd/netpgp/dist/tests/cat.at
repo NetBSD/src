@@ -1,4 +1,4 @@
-# $NetBSD: cat.at,v 1.4 2009/06/11 02:36:38 lukem Exp $
+# $NetBSD: cat.at,v 1.5 2009/06/11 02:48:20 lukem Exp $
 
 AT_SETUP([attached signature and verification])
 
@@ -10,11 +10,13 @@ AT_CHECK([echo '' | netpgp --pass-fd 0 --homedir $testhomedir --sign file3],
 
 # Verify sig file
 AT_CHECK([netpgp --homedir $testhomedir --cat --output=file3.copy file3.gpg],
-    [0], [ignore], [ignore], [ignore], [diff file3.copy file3])
+    [0], [ignore], [ignore])
+AT_CHECK([diff file3 file3.copy])
 
 # Verify sig to stdout
 AT_CHECK([netpgp --homedir $testhomedir --cat file3.gpg],
-    [0], [ignore], [ignore], [ignore], [diff stdout file3])
+    [0], [stdout], [ignore])
+AT_CHECK([diff file3 stdout])
 
 # XXXTODO: deliberately corrupt file3.gpg and attempt to verify
 
