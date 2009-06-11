@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.14 2009/06/09 00:51:02 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.15 2009/06/11 01:12:42 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -815,7 +815,7 @@ rsa_generate_keypair(__ops_key_t *keydata,
 
 	RSA_free(rsa);
 
-	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, OPS_KEY_ID_SIZE,
+	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, 
 			&keydata->key.seckey.pubkey);
 	__ops_fingerprint(&keydata->fingerprint, &keydata->key.seckey.pubkey);
 
