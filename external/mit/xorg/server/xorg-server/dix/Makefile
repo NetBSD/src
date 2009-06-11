@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/10/20 16:25:06 cube Exp $
+#	$NetBSD: Makefile,v 1.7 2009/06/11 05:43:15 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -12,7 +12,9 @@ SRCS=		atom.c colormap.c cursor.c devices.c dispatch.c dixfonts.c \
 		dixutils.c events.c extension.c ffs.c gc.c getevents.c \
 		globals.c glyphcurs.c grabs.c initatoms.c main.c pixmap.c \
 		privates.c property.c resource.c swaprep.c swapreq.c \
-		tables.c window.c
+		tables.c window.c \
+		deprecated.c enterleave.c ptrveloc.c registry.c selection.c
+
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg
@@ -31,6 +33,3 @@ COPTS.dixutils.c=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
-
-SUBDIR=	xpstubs
-.include <bsd.subdir.mk>
