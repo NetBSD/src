@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.815 2009/06/11 05:40:18 mrg Exp $
+# $NetBSD: mi,v 1.816 2009/06/11 06:18:12 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -599,7 +599,6 @@
 ./usr/X11R7/lib/X11/xkb/geometry/digital	-obsolete-	obsolete
 ./usr/X11R7/lib/X11/xkb/geometry/digital_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/geometry/ibm		-obsolete-	obsolete
-./usr/X11R7/lib/X11/xkb/geometry/ibm_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/geometry/sgi		-obsolete-	obsolete
 ./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/keycodes		base-x11-root
