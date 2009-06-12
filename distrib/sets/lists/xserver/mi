@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2009/02/14 11:23:14 abs Exp $
+# $NetBSD: mi,v 1.29 2009/06/12 01:55:59 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -58,14 +58,14 @@
 ./usr/X11R7/man/cat1/Xnest.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xserver.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xvfb.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat5/SecurityPolicy.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/SecurityPolicy.0			-unknown-	obsolete
 ./usr/X11R7/man/html1/Xmark.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xnest.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xserver.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/Xvfb.html				-unknown-	html,xorg
-./usr/X11R7/man/html5/SecurityPolicy.html		-unknown-	html,xorg
+./usr/X11R7/man/html5/SecurityPolicy.html		-unknown-	obsolete
 ./usr/X11R7/man/man1/Xmark.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xnest.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xserver.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg
-./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	.man,xorg
+./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	obsolete
