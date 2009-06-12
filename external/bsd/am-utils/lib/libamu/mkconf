@@ -1,4 +1,4 @@
-#	$NetBSD: mkconf,v 1.1 2008/09/19 21:38:41 christos Exp $
+#	$NetBSD: mkconf,v 1.2 2009/06/12 15:44:58 christos Exp $
 #
 # mkconf
 # Generate local configuration parameters for amd
@@ -23,7 +23,7 @@ cat << __EOF
 #define HOST_OS "netbsd$1"
 
 /* Define only name of host machine OS (eg. solaris2) */
-#define HOST_OS_NAME "netbsd`echo $1 | cut -d. -f 1`"
+#define HOST_OS_NAME "netbsd"
 
 /* Define only version of host machine (eg. 2.5.1) */
 #define HOST_OS_VERSION "$1"
