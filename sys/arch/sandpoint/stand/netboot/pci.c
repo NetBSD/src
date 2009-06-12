@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.11 2009/03/18 10:22:35 cegger Exp $ */
+/* $NetBSD: pci.c,v 1.12 2009/06/12 00:24:33 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ pcifinddev(unsigned vend, unsigned prod, unsigned *tag)
 	}
 	*tag = ~0;
 	return -1;
-} 
+}
 
 int
 pcilookup(type, list, max)
@@ -344,8 +344,7 @@ clsmatch(int bus, int dev, int func, unsigned long data)
 }
 
 static int
-_pcilookup(int bus, int (*match)(int, int, int, unsigned long), unsigned long data, list, int index, int limit)
-unsigned list[][2];
+_pcilookup(int bus, int (*match)(int, int, int, unsigned long), unsigned long data, unsigned list[][2], int index, int limit)
 {
 	int device, function, nfuncs;
 	unsigned pciid, bhlcr, class;
@@ -375,7 +374,7 @@ unsigned list[][2];
 				continue;
 			if ((*match)(bus, device, function, data)) {
 				list[index][0] = pciid;
-				list[index][1] = 
+				list[index][1] =
 				     pcimaketag(bus, device, function);
 				index += 1;
 				if (index >= limit)

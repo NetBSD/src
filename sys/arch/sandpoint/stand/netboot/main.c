@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.21 2009/03/18 10:22:35 cegger Exp $ */
+/* $NetBSD: main.c,v 1.22 2009/06/12 00:24:33 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@ void bi_add(void *, int, int);
 extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
 
 int brdtype;
+char *consname = CONSNAME;
+int consport = CONSPORT;
+int consspeed = CONSSPEED;
 
 void
 main(void)
@@ -129,9 +132,9 @@ main(void)
 	bi_init(bootinfo);
 
 	bi_mem.memsize = memsize;
-	snprintf(bi_cons.devname, sizeof(bi_cons.devname), CONSNAME);
-	bi_cons.addr = CONSPORT;
-	bi_cons.speed = CONSSPEED;
+	snprintf(bi_cons.devname, sizeof(bi_cons.devname), consname);
+	bi_cons.addr = consport;
+	bi_cons.speed = consspeed;
 	bi_clk.ticks_per_sec = TICKS_PER_SEC;
 	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
 	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), rootdev);
