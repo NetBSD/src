@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.17 2009/06/12 01:55:59 mrg Exp $
+# $NetBSD: md.alpha,v 1.18 2009/06/12 02:14:42 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -250,7 +250,7 @@
 ./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i740.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/imstt.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/imstt.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
