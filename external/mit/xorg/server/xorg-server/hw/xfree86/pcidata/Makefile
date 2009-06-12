@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/06/10 02:20:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/12 01:59:06 mrg Exp $
 
 # XXX this one is installed in modular-xorg-server
 
@@ -11,7 +11,6 @@ LIB=	pcidata
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/scanpci
 SRCS=	xf86PciData.c
-DPSRCS+=xf86PciIds.h
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \

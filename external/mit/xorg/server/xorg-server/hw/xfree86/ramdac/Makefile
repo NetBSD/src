@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/08/15 15:55:06 rtr Exp $
+# $NetBSD: Makefile,v 1.4 2009/06/12 01:59:06 mrg Exp $
 
 #XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -13,6 +13,7 @@ SRCS=	xf86RamDac.c xf86RamDacCmap.c \
 	xf86BitOrder.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \

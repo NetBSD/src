@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2009/04/10 17:00:45 bouyer Exp $
+#	$NetBSD: Makefile,v 1.28 2009/06/12 01:59:04 mrg Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -91,11 +91,19 @@ SUBDIR+= \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-cirrus_laguna \
-	xf86-video-cyrix \
+
+# replace with xf86-video-geode
+#	xf86-video-cyrix \
+
+SUBDIR+= \
 	xf86-video-glint \
 	xf86-video-i128 \
 	xf86-video-i740 \
-	xf86-video-imstt \
+
+# needs porting for xorg-server 1.6
+#	xf86-video-imstt \
+
+SUBDIR+= \
 	xf86-video-intel \
 	xf86-video-mach64 \
 	xf86-video-mga \
@@ -115,10 +123,11 @@ SUBDIR+= \
 	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-vga \
-	xf86-video-via
+
+# replace with xf86-video-openchrome
+#	xf86-video-via
 .endif
 
-#xf86-video-wsfb
 #xf86-video-rendition
 
 .include <bsd.subdir.mk>
