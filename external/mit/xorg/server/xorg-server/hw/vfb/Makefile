@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/06/11 05:43:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2009/06/12 01:59:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -70,6 +70,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.xkbstubs} \
 	${LDADD.composite} \
 	${LDADD.os} \
+	${LDADD.glx} \
 	-lXfont \
 	-lfreetype \
 	-lXau \
@@ -85,8 +86,7 @@ DPADD+=	${DPADD.dix} ${DPADD.fb} ${DPADD.mi} ${DPADD.xfixes} \
 	${DPADD.Xext} ${DPADD.config} ${DPADD.dbe} \
 	${DPADD.record} ${DPADD.render} ${DPADD.randr} ${DPADD.damageext} \
 	${DPADD.miext/damage} ${DPADD.miext/shadow} ${DPADD.Xi} \
-	${DPADD.xkb} ${DPADD.composite} ${DPADD.os} \
-	${LIBCWRAPPER} \
+	${DPADD.xkb} ${DPADD.composite} ${DPADD.os} ${DPADD.glx} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} \
 	${LIBCRYPTO}

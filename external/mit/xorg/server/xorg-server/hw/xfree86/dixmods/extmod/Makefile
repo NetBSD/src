@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2009/06/11 05:43:16 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2009/06/12 01:59:05 mrg Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
@@ -10,7 +10,6 @@ LIB=	extmod
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
 SRCS=	xf86dga2.c \
 	xvmod.c \
-	xf86misc.c \
 	xf86vmode.c \
 	modinit.c
 
@@ -21,6 +20,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/dbe \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/hw/xfree86/loader \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/miext/shadow \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \

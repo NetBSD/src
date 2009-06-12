@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/06/11 05:43:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2009/06/12 01:59:07 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -9,7 +9,7 @@ LIB=	xorgos
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bsd
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
 SRCS.bsd=	\
-		bsd_VTsw.c bsd_bell.c bsd_init.c \
+		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_pci.c \
 		kmod_noop.c \
 		posix_tty.c sigio.c vidmem.c
 
@@ -76,10 +76,6 @@ CPPFLAGS.arm_video.c=	-Wno-error
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus
 SRCS.bus+=	Pci.c
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-SRCS.bus+=	ix86Pci.c
-.endif
-
 .if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || ${MACHINE_ARCH} == "sparc" || \
@@ -93,7 +89,7 @@ CPPFLAGS.netbsdPci.c+= -DPCI_VIA_TTYE0
 .endif
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
-SRCS.misc=	xf86_Util.c Delay.c
+SRCS.misc=	Delay.c
 
 # XXX .S not built from automake either
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
@@ -111,6 +107,7 @@ SRCS.misc=	xf86_Util.c Delay.c
 #SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
+SRCS.misc+=     BUSmemcpy.c SlowBcopy.c
 
 # XXX namespace collision so avoid it, only has to be done for non-i386.
 #BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
@@ -129,6 +126,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/mi \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared \
 		-I${X11SRCDIR.xc}/extras/drm/shared
 .if ${X11DRI} != "no"

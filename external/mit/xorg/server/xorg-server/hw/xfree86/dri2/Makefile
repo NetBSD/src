@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/06/11 17:59:25 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2009/06/12 01:59:05 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 
@@ -15,6 +15,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
+		-I${X11SRCDIR.xorg-server}/xfixes \
 		-I${X11SRCDIR.xorg-server}/glx \
 		-I${X11SRCDIR.xorg-server}/GL/include \
 		-I${X11SRCDIR.xorg-server}/modes \
@@ -22,6 +23,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/i2c \
 		-I${X11SRCDIR.xorg-server}/parser \
 		-I${X11SRCDIR.xorg-server}/ramdac \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.MesaLib}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/dri \
@@ -31,8 +33,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 
 CPPFLAGS+=	-DXF86DRI \
 		${X11FLAGS.DIX}
-
-CPPFLAGS.dri.c=	-Wno-error
 
 LIBDPLIBS=	drm ${.CURDIR}/../../../../../lib/libdrm
 

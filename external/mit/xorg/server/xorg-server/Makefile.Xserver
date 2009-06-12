@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.9 2009/06/11 05:43:15 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.10 2009/06/12 01:59:04 mrg Exp $
 
 .for _SL in \
 	mi \
@@ -8,7 +8,6 @@
 	Xext \
 	Xext/Xextbuiltin \
 	dbe \
-	XTrap \
 	record \
 	render \
 	randr \
@@ -24,18 +23,15 @@
 	os \
 	dix \
 	config \
+	glx \
 	hw/xnest \
 	hw/xfree86/common \
 	hw/xfree86/ddc \
 	hw/xfree86/dixmods \
-	hw/xfree86/dixmods/afb \
-	hw/xfree86/dixmods/cfb \
-	hw/xfree86/dixmods/cfb32 \
 	hw/xfree86/dixmods/dbe \
 	hw/xfree86/dixmods/extmod \
 	hw/xfree86/dixmods/fb \
 	hw/xfree86/dixmods/freetype \
-	hw/xfree86/dixmods/mfb \
 	hw/xfree86/dixmods/record \
 	hw/xfree86/dixmods/shadow \
 	hw/xfree86/dixmods/type1 \
@@ -59,8 +55,6 @@
 	hw/xfree86/vgahw \
 	hw/xfree86/x86emu \
 	hw/xfree86/xaa \
-	hw/xfree86/xf1bpp \
-	hw/xfree86/xf4bpp \
 	hw/xfree86/xf8_16bpp \
 	hw/xfree86/xf8_32bpp \
 	hw/xfree86/xf86config \

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.26 2009/06/11 05:43:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2009/06/12 01:59:04 mrg Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dri2 dummy i2c int10 loader \
 		xf86modes exa \
-		xorgos ramdac pcidata shadowfb vbe vgahw \
+		xorgos ramdac shadowfb vbe vgahw \
 		x86emu xaa xf86config xf8_16bpp
 
 SUBDIR+=	.WAIT utils
@@ -62,9 +62,13 @@ LDADD+=	${LDADD.miext/cw}
 LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
 LDADD+=	${LDADD.os}
+LDADD+=	${LDADD.glx}
+LDADD+=	${LDADD.hw/xfree86/dri}
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
+LDADD+=	-lpciaccess -ldrm
+LDADD+=	-lcrypto
 LDADD+=	-Wl,--no-whole-archive
 
 .if ${MACHINE_ARCH} == "i386"
@@ -87,7 +91,6 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.Xext} \
 	${DPADD.config} \
 	${DPADD.dbe} \
-	${DPADD.XTrap} \
 	${DPADD.record} \
 	${DPADD.render} \
 	${DPADD.randr} \
@@ -99,6 +102,8 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.xkb} \
 	${DPADD.composite} \
 	${DPADD.os} \
+	${DPADD.glx} \
+	${DPADD.hw/xfree86/dri} \
 	${DPADD.hw/xfree86/dixmods/fb} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/init} \
@@ -111,7 +116,8 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.hw/xfree86/i2c} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
-	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM}
+	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
+	${LIBCRYPTO}
 
 SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 

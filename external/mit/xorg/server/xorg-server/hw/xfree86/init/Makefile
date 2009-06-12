@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/12 01:59:06 mrg Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -36,6 +36,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/int10 \
 		-I${X11SRCDIR.xorg-server}/render \
 		-I${X11SRCDIR.xorg-server}/randr \
+		-I${X11SRCDIR.xorg-server}/../include \
 		-I.
 
 CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \

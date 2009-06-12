@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/06/11 05:43:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2009/06/12 01:59:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ XORGINC_SUBDIR=	Xext dbe exa fb include mi \
 		miext/damage miext/shadow randr render xkb record
 XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
 		os-support os-support/bus parser rac ramdac shadowfb \
-		vbe vgahw xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp
+		vbe vgahw xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp dri2
 
 .for _dir in ${XORGINC_SUBDIR}
 .PATH: ${XORGSRC}/${_dir}
@@ -50,7 +50,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h bstore.h \
 	xkbstr.h xkbrules.h xserver-properties.h \
 	dixaccess.h privates.h ptrveloc.h registry.h xkbfile.h \
 	xf86xvmc.h xf86xvpriv.h xisb.h xorg-server.h xorgVersion.h xvdix.h \
-	xvmcext.h hotplug.h xkbsrv.h dix-config.h
+	xvmcext.h hotplug.h xkbsrv.h dix-config.h dri2.h rrtransform.h
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

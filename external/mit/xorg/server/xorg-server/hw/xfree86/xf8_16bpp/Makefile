@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
+# $NetBSD: Makefile,v 1.4 2009/06/12 01:59:07 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -11,10 +11,8 @@ LIB=	xf8_16bpp
 SRCS=	xf8_16module.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/xf1bpp \
-		-I${X11SRCDIR.xorg-server}/mfb \
-		-I${X11SRCDIR.xorg-server}/cfb \
 		-I${X11SRCDIR.xorg-server}/mi \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
