@@ -1,6 +1,10 @@
 To Do
 =====
+don't complain if no .gnupg dir (even when using --homedir)
+failure to run if no userid in gpg.conf (even if --userid specified)
+make netpgpkeys work - add, import, commit, update, sign, passphrase
 return userids from successful verify, and then print id out if required
+is get_passphrase_cb needed?
 error logging
 separate from libcrypto?
 64-bit offsets
