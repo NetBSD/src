@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.116 2009/03/09 16:19:22 uebayasi Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.117 2009/06/12 09:26:50 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.116 2009/03/09 16:19:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.117 2009/06/12 09:26:50 plunky Exp $");
 
 #include "opt_ptm.h"
 
@@ -765,7 +765,7 @@ block:
 		error = cnt == 0 ? EWOULDBLOCK : 0;
 		goto out;
 	}
-	error = cv_wait_sig(&tp->t_rawcv, &tty_lock);
+	error = cv_wait_sig(&tp->t_rawcvf, &tty_lock);
 	mutex_spin_exit(&tty_lock);
 	if (error) {
 		/* adjust for data copied in but not written */
