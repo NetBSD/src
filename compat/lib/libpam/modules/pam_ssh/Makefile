@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/27 08:00:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2009/06/12 06:40:51 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	ssh	${.CURDIR}/../../../libssh  crypt	${.CURDIR}/../../../libcrypt  crypto	${.CURDIR}/../../../libcrypto
+LIBDPLIBS=	ssh	${.CURDIR}/../../../../crypto/external/bsd/openssh/lib  crypt	${.CURDIR}/../../../libcrypt  crypto	${.CURDIR}/../../../libcrypto
 
 NOCHECKVER=	# defined
 
