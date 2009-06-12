@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.991 2009/06/11 12:42:31 cegger Exp $
+$NetBSD: pcidevs,v 1.992 2009/06/12 23:00:24 rjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1994,7 +1994,10 @@ product MARVELL 88SE6101	0x6101	88SE6101 Single Port PATA133 Controller
 product MARVELL 88SE6121	0x6121	88SE6121 SATA II Controller
 product MARVELL 88SE614X	0x6141	88SE614X SATA II PCI-E Controller
 product MARVELL 88SE6145	0x6145	88SE6145 SATA II PCI-E Controller
+product MARVELL 88F6180		0x6180	88F6180 SoC Kirkwood
 product MARVELL 88F6183		0x6183	88F6183 SoC Orion1
+product MARVELL 88F6192		0x6192	88F6192 SoC Kirkwood
+product MARVELL 88F6281		0x6281	88F6281 SoC Kirkwood
 product MARVELL	GT64130		0x6320	GT-64130 System Controller
 product MARVELL	GT64260		0x6430	GT-64260 System Controller
 product MARVELL	GT64360		0x6460	MV6436x System Controller
