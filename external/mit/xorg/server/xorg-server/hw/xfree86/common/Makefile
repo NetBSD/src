@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/06/11 05:43:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2009/06/12 01:59:04 mrg Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -16,9 +16,11 @@ SRCS=	xf86Configure.c xf86ShowOpts.c xf86Bus.c xf86Config.c \
 	xf86Cursor.c xf86DGA.c xf86DPMS.c \
 	xf86Events.c xf86Globals.c xf86AutoConfig.c \
 	xf86Option.c \
+	xf86VidMode.c xf86fbman.c xf86cmap.c \
 	xf86Helper.c xf86PM.c xf86RAC.c xf86Xinput.c xisb.c \
 	xf86Mode.c xorgHelper.c \
-	${SRCS.xv} ${SRCS.bus} ${SRCS.randr}
+	${SRCS.xv} ${SRCS.bus} ${SRCS.randr} \
+	xf86DefModeSet.c
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 SRCS.bus+=	xf86sbusBus.c
@@ -42,7 +44,8 @@ xf86DefModeSet.c:
 	cat \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/vesamodes \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/extramodes | \
-	${TOOL_AWK} -f ${.CURDIR}/modeline2c.awk > ${.TARGET}
+	${TOOL_AWK} -f ${X11SRCDIR.xorg-server}/hw/xfree86/common/modeline2c.awk > ${.TARGET}
+	@echo >> ${.TARGET}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
@@ -119,6 +122,7 @@ COPTS.xf86AutoConfig.c=		-Wno-error
 COPTS.xf86Config.c=		-Wno-error
 COPTS.xf86Cursor.c=		-Wno-error
 COPTS.xf86RandR.c=		-Wno-error
+COPTS.xf86Helper.c=		-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

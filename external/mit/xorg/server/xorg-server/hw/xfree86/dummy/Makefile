@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/11 05:43:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2009/06/12 01:59:05 mrg Exp $
 
 MKX11LOADABLE=no
 
@@ -22,6 +22,7 @@ SRCS+=	sigiostubs.c
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dummylib \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
+		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
