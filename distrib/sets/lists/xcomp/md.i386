@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.23 2009/06/09 05:24:31 mrg Exp $
+# $NetBSD: md.i386,v 1.24 2009/06/12 12:36:50 njoly Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -85,6 +85,6 @@
 ./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	obsolete
+./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	obsolete
 ./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg
