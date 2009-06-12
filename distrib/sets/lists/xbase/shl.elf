@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.26 2009/06/10 07:52:36 mrg Exp $
+# $NetBSD: shl.elf,v 1.27 2009/06/12 01:55:59 mrg Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -209,8 +209,10 @@
 ./usr/X11R7/lib/libglut.so.4			-unknown-		xorg
 ./usr/X11R7/lib/liblbxutil.so			-obsolete		obsolete
 ./usr/X11R7/lib/liblbxutil.so.2			-obsolete		obsolete
+./usr/X11R7/lib/libpciaccess.so			-unknown-		xorg
+./usr/X11R7/lib/libpciaccess.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so			-unknown-		xorg
-./usr/X11R7/lib/libpixman-1.so.1		-unknown-		xorg
+./usr/X11R7/lib/libpixman-1.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so			-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libxkbui.so			-unknown-		xorg

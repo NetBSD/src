@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.94 2009/06/10 07:52:36 mrg Exp $
+#	 $NetBSD: mi,v 1.95 2009/06/12 01:55:59 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5715,24 +5715,35 @@
 ./usr/X11R7/include/ft2build.h				-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman-version.h		-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman.h			-unknown-	xorg
+./usr/X11R7/include/pciaccess.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/BT.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/IBM.h				-unknown-	xorg
+./usr/X11R7/include/xorg/dixaccess.h			-unknown-	xorg
+./usr/X11R7/include/xorg/dri2.h				-unknown-	xorg
+./usr/X11R7/include/xorg/privates.h			-unknown-	xorg
+./usr/X11R7/include/xorg/ptrveloc.h			-unknown-	xorg
+./usr/X11R7/include/xorg/registry.h			-unknown-	xorg
+./usr/X11R7/include/xorg/rrtransform.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xkbfile.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xkbrules.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xkbstr.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xserver-properties.h		-unknown-	xorg
 ./usr/X11R7/include/xorg/TI.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/XIstubs.h			-unknown-	xorg
-./usr/X11R7/include/xorg/afb.h				-unknown-	xorg
-./usr/X11R7/include/xorg/assyntax.h			-unknown-	xorg
-./usr/X11R7/include/xorg/atKeynames.h			-unknown-	xorg
+./usr/X11R7/include/xorg/afb.h				-unknown-	obsolete
+./usr/X11R7/include/xorg/assyntax.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/atKeynames.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/bstore.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/bstorestr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb.h				-unknown-	xorg
-./usr/X11R7/include/xorg/cfb16.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb32.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb8_16.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfb8_32.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfbmap.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfbmskbits.h			-unknown-	xorg
-./usr/X11R7/include/xorg/cfbunmap.h			-unknown-	xorg
+./usr/X11R7/include/xorg/cfb.h				-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb16.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb32.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb8_16.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfb8_32.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfbmap.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfbmskbits.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/cfbunmap.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/closestr.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/closure.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/colormap.h			-unknown-	xorg
@@ -5762,7 +5773,7 @@
 ./usr/X11R7/include/xorg/fb.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/fbdevhw.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fboverlay.h			-unknown-	xorg
-./usr/X11R7/include/xorg/fbpseudocolor.h		-unknown-	xorg
+./usr/X11R7/include/xorg/fbpseudocolor.h		-unknown-	obsolete
 ./usr/X11R7/include/xorg/fbrop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fi1236.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fourcc.h			-unknown-	xorg
@@ -5774,9 +5785,9 @@
 ./usr/X11R7/include/xorg/i2c_def.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/input.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/inputstr.h			-unknown-	xorg
-./usr/X11R7/include/xorg/mfb.h				-unknown-	xorg
-./usr/X11R7/include/xorg/mfbmap.h			-unknown-	xorg
-./usr/X11R7/include/xorg/mfbunmap.h			-unknown-	xorg
+./usr/X11R7/include/xorg/mfb.h				-unknown-	obsolete
+./usr/X11R7/include/xorg/mfbmap.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/mfbunmap.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/mi.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/mibank.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/mibstore.h			-unknown-	xorg
@@ -5835,15 +5846,15 @@
 ./usr/X11R7/include/xorg/xaaWrapper.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xaalocal.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xaarop.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Crtc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Cursor.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86DDC.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Modes.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Module.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86OSmouse.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf86OSmouse.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86Opt.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Optrec.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Parser.h			-unknown-	xorg
@@ -5856,12 +5867,12 @@
 ./usr/X11R7/include/xorg/xf86RandR12.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Rename.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Resources.h		-unknown-	xorg
-./usr/X11R7/include/xorg/xf86Version.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf86Version.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86Xinput.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86_OSlib.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86_OSproc.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86_ansic.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86_libc.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf86_ansic.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/xf86_libc.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86cmap.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86fbman.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86i2c.h			-unknown-	xorg
@@ -5978,7 +5989,7 @@
 ./usr/X11R7/lib/X11/config/svr4.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/ultrix.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/usl.cf			-unknown-	xorg
-./usr/X11R7/lib/X11/config/version.def			-unknown-	xorg
+./usr/X11R7/lib/X11/config/version.def			-unknown-	obsolete
 ./usr/X11R7/lib/X11/config/x386.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xf86.rules			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xf86.tmpl			-unknown-	xorg
@@ -6143,6 +6154,9 @@
 ./usr/X11R7/lib/libmp.a					-unknown-	xorg
 ./usr/X11R7/lib/libmp_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libmp_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libpciaccess.a				-unknown-	xorg
+./usr/X11R7/lib/libpciaccess_g.a			-unknown-	debuglib,xorg
+./usr/X11R7/lib/libpciaccess_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libpixman-1.a				-unknown-	xorg
 ./usr/X11R7/lib/libpixman-1_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libpixman-1_p.a				-unknown-	profile,xorg
@@ -6178,6 +6192,7 @@
 ./usr/X11R7/lib/pkgconfig/lbxutil.pc			-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/libdrm.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libfs.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/pciaccess.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/printproto.pc			-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/randrproto.pc			-unknown-	xorg
@@ -9114,11 +9129,11 @@
 ./usr/libdata/debug/usr/X11R7/bin/makestrs.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mkfontscale.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/oclock.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/proxymngr.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/resize.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/revpath.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/sessreg.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/setxkbmap.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/showrgb.debug		-unknown-	debug,xorg
@@ -9294,6 +9309,7 @@
 ./usr/libdata/lint/llib-llisp.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lmp.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-loldX.ln			-unknown-	lint,x11
+./usr/libdata/lint/llib-lpciaccess.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lpsres.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lre.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxkbfile.ln			-unknown-	lint,x11
