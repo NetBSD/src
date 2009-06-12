@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2009/06/10 05:06:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/12 04:10:57 snj Exp $
 
 DRIVER=		xf86-video-vmware
 DRIVER_NAME=	vmware_drv
 
 SRCS=		bits2pixels.c vmware.c vmwarecurs.c vmwarectrl.c
-SRCS+=		vmwarexinerama.c vmwarevideo.c
+SRCS+=		vmwaremodes.c vmwarevideo.c vmwarexinerama.c 
 MAN=		vmware.4
 
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
