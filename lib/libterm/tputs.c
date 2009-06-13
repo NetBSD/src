@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.23 2005/05/15 21:11:13 christos Exp $	*/
+/*	$NetBSD: tputs.c,v 1.24 2009/06/13 19:23:22 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.23 2005/05/15 21:11:13 christos Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.24 2009/06/13 19:23:22 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ _tputs_convert(const char **ptr, int affcnt)
  * The number of affected lines is affcnt, and the routine
  * used to output one character is outc.
  */
-void
+int
 tputs(const char *cp, int affcnt, int (*outc)(int))
 {
 	int i = 0;
@@ -113,7 +113,7 @@ tputs(const char *cp, int affcnt, int (*outc)(int))
 	_DIAGASSERT(outc != 0);
 
 	if (cp == 0)
-		return;
+		return -1;
 
 	/* scan and convert delay digits (if any) */
 	i = _tputs_convert(&cp, affcnt);
@@ -129,9 +129,9 @@ tputs(const char *cp, int affcnt, int (*outc)(int))
 	 * not comprehensible, then don't try to delay.
 	 */
 	if (i == 0)
-		return;
+		return 0;
 	if (ospeed <= 0 || ospeed >= TMSPC10SIZE)
-		return;
+		return 0;
 
 	/*
 	 * Round up by a half a character frame,
@@ -144,6 +144,7 @@ tputs(const char *cp, int affcnt, int (*outc)(int))
 	i += mspc10 / 2;
 	for (i /= mspc10; i > 0; i--)
 		(void)(*outc)(PC);
+	return 0;
 }
 
 

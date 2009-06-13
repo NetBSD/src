@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.15 2005/02/04 15:52:08 perry Exp $	*/
+/*	$NetBSD: termcap.h,v 1.16 2009/06/13 19:23:22 roy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@ char *tgetstr(const char *, char **);
 int   tgetflag(const char *);
 int   tgetnum(const char *);
 char *tgoto(const char *, int, int);
-void  tputs(const char *, int, int (*)(int));
+int   tputs(const char *, int, int (*)(int));
 
 /*
  * New interface
