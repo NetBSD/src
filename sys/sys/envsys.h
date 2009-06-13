@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.25 2009/06/08 00:55:35 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.26 2009/06/13 16:08:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -145,7 +145,8 @@ enum envsys_battery_capacity_states {
 #define ENVSYS_REMOVEPROPS	_IOWR('E', 2, struct plistref)
 
 /*
- * Properties that can be set in upropset
+ * Properties that can be set in upropset (and in the event_limit's
+ * flags field)
  */
 #define	PROP_CRITMAX		0x0001
 #define	PROP_CRITMIN		0x0002
@@ -155,6 +156,22 @@ enum envsys_battery_capacity_states {
 #define	PROP_BATTWARN		0x0020
 #define	PROP_DESC		0x0040
 #define	PROP_RFACT		0x0080
+
+#define	PROP_DRIVER_LIMITS	0x8000
+#define	PROP_LIMITS		0x003f
+
+/*
+ * Thresholds/limits that are being monitored
+ */
+struct sysmon_envsys_lim {
+	uint32_t	sel_flags;	/* Flag which limits are present */
+	int32_t		sel_critmax;
+	int32_t		sel_warnmax;
+	int32_t		sel_warnmin;
+	int32_t		sel_critmin;
+};
+
+typedef struct sysmon_envsys_lim sysmon_envsys_lim_t;
 
 /*
  * Compatibility with old interface. Only ENVSYS_GTREDATA
