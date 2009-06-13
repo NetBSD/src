@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.42 2009/03/15 12:33:53 joerg Exp $
+.\"	$NetBSD: envsys.4,v 1.43 2009/06/13 16:08:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 13, 2007
+.Dd June 12, 2009
 .Dt ENVSYS 4
 .Os
 .Sh NAME
@@ -135,6 +135,12 @@ dictionary (which contains specific properties for a device):
 		\&\*[Lt]string\&\*[Gt]Ampere hour\&\*[Lt]\&/string\&\*[Gt]
 		\&\*[Lt]key\&\*[Gt]want-percentage\&\*[Lt]\&/key\&\*[Gt]
 		\&\*[Lt]true\&/\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]warning-capacity\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]19234\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]warning-max\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]323150000\&\*[Lt]\&/integer\&\*[Gt]
+		\&\*[Lt]key\&\*[Gt]warning-min\&\*[Lt]\&/key\&\*[Gt]
+		\&\*[Lt]integer\&\*[Gt]298150000\&\*[Lt]\&/integer\&\*[Gt]
 	\&\*[Lt]\&/dict\&\*[Gt]
 	\&\*[Lt]dict\&\*[Gt]
 		\&\*[Lt]key\&\*[Gt]device-properties\&\*[Lt]\&/key\&\*[Gt]
@@ -184,19 +190,14 @@ Current max value in the sensor.
 Current min value in the sensor.
 .It Fa monitoring-state-critical
 If true, the driver has enabled the flag to monitor a critical state.
-.It Fa monitoring-state-critical-over
-If true, the driver has enabled the flag to monitor a critical over state.
-.It Fa monitoring-state-critical-under
-If true, the driver has enabled the flag to monitor a critical under state.
+.It Fa monitoring-state-hw-range-limits
+If true, the driver has enabled the flag to monitor warning or critical
+limits.
 .It Fa monitoring-state-state-changed
 If true, the driver has enabled the flag to monitor for state changes in
 a drive or Battery state sensor.
-.It Fa monitoring-state-warning-over
-If true, the driver has enabled the flag to monitor a warning over state.
-.It Fa monitoring-state-warning-under
-If true, the driver has enabled the flag to monitor a warning under state.
 .It Fa monitoring-supported
-If true, critical capacity/max/min limits may be set by the
+If true, critical/warning capacity/max/min limits may be set by the
 .Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
 .It Fa state
@@ -209,6 +210,21 @@ If true,
 and
 .Em cur-value
 are valid and a percentage may be computed from them.
+.It Fa warning-capacity
+Warning capacity set previously by the
+.Dv ENVSYS_SETDICTIONARY
+.Xr ioctl 2 .
+Only available on sensors with the
+.Em want-percentage
+object enabled.
+.It Fa warning-max
+Warning max limit set previously by the
+.Dv ENVSYS_SETDICTIONARY
+.Xr ioctl 2 .
+.It Fa warning-min
+Warning min limit set previously by the
+.Dv ENVSYS_SETDICTIONARY
+.Xr ioctl 2 .
 .El
 .It Dv ENVSYS_REMOVEPROPS Pq prop_dictionary_t
 .Pp
@@ -251,6 +267,12 @@ a sensor understands:
 	\&\*[Lt]integer\&\*[Gt]3400\&\*[Lt]\&/integer\&\*[Gt]
 	\&\*[Lt]key\&\*[Gt]critical-min\&\*[Lt]\&/key\&\*[Gt]
 	\&\*[Lt]integer\&\*[Gt]2800\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]warning-capacity\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]integer\&\*[Gt]15\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]warning-max\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]integer\&\*[Gt]3200\&\*[Lt]\&/integer\&\*[Gt]
+	\&\*[Lt]key\&\*[Gt]warning-min\&\*[Lt]\&/key\&\*[Gt]
+	\&\*[Lt]integer\&\*[Gt]2900\&\*[Lt]\&/integer\&\*[Gt]
 \&\*[Lt]\&/dict\&\*[Gt]
 .Ed
 .Pp
@@ -305,12 +327,12 @@ object specifying the sensor that is required for the new properties.
 If an unknown object was sent with the dictionary,
 .Er EINVAL
 will be returned, or if the sensor does not support changing
-rfact (voltage sensors) or critical/capacity limits,
+rfact (voltage sensors) or critical/warning/capacity limits,
 .Er ENOTSUP
 will be returned.
 .El
 .Sh NOTES
-When setting a critical max or min limit with the
+When setting a critical/warning max or min limit with the
 .Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 ,
 the user must be aware that
@@ -320,7 +342,7 @@ Please see
 .Xr sysmon_envsys 9
 for more information.
 .Pp
-Also when setting a critical capacity limit, the formula to send a
+Also when setting a critical or warning capacity limit, the formula to send a
 proper value to
 .Xr sysmon_envsys 9
 is the following:

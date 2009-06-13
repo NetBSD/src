@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.24 2009/06/01 20:08:44 pgoyette Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.25 2009/06/13 16:08:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 1, 2009
+.Dd June 13, 2009
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -104,6 +104,8 @@ struct sysmon_envsys {
 	uint64_t	sme_events_timeout;
 	void 		*sme_cookie;
 	void (*sme_refresh)(struct sysmon_envsys *, envsys_data_t *);
+	void (*sme_set_limits)(struct sysmon_envsys *, sysmon_envsys_lim_t *);
+	void (*sme_get_limits)(struct sysmon_envsys *, sysmon_envsys_lim_t *); 
 };
 .Ed
 .Pp
@@ -126,14 +128,10 @@ Currently supporting
 If enabled, the
 .Ar sme_refresh
 function callback won't be used
-to refresh sensors data and the driver will use its own method.
-Hence
-.Ar sme_cookie
-won't be necessary either (OPTIONAL).
+to refresh sensors data and the driver will use its own method (OPTIONAL).
 .It Fa sme_events_timeout
-This is used to specify the default timeout value that will be used to
-check for critical events if any monitoring flag was set.
-The value is used as seconds (OPTIONAL).
+This is used to specify the default timeout value (in seconds) that will be
+used to check for critical events if any monitoring flag was set (OPTIONAL).
 .El
 .Pp
 If the driver wants to refresh sensors data via the
@@ -145,8 +143,11 @@ framework, the following members must be specified:
 Pointer to the device struct (also called
 .Dq softc ) .
 This may be used in the
-.Sy sme_refresh
-function callback.
+.Sy sme_refresh ,
+.Sy sme_get_limits ,
+or
+.Sy sme_set_limits
+function callbacks.
 .It Fa sme_refresh
 Pointer to a function that will be used to refresh sensor data in
 the device.
@@ -156,6 +157,19 @@ sensor depending of the returned data by the driver.
 .Em You don't have to refresh all sensors, only the sensor specified by the
 .Sy edata-\*[Gt]sensor
 .Em index .
+.It Fa sme_get_limits
+Pointer to a function that will be used to obtain from the driver the
+initial limits (or thresholds) used when monitoring a sensor's value.
+(See the
+.Sx SENSOR DETAILS
+section for more information.)
+.It Fa sme_set_limits
+Pointer to a function that alerts the device driver whenever monitoring
+limits (or thresholds) are updated by the user.
+Setting this function allows the device driver to reprogram hardware
+limits (if provided by the device), and gives the driver direct control
+over setting the sensor's state based on hardware status.
+XXXX
 .El
 .Pp
 Note that it's not necessary to refresh the sensors data before the
@@ -203,7 +217,7 @@ of
 This will be used to report its current state (on/off).
 .It SME_CLASS_BATTERY
 .Pp
-This class is for devices that want to act as an
+This class is for devices that want to act as a
 .Em Battery .
 The device writer must ensure that at least there are two sensors with
 units of
@@ -211,14 +225,14 @@ units of
 and
 .Sy ENVSYS_BATTERY_CHARGE .
 .Pp
-These two sensors are used to ensure that the battery device won't
-never send a
+These two sensors are used to ensure that the battery device can
+send a
 .Em low-power
 event to the
 .Xr powerd 8
 daemon (if running) when all battery devices are in a critical state.
-The critical state means that a battery is not currently charging
-and its charge state is low or critical.
+(The critical state occurs when a battery is not currently charging
+and its charge state is low or critical).
 When the
 .Em low-power
 condition is met, an event is sent to the
@@ -241,7 +255,7 @@ If a
 .Dv SME_CLASS_ACADAPTER
 or
 .Dv SME_CLASS_BATTERY
-class don't have the sensors required, the
+class device doesn't have the sensors required, the
 .Em low-power
 event will never be sent, and the graceful shutdown won't be possible.
 .Ss SENSOR DETAILS
@@ -301,10 +315,13 @@ daemon (if running).
 The monitoring event will be registered when this flag is
 .Dv true
 and one or more of the
-.Dv ENVSYS_FMONFOO
+.Dv ENVSYS_FMONxxx
 flags were set in the
 .Ar flags
 member.
+.Em NOTE
+.Em that limits (or thresholds) can be set at any time to enable
+.Em monitoring that the sensor's value remains within those limits.
 .It Fa desc
 Used to set the description string.
 .Em NOTE
@@ -445,11 +462,11 @@ member is not set to
 or
 .Ar ENVSYS_BATTERY_CAPACITY .
 .It ENVSYS_FMONNOTSUPP
-Disallows to set a critical limit via the
+Disallows setting of limits (or thresholds) via the
 .Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
-This flag has not any effect for monitoring flags set in the driver and it's
-only meant to disable setting critical limits from userland.
+This flag has no effect on monitoring flags set in the driver and is
+only disables setting the limits from userland.
 .El
 .Pp
 .Em If the driver has to use any of the
@@ -464,10 +481,9 @@ If
 .Ar units
 is set to
 .Ar ENVSYS_DRIVE ,
-there are some predefined states that must be set (only one)
-to the
+the
 .Ar value_cur
-member:
+member must be set to one of the following predefined states:
 .Pp
 .Bl -tag -width "ENVSYS_DRIVE_POWERDOWNXX" -compact
 .It ENVSYS_DRIVE_EMPTY
@@ -505,10 +521,9 @@ If
 .Ar units
 is set to
 .Ar ENVSYS_BATTERY_CAPACITY ,
-there are some predefined capacity states that must be set (only one)
-to the
+the
 .Ar value_cur
-member:
+member must be set to one of the following predefined capacity states:
 .Pp
 .Bl -tag -width "ENVSYS_BATTERY_CAPACITY_CRITICAL" -compact
 .It ENVSYS_BATTERY_CAPACITY_NORMAL
