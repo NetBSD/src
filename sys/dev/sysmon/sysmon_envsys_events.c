@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.66 2009/06/08 13:06:33 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.67 2009/06/13 16:08:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.66 2009/06/08 13:06:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.67 2009/06/13 16:08:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,9 +82,8 @@ static bool sme_acadapter_check(void);
  */
 int
 sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
-		   struct sysmon_envsys *sme, int32_t critmax,
-		   int32_t warnmax, int32_t warnmin, int32_t critmin,
-		   int lim_flags, int crittype, int powertype)
+		   struct sysmon_envsys *sme, sysmon_envsys_lim_t *lims,
+		   int crittype, int powertype)
 {
 	sme_event_t *see = NULL, *osee = NULL;
 	prop_object_t obj;
@@ -108,36 +107,36 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		    __func__, sme->sme_name, edata->desc, lim_flags));
 
 		see = osee;
-		if (lim_flags & PROP_CRITMAX) {
-			if (critmax == see->see_critmax) {
+		if (lims->sel_flags & PROP_CRITMAX) {
+			if (lims->sel_critmax == see->see_lims.sel_critmax) {
 				DPRINTF(("%s: type=%d (critmax exists)\n",
 				    __func__, crittype));
 				error = EEXIST;
-				lim_flags &= ~PROP_CRITMAX;
+				lims->sel_flags &= ~PROP_CRITMAX;
 			}
 		}
-		if (lim_flags & PROP_WARNMAX) {
-			if (warnmax == see->see_warnmax) {
+		if (lims->sel_flags & PROP_WARNMAX) {
+			if (lims->sel_warnmax == see->see_lims.sel_warnmax) {
 				DPRINTF(("%s: type=%d (warnmax exists)\n",
 				    __func__, crittype));
 				error = EEXIST;
-				lim_flags &= ~PROP_WARNMAX;
+				lims->sel_flags &= ~PROP_WARNMAX;
 			}
 		}
-		if (lim_flags & (PROP_WARNMIN | PROP_BATTWARN)) {
-			if (warnmin == see->see_warnmin) {
+		if (lims->sel_flags & (PROP_WARNMIN | PROP_BATTWARN)) {
+			if (lims->sel_warnmin == see->see_lims.sel_warnmin) {
 				DPRINTF(("%s: type=%d (warnmin exists)\n",
 				    __func__, crittype));
 				error = EEXIST;
-				lim_flags &= ~(PROP_WARNMIN | PROP_BATTWARN);
+				lims->sel_flags &= ~(PROP_WARNMIN | PROP_BATTWARN);
 			}
 		}
-		if (lim_flags & (PROP_CRITMIN | PROP_BATTCAP)) {
-			if (critmin == see->see_critmin) {
+		if (lims->sel_flags & (PROP_CRITMIN | PROP_BATTCAP)) {
+			if (lims->sel_critmin == see->see_lims.sel_critmin) {
 				DPRINTF(("%s: type=%d (critmin exists)\n",
 				    __func__, crittype));
 				error = EEXIST;
-				lim_flags &= ~(PROP_CRITMIN | PROP_BATTCAP);
+				lims->sel_flags &= ~(PROP_CRITMIN | PROP_BATTCAP);
 			}
 		}
 		break;
@@ -192,7 +191,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/*
 	 * Limit operation requested.
 	 */
-	if (lim_flags & PROP_CRITMAX) {
+	if (lims->sel_flags & PROP_CRITMAX) {
 		objkey = "critical-max";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -200,17 +199,19 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			    __func__, sme->sme_name, objkey));
 			error = ENOTSUP;
 		} else {
-			see->see_critmax = critmax;
-			error = sme_sensor_upint32(sdict, objkey, critmax);
+			see->see_lims.sel_critmax = lims->sel_critmax;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_critmax);
 			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
 			    "(%s updated)\n", __func__, sme->sme_name,
 			    edata->desc, crittype, objkey));
 		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_CRITMAX;
 	}
-	if (error && error != EEXIST)
-		goto out;
 
-	if (lim_flags & PROP_WARNMAX) {
+	if (lims->sel_flags & PROP_WARNMAX) {
 		objkey = "warning-max";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -218,17 +219,19 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			    __func__, sme->sme_name, objkey));
 			error = ENOTSUP;
 		} else {
-			see->see_warnmax = warnmax;
-			error = sme_sensor_upint32(sdict, objkey, warnmax);
+			see->see_lims.sel_warnmax = lims->sel_warnmax;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_warnmax);
 			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
 			    "(%s updated)\n", __func__, sme->sme_name,
 			    edata->desc, crittype, objkey));
 		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_WARNMAX;
 	}
-	if (error && error != EEXIST)
-		goto out;
 
-	if (lim_flags & PROP_WARNMIN) {
+	if (lims->sel_flags & PROP_WARNMIN) {
 		objkey = "warning-min";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -236,17 +239,19 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			    __func__, sme->sme_name, objkey));
 			error = ENOTSUP;
 		} else {
-			see->see_warnmin = warnmin;
-			error = sme_sensor_upint32(sdict, objkey, warnmin);
+			see->see_lims.sel_warnmin = lims->sel_warnmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_warnmin);
 			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
 			    "(%s updated)\n", __func__, sme->sme_name,
 			    edata->desc, crittype, objkey));
 		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_WARNMIN;
 	}
-	if (error && error != EEXIST)
-		goto out;
 
-	if (lim_flags & PROP_CRITMIN) {
+	if (lims->sel_flags & PROP_CRITMIN) {
 		objkey = "critical-min";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -254,17 +259,19 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			    __func__, sme->sme_name, objkey));
 			error = ENOTSUP;
 		} else {
-			see->see_critmin = critmin;
-			error = sme_sensor_upint32(sdict, objkey, critmin);
+			see->see_lims.sel_critmin = lims->sel_critmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_critmin);
 			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
 			    "(%s updated)\n", __func__, sme->sme_name,
 			    edata->desc, crittype, objkey));
 		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_CRITMIN;
 	}
-	if (error && error != EEXIST)
-		goto out;
 
-	if (lim_flags & PROP_BATTWARN) {
+	if (lims->sel_flags & PROP_BATTWARN) {
 		objkey = "warning-capacity";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -272,17 +279,19 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			    __func__, sme->sme_name, objkey));
 			error = ENOTSUP;
 		} else {
-			see->see_warnmin = warnmin;
-			error = sme_sensor_upint32(sdict, objkey, warnmin);
+			see->see_lims.sel_warnmin = lims->sel_warnmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_warnmin);
 			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
 			    "(%s updated)\n", __func__, sme->sme_name,
 			    edata->desc, crittype, objkey));
 		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_BATTWARN;
 	}
-	if (error && error != EEXIST)
-		goto out;
 
-	if (lim_flags & PROP_BATTCAP) {
+	if (lims->sel_flags & PROP_BATTCAP) {
 		objkey = "critical-capacity";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -290,28 +299,41 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			    __func__, sme->sme_name, objkey));
 			error = ENOTSUP;
 		} else {
-			see->see_critmin = critmin;
-			error = sme_sensor_upint32(sdict, objkey, critmin);
+			see->see_lims.sel_critmin = lims->sel_critmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_critmin);
 			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
 			    "(%s updated)\n", __func__, sme->sme_name,
 			    edata->desc, crittype, objkey));
 		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_BATTCAP;
 	}
-	if (error && error != EEXIST)
-		goto out;
 
 	DPRINTF(("%s: (%s) event registered (sensor=%s snum=%d type=%d "
 	    "critmin=%" PRIu32 " warnmin=%" PRIu32 " warnmax=%" PRIu32
 	    " critmax=%" PRIu32 " props 0x%04x)\n", __func__,
 	    see->see_sme->sme_name, see->see_pes.pes_sensname,
-	    see->see_edata->sensor, see->see_type, see->see_critmin,
-	    see->see_warnmin, see->see_warnmax, see->see_critmax,
-	    see->see_edata->upropset));
+	    see->see_edata->sensor, see->see_type, see->see_lims.sel_critmin,
+	    see->see_lims.sel_warnmin, see->see_lims.sel_warnmax,
+	    see->see_lims.sel_critmax, see->see_edata->upropset));
 	/*
 	 * Initialize the events framework if it wasn't initialized before.
 	 */
 	if ((sme->sme_flags & SME_CALLOUT_INITIALIZED) == 0)
 		error = sme_events_init(sme);
+
+	/*
+	 * If driver requested notification, advise it of new
+	 * limit values
+	 */
+	if (sme->sme_set_limits) {
+		see->see_lims.sel_flags = see->see_edata->upropset &
+					  PROP_LIMITS;
+		(*sme->sme_set_limits)(sme, &(see->see_lims));
+	}
+
 out:
 	if ((error == 0 || error == EEXIST) && osee == NULL)
 		LIST_INSERT_HEAD(&sme->sme_events_list, see, see_list);
@@ -428,6 +450,7 @@ void
 sme_event_drvadd(void *arg)
 {
 	sme_event_drv_t *sed_t = arg;
+	sysmon_envsys_lim_t lims;
 	int error = 0;
 
 	KASSERT(sed_t != NULL);
@@ -440,7 +463,7 @@ do {									\
 		error = sme_event_register(sed_t->sed_sdict,		\
 				      sed_t->sed_edata,			\
 				      sed_t->sed_sme,			\
-				      0, 0, 0, 0, 0,			\
+				      &lims,				\
 				      (b),				\
 				      sed_t->sed_powertype);		\
 		if (error && error != EEXIST)				\
@@ -457,17 +480,25 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
+	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS) {
+		if (sed_t->sed_sme->sme_get_limits)
+			(*sed_t->sed_sme->sme_get_limits)(sed_t->sed_sme,
+							  &lims);
+		else
+			sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
+	}
+
 	SEE_REGEVENT(ENVSYS_FMONCRITICAL,
 		     PENVSYS_EVENT_CRITICAL,
 		     "critical");
 
-	SEE_REGEVENT(ENVSYS_FMONLIMITS,
-		     PENVSYS_EVENT_LIMITS,
-		     "hw-range-limits");
-
 	SEE_REGEVENT(ENVSYS_FMONSTCHANGED,
 		     PENVSYS_EVENT_STATE_CHANGED,
 		     "state-changed");
+
+	SEE_REGEVENT(ENVSYS_FMONLIMITS,
+		     PENVSYS_EVENT_LIMITS,
+		     "hw-range-limits");
 
 	/* 
 	 * we are done, free memory now.
@@ -604,24 +635,31 @@ sme_events_worker(struct work *wk, void *arg)
 
 	switch (see->see_type) {
 	/*
-	 * For user range limits, calculate a new state first
-	 * State based on user limits will override any hardware
-	 * detected state.
+	 * For range limits, if the driver claims responsibility for
+	 * limit/range checking, just user driver-supplied status.
+	 * Else calculate our own status.  Note that driver must
+	 * relinquish responsibility for ALL limits if there is even
+	 * one limit that it cannot handle!
 	 */
 	case PENVSYS_EVENT_LIMITS:
 	case PENVSYS_EVENT_CAPACITY:
-#define __EXCEEDED_LIMIT(lim, rel) ((lim) && edata->value_cur rel (lim))
-		if __EXCEEDED_LIMIT(see->see_critmin, <)
-			edata->state = ENVSYS_SCRITUNDER;
-		else if __EXCEEDED_LIMIT(see->see_warnmin, <)
-			edata->state = ENVSYS_SWARNUNDER;
-		else if __EXCEEDED_LIMIT(see->see_warnmax, >)
-			edata->state = ENVSYS_SWARNOVER;
-		else if __EXCEEDED_LIMIT(see->see_critmax, >)
-			edata->state = ENVSYS_SCRITOVER;
+#define __EXCEED_LIM(lim, rel) ((lim) && edata->value_cur rel (lim))
+		if ((see->see_lims.sel_flags & PROP_DRIVER_LIMITS) == 0) {
+			if __EXCEED_LIM(see->see_lims.sel_critmin, <)
+				edata->state = ENVSYS_SCRITUNDER;
+			else if __EXCEED_LIM(see->see_lims.sel_warnmin, <)
+				edata->state = ENVSYS_SWARNUNDER;
+			else if __EXCEED_LIM(see->see_lims.sel_warnmax, >)
+				edata->state = ENVSYS_SWARNOVER;
+			else if __EXCEED_LIM(see->see_lims.sel_critmax, >)
+				edata->state = ENVSYS_SCRITOVER;
+		}
 		/* FALLTHROUGH */
-#undef __EXCEEDED_LIMIT
+#undef	__EXCEED_LIM
 
+		/*
+		 * Send event if state has changed
+		 */
 		if (edata->state == see->see_evsent)
 			break;
 
