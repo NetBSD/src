@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.29 2009/06/08 00:55:35 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.30 2009/06/13 16:08:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -73,10 +73,7 @@ typedef struct sme_event {
 	struct sysmon_envsys	*see_sme;	/* device associated */
 	struct penvsys_state	see_pes;	/* our power envsys */
 	envsys_data_t		*see_edata;	/* our sensor data */
-	int32_t			see_critmin;	/* critical-min value set */
-	int32_t			see_warnmin;	/* warning-min value set */
-	int32_t			see_warnmax;	/* warning-max value set */
-	int32_t			see_critmax;	/* critical-max value set */
+	sysmon_envsys_lim_t	see_lims;	/* limit values */
 	int			see_type;	/* type of the event */
 	int			see_evsent;	/* event already sent */
 	int 			see_flags;	/* see above */
@@ -128,8 +125,8 @@ void	sysmon_envsys_release(struct sysmon_envsys *, bool);
  * functions to handle sysmon envsys events.
  */
 int	sme_event_register(prop_dictionary_t, envsys_data_t *,
-			   struct sysmon_envsys *, int32_t, int32_t,
-			   int32_t, int32_t, int, int, int);
+			   struct sysmon_envsys *, sysmon_envsys_lim_t *,
+			   int, int);
 int	sme_event_unregister(struct sysmon_envsys *, const char *, int);
 void	sme_event_unregister_all(struct sysmon_envsys *);
 void	sme_event_drvadd(void *);
