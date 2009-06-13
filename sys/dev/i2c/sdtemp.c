@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.4 2009/06/13 19:02:33 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.5 2009/06/13 20:27:19 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.4 2009/06/13 19:02:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.5 2009/06/13 20:27:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 	if ((error = sdtemp_read_16(sc, SDTEMP_REG_MFG_ID,  &mfgid)) != 0 ||
 	    (error = sdtemp_read_16(sc, SDTEMP_REG_DEV_REV, &devid)) != 0) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error(": attach error %d\n", error);
 		return;
 	}
