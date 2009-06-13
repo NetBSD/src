@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_dumbclock.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_dumbclock.c,v 1.3 2009/06/13 12:02:08 kardel Exp $	*/
 
 /*
  * refclock_dumbclock - clock driver for a unknown time distribution system
@@ -14,11 +14,6 @@
 #include <config.h>
 #endif
 
-#if defined(SYS_WINNT)
-#undef close
-#define close closesocket
-#endif
-
 #if defined(REFCLOCK) && defined(CLOCK_DUMBCLOCK)
 
 #include "ntpd.h"
@@ -29,6 +24,12 @@
 
 #include <stdio.h>
 #include <ctype.h>
+
+#ifdef SYS_WINNT
+extern int async_write(int, const void *, unsigned int);
+#undef write
+#define write(fd, data, octets)	async_write(fd, data, octets)
+#endif
 
 /*
  * This driver supports a generic dumb clock that only outputs hh:mm:ss,
