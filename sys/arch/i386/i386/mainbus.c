@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.84 2009/04/17 21:07:58 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.85 2009/06/13 13:35:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.84 2009/04/17 21:07:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.85 2009/06/13 13:35:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,6 +396,8 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 	 */
 #if NPCI > 0
 	if (pci_mode != 0 && ifattr_match(ifattr, "pcibus")) {
+		int npcibus = 0;
+
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
@@ -405,16 +407,14 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		mba.mba_pba.pba_bus = 0;
 		mba.mba_pba.pba_bridgetag = NULL;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
-		if (sc->sc_mpacpi_active)
-			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
-		else
+		if (npcibus == 0 && sc->sc_mpacpi_active)
+			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
-		if (mpbios_scanned != 0)
-			mp_pci_scan(self, &mba.mba_pba, pcibusprint);
-		else
+		if (npcibus == 0 && mpbios_scanned != 0)
+			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 #endif
-		if (sc->sc_pci == NULL) {
+		if (npcibus == 0 && sc->sc_pci == NULL) {
 			sc->sc_pci = config_found_ia(self, "pcibus",
 			    &mba.mba_pba, pcibusprint);
 		}
