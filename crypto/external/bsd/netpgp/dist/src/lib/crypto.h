@@ -93,8 +93,8 @@ struct _ops_crypt_t {
 	__ops_symm_alg_t		alg;
 	size_t				blocksize;
 	size_t				keysize;
-	__ops_setiv_func_t		*set_iv;/* Call before decrypt init! */
-	__ops_setkey_func_t		*set_key;/* Call this before init! */
+	__ops_setiv_func_t		*set_iv;
+	__ops_setkey_func_t		*set_crypt_key;
 	__ops_crypt_init_t		*base_init;
 	__ops_crypt_resync_t		*decrypt_resync;
 	/* encrypt/decrypt one block  */

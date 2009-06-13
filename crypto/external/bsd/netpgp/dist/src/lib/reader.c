@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.21 2009/06/11 04:57:52 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.22 2009/06/13 05:25:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -147,7 +147,7 @@ __ops_getpassphrase(void *in, char *phrase, size_t size)
 		}
 		(void) snprintf(phrase, size, "%s", p);
 	} else {
-		if (fgets(phrase, size, in) == NULL) {
+		if (fgets(phrase, (int)size, in) == NULL) {
 			return 0;
 		}
 		phrase[strlen(phrase) - 1] = 0x0;
@@ -2089,7 +2089,6 @@ litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	case OPS_PTAG_CT_LITDATA_HEADER:
 		/* ignore */
-printf("LITDATA_HEADER: filename ,%s,\n", content->litdata_header.filename);
 		break;
 
 	default:
@@ -2202,12 +2201,8 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	__ops_io_t		*io;
-	FILE			*passfp;
 
 	io = cbinfo->io;
-	if ((passfp = cbinfo->passfp) != NULL) {
-		/* read from passfp and return */
-	}
 	if (__ops_get_debug_level(__FILE__)) {
 		__ops_print_packet(pkt);
 	}

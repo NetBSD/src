@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.12 2009/06/09 00:51:03 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.13 2009/06/13 05:25:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1019,7 +1019,7 @@ __ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 	__ops_crypt_any(encrypted, encrypted_pk_sesskey->symm_alg);
 	iv = calloc(1, encrypted->blocksize);
 	encrypted->set_iv(encrypted, iv);
-	encrypted->set_key(encrypted, &encrypted_pk_sesskey->key[0]);
+	encrypted->set_crypt_key(encrypted, &encrypted_pk_sesskey->key[0]);
 	__ops_encrypt_init(encrypted);
 
 	se_ip->crypt = encrypted;
@@ -1389,7 +1389,7 @@ __ops_push_stream_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 	__ops_crypt_any(encrypted, encrypted_pk_sesskey->symm_alg);
 	iv = calloc(1, encrypted->blocksize);
 	encrypted->set_iv(encrypted, iv);
-	encrypted->set_key(encrypted, &encrypted_pk_sesskey->key[0]);
+	encrypted->set_crypt_key(encrypted, &encrypted_pk_sesskey->key[0]);
 	__ops_encrypt_init(encrypted);
 
 	se_ip->crypt = encrypted;
