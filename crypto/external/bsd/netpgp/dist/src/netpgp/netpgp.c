@@ -216,13 +216,15 @@ give_it_large(netpgp_t *netpgp)
 
 /* set the home directory value to "home/subdir" */
 static int
-set_homedir(netpgp_t *netpgp, char *home, const char *subdir)
+set_homedir(netpgp_t *netpgp, char *home, const char *subdir, const int quiet)
 {
 	struct stat	st;
 	char		d[MAXPATHLEN];
 
 	if (home == NULL) {
-		(void) fprintf(stderr, "NULL HOME directory\n");
+		if (!quiet) {
+			(void) fprintf(stderr, "NULL HOME directory\n");
+		}
 		return 0;
 	}
 	(void) snprintf(d, sizeof(d), "%s%s", home, (subdir) ? subdir : "");
@@ -235,7 +237,10 @@ set_homedir(netpgp_t *netpgp, char *home, const char *subdir)
 					d);
 		return 0;
 	}
-	(void) fprintf(stderr, "netpgp: warning homedir \"%s\" not found\n", d);
+	if (!quiet) {
+		(void) fprintf(stderr,
+			"netpgp: warning homedir \"%s\" not found\n", d);
+	}
 	return 1;
 }
 
@@ -260,7 +265,7 @@ main(int argc, char **argv)
 	}
 	/* set some defaults */
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
-	set_homedir(&netpgp, getenv("HOME"), "/.gnupg");
+	set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -269,9 +274,13 @@ main(int argc, char **argv)
 			p.cmd = options[optindex].val;
 			break;
 		case ENCRYPT:
-		case DECRYPT:
 		case SIGN:
 		case CLEARSIGN:
+			/* for encryption and signing, we need a userid */
+			netpgp_setvar(&netpgp, "need userid", "1");
+			p.cmd = options[optindex].val;
+			break;
+		case DECRYPT:
 		case VERIFY:
 		case VERIFY_CAT:
 		case LIST_PACKETS:
@@ -316,7 +325,7 @@ main(int argc, char **argv)
 				"No home directory argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			set_homedir(&netpgp, optarg, NULL);
+			set_homedir(&netpgp, optarg, NULL, 0);
 			break;
 		case HASH_ALG:
 			if (optarg == NULL) {

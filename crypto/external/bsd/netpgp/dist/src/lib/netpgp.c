@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.25 2009/06/11 04:57:52 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.26 2009/06/13 05:25:08 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -97,7 +97,6 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 	__OPS_USED(netpgp);
 	(void) snprintf(buf, sizeof(buf), "%s/gpg.conf", homedir);
 	if ((fp = fopen(buf, "r")) == NULL) {
-		(void) fprintf(stderr, "conffile: can't open '%s'\n", buf);
 		return 0;
 	}
 	(void) memset(&keyre, 0x0, sizeof(keyre));
@@ -270,13 +269,12 @@ netpgp_init(netpgp_t *netpgp)
 		}
 	}
 	if (userid == NULL) {
-		if (netpgp_getvar(netpgp, "userid checks") == NULL) {
+		if (netpgp_getvar(netpgp, "need userid") != NULL) {
 			(void) fprintf(io->errs, "Cannot find user id\n");
 			return 0;
 		}
-		(void) fprintf(io->errs, "Skipping user id check\n");
 	} else {
-		(void) netpgp_setvar(netpgp, "userid", id);
+		(void) netpgp_setvar(netpgp, "userid", userid);
 	}
 	if ((netpgp->pubring = readkeyring(netpgp, "pubring")) == NULL) {
 		(void) fprintf(io->errs, "Can't read pub keyring\n");

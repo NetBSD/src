@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.18 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.19 2009/06/13 05:25:08 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -425,7 +425,7 @@ write_seckey_body(const __ops_seckey_t *key,
 
 	__ops_crypt_any(&crypted, key->alg);
 	crypted.set_iv(&crypted, key->iv);
-	crypted.set_key(&crypted, sesskey);
+	crypted.set_crypt_key(&crypted, sesskey);
 	__ops_encrypt_init(&crypted);
 
 	if (__ops_get_debug_level(__FILE__)) {
