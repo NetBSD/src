@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpdc-opts.h,v 1.1.1.4 2009/01/08 19:18:20 kardel Exp $	*/
+/*	$NetBSD: ntpdc-opts.h,v 1.1.1.5 2009/06/13 09:18:06 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpdc-opts.h)
  *  
- *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:18:22 AM EST
+ *  It has been AutoGen-ed  Monday May 18, 2009 at 05:02:28 AM EDT
  *  From the definitions    ntpdc-opts.def
  *  and the template file   options
  *
@@ -21,7 +21,7 @@
  *
  * This source file is copyrighted and licensed under the following terms:
  *
- * ntpdc copyright 1970-2008 David L. Mills and/or others - all rights reserved
+ * ntpdc copyright 1970-2009 David L. Mills and/or others - all rights reserved
  *
  * see html/copyright.html
  */
@@ -72,8 +72,8 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    15
-#define NTPDC_VERSION       "4.2.4p6"
-#define NTPDC_FULL_VERSION  "ntpdc - vendor-specific NTP query program - Ver. 4.2.4p6"
+#define NTPDC_VERSION       "4.2.4p7"
+#define NTPDC_FULL_VERSION  "ntpdc - vendor-specific NTP query program - Ver. 4.2.4p7"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
