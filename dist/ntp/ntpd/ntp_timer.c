@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.1.1.5 2007/01/06 16:06:40 kardel Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.1.1.6 2009/06/13 09:18:15 kardel Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -345,12 +345,10 @@ timer(void)
 	 * interface update timer
 	 */
 	if (interface_interval && interface_timer <= current_time) {
+
 		timer_interfacetimeout(current_time + interface_interval);
-#ifdef DEBUG
-	  if (debug)
-	    printf("timer: interface update\n");
-#endif
-	  interface_update(NULL, NULL);
+		DPRINTF(1, ("timer: interface update\n"));
+		interface_update(NULL, NULL);
 	}
 	
 	/*

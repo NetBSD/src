@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.1.1.3 2006/06/11 15:00:57 kardel Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.1.1.4 2009/06/13 09:18:18 kardel Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -7,11 +7,6 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-#if defined(SYS_WINNT)
-#undef close
-#define close closesocket
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_NMEA)
@@ -28,6 +23,12 @@
 #ifdef HAVE_PPSAPI
 # include "ppsapi_timepps.h"
 #endif /* HAVE_PPSAPI */
+
+#ifdef SYS_WINNT
+extern int async_write(int, const void *, unsigned int);
+#undef write
+#define write(fd, data, octets)	async_write(fd, data, octets)
+#endif
 
 /*
  * This driver supports the NMEA GPS Receiver with

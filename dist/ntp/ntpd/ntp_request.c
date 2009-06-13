@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.1.1.6 2008/08/23 07:38:44 kardel Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.1.1.7 2009/06/13 09:18:15 kardel Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -498,10 +498,10 @@ process_private(
 	 */
 	temp_size = INFO_ITEMSIZE(inpkt->mbz_itemsize);
 	if ((temp_size != proc->sizeofitem &&
-	    temp_size != proc->v6_sizeofitem) &&
+	     temp_size != proc->v6_sizeofitem) &&
 	    !(inpkt->implementation == IMPL_XNTPD &&
-	    inpkt->request == REQ_CONFIG &&
-	    temp_size == sizeof(struct old_conf_peer))) {
+	      inpkt->request == REQ_CONFIG &&
+	      temp_size == sizeof(struct old_conf_peer))) {
 #ifdef DEBUG
 		if (debug > 2)
 			printf("process_private: wrong item size, received %d, should be %d or %d\n",
@@ -1321,6 +1321,7 @@ do_conf(
 	struct req_pkt *inpkt
 	)
 {
+	static u_long soonest_ifrescan_time = 0;
 	int items;
 	u_int fl;
 	struct conf_peer *cp; 
@@ -1414,6 +1415,23 @@ do_conf(
 			req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 			return;
 		}
+
+		/*
+		 * ntp_intres.c uses REQ_CONFIG/doconf() to add each
+		 * server after its name is resolved.  If we have been
+		 * disconnected from the network, it may notice the
+		 * network has returned and add the first server while
+		 * the relevant interface is still disabled, awaiting
+		 * the next interface rescan.  To get things moving
+		 * more quickly, trigger an interface scan now, except
+		 * if we have done so in the last half minute.
+		 */
+		if (soonest_ifrescan_time < current_time) {
+			soonest_ifrescan_time = current_time + 30;
+			timer_interfacetimeout(current_time);
+			DPRINTF(1, ("do_conf triggering interface rescan\n"));
+		}
+
 		cp = (struct conf_peer *)
 		    ((char *)cp + INFO_ITEMSIZE(inpkt->mbz_itemsize));
 	}

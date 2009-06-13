@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.1.1.5 2007/01/06 16:07:24 kardel Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.1.1.6 2009/06/13 09:18:25 kardel Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -3187,9 +3187,9 @@ cookedprint(
 				if (!decodeuint(value, &uval))
 				    output_raw = '?';
 				else {
-					char b[10];
+					char b[12];
 
-					(void) sprintf(b, "%03lo", uval);
+					(void) snprintf(b, sizeof b, "%03lo", uval);
 					output(fp, name, b);
 				}
 				break;

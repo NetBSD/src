@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.1.1.3 2006/06/11 15:01:12 kardel Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.1.1.4 2009/06/13 09:18:20 kardel Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -58,12 +58,13 @@
 #include "config.h"
 #endif
 
-#if defined(SYS_WINNT)
-#undef close
-#define close closesocket
-#endif
-
 #if defined(REFCLOCK) && (defined(PALISADE) || defined(CLOCK_PALISADE))
+
+#ifdef SYS_WINNT
+extern int async_write(int, const void *, unsigned int);
+#undef write
+#define write(fd, data, octets)	async_write(fd, data, octets)
+#endif
 
 #include "refclock_palisade.h"
 /* Table to get from month to day of the year */
