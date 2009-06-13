@@ -326,7 +326,7 @@
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 /* #undef HAVE_DOPRNT */
 
-/* Can we drop root privileges? */
+/* [Can], [we], [drop], [root], [privileges?] */
 #define HAVE_DROPROOT 
 
 /* Define to 1 if you have the <errno.h> header file. */
@@ -342,7 +342,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `finite' function. */
-/* #undef HAVE_FINITE */
+#define HAVE_FINITE 1
 
 /* Define to 1 if you have the `getbootfile' function. */
 /* #undef HAVE_GETBOOTFILE */
@@ -376,6 +376,9 @@
 /* ISC: Use iflist_sysctl? */
 #define HAVE_IFLIST_SYSCTL 1
 
+/* inline keyword or macro available */
+#define HAVE_INLINE 1
+
 /* Define to 1 if the system has the type `int16_t'. */
 #define HAVE_INT16_T 1
 
@@ -390,6 +393,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
+
+/* Do we have IPTOS support? */
+#define HAVE_IPTOS_SUPPORT 1
 
 /* Define to 1 if you have the `isfinite' function. */
 #define HAVE_ISFINITE 1
@@ -424,17 +430,8 @@
 /* Define to 1 if you have the `ld' library (-lld). */
 /* #undef HAVE_LIBLD */
 
-/* Define to 1 if you have the `md' library (-lmd). */
-/* #undef HAVE_LIBMD */
-
-/* Define to 1 if you have the `md5' library (-lmd5). */
-/* #undef HAVE_LIBMD5 */
-
 /* Define to 1 if you have the `mld' library (-lmld). */
 /* #undef HAVE_LIBMLD */
-
-/* Define to 1 if you have the `nsl' library (-lnsl). */
-/* #undef HAVE_LIBNSL */
 
 /* Define to 1 if you have the `posix4' library (-lposix4). */
 /* #undef HAVE_LIBPOSIX4 */
@@ -445,19 +442,13 @@
 /* Define to 1 if you have the `rt' library (-lrt). */
 #define HAVE_LIBRT 1
 
-/* Define to 1 if you have the `socket' library (-lsocket). */
-/* #undef HAVE_LIBSOCKET */
-
-/* Define to 1 if you have the `syslog' library (-lsyslog). */
-/* #undef HAVE_LIBSYSLOG */
-
-/* Define to 1 if you have the `xnet' library (-lxnet). */
-/* #undef HAVE_LIBXNET */
+/* Define to 1 if you have the <libscf.h> header file. */
+/* #undef HAVE_LIBSCF_H */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
 
-/* Do we have Linux capabilities? */
+/* [Do], [we], [have], [Linux], [capabilities?] */
 /* #undef HAVE_LINUX_CAPABILITIES */
 
 /* Define to 1 if you have the <machine/inline.h> header file. */
@@ -546,6 +537,9 @@
 
 /* Define to 1 if you have the `ntp_gettime' function. */
 #define HAVE_NTP_GETTIME 1
+
+/* Do we want support for Samba's signing daemon? */
+/* #undef HAVE_NTP_SIGND */
 
 /* Define this if pathfind(3) works */
 /* #undef HAVE_PATHFIND */
@@ -649,6 +643,9 @@
 /* Define to 1 if you have the `snprintf' function. */
 #define HAVE_SNPRINTF 1
 
+/* [Are], [Solaris], [privileges], [available?] */
+/* #undef HAVE_SOLARIS_PRIVS */
+
 /* Does struct sockaddr_storage have ss_family? */
 #define HAVE_SS_FAMILY_IN_SS 1
 
@@ -702,9 +699,6 @@
 
 /* Do we have struct snd_size? */
 /* #undef HAVE_STRUCT_SND_SIZE */
-
-/* Define to 1 if `sin6_scope_id' is member of `struct sockaddr_in6'. */
-#define HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID 1
 
 /* Does a system header define struct sockaddr_storage? */
 #define HAVE_STRUCT_SOCKADDR_STORAGE 1
@@ -981,6 +975,9 @@
 /* Does struct sockaddr_storage have __ss_len? */
 /* #undef HAVE___SS_LEN_IN_SS */
 
+/* [Retry], [queries], [on], [_any_], [DNS], [error?] */
+/* #undef IGNORE_DNS_ERRORS */
+
 /* Should we use the IRIG sawtooth filter? */
 /* #undef IRIG_SUCKS */
 
@@ -1013,6 +1010,9 @@
 
 /* ISC: Need in6addr_any? */
 /* #undef ISC_PLATFORM_NEEDIN6ADDRANY */
+
+/* Do we need netinet6/in6.h? */
+/* #undef ISC_PLATFORM_NEEDNETINET6IN6H */
 
 /* ISC: provide inet_ntop() */
 /* #undef ISC_PLATFORM_NEEDNTOP */
@@ -1127,13 +1127,13 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.4p5"
+#define PACKAGE_STRING "ntp 4.2.4p7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.4p5"
+#define PACKAGE_VERSION "4.2.4p7"
 
 /* Do we have the ppsclock streams module? */
 /* #undef PPS */
@@ -1190,7 +1190,7 @@
 #define SIZEOF_SIGNED_CHAR 1
 
 /* The size of a `time_t', as computed by sizeof. */
-#define SIZEOF_TIME_T 4
+#define SIZEOF_TIME_T 8
 
 /* Does SIOCGIFCONF return size in the buffer? */
 /* #undef SIZE_RETURNED_IN_BUFFER */
@@ -1259,7 +1259,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.4p5"
+#define VERSION "4.2.4p7"
 
 /* ISC: Want IPv6? */
 /* #define WANT_IPV6  */

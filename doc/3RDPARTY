@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.701 2009/06/08 00:15:37 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.702 2009/06/13 12:02:07 kardel Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -661,11 +661,11 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
-Version:	4.2.4p6
+Version:	4.2.4p7
 Current Vers:	4.2.4p7
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
-Home Page:	http://www.ntp.org/, http://ntp.isc.org/
+Home Page:	http://www.ntp.org/, http://support.ntp.org/
 Mailing List:
 Responsible:	simonb, jonathan, kardel
 License:	BSD-like

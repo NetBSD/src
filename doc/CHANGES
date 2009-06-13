@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1240 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1241 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -298,3 +298,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	modload(8): Add various flags to assist in the creation and
 		maintenance of <module>.prop and/or to set MODCTL_NO_PROP.
 		[jnemeth 20090609]
+	ntp:	Import ntp-4-2-4p7. [kardel 20090613]

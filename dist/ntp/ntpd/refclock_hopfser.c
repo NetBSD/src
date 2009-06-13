@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hopfser.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_hopfser.c,v 1.4 2009/06/13 12:02:08 kardel Exp $	*/
 
 /*
  *
@@ -14,11 +14,6 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
-#endif
-
-#if defined(SYS_WINNT)
-#undef close
-#define close closesocket
 #endif
 
 #if defined(REFCLOCK) && (defined(CLOCK_HOPF_SERIAL))
@@ -51,6 +46,12 @@
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
+#endif
+
+#ifdef SYS_WINNT
+extern int async_write(int, const void *, unsigned int);
+#undef write
+#define write(fd, data, octets)	async_write(fd, data, octets)
 #endif
 
 /*

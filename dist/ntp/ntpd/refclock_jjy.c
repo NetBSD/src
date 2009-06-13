@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.4 2007/01/06 19:45:23 kardel Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.5 2009/06/13 12:02:08 kardel Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -76,6 +76,9 @@
 /*    [Fix]    C-DEX JST2000                                          */
 /*             Thanks to Hideo Kuramatsu for the patch                */
 /*                                                                    */
+/*  2009/04/05                                                        */
+/*    [Add]    Support the CITIZEN T.I.C JJY-200 receiver             */
+/*                                                                    */
 /**********************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -133,12 +136,26 @@
 /*                 <SUB>                    Second signal             */
 /*                                                                    */
 /**********************************************************************/
+/*                                                                    */
+/*  The CITIZEN T.I.C CO., LTD. JJY receiver JJY200                   */
+/*                                                                    */
+/*  Command        Response                 Remarks                   */
+/*  ------------   ----------------------   ---------------------     */
+/*                 'XX YY/MM/DD W HH:MM:SS<CR>                        */
+/*                                          XX: OK|NG|ER              */
+/*                                          W:  0(Monday)-6(Sunday)   */
+/*                                                                    */
+/**********************************************************************/
 
 /*
  * Interface definitions
  */
 #define	DEVICE  	"/dev/jjy%d"    /* device name and unit */
 #define	SPEED232	B9600           /* uart speed (9600 baud) */
+#define	SPEED232_TRISTATE_JJY01         B9600   /* UART speed (9600 baud) */
+#define	SPEED232_CDEX_JST2000           B9600   /* UART speed (9600 baud) */
+#define	SPEED232_ECHOKEISOKUKI_LT2000   B9600   /* UART speed (9600 baud) */
+#define	SPEED232_CITIZENTIC_JJY200      B4800   /* UART speed (4800 baud) */
 #define	REFID   	"JJY"           /* reference ID */
 #define	DESCRIPTION	"JJY Receiver"
 #define	PRECISION	(-3)           /* precision assumed (about 100 ms) */
@@ -151,6 +168,7 @@ struct jjyunit {
     short   operationmode ;     /* Echo Keisokuki LT-2000 : 1 or 2 */
 	short	version ;
 	short	linediscipline ;	/* LDISC_CLK or LDISC_RAW */
+    char    bPollFlag ;         /* Set by jjy_pool and Reset by jjy_receive */
 	int 	linecount ;
 	int 	lineerror ;
 	int 	year, month, day, hour, minute, second, msecond ;
@@ -166,6 +184,7 @@ struct jjyunit {
 #define	UNITTYPE_TRISTATE_JJY01	1
 #define	UNITTYPE_CDEX_JST2000  	2
 #define	UNITTYPE_ECHOKEISOKUKI_LT2000  	3
+#define	UNITTYPE_CITIZENTIC_JJY200  	4
 
 /*
  * Function prototypes
@@ -176,10 +195,12 @@ static	void	jjy_poll                    P((int, struct peer *));
 static	void	jjy_poll_tristate_jjy01     P((int, struct peer *));
 static	void	jjy_poll_cdex_jst2000       P((int, struct peer *));
 static	void	jjy_poll_echokeisokuki_lt2000    P((int, struct peer *));
+static  void    jjy_poll_citizentic_jjy200          P((int, struct peer *));
 static	void	jjy_receive                 P((struct recvbuf *));
 static	int 	jjy_receive_tristate_jjy01  P((struct recvbuf *));
 static	int 	jjy_receive_cdex_jst2000    P((struct recvbuf *));
 static	int 	jjy_receive_echokeisokuki_lt2000 P((struct recvbuf *));
+static  int     jjy_receive_citizentic_jjy200       P((struct recvbuf *));
 
 /*
  * Transfer vector
@@ -219,6 +240,7 @@ jjy_start ( int unit, struct peer *peer )
 	int 	fd ;
 	char	*pDeviceName ;
 	short	iDiscipline ;
+	int 	iSpeed232 ;
 
 #ifdef DEBUG
 	if ( debug ) {
@@ -240,9 +262,22 @@ jjy_start ( int unit, struct peer *peer )
 	 */
 	switch ( peer->ttl ) {
 	case 0 :
-	case 1 : iDiscipline = LDISC_CLK ; break ;
-	case 2 : iDiscipline = LDISC_RAW ; break ;
-	case 3 : iDiscipline = LDISC_CLK ; break ;
+    case 1 :
+        iDiscipline = LDISC_CLK ;
+        iSpeed232   = SPEED232_TRISTATE_JJY01 ;
+        break ;
+    case 2 :
+        iDiscipline = LDISC_RAW ;
+        iSpeed232   = SPEED232_CDEX_JST2000   ;
+        break ;
+    case 3 :
+        iDiscipline = LDISC_CLK ;
+        iSpeed232   = SPEED232_ECHOKEISOKUKI_LT2000 ;
+        break ;
+    case 4 :
+        iDiscipline = LDISC_CLK ;
+        iSpeed232   = SPEED232_CITIZENTIC_JJY200 ;
+        break ;
 	default :
 		msyslog ( LOG_ERR, "JJY receiver [ %s mode %d ] : Unsupported mode",
 		          ntoa(&peer->srcadr), peer->ttl ) ;
@@ -250,7 +285,7 @@ jjy_start ( int unit, struct peer *peer )
 		return RC_START_ERROR ;
 	}
 
-	if ( ! ( fd = refclock_open ( pDeviceName, SPEED232, iDiscipline ) ) ) {
+	if ( ! ( fd = refclock_open ( pDeviceName, iSpeed232, iDiscipline ) ) ) {
 		free ( (void*) pDeviceName ) ;
 		return RC_START_ERROR ;
 	}
@@ -301,6 +336,11 @@ jjy_start ( int unit, struct peer *peer )
 			break ;
 		}
 		break ;
+    case 4 :
+        up->unittype = UNITTYPE_CITIZENTIC_JJY200 ;
+        up->lineexpect = 1 ;
+        up->charexpect[0] = 23 ; /* 'XX YY/MM/DD W HH:MM:SS<CR> */
+        break ;
 	default :
 		msyslog ( LOG_ERR, "JJY receiver [ %s mode %d ] : Unsupported mode",
 		          ntoa(&peer->srcadr), peer->ttl ) ;
@@ -436,6 +476,10 @@ jjy_receive ( struct recvbuf *rbufp )
 		rc = jjy_receive_echokeisokuki_lt2000 ( rbufp ) ;
 		break ;
 
+    case UNITTYPE_CITIZENTIC_JJY200 :
+        rc = jjy_receive_citizentic_jjy200 ( rbufp ) ;
+        break ;
+
 	default :
 		rc = 0 ;
 		break ;
@@ -454,6 +498,8 @@ jjy_receive ( struct recvbuf *rbufp )
 	}
 
 	if ( rc == 0 ) return ;
+
+    up->bPollFlag = 0 ;
 
 	if ( up->lineerror != 0 ) {
 		refclock_report ( peer, CEVNT_BADREPLY ) ;
@@ -868,6 +914,93 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 }
 
 /**************************************************************************************************/
+
+static int
+jjy_receive_citizentic_jjy200 ( struct recvbuf *rbufp )
+{
+
+    static  char    *sFunctionName = "jjy_receive_citizentic_jjy200" ;
+
+    struct jjyunit      *up ;
+    struct refclockproc *pp ;
+    struct peer         *peer;
+
+    char    *pBuf ;
+    int     iLen ;
+    int     rc ;
+    char    cApostrophe, sStatus[3] ;
+    int     iWeekday ;
+
+    /*
+     * Initialize pointers and read the timecode and timestamp
+     */
+    peer = (struct peer *) rbufp->recv_srcclock ;
+    pp = peer->procptr ;
+    up = (struct jjyunit *) pp->unitptr ;
+
+    if ( up->linediscipline == LDISC_RAW ) {
+        pBuf = up->rawbuf ;
+        iLen = up->charcount ;
+    } else {
+        pBuf = pp->a_lastcode ;
+        iLen = pp->lencode ;
+    }
+
+    /*
+     * JJY-200 sends a timestamp every second.
+     * So, a timestamp is ignored unless it is right after polled.
+     */
+    if ( ! up->bPollFlag ) return 0 ;
+
+    switch ( up->linecount ) {
+
+    case 1 : /* 'XX YY/MM/DD W HH:MM:SS<CR> */
+
+        if ( iLen != 23 ) {
+#ifdef DEBUG
+            if ( debug >= 2 ) {
+                printf ( "%s (refclock_jjy.c) : Reply length error ( iLen=%d )\n", sFunctionName, iLen ) ;
+            }
+#endif
+            up->lineerror = 1 ;
+            break ;
+        }
+
+        rc = sscanf ( pBuf, "%c%2s %2d/%2d/%2d %1d %2d:%2d:%2d",
+                      &cApostrophe, sStatus, 
+                      &up->year, &up->month, &up->day, &iWeekday, &up->hour, &up->minute, &up->second ) ;
+        sStatus[2] = 0 ;
+        if ( rc != 9 || cApostrophe != '\'' || strcmp( sStatus, "OK" ) != 0
+          || up->month < 1 || up->month > 12 || up->day < 1 || up->day > 31
+          || iWeekday > 6
+          || up->hour > 23 || up->minute > 59 || up->second > 60 ) {
+#ifdef DEBUG
+            if ( debug >= 2 ) {
+                printf ( "%s (refclock_jjy.c) : Time error (rc=%d) [ %c %2s %02d %02d %02d %d %02d %02d %02d ]\n", sFunctionName,
+                         rc, cApostrophe, sStatus, up->year, up->month, up->day, iWeekday, up->hour, up->minute, up->second ) ;
+            }
+#endif
+            up->lineerror = 1 ;
+            break ;
+        }
+
+        up->year += 2000 ;
+        up->msecond = 0 ;
+
+        break ;
+
+    default : /* Unexpected reply */
+
+        up->lineerror = 1 ;
+        break ;
+
+    }
+
+    return 1 ;
+
+}
+
+/**************************************************************************************************/
 /*  jjy_poll - called by the transmit procedure                                                   */
 /**************************************************************************************************/
 static void
@@ -895,6 +1028,7 @@ jjy_poll ( int unit, struct peer *peer )
 
 	pp->polls ++ ;
 
+    up->bPollFlag = 1 ;
 	up->linecount = 0 ;
 	up->lineerror = 0 ;
 	up->charcount = 0 ;
@@ -912,6 +1046,10 @@ jjy_poll ( int unit, struct peer *peer )
 	case UNITTYPE_ECHOKEISOKUKI_LT2000 :
 		jjy_poll_echokeisokuki_lt2000 ( unit, peer ) ;
 		break ;
+
+    case UNITTYPE_CITIZENTIC_JJY200 :
+        jjy_poll_citizentic_jjy200 ( unit, peer ) ;
+        break ;
 
 	default :
 		break ;
@@ -1005,6 +1143,16 @@ jjy_poll_echokeisokuki_lt2000 ( int unit, struct peer *peer )
 	if ( write ( pp->io.fd, sCmd, 1 ) != 1  ) {
 		refclock_report ( peer, CEVNT_FAULT ) ;
 	}
+
+}
+
+/**************************************************************************************************/
+
+static void
+jjy_poll_citizentic_jjy200 ( int unit, struct peer *peer )
+{
+
+    /* Do nothing ( up->bPollFlag is set by the jjy_poll ) */
 
 }
 

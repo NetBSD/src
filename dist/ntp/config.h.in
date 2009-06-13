@@ -325,7 +325,7 @@
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
-/* Can we drop root privileges? */
+/* [Can], [we], [drop], [root], [privileges?] */
 #undef HAVE_DROPROOT
 
 /* Define to 1 if you have the <errno.h> header file. */
@@ -370,8 +370,11 @@
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #undef HAVE_IEEEFP_H
 
-/* ISC: Use iflist_sysctl? */
+/* have iflist_sysctl? */
 #undef HAVE_IFLIST_SYSCTL
+
+/* inline keyword or macro available */
+#undef HAVE_INLINE
 
 /* Define to 1 if the system has the type `int16_t'. */
 #undef HAVE_INT16_T
@@ -387,6 +390,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Do we have IPTOS support? */
+#undef HAVE_IPTOS_SUPPORT
 
 /* Define to 1 if you have the `isfinite' function. */
 #undef HAVE_ISFINITE
@@ -421,17 +427,8 @@
 /* Define to 1 if you have the `ld' library (-lld). */
 #undef HAVE_LIBLD
 
-/* Define to 1 if you have the `md' library (-lmd). */
-#undef HAVE_LIBMD
-
-/* Define to 1 if you have the `md5' library (-lmd5). */
-#undef HAVE_LIBMD5
-
 /* Define to 1 if you have the `mld' library (-lmld). */
 #undef HAVE_LIBMLD
-
-/* Define to 1 if you have the `nsl' library (-lnsl). */
-#undef HAVE_LIBNSL
 
 /* Define to 1 if you have the `posix4' library (-lposix4). */
 #undef HAVE_LIBPOSIX4
@@ -442,19 +439,13 @@
 /* Define to 1 if you have the `rt' library (-lrt). */
 #undef HAVE_LIBRT
 
-/* Define to 1 if you have the `socket' library (-lsocket). */
-#undef HAVE_LIBSOCKET
-
-/* Define to 1 if you have the `syslog' library (-lsyslog). */
-#undef HAVE_LIBSYSLOG
-
-/* Define to 1 if you have the `xnet' library (-lxnet). */
-#undef HAVE_LIBXNET
+/* Define to 1 if you have the <libscf.h> header file. */
+#undef HAVE_LIBSCF_H
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
-/* Do we have Linux capabilities? */
+/* [Do], [we], [have], [Linux], [capabilities?] */
 #undef HAVE_LINUX_CAPABILITIES
 
 /* Define to 1 if you have the <machine/inline.h> header file. */
@@ -543,6 +534,9 @@
 
 /* Define to 1 if you have the `ntp_gettime' function. */
 #undef HAVE_NTP_GETTIME
+
+/* Do we want support for Samba's signing daemon? */
+#undef HAVE_NTP_SIGND
 
 /* Define this if pathfind(3) works */
 #undef HAVE_PATHFIND
@@ -646,6 +640,9 @@
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
+/* [Are], [Solaris], [privileges], [available?] */
+#undef HAVE_SOLARIS_PRIVS
+
 /* Does struct sockaddr_storage have ss_family? */
 #undef HAVE_SS_FAMILY_IN_SS
 
@@ -699,9 +696,6 @@
 
 /* Do we have struct snd_size? */
 #undef HAVE_STRUCT_SND_SIZE
-
-/* Define to 1 if `sin6_scope_id' is member of `struct sockaddr_in6'. */
-#undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
 
 /* Does a system header define struct sockaddr_storage? */
 #undef HAVE_STRUCT_SOCKADDR_STORAGE
@@ -978,6 +972,9 @@
 /* Does struct sockaddr_storage have __ss_len? */
 #undef HAVE___SS_LEN_IN_SS
 
+/* [Retry], [queries], [on], [_any_], [DNS], [error?] */
+#undef IGNORE_DNS_ERRORS
+
 /* Should we use the IRIG sawtooth filter? */
 #undef IRIG_SUCKS
 
@@ -987,29 +984,32 @@
 /* ISC: do we have if_nametoindex()? */
 #undef ISC_PLATFORM_HAVEIFNAMETOINDEX
 
-/* ISC: have struct if_laddrconf? */
+/* have struct if_laddrconf? */
 #undef ISC_PLATFORM_HAVEIF_LADDRCONF
 
-/* ISC: have struct if_laddrreq? */
+/* have struct if_laddrreq? */
 #undef ISC_PLATFORM_HAVEIF_LADDRREQ
 
-/* ISC: Have struct in6_pktinfo? */
+/* have struct in6_pktinfo? */
 #undef ISC_PLATFORM_HAVEIN6PKTINFO
 
-/* ISC: Have IPv6? */
+/* have IPv6? */
 #undef ISC_PLATFORM_HAVEIPV6
 
 /* ISC: struct sockaddr as sa_len? */
 #undef ISC_PLATFORM_HAVESALEN
 
-/* ISC: Have sin6_scope_id? */
+/* have sin6_scope_id? */
 #undef ISC_PLATFORM_HAVESCOPEID
 
 /* ISC: provide inet_aton() */
 #undef ISC_PLATFORM_NEEDATON
 
-/* ISC: Need in6addr_any? */
+/* missing in6addr_any? */
 #undef ISC_PLATFORM_NEEDIN6ADDRANY
+
+/* Do we need netinet6/in6.h? */
+#undef ISC_PLATFORM_NEEDNETINET6IN6H
 
 /* ISC: provide inet_ntop() */
 #undef ISC_PLATFORM_NEEDNTOP
@@ -1088,6 +1088,9 @@
 
 /* Default location of crypto key info */
 #undef NTP_KEYSDIR
+
+/* Path to sign daemon rendezvous socket */
+#undef NTP_SIGND_PATH
 
 /* Do we have ntp_{adj,get}time in libc? */
 #undef NTP_SYSCALLS_LIBC
@@ -1258,8 +1261,11 @@ typedef unsigned int	uintptr_t;
 /* Version number of package */
 #undef VERSION
 
-/* ISC: Want IPv6? */
+/* configure --enable-ipv6 */
 #undef WANT_IPV6
+
+/* Do we want the windows symmetric client hack? */
+#undef WINTIME
 
 /* Define this if a working libregex can be found */
 #undef WITH_LIBREGEX
