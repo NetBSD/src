@@ -1,9 +1,9 @@
-/*	$NetBSD: sntp-opts.c,v 1.1.1.4 2009/01/08 19:18:50 kardel Exp $	*/
+/*	$NetBSD: sntp-opts.c,v 1.1.1.5 2009/06/13 09:18:34 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.c)
  *  
- *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:19:26 AM EST
+ *  It has been AutoGen-ed  Monday May 18, 2009 at 05:03:26 AM EDT
  *  From the definitions    sntp-opts.def
  *  and the template file   options
  *
@@ -515,7 +515,7 @@ static tOptDesc optDesc[ OPTION_CT ] = {
  */
 tSCC   zPROGNAME[]   = "SNTP";
 tSCC   zUsageTitle[] =
-"sntp - standard SNTP program - Ver. 4.2.4p6\n\
+"sntp - standard SNTP program - Ver. 4.2.4p7\n\
 USAGE:  %s [ -<flag> | --<name> ]...\n";
 tSCC   zRcName[]     = ".ntprc";
 tSCC*  apzHomeList[] = {
@@ -523,7 +523,7 @@ tSCC*  apzHomeList[] = {
        ".",
        NULL };
 
-tSCC   zBugsAddr[]    = "http://bugs.ntp.isc.org, bugs@ntp.org";
+tSCC   zBugsAddr[]    = "http://bugs.ntp.org, bugs@ntp.org";
 #define zExplain NULL
 tSCC    zDetail[]     = "\n\
 .I sntp\n\

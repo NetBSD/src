@@ -1,3 +1,41 @@
+NTP 4.2.4p7 (Harlan Stenn <stenn@ntp.org>, 2009/05/04)
+
+Focus: Security and Bug Fixes
+
+Severity: HIGH
+
+This release fixes the following high-severity vulnerability:
+
+* [Sec 1151] Remote exploit if autokey is enabled.  CVE-2009-1252
+
+  See http://support.ntp.org/security for more information.
+
+  If autokey is enabled (if ntp.conf contains a "crypto pw whatever"
+  line) then a carefully crafted packet sent to the machine will cause
+  a buffer overflow and possible execution of injected code, running
+  with the privileges of the ntpd process (often root).
+
+  Credit for finding this vulnerability goes to Chris Ries of CMU.
+
+This release fixes the following low-severity vulnerabilities:
+
+* [Sec 1144] limited (two byte) buffer overflow in ntpq.  CVE-2009-0159
+  Credit for finding this vulnerability goes to Geoff Keating of Apple.
+  
+* [Sec 1149] use SO_EXCLUSIVEADDRUSE on Windows
+  Credit for finding this issue goes to Dave Hart.
+
+This release fixes a number of bugs and adds some improvements:
+
+* Improved logging
+* Fix many compiler warnings
+* Many fixes and improvements for Windows
+* Adds support for AIX 6.1
+* Resolves some issues under MacOS X and Solaris
+
+THIS IS A STRONGLY RECOMMENDED UPGRADE.
+
+---
 NTP 4.2.4p6 (Harlan Stenn <stenn@ntp.org>, 2009/01/07)
 
 Focus: Security Fix
