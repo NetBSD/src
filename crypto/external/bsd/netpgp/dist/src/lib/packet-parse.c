@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.21 2009/06/11 01:12:42 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.22 2009/06/13 05:25:08 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2637,7 +2637,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 			fprintf(stderr, "\n");
 		}
 		decrypt.set_iv(&decrypt, pkt.u.seckey.iv);
-		decrypt.set_key(&decrypt, key);
+		decrypt.set_crypt_key(&decrypt, key);
 
 		/* now read encrypted data */
 
@@ -2911,7 +2911,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	__ops_crypt_any(&stream->decrypt, pkt.u.pk_sesskey.symm_alg);
 	iv = calloc(1, stream->decrypt.blocksize);
 	stream->decrypt.set_iv(&stream->decrypt, iv);
-	stream->decrypt.set_key(&stream->decrypt, pkt.u.pk_sesskey.key);
+	stream->decrypt.set_crypt_key(&stream->decrypt, pkt.u.pk_sesskey.key);
 	__ops_encrypt_init(&stream->decrypt);
 	(void) free(iv);
 	return 1;
