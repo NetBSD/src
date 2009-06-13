@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpq-opts.h,v 1.1.1.4 2009/01/08 19:18:40 kardel Exp $	*/
+/*	$NetBSD: ntpq-opts.h,v 1.1.1.5 2009/06/13 09:18:25 kardel Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpq-opts.h)
  *  
- *  It has been AutoGen-ed  Thursday January  8, 2009 at 06:18:56 AM EST
+ *  It has been AutoGen-ed  Monday May 18, 2009 at 05:02:59 AM EDT
  *  From the definitions    ntpq-opts.def
  *  and the template file   options
  *
@@ -21,7 +21,7 @@
  *
  * This source file is copyrighted and licensed under the following terms:
  *
- * ntpq copyright 1970-2008 David L. Mills and/or others - all rights reserved
+ * ntpq copyright 1970-2009 David L. Mills and/or others - all rights reserved
  *
  * see html/copyright.html
  */
@@ -70,8 +70,8 @@ typedef enum {
 } teOptIndex;
 
 #define OPTION_CT    13
-#define NTPQ_VERSION       "4.2.4p6"
-#define NTPQ_FULL_VERSION  "ntpq - standard NTP query program - Ver. 4.2.4p6"
+#define NTPQ_VERSION       "4.2.4p7"
+#define NTPQ_FULL_VERSION  "ntpq - standard NTP query program - Ver. 4.2.4p7"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
