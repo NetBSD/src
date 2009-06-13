@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.1 2009/05/09 15:04:25 pgoyette Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.2 2009/06/13 19:02:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #define	SDTEMP_HYSTERESIS_60		0x0600
 
 /*
- * Temperature is a 12-bit value in the range of -256 <= x < +256 degrees.
+ * Temperature is a 13-bit value in the range of -256 <= x < +256 degrees.
  * Maximum resolution is 0.0625C (1/16th degree, 4 bits), but some devices
  * may have only 0.2500C or 0.1250C (1 or 2 bits), and some devices may not
  * be able to represent negative values (not that we'd expect them, anyway).
@@ -82,7 +82,7 @@
 #define	SDTEMP_TEMP_SIGN_EXT		0xF000
 
 /*
- * Status bits set in MCP98XX_REG_AMBIENT_TEMP only
+ * Status bits set in SDTEMP_REG_AMBIENT_TEMP only
  */
 #define	SDTEMP_ABOVE_CRIT		0x8000
 #define	SDTEMP_ABOVE_UPPER		0x4000
