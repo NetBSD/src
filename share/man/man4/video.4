@@ -1,4 +1,4 @@
-.\"	$NetBSD: video.4,v 1.5 2008/09/09 05:47:07 wiz Exp $
+.\"	$NetBSD: video.4,v 1.6 2009/06/13 10:07:55 njoly Exp $
 .\"
 .\" Copyright (c) 2008 Patrick Mahoney
 .\" All rights reserved.
@@ -87,7 +87,7 @@ to remove a filled buffer from the queue.
 At this point the video data from the dequeued buffer is valid.
 .Sh DEVICE CAPABILITIES
 .Bl -tag -width indent
-.It Dv VIDIOC_QUERYCAP (struct v4l2_capabilities)
+.It Dv VIDIOC_QUERYCAP (struct v4l2_capability)
 This command queries the capabilities of the device.
 The first three fields are informational NULL terminated strings
 filled by the driver:
