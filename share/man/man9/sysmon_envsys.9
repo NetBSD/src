@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.27 2009/06/14 19:43:12 pgoyette Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.28 2009/06/14 22:37:43 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,7 +107,7 @@ struct sysmon_envsys {
 	void (*sme_set_limits)(struct sysmon_envsys *, envsys_data_t *,
 			       sysmon_envsys_lim_t *);
 	void (*sme_get_limits)(struct sysmon_envsys *, envsys_data_t *,
-			       sysmon_envsys_lim_t *); 
+			       sysmon_envsys_lim_t *);
 };
 .Ed
 .Pp
