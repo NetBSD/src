@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.14 2009/06/11 22:40:42 joerg Exp $ */
+/* $NetBSD: sha2.c,v 1.15 2009/06/14 14:04:07 martin Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,14 +43,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.14 2009/06/11 22:40:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.15 2009/06/14 14:04:07 martin Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.14 2009/06/11 22:40:42 joerg Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.15 2009/06/14 14:04:07 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -162,7 +162,7 @@ be64toh(uint64_t x)
  * only.
  */
 static void SHA512_Last(SHA512_CTX *);
-void SHA224_Transform(SHA224_CTX *, const uint64_t*);
+void SHA224_Transform(SHA224_CTX *, const uint32_t*);
 void SHA256_Transform(SHA256_CTX *, const uint32_t*);
 void SHA384_Transform(SHA384_CTX *, const uint64_t*);
 void SHA512_Transform(SHA512_CTX *, const uint64_t*);
@@ -638,9 +638,9 @@ SHA224_Update(SHA224_CTX *context, const uint8_t *data, size_t len)
 }
 
 void
-SHA224_Transform(SHA224_CTX *context, const uint64_t *data)
+SHA224_Transform(SHA224_CTX *context, const uint32_t *data)
 {
-	SHA224_Transform((SHA256_CTX *)context, data);
+	SHA256_Transform((SHA256_CTX *)context, data);
 }
 
 int
