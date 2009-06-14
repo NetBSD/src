@@ -1616,7 +1616,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 			flush_all();	/* fflush() or fflush("") -> all */
 			u = 0;
 		} else if ((fp = openfile(FFLUSH, getsval(x))) == NULL)
-			u = EOF;
+			u = -1;
 		else
 			u = fflush(fp);
 		break;
@@ -1821,7 +1821,7 @@ Cell *closefile(Node **a, int n)
 				stat = pclose(files[i].fp);
 			else
 				stat = fclose(files[i].fp);
-			if (stat == EOF)
+			if (stat == -1)
 				WARNING( "i/o error occurred closing %s", files[i].fname );
 			if (i > 2)	/* don't do /dev/std... */
 				xfree(files[i].fname);
@@ -1844,11 +1844,15 @@ void closeall(void)
 		if (files[i].fp) {
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
-			if (files[i].mode == '|' || files[i].mode == LE)
+			if (i == 0)
+				stat = fpurge(files[i].fp);
+			else if (i < 2)
+				stat = fflush(files[i].fp);
+			else if (files[i].mode == '|' || files[i].mode == LE)
 				stat = pclose(files[i].fp);
 			else
 				stat = fclose(files[i].fp);
-			if (stat == EOF)
+			if (stat == -1)
 				WARNING( "i/o error occurred while closing %s", files[i].fname );
 		}
 	}
