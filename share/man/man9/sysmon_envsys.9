@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.28 2009/06/14 22:37:43 wiz Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.29 2009/06/14 23:09:55 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -138,7 +138,7 @@ used to check for critical events if any monitoring flag was set (OPTIONAL).
 .Pp
 If the driver wants to refresh sensors data via the
 .Nm
-framework, the following members must be specified:
+framework, the following members may be specified:
 .Pp
 .Bl -tag -width "sme_sensor_data_xxxxxxxxx"
 .It Fa sme_cookie
@@ -154,23 +154,34 @@ function callbacks.
 Pointer to a function that will be used to refresh sensor data in
 the device.
 This can be used to set the state and other properties of the
-sensor depending of the returned data by the driver.
+sensor depending on the data returned by the driver.
 .Em NOTE :
 .Em You don't have to refresh all sensors, only the sensor specified by the
 .Sy edata-\*[Gt]sensor
 .Em index .
+If this member is not specified, the device driver will be totally
+responsible for all updates of this sensor; the
+.Nm
+framework will not be able to update the sensor value.
 .It Fa sme_get_limits
 Pointer to a function that will be used to obtain from the driver the
 initial limits (or thresholds) used when monitoring a sensor's value.
 (See the
 .Sx SENSOR DETAILS
 section for more information.)
+If this member is not specified, the ENVSYS_FMONLIMITS flag will be
+ignored, and limit monitoring will not occur until appropriate limits
+are enabled from userland via
+.Xr envstat 8 .
 .It Fa sme_set_limits
 Pointer to a function that alerts the device driver whenever monitoring
 limits (or thresholds) are updated by the user.
 Setting this function allows the device driver to reprogram hardware
 limits (if provided by the device), and gives the driver direct control
 over setting the sensor's state based on hardware status.
+If this member is not specified, the
+.Nm
+framework performs all limit checks in software.
 .El
 .Pp
 Note that it's not necessary to refresh the sensors data before the
