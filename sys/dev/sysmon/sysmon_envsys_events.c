@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.67 2009/06/13 16:08:25 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.68 2009/06/14 19:43:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.67 2009/06/13 16:08:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.68 2009/06/14 19:43:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -331,7 +331,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	if (sme->sme_set_limits) {
 		see->see_lims.sel_flags = see->see_edata->upropset &
 					  PROP_LIMITS;
-		(*sme->sme_set_limits)(sme, &(see->see_lims));
+		(*sme->sme_set_limits)(sme, edata, &(see->see_lims));
 	}
 
 out:
@@ -483,6 +483,7 @@ do {									\
 	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS) {
 		if (sed_t->sed_sme->sme_get_limits)
 			(*sed_t->sed_sme->sme_get_limits)(sed_t->sed_sme,
+							  sed_t->sed_edata,
 							  &lims);
 		else
 			sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;

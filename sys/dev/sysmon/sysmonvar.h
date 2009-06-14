@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.28 2009/06/13 16:08:25 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.29 2009/06/14 19:43:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -89,8 +89,10 @@ struct sysmon_envsys {
 	 * Function callbacks to exchange limit/threshold values
 	 * with device
 	 */
-	void (*sme_set_limits)(struct sysmon_envsys *, sysmon_envsys_lim_t *);
-	void (*sme_get_limits)(struct sysmon_envsys *, sysmon_envsys_lim_t *);
+	void (*sme_set_limits)(struct sysmon_envsys *, envsys_data_t *,
+			       sysmon_envsys_lim_t *);
+	void (*sme_get_limits)(struct sysmon_envsys *, envsys_data_t *,
+			       sysmon_envsys_lim_t *);
 
 	struct workqueue *sme_wq;	/* the workqueue for the events */
 	struct callout sme_callout;	/* for the events */
