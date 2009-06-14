@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.122 2009/05/23 22:29:14 ad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.123 2009/06/14 13:18:02 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1939,7 +1939,7 @@ putter)
 
 zfs)
 	mkdev zfs c %zfs_chr% 0 600
-	mkdir -m 755 /dev/zpool
+	mkdir -m 755 zpool
 	;;
 
 midevend)
