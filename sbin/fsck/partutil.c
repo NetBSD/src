@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.7 2009/06/06 18:31:29 haad Exp $	*/
+/*	$NetBSD: partutil.c,v 1.8 2009/06/14 21:06:18 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.7 2009/06/06 18:31:29 haad Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.8 2009/06/14 21:06:18 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -168,12 +168,11 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	/* Get disk description dictionary */
 	if ((error = prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO,
 		    &disk_dict)) != 0) {
-		warn("Please implement DIOCGDISKINFO for %s disk driver\n", s);
-		
 		/*
 		 * Ask for disklabel if DIOCGDISKINFO failed. This is
 		 * compatibility call and can be removed when all devices
 		 * will support DIOCGDISKINFO.
+		 * cgd, ccd pseudo disk drives doesn't support DIOCGDDISKINFO
 		 */
 		if ((error = ioctl(fd, DIOCGDINFO, lp)) == -1) {
 			printf("DIOCGDINFO on %s failed\n", s);
