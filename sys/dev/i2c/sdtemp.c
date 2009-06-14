@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.5 2009/06/13 20:27:19 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.6 2009/06/14 19:44:46 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.5 2009/06/13 20:27:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.6 2009/06/14 19:44:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,9 @@ CFATTACH_DECL_NEW(sdtemp, sizeof(struct sdtemp_softc),
 	sdtemp_match, sdtemp_attach, NULL, NULL);
 
 static void	sdtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
-static void	sdtemp_get_limits(struct sysmon_envsys *,
+static void	sdtemp_get_limits(struct sysmon_envsys *, envsys_data_t *,
 				  sysmon_envsys_lim_t *);
-static void	sdtemp_set_limits(struct sysmon_envsys *,
+static void	sdtemp_set_limits(struct sysmon_envsys *, envsys_data_t *,
 				  sysmon_envsys_lim_t *);
 #ifdef NOT_YET
 static int	sdtemp_read_8(struct sdtemp_softc *, uint8_t, uint8_t *);
@@ -272,7 +272,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Retrieve and display hardware monitor limits */
-	sdtemp_get_limits(sc->sc_sme, &limits);
+	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &limits);
 	aprint_normal_dev(self, "");
 	i = 0;
 	if (limits.sel_flags & PROP_WARNMIN) {
@@ -304,7 +304,8 @@ bad2:
 
 /* Retrieve current limits from device, and encode in uKelvins */
 static void
-sdtemp_get_limits(struct sysmon_envsys *sme, sysmon_envsys_lim_t *limits)
+sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		  sysmon_envsys_lim_t *limits)
 {
 	struct sdtemp_softc *sc = sme->sme_cookie;
 	uint16_t lim;
@@ -328,7 +329,8 @@ sdtemp_get_limits(struct sysmon_envsys *sme, sysmon_envsys_lim_t *limits)
 
 /* Send current limit values to the device */
 static void
-sdtemp_set_limits(struct sysmon_envsys *sme, sysmon_envsys_lim_t *limits)
+sdtemp_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		  sysmon_envsys_lim_t *limits)
 {
 	uint16_t val;
 	struct sdtemp_softc *sc = sme->sme_cookie;
