@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.12 2009/01/26 04:01:14 lukem Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.13 2009/06/14 23:23:54 tonnerre Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.12 2009/01/26 04:01:14 lukem Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.13 2009/06/14 23:23:54 tonnerre Exp $");
 #endif
 
 
@@ -508,6 +508,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 				/* Root doesn't need the old password. */
 				return (pam_set_item(pamh, PAM_OLDAUTHTOK, ""));
 			}
+			/*
+			 * Apparently we're not root, so let's forbid editing
+			 * root.
+			 * XXX Check for some flag to indicate if this
+			 * XXX is the desired behavior.
+			 */
+			if (pwd->pw_uid == 0)
+				return (PAM_PERM_DENIED);
 		}
 
 		if (pwd->pw_passwd[0] == '\0') {
