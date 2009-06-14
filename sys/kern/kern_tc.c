@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.39 2009/05/23 17:08:04 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.40 2009/06/14 13:16:32 kardel Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.39 2009/05/23 17:08:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.40 2009/06/14 13:16:32 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -87,16 +87,19 @@ static struct timecounter dummy_timecounter = {
 
 struct timehands {
 	/* These fields must be initialized by the driver. */
-	struct timecounter	*th_counter;
-	int64_t			th_adjustment;
-	u_int64_t		th_scale;
-	u_int	 		th_offset_count;
-	struct bintime		th_offset;
-	struct timeval		th_microtime;
-	struct timespec		th_nanotime;
+	struct timecounter	*th_counter;     /* active timecounter */
+	int64_t			th_adjustment;   /* frequency adjustment */
+						 /* (NTP/adjtime) */
+	u_int64_t		th_scale;        /* scale factor (counter */
+						 /* tick->time) */
+	u_int64_t 		th_offset_count; /* offset at last time */
+						 /* update (tc_windup()) */
+	struct bintime		th_offset;       /* bin (up)time at windup */
+	struct timeval		th_microtime;    /* cached microtime */
+	struct timespec		th_nanotime;     /* cached nanotime */
 	/* Fields not to be copied in tc_windup start with th_generation. */
-	volatile u_int		th_generation;
-	struct timehands	*th_next;
+	volatile u_int		th_generation;   /* current genration */
+	struct timehands	*th_next;        /* next timehand */
 };
 
 static struct timehands th0;
@@ -732,7 +735,6 @@ tc_windup(void)
 	else
 		ncount = 0;
 	th->th_offset_count += delta;
-	th->th_offset_count &= th->th_counter->tc_counter_mask;
 	bintime_addx(&th->th_offset, th->th_scale * delta);
 
 	/*
@@ -920,7 +922,7 @@ pps_capture(struct pps_state *pps)
 	th = timehands;
 	pps->capgen = th->th_generation;
 	pps->capth = th;
-	pps->capcount = th->th_counter->tc_get_timecount(th->th_counter);
+	pps->capcount = (u_int64_t)tc_delta(th) + th->th_offset_count;
 	if (pps->capgen != th->th_generation)
 		pps->capgen = 0;
 }
@@ -930,7 +932,7 @@ pps_event(struct pps_state *pps, int event)
 {
 	struct bintime bt;
 	struct timespec ts, *tsp, *osp;
-	u_int tcount, *pcount;
+	u_int64_t tcount, *pcount;
 	int foff, fhard;
 	pps_seq_t *pseq;
 
@@ -971,7 +973,6 @@ pps_event(struct pps_state *pps, int event)
 
 	/* Convert the count to a timespec. */
 	tcount = pps->capcount - pps->capth->th_offset_count;
-	tcount &= pps->capth->th_counter->tc_counter_mask;
 	bt = pps->capth->th_offset;
 	bintime_addx(&bt, pps->capth->th_scale * tcount);
 	bintime_add(&bt, &timebasebin);
