@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1241 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1242 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -299,3 +299,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		maintenance of <module>.prop and/or to set MODCTL_NO_PROP.
 		[jnemeth 20090609]
 	ntp:	Import ntp-4-2-4p7. [kardel 20090613]
+	ehci(4): Add quirk for SB600/SB700 chipsets to workaround freeze
+		in USB subsystem. [cegger 20090615]
