@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.29 2009/06/14 23:09:55 pgoyette Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.30 2009/06/15 12:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,9 +169,10 @@ initial limits (or thresholds) used when monitoring a sensor's value.
 (See the
 .Sx SENSOR DETAILS
 section for more information.)
-If this member is not specified, the ENVSYS_FMONLIMITS flag will be
-ignored, and limit monitoring will not occur until appropriate limits
-are enabled from userland via
+If this member is not specified, the
+.Dv ENVSYS_FMONLIMITS
+flag will be ignored, and limit monitoring will not occur until
+appropriate limits are enabled from userland via
 .Xr envstat 8 .
 .It Fa sme_set_limits
 Pointer to a function that alerts the device driver whenever monitoring
@@ -225,7 +226,7 @@ The device writer must ensure that at least there is a
 sensor with
 .Em units
 of
-.Sy ENVSYS_INDICATOR .
+.Dv ENVSYS_INDICATOR .
 This will be used to report its current state (on/off).
 .It SME_CLASS_BATTERY
 .Pp
@@ -233,9 +234,9 @@ This class is for devices that want to act as a
 .Em Battery .
 The device writer must ensure that at least there are two sensors with
 units of
-.Sy ENVSYS_BATTERY_CAPACITY
+.Dv ENVSYS_BATTERY_CAPACITY
 and
-.Sy ENVSYS_BATTERY_CHARGE .
+.Dv ENVSYS_BATTERY_CHARGE .
 .Pp
 These two sensors are used to ensure that the battery device can
 send a
@@ -355,33 +356,34 @@ type must be valid.
 The following units are defined:
 .Pp
 .Bl -tag -width "ENVSYS_BATTERY_CAPACITY" -compact
-.It ENVSYS_STEMP
+.It Dv ENVSYS_STEMP
 For temperature sensors.
-.It ENVSYS_SFANRPM
+.It Dv ENVSYS_SFANRPM
 For fan sensors.
-.It ENVSYS_SVOLTS_AC
+.It Dv ENVSYS_SVOLTS_AC
 For AC Voltage.
-.It ENVSYS_SVOLTS_DC
+.It Dv ENVSYS_SVOLTS_DC
 For DC Voltage.
-.It ENVSYS_SOHMS
+.It Dv ENVSYS_SOHMS
 For Ohms.
-.It ENVSYS_SWATTS
+.It Dv ENVSYS_SWATTS
 For Watts.
-.It ENVSYS_SAMPS
+.It Dv ENVSYS_SAMPS
 For Ampere.
-.It ENVSYS_SWATTHOUR
+.It Dv ENVSYS_SWATTHOUR
 For Watts hour.
-.It ENVSYS_SAMPHOUR
+.It Dv ENVSYS_SAMPHOUR
 For Ampere hour.
-.It ENVSYS_INDICATOR
+.It Dv ENVSYS_INDICATOR
 For sensors that only want a boolean type.
-.It ENVSYS_INTEGER
+.It Dv ENVSYS_INTEGER
 For sensors that only want an integer type.
-.It ENVSYS_DRIVE
+.It Dv ENVSYS_DRIVE
 For drive sensors.
-.It ENVSYS_BATTERY_CAPACITY
+.It Dv ENVSYS_BATTERY_CAPACITY
 For Battery device classes.
-This sensor unit uses the ENVSYS_BATTERY_CAPACITY_*
+This sensor unit uses the
+.Dv ENVSYS_BATTERY_CAPACITY_*
 values in
 .Ar value_cur
 to report its current capacity to userland.
@@ -389,7 +391,7 @@ Mandatory if
 .Fa sme_class
 is set to
 .Dv SME_CLASS_BATTERY .
-.It ENVSYS_BATTERY_CHARGE
+.It Dv ENVSYS_BATTERY_CHARGE
 For Battery device classes.
 This sensor is equivalent to the Indicator type, it's a boolean.
 Use it to specify in what state is the Battery state:
@@ -410,19 +412,19 @@ unknown state).
 Possible values:
 .Pp
 .Bl -tag -width "ENVSYS_SCRITUNDERXX" -compact
-.It ENVSYS_SVALID
+.It Dv ENVSYS_SVALID
 Sets the sensor to a valid state.
-.It ENVSYS_SINVALID
+.It Dv ENVSYS_SINVALID
 Sets the sensor to an invalid state.
-.It ENVSYS_SCRITICAL
+.It Dv ENVSYS_SCRITICAL
 Sets the sensor to a critical state.
-.It ENVSYS_SCRITUNDER
+.It Dv ENVSYS_SCRITUNDER
 Sets the sensor to a critical under state.
-.It ENVSYS_SCRITOVER
+.It Dv ENVSYS_SCRITOVER
 Sets the sensor to a critical over state.
-.It ENVSYS_SWARNUNDER
+.It Dv ENVSYS_SWARNUNDER
 Sets the sensor to a warning under state.
-.It ENVSYS_SWARNOVER
+.It Dv ENVSYS_SWARNOVER
 Sets the sensor to a warning over state.
 .El
 .Pp
@@ -432,7 +434,7 @@ The
 member accepts one or more of the following flags:
 .Pp
 .Bl -tag -width "ENVSYS_FCHANGERFACTXX"
-.It ENVSYS_FCHANGERFACT
+.It Dv ENVSYS_FCHANGERFACT
 Marks the sensor with ability to change the
 .Ar rfact
 value on the fly (in voltage sensors).
@@ -440,40 +442,40 @@ The
 .Ar rfact
 member must be used in the correct place of the code
 that retrieves and converts the value of the sensor.
-.It ENVSYS_FPERCENT
+.It Dv ENVSYS_FPERCENT
 This uses the
 .Ar value_cur
 and
 .Ar value_max
 members to make a percentage.
 Both values must be enabled and have data.
-.It ENVSYS_FVALID_MAX
+.It Dv ENVSYS_FVALID_MAX
 Marks the
 .Ar value_max
 value as valid.
-.It ENVSYS_FVALID_MIN
+.It Dv ENVSYS_FVALID_MIN
 Marks the
 .Ar value_min
 value as valid.
-.It ENVSYS_FVALID_AVG
+.It Dv ENVSYS_FVALID_AVG
 Marks the
 .Ar value_avg
 value as valid.
-.It ENVSYS_FMONCRITICAL
+.It Dv ENVSYS_FMONCRITICAL
 Enables and registers a new event to monitor a critical state.
-.It ENVSYS_FMONLIMITS
+.It Dv ENVSYS_FMONLIMITS
 Enables and registers a new event to monitor a sensor's value crossing
 limits or thresholds.
-.It ENVSYS_FMONSTCHANGED
+.It Dv ENVSYS_FMONSTCHANGED
 Enables and registers a new event to monitor Battery capacity or drive state
 sensors.
 It won't be effective if the
 .Ar units
 member is not set to
-.Ar ENVSYS_DRIVE
+.Dv ENVSYS_DRIVE
 or
-.Ar ENVSYS_BATTERY_CAPACITY .
-.It ENVSYS_FMONNOTSUPP
+.Dv ENVSYS_BATTERY_CAPACITY .
+.It Dv ENVSYS_FMONNOTSUPP
 Disallows setting of limits (or thresholds) via the
 .Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
@@ -492,39 +494,39 @@ only disables setting the limits from userland.
 If
 .Ar units
 is set to
-.Ar ENVSYS_DRIVE ,
+.Dv ENVSYS_DRIVE ,
 the
 .Ar value_cur
 member must be set to one of the following predefined states:
 .Pp
 .Bl -tag -width "ENVSYS_DRIVE_POWERDOWNXX" -compact
-.It ENVSYS_DRIVE_EMPTY
+.It Dv ENVSYS_DRIVE_EMPTY
 Drive state is unknown.
-.It ENVSYS_DRIVE_READY
+.It Dv ENVSYS_DRIVE_READY
 Drive is ready.
-.It ENVSYS_DRIVE_POWERUP
+.It Dv ENVSYS_DRIVE_POWERUP
 Drive is powering up.
-.It ENVSYS_DRIVE_ONLINE
+.It Dv ENVSYS_DRIVE_ONLINE
 Drive is online.
-.It ENVSYS_DRIVE_OFFLINE
+.It Dv ENVSYS_DRIVE_OFFLINE
 Drive is offline.
-.It ENVSYS_DRIVE_IDLE
+.It Dv ENVSYS_DRIVE_IDLE
 Drive is idle.
-.It ENVSYS_DRIVE_ACTIVE
+.It Dv ENVSYS_DRIVE_ACTIVE
 Drive is active.
-.It ENVSYS_DRIVE_BUILD
+.It Dv ENVSYS_DRIVE_BUILD
 Drive is building.
-.It ENVSYS_DRIVE_REBUILD
+.It Dv ENVSYS_DRIVE_REBUILD
 Drive is rebuilding.
-.It ENVSYS_DRIVE_POWERDOWN
+.It Dv ENVSYS_DRIVE_POWERDOWN
 Drive is powering down.
-.It ENVSYS_DRIVE_FAIL
+.It Dv ENVSYS_DRIVE_FAIL
 Drive has failed.
-.It ENVSYS_DRIVE_PFAIL
+.It Dv ENVSYS_DRIVE_PFAIL
 Drive has been degraded.
-.It ENVSYS_DRIVE_MIGRATING
+.It Dv ENVSYS_DRIVE_MIGRATING
 Drive is migrating.
-.It ENVSYS_DRIVE_CHECK
+.It Dv ENVSYS_DRIVE_CHECK
 Drive is checking its state.
 .El
 .Pp
@@ -532,19 +534,19 @@ Drive is checking its state.
 If
 .Ar units
 is set to
-.Ar ENVSYS_BATTERY_CAPACITY ,
+.Dv ENVSYS_BATTERY_CAPACITY ,
 the
 .Ar value_cur
 member must be set to one of the following predefined capacity states:
 .Pp
 .Bl -tag -width "ENVSYS_BATTERY_CAPACITY_CRITICAL" -compact
-.It ENVSYS_BATTERY_CAPACITY_NORMAL
+.It Dv ENVSYS_BATTERY_CAPACITY_NORMAL
 Battery charge is in normal capacity.
-.It ENVSYS_BATTERY_CAPACITY_CRITICAL
+.It Dv ENVSYS_BATTERY_CAPACITY_CRITICAL
 Battery charge is in critical capacity.
-.It ENVSYS_BATTERY_CAPACITY_LOW
+.It Dv ENVSYS_BATTERY_CAPACITY_LOW
 Battery charge is in low capacity.
-.It ENVSYS_BATTERY_CAPACITY_WARNING
+.It Dv ENVSYS_BATTERY_CAPACITY_WARNING
 Battery charge is in warning capacity.
 .El
 .It
@@ -565,12 +567,12 @@ Ampere to
 etc.
 .Pp
 The following types shouldn't need any conversion:
-.Ar ENVSYS_BATTERY_CAPACITY ,
-.Ar ENVSYS_BATTERY_CHARGE ,
-.Ar ENVSYS_INDICATOR ,
-.Ar ENVSYS_INTEGER
+.Dv ENVSYS_BATTERY_CAPACITY ,
+.Dv ENVSYS_BATTERY_CHARGE ,
+.Dv ENVSYS_INDICATOR ,
+.Dv ENVSYS_INTEGER
 and
-.Ar ENVSYS_DRIVE .
+.Dv ENVSYS_DRIVE .
 .Pp
 .Em PLEASE NOTE THAT YOU MUST AVOID USING FLOATING POINT OPERATIONS
 .Em IN KERNEL WHEN CONVERTING THE DATA RETURNED BY THE DRIVER TO THE
