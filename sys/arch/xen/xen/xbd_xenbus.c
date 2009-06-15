@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.39 2009/03/03 19:04:41 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.40 2009/06/15 21:11:24 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.39 2009/03/03 19:04:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.40 2009/06/15 21:11:24 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -399,6 +399,8 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 {
 	struct xbd_xenbus_softc *sc = device_private((device_t)arg);
 	struct dk_geom *pdg;
+	prop_dictionary_t disk_info, odisk_info, geom;
+
 	char buf[9];
 	int s;
 	DPRINTF(("%s: new backend state %d\n",
@@ -458,6 +460,31 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 				buf, (int)pdg->pdg_secsize, sc->sc_xbdsize);
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
+
+		disk_info = prop_dictionary_create();
+		geom = prop_dictionary_create();
+		prop_dictionary_set_uint64(geom, "sectors-per-unit",
+		    sc->sc_dksc.sc_size);
+		prop_dictionary_set_uint32(geom, "sector-size",
+		    pdg->pdg_secsize);
+		prop_dictionary_set_uint16(geom, "sectors-per-track",
+		    pdg->pdg_nsectors);
+		prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+		    pdg->pdg_ntracks);
+		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+		    pdg->pdg_ncylinders);
+		prop_dictionary_set(disk_info, "geometry", geom);
+		prop_object_release(geom);
+		prop_dictionary_set(device_properties(sc->sc_dev),
+		    "disk-info", disk_info);
+		/*
+		 * Don't release disk_info here; we keep a reference to it.
+		 * disk_detach() will release it when we go away.
+		 */
+		odisk_info = sc->sc_dksc.sc_dkdev.dk_info;
+		sc->sc_dksc.sc_dkdev.dk_info = disk_info;
+		if (odisk_info)
+			prop_object_release(odisk_info);
 
 		/* the disk should be working now */
 		config_pending_decr();
@@ -676,6 +703,10 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    dev, cmd, data, flag, l));
 	dksc = &sc->sc_dksc;
 	dk = &dksc->sc_dkdev;
+
+	error = disk_ioctl(&sc->sc_dksc.sc_dkdev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (cmd) {
 	case DIOCSSTRATEGY:
