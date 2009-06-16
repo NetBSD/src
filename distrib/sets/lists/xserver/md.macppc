@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.47 2009/06/12 02:14:42 mrg Exp $
+# $NetBSD: md.macppc,v 1.48 2009/06/16 00:26:11 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -331,6 +331,8 @@
 ./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg

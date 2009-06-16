@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.18 2009/06/12 02:14:42 mrg Exp $
+# $NetBSD: md.alpha,v 1.19 2009/06/16 00:26:11 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -33,6 +33,8 @@
 ./usr/X11R7/lib/modules/dri/savage_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/trident_dri.so		-unknown-	xorg
