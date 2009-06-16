@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2008/11/18 17:03:58 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/16 05:21:58 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=		OSMesa
 
 MESA_SRC_MODULES=	main math vbo tnl shader swrast slang glapi common \
-			osmesa
+			osmesa ss
 
 .PATH:		${X11SRCDIR.MesaLib}/include/GL
 INCS=		osmesa.h
