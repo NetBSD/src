@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.349 2009/04/21 03:00:29 nonaka Exp $
+#	$NetBSD: files.i386,v 1.350 2009/06/16 21:05:33 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -243,6 +243,7 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file	arch/x86/isa/clock.c		isa
+file	arch/x86/isa/rtc.c		isa
 
 # TSC support
 file	arch/x86/x86/tsc.c
