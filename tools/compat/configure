@@ -4980,7 +4980,7 @@ EOF
 fi
 
 for ac_func in atoll asprintf asnprintf basename devname dirfd dirname \
-	esetfunc fgetln flock futimes getopt getopt_long \
+	esetfunc fgetln flock fpurge __fpurge futimes getopt getopt_long \
 	group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
 	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb pwrite \
