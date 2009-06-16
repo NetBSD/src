@@ -1,4 +1,4 @@
-/* $NetBSD: tftp-proxy.c,v 1.2 2008/06/18 09:06:26 yamt Exp $ */
+/* $NetBSD: tftp-proxy.c,v 1.3 2009/06/16 02:18:07 minskim Exp $ */
 /* $OpenBSD: tftp-proxy.c,v 1.2 2006/12/20 03:33:38 joel Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
@@ -173,7 +173,6 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "recvfrom: %m");
 		exit(1);
 	}
-
 
 	bzero(&msg, sizeof(msg));
 	iov.iov_base = req;
