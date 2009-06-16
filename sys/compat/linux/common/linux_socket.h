@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.16 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.17 2009/06/16 23:17:02 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -179,6 +179,10 @@ struct linux_cmsghdr {
 	((mhdr)->msg_controllen >= sizeof(struct linux_cmsghdr) ? \
 	(struct linux_cmsghdr *)(mhdr)->msg_control : NULL)
 
+#define LINUX_CMSG_SPACE(l) \
+	(sizeof(struct linux_cmsghdr) + LINUX_CMSG_ALIGN(l))
+#define LINUX_CMSG_LEN(l) \
+	(sizeof(struct linux_cmsghdr) + (l))
 
 /*
  * Machine specific definitions.
