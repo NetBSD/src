@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.29 2009/06/10 17:19:08 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.30 2009/06/16 02:25:41 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -975,4 +975,25 @@ sbin/newfs/newfs.c				1.103
 	Issue a better error message if attempting to create a file system
 	on a block device.  Inspired by PR kern/41127.
 	[snj, ticket #803]
+
+sys/arch/x86/conf/files.x86			1.52 via patch
+sys/arch/x86/include/cpu.h			1.17
+sys/arch/x86/x86/cpu_topology.c			1.1
+sys/arch/x86/x86/identcpu.c			1.16 via patch
+sys/arch/xen/conf/files.xen			1.99 via patch
+
+	Move x86 CPU topology detection code into the separate file.
+	[rmind, ticket #782]
+
+sys/arch/x86/include/specialreg.h		1.36
+sys/arch/x86/x86/cpu_topology.c			1.2
+
+	Add CPU topology detection support for AMD processors.
+	Tested on the following AMD CPUs:
+	- Family 15, model 65
+	- Family 15, model 67
+	- Family 15, model 75
+	- Family 16, model 2
+	- Family 17, model 3
+	[rmind, ticket #789]
 
