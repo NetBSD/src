@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.102 2009/06/16 22:56:49 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.103 2009/06/16 23:17:02 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.102 2009/06/16 22:56:49 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.103 2009/06/16 23:17:02 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -669,11 +669,11 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 			break;
 		}
 		m = m->m_next;
-		if (m == NULL || q + LINUX_CMSG_ALIGN(dlen) > q_end) {
-			q += dlen;
+		if (m == NULL || q + LINUX_CMSG_SPACE(dlen) > q_end) {
+			q += LINUX_CMSG_LEN(dlen);
 			break;
 		}
-		q += LINUX_CMSG_ALIGN(dlen);
+		q += LINUX_CMSG_SPACE(dlen);
 	}
 
   done:
