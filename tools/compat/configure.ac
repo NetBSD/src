@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.69 2009/02/03 05:22:40 dbj Exp $
+#	$NetBSD: configure.ac,v 1.70 2009/06/16 22:35:34 christos Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -24,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.69 2009/02/03 05:22:40 dbj Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.70 2009/06/16 22:35:34 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -145,7 +145,7 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 # Library functions (where a .h check isn't enough).
 AC_FUNC_ALLOCA
 AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
-	esetfunc fgetln flock futimes getopt getopt_long \
+	esetfunc fgetln flock fpurge __fpurge futimes getopt getopt_long \
 	group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
 	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb pwrite \
