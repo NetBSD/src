@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.22 2009/01/05 06:11:43 tnozaki Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.23 2009/06/16 22:35:34 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -260,6 +260,9 @@
 
 /* Define if you have the `fparseln' function. */
 #undef HAVE_FPARSELN
+
+/* Define if you have the `fpurge' function. */
+#undef HAVE_FPURGE
 
 /* Define if you have the `futimes' function. */
 #undef HAVE_FUTIMES
@@ -569,6 +572,9 @@
 
 /* Define if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
+
+/* Define if you have the `__fpurge' function. */
+#undef HAVE___FPURGE
 
 /* Path to sh(1). */
 #undef PATH_BSHELL
