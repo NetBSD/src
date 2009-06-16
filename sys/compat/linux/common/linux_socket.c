@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.100 2009/06/11 19:57:58 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.101 2009/06/16 15:56:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.100 2009/06/11 19:57:58 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.101 2009/06/16 15:56:10 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -541,6 +541,9 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 		msg.msg_control = ctl_mbuf;
 		msg.msg_flags |= MSG_CONTROLMBUF;
+
+		ktrkuser("msgcontrol", mtod(ctl_mbuf, void *),
+		    msg.msg_controllen);
 	}
 
 	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
@@ -600,6 +603,8 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 		free_control_mbuf(l, control, control);
 		return 0;
 	}
+
+	ktrkuser("msgcontrol", mtod(control, void *), mp->msg_controllen);
 
 	q = (char *)mp->msg_control;
 	q_end = q + mp->msg_controllen;
@@ -725,8 +730,10 @@ linux_sys_recvmsg(struct lwp *l, const struct linux_sys_recvmsg_args *uap, regis
 		if (msg.msg_flags < 0)
 			/* Some flag unsupported by Linux */
 			error = EINVAL;
-		else
+		else {
+			ktrkuser("msghdr", &msg, sizeof(msg));
 			error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
+		}
 	}
 
 	return (error);
