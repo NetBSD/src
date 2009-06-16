@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49 2009/01/16 20:16:47 jym Exp $	*/
+/*	$NetBSD: clock.c,v 1.50 2009/06/16 21:05:35 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49 2009/01/16 20:16:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.50 2009/06/16 21:05:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49 2009/01/16 20:16:47 jym Exp $");
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>
+#include <x86/rtc.h>
 
 static int xen_timer_handler(void *, struct intrframe *);
 
@@ -316,6 +317,13 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 	int s;
 
 	if (xendomain_is_privileged()) {
+#ifdef XEN3
+ 		/* needs to set the RTC chip too */
+ 		struct clock_ymdhms dt;
+ 		clock_secs_to_ymdhms(tvp->tv_sec, &dt);
+ 		rtc_set_ymdhms(NULL, &dt);
+#endif
+ 
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
 		op.cmd = DOM0_SETTIME;
 #else
@@ -332,9 +340,9 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 		op.u.settime.system_time = get_system_time();
 		splx(s);
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
-		HYPERVISOR_dom0_op(&op);
+		return HYPERVISOR_dom0_op(&op);
 #else
-		HYPERVISOR_platform_op(&op);
+		return HYPERVISOR_platform_op(&op);
 #endif
 	}
 #endif
