@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.65 2009/06/12 02:14:42 mrg Exp $
+# $NetBSD: md.i386,v 1.66 2009/06/16 00:26:11 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -451,6 +451,8 @@
 ./usr/X11R7/lib/modules/dri/savage_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/trident_dri.so		-unknown-	xorg
@@ -586,11 +588,11 @@
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_pic.a	-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx_g.a		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	obsolete
+./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx_g.a		-unknown-	debuglib,xorg
+./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so.0		-unknown-	obsolete
@@ -707,7 +709,7 @@
 ./usr/X11R7/man/cat4/i128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i740.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/imstt.0				-unknown-	obsolete
-./usr/X11R7/man/cat4/intel.0				-unknown-	obsolete
+./usr/X11R7/man/cat4/intel.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
