@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.11 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: parse.y,v 1.12 2009/06/16 05:16:52 minskim Exp $	*/
 /*	$OpenBSD: parse.y,v 1.519 2007/06/21 19:30:03 henning Exp $	*/
 
 /*
@@ -26,9 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This material is based upon work partially supported by NSF under
- * Contract No. NSF CNS-0626584.
  */
 %{
 #include <sys/types.h>
