@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.151 2009/02/18 21:06:47 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.152 2009/06/16 05:44:06 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.151 2009/02/18 21:06:47 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.152 2009/06/16 05:44:06 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.151 2009/02/18 21:06:47 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.152 2009/06/16 05:44:06 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -205,7 +205,7 @@ static int var_exportedVars = VAR_EXPORTED_NONE;
  * We pass this to Var_Export when doing the initial export
  * or after updating an exported var.
  */
-#define VAR_EXPORT_FORCE 1
+#define VAR_EXPORT_PARENT 1
 
 /* Var*Pattern flags */
 #define VAR_SUB_GLOBAL	0x01	/* Apply substitution globally */
@@ -541,9 +541,10 @@ Var_Delete(const char *name, GNode *ctxt)
  * We ignore make internal variables (those which start with '.')
  * Also we jump through some hoops to avoid calling setenv
  * more than necessary since it can leak.
+ * We only manipulate flags of vars if 'parent' is set.
  */
 static int
-Var_Export1(const char *name, int force)
+Var_Export1(const char *name, int parent)
 {
     char tmp[BUFSIZ];
     Var *v;
@@ -571,19 +572,19 @@ Var_Export1(const char *name, int force)
     if (v == NULL) {
 	return 0;
     }
-    if (!force &&
+    if (!parent &&
 	(v->flags & (VAR_EXPORTED|VAR_REEXPORT)) == VAR_EXPORTED) {
 	return 0;			/* nothing to do */
     }
     val = Buf_GetAll(&v->val, NULL);
     if (strchr(val, '$')) {
-	/* Flag this as something we need to re-export */
-	v->flags |= (VAR_EXPORTED|VAR_REEXPORT);
-	if (force) {
+	if (parent) {
 	    /*
+	     * Flag this as something we need to re-export.
 	     * No point actually exporting it now though,
 	     * the child can do it at the last minute.
 	     */
+	    v->flags |= (VAR_EXPORTED|VAR_REEXPORT);
 	    return 1;
 	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
@@ -593,15 +594,19 @@ Var_Export1(const char *name, int force)
 	    free(val);
 	}
     } else {
-	v->flags &= ~VAR_REEXPORT;	/* once will do */
-	if (force || !(v->flags & VAR_EXPORTED)) {
+	if (parent) {
+	    v->flags &= ~VAR_REEXPORT;	/* once will do */
+	}
+	if (parent || !(v->flags & VAR_EXPORTED)) {
 	    setenv(name, val, 1);
 	}
     }
     /*
      * This is so Var_Set knows to call Var_Export again...
      */
-    v->flags |= VAR_EXPORTED;
+    if (parent) {
+	v->flags |= VAR_EXPORTED;
+    }
     return 1;
 }
 
@@ -693,7 +698,7 @@ Var_Export(char *str, int isExport)
 		continue;
 	    }
 	}
-	if (Var_Export1(name, VAR_EXPORT_FORCE)) {
+	if (Var_Export1(name, VAR_EXPORT_PARENT)) {
 	    if (VAR_EXPORTED_ALL != var_exportedVars)
 		var_exportedVars = VAR_EXPORTED_YES;
 	    if (isExport) {
@@ -781,7 +786,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
 	}
 	if ((v->flags & VAR_EXPORTED)) {
-	    Var_Export1(name, VAR_EXPORT_FORCE);
+	    Var_Export1(name, VAR_EXPORT_PARENT);
 	}
     }
     /*
