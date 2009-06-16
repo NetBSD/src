@@ -1818,11 +1818,14 @@ Cell *closefile(Node **a, int n)
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
 			if (files[i].mode == '|' || files[i].mode == LE)
-				stat = pclose(files[i].fp);
+				stat = pclose(files[i].fp) == -1;
 			else
-				stat = fclose(files[i].fp);
-			if (stat == -1)
-				WARNING( "i/o error occurred closing %s", files[i].fname );
+				stat = fclose(files[i].fp) == EOF;
+			if (stat) {
+				stat = -1;
+				WARNING( "i/o error occurred closing %s",
+				    files[i].fname );
+			}
 			if (i > 2)	/* don't do /dev/std... */
 				xfree(files[i].fname);
 			files[i].fname = NULL;	/* watch out for ref thru this */
@@ -1845,14 +1848,14 @@ void closeall(void)
 			if (ferror(files[i].fp))
 				WARNING( "i/o error occurred on %s", files[i].fname );
 			if (i == 0)
-				stat = fpurge(files[i].fp);
+				stat = fpurge(files[i].fp) == EOF;
 			else if (i <= 2)
-				stat = fflush(files[i].fp);
+				stat = fflush(files[i].fp) == EOF;
 			else if (files[i].mode == '|' || files[i].mode == LE)
-				stat = pclose(files[i].fp);
+				stat = pclose(files[i].fp) == -1;
 			else
-				stat = fclose(files[i].fp);
-			if (stat == -1)
+				stat = fclose(files[i].fp) == EOF;
+			if (stat)
 				WARNING( "i/o error occurred while closing %s", files[i].fname );
 		}
 	}
