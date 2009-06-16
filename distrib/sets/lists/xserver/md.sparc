@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.34 2009/06/12 01:55:59 mrg Exp $
+# $NetBSD: md.sparc,v 1.35 2009/06/16 00:26:11 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -300,6 +300,8 @@
 ./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
