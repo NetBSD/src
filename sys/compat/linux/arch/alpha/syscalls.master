@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2009/06/08 13:26:57 njoly Exp $
+	$NetBSD: syscalls.master,v 1.70 2009/06/17 14:18:51 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -233,10 +233,10 @@
 ;112	ALIAS		osf1_sys_sigstack
 112	NOARGS		{ int|compat_43_sys||sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
-113	STD		{ ssize_t|linux_sys||recvmsg(int s, struct msghdr *msg, \
-				int flags); }
+113	STD		{ ssize_t|linux_sys||recvmsg(int s, \
+			    struct linux_msghdr *msg, int flags); }
 114	STD		{ ssize_t|linux_sys||sendmsg(int s, \
-				const struct msghdr *msg, int flags); }
+				const struct linux_msghdr *msg, int flags); }
 115	UNIMPL
 116	NODEF		{ int|osf1_sys||gettimeofday(struct osf1_timeval *tv, \
 			    struct osf1_timezone *tzp); }
