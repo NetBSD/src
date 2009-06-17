@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2009/06/08 13:26:57 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.36 2009/06/17 14:18:51 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -298,12 +298,12 @@
 176	NOARGS		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
 			    int flags, struct osockaddr *from, \
 			    int *fromlenaddr); }
-177	NOARGS		{ int|linux_sys||recvmsg(int s, struct msghdr *msg, \
-			    u_int flags); }
+177	NOARGS		{ int|linux_sys||recvmsg(int s, \
+			    struct linux_msghdr *msg, u_int flags); }
 178	NOARGS		{ int|linux_sys||send(int s, void *buf, int len, \
 			    int flags); }
-179	NOARGS		{ int|linux_sys||sendmsg(int s, struct msghdr *msg, \
-			    u_int flags); }
+179	NOARGS		{ int|linux_sys||sendmsg(int s, \
+			    struct linux_msghdr *msg, u_int flags); }
 180	NOARGS		{ int|linux_sys||sendto(int s, void *msg, \
 			    int len, int flags, struct osockaddr *to, \
 			    int tolen); }
