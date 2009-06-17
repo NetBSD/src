@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31 2009/06/08 13:26:57 njoly Exp $
+	$NetBSD: syscalls.master,v 1.32 2009/06/17 14:18:51 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -154,9 +154,9 @@
 			    size_t len, int flags, struct osockaddr *from, \
 			    unsigned int *fromlenaddr); }
 46	STD		{ int|linux_sys||sendmsg(int s, \
-			    const struct msghdr *msg, int flags); }
+			    const struct linux_msghdr *msg, int flags); }
 47	STD		{ ssize_t|linux_sys||recvmsg(int s, \
-			    struct msghdr *msg, int flags); }
+			    struct linux_msghdr *msg, int flags); }
 48	NOARGS		{ int|sys||shutdown(int s, int how); }
 49	STD		{ int|linux_sys||bind(int s, \
 			    const struct osockaddr *name, \
