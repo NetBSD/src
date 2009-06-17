@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.103 2009/06/16 23:17:02 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.104 2009/06/17 14:18:51 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.103 2009/06/16 23:17:02 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.104 2009/06/17 14:18:51 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -121,6 +121,8 @@ static int linux_get_sa(struct lwp *, int, struct mbuf **,
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
 static int bsd_to_linux_msg_flags(int);
+static void linux_to_bsd_msghdr(struct linux_msghdr *, struct msghdr *);
+static void bsd_to_linux_msghdr(struct msghdr *, struct linux_msghdr *);
 
 static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
 	AF_UNSPEC,
@@ -394,24 +396,50 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 }
 
+static void
+linux_to_bsd_msghdr(struct linux_msghdr *lmsg, struct msghdr *bmsg)
+{
+	bmsg->msg_name = lmsg->msg_name;
+	bmsg->msg_namelen = lmsg->msg_namelen;
+	bmsg->msg_iov = lmsg->msg_iov;
+	bmsg->msg_iovlen = lmsg->msg_iovlen;
+	bmsg->msg_control = lmsg->msg_control;
+	bmsg->msg_controllen = lmsg->msg_controllen;
+	bmsg->msg_flags = lmsg->msg_flags;
+}
+
+static void
+bsd_to_linux_msghdr(struct msghdr *bmsg, struct linux_msghdr *lmsg)
+{
+	lmsg->msg_name = bmsg->msg_name;
+	lmsg->msg_namelen = bmsg->msg_namelen;
+	lmsg->msg_iov = bmsg->msg_iov;
+	lmsg->msg_iovlen = bmsg->msg_iovlen;
+	lmsg->msg_control = bmsg->msg_control;
+	lmsg->msg_controllen = bmsg->msg_controllen;
+	lmsg->msg_flags = bmsg->msg_flags;
+}
+
 int
 linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) s;
-		syscallarg(struct msghdr *) msg;
+		syscallarg(struct linux_msghdr *) msg;
 		syscallarg(u_int) flags;
 	} */
 	struct msghdr	msg;
+	struct linux_msghdr lmsg;
 	int		error;
 	int		bflags;
 	struct mbuf     *nam;
 	u_int8_t	*control;
 	struct mbuf     *ctl_mbuf = NULL;
 
-	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
+	error = copyin(SCARG(uap, msg), &lmsg, sizeof(lmsg));
 	if (error)
 		return error;
+	linux_to_bsd_msghdr(&lmsg, &msg);
 
 	msg.msg_flags = MSG_IOVUSRSPACE;
 
@@ -423,7 +451,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 		/* Some supported flag */
 		return EINVAL;
 
-	if (msg.msg_name) {
+	if (lmsg.msg_name) {
 		/* Read in and convert the sockaddr */
 		error = linux_get_sa(l, SCARG(uap, s), &nam, msg.msg_name,
 		    msg.msg_namelen);
@@ -436,7 +464,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	/*
 	 * Handle cmsg if there is any.
 	 */
-	if (CMSG_FIRSTHDR(&msg)) {
+	if (LINUX_CMSG_FIRSTHDR(&lmsg)) {
 		struct linux_cmsghdr l_cmsg, *l_cc;
 		struct cmsghdr *cmsg;
 		ssize_t resid = msg.msg_controllen;
@@ -446,7 +474,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 		clen = MLEN;
 		control = mtod(ctl_mbuf, void *);
 
-		l_cc = LINUX_CMSG_FIRSTHDR(&msg);
+		l_cc = LINUX_CMSG_FIRSTHDR(&lmsg);
 		do {
 			error = copyin(l_cc, &l_cmsg, sizeof(l_cmsg));
 			if (error)
@@ -688,16 +716,18 @@ linux_sys_recvmsg(struct lwp *l, const struct linux_sys_recvmsg_args *uap, regis
 {
 	/* {
 		syscallarg(int) s;
-		syscallarg(struct msghdr *) msg;
+		syscallarg(struct linux_msghdr *) msg;
 		syscallarg(u_int) flags;
 	} */
 	struct msghdr	msg;
+	struct linux_msghdr lmsg;
 	int		error;
 	struct mbuf	*from, *control;
 
-	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
+	error = copyin(SCARG(uap, msg), &lmsg, sizeof(lmsg));
 	if (error)
 		return (error);
+	linux_to_bsd_msghdr(&lmsg, &msg);
 
 	msg.msg_flags = linux_to_bsd_msg_flags(SCARG(uap, flags));
 	if (msg.msg_flags < 0) {
@@ -732,7 +762,8 @@ linux_sys_recvmsg(struct lwp *l, const struct linux_sys_recvmsg_args *uap, regis
 			error = EINVAL;
 		else {
 			ktrkuser("msghdr", &msg, sizeof(msg));
-			error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
+			bsd_to_linux_msghdr(&msg, &lmsg);
+			error = copyout(&lmsg, SCARG(uap, msg), sizeof(lmsg));
 		}
 	}
 
