@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.48 2009/06/09 20:35:02 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.49 2009/06/17 21:04:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.48 2009/06/09 20:35:02 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.49 2009/06/17 21:04:25 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1072,7 +1072,8 @@ module_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 		if (mod->mod_kobj == NULL) {
 			continue;
 		}
-		kobj_stat(mod->mod_kobj, &maddr, &msize);
+		if (kobj_stat(mod->mod_kobj, &maddr, &msize) != 0)
+			continue;
 		if (addr < maddr || addr >= maddr + msize) {
 			continue;
 		}
@@ -1112,12 +1113,11 @@ module_print_list(void (*pr)(const char *, ...))
 			src = "unknown";
 			break;
 		}
-		if (mod->mod_kobj != NULL) {
-			kobj_stat(mod->mod_kobj, &maddr, &msize);
-		} else {
+		if (mod->mod_kobj == NULL) {
 			maddr = 0;
 			msize = 0;
-		}
+		} else if (kobj_stat(mod->mod_kobj, &maddr, &msize) != 0)
+			continue;
 		(*pr)("%16s %16lx %8ld %8s\n", mod->mod_info->mi_name,
 		    (long)maddr, (long)msize, src);
 	}
