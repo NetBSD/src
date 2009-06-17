@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69.2.2 2009/02/18 01:10:57 snj Exp $
+# $NetBSD: mi,v 1.69.2.3 2009/06/17 20:13:35 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1348,6 +1348,7 @@
 ./usr/X11R7/lib/X11/app-defaults/Xmessage		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Xmessage-color		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Xmh			-unknown-	xorg
+./usr/X11R7/lib/X11/app-defaults/Xvidtune		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/C/Compose			-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/C/XI18N_OBJS			-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/C/XLC_LOCALE			-unknown-	xorg
