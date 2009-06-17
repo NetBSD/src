@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.155 2009/06/17 20:17:24 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.156 2009/06/17 20:56:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3453,4 +3453,10 @@ lib/libpam/modules/pam_unix/pam_unix.c		1.13
 	(Checked that everybody else's password can be changed without any
 	problem, and checked that root can still change the root password.)
 	[tonnerre, ticket #1326]
+
+usr.bin/window/ttgeneric.c			1.11
+
+	PR/41581: Der mouse: window SEGV with certain terminals.  does strcmp
+	first and then checks for null pointer for underline and bold.
+	[christos, ticket #1324]
 
