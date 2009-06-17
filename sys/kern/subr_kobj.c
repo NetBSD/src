@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.24.4.1 2009/02/02 02:27:22 snj Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.24.4.2 2009/06/17 20:20:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.24.4.1 2009/02/02 02:27:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.24.4.2 2009/06/17 20:20:54 bouyer Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -803,25 +803,25 @@ kobj_jettison(kobj_t ko)
 {
 	int i;
 
-	for (i = 0; i < ko->ko_nrel; i++) {
-		if (ko->ko_reltab[i].rel) {
-			kobj_free(ko, ko->ko_reltab[i].rel,
-			    ko->ko_reltab[i].size);
-		}
-	}
-	for (i = 0; i < ko->ko_nrela; i++) {
-		if (ko->ko_relatab[i].rela) {
-			kobj_free(ko, ko->ko_relatab[i].rela,
-			    ko->ko_relatab[i].size);
-		}
-	}
 	if (ko->ko_reltab != NULL) {
+		for (i = 0; i < ko->ko_nrel; i++) {
+			if (ko->ko_reltab[i].rel) {
+				kobj_free(ko, ko->ko_reltab[i].rel,
+				    ko->ko_reltab[i].size);
+			}
+		}
 		kobj_free(ko, ko->ko_reltab, ko->ko_nrel *
 		    sizeof(*ko->ko_reltab));
 		ko->ko_reltab = NULL;
 		ko->ko_nrel = 0;
 	}
 	if (ko->ko_relatab != NULL) {
+		for (i = 0; i < ko->ko_nrela; i++) {
+			if (ko->ko_relatab[i].rela) {
+				kobj_free(ko, ko->ko_relatab[i].rela,
+				    ko->ko_relatab[i].size);
+			}
+		}
 		kobj_free(ko, ko->ko_relatab, ko->ko_nrela *
 		    sizeof(*ko->ko_relatab));
 		ko->ko_relatab = NULL;
