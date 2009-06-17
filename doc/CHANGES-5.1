@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.30 2009/06/16 02:25:41 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.31 2009/06/17 20:37:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -996,4 +996,61 @@ sys/arch/x86/x86/cpu_topology.c			1.2
 	- Family 16, model 2
 	- Family 17, model 3
 	[rmind, ticket #789]
+
+distrib/sets/lists/xbase/mi			1.76
+external/mit/xorg/bin/xvidtune/Makefile		1.2
+
+	fix xsrc/41577: install the Xvidtune app-defaults file, after the
+	necessary preprocessing and sed processing it needs.
+	[mrg, ticket #805]
+
+sys/compat/linux/common/linux_socket.c		1.100
+
+	In sendmsg(2), do copy the msghdr structure before trying to use it.
+	[njoly, ticket #806]
+
+sys/kern/tty_pty.c				1.117
+
+	Writes on the controlling tty were not being awoken from blocks,
+	use the correct condvar to make this happen.
+	this fixes PR/41566
+	[plunky, ticket #807]
+
+external/bsd/am-utils/lib/libamu/mkconf		1.2
+
+	PR/41580: Hauke Fath: am-utils uses "netbsd${OSVER}" selector, still.
+	Changed to "netbsd"
+	[christos, ticket #808]
+
+sys/kern/subr_kobj.c				1.35
+
+	Fix a crash observed when trying to load a corrupted ELF kernel module.
+	[rmind, ticket #809]
+
+sys/netinet/tcp_usrreq.c			1.155
+
+	sysctl_inpcblist: fix a lock leak in error path
+	[rmind, ticket #812]
+
+usr.bin/window/ttgeneric.c			1.11
+
+	PR/41581: Der mouse: window SEGV with certain terminals.
+	does strcmp first and then checks for null pointer for
+	underline and bold.
+	[christos, ticket #813]
+
+sys/dev/pci/ehci_pci.c				1.45
+
+	Apply hw workaround required for all SB600 revisions and SB700
+	revisions A12 and A13 to avoid USB subsystem hang symptom.
+	The USB subsystem hang symptom is observed when the system has
+	multiple USB devices connected to it or one USB device is often
+	re-connected.
+	[cegger, ticket #814]
+
+lib/libpam/modules/pam_unix/pam_unix.c		1.13
+
+	Restore the good old UNIX behavior of root password changing: only root
+	may change the root password.
+	[tonnerre, ticket #817]
 
