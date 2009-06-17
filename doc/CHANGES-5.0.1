@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.22 2009/06/17 20:44:32 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.23 2009/06/17 20:49:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -430,4 +430,9 @@ lib/libpam/modules/pam_unix/pam_unix.c		1.13
 	Restore the good old UNIX behavior of root password changing: only root
 	may change the root password.
 	[tonnerre, ticket #817]
+
+sys/kern/sys_generic.c				1.122 via patch
+
+	Updates to f_flag need to be made with atomics.
+	[rmind, ticket #811]
 
