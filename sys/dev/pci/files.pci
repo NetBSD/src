@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.314 2009/04/21 03:00:29 nonaka Exp $
+#	$NetBSD: files.pci,v 1.315 2009/06/17 04:37:57 jakllsch Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -959,7 +959,7 @@ file	dev/pci/if_lii.c		lii
 # Silicon Image SteelVine SATA-II controllers
 define siisata
 file dev/ic/siisata.c atapibus & atabus & siisata
-device siisata: ata, ata_dma, ata_udma, sata, siisata
+device siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
 attach siisata at pci with siisata_pci
 file dev/pci/siisata_pci.c siisata_pci
 
