@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.946 2009/05/06 02:52:13 cube Exp $
+#	$NetBSD: files,v 1.947 2009/06/17 03:07:51 jakllsch Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -277,6 +277,7 @@ define	midisyn
 define	videobus	{ }
 define	ata	        {[channel = -1]}
 define	sata
+define	sata_fis
 define	scsi_core
 define	scsi		{[channel = -1]}: scsi_core
 define	ata_hl		{[drive = -1]}
