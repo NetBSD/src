@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.38 2009/05/26 08:34:23 jnemeth Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.39 2009/06/17 21:04:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.38 2009/05/26 08:34:23 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.39 2009/06/17 21:04:25 dyoung Exp $");
 
 #include "opt_modular.h"
 
@@ -622,7 +622,7 @@ kobj_unload(kobj_t ko)
  *
  *	Return size and load address of an object.
  */
-void
+int
 kobj_stat(kobj_t ko, vaddr_t *address, size_t *size)
 {
 
@@ -632,6 +632,7 @@ kobj_stat(kobj_t ko, vaddr_t *address, size_t *size)
 	if (size != NULL) {
 		*size = ko->ko_size;
 	}
+	return 0; 
 }
 
 /*
@@ -1126,11 +1127,11 @@ kobj_unload(kobj_t ko)
 	panic("not modular");
 }
 
-void
+int
 kobj_stat(kobj_t ko, vaddr_t *base, size_t *size)
 {
 
-	panic("not modular");
+	return ENOSYS;
 }
 
 int
