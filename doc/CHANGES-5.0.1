@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.21 2009/06/10 19:20:28 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.22 2009/06/17 20:44:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -393,4 +393,41 @@ sys/arch/sh3/sh3/locore_subr.S			1.52
 	Fix logic error in copyinstr() when deciding whether to return EFAULT
 	or ENAMETOOLONG.
 	[uwe, ticket #802]
+
+distrib/sets/lists/xbase/mi			1.76
+external/mit/xorg/bin/xvidtune/Makefile		1.2
+
+	fix xsrc/41577: install the Xvidtune app-defaults file, after the
+	necessary preprocessing and sed processing it needs.
+	[mrg, ticket #805]
+
+sys/compat/linux/common/linux_socket.c		1.100
+
+	In sendmsg(2), do copy the msghdr structure before trying to use it.
+	[njoly, ticket #806]
+
+sys/kern/subr_kobj.c				1.35
+
+	Fix a crash observed when trying to load a corrupted ELF kernel module.
+	[rmind, ticket #809]
+
+sys/netinet/tcp_usrreq.c			1.155
+
+	sysctl_inpcblist: fix a lock leak in error path
+	[rmind, ticket #812]
+
+sys/dev/pci/ehci_pci.c				1.45
+
+	Apply hw workaround required for all SB600 revisions and SB700
+	revisions A12 and A13 to avoid USB subsystem hang symptom.
+	The USB subsystem hang symptom is observed when the system has
+	multiple USB devices connected to it or one USB device is often
+	re-connected.
+	[cegger, ticket #814]
+
+lib/libpam/modules/pam_unix/pam_unix.c		1.13
+
+	Restore the good old UNIX behavior of root password changing: only root
+	may change the root password.
+	[tonnerre, ticket #817]
 
