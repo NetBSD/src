@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.23 2009/06/17 20:49:39 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.24 2009/06/17 21:34:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -435,4 +435,11 @@ sys/kern/sys_generic.c				1.122 via patch
 
 	Updates to f_flag need to be made with atomics.
 	[rmind, ticket #811]
+
+sys/kern/tty_pty.c				1.117
+
+	Writes on the controlling tty were not being awoken from blocks,
+	use the correct condvar to make this happen.
+	this fixes PR/41566
+	[plunky, ticket #807]
 
