@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.42 2009/06/18 15:15:10 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.43 2009/06/18 15:51:44 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.42 2009/06/18 15:15:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.43 2009/06/18 15:51:44 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -268,6 +268,7 @@ udf_write(void *v)
 	struct vnode *vp     = ap->a_vp;
 	struct uio   *uio    = ap->a_uio;
 	int           ioflag = ap->a_ioflag;
+	kauth_cred_t  cred   = ap->a_cred;
 	int           advice = IO_ADV_DECODE(ap->a_ioflag);
 	struct uvm_object    *uobj;
 	struct udf_node      *udf_node = VTOI(vp);
