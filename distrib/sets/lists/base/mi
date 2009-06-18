@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.817 2009/06/16 00:26:10 mrg Exp $
+# $NetBSD: mi,v 1.818 2009/06/18 05:59:42 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -626,7 +626,6 @@
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/symbols/nec		-obsolete-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/nec_vndr	base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/pc		base-x11-root
 ./usr/X11R7/lib/X11/xkb/symbols/sgi		-obsolete-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/symbols/sharp		-obsolete-	obsolete
