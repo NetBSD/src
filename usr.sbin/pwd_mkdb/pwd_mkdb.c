@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.40 2009/04/18 08:08:36 lukem Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.41 2009/06/18 17:46:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.40 2009/04/18 08:08:36 lukem Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.41 2009/06/18 17:46:24 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -133,7 +133,7 @@ static const char __yp_token[] = "__YP!";
 extern const char __yp_token[];
 #endif
 
-HASHINFO openinfo = {
+static HASHINFO openinfo = {
 	4096,		/* bsize */
 	32,		/* ffactor */
 	256,		/* nelem */
@@ -154,24 +154,24 @@ static char	pwd_Sdb_tmp[MAX(MAXPATHLEN, LINE_MAX * 2)];
 static int 	lorder = BYTE_ORDER;
 static int	clean;
 
-void	bailout(void);
+void	bailout(void) __attribute__((__noreturn__));
 void	cp(const char *, const char *, mode_t);
 int	deldbent(DB *, const char *, int, void *);
 void	error(const char *);
-int	getdbent(DB *, const char *, int, void *, struct passwd **);
+int	getdbent(DB *, const char *, int, void *, struct passwd **, uint32_t);
 void	inconsistancy(void);
 void	install(const char *, const char *);
 int	main(int, char **);
 void	putdbents(DB *, struct passwd *, const char *, int, const char *, int,
-		  int, int);
+    int, int, uint32_t);
 void	putyptoken(DB *, const char *);
 void	rm(const char *);
 int	scan(FILE *, struct passwd *, int *, int *);
-void	usage(void);
+void	usage(void) __attribute__((__noreturn__));
 void	wr_error(const char *);
-void	checkversion(DB *);
-uint32_t getversion(void);
-void	setversion(DB *);
+void	checkversion(uint32_t, uint32_t);
+uint32_t getversion(const char *);
+void	setversion(DB *, uint32_t);
 
 #define SWAP(sw) \
     ((sizeof(sw) == 2 ? (typeof(sw))bswap16((uint16_t)sw) : \
@@ -181,7 +181,7 @@ void	setversion(DB *);
 int
 main(int argc, char *argv[])
 {
-	int ch, makeold, tfd, lineno, found, rv, hasyp, secureonly;
+	int ch, makeold, tfd, lineno, found, rv, hasyp, secureonly, verbose;
 	struct passwd pwd, *tpwd;
 	char *username;
 	DB *dp, *edp;
@@ -191,6 +191,8 @@ main(int argc, char *argv[])
 	char buf[MAXPATHLEN];
 	struct stat st;
 	u_int cachesize;
+	uint32_t version, req_version;
+	uint32_t sversion, req_sversion;
 
 	prefix[0] = '\0';
 	makeold = 0;
@@ -202,8 +204,10 @@ main(int argc, char *argv[])
 	newuser = 0;
 	dp = NULL;
 	cachesize = 0;
+	verbose = 0;
+	req_version = req_sversion = ~0U;
 
-	while ((ch = getopt(argc, argv, "BLc:d:psu:v")) != -1)
+	while ((ch = getopt(argc, argv, "BLc:d:psu:V:v")) != -1)
 		switch (ch) {
 		case 'B':			/* big-endian output */
 			lorder = BIG_ENDIAN;
@@ -226,7 +230,13 @@ main(int argc, char *argv[])
 		case 'u':			/* modify one user only */
 			username = optarg;
 			break;
-		case 'v':			/* backward compatible */
+		case 'V':
+			req_sversion = req_version = (uint32_t)atoi(optarg);
+			if (req_version > 1)
+				err(1, "Unknown version %u\n", req_version);
+			break;
+		case 'v':
+			verbose++;
 			break;
 		case '?':
 		default:
@@ -298,10 +308,22 @@ main(int argc, char *argv[])
 		if (dp == NULL)
 			error(pwd_db_tmp);
 		clean |= FILE_INSECURE;
-		if (username != NULL)
-			checkversion(dp);
-		else
-			setversion(dp);
+		version = getversion(_PATH_MP_DB);
+		if (req_version == ~0U)
+			req_version = version;
+		if (verbose)
+			fprintf(stderr, "%s: " _PATH_MP_DB
+			    " version %u requested %u\n",
+			    getprogname(), version, req_version);
+		if (username != NULL && req_version != version)
+			checkversion(req_version, version);
+		else if (req_version != version) {
+			if (verbose)
+				fprintf(stderr, "%s: changing " _PATH_MP_DB
+				    " from version %u to version %u\n",
+				    getprogname(), version, req_version);
+			setversion(dp, req_version);
+		}
 	}
 
 	/* Open the temporary encrypted password database. */
@@ -315,10 +337,22 @@ main(int argc, char *argv[])
 	if (!edp)
 		error(pwd_Sdb_tmp);
 	clean |= FILE_SECURE;
+	sversion = getversion(_PATH_SMP_DB);
+	if (verbose)
+		fprintf(stderr, "%s: " _PATH_SMP_DB
+		    " version %u requested %u\n",
+		    getprogname(), sversion, req_version);
+	if (req_sversion == ~0U)
+		req_sversion = sversion;
 	if (username != NULL)
-		checkversion(edp);
-	else
-		setversion(edp);
+		checkversion(req_sversion, sversion);
+	else if (req_sversion != sversion) {
+		if (verbose)
+			fprintf(stderr, "%s: changing " _PATH_SMP_DB
+			    " from version %u to version %u\n",
+			    getprogname(), sversion, req_sversion);
+		setversion(edp, req_sversion);
+	}
 
 	/*
 	 * Open file for old password file.  Minor trickiness -- don't want to
@@ -345,7 +379,8 @@ main(int argc, char *argv[])
 		/*
 		 * Determine if this is a new entry.
 		 */
-		if (getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYNAME, username, &tpwd))
+		if (getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYNAME, username, &tpwd,
+		    sversion))
 			newuser = 1;
 		else {
 			newuser = 0;
@@ -394,7 +429,7 @@ main(int argc, char *argv[])
 			/* Write the database entry out. */
 			if (!secureonly)
 				putdbents(dp, &pwd, "*", flags, pwd_db_tmp,
-				    lineno, dbflg, uid_dbflg);
+				    lineno, dbflg, uid_dbflg, req_version);
 			continue;
 		} else if (strcmp(username, pwd.pw_name) != 0)
 			continue;
@@ -409,7 +444,8 @@ main(int argc, char *argv[])
 		 * Ensure that the text file and database agree on
 		 * which line the record is from.
 		 */
-		rv = getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYNUM, &lineno, &tpwd);
+		rv = getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYNUM, &lineno, &tpwd,
+		    sversion);
 		if (newuser) {
 			if (rv == 0)
 				inconsistancy();
@@ -423,7 +459,7 @@ main(int argc, char *argv[])
 			 * same username.
 			 */
 			if (!getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYUID, &olduid,
-			    &tpwd)) {
+			    &tpwd, sversion)) {
 				if (strcmp(username, tpwd->pw_name) == 0) {
 					if (!secureonly)
 						deldbent(dp, pwd_db_tmp,
@@ -441,16 +477,16 @@ main(int argc, char *argv[])
 		 * it.
 		 */
 		if (!getdbent(edp, pwd_Sdb_tmp, _PW_KEYBYUID, &pwd.pw_uid,
-		    &tpwd))
+		    &tpwd, sversion))
 			if (strcmp(username, tpwd->pw_name) != 0)
 				uid_dbflg = R_NOOVERWRITE;
 
 		/* Write the database entries out */
 		if (!secureonly)
 			putdbents(dp, &pwd, "*", flags, pwd_db_tmp, lineno,
-			    dbflg, uid_dbflg);
+			    dbflg, uid_dbflg, req_version);
 		putdbents(edp, &pwd, pwd.pw_passwd, flags, pwd_Sdb_tmp,
-		    lineno, dbflg, uid_dbflg);
+		    lineno, dbflg, uid_dbflg, req_sversion);
 
 		found = 1;
 		if (!makeold)
@@ -475,7 +511,7 @@ main(int argc, char *argv[])
 		rewind(fp);
 		for (lineno = 0; scan(fp, &pwd, &flags, &lineno);)
 			putdbents(edp, &pwd, pwd.pw_passwd, flags, pwd_Sdb_tmp,
-			    lineno, dbflg, uid_dbflg);
+			    lineno, dbflg, uid_dbflg, req_sversion);
 
 		/* Store YP token if needed. */
 		if (hasyp)
@@ -653,54 +689,49 @@ bailout(void)
 	exit(EXIT_FAILURE);
 }
 
-/*
- * Ensures that an existing database is up to date.
- *
- * Makes sure that the version number of an existing database matches the
- * version number setversion() writes.  If it does not, this function aborts
- * execution because updating the database without fully regenerating it will
- * leave it inconsistent.
- */
-void
-checkversion(DB *dp)
+uint32_t
+getversion(const char *fname)
 {
 	DBT data, key;
 	int ret;
+	uint32_t version = 0;
+	DB *dp;
 
+	dp = dbopen(fname, O_RDONLY, PERM_INSECURE, DB_HASH, NULL);
+	if (dp == NULL) {
+		warn("Cannot open database %s", fname);
+		bailout();
+	}
 	key.data = __UNCONST("VERSION");
 	key.size = strlen((const char *)key.data) + 1;
 
-	ret = (*dp->get)(dp, &key, &data, 0);
-	if (ret == -1) {
-		warnx("cannot get VERSION record from database");
-		bailout();
+	switch (ret = (*dp->get)(dp, &key, &data, 0)) {
+	case -1:	/* Error */
+		warn("Cannot get VERSION record from database");
+		goto out;
+	case 0:
+		if (data.size != sizeof(version)) {
+		    warnx("Bad VERSION record in database");
+		    goto out;
+		}
+		memcpy(&version, data.data, sizeof(version));
+		/*FALLTHROUGH*/
+	case 1:
+		(*dp->close)(dp);
+		return version;
+	default:
+		warnx("internal error db->get returns %d", ret);
+		goto out;
 	}
-
-	if (ret == 1 || (uint32_t)(*(int *)data.data) != getversion()) {
-		warnx("databases are laid out according to an old version");
-		warnx("re-build the databases without -u");
-		bailout();
-	}
-}
-
-/*
- * Returns the version number we write to and expect from databases.
- */
-uint32_t
-getversion(void)
-{
-	uint32_t version = sizeof(((struct passwd *)NULL)->pw_change) != sizeof(int32_t);
-	if (lorder != BYTE_ORDER)
-		version = SWAP(version);
-	return version;
+out:
+	(*dp->close)(dp);
+	bailout();
 }
 
 void
-setversion(DB *dp)
+setversion(DB *dp, uint32_t version)
 {
 	DBT data, key;
-	uint32_t version = getversion();
-
 	key.data = __UNCONST("VERSION");
 	key.size = strlen((const char *)key.data) + 1;
 
@@ -709,6 +740,15 @@ setversion(DB *dp)
 
 	if ((*dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
 		wr_error("setversion");
+}
+
+void
+checkversion(uint32_t req_version, uint32_t version)
+{
+	(void)fprintf(stderr, "%s: you cannot change a single "
+	    "record from version %u to version %u\n", getprogname(),
+	    version, req_version);
+	bailout();
 }
 
 /*
@@ -728,7 +768,7 @@ setversion(DB *dp)
 
 void
 putdbents(DB *dp, struct passwd *pw, const char *passwd, int flags,
-	  const char *fn, int lineno, int dbflg, int uid_dbflg)
+      const char *fn, int lineno, int dbflg, int uid_dbflg, uint32_t version)
 {
 	struct passwd pwd;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024], *p;
@@ -744,9 +784,31 @@ putdbents(DB *dp, struct passwd *pw, const char *passwd, int flags,
 	if (lorder != BYTE_ORDER) {
 		pwd.pw_uid = SWAP(pwd.pw_uid);
 		pwd.pw_gid = SWAP(pwd.pw_gid);
-		pwd.pw_change = SWAP(pwd.pw_change);
-		pwd.pw_expire = SWAP(pwd.pw_expire);
 	}
+
+#define WRITEPWTIMEVAR(pwvar) \
+	do { \
+		if (version == 0 && \
+		    sizeof(pwvar) == sizeof(uint64_t)) { \
+			uint32_t tmp = (uint32_t)pwvar; \
+			if (lorder != BYTE_ORDER) \
+				tmp = SWAP(tmp); \
+			memmove(p, &tmp, sizeof(tmp)); \
+			p += sizeof(tmp); \
+		} else if (version == 1 && \
+		    sizeof(pwvar) == sizeof(uint32_t)) { \
+			uint64_t tmp = pwvar; \
+			if (lorder != BYTE_ORDER) \
+				tmp = SWAP(tmp); \
+			memmove(p, &tmp, sizeof(tmp)); \
+			p += sizeof(tmp); \
+		} else { \
+			if (lorder != BYTE_ORDER) \
+				pwvar = SWAP(pwvar); \
+			memmove(p, &pwvar, sizeof(pwvar)); \
+			p += sizeof(pwvar); \
+		} \
+	} while (/*CONSTCOND*/0)
 
 	/* Create insecure data. */
 	p = buf;
@@ -756,14 +818,12 @@ putdbents(DB *dp, struct passwd *pw, const char *passwd, int flags,
 	p += sizeof(pwd.pw_uid);
 	memmove(p, &pwd.pw_gid, sizeof(pwd.pw_gid));
 	p += sizeof(pwd.pw_gid);
-	memmove(p, &pwd.pw_change, sizeof(pwd.pw_change));
-	p += sizeof(pwd.pw_change);
+	WRITEPWTIMEVAR(pwd.pw_change);
 	COMPACT(pwd.pw_class);
 	COMPACT(pwd.pw_gecos);
 	COMPACT(pwd.pw_dir);
 	COMPACT(pwd.pw_shell);
-	memmove(p, &pwd.pw_expire, sizeof(pwd.pw_expire));
-	p += sizeof(pwd.pw_expire);
+	WRITEPWTIMEVAR(pwd.pw_expire);
 	x = flags;
 	if (lorder != BYTE_ORDER)
 		x = SWAP(x);
@@ -830,7 +890,8 @@ deldbent(DB *dp, const char *fn, int type, void *keyp)
 }
 
 int
-getdbent(DB *dp, const char *fn, int type, void *keyp, struct passwd **tpwd)
+getdbent(DB *dp, const char *fn, int type, void *keyp, struct passwd **tpwd,
+    uint32_t version)
 {
 	static char buf[MAX(MAXPATHLEN, LINE_MAX * 2)];
 	static struct passwd pwd;
@@ -869,39 +930,64 @@ getdbent(DB *dp, const char *fn, int type, void *keyp, struct passwd **tpwd)
 
 	pwd.pw_name = p;
 	while (*p++ != '\0')
-		;
+		continue;
 	pwd.pw_passwd = p;
 	while (*p++ != '\0')
-		;
+		continue;
 
 	memcpy(&pwd.pw_uid, p, sizeof(pwd.pw_uid));
 	p += sizeof(pwd.pw_uid);
 	memcpy(&pwd.pw_gid, p, sizeof(pwd.pw_gid));
 	p += sizeof(pwd.pw_gid);
-	memcpy(&pwd.pw_change, p, sizeof(pwd.pw_change));
-	p += sizeof(pwd.pw_change);
+
+#define READPWTIMEVAR(pwvar) \
+	do { \
+		if (version == 0 && \
+		    sizeof(pwvar) == sizeof(uint64_t)) { \
+			uint32_t tmp; \
+			memcpy(&tmp, p, sizeof(tmp)); \
+			p += sizeof(tmp); \
+			if (lorder != BYTE_ORDER) \
+				pwvar = SWAP(tmp); \
+			else \
+				pwvar = tmp; \
+		} else if (version == 1 && \
+		    sizeof(pwvar) == sizeof(uint32_t)) { \
+			uint64_t tmp; \
+			memcpy(&tmp, p, sizeof(tmp)); \
+			p += sizeof(tmp); \
+			if (lorder != BYTE_ORDER) \
+				pwvar = (uint32_t)SWAP(tmp); \
+			else \
+				pwvar = (uint32_t)tmp; \
+		} else { \
+			memcpy(&pwvar, p, sizeof(pwvar)); \
+			p += sizeof(pwvar); \
+			if (lorder != BYTE_ORDER) \
+				pwvar = SWAP(pwvar); \
+		} \
+	} while (/*CONSTCOND*/0)
+		
+	READPWTIMEVAR(pwd.pw_change);
 
 	pwd.pw_class = p;
 	while (*p++ != '\0')
-		;
+		continue;
 	pwd.pw_gecos = p;
 	while (*p++ != '\0')
-		;
+		continue;
 	pwd.pw_dir = p;
 	while (*p++ != '\0')
-		;
+		continue;
 	pwd.pw_shell = p;
 	while (*p++ != '\0')
-		;
+		continue;
 
-	memcpy(&pwd.pw_expire, p, sizeof(pwd.pw_expire));
-	p += sizeof(pwd.pw_expire);
+	READPWTIMEVAR(pwd.pw_expire);
 
 	if (lorder != BYTE_ORDER) {
 		pwd.pw_uid = SWAP(pwd.pw_uid);
 		pwd.pw_gid = SWAP(pwd.pw_gid);
-		pwd.pw_change = SWAP(pwd.pw_change);
-		pwd.pw_expire = SWAP(pwd.pw_expire);
 	}
 
 	*tpwd = &pwd;
@@ -927,6 +1013,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: pwd_mkdb [-BLps] [-c cachesize] [-d directory] [-u user] file\n");
+	    "Usage: %s [-BLpsv] [-c cachesize] [-d directory] [-u user] "
+	    "[-V version] file\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
