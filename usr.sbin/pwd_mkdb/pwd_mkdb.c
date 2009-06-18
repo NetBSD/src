@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.42 2009/06/18 21:59:24 christos Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.43 2009/06/18 22:13:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.42 2009/06/18 21:59:24 christos Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.43 2009/06/18 22:13:56 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -752,7 +752,7 @@ setversion(struct pwddb *db)
 	data.data = &db->wversion;
 	data.size = sizeof(uint32_t);
 
-	if ((*db->db->put)(db->db, &key, &data, R_NOOVERWRITE) != 0) {
+	if ((*db->db->put)(db->db, &key, &data, 0) != 0) {
 		warn("Can't write VERSION record to %s", db->dbname);
 		bailout();
 	}
