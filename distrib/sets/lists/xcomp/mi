@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.96 2009/06/18 06:36:58 mrg Exp $
+#	 $NetBSD: mi,v 1.97 2009/06/18 21:05:35 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6179,7 +6179,7 @@
 ./usr/X11R7/lib/pkgconfig/fontconfig.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontenc.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontsproto.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/fontutil.pc			-unknown-	xorg,xfont
+./usr/X11R7/lib/pkgconfig/fontutil.pc			-unknown-	xorg,x11fonts
 ./usr/X11R7/lib/pkgconfig/freetype2.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/gl.pc				-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/glproto.pc			-unknown-	xorg
