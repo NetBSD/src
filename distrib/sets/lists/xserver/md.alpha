@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.19 2009/06/16 00:26:11 mrg Exp $
+# $NetBSD: md.alpha,v 1.20 2009/06/18 05:57:34 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -132,10 +132,10 @@
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_pic.a	-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	obsolete
+./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so.0		-unknown-	obsolete
