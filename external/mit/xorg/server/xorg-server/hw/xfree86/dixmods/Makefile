@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/06/12 01:59:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2009/06/18 03:32:41 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -25,6 +25,7 @@ SUBDIR = \
 	dbe \
 	extmod \
 	fb \
+	glx \
 	record \
 	shadow \
 	wfb \
