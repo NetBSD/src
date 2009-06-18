@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/06/10 08:30:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/06/18 02:45:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,7 @@ X11EXTRAMANDEFS+=	-e 's%__configfilepath__%${XFSCONFIGDIR}/config%g; \
 
 BUILDSYMLINKS=	config.cpp fsconfig.cpp
 CPPSCRIPTS=	fsconfig
-CPPSCRIPTFLAGS=	-DDEFAULTFONTPATH=${X11FONTDIR}/misc/,${X11FONTDIR}/Speedo/,${X11FONTDIR}/Type1/,${X11FONTDIR}/CID/,${X11FONTDIR}/75dpi/,${X11FONTDIR}/100dpi/ \
+CPPSCRIPTFLAGS=	-DDEFAULTFONTPATH=${X11FONTDIR}/misc/,${X11FONTDIR}/Type1/,${X11FONTDIR}/75dpi/,${X11FONTDIR}/100dpi/ \
 		-DFSERRORS=/var/log/xfs.log
 
 CONFIGFILES=	fsconfig
