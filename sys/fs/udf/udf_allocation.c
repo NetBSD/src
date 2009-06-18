@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.24 2009/06/18 15:06:38 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.25 2009/06/18 15:09:18 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.24 2009/06/18 15:06:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.25 2009/06/18 15:09:18 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1028,7 +1028,7 @@ udf_allocate_space(struct udf_mount *ump, int udf_c_type,
 		lmappos = lmapping;
 		printf("udf_allocate_space, allocated logical lba :\n");
 		for (lb_num = 0; lb_num < num_lb; lb_num++) {
-			printf("%s %"PRIu64",", (lb_num > 0)?",":"", 
+			printf("%s %"PRIu64, (lb_num > 0)?",":"", 
 				*lmappos++);
 		}
 		printf("\n");
@@ -2253,7 +2253,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 		/* convert to a normal alloc and select type */
 		isdir    = (vp->v_type == VDIR);
 		my_part  = udf_rw16(udf_node->loc.loc.part_num);
-		dst_part = isdir? ump->fids_part : ump->data_part;
+		dst_part = isdir ? ump->fids_part : ump->data_part;
 		addr_type = UDF_ICB_SHORT_ALLOC;
 		if (dst_part != my_part)
 			addr_type = UDF_ICB_LONG_ALLOC;
