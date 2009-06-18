@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.41 2009/05/07 19:30:30 elad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.42 2009/06/18 15:15:10 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.41 2009/05/07 19:30:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.42 2009/06/18 15:15:10 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -383,7 +383,7 @@ udf_write(void *v)
 	if (error) {
 		/* bring back file size to its former size */
 		/* take notice of its errors? */
-		(void) udf_chsize(vp, (u_quad_t) old_size, NOCRED);
+		(void) udf_chsize(vp, (u_quad_t) old_size, cred);
 
 		/* roll back uio */
 		uio->uio_offset -= resid - uio->uio_resid;
@@ -2154,7 +2154,6 @@ udf_advlock(void *v)
 }
 
 /* --------------------------------------------------------------------- */
-
 
 /* Global vfs vnode data structures for udfs */
 int (**udf_vnodeop_p)(void *);
