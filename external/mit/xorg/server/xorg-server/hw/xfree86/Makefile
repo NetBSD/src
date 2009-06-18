@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.27 2009/06/12 01:59:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2009/06/18 02:46:10 mrg Exp $
 
-SUBDIR=		common init ddc dixmods doc dri dri2 dummy i2c int10 loader \
+SUBDIR=		common init ddc dixmods doc dri dri2 dummy i2c loader \
 		xf86modes exa \
 		xorgos ramdac shadowfb vbe vgahw \
 		x86emu xaa xf86config xf8_16bpp
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	int10 
+.endif
 
 SUBDIR+=	.WAIT utils
 
