@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.92 2009/06/18 15:01:34 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.93 2009/06/18 15:03:34 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.92 2009/06/18 15:01:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.93 2009/06/18 15:03:34 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -5434,7 +5434,7 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 		return 0;
 	}
 
-	/* lock node */
+	/* lock node; unlocked in callback */
 	UDF_LOCK_NODE(udf_node, 0);
 
 	/* at least one descriptor writeout */
