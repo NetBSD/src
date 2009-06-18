@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.250 2009/05/12 18:07:54 plunky Exp $
+#	$NetBSD: bsd.README,v 1.251 2009/06/18 06:36:59 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -324,6 +324,11 @@ MKX11		If not "no", depending on the value of ${X11FLAVOUR},
 		src/external/mit/xorg (modular Xorg) to cross-build X11 and
 		automatically enables creation of X sets.
 		Default: no
+
+MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
+		install the X fonts.  The xfont set is still created but
+		will be empty.
+		Default: yes
 
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
