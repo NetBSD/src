@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.29 2009/06/12 01:55:59 mrg Exp $	x11
+# $NetBSD: md.sgimips,v 1.30 2009/06/18 05:57:34 mrg Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -452,10 +452,11 @@
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_pic.a	-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	obsolete
+./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx_g.a		-unknown-	debuglib,xorg
+./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libmfb.so.0		-unknown-	obsolete
