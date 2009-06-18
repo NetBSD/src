@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.20 2007/08/26 23:55:50 dyoung Exp $
+# $NetBSD: sysdb,v 1.21 2009/06/18 22:00:04 christos Exp $
 #
 
 # PROVIDE: sysdb
@@ -68,7 +68,7 @@ build_devdb()
 build_password()
 {
 	local p=/etc/master.passwd
-	check_file $p /etc/spwd.db pwd_mkdb $p
+	check_file $p /etc/spwd.db pwd_mkdb -w $p
 }
 
 build_utmp()
