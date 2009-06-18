@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.91 2009/05/20 15:30:26 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.92 2009/06/18 15:01:34 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.91 2009/05/20 15:30:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.92 2009/06/18 15:01:34 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -5494,14 +5494,6 @@ udf_dispose_node(struct udf_node *udf_node)
 				"v_numoutput = %d", udf_node, vp->v_numoutput);
 #endif
 
-	/* wait until out of sync (just in case we happen to stumble over one */
-	KASSERT(!mutex_owned(&mntvnode_lock));
-	mutex_enter(&mntvnode_lock);
-	while (udf_node->i_flags & IN_SYNCED) {
-		cv_timedwait(&udf_node->ump->dirtynodes_cv, &mntvnode_lock,
-			hz/16);
-	}
-	mutex_exit(&mntvnode_lock);
 
 	/* TODO extended attributes and streamdir */
 
