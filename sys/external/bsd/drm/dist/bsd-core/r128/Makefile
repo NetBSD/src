@@ -3,7 +3,6 @@
 .PATH:	${.CURDIR}/..
 KMOD	= r128
 NO_MAN	= YES
-NOMAN	= YES
 SRCS    = r128_cce.c r128_drv.c r128_state.c r128_irq.c
 SRCS   += device_if.h bus_if.h pci_if.h opt_drm.h
 CFLAGS += ${DEBUG_FLAGS} -I. -I..
