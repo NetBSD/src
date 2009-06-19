@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.32 2009/06/17 20:49:26 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.33 2009/06/19 22:00:50 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1050,12 +1050,72 @@ sys/dev/pci/ehci_pci.c				1.45
 
 lib/libpam/modules/pam_unix/pam_unix.c		1.13
 
-	Restore the good old UNIX behavior of root password changing: only root
-	may change the root password.
+	Restore the good old UNIX behavior of root password changing:
+	only root may change the root password.
 	[tonnerre, ticket #817]
 
 sys/kern/sys_generic.c				1.122 via patch
 
 	Updates to f_flag need to be made with atomics.
 	[rmind, ticket #811]
+
+sys/arch/amd64/conf/files.amd64			1.68
+sys/arch/i386/conf/files.i386			1.350
+sys/arch/x86/include/rtc.h			1.1
+sys/arch/x86/isa/clock.c			1.33
+sys/arch/x86/isa/rtc.c				1.1
+sys/arch/xen/conf/files.xen			1.100
+sys/arch/xen/xen/clock.c			1.50 via patch
+
+	Split mc146818-related functions from clock.c into rtc.c.
+	Call rtc_set_ymdhms() from xen/xen/clock.c:xen_rtc_set() for
+	xen3 dom0 kernels as the Xen3 hypervisor doesn't write the new
+	date/time to the CMOS by itself.  Now a XEN3_DOM0 kernel
+	properly updates the CMOS time.
+	[bouyer, ticket #816]
+
+sys/dev/sbus/if_le_ledma.c			1.31
+
+	Don't immediately switch UTP/AUI ports on lost carrier.
+	It may take a while for modern switches to set 10baseT media.
+	[tsutsui, ticket #818]
+
+sys/arch/amd64/amd64/mainbus.c			1.28 via patch
+sys/arch/i386/i386/mainbus.c			1.85 via patch
+sys/arch/x86/x86/mpacpi.c			patch
+sys/arch/x86/x86/mpbios.c			patch
+
+	- Make MP SCANPCI function for ACPI_SCANPCI and MPBIOS_SCANPCI
+	  return a number of attached PCI busses
+	- If no valid PCI busses are attached in the MP SCANPCI function,
+	  try to probe and attach pci0 at mainbus as well as kernels
+	  with no SCANPCI options
+	Fixes PR port-i386/38729 (ACPI kernel booted under qemu cannot
+	detect devices).
+	[tsutsui, ticket #819]
+
+distrib/hp300/miniroot/install.md		1.14
+
+	Make hp300's install.md script probe cd(4) devices properly.
+	[tsutsui, ticket #820]
+
+sys/compat/linux/common/linux_sched.c		1.59
+
+	In linux_sys_sched_getaffinity(), do not leak memory on error.
+	[njoly, ticket #822]
+
+sys/dev/ic/rtl8169.c				1.107, 1.114-1.119, 1.121
+sys/dev/ic/rtl81x9reg.h				1.36-1.39
+sys/dev/ic/rtl81x9var.h				1.47
+sys/dev/mii/rgephy.c				1.27 via patch
+sys/dev/pci/if_re_pci.c				1.36
+
+	- detect RTL8169CP, RTL8168D/8111D, and RTL8103E variants
+	- fix rgephy(4) problem on RTL8111D reported on current-users:
+	http://mail-index.NetBSD.org/current-users/2009/04/12/msg008977.html
+	http://mail-index.NetBSD.org/current-users/2009/04/19/msg009096.html
+	- pull more quirk handling from FreeBSD
+	- remove "B" suffix from RTL8168 device names in attach message
+	- fix RX hwcksum for DESCV2 chips for PR kern/40605
+	[tsutsui, ticket #821]
 
