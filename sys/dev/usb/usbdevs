@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.527 2009/05/25 11:35:10 nisimura Exp $
+$NetBSD: usbdevs,v 1.528 2009/06/19 01:14:27 mrg Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1604,10 +1604,12 @@ product MOBILITY EA		0x0204	Ethernet Adapter
 product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
 
 /* MosChip Semiconductor */
+product MOSCHIP MCS7703		0x7703	MCS7703 USB Serial Adapter
 product MOSCHIP MCS7780		0x7780	Fast IrDA Adapter
 product MOSCHIP MCS7781		0x7781	Fast IrDA Adapter
 product MOSCHIP MCS7784		0x7784	Slow IrDA Adapter
 product MOSCHIP MCS7830		0x7830	Ethernet Adapter
+product MOSCHIP MCS7840		0x7840	MCS7840 USB Serial Adapter
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
