@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.105.4.7 2009/05/01 02:11:15 snj Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.105.4.8 2009/06/19 21:51:43 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.105.4.7 2009/05/01 02:11:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.105.4.8 2009/06/19 21:51:43 snj Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -567,43 +567,27 @@ re_attach(struct rtk_softc *sc)
 
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
 		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
-		/* These rev numbers are taken from Realtek's driver */
 		switch (hwrev) {
 		case RTK_HWREV_8169:
-			/* XXX not in the Realtek driver */
-			sc->sc_rev = 1;
 			sc->sc_quirk |= RTKQ_8169NONS;
 			break;
 		case RTK_HWREV_8169S:
 		case RTK_HWREV_8110S:
-			sc->sc_rev = 3;
-			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
 		case RTK_HWREV_8169_8110SB:
-			sc->sc_rev = 4;
-			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
 		case RTK_HWREV_8169_8110SC:
-			sc->sc_rev = 5;
 			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
-		case RTK_HWREV_8101E:
-			sc->sc_rev = 11;
-			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168_SPIN1:
-			sc->sc_rev = 21;
-			break;
 		case RTK_HWREV_8168_SPIN2:
-			sc->sc_rev = 22;
-			break;
 		case RTK_HWREV_8168_SPIN3:
-			sc->sc_rev = 23;
+			sc->sc_quirk |= RTKQ_MACSTAT;
 			break;
 		case RTK_HWREV_8168C:
 		case RTK_HWREV_8168C_SPIN2:
-			sc->sc_rev = 24;
-			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+		case RTK_HWREV_8168CP:
+		case RTK_HWREV_8168D:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP;
 			/*
 			 * From FreeBSD driver:
 			 * 
@@ -619,22 +603,23 @@ re_attach(struct rtk_softc *sc)
 			 */
 			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
-		case RTK_HWREV_8102E:
-		case RTK_HWREV_8102EL:
-			sc->sc_rev = 25;
-			sc->sc_quirk |=
-			    RTKQ_DESCV2 | RTKQ_NOEECMD | RTKQ_NOJUMBO;
-			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
-			/* XXX not in the Realtek driver */
-			sc->sc_rev = 0;
+		case RTK_HWREV_8101E:
 			sc->sc_quirk |= RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8102E:
+		case RTK_HWREV_8102EL:
+		case RTK_HWREV_8103E:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
 			    "Unknown revision (0x%08x)\n", hwrev);
-			sc->sc_rev = 0;
+			/* assume the latest features */
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 		}
 
 		/* Set RX length mask */
@@ -1266,25 +1251,49 @@ re_rxeof(struct rtk_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 
 		/* Do RX checksumming */
+		if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {
+			/* Check IP header checksum */
+			if ((rxstat & RE_RDESC_STAT_PROTOID) != 0) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (rxstat & RE_RDESC_STAT_IPSUMBAD)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
 
-		/* Check IP header checksum */
-		if ((rxstat & RE_RDESC_STAT_PROTOID) != 0 &&
-		    ((sc->sc_quirk & RTKQ_DESCV2) == 0 ||
-		     (rxvlan & RE_RDESC_VLANCTL_IPV4) != 0)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
+				/* Check TCP/UDP checksum */
+				if (RE_TCPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+					if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				} else if (RE_UDPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+					if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				}
+			}
+		} else {
+			/* Check IPv4 header checksum */
+			if ((rxvlan & RE_RDESC_VLANCTL_IPV4) != 0) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (rxstat & RE_RDESC_STAT_IPSUMBAD)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
 
-		/* Check TCP/UDP checksum */
-		if (RE_TCPPKT(rxstat)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-			if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		} else if (RE_UDPPKT(rxstat)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-			if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+				/* Check TCPv4/UDPv4 checksum */
+				if (RE_TCPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+					if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				} else if (RE_UDPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+					if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				}
+			}
+			/* XXX Check TCPv6/UDPv6 checksum? */
 		}
 
 		if (rxvlan & RE_RDESC_VLANCTL_TAG) {
@@ -1713,6 +1722,7 @@ re_init(struct ifnet *ifp)
 	const uint8_t *enaddr;
 	uint32_t rxcfg = 0;
 	uint32_t reg;
+	uint16_t cfg;
 	int error;
 
 	if ((error = re_enable(sc)) != 0)
@@ -1730,32 +1740,27 @@ re_init(struct ifnet *ifp)
 	 * RX checksum offload. We must configure the C+ register
 	 * before all others.
 	 */
-	reg = 0;
-
-	/*
-	 * XXX: Realtek docs say bits 0 and 1 are reserved, for 8169S/8110S.
-	 * FreeBSD  drivers set these bits anyway (for 8139C+?).
-	 * So far, it works.
-	 */
+	cfg = RE_CPLUSCMD_PCI_MRW;
 
 	/*
 	 * XXX: For old 8169 set bit 14.
 	 *      For 8169S/8110S and above, do not set bit 14.
 	 */
 	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
-		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;;
+		cfg |= (0x1 << 14);
 
-	if (1)  {/* not for 8169S ? */
-		reg |=
-		    RTK_CPLUSCMD_VLANSTRIP |
-		    (ifp->if_capenable &
-		    (IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_TCPv4_Rx |
-		     IFCAP_CSUM_UDPv4_Rx) ?
-		    RTK_CPLUSCMD_RXCSUM_ENB : 0);
-	}
+	if ((ifp->if_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
+		cfg |= RE_CPLUSCMD_VLANSTRIP;
+	if ((ifp->if_capenable & (IFCAP_CSUM_IPv4_Rx |
+	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx)) != 0)
+		cfg |= RE_CPLUSCMD_RXCSUM_ENB;
+	if ((sc->sc_quirk & RTKQ_MACSTAT) != 0) {
+		cfg |= RE_CPLUSCMD_MACSTAT_DIS;
+		cfg |= RE_CPLUSCMD_TXENB;
+	} else
+		cfg |= RE_CPLUSCMD_RXENB | RE_CPLUSCMD_TXENB;
 
-	CSR_WRITE_2(sc, RTK_CPLUS_CMD,
-	    reg | RTK_CPLUSCMD_RXENB | RTK_CPLUSCMD_TXENB);
+	CSR_WRITE_2(sc, RTK_CPLUS_CMD, cfg);
 
 	/* XXX: from Realtek-supplied Linux driver. Wholly undocumented. */
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0)
@@ -1975,8 +1980,14 @@ re_stop(struct ifnet *ifp, int disable)
 
 	mii_down(&sc->mii);
 
-	CSR_WRITE_1(sc, RTK_COMMAND, 0x00);
+	if ((sc->sc_quirk & RTKQ_CMDSTOP) != 0)
+		CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_STOPREQ | RTK_CMD_TX_ENB |
+		    RTK_CMD_RX_ENB);
+	else
+		CSR_WRITE_1(sc, RTK_COMMAND, 0x00);
+	DELAY(1000);
 	CSR_WRITE_2(sc, RTK_IMR, 0x0000);
+	CSR_WRITE_2(sc, RTK_ISR, 0xFFFF);
 
 	if (sc->re_head != NULL) {
 		m_freem(sc->re_head);
