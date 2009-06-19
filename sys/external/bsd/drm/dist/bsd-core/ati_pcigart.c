@@ -39,26 +39,87 @@
 #define ATI_PCIE_WRITE 0x4
 #define ATI_PCIE_READ 0x8
 
-static int drm_ati_alloc_pcigart_table(struct drm_device *dev,
-				       struct drm_ati_pcigart_info *gart_info)
+static void
+drm_ati_alloc_pcigart_table_cb(void *arg, bus_dma_segment_t *segs,
+			       int nsegs, int error)
 {
-	dev->sg->dmah = drm_pci_alloc(dev, gart_info->table_size,
-						PAGE_SIZE,
-						gart_info->table_mask);
-	if (dev->sg->dmah == NULL)
+	struct drm_dma_handle *dmah = arg;
+
+	if (error != 0)
+		return;
+
+	KASSERT(nsegs == 1,
+	    ("drm_ati_alloc_pcigart_table_cb: bad dma segment count"));
+
+	dmah->busaddr = segs[0].ds_addr;
+}
+
+static int
+drm_ati_alloc_pcigart_table(struct drm_device *dev,
+			    struct drm_ati_pcigart_info *gart_info)
+{
+	struct drm_dma_handle *dmah;
+	int flags, ret;
+
+	dmah = malloc(sizeof(struct drm_dma_handle), DRM_MEM_DMA,
+	    M_ZERO | M_NOWAIT);
+	if (dmah == NULL)
 		return ENOMEM;
+
+	DRM_UNLOCK();
+	ret = bus_dma_tag_create(NULL, PAGE_SIZE, 0, /* tag, align, boundary */
+	    gart_info->table_mask, BUS_SPACE_MAXADDR, /* lowaddr, highaddr */
+	    NULL, NULL, /* filtfunc, filtfuncargs */
+	    gart_info->table_size, 1, /* maxsize, nsegs */
+	    gart_info->table_size, /* maxsegsize */
+	    BUS_DMA_ALLOCNOW, NULL, NULL, /* flags, lockfunc, lockfuncargs */
+	    &dmah->tag);
+	if (ret != 0) {
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
+
+	flags = BUS_DMA_NOWAIT | BUS_DMA_ZERO;
+	if (gart_info->gart_reg_if == DRM_ATI_GART_IGP)
+	    flags |= BUS_DMA_NOCACHE;
+	
+	ret = bus_dmamem_alloc(dmah->tag, &dmah->vaddr, flags, &dmah->map);
+	if (ret != 0) {
+		bus_dma_tag_destroy(dmah->tag);
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
+	DRM_LOCK();
+
+	ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr,
+	    gart_info->table_size, drm_ati_alloc_pcigart_table_cb, dmah, 0);
+	if (ret != 0) {
+		bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
+		bus_dma_tag_destroy(dmah->tag);
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
+
+	dev->sg->dmah = dmah;
 
 	return 0;
 }
 
-static void drm_ati_free_pcigart_table(struct drm_device *dev,
-				       struct drm_ati_pcigart_info *gart_info)
+static void
+drm_ati_free_pcigart_table(struct drm_device *dev,
+			   struct drm_ati_pcigart_info *gart_info)
 {
-	drm_pci_free(dev, dev->sg->dmah);
+	struct drm_dma_handle *dmah = dev->sg->dmah;
+
+	bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
+	bus_dma_tag_destroy(dmah->tag);
+	free(dmah, DRM_MEM_DMA);
 	dev->sg->dmah = NULL;
 }
 
-int drm_ati_pcigart_cleanup(struct drm_device *dev, struct drm_ati_pcigart_info *gart_info)
+int
+drm_ati_pcigart_cleanup(struct drm_device *dev,
+			struct drm_ati_pcigart_info *gart_info)
 {
 	/* we need to support large memory configurations */
 	if (dev->sg == NULL) {
@@ -77,17 +138,17 @@ int drm_ati_pcigart_cleanup(struct drm_device *dev, struct drm_ati_pcigart_info 
 	return 1;
 }
 
-int drm_ati_pcigart_init(struct drm_device *dev,
-			 struct drm_ati_pcigart_info *gart_info)
+int
+drm_ati_pcigart_init(struct drm_device *dev,
+		     struct drm_ati_pcigart_info *gart_info)
 {
-
 	void *address = NULL;
 	unsigned long pages;
 	u32 *pci_gart, page_base;
 	dma_addr_t bus_address = 0;
+	dma_addr_t entry_addr;
 	int i, j, ret = 0;
 	int max_pages;
-	dma_addr_t entry_addr;
 
 	/* we need to support large memory configurations */
 	if (dev->sg == NULL) {
@@ -129,12 +190,14 @@ int drm_ati_pcigart_init(struct drm_device *dev,
 			page_base = (u32) entry_addr & ATI_PCIGART_PAGE_MASK;
 			switch(gart_info->gart_reg_if) {
 			case DRM_ATI_GART_IGP:
-				page_base |= (upper_32_bits(entry_addr) & 0xff) << 4;
+				page_base |=
+				    (upper_32_bits(entry_addr) & 0xff) << 4;
 				page_base |= 0xc;
 				break;
 			case DRM_ATI_GART_PCIE:
 				page_base >>= 8;
-				page_base |= (upper_32_bits(entry_addr) & 0xff) << 24;
+				page_base |=
+				    (upper_32_bits(entry_addr) & 0xff) << 24;
 				page_base |= ATI_PCIE_READ | ATI_PCIE_WRITE;
 				break;
 			default:
@@ -146,8 +209,6 @@ int drm_ati_pcigart_init(struct drm_device *dev,
 			entry_addr += ATI_PCIGART_PAGE_SIZE;
 		}
 	}
-
-	DRM_MEMORYBARRIER();
 
 	ret = 1;
 
