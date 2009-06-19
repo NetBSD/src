@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.24 2009/06/17 21:34:45 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.25 2009/06/19 21:42:15 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -442,4 +442,14 @@ sys/kern/tty_pty.c				1.117
 	use the correct condvar to make this happen.
 	this fixes PR/41566
 	[plunky, ticket #807]
+
+distrib/hp300/miniroot/install.md		1.14
+
+	Make hp300's install.md script probe cd(4) devices properly.
+	[tsutsui, ticket #820]
+
+sys/compat/linux/common/linux_sched.c		1.59
+
+	In linux_sys_sched_getaffinity(), do not leak memory on error.
+	[njoly, ticket #822]
 
