@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcidrm,v 1.4 2009/05/06 01:34:08 mrg Exp $
+#	$NetBSD: files.pcidrm,v 1.5 2009/06/19 03:53:24 mrg Exp $
 
 define	drmpci
 
@@ -68,6 +68,7 @@ file	dev/pci/drm/radeon_state.c	radeondrm & !drm_external
 
 file	external/bsd/drm/dist/bsd-core/radeon_drv.c		radeondrm & drm_external
 file	external/bsd/drm/dist/shared-core/r300_cmdbuf.c		radeondrm & drm_external
+file	external/bsd/drm/dist/shared-core/r600_cp.c		radeondrm & drm_external
 file	external/bsd/drm/dist/shared-core/radeon_cp.c		radeondrm & drm_external
 file	external/bsd/drm/dist/shared-core/radeon_irq.c		radeondrm & drm_external
 file	external/bsd/drm/dist/shared-core/radeon_mem.c		radeondrm & drm_external
