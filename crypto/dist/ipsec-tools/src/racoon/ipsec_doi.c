@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.23.4.9 2008/06/18 07:30:19 mgrooms Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.23.4.10 2009/06/19 07:32:52 tteras Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -4381,20 +4381,29 @@ ipsecdoi_id2str(id)
 	char *dat;
 	static char buf[BUFLEN];
 	struct ipsecdoi_id_b *id_b = (struct ipsecdoi_id_b *)id->v;
-	struct sockaddr saddr;
+	struct sockaddr_storage saddr_storage;
+	struct sockaddr        *saddr;
+	struct sockaddr_in     *saddr_in;
+	struct sockaddr_in6    *saddr_in6;
 	u_int plen = 0;
 
+	saddr     = (struct sockaddr *)&saddr_storage;
+	saddr_in  = (struct sockaddr_in *)&saddr_storage;
+	saddr_in6 = (struct sockaddr_in6 *)&saddr_storage;
+
+	
 	switch (id_b->type) {
 	case IPSECDOI_ID_IPV4_ADDR:
 	case IPSECDOI_ID_IPV4_ADDR_SUBNET:
 	case IPSECDOI_ID_IPV4_ADDR_RANGE:
 
 #ifndef __linux__
-		saddr.sa_len = sizeof(struct sockaddr_in);
+		saddr->sa_len = sizeof(struct sockaddr_in);
 #endif
-		saddr.sa_family = AF_INET;
-		((struct sockaddr_in *)&saddr)->sin_port = IPSEC_PORT_ANY;
-		memcpy(&((struct sockaddr_in *)&saddr)->sin_addr,
+		saddr->sa_family = AF_INET;
+
+		saddr_in->sin_port = IPSEC_PORT_ANY;
+		memcpy(&saddr_in->sin_addr,
 			id->v + sizeof(*id_b), sizeof(struct in_addr));
 		break;
 #ifdef INET6
@@ -4403,12 +4412,17 @@ ipsecdoi_id2str(id)
 	case IPSECDOI_ID_IPV6_ADDR_RANGE:
 
 #ifndef __linux__
-		saddr.sa_len = sizeof(struct sockaddr_in6);
+		saddr->sa_len = sizeof(struct sockaddr_in6);
 #endif
-		saddr.sa_family = AF_INET6;
-		((struct sockaddr_in6 *)&saddr)->sin6_port = IPSEC_PORT_ANY;
-		memcpy(&((struct sockaddr_in6 *)&saddr)->sin6_addr,
+		saddr->sa_family = AF_INET6;
+
+		saddr_in6->sin6_port = IPSEC_PORT_ANY;
+		memcpy(&saddr_in6->sin6_addr,
 			id->v + sizeof(*id_b), sizeof(struct in6_addr));
+		saddr_in6->sin6_scope_id =
+			(IN6_IS_ADDR_LINKLOCAL(&saddr_in6->sin6_addr)
+				? ((struct sockaddr_in6 *)id_b)->sin6_scope_id
+				: 0);
 		break;
 #endif
 	}
@@ -4418,7 +4432,7 @@ ipsecdoi_id2str(id)
 #ifdef INET6
 	case IPSECDOI_ID_IPV6_ADDR:
 #endif
-		len = snprintf( buf, BUFLEN, "%s", saddrwop2str(&saddr));
+		len = snprintf( buf, BUFLEN, "%s", saddrwop2str(saddr));
 		break;
 
 	case IPSECDOI_ID_IPV4_ADDR_SUBNET:
@@ -4474,42 +4488,46 @@ ipsecdoi_id2str(id)
 			plen += l;
 		}
 
-		len = snprintf( buf, BUFLEN, "%s/%i", saddrwop2str(&saddr), plen);
+		len = snprintf( buf, BUFLEN, "%s/%i", saddrwop2str(saddr), plen);
 	    }
 		break;
 
 	case IPSECDOI_ID_IPV4_ADDR_RANGE:
 
-		len = snprintf( buf, BUFLEN, "%s-", saddrwop2str(&saddr));
+		len = snprintf( buf, BUFLEN, "%s-", saddrwop2str(saddr));
 
 #ifndef __linux__
-		saddr.sa_len = sizeof(struct sockaddr_in);
+		saddr->sa_len = sizeof(struct sockaddr_in);
 #endif
-		saddr.sa_family = AF_INET;
-		((struct sockaddr_in *)&saddr)->sin_port = IPSEC_PORT_ANY;
-		memcpy(&((struct sockaddr_in *)&saddr)->sin_addr,
+		saddr->sa_family = AF_INET;
+		saddr_in->sin_port = IPSEC_PORT_ANY;
+		memcpy(&saddr_in->sin_addr,
 			id->v + sizeof(*id_b) + sizeof(struct in_addr),
 			sizeof(struct in_addr));
 
-		len += snprintf( buf + len, BUFLEN - len, "%s", saddrwop2str(&saddr));
+		len += snprintf( buf + len, BUFLEN - len, "%s", saddrwop2str(saddr));
 
 		break;
 
 #ifdef INET6
 	case IPSECDOI_ID_IPV6_ADDR_RANGE:
 
-		len = snprintf( buf, BUFLEN, "%s-", saddrwop2str(&saddr));
+		len = snprintf( buf, BUFLEN, "%s-", saddrwop2str(saddr));
 
 #ifndef __linux__
-		saddr.sa_len = sizeof(struct sockaddr_in6);
+		saddr->sa_len = sizeof(struct sockaddr_in6);
 #endif
-		saddr.sa_family = AF_INET6;
-		((struct sockaddr_in6 *)&saddr)->sin6_port = IPSEC_PORT_ANY;
-		memcpy(&((struct sockaddr_in6 *)&saddr)->sin6_addr,
+		saddr->sa_family = AF_INET6;
+		saddr_in6->sin6_port = IPSEC_PORT_ANY;
+		memcpy(&saddr_in6->sin6_addr,
 			id->v + sizeof(*id_b) + sizeof(struct in6_addr),
 			sizeof(struct in6_addr));
+		saddr_in6->sin6_scope_id =
+			(IN6_IS_ADDR_LINKLOCAL(&saddr_in6->sin6_addr)
+				? ((struct sockaddr_in6 *)id_b)->sin6_scope_id
+				: 0);
 
-		len += snprintf( buf + len, BUFLEN - len, "%s", saddrwop2str(&saddr));
+		len += snprintf( buf + len, BUFLEN - len, "%s", saddrwop2str(saddr));
 
 		break;
 #endif
