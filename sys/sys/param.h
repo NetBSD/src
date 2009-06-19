@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.348 2009/06/14 21:37:06 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.349 2009/06/19 15:25:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -344,8 +344,8 @@
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
-#define	MIN(a,b)	(((a)<(b))?(a):(b))
-#define	MAX(a,b)	(((a)>(b))?(a):(b))
+#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
 /*
  * Constants for setting the parameters of the kernel memory allocator.
