@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd_mkdb.8,v 1.25 2009/06/18 21:59:24 christos Exp $
+.\"	$NetBSD: pwd_mkdb.8,v 1.26 2009/06/19 05:50:39 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,14 +100,15 @@ This option may only be used when the line number and user name in
 the password file have not changed, or when adding a new user from
 the last line in the password file.
 .It Fl V Ar version
-Upgrade or downgrade databases to the numbered version. Version
+Upgrade or downgrade databases to the numbered version.
+Version
 .Dv 0
 is the old format (up to and including
 .Nx 5.0 )
 with the 4 byte time fields and version
 .Dv 1
 is the new format with the 8 byte time fields (greater than
-.Nx 5.0 ).
+.Nx 5.0 ) .
 .Nx 5.0
 cannot read version
 .Dv 1
@@ -151,6 +152,27 @@ The secure password database file.
 .It Pa /etc/spwd.db.tmp
 A temporary file.
 .El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr passwd 1 ,
+.Xr pwhash 1 ,
+.Xr db 3 ,
+.Xr getpwent 3 ,
+.Xr pw_mkdb 3 ,
+.Xr passwd 5 ,
+.Xr useradd 8 ,
+.Xr userdel 8 ,
+.Xr usermod 8 ,
+.Xr vipw 8
+.Sh COMPATIBILITY
+Previous versions of the system had a program similar to
+.Nm
+which built
+.Em dbm
+style databases for the password file but depended on the calling programs
+to install them.
+The program was renamed in order that previous users of the program
+not be surprised by the changes in functionality.
 .Sh BUGS
 Because of the necessity for atomic update of the password files,
 .Nm
@@ -190,24 +212,3 @@ Using the
 .Fl u
 option on a system where multiple users share the same UID can have
 unexpected results.
-.Sh COMPATIBILITY
-Previous versions of the system had a program similar to
-.Nm
-which built
-.Em dbm
-style databases for the password file but depended on the calling programs
-to install them.
-The program was renamed in order that previous users of the program
-not be surprised by the changes in functionality.
-.Sh SEE ALSO
-.Xr chpass 1 ,
-.Xr passwd 1 ,
-.Xr pwhash 1 ,
-.Xr db 3 ,
-.Xr getpwent 3 ,
-.Xr pw_mkdb 3 ,
-.Xr passwd 5 ,
-.Xr useradd 8 ,
-.Xr userdel 8 ,
-.Xr usermod 8 ,
-.Xr vipw 8
