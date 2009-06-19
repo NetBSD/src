@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.43 2009/06/18 22:13:56 christos Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.44 2009/06/19 15:23:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.43 2009/06/18 22:13:56 christos Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.44 2009/06/19 15:23:26 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -167,27 +167,30 @@ static struct pwddb sdb, idb;
 
 void	bailout(void) __attribute__((__noreturn__));
 void	cp(const char *, const char *, mode_t);
-int	deldbent(struct pwddb *, int, void *);
+void	deldbent(struct pwddb *, int, void *);
 void	error(const char *);
 int	getdbent(struct pwddb *, int, void *, struct passwd **);
-void	inconsistancy(void);
+void	inconsistency(void);
 void	install(const char *, const char *);
 int	main(int, char **);
-void	putdbents(struct pwddb *, struct passwd *, const char *, int, int, int,
-    int);
+void	putdbents(struct pwddb *, struct passwd *, const char *, int, int,
+    u_int, u_int);
 void	putyptoken(struct pwddb *);
 void	rm(const char *);
 int	scan(FILE *, struct passwd *, int *, int *);
 void	usage(void) __attribute__((__noreturn__));
 void	wr_error(const char *);
-void	checkversion(struct pwddb *);
 uint32_t getversion(const char *);
 void	setversion(struct pwddb *);
 
+#ifndef __lint__
 #define SWAP(sw) \
     ((sizeof(sw) == 2 ? (typeof(sw))bswap16((uint16_t)sw) : \
     (sizeof(sw) == 4 ? (typeof(sw))bswap32((uint32_t)sw) : \
     (sizeof(sw) == 8 ? (typeof(sw))bswap64((uint64_t)sw) : (abort(), 0)))))
+#else
+#define SWAP(sw) sw
+#endif
 
 static void
 closedb(struct pwddb *db)
@@ -198,7 +201,7 @@ closedb(struct pwddb *db)
 
 static void
 opendb(struct pwddb *db, const char *dbname, const char *username,
-    uint32_t req_version, int flags, int perm)
+    uint32_t req_version, int flags, mode_t perm)
 {
 	char buf[MAXPATHLEN];
 
@@ -206,7 +209,7 @@ opendb(struct pwddb *db, const char *dbname, const char *username,
 	    dbname);
 
 	if (username != NULL) {
-		snprintf(buf, sizeof(buf), "%s%s", prefix, dbname);
+		(void)snprintf(buf, sizeof(buf), "%s%s", prefix, dbname);
 		cp(buf, db->dbname, perm);
 	}
 
@@ -227,20 +230,25 @@ opendb(struct pwddb *db, const char *dbname, const char *username,
 		warnx("Use %s -V 1 to upgrade once you've recompiled "
 		    "all your binaries.", getprogname());
 	}
-	if (verbose)
-		fprintf(stderr, "%s: %s version %u requested %u\n",
-		    getprogname(), db->fname, db->rversion, db->wversion);
-
 	if (db->wversion != db->rversion) {
-		if (username != NULL)
-			checkversion(db);
-		else if (verbose) {
-		    fprintf(stderr, "%s: changing %s from version "
+		if (username != NULL) {
+			(void)fprintf(stderr, "%s: you cannot change a single "
+			    "record from version %u to version %u\n",
+			    getprogname(), db->rversion, db->wversion);
+			bailout();
+		} else if (verbose) {
+		    (void)fprintf(stderr, "%s: changing %s from version "
 			"%u to version %u\n",
 			getprogname(), db->fname,
 			db->rversion, db->wversion);
 		}
+	} else {
+		if (verbose)
+			(void)fprintf(stderr, "%s: %s version %u "
+			    "requested %u\n", getprogname(), db->fname,
+			    db->rversion, db->wversion);
 	}
+
 	setversion(db);
 }
 
@@ -252,7 +260,8 @@ main(int argc, char *argv[])
 	char *username;
 	FILE *fp, *oldfp;
 	sigset_t set;
-	int dbflg, uid_dbflg, newuser, olduid, flags;
+	u_int dbflg, uid_dbflg;
+	int newuser, olduid, flags;
 	struct stat st;
 	u_int cachesize;
 	uint32_t req_version;
@@ -282,7 +291,7 @@ main(int argc, char *argv[])
 			cachesize = atoi(optarg) * 1024 * 1024;
 			break;
 		case 'd':			/* set prefix */
-			strlcpy(prefix, optarg, sizeof(prefix));
+			(void)strlcpy(prefix, optarg, sizeof(prefix));
 			break;
 		case 'p':			/* create V7 "file.orig" */
 			makeold = 1;
@@ -323,12 +332,12 @@ main(int argc, char *argv[])
 	 * This could be changed to allow the user to interrupt.
 	 * Probably not worth the effort.
 	 */
-	sigemptyset(&set);
-	sigaddset(&set, SIGTSTP);
-	sigaddset(&set, SIGHUP);
-	sigaddset(&set, SIGINT);
-	sigaddset(&set, SIGQUIT);
-	sigaddset(&set, SIGTERM);
+	(void)sigemptyset(&set);
+	(void)sigaddset(&set, SIGTSTP);
+	(void)sigaddset(&set, SIGHUP);
+	(void)sigaddset(&set, SIGINT);
+	(void)sigaddset(&set, SIGQUIT);
+	(void)sigaddset(&set, SIGTERM);
 	(void)sigprocmask(SIG_BLOCK, &set, (sigset_t *)NULL);
 
 	/* We don't care what the user wants. */
@@ -353,7 +362,7 @@ main(int argc, char *argv[])
 		openinfo.cachesize = cachesize;
 	} else {
 		/* Tweak openinfo values for large passwd files. */
-		cachesize = st.st_size * 20;
+		cachesize = (u_int)(st.st_size * 20);
 		if (cachesize > MAX_CACHESIZE)
 			cachesize = MAX_CACHESIZE;
 		else if (cachesize < MIN_CACHESIZE)
@@ -465,10 +474,10 @@ main(int argc, char *argv[])
 		rv = getdbent(&sdb, _PW_KEYBYNUM, &lineno, &tpwd);
 		if (newuser) {
 			if (rv == 0)
-				inconsistancy();
+				inconsistency();
 		} else if (rv == -1 ||
 			strcmp(username, tpwd->pw_name) != 0)
-			inconsistancy();
+			inconsistency();
 		else if ((uid_t)olduid != pwd.pw_uid) {
 			/*
 			 * If we're changing UID, remove the BYUID
@@ -483,7 +492,7 @@ main(int argc, char *argv[])
 					deldbent(&sdb, _PW_KEYBYUID, &olduid);
 				}
 			} else
-				inconsistancy();
+				inconsistency();
 		}
 
 		/*
@@ -575,7 +584,7 @@ scan(FILE *fp, struct passwd *pw, int *flags, int *lineno)
 	char *p;
 	int oflags;
 
-	if (fgets(line, sizeof(line), fp) == NULL)
+	if (fgets(line, (int)sizeof(line), fp) == NULL)
 		return (0);
 	(*lineno)++;
 
@@ -590,8 +599,10 @@ scan(FILE *fp, struct passwd *pw, int *flags, int *lineno)
 		error(pname);
 	}
 	*p = '\0';
-	if (strcmp(line, "+") == 0)
-		strcpy(line, "+:::::::::");	/* pw_scan() can't handle "+" */
+	if (strcmp(line, "+") == 0) {
+		/* pw_scan() can't handle "+" */
+		(void)strcpy(line, "+:::::::::");
+	}
 	oflags = 0;
 	if (!pw_scan(line, pw, &oflags)) {
 		warnx("at line #%d", *lineno);
@@ -610,7 +621,7 @@ install(const char *from, const char *to)
 	char errbuf[BUFSIZ];
 	int sverrno;
 
-	snprintf(buf, sizeof(buf), "%s%s", prefix, to);
+	(void)snprintf(buf, sizeof(buf), "%s%s", prefix, to);
 	if (rename(from, buf)) {
 		sverrno = errno;
 		(void)snprintf(errbuf, sizeof(errbuf), "%s to %s", from, buf);
@@ -631,14 +642,15 @@ void
 cp(const char *from, const char *to, mode_t mode)              
 {               
 	static char buf[MAXBSIZE];
-	int from_fd, rcount, to_fd, wcount, sverrno;
+	int from_fd, to_fd, sverrno;
+	ssize_t rcount, wcount;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0)
 		error(from);
 	if ((to_fd = open(to, O_WRONLY | O_CREAT | O_EXCL, mode)) < 0)
 		error(to);
 	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
-		wcount = write(to_fd, buf, rcount);
+		wcount = write(to_fd, buf, (size_t)rcount);
 		if (rcount != wcount || wcount == -1) {
 			sverrno = errno;
 			(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
@@ -679,7 +691,7 @@ error(const char *str)
 }
 
 void
-inconsistancy(void)
+inconsistency(void)
 {
 
 	warnx("text files and databases are inconsistent");
@@ -726,7 +738,7 @@ getversion(const char *fname)
 		    warnx("Bad VERSION record in database");
 		    goto out;
 		}
-		memcpy(&version, data.data, sizeof(version));
+		(void)memcpy(&version, data.data, sizeof(version));
 		/*FALLTHROUGH*/
 	case 1:
 		if (ret == 1)
@@ -740,6 +752,7 @@ getversion(const char *fname)
 out:
 	(*db->close)(db);
 	bailout();
+	/*NOTREACHED*/
 }
 
 void
@@ -758,14 +771,6 @@ setversion(struct pwddb *db)
 	}
 }
 
-void
-checkversion(struct pwddb *db)
-{
-	(void)fprintf(stderr, "%s: you cannot change a single "
-	    "record from version %u to version %u\n", getprogname(),
-	    db->rversion, db->wversion);
-	bailout();
-}
 
 /*
  * Write entries to a database for a single user. 
@@ -784,16 +789,16 @@ checkversion(struct pwddb *db)
 
 void
 putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
-      int lineno, int dbflg, int uid_dbflg)
+      int lineno, u_int dbflg, u_int uid_dbflg)
 {
 	struct passwd pwd;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024], *p;
 	DBT data, key;
 	const char *t;
 	u_int32_t x;
-	int len;
+	size_t len;
 
-	memcpy(&pwd, pw, sizeof(pwd));
+	(void)memcpy(&pwd, pw, sizeof(pwd));
 	data.data = (u_char *)buf;
 	key.data = (u_char *)tbuf;
 
@@ -805,23 +810,23 @@ putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
 #define WRITEPWTIMEVAR(pwvar) \
 	do { \
 		if (db->wversion == 0 && \
-		    sizeof(pwvar) == sizeof(uint64_t)) { \
+		    /*CONSTCOND*/sizeof(pwvar) == sizeof(uint64_t)) { \
 			uint32_t tmp = (uint32_t)pwvar; \
 			if (lorder != BYTE_ORDER) \
 				tmp = SWAP(tmp); \
-			memmove(p, &tmp, sizeof(tmp)); \
+			(void)memmove(p, &tmp, sizeof(tmp)); \
 			p += sizeof(tmp); \
 		} else if (db->wversion == 1 && \
-		    sizeof(pwvar) == sizeof(uint32_t)) { \
+		    /*CONSTCOND*/sizeof(pwvar) == sizeof(uint32_t)) { \
 			uint64_t tmp = pwvar; \
 			if (lorder != BYTE_ORDER) \
 				tmp = SWAP(tmp); \
-			memmove(p, &tmp, sizeof(tmp)); \
+			(void)memmove(p, &tmp, sizeof(tmp)); \
 			p += sizeof(tmp); \
 		} else { \
 			if (lorder != BYTE_ORDER) \
 				pwvar = SWAP(pwvar); \
-			memmove(p, &pwvar, sizeof(pwvar)); \
+			(void)memmove(p, &pwvar, sizeof(pwvar)); \
 			p += sizeof(pwvar); \
 		} \
 	} while (/*CONSTCOND*/0)
@@ -830,9 +835,9 @@ putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
 	p = buf;
 	COMPACT(pwd.pw_name);
 	COMPACT(passwd);
-	memmove(p, &pwd.pw_uid, sizeof(pwd.pw_uid));
+	(void)memmove(p, &pwd.pw_uid, sizeof(pwd.pw_uid));
 	p += sizeof(pwd.pw_uid);
-	memmove(p, &pwd.pw_gid, sizeof(pwd.pw_gid));
+	(void)memmove(p, &pwd.pw_gid, sizeof(pwd.pw_gid));
 	p += sizeof(pwd.pw_gid);
 	WRITEPWTIMEVAR(pwd.pw_change);
 	COMPACT(pwd.pw_class);
@@ -843,14 +848,14 @@ putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
 	x = flags;
 	if (lorder != BYTE_ORDER)
 		x = SWAP(x);
-	memmove(p, &x, sizeof(x));
+	(void)memmove(p, &x, sizeof(x));
 	p += sizeof(flags);
 	data.size = p - buf;
 
 	/* Store insecure by name. */
 	tbuf[0] = _PW_KEYBYNAME;
 	len = strlen(pwd.pw_name);
-	memmove(tbuf + 1, pwd.pw_name, len);
+	(void)memmove(tbuf + 1, pwd.pw_name, len);
 	key.size = len + 1;
 	if ((*db->db->put)(db->db, &key, &data, dbflg) == -1)
 		wr_error(db->dbname);
@@ -860,33 +865,33 @@ putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
 	x = lineno;
 	if (lorder != BYTE_ORDER)
 		x = SWAP(x);
-	memmove(tbuf + 1, &x, sizeof(x));
+	(void)memmove(tbuf + 1, &x, sizeof(x));
 	key.size = sizeof(x) + 1;
 	if ((*db->db->put)(db->db, &key, &data, dbflg) == -1)
 		wr_error(db->dbname);
 
 	/* Store insecure by uid. */
 	tbuf[0] = _PW_KEYBYUID;
-	memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
+	(void)memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
 	key.size = sizeof(pwd.pw_uid) + 1;
 	if ((*db->db->put)(db->db, &key, &data, uid_dbflg) == -1)
 		wr_error(db->dbname);
 }
 
-int
+void
 deldbent(struct pwddb *db, int type, void *keyp)
 {
 	char tbuf[1024];
 	DBT key;
 	u_int32_t x;
-	int len, rv;
+	size_t len;
 
 	key.data = (u_char *)tbuf;
 
 	switch (tbuf[0] = type) {
 	case _PW_KEYBYNAME:
 		len = strlen((char *)keyp);
-		memcpy(tbuf + 1, keyp, len);
+		(void)memcpy(tbuf + 1, keyp, len);
 		key.size = len + 1;
 		break;
 
@@ -895,14 +900,13 @@ deldbent(struct pwddb *db, int type, void *keyp)
 		x = *(int *)keyp;
 		if (lorder != BYTE_ORDER)
 			x = SWAP(x);
-		memmove(tbuf + 1, &x, sizeof(x));
+		(void)memmove(tbuf + 1, &x, sizeof(x));
 		key.size = sizeof(x) + 1;
 		break;
 	}
 
-	if ((rv = (*db->db->del)(db->db, &key, 0)) == -1)
+	if ((*db->db->del)(db->db, &key, 0) == -1)
 		wr_error(db->dbname);
-	return (rv);
 }
 
 int
@@ -913,7 +917,8 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 	char tbuf[1024], *p;
 	DBT key, data;
 	u_int32_t x;
-	int len, rv;
+	size_t len;
+	int rv;
 
 	data.data = (u_char *)buf;
 	data.size = sizeof(buf);
@@ -922,7 +927,7 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 	switch (tbuf[0] = type) {
 	case _PW_KEYBYNAME:
 		len = strlen((char *)keyp);
-		memcpy(tbuf + 1, keyp, len);
+		(void)memcpy(tbuf + 1, keyp, len);
 		key.size = len + 1;
 		break;
 
@@ -931,7 +936,7 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 		x = *(int *)keyp;
 		if (lorder != BYTE_ORDER)
 			x = SWAP(x);
-		memmove(tbuf + 1, &x, sizeof(x));
+		(void)memmove(tbuf + 1, &x, sizeof(x));
 		key.size = sizeof(x) + 1;
 		break;
 	}
@@ -950,33 +955,33 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 	while (*p++ != '\0')
 		continue;
 
-	memcpy(&pwd.pw_uid, p, sizeof(pwd.pw_uid));
+	(void)memcpy(&pwd.pw_uid, p, sizeof(pwd.pw_uid));
 	p += sizeof(pwd.pw_uid);
-	memcpy(&pwd.pw_gid, p, sizeof(pwd.pw_gid));
+	(void)memcpy(&pwd.pw_gid, p, sizeof(pwd.pw_gid));
 	p += sizeof(pwd.pw_gid);
 
 #define READPWTIMEVAR(pwvar) \
 	do { \
 		if (db->rversion == 0 && \
-		    sizeof(pwvar) == sizeof(uint64_t)) { \
+		    /*CONSTCOND*/sizeof(pwvar) == sizeof(uint64_t)) { \
 			uint32_t tmp; \
-			memcpy(&tmp, p, sizeof(tmp)); \
+			(void)memcpy(&tmp, p, sizeof(tmp)); \
 			p += sizeof(tmp); \
 			if (lorder != BYTE_ORDER) \
 				pwvar = SWAP(tmp); \
 			else \
 				pwvar = tmp; \
 		} else if (db->rversion == 1 && \
-		    sizeof(pwvar) == sizeof(uint32_t)) { \
+		    /*CONSTCOND*/sizeof(pwvar) == sizeof(uint32_t)) { \
 			uint64_t tmp; \
-			memcpy(&tmp, p, sizeof(tmp)); \
+			(void)memcpy(&tmp, p, sizeof(tmp)); \
 			p += sizeof(tmp); \
 			if (lorder != BYTE_ORDER) \
 				pwvar = (uint32_t)SWAP(tmp); \
 			else \
 				pwvar = (uint32_t)tmp; \
 		} else { \
-			memcpy(&pwvar, p, sizeof(pwvar)); \
+			(void)memcpy(&pwvar, p, sizeof(pwvar)); \
 			p += sizeof(pwvar); \
 			if (lorder != BYTE_ORDER) \
 				pwvar = SWAP(pwvar); \
