@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: clock.c,v 1.47.4.1 2009/06/19 21:22:11 snj Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47.4.1 2009/06/19 21:22:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2008/10/21 15:46:32 cegger Exp $");
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>
+#include <x86/rtc.h>
 
 static int xen_timer_handler(void *, struct intrframe *);
 
@@ -312,6 +313,13 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 	int s;
 
 	if (xendomain_is_privileged()) {
+#ifdef XEN3
+		/* needs to set the RTC chip too */
+		struct clock_ymdhms dt;
+		clock_secs_to_ymdhms(tvp->tv_sec, &dt);
+		rtc_set_ymdhms(NULL, &dt);
+#endif
+
 		op.cmd = DOM0_SETTIME;
 		/* XXX is rtc_offset handled correctly everywhere? */
 		op.u.settime.secs	 = tvp->tv_sec;
@@ -323,7 +331,7 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 		s = splhigh();
 		op.u.settime.system_time = get_system_time();
 		splx(s);
-		HYPERVISOR_dom0_op(&op);
+		return HYPERVISOR_dom0_op(&op);
 	}
 #endif
 
