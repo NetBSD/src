@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.702 2009/06/13 12:02:07 kardel Exp $
+#	$NetBSD: 3RDPARTY,v 1.703 2009/06/19 04:46:14 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -610,7 +610,7 @@ under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
 
 Package:	mesa-drm
-Version:	git 2580a065d81be645a14af1e91b8441f7e72fcbe4
+Version:	git 85b9f737db0d2a845e4d7e2bbf9ad12ff9e2227c
 Current Vers:
 Maintainer:	mesa-git@?
 Archive Site:	git://anongit.freedesktop.org/git/mesa/drm
