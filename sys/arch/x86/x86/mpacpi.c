@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.69.4.1 2009/01/16 21:35:43 bouyer Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.69.4.2 2009/06/19 21:33:57 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69.4.1 2009/01/16 21:35:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69.4.2 2009/06/19 21:33:57 snj Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -1165,7 +1165,7 @@ int
 mpacpi_scan_pci(struct device *self, struct pcibus_attach_args *pba,
 	        cfprint_t print)
 {
-	int i;
+	int i, cnt = 0;
 	struct mp_bus *mpb;
 	struct pci_attach_args;
 
@@ -1176,9 +1176,10 @@ mpacpi_scan_pci(struct device *self, struct pcibus_attach_args *pba,
 		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
 			pba->pba_bus = i;
 			config_found_ia(self, "pcibus", pba, print);
+			++cnt;
 		}
 	}
-	return 0;
+	return cnt;
 }
 
 #endif

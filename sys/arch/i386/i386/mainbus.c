@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.77 2008/05/18 02:06:14 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.77.8.1 2009/06/19 21:33:57 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.77 2008/05/18 02:06:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.77.8.1 2009/06/19 21:33:57 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,6 +319,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 #if NPCI > 0
 	if (pci_mode != 0) {
+		int npcibus = 0;
+
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
@@ -328,16 +330,18 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_pba.pba_bus = 0;
 		mba.mba_pba.pba_bridgetag = NULL;
 #if NACPI > 0 && defined(ACPI_SCANPCI)
-		if (mpacpi_active)
-			mpacpi_scan_pci(self, &mba.mba_pba, pcibusprint);
-		else
+		if (npcibus == 0 && mpacpi_active)
+			npcibus = mpacpi_scan_pci(self, &mba.mba_pba,
+			    pcibusprint);
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
-		if (mpbios_scanned != 0)
-			mpbios_scan_pci(self, &mba.mba_pba, pcibusprint);
-		else
+		if (npcibus == 0 && mpbios_scanned != 0)
+			npcibus = mpbios_scan_pci(self, &mba.mba_pba,
+			    pcibusprint);
 #endif
-		config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
+		if (npcibus == 0)
+			config_found_ia(self, "pcibus", &mba.mba_pba,
+			    pcibusprint);
 #if NACPI > 0
 		if (mp_verbose)
 			acpi_pci_link_state();
