@@ -1,4 +1,4 @@
-/* $NetBSD: fattr.c,v 1.9 2008/08/05 20:57:45 pooka Exp $ */
+/* $NetBSD: fattr.c,v 1.10 2009/06/19 12:55:45 stacktic Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fattr.c,v 1.9 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: fattr.c,v 1.10 2009/06/19 12:55:45 stacktic Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ a_mask(const char *s)
 	int rv;
 	char *ep;
 
-	rv = strtol(optarg, &ep, 8);
+	rv = strtol(s, &ep, 8);
 	if (s == ep || *ep || rv < 0)
 		errx(1, "invalid file mode: %s", s);
 	return rv;
