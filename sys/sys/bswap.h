@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.13 2008/06/27 22:19:43 mlelstv Exp $      */
+/*      $NetBSD: bswap.h,v 1.14 2009/06/19 15:24:17 christos Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -23,7 +23,7 @@ uint32_t bswap32(uint32_t) __RENAME(__bswap32) __attribute__((__const__));
 uint64_t bswap64(uint64_t) __attribute__((__const__));
 __END_DECLS
 
-#if defined(__GNUC__) && defined(__OPTIMIZE__)
+#if defined(__GNUC__) && defined(__OPTIMIZE__) && !defined(__lint__)
 
 /* machine/byte_swap.h might have defined inline versions */
 #ifndef __BYTE_SWAP_U64_VARIABLE
