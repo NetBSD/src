@@ -28,34 +28,27 @@
 #include "drmP.h"
 #include "drm.h"
 
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500102
 int drm_mmap(struct cdev *kdev, vm_offset_t offset, vm_paddr_t *paddr,
     int prot)
-#elif defined(__FreeBSD__)
-int drm_mmap(dev_t kdev, vm_offset_t offset, int prot)
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
-#endif
 {
 	struct drm_device *dev = drm_get_device_from_kdev(kdev);
+	struct drm_file *file_priv = NULL;
 	drm_local_map_t *map;
-	drm_file_t *priv;
-	drm_map_type_t type;
-#ifdef __FreeBSD__
+	enum drm_map_type type;
 	vm_paddr_t phys;
-#else
-	paddr_t phys;
-#endif
+	int error;
 
-	DRM_LOCK();
-	priv = drm_find_file_by_proc(dev, DRM_CURPROC);
-	DRM_UNLOCK();
-	if (priv == NULL) {
-		DRM_ERROR("can't find authenticator\n");
+	/* d_mmap gets called twice, we can only reference file_priv during
+	 * the first call.  We need to assume that if error is EBADF the
+	 * call was succesful and the client is authenticated.
+	 */
+	error = devfs_get_cdevpriv((void **)&file_priv);
+	if (error == ENOENT) {
+		DRM_ERROR("Could not find authenticator!\n");
 		return EINVAL;
 	}
 
-	if (!priv->authenticated)
+	if (file_priv && !file_priv->authenticated)
 		return EACCES;
 
 	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
@@ -68,12 +61,8 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			unsigned long phys = dma->pagelist[page];
 
 			DRM_SPINUNLOCK(&dev->dma_lock);
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500102
 			*paddr = phys;
 			return 0;
-#else
-			return atop(phys);
-#endif
 		} else {
 			DRM_SPINUNLOCK(&dev->dma_lock);
 			return -1;
@@ -94,8 +83,13 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	}
 
 	if (map == NULL) {
+		DRM_DEBUG("Can't find map, requested offset = %016lx\n",
+		    offset);
+		TAILQ_FOREACH(map, &dev->maplist, link) {
+			DRM_DEBUG("map offset = %016lx, handle = %016lx\n",
+			map->offset, (unsigned long)map->handle);
+		}
 		DRM_UNLOCK();
-		DRM_DEBUG("can't find map\n");
 		return -1;
 	}
 	if (((map->flags&_DRM_RESTRICTED) && !DRM_SUSER(DRM_CURPROC))) {
@@ -124,11 +118,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		return -1;	/* This should never happen. */
 	}
 
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500102
 	*paddr = phys;
 	return 0;
-#else
-	return atop(phys);
-#endif
 }
 

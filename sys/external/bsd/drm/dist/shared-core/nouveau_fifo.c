@@ -131,7 +131,7 @@ int nouveau_fifo_init(struct drm_device *dev)
 	/* No cmdbuf object */
 	NV_WRITE(NV04_PFIFO_CACHE1_DMA_INSTANCE, 0x00000000);
 	NV_WRITE(NV03_PFIFO_CACHE0_PUSH0, 0x00000000);
-	NV_WRITE(NV03_PFIFO_CACHE0_PULL0, 0x00000000);
+	NV_WRITE(NV04_PFIFO_CACHE0_PULL0, 0x00000000);
 	NV_WRITE(NV04_PFIFO_SIZE, 0x0000FFFF);
 	NV_WRITE(NV04_PFIFO_CACHE1_HASH, 0x0000FFFF);
 	NV_WRITE(NV04_PFIFO_CACHE0_PULL1, 0x00000001);
@@ -362,7 +362,8 @@ nouveau_fifo_alloc(struct drm_device *dev, struct nouveau_channel **chan_ret,
 	/* If this is the first channel, setup PFIFO ourselves.  For any
 	 * other case, the GPU will handle this when it switches contexts.
 	 */
-	if (dev_priv->fifo_alloc_count == 1) {
+	if (dev_priv->card_type < NV_50 &&
+	    dev_priv->fifo_alloc_count == 1) {
 		ret = engine->fifo.load_context(chan);
 		if (ret) {
 			nouveau_fifo_free(chan);
@@ -390,7 +391,7 @@ nouveau_fifo_alloc(struct drm_device *dev, struct nouveau_channel **chan_ret,
 	return 0;
 }
 
-static int
+int
 nouveau_channel_idle(struct nouveau_channel *chan)
 {
 	struct drm_device *dev = chan->dev;
@@ -594,6 +595,8 @@ struct drm_ioctl_desc nouveau_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_NOUVEAU_MEM_ALLOC, nouveau_ioctl_mem_alloc, DRM_AUTH),
 	DRM_IOCTL_DEF(DRM_NOUVEAU_MEM_FREE, nouveau_ioctl_mem_free, DRM_AUTH),
 	DRM_IOCTL_DEF(DRM_NOUVEAU_MEM_TILE, nouveau_ioctl_mem_tile, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_NOUVEAU_SUSPEND, nouveau_ioctl_suspend, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_NOUVEAU_RESUME, nouveau_ioctl_resume, DRM_AUTH),
 };
 
 int nouveau_max_ioctl = DRM_ARRAY_SIZE(nouveau_ioctls);
