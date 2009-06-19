@@ -40,7 +40,8 @@ int main(int argc, char **argv)
 	assert(strlen(v->name) != 0);
 	assert(strlen(v->date) != 0);
 	assert(strlen(v->desc) != 0);
-	assert(v->version_major >= 1);
+	if (strcmp(v->name, "i915") == 0)
+		assert(v->version_major >= 1);
 	drmFree(v);
 	close(fd);
 	return 0;

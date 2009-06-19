@@ -3,8 +3,11 @@ DRM README file
 
 
 There are two main parts to this package: the DRM client library/interface
-(libdrm.so) and kernel/hardware-specific device modules (such as i915.ko).
-
+(libdrm.so) and kernel/hardware-specific device modules (such as radeon.ko).
+The kernel device modules are not shipped with libdrm releases and should only
+be built from the git tree by developers and bleeding-edge testers of
+non-Intel hardware.  The Intel kernel modules are developed in the Linux
+kernel tree.
 
 
 Compiling
@@ -19,7 +22,7 @@ Then,
 	make install
 
 
-To build the device-specific kernel modules:
+To build the device-specific kernel modules from the git tree:
 
 	cd linux-core/
 	make

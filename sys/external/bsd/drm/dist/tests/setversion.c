@@ -40,6 +40,11 @@ int main(int argc, char **argv)
 	int fd, ret;
 	drm_set_version_t sv, version;
 
+	if (getuid() != 0) {
+		fprintf(stderr, "setversion test requires root, skipping\n");
+		return 0;
+	}
+
 	fd = drm_open_any_master();
 
 	/* First, check that we can get the DD/DI versions. */

@@ -269,7 +269,7 @@ nv50_fifo_create_context(struct nouveau_channel *chan)
 
 	if (!IS_G80) {
 		INSTANCE_WR(chan->ramin->gpuobj, 0, chan->id);
-		INSTANCE_WR(chan->ramin->gpuobj, 1, chan->ramfc->instance);
+		INSTANCE_WR(chan->ramin->gpuobj, 1, chan->ramfc->instance >> 8);
 
 		INSTANCE_WR(ramfc, 0x88/4, 0x3d520); /* some vram addy >> 10 */
 		INSTANCE_WR(ramfc, 0x98/4, chan->ramin->instance >> 12);
