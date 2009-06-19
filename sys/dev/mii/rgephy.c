@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.21 2008/05/04 17:06:10 xtraeme Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.21.10.1 2009/06/19 21:51:43 snj Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.21 2008/05/04 17:06:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.21.10.1 2009/06/19 21:51:43 snj Exp $");
 
 
 /*
@@ -589,13 +589,6 @@ rgephy_reset(struct mii_softc *sc)
 	if (rsc->mii_revision < 2)
 		rgephy_load_dspcode(sc);
 	else {
-		PHY_WRITE(sc, 0x1F, 0x0001);
-		PHY_WRITE(sc, 0x09, 0x273a);
-		PHY_WRITE(sc, 0x0e, 0x7bfb);
-		PHY_WRITE(sc, 0x1b, 0x841e);
-
-		PHY_WRITE(sc, 0x1F, 0x0002);
-		PHY_WRITE(sc, 0x01, 0x90D0);
 		PHY_WRITE(sc, 0x1F, 0x0000);
 		PHY_WRITE(sc, 0x0e, 0x0000);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.32.4.3 2009/05/01 02:10:03 snj Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.32.4.4 2009/06/19 21:51:43 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -158,6 +158,9 @@
 #define RTK_HWREV_8169_8110SB	0x10000000
 #define RTK_HWREV_8169_8110SC	0x18000000
 #define RTK_HWREV_8102EL	0x24800000
+#define RTK_HWREV_8103E		0x24C00000
+#define RTK_HWREV_8168D		0x28000000
+#define RTK_HWREV_8168DP	0x28800000
 #define RTK_HWREV_8168_SPIN1	0x30000000
 #define RTK_HWREV_8100E		0x30800000
 #define RTK_HWREV_8101E		0x34000000
@@ -167,6 +170,7 @@
 #define RTK_HWREV_8100E_SPIN2	0x38800000
 #define RTK_HWREV_8168C		0x3C000000
 #define RTK_HWREV_8168C_SPIN2	0x3C400000
+#define RTK_HWREV_8168CP	0x3C800000
 #define RTK_HWREV_8139		0x60000000
 #define RTK_HWREV_8139A		0x70000000
 #define RTK_HWREV_8139AG	0x70800000
@@ -306,6 +310,7 @@
 #define RTK_CMD_TX_ENB		0x0004
 #define RTK_CMD_RX_ENB		0x0008
 #define RTK_CMD_RESET		0x0010
+#define RTK_CMD_STOPREQ		0x0080
 
 /*
  * EEPROM control register
@@ -400,12 +405,21 @@
 
 /* C+ mode command register */
 
-#define RTK_CPLUSCMD_TXENB	0x0001	/* enable C+ transmit mode */
-#define RTK_CPLUSCMD_RXENB	0x0002	/* enable C+ receive mode */
-#define RTK_CPLUSCMD_PCI_MRW	0x0008	/* enable PCI multi-read/write */
-#define RTK_CPLUSCMD_PCI_DAC	0x0010	/* PCI dual-address cycle only */
-#define RTK_CPLUSCMD_RXCSUM_ENB	0x0020	/* enable RX checksum offload */
-#define RTK_CPLUSCMD_VLANSTRIP	0x0040	/* enable VLAN tag stripping */
+#define RE_CPLUSCMD_TXENB	0x0001	/* enable C+ transmit mode */
+#define RE_CPLUSCMD_RXENB	0x0002	/* enable C+ receive mode */
+#define RE_CPLUSCMD_PCI_MRW	0x0008	/* enable PCI multi-read/write */
+#define RE_CPLUSCMD_PCI_DAC	0x0010	/* PCI dual-address cycle only */
+#define RE_CPLUSCMD_RXCSUM_ENB	0x0020	/* enable RX checksum offload */
+#define RE_CPLUSCMD_VLANSTRIP	0x0040	/* enable VLAN tag stripping */
+#define RE_CPLUSCMD_MACSTAT_DIS	0x0080	/* 8168B/C/CP */
+#define RE_CPLUSCMD_ASF		0x0100	/* 8168C/CP */
+#define RE_CPLUSCMD_DBG_SEL	0x0200	/* 8168C/CP */
+#define RE_CPLUSCMD_FORCE_TXFC	0x0400	/* 8168C/CP */
+#define RE_CPLUSCMD_FORCE_RXFC	0x0800	/* 8168C/CP */
+#define RE_CPLUSCMD_FORCE_HDPX	0x1000	/* 8168C/CP */
+#define RE_CPLUSCMD_NORMAL_MODE	0x2000	/* 8168C/CP */
+#define RE_CPLUSCMD_DBG_ENB	0x4000	/* 8168C/CP */
+#define RE_CPLUSCMD_BIST_ENB	0x8000	/* 8168C/CP */
 
 /* C+ early transmit threshold */
 
