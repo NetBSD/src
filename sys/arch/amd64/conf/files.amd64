@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.60 2008/05/11 14:44:53 ad Exp $
+#	$NetBSD: files.amd64,v 1.60.8.1 2009/06/19 21:22:10 snj Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -112,6 +112,7 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file 	arch/x86/isa/clock.c 			isa
+file	arch/x86/isa/rtc.c			isa
 
 # TSC timecounter support
 file	arch/x86/x86/tsc.c
