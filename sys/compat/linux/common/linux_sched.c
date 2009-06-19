@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.58 2008/10/25 23:38:28 christos Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.58.4.1 2009/06/19 21:42:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.58 2008/10/25 23:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.58.4.1 2009/06/19 21:42:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -646,12 +646,11 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 	retp = (int *)&data[SCARG(uap, len) - sizeof(ret)];
 	*retp = ret;
 
-	if ((error = copyout(data, SCARG(uap, mask), SCARG(uap, len))) != 0)
-		return error;
+	error = copyout(data, SCARG(uap, mask), SCARG(uap, len));
 
 	free(data, M_TEMP);
 
-	return 0;
+	return error;
 
 }
 
