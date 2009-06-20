@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12 2008/11/13 18:44:51 cegger Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.13 2009/06/20 10:24:28 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12 2008/11/13 18:44:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.13 2009/06/20 10:24:28 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -466,17 +466,26 @@ xpq_debug_dump(void)
 
 	XENPRINTK2(("idx: %d\n", xpq_idx));
 	for (i = 0; i < xpq_idx; i++) {
-		sprintf(XBUF, "%" PRIx64 " %08" PRIx64,
+		snprintf(XBUF, sizeof(XBUF), "%" PRIx64 " %08" PRIx64,
 		    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64,
-			    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
+			snprintf(XBUF + strlen(XBUF),
+			    sizeof(XBUF) - strlen(XBUF),
+			    "%" PRIx64 " %08" PRIx64,
+			    (uint64_t)xpq_queue[i].ptr,
+			    (uint64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64, 
-			    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
+			snprintf(XBUF + strlen(XBUF),
+			    sizeof(XBUF) - strlen(XBUF),
+			    "%" PRIx64 " %08" PRIx64, 
+			    (uint64_t)xpq_queue[i].ptr,
+			    (uint64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64,
-			    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
+			snprintf(XBUF + strlen(XBUF),
+			    sizeof(XBUF) - strlen(XBUF),
+			    "%" PRIx64 " %08" PRIx64,
+			    (uint64_t)xpq_queue[i].ptr,
+			    (uint64_t)xpq_queue[i].val);
 		XENPRINTK2(("%d: %s\n", xpq_idx, XBUF));
 	}
 }
