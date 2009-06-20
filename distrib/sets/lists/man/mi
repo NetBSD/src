@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1139 2009/06/10 00:40:34 agc Exp $
+# $NetBSD: mi,v 1.1140 2009/06/20 04:20:22 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2173,6 +2173,7 @@
 ./usr/share/man/cat8/ipwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irda.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/iscsi-initiator.0		man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat8/iscsi-target.0		man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat8/isdnd.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/isdnmonitor.0		man-isdn-catman		.cat
@@ -4588,6 +4589,7 @@
 ./usr/share/man/html8/ipwctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/irda.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/irdaattach.html		man-sysutil-htmlman	html
+./usr/share/man/html8/iscsi-initiator.html	man-iscsi-htmlman	iscsi,html
 ./usr/share/man/html8/iscsi-target.html		man-iscsi-htmlman	iscsi,html
 ./usr/share/man/html8/isdnd.html		man-isdn-htmlman	html
 ./usr/share/man/html8/isdnmonitor.html		man-isdn-htmlman	html
@@ -7149,6 +7151,7 @@
 ./usr/share/man/man8/ipwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/irda.8			man-sysutil-man		.man
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man		.man
+./usr/share/man/man8/iscsi-initiator.8		man-iscsi-man		iscsi,.man
 ./usr/share/man/man8/iscsi-target.8		man-iscsi-man		iscsi,.man
 ./usr/share/man/man8/isdnd.8			man-isdn-man		.man
 ./usr/share/man/man8/isdnmonitor.8		man-isdn-man		.man
