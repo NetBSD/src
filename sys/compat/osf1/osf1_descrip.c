@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.26.4.1 2009/05/04 08:12:26 yamt Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.26.4.2 2009/06/20 07:20:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26.4.1 2009/05/04 08:12:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26.4.2 2009/06/20 07:20:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ osf1_sys_ftruncate(struct lwp *l, const struct osf1_sys_ftruncate_args *uap, reg
 	struct sys_ftruncate_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, pad) = 0;
+	SCARG(&a, PAD) = 0;
 	SCARG(&a, length) = SCARG(uap, length);
 
 	return sys_ftruncate(l, &a, retval);
@@ -264,7 +264,7 @@ osf1_sys_lseek(struct lwp *l, const struct osf1_sys_lseek_args *uap, register_t 
 	struct sys_lseek_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, pad) = 0;
+	SCARG(&a, PAD) = 0;
 	SCARG(&a, offset) = SCARG(uap, offset);
 	SCARG(&a, whence) = SCARG(uap, whence);
 

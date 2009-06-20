@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.25.2.3 2009/05/16 10:41:50 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.25.2.4 2009/06/20 07:20:34 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25.2.3 2009/05/16 10:41:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25.2.4 2009/06/20 07:20:34 yamt Exp $");
 
 /*
  * TODO:
@@ -697,6 +697,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		if (timercmp(&sc_tv, &ch_tv, >) ||
 		    timercmp(&sc_tv, &ch_tv, ==)) {
 			callout_stop(&sc->sc_ad_tmo);
+			CARP_LOG(sc, ("MASTER -> BACKUP (more frequent advertisement received)"));
 			carp_set_state(sc, BACKUP);
 			carp_setrun(sc, 0);
 			carp_setroute(sc, RTM_DELETE);
@@ -708,6 +709,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		 * and this one claims to be slower, treat him as down.
 		 */
 		if (carp_opts[CARPCTL_PREEMPT] && timercmp(&sc_tv, &ch_tv, <)) {
+			CARP_LOG(sc, ("BACKUP -> MASTER (preempting a slower master)"));
 			carp_master_down(sc);
 			break;
 		}
@@ -719,6 +721,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		 */
 		sc_tv.tv_sec = sc->sc_advbase * 3;
 		if (timercmp(&sc_tv, &ch_tv, <)) {
+			CARP_LOG(sc, ("BACKUP -> MASTER (master timed out)"));
 			carp_master_down(sc);
 			break;
 		}
@@ -1388,6 +1391,7 @@ carp_master_down(void *v)
 	case MASTER:
 		break;
 	case BACKUP:
+		CARP_LOG(sc, ("INIT -> MASTER (preempting)"));
 		carp_set_state(sc, MASTER);
 		carp_send_ad(sc);
 		carp_send_arp(sc);
@@ -2052,8 +2056,11 @@ carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 void
 carp_set_state(struct carp_softc *sc, int state)
 {
+	static const char *carp_states[] = { CARP_STATES };
 	if (sc->sc_state == state)
 		return;
+
+	CARP_LOG(sc, ("state transition from: %s -> to: %s", carp_states[sc->sc_state], carp_states[state]));
 
 	sc->sc_state = state;
 	switch (state) {

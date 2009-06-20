@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.47.4.2 2009/05/04 08:14:35 yamt Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.47.4.3 2009/06/20 07:20:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -87,15 +87,15 @@
 #define	NDENTRYSHIFT	5		/* bits per entry */
 #define	NDLOSLOTS(x)	(((x) + NDENTRIES - 1) >> NDENTRYSHIFT)
 #define	NDHISLOTS(x)	((NDLOSLOTS(x) + NDENTRIES - 1) >> NDENTRYSHIFT)
-#define	NDFDFILE	3		/* first 3 descriptors are free */
+#define	NDFDFILE	6		/* first 6 descriptors are free */
 
 /*
  * Process-private descriptor reference, one for each descriptor slot
  * in use.  Locks:
  *
  * :	unlocked
+ * a	atomic operations + filedesc_t::fd_lock in some cases
  * d	filedesc_t::fd_lock
- * f	fdfile_t::ff_lock, may be stable if reference held
  *
  * Note that ff_exclose and ff_allocated are likely to be byte sized
  * (bool).  In general adjacent sub-word sized fields must be locked
@@ -104,18 +104,28 @@
  * it's invalid.
  */
 typedef struct fdfile {
-	kmutex_t	ff_lock;	/* :: lock on structure */
 	bool		ff_exclose;	/* :: close on exec flag */
 	bool		ff_allocated;	/* d: descriptor slot is allocated */
-	u_int		ff_refcnt;	/* f: reference count on structure */
-	struct file	*ff_file;	/* f: pointer to file if open */
-	SLIST_HEAD(,knote) ff_knlist;	/* f: knotes attached to this fd */
-	kcondvar_t	ff_closing;	/* f: notifier for close */
+	u_int		ff_refcnt;	/* a: reference count on structure */
+	struct file	*ff_file;	/* d: pointer to file if open */
+	SLIST_HEAD(,knote) ff_knlist;	/* d: knotes attached to this fd */
+	kcondvar_t	ff_closing;	/* d: notifier for close */
 } fdfile_t;
 
 /* Reference count */
 #define	FR_CLOSING	(0x80000000)	/* closing: must interlock */
 #define	FR_MASK		(~FR_CLOSING)	/* reference count */
+
+/*
+ * Open file table, potentially many 'active' tables per filedesc_t
+ * in a multi-threaded process, or with a shared filedesc_t (clone()).
+ * nfiles is first to avoid pointer arithmetic.
+ */
+typedef struct fdtab {
+	u_int		dt_nfiles;	/* number of open files allocated */
+	struct fdtab	*dt_link;	/* for lists of dtab */
+	fdfile_t	*dt_ff[NDFILE];	/* file structures for open fds */
+} fdtab_t;
 
 typedef struct filedesc {
 	/*
@@ -127,29 +137,27 @@ typedef struct filedesc {
 	 * All of the remaining fields are locked by fd_lock.
 	 */
 	kmutex_t	fd_lock;	/* lock on structure */
-	fdfile_t	**fd_ofiles;	/* file structures for open files */
+	fdtab_t * volatile fd_dt;	/* active descriptor table */
 	uint32_t	*fd_himap;	/* each bit points to 32 fds */
 	uint32_t	*fd_lomap;	/* bitmap of free fds */
-	void		*fd_discard;	/* old fd_ofiles tables to discard */
 	struct klist	*fd_knhash;	/* hash of attached non-fd knotes */
 	int		fd_lastkqfile;	/* max descriptor for kqueue */
 	int		fd_lastfile;	/* high-water mark of fd_ofiles */
 	int		fd_refcnt;	/* reference count */
-	int		fd_nfiles;	/* number of open files allocated */
 	u_long		fd_knhashmask;	/* size of fd_knhash */
-#define fd_startzero	fd_freefile	/* area to zero on return to cache */
 	int		fd_freefile;	/* approx. next free file */
-	int		fd_nused;	/* number of slots in use */
+	int		fd_unused;	/* unused */
 	bool		fd_exclose;	/* non-zero if >0 fd with EXCLOSE */
 	/*
-	 * These arrays are used when the number of open files is
+	 * This structure is used when the number of open files is
 	 * <= NDFILE, and are then pointed to by the pointers above.
 	 */
-	fdfile_t	*fd_dfiles[NDFILE];
+	fdtab_t		fd_dtbuiltin;
 	/*
 	 * These arrays are used when the number of open files is
 	 * <= 1024, and are then pointed to by the pointers above.
 	 */
+#define fd_startzero	fd_dhimap	/* area to zero on return to cache */
 	uint32_t	fd_dhimap[NDENTRIES >> NDENTRYSHIFT];
 	uint32_t	fd_dlomap[NDENTRIES];
 } filedesc_t;
@@ -182,9 +190,8 @@ void	fd_abort(struct proc *, file_t *, unsigned);
 filedesc_t *fd_copy(void);
 filedesc_t *fd_init(filedesc_t *);
 void	fd_share(proc_t *);
-void	fd_clear(void);
+void	fd_hold(void);
 void	fd_free(void);
-void	fd_remove(filedesc_t *, unsigned);
 void	fd_closeexec(void);
 int	fd_checkstd(void);
 file_t	*fd_getfile(unsigned);
@@ -195,9 +202,6 @@ int	fd_getsock(unsigned, struct socket **);
 void	fd_putvnode(unsigned);
 void	fd_putsock(unsigned);
 int	fd_close(unsigned);
-void	fd_used(filedesc_t *, unsigned);
-void	fd_unused(filedesc_t *, unsigned);
-bool	fd_isused(filedesc_t *, unsigned);
 int	fd_dup(file_t *, int, int *, bool);
 int	fd_dup2(file_t *, unsigned);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
@@ -214,7 +218,6 @@ int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
 int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
     struct proc *);
 
-void	ffree(file_t *);
 int	closef(file_t *);
 file_t *fgetdummy(void);
 void	fputdummy(file_t *);
@@ -226,6 +229,7 @@ int	do_fcntl_lock(int, int, struct flock *);
 int	do_posix_fadvise(int, off_t, off_t, int);
 
 extern kmutex_t filelist_lock;
+extern filedesc_t filedesc0;
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.74.10.2 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.74.10.3 2009/06/20 07:20:09 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
 #include "opt_sparc_arch.h"
+#include "opt_modular.h"
 #endif
 
 #include <sys/device.h>
@@ -104,26 +105,16 @@ struct xpmsg {
 		 * the trap window (see locore.s).
 		 */
 		struct xpmsg_func {
-			int	(*func)(int, int, int);
+			void	(*func)(int, int, int);
 			void	(*trap)(int, int, int);
 			int	arg0;
 			int	arg1;
 			int	arg2;
-			int	retval;
 		} xpmsg_func;
 	} u;
 	volatile int	received;
 	volatile int	complete;
 };
-
-/*
- * This must be locked around all message transactions to ensure only
- * one CPU is generating them.
- */
-extern struct simplelock xpmsg_lock;
-
-#define LOCK_XPMSG()	simple_lock(&xpmsg_lock);
-#define UNLOCK_XPMSG()	simple_unlock(&xpmsg_lock);
 
 /*
  * The cpuinfo structure. This structure maintains information about one
@@ -334,6 +325,12 @@ struct cpu_info {
 	/*bus_space_handle_t*/ long ci_mxccregs;
 
 	u_int	ci_tt;			/* Last trap (if tracing) */
+
+	/*
+	 * Start/End VA's of this cpu_info region; we upload the other pages
+	 * in this region that aren't part of the cpu_info to uvm.
+	 */
+	vaddr_t	ci_free_sva1, ci_free_eva1, ci_free_sva2, ci_free_eva2;
 };
 
 /*
@@ -415,10 +412,16 @@ struct cpu_info {
 
 
 #define CPU_INFO_ITERATOR		int
-#ifdef MULTIPROCESSOR
-#define CPU_INFO_FOREACH(cii, cp)	cii = 0; cp = &cpus[cii].ci, cii < sparc_ncpus; cii++
+/*
+ * Provide two forms of CPU_INFO_FOREACH.  One fast one for non-modular
+ * non-SMP kernels, and the other for everyone else.  Both work in the
+ * non-SMP case, just involving an extra indirection through cpus[0] for
+ * the portable version.
+ */
+#if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
+#define	CPU_INFO_FOREACH(cii, cp)	cii = 0; (cp = cpus[cii]) && cp->eintstack && cii < sparc_ncpus; cii++
 #else
-#define	CPU_INFO_FOREACH(cii, cp)	(void)cii, cp = curcpu(); cp != NULL; cp = NULL
+#define CPU_INFO_FOREACH(cii, cp)	(void)cii, cp = curcpu(); cp != NULL; cp = NULL
 #endif
 
 /*
@@ -437,7 +440,8 @@ void pmap_alloc_cpu (struct cpu_info *);
 #define	CPUSET_ALL	0xffffffffU	/* xcall to all configured CPUs */
 
 #if defined(MULTIPROCESSOR)
-typedef int (*xcall_func_t)(int, int, int);
+void cpu_init_system(void);
+typedef void (*xcall_func_t)(int, int, int);
 typedef void (*xcall_trap_t)(int, int, int);
 void xcall(xcall_func_t, xcall_trap_t, int, int, int, u_int);
 /* Shorthand */
@@ -472,12 +476,8 @@ void xcall(xcall_func_t, xcall_trap_t, int, int, int, u_int);
 extern int bootmid;			/* Module ID of boot CPU */
 #define CPU_MID2CPUNO(mid)		((mid) != 0 ? (mid) - 8 : 0)
 
+extern struct cpu_info *cpus[];
 #ifdef MULTIPROCESSOR
-union cpu_info_pg {
-	struct cpu_info ci;	/* cpu info (aliased (per cpu) to CPUINFO_VA */
-	char pad[32 * 1024];	/* XXX: force 32K alignment for now */
-};				/* SMP capable cpu types */
-extern union cpu_info_pg *cpus;
 extern u_int cpu_ready_mask;		/* the set of CPUs marked as READY */
 #endif
 

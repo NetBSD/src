@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33.10.1 2009/05/04 08:11:14 yamt Exp $
+#	$NetBSD: Makefile,v 1.33.10.2 2009/06/20 07:20:05 yamt Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -11,9 +11,9 @@ SI386=	${SYSDIR}/arch/i386/acpi/*.[ch] \
 	${SYSDIR}/arch/i386/mca/*.[ch] \
 	${SYSDIR}/arch/i386/pci/*.[ch] \
 	${SYSDIR}/arch/i386/pnpbios/*.[ch] \
-	${SYSDIR}/contrib/dev/ath/*.[ch] \
-	${SYSDIR}/contrib/dev/ath/netbsd/*.[ch] \
-	${SYSDIR}/contrib/dev/ath/public/*.[ch] \
+	${SYSDIR}/external/isc/atheros_hal/dist/*.[ch] \
+	${SYSDIR}/external/isc/atheros_hal/dist/*/*.[ch] \
+	${SYSDIR}/external/isc/atheros_hal/ic/*.[ch] \
 	${SYSDIR}/dist/acpica/*.[ch]
 SI386+=	${SYSDIR}/arch/x86/x86/*.[ch] \
 	${SYSDIR}/arch/x86/acpi/*.[ch] \

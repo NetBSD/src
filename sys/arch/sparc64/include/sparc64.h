@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.9 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.9.72.1 2009/06/20 07:20:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -38,17 +38,17 @@ struct mem_region {
 	uint64_t size;
 };
 
-int prom_set_trap_table (vaddr_t);
-uint64_t prom_vtop (vaddr_t);
-vaddr_t prom_claim_virt (vaddr_t, int);
-vaddr_t prom_alloc_virt (int, int);
-int prom_free_virt (vaddr_t, int);
-int prom_unmap_virt (vaddr_t, int);
-int prom_map_phys (uint64_t, off_t, vaddr_t, int);
-uint64_t prom_alloc_phys (int , int);
-uint64_t prom_claim_phys (paddr_t, int);
-int prom_free_phys (paddr_t, int);
-uint64_t prom_get_msgbuf (int, int);
+int prom_set_trap_table(vaddr_t);
+paddr_t prom_vtop(vaddr_t);
+vaddr_t prom_claim_virt(vaddr_t, int);
+vaddr_t prom_alloc_virt(int, int);
+int prom_free_virt(vaddr_t, int);
+int prom_unmap_virt(vaddr_t, int);
+int prom_map_phys(paddr_t, off_t, vaddr_t, int);
+paddr_t prom_alloc_phys(int , int);
+paddr_t prom_claim_phys(paddr_t, int);
+int prom_free_phys(paddr_t, int);
+paddr_t prom_get_msgbuf(int, int);
 
 void prom_stopself(void);
 void prom_startcpu(u_int, void *, u_long);

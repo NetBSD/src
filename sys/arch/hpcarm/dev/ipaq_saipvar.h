@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saipvar.h,v 1.5.66.1 2008/05/16 02:22:27 yamt Exp $	*/
+/*	$NetBSD: ipaq_saipvar.h,v 1.5.66.2 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -30,7 +30,7 @@
 
 /* ipaq softc */
 struct ipaq_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_gpioh;

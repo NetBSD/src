@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.12 2008/03/14 15:09:10 cube Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.12.4.1 2009/06/20 07:20:03 yamt Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.12 2008/03/14 15:09:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.12.4.1 2009/06/20 07:20:03 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.12 2008/03/14 15:09:10 cube Exp $");
 #define	COMGSC_FREQUENCY (1843200 * 4) /* 16-bit baud rate divisor */
 
 struct com_gsc_regs {
-	u_int8_t reset;
+	uint8_t reset;
 };
 
 struct com_gsc_softc {

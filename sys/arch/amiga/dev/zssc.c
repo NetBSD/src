@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.40.44.1 2009/05/04 08:10:35 yamt Exp $ */
+/*	$NetBSD: zssc.c,v 1.40.44.2 2009/06/20 07:20:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.40.44.1 2009/05/04 08:10:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.40.44.2 2009/06/20 07:20:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,8 @@ zsscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_ctest7 = 0x00;
 	sc->sc_dcntl = 0x00;
 
-	alloc_sicallback();
+	sc->sc_siop_si = softint_establish(SOFTINT_BIO,
+	    (void (*)(void *))siopintr, sc);
 
 	sc->sc_adapter.adapt_dev = &sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
@@ -156,9 +157,9 @@ zsscattach(struct device *pdp, struct device *dp, void *auxp)
 /*
  * Level 6 interrupt processing for the Progressive Peripherals Inc
  * Zeus SCSI.  Because the level 6 interrupt is above splbio, the
- * interrupt status is saved and an sicallback to the level 2 interrupt
- * handler scheduled.  This way, the actual processing of the interrupt
- * can be deferred until splbio is unblocked.
+ * interrupt status is saved and a softint scheduled.  This way,
+ * the actual processing of the interrupt can be deferred until 
+ * splbio is unblocked.
  */
 
 int
@@ -188,7 +189,7 @@ zssc_dmaintr(void *arg)
 	rp->siop_sien = 0;
 	rp->siop_dien = 0;
 	sc->sc_flags |= SIOP_INTDEFER | SIOP_INTSOFF;
-	add_sicallback((sifunc_t)siopintr, sc, NULL);
+	softint_schedule(sc->sc_siop_si);
 	return(1);
 }
 

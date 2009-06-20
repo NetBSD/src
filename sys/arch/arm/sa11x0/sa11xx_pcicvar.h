@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.5.16.1 2008/05/16 02:22:02 yamt Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.5.16.2 2009/06/20 07:20:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 struct sapcic_socket {
 	struct sapcic_softc *sc;
 	int socket;			/* socket number */
-	struct device *pcmcia;
+	device_t pcmcia;
 	struct sapcic_tag *pcictag;
 
 	struct lwp *event_thread;
@@ -75,7 +75,7 @@ struct sapcic_tag {
 
 /* common part for sacpcic_softc and sagpcic_softc */
 struct sapcic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	kmutex_t sc_lock;
 };

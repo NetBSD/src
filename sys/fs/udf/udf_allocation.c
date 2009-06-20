@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.1.2.3 2009/05/04 08:13:44 yamt Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.1.2.4 2009/06/20 07:20:30 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.1.2.3 2009/05/04 08:13:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.1.2.4 2009/06/20 07:20:30 yamt Exp $");
 #endif /* not lint */
 
 
@@ -1325,11 +1325,11 @@ udf_wipe_adslots(struct udf_node *udf_node)
 	if (fe) {
 		fe->l_ad         = udf_rw32(0);
 		fe->logblks_rec  = udf_rw64(0);
-		fe->tag.desc_crc_len = udf_rw32(crclen);
+		fe->tag.desc_crc_len = udf_rw16(crclen);
 	} else {
 		efe->l_ad        = udf_rw32(0);
 		efe->logblks_rec = udf_rw64(0);
-		efe->tag.desc_crc_len = udf_rw32(crclen);
+		efe->tag.desc_crc_len = udf_rw16(crclen);
 	}
 
 	/* wipe all allocation extent entries */
@@ -1342,7 +1342,7 @@ udf_wipe_adslots(struct udf_node *udf_node)
 		ext->l_ad = udf_rw32(0);
 
 		crclen = dscr_size - UDF_DESC_TAG_LENGTH;
-		ext->tag.desc_crc_len = udf_rw32(crclen);
+		ext->tag.desc_crc_len = udf_rw16(crclen);
 	}
 	udf_node->i_flags |= IN_NODE_REBUILD;
 }
@@ -1568,7 +1568,7 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 
 	/* offset is offset within the current (E)FE/AED */
 	l_ad   = udf_rw32(*l_ad_p);
-	crclen = udf_rw32(dscr->tag.desc_crc_len);
+	crclen = udf_rw16(dscr->tag.desc_crc_len);
 	logblks_rec = udf_rw64(*logblks_rec_p);
 
 	/* overwriting old piece? */
@@ -1630,7 +1630,7 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 			memset(ext->data, 0, max_l_ad);
 			ext->l_ad = udf_rw32(0);
 			ext->tag.desc_crc_len =
-				udf_rw32(dscr_size - UDF_DESC_TAG_LENGTH);
+				udf_rw16(dscr_size - UDF_DESC_TAG_LENGTH);
 
 			/* declare aed */
 			udf_node->num_extensions++;
@@ -1648,7 +1648,7 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 		}
 		l_ad   += adlen;
 		crclen += adlen;
-		dscr->tag.desc_crc_len = udf_rw32(crclen);
+		dscr->tag.desc_crc_len = udf_rw16(crclen);
 		*l_ad_p = udf_rw32(l_ad);
 
 		/* advance to the new extension */
@@ -1660,7 +1660,7 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 
 		l_ad_p = &ext->l_ad;
 		l_ad   = udf_rw32(*l_ad_p);
-		crclen = udf_rw32(dscr->tag.desc_crc_len);
+		crclen = udf_rw16(dscr->tag.desc_crc_len);
 		offset = 0;
 
 		/* adjust callees slot count for link insert */
@@ -1682,16 +1682,17 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 	}
 
 	/* adjust logblks recorded count */
-	flags = UDF_EXT_FLAGS(udf_rw32(icb->len));
+	len = udf_rw32(icb->len);
+	flags = UDF_EXT_FLAGS(len);
 	if (flags == UDF_EXT_ALLOCATED)
-		logblks_rec += (UDF_EXT_LEN(icb->len) + lb_size -1) / lb_size;
+		logblks_rec += (UDF_EXT_LEN(len) + lb_size -1) / lb_size;
 	*logblks_rec_p = udf_rw64(logblks_rec);
 
 	/* adjust l_ad and crclen when needed */
 	if (offset >= l_ad) {
 		l_ad   += adlen;
 		crclen += adlen;
-		dscr->tag.desc_crc_len = udf_rw32(crclen);
+		dscr->tag.desc_crc_len = udf_rw16(crclen);
 		*l_ad_p = udf_rw32(l_ad);
 	}
 
@@ -2201,12 +2202,12 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			if (fe) {
 				fe->inf_len   = udf_rw64(inflen);
 				fe->l_ad      = udf_rw32(l_ad);
-				fe->tag.desc_crc_len = udf_rw32(crclen);
+				fe->tag.desc_crc_len = udf_rw16(crclen);
 			} else {
 				efe->inf_len  = udf_rw64(inflen);
 				efe->obj_size = udf_rw64(objsize);
 				efe->l_ad     = udf_rw32(l_ad);
-				efe->tag.desc_crc_len = udf_rw32(crclen);
+				efe->tag.desc_crc_len = udf_rw16(crclen);
 			}
 			error = 0;
 
@@ -2474,12 +2475,12 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		if (fe) {
 			fe->inf_len   = udf_rw64(inflen);
 			fe->l_ad      = udf_rw32(l_ad);
-			fe->tag.desc_crc_len = udf_rw32(crclen);
+			fe->tag.desc_crc_len = udf_rw16(crclen);
 		} else {
 			efe->inf_len  = udf_rw64(inflen);
 			efe->obj_size = udf_rw64(objsize);
 			efe->l_ad     = udf_rw32(l_ad);
-			efe->tag.desc_crc_len = udf_rw32(crclen);
+			efe->tag.desc_crc_len = udf_rw16(crclen);
 		}
 		error = 0;
 
@@ -2635,12 +2636,12 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 			if (fe) {
 				fe->inf_len   = udf_rw64(inflen);
 				fe->l_ad      = udf_rw32(l_ad);
-				fe->tag.desc_crc_len = udf_rw32(crclen);
+				fe->tag.desc_crc_len = udf_rw16(crclen);
 			} else {
 				efe->inf_len  = udf_rw64(inflen);
 				efe->obj_size = udf_rw64(objsize);
 				efe->l_ad     = udf_rw32(l_ad);
-				efe->tag.desc_crc_len = udf_rw32(crclen);
+				efe->tag.desc_crc_len = udf_rw16(crclen);
 			}
 			/* eventually copy in evacuated piece */
 			/* set new size for uvm */

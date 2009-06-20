@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14.44.1 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.14.44.2 2009/06/20 07:20:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14.44.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14.44.2 2009/06/20 07:20:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ process_read_regs(struct lwp *p, struct reg *regs)
 {
 
 	/* NOTE: struct reg == struct trapframe */
-	memcpy( (void *)regs, p->l_md.md_tf, sizeof(struct reg));
+	memcpy((void *)regs, p->l_md.md_tf, sizeof(struct reg));
 	return (0);
 }
 
@@ -123,7 +123,7 @@ process_write_regs(struct lwp *p, const struct reg *regs)
 {
 	int	psr = p->l_md.md_tf->tf_psr & ~PSR_ICC;
 
-	memcpy( p->l_md.md_tf, regs, sizeof(struct reg));
+	memcpy(p->l_md.md_tf, regs, sizeof(struct reg));
 	p->l_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
 	return (0);
 }
@@ -155,7 +155,7 @@ process_read_fpregs(struct lwp *p, struct fpreg *regs)
 	/* NOTE: struct fpreg == prefix of struct fpstate */
 	if (p->l_md.md_fpstate)
 		statep = p->l_md.md_fpstate;
-	memcpy( regs, statep, sizeof(struct fpreg));
+	memcpy(regs, statep, sizeof(struct fpreg));
 	return (0);
 }
 
@@ -167,7 +167,7 @@ process_write_fpregs(struct lwp *p, const struct fpreg *regs)
 		return (EINVAL);
 
 	/* Write new values to the FP registers */
-	memcpy( p->l_md.md_fpstate, regs, sizeof(struct fpreg));
+	memcpy(p->l_md.md_fpstate, regs, sizeof(struct fpreg));
 
 	/* Reset FP queue in this process `fpstate' */
 	p->l_md.md_fpstate->fs_qsize = 0;

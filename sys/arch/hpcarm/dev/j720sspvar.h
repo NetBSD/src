@@ -1,4 +1,4 @@
-/*	$NetBSD: j720sspvar.h,v 1.2.64.1 2008/05/16 02:22:27 yamt Exp $	*/
+/*	$NetBSD: j720sspvar.h,v 1.2.64.2 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 SSP port. */
 
 struct j720ssp_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_gpioh;

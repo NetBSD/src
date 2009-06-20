@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19.18.1 2008/05/16 02:21:52 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.18.2 2009/06/20 07:20:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #define _AMIGA_INTR_H_
 
 #include <amiga/amiga/isr.h>
-#include <amiga/include/mtpr.h>
 #include <m68k/psl.h>
 
 #define	IPL_NONE	0

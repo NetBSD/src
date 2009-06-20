@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.16 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.16.78.1 2009/06/20 07:20:00 yamt Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.16 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.16.78.1 2009/06/20 07:20:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -190,16 +190,6 @@ isic_supio_attach(struct device *parent, struct device *self, void *aux)
 	ssc->sc_isr.isr_ipl = isic_supio_ipl;	/* XXX */
 	add_isr(&ssc->sc_isr);
 }
-
-#if 0
-int
-isic_supiointr(void *p)
-{
-	/* XXX should test whether it is our interrupt at all */
-        add_sicallback((sifunc_t)isicintr, p, NULL);
-	return 1;
-}
-#endif
 
 /*static*/ void
 aster_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)

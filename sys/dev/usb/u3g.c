@@ -1,3 +1,5 @@
+/*	$NetBSD: u3g.c,v 1.6.6.3 2009/06/20 07:20:29 yamt Exp $	*/
+
 /*
  * Copyright (c) 2008 AnyWi Technologies
  *   Author: Andrea Guzzo <aguzzo@anywi.com>
@@ -18,6 +20,9 @@
  *
  * $FreeBSD$
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.6.6.3 2009/06/20 07:20:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

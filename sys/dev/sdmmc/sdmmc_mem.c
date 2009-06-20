@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.1.4.2 2009/05/04 08:13:18 yamt Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.1.4.3 2009/06/20 07:20:29 yamt Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.1.4.2 2009/05/04 08:13:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.1.4.3 2009/06/20 07:20:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -300,6 +300,7 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		switch (csd->csdver) {
 		case SD_CSD_CSDVER_2_0:
 			DPRINTF(("%s: SD Ver.2.0\n", SDMMCDEVNAME(sc)));
+			SET(sf->flags, SFF_SDHC);
 			csd->capacity = SD_CSD_V2_CAPACITY(resp);
 			csd->read_bl_len = SD_CSD_V2_BL_LEN;
 			break;

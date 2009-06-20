@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33.4.1 2009/05/04 08:12:23 yamt Exp $
+	$NetBSD: syscalls.master,v 1.33.4.2 2009/06/20 07:20:17 yamt Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -144,8 +144,8 @@
 65	NOARGS	{ int|sys||getpgrp(void); }
 66	NOARGS	{ int|sys||setsid(void); }
 67	UNIMPL	sigaction
-68	UNIMPL	siggetmask
-69	UNIMPL	sigsetmask
+68	STD	{ int|linux32_sys||siggetmask(void); }
+69	STD	{ int|linux32_sys||sigsetmask(linux32_old_sigset_t mask); }
 70	STD	{ int|linux32_sys||setreuid16(linux32_uid16_t ruid, \
 		    linux32_uid16_t euid); }
 71	STD	{ int|linux32_sys||setregid16(linux32_gid16_t rgid, \
@@ -196,7 +196,7 @@
 98	UNIMPL	profil
 99	STD	{ int|linux32_sys||statfs(netbsd32_charp path, \
 		    linux32_statfsp sp); }
-100	UNIMPL	fstatfs
+100	STD	{ int|linux32_sys||fstatfs(int fd, linux32_statfsp sp); }
 101	UNIMPL	ioperm
 102	STD	{ int|linux32_sys||socketcall(int what, netbsd32_voidp args); }
 103	UNIMPL	syslog
@@ -204,9 +204,12 @@
 		    netbsd32_itimerval50p_t itv, netbsd32_itimerval50p_t oitv); }
 105	NOARGS	{ int|compat_50_netbsd32||getitimer(int which, \
 		    netbsd32_itimerval50p_t itv); }
-106	UNIMPL	stat
-107	UNIMPL	lstat
-108	UNIMPL	fstat
+106	STD	{ int|linux32_sys||stat(netbsd32_charp path, \
+		    linux32_statp sp); }
+107	STD	{ int|linux32_sys||lstat(netbsd32_charp path, \
+		    linux32_statp sp); }
+108	STD	{ int|linux32_sys||fstat(int fd, \
+		    linux32_statp sp); }
 109	STD	{ int|linux32_sys||olduname(linux32_oldutsnamep_t up); }
 110	UNIMPL	iopl
 111	UNIMPL	vhangup
@@ -307,7 +310,8 @@
 176	STD	{ int|linux32_sys||rt_sigpending(linux32_sigsetp_t set, \
 		    netbsd32_size_t sigsetsize); }
 177	UNIMPL	rt_sigtimedwait
-178	UNIMPL	rt_queueinfo
+178	STD	{ int|linux32_sys||rt_queueinfo(int pid, int sig, \
+		    linux32_siginfop_t uinfo); }
 179	STD	{ int|linux32_sys||rt_sigsuspend(linux32_sigsetp_t unewset, \
 		    netbsd32_size_t sigsetsize); }
 180	STD	{ netbsd32_ssize_t|linux32_sys||pread(int fd, \

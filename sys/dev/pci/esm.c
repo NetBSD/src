@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.47.4.1 2009/05/16 10:41:33 yamt Exp $      */
+/*      $NetBSD: esm.c,v 1.47.4.2 2009/06/20 07:20:23 yamt Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.4.1 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.4.2 2009/06/20 07:20:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ esm_get_quirks(pcireg_t subid)
 {
 	int i;
 
-	for (i = 0; i < (sizeof esm_quirks / sizeof esm_quirks[0]); i++) {
+	for (i = 0; i < __arraycount(esm_quirks); i++) {
 		if (PCI_VENDOR(subid) == esm_quirks[i].eq_vendor &&
 		    PCI_PRODUCT(subid) == esm_quirks[i].eq_product) {
 			return esm_quirks[i].eq_quirks;
@@ -288,7 +288,7 @@ esm_dump_regs(struct esm_softc *ess)
 	int i;
 
 	printf("%s registers:", device_xname(ess->sc_dev));
-	for (i = 0; i < (sizeof dump_regs / sizeof dump_regs[0]); i++) {
+	for (i = 0; i < __arraycount(dump_regs); i++) {
 		if (i % 5 == 0)
 			printf("\n");
 		printf("0x%2.2x: ", dump_regs[i].offset);
@@ -1528,7 +1528,7 @@ esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
 
 	p->size = size;
 	error = bus_dmamem_alloc(sc->dmat, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+				 p->segs, __arraycount(p->segs),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		return error;

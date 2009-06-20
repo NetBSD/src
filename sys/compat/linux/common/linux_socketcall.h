@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.14.10.1 2008/05/16 02:23:43 yamt Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.14.10.2 2009/06/20 07:20:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -185,13 +185,13 @@ struct linux_sys_getpeername_args {
 
 struct linux_sys_sendmsg_args {
 	syscallarg(int) s;
-	syscallarg(struct msghdr *) msg;
+	syscallarg(struct linux_msghdr *) msg;
 	syscallarg(u_int) flags;
 };
 
 struct linux_sys_recvmsg_args {
 	syscallarg(int) s;
-	syscallarg(struct msghdr *) msg;
+	syscallarg(struct linux_msghdr *) msg;
 	syscallarg(u_int) flags;
 };
 

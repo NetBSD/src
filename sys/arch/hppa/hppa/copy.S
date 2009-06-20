@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.6.18.3 2009/05/16 10:41:14 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.6.18.4 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -174,14 +174,14 @@ LEAF_ENTRY(spstrcpy)
 	mtsp	%arg2, %sr2
 	copy	%arg1, %arg0	/* save src */
 
-$spstrcpy_loop:
-	comb,=,n %r0, %ret1, $spstrcpy_exit
+L$spstrcpy_loop:
+	comb,=,n %r0, %ret1, L$spstrcpy_exit
 	ldbs,ma	1(%sr1, %arg1), %t1
 	stbs,ma	%t1, 1(%sr2, %arg3)
-	comb,<>	%r0, %t1, $spstrcpy_loop
+	comb,<>	%r0, %t1, L$spstrcpy_loop
 	ldo	-1(%ret1), %ret1
 
-$spstrcpy_exit:
+L$spstrcpy_exit:
 	/* reset fault handler */
 	stw	%r0, PCB_ONFAULT+U_PCB(%r31)
 	mtsp	%r0, %sr2	/* XXX need this? */

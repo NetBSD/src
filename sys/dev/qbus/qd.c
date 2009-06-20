@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.43.4.1 2009/05/04 08:13:15 yamt Exp $	*/
+/*	$NetBSD: qd.c,v 1.43.4.2 2009/06/20 07:20:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.43.4.1 2009/05/04 08:13:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.43.4.2 2009/06/20 07:20:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -167,7 +167,6 @@ int Qbus_unmap[NQD];		/* Qbus mapper release code */
 struct qdmap qdmap[NQD];	/* QDSS register map structure */
 struct qdflags qdflags[NQD];	/* QDSS register map structure */
 void *qdbase[NQD];		/* base address of each QDSS unit */
-struct buf qdbuf[NQD];		/* buf structs used by strategy */
 short qdopened[NQD];		/* graphics device is open exclusive use */
 
 /*
@@ -1640,8 +1639,7 @@ qdwrite(dev_t dev, struct uio *uio, int flag)
 		/*
 		* this is a DMA xfer from user space
 		*/
-		return (physio(qd_strategy, &qdbuf[unit],
-		dev, B_WRITE, minphys, uio));
+		return (physio(qd_strategy, NULL, dev, B_WRITE, minphys, uio));
 	}
 	return (ENXIO);
 }
@@ -1667,8 +1665,7 @@ qdread(dev_t dev, struct uio *uio, int flag)
 		/*
 		* this is a bitmap-to-processor xfer
 		*/
-		return (physio(qd_strategy, &qdbuf[unit],
-		dev, B_READ, minphys, uio));
+		return (physio(qd_strategy, NULL, dev, B_READ, minphys, uio));
 	}
 	return (ENXIO);
 }

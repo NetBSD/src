@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.13 2007/12/20 23:03:03 dsl Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.13.10.1 2009/06/20 07:20:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.13 2007/12/20 23:03:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.13.10.1 2009/06/20 07:20:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ osf1_sys_mmap(struct lwp *l, const struct osf1_sys_mmap_args *uap, register_t *r
 	SCARG(&a, addr) = SCARG(uap, addr);
 	SCARG(&a, len) = SCARG(uap, len);
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, pad) = 0;
+	SCARG(&a, PAD) = 0;
 	SCARG(&a, pos) = SCARG(uap, pos);
 
 	/* translate prot */

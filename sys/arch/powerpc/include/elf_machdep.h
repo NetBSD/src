@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.7 2006/11/25 18:04:33 freza Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.7.56.1 2009/06/20 07:20:07 yamt Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -52,5 +52,40 @@
 #define	R_PPC_PLT16_HI 		30
 #define	R_PPC_PLT16_HA 		31
 #define	R_PPC_SDAREL 		32
+
+/* TLS relocations */
+#define	R_PPC_TLS		67
+
+#define	R_PPC_DTPMOD32		68
+#define	R_PPC_TPREL16		69
+#define	R_PPC_TPREL16_LO	70
+#define	R_PPC_TPREL16_HI	71
+#define	R_PPC_TPREL16_HA	72
+#define	R_PPC_TPREL32		73
+#define	R_PPC_DTPREL16		74
+#define	R_PPC_DTPREL16_LO	75
+#define	R_PPC_DTPREL16_HI	76
+#define	R_PPC_DTPREL16_HA	77
+#define	R_PPC_DTPREL32		78
+
+#define	R_PPC_GOT_TLSGD16	79
+#define	R_PPC_GOT_TLSGD16_LO	80
+#define	R_PPC_GOT_TLSGD16_HI	81
+#define	R_PPC_GOT_TLSGD16_HA	82
+#define	R_PPC_GOT_TLSLD16	83
+#define	R_PPC_GOT_TLSLD16_LO	84
+#define	R_PPC_GOT_TLSLD16_HI	85
+#define	R_PPC_GOT_TLSLD16_HA	86
+
+#define	R_PPC_GOT_TPREL16	87
+#define	R_PPC_GOT_TPREL16_LO	88
+#define	R_PPC_GOT_TPREL16_HI	89
+#define	R_PPC_GOT_TPREL16_HA	90
+#define	R_PPC_GOT_DTPREL16	91
+#define	R_PPC_GOT_DTPREL16_LO	92
+#define	R_PPC_GOT_DTPREL16_HI	93
+#define	R_PPC_GOT_DTPREL16_HA	94
+#define	R_PPC_TLSGD		95
+#define	R_PPC_TLSLD		96
 
 #define R_TYPE(name) 		__CONCAT(R_PPC_,name)

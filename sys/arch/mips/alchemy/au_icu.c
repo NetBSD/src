@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.22.16.1 2008/05/16 02:22:48 yamt Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.22.16.2 2009/06/20 07:20:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.22.16.1 2008/05/16 02:22:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.22.16.2 2009/06/20 07:20:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -99,7 +99,10 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTNET */
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/*  3: IPL_VM */
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3,		/*  3: IPL_VM */
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
 		MIPS_INT_MASK_0|

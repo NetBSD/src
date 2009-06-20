@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.20.10.1 2008/05/16 02:21:56 yamt Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.20.10.2 2009/06/20 07:20:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.20.10.1 2008/05/16 02:21:56 yamt Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.20.10.2 2009/06/20 07:20:00 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -146,7 +146,6 @@ footbridge_intr_calculate_masks(void)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	KASSERT(footbridge_imask[IPL_VM] != 0);
 	footbridge_imask[IPL_SCHED] |= footbridge_imask[IPL_VM];
 	footbridge_imask[IPL_HIGH] |= footbridge_imask[IPL_SCHED];
 

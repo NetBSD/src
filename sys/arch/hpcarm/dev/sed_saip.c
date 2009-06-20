@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.22.44.1 2009/05/04 08:11:10 yamt Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.22.44.2 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.22.44.1 2009/05/04 08:11:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.22.44.2 2009/06/20 07:20:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.22.44.1 2009/05/04 08:11:10 yamt Exp 
 #include <hpcarm/dev/sed1356var.h>
 
 #ifdef SED_DEBUG
-#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while (0)
+#define VPRINTF(arg)	do { if (bootverbose) aprint_normal arg; } while (0)
 #else
 #define VPRINTF(arg)	/* nothing */
 #endif
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.22.44.1 2009/05/04 08:11:10 yamt Exp 
 /*
  * Function prototypes.
  */
-static int	sed1356_match(struct device *, struct cfdata *, void *);
-static void	sed1356_attach(struct device *, struct device *, void *);
+static int	sed1356_match(device_t, cfdata_t, void *);
+static void	sed1356_attach(device_t, device_t, void *);
 static int	sed1356_ioctl(void *, u_long, void *, int, struct lwp *);
 static paddr_t	sed1356_mmap(void *, off_t, int);
 
@@ -98,7 +98,7 @@ extern int j720lcd_power(void *, int, long, void *);   /* XXX */
 /*
  * Static variables.
  */
-CFATTACH_DECL(sed, sizeof(struct sed1356_softc),
+CFATTACH_DECL_NEW(sed, sizeof(struct sed1356_softc),
     sed1356_match, sed1356_attach, NULL, NULL);
 struct hpcfb_accessops sed1356_ha = {
 	sed1356_ioctl, sed1356_mmap
@@ -110,7 +110,7 @@ static int attach_flag = 0;
  * Function bodies.
  */
 static int
-sed1356_match(struct device *parent, struct cfdata *match, void *aux)
+sed1356_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	/* XXX check version register */
@@ -118,9 +118,9 @@ sed1356_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sed1356_attach(struct device *parent, struct device *self, void *aux)
+sed1356_attach(device_t parent, device_t self, void *aux)
 {
-	struct sed1356_softc *sc = (struct sed1356_softc *)self;
+	struct sed1356_softc *sc = device_private(self);
 	struct hpcfb_attach_args ha;
 	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
 
@@ -133,31 +133,31 @@ sed1356_attach(struct device *parent, struct device *self, void *aux)
 		/* just return so that hpcfb will not be attached */
 		return;
 	}
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = &sa11x0_bs_tag;
-	sc->sc_parent = (struct sa11x0_softc *)parent;
+	sc->sc_parent = device_private(parent);
 	if (bus_space_map(sc->sc_iot, (bus_addr_t)bootinfo->fb_addr & ~0x3fffff,
 	    0x200, 0, &sc->sc_regh)) {
-		printf("%s: unable to map register\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "unable to map register\n");
 		return;
 	}
 
-	printf("%s: Epson SED1356", sc->sc_dev.dv_xname);
+	aprint_normal_dev(self, "Epson SED1356");
 	if (console) {
-		printf(", console");
+		aprint_normal(", console");
 	}
-	printf("\n");
-	printf("%s: framebuffer address: 0x%08lx\n",
-	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "framebuffer address: 0x%08lx\n",
+			  (u_long)bootinfo->fb_addr);
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;
 	sc->sc_powerhook = powerhook_establish(self->dv_xname,
 	    sed1356_power, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "WARNING: unable to establish power hook\n");
 
 	/* Initialize backlight brightness and lcd contrast */
 	sc->sc_lcd_inited = 0;
@@ -199,7 +199,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	    bootinfo->fb_line_bytes == 0 ||
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
-		printf("no frame buffer information.\n");
+		aprint_normal("no frame buffer information.\n");
 		return -1;
 	}
 
@@ -218,7 +218,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	if (bus_space_map(&sa11x0_bs_tag, (bus_addr_t)bootinfo->fb_addr,
 			   bootinfo->fb_height * bootinfo->fb_line_bytes,
 			   0, &fb->hf_baseaddr)) {
-		printf("unable to map framebuffer\n");
+		aprint_normal("unable to map framebuffer\n");
 		return -1;
 	}
 	fb->hf_offset		= (u_long)bootinfo->fb_addr -
@@ -296,7 +296,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 		break;
 
 	default:
-		printf("unsupported type %d.\n", bootinfo->fb_type);
+		aprint_normal("unsupported type %d.\n", bootinfo->fb_type);
 		return -1;
 	}
 

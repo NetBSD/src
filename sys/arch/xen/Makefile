@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.78.1 2009/05/04 08:12:11 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.78.2 2009/06/20 07:20:13 yamt Exp $
+
+.include <bsd.own.mk>
 
 # Makefile for xen tags file
 
@@ -20,8 +22,9 @@ AXEN+=	${SYSDIR}/arch/xen/${XEN_BUILD}/*.[sS]
 DXEN=	xen ${XEN_MACHINE_ARCHS} include
 
 tags:
-	rm -f ${TXEN}
-	-echo ${SXEN} ${COMM} | xargs ctags -wadtf ${TXEN}
+	-rm -f ${TXEN}
+	-echo ${SXEN} | xargs ctags -wadtf ${TXEN}
+	${FINDCOMM} | xargs ctags -wadtf ${TXEN}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AXEN} | \
 	    ${TOOL_SED} -e \
 		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \

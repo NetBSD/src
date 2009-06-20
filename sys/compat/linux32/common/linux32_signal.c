@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.8.2.1 2009/05/04 08:12:23 yamt Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.8.2.2 2009/06/20 07:20:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.8.2.1 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.8.2.2 2009/06/20 07:20:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -406,4 +406,67 @@ linux32_sys_rt_sigpending(struct lwp *l, const struct linux32_sys_rt_sigpending_
 	sigpending1(l, &bss);
 	native_to_linux32_sigset(&lss, &bss);
 	return copyout(&lss, SCARG_P32(uap, set), sizeof(lss));
+}
+
+int
+linux32_sys_siggetmask(struct lwp *l, const void *v, register_t *retval)
+{
+	struct proc *p = l->l_proc;
+	sigset_t bss;
+	linux32_old_sigset_t lss;
+	int error;
+
+	mutex_enter(p->p_lock);
+	error = sigprocmask1(l, SIG_SETMASK, 0, &bss);
+	mutex_exit(p->p_lock);
+	if (error)
+		return error;
+	native_to_linux32_old_sigset(&lss, &bss);
+	*retval = lss;
+	return 0;
+}
+
+int
+linux32_sys_sigsetmask(struct lwp *l, const struct linux32_sys_sigsetmask_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_old_sigset_t) mask;
+	} */
+	sigset_t nbss, obss;
+	linux32_old_sigset_t nlss, olss;
+	struct proc *p = l->l_proc;
+	int error;
+
+	nlss = SCARG(uap, mask);
+	linux32_old_to_native_sigset(&nbss, &nlss);
+	mutex_enter(p->p_lock);
+	error = sigprocmask1(l, SIG_SETMASK, &nbss, &obss);
+	mutex_exit(p->p_lock);
+	if (error)
+		return error;
+	native_to_linux32_old_sigset(&olss, &obss);
+	*retval = olss;
+	return 0;
+}
+
+int
+linux32_sys_rt_queueinfo(struct lwp *l, const struct linux32_sys_rt_queueinfo_args *uap, register_t *retval)
+{
+	/*
+		syscallarg(int) pid;
+		syscallarg(int) sig;
+		syscallarg(linux32_siginfop_t) uinfo;
+	*/
+	int error;
+	linux32_siginfo_t info;
+
+	error = copyin(SCARG_P32(uap, uinfo), &info, sizeof(info));
+	if (error)
+		return error;
+	if (info.lsi_code >= 0)
+		return EPERM;
+
+	/* XXX To really implement this we need to      */
+	/* XXX keep a list of queued signals somewhere. */
+	return linux32_sys_kill(l, (const void *)uap, retval);
 }

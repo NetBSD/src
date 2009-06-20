@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.12 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: isr.h,v 1.12.78.1 2009/06/20 07:19:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982 Regents of the University of California.
@@ -48,10 +48,6 @@ struct isr {
 #ifdef _KERNEL
 void add_isr(struct isr *);
 void remove_isr(struct isr *);
-typedef void (*sifunc_t)(void *, void *);
-void alloc_sicallback(void);
-void add_sicallback(sifunc_t, void *, void *);
-void rem_sicallback(sifunc_t);
 #endif
 
 #endif /* _AMIGA_ISR_H_ */

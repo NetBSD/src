@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27.4.2 2009/05/16 10:41:13 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.4.3 2009/06/20 07:20:03 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -270,6 +270,7 @@ int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
 		 size_t *);
 int	copy_on_fault(void);
 void	lwp_trampoline(void);
+void	setfunc_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
 #endif

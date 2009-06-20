@@ -1,0 +1,9 @@
+#	$NetBSD: Makefile.rumpdev,v 1.1.2.2 2009/06/20 07:20:35 yamt Exp $
+#
+
+RUMPDEVLIST=	disk raidframe
+
+.for var in ${RUMPDEVLIST}
+RUMPDEVLIBS+=lib${var}
+RUMPDEVLDADD+=-lrumpdev_${var}
+.endfor

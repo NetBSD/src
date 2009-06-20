@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.19.18.2 2009/05/04 08:12:26 yamt Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.19.18.3 2009/06/20 07:20:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.19.18.2 2009/05/04 08:12:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.19.18.3 2009/06/20 07:20:18 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.19.18.2 2009/05/04 08:12:26 yamt E
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/stat.h>
@@ -74,10 +75,6 @@ struct uvm_object *emul_pecoff_object;
 
 #ifndef __HAVE_SYSCALL_INTERN
 void	syscall(void);
-#endif
-
-#ifdef SYSCALL_DEBUG
-extern const char * const syscallnames[];
 #endif
 
 struct emul emul_pecoff = {
