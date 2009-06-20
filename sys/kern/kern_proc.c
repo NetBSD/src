@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.139.2.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.139.2.3 2009/06/20 07:20:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.3 2009/06/20 07:20:31 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -203,6 +203,7 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_psid = PS_NONE,
 	.l_pi_lenders = SLIST_HEAD_INITIALIZER(&lwp0.l_pi_lenders),
 	.l_name = __UNCONST("swapper"),
+	.l_fd = &filedesc0,
 };
 kauth_cred_t cred0;
 

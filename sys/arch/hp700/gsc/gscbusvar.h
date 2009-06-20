@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbusvar.h,v 1.5.78.2 2009/05/16 10:41:13 yamt Exp $	*/
+/*	$NetBSD: gscbusvar.h,v 1.5.78.3 2009/06/20 07:20:03 yamt Exp $	*/
 
 /*	$OpenBSD: gscbusvar.h,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
 
@@ -57,7 +57,7 @@ struct gsc_attach_args {
 	int	ga_scsi_target;
 
 	/* The address for the Ethernet adapter. */
-	u_int8_t ga_ether_address[6];
+	uint8_t	ga_ether_address[6];
 };
 
 int gscprint(void *, const char *);

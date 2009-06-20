@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.9.4.3 2009/05/16 10:41:43 yamt Exp $ */
+/*	$NetBSD: agten.c,v 1.9.4.4 2009/06/20 07:20:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.9.4.3 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.9.4.4 2009/06/20 07:20:28 yamt Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -245,9 +245,10 @@ agten_attach(device_t parent, device_t dev, void *aux)
 
 	reg = prom_getpropint(node, "i128_fb_physaddr", -1);
 	sc->sc_i128_fbsz = prom_getpropint(node, "i128_fb_size", -1);
-	if (sparc_bus_map_large(sc->sc_bustag,
+	if (sbus_bus_map(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
-	    sc->sc_stride * sc->sc_height, BUS_SPACE_MAP_LINEAR, 
+	    sc->sc_stride * sc->sc_height,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE, 
 	    &sc->sc_i128_fbh) != 0) {
 
 		aprint_error_dev(dev, "unable to map the framebuffer\n");

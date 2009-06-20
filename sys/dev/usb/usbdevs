@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.497.2.2 2009/05/04 08:13:22 yamt Exp $
+$NetBSD: usbdevs,v 1.497.2.3 2009/06/20 07:20:29 yamt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1067,7 +1067,8 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
-product FTDI SERIAL_2232C	0x6010	2232C USB FAST SERIAL ADAPTER
+product FTDI SERIAL_2232C	0x6010	2232C USB dual FAST SERIAL ADAPTER
+product FTDI SERIAL_4232H	0x6011	2232H USB quad FAST SERIAL ADAPTER
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
 product FTDI MHAM_KW		0xeee8	KW

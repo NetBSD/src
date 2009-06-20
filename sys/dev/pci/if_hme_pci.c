@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.24.4.2 2009/05/16 10:41:34 yamt Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.24.4.3 2009/06/20 07:20:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.24.4.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.24.4.3 2009/06/20 07:20:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ struct hme_pci_softc {
 int	hmematch_pci(device_t, cfdata_t, void *);
 void	hmeattach_pci(device_t, device_t, void *);
 
-CFATTACH_DECL(hme_pci, sizeof(struct hme_pci_softc),
+CFATTACH_DECL_NEW(hme_pci, sizeof(struct hme_pci_softc),
     hmematch_pci, hmeattach_pci, NULL, NULL);
 
 int
@@ -94,7 +94,7 @@ hmematch_pci(device_t parent, cfdata_t cf, void *aux)
 
 #if HME_USE_LOCAL_MAC_ADDRESS
 static inline int
-hmepromvalid(u_int8_t* buf)
+hmepromvalid(uint8_t* buf)
 {
 	return buf[0] == 0x18 && buf[1] == 0x00 &&	/* structure length */
 	    buf[2] == 0x00 &&				/* revision */
@@ -133,16 +133,16 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 #if HME_USE_LOCAL_MAC_ADDRESS
 	struct pci_attach_args	ebus_pa;
 	pcireg_t		ebus_cl, ebus_id;
-	u_int8_t		*enaddr;
+	uint8_t			*enaddr;
 	bus_space_tag_t		romt;
 	bus_space_handle_t	romh;
 	bus_size_t		romsize;
-	u_int8_t		buf[64];
+	uint8_t			buf[64];
 	int			dataoff, vpdoff;
 	struct pci_vpd		*vpd;
-	static const u_int8_t promhdr[] = { 0x55, 0xaa };
+	static const uint8_t promhdr[] = { 0x55, 0xaa };
 #define PROMHDR_PTR_DATA	0x18
-	static const u_int8_t promdat[] = {
+	static const uint8_t promdat[] = {
 		0x50, 0x43, 0x49, 0x52,		/* "PCIR" */
 		PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
 		PCI_PRODUCT_SUN_HMENETWORK & 0xff,
@@ -152,7 +152,9 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 #define PROMDATA_DATA2		0x0a
 #endif	/* HME_USE_LOCAL_MAC_ADDRESS */
 
-	printf(": Sun Happy Meal Ethernet, rev. %d\n",
+	sc->sc_dev = self;
+
+	aprint_normal(": Sun Happy Meal Ethernet, rev. %d\n",
 	    PCI_REVISION(pa->pa_class));
 
 	/*
@@ -192,30 +194,29 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 
 #define PCI_HME_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
-	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL) != 0)
-	{
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL) != 0) {
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 	sc->sc_seb = hsc->hsc_memh;
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x2000,
 	    0x1000, &sc->sc_etx)) {
-		aprint_error_dev(&sc->sc_dev, "unable to subregion ETX registers\n");
+		aprint_error_dev(self, "unable to subregion ETX registers\n");
 		return;
 	}
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x4000,
 	    0x1000, &sc->sc_erx)) {
-		aprint_error_dev(&sc->sc_dev, "unable to subregion ERX registers\n");
+		aprint_error_dev(self, "unable to subregion ERX registers\n");
 		return;
 	}
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x6000,
 	    0x1000, &sc->sc_mac)) {
-		aprint_error_dev(&sc->sc_dev, "unable to subregion MAC registers\n");
+		aprint_error_dev(self, "unable to subregion MAC registers\n");
 		return;
 	}
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x7000,
 	    0x1000, &sc->sc_mif)) {
-		aprint_error_dev(&sc->sc_dev, "unable to subregion MIF registers\n");
+		aprint_error_dev(self, "unable to subregion MIF registers\n");
 		return;
 	}
 
@@ -297,26 +298,26 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 #ifdef __sparc__
 		prom_getether(PCITAG_NODE(pa->pa_tag), sc->sc_enaddr);
 #else
-		printf("%s: no Ethernet address found\n", device_xname(&sc->sc_dev));
+		printf("%s: no Ethernet address found\n", device_xname(self));
 #endif
 
 	/*
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
+		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	hsc->hsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, hme_intr, sc);
 	if (hsc->hsc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->sc_burst = 16;	/* XXX */
 

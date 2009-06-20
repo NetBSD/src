@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.37.4.3 2009/05/16 10:41:30 yamt Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.37.4.4 2009/06/20 07:20:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.3 2009/05/16 10:41:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.4 2009/06/20 07:20:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,7 @@ static const struct mii_phydesc brgphys[] = {
 };
 
 static int
-brgphymatch(device_t parent, cfdata_t match,
-    void *aux)
+brgphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -207,7 +206,6 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
 	prop_dictionary_t dict;
-	const char *devname;
 
 	mpd = mii_phy_match(ma, brgphys);
 	aprint_naive(": Media interface\n");
@@ -238,14 +236,12 @@ brgphyattach(device_t parent, device_t self, void *aux)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
 
-	parent = device_parent(sc->mii_dev);
-	devname = parent->dv_cfdriver->cd_name;
-	if (strcmp(devname, "bge") == 0) {
+	if (device_is_a(parent, "bge")) {
 		bsc->sc_isbge = 1;
 		dict = device_properties(parent);
 		prop_dictionary_get_uint32(dict, "phyflags",
 		    &bsc->sc_bge_flags);
-	} else if (strcmp(devname, "bnx") == 0) {
+	} else if (device_is_a(parent, "bnx")) {
 		bsc->sc_isbnx = 1;
 		dict = device_properties(parent);
 		prop_dictionary_get_uint32(dict, "phyflags",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.20.4.2 2009/05/04 08:11:58 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.20.4.3 2009/06/20 07:20:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20.4.2 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20.4.3 2009/06/20 07:20:11 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -242,9 +242,9 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 int
 sparc64_ipi_wait(sparc64_cpuset_t volatile *cpus_watchset, sparc64_cpuset_t cpus_mask)
 {
-	uint64_t limit = tick() + cpu_frequency(curcpu());
+	uint64_t limit = gettick() + cpu_frequency(curcpu());
 
-	while (tick() < limit) {
+	while (gettick() < limit) {
 		membar_sync();
 		if (CPUSET_EQUAL(*cpus_watchset, cpus_mask))
 			return 0;

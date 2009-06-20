@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119.2.1 2009/05/04 08:10:34 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.119.2.2 2009/06/20 07:19:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.2.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.2.2 2009/06/20 07:19:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.2.1 2009/05/04 08:10:34 yamt Exp $");
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/mtpr.h>
 #include <machine/pte.h>
 
 #include <m68k/fpe/fpu_emulate.h>

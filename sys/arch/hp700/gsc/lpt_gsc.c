@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.9.4.1 2009/05/16 10:41:13 yamt Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.9.4.2 2009/06/20 07:20:03 yamt Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.9.4.1 2009/05/16 10:41:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.9.4.2 2009/06/20 07:20:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ lpt_gsc_probe(device_t parent, cfdata_t match, void *aux)
 	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 	bus_addr_t base;
-	u_int8_t mask, data;
+	uint8_t mask, data;
 	int i, rv;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||

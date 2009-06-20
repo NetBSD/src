@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.73.10.2 2009/05/04 08:14:04 yamt Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.73.10.3 2009/06/20 07:20:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.73.10.2 2009/05/04 08:14:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.73.10.3 2009/06/20 07:20:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -164,13 +164,13 @@ fdesc_root(struct mount *mp, struct vnode **vpp)
 int
 fdesc_statvfs(struct mount *mp, struct statvfs *sbp)
 {
-	struct lwp *l = curlwp;
-	struct filedesc *fdp;
-	struct proc *p;
+	lwp_t *l = curlwp;
+	proc_t *p;
 	int lim;
 	int i;
 	int last;
 	int freefd;
+	fdtab_t *dt;
 
 	/*
 	 * Compute number of free file descriptors.
@@ -179,20 +179,20 @@ fdesc_statvfs(struct mount *mp, struct statvfs *sbp)
 	 * of open files... ]
 	 */
 	p = l->l_proc;
+	dt = l->l_fd->fd_dt;
 	lim = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
-	fdp = p->p_fd;
-	last = min(fdp->fd_nfiles, lim);
+	last = min(dt->dt_nfiles, lim);
 	freefd = 0;
-	for (i = fdp->fd_freefile; i < last; i++)
-		if (fdp->fd_ofiles[i] == NULL)
+	for (i = l->l_fd->fd_freefile; i < last; i++)
+		if (dt->dt_ff[i]->ff_file == NULL)
 			freefd++;
 
 	/*
 	 * Adjust for the fact that the fdesc array may not
 	 * have been fully allocated yet.
 	 */
-	if (fdp->fd_nfiles < lim)
-		freefd += (lim - fdp->fd_nfiles);
+	if (dt->dt_nfiles < lim)
+		freefd += (lim - dt->dt_nfiles);
 
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_frsize = DEV_BSIZE;

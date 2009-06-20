@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.3 2005/11/24 12:54:29 dbj Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.3.78.1 2009/06/20 07:20:02 yamt Exp $
 
 MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
 
-CFLAGS+=-mcpu=403
-AFLAGS+=-mcpu=403
+CFLAGS+=-mcpu=405
+AFLAGS+=-mcpu=405
 TEXTADDR?=	25000
 
 SYSTEM_FIRST_OBJ=	locore.o

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.91.2.1 2009/05/04 08:12:21 yamt Exp $
+	$NetBSD: syscalls.master,v 1.91.2.2 2009/06/20 07:20:15 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -316,9 +316,8 @@
 			    linux_sigset_t *set, \
 			    size_t sigsetsize); }
 177	UNIMPL		rt_sigtimedwait
-; XXX XAX int here?  sigset_t here?  siginfo_t
 178	STD		{ int|linux_sys||rt_queueinfo(int pid, int signum, \
-			    void *uinfo); }
+			    linux_siginfo_t *uinfo); }
 179	STD		{ int|linux_sys||rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
 180	STD		{ int|linux_sys||pread(int fd, char *buf, \

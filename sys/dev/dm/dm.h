@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.12.2.2 2009/05/04 08:12:36 yamt Exp $      */
+/*        $NetBSD: dm.h,v 1.12.2.3 2009/06/20 07:20:21 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define DM_NAME_LEN 128
 #define DM_UUID_LEN 129
 
-#define DM_VERSION_MAJOR	4
+#define DM_VERSION_MAJOR	5
 #define DM_VERSION_MINOR	13
 #define DM_VERSION_PATCHLEVEL	0
 
@@ -209,7 +209,7 @@ typedef struct target_snapshot_origin_config {
 typedef struct dm_target {
 	char name[DM_MAX_TYPE_NAME];
 	/* Initialize target_config area */
-	int (*init)(dm_dev_t *, void **, char *);
+	int (*init)(dm_dev_t *, void **, prop_dictionary_t);
 
 	/* Destroy target_config area */
 	int (*destroy)(dm_table_entry_t *);
@@ -244,7 +244,7 @@ struct cmd_function {
 };
 
 /* device-mapper */
-void dmgetdisklabel(struct disklabel *, dm_table_head_t *);
+void dmgetproperties(struct disk *, dm_table_head_t *);
 
 /* dm_ioctl.c */
 int dm_dev_create_ioctl(prop_dictionary_t);
@@ -278,8 +278,10 @@ void dm_target_busy(dm_target_t *);
 /* XXX temporally add */
 int dm_target_init(void);
 
+#define DM_MAX_PARAMS_SIZE 1024
+
 /* dm_target_zero.c */
-int dm_target_zero_init(dm_dev_t *, void**,  char *);
+int dm_target_zero_init(dm_dev_t *, void**, prop_dictionary_t);
 char * dm_target_zero_status(void *);
 int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_zero_destroy(dm_table_entry_t *);
@@ -287,7 +289,7 @@ int dm_target_zero_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_error.c */
-int dm_target_error_init(dm_dev_t *, void**, char *);
+int dm_target_error_init(dm_dev_t *, void**, prop_dictionary_t);
 char * dm_target_error_status(void *);
 int dm_target_error_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_error_deps(dm_table_entry_t *, prop_array_t);
@@ -295,7 +297,7 @@ int dm_target_error_destroy(dm_table_entry_t *);
 int dm_target_error_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_linear.c */
-int dm_target_linear_init(dm_dev_t *, void**, char *);
+int dm_target_linear_init(dm_dev_t *, void**, prop_dictionary_t);
 char * dm_target_linear_status(void *);
 int dm_target_linear_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_linear_deps(dm_table_entry_t *, prop_array_t);
@@ -306,7 +308,7 @@ int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
 uint64_t atoi(const char *); 
 
 /* dm_target_mirror.c */
-int dm_target_mirror_init(dm_dev_t *, void**, char *);
+int dm_target_mirror_init(dm_dev_t *, void**, prop_dictionary_t);
 char * dm_target_mirror_status(void *);
 int dm_target_mirror_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_mirror_deps(dm_table_entry_t *, prop_array_t);
@@ -314,7 +316,7 @@ int dm_target_mirror_destroy(dm_table_entry_t *);
 int dm_target_mirror_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_stripe.c */
-int dm_target_stripe_init(dm_dev_t *, void**, char *);
+int dm_target_stripe_init(dm_dev_t *, void**, prop_dictionary_t);
 char * dm_target_stripe_status(void *);
 int dm_target_stripe_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_stripe_deps(dm_table_entry_t *, prop_array_t);
@@ -322,7 +324,7 @@ int dm_target_stripe_destroy(dm_table_entry_t *);
 int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_snapshot.c */
-int dm_target_snapshot_init(dm_dev_t *, void**, char *);
+int dm_target_snapshot_init(dm_dev_t *, void**, prop_dictionary_t);
 char * dm_target_snapshot_status(void *);
 int dm_target_snapshot_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_deps(dm_table_entry_t *, prop_array_t);
@@ -330,7 +332,7 @@ int dm_target_snapshot_destroy(dm_table_entry_t *);
 int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm snapshot origin driver */
-int dm_target_snapshot_orig_init(dm_dev_t *, void**, char *);
+int dm_target_snapshot_orig_init(dm_dev_t *, void**, prop_dictionary_t);
 char * dm_target_snapshot_orig_status(void *);
 int dm_target_snapshot_orig_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_orig_deps(dm_table_entry_t *, prop_array_t);

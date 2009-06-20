@@ -1,4 +1,4 @@
-/*      $NetBSD: lubbock_pcic.c,v 1.3.72.1 2008/05/16 02:22:14 yamt Exp $	*/
+/*      $NetBSD: lubbock_pcic.c,v 1.3.72.2 2009/06/20 07:20:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.3.72.1 2008/05/16 02:22:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.3.72.2 2009/06/20 07:20:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.3.72.1 2008/05/16 02:22:14 yamt E
 #include <evbarm/lubbock/lubbock_reg.h>
 #include <evbarm/lubbock/lubbock_var.h>
 
-static	int	sacpcic_match(struct device *, struct cfdata *, void *);
-static	void	sacpcic_attach(struct device *, struct device *, void *);
+static	int	sacpcic_match(device_t, cfdata_t, void *);
+static	void	sacpcic_attach(device_t, device_t, void *);
 static	void	lubbock_set_power(struct sapcic_socket *so, int arg);
 static	void	lubbock_socket_setup(struct sapcic_socket *sp);
 
@@ -71,11 +71,11 @@ static struct sapcic_tag lubbock_sacpcic_functions = {
 	sacpcic_intr_disestablish
 };
 
-CFATTACH_DECL(sacpcic, sizeof(struct sacpcic_softc),
+CFATTACH_DECL_NEW(sacpcic, sizeof(struct sacpcic_softc),
     sacpcic_match, sacpcic_attach, NULL, NULL);
 
 static int
-sacpcic_match(struct device *parent, struct cfdata *cf, void *aux)
+sacpcic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
@@ -88,10 +88,10 @@ lubbock_socket_setup(struct sapcic_socket *sp)
 }
 
 static void
-sacpcic_attach(struct device *parent, struct device *self, void *aux)
+sacpcic_attach(device_t parent, device_t self, void *aux)
 {
-	sacpcic_attach_common((struct sacc_softc *)parent,
-	    (struct sacpcic_softc *)self, aux, lubbock_socket_setup);
+	sacpcic_attach_common(device_private(parent),
+	    device_private(self), aux, lubbock_socket_setup);
 }
 
 
@@ -99,8 +99,7 @@ static void
 lubbock_set_power(struct sapcic_socket *so, int arg)
 {
 	struct sacc_softc *sc = so->pcictag_cookie;
-	struct obio_softc *bsc =
-	    (struct obio_softc *)device_parent(&sc->sc_dev);
+	struct obio_softc *bsc = device_private(device_parent(sc->sc_dev));
 	int s;
 	uint16_t tmp;
 
@@ -134,6 +133,6 @@ lubbock_set_power(struct sapcic_socket *so, int arg)
 		splx(s);
 		break;
 	default:
-		printf("unknown socket number: %d\n", so->socket);
+		aprint_normal("unknown socket number: %d\n", so->socket);
 	}
 }

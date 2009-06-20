@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.4.4.2 2009/05/04 08:14:30 yamt Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.4.4.3 2009/06/20 07:20:36 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -6,7 +6,7 @@
 LIB=		rumpnet
 
 .PATH:	${RUMPTOP}/librump/rumpnet				\
-	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
+	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../net					\
 	${RUMPTOP}/../compat/common
 
@@ -19,9 +19,6 @@ SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 # radix trie support
 SRCS+=	radix.c
 
-# src/lib/libkern
-SRCS+=	intoa.c
-
 # compat
 SRCS+=	rtsock_50.c
 
@@ -30,7 +27,6 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpnet/opt
-CPPFLAGS+=	-DMAXUSERS=32
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

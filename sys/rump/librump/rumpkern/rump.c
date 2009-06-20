@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.42.4.3 2009/05/16 10:41:52 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.42.4.4 2009/06/20 07:20:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.3 2009/05/16 10:41:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.4 2009/06/20 07:20:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -552,4 +552,11 @@ rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
 	rump_sysproxy = proxy;
 
 	return 0;
+}
+
+int
+rump_getversion()
+{
+
+	return __NetBSD_Version__;
 }

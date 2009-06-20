@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.35.44.1 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: msiiep.c,v 1.35.44.2 2009/06/20 07:20:10 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.35.44.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.35.44.2 2009/06/20 07:20:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -657,10 +657,12 @@ mspcic_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 }
 
 static void
-mspcic_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t dmam)
+mspcic_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
-	panic("mspcic_dmamap_unload: not implemented");
+	/* Mark the mappings as invalid. */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 }
 
 

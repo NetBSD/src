@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.2 2009/05/04 08:12:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.3 2009/06/20 07:20:13 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -257,6 +257,9 @@ xen_intr_map(int *pirq, int type)
 	 * of the next device if this one used this IRQ. The easiest is
 	 * to allocate IRQs top-down, starting with a high number.
 	 * 250 and 230 have been tried, but got rejected by Xen.
+	 *
+	 * Xen 3.5 also rejects 200. Try out all values until Xen accepts
+	 * or none is available.
 	 */
 	static int xen_next_irq = 200;
 	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
@@ -271,11 +274,16 @@ xen_intr_map(int *pirq, int type)
 			irq = APIC_IRQ_LEGACY_IRQ(*pirq);
 			if (irq <= 0 || irq > 15)
 				irq = xen_next_irq--;
+retry:
 			/* allocate vector and route interrupt */
 			op.cmd = PHYSDEVOP_ASSIGN_VECTOR;
 			op.u.irq_op.irq = irq;
-			if (HYPERVISOR_physdev_op(&op) < 0)
-				panic("PHYSDEVOP_ASSIGN_VECTOR irq %d", irq);
+			if (HYPERVISOR_physdev_op(&op) < 0) {
+				irq = xen_next_irq--;
+				if (xen_next_irq == 15)
+					panic("PHYSDEVOP_ASSIGN_VECTOR irq %d", irq);
+				goto retry;
+			}
 			irq2vect[irq] = op.u.irq_op.vector;
 			vect2irq[op.u.irq_op.vector] = irq;
 			pic->pic_addroute(pic, &phycpu_info_primary, pin,

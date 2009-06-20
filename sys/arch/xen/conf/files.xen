@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.84.2.2 2009/05/04 08:12:11 yamt Exp $
+#	$NetBSD: files.xen,v 1.84.2.3 2009/06/20 07:20:13 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -94,6 +94,7 @@ file	arch/xen/xen/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
 
 file	arch/xen/xen/clock.c
+file	arch/x86/isa/rtc.c		xen3 & dom0ops
 file	arch/xen/xen/evtchn.c
 file	arch/xen/xen/ctrl_if.c			!xen3
 

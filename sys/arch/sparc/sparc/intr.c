@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.100.10.1 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: intr.c,v 1.100.10.2 2009/06/20 07:20:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100.10.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100.10.2 2009/06/20 07:20:10 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -80,6 +80,39 @@ EVCNT_ATTACH_STATIC(lev13_evcnt);
 EVCNT_ATTACH_STATIC(lev14_evcnt);
 #endif
 
+struct evcnt intrcnt[15] = {
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "spur", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev1", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev2", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev3", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev4", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev5", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev6", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev7", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev8", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev9", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "clock", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev11", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev12", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev13", "hard"),
+   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "prof", "hard"),
+};
+
+EVCNT_ATTACH_STATIC2(intrcnt, 0);
+EVCNT_ATTACH_STATIC2(intrcnt, 1);
+EVCNT_ATTACH_STATIC2(intrcnt, 2);
+EVCNT_ATTACH_STATIC2(intrcnt, 3);
+EVCNT_ATTACH_STATIC2(intrcnt, 4);
+EVCNT_ATTACH_STATIC2(intrcnt, 5);
+EVCNT_ATTACH_STATIC2(intrcnt, 6);
+EVCNT_ATTACH_STATIC2(intrcnt, 7);
+EVCNT_ATTACH_STATIC2(intrcnt, 8);
+EVCNT_ATTACH_STATIC2(intrcnt, 9);
+EVCNT_ATTACH_STATIC2(intrcnt, 10);
+EVCNT_ATTACH_STATIC2(intrcnt, 11);
+EVCNT_ATTACH_STATIC2(intrcnt, 12);
+EVCNT_ATTACH_STATIC2(intrcnt, 13);
+EVCNT_ATTACH_STATIC2(intrcnt, 14);
 
 void	strayintr(struct clockframe *);
 #ifdef DIAGNOSTIC
@@ -99,8 +132,8 @@ strayintr(struct clockframe *fp)
 	int timesince;
 
 	snprintb(bits, sizeof(bits), PSR_BITS, fp->psr);
-	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
-	    fp->ipl, fp->pc, fp->npc, bits);
+	printf("stray interrupt cpu%d ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
+	    cpu_number(), fp->ipl, fp->pc, fp->npc, bits);
 
 	timesince = time_uptime - straytime;
 	if (timesince <= 10) {
@@ -344,7 +377,7 @@ xcallintr(void *v)
 		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
 
 		if (p->func)
-			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2);
+			(*p->func)(p->arg0, p->arg1, p->arg2);
 		break;
 	    }
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.18 2008/04/21 12:56:31 ad Exp $	*/
+/*	$NetBSD: timepps.h,v 1.18.2.1 2009/06/20 07:20:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -139,7 +139,7 @@ struct pps_state {
 	/* Capture information. */
 	struct timehands *capth;
 	unsigned	capgen;
-	unsigned	capcount;
+	u_int64_t	capcount;
 
 	/* State information. */
 	pps_params_t	ppsparam;
@@ -147,7 +147,7 @@ struct pps_state {
 	int		kcmode;
 	int		ppscap;
 	struct timecounter *ppstc;
-	unsigned	ppscount[3];
+	u_int64_t	ppscount[3]; 
 };
 
 void pps_capture(struct pps_state *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_signal.h,v 1.1.76.1 2009/06/20 07:20:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -30,8 +30,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _I386_LINUX32_SIGNAL_H_
-#define _I386_LINUX32_SIGNAL_H_
+#ifndef _AMD64_LINUX32_SIGNAL_H_
+#define _AMD64_LINUX32_SIGNAL_H_
 
 #define native_to_linux32_signo native_to_linux_signo
 #define linux32_to_native_signo linux_to_native_signo
@@ -296,4 +296,4 @@ struct linux32_sigframe {
         linux32_handler_t   sf_handler;
 };
 
-#endif /* _I386_LINUX32_SIGNAL_H_ */
+#endif /* _AMD64_LINUX32_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.54.4.1 2009/05/04 08:13:19 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.54.4.2 2009/06/20 07:20:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.54.4.1 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.54.4.2 2009/06/20 07:20:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,12 +54,15 @@ struct sme_sensor_event {
 };
 
 static const struct sme_sensor_event sme_sensor_event[] = {
-	{ ENVSYS_SVALID, 	PENVSYS_EVENT_NORMAL },
-	{ ENVSYS_SCRITOVER, 	PENVSYS_EVENT_CRITOVER },
-	{ ENVSYS_SCRITUNDER, 	PENVSYS_EVENT_CRITUNDER },
-	{ ENVSYS_SWARNOVER, 	PENVSYS_EVENT_WARNOVER },
-	{ ENVSYS_SWARNUNDER,	PENVSYS_EVENT_WARNUNDER },
-	{ -1, 			-1 }
+	{ ENVSYS_SVALID,			PENVSYS_EVENT_NORMAL },
+	{ ENVSYS_SCRITOVER, 			PENVSYS_EVENT_CRITOVER },
+	{ ENVSYS_SCRITUNDER, 			PENVSYS_EVENT_CRITUNDER },
+	{ ENVSYS_SWARNOVER, 			PENVSYS_EVENT_WARNOVER },
+	{ ENVSYS_SWARNUNDER,			PENVSYS_EVENT_WARNUNDER },
+	{ ENVSYS_BATTERY_CAPACITY_NORMAL,	PENVSYS_EVENT_NORMAL },
+	{ ENVSYS_BATTERY_CAPACITY_WARNING,	PENVSYS_EVENT_BATT_WARN },
+	{ ENVSYS_BATTERY_CAPACITY_CRITICAL,	PENVSYS_EVENT_BATT_CRIT },
+	{ -1, 					-1 }
 };
 
 static bool sysmon_low_power;
@@ -79,41 +82,15 @@ static bool sme_acadapter_check(void);
  */
 int
 sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
-		   struct sysmon_envsys *sme, const char *objkey,
-		   int32_t critval, int crittype, int powertype)
+		   struct sysmon_envsys *sme, sysmon_envsys_lim_t *lims,
+		   int crittype, int powertype)
 {
 	sme_event_t *see = NULL, *osee = NULL;
 	prop_object_t obj;
-	bool critvalup = false;
 	int error = 0;
-	int real_crittype;
-	int32_t o_critval;
+	const char *objkey;
 
 	KASSERT(sdict != NULL || edata != NULL || sme != NULL);
-	/*
-	 * Allocate a new sysmon_envsys event.
-	 */
-	see = kmem_zalloc(sizeof(*see), KM_SLEEP);
-	if (see == NULL)
-		return ENOMEM;
-
-	/*
-	 * Map user-types to kernel types
-	 */
-	switch (crittype) {
-	case PENVSYS_EVENT_USER_CRITMAX:
-	case PENVSYS_EVENT_USER_CRITMIN:
-	case PENVSYS_EVENT_USER_WARNMAX:
-	case PENVSYS_EVENT_USER_WARNMIN:
-		real_crittype = PENVSYS_EVENT_USER_LIMITS;
-		break;
-	case PENVSYS_EVENT_BATT_USERCAP:
-	case PENVSYS_EVENT_BATT_USERWARN:
-		real_crittype = PENVSYS_EVENT_BATT_USER_LIMITS;
-		break;
-	default:
-		real_crittype = crittype;
-	}
 
 	/* 
 	 * check if the event is already on the list and return
@@ -121,185 +98,248 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 */
 	mutex_enter(&sme->sme_mtx);
 	LIST_FOREACH(osee, &sme->sme_events_list, see_list) {
-		if (strcmp(edata->desc, osee->see_pes.pes_sensname) == 0)
-			if (real_crittype == osee->see_type) {
-				switch (crittype) {
-				case PENVSYS_EVENT_USER_CRITMAX:
-				case PENVSYS_EVENT_BATT_USERCAP:
-					o_critval = osee->see_critmax;
-					break;
-				case PENVSYS_EVENT_USER_WARNMAX:
-				case PENVSYS_EVENT_BATT_USERWARN:
-					o_critval = osee->see_warnmax;
-					break;
-				case PENVSYS_EVENT_USER_WARNMIN:
-					o_critval = osee->see_warnmin;
-					break;
-				case PENVSYS_EVENT_USER_CRITMIN:
-				default:
-					o_critval = osee->see_critmin;
-					break;
-				}
-				if (o_critval == critval) {
-					DPRINTF(("%s: dev=%s sensor=%s type=%d "
-				    	    "(already exists)\n", __func__,
-				    	    osee->see_pes.pes_dvname,
-				    	    osee->see_pes.pes_sensname,
-					    osee->see_type));
-					error = EEXIST;
-					goto out;
-				}
-				critvalup = true;
-				break;
-			}
-	}
+		if (strcmp(edata->desc, osee->see_pes.pes_sensname) != 0)
+			continue;
+		if (crittype != osee->see_type)
+			continue;
 
-	/* 
-	 * Critical condition operation requested by userland.
-	 */
-	if (objkey && critval && critvalup) {
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) == PROP_TYPE_NUMBER) {
-			/* 
-			 * object is already in dictionary and value
-			 * provided is not the same than we have
-			 * currently, update the critical value.
-			 */
-			switch (crittype) {
-			case PENVSYS_EVENT_USER_CRITMAX:
-			case PENVSYS_EVENT_BATT_USERCAP:
-				osee->see_critmax = critval;
-				break;
-			case PENVSYS_EVENT_USER_WARNMAX:
-			case PENVSYS_EVENT_BATT_USERWARN:
-				osee->see_warnmax = critval;
-				break;
-			case PENVSYS_EVENT_USER_WARNMIN:
-				osee->see_warnmin = critval;
-				break;
-			case PENVSYS_EVENT_USER_CRITMIN:
-			default:
-				osee->see_critmin = critval;
-				break;
+		DPRINTF(("%s: dev %s sensor %s lim_flags 0x%04x event exists\n",
+		    __func__, sme->sme_name, edata->desc, lim_flags));
+
+		see = osee;
+		if (lims->sel_flags & PROP_CRITMAX) {
+			if (lims->sel_critmax == see->see_lims.sel_critmax) {
+				DPRINTF(("%s: type=%d (critmax exists)\n",
+				    __func__, crittype));
+				error = EEXIST;
+				lims->sel_flags &= ~PROP_CRITMAX;
 			}
-			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
-			    "(critval updated)\n", __func__, sme->sme_name,
-			    edata->desc, osee->see_type));
-			error = sme_sensor_upint32(sdict, objkey, critval);
-			goto out;
 		}
+		if (lims->sel_flags & PROP_WARNMAX) {
+			if (lims->sel_warnmax == see->see_lims.sel_warnmax) {
+				DPRINTF(("%s: type=%d (warnmax exists)\n",
+				    __func__, crittype));
+				error = EEXIST;
+				lims->sel_flags &= ~PROP_WARNMAX;
+			}
+		}
+		if (lims->sel_flags & (PROP_WARNMIN | PROP_BATTWARN)) {
+			if (lims->sel_warnmin == see->see_lims.sel_warnmin) {
+				DPRINTF(("%s: type=%d (warnmin exists)\n",
+				    __func__, crittype));
+				error = EEXIST;
+				lims->sel_flags &= ~(PROP_WARNMIN | PROP_BATTWARN);
+			}
+		}
+		if (lims->sel_flags & (PROP_CRITMIN | PROP_BATTCAP)) {
+			if (lims->sel_critmin == see->see_lims.sel_critmin) {
+				DPRINTF(("%s: type=%d (critmin exists)\n",
+				    __func__, crittype));
+				error = EEXIST;
+				lims->sel_flags &= ~(PROP_CRITMIN | PROP_BATTCAP);
+			}
+		}
+		break;
 	}
+	if (see == NULL) {
+		/*
+		 * New event requested - allocate a sysmon_envsys event.
+		 */
+		see = kmem_zalloc(sizeof(*see), KM_SLEEP);
+		if (see == NULL)
+			return ENOMEM;
 
-	/*
-	 * New limit defined for existing event
-	 */
-	if (osee != NULL) {
-		osee->see_edata = edata;
+		DPRINTF(("%s: dev %s sensor %s lim_flags 0x%04x new event\n",
+		    __func__, sme->sme_name, edata->desc, lim_flags));
+
+		see->see_type = crittype;
+		see->see_sme = sme;
+		see->see_edata = edata;
+
+		/* Initialize sensor type and previously-sent state */
+
+		see->see_pes.pes_type = powertype;
+
 		switch (crittype) {
-		case PENVSYS_EVENT_USER_CRITMAX:
-		case PENVSYS_EVENT_BATT_USERCAP:
-			osee->see_critmax = critval;
+		case PENVSYS_EVENT_LIMITS:
+			see->see_evsent = ENVSYS_SVALID;
 			break;
-		case PENVSYS_EVENT_USER_WARNMAX:
-		case PENVSYS_EVENT_BATT_USERWARN:
-			osee->see_warnmax = critval;
-			break;
-		case PENVSYS_EVENT_USER_WARNMIN:
-			osee->see_warnmin = critval;
-			break;
-		case PENVSYS_EVENT_USER_CRITMIN:
-		default:
-			osee->see_critmin = critval;
-			break;
-		}
-		if (objkey && critval) {
-			error = sme_sensor_upint32(sdict, objkey, critval);
-			if (error)
-				goto out;
-		}
-		DPRINTF(("%s: (%s) new limit added to existing event, type %d "
-		    "critmin=%" PRIu32 " warnmin=%" PRIu32 " warnmax=%"
-		    PRIu32 " critmax=%d\n", __func__, osee->see_sme->sme_name,
-		    osee->see_type, osee->see_critmin, osee->see_warnmin,
-		    osee->see_warnmax, osee->see_critmax));
-		goto out;
-	}
-	/*
-	 * New event requested.
-	 */
-	see->see_edata = edata;
-	switch (crittype) {
-	case PENVSYS_EVENT_USER_CRITMAX:
-	case PENVSYS_EVENT_BATT_USERCAP:
-		see->see_critmax = critval;
-		break;
-	case PENVSYS_EVENT_USER_WARNMAX:
-	case PENVSYS_EVENT_BATT_USERWARN:
-		see->see_warnmax = critval;
-		break;
-	case PENVSYS_EVENT_USER_WARNMIN:
-		see->see_warnmin = critval;
-		break;
-	case PENVSYS_EVENT_USER_CRITMIN:
-	default:
-		see->see_critmin = critval;
-		break;
-	}
-	see->see_type = real_crittype;
-	see->see_sme = sme;
-
-	/* Initialize sensor type and previously-sent state */
-
-	see->see_pes.pes_type = powertype;
-	switch (real_crittype) {
-	case PENVSYS_EVENT_HW_LIMITS:
-	case PENVSYS_EVENT_USER_LIMITS:
-	case PENVSYS_EVENT_BATT_USER_LIMITS:
-		see->see_evsent = ENVSYS_SVALID;
-		break;
-	case PENVSYS_EVENT_STATE_CHANGED:
-		if (edata->units == ENVSYS_BATTERY_CAPACITY)
+		case PENVSYS_EVENT_CAPACITY:
 			see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
-		else if (edata->units == ENVSYS_DRIVE)
-			see->see_evsent = ENVSYS_DRIVE_EMPTY;
-#ifdef DIAGNOSTIC
-		else
-			panic("%s: bad units for "
-			      "PENVSYS_EVENT_STATE_CHANGED", __func__);
-#endif
-		break;
-	case PENVSYS_EVENT_CRITICAL:
-	default:
-		see->see_evsent = 0;
-		break;
+			break;
+		case PENVSYS_EVENT_STATE_CHANGED:
+			if (edata->units == ENVSYS_BATTERY_CAPACITY)
+				see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+			else if (edata->units == ENVSYS_DRIVE)
+				see->see_evsent = ENVSYS_DRIVE_EMPTY;
+			else
+				panic("%s: bad units for "
+				      "PENVSYS_EVENT_STATE_CHANGED", __func__);
+			break;
+		case PENVSYS_EVENT_CRITICAL:
+		default:
+			see->see_evsent = 0;
+			break;
+		}
+
+		(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
+		    sizeof(see->see_pes.pes_dvname));
+		(void)strlcpy(see->see_pes.pes_sensname, edata->desc,
+		    sizeof(see->see_pes.pes_sensname));
 	}
 
-	(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
-	    sizeof(see->see_pes.pes_dvname));
-	(void)strlcpy(see->see_pes.pes_sensname, edata->desc,
-	    sizeof(see->see_pes.pes_sensname));
-
-	LIST_INSERT_HEAD(&sme->sme_events_list, see, see_list);
-	if (objkey && critval) {
-		error = sme_sensor_upint32(sdict, objkey, critval);
-		if (error)
+	/*
+	 * Limit operation requested.
+	 */
+	if (lims->sel_flags & PROP_CRITMAX) {
+		objkey = "critical-max";
+		obj = prop_dictionary_get(sdict, objkey);
+		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
+			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
+			    __func__, sme->sme_name, objkey));
+			error = ENOTSUP;
+		} else {
+			see->see_lims.sel_critmax = lims->sel_critmax;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_critmax);
+			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
+			    "(%s updated)\n", __func__, sme->sme_name,
+			    edata->desc, crittype, objkey));
+		}
+		if (error && error != EEXIST)
 			goto out;
+		see->see_edata->upropset |= PROP_CRITMAX;
 	}
+
+	if (lims->sel_flags & PROP_WARNMAX) {
+		objkey = "warning-max";
+		obj = prop_dictionary_get(sdict, objkey);
+		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
+			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
+			    __func__, sme->sme_name, objkey));
+			error = ENOTSUP;
+		} else {
+			see->see_lims.sel_warnmax = lims->sel_warnmax;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_warnmax);
+			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
+			    "(%s updated)\n", __func__, sme->sme_name,
+			    edata->desc, crittype, objkey));
+		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_WARNMAX;
+	}
+
+	if (lims->sel_flags & PROP_WARNMIN) {
+		objkey = "warning-min";
+		obj = prop_dictionary_get(sdict, objkey);
+		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
+			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
+			    __func__, sme->sme_name, objkey));
+			error = ENOTSUP;
+		} else {
+			see->see_lims.sel_warnmin = lims->sel_warnmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_warnmin);
+			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
+			    "(%s updated)\n", __func__, sme->sme_name,
+			    edata->desc, crittype, objkey));
+		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_WARNMIN;
+	}
+
+	if (lims->sel_flags & PROP_CRITMIN) {
+		objkey = "critical-min";
+		obj = prop_dictionary_get(sdict, objkey);
+		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
+			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
+			    __func__, sme->sme_name, objkey));
+			error = ENOTSUP;
+		} else {
+			see->see_lims.sel_critmin = lims->sel_critmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_critmin);
+			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
+			    "(%s updated)\n", __func__, sme->sme_name,
+			    edata->desc, crittype, objkey));
+		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_CRITMIN;
+	}
+
+	if (lims->sel_flags & PROP_BATTWARN) {
+		objkey = "warning-capacity";
+		obj = prop_dictionary_get(sdict, objkey);
+		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
+			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
+			    __func__, sme->sme_name, objkey));
+			error = ENOTSUP;
+		} else {
+			see->see_lims.sel_warnmin = lims->sel_warnmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_warnmin);
+			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
+			    "(%s updated)\n", __func__, sme->sme_name,
+			    edata->desc, crittype, objkey));
+		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_BATTWARN;
+	}
+
+	if (lims->sel_flags & PROP_BATTCAP) {
+		objkey = "critical-capacity";
+		obj = prop_dictionary_get(sdict, objkey);
+		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
+			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
+			    __func__, sme->sme_name, objkey));
+			error = ENOTSUP;
+		} else {
+			see->see_lims.sel_critmin = lims->sel_critmin;
+			error = sme_sensor_upint32(sdict, objkey,
+						   lims->sel_critmin);
+			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
+			    "(%s updated)\n", __func__, sme->sme_name,
+			    edata->desc, crittype, objkey));
+		}
+		if (error && error != EEXIST)
+			goto out;
+		see->see_edata->upropset |= PROP_BATTCAP;
+	}
+
 	DPRINTF(("%s: (%s) event registered (sensor=%s snum=%d type=%d "
 	    "critmin=%" PRIu32 " warnmin=%" PRIu32 " warnmax=%" PRIu32
-	    " crixmax=%" PRIu32 ")\n", __func__,
+	    " critmax=%" PRIu32 " props 0x%04x)\n", __func__,
 	    see->see_sme->sme_name, see->see_pes.pes_sensname,
-	    see->see_edata->sensor, see->see_type, see->see_critmin,
-	    see->see_warnmin, see->see_warnmax, see->see_critmax));
+	    see->see_edata->sensor, see->see_type, see->see_lims.sel_critmin,
+	    see->see_lims.sel_warnmin, see->see_lims.sel_warnmax,
+	    see->see_lims.sel_critmax, see->see_edata->upropset));
 	/*
 	 * Initialize the events framework if it wasn't initialized before.
 	 */
 	if ((sme->sme_flags & SME_CALLOUT_INITIALIZED) == 0)
 		error = sme_events_init(sme);
+
+	/*
+	 * If driver requested notification, advise it of new
+	 * limit values
+	 */
+	if (sme->sme_set_limits) {
+		see->see_lims.sel_flags = see->see_edata->upropset &
+					  PROP_LIMITS;
+		(*sme->sme_set_limits)(sme, edata, &(see->see_lims));
+	}
+
 out:
+	if ((error == 0 || error == EEXIST) && osee == NULL)
+		LIST_INSERT_HEAD(&sme->sme_events_list, see, see_list);
+
 	mutex_exit(&sme->sme_mtx);
-	if (error || critvalup)
-		kmem_free(see, sizeof(*see));
+
 	return error;
 }
 
@@ -410,6 +450,7 @@ void
 sme_event_drvadd(void *arg)
 {
 	sme_event_drv_t *sed_t = arg;
+	sysmon_envsys_lim_t lims;
 	int error = 0;
 
 	KASSERT(sed_t != NULL);
@@ -422,8 +463,7 @@ do {									\
 		error = sme_event_register(sed_t->sed_sdict,		\
 				      sed_t->sed_edata,			\
 				      sed_t->sed_sme,			\
-				      NULL,				\
-				      0,				\
+				      &lims,				\
 				      (b),				\
 				      sed_t->sed_powertype);		\
 		if (error && error != EEXIST)				\
@@ -440,18 +480,26 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
+	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS) {
+		if (sed_t->sed_sme->sme_get_limits)
+			(*sed_t->sed_sme->sme_get_limits)(sed_t->sed_sme,
+							  sed_t->sed_edata,
+							  &lims);
+		else
+			sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
+	}
+
 	SEE_REGEVENT(ENVSYS_FMONCRITICAL,
 		     PENVSYS_EVENT_CRITICAL,
 		     "critical");
 
-	SEE_REGEVENT(ENVSYS_FMONCRITUNDER | ENVSYS_FMONCRITOVER |
-		     ENVSYS_FMONWARNUNDER | ENVSYS_FMONWARNOVER,
-		     PENVSYS_EVENT_HW_LIMITS,
-		     "hw-range-limits");
-
 	SEE_REGEVENT(ENVSYS_FMONSTCHANGED,
 		     PENVSYS_EVENT_STATE_CHANGED,
 		     "state-changed");
+
+	SEE_REGEVENT(ENVSYS_FMONLIMITS,
+		     PENVSYS_EVENT_LIMITS,
+		     "hw-range-limits");
 
 	/* 
 	 * we are done, free memory now.
@@ -566,15 +614,14 @@ sme_events_worker(struct work *wk, void *arg)
 	if ((see->see_flags & SEE_EVENT_WORKING) == 0)
 		see->see_flags |= SEE_EVENT_WORKING;
 	/* 
-	 * sme_events_check marks the first event for the device to
-	 * make us refresh it here.  Don't refresh if the driver uses
-	 * its own method for refreshing.
+	 * sme_events_check marks the sensors to make us refresh them here.
+	 * Don't refresh if the driver uses its own method for refreshing.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-		if ((see->see_edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
+		if ((edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
 			/* refresh sensor in device */
 			(*sme->sme_refresh)(sme, edata);
-			see->see_edata->flags &= ~ENVSYS_FNEED_REFRESH;
+			edata->flags &= ~ENVSYS_FNEED_REFRESH;
 		}
 	}
 
@@ -589,27 +636,31 @@ sme_events_worker(struct work *wk, void *arg)
 
 	switch (see->see_type) {
 	/*
-	 * For user range limits, calculate a new state first
-	 * State based on user limits will override any hardware
-	 * detected state.
+	 * For range limits, if the driver claims responsibility for
+	 * limit/range checking, just user driver-supplied status.
+	 * Else calculate our own status.  Note that driver must
+	 * relinquish responsibility for ALL limits if there is even
+	 * one limit that it cannot handle!
 	 */
-	case PENVSYS_EVENT_USER_LIMITS:
-	case PENVSYS_EVENT_BATT_USER_LIMITS:
-#define __EXCEEDED_LIMIT(lim, rel) ((lim) && edata->value_cur rel (lim))
-		if __EXCEEDED_LIMIT(see->see_critmin, <)
-			edata->state = ENVSYS_SCRITUNDER;
-		else if __EXCEEDED_LIMIT(see->see_warnmin, <)
-			edata->state = ENVSYS_SWARNUNDER;
-		else if __EXCEEDED_LIMIT(see->see_warnmax, >)
-			edata->state = ENVSYS_SWARNOVER;
-		else if __EXCEEDED_LIMIT(see->see_critmax, >)
-			edata->state = ENVSYS_SCRITOVER;
+	case PENVSYS_EVENT_LIMITS:
+	case PENVSYS_EVENT_CAPACITY:
+#define __EXCEED_LIM(lim, rel) ((lim) && edata->value_cur rel (lim))
+		if ((see->see_lims.sel_flags & PROP_DRIVER_LIMITS) == 0) {
+			if __EXCEED_LIM(see->see_lims.sel_critmin, <)
+				edata->state = ENVSYS_SCRITUNDER;
+			else if __EXCEED_LIM(see->see_lims.sel_warnmin, <)
+				edata->state = ENVSYS_SWARNUNDER;
+			else if __EXCEED_LIM(see->see_lims.sel_warnmax, >)
+				edata->state = ENVSYS_SWARNOVER;
+			else if __EXCEED_LIM(see->see_lims.sel_critmax, >)
+				edata->state = ENVSYS_SCRITOVER;
+		}
 		/* FALLTHROUGH */
-#undef __EXCEED_LIMIT
-	/*
-	 * For hardware and user range limits, send event if state has changed
-	 */
-	case PENVSYS_EVENT_HW_LIMITS:
+#undef	__EXCEED_LIM
+
+		/*
+		 * Send event if state has changed
+		 */
 		if (edata->state == see->see_evsent)
 			break;
 
@@ -672,7 +723,7 @@ sme_events_worker(struct work *wk, void *arg)
 			state = ENVSYS_BATTERY_CAPACITY_NORMAL;
 			break;
 		default:
-			panic("%s: invalid units for ENVSYS_FMONSTCHANGED",
+			panic("%s: bad units for PENVSYS_EVENT_STATE_CHANGED",
 			    __func__);
 		}
 
@@ -689,25 +740,19 @@ sme_events_worker(struct work *wk, void *arg)
 		(void)strlcpy(see->see_pes.pes_statedesc, sdt[i].desc,
 		    sizeof(see->see_pes.pes_statedesc));
 
-		/* 
-		 * state is ok again... send a normal event.
-		 */
-		if (see->see_evsent && edata->value_cur == state) {
+		if (edata->value_cur == state)
+			/*
+			 * state returned to normal condition
+			 */
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_NORMAL);
-			see->see_evsent = false;
-		}
-
-		/*
-		 * state has been changed... send event.
-		 */
-		if (see->see_evsent || edata->value_cur != state) {
-			/* 
-			 * save current drive state.
+		else
+			/*
+			 * state changed to abnormal condition
 			 */
-			see->see_evsent = edata->value_cur;
 			sysmon_penvsys_event(&see->see_pes, see->see_type);
-		}
+
+		see->see_evsent = edata->value_cur;
 
 		/* 
 		 * There's no need to continue if it's a drive sensor.

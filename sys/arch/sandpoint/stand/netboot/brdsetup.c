@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.6.2.2 2009/05/04 08:11:47 yamt Exp $ */
+/* $NetBSD: brdsetup.c,v 1.6.2.3 2009/06/20 07:20:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -80,13 +80,21 @@ brdsetup(void)
 		brdtype = BRD_ENCOREPP1;
 		setup_82C686B();
 	}
+	else if ((pcicfgread(pcimaketag(0, 11, 0), PCI_CLASS_REG) >> 16) ==
+	    PCI_CLASS_ETH) {
+		/* tlp (ADMtek AN985) or re (RealTek 8169S) at dev 11 */
+		brdtype = BRD_KUROBOX;
+		consname = "eumb";
+		consport = 0x4600;
+		consspeed = 57600;
+	}
 
 	/* now prepare serial console */
-	if (strcmp(CONSNAME, "eumb") != 0)
-		uartbase = 0xfe000000 + CONSPORT; /* 0x3f8, 0x2f8 */
+	if (strcmp(consname, "eumb") != 0)
+		uartbase = 0xfe000000 + consport; /* 0x3f8, 0x2f8 */
 	else {
-		uartbase = 0xfc000000 + CONSPORT; /* 0x4500, 0x4600 */
-		div = (TICKS_PER_SEC * 4) / CONSSPEED / 16;
+		uartbase = 0xfc000000 + consport; /* 0x4500, 0x4600 */
+		div = (TICKS_PER_SEC * 4) / consspeed / 16;
 		UART_WRITE(DCR, 0x01);	/* 2 independent UART */
 		UART_WRITE(LCR, 0x80);	/* turn on DLAB bit */
 		UART_WRITE(FCR, 0x00);

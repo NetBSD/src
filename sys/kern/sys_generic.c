@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_generic.c,v 1.118.2.2 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.118.2.3 2009/06/20 07:20:31 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.118.2.2 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.118.2.3 2009/06/20 07:20:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.118.2.2 2009/05/04 08:13:48 yamt E
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -542,7 +543,7 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		goto out;
 	}
 
-	ff = fdp->fd_ofiles[SCARG(uap, fd)];
+	ff = fdp->fd_dt->dt_ff[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
 		ff->ff_exclose = false;
@@ -593,22 +594,20 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	switch (com) {
 
 	case FIONBIO:
-		FILE_LOCK(fp);
+		/* XXX Code block is not atomic */
 		if (*(int *)data != 0)
-			fp->f_flag |= FNONBLOCK;
+			atomic_or_uint(&fp->f_flag, FNONBLOCK);
 		else
-			fp->f_flag &= ~FNONBLOCK;
-		FILE_UNLOCK(fp);
+			atomic_and_uint(&fp->f_flag, ~FNONBLOCK);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data);
 		break;
 
 	case FIOASYNC:
-		FILE_LOCK(fp);
+		/* XXX Code block is not atomic */
 		if (*(int *)data != 0)
-			fp->f_flag |= FASYNC;
+			atomic_or_uint(&fp->f_flag, FASYNC);
 		else
-			fp->f_flag &= ~FASYNC;
-		FILE_UNLOCK(fp);
+			atomic_and_uint(&fp->f_flag, ~FASYNC);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data);
 		break;
 
