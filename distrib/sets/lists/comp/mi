@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1271 2009/06/20 04:20:22 agc Exp $
+#	$NetBSD: mi,v 1.1272 2009/06/20 14:29:48 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7200,6 +7200,7 @@
 ./usr/share/man/cat3/putwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_abort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_copy.0			comp-c-catman		.cat
+./usr/share/man/cat3/pw_copyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_edit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_error.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_getconf.0		comp-c-catman		.cat
@@ -12644,6 +12645,7 @@
 ./usr/share/man/html3/putwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_abort.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_copy.html		comp-c-htmlman		html
+./usr/share/man/html3/pw_copyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_edit.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_error.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_getconf.html		comp-c-htmlman		html
@@ -18088,6 +18090,7 @@
 ./usr/share/man/man3/putwin.3			comp-c-man		.man
 ./usr/share/man/man3/pw_abort.3			comp-c-man		.man
 ./usr/share/man/man3/pw_copy.3			comp-c-man		.man
+./usr/share/man/man3/pw_copyx.3			comp-c-man		.man
 ./usr/share/man/man3/pw_edit.3			comp-c-man		.man
 ./usr/share/man/man3/pw_error.3			comp-c-man		.man
 ./usr/share/man/man3/pw_getconf.3		comp-c-man		.man
