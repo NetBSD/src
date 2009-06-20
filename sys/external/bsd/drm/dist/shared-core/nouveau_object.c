@@ -141,13 +141,8 @@ nouveau_ramht_insert(struct drm_device *dev, struct nouveau_gpuobj_ref *ref)
 			  ref->channel, co, INSTANCE_RD(ramht, co/4));
 
 		co += 8;
-		if (co >= dev_priv->ramht_size) {
-			DRM_INFO("no space left after collision\n");
+		if (co >= dev_priv->ramht_size)
 			co = 0;
-			/* exit as it seems to cause crash with nouveau_demo and
-			 * 0xdead0001 object */
-			break;
-		}
 	} while (co != ho);
 
 	DRM_ERROR("RAMHT space exhausted. ch=%d\n", ref->channel);
@@ -739,7 +734,12 @@ nouveau_gpuobj_dma_new(struct nouveau_channel *chan, int class,
 							     PAGE_SIZE,
 							     DMA_BIDIRECTIONAL);
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27))
+					/* Not a 100% sure this is the right kdev in all cases. */
+					if (dma_mapping_error(&dev->primary->kdev, dev->sg->busaddr[idx])) {
+#else
 					if (dma_mapping_error(dev->sg->busaddr[idx])) {
+#endif
 						return -ENOMEM;
 					}
 				}
@@ -937,7 +937,7 @@ nouveau_gpuobj_channel_init_pramin(struct nouveau_channel *chan)
 		/* RAMFC */
 		size += 0x1000;
 		/* PGRAPH context */
-		size += 0x60000;
+		size += 0x70000;
 	}
 
 	DRM_DEBUG("ch%d PRAMIN size: 0x%08x bytes, base alloc=0x%08x\n",
