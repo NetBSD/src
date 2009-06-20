@@ -1569,7 +1569,8 @@ void radeon_do_release(struct drm_device * dev)
 					mtx_sleep(&ret, &dev->dev_lock, PZERO, "rdnrel",
 						  1);
 #elif   defined(__NetBSD__)
-                    mtsleep(&ret, 0, "rdnrel", 1, &dev->dev_lock);
+					mtsleep(&ret, 0, "rdnrel", 1,
+						&dev->dev_lock);
 #else
 					tsleep(&ret, PZERO, "rdnrel", 1);
 #endif
@@ -1587,7 +1588,8 @@ void radeon_do_release(struct drm_device * dev)
 					mtx_sleep(&ret, &dev->dev_lock, PZERO, "rdnrel",
 						  1);
 #elif   defined(__NetBSD__)
-                    mtsleep(&ret, 0, "rdnrel", 1, &dev->dev_lock);
+					mtsleep(&ret, 0, "rdnrel", 1,
+						&dev->dev_lock);
 #else
 					tsleep(&ret, PZERO, "rdnrel", 1);
 #endif
