@@ -47,6 +47,10 @@
 
 #include "virtdir.h"
 
+#if defined(__NetBSD__) && defined(USE_LIBKMOD)
+#include "libkmod.h"
+#endif
+
 #include "defs.h"
 
 static int		 verbose; /* how chatty are we? */
@@ -631,8 +635,14 @@ main(int argc, char **argv)
 		all_targets.c = CONFIG_INITIATOR_NUM_TARGETS;
 	}
 
-
 	sti.st.st_ino = 0x15c51;
+
+#if defined(__NetBSD__) && defined(USE_LIBKMOD)
+	/* check that the puffs module is loaded on NetBSD */
+	if (kmodstat("puffs", NULL) == 0 && !kmodload("puffs")) {
+		(void) fprintf(stderr, "initiator: can't load puffs module\n");
+	}
+#endif
 
 	for (u = 0 ; u < all_targets.c / 2 ; u++) {
 		ALLOC(targetinfo_t, tv.v, tv.size, tv.c, 10, 10, "iscsifs",
