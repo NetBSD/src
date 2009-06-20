@@ -1,4 +1,4 @@
-/*	$NetBSD: c.h,v 1.6 2009/06/19 23:36:41 dyoung Exp $	*/
+/*	$NetBSD: c.h,v 1.7 2009/06/20 17:03:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -62,11 +62,20 @@
 #ifndef	FALSE
 #define FALSE	0
 #endif	/* FALSE */
+
 #ifndef	TRUE
 #define TRUE	1
 #endif	/* TRUE */
 
+#ifndef MAX
+#define MAX(a,b) ((a)>(b)?(a):(b))
+#endif
+
+#ifdef __arraycount
 #define sizeofA(array)	__arraycount(array)
+#else
+#define sizeofA(array) (sizeof(array)/sizeof(array[0]))
+#endif
 
 #ifndef __unused
 #ifndef __GNUC__
