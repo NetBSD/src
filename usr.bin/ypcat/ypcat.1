@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypcat.1,v 1.14 2005/02/26 16:21:05 wiz Exp $
+.\"	$NetBSD: ypcat.1,v 1.15 2009/06/20 19:27:26 christos Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 26, 2005
+.Dd June 20, 2009
 .Dt YPCAT 1
 .Os
 .Sh NAME
@@ -61,15 +61,21 @@ is not part of the value.
 Inhibit translation of map nicknames
 to their corresponding map names.
 .It Fl x
-Display the map nickname table.
+Display the map nickname table, found in /var/yp/nicknames.
+A built-in default translation table is used if /var/yp/nicknames
+does not exist (see
+.Xr nicknames 5
+for details).
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr ypmatch 1 ,
 .Xr ypwhich 1 ,
+.Xr nicknames 5 ,
 .Xr nis 8 ,
 .Xr ypbind 8 ,
 .Xr yppoll 8 ,
 .Xr ypset 8
 .Sh AUTHORS
 .An Theo De Raadt
+.An Greywolf

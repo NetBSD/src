@@ -1,4 +1,4 @@
-.\" $NetBSD: ypwhich.1,v 1.15 2008/01/24 23:56:55 christos Exp $
+.\" $NetBSD: ypwhich.1,v 1.16 2009/06/20 19:27:26 christos Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -99,7 +99,11 @@ is omitted,
 .Nm
 will produce a list of available maps.
 .It Fl x
-Display the map nickname table.
+Display the map nickname table, found in /var/yp/nicknames.
+A built-in default translation table is used if /var/yp/nicknames
+does not exist (see
+.Xr nicknames 5
+for details).
 .El
 .Pp
 .Nm
@@ -110,9 +114,11 @@ is used, and there was a problem in determining the map's master.
 .Xr domainname 1 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
+.Xr nicknames 5 ,
 .Xr nis 8 ,
 .Xr ypbind 8 ,
 .Xr yppoll 8 ,
 .Xr ypset 8
 .Sh AUTHORS
 .An Charles D. Cranor
+.An Greywolf
