@@ -210,22 +210,62 @@ int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf
 			;
 		if (c != EOF)
 			ungetc(c, inf);
-	}
-	for (rr = buf; ; ) {
-		for (; (c=getc(inf)) != sep && c != EOF; ) {
-			if (rr-buf+1 > bufsize)
-				if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 1"))
-					FATAL("input record `%.30s...' too long", buf);
+	} else if ((*RS)[1]) {
+		fa *pfa = makedfa(*RS, 1);
+		int tempstat = pfa->initstat;
+		char *brr = buf;
+		char *rrr = NULL;
+		int x;
+		for (rr = buf; ; ) {
+			while ((c = getc(inf)) != EOF) {
+				if (rr-buf+3 > bufsize)
+					if (!adjbuf(&buf, &bufsize, 3+rr-buf,
+					    recsize, &rr, "readrec 2"))
+						FATAL("input record `%.30s...'"
+						    " too long", buf);
+				*rr++ = c;
+				*rr = '\0';
+				if (!(x = nematch(pfa, brr))) {
+					pfa->initstat = tempstat;
+					if (rrr) {
+						rr = rrr;
+						ungetc(c, inf);
+						break;
+					}
+				} else {
+					pfa->initstat = 2;
+					brr = rrr = rr = patbeg;
+				}
+			}
+			if (rrr || c == EOF)
+				break;
+			if ((c = getc(inf)) == '\n' || c == EOF)
+				/* 2 in a row */
+				break;
+			*rr++ = '\n';
 			*rr++ = c;
 		}
-		if (**RS == sep || c == EOF)
-			break;
-		if ((c = getc(inf)) == '\n' || c == EOF) /* 2 in a row */
-			break;
-		if (!adjbuf(&buf, &bufsize, 2+rr-buf, recsize, &rr, "readrec 2"))
-			FATAL("input record `%.30s...' too long", buf);
-		*rr++ = '\n';
-		*rr++ = c;
+	} else {
+		for (rr = buf; ; ) {
+			for (; (c=getc(inf)) != sep && c != EOF; ) {
+				if (rr-buf+1 > bufsize)
+					if (!adjbuf(&buf, &bufsize, 1+rr-buf,
+					    recsize, &rr, "readrec 1"))
+						FATAL("input record `%.30s...'"
+						    " too long", buf);
+				*rr++ = c;
+			}
+			if (**RS == sep || c == EOF)
+				break;
+			if ((c = getc(inf)) == '\n' || c == EOF)
+				/* 2 in a row */
+				break;
+			if (!adjbuf(&buf, &bufsize, 2+rr-buf, recsize, &rr,
+			    "readrec 2"))
+				FATAL("input record `%.30s...' too long", buf);
+			*rr++ = '\n';
+			*rr++ = c;
+		}
 	}
 	if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
 		FATAL("input record `%.30s...' too long", buf);
