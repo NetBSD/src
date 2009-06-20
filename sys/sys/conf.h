@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.134 2009/02/02 14:00:27 haad Exp $	*/
+/*	$NetBSD: conf.h,v 1.135 2009/06/20 19:24:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,6 +61,7 @@ struct vnode;
 #define	D_TTY		0x0003
 #define	D_TYPEMASK	0x00ff
 #define	D_MPSAFE	0x0100
+#define	D_NEGOFFSAFE	0x0200
 
 /*
  * Block device switch table
