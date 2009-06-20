@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.277.2.2 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.277.2.3 2009/06/20 07:20:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.2 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.3 2009/06/20 07:20:10 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -682,7 +682,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	/*
 	 * Get the floating point registers
 	 */
-	memcpy( f->__fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
+	memcpy(f->__fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
 	f->__fp_nqsize = sizeof(struct fp_qentry);
 	f->__fp_nqel = fps->fs_qsize;
 	f->__fp_fsr = fps->fs_fsr;
@@ -794,7 +794,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 			return (EINVAL);
 		}
-		memcpy( fps->fs_regs, f->__fpu_regs, sizeof(fps->fs_regs));
+		memcpy(fps->fs_regs, f->__fpu_regs, sizeof(fps->fs_regs));
 		fps->fs_qsize = f->__fp_nqel;
 		fps->fs_fsr = f->__fp_fsr;
 		if (f->__fp_q != NULL) {
@@ -919,7 +919,7 @@ cpu_reboot(int howto, char *user_boot_string)
 		i = strlen(user_boot_string);
 		if (i > sizeof(str) - sizeof(opts) - 1)
 			prom_boot(user_boot_string);	/* XXX */
-		memcpy( str, user_boot_string, i);
+		memcpy(str, user_boot_string, i);
 		if (opts[0] != '\0')
 			str[i] = ' ';
 	}
@@ -1914,8 +1914,8 @@ bus_space_translate_address_generic(struct openprom_range *ranges, int nranges,
 	return (EINVAL);
 }
 
-int
-sparc_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
+static int
+sparc_bus_map_iodev(bus_space_tag_t t, bus_addr_t ba, bus_size_t size, int flags,
 	      vaddr_t va, bus_space_handle_t *hp)
 {
 	vaddr_t v;
@@ -1981,19 +1981,31 @@ static	vaddr_t iobase;
 	return (0);
 }
 
-int
-sparc_bus_map_large(bus_space_tag_t t, int slot, bus_size_t offset,
+static int
+sparc_bus_map_large(bus_space_tag_t t, bus_addr_t ba,
 		    bus_size_t size, int flags, bus_space_handle_t *hp)
 {
-	bus_addr_t pa = BUS_ADDR(slot,offset);
 	vaddr_t v = 0;
 
 	if (uvm_map(kernel_map, &v, size, NULL, 0, PAGE_SIZE,
 	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_SHARE, UVM_ADV_NORMAL,
 			0)) == 0) {
-		return sparc_bus_map(t, pa, size, flags, v, hp);
+		return sparc_bus_map_iodev(t, ba, size, flags, v, hp);
 	}
 	return -1;
+}
+
+int
+sparc_bus_map(bus_space_tag_t t, bus_addr_t ba,
+		    bus_size_t size, int flags, vaddr_t va,
+		    bus_space_handle_t *hp)
+{
+
+	if (flags & BUS_SPACE_MAP_LARGE) {
+		return sparc_bus_map_large(t, ba, size, flags, hp);
+	} else
+		return sparc_bus_map_iodev(t, ba, size, flags, va, hp);
+		
 }
 
 int
@@ -2003,8 +2015,8 @@ sparc_bus_unmap(bus_space_tag_t t, bus_space_handle_t bh, bus_size_t size)
 
 	/*
 	 * XXX
-	 * mappings from sparc_bus_map_large() probably need additional care
-	 * here
+	 * mappings with BUS_SPACE_MAP_LARGE need additional care here
+	 * we can just check if the VA is in the IODEV range
 	 */
 
 	pmap_kremove(va, round_page(size));

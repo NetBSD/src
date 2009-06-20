@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.6.4.2 2009/05/04 08:11:47 yamt Exp $ */
+/* $NetBSD: globals.h,v 1.6.4.3 2009/06/20 07:20:08 yamt Exp $ */
 
 /* clock feed */
 #ifndef TICKS_PER_SEC
@@ -11,7 +11,12 @@ extern int brdtype;
 #define BRD_SANDPOINTX2		2
 #define BRD_SANDPOINTX3		3
 #define BRD_ENCOREPP1		10
+#define BRD_KUROBOX		100
 #define BRD_UNKNOWN		-1
+
+extern char *consname;
+extern int consport;
+extern int consspeed;
 
 unsigned mpc107memsize(void);
 

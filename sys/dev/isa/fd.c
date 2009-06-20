@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.84.4.3 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.84.4.4 2009/06/20 07:20:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.3 2009/05/16 10:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.4 2009/06/20 07:20:22 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1399,6 +1399,10 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+
+	error = disk_ioctl(&fd->sc_dk, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (cmd) {
 	case DIOCGDINFO:

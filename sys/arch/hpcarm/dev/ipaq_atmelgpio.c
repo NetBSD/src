@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.13.56.1 2008/05/16 02:22:27 yamt Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.13.56.2 2009/06/20 07:20:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.13.56.1 2008/05/16 02:22:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.13.56.2 2009/06/20 07:20:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,48 +57,47 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.13.56.1 2008/05/16 02:22:27 yam
 #include <arm/sa11x0/sa11x0_reg.h>
 
 #ifdef ATMEL_DEBUG
-#define DPRINTF(x) printf x
+#define DPRINTF(x) aprint_normal x
 #else
 #define DPRINTF(x)
 #endif
 
-static	int	atmelgpio_match(struct device *, struct cfdata *, void *);
-static	void	atmelgpio_attach(struct device *, struct device *, void *);
+static	int	atmelgpio_match(device_t, cfdata_t, void *);
+static	void	atmelgpio_attach(device_t, device_t, void *);
 static	int	atmelgpio_print(void *, const char *);
-static	int	atmelgpio_search(struct device *, struct cfdata *,
-				 const int *, void *);
+static	int	atmelgpio_search(device_t, cfdata_t, const int *, void *);
 static	void	atmelgpio_init(struct atmelgpio_softc *);
 
 static	void	rxtx_data(struct atmelgpio_softc *, int, int,
 			 uint8_t *, struct atmel_rx *);
 
-CFATTACH_DECL(atmelgpio, sizeof(struct atmelgpio_softc),
+CFATTACH_DECL_NEW(atmelgpio, sizeof(struct atmelgpio_softc),
     atmelgpio_match, atmelgpio_attach, NULL, NULL);
 
 static int
-atmelgpio_match(struct device *parent, struct cfdata *cf, void *aux)
+atmelgpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 static void
-atmelgpio_attach(struct device *parent, struct device *self, void *aux)
+atmelgpio_attach(device_t parent, device_t self, void *aux)
 {
-	struct atmelgpio_softc *sc = (struct atmelgpio_softc *)self;
-	struct ipaq_softc *psc = (struct ipaq_softc *)parent;
+	struct atmelgpio_softc *sc = device_private(self);
+	struct ipaq_softc *psc = device_private(parent);
 
 	struct atmel_rx rxbuf;
 
-	printf("\n");
-	printf("%s: Atmel microcontroller GPIO\n",  sc->sc_dev.dv_xname);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "Atmel microcontroller GPIO\n");
 
 	sc->sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
-	sc->sc_parent = (struct ipaq_softc *)parent;
+	sc->sc_parent = psc;
 
 	if (bus_space_map(sc->sc_iot, SACOM1_BASE, SACOM_NPORTS, 0,
                         &sc->sc_ioh)) {
-                printf("%s: unable to map of UART1 registers\n", sc->sc_dev.dv_xname);
+                aprint_normal_dev(self, "unable to map of UART1 registers\n");
                 return;
         }
 
@@ -110,12 +109,12 @@ atmelgpio_attach(struct device *parent, struct device *self, void *aux)
 #if 1  /* this is sample */
 	rxtx_data(sc, STATUS_BATTERY, 0, NULL, &rxbuf); 
 
-	printf("ac_status          = %x\n", rxbuf.data[0]);
-	printf("Battery kind       = %x\n", rxbuf.data[1]);
-	printf("Voltage            = %d mV\n",
+	aprint_normal("ac_status          = %x\n", rxbuf.data[0]);
+	aprint_normal("Battery kind       = %x\n", rxbuf.data[1]);
+	aprint_normal("Voltage            = %d mV\n",
 		1000 * (rxbuf.data[3] << 8 | rxbuf.data[2]) /228);
-	printf("Battery Status     = %x\n", rxbuf.data[4]);
-	printf("Battery percentage = %d\n",
+	aprint_normal("Battery Status     = %x\n", rxbuf.data[4]);
+	aprint_normal("Battery percentage = %d\n",
 		425 * (rxbuf.data[3] << 8 | rxbuf.data[2]) /1000 - 298);
 #endif
 
@@ -129,7 +128,7 @@ atmelgpio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-atmelgpio_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+atmelgpio_search(device_t parent, cfdata_t cf, const int *ldesc,
 		 void *aux)
 {
 	if (config_match(parent, cf, NULL) > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.17.2.1 2009/05/04 08:12:23 yamt Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.17.2.2 2009/06/20 07:20:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.2.1 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.2.2 2009/06/20 07:20:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.2.1 2009/05/04 08:12:23 yam
 #include <sys/exec_elf.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
-#include <sys/wait.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <machine/netbsd32_machdep.h>
@@ -225,11 +224,8 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
-
-		/* We use the same codes */
-		lsi->lsi_code = ksi->ksi_code;
-		/* XXX is that right? */
-		lsi->lsi_status = WEXITSTATUS(ksi->ksi_status);
+		lsi->lsi_status = native_to_linux_si_status(ksi->ksi_code,
+		    ksi->ksi_status);
 		break;
 	case LINUX32_SIGIO:
 		lsi->lsi_band = ksi->ksi_band;

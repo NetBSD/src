@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.2.2.3 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: uturn.c,v 1.2.2.4 2009/06/20 07:20:03 yamt Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -41,10 +41,10 @@
 #include <hp700/dev/cpudevs.h>
 
 struct uturn_regs {
-	u_int64_t	resv0[2];
-	u_int64_t	status;		/* 0x10: */
-	u_int64_t	resv1[5];
-	u_int64_t	debug;		/* 0x40: */
+	uint64_t	resv0[2];
+	uint64_t	status;		/* 0x10: */
+	uint64_t	resv1[5];
+	uint64_t	debug;		/* 0x40: */
 };
 
 struct uturn_softc {
@@ -124,6 +124,7 @@ uturnattach(device_t parent, device_t self, void *aux)
 	case HPPA_BOARD_HP869:
 
 	case HPPA_BOARD_HP800D:
+	case HPPA_BOARD_HP821:
 		nca.ca_hpabase = ((struct iomod *)ioh)->io_io_low << 16;
 		pdc_scanbus(self, &nca, uturn_callback);
 		break;

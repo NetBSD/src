@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.16.74.1 2009/05/04 08:13:02 yamt Exp $ */
+/* $NetBSD: tgavar.h,v 1.16.74.2 2009/06/20 07:20:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -94,7 +94,7 @@ struct tga_devconfig {
 };
 
 struct tga_softc {
-	struct	device sc_dev;
+	device_t	 sc_dev;
 
 	struct	tga_devconfig *sc_dc;	/* device configuration */
 	void	*sc_intr;		/* interrupt handler info */

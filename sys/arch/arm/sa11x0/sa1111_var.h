@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.10.64.1 2008/05/16 02:22:02 yamt Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.10.64.2 2009/06/20 07:20:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ struct sacc_intrvec {
 };
 
 struct sacc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_tag_t sc_piot;	/* parent(SA-1110)'s iot */
@@ -71,7 +71,7 @@ struct sa1111_attach_args {
 void	*sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
 			  int (*)(void *), void *);
 void	sacc_intr_disestablish(sacc_chipset_tag_t *, void *);
-int	sacc_probe(struct device *, struct cfdata *, void *);
-int	sa1111_search(struct device *, struct cfdata *, const int *, void *);
+int	sacc_probe(device_t, cfdata_t, void *);
+int	sa1111_search(device_t, cfdata_t, const int *, void *);
 
 #endif /* _SA1111_VAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79.4.2 2009/05/04 08:11:58 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.79.4.3 2009/06/20 07:20:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -338,11 +338,11 @@ int	probeset(paddr_t, int, int, uint64_t);
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )
 
-void 	lwp_trampoline(void);
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
 void	switchtoctx(int);
+void	next_tick(long);
 /* trap.c */
 void	kill_user_windows(struct lwp *);
 int	rwindow_save(struct lwp *);

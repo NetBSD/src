@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6.10.1 2009/05/04 08:11:14 yamt Exp $	*/
+/*	$NetBSD: reg.h,v 1.6.10.2 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -88,8 +88,8 @@
 /* Temporary control registers */
 #define	CR_CURLWP	24	/* tr0: curlwp				*/
 #define	CR_VTOP		25	/* tr1: virt to phys table address	*/
-#define	CR_TR2		26	/* tr2: (TLS?)				*/
-#define	CR_TR3		27	/* tr3: (TLS?)				*/
+#define	CR_TR2		26	/* tr2: temporary			*/
+#define	CR_TLS		27	/* tr3: thread local storage pointer	*/
 #define	CR_HVTP		28	/* tr4: faulted HVT slot ptr on LC cpus */
 #define	CR_TR5		29	/* tr5: emu / TLB_STATS_{PRE,AFT}	*/
 #define	CR_UPADDR	30	/* tr6: paddr of U-area of curlwp	*/
@@ -187,30 +187,30 @@
 #ifndef __ASSEMBLER__
 
 struct reg {
-	u_int32_t r_regs[HPPA_NREGS];	/* r0 is psw */
+	uint32_t r_regs[HPPA_NREGS];	/* r0 is psw */
 
-	u_int32_t r_sar;
+	uint32_t r_sar;
 
-	u_int32_t r_pcsqh;
-	u_int32_t r_pcsqt;
-	u_int32_t r_pcoqh;
-	u_int32_t r_pcoqt;
+	uint32_t r_pcsqh;
+	uint32_t r_pcsqt;
+	uint32_t r_pcoqh;
+	uint32_t r_pcoqt;
 	
-	u_int32_t r_sr0;
-	u_int32_t r_sr1;
-	u_int32_t r_sr2;
-	u_int32_t r_sr3;
-	u_int32_t r_sr4;
-	u_int32_t r_sr5;	/* !mcontext */
-	u_int32_t r_sr6;	/* !mcontext */
-	u_int32_t r_sr7;	/* !mcontext */
+	uint32_t r_sr0;
+	uint32_t r_sr1;
+	uint32_t r_sr2;
+	uint32_t r_sr3;
+	uint32_t r_sr4;
+	uint32_t r_sr5;	/* !mcontext */
+	uint32_t r_sr6;	/* !mcontext */
+	uint32_t r_sr7;	/* !mcontext */
 
-	u_int32_t r_cr26;
-	u_int32_t r_cr27;
+	uint32_t r_cr26;
+	uint32_t r_cr27;
 };
 
 struct fpreg {
-	u_int64_t fpr_regs[HPPA_NFPREGS];
+	uint64_t fpr_regs[HPPA_NFPREGS];
 };
 #endif /* !__ASSEMBLER__ */
 

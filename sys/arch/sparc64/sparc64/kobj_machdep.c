@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.1.18.1 2008/05/16 02:23:16 yamt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.1.18.2 2009/06/20 07:20:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Jake Burkholder.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1.18.1 2008/05/16 02:23:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1.18.2 2009/06/20 07:20:11 yamt Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -204,7 +204,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		return 0;
 
 	if (rtype == R_SPARC_RELATIVE) {
-		kobj_stat(ko, &base, NULL, NULL);
+		kobj_stat(ko, &base, NULL);
 		value = rela->r_addend + (Elf_Addr)base;
 		where = (Elf_Addr *)((Elf_Addr)base + rela->r_offset);
 		*where = value;

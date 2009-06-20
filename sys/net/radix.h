@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.19.32.2 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: radix.h,v 1.19.32.3 2009/06/20 07:20:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -133,6 +133,7 @@ extern struct radix_mask *rn_mkfreelist;
 
 void	rn_init(void);
 int	rn_inithead(void **, int);
+void	rn_delayedinit(void **, int);
 int	rn_inithead0(struct radix_node_head *, int);
 int	rn_refines(const void *, const void *);
 int	rn_walktree(struct radix_node_head *,

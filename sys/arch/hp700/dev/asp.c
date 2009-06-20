@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.10.56.2 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: asp.c,v 1.10.56.3 2009/06/20 07:20:02 yamt Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.10.56.2 2009/05/16 10:41:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.10.56.3 2009/06/20 07:20:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,24 +60,24 @@ __KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.10.56.2 2009/05/16 10:41:12 yamt Exp $");
 #include <hp700/gsc/gscbusvar.h>
 
 struct asp_hwr {
-	u_int8_t asp_reset;
-	u_int8_t asp_resv[31];
-	u_int8_t asp_version;
-	u_int8_t asp_resv1[15];
-	u_int8_t asp_scsidsync;
-	u_int8_t asp_resv2[15];
-	u_int8_t asp_error;
+	uint8_t asp_reset;
+	uint8_t asp_resv[31];
+	uint8_t asp_version;
+	uint8_t asp_resv1[15];
+	uint8_t asp_scsidsync;
+	uint8_t asp_resv2[15];
+	uint8_t asp_error;
 };
 
 struct asp_trs {
-	u_int32_t asp_irr;
-	u_int32_t asp_imr;
-	u_int32_t asp_ipr;
-	u_int32_t asp_icr;
-	u_int32_t asp_iar;
-	u_int32_t asp_resv[3];
-	u_int8_t  asp_cled;
-	u_int8_t  asp_resv1[3];
+	uint32_t asp_irr;
+	uint32_t asp_imr;
+	uint32_t asp_ipr;
+	uint32_t asp_icr;
+	uint32_t asp_iar;
+	uint32_t asp_resv[3];
+	uint8_t  asp_cled;
+	uint8_t  asp_resv1[3];
 	struct {
 		u_int		:20,
 			asp_spu	: 3,	/* SPU ID board jumper */

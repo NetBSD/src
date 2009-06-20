@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.4.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.4.2 2009/06/20 07:20:30 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.1 2009/05/04 08:13:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.2 2009/06/20 07:20:30 yamt Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -1453,7 +1453,7 @@ pf_change_ap(struct pf_addr *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc,
 }
 
 
-/* Changes a u_int32_t.  Uses a void *so there are no align restrictions */
+/* Changes a u_int32_t.  Uses a void * so there are no align restrictions */
 void
 pf_change_a(void *a, u_int16_t *c, u_int32_t an, u_int8_t u)
 {

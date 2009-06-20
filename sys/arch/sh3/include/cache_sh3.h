@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.h,v 1.8.72.1 2008/05/16 02:23:08 yamt Exp $	*/
+/*	$NetBSD: cache_sh3.h,v 1.8.72.2 2009/06/20 07:20:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@ do {									\
 #define	SH7709_CACHE_FLUSH()		SH3_CACHE_8K_FLUSH(4)
 #define	SH7709_CACHE_FLUSH_RAMMODE()	SH3_CACHE_8K_FLUSH(2)
 #define	SH7709A_CACHE_FLUSH()		SH3_CACHE_16K_FLUSH()
+#define	SH7706_CACHE_FLUSH()		SH3_CACHE_16K_FLUSH()
 
 #ifndef _LOCORE
 extern void sh3_cache_config(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.26.4.1 2009/05/04 08:13:19 yamt Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.26.4.2 2009/06/20 07:20:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -60,7 +60,6 @@ struct workqueue;
  *****************************************************************************/
 
 struct sme_event;
-struct sme_sensor_names;
 
 struct sysmon_envsys {
 	const char *sme_name;		/* envsys device name */
@@ -85,6 +84,15 @@ struct sysmon_envsys {
 	 * Function callback to receive data from device.
 	 */
 	void (*sme_refresh)(struct sysmon_envsys *, envsys_data_t *);
+
+	/*
+	 * Function callbacks to exchange limit/threshold values
+	 * with device
+	 */
+	void (*sme_set_limits)(struct sysmon_envsys *, envsys_data_t *,
+			       sysmon_envsys_lim_t *);
+	void (*sme_get_limits)(struct sysmon_envsys *, envsys_data_t *,
+			       sysmon_envsys_lim_t *);
 
 	struct workqueue *sme_wq;	/* the workqueue for the events */
 	struct callout sme_callout;	/* for the events */

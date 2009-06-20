@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.34.2.2 2009/05/04 08:12:11 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.34.2.3 2009/06/20 07:20:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.34.2.2 2009/05/04 08:12:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.34.2.3 2009/06/20 07:20:13 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -409,14 +409,15 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 	pp = &sc->sc_pins[pin];
 	map = pp->ip_map;
 	redlo = map == NULL ? IOAPIC_REDLO_MASK : map->redir;
+	redhi = 0;
 	delmode = (redlo & IOAPIC_REDLO_DEL_MASK) >> IOAPIC_REDLO_DEL_SHIFT;
-	redhi = (ci->ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 
 	if (delmode == IOAPIC_REDLO_DEL_FIXED ||
 	    delmode == IOAPIC_REDLO_DEL_LOPRI) {
 	    	if (pp->ip_type == IST_NONE) {
 			redlo |= IOAPIC_REDLO_MASK;
 		} else {
+			redhi = (ci->ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 			redlo |= (idt_vec & 0xff);
 			redlo |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 			redlo &= ~IOAPIC_REDLO_DSTMOD;

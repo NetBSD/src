@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.82.18.1 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: ite.c,v 1.82.18.2 2009/06/20 07:20:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.18.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.18.2 2009/06/20 07:20:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -248,7 +248,6 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 		ip->grf = gp;
 		splx(s);
 
-		alloc_sicallback();
 		iteinit(gp->g_itedev);
 		printf(": rows %d cols %d", ip->rows, ip->cols);
 		printf(" repeat at (%d/100)s next at (%d/100)s",
@@ -877,14 +876,6 @@ ite_filter(u_char c, enum caller caller)
 
 	/* have to make sure we're at spltty in here */
 	s = spltty();
-
-	/*
-	 * keyboard interrupts come at priority 2, while softint
-	 * generated keyboard-repeat interrupts come at level 1.  So,
-	 * to not allow a key-up event to get thru before a repeat for
-	 * the key-down, we remove any outstanding callout requests..
-	rem_sicallback(ite_sifilter);
-	 */
 
 	up = c & 0x80 ? 1 : 0;
 	c &= 0x7f;

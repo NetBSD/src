@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.274.2.3 2009/05/16 10:41:53 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.274.2.4 2009/06/20 07:20:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -556,11 +556,20 @@ void	kstack_check_magic(const struct lwp *);
  * kernel stack paramaters
  * XXX require sizeof(struct user)
  */
-/* the lowest address of kernel stack */
+/*
+ * KSTACK_LOWEST_ADDR: return the lowest address of the lwp's kernel stack,
+ * excluding redzone etc.
+ *
+ * if <machine/proc.h> provides the MD definition, it will be used.
+ */
 #ifndef KSTACK_LOWEST_ADDR
 #define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((l)->l_addr + 1))
 #endif
-/* size of kernel stack */
+/*
+ * KSTACK_SIZE: the size kernel stack for a lwp, excluding redzone etc.
+ *
+ * if <machine/proc.h> provides the MD definition, it will be used.
+ */
 #ifndef KSTACK_SIZE
 #define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif

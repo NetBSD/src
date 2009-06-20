@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.122.4.3 2009/05/30 04:25:43 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.122.4.4 2009/06/20 07:20:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.4.3 2009/05/30 04:25:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.4.4 2009/06/20 07:20:38 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -145,7 +145,8 @@ sys_sstk(struct lwp *l, const struct sys_sstk_args *uap, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_mincore(struct lwp *l, const struct sys_mincore_args *uap, register_t *retval)
+sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(void *) addr;
@@ -562,7 +563,8 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
  */
 
 int
-sys___msync13(struct lwp *l, const struct sys___msync13_args *uap, register_t *retval)
+sys___msync13(struct lwp *l, const struct sys___msync13_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(void *) addr;
@@ -716,7 +718,8 @@ sys_munmap(struct lwp *l, const struct sys_munmap_args *uap, register_t *retval)
  */
 
 int
-sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap, register_t *retval)
+sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(void *) addr;
@@ -760,7 +763,8 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap, register_t *ret
  */
 
 int
-sys_minherit(struct lwp *l, const struct sys_minherit_args *uap, register_t *retval)
+sys_minherit(struct lwp *l, const struct sys_minherit_args *uap,
+   register_t *retval)
 {
 	/* {
 		syscallarg(void *) addr;
@@ -801,7 +805,8 @@ sys_minherit(struct lwp *l, const struct sys_minherit_args *uap, register_t *ret
 
 /* ARGSUSED */
 int
-sys_madvise(struct lwp *l, const struct sys_madvise_args *uap, register_t *retval)
+sys_madvise(struct lwp *l, const struct sys_madvise_args *uap,
+   register_t *retval)
 {
 	/* {
 		syscallarg(void *) addr;
@@ -844,13 +849,9 @@ sys_madvise(struct lwp *l, const struct sys_madvise_args *uap, register_t *retva
 		 * Activate all these pages, pre-faulting them in if
 		 * necessary.
 		 */
-		/*
-		 * XXX IMPLEMENT ME.
-		 * Should invent a "weak" mode for uvm_fault()
-		 * which would only do the PGO_LOCKED pgo_get().
-		 */
-
-		return (0);
+		error = uvm_map_willneed(&p->p_vmspace->vm_map,
+		    addr, addr + size);
+		break;
 
 	case MADV_DONTNEED:
 
@@ -953,7 +954,8 @@ sys_mlock(struct lwp *l, const struct sys_mlock_args *uap, register_t *retval)
  */
 
 int
-sys_munlock(struct lwp *l, const struct sys_munlock_args *uap, register_t *retval)
+sys_munlock(struct lwp *l, const struct sys_munlock_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const void *) addr;
@@ -996,7 +998,8 @@ sys_munlock(struct lwp *l, const struct sys_munlock_args *uap, register_t *retva
  */
 
 int
-sys_mlockall(struct lwp *l, const struct sys_mlockall_args *uap, register_t *retval)
+sys_mlockall(struct lwp *l, const struct sys_mlockall_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) flags;
@@ -1037,7 +1040,8 @@ sys_munlockall(struct lwp *l, const void *v, register_t *retval)
  */
 
 int
-uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot, vm_prot_t maxprot, int flags, void *handle, voff_t foff, vsize_t locklimit)
+uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
+    vm_prot_t maxprot, int flags, void *handle, voff_t foff, vsize_t locklimit)
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;

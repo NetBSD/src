@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.65.4.2 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.65.4.3 2009/06/20 07:20:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.65.4.2 2009/05/04 08:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.65.4.3 2009/06/20 07:20:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -254,7 +254,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 {
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
-	int s, channel;
+	int channel;
 
 	if (zsd == NULL) {
 		aprint_error(": configuration incomplete\n");
@@ -333,9 +333,9 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 			/* No sub-driver.  Just reset it. */
 			uint8_t reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
-			s = splzs();
+			zs_lock_chan(cs);
 			zs_write_reg(cs,  9, reset);
-			splx(s);
+			zs_unlock_chan(cs);
 		} 
 #if (NKBD > 0) || (NMS > 0)
 		/* 
@@ -388,13 +388,12 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	 * (common to both channels, do it on A)
 	 */
 	cs = zsc->zsc_cs[0];
-	s = splhigh();
+	zs_lock_chan(cs);
 	/* interrupt vector */
 	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
-	splx(s);
-
+	zs_unlock_chan(cs);
 }
 
 static int
@@ -460,10 +459,11 @@ static void
 zssoft(void *arg)
 {
 	struct zsc_softc *zsc = arg;
-	int s;
 
-	/* Make sure we call the tty layer at spltty. */
-	s = spltty();
+#if 0 /* not yet */
+	/* Make sure we call the tty layer with tty_lock held. */
+	mutex_spin_enter(&tty_lock);
+#endif
 	zssoftpending = 0;
 	(void)zsc_intr_soft(zsc);
 #ifdef TTY_DEBUG
@@ -478,7 +478,9 @@ zssoft(void *arg)
 		}
 	}
 #endif
-	splx(s);
+#if 0 /* not yet */
+	mutex_spin_exit(&tty_lock);
+#endif
 }
 
 
@@ -532,7 +534,6 @@ zs_set_speed(struct zs_chanstate *cs, int bps /* bits per second */)
 int
 zs_set_modes(struct zs_chanstate *cs, int cflag)
 {
-	int s;
 
 	/*
 	 * Output hardware flow control on the chip is horrendous:
@@ -541,7 +542,7 @@ zs_set_modes(struct zs_chanstate *cs, int cflag)
 	 * Therefore, NEVER set the HFC bit, and instead use the
 	 * status interrupt to detect CTS changes.
 	 */
-	s = splzs();
+	zs_lock_chan(cs);
 	cs->cs_rr0_pps = 0;
 	if ((cflag & (CLOCAL | MDMBUF)) != 0) {
 		cs->cs_rr0_dcd = 0;
@@ -566,7 +567,7 @@ zs_set_modes(struct zs_chanstate *cs, int cflag)
 		cs->cs_wr5_rts = 0;
 		cs->cs_rr0_cts = 0;
 	}
-	splx(s);
+	zs_unlock_chan(cs);
 
 	/* Caller will stuff the pending registers. */
 	return (0);

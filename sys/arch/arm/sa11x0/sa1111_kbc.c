@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.10 2008/01/05 00:31:55 ad Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.10.10.1 2009/06/20 07:20:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.10 2008/01/05 00:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.10.10.1 2009/06/20 07:20:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.10 2008/01/05 00:31:55 ad Exp $");
 #include "locators.h"
 
 struct sackbc_softc {
-	struct device dev;
+	device_t dev;
 
 	bus_space_tag_t    iot;
 	bus_space_handle_t ioh;
@@ -101,8 +101,8 @@ struct sackbc_softc {
 	pckbport_tag_t pt;
 };
 
-static int	sackbc_match(struct device *, struct cfdata *, void *);
-static void	sackbc_attach(struct device *, struct device *, void *);
+static int	sackbc_match(device_t, cfdata_t, void *);
+static void	sackbc_attach(device_t, device_t, void *);
 
 static int	sackbc_xt_translation(void *, pckbport_slot_t, int);
 #define sackbc_send_devcmd	sackbc_send_cmd
@@ -112,7 +112,7 @@ static void	sackbc_slot_enable(void *, pckbport_slot_t, int);
 static void	sackbc_intr_establish(void *, pckbport_slot_t);
 static void	sackbc_set_poll(void *, pckbport_slot_t, int);
 
-CFATTACH_DECL(sackbc, sizeof(struct sackbc_softc), sackbc_match,
+CFATTACH_DECL_NEW(sackbc, sizeof(struct sackbc_softc), sackbc_match,
     sackbc_attach, NULL, NULL);
 
 static struct pckbport_accessops const sackbc_ops = {
@@ -136,7 +136,7 @@ static struct pckbport_accessops const sackbc_ops = {
 
 
 static int
-sackbc_match(struct device *parent, struct cfdata *cf, void *aux)
+sackbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sa1111_attach_args *aa = (struct sa1111_attach_args *)aux;
 
@@ -193,11 +193,10 @@ sackbc_intr_establish(void *cookie, pckbport_slot_t slot)
 
 	if (!(sc->polling) && sc->ih_rx == NULL) {
 		sc->ih_rx = sacc_intr_establish(
-			(sacc_chipset_tag_t *) device_parent(&sc->dev), 
+			(sacc_chipset_tag_t *) device_parent(sc->dev), 
 			sc->intr+1, IST_EDGE_RAISE, IPL_TTY, sackbc_rxint, sc);
 		if (sc->ih_rx == NULL) {
-			printf("%s: can't establish interrupt\n",
-			    sc->dev.dv_xname);
+			aprint_normal_dev(sc->dev, "can't establish interrupt\n");
 		}
 	}
 }
@@ -207,19 +206,19 @@ sackbc_disable_intrhandler(struct sackbc_softc *sc)
 {
 	if (sc->polling && sc->ih_rx) {
 		sacc_intr_disestablish(
-			(sacc_chipset_tag_t *) device_parent(&sc->dev),
+			(sacc_chipset_tag_t *) device_parent(sc->dev),
 			sc->ih_rx);
 		sc->ih_rx = NULL;
 	}
 }
 
 static	void	
-sackbc_attach(struct device *parent, struct device *self, void *aux)
+sackbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct sackbc_softc *sc = (struct sackbc_softc *)self;
-	struct sacc_softc *psc = (struct sacc_softc *)parent;
+	struct sackbc_softc *sc = device_private(self);
+	struct sacc_softc *psc = device_private(parent);
 	struct sa1111_attach_args *aa = (struct sa1111_attach_args *)aux;
-	struct device *child;
+	device_t child;
 	uint32_t tmp, clock_bit;
 	int intr, slot;
 
@@ -235,10 +234,11 @@ sackbc_attach(struct device *parent, struct device *self, void *aux)
 	if (aa->sa_intr == SACCCF_INTR_DEFAULT)
 		aa->sa_intr = intr;
 
+	sc->dev = self;
 	sc->iot = psc->sc_iot;
 	if (bus_space_subregion(psc->sc_iot, psc->sc_ioh,
 	    aa->sa_addr, aa->sa_size, &sc->ioh)) {
-		printf(": can't map subregion\n");
+		aprint_normal(": can't map subregion\n");
 		return;
 	}
 
@@ -278,7 +278,7 @@ sackbc_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		sc->slot = slot;
 #if NRND > 0
-		rnd_attach_source(&sc->rnd_source, child->dv_xname,
+		rnd_attach_source(&sc->rnd_source, device_xname(child),
 		    RND_TYPE_TTY, 0);
 #endif
 		/* only one of KBD_SLOT or AUX_SLOT is used. */

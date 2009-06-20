@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220.2.3 2009/05/16 10:41:16 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.220.2.4 2009/06/20 07:20:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.3 2009/05/16 10:41:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.4 2009/06/20 07:20:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.3 2009/05/16 10:41:16 yamt Exp $
 #include <sys/exec.h>
 #include <sys/ucontext.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #include <uvm/uvm.h>
 
@@ -229,9 +230,9 @@ cpu_startup(void)
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	register struct trapframe64 *tf = l->l_md.md_tf;
-	register struct fpstate64 *fs;
-	register int64_t tstate;
+	struct trapframe64 *tf = l->l_md.md_tf;
+	struct fpstate64 *fs;
+	int64_t tstate;
 	int pstate = PSTATE_USER;
 #ifdef __arch64__
 	Elf_Ehdr *eh = pack->ep_hdr;
@@ -557,12 +558,12 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
-int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(register int howto, char *user_boot_string)
+cpu_reboot(int howto, char *user_boot_string)
 {
+	static bool syncdone = false;
 	int i;
 	static char str[128];
 
@@ -576,13 +577,13 @@ cpu_reboot(register int howto, char *user_boot_string)
 	fb_unblank();
 #endif
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0 && !syncdone) {
 		extern struct lwp lwp0;
 
 		/* XXX protect against curlwp->p_stats.foo refs in sync() */
 		if (curlwp == NULL)
 			curlwp = &lwp0;
-		waittime = 0;
+		syncdone = true;
 		vfs_shutdown();
 
 		/*
@@ -673,7 +674,7 @@ void
 cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
-	register int nblks, dumpblks;
+	int nblks, dumpblks;
 
 	if (dumpdev == NODEV)
 		/* No usable dump device */
@@ -722,12 +723,12 @@ void
 dumpsys(void)
 {
 	const struct bdevsw *bdev;
-	register int psize;
+	int psize;
 	daddr_t blkno;
-	register int (*dump)(dev_t, daddr_t, void *, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int j, error = 0;
 	uint64_t todo;
-	register struct mem_region *mp;
+	struct mem_region *mp;
 
 	/* copy registers to dumppcb and flush windows */
 	memset(&dumppcb, 0, sizeof(struct pcb));
@@ -2011,3 +2012,10 @@ cpu_intr_p(void)
 
 	return curcpu()->ci_idepth >= 0;
 }
+
+#ifdef MODULAR
+void
+module_init_md(void)
+{
+}
+#endif

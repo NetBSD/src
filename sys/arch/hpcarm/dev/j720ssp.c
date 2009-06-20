@@ -1,4 +1,4 @@
-/*	$NetBSD: j720ssp.c,v 1.30.62.1 2008/05/16 02:22:27 yamt Exp $	*/
+/*	$NetBSD: j720ssp.c,v 1.30.62.2 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 SSP port. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.30.62.1 2008/05/16 02:22:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.30.62.2 2009/06/20 07:20:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.30.62.1 2008/05/16 02:22:27 yamt Exp $
 #include <hpcarm/dev/j720sspvar.h>
 
 #ifdef DEBUG
-#define DPRINTF(arg)	printf arg
+#define DPRINTF(arg)	aprint_normal arg
 #else
 #define DPRINTF(arg)	/* nothing */
 #endif
@@ -58,18 +58,17 @@ __KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.30.62.1 2008/05/16 02:22:27 yamt Exp $
 		(x) = ((((x) & 0xaa) >> 1) | (((x) & 0x55) << 1));	\
 	} while (0)
 
-static int	j720ssp_match(struct device *, struct cfdata *, void *);
-static void	j720ssp_attach(struct device *, struct device *, void *);
-static int	j720ssp_search(struct device *, struct cfdata *,
-		    const int *, void *);
+static int	j720ssp_match(device_t, cfdata_t, void *);
+static void	j720ssp_attach(device_t, device_t, void *);
+static int	j720ssp_search(device_t, cfdata_t, const int *, void *);
 static int	j720ssp_print(void *, const char *);
 
-CFATTACH_DECL(j720ssp, sizeof(struct j720ssp_softc),
+CFATTACH_DECL_NEW(j720ssp, sizeof(struct j720ssp_softc),
     j720ssp_match, j720ssp_attach, NULL, NULL);
 
 
 static int
-j720ssp_match(struct device *parent, struct cfdata *cf, void *aux)
+j720ssp_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(cf->cf_name, "j720ssp") != 0)
@@ -79,30 +78,30 @@ j720ssp_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-j720ssp_attach(struct device *parent, struct device *self, void *aux)
+j720ssp_attach(device_t parent, device_t self, void *aux)
 {
-	struct j720ssp_softc *sc = (void *)self;
-	struct sa11x0_softc *psc = (void *)parent;
+	struct j720ssp_softc *sc = device_private(self);
+	struct sa11x0_softc *psc = device_private(parent);
 	struct sa11x0_attach_args *sa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = psc->sc_iot;
 	sc->sc_gpioh = psc->sc_gpioh;
 	sc->sc_parent = psc;
 
 	if (bus_space_map(sc->sc_iot, sa->sa_addr, sa->sa_size, 0,
 	    &sc->sc_ssph)) {
-		printf(": unable to map SSP registers\n");
+		aprint_normal(": unable to map SSP registers\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	config_search_ia(j720ssp_search, self, "j720ssp", NULL);
 }
 
 static int
-j720ssp_search(struct device *parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
+j720ssp_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)

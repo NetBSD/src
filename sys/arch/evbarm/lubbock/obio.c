@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7.10.1 2008/05/16 02:22:14 yamt Exp $ */
+/*	$NetBSD: obio.c,v 1.7.10.2 2009/06/20 07:20:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7.10.1 2008/05/16 02:22:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7.10.2 2009/06/20 07:20:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,14 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7.10.1 2008/05/16 02:22:14 yamt Exp $");
 #include "locators.h"
 
 /* prototypes */
-static int	obio_match(struct device *, struct cfdata *, void *);
-static void	obio_attach(struct device *, struct device *, void *);
-static int	obio_search(struct device *, struct cfdata *,
-		    const int *, void *);
+static int	obio_match(device_t, cfdata_t, void *);
+static void	obio_attach(device_t, device_t, void *);
+static int	obio_search(device_t, cfdata_t, const int *, void *);
 static int	obio_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(obio, sizeof(struct obio_softc), obio_match, obio_attach,
+CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc), obio_match, obio_attach,
     NULL, NULL);
 
 uint32_t obio_intr_mask;
@@ -76,7 +75,7 @@ obio_spurious(void *arg)
 {
 	int irqno = (int)arg;
 
-	printf("Spurious interrupt %d on On-board peripheral", irqno);
+	aprint_normal("Spurious interrupt %d on On-board peripheral", irqno);
 	return 1;
 }
 
@@ -194,22 +193,22 @@ obio_print(void *aux, const char *name)
 	struct obio_attach_args *oba = (struct obio_attach_args*)aux;
 
 	if (oba->oba_addr != OBIOCF_ADDR_DEFAULT)
-                printf(" addr 0x%lx", oba->oba_addr);
+		aprint_normal(" addr 0x%lx", oba->oba_addr);
         if (oba->oba_intr > 0)
-                printf(" intr %d", oba->oba_intr);
+		aprint_normal(" intr %d", oba->oba_intr);
         return (UNCONF);
 }
 
 int
-obio_match(struct device *parent, struct cfdata *match, void *aux)
+obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 void
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct obio_softc *sc = (struct obio_softc*)self;
+	struct obio_softc *sc = device_private(self);
 	int system_id, baseboard_id, expansion_id, processor_card_id;
 	struct pxaip_attach_args *sa = (struct pxaip_attach_args *)aux;
 	const char *processor_card_name;
@@ -217,10 +216,11 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	
 
 	/* Map on-board FPGA registers */
+	sc->sc_dev = self;
 	sc->sc_iot = &pxa2x0_bs_tag;
 	if (bus_space_map(sc->sc_iot, LUBBOCK_OBIO_PBASE, LUBBOCK_OBIO_SIZE,
 	    0, &(sc->sc_obioreg_ioh))) {
-		printf("%s: can't map FPGA registers\n", self->dv_xname);
+		aprint_normal_dev(self, "can't map FPGA registers\n");
 	}
 
 	system_id = bus_space_read_4(sc->sc_iot, sc->sc_obioreg_ioh,
@@ -287,10 +287,9 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-obio_search(struct device *parent, struct cfdata *cf, const int *ldesc,
-    void *aux)
+obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct obio_softc *sc = (struct obio_softc *)parent;
+	struct obio_softc *sc = device_private(parent);
 	struct obio_attach_args oba;
 
 	oba.oba_sc = sc;

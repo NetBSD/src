@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.94.10.1 2009/05/04 08:11:56 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.94.10.2 2009/06/20 07:20:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94.10.1 2009/05/04 08:11:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94.10.2 2009/06/20 07:20:10 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -207,8 +207,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 		write_user_windows();
 		opcb->pcb_psr = getpsr();
 	}
+#ifdef DIAGNOSTIC
+	else if (l1 != &lwp0)	/* XXX is this valid? */
+		panic("cpu_lwp_fork: curlwp");
+#endif
 
-	memcpy( (void *)npcb, (void *)opcb, sizeof(struct pcb));
+	memcpy((void *)npcb, (void *)opcb, sizeof(struct pcb));
 	if (l1->l_md.md_fpstate != NULL) {
 		struct cpu_info *cpi;
 		int s;
@@ -229,7 +233,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 					1 << cpi->ci_cpuid);
 #endif
 		}
-		memcpy( l2->l_md.md_fpstate, l1->l_md.md_fpstate,
+		memcpy(l2->l_md.md_fpstate, l1->l_md.md_fpstate,
 		    sizeof(struct fpstate));
 		FPU_UNLOCK(s);
 	} else
@@ -271,9 +275,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_int)npcb + TOPFRAMEOFF);
+	/**rp = *(struct rwindow *)((u_int)opcb + TOPFRAMEOFF);*/
 	rp->rw_local[0] = (int)func;		/* Function to call */
 	rp->rw_local[1] = (int)arg;		/* and its argument */
-	rp->rw_local[2] = (int)l2;		/* the new LWP */
+	rp->rw_local[2] = (int)l2;		/* new LWP */
 
 	npcb->pcb_pc = (int)lwp_trampoline - 8;
 	npcb->pcb_sp = (int)rp;
@@ -331,9 +336,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (int)func;		/* Function to call */
 	rp->rw_local[1] = (int)arg;		/* and its argument */
-	rp->rw_local[2] = (int)l;		/* new lwp */
 
-	pcb->pcb_pc = (int)lwp_trampoline - 8;
+	pcb->pcb_pc = (int)lwp_setfunc_trampoline - 8;
 	pcb->pcb_sp = (int)rp;
 	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
 	pcb->pcb_wim = 1;		/* Fence at window #1 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbd.c,v 1.4.56.1 2008/05/16 02:22:27 yamt Exp $	*/
+/*	$NetBSD: j720kbd.c,v 1.4.56.2 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 keyboard driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.4.56.1 2008/05/16 02:22:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.4.56.2 2009/06/20 07:20:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.4.56.1 2008/05/16 02:22:27 yamt Exp $"
 #include <hpcarm/dev/j720sspvar.h>
 
 #ifdef DEBUG
-#define DPRINTF(arg)	printf arg
+#define DPRINTF(arg)	aprint_normal arg
 #else
 #define DPRINTF(arg)	/* nothing */
 #endif
@@ -69,15 +69,15 @@ struct j720kbd_chip {
 };
 
 struct j720kbd_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	struct j720kbd_chip	*sc_chip;
 };
 
 static struct j720kbd_chip j720kbd_chip;
 
-static int	j720kbd_match(struct device *, struct cfdata *, void *);
-static void	j720kbd_attach(struct device *, struct device *, void *);
+static int	j720kbd_match(device_t, cfdata_t, void *);
+static void	j720kbd_attach(device_t, device_t, void *);
 
 static void	j720kbd_cnattach(void);
 static void	j720kbd_ifsetup(struct j720kbd_chip *);
@@ -86,12 +86,12 @@ static int	j720kbd_intr(void *);
 static int	j720kbd_poll(void *);
 static void	j720kbd_read(struct j720kbd_chip *, char *);
 
-CFATTACH_DECL(j720kbd, sizeof(struct j720kbd_softc),
+CFATTACH_DECL_NEW(j720kbd, sizeof(struct j720kbd_softc),
     j720kbd_match, j720kbd_attach, NULL, NULL);
 
 
 static int
-j720kbd_match(struct device *parent, struct cfdata *cf, void *aux)
+j720kbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (!platid_match(&platid, &platid_mask_MACH_HP_JORNADA_7XX))
@@ -103,15 +103,16 @@ j720kbd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-j720kbd_attach(struct device *parent, struct device *self, void *aux)
+j720kbd_attach(device_t parent, device_t self, void *aux)
 {
-	struct j720kbd_softc *sc = (void *)self;
+	struct j720kbd_softc *sc = device_private(self);
 	struct hpckbd_attach_args haa;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_chip = &j720kbd_chip;
-	sc->sc_chip->scc_ssp = (struct j720ssp_softc *)parent;
+	sc->sc_chip->scc_ssp = device_private(parent);
 	sc->sc_chip->scc_enabled = 0;
 
 	/* Attach console if not using serial. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.37.4.2 2009/05/04 08:12:55 yamt Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.37.4.3 2009/06/20 07:20:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.37.4.2 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.37.4.3 2009/06/20 07:20:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,18 @@ extern int ehcidebug;
 #define DPRINTF(x)
 #endif
 
+enum ehci_pci_quirk_flags {
+	EHCI_PCI_QUIRK_AMD_SB600 = 0x1,	/* always need a quirk */
+	EHCI_PCI_QUIRK_AMD_SB700 = 0x2,	/* depends on the SMB revision */
+};
+
+static const struct pci_quirkdata ehci_pci_quirks[] = {
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_EHCI,
+	    EHCI_PCI_QUIRK_AMD_SB600 },
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_EHCI,
+	    EHCI_PCI_QUIRK_AMD_SB700 },
+};
+
 static void ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 				   pcitag_t tag);
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
@@ -74,7 +86,15 @@ struct ehci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
+static int ehci_sb700_match(struct pci_attach_args *pa);
+static int ehci_apply_amd_quirks(struct ehci_pci_softc *sc);
+enum ehci_pci_quirk_flags ehci_pci_lookup_quirkdata(pci_vendor_id_t,
+	pci_product_id_t);
+
 #define EHCI_MAX_BIOS_WAIT		1000 /* ms */
+#define EHCI_SBx00_WORKAROUND_REG	0x50
+#define EHCI_SBx00_WORKAROUND_ENABLE	__BIT(27)
+
 
 static int
 ehci_pci_match(device_t parent, cfdata_t match, void *aux)
@@ -104,6 +124,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	usbd_status r;
 	int ncomp;
 	struct usb_pci *up;
+	int quirk;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
@@ -113,6 +134,10 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
+
+	/* Check for quirks */
+	quirk = ehci_pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
+					   PCI_PRODUCT(pa->pa_id));
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
@@ -130,6 +155,17 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+
+	/* Handle quirks */
+	switch (quirk) {
+	case EHCI_PCI_QUIRK_AMD_SB600:
+		ehci_apply_amd_quirks(sc);
+		break;
+	case EHCI_PCI_QUIRK_AMD_SB700:
+		if (pci_find_device(NULL, ehci_sb700_match))
+			ehci_apply_amd_quirks(sc);
+		break;
+	}
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -403,3 +439,47 @@ ehci_pci_resume(device_t dv PMF_FN_ARGS)
 	ehci_get_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
 	return ehci_resume(dv PMF_FN_CALL);
 }
+
+static int
+ehci_sb700_match(struct pci_attach_args *pa)
+{
+	if (!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB))
+		return 0;
+
+	switch (PCI_REVISION(pa->pa_class)) {
+	case 0x3a:
+	case 0x3b:
+		return 1;
+	}
+
+	return 0;
+}
+
+static int
+ehci_apply_amd_quirks(struct ehci_pci_softc *sc)
+{
+	pcireg_t value;
+ 
+	aprint_normal_dev(sc->sc.sc_dev,
+	    "applying AMD SB600/SB700 USB freeze workaround\n");
+	value = pci_conf_read(sc->sc_pc, sc->sc_tag, EHCI_SBx00_WORKAROUND_REG);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, EHCI_SBx00_WORKAROUND_REG,
+	    value | EHCI_SBx00_WORKAROUND_ENABLE);
+
+	return 0;
+}
+
+enum ehci_pci_quirk_flags
+ehci_pci_lookup_quirkdata(pci_vendor_id_t vendor, pci_product_id_t product)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(ehci_pci_quirks); i++) {
+		if (vendor == ehci_pci_quirks[i].vendor &&
+		    product == ehci_pci_quirks[i].product)
+			return ehci_pci_quirks[i].quirks;
+	}
+	return 0;
+}
+

@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.7.4.2 2009/05/16 10:41:13 yamt Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.7.4.3 2009/06/20 07:20:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.7.4.2 2009/05/16 10:41:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.7.4.3 2009/06/20 07:20:03 yamt Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -105,11 +105,11 @@ CFATTACH_DECL_NEW(
 	NULL
 );
 
-int iee_gsc_cmd(struct iee_softc *, u_int32_t);
+int iee_gsc_cmd(struct iee_softc *, uint32_t);
 int iee_gsc_reset(struct iee_softc *);
 
 int
-iee_gsc_cmd(struct iee_softc *sc, u_int32_t cmd)
+iee_gsc_cmd(struct iee_softc *sc, uint32_t cmd)
 {
 	struct iee_gsc_softc *sc_gsc = (struct iee_gsc_softc *)sc;
 	int n;

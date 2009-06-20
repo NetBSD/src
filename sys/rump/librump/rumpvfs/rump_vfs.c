@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.20.2.3 2009/05/16 10:41:52 yamt Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.20.2.4 2009/06/20 07:20:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.4 2009/06/20 07:20:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.11.4.2 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: lasi.c,v 1.11.4.3 2009/06/20 07:20:02 yamt Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.4.2 2009/05/16 10:41:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.4.3 2009/06/20 07:20:02 yamt Exp $");
 
 #undef LASIDEBUG
 
@@ -51,21 +51,21 @@ __KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.11.4.2 2009/05/16 10:41:12 yamt Exp $");
 #include <hp700/gsc/gscbusvar.h>
 
 struct lasi_hwr {
-	u_int32_t lasi_power;
+	uint32_t lasi_power;
 #define	LASI_BLINK	0x01
 #define	LASI_OFF	0x02
-	u_int32_t lasi_error;
-	u_int32_t lasi_version;
-	u_int32_t lasi_reset;
-	u_int32_t lasi_arbmask;
+	uint32_t lasi_error;
+	uint32_t lasi_version;
+	uint32_t lasi_reset;
+	uint32_t lasi_arbmask;
 };
 
 struct lasi_trs {
-	u_int32_t lasi_irr;	/* int requset register */
-	u_int32_t lasi_imr;	/* int mask register */
-	u_int32_t lasi_ipr;	/* int pending register */
-	u_int32_t lasi_icr;	/* int command? register */
-	u_int32_t lasi_iar;	/* int acquire? register */
+	uint32_t lasi_irr;	/* int requset register */
+	uint32_t lasi_imr;	/* int mask register */
+	uint32_t lasi_ipr;	/* int pending register */
+	uint32_t lasi_icr;	/* int command? register */
+	uint32_t lasi_iar;	/* int acquire? register */
 };
 
 #define	LASI_BANK_SZ	0x200000

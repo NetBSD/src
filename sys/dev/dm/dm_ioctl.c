@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.11.2.2 2009/05/04 08:12:36 yamt Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.11.2.3 2009/06/20 07:20:21 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -247,6 +247,8 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	disk_init(dmv->diskp, dmv->name, &dmdkdriver);
 	disk_attach(dmv->diskp);
+
+	dmv->diskp->dk_info = NULL;
 	
 	if ((r = dm_dev_insert(dmv)) != 0)		
 		dm_dev_free(dmv);
@@ -539,7 +541,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 		
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 
-	dmgetdisklabel(dmv->diskp->dk_label, &dmv->table_head);
+	dmgetproperties(dmv->diskp, &dmv->table_head);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
@@ -680,13 +682,11 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 	prop_object_iterator_t iter;
 	prop_array_t cmd_array;
-	prop_dictionary_t target_dict;
+	prop_dictionary_t target_dict, param_dict;
 	
 	const char *name, *uuid, *type;
 
 	uint32_t flags, ret, minor;
-
-	char *str;
 
 	ret = 0;
 	flags = 0;
@@ -694,7 +694,6 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	dmv = NULL;
 	last_table = NULL;
-	str = NULL;
 
 /*	char *xml;
 	xml = prop_dictionary_externalize(dm_dict);
@@ -769,8 +768,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * null and therefore it should be checked before we try to
 		 * use it.
 		 */
-		prop_dictionary_get_cstring(target_dict,
-		    DM_TABLE_PARAMS, (char**)&str);
+		param_dict = prop_dictionary_get(target_dict, DM_TABLE_PARAMS);
 		
 		if (SLIST_EMPTY(tbl))
 			/* insert this table to head */
@@ -783,19 +781,16 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * therfore I have to pass it to target init
 		 * routine and parse parameters there.
 		 */
-		
 		if ((ret = target->init(dmv, &table_en->target_config,
-			    str)) != 0) {
+			param_dict)) != 0) {
 
 			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
-			free(str, M_TEMP);
-
+			
 			dm_dev_unbusy(dmv);
 			return ret;
 		}
 		last_table = table_en;
-		free(str, M_TEMP);
 	}
 	prop_object_iterator_release(iter);
 	

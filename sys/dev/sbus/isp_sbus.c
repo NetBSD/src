@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.73.4.1 2009/05/16 10:41:43 yamt Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.73.4.2 2009/06/20 07:20:28 yamt Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.4.1 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.4.2 2009/06/20 07:20:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ isp_sbus_attach(device_t parent, device_t self, void *aux)
 	int freq, ispburst, sbusburst;
 	struct sbus_attach_args *sa = aux;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
+	struct sbus_softc *sbsc = device_private(parent);
 	ispsoftc_t *isp = &sbc->sbus_isp;
 
 	printf(" for %s\n", sa->sa_name);
@@ -160,7 +161,7 @@ isp_sbus_attach(device_t parent, device_t self, void *aux)
 	 * walks up the tree finding the limiting burst size node (if
 	 * any).
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	sbusburst = sbsc->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1;
 	ispburst = prom_getpropint(sa->sa_node, "burst-sizes", -1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.42.4.2 2009/05/04 08:11:05 yamt Exp $	*/
+/*	$NetBSD: mt.c,v 1.42.4.3 2009/06/20 07:20:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.42.4.2 2009/05/04 08:11:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.42.4.3 2009/06/20 07:20:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ struct	mt_softc {
 	tpr_t	sc_ttyp;
 	struct bufq_state *sc_tab;/* buf queue */
 	int	sc_active;
-	struct buf sc_bufstore;	/* XXX buffer storage */
 };
 
 #ifdef DEBUG
@@ -425,19 +424,16 @@ mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 mtcommand(dev_t dev, int cmd, int cnt)
 {
-	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
-	struct buf *bp = &sc->sc_bufstore;
 	int error = 0;
+	buf_t *bp;
 
-#if 1
-	if (bp->b_cflags & BC_BUSY)
-		return EBUSY;
-#endif
+	bp = getiobuf(NULL, true);
 	bp->b_cmd = cmd;
 	bp->b_dev = dev;
 	do {
 		bp->b_cflags = BC_BUSY;
 		bp->b_flags = B_CMD;
+		bp->b_oflags = 0;
 		mtstrategy(bp);
 		biowait(bp);
 		if (bp->b_error != 0) {
@@ -445,11 +441,8 @@ mtcommand(dev_t dev, int cmd, int cnt)
 			break;
 		}
 	} while (--cnt > 0);
-#if 0
-	bp->b_flags = 0 /*&= ~BC_BUSY*/;
-#else
-	bp->b_flags &= ~BC_BUSY;
-#endif
+	putiobuf(bp);
+
 	return error;
 }
 
@@ -920,19 +913,15 @@ mtintr(void *arg)
 static int
 mtread(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
-	return physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_READ, minphys, uio);
+	return physio(mtstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
 static int
 mtwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 
-	return physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_WRITE, minphys, uio);
+	return physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 static int

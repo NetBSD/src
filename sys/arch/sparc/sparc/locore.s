@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.243.10.1 2009/05/04 08:11:55 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.243.10.2 2009/06/20 07:20:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -117,6 +117,15 @@ BARF
 	ld	[%o0 + %lo(what)], %o1; \
 	inc	%o1; \
 	st	%o1, [%o0 + %lo(what)]
+
+#if EV_COUNT != 0
+# error "this code does not work with EV_COUNT != 0"
+#endif
+#if EV_STRUCTSIZE != 32
+# error "this code does not work with EV_STRUCTSIZE != 32"
+#else
+# define EV_STRUCTSHIFT	5
+#endif
 
 /*
  * Another handy macro: load one register window, given `base' address.
@@ -2518,11 +2527,13 @@ softintr_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
+	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+	sll	%l3, EV_STRUCTSHIFT, %o2
+	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]
-	inc	%o0
-	st	%o0, [%l4 + %l5]
+	inccc   %o1
+	addx    %o0, 0, %o0
+	std	%o0, [%l4 + %o2]
 	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
@@ -2537,11 +2548,10 @@ softintr_common:
 	 * XXX Must not happen for fast soft interrupts!
 	 */
 	cmp	%l3, IPL_VM
-	bgeu	0f
+	bne	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
-0:
 #endif
 
 	b	3f
@@ -2565,7 +2575,7 @@ softintr_common:
 
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_VM
-	bgeu	0f
+	bne	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
@@ -2671,11 +2681,13 @@ sparc_interrupt4m_bogus:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
+	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+	sll	%l3, EV_STRUCTSHIFT, %o2
+	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
-	inc	%o0
-	st	%o0, [%l4 + %l5]
+	inccc   %o1
+	addx    %o0, 0, %o0
+	std	%o0, [%l4 + %o2]
 
 	st	%fp, [%sp + CCFSZ + 16]
 
@@ -2716,11 +2728,13 @@ sparc_interrupt_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
+	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+	sll	%l3, EV_STRUCTSHIFT, %o2
+	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
-	inc	%o0
-	st	%o0, [%l4 + %l5]
+	inccc   %o1
+	addx    %o0, 0, %o0
+	std	%o0, [%l4 + %o2]
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
@@ -2732,7 +2746,7 @@ sparc_interrupt_common:
 #if defined(MULTIPROCESSOR)
 	/* Grab the kernel lock for interrupt levels =< IPL_VM */
 	cmp	%l3, IPL_VM
-	bgeu	3f
+	bne	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 	call	_C_LABEL(intr_lock_kernel)
 	 nop
@@ -2772,7 +2786,7 @@ sparc_interrupt_common:
 4:
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, IPL_VM
-	bgeu	0f
+	bne	0f
 	 nop
 	call	_C_LABEL(intr_unlock_kernel)
 	 nop
@@ -4602,12 +4616,12 @@ _C_LABEL(cpu_hatch):
 	wr	%g6, 0, %tbr
 	nop; nop; nop			! paranoia
 
-	/* Set up a stack */
+	/* Set up a stack. We use the bottom half of the interrupt stack */
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
 	sethi	%hi(_EINTSTACKP), %o0
 	ld	[%o0 + %lo(_EINTSTACKP)], %o0
-	set	USPACE - CCFSZ - 80, %sp
-	add	%sp, %o0, %sp
+	set	(INT_STACK_SIZE/2) + CCFSZ + 80, %sp
+	sub	%o0, %sp, %sp
 
 	/* Enable traps */
 	rd	%psr, %l0
@@ -5044,6 +5058,9 @@ ENTRY(snapshot)
  *
  * If were setting up a kernel thread, the function *(%l0) will not
  * return.
+ *
+ * For KERN_SA applications, we provide an alternate entry point for
+ * cpu_setfunc() to use.
  */
 ENTRY(lwp_trampoline)
 	/*
@@ -5056,6 +5073,7 @@ ENTRY(lwp_trampoline)
 	call	lwp_startup
 	 mov	%l2, %o1
 
+_ENTRY(lwp_setfunc_trampoline)
 	call	%l0
 	 mov	%l1, %o0
 
@@ -6316,31 +6334,6 @@ _C_LABEL(bootinfo):
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
 	.word	_C_LABEL(u0)	! KVA of proc0 uarea
-
-/* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"lev6"
-	.asciz	"lev7"
-	.asciz  "lev8"
-	.asciz	"lev9"
-	.asciz	"clock"
-	.asciz	"lev11"
-	.asciz	"lev12"
-	.asciz	"lev13"
-	.asciz	"prof"
-_C_LABEL(eintrnames):
-	_ALIGN
-_C_LABEL(intrcnt):
-	.skip	4*15
-_C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(romp), 4

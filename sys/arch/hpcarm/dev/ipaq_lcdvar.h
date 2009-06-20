@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcdvar.h,v 1.1.130.1 2008/05/16 02:22:27 yamt Exp $ */
+/*	$NetBSD: ipaq_lcdvar.h,v 1.1.130.2 2009/06/20 07:20:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <dev/hpc/hpcfbio.h>
 
 struct ipaqlcd_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct ipaq_softc	*sc_parent;

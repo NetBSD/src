@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43.4.2 2009/05/16 10:41:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43.4.3 2009/06/20 07:20:34 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -76,14 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43.4.2 2009/05/16 10:41:50 yamt Exp $"
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#ifndef __FreeBSD__
 #include <sys/ioctl.h>
-#else
-#include <sys/sockio.h>
-#endif
-#ifdef __FreeBSD__
-#include <sys/sysctl.h>
-#endif
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -101,9 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43.4.2 2009/05/16 10:41:50 yamt Exp $"
 #include <netinet/in_pcb.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#ifndef __OpenBSD__
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
 #include <netinet6/nd6.h>
@@ -119,13 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43.4.2 2009/05/16 10:41:50 yamt Exp $"
 #include <net/if_mip.h>
 #endif /* NMIP > 0 */
 #endif /* MIP6 */
-
-#ifndef __OpenBSD__
-#include "loop.h"
-#endif
-#ifdef __NetBSD__
-extern struct ifnet loif[NLOOP];
-#endif
 
 #define ADDR_LABEL_NOTAPP (-1)
 struct in6_addrpolicy defaultaddrpolicy;
@@ -603,11 +587,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	/* If the caller specify the outgoing interface explicitly, use it. */
 	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
 		/* XXX boundary check is assumed to be already done. */
-#ifdef __FreeBSD__
-		ifp = ifnet_byindex(pi->ipi6_ifindex);
-#else
 		ifp = ifindex2ifnet[pi->ipi6_ifindex];
-#endif
 		if (ifp != NULL &&
 		    (norouteok || retrt == NULL ||
 		    IN6_IS_ADDR_MULTICAST(dst))) {

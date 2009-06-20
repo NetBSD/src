@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.3.144.2 2009/05/04 08:12:20 yamt Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.3.144.3 2009/06/20 07:20:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ typedef struct linux_siginfo {
 		/* SIGCHLD */
 		struct {
 			linux_pid_t	_pid;
+			linux_uid_t	_uid;
 			int		_status;
 			linux_clock_t	_utime;
 			linux_clock_t	_stime;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.245.4.3 2009/05/16 10:41:42 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.245.4.4 2009/06/20 07:20:28 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.245.4.3 2009/05/16 10:41:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.245.4.4 2009/06/20 07:20:28 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1731,6 +1731,10 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/*
 	 * Add support for "regular" device ioctls here.
 	 */
+	
+	error = disk_ioctl(&rs->sc_dkdev, cmd, data, flag, l); 
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -1868,6 +1872,9 @@ raidinit(RF_Raid_t *raidPtr)
 	if (rs->sc_dev==NULL) {
 		printf("raid%d: config_attach_pseudo failed\n",
 		       raidPtr->raidid);
+		rs->sc_flags &= ~RAIDF_INITED;
+		free(cf, M_RAIDFRAME);
+		return;
 	}
 
 	/* disk_attach actually creates space for the CPU disklabel, among

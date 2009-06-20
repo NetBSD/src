@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.19.20.2 2009/05/16 10:41:11 yamt Exp $ */
+/* $NetBSD: if_ie.c,v 1.19.20.3 2009/06/20 07:19:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.19.20.2 2009/05/16 10:41:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.19.20.3 2009/06/20 07:19:58 yamt Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -450,7 +450,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	/* Fill in my application form to attach to the inet system */
 
-	memcpy( ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
@@ -1493,7 +1493,7 @@ iestart(struct ifnet *ifp)
 
 		for (m0 = m; m && (len + m->m_len) < IE_TXBUF_SIZE;
 		     m = m->m_next) {
-			memcpy( buffer, mtod(m, void *), m->m_len);
+			memcpy(buffer, mtod(m, void *), m->m_len);
 			buffer += m->m_len;
 			len += m->m_len;
 		}

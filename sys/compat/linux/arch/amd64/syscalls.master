@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23.4.1 2009/05/04 08:12:20 yamt Exp $
+	$NetBSD: syscalls.master,v 1.23.4.2 2009/06/20 07:20:14 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -154,9 +154,9 @@
 			    size_t len, int flags, struct osockaddr *from, \
 			    unsigned int *fromlenaddr); }
 46	STD		{ int|linux_sys||sendmsg(int s, \
-			    const struct msghdr *msg, int flags); }
+			    const struct linux_msghdr *msg, int flags); }
 47	STD		{ ssize_t|linux_sys||recvmsg(int s, \
-			    struct msghdr *msg, int flags); }
+			    struct linux_msghdr *msg, int flags); }
 48	NOARGS		{ int|sys||shutdown(int s, int how); }
 49	STD		{ int|linux_sys||bind(int s, \
 			    const struct osockaddr *name, \
@@ -289,7 +289,7 @@
 			    size_t sigsetsize); }
 128	UNIMPL		rt_sigtimedwait
 129	STD		{ int|linux_sys||rt_queueinfo(int pid, int signum, \
-			    siginfo_t *uinfo); }
+			    linux_siginfo_t *uinfo); }
 130	STD		{ int|linux_sys||rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
 131	STD		{ int|linux_sys||sigaltstack( \

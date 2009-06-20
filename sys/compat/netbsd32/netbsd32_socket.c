@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.31.4.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.31.4.2 2009/06/20 07:20:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.31.4.1 2009/05/04 08:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.31.4.2 2009/06/20 07:20:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,8 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 		syscallarg(int) flags;
 	} */
 	struct netbsd32_msghdr msg;
-	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
+	struct iovec aiov[UIO_SMALLIOV], *iov;
+	struct netbsd32_iovec *iov32;
 	int error;
 
 	error = copyin(SCARG_P32(uap, msg), &msg, sizeof(msg));
@@ -78,9 +79,8 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 	} else 
 		iov = aiov;
 	msg.msg_flags = SCARG(uap, flags);
-	uiov = (struct iovec *)NETBSD32PTR64(msg.msg_iov);
-	error = netbsd32_to_iovecin((struct netbsd32_iovec *)uiov,
-				   iov, msg.msg_iovlen);
+	iov32 = NETBSD32PTR64(msg.msg_iov);
+	error = netbsd32_to_iovecin(iov32, iov, msg.msg_iovlen);
 	if (error)
 		goto done;
 	if ((error = recvit32(l, SCARG(uap, s), &msg, iov, (void *)0,
@@ -224,6 +224,7 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 	struct msghdr msg;
 	struct netbsd32_msghdr msg32;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
+	struct netbsd32_iovec *iov32;
 	int error;
 
 	error = copyin(SCARG_P32(uap, msg), &msg32, sizeof(msg32));
@@ -242,8 +243,8 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 	else
 		return (EMSGSIZE);
 
-	error = netbsd32_to_iovecin((struct netbsd32_iovec *)msg.msg_iov,
-				   iov, msg.msg_iovlen);
+	iov32 = NETBSD32PTR64(msg32.msg_iov);
+	error = netbsd32_to_iovecin(iov32, iov, msg.msg_iovlen);
 	if (error)
 		goto done;
 	msg.msg_iov = iov;

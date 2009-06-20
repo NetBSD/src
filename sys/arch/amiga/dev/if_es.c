@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.42.20.1 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: if_es.c,v 1.42.20.2 2009/06/20 07:20:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42.20.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42.20.2 2009/06/20 07:20:00 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42.20.1 2009/05/04 08:10:34 yamt Exp $")
 #endif
 
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>

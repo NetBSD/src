@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.61.2.2 2009/05/04 08:12:22 yamt Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.61.2.3 2009/06/20 07:20:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.61.2.2 2009/05/04 08:12:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.61.2.3 2009/06/20 07:20:16 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.61.2.2 2009/05/04 08:12:22 yamt E
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/wait.h>
 
 #include <sys/syscallargs.h>
 
@@ -497,14 +498,19 @@ linux_sys_rt_sigsuspend(struct lwp *l, const struct linux_sys_rt_sigsuspend_args
 int
 linux_sys_rt_queueinfo(struct lwp *l, const struct linux_sys_rt_queueinfo_args *uap, register_t *retval)
 {
-	/* XXX XAX This isn't this really int, int, siginfo_t *, is it? */
-#if 0
-	struct linux_sys_rt_queueinfo_args /* {
+	/*
 		syscallarg(int) pid;
 		syscallarg(int) signum;
-		syscallarg(siginfo_t *) uinfo;
-	} */ *uap = v;
-#endif
+		syscallarg(linix_siginfo_t *) uinfo;
+	*/
+	int error;
+	linux_siginfo_t info;
+
+	error = copyin(SCARG(uap, uinfo), &info, sizeof(info));
+	if (error)
+		return error;
+	if (info.lsi_code >= 0)
+		return EPERM;
 
 	/* XXX To really implement this we need to	*/
 	/* XXX keep a list of queued signals somewhere.	*/
@@ -685,4 +691,28 @@ native_to_linux_si_code(int code)
 		return si_codes[-code];
 
 	return code;
+}
+
+int
+native_to_linux_si_status(int code, int status)
+{
+	int sts;
+
+	switch (code) {
+	case CLD_CONTINUED:
+		sts = LINUX_SIGCONT;
+		break;
+	case CLD_EXITED:
+		sts = WEXITSTATUS(status);
+		break;
+	case CLD_STOPPED:
+	case CLD_TRAPPED:
+	case CLD_DUMPED:
+	case CLD_KILLED:
+	default:
+		sts = native_to_linux_signo[WTERMSIG(status)];
+		break;
+	}
+
+	return sts;
 }

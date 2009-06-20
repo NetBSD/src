@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.272.4.3 2009/05/16 10:41:44 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.272.4.4 2009/06/20 07:20:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.272.4.3 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.272.4.4 2009/06/20 07:20:29 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -103,6 +103,7 @@ static void	sddone(struct scsipi_xfer *, int);
 static bool	sd_suspend(device_t PMF_FN_PROTO);
 static bool	sd_shutdown(device_t, int);
 static int	sd_interpret_sense(struct scsipi_xfer *);
+static int	sdlastclose(device_t);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
 		    int, int *);
@@ -125,12 +126,11 @@ static int	sd_setcache(struct sd_softc *, int);
 
 static int	sdmatch(device_t, cfdata_t, void *);
 static void	sdattach(device_t, device_t, void *);
-static int	sdactivate(device_t, enum devact);
 static int	sddetach(device_t, int);
 static void	sd_set_properties(struct sd_softc *);
 
 CFATTACH_DECL3_NEW(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
-    sdactivate, NULL, NULL, DVF_DETACH_SHUTDOWN);
+    NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver sd_cd;
 
@@ -327,29 +327,13 @@ sdattach(device_t parent, device_t self, void *aux)
 }
 
 static int
-sdactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
-}
-
-static int
 sddetach(device_t self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
-	int s, bmaj, cmaj, i, mn;
+	int s, bmaj, cmaj, i, mn, rc;
+
+	if ((rc = disk_begindetach(&sd->sc_dk, sdlastclose, self, flags)) != 0)
+		return rc;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&sd_bdevsw);
@@ -582,6 +566,45 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 /*
+ * Caller must hold sd->sc_dk.dk_openlock.
+ */
+static int
+sdlastclose(device_t self)
+{
+	struct sd_softc *sd = device_private(self);
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
+
+	/*
+	 * If the disk cache needs flushing, and the disk supports
+	 * it, do it now.
+	 */
+	if ((sd->flags & SDF_DIRTY) != 0) {
+		if (sd_flush(sd, 0)) {
+			aprint_error_dev(sd->sc_dev,
+				"cache synchronization failed\n");
+			sd->flags &= ~SDF_FLUSHING;
+		} else
+			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+	}
+
+	scsipi_wait_drain(periph);
+
+	if (periph->periph_flags & PERIPH_REMOVABLE)
+		scsipi_prevent(periph, SPAMR_ALLOW,
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+		    XS_CTL_IGNORE_NOT_READY |
+		    XS_CTL_SILENT);
+	periph->periph_flags &= ~PERIPH_OPEN;
+
+	scsipi_wait_drain(periph);
+
+	scsipi_adapter_delref(adapt);
+
+	return 0;
+}
+
+/*
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
@@ -589,8 +612,6 @@ static int
 sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
-	struct scsipi_periph *periph = sd->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = SDPART(dev);
 
 	mutex_enter(&sd->sc_dk.dk_openlock);
@@ -605,33 +626,8 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	sd->sc_dk.dk_openmask =
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
-	if (sd->sc_dk.dk_openmask == 0) {
-		/*
-		 * If the disk cache needs flushing, and the disk supports
-		 * it, do it now.
-		 */
-		if ((sd->flags & SDF_DIRTY) != 0) {
-			if (sd_flush(sd, 0)) {
-				aprint_error_dev(sd->sc_dev,
-					"cache synchronization failed\n");
-				sd->flags &= ~SDF_FLUSHING;
-			} else
-				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
-		}
-
-		scsipi_wait_drain(periph);
-
-		if (periph->periph_flags & PERIPH_REMOVABLE)
-			scsipi_prevent(periph, SPAMR_ALLOW,
-			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-			    XS_CTL_IGNORE_NOT_READY |
-			    XS_CTL_SILENT);
-		periph->periph_flags &= ~PERIPH_OPEN;
-
-		scsipi_wait_drain(periph);
-
-		scsipi_adapter_delref(adapt);
-	}
+	if (sd->sc_dk.dk_openmask == 0)
+		sdlastclose(sd->sc_dev);
 
 	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (0);
@@ -1033,6 +1029,10 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 				return (EIO);
 		}
 	}
+
+	error = disk_ioctl(&sd->sc_dk, cmd, addr, flag, l); 
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (cmd) {
 	case DIOCGDINFO:

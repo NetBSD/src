@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17.18.2 2009/05/04 08:11:34 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.18.3 2009/06/20 07:20:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #ifndef _MVME68K_INTR_H
 #define _MVME68K_INTR_H
 
-#include <sys/device.h>
 #include <machine/psl.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */

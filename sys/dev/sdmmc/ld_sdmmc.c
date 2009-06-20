@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.1.4.3 2009/05/16 10:41:44 yamt Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.1.4.4 2009/06/20 07:20:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.1.4.3 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.1.4.4 2009/06/20 07:20:29 yamt Exp $");
 
 #include "rnd.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.1.4.3 2009/05/16 10:41:44 yamt Exp $"
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
+#include <sys/kthread.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -84,6 +85,7 @@ static int ld_sdmmc_detach(device_t, int);
 static int ld_sdmmc_dump(struct ld_softc *, void *, int, int);
 static int ld_sdmmc_start(struct ld_softc *, struct buf *);
 
+static void ld_sdmmc_doattach(void *);
 static void ld_sdmmc_dobio(void *);
 static void ld_sdmmc_timeout(void *);
 
@@ -109,6 +111,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	struct ld_sdmmc_softc *sc = device_private(self);
 	struct sdmmc_attach_args *sa = aux;
 	struct ld_softc *ld = &sc->sc_ld;
+	struct lwp *lwp;
 
 	ld->sc_dv = self;
 
@@ -128,7 +131,24 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dump = ld_sdmmc_dump;
 	ld->sc_start = ld_sdmmc_start;
 
+	/*
+	 * It is avoided that the error occurs when the card attaches it, 
+	 * when wedge is supported.
+	 */
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	    ld_sdmmc_doattach, sc, &lwp, "%sattach", device_xname(self))) {
+		aprint_error_dev(self, "couldn't create thread\n");
+	}
+}
+
+static void
+ld_sdmmc_doattach(void *arg)
+{
+	struct ld_sdmmc_softc *sc = (struct ld_sdmmc_softc *)arg;
+	struct ld_softc *ld = &sc->sc_ld;
+
 	ldattach(ld);
+	kthread_exit(0);
 }
 
 static int

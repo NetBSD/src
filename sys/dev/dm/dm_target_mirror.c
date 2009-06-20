@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.5.2.2 2009/05/04 08:12:36 yamt Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.5.2.3 2009/06/20 07:20:21 yamt Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
  * 0 52428800 mirror clustered_disk 4 253:2 1024 UUID block_on_error 3 253:3 0 253:4 0 253:5 0
  */
 int
-dm_target_mirror_init(dm_dev_t *dmv, void **target_config, char *argv)
+dm_target_mirror_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dict)
 {
 
 	printf("Mirror target init function called!!\n");

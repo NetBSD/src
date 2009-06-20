@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.6.2.2 2009/05/04 08:14:33 yamt Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.6.2.3 2009/06/20 07:20:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6.2.2 2009/05/04 08:14:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6.2.3 2009/06/20 07:20:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -262,6 +262,8 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 	rv = ether_ioctl(ifp, cmd, data);
+	if (rv == ENETRESET)
+		rv = 0;
 	splx(s);
 
 	return rv;

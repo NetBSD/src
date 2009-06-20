@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29.2.1 2009/05/04 08:12:21 yamt Exp $  
+	$NetBSD: syscalls.master,v 1.29.2.2 2009/06/20 07:20:16 yamt Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -298,12 +298,12 @@
 176	NOARGS		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
 			    int flags, struct osockaddr *from, \
 			    int *fromlenaddr); }
-177	NOARGS		{ int|linux_sys||recvmsg(int s, struct msghdr *msg, \
-			    u_int flags); }
+177	NOARGS		{ int|linux_sys||recvmsg(int s, \
+			    struct linux_msghdr *msg, u_int flags); }
 178	NOARGS		{ int|linux_sys||send(int s, void *buf, int len, \
 			    int flags); }
-179	NOARGS		{ int|linux_sys||sendmsg(int s, struct msghdr *msg, \
-			    u_int flags); }
+179	NOARGS		{ int|linux_sys||sendmsg(int s, \
+			    struct linux_msghdr *msg, u_int flags); }
 180	NOARGS		{ int|linux_sys||sendto(int s, void *msg, \
 			    int len, int flags, struct osockaddr *to, \
 			    int tolen); }
@@ -341,9 +341,8 @@
 			    linux_sigset_t *set, \
 			    size_t sigsetsize); }
 197	UNIMPL		rt_sigtimedwait
-; XXX XAX int here?  sigset_t here?  siginfo_t
 198	STD		{ int|linux_sys||rt_queueinfo(int pid, int signum, \
-			    void *uinfo); }
+			    linux_siginfo_t *uinfo); }
 199	STD		{ int|linux_sys||rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
 200	STD		{ int|linux_sys||pread(int fd, char *buf, \

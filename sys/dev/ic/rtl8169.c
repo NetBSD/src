@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.102.2.3 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.102.2.4 2009/06/20 07:20:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.3 2009/05/16 10:41:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.4 2009/06/20 07:20:22 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1251,25 +1251,49 @@ re_rxeof(struct rtk_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 
 		/* Do RX checksumming */
+		if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {
+			/* Check IP header checksum */
+			if ((rxstat & RE_RDESC_STAT_PROTOID) != 0) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (rxstat & RE_RDESC_STAT_IPSUMBAD)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
 
-		/* Check IP header checksum */
-		if ((rxstat & RE_RDESC_STAT_PROTOID) != 0 &&
-		    ((sc->sc_quirk & RTKQ_DESCV2) == 0 ||
-		     (rxvlan & RE_RDESC_VLANCTL_IPV4) != 0)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
+				/* Check TCP/UDP checksum */
+				if (RE_TCPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+					if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				} else if (RE_UDPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+					if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				}
+			}
+		} else {
+			/* Check IPv4 header checksum */
+			if ((rxvlan & RE_RDESC_VLANCTL_IPV4) != 0) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (rxstat & RE_RDESC_STAT_IPSUMBAD)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
 
-		/* Check TCP/UDP checksum */
-		if (RE_TCPPKT(rxstat)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-			if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		} else if (RE_UDPPKT(rxstat)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-			if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+				/* Check TCPv4/UDPv4 checksum */
+				if (RE_TCPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+					if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				} else if (RE_UDPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+					if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				}
+			}
+			/* XXX Check TCPv6/UDPv6 checksum? */
 		}
 
 		if (rxvlan & RE_RDESC_VLANCTL_TAG) {

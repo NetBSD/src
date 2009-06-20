@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.10.1 2009/05/04 08:11:14 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.10.2 2009/06/20 07:20:04 yamt Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -49,7 +49,7 @@ struct pmap {
 #define	pm_lock	pm_obj.vmobjlock
 	struct vm_page	*pm_ptphint;
 	struct vm_page	*pm_pdir_pg;	/* vm_page for pdir */
-	volatile u_int32_t *pm_pdir;	/* page dir (read-only after create) */
+	volatile uint32_t *pm_pdir;	/* page dir (read-only after create) */
 	pa_space_t	pm_space;	/* space id (read-only after create) */
 	u_int		pm_pid;		/* prot id (read-only after create) */
 

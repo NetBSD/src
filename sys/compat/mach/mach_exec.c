@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.67.10.2 2009/05/04 08:12:24 yamt Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.67.10.3 2009/06/20 07:20:17 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67.10.2 2009/05/04 08:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67.10.3 2009/06/20 07:20:17 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67.10.2 2009/05/04 08:12:24 yamt Exp
 #include <sys/malloc.h>
 
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
@@ -58,9 +59,6 @@ static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
 static void mach_init(void);
 
 extern struct sysent sysent[];
-#ifdef SYSCALL_DEBUG
-extern const char * const syscallnames[];
-#endif
 #ifndef __HAVE_SYSCALL_INTERN
 void syscall(void);
 #else

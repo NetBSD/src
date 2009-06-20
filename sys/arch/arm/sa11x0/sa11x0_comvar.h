@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_comvar.h,v 1.4.20.1 2008/05/16 02:22:02 yamt Exp $        */
+/*      $NetBSD: sa11x0_comvar.h,v 1.4.20.2 2009/06/20 07:20:01 yamt Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -46,7 +46,7 @@
 #define SACOM_RING_SIZE		2048
 
 struct sacom_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t 	sc_ioh;

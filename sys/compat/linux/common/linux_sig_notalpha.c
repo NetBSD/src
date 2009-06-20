@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.37.2.1 2008/05/16 02:23:43 yamt Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.37.2.2 2009/06/20 07:20:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.37.2.1 2008/05/16 02:23:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.37.2.2 2009/06/20 07:20:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ linux_sys_siggetmask(struct lwp *l, const void *v, register_t *retval)
 	if (error)
 		return (error);
 	native_to_linux_old_sigset(&lss, &bss);
+	*retval = lss;
 	return (0);
 }
 

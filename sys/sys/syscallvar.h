@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.4.10.2 2009/05/04 08:14:36 yamt Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.4.10.3 2009/06/20 07:20:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,5 +63,8 @@ sy_call(const struct sysent *sy, struct lwp *l, const void *uap,
 
 	return error;
 }
+
+/* inclusion in the kernel currently depends on SYSCALL_DEBUG */
+extern const char * const syscallnames[];
 
 #endif	/* _SYS_SYSCALLVAR_H_ */

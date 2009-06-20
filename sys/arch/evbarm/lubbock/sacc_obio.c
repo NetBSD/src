@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.7.10.2 2009/05/04 08:10:59 yamt Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.7.10.3 2009/06/20 07:20:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.7.10.2 2009/05/04 08:10:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.7.10.3 2009/06/20 07:20:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,14 +65,14 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.7.10.2 2009/05/04 08:10:59 yamt Exp 
 #include <evbarm/lubbock/lubbock_var.h>
 
 
-static	void	sacc_obio_attach(struct device *, struct device *, void *);
+static	void	sacc_obio_attach(device_t, device_t, void *);
 static	int  sacc_obio_intr(void *arg);
 
-CFATTACH_DECL(sacc_obio, sizeof(struct sacc_softc), sacc_probe, 
+CFATTACH_DECL_NEW(sacc_obio, sizeof(struct sacc_softc), sacc_probe, 
     sacc_obio_attach, NULL, NULL);
 
 #if 0
-#define DPRINTF(arg)	printf arg
+#define DPRINTF(arg)	aprint_normal arg
 #else
 #define DPRINTF(arg)
 #endif
@@ -80,17 +80,17 @@ CFATTACH_DECL(sacc_obio, sizeof(struct sacc_softc), sacc_probe,
 uint16_t cs2_memctl_init = 0x7ff0;
 
 static void
-sacc_obio_attach(struct device *parent, struct device *self, void *aux)
+sacc_obio_attach(device_t parent, device_t self, void *aux)
 {
 	int i;
 	u_int32_t skid, tmp;
-	struct sacc_softc *sc = (struct sacc_softc *)self;
-	struct obio_softc *psc = (struct obio_softc *)parent;
+	struct sacc_softc *sc = device_private(self);
+	struct obio_softc *psc = device_private(parent);
 	struct obio_attach_args *sa = aux;
 	bus_space_tag_t iot = sa->oba_iot;
 	bus_space_handle_t memctl_ioh;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Set alternative function for GPIO pings 48..57 on PXA2X0 */
 	for (i=48; i <= 55; ++i)
@@ -109,6 +109,7 @@ sacc_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	bus_space_unmap(iot, memctl_ioh, PXA2X0_MEMCTL_SIZE);
 
+	sc->sc_dev = self;
 	sc->sc_piot = sc->sc_iot = iot;
 	sc->sc_gpioh = 0;	/* not used */
 
@@ -117,8 +118,8 @@ sacc_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	skid = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCSBI_SKID);
 
-	printf("%s: SA1111 rev %d.%d\n", sc->sc_dev.dv_xname,
-	       (skid & 0xf0) >> 4, skid & 0xf);
+	aprint_normal_dev(self, "SA1111 rev %d.%d\n",
+			  (skid & 0xf0) >> 4, skid & 0xf);
 
 	tmp = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCSBI_SKCR);
 	tmp = (tmp & ~SKCR_VCOOFF) | SKCR_PLLBYPASS;
@@ -161,7 +162,7 @@ sacc_obio_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  fail:
-	printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(self, "unable to map registers\n");
 }
 
 static int

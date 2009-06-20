@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.31.20.1 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: if_qn.c,v 1.31.20.2 2009/06/20 07:20:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31.20.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31.20.2 2009/06/20 07:20:00 yamt Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -114,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31.20.1 2009/05/04 08:10:34 yamt Exp $")
 #endif
 
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>

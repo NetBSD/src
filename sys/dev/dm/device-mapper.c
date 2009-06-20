@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.6.2.2 2009/05/04 08:12:36 yamt Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.6.2.3 2009/06/20 07:20:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -329,37 +329,26 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		dm_dev_unbusy(dmv);
 		break;
 	}
-	
-	case DIOCGDINFO:
+
+	case DIOCGDISKINFO:
 	{
+		struct plistref *pref = (struct plistref *) data;
+
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENOENT;
-
-		aprint_debug("DIOCGDINFO %d\n", dmv->diskp->dk_label->d_secsize);
-		 
-		*(struct disklabel *)data = *(dmv->diskp->dk_label);
-
-		dm_dev_unbusy(dmv);
-		break;
-	}
-	 
-	case DIOCGPART:
-	{
-		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
-			return ENOENT;
-
-		((struct partinfo *)data)->disklab = dmv->diskp->dk_label;
-		((struct partinfo *)data)->part = &dmv->diskp->dk_label->d_partitions[0];
-
-		dm_dev_unbusy(dmv);
-		break;
-	}
-	case DIOCWDINFO:
-	case DIOCSDINFO:
-	case DIOCKLABEL:
-	case DIOCWLABEL:
-	case DIOCGDEFLABEL:
 		
+		if (dmv->diskp->dk_info == NULL) {
+			dm_dev_unbusy(dmv);
+			return ENOTSUP;
+		} else
+			prop_dictionary_copyout_ioctl(pref, cmd,
+			    dmv->diskp->dk_info);
+
+		dm_dev_unbusy(dmv);
+		
+		break;
+	}
+	
 	default:
 		aprint_debug("unknown disk_ioctl called\n");
 		return 1;
@@ -504,55 +493,38 @@ dmminphys(struct buf *bp)
 	bp->b_bcount = MIN(bp->b_bcount, MAXPHYS);
 }
 
- /*
-  * Load the label information on the named device
-  * Actually fabricate a disklabel.
-  *
-  * EVENTUALLY take information about different
-  * data tracks from the TOC and put it in the disklabel
-  *
-  * Copied from vnd code.
-  */
 void
-dmgetdisklabel(struct disklabel *lp, dm_table_head_t *head)
+dmgetproperties(struct disk *disk, dm_table_head_t *head)
 {
-	struct partition *pp;
+	prop_dictionary_t disk_info, odisk_info, geom;
 	int dmp_size;
-
-	dmp_size = dm_table_size(head);
-
-	/*
-	 * Size must be at least 2048 DEV_BSIZE blocks
-	 * (1M) in order to use this geometry.
-	 */
-		
-	lp->d_secperunit = dmp_size;
-	lp->d_secsize = DEV_BSIZE;
-	lp->d_nsectors = 32;
-	lp->d_ntracks = 64;
-	lp->d_ncylinders = dmp_size / (lp->d_nsectors * lp->d_ntracks);
-	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-
-	strncpy(lp->d_typename, "lvm", sizeof(lp->d_typename));
-	lp->d_type = DTYPE_DM;
-	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	lp->d_rpm = 3600;
-	lp->d_interleave = 1;
-	lp->d_flags = 0;
-
-	pp = &lp->d_partitions[0];
-	/*
-	 * This is logical offset and therefore it can be 0
-	 * I will consider table offsets later in dmstrategy.
-	 */
-	pp->p_offset = 0; 
-	pp->p_size = dmp_size * DEV_BSIZE;
-	pp->p_fstype = FS_BSDFFS;  /* default value */
-	lp->d_npartitions = 1;
-
-	lp->d_magic = DISKMAGIC;
-	lp->d_magic2 = DISKMAGIC;
-	lp->d_checksum = dkcksum(lp);
 	
-	return;
-}
+	dmp_size = dm_table_size(head);
+	
+	disk_info = prop_dictionary_create();
+
+	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", dmp_size);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    DEV_BSIZE /* XXX 512? */);
+
+	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
+
+	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
+
+	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dmp_size / 2048);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	odisk_info = disk->dk_info;
+	
+	disk->dk_info = disk_info;
+
+	if (odisk_info != NULL)
+		prop_object_release(odisk_info);
+}	

@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.9.4.2 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: wax.c,v 1.9.4.3 2009/06/20 07:20:03 yamt Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.9.4.2 2009/05/16 10:41:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.9.4.3 2009/06/20 07:20:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,11 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.9.4.2 2009/05/16 10:41:12 yamt Exp $");
 #define	WAX_REGS	0xc000
 
 struct wax_regs {
-	u_int32_t wax_irr;	/* int requset register */
-	u_int32_t wax_imr;	/* int mask register */
-	u_int32_t wax_ipr;	/* int pending register */
-	u_int32_t wax_icr;	/* int control register */
-	u_int32_t wax_iar;	/* int address register */
+	uint32_t wax_irr;	/* int requset register */
+	uint32_t wax_imr;	/* int mask register */
+	uint32_t wax_ipr;	/* int pending register */
+	uint32_t wax_icr;	/* int control register */
+	uint32_t wax_iar;	/* int address register */
 };
 
 struct wax_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.38.4.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.38.4.2 2009/06/20 07:20:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.38.4.1 2009/05/04 08:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.38.4.2 2009/06/20 07:20:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		goto out;
 	}
 
-	ff = fdp->fd_ofiles[SCARG(uap, fd)];
+	ff = fdp->fd_dt->dt_ff[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIOCLEX:
 		ff->ff_exclose = true;

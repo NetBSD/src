@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.61.2.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.61.2.2 2009/06/20 07:20:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -297,6 +297,7 @@ extern vaddr_t	uvm_maxkaddr;
 
 void		uvm_map_deallocate(struct vm_map *);
 
+int		uvm_map_willneed(struct vm_map *, vaddr_t, vaddr_t);
 int		uvm_map_clean(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_clip_start(struct vm_map *, struct vm_map_entry *,
 		    vaddr_t, struct uvm_mapent_reservation *);

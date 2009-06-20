@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_var.h,v 1.7.68.1 2008/05/16 02:22:02 yamt Exp $	*/
+/*	$NetBSD: sa11x0_var.h,v 1.7.68.2 2009/06/20 07:20:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <machine/bus.h>
 
 struct sa11x0_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_gpioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.30.4.1 2009/05/04 08:14:30 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.30.4.2 2009/06/20 07:20:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.1 2009/05/04 08:14:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.2 2009/06/20 07:20:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.1 2009/05/04 08:14:30 yamt Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_prot.h>
+#include <uvm/uvm_readahead.h>
 
 #include "rump_private.h"
 
@@ -449,6 +450,14 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 	/* nada for now */
 }
 
+int
+uvm_readahead(struct uvm_object *uobj, off_t off, off_t size)
+{
+
+	/* nada for now */
+	return 0;
+}
+
 /*
  * Kmem
  */
@@ -564,4 +573,38 @@ uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
 {
 
 	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
+}
+
+/*
+ * Mapping and vm space locking routines.
+ * XXX: these don't work for non-local vmspaces
+ */
+int
+uvm_vslock(struct vmspace *vs, void *addr, size_t len, vm_prot_t access)
+{
+
+	KASSERT(vs == &rump_vmspace);
+	return 0;
+}
+
+void
+uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
+{
+
+	KASSERT(vs == &rump_vmspace);
+}
+
+void
+vmapbuf(struct buf *bp, vsize_t len)
+{
+
+	bp->b_saveaddr = bp->b_data;
+}
+
+void
+vunmapbuf(struct buf *bp, vsize_t len)
+{
+
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = 0;
 }

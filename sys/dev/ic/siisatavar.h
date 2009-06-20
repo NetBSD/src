@@ -1,5 +1,4 @@
-/* $NetBSD: siisatavar.h,v 1.2.12.2 2009/05/04 08:12:44 yamt Exp $ */
-/* Id: siisatavar.h,v 1.15 2008/05/22 13:48:54 jakllsch Exp  */
+/* $NetBSD: siisatavar.h,v 1.2.12.3 2009/06/20 07:20:22 yamt Exp $ */
 
 /* from ahcisatavar.h */
 
@@ -84,8 +83,10 @@ struct siisata_softc {
 	struct atac_softc sc_atac;
 	bus_space_tag_t sc_grt;
 	bus_space_handle_t sc_grh;
+	bus_size_t sc_grs;
 	bus_space_tag_t sc_prt;
 	bus_space_handle_t sc_prh;
+	bus_size_t sc_prs;
 	bus_dma_tag_t sc_dmat;
 
 	struct ata_channel *sc_chanarray[SIISATA_MAX_PORTS];
@@ -121,9 +122,9 @@ struct siisata_softc {
 
 #define SIISATA_NON_NCQ_SLOT 27
 
-void siisata_attach(struct siisata_softc *);   
-int siisata_intr(void *);
-
+void siisata_attach(struct siisata_softc *);
+int siisata_detach(struct siisata_softc *, int);
 void siisata_resume(struct siisata_softc *);
+int siisata_intr(void *);
 
 #endif  /* !_IC_SIISATAVAR_H_ */

@@ -1,8 +1,11 @@
-/* $NetBSD: kern_tc.c,v 1.33.2.2 2009/05/04 08:13:47 yamt Exp $ */
+/* $NetBSD: kern_tc.c,v 1.33.2.3 2009/06/20 07:20:31 yamt Exp $ */
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.33.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.33.2.3 2009/06/20 07:20:31 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -54,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.33.2.2 2009/05/04 08:13:47 yamt Exp $"
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
+#include <sys/xcall.h>
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -83,16 +87,19 @@ static struct timecounter dummy_timecounter = {
 
 struct timehands {
 	/* These fields must be initialized by the driver. */
-	struct timecounter	*th_counter;
-	int64_t			th_adjustment;
-	u_int64_t		th_scale;
-	u_int	 		th_offset_count;
-	struct bintime		th_offset;
-	struct timeval		th_microtime;
-	struct timespec		th_nanotime;
+	struct timecounter	*th_counter;     /* active timecounter */
+	int64_t			th_adjustment;   /* frequency adjustment */
+						 /* (NTP/adjtime) */
+	u_int64_t		th_scale;        /* scale factor (counter */
+						 /* tick->time) */
+	u_int64_t 		th_offset_count; /* offset at last time */
+						 /* update (tc_windup()) */
+	struct bintime		th_offset;       /* bin (up)time at windup */
+	struct timeval		th_microtime;    /* cached microtime */
+	struct timespec		th_nanotime;     /* cached nanotime */
 	/* Fields not to be copied in tc_windup start with th_generation. */
-	volatile u_int		th_generation;
-	struct timehands	*th_next;
+	volatile u_int		th_generation;   /* current genration */
+	struct timehands	*th_next;        /* next timehand */
 };
 
 static struct timehands th0;
@@ -126,6 +133,7 @@ static int timestepwarnings;
 
 kmutex_t timecounter_lock;
 static u_int timecounter_mods;
+static volatile int timecounter_removals = 1;
 static u_int timecounter_bad;
 
 #ifdef __FreeBSD__
@@ -309,15 +317,49 @@ void
 binuptime(struct bintime *bt)
 {
 	struct timehands *th;
-	u_int gen;
+	lwp_t *l;
+	u_int lgen, gen;
 
 	TC_COUNT(nbinuptime);
+
+	/*
+	 * Provide exclusion against tc_detach().
+	 *
+	 * We record the number of timecounter removals before accessing
+	 * timecounter state.  Note that the LWP can be using multiple
+	 * "generations" at once, due to interrupts (interrupted while in
+	 * this function).  Hardware interrupts will borrow the interrupted
+	 * LWP's l_tcgen value for this purpose, and can themselves be
+	 * interrupted by higher priority interrupts.  In this case we need
+	 * to ensure that the oldest generation in use is recorded.
+	 *
+	 * splsched() is too expensive to use, so we take care to structure
+	 * this code in such a way that it is not required.  Likewise, we
+	 * do not disable preemption.
+	 *
+	 * Memory barriers are also too expensive to use for such a
+	 * performance critical function.  The good news is that we do not
+	 * need memory barriers for this type of exclusion, as the thread
+	 * updating timecounter_removals will issue a broadcast cross call
+	 * before inspecting our l_tcgen value (this elides memory ordering
+	 * issues).
+	 */
+	l = curlwp;
+	lgen = l->l_tcgen;
+	if (__predict_true(lgen == 0)) {
+		l->l_tcgen = timecounter_removals;
+	}
+	__insn_barrier();
+
 	do {
 		th = timehands;
 		gen = th->th_generation;
 		*bt = th->th_offset;
 		bintime_addx(bt, th->th_scale * tc_delta(th));
 	} while (gen == 0 || gen != th->th_generation);
+
+	__insn_barrier();
+	l->l_tcgen = lgen;
 }
 
 void
@@ -543,8 +585,11 @@ tc_detach(struct timecounter *target)
 {
 	struct timecounter *tc;
 	struct timecounter **tcp = NULL;
-	int rc = 0;
+	int removals;
+	uint64_t where;
+	lwp_t *l;
 
+	/* First, find the timecounter. */
 	mutex_spin_enter(&timecounter_lock);
 	for (tcp = &timecounters, tc = timecounters;
 	     tc != NULL;
@@ -553,17 +598,62 @@ tc_detach(struct timecounter *target)
 			break;
 	}
 	if (tc == NULL) {
-		rc = ESRCH;
-	} else {
-		*tcp = tc->tc_next;
-		if (timecounter == target) {
-			tc_pick();
-			tc_windup();
-		}
-		timecounter_mods++;
+		mutex_spin_exit(&timecounter_lock);
+		return ESRCH;
 	}
+
+	/* And now, remove it. */
+	*tcp = tc->tc_next;
+	if (timecounter == target) {
+		tc_pick();
+		tc_windup();
+	}
+	timecounter_mods++;
+	removals = timecounter_removals++;
 	mutex_spin_exit(&timecounter_lock);
-	return rc;
+
+	/*
+	 * We now have to determine if any threads in the system are still
+	 * making use of this timecounter.
+	 *
+	 * We issue a broadcast cross call to elide memory ordering issues,
+	 * then scan all LWPs in the system looking at each's timecounter
+	 * generation number.  We need to see a value of zero (not actively
+	 * using a timecounter) or a value greater than our removal value.
+	 *
+	 * We may race with threads that read `timecounter_removals' and
+	 * and then get preempted before updating `l_tcgen'.  This is not
+	 * a problem, since it means that these threads have not yet started
+	 * accessing timecounter state.  All we do need is one clean
+	 * snapshot of the system where every thread appears not to be using
+	 * old timecounter state.
+	 */
+	for (;;) {
+		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+		xc_wait(where);
+
+		mutex_enter(proc_lock);
+		LIST_FOREACH(l, &alllwp, l_list) {
+			if (l->l_tcgen == 0 || l->l_tcgen > removals) {
+				/*
+				 * Not using timecounter or old timecounter
+				 * state at time of our xcall or later.
+				 */
+				continue;
+			}
+			break;
+		}
+		mutex_exit(proc_lock);
+
+		/*
+		 * If the timecounter is still in use, wait at least 10ms
+		 * before retrying.
+		 */
+		if (l == NULL) {
+			return 0;
+		}
+		(void)kpause("tcdetach", false, mstohz(10), NULL);
+	}
 }
 
 /* Report the frequency of the current timecounter. */
@@ -645,7 +735,6 @@ tc_windup(void)
 	else
 		ncount = 0;
 	th->th_offset_count += delta;
-	th->th_offset_count &= th->th_counter->tc_counter_mask;
 	bintime_addx(&th->th_offset, th->th_scale * delta);
 
 	/*
@@ -833,7 +922,7 @@ pps_capture(struct pps_state *pps)
 	th = timehands;
 	pps->capgen = th->th_generation;
 	pps->capth = th;
-	pps->capcount = th->th_counter->tc_get_timecount(th->th_counter);
+	pps->capcount = (u_int64_t)tc_delta(th) + th->th_offset_count;
 	if (pps->capgen != th->th_generation)
 		pps->capgen = 0;
 }
@@ -843,7 +932,7 @@ pps_event(struct pps_state *pps, int event)
 {
 	struct bintime bt;
 	struct timespec ts, *tsp, *osp;
-	u_int tcount, *pcount;
+	u_int64_t tcount, *pcount;
 	int foff, fhard;
 	pps_seq_t *pseq;
 
@@ -884,7 +973,6 @@ pps_event(struct pps_state *pps, int event)
 
 	/* Convert the count to a timespec. */
 	tcount = pps->capcount - pps->capth->th_offset_count;
-	tcount &= pps->capth->th_counter->tc_counter_mask;
 	bt = pps->capth->th_offset;
 	bintime_addx(&bt, pps->capth->th_scale * tcount);
 	bintime_add(&bt, &timebasebin);

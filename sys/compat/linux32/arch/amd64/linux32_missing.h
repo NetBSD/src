@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.h,v 1.8 2008/04/16 10:03:31 njoly Exp $ */
+/*	$NetBSD: linux32_missing.h,v 1.8.4.1 2009/06/20 07:20:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -30,8 +30,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _I386_LINUX32_MISSING_H
-#define _I386_LINUX32_MISSING_H
+#ifndef _AMD64_LINUX32_MISSING_H
+#define _AMD64_LINUX32_MISSING_H
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/linux/common/linux_types.h>
@@ -80,4 +80,4 @@ SYS_DEF(linux_sys_setgroups16);
 __END_DECLS
 #endif /* !_KERNEL */
 
-#endif /* _I386_LINUX32_MISSING_H */
+#endif /* _AMD64_LINUX32_MISSING_H */

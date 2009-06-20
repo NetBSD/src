@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18.46.1 2009/05/04 08:10:38 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.46.2 2009/06/20 07:20:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.46.1 2009/05/04 08:10:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.46.2 2009/06/20 07:20:00 yamt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -156,7 +156,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
-	memcpy( (void *)regs->r, (void *)&tf->tf_r0, sizeof(regs->r));
+	memcpy((void *)regs->r, (void *)&tf->tf_r0, sizeof(regs->r));
 	regs->r_sp = tf->tf_usr_sp;
 	regs->r_lr = tf->tf_usr_lr;
 	regs->r_pc = tf->tf_pc;
@@ -194,7 +194,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
-	memcpy( &tf->tf_r0, regs->r, sizeof(regs->r));
+	memcpy(&tf->tf_r0, regs->r, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
 #ifdef __PROG32

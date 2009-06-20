@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.146.2.2 2009/05/04 08:13:47 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.146.2.3 2009/06/20 07:20:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.3 2009/06/20 07:20:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -173,6 +173,7 @@ static void config_devdealloc(device_t);
 static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
 static void config_devunlink(device_t);
+static void config_twiddle_fn(void *);
 
 static void pmflock_debug(device_t, const char *, int);
 static void pmflock_debug_with_flags(device_t, const char *, int PMF_FN_PROTO);
@@ -226,6 +227,7 @@ static int detachall = 0;
 static int config_initialized;		/* config_init() has been called. */
 
 static int config_do_twiddle;
+static callout_t config_twiddle_ch;
 
 struct vnode *
 opendisk(struct device *dv)
@@ -353,6 +355,9 @@ config_init(void)
 	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&config_misc_cv, "cfgmisc");
 
+	callout_init(&config_twiddle_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
+
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
 		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
@@ -460,6 +465,12 @@ configure2(void)
 	/* Setup the runqueues and scheduler. */
 	runq_init();
 	sched_init();
+
+	/*
+	 * Bus scans can make it appear as if the system has paused, so
+	 * twiddle constantly while config_interrupts() jobs are running.
+	 */
+	config_twiddle_fn(NULL);
 
 	/*
 	 * Create threads to call back and finish configuration for
@@ -1027,7 +1038,7 @@ config_found_sm_loc(device_t parent,
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
-		if (config_do_twiddle)
+		if (config_do_twiddle && cold)
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
@@ -1336,7 +1347,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 
 	config_devlink(dev);
 
-	if (config_do_twiddle)
+	if (config_do_twiddle && cold)
 		twiddle();
 	else
 		aprint_naive("Found ");
@@ -1500,8 +1511,8 @@ config_detach(device_t dev, int flags)
 	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
 	    (dev->dv_flags & DVF_DETACH_SHUTDOWN) == 0) {
 		rv = EBUSY;	/* XXX EOPNOTSUPP? */
-	} else if (ca->ca_activate != NULL)
-		rv = config_deactivate(dev);
+	} else if ((rv = config_deactivate(dev)) == EOPNOTSUPP)
+		rv = 0;	/* Do not treat EOPNOTSUPP as an error */
 
 	/*
 	 * Try to detach the device.  If that's not possible, then
@@ -1837,16 +1848,30 @@ config_finalize(void)
 	errcnt = aprint_get_error_count();
 	if ((boothowto & (AB_QUIET|AB_SILENT)) != 0 &&
 	    (boothowto & AB_VERBOSE) == 0) {
+		mutex_enter(&config_misc_lock);
 		if (config_do_twiddle) {
 			config_do_twiddle = 0;
 			printf_nolog(" done.\n");
 		}
+		mutex_exit(&config_misc_lock);
 		if (errcnt != 0) {
 			printf("WARNING: %d error%s while detecting hardware; "
 			    "check system log.\n", errcnt,
 			    errcnt == 1 ? "" : "s");
 		}
 	}
+}
+
+void
+config_twiddle_fn(void *cookie)
+{
+
+	mutex_enter(&config_misc_lock);
+	if (config_do_twiddle) {
+		twiddle();
+		callout_schedule(&config_twiddle_ch, mstohz(100));
+	}
+	mutex_exit(&config_misc_lock);
 }
 
 /*

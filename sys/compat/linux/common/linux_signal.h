@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.27.16.2 2009/05/04 08:12:22 yamt Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.27.16.3 2009/06/20 07:20:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ void native_to_linux_sigaltstack(struct linux_sigaltstack *,
     const struct sigaltstack *);
 
 int native_to_linux_si_code(int);
+int native_to_linux_si_status(int, int);
 
 __END_DECLS
 #endif /* !_KERNEL */

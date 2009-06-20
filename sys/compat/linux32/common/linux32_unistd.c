@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.22.4.1 2009/05/04 08:12:24 yamt Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.22.4.2 2009/06/20 07:20:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22.4.1 2009/05/04 08:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22.4.2 2009/06/20 07:20:17 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -443,12 +443,14 @@ linux32_sys_nice(struct lwp *l, const struct linux32_sys_nice_args *uap, registe
 	} */
 	struct proc *p = l->l_proc;
 	struct sys_setpriority_args bsa;
+	int error;
 
 	SCARG(&bsa, which) = PRIO_PROCESS;
 	SCARG(&bsa, who) = 0;
 	SCARG(&bsa, prio) = p->p_nice - NZERO + SCARG(uap, incr);
 
-	return sys_setpriority(l, &bsa, retval);
+	error = sys_setpriority(l, &bsa, retval);
+	return (error) ? EPERM : 0;
 }
 
 int

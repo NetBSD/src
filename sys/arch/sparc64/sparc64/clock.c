@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.95.4.2 2009/05/04 08:11:58 yamt Exp $ */
+/*	$NetBSD: clock.c,v 1.95.4.3 2009/06/20 07:20:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.4.2 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.4.3 2009/06/20 07:20:11 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -348,7 +348,6 @@ cpu_initclocks(void)
 #ifndef MULTIPROCESSOR
 	int statint, minint;
 #endif
-	uint64_t start_time = 0;
 #ifdef DEBUG
 	extern int intrdebug;
 #endif
@@ -374,18 +373,9 @@ cpu_initclocks(void)
 		curcpu()->ci_cpu_clockrate[0] = 200000000;
 		curcpu()->ci_cpu_clockrate[1] = 200000000 / 1000000;
 	}
-	
+
 	/* Initialize the %tick register */
-#ifdef __arch64__
-	__asm volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
-#else
-	{
-		int start_hi = (start_time>>32), start_lo = start_time;
-		__asm volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0, 0, %%tick" 
-				 : "=&r" (start_hi) /* scratch register */
-				 : "r" ((int)(start_hi)), "r" ((int)(start_lo)));
-	}
-#endif
+	settick(0);
 
 	tick_timecounter.tc_frequency = curcpu()->ci_cpu_clockrate[0];
 	tc_init(&tick_timecounter);
@@ -493,7 +483,7 @@ clockintr(void *cap)
 #ifdef DEBUG
 	static int64_t tick_base = 0;
 	struct timeval ctime;
-	int64_t t = (uint64_t)tick();
+	int64_t t = gettick();
 
 	microtime(&ctime);
 	if (!tick_base) {

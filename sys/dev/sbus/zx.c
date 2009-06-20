@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.21.4.3 2009/05/16 10:41:43 yamt Exp $	*/
+/*	$NetBSD: zx.c,v 1.21.4.4 2009/06/20 07:20:28 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.3 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.4 2009/06/20 07:20:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,8 @@ zx_attach(device_t parent, device_t self, void *args)
 	sc->sc_bt = bt;
 	sc->sc_paddr = sbus_bus_addr(bt, sa->sa_slot, sa->sa_offset);
 
-	if (sparc_bus_map_large(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_SS0,
-	    0x800000, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_SS0,
+	    0x800000, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE, &bh) != 0) {
 		aprint_error_dev(self, "can't map bits\n");
 		return;
 	}

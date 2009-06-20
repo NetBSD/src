@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.89.2.2 2009/05/04 08:14:35 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.89.2.3 2009/06/20 07:20:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -173,11 +173,21 @@ struct lwp {
 	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
 	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
 	_TAILQ_HEAD(,struct lockdebug,volatile) l_ld_locks;/* !: locks held by LWP */
+	int		l_tcgen;	/* !: for timecounter removal */
+	int		l_unused2;	/* !: for future use */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
 };
+
+/*
+ * USER_TO_UAREA/UAREA_TO_USER: macros to convert between
+ * the lowest address of the uarea (UAREA) and lwp::l_addr (USER).
+ *
+ * the default is just a cast.  MD code can modify it by defining
+ * either these macros or UAREA_USER_OFFSET in <machine/proc.h>.
+ */
 
 #if !defined(USER_TO_UAREA)
 #if !defined(UAREA_USER_OFFSET)
@@ -306,6 +316,7 @@ void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
 u_int	lwp_unsleep(lwp_t *, bool);
+uint64_t lwp_pctr(void);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);

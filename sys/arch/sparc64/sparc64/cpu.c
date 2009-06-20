@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.75.4.1 2009/05/04 08:11:58 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.75.4.2 2009/06/20 07:20:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75.4.1 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75.4.2 2009/06/20 07:20:11 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -427,6 +427,7 @@ cpu_hatch(void)
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
+	settick(0);
 	tickintr_establish(PIL_CLOCK, tickintr);
 	spl0();
 }

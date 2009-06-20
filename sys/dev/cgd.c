@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.51.6.2 2009/05/04 08:12:32 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.51.6.3 2009/06/20 07:20:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.51.6.2 2009/05/04 08:12:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.51.6.3 2009/06/20 07:20:20 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -844,4 +844,39 @@ hexprint(const char *start, void *buf, int len)
 	while (len--)
 		printf("%02x", (unsigned char) *c++);
 }
+#endif
+
+#ifdef _MODULE
+
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_DRIVER, cgd, NULL);
+
+static int
+cgd_modcmd(modcmd_t cmd, void *arg)
+{
+	int bmajor = -1, cmajor = -1,  error = 0;
+	
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		cgdattach(4);
+		
+		return devsw_attach("cgd", &cgd_bdevsw, &bmajor,
+		    &cgd_cdevsw, &cmajor);
+		break;
+
+	case MODULE_CMD_FINI:
+		return devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+		break;
+
+	case MODULE_CMD_STAT:
+		return ENOTTY;
+
+	default:
+		return ENOTTY;
+	}
+
+	return error;
+}
+
 #endif

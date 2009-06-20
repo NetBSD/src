@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208.10.1 2009/05/04 08:10:33 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208.10.2 2009/06/20 07:19:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.10.1 2009/05/04 08:10:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.10.2 2009/06/20 07:19:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,6 @@ vm_offset_t reserve_dumppages(vm_offset_t);
 void dumpsys(void);
 void initcpu(void);
 void straytrap(int, u_short);
-static void call_sicallbacks(void);
 void intrhand(int);
 #if NSER > 0
 void ser_outintr(void);
@@ -174,12 +173,7 @@ paddr_t msgbufpa;
 int	machineid;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
-/*
- * extender "register" for software interrupts. Moved here
- * from locore.s, since softints are no longer dealt with
- * in locore.s.
- */
-unsigned char ssir;
+
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -928,161 +922,6 @@ badbaddr(register void *addr)
 	return(0);
 }
 
-/*
- * this is a handy package to have asynchronously executed
- * function calls executed at very low interrupt priority.
- * Example for use is keyboard repeat, where the repeat
- * handler running at splclock() triggers such a (hardware
- * aided) software interrupt.
- * Note: the installed functions are currently called in a
- * LIFO fashion, might want to change this to FIFO
- * later.
- */
-struct si_callback {
-	struct si_callback *next;
-	void (*function)(void *rock1, void *rock2);
-	void *rock1, *rock2;
-};
-
-struct softintr {
-	int pending;
-	void (*function)(void *);
-	void *arg;
-};
-
-static struct si_callback *si_callbacks;
-static struct si_callback *si_free;
-#ifdef DIAGNOSTIC
-static int ncb;		/* number of callback blocks allocated */
-static int ncbd;	/* number of callback blocks dynamically allocated */
-#endif
-
-void
-alloc_sicallback(void)
-{
-	struct si_callback *si;
-	int s;
-
-	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
-	if (si == NULL)
-		return;
-	s = splhigh();
-	si->next = si_free;
-	si_free = si;
-	splx(s);
-#ifdef DIAGNOSTIC
-	++ncb;
-#endif
-}
-
-void
-add_sicallback (void (*function)(void *rock1, void *rock2), void *rock1, void *rock2)
-{
-	struct si_callback *si;
-	int s;
-
-	/*
-	 * this function may be called from high-priority interrupt handlers.
-	 * We may NOT block for  memory-allocation in here!.
-	 */
-	s = splhigh();
-	si = si_free;
-	if (si != NULL)
-		si_free = si->next;
-	splx(s);
-
-	if (si == NULL) {
-		si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
-#ifdef DIAGNOSTIC
-		if (si)
-			++ncbd;		/* count # dynamically allocated */
-#endif
-
-		if (!si)
-			return;
-	}
-
-	si->function = function;
-	si->rock1 = rock1;
-	si->rock2 = rock2;
-
-	s = splhigh();
-	si->next = si_callbacks;
-	si_callbacks = si;
-	splx(s);
-
-	/*
-	 * Cause a software interrupt (spl1). This interrupt might
-	 * happen immediately, or after returning to a safe enough level.
-	 */
-	setsoftcback();
-}
-
-
-void
-rem_sicallback(void (*function)(void *rock1, void *rock2))
-{
-	struct si_callback *si, *psi, *nsi;
-	int s;
-
-	s = splhigh();
-	for (psi = 0, si = si_callbacks; si; ) {
-		nsi = si->next;
-
-		if (si->function != function)
-			psi = si;
-		else {
-/*			free(si, M_TEMP); */
-			si->next = si_free;
-			si_free = si;
-			if (psi)
-				psi->next = nsi;
-			else
-				si_callbacks = nsi;
-		}
-		si = nsi;
-	}
-	splx(s);
-}
-
-/* purge the list */
-static void
-call_sicallbacks(void)
-{
-	struct si_callback *si;
-	int s;
-	void *rock1, *rock2;
-	void (*function)(void *, void *);
-
-	do {
-		s = splhigh ();
-		if ((si = si_callbacks) != 0)
-			si_callbacks = si->next;
-		splx(s);
-
-		if (si) {
-			function = si->function;
-			rock1 = si->rock1;
-			rock2 = si->rock2;
-/*			si->function(si->rock1, si->rock2); */
-/*			free(si, M_TEMP); */
-			s = splhigh ();
-			si->next = si_free;
-			si_free = si;
-			splx(s);
-			function (rock1, rock2);
-		}
-	} while (si);
-#ifdef DIAGNOSTIC
-	if (ncbd) {
-		ncb += ncbd;
-		printf("call_sicallback: %d more dynamic structures %d total\n",
-		    ncbd, ncb);
-		ncbd = 0;
-	}
-#endif
-}
-
 struct isr *isr_ports;
 #ifdef DRACO
 struct isr *isr_slot3;
@@ -1251,30 +1090,11 @@ intrhand(int sr)
 			custom.intreq = INTF_DSKBLK;
 		}
 		if (ireq & INTF_SOFTINT) {
-			unsigned char ssir_active;
-			int s;
-
-			/*
-			 * first clear the softint-bit
-			 * then process all classes of softints.
-			 * this order is dicated by the nature of
-			 * software interrupts.  The other order
-			 * allows software interrupts to be missed.
-			 * Also copy and clear ssir to prevent
-			 * interrupt loss.
-			 */
-			clrsoftint();
-			s = splhigh();
-			ssir_active = ssir;
-			siroff(SIR_NET | SIR_CBACK);
-			splx(s);
-			if (ssir_active & SIR_CBACK) {
-#ifdef REALLYDEBUG
-				printf("calling softcallbacks\n");
+			/* sicallback handling removed */
+#ifdef DEBUG
+			printf("intrhand: SOFTINT ignored\n");
 #endif
-				uvmexp.softs++;
-				call_sicallbacks();
-			}
+			custom.intreq = INTF_SOFTINT;
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.11.4.1 2009/05/04 08:12:23 yamt Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.11.4.2 2009/06/20 07:20:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11.4.1 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11.4.2 2009/06/20 07:20:17 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,15 +74,44 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11.4.1 2009/05/04 08:12:23 yamt E
 #include <compat/linux32/common/linux32_socketcall.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-static inline void linux32_from_stat(struct stat *, struct linux32_stat64 *);
+static inline void bsd_to_linux32_stat(struct stat *, struct linux32_stat *);
+static inline void bsd_to_linux32_stat64(struct stat *, struct linux32_stat64 *);
 
 #define linux_fakedev(x,y) (x)
+
 static inline void
-linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
+bsd_to_linux32_stat(struct stat *st, struct linux32_stat *st32)
 {
 	memset(st32, 0, sizeof(*st32));
 	st32->lst_dev = linux_fakedev(st->st_dev, 0);
-	st32->__lst_ino = st->st_ino;
+	st32->lst_ino = st->st_ino;
+	st32->lst_mode = st->st_mode;
+	if (st->st_nlink >= (1 << 15))
+		st32->lst_nlink = (1 << 15) - 1;
+	else
+		st32->lst_nlink = st->st_nlink;
+	st32->lst_uid = st->st_uid;
+	st32->lst_gid = st->st_gid;
+	st32->lst_rdev = linux_fakedev(st->st_rdev, 0);
+	st32->lst_size = st->st_size;
+	st32->lst_blksize = st->st_blksize;
+	st32->lst_blocks = st->st_blocks;
+	st32->lst_atime = st->st_atime;
+	st32->lst_mtime = st->st_mtime;
+	st32->lst_ctime = st->st_ctime;
+#ifdef LINUX32_STAT_HAS_NSEC
+	st32->lst_atime_nsec = st->st_atimensec;
+	st32->lst_mtime_nsec = st->st_mtimensec;
+	st32->lst_ctime_nsec = st->st_ctimensec;
+#endif
+}
+
+static inline void
+bsd_to_linux32_stat64(struct stat *st, struct linux32_stat64 *st32)
+{
+	memset(st32, 0, sizeof(*st32));
+	st32->lst_dev = linux_fakedev(st->st_dev, 0);
+	st32->lst_ino = st->st_ino;
 	st32->lst_mode = st->st_mode;
 	if (st->st_nlink >= (1 << 15))
 		st32->lst_nlink = (1 << 15) - 1;
@@ -103,14 +132,12 @@ linux32_from_stat(struct stat *st, struct linux32_stat64 *st32)
 	st32->lst_ctime_nsec = st->st_ctimensec;
 #endif
 #ifdef LINUX32_STAT64_HAS_BROKEN_ST_INO
-	st32->lst_ino = st->st_ino;
+	st32->__lst_ino = st->st_ino;
 #endif
-
-	return;
 }
 
 int
-linux32_sys_stat64(struct lwp *l, const struct linux32_sys_stat64_args *uap, register_t *retval)
+linux32_sys_stat(struct lwp *l, const struct linux32_sys_stat_args *uap, register_t *retval)
 {
 	/* {
 	        syscallarg(netbsd32_charp) path;
@@ -118,19 +145,71 @@ linux32_sys_stat64(struct lwp *l, const struct linux32_sys_stat64_args *uap, reg
 	} */
 	int error;
 	struct stat st;
-	struct linux32_stat64 st32;
-	struct linux32_stat64 *st32p;
-	const char *path = SCARG_P32(uap, path);
+	struct linux32_stat st32;
 	
-	error = do_sys_stat(path, FOLLOW, &st);
+	error = do_sys_stat(SCARG_P32(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
-	linux32_from_stat(&st, &st32);
+	bsd_to_linux32_stat(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
+}
 
-	st32p = SCARG_P32(uap, sp);
+int
+linux32_sys_lstat(struct lwp *l, const struct linux32_sys_lstat_args *uap, register_t *retval)
+{
+	/* {
+	        syscallarg(netbsd32_charp) path;
+	        syscallarg(linux32_statp) sp;
+	} */
+	int error;
+	struct stat st;
+	struct linux32_stat st32;
+	
+	error = do_sys_stat(SCARG_P32(uap, path), NOFOLLOW, &st);
+	if (error != 0)
+		return error;
 
-	return copyout(&st32, st32p, sizeof(*st32p));
+	bsd_to_linux32_stat(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
+}
+
+int
+linux32_sys_fstat(struct lwp *l, const struct linux32_sys_fstat_args *uap, register_t *retval)
+{
+	/* {
+	        syscallarg(int) fd;
+	        syscallarg(linux32_statp) sp;
+	} */
+	int error;
+	struct stat st;
+	struct linux32_stat st32;
+
+	error = do_sys_fstat(SCARG(uap, fd), &st);
+	if (error != 0)
+		return error;
+
+	bsd_to_linux32_stat(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
+}
+
+int
+linux32_sys_stat64(struct lwp *l, const struct linux32_sys_stat64_args *uap, register_t *retval)
+{
+	/* {
+	        syscallarg(netbsd32_charp) path;
+	        syscallarg(linux32_stat64p) sp;
+	} */
+	int error;
+	struct stat st;
+	struct linux32_stat64 st32;
+	
+	error = do_sys_stat(SCARG_P32(uap, path), FOLLOW, &st);
+	if (error != 0)
+		return error;
+
+	bsd_to_linux32_stat64(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
 }
 
 int
@@ -143,18 +222,13 @@ linux32_sys_lstat64(struct lwp *l, const struct linux32_sys_lstat64_args *uap, r
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
-	struct linux32_stat64 *st32p;
-	const char *path = SCARG_P32(uap, path);
 	
-	error = do_sys_stat(path, NOFOLLOW, &st);
+	error = do_sys_stat(SCARG_P32(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 
-	linux32_from_stat(&st, &st32);
-
-	st32p = SCARG_P32(uap, sp);
-
-	return copyout(&st32, st32p, sizeof(*st32p));
+	bsd_to_linux32_stat64(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
 }
 
 int
@@ -167,15 +241,11 @@ linux32_sys_fstat64(struct lwp *l, const struct linux32_sys_fstat64_args *uap, r
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
-	struct linux32_stat64 *st32p;
 
 	error = do_sys_fstat(SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
 
-	linux32_from_stat(&st, &st32);
-
-	st32p = SCARG_P32(uap, sp);
-
-	return copyout(&st32, st32p, sizeof(*st32p));
+	bsd_to_linux32_stat64(&st, &st32);
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.20.4.2 2009/05/04 08:12:27 yamt Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.20.4.3 2009/06/20 07:20:19 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.20.4.2 2009/05/04 08:12:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.20.4.3 2009/06/20 07:20:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,7 +73,7 @@ svr4_fil_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long cmd
 
 	if ((fp = fd_getfile(fd)) == NULL)
                 return EBADF;
-	ff = fdp->fd_ofiles[fd];
+	ff = fdp->fd_dt->dt_ff[fd];
 	switch (cmd) {
 	case SVR4_FIOCLEX:
 		ff->ff_exclose = true;

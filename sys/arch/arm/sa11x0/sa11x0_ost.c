@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.23 2008/04/20 10:21:13 chris Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.23.2.1 2009/06/20 07:20:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.23 2008/04/20 10:21:13 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.23.2.1 2009/06/20 07:20:01 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.23 2008/04/20 10:21:13 chris Exp $"
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa11x0_ostreg.h>
 
-static int	saost_match(struct device *, struct cfdata *, void *);
-static void	saost_attach(struct device *, struct device *, void *);
+static int	saost_match(device_t, cfdata_t, void *);
+static void	saost_attach(device_t, device_t, void *);
 
 static void	saost_tc_init(void);
 
@@ -67,7 +67,7 @@ static int	clockintr(void *);
 static int	statintr(void *);
 
 struct saost_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -91,37 +91,38 @@ static struct saost_softc *saost_sc = NULL;
 #define STATHZ	64
 #endif
 
-CFATTACH_DECL(saost, sizeof(struct saost_softc),
+CFATTACH_DECL_NEW(saost, sizeof(struct saost_softc),
     saost_match, saost_attach, NULL, NULL);
 
 static int
-saost_match(struct device *parent, struct cfdata *match, void *aux)
+saost_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 static void
-saost_attach(struct device *parent, struct device *self, void *aux)
+saost_attach(device_t parent, device_t self, void *aux)
 {
-	struct saost_softc *sc = (struct saost_softc *)self;
+	struct saost_softc *sc = device_private(self);
 	struct sa11x0_attach_args *sa = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = sa->sa_iot;
 
 	saost_sc = sc;
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, 
 	    &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
 	/* disable all channel and clear interrupt status */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_IR, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_SR, 0xf);
 
-	printf("%s: SA-11x0 OS Timer\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(self, "SA-11x0 OS Timer\n");
 }
 
 static int
@@ -224,7 +225,7 @@ cpu_initclocks(void)
 	profhz = stathz;
 	sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
 
-	printf("clock: hz=%d stathz=%d\n", hz, stathz);
+	aprint_normal("clock: hz=%d stathz=%d\n", hz, stathz);
 
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	sc->sc_clock_count = TIMER_FREQUENCY / hz;

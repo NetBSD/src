@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.167.4.2 2009/05/16 10:41:36 yamt Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.167.4.3 2009/06/20 07:20:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167.4.2 2009/05/16 10:41:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167.4.3 2009/06/20 07:20:23 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -99,6 +99,7 @@ delay_ms(int millis, void *param)
 
 int pcicbbmatch(device_t, cfdata_t, void *);
 void pccbbattach(device_t, device_t, void *);
+void pccbbchilddet(device_t, device_t);
 int pccbbdetach(device_t, int);
 int pccbbintr(void *);
 static void pci113x_insert(void *);
@@ -212,7 +213,7 @@ static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
 #endif
 
 CFATTACH_DECL3_NEW(cbb_pci, sizeof(struct pccbb_softc),
-    pcicbbmatch, pccbbattach, pccbbdetach, NULL, NULL, NULL,
+    pcicbbmatch, pccbbattach, pccbbdetach, NULL, NULL, pccbbchilddet,
     DVF_DETACH_SHUTDOWN);
 
 static const struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
@@ -388,6 +389,20 @@ cb_chipset(u_int32_t pci_id, int *flagp)
 		*flagp = yc->yc_flags;
 
 	return (yc->yc_chiptype);
+}
+
+void
+pccbbchilddet(device_t self, device_t child)
+{
+	struct pccbb_softc *sc = device_private(self);
+	int s;
+
+	KASSERT(sc->sc_csc == device_private(child));
+
+	s = splbio();
+	if (sc->sc_csc == device_private(child))
+		sc->sc_csc = NULL;
+	splx(s);
 }
 
 void
@@ -1030,6 +1045,7 @@ int
 pccbbintr(void *arg)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)arg;
+	struct cardslot_softc *csc;
 	u_int32_t sockevent, sockstate;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
@@ -1087,14 +1103,16 @@ pccbbintr(void *arg)
 				    device_xname(sc->sc_dev), sockevent));
 				DPRINTF((" card removed, 0x%08x\n", sockstate));
 				sc->sc_flags &= ~CBB_CARDEXIST;
-				if (sc->sc_csc->sc_status &
+				if ((csc = sc->sc_csc) == NULL)
+					;
+				else if (csc->sc_status &
 				    CARDSLOT_STATUS_CARD_16) {
-					cardslot_event_throw(sc->sc_csc,
+					cardslot_event_throw(csc,
 					    CARDSLOT_EVENT_REMOVAL_16);
-				} else if (sc->sc_csc->sc_status &
+				} else if (csc->sc_status &
 				    CARDSLOT_STATUS_CARD_CB) {
 					/* Cardbus intr removed */
-					cardslot_event_throw(sc->sc_csc,
+					cardslot_event_throw(csc,
 					    CARDSLOT_EVENT_REMOVAL_CB);
 				}
 			} else if (sc->sc_flags & CBB_INSERTING) {
@@ -1148,6 +1166,7 @@ static void
 pci113x_insert(void *arg)
 {
 	struct pccbb_softc *sc = arg;
+	struct cardslot_softc *csc;
 	u_int32_t sockevent, sockstate;
 
 	if (!(sc->sc_flags & CBB_INSERTING)) {
@@ -1166,14 +1185,14 @@ pci113x_insert(void *arg)
 		DPRINTF((" card inserted, 0x%08x\n", sockstate));
 		sc->sc_flags |= CBB_CARDEXIST;
 		/* call pccard interrupt handler here */
-		if (sockstate & CB_SOCKET_STAT_16BIT) {
+		if ((csc = sc->sc_csc) == NULL)
+			;
+		else if (sockstate & CB_SOCKET_STAT_16BIT) {
 			/* 16-bit card found */
-			cardslot_event_throw(sc->sc_csc,
-			    CARDSLOT_EVENT_INSERTION_16);
+			cardslot_event_throw(csc, CARDSLOT_EVENT_INSERTION_16);
 		} else if (sockstate & CB_SOCKET_STAT_CB) {
 			/* cardbus card found */
-			cardslot_event_throw(sc->sc_csc,
-			    CARDSLOT_EVENT_INSERTION_CB);
+			cardslot_event_throw(csc, CARDSLOT_EVENT_INSERTION_CB);
 		} else {
 			/* who are you? */
 		}

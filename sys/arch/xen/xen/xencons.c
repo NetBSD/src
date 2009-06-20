@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.27.4.1 2009/05/04 08:12:14 yamt Exp $	*/
+/*	$NetBSD: xencons.c,v 1.27.4.2 2009/06/20 07:20:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.27.4.1 2009/05/04 08:12:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.27.4.2 2009/06/20 07:20:13 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -558,6 +558,10 @@ xencons_intr(void *p)
 	static char rbuf[16];
 	int len;
 	struct xencons_softc *sc = p;
+
+	if (sc == NULL)
+		/* Interrupt may happen during resume */
+		return 1;
 
 	if (sc->polling)
 		return 1;
