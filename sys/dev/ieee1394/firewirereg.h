@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.8 2008/03/29 16:22:53 kiyohara Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.9 2009/06/20 09:40:52 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -334,8 +334,6 @@ extern int firewire_phydma_enable;
 #define bio_resid b_resid
 #define BIO_READ B_READ
 #define BIO_WRITE B_WRITE
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
 #endif
 
 MALLOC_DECLARE(M_FW);
