@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.8 2009/06/20 18:20:51 mrg Exp $
+.\"	$NetBSD: drm.4,v 1.9 2009/06/20 22:55:20 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner
 .\" All rights reserved.
@@ -88,7 +88,9 @@ the appropriate
 device must exist, and DRI must be enabled in the X configuration
 file.
 .Xr X 7
-provided with NetBSD and compiled from
+provided with
+.Nx
+and compiled from
 .Xr pkgsrc 7
 do so automatically where supported.
 .Pp
@@ -137,13 +139,13 @@ nodes
 .Ar hw.dri.card1 ,
 etc.
 .Sh SEE ALSO
-.Xr agp 4 ,
-.Xr X 7 ,
 .Xr XFree86 1 ,
 .Xr Xorg 1 ,
-.Xr xorg.conf 5 ,
+.Xr agp 4 ,
 .Xr XF86Config 5 ,
-.Xr /usr/X11R[67]/lib/X11/doc/README.DRI
+.Xr xorg.conf 5 ,
+.Xr X 7 ,
+.Pa /usr/X11R[67]/lib/X11/doc/README.DRI
 .Sh HISTORY
 DRM was first available for Linux.
 Subsequently Eric Anholt ported the DRM kernel modules to
