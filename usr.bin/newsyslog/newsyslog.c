@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.57 2009/02/17 02:56:43 dogcow Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.58 2009/06/20 19:34:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.57 2009/02/17 02:56:43 dogcow Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.58 2009/06/20 19:34:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -536,6 +536,25 @@ log_trim(struct conf_entry *log)
 		}
 	}
 
+	/*
+	 * If a historical log file isn't compressed, and 'z' has been
+	 * specified, compress it.  (This is convenient, but is also needed
+	 * if 'p' has been specified.)  It should be noted that gzip(1)
+	 * preserves file ownership and file mode.
+	 */
+	if (ziptype) {
+		for (i = 0; i < log->numhist; i++) {
+			snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i);
+			if (lstat(file1, &st) != 0)
+				continue;
+			snprintf(file2, sizeof(file2), "%s%s", file1,
+			    compress[ziptype].suffix);
+			if (lstat(file2, &st) == 0)
+				continue;
+			log_compress(log, file1);
+		}
+	}
+
 	/* Move down log files. */
 	for (i = log->numhist - 1; i > 0; i--) {
 		for (j = 0; j < (int)__arraycount(compress); j++) {
@@ -563,24 +582,6 @@ log_trim(struct conf_entry *log)
 				err(EXIT_FAILURE, "%s", file2);
 	}
 
-	/*
-	 * If a historical log file isn't compressed, and 'z' has been
-	 * specified, compress it.  (This is convenient, but is also needed
-	 * if 'p' has been specified.)	It should be noted that gzip(1)
-	 * preserves file ownership and file mode.
-	 */
-	if (ziptype) {
-		for (i = (log->flags & CE_PLAIN0) != 0; i < log->numhist; i++) {
-			snprintf(file1, sizeof(file1), "%s.%d", log->logfile, i);
-			if (lstat(file1, &st) != 0)
-				continue;
-			snprintf(file2, sizeof(file2), "%s%s", file1,
-			    compress[ziptype].suffix);
-			if (lstat(file2, &st) == 0)
-				continue;
-			log_compress(log, file1);
-		}
-	}
 	log_get_format(log);
 	log_trimmed(log);
 
