@@ -54,7 +54,7 @@ struct drm_sysctl_info {
 #elif   defined(__NetBSD__)
 	const struct sysctlnode *dri, *dri_card, *dri_debug;
 	const struct sysctlnode *dri_rest[DRM_SYSCTL_ENTRIES];
-    char		       name[7];
+	char		       name[7];
 #endif
 };
 
@@ -193,7 +193,7 @@ static int drm_name_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-    int len = 0;
+	int len = 0;
 #endif
 	char buf[128];
 	int retcode;
@@ -231,7 +231,7 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-    int len = 0;
+	int len = 0;
 #endif
 	drm_local_map_t *map, *tempmaps;
 	const char   *types[] = { "FB", "REG", "SHM", "AGP", "SG" };
@@ -296,7 +296,7 @@ static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-    int len = 0;
+	int len = 0;
 #endif
 	drm_device_dma_t *dma = dev->dma;
 	drm_device_dma_t tempdma;
@@ -358,7 +358,7 @@ static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-    int len = 0;
+	int len = 0;
 #endif
 	struct drm_file *priv, *tempprivs;
 	char buf[128];

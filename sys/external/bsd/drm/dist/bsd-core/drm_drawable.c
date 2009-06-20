@@ -81,7 +81,7 @@ int drm_adddraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 #endif
 	DRM_SPINLOCK(&dev->drw_lock);
 #if defined(__NetBSD__)
-    info->handle = ++dev->drw_no;
+	info->handle = ++dev->drw_no;
 #endif
 	RB_INSERT(drawable_tree, &dev->drw_head, info);
 	draw->handle = info->handle;
@@ -106,8 +106,8 @@ int drm_rmdraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
 #if defined(__FreeBSD__)
 		free_unr(dev->drw_unrhdr, draw->handle);
 #endif
-        if (info->rects)
-    		free(info->rects, DRM_MEM_DRAWABLE);
+		if (info->rects)
+			free(info->rects, DRM_MEM_DRAWABLE);
 		free(info, DRM_MEM_DRAWABLE);
 		return 0;
 	} else {
@@ -131,8 +131,8 @@ int drm_update_draw(struct drm_device *dev, void *data,
 	case DRM_DRAWABLE_CLIPRECTS:
 		DRM_SPINLOCK(&dev->drw_lock);
 		if (update->num != info->num_rects) {
-            if (info->rects)
-    			free(info->rects, DRM_MEM_DRAWABLE);
+			if (info->rects)
+				free(info->rects, DRM_MEM_DRAWABLE);
 			info->rects = NULL;
 			info->num_rects = 0;
 		}
@@ -173,8 +173,8 @@ void drm_drawable_free_all(struct drm_device *dev)
 #if defined(__FreeBSD__)
 		free_unr(dev->drw_unrhdr, info->handle);
 #endif
-        if (info->info.rects)
-    		free(info->info.rects, DRM_MEM_DRAWABLE);
+		if (info->info.rects)
+			free(info->info.rects, DRM_MEM_DRAWABLE);
 		free(info, DRM_MEM_DRAWABLE);
 		DRM_SPINLOCK(&dev->drw_lock);
 	}

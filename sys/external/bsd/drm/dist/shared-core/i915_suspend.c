@@ -375,7 +375,7 @@ int i915_restore_state(struct drm_device *dev)
 #if defined(__FreeBSD__)
 	pci_write_config(dev->device, LBB, dev_priv->saveLBB, 1);
 #elif   defined(__NetBSD__)
-    pci_conf_write(dev->pa.pa_pc, dev->pa.pa_tag, LBB, dev_priv->saveLBB);
+	pci_conf_write(dev->pa.pa_pc, dev->pa.pa_tag, LBB, dev_priv->saveLBB);
 #else
 	pci_write_config_byte(dev->pdev, LBB, dev_priv->saveLBB);
 #endif

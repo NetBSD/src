@@ -82,19 +82,19 @@ static void vblank_disable_fn(void *arg)
 	int i;
 
 #if defined(__NetBSD__)
-    mutex_enter(&dev->vbl_lock);
+	mutex_enter(&dev->vbl_lock);
 #endif
 	if (callout_pending(&dev->vblank_disable_timer)) {
 		/* callout was reset */
 #if defined(__NetBSD__)
-        mutex_exit(&dev->vbl_lock);
+		mutex_exit(&dev->vbl_lock);
 #endif
 		return;
 	}
 	if (!callout_active(&dev->vblank_disable_timer)) {
 		/* callout was stopped */
 #if defined(__NetBSD__)
-        mutex_exit(&dev->vbl_lock);
+		mutex_exit(&dev->vbl_lock);
 #endif
 		return;
 	}
@@ -103,10 +103,10 @@ static void vblank_disable_fn(void *arg)
 	DRM_DEBUG("vblank_disable_allowed=%d\n", dev->vblank_disable_allowed);
 	if (!dev->vblank_disable_allowed) {
 #if defined(__NetBSD__)
-        mutex_exit(&dev->vbl_lock);
+		mutex_exit(&dev->vbl_lock);
 #endif
 		return;
-    }
+	}
 
 	for (i = 0; i < dev->num_crtcs; i++) {
 		if (atomic_read(&dev->vblank[i].refcount) == 0 &&
@@ -119,7 +119,7 @@ static void vblank_disable_fn(void *arg)
 		}
 	}
 #if defined(__NetBSD__)
-    mutex_exit(&dev->vbl_lock);
+	mutex_exit(&dev->vbl_lock);
 #endif
 }
 
@@ -501,8 +501,8 @@ int drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_pr
 				    &dev->irq_lock, PCATCH, "vblwtq",
 				    3 * DRM_HZ);
 #elif   defined(__NetBSD__)
-                ret = mtsleep(&dev->vblank[crtc].queue,
-                    PCATCH, "vblwtq", 3 * DRM_HZ, &dev->irq_lock);
+			ret = mtsleep(&dev->vblank[crtc].queue,
+				PCATCH, "vblwtq", 3 * DRM_HZ, &dev->irq_lock);
 #endif
 			DRM_SPINUNLOCK(&dev->irq_lock);
 		}

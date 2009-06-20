@@ -62,7 +62,7 @@ int drm_setunique(struct drm_device *dev, void *data,
 		  struct drm_file *file_priv)
 {
 #if defined(__NetBSD__)
-    return EOPNOTSUPP;
+	return EOPNOTSUPP;
 #else
 	struct drm_unique *u = data;
 	int domain, bus, slot, func, ret;

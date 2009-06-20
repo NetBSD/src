@@ -83,7 +83,8 @@ drm_device_find_capability(struct drm_device *dev, int cap)
 	return 0;
 #endif
 #elif   defined(__NetBSD__)
-    return pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, cap, NULL, NULL);
+	return pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, cap, NULL,
+				  NULL);
 #endif
 }
 
