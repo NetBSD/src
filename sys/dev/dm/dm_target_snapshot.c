@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.9 2009/06/05 19:56:40 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.10 2009/06/20 09:57:26 cegger Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -393,7 +393,7 @@ dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
  */
 int
 dm_target_snapshot_orig_init(dm_dev_t *dmv, void **target_config, 
-	char *params)
+	prop_dictionary_t dict)
 {
 	dm_target_snapshot_origin_config_t *tsoc;
 	dm_pdev_t *dmp_real;
