@@ -656,19 +656,14 @@ int savage_driver_firstopen(struct drm_device *dev)
  */
 void savage_driver_lastclose(struct drm_device *dev)
 {
-#ifndef DRM_NO_MTRR
 	drm_savage_private_t *dev_priv = dev->dev_private;
 	int i;
 
 	for (i = 0; i < 3; ++i)
 		if (dev_priv->mtrr[i].handle >= 0)
-			drm_mtrr_del(
-#ifdef __FreeBSD__
-				     dev_priv->mtrr[i].handle,
-#endif
+			drm_mtrr_del(dev_priv->mtrr[i].handle,
 				     dev_priv->mtrr[i].base,
 				     dev_priv->mtrr[i].size, DRM_MTRR_WC);
-#endif
 }
 
 int savage_driver_unload(struct drm_device *dev)

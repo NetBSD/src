@@ -122,8 +122,8 @@ nv04_fifo_save_context(struct nouveau_channel *chan)
 	struct drm_nouveau_private *dev_priv = dev->dev_private;
 	uint32_t tmp;
 
-	RAMFC_WR(DMA_PUT, NV04_PFIFO_CACHE1_DMA_PUT);
-	RAMFC_WR(DMA_GET, NV04_PFIFO_CACHE1_DMA_GET);
+	RAMFC_WR(DMA_PUT, NV_READ(NV04_PFIFO_CACHE1_DMA_PUT));
+	RAMFC_WR(DMA_GET, NV_READ(NV04_PFIFO_CACHE1_DMA_GET));
 
 	tmp  = NV_READ(NV04_PFIFO_CACHE1_DMA_DCOUNT) << 16;
 	tmp |= NV_READ(NV04_PFIFO_CACHE1_DMA_INSTANCE);

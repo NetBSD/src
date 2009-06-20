@@ -3,7 +3,6 @@
 .PATH:	${.CURDIR}/..
 KMOD	= via
 NO_MAN	= YES
-NOMAN	= YES
 SRCS    = via_dma.c via_drv.c via_ds.c via_irq.c via_map.c via_mm.c \
 	via_verifier.c via_video.c
 SRCS   += device_if.h bus_if.h pci_if.h opt_drm.h
