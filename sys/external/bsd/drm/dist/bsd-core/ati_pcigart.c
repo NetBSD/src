@@ -63,7 +63,7 @@ drm_ati_alloc_pcigart_table(struct drm_device *dev,
 	struct drm_dma_handle *dmah;
 	int flags, ret;
 #if defined(__NetBSD__)
-    int nsegs;
+	int nsegs;
 #endif
 
 	dmah = malloc(sizeof(struct drm_dma_handle), DRM_MEM_DMA,
@@ -107,71 +107,72 @@ drm_ati_alloc_pcigart_table(struct drm_device *dev,
 	}
 
 #elif   defined(__NetBSD__)
-    dmah->tag = dev->pa.pa_dmat;
+	dmah->tag = dev->pa.pa_dmat;
 
 	flags = BUS_DMA_NOWAIT;
 	if (gart_info->gart_reg_if == DRM_ATI_GART_IGP)
-	    flags |= BUS_DMA_NOCACHE;
+		flags |= BUS_DMA_NOCACHE;
 
-    ret = bus_dmamem_alloc(dmah->tag, gart_info->table_size, PAGE_SIZE,
-            0, dmah->segs, 1, &nsegs, flags);
-    if (ret != 0) {
-        printf("drm: unable to allocate %zu bytes of DMA, error %d\n",
-                (size_t)gart_info->table_size, ret);
-        dmah->tag = NULL;
-        free(dmah, DRM_MEM_DMA);
-        return ENOMEM;
-    }
-    if (nsegs != 1) {
-        printf("drm: bad segment count\n");
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
-        free(dmah, DRM_MEM_DMA);
-        return ENOMEM;
-    }
+	ret = bus_dmamem_alloc(dmah->tag, gart_info->table_size, PAGE_SIZE,
+	0, dmah->segs, 1, &nsegs, flags);
+	if (ret != 0) {
+		printf("drm: unable to allocate %zu bytes of DMA, error %d\n",
+			(size_t)gart_info->table_size, ret);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
+	if (nsegs != 1) {
+		printf("drm: bad segment count\n");
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
 
-    ret = bus_dmamem_map(dmah->tag, dmah->segs, nsegs, gart_info->table_size,
-            &dmah->vaddr, flags | BUS_DMA_COHERENT);
-    if (ret != 0) {
-        printf("drm: Unable to map DMA, error %d\n", ret);
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
-        free(dmah, DRM_MEM_DMA);
-        return ENOMEM;
-    }
+	ret = bus_dmamem_map(dmah->tag, dmah->segs, nsegs,
+			     gart_info->table_size, &dmah->vaddr,
+			     flags | BUS_DMA_COHERENT);
+	if (ret != 0) {
+		printf("drm: Unable to map DMA, error %d\n", ret);
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
 
-    ret = bus_dmamap_create(dmah->tag, gart_info->table_size, 1,
-            gart_info->table_size, 0,
-            BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->map);
-    if (ret != 0) {
+	ret = bus_dmamap_create(dmah->tag, gart_info->table_size, 1,
+				gart_info->table_size, 0,
+				BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->map);
+	if (ret != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", ret);
-    	bus_dmamem_unmap(dmah->tag, dmah->vaddr, gart_info->table_size);
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
-        free(dmah, DRM_MEM_DMA);
-        return ENOMEM;
-    }
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, gart_info->table_size);
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
 
-    ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr,
-            gart_info->table_size, NULL, BUS_DMA_NOWAIT);
-    if (ret != 0) {
+	ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr,
+			      gart_info->table_size, NULL, BUS_DMA_NOWAIT);
+	if (ret != 0) {
 		printf("drm: Unable to load DMA map, error %d\n", ret);
-        bus_dmamap_destroy(dmah->tag, dmah->map);
-    	bus_dmamem_unmap(dmah->tag, dmah->vaddr, gart_info->table_size);
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
-        free(dmah, DRM_MEM_DMA);
-        return ENOMEM;
-    }
-    dmah->busaddr = dmah->map->dm_segs[0].ds_addr;
-    dmah->size = gart_info->table_size;
-    dmah->nsegs = 1;
-    /*
-     * Mirror here FreeBSD doing BUS_DMA_ZERO.
-     * But I see this same memset() is done in drm_ati_pcigart_init(),
-     * so maybe this is not needed.
-     */
-    memset(dmah->vaddr, 0, gart_info->table_size);
+		bus_dmamap_destroy(dmah->tag, dmah->map);
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, gart_info->table_size);
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return ENOMEM;
+	}
+	dmah->busaddr = dmah->map->dm_segs[0].ds_addr;
+	dmah->size = gart_info->table_size;
+	dmah->nsegs = 1;
+	/*
+	* Mirror here FreeBSD doing BUS_DMA_ZERO.
+	* But I see this same memset() is done in drm_ati_pcigart_init(),
+	* so maybe this is not needed.
+	*/
+	memset(dmah->vaddr, 0, gart_info->table_size);
 #endif
 
 	dev->sg->dmah = dmah;
@@ -189,11 +190,11 @@ drm_ati_free_pcigart_table(struct drm_device *dev,
 	bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
 	bus_dma_tag_destroy(dmah->tag);
 #elif   defined(__NetBSD__)
-    bus_dmamap_unload(dmah->tag, dmah->map);
-    bus_dmamap_destroy(dmah->tag, dmah->map);
-    bus_dmamem_unmap(dmah->tag, dmah->vaddr, dmah->size);
-    bus_dmamem_free(dmah->tag, dmah->segs, 1);
-    dmah->tag = NULL;
+	bus_dmamap_unload(dmah->tag, dmah->map);
+	bus_dmamap_destroy(dmah->tag, dmah->map);
+	bus_dmamem_unmap(dmah->tag, dmah->vaddr, dmah->size);
+	bus_dmamem_free(dmah->tag, dmah->segs, 1);
+	dmah->tag = NULL;
 #endif
 	free(dmah, DRM_MEM_DMA);
 	dev->sg->dmah = NULL;

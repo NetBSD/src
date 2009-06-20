@@ -290,7 +290,6 @@ enum {
 
 #elif   defined(__NetBSD__)
 
-#define CDEV_MAJOR  34
 #define PAGE_ALIGN(addr)    ALIGN(addr)
 #define DRM_SUSER(p)    (kauth_cred_getsvuid((p)->p_cred) == 0)
 #define DRM_AGP_FIND_DEVICE()	agp_find_device(0)
@@ -558,7 +557,7 @@ typedef struct drm_dma_handle {
 	bus_dmamap_t map;
 #if defined(__NetBSD__)
 	size_t size;
-    size_t nsegs;
+	size_t nsegs;
 	bus_dma_segment_t segs[1];
 #endif
 } drm_dma_handle_t;
@@ -584,7 +583,7 @@ struct drm_file {
 	pid_t		  pid;
 	uid_t		  uid;
 #if defined(__NetBSD__)
-    int refs;
+	int refs;
 #endif
 	drm_magic_t	  magic;
 	unsigned long	  ioctl_count;
@@ -671,8 +670,8 @@ typedef struct drm_local_map {
 	bus_space_handle_t bsh;
 	drm_dma_handle_t *dmah;
 #if defined(__NetBSD__)
-    int *cnt;
-    bus_size_t mapsize;
+	int *cnt;
+	bus_size_t mapsize;
 #endif
 	TAILQ_ENTRY(drm_local_map) link;
 } drm_local_map_t;
@@ -888,7 +887,7 @@ struct drm_device {
 #if defined(__FreeBSD__)
 	struct sigio      *buf_sigio;	/* Processes waiting for SIGIO     */
 #elif   defined(__NetBSD__)
-    pid_t   buf_pgid;
+	pid_t   buf_pgid;
 #endif
 
 				/* Sysctl support */
@@ -904,7 +903,7 @@ struct drm_device {
 #if defined(__FreeBSD__)
 	struct unrhdr	  *drw_unrhdr;
 #elif   defined(__NetBSD__)
-    int drw_no;
+	int drw_no;
 #endif
 	/* RB tree of drawable infos */
 	RB_HEAD(drawable_tree, bsd_drm_drawable_info) drw_head;
