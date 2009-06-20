@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.7 2009/05/12 08:16:46 wiz Exp $
+.\"	$NetBSD: drm.4,v 1.8 2009/06/20 18:20:51 mrg Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 12, 2009
+.Dd June 19, 2009
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Cd viadrm*        at vga?
 .Pp
 .Cd options        DRM_DEBUG
+.Cd options        DRM_EXTERNAL
 .Cd options        DRM_NO_AGP
 .Sh DESCRIPTION
 The
@@ -86,35 +87,35 @@ the appropriate
 .Pa /dev/dri/card*
 device must exist, and DRI must be enabled in the X configuration
 file.
+.Xr X 7
+provided with NetBSD and compiled from
+.Xr pkgsrc 7
+do so automatically where supported.
 .Pp
-Details for these steps:
-.Bl -enum -offset indent
-.It
-X must be compiled with DRI support.
-On i386, this is usually the default.
-.It
-Mesa (see
-.Pa http://www.mesa3d.org/ )
-should be compiled for the netbsd-dri target, patch available at
-.Pa http://issc.uj.ac.za/~yorick/drm/mesa.patch
-.It
-The device node must exist:
+.Xr X 7
+will attempt to create the device node automatically.
+To create the device node manually:
 .Bd -literal -offset indent
 mkdir -p /dev/dri
 mknod /dev/dri/card0 c 180 0
 chgrp wheel /dev/dri/card0
 chmod 0660 /dev/dri/card0
 .Ed
-.It
-Enable DRI in the X configuration (either
+.Pp
+To enable DRI in the X configuration add the following to either
 .Pa xorg.conf
+for
+.Xr Xorg 1
 or
-.Pa XF86Config ) :
-.Bd -literal
+.Pa XF86Config
+for
+.Xr XFree86 1
+:
+.Bd -literal -offset indent
 Section "Module"
         ...
         Load  "dri"
-        Load  "GLcore"
+        Load  "dri2"
         Load  "glx"
 EndSection
 \&...
@@ -123,7 +124,6 @@ Section "DRI"
         Mode 0660
 EndSection
 .Ed
-.El
 .Pp
 Debugging output can be enabled and disabled by setting the
 .Xr sysctl 8
@@ -138,7 +138,12 @@ nodes
 etc.
 .Sh SEE ALSO
 .Xr agp 4 ,
-.Xr X 7
+.Xr X 7 ,
+.Xr XFree86 1 ,
+.Xr Xorg 1 ,
+.Xr xorg.conf 5 ,
+.Xr XF86Config 5 ,
+.Xr /usr/X11R[67]/lib/X11/doc/README.DRI
 .Sh HISTORY
 DRM was first available for Linux.
 Subsequently Eric Anholt ported the DRM kernel modules to
@@ -162,6 +167,9 @@ thanks largely to the efforts of all those mentioned above.
 Subsequently Matthias Drochner improved the DRM file hierarchy for
 .Nx
 and committed the DRM kernel drivers.
+Matthew Green cleaned up this port and merged a set of newer
+drivers, with Arto Huusko and FUKAUMI Naoki helping to get
+the latest Mesa port upto date.
 .Pp
 The
 .Nm
@@ -188,17 +196,6 @@ drivers appeared in
 .An Daryll Strauss ,
 .An Keith Whitwell
 .Sh CAVEATS
-Disable AIGLX if necessary
-.Pq Pa xorg.conf :
-.Bd -literal -offset indent
-Section "ServerFlags"
-        Option  "AIGLX" "off"
-EndSection
-
-Section "Extensions"
-        Option "Composite" "Disable"
-EndSection
-.Ed
 .Pp
 In case of errors,
 .Pa /dev/dri/card0
@@ -208,3 +205,7 @@ may be changed, make sure to recreate it in that case.
 can slow DRI down a lot, disable it once
 .Nm
 works.
+.Pp
+To use the latest drivers,
+.Cd options        DRM_EXTERNAL
+must be added to the kernel configuration file.
