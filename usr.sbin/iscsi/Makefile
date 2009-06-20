@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2009/05/01 23:40:32 agc Exp $
+# $NetBSD: Makefile,v 1.3 2009/06/20 04:18:39 agc Exp $
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
 
-SUBDIR= target
+SUBDIR= target initiator
 
 .include <bsd.subdir.mk>
