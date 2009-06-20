@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.818 2009/06/18 05:59:42 mrg Exp $
+# $NetBSD: mi,v 1.819 2009/06/20 04:20:21 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1445,6 +1445,7 @@
 ./usr/sbin/ipsend				base-ipf-bin		ipfilter
 ./usr/sbin/iptest				base-ipf-bin		ipfilter
 ./usr/sbin/irdaattach				base-sysutil-bin
+./usr/sbin/iscsi-initiator			base-iscsi-bin		iscsi
 ./usr/sbin/iscsi-target				base-iscsi-bin		iscsi
 ./usr/sbin/isdnd				base-isdn-bin
 ./usr/sbin/isdnmonitor				base-isdn-bin

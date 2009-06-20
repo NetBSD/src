@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1270 2009/06/10 00:40:33 agc Exp $
+#	$NetBSD: mi,v 1.1271 2009/06/20 04:20:22 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3338,6 +3338,7 @@
 ./usr/libdata/debug/usr/sbin/ipsend.debug	comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/iptest.debug	comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/irdaattach.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iscsi-initiator.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/sbin/iscsi-target.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/sbin/isdnd.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/isdnmonitor.debug	comp-isdn-debug		debug
