@@ -81,7 +81,7 @@ unsigned long drm_get_resource_start(struct drm_device *dev,
 #if defined(__FreeBSD__)
 	return rman_get_start(dev->pcir[resource]);
 #elif   defined(__NetBSD__)
-    return dev->pci_map_data[resource].base;
+	return dev->pci_map_data[resource].base;
 #endif
 }
 
@@ -94,7 +94,7 @@ unsigned long drm_get_resource_len(struct drm_device *dev,
 #if defined(__FreeBSD__)
 	return rman_get_size(dev->pcir[resource]);
 #elif   defined(__NetBSD__)
-    return dev->pci_map_data[resource].size;
+	return dev->pci_map_data[resource].size;
 #endif
 }
 
@@ -588,12 +588,12 @@ static int drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *reque
 
 	if (entry->buflist == NULL || entry->seglist == NULL || 
 	    temp_pagelist == NULL) {
-        if (temp_pagelist)
-    		free(temp_pagelist, DRM_MEM_PAGES);
-        if (entry->seglist)
-    		free(entry->seglist, DRM_MEM_SEGS);
-        if (entry->buflist)
-    		free(entry->buflist, DRM_MEM_BUFS);
+		if (temp_pagelist)
+			free(temp_pagelist, DRM_MEM_PAGES);
+		if (entry->seglist)
+			free(entry->seglist, DRM_MEM_SEGS);
+		if (entry->buflist)
+			free(entry->buflist, DRM_MEM_BUFS);
 		return ENOMEM;
 	}
 
@@ -1049,7 +1049,7 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	vm_size_t size;
 	vm_offset_t vaddr;
 #elif   defined(__NetBSD__)
-    struct vnode *vn;
+	struct vnode *vn;
 	voff_t foff;
 	vsize_t size, rsize;
 	vaddr_t vaddr;
@@ -1065,7 +1065,7 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 #if defined(__FreeBSD__)
 	vms = DRM_CURPROC->td_proc->p_vmspace;
 #elif   defined(__NetBSD__)
-    vms = DRM_CURPROC->p_vmspace;
+	vms = DRM_CURPROC->p_vmspace;
 #endif
 
 	DRM_SPINLOCK(&dev->dma_lock);

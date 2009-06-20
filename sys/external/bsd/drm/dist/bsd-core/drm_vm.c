@@ -43,7 +43,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	vm_paddr_t phys;
 	int error;
 #elif   defined(__NetBSD__)
-    paddr_t phys;
+	paddr_t phys;
 	unsigned long map_offs;
 #endif
 
@@ -58,13 +58,13 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		return EINVAL;
 	}
 #elif   defined(__NetBSD__)
-    DRM_LOCK();
-    file_priv = drm_find_file_by_proc(dev, DRM_CURPROC);
-    DRM_UNLOCK();
-    if (file_priv == NULL) {
+	DRM_LOCK();
+	file_priv = drm_find_file_by_proc(dev, DRM_CURPROC);
+	DRM_UNLOCK();
+	if (file_priv == NULL) {
 		DRM_ERROR("Could not find authenticator!\n");
 		return -1;
-    }
+	}
 #endif
 
 	if (file_priv && !file_priv->authenticated)
@@ -88,7 +88,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			*paddr = physaddr;
 			return 0;
 #elif   defined(__NetBSD__)
-            return atop(physaddr);
+			return atop(physaddr);
 #endif
 		} else {
 			DRM_SPINUNLOCK(&dev->dma_lock);
@@ -162,7 +162,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	*paddr = phys;
 	return 0;
 #elif   defined(__NetBSD__)
-    return atop(phys);
+	return atop(phys);
 #endif
 }
 

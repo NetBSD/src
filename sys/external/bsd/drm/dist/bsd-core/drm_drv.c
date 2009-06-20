@@ -33,6 +33,7 @@
  * open/close, and ioctl dispatch.
  */
 
+
 #if defined(__FreeBSD__)
 #include <sys/limits.h>
 #elif   defined(__NetBSD__)
@@ -311,7 +312,7 @@ struct cdevsw drm_cdevsw = {
 	drm_poll,
 	drm_mmap,
 	nokqfilter,
-	D_TTY
+	D_TTY | D_NEGOFFSAFE
 };
 
 int drm_refcnt = 0;
@@ -336,15 +337,15 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 	struct drm_device *dev;
 	int unit;
 
-    unit = device_unit(kdev);
-    if (unit < 0 || unit >= DRM_MAXUNITS)
-        panic("drm_attach: device unit %d invalid", unit);
-    if (drm_units[unit] != NULL)
-        panic("drm_attach: unit %d already attached", unit);
+	unit = device_unit(kdev);
+	if (unit < 0 || unit >= DRM_MAXUNITS)
+	panic("drm_attach: device unit %d invalid", unit);
+	if (drm_units[unit] != NULL)
+	panic("drm_attach: unit %d already attached", unit);
 
 	dev = device_private(kdev);
-    dev->device = kdev;
-    drm_units[unit] = dev;
+	dev->device = kdev;
+	drm_units[unit] = dev;
 
 	for (unit = 0; unit < DRM_MAX_PCI_RESOURCE; unit++)
 	{
@@ -366,8 +367,8 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 		}
 		if (dev->pci_map_data[unit].maptype == PCI_MAPREG_TYPE_MEM)
 			dev->pci_map_data[unit].flags |= BUS_SPACE_MAP_LINEAR;
-		if (dev->pci_map_data[unit].maptype
-                    == (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT))
+		if (dev->pci_map_data[unit].maptype ==
+		    (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT))
 			dev->pci_map_data[unit].flags |= BUS_SPACE_MAP_LINEAR;
 		DRM_DEBUG("pci resource %d: type=%d, base=%lx, size=%zx, flags=%x\n",
 			unit, dev->pci_map_data[unit].maptype,
@@ -414,9 +415,9 @@ drm_detach(device_t self, int flags)
 
 	drm_unload(dev);
 
-    drm_units[device_unit(self)] = NULL;
+	drm_units[device_unit(self)] = NULL;
 
-    free(dev->driver, DRM_MEM_DRIVER);
+	free(dev->driver, DRM_MEM_DRIVER);
 
 	return 0;
 }
@@ -491,7 +492,7 @@ static int drm_firstopen(struct drm_device *dev)
 #if defined(__FreeBSD__)
 	dev->buf_sigio = NULL;
 #elif   defined(__NetBSD__)
-    dev->buf_pgid = 0;
+	dev->buf_pgid = 0;
 #endif
 
 	DRM_DEBUG("\n");
@@ -643,11 +644,11 @@ static int drm_load(struct drm_device *dev)
 		goto error;
 	}
 #else
-    dev->drw_no = 0;
+	dev->drw_no = 0;
 #endif
 
 #if defined(__NetBSD__)
-    aprint_normal_dev(dev->device,
+	aprint_normal_dev(dev->device,
 #else
 	DRM_INFO(
 #endif
@@ -699,9 +700,9 @@ static void drm_unload(struct drm_device *dev)
 
 		retcode = drm_mtrr_del(
 #if defined(__FreeBSD__)
-            0,
+		    0,
 #endif
-            dev->agp->info.ai_aperture_base,
+		    dev->agp->info.ai_aperture_base,
 		    dev->agp->info.ai_aperture_size, DRM_MTRR_WC);
 		DRM_DEBUG("mtrr_del = %d", retcode);
 	}
@@ -789,10 +790,9 @@ int drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
 	dev = DRIVER_SOFTC(dev2unit(kdev));
 #elif   defined(__NetBSD__)
 	dev = DRIVER_SOFTC(kdev);
-    if (dev == NULL) {
-        return ENXIO;
-    }
-    dev->kdev = kdev;
+	if (dev == NULL)
+		return ENXIO;
+	dev->kdev = kdev;
 #endif
 
 	DRM_DEBUG("open_count = %d\n", dev->open_count);
@@ -825,10 +825,10 @@ drm_close(dev_t kdev, int flags, int fmt, struct lwp *l)
 	int retcode = 0;
 
 #if defined(__FreeBSD__)
-    file_priv = data;
-    dev = file_priv->dev;
+	file_priv = data;
+	dev = file_priv->dev;
 #elif   defined(__NetBSD__)
-    dev = DRIVER_SOFTC(kdev);
+	dev = DRIVER_SOFTC(kdev);
 #endif
 
 	DRM_DEBUG("open_count = %d\n", dev->open_count);
@@ -836,12 +836,12 @@ drm_close(dev_t kdev, int flags, int fmt, struct lwp *l)
 	DRM_LOCK();
 
 #if defined(__NetBSD__)
-    file_priv = drm_find_file_by_proc(dev, l->l_proc);
-    if (file_priv == NULL) {
-        DRM_UNLOCK();
-        DRM_ERROR("can't find authenticator\n");
-        return EINVAL;
-    }
+	file_priv = drm_find_file_by_proc(dev, l->l_proc);
+	if (file_priv == NULL) {
+		DRM_UNLOCK();
+		DRM_ERROR("can't find authenticator\n");
+		return EINVAL;
+	}
 #endif
 
 	if (dev->driver->preclose != NULL)
@@ -913,7 +913,7 @@ drm_close(dev_t kdev, int flags, int fmt, struct lwp *l)
 #if defined(__FreeBSD__)
 	funsetown(&dev->buf_sigio);
 #else
-    dev->buf_pgid = 0;
+	dev->buf_pgid = 0;
 #endif
 
 	if (dev->driver->postclose != NULL)
@@ -941,7 +941,7 @@ drm_close(dev_t kdev, int flags, int fmt, struct lwp *l)
 	DRM_UNLOCK();
 
 #if defined(__NetBSD__)
-    return retcode;
+	return retcode;
 #endif
 }
 
@@ -965,10 +965,10 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, DRM_IOCTL_DATA data, int flags,
 		return EINVAL;
 	}
 #elif   defined(__NetBSD__)
-    DRM_LOCK();
-    file_priv = drm_find_file_by_proc(dev, p->l_proc);
-    DRM_UNLOCK();
-    if (file_priv == NULL) {
+	DRM_LOCK();
+	file_priv = drm_find_file_by_proc(dev, p->l_proc);
+	DRM_UNLOCK();
+	if (file_priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
 		return EINVAL;
 	}

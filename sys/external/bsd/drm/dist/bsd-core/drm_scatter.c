@@ -49,7 +49,7 @@ drm_sg_alloc(struct drm_device *dev, struct drm_scatter_gather *request)
 	unsigned long pages;
 	int ret;
 #if defined(__NetBSD__)
-    int nsegs, i, npage;
+	int nsegs, i, npage;
 #endif
 
 	if (dev->sg)
@@ -116,10 +116,9 @@ drm_sg_alloc(struct drm_device *dev, struct drm_scatter_gather *request)
 		return ENOMEM;
 	}
 #elif   defined(__NetBSD__)
-	dmah = malloc(sizeof(struct drm_dma_handle)
-        + (pages - 1) * sizeof(bus_dma_segment_t),
-        DRM_MEM_DMA,
-	    M_ZERO | M_NOWAIT);
+	dmah = malloc(sizeof(struct drm_dma_handle) +
+		      (pages - 1) * sizeof(bus_dma_segment_t),
+		      DRM_MEM_DMA, M_ZERO | M_NOWAIT);
 	if (dmah == NULL) {
 		free(entry->busaddr, DRM_MEM_PAGES);
 		free(entry, DRM_MEM_SGLISTS);
@@ -128,68 +127,72 @@ drm_sg_alloc(struct drm_device *dev, struct drm_scatter_gather *request)
 
 	dmah->tag = dev->pa.pa_dmat;
 
-	if ((ret = bus_dmamem_alloc(dmah->tag, request->size, PAGE_SIZE,
-        0, dmah->segs, pages, &nsegs,
-        BUS_DMA_WAITOK) != 0)) {
+	if ((ret = bus_dmamem_alloc(dmah->tag, request->size, PAGE_SIZE, 0,
+				    dmah->segs, pages, &nsegs,
+				    BUS_DMA_WAITOK) != 0)) {
 		printf("drm: Unable to allocate %lu bytes of DMA, error %d\n",
 		    request->size, ret);
-        dmah->tag = NULL;
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
 		free(entry->busaddr, DRM_MEM_PAGES);
 		free(entry, DRM_MEM_SGLISTS);
-        return ENOMEM;
+		return ENOMEM;
 	}
-    DRM_DEBUG("nsegs = %d\n", nsegs);
-    dmah->nsegs = nsegs;
-	if ((ret = bus_dmamem_map(dmah->tag, dmah->segs, nsegs, request->size, 
-	     &dmah->vaddr, BUS_DMA_NOWAIT | BUS_DMA_NOCACHE | BUS_DMA_COHERENT)) != 0) {
+	DRM_DEBUG("nsegs = %d\n", nsegs);
+	dmah->nsegs = nsegs;
+	if ((ret = bus_dmamem_map(dmah->tag, dmah->segs, nsegs, request->size,
+				  &dmah->vaddr, BUS_DMA_NOWAIT |
+				  BUS_DMA_NOCACHE | BUS_DMA_COHERENT)) != 0) {
 		printf("drm: Unable to map DMA, error %d\n", ret);
-        bus_dmamem_free(dmah->tag, dmah->segs, dmah->nsegs);
-        dmah->tag = NULL;
+		bus_dmamem_free(dmah->tag, dmah->segs, dmah->nsegs);
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-   		free(entry->busaddr, DRM_MEM_PAGES);
+		free(entry->busaddr, DRM_MEM_PAGES);
 		free(entry, DRM_MEM_SGLISTS);
-        return ENOMEM;
+		return ENOMEM;
 	}
 	if ((ret = bus_dmamap_create(dmah->tag, request->size, nsegs,
-        request->size, 0,
-	    BUS_DMA_NOWAIT, &dmah->map)) != 0) {
+                                     request->size, 0, BUS_DMA_NOWAIT,
+				     &dmah->map)) != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", ret);
-        bus_dmamem_unmap(dmah->tag, dmah->vaddr, request->size);
-        bus_dmamem_free(dmah->tag, dmah->segs, nsegs);
-        dmah->tag = NULL;
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, request->size);
+		bus_dmamem_free(dmah->tag, dmah->segs, nsegs);
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-   		free(entry->busaddr, DRM_MEM_PAGES);
+		free(entry->busaddr, DRM_MEM_PAGES);
 		free(entry, DRM_MEM_SGLISTS);
-        return ENOMEM;
+		return ENOMEM;
 	}
-	if ((ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr, 
-	     request->size, NULL, BUS_DMA_NOWAIT | BUS_DMA_NOCACHE)) != 0) {
+	if ((ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr,
+				   request->size, NULL,
+				   BUS_DMA_NOWAIT | BUS_DMA_NOCACHE)) != 0) {
 		printf("drm: Unable to load DMA map, error %d\n", ret);
-        bus_dmamap_destroy(dmah->tag, dmah->map);
-        bus_dmamem_unmap(dmah->tag, dmah->vaddr, request->size);
-        bus_dmamem_free(dmah->tag, dmah->segs, dmah->nsegs);
-        dmah->tag = NULL;
+		bus_dmamap_destroy(dmah->tag, dmah->map);
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, request->size);
+		bus_dmamem_free(dmah->tag, dmah->segs, dmah->nsegs);
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-        return ENOMEM;
+		return ENOMEM;
 	}
-    /*
-     * We are expected to return address for each page here.
-     * If bus_dmamem_alloc did not return each page in own segment
-     * (likely not), split them as if they were separate segments.
-     */
+	/*
+	 * We are expected to return address for each page here.
+	 * If bus_dmamem_alloc did not return each page in own segment
+	 * (likely not), split them as if they were separate segments.
+	 */
 	for (i = 0, npage = 0 ; (i < nsegs) && (npage < pages) ; i++) {
-        bus_addr_t base = dmah->map->dm_segs[i].ds_addr;
-        bus_size_t offs;
-        for (offs = 0 ; (offs + PAGE_SIZE <= dmah->map->dm_segs[i].ds_len)
-                && (npage < pages) ; offs += PAGE_SIZE) {
-		    entry->busaddr[npage++] = base + offs;
-        }
+		bus_addr_t base = dmah->map->dm_segs[i].ds_addr;
+		bus_size_t offs;
+
+		for (offs = 0;
+		     (offs + PAGE_SIZE <= dmah->map->dm_segs[i].ds_len) &&
+		     (npage < pages);
+		     offs += PAGE_SIZE)
+			entry->busaddr[npage++] = base + offs;
 	}
-    KASSERT(i == nsegs);
-    KASSERT(npage == pages);
+	KASSERT(i == nsegs);
+	KASSERT(npage == pages);
 	dmah->size = request->size;
-    memset(dmah->vaddr, 0, request->size);
+	memset(dmah->vaddr, 0, request->size);
 #endif
 
 	entry->sg_dmah = dmah;

@@ -59,7 +59,7 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 	drm_dma_handle_t *dmah;
 	int ret;
 #if defined (__NetBSD__)
-    int nsegs;
+	int nsegs;
 #endif
 
 	/* Need power-of-two alignment, so fail the allocation if it isn't. */
@@ -116,49 +116,49 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 	    dmah->segs, 1, &nsegs, BUS_DMA_WAITOK)) != 0) {
 		printf("drm: Unable to allocate %zu bytes of DMA, error %d\n",
 		    size, ret);
-        dmah->tag = NULL;
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-        return NULL;
+		return NULL;
 	}
 	/* XXX is there a better way to deal with this? */
 	if (nsegs != 1) {
 		printf("drm: bad segment count from bus_dmamem_alloc\n");
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-        return NULL;
+		return NULL;
 	}
 	if ((ret = bus_dmamem_map(dmah->tag, dmah->segs, nsegs, size, 
 	     &dmah->vaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_NOCACHE)) != 0) {
 		printf("drm: Unable to map DMA, error %d\n", ret);
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-        return NULL;
+		return NULL;
 	}
 	if ((ret = bus_dmamap_create(dmah->tag, size, 1, size, maxaddr,
 	     BUS_DMA_NOWAIT, &dmah->map)) != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", ret);
-        bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-        return NULL;
+		return NULL;
 	}
 	if ((ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr, 
 	     size, NULL, BUS_DMA_NOWAIT | BUS_DMA_NOCACHE)) != 0) {
 		printf("drm: Unable to load DMA map, error %d\n", ret);
-        bus_dmamap_destroy(dmah->tag, dmah->map);
-        bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
-        bus_dmamem_free(dmah->tag, dmah->segs, 1);
-        dmah->tag = NULL;
+		bus_dmamap_destroy(dmah->tag, dmah->map);
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
 		free(dmah, DRM_MEM_DMA);
-        return NULL;
+		return NULL;
 	}
 	dmah->busaddr = dmah->map->dm_segs[0].ds_addr;
 	dmah->size = size;
-    dmah->nsegs = 1;
-    memset(dmah->vaddr, 0, size);
+	dmah->nsegs = 1;
+	memset(dmah->vaddr, 0, size);
 #endif
 
 	return dmah;

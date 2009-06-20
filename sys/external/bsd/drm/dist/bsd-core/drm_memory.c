@@ -103,8 +103,8 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 				map->bsh = dev->pci_map_data[i].bsh;
 				return dev->pci_map_data[i].vaddr;
 			}
-            DRM_DEBUG("ioremap%s: flags %d\n",
-                    wc ? "_wc" : "", dev->pci_map_data[i].flags);
+			DRM_DEBUG("ioremap%s: flags %d\n", wc ? "_wc" : "",
+				  dev->pci_map_data[i].flags);
 			if ((reason = bus_space_map(map->bst, map->offset,
 					dev->pci_map_data[i].size,
 					dev->pci_map_data[i].flags, &map->bsh)))
@@ -151,8 +151,8 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 			map->cnt = &(dev->agp_map_data[i].mapped);
 			map->mapsize = dev->agp_map_data[i].size;
 
-            DRM_DEBUG("ioremap%s: flags %d\n",
-                    wc ? "_wc" : "", dev->agp_map_data[i].flags);
+			DRM_DEBUG("ioremap%s: flags %d\n", wc ? "_wc" : "",
+				  dev->agp_map_data[i].flags);
 			rv = bus_space_map(map->bst, map->offset,
 				dev->agp_map_data[i].size,
 				dev->agp_map_data[i].flags, &map->bsh);
@@ -183,7 +183,7 @@ void *drm_ioremap_wc(struct drm_device *dev, drm_local_map_t *map)
 #if defined(__FreeBSD__)
 	return pmap_mapdev_attr(map->offset, map->size, PAT_WRITE_COMBINING);
 #elif   defined(__NetBSD__)
-    return drm_netbsd_ioremap(dev, map, 1);
+	return drm_netbsd_ioremap(dev, map, 1);
 #endif
 }
 
@@ -192,7 +192,7 @@ void *drm_ioremap(struct drm_device *dev, drm_local_map_t *map)
 #if defined(__FreeBSD__)
 	return pmap_mapdev(map->offset, map->size);
 #elif   defined(__NetBSD__)
-    return drm_netbsd_ioremap(dev, map, 0);
+	return drm_netbsd_ioremap(dev, map, 0);
 #endif
 }
 

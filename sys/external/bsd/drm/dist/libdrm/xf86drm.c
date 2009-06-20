@@ -63,7 +63,8 @@
 #endif
 
 #ifdef __NetBSD__
-#define DRM_MAJOR 34
+#undef DRM_MAJOR
+#define DRM_MAJOR 180
 #endif
 
 # ifdef __OpenBSD__

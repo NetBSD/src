@@ -51,7 +51,7 @@ drm_find_file_by_proc(struct drm_device *dev, struct proc *p)
 			return priv;
 	}
 
-    return NULL;
+	return NULL;
 }
 
 /* drm_open_helper is called whenever a process opens /dev/drm. */
@@ -115,7 +115,7 @@ int drm_open_helper(struct cdev *kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 		    struct drm_device *dev)
 {
 	struct drm_file *priv;
-    int m = minor(kdev);
+	int m = minor(kdev);
 	int retcode;
 
 	if (flags & O_EXCL)
