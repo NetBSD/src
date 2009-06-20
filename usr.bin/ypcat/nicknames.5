@@ -1,0 +1,90 @@
+.\" $NetBSD: nicknames.5,v 1.1 2009/06/20 19:27:26 christos Exp $
+.\"
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd 28 August, 2003
+.Dt NICKNAMES 5
+.Os
+.Sh NAME
+.Nm nicknames
+.Nd map nickname translation file for NIS (YP)
+.Sh DESCRIPTION
+The
+.Xr ypcat 1 ,
+.Xr ypmatch 1 ,
+and
+.Xr ypwhich 1
+commands reference NIS (YP) maps as specified by the user.  Occasionally
+it is desirable to use a shorthand reference for a longer map name, hence
+the
+.Nm
+file, kept in
+.Dq /var/yp/nicknames.
+.Pp
+The format of the file is
+.Pp
+.Dl nickname map
+.Pp
+one pair per line.  The default installed nickname map is as follows:
+.Pp
+.Bl -tag -width protocols -offset indent -compact
+.It passwd
+passwd.byname
+.It group
+group.byname
+.It networks
+networks.byaddr
+.It hosts
+hosts.byname
+.It protocols
+protocols.bynumber
+.It services
+services.byname
+.It aliases
+aliases.byname
+.It ethers
+ethers.byname
+.It master.passwd
+master.passwd.byname
+.El
+.Pp
+A blank or incomplete
+.Nm
+file will affect any scripts which use nicknames for map lookup,
+whereas if the file is simply missing, the default compiled-in list
+will be used.
+.Pp
+.Sh SEE ALSO
+.Xr ypcat 1 ,
+.Xr ypmatch 1 ,
+.Xr ypwhich 1
+.Sh HISTORY
+The
+.Nm
+file first appeared in Solaris 2.4.
