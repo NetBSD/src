@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.196 2009/05/27 18:02:57 dholland Exp $
+$NetBSD: UPDATING,v 1.197 2009/06/21 20:08:36 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20090616:
+	Native Xorg was upgraded.  Builds will need a clean objdir for
+	src/external/mit/xorg.  Upgrading a system from sets will not
+	work properly yet as the /usr/X11R7/lib/X11/xkb/symbols/pc
+	subdirectory has been changed into a file, and this needs to
+	be manually "rm -r"'ed before installing xbase.tgz.
 
 20090501:
 	Several new functions were added to string.h/libc, and this
