@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.18 2009/06/21 17:52:42 dholland Exp $
+.\"	$NetBSD: semctl.2,v 1.19 2009/06/21 18:04:46 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -198,6 +198,19 @@ set to reflect the error.
 .Fn semctl
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EACCES
+The caller has no operation permission for this semaphore.
+.It Bq Er EFAULT
+.Fa arg.buf
+or
+.Fa arg.array
+specifies an invalid address.
+.It Bq Er EINVAL
+.Fa semid
+is not a valid message semaphore identifier.
+.Pp
+.Va cmd
+is not a valid command.
 .It Bq Er EPERM
 .Fa cmd
 is equal to
@@ -210,19 +223,6 @@ the effective uid match either the
 or
 .Va sem_perm.cuid
 fields of the data structure associated with the semaphore.
-.It Bq Er EACCES
-The caller has no operation permission for this semaphore.
-.It Bq Er EINVAL
-.Fa semid
-is not a valid message semaphore identifier.
-.Pp
-.Va cmd
-is not a valid command.
-.It Bq Er EFAULT
-.Fa arg.buf
-or
-.Fa arg.array
-specifies an invalid address.
 .It Bq Er ERANGE
 .Fa cmd
 is equal to
