@@ -946,7 +946,8 @@ int cgoto(fa *f, int s, int c)
 		overflo("out of space in cgoto");
 
 	f->posns[f->curstat] = p;
-	f->gototab[s][c] = f->curstat;
+	if (c != HAT)
+		f->gototab[s][c] = f->curstat;
 	for (i = 0; i <= setcnt; i++)
 		p[i] = tmpset[i];
 	if (setvec[f->accept])
