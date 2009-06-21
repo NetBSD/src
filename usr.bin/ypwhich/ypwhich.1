@@ -1,4 +1,4 @@
-.\" $NetBSD: ypwhich.1,v 1.16 2009/06/20 19:27:26 christos Exp $
+.\" $NetBSD: ypwhich.1,v 1.17 2009/06/21 15:02:54 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -36,18 +36,13 @@
 .Nd return hostname of NIS server of map master
 .Sh SYNOPSIS
 .Nm
-.Op Fl d Ar domain
-.Oo
-.Op Fl h
-.Ar host
-.Oc
 .Op Fl T
+.Op Fl d Ar domain
+.Op Op Fl h Ar host
 .Nm
+.Op Fl fTt
 .Op Fl d Ar domain
 .Op Fl h Ar host
-.Op Fl f
-.Op Fl t
-.Op Fl T
 .Fl m Op Ar mname
 .Nm
 .Fl x
@@ -71,8 +66,6 @@ The options are as follows:
 .Bl -tag -width Fl
 .It Fl d Ar domain
 Specify a domain other than the default domain.
-.It Fl h Ar host
-Specify a host other than localhost to query for information.
 .It Fl f
 When used in conjunction with
 .Fl m ,
@@ -82,11 +75,8 @@ to query
 .Ar host
 directly, without using the local copy of
 .Xr ypbind 8 .
-.It Fl t
-Inhibit translation of map nicknames
-to their corresponding map names.
-.It Fl T
-Use TCP protocol instead of UDP.
+.It Fl h Ar host
+Specify a host other than localhost to query for information.
 .It Fl m Op Ar mname
 Find the master
 .Tn NIS
@@ -98,14 +88,21 @@ If
 is omitted,
 .Nm
 will produce a list of available maps.
+.It Fl T
+Use TCP protocol instead of UDP.
+.It Fl t
+Inhibit translation of map nicknames
+to their corresponding map names.
 .It Fl x
-Display the map nickname table, found in /var/yp/nicknames.
-A built-in default translation table is used if /var/yp/nicknames
+Display the map nickname table, found in
+.Pa /var/yp/nicknames .
+A built-in default translation table is used if
+.Pa /var/yp/nicknames
 does not exist (see
 .Xr nicknames 5
 for details).
 .El
-.Pp
+.Sh EXIT STATUS
 .Nm
 exits with a non-zero exit code if
 .Fl m
