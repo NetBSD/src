@@ -1,0 +1,224 @@
+iSCSI Frequently Asked Questions
+================================
+
+Q1. What is iSCSI?
+==================
+
+A1.  It's an IETF standard (RFC 3720) for remote access to block-level
+storage.  It can be thought of as similar to NFS, except that an NFS
+server exports files; the iSCSI target exports blocks to the iSCSI
+initiators, which are the clients.
+
+
+Q2. What's the difference between an initiator and a target?
+============================================================
+
+A2.  The target is the iSCSI server - it serves up blocks to the
+clients, which are called initiators.  Typically, initiators are part
+of the operating system, since the operating system manages block
+storage, presenting it to the user as file systems sitting on top of
+the storage.
+
+Targets do not generally need to be part of the operating system,
+indeed there is some flexibility to be gained by having targets as
+part of the user-level daemons that are run. This means that
+security credentials need not be buried in the kernel.
+
+
+Q3. So how do I use it?
+=======================
+
+A3.  Firstly, you need to set up the iSCSI target.  The target is
+simply sitting there, waiting for requests for blocks.  So we need to
+configure the target with an area of storage for it to present to the
+initiators.
+
+To set up the target, you need to edit the /etc/iscsi/targets file.
+It has a certain layout, to provide a means of (a) mirroring and (b)
+combining multiple areas to present one large contiguous area of
+storage. This can be multiply-layered.
+
+The basic unit of storage is an extent. This can be either a file
+or a device. The offset of the start of the extent to be presented
+must be given, and also the length of the extent.
+
+A device is made up of one or more extents, and/or one or more
+other devices.
+
+At the highest level, a target is what is presented to the initiator,
+and is made up of one or more devices, and/or one or more extents.
+
+The simple example is as follows, consisting of one piece of storage
+presented by one target:
+
+	# extent        file or device          start           length
+	extent0         /tmp/iscsi-target0      0               100MB
+
+will produce an extent of storage which is based on one file,
+/tmp/iscsi-target0, which starts 0 bytes into the file, and is 100 MB
+in length.  The file will be created if it does not already exist.
+
+	# target        storage                 netmask
+	target0         extent0                 0.0.0.0/0
+
+That extent is then used in target0, and will be presented to an
+initiator running on any host.
+
+Extents must be defined before they can be used, and extents cannot
+be used more than once.
+
+Devices are used to combine extents or other devices.  Device
+definitions have the following format:
+
+	# devices
+	device0	RAID1		extent0 extent1
+
+A "RAID1" device behaves in much the same way that RAID1 devices work
+in the storage arena - they mirror the original storage.  There can be
+any number of devices or extents in a RAID1 device, not just 2, but
+each device or extent must be of the same size.
+
+A "RAID0" device combines the storage, to produce a larger area of
+(virtually) "contiguous" storage.
+
+Devices must be defined before they can be used, and devices may not
+be used more than once.
+
+A more detailed example would be as follows:
+
+	# Complex file showing 3-way RAID1 (with RAID1 components),
+	# also using local and (NFS) remote components
+
+	# extents
+	extent0	/iscsi/extents/0			0	100MB
+	extent1	/imports/remote1/iscsi/extents/0	0	100MB
+	extent2	/iscsi/extents/1			0	100MB
+	extent3	/imports/remote1/iscsi/extents/1	0	100MB
+	extent4	/iscsi/extents/2			0	100MB
+	extent5	/imports/remote1/iscsi/extents/2	0	100MB
+	extent6	/iscsi/extents/3			0	100GB
+
+	# devices
+	device0	RAID1		extent0 extent1
+	device1	RAID1		extent2 extent3
+	device2	RAID1		extent4 extent5
+	device3	RAID1		device0 device1 device2
+
+	# targets
+	target0	device3		10.4.0.0/16
+
+	# a target can be made from just an extent
+	target1	extent6		127.0.0.0/8
+
+which will make 7 extents, 3 of them 100 MB in length and remote (via
+NFS), and 3 of them 100 MB in length and local, and one of them large
+(100 GB) and local.  Three separate occurrences of a local and remote
+100 MB extent are combined to make three RAID1 devices, and then those
+three RAID1 devices are combined into another RAID1 device, and
+presented as target0.
+
+The other extent is used to present a simple 100 GB of storage as
+target1.
+
+
+Q4.  What about security?
+=========================
+
+A4.  A good question.  RFC 3720 specifies CHAP, SRM and Kerberos as
+methods of providing authentication and/or security.  In practice,
+it's whatever is provided by the initiator you are using which will
+determine what authentication or security is used.
+
+If you want any form of security, it's probably best to use ssh port
+forwarding for all your traffic if you're worried about security. 
+CHAP will only provide authentication, the other information will flow
+across the network in clear.
+
+
+Q5.  Using the Microsoft initiator, I can't login with CHAP
+===========================================================
+
+A5.  The 1.06 Microsoft initiator silently enforces a chap password
+length of at least 12 characters.  If you enter a password which is
+less than that, your Discovery login will silently fail.
+
+Since CHAP provides very little authentication anyway, you are advised
+not to use it - ssh port forwarding, and the use of tcp wrappers,
+will do a much better job of protection.
+
+
+Q6. What initiators work with the NetBSD iSCSI target?
+======================================================
+
+A6. The NetBSD target has been tested at various times with the Microsoft
+iSCSI initiator, version 1.06 (which can be downloaded for free from
+www.microsoft.com, but needs Windows XP Pro to work), and also with the
+NetBSD test harness, which is provided, but not installed, in the same
+place as the target.
+
+
+Q7.  What is the difference between Discovery and Normal login?
+===============================================================
+
+A7.  On direct-attached storage, the kernel verifies what storage is
+available, and assigns a device node to it. With iSCSI, storage can
+come and go, and our proximity to the devices doesn't matter. So we
+need to find a different method of finding out what iSCSI storage is
+out there.
+
+This is done by a "Discovery" iSCSI session - the initiator logs in
+to the target, finds out what storage is being presented, then logs
+back out. This can be seen by the syslog entries:
+
+	Feb  5 10:33:44 sys3 iscsi-target: > Discovery login from iqn.1991-05.com.microsoft:inspiron on 10.4.1.5
+	Feb  5 10:33:44 sys3 iscsi-target: < Discovery logout from iqn.1991-05.com.microsoft:inspiron on 10.4.1.5
+
+The initiator will then perform a "Normal" login session, which will
+establish a session between the initiator and target. This is denoted
+by the syslog entries:
+
+	Feb  5 00:00:28 sys3 iscsi-target: > Discovery login from iqn.1993-03.org.NetBSD.iscsi-initiator:agc on 127.0.0.1
+	Feb  5 00:00:28 sys3 iscsi-target: < Discovery logout from iqn.1993-03.org.NetBSD.iscsi-initiator:agc on 127.0.0.1
+	Feb  5 00:00:28 sys3 iscsi-target: > Normal login from iqn.1993-03.org.NetBSD.iscsi-initiator:agc on 127.0.0.1
+	Feb  5 00:05:32 sys3 iscsi-target: < Normal logout from iqn.1993-03.org.NetBSD.iscsi-initiator:agc on 127.0.0.1
+
+
+Q8. So what do I do to try it?
+==============================
+
+A8. Perform the following steps:
+
+a) define the storage that you want to present in /etc/iscsi/targets
+b) start the iSCSI target: /etc/rc.d/iscsi_target forcestart
+c) use an initiator to point it at the machine you started it on
+
+
+Q9. Why does the test harness not work properly?
+================================================
+
+A9. Firstly, you should be invoking the test harness as
+
+	iscsi-harness -n 3 -h localhost
+
+where the 'n' option is the number of iterations to perform, and the
+'h' parameter is the name or address of the machine where the
+iscsi-target is running.
+
+If the harness was invoked properly, check any error messages which
+the test harness sends:
+
+If one of them looks like:
+
+	No matching user configuration entry for `agc' was found
+	Please add an entry for `agc' to `/etc/iscsi/auths'
+
+(where "agc" is substituted for the name of the user who was running
+the test harness), then please do as suggested. The iSCSI test harness
+tests, amongst other things, the CHAP authentication process, and so
+CHAP credentials for that user are needed.
+
+
+
+Alistair Crooks
+agc@NetBSD.org
+Wed Feb  8 07:21:56 GMT 2006
