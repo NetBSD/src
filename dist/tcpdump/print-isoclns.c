@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isoclns.c,v 1.6.10.1 2008/04/14 21:04:29 jdc Exp $	*/
+/*	$NetBSD: print-isoclns.c,v 1.6.10.2 2009/06/21 21:30:22 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -32,7 +32,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-isoclns.c,v 1.106.2.5 2004/03/24 01:45:26 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-isoclns.c,v 1.6.10.1 2008/04/14 21:04:29 jdc Exp $");
+__RCSID("$NetBSD: print-isoclns.c,v 1.6.10.2 2009/06/21 21:30:22 snj Exp $");
 #endif
 #endif
 
@@ -1521,6 +1521,9 @@ static int isis_print (const u_int8_t *p, u_int length)
 
 	if (tlv_len == 0) /* something is malformed */
 	    continue;
+
+        if (tlv_len == 0) /* something is malformed */
+            break;
 
         /* now check if we have a decoder otherwise do a hexdump at the end*/
 	switch (tlv_type) {

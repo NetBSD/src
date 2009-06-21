@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ldp.c,v 1.1.1.1 2004/09/27 17:07:12 dyoung Exp $	*/
+/*	$NetBSD: print-ldp.c,v 1.1.1.1.10.1 2009/06/21 21:30:23 snj Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -327,6 +327,9 @@ ldp_print(register const u_char *pptr, register u_int len) {
                msg_len,
                EXTRACT_32BITS(&ldp_msg_header->id),
                LDP_MASK_U_BIT(EXTRACT_16BITS(&ldp_msg_header->type)) ? "continue processing" : "ignore");
+
+        if (msg_len == 0) /* infinite loop protection */
+            break;
 
         msg_tptr=tptr+sizeof(struct ldp_msg_header);
         msg_tlen=msg_len-sizeof(struct ldp_msg_header)+4; /* Type & Length fields not included */
