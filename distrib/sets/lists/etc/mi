@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.209 2009/04/28 23:31:52 roy Exp $
+# $NetBSD: mi,v 1.210 2009/06/21 01:55:34 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -355,3 +355,4 @@
 ./var/run/utmpx					etc-sys-log
 ./var/yp/Makefile.main				etc-nis-root		yp
 ./var/yp/Makefile.yp				etc-nis-root		yp
+./var/yp/nicknames				etc-nis-root		yp
