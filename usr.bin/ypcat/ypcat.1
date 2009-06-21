@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypcat.1,v 1.15 2009/06/20 19:27:26 christos Exp $
+.\"	$NetBSD: ypcat.1,v 1.16 2009/06/21 14:57:33 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -61,8 +61,10 @@ is not part of the value.
 Inhibit translation of map nicknames
 to their corresponding map names.
 .It Fl x
-Display the map nickname table, found in /var/yp/nicknames.
-A built-in default translation table is used if /var/yp/nicknames
+Display the map nickname table, found in
+.Pa /var/yp/nicknames .
+A built-in default translation table is used if
+.Pa /var/yp/nicknames
 does not exist (see
 .Xr nicknames 5
 for details).
