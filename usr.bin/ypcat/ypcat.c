@@ -1,4 +1,4 @@
-/* $NetBSD: ypcat.c,v 1.13 2009/06/20 19:27:26 christos Exp $	*/
+/* $NetBSD: ypcat.c,v 1.14 2009/06/21 14:58:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.13 2009/06/20 19:27:26 christos Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.14 2009/06/21 14:58:16 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -148,7 +148,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-k] [-d domainname] [-t] mapname\n",
+	(void)fprintf(stderr, "Usage: %s [-kt] [-d domainname] mapname\n",
 	    getprogname());
 	(void)fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);
