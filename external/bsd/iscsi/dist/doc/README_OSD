@@ -1,0 +1,58 @@
+
+-------------------------
+Installing the OSD System
+-------------------------
+
+ 1. Build kernel version 2.4 w/ SMP mode disabled and make sure the 
+    directory /usr/src/linux points to this build.
+ 2. Modify initiator.h and initiator.c (as per the README) to point to 
+    your intended target.
+ 3. Run 'make osd' to build all the OSD  executables.  In particular,
+    you need uosd, so.o, intel_iscsi.o and osdfs.o.
+ 4. Run 'make all' to build the remaining executables. 
+ 5. Select a machine as the target and run "uosd -f" as root on this 
+    machine. This will create files and directories in /tmp.
+ 
+----------------------
+Testing the OSD System
+----------------------
+
+ 6. Run utest to make sure the target is working OK.
+ 7. Do an "insmod ./so.o" to install the Linux SCSI upper layer driver for OSD.
+ 8. Do an "insmod ./intel_iscsi.o" to install the kernel mode iSCSI initiator.
+ 9. Do an "insmod ./osdfs.o" to install the file system.
+10. Make the OSD device with "mknod /dev/so0 b 232 0".
+11. Do a "mount -t osdfs /dev/so0 /mnt" to mount the filesystem.
+12. Go to /mnt and run "echo Hello, World! > foo" to create an object 
+    on the OSD.
+13. Do a "cat foo" to read the object. you should see "Hello, world!"
+
+From here you should be able to use /mnt as you would any filesystem.
+
+--------------------
+2.4.18 Modifications
+--------------------
+
+include/scsi/scsi.h:143
+  #define TYPE_OSD 0x0e
+
+drivers/scsi/scsi.h:92:
+  #define MAX_SCSI_DEVICE_CODE 15
+
+drivers/scsi/scsi.h:354:
+  #define MAX_COMMAND_SIZE 256
+
+drivers/scsi/scsi.c:145:
+  "OSD              ",
+
+drivers/scsi/scsi_dma.c:248:
+  SDpnt->type == TYPE_DISK || SDpnt->type == TYPE_MOD || SDpnt->type == TYPE_OSD) {
+
+drivers/scsi/scsi_scan.c:644:
+  case TYPE_OSD:
+
+----------
+Hints/Tips
+----------
+
+-Field testing on some workstations resulted in compiling errors if highmem support in the kernel as enabled
