@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.35 2009/06/17 20:17:40 jdc Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.36 2009/06/21 11:23:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -624,4 +624,9 @@ lib/libpam/modules/pam_unix/pam_unix.c		1.13
 	(Checked that everybody else's password can be changed without any
 	problem, and checked that root can still change the root password.)
 	[tonnerre, ticket #1326]
+
+sys/compat/linux/common/linux_sched.c		1.59
+
+	In linux_sys_sched_getaffinity(), do not leak memory on error.
+	[njoly, ticket #1328]
 
