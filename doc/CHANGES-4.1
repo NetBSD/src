@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.156 2009/06/17 20:56:23 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.157 2009/06/21 11:23:15 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3459,4 +3459,24 @@ usr.bin/window/ttgeneric.c			1.11
 	PR/41581: Der mouse: window SEGV with certain terminals.  does strcmp
 	first and then checks for null pointer for underline and bold.
 	[christos, ticket #1324]
+
+sys/arch/amd64/amd64/mainbus.c			1.28 via patch
+sys/arch/i386/i386/mainbus.c			1.85 via patch
+sys/arch/x86/x86/mp.c				1.2 via patch
+sys/arch/x86/x86/mpacpi.c			patch
+sys/arch/x86/x86/mpbios.c			patch
+
+	Apply fixes from jmcneill@ for PR port-i386/38729 (ACPI kernel booted
+	under qemu cannot detect devices):
+	- make MP SCANPCI function for ACPI_SCANPCI and MPBIOS_SCANPCI
+	  return a number of attached PCI busses
+	- if no valid PCI busses are attached in the MP SCANPCI function,
+	  try to probe and attach pci0 at mainbus as well as kernels
+	  with no SCANPCI options
+	[tsutsui, ticket #1327]
+
+sys/compat/linux/common/linux_sched.c		1.59
+
+	In linux_sys_sched_getaffinity(), do not leak memory on error.
+	[njoly, ticket #1328]
 
