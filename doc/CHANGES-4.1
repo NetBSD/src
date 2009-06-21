@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.158 2009/06/21 11:46:20 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.159 2009/06/21 21:31:32 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3480,10 +3480,18 @@ sys/compat/linux/common/linux_sched.c		1.59
 	In linux_sys_sched_getaffinity(), do not leak memory on error.
 	[njoly, ticket #1328]
 
-external/bsd/pkg_install/dist/admin/pkg_admin.1:	1.1.1.7
-external/bsd/pkg_install/dist/lib/license.c: 		1.1.1.3
-external/bsd/pkg_install/dist/lib/version.h:		1.1.1.16
+external/bsd/pkg_install/dist/admin/pkg_admin.1	1.1.1.7
+external/bsd/pkg_install/dist/lib/license.c	1.1.1.3
+external/bsd/pkg_install/dist/lib/version.h	1.1.1.16
 
 	Merge pkg_install-20090610 from HEAD
 	[joerg, ticket #1325]
 
+dist/tcpdump/print-bgp.c			patch
+dist/tcpdump/print-isoclns.c			patch
+dist/tcpdump/print-ldp.c			patch
+dist/tcpdump/print-rsvp.c			patch
+ 
+	Fix CAN-2005-1278, CAN-2005-1279 and CAN-2005-1280.
+	[tonnerre, ticket #1329]
+ 
