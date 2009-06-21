@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.36 2009/06/21 11:23:22 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.37 2009/06/21 11:45:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -629,4 +629,11 @@ sys/compat/linux/common/linux_sched.c		1.59
 
 	In linux_sys_sched_getaffinity(), do not leak memory on error.
 	[njoly, ticket #1328]
+
+external/bsd/pkg_install/dist/admin/pkg_admin.1:	1.1.1.7
+external/bsd/pkg_install/dist/lib/license.c: 		1.1.1.3
+external/bsd/pkg_install/dist/lib/version.h:		1.1.1.16
+
+	Merge pkg_install-20090610 from HEAD
+	[joerg, ticket #1325]
 
