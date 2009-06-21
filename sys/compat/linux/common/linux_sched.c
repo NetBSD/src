@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.37.2.1 2007/03/28 20:38:41 jdc Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.37.2.1.6.1 2009/06/21 11:22:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.37.2.1 2007/03/28 20:38:41 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.37.2.1.6.1 2009/06/21 11:22:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -557,12 +557,11 @@ linux_sys_sched_getaffinity(l, v, retval)
 	retp = (int *)&data[SCARG(uap, len) - sizeof(ret)];
 	*retp = ret;
 
-	if ((error = copyout(data, SCARG(uap, mask), SCARG(uap, len))) != 0)
-		return error;
+	error = copyout(data, SCARG(uap, mask), SCARG(uap, len));
 
 	free(data, M_TEMP);
 
-	return 0;
+	return error;
 
 }
 
