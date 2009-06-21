@@ -1,0 +1,42 @@
+$NetBSD: COMPATIBILITY,v 1.1 2009/06/21 21:20:30 agc Exp $
+
+The NetBSD iSCSI initiator has been tried with the following initiators:
+
+1. Microsoft iSCSI initiator, versions 1.xx and 2.03
+Tested by Alistair Crooks
+Seems to work fine - instructions in place at
+ftp://ftp.netbsd.org/pub/NetBSD/misc/agc/HOWTO-iSCSI-initiator.pdf
+(This is the initiator that is used to test new releases)
+Entry added: 26/10/2007
+
+2. Solaris 10 Express 06/04
+Tested by Alistair Crooks
+Only a small test case was tried
+VPD83 functionality was added for this initiator
+Entry added: 26/10/2007
+
+3. IBM AIX 5.3 iSCSI initiator
+Tested by Andreas
+Information in
+http://mail-index.netbsd.org/current-users/2007/10/12/0008.html
+Entry added: 26/10/2007
+
+4. Linux open-iscsi initiator
+Tested by Mark Foster
+No issues
+http://mark.foster.cc/wiki/index.php/User:Fostermarkd/FreeBSD/iSCSI
+Entry added: 24/12/2007
+
+5. NetBSD iSCSI initiator
+Tested by Alistair Crooks
+Works fine - instructions in
+http://mail-index.netbsd.org/netbsd-users/2007/11/10/0002.html
+(This initiator receives the most testing with the NetBSD iSCSI target)
+Entry added: 24/12/2007
+
+Any information on other initiators tried (either positive or negative)
+would be gratefully received.
+
+Alistair Crooks
+agc@NetBSD.org
+Last updated: 24/12/2007
