@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.33 2009/06/19 22:00:50 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.34 2009/06/21 01:11:26 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1118,4 +1118,166 @@ sys/dev/pci/if_re_pci.c				1.36
 	- remove "B" suffix from RTL8168 device names in attach message
 	- fix RX hwcksum for DESCV2 chips for PR kern/40605
 	[tsutsui, ticket #821]
+
+sys/external/bsd/drm/dist/Makefile.am		patch
+sys/external/bsd/drm/dist/README		patch
+sys/external/bsd/drm/dist/bsd-core/Makefile	patch
+sys/external/bsd/drm/dist/bsd-core/ati_pcigart.c patch
+sys/external/bsd/drm/dist/bsd-core/drm/Makefile	patch
+sys/external/bsd/drm/dist/bsd-core/drmP.h	patch
+sys/external/bsd/drm/dist/bsd-core/drm_agpsupport.c patch
+sys/external/bsd/drm/dist/bsd-core/drm_atomic.h	patch
+sys/external/bsd/drm/dist/bsd-core/drm_auth.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_bufs.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_context.c patch
+sys/external/bsd/drm/dist/bsd-core/drm_dma.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_drawable.c patch
+sys/external/bsd/drm/dist/bsd-core/drm_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_fops.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_ioctl.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_irq.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_linux_list.h patch
+sys/external/bsd/drm/dist/bsd-core/drm_lock.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_memory.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_pci.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_pciids.h	patch
+sys/external/bsd/drm/dist/bsd-core/drm_scatter.c patch
+sys/external/bsd/drm/dist/bsd-core/drm_sysctl.c	patch
+sys/external/bsd/drm/dist/bsd-core/drm_vm.c	patch
+sys/external/bsd/drm/dist/bsd-core/i915/Makefile patch
+sys/external/bsd/drm/dist/bsd-core/i915_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/mach64/Makefile patch
+sys/external/bsd/drm/dist/bsd-core/mach64_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/mga/Makefile	patch
+sys/external/bsd/drm/dist/bsd-core/mga_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/nouveau/Makefile patch
+sys/external/bsd/drm/dist/bsd-core/nouveau_drv.c patch
+sys/external/bsd/drm/dist/bsd-core/nouveau_sgdma.c patch
+sys/external/bsd/drm/dist/bsd-core/r128/Makefile patch
+sys/external/bsd/drm/dist/bsd-core/r128_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/radeon/Makefile patch
+sys/external/bsd/drm/dist/bsd-core/radeon_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/savage/Makefile patch
+sys/external/bsd/drm/dist/bsd-core/savage_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/sis/Makefile	patch
+sys/external/bsd/drm/dist/bsd-core/sis_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/tdfx/Makefile patch
+sys/external/bsd/drm/dist/bsd-core/tdfx_drv.c	patch
+sys/external/bsd/drm/dist/bsd-core/via/Makefile	patch
+sys/external/bsd/drm/dist/bsd-core/via_drv.c	patch
+sys/external/bsd/drm/dist/configure.ac		patch
+sys/external/bsd/drm/dist/libdrm/Makefile.am	patch
+sys/external/bsd/drm/dist/libdrm/intel/Makefile.am patch
+sys/external/bsd/drm/dist/libdrm/intel/intel_bufmgr.c patch
+sys/external/bsd/drm/dist/libdrm/intel/intel_bufmgr.h patch
+sys/external/bsd/drm/dist/libdrm/intel/intel_bufmgr_fake.c patch
+sys/external/bsd/drm/dist/libdrm/intel/intel_bufmgr_gem.c patch
+sys/external/bsd/drm/dist/libdrm/intel/intel_bufmgr_priv.h patch
+sys/external/bsd/drm/dist/libdrm/intel/intel_chipset.h patch
+sys/external/bsd/drm/dist/libdrm/intel/mm.c	patch
+sys/external/bsd/drm/dist/libdrm/intel/mm.h	patch
+sys/external/bsd/drm/dist/libdrm/libdrm_lists.h	patch
+sys/external/bsd/drm/dist/libdrm/nouveau/Makefile.am patch
+sys/external/bsd/drm/dist/libdrm/nouveau/libdrm_nouveau.pc.in patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_bo.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_bo.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_channel.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_channel.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_class.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_device.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_device.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_dma.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_dma.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_drmif.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_fence.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_grobj.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_grobj.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_notifier.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_notifier.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_private.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_pushbuf.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_pushbuf.h patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_resource.c patch
+sys/external/bsd/drm/dist/libdrm/nouveau/nouveau_resource.h patch
+sys/external/bsd/drm/dist/libdrm/xf86drm.c	patch
+sys/external/bsd/drm/dist/libdrm/xf86drm.h	patch
+sys/external/bsd/drm/dist/libdrm/xf86drmMode.c	patch
+sys/external/bsd/drm/dist/libdrm/xf86drmMode.h	patch
+sys/external/bsd/drm/dist/libdrm/xf86mm.h	patch
+sys/external/bsd/drm/dist/libdrm_intel.pc.in	patch
+sys/external/bsd/drm/dist/scripts/create_lk_gpu.sh patch
+sys/external/bsd/drm/dist/shared-core/Makefile.am patch
+sys/external/bsd/drm/dist/shared-core/drm.h	patch
+sys/external/bsd/drm/dist/shared-core/drm_mode.h patch
+sys/external/bsd/drm/dist/shared-core/drm_pciids.txt patch
+sys/external/bsd/drm/dist/shared-core/i915_dma.c patch
+sys/external/bsd/drm/dist/shared-core/i915_drm.h patch
+sys/external/bsd/drm/dist/shared-core/i915_drv.h patch
+sys/external/bsd/drm/dist/shared-core/i915_irq.c patch
+sys/external/bsd/drm/dist/shared-core/i915_reg.h patch
+sys/external/bsd/drm/dist/shared-core/i915_suspend.c patch
+sys/external/bsd/drm/dist/shared-core/mach64_dma.c patch
+sys/external/bsd/drm/dist/shared-core/mach64_drv.h patch
+sys/external/bsd/drm/dist/shared-core/mach64_irq.c patch
+sys/external/bsd/drm/dist/shared-core/mga_dma.c	patch
+sys/external/bsd/drm/dist/shared-core/mga_irq.c	patch
+sys/external/bsd/drm/dist/shared-core/nouveau_dma.c patch
+sys/external/bsd/drm/dist/shared-core/nouveau_drm.h patch
+sys/external/bsd/drm/dist/shared-core/nouveau_drv.h patch
+sys/external/bsd/drm/dist/shared-core/nouveau_fifo.c patch
+sys/external/bsd/drm/dist/shared-core/nouveau_irq.c patch
+sys/external/bsd/drm/dist/shared-core/nouveau_mem.c patch
+sys/external/bsd/drm/dist/shared-core/nouveau_object.c patch
+sys/external/bsd/drm/dist/shared-core/nouveau_reg.h patch
+sys/external/bsd/drm/dist/shared-core/nouveau_state.c patch
+sys/external/bsd/drm/dist/shared-core/nv04_fifo.c patch
+sys/external/bsd/drm/dist/shared-core/nv04_instmem.c patch
+sys/external/bsd/drm/dist/shared-core/nv20_graph.c patch
+sys/external/bsd/drm/dist/shared-core/nv40_graph.c patch
+sys/external/bsd/drm/dist/shared-core/nv40_mc.c	patch
+sys/external/bsd/drm/dist/shared-core/nv50_fifo.c patch
+sys/external/bsd/drm/dist/shared-core/nv50_graph.c patch
+sys/external/bsd/drm/dist/shared-core/nv50_grctx.h patch
+sys/external/bsd/drm/dist/shared-core/nv50_instmem.c patch
+sys/external/bsd/drm/dist/shared-core/nv_drv.h	removed
+sys/external/bsd/drm/dist/shared-core/r128_drv.h patch
+sys/external/bsd/drm/dist/shared-core/r128_irq.c patch
+sys/external/bsd/drm/dist/shared-core/r300_cmdbuf.c patch
+sys/external/bsd/drm/dist/shared-core/r600_cp.c	patch
+sys/external/bsd/drm/dist/shared-core/r600_microcode.h patch
+sys/external/bsd/drm/dist/shared-core/radeon_cp.c patch
+sys/external/bsd/drm/dist/shared-core/radeon_drm.h patch
+sys/external/bsd/drm/dist/shared-core/radeon_drv.h patch
+sys/external/bsd/drm/dist/shared-core/radeon_irq.c patch
+sys/external/bsd/drm/dist/shared-core/radeon_state.c patch
+sys/external/bsd/drm/dist/shared-core/savage_bci.c patch
+sys/external/bsd/drm/dist/shared-core/savage_state.c patch
+sys/external/bsd/drm/dist/shared-core/sis_ds.c	patch
+sys/external/bsd/drm/dist/shared-core/via_irq.c	patch
+sys/external/bsd/drm/dist/shared-core/via_map.c	patch
+sys/external/bsd/drm/dist/tests/Makefile.am	patch
+sys/external/bsd/drm/dist/tests/dristat.c	patch
+sys/external/bsd/drm/dist/tests/drmtest.c	patch
+sys/external/bsd/drm/dist/tests/drmtest.h	patch
+sys/external/bsd/drm/dist/tests/gem_basic.c	patch
+sys/external/bsd/drm/dist/tests/gem_flink.c	patch
+sys/external/bsd/drm/dist/tests/gem_mmap.c	patch
+sys/external/bsd/drm/dist/tests/gem_readwrite.c	patch
+sys/external/bsd/drm/dist/tests/getversion.c	patch
+sys/external/bsd/drm/dist/tests/modeprint/Makefile.am patch
+sys/external/bsd/drm/dist/tests/modeprint/modeprint.c patch
+sys/external/bsd/drm/dist/tests/modetest/Makefile.am patch
+sys/external/bsd/drm/dist/tests/modetest/modetest.c patch
+sys/external/bsd/drm/dist/tests/setversion.c	patch
+sys/external/bsd/drm/dist/tests/updatedraw.c	patch
+
+	Sync external drm with HEAD.
+	[mrg, ticket #823]
+
+usr.bin/ktruss/dump.c				1.34, 1.35
+
+	PR/41338: Michael van Elst: ktruss mixes filename arguments
+	Restore call to dumppendq.  make flushpendq drop only entries
+	for the current thread.
+	[mlelstv, ticket #824]
 
