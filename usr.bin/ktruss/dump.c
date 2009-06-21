@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.29 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: dump.c,v 1.29.4.1 2009/06/21 01:08:21 snj Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.29 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: dump.c,v 1.29.4.1 2009/06/21 01:08:21 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -650,9 +650,7 @@ ktrsysret(struct ktr_entry *kte)
 		free(genio);
 	}
 
-#if 0 /* Why? */
 	flushpendq(kte);
-#endif
 	free(kte);
 }
 
