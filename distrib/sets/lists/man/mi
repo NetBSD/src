@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1140 2009/06/20 04:20:22 agc Exp $
+# $NetBSD: mi,v 1.1141 2009/06/21 01:55:35 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1800,6 +1800,7 @@
 ./usr/share/man/cat5/netid.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat5/networks.0			man-net-catman		.cat
 ./usr/share/man/cat5/newsyslog.conf.0		man-sysutil-catman	.cat
+./usr/share/man/cat5/nicknames.0		man-nis-catman		.cat
 ./usr/share/man/cat5/nisplus_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/nologin.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
@@ -4312,6 +4313,7 @@
 ./usr/share/man/html5/netid.html		man-nis-htmlman		yp,html
 ./usr/share/man/html5/networks.html		man-net-htmlman		html
 ./usr/share/man/html5/newsyslog.conf.html	man-sysutil-htmlman	html
+./usr/share/man/html5/nicknames.html		man-nis-htmlman		html
 ./usr/share/man/html5/nisplus_table.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/nologin.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/nsswitch.conf.html	man-net-htmlman		html
@@ -6778,6 +6780,7 @@
 ./usr/share/man/man5/netid.5			man-nis-man		yp,.man
 ./usr/share/man/man5/networks.5			man-net-man		.man
 ./usr/share/man/man5/newsyslog.conf.5		man-sysutil-man		.man
+./usr/share/man/man5/nicknames.5		man-nis-catman		yp,.cat
 ./usr/share/man/man5/nisplus_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/nologin.5			man-sysutil-man		.man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
