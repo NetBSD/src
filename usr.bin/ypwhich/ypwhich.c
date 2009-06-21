@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.16 2009/06/20 19:27:26 christos Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.17 2009/06/21 15:04:56 wiz Exp $	*/
 
 /*
  *
@@ -192,7 +192,7 @@ usage(void)
 {
 	const char *pname = getprogname();
 	(void)fprintf(stderr, "Usage:\t%s [-T] [-d domain] [[-h] host]\n"
-	    "\t%s [-T] [-h host] [-d domain] [-f] [-t] -m [mapname]\n"
+	    "\t%s [-fTt] [-d domain] [-h host] -m [mapname]\n"
 	    "\t%s [-T] -x\n", pname, pname, pname);
 	exit(1);
 }
