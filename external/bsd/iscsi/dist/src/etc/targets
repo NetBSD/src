@@ -1,0 +1,21 @@
+# $NetBSD: targets,v 1.1 2009/06/22 01:51:02 agc Exp $
+#
+# Structure of this file:
+#
+# + an extent is a straight (offset, length) pair of a file or device
+#   it's the lowest common storage denominator
+#   at least one is needed
+# + a device is made up of one or more extents or other devices
+#   devices can be added in a hierachical manner, to enhance resilience
+# + in this example, no device definitions are necessary, as the target
+#   will just use a simple extent for persistent storage
+# + a target is made up of 1 or more devices
+# The code does not support RAID1 recovery at present
+
+# Simple file showing 1 extent, mapped straight into 1 target
+
+# extents	file			start	length
+extent0		/tmp/iscsi-target0	0	100MB
+
+# target	flags	storage		netmask
+target0		rw	extent0		10.4.0.0/16
