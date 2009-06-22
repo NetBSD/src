@@ -1,4 +1,4 @@
-/*	$NetBSD: libkmod.c,v 1.1 2009/06/21 21:11:16 agc Exp $	*/
+/*	$NetBSD: libkmod.c,v 1.1 2009/06/22 14:44:12 agc Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: libkmod.c,v 1.1 2009/06/21 21:11:16 agc Exp $");
+__RCSID("$NetBSD: libkmod.c,v 1.1 2009/06/22 14:44:12 agc Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
