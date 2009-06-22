@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.67 2009/05/07 19:30:30 elad Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.68 2009/06/22 21:13:50 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.67 2009/05/07 19:30:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.68 2009/06/22 21:13:50 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,8 @@ smbfs_write(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 
-	SMBVDEBUG("%d,ofs=%lld,sz=%u\n",vp->v_type, (long long int)uio->uio_offset, uio->uio_resid);
+	SMBVDEBUG("%d,ofs=%lld,sz=%zu\n",vp->v_type,
+	    (long long int)uio->uio_offset, uio->uio_resid);
 	if (vp->v_type != VREG)
 		return (EPERM);
 	return smbfs_writevnode(vp, uio, ap->a_cred, ap->a_ioflag);
