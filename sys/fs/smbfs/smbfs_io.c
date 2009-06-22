@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.32 2009/03/18 16:00:21 cegger Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.33 2009/06/22 21:13:50 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.32 2009/03/18 16:00:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.33 2009/06/22 21:13:50 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	/* vn types other than VREG unsupported */
 	KASSERT(vp->v_type == VREG);
 
-	SMBVDEBUG("ofs=%lld,resid=%d\n",
+	SMBVDEBUG("ofs=%lld,resid=%zu\n",
 		(long long int) uiop->uio_offset,
 		uiop->uio_resid);
 	if (uiop->uio_offset < 0)
@@ -291,7 +291,8 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	}
 	smb_makescred(&scred, l, cred);
 	error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
-	SMBVDEBUG("after: ofs=%lld,resid=%d,err=%d\n",(long long int)uiop->uio_offset, uiop->uio_resid, error);
+	SMBVDEBUG("after: ofs=%lld,resid=%zu,err=%d\n",
+	    (long long int)uiop->uio_offset, uiop->uio_resid, error);
 	if (!error) {
 		if (uiop->uio_offset > np->n_size) {
 			np->n_size = uiop->uio_offset;
