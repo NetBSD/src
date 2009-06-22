@@ -1,4 +1,4 @@
-.\"	$NetBSD: drm.4,v 1.9 2009/06/20 22:55:20 wiz Exp $
+.\"	$NetBSD: drm.4,v 1.10 2009/06/22 02:34:10 mrg Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 19, 2009
+.Dd June 21, 2009
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -41,7 +41,6 @@
 .Cd viadrm*        at vga?
 .Pp
 .Cd options        DRM_DEBUG
-.Cd options        DRM_EXTERNAL
 .Cd options        DRM_NO_AGP
 .Sh DESCRIPTION
 The
@@ -207,7 +206,3 @@ may be changed, make sure to recreate it in that case.
 can slow DRI down a lot, disable it once
 .Nm
 works.
-.Pp
-To use the latest drivers,
-.Cd options        DRM_EXTERNAL
-must be added to the kernel configuration file.
