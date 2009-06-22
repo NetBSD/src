@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2009/06/22 06:52:18 agc Exp $
+# $NetBSD: Makefile,v 1.3 2009/06/22 14:44:12 agc Exp $
 
-.sinclude "${.CURDIR}/Makefile.inc"
+BINDIR=/usr/sbin
 
 SUBDIR=	lib .WAIT
 
