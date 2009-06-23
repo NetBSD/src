@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.819 2009/06/20 04:20:21 agc Exp $
+# $NetBSD: mi,v 1.820 2009/06/23 17:58:22 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1262,10 +1262,15 @@
 ./usr/libexec/postfix/lmtp			base-postfix-bin	postfix
 ./usr/libexec/postfix/local			base-postfix-bin	postfix
 ./usr/libexec/postfix/master			base-postfix-bin	postfix
-./usr/libexec/postfix/nqmgr			base-obsolete	obsolete
+./usr/libexec/postfix/nqmgr			base-obsolete		obsolete
 ./usr/libexec/postfix/oqmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/pickup			base-postfix-bin	postfix
 ./usr/libexec/postfix/pipe			base-postfix-bin	postfix
+./usr/libexec/postfix/post-install		base-postfix-bin	postfix
+./usr/libexec/postfix/postfix-files		base-postfix-bin	postfix
+./usr/libexec/postfix/postfix-script		base-postfix-bin	postfix
+./usr/libexec/postfix/postfix-wrapper		base-postfix-bin	postfix
+./usr/libexec/postfix/postmulti-script		base-postfix-bin	postfix
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmqpd			base-obsolete		obsolete
@@ -1553,6 +1558,7 @@
 ./usr/sbin/postlock				base-postfix-bin	postfix
 ./usr/sbin/postlog				base-postfix-bin	postfix
 ./usr/sbin/postmap				base-postfix-bin	postfix
+./usr/sbin/postmulti				base-postfix-bin	postfix
 ./usr/sbin/postqueue				base-postfix-bin	postfix
 ./usr/sbin/postsuper				base-postfix-bin	postfix
 ./usr/sbin/powerd				base-sysutil-bin
