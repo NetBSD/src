@@ -1,4 +1,4 @@
-/* $NetBSD: uuid.c,v 1.3 2007/06/16 23:13:26 agc Exp $ */
+/* $NetBSD: uuid.c,v 1.4 2009/06/23 05:11:47 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -48,23 +48,19 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef HAVE_UUID_H
-#include <uuid.h>
-#endif
-
+#include "storage.h"
 #include "compat.h"
 #include "defs.h"
 
-#ifndef HAVE_UUID_CREATE
 /* just fill the struct with random values for now */
 void
-uuid_create(uuid_t *uuid, uint32_t *status)
+nbuuid_create(nbuuid_t *uuid, uint32_t *status)
 {
 	uint64_t	ether;
 	time_t		t;
 
 	(void) time(&t);
-	ether = (random() << 32) | random();
+	ether = ((uint64_t)random() << 32) | random();
 	uuid->time_low = t;
 	uuid->time_mid = (uint16_t)(random() & 0xffff);
 	uuid->time_hi_and_version = (uint16_t)(random() & 0xffff);
@@ -73,12 +69,10 @@ uuid_create(uuid_t *uuid, uint32_t *status)
 	(void) memcpy(&uuid->node, &ether, sizeof(uuid->node));
 	*status = 0;
 }
-#endif
 
-#ifndef HAVE_UUID_TO_STRING
 /* convert the struct to a printable string */
 void
-uuid_to_string(uuid_t *uuid, char **str, uint32_t *status)
+nbuuid_to_string(nbuuid_t *uuid, char **str, uint32_t *status)
 {
 	char	s[64];
 
@@ -97,4 +91,3 @@ uuid_to_string(uuid_t *uuid, char **str, uint32_t *status)
 	*str = strdup(s);
 	*status = 0;
 }
-#endif
