@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.20 2009/06/18 05:57:34 mrg Exp $
+# $NetBSD: md.alpha,v 1.21 2009/06/23 04:39:52 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -97,8 +97,8 @@
 ./usr/X11R7/lib/modules/drivers/trident_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vga_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vga_drv.so.4		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vga_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/vga_drv.so.4		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
