@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.19 2008/02/26 05:03:29 mellon Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.20 2009/06/23 19:50:50 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2520,6 +2520,8 @@ void script_write_params (client, prefix, lease)
 		if (data.len > 3) {
 			struct iaddr netmask, subnet, broadcast;
 
+			if (data.len > sizeof netmask.iabuf)
+			    data.len = sizeof netmask.iabuf;
 			memcpy (netmask.iabuf, data.data, data.len);
 			netmask.len = data.len;
 			data_string_forget (&data, MDL);
