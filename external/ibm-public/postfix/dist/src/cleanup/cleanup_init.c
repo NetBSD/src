@@ -1,4 +1,6 @@
-/*	$NetBSD: cleanup_init.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_init.c,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
+
+/*	$NetBSD: cleanup_init.c,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
 
 /*++
 /* NAME
@@ -7,6 +9,8 @@
 /*	cleanup callable interface, initializations
 /* SYNOPSIS
 /*	#include "cleanup.h"
+/*
+/*	CONFIG_BOOL_TABLE cleanup_bool_table[];
 /*
 /*	CONFIG_INT_TABLE cleanup_int_table[];
 /*
@@ -36,7 +40,7 @@
 /*	for one-time initializations that must be done before any message
 /*	processing can take place.
 /*
-/*	cleanup_{int,str,time}_table[] specify configuration
+/*	cleanup_{bool,int,str,time}_table[] specify configuration
 /*	parameters that must be initialized before calling any functions
 /*	in this module. These tables satisfy the interface as specified in
 /*	single_service(3).
@@ -136,6 +140,7 @@ int     var_delay_warn_time;		/* delay that triggers warning */
 char   *var_prop_extension;		/* propagate unmatched extension */
 char   *var_always_bcc;			/* big brother */
 char   *var_rcpt_witheld;		/* recipients not disclosed */
+bool    var_canon_env_rcpt;		/* canonicalize envelope recipient */
 char   *var_masq_classes;		/* what to masquerade */
 int     var_qattr_count_limit;		/* named attribute limit */
 int     var_virt_recur_limit;		/* maximum virtual alias recursion */
