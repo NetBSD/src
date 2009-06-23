@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/06/12 01:59:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2009/06/23 04:39:52 mrg Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -91,10 +91,7 @@ OS_RELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 DRIVERS=	mga glint nv tga s3 s3virge sis rendition neomagic \
 		i740 tdfx savage cirrus vmware tseng trident chips \
 		apm i128
-.if ${MACHINE_ARCH} != "x86_64"
-DRIVERS+=	nsc
-.endif
-DRIVERS+=	ati i810 ark cyrix siliconmotion via fbdev vesa vga \
+DRIVERS+=	ati i810 ark cyrix siliconmotion via fbdev vesa \
 		dummy
 
 IDRIVERS=	mouse keyboard acecad calcomp citron digitaledge \
