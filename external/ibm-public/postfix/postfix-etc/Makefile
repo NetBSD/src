@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/23 15:02:54 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2009/06/23 17:55:06 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -13,19 +13,6 @@ FILESDIR=	${PFIX_ETCDIR}
 # real information at all, just the man page sources, and are not
 # needed by default.
 #
-CONFIGFILES=	main.cf master.cf postfix-files README
-
-# And of course, we need the postfix-script file. It isn't clear that
-# this should be considered configuration and not a candidate for
-# libexec, but Wietse explicitly wants it this way, since he wants
-# the user to be able to use postfix-script as a place to install hooks.
-#
-CONFIGFILES+=			postfix-script post-install
-FILESMODE_postfix-script=	${BINMODE}
-FILESMODE_post-install=		${BINMODE}
-
-CONFIGFILES+=			postfix-wrapper postmulti-script
-FILESMODE_postfix-wrapper=	${BINMODE}
-FILESMODE_postmulti-script=	${BINMODE}
+CONFIGFILES=	main.cf master.cf README
 
 .include <bsd.prog.mk>

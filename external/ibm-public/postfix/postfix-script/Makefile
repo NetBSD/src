@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/23 15:02:54 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2009/06/23 17:55:06 tron Exp $
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/external/ibm-public/postfix/dist/conf
 .PATH:		${DIST}
 
-# XXX Should go in /usr/libexec/postfix, but we'll need some source
-# changes before we can do that for real. Meanwhile, /etc/postfix
-#BINDIR=	${PFIX_LIBEXECDIR}
-BINDIR=		${PFIX_ETCDIR}
+BINDIR=		${PFIX_LIBEXECDIR}
 
-SCRIPTS=	postfix-script postfix-wrapper
+SCRIPTS=	post-install postfix-script postfix-wrapper postmulti-script
+
+FILES=		postfix-files
+FILESDIR=	${PFIX_LIBEXECDIR}
 
 .include <bsd.prog.mk>
