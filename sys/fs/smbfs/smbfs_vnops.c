@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.68 2009/06/22 21:13:50 njoly Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.69 2009/06/23 19:36:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.68 2009/06/22 21:13:50 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.69 2009/06/23 19:36:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ smbfs_access(void *v)
 		}
 	}
 
-	return (vaccess(vp->v_type,
+	return (genfs_can_access(vp->v_type,
 	    (vp->v_type == VDIR) ? smp->sm_args.dir_mode : smp->sm_args.file_mode,
 	    smp->sm_args.uid, smp->sm_args.gid,
 	    acc_mode, ap->a_cred));

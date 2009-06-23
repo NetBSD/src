@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.177 2009/05/08 10:52:00 rmind Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.178 2009/06/23 19:36:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.177 2009/05/08 10:52:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.178 2009/06/23 19:36:40 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -328,7 +328,7 @@ ufs_access(void *v)
 	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
 		return (EPERM);
 
-	return (vaccess(vp->v_type, ip->i_mode & ALLPERMS,
+	return (genfs_can_access(vp->v_type, ip->i_mode & ALLPERMS,
 		ip->i_uid, ip->i_gid, mode, ap->a_cred));
 }
 

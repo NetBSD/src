@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.379 2009/05/16 08:29:53 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.380 2009/06/23 19:36:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.379 2009/05/16 08:29:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.380 2009/06/23 19:36:38 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.379 2009/05/16 08:29:53 yamt Exp $");
 #include <sys/kthread.h>
 #include <sys/wapbl.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
@@ -2587,64 +2588,17 @@ printlockedvnodes(void)
 }
 #endif
 
-/*
- * Do the usual access checking.
- * file_mode, uid and gid are from the vnode in question,
- * while acc_mode and cred are from the VOP_ACCESS parameter list
- */
+/* Deprecated. Kept for KPI compatibility. */
 int
 vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
     mode_t acc_mode, kauth_cred_t cred)
 {
-	mode_t mask;
-	int error, ismember;
 
-	/*
-	 * Super-user always gets read/write access, but execute access depends
-	 * on at least one execute bit being set.
-	 */
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
-		if ((acc_mode & VEXEC) && type != VDIR &&
-		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
-			return (EACCES);
-		return (0);
-	}
+#ifdef DIAGNOSTIC
+	print("vaccess: deprecated interface used.\n");
+#endif /* DIAGNOSTIC */
 
-	mask = 0;
-
-	/* Otherwise, check the owner. */
-	if (kauth_cred_geteuid(cred) == uid) {
-		if (acc_mode & VEXEC)
-			mask |= S_IXUSR;
-		if (acc_mode & VREAD)
-			mask |= S_IRUSR;
-		if (acc_mode & VWRITE)
-			mask |= S_IWUSR;
-		return ((file_mode & mask) == mask ? 0 : EACCES);
-	}
-
-	/* Otherwise, check the groups. */
-	error = kauth_cred_ismember_gid(cred, gid, &ismember);
-	if (error)
-		return (error);
-	if (kauth_cred_getegid(cred) == gid || ismember) {
-		if (acc_mode & VEXEC)
-			mask |= S_IXGRP;
-		if (acc_mode & VREAD)
-			mask |= S_IRGRP;
-		if (acc_mode & VWRITE)
-			mask |= S_IWGRP;
-		return ((file_mode & mask) == mask ? 0 : EACCES);
-	}
-
-	/* Otherwise, check everyone else. */
-	if (acc_mode & VEXEC)
-		mask |= S_IXOTH;
-	if (acc_mode & VREAD)
-		mask |= S_IROTH;
-	if (acc_mode & VWRITE)
-		mask |= S_IWOTH;
-	return ((file_mode & mask) == mask ? 0 : EACCES);
+	return genfs_can_access(type, file_mode, uid, gid, acc_mode, cred);
 }
 
 /*

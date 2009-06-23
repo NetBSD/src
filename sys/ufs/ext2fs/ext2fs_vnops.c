@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.86 2009/05/07 19:30:30 elad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.87 2009/06/23 19:36:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.86 2009/05/07 19:30:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.87 2009/06/23 19:36:40 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ ext2fs_access(void *v)
 	if ((mode & VWRITE) && (ip->i_e2fs_flags & EXT2_IMMUTABLE))
 		return (EPERM);
 
-	return (vaccess(vp->v_type, ip->i_e2fs_mode & ALLPERMS,
+	return (genfs_can_access(vp->v_type, ip->i_e2fs_mode & ALLPERMS,
 			ip->i_uid, ip->i_gid, mode, ap->a_cred));
 }
 
