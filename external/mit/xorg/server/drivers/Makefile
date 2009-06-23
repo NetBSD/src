@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2009/06/12 01:59:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2009/06/23 04:39:52 mrg Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -79,7 +79,6 @@ SUBDIR+= \
 	xf86-video-tga \
 	xf86-video-trident \
 	xf86-video-tseng \
-	xf86-video-vga \
 	xf86-video-wsfb
 .elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
@@ -108,7 +107,6 @@ SUBDIR+= \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-neomagic \
-	xf86-video-nsc \
 	xf86-video-nv \
 	xf86-video-r128 \
 	xf86-video-radeon \
@@ -122,11 +120,17 @@ SUBDIR+= \
 	xf86-video-tga \
 	xf86-video-trident \
 	xf86-video-tseng \
-	xf86-video-vga \
 
 # replace with xf86-video-openchrome
 #	xf86-video-via
 .endif
+
+# broken with xorg-server 1.6
+# x86
+#	xf86-video-nsc \
+#	xf86-video-vga \
+# alpha
+#	xf86-video-vga \
 
 #xf86-video-rendition
 
