@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.28 2009/06/12 01:55:59 mrg Exp $
+# $NetBSD: md.cats,v 1.29 2009/06/23 04:39:52 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -389,8 +389,8 @@
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so.1	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/nsc_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/nsc_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nsc_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/nsc_drv.so.2		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nv_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/nv_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
@@ -415,8 +415,8 @@
 ./usr/X11R7/lib/modules/drivers/tseng_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vesa_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vesa_drv.so.2		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vga_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vga_drv.so.4		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vga_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/vga_drv.so.4		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/via_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/via_drv.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so		-unknown-	xorg
@@ -572,7 +572,7 @@
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/neomagic.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/nsc.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/nsc.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/nv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeonhd.0				-unknown-	.cat,xorg
@@ -583,7 +583,7 @@
 ./usr/X11R7/man/cat4/trident.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/tseng.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vesa.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/vga.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/vga.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/via.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/vmware.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
@@ -608,7 +608,7 @@
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/neomagic.html			-unknown-	html,xorg
-./usr/X11R7/man/html4/nsc.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/nsc.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/nv.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeonhd.html			-unknown-	html,xorg
@@ -619,7 +619,7 @@
 ./usr/X11R7/man/html4/trident.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/tseng.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/vesa.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/vga.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/vga.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/via.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/vmware.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
@@ -644,7 +644,7 @@
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/neomagic.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/nsc.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/nsc.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/nv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeonhd.4				-unknown-	.man,xorg
@@ -655,7 +655,7 @@
 ./usr/X11R7/man/man4/trident.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/tseng.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vesa.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/vga.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/vga.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/via.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/vmware.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
