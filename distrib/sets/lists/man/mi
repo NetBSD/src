@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1141 2009/06/21 01:55:35 christos Exp $
+# $NetBSD: mi,v 1.1142 2009/06/23 17:58:23 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -385,6 +385,7 @@
 ./usr/share/man/cat1/postlock.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postlog.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postmap.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat1/postmulti.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postqueue.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/postsuper.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/pr.0			man-util-catman		.cat
@@ -1820,6 +1821,7 @@
 ./usr/share/man/cat5/pkg_install.conf.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat5/pkg_summary.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat5/postconf.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat5/postfix-wrapper.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/primes.0			man-obsolete		obsolete
 ./usr/share/man/cat5/printcap.0			man-lpr-catman		.cat
 ./usr/share/man/cat5/protocols.0		man-net-catman		.cat
@@ -3049,6 +3051,7 @@
 ./usr/share/man/html1/postlock.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postlog.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postmap.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html1/postmulti.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postqueue.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/postsuper.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html1/pr.html			man-util-htmlman	html
@@ -4329,6 +4332,7 @@
 ./usr/share/man/html5/pkg_install.conf.html	man-pkgutil-htmlman	html
 ./usr/share/man/html5/pkg_summary.html		man-pkgutil-htmlman	html
 ./usr/share/man/html5/postconf.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html5/postfix-wrapper.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/printcap.html		man-lpr-htmlman		html
 ./usr/share/man/html5/protocols.html		man-net-htmlman		html
 ./usr/share/man/html5/racoon.conf.html		man-netutil-htmlman	crypto,html
@@ -5365,6 +5369,7 @@
 ./usr/share/man/man1/postlock.1			man-postfix-man		postfix,.man
 ./usr/share/man/man1/postlog.1			man-postfix-man		postfix,.man
 ./usr/share/man/man1/postmap.1			man-postfix-man		postfix,.man
+./usr/share/man/man1/postmulti.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/postqueue.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/postsuper.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/pr.1			man-util-man		.man
@@ -6800,6 +6805,7 @@
 ./usr/share/man/man5/pkg_install.conf.5		man-pkgutil-man		.man
 ./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		.man
 ./usr/share/man/man5/postconf.5			man-postfix-man		postfix,.man
+./usr/share/man/man5/postfix-wrapper.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
 ./usr/share/man/man5/printcap.5			man-lpr-man		.man
 ./usr/share/man/man5/protocols.5		man-net-man		.man
