@@ -1,0 +1,65 @@
+header_body_checks: test-queueID: warning: header subject: primary subject
+0 MAIN 0	|subject: primary subject
+header_body_checks: test-queueID: warning: header content-type: multipart/(co\m\)ment)mumble mumble; boundary = "ab\cd ? ef" mumble
+1 MAIN 71	|content-type: multipart/(co\m\)ment)mumble mumble; boundary = "ab\cd 
+ ef" mumble
+HEADER END
+2 BODY N 0	|
+header_body_checks: test-queueID: warning: body abcdef prolog
+3 BODY N 1	|abcdef prolog
+4 BODY N 15	|
+header_body_checks: test-queueID: warning: body --abcd ef
+5 BODY N 16	|--abcd ef
+header_body_checks: test-queueID: warning: header content-type: message/rfc822; mumble
+6 MULT 0	|content-type: message/rfc822; mumble
+7 BODY N 0	|
+header_body_checks: test-queueID: warning: header subject: nested subject
+8 NEST 0	|subject: nested subject
+header_body_checks: test-queueID: warning: header content-type: multipart/mumble; boundary(comment)="pqrs"
+9 NEST 57	|content-type: multipart/mumble; boundary(comment)="pqrs"
+header_body_checks: test-queueID: warning: header content-transfer-encoding: base64
+10 NEST 91	|content-transfer-encoding: base64
+header_body_checks: warning: invalid message/* or multipart/* encoding domain: base64
+11 BODY N 0	|
+header_body_checks: test-queueID: warning: body pqrs prolog
+12 BODY N 1	|pqrs prolog
+13 BODY N 13	|
+header_body_checks: test-queueID: warning: body --pqrs
+14 BODY N 14	|--pqrs
+header_body_checks: test-queueID: warning: header header: pqrs part 01
+15 MULT 0	|header: pqrs part 01
+16 BODY N 0	|
+header_body_checks: test-queueID: warning: body body pqrs part 01
+17 BODY N 1	|body pqrs part 01
+18 BODY N 19	|
+header_body_checks: test-queueID: warning: body --pqrs
+19 BODY N 20	|--pqrs
+header_body_checks: test-queueID: warning: header header: pqrs part 02
+20 MULT 0	|header: pqrs part 02
+21 BODY N 0	|
+header_body_checks: test-queueID: warning: body body pqrs part 02
+22 BODY N 1	|body pqrs part 02
+23 BODY N 19	|
+header_body_checks: test-queueID: warning: body --bogus-boundary
+24 BODY N 20	|--bogus-boundary
+header_body_checks: test-queueID: warning: body header: wietse
+25 BODY N 37	|header: wietse
+26 BODY N 52	|
+header_body_checks: test-queueID: warning: body body asdasads
+27 BODY N 53	|body asdasads
+28 BODY N 67	|
+header_body_checks: test-queueID: warning: body --abcd ef
+29 BODY N 68	|--abcd ef
+header_body_checks: test-queueID: warning: header header: abcdef part 02
+30 MULT 0	|header: abcdef part 02
+31 BODY N 0	|
+header_body_checks: test-queueID: warning: body body abcdef part 02
+32 BODY N 1	|body abcdef part 02
+33 BODY N 21	|
+header_body_checks: test-queueID: warning: body --abcd ef--
+34 BODY N 0	|--abcd ef--
+35 BODY N 12	|
+header_body_checks: test-queueID: warning: body epilog
+36 BODY N 13	|epilog
+BODY END
+header_body_checks: warning: improper message/* or multipart/* encoding domain

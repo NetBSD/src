@@ -1,0 +1,20 @@
+Qmail needs 16 seconds per 1000 destinations.
+Default configuration, concurrencyremote = 100.
+
+/usr/bin/time ./smtp-source -r 1000 fist
+        1.16 real         0.09 user         0.24 sys
+Jun  8 14:57:17 fist qmail: 865796237.334359 new msg 39906
+Jun  8 14:57:32 fist qmail: 865796252.632756 delivery 2154: success: 168.100.189
+Total time: 15 seconds
+
+/usr/bin/time ./smtp-source -r 2000 fist
+        1.99 real         0.23 user         0.45 sys
+Jun  8 14:58:11 fist qmail: 865796291.817523 new msg 39907
+Jun  8 14:58:43 fist qmail: 865796323.174117 delivery 4116: success: 168.100.189
+Total time: 32 seconds
+
+/usr/bin/time ./smtp-source -r 5000 fist
+        4.63 real         0.58 user         1.10 sys
+Jun  8 14:59:23 fist qmail: 865796363.346735 new msg 39908
+Jun  8 15:00:43 fist qmail: 865796443.209168 delivery 9153: success: 168.100.189
+Total time: 80 seconds

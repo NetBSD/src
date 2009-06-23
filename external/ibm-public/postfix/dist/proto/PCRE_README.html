@@ -1,0 +1,101 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix PCRE Support</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix PCRE Support</h1>
+
+<hr>
+
+<h2>PCRE (Perl Compatible Regular Expressions) map support</h2>
+
+<p> The optional "pcre" map type allows you to specify regular
+expressions with the PERL style notation such as \s for space and
+\S for non-space. The main benefit, however, is that pcre lookups
+are often faster than regexp lookups. This is because the pcre
+implementation is often more efficient than the POSIX regular
+expression implementation that you find on many systems. </p>
+
+<p> A description of how to use pcre tables, including examples,
+is given in the pcre_table(5) manual page. Information about PCRE
+itself can be found at http://www.pcre.org/. </p>
+
+<h2>Building Postfix with PCRE support</h2>
+
+<p> These instructions assume that you build Postfix from source
+code as described in the INSTALL document. Some modification may
+be required if you build Postfix from a vendor-specific source
+package.  </p>
+
+<p> Note: to use pcre with Debian GNU/Linux's Postfix, all you
+need is to install the postfix-pcre package and you're done.  There
+is no need to recompile Postfix. </p>
+
+<p> In some future, Postfix will have a plug-in interface for adding
+map types. Until then, you need to compile PCRE support into Postfix.
+</p>
+
+<p> First of all, you need the PCRE library (Perl Compatible Regular
+Expressions), which can be obtained from: </p>
+
+<blockquote> 
+ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/.
+</blockquote>
+
+<p> NOTE: pcre versions prior to 2.06 cannot be used. </p>
+
+<p> In order to build Postfix with PCRE support you need to add
+-DHAS_PCRE and a -I for the PCRE include file to CCARGS, and add
+the path to the PCRE library to AUXLIBS, for example: </p>
+
+<blockquote>
+<pre>
+make -f Makefile.init makefiles \
+    "CCARGS=-DHAS_PCRE -I/usr/local/include" \
+    "AUXLIBS=-L/usr/local/lib -lpcre"
+</pre>
+</blockquote>
+
+<p> Solaris needs run-time path information too: </p>
+
+<blockquote>
+<pre>
+make -f Makefile.init makefiles \
+    "CCARGS=-DHAS_PCRE -I/usr/local/include" \
+    "AUXLIBS=-L/usr/local/lib -R/usr/local/lib -lpcre"
+</pre>
+</blockquote>
+
+<h2>Things to know</h2>
+
+<ul>
+
+<li> <p> When Postfix searches a pcre: or regexp: lookup table,
+each pattern is applied to the entire input string. Depending on
+the application, that string is an entire client hostname, an entire
+client IP address, or an entire mail address. Thus, no parent domain
+or parent network search is done, "user@domain" mail addresses are
+not broken up into their user and domain constituent parts, and
+"user+foo" is not broken up into user and foo.  </p>
+
+<li> <p> Regular expression tables such as pcre: or regexp: are
+not allowed to do $number substitution in lookup results that can
+be security sensitive: currently, that restriction applies to the
+local aliases(5) database or the virtual(8) delivery agent tables.
+</p>
+
+</ul>
+
+</body>
+
+</html>

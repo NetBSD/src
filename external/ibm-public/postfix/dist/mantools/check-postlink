@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# Look for missing parameter names in postlink
+
+trap 'rm -f postlink.tmp postconf.tmp check-postlink.tmp 2>/dev/null' 0 1 2 3 15
+
+# Extract parameters from postconf.5.html hyperlinks.
+
+sed -n '/[ 	].*href="postconf\.5\.html#/{
+	s/^[^#]*#//
+	s/".*//
+	p
+}' mantools/postlink | sort > postlink.tmp
+#
+# Extract parameters from postlink script. This also produces names
+# of obsolete parameters, and non-parameter names such as SMTPD
+# access restrictions and mask names.
+
+postconf -d | sed 's/ =.*//' | sort >postconf.tmp
+
+# Filter the output through a whitelist.
+
+cat >check-postlink.tmp <<'EOF'
+lmtp_body_checks
+lmtp_cname_overrides_servername
+lmtp_destination_concurrency_failed_cohort_limit
+lmtp_destination_concurrency_negative_feedback
+lmtp_destination_concurrency_positive_feedback
+lmtp_destination_rate_delay
+lmtp_header_checks
+lmtp_initial_destination_concurrency
+lmtp_mime_header_checks
+lmtp_nested_header_checks
+local_destination_concurrency_failed_cohort_limit
+local_destination_concurrency_negative_feedback
+local_destination_concurrency_positive_feedback
+local_destination_rate_delay
+local_initial_destination_concurrency
+relay_destination_concurrency_failed_cohort_limit
+relay_destination_concurrency_negative_feedback
+relay_destination_concurrency_positive_feedback
+relay_destination_rate_delay
+relay_initial_destination_concurrency
+smtp_destination_concurrency_failed_cohort_limit
+smtp_destination_concurrency_negative_feedback
+smtp_destination_concurrency_positive_feedback
+smtp_destination_rate_delay
+smtp_initial_destination_concurrency
+stress
+virtual_destination_concurrency_failed_cohort_limit
+virtual_destination_concurrency_negative_feedback
+virtual_destination_concurrency_positive_feedback
+virtual_destination_rate_delay
+virtual_initial_destination_concurrency
+EOF
+
+comm -23 postconf.tmp postlink.tmp | fgrep -vx -f check-postlink.tmp

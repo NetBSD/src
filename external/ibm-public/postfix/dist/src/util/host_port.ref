@@ -1,0 +1,22 @@
+>> hhh:ppp
+host hhh port ppp
+>> hhh:
+host hhh port default-service
+>> hhh
+host hhh port default-service
+>> [hhh]:ppp
+host hhh port ppp
+>> [hhh]:
+host hhh port default-service
+>> [hhh]
+host hhh port default-service
+>> #[hhh:ppp]
+>> #[hhh:]
+>> hhh:1pp
+unknown: warning: garbage after numerical service in hhh:1pp
+>> [hh.]
+unknown: warning: valid hostname or network address required in [hh.]
+>> hh.
+unknown: warning: valid hostname or network address required in hh.
+>> 999
+unknown: warning: valid hostname or network address required in 999

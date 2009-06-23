@@ -1,0 +1,228 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Manual Pages </title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+Manual Pages </h1>
+
+<hr>
+
+<h2> Information for new Postfix users </h2>
+
+<p> New Postfix users should first look at the following introductory
+documents.  These introductions are hyperlinked to more advanced
+documents and to UNIX-style manual pages. The UNIX-style manual
+pages are intended for people who are already familiar with Postfix.
+</p>
+
+<ul>
+
+<li> <a href="OVERVIEW.html"> Postfix architecture overview </a>
+
+<li> <a href="BASIC_CONFIGURATION_README.html"> Basic configuration
+</a>
+
+<li> <a href="DEBUG_README.html"> Trouble shooting </a>
+
+<li> <a href="CONTENT_INSPECTION_README.html"> Content inspection
+overview</a>
+
+<li> <a href="SMTPD_ACCESS_README.html">Relay/access control overview
+</a>
+
+<li> <a href="DATABASE_README.html"> Lookup table overview </a>
+
+</ul>
+
+<h2> Postfix manual page organization </h2>
+
+<p> Each Postfix manual page is numbered after a section of the
+UNIX manual: examples are <a href="mailq.1.html">mailq(1)</a> or <a href="access.5.html">access(5)</a>. Unfortunately,
+there is no single universal method to organize manual pages; each
+UNIX flavor appears to be different. Postfix documentation assumes
+the following convention:  </p>
+
+<blockquote>
+
+<table cellpadding="0" cellspacing="0">
+
+<tr><th> Section </th> <th> Topic </th> </tr>
+
+<tr><td colspan="2"> <hr> </td> </tr>
+
+<tr><td align="center"> 1 </td> <td> Commands </td> </tr>
+
+<tr><td align="center"> 3 </td> <td> Library routines </td> </tr>
+
+<tr><td align="center"> 5 </td> <td> File formats </td> </tr>
+
+<tr><td align="center"> 8 </td> <td> Daemons </td> </tr>
+
+</table>
+
+</blockquote>
+
+<h2> Commands </h2>
+
+<ul>
+
+
+<li> <a href="postalias.1.html">postalias(1)</a>, create/update/query alias database 
+
+<li> <a href="postcat.1.html">postcat(1)</a>, examine Postfix queue file 
+
+<li> <a href="postconf.1.html">postconf(1)</a>, Postfix configuration utility 
+
+<li> <a href="postfix.1.html">postfix(1)</a>, Postfix control program 
+
+<li> <a href="postkick.1.html">postkick(1)</a>, trigger Postfix daemon 
+
+<li> <a href="postlock.1.html">postlock(1)</a>, Postfix-compatible locking 
+
+<li> <a href="postlog.1.html">postlog(1)</a>, Postfix-compatible logging 
+
+<li> <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager 
+
+<li> <a href="postmulti.1.html">postmulti(1)</a>, Postfix multi-instance manager 
+
+<li> <a href="postqueue.1.html">postqueue(1)</a>, Postfix mail queue control 
+
+<li> <a href="postsuper.1.html">postsuper(1)</a>, Postfix housekeeping 
+
+<li> <a href="mailq.1.html">mailq(1)</a>, Sendmail compatibility interface 
+
+<li> <a href="newaliases.1.html">newaliases(1)</a>, Sendmail compatibility interface 
+
+<li> <a href="sendmail.1.html">sendmail(1)</a>, Sendmail compatibility interface 
+
+</ul>
+
+<h2> Postfix configuration </h2>
+
+<ul>
+
+
+<li> <a href="bounce.5.html">bounce(5)</a>, Postfix bounce message templates 
+
+<li> <a href="master.5.html">master(5)</a>, Postfix <a href="master.5.html">master.cf</a> file syntax 
+
+<li> <a href="postconf.5.html">postconf(5)</a>, Postfix <a href="postconf.5.html">main.cf</a> file syntax 
+
+<li> <a href="postfix-wrapper.5.html">postfix-wrapper(5)</a>, Postfix multi-instance API 
+
+</ul>
+
+<h2> Table-driven mechanisms </h2>
+
+<ul>
+
+
+<li> <a href="access.5.html">access(5)</a>, Postfix SMTP access control table 
+
+<li> <a href="aliases.5.html">aliases(5)</a>, Postfix alias database 
+
+<li> <a href="canonical.5.html">canonical(5)</a>, Postfix input address rewriting 
+
+<li> <a href="generic.5.html">generic(5)</a>, Postfix output address rewriting 
+
+<li> <a href="header_checks.5.html">header_checks(5)</a>, <a href="header_checks.5.html">body_checks(5)</a>, Postfix content inspection 
+
+<li> <a href="relocated.5.html">relocated(5)</a>, Users that have moved 
+
+<li> <a href="transport.5.html">transport(5)</a>, Postfix routing table 
+
+<li> <a href="virtual.5.html">virtual(5)</a>, Postfix virtual aliasing 
+
+</ul>
+
+<h2> Table lookup mechanisms </h2>
+
+<ul>
+
+
+<li> <a href="cidr_table.5.html">cidr_table(5)</a>, Associate CIDR pattern with value 
+
+<li> <a href="ldap_table.5.html">ldap_table(5)</a>, Postfix LDAP client 
+
+<li> <a href="mysql_table.5.html">mysql_table(5)</a>, Postfix MYSQL client 
+
+<li> <a href="nisplus_table.5.html">nisplus_table(5)</a>, Postfix NIS+ client 
+
+<li> <a href="pcre_table.5.html">pcre_table(5)</a>, Associate PCRE pattern with value 
+
+<li> <a href="pgsql_table.5.html">pgsql_table(5)</a>, Postfix PostgreSQL client 
+
+<li> <a href="regexp_table.5.html">regexp_table(5)</a>, Associate POSIX regexp pattern with value 
+
+<li> <a href="tcp_table.5.html">tcp_table(5)</a>, Postfix client-server table lookup 
+
+</ul>
+
+<h2> Daemon processes </h2>
+
+<ul>
+
+
+<li> <a href="anvil.8.html">anvil(8)</a>, Postfix connection/rate limiting 
+
+<li> <a href="bounce.8.html">bounce(8)</a>, <a href="defer.8.html">defer(8)</a>, <a href="trace.8.html">trace(8)</a>, Delivery status reports 
+
+<li> <a href="cleanup.8.html">cleanup(8)</a>, canonicalize and enqueue message 
+
+<li> <a href="discard.8.html">discard(8)</a>, Postfix discard delivery agent 
+
+<li> <a href="error.8.html">error(8)</a>, Postfix error delivery agent 
+
+<li> <a href="flush.8.html">flush(8)</a>, Postfix fast ETRN service 
+
+<li> <a href="local.8.html">local(8)</a>, Postfix local delivery agent 
+
+<li> <a href="master.8.html">master(8)</a>, Postfix master daemon 
+
+<li> <a href="qmgr.8.html">oqmgr(8)</a>, old Postfix queue manager 
+
+<li> <a href="pickup.8.html">pickup(8)</a>, Postfix local mail pickup 
+
+<li> <a href="pipe.8.html">pipe(8)</a>, deliver mail to non-Postfix command 
+
+<li> <a href="proxymap.8.html">proxymap(8)</a>, Postfix lookup table proxy server 
+
+<li> <a href="qmgr.8.html">qmgr(8)</a>, Postfix queue manager 
+
+<li> <a href="qmqpd.8.html">qmqpd(8)</a>, Postfix QMQP server 
+
+<li> <a href="scache.8.html">scache(8)</a>, Postfix connection cache manager 
+
+<li> <a href="showq.8.html">showq(8)</a>, list Postfix mail queue 
+
+<li> <a href="smtp.8.html">smtp(8)</a>, <a href="lmtp.8.html">lmtp(8)</a>, Postfix SMTP+LMTP client 
+
+<li> <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server 
+
+<li> <a href="spawn.8.html">spawn(8)</a>, run non-Postfix server 
+
+<li> <a href="tlsmgr.8.html">tlsmgr(8)</a>, Postfix TLS cache and randomness manager 
+
+<li> <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, Postfix address rewriting 
+
+<li> <a href="verify.8.html">verify(8)</a>, Postfix address verification 
+
+<li> <a href="virtual.8.html">virtual(8)</a>, Postfix virtual delivery agent 
+
+</ul>
+
+
+</body>
+
+</html>

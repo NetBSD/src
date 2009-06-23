@@ -1,0 +1,14 @@
+This patch adds support for logfiles with conn_use, delays, and dsn
+attributes.
+
+--- pflogsumm.pl.orig	2005-04-09 12:54:44.000000000 +0200
++++ pflogsumm.pl	2005-11-07 21:50:05.483199193 +0100
+@@ -696,7 +696,7 @@
+ 	    }
+ 	}
+ 	elsif((($addr, $relay, $delay, $status, $toRmdr) = $logRmdr =~
+-		/to=<([^>]*)>, (?:orig_to=<[^>]*>, )?relay=([^,]+), delay=([^,]+), status=(\S+)(.*)$/o) >= 4)
++		/to=<([^>]*)>, (?:orig_to=<[^>]*>, )?relay=([^,]+), (?:conn_use=[^,]+, )?delay=([^,]+), (?:delays=[^,]+, )?(?:dsn=[^,]+, )?status=(\S+)(.*)$/o) >= 4)
+ 	{
+ 
+ 	    if($opts{'m'} && $addr =~ /^(.*!)*([^!]+)!([^!@]+)@([^\.]+)$/o) {

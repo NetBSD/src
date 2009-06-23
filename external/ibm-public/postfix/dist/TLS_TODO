@@ -1,0 +1,39 @@
+This list does not really follow priority.
+
+* Code cleanup: split smtp_session.c into generic SMTP, legacy TLS,
+  and current TLS.  The amount of TLS code now dominates the file.
+  Do this after all other code revisions stabilize, to avoid
+  complicating code reviews.
+
+* Code cleanup: TLS_LEV_NOTFOUND no longer belongs in the TLS
+  library. It is an SMTP-client only feature. To fix, change the
+  policy lookup API and use a different method to indicate if a
+  policy was found. At the same time, fix policy lookup to initialize
+  session->tls_level.
+
+* Code cleanup: see if multiple consecutive switches can be aggregated
+  (set_cipher_grade() and session_tls_init()).
+
+* Implement support of CRL checking. OpenSSL 0.9.7 finally supports CRLs,
+  so Postfix/TLS should support loading CRLs.
+
+* Cleanup the "pfixtls" special logging, so that it fits Wietses original
+  "per site" decision to make debugging easier.
+
+* Move TLS based information from separate lines into Postfix's smtpd
+  logging lines to make logfile analysis easier.
+
+* Check the "info_callback" for sensitive use. I already had to remove the
+  "warning alert" issued on normal shutdown. Why is a warning issued for
+  a normal shutdown??
+
+* Introduce new tls_per_client table to achieve the same selective behaviour
+  for incoming connections.
+
+* Introduce better support for "opportunistic" encryption: collect information
+  about peers connecting; log warnings when the key changed etc.
+  [I am not sure that I already have the best answers available.]
+
+* Find a way to use the certificates themselves instead of the fingerprints
+  to allow certificate based relaying. The maintenance of the fingerprints
+  is a nightmare.

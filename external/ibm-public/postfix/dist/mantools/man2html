@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Crude script to convert formatted manual pages to HTML
+
+while :
+do
+    case $1 in
+    -t) title=$2; shift; shift;;
+    -*) echo "Usage: $0 [-t title] [file(s)]" 1>&2; exit 1;;
+     *) break;;
+    esac
+done
+
+echo "<!doctype html public \"-//W3C//DTD HTML 4.01 Transitional//EN\"
+        \"http://www.w3.org/TR/html4/loose.dtd\">
+<html> <head>
+<meta http-equiv=\"Content-Type\" content=\"text/html; charset=us-ascii\">
+<title> $title </title>
+</head> <body> <pre>"
+
+sed '
+	s/\([<>&]\)\1/\1/g
+	s/&/\&amp;/g
+	s/_</\&lt;/g
+	s/<</\&lt;/g
+	s/</\&lt;/g
+	s/_>/\&gt;/g
+	s/>>/\&gt;/g
+	s/>/\&gt;/g
+	s;_\([^_]\);<i>\1</i>;g
+	s;.\(.\);<b>\1</b>;g
+	s;</i>\( *\)<i>;\1;g
+	s;</b>\( *\)<b>;\1;g
+' "$@" | egrep -v 'postconf (readme|html)_direc|tory</b>" *to *locate *this'
+
+echo '</pre> </body> </html>'

@@ -1,0 +1,6 @@
+See http://www.openspf.org/Software for the current version of the
+SPF policy daemon for Postfix.
+
+SPF support is also available via MILTER plugins, such as sid-milter
+at http://sourceforge.net/projects/sid-milter/ which implements both
+SenderID and SPF.

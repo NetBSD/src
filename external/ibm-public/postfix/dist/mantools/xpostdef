@@ -1,0 +1,121 @@
+#!/usr/bin/perl
+
+# Usage: xpostdef postconf.proto >postconf.proto.new
+
+# Update parameter default values in postconf prototype file.
+
+$POSTCONF="postconf";
+
+# Read all the default parameter values. This also provides us with
+# a list of all the parameters that postconf knows about.
+
+open(POSTCONF, "$POSTCONF -d|") || die "cannot run $POSTCONF -d: !$\n";
+while(<POSTCONF>) {
+    chop;
+    if (($name, $defval) = split(/\s+=\s+/, $_, 2)) {
+	$defval =~ s/&/\&amp;/g;
+	$defval =~ s/</\&lt;/g;
+	$defval =~ s/>/\&gt;/g;
+	$defval =~ s/\s+$//;
+	$defaults{$name} = $defval;
+    } else {
+	die "unexpected $POSTCONF output: $_\n";
+    }
+}
+close(POSTCONF) || die "$POSTCONF failed: $!\n"; 
+
+# Censor out default values that are system or version dependent, or
+# that don't display well.
+
+$censored = <<EOF;
+alias_database
+alias_maps
+command_directory
+command_expansion_filter
+config_directory
+daemon_directory
+default_database_type
+default_rbl_reply
+execution_directory_expansion_filter
+export_environment
+forward_expansion_filter
+forward_path
+html_directory
+import_environment
+mail_release_date
+mail_spool_directory
+mail_version
+mailbox_delivery_lock
+mailq_path
+manpage_directory
+mydomain
+myhostname
+mynetworks
+newaliases_path
+parent_domain_matches_subdomains
+proxy_read_maps
+queue_directory
+readme_directory
+sendmail_path
+smtpd_expansion_filter
+tls_random_source
+virtual_mailbox_lock
+milter_connect_macros
+milter_helo_macros
+milter_mail_macros
+milter_rcpt_macros
+milter_data_macros
+milter_unknown_command_macros
+milter_end_of_data_macros
+EOF
+
+for $name (split(/\s+/, $censored)) {
+    $defaults{$name} = "see \"postconf -d\" output";
+}
+
+# Process the postconf prototype file, and update default values
+# with output from the postconf command. Leave alone any defaults
+# that postconf didn't know about. This can happen when conditional
+# features have been compile time disabled.
+
+$name = $defval = $text = $line = "";
+
+while(<>) {
+    if (/^%PARAM/) {
+
+	# Print the updated parameter text. Keep the old default if
+	# postconf doesn't have a suitable one.
+
+	if ($name) {
+	    $defval = $defaults{$name} if (defined($defaults{$name}));
+	    print "%PARAM $name $defval\n";
+	}
+	print $text;
+
+	# Reset the parameter name, default, and accumulated text.
+
+	$name = $defval = $text = $line = "";
+
+	# Accumulate the parameter name and default value.
+
+	do {
+	    $_ =~ s/\s+$//;
+	    $line .= " " . $_;
+	} while(($_ = <POSTCONF>) && /^../);
+	($junk, $class, $name, $defval) = split(/\s+/, $line, 4);
+    } else {
+
+	# Accumulate the text in the parameter definition.
+
+	$_ =~ s/\s+$/\n/;
+	$text .= $_;
+
+    }
+}
+
+# Fix the last parameter.
+
+if ($name && $text) {
+    $defval = $defaults{$name} if (defined($defaults{$name}));
+    print "%PARAM $name $defval\n$text";
+}

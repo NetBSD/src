@@ -1,0 +1,38 @@
+subject: primary subject
+content-type : multipart/(co\m\)ment)mumble mumble; boundary = "ab\cd 
+ ef" mumble
+
+abcdef prolog
+
+--abcd ef
+content-type: message/rfc822; mumble
+
+subject: nested subject
+content-type: multipart/mumble; boundary(comment)="pqrs"
+content-transfer-encoding: base64
+
+pqrs prolog
+
+--pqrs
+header: pqrs part 01
+
+body pqrs part 01
+
+--pqrs
+header: pqrs part 02
+
+body pqrs part 02
+
+--bogus-boundary
+header: wietse
+
+body asdasads
+
+--abcd ef
+header: abcdef part 02
+
+body abcdef part 02
+
+--abcd ef--
+
+epilog

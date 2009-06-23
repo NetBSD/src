@@ -1,0 +1,443 @@
+The stable Postfix release is called postfix-2.2.x where 2=major
+release number, 2=minor release number, x=patchlevel.  The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-2.3-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+Main changes with Postfix version 2.2
+-------------------------------------
+
+This is a summary of the changes. These and more are detailed in
+the following sections of this document.
+
+- TLS and IPv6 support are now built into Postfix, based on code
+from third-party patches.
+
+- Extended query interface for LDAP, MySQL and PostgreSQL with free
+form SQL queries, and domain filters to reduce unnecessary lookups.
+
+- SMTP client-side connection reuse. This can dramatically speed
+up deliveries to high-volume destinations that have some servers
+that respond, and some non-responding mail servers.
+
+- By default, Postfix no longer rewrites message headers in mail
+from remote clients. This includes masquerading, canonical mapping,
+replacing "!" and "%" by "@", and appending the local domain to
+incomplete addresses.  Thus, spam from poorly written software no
+longer looks like it came from a local user.
+
+- When your machine does not have its own domain name, Postfix can
+now replace your "home network" email address by your ISP account
+in outgoing SMTP mail, while leaving your email address unchanged
+when sending mail to someone on the local machine.
+
+- Compatibility workarounds: you can now selectively turn off ESMTP
+features such as AUTH or STARTTLS in the Postfix SMTP client or
+server, without having to "dumb down" other mail deliveries, and
+without having to use transport maps for outgoing mail.
+
+- Remote SMTP client resource control (the anvil server).  This
+allows you to limit the number of connections, or the number of
+MAIL FROM and RCPT TO commands that an SMTP client can send per
+unit time.
+
+- Support for CDB, SDBM and NIS+ databases is now built into Postfix
+(but the CDB and SDBM libraries are not).
+
+- New SMTP access control features, and more.
+
+Major changes - critical
+------------------------
+
+BEFORE upgrading from an older release you MUST stop Postfix, unless
+you're running a Postfix 2.2 snapshot release that already has
+Postfix 2.2 IPV6 and TLS support.
+
+AFTER upgrading from an older release DO NOT copy the old
+master.cf/main.cf files over the new files.  Instead, you MUST let
+the Postfix installation procedure update the existing configuration
+files with new service entries.
+
+[Incompat 20041118] The master-child protocol has changed.  The
+Postfix master daemon will log warnings about partial status updates
+if you don't stop and start Postfix.
+
+[Incompat 20041023, 20041009] The queue manager to delivery agent
+protocol has changed. Mail will remain queued if you do not restart
+the queue manager.
+
+[Incompat 20050111] The upgrade procedure adds the tlsmgr service
+to the master.cf file. This service entry is not compatible with
+the Postfix/TLS patch.
+
+[Feature 20040919] The upgrade procedure adds the discard service
+to the master.cf file.
+
+[Feature 20040720] The upgrade procedure adds the scache (shared
+connection cache) service to the master.cf file.
+
+Major changes - IPv6 support
+----------------------------
+
+[Feature 20050111] Postfix version 2.2 IP version 6 support based
+on the Postfix/IPv6 patch by Dean Strik and others.  IPv6 support
+is always compiled into Postfix on systems that have Postfix
+compatible IPv6 support. On other systems Postfix will simply use
+IP version 4 just like it did before. See the IPV6_README document
+for what systems are supported, and how to turn on IPv6 in main.cf.
+
+[Incompat 20050111] Postfix version 2.2 IPv6 support differs from
+the Postfix/IPv6 patch by Dean Strik in a few minor ways.
+
+- Network protocol support including DNS lookup is selected with
+the inet_protocols parameter instead of the inet_interfaces parameter.
+This is needed so that Postfix will not attempt to deliver mail via
+IPv6 when the system has no IPv6 connectivity.
+
+- The lmtp_bind_address6 feature was omitted. The Postfix LMTP
+client will be absorbed into the SMTP client, so there is no reason
+to keep adding features to the LMTP client.
+
+- The CIDR-based address matching code was rewritten.  The new
+behavior is believed to be closer to expectation. The results may
+be incompatible with that of the Postfix/IPv6 patch.
+
+[Incompat 20050117] The Postfix SMTP server now requires that IPv6
+addresses in SMTP commands are specified as [ipv6:ipv6address], as
+described in RFC 2821.
+
+Major changes - TLS support
+---------------------------
+
+[Feature 20041210] Postfix version 2.2 TLS support, based on the
+Postfix/TLS patch by Lutz Jaenicke.  TLS support is not compiled
+in by default.  For more information about Postfix 2.2 TLS support,
+see the TLS_README document.
+
+[Incompat 20041210] Postfix version 2.2 TLS support differs from
+the Postfix/TLS patch by Lutz Jaenicke in a few minor ways.
+
+- main.cf: Use btree instead of sdbm for TLS session cache databases.
+
+  Session caches are now accessed only by the tlsmgr(8) process,
+  so there are no concurrency issues. Although Postfix still has
+  an SDBM client, the SDBM library (1000 lines of code) is no longer
+  included with Postfix.
+
+  TLS session caches can use any database that can store objects
+  of several kbytes or more, and that implements the sequence
+  operation. In most cases, btree databases should be adequate.
+
+  NOTE: You cannot use dbm databases. TLS session objects are too
+  large.
+
+- master.cf: Specify unix instead of fifo for the tlsmgr service type.
+  This change is automatically made by the Postfix upgrade procedure.
+
+  The smtp(8) and smtpd(8) processes use a client-server protocol
+  in order to access the tlsmgr(8)'s pseudo-random number generation
+  (PRNG) pool, and in order to access the TLS session cache databases.
+  Such a protocol cannot be run across fifos.
+
+[Feature 20050209] The Postfix SMTP server policy delegation protocol
+now supplies TLS client certificate information after successful
+verification.  The new policy delegation protocol attribute names
+are ccert_subject, ccert_issuer and ccert_fingerprint.
+
+[Feature 20050208] New "check_ccert_maps maptype:mapname" feature
+to enforce access control based on hexadecimal client certificate
+fingerprints.
+
+Major changes - SMTP client connection cache
+--------------------------------------------
+
+[Feature 20040720] SMTP client-side connection caching. Instead of
+disconnecting immediately after a mail transaction, the Postfix
+SMTP client can save the open connection to the scache(8) connection
+cache daemon, so that any SMTP client process can reuse that session
+for another mail transaction.  See the CONNECTION_CACHE_README
+document for a description of configuration and implementation.
+
+This feature introduces the scache (connection cache) server, which
+is added to your master.cf file when you upgrade Postfix.
+
+[Feature 20040729] Opportunistic SMTP connection caching. When a
+destination has a high volume of mail in the active queue, SMTP
+connection caching is enabled automatically.  This is controlled
+with a new configuration parameter "smtp_connection_cache_on_demand"
+(default:  yes).
+
+[Feature 20040723] Per-destination SMTP connection caching. This
+is enabled with the smtp_connection_cache_destinations parameter.
+The parameter requires "bare" domain names or IP addresses without
+"[]" or TCP port, to avoid a syntax conflict between host:port and
+maptype:mapname entries.
+
+[Feature 20040721] The scache(8) connection cache manager logs cache
+hit and miss statistics every $connection_cache_status_update_time
+seconds (default: 600s).  It reports the hit and miss rates for
+lookups by domain, as well as for lookups by network address.
+
+Major changes - address rewriting
+---------------------------------
+
+[Feature 20050206] Support for address rewriting in outgoing SMTP
+mail (headers and envelopes). This is useful for sites that have a
+fantasy Internet domain name such as localdomain.local.  Mail
+addresses that use fantasy domain names are often rejected by mail
+servers.
+
+The smtp_generic_maps feature allows you to replace a local mail
+address (user@localdomain.local) by a valid Internet address
+(account@isp.example) when mail is sent across the Internet.  The
+feature has no effect on mail that is sent between accounts on the
+local machine. The syntax is described in generic(5) and a detailed
+example is in the STANDARD_CONFIGURATION_README document, the section
+titled "Postfix on hosts without a real Internet hostname".
+
+[Feature 20041023] By default, Postfix no longer rewrites message
+headers in mail from remote clients. This includes masquerading,
+canonical mapping, replacing "!" and "%" by "@", and appending the
+local domain to incomplete addresses.  Thus, spam from poorly written
+software no longer looks like it came from a local user.
+
+By default, Postfix rewrites message header addresses only when the
+client IP address matches the local machine's interface addresses,
+or when mail is submitted with the Postfix sendmail(1) command.
+
+Postfix rewrites message headers in mail from other clients only
+when the remote_header_rewrite_domain parameter specifies a domain
+name (such as "domain.invalid"); this domain is appended to incomplete
+addresses. Rewriting also includes masquerading, canonical mapping,
+and replacing "!" and "%" by "@".
+
+To get the behavior before Postfix 2.2 (always append Postfix's own
+domain to incomplete addresses in message headers, always subject
+message headers to canonical mapping, address masquerading, and
+always replace "!" and "%" by "@") specify:
+
+/etc/postfix/main.cf:
+    local_header_rewrite_clients = static:all
+
+If you must rewrite headers in mail from specific clients then you
+can specify, for example,
+
+/etc/postfix/main.cf:
+    local_header_rewrite_clients = permit_mynetworks,
+	permit_sasl_authenticated, permit_tls_clientcerts,
+	check_address_map hash:/etc/postfix/pop-before-smtp
+
+Postfix always appends local domain information to envelope addresses
+(as opposed to header addresses), because an unqualified envelope
+address is effectively local for the purpose of delivery, and for
+the purpose of replying to it.
+
+Full details are given in ADDRESS_REWRITING_README, and in the
+postconf(5) manual. For best results, point your browser at the
+ADDRESS_REWRITING_README.html file and navigate to the section
+titled " To rewrite message headers or not, or to label as invalid".
+
+[Incompat 20050212] When header address rewriting is enabled, Postfix
+now updates a message header only when at least one address in that
+header is modified.  Older Postfix versions first parse and then
+un-parse a header so that there may be subtle changes in formatting,
+such as the amount of whitespace between tokens.
+
+[Incompat 20050227] Postfix no longer changes message header labels.
+Thus, FROM: or CC: are no longer replaced by From: or Cc:.
+
+[Feature 20040827] Finer control over canonical mapping with
+canonical_classes, sender_canonical_classes and
+recipient_canonical_classes.  These specify one or more of
+envelope_sender, header_sender, envelope_recipient or header_recipient.
+The default settings are backwards compatible.
+
+Major changes - SMTP compatibility controls
+-------------------------------------------
+
+[Feature 20041218] Fine control for SMTP inter-operability problems,
+by discarding keywords that are sent or received with the EHLO
+handshake.  Typically one would discard "pipelining", "starttls",
+or "auth" to work around systems with a broken implementation.
+Specify a list of EHLO keywords with the smtp(d)_discard_ehlo_keywords
+parameters, or specify one or more lookup tables, indexed by remote
+network address, with the smtp(d)_discard_ehlo_keyword_address_maps
+parameters.
+
+Note: this feature only discards words from the EHLO conversation;
+it does not turn off the actual features in the SMTP server.
+
+Major changes - database support
+--------------------------------
+
+[Feature 20050209] Extended LDAP, MySQL and PgSQL query interface
+with free form SQL queries, the domain filter optimization that was
+already available with LDAP and more. This code was worked on by
+many people but Victor Duchovni took the lead. See the respective
+{LDAP,MYSQL,PGSQL}_README and {ldap,mysql,pgsql}_table documents.
+
+[Feature 20041210] You can now dump an entire database with the new
+postmap/postalias "-s" option. This works only for database types
+with Postfix sequence operator support: hash, btree, dbm, and sdbm.
+
+[Feature 20041208] Support for CDB databases by Michael Tokarev.
+This supports both Michael's tinycdb and Daniel Bernstein's cdb
+implementations, but neither of the two implementations is bundled
+with Postfix.
+
+[Feature 20041023] The NIS+ client by Geoff Gibbs is now part of
+the Postfix source tree. Details are given in the nisplus_table(5)
+manual page.
+
+[Feature 20040827] Easier use of the proxymap(8) service with the
+virtual(8) delivery agent. The virtual(8) delivery agent will
+silently open maps directly when those maps can't be proxied for
+security reasons.  This means you can now specify "virtual_mailbox_maps
+= proxy:mysql:whatever" without triggering a fatal error in the
+virtual(8) delivery agent.
+
+Major changes - remote SMTP client resource control
+---------------------------------------------------
+
+[Incompat 20041009] The smtpd_client_connection_limit_exceptions
+parameter is renamed to smtpd_client_event_limit_exceptions. Besides
+connections it now also applies to per-client message rate and
+recipient rate limits.
+
+[Feature 20041009] Per SMTP client message rate and recipient rate
+limits. These limit the number of MAIL FROM or RCPT TO requests
+regardless of whether or not Postfix would have accepted them
+otherwise. The user interface (smtpd_client_message_rate_limit and
+smtpd_client_recipient_rate_limit) is similar to that of the existing
+per SMTP client connection rate limit, and the same warnings apply:
+these features are to be used to stop abuse, and must not be used
+to regulate legitimate mail.  More details can be found in the
+postconf(5) manual.
+
+Major changes - remote SMTP client access control
+-------------------------------------------------
+
+[Feature 20050209] The Postfix SMTP server policy delegation protocol
+now supplies TLS client certificate information after successful
+verification.  The new policy delegation protocol attribute names
+are ccert_subject, ccert_issuer and ccert_fingerprint.
+
+[Feature 20050208] New "check_ccert_maps maptype:mapname" feature
+to enforce access control based on hexadecimal client certificate
+fingerprints.
+
+[Feature 20050203] New "permit_inet_interfaces" access restriction
+to allow access from local IP addresses only.  This is used for the
+default, purist, setting of local_header_rewrite_clients (rewrite
+only headers in mail from this machine).
+
+[Feature 20050203] New "sleep time-in-seconds" pseudo access
+restriction to block zombie clients with reject_unauthorized_pipelining
+before the Postfix SMTP server sends the SMTP greeting. See postconf(5)
+for example. This feature is not available the stable Postfix 2.2
+release, but it is documented here so that it will not get lost.
+
+[Feature 20041118] New "smtpd_end_of_data_restrictions" feature
+that is invoked after the client terminates the SMTP DATA command.
+The syntax is the same as with "smtpd_data_restrictions".  In the
+SMTPD policy delegation request, the message size is the actual
+byte count of the message content, instead of the message size
+announced by the client in the MAIL FROM command.
+
+Major changes - SASL authentication
+-----------------------------------
+
+[Feature 20040827] Better SMTP client control over the use of SASL
+mechanisms. New smtp_sasl_mechanism_filter mechanism to shorten the
+list of SASL mechanisms from a remote server to just those that the
+local SASL library can actually use.
+
+Major changes - header/body patterns
+------------------------------------
+
+[Feature 20050205] REPLACE action in header_checks and body_checks,
+to replace a message header or body line.  See header_checks(5) for
+details.
+
+Major changes - local delivery
+------------------------------
+
+[Feature 20040621] Control over the working directory when executing
+an external command.  With the pipe(8) mailer, specify directory=pathname,
+and with local(8) specify "command_execution_directory = expression"
+where "expression" is subject to $home etc. macro expansion. The
+result of macro expansion is restricted by the set of characters
+specified with execution_directory_expansion_filter.
+
+Major changes - mail delivery attributes
+----------------------------------------
+
+[Feature 20041218] More client attributes for delivery to command
+with the local(8) and pipe(8) delivery agents: client_hostname,
+client_address, client_protocol, client_helo, sasl_method, sasl_sender,
+and sasl_username.  With local(8), attribute names must be specified
+in upper case.
+
+Major changes - package creation
+--------------------------------
+
+[Feature 20050203] To create a ready-to-install package for
+distribution to other systems you can now use "make package" or
+"make non-interactive-package", instead of invoking the internal
+postfix-install script by hand. See the PACKAGE_README file for
+details.
+
+Major changes - performance
+---------------------------
+
+[Incompat 20050117] Only the deferred and defer queue directories
+are now hashed by default, instead of eight queue directories.  This
+may speed up Postfix boot time on low-traffic systems without
+compromising performance under high load too much. Hashing must be
+turned on for the defer and deferred queue directories, because
+those directories contain lots of files when undeliverable mail is
+backing up.
+
+[Incompat 20040720] The default SMTP/LMTP timeouts for sending RSET
+are reduced to 20s.
+
+Major changes - miscellaneous
+-----------------------------
+
+[Feature 20050203] Safety: Postfix no longer tries to send mail to
+the fallback_relay when the local machine is MX host for the mail
+destination. See the postconf(5) description of the fallback_relay
+feature for details.
+
+[Incompat 20041023] Support for the non-standard Errors-To: return
+addresses is now removed from Postfix.  It was already disabled by
+default with Postfix version 2.1. Since Errors-To: is non-standard,
+there was no guarantee that it would have the desired effect with
+other MTAs.
+
+[Feature 20040919] A new discard(8) mail delivery agent that makes
+throwing away mail easier and more efficient. It's the Postfix
+equivalent of /dev/null for mail deliveries. On the mail receiving
+side, Postfix already has a /dev/null equivalent in the form of the
+DISCARD action in access maps and header_body_checks.
+
+[Feature 20040919] Access control for local mail submission, for
+listing the queue, and for flushing the queue. These features are
+controlled with authorized_submit_users, authorized_mailq_users,
+and with authorized_flush_users, respectively. The last two controls
+are always permitted for the super-user and for the mail system
+owner.  More information is in the postconf(5) manual.
+
+[Incompat 20040829] When no recipients are specified on the command
+line or via the -t option, the Postfix sendmail command terminates
+with status EX_USAGE and produces an error message instead of
+accepting the mail first and bouncing it later. This gives more
+direct feedback in case of a common client configuration error.
+
