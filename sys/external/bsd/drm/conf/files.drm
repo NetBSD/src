@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.1 2009/06/21 20:15:26 mrg Exp $
+#	$NetBSD: files.drm,v 1.2 2009/06/23 04:42:58 mrg Exp $
 
 # direct rendering modules
 define	drmbase
@@ -48,7 +48,36 @@ file	external/bsd/drm/dist/shared-core/mga_irq.c		mgadrm
 file	external/bsd/drm/dist/shared-core/mga_state.c		mgadrm
 file	external/bsd/drm/dist/shared-core/mga_warp.c		mgadrm
 
-# XXX missing: nouveau, nv
+#device	nouveaudrm: drmbase, drmpci
+#attach	nouveaudrm at drm
+#file	external/bsd/drm/dist/bsd-core/nouveau_drv.c		nouveaudrm
+#file	external/bsd/drm/dist/bsd-core/nouveau_sgdma.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_state.c	nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_mem.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_object.c	nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_fifo.c	nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_notifier.c	nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_dma.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_irq.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nouveau_swmthd.c	nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv04_timer.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv04_mc.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv40_mc.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv50_mc.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv04_fb.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv10_fb.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv40_fb.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv04_fifo.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv10_fifo.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv40_fifo.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv50_fifo.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv04_graph.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv10_graph.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv20_graph.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv40_graph.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv50_graph.c		nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv04_instmem.c	nouveaudrm
+#file	external/bsd/drm/dist/shared-core/nv50_instmem.c	nouveaudrm
 
 device	r128drm: drmbase, drmpci
 attach	r128drm at drm
