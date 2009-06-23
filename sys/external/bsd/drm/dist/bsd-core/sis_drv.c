@@ -56,6 +56,8 @@ static void sis_configure(struct drm_device *dev)
 	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
 
+#if defined(__FreeBSD__)
+
 static int
 sis_probe(device_t kdev)
 {
@@ -110,3 +112,90 @@ DRIVER_MODULE(sisdrm, vgapci, sis_driver, drm_devclass, 0, 0);
 DRIVER_MODULE(sisdrm, pci, sis_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(sisdrm, drm, 1, 1, 1);
+
+#elif   defined(__NetBSD__)
+
+static int
+sisdrm_probe(device_t parent, cfdata_t match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+
+	return drm_probe(pa, sis_pciidlist);
+}
+
+static void
+sisdrm_attach(device_t parent, device_t self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	struct drm_device *dev = device_private(self);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
+	sis_configure(dev);
+
+	drm_attach(self, pa, sis_pciidlist);
+}
+
+CFATTACH_DECL_NEW(sisdrm, sizeof(struct drm_device),
+    sisdrm_probe, sisdrm_attach, drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, sisdrm, NULL);
+
+CFDRIVER_DECL(sisdrm, DV_DULL, NULL);
+extern struct cfattach sisdrm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata sisdrm_cfdata[] = {
+	{
+		.cf_name = "sisdrm",
+		.cf_atname = "sisdrm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+sisdrm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&sisdrm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("sisdrm", &sisdrm_ca);
+		if (err) {
+			config_cfdriver_detach(&sisdrm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(sisdrm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("sisdrm", &sisdrm_ca);
+			config_cfdriver_detach(&sisdrm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(sisdrm_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("sisdrm", &sisdrm_ca);
+		config_cfdriver_detach(&sisdrm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _MODULE */
+
+#endif
