@@ -1,0 +1,597 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix LDAP Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix LDAP Howto</h1>
+
+<hr>
+
+<h2>LDAP Support in Postfix</h2>
+
+<p> Postfix can use an LDAP directory as a source for any of its
+lookups:  <a href="aliases.5.html">aliases(5)</a>, <a href="virtual.5.html">virtual(5)</a>, <a href="canonical.5.html">canonical(5)</a>, etc. This allows
+you to keep information for your mail service in a replicated
+network database with fine-grained access controls. By not storing
+it locally on the mail server, the administrators can maintain it
+from anywhere, and the users can control whatever bits of it you
+think appropriate.  You can have multiple mail servers using the
+same information, without the hassle and delay of having to copy
+it to each. </p>
+
+<p> Topics covered in this document:</p>
+
+<ul>
+
+<li><a href="#build">Building Postfix with LDAP support</a>
+
+<li><a href="#config">Configuring LDAP lookups</a>
+
+<li><a href="#example_alias">Example: aliases</a>
+
+<li><a href="#example_virtual">Example: virtual domains/addresses</a>
+
+<li><a href="#example_group">Example: expanding LDAP groups</a>
+
+<li><a href="#other">Other uses of LDAP lookups</a>
+
+<li><a href="#hmmmm">Notes and things to think about</a>
+
+<li><a href="#feedback">Feedback</a>
+
+<li><a href="#credits">Credits</a>
+
+</ul>
+
+<h2><a name="build">Building Postfix with LDAP support</a></h2>
+
+<p> These instructions assume that you build Postfix from source
+code as described in the <a href="INSTALL.html">INSTALL</a> document. Some modification may   
+be required if you build Postfix from a vendor-specific source
+package.  </p>
+
+<p> Note 1: Postfix no longer supports the LDAP version 1 interface.
+</p>
+
+<p> Note 2: to use LDAP with Debian GNU/Linux's Postfix, all you
+need is to install the postfix-ldap package and you're done.  There
+is no need to recompile Postfix. </p>
+
+<p> You need to have LDAP libraries and include files installed
+somewhere on your system, and you need to configure the Postfix
+Makefiles accordingly. </p>
+
+<p> For example, to build the OpenLDAP libraries for use with
+Postfix (i.e.  LDAP client code only), you could use the following
+command: </p>
+
+<blockquote>
+<pre>
+% ./configure  --without-kerberos --without-cyrus-sasl --without-tls \
+    --without-threads --disable-slapd --disable-slurpd \
+    --disable-debug --disable-shared
+</pre>
+</blockquote>
+
+<p> If you're using the libraries from the UM distribution
+(<a href="http://www.umich.edu/~dirsvcs/ldap/ldap.html">http://www.umich.edu/~dirsvcs/ldap/ldap.html</a>) or OpenLDAP
+(<a href="http://www.openldap.org">http://www.openldap.org</a>), something like this in the top level of
+your Postfix source tree should work: </p>
+
+<blockquote>
+<pre>
+% make tidy
+% make makefiles CCARGS="-I/usr/local/include -DHAS_LDAP" \
+    AUXLIBS="-L/usr/local/lib -lldap -L/usr/local/lib -llber"
+</pre>
+</blockquote>
+
+<p> On Solaris 2.x you may have to specify run-time link information,
+otherwise ld.so will not find some of the shared libraries: </p>
+
+<blockquote>
+<pre>
+% make tidy
+% make makefiles CCARGS="-I/usr/local/include -DHAS_LDAP" \
+    AUXLIBS="-L/usr/local/lib -R/usr/local/lib -lldap \
+            -L/usr/local/lib -R/usr/local/lib -llber"
+</pre>
+</blockquote>
+
+<p> The 'make tidy' command is needed only if you have previously
+built Postfix without LDAP support. </p>
+
+<p> Instead of '/usr/local' specify the actual locations of your
+LDAP include files and libraries. Be sure to not mix LDAP include
+files and LDAP libraries of different versions!! </p>
+
+<p> If your LDAP libraries were built with Kerberos support, you'll
+also need to include your Kerberos libraries in this line. Note
+that the KTH Kerberos IV libraries might conflict with Postfix's
+lib/libdns.a, which defines dns_lookup. If that happens, you'll
+probably want to link with LDAP libraries that lack Kerberos support
+just to build Postfix, as it doesn't support Kerberos binds to the
+LDAP server anyway. Sorry about the bother. </p>
+
+<p> If you're using one of the Netscape LDAP SDKs, you'll need to
+change the AUXLIBS line to point to libldap10.so or libldapssl30.so
+or whatever you have, and you may need to use the appropriate linker
+option (e.g. '-R') so the executables can find it at runtime. </p>
+
+<h2><a name="config">Configuring LDAP lookups</a></h2>
+
+<p> In order to use LDAP lookups, define an LDAP source
+as a table lookup in <a href="postconf.5.html">main.cf</a>, for example: </p>
+
+<blockquote>
+<pre>
+<a href="postconf.5.html#alias_maps">alias_maps</a> = hash:/etc/aliases, <a href="ldap_table.5.html">ldap</a>:/etc/postfix/ldap-aliases.cf
+</pre>
+</blockquote>
+
+<p> The file /etc/postfix/ldap-aliases.cf can specify a great number
+of parameters, including parameters that enable LDAP SSL and
+STARTTLS. For a complete description, see the <a href="ldap_table.5.html">ldap_table(5)</a> manual
+page. </p>
+
+<h2><a name="example_alias">Example: local(8) aliases</a></h2>
+
+<p> Here's a basic example for using LDAP to look up <a href="local.8.html">local(8)</a>
+aliases. Assume that in <a href="postconf.5.html">main.cf</a>, you have: </p>
+
+<blockquote> 
+<pre>
+<a href="postconf.5.html#alias_maps">alias_maps</a> = hash:/etc/aliases, <a href="ldap_table.5.html">ldap</a>:/etc/postfix/ldap-aliases.cf
+</pre>
+</blockquote> 
+
+<p> and in <a href="ldap_table.5.html">ldap</a>:/etc/postfix/ldap-aliases.cf you have: </p>
+
+<blockquote> 
+<pre>
+server_host = ldap.example.com
+search_base = dc=example, dc=com
+</pre>
+</blockquote> 
+
+<p> Upon receiving mail for a local address "ldapuser" that isn't
+found in the /etc/aliases database, Postfix will search the LDAP
+server listening at port 389 on ldap.example.com. It will bind anonymously,
+search for any directory entries whose mailacceptinggeneralid
+attribute is "ldapuser", read the "maildrop" attributes of those
+found, and build a list of their maildrops, which will be treated
+as <a href="http://tools.ietf.org/html/rfc822">RFC822</a> addresses to which the message will be delivered. </p>
+
+<h2><a name="example_virtual">Example: virtual domains/addresses</a></h2>
+
+<p> If you want to keep information for virtual lookups in your
+directory, it's only a little more complicated. First, you need to
+make sure Postfix knows about the virtual domain. An easy way to
+do that is to add the domain to the mailacceptinggeneralid attribute
+of some entry in the directory. Next, you'll want to make sure all
+of your virtual recipient's mailacceptinggeneralid attributes are
+fully qualified with their virtual domains. Finally, if you want
+to designate a directory entry as the default user for a virtual
+domain, just give it an additional mailacceptinggeneralid (or the
+equivalent in your directory) of "@fake.dom". That's right, no
+user part. If you don't want a catchall user, omit this step and
+mail to unknown users in the domain will simply bounce. </p>
+
+<p> In summary, you might have a catchall user for a virtual domain
+that looks like this: </p>
+
+<blockquote> 
+<pre>
+     dn: cn=defaultrecipient, dc=fake, dc=dom
+     objectclass: top
+     objectclass: virtualaccount
+     cn: defaultrecipient
+     owner: uid=root, dc=someserver, dc=isp, dc=dom
+1 -&gt; mailacceptinggeneralid: fake.dom
+2 -&gt; mailacceptinggeneralid: @fake.dom
+3 -&gt; maildrop: realuser@real.dom         
+</pre>
+</blockquote> 
+
+<dl compact>
+
+<dd> <p> 1: Postfix knows fake.dom is a valid virtual domain when
+it looks for this and gets something (the maildrop) back. </p>
+
+<dd> <p> 2: This causes any mail for unknown users in fake.dom to
+go to this entry ... </p>
+
+<dd> <p> 3: ... and then to its maildrop. </p>
+
+</dl>
+
+<p> Normal users might simply have one mailacceptinggeneralid and
+<a href="QSHAPE_README.html#maildrop_queue">maildrop</a>, e.g. "normaluser@fake.dom" and "normaluser@real.dom".
+</p>
+
+<h2><a name="example_group">Example: expanding LDAP groups</a></h2>
+
+<p>
+LDAP is frequently used to store group member information.  There are a
+number of ways of handling LDAP groups.  We will show a few examples in
+order of increasing complexity, but owing to the number of independent
+variables, we can only present a tiny portion of the solution space.
+We show how to:
+</p>
+
+<ol>
+
+<li> <p> query groups as lists of addresses; </p>
+
+<li> <p> query groups as lists of user objects containing addresses; </p>
+
+<li> <p> forward special lists unexpanded to a separate list server,
+for moderation or other processing; </p>
+
+<li> <p> handle complex schemas by controlling expansion and by treating
+leaf nodes specially, using features that are new in Postfix 2.4. </p>
+
+</ol>
+
+<p>
+The example LDAP entries and implied schema below show two group entries
+("agroup" and "bgroup") and four user entries ("auser", "buser", "cuser"
+and "duser"). The group "agroup" has the users "auser" (1) and "buser" (2)
+as members via DN references in the multi-valued attribute "memberdn", and
+direct email addresses of two external users "auser@example.org" (3) and
+"buser@example.org" (4) stored in the multi-valued attribute "memberaddr".
+The same is true of "bgroup" and "cuser"/"duser" (6)/(7)/(8)/(9), but
+"bgroup" also has a "maildrop" attribute of "bgroup@mlm.example.com"
+(5): </p>
+
+<blockquote> 
+<pre>
+     dn: cn=agroup, dc=example, dc=com
+     objectclass: top
+     objectclass: ldapgroup
+     cn: agroup
+     mail: agroup@example.com
+1 -&gt; memberdn: uid=auser, dc=example, dc=com
+2 -&gt; memberdn: uid=buser, dc=example, dc=com
+3 -&gt; memberaddr: auser@example.org
+4 -&gt; memberaddr: buser@example.org
+</pre>
+<br>
+
+<pre>
+     dn: cn=bgroup, dc=example, dc=com
+     objectclass: top
+     objectclass: ldapgroup
+     cn: bgroup
+     mail: bgroup@example.com
+5 -&gt; maildrop: bgroup@mlm.example.com
+6 -&gt; memberdn: uid=cuser, dc=example, dc=com
+7 -&gt; memberdn: uid=duser, dc=example, dc=com
+8 -&gt; memberaddr: cuser@example.org
+9 -&gt; memberaddr: duser@example.org
+</pre>
+<br>
+
+<pre>
+     dn: uid=auser, dc=example, dc=com
+     objectclass: top
+     objectclass: ldapuser
+     uid: auser
+10 -&gt; mail: auser@example.com
+11 -&gt; maildrop: auser@mailhub.example.com
+</pre>
+<br>
+
+<pre>
+     dn: uid=buser, dc=example, dc=com
+     objectclass: top
+     objectclass: ldapuser
+     uid: buser
+12 -&gt; mail: buser@example.com
+13 -&gt; maildrop: buser@mailhub.example.com
+</pre>
+<br>
+
+<pre>
+     dn: uid=cuser, dc=example, dc=com
+     objectclass: top
+     objectclass: ldapuser
+     uid: cuser
+14 -&gt; mail: cuser@example.com
+</pre>
+<br>
+
+<pre>
+     dn: uid=duser, dc=example, dc=com
+     objectclass: top
+     objectclass: ldapuser
+     uid: duser
+15 -&gt; mail: duser@example.com
+</pre>
+<br>
+
+</blockquote> 
+
+<p> Our first use case ignores the "memberdn" attributes, and assumes
+that groups hold only direct "memberaddr" strings as in (3), (4), (8) and
+(9). The goal is to map the group address to the list of constituent
+"memberaddr" values. This is simple, ignoring the various connection
+related settings (hosts, ports, bind settings, timeouts, ...) we have:
+</p>
+
+<blockquote> 
+<pre>
+    simple.cf:
+        ...
+        search_base = dc=example, dc=com
+        query_filter = mail=%s
+        result_attribute = memberaddr
+    $ postmap -q agroup@example.com <a href="ldap_table.5.html">ldap</a>:simple.cf
+    auser@example.org,buser@example.org
+</pre>
+</blockquote> 
+
+<p> We search "dc=example, dc=com". The "mail" attribute is used in the
+query_filter to locate the right group, the "result_attribute" setting
+described in <a href="ldap_table.5.html">ldap_table(5)</a> is used to specify that "memberaddr" values
+from the matching group are to be returned as a comma separated list.
+Always check tables using <a href="postmap.1.html">postmap(1)</a> with the "-q" option, before
+deploying them into production use in <a href="postconf.5.html">main.cf</a>. </p>
+
+<p> Our second use case instead expands "memberdn" attributes (1), (2),
+(6) and (7), follows the DN references and returns the "maildrop" of the
+referenced user entries. Here we use the "special_result_attribute"
+setting from <a href="ldap_table.5.html">ldap_table(5)</a> to designate the "memberdn" attribute
+as holding DNs of the desired member entries. The "result_attribute"
+setting selects which attributes are returned from the selected DNs. It
+is important to choose a result attribute that is not also present in
+the group object, because result attributes are collected from both
+the group and the member DNs. In this case we choose "maildrop" and
+assume for the moment that groups never have a "maildrop" (the "bgroup"
+"maildrop" attribute is for a different use case). The returned data for
+"auser" and "buser" is from items (11) and (13) in the example data. </p>
+
+<blockquote> 
+<pre>
+    special.cf:
+        ...
+        search_base = dc=example, dc=com
+        query_filter = mail=%s
+        result_attribute = maildrop
+        special_result_attribute = memberdn
+    $ postmap -q agroup@example.com <a href="ldap_table.5.html">ldap</a>:special.cf
+    auser@mailhub.example.com,buser@mailhub.example.com
+</pre>
+</blockquote> 
+
+<p> Note: if the desired member object result attribute is always also
+present in the group, you get surprising results: the expansion also
+returns the address of the group. This is a known limitation of Postfix
+releases prior to 2.4, and is addressed in the new with Postfix 2.4
+"leaf_result_attribute" feature described in <a href="ldap_table.5.html">ldap_table(5)</a>. </p>
+
+<p> Our third use case has some groups that are expanded immediately,
+and other groups that are forwarded to a dedicated mailing list manager
+host for delayed expansion. This uses two LDAP tables, one for users
+and forwarded groups and a second for groups that can be expanded
+immediately. It is assumed that groups that require forwarding are
+never nested members of groups that are directly expanded. </p>
+
+<blockquote> 
+<pre>
+    no_expand.cf:
+        ...
+        search_base = dc=example, dc=com
+        query_filter = mail=%s
+        result_attribute = maildrop
+    expand.cf
+        ...
+        search_base = dc=example, dc=com
+        query_filter = mail=%s
+        result_attribute = maildrop
+        special_result_attribute = memberdn
+    $ postmap -q auser@example.com <a href="ldap_table.5.html">ldap</a>:no_expand.cf <a href="ldap_table.5.html">ldap</a>:expand.cf
+    auser@mailhub.example.com
+    $ postmap -q agroup@example.com <a href="ldap_table.5.html">ldap</a>:no_expand.cf <a href="ldap_table.5.html">ldap</a>:expand.cf
+    auser@mailhub.example.com,buser@mailhub.example.com
+    $ postmap -q bgroup@example.com <a href="ldap_table.5.html">ldap</a>:no_expand.cf <a href="ldap_table.5.html">ldap</a>:expand.cf
+    bgroup@mlm.example.com
+</pre>
+</blockquote> 
+
+<p> Non-group objects and groups with delayed expansion (those that have a
+maildrop attribute) are rewritten to a single maildrop value. Groups that
+don't have a maildrop are expanded as the second use case. This admits
+a more elegant solution with Postfix 2.4 and later. </p>
+
+<p> Our final use case is the same as the third, but this time uses new
+features in Postfix 2.4. We now are able to use just one LDAP table and
+no longer need to assume that forwarded groups are never nested inside
+expanded groups. </p>
+
+<blockquote> 
+<pre>
+    fancy.cf:
+        ...
+        search_base = dc=example, dc=com
+        query_filter = mail=%s
+        result_attribute = memberaddr
+        special_result_attribute = memberdn
+        terminal_result_attribute = maildrop
+        leaf_result_attribute = mail
+    $ postmap -q auser@example.com <a href="ldap_table.5.html">ldap</a>:fancy.cf
+    auser@mailhub.example.com
+    $ postmap -q cuser@example.com <a href="ldap_table.5.html">ldap</a>:fancy.cf
+    cuser@example.com
+    $ postmap -q agroup@example.com <a href="ldap_table.5.html">ldap</a>:fancy.cf
+    auser@mailhub.example.com,buser@mailhub.example.com,auser@example.org,buser@example.org
+    $ postmap -q bgroup@example.com <a href="ldap_table.5.html">ldap</a>:fancy.cf
+    bgroup@mlm.example.com
+</pre>
+</blockquote> 
+
+<p> Above, delayed expansion is enabled via "terminal_result_attribute",
+which, if present, is used as the sole result and all other expansion is
+suppressed. Otherwise, the "leaf_result_attribute" is only returned for
+leaf objects that don't have a "special_result_attribute" (non-groups),
+while the "result_attribute" (direct member address of groups) is returned
+at every level of recursive expansion, not just the leaf nodes. This fancy
+example illustrates all the features of Postfix 2.4 group expansion. </p>
+
+<h2><a name="other">Other uses of LDAP lookups</a></h2>
+
+Other common uses for LDAP lookups include rewriting senders and
+recipients with Postfix's canonical lookups, for example in order
+to make mail leaving your site appear to be coming from
+"First.Last@example.com" instead of "userid@example.com".
+
+<h2><a name="hmmmm">Notes and things to think about</a></h2>
+
+<ul>
+
+<li> <p> The bits of schema and attribute names used in this document are just
+  examples. There's nothing special about them, other than that some are
+  the defaults in the LDAP configuration parameters. You can use
+  whatever schema you like, and configure Postfix accordingly. </p>
+
+<li> <p> You probably want to make sure that mailacceptinggeneralids are
+  unique, and that not just anyone can specify theirs as postmaster or
+  root, say. </p>
+
+<li> <p> An entry can have an arbitrary number of mailacceptinggeneralids or
+  maildrops. Maildrops can also be comma-separated lists of addresses.
+  They will all be found and returned by the lookups. For example, you
+  could define an entry intended for use as a mailing list that looks
+  like this (Warning! Schema made up just for this example): </p>
+
+<blockquote>
+<pre>
+dn: cn=Accounting Staff List, dc=example, dc=com
+cn: Accounting Staff List
+o: example.com
+objectclass: maillist
+mailacceptinggeneralid: accountingstaff
+mailacceptinggeneralid: accounting-staff
+maildrop: mylist-owner
+maildrop: an-accountant
+maildrop: some-other-accountant
+maildrop: this, that, theother
+</pre>
+</blockquote>
+
+<li> <p> If you use an LDAP map for lookups other than aliases, you may have to
+  make sure the lookup makes sense. In the case of virtual lookups,
+  maildrops other than mail addresses are pretty useless, because
+  Postfix can't know how to set the ownership for program or file
+  delivery. Your <b>query_filter</b> should probably look something like this: </p>
+
+<blockquote>
+<pre>
+query_filter = (&amp;(mailacceptinggeneralid=%s)(!(|(maildrop="*|*")(maildrop="*:*")(maildrop="*/*"))))
+</pre>
+</blockquote>
+
+<li> <p> And for that matter, even for aliases, you may not want users able to
+  specify their maildrops as programs, includes, etc. This might be
+  particularly pertinent on a "sealed" server where they don't have
+  local UNIX accounts, but exist only in LDAP and Cyrus. You might allow
+  the fun stuff only for directory entries owned by an administrative
+  account,
+  so that if the object had a program as its maildrop and weren't owned
+  by "cn=root" it wouldn't be returned as a valid local user. This will
+  require some thought on your part to implement safely, considering the
+  ramifications of this type of delivery. You may decide it's not worth
+  the bother to allow any of that nonsense in LDAP lookups, ban it in
+  the <b>query_filter</b>, and keep things like majordomo lists in local alias
+  databases. </p>
+
+<blockquote>
+<pre>
+query_filter = (&amp;(mailacceptinggeneralid=%s)(!(|(maildrop="*|*")(maildrop="*:*")(maildrop="*/*"))(owner=cn=root, dc=your, dc=com)))
+</pre>
+</blockquote>
+
+<li> <p> LDAP lookups are slower than local DB or DBM lookups. For most sites
+  they won't be a bottleneck, but it's a good idea to know how to tune
+  your directory service. </p>
+
+<li> <p> Multiple LDAP maps share the same LDAP connection if they differ
+  only in their query related parameters: base, scope, query_filter, and
+  so on. To take advantage of this, avoid spurious differences in the
+  definitions of LDAP maps: host selection order, version, bind, tls
+  parameters, ... should be the same for multiple maps whenever possible. </p>
+
+</ul>
+
+<h2><a name="feedback">Feedback</a></h2>
+
+<p> If you have questions, send them to postfix-users@postfix.org. Please
+include relevant information about your Postfix setup: LDAP-related
+output from postconf, which LDAP libraries you built with, and which
+directory server you're using. If your question involves your directory
+contents, please include the applicable bits of some directory entries. </p>
+
+<h2><a name="credits">Credits</a></h2>
+
+<ul>
+
+<li>Manuel Guesdon: Spotted a bug with the timeout attribute.
+
+<li>John Hensley: Multiple LDAP sources with more configurable attributes.
+
+<li>Carsten Hoeger: Search scope handling. 
+
+<li>LaMont Jones: Domain restriction, URL and DN searches, multiple result
+              attributes.
+
+<li>Mike Mattice: Alias dereferencing control.
+
+<li>Hery Rakotoarisoa: Patches for LDAPv3 updating.
+
+<li>Prabhat K Singh: Wrote the initial Postfix LDAP lookups and connection caching.
+
+<li>Keith Stevenson: <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries.
+
+<li>Samuel Tardieu: Noticed that searches could include wildcards, prompting
+                the work on <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries. Spotted a bug
+                in binding.
+
+<li>Sami Haahtinen: Referral chasing and v3 support.
+
+<li>Victor Duchovni: ldap_bind() timeout. With fixes from LaMont Jones:
+                 OpenLDAP cache deprecation. Limits on recursion, expansion
+                 and search results size. LDAP connection sharing for maps
+                 differing only in the query parameters.
+
+<li>Liviu Daia: Support for SSL/STARTTLS. Support for storing map definitions in
+            external files (<a href="ldap_table.5.html">ldap</a>:/path/ldap.cf) needed to securely store
+            passwords for plain auth.
+
+<li>Liviu Daia revised the configuration interface and added the <a href="postconf.5.html">main.cf</a>
+    configuration feature.</li>
+    
+<li>Liviu Daia with further refinements from Jose Luis Tallon and
+Victor Duchovni developed the common query, result_format, domain and
+expansion_limit interface for LDAP, MySQL and PosgreSQL.</li>
+
+<li>Gunnar Wrobel provided a first implementation of a feature to
+limit LDAP search results to leaf nodes only. Victor generalized
+this into the Postfix 2.4 "leaf_result_attribute" feature. </li>
+
+</ul>
+
+And of course Wietse.
+
+</body>
+
+</html>

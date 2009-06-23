@@ -1,0 +1,202 @@
+#!/bin/sh
+
+# srctoman - extract manual page from source file comment
+
+# @(#) srctoman.sh 1.2 11/4/89 15:56:22
+
+LANG=
+
+# process arguments
+
+while :
+do
+    case $1 in
+ [0-9]) SECT=$1;;
+     -) LANG=$1; B='[#:]';;
+  -awk) LANG=$1; B='#';;
+    -c) LANG=$1; B='\/\*';;
+    -f) LANG=$1; B='[Cc]';;
+   -mk) LANG=$1; B='#';;
+ -n|-t) LANG=$1; B='\\"';;
+    -p) LANG=$1; B='{';;
+    -r) LANG=$1; B='#';;
+    -C) LANG=$1; B=$2; shift;;
+    -*) ERROR="unknown option: $1"; break;;
+    "") ERROR="missing file argument"; break;;
+     *) break;;
+    esac
+    shift
+done
+
+# check error status
+
+case $ERROR in
+"") ;;
+ *) echo "$0: $ERROR" 1>&2
+    echo "usage: $0 [-|-awk|-c|-f|-mk|-n|-p|-t|-r|-C] [section] file(s)" 1>&2; exit 1;;
+esac
+
+# set up for file suffix processing
+
+case $LANG in
+"") sh='[:#]';	r='#';	rh=$r;	awk='#'; mk='#';
+    c='\/\*';	h=$c;	y=$c;	l=$c;
+    f='[Cc]';	fh=$f;	p='{';	ph=$p;
+    ms='\\"';	nr=$ms;	mn=$ms;	man=$ms;
+esac
+
+# extract comments
+
+for i in $*
+do
+    case $LANG in
+    "") eval B\="\$`expr $i : '.*\.\([^.]*\)$'`"
+	test "$B" || { echo "$0: unknown suffix: $i; assuming c" 1>&2; B=$c; }
+    esac
+    sed '
+    /^'"$B"'++/,/^'"$B"'--/!d
+    /^'"$B"'++/d
+    /^'"$B"'--/d
+    s/[ 	]*$//
+    /^'"$B"' \([A-Z]\)/{
+	s//\1/
+	/^NAME[ 	]*$/{
+	    N
+	    s/^.*\n'"$B"'[ 	]*//
+	    h
+	    y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/
+	    s/^.*$/.TH & '"$SECT"'\
+.ad\
+.fi\
+.SH NAME/
+	    p
+	    g
+	    s/[ 	][ 	]*[0-9][ 	]*$//
+	    a\
+\\-
+	    p
+	    d
+	}
+	/^SUMMARY/d
+	/^DESCRIPTION/s//.SH &\
+.ad\
+.fi/
+	/^BUGS/s//.SH &\
+.ad\
+.fi/
+	/^DIAGNOSTICS/s//.SH &\
+.ad\
+.fi/
+	/^[A-Z][A-Z][A-Z][^a-z]*$/s//.SH "&"\
+.na\
+.nf/
+	p
+	d
+    }
+    s/^'"$B"' *//
+    s/^	//
+    s/^[ 	]*$//
+    /^\\"/d
+' $i
+done | expand
+
+exit
+
+#++
+# NAME
+#	srctoman 1
+# SUMMARY
+#	extract manual page from source file comment
+# PACKAGE
+#	sdetools
+# SYNOPSIS
+#	srctoman [-|-awk|-c|-f|-mk|-m|-n|-p|-t|-r|-C] [section] file(s)
+# DESCRIPTION
+#	\fIsrctoman\fR converts comments in various programming languages to
+#	UNIX-style manual pages.
+#	The command processes comments in the style of newsrc(1);
+#	its standard output is suitable for formatting with nroff(1) or 
+#	troff(1) using the "-man" macro package.  
+#	Typically, srctoman is invoked from make(1) scripts.
+#
+#	Source files are processed in the indicated order; if no
+#	files are specified the command produces no output.
+#
+#	The source file language can be specified through a command-line
+#	option, or can be implied by the filename suffix.
+#	The expected start-of-comment symbol is shown in the last column.
+#
+# .nf
+# .ft C
+	option	language	comment
+
+	-	shell		[:#]
+	-awk	awk		#
+	-c	c		/*
+	-f	fortran		[Cc]
+	-mk	make		#
+	-n	nroff		\\"
+	-p	pascal		{
+	-t	troff		\\"
+	-r	ratfor		#
+	-C	any language	next argument
+#
+	suffix	language	comment
+
+	.awk	awk		#
+	.c	c		/*
+	.f	fortran		[Cc]
+	.fh	fortran		[Cc]
+	.h	c		/*
+	.l	lex		/*
+	.man	nroff,troff	\\"
+	.mk	make		#
+	.me	nroff,troff	\\"
+	.ms	nroff,troff	\\"
+	.nr	nroff,troff	\\"
+	.p	pascal		{
+	.ph	pascal		{
+	.r	ratfor		#
+	.rh	ratfor		#
+	.sh	shell		[:#]
+	.y	yacc		/*
+# .ft
+# .PP
+# .fi
+#
+#	The required format of comments is discussed below, where SOC
+#	stands for the start-of-comment symbol of the language being used.
+# .IP o
+#	Start of manual: SOC, followed by `++'.
+# .IP o
+#	Section heading: SOC, blank, section name in upper case.
+# .IP o
+#	All other text: SOC and subsequent blanks or tabs are removed.
+#	Lines that do not start with SOC are left unchanged (useful for 
+#	inclusion of program text).
+# .IP o
+#	End of manual: SOC, followed by `--'.
+#	An end-of-comment may follow if the source file language requires this.
+# .PP
+#	The following manual sections receive a special treatment:
+#	NAME and SUMMARY should appear at the beginning and in
+#	this order; DESCRIPTION, DIAGNOSTICS and BUGS will be
+#	right-margin adjusted.
+#	Other sections may be added freely without confusing srctoman.
+# COMMANDS
+#	sh(1), sed(1), expand(1)
+# SEE ALSO
+#	newsrc(1)
+# DIAGNOSTICS
+#	The program complains if an unknown language is specified
+#	of if the language cannot be deduced from the file suffix.
+# AUTHOR(S)
+#	W.Z. Venema
+#	Eindhoven University of Technology
+#	Department of Mathematics and Computer Science
+#	Den Dolech 2, P.O. Box 513, 5600 MB Eindhoven, The Netherlands
+# CREATION DATE
+#	Fri Jan 17 22:59:27 MET 1986
+# STATUS
+#	srctoman.sh 1.2 11/4/89 15:56:22 (draft)
+#--

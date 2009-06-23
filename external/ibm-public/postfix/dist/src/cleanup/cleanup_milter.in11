@@ -1,0 +1,10 @@
+#
+# Replace a non-existent body by a non-empty one.
+#
+#verbose on
+open test-queue-file11.tmp
+
+replbody loremipsum
+replbody loremipsum
+
+close
