@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2008/05/19 13:21:57 tnn Exp $
+# $NetBSD: Makefile,v 1.2.14.1 2009/06/23 07:07:28 snj Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	${S}/dev/drm
+.PATH:	${S}/external/bsd/drm/dist/bsd-core
 
 KMOD=   drm
 
@@ -22,5 +22,7 @@ SRCS+=	drm_pci.c
 SRCS+=	drm_scatter.c
 SRCS+=	drm_sysctl.c
 SRCS+=	drm_vm.c
+
+CPPFLAGS+=	-I${S}/external/bsd/drm/dist/shared-core
 
 .include <bsd.kmodule.mk>
