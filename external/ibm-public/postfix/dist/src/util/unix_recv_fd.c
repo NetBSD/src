@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_recv_fd.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: unix_recv_fd.c,v 1.2 2009/06/23 11:41:07 tron Exp $	*/
 
 /*++
 /* NAME
@@ -76,7 +76,7 @@ int     unix_recv_fd(int fd)
 
     memset((char *) &msg, 0, sizeof(msg));	/* Fix 200512 */
     msg.msg_control = control_un.control;
-    msg.msg_controllen = CMSG_LEN(sizeof(newfd));	/* Fix 200506 */
+    msg.msg_controllen = sizeof(control_un.control);	/* Fix 200506 */
 #else
     msg.msg_accrights = (char *) &newfd;
     msg.msg_accrightslen = sizeof(newfd);

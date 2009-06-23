@@ -1,4 +1,6 @@
-/*	$NetBSD: cleanup.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
+
+/*	$NetBSD: cleanup.c,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
 
 /*++
 /* NAME
@@ -547,6 +549,7 @@ int     main(int argc, char **argv)
      * Pass control to the single-threaded service skeleton.
      */
     single_server_main(argc, argv, cleanup_service,
+		       MAIL_SERVER_BOOL_TABLE, cleanup_bool_table,
 		       MAIL_SERVER_INT_TABLE, cleanup_int_table,
 		       MAIL_SERVER_BOOL_TABLE, cleanup_bool_table,
 		       MAIL_SERVER_STR_TABLE, cleanup_str_table,
