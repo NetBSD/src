@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1243 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1244 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -303,3 +303,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		in USB subsystem. [cegger 20090615]
 	drm(4): Update to mesa-drm 85b9f737db0d2a845e4d7e2bbf9ad12ff9e2227c.
 		[mrg 20090619]
+	postfix(1): Import version 2.6.2 [tron 20090623]
