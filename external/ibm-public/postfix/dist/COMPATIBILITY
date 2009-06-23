@@ -1,0 +1,73 @@
+.forward	yes (empty files; can enable/disable mail to /file or |command)
+/usr/mail	yes (compile time option)
+/usr/spool/mail	yes (compile time option)
+/var/mail	yes (compile time option)
+/var/spool/mail	yes (compile time option)
+:include:	yes (mail to /file and |command is off by default)
+address probing	yes (optional persistent database)
+aliases		yes (can enable/disable mail to /file or |command)
+bare newlines	yes (but will send CRLF)
+blacklisting	yes (client name/addr; helo hostname; mail from; rcpt to)
+connection caching yes (SMTP shared cache; LMTP shared cache)
+content filter	yes (before and after queue, internal and external)
+db tables	yes (compile time option)
+dbm tables	yes (compile time option)
+delivered-to	yes (configurable with prepend_delivered_header)
+dsn		yes
+enhanced status codes	yes
+errors-to:	no (removed with Postfix 2.2)
+esmtp		yes
+etrn support	yes (per-destination log for authorized destinations only)
+fcntl locking	yes (runtime configurable)
+flock locking	yes (runtime configurable)
+genericstable	yes (Postfix 2.2 generic(5) table)
+greylist	yes (delegated policy script)
+home mailbox	yes
+ident lookup	no
+ipv6	        yes (compatibility for ipv4-only systems)
+ldap tables	yes (contributed)
+lmtp support	yes (client only)
+luser relay	yes
+m4 config	no
+mail to command	yes (configurable for .forward, aliases, :include:)
+mail to file	yes (configurable for .forward, aliases, :include:)
+maildir		yes (in home, system mailspool, /file/name/ alias)
+mailertable	yes (it's called transport)
+mailq		yes
+majordomo	yes (edit approve script to delete /^delivered-to:/i)
+milter		yes (except body replacement)
+mime		yes (including 8bit to quoted-printable conversion)
+mysql tables	yes (contributed)
+netinfo tables	yes (contributed)
+newaliases	yes (main alias database only)
+nis tables	yes
+nis+ tables	yes (contributed)
+no <> in smtp	yes (most common address forms)
+pgsql tables	yes (contributed)
+pipeline option	yes (SMTP server and client; LMTP client)
+pop/imap	no
+qmqp server	yes (with verp support)
+rbl support	yes
+return-receipt:	no (use DSN NOTIFY=SUCCESS)
+rhsbl support	yes
+sasl support	yes (compile time option)
+sendmail -bt	no
+sendmail -bv	yes (sends delivery report via email)
+sendmail -q	yes
+sendmail -qRxxx	yes (for domains specified in fast_flush_domains)
+sendmail -qSxxx	no
+sendmail -qtime	ignored
+sendmail -v	yes (sends delivery report via email)
+sendmail.cf	no (uses table-driven address rewriting)
+size option	yes, server and client
+smarthost	yes (specify relayhost in main.cf)
+spf		yes (delegated policy script)
+starttls        yes (compile time option)
+tcp wrapper	no (use built-in blacklist facility)
+user+extension	yes (also: .forward+extension)
+user-extension	yes (also: .forward-extension)
+user.lock	yes (runtime configurable)
+uucp support	yes (sends user@domain recipients)
+verp support	yes (delimiters are configurable)
+virtual domains	yes (via local delivery agent and via dedicated delivery agent)
+year 2000 safe	yes

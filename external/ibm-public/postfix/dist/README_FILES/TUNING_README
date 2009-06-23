@@ -1,0 +1,486 @@
+ PPoossttffiixx PPeerrffoorrmmaannccee TTuunniinngg
+
+-------------------------------------------------------------------------------
+
+PPuurrppoossee ooff PPoossttffiixx ppeerrffoorrmmaannccee ttuunniinngg
+
+The hints and tips in this document help you improve the performance of Postfix
+systems that already work. If your Postfix system is unable to receive or
+deliver mail, then you need to solve those problems first, using the
+DEBUG_README document as guidance.
+
+For tuning external content filter performance, first read the respective
+information in the FILTER_README and SMTPD_PROXY_README documents. Then make
+sure to avoid latency in the content filter code. As much as possible avoid
+performing queries against external data sources with a high or highly variable
+delay. Your content filter will run with a small concurrency to avoid CPU/
+memory starvation, and if any latency creeps in, content filter throughput will
+suffer. High volume environments should avoid RBL lookups, complex database
+queries and so on.
+
+Topics on mail receiving performance:
+
+  * General mail receiving performance tips
+  * Doing more work with your SMTP server processes
+  * Slowing down SMTP clients that make many errors
+  * Measures against clients that make too many connections
+
+Topics on mail delivery performance:
+
+  * General mail delivery performance tips
+  * Tuning the frequency of deferred mail delivery attempts
+  * Tuning the number of simultaneous deliveries
+  * Tuning the number of recipients per delivery
+
+Other Postfix performance tuning topics:
+
+  * Tuning the number of Postfix processes
+  * Tuning the number of processes on the system
+  * Tuning the number of open files or sockets
+
+The following tools can be used to measure mail system performance under
+artificial loads. They are normally not installed with Postfix.
+
+  * smtp-source, SMTP/LMTP message generator
+  * smtp-sink, SMTP/LMTP message dump
+  * qmqp-source, QMQP message generator
+  * qmqp-sink, QMQP message dump
+
+GGeenneerraall mmaaiill rreecceeiivviinngg ppeerrffoorrmmaannccee ttiippss
+
+  * Read and understand the maildrop queue, incoming queue, and active queue
+    discussions in the QSHAPE_README document.
+
+  * Run a local name server to reduce slow-down due to DNS lookups. If you run
+    multiple Postfix systems, point each local name server to a shared
+    forwarding server to reduce the number of lookups across the upstream
+    network link.
+
+  * Eliminate unnecessary LDAP lookups, by specifying a domain filter. This
+    eliminates lookups for addresses in remote domains, and eliminates lookups
+    of partial addresses. See ldap_table(5) for details.
+
+When Postfix responds slowly to SMTP clients:
+
+  * Look for obvious signs of trouble as described in the DEBUG_README
+    document, and eliminate those problems first.
+
+  * Turn off your header_checks and body_checks patterns and see if the problem
+    goes away.
+
+  * Turn off chroot operation as described in the DEBUG_README document and see
+    if the problem goes away.
+
+  * If Postfix logs the SMTP client as "unknown" then you have a name service
+    problem: the name server is bad, or the resolv.conf file contains bad
+    information, or some packet filter is blocking the DNS requests or replies.
+
+  * If the number of smtpd(8) processes has reached the process limit as
+    specified in master.cf, new SMTP clients must wait until a process becomes
+    available. Increase the number of processes if memory permits. See the
+    instructions given under "Tuning the number of Postfix processes".
+
+DDooiinngg mmoorree wwoorrkk wwiitthh yyoouurr SSMMTTPP sseerrvveerr pprroocceesssseess
+
+With Postfix versions 2.0 and earlier, the smtpd(8) server pauses before
+reporting an error to an SMTP client. The idea is called tar pitting. However,
+these delays also slow down Postfix. When the smtpd(8) server replies slowly,
+sessions take more time, so that more smtpd(8) server processes are needed to
+handle the load. When your Postfix smtpd(8) server process limit is reached,
+new clients must wait until a server process becomes available. This means that
+all clients experience poor performance.
+
+You can speed up the handling of smtpd(8) server error replies by turning off
+the delay:
+
+    /etc/postfix/main.cf:
+        # Not needed with Postfix 2.1
+        smtpd_error_sleep_time = 0
+
+With the above setting, Postfix 2.0 and earlier can serve more SMTP clients
+with the same number SMTP server processes. The next section describes how
+Postfix deals with clients that make a large number of errors.
+
+SSlloowwiinngg ddoowwnn SSMMTTPP cclliieennttss tthhaatt mmaakkee mmaannyy eerrrroorrss
+
+The Postfix smtpd(8) server maintains a per-session error count. The error
+count is reset when a message is transferred successfully, and is incremented
+when a client request is unrecognized or unimplemented, when a client request
+violates access restrictions, or when some other error happens.
+
+As the per-session error count increases, the smtpd(8) server changes behavior
+and begins to insert delays into the responses. The idea is to slow down a run-
+away client in order to limit resource usage. The behavior is Postfix version
+dependent.
+
+IMPORTANT: These delays slow down Postfix, too. When too much delay is
+configured, the number of simultaneous SMTP sessions will increase until it
+reaches the smtpd(8) server process limit, and new SMTP clients must wait until
+an smtpd(8) server process becomes available.
+
+Postfix version 2.1 and later:
+
+  * When the error count reaches $smtpd_soft_error_limit (default: 10), the
+    Postfix smtpd(8) server delays all non-error and error responses by
+    $smtpd_error_sleep_time seconds (default: 1 second).
+
+  * When the error count reaches $smtpd_hard_error_limit (default: 20) the
+    Postfix smtpd(8) server breaks the connection.
+
+Postfix version 2.0 and earlier:
+
+  * When the error count is less than $smtpd_soft_error_limit (default: 10) the
+    Postfix smtpd(8) server delays all error replies by $smtpd_error_sleep_time
+    (1 second with Postfix 2.0, 5 seconds with Postfix 1.1 and earlier).
+
+  * When the error count reaches $smtpd_soft_error_limit, the Postfix smtpd(8)
+    server delays all responses by "error count" seconds or
+    $smtpd_error_sleep_time, whichever is more.
+
+  * When the error count reaches $smtpd_hard_error_limit (default: 20) the
+    Postfix smtpd(8) server breaks the connection.
+
+MMeeaassuurreess aaggaaiinnsstt cclliieennttss tthhaatt mmaakkee ttoooo mmaannyy ccoonnnneeccttiioonnss
+
+Note: these features use the Postfix anvil(8) service, introduced with Postfix
+version 2.2.
+
+The Postfix smtpd(8) server can limit the number of simultaneous connections
+from the same SMTP client, as well as the connection rate and the rate of
+certain SMTP commands from the same client. These statistics are maintained by
+the anvil(8) server (translation: if anvil(8) breaks, then connection limits
+stop working).
+
+IMPORTANT: These limits must not be used to regulate legitimate traffic: mail
+will suffer grotesque delays if you do so. The limits are designed to protect
+the smtpd(8) server against abuse by out-of-control clients.
+
+    smtpd_client_connection_count_limit (default: 50)
+        The maximum number of connections that an SMTP client may make
+        simultaneously.
+    smtpd_client_connection_rate_limit (default: no limit)
+        The maximum number of connections that an SMTP client may make in the
+        time interval specified with anvil_rate_time_unit (default: 60s).
+    smtpd_client_message_rate_limit (default: no limit)
+        The maximum number of message delivery requests that an SMTP client may
+        make in the time interval specified with anvil_rate_time_unit (default:
+        60s).
+    smtpd_client_recipient_rate_limit (default: no limit)
+        The maximum number of recipient addresses that an SMTP client may
+        specify in the time interval specified with anvil_rate_time_unit
+        (default: 60s).
+    smtpd_client_new_tls_session_rate_limit (default: no limit)
+        The maximum number of new TLS sessions (without using the TLS session
+        cache) that an SMTP client may negotiate in the time interval specified
+        with anvil_rate_time_unit (default: 60s).
+    smtpd_client_event_limit_exceptions (default: $mynetworks)
+        SMTP clients that are excluded from connection and rate limits
+        specified above.
+
+GGeenneerraall mmaaiill ddeelliivveerryy ppeerrffoorrmmaannccee ttiippss
+
+  * Read and understand the maildrop queue, incoming queue, active queue and
+    deferred queue discussions in the QSHAPE_README document.
+
+  * In case of slow delivery, run the qshape tool as described in the
+    QSHAPE_README document.
+
+  * Submit multiple recipients per message instead of submitting messages with
+    only a few recipients.
+
+  * Submit mail via SMTP instead of /usr/sbin/sendmail. You may have to adjust
+    the smtpd_recipient_limit parameter setting.
+
+  * Don't overwhelm the disk with mail submissions. Optimize the mail
+    submission rate by tuning the number of parallel submissions and/or by
+    tuning the Postfix in_flow_delay parameter setting.
+
+  * Run a local name server to reduce slow-down due to DNS lookups. If you run
+    multiple Postfix systems, point each local name server to a shared
+    forwarding server to reduce the number of lookups across the upstream
+    network link.
+
+  * Reduce the smtp_connect_timeout and smtp_helo_timeout values so that
+    Postfix does not waste lots of time connecting to non-responding remote
+    SMTP servers.
+
+  * Use a dedicated mail delivery transport for problematic destinations, with
+    reduced timeouts and with adjusted concurrency. See "Tuning the number of
+    simultaneous deliveries" below.
+
+  * Use a fallback_relay host for mail that cannot be delivered upon the first
+    attempt. This "graveyard" machine can use shorter retry times for difficult
+    to reach destinations. See "Tuning the frequency of deferred mail delivery
+    attempts" below.
+
+  * Speed up disk updates with a large (64MB) persistent write cache. This
+    allows disk updates to be sorted for optimal access speed without
+    compromising file system integrity when the system crashes.
+
+  * Use a solid-state disk (a persistent RAM disk). This is an expensive
+    solution that should be used in combination with short SMTP timeouts and a
+    fallback_relay "graveyard" machine that delivers mail for problem
+    destinations.
+
+TTuunniinngg tthhee nnuummbbeerr ooff ssiimmuullttaanneeoouuss ddeelliivveerriieess
+
+Although Postfix can be configured to run 1000 SMTP client processes at the
+same time, it is rarely desirable that it makes 1000 simultaneous connections
+to the same remote system. For this reason, Postfix has safety mechanisms in
+place to avoid this so-called "thundering herd" problem.
+
+The Postfix queue manager implements the analog of the TCP slow start flow
+control strategy: when delivering to a site, send a small number of messages
+first, then increase the concurrency as long as all goes well; reduce
+concurrency in the face of congestion.
+
+  * The initial_destination_concurrency parameter (default: 5) controls how
+    many messages are initially sent to the same destination before adapting
+    delivery concurrency. Of course, this setting is effective only as long as
+    it does not exceed the process limit and the destination concurrency limit
+    for the specific mail transport channel.
+
+  * The default_destination_concurrency_limit parameter (default: 20) controls
+    how many messages may be sent to the same destination simultaneously. You
+    can override this setting for specific message delivery transports by
+    taking the name of the master.cf entry and appending
+    "_destination_concurrency_limit".
+
+Examples of transport specific concurrency limits are:
+
+  * The local_destination_concurrency_limit parameter (default: 2) controls how
+    many messages are delivered simultaneously to the same local recipient. The
+    recommended limit is low because delivery to the same mailbox must happen
+    sequentially, so massive parallelism is not useful. Another good reason to
+    limit delivery concurrency to the same recipient: if the recipient has an
+    expensive shell command in her .forward file, or if the recipient is a
+    mailing list manager, you don't want to run too many instances of those
+    processes at the same time.
+
+  * The default smtp_destination_concurrency_limit of 20 seems enough to
+    noticeably load a system without bringing it to its knees. Be careful when
+    changing this to a much larger number.
+
+The above default values of the concurrency limits work well in a broad range
+of situations. Knee-jerk changes to these parameters in the face of congestion
+can actually make problems worse. Specifically, large destination concurrencies
+should never be the default. They should be used only for transports that
+deliver mail to a small number of high volume domains.
+
+A common situation where high concurrency is called for is on gateways relaying
+a high volume of mail from between the Internet and an intranet mail
+environment. Approximately half the mail (assuming equal volumes inbound and
+outbound) will be destined for the internal mail hubs. Since the internal mail
+hubs will be receiving all external mail exclusively from the gateway, it is
+reasonable to configure the gateway to make greater demands on the capacity of
+the internal SMTP servers.
+
+The tuning of the inbound concurrency limits need not be trial and error. A
+high volume capable mailhub should be able to easily handle 50 or 100 (rather
+than the default 20) simultaneous connections, especially if the gateway
+forwards to multiple MX hosts. When all MX hosts are up and accepting
+connections in a timely fashion, throughput will be high. If any MX host is
+down and completely unresponsive, the average connection latency rises to at
+least 1/N * $smtp_connection_timeout, if there are N MX hosts. This limits
+throughput to at most the destination concurrency * N /
+$smtp_connection_timeout.
+
+For example, with a destination concurrency of 100 and 2 MX hosts, each host
+will handle up to 50 simultaneous connections. If one MX host is down and the
+default SMTP connection timeout is 30s, the throughput limit is 100 * 2 / 30 ~=
+6 messages per second. This suggests that high volume destinations with good
+connectivity and multiple MX hosts need a lower connection timeout, values as
+low as 5s or even 1s can be used to prevent congestion when one or more, but
+not all MX hosts are down.
+
+If necessary, set a higher transport_destination_concurrency_limit (in main.cf
+since this is a queue manager parameter) and a lower smtp_connection_timeout
+(with a "-o" override in master.cf since this parameter has no per-transport
+name) for the relay transport and any transports dedicated for specific high
+volume destinations.
+
+TTuunniinngg tthhee nnuummbbeerr ooff rreecciippiieennttss ppeerr ddeelliivveerryy
+
+The default_destination_recipient_limit parameter (default: 50) controls how
+many recipients a Postfix delivery agent will send with each copy of an email
+message. You can override this setting for specific Postfix delivery agents.
+For example, "uucp_destination_recipient_limit = 100" would limit the number of
+recipients per UUCP delivery to 100.
+
+If an email message exceeds the recipient limit for some destination, the
+Postfix queue manager breaks up the list of recipients into smaller lists.
+Postfix will attempt to send multiple copies of the message in parallel.
+
+IMPORTANT: Be careful when increasing the recipient limit per message delivery;
+some smtpd(8) servers abort the connection when they run out of memory or when
+a hard recipient limit is reached, so that the message will never be delivered.
+
+The smtpd_recipient_limit parameter (default: 1000) controls how many
+recipients the Postfix smtpd(8) server will take per delivery. The default
+limit is more than any reasonable SMTP client would send. The limit exists to
+protect the local mail system against a run-away client.
+
+TTuunniinngg tthhee ffrreeqquueennccyy ooff ddeeffeerrrreedd mmaaiill ddeelliivveerryy aatttteemmppttss
+
+When a Postfix delivery agent (smtp(8), local(8), etc.) is unable to deliver a
+message it may blame the message itself, or it may blame the receiving party.
+
+  * When the delivery agent blames the message, the queue manager gives the
+    queue file a time stamp into the future, so it won't be looked at for a
+    while. By default, the amount of time to cool down is the amount of time
+    that has passed since the message arrived. This results in so-called
+    exponential backoff behavior.
+
+  * When the delivery agent blames the receiving party (for example a local
+    recipient user, or a remote host), the queue manager not only advances the
+    queue file time stamp, but also puts the receiving party on a "dead" list
+    so that it will be skipped for some amount of time.
+
+This process is governed by a bunch of little parameters.
+
+    queue_run_delay (default: 300 seconds; before Postfix 2.4: 1000s)
+        How often the queue manager scans the queue for deferred mail.
+    minimal_backoff_time (default: 300 seconds; before Postfix 2.4: 1000s)
+        The minimal amount of time a message won't be looked at, and the
+        minimal amount of time to stay away from a "dead" destination.
+    maximal_backoff_time (default: 4000 seconds)
+        The maximal amount of time a message won't be looked at after a
+        delivery failure.
+    maximal_queue_lifetime (default: 5 days)
+        How long a message stays in the queue before it is sent back as
+        undeliverable. Specify 0 for mail that should be returned immediately
+        after the first unsuccessful delivery attempt.
+    bounce_queue_lifetime (default: 5 days, available with Postfix version 2.1
+    and later)
+        How long a MAILER-DAEMON message stays in the queue before it is
+        considered undeliverable. Specify 0 for mail that should be tried only
+        once.
+    qmgr_message_recipient_limit (default: 20000)
+        The size of many in-memory queue manager data structures. Among others,
+        this parameter limits the size of the short-term, in-memory list of
+        "dead" destinations. Destinations that don't fit the list are not
+        added.
+
+IMPORTANT: If you increase the frequency of deferred mail delivery attempts, or
+if you flush the deferred mail queue frequently, then you may find that Postfix
+mail delivery performance actually becomes worse. The symptoms are as follows:
+
+  * The active queue becomes saturated with mail that has delivery problems.
+    New mail enters the active queue only when an old message is deferred. This
+    is a slow process that usually requires timing out one or more SMTP
+    connections.
+
+  * All available Postfix delivery agents become occupied trying to connect to
+    unreachable sites etc. New mail has to wait until a delivery agent becomes
+    available. This is a slow process that usually requires timing out one or
+    more SMTP connections.
+
+When mail is being deferred frequently, fixing the problem is always better
+than increasing the frequency of delivery attempts. However, if you can control
+only the delivery attempt frequency, consider using a dedicated fallback_relay
+"graveyard" machine for bad destinations, so that these destinations do not
+ruin the performance of normal mail deliveries.
+
+TTuunniinngg tthhee nnuummbbeerr ooff PPoossttffiixx pprroocceesssseess
+
+The default_process_limit configuration parameter gives direct control over how
+many daemon processes Postfix will run. As of Postfix 2.0 the default limit is
+100 smtp client processes, 100 smtp server processes, and so on. This may
+overwhelm systems with little memory, as well as networks with low bandwidth.
+
+You can change the global process limit by specifying a non-default
+default_process_limit in the main.cf file. For example, to run up to 10 smtp
+client processes, 10 smtp server processes, and so on:
+
+    /etc/postfix/main.cf:
+        default_process_limit = 10
+
+You need to execute "postfix reload" to make the change effective. The limits
+are enforced by the Postfix master(8) daemon which does not automatically read
+main.cf when it changes.
+
+You can override the process limit for specific Postfix daemons by editing the
+master.cf file. For example, if you do not wish to receive 100 SMTP messages at
+the same time, but do not want to change the process limits for local mail
+deliveries, you could specify:
+
+    /etc/postfix/master.cf:
+        # ====================================================================
+        # service type  private unpriv  chroot  wakeup  maxproc command + args
+        #               (yes)   (yes)   (yes)   (never) (100)
+        # ====================================================================
+        . . .
+        smtp      inet  n       -       -       -       10      smtpd
+        . . .
+
+TTuunniinngg tthhee nnuummbbeerr ooff pprroocceesssseess oonn tthhee ssyysstteemm
+
+  * MacOS X will run out of process slots when you increase Postfix process
+    limits. The following works with OSX 10.4 and OSX 10.5.
+
+    MacOS X kernel parameters can be specified in /etc/sysctl.conf.
+
+    /etc/sysctl.conf:
+        kern.maxproc=2048
+        kern.maxprocperuid=2048
+
+    Unfortunately these can't simply be set on the fly with "sysctl -w". You
+    also have to set the following in /etc/launchd.conf so that the root user
+    after boot will have the right process limit (2048). Otherwise you have to
+    always run ulimit -u 2048 as root, then start a user shell, and then start
+    processes for things to take effect.
+
+    /etc/launchd.conf:
+        limit maxproc 2048
+
+    Once these are in place, reboot the system. After that, the limits will
+    stay in place.
+
+TTuunniinngg tthhee nnuummbbeerr ooff ooppeenn ffiilleess oorr ssoocckkeettss
+
+When Postfix opens too many files or sockets, processes will abort with fatal
+errors, and the system may log "file table full" errors.
+
+  * Depending on your Postfix and operating system versions you may need to
+    recompile Postfix if you need more than 1024 file descriptors per process:
+
+      o No recompilation is needed for Postfix version 2.4 and later, when it
+        was compiled for systems that support BSD kqueue(2) (FreeBSD 4.1,
+        NetBSD 2.0, OpenBSD 2.9), Solaris 8 /dev/poll, or Linux 2.6 epoll(4).
+
+      o Otherwise, Postfix needs to be recompiled to override the default
+        FD_SETSIZE value.
+
+  * Reduce the number of processes as described under "Tuning the number of
+    Postfix processes" above. Fewer processes need fewer open files and
+    sockets.
+
+  * Configure the kernel for more open files and sockets. The details are
+    extremely system dependent and change with the operating system version. Be
+    sure to verify the following information with your system tuning guide:
+
+      o Some FreeBSD kernel parameters can be specified in /boot/loader.conf,
+        and some can be specified in /etc/sysctl.conf or changed with sysctl
+        commands. Which is which depends on the version.
+
+        kern.ipc.maxsockets="5000"
+        kern.ipc.nmbclusters="65536"
+        kern.maxproc="2048"
+        kern.maxfiles="16384"
+        kern.maxfilesperproc="16384"
+
+      o Linux kernel parameters can be specified in /etc/sysctl.conf or changed
+        with sysctl commands:
+
+        fs.file-max=16384
+        kernel.threads-max=2048
+
+      o Solaris kernel parameters can be specified in /etc/system, as described
+        in the Solaris FAQ entry titled "How can I increase the number of file
+        descriptors per process?"
+
+        * set hard limit on file descriptors
+        set rlim_fd_max = 4096
+        * set soft limit on file descriptors
+        set rlim_fd_cur = 1024
+

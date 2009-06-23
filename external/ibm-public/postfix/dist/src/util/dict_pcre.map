@@ -1,0 +1,22 @@
+if /true/	fodder
+/1/	1
+if /false/
+/2/	2
+endif		fodder
+/3/	3
+endif
+/a/!/b/	a!b
+/c/
+/(1)(2)(3)(5)/	($1)($2)($3)($4)($5)
+/(1)(2)(3)(4)/	($1)($2)($3)($4)
+/(1)(2)(3)/	($1)($2)($3)
+# trailing whitespace below
+if /bar/ 	
+if !/xyzzy/
+/(elbereth)/	($1)
+!/(bogus)/	($1)
+!/find/		Don't have a liquor license
+endif
+endif	 
+# trailing whitespace above
+!
