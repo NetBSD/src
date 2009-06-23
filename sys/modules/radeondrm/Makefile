@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.5 2008/10/15 14:09:21 pooka Exp $
+# $NetBSD: Makefile,v 1.5.4.1 2009/06/23 07:07:29 snj Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	${S}/dev/pci/drm
+.PATH:	${S}/external/bsd/drm/dist/bsd-core
+.PATH:	${S}/external/bsd/drm/dist/shared-core
 
 KMOD=   radeondrm
 
@@ -14,6 +15,7 @@ SRCS+=	radeon_irq.c
 SRCS+=	radeon_mem.c
 SRCS+=	radeon_state.c
 
-CPPFLAGS+=	-I${S}/dev/drm
+CPPFLAGS+=	-I${S}/external/bsd/drm/dist/bsd-core \
+		-I${S}/external/bsd/drm/dist/shared-core
 
 .include <bsd.kmodule.mk>
