@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.13 2009/02/08 19:14:52 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.14 2009/06/23 20:09:07 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -164,6 +164,7 @@ void udf_delete_node(struct udf_node *udf_node);
 int udf_chsize(struct vnode *vp, u_quad_t newsize, kauth_cred_t cred);
 int udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node, struct udf_node *udf_node, struct componentname *cnp);
 int udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node, struct udf_node *udf_node, struct vattr *vap, struct componentname *cnp);
+int udf_dir_update_rootentry(struct udf_mount *ump, struct udf_node *dir_node, struct udf_node *new_parent_node);
 
 /* update and times */
 void udf_add_to_dirtylist(struct udf_node *udf_node);

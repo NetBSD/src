@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.93 2009/06/18 15:03:34 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.94 2009/06/23 20:09:07 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.93 2009/06/18 15:03:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.94 2009/06/23 20:09:07 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4792,6 +4792,123 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	/* remove from the dirhash */
 	dirhash_remove(dirh, dirent, diroffset,
 		udf_fidsize(fid));
+
+error_out:
+	free(fid, M_UDFTEMP);
+	free(dirent, M_UDFTEMP);
+
+	dirhash_put(dir_node->dir_hash);
+
+	return error;
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+udf_dir_update_rootentry(struct udf_mount *ump, struct udf_node *dir_node,
+	struct udf_node *new_parent_node)
+{
+	struct vnode *dvp = dir_node->vnode;
+	struct dirhash       *dirh;
+	struct dirhash_entry *dirh_ep;
+	struct file_entry    *fe;
+	struct extfile_entry *efe;
+	struct fileid_desc *fid;
+	struct dirent *dirent;
+	uint64_t file_size, diroffset;
+	uint64_t new_parent_unique_id;
+	uint32_t lb_size, fidsize;
+	int found, error;
+	char const *name  = "..";
+	int namelen = 2;
+	int hit;
+
+	/* get our dirhash and make sure its read in */
+	dirhash_get(&dir_node->dir_hash);
+	error = dirhash_fill(dir_node);
+	if (error) {
+		dirhash_put(dir_node->dir_hash);
+		return error;
+	}
+	dirh = dir_node->dir_hash;
+
+	/* get new parent's unique ID */
+	fe  = new_parent_node->fe;
+	efe = new_parent_node->efe;
+	if (fe) {
+		new_parent_unique_id = udf_rw64(fe->unique_id);
+	} else {
+		assert(efe);
+		new_parent_unique_id = udf_rw64(efe->unique_id);
+	}
+
+	/* get directory filesize */
+	fe  = dir_node->fe;
+	efe = dir_node->efe;
+	if (fe) {
+		file_size = udf_rw64(fe->inf_len);
+	} else {
+		assert(efe);
+		file_size = udf_rw64(efe->inf_len);
+	}
+
+	/* allocate temporary space for fid */
+	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
+	fid     = malloc(lb_size, M_UDFTEMP, M_WAITOK);
+	dirent  = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+
+	/*
+	 * NOTE the standard does not dictate the FID entry '..' should be
+	 * first, though in practice it will most likely be.
+	 */
+
+	/* search our dirhash hits */
+	found = 0;
+	dirh_ep = NULL;
+	for (;;) {
+		hit = dirhash_lookup(dirh, name, namelen, &dirh_ep);
+		/* if no hit, abort the search */
+		if (!hit)
+			break;
+
+		/* check this hit */
+		diroffset = dirh_ep->offset;
+
+		/* transfer a new fid/dirent */
+		error = udf_read_fid_stream(dvp, &diroffset, fid, dirent);
+		if (error)
+			break;
+
+		/* see if its our entry */
+		KASSERT(dirent->d_namlen == namelen);
+		if (strncmp(dirent->d_name, name, namelen) == 0) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (!found)
+		error = ENOENT;
+	if (error)
+		goto error_out;
+
+	/* update our ICB to the new parent, hit of lower 32 bits of uniqueid */
+	fid->icb = new_parent_node->write_loc;
+	fid->icb.longad_uniqueid = udf_rw32(new_parent_unique_id);
+
+	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
+
+	/* get size of fid and compensate for the read_fid_stream advance */
+	fidsize = udf_fidsize(fid);
+	diroffset -= fidsize;
+
+	/* write out */
+	error = vn_rdwr(UIO_WRITE, dir_node->vnode,
+			fid, fidsize, diroffset, 
+			UIO_SYSSPACE, IO_ALTSEMANTICS | IO_NODELOCKED,
+			FSCRED, NULL, NULL);
+
+	/* nothing to be done in the dirhash */
 
 error_out:
 	free(fid, M_UDFTEMP);

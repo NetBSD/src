@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.44 2009/06/23 19:36:39 elad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.45 2009/06/23 20:09:07 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.44 2009/06/23 19:36:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.45 2009/06/23 20:09:07 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1818,6 +1818,57 @@ udf_readlink(void *v)
 
 /* --------------------------------------------------------------------- */
 
+static int
+udf_on_rootpath(struct udf_node *fnode, struct udf_node *tdnode)
+{
+	struct udf_mount *ump = tdnode->ump;
+	struct udf_node *res_node;
+	struct long_ad icb_loc;
+	const char *name;
+	int namelen;
+	int error, found;
+
+	/* if fnode is on the path from tdnode to the root, return error */
+	name    = "..";
+	namelen = 2;
+	while (fnode != tdnode) {
+		DPRINTF(NODE, ("udf_on_rootpath : fnode %p, tdnode %p\n",
+			fnode, tdnode));
+		if (tdnode->vnode->v_vflag & VV_ROOT) {
+			/* found root, accept */
+			/* DPRINTF(NODE, ("\tCOUGHT, pre-vput\n")); */
+			vput(tdnode->vnode);
+			DPRINTF(NODE, ("\tCOUGHT: valid\n"));
+			return 0;
+		}
+		/* go down one level */
+		error = udf_lookup_name_in_dir(tdnode->vnode, name, namelen,
+			&icb_loc, &found);
+
+		DPRINTF(NODE, ("\tlookup of '..' resulted in error %d, "
+			"found %d\n", error, found));
+		/* DPRINTF(NODE, ("\tvput %p\n", tdnode->vnode)); */
+		vput(tdnode->vnode);
+
+		if (error)	/* now what? bail out */
+			return EINVAL;
+		if (!found)	/* unlikely */
+			return EINVAL;
+
+		DPRINTF(NODE, ("\tgetting .. node\n"));
+		error = udf_get_node(ump, &icb_loc, &res_node);
+		DPRINTF(NODE, ("\treported error %d\n", error));
+		if (error)	/* argh, bail out */
+			return EINVAL;
+
+		tdnode = res_node;
+	}
+	DPRINTF(NODE, ("\tCOUGHT: invalid\n"));
+	vput(tdnode->vnode);
+
+	return EINVAL;
+}
+
 /* note: i tried to follow the logics of the tmpfs rename code */
 int
 udf_rename(void *v)
@@ -1890,12 +1941,17 @@ udf_rename(void *v)
 		}
 	}
 
-	/* dont allow renaming directories acros directory for now */
-	if (fdnode != tdnode) {
-		if (fvp->v_type == VDIR) {
-			error = EINVAL;
+	/* check if moving a directory to a new parent is allowed */
+	if ((fdnode != tdnode) && (fvp->v_type == VDIR)) {
+		vref(tdvp);
+		error = udf_on_rootpath(fnode, tdnode);
+		DPRINTF(NODE, ("Dir rename allowed ? %s\n", error ? "NO":"YES"));
+
+		/* tdnode is vput()'ed, relock */
+		(void) vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+
+		if (error)
 			goto out;
-		}
 	}
 
 	/* remove existing entry if present */
@@ -1911,6 +1967,19 @@ udf_rename(void *v)
 	error = udf_dir_detach(tdnode->ump, fdnode, fnode, fcnp);
 	if (error)
 		udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
+	if (error)
+		goto out;
+
+	/* update tnode's '..' if moving directory to new parent */
+	if ((fdnode != tdnode) && (fvp->v_type == VDIR)) {
+		/* update fnode's '..' entry */
+		error = udf_dir_update_rootentry(fnode->ump, fnode, tdnode);
+		if (error) {
+			/* 'try' to recover from this situation */
+			udf_dir_attach(tdnode->ump, fdnode, fnode, &fvap, fcnp);
+			udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
+		}
+	}
 
 out:
         if (fdnode != tdnode)
