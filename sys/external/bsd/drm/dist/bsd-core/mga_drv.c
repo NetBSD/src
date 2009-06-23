@@ -37,10 +37,30 @@
 #include "mga_drv.h"
 #include "drm_pciids.h"
 
+#ifdef __NetBSD__
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcidevs_data.h>
+#endif
+
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mga_pciidlist[] = {
 	mga_PCI_IDS
 };
+
+#ifdef __NetBSD__
+static int mgadev_match(struct pci_attach_args *pa);
+static int
+mgadev_match(struct pci_attach_args *pa)
+{
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HINT &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HINT_HB1)
+		return 1;
+	return 0;
+}
+#endif
+
 
 /**
  * Determine if the device really is AGP or not.
@@ -61,8 +81,6 @@ static drm_pci_id_list_t mga_pciidlist[] = {
  */
 static int mga_driver_device_is_agp(struct drm_device * dev)
 {
-	device_t bus;
-
 	/* There are PCI versions of the G450.  These cards have the
 	 * same PCI ID as the AGP G450, but have an additional PCI-to-PCI
 	 * bridge chip.  We detect these cards, which are not currently
@@ -71,6 +89,9 @@ static int mga_driver_device_is_agp(struct drm_device * dev)
 	 * device is 0x0021 (HB6 Universal PCI-PCI bridge), we reject the
 	 * device.
 	 */
+#if defined(__FreeBSD__)
+	device_t bus;
+
 #if __FreeBSD_version >= 700010
 	bus = device_get_parent(device_get_parent(dev->device));
 #else
@@ -79,6 +100,12 @@ static int mga_driver_device_is_agp(struct drm_device * dev)
 	if (pci_get_device(dev->device) == 0x0525 &&
 	    pci_get_vendor(bus) == 0x3388 &&
 	    pci_get_device(bus) == 0x0021)
+#else
+	struct pci_attach_args pa;
+
+	if (PCI_PRODUCT(dev->pa.pa_id) == PCI_PRODUCT_MATROX_G400_AGP &&
+	    pci_find_device(&pa, mgadev_match))
+#endif
 		return DRM_IS_NOT_AGP;
 	else
 		return DRM_MIGHT_BE_AGP;
@@ -115,6 +142,8 @@ static void mga_configure(struct drm_device *dev)
 	dev->driver->minor		= DRIVER_MINOR;
 	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
+
+#if defined(__FreeBSD__)
 
 static int
 mga_probe(device_t kdev)
@@ -170,3 +199,90 @@ DRIVER_MODULE(mga, vgapci, mga_driver, drm_devclass, 0, 0);
 DRIVER_MODULE(mga, pci, mga_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(mga, drm, 1, 1, 1);
+
+#elif   defined(__NetBSD__)
+
+static int
+mgadrm_probe(device_t parent, cfdata_t match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+
+	return drm_probe(pa, mga_pciidlist);
+}
+
+static void
+mgadrm_attach(device_t parent, device_t self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	struct drm_device *dev = device_private(self);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
+	mga_configure(dev);
+
+	drm_attach(self, pa, mga_pciidlist);
+}
+
+CFATTACH_DECL_NEW(mgadrm, sizeof(struct drm_device),
+    mgadrm_probe, mgadrm_attach, drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, mgadrm, NULL);
+
+CFDRIVER_DECL(mgadrm, DV_DULL, NULL);
+extern struct cfattach mgadrm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata mgadrm_cfdata[] = {
+	{
+		.cf_name = "mgadrm",
+		.cf_atname = "mgadrm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+mgadrm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&mgadrm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("mgadrm", &mgadrm_ca);
+		if (err) {
+			config_cfdriver_detach(&mgadrm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(mgadrm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("mgadrm", &mgadrm_ca);
+			config_cfdriver_detach(&mgadrm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(mgadrm_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("mgadrm", &mgadrm_ca);
+		config_cfdriver_detach(&mgadrm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _MODULE */
+
+#endif
