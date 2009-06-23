@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.39 2009/01/25 14:25:27 lukem Exp $ */
+/* $NetBSD: disk.c,v 1.40 2009/06/23 05:11:47 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -108,10 +108,6 @@
 
 #include <unistd.h>
 
-#ifdef HAVE_UUID_H
-#include <uuid.h>
-#endif
-
 #include "scsi_cmd_codes.h"
 
 #include "iscsi.h"
@@ -151,7 +147,7 @@ typedef struct iscsi_disk_t {
 	uint64_t	 blocklen;			/* block size */
 	uint64_t	 luns;				/* # of luns */
 	uint64_t	 size;				/* size of complete disk */
-	uuid_t		 uuid;				/* disk's uuid */
+	nbuuid_t	 uuid;				/* disk's uuid */
 	char		*uuid_string;			/* uuid string */
 	targv_t		*tv;				/* the component devices and extents */
 	uint32_t	 resc;				/* # of reservation keys */
@@ -976,8 +972,8 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
 				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_LOGICAL_UNIT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
 				if (disks.v[sess->d].uuid_string == NULL) {
-					uuid_create(&disks.v[sess->d].uuid, &status);
-					uuid_to_string(&disks.v[sess->d].uuid, &disks.v[sess->d].uuid_string, &status);
+					nbuuid_create(&disks.v[sess->d].uuid, &status);
+					nbuuid_to_string(&disks.v[sess->d].uuid, &disks.v[sess->d].uuid_string, &status);
 				}
 				len = (uint8_t) snprintf((char *)&cp[4],
 							(unsigned)(*totsize - (int)(cp - &data[4])),

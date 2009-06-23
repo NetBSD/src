@@ -1,4 +1,4 @@
-/* $NetBSD: storage.h,v 1.5 2007/12/09 09:16:42 agc Exp $ */
+/* $NetBSD: storage.h,v 1.6 2009/06/23 05:11:46 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -32,6 +32,28 @@
 
 #include "defs.h"
 
+/* Length of a node address (an IEEE 802 address). */
+#define NB_UUID_NODE_LEN		6
+
+/*
+ * See also:
+ *      http://www.opengroup.org/dce/info/draft-leach-uuids-guids-01.txt
+ *      http://www.opengroup.org/onlinepubs/009629399/apdxa.htm
+ *
+ * A DCE 1.1 compatible source representation of UUIDs.
+ */
+typedef struct nbuuid_t {
+        uint32_t        time_low;
+        uint16_t        time_mid;
+        uint16_t        time_hi_and_version;
+        uint8_t         clock_seq_hi_and_reserved;
+        uint8_t         clock_seq_low;
+        uint8_t         node[NB_UUID_NODE_LEN];
+} nbuuid_t;
+
+void    nbuuid_create(nbuuid_t *, uint32_t *);
+void    nbuuid_to_string(nbuuid_t *, char **, uint32_t *);
+
 enum {
 	DE_EXTENT,
 	DE_DEVICE
@@ -51,7 +73,7 @@ typedef struct disc_de_t {
 typedef struct disc_extent_t {
 	char		*extent;	/* extent name */
 	char		*dev;		/* device associated with it */
-	uint64_t	sacred;		/* offset of extent from start of device */
+	uint64_t	sacred;		/* offset of extent from start of dev */
 	uint64_t	len;		/* size of extent */
 	int		fd;		/* in-core file descriptor */
 	int		used;		/* extent has been used in a device */
