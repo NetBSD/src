@@ -1,0 +1,26 @@
+#!/bin/sh
+
+HTML2TEXT="html2text -style pretty -rcfile html2text.rc"
+
+#case $# in
+# 0) $HTML2TEXT;;
+# *) for file 
+#    do
+#        cat <<EOF | fmt
+#[hyperlinked version: www.postfix.org/$file]
+#EOF
+#         $HTML2TEXT $file
+#    done;;
+#esac | sed '
+
+$HTML2TEXT "$@" | sed '
+:top
+/ -$/ {
+	N
+	s/ -\n  o/ -o/
+	b top
+}
+' | awk '
+/^$/ && prev_len == 0 { next }
+		      { print; prev_len = length }
+'

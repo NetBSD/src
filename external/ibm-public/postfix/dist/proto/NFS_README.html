@@ -1,0 +1,137 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix and NFS</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix and NFS</h1>
+
+<hr>
+
+<h2> Postfix support status for NFS </h2>
+
+<p> What is the status of support for Postfix on NFS? The answer
+is that Postfix itself is supported when you use NFS, but there is
+no promise that an NFS-related problem will promptly receive a
+Postfix workaround, or that a workaround will even be possible.
+</p>
+
+<p> That said, Postfix will in many cases work very well on NFS,
+because Postfix implements a number of workarounds (see below).
+Good NFS implementations seldom if ever give problems with Postfix,
+so Wietse recommends that you spend your money wisely.  </p>
+
+<h2> Postfix file locking and NFS </h2>
+
+<p> For the Postfix mail queue, it does not matter how well NFS
+file locking works. The reason is that you cannot share Postfix
+queues among multiple running Postfix instances. You can use NFS
+to switch a Postfix mail queue from one NFS client to another one,
+but only one NFS client can access a Postfix mail queue at any
+particular point in time. </p>
+
+<p> For mailbox file sharing with NFS, your options are to use
+<b>fcntl</b> (kernel locks), <b>dotlock</b> (<i>username</i>.lock
+files), to use both locking methods simultaneously, or to switch
+to maildir format. The maildir format uses one file per message and
+needs no file locking support in Postfix or in other mail software.
+</p>
+
+<p> Many sites that use mailbox format play safe and use both locking
+methods simultaneously. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    virtual_mailbox_lock = fcntl, dotlock
+    mailbox_delivery_lock = fcntl, dotlock
+</pre>
+</blockquote>
+
+<h2> Postfix NFS workarounds </h2>
+
+<p> The list below summarizes the workarounds that exist for running
+Postfix on NFS as of the middle of 2003. As a reminder, Postfix
+itself is still supported when it runs on NFS, but there is no
+promise that an NFS-related problem will promptly receive a Postfix
+workaround, or that a workaround will even be possible.  </p>
+
+<ul>
+
+<li> <p> Problem: when renaming a file, the operation may succeed
+but report an error anyway<sup>[1]</sup>. </p>
+
+<p> Workaround: when rename(old, new) reports an error, Postfix
+checks if the new name exists and the old name is gone. If the check
+succeeds, Postfix assumes that the rename() operation completed
+normally.  </p>
+
+<li> <p> Problem: when creating a directory, the operation may succeed
+but report an error anyway<sup>[1]</sup>. </p>
+
+<p> Workaround: when mkdir(new) reports an EEXIST error, Postfix
+checks if the new name resolves to a directory. If the check succeeds,
+Postfix assumes that the mkdir() operation completed normally.  </p>
+
+<li> <p> Problem: when creating a hardlink to a file, the operation
+may succeed but report an error anyway<sup>[1]</sup>. </p>
+
+<p> Workaround: when link(old, new) fails, Postfix compares the
+device and inode number of the old and new files. When the two files
+are identical, Postfix assumes that the link() operation completed
+normally. </p>
+
+<li> <p> Problem: when creating a dotlock (<i>username</i>.lock)
+file, the operation may succeed but report an error anyway<sup>[1]</sup>.
+</p>
+
+<p> Workaround: in this case, the only safe action is to back off
+and try again later.  </p>
+
+<li> <p> Problem: when a file server's "time of day" clock is not
+synchronized with the client's "time of day" clock, email deliveries
+are delayed by a minute or more.  </p>
+
+<p> Workaround: Postfix explicitly sets file time stamps to avoid
+delays with new mail (Postfix uses "last modified" file time stamps
+to decide when a queue file is ready for delivery).  </p>
+
+</ul>
+
+<p> <sup>[1]</sup> How can an operation succeed and report an error
+anyway? </p>
+
+<p> Suppose that an NFS server executes a client request successfully,
+and that the server's reply to the client is lost.  After some time
+the client retransmits the request to the server.  Normally, the
+server remembers that it already completed the request (it keeps a
+list of recently-completed requests and replies), and simply
+retransmits the reply. </p>
+
+<p> However, when the server has rebooted or when it has been very
+busy, the server no longer remembers that it already completed the
+request, and repeats the operation.  This causes no problems with
+file read/write requests (they contain a file offset and can therefore
+be repeated safely), but fails with non-idempotent operations. For
+example, when the server executes a retransmitted rename() request,
+the server reports an ENOENT error because the old name does not
+exist; and when the server executes a retransmitted link(), mkdir()
+or create() request, the server reports an EEXIST error because the
+name already exists. </p>
+
+<p> Thus, successful, non-idempotent, NFS operations will report
+false errors when the server reply is lost, the client retransmits
+the request, and the server does not remember that it already
+completed the request.  </p>
+
+</body>
+</html>

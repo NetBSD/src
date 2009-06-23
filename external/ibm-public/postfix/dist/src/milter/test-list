@@ -1,0 +1,49 @@
+# Reject with text 
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c connect -p inet:9999@0.0.0.0
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c helo -p inet:9999@0.0.0.0
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c mail -p inet:9999@0.0.0.0
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c rcpt -p inet:9999@0.0.0.0
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c header -p inet:9999@0.0.0.0
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c eoh -p inet:9999@0.0.0.0
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c body -p inet:9999@0.0.0.0
+./test-milter -C 1 -a "554 5.7.1 1% 2%% 3%%%" -c eom -p inet:9999@0.0.0.0
+
+# Tempfail tests
+./test-milter -C 1 -a tempfail -c connect -p inet:9999@0.0.0.0
+./test-milter -C 1 -a tempfail -c helo -p inet:9999@0.0.0.0
+./test-milter -C 1 -a tempfail -c mail -p inet:9999@0.0.0.0
+./test-milter -C 1 -a tempfail -c rcpt -p inet:9999@0.0.0.0
+./test-milter -C 1 -a tempfail -c header -p inet:9999@0.0.0.0
+./test-milter -C 1 -a tempfail -c eoh -p inet:9999@0.0.0.0
+./test-milter -C 1 -a tempfail -c body -p inet:9999@0.0.0.0
+./test-milter -C 1 -a tempfail -c eom -p inet:9999@0.0.0.0
+
+# Reject tests
+./test-milter -C 1 -a reject -c connect -p inet:9999@0.0.0.0
+./test-milter -C 1 -a reject -c helo -p inet:9999@0.0.0.0
+./test-milter -C 1 -a reject -c mail -p inet:9999@0.0.0.0
+./test-milter -C 1 -a reject -c rcpt -p inet:9999@0.0.0.0
+./test-milter -C 1 -a reject -c header -p inet:9999@0.0.0.0
+./test-milter -C 1 -a reject -c eoh -p inet:9999@0.0.0.0
+./test-milter -C 1 -a reject -c body -p inet:9999@0.0.0.0
+./test-milter -C 1 -a reject -c eom -p inet:9999@0.0.0.0
+
+# Accept tests
+./test-milter -C 1 -a accept -c connect -p inet:9999@0.0.0.0
+./test-milter -C 1 -a accept -c helo -p inet:9999@0.0.0.0
+./test-milter -C 1 -a accept -c rcpt -p inet:9999@0.0.0.0
+./test-milter -C 1 -a accept -c mail -p inet:9999@0.0.0.0
+./test-milter -C 1 -a accept -c header -p inet:9999@0.0.0.0
+./test-milter -C 1 -a accept -c eoh -p inet:9999@0.0.0.0
+./test-milter -C 1 -a accept -c body -p inet:9999@0.0.0.0
+./test-milter -C 1 -a accept -c eom -p inet:9999@0.0.0.0
+
+# discard tests
+./test-milter -C 1 -a discard -c connect -p inet:9999@0.0.0.0
+./test-milter -C 1 -a discard -c helo -p inet:9999@0.0.0.0
+./test-milter -C 1 -a discard -c rcpt -p inet:9999@0.0.0.0
+./test-milter -C 1 -a discard -c mail -p inet:9999@0.0.0.0
+./test-milter -C 1 -a discard -c header -p inet:9999@0.0.0.0
+./test-milter -C 1 -a discard -c eoh -p inet:9999@0.0.0.0
+./test-milter -C 1 -a discard -c body -p inet:9999@0.0.0.0
+./test-milter -C 1 -a discard -c eom -p inet:9999@0.0.0.0

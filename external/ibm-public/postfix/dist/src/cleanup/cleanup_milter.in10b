@@ -1,0 +1,12 @@
+#
+# Replace a short body by a longer one, and then replace the longer
+# body by itself. The result should be identical to what we had after
+# one replacement.
+#
+#verbose on
+open test-queue-file10.tmp
+
+replbody loremipsum
+replbody loremipsum
+
+close
