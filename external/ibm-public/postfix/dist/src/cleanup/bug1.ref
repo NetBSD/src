@@ -1,0 +1,56 @@
+*** ENVELOPE RECORDS bug1.file.tmp ***
+        0 message_size:             441             813               3               0             441
+       81 message_arrival_time: Sat Jan 20 19:52:41 2007
+      100 create_time: Sat Jan 20 19:52:47 2007
+      124 named_attribute: rewrite_context=local
+      147 sender: wietse@porcupine.org
+      169 named_attribute: log_client_name=hades.porcupine.org
+      206 named_attribute: log_client_address=168.100.189.10
+      241 named_attribute: log_message_origin=hades.porcupine.org[168.100.189.10]
+      297 named_attribute: log_helo_name=hades.porcupine.org
+      332 named_attribute: log_protocol_name=SMTP
+      356 named_attribute: client_name=hades.porcupine.org
+      389 named_attribute: reverse_client_name=hades.porcupine.org
+      430 named_attribute: client_address=168.100.189.10
+      461 named_attribute: helo_name=hades.porcupine.org
+      492 named_attribute: client_address_type=2
+      515 named_attribute: dsn_orig_rcpt=rfc822;wietse@porcupine.org
+      558 original_recipient: wietse@porcupine.org
+      580 recipient: wietse@porcupine.org
+      602 named_attribute: dsn_orig_rcpt=rfc822;alias@hades.porcupine.org
+      650 original_recipient: alias@hades.porcupine.org
+      677 recipient: wietse@porcupine.org
+      699 named_attribute: dsn_orig_rcpt=rfc822;alias@hades.porcupine.org
+      747 original_recipient: alias@hades.porcupine.org
+      774 recipient: root@porcupine.org
+      794 pointer_record:               0
+      811 *** MESSAGE CONTENTS bug1.file.tmp ***
+      813 regular_text: Received: from hades.porcupine.org (hades.porcupine.org [168.100.189.10])
+      888 regular_text: 	by hades.porcupine.org (Postfix) with SMTP id 38132290405;
+      949 regular_text: 	Sat, 20 Jan 2007 19:52:41 -0500 (EST)
+      989 regular_text: X: 1
+      995 padding:         0
+     1006 regular_text:  2
+     1010 regular_text:  3
+     1014 regular_text:  4
+     1018 regular_text:  5
+     1022 regular_text:  6
+     1026 regular_text:  7
+     1030 regular_text: Y: 1234567
+     1042 padding:   0
+     1047 regular_text: Message-Id: <20070121005247.38132290405@hades.porcupine.org>
+     1109 regular_text: Date: Sat, 20 Jan 2007 19:52:41 -0500 (EST)
+     1154 regular_text: From: wietse@porcupine.org
+     1182 regular_text: To: undisclosed-recipients:;
+     1212 pointer_record:            1258
+     1258 pointer_record:            1302
+     1302 pointer_record:            1346
+     1346 pointer_record:            1390
+     1390 regular_text: Subject: long header text
+     1417 pointer_record:            1285
+     1285 pointer_record:            1229
+     1229 regular_text: 
+     1231 regular_text: text
+     1237 pointer_record:               0
+     1254 *** HEADER EXTRACTED bug1.file.tmp ***
+     1256 *** MESSAGE FILE END bug1.file.tmp ***

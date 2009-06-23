@@ -1,0 +1,406 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Backscatter Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+Backscatter Howto</h1>
+
+<hr>
+
+<h2>Overview </h2>
+
+<p> This document describes features that require Postfix version
+2.0 or later. </p>
+
+<p> Topics covered in this document: </p>
+
+<ul>
+
+<li><a href="#wtf">What is backscatter mail?</a>
+
+<li><a href="#random">How do I block backscatter mail to random
+recipient addresses?</a>
+
+<li><a href="#real">How do I block backscatter mail to real
+recipient addresses?</a>
+
+<ul>
+
+<li><a href="#forged_helo">Blocking backscatter mail with forged
+mail server information</a>
+
+<li><a href="#forged_sender">Blocking backscatter mail with forged
+sender information</a>
+
+<li><a href="#forged_other">Blocking backscatter mail with other
+forged information</a>
+
+<li><a href="#scanner">Blocking backscatter mail from virus
+scanners</a>
+
+</ul>
+
+</ul>
+
+<p> The examples use Perl Compatible Regular Expressions (Postfix
+<a href="pcre_table.5.html">pcre</a>: tables), but also provide a translation to POSIX regular
+expressions (Postfix <a href="regexp_table.5.html">regexp</a>: tables). PCRE is preferred primarily
+because the implementation is often faster.</p>
+
+<h2><a name="wtf">What is backscatter mail?</a></h2>
+
+<p> When a spammer or worm sends mail with forged sender addresses,
+innocent sites are flooded with undeliverable mail notifications.
+This is called backscatter mail.  With Postfix, you know that you're
+a backscatter victim when your logfile goes on and on like this:
+</p>
+
+<blockquote>
+<pre>
+Dec  4 04:30:09 hostname postfix/smtpd[58549]: NOQUEUE: reject:
+RCPT from xxxxxxx[x.x.x.x]: 550 5.1.1 &lt;yyyyyy@your.domain.here&gt;:
+Recipient address rejected: User unknown; from=&lt;&gt;
+to=&lt;yyyyyy@your.domain.here&gt; proto=ESMTP helo=&lt;zzzzzz&gt;
+</pre>
+</blockquote>
+
+<p> What you see are lots of "user unknown" errors with "from=&lt;&gt;".
+These are error reports from MAILER-DAEMONs elsewhere on the Internet.
+</p>
+
+<h2><a name="random">How do I block backscatter mail to random
+recipient addresses?</a></h2>
+
+<p> If your machine receives backscatter mail to random addresses,
+configure Postfix to reject all mail for non-existent recipients
+as described in the <a href="LOCAL_RECIPIENT_README.html">LOCAL_RECIPIENT_README</a> and
+<a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a> documentation.  </p>
+
+<p> If your machine runs Postfix 2.0 and earlier, disable the "pause
+before reject" feature in the SMTP server. If your system is under
+stress then it should not waste time. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    # Not needed with Postfix 2.1 and later.
+    <a href="postconf.5.html#smtpd_error_sleep_time">smtpd_error_sleep_time</a> = 0
+
+    # Not needed with Postfix 2.4 and later.
+    <a href="postconf.5.html#unknown_local_recipient_reject_code">unknown_local_recipient_reject_code</a> = 550
+</pre>
+</blockquote>
+
+<h2><a name="real">How do I block backscatter mail to real
+recipient addresses?</a></h2>
+
+<p> When backscatter mail passes the "unknown recipient" barrier,
+there still is no need to despair.  Many mail systems are kind
+enough to attach the message headers of the undeliverable mail in
+the non-delivery notification. These message headers contain
+information that you can use to recognize and block forged mail.
+</p>
+
+<h3><a name="forged_helo">Blocking backscatter mail with forged
+mail server information</a></h3>
+
+<p> Although my email address is "wietse@porcupine.org", all my
+mail systems announce themselves with the SMTP HELO command as
+"hostname.porcupine.org".  Thus, if returned mail has a Received:
+message header like this: </p>
+
+<blockquote>
+<pre>
+Received: from porcupine.org ...
+</pre>
+</blockquote>
+
+<p> Then I know that this is almost certainly forged mail (almost;
+see <a href="#caveats">next section</a> for the fly in the ointment).
+Mail that is really
+sent by my systems looks like this: </p>
+
+<blockquote>
+<pre>
+Received: from hostname.porcupine.org ...
+</pre>
+</blockquote>
+
+<p> For the same reason the following message headers are very likely
+to be the result of forgery:</p>
+
+<blockquote>
+<pre>
+Received: from host.example.com ([1.2.3.4] helo=porcupine.org) ...
+Received: from [1.2.3.4] (port=12345 helo=porcupine.org) ...
+Received: from host.example.com (HELO porcupine.org) ...
+Received: from host.example.com (EHLO porcupine.org) ...
+</pre>
+</blockquote>
+
+<p> Some forgeries show up in the way that a mail server reports
+itself in Received: message headers. Keeping in mind that all my
+systems have a mail server name of <i>hostname</i>.porcupine.org,
+the following is definitely a forgery:</p>
+
+<blockquote>
+<pre>
+Received: by porcupine.org ...
+Received: from host.example.com ( ... ) by porcupine.org ...
+</pre>
+</blockquote>
+
+<p> Another frequent sign of forgery is the Message-ID: header. My
+systems produce a Message-ID: of
+&lt;<i>stuff</i>@<i>hostname</i>.porcupine.org&gt;.  The following
+are forgeries, especially the first one:
+
+<blockquote>
+<pre>
+Message-ID: &lt;1cb479435d8eb9.2beb1.qmail@porcupine.org&gt;
+Message-ID: &lt;yulszqocfzsficvzzju@porcupine.org&gt;
+</pre>
+</blockquote>
+
+<p> To block such backscatter I use <a href="postconf.5.html#header_checks">header_checks</a> and <a href="postconf.5.html#body_checks">body_checks</a>
+patterns like this: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#header_checks">header_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/header_checks
+    <a href="postconf.5.html#body_checks">body_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/body_checks
+
+/etc/postfix/header_checks:
+    if /^Received:/
+    /^Received: +from +(porcupine\.org) +/
+        reject forged client name in Received: header: $1
+    /^Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)(porcupine\.org)\)/
+        reject forged client name in Received: header: $2
+    /^Received:.* +by +(porcupine\.org)\b/
+        reject forged mail server name in Received: header: $1
+    endif
+    /^Message-ID:.* &lt;!&amp;!/ DUNNO
+    /^Message-ID:.*@(porcupine\.org)/
+	reject forged domain name in Message-ID: header: $1
+
+/etc/postfix/body_checks:
+    if /^[&gt; ]*Received:/
+    /^[&gt; ]*Received: +from +(porcupine\.org) /
+        reject forged client name in Received: header: $1
+    /^[&gt; ]*Received: +from +[^ ]+ +\(([^ ]+ +[he]+lo=|[he]+lo +)(porcupine\.org)\)/
+        reject forged client name in Received: header: $2
+    /^[&gt; ]*Received:.* +by +(porcupine\.org)\b/
+        reject forged mail server name in Received: header: $1
+    endif
+    /^[&gt; ]*Message-ID:.* &lt;!&amp;!/ DUNNO
+    /^[&gt; ]*Message-ID:.*@(porcupine\.org)/
+	reject forged domain name in Message-ID: header: $1
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The example uses <a href="pcre_table.5.html">pcre</a>: tables mainly for speed; with minor
+modifications, you can use <a href="regexp_table.5.html">regexp</a>: tables as explained below. </p>
+
+<li> <p> The example is simplified for educational purposes.  In
+reality my patterns list multiple domain names, as
+"<tt>(domain|domain|...)</tt>".  </p>
+
+<li> <p> The "<tt>\.</tt>" matches "<tt>.</tt>" literally. Without
+the "<tt>\</tt>", the "<tt>.</tt>" would match any character. </p>
+
+<li> <p> The "<tt>\(</tt>" and "<tt>\)</tt>" match "<tt>(</tt>"
+and "<tt>)</tt>" literally. Without the "<tt>\</tt>", the "<tt>(</tt>"
+and "<tt>)</tt>" would be grouping operators.  </p>
+
+<li> <p> The "<tt>\b</tt>" is used here to match the end of a word.
+If you use <a href="regexp_table.5.html">regexp</a>: tables, specify "<tt>[[:&gt;:]]</tt>" (on some
+systems you should specify "<tt>\&gt;</tt>" instead; for details
+see your system documentation).
+
+<li> <p> The "if /pattern/" and "endif" eliminate unnecessary
+matching attempts. DO NOT indent lines starting with /pattern/
+between the "if" and "endif"! </p>
+
+<li> <p> The two "<tt>Message-ID:.* &lt;!&amp;!</tt>" rules are
+workarounds for some versions of Outlook express, as described in
+the <a href="#caveats"> caveats </a> section below.
+
+</ul>
+
+<p><a name="caveats"><strong>Caveats</strong></a></p>
+
+<ul>
+
+<li>
+
+<p> Netscape Messenger (and reportedly, Mozilla) sends a HELO name
+that is identical to the sender address domain part. If you have
+such clients then the above patterns would block legitimate email.
+</p>
+
+<p> My network has only one such machine, and to prevent its mail
+from being blocked I have configured it to send mail as
+user@hostname.porcupine.org. On the Postfix server, a canonical
+mapping translates this temporary address into user@porcupine.org.
+</p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
+
+/etc/postfix/canonical:
+    @hostname.porcupine.org @porcupine.org
+</pre>
+</blockquote>
+
+<p> This is of course practical only when you have very few systems
+that send HELO commands like this, and when you never have to send
+mail to a user on such a host. </p>
+
+<p> An alternative would be to remove the hostname from
+"hostname.porcupine.org" with address
+masquerading, as described in the <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a> document.
+</p>
+
+<li> <p> Reportedly, Outlook 2003 (perhaps Outlook Express, and
+other versions as well) present substantially different Message-ID
+headers depending upon whether or not a DSN is requested (via Options
+"Request a delivery receipt for this message"). </p>
+
+<p> When a DSN is requested, Outlook 2003 uses a Message-ID string
+that ends in the sender's domain name: </p>
+
+<blockquote>
+<pre>
+Message-ID: &lt;!&amp;! ...very long string... ==@example.com&gt;
+</pre>
+</blockquote>
+
+<p> where <i>example.com</i> is the domain name part of the email
+address specified in Outlook's account settings for the user.  Since
+many users configure their email addresses as <i>username@example.com</i>,
+messages with DSN turned on will trigger the REJECT action in the
+previous section. </p>
+
+<p> If you have such clients then you can to exclude their Message-ID
+strings with the two "<tt>Message-ID:.* &lt;!&amp;!</tt>" patterns
+that are shown in the previous section.  Otherwise you will not be
+able to use the two backscatter rules to stop forged Message ID
+strings.  Of course this workaround may break the next time Outlook
+is changed.  </p>
+
+</ul>
+
+<h3><a name="forged_sender">Blocking backscatter mail with forged
+sender information</a></h3>
+
+Like many people I still have a few email addresses in domains that
+I used in the past. Mail for those addresses is forwarded to my
+current address.  Most of the backscatter mail that I get claims
+to be sent from these addresses.  Such mail is obviously forged
+and is very easy to stop.
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#header_checks">header_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/header_checks
+    <a href="postconf.5.html#body_checks">body_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/body_checks
+
+/etc/postfix/header_checks:
+    /^(From|Return-Path):.*\b(user@domain\.tld)\b/ 
+        reject forged sender address in $1: header: $2
+
+/etc/postfix/body_checks:
+    /^[&gt; ]*(From|Return-Path):.*\b(user@domain\.tld)\b/ 
+        reject forged sender address in $1: header: $2
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The example uses <a href="pcre_table.5.html">pcre</a>: tables mainly for speed; with minor
+modifications, you can use <a href="regexp_table.5.html">regexp</a>: tables as explained below. </p>
+
+<li> <p> The example is simplified for educational purposes.  In
+reality, my patterns list multiple email addresses as
+"<tt>(user1@domain1\.tld|user2@domain2\.tld)</tt>".  </p>
+
+<li> <p> The two "<tt>\b</tt>" as used in "<tt>\b(user@domain\.tld)\b</tt>"
+match the beginning and end of a word, respectively.  If you use
+<a href="regexp_table.5.html">regexp</a>: tables, specify "<tt>[[:&lt;:]]</tt> and <tt>[[:&gt;:]]</tt>"
+(on some systems you should specify "<tt>\&lt;</tt> and <tt>\&gt;</tt>"
+instead; for details see your system documentation).  </p>
+
+<li> <p> The "<tt>\.</tt>" matches "<tt>.</tt>" literally. Without
+the "<tt>\</tt>", the "<tt>.</tt>" would match any character. </p>
+
+</ul>
+
+<h3><a name="forged_other">Blocking backscatter mail with other
+forged information</a></h3>
+
+<p> Another sign of forgery can be found in the IP address that is
+recorded in Received: headers next to your HELO host or domain name.
+This information must be used with care, though. Some mail servers
+are behind a network address translator and never see the true
+client IP address.  </p>
+
+<h3><a name="scanner">Blocking backscatter mail from virus
+scanners</a></h3>
+
+<p> With all the easily recognizable forgeries eliminated, there
+is one category of backscatter mail that remains, and that is
+notifications from virus scanner software. Unfortunately, some
+virus scanning software doesn't know that viruses forge sender
+addresses. To make matters worse, the software also doesn't know
+how to report a mail delivery problem, so that we cannot use the
+above techniques to recognize forgeries.  </p>
+
+<p> Recognizing virus scanner mail is an error prone process,
+because there is a lot of variation in report formats.  The following
+is only a small example of message header patterns.  For a large
+collection of header and body patterns that recognize virus
+notification email, see <a href="http://www.dkuug.dk/keld/virus/">http://www.dkuug.dk/keld/virus/</a>
+or <a href="http://www.t29.dk/antiantivirus.txt">http://www.t29.dk/antiantivirus.txt</a>.  </p>
+
+<blockquote>
+<pre>
+/etc/postfix/header_checks:
+    /^Subject: *Your email contains VIRUSES/ DISCARD virus notification
+    /^Content-Disposition:.*VIRUS1_DETECTED_AND_REMOVED/
+        DISCARD virus notification
+    /^Content-Disposition:.*VirusWarning.txt/ DISCARD virus notification
+</pre>
+</blockquote>
+
+<p> Note: these documents haven't been updated since 2004, so they
+are useful only as a starting point. </p>
+
+<p> A plea to virus or spam scanner operators: please do not make
+the problem worse by sending return mail to forged sender addresses.
+You're only harassing innocent people. If you must return mail to
+the purported sender, please return the full message headers, so
+that the sender can filter out the obvious forgeries. </p>
+
+</body>
+
+</html>

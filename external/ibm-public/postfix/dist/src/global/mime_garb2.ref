@@ -1,0 +1,38 @@
+MAIN 0	|From: Some One <user@example.com>
+MAIN 32	|To: Some One <user@example.com>
+MAIN 46	|Subject: Test
+MAIN 64	|MIME-Version: 1.0
+mime_state: header_token: Multipart / Mixed
+mime_state: header_token: boundary = Boundary-00=_mvhpFky0yqNhsa4
+mime_state: PUSH boundary Boundary-00=_mvhpFky0yqNhsa4
+MAIN 95	|Content-Type: Multipart/Mixed;
+  boundary="Boundary-00=_mvhpFky0yqNhsa4"
+HEADER END
+BODY N 0	|
+BODY N 1	|--Boundary-00=_mvhpFky0yqNhsa4
+mime_state: header_token: text / plain
+MULT 0	|Content-Type: text/plain;
+  charset="utf-8"
+mime_state: header_token: quoted-printable  
+MULT 44	|Content-Transfer-Encoding: quoted-printable
+MULT 72	|Content-Disposition: inline
+BODY N 0	|
+BODY N 1	|This is a test
+BODY N 16	|--Boundary-00=_mvhpFky0yqNhsa4
+mime_state: header_token: message / rfc822
+MULT 0	|Content-Type: message/rfc822;
+  name="forwarded message"
+mime_state: header_token: 7bit  
+MULT 32	|Content-Transfer-Encoding: 7bit
+MULT 60	|Content-Disposition: inline
+BODY N 0	|
+mime_state: garbage in nested header
+BODY N 0	|From user@example.com Thu Jan 11 13:08:21 CET 2007
+BODY N 51	|To: user@example.com
+BODY N 72	|From: Some One <user@example.com>
+BODY N 106	|Subject: Forwarded Test
+BODY N 130	|
+BODY N 131	|Blah
+BODY N 136	|
+BODY END
+mime_state: POP boundary Boundary-00=_mvhpFky0yqNhsa4

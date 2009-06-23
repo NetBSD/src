@@ -1,0 +1,116 @@
+#
+# Initialize.
+#
+#! ../bin/postmap smtpd_check_access
+#msg_verbose 1
+smtpd_delay_reject 0
+mynetworks 127.0.0.0/8,168.100.189.0/28
+relay_domains porcupine.org
+maps_rbl_domains dnsbltest.porcupine.org
+#
+# Test the client restrictions.
+#
+client_restrictions permit_mynetworks,reject_unknown_client,check_client_access,hash:./smtpd_check_access
+client unknown 131.155.210.17
+client unknown 168.100.189.13
+client random.bad.domain 123.123.123.123
+client friend.bad.domain 123.123.123.123
+client bad.domain 123.123.123.123
+client wzv.win.tue.nl 131.155.210.17
+client aa.win.tue.nl 131.155.210.18
+client_restrictions permit_mynetworks
+#
+# Test the helo restrictions
+#
+helo_restrictions permit_mynetworks,reject_unknown_client,reject_invalid_hostname,reject_unknown_hostname,check_helo_access,hash:./smtpd_check_access
+client unknown 131.155.210.17
+helo foo.
+client foo 123.123.123.123
+helo foo.
+helo foo
+helo spike.porcupine.org
+helo_restrictions permit_mynetworks,reject_unknown_client,reject_invalid_hostname,check_helo_access,hash:./smtpd_check_access
+helo random.bad.domain
+helo friend.bad.domain
+#
+# Test the sender restrictions
+#
+sender_restrictions permit_mynetworks,reject_unknown_client
+client unknown 131.155.210.17
+mail foo@watson.ibm.com
+client unknown 168.100.189.13
+mail foo@watson.ibm.com
+client foo 123.123.123.123
+mail foo@watson.ibm.com
+sender_restrictions reject_unknown_address
+mail foo@watson.ibm.com
+mail foo@bad.domain
+sender_restrictions check_sender_access,hash:./smtpd_check_access
+mail bad-sender@any.domain
+mail bad-sender@good.domain
+mail reject@this.address
+mail Reject@this.address
+mail foo@bad.domain
+mail foo@Bad.domain
+mail foo@random.bad.domain
+mail foo@friend.bad.domain
+#
+# Test the recipient restrictions
+#
+recipient_restrictions permit_mynetworks,reject_unknown_client,check_relay_domains
+client unknown 131.155.210.17
+rcpt foo@watson.ibm.com
+client unknown 168.100.189.13
+rcpt foo@watson.ibm.com
+client foo 123.123.123.123
+rcpt foo@watson.ibm.com
+rcpt foo@porcupine.org
+recipient_restrictions check_relay_domains
+client foo.porcupine.org 168.100.189.13
+rcpt foo@watson.ibm.com
+rcpt foo@porcupine.org
+client foo 123.123.123.123
+rcpt foo@watson.ibm.com
+rcpt foo@porcupine.org
+recipient_restrictions check_recipient_access,hash:./smtpd_check_access
+mail bad-sender@any.domain
+mail bad-sender@good.domain
+mail reject@this.address
+mail foo@bad.domain
+mail foo@random.bad.domain
+mail foo@friend.bad.domain
+#
+# RBL
+#
+client_restrictions reject_maps_rbl
+client spike.porcupine.org 168.100.189.2
+client foo 127.0.0.2
+#
+# unknown sender/recipient domain
+#
+unknown_address_reject_code 554
+recipient_restrictions reject_unknown_recipient_domain,reject_unknown_sender_domain
+mail wietse@porcupine.org
+rcpt wietse@porcupine.org
+rcpt wietse@no.recipient.domain
+mail wietse@no.sender.domain
+rcpt wietse@porcupine.org
+#
+# {permit_auth,reject_unauth}_destination
+#
+relay_domains foo.com,bar.com
+mail user@some.where
+recipient_restrictions permit_auth_destination,reject
+rcpt user@foo.org
+rcpt user@foo.com
+recipient_restrictions reject_unauth_destination,permit
+rcpt user@foo.org
+rcpt user@foo.com
+#
+# unknown client tests
+#
+unknown_client_reject_code 550
+client_restrictions reject_unknown_client
+client spike.porcupine.org 160.100.189.2 2
+client unknown 1.1.1.1 4
+client unknown 1.1.1.1 5

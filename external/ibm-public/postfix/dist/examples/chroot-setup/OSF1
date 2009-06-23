@@ -1,0 +1,21 @@
+*******************************************************************
+#                       setup chroot jail for OSF1
+#                            prabhat@wonder
+set -e
+umask 022
+
+#Default POSTFIX_DIR = /var/spool/postfix
+#Else set POSTFIX_DIR in environment
+
+POSTFIX_DIR=${POSTFIX_DIR-/var/spool/postfix}
+
+cd ${POSTFIX_DIR}
+mkdir etc
+cp /etc/svc.conf /etc/services /etc/resolv.conf etc
+#
+# The following line added to make the timestamps in syslog to be correct.
+# /PetBi@UNIT.LiU.SE
+#
+cp -r /etc/zoneinfo etc
+
+#*******************************************************************
