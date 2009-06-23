@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.43 2009/06/18 15:51:44 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.44 2009/06/23 19:36:39 elad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.43 2009/06/18 15:51:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.44 2009/06/23 19:36:39 elad Exp $");
 #endif /* not lint */
 
 
@@ -1358,8 +1358,8 @@ udf_access(void *v)
 	if ((mode & VWRITE) && (flags & IMMUTABLE))
 		return EPERM;
 
-	/* ask the generic vaccess to advice on security */
-	return vaccess(vp->v_type,
+	/* ask the generic genfs_can_access to advice on security */
+	return genfs_can_access(vp->v_type,
 			vap.va_mode, vap.va_uid, vap.va_gid,
 			mode, cred);
 }

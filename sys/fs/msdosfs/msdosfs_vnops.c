@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.59 2009/05/07 19:30:31 elad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.60 2009/06/23 19:36:39 elad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.59 2009/05/07 19:30:31 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.60 2009/06/23 19:36:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ msdosfs_access(void *v)
 		mode = S_IRWXU|S_IRWXG|S_IRWXO;
 	else
 		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-	return (vaccess(ap->a_vp->v_type,
+	return (genfs_can_access(ap->a_vp->v_type,
 	    mode & (vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask),
 	    pmp->pm_uid, pmp->pm_gid, ap->a_mode, ap->a_cred));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.21 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.22 2009/06/23 19:36:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.21 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.22 2009/06/23 19:36:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.21 2008/11/26 20:17:33 pooka Exp
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/buf.h>
+
+#include <miscfs/genfs/genfs.h>
 
 #include <fs/sysvbfs/sysvbfs.h>
 #include <fs/sysvbfs/bfs.h>
@@ -244,7 +246,7 @@ sysvbfs_access(void *arg)
 	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return EROFS;
 
-	return vaccess(vp->v_type, attr->mode, attr->uid, attr->gid,
+	return genfs_can_access(vp->v_type, attr->mode, attr->uid, attr->gid,
 	    ap->a_mode, ap->a_cred);
 }
 

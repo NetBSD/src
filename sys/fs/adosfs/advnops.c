@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.33 2009/03/14 21:04:23 dsl Exp $	*/
+/*	$NetBSD: advnops.c,v 1.34 2009/06/23 19:36:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.33 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.34 2009/06/23 19:36:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -786,8 +786,9 @@ adosfs_access(void *v)
 			break;
 		}
 	}
-	error = vaccess(sp->a_vp->v_type, adunixprot(ap->adprot) & ap->amp->mask,
-	    ap->uid, ap->gid, sp->a_mode, sp->a_cred);
+	error = genfs_can_access(sp->a_vp->v_type,
+	    adunixprot(ap->adprot) & ap->amp->mask, ap->uid, ap->gid,
+	    sp->a_mode, sp->a_cred);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif

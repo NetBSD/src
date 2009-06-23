@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.136 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.137 2009/06/23 19:36:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.136 2009/03/14 15:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.137 2009/06/23 19:36:40 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -777,7 +777,7 @@ kernfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
-	return (vaccess(va.va_type, va.va_mode, va.va_uid, va.va_gid,
+	return (genfs_can_access(va.va_type, va.va_mode, va.va_uid, va.va_gid,
 	    ap->a_mode, ap->a_cred));
 }
 

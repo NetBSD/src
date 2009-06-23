@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.36 2008/12/17 20:51:35 cegger Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.37 2009/06/23 19:36:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.36 2008/12/17 20:51:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.37 2009/06/23 19:36:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ cd9660_access(void *v)
 		}
 	}
 
-	return (vaccess(vp->v_type, ip->inode.iso_mode & ALLPERMS,
+	return (genfs_can_access(vp->v_type, ip->inode.iso_mode & ALLPERMS,
 	    ip->inode.iso_uid, ip->inode.iso_gid, ap->a_mode, ap->a_cred));
 }
 

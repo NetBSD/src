@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.59 2009/04/29 11:01:50 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.60 2009/06/23 19:36:39 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.59 2009/04/29 11:01:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.60 2009/06/23 19:36:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.59 2009/04/29 11:01:50 pooka Exp $
 #include <uvm/uvm.h>
 
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/genfs/genfs.h>
 #include <fs/tmpfs/tmpfs_vnops.h>
 #include <fs/tmpfs/tmpfs.h>
 
@@ -381,7 +382,7 @@ tmpfs_access(void *v)
 		goto out;
 	}
 
-	error = vaccess(vp->v_type, node->tn_mode, node->tn_uid,
+	error = genfs_can_access(vp->v_type, node->tn_mode, node->tn_uid,
 	    node->tn_gid, mode, cred);
 
 out:

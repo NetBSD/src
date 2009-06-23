@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.174 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.175 2009/06/23 19:36:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.174 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.175 2009/06/23 19:36:40 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -932,7 +932,7 @@ procfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
-	return (vaccess(va.va_type, va.va_mode,
+	return (genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 

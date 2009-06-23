@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.278 2009/05/10 05:18:26 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.279 2009/06/23 19:36:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.278 2009/05/10 05:18:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.279 2009/06/23 19:36:40 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -3408,7 +3408,7 @@ nfsspec_access(void *v)
 		}
 	}
 
-	return (vaccess(va.va_type, va.va_mode,
+	return (genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 

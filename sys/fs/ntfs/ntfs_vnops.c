@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.43 2009/04/29 22:33:33 elad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.44 2009/06/23 19:36:40 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.43 2009/04/29 22:33:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.44 2009/06/23 19:36:40 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,7 +427,7 @@ ntfs_access(void *v)
 
 	file_mode = ip->i_mp->ntm_mode | (S_IXUSR|S_IXGRP|S_IXOTH);
 
-	return (vaccess(vp->v_type, file_mode, ip->i_mp->ntm_uid,
+	return (genfs_can_access(vp->v_type, file_mode, ip->i_mp->ntm_uid,
 	    ip->i_mp->ntm_gid, mode, ap->a_cred));
 }
 

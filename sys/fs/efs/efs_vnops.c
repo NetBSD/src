@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.17 2008/12/01 14:34:50 pooka Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.18 2009/06/23 19:36:40 elad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.17 2008/12/01 14:34:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.18 2009/06/23 19:36:40 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,8 @@ efs_access(void *v)
 	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return (EROFS);
 
-	return (vaccess(vp->v_type, eip->ei_mode, eip->ei_uid, eip->ei_gid,
-	    ap->a_mode, ap->a_cred));
+	return (genfs_can_access(vp->v_type, eip->ei_mode, eip->ei_uid,
+	    eip->ei_gid, ap->a_mode, ap->a_cred));
 }
 
 /*
