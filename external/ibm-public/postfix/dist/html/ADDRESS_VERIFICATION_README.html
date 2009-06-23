@@ -301,7 +301,7 @@ in forged email.  </p>
 
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree instead.
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/lib/postfix/verify
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/db/postfix/verify
  
 /etc/postfix/sender_access:
     aol.com     <a href="postconf.5.html#reject_unverified_sender">reject_unverified_sender</a>
@@ -346,7 +346,7 @@ you can see what mail would be blocked: </p>
 
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree instead.
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/lib/postfix/verify
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/db/postfix/verify
 </pre>
 </blockquote>
 
@@ -424,7 +424,7 @@ stop". </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     # Note: avoid hash files here. Use btree instead.
-    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/lib/postfix/verify
+    <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/db/postfix/verify
 </pre>
 </blockquote>
 
