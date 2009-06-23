@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.59 2009/06/18 20:36:28 njoly Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.60 2009/06/23 13:18:59 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.59 2009/06/18 20:36:28 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.60 2009/06/23 13:18:59 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -622,15 +622,12 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 		syscallarg(unsigned int) len;
 		syscallarg(unsigned long *) mask;
 	} */
-	int error;
-	int ret;
-	char *data;
-	int *retp;
+	int error, size, nb = ncpu;
+	unsigned long *p, *data;
 
-	if (SCARG(uap, mask) == NULL)
-		return EINVAL;
-
-	if (SCARG(uap, len) < sizeof(int))
+	/* Unlike Linux, dynamically calculate cpu mask size */
+	size = sizeof(long) * ((ncpu + LONG_BIT - 1) / LONG_BIT);
+	if (SCARG(uap, len) < size)
 		return EINVAL;
 
 	if (pfind(SCARG(uap, pid)) == NULL)
@@ -641,14 +638,18 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 	 * The result is a mask, the first CPU being in the least significant
 	 * bit.
 	 */
-	ret = (1 << ncpu) - 1;
-	data = malloc(SCARG(uap, len), M_TEMP, M_WAITOK|M_ZERO);
-	retp = (int *)&data[SCARG(uap, len) - sizeof(ret)];
-	*retp = ret;
+	data = malloc(size, M_TEMP, M_WAITOK|M_ZERO);
+	p = data;
+	while (nb > LONG_BIT) {
+		*p++ = ~0UL;
+		nb -= LONG_BIT;
+	}
+	if (nb)
+		*p = (1 << ncpu) - 1;
 
-	error = copyout(data, SCARG(uap, mask), SCARG(uap, len));
-
+	error = copyout(data, SCARG(uap, mask), size);
 	free(data, M_TEMP);
+	*retval = size;
 
 	return error;
 
