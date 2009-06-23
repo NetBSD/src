@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.12 2009/01/25 14:25:27 lukem Exp $ */
+/* $NetBSD: storage.c,v 1.13 2009/06/23 05:08:22 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -179,52 +179,91 @@ getsize(conffile_t *cf, devv_t *devvp, extv_t *evp, char *s)
 static int
 do_device(conffile_t *cf, devv_t *devvp, extv_t *evp, ent_t *ep)
 {
-	if (find_device(devvp, ep->sv.v[DEVICE_NAME_COL]) != NULL) {
-		(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-		(void) fprintf(stderr, "Error: attempt to re-define device `%s'\n", ep->sv.v[DEVICE_NAME_COL]);
+	disc_device_t	*disk;
+	char		*device;
+
+	device = ep->sv.v[DEVICE_NAME_COL];
+	if ((disk = find_device(devvp, device)) != NULL) {
+		(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf),
+						conffile_get_lineno(cf));
+		(void) fprintf(stderr,
+			"Error: attempt to re-define device `%s'\n",
+			device);
 		return 0;
 	}
-	ALLOC(disc_device_t, devvp->v, devvp->size, devvp->c, 14, 14, "do_device", exit(EXIT_FAILURE));
-	devvp->v[devvp->c].dev = strdup(ep->sv.v[DEVICE_NAME_COL]);
-	devvp->v[devvp->c].raid = (strncasecmp(ep->sv.v[DEVICE_RAIDLEVEL_COL], "raid", 4) == 0) ? atoi(&ep->sv.v[DEVICE_RAIDLEVEL_COL][4]) : 0;
-	devvp->v[devvp->c].size = ep->sv.c - 2;
-	devvp->v[devvp->c].len = getsize(cf, devvp, evp, ep->sv.v[DEVICE_LENGTH_COL]);
-	NEWARRAY(disc_de_t, devvp->v[devvp->c].xv, ep->sv.c - 2, "do_device", exit(EXIT_FAILURE));
-	for (devvp->v[devvp->c].c = 0 ; devvp->v[devvp->c].c < devvp->v[devvp->c].size ; devvp->v[devvp->c].c++) {
-		if ((devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp = find_extent(evp, ep->sv.v[devvp->v[devvp->c].c + 2])) != NULL) {
-			if (devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->used) {
-				(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-				(void) fprintf(stderr, "Error: extent `%s' has already been used\n", ep->sv.v[devvp->v[devvp->c].c + 2]);
+	ALLOC(disc_device_t, devvp->v, devvp->size, devvp->c, 14, 14,
+				"do_device", exit(EXIT_FAILURE));
+	disk = &devvp->v[devvp->c];
+	disk->dev = strdup(device);
+	disk->raid =
+		(strncasecmp(ep->sv.v[DEVICE_RAIDLEVEL_COL], "raid", 4) == 0) ?
+		atoi(&ep->sv.v[DEVICE_RAIDLEVEL_COL][4]) : 0;
+	disk->size = ep->sv.c - 2;
+	disk->len = getsize(cf, devvp, evp, ep->sv.v[DEVICE_LENGTH_COL]);
+	NEWARRAY(disc_de_t, disk->xv, ep->sv.c - 2, "do_device",
+			exit(EXIT_FAILURE));
+	for (disk->c = 0 ; disk->c < disk->size ; disk->c++) {
+		disk->xv[disk->c].u.xp =
+				find_extent(evp, ep->sv.v[disk->c + 2]);
+		if (disk->xv[disk->c].u.xp != NULL) {
+			if (disk->xv[disk->c].u.xp->used) {
+				(void) fprintf(stderr, "%s:%d: ",
+						conffile_get_name(cf),
+						conffile_get_lineno(cf));
+				(void) fprintf(stderr,
+				"Error: extent `%s' has already been used\n",
+					ep->sv.v[disk->c + 2]);
 				return 0;
 			}
-			if (devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len != devvp->v[devvp->c].len && devvp->v[devvp->c].raid != 0) {
-				(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-				(void) fprintf(stderr, "Error: extent `%s' has size %" PRIu64 ", not %" PRIu64"\n", ep->sv.v[devvp->v[devvp->c].c + 2], devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len, devvp->v[devvp->c].len);
+			if (disk->xv[disk->c].u.xp->len != disk->len &&
+							disk->raid != 0) {
+				(void) fprintf(stderr, "%s:%d: ",
+						conffile_get_name(cf),
+						conffile_get_lineno(cf));
+				(void) fprintf(stderr,
+					"Error: extent `%s' has size %" PRIu64
+					", not %" PRIu64"\n",
+					ep->sv.v[disk->c + 2],
+					disk->xv[disk->c].u.xp->len,
+					disk->len);
 				return 0;
 			}
-			devvp->v[devvp->c].xv[devvp->v[devvp->c].c].type = DE_EXTENT;
-			devvp->v[devvp->c].xv[devvp->v[devvp->c].c].size = devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len;
-			devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->used = 1;
-		} else if ((devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.dp = find_device(devvp, ep->sv.v[devvp->v[devvp->c].c + 2])) != NULL) {
-			if (devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.dp->used) {
-				(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-				(void) fprintf(stderr, "Error: device `%s' has already been used\n", ep->sv.v[devvp->v[devvp->c].c + 2]);
+			disk->xv[disk->c].type = DE_EXTENT;
+			disk->xv[disk->c].size = disk->xv[disk->c].u.xp->len;
+			disk->xv[disk->c].u.xp->used = 1;
+		} else if ((disk->xv[disk->c].u.dp =
+			find_device(devvp, ep->sv.v[disk->c + 2])) != NULL) {
+			if (disk->xv[disk->c].u.dp->used) {
+				(void) fprintf(stderr, "%s:%d: ",
+						conffile_get_name(cf),
+						conffile_get_lineno(cf));
+				(void) fprintf(stderr,
+				"Error: device `%s' has already been used\n",
+					ep->sv.v[disk->c + 2]);
 				return 0;
 			}
-			devvp->v[devvp->c].xv[devvp->v[devvp->c].c].type = DE_DEVICE;
-			devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.dp->used = 1;
-			devvp->v[devvp->c].xv[devvp->v[devvp->c].c].size = devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.dp->len;
+			disk->xv[disk->c].type = DE_DEVICE;
+			disk->xv[disk->c].u.dp->used = 1;
+			disk->xv[disk->c].size = disk->xv[disk->c].u.dp->len;
 		} else {
-			(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-			(void) fprintf(stderr, "Error: no extent or device found for `%s'\n", ep->sv.v[devvp->v[devvp->c].c + 2]);
+			(void) fprintf(stderr, "%s:%d: ",
+						conffile_get_name(cf),
+						conffile_get_lineno(cf));
+			(void) fprintf(stderr,
+				"Error: no extent or device found for `%s'\n",
+				ep->sv.v[disk->c + 2]);
 			return 0;
 		}
 	}
-	if (devvp->v[devvp->c].raid == 1) {
+	if (disk->raid == 1) {
 		/* check we have more than 1 device/extent */
-		if (devvp->v[devvp->c].c < 2) {
-			(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
-			(void) fprintf(stderr, "Error: device `%s' is specified as RAID1, but has only %d sub-devices/extents\n", devvp->v[devvp->c].dev, devvp->v[devvp->c].c);
+		if (disk->c < 2) {
+			(void) fprintf(stderr, "%s:%d: ",
+						conffile_get_name(cf),
+						conffile_get_lineno(cf));
+			(void) fprintf(stderr,
+"Error: device `%s' is RAID1, but has only %d sub-devices/extents\n",
+					disk->dev, disk->c);
 			return 0;
 		}
 	}
