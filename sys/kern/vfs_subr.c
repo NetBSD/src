@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.380 2009/06/23 19:36:38 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.381 2009/06/23 23:04:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.380 2009/06/23 19:36:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.381 2009/06/23 23:04:11 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2595,7 +2595,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 {
 
 #ifdef DIAGNOSTIC
-	print("vaccess: deprecated interface used.\n");
+	printf("vaccess: deprecated interface used.\n");
 #endif /* DIAGNOSTIC */
 
 	return genfs_can_access(type, file_mode, uid, gid, acc_mode, cred);
