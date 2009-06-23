@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.30 2009/05/07 19:30:29 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.31 2009/06/23 19:36:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.30 2009/05/07 19:30:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.31 2009/06/23 19:36:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,7 +521,7 @@ ptyfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
-	return vaccess(va.va_type, va.va_mode,
+	return genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred);
 }
 
