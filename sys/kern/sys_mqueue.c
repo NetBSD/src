@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.18 2009/05/26 00:39:14 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.19 2009/06/23 19:36:38 elad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.18 2009/05/26 00:39:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.19 2009/06/23 19:36:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.18 2009/05/26 00:39:14 rmind Exp $"
 #include <sys/systm.h>
 #include <sys/unistd.h>
 #include <sys/vnode.h>
+
+#include <miscfs/genfs/genfs.h>
 
 /* System-wide limits. */
 static u_int			mq_open_max = MQ_OPEN_MAX;
@@ -428,8 +430,8 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		if (fp->f_flag & FWRITE) {
 			acc_mode |= VWRITE;
 		}
-		if (vaccess(VNON, mq->mq_mode, mq->mq_euid, mq->mq_egid,
-		    acc_mode, l->l_cred)) {
+		if (genfs_can_access(VNON, mq->mq_mode, mq->mq_euid,
+		    mq->mq_egid, acc_mode, l->l_cred)) {
 			error = EACCES;
 			goto exit;
 		}

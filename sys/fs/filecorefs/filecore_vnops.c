@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.30 2009/03/14 21:04:23 dsl Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.31 2009/06/23 19:36:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.30 2009/03/14 21:04:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.31 2009/06/23 19:36:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ filecore_access(void *v)
 		}
 	}
 
-	return (vaccess(vp->v_type, filecore_mode(ip),
+	return (genfs_can_access(vp->v_type, filecore_mode(ip),
 	    fcmp->fc_uid, fcmp->fc_gid, ap->a_mode, ap->a_cred));
 }
 

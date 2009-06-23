@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.13 2008/12/17 20:51:35 cegger Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.14 2009/06/23 19:36:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.13 2008/12/17 20:51:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.14 2009/06/23 19:36:39 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -551,7 +551,7 @@ hfs_vop_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
-	return vaccess(va.va_type, va.va_mode, va.va_uid, va.va_gid,
+	return genfs_can_access(va.va_type, va.va_mode, va.va_uid, va.va_gid,
 	    ap->a_mode, ap->a_cred);
 }
 
