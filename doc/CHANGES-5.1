@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.35 2009/06/21 11:44:54 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.36 2009/06/23 07:12:21 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1287,4 +1287,37 @@ external/bsd/pkg_install/dist/lib/version.h:		1.1.1.16
 
 	Merge pkg_install-20090610 from HEAD
 	[joerg, ticket #815]
+
+usr.bin/audio/common/libaudio.h			1.16
+usr.bin/audio/common/wav.c			1.9
+
+	- add extended WAVE header support
+	- attempt to play a bunch more WAV files
+	[mrg, ticket #825]
+
+sys/sys/conf.h					1.135
+sys/uvm/uvm_device.c				1.56
+
+	Add a workaround for drm:
+	For device mmap()'s, if the D_NEGOFFSAFE flag is set, do not
+	check if the offset is negative.
+	[mrg, ticket #826]
+
+sys/dev/drm/files.drm				patch
+sys/dev/pci/drm/files.pcidrm			patch
+
+	Default to the new drm code.
+	[mrg, ticket #827]
+
+share/man/man4/drm.4				patch
+
+	Sync drm man page with reality.
+	[mrg, ticket #828]
+
+sys/modules/drm/Makefile			1.3
+sys/modules/i915drm/Makefile			1.4, 1.5
+sys/modules/radeondrm/Makefile			1.6, 1.7
+
+	Fix modules build after update of drm(4).
+	[mrg, ticket #829]
 
