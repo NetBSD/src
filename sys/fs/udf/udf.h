@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.32 2009/06/18 14:57:50 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.33 2009/06/23 20:13:37 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -105,7 +105,7 @@ extern int udf_verbose;
 /* DON'T change these: they identify 13thmonkey's UDF implementation */
 #define APP_NAME		"*NetBSD UDF"
 #define APP_VERSION_MAIN	0
-#define APP_VERSION_SUB		4
+#define APP_VERSION_SUB		5
 #define IMPL_NAME		"*NetBSD kernel UDF"
 
 
