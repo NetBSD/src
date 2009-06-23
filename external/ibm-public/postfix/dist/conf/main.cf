@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.1.1.1 2009/06/23 10:08:23 tron Exp $
+#	$NetBSD: main.cf,v 1.2 2009/06/23 11:41:06 tron Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -47,7 +47,7 @@ daemon_directory = /usr/libexec/postfix
 # data files (caches, random numbers). This directory must be owned
 # by the mail_owner account (see below).
 #
-data_directory = /var/lib/postfix
+data_directory = /var/db/postfix
 
 # QUEUE AND PROCESS OWNERSHIP
 #
@@ -107,6 +107,10 @@ mail_owner = postfix
 # the software claims all active interfaces on the machine. The
 # parameter also controls delivery of mail to user@[ip.address].
 #
+# NOTE: On NetBSD, postfix does not listen on the network by default.
+#       To enable inbound mail reception once your configuration is
+#       ready, uncomment the smtp service in /etc/postfix/master.cf
+#
 # See also the proxy_interfaces parameter, for network addresses that
 # are forwarded to us via a proxy or network address translator.
 #
@@ -115,6 +119,10 @@ mail_owner = postfix
 #inet_interfaces = all
 #inet_interfaces = $myhostname
 #inet_interfaces = $myhostname, localhost
+
+# NetBSD is IPv6-capable.  Use all available address families.
+#
+inet_protocols = all
 
 # The proxy_interfaces parameter specifies the network interface
 # addresses that this mail system receives mail on by way of a
@@ -617,37 +625,37 @@ debugger_command =
 # sendmail_path: The full pathname of the Postfix sendmail command.
 # This is the Sendmail-compatible mail posting interface.
 # 
-sendmail_path =
+sendmail_path = /usr/sbin/sendmail
 
 # newaliases_path: The full pathname of the Postfix newaliases command.
 # This is the Sendmail-compatible command to build alias databases.
 #
-newaliases_path =
+newaliases_path = /usr/bin/newaliases
 
 # mailq_path: The full pathname of the Postfix mailq command.  This
 # is the Sendmail-compatible mail queue listing command.
 # 
-mailq_path =
+mailq_path = /usr/bin/mailq
 
 # setgid_group: The group for mail submission and queue management
 # commands.  This must be a group name with a numerical group ID that
 # is not shared with other accounts, not even with the Postfix account.
 #
-setgid_group =
+setgid_group = maildrop
 
 # html_directory: The location of the Postfix HTML documentation.
 #
-html_directory =
+html_directory = /usr/share/doc/html/postfix
 
 # manpage_directory: The location of the Postfix on-line manual pages.
 #
-manpage_directory =
+manpage_directory = /usr/share/man
 
 # sample_directory: The location of the Postfix sample configuration files.
 # This parameter is obsolete as of Postfix 2.1.
 #
-sample_directory =
+sample_directory = /usr/share/examples/postfix
 
 # readme_directory: The location of the Postfix README files.
 #
-readme_directory =
+readme_directory = /usr/share/examples/postfix

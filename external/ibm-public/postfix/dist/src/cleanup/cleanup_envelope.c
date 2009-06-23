@@ -1,4 +1,6 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
+
+/*	$NetBSD: cleanup_envelope.c,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
 
 /*++
 /* NAME

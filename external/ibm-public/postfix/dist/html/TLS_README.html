@@ -639,7 +639,7 @@ the cost of repeatedly negotiating TLS session keys is high.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/var/lib/postfix/smtpd_scache
+    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/var/db/postfix/smtpd_scache
 </pre>
 </blockquote>
 
@@ -1129,7 +1129,7 @@ is allowed to negotiate per unit time.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/var/lib/postfix/smtp_scache
+    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/var/db/postfix/smtp_scache
 </pre>
 </blockquote>
 
@@ -2453,7 +2453,7 @@ This file is created when it does not exist. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#tls_random_exchange_name">tls_random_exchange_name</a> = /var/lib/postfix/prng_exch
+    <a href="postconf.5.html#tls_random_exchange_name">tls_random_exchange_name</a> = /var/db/postfix/prng_exch
     <a href="postconf.5.html#tls_random_prng_update_period">tls_random_prng_update_period</a> = 3600s
 </pre>
 </blockquote>
@@ -2598,14 +2598,14 @@ but don't require them from all clients. </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/cacert.pem
     <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> =
-	btree:/var/lib/postfix/smtp_tls_session_cache
+	btree:/var/db/postfix/smtp_tls_session_cache
     <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = may
     <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> = /etc/postfix/cacert.pem
     <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = /etc/postfix/foo-cert.pem
     <a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a> = /etc/postfix/foo-key.pem
     <a href="postconf.5.html#smtpd_tls_received_header">smtpd_tls_received_header</a> = yes
     <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> =
-	btree:/var/lib/postfix/smtpd_tls_session_cache
+	btree:/var/db/postfix/smtpd_tls_session_cache
     <a href="postconf.5.html#tls_random_source">tls_random_source</a> = dev:/dev/urandom
     # Postfix 2.3 and later
     <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = may

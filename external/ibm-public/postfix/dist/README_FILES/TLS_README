@@ -428,7 +428,7 @@ is high.
 Example:
 
     /etc/postfix/main.cf:
-        smtpd_tls_session_cache_database = btree:/var/lib/postfix/smtpd_scache
+        smtpd_tls_session_cache_database = btree:/var/db/postfix/smtpd_scache
 
 Note: as of version 2.5, Postfix no longer uses root privileges when opening
 this file. The file should now be stored under the Postfix-owned
@@ -777,7 +777,7 @@ client is allowed to negotiate per unit time.
 Example:
 
     /etc/postfix/main.cf:
-        smtp_tls_session_cache_database = btree:/var/lib/postfix/smtp_scache
+        smtp_tls_session_cache_database = btree:/var/db/postfix/smtp_scache
 
 Note: as of version 2.5, Postfix no longer uses root privileges when opening
 this file. The file should now be stored under the Postfix-owned
@@ -1820,7 +1820,7 @@ state the next time it starts up. This file is created when it does not exist.
 Examples:
 
     /etc/postfix/main.cf:
-        tls_random_exchange_name = /var/lib/postfix/prng_exch
+        tls_random_exchange_name = /var/db/postfix/prng_exch
         tls_random_prng_update_period = 3600s
 
 As of version 2.5, Postfix no longer uses root privileges when opening this
@@ -1941,14 +1941,14 @@ indicates a super-user shell.
         /etc/postfix/main.cf:
             smtp_tls_CAfile = /etc/postfix/cacert.pem
             smtp_tls_session_cache_database =
-        	btree:/var/lib/postfix/smtp_tls_session_cache
+        	btree:/var/db/postfix/smtp_tls_session_cache
             smtp_tls_security_level = may
             smtpd_tls_CAfile = /etc/postfix/cacert.pem
             smtpd_tls_cert_file = /etc/postfix/foo-cert.pem
             smtpd_tls_key_file = /etc/postfix/foo-key.pem
             smtpd_tls_received_header = yes
             smtpd_tls_session_cache_database =
-        	btree:/var/lib/postfix/smtpd_tls_session_cache
+        	btree:/var/db/postfix/smtpd_tls_session_cache
             tls_random_source = dev:/dev/urandom
             # Postfix 2.3 and later
             smtpd_tls_security_level = may

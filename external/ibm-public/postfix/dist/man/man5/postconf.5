@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.1.1.1 2009/06/23 10:08:34 tron Exp $
+.\"	$NetBSD: postconf.5,v 1.2 2009/06/23 11:41:06 tron Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -112,8 +112,8 @@ Examples:
 .nf
 .na
 .ft C
-address_verify_map = hash:/var/lib/postfix/verify
-address_verify_map = btree:/var/lib/postfix/verify
+address_verify_map = hash:/var/db/postfix/verify
+address_verify_map = btree:/var/db/postfix/verify
 .fi
 .ad
 .ft R
@@ -4836,7 +4836,7 @@ Example:
 .nf
 .na
 .ft C
-smtp_sasl_auth_cache_name = proxy:btree:/var/lib/postfix/sasl_auth_cache
+smtp_sasl_auth_cache_name = proxy:btree:/var/db/postfix/sasl_auth_cache
 .fi
 .ad
 .ft R
@@ -6022,7 +6022,7 @@ Example:
 .nf
 .na
 .ft C
-smtp_tls_session_cache_database = btree:/var/lib/postfix/smtp_scache
+smtp_tls_session_cache_database = btree:/var/db/postfix/smtp_scache
 .fi
 .ad
 .ft R
@@ -8202,7 +8202,7 @@ Example:
 .nf
 .na
 .ft C
-smtpd_tls_session_cache_database = btree:/var/lib/postfix/smtpd_scache
+smtpd_tls_session_cache_database = btree:/var/db/postfix/smtpd_scache
 .fi
 .ad
 .ft R

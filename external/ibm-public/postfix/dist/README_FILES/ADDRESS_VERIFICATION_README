@@ -179,7 +179,7 @@ verification for specific domains that often appear in forged email.
 
         # Note 1: Be sure to read the "Caching" section below!
         # Note 2: Avoid hash files here. Use btree instead.
-        address_verify_map = btree:/var/lib/postfix/verify
+        address_verify_map = btree:/var/db/postfix/verify
 
     /etc/postfix/sender_access:
         aol.com     reject_unverified_sender
@@ -218,7 +218,7 @@ be blocked:
 
         # Note 1: Be sure to read the "Caching" section below!
         # Note 2: Avoid hash files here. Use btree instead.
-        address_verify_map = btree:/var/lib/postfix/verify
+        address_verify_map = btree:/var/db/postfix/verify
 
 This is also a good way to populate your cache with address verification
 results before you start to actually reject mail.
@@ -279,7 +279,7 @@ If your /var file system has sufficient space, try:
 
     /etc/postfix/main.cf:
         # Note: avoid hash files here. Use btree instead.
-        address_verify_map = btree:/var/lib/postfix/verify
+        address_verify_map = btree:/var/db/postfix/verify
 
 NOTE 1: As of version 2.5, Postfix no longer uses root privileges when opening
 this file. The file should now be stored under the Postfix-owned

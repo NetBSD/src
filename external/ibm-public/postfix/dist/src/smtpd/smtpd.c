@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.1.1.1 2009/06/23 10:08:55 tron Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
 
 /*++
 /* NAME
@@ -4698,6 +4698,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 		 VAR_SMTPD_SASL_ENABLE);
 #endif
 
+#ifdef USE_TLS
     /*
      * XXX Temporary fix to pretend that we consistently implement TLS
      * security levels. We implement only a subset for now. If we implement
@@ -4732,6 +4733,9 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
     }
     enforce_tls = var_smtpd_tls_wrappermode || var_smtpd_enforce_tls;
     use_tls = var_smtpd_use_tls || enforce_tls;
+#else
+    enforce_tls = use_tls = 0;
+#endif
 
     /*
      * Keys can only be loaded when running with suitable permissions. When
