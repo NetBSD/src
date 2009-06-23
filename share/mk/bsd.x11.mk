@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.74 2009/06/11 05:34:22 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.75 2009/06/23 04:40:29 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -293,6 +293,17 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@GL_PC_REQ_PRIV@,x11 xext,; \
 		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
 		s,@GL_PC_CFLAGS@,,; \
+		s,@GLU_PC_REQ_PRIV@,,; \
+		s,@GLU_PC_LIB_PRIV@,-lGLU,; \
+		s,@GLU_PC_CFLAGS@,,; \
+		s,@GLUT_PC_REQ_PRIV@,gl glu,; \
+		s,@GLUT_PC_LIB_PRIV@,-lglut,; \
+		s,@GLUT_PC_CFLAGS@,,; \
+		s,@abi_ansic@,0.4,; \
+		s,@abi_videodrv@,5.0,; \
+		s,@abi_xinput@,4.0,; \
+		s,@abi_extension@,2.0,; \
+		s,@abi_font@,0.6,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-R\1 &%g' \
