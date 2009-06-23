@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.703 2009/06/19 04:46:14 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.704 2009/06/23 18:00:11 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -837,14 +837,14 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
-Version:	2.5.4
+Version:	2.6.2
 Current Vers:	2.6.2
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
 Responsible:	heas
-License:	IBM Public License. See also src/gnu/dist/postfix.
+License:	IBM Public License. See also src/external/ibm-public/postfix/dist.
 Notes:
 HTML documentation should be kept in sync with the README_FILES.
 src/gnu/dist/postfix/conf/postfix-files must be kept in sync with our
