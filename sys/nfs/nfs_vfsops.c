@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.196.10.3 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.196.10.4 2009/06/24 14:15:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196.10.3 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196.10.4 2009/06/24 14:15:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -643,19 +643,17 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return (EPROGMISMATCH);
 #endif
 	if (mp->mnt_flag & MNT_UPDATE) {
-#if 0
 		if (nmp == NULL)
 			return (EIO);
 		/*
 		 * When doing an update, we can't change from or to
 		 * v3, or change cookie translation
 		 */
-		args->flags = (args->flags & ~(NFSMNT_NFSV3|NFSMNT_XLATECOOKIE)) |
+		args->flags =
+		    (args->flags & ~(NFSMNT_NFSV3|NFSMNT_XLATECOOKIE)) |
 		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_XLATECOOKIE));
 		nfs_decode_args(nmp, args, l);
 		return (0);
-#endif
-		return EOPNOTSUPP;
 	}
 	if (args->fhsize < 0 || args->fhsize > NFSX_V3FHMAX)
 		return (EINVAL);
