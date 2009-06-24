@@ -1,11 +1,11 @@
-/*	$NetBSD: session.c,v 1.25 2009/04/21 18:38:32 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.26 2009/06/24 11:28:48 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -113,7 +113,7 @@ static void check_sigreq __P((void));
 static void check_flushsa __P((void));
 static int close_sockets __P((void));
 
-static fd_set mask;
+static fd_set preset_mask, active_mask;
 static struct fd_monitor fd_monitors[FD_SETSIZE];
 static int nfds = 0;
 
@@ -128,7 +128,7 @@ monitor_fd(int fd, int (*callback)(void *, int), void *ctx)
 		exit(1);
 	}
 
-	FD_SET(fd, &mask);
+	FD_SET(fd, &preset_mask);
 	if (fd > nfds)
 		nfds = fd;
 
@@ -144,7 +144,8 @@ unmonitor_fd(int fd)
 		exit(1);
 	}
 
-	FD_CLR(fd, &mask);
+	FD_CLR(fd, &preset_mask);
+	FD_CLR(fd, &active_mask);
 	fd_monitors[fd].callback = NULL;
 	fd_monitors[fd].ctx = NULL;
 }
@@ -152,7 +153,6 @@ unmonitor_fd(int fd)
 int
 session(void)
 {
-	fd_set rfds;
 	struct timeval *timeout;
 	int error;
 	char pid_file[MAXPATHLEN];
@@ -161,7 +161,7 @@ session(void)
 	int i;
 
 	nfds = 0;
-	FD_ZERO(&mask);
+	FD_ZERO(&preset_mask);
 
 	/* initialize schedular */
 	sched_init();
@@ -227,14 +227,14 @@ session(void)
 #endif
 
 	/* write .pid file */
-	if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE] == NULL) 
+	if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE] == NULL)
 		strlcpy(pid_file, _PATH_VARRUN "racoon.pid", MAXPATHLEN);
-	else if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE][0] == '/') 
+	else if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE][0] == '/')
 		strlcpy(pid_file, lcconf->pathinfo[LC_PATHTYPE_PIDFILE], MAXPATHLEN);
 	else {
 		strlcat(pid_file, _PATH_VARRUN, MAXPATHLEN);
 		strlcat(pid_file, lcconf->pathinfo[LC_PATHTYPE_PIDFILE], MAXPATHLEN);
-	} 
+	}
 	fp = fopen(pid_file, "w");
 	if (fp) {
 		if (fchmod(fileno(fp),
@@ -274,9 +274,9 @@ session(void)
 
 		/* schedular can change select() mask, so we reset
 		 * the working copy here */
-		rfds = mask;
+		active_mask = preset_mask;
 
-		error = select(nfds + 1, &rfds, NULL, NULL, timeout);
+		error = select(nfds + 1, &active_mask, NULL, NULL, timeout);
 		if (error < 0) {
 			switch (errno) {
 			case EINTR:
@@ -291,8 +291,14 @@ session(void)
 		}
 
 		for (i = 0; i <= nfds; i++) {
-			if (FD_ISSET(i, &rfds))
+			if (!FD_ISSET(i, &active_mask))
+				continue;
+
+			if (fd_monitors[i].callback != NULL)
 				fd_monitors[i].callback(fd_monitors[i].ctx, i);
+			else
+				plog(LLV_ERROR, LOCATION, NULL,
+				     "fd %d set, but no active callback\n", i);
 		}
 	}
 }
@@ -342,7 +348,7 @@ static void reload_conf(){
 
 #ifdef ENABLE_HYBRID
 	if ((isakmp_cfg_init(ISAKMP_CFG_INIT_WARM)) != 0) {
-		plog(LLV_ERROR, LOCATION, NULL, 
+		plog(LLV_ERROR, LOCATION, NULL,
 		    "ISAKMP mode config structure reset failed, "
 		    "not reloading\n");
 		return;
@@ -373,7 +379,7 @@ static void reload_conf(){
 	}
 	restore_params();
 
-#if 0	
+#if 0
 	if (dump_config)
 		dumprmconf ();
 #endif
@@ -417,8 +423,8 @@ check_sigreq()
 			break;
 
 #ifdef DEBUG_RECORD_MALLOCATION
-		/* 
-		 * XXX This operation is signal handler unsafe and may lead to 
+		/*
+		 * XXX This operation is signal handler unsafe and may lead to
 		 * crashes and security breaches: See Henning Brauer talk at
 		 * EuroBSDCon 2005. Do not run in production with this option
 		 * enabled.
@@ -435,13 +441,13 @@ check_sigreq()
 
 		case SIGINT:
 		case SIGTERM:
-			plog(LLV_INFO, LOCATION, NULL, 
+			plog(LLV_INFO, LOCATION, NULL,
 			    "caught signal %d\n", sig);
 			close_session();
 			break;
 
 		default:
-			plog(LLV_INFO, LOCATION, NULL, 
+			plog(LLV_INFO, LOCATION, NULL,
 			    "caught signal %d\n", sig);
 			break;
 		}
