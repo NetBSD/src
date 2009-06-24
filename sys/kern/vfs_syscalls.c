@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.350.2.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.350.2.3 2009/06/24 14:21:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350.2.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350.2.3 2009/06/24 14:21:43 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2185,7 +2185,9 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 		newoff = fp->f_offset + SCARG(uap, offset);
 		break;
 	case SEEK_END:
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 		error = VOP_GETATTR(vp, &vattr, cred);
+		VOP_UNLOCK(vp, 0);
 		if (error) {
 			goto out;
 		}
@@ -3586,7 +3588,10 @@ dorevoke(struct vnode *vp, kauth_cred_t cred)
 	struct vattr vattr;
 	int error;
 
-	if ((error = VOP_GETATTR(vp, &vattr, cred)) != 0)
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	error = VOP_GETATTR(vp, &vattr, cred);
+	VOP_UNLOCK(vp, 0);
+	if (error != 0)
 		return error;
 	if (kauth_cred_geteuid(cred) == vattr.va_uid ||
 	    (error = kauth_authorize_generic(cred,
