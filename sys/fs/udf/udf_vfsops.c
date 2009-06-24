@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.56 2009/04/25 18:53:45 elad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.57 2009/06/24 17:09:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.56 2009/04/25 18:53:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.57 2009/06/24 17:09:13 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -782,8 +782,7 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
 	struct logvol_int_desc *lvid;
 	struct udf_logvol_info *impl;
 	uint64_t freeblks, sizeblks;
-	uint32_t *pos1, *pos2;
-	int part, num_part;
+	int num_part;
 
 	DPRINTF(CALL, ("udf_statvfs called\n"));
 	sbp->f_flag   = mp->mnt_flag;
@@ -792,36 +791,16 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_iosize = ump->discinfo.sector_size;
 
 	mutex_enter(&ump->allocate_mutex);
-	lvid = ump->logvol_integrity;
-	freeblks = sizeblks = 0;
 
-	/* Sequentials report free space directly (CD/DVD/BD-R) */
-	KASSERT(lvid);
-	num_part = udf_rw32(lvid->num_part);
-	impl = (struct udf_logvol_info *) (lvid->tables + 2*num_part);
-
-	if (ump->discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) {
-		/* XXX assumption at most two tracks open */
-		freeblks = ump->data_track.free_blocks;
-		if (ump->data_track.tracknr != ump->metadata_track.tracknr)
-			freeblks += ump->metadata_track.free_blocks;
-		sizeblks = ump->discinfo.last_possible_lba;
-	} else {
-		/* free and used space for mountpoint based on logvol integrity */
-		for (part=0; part < num_part; part++) {
-			pos1 = &lvid->tables[0] + part;
-			pos2 = &lvid->tables[0] + num_part + part;
-			if (udf_rw32(*pos1) != (uint32_t) -1) {
-				freeblks += udf_rw32(*pos1);
-				sizeblks += udf_rw32(*pos2);
-			}
-		}
-	}
-	freeblks -= ump->uncomitted_lb;
+	udf_calc_freespace(ump, &sizeblks, &freeblks);
 
 	sbp->f_blocks = sizeblks;
 	sbp->f_bfree  = freeblks;
 	sbp->f_files  = 0;
+
+	lvid = ump->logvol_integrity;
+	num_part = udf_rw32(lvid->num_part);
+	impl = (struct udf_logvol_info *) (lvid->tables + 2*num_part);
 	if (impl) {
 		sbp->f_files  = udf_rw32(impl->num_files);
 		sbp->f_files += udf_rw32(impl->num_directories);

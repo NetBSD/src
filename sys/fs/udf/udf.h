@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.33 2009/06/23 20:13:37 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.34 2009/06/24 17:09:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -124,6 +124,7 @@ extern int udf_verbose;
 #define UDF_VAT_CHUNKSIZE	(64*1024)		/* picked */
 #define UDF_SYMLINKBUFLEN	(64*1024)		/* picked */
 
+#define UDF_DISC_SLACK		(128)			/* picked, at least 64 kb or 128 */
 #define UDF_ISO_VRS_SIZE	(32*2048)		/* 32 ISO `sectors' */
 
 
@@ -340,7 +341,7 @@ struct udf_mount {
 	kcondvar_t 	dirtynodes_cv;			/* sleeping on sync  */
 
 	/* late allocation */
-	uint32_t		 uncomitted_lb;		/* for free space    */
+	int32_t			 uncommitted_lbs[UDF_PARTITIONS];
 	struct long_ad		*la_node_ad_cpy;		/* issue buf */
 	uint64_t		*la_lmapping, *la_pmapping;	/* issue buf */
 
@@ -387,6 +388,7 @@ struct udf_node {
 	struct lockf		*lockf;			/* lock list         */
 	uint32_t		 outstanding_bufs;	/* file data         */
 	uint32_t		 outstanding_nodedscr;	/* node dscr         */
+	int32_t			 uncommitted_lbs;	/* in UBC            */
 
 	/* references to associated nodes */
 	struct udf_node		*extattr;

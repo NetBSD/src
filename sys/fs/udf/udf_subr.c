@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.94 2009/06/23 20:09:07 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.95 2009/06/24 17:09:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.94 2009/06/23 20:09:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.95 2009/06/24 17:09:13 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -949,6 +949,38 @@ udf_read_anchors(struct udf_mount *ump)
 	ump->last_possible_vat_location  = track_end + last_track.packet_size;
 
 	return ok;
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+udf_get_c_type(struct udf_node *udf_node)
+{
+	int isdir, what;
+
+	isdir  = (udf_node->vnode->v_type == VDIR);
+	what   = isdir ? UDF_C_FIDS : UDF_C_USERDATA;
+
+	if (udf_node->ump)
+		if (udf_node == udf_node->ump->metadatabitmap_node)
+			what = UDF_C_METADATA_SBM;
+
+	return what;
+}
+
+
+int
+udf_get_record_vpart(struct udf_mount *ump, int udf_c_type)
+{
+	int vpart_num;
+
+	vpart_num = ump->data_part;
+	if (udf_c_type == UDF_C_NODE)
+		vpart_num = ump->node_part;
+	if (udf_c_type == UDF_C_FIDS)
+		vpart_num = ump->fids_part;
+
+	return vpart_num;
 }
 
 /* --------------------------------------------------------------------- */
@@ -2776,7 +2808,7 @@ udf_writeout_vat(struct udf_mount *ump)
 
 	DPRINTF(CALL, ("udf_writeout_vat\n"));
 
-	mutex_enter(&ump->allocate_mutex);
+//	mutex_enter(&ump->allocate_mutex);
 	udf_update_vat_descriptor(ump);
 
 	/* write out the VAT contents ; TODO intelligent writing */
@@ -2789,7 +2821,7 @@ udf_writeout_vat(struct udf_mount *ump)
 		goto out;
 	}
 
-	mutex_exit(&ump->allocate_mutex);
+//	mutex_exit(&ump->allocate_mutex);
 
 	vflushbuf(ump->vat_node->vnode, 1 /* sync */);
 	error = VOP_FSYNC(ump->vat_node->vnode,
@@ -3898,24 +3930,53 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
  */
 
 /*
- * Callback from genfs to allocate len bytes at offset off; only called when
- * filling up gaps in the allocation.
+ * Called for allocating an extent of the file either by VOP_WRITE() or by
+ * genfs filling up gaps.
  */
-/* XXX should we check if there is space enough in udf_gop_alloc? */
 static int
 udf_gop_alloc(struct vnode *vp, off_t off,
     off_t len, int flags, kauth_cred_t cred)
 {
-#if 0
 	struct udf_node *udf_node = VTOI(vp);
 	struct udf_mount *ump = udf_node->ump;
+	uint64_t lb_start, lb_end;
 	uint32_t lb_size, num_lb;
-#endif
+	int udf_c_type, vpart_num, can_fail;
+	int error;
 
-	DPRINTF(NOTIMPL, ("udf_gop_alloc not implemented\n"));
-	DPRINTF(ALLOC, ("udf_gop_alloc called for %"PRIu64" bytes\n", len));
+	DPRINTF(ALLOC, ("udf_gop_alloc called for offset %"PRIu64" for %"PRIu64" bytes, %s\n",
+		off, len, flags? "SYNC":"NONE"));
 
-	return 0;
+	/*
+	 * request the pages of our vnode and see how many pages will need to
+	 * be allocated and reserve that space
+	 */
+	lb_size  = udf_rw32(udf_node->ump->logical_vol->lb_size);
+	lb_start = off / lb_size;
+	lb_end   = (off + len + lb_size -1) / lb_size;
+	num_lb   = lb_end - lb_start;
+
+	udf_c_type = udf_get_c_type(udf_node);
+	vpart_num  = udf_get_record_vpart(ump, udf_c_type);
+
+	/* all requests can fail */
+	can_fail   = true;
+
+	/* fid's (directories) can't fail */
+	if (udf_c_type == UDF_C_FIDS)
+		can_fail   = false;
+
+	/* system files can't fail */
+	if (vp->v_vflag & VV_SYSTEM)
+		can_fail = false;
+
+	error = udf_reserve_space(ump, udf_node, udf_c_type,
+		vpart_num, num_lb, can_fail);
+
+	DPRINTF(ALLOC, ("\tlb_start %"PRIu64", lb_end %"PRIu64", num_lb %d\n",
+		lb_start, lb_end, num_lb));
+
+	return error;
 }
 
 
@@ -5255,6 +5316,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	genfs_node_init(nvp, &udf_genfsops);	/* inititise genfs */
 	udf_node->outstanding_bufs = 0;
 	udf_node->outstanding_nodedscr = 0;
+	udf_node->uncommitted_lbs = 0;
 
 	/* check if we're fetching the root */
 	if (ump->fileset_desc)
@@ -5548,11 +5610,15 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 
 	if (udf_node->i_flags & IN_DELETED) {
 		DPRINTF(NODE, ("\tnode deleted; not writing out\n"));
+		udf_cleanup_reservation(udf_node);
 		return 0;
 	}
 
 	/* lock node; unlocked in callback */
 	UDF_LOCK_NODE(udf_node, 0);
+
+	/* remove pending reservations, we're written out */
+	udf_cleanup_reservation(udf_node);
 
 	/* at least one descriptor writeout */
 	udf_node->outstanding_nodedscr = 1;
@@ -5587,6 +5653,7 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 
 	loc = &udf_node->write_loc;
 	error = udf_write_logvol_dscr(udf_node, dscr, loc, waitfor);
+
 	return error;
 }
 
@@ -5611,6 +5678,7 @@ udf_dispose_node(struct udf_node *udf_node)
 				"v_numoutput = %d", udf_node, vp->v_numoutput);
 #endif
 
+	udf_cleanup_reservation(udf_node);
 
 	/* TODO extended attributes and streamdir */
 
@@ -5685,22 +5753,22 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 
 	/* lock node */
 	error = vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error) {
-		nvp->v_data = NULL;
-		ungetnewvnode(nvp);
-		return error;
-	}
+	if (error)
+		goto error_out_unget;
 
-	/* get disc allocation for one logical block */
+	/* reserve space for one logical block */
 	vpart_num = ump->node_part;
-	error = udf_pre_allocate_space(ump, UDF_C_NODE, 1,
-			vpart_num, &lmapping);
+	error = udf_reserve_space(ump, NULL, UDF_C_NODE,
+		vpart_num, 1, /* can_fail */ true);
+	if (error)
+		goto error_out_unlock;
+
+	/* allocate node */
+	error = udf_allocate_space(ump, NULL, UDF_C_NODE,
+			vpart_num, 1, &lmapping);
+	if (error)
+		goto error_out_unreserve;
 	lb_num = lmapping;
-	if (error) {
-		vlockmgr(nvp->v_vnlock, LK_RELEASE);
-		ungetnewvnode(nvp);
-		return error;
-	}
 
 	/* initialise pointer to location */
 	memset(&node_icb_loc, 0, sizeof(struct long_ad));
@@ -5724,6 +5792,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	cv_init(&udf_node->node_lock, "udf_nlk");
 	udf_node->outstanding_bufs = 0;
 	udf_node->outstanding_nodedscr = 0;
+	udf_node->uncommitted_lbs = 0;
 
 	/* initialise genfs */
 	genfs_node_init(nvp, &udf_genfsops);
@@ -5790,6 +5859,18 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	*vpp = nvp;
 
 	return 0;
+
+error_out_unreserve:
+	udf_do_unreserve_space(ump, NULL, vpart_num, 1);
+
+error_out_unlock:
+	vlockmgr(nvp->v_vnlock, LK_RELEASE);
+
+error_out_unget:
+	nvp->v_data = NULL;
+	ungetnewvnode(nvp);
+
+	return error;
 }
 
 
@@ -6470,15 +6551,14 @@ udf_read_filebuf(struct udf_node *udf_node, struct buf *buf)
 	uint32_t    from, lblkno;
 	uint32_t    sectors;
 	uint8_t    *buf_pos;
-	int error, run_length, isdir, what;
+	int error, run_length, what;
 
 	sector_size = udf_node->ump->discinfo.sector_size;
 
 	from    = buf->b_blkno;
 	sectors = buf->b_bcount / sector_size;
 
-	isdir   = (udf_node->vnode->v_type == VDIR);
-	what    = isdir ? UDF_C_FIDS : UDF_C_USERDATA;
+	what = udf_get_c_type(udf_node);
 
 	/* assure we have enough translation slots */
 	KASSERT(buf->b_bcount / sector_size <= UDF_MAX_MAPPINGS);
@@ -6599,18 +6679,14 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 	uint32_t    buf_offset, lb_num, rbuflen, rblk;
 	uint32_t    from, lblkno;
 	uint32_t    num_lb;
-	int error, run_length, isdir, what, s;
+	int error, run_length, what, s;
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 
 	from   = buf->b_blkno;
 	num_lb = buf->b_bcount / lb_size;
 
-	isdir  = (udf_node->vnode->v_type == VDIR);
-	what   = isdir ? UDF_C_FIDS : UDF_C_USERDATA;
-
-	if (udf_node == ump->metadatabitmap_node)
-		what = UDF_C_METADATA_SBM;
+	what = udf_get_c_type(udf_node);
 
 	/* assure we have enough translation slots */
 	KASSERT(buf->b_bcount / lb_size <= UDF_MAX_MAPPINGS);
@@ -6659,7 +6735,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 		 */
 
 		/* XXX why not ignore the mapping altogether ? */
-		/* TODO estimate here how much will be late-allocated */
 		DPRINTF(WRITE, ("\twrite lb_num "
 		    "%"PRIu64, mapping[lb_num]));
 
@@ -6678,19 +6753,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 		/* nest an iobuf on the master buffer for the extent */
 		rbuflen = run_length * lb_size;
 		rblk = run_start * (lb_size/DEV_BSIZE);
-
-#if 0
-		/* if its zero or unmapped, our blknr gets -1 for unmapped */
-		switch (mapping[lb_num]) {
-		case UDF_TRANS_UNMAPPED:
-		case UDF_TRANS_ZERO:
-			rblk = -1;
-			break;
-		default:
-			rblk = run_start * (lb_size/DEV_BSIZE);
-			break;
-		}
-#endif
 
 		nestbuf = getiobuf(NULL, true);
 		nestiobuf_setup(buf, nestbuf, buf_offset, rbuflen);

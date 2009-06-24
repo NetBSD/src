@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.14 2009/06/23 20:09:07 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.15 2009/06/24 17:09:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -109,11 +109,18 @@ int udf_vat_read(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t of
 int udf_vat_write(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t offset);
 
 /* disc allocation */
-void udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf, uint64_t *lmapping, struct long_ad *node_ad_cpy, uint16_t *vpart_num);
+int udf_get_c_type(struct udf_node *udf_node);
+int udf_get_record_vpart(struct udf_mount *ump, int udf_c_type);
+void udf_do_reserve_space(struct udf_mount *ump, struct udf_node *udf_node, uint16_t vpart_num, uint32_t num_lb);
+void udf_do_unreserve_space(struct udf_mount *ump, struct udf_node *udf_node, uint16_t vpart_num, uint32_t num_lb);
+int udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node, int udf_c_type, uint16_t vpart_num, uint32_t num_lb, int can_fail);
+void udf_cleanup_reservation(struct udf_node *udf_node);
+int udf_allocate_space(struct udf_mount *ump, struct udf_node *udf_node, int udf_c_type, uint16_t vpart_num, uint32_t num_lb, uint64_t *lmapping);
 void udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num, uint16_t vpart_num, uint32_t num_lb);
-int udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type, uint32_t num_lb, uint16_t vpartnr, uint64_t *lmapping);
+void udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf, uint64_t *lmapping, struct long_ad *node_ad_cpy, uint16_t *vpart_num);
 int udf_grow_node(struct udf_node *node, uint64_t new_size);
 int udf_shrink_node(struct udf_node *node, uint64_t new_size);
+void udf_calc_freespace(struct udf_mount *ump, uint64_t *sizeblks, uint64_t *freeblks);
 
 /* node readers and writers */
 uint64_t udf_advance_uniqueid(struct udf_mount *ump);

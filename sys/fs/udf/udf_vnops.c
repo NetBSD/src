@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.45 2009/06/23 20:09:07 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.46 2009/06/24 17:09:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.45 2009/06/23 20:09:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.46 2009/06/24 17:09:13 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -277,6 +277,7 @@ udf_write(void *v)
 	uint64_t file_size, old_size, old_offset;
 	vsize_t len;
 	int async = vp->v_mount->mnt_flag & MNT_ASYNC;
+	int aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	int error;
 	int resid, extended;
 
@@ -342,6 +343,12 @@ udf_write(void *v)
 		/* maximise length to file extremity */
 		len = MIN(file_size - uio->uio_offset, uio->uio_resid);
 		if (len == 0)
+			break;
+
+		genfs_node_wrlock(vp);
+		error = GOP_ALLOC(vp, uio->uio_offset, len, aflag, cred);
+		genfs_node_unlock(vp);
+		if (error)
 			break;
 
 		/* ubc, here we come, prepare to trap */
