@@ -44,6 +44,12 @@ static drm_pci_id_list_t mach64_pciidlist[] = {
 	mach64_PCI_IDS
 };
 
+int
+mach64_driver_load(struct drm_device * dev, unsigned long flags)
+{
+        return drm_vblank_init(dev, 1);
+}
+
 static void mach64_configure(struct drm_device *dev)
 {
 	dev->driver->driver_features =
@@ -73,6 +79,8 @@ static void mach64_configure(struct drm_device *dev)
 	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
 
+#if defined(__FreeBSD__)
+
 static int
 mach64_probe(device_t kdev)
 {
@@ -90,12 +98,6 @@ mach64_attach(device_t kdev)
 	mach64_configure(dev);
 
 	return drm_attach(kdev, mach64_pciidlist);
-}
-
-int
-mach64_driver_load(struct drm_device * dev, unsigned long flags)
-{
-        return drm_vblank_init(dev, 1);
 }
 
 static int
@@ -133,3 +135,90 @@ DRIVER_MODULE(mach64, vgapci, mach64_driver, drm_devclass, 0, 0);
 DRIVER_MODULE(mach64, pci, mach64_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(mach64, drm, 1, 1, 1);
+
+#elif   defined(__NetBSD__)
+
+static int
+mach64drm_probe(device_t parent, cfdata_t match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+
+	return drm_probe(pa, mach64_pciidlist);
+}
+
+static void
+mach64drm_attach(device_t parent, device_t self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	struct drm_device *dev = device_private(self);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
+	mach64_configure(dev);
+
+	drm_attach(self, pa, mach64_pciidlist);
+}
+
+CFATTACH_DECL_NEW(mach64drm, sizeof(struct drm_device),
+    mach64drm_probe, mach64drm_attach, drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, mach64drm, NULL);
+
+CFDRIVER_DECL(mach64drm, DV_DULL, NULL);
+extern struct cfattach mach64drm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata mach64drm_cfdata[] = {
+	{
+		.cf_name = "mach64drm",
+		.cf_atname = "mach64drm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+mach64drm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&mach64drm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("mach64drm", &mach64drm_ca);
+		if (err) {
+			config_cfdriver_detach(&mach64drm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(mach64drm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("mach64drm", &mach64drm_ca);
+			config_cfdriver_detach(&mach64drm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(mach64drm_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("mach64drm", &mach64drm_ca);
+		config_cfdriver_detach(&mach64drm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _MODULE */
+
+#endif
