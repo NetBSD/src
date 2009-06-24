@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.36 2009/06/23 07:12:21 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.37 2009/06/24 17:53:11 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1320,4 +1320,20 @@ sys/modules/radeondrm/Makefile			1.6, 1.7
 
 	Fix modules build after update of drm(4).
 	[mrg, ticket #829]
+
+sys/external/bsd/drm/dist/bsd-core/mach64_drv.c	1.4
+sys/external/bsd/drm/dist/bsd-core/mga_drv.c	1.5
+sys/external/bsd/drm/dist/bsd-core/r128_drv.c	1.4
+sys/external/bsd/drm/dist/bsd-core/savage_drv.c	1.4
+sys/external/bsd/drm/dist/bsd-core/sis_drv.c	1.4
+sys/external/bsd/drm/dist/bsd-core/tdfx_drv.c	1.4
+sys/external/bsd/drm/dist/shared-core/mach64_dma.c 1.2
+sys/external/bsd/drm/dist/shared-core/mach64_drv.h 1.4
+sys/external/bsd/drm/dist/shared-core/savage_bci.c 1.4
+sys/external/bsd/drm/dist/shared-core/savage_state.c 1.4
+sys/external/bsd/drm/dist/shared-core/sis_ds.c	1.4
+
+	Add a bunch of fixes mostly from rafal@. Use pci_find_device()
+	to kill the one XXX rafal left.
+	[mrg, ticket #830]
 
