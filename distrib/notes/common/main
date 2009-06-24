@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.448 2009/05/27 09:40:01 njoly Exp $
+.\"	$NetBSD: main,v 1.449 2009/06/24 12:15:43 mbalmer Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1121,6 +1121,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Lennart Augustsson Ta Mt augustss@NetBSD.org
 .It Ta Zafer Aydogan Ta Mt zafer@NetBSD.org
 .It Ta Christoph Badura Ta Mt bad@NetBSD.org
+.It Ta Marc Balmer Ta Mt mbalmer@NetBSD.org
 .It Ta Bang Jun-Young Ta Mt junyoung@NetBSD.org
 .It Ta Dieter Baron Ta Mt dillo@NetBSD.org
 .It Ta Robert V. Baron Ta Mt rvb@NetBSD.org
