@@ -1,4 +1,4 @@
-.\"	$NetBSD: firmload.9,v 1.4 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: firmload.9,v 1.5 2009/06/24 16:28:48 dholland Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ provides a simple and convenient API for device drivers to load firmware
 images from files residing in the file system that are necessary for the
 devices that they control.
 Firmware images reside in sub-directories, one for each driver, of a series
-of colon-separated path prefixes specified the sysctl variable
+of colon-separated path prefixes specified by the sysctl variable
 .Dv hw.firmware.path .
 .Pp
 The following functions are provided by the
