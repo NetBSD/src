@@ -360,7 +360,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 				&(dev->pci_map_data[unit].size),
 				&(dev->pci_map_data[unit].flags)))
 		{
-			DRM_ERROR("pci_mapreg info for %d failed\n",
+			DRM_DEBUG("pci_mapreg info for %d failed\n",
 				PCI_MAPREG_START + unit*4);
 			dev->pci_map_data[unit].base = 0;
 			dev->pci_map_data[unit].size = 0;
