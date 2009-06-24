@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.196.10.4 2009/06/24 14:15:35 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.196.10.5 2009/06/24 14:21:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196.10.4 2009/06/24 14:15:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196.10.5 2009/06/24 14:21:43 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -386,9 +386,13 @@ nfs_mountroot(void)
 	vfs_unbusy(mp, false, NULL);
 
 	/* Get root attributes (for the time). */
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error)
+		panic("nfs_mountroot: lock for root");
 	error = VOP_GETATTR(vp, &attr, l->l_cred);
 	if (error)
 		panic("nfs_mountroot: getattr for root");
+	VOP_UNLOCK(vp, 0);
 	n = attr.va_atime.tv_sec;
 #ifdef	DEBUG
 	printf("root time: 0x%lx\n", n);

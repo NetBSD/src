@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.266.10.3 2009/05/16 10:41:51 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266.10.4 2009/06/24 14:21:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.3 2009/05/16 10:41:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.4 2009/06/24 14:21:43 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -570,6 +570,8 @@ nfs_getattr(void *v)
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(vp);
+
+	KASSERT(VOP_ISLOCKED(vp));
 
 	/*
 	 * Update local times for special files.
