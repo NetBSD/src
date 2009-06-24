@@ -661,9 +661,14 @@ void savage_driver_lastclose(struct drm_device *dev)
 
 	for (i = 0; i < 3; ++i)
 		if (dev_priv->mtrr[i].handle >= 0)
+#if defined(__FreeBSD__)
 			drm_mtrr_del(dev_priv->mtrr[i].handle,
 				     dev_priv->mtrr[i].base,
 				     dev_priv->mtrr[i].size, DRM_MTRR_WC);
+#elif defined(__NetBSD__)
+			drm_mtrr_del(dev_priv->mtrr[i].base,
+				     dev_priv->mtrr[i].size, DRM_MTRR_WC);
+#endif
 }
 
 int savage_driver_unload(struct drm_device *dev)
