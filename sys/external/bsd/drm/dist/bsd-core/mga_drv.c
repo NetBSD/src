@@ -40,7 +40,6 @@
 #ifdef __NetBSD__
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/pci/pcidevs_data.h>
 #endif
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
