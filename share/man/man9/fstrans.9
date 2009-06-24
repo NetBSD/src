@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.13 2009/04/12 19:00:56 joerg Exp $
+.\"     $NetBSD: fstrans.9,v 1.14 2009/06/24 22:39:40 zafer Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,8 +126,8 @@ on the file system
 .Fa mp .
 .It Fn fstrans_start_nowait "mp" "lock_type"
 will not wait for a state change of the file system when attempting to
-aquire the lock.
-The thread may still sleep while attempting to aquire the lock.
+acquire the lock.
+The thread may still sleep while attempting to acquire the lock.
 .It Fn fstrans_done "mp"
 releases a lock on the file system
 .Fa mp .
