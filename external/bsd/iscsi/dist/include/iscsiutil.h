@@ -1,35 +1,43 @@
 /*
- * IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING. By downloading, copying, installing or
- * using the software you agree to this license. If you do not agree to this license, do not download, install,
- * copy or use the software.
+ * IMPORTANT:  READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING. 
+ * By downloading, copying, installing or using the software you agree
+ * to this license.  If you do not agree to this license, do not
+ * download, install, copy or use the software.
  *
  * Intel License Agreement
  *
  * Copyright (c) 2000, Intel Corporation
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that
- * the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * -Redistributions of source code must retain the above copyright notice, this list of conditions and the
- *  following disclaimer.
+ * -Redistributions of source code must retain the above copyright
+ *  notice, this list of conditions and the following disclaimer.
  *
- * -Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
- *  following disclaimer in the documentation and/or other materials provided with the distribution.
+ * -Redistributions in binary form must reproduce the above copyright
+ *  notice, this list of conditions and the following disclaimer in the
+ *  documentation and/or other materials provided with the
+ *  distribution.
  *
- * -The name of Intel Corporation may not be used to endorse or promote products derived from this software
- *  without specific prior written permission.
+ * -The name of Intel Corporation may not be used to endorse or
+ *  promote products derived from this software without specific prior
+ *  written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL INTEL
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
-
 #ifndef _ISCSIUTIL_H_
 #define _ISCSIUTIL_H_
 
@@ -173,8 +181,6 @@ void	iscsi_print_buffer(const char *, const size_t);
 #define ISCSI_NTOHS(a)	ntohs(a)
 #define ISCSI_HTONS(a)	htons(a)
 
-#define ISCSI_GETPID getpid()
-
 #ifndef HAVE_SOCKLEN_T
 typedef int	socklen_t;
 #endif
@@ -280,8 +286,6 @@ int             iscsi_queue_full(iscsi_queue_t * );
  * Socket Abstraction
  */
 
-typedef int     iscsi_socket_t;
-
 /* Turning off Nagle's Algorithm doesn't always seem to work, */
 /* so we combine two messages into one when the second's size */
 /* is less than or equal to ISCSI_SOCK_HACK_CROSSOVER. */
@@ -291,25 +295,25 @@ typedef int     iscsi_socket_t;
 #define ISCSI_SOCK_CONNECT_TIMEOUT   1
 #define ISCSI_SOCK_MSG_BYTE_ALIGN    4
 
-int             iscsi_sock_create(iscsi_socket_t * );
-int             iscsi_socks_establish(iscsi_socket_t *, int *, int *, int, int);
-int		iscsi_waitfor_connection(iscsi_socket_t *, int, const char *cf, iscsi_socket_t *);
+int             iscsi_sock_create(int *);
+int             iscsi_socks_establish(int *, int *, int *, char *, int);
+int		iscsi_waitfor_connection(int *, int, const char *cf, int *);
 const char	*iscsi_address_family(int);
-int             iscsi_sock_setsockopt(iscsi_socket_t * , int , int , void *, unsigned  );
-int             iscsi_sock_getsockopt(iscsi_socket_t * , int , int , void *, unsigned *);
-int             iscsi_sock_bind(iscsi_socket_t , int );
-int             iscsi_sock_listen(iscsi_socket_t );
-int             iscsi_sock_connect(iscsi_socket_t , char *, int );
-int             iscsi_sock_accept(iscsi_socket_t , iscsi_socket_t * );
-int             iscsi_sock_shutdown(iscsi_socket_t , int );
-int             iscsi_sock_close(iscsi_socket_t );
-int             iscsi_sock_msg(iscsi_socket_t , int , unsigned , void *, int );
-int		iscsi_sock_send_header_and_data(iscsi_socket_t ,
+int             iscsi_sock_setsockopt(int * , int , int , void *, unsigned);
+int             iscsi_sock_getsockopt(int * , int , int , void *, unsigned *);
+int             iscsi_sock_bind(int , int);
+int             iscsi_sock_listen(int);
+int             iscsi_sock_connect(int , char *, int);
+int             iscsi_sock_accept(int , int *);
+int             iscsi_sock_shutdown(int , int);
+int             iscsi_sock_close(int);
+int             iscsi_sock_msg(int , int , unsigned , void *, int);
+int		iscsi_sock_send_header_and_data(int ,
 				void *, unsigned ,
-				const void *, unsigned , int );
-int             iscsi_sock_getsockname(iscsi_socket_t , struct sockaddr * , unsigned *);
-int             iscsi_sock_getpeername(iscsi_socket_t , struct sockaddr * , unsigned *);
-int             modify_iov(struct iovec ** , int *, uint32_t , uint32_t );
+				const void *, unsigned , int);
+int             iscsi_sock_getsockname(int , struct sockaddr * , unsigned *);
+int             iscsi_sock_getpeername(int , struct sockaddr * , unsigned *);
+int             modify_iov(struct iovec ** , int *, uint32_t , uint32_t);
 
 
 void	cdb2lba(uint32_t *, uint16_t *, uint8_t *);
@@ -321,10 +325,10 @@ void	lba2cdb(uint8_t *, uint32_t *, uint16_t *);
 
 typedef pthread_mutex_t iscsi_mutex_t;
 
-int             iscsi_mutex_init(iscsi_mutex_t * );
-int             iscsi_mutex_lock(iscsi_mutex_t * );
-int             iscsi_mutex_unlock(iscsi_mutex_t * );
-int             iscsi_mutex_destroy(iscsi_mutex_t * );
+int             iscsi_mutex_init(iscsi_mutex_t *);
+int             iscsi_mutex_lock(iscsi_mutex_t *);
+int             iscsi_mutex_unlock(iscsi_mutex_t *);
+int             iscsi_mutex_destroy(iscsi_mutex_t *);
 
 #define ISCSI_LOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_lock(M) != 0) {					\
@@ -360,10 +364,10 @@ int             iscsi_mutex_destroy(iscsi_mutex_t * );
 
 typedef pthread_cond_t iscsi_cond_t;
 
-int             iscsi_cond_init(iscsi_cond_t * );
-int             iscsi_cond_wait(iscsi_cond_t * , iscsi_mutex_t * );
-int             iscsi_cond_signal(iscsi_cond_t * );
-int             iscsi_cond_destroy(iscsi_cond_t * );
+int             iscsi_cond_init(iscsi_cond_t *);
+int             iscsi_cond_wait(iscsi_cond_t * , iscsi_mutex_t *);
+int             iscsi_cond_signal(iscsi_cond_t *);
+int             iscsi_cond_destroy(iscsi_cond_t *);
 
 #define ISCSI_COND_INIT(C, ELSE) do {					\
 	if (iscsi_cond_init(C) != 0) {					\
@@ -395,9 +399,9 @@ int             iscsi_cond_destroy(iscsi_cond_t * );
 
 typedef struct iscsi_thread_t {
 	pthread_t       pthread;
-}               iscsi_thread_t;
+} iscsi_thread_t;
 
-int             iscsi_thread_create(iscsi_thread_t * , void *(*proc) (void *), void *);
+int iscsi_thread_create(iscsi_thread_t * , void *(*proc) (void *), void *);
 
 #define ISCSI_SET_THREAD(ME)	/* for user pthread id set by pthread_create
 				 * in iscsi_thread_create */
@@ -423,9 +427,10 @@ typedef struct {
 }               iscsi_worker_t;
 
 #define ISCSI_WORKER_EXIT(ME) do {					\
-	iscsi_trace(TRACE_ISCSI_DEBUG ,__FILE__, __LINE__, "exiting\n");			\
+	iscsi_trace(TRACE_ISCSI_DEBUG ,__FILE__, __LINE__, "exiting\n");\
 	(ME)->state |= ISCSI_WORKER_STATE_EXITING;			\
 	return 0;							\
+	/* NOTREACHED */						\
 } while (/* CONSTCOND */ 0)
 
 /*
@@ -452,6 +457,14 @@ if ((V1)!=(V2)) {                                                    \
   return RC;                                                         \
 }
 
+#define ERROR_NOT_EQUAL(NAME, V1, V2, CU) 	do {			\
+	if ((V1)!=(V2)) {						\
+		iscsi_trace_error(__FILE__, __LINE__,			\
+			"Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2); \
+		CU;							\
+	}								\
+} while(/* CONSTCOND */0)
+
 #define WARN_NOT_EQUAL(NAME, V1, V2)                                 \
 if ((V1)!=(V2)) {                                                    \
   iscsi_trace_warning(__FILE__, __LINE__, "Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);  \
@@ -469,9 +482,9 @@ if ((V1)==(V2)) {                                                    \
  */
 
 uint32_t        iscsi_atoi(char *);
-int HexTextToData(const char *, uint32_t , uint8_t *, uint32_t );
-int HexDataToText(uint8_t *, uint32_t , char *, uint32_t );
-void            GenRandomData(uint8_t *, uint32_t );
+int HexTextToData(const char *, uint32_t , uint8_t *, uint32_t);
+int HexDataToText(uint8_t *, uint32_t , char *, uint32_t);
+void            GenRandomData(uint8_t *, uint32_t);
 
 /* this is the maximum number of iovecs which we can use in iscsi_sock_send_header_and_data */
 #ifndef ISCSI_MAX_IOVECS
@@ -486,4 +499,4 @@ enum {
 
 int		allow_netmask(const char *, const char *);
 
-#endif				/* _ISCSIUTIL_H_ */
+#endif /* _ISCSIUTIL_H_ */
