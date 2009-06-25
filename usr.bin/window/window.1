@@ -1,4 +1,4 @@
-.\"	$NetBSD: window.1,v 1.15.40.1 2009/06/25 21:47:20 hubertf Exp $
+.\"	$NetBSD: window.1,v 1.15.40.2 2009/06/25 21:48:17 hubertf Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)window.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd June 25, 2009
+.Dd December 30, 1993
 .Dt WINDOW 1
 .Os
 .Sh NAME
@@ -1048,18 +1048,6 @@ startup command file.
 .It Pa /dev/[pt]ty[pq]?
 pseudo-terminal devices.
 .El
-.Sh EXAMPLES
-The following example
-.Pa ~/.windowrc
-will open two windows. 
-The upper one will take one third of the screen 
-and run tcpdump, the lower one will take
-the remaining two thirds of the screen and run
-the default shell:
-.Bd -literal -offset 
-window r=1, nr=$nrow/3-1, l=tcpdump\\ pcn0, sh=tcpdump \\-ni pcn0
-window r=$nrow/3, nr=2*$nrow/3+1
-.Ed
 .Sh DIAGNOSTICS
 Should be self explanatory.
 .Sh HISTORY
