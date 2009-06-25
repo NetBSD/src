@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/06/23 15:02:51 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2009/06/25 18:21:50 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -59,7 +59,7 @@ PFIX_LIBSDIRS+=	tls tls
 
 .for _LD _LL in	${PFIX_LIBSDIRS}
 .if !defined(POBJDIR.${_LL})
-POBJDIR.${_LL}!=cd ${PFIX_SRCDIR}/${_LD} && ${PRINTOBJDIR}
+POBJDIR.${_LL}!=cd ${PFIX_SRCDIR}/lib/${_LD} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=POBJDIR.${_LL}
 .endif
 LIBP${_LL:tu}=	${POBJDIR.${_LL}}/lib${_LL}.a
@@ -82,7 +82,3 @@ CPPFLAGS+=	-DDEF_HTML_DIR=\"${PFIX_HTMLDIR}\" \
 
 # postfix check wants a lot of files to be owned by root
 BINOWN=	root
-
-.if exists(${.CURDIR}/../../Makefile.inc)
-.include "${.CURDIR}/../../Makefile.inc"
-.endif
