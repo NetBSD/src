@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2009/06/25 20:47:45 dyoung Exp $
+# $NetBSD: Makefile,v 1.11 2009/06/25 21:04:13 dyoung Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ WARNS=4
 
 ISCSIDIST=	${NETBSDSRCDIR}/external/bsd/iscsi/dist
 .PATH:	${ISCSIDIST}/src
+.PATH:	${ISCSIDIST}/src/lib
 
 LIBDPLIBS+=      pthread  ${.CURDIR}/../libpthread
 
