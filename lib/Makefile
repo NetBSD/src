@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.139 2009/06/09 05:20:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.140 2009/06/25 13:58:59 agc Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -64,10 +64,6 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libedit		# depends on libterm
 
 SUBDIR+=	libradius	# depends on libcrypto - only if ${MKCRYPTO}
-
-.if (${MKISCSI} != "no")
-SUBDIR+=	libiscsi	# depends on libpthread
-.endif
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	libssl		# depends on libcrypto
