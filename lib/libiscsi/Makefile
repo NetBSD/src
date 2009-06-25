@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2009/06/23 05:15:07 agc Exp $
+# $NetBSD: Makefile,v 1.10 2009/06/25 20:47:45 dyoung Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ LDFLAGS+= -pthread
 NOMAN= # defined
 WARNS=4
 
-ISCSIDIST=	${NETBSDSRCDIR}/dist/iscsi
+ISCSIDIST=	${NETBSDSRCDIR}/external/bsd/iscsi/dist
 .PATH:	${ISCSIDIST}/src
 
 LIBDPLIBS+=      pthread  ${.CURDIR}/../libpthread
