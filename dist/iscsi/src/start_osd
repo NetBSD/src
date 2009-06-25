@@ -1,5 +1,0 @@
-#!/bin/sh
-insmod ./so.o
-insmod ./intel_iscsi.o
-insmod ./osdfs.o
-mount -t osdfs /dev/so0 /mnt -o gid=0x2d159c01 -o uid=0x2c8f1801
