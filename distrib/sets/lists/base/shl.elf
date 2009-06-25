@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.176 2009/06/07 22:48:15 christos Exp $
+# $NetBSD: shl.elf,v 1.177 2009/06/25 20:54:16 agc Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -153,7 +153,7 @@
 ./usr/lib/libisccfg.so				base-bind-shlib
 ./usr/lib/libisccfg.so.3			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
-./usr/lib/libiscsi.so.1				base-iscsi-shlib	iscsi
+./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libkadm.so				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5clnt.so.11			base-krb5-shlib		kerberos
