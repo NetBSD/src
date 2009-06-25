@@ -1,4 +1,5 @@
-/* $NetBSD: wake.c,v 1.1 2009/06/25 18:41:22 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.2 2009/06/25 18:50:46 mbalmer Exp $ */
+
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
  * Copyright (C) 2000 Eugene M. Kim.  All rights reserved.
@@ -24,6 +25,8 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* Send Wake-on-LAN packets to machines on the local Ethernet */
 
 #include <sys/types.h>
 #include <sys/param.h>
