@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.52 2009/05/16 18:13:08 plunky Exp $
+.\" $NetBSD: mdoc.local,v 1.53 2009/06/25 17:40:07 agc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,8 +74,8 @@
 .\" Local libraries not in groff
 .ds doc-str-Lb-libarchive       Reading and Writing Streaming Archives Library (libarchive, \-larchive)
 .ds doc-str-Lb-libbluetooth     Bluetooth Library (libbluetooth, \-lbluetooth)
+.ds doc-str-Lb-libiscsi         iSCSI protocol library (libiscsi, \-liscsi)
 .ds doc-str-Lb-libnetpgp        Netpgp signing, verification, encryption and decryption (libnetpgp, \-lnetpgp)
-.ds doc-str-Lb-libopenpgpsdk    Openpgp signing, verification, encryption and decryption (libopenpgpsdk, \-lopenpgpsdk)
 .ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
 .ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lrefuse)
