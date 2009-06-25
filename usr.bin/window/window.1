@@ -1,4 +1,4 @@
-.\"	$NetBSD: window.1,v 1.17 2009/06/25 21:48:49 hubertf Exp $
+.\"	$NetBSD: window.1,v 1.18 2009/06/25 23:20:55 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1051,12 +1051,12 @@ pseudo-terminal devices.
 .Sh EXAMPLES
 The following example
 .Pa ~/.windowrc
-will open two windows. 
-The upper one will take one third of the screen 
+will open two windows.
+The upper one will take one third of the screen
 and run tcpdump, the lower one will take
 the remaining two thirds of the screen and run
 the default shell:
-.Bd -literal -offset 
+.Bd -literal -offset
 window r=1, nr=$nrow/3-1, l=tcpdump\\ pcn0, sh=tcpdump \\-ni pcn0
 window r=$nrow/3, nr=2*$nrow/3+1
 .Ed
