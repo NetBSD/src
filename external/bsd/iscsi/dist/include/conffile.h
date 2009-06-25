@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.1 2009/06/21 21:20:30 agc Exp $ */
+/* $NetBSD: conffile.h,v 1.2 2009/06/25 13:47:09 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
