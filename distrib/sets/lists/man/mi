@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1142 2009/06/23 17:58:23 tron Exp $
+# $NetBSD: mi,v 1.1143 2009/06/25 18:41:22 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2681,6 +2681,7 @@
 ./usr/share/man/cat8/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/vmstat.0			man-obsolete		obsolete
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/wake.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/walnut/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/walnut/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/wdogctl.0			man-sysutil-catman	.cat
@@ -4989,6 +4990,7 @@
 ./usr/share/man/html8/vgscan.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/vgsplit.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/vnconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/wake.html			man-netutil-htmlman	html
 ./usr/share/man/html8/wdogctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/wiconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wire-test.html		man-netutil-htmlman	html
@@ -7665,6 +7667,7 @@
 ./usr/share/man/man8/virtual.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/vmstat.8			man-obsolete		obsolete
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man		.man
+./usr/share/man/man8/wake.8			man-netutil-man		.man
 ./usr/share/man/man8/walnut/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/walnut/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man		.man
