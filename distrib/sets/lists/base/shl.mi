@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.476 2009/06/07 22:48:15 christos Exp $
+# $NetBSD: shl.mi,v 1.477 2009/06/25 20:54:16 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -84,7 +84,7 @@
 ./usr/lib/libisc.so.3.0				base-bind-shlib
 ./usr/lib/libisccc.so.3.0			base-bind-shlib
 ./usr/lib/libisccfg.so.3.0			base-bind-shlib
-./usr/lib/libiscsi.so.1.0			base-iscsi-shlib	iscsi
+./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi
 ./usr/lib/libkadm5clnt.so.11.0			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so.12.0			base-krb5-shlib		kerberos
 ./usr/lib/libkafs.so.10.0			base-krb5-shlib		kerberos

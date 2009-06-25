@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1273 2009/06/23 17:58:22 tron Exp $
+#	$NetBSD: mi,v 1.1274 2009/06/25 20:54:16 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1274,6 +1274,7 @@
 ./usr/include/iconv.h				comp-c-include
 ./usr/include/ifaddrs.h				comp-c-include
 ./usr/include/inttypes.h			comp-c-include
+./usr/include/iscsi.h				comp-c-include		iscsi
 ./usr/include/iso646.h				comp-c-include
 ./usr/include/isofs/cd9660/cd9660_extern.h	comp-c-include
 ./usr/include/isofs/cd9660/cd9660_mount.h	comp-c-include
@@ -6596,6 +6597,7 @@
 ./usr/share/man/cat3/lhash.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libarchive.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libarchive_internals.0	comp-c-catman		.cat
+./usr/share/man/cat3/libiscsi.0			comp-c-catman		iscsi,.cat
 ./usr/share/man/cat3/libmagic.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
@@ -12060,6 +12062,7 @@
 ./usr/share/man/html3/lh_stats.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libarchive.html		comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_internals.html	comp-c-htmlman		html
+./usr/share/man/html3/libiscsi.html		comp-c-htmlman		iscsi,html
 ./usr/share/man/html3/libmagic.html		comp-c-htmlman		html
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
@@ -17486,6 +17489,7 @@
 ./usr/share/man/man3/lhash.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libarchive.3		comp-c-man		.man
 ./usr/share/man/man3/libarchive_internals.3	comp-c-man		.man
+./usr/share/man/man3/libiscsi.3			comp-c-man		iscsi,.man
 ./usr/share/man/man3/libmagic.3			comp-c-man		.man
 ./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
