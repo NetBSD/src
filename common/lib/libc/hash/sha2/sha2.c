@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.17 2009/06/19 05:09:09 tsutsui Exp $ */
+/* $NetBSD: sha2.c,v 1.18 2009/06/25 14:05:18 joerg Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.17 2009/06/19 05:09:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.18 2009/06/25 14:05:18 joerg Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.17 2009/06/19 05:09:09 tsutsui Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.17 2009/06/19 05:09:09 tsutsui Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.18 2009/06/25 14:05:18 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -624,9 +624,10 @@ SHA224_Init(SHA224_CTX *context)
 	if (context == NULL)
 		return 1;
 
+	/* The state and buffer size are driven by SHA256, not by SHA224. */
 	memcpy(context->state, sha224_initial_hash_value,
-	    (size_t)(SHA224_DIGEST_LENGTH));
-	memset(context->buffer, 0, (size_t)(SHA224_BLOCK_LENGTH));
+	    (size_t)(SHA256_DIGEST_LENGTH));
+	memset(context->buffer, 0, (size_t)(SHA256_BLOCK_LENGTH));
 	context->bitcount = 0;
 
 	return 1;
