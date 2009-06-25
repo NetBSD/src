@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.37 2009/06/24 17:53:11 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.38 2009/06/25 01:42:21 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1336,4 +1336,9 @@ sys/external/bsd/drm/dist/shared-core/sis_ds.c	1.4
 	Add a bunch of fixes mostly from rafal@. Use pci_find_device()
 	to kill the one XXX rafal left.
 	[mrg, ticket #830]
+
+sys/external/bsd/drm/dist/bsd-core/mga_drv.c	1.6
+
+	Don't include pcidevs_data.h.  Fixes build of mga_drv.
+	[mrg, ticket #832]
 
