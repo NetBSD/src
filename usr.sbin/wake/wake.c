@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.2 2009/06/25 18:50:46 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.3 2009/06/25 22:26:54 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
@@ -171,7 +171,7 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	(void)memset(pkt.data, 0xff, SYNC_LEN);
 	for (p = pkt.data + SYNC_LEN, i = 0; i < DESTADDR_COUNT;
 	    p += ETHER_ADDR_LEN, i++)
-		bcopy(addr->ether_addr_octet, p, ETHER_ADDR_LEN);
+		memcpy(p, addr->ether_addr_octet, ETHER_ADDR_LEN);
 	p = (u_char *)&pkt;
 	len = sizeof(pkt);
 	bw = 0;
