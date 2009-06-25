@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.95 2009/06/24 17:09:13 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.96 2009/06/25 17:16:33 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.95 2009/06/24 17:09:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.96 2009/06/25 17:16:33 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3373,6 +3373,14 @@ udf_calchash(struct long_ad *icbptr)
 }
 
 
+int
+udf_check_icb_equal(struct long_ad *a, struct long_ad *b)
+{
+	return (a->loc.lb_num   == b->loc.lb_num &&
+	    a->loc.part_num == b->loc.part_num);
+}
+
+
 static struct udf_node *
 udf_hash_lookup(struct udf_mount *ump, struct long_ad *icbptr)
 {
@@ -3386,8 +3394,7 @@ loop:
 	hashline = udf_calchash(icbptr) & UDF_INODE_HASHMASK;
 	LIST_FOREACH(node, &ump->udf_nodes[hashline], hashchain) {
 		assert(node);
-		if (node->loc.loc.lb_num   == icbptr->loc.lb_num &&
-		    node->loc.loc.part_num == icbptr->loc.part_num) {
+		if (udf_check_icb_equal(&node->loc, icbptr)) {
 			vp = node->vnode;
 			assert(vp);
 			mutex_enter(&vp->v_interlock);
