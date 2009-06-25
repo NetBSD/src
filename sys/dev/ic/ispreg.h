@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.32 2008/03/11 05:33:30 mjacob Exp $ */
+/* $NetBSD: ispreg.h,v 1.33 2009/06/25 23:44:02 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -473,10 +473,21 @@ typedef struct {
 	uint16_t param[MAILBOX_STORAGE];
 	uint16_t ibits;
 	uint16_t obits;
-	uint32_t	: 28,
+	uint32_t
+		lineno	: 16,
+			: 12,
 		logval	: 4;
 	uint32_t timeout;
+	const char *func;
 } mbreg_t;
+#define	MBSINIT(mbxp, code, loglev, timo)	\
+	ISP_MEMZERO((mbxp), sizeof (mbreg_t));	\
+	(mbxp)->param[0] = code;		\
+	(mbxp)->lineno = __LINE__;		\
+	(mbxp)->func = __func__;		\
+	(mbxp)->logval = loglev;		\
+	(mbxp)->timeout = timo
+
 
 /*
  * Fibre Protocol Module and Frame Buffer Register Offsets/Definitions (2X00).
