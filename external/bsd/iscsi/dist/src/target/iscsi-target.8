@@ -1,0 +1,124 @@
+.\" $NetBSD: iscsi-target.8,v 1.1 2009/06/25 13:47:11 agc Exp $
+.\"
+.\" Copyright © 2006 Alistair Crooks.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 27, 2006
+.Dt ISCSI-TARGET 8
+.Os
+.Sh NAME
+.Nm iscsi-target
+.Nd service remote iSCSI requests
+.Sh SYNOPSIS
+.Nm
+.Op Fl 46DV
+.Op Fl b Ar block length
+.Op Fl f Ar configuration file
+.Op Fl p Ar port number
+.Op Fl s Ar maximum number of sessions
+.Op Fl t Ar target name
+.Op Fl v Ar verbose arg
+.Sh DESCRIPTION
+.Nm
+is the server for
+iSCSI
+requests from iSCSI initiators.
+.Nm
+listens for discovery and login requests on the required port,
+and responds to those requests appropriately.
+.Pp
+Options and operands available for
+.Nm iscsi-target :
+.Bl -tag -width Ds
+.It Fl 4
+.Nm
+will listen for IPv4 connections,
+and respond back using IPv4.
+This is the default address family.
+.It Fl 6
+.Nm
+will listen for IPv6 connections,
+and respond back using IPv6.
+.It Fl b Ar blocksize
+Specify the underlying block size for iSCSI storage which will be served.
+The possible sizes are: 512, 1024, 2048, and 4096 bytes, with the default
+being 512 bytes.
+.It Fl D
+When this option is specified,
+.Nm
+will not detach itself from the controlling tty, and will
+not become a daemon.
+This can be useful for debugging purposes.
+.It Fl f Ar configfile
+Use the named file as the configuration file.
+The default file can be found in
+.Ar /etc/iscsi/targets .
+See
+.Xr targets 5
+for more information.
+.It Fl p Ar port number
+Use the port number provided as the argument as the port
+on which to listen for iSCSI service requests from
+initiators.
+.It Fl s Ar maximum number of sessions
+Allow the maximum number of sessions to be initiated when
+connecting to the target.
+.It Fl t Ar filename
+The target name (as it appears to the iSCSI initiator) can be specified
+using this flag.
+.It Fl V
+.Nm
+will print the utility name and version number,
+and the address for bug reports, and then exit.
+.It Fl v Ar argument
+The amount of information shown can be varied by using this command.
+Possible values of
+.Ar argument
+are
+.Ar net
+to show network-related information,
+.Ar iscsi
+to show iSCSI protocol-related information,
+.Ar scsi
+to show SCSI protocol information, and
+.Ar all
+to show information from all of the above arguments.
+.El
+.Sh FILES
+.Bl -tag -width /var/run/iscsi-target.pid -compact
+.It Pa /etc/iscsi/targets
+the list of exported storage
+.It Pa /var/run/iscsi-target.pid
+the PID of the currently running
+.Nm
+.El
+.Sh SEE ALSO
+.Xr targets 5
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 4.0 .

@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1 2009/06/21 21:20:31 agc Exp $ */
+/* $NetBSD: defs.h,v 1.2 2009/06/25 13:47:09 agc Exp $ */
 
 /*
  * Copyright (c) 1999-2005 Alistair Crooks.  All rights reserved.
@@ -78,7 +78,7 @@
 	size = _newsize;						\
 } while( /* CONSTCOND */ 0)
 
-/*		(void) memset(&v[size], 0x0, sizeof(type) * incr);	\*/
+#define USE_ARG(x)  /*LINTED*/(void)&(x)
 
 #define DEFINE_ARRAY(name, type)					\
 typedef struct name {							\

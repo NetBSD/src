@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi-md5.h,v 1.1 2009/06/21 21:20:31 agc Exp $	*/
+/*	$NetBSD: iscsi-md5.h,v 1.2 2009/06/25 13:47:09 agc Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
