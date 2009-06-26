@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.12 2007/10/16 15:37:32 he Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.13 2009/06/26 22:41:26 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -691,6 +691,7 @@ smb_ctx_lookup(struct smb_ctx *ctx, int level, int flags)
 
 		if (ioctl(ctx->ct_fd, SMBIOC_LOOKUP, &rq) != -1)
 			goto success;
+		error = errno;
 
 	    fail:
 		if (flags & SMBLK_CREATE)
