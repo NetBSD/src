@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.177 2009/05/29 23:27:08 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.178 2009/06/26 19:30:45 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.177 2009/05/29 23:27:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.178 2009/06/26 19:30:45 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1598,6 +1598,7 @@ config_detach(device_t dev, int flags)
 
 out:
 	mutex_enter(&alldevs_mtx);
+	KASSERT(alldevs_nwrite != 0);
 	if (--alldevs_nwrite == 0)
 		alldevs_writer = NULL;
 	cv_signal(&alldevs_cv);
@@ -1621,6 +1622,52 @@ config_detach_children(device_t parent, int flags)
 	}
 	deviter_release(&di);
 	return error;
+}
+
+device_t
+shutdown_first(struct shutdown_state *s)
+{
+	if (!s->initialized) {
+		deviter_init(&s->di, DEVITER_F_SHUTDOWN|DEVITER_F_LEAVES_FIRST);
+		s->initialized = true;
+	}
+	return shutdown_next(s);
+}
+
+device_t
+shutdown_next(struct shutdown_state *s)
+{
+	device_t dv;
+
+	while ((dv = deviter_next(&s->di)) != NULL && !device_is_active(dv))
+		;
+
+	if (dv == NULL)
+		s->initialized = false;
+
+	return dv;
+}
+
+bool
+config_detach_all(int how)
+{
+	static struct shutdown_state s;
+	device_t curdev;
+	bool progress = false;
+
+	if ((how & RB_NOSYNC) != 0)
+		return false;
+
+	for (curdev = shutdown_first(&s); curdev != NULL;
+	     curdev = shutdown_next(&s)) {
+		aprint_debug(" detaching %s, ", device_xname(curdev));
+		if (config_detach(curdev, DETACH_SHUTDOWN) == 0) {
+			progress = true;
+			aprint_debug("success.");
+		} else
+			aprint_debug("failed.");
+	}
+	return progress;
 }
 
 int
@@ -2689,16 +2736,15 @@ deviter_release(deviter_t *di)
 	bool rw = (di->di_flags & DEVITER_F_RW) != 0;
 
 	mutex_enter(&alldevs_mtx);
-	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
-		--alldevs_nwrite;
-	else {
-
-		if (rw) {
-			if (--alldevs_nwrite == 0)
-				alldevs_writer = NULL;
-		} else
-			--alldevs_nread;
-
+	if (!rw) {
+		--alldevs_nread;
+		cv_signal(&alldevs_cv);
+	} else if (alldevs_nwrite > 0 && alldevs_writer == NULL) {
+		--alldevs_nwrite;	/* shutting down: do not signal */
+	} else {
+		KASSERT(alldevs_nwrite != 0);
+		if (--alldevs_nwrite == 0)
+			alldevs_writer = NULL;
 		cv_signal(&alldevs_cv);
 	}
 	mutex_exit(&alldevs_mtx);
