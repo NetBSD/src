@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.5 2009/06/26 17:38:32 christos Exp $ */
+/* $NetBSD: wake.c,v 1.6 2009/06/26 21:55:28 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
@@ -49,7 +49,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
 #include <sysexits.h>
 #include <unistd.h>
 
@@ -70,7 +69,7 @@ static int send_wakeup(int, struct ether_addr const *);
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s interface lladdr\n", getprogname());
+	(void)fprintf(stderr, "usage: %s interface lladdr\n", getprogname());
 	exit(0);
 }
 
