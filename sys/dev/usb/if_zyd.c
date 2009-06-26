@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.19 2009/06/26 00:06:27 dyoung Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.20 2009/06/26 00:14:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.19 2009/06/26 00:06:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.20 2009/06/26 00:14:09 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -783,6 +783,9 @@ Static int
 zyd_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct zyd_softc *sc = ic->ic_ifp->if_softc;
+
+	if (!sc->attached)
+		return ENXIO;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_stop(&sc->sc_scan_ch);
@@ -2446,10 +2449,7 @@ zyd_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		if (!sc->attached)
-			error = ENXIO;
-		else
-			error = ieee80211_ioctl(ic, cmd, data);
+		error = ieee80211_ioctl(ic, cmd, data);
 	}
 
 	if (error == ENETRESET) {
