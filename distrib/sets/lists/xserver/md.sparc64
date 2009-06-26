@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.34 2009/06/18 05:57:35 mrg Exp $	x11
+# $NetBSD: md.sparc64,v 1.35 2009/06/26 20:52:02 nakayama Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -382,7 +382,7 @@
 ./usr/X11R7/lib/modules/extensions/libshadow_g.a	-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libshadow_pic.a	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libxtrap.a		-unknown-	obsolete
-./usr/X11R7/lib/modules/extensions/libxtrap.so		-unknown-	xorobsolete
+./usr/X11R7/lib/modules/extensions/libxtrap.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap.so.0	-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libxtrap_pic.a	-unknown-	obsolete
