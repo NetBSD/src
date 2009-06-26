@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.145 2009/04/11 09:41:18 apb Exp $	*/
+/*	$NetBSD: job.c,v 1.146 2009/06/26 01:26:32 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.145 2009/04/11 09:41:18 apb Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.146 2009/06/26 01:26:32 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.145 2009/04/11 09:41:18 apb Exp $");
+__RCSID("$NetBSD: job.c,v 1.146 2009/06/26 01:26:32 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1307,6 +1307,7 @@ JobExec(Job *job, char **argv)
 
     if (cpid == 0) {
 	/* Child */
+	sigset_t tmask;
 
 	/*
 	 * Reset all signal handlers; this is necessary because we also
@@ -1315,8 +1316,8 @@ JobExec(Job *job, char **argv)
 	JobSigReset();
 
 	/* Now unblock signals */
-	sigemptyset(&mask);
-	JobSigUnlock(&mask);
+	sigemptyset(&tmask);
+	JobSigUnlock(&tmask);
 
 	/*
 	 * Must duplicate the input stream down to the child's input and
