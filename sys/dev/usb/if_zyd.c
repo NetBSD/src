@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.18 2009/06/26 00:01:25 dyoung Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.19 2009/06/26 00:06:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.18 2009/06/26 00:01:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.19 2009/06/26 00:06:27 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -358,7 +358,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 10;
-	usb_callout_init(sc->sc_amrr_ch);
+	callout_init(&sc->sc_amrr_ch, 0);
 
 	error = usbd_set_config_no(sc->sc_udev, ZYD_CONFIG_NO, 1);
 	if (error != 0) {
@@ -475,8 +475,8 @@ zyd_detach(device_t self, int flags)
 
 	zyd_stop(ifp, 1);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	usb_uncallout(sc->sc_scan_ch, zyd_next_scan, sc);
-	usb_uncallout(sc->sc_amrr_ch, zyd_amrr_timeout, sc);
+	callout_stop(&sc->sc_scan_ch);
+	callout_stop(&sc->sc_amrr_ch);
 
 	zyd_close_pipes(sc);
 
@@ -739,7 +739,7 @@ zyd_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		zyd_set_chan(sc, ic->ic_curchan);
-		usb_callout(sc->sc_scan_ch, hz / 5, zyd_next_scan, sc);
+		callout_reset(&sc->sc_scan_ch, hz / 5, zyd_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -770,7 +770,7 @@ zyd_task(void *arg)
 
 		/* start automatic rate control timer */
 		if (ic->ic_fixed_rate == IEEE80211_FIXED_RATE_NONE)
-			usb_callout(sc->sc_amrr_ch, hz, zyd_amrr_timeout, sc);
+			callout_reset(&sc->sc_amrr_ch, hz, zyd_amrr_timeout, sc);
 
 		break;
 	}
@@ -785,8 +785,8 @@ zyd_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct zyd_softc *sc = ic->ic_ifp->if_softc;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	usb_uncallout(sc->sc_scan_ch, zyd_next_scan, sc);
-	usb_uncallout(sc->sc_amrr_ch, zyd_amrr_timeout, sc);
+	callout_stop(&sc->sc_scan_ch);
+	callout_stop(&sc->sc_amrr_ch);
 
 	/* do it in a process context */
 	sc->sc_state = nstate;
@@ -2668,7 +2668,7 @@ zyd_amrr_timeout(void *arg)
 		ieee80211_iterate_nodes(&ic->ic_sta, zyd_iter_func, sc);
 	splx(s);
 
-	usb_callout(sc->sc_amrr_ch, hz, zyd_amrr_timeout, sc);
+	callout_reset(&sc->sc_amrr_ch, hz, zyd_amrr_timeout, sc);
 }
 
 Static void
