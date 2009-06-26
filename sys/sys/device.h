@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.119 2009/05/07 22:17:41 cegger Exp $ */
+/* $NetBSD: device.h,v 1.120 2009/06/26 19:30:45 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -201,6 +201,11 @@ struct deviter {
 };
 
 typedef struct deviter deviter_t;
+
+struct shutdown_state {
+	bool initialized;
+	deviter_t di;
+};
 #endif
 
 /*
@@ -446,6 +451,7 @@ device_t config_attach_pseudo(cfdata_t);
 
 int	config_detach(device_t, int);
 int	config_detach_children(device_t, int flags);
+bool	config_detach_all(int);
 int	config_activate(device_t);
 int	config_deactivate(device_t);
 void	config_defer(device_t, void (*)(device_t));
@@ -540,6 +546,8 @@ void		device_pmf_class_register(device_t, void *,
 		    void (*)(device_t));
 void		device_pmf_class_deregister(device_t);
 
+device_t	shutdown_first(struct shutdown_state *);
+device_t	shutdown_next(struct shutdown_state *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */
