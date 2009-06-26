@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.9 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.10 2009/06/26 00:24:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.9 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.10 2009/06/26 00:24:18 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -100,14 +100,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.9 2009/04/18 14:58:03 tsutsui Exp $");
 #include <sys/rnd.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/tcp.h>
+
+#ifdef INET
+#include <netinet/in_var.h>
 #endif
 
+#include <netinet/tcp.h>
 
 #include <net/if_ether.h>
 #include <uvm/uvm_extern.h>
