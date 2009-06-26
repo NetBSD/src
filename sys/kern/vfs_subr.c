@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.382 2009/06/26 18:53:07 dyoung Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.383 2009/06/26 18:58:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.382 2009/06/26 18:53:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.383 2009/06/26 18:58:14 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2335,9 +2335,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			vfs_unmount_print(mp, "");
 			progress = true;
 		} else {
-#if 1
 			atomic_dec_uint(&mp->mnt_refcnt);
-#endif
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
