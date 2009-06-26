@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.3 2009/06/25 22:26:54 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.4 2009/06/26 09:00:49 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
@@ -44,16 +44,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
-
-#ifndef BPF_PATH_FORMAT
-#define BPF_PATH_FORMAT "/dev/bpf%u"
-#endif
 
 #ifndef SYNC_LEN
 #define SYNC_LEN 6
@@ -66,7 +63,6 @@
 __dead void usage(void);
 
 int wake(const char *iface, const char *host);
-int get_bpf(void);
 int bind_if_to_bpf(char const *ifname, int bpf);
 int get_ether(char const *text, struct ether_addr *addr);
 int send_wakeup(int bpf, struct ether_addr const *addr);
@@ -86,7 +82,7 @@ wake(const char *iface, const char *host)
 	int res, bpf;
 	struct ether_addr macaddr;
 
-	bpf = get_bpf();
+	bpf = open(_PATH_BPF, O_RDWR);
 	if (bpf == -1) {
 		printf("no bpf\n");
 		return -1;
@@ -99,26 +95,6 @@ wake(const char *iface, const char *host)
 	res = send_wakeup(bpf, &macaddr);
 	(void)close(bpf);
 	return res;
-}
-
-int
-get_bpf(void)
-{
-	int i, fd;
-	char path[MAXPATHLEN];
-
-	for (i = 0;; i++) {
-		if (snprintf(path, sizeof(path), BPF_PATH_FORMAT, i) == -1)
-			return -1;
-
-		fd = open(path, O_RDWR);
-		if (fd != -1)
-			return fd;
-		if (errno == EBUSY)
-			continue;
-		break;
-	}
-	return -1;
 }
 
 int
