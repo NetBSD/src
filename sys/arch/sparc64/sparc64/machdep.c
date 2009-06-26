@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.242 2009/05/21 08:13:43 jnemeth Exp $ */
+/*	$NetBSD: machdep.c,v 1.243 2009/06/26 23:40:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2009/05/21 08:13:43 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2009/06/26 23:40:27 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -560,14 +560,31 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 
 struct pcb dumppcb;
 
+static void
+maybe_dump(int howto)
+{
+	int s;
+
+	/* Disable interrupts. */
+	s = splhigh();
+
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		dumpsys();
+
+	splx(s);
+}
+
 void
 cpu_reboot(int howto, char *user_boot_string)
 {
 	static bool syncdone = false;
 	int i;
 	static char str[128];
+	struct lwp *l;
 
-	/* If system is cold, just halt. */
+	l = (curlwp == NULL) ? &lwp0 : curlwp;
+
 	if (cold) {
 		howto |= RB_HALT;
 		goto haltsys;
@@ -577,34 +594,47 @@ cpu_reboot(int howto, char *user_boot_string)
 	fb_unblank();
 #endif
 	boothowto = howto;
+
+	/* If rebooting and a dump is requested, do it.
+	 *
+	 * XXX used to dump after vfs_shutdown() and before
+	 * detaching devices / shutdown hooks / pmf_system_shutdown().
+	 */
+	maybe_dump(howto);
+
 	if ((howto & RB_NOSYNC) == 0 && !syncdone) {
 		extern struct lwp lwp0;
 
-		/* XXX protect against curlwp->p_stats.foo refs in sync() */
-		if (curlwp == NULL)
-			curlwp = &lwp0;
+		if (!syncdone) {
 		syncdone = true;
 		vfs_shutdown();
+			/* XXX used to force unmount as well, here */
+			vfs_sync_all(l);
+			/*
+			 * If we've been adjusting the clock, the todr
+			 * will be out of synch; adjust it now.
+			 *
+			 * resettodr will only do this only if inittodr()
+			 * has already been called.
+			 *
+			 * XXX used to do this after unmounting all
+			 * filesystems with vfs_shutdown().
+			 */
+			resettodr();
+		}
 
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 * resettodr will only do this only if inittodr()
-		 * has already been called.
-		 */
-		resettodr();
-	}
-	(void) splhigh();		/* ??? */
-
-	/* If rebooting and a dump is requested, do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
+		while (vfs_unmountall1(l, false, false) ||
+		       config_detach_all(boothowto) ||
+		       vfs_unmount_forceone(l))
+			;	/* do nothing */
+	} else
+		suspendsched();
 
 	pmf_system_shutdown(boothowto);
+
+	splhigh();
+
+haltsys:
 
 #ifdef MULTIPROCESSOR
 	/* Stop all secondary cpus */
