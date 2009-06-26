@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.4 2009/06/26 09:00:49 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.5 2009/06/26 17:38:32 christos Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
@@ -49,6 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <paths.h>
 #include <sysexits.h>
 #include <unistd.h>
 
@@ -60,62 +61,53 @@
 #define DESTADDR_COUNT 16
 #endif
 
-__dead void usage(void);
+static __dead void usage(void);
+static int wake(int, const char *);
+static int bind_if_to_bpf(char const *, int);
+static int get_ether(char const *, struct ether_addr *);
+static int send_wakeup(int, struct ether_addr const *);
 
-int wake(const char *iface, const char *host);
-int bind_if_to_bpf(char const *ifname, int bpf);
-int get_ether(char const *text, struct ether_addr *addr);
-int send_wakeup(int bpf, struct ether_addr const *addr);
-
-void
+static void
 usage(void)
 {
-	extern char *__progname;
-
-	(void)fprintf(stderr, "usage: %s interface lladdr\n", __progname);
+	(void)fprintf(stderr, "Usage: %s interface lladdr\n", getprogname());
 	exit(0);
 }
 
-int
-wake(const char *iface, const char *host)
+static int
+wake(int bpf, const char *host)
 {
-	int res, bpf;
 	struct ether_addr macaddr;
 
-	bpf = open(_PATH_BPF, O_RDWR);
-	if (bpf == -1) {
-		printf("no bpf\n");
+	if (get_ether(host, &macaddr) == -1)
 		return -1;
-	}
-	if (bind_if_to_bpf(iface, bpf) == -1 ||
-	    get_ether(host, &macaddr) == -1) {
-		(void)close(bpf);
-		return -1;
-	}
-	res = send_wakeup(bpf, &macaddr);
-	(void)close(bpf);
-	return res;
+
+	return send_wakeup(bpf, &macaddr);
 }
 
-int
+static int
 bind_if_to_bpf(char const *ifname, int bpf)
 {
 	struct ifreq ifr;
 	u_int dlt;
 
 	if (strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)) >=
-	    sizeof(ifr.ifr_name))
+	    sizeof(ifr.ifr_name)) {
+		errno = ENAMETOOLONG;
 		return -1;
+	}
 	if (ioctl(bpf, BIOCSETIF, &ifr) == -1)
 		return -1;
 	if (ioctl(bpf, BIOCGDLT, &dlt) == -1)
 		return -1;
-	if (dlt != DLT_EN10MB)
+	if (dlt != DLT_EN10MB) {
+		errno = EOPNOTSUPP;
 		return -1;
+	}
 	return 0;
 }
 
-int
+static int
 get_ether(char const *text, struct ether_addr *addr)
 {
 	struct ether_addr *paddr;
@@ -130,7 +122,7 @@ get_ether(char const *text, struct ether_addr *addr)
 	return 0;
 }
 
-int
+static int
 send_wakeup(int bpf, struct ether_addr const *addr)
 {
 	struct {
@@ -147,8 +139,8 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	(void)memset(pkt.data, 0xff, SYNC_LEN);
 	for (p = pkt.data + SYNC_LEN, i = 0; i < DESTADDR_COUNT;
 	    p += ETHER_ADDR_LEN, i++)
-		memcpy(p, addr->ether_addr_octet, ETHER_ADDR_LEN);
-	p = (u_char *)&pkt;
+		(void)memcpy(p, addr->ether_addr_octet, ETHER_ADDR_LEN);
+	p = (u_char *)(void *)&pkt;
 	len = sizeof(pkt);
 	bw = 0;
 	while (len) {
@@ -163,14 +155,20 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 int
 main(int argc, char *argv[])
 {
-	int n;
+	int bpf, n;
 
 	if (argc < 3)
 		usage();
 
+	if ((bpf = open(_PATH_BPF, O_RDWR)) == -1)
+		err(1, "Cannot open bpf interface");
+
+	if (bind_if_to_bpf(argv[1], bpf) == -1)
+		err(1, "Cannot bind to interface `%s'", argv[1]);
+
 	for (n = 2; n < argc; n++)
-		if (wake(argv[1], argv[n]))
-			warnx("error sending Wake on LAN frame over %s to %s",
+		if (wake(bpf, argv[n]))
+			warn("Cannot send Wake on LAN frame over `%s' to `%s'",
 			    argv[1], argv[n]);
 	return 0;
 }
