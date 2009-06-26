@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.381 2009/06/23 23:04:11 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.382 2009/06/26 18:53:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.381 2009/06/23 23:04:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.382 2009/06/26 18:53:07 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -166,6 +166,9 @@ static kmutex_t	vrele_lock;
 static kcondvar_t vrele_cv;
 static lwp_t *vrele_lwp;
 
+static uint64_t mountgen = 0;
+static kmutex_t mountgen_lock;
+
 kmutex_t mountlist_lock;
 kmutex_t mntid_lock;
 kmutex_t mntvnode_lock;
@@ -189,6 +192,7 @@ static void insmntque(vnode_t *, struct mount *);
 static int getdevvp(dev_t, vnode_t **, enum vtype);
 static vnode_t *getcleanvnode(void);
 void vpanic(vnode_t *, const char *);
+static void vfs_shutdown1(struct lwp *);
 
 #ifdef DEBUG 
 void printlockedvnodes(void);
@@ -229,6 +233,7 @@ void
 vntblinit(void)
 {
 
+	mutex_init(&mountgen_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mountlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -488,6 +493,10 @@ vfs_mountalloc(struct vfsops *vfsops, struct vnode *vp)
 	KASSERT(error == 0);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
+
+	mutex_enter(&mountgen_lock);
+	mp->mnt_gen = mountgen++;
+	mutex_exit(&mountgen_lock);
 
 	return mp;
 }
@@ -2264,25 +2273,71 @@ vfs_unmountall(struct lwp *l)
 	return vfs_unmountall1(l, true, true);
 }
 
+static void
+vfs_unmount_print(struct mount *mp, const char *pfx)
+{
+	printf("%sunmounted %s on %s type %s\n", pfx,
+	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname,
+	    mp->mnt_stat.f_fstypename);
+}
+
+bool
+vfs_unmount_forceone(struct lwp *l)
+{
+	struct mount *mp, *nmp = NULL;
+	int error;
+
+	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
+		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen)
+			nmp = mp;
+	}
+
+	if (nmp == NULL)
+		return false;
+
+#ifdef DEBUG
+	printf("\nforcefully unmounting %s (%s)...",
+	    nmp->mnt_stat.f_mntonname, nmp->mnt_stat.f_mntfromname);
+#endif
+	atomic_inc_uint(&nmp->mnt_refcnt);
+	if ((error = dounmount(nmp, MNT_FORCE, l)) == 0) {
+		vfs_unmount_print(nmp, "forcefully ");
+		return true;
+	} else
+		atomic_dec_uint(&nmp->mnt_refcnt);
+
+#ifdef DEBUG
+	printf("forceful unmount of %s failed with error %d\n",
+	    nmp->mnt_stat.f_mntonname, error);
+#endif
+
+	return false;
+}
+
 bool
 vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 {
 	struct mount *mp, *nmp;
-	bool any_error, progress;
+	bool any_error = false, progress = false;
 	int error;
 
-	for (any_error = false, mp = CIRCLEQ_LAST(&mountlist);
-	     !CIRCLEQ_EMPTY(&mountlist);
+	for (mp = CIRCLEQ_LAST(&mountlist);
+	     mp != (void *)&mountlist;
 	     mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
 #ifdef DEBUG
-		printf("\nunmounting %s (%s)...",
-		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
+		printf("\nunmounting %p %s (%s)...",
+		    (void *)mp, mp->mnt_stat.f_mntonname,
+		    mp->mnt_stat.f_mntfromname);
 #endif
 		atomic_inc_uint(&mp->mnt_refcnt);
-		if ((error = dounmount(mp, force ? MNT_FORCE : 0, l)) == 0)
+		if ((error = dounmount(mp, force ? MNT_FORCE : 0, l)) == 0) {
+			vfs_unmount_print(mp, "");
 			progress = true;
-		else {
+		} else {
+#if 1
+			atomic_dec_uint(&mp->mnt_refcnt);
+#endif
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
@@ -2308,6 +2363,12 @@ vfs_shutdown(void)
 	/* XXX we're certainly not running in lwp0's context! */
 	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
+	vfs_shutdown1(l);
+}
+
+void
+vfs_sync_all(struct lwp *l)
+{
 	printf("syncing disks... ");
 
 	/* remove user processes from run queue */
@@ -2328,6 +2389,13 @@ vfs_shutdown(void)
 		return;
 	} else
 		printf("done\n");
+}
+
+static void
+vfs_shutdown1(struct lwp *l)
+{
+
+	vfs_sync_all(l);
 
 	/*
 	 * If we've panic'd, don't make the situation potentially
