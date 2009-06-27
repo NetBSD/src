@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: dm_table.c,v 1.3 2009/06/27 16:10:25 jakllsch Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ dm_table_size(dm_table_head_t *head)
 
 	dm_table_unbusy(head);
 	
-	return length / DEV_BSIZE;
+	return length;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.7 2009/06/05 21:52:31 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.8 2009/06/27 16:10:25 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -391,6 +391,14 @@ dmstrategy(struct buf *bp)
 		return;
 	} 
 
+	if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+	    dm_table_size(&dmv->table_head)) <= 0) {
+		dm_dev_unbusy(dmv);
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return;
+	}
+
 	/* FIXME: have to be called with IPL_BIO*/
 	disk_busy(dmv->diskp);
 	
@@ -443,7 +451,7 @@ dmstrategy(struct buf *bp)
 
 			table_en->target->strategy(table_en, nestbuf);
 		}
-	}	
+	}
 
 	if (issued_len < buf_len)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
