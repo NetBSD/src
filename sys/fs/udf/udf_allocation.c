@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.26 2009/06/24 17:09:13 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.27 2009/06/27 13:42:06 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.26 2009/06/24 17:09:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.27 2009/06/27 13:42:06 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2616,7 +2616,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 	uint64_t foffset, end_foffset;
 	uint64_t orig_inflen, orig_lbrec, new_inflen, new_lbrec;
 	uint32_t lb_size, dscr_size, crclen;
-	uint32_t slot_offset;
+	uint32_t slot_offset, slot_offset_lb;
 	uint32_t len, flags, max_len;
 	uint32_t num_lb, lb_num;
 	uint32_t max_l_ad, l_ad, l_ea;
@@ -2762,9 +2762,13 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		vpart_num = udf_rw16(s_ad.loc.part_num);
 
 		if (flags == UDF_EXT_ALLOCATED) {
-			/* note: round DOWN on num_lb */
-			lb_num += (slot_offset + lb_size -1) / lb_size;
-			num_lb  = (len - slot_offset) / lb_size;
+			/* calculate extent in lb, and offset in lb */
+			num_lb = (len + lb_size -1) / lb_size;
+			slot_offset_lb = (slot_offset + lb_size -1) / lb_size;
+
+			/* adjust our slot */
+			lb_num += slot_offset_lb;
+			num_lb -= slot_offset_lb;
 
 			udf_free_allocated_space(ump, lb_num, vpart_num, num_lb);
 		}
