@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.49 2009/06/09 04:35:25 mrg Exp $
+# $NetBSD: md.amd64,v 1.50 2009/06/28 05:37:22 agc Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -471,10 +471,6 @@
 ./usr/lib/i386/libisccfg.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libisccfg_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libisccfg_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libiscsi.a			comp-c-lib		compat
-./usr/lib/i386/libiscsi.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/libiscsi_p.a			comp-c-proflib		compat,profile
-./usr/lib/i386/libiscsi_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libkadm5clnt.so			comp-sys-shlib		compat,pic,kerberos
 ./usr/lib/i386/libkadm5clnt_p.a			comp-c-proflib		compat,profile,kerberos

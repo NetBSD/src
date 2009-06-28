@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.55 2009/06/25 20:54:16 agc Exp $
+# $NetBSD: md.amd64,v 1.56 2009/06/28 05:37:22 agc Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -107,8 +107,6 @@
 ./usr/lib/i386/libisccc.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libiscsi.so.2			base-compat-shlib	compat,pic
-./usr/lib/i386/libiscsi.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libkadm5clnt.so.11		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libkadm5clnt.so.11.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libkadm5srv.so.12		base-compat-shlib	compat,pic,kerberos
