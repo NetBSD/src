@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.5 2008/01/28 03:23:29 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.6 2009/06/28 21:12:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: execute.c,v 1.5 2008/01/28 03:23:29 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.6 2009/06/28 21:12:35 dholland Exp $");
 #endif /* not lint */
 
 # include	<stdlib.h>
@@ -366,7 +366,7 @@ fire(pp, req_index)
 		outstr(pp, "   ", 3);
 	}
 	pp->p_ammo -= shot_req[req_index];
-	(void) sprintf(Buf, "%3d", pp->p_ammo);
+	(void) snprintf(Buf, sizeof(Buf), "%3d", pp->p_ammo);
 	cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 	outstr(pp, Buf, 3);
 
@@ -415,7 +415,7 @@ fire_slime(pp, req_index)
 		outstr(pp, "   ", 3);
 	}
 	pp->p_ammo -= slime_req[req_index];
-	(void) sprintf(Buf, "%3d", pp->p_ammo);
+	(void) snprintf(Buf, sizeof(Buf), "%3d", pp->p_ammo);
 	cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 	outstr(pp, Buf, 3);
 
@@ -536,7 +536,7 @@ cloak(pp)
 		return;
 	}
 # endif
-	(void) sprintf(Buf, "%3d", --pp->p_ammo);
+	(void) snprintf(Buf, sizeof(Buf), "%3d", --pp->p_ammo);
 	cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 	outstr(pp, Buf, 3);
 
@@ -560,7 +560,7 @@ scan(pp)
 		message(pp, "No more charges");
 		return;
 	}
-	(void) sprintf(Buf, "%3d", --pp->p_ammo);
+	(void) snprintf(Buf, sizeof(Buf), "%3d", --pp->p_ammo);
 	cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 	outstr(pp, Buf, 3);
 
@@ -600,7 +600,7 @@ pickup(pp, y, x, prob, obj)
 			TRUE, pp->p_face);
 	else {
 		pp->p_ammo += req;
-		(void) sprintf(Buf, "%3d", pp->p_ammo);
+		(void) snprintf(Buf, sizeof(Buf), "%3d", pp->p_ammo);
 		cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 		outstr(pp, Buf, 3);
 	}
