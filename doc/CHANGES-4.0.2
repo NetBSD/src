@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.38 2009/06/21 21:29:04 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.39 2009/06/28 19:51:33 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -644,4 +644,10 @@ dist/tcpdump/print-rsvp.c			patch
 
 	Fix CAN-2005-1278, CAN-2005-1279 and CAN-2005-1280.
 	[tonnerre, ticket #1329]
+
+games/hunt/huntd/answer.c			1.10
+
+	Fix possible remote DoS of a running hunt game, and prevent
+	a possible theoretical attack involving >= 1 billion ammo.
+	[dholland, ticket #1330]
 
