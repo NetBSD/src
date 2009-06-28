@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.26 2009/06/21 11:44:30 bouyer Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.27 2009/06/28 19:54:18 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -459,4 +459,10 @@ external/bsd/pkg_install/dist/lib/version.h:		1.1.1.16
 
 	Merge pkg_install-20090610 from HEAD
 	[joerg, ticket #815]
+
+games/hunt/huntd/answer.c			1.10
+
+	Fix possible remote DoS of a running hunt game, and prevent
+	a possible theoretical attack involving >= 1 billion ammo.
+	[dholland, ticket #834]
 
