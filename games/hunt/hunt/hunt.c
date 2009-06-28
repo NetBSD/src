@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.27 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: hunt.c,v 1.28 2009/06/28 21:12:10 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.27 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.28 2009/06/28 21:12:10 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -610,7 +610,8 @@ find_driver(do_startup)
 # endif
 			hp = gethostbyaddr((char *) &hosts[i].sin_addr,
 					sizeof hosts[i].sin_addr, AF_INET);
-			(void) sprintf(buf, "%8c    %.64s", 'a' + i,
+			(void) snprintf(buf, sizeof(buf),
+				"%8c    %.64s", 'a' + i,
 				hp != NULL ? hp->h_name
 				: inet_ntoa(hosts->sin_addr));
 			put_str(buf);

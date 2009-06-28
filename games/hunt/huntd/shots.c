@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.6 2006/03/17 23:34:37 abs Exp $	*/
+/*	$NetBSD: shots.c,v 1.7 2009/06/28 21:12:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.6 2006/03/17 23:34:37 abs Exp $");
+__RCSID("$NetBSD: shots.c,v 1.7 2009/06/28 21:12:35 dholland Exp $");
 #endif /* not lint */
 
 # include	<err.h>
@@ -316,7 +316,8 @@ move_normal_shot(bp)
 				message(pp, "Absorbed charge (good shield!)");
 				pp->p_ident->i_absorbed += bp->b_charge;
 				free((char *) bp);
-				(void) sprintf(Buf, "%3d", pp->p_ammo);
+				(void) snprintf(Buf, sizeof(Buf),
+						"%3d", pp->p_ammo);
 				cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 				outstr(pp, Buf, 3);
 				return FALSE;
@@ -497,7 +498,7 @@ drone_move:
 			pp->p_ammo += bp->b_charge;
 			message(pp, "**** Absorbed drone ****");
 			free((char *) bp);
-			(void) sprintf(Buf, "%3d", pp->p_ammo);
+			(void) snprintf(Buf, sizeof(buf), "%3d", pp->p_ammo);
 			cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 			outstr(pp, Buf, 3);
 			return FALSE;
