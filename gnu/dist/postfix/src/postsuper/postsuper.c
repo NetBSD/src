@@ -974,11 +974,17 @@ static void interrupted(int sig)
     /*
      * This commands requires root privileges. We therefore do not worry
      * about hostile signals, and report problems via msg_warn().
+     * 
+     * We use the in-kernel SIGINT handler address as an atomic variable to
+     * prevent nested interrupted() calls. For this reason, main() must
+     * configure interrupted() as SIGINT handler before other signal handlers
+     * are allowed to invoke interrupted(). See also similar code in
+     * postdrop.
      */
-    if (signal(SIGHUP, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGINT, SIG_IGN);
+    if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGTERM, SIG_IGN);
+	(void) signal(SIGHUP, SIG_IGN);
 	if (inode_mismatch > 0 || inode_fixed > 0 || position_mismatch > 0)
 	    msg_warn("OPERATION INCOMPLETE -- RERUN COMMAND TO FIX THE QUEUE FIRST");
 	if (sig)
@@ -1175,11 +1181,20 @@ int     main(int argc, char **argv)
      * 
      * Set up signal handlers after permanently dropping super-user privileges,
      * so that signal handlers will always run with the correct privileges.
+     * 
+     * XXX Don't enable SIGHUP or SIGTERM if it was ignored by the parent.
+     * 
+     * interrupted() uses the in-kernel SIGINT handler address as an atomic
+     * variable to prevent nested interrupted() calls. For this reason, the
+     * SIGINT handler must be configured before other signal handlers are
+     * allowed to invoke interrupted(). See also similar code in postdrop.
      */
-    signal(SIGHUP, interrupted);
     signal(SIGINT, interrupted);
     signal(SIGQUIT, interrupted);
-    signal(SIGTERM, interrupted);
+    if (signal(SIGTERM, SIG_IGN) == SIG_DFL)
+	signal(SIGTERM, interrupted);
+    if (signal(SIGHUP, SIG_IGN) == SIG_DFL)
+	signal(SIGHUP, interrupted);
     msg_cleanup(fatal_warning);
 
     /*

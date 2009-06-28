@@ -1792,7 +1792,7 @@ is decremented by 1 after each failed pseudo-cohort.  </dd>
 <p> A pseudo-cohort is the number of deliveries equal to a destination's
 delivery concurrency. </p>
 
-<p> Use <a href="postconf.5.html#transport_destination_concurrency_positive_feedback"><i>transport</i>_destination_concurrency_negative_feedback</a>
+<p> Use <a href="postconf.5.html#transport_destination_concurrency_negative_feedback"><i>transport</i>_destination_concurrency_negative_feedback</a>
 to specify a transport-specific override, where <i>transport</i>
 is the <a href="master.5.html">master.cf</a>
 name of the message delivery transport. </p>
@@ -3718,7 +3718,7 @@ client, for example:
 <blockquote>
 <pre>
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    mylmtp ... lmtp -o <a href="postconf.5.html#lmtp_lhloname">lmtp_lhlo_name</a>=foo.bar.com
+    mylmtp ... lmtp -o <a href="postconf.5.html#lmtp_lhlo_name">lmtp_lhlo_name</a>=foo.bar.com
 </pre>
 </blockquote>
 

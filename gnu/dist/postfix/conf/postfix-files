@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.11 2008/06/22 14:38:41 christos Exp $
+#	$NetBSD: postfix-files,v 1.11.4.1 2009/06/28 01:57:52 snj Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -45,7 +45,7 @@
 # permissions, so that running "make install" fixes any glitches.
 #
 $config_directory:d:root:-:755:u
-$data_directory:d:$mail_owner:-:700:u
+$data_directory:d:$mail_owner:-:700:uc
 $daemon_directory:d:root:-:755:u
 $queue_directory:d:root:-:755:uc
 $sample_directory:d:root:-:755:o

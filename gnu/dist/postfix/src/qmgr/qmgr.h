@@ -436,6 +436,7 @@ struct QMGR_PEER {
 
 extern QMGR_ENTRY *qmgr_job_entry_select(QMGR_TRANSPORT *);
 extern QMGR_PEER *qmgr_peer_select(QMGR_JOB *);
+extern void qmgr_job_blocker_update(QMGR_QUEUE *);
 
 extern QMGR_JOB *qmgr_job_obtain(QMGR_MESSAGE *, QMGR_TRANSPORT *);
 extern void qmgr_job_free(QMGR_JOB *);

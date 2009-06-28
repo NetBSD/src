@@ -564,11 +564,23 @@ int     smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
     /*
      * Log a warning in case the proxy does not send the expected response.
      * Silently accept any response when the client expressed no expectation.
+     * 
+     * Don't pass through misleading 2xx replies. it confuses naive users and
+     * SMTP clients, and creates support problems.
      */
     if (expect != SMTPD_PROX_WANT_ANY && expect != *STR(state->proxy_buffer)) {
 	va_start(ap, fmt);
 	smtpd_proxy_cmd_error(state, fmt, ap);
 	va_end(ap);
+	if (*STR(state->proxy_buffer) == SMTPD_PROX_WANT_OK
+	    || *STR(state->proxy_buffer) == SMTPD_PROX_WANT_MORE) {
+	    state->error_mask |= MAIL_ERROR_SOFTWARE;
+	    state->err |= CLEANUP_STAT_PROXY;
+	    detail = cleanup_stat_detail(CLEANUP_STAT_PROXY);
+	    vstring_sprintf(state->proxy_buffer,
+			    "%d %s Error: %s",
+			    detail->smtp, detail->dsn, detail->text);
+	}
 	return (-1);
     } else {
 	return (0);

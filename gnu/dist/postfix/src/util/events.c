@@ -354,6 +354,7 @@ static int event_pollfd;		/* handle to file descriptor set */
 
 #define EVENT_REG_INIT_HANDLE(er, n) do { \
 	er = event_pollfd = open("/dev/poll", O_RDWR); \
+	if (event_pollfd >= 0) close_on_exec(event_pollfd, CLOSE_ON_EXEC); \
     } while (0)
 #define EVENT_REG_INIT_TEXT	"open /dev/poll"
 
@@ -425,6 +426,7 @@ static int event_epollfd;		/* epoll handle */
 
 #define EVENT_REG_INIT_HANDLE(er, n) do { \
 	er = event_epollfd = epoll_create(n); \
+	if (event_epollfd >= 0) close_on_exec(event_epollfd, CLOSE_ON_EXEC); \
     } while (0)
 #define EVENT_REG_INIT_TEXT	"epoll_create"
 

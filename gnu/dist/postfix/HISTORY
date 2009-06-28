@@ -13248,7 +13248,7 @@ Apologies for any names omitted.
 	cleanup/cleanup_final.c, cleanup/cleanup_bounce.c,
 	cleanup/cleanup_api.c.
 
-20050217
+20070217
 
 	Streamline the compile time selection of event handling
 	styles, replacing multiple on/off macros by just one
@@ -14430,3 +14430,87 @@ Apologies for any names omitted.
 	symlink itself is owned by root).  This change will break
 	legitimate configurations that deliver mail to a symbolic
 	link in a directory with less restrictive permissions.
+
+20080826
+
+	Bugfix (introduced Postfix 2.4): epoll file descriptor leak.
+	With Postfix >= 2.4 on Linux >= 2.6, Postfix has an epoll
+	file descriptor leak when it executes non-Postfix commands
+	in, for example, user-controlled $HOME/.forward files.  A
+	local user can access a leaked epoll file descriptor to
+	implement a denial of service attack on Postfix. Data
+	confidentiality and integrity are not affected.  File:
+	util/events.c.
+
+20081022
+
+	Documentation: removed inapplicable daemon_timeout reference
+	from qmgr(8), oqmgr(8), pickup(8). These daemons need to
+	use a much shorter watchdog timer.
+
+20081108
+
+	Bugfix (introduced Postfix 2.5): the Postfix SMTP server
+	did not ask for a client certificate with "smtpd_tls_req_ccert
+	= yes". Reported by Rob Foehl. File: smtpd/smtpd.c.
+
+20081126
+
+	Documentation: pcre_table(5) incorrectly claimed that the
+	'x' flag supports #comment after text. File: proto/pcre_table.
+
+20081203
+
+	Cleanup: adjust the VSTREAM buffer strategy when reusing
+	an SMTP connection with a large TCP MSS value. File:
+	smtp/smtp_reuse.c.
+
+20081222
+
+	Documentation: log the "*" pattern as the last transport
+	map lookup. File: proto/transport.
+
+20090122
+
+	Bugfix: the data_directory was not automatically created!
+	File: conf/postfix-files.
+
+20090304
+
+	Cleanup: skip over suspended or throttled queues while
+	looking for delivery requests. File: *qmgr/qmgr_transport.c.
+
+20090305
+
+	Bugfix: in the "new queue manager", the _destination_rate_delay
+	code needed to postpone the job scheduler updates after
+	delivery completion, otherwise the scheduler could loop on
+	blocked jobs.  Victor & Wietse.  File: qmgr/qmgr_entry.c,
+	qmgr/qmgr_queue.c, qmgr/qmgr_job.c.
+
+	Cleanup: report a "queue file write error", instead of
+	passing though bogus 2xx replies from proxy filters to SMTP
+	clients.  File: smtpd/smtpd_proxy.c.
+
+20090310
+
+	Bugfix: Postfix used mumble_concurrency_failed_cohort_limit
+	instead of mumble_destination_concurrency_failed_cohort_limit
+	as documented. File: global/mail_params.h.
+
+20090419
+
+	Bugfix: don't re-enable SIGHUP if it is ignored in the
+	parent. This may cause random "Postfix integrity check
+	failed" errors at boot time (POSIX SIGHUP death), causing
+	Postfix not to start. We duplicate code from postdrop and
+	thus avoid past mistakes.  File: postsuper/postsuper.c.
+
+	Robustness: don't re-enable SIGTERM if it is ignored in the
+	parent. Files: postsuper/postsuper.c, postdrop/postdrop.c.
+
+20090428
+
+	Bugfix: don't disable MIME parsing with smtp_header_checks,
+	smtp_mime_header_checks, smtp_nested_header_checks or with
+	smtp_body_checks. Bug reported by Victor. File: smtp/smtp_proto.c.
