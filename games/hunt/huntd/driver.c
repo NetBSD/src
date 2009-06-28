@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.13 2008/01/28 03:23:29 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.14 2009/06/28 21:12:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.13 2008/01/28 03:23:29 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.14 2009/06/28 21:12:35 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -490,7 +490,7 @@ checkdam(ouch, gotcha, credit, amt, this_shot_type)
 # endif
 	ouch->p_damage += amt;
 	if (ouch->p_damage <= ouch->p_damcap) {
-		(void) sprintf(Buf, "%2d", ouch->p_damage);
+		(void) snprintf(Buf, sizeof(Buf), "%2d", ouch->p_damage);
 		cgoto(ouch, STAT_DAM_ROW, STAT_VALUE_COL);
 		outstr(ouch, Buf, 2);
 		return;
@@ -541,13 +541,15 @@ checkdam(ouch, gotcha, credit, amt, this_shot_type)
 # endif
 	}
 	if (credit == NULL) {
-		(void) sprintf(ouch->p_death, "| %s by %s |", cp,
+		(void) snprintf(ouch->p_death, sizeof(ouch->p_death),
+			"| %s by %s |", cp,
 			(this_shot_type == MINE || this_shot_type == GMINE) ?
 			"a mine" : "act of God");
 		return;
 	}
 
-	(void) sprintf(ouch->p_death, "| %s by %s |", cp, credit->i_name);
+	(void) snprintf(ouch->p_death, sizeof(ouch->p_death),
+		"| %s by %s |", cp, credit->i_name);
 
 	if (ouch == gotcha) {		/* No use killing yourself */
 		credit->i_kills--;
@@ -572,13 +574,15 @@ checkdam(ouch, gotcha, credit, amt, this_shot_type)
 	gotcha->p_damage -= STABDAM;
 	if (gotcha->p_damage < 0)
 		gotcha->p_damage = 0;
-	(void) sprintf(Buf, "%2d/%2d", gotcha->p_damage, gotcha->p_damcap);
+	(void) snprintf(Buf, sizeof(Buf), "%2d/%2d", gotcha->p_damage,
+			gotcha->p_damcap);
 	cgoto(gotcha, STAT_DAM_ROW, STAT_VALUE_COL);
 	outstr(gotcha, Buf, 5);
-	(void) sprintf(Buf, "%3d", (gotcha->p_damcap - MAXDAM) / 2);
+	(void) snprintf(Buf, sizeof(Buf), "%3d",
+			(gotcha->p_damcap - MAXDAM) / 2);
 	cgoto(gotcha, STAT_KILL_ROW, STAT_VALUE_COL);
 	outstr(gotcha, Buf, 3);
-	(void) sprintf(Buf, "%5.2f", gotcha->p_ident->i_score);
+	(void) snprintf(Buf, sizeof(Buf), "%5.2f", gotcha->p_ident->i_score);
 	for (ouch = Player; ouch < End_player; ouch++) {
 		cgoto(ouch, STAT_PLAY_ROW + 1 + (gotcha - Player),
 			STAT_NAME_COL);
@@ -671,7 +675,7 @@ zap(pp, was_player, i)
 		if (x > 0) {
 			(void) add_shot(len, pp->p_y, pp->p_x, pp->p_face, x,
 				(PLAYER *) NULL, TRUE, SPACE);
-			(void) sprintf(Buf, "%s detonated.",
+			(void) snprintf(Buf, sizeof(Buf), "%s detonated.",
 				pp->p_ident->i_name);
 			for (np = Player; np < End_player; np++)
 				message(np, Buf);
@@ -747,7 +751,7 @@ zap(pp, was_player, i)
 			memcpy(pp, End_player, sizeof (PLAYER));
 			fdset[i] = fdset[End_player - Player + 3];
 			fdset[End_player - Player + 3].fd = -1;
-			(void) sprintf(Buf, "%5.2f%c%-10.10s %c",
+			(void) snprintf(Buf, sizeof(Buf), "%5.2f%c%-10.10s %c",
 				pp->p_ident->i_score, stat_char(pp),
 				pp->p_ident->i_name, pp->p_ident->i_team);
 			n = STAT_PLAY_ROW + 1 + (pp - Player);
@@ -786,7 +790,8 @@ zap(pp, was_player, i)
 			memcpy(pp, End_monitor, sizeof (PLAYER));
 			fdset[i] = fdset[End_monitor - Monitor + MAXPL + 3];
 			fdset[End_monitor - Monitor + MAXPL + 3].fd = -1;
-			(void) sprintf(Buf, "%5.5s %-10.10s %c", " ",
+			(void) snprintf(Buf, sizeof(Buf), "%5.5s %-10.10s %c",
+				" ",
 				pp->p_ident->i_name, pp->p_ident->i_team);
 			n = STAT_MON_ROW + 1 + (pp - Player);
 			for (np = Player; np < End_player; np++) {

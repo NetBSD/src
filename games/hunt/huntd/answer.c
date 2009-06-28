@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.10 2009/06/28 18:59:37 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.11 2009/06/28 21:12:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.10 2009/06/28 18:59:37 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.11 2009/06/28 21:12:35 dholland Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -131,9 +131,10 @@ answer()
 		int	n;
 
 		if (team == ' ')
-			(void) sprintf(buf, "%s: ", name);
+			(void) snprintf(buf, sizeof(buf), "%s: ", name);
 		else
-			(void) sprintf(buf, "%s[%c]: ", name, team);
+			(void) snprintf(buf, sizeof(buf), "%s[%c]: ", name,
+					team);
 		n = strlen(buf);
 		for (pp = Player; pp < End_player; pp++) {
 			cgoto(pp, HEIGHT, 0);
@@ -213,7 +214,8 @@ stmonitor(pp)
 
 	drawmaze(pp);
 
-	(void) sprintf(Buf, "%5.5s%c%-10.10s %c", " ", stat_char(pp),
+	(void) snprintf(Buf, sizeof(Buf), "%5.5s%c%-10.10s %c", " ",
+		stat_char(pp),
 		pp->p_ident->i_name, pp->p_ident->i_team);
 	line = STAT_MON_ROW + 1 + (pp - Monitor);
 	for (npp = Player; npp < End_player; npp++) {
@@ -317,7 +319,8 @@ stplayer(newpp, enter_status)
 		check(pp, y, x);
 # endif
 
-	(void) sprintf(Buf, "%5.2f%c%-10.10s %c", newpp->p_ident->i_score,
+	(void) snprintf(Buf, sizeof(Buf), "%5.2f%c%-10.10s %c",
+		newpp->p_ident->i_score,
 		stat_char(newpp), newpp->p_ident->i_name,
 		newpp->p_ident->i_team);
 	y = STAT_PLAY_ROW + 1 + (newpp - Player);
@@ -329,7 +332,8 @@ stplayer(newpp, enter_status)
 			newpp->p_ammo += NSHOTS;
 			cgoto(pp, y, STAT_NAME_COL);
 			outstr(pp, Buf, STAT_NAME_LEN);
-			(void) sprintf(smallbuf, "%3d", pp->p_ammo);
+			(void) snprintf(smallbuf, sizeof(smallbuf),
+					"%3d", pp->p_ammo);
 			cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 			outstr(pp, smallbuf, 3);
 		}
