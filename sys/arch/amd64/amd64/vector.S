@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.29 2008/11/25 16:25:29 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.30 2009/06/28 15:18:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -452,8 +452,12 @@ IDTVEC(intr_lapic_tlb_mcast)
 0:
 	pushq	%rax
 	pushq	%rbx
-	pushq	%rcx
+	pushq	%rdi
+	pushq	%rsi
 	pushq	%rdx
+	pushq	%rcx
+	pushq	%r8
+	pushq	%r9
 	incq	CPUVAR(TLB_EVCNT)+EV_COUNT
 	/* Find out what needs to be invalidated and unlock the mailbox. */
 	movq	CPUVAR(PMAP_CPU),%rcx
@@ -489,8 +493,12 @@ IDTVEC(intr_lapic_tlb_mcast)
 	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
 3:
 	/* Restore state and return. */
-	popq	%rdx
+	popq	%r9
+	popq	%r8
 	popq	%rcx
+	popq	%rdx
+	popq	%rsi
+	popq	%rdi
 	popq	%rbx
 	popq	%rax
 	testq	$SEL_UPL, 8(%rsp)
@@ -499,9 +507,17 @@ IDTVEC(intr_lapic_tlb_mcast)
 4:
 	iretq
 5:
-	/* Invalidate all user pages. */
+	/*
+	 * Get the emap generation number.  Invalidate user TLB entries.
+	 * Perform emap update, pass the generation number.  Note that
+	 * caller-save registers might be modified (all saved in the
+	 * beginning).  Only %rbx value is used by 2b context.
+	 */
+	callq	_C_LABEL(uvm_emap_gen_return)
+	movq	%rax, %rdi
 	movq	%cr3, %rax
 	movq	%rax, %cr3
+	callq	_C_LABEL(uvm_emap_update)
 	jmp	2b
 
 /*
@@ -510,12 +526,16 @@ IDTVEC(intr_lapic_tlb_mcast)
 IDTVEC(intr_lapic_tlb_bcast)
 	/* Save state. */
 	pushq	%rax
-	pushq	%rbx
+	pushq	%rdi
+	pushq	%rsi
 	pushq	%rdx
+	pushq	%rcx
+	pushq	%r8
+	pushq	%r9
 	/* Find out what needs to be invalidated. */
 	movq	_C_LABEL(pmap_mbox)+MB_ADDR1, %rax
 	movq	_C_LABEL(pmap_mbox)+MB_ADDR2, %rdx
-	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rbx
+	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rdi
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
 	je,pn	3f
@@ -529,27 +549,44 @@ IDTVEC(intr_lapic_tlb_bcast)
 	/* Notify waiter of completion, restore state & return */
 	lock
 	incq	_C_LABEL(pmap_mbox)+MB_TAIL
+	popq	%r9
+	popq	%r8
+	popq	%rcx
 	popq	%rdx
-	popq	%rbx
+	popq	%rsi
+	popq	%rdi
 	popq	%rax
 	iretq
 3:
-	testq	%rbx, %rbx
+	testq	%rdi, %rdi
 	jz	4f
 	/*
-	 * If we have been asked to invalidate the entire TLB
-	 * we arrive here.
+	 * If we have been asked to invalidate the entire TLB we arrive here.
+	 * Get the emap generation before flush, and use it after for update.
+	 * Note that caller-save registers might be modified, though no
+	 * registers need to be preserved for 2b context.
 	 */
+	callq	_C_LABEL(uvm_emap_gen_return)
+	movq	%rax, %rdi
 	movq	%cr4, %rax
 	movq	%rax, %rdx
 	andq	$~CR4_PGE, %rdx
 	movq	%rdx, %cr4
 	movq	%rax, %cr4
+	callq	_C_LABEL(uvm_emap_update)
 	jmp	2b
 4:
-	/* Invalidate user TLB entries. */
+	/*
+	 * Get the emap generation number.  Invalidate user TLB entries.
+	 * Perform emap update, pass the generation number.  Note that
+	 * caller-save registers might be modified, though no registers
+	 * need to be preserved for 2b context.
+	 */
+	callq	_C_LABEL(uvm_emap_gen_return)
+	movq	%rax, %rdi
 	movq	%cr3, %rax
 	movq	%rax, %cr3
+	callq	_C_LABEL(uvm_emap_update)
 	jmp	2b
 
 #endif /* !XEN */

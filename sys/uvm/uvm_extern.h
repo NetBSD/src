@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.154 2009/03/30 16:36:36 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.155 2009/06/28 15:18:50 rmind Exp $	*/
 
 /*
  *
@@ -224,6 +224,11 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
  * Default number of pages to allocate on the stack
  */
 #define	UBC_MAX_PAGES	8
+
+/*
+ * Value representing inactive emap.
+ */
+#define	UVM_EMAP_INACTIVE	(0)
 
 /*
  * structures
@@ -566,6 +571,31 @@ void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 void			ubc_release(void *, int);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
 			    int, int);
+
+/* uvm_emap.c */
+void			uvm_emap_sysinit(void);
+#ifdef __HAVE_PMAP_EMAP
+void			uvm_emap_switch(lwp_t *);
+#else
+#define			uvm_emap_switch(l)
+#endif
+
+u_int			uvm_emap_gen_return(void);
+void			uvm_emap_update(u_int);
+
+vaddr_t			uvm_emap_alloc(vsize_t, bool);
+void			uvm_emap_free(vaddr_t, size_t);
+
+void			uvm_emap_enter(vaddr_t, struct vm_page **, u_int);
+void			uvm_emap_remove(vaddr_t, vsize_t);
+
+#ifdef __HAVE_PMAP_EMAP
+void			uvm_emap_consume(u_int);
+u_int			uvm_emap_produce(void);
+#else
+#define			uvm_emap_consume(x)
+#define			uvm_emap_produce()	UVM_EMAP_INACTIVE
+#endif
 
 /* uvm_fault.c */
 #define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)

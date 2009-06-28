@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.13 2009/03/29 10:51:53 ad Exp $
+#	$NetBSD: files.uvm,v 1.14 2009/06/28 15:18:50 rmind Exp $
 
 #
 # UVM options
@@ -17,6 +17,7 @@ file	uvm/uvm_aobj.c
 file	uvm/uvm_bio.c
 file	uvm/uvm_coredump.c		coredump
 file	uvm/uvm_device.c
+file	uvm/uvm_emap.c
 file	uvm/uvm_fault.c
 file	uvm/uvm_glue.c
 file	uvm/uvm_init.c
