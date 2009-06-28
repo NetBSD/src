@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.20 2009/05/12 21:08:23 ad Exp $	*/
+/*	$NetBSD: dinode.h,v 1.21 2009/06/28 09:26:18 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -43,6 +43,10 @@
  * SUCH DAMAGE.
  *
  *	@(#)dinode.h	8.9 (Berkeley) 3/29/95
+ */
+
+/*
+ * NOTE: COORDINATE ON-DISK FORMAT CHANGES WITH THE FREEBSD PROJECT.
  */
 
 #ifndef	_UFS_UFS_DINODE_H_
