@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.23 2008/08/30 10:54:27 christos Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.23.4.1 2009/06/28 01:57:54 snj Exp $	*/
 
 /*++
 /* NAME
@@ -4557,7 +4557,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 				    = var_smtpd_tls_dh512_param_file,
 				    protocols = enforce_tls ?
 				    var_smtpd_tls_mand_proto : "",
-				    ask_ccert = var_smtpd_tls_ask_ccert,
+				    ask_ccert = wantcert,
 				    fpt_dgst = var_smtpd_tls_fpt_dgst);
 	    else
 		msg_warn("No server certs available. TLS won't be enabled");

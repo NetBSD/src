@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.18 2008/08/30 10:54:26 christos Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.18.4.1 2009/06/28 01:57:53 snj Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -2901,12 +2901,12 @@ extern char *var_smtp_body_chks;
   * Scheduler concurrency feedback algorithms.
   */
 #define VAR_CONC_POS_FDBACK	"default_destination_concurrency_positive_feedback"
-#define _CONC_POS_FDBACK	"_concurrency_positive_feedback"
+#define _CONC_POS_FDBACK	"_destination_concurrency_positive_feedback"
 #define DEF_CONC_POS_FDBACK	"1"
 extern char *var_conc_pos_feedback;
 
 #define VAR_CONC_NEG_FDBACK	"default_destination_concurrency_negative_feedback"
-#define _CONC_NEG_FDBACK	"_concurrency_negative_feedback"
+#define _CONC_NEG_FDBACK	"_destination_concurrency_negative_feedback"
 #define DEF_CONC_NEG_FDBACK	"1"
 extern char *var_conc_neg_feedback;
 
@@ -2914,7 +2914,7 @@ extern char *var_conc_neg_feedback;
 #define CONC_FDBACK_NAME_SQRT_WIN "sqrt_concurrency"
 
 #define VAR_CONC_COHORT_LIM	"default_destination_concurrency_failed_cohort_limit"
-#define _CONC_COHORT_LIM	"_concurrency_failed_cohort_limit"
+#define _CONC_COHORT_LIM	"_destination_concurrency_failed_cohort_limit"
 #define DEF_CONC_COHORT_LIM	1
 extern int var_conc_cohort_limit;
 
