@@ -18,6 +18,9 @@
 /*
 /*	QMGR_ENTRY *qmgr_job_entry_select(transport)
 /*	QMGR_TRANSPORT *transport;
+/*
+/*	void	qmgr_job_blocker_update(queue)
+/*	QMGR_QUEUE *queue;
 /* DESCRIPTION
 /*	These routines add/delete/manipulate per-transport jobs.
 /*	Each job corresponds to a specific transport and message.
@@ -37,6 +40,11 @@
 /*	for delivery. The job preempting algorithm is also exercised.
 /*	If necessary, an attempt to read more recipients into core is made.
 /*	This can result in creation of more job, queue and entry structures.
+/*
+/*	qmgr_job_blocker_update() updates the status of blocked
+/*	jobs after a decrease in the queue's concurrency level,
+/*	after the queue is throttled, or after the queue is resumed
+/*	from suspension.
 /*
 /*	qmgr_job_move_limits() takes care of proper distribution of the
 /*	per-transport recipients limit among the per-transport jobs.
@@ -937,3 +945,36 @@ QMGR_ENTRY *qmgr_job_entry_select(QMGR_TRANSPORT *transport)
     transport->job_current = 0;
     return (0);
 }
+
+/* qmgr_job_blocker_update - update "blocked job" status */
+
+void     qmgr_job_blocker_update(QMGR_QUEUE *queue)
+{
+    QMGR_TRANSPORT *transport = queue->transport;
+
+    /*
+     * If the queue was blocking some of the jobs on the job list, check if
+     * the concurrency limit has lifted. If there are still some pending
+     * deliveries, give it a try and unmark all transport blockers at once.
+     * The qmgr_job_entry_select() will do the rest. In either case make sure
+     * the queue is not marked as a blocker anymore, with extra handling of
+     * queues which were declared dead.
+     * 
+     * Note that changing the blocker status also affects the candidate cache.
+     * Most of the cases would be automatically recognized by the current job
+     * change, but we play safe and reset the cache explicitly below.
+     * 
+     * Keeping the transport blocker tag odd is an easy way to make sure the tag
+     * never matches jobs that are not explicitly marked as blockers.
+     */
+    if (queue->blocker_tag == transport->blocker_tag) {
+	if (queue->window > queue->busy_refcount && queue->todo.next != 0) {
+	    transport->blocker_tag += 2;
+	    transport->job_current = transport->job_list.next;
+	    transport->candidate_cache_current = 0;
+	}
+	if (queue->window > queue->busy_refcount || QMGR_QUEUE_THROTTLED(queue))
+	    queue->blocker_tag = 0;
+    }
+}
+

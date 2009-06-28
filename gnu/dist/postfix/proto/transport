@@ -106,15 +106,16 @@
 #	string \fBtransport_maps\fR is not listed in the
 #	\fBparent_domain_matches_subdomains\fR configuration setting.
 #	Otherwise, a domain name matches itself and its subdomains.
+# .IP "\fB*\fI transport\fR:\fInexthop\fR"
+#	The special pattern \fB*\fR represents any address (i.e. it
+#	functions as the wild-card pattern, and is unique to Postfix
+#	transport tables).
 # .PP
-#	Note 1: the special pattern \fB*\fR represents any address (i.e. it
-#	functions as the wild-card pattern).
-#
-#	Note 2: the null recipient address is looked up as
+#	Note 1: the null recipient address is looked up as
 #	\fB$empty_address_recipient\fR@\fB$myhostname\fR (default:
 #	mailer-daemon@hostname).
 #
-#	Note 3: \fIuser@domain\fR or \fIuser+extension@domain\fR
+#	Note 2: \fIuser@domain\fR or \fIuser+extension@domain\fR
 #	lookup is available in Postfix 2.0 and later.
 # RESULT FORMAT
 # .ad

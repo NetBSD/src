@@ -1771,12 +1771,15 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		 * XXX Don't downgrade just because generic_maps is turned
 		 * on.
 		 */
-		if (downgrading || smtp_generic_maps || smtp_header_checks
-		    || smtp_body_checks)
+#define SMTP_ANY_CHECKS (smtp_header_checks || smtp_body_checks)
+
+		if (downgrading || smtp_generic_maps || SMTP_ANY_CHECKS)
 		    session->mime_state = mime_state_alloc(downgrading ?
 							   MIME_OPT_DOWNGRADE
 						 | MIME_OPT_REPORT_NESTING :
-						      MIME_OPT_DISABLE_MIME,
+						      SMTP_ANY_CHECKS == 0 ?
+						     MIME_OPT_DISABLE_MIME :
+							   0,
 							   smtp_generic_maps
 						     || smtp_header_checks ?
 						       smtp_header_rewrite :

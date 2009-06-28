@@ -90,11 +90,11 @@
 #	matching.
 # .IP "\fBx\fR (default: off)"
 #	Toggles the pcre extended flag. When this flag is on, whitespace
-#	in the pattern (other than in a character class) and
-#	characters between a \fB#\fR outside a character class and
-#	the next newline character are ignored. An escaping backslash
-#	can be used to include a whitespace or \fB#\fR character
-#	as part of the pattern.
+#	characters in the pattern (other than in a character class)
+#	are ignored.  To include a whitespace character as part of
+#	the pattern, escape it with backslash.
+# .sp
+#	Note: do not use \fB#\fIcomment\fR after patterns.
 # .IP "\fBA\fR (default: off)"
 #	Toggles the PCRE_ANCHORED flag.  When this flag is on,
 #	the pattern is forced to be "anchored", that is, it is
