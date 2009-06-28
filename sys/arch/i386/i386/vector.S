@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.45 2009/03/21 14:41:29 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.46 2009/06/28 15:18:50 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.45 2009/03/21 14:41:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.46 2009/06/28 15:18:50 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -227,9 +227,19 @@ IDTVEC(intr_lapic_tlb_mcast)
 	popl	%eax
 	iret
 4:
-	/* Invalidate all user pages. */
+	/*
+	 * Get the emap generation number.  Invalidate user TLB entries.
+	 * Perform emap update, pass the generation number.  Note that
+	 * caller-save registers might be modified (all saved in the
+	 * beginning).  Only %ebx value is used by 2b context.
+	 */
+	call	_C_LABEL(uvm_emap_gen_return)
+	movl	%eax, %edx
 	movl	%cr3, %eax
 	movl	%eax, %cr3
+	pushl	%edx
+	call	_C_LABEL(uvm_emap_update)
+	addl	$4, %esp
 	jmp	2b
 IDTVEC_END(intr_lapic_tlb_mcast)
 
@@ -240,6 +250,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	/* Save state and ack the interrupt. */
 	pushl	%eax
 	pushl	%ebx
+	pushl	%ecx
 	pushl	%edx
 	/* Find out what we need to invalidate. */
 	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
@@ -259,6 +270,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	lock
 	incl	%ss:_C_LABEL(pmap_mbox)+MB_TAIL
 	popl	%edx
+	popl	%ecx
 	popl	%ebx
 	popl	%eax
 	iret
@@ -266,19 +278,36 @@ IDTVEC(intr_lapic_tlb_bcast)
 	testl	%ebx, %ebx
 	jz	4f
 	/*
-	 * If the CPU understands global pages and we have been asked
-	 * to invalidate the entire TLB we arrive here.
+	 * If we have been asked to invalidate the entire TLB we arrive here.
+	 * Get the emap generation before flush, and use it after for update.
+	 * Note that caller-save registers might be modified, though no
+	 * registers need to be preserved for 2b context.
 	 */
+	call	_C_LABEL(uvm_emap_gen_return)
+	movl	%eax, %ebx
 	movl	%cr4, %eax
 	movl	%eax, %edx
 	andl	$~CR4_PGE, %edx
 	movl	%edx, %cr4
 	movl	%eax, %cr4
+	pushl	%ebx
+	call	_C_LABEL(uvm_emap_update)
+	addl	$4, %esp
 	jmp	2b
 4:
-	/* Invalidate user TLB entries. */
+	/*
+	 * Get the emap generation number.  Invalidate user TLB entries.
+	 * Perform emap update, pass the generation number.  Note that
+	 * caller-save registers might be modified, though no registers
+	 * need to be preserved for 2b context.
+	 */
+	call	_C_LABEL(uvm_emap_gen_return)
+	movl	%eax, %ebx
 	movl	%cr3, %eax
 	movl	%eax, %cr3
+	pushl	%ebx
+	call	_C_LABEL(uvm_emap_update)
+	addl	$4, %esp
 	jmp	2b
 IDTVEC_END(intr_lapic_tlb_bcast)
 

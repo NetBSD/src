@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.114 2009/06/28 14:34:48 rmind Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.115 2009/06/28 15:18:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.114 2009/06/28 14:34:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.115 2009/06/28 15:18:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.114 2009/06/28 14:34:48 rmind Exp $")
 
 #include <uvm/uvm.h>
 
-/* Use this define if you want to disable *fancy* VM things. */
+/*
+ * Use this to disable direct I/O and decrease the code size:
+ * #define PIPE_NODIRECT
+ */
+
 /* XXX Disabled for now; rare hangs switching between direct/buffered */
 #define PIPE_NODIRECT
 
@@ -500,6 +504,7 @@ again:
 			 * Direct copy, bypassing a kernel buffer.
 			 */
 			void *va;
+			u_int gen;
 
 			KASSERT(rpipe->pipe_state & PIPE_DIRECTW);
 
@@ -508,8 +513,15 @@ again:
 				size = uio->uio_resid;
 
 			va = (char *)rpipe->pipe_map.kva + rpipe->pipe_map.pos;
+			gen = rpipe->pipe_map.egen;
 			mutex_exit(lock);
+
+			/*
+			 * Consume emap and read the data from loaned pages.
+			 */
+			uvm_emap_consume(gen);
 			error = uiomove(va, size, uio);
+
 			mutex_enter(lock);
 			if (error)
 				break;
@@ -635,6 +647,7 @@ pipe_loan_free(struct pipe *wpipe)
 	vsize_t len;
 
 	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
+	uvm_emap_remove(wpipe->pipe_map.kva, len);	/* XXX */
 	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len, UVM_KMF_VAONLY);
 	wpipe->pipe_map.kva = 0;
 	atomic_add_int(&amountpipekva, -len);
@@ -656,10 +669,10 @@ pipe_loan_free(struct pipe *wpipe)
 static int
 pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 {
-	int error, npages, j;
 	struct vm_page **pgs;
-	vaddr_t bbase, kva, base, bend;
+	vaddr_t bbase, base, bend;
 	vsize_t blen, bcnt;
+	int error, npages;
 	voff_t bpos;
 	kmutex_t *lock = wpipe->pipe_lock;
 
@@ -713,12 +726,9 @@ pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 		return (ENOMEM); /* so that caller fallback to ordinary write */
 	}
 
-	/* Enter the loaned pages to kva */
-	kva = wpipe->pipe_map.kva;
-	for (j = 0; j < npages; j++, kva += PAGE_SIZE) {
-		pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pgs[j]), VM_PROT_READ);
-	}
-	pmap_update(pmap_kernel());
+	/* Enter the loaned pages to KVA, produce new emap generation number. */
+	uvm_emap_enter(wpipe->pipe_map.kva, pgs, npages);
+	wpipe->pipe_map.egen = uvm_emap_produce();
 
 	/* Now we can put the pipe in direct write mode */
 	wpipe->pipe_map.pos = bpos;
@@ -760,8 +770,7 @@ pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 	mutex_exit(lock);
 
 	if (pgs != NULL) {
-		pmap_kremove(wpipe->pipe_map.kva, blen);
-		pmap_update(pmap_kernel());
+		/* XXX: uvm_emap_remove */
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
 	}
 	if (error || amountpipekva > maxpipekva)

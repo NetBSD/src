@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.119 2009/05/27 12:08:35 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.120 2009/06/28 15:18:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ struct lwp {
 	int		l_sleeperr;	/* !: error before unblock */
 	u_int		l_slptime;	/* l: time since last blocked */
 	callout_t	l_timeout_ch;	/* !: callout for tsleep */
+	u_int		l_emap_gen;	/* !: emap generation number */
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */

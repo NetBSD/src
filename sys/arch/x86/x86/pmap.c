@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2009/04/23 12:18:41 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2009/06/28 15:18:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2009/04/23 12:18:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2009/06/28 15:18:50 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1053,6 +1053,66 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		kpreempt_disable();
 		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
 		kpreempt_enable();
+	}
+}
+
+void
+pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
+{
+	pt_entry_t *pte, opte, npte;
+
+	KASSERT((prot & ~VM_PROT_ALL) == 0);
+	pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
+
+#ifdef DOM0OPS
+	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
+		npte = pa;
+	} else
+#endif
+		npte = pmap_pa2pte(pa);
+
+	npte = pmap_pa2pte(pa);
+	npte |= protection_codes[prot] | PG_k | PG_V;
+	opte = pmap_pte_testset(pte, npte);
+}
+
+/*
+ * pmap_emap_sync: perform TLB flush or pmap load, if it was deferred.
+ */
+void
+pmap_emap_sync(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct pmap *pmap;
+
+	KASSERT(kpreempt_disabled());
+	if (__predict_true(ci->ci_want_pmapload)) {
+		/*
+		 * XXX: Hint for pmap_reactivate(), which might suggest to
+		 * not perform TLB flush, if state has not changed.
+		 */
+		pmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
+		if (__predict_false(pmap == ci->ci_pmap)) {
+			const uint32_t cpumask = ci->ci_cpumask;
+			atomic_and_32(&pmap->pm_cpus, ~cpumask);
+		}
+		pmap_load();
+		KASSERT(ci->ci_want_pmapload == 0);
+	} else {
+		tlbflush();
+	}
+
+}
+
+void
+pmap_emap_remove(vaddr_t sva, vsize_t len)
+{
+	pt_entry_t *pte, xpte;
+	vaddr_t va, eva = sva + len;
+
+	for (va = sva; va < eva; va += PAGE_SIZE) {
+		pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
+		xpte |= pmap_pte_testset(pte, 0);
 	}
 }
 
@@ -2609,6 +2669,7 @@ pmap_load(void)
 
 	if (pmap == oldpmap) {
 		if (!pmap_reactivate(pmap)) {
+			u_int gen = uvm_emap_gen_return();
 
 			/*
 			 * pmap has been changed during deactivated.
@@ -2616,6 +2677,7 @@ pmap_load(void)
 			 */
 
 			tlbflush();
+			uvm_emap_update(gen);
 		}
 
 		ci->ci_want_pmapload = 0;
@@ -2732,7 +2794,11 @@ pmap_load(void)
 	splx(s);
 	}
 #else /* PAE */
+	{
+	u_int gen = uvm_emap_gen_return();
 	lcr3(pcb->pcb_cr3);
+	uvm_emap_update(gen);
+	}
 #endif /* PAE */
 #endif /* XEN && x86_64 */
 
@@ -4648,10 +4714,13 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		return;
 
 	if (sva == (vaddr_t)-1LL) {
-		if (pte != 0)
+		u_int gen = uvm_emap_gen_return();
+		if (pte != 0) {
 			tlbflushg();
-		else
+		} else {
 			tlbflush();
+		}
+		uvm_emap_update(gen);
 	} else {
 		do {
 			pmap_update_pg(sva);
