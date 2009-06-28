@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.11 2007/12/15 19:44:41 perry Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.12 2009/06/28 21:12:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.11 2007/12/15 19:44:41 perry Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.12 2009/06/28 21:12:35 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -164,10 +164,12 @@ faketalk()
 	}
 
 	(void) fgets(buf, BUFSIZ, f);
-	(void) sprintf(buf, "HELO HuntGame@%s\r\n", my_machine_name);
+	(void) snprintf(buf, sizeof(buf),
+			"HELO HuntGame@%s\r\n", my_machine_name);
 	(void) write(service, buf, strlen(buf));
 	(void) fgets(buf, BUFSIZ, f);
-	(void) sprintf(buf, "EXPN %s@%s\r\n", RENDEZVOUS, my_machine_name);
+	(void) snprintf(buf, sizeof(buf),
+			"EXPN %s@%s\r\n", RENDEZVOUS, my_machine_name);
 	(void) write(service, buf, strlen(buf));
 	while (fgets(buf, BUFSIZ, f) != NULL) {
 		char	*s, *t;
