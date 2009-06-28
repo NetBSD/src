@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.39 2009/06/28 02:02:53 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.40 2009/06/28 19:55:12 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1381,4 +1381,10 @@ gnu/dist/postfix/src/util/events.c		patch
 
 	Update Postfix to version 2.5.7.
 	[tron, ticket #831]
+
+games/hunt/huntd/answer.c			1.10
+
+	Fix possible remote DoS of a running hunt game, and prevent
+	a possible theoretical attack involving >= 1 billion ammo.
+	[dholland, ticket #834]
 
