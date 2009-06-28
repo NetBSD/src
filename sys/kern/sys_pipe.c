@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.113 2009/06/28 14:22:11 rmind Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.114 2009/06/28 14:34:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.113 2009/06/28 14:22:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.114 2009/06/28 14:34:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
 static int	pipe_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
 static int	pipe_close(file_t *);
 static int	pipe_poll(file_t *, int);
-static int	pipe_kqfilter(file_t **, struct knote *);
+static int	pipe_kqfilter(file_t *, struct knote *);
 static int	pipe_stat(file_t *, struct stat *);
 static int	pipe_ioctl(file_t *, u_long, void *);
 
