@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.27 2009/04/11 15:46:18 christos Exp $ */
+/* $NetBSD: pipe.h,v 1.28 2009/06/28 15:18:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -81,6 +81,7 @@ struct pipemapping {
 	voff_t		pos;		/* current position within page */
 	int		npages;		/* how many pages allocated */
 	struct vm_page	**pgs;		/* pointers to the pages */
+	u_int		egen;		/* emap generation number */
 };
 
 /*

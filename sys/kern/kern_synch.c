@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.264 2009/04/16 21:19:23 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.265 2009/06/28 15:18:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.264 2009/04/16 21:19:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.265 2009/06/28 15:18:50 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -767,6 +767,8 @@ mi_switch(lwp_t *l)
 		 * Restore VM context and IPL.
 		 */
 		pmap_activate(l);
+		uvm_emap_switch(l);
+
 		if (prevlwp != NULL) {
 			/* Normalize the count of the spin-mutexes */
 			ci->ci_mtx_count++;
