@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.8 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: answer.c,v 1.8.4.1 2009/06/28 19:52:10 snj Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.8 2006/05/09 20:18:06 mrg Exp $");
+__RCSID("$NetBSD: answer.c,v 1.8.4.1 2009/06/28 19:52:10 snj Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -100,6 +100,12 @@ answer()
 	(void) read(newsock, Ttyname, NAMELEN);
 	(void) read(newsock, (char *) &mode, sizeof mode);
 	mode = ntohl(mode);
+
+	/*
+	 * Ensure null termination.
+	 */
+	name[sizeof(name)-1] = '\0';
+	Ttyname[sizeof(Ttyname)-1] = '\0';
 
 	/*
 	 * Turn off blocking I/O, so a slow or dead terminal won't stop
@@ -317,7 +323,7 @@ stplayer(newpp, enter_status)
 	y = STAT_PLAY_ROW + 1 + (newpp - Player);
 	for (pp = Player; pp < End_player; pp++) {
 		if (pp != newpp) {
-			char	smallbuf[10];
+			char	smallbuf[16];
 
 			pp->p_ammo += NSHOTS;
 			newpp->p_ammo += NSHOTS;
