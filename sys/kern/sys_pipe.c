@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.112 2009/04/11 23:05:26 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.113 2009/06/28 14:22:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.112 2009/04/11 23:05:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.113 2009/06/28 14:22:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,18 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.112 2009/04/11 23:05:26 christos Exp 
 /* XXX Disabled for now; rare hangs switching between direct/buffered */
 #define PIPE_NODIRECT
 
-/*
- * interfaces to the outside world
- */
-static int pipe_read(struct file *fp, off_t *offset, struct uio *uio,
-		kauth_cred_t cred, int flags);
-static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
-		kauth_cred_t cred, int flags);
-static int pipe_close(struct file *fp);
-static int pipe_poll(struct file *fp, int events);
-static int pipe_kqfilter(struct file *fp, struct knote *kn);
-static int pipe_stat(struct file *fp, struct stat *sb);
-static int pipe_ioctl(struct file *fp, u_long cmd, void *data);
+static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
+static int	pipe_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
+static int	pipe_close(file_t *);
+static int	pipe_poll(file_t *, int);
+static int	pipe_kqfilter(file_t **, struct knote *);
+static int	pipe_stat(file_t *, struct stat *);
+static int	pipe_ioctl(file_t *, u_long, void *);
 
 static const struct fileops pipeops = {
 	.fo_read = pipe_read,
@@ -129,56 +124,55 @@ static const struct fileops pipeops = {
  * reference for performance reasons, so small amounts of outstanding I/O
  * will not wipe the cache.
  */
-#define MINPIPESIZE (PIPE_SIZE/3)
-#define MAXPIPESIZE (2*PIPE_SIZE/3)
+#define	MINPIPESIZE	(PIPE_SIZE / 3)
+#define	MAXPIPESIZE	(2 * PIPE_SIZE / 3)
 
 /*
  * Maximum amount of kva for pipes -- this is kind-of a soft limit, but
  * is there so that on large systems, we don't exhaust it.
  */
-#define MAXPIPEKVA (8*1024*1024)
-static u_int maxpipekva = MAXPIPEKVA;
+#define	MAXPIPEKVA	(8 * 1024 * 1024)
+static u_int	maxpipekva = MAXPIPEKVA;
 
 /*
  * Limit for direct transfers, we cannot, of course limit
  * the amount of kva for pipes in general though.
  */
-#define LIMITPIPEKVA (16*1024*1024)
-static u_int limitpipekva = LIMITPIPEKVA;
+#define	LIMITPIPEKVA	(16 * 1024 * 1024)
+static u_int	limitpipekva = LIMITPIPEKVA;
 
 /*
  * Limit the number of "big" pipes
  */
-#define LIMITBIGPIPES  32
-static u_int maxbigpipes = LIMITBIGPIPES;
-static u_int nbigpipe = 0;
+#define	LIMITBIGPIPES	32
+static u_int	maxbigpipes = LIMITBIGPIPES;
+static u_int	nbigpipe = 0;
 
 /*
  * Amount of KVA consumed by pipe buffers.
  */
-static u_int amountpipekva = 0;
+static u_int	amountpipekva = 0;
 
-static void pipeclose(struct file *fp, struct pipe *pipe);
-static void pipe_free_kmem(struct pipe *pipe);
-static int pipe_create(struct pipe **pipep, pool_cache_t, kmutex_t *);
-static int pipelock(struct pipe *pipe, int catch);
-static inline void pipeunlock(struct pipe *pipe);
-static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, int code);
+static void	pipeclose(file_t *, struct pipe *);
+static void	pipe_free_kmem(struct pipe *);
+static int	pipe_create(struct pipe **, pool_cache_t, kmutex_t *);
+static int	pipelock(struct pipe *, int);
+static inline void pipeunlock(struct pipe *);
+static void	pipeselwakeup(struct pipe *, struct pipe *, int);
 #ifndef PIPE_NODIRECT
-static int pipe_direct_write(struct file *fp, struct pipe *wpipe,
-    struct uio *uio);
+static int	pipe_direct_write(file_t *, struct pipe *, struct uio *);
 #endif
-static int pipespace(struct pipe *pipe, int size);
-static int pipe_ctor(void *, void *, int);
-static void pipe_dtor(void *, void *);
+static int	pipespace(struct pipe *, int);
+static int	pipe_ctor(void *, void *, int);
+static void	pipe_dtor(void *, void *);
 
 #ifndef PIPE_NODIRECT
-static int pipe_loan_alloc(struct pipe *, int);
-static void pipe_loan_free(struct pipe *);
+static int	pipe_loan_alloc(struct pipe *, int);
+static void	pipe_loan_free(struct pipe *);
 #endif /* PIPE_NODIRECT */
 
-static pool_cache_t pipe_wr_cache;
-static pool_cache_t pipe_rd_cache;
+static pool_cache_t	pipe_wr_cache;
+static pool_cache_t	pipe_rd_cache;
 
 void
 pipe_init(void)
@@ -244,13 +238,11 @@ pipe_dtor(void *arg, void *obj)
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
  */
-
-/* ARGSUSED */
 int
 sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
-	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
+	file_t *rf, *wf;
 	kmutex_t *mutex;
 	int fd, error;
 	proc_t *p;
@@ -445,9 +437,8 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 	fownsignal(sigp->pipe_pgid, SIGIO, code, band, selp);
 }
 
-/* ARGSUSED */
 static int
-pipe_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
@@ -469,7 +460,7 @@ again:
 
 	while (uio->uio_resid) {
 		/*
-		 * normal pipe buffer receive
+		 * Normal pipe buffer receive.
 		 */
 		if (bp->cnt > 0) {
 			size = bp->size - bp->out;
@@ -508,7 +499,7 @@ again:
 			/*
 			 * Direct copy, bypassing a kernel buffer.
 			 */
-			void *	va;
+			void *va;
 
 			KASSERT(rpipe->pipe_state & PIPE_DIRECTW);
 
@@ -539,14 +530,14 @@ again:
 			break;
 
 		/*
-		 * detect EOF condition
-		 * read returns 0 on EOF, no need to set error
+		 * Detect EOF condition.
+		 * Read returns 0 on EOF, no need to set error.
 		 */
 		if (rpipe->pipe_state & PIPE_EOF)
 			break;
 
 		/*
-		 * don't block on non-blocking I/O
+		 * Don't block on non-blocking I/O.
 		 */
 		if (fp->f_flag & FNONBLOCK) {
 			error = EAGAIN;
@@ -663,7 +654,7 @@ pipe_loan_free(struct pipe *wpipe)
  * Called with the long-term pipe lock held.
  */
 static int
-pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
+pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 {
 	int error, npages, j;
 	struct vm_page **pgs;
@@ -810,7 +801,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 #endif /* !PIPE_NODIRECT */
 
 static int
-pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct pipe *wpipe, *rpipe;
@@ -953,11 +944,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				 * support atomic writes.  Wraparound
 				 * happened.
 				 */
-#ifdef DEBUG
-				if (bp->in + segsize != bp->size)
-					panic("Expected pipe buffer wraparound disappeared");
-#endif
-
+				KASSERT(bp->in + segsize == bp->size);
 				error = uiomove(bp->buffer,
 				    size - segsize, uio);
 			}
@@ -967,18 +954,12 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 			bp->in += size;
 			if (bp->in >= bp->size) {
-#ifdef DEBUG
-				if (bp->in != size - segsize + bp->size)
-					panic("Expected wraparound bad");
-#endif
+				KASSERT(bp->in == size - segsize + bp->size);
 				bp->in = size - segsize;
 			}
 
 			bp->cnt += size;
-#ifdef DEBUG
-			if (bp->cnt > bp->size)
-				panic("Pipe buffer overflow");
-#endif
+			KASSERT(bp->cnt <= bp->size);
 		} else {
 			/*
 			 * If the "read-side" has been blocked, wake it up now.
@@ -986,7 +967,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			cv_broadcast(&wpipe->pipe_rcv);
 
 			/*
-			 * don't block on non-blocking I/O
+			 * Don't block on non-blocking I/O.
 			 */
 			if (fp->f_flag & FNONBLOCK) {
 				error = EAGAIN;
@@ -1052,10 +1033,10 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 }
 
 /*
- * we implement a very minimal set of ioctls for compatibility with sockets.
+ * We implement a very minimal set of ioctls for compatibility with sockets.
  */
 int
-pipe_ioctl(struct file *fp, u_long cmd, void *data)
+pipe_ioctl(file_t *fp, u_long cmd, void *data)
 {
 	struct pipe *pipe = fp->f_data;
 	kmutex_t *lock = pipe->pipe_lock;
@@ -1131,7 +1112,7 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data)
 }
 
 int
-pipe_poll(struct file *fp, int events)
+pipe_poll(file_t *fp, int events)
 {
 	struct pipe *rpipe = fp->f_data;
 	struct pipe *wpipe;
@@ -1181,7 +1162,7 @@ pipe_poll(struct file *fp, int events)
 }
 
 static int
-pipe_stat(struct file *fp, struct stat *ub)
+pipe_stat(file_t *fp, struct stat *ub)
 {
 	struct pipe *pipe = fp->f_data;
 
@@ -1207,9 +1188,8 @@ pipe_stat(struct file *fp, struct stat *ub)
 	return 0;
 }
 
-/* ARGSUSED */
 static int
-pipe_close(struct file *fp)
+pipe_close(file_t *fp)
 {
 	struct pipe *pipe = fp->f_data;
 
@@ -1247,10 +1227,10 @@ pipe_free_kmem(struct pipe *pipe)
 }
 
 /*
- * shutdown the pipe
+ * Shutdown the pipe.
  */
 static void
-pipeclose(struct file *fp, struct pipe *pipe)
+pipeclose(file_t *fp, struct pipe *pipe)
 {
 	kmutex_t *lock;
 	struct pipe *ppipe;
@@ -1280,7 +1260,7 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	}
 
 	/*
-	 * Disconnect from peer
+	 * Disconnect from peer.
 	 */
 	if ((ppipe = pipe->pipe_peer) != NULL) {
 		pipeselwakeup(ppipe, ppipe, POLL_HUP);
@@ -1300,7 +1280,7 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	mutex_exit(lock);
 
 	/*
-	 * free resources
+	 * Free resources.
 	 */
 	pipe->pipe_pgid = 0;
 	pipe->pipe_state = PIPE_SIGNALR;
@@ -1326,10 +1306,10 @@ filt_pipedetach(struct knote *kn)
 
 	switch(kn->kn_filter) {
 	case EVFILT_WRITE:
-		/* need the peer structure, not our own */
+		/* Need the peer structure, not our own. */
 		pipe = pipe->pipe_peer;
 
-		/* if reader end already closed, just return */
+		/* If reader end already closed, just return. */
 		if (pipe == NULL) {
 			mutex_exit(lock);
 			return;
@@ -1337,20 +1317,15 @@ filt_pipedetach(struct knote *kn)
 
 		break;
 	default:
-		/* nothing to do */
+		/* Nothing to do. */
 		break;
 	}
 
-#ifdef DIAGNOSTIC
-	if (kn->kn_hook != pipe)
-		panic("filt_pipedetach: inconsistent knote");
-#endif
-
+	KASSERT(kn->kn_hook == pipe);
 	SLIST_REMOVE(&pipe->pipe_sel.sel_klist, kn, knote, kn_selnext);
 	mutex_exit(lock);
 }
 
-/*ARGSUSED*/
 static int
 filt_piperead(struct knote *kn, long hint)
 {
@@ -1381,7 +1356,6 @@ filt_piperead(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-/*ARGSUSED*/
 static int
 filt_pipewrite(struct knote *kn, long hint)
 {
@@ -1416,9 +1390,8 @@ static const struct filterops pipe_rfiltops =
 static const struct filterops pipe_wfiltops =
 	{ 1, NULL, filt_pipedetach, filt_pipewrite };
 
-/*ARGSUSED*/
 static int
-pipe_kqfilter(struct file *fp, struct knote *kn)
+pipe_kqfilter(file_t *fp, struct knote *kn)
 {
 	struct pipe *pipe;
 	kmutex_t *lock;
@@ -1436,7 +1409,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		kn->kn_fop = &pipe_wfiltops;
 		pipe = pipe->pipe_peer;
 		if (pipe == NULL) {
-			/* other end of pipe has been closed */
+			/* Other end of pipe has been closed. */
 			mutex_exit(lock);
 			return (EBADF);
 		}
