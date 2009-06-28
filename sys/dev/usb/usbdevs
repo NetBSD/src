@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.528 2009/06/19 01:14:27 mrg Exp $
+$NetBSD: usbdevs,v 1.529 2009/06/28 10:45:24 mbalmer Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -343,6 +343,7 @@ vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
 vendor AGILENT		0x0957	Agilent Technologies
+vendor GUDE		0x0959	Gude ADS
 vendor PORTSMITH	0x095a	Portsmith
 vendor ACERW		0x0967	Acer
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
@@ -480,8 +481,9 @@ vendor METAGEEK		0x1781	MetaGeek
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
-vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
+vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
+vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor ERICSSON		0x2282	Ericsson
@@ -1141,6 +1143,9 @@ product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
 
+/* Gude ADS */
+product	GUDE DCF		0xdcf7	Exper mouseCLOCK USB
+
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
 product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
@@ -1491,6 +1496,9 @@ product MCT ML_4500		0x0302	ML-4500
 
 /* MediaGear products */
 product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
+
+/* Meinberg Funkuhren products */
+product	MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
