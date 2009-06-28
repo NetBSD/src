@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.38 2009/06/25 01:42:21 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.39 2009/06/28 02:02:53 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1341,4 +1341,44 @@ sys/external/bsd/drm/dist/bsd-core/mga_drv.c	1.6
 
 	Don't include pcidevs_data.h.  Fixes build of mga_drv.
 	[mrg, ticket #832]
+
+doc/3RDPARTY					1.704-1.705 via patch
+gnu/dist/postfix/HISTORY			patch
+gnu/dist/postfix/conf/postfix-files		patch
+gnu/dist/postfix/conf/transport			patch
+gnu/dist/postfix/html/oqmgr.8.html		patch
+gnu/dist/postfix/html/pcre_table.5.html		patch
+gnu/dist/postfix/html/pickup.8.html		patch
+gnu/dist/postfix/html/postconf.5.html		patch
+gnu/dist/postfix/html/qmgr.8.html		patch
+gnu/dist/postfix/html/transport.5.html		patch
+gnu/dist/postfix/man/man5/pcre_table.5		patch
+gnu/dist/postfix/man/man5/transport.5		patch
+gnu/dist/postfix/man/man8/oqmgr.8		patch
+gnu/dist/postfix/man/man8/pickup.8		patch
+gnu/dist/postfix/man/man8/qmgr.8		patch
+gnu/dist/postfix/mantools/postlink		patch
+gnu/dist/postfix/proto/pcre_table		patch
+gnu/dist/postfix/proto/transport		patch
+gnu/dist/postfix/src/global/mail_params.h	patch
+gnu/dist/postfix/src/global/mail_version.h	patch
+gnu/dist/postfix/src/oqmgr/qmgr.c		patch
+gnu/dist/postfix/src/oqmgr/qmgr_transport.c	patch
+gnu/dist/postfix/src/pickup/pickup.c		patch
+gnu/dist/postfix/src/postdrop/postdrop.c	patch
+gnu/dist/postfix/src/postsuper/postsuper.c	patch
+gnu/dist/postfix/src/qmgr/qmgr.c		patch
+gnu/dist/postfix/src/qmgr/qmgr.h		patch
+gnu/dist/postfix/src/qmgr/qmgr_entry.c		patch
+gnu/dist/postfix/src/qmgr/qmgr_job.c		patch
+gnu/dist/postfix/src/qmgr/qmgr_queue.c		patch
+gnu/dist/postfix/src/qmgr/qmgr_transport.c	patch
+gnu/dist/postfix/src/smtp/smtp_proto.c		patch
+gnu/dist/postfix/src/smtp/smtp_reuse.c		patch
+gnu/dist/postfix/src/smtpd/smtpd.c		patch
+gnu/dist/postfix/src/smtpd/smtpd_proxy.c	patch
+gnu/dist/postfix/src/util/events.c		patch
+
+	Update Postfix to version 2.5.7.
+	[tron, ticket #831]
 
