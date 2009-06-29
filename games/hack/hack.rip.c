@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rip.c,v 1.7 2003/04/02 18:36:39 jsm Exp $	*/
+/*	$NetBSD: hack.rip.c,v 1.7.16.1 2009/06/29 23:53:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rip.c,v 1.7 2003/04/02 18:36:39 jsm Exp $");
+__RCSID("$NetBSD: hack.rip.c,v 1.7.16.1 2009/06/29 23:53:01 snj Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -94,9 +94,9 @@ outrip()
 	(void) strcpy(buf, plname);
 	buf[16] = 0;
 	center(6, buf);
-	(void) sprintf(buf, "%ld AU", u.ugold);
+	(void) snprintf(buf, sizeof(buf), "%ld AU", u.ugold);
 	center(7, buf);
-	(void) sprintf(buf, "killed by%s",
+	(void) snprintf(buf, sizeof(buf), "killed by%s",
 		       !strncmp(killer, "the ", 4) ? "" :
 		       !strcmp(killer, "starvation") ? "" :
 		       strchr(vowels, *killer) ? " an" : " a");
@@ -118,7 +118,7 @@ outrip()
 		center(9, buf);
 		center(10, buf + i1);
 	}
-	(void) sprintf(buf, "%4d", getyear());
+	(void) snprintf(buf, sizeof(buf), "%4d", getyear());
 	center(11, buf);
 	puts(ripbot);
 	getret();

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.10 2006/03/29 01:19:51 jnemeth Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.10.4.1 2009/06/29 23:53:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.10 2006/03/29 01:19:51 jnemeth Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.10.4.1 2009/06/29 23:53:01 snj Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -733,7 +733,7 @@ xprname(obj, let)
 {
 	static char     li[BUFSZ];
 
-	(void) sprintf(li, "%c - %s.",
+	(void) snprintf(li, sizeof(li), "%c - %s.",
 		       flags.invlet_constant ? obj->invlet : let,
 		       doname(obj));
 	return (li);
@@ -897,7 +897,7 @@ dolook()
 	if (gold) {
 		char            gbuf[30];
 
-		(void) sprintf(gbuf, "%ld gold piece%s",
+		(void) snprintf(gbuf, sizeof(gbuf), "%ld gold piece%s",
 			       gold->amount, plur(gold->amount));
 		if (!ct++)
 			pline("You %s here %s.", verb, gbuf);
