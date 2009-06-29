@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_name.c,v 1.7 2008/01/28 06:55:41 dholland Exp $	*/
+/*	$NetBSD: hack.do_name.c,v 1.7.10.1 2009/06/29 23:31:28 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_name.c,v 1.7 2008/01/28 06:55:41 dholland Exp $");
+__RCSID("$NetBSD: hack.do_name.c,v 1.7.10.1 2009/06/29 23:31:28 snj Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -274,7 +274,7 @@ xmonnam(mtmp, vb)
 {
 	static char     buf[BUFSZ];	/* %% */
 	if (mtmp->mnamelth && !vb) {
-		(void) strcpy(buf, NAME(mtmp));
+		(void) strlcpy(buf, NAME(mtmp), sizeof(buf));
 		return (buf);
 	}
 	switch (mtmp->data->mlet) {
@@ -287,23 +287,23 @@ xmonnam(mtmp, vb)
 					(void)
 						strcpy((char *) mtmp->mextra, !rn2(5) ? plname : gn);
 			}
-			(void) sprintf(buf, "%s's ghost", gn);
+			(void) snprintf(buf, sizeof(buf), "%s's ghost", gn);
 		}
 		break;
 	case '@':
 		if (mtmp->isshk) {
-			(void) strcpy(buf, shkname(mtmp));
+			(void) strlcpy(buf, shkname(mtmp), sizeof(buf));
 			break;
 		}
 		/* fall into next case */
 	default:
-		(void) sprintf(buf, "the %s%s",
+		(void) snprintf(buf, sizeof(buf), "the %s%s",
 			       mtmp->minvis ? "invisible " : "",
 			       mtmp->data->mname);
 	}
 	if (vb && mtmp->mnamelth) {
-		(void) strcat(buf, " called ");
-		(void) strcat(buf, NAME(mtmp));
+		(void) strlcat(buf, " called ", sizeof(buf));
+		(void) strlcat(buf, NAME(mtmp), sizeof(buf));
 	}
 	return (buf);
 }
@@ -342,7 +342,7 @@ amonnam(mtmp, adj)
 
 	if (!strncmp(bp, "the ", 4))
 		bp += 4;
-	(void) sprintf(buf, "the %s %s", adj, bp);
+	(void) snprintf(buf, sizeof(buf), "the %s %s", adj, bp);
 	return (buf);
 }
 
