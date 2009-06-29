@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.41 2008/04/28 20:23:41 martin Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.42 2009/06/29 05:08:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.41 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.42 2009/06/29 05:08:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.41 2008/04/28 20:23:41 martin Exp 
 void
 emul_find_root(struct lwp *l, struct exec_package *epp)
 {
-	struct nameidata nd;
+	struct vnode *vp;
 	const char *emul_path;
 
 	if (epp->ep_emul_root != NULL)
@@ -64,12 +64,11 @@ emul_find_root(struct lwp *l, struct exec_package *epp)
 		/* Emulation doesn't have a root */
 		return;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, emul_path);
-	if (namei(&nd) != 0)
+	if (namei_simple_kernel(emul_path, NSM_FOLLOW_NOEMULROOT, &vp) != 0)
 		/* emulation root doesn't exist */
 		return;
 
-	epp->ep_emul_root = nd.ni_vp;
+	epp->ep_emul_root = vp;
 }
 
 /*
