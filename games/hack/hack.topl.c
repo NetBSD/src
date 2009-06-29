@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.8.10.1 2009/06/29 23:31:28 snj Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.8.10.2 2009/06/29 23:33:53 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.8.10.1 2009/06/29 23:31:28 snj Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.8.10.2 2009/06/29 23:33:53 snj Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -216,7 +216,7 @@ vpline(line, ap)
 {
 	char            pbuf[BUFSZ];
 	char           *bp = pbuf, *tl;
-	int             n, n0;
+	int             n, n0, tlpos, dead;
 
 	if (!line || !*line)
 		return;
@@ -244,8 +244,9 @@ vpline(line, ap)
 	if (flags.toplin == 1)
 		more();
 	remember_topl();
+	dead = 0;
 	toplines[0] = 0;
-	while (n0) {
+	while (n0 && !dead) {
 		if (n0 >= CO) {
 			/* look for appropriate cut point */
 			n0 = 0;
@@ -259,7 +260,14 @@ vpline(line, ap)
 			if (!n0)
 				n0 = CO - 2;
 		}
-		(void) strncpy((tl = eos(toplines)), bp, n0);
+		tlpos = strlen(toplines);
+		tl = toplines + tlpos;
+		/* avoid overflow */
+		if (tlpos + n0 > (int)sizeof(toplines) - 1) {
+			n0 = sizeof(toplines) - 1 - tlpos;
+			dead = 1;
+		}
+		(void) memcpy(tl, bp, n0);
 		tl[n0] = 0;
 		bp += n0;
 
@@ -269,7 +277,7 @@ vpline(line, ap)
 
 		n0 = strlen(bp);
 		if (n0 && tl[0])
-			(void) strcat(tl, "\n");
+			(void) strlcat(toplines, "\n", sizeof(toplines));
 	}
 	redotoplin();
 }

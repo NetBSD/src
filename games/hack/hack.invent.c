@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.10.26.1 2009/06/29 23:31:28 snj Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.10.26.2 2009/06/29 23:33:53 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,9 +63,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.10.26.1 2009/06/29 23:31:28 snj Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.10.26.2 2009/06/29 23:33:53 snj Exp $");
 #endif				/* not lint */
 
+#include <assert.h>
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
@@ -578,7 +579,7 @@ ggetobj(word, fn, max)
 	char            buf[BUFSZ];
 	char           *ip;
 	char            sym;
-	int             oletct = 0, iletct = 0;
+	unsigned        oletct = 0, iletct = 0;
 	boolean         allflag = FALSE;
 	char            olets[20], ilets[20];
 	int           (*ckfn)(struct obj *) =
@@ -609,6 +610,7 @@ ggetobj(word, fn, max)
 		if (invent)
 			ilets[iletct++] = 'a';
 		ilets[iletct] = 0;
+		assert(iletct < sizeof(ilets));
 	}
 	pline("What kinds of thing do you want to %s? [%s] ",
 	      word, ilets);
@@ -637,6 +639,7 @@ ggetobj(word, fn, max)
 				olets[oletct++] = sym;
 				olets[oletct] = 0;
 			}
+			assert(oletct < sizeof(olets));
 		} else
 			pline("You don't have any %c's.", sym);
 	}
@@ -754,7 +757,7 @@ doinv(lets)
 {
 	struct obj     *otmp;
 	char            ilet;
-	int             ct = 0;
+	unsigned        ct = 0;
 	char            any[BUFSZ];
 
 	morc = 0;		/* just to be sure */
@@ -777,6 +780,7 @@ doinv(lets)
 				ilet = 'A';
 	}
 	any[ct] = 0;
+	assert(ct < sizeof(any));
 	cornline(2, any);
 }
 
@@ -786,7 +790,7 @@ dotypeinv()
 	/* Changed to one type only, so he doesnt have to type cr */
 	char            c, ilet;
 	char            stuff[BUFSZ];
-	int             stct;
+	unsigned        stct;
 	struct obj     *otmp;
 	boolean         billx = inshop() && doinvbill(0);
 	boolean         unpd = FALSE;
@@ -812,6 +816,7 @@ dotypeinv()
 	if (billx)
 		stuff[stct++] = 'x';
 	stuff[stct] = 0;
+	assert(stct < sizeof(stuff));
 
 	if (stct > 1) {
 		pline("What type of object [%s] do you want an inventory of? ",
@@ -848,6 +853,8 @@ dotypeinv()
 				ilet = 'A';
 	}
 	stuff[stct] = '\0';
+	assert(stct < sizeof(stuff));
+
 	if (stct == 0)
 		pline("You have no such objects.");
 	else
