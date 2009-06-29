@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rip.c,v 1.10 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.rip.c,v 1.11 2009/06/29 23:05:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rip.c,v 1.10 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.rip.c,v 1.11 2009/06/29 23:05:33 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -101,7 +101,7 @@ outrip(void)
 		       !strcmp(killer, "starvation") ? "" :
 		       strchr(vowels, *killer) ? " an" : " a");
 	center(8, buf);
-	(void) strcpy(buf, killer);
+	(void) strlcpy(buf, killer, sizeof(buf));
 	{
 		int             i1;
 		if ((i1 = strlen(buf)) > 16) {
