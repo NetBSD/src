@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.12 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.13 2009/06/29 23:05:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.12 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.13 2009/06/29 23:05:33 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -300,7 +300,8 @@ main(int argc, char *argv[])
 				}
 				*gp = 0;
 			} else
-				(void) strcpy(genocided, sfoo);
+				(void) strlcpy(genocided, sfoo,
+						sizeof(genocided));
 			(void) strcpy(fut_geno, genocided);
 		}
 	}
@@ -478,12 +479,12 @@ void
 glo(int foo)
 {
 	/* construct the string  xlock.n  */
-	char           *tf;
+	size_t pos;
 
-	tf = lock;
-	while (*tf && *tf != '.')
-		tf++;
-	(void) sprintf(tf, ".%d", foo);
+	pos = 0;
+	while (lock[pos] && lock[pos] != '.')
+		pos++;
+	(void) snprintf(lock + pos, sizeof(lock) - pos, ".%d", foo);
 }
 
 /*
