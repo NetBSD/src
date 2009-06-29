@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.6 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.6.42.1 2009/06/29 23:22:24 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.6 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.6.42.1 2009/06/29 23:22:24 snj Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -330,7 +330,8 @@ gotit:
 eatx:
 	if (multi < 0 && !nomovemsg) {
 		static char     msgbuf[BUFSZ];
-		(void) sprintf(msgbuf, "You finished eating the %s.",
+		(void) snprintf(msgbuf, sizeof(msgbuf),
+			       "You finished eating the %s.",
 			       ftmp->oc_name);
 		nomovemsg = msgbuf;
 	}
