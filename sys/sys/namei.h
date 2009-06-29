@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.64 2009/02/11 00:20:18 enami Exp $	*/
+/*	$NetBSD: namei.h,v 1.65 2009/06/29 05:03:12 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.4 2008/12/03 10:54:27 ad Exp 
- *   from: NetBSD: namei.src,v 1.10 2009/02/11 00:19:11 enami Exp 
+ *   from: NetBSD: namei.src,v 1.11 2009/06/29 05:00:14 dholland Exp 
  */
 
 /*
@@ -203,6 +203,36 @@ extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
 #define	PNBUF_GET()	pool_cache_get(pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (pnb))
+
+/*
+ * Typesafe flags for namei_simple.
+ *
+ * This encoding is not optimal but serves the important purpose of
+ * not being type-compatible with the regular namei flags.
+ */
+struct namei_simple_flags_type; /* Opaque. */
+typedef const struct namei_simple_flags_type *namei_simple_flags_t; /* Gross. */
+extern const namei_simple_flags_t
+	NSM_NOFOLLOW_NOEMULROOT,
+	NSM_NOFOLLOW_TRYEMULROOT,
+	NSM_FOLLOW_NOEMULROOT,
+	NSM_FOLLOW_TRYEMULROOT;
+
+/*
+ * namei_simple_* - the simple cases of namei, with no struct
+ *                  nameidata involved.
+ *
+ * namei_simple_kernel takes a kernel-space path as the first argument.
+ * namei_simple_user takes a user-space path as the first argument.
+ *
+ * A namei call can be converted to namei_simple_* if:
+ *    - the second arg to NDINIT is LOOKUP;
+ *    - it does not need the parent vnode, nd.ni_dvp;
+ *    - the only flags it uses are (NO)FOLLOW and TRYEMULROOT;
+ *    - it does not do anything else gross with the contents of nd.
+ */
+int namei_simple_kernel(const char *, namei_simple_flags_t, struct vnode **);
+int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
