@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.7 2006/05/13 22:45:11 christos Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.7.14.1 2009/06/29 23:43:48 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.7 2006/05/13 22:45:11 christos Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.7.14.1 2009/06/29 23:43:48 snj Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: hack.end.c,v 1.7 2006/05/13 22:45:11 christos Exp $");
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
-#define	Sprintf	(void) sprintf
+#define	Snprintf	(void) snprintf
 
 xchar           maxdlevel = 1;
 
@@ -131,14 +131,15 @@ done_in_by(mtmp)
 	static char     buf[BUFSZ];
 	pline("You die ...");
 	if (mtmp->data->mlet == ' ') {
-		Sprintf(buf, "the ghost of %s", (char *) mtmp->mextra);
+		Snprintf(buf, sizeof(buf),
+			"the ghost of %s", (char *) mtmp->mextra);
 		killer = buf;
 	} else if (mtmp->mnamelth) {
-		Sprintf(buf, "%s called %s",
+		Snprintf(buf, sizeof(buf), "%s called %s",
 			mtmp->data->mname, NAME(mtmp));
 		killer = buf;
 	} else if (mtmp->minvis) {
-		Sprintf(buf, "invisible %s", mtmp->data->mname);
+		Snprintf(buf, sizeof(buf), "invisible %s", mtmp->data->mname);
 		killer = buf;
 	} else
 		killer = mtmp->data->mname;
@@ -495,84 +496,120 @@ outheader()
 	puts(linebuf);
 }
 
-/* so>0: standout line; so=0: ordinary line; so<0: no output, return lth */
+/* so>0: standout line; so=0: ordinary line; so<0: no output, return length */
 int
 outentry(int rank, struct toptenentry *t1, int so)
 {
 	boolean         quit = FALSE, killed = FALSE, starv = FALSE;
 	char            linebuf[BUFSZ];
-	linebuf[0] = 0;
+	size_t pos;
+
+	linebuf[0] = '\0';
+	pos = 0;
+
 	if (rank)
-		Sprintf(eos(linebuf), "%3d", rank);
+		Snprintf(linebuf+pos, sizeof(linebuf)-pos, "%3d", rank);
 	else
-		Sprintf(eos(linebuf), "   ");
-	Sprintf(eos(linebuf), " %6ld %8s", t1->points, t1->name);
+		Snprintf(linebuf+pos, sizeof(linebuf)-pos, "   ");
+	pos = strlen(linebuf);
+
+	Snprintf(linebuf+pos, sizeof(linebuf)-pos, " %6ld %8s",
+		t1->points, t1->name);
+	pos = strlen(linebuf);
+
 	if (t1->plchar == 'X')
-		Sprintf(eos(linebuf), " ");
+		Snprintf(linebuf+pos, sizeof(linebuf)-pos, " ");
 	else
-		Sprintf(eos(linebuf), "-%c ", t1->plchar);
+		Snprintf(linebuf+pos, sizeof(linebuf)-pos, "-%c ", t1->plchar);
+	pos = strlen(linebuf);
+
 	if (!strncmp("escaped", t1->death, 7)) {
 		if (!strcmp(" (with amulet)", t1->death + 7))
-			Sprintf(eos(linebuf), "escaped the dungeon with amulet");
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				"escaped the dungeon with amulet");
 		else
-			Sprintf(eos(linebuf), "escaped the dungeon [max level %d]",
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				"escaped the dungeon [max level %d]",
 				t1->maxlvl);
+		pos = strlen(linebuf);
 	} else {
 		if (!strncmp(t1->death, "quit", 4)) {
 			quit = TRUE;
 			if (t1->maxhp < 3 * t1->hp && t1->maxlvl < 4)
-				Sprintf(eos(linebuf), "cravenly gave up");
+				Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+					"cravenly gave up");
 			else
-				Sprintf(eos(linebuf), "quit");
-		} else if (!strcmp(t1->death, "choked"))
-			Sprintf(eos(linebuf), "choked on %s food",
+				Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+					"quit");
+		} else if (!strcmp(t1->death, "choked")) {
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				"choked on %s food",
 				(t1->sex == 'F') ? "her" : "his");
-		else if (!strncmp(t1->death, "starv", 5))
-			Sprintf(eos(linebuf), "starved to death"), starv = TRUE;
-		else
-			Sprintf(eos(linebuf), "was killed"), killed = TRUE;
-		Sprintf(eos(linebuf), " on%s level %d",
+		} else if (!strncmp(t1->death, "starv", 5)) {
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				"starved to death");
+			starv = TRUE;
+		} else {
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				"was killed");
+			killed = TRUE;
+		}
+		pos = strlen(linebuf);
+
+		Snprintf(linebuf+pos, sizeof(linebuf)-pos, " on%s level %d",
 			(killed || starv) ? "" : " dungeon", t1->level);
+		pos = strlen(linebuf);
+
 		if (t1->maxlvl != t1->level)
-			Sprintf(eos(linebuf), " [max %d]", t1->maxlvl);
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				" [max %d]", t1->maxlvl);
+		pos = strlen(linebuf);
+
 		if (quit && t1->death[4])
-			Sprintf(eos(linebuf), t1->death + 4);
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				 "%s", t1->death + 4);
+		pos = strlen(linebuf);
 	}
-	if (killed)
-		Sprintf(eos(linebuf), " by %s%s",
+	if (killed) {
+		Snprintf(linebuf+pos, sizeof(linebuf)-pos, " by %s%s",
 			(!strncmp(t1->death, "trick", 5) || !strncmp(t1->death, "the ", 4))
 			? "" :
 			strchr(vowels, *t1->death) ? "an " : "a ",
 			t1->death);
-	Sprintf(eos(linebuf), ".");
+		pos = strlen(linebuf);
+	}
+	strlcat(linebuf, ".", sizeof(linebuf));
+	pos = strlen(linebuf);
 	if (t1->maxhp) {
-		char           *bp = eos(linebuf);
 		char            hpbuf[10];
-		int             hppos;
-		Sprintf(hpbuf, (t1->hp > 0) ? itoa(t1->hp) : "-");
+		unsigned        hppos;
+
+		strlcpy(hpbuf, (t1->hp > 0) ? itoa(t1->hp) : "-", sizeof(hpbuf));
 		hppos = COLNO - 7 - strlen(hpbuf);
-		if (bp <= linebuf + hppos) {
-			while (bp < linebuf + hppos)
-				*bp++ = ' ';
-			(void) strcpy(bp, hpbuf);
-			Sprintf(eos(bp), " [%d]", t1->maxhp);
+		if (pos <= hppos) {
+			while (pos < hppos)
+				linebuf[pos++] = ' ';
+			(void) strlcpy(linebuf+pos, hpbuf, sizeof(linebuf)-pos);
+			pos = strlen(linebuf);
+			Snprintf(linebuf+pos, sizeof(linebuf)-pos,
+				" [%d]", t1->maxhp);
+			pos = strlen(linebuf);
 		}
 	}
 	if (so == 0)
 		puts(linebuf);
 	else if (so > 0) {
-		char           *bp = eos(linebuf);
 		if (so >= COLNO)
 			so = COLNO - 1;
-		while (bp < linebuf + so)
-			*bp++ = ' ';
-		*bp = 0;
+		while (pos < (unsigned)so)
+			linebuf[pos++] = ' ';
+		linebuf[pos] = '\0';
 		standoutbeg();
 		fputs(linebuf, stdout);
 		standoutend();
 		(void) putchar('\n');
 	}
-	return (strlen(linebuf));
+	return /*(strlen(linebuf))*/ pos;
 }
 
 char           *
@@ -580,7 +617,7 @@ itoa(a)
 	int             a;
 {
 	static char     buf[12];
-	Sprintf(buf, "%d", a);
+	Snprintf(buf, sizeof(buf), "%d", a);
 	return (buf);
 }
 

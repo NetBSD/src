@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: extern.h,v 1.6.26.1 2009/06/29 23:43:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -363,7 +363,7 @@ char *sitoa(int);
 char *typename(int);
 char *xname(struct obj *);
 char *doname(struct obj *);
-void setan(const char *, char *);
+void setan(const char *, char *, size_t);
 char *aobjnam(struct obj *, const char *);
 char *Doname(struct obj *);
 struct obj *readobjnam(char *);
