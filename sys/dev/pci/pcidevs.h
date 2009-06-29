@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.992 2009/06/12 23:05:34 rjs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.993 2009/06/29 11:04:05 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.992 2009/06/12 23:00:24 rjs Exp
+ *	NetBSD: pcidevs,v 1.993 2009/06/29 11:02:43 hubertf Exp
  */
 
 /*
@@ -1856,6 +1856,7 @@
 
 /* ENE Technology products */
 #define	PCI_PRODUCT_ENE_MCR510	0x0510		/* MCR510 PCI Memory Card Reader Controller */
+#define	PCI_PRODUCT_ENE_CB712	0x0550		/* CB712/714/810 PCI SD Card Reader Controller */
 #define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB1211 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1225	0x1225		/* CB1225 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB1410 CardBus Controller */
@@ -3906,6 +3907,8 @@
 #define	PCI_PRODUCT_TI_PCI72111CB	0x8031		/* PCI7x21/7x11 Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI72111FW	0x8032		/* PCI7x21/7x11 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_PCI72111FM	0x8033		/* PCI7x21/7x11 Integrated FlashMedia Controller */
+#define	PCI_PRODUCT_TI_PCI72111SD	0x8034		/* PCI7x21/7x11 SD Card Controller */
+#define	PCI_PRODUCT_TI_PCI72111SM	0x8035		/* PCI7x21/7x11 SM Card Controller */
 #define	PCI_PRODUCT_TI_PCI6515A	0x8036		/* PCI6515A Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI6515ASM	0x8038		/* PCI6515A Cardbus Controller (Smart Card mode) */
 #define	PCI_PRODUCT_TI_PCIXX12CB	0x8039		/* PCIXX12 Cardbus Controller */
