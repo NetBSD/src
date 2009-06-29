@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.9.16.1 2009/06/29 23:53:01 snj Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.9.16.2 2009/06/29 23:55:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.9.16.1 2009/06/29 23:53:01 snj Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.9.16.2 2009/06/29 23:55:23 snj Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -193,11 +193,11 @@ gethdate(name)
 		if ((np = strchr(path, ':')) == NULL)
 			np = path + strlen(path);	/* point to end str */
 		if (np - path <= 1)	/* %% */
-			(void) strcpy(filename, name);
+			(void) strlcpy(filename, name, sizeof(filename));
 		else {
-			(void) strncpy(filename, path, np - path);
-			filename[np - path] = '/';
-			(void) strcpy(filename + (np - path) + 1, name);
+			(void) snprintf(filename, sizeof(filename),
+				"%.*s/%s",
+				(int)(np - path), path, name);
 		}
 		if (stat(filename, &hbuf) == 0)
 			return;
