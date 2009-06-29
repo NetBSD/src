@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.265 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.266 2009/06/29 23:39:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.265 2009/06/28 15:18:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.266 2009/06/29 23:39:00 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1001,7 +1001,7 @@ setrunnable(struct lwp *l)
 /*
  * suspendsched:
  *
- *	Convert all non-L_SYSTEM LSSLEEP or LSRUN LWPs to LSSUSPENDED. 
+ *	Convert all non-LW_SYSTEM LSSLEEP or LSRUN LWPs to LSSUSPENDED. 
  */
 void
 suspendsched(void)
