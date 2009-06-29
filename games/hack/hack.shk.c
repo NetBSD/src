@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shk.c,v 1.8 2006/03/30 01:32:27 jnemeth Exp $	*/
+/*	$NetBSD: hack.shk.c,v 1.8.30.1 2009/06/29 23:22:24 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shk.c,v 1.8 2006/03/30 01:32:27 jnemeth Exp $");
+__RCSID("$NetBSD: hack.shk.c,v 1.8.30.1 2009/06/29 23:22:24 snj Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -838,17 +838,19 @@ doinvbill(mode)
 			thisused = bp->price * uquan;
 			totused += thisused;
 			obj->quan = uquan;	/* cheat doname */
-			(void) sprintf(buf, "x -  %s", doname(obj));
+			(void) snprintf(buf, sizeof(buf),
+					"x -  %s", doname(obj));
 			obj->quan = oquan;	/* restore value */
 			for (cnt = 0; buf[cnt]; cnt++);
 			while (cnt < 50)
 				buf[cnt++] = ' ';
-			(void) sprintf(&buf[cnt], " %5ld zorkmids", thisused);
+			(void) snprintf(buf+cnt, sizeof(buf)-cnt,
+					" %5ld zorkmids", thisused);
 			if (page_line(buf))
 				goto quit;
 		}
 	}
-	(void) sprintf(buf, "Total:%50ld zorkmids", totused);
+	(void) snprintf(buf, sizeof(buf), "Total:%50ld zorkmids", totused);
 	if (page_line("") || page_line(buf))
 		goto quit;
 	set_pager(1);

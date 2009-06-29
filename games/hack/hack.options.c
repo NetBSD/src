@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.options.c,v 1.7 2004/01/01 16:02:51 jsm Exp $	*/
+/*	$NetBSD: hack.options.c,v 1.7.42.1 2009/06/29 23:22:24 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.options.c,v 1.7 2004/01/01 16:02:51 jsm Exp $");
+__RCSID("$NetBSD: hack.options.c,v 1.7.42.1 2009/06/29 23:22:24 snj Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -239,7 +239,8 @@ bad:
 int
 doset()
 {
-	char            buf[BUFSZ];
+	char buf[BUFSZ];
+	size_t pos;
 
 	pline("What options do you want to set? ");
 	getlin(buf);
@@ -247,22 +248,24 @@ doset()
 		(void) strcpy(buf, "HACKOPTIONS=");
 		(void) strcat(buf, flags.female ? "female," : "male,");
 		if (flags.standout)
-			(void) strcat(buf, "standout,");
+			(void) strlcat(buf, "standout,", sizeof(buf));
 		if (flags.nonull)
-			(void) strcat(buf, "nonull,");
+			(void) strlcat(buf, "nonull,", sizeof(buf));
 		if (flags.nonews)
-			(void) strcat(buf, "nonews,");
+			(void) strlcat(buf, "nonews,", sizeof(buf));
 		if (flags.time)
-			(void) strcat(buf, "time,");
+			(void) strlcat(buf, "time,", sizeof(buf));
 		if (flags.notombstone)
-			(void) strcat(buf, "notombstone,");
+			(void) strlcat(buf, "notombstone,", sizeof(buf));
 		if (flags.no_rest_on_space)
-			(void) strcat(buf, "!rest_on_space,");
+			(void) strlcat(buf, "!rest_on_space,", sizeof(buf));
 		if (flags.end_top != 5 || flags.end_around != 4 || flags.end_own) {
-			(void) sprintf(eos(buf), "endgame: %u topscores/%u around me",
+			pos = strlen(buf);
+			(void) snprintf(buf+pos, sizeof(buf)-pos,
+				       "endgame: %u topscores/%u around me",
 				       flags.end_top, flags.end_around);
 			if (flags.end_own)
-				(void) strcat(buf, "/own scores");
+				(void) strlcat(buf, "/own scores", sizeof(buf));
 		} else {
 			char           *eop = eos(buf);
 			if (*--eop == ',')
