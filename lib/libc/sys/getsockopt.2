@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.33 2009/06/29 06:22:13 plunky Exp $
+.\"	$NetBSD: getsockopt.2,v 1.34 2009/06/29 08:38:07 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,7 +94,8 @@ and modified on return to indicate the actual size of
 the value returned.
 If no option value is to be supplied or returned,
 .Fa optval
-may be NULL.
+may be
+.Dv NULL .
 .Pp
 .Fa optname
 and any specified options are passed uninterpreted to the appropriate
@@ -365,7 +366,9 @@ can be passed to the accept filter specified by
 to provide additional configuration options at attach time.
 Passing in an
 .Fa optval
-of NULL will remove the filter.
+of
+.Dv NULL
+will remove the filter.
 .Pp
 Finally,
 .Dv SO_TYPE
@@ -402,7 +405,7 @@ this error may also be returned if
 is not in a valid part of the process address space.
 .It Bq Er EINVAL
 The socket
-.Fa s 
+.Fa s
 was not suitable for installing an
 .Xr accept_filter 9 .
 .It Bq Er ENOPROTOOPT
