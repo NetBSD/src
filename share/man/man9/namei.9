@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.20 2009/06/29 05:49:28 dholland Exp $
+.\"     $NetBSD: namei.9,v 1.21 2009/06/29 06:02:09 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nm lookup ,
 .Nm relookup ,
 .Nm NDINIT ,
-.Nm namei_simple_kernel,
+.Nm namei_simple_kernel ,
 .Nm namei_simple_user
 .Nd pathname lookup
 .Sh SYNOPSIS
@@ -155,34 +155,34 @@ interface and the vnode operations, these flags are sometimes used
 The additional flags are:
 .Pp
 .Bl -tag -offset indent -width NOCROSSMOUNT -compact
-.It NOCROSSMOUNT
+.It Dv NOCROSSMOUNT
 do not cross mount points
-.It RDONLY
+.It Dv RDONLY
 lookup with read-only semantics
-.It HASBUF
+.It Dv HASBUF
 caller has allocated pathname buffer
 .Em ni_cnd.cn_pnbuf
-.It SAVENAME
+.It Dv SAVENAME
 save pathname buffer
-.It SAVESTART
+.It Dv SAVESTART
 save starting directory
-.It ISDOTDOT
+.It Dv ISDOTDOT
 current pathname component is ..
-.It MAKEENTRY
+.It Dv MAKEENTRY
 add entry to the name cache
-.It ISLASTCN
+.It Dv ISLASTCN
 this is last component of pathname
-.It ISSYMLINK
+.It Dv ISSYMLINK
 symlink needs interpretation
-.It ISWHITEOUT
+.It Dv ISWHITEOUT
 found whiteout
-.It DOWHITEOUT
+.It Dv DOWHITEOUT
 do whiteouts
-.It REQUIREDIR
+.It Dv REQUIREDIR
 must be a directory
-.It CREATEDIR
+.It Dv CREATEDIR
 trailing slashes are ok
-.It PARAMASK
+.It Dv PARAMASK
 mask of parameter descriptors
 .El
 .Pp
@@ -195,9 +195,13 @@ sets the flag, then the buffer must be freed by either the commit
 routine or the
 .Fn VOP_ABORT
 routine.
-The SAVESTART flag is set only by the callers of
+The
+.Dv SAVESTART
+flag is set only by the callers of
 .Fn namei .
-It implies SAVENAME plus the addition of saving the parent directory
+It implies
+.Dv SAVENAME
+plus the addition of saving the parent directory
 that contains the name in
 .Em ni_startdir .
 It allows repeated calls to
@@ -224,18 +228,24 @@ The
 .Em ndp-\*[Gt]segflg
 flags defines whether the name in
 .Em ndp-\*[Gt]ni_dirp
-is an address in kernel space (UIO_SYSSPACE) or an address in user
-space (UIO_USERSPACE).
+is an address in kernel space
+.Pq Dv UIO_SYSSPACE
+or an address in user space
+.Pq Dv UIO_USERSPACE .
 .Pp
 The vnode for the pathname is returned in
 .Em ndp-\*[Gt]ni_vp .
 The parent directory is returned locked in
 .Em ndp-\*[Gt]ni_dvp
-iff LOCKPARENT is specified.
+iff
+.Dv LOCKPARENT
+is specified.
 .Pp
 If
 .Em ndp-\*[Gt]ni_cnd.cn_flags
-has the FOLLOW flag set then symbolic links are followed when they
+has the
+.Dv FOLLOW
+flag set then symbolic links are followed when they
 occur at the end of the name translation process.
 Symbolic links are always followed for all other pathname components
 other than the last.
@@ -256,7 +266,12 @@ The semantics of
 .Fn lookup
 are altered by the operation specified by
 .Em ndp-\*[Gt]ni_cnd.cn_nameiop .
-When CREATE, RENAME, or DELETE is specified, information usable in
+When
+.Dv CREATE ,
+.Dv RENAME ,
+or
+.Dv DELETE
+is specified, information usable in
 creating, renaming, or deleting a directory entry may be calculated.
 .Pp
 If the target of the pathname exists and LOCKLEAF is set, the target
@@ -315,18 +330,24 @@ and translate it to a vnode, returned in
 .Fa ret .
 The
 .Fa path
-argument must be a kernel (UIO_SYSSPACE) pointer.
+argument must be a kernel
+.Pq Dv UIO_SYSSPACE
+pointer.
 The
 .Fa sflags
 argument chooses the precise behavior.
 It may be set to one of the following symbols:
 .Bl -tag -offset indent -width NSM_NOFOLLOW_TRYEMULROOT -compact
-.It NSM_NOFOLLOW_NOEMULROOT
-.It NSM_NOFOLLOW_TRYEMULROOT
-.It NSM_FOLLOW_NOEMULROOT
-.It NSM_FOLLOW_TRYEMULROOT
+.It Dv NSM_NOFOLLOW_NOEMULROOT
+.It Dv NSM_NOFOLLOW_TRYEMULROOT
+.It Dv NSM_FOLLOW_NOEMULROOT
+.It Dv NSM_FOLLOW_TRYEMULROOT
 .El
-These select (or not) the FOLLOW/NOFOLLOW and TRYEMULROOT flags.
+These select (or not) the
+.Dv FOLLOW/NOFOLLOW
+and
+.Dv TRYEMULROOT
+flags.
 Other flags are not available through this interface, which is
 nonetheless sufficient for more than half the
 .Fn namei
@@ -343,8 +364,9 @@ This function is the same as
 .Fn namei_simple_kernel
 except that the
 .Fa path
-argument shall be a user pointer (UIO_USERSPACE) rather than a kernel
-pointer.
+argument shall be a user pointer
+.Pq Dv UIO_USERSPACE
+rather than a kernel pointer.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
