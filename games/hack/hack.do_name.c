@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_name.c,v 1.9 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.do_name.c,v 1.10 2009/06/29 23:05:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_name.c,v 1.9 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.do_name.c,v 1.10 2009/06/29 23:05:33 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -279,7 +279,7 @@ xmonnam(struct monst *mtmp, int vb)
 				gn = ghostnames[rn2(SIZE(ghostnames))];
 				if (!rn2(2))
 					(void)
-						strcpy((char *) mtmp->mextra, !rn2(5) ? plname : gn);
+						strlcpy((char *) mtmp->mextra, !rn2(5) ? plname : gn, mtmp->mxlth);
 			}
 			(void) snprintf(buf, sizeof(buf), "%s's ghost", gn);
 		}
