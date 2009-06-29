@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pri.c,v 1.8 2003/04/02 18:36:39 jsm Exp $	*/
+/*	$NetBSD: hack.pri.c,v 1.8.26.1 2009/06/29 23:43:48 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pri.c,v 1.8 2003/04/02 18:36:39 jsm Exp $");
+__RCSID("$NetBSD: hack.pri.c,v 1.8.26.1 2009/06/29 23:43:48 snj Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -731,33 +731,47 @@ bot()
 {
 	char           *ob = oldbot, *nb = newbot;
 	int             i;
+	size_t pos;
+
 	if (flags.botlx)
 		*ob = 0;
 	flags.botl = flags.botlx = 0;
 #ifdef GOLD_ON_BOTL
-	(void) sprintf(newbot,
+	(void) snprintf(newbot, sizeof(newbot),
 		       "Level %-2d  Gold %-5lu  Hp %3d(%d)  Ac %-2d  Str ",
 		       dlevel, u.ugold, u.uhp, u.uhpmax, u.uac);
 #else
-	(void) sprintf(newbot,
+	(void) snprintf(newbot, sizeof(newbot),
 		       "Level %-2d   Hp %3d(%d)   Ac %-2d   Str ",
 		       dlevel, u.uhp, u.uhpmax, u.uac);
 #endif	/* GOLD_ON_BOTL */
 	if (u.ustr > 18) {
 		if (u.ustr > 117)
-			(void) strcat(newbot, "18/**");
-		else
-			(void) sprintf(eos(newbot), "18/%02d", u.ustr - 18);
-	} else
-		(void) sprintf(eos(newbot), "%-2d   ", u.ustr);
+			(void) strlcat(newbot, "18/**", sizeof(newbot));
+		else {
+			pos = strlen(newbot);
+			(void) snprintf(newbot+pos, sizeof(newbot)-pos,
+					"18/%02d", u.ustr - 18);
+		}
+	} else {
+		pos = strlen(newbot);
+		(void) snprintf(newbot+pos, sizeof(newbot)-pos,
+				"%-2d   ", u.ustr);
+	}
+	pos = strlen(newbot);
 #ifdef EXP_ON_BOTL
-	(void) sprintf(eos(newbot), "  Exp %2d/%-5lu ", u.ulevel, u.uexp);
+	(void) snprintf(newbot+pos, sizeof(newbot)-pos,
+			"  Exp %2d/%-5lu ", u.ulevel, u.uexp);
 #else
-	(void) sprintf(eos(newbot), "   Exp %2u  ", u.ulevel);
+	(void) snprintf(newbot+pos, sizeof(newbot)-pos,
+			"   Exp %2u  ", u.ulevel);
 #endif	/* EXP_ON_BOTL */
-	(void) strcat(newbot, hu_stat[u.uhs]);
-	if (flags.time)
-		(void) sprintf(eos(newbot), "  %ld", moves);
+	(void) strlcat(newbot, hu_stat[u.uhs], sizeof(newbot));
+	if (flags.time) {
+		pos = strlen(newbot);
+		(void) snprintf(newbot+pos, sizeof(newbot)-pos,
+				"  %ld", moves);
+	}
 	if (strlen(newbot) >= COLNO) {
 		char           *bp0, *bp1;
 		bp0 = bp1 = newbot;
