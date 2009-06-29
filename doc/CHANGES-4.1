@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.160 2009/06/28 19:52:37 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.161 2009/06/29 23:57:49 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3500,4 +3500,27 @@ games/hunt/huntd/answer.c			1.10
 	Fix possible remote DoS of a running hunt game, and prevent
 	a possible theoretical attack involving >= 1 billion ammo.
 	[dholland, ticket #1330]
+
+games/hack/extern.h				1.11
+games/hack/hack.do_name.c			1.9, 1.10
+games/hack/hack.eat.c				1.8
+games/hack/hack.end.c				1.12 via patch
+games/hack/hack.fight.c				1.10 via patch
+games/hack/hack.h				1.13 via patch
+games/hack/hack.invent.c			1.12, 1.13
+games/hack/hack.main.c				1.12, 1.13
+games/hack/hack.objnam.c			1.9
+games/hack/hack.options.c			1.9  
+games/hack/hack.pri.c				1.11
+games/hack/hack.rip.c				1.10, 1.11
+games/hack/hack.shk.c				1.10
+games/hack/hack.topl.c				1.10, 1.11
+games/hack/hack.unix.c				1.12, 1.13
+        
+	sprintf -> snprintf, plus some use of strlcpy/strlcat where
+       	appropriate.
+	Fix two serious string-handling bugs (one exploitable, one
+	probably exploitable) and also add proper checking/paranoia
+	in several other places.
+	[dholland, ticket #1331]
 
