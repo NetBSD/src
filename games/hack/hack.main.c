@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.9 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.9.16.1 2009/06/29 23:53:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.9 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.9.16.1 2009/06/29 23:53:01 snj Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -308,7 +308,7 @@ main(argc, argv)
 	}
 #endif
 	setftty();
-	(void) sprintf(SAVEF, "save/%d%s", getuid(), plname);
+	(void) snprintf(SAVEF, sizeof(SAVEF), "save/%d%s", getuid(), plname);
 	regularize(SAVEF + 5);	/* avoid . or / in name */
 	if ((fd = open(SAVEF, O_RDONLY)) >= 0 &&
 	    (uptodate(fd) || unlink(SAVEF) == 666)) {
