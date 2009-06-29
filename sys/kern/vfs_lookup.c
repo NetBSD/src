@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.115 2009/06/26 15:49:03 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.116 2009/06/29 05:00:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.115 2009/06/26 15:49:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.116 2009/06/29 05:00:14 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1009,4 +1009,77 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 bad:
 	*vpp = NULL;
 	return (error);
+}
+
+/*
+ * namei_simple - simple forms of namei.
+ *
+ * These are wrappers to allow the simple case callers of namei to be
+ * left alone while everything else changes under them.
+ */
+
+/* Flags */
+struct namei_simple_flags_type {
+	int dummy;
+};
+static const struct namei_simple_flags_type ns_nn, ns_nt, ns_fn, ns_ft;
+const namei_simple_flags_t NSM_NOFOLLOW_NOEMULROOT = &ns_nn;
+const namei_simple_flags_t NSM_NOFOLLOW_TRYEMULROOT = &ns_nt;
+const namei_simple_flags_t NSM_FOLLOW_NOEMULROOT = &ns_fn;
+const namei_simple_flags_t NSM_FOLLOW_TRYEMULROOT = &ns_ft;
+
+static
+int
+namei_simple_convert_flags(namei_simple_flags_t sflags)
+{
+	if (sflags == NSM_NOFOLLOW_NOEMULROOT)
+		return NOFOLLOW | 0;
+	if (sflags == NSM_NOFOLLOW_TRYEMULROOT)
+		return NOFOLLOW | TRYEMULROOT;
+	if (sflags == NSM_FOLLOW_NOEMULROOT)
+		return FOLLOW | 0;
+	if (sflags == NSM_FOLLOW_TRYEMULROOT)
+		return FOLLOW | TRYEMULROOT;
+	panic("namei_simple_convert_flags: bogus sflags\n");
+	return 0;
+}
+
+int
+namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
+			struct vnode **vp_ret)
+{
+	struct nameidata nd;
+	int err;
+
+	NDINIT(&nd,
+		LOOKUP,
+		namei_simple_convert_flags(sflags),
+		UIO_SYSSPACE,
+		path);
+	err = namei(&nd);
+	if (err != 0) {
+		return err;
+	}
+	*vp_ret = nd.ni_vp;
+	return 0;
+}
+
+int
+namei_simple_user(const char *path, namei_simple_flags_t sflags,
+			struct vnode **vp_ret)
+{
+	struct nameidata nd;
+	int err;
+
+	NDINIT(&nd,
+		LOOKUP,
+		namei_simple_convert_flags(sflags),
+		UIO_USERSPACE,
+		path);
+	err = namei(&nd);
+	if (err != 0) {
+		return err;
+	}
+	*vp_ret = nd.ni_vp;
+	return 0;
 }
