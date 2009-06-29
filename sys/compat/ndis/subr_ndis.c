@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.21 2009/05/11 21:34:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.22 2009/06/29 05:08:16 dholland Exp $");
 #endif
 
 /*
@@ -3162,6 +3162,7 @@ NdisOpenFile(ndis_status *status, ndis_handle *filehandle, uint32_t *filelength,
 	if (td->td_proc->p_fd->fd_cdir == NULL)
 		td->td_proc->p_fd->fd_cdir = rootvnode;
 
+	/* freebsd-only code; don't modernize this - dholland */
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, td);
 
 	flags = FREAD;
