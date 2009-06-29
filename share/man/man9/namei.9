@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.18 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: namei.9,v 1.19 2009/06/29 05:17:14 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,9 @@
 .Nm namei ,
 .Nm lookup ,
 .Nm relookup ,
-.Nm NDINIT
+.Nm NDINIT ,
+.Nm namei_simple_kernel,
+.Nm namei_simple_user
 .Nd pathname lookup
 .Sh SYNOPSIS
 .In sys/namei.h
@@ -50,6 +52,12 @@
 .Ft void
 .Fn NDINIT "struct nameidata *ndp" "u_long op" "u_long flags" \
 "enum uio_seg segflg" "const char *namep"
+.Ft int
+.Fn namei_simple_kernel "const char *path" "namei_simple_flags_t sflags" \
+"struct vnode **ret"
+.Ft int
+.Fn namei_simple_user "const char *path" "namei_simple_flags_t sflags" \
+"struct vnode **ret"
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,7 +71,8 @@ for name-to-inode conversion, in the days before the
 .Xr vfs 9
 interface was implemented.
 .Pp
-The arguments passed to the functions are encapsulated in the
+Except for the simple forms, the arguments passed to the functions are
+encapsulated in the
 .Em nameidata
 structure.
 It has the following structure:
@@ -299,6 +308,43 @@ In the rare case that another set of credentials is required for the
 namei operation,
 .Em ndp-\*[Gt]ni_cnd.cn_cred
 must be set manually.
+.It Fn namei_simple_kernel "path" "sflags" "ret"
+Look up the path
+.Fa path
+and translate it to a vnode, returned in
+.Fa ret .
+The
+.Fa path
+argument must be a kernel (UIO_SYSSPACE) pointer.
+The
+.Fa sflags
+argument chooses the precise behavior.
+It may be set to one of the following symbols:
+.Bl -tag -offset indent -width NSM_NOFOLLOW_TRYEMULROOT -compact
+.It NSM_NOFOLLOW_NOEMULROOT
+.It NSM_NOFOLLOW_TRYEMULROOT
+.It NSM_FOLLOW_NOEMULROOT
+.It NSM_FOLLOW_TRYEMULROOT
+.El
+These select (or not) the FOLLOW/NOFOLLOW and TRYEMULROOT flags.
+Other flags are not available through this interface, which is
+nonetheless sufficient for more than half the
+.Fn namei
+usage in the kernel.
+Note that the encoding of
+.Fa sflags
+has deliberately been arranged to be type-incompatible with anything
+else.
+This prevents various possible accidents while the
+.Fn namei
+interface is being rototilled.
+.It Fn namei_simple_user "path" "sflags" "ret"
+This function is the same as
+.Fn namei_simple_kernel
+except that the
+.Fa path
+argument shall be a user pointer (UIO_USERSPACE) rather than a kernel
+pointer.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
