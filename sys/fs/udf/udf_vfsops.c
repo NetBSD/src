@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.57 2009/06/24 17:09:13 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.57 2009/06/24 17:09:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $");
 #endif /* not lint */
 
 
@@ -316,7 +316,6 @@ udf_mount(struct mount *mp, const char *path,
 	  void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct udf_args *args = data;
 	struct udf_mount *ump;
 	struct vnode *devvp;
@@ -353,11 +352,10 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-	error = namei(&nd);
+	error = namei_simple_user(args->fspec,
+				NSM_FOLLOW_NOEMULROOT, &devvp);
 	if (error)
 		return error;
-	devvp = nd.ni_vp;
 
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_VOLUMES)

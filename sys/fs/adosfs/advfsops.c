@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.57 2009/04/25 18:53:44 elad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.57 2009/04/25 18:53:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -88,7 +88,6 @@ int
 adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct vnode *devvp;
 	struct adosfs_args *args = data;
 	struct adosfsmount *amp;
@@ -120,10 +119,10 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(args->fspec,
+				NSM_FOLLOW_NOEMULROOT, &devvp);
+	if (error != 0)
 		return (error);
-	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);

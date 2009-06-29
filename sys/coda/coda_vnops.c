@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.69 2009/01/11 02:45:46 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.70 2009/06/29 05:08:15 dholland Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.69 2009/01/11 02:45:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.70 2009/06/29 05:08:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,8 +495,8 @@ coda_ioctl(void *v)
 /* locals */
     int error;
     struct vnode *tvp;
-    struct nameidata ndp;
     struct PioctlData *iap = (struct PioctlData *)data;
+    namei_simple_flags_t sflags;
 
     MARK_ENTRY(CODA_IOCTL_STATS);
 
@@ -516,10 +516,8 @@ coda_ioctl(void *v)
     /* Should we use the name cache here? It would get it from
        lookupname sooner or later anyway, right? */
 
-    NDINIT(&ndp, LOOKUP, (iap->follow ? FOLLOW : NOFOLLOW), UIO_USERSPACE,
-	iap->path);
-    error = namei(&ndp);
-    tvp = ndp.ni_vp;
+    sflags = iap->follow ? NSM_FOLLOW_NOEMULROOT : NSM_NOFOLLOW_NOEMULROOT;
+    error = namei_simple_user(iap->path, sflags, &tvp);
 
     if (error) {
 	MARK_INT_FAIL(CODA_IOCTL_STATS);
