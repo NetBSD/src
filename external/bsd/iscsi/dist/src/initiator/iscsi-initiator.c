@@ -102,6 +102,33 @@ typedef struct sti_t {
 #define __UNCONST(x)	(x)
 #endif
 
+static void
+lba2cdb(uint8_t *cdb, uint32_t *lba, uint16_t *len)
+{
+	/* Some platforms (like strongarm) aligns on */
+	/* word boundaries.  So HTONL and NTOHL won't */
+	/* work here. */
+	int	little_endian = 1;
+
+	if (*(char *) (void *) &little_endian) {
+		/* little endian */
+		cdb[2] = ((uint8_t *) (void *)lba)[3];
+		cdb[3] = ((uint8_t *) (void *)lba)[2];
+		cdb[4] = ((uint8_t *) (void *)lba)[1];
+		cdb[5] = ((uint8_t *) (void *)lba)[0];
+		cdb[7] = ((uint8_t *) (void *)len)[1];
+		cdb[8] = ((uint8_t *) (void *)len)[0];
+	} else {
+		/* big endian */
+		cdb[2] = ((uint8_t *) (void *)lba)[2];
+		cdb[3] = ((uint8_t *) (void *)lba)[3];
+		cdb[4] = ((uint8_t *) (void *)lba)[0];
+		cdb[5] = ((uint8_t *) (void *)lba)[1];
+		cdb[7] = ((uint8_t *) (void *)len)[0];
+		cdb[8] = ((uint8_t *) (void *)len)[1];
+	}
+}
+
 /* read the capacity (maximum LBA and blocksize) from the target */
 int 
 read_capacity(uint64_t target, uint32_t lun, uint32_t *maxlba, uint32_t *blocklen)
@@ -129,21 +156,21 @@ read_capacity(uint64_t target, uint32_t lun, uint32_t *maxlba, uint32_t *blockle
 	cmd.ptr = &args;
 
 	if (initiator_command(&cmd) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "initiator_command() failed\n");
+		iscsi_err(__FILE__, __LINE__, "initiator_command() failed\n");
 		return -1;
 	}
 	if (args.status) {
-		iscsi_trace_error(__FILE__, __LINE__, "READ_CAPACITY failed (status %#x)\n", args.status);
+		iscsi_err(__FILE__, __LINE__, "READ_CAPACITY failed (status %#x)\n", args.status);
 		return -1;
 	}
 	*maxlba = ISCSI_NTOHL(*((uint32_t *) (data)));
 	*blocklen = ISCSI_NTOHL(*((uint32_t *) (data + 4)));
 	if (*maxlba == 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "Device returned Maximum LBA of zero\n");
+		iscsi_err(__FILE__, __LINE__, "Device returned Maximum LBA of zero\n");
 		return -1;
 	}
 	if (*blocklen % 2) {
-		iscsi_trace_error(__FILE__, __LINE__, "Device returned strange block len: %u\n", *blocklen);
+		iscsi_err(__FILE__, __LINE__, "Device returned strange block len: %u\n", *blocklen);
 		return -1;
 	}
 	return 0;
@@ -175,11 +202,11 @@ inquiry(uint64_t target, uint32_t lun, uint8_t type, uint8_t inquire, uint8_t *d
 	cmd.ptr = &args;
 
 	if (initiator_command(&cmd) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "initiator_command() failed\n");
+		iscsi_err(__FILE__, __LINE__, "initiator_command() failed\n");
 		return -1;
 	}
 	if (args.status) {
-		iscsi_trace_error(__FILE__, __LINE__, "INQUIRY failed (status %#x)\n", args.status);
+		iscsi_err(__FILE__, __LINE__, "INQUIRY failed (status %#x)\n", args.status);
 		return -1;
 	}
 
@@ -222,12 +249,12 @@ blockop(uint64_t target, uint32_t lun, uint32_t lba, uint32_t len,
 	cmd.ptr = &args;
 	/* Execute iSCSI command */
 	if (initiator_command(&cmd) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "initiator_command() failed\n");
+		iscsi_err(__FILE__, __LINE__, "initiator_command() failed\n");
 		return -1;
 	}
 
 	if (args.status) {
-		iscsi_trace_error(__FILE__, __LINE__, "scsi_command() failed (status %#x)\n", args.status);
+		iscsi_err(__FILE__, __LINE__, "scsi_command() failed (status %#x)\n", args.status);
 		return -1;
 	}
 	return 0;
@@ -271,11 +298,11 @@ sgblockop(uint64_t target, uint32_t lun, uint32_t lba, uint32_t len,
 	/* Execute iSCSI command */
 
 	if (initiator_command(&cmd) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "initiator_command() failed\n");
+		iscsi_err(__FILE__, __LINE__, "initiator_command() failed\n");
 		return -1;
 	}
 	if (args.status) {
-		iscsi_trace_error(__FILE__, __LINE__, "scsi_command() failed (status %#x)\n", args.status);
+		iscsi_err(__FILE__, __LINE__, "scsi_command() failed (status %#x)\n", args.status);
 		return -1;
 	}
 	return 0;
@@ -296,7 +323,7 @@ targetop(uint32_t t, uint64_t offset, uint32_t length, uint32_t request, char *b
 		if ((ioc * SGsize) < request)
 			ioc++;
 		if ((iov = iscsi_malloc(ioc * sizeof(*iov))) == NULL) {
-			iscsi_trace_error(__FILE__, __LINE__, "out of memory\n");
+			iscsi_err(__FILE__, __LINE__, "out of memory\n");
 			return -1;
 		}
 
@@ -311,7 +338,7 @@ targetop(uint32_t t, uint64_t offset, uint32_t length, uint32_t request, char *b
 
 		if (sgblockop(tv.v[t].target, tv.v[t].lun, offset / tv.v[t].blocksize, (length / tv.v[t].blocksize), tv.v[t].blocksize, (uint8_t *) iov, ioc, writing) != 0) {
 			iscsi_free(iov);
-			iscsi_trace_error(__FILE__, __LINE__, "read_10() failed\n");
+			iscsi_err(__FILE__, __LINE__, "read_10() failed\n");
 			return -1;
 		}
 		iscsi_free(iov);
@@ -321,7 +348,7 @@ targetop(uint32_t t, uint64_t offset, uint32_t length, uint32_t request, char *b
 			req_len++;
 		if (blockop(tv.v[t].target, tv.v[t].lun, offset / tv.v[t].blocksize, 
 				req_len, tv.v[t].blocksize, (uint8_t *) buf, writing) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "read_10() failed\n");
+			iscsi_err(__FILE__, __LINE__, "read_10() failed\n");
 			return -1;
 		}
 	}
@@ -527,7 +554,8 @@ main(int argc, char **argv)
 	discover = 0;
 	(void) stat("/etc/hosts", &sti.st);
 	devtype = 'f';
-	while ((i = getopt(argc, argv, "46a:bcd:Dfh:p:t:u:vV")) != -1) {
+	iscsi_initiator_setvar(&ini, "address family", "4");
+	while ((i = getopt(argc, argv, "46a:bcd:Dfh:p:t:u:v:V")) != -1) {
 		switch(i) {
 		case '4':
 		case '6':
@@ -566,34 +594,48 @@ main(int argc, char **argv)
 			iscsi_initiator_setvar(&ini, "user", optarg);
 			break;
 		case 'V':
-			(void) printf("\"%s\" %s\nPlease send all bug reports to %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
+			(void) printf("\"%s\" %s\nPlease send all bug reports "
+					"to %s\n",
+					PACKAGE_NAME,
+					PACKAGE_VERSION,
+					PACKAGE_BUGREPORT);
 			exit(EXIT_SUCCESS);
 			/* NOTREACHED */
 		case 'v':
 			verbose += 1;
+			if (strcmp(optarg, "net") == 0) {
+				iscsi_initiator_setvar(&ini, "debug", "net");
+			} else if (strcmp(optarg, "iscsi") == 0) {
+				iscsi_initiator_setvar(&ini, "debug", "iscsi");
+			} else if (strcmp(optarg, "scsi") == 0) {
+				iscsi_initiator_setvar(&ini, "debug", "scsi");
+			} else if (strcmp(optarg, "all") == 0) {
+				iscsi_initiator_setvar(&ini, "debug", "all");
+			}
 			break;
 		default:
-			(void) fprintf(stderr, "%s: unknown option `%c'", *argv, i);
+			(void) fprintf(stderr, "%s: unknown option `%c'",
+					*argv, i);
 		}
 	}
 	if (iscsi_initiator_getvar(&ini, "user") == NULL) {
-		iscsi_trace_error(__FILE__, __LINE__, "user must be specified with -u");
+		iscsi_err(__FILE__, __LINE__, "user must be specified with -u");
 		exit(EXIT_FAILURE);
 	}
 
-	if (initiator_start(&ini) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
+	if (iscsi_initiator_start(&ini) == -1) {
+		iscsi_err(__FILE__, __LINE__, "initiator_init() failed\n");
 		exit(EXIT_FAILURE);
 	}
 
-
-        if (initiator_discover(host, 0, 0) < 0) {
+        if (iscsi_initiator_discover(host, 0, 0) < 0) {
                 printf("initiator_discover() in discover failed\n");
 		exit(EXIT_FAILURE);
 	}
 
-        if (initiator_get_targets(0,&all_targets) == -1) {
- 		iscsi_trace_error(__FILE__, __LINE__, "initiator_get_targets() failed\n");
+        if (iscsi_initiator_get_targets(0,&all_targets) == -1) {
+ 		iscsi_err(__FILE__, __LINE__,
+			"initiator_get_targets() failed\n");
                	exit(EXIT_FAILURE);
 	}
 
@@ -609,8 +651,14 @@ main(int argc, char **argv)
         }
 
 	if (all_targets.c/2 > CONFIG_INITIATOR_NUM_TARGETS) {
-		(void) fprintf(stderr, "CONFIG_INITIATOR_NUM_TARGETS in initiator.h is too small.  %d targets available, only %d configurable.\n", all_targets.c/2, CONFIG_INITIATOR_NUM_TARGETS);
-		(void) fprintf(stderr, "Truncating number of targets to %d.\n", CONFIG_INITIATOR_NUM_TARGETS);
+		(void) fprintf(stderr,
+			"CONFIG_INITIATOR_NUM_TARGETS in initiator.h "
+			"is too small.  %d targets available, "
+			"only %d configurable.\n",
+			all_targets.c/2, CONFIG_INITIATOR_NUM_TARGETS);
+		(void) fprintf(stderr,
+			"Truncating number of targets to %d.\n",
+			CONFIG_INITIATOR_NUM_TARGETS);
 		all_targets.c = CONFIG_INITIATOR_NUM_TARGETS;
 	}
 
@@ -629,8 +677,8 @@ main(int argc, char **argv)
 
 		initiator_set_target_name(u, all_targets.v[u * 2]);
 
-		if (initiator_discover(host, u, 0) < 0) {
-			printf("initiator_discover() failed\n");
+		if (iscsi_initiator_discover(host, u, 0) < 0) {
+			printf("iscsi_initiator_discover() failed\n");
 			break;
 		}
 
@@ -660,34 +708,49 @@ main(int argc, char **argv)
 		inquiry(u, 0, 0, 0, data);
 		tv.v[tv.c].devicetype = (data[0] & 0x1f);
 		(void) memcpy(tv.v[tv.c].vendor, &data[8], VendorLen);
-		(void) memcpy(tv.v[tv.c].product, &data[8 + VendorLen], ProductLen);
-		(void) memcpy(tv.v[tv.c].version, &data[8 + VendorLen + ProductLen], VersionLen);
+		(void) memcpy(tv.v[tv.c].product, &data[8 + VendorLen],
+				ProductLen);
+		(void) memcpy(tv.v[tv.c].version,
+				&data[8 + VendorLen + ProductLen], VersionLen);
 		(void) memset(data, 0x0, sizeof(data));
-		inquiry(u, 0, INQUIRY_EVPD_BIT, INQUIRY_UNIT_SERIAL_NUMBER_VPD, data);
+		inquiry(u, 0, INQUIRY_EVPD_BIT, INQUIRY_UNIT_SERIAL_NUMBER_VPD,
+				data);
 		tv.v[tv.c].serial = strdup((char *)&data[4]);
 
+		/* create the tree using virtdir routines */
 		cc = snprintf(name, sizeof(name), "/%s/%s", host, colon);
 		virtdir_add(&iscsi, name, cc, 'd', name, cc);
-		cc = snprintf(name, sizeof(name), "/%s/%s/storage", host, colon);
-		virtdir_add(&iscsi, name, cc, devtype, (void *)&sti, sizeof(sti));
-		cc = snprintf(name, sizeof(name), "/%s/%s/hostname", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tinfo.name, strlen(tinfo.name));
+		cc = snprintf(name, sizeof(name), "/%s/%s/storage", host,
+				colon);
+		virtdir_add(&iscsi, name, cc, devtype, (void *)&sti,
+				sizeof(sti));
+		cc = snprintf(name, sizeof(name), "/%s/%s/hostname", host,
+				colon);
+		virtdir_add(&iscsi, name, cc, 'l', tinfo.name,
+				strlen(tinfo.name));
 		cc = snprintf(name, sizeof(name), "/%s/%s/ip", host, colon);
 		virtdir_add(&iscsi, name, cc, 'l', tinfo.ip, strlen(tinfo.ip));
-		cc = snprintf(name, sizeof(name), "/%s/%s/targetname", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tinfo.TargetName, strlen(tinfo.TargetName));
+		cc = snprintf(name, sizeof(name), "/%s/%s/targetname", host,
+				colon);
+		virtdir_add(&iscsi, name, cc, 'l', tinfo.TargetName,
+				strlen(tinfo.TargetName));
 		cc = snprintf(name, sizeof(name), "/%s/%s/vendor", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].vendor, strlen(tv.v[tv.c].vendor));
-		cc = snprintf(name, sizeof(name), "/%s/%s/product", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].product, strlen(tv.v[tv.c].product));
-		cc = snprintf(name, sizeof(name), "/%s/%s/version", host, colon);
-		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].version, strlen(tv.v[tv.c].version));
+		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].vendor,
+				strlen(tv.v[tv.c].vendor));
+		cc = snprintf(name, sizeof(name), "/%s/%s/product", host,
+				colon);
+		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].product,
+				strlen(tv.v[tv.c].product));
+		cc = snprintf(name, sizeof(name), "/%s/%s/version", host,
+				colon);
+		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].version,
+				strlen(tv.v[tv.c].version));
 		if (tv.v[tv.c].serial[0] && tv.v[tv.c].serial[0] != ' ') {
-			cc = snprintf(name, sizeof(name), "/%s/%s/serial", host, colon);
-			virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].serial, strlen(tv.v[tv.c].serial));
+			cc = snprintf(name, sizeof(name), "/%s/%s/serial",
+				host, colon);
+			virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].serial,
+				strlen(tv.v[tv.c].serial));
 		}
-
-
 		tv.c += 1;
 	}
 	return fuse_main(argc - optind, argv + optind, &iscsiops, NULL);

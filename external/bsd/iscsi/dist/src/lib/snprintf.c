@@ -40,7 +40,7 @@
 #endif
 
 #if 0
-RCSID("$Id: snprintf.c,v 1.1 2009/06/25 13:47:11 agc Exp $");
+RCSID("$Id: snprintf.c,v 1.2 2009/06/30 02:44:52 agc Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>

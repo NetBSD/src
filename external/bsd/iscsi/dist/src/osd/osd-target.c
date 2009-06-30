@@ -1,4 +1,4 @@
-/* $NetBSD: osd-target.c,v 1.1 2009/06/25 13:48:42 agc Exp $ */
+/* $NetBSD: osd-target.c,v 1.2 2009/06/30 02:44:52 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © 2006 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: osd-target.c,v 1.1 2009/06/25 13:48:42 agc Exp $");
+__RCSID("$NetBSD: osd-target.c,v 1.2 2009/06/30 02:44:52 agc Exp $");
 #endif
 #include "config.h"
 
@@ -77,7 +77,7 @@ handler(int s)
 	if (ISCSI_GETPID != g_main_pid)
 		return;
 	if (target_shutdown(&g) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "target_shutdown() failed\n");
+		iscsi_err(__FILE__, __LINE__, "target_shutdown() failed\n");
 		return;
 	}
 	return;
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 	/* Initialize target */
 	for (i = optind ; i < argc ; i++) {
 		if (target_init(&g, &tv, TargetName, i) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "target_init() failed\n");
+			iscsi_err(__FILE__, __LINE__, "target_init() failed\n");
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 #ifdef HAVE_DAEMON
 	/* if we are supposed to be a daemon, detach from controlling tty */
 	if (detach_me_harder && daemon(0, 0) < 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "daemon() failed\n");
+		iscsi_err(__FILE__, __LINE__, "daemon() failed\n");
 		exit(EXIT_FAILURE);
 	}
 #endif
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 
 	/* Wait for connections */
 	if (target_listen(&g) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "target_listen() failed\n");
+		iscsi_err(__FILE__, __LINE__, "target_listen() failed\n");
 	}
 
 	return EXIT_SUCCESS;
