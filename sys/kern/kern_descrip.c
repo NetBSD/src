@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.197 2009/06/08 00:19:56 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.198 2009/06/30 20:32:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.197 2009/06/08 00:19:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.198 2009/06/30 20:32:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1423,6 +1423,8 @@ fd_copy(void)
 		}
 		if (__predict_false(fp->f_type == DTYPE_KQUEUE)) {
 			/* kqueue descriptors cannot be copied. */
+                       if (i < newfdp->fd_freefile)
+                               newfdp->fd_freefile = i;
 			continue;
 		}
 		/* It's active: add a reference to the file. */
