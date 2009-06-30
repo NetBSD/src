@@ -159,6 +159,17 @@ print_usage(const char *usagemsg, char *progname)
 		progname, progname, usagemsg);
 }
 
+/* check the file is not NULL */
+static int
+nonnull(char *f, char *progname)
+{
+	if (f == NULL) {
+		(void) fprintf(stderr, "%s: No filename provided\n", progname);
+		return 0;
+	}
+	return 1;
+}
+
 /* do a command once for a specified file 'f' */
 static int
 netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
@@ -167,30 +178,37 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 
 	switch (p->cmd) {
 	case ENCRYPT:
-		return netpgp_encrypt_file(netpgp,
+		return nonnull(f, p->progname) &&
+			netpgp_encrypt_file(netpgp,
 					netpgp_getvar(netpgp, "userid"),
 					f, p->output,
 					p->armour);
 	case DECRYPT:
-		return netpgp_decrypt_file(netpgp, f, p->output, p->armour);
+		return nonnull(f, p->progname) &&
+			netpgp_decrypt_file(netpgp, f, p->output, p->armour);
 	case SIGN:
-		return netpgp_sign_file(netpgp,
+		return nonnull(f, p->progname) &&
+			netpgp_sign_file(netpgp,
 					netpgp_getvar(netpgp, "userid"),
 					f, p->output,
 					p->armour, !cleartext, p->detached);
 	case CLEARSIGN:
-		return netpgp_sign_file(netpgp,
+		return nonnull(f, p->progname) &&
+			netpgp_sign_file(netpgp,
 					netpgp_getvar(netpgp, "userid"),
 					f, p->output,
 					p->armour, cleartext, p->detached);
 	case VERIFY:
-		return netpgp_verify_file(netpgp, f, NULL, p->armour);
+		return nonnull(f, p->progname) &&
+			netpgp_verify_file(netpgp, f, NULL, p->armour);
 	case VERIFY_CAT:
-		return netpgp_verify_file(netpgp, f,
+		return nonnull(f, p->progname) &&
+			netpgp_verify_file(netpgp, f,
 					(p->output) ? p->output : "-",
 					p->armour);
 	case LIST_PACKETS:
-		return netpgp_list_packets(netpgp, f, p->armour, NULL);
+		return nonnull(f, p->progname) &&
+			netpgp_list_packets(netpgp, f, p->armour, NULL);
 	case HELP_CMD:
 	default:
 		print_usage(usage, p->progname);
