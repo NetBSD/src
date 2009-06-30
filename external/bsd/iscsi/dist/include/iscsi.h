@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi.h,v 1.2 2009/06/25 13:47:09 agc Exp $ */
+/* $NetBSD: iscsi.h,v 1.3 2009/06/30 02:44:52 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ int iscsi_target_shutdown(iscsi_target_t *);
 void iscsi_target_write_pidfile(const char *);
 int iscsi_target_setvar(iscsi_target_t *, const char *, const char *);
 char *iscsi_target_getvar(iscsi_target_t *, const char *);
+int iscsi_target_reconfigure(iscsi_target_t *);
 
 typedef struct iscsi_initiator_t {
 	uint32_t	c;			/* # of vars */
@@ -71,10 +72,10 @@ typedef struct iscsi_initiator_t {
 } iscsi_initiator_t;
 
 int iscsi_initiator_set_defaults(iscsi_initiator_t *);
-int initiator_start(iscsi_initiator_t *);
-int initiator_info(char *, int, int);
-int initiator_shutdown(void);
-int initiator_discover(char *, uint64_t, int);
+int iscsi_initiator_start(iscsi_initiator_t *);
+int iscsi_initiator_info(char *, int, int);
+int iscsi_initiator_shutdown(void);
+int iscsi_initiator_discover(char *, uint64_t, int);
 
 int iscsi_initiator_setvar(iscsi_initiator_t *, const char *, const char *);
 char *iscsi_initiator_getvar(iscsi_initiator_t *, const char *);

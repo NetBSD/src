@@ -53,25 +53,25 @@ extract_attribute(uint32_t page, uint32_t n, uint16_t len,
 
 	for (i = 0; i < length;) {
 		if (ISCSI_NTOHL(*(uint32_t *) (data + i)) != page) {
-			iscsi_trace_error(__FILE__, __LINE__, "page mismatch: got 0x%x, expected 0x%x\n", ISCSI_NTOHL(*(uint32_t *) (data + i)), page);
+			iscsi_err(__FILE__, __LINE__, "page mismatch: got 0x%x, expected 0x%x\n", ISCSI_NTOHL(*(uint32_t *) (data + i)), page);
 			return -1;
 		}
 		i += 4;
 		if (ISCSI_NTOHL(*(uint32_t *) (data + i)) != n) {
-			iscsi_trace_error(__FILE__, __LINE__, "index mismatch\n");
+			iscsi_err(__FILE__, __LINE__, "index mismatch\n");
 			return -1;
 		}
 		i += 4;
 		if (ISCSI_NTOHS(*(uint16_t *) (data + i)) != len) {
-			iscsi_trace_error(__FILE__, __LINE__, "len mismatch\n");
+			iscsi_err(__FILE__, __LINE__, "len mismatch\n");
 			return -1;
 		}
 		i += 2;
-		iscsi_trace(TRACE_DEBUG, __FILE__, __LINE__, "page 0x%x, index %u, len %u\n", page, n, len);
+		iscsi_trace(TRACE_DEBUG, "page 0x%x, index %u, len %u\n", page, n, len);
 		memcpy(val, data + i, len);
 		i += len;
 	}
-	iscsi_trace(TRACE_DEBUG, __FILE__, __LINE__, "parsed %i bytes\n", i);
+	iscsi_trace(TRACE_DEBUG, "parsed %i bytes\n", i);
 	return i;
 }
 
@@ -113,15 +113,15 @@ osd_create_group(void *dev,
 
 	args.get_attributes_allocation_length = 14;
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
 	if (extract_attribute(0x40000001, 0x1, 4, get_data, 14, GroupID) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "extract_attributes() failed\n");
+		iscsi_err(__FILE__, __LINE__, "extract_attributes() failed\n");
 		return -1;
 	}
 	*GroupID = ISCSI_NTOHL(*GroupID);
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_create_group() OK --> GroupID 0x%x\n", *GroupID);
+	iscsi_trace(TRACE_OSD, "osd_create_group() OK --> GroupID 0x%x\n", *GroupID);
 
 	return 0;
 }
@@ -164,15 +164,15 @@ osd_create(void *dev, uint32_t GroupID,
 
 	args.get_attributes_allocation_length = 18;
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
 	if (extract_attribute(0x00000001, 0x2, 8, get_data, 18, UserID) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "extract_attributes() failed\n");
+		iscsi_err(__FILE__, __LINE__, "extract_attributes() failed\n");
 		return -1;
 	}
 	*UserID = ISCSI_NTOHLL(*UserID);
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_create(GroupID 0x%x) OK --> UserID 0x%llx\n", GroupID, *UserID);
+	iscsi_trace(TRACE_OSD, "osd_create(GroupID 0x%x) OK --> UserID 0x%llx\n", GroupID, *UserID);
 
 	return 0;
 }
@@ -196,10 +196,10 @@ osd_remove_group(void *dev, uint32_t GroupID,
 	args.service_action = OSD_REMOVE_GROUP;
 	args.GroupID = GroupID;
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_remove_group(Group ID 0x%x) OK\n", GroupID);
+	iscsi_trace(TRACE_OSD, "osd_remove_group(Group ID 0x%x) OK\n", GroupID);
 
 	return 0;
 }
@@ -224,10 +224,10 @@ osd_remove(void *dev, uint32_t GroupID, uint64_t UserID,
 	args.UserID = UserID;
 	args.GroupID = GroupID;
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_remove(GroupID 0x%x, UserID 0x%llx) OK\n", GroupID, UserID);
+	iscsi_trace(TRACE_OSD, "osd_remove(GroupID 0x%x, UserID 0x%llx) OK\n", GroupID, UserID);
 
 	return 0;
 }
@@ -240,7 +240,7 @@ osd_write(void *dev,
 	osd_args_t      args;
 	OSD_OPS_MEM     mem;
 
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_write(GroupID 0x%x, UserID 0x%llx, Offset %llu, Len %llu)\n", GroupID, UserID, offset, len);
+	iscsi_trace(TRACE_OSD, "osd_write(GroupID 0x%x, UserID 0x%llx, Offset %llu, Len %llu)\n", GroupID, UserID, offset, len);
 	mem.send_data = send_data;
 	mem.send_len = len;
 	mem.send_sg = sg_len;
@@ -255,7 +255,7 @@ osd_write(void *dev,
 	args.offset = offset;
 	args.length = len;
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
 	return 0;
@@ -269,7 +269,7 @@ osd_read(void *dev,
 	osd_args_t      args;
 	OSD_OPS_MEM     mem;
 
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_read(GroupID 0x%x, UserID 0x%llx, Offset %llu, Len %llu)\n", GroupID, UserID, offset, len);
+	iscsi_trace(TRACE_OSD, "osd_read(GroupID 0x%x, UserID 0x%llx, Offset %llu, Len %llu)\n", GroupID, UserID, offset, len);
 	mem.send_data = NULL;
 	mem.send_len = 0;
 	mem.send_sg = 0;
@@ -284,7 +284,7 @@ osd_read(void *dev,
 	args.offset = offset;
 	args.length = len;
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
 	return 0;
@@ -304,7 +304,7 @@ osd_set_one_attr(void *dev,
 	uint8_t        *buffer = NULL;
 #endif
 
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_set_one_attr(GroupID 0x%x, UserID 0x%llx, Page 0x%x, Index %u, Len %u)\n",
+	iscsi_trace(TRACE_OSD, "osd_set_one_attr(GroupID 0x%x, UserID 0x%llx, Page 0x%x, Index %u, Len %u)\n",
 	      GroupID, UserID, page, n, len);
 	memset(&args, 0, sizeof(osd_args_t));
 	args.opcode = 0x7F;
@@ -326,7 +326,7 @@ osd_set_one_attr(void *dev,
 	mem.send_sg = 2;
 #else
 	if ((buffer = iscsi_malloc_atomic(10 + len)) == NULL) {
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
+		iscsi_err(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 		return -1;
 	}
 	memcpy(buffer, list, 10);
@@ -340,7 +340,7 @@ osd_set_one_attr(void *dev,
 	mem.recv_sg = 0;
 
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
 	if (buffer)
@@ -365,7 +365,7 @@ osd_get_one_attr(void *dev,
 	uint8_t        *buffer;
 #endif
 
-	iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "osd_get_one_attr(GroupID 0x%x, UserID 0x%llx, Page 0x%x, Index %u, Alloc Len %u)\n",
+	iscsi_trace(TRACE_OSD, "osd_get_one_attr(GroupID 0x%x, UserID 0x%llx, Page 0x%x, Index %u, Alloc Len %u)\n",
 	      GroupID, UserID, page, n, alloc_len);
 	memset(&args, 0, sizeof(osd_args_t));
 	args.opcode = 0x7F;
@@ -381,7 +381,7 @@ osd_get_one_attr(void *dev,
 		mem.send_len = 8;
 		mem.send_sg = 0;
 	} else {
-		iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "requesting entire page or reference page\n");
+		iscsi_trace(TRACE_OSD, "requesting entire page or reference page\n");
 		mem.send_data = NULL;
 		mem.send_len = 0;
 		mem.send_sg = 0;
@@ -397,7 +397,7 @@ osd_get_one_attr(void *dev,
 	mem.recv_sg = 2;
 #else
 	if ((buffer = iscsi_malloc_atomic(10 + alloc_len)) == NULL) {
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
+		iscsi_err(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 		return -1;
 	}
 	mem.recv_data = buffer;
@@ -406,7 +406,7 @@ osd_get_one_attr(void *dev,
 #endif
 	args.get_attributes_allocation_length = 10 + alloc_len;
 	if (osd_exec(dev, &args, &mem) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "osd_exec() failed\n");
+		iscsi_err(__FILE__, __LINE__, "osd_exec() failed\n");
 		return -1;
 	}
 	memcpy(value, buffer + 10, alloc_len);
