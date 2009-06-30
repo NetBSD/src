@@ -1,4 +1,4 @@
-/*	$NetBSD: md5hl.c,v 1.1 2009/06/25 13:47:11 agc Exp $	*/
+/*	$NetBSD: md5hl.c,v 1.2 2009/06/30 02:44:52 agc Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@netbsd.org>, April 29, 1997.
@@ -18,7 +18,7 @@
 #define _DIAGASSERT(cond)	assert(cond)
 #endif
 
-/*	$NetBSD: md5hl.c,v 1.1 2009/06/25 13:47:11 agc Exp $	*/
+/*	$NetBSD: md5hl.c,v 1.2 2009/06/30 02:44:52 agc Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-## $NetBSD: Makefile.am,v 1.1 2009/06/25 13:47:11 agc Exp $
+## $NetBSD: Makefile.am,v 1.2 2009/06/30 02:44:52 agc Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
 
@@ -10,11 +10,11 @@ libiscsi_la_SOURCES	= \
 	conffile.c \
 	disk.c \
 	initiator.c \
-	iscsi.c \
 	md5c.c \
 	md5hl.c \
 	netmask.c \
 	parameters.c \
+	protocol.c \
 	storage.c \
 	snprintf.c \
 	strlcpy.c \

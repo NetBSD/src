@@ -117,7 +117,7 @@ int osd_exec_via_scsi(void *dev, osd_args_t *args, OSD_OPS_MEM *m) {
   int len = 0;
 
   if (m->send_sg||m->recv_sg) {
-    iscsi_trace_error("scatter/gather not yet implemented!\n");
+    iscsi_err("scatter/gather not yet implemented!\n");
     return -1;
   }
 
@@ -146,7 +146,7 @@ int osd_exec_via_scsi(void *dev, osd_args_t *args, OSD_OPS_MEM *m) {
       SRpnt->sr_data_direction = 0;
       break;
     default:
-      iscsi_trace_error("unsupported OSD service action 0x%x\n", args->service_action);
+      iscsi_err("unsupported OSD service action 0x%x\n", args->service_action);
       return -1;
   }
   OSD_ENCAP_CDB(args, cdb);
@@ -155,7 +155,7 @@ int osd_exec_via_scsi(void *dev, osd_args_t *args, OSD_OPS_MEM *m) {
 
   scsi_wait_req(SRpnt, cdb, ptr, len, 5*HZ, 5);
   if (SRpnt->sr_result!=0) {
-    iscsi_trace_error("SCSI command failed (result %u)\n", SRpnt->sr_result);
+    iscsi_err("SCSI command failed (result %u)\n", SRpnt->sr_result);
     scsi_release_request(SRpnt);
     SRpnt = NULL;
     return -1;
@@ -178,7 +178,7 @@ static int entries_get(kdev_t dev, uint64_t uid, char **entries, uint32_t *num, 
   uint16_t len;
 
   if (osd_get_one_attr((void *)&dev, root_gid, uid, 0x30000000, 0x0, sizeof(struct inode), &osd_exec_via_scsi, &len, (void *) &inode)!=0) {
-    iscsi_trace_error("osd_get_one_attr() failed\n");
+    iscsi_err("osd_get_one_attr() failed\n");
     return -1;
   }
   *num = 0; 
@@ -187,11 +187,11 @@ static int entries_get(kdev_t dev, uint64_t uid, char **entries, uint32_t *num, 
     int n = 0;
 
     if ((*entries=vmalloc(*size+1))==NULL) {
-      iscsi_trace_error("vmalloc() failed\n");
+      iscsi_err("vmalloc() failed\n");
       return -1;
     }
     if (osd_read((void *)&dev, root_gid, uid, 0, *size, *entries, 0, &osd_exec_via_scsi)!=0) {
-      iscsi_trace_error("osd_read() failed\n");
+      iscsi_err("osd_read() failed\n");
       vfree(*entries);
       return -1;
     }
@@ -202,12 +202,12 @@ static int entries_get(kdev_t dev, uint64_t uid, char **entries, uint32_t *num, 
       if ((ptr2=strchr(ptr, '\n'))!=NULL) {
         n++;
         if ((ptr2 = strchr(ptr2+1, '\n'))==NULL) {
-          iscsi_trace_error("directory 0x%llx corrupted (line %i)\n", uid, n);
+          iscsi_err("directory 0x%llx corrupted (line %i)\n", uid, n);
           return -1;
         }
         (*num)++;
       } else {
-        iscsi_trace_error("directory 0x%llx corrupted (line %i)\n", uid, n);
+        iscsi_err("directory 0x%llx corrupted (line %i)\n", uid, n);
         return -1;
       }
       ptr = ptr2+1;
@@ -227,7 +227,7 @@ static int entry_add(kdev_t dev, ino_t dir_ino, ino_t entry_ino,
   /*  Get size of directory */
 
   if (osd_get_one_attr((void *)&dev, root_gid, uid, 0x30000000, 0x0, sizeof(struct inode), &osd_exec_via_scsi, &len, (void *) &inode)!=0) {
-    iscsi_trace_error("osd_get_one_attr() failed\n");
+    iscsi_err("osd_get_one_attr() failed\n");
     return -1;
   }
 
@@ -236,7 +236,7 @@ static int entry_add(kdev_t dev, ino_t dir_ino, ino_t entry_ino,
   sprintf(entry, "%s\n", name);
   sprintf(entry+strlen(entry), "%li\n", entry_ino);
   if (osd_write((void *)&dev, root_gid, uid, inode.i_size, strlen(entry), entry, 0, &osd_exec_via_scsi)!=0) {
-    iscsi_trace_error("osd_write() failed\n");
+    iscsi_err("osd_write() failed\n");
     return -1;
   }
   *new_size += strlen(entry);
@@ -253,7 +253,7 @@ static int entry_del(kdev_t dev, ino_t dir_ino, ino_t ino, const char *name, uin
   /*  Read */
 
   if (entries_get(dev, dir_ino, &entries, &num_entries, &size)!=0) {
-    iscsi_trace_error("entries_get() failed\n");
+    iscsi_err("entries_get() failed\n");
     return -1;
   }
   entries[size] = 0x0;
@@ -268,7 +268,7 @@ static int entry_del(kdev_t dev, ino_t dir_ino, ino_t ino, const char *name, uin
     do {
       n++;
       if ((nl=strchr(ptr, '\n'))==NULL) {
-        iscsi_trace_error("directory 0x%llx corrupted (line %i)\n", dir_uid, n);
+        iscsi_err("directory 0x%llx corrupted (line %i)\n", dir_uid, n);
         return -1;
       }
       *nl = 0x0;
@@ -278,28 +278,28 @@ static int entry_del(kdev_t dev, ino_t dir_ino, ino_t ino, const char *name, uin
       *nl = '\n';
       n++;
       if ((ptr=strchr(nl+1, '\n'))==NULL) {
-        iscsi_trace_error("directory 0x%llx corrupted (line %i)\n", dir_uid, n);
+        iscsi_err("directory 0x%llx corrupted (line %i)\n", dir_uid, n);
         return -1;
       }
       ptr++;
     } while (!tmp && *ptr);
 
     if (!tmp) {
-      iscsi_trace_error("entry \"%s\" not found in dir 0x%llx\n", name, dir_uid);
+      iscsi_err("entry \"%s\" not found in dir 0x%llx\n", name, dir_uid);
       return -1;
     }
     if (entries+size-ptr) {
       iscsi_trace(TRACE_OSDFS, "writing remaining %u directory bytes at offset %u\n", 
             entries+size-ptr, tmp-entries);
       if (osd_write((void *)&dev, root_gid, dir_uid, tmp-entries, entries+size-ptr, ptr, 0, &osd_exec_via_scsi)!=0) {
-        iscsi_trace_error("osd_write() failed\n");
+        iscsi_err("osd_write() failed\n");
         return -1;
       }
     }
     *new_size = size-(ptr-tmp); 
     vfree(entries);
   } else {
-    iscsi_trace_error("dir 0x%llx has no entries\n", dir_uid);
+    iscsi_err("dir 0x%llx has no entries\n", dir_uid);
     return -1;
   }
 
@@ -312,7 +312,7 @@ static int entry_num(kdev_t dev, ino_t ino) {
   uint64_t size;
 
   if (entries_get(dev, ino, &entries, &num_entries, &size)!=0) {
-    iscsi_trace_error("entries_get() failed\n");
+    iscsi_err("entries_get() failed\n");
     return -1;
   }
   iscsi_trace(TRACE_OSDFS, "ino %li has %i entries\n", ino, num_entries);
@@ -335,7 +335,7 @@ static void osdfs_set_ops(struct inode *inode) {
       inode->i_op = &page_symlink_inode_operations;
       break;
     default:
-      iscsi_trace_error("UNKNOWN MODE\n");
+      iscsi_err("UNKNOWN MODE\n");
   }
   inode->i_mapping->a_ops = &osdfs_aops;
 }
@@ -352,7 +352,7 @@ static struct inode *osdfs_get_inode(struct super_block *sb, int mode, int dev, 
   /*  osdfds_read_inode() to fill the inode structure. */
 
   if ((inode=iget(sb, ino))==NULL) {
-    iscsi_trace_error("iget() failed\n");
+    iscsi_err("iget() failed\n");
     return NULL;
   }
 
@@ -378,10 +378,10 @@ static void osdfs_read_inode(struct inode *inode) {
   /*  Get object attributes for rest of inode */
 
   if ((attr=iscsi_malloc_atomic(sizeof(struct inode)))==NULL) {
-    iscsi_trace_error("iscsi_malloc_atomic() failed\n");
+    iscsi_err("iscsi_malloc_atomic() failed\n");
   }
   if (osd_get_one_attr((void *)&dev, root_gid, uid, 0x30000000, 0x0, sizeof(struct inode), &osd_exec_via_scsi, &len, attr)!=0) {
-    iscsi_trace_error("osd_get_one_attr() failed\n");
+    iscsi_err("osd_get_one_attr() failed\n");
     return;
   }
 
@@ -411,7 +411,7 @@ void osdfs_write_inode(struct inode *inode, int sync) {
   iscsi_trace(TRACE_OSDFS, "osdfs_write_inode(0x%llx)\n", uid);
 
   if (osd_set_one_attr((void *)&dev, root_gid, uid, 0x30000000, 0x1, sizeof(struct inode), (void *) inode, &osd_exec_via_scsi)!=0) {
-    iscsi_trace_error("osd_set_one_attr() failed\n");
+    iscsi_err("osd_set_one_attr() failed\n");
   }
   inode->i_state &= ~I_DIRTY;
 }
@@ -426,19 +426,19 @@ void osdfs_delete_inode(struct inode *inode) {
 }
 
 void osdfs_put_super(struct super_block *sb) {
-  iscsi_trace_error("osdfs_put_super() not implemented\n");
+  iscsi_err("osdfs_put_super() not implemented\n");
 }
 
 void osdfs_write_super(struct super_block *sb) {
-  iscsi_trace_error("osdfs_write_super() not implemented\n");
+  iscsi_err("osdfs_write_super() not implemented\n");
 }
 
 void osdfs_write_super_lockfs(struct super_block *sb) {
-  iscsi_trace_error("osdfs_write_super_lockfs() not implemented\n");
+  iscsi_err("osdfs_write_super_lockfs() not implemented\n");
 }
 
 void osdfs_unlockfs(struct super_block *sb) {
-  iscsi_trace_error("osdfs_unlockfs() not implemented\n");
+  iscsi_err("osdfs_unlockfs() not implemented\n");
 }
 
 int osdfs_statfs(struct super_block *sb, struct statfs *buff) {
@@ -456,7 +456,7 @@ int osdfs_statfs(struct super_block *sb, struct statfs *buff) {
 }
 
 int osdfs_remount_fs(struct super_block *sb, int *i, char *c) {
-  iscsi_trace_error("osdfs_remount_fs() not implemented\n");
+  iscsi_err("osdfs_remount_fs() not implemented\n");
 
   return -1;
 }
@@ -466,7 +466,7 @@ void osdfs_clear_inode(struct inode *inode) {
 }
 
 void osdfs_umount_begin(struct super_block *sb) {
-  iscsi_trace_error("osdfs_unmount_begin() not implemented\n");
+  iscsi_err("osdfs_unmount_begin() not implemented\n");
 }
 
 static struct super_operations osdfs_ops = {
@@ -495,7 +495,7 @@ static int osdfs_create(struct inode *dir, struct dentry *dentry, int mode) {
 
   iscsi_trace(TRACE_OSDFS, "osdfs_create(\"%s\")\n", dentry->d_name.name);
   if (osdfs_mknod(dir, dentry, mode | S_IFREG, 0)!=0) {
-    iscsi_trace_error("osdfs_mknod() failed\n");
+    iscsi_err("osdfs_mknod() failed\n");
     return -1;
   } 
   iscsi_trace(TRACE_OSDFS, "file \"%s\" is inode 0x%x\n", dentry->d_name.name, (unsigned) dentry->d_inode->i_ino);
@@ -519,7 +519,7 @@ static struct dentry * osdfs_lookup(struct inode *dir, struct dentry *dentry) {
 
   ISCSI_LOCK(&g_mutex, return NULL);
   if (entries_get(dev, uid, &entries, &num_entries, &size)!=0) {
-    iscsi_trace_error("entries_get() failed\n");
+    iscsi_err("entries_get() failed\n");
     ISCSI_UNLOCK(&g_mutex, return NULL);
     return NULL;
   }
@@ -540,7 +540,7 @@ static struct dentry * osdfs_lookup(struct inode *dir, struct dentry *dentry) {
           sscanf(ptr+strlen(ptr)+1, "%li", &ino);
           iscsi_trace(TRACE_OSDFS, "found \"%s\" at ino %li\n", name, ino);
           if ((inode=iget(dir->i_sb, ino))==NULL) {
-            iscsi_trace_error("iget() failed\n");
+            iscsi_err("iget() failed\n");
             return NULL;
           }
         } 
@@ -567,7 +567,7 @@ static int osdfs_link(struct dentry *old_dentry, struct inode * dir, struct dent
   iscsi_trace(TRACE_OSDFS, "osdfs_link(%lu, \"%s\")\n", ino, name);
   ISCSI_LOCK(&g_mutex, return -1);
   if (entry_add(dev, dir_ino, ino, name, &dir->i_size)!=0) {
-    iscsi_trace_error("entry_add() failed\n");
+    iscsi_err("entry_add() failed\n");
     return -1;
   }
   inode->i_nlink++; 
@@ -595,14 +595,14 @@ static int osdfs_unlink(struct inode * dir, struct dentry *dentry) {
       break;
     case S_IFDIR:
       if (entry_num(dev, ino)) {
-        iscsi_trace_error("directory 0x%x still has %i entries\n", 
+        iscsi_err("directory 0x%x still has %i entries\n", 
                     (unsigned) ino, entry_num(dev, ino));
         ISCSI_UNLOCK(&g_mutex, return -1);
         return -ENOTEMPTY;
       }
   }
   if (entry_del(dev, dir_ino, ino, name, &(dir->i_size))!=0) {
-    iscsi_trace_error("entry_del() failed\n");
+    iscsi_err("entry_del() failed\n");
     ISCSI_UNLOCK(&g_mutex, return -1);
     return -1;
   }
@@ -613,7 +613,7 @@ static int osdfs_unlink(struct inode * dir, struct dentry *dentry) {
   } else {
     iscsi_trace(TRACE_OSDFS, "ino 0x%x link count reached 0, removing object\n", (unsigned) ino);
     if (osd_remove((void *)&dev, root_gid, ino, &osd_exec_via_scsi)!=0) {
-      iscsi_trace_error("osd_remove() failed\n");
+      iscsi_err("osd_remove() failed\n");
       return -1;
     }
   }
@@ -627,12 +627,12 @@ static int osdfs_symlink(struct inode * dir, struct dentry *dentry, const char *
 
   iscsi_trace(TRACE_OSDFS, "osdfs_symlink(\"%s\"->\"%s\")\n", dentry->d_name.name, symname);
   if (osdfs_mknod(dir, dentry,  S_IRWXUGO | S_IFLNK, 0)!=0) {
-    iscsi_trace_error("osdfs_mknod() failed\n");
+    iscsi_err("osdfs_mknod() failed\n");
     return -1;
   } 
   inode = dentry->d_inode;
   if (block_symlink(inode, symname, strlen(symname)+1)!=0) {
-    iscsi_trace_error("block_symlink() failed\n");
+    iscsi_err("block_symlink() failed\n");
     return -1;
   }
   iscsi_trace(TRACE_OSDFS, "symbolic link \"%s\" is inode %lu\n", dentry->d_name.name, inode->i_ino);
@@ -644,7 +644,7 @@ static int osdfs_mkdir(struct inode * dir, struct dentry * dentry, int mode) {
 
   iscsi_trace(TRACE_OSDFS, "osdfs_mkdir(\"%s\")\n", dentry->d_name.name);
   if (osdfs_mknod(dir, dentry, mode | S_IFDIR, 0)!=0) {
-    iscsi_trace_error("osdfs_mkdir() failed\n");
+    iscsi_err("osdfs_mkdir() failed\n");
   } 
 
   return 0;
@@ -662,7 +662,7 @@ static int osdfs_mknod(struct inode *dir, struct dentry *dentry, int mode, int d
   /*  Create object */
 
   if (osd_create((void *)&dev, root_gid, &osd_exec_via_scsi, &uid)!=0) {
-    iscsi_trace_error("osd_create() failed\n");
+    iscsi_err("osd_create() failed\n");
     return -1;
   }
 
@@ -678,14 +678,14 @@ static int osdfs_mknod(struct inode *dir, struct dentry *dentry, int mode, int d
   attr.i_nlink = 1;
   if (osd_set_one_attr((void *)&dir->i_sb->s_dev, root_gid, uid, 0x30000000, 0x1, sizeof(struct inode), 
                         &attr, &osd_exec_via_scsi)!=0) {
-    iscsi_trace_error("osd_set_one_attr() failed\n");
+    iscsi_err("osd_set_one_attr() failed\n");
     return -1;
   }
 
   /*  Assign to an inode */
 
   if ((inode = osdfs_get_inode(dir->i_sb, mode, dev, name, uid))==NULL) {
-    iscsi_trace_error("osdfs_get_inode() failed\n");
+    iscsi_err("osdfs_get_inode() failed\n");
     return -ENOSPC;
   }
   d_instantiate(dentry, inode);
@@ -695,7 +695,7 @@ static int osdfs_mknod(struct inode *dir, struct dentry *dentry, int mode, int d
   if (inode->i_ino != 1) {
     ISCSI_LOCK(&g_mutex, return -1);
     if (entry_add(dev, dir->i_ino, inode->i_ino, name, &dir->i_size)!=0) {
-      iscsi_trace_error("entry_add() failed\n");
+      iscsi_err("entry_add() failed\n");
       return -1;
     }
     osdfs_write_inode(dir, 0);
@@ -728,7 +728,7 @@ static int osdfs_rename(struct inode *old_dir, struct dentry *old_dentry, struct
 
   ISCSI_LOCK(&g_mutex, return -1);
   if (entry_del(dev, old_dir_ino, old_ino, old_name, &old_dir->i_size)!=0) {
-    iscsi_trace_error("error deleting old entry \"%s\"\n", old_name);
+    iscsi_err("error deleting old entry \"%s\"\n", old_name);
     ISCSI_UNLOCK(&g_mutex, return -1);
     return -1;
   }
@@ -740,7 +740,7 @@ static int osdfs_rename(struct inode *old_dir, struct dentry *old_dentry, struct
   if (new_dentry->d_inode) {
     iscsi_trace(TRACE_OSDFS, "unlinking existing file\n");
     if (osdfs_unlink(new_dir, new_dentry)!=0) {
-      iscsi_trace_error("osdfs_unlink() failed\n");
+      iscsi_err("osdfs_unlink() failed\n");
       return -1;
     }
   }
@@ -749,7 +749,7 @@ static int osdfs_rename(struct inode *old_dir, struct dentry *old_dentry, struct
 
   ISCSI_LOCK(&g_mutex, return -1);
   if (entry_add(dev, new_dir_ino, new_ino, new_name, &new_dir->i_size)!=0) {
-    iscsi_trace_error("error adding new entry \"%s\"\n", new_name);
+    iscsi_err("error adding new entry \"%s\"\n", new_name);
     ISCSI_UNLOCK(&g_mutex, return -1);
     return -1;
   }
@@ -778,7 +778,7 @@ static struct inode_operations osdfs_dir_inode_operations = {
 
 
 static int osdfs_sync_file(struct file * file, struct dentry *dentry, int datasync) {
-  iscsi_trace_error("osdfs_syncfile() not implemented\n");
+  iscsi_err("osdfs_syncfile() not implemented\n");
   return -1;
 }
 
@@ -811,7 +811,7 @@ static int osdfs_readdir(struct file * filp, void * dirent, filldir_t filldir) {
         name, (unsigned) ino, offset);
   ISCSI_LOCK(&g_mutex, return -1);
   if (entries_get(dev, uid, &entries, &num_entries, &size)!=0) {
-    iscsi_trace_error("entries_get() failed\n");
+    iscsi_err("entries_get() failed\n");
     ISCSI_UNLOCK(&g_mutex, return -1);
     return -1;
   }
@@ -836,7 +836,7 @@ static int osdfs_readdir(struct file * filp, void * dirent, filldir_t filldir) {
 
       iscsi_trace(TRACE_OSDFS, "adding \".\" (ino 0x%x)\n", (unsigned) ino);
       if (filldir(dirent, ".", 1, filp->f_pos++, ino, DT_DIR) < 0) {
-        iscsi_trace_error("filldir() failed for \".\"??\n");
+        iscsi_err("filldir() failed for \".\"??\n");
         vfree(entries);
         return -1;
       }
@@ -845,7 +845,7 @@ static int osdfs_readdir(struct file * filp, void * dirent, filldir_t filldir) {
 
       iscsi_trace(TRACE_OSDFS, "adding \"..\" (ino 0x%x)\n", (unsigned) dentry->d_parent->d_inode->i_ino);
       if (filldir(dirent, "..", 2, filp->f_pos++, dentry->d_parent->d_inode->i_ino, DT_DIR) < 0) {
-        iscsi_trace_error("filldir() failed for \"..\"??\n");
+        iscsi_err("filldir() failed for \"..\"??\n");
         vfree(entries);
         return -1;
       }
@@ -907,7 +907,7 @@ static int osdfs_readpage(struct file *file, struct page * page) {
   if (!Page_Uptodate(page)) {
     memset(kmap(page), 0, PAGE_CACHE_SIZE);
     if (osd_read((void *)&dev, root_gid, uid, Offset, len, page->virtual, 0, &osd_exec_via_scsi)!=0) {
-      iscsi_trace_error("osd_read() failed\n");
+      iscsi_err("osd_read() failed\n");
       UnlockPage(page);
       return -1;;
     }
@@ -915,7 +915,7 @@ static int osdfs_readpage(struct file *file, struct page * page) {
     flush_dcache_page(page);
     SetPageUptodate(page);
   } else {
-    iscsi_trace_error("The page IS up to date???\n");
+    iscsi_err("The page IS up to date???\n");
   }
   UnlockPage(page);
 
@@ -938,7 +938,7 @@ static int osdfs_commit_write(struct file *file, struct page *page, unsigned off
   iscsi_trace(TRACE_OSDFS, "osdfs_commit_write(ino %lu, offset %u, to %u, Offset %llu, Length %llu)\n",
         ino, offset, to, Offset, Length);
   if (osd_write((void *)&dev, root_gid, uid, Offset, Length, page->virtual+offset, 0, &osd_exec_via_scsi)!=0) {
-    iscsi_trace_error("osd_write() failed\n");
+    iscsi_err("osd_write() failed\n");
     return -1;
   }
   if (Offset+Length>inode->i_size) {
@@ -986,16 +986,16 @@ static struct super_block *osdfs_read_super(struct super_block *sb, void *data, 
     }
     if (!strncmp(opt, "uid=", 3)) {
       if (sscanf(opt, "uid=0x%Lx", &root_uid)!=1) {
-        iscsi_trace_error("malformed option \"%s\"\n", opt);
+        iscsi_err("malformed option \"%s\"\n", opt);
         return NULL;
       }
     } else if (!strncmp(opt, "gid=", 3)) {
       if (sscanf(opt, "gid=0x%x", &root_gid)!=1) {
-        iscsi_trace_error("malformed option \"%s\"\n", opt);
+        iscsi_err("malformed option \"%s\"\n", opt);
         return NULL;
       }
     } else {
-      iscsi_trace_error("unknown option \"%s\"\n", opt);
+      iscsi_err("unknown option \"%s\"\n", opt);
       return NULL;
     }
   }
@@ -1012,7 +1012,7 @@ static struct super_block *osdfs_read_super(struct super_block *sb, void *data, 
     /*  Create group object for root directory */
 
     if (osd_create_group((void *)&sb->s_dev, &osd_exec_via_scsi, &root_gid)!=0) {
-      iscsi_trace_error("osd_create_group() failed\n");
+      iscsi_err("osd_create_group() failed\n");
       return NULL;
     }
     printf("** ROOT DIRECTORY GROUP OBJECT IS 0x%x **\n", root_gid);
@@ -1020,7 +1020,7 @@ static struct super_block *osdfs_read_super(struct super_block *sb, void *data, 
     /*  Create user object for root directory */
 
     if (osd_create((void *)&sb->s_dev, root_gid, &osd_exec_via_scsi, &root_uid)!=0) {
-      iscsi_trace_error("osd_create() failed\n");
+      iscsi_err("osd_create() failed\n");
       return NULL;
     }
     printf("** ROOT DIRECTORY USER OBJECT IS 0x%llx **\n", root_uid);
@@ -1030,7 +1030,7 @@ static struct super_block *osdfs_read_super(struct super_block *sb, void *data, 
     memset(&attr, 0, sizeof(struct inode));
     attr.i_mode = S_IFDIR | 0755;
     if (osd_set_one_attr((void *)&sb->s_dev, root_gid, root_uid, 0x30000000, 0x1, sizeof(struct inode), (void *) &attr, &osd_exec_via_scsi)!=0) {
-      iscsi_trace_error("osd_set_one_attr() failed\n");
+      iscsi_err("osd_set_one_attr() failed\n");
       return NULL;
     }
   } else {
@@ -1040,11 +1040,11 @@ static struct super_block *osdfs_read_super(struct super_block *sb, void *data, 
   /*  Create inode for root directory */
     
   if ((inode=osdfs_get_inode(sb, S_IFDIR | 0755, 0, "/", root_uid))==NULL) {
-    iscsi_trace_error("osdfs_get_inode() failed\n");
+    iscsi_err("osdfs_get_inode() failed\n");
     return NULL;
   }
   if ((sb->s_root=d_alloc_root(inode))==NULL) {
-    iscsi_trace_error("d_alloc_root() failed\n");
+    iscsi_err("d_alloc_root() failed\n");
     iput(inode);
     return NULL;
   }

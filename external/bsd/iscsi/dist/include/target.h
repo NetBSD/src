@@ -77,7 +77,7 @@ typedef struct target_session_t {
 	int             LoginStarted;
 	uint64_t        isid;
 	int             tsih;
-	iscsi_target_t	*globals;
+	iscsi_target_t	*target;
 	iscsi_worker_t  worker;
 	iscsi_parameter_t *params;
 	iscsi_sess_param_t sess_params;
