@@ -81,15 +81,15 @@ enum {
 };
 
 typedef struct iscsi_parameter_item_t {
-	char            value[ISCSI_PARAM_MAX_LEN];
-	struct iscsi_parameter_item_t *next;
-}               iscsi_parameter_value_t;
+	char				 value[ISCSI_PARAM_MAX_LEN];
+	struct iscsi_parameter_item_t	*next;
+} iscsi_parameter_value_t;
 
 /* this struct defines the credentials a user has */
 typedef struct iscsi_cred_t {
-	char		*user;			/* user's name */
-	char		*auth_type;		/* preferred authentication type */
-	char		*shared_secret;		/* the shared secret which will be used */
+	char		*user;		/* user's name */
+	char		*auth_type;	/* preferred authentication type */
+	char		*shared_secret;	/* the shared secret */
 } iscsi_cred_t;
 
 /*
@@ -99,7 +99,7 @@ typedef struct iscsi_cred_t {
 typedef struct iscsi_sess_param_t {
 	uint32_t        max_burst_length;
 	uint32_t        first_burst_length;
-	uint32_t        max_data_seg_length;
+	uint32_t        max_dataseg_len;
 	iscsi_cred_t	cred;
 	uint8_t         initial_r2t;
 	uint8_t         immediate_data;
@@ -127,7 +127,7 @@ typedef struct iscsi_parameter_t {
 	int             rx_answer;	/* received answer */
 	int             reset;	/* reset value_l */
 	struct iscsi_parameter_t *next;
-}               iscsi_parameter_t;
+} iscsi_parameter_t;
 
 int             param_list_add(iscsi_parameter_t ** , int , const char *, const char *, const char *);
 int             param_list_print(iscsi_parameter_t * );
@@ -154,25 +154,25 @@ void            set_session_parameters(iscsi_parameter_t * , iscsi_sess_param_t 
 
 #define PARAM_LIST_DESTROY(LIST, ELSE)                    \
 if (param_list_destroy(LIST)!=0) {                             \
-  iscsi_trace_error(__FILE__, __LINE__, "param_list_destroy() failed\n");                \
+  iscsi_err(__FILE__, __LINE__, "param_list_destroy() failed\n");                \
   ELSE;                                                        \
 }
 
 #define PARAM_LIST_ADD(LIST, TYPE, KEY, DFLT, VALID, ELSE)   \
 if (param_list_add(LIST, TYPE, KEY, DFLT, VALID)!=0) {            \
-  iscsi_trace_error(__FILE__, __LINE__, "param_list_add() failed\n");                       \
+  iscsi_err(__FILE__, __LINE__, "param_list_add() failed\n");                       \
   ELSE;                                                           \
 }
 
 #define PARAM_TEXT_ADD(LIST, KEY, VAL, TEXT, LEN, SIZE, OFFER, ELSE )  \
 if (param_text_add(LIST, KEY, VAL, TEXT, LEN, SIZE, OFFER)!=0) {            \
-  iscsi_trace_error(__FILE__, __LINE__, "param_text_add() failed\n");                           \
+  iscsi_err(__FILE__, __LINE__, "param_text_add() failed\n");                           \
   ELSE;                                                               \
 }
 
 #define PARAM_TEXT_PARSE(LIST, CRED, TEXT, LEN, TEXT_OUT, LEN_OUT, SIZE, OFFER, ELSE )   \
 if (param_text_parse(LIST, CRED, TEXT, LEN, TEXT_OUT, LEN_OUT, SIZE, OFFER)!=0) {             \
-  iscsi_trace_error(__FILE__, __LINE__, "param_text_parse_offer() failed\n");                               \
+  iscsi_err(__FILE__, __LINE__, "param_text_parse_offer() failed\n");                               \
   ELSE;                                                                           \
 }
 #endif

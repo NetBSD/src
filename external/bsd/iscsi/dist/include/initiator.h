@@ -138,7 +138,7 @@ void		get_target_info(uint64_t, initiator_target_t *);
 
 int		ii_initiator_init(const char *, int, int, const char *, char *, int, int, int);
 
-int		initiator_get_targets(int, strv_t *);
+int		iscsi_initiator_get_targets(int, strv_t *);
 int		initiator_set_target_name(int, char *);
 
 #endif				/* _INITIATOR_H_ */

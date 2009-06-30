@@ -144,9 +144,9 @@ EXTERN uint32_t iscsi_debug_level;
  * Debugging Functions
  */
 void	set_debug(const char *);
-void	iscsi_trace(const int, const char *, const int, const char *, ...);
-void	iscsi_trace_warning(const char *, const int, const char *, ...);
-void	iscsi_trace_error(const char *, const int, const char *, ...);
+void	iscsi_trace(const int, const char *, ...);
+void	iscsi_warn(const char *, const int, const char *, ...);
+void	iscsi_err(const char *, const int, const char *, ...);
 void	iscsi_print_buffer(const char *, const size_t);
 
 
@@ -186,15 +186,8 @@ typedef int	socklen_t;
 #endif
 
 /*
- * Sleeping
- */
-
-#define ISCSI_SLEEP(N) sleep(N)
-
-/*
  * Memory
  */
-
 void           *iscsi_malloc(unsigned);
 void            iscsi_free(void *);
 void           *iscsi_malloc_atomic(unsigned);
@@ -255,7 +248,7 @@ typedef struct hash_t {
 	int             insertions;
 	int             n;
 	iscsi_spin_t    lock;
-}               hash_t;
+} hash_t;
 
 int             hash_init(hash_t * , int );
 int             hash_insert(hash_t * , struct initiator_cmd_t * , uint32_t );
@@ -273,7 +266,7 @@ typedef struct iscsi_queue_t {
 	void          **elem;
 	int             depth;
 	iscsi_spin_t    lock;
-}               iscsi_queue_t;
+} iscsi_queue_t;
 
 int             iscsi_queue_init(iscsi_queue_t * , int );
 void            iscsi_queue_destroy(iscsi_queue_t * );
@@ -316,9 +309,6 @@ int             iscsi_sock_getpeername(int , struct sockaddr * , unsigned *);
 int             modify_iov(struct iovec ** , int *, uint32_t , uint32_t);
 
 
-void	cdb2lba(uint32_t *, uint16_t *, uint8_t *);
-void	lba2cdb(uint8_t *, uint32_t *, uint16_t *);
-
 /*
  * Mutexes
  */
@@ -332,28 +322,28 @@ int             iscsi_mutex_destroy(iscsi_mutex_t *);
 
 #define ISCSI_LOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_lock(M) != 0) {					\
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_lock() failed\n");	\
+		iscsi_err(__FILE__, __LINE__, "iscsi_mutex_lock() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_UNLOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_unlock(M) != 0) {				\
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_unlock() failed\n");	\
+		iscsi_err(__FILE__, __LINE__, "iscsi_mutex_unlock() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_INIT(M, ELSE) do {					\
 	if (iscsi_mutex_init(M) != 0) {					\
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_init() failed\n");	\
+		iscsi_err(__FILE__, __LINE__, "iscsi_mutex_init() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_DESTROY(M, ELSE) do {				\
 	if (iscsi_mutex_destroy(M) != 0) {				\
-		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_destroy() failed\n");	\
+		iscsi_err(__FILE__, __LINE__, "iscsi_mutex_destroy() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -443,50 +433,37 @@ typedef struct {
  */
 
 #define NO_CLEANUP {}
-#define RETURN_GREATER(NAME, V1, V2, CU, RC)                         \
-if ((V1)>(V2)) {                                                     \
-  iscsi_trace_error(__FILE__, __LINE__, "Bad \"%s\": %u > %u.\n", NAME, (unsigned)V1, (unsigned)V2); \
-  CU;                                                                \
-  return RC;                                                         \
-}
 
+#if 0
 #define RETURN_NOT_EQUAL(NAME, V1, V2, CU, RC)                       \
 if ((V1)!=(V2)) {                                                    \
-  iscsi_trace_error(__FILE__, __LINE__, "Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);    \
+  iscsi_err(__FILE__, __LINE__, "Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);    \
   CU;                                                                \
   return RC;                                                         \
 }
+#endif
 
+#if 0
 #define ERROR_NOT_EQUAL(NAME, V1, V2, CU) 	do {			\
 	if ((V1)!=(V2)) {						\
-		iscsi_trace_error(__FILE__, __LINE__,			\
+		iscsi_err(__FILE__, __LINE__,			\
 			"Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2); \
 		CU;							\
 	}								\
 } while(/* CONSTCOND */0)
-
-#define WARN_NOT_EQUAL(NAME, V1, V2)                                 \
-if ((V1)!=(V2)) {                                                    \
-  iscsi_trace_warning(__FILE__, __LINE__, "Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);  \
-}
-
-#define RETURN_EQUAL(NAME, V1, V2, CU, RC)                           \
-if ((V1)==(V2)) {                                                    \
-  iscsi_trace_error(__FILE__, __LINE__, "Bad \"%s\": %u == %u.\n", NAME, V1, V2);              \
-  CU;                                                                \
-  return RC;                                                         \
-}
+#endif
 
 /*
  * Misc. Functions
  */
 
-uint32_t        iscsi_atoi(char *);
+uint32_t iscsi_atoi(char *);
 int HexTextToData(const char *, uint32_t , uint8_t *, uint32_t);
 int HexDataToText(uint8_t *, uint32_t , char *, uint32_t);
-void            GenRandomData(uint8_t *, uint32_t);
+void GenRandomData(uint8_t *, uint32_t);
 
-/* this is the maximum number of iovecs which we can use in iscsi_sock_send_header_and_data */
+/* this is the maximum number of iovecs which we can use in
+* iscsi_sock_send_header_and_data */
 #ifndef ISCSI_MAX_IOVECS
 #define ISCSI_MAX_IOVECS        32
 #endif

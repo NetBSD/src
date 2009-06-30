@@ -124,7 +124,7 @@ device_init(globals_t *gp, char *dev)
 
 		if (mkdir(base_dir, 0755) != 0) {
 			if (errno != EEXIST) {
-				iscsi_trace_error(__FILE__, __LINE__, "error creating directory \"%s\" for OSD: errno %d\n", base_dir, errno);
+				iscsi_err(__FILE__, __LINE__, "error creating directory \"%s\" for OSD: errno %d\n", base_dir, errno);
 				return -1;
 			}
 		}
@@ -134,7 +134,7 @@ device_init(globals_t *gp, char *dev)
 			sprintf(FileName, "%s/lun_%d", base_dir, i);
 			if (mkdir(FileName, 0755) != 0) {
 				if (errno != EEXIST) {
-					iscsi_trace_error(__FILE__, __LINE__, "error creating \"%s\" for LU %d: errno %d\n", FileName, i, errno);
+					iscsi_err(__FILE__, __LINE__, "error creating \"%s\" for LU %d: errno %d\n", FileName, i, errno);
 					return -1;
 				}
 			}
@@ -180,10 +180,10 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	uint32_t        index = 0;
 	int             attr_len = 0;
 
-	iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SCSI op 0x%x (lun %llu)\n", args->cdb[0], args->lun);
+	iscsi_trace(TRACE_SCSI_CMD, "SCSI op 0x%x (lun %llu)\n", args->cdb[0], args->lun);
 
 	if (args->lun >= osd_luns) {
-		iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "invalid lun: %llu\n", args->lun);
+		iscsi_trace(TRACE_SCSI_DEBUG, "invalid lun: %llu\n", args->lun);
 		args->status = 0x01;
 		return 0;
 	}
@@ -193,14 +193,14 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case TEST_UNIT_READY:
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "TEST_UNIT_READY(lun %llu)\n", args->lun);
+		iscsi_trace(TRACE_SCSI_CMD, "TEST_UNIT_READY(lun %llu)\n", args->lun);
 		args->status = 0;
 		args->length = 0;
 		break;
 
 	case INQUIRY:
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "INQUIRY(lun %llu)\n", args->lun);
+		iscsi_trace(TRACE_SCSI_CMD, "INQUIRY(lun %llu)\n", args->lun);
 		data = args->send_data;
 		memset(data, 0, args->cdb[4]);	/* Clear allocated buffer */
 		data[0] = 0x0e;	/* Peripheral Device Type */
@@ -247,7 +247,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 		if (osd_args.set_attributes_list_length) {
 			if ((set_list = iscsi_malloc_atomic(osd_args.set_attributes_list_length)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
+				iscsi_err(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 				goto done;
 			}
 			sg[sg_len].iov_base = set_list;
@@ -256,7 +256,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		}
 		if (osd_args.get_attributes_list_length) {
 			if ((get_list = iscsi_malloc_atomic(osd_args.get_attributes_list_length)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
+				iscsi_err(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 				goto done;
 			}
 			sg[sg_len].iov_base = get_list;
@@ -265,7 +265,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		}
 		if (osd_args.service_action == OSD_WRITE) {
 			if ((write_data = iscsi_malloc_atomic(osd_args.length)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
+				iscsi_err(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 				goto done;
 			}
 			sg[sg_len].iov_base = write_data;
@@ -274,7 +274,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		}
 		if (sg_len) {
 			if (target_transfer_data(sess, args, sg, sg_len) != 0) {
-				iscsi_trace_error(__FILE__, __LINE__, "target_transfer_data() failed\n");
+				iscsi_err(__FILE__, __LINE__, "target_transfer_data() failed\n");
 				goto done;
 			}
 		}
@@ -287,7 +287,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 			uint16_t        len;
 			int             i;
 
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_SET_ATTR(lun %llu, GroupID 0x%x, UserID 0x%llx)\n", args->lun, osd_args.GroupID, osd_args.UserID);
+			iscsi_trace(TRACE_OSD, "OSD_SET_ATTR(lun %llu, GroupID 0x%x, UserID 0x%llx)\n", args->lun, osd_args.GroupID, osd_args.UserID);
 			for (i = 0; i < osd_args.set_attributes_list_length;) {
 				page = ISCSI_NTOHL(*((uint32_t *) (&(set_list[i]))));
 				i += 4;
@@ -298,15 +298,15 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx.0x%x.%u",
 					base_dir, args->lun, osd_args.GroupID, osd_args.UserID, page, attr);
 				if ((rc = open(FileName, O_WRONLY | O_CREAT, 0644)) == -1) {
-					iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
+					iscsi_err(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 					goto done;
 				}
 				if (write(rc, set_list + i, len) != len) {
-					iscsi_trace_error(__FILE__, __LINE__, "write() failed\n");
+					iscsi_err(__FILE__, __LINE__, "write() failed\n");
 				}
 				close(rc);
 				i += len;
-				iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "SET(0x%x,%u,%u>\n", page, attr, len);
+				iscsi_trace(TRACE_OSD, "SET(0x%x,%u,%u>\n", page, attr, len);
 			}
 		}
 		args->send_sg_len = 0;
@@ -321,16 +321,16 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				sprintf(FileName, "%s/lun_%llu/0x%x", base_dir, args->lun, GroupID);
 				rc = mkdir(FileName, 0755);
 			} while (rc == -1 && errno == EEXIST);
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_CREATE_GROUP(lun %llu) --> 0x%x\n", args->lun, GroupID);
+			iscsi_trace(TRACE_OSD, "OSD_CREATE_GROUP(lun %llu) --> 0x%x\n", args->lun, GroupID);
 			args->status = 0;
 			break;
 
 		case OSD_REMOVE_GROUP:
 
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_REMOVE_GROUP(lun %llu, 0x%x)\n", args->lun, osd_args.GroupID);
+			iscsi_trace(TRACE_OSD, "OSD_REMOVE_GROUP(lun %llu, 0x%x)\n", args->lun, osd_args.GroupID);
 			sprintf(FileName, "%s/lun_%llu/0x%x", base_dir, args->lun, osd_args.GroupID);
 			if ((rc = rmdir(FileName)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "rmdir(\"%s\") failed: errno %d\n", FileName, errno);
+				iscsi_err(__FILE__, __LINE__, "rmdir(\"%s\") failed: errno %d\n", FileName, errno);
 				goto done;
 			}
 			args->status = 0;
@@ -348,43 +348,43 @@ create_user_again:
 				goto create_user_again;
 			}
 			close(rc);
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_CREATE(lun %llu, GroupID 0x%x) --> 0x%llx\n", args->lun, osd_args.GroupID, UserID);
+			iscsi_trace(TRACE_OSD, "OSD_CREATE(lun %llu, GroupID 0x%x) --> 0x%llx\n", args->lun, osd_args.GroupID, UserID);
 			args->status = 0;
 
 			break;
 
 		case OSD_REMOVE:
 
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_REMOVE(lun %llu, 0x%llx)\n", args->lun, osd_args.UserID);
+			iscsi_trace(TRACE_OSD, "OSD_REMOVE(lun %llu, 0x%llx)\n", args->lun, osd_args.UserID);
 			sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx",
 				base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
 			if ((rc = unlink(FileName)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "unlink(\"%s\") failed: errno %d\n", FileName, errno);
+				iscsi_err(__FILE__, __LINE__, "unlink(\"%s\") failed: errno %d\n", FileName, errno);
 				goto done;
 			}
 			sprintf(string, "rm -f %s/lun_%llu/0x%x/0x%llx.*", base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
 			if (system(string) != 0) {
-				iscsi_trace_error(__FILE__, __LINE__, "\"%s\" failed\n", string);
+				iscsi_err(__FILE__, __LINE__, "\"%s\" failed\n", string);
 				return -1;
 			}
 			args->status = 0;
 			break;
 
 		case OSD_WRITE:
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_WRITE(lun %llu, GroupID 0x%x, UserID 0x%llx, length %llu, offset %llu)\n",
+			iscsi_trace(TRACE_OSD, "OSD_WRITE(lun %llu, GroupID 0x%x, UserID 0x%llx, length %llu, offset %llu)\n",
 			      args->lun, osd_args.GroupID, osd_args.UserID, osd_args.length, osd_args.offset);
 			sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx",
 				base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
 			if ((rc = open(FileName, O_WRONLY, 0644)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
+				iscsi_err(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 				goto write_done;
 			}
 			if (lseek(rc, osd_args.offset, SEEK_SET) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\": errno %d\n", FileName, errno);
+				iscsi_err(__FILE__, __LINE__, "error seeking \"%s\": errno %d\n", FileName, errno);
 				goto write_done;
 			}
 			if (write(rc, write_data, osd_args.length) != osd_args.length) {
-				iscsi_trace_error(__FILE__, __LINE__, "write() failed\n");
+				iscsi_err(__FILE__, __LINE__, "write() failed\n");
 				goto write_done;
 			}
 			close(rc);
@@ -393,24 +393,24 @@ write_done:
 			break;
 
 		case OSD_READ:
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_READ(lun %llu, GroupID 0x%x, UserID 0x%llx, length %llu, offset %llu)\n",
+			iscsi_trace(TRACE_OSD, "OSD_READ(lun %llu, GroupID 0x%x, UserID 0x%llx, length %llu, offset %llu)\n",
 			      args->lun, osd_args.GroupID, osd_args.UserID, osd_args.length, osd_args.offset);
 			sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx",
 				base_dir, args->lun, osd_args.GroupID, osd_args.UserID);
 			if ((rc = open(FileName, O_RDONLY, 0644)) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
+				iscsi_err(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 				goto read_done;
 			}
 			if ((read_data = iscsi_malloc_atomic(osd_args.length)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
+				iscsi_err(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 				goto read_done;
 			}
 			if (lseek(rc, osd_args.offset, SEEK_SET) == -1) {
-				iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\": errno %d\n", FileName, errno);
+				iscsi_err(__FILE__, __LINE__, "error seeking \"%s\": errno %d\n", FileName, errno);
 				goto read_done;
 			}
 			if (read(rc, read_data, osd_args.length) != osd_args.length) {
-				iscsi_trace_error(__FILE__, __LINE__, "read() failed\n");
+				iscsi_err(__FILE__, __LINE__, "read() failed\n");
 				goto read_done;
 			}
 			close(rc);
@@ -436,7 +436,7 @@ read_done:
 			break;
 
 		case OSD_GET_ATTR:
-			iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "OSD_GET_ATTR(lun %llu, GroupID 0x%x, UserID 0x%llx)\n",
+			iscsi_trace(TRACE_OSD, "OSD_GET_ATTR(lun %llu, GroupID 0x%x, UserID 0x%llx)\n",
 			      args->lun, osd_args.GroupID, osd_args.UserID);
 			args->status = 0;
 			break;
@@ -455,7 +455,7 @@ read_done:
 
 		if (osd_args.get_attributes_list_length || osd_args.get_attributes_page) {
 			if ((get_data = iscsi_malloc_atomic(osd_args.get_attributes_allocation_length)) == NULL) {
-				iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
+				iscsi_err(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 				goto done;
 			}
 		}
@@ -467,7 +467,7 @@ read_done:
 				i += 4;
 				index = ISCSI_NTOHL(*((uint32_t *) (&(get_list[i]))));
 				i += 4;
-				iscsi_trace(TRACE_OSD, __FILE__, __LINE__, "GET(0x%x,%u)\n", page, index);
+				iscsi_trace(TRACE_OSD, "GET(0x%x,%u)\n", page, index);
 
 				switch (page) {
 				case 0x40000001:
@@ -483,7 +483,7 @@ read_done:
 						attr_len += 4;
 						break;
 					default:
-						iscsi_trace_error(__FILE__, __LINE__, "unknown attr index %u\n", index);
+						iscsi_err(__FILE__, __LINE__, "unknown attr index %u\n", index);
 						goto done;
 					}
 					break;
@@ -510,7 +510,7 @@ read_done:
 						attr_len += 8;
 						break;
 					default:
-						iscsi_trace_error(__FILE__, __LINE__, "unknown attr index %u\n", index);
+						iscsi_err(__FILE__, __LINE__, "unknown attr index %u\n", index);
 						goto done;
 					}
 					break;
@@ -529,23 +529,23 @@ read_done:
 						sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx.0x%x.%u",
 							base_dir, args->lun, osd_args.GroupID, osd_args.UserID, page, index);
 						if ((rc = open(FileName, O_RDONLY, 0644)) == -1) {
-							iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
+							iscsi_err(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 						}
 						if (read(rc, get_data + attr_len, 480) != 480) {
-							iscsi_trace_error(__FILE__, __LINE__, "read() failed\n");
+							iscsi_err(__FILE__, __LINE__, "read() failed\n");
 							goto done;
 						}
 						close(rc);
 						attr_len += 480;
 						break;
 					default:
-						iscsi_trace_error(__FILE__, __LINE__, "unknown vendor attr index %u\n", index);
+						iscsi_err(__FILE__, __LINE__, "unknown vendor attr index %u\n", index);
 						goto done;
 					}
 					break;
 
 				default:
-					iscsi_trace_error(__FILE__, __LINE__, "unknown page 0x%x\n", page);
+					iscsi_err(__FILE__, __LINE__, "unknown page 0x%x\n", page);
 					goto done;
 				}
 			}
@@ -595,23 +595,23 @@ read_done:
 				sprintf(FileName, "%s/lun_%llu/0x%x/0x%llx.0x%x.%u",
 					base_dir, args->lun, osd_args.GroupID, osd_args.UserID, page, index);
 				if ((rc = open(FileName, O_RDONLY, 0644)) == -1) {
-					iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
+					iscsi_err(__FILE__, __LINE__, "error opening \"%s\": errno %d\n", FileName, errno);
 				}
 				if (read(rc, get_data + attr_len, 480) != 480) {
-					iscsi_trace_error(__FILE__, __LINE__, "read() failed\n");
+					iscsi_err(__FILE__, __LINE__, "read() failed\n");
 					goto done;
 				}
 				close(rc);
 				attr_len += 480;
 				break;
 			default:
-				iscsi_trace_error(__FILE__, __LINE__, "page not yet supported\n");
+				iscsi_err(__FILE__, __LINE__, "page not yet supported\n");
 				goto done;
 			}
 		}
 		if (attr_len) {
 			if (attr_len != osd_args.get_attributes_allocation_length) {
-				iscsi_trace_error(__FILE__, __LINE__, "allocation lengths differ: got %u, expected %u\n",
+				iscsi_err(__FILE__, __LINE__, "allocation lengths differ: got %u, expected %u\n",
 					    osd_args.get_attributes_allocation_length, attr_len);
 				goto done;
 			}
@@ -634,14 +634,14 @@ read_done:
 		break;
 
 	default:
-		iscsi_trace_error(__FILE__, __LINE__, "UNKNOWN OPCODE 0x%x\n", args->cdb[0]);
+		iscsi_err(__FILE__, __LINE__, "UNKNOWN OPCODE 0x%x\n", args->cdb[0]);
 		args->status = 0x01;
 		break;
 	}
 
 
 done:
-	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "SCSI op 0x%x: done (status 0x%x)\n", args->cdb[0], args->status);
+	iscsi_trace(TRACE_SCSI_DEBUG, "SCSI op 0x%x: done (status 0x%x)\n", args->cdb[0], args->status);
 	if (set_list) {
 		iscsi_free_atomic(set_list);
 	}

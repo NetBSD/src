@@ -1,4 +1,4 @@
-/* $NetBSD: uuid.c,v 1.1 2009/06/25 13:47:11 agc Exp $ */
+/* $NetBSD: uuid.c,v 1.2 2009/06/30 02:44:52 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -61,11 +61,11 @@ nbuuid_create(nbuuid_t *uuid, uint32_t *status)
 
 	(void) time(&t);
 	ether = ((uint64_t)random() << 32) | random();
-	uuid->time_low = t;
+	uuid->time_low = (int)t;
 	uuid->time_mid = (uint16_t)(random() & 0xffff);
 	uuid->time_hi_and_version = (uint16_t)(random() & 0xffff);
-	uuid->clock_seq_low = random() & 0xff;
-	uuid->clock_seq_hi_and_reserved = random() & 0xff;
+	uuid->clock_seq_low = (uint8_t)(random() & 0xff);
+	uuid->clock_seq_hi_and_reserved = (uint8_t)(random() & 0xff);
 	(void) memcpy(&uuid->node, &ether, sizeof(uuid->node));
 	*status = 0;
 }

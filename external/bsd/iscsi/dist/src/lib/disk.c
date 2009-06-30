@@ -1,7 +1,11 @@
-/* $NetBSD: disk.c,v 1.1 2009/06/25 13:47:11 agc Exp $ */
+/* $NetBSD: disk.c,v 1.2 2009/06/30 02:44:52 agc Exp $ */
 
-/*
- * Copyright © 2006 Alistair Crooks.  All rights reserved.
+/*-
+ * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Alistair Crooks (agc@netbsd.org)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,21 +15,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * IMPORTANT:  READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING. 
@@ -127,11 +128,8 @@
 #include "defs.h"
 #include "storage.h"
 
-#define CONFIG_DISK_NUM_LUNS_DFLT           1
-#define CONFIG_DISK_BLOCK_LEN_DFLT          512
-#define CONFIG_DISK_NUM_BLOCKS_DFLT         204800
-#define CONFIG_DISK_INITIAL_CHECK_CONDITION 0
-#define CONFIG_DISK_MAX_LUNS                8
+#define iSCSI_DEFAULT_LUNS	1
+#define iSCSI_DEFAULT_BLOCKLEN	512
 
 /* End disk configuration */
 
@@ -149,18 +147,18 @@ enum {
 
 /* this struct describes an iscsi LUN */
 typedef struct iscsi_disk_t {
-	int		 type;				/* type of disk - fs/mmap and fs */
-	char		 filename[MAXPATHLEN];		/* filename for the disk itself */
-	uint8_t		*buffer;			/* buffer for disk read/write ops */
-	uint64_t	 blockc;			/* # of blocks */
-	uint64_t	 blocklen;			/* block size */
-	uint64_t	 luns;				/* # of luns */
-	uint64_t	 size;				/* size of complete disk */
-	nbuuid_t	 uuid;				/* disk's uuid */
-	char		*uuid_string;			/* uuid string */
-	targv_t		*lunv;				/* the component devices and extents */
-	uint32_t	 resc;				/* # of reservation keys */
-	uint64_t	 reskeys[MAX_RESERVATIONS];	/* the reservation keys */
+	int		 type;		/* type of disk - fs/mmap and fs */
+	char		 filename[MAXPATHLEN];	/* filename for the disk */
+	uint8_t		*buffer;	/* buffer for disk read/write ops */
+	uint64_t	 blockc;	/* # of blocks */
+	uint64_t	 blocklen;	/* block size */
+	uint64_t	 luns;		/* # of luns */
+	uint64_t	 size;		/* size of complete disk */
+	nbuuid_t	 uuid;		/* disk's uuid */
+	char		*uuid_string;	/* uuid string */
+	targv_t		*lunv;		/* the component devices and extents */
+	uint32_t	 resc;		/* # of reservation keys */
+	uint64_t	 reskeys[MAX_RESERVATIONS];	/* reservation keys */
 } iscsi_disk_t;
 
 DEFINE_ARRAY(disks_t, iscsi_disk_t);
@@ -180,9 +178,10 @@ disk/extent code
 /*
  * Private Interface
  */
-
-static int      disk_read(target_session_t * , iscsi_scsi_cmd_args_t * , uint32_t , uint16_t , uint8_t);
-static int      disk_write(target_session_t * , iscsi_scsi_cmd_args_t * , uint8_t , uint32_t , uint32_t);
+static int      disk_read(target_session_t *, iscsi_scsi_cmd_args_t *,
+				uint32_t, uint16_t, uint8_t);
+static int      disk_write(target_session_t *, iscsi_scsi_cmd_args_t *,
+				uint8_t, uint32_t, uint32_t);
 
 /* return the de index and offset within the device for RAID0 */
 static int
@@ -216,12 +215,14 @@ device_open(disc_device_t *dp, int flags, int mode)
 	for (fd = -1, i = 0 ; i < dp->c ; i++) {
 		switch (dp->xv[i].type) {
 		case DE_DEVICE:
-			if ((fd = device_open(dp->xv[i].u.dp, flags, mode)) < 0) {
+			fd = device_open(dp->xv[i].u.dp, flags, mode);
+			if (fd < 0) {
 				return -1;
 			}
 			break;
 		case DE_EXTENT:
-			if ((fd = extent_open(dp->xv[i].u.xp, flags, mode)) < 0) {
+			fd = extent_open(dp->xv[i].u.xp, flags, mode);
+			if (fd < 0) {
 				return -1;
 			}
 			break;
@@ -267,12 +268,16 @@ device_lseek(disc_device_t *dp, off_t off, int whence)
 		if (raid0_getoff(dp, (uint64_t) off, &d, &suboff)) {
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_lseek(dp->xv[d].u.dp, (off_t) suboff, whence)) < 0) {
+				ret = device_lseek(dp->xv[d].u.dp,
+					(off_t) suboff, whence);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_lseek(dp->xv[d].u.xp, (off_t) suboff, whence)) < 0) {
+				ret = extent_lseek(dp->xv[d].u.xp,
+						(off_t) suboff, whence);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
@@ -285,12 +290,16 @@ device_lseek(disc_device_t *dp, off_t off, int whence)
 		for (d = 0 ; d < dp->c ; d++) {
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_lseek(dp->xv[d].u.dp, (off_t) off, whence)) < 0) {
+				ret = device_lseek(dp->xv[d].u.dp, (off_t)off,
+							whence);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_lseek(dp->xv[d].u.xp, (off_t) off, whence)) < 0) {
+				ret = extent_lseek(dp->xv[d].u.xp, (off_t)off,
+							whence);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
@@ -344,12 +353,16 @@ device_fsync_range(disc_device_t *dp, int how, off_t from, off_t len)
 		if (raid0_getoff(dp, (uint64_t) from, &d, &suboff)) {
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_fsync_range(dp->xv[d].u.dp, how, (off_t)suboff, len)) < 0) {
+				ret = device_fsync_range(dp->xv[d].u.dp, how,
+						(off_t)suboff, len);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_fsync_range(dp->xv[d].u.xp, how, (off_t)suboff, len)) < 0) {
+				ret = extent_fsync_range(dp->xv[d].u.xp, how,
+						(off_t)suboff, len);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
@@ -362,12 +375,16 @@ device_fsync_range(disc_device_t *dp, int how, off_t from, off_t len)
 		for (d = 0 ; d < dp->c ; d++) {
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_fsync_range(dp->xv[d].u.dp, how, from, len)) < 0) {
+				ret = device_fsync_range(dp->xv[d].u.dp, how,
+						from, len);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_fsync_range(dp->xv[d].u.xp, how, from, len)) < 0) {
+				ret = extent_fsync_range(dp->xv[d].u.xp, how,
+						from, len);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
@@ -408,12 +425,12 @@ extent_read(disc_extent_t *xp, void *buf, size_t cc)
 static ssize_t
 device_read(disc_device_t *dp, void *buf, size_t cc)
 {
-	uint64_t	suboff;
-	uint64_t	got;
-	ssize_t		ret;
-	size_t		subcc;
+	uint64_t	 suboff;
+	uint64_t	 got;
+	uint32_t	 d;
+	ssize_t		 ret;
+	size_t		 subcc;
 	char		*cbuf;
-	uint32_t	d;
 
 	ret = -1;
 	switch(dp->raid) {
@@ -425,15 +442,20 @@ device_read(disc_device_t *dp, void *buf, size_t cc)
 			if (device_lseek(dp, (off_t)dp->off, SEEK_SET) < 0) {
 				return -1;
 			}
-			subcc = MIN(cc - (size_t)got, (size_t)(dp->len - (size_t)dp->off));
+			subcc = MIN(cc - (size_t)got,
+					(size_t)(dp->len - (size_t)dp->off));
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_read(dp->xv[d].u.dp, &cbuf[(int)got], subcc)) < 0) {
+				ret = device_read(dp->xv[d].u.dp,
+						&cbuf[(int)got], subcc);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_read(dp->xv[d].u.xp, &cbuf[(int)got], subcc)) < 0) {
+				ret = extent_read(dp->xv[d].u.xp,
+						&cbuf[(int)got], subcc);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
@@ -448,12 +470,14 @@ device_read(disc_device_t *dp, void *buf, size_t cc)
 		for (d = 0 ; d < dp->c ; d++) {
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_read(dp->xv[d].u.dp, buf, cc)) < 0) {
+				ret = device_read(dp->xv[d].u.dp, buf, cc);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_read(dp->xv[d].u.xp, buf, cc)) < 0) {
+				ret = extent_read(dp->xv[d].u.xp, buf, cc);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
@@ -494,12 +518,12 @@ extent_write(disc_extent_t *xp, void *buf, size_t cc)
 static ssize_t
 device_write(disc_device_t *dp, void *buf, size_t cc)
 {
-	uint64_t	suboff;
-	uint64_t	done;
-	ssize_t		ret;
-	size_t		subcc;
+	uint64_t	 suboff;
+	uint64_t	 done;
+	uint32_t	 d;
+	ssize_t		 ret;
+	size_t		 subcc;
 	char		*cbuf;
-	uint32_t	d;
 
 	ret = -1;
 	switch(dp->raid) {
@@ -508,18 +532,23 @@ device_write(disc_device_t *dp, void *buf, size_t cc)
 			if (!raid0_getoff(dp, dp->off, &d, &suboff)) {
 				return -1;
 			}
-			subcc = (size_t) MIN(cc - (size_t)done, (size_t)(dp->len - dp->off));
+			subcc = (size_t)MIN(cc - (size_t)done,
+					(size_t)(dp->len - dp->off));
 			if (device_lseek(dp, (off_t)dp->off, SEEK_SET) < 0) {
 				return -1;
 			}
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_write(dp->xv[d].u.dp, &cbuf[(int)done], subcc)) < 0) {
+				ret = device_write(dp->xv[d].u.dp,
+					&cbuf[(int)done], subcc);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_write(dp->xv[d].u.xp, &cbuf[(int)done], subcc)) < 0) {
+				ret = extent_write(dp->xv[d].u.xp,
+						&cbuf[(int)done], subcc);
+				if (ret < 0) {
 					return -1;
 				}
 				break;
@@ -534,14 +563,20 @@ device_write(disc_device_t *dp, void *buf, size_t cc)
 		for (d = 0 ; d < dp->c ; d++) {
 			switch (dp->xv[d].type) {
 			case DE_DEVICE:
-				if ((ret = device_write(dp->xv[d].u.dp, buf, cc)) < 0) {
-					iscsi_trace_error(__FILE__, __LINE__, "device_write RAID1 device write failure\n");
+				ret = device_write(dp->xv[d].u.dp, buf, cc);
+				if (ret < 0) {
+					iscsi_err(__FILE__, __LINE__,
+						"device_write RAID1 device "
+						"write failure\n");
 					return -1;
 				}
 				break;
 			case DE_EXTENT:
-				if ((ret = extent_write(dp->xv[d].u.xp, buf, cc)) < 0) {
-					iscsi_trace_error(__FILE__, __LINE__, "device_write RAID1 extent write failure\n");
+				ret = extent_write(dp->xv[d].u.xp, buf, cc);
+				if (ret < 0) {
+					iscsi_err(__FILE__, __LINE__,
+						"device_write RAID1 extent "
+						"write failure\n");
 					return -1;
 				}
 				break;
@@ -664,7 +699,8 @@ device_set_var(const char *var, const char *arg)
 	}
 }
 
-/* allocate some space for a disk/extent, using an lseek, read and write combination */
+/* allocate some space for a disk/extent, using an lseek, read and
+* write combination */
 static int
 de_allocate(disc_de_t *de, char *filename)
 {
@@ -673,15 +709,18 @@ de_allocate(disc_de_t *de, char *filename)
 
 	size = de_getsize(de);
 	if (de_lseek(de, size - sizeof(block), SEEK_SET) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "error seeking \"%s\"\n", filename);
+		iscsi_err(__FILE__, __LINE__,
+				"error seeking \"%s\"\n", filename);
 		return 0;
 	}
 	if (de_read(de, block, sizeof(block)) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "error reading \"%s\"", filename);
+		iscsi_err(__FILE__, __LINE__,
+				"error reading \"%s\"", filename);
 		return 0;
 	}
 	if (de_write(de, block, sizeof(block)) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "error writing \"%s\"", filename);
+		iscsi_err(__FILE__, __LINE__,
+				"error writing \"%s\"", filename);
 		return 0;
 	}
 	return 1;
@@ -713,15 +752,12 @@ allocate_space(disc_target_t *tp)
 
 /* copy src to dst, of size `n' bytes, padding any extra with `pad' */
 static void
-strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen, char pad)
+strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen,
+		char pad)
 {
-	size_t	i;
-
 	if (srclen < dstlen) {
 		(void) memcpy(dst, src, srclen);
-		for (i = srclen ; i < dstlen ; i++) {
-			dst[i] = pad;
-		}
+		(void) memset(&dst[srclen], pad, dstlen - srclen);
 	} else {
 		(void) memcpy(dst, src, dstlen);
 	}
@@ -731,11 +767,11 @@ strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen, cha
 static int
 report_luns(uint64_t *data, int64_t luns)
 {
-	uint64_t	lun;
+	uint64_t	i;
 	int32_t		off;
 
-	for (lun = 0, off = 8 ; lun < (uint64_t)luns ; lun++, off += sizeof(lun)) {
-		data[(int)lun] = ISCSI_HTONLL(lun);
+	for (i = 0, off = 8 ; i < (uint64_t)luns ; i++, off += sizeof(i)) {
+		data[(int)i] = ISCSI_HTONLL(i);
 	}
 	return off;
 }
@@ -748,70 +784,86 @@ persistent_reserve_in(uint8_t action, uint8_t *data)
 
 	switch(action) {
 	case PERSISTENT_RESERVE_IN_READ_KEYS:
-		key = 0; /* simulate "just powered on" */
-		*((uint32_t *) (void *)data) = (uint32_t) ISCSI_HTONL((uint32_t) 0);
-		*((uint32_t *) (void *)data + 4) = (uint32_t) ISCSI_HTONL((uint32_t) sizeof(key)); /* length in bytes of list of keys */
+		key = 0;	/* simulate "just powered on" */
+		*((uint32_t *)(void *)data) =
+				(uint32_t)ISCSI_HTONL((uint32_t) 0);
+		*((uint32_t *) (void *)data + 4) =
+				(uint32_t) ISCSI_HTONL((uint32_t) sizeof(key));
+				/* length in bytes of list of keys */
 		*((uint64_t *) (void *)data + 8) = (uint64_t) ISCSI_HTONLL(key);
 		return 8 + sizeof(key);
 	case PERSISTENT_RESERVE_IN_REPORT_CAPABILITIES:
 		(void) memset(data, 0x0, 8);
-		*((uint16_t *) (void *)data) = (uint16_t) ISCSI_HTONS((uint16_t) 8); /* length is fixed at 8 bytes */
-		data[2] = PERSISTENT_RESERVE_IN_CRH; /* also SIP_C, ATP_C and PTPL_C here */
-		data[3] = 0; /* also TMV and PTPL_A here */
-		data[4] = 0; /* also WR_EX_AR, EX_AC_RD, WR_EX_RD, EX_AC, WR_EX here */
-		data[5] = 0; /* also EX_AC_AR here */
+		/* length is fixed at 8 bytes */
+		*((uint16_t *)(void *)data) =
+				(uint16_t)ISCSI_HTONS((uint16_t)8);
+		data[2] = PERSISTENT_RESERVE_IN_CRH;
+				/* also SIP_C, ATP_C and PTPL_C here */
+		data[3] = 0;	/* also TMV and PTPL_A here */
+		data[4] = 0;
+			/* also WR_EX_AR, EX_AC_RD, WR_EX_RD, EX_AC, WR_EX */
+		data[5] = 0;	/* also EX_AC_AR here */
 		return 8;
 	default:
-		iscsi_trace_error(__FILE__, __LINE__, "persistent_reserve_in: action %x unrecognised\n", action);
+		iscsi_err(__FILE__, __LINE__,
+			"persistent_reserve_in: action %x unrecognised\n",
+			action);
 		return 0;
 	}
 }
 
 /* initialise the device */
-/* ARGSUSED */
 int 
-device_init(iscsi_target_t *gp, targv_t *tvp, disc_target_t *tp)
+device_init(iscsi_target_t *tgt, targv_t *tvp, disc_target_t *tp)
 {
-	int	mode;
+	iscsi_disk_t	*idisk;
+	int	 	 mode;
 
-	USE_ARG(gp);
 	ALLOC(iscsi_disk_t, disks.v, disks.size, disks.c, 10, 10,
 			"device_init", ;);
-	disks.v[disks.c].lunv = tvp;
-	if ((disks.v[disks.c].luns = defaults.luns) == 0) {
-		disks.v[disks.c].luns = CONFIG_DISK_NUM_LUNS_DFLT;
+	idisk = &disks.v[disks.c];
+	idisk->lunv = tvp;
+	if ((idisk->luns = defaults.luns) == 0) {
+		idisk->luns = iSCSI_DEFAULT_LUNS;
 	}
-	if ((disks.v[disks.c].blocklen = defaults.blocklen) == 0) {
-		disks.v[disks.c].blocklen = CONFIG_DISK_BLOCK_LEN_DFLT;
-	}
-	disks.v[disks.c].size = de_getsize(&tp->de);
-	disks.v[disks.c].blockc = disks.v[disks.c].size / disks.v[disks.c].blocklen;
-	NEWARRAY(uint8_t, disks.v[disks.c].buffer, MB(1), "buffer1", ;);
-	switch(disks.v[disks.c].blocklen) {
+	idisk->blocklen = atoi(iscsi_target_getvar(tgt, "blocklen"));
+	switch(idisk->blocklen) {
 	case 512:
 	case 1024:
 	case 2048:
 	case 4096:
+	case 8192:
 		break;
 	default:
-		iscsi_trace_error(__FILE__, __LINE__, "Invalid block len %" PRIu64 ". Choose one of 512, 1024, 2048, 4096.\n", disks.v[disks.c].blocklen);
+		iscsi_err(__FILE__, __LINE__,
+			"Invalid block len %" PRIu64
+			". Choose one of 512, 1024, 2048, 4096, or 8192.\n",
+			idisk->blocklen);
 		return -1;
 	}
-	disks.v[disks.c].type = ISCSI_FS;
-	printf("DISK: %" PRIu64 " logical unit%s (%" PRIu64 " blocks, %" PRIu64 " bytes/block), type %s\n",
-	      disks.v[disks.c].luns,
-	      (disks.v[disks.c].luns == 1) ? "" : "s",
-	      disks.v[disks.c].blockc, disks.v[disks.c].blocklen,
-	      (disks.v[disks.c].type == ISCSI_FS) ? "iscsi fs" : "iscsi fs mmap");
+	idisk->size = de_getsize(&tp->de);
+	idisk->blockc = idisk->size / idisk->blocklen;
+	NEWARRAY(uint8_t, idisk->buffer, MB(1), "buffer1", ;);
+	idisk->type = ISCSI_FS;
+	printf("DISK: %" PRIu64 " logical unit%s (%" PRIu64 " blocks, %"
+			PRIu64 " bytes/block), type %s\n",
+			idisk->luns,
+			(idisk->luns == 1) ? "" : "s",
+			idisk->blockc, idisk->blocklen,
+			(idisk->type == ISCSI_FS) ? "iscsi fs" :
+				"iscsi fs mmap");
 	printf("DISK: LUN 0: ");
-	(void) strlcpy(disks.v[disks.c].filename, disc_get_filename(&tp->de), sizeof(disks.v[disks.c].filename));
+	(void) strlcpy(idisk->filename, disc_get_filename(&tp->de),
+			sizeof(idisk->filename));
 	mode = (tp->flags & TARGET_READONLY) ? O_RDONLY : (O_CREAT | O_RDWR);
 	if (de_open(&tp->de, mode, 0666) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "error opening \"%s\"\n", disks.v[disks.c].filename);
+		iscsi_err(__FILE__, __LINE__,
+			"error opening \"%s\"\n", idisk->filename);
 		return -1;
 	}
 	if (!(tp->flags & TARGET_READONLY) && !allocate_space(tp)) {
-		iscsi_trace_error(__FILE__, __LINE__, "error allocating space for \"%s\"", tp->target);
+		iscsi_err(__FILE__, __LINE__,
+			"error allocating space for \"%s\"", tp->target);
 		return -1;
 	}
 	printf("%" PRIu64 " MB %sdisk storage for \"%s\"\n",
@@ -819,6 +871,32 @@ device_init(iscsi_target_t *gp, targv_t *tvp, disc_target_t *tp)
 		(tp->flags & TARGET_READONLY) ? "readonly " : "",
 		tp->target);
 	return disks.c++;
+}
+
+static void
+cdb2lba(uint32_t *lba, uint16_t *len, uint8_t *cdb)
+{
+	/* Some platforms (like strongarm) aligns on */
+	/* word boundaries.  So HTONL and NTOHL won't */
+	/* work here. */
+	int	little_endian = 1;
+
+	if (*(char *) (void *) &little_endian) {
+		/* little endian */
+		((uint8_t *) (void *) lba)[0] = cdb[5];
+		((uint8_t *) (void *) lba)[1] = cdb[4];
+		((uint8_t *) (void *) lba)[2] = cdb[3];
+		((uint8_t *) (void *) lba)[3] = cdb[2];
+		((uint8_t *) (void *) len)[0] = cdb[8];
+		((uint8_t *) (void *) len)[1] = cdb[7];
+	} else {
+		((uint8_t *) (void *) lba)[0] = cdb[2];
+		((uint8_t *) (void *) lba)[1] = cdb[3];
+		((uint8_t *) (void *) lba)[2] = cdb[4];
+		((uint8_t *) (void *) lba)[3] = cdb[5];
+		((uint8_t *) (void *) len)[0] = cdb[7];
+		((uint8_t *) (void *) len)[1] = cdb[8];
+	}
 }
 
 /* handle MODE_SENSE_6 and MODE_SENSE_10 commands */
@@ -837,7 +915,7 @@ mode_sense(const int bytes, target_cmd_t *cmd)
 		len = ISCSI_MODE_SENSE_LEN;
 		mode_data_len = len + 3;
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_6\n");
+		iscsi_trace(TRACE_SCSI_CMD, "MODE_SENSE_6\n");
 		(void) memset(cp, 0x0, mode_data_len);
 
 		cp[0] = mode_data_len;
@@ -847,7 +925,7 @@ mode_sense(const int bytes, target_cmd_t *cmd)
 		cp[10] = 2;	/* density code and block length */
 
 		args->input = 1;
-		args->length = (unsigned)(len);
+		args->length = (unsigned)len;
 		args->status = SCSI_SUCCESS;
 		return 1;
 	case 10:
@@ -855,7 +933,7 @@ mode_sense(const int bytes, target_cmd_t *cmd)
 		len = ISCSI_MODE_SENSE_LEN;
 		mode_data_len = len + 3;
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_10\n");
+		iscsi_trace(TRACE_SCSI_CMD, "MODE_SENSE_10\n");
 		(void) memset(cp, 0x0, mode_data_len);
 		if (cdb[4] == 0) {
 			/* zero length cdb means just return success */
@@ -864,7 +942,8 @@ mode_sense(const int bytes, target_cmd_t *cmd)
 			args->status = SCSI_SUCCESS;
 			return 1;
 		}
-		if ((cdb[2] & PAGE_CONTROL_MASK) == PAGE_CONTROL_CHANGEABLE_VALUES) {
+		if ((cdb[2] & PAGE_CONTROL_MASK) ==
+					PAGE_CONTROL_CHANGEABLE_VALUES) {
 			/* just send back a CHECK CONDITION */
 			args->input = 1;
 			args->length = (unsigned)(len);
@@ -874,7 +953,7 @@ mode_sense(const int bytes, target_cmd_t *cmd)
 			cp[13] = ASCQ_LUN_UNSUPPORTED;
 			return 1;
 		}
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "PC %02x\n", cdb[2]);
+		iscsi_trace(TRACE_SCSI_CMD, "PC %02x\n", cdb[2]);
 
 		cp[0] = mode_data_len;
 		cp[1] = 0;
@@ -890,22 +969,121 @@ mode_sense(const int bytes, target_cmd_t *cmd)
 	return 0;
 }
 
+/* fill in the device serial number vital product data */
+static uint8_t
+serial_vpd(uint8_t *data)
+{
+	uint8_t	len;
+
+	data[0] = DISK_PERIPHERAL_DEVICE;
+	data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+	len = 16;
+	/* add target device's Unit Serial Number */
+	/* section 7.6.10 of SPC-3 says that if there is no serial number,
+	 * use spaces */
+	strpadcpy(&data[4], (size_t)len, " ", strlen(" "), ' ');
+	return len;
+}
+
+/* fill in the device identification vital product data */
+static void
+device_vpd(iscsi_target_t *tgt, uint8_t *data, uint8_t *rspc,
+		uint8_t *cdbsize, uint8_t lun, char *uuid)
+{
+	uint16_t	 len;
+	uint8_t		*cp;
+
+	data[0] = DISK_PERIPHERAL_DEVICE;
+	data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+	*rspc = 0;
+	cp = &data[4];
+	/* add target device's IQN */
+	cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) |
+			INQUIRY_DEVICE_CODESET_UTF8;
+	cp[1] = (INQUIRY_DEVICE_PIV << 7) |
+			(INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) |
+			INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+	len = (uint8_t) snprintf((char *)&cp[4],
+			(unsigned)(*cdbsize - (int)(cp - &data[4])), "%s",
+			iscsi_target_getvar(tgt, "iqn"));
+	cp[3] = len;
+	*rspc += len + 4;
+	cp += len + 4;
+	/* add target port's IQN + LUN */
+	cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) |
+		INQUIRY_DEVICE_CODESET_UTF8;
+	cp[1] = (INQUIRY_DEVICE_PIV << 7) |
+		(INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT << 4) |
+		INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+	len = (uint8_t) snprintf((char *)&cp[4],
+				(unsigned)(*cdbsize - (int)(cp - &data[4])),
+				"%s,t,%#x",
+				iscsi_target_getvar(tgt, "iqn"),
+				lun);
+	cp[3] = len;
+	*rspc += len + 4;
+	cp += len + 4;
+	/* add target port's IQN + LUN extension */
+	cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) |
+		INQUIRY_DEVICE_CODESET_UTF8;
+	cp[1] = (INQUIRY_DEVICE_PIV << 7) |
+		(INQUIRY_DEVICE_ASSOCIATION_LOGICAL_UNIT << 4) |
+		INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+	len = (uint8_t) snprintf((char *)&cp[4],
+				(unsigned) (*cdbsize - (int)(cp - &data[4])),
+				"%s,L,0x%8.8s%4.4s%4.4s",
+				iscsi_target_getvar(tgt, "iqn"),
+				uuid, &uuid[9], &uuid[14]);
+	cp[3] = len;
+	*rspc += len + 4;
+	cp += len + 4;
+	/* add target's uuid as a T10 identifier */
+	cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) |
+		INQUIRY_DEVICE_CODESET_UTF8;
+	cp[1] = (INQUIRY_DEVICE_PIV << 7) |
+		(INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) |
+		INQUIRY_IDENTIFIER_TYPE_T10;
+	strpadcpy(&cp[4], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
+	len = 8;
+	len += (uint8_t) snprintf((char *)&cp[8 + 4],
+				(unsigned)(*cdbsize - (int)(cp - &data[4])),
+				"0x%8.8s%4.4s%4.4s",
+				uuid, &uuid[9], &uuid[14]);
+	cp[3] = len;
+	*rspc += len + 4;
+}
+
+static void
+version_inquiry(uint8_t *data, uint8_t *cdbsize)
+{
+	char	versionstr[8];
+
+	data[0] = DISK_PERIPHERAL_DEVICE;
+	data[2] = SCSI_VERSION_SPC;
+	data[4] = *cdbsize - 4;	/* Additional length  */
+	data[7] |= (WIDE_BUS_32 | WIDE_BUS_16);
+	strpadcpy(&data[8], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
+	strpadcpy(&data[16], 16, ISCSI_PRODUCT, strlen(ISCSI_PRODUCT), ' ');
+	(void) snprintf(versionstr, sizeof(versionstr), "%d", ISCSI_VERSION);
+	strpadcpy(&data[32], 4, versionstr, strlen(versionstr), ' ');
+}
 
 int 
-device_command(target_session_t * sess, target_cmd_t * cmd)
+device_command(target_session_t *sess, target_cmd_t *cmd)
 {
-	iscsi_scsi_cmd_args_t	*args = cmd->scsi_cmd;
+	iscsi_scsi_cmd_args_t  *args = cmd->scsi_cmd;
 	uint32_t        	status;
 	uint32_t		lba;
 	uint16_t		len;
-	uint8_t			*totsize;
-	uint8_t			*totlen;
-	uint8_t			*cp;
+	uint8_t			*cdbsize;
+	uint8_t			*rspc;
 	uint8_t			*data;
-	uint8_t			*cdb = args->cdb;
-	uint8_t			lun = (uint8_t) (args->lun >> 32);
+	uint8_t			*cdb;
+	uint8_t			lun;
 
-	totsize = &cdb[4];
+	cdb = args->cdb;
+	lun = (uint8_t) (args->lun >> 32);
+	cdbsize = &cdb[4];
 
 	/*
 	 * added section to return no device equivalent for lun request
@@ -913,7 +1091,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	 */
 	if (lun >= disks.v[sess->d].luns) {
 		data = args->send_data;
-		(void) memset(data, 0x0, (size_t) *totsize);
+		(void) memset(data, 0x0, (size_t) *cdbsize);
 		/*
 		 * data[0] = 0x7F; means no device
 		 */
@@ -926,103 +1104,50 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	}
 
 	lun = (uint8_t) sess->d;
-	iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SCSI op %#x (lun %d): \n", cdb[0], lun);
+	iscsi_trace(TRACE_SCSI_CMD, "SCSI op %#x (lun %d): \n", cdb[0], lun);
 
 	switch (cdb[0]) {
-
 	case TEST_UNIT_READY:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "TEST_UNIT_READY\n");
+		iscsi_trace(TRACE_SCSI_CMD, "TEST_UNIT_READY\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	case INQUIRY:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "INQUIRY%s\n", (cdb[1] & INQUIRY_EVPD_BIT) ? " for Vital Product Data" : "");
+		iscsi_trace(TRACE_SCSI_CMD, "INQUIRY%s\n",
+				(cdb[1] & INQUIRY_EVPD_BIT) ?
+					" for Vital Product Data" : "");
 		data = args->send_data;
 		args->status = SCSI_SUCCESS;
-		(void) memset(data, 0x0, (unsigned) *totsize);	/* Clear allocated buffer */
+		/* Clear allocated buffer */
+		(void) memset(data, 0x0, (unsigned) *cdbsize);
 		if (cdb[1] & INQUIRY_EVPD_BIT) {
-			totlen = &data[3];
+			rspc = &data[3];
 			switch(cdb[2]) {
 			case INQUIRY_UNIT_SERIAL_NUMBER_VPD:
-				data[0] = DISK_PERIPHERAL_DEVICE;
-				data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
-				len = 16;
-				*totlen = len;
-				/* add target device's Unit Serial Number */
-				/* section 7.6.10 of SPC-3 says that if there is no serial number, use spaces */
-				strpadcpy(&data[4], (unsigned)len, " ", strlen(" "), ' ');
+				*rspc = serial_vpd(data);
+				args->length = 16;
 				break;
 			case INQUIRY_DEVICE_IDENTIFICATION_VPD:
-				data[0] = DISK_PERIPHERAL_DEVICE;
-				data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
-				*totlen = 0;
-				cp = &data[4];
-				/* add target device's IQN */
-				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
-				len = (uint8_t) snprintf((char *)&cp[4],
-					(unsigned)(*totsize - (int)(cp - &data[4])),
-							"%s",
-					iscsi_target_getvar(sess->globals, "iqn"));
-				cp[3] = len;
-				*totlen += len + 4;
-				cp += len + 4;
-				/* add target port's IQN + LUN */
-				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
-				len = (uint8_t) snprintf((char *)&cp[4],
-							(unsigned)(*totsize - (int)(cp - &data[4])),
-							"%s,t,%#x",
-					iscsi_target_getvar(sess->globals, "iqn"),
-							lun);
-				cp[3] = len;
-				*totlen += len + 4;
-				cp += len + 4;
-				/* add target port's IQN + LUN extension */
-				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_LOGICAL_UNIT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
 				if (disks.v[sess->d].uuid_string == NULL) {
 					nbuuid_create(&disks.v[sess->d].uuid,
-							&status);
+						&status);
 					nbuuid_to_string(&disks.v[sess->d].uuid,
 						&disks.v[sess->d].uuid_string,
 						&status);
 				}
-				len = (uint8_t) snprintf((char *)&cp[4],
-					(unsigned)
-					(*totsize - (int)(cp - &data[4])),
-					"%s,L,0x%8.8s%4.4s%4.4s",
-					iscsi_target_getvar(sess->globals, "iqn"),
-					disks.v[sess->d].uuid_string,
-					&disks.v[sess->d].uuid_string[9],
-					&disks.v[sess->d].uuid_string[14]);
-				cp[3] = len;
-				*totlen += len + 4;
-				cp += len + 4;
-				/* add target's uuid as a T10 identifier */
-				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_IDENTIFIER_TYPE_T10;
-				strpadcpy(&cp[4], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
-				len = 8;
-				len += (uint8_t) snprintf((char *)&cp[8 + 4],
-							(unsigned)(*totsize - (int)(cp - &data[4])),
-							"0x%8.8s%4.4s%4.4s",
-							disks.v[sess->d].uuid_string,
-							&disks.v[sess->d].uuid_string[9],
-							&disks.v[sess->d].uuid_string[14]);
-				cp[3] = len;
-				*totlen += len + 4;
-				args->length = *totlen + 6;
+				device_vpd(sess->target, data, rspc, cdbsize,
+					lun, disks.v[sess->d].uuid_string);
+				args->length = *rspc + 6;
 				break;
 			case INQUIRY_SUPPORTED_VPD_PAGES:
 				data[0] = DISK_PERIPHERAL_DEVICE;
 				data[1] = INQUIRY_SUPPORTED_VPD_PAGES;
-				*totlen = 3;	/* # of supported pages */
+				*rspc = 3;	/* # of supported pages */
 				data[4] = INQUIRY_SUPPORTED_VPD_PAGES;
 				data[5] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
 				data[6] = EXTENDED_INQUIRY_DATA_VPD;
-				args->length = *totsize + 1;
+				args->length = *cdbsize + 1;
 				break;
 			case EXTENDED_INQUIRY_DATA_VPD:
 				data[0] = DISK_PERIPHERAL_DEVICE;
@@ -1033,21 +1158,14 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				args->length = 64;
 				break;
 			default:
-				iscsi_trace_error(__FILE__, __LINE__, "Unsupported INQUIRY VPD page %x\n", cdb[2]);
+				iscsi_err(__FILE__, __LINE__,
+					"Unsupported INQUIRY VPD page %x\n",
+					cdb[2]);
 				args->status = SCSI_CHECK_CONDITION;
 				break;
 			}
 		} else {
-			char	versionstr[8];
-
-			data[0] = DISK_PERIPHERAL_DEVICE;
-			data[2] = SCSI_VERSION_SPC;
-			data[4] = *totsize - 4;	/* Additional length  */
-			data[7] |= (WIDE_BUS_32 | WIDE_BUS_16);
-			strpadcpy(&data[8], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
-			strpadcpy(&data[16], 16, ISCSI_PRODUCT, strlen(ISCSI_PRODUCT), ' ');
-			(void) snprintf(versionstr, sizeof(versionstr), "%d", ISCSI_VERSION);
-			strpadcpy(&data[32], 4, versionstr, strlen(versionstr), ' ');
+			version_inquiry(data, cdbsize);
 			args->length = cdb[4] + 1;
 		}
 		if (args->status == SCSI_SUCCESS) {
@@ -1056,22 +1174,26 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case MODE_SELECT_6:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SELECT_6\n");
+		iscsi_trace(TRACE_SCSI_CMD, "MODE_SELECT_6\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	case STOP_START_UNIT:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "STOP_START_UNIT\n");
+		iscsi_trace(TRACE_SCSI_CMD, "STOP_START_UNIT\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	case READ_CAPACITY:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "READ_CAPACITY\n");
+		iscsi_trace(TRACE_SCSI_CMD, "READ_CAPACITY\n");
 		data = args->send_data;
-		*((uint32_t *) (void *)data) = (uint32_t) ISCSI_HTONL((uint32_t) disks.v[sess->d].blockc - 1);	/* Max LBA */
-		*((uint32_t *) (void *)(data + 4)) = (uint32_t) ISCSI_HTONL((uint32_t) disks.v[sess->d].blocklen);	/* Block len */
+		*((uint32_t *)(void *)data) = (uint32_t) ISCSI_HTONL(
+				(uint32_t) disks.v[sess->d].blockc - 1);
+				/* Max LBA */
+		*((uint32_t *)(void *)(data + 4)) = (uint32_t) ISCSI_HTONL(
+				(uint32_t) disks.v[sess->d].blocklen);
+				/* Block len */
 		args->input = 8;
 		args->length = 8;
 		args->status = SCSI_SUCCESS;
@@ -1079,12 +1201,14 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case WRITE_6:
 		lba = ISCSI_NTOHL(*((uint32_t *) (void *)cdb)) & 0x001fffff;
-		if ((len = *totsize) == 0) {
+		if ((len = *cdbsize) == 0) {
 			len = 256;
 		}
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "WRITE_6(lba %u, len %u blocks)\n", lba, len);
+		iscsi_trace(TRACE_SCSI_CMD, 
+				"WRITE_6(lba %u, len %u blocks)\n", lba, len);
 		if (disk_write(sess, args, lun, lba, (unsigned) len) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "disk_write() failed\n");
+			iscsi_err(__FILE__, __LINE__,
+				"disk_write() failed\n");
 			args->status = SCSI_CHECK_CONDITION;
 		}
 		args->length = 0;
@@ -1092,13 +1216,15 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 
 	case READ_6:
-		lba = ISCSI_NTOHL(*((uint32_t *) (void *)cdb)) & 0x001fffff;
-		if ((len = *totsize) == 0) {
+		lba = ISCSI_NTOHL(*((uint32_t *)(void *)cdb)) & 0x001fffff;
+		if ((len = *cdbsize) == 0) {
 			len = 256;
 		}
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "READ_6(lba %u, len %u blocks)\n", lba, len);
+		iscsi_trace(TRACE_SCSI_CMD,
+			"READ_6(lba %u, len %u blocks)\n", lba, len);
 		if (disk_read(sess, args, lba, len, lun) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "disk_read() failed\n");
+			iscsi_err(__FILE__, __LINE__,
+					"disk_read() failed\n");
 			args->status = SCSI_CHECK_CONDITION;
 		}
 		args->input = 1;
@@ -1112,9 +1238,12 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	case WRITE_VERIFY:
 		cdb2lba(&lba, &len, cdb);
 
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "WRITE_10 | WRITE_VERIFY(lba %u, len %u blocks)\n", lba, len);
+		iscsi_trace(TRACE_SCSI_CMD,
+			"WRITE_10 | WRITE_VERIFY(lba %u, len %u blocks)\n",
+			lba, len);
 		if (disk_write(sess, args, lun, lba, (unsigned) len) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "disk_write() failed\n");
+			iscsi_err(__FILE__, __LINE__,
+					"disk_write() failed\n");
 			args->status = SCSI_CHECK_CONDITION;
 		}
 		args->length = 0;
@@ -1122,10 +1251,11 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case READ_10:
 		cdb2lba(&lba, &len, cdb);
-
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "READ_10(lba %u, len %u blocks)\n", lba, len);
+		iscsi_trace(TRACE_SCSI_CMD,
+				"READ_10(lba %u, len %u blocks)\n", lba, len);
 		if (disk_read(sess, args, lba, len, lun) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "disk_read() failed\n");
+			iscsi_err(__FILE__, __LINE__,
+				"disk_read() failed\n");
 			args->status = SCSI_CHECK_CONDITION;
 		}
 		args->input = 1;
@@ -1138,10 +1268,13 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case SYNC_CACHE:
 		cdb2lba(&lba, &len, cdb);
-
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "SYNC_CACHE (lba %u, len %u blocks)\n", lba, len);
-		if (de_fsync_range(&disks.v[sess->d].lunv->v[lun].de, FDATASYNC, lba, (off_t)(len * disks.v[sess->d].blocklen)) < 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "disk_read() failed\n");
+		iscsi_trace(TRACE_SCSI_CMD,
+			"SYNC_CACHE (lba %u, len %u blocks)\n", lba, len);
+		if (de_fsync_range(&disks.v[sess->d].lunv->v[lun].de,
+				FDATASYNC, lba,
+				(off_t)(len * disks.v[sess->d].blocklen)) < 0) {
+			iscsi_err(__FILE__, __LINE__,
+					"disk_read() failed\n");
 			args->status = SCSI_CHECK_CONDITION;
 		} else {
 			args->status = SCSI_SUCCESS;
@@ -1150,7 +1283,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case LOG_SENSE:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "LOG_SENSE\n");
+		iscsi_trace(TRACE_SCSI_CMD, "LOG_SENSE\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
@@ -1161,63 +1294,71 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case MODE_SELECT_10:
 		/* XXX still to do */
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SELECT_10\n");
+		iscsi_trace(TRACE_SCSI_CMD, "MODE_SELECT_10\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	case PERSISTENT_RESERVE_IN:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "PERSISTENT_RESERVE_IN\n");
-		args->length = persistent_reserve_in((cdb[1] & PERSISTENT_RESERVE_IN_SERVICE_ACTION_MASK), args->send_data);
+		iscsi_trace(TRACE_SCSI_CMD, "PERSISTENT_RESERVE_IN\n");
+		args->length = persistent_reserve_in((cdb[1] &
+				PERSISTENT_RESERVE_IN_SERVICE_ACTION_MASK),
+				args->send_data);
 		args->status = SCSI_SUCCESS;
 		break;
 
 	case REPORT_LUNS:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "REPORT LUNS\n");
-		args->length = report_luns((uint64_t *)(void *)&args->send_data[8], (off_t)disks.v[sess->d].luns);
-		*((uint32_t *) (void *)args->send_data) = ISCSI_HTONL(disks.v[sess->d].luns * sizeof(uint64_t));
+		iscsi_trace(TRACE_SCSI_CMD, "REPORT LUNS\n");
+		args->length = report_luns(
+				(uint64_t *)(void *)&args->send_data[8],
+				(off_t)disks.v[sess->d].luns);
+		*((uint32_t *)(void *)args->send_data) =
+				ISCSI_HTONL(disks.v[sess->d].luns *
+				sizeof(uint64_t));
 		args->input = 8;
 		args->status = SCSI_SUCCESS;
 		break;
 
 	case RESERVE_6:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RESERVE_6\n");
+		iscsi_trace(TRACE_SCSI_CMD, "RESERVE_6\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	case RELEASE_6:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RELEASE_6\n");
+		iscsi_trace(TRACE_SCSI_CMD, "RELEASE_6\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	case RESERVE_10:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RESERVE_10\n");
+		iscsi_trace(TRACE_SCSI_CMD, "RESERVE_10\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	case RELEASE_10:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "RELEASE_10\n");
+		iscsi_trace(TRACE_SCSI_CMD, "RELEASE_10\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
 
 	default:
-		iscsi_trace_error(__FILE__, __LINE__, "UNKNOWN OPCODE %#x\n", cdb[0]);
+		iscsi_err(__FILE__, __LINE__,
+			"UNKNOWN OPCODE %#x\n", cdb[0]);
 		/* to not cause confusion with some initiators */
 		args->status = SCSI_CHECK_CONDITION;
 		break;
 	}
-	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "SCSI op %#x: done (status %#x)\n", cdb[0], args->status);
+	iscsi_trace(TRACE_SCSI_DEBUG,
+		"SCSI op %#x: done (status %#x)\n", cdb[0], args->status);
 	return 0;
 }
 
-/*ARGSUSED*/
 int 
 device_shutdown(target_session_t *sess)
 {
+	USE_ARG(sess);
 	return 1;
 }
 
@@ -1226,84 +1367,129 @@ device_shutdown(target_session_t *sess)
  */
 
 static int 
-disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uint32_t lba, uint32_t len)
+disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun,
+		uint32_t lba, uint32_t len)
 {
-	uint64_t        byte_offset = lba * disks.v[sess->d].blocklen;
-	uint64_t        num_bytes = len * disks.v[sess->d].blocklen;
-	uint8_t        *ptr = NULL;
 	struct iovec    sg;
+	uint64_t        byte_offset;
+	uint64_t        bytec;
+	uint8_t        *ptr;
 
-	iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "writing %" PRIu64 " bytes from socket into device at byte offset %" PRIu64 "\n", num_bytes, byte_offset);
+	byte_offset = lba * disks.v[sess->d].blocklen;
+	bytec = len * disks.v[sess->d].blocklen;
+	ptr = NULL;
+	iscsi_trace(TRACE_SCSI_DATA,
+		"writing %" PRIu64
+		" bytes from socket into device at byte offset %" PRIu64 "\n",
+		bytec, byte_offset);
+
+	if ((unsigned) bytec > MB(1)) {
+		iscsi_err(__FILE__, __LINE__, "bytec > %u\n", bytec);
+		NO_CLEANUP;
+		return -1;
+	}
 
 	/* Assign ptr for write data */
-
-	RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
 	ptr = disks.v[sess->d].buffer;
 
 	/* Have target do data transfer */
-
 	sg.iov_base = ptr;
-	sg.iov_len = (unsigned)num_bytes;
+	sg.iov_len = (unsigned)bytec;
 	if (target_transfer_data(sess, args, &sg, 1) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "target_transfer_data() failed\n");
+		iscsi_err(__FILE__, __LINE__,
+			"target_transfer_data() failed\n");
 	}
 	/* Finish up write */
-	if (de_lseek(&disks.v[sess->d].lunv->v[lun].de, (off_t) byte_offset, SEEK_SET) == -1) {
-		iscsi_trace_error(__FILE__, __LINE__, "lseek() to offset %" PRIu64 " failed\n", byte_offset);
+	if (de_lseek(&disks.v[sess->d].lunv->v[lun].de, (off_t)byte_offset,
+				SEEK_SET) == -1) {
+		iscsi_err(__FILE__, __LINE__,
+			"lseek() to offset %" PRIu64 " failed\n",
+			byte_offset);
 		return -1;
 	}
 	if (!target_writable(&disks.v[sess->d].lunv->v[lun])) {
-		iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].lunv->v[lun].de));
+		iscsi_err(__FILE__, __LINE__,
+			"write() of %" PRIu64 " bytes failed at offset %"
+			PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n",
+			bytec, byte_offset,
+			de_getsize(&disks.v[sess->d].lunv->v[lun].de));
 		return -1;
 	}
-	if ((uint64_t)de_write(&disks.v[sess->d].lunv->v[lun].de, ptr, (unsigned) num_bytes) != num_bytes) {
-		iscsi_trace_error(__FILE__, __LINE__, "write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].lunv->v[lun].de));
+	if ((uint64_t)de_write(&disks.v[sess->d].lunv->v[lun].de, ptr,
+			(unsigned) bytec) != bytec) {
+		iscsi_err(__FILE__, __LINE__,
+			"write() of %" PRIu64 " bytes failed at offset %"
+			PRIu64 ", size %" PRIu64 "\n",
+			bytec, byte_offset,
+			de_getsize(&disks.v[sess->d].lunv->v[lun].de));
 		return -1;
 	}
-	iscsi_trace(TRACE_SCSI_DATA, __FILE__, __LINE__, "wrote %" PRIu64 " bytes to device OK\n", num_bytes);
+	iscsi_trace(TRACE_SCSI_DATA, 
+		"wrote %" PRIu64 " bytes to device OK\n", bytec);
 	return 0;
 }
 
 static int 
-disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, uint16_t len, uint8_t lun)
+disk_read(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint32_t lba,
+		uint16_t len, uint8_t lun)
 {
-	uint64_t        byte_offset = lba * disks.v[sess->d].blocklen;
-	uint64_t        num_bytes = len * disks.v[sess->d].blocklen;
-	uint64_t        extra = 0;
-	uint8_t        *ptr = NULL;
+	uint64_t        byte_offset;
+	uint64_t        bytec;
+	uint64_t        extra;
+	uint8_t        *ptr;
 	uint32_t        n;
 	int             rc;
 
-	RETURN_EQUAL("len", len, 0, NO_CLEANUP, -1);
-	if ((lba > (disks.v[sess->d].blockc - 1)) || ((lba + len) > disks.v[sess->d].blockc)) {
-		iscsi_trace_error(__FILE__, __LINE__, "attempt to read beyond end of media\n");
-		iscsi_trace_error(__FILE__, __LINE__, "max_lba = %" PRIu64 ", requested lba = %u, len = %u\n", disks.v[sess->d].blockc - 1, lba, len);
+	byte_offset = lba * disks.v[sess->d].blocklen;
+	bytec = len * disks.v[sess->d].blocklen;
+	extra = 0;
+	ptr = NULL;
+	if (len == 0) {
+		iscsi_err(__FILE__, __LINE__, "Zero \"len\"\n");
+		NO_CLEANUP;
 		return -1;
 	}
-	RETURN_GREATER("num_bytes (FIX ME)", (unsigned) num_bytes, MB(1), NO_CLEANUP, -1);
+	if (lba > disks.v[sess->d].blockc - 1 ||
+	    (lba + len) > disks.v[sess->d].blockc) {
+		iscsi_err(__FILE__, __LINE__,
+			"attempt to read beyond end of media\n"
+			"max_lba = %" PRIu64 ", requested lba = %u, len = %u\n",
+			disks.v[sess->d].blockc - 1, lba, len);
+		return -1;
+	}
+	if ((unsigned) bytec > MB(1)) {
+		iscsi_err(__FILE__, __LINE__, "bytec > %u\n", bytec);
+		NO_CLEANUP;
+		return -1;
+	}
 	ptr = disks.v[sess->d].buffer;
 	n = 0;
 	do {
-		if (de_lseek(&disks.v[sess->d].lunv->v[lun].de, (off_t)(n + byte_offset), SEEK_SET) == -1) {
-			iscsi_trace_error(__FILE__, __LINE__, "lseek() failed\n");
+		if (de_lseek(&disks.v[sess->d].lunv->v[lun].de,
+				(off_t)(n + byte_offset), SEEK_SET) == -1) {
+			iscsi_err(__FILE__, __LINE__, "lseek failed\n");
 			return -1;
 		}
-		rc = de_read(&disks.v[sess->d].lunv->v[lun].de, ptr + n, (size_t)(num_bytes - n));
+		rc = de_read(&disks.v[sess->d].lunv->v[lun].de, ptr + n,
+				(size_t)(bytec - n));
 		if (rc <= 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "read() failed: rc %d errno %d\n", rc, errno);
+			iscsi_err(__FILE__, __LINE__,
+				"read failed: rc %d errno %d\n", rc, errno);
 			return -1;
 		}
 		n += rc;
-		if (n < num_bytes) {
-			iscsi_trace_error(__FILE__, __LINE__, "Got partial file read: %d bytes of %" PRIu64 "\n", rc, num_bytes - n + rc);
+		if (n < bytec) {
+			iscsi_err(__FILE__, __LINE__,
+				"Got partial file read: %d bytes of %" PRIu64
+				"\n", rc, bytec - n + rc);
 		}
-	} while (n < num_bytes);
-
-	((struct iovec *) (void *)args->send_data)[0].iov_base = ptr + (unsigned) extra;
-	((struct iovec *) (void *)args->send_data)[0].iov_len = (unsigned) num_bytes;
-	args->length = (unsigned) num_bytes;
+	} while (n < bytec);
+	((struct iovec *)(void *)args->send_data)[0].iov_base =
+			ptr + (unsigned) extra;
+	((struct iovec *)(void *)args->send_data)[0].iov_len =
+			(unsigned) bytec;
+	args->length = (unsigned) bytec;
 	args->send_sg_len = 1;
 	args->status = 0;
-
 	return 0;
 }
