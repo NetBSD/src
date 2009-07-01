@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.214.4.1 2009/02/02 02:32:57 snj Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.214.4.2 2009/07/01 22:30:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.214.4.1 2009/02/02 02:32:57 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.214.4.2 2009/07/01 22:30:30 snj Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -550,8 +550,8 @@ exit1(struct lwp *l, int rv)
 	 * Drop debugger/procfs lock; no new references can be gained.
 	 */
 	cv_broadcast(&p->p_pptr->p_waitcv);
-	mutex_exit(proc_lock);
 	rw_exit(&p->p_reflock);
+	mutex_exit(proc_lock);
 
 	/* Verify that we hold no locks other than the kernel lock. */
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
