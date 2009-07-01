@@ -1,13 +1,23 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/03 14:47:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2009/07/01 22:58:40 snj Exp $
 
 DRIVER=		xf86-video-savage
 DRIVER_NAME=	savage_drv
 
-SRCS=		savage_accel.c savage_xaa.c savage_exa.c
-SRCS+=		savage_cursor.c savage_dga.c savage_driver.c
-SRCS+=		savage_i2c.c savage_shadow.c savage_streams.c
-SRCS+=		savage_vbe.c savage_video.c
-MAN=		savage.4
+SRCS=	\
+	savage_accel.c \
+	savage_xaa.c \
+	savage_exa.c \
+	savage_cursor.c \
+	savage_dga.c \
+	savage_driver.c \
+	savage_i2c.c \
+	savage_shadow.c \
+	savage_streams.c \
+	savage_vbe.c \
+	savage_video.c \
+	savage_hwmc.c \
+	savage_dri.c
+MAN=	savage.4
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
