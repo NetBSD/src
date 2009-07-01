@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.4 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.5 2009/07/01 16:54:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.4 2008/04/28 20:22:58 martin Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.5 2009/07/01 16:54:41 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,6 +45,7 @@ void
 _lwp_makecontext(ucontext_t *u, void (*start)(void *),
     void *arg, void *private, caddr_t stack_base, size_t stack_size)
 {
+	__greg_t *gr = u->uc_mcontext.__gregs;
 	void **sp;
 
 	getcontext(u);
@@ -54,16 +55,16 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	u->uc_stack.ss_size = stack_size;
 
 	/* LINTED uintptr_t is safe */
-	u->uc_mcontext.__gregs[_REG_RIP] = (uintptr_t)start;
+	gr[_REG_RIP] = (uintptr_t)start;
 	
 	sp = (void **) (((uintptr_t)(stack_base + stack_size) & ~15) - 8);
 
 	/* LINTED __greg_t is safe */
-	u->uc_mcontext.__gregs[_REG_RDI] = (__greg_t)arg;
+	gr[_REG_RDI] = (__greg_t)arg;
 	*--sp = (void *) _lwp_exit;
 	
 	/* LINTED uintptr_t is safe */
-	u->uc_mcontext.__gregs[_REG_URSP] = (uintptr_t) sp;
+	gr[_REG_URSP] = (uintptr_t) sp;
 
 	/* LINTED private is currently unused */
 }
