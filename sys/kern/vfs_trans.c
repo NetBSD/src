@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.23 2008/09/17 14:49:25 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.23.6.1 2009/07/01 22:39:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.23 2008/09/17 14:49:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.23.6.1 2009/07/01 22:39:28 snj Exp $");
 
 /*
  * File system transaction operations.
@@ -486,7 +486,7 @@ fstrans_dump(int full)
 
 	printf("Fstrans locks by lwp:\n");
 	for (pd = proclists; pd->pd_list != NULL; pd++)
-		LIST_FOREACH(p, pd->pd_list, p_list)
+		PROCLIST_FOREACH(p, pd->pd_list)
 			LIST_FOREACH(l, &p->p_lwps, l_sibling)
 				fstrans_print_lwp(p, l, full == 1);
 
