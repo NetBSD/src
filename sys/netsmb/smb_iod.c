@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.30 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.31 2009/07/01 10:01:28 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.30 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.31 2009/07/01 10:01:28 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ smb_iod_rqprocessed(struct smb_rq *rqp, int error)
 	rqp->sr_rpgen++;
 	rqp->sr_state = SMBRQ_NOTIFIED;
 	wakeup(&rqp->sr_state);
-	callout_stop(&rqp->sr_timo_ch);
+	if (rqp->sr_timo > 0)
+		callout_stop(&rqp->sr_timo_ch);
 	if (rqp->sr_recvcallback)
 		(*rqp->sr_recvcallback)(rqp->sr_recvarg);
 	SMBRQ_SUNLOCK(rqp);
