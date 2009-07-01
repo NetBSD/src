@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.149.4.4 2009/04/01 00:25:22 snj Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.149.4.4.2.1 2009/07/01 22:27:55 snj Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.4 2009/04/01 00:25:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.4.2.1 2009/07/01 22:27:55 snj Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2200,6 +2200,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		kproc2 = kmem_alloc(sizeof(*kproc2), KM_SLEEP);
 	}
 	marker = kmem_alloc(sizeof(*marker), KM_SLEEP);
+	marker->p_flag = PK_MARKER;
 
 	mutex_enter(proc_lock);
 	mmmbrains = false;
