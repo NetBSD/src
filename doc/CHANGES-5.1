@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.41 2009/06/29 23:36:13 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.42 2009/07/01 23:01:49 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1421,4 +1421,62 @@ games/hack/hack.unix.c				1.12, 1.13
 	probably exploitable) and also add proper checking/paranoia in
 	several other places.
 	[dholland, ticket #844]
+
+sys/kern/init_sysctl.c				1.161
+
+	sysctl_doeproc: fix a bug in rev.1.135.  Don't forget to mark
+	our marker process PK_MARKER.  This fixes crashes in
+	sched_pstats, etc.
+	[rmind, ticket #835]
+
+sys/kern/kern_exit.c				1.221
+
+	exit1: fix a race with do_sys_wait/proc_free.
+	[rmind, ticket #836]
+
+sys/kern/kern_rwlock.c				1.31
+
+	lockdebug fixes for rw_tryupgrade/rw_downgrade.
+	[rmind, ticket #837]
+
+sys/kern/init_sysctl.c				1.162
+sys/kern/vfs_trans.c				1.25
+
+	Don't forget to skip marker processes.
+	[rmind, ticket #838]
+
+sys/kern/init_sysctl.c				1.163
+
+	sysctl_doeproc:
+	        - simplify.
+	        - KERN_PROC: fix possible stale proc pointer dereference.
+	        - KERN_PROC: don't do copyout with proc_lock held.
+	[rmind, ticket #839]
+
+sys/kern/vfs_lockf.c				1.70
+
+	lf_split: cv_destroy a condvar before clobbering it.
+	[rmind, ticket #840]
+
+sys/kern/vfs_syscalls.c				1.392
+
+	do_sys_utimes: fix a bug introduced by rev.1.367.
+	VA_UTIMES_NULL is in va_vaflags, not va_flags.
+	[rmind, ticket #841]
+
+sys/kern/vfs_lockf.c				1.71
+
+	Don't make F_GETLK or the common case of F_UNLCK fail for
+	per-user limit.
+	[rmind, ticket #842]
+
+lib/libc/sys/getrlimit.2			1.31, 1.32
+
+	Document RLIMIT_AS.  Fixes PR#41517.
+	[mrg, ticket #846]
+
+external/mit/xorg/server/drivers/xf86-video-savage/Makefile 1.5
+
+	Add files needed for DRI.
+	[mrg, ticket #845]
 
