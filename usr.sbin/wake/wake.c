@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.6 2009/06/26 21:55:28 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.7 2009/07/01 07:49:12 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
@@ -143,7 +143,7 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	len = sizeof(pkt);
 	bw = 0;
 	while (len) {
-		if ((bw = write(bpf, &pkt, sizeof(pkt))) == -1)
+		if ((bw = write(bpf, p, len)) == -1)
 			return -1;
 		len -= bw;
 		p += bw;
