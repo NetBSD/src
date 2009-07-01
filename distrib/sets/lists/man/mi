@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1145 2009/06/26 20:59:00 nakayama Exp $
+# $NetBSD: mi,v 1.1146 2009/07/01 23:54:48 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6787,7 +6787,7 @@
 ./usr/share/man/man5/netid.5			man-nis-man		yp,.man
 ./usr/share/man/man5/networks.5			man-net-man		.man
 ./usr/share/man/man5/newsyslog.conf.5		man-sysutil-man		.man
-./usr/share/man/man5/nicknames.5		man-nis-catman		yp,.man
+./usr/share/man/man5/nicknames.5		man-nis-man		yp,.man
 ./usr/share/man/man5/nisplus_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/nologin.5			man-sysutil-man		.man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
