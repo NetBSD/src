@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.15 2009/05/24 21:41:44 ad Exp $	*/
+/*	$NetBSD: sock.c,v 1.16 2009/07/02 01:43:15 snj Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -329,7 +329,7 @@ struct	tcpiphdr *ti;
 	t = NULL;
 
 	o = (struct file **)calloc(1, sizeof(*o) * (fd->fd_lastfile + 1));
-#if defined(__NetBSD_Version__)  && __NetBSD__Version__ >= 599001200
+#if defined(__NetBSD_Version__)  && __NetBSD_Version__ < 599001200
 	if (KMCPY(o, fd->fd_ofiles, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)
 	    {
 		fprintf(stderr, "read(%#lx,%#lx,%lu) - u_ofile - failed\n",
