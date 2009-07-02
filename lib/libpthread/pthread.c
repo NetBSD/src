@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.111 2009/06/25 13:38:43 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.112 2009/07/02 09:59:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.111 2009/06/25 13:38:43 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.112 2009/07/02 09:59:00 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -408,14 +408,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	pthread__scrubthread(newthread, name, nattr.pta_flags);
 	newthread->pt_func = startfunc;
 	newthread->pt_arg = arg;
-#if 0
 	_lwp_makecontext(&newthread->pt_uc, pthread__create_tramp,
 	    newthread, newthread, newthread->pt_stack.ss_sp,
 	    newthread->pt_stack.ss_size);
-#else
-	makecontext(&newthread->pt_uc, pthread__create_tramp, 1,
-	    newthread);
-#endif
 
 	flag = LWP_DETACHED;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0 ||
