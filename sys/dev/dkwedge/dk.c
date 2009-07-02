@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.45 2009/05/12 14:19:40 cegger Exp $	*/
+/*	$NetBSD: dk.c,v 1.46 2009/07/02 00:56:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.45 2009/05/12 14:19:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.46 2009/07/02 00:56:48 dyoung Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -93,6 +93,8 @@ struct dkwedge_softc {
 static void	dkstart(struct dkwedge_softc *);
 static void	dkiodone(struct buf *);
 static void	dkrestart(void *);
+
+static int	dklastclose(struct dkwedge_softc *);
 
 static dev_type_open(dkopen);
 static dev_type_close(dkclose);
@@ -954,6 +956,23 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 /*
+ * Caller must hold sc->sc_dk.dk_openlock and sc->sc_parent->dk_rawlock.
+ */
+static int
+dklastclose(struct dkwedge_softc *sc)
+{
+	int error = 0;
+
+	if (sc->sc_parent->dk_rawopens-- == 1) {
+		KASSERT(sc->sc_parent->dk_rawvp != NULL);
+		error = vn_close(sc->sc_parent->dk_rawvp,
+		    FREAD | FWRITE, NOCRED);
+		sc->sc_parent->dk_rawvp = NULL;
+	}
+	return error;
+}
+
+/*
  * dkclose:		[devsw entry point]
  *
  *	Close a wedge.
@@ -976,14 +995,8 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	if (sc->sc_dk.dk_openmask == 0) {
-		if (sc->sc_parent->dk_rawopens-- == 1) {
-			KASSERT(sc->sc_parent->dk_rawvp != NULL);
-			error = vn_close(sc->sc_parent->dk_rawvp,
-			    FREAD | FWRITE, NOCRED);
-			sc->sc_parent->dk_rawvp = NULL;
-		}
-	}
+	if (sc->sc_dk.dk_openmask == 0)
+		error = dklastclose(sc);
 
 	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
