@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.31 2009/07/02 17:45:26 dyoung Exp $
+.\"	$NetBSD: wiconfig.8,v 1.32 2009/07/02 18:32:04 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -42,24 +42,12 @@
 .Nm wiconfig
 .Ar interface
 .Op Fl \&Dho
-.Bk -words
 .Op Fl A Ar 1|2
-.Ek
-.Bk -words
 .Op Fl a Ar access_point_density
-.Ek
-.Bk -words
 .Op Fl d Ar max_data_length
-.Ek
-.Bk -words
 .Op Fl M Ar 0|1
-.Ek
-.Bk -words
 .Op Fl R Ar 1|3
-.Ek
-.Bk -words
 .Op Fl s Ar station_name
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -171,7 +159,8 @@ threshold.
 .It Fl s Ar station_name
 Sets the
 .Ar station_name
-for the specified interface.  The
+for the specified interface.
+The
 .Ar station_name
 is used for diagnostic purposes.
 The
