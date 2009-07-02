@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.37 2008/05/29 14:51:27 mrg Exp $
+.\"	$NetBSD: audiorecord.1,v 1.38 2009/07/02 04:45:27 mrg Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -152,6 +152,8 @@ are
 .Dq mic ,
 and
 .Dq line .
+.It Fl q
+Be quiet.
 .It Fl s Ar rate
 Set the sampling rate.
 This value is per-second.
@@ -159,9 +161,7 @@ Typical values are 8000, 44100, and 48000, which are the telephone,
 CD Audio, and DAT Audio default sampling rates.
 .It Fl t Ar time
 Sets the maximum amount of time to record.
-Format is [hh:]mm:ss.
-.It Fl q
-Be quiet.
+Format is [hh:]mm:ss[.dddddd].
 .It Fl V
 Be verbose.
 .It Fl v Ar volume
