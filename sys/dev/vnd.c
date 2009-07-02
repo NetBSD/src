@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.201 2009/05/07 09:13:13 cegger Exp $	*/
+/*	$NetBSD: vnd.c,v 1.202 2009/07/02 02:06:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.201 2009/05/07 09:13:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.202 2009/07/02 02:06:11 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -356,8 +356,10 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if ((error = vndlock(sc)) != 0)
 		return error;
 
-	if ((sc->sc_flags & VNF_CLEARING) != 0)
-		return ENXIO;
+	if ((sc->sc_flags & VNF_CLEARING) != 0) {
+		error = ENXIO;
+		goto done;
+	}
 
 	lp = sc->sc_dkdev.dk_label;
 
