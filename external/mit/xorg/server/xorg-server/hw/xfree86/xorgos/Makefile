@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2009/06/12 01:59:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2009/07/02 04:27:47 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -80,12 +80,12 @@ SRCS.bus+=	Pci.c
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "alpha"
-SRCS.bus+=	netbsdPci.c
+#SRCS.bus+=	netbsdPci.c
 .endif
 
-.if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "powerpc"
-CPPFLAGS.netbsdPci.c+= -DPCI_VIA_TTYE0
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" || \
+    ${MACHINE_ARCH} == "powerpc" || ${MACHINE} == "netwinder"
+#CPPFLAGS.netbsdPci.c+= -DPCI_VIA_TTYE0
 .endif
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
