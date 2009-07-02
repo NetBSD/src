@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.96 2009/04/08 14:32:05 joerg Exp $
+.\"	$NetBSD: ifconfig.8,v 1.97 2009/07/02 17:45:25 dyoung Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd March 27, 2009
+.Dd July 2, 2009
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -372,6 +372,15 @@ and
 .Pq IEEE 802.11 devices only
 Configure the fragmentation threshold for IEEE 802.11-based wireless
 network interfaces.
+.It Cm rts Ar threshold
+.Pq IEEE 802.11 devices only
+Configure the RTS/CTS threshold for IEEE 802.11-based wireless
+network interfaces.
+This controls the number of bytes used for the RTS/CTS handshake boundary.
+The
+.Ar threshold
+can be any value between 0 and 2347.
+The default is 2347, which indicates the RTS/CTS mechanism should not be used.
 .It Cm ssid Ar id
 .Pq IEEE 802.11 devices only
 Configure the Service Set Identifier (a.k.a. the network name)
