@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/06/12 01:59:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2009/07/02 04:27:05 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -10,7 +10,7 @@ SRCS=	loader.c loadext.c loadmod.c dlloader.c os.c dixsym.c  \
 	extsym.c misym.c xf86sym.c 
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
-SRCS+=	SparcMulDiv.S
+#SRCS+=	SparcMulDiv.S
 .endif
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
