@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.42 2009/07/01 23:01:49 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.43 2009/07/02 05:10:46 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1479,4 +1479,12 @@ external/mit/xorg/server/drivers/xf86-video-savage/Makefile 1.5
 
 	Add files needed for DRI.
 	[mrg, ticket #845]
+
+xsrc/external/mit/freetype/dist/src/cff/cffload.c 1.2
+xsrc/external/mit/freetype/dist/src/lzw/ftzopen.c 1.2
+xsrc/external/mit/freetype/dist/src/sfnt/ttcmap.c 1.2
+xsrc/external/mit/freetype/dist/src/smooth/ftsmooth.c 1.2
+
+	Apply fixes from CVE-2009-0946.
+	[mrg, ticket #848]
 
