@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.395 2009/06/29 05:08:18 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.396 2009/07/02 12:53:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.395 2009/06/29 05:08:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.396 2009/07/02 12:53:47 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3444,14 +3444,21 @@ sys_mkdir(struct lwp *l, const struct sys_mkdir_args *uap, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */
-	struct proc *p = l->l_proc;
+
+	return do_sys_mkdir(SCARG(uap, path), SCARG(uap, mode));
+}
+
+int
+do_sys_mkdir(const char *path, mode_t mode)
+{
+	struct proc *p = curlwp->l_proc;
 	struct vnode *vp;
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
+	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR | TRYEMULROOT,
+	    UIO_USERSPACE, path);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -3467,8 +3474,7 @@ sys_mkdir(struct lwp *l, const struct sys_mkdir_args *uap, register_t *retval)
 	VATTR_NULL(&vattr);
 	vattr.va_type = VDIR;
 	/* We will read cwdi->cwdi_cmask unlocked. */
-	vattr.va_mode =
-	    (SCARG(uap, mode) & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
+	vattr.va_mode = (mode & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (!error)
 		vput(nd.ni_vp);
