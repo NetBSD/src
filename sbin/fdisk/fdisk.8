@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.60 2009/06/01 19:57:33 christos Exp $
+.\"	$NetBSD: fdisk.8,v 1.61 2009/07/02 00:49:58 snj Exp $
 .\"
 .Dd June 1, 2009
 .Dt FDISK 8
@@ -125,8 +125,8 @@ This mode is designed not to change any data unless you explicitly tell it to;
 .Nm
 selects defaults for its questions to guarantee that behaviour.
 .Pp
-If partition data is going to be updated, and disk carries GUID Partition
-Tables the
+If partition data is going to be updated and the disk carries GUID Partition
+Tables,
 .Nm
 will remove both primary and backup GPT headers from the disk.
 See
