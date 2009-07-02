@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_wait.3,v 1.12 2009/01/11 02:46:48 christos Exp $
+.\" $NetBSD: pthread_cond_wait.3,v 1.13 2009/07/02 19:43:06 rumble Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ The
 function atomically blocks the current thread waiting on the condition
 variable specified by
 .Fa cond ,
-and unblocks the mutex specified by
+and unlocks the mutex specified by
 .Fa mutex .
 The waiting thread unblocks after another thread calls
 .Xr pthread_cond_signal 3 ,
@@ -90,7 +90,7 @@ The
 function atomically blocks the current thread waiting on the condition
 variable specified by
 .Fa cond ,
-and unblocks the mutex specified by
+and unlocks the mutex specified by
 .Fa mutex .
 The waiting thread unblocks after another thread calls
 .Xr pthread_cond_signal 3 ,
