@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.60 2009/06/23 19:36:39 elad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.61 2009/07/03 21:17:41 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.60 2009/06/23 19:36:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.61 2009/07/03 21:17:41 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -337,19 +337,10 @@ tmpfs_close(void *v)
 
 /* --------------------------------------------------------------------- */
 
-int
-tmpfs_access(void *v)
+static int
+tmpfs_check_possible(struct vnode *vp, struct tmpfs_node *node, mode_t mode)
 {
-	struct vnode *vp = ((struct vop_access_args *)v)->a_vp;
-	int mode = ((struct vop_access_args *)v)->a_mode;
-	kauth_cred_t cred = ((struct vop_access_args *)v)->a_cred;
-
-	int error;
-	struct tmpfs_node *node;
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_TMPFS_NODE(vp);
+	int error = 0;
 
 	switch (vp->v_type) {
 	case VDIR:
@@ -382,8 +373,38 @@ tmpfs_access(void *v)
 		goto out;
 	}
 
-	error = genfs_can_access(vp->v_type, node->tn_mode, node->tn_uid,
+ out:
+	return error;
+}
+
+static int
+tmpfs_check_permitted(struct vnode *vp, struct tmpfs_node *node, mode_t mode,
+    kauth_cred_t cred)
+{
+
+	return genfs_can_access(vp->v_type, node->tn_mode, node->tn_uid,
 	    node->tn_gid, mode, cred);
+}
+
+int
+tmpfs_access(void *v)
+{
+	struct vnode *vp = ((struct vop_access_args *)v)->a_vp;
+	int mode = ((struct vop_access_args *)v)->a_mode;
+	kauth_cred_t cred = ((struct vop_access_args *)v)->a_cred;
+
+	int error;
+	struct tmpfs_node *node;
+
+	KASSERT(VOP_ISLOCKED(vp));
+
+	node = VP_TO_TMPFS_NODE(vp);
+
+	error = tmpfs_check_possible(vp, node, mode);
+	if (error)
+		goto out;
+
+	error = tmpfs_check_permitted(vp, node, mode, cred);
 
 out:
 	KASSERT(VOP_ISLOCKED(vp));
