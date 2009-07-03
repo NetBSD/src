@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.7 2009/06/12 00:24:33 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.8 2009/07/03 10:31:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -87,6 +87,22 @@ brdsetup(void)
 		consname = "eumb";
 		consport = 0x4600;
 		consspeed = 57600;
+		if (pcifinddev(0x10ec, 0x8169, &pcib) == 0) /* KURO-BOX/HG */
+			ticks_per_sec = 133000000 / 4;
+
+		/* Stop Watchdog */
+		uartbase = 0xfc000000 + 0x4500;
+		div = (ticks_per_sec * 4) / 9600 / 16;
+		UART_WRITE(DCR, 0x01);	/* 2 independent UART */
+		UART_WRITE(LCR, 0x80);	/* turn on DLAB bit */
+		UART_WRITE(FCR, 0x00);
+		UART_WRITE(DMB, div >> 8);
+		UART_WRITE(DLB, div & 0xff);
+		UART_WRITE(LCR, 0x03 | 0x18);	/* 8 E 1 */
+		UART_WRITE(MCR, 0x03);		/* RTS DTR */
+		UART_WRITE(FCR, 0x07);		/* FIFO_EN | RXSR | TXSR */
+		UART_WRITE(IER, 0x00);		/* make sure INT disabled */
+		printf("AAAAFFFFJJJJ>>>>VVVV>>>>ZZZZVVVVKKKK");
 	}
 
 	/* now prepare serial console */
@@ -94,7 +110,7 @@ brdsetup(void)
 		uartbase = 0xfe000000 + consport; /* 0x3f8, 0x2f8 */
 	else {
 		uartbase = 0xfc000000 + consport; /* 0x4500, 0x4600 */
-		div = (TICKS_PER_SEC * 4) / consspeed / 16;
+		div = (ticks_per_sec * 4) / consspeed / 16;
 		UART_WRITE(DCR, 0x01);	/* 2 independent UART */
 		UART_WRITE(LCR, 0x80);	/* turn on DLAB bit */
 		UART_WRITE(FCR, 0x00);
