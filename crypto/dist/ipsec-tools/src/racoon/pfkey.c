@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.46 2009/03/13 04:49:16 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.47 2009/07/03 06:40:10 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.46 2009/03/13 04:49:16 tteras Exp $ */
+/* $Id: pfkey.c,v 1.47 2009/07/03 06:40:10 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -769,6 +769,28 @@ keylen_ealg(enctype, encklen)
 	return res;
 }
 
+void
+pk_fixup_sa_addresses(mhp)
+	caddr_t *mhp;
+{
+	struct sockaddr *src, *dst;
+	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
+	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
+#ifdef ENABLE_NATT
+	if (PFKEY_ADDR_X_NATTYPE(mhp[SADB_X_EXT_NAT_T_TYPE])) {
+		/* NAT-T is enabled for this SADB entry; copy
+		 * the ports from NAT-T extensions */
+		if(mhp[SADB_X_EXT_NAT_T_SPORT] != NULL)
+			set_port(src, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_SPORT]));
+		if(mhp[SADB_X_EXT_NAT_T_DPORT] != NULL)
+			set_port(dst, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_DPORT]));
+	}
+#else
+	set_port(src, 0);
+	set_port(dst, 0);
+#endif
+}
+
 int
 pfkey_convertfromipsecdoi(proto_id, t_id, hashtype,
 		e_type, e_keylen, a_type, a_keylen, flags)
@@ -866,6 +888,8 @@ pk_sendgetspi(iph2)
 	struct saprop *pp;
 	struct saproto *pr;
 	u_int32_t minspi, maxspi;
+	u_int8_t natt_type = 0;
+	u_int16_t sport = 0, dport = 0;
 
 	if (iph2->side == INITIATOR)
 		pp = iph2->proposal;
@@ -919,19 +943,27 @@ pk_sendgetspi(iph2)
 		}
 
 #ifdef ENABLE_NATT
-		if (! pr->udp_encap) {
-			/* Remove port information, that SA doesn't use it */
-			set_port(iph2->src, 0);
-			set_port(iph2->dst, 0);
+		if (pr->udp_encap) {
+			natt_type = iph2->ph1->natt_options->encaps_type;
+			sport=extract_port(src);
+			dport=extract_port(dst);
 		}
 #endif
+		/* Always remove port information, it will be sent in
+		 * SADB_X_EXT_NAT_T_[S|D]PORT if needed */
+		set_port(src, 0);
+		set_port(dst, 0);
+
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_getspi\n");
-		if (pfkey_send_getspi(
+		if (pfkey_send_getspi_nat(
 				lcconf->sock_pfkey,
 				satype,
 				mode,
 				dst,			/* src of SA */
 				src,			/* dst of SA */
+				natt_type,
+				dport,
+				sport,
 				minspi, maxspi,
 				pr->reqid_in, iph2->seq) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -1157,13 +1189,13 @@ pk_sendupdate(iph2)
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
 #endif
-		} else {
-			/* Remove port information, that SA doesn't use it */
-			set_port(sa_args.src, 0);
-			set_port(sa_args.dst, 0);
 		}
-
 #endif
+		/* Always remove port information, it will be sent in
+		 * SADB_X_EXT_NAT_T_[S|D]PORT if needed */
+		set_port(sa_args.src, 0);
+		set_port(sa_args.dst, 0);
+
 		/* more info to fill in */
 		sa_args.spi = pr->spi;
 		sa_args.reqid = pr->reqid_in;
@@ -1236,6 +1268,7 @@ pk_recvupdate(mhp)
 		return -1;
 	}
 	msg = (struct sadb_msg *)mhp[0];
+	pk_fixup_sa_addresses(mhp);
 	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 	sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
@@ -1328,7 +1361,6 @@ pk_recvupdate(mhp)
 	/* Force the update of ph2's ports, as there is at least one
 	 * situation where they'll mismatch with ph1's values
 	 */
-
 #ifdef ENABLE_NATT
 	set_port(iph2->src, extract_port(iph2->ph1->local));
 	set_port(iph2->dst, extract_port(iph2->ph1->remote));
@@ -1456,17 +1488,12 @@ pk_sendadd(iph2)
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
 #endif
-		} else {
-			/* Remove port information, that SA doesn't use it */
-			set_port(sa_args.src, 0);
-			set_port(sa_args.dst, 0);
 		}
-
-#else
-		/* Remove port information, it is not used without NAT-T */
+#endif
+		/* Always remove port information, it will be sent in
+		 * SADB_X_EXT_NAT_T_[S|D]PORT if needed */
 		set_port(sa_args.src, 0);
 		set_port(sa_args.dst, 0);
-#endif
 
 		/* more info to fill in */
 		sa_args.spi = pr->spi_p;
@@ -1596,6 +1623,7 @@ pk_recvexpire(mhp)
 	}
 	msg = (struct sadb_msg *)mhp[0];
 	sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
+	pk_fixup_sa_addresses(mhp);
 	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
@@ -1721,6 +1749,7 @@ pk_recvacquire(mhp)
 	}
 	msg = (struct sadb_msg *)mhp[0];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	pk_fixup_sa_addresses(mhp);
 	sp_src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	sp_dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
@@ -1971,6 +2000,7 @@ pk_recvdelete(mhp)
 	}
 	msg = (struct sadb_msg *)mhp[0];
 	sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
+	pk_fixup_sa_addresses(mhp);
 	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
@@ -2709,7 +2739,6 @@ pk_recvspddump(mhp)
 		return -1;
 	}
 	msg = (struct sadb_msg *)mhp[0];
-
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
