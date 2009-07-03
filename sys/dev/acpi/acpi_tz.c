@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.43 2009/07/03 15:34:10 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.44 2009/07/03 21:18:40 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.43 2009/07/03 15:34:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.44 2009/07/03 21:18:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.43 2009/07/03 15:34:10 pgoyette Exp $"
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
-#include <sys/mutex.h>
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/acpi/acpica.h>
@@ -106,7 +105,6 @@ struct acpitz_softc {
 	struct callout sc_callout;
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
-	kmutex_t sc_mtx;
 	int sc_active;		/* active cooling level */
 	int sc_flags;
 	int sc_rate;		/* tz poll rate */
@@ -159,8 +157,6 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 	ACPI_INTEGER v;
-
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 #if 0
 	sc->sc_flags = ATZ_F_VERBOSE;
