@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.18 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.19 2009/07/03 06:40:10 tteras Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -380,10 +380,12 @@ pfkey_get_softrate(type)
  *	-1	: error occured, and set errno.
  */
 int
-pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
+pfkey_send_getspi_nat(so, satype, mode, src, dst, natt_type, sport, dport, min, max, reqid, seq)
 	int so;
 	u_int satype, mode;
 	struct sockaddr *src, *dst;
+	u_int8_t natt_type;
+	u_int16_t sport, dport;
 	u_int32_t min, max, reqid, seq;
 {
 	struct sadb_msg *newmsg;
@@ -431,6 +433,14 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 		len += sizeof(struct sadb_spirange);
 	}
 
+#ifdef SADB_X_EXT_NAT_T_TYPE
+	if(natt_type||sport||dport){
+		len += sizeof(struct sadb_x_nat_t_type);
+		len += sizeof(struct sadb_x_nat_t_port);
+		len += sizeof(struct sadb_x_nat_t_port);
+	}
+#endif
+
 	if ((newmsg = CALLOC((size_t)len, struct sadb_msg *)) == NULL) {
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
@@ -466,6 +476,32 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 		return -1;
 	}
 
+#ifdef SADB_X_EXT_NAT_T_TYPE
+	/* Add nat-t messages */
+	if (natt_type) {
+		p = pfkey_set_natt_type(p, ep, SADB_X_EXT_NAT_T_TYPE, 
+					natt_type);
+		if (!p) {
+			free(newmsg);
+			return -1;
+		}
+
+		p = pfkey_set_natt_port(p, ep, SADB_X_EXT_NAT_T_SPORT,
+					sport);
+		if (!p) {
+			free(newmsg);
+			return -1;
+		}
+
+		p = pfkey_set_natt_port(p, ep, SADB_X_EXT_NAT_T_DPORT,
+					dport);
+		if (!p) {
+			free(newmsg);
+			return -1;
+		}
+	}
+#endif
+
 	/* proccessing spi range */
 	if (need_spirange) {
 		struct sadb_spirange spirange;
@@ -499,6 +535,17 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
+}
+
+int
+pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
+	int so;
+	u_int satype, mode;
+	struct sockaddr *src, *dst;
+	u_int32_t min, max, reqid, seq;
+{
+	return pfkey_send_getspi_nat(so, satype, mode, src, dst, 0, 0, 0,
+		min, max, reqid, seq);
 }
 
 /*
