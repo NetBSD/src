@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.10 2009/03/13 04:49:16 tteras Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.11 2009/07/03 06:41:47 tteras Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -189,8 +189,7 @@ extern int enumrmconf __P((struct rmconfselector *rmsel,
 			   void *enum_arg));
 
 #define GETRMCONF_F_NO_ANONYMOUS	0x0001
-#define GETRMCONF_F_NO_PORTS		0x0002
-#define GETRMCONF_F_NO_PASSIVE		0x0004
+#define GETRMCONF_F_NO_PASSIVE		0x0002
 
 #define RMCONF_ERR_MULTIPLE		((struct remoteconf *) -1)
 

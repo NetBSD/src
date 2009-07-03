@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.21 2009/01/23 08:23:51 tteras Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.22 2009/07/03 06:41:46 tteras Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1151,15 +1151,6 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 		goto end;
 	}
 
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-	if (set_port(iph2->dst, 0) == NULL ||
-	    set_port(iph2->src, 0) == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "invalid family: %d\n", iph1->remote->sa_family);
-		delph2(iph2);
-		goto end;
-	}
-#endif
 	iph2->side = INITIATOR;
 	iph2->status = PHASE2ST_START;
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.47 2009/07/03 06:40:10 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.48 2009/07/03 06:41:46 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.47 2009/07/03 06:40:10 tteras Exp $ */
+/* $Id: pfkey.c,v 1.48 2009/07/03 06:41:46 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -774,8 +774,12 @@ pk_fixup_sa_addresses(mhp)
 	caddr_t *mhp;
 {
 	struct sockaddr *src, *dst;
+
 	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
+	set_port(src, PORT_ISAKMP);
+	set_port(dst, PORT_ISAKMP);
+
 #ifdef ENABLE_NATT
 	if (PFKEY_ADDR_X_NATTYPE(mhp[SADB_X_EXT_NAT_T_TYPE])) {
 		/* NAT-T is enabled for this SADB entry; copy
@@ -785,9 +789,6 @@ pk_fixup_sa_addresses(mhp)
 		if(mhp[SADB_X_EXT_NAT_T_DPORT] != NULL)
 			set_port(dst, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_DPORT]));
 	}
-#else
-	set_port(src, 0);
-	set_port(dst, 0);
 #endif
 }
 
@@ -949,10 +950,6 @@ pk_sendgetspi(iph2)
 			dport=extract_port(dst);
 		}
 #endif
-		/* Always remove port information, it will be sent in
-		 * SADB_X_EXT_NAT_T_[S|D]PORT if needed */
-		set_port(src, 0);
-		set_port(dst, 0);
 
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_getspi\n");
 		if (pfkey_send_getspi_nat(
@@ -1009,6 +1006,7 @@ pk_recvgetspi(mhp)
 	}
 	msg = (struct sadb_msg *)mhp[0];
 	sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
+	pk_fixup_sa_addresses(mhp);
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]); /* note SA dir */
 	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
@@ -1183,18 +1181,14 @@ pk_sendupdate(iph2)
 #ifdef ENABLE_NATT
 		if (pr->udp_encap) {
 			sa_args.l_natt_type = iph2->ph1->natt_options->encaps_type;
-			sa_args.l_natt_sport = extract_port (iph2->ph1->remote);
-			sa_args.l_natt_dport = extract_port (iph2->ph1->local);
+			sa_args.l_natt_sport = extract_port(iph2->ph1->remote);
+			sa_args.l_natt_dport = extract_port(iph2->ph1->local);
 			sa_args.l_natt_oa = iph2->natoa_src;
 #ifdef SADB_X_EXT_NAT_T_FRAG
 			sa_args.l_natt_frag = iph2->ph1->rmconf->esp_frag;
 #endif
 		}
 #endif
-		/* Always remove port information, it will be sent in
-		 * SADB_X_EXT_NAT_T_[S|D]PORT if needed */
-		set_port(sa_args.src, 0);
-		set_port(sa_args.dst, 0);
 
 		/* more info to fill in */
 		sa_args.spi = pr->spi;
@@ -1358,14 +1352,6 @@ pk_recvupdate(mhp)
 	/* turn off schedule */
 	sched_cancel(&iph2->scr);
 
-	/* Force the update of ph2's ports, as there is at least one
-	 * situation where they'll mismatch with ph1's values
-	 */
-#ifdef ENABLE_NATT
-	set_port(iph2->src, extract_port(iph2->ph1->local));
-	set_port(iph2->dst, extract_port(iph2->ph1->remote));
-#endif
-
 	/*
 	 * since we are going to reuse the phase2 handler, we need to
 	 * remain it and refresh all the references between ph1 and ph2 to use.
@@ -1418,7 +1404,7 @@ pk_sendadd(iph2)
 		racoon_free(sa_args.src);
 		racoon_free(sa_args.dst);
 		return -1;
- 	}
+	}
 
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
 		/* validity check */
@@ -1490,11 +1476,6 @@ pk_sendadd(iph2)
 #endif
 		}
 #endif
-		/* Always remove port information, it will be sent in
-		 * SADB_X_EXT_NAT_T_[S|D]PORT if needed */
-		set_port(sa_args.src, 0);
-		set_port(sa_args.dst, 0);
-
 		/* more info to fill in */
 		sa_args.spi = pr->spi_p;
 		sa_args.reqid = pr->reqid_out;
@@ -1559,6 +1540,7 @@ pk_recvadd(mhp)
 		return -1;
 	}
 	msg = (struct sadb_msg *)mhp[0];
+	pk_fixup_sa_addresses(mhp);
 	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 	sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
@@ -1749,7 +1731,9 @@ pk_recvacquire(mhp)
 	}
 	msg = (struct sadb_msg *)mhp[0];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
-	pk_fixup_sa_addresses(mhp);
+	/* acquire does not have nat-t ports; so do not bother setting
+	 * the default port 500; just use the port zero for wildcard
+	 * matching the get a valid natted destination */
 	sp_src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 	sp_dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
@@ -2884,8 +2868,8 @@ migrate_ph1_ike_addresses(iph1, arg)
 	u_int16_t port;
 
 	/* Already up-to-date? */
-	if (cmpsaddrwop(iph1->local, ma->local) == 0 &&
-	    cmpsaddrwop(iph1->remote, ma->remote) == 0)
+	if (cmpsaddr(iph1->local, ma->local) == 0 &&
+	    cmpsaddr(iph1->remote, ma->remote) == 0)
 		return 0;
 
 	if (iph1->status < PHASE1ST_ESTABLISHED) {
@@ -2985,8 +2969,8 @@ migrate_ph2_ike_addresses(iph2, arg)
 		migrate_ph1_ike_addresses(iph2->ph1, arg);
 
 	/* Already up-to-date? */
-	if (CMPSADDR(iph2->src, ma->local) == 0 &&
-	    CMPSADDR(iph2->dst, ma->remote) == 0)
+	if (cmpsaddr(iph2->src, ma->local) == 0 &&
+	    cmpsaddr(iph2->dst, ma->remote) == 0)
 		return 0;
 
 	/* save src/dst as sa_src/sa_dst before rewriting */
@@ -3206,8 +3190,8 @@ migrate_ph2_one_isr(spid, isr_cur, xisr_old, xisr_new)
 		     "changing address families (%d to %d) for endpoints.\n",
 		     osaddr->sa_family, nsaddr->sa_family);
 
-	if (CMPSADDR(osaddr, (struct sockaddr *)&saidx->src) ||
-	    CMPSADDR(odaddr, (struct sockaddr *)&saidx->dst)) {
+	if (cmpsaddr(osaddr, (struct sockaddr *) &saidx->src) ||
+	    cmpsaddr(odaddr, (struct sockaddr *) &saidx->dst)) {
 		plog(LLV_DEBUG, LOCATION, NULL, "SADB_X_MIGRATE: "
 		     "mismatch of addresses in saidx and xisr.\n");
 		return -1;

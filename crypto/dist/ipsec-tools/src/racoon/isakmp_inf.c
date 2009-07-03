@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.40 2009/07/03 06:40:10 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.41 2009/07/03 06:41:46 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -899,15 +899,6 @@ isakmp_info_send_common(iph1, payload, np, flags)
 		delph2(iph2);
 		goto end;
 	}
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-	if (set_port(iph2->dst, 0) == NULL ||
-	    set_port(iph2->src, 0) == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "invalid family: %d\n", iph1->remote->sa_family);
-		delph2(iph2);
-		goto end;
-	}
-#endif
 	iph2->side = INITIATOR;
 	iph2->status = PHASE2ST_START;
 	iph2->msgid = isakmp_newmsgid2(iph1);
@@ -1123,9 +1114,6 @@ purge_ipsec_spi(dst0, proto, spi, n)
 	u_int64_t created;
 	size_t i;
 	caddr_t mhp[SADB_EXT_MAX + 1];
-#ifdef ENABLE_NATT
-	int natt_port_forced;
-#endif
 
 	plog(LLV_DEBUG2, LOCATION, NULL,
 		 "purge_ipsec_spi:\n");
@@ -1165,6 +1153,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			msg = next;
 			continue;
 		}
+		pk_fixup_sa_addresses(mhp);
 		src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 		dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 		lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
@@ -1178,28 +1167,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			msg = next;
 			continue;
 		}
-#ifdef ENABLE_NATT
-		if (PFKEY_ADDR_X_NATTYPE(mhp[SADB_X_EXT_NAT_T_TYPE])) {
-			/* NAT-T is enabled for this SADB entry; copy
-			 * the ports from NAT-T extensions */
-			if (extract_port(src) == 0 &&
-			    mhp[SADB_X_EXT_NAT_T_SPORT] != NULL) {
-				set_port(src, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_SPORT]));
-			}
 
-			if (extract_port(dst) == 0 &&
-			    mhp[SADB_X_EXT_NAT_T_DPORT] != NULL) {
-				set_port(dst, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_DPORT]));
-			}
-			natt_port_forced = 0;
-		} else {
-			/* Force default UDP ports, so
-			 * CMPSADDR will match SAs with NO encapsulation */
-			set_port(src, PORT_ISAKMP);
-			set_port(dst, PORT_ISAKMP);
-			natt_port_forced = 1;
-		}
-#endif
 		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(src));
 		plog(LLV_DEBUG2, LOCATION, NULL, "dst: %s\n", saddr2str(dst));
 
@@ -1207,19 +1175,11 @@ purge_ipsec_spi(dst0, proto, spi, n)
 
 		/* don't delete inbound SAs at the moment */
 		/* XXX should we remove SAs with opposite direction as well? */
-		if (CMPSADDR(dst0, dst)) {
+		if (cmpsaddr(dst0, dst)) {
 			msg = next;
 			continue;
 		}
 
-#ifdef ENABLE_NATT
-		if (natt_port_forced) {
-			/* Set back port to 0 if it was forced
-			 * to default UDP port */
-			set_port(src, 0);
-			set_port(dst, 0);
-		}
-#endif
 		for (i = 0; i < n; i++) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"check spi(packet)=%u spi(db)=%u.\n",
@@ -1350,37 +1310,33 @@ isakmp_info_recv_initialcontact(iph1, protectedph2)
 	msg = (struct sadb_msg *)buf->v;
 	end = (struct sadb_msg *)(buf->v + buf->l);
 
-	while (msg < end) {
+	for (; msg < end; msg = next) {
 		if ((msg->sadb_msg_len << 3) < sizeof(*msg))
 			break;
+
 		next = (struct sadb_msg *)((caddr_t)msg + (msg->sadb_msg_len << 3));
-		if (msg->sadb_msg_type != SADB_DUMP) {
-			msg = next;
+		if (msg->sadb_msg_type != SADB_DUMP)
 			continue;
-		}
 
 		if (pfkey_align(msg, mhp) || pfkey_check(mhp)) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"pfkey_check (%s)\n", ipsec_strerror());
-			msg = next;
 			continue;
 		}
 
 		if (mhp[SADB_EXT_SA] == NULL
 		 || mhp[SADB_EXT_ADDRESS_SRC] == NULL
-		 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
-			msg = next;
+		 || mhp[SADB_EXT_ADDRESS_DST] == NULL)
 			continue;
-		}
+
 		sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
+		pk_fixup_sa_addresses(mhp);
 		src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 		dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
 		if (sa->sadb_sa_state != SADB_SASTATE_MATURE
-		 && sa->sadb_sa_state != SADB_SASTATE_DYING) {
-			msg = next;
+		 && sa->sadb_sa_state != SADB_SASTATE_DYING)
 			continue;
-		}
 
 		/*
 		 * RFC2407 4.6.3.3 INITIAL-CONTACT is the message that
@@ -1390,39 +1346,18 @@ isakmp_info_recv_initialcontact(iph1, protectedph2)
 		 * racoon only deletes SA which is matched both the
 		 * source address and the destination accress.
 		 */
-#ifdef ENABLE_NATT
-		/* 
-		 * XXX RFC 3947 says that whe MUST NOT use IP+port to find old SAs
-		 * from this peer !
-		 */
-		if(iph1->natt_flags & NAT_DETECTED){
-			if (CMPSADDR(iph1->local, src) == 0 &&
-				CMPSADDR(iph1->remote, dst) == 0)
-				;
-			else if (CMPSADDR(iph1->remote, src) == 0 &&
-					 CMPSADDR(iph1->local, dst) == 0)
-				;
-			else {
-				msg = next;
-				continue;
-			}
-		} else
-#endif
-		/* If there is no NAT-T, we don't have to check addr + port...
-		 * XXX what about a configuration with a remote peers which is not
-		 * NATed, but which NATs some other peers ?
-		 * Here, the INITIAl-CONTACT would also flush all those NATed peers !!
-		 */
-		if (cmpsaddrwop(iph1->local, src) == 0 &&
-		    cmpsaddrwop(iph1->remote, dst) == 0)
-			;
-		else if (cmpsaddrwop(iph1->remote, src) == 0 &&
-		    cmpsaddrwop(iph1->local, dst) == 0)
-			;
-		else {
-			msg = next;
+
+		/*
+		 * Check that the IP and port match. But this is not optimal,
+		 * since NAT-T can make the peer have multiple different
+		 * ports. Correct thing to do is delete all entries with
+                 * same identity. -TT
+                 */
+		if ((cmpsaddr(iph1->local, src) != 0 ||
+		     cmpsaddr(iph1->remote, dst) != 0) &&
+		    (cmpsaddr(iph1->local, dst) != 0 ||
+		     cmpsaddr(iph1->remote, src) != 0))
 			continue;
-		}
 
 		/*
 		 * Make sure this is an SATYPE that we manage.
@@ -1434,10 +1369,8 @@ isakmp_info_recv_initialcontact(iph1, protectedph2)
 			    msg->sadb_msg_satype)
 				break;
 		}
-		if (i == pfkey_nsatypes) {
-			msg = next;
+		if (i == pfkey_nsatypes)
 			continue;
-		}
 
 		plog(LLV_INFO, LOCATION, NULL,
 			"purging spi=%u.\n", ntohl(sa->sadb_sa_spi));
@@ -1457,8 +1390,6 @@ isakmp_info_recv_initialcontact(iph1, protectedph2)
 			remph2(iph2);
 			delph2(iph2);
 		}
-
-		msg = next;
 	}
 
 	vfree(buf);

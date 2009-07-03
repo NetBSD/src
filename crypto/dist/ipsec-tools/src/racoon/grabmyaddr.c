@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.22 2009/04/21 18:38:31 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.23 2009/07/03 06:41:46 tteras Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -100,7 +100,7 @@ myaddr_configured(addr)
 		return TRUE;
 
 	LIST_FOREACH(cfg, &configured, chain) {
-		if (cmpsaddrstrict(addr, (struct sockaddr *) &cfg->addr) == 0)
+		if (cmpsaddr(addr, (struct sockaddr *) &cfg->addr) == 0)
 			return TRUE;
 	}
 
@@ -116,7 +116,7 @@ myaddr_open(addr, udp_encap)
 
 	/* Already open? */
 	LIST_FOREACH(my, &opened, chain) {
-		if (cmpsaddrstrict(addr, (struct sockaddr *) &my->addr) == 0)
+		if (cmpsaddr(addr, (struct sockaddr *) &my->addr) == 0)
 			return TRUE;
 	}
 
@@ -156,7 +156,7 @@ myaddr_open_all_configured(addr)
 
 	LIST_FOREACH(cfg, &configured, chain) {
 		if (addr != NULL &&
-		    cmpsaddrwop(addr, (struct sockaddr *) &cfg->addr) != 0)
+		    cmpsaddr(addr, (struct sockaddr *) &cfg->addr) != 0)
 			continue;
 		if (!myaddr_open((struct sockaddr *) &cfg->addr, cfg->udp_encap))
 			return FALSE;
@@ -187,8 +187,8 @@ myaddr_close_all_open(addr)
 	for (my = LIST_FIRST(&opened); my; my = next) {
 		next = LIST_NEXT(my, chain);
 
-		if (!cmpsaddrwop((struct sockaddr *) &addr,
-				 (struct sockaddr *) &my->addr))
+		if (!cmpsaddr((struct sockaddr *) &addr,
+			      (struct sockaddr *) &my->addr))
 			myaddr_delete(my);
 	}
 }
@@ -261,7 +261,7 @@ myaddr_getfd(addr)
 	struct myaddr *my;
 
 	LIST_FOREACH(my, &opened, chain) {
-		if (cmpsaddrstrict((struct sockaddr *) &my->addr, addr) == 0)
+		if (cmpsaddr((struct sockaddr *) &my->addr, addr) == 0)
 			return my->fd;
 	}
 
@@ -273,19 +273,13 @@ myaddr_getsport(addr)
 	struct sockaddr *addr;
 {
 	struct myaddr *my;
-	int bestmatch_port = -1;
 
 	LIST_FOREACH(my, &opened, chain) {
-		if (cmpsaddrstrict((struct sockaddr *) &my->addr, addr) == 0)
+		if (cmpsaddr((struct sockaddr *) &my->addr, addr) == 0)
 			return extract_port((struct sockaddr *) &my->addr);
-		if (cmpsaddrwop((struct sockaddr *) &my->addr, addr) != 0)
-			continue;
-		if (bestmatch_port == -1 ||
-		    extract_port((struct sockaddr *) &my->addr) == PORT_ISAKMP)
-			bestmatch_port = extract_port((struct sockaddr *) &my->addr);
 	}
 
-	return bestmatch_port;
+	return PORT_ISAKMP;
 }
 
 void
