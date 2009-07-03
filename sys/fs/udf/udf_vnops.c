@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.48 2009/07/03 21:17:41 elad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.49 2009/07/03 23:14:11 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.48 2009/07/03 21:17:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.49 2009/07/03 23:14:11 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -1311,7 +1311,7 @@ udf_close(void *v)
 /* --------------------------------------------------------------------- */
 
 static int
-udf_check_possible(struct vattr *vap, mode_t mode)
+udf_check_possible(struct vnode *vp, struct vattr *vap, mode_t mode)
 {
 	int flags;
 
@@ -1383,7 +1383,7 @@ udf_access(void *v)
 	if (error)
 		return error;
 
-	error = udf_check_possible(&vap, mode);
+	error = udf_check_possible(vp, &vap, mode);
 	if (error)
 		return error;
 
