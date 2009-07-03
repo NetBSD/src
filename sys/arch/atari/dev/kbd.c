@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.37 2009/07/03 13:36:09 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.38 2009/07/03 13:49:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37 2009/07/03 13:36:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.38 2009/07/03 13:49:39 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -123,7 +123,7 @@ static int  kbdmatch(struct device *, struct cfdata *, void *);
 #if NITE>0
 static int  kbd_do_modifier(uint8_t);
 #endif
-static int  kbd_write_poll(uint8_t *, int);
+static int  kbd_write_poll(const uint8_t *, int);
 static void kbd_pkg_start(struct kbd_softc *, uint8_t);
 
 CFATTACH_DECL(kbd, sizeof(struct device),
@@ -179,8 +179,8 @@ static void
 kbdattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	int timeout;
-	uint8_t kbd_rst[]  = { 0x80, 0x01 };
-	uint8_t kbd_icmd[] = { 0x12, 0x15 };
+	const uint8_t kbd_rst[]  = { 0x80, 0x01 };
+	const uint8_t kbd_icmd[] = { 0x12, 0x15 };
 
 	/*
 	 * Disable keyboard interrupts from MFP
@@ -649,7 +649,7 @@ kbdgetcn(void)
  * Write a command to the keyboard in 'polled' mode.
  */
 static int
-kbd_write_poll(uint8_t *cmd, int len)
+kbd_write_poll(const uint8_t *cmd, int len)
 {
 	int	timeout;
 
@@ -667,7 +667,7 @@ kbd_write_poll(uint8_t *cmd, int len)
  * Write a command to the keyboard. Return when command is send.
  */
 void
-kbd_write(uint8_t *cmd, int len)
+kbd_write(const uint8_t *cmd, int len)
 {
 	struct kbd_softc	*k = &kbd_softc;
 	int			sps;
