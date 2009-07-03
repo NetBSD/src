@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.69 2009/06/23 19:36:39 elad Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.70 2009/07/03 18:35:33 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.69 2009/06/23 19:36:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.70 2009/07/03 18:35:33 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,11 +227,9 @@ smbfs_open(void *v)
 		return EACCES;
 	}
 	if (vp->v_type == VDIR) {
-		if ((sv_caps & SMB_CAP_NT_SMBS) == 0) {
-			np->n_flag |= NOPEN;
+		np->n_flag |= NOPEN;
+		if ((sv_caps & SMB_CAP_NT_SMBS) == 0)
 			return 0;
-		}
-
 		goto do_open;	/* skip 'modified' check */
 	}
 
