@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.70 2009/07/03 18:35:33 njoly Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.71 2009/07/03 21:17:41 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.70 2009/07/03 18:35:33 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.71 2009/07/03 21:17:41 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,32 +160,16 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 const struct vnodeopv_desc smbfs_vnodeop_opv_desc =
 	{ &smbfs_vnodeop_p, smbfs_vnodeop_entries };
 
-int
-smbfs_access(void *v)
+static int
+smbfs_check_possible(struct vnode *vp, struct smbnode *np, mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-#ifdef SMB_VNODE_DEBUG
-	struct smbnode *np = VTOSMB(vp);
-#endif
-	u_int acc_mode = ap->a_mode;
-	struct smbmount *smp = VTOSMBFS(vp);
-
-        SMBVDEBUG("file '%.*s', node mode=%o, acc mode=%x\n",
-	    (int) np->n_nmlen, np->n_name,
-	    (vp->v_type == VDIR) ? smp->sm_args.dir_mode : smp->sm_args.file_mode,
-	    acc_mode);
 
         /*
          * Disallow write attempts on read-only file systems;
          * unless the file is a socket, fifo, or a block or
          * character device resident on the file system.
          */
-	if (acc_mode & VWRITE) {
+	if (mode & VWRITE) {
 		switch (vp->v_type) {
 		case VREG:
 		case VDIR:
@@ -197,10 +181,45 @@ smbfs_access(void *v)
 		}
 	}
 
-	return (genfs_can_access(vp->v_type,
+	return 0;
+}
+
+static int
+smbfs_check_permitted(struct vnode *vp, struct smbnode *np, mode_t mode,
+    kauth_cred_t cred)
+{
+	struct smbmount *smp = VTOSMBFS(vp);
+
+	return genfs_can_access(vp->v_type,
 	    (vp->v_type == VDIR) ? smp->sm_args.dir_mode : smp->sm_args.file_mode,
-	    smp->sm_args.uid, smp->sm_args.gid,
-	    acc_mode, ap->a_cred));
+	    smp->sm_args.uid, smp->sm_args.gid, mode, cred);
+}
+
+int
+smbfs_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int  a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct smbnode *np = VTOSMB(vp);
+	u_int acc_mode = ap->a_mode;
+	int error;
+
+        SMBVDEBUG("file '%.*s', node mode=%o, acc mode=%x\n",
+	    (int) np->n_nmlen, np->n_name,
+	    (vp->v_type == VDIR) ? smp->sm_args.dir_mode : smp->sm_args.file_mode,
+	    acc_mode);
+
+	error = smbfs_check_possible(vp, np, acc_mode);
+	if (error)
+		return error;
+
+	error = smbfs_check_permitted(vp, np, acc_mode, ap->a_cred);
+
+	return error;
 }
 
 /* ARGSUSED */

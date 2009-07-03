@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.18 2009/06/23 19:36:40 elad Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.19 2009/07/03 21:17:41 elad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.18 2009/06/23 19:36:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.19 2009/07/03 21:17:41 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,12 +128,31 @@ efs_lookup(void *v)
 	return (0);
 }
 
+static int
+efs_check_possible(struct vnode *vp, struct efs_inode *eip, mode_t mode)
+{
+
+	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
+		return (EROFS);
+
+	return 0;
+}
+
 /*
  * Determine the accessiblity of a file based on the permissions allowed by the
  * specified credentials.
  *
  * Returns 0 on success.
  */
+static int
+efs_check_possible(struct vnode *vp, struct efs_inode *eip, mode_t mode,
+    kauth_cred_t cred)
+{
+
+	return genfs_can_access(vp->v_type, eip->ei_mode, eip->ei_uid,
+	    eip->ei_gid, mode, cred);
+}
+
 static int
 efs_access(void *v)
 {
@@ -145,12 +164,15 @@ efs_access(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct efs_inode *eip = EFS_VTOI(vp);
+	int error;
 
-	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
-		return (EROFS);
+	error = efs_check_possible(vp, eip, ap->a_mode);
+	if (error)
+		return error;
 
-	return (genfs_can_access(vp->v_type, eip->ei_mode, eip->ei_uid,
-	    eip->ei_gid, ap->a_mode, ap->a_cred));
+	error = efs_check_permitted(vp, eip, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 /*
