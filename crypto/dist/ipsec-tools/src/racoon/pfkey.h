@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.h,v 1.7 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: pfkey.h,v 1.8 2009/07/03 06:40:10 tteras Exp $	*/
 
 /* Id: pfkey.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -52,6 +52,7 @@ extern struct pfkey_st *pfkey_getpst __P((caddr_t *, int, int));
 extern int pk_checkalg __P((int, int, int));
 
 struct ph2handle;
+extern void pk_fixup_sa_addresses __P((caddr_t *mhp));
 extern int pk_sendgetspi __P((struct ph2handle *));
 extern int pk_sendupdate __P((struct ph2handle *));
 extern int pk_sendadd __P((struct ph2handle *));

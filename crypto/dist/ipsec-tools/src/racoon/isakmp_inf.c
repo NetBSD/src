@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.39 2009/05/18 17:07:15 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.40 2009/07/03 06:40:10 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1124,8 +1124,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 	size_t i;
 	caddr_t mhp[SADB_EXT_MAX + 1];
 #ifdef ENABLE_NATT
-	struct sadb_x_nat_t_type *natt_type;
-	struct sadb_x_nat_t_port *natt_port;
+	int natt_port_forced;
 #endif
 
 	plog(LLV_DEBUG2, LOCATION, NULL,
@@ -1180,22 +1179,25 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			continue;
 		}
 #ifdef ENABLE_NATT
-		natt_type = (void *)mhp[SADB_X_EXT_NAT_T_TYPE];
-		if (natt_type && natt_type->sadb_x_nat_t_type_type) {
+		if (PFKEY_ADDR_X_NATTYPE(mhp[SADB_X_EXT_NAT_T_TYPE])) {
 			/* NAT-T is enabled for this SADB entry; copy
 			 * the ports from NAT-T extensions */
-			natt_port = (void *)mhp[SADB_X_EXT_NAT_T_SPORT];
-			if (extract_port(src) == 0 && natt_port != NULL)
-				set_port(src, ntohs(natt_port->sadb_x_nat_t_port_port));
+			if (extract_port(src) == 0 &&
+			    mhp[SADB_X_EXT_NAT_T_SPORT] != NULL) {
+				set_port(src, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_SPORT]));
+			}
 
-			natt_port = (void *)mhp[SADB_X_EXT_NAT_T_DPORT];
-			if (extract_port(dst) == 0 && natt_port != NULL)
-				set_port(dst, ntohs(natt_port->sadb_x_nat_t_port_port));
-		}else{
-			/* Force default UDP ports, so CMPSADDR will match SAs with NO encapsulation
-			 */
+			if (extract_port(dst) == 0 &&
+			    mhp[SADB_X_EXT_NAT_T_DPORT] != NULL) {
+				set_port(dst, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_DPORT]));
+			}
+			natt_port_forced = 0;
+		} else {
+			/* Force default UDP ports, so
+			 * CMPSADDR will match SAs with NO encapsulation */
 			set_port(src, PORT_ISAKMP);
 			set_port(dst, PORT_ISAKMP);
+			natt_port_forced = 1;
 		}
 #endif
 		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(src));
@@ -1211,10 +1213,9 @@ purge_ipsec_spi(dst0, proto, spi, n)
 		}
 
 #ifdef ENABLE_NATT
-		if (natt_type == NULL ||
-			! natt_type->sadb_x_nat_t_type_type) {
-			/* Set back port to 0 if it was forced to default UDP port
-			 */
+		if (natt_port_forced) {
+			/* Set back port to 0 if it was forced
+			 * to default UDP port */
 			set_port(src, 0);
 			set_port(dst, 0);
 		}
