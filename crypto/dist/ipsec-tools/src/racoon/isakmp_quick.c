@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.25 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.26 2009/07/03 06:41:46 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -610,17 +610,19 @@ quick_i2recv(iph2, msg0)
 			error = ISAKMP_NTYPE_ATTRIBUTES_NOT_SUPPORTED;
 			goto end;
 		}
+#ifdef ENABLE_NATT
+		set_port(iph2->natoa_src,
+			 extract_port((struct sockaddr *) &proposed_addr));
+#endif
 
-		if (cmpsaddrstrict((struct sockaddr *) &proposed_addr,
-				   (struct sockaddr *) &got_addr) == 0) {
+		if (cmpsaddr((struct sockaddr *) &proposed_addr,
+			     (struct sockaddr *) &got_addr) == 0) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"IDci matches proposal.\n");
 #ifdef ENABLE_NATT
 		} else if (iph2->natoa_src != NULL
-			&& cmpsaddrwop(iph2->natoa_src,
-				       (struct sockaddr *) &got_addr) == 0
-			&& extract_port((struct sockaddr *) &proposed_addr) ==
-			   extract_port((struct sockaddr *) &got_addr)) {
+			&& cmpsaddr(iph2->natoa_src,
+				    (struct sockaddr *) &got_addr) == 0) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"IDci matches NAT-OAi.\n");
 #endif
@@ -656,16 +658,19 @@ quick_i2recv(iph2, msg0)
 			goto end;
 		}
 
-		if (cmpsaddrstrict((struct sockaddr *) &proposed_addr,
-				   (struct sockaddr *) &got_addr) == 0) {
+#ifdef ENABLE_NATT
+		set_port(iph2->natoa_dst,
+			 extract_port((struct sockaddr *) &proposed_addr));
+#endif
+
+		if (cmpsaddr((struct sockaddr *) &proposed_addr,
+			     (struct sockaddr *) &got_addr) == 0) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"IDcr matches proposal.\n");
 #ifdef ENABLE_NATT
 		} else if (iph2->natoa_dst != NULL
-			&& cmpsaddrwop(iph2->natoa_dst,
-				       (struct sockaddr *) &got_addr) == 0
-			&& extract_port((struct sockaddr *) &proposed_addr) ==
-			   extract_port((struct sockaddr *) &got_addr)) {
+			&& cmpsaddr(iph2->natoa_dst,
+				    (struct sockaddr *) &got_addr) == 0) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"IDcr matches NAT-OAr.\n");
 #endif

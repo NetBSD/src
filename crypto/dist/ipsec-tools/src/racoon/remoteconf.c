@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.14 2009/03/12 23:05:27 he Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.15 2009/07/03 06:41:47 tteras Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -200,15 +200,9 @@ rmconf_match_type(rmsel, rmconf)
 	/* Check address */
 	if (rmsel->remote != NULL) {
 		if (rmconf->remote->sa_family != AF_UNSPEC) {
-			if (rmsel->flags & GETRMCONF_F_NO_PORTS) {
-				if (cmpsaddrwop(rmsel->remote,
-						rmconf->remote) != 0)
-					return 0;
-			} else {
-				if (cmpsaddrstrict(rmsel->remote,
-						   rmconf->remote) != 0)
-					return 0;
-			}
+			if (cmpsaddr(rmsel->remote, rmconf->remote) != 0)
+				return 0;
+
 			/* Address matched */
 			ret = 2;
 		}
@@ -262,7 +256,7 @@ void rmconf_selector_from_ph1(rmsel, iph1)
 	struct ph1handle *iph1;
 {
 	memset(rmsel, 0, sizeof(*rmsel));
-	rmsel->flags = GETRMCONF_F_NO_PORTS;
+	rmsel->flags = 0;
 	rmsel->remote = iph1->remote;
 	rmsel->etype = iph1->etype;
 	rmsel->approval = iph1->approval;
@@ -357,22 +351,8 @@ getrmconf(remote, flags)
 	int n = 0;
 
 	memset(&ctx, 0, sizeof(ctx));
-	ctx.sel.flags = flags | GETRMCONF_F_NO_PORTS;
+	ctx.sel.flags = flags;
 	ctx.sel.remote = remote;
-#ifndef ENABLE_NATT
-	/* 
-	 * We never have ports set in our remote configurations, but when
-	 * NAT-T is enabled, the kernel can have policies with ports and
-	 * send us an acquire message for a destination that has a port set.
-	 * If we do this port check here, we don't find the remote config.
-	 *
-	 * In an ideal world, we would be able to have remote conf with
-	 * port, and the port could be a wildcard. That test could be used.
-	 */
-	if (remote->sa_family != AF_UNSPEC &&
-	    extract_port(remote) != IPSEC_PORT_ANY)
-		ctx.sel.flags &= ~GETRMCONF_F_NO_PORTS;
-#endif /* ENABLE_NATT */
 
 	if (enumrmconf(&ctx.sel, rmconf_find, &ctx) != 0) {
 		plog(LLV_ERROR, LOCATION, remote,
