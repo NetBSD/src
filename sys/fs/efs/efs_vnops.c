@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.19 2009/07/03 21:17:41 elad Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.20 2009/07/03 22:25:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.19 2009/07/03 21:17:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.20 2009/07/03 22:25:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ static int
 efs_check_possible(struct vnode *vp, struct efs_inode *eip, mode_t mode)
 {
 
-	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
+	if ((mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return (EROFS);
 
 	return 0;
@@ -145,7 +145,7 @@ efs_check_possible(struct vnode *vp, struct efs_inode *eip, mode_t mode)
  * Returns 0 on success.
  */
 static int
-efs_check_possible(struct vnode *vp, struct efs_inode *eip, mode_t mode,
+efs_check_permitted(struct vnode *vp, struct efs_inode *eip, mode_t mode,
     kauth_cred_t cred)
 {
 
