@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.38 2009/07/03 13:49:39 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.39 2009/07/03 14:00:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.38 2009/07/03 13:49:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.39 2009/07/03 14:00:41 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -102,7 +102,6 @@ uint8_t			kbd_modifier;	/* Modifier mask		*/
 static uint8_t		kbd_ring[KBD_RING_SIZE];
 static volatile u_int	kbd_rbput = 0;	/* 'put' index			*/
 static u_int		kbd_rbget = 0;	/* 'get' index			*/
-static uint8_t		kbd_soft  = 0;	/* 1: Softint has been scheduled*/
 
 static struct kbd_softc kbd_softc;
 
@@ -117,7 +116,7 @@ dev_type_kqfilter(kbdkqfilter);
 /* Interrupt handler */
 void	kbdintr(int);
 
-static void kbdsoft(void *, void *);
+static void kbdsoft(void *);
 static void kbdattach(struct device *, struct device *, void *);
 static int  kbdmatch(struct device *, struct cfdata *, void *);
 #if NITE>0
@@ -219,6 +218,8 @@ kbdattach(struct device *pdp, struct device *dp, void *auxp)
 	kbd_write_poll(kbd_icmd, sizeof(kbd_icmd));
 
 	printf("\n");
+
+	kbd_softc.k_sicookie = softint_establish(SOFTINT_SERIAL, kbdsoft, NULL);
 
 #if NWSKBD>0
 	if (dp != NULL) {
@@ -413,22 +414,15 @@ kbdintr(int sr)
 	/*
 	 * Activate software-level to handle possible input.
 	 */
-	if (got_char) {
-		if (!BASEPRI(sr)) {
-			if (!kbd_soft++)
-				add_sicallback(kbdsoft, 0, 0);
-		} else {
-			spl1();
-			kbdsoft(NULL, NULL);
-		}
-	}
+	if (got_char)
+		softint_schedule(kbd_softc.k_sicookie);
 }
 
 /*
  * Keyboard soft interrupt handler
  */
-void
-kbdsoft(void *junk1, void *junk2)
+static void
+kbdsoft(void *junk1)
 {
 	int s;
 	uint8_t code;
@@ -436,7 +430,6 @@ kbdsoft(void *junk1, void *junk2)
 	struct firm_event *fe;
 	int put, get, n;
 
-	kbd_soft = 0;
 	get      = kbd_rbget;
 
 	for (;;) {
