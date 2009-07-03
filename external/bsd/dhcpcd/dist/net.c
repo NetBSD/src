@@ -383,7 +383,7 @@ do_address(const char *ifname,
 		n = (const struct sockaddr_in *)(void *)ifa->ifa_netmask;
 		if (ifa->ifa_flags & IFF_POINTOPOINT)
 			d = (const struct sockaddr_in *)(void *)
-				&ifa->ifa_dstaddr;
+				ifa->ifa_dstaddr;
 		else
 			d = NULL;
 		if (act == 1) {
