@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.42 2009/06/30 16:14:49 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.43 2009/07/03 15:34:10 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.42 2009/06/30 16:14:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.43 2009/07/03 15:34:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -618,14 +618,14 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (sc->sc_zone.hot != ATZ_TMP_INVALID) {
 		limits->sel_flags |= PROP_CRITMAX;
-		limits->sel_critmax = sc->sc_zone.hot;
+		limits->sel_critmax = sc->sc_zone.hot * 100000 - 50000;
 	} else if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
 		limits->sel_flags |= PROP_CRITMAX;
-		limits->sel_critmax = sc->sc_zone.crt;
+		limits->sel_critmax = sc->sc_zone.crt * 100000 - 50000;
 	}
 	for (i = 0; i < ATZ_NLEVELS; i++) 
 		if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
-			limits->sel_critmax = sc->sc_zone.ac[i];
+			limits->sel_critmax = sc->sc_zone.ac[i] * 100000 - 50000;
 			limits->sel_flags |= PROP_WARNMAX;
 			break;
 		}
