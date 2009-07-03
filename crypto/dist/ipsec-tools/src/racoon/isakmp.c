@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.57 2009/07/03 06:40:10 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.58 2009/07/03 06:41:46 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -468,8 +468,8 @@ isakmp_main(msg, remote, local)
 		/* Floating ports for NAT-T */
 		if (NATT_AVAILABLE(iph1) &&
 		    ! (iph1->natt_flags & NAT_PORTS_CHANGED) &&
-		    ((cmpsaddrstrict(iph1->remote, remote) != 0) ||
-		    (cmpsaddrstrict(iph1->local, local) != 0)))
+		    ((cmpsaddr(iph1->remote, remote) != 0) ||
+		     (cmpsaddr(iph1->local, local) != 0)))
 		{
 			/* prevent memory leak */
 			racoon_free(iph1->remote);
@@ -510,7 +510,7 @@ isakmp_main(msg, remote, local)
 #endif
 
 		/* must be same addresses in one stream of a phase at least. */
-		if (cmpsaddrstrict(iph1->remote, remote) != 0) {
+		if (cmpsaddr(iph1->remote, remote) != 0) {
 			char *saddr_db, *saddr_act;
 
 			saddr_db = racoon_strdup(saddr2str(iph1->remote));
@@ -636,7 +636,7 @@ isakmp_main(msg, remote, local)
 					"exchange received.\n");
 				return -1;
 			}
-			if (cmpsaddrstrict(iph1->remote, remote) != 0) {
+			if (cmpsaddr(iph1->remote, remote) != 0) {
 				plog(LLV_WARNING, LOCATION, remote,
 					"remote address mismatched. "
 					"db=%s\n",
@@ -1268,6 +1268,12 @@ isakmp_ph2begin_i(iph1, iph2)
 	}
 #endif
 
+	/* fixup ph2 ports for this ph1 */
+	if (extract_port(iph2->src) == 0)
+		set_port(iph2->src, extract_port(iph1->local));
+	if (extract_port(iph2->dst) == 0)
+		set_port(iph2->dst, extract_port(iph1->remote));
+
 	/* found ISAKMP-SA. */
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
 	plog(LLV_DEBUG, LOCATION, NULL, "begin QUICK mode.\n");
@@ -1346,15 +1352,6 @@ isakmp_ph2begin_r(iph1, msg)
 		delph2(iph2);
 		return -1;
 	}
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-	if (set_port(iph2->dst, 0) == NULL ||
-	    set_port(iph2->src, 0) == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		     "invalid family: %d\n", iph2->dst->sa_family);
-		delph2(iph2);
-		return -1;
-	}
-#endif
 
 	/* add new entry to isakmp status table */
 	insph2(iph2);
@@ -2179,23 +2176,12 @@ isakmp_post_acquire(iph2)
 		return 0;
 	}
 
-	/* 
-	 * Search isakmp status table by address and port 
-	 * If NAT-T is in use, consider null ports as a 
-	 * wildcard and use IKE ports instead.
+	/*
+	 * XXX Searching by IP addresses + ports might fail on
+	 * some cases, we should use the ISAKMP identity to search
+	 * matching ISAKMP.
 	 */
-#ifdef ENABLE_NATT
-	if (!extract_port(iph2->src) && !extract_port(iph2->dst)) {
-		if ((iph1 = getph1byaddrwop(iph2->src, iph2->dst)) != NULL) {
-			set_port(iph2->src, extract_port(iph1->local));
-			set_port(iph2->dst, extract_port(iph1->remote));
-		}
-	} else {
-		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
-	}
-#else
 	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
-#endif
 
 	/* no ISAKMP-SA found. */
 	if (iph1 == NULL) {
@@ -2373,26 +2359,8 @@ isakmp_chkph1there(iph2)
 		return;
 	}
 
-	/* 
-	 * Search isakmp status table by address and port 
-	 * If NAT-T is in use, consider null ports as a 
-	 * wildcard and use IKE ports instead.
-	 */
-#ifdef ENABLE_NATT
-	if (!extract_port(iph2->src) && !extract_port(iph2->dst)) {
-		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: extract_port.\n");
-		if( (iph1 = getph1byaddrwop(iph2->src, iph2->dst)) != NULL){
-			plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: found a ph1 wop.\n");
-		}
-	} else {
-		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: searching byaddr.\n");
-		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
-		if(iph1 != NULL)
-			plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: found byaddr.\n");
-	}
-#else
+	/* Search isakmp status table by address and port */
 	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
-#endif
 
 	/* XXX Even if ph1 as responder is there, should we not start
 	 * phase 2 negotiation ? */
@@ -3314,19 +3282,9 @@ purge_remote(iph1)
 			msg = next;
 			continue;
 		}
+		pk_fixup_sa_addresses(mhp);
 		src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 		dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
-
-#ifdef SADB_X_NAT_T_NEW_MAPPING
-		if (PFKEY_ADDR_X_NATTYPE(mhp[SADB_X_EXT_NAT_T_TYPE])) {
-			/* NAT-T is enabled for this SADB entry; copy
-			 * the ports from NAT-T extensions */
-			if(mhp[SADB_X_EXT_NAT_T_SPORT] != NULL)
-				set_port(src, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_SPORT]));
-			if(mhp[SADB_X_EXT_NAT_T_DPORT] != NULL)
-				set_port(dst, PFKEY_ADDR_X_PORT(mhp[SADB_X_EXT_NAT_T_DPORT]));
-		}
-#endif
 
 		if (sa->sadb_sa_state != SADB_SASTATE_LARVAL &&
 		    sa->sadb_sa_state != SADB_SASTATE_MATURE &&
@@ -3339,22 +3297,14 @@ purge_remote(iph1)
 		 * check in/outbound SAs.
 		 * Select only SAs where src == local and dst == remote (outgoing)
 		 * or src == remote and dst == local (incoming).
-		 * XXX we sometime have src/dst ports set to 0 and want to match
-		 * iph1->local/remote with ports set to 500. This is a bug, see trac:2
 		 */
-#ifdef ENABLE_NATT
-		if ((cmpsaddrmagic(iph1->local, src) || cmpsaddrmagic(iph1->remote, dst)) &&
-			(cmpsaddrmagic(iph1->local, dst) || cmpsaddrmagic(iph1->remote, src))) {
+		if ((cmpsaddr(iph1->local, src) ||
+		     cmpsaddr(iph1->remote, dst)) &&
+		    (cmpsaddr(iph1->local, dst) ||
+		     cmpsaddr(iph1->remote, src))) {
 			msg = next;
 			continue;
 		}
-#else
-		if ((CMPSADDR(iph1->local, src) || CMPSADDR(iph1->remote, dst)) &&
-			(CMPSADDR(iph1->local, dst) || CMPSADDR(iph1->remote, src))) {
-			msg = next;
-			continue;
-		}
-#endif
 
 		proto_id = pfkey2ipsecdoi_proto(msg->sadb_msg_satype);
 		iph2 = getph2bysaidx(src, dst, proto_id, sa->sadb_sa_spi);

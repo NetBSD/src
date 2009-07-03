@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.28 2009/04/28 13:54:07 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.29 2009/07/03 06:41:46 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -120,11 +120,11 @@ enumph1(sel, enum_func, enum_arg)
 	LIST_FOREACH(p, &ph1tree, chain) {
 		if (sel != NULL) {
 			if (sel->local != NULL &&
-			    CMPSADDR(sel->local, p->local) != 0)
+			    cmpsaddr(sel->local, p->local) != 0)
 				continue;
 
 			if (sel->remote != NULL &&
-			    CMPSADDR(sel->remote, p->remote) != 0)
+			    cmpsaddr(sel->remote, p->remote) != 0)
 				continue;
 		}
 
@@ -201,17 +201,12 @@ getph1(rmconf, local, remote, flags)
 			     "status %d, skipping\n", p->status);
 			continue;
 		}
-		if (flags & GETPH1_F_WITHOUT_PORTS) {
-			if (local != NULL && cmpsaddrwop(local, p->local) != 0)
-				continue;
-			if (remote != NULL && cmpsaddrwop(remote, p->remote) != 0)
-				continue;
-		} else {
-			if (local != NULL && CMPSADDR(local, p->local) != 0)
-				continue;
-			if (remote != NULL && CMPSADDR(remote, p->remote) != 0)
-				continue;
-		}
+
+		if (local != NULL && cmpsaddr(local, p->local) != 0)
+			continue;
+
+		if (remote != NULL && cmpsaddr(remote, p->remote) != 0)
+			continue;
 
 		plog(LLV_DEBUG2, LOCATION, NULL, "matched\n");
 		return p;
@@ -287,8 +282,8 @@ void migrate_dying_ph12(iph1)
 		if (p->status < PHASE1ST_DYING)
 			continue;
 
-		if (CMPSADDR(iph1->local, p->local) == 0
-		 && CMPSADDR(iph1->remote, p->remote) == 0)
+		if (cmpsaddr(iph1->local, p->local) == 0
+		 && cmpsaddr(iph1->remote, p->remote) == 0)
 			migrate_ph12(p, iph1);
 	}
 }
@@ -518,11 +513,11 @@ enumph2(sel, enum_func, enum_arg)
 				continue;
 
 			if (sel->src != NULL &&
-			    CMPSADDR(sel->src, p->src) != 0)
+			    cmpsaddr(sel->src, p->src) != 0)
 				continue;
 
 			if (sel->dst != NULL &&
-			    CMPSADDR(sel->dst, p->dst) != 0)
+			    cmpsaddr(sel->dst, p->dst) != 0)
 				continue;
 		}
 
@@ -586,8 +581,8 @@ getph2byid(src, dst, spid)
 
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
-		    cmpsaddrwild(src, p->src) == 0 &&
-		    cmpsaddrwild(dst, p->dst) == 0){
+		    cmpsaddr(src, p->src) == 0 &&
+		    cmpsaddr(dst, p->dst) == 0){
 			/* Sanity check to detect zombie handlers
 			 * XXX Sould be done "somewhere" more interesting,
 			 * because we have lots of getph2byxxxx(), but this one
@@ -614,8 +609,8 @@ getph2bysaddr(src, dst)
 	struct ph2handle *p;
 
 	LIST_FOREACH(p, &ph2tree, chain) {
-		if (cmpsaddrstrict(src, p->src) == 0 &&
-		    cmpsaddrstrict(dst, p->dst) == 0)
+		if (cmpsaddr(src, p->src) == 0 &&
+		    cmpsaddr(dst, p->dst) == 0)
 			return p;
 	}
 
@@ -918,7 +913,7 @@ getcontacted(remote)
 	struct contacted *p;
 
 	LIST_FOREACH(p, &ctdtree, chain) {
-		if (cmpsaddrstrict(remote, p->remote) == 0)
+		if (cmpsaddr(remote, p->remote) == 0)
 			return p;
 	}
 
@@ -997,7 +992,7 @@ check_recvdpkt(remote, local, rbuf)
 	/*
 	 * the packet was processed before, but the remote address mismatches.
 	 */
-	if (cmpsaddrstrict(remote, r->remote) != 0)
+	if (cmpsaddr(remote, r->remote) != 0)
 		return 2;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: throttle.c,v 1.5 2009/01/23 08:25:07 tteras Exp $	*/
+/*	$NetBSD: throttle.c,v 1.6 2009/07/03 06:41:47 tteras Exp $	*/
 
 /* Id: throttle.c,v 1.5 2006/04/05 20:54:50 manubsd Exp */
 
@@ -104,7 +104,7 @@ restart:
 			goto restart;
 		}
 
-		if (cmpsaddrwop(addr, (struct sockaddr *)&te->host) == 0) {
+		if (cmpsaddr(addr, (struct sockaddr *) &te->host) == 0) {
 			found = 1;
 			break;
 		}

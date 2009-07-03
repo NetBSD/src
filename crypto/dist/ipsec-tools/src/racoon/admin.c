@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.30 2009/04/20 13:22:00 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.31 2009/07/03 06:41:46 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -167,6 +167,14 @@ end:
 	return error;
 }
 
+static int admin_ph1_delete_sa(struct ph1handle *iph1, void *arg)
+{
+	if (iph1->status >= PHASE1ST_ESTABLISHED)
+		isakmp_info_send_d1(iph1);
+	purge_remote(iph1);
+	return 0;
+}
+
 /*
  * main child's process.
  */
@@ -257,7 +265,7 @@ admin_process(so2, combuf)
 			break;
 		}
 
-		iph1 = getph1byaddrwop(src, dst);
+		iph1 = getph1byaddr(src, dst, 0);
 		if (iph1 == NULL) {
 			l_ac_errno = ENOENT;
 			break;
@@ -292,30 +300,25 @@ admin_process(so2, combuf)
 
 	case ADMIN_DELETE_SA: {
 		struct ph1handle *iph1;
-		struct sockaddr *dst;
-		struct sockaddr *src;
+		struct ph1selector sel;
 		char *loc, *rem;
 
-		src = (struct sockaddr *)
+		memset(&sel, 0, sizeof(sel));
+		sel.local = (struct sockaddr *)
 			&((struct admin_com_indexes *)
 			    ((caddr_t)com + sizeof(*com)))->src;
-		dst = (struct sockaddr *)
+		sel.remote = (struct sockaddr *)
 			&((struct admin_com_indexes *)
 			    ((caddr_t)com + sizeof(*com)))->dst;
 
-		loc = racoon_strdup(saddrwop2str(src));
-		rem = racoon_strdup(saddrwop2str(dst));
+		loc = racoon_strdup(saddr2str(sel.local));
+		rem = racoon_strdup(saddr2str(sel.remote));
 		STRDUP_FATAL(loc);
 		STRDUP_FATAL(rem);
 
-		if ((iph1 = getph1byaddrwop(src, dst)) == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL, 
-			    "phase 1 for %s -> %s not found\n", loc, rem);
-		} else {
-			if (iph1->status >= PHASE1ST_ESTABLISHED)
-				isakmp_info_send_d1(iph1);
-			purge_remote(iph1);
-		}
+		plog(LLV_INFO, LOCATION, NULL,
+		     "admin delete-sa %s %s\n", loc, rem);
+		enumph1(&sel, admin_ph1_delete_sa, NULL);
 
 		racoon_free(loc);
 		racoon_free(rem);
@@ -360,7 +363,7 @@ admin_process(so2, combuf)
 		plog(LLV_INFO, LOCATION, NULL, 
 		    "Flushing all SAs for peer %s\n", rem);
 
-		while ((iph1 = getph1bydstaddrwop(dst)) != NULL) {
+		while ((iph1 = getph1bydstaddr(dst)) != NULL) {
 			loc = racoon_strdup(saddrwop2str(iph1->local));
 			STRDUP_FATAL(loc);
 
@@ -429,7 +432,7 @@ admin_process(so2, combuf)
 			l_ac_errno = -1;
 
 			/* connected already? */
-			ph1 = getph1byaddrwop(src, dst);
+			ph1 = getph1byaddr(src, dst, 0);
 			if (ph1 != NULL) {
 				event_list = &ph1->evt_listeners;
 				if (ph1->status == PHASE1ST_ESTABLISHED)
