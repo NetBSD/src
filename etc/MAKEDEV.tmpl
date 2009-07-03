@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.125 2009/06/14 21:34:15 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.126 2009/07/03 06:33:56 mrg Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -741,6 +741,7 @@ all)
 	makedev putter
 	makedev drvctl
 	makedev video
+	makedev dri0
 	makedev altmem
 	makedev zfs
 	makedev local # do this last
@@ -1899,6 +1900,11 @@ ttyS*)
 atabus*)
 	unit=${i#atabus}
 	mkdev atabus$unit c %atabus_chr% $unit 644
+	;;
+
+dri*)
+	makedir dri 755
+	mkdev dri/card$unit c %dri_chr% 2 660
 	;;
 
 drvctl)
