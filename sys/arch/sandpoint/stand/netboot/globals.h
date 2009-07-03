@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.9 2009/06/12 00:24:33 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.10 2009/07/03 10:31:19 nisimura Exp $ */
 
 /* clock feed */
 #ifndef TICKS_PER_SEC
@@ -17,6 +17,7 @@ extern int brdtype;
 extern char *consname;
 extern int consport;
 extern int consspeed;
+extern int ticks_per_sec;
 
 unsigned mpc107memsize(void);
 
