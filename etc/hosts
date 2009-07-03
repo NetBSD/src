@@ -1,4 +1,4 @@
-#	$NetBSD: hosts,v 1.7 2004/08/29 13:26:17 chs Exp $
+#	$NetBSD: hosts,v 1.8 2009/07/03 22:32:55 hubertf Exp $
 #
 # Host Database
 # This file should contain the addresses and aliases
@@ -10,7 +10,7 @@
 ::1			localhost localhost.
 127.0.0.1		localhost localhost.
 #
-# RFC 1918 specifies that these networks are "internal".
-# 10.0.0.0	10.255.255.255
-# 172.16.0.0	172.31.255.255
-# 192.168.0.0	192.168.255.255
+# RFC 1918 specifies that these networks are "internal":
+# 10.0.0.0        -   10.255.255.255  (10/8 prefix)
+# 172.16.0.0      -   172.31.255.255  (172.16/12 prefix)
+# 192.168.0.0     -   192.168.255.255 (192.168/16 prefix)
