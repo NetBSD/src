@@ -1689,9 +1689,7 @@ main(int argc, char **argv)
 	ifc = argc - optind;
 	ifv = argv + optind;
 	if (options & DHCPCD_BACKGROUND ||
-	    (ifc == 0 &&
-		options & DHCPCD_LINK &&
-		options & DHCPCD_DAEMONISE))
+	    (ifc == 0 && options & DHCPCD_LINK && options & DHCPCD_DAEMONISE))
 	{
 		daemonise();
 	} else if (options & DHCPCD_DAEMONISE) {
