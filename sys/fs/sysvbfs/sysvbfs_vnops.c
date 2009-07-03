@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.23 2009/07/03 21:17:41 elad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.24 2009/07/03 22:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.23 2009/07/03 21:17:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.24 2009/07/03 22:38:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -261,6 +261,7 @@ sysvbfs_access(void *arg)
 	} */ *ap = arg;
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
+	int error;
 
 	DPRINTF("%s:\n", __func__);
 
