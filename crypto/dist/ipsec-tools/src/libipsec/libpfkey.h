@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.15 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.16 2009/07/03 06:40:10 tteras Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -117,6 +117,10 @@ u_int pfkey_set_softrate __P((u_int, u_int));
 u_int pfkey_get_softrate __P((u_int));
 int pfkey_send_getspi __P((int, u_int, u_int, struct sockaddr *,
 	struct sockaddr *, u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+int pfkey_send_getspi_nat __P((int, u_int, u_int,
+	struct sockaddr *, struct sockaddr *, u_int8_t, u_int16_t, u_int16_t,
+	u_int32_t, u_int32_t, u_int32_t, u_int32_t));
+
 int pfkey_send_update2 __P((struct pfkey_send_sa_args *));
 int pfkey_send_add2 __P((struct pfkey_send_sa_args *)); 
 int pfkey_send_delete __P((int, u_int, u_int,
@@ -154,6 +158,14 @@ int pfkey_send_migrate __P((int, struct sockaddr *, struct sockaddr *,
         struct sockaddr *, u_int, struct sockaddr *, u_int, u_int,
         caddr_t, int, u_int32_t));
 #endif
+
+/* XXX should be somewhere else !!!
+ */
+#ifdef SADB_X_NAT_T_NEW_MAPPING
+#define PFKEY_ADDR_X_PORT(ext) (ntohs(((struct sadb_x_nat_t_port *)ext)->sadb_x_nat_t_port_port))
+#define PFKEY_ADDR_X_NATTYPE(ext) ( ext != NULL && ((struct sadb_x_nat_t_type *)ext)->sadb_x_nat_t_type_type )
+#endif
+
 
 int pfkey_open __P((void));
 void pfkey_close __P((int));
