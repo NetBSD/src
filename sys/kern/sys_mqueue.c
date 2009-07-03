@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.19 2009/06/23 19:36:38 elad Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.20 2009/07/03 21:32:09 elad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.19 2009/06/23 19:36:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.20 2009/07/03 21:32:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -295,6 +295,17 @@ mq_close_fop(file_t *fp)
 	return 0;
 }
 
+static int
+mqueue_access(struct mqueue *mq, mode_t mode, kauth_cred_t cred)
+{
+	if (genfs_can_access(VNON, mq->mq_mode, mq->mq_euid,
+	    mq->mq_egid, mode, cred)) {
+		return EACCES;
+	}
+
+	return 0;
+}
+
 /*
  * General mqueue system calls.
  */
@@ -430,8 +441,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		if (fp->f_flag & FWRITE) {
 			acc_mode |= VWRITE;
 		}
-		if (genfs_can_access(VNON, mq->mq_mode, mq->mq_euid,
-		    mq->mq_egid, acc_mode, l->l_cred)) {
+		if (mqueue_access(mq, acc_mode, l->l_cred) != 0) {
 			error = EACCES;
 			goto exit;
 		}
