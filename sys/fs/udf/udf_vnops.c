@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.47 2009/06/25 17:16:33 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.48 2009/07/03 21:17:41 elad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.47 2009/06/25 17:16:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.48 2009/07/03 21:17:41 elad Exp $");
 #endif /* not lint */
 
 
@@ -1310,31 +1310,13 @@ udf_close(void *v)
 
 /* --------------------------------------------------------------------- */
 
-int
-udf_access(void *v)
+static int
+udf_check_possible(struct vattr *vap, mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int a_mode;
-		kauth_cred_t a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode    *vp   = ap->a_vp;
-	mode_t	         mode = ap->a_mode;
-	kauth_cred_t     cred = ap->a_cred;
-	/* struct udf_node *udf_node = VTOI(vp); */
-	struct vattr vap;
 	int flags;
-	int error;
-
-	DPRINTF(CALL, ("udf_access called\n"));
-
-	error = VOP_GETATTR(vp, &vap, NULL);
-	if (error)
-		return error;
 
 	/* check if we are allowed to write */
-	switch (vap.va_type) {
+	switch (vap->va_type) {
 	case VDIR:
 	case VLNK:
 	case VREG:
@@ -1365,10 +1347,49 @@ udf_access(void *v)
 	if ((mode & VWRITE) && (flags & IMMUTABLE))
 		return EPERM;
 
+	return 0;
+}
+
+static int
+udf_check_permitted(struct vnode *vp, struct vattr *vap, mode_t mode,
+    kauth_cred_t cred)
+{
+
 	/* ask the generic genfs_can_access to advice on security */
 	return genfs_can_access(vp->v_type,
-			vap.va_mode, vap.va_uid, vap.va_gid,
+			vap->va_mode, vap->va_uid, vap->va_gid,
 			mode, cred);
+}
+
+int
+udf_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode    *vp   = ap->a_vp;
+	mode_t	         mode = ap->a_mode;
+	kauth_cred_t     cred = ap->a_cred;
+	/* struct udf_node *udf_node = VTOI(vp); */
+	struct vattr vap;
+	int error;
+
+	DPRINTF(CALL, ("udf_access called\n"));
+
+	error = VOP_GETATTR(vp, &vap, NULL);
+	if (error)
+		return error;
+
+	error = udf_check_possible(&vap, mode);
+	if (error)
+		return error;
+
+	error = udf_check_permitted(vp, &vap, mode, cred);
+
+	return error;
 }
 
 /* --------------------------------------------------------------------- */
