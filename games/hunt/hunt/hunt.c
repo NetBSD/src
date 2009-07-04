@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.32 2009/07/04 05:01:16 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.33 2009/07/04 06:38:34 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.32 2009/07/04 05:01:16 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.33 2009/07/04 06:38:34 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -746,7 +746,7 @@ bad_ver(void)
  * sigterm:
  *	Handle a terminate signal
  */
-SIGNAL_TYPE
+void
 sigterm(int dummy __unused)
 {
 	leavex(0, NULL);
@@ -758,7 +758,7 @@ sigterm(int dummy __unused)
  * sigusr1:
  *	Handle a usr1 signal
  */
-SIGNAL_TYPE
+void
 sigusr1(int dummy __unused)
 {
 	leavex(1, "Unable to start driver.  Try again.");
@@ -770,7 +770,7 @@ sigusr1(int dummy __unused)
  * sigalrm:
  *	Handle an alarm signal
  */
-SIGNAL_TYPE
+void
 sigalrm(int dummy __unused)
 {
 	return;
@@ -795,7 +795,7 @@ rmnl(char *s)
  * intr:
  *	Handle a interrupt signal
  */
-SIGNAL_TYPE
+void
 intr(int dummy __unused)
 {
 	int ch;
@@ -903,7 +903,7 @@ leavex(int eval, const char *mesg)
  * tstp:
  *	Handle stop and start signals
  */
-SIGNAL_TYPE
+void
 tstp(int dummy __unused)
 {
 #if BSD_RELEASE < 44

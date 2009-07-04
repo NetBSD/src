@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.13 2009/07/04 05:01:16 dholland Exp $	*/
+/*	$NetBSD: otto.c,v 1.14 2009/07/04 06:38:34 dholland Exp $	*/
 #ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.13 2009/07/04 05:01:16 dholland Exp $");
+__RCSID("$NetBSD: otto.c,v 1.14 2009/07/04 06:38:34 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -148,13 +148,13 @@ STATIC void face_and_move_direction(int, int);
 STATIC int go_for_ammo(char);
 STATIC void ottolook(int, struct item *);
 STATIC void look_around(void);
-STATIC SIGNAL_TYPE nothing(int);
+STATIC void nothing(int);
 STATIC int stop_look(struct item *, char, int, int);
 STATIC void wander(void);
 
 extern int Otto_count;
 
-STATIC SIGNAL_TYPE
+STATIC void
 nothing(int dummy __unused)
 {
 }
