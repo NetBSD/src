@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.13 2009/07/04 07:10:23 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.14 2009/07/04 07:51:34 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.13 2009/07/04 07:10:23 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.14 2009/07/04 07:51:34 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -42,10 +42,8 @@ __RCSID("$NetBSD: playit.c,v 1.13 2009/07/04 07:10:23 dholland Exp $");
 #include <curses.h>
 #include <ctype.h>
 #include <signal.h>
-#if defined(HPUX) || (defined(BSD_RELEASE) && BSD_RELEASE >= 44)
 #include <termios.h>
 #include <unistd.h>
-#endif
 #include "hunt.h"
 
 #ifndef FREAD
@@ -76,10 +74,6 @@ static int icnt = 0;
 static unsigned char ibuf[256], *iptr = ibuf;
 
 #define GETCHR()	(--icnt < 0 ? getchr() : *iptr++)
-
-#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
-extern int _putchar();
-#endif
 
 static unsigned char getchr(void);
 static void send_stuff(void);
@@ -160,15 +154,7 @@ playit(void)
 		  case READY:
 			refresh();
 			if (nchar_send < 0)
-#if defined(HPUX) || (defined(BSD_RELEASE) && BSD_RELEASE >= 44)
 				tcflush(STDIN, TCIFLUSH);
-#else
-#ifndef TCFLSH
-				(void) ioctl(STDIN, TIOCFLUSH, &in);
-#else
-				(void) ioctl(STDIN, TCFLSH, 0);
-#endif
-#endif
 			nchar_send = MAX_SEND;
 #ifndef OTTO
 			(void) GETCHR();
@@ -348,12 +334,7 @@ get_message:
 				refresh();
 				if ((ch = getchar()) == '\n' || ch == '\r')
 					break;
-#if BSD_RELEASE >= 44
-				if (ch == erasechar())
-#else
-				if (ch == _tty.sg_erase)
-#endif
-				{
+				if (ch == erasechar()) {
 					if (cp > buf) {
 						int y, x;
 						getyx(stdscr, y, x);
@@ -363,12 +344,7 @@ get_message:
 					}
 					continue;
 				}
-#if BSD_RELEASE >= 44
-				else if (ch == killchar())
-#else
-				else if (ch == _tty.sg_kill)
-#endif
-				{
+				else if (ch == killchar()) {
 					int y, x;
 					getyx(stdscr, y, x);
 					move(y, x - (cp - buf));

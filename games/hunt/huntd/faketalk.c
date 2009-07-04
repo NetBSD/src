@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.16 2009/07/04 06:38:35 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.17 2009/07/04 07:51:35 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.16 2009/07/04 06:38:35 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.17 2009/07/04 07:51:35 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -214,11 +214,7 @@ do_announce(char *s)
 	get_remote_name(s);	/* setup his_machine_addr, msg.r_name */
 
 #ifdef TALK_43
-#if BSD_RELEASE >= 44
 	msg.ctl_addr = *(struct osockaddr *) &ctl_addr;
-#else
-	msg.ctl_addr = *(struct sockaddr *) &ctl_addr;
-#endif
 	msg.ctl_addr.sa_family = htons(msg.ctl_addr.sa_family);
 #else
 	msg.ctl_addr = ctl_addr;

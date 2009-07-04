@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.17 2009/07/04 07:10:23 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.18 2009/07/04 07:51:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -40,12 +40,7 @@
 #include <syslog.h>
 #endif
 
-#if BSD_RELEASE < 44
-#include <sgtty.h>
-#else
 #include <sys/ioctl.h>
-#endif
-
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/poll.h>
@@ -54,9 +49,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#ifdef BROADCAST
 #include <net/if.h>
-#endif
 #else
 #include <sys/un.h>
 #endif

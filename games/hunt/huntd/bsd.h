@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd.h,v 1.6 2009/07/04 06:31:31 dholland Exp $	*/
+/*	$NetBSD: bsd.h,v 1.7 2009/07/04 07:51:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -30,7 +30,3 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(BSD_RELEASE) && BSD_RELEASE >= 43
-#define BROADCAST
-#endif
