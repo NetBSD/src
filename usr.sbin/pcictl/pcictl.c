@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.12 2009/04/18 07:17:16 lukem Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.13 2009/07/04 09:12:46 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,7 +63,6 @@ struct command {
 	int open_flags;
 };
 
-int	main(int, char *[]);
 void	usage(void);
 
 int	pcifd;
@@ -120,7 +119,7 @@ main(int argc, char *argv[])
 		if (strcmp(cmdname, commands[i].cmd_name) == 0)
 			break;
 	if (commands[i].cmd_name == NULL)
-		errx(1, "unknown command: %s", cmdname);
+		errx(EXIT_FAILURE, "unknown command: %s", cmdname);
 
 	argnames = commands[i].arg_names;
 
@@ -131,18 +130,18 @@ main(int argc, char *argv[])
 		dvname = dvname_store;
 	pcifd = open(dvname, commands[i].open_flags);
 	if (pcifd < 0)
-		err(1, "%s", dvname);
+		err(EXIT_FAILURE, "%s", dvname);
 
 	/* Make sure the device is a PCI bus. */
 	if (ioctl(pcifd, PCI_IOC_BUSINFO, &pci_businfo) != 0)
-		errx(1, "%s: not a PCI bus device", dvname);
+		errx(EXIT_FAILURE, "%s: not a PCI bus device", dvname);
 
 	(*commands[i].cmd_func)(argc, argv);
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 void
-usage()
+usage(void)
 {
 	int i;
 
@@ -154,7 +153,7 @@ usage()
 		fprintf(stderr, "\t%s %s\n", commands[i].cmd_name,
 		    commands[i].arg_names);
 
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 void
