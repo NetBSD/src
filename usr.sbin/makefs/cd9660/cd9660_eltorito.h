@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.h,v 1.4 2005/10/30 07:33:57 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.h,v 1.5 2009/07/04 14:31:38 ahoka Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
