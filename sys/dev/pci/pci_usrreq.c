@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.16 2008/06/11 19:27:03 cegger Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.17 2009/07/04 21:01:10 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.16 2008/06/11 19:27:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.17 2009/07/04 21:01:10 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,9 +62,9 @@ pciopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	dv = device_lookup(&pci_cd, minor(dev));
 	if (dv == NULL)
-		return (ENXIO);
+		return ENXIO;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -81,7 +81,7 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case PCI_IOC_BDF_CFGWRITE:
 		if (bdfr->bus > 255 || bdfr->device >= sc->sc_maxndevs ||
 		    bdfr->function > 7)
-			return (EINVAL);
+			return EINVAL;
 		tag = pci_make_tag(sc->sc_pc, bdfr->bus, bdfr->device,
 		    bdfr->function);
 		if (cmd == PCI_IOC_BDF_CFGREAD)
@@ -89,7 +89,7 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    bdfr->cfgreg.reg);
 		else {
 			if ((flag & FWRITE) == 0)
-				return (EBADF);
+				return EBADF;
 			pci_conf_write(sc->sc_pc, tag, bdfr->cfgreg.reg,
 			    bdfr->cfgreg.val);
 		}
@@ -101,10 +101,10 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	default:
-		return (ENOTTY);
+		return ENOTTY;
 	}
 
-	return (0);
+	return 0;
 }
 
 static paddr_t
@@ -120,10 +120,10 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	 *
 	 * XXX Need a way to deal with linear/prefetchable/etc.
 	 */
-	return (bus_space_mmap(sc->sc_memt, offset, 0, prot, 0));
+	return bus_space_mmap(sc->sc_memt, offset, 0, prot, 0);
 #else
 	/* XXX Consider this further. */
-	return (-1);
+	return -1;
 #endif
 }
 
@@ -150,14 +150,14 @@ pci_devioctl(pci_chipset_tag_t pc, pcitag_t tag, u_long cmd, void *data,
 			r->val = pci_conf_read(pc, tag, r->reg);
 		else {
 			if ((flag & FWRITE) == 0)
-				return (EBADF);
+				return EBADF;
 			pci_conf_write(pc, tag, r->reg, r->val);
 		}
 		break;
 
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
 
-	return (0);
+	return 0;
 }
