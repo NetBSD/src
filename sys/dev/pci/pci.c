@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.122 2009/04/02 00:09:33 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.123 2009/07/04 21:01:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.122 2009/04/02 00:09:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.123 2009/07/04 21:01:10 cegger Exp $");
 
 #include "opt_pci.h"
 
@@ -118,17 +118,17 @@ pcimatch(device_t parent, cfdata_t cf, void *aux)
 	/* Check the locators */
 	if (cf->cf_loc[PCIBUSCF_BUS] != PCIBUSCF_BUS_DEFAULT &&
 	    cf->cf_loc[PCIBUSCF_BUS] != pba->pba_bus)
-		return (0);
+		return 0;
 
 	/* sanity */
 	if (pba->pba_bus < 0 || pba->pba_bus > 255)
-		return (0);
+		return 0;
 
 	/*
 	 * XXX check other (hardware?) indicators
 	 */
 
-	return (1);
+	return 1;
 }
 
 void
@@ -264,7 +264,7 @@ pciprint(void *aux, const char *pnp)
 		}
 		printf(")");
 	}
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
@@ -282,11 +282,11 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	/* a driver already attached? */
 	if (sc->PCI_SC_DEVICESC(device, function).c_dev != NULL && !match)
-		return (0);
+		return 0;
 
 	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
-		return (0);
+		return 0;
 
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -294,10 +294,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-		return (0);
+		return 0;
 	/* XXX Not invalid, but we've done this ~forever. */
 	if (PCI_VENDOR(id) == 0)
-		return (0);
+		return 0;
 
 	pa.pa_iot = sc->sc_iot;
 	pa.pa_memt = sc->sc_memt;
@@ -376,7 +376,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		ret = (subdev != NULL);
 	}
 
-	return (ret);
+	return ret;
 }
 
 void
@@ -414,7 +414,7 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 
 	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
-		return (0);
+		return 0;
 
 	/* Determine the Capability List Pointer register to start with. */
 	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -427,7 +427,7 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 		ofs = PCI_CARDBUS_CAPLISTPTR_REG;
 		break;
 	default:
-		return (0);
+		return 0;
 	}
 
 	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, ofs));
@@ -447,12 +447,12 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 				*offset = ofs;
 			if (value)
 				*value = reg;
-			return (1);
+			return 1;
 		}
 		ofs = PCI_CAPLIST_NEXT(reg);
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -472,9 +472,9 @@ pci_find_device(struct pci_attach_args *pa,
 		if (pcidev != NULL &&
 		    pci_enumerate_bus(device_private(pcidev), wildcard,
 		    		      match, pa) != 0)
-			return (1);
+			return 1;
 	}
-	return (0);
+	return 0;
 }
 
 #ifndef PCI_MACHDEP_ENUMERATE_BUS
@@ -544,10 +544,10 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 			tag = pci_make_tag(pc, sc->sc_bus, device, function);
 			ret = pci_probe_device(sc, tag, match, pap);
 			if (match != NULL && ret != 0)
-				return (ret);
+				return ret;
 		}
 	}
-	return (0);
+	return 0;
 }
 #endif /* PCI_MACHDEP_ENUMERATE_BUS */
 
@@ -567,7 +567,7 @@ pci_vpd_read(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 	KASSERT((offset + count) < 0x7fff);
 
 	if (pci_get_capability(pc, tag, PCI_CAP_VPD, &ofs, &reg) == 0)
-		return (1);
+		return 1;
 
 	for (i = 0; i < count; offset += sizeof(*data), i++) {
 		reg &= 0x0000ffff;
@@ -582,14 +582,14 @@ pci_vpd_read(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 		j = 0;
 		do {
 			if (j++ == 20)
-				return (1);
+				return 1;
 			delay(4);
 			reg = pci_conf_read(pc, tag, ofs);
 		} while ((reg & PCI_VPD_OPFLAG) == 0);
 		data[i] = pci_conf_read(pc, tag, PCI_VPD_DATAREG(ofs));
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -603,7 +603,7 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 	KASSERT((offset + count) < 0x7fff);
 
 	if (pci_get_capability(pc, tag, PCI_CAP_VPD, &ofs, &reg) == 0)
-		return (1);
+		return 1;
 
 	for (i = 0; i < count; offset += sizeof(*data), i++) {
 		pci_conf_write(pc, tag, PCI_VPD_DATAREG(ofs), data[i]);
@@ -620,13 +620,13 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 		j = 0;
 		do {
 			if (j++ == 20)
-				return (1);
+				return 1;
 			delay(1);
 			reg = pci_conf_read(pc, tag, ofs);
 		} while (reg & PCI_VPD_OPFLAG);
 	}
 
-	return (0);
+	return 0;
 }
 
 int
