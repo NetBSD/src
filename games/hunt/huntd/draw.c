@@ -1,4 +1,4 @@
-/*	$NetBSD: draw.c,v 1.6 2009/07/04 02:37:20 dholland Exp $	*/
+/*	$NetBSD: draw.c,v 1.7 2009/07/04 04:29:54 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,18 +32,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: draw.c,v 1.6 2009/07/04 02:37:20 dholland Exp $");
+__RCSID("$NetBSD: draw.c,v 1.7 2009/07/04 04:29:54 dholland Exp $");
 #endif /* not lint */
 
-# include	"hunt.h"
+#include "hunt.h"
 
 void
 drawmaze(PLAYER *pp)
 {
-	int	x;
-	char	*sp;
-	int	y;
-	char	*endp;
+	int x;
+	char *sp;
+	int y;
+	char *endp;
 
 	clrscr(pp);
 	outstr(pp, pp->p_maze[0], WIDTH);
@@ -72,8 +72,8 @@ drawmaze(PLAYER *pp)
 void
 drawstatus(PLAYER *pp)
 {
-	int	i;
-	PLAYER	*np;
+	int i;
+	PLAYER *np;
 
 	cgoto(pp, STAT_AMMO_ROW, STAT_LABEL_COL);
 	outstr(pp, "Ammo:", 5);
@@ -110,7 +110,7 @@ drawstatus(PLAYER *pp)
 		outstr(pp, Buf, STAT_NAME_LEN);
 	}
 
-# ifdef MONITOR
+#ifdef MONITOR
 	cgoto(pp, STAT_MON_ROW, STAT_LABEL_COL);
 	outstr(pp, "Monitor:", 8);
 	for (i = STAT_MON_ROW + 1, np = Monitor; np < End_monitor; np++) {
@@ -119,13 +119,13 @@ drawstatus(PLAYER *pp)
 		cgoto(pp, i++, STAT_NAME_COL);
 		outstr(pp, Buf, STAT_NAME_LEN);
 	}
-# endif
+#endif
 }
 
 void
 look(PLAYER *pp)
 {
-	int	x, y;
+	int x, y;
 
 	x = pp->p_x;
 	y = pp->p_y;
@@ -161,10 +161,10 @@ look(PLAYER *pp)
 		see(pp, LEFTS);
 		see(pp, RIGHT);
 		break;
-# ifdef FLY
+#ifdef FLY
 	  case FLYER:
 		break;
-# endif
+#endif
 	}
 	cgoto(pp, y, x);
 }
@@ -172,8 +172,8 @@ look(PLAYER *pp)
 void
 see(PLAYER *pp, int face)
 {
-	char	*sp;
-	int	y, x, i, cnt;
+	char *sp;
+	int y, x, i, cnt;
 
 	x = pp->p_x;
 	y = pp->p_y;
@@ -257,9 +257,9 @@ see(PLAYER *pp, int face)
 void
 check(PLAYER *pp, int y, int x)
 {
-	int	indx;
-	int	ch;
-	PLAYER	*rpp;
+	int indx;
+	int ch;
+	PLAYER *rpp;
 
 	indx = y * sizeof Maze[0] + x;
 	ch = ((char *) Maze)[indx];
@@ -283,18 +283,18 @@ check(PLAYER *pp, int y, int x)
 void
 showstat(PLAYER *pp)
 {
-	PLAYER	*np;
-	int	y;
-	char	c;
+	PLAYER *np;
+	int y;
+	char c;
 
 	y = STAT_PLAY_ROW + 1 + (pp - Player);
 	c = stat_char(pp);
-# ifdef MONITOR
+#ifdef MONITOR
 	for (np = Monitor; np < End_monitor; np++) {
 		cgoto(np, y, STAT_SCAN_COL);
 		outch(np, c);
 	}
-# endif
+#endif
 	for (np = Player; np < End_player; np++) {
 		cgoto(np, y, STAT_SCAN_COL);
 		outch(np, c);
@@ -309,17 +309,17 @@ showstat(PLAYER *pp)
 void
 drawplayer(PLAYER *pp, FLAG draw)
 {
-	PLAYER	*newp;
-	int	x, y;
+	PLAYER *newp;
+	int x, y;
 
 	x = pp->p_x;
 	y = pp->p_y;
 	Maze[y][x] = draw ? pp->p_face : pp->p_over;
 
-# ifdef MONITOR
+#ifdef MONITOR
 	for (newp = Monitor; newp < End_monitor; newp++)
 		check(newp, y, x);
-# endif
+#endif
 
 	for (newp = Player; newp < End_player; newp++) {
 		if (!draw || newp == pp) {
@@ -378,7 +378,7 @@ translate(char ch)
 int
 player_sym(PLAYER *pp, int y, int x)
 {
-	PLAYER	*npp;
+	PLAYER *npp;
 
 	npp = play_at(y, x);
 	if (npp->p_ident->i_team == ' ')

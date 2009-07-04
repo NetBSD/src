@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.4 2009/07/04 02:37:20 dholland Exp $	*/
+/*	$NetBSD: ctl.c,v 1.5 2009/07/04 04:29:54 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,14 +32,14 @@
 
 #include "bsd.h"
 
-#if	defined(TALK_43) || defined(TALK_42) 
+#if defined(TALK_43) || defined(TALK_42) 
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ctl.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl.c,v 1.4 2009/07/04 02:37:20 dholland Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.5 2009/07/04 04:29:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,16 +52,16 @@ __RCSID("$NetBSD: ctl.c,v 1.4 2009/07/04 02:37:20 dholland Exp $");
 #include "hunt.h"
 #include "talk_ctl.h"
 
-struct	sockaddr_in daemon_addr = { AF_INET };
-struct	sockaddr_in ctl_addr = { AF_INET };
+struct sockaddr_in daemon_addr = { AF_INET };
+struct sockaddr_in ctl_addr = { AF_INET };
 
-	/* inet addresses of the two machines */
-struct	in_addr my_machine_addr;
-struct	in_addr his_machine_addr;
+/* inet addresses of the two machines */
+struct in_addr my_machine_addr;
+struct in_addr his_machine_addr;
 
 u_short daemon_port;	/* port number of the talk daemon */
 
-int	ctl_sockt;
+int ctl_sockt;
 
 CTL_MSG msg;
 

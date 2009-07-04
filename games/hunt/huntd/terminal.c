@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.6 2009/07/04 02:37:20 dholland Exp $	*/
+/*	$NetBSD: terminal.c,v 1.7 2009/07/04 04:29:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,12 +32,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: terminal.c,v 1.6 2009/07/04 02:37:20 dholland Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.7 2009/07/04 04:29:55 dholland Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
 #include "hunt.h"
-#define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
+#define TERM_WIDTH	80	/* Assume terminals are 80-char wide */
 
 /*
  * cgoto:
@@ -104,7 +104,7 @@ ce(PLAYER *pp)
 	sendcom(pp, CLRTOEOL);
 }
 
-#if 0		/* XXX lukem*/
+#if 0		/* XXX lukem */
 /*
  * ref;
  *	Refresh the screen
@@ -124,7 +124,7 @@ void
 sendcom(PLAYER *pp, int command, ...)
 {
 	va_list	ap;
-	int	arg1, arg2;
+	int arg1, arg2;
 
 	va_start(ap, command);
 	(void) putc(command, pp->p_output);

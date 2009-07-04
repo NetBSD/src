@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.16 2009/07/04 02:37:20 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.17 2009/07/04 04:29:54 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,49 +32,50 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.16 2009/07/04 02:37:20 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.17 2009/07/04 04:29:54 dholland Exp $");
 #endif /* not lint */
 
-# include	<sys/ioctl.h>
-# include	<sys/stat.h>
-# include	<sys/time.h>
-# include	<err.h>
-# include	<errno.h>
-# include	<signal.h>
-# include	<stdlib.h>
-# include	<unistd.h>
-# include	"hunt.h"
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <err.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include"hunt.h"
 
-# ifndef pdp11
-# define	RN	(((Seed = Seed * 11109 + 13849) >> 16) & 0xffff)
-# else
-# define	RN	((Seed = Seed * 11109 + 13849) & 0x7fff)
-# endif
+#ifndef pdp11
+#define RN	(((Seed = Seed * 11109 + 13849) >> 16) & 0xffff)
+#else
+#define RN	((Seed = Seed * 11109 + 13849) & 0x7fff)
+#endif
 
-int	Seed = 0;
+int Seed = 0;
 
 
-SOCKET	Daemon;
-char	*First_arg;		/* pointer to argv[0] */
-char	*Last_arg;		/* pointer to end of argv/environ */
-# ifdef	INTERNET
-int	Test_socket;		/* test socket to answer datagrams */
-FLAG	inetd_spawned;		/* invoked via inetd */
-FLAG	standard_port = TRUE;	/* true if listening on standard port */
+SOCKET Daemon;
+char *First_arg;		/* pointer to argv[0] */
+char *Last_arg;			/* pointer to end of argv/environ */
+
+#ifdef INTERNET
+int Test_socket;		/* test socket to answer datagrams */
+FLAG inetd_spawned;		/* invoked via inetd */
+FLAG standard_port = TRUE;	/* true if listening on standard port */
 u_short	sock_port;		/* port # of tcp listen socket */
 u_short	stat_port;		/* port # of statistics tcp socket */
-# define	DAEMON_SIZE	(sizeof Daemon)
-# else
-# define	DAEMON_SIZE	(sizeof Daemon - 1)
-# endif
+#define DAEMON_SIZE	(sizeof Daemon)
+#else
+#define DAEMON_SIZE	(sizeof Daemon - 1)
+#endif
 
-static	void	clear_scores(void);
-static	int	havechar(PLAYER *, int);
-static	void	init(void);
-	int	main(int, char *[], char *[]);
-static	void	makeboots(void);
-static	void	send_stats(void);
-static	void	zap(PLAYER *, FLAG, int);
+static void clear_scores(void);
+static int havechar(PLAYER *, int);
+static void init(void);
+int main(int, char *[], char *[]);
+static void makeboots(void);
+static void send_stats(void);
+static void zap(PLAYER *, FLAG, int);
 
 
 /*
@@ -84,17 +85,17 @@ static	void	zap(PLAYER *, FLAG, int);
 int
 main(int ac, char **av, char **ep)
 {
-	PLAYER	*pp;
-# ifdef INTERNET
-	u_short	msg;
-	short	port_num, reply;
-	socklen_t	namelen;
-	SOCKET	test;
-# endif
-	static FLAG	first = TRUE;
-	static FLAG	server = FALSE;
-	int		c, i;
-	const int	linger = 90 * 1000;
+	PLAYER *pp;
+#ifdef INTERNET
+	u_short msg;
+	short port_num, reply;
+	socklen_t namelen;
+	SOCKET test;
+#endif
+	static FLAG first = TRUE;
+	static FLAG server = FALSE;
+	int c, i;
+	const int linger = 90 * 1000;
 
 	First_arg = av[0];
 	if (ep == NULL || *ep == NULL)
@@ -108,12 +109,12 @@ main(int ac, char **av, char **ep)
 		  case 's':
 			server = TRUE;
 			break;
-# ifdef INTERNET
+#ifdef INTERNET
 		  case 'p':
 			standard_port = FALSE;
 			Test_port = atoi(optarg);
 			break;
-# endif
+#endif
 		  default:
 erred:
 			fprintf(stderr, "Usage: %s [-s] [-p port]\n", av[0]);
@@ -132,14 +133,14 @@ again:
 		while (poll(fdset, 3+MAXPL+MAXMON, INFTIM) < 0)
 		{
 			if (errno != EINTR)
-# ifdef LOG
+#ifdef LOG
 				syslog(LOG_WARNING, "poll: %m");
-# else
+#else
 				warn("poll");
-# endif
+#endif
 			errno = 0;
 		}
-# ifdef INTERNET
+#ifdef INTERNET
 		if (fdset[2].revents & POLLIN) {
 			namelen = DAEMON_SIZE;
 			port_num = htons(sock_port);
@@ -171,40 +172,40 @@ again:
 				break;
 			}
 		}
-# endif
+#endif
 		{
 			for (pp = Player, i = 0; pp < End_player; pp++, i++)
 				if (havechar(pp, i + 3)) {
 					execute(pp);
 					pp->p_nexec++;
 				}
-# ifdef MONITOR
+#ifdef MONITOR
 			for (pp = Monitor, i = 0; pp < End_monitor; pp++, i++)
 				if (havechar(pp, i + MAXPL + 3)) {
 					mon_execute(pp);
 					pp->p_nexec++;
 				}
-# endif
+#endif
 			moveshots();
 			for (pp = Player, i = 0; pp < End_player; )
 				if (pp->p_death[0] != '\0')
 					zap(pp, TRUE, i + 3);
 				else
 					pp++, i++;
-# ifdef MONITOR
+#ifdef MONITOR
 			for (pp = Monitor, i = 0; pp < End_monitor; )
 				if (pp->p_death[0] != '\0')
 					zap(pp, FALSE, i + MAXPL + 3);
 				else
 					pp++, i++;
-# endif
+#endif
 		}
 		if (fdset[0].revents & POLLIN)
 			if (answer()) {
-# ifdef INTERNET
+#ifdef INTERNET
 				if (first && standard_port)
 					faketalk();
-# endif
+#endif
 				first = FALSE;
 			}
 		if (fdset[1].revents & POLLIN)
@@ -215,14 +216,14 @@ again:
 			pp->p_nexec = 0;
 			(void) fflush(pp->p_output);
 		}
-# ifdef MONITOR
+#ifdef MONITOR
 		for (pp = Monitor, i = 0; pp < End_monitor; pp++, i++) {
 			if (fdset[i + MAXPL + 3].revents & POLLIN)
 				sendcom(pp, READY, pp->p_nexec);
 			pp->p_nexec = 0;
 			(void) fflush(pp->p_output);
 		}
-# endif
+#endif
 	} while (Nplayer > 0);
 
 	if (poll(fdset, 3+MAXPL+MAXMON, linger) > 0) {
@@ -232,17 +233,17 @@ again:
 		clear_scores();
 		makemaze();
 		clearwalls();
-# ifdef BOOTS
+#ifdef BOOTS
 		makeboots();
-# endif
+#endif
 		first = TRUE;
 		goto again;
 	}
 
-# ifdef MONITOR
+#ifdef MONITOR
 	for (pp = Monitor, i = 0; pp < End_monitor; i++)
 		zap(pp, FALSE, i + MAXPL + 3);
-# endif
+#endif
 	cleanup(0);
 	/* NOTREACHED */
 	return(0);
@@ -255,125 +256,125 @@ again:
 static void
 init(void)
 {
-	int	i;
-# ifdef	INTERNET
-	SOCKET	test_port;
-	int	msg;
-	socklen_t	len;
-# endif
+	int i;
+#ifdef INTERNET
+	SOCKET test_port;
+	int msg;
+	socklen_t len;
+#endif
 
-# ifndef DEBUG
-# ifdef TIOCNOTTY
+#ifndef DEBUG
+#ifdef TIOCNOTTY
 	(void) ioctl(fileno(stdout), TIOCNOTTY, NULL);
-# endif
+#endif
 	(void) setpgrp(getpid(), getpid());
 	(void) signal(SIGHUP, SIG_IGN);
 	(void) signal(SIGINT, SIG_IGN);
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGTERM, cleanup);
-# endif
+#endif
 
 	(void) chdir("/var/tmp");	/* just in case it core dumps */
 	(void) umask(0);		/* No privacy at all! */
 	(void) signal(SIGPIPE, SIG_IGN);
 
-# ifdef LOG
-# ifdef	SYSLOG_43
+#ifdef LOG
+#ifdef	SYSLOG_43
 	openlog("huntd", LOG_PID, LOG_DAEMON);
-# endif
-# ifdef	SYSLOG_42
+#endif
+#ifdef	SYSLOG_42
 	openlog("huntd", LOG_PID);
-# endif
-# endif
+#endif
+#endif
 
 	/*
 	 * Initialize statistics socket
 	 */
-# ifdef	INTERNET
+#ifdef INTERNET
 	Daemon.sin_family = SOCK_FAMILY;
 	Daemon.sin_addr.s_addr = INADDR_ANY;
 	Daemon.sin_port = 0;
-# else
+#else
 	Daemon.sun_family = SOCK_FAMILY;
 	(void) strcpy(Daemon.sun_path, Stat_name);
-# endif
+#endif
 
 	Status = socket(SOCK_FAMILY, SOCK_STREAM, 0);
 	if (bind(Status, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
-# ifdef LOG
+#ifdef LOG
 			syslog(LOG_ERR, "bind: %m");
-# else
+#else
 			warn("bind");
-# endif
+#endif
 			cleanup(1);
 		}
 	}
 	(void) listen(Status, 5);
 
-# ifdef INTERNET
+#ifdef INTERNET
 	len = sizeof (SOCKET);
 	if (getsockname(Status, (struct sockaddr *) &Daemon, &len) < 0)  {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR, "getsockname: %m");
-# else
+#else
 		warn("getsockname");
-# endif
+#endif
 		exit(1);
 	}
 	stat_port = ntohs(Daemon.sin_port);
-# endif
+#endif
 
 	/*
 	 * Initialize main socket
 	 */
-# ifdef	INTERNET
+#ifdef INTERNET
 	Daemon.sin_family = SOCK_FAMILY;
 	Daemon.sin_addr.s_addr = INADDR_ANY;
 	Daemon.sin_port = 0;
-# else
+#else
 	Daemon.sun_family = SOCK_FAMILY;
 	(void) strcpy(Daemon.sun_path, Sock_name);
-# endif
+#endif
 
 	Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-# if defined(INTERNET)
+#if defined(INTERNET)
 	msg = 1;
 	if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_WARNING, "setsockopt loopback %m");
-# else
+#else
 		warn("setsockopt loopback");
-# endif
-# endif
+#endif
+#endif
 	if (bind(Socket, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
-# ifdef LOG
+#ifdef LOG
 			syslog(LOG_ERR, "bind: %m");
-# else
+#else
 			warn("bind");
-# endif
+#endif
 			cleanup(1);
 		}
 	}
 	(void) listen(Socket, 5);
 
-# ifdef INTERNET
+#ifdef INTERNET
 	len = sizeof (SOCKET);
 	if (getsockname(Socket, (struct sockaddr *) &Daemon, &len) < 0)  {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR, "getsockname: %m");
-# else
+#else
 		warn("getsockname");
-# endif
+#endif
 		exit(1);
 	}
 	sock_port = ntohs(Daemon.sin_port);
-# endif
+#endif
 
 	/*
 	 * Initialize minimal poll mask
@@ -383,7 +384,7 @@ init(void)
 	fdset[1].fd = Status;
 	fdset[1].events = POLLIN;
 
-# ifdef INTERNET
+#ifdef INTERNET
 	len = sizeof (SOCKET);
 	if (getsockname(0, (struct sockaddr *) &test_port, &len) >= 0
 	&& test_port.sin_family == AF_INET) {
@@ -400,11 +401,11 @@ init(void)
 		Test_socket = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
 		if (bind(Test_socket, (struct sockaddr *) &test_port,
 		    DAEMON_SIZE) < 0) {
-# ifdef LOG
+#ifdef LOG
 			syslog(LOG_ERR, "bind: %m");
-# else
+#else
 			warn("bind");
-# endif
+#endif
 			exit(1);
 		}
 		(void) listen(Test_socket, 5);
@@ -412,15 +413,15 @@ init(void)
 
 	fdset[2].fd = Test_socket;
 	fdset[2].events = POLLIN;
-# else
+#else
 	fdset[2].fd = -1;
-# endif
+#endif
 
 	Seed = getpid() + time((time_t *) NULL);
 	makemaze();
-# ifdef BOOTS
+#ifdef BOOTS
 	makeboots();
-# endif
+#endif
 
 	for (i = 0; i < NASCII; i++)
 		See_over[i] = TRUE;
@@ -428,14 +429,14 @@ init(void)
 	See_over[WALL1] = FALSE;
 	See_over[WALL2] = FALSE;
 	See_over[WALL3] = FALSE;
-# ifdef REFLECT
+#ifdef REFLECT
 	See_over[WALL4] = FALSE;
 	See_over[WALL5] = FALSE;
-# endif
+#endif
 
 }
 
-# ifdef BOOTS
+#ifdef BOOTS
 /*
  * makeboots:
  *	Put the boots in the maze
@@ -443,8 +444,8 @@ init(void)
 static void
 makeboots(void)
 {
-	int	x, y;
-	PLAYER	*pp;
+	int x, y;
+	PLAYER *pp;
 
 	do {
 		x = rand_num(WIDTH - 1) + 1;
@@ -454,7 +455,7 @@ makeboots(void)
 	for (pp = Boot; pp < &Boot[NBOOTS]; pp++)
 		pp->p_flying = -1;
 }
-# endif
+#endif
 
 
 /*
@@ -465,11 +466,11 @@ void
 checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
 	 char this_shot_type)
 {
-	const char	*cp;
+	const char *cp;
 
 	if (ouch->p_death[0] != '\0')
 		return;
-# ifdef BOOTS
+#ifdef BOOTS
 	if (this_shot_type == SLIME)
 		switch (ouch->p_nboots) {
 		  default:
@@ -482,7 +483,7 @@ checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
 				message(gotcha, "He has boots on!");
 			return;
 		}
-# endif
+#endif
 	ouch->p_damage += amt;
 	if (ouch->p_damage <= ouch->p_damcap) {
 		(void) snprintf(Buf, sizeof(Buf), "%2d", ouch->p_damage);
@@ -496,11 +497,11 @@ checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
 	  default:
 		cp = "Killed";
 		break;
-# ifdef FLY
+#ifdef FLY
 	  case FALL:
 		cp = "Killed on impact";
 		break;
-# endif
+#endif
 	  case KNIFE:
 		cp = "Stabbed to death";
 		ouch->p_ammo = 0;		/* No exploding */
@@ -517,23 +518,23 @@ checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
 	  case GMINE:
 		cp = "Blown apart";
 		break;
-# ifdef	OOZE
+#ifdef	OOZE
 	  case SLIME:
 		cp = "Slimed";
 		if (credit != NULL)
 			credit->i_slime++;
 		break;
-# endif
-# ifdef	VOLCANO
+#endif
+#ifdef	VOLCANO
 	  case LAVA:
 		cp = "Baked";
 		break;
-# endif
-# ifdef DRONE
+#endif
+#ifdef DRONE
 	  case DSHOT:
 		cp = "Eliminated";
 		break;
-# endif
+#endif
 	}
 	if (credit == NULL) {
 		(void) snprintf(ouch->p_death, sizeof(ouch->p_death),
@@ -583,13 +584,13 @@ checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
 			STAT_NAME_COL);
 		outstr(ouch, Buf, 5);
 	}
-# ifdef MONITOR
+#ifdef MONITOR
 	for (ouch = Monitor; ouch < End_monitor; ouch++) {
 		cgoto(ouch, STAT_PLAY_ROW + 1 + (gotcha - Player),
 			STAT_NAME_COL);
 		outstr(ouch, Buf, 5);
 	}
-# endif
+#endif
 }
 
 /*
@@ -599,11 +600,11 @@ checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
 static void
 zap(PLAYER *pp, FLAG was_player, int i)
 {
-	int	n, len;
-	BULLET	*bp;
-	PLAYER	*np;
-	int	x, y;
-	int	savefd;
+	int n, len;
+	BULLET *bp;
+	PLAYER *np;
+	int x, y;
+	int savefd;
 
 	if (was_player) {
 		if (pp->p_undershot)
@@ -628,9 +629,9 @@ zap(PLAYER *pp, FLAG was_player, int i)
 
 	savefd = pp->p_fd;
 
-# ifdef MONITOR
+#ifdef MONITOR
 	if (was_player) {
-# endif
+#endif
 		for (bp = Bullets; bp != NULL; bp = bp->b_next) {
 			if (bp->b_owner == pp)
 				bp->b_owner = NULL;
@@ -671,11 +672,11 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				pp->p_ident->i_name);
 			for (np = Player; np < End_player; np++)
 				message(np, Buf);
-# ifdef MONITOR
+#ifdef MONITOR
 			for (np = Monitor; np < End_monitor; np++)
 				message(np, Buf);
-# endif
-# ifdef BOOTS
+#endif
+#ifdef BOOTS
 			while (pp->p_nboots-- > 0) {
 				for (np = Boot; np < &Boot[NBOOTS]; np++)
 					if (np->p_flying < 0)
@@ -692,9 +693,9 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				np->p_face = BOOT;
 				showexpl(np->p_y, np->p_x, BOOT);
 			}
-# endif
+#endif
 		}
-# ifdef BOOTS
+#ifdef BOOTS
 		else if (pp->p_nboots > 0) {
 			if (pp->p_nboots == 2)
 				Maze[pp->p_y][pp->p_x] = BOOT_PAIR;
@@ -704,9 +705,9 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				fixshots(pp->p_y, pp->p_x,
 					Maze[pp->p_y][pp->p_x]);
 		}
-# endif
+#endif
 
-# ifdef VOLCANO
+#ifdef VOLCANO
 		volcano += pp->p_ammo - x;
 		if (rand_num(100) < volcano / 50) {
 			do {
@@ -719,9 +720,9 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				message(np, "Volcano eruption.");
 			volcano = 0;
 		}
-# endif
+#endif
 
-# ifdef	DRONE
+#ifdef DRONE
 		if (rand_num(100) < 2) {
 			do {
 				x = rand_num(WIDTH / 2) + WIDTH / 4;
@@ -732,7 +733,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				rand_num(MAXBOMB - MINDSHOT)],
 				(PLAYER *) NULL, FALSE, SPACE);
 		}
-# endif
+#endif
 
 		sendcom(pp, ENDWIN);
 		(void) putc(' ', pp->p_output);
@@ -751,12 +752,12 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				cgoto(np, n, STAT_NAME_COL);
 				outstr(np, Buf, STAT_NAME_LEN);
 			}
-# ifdef MONITOR
+#ifdef MONITOR
 			for (np = Monitor; np < End_monitor; np++) {
 				cgoto(np, n, STAT_NAME_COL);
 				outstr(np, Buf, STAT_NAME_LEN);
 			}
-# endif
+#endif
 		} else
 			fdset[i].fd = -1;
 
@@ -766,7 +767,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 			cgoto(np, n, STAT_NAME_COL);
 			ce(np);
 		}
-# ifdef MONITOR
+#ifdef MONITOR
 		for (np = Monitor; np < End_monitor; np++) {
 			cgoto(np, n, STAT_NAME_COL);
 			ce(np);
@@ -808,7 +809,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 			ce(np);
 		}
 	}
-# endif
+#endif
 }
 
 /*
@@ -854,7 +855,7 @@ check_again:
 SIGNAL_TYPE
 cleanup(int eval)
 {
-	PLAYER	*pp;
+	PLAYER *pp;
 
 	for (pp = Player; pp < End_player; pp++) {
 		cgoto(pp, HEIGHT, 0);
@@ -862,18 +863,18 @@ cleanup(int eval)
 		(void) putc(LAST_PLAYER, pp->p_output);
 		(void) fclose(pp->p_output);
 	}
-# ifdef MONITOR
+#ifdef MONITOR
 	for (pp = Monitor; pp < End_monitor; pp++) {
 		cgoto(pp, HEIGHT, 0);
 		sendcom(pp, ENDWIN);
 		(void) putc(LAST_PLAYER, pp->p_output);
 		(void) fclose(pp->p_output);
 	}
-# endif
+#endif
 	(void) close(Socket);
-# ifdef AF_UNIX_HACK
+#ifdef AF_UNIX_HACK
 	(void) unlink(Sock_name);
-# endif
+#endif
 
 	exit(eval);
 }
@@ -885,38 +886,38 @@ cleanup(int eval)
 static void
 send_stats(void)
 {
-	IDENT	*ip;
-	FILE	*fp;
-	int	s;
-	SOCKET	sockstruct;
-	socklen_t	socklen;
+	IDENT *ip;
+	FILE *fp;
+	int s;
+	SOCKET sockstruct;
+	socklen_t socklen;
 
 	/*
 	 * Get the output stream ready
 	 */
-# ifdef INTERNET
+#ifdef INTERNET
 	socklen = sizeof sockstruct;
-# else
+#else
 	socklen = sizeof sockstruct - 1;
-# endif
+#endif
 	s = accept(Status, (struct sockaddr *) &sockstruct, &socklen);
 	if (s < 0) {
 		if (errno == EINTR)
 			return;
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_WARNING, "accept: %m");
-# else
+#else
 		warn("accept");
-# endif
+#endif
 		return;
 	}
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_WARNING, "fdopen: %m");
-# else
+#else
 		warn("fdopen");
-# endif
+#endif
 		(void) close(s);
 		return;
 	}
@@ -961,7 +962,7 @@ send_stats(void)
 static void
 clear_scores(void)
 {
-	IDENT	*ip, *nextip;
+	IDENT *ip, *nextip;
 
 	for (ip = Scores; ip != NULL; ip = nextip) {
 		nextip = ip->i_next;

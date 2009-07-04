@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.9 2009/07/04 02:37:20 dholland Exp $	*/
+/*	$NetBSD: get_names.c,v 1.10 2009/07/04 04:29:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,24 +32,24 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.9 2009/07/04 02:37:20 dholland Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.10 2009/07/04 04:29:55 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
 
-#if	defined(TALK_43) || defined(TALK_42)
+#if defined(TALK_43) || defined(TALK_42)
 
-# include	<sys/param.h>
-# include	<netdb.h>
-# include	<stdio.h>
-# include	<stdlib.h>
-# include	<string.h>
-# include	<unistd.h>
-# include	"hunt.h"
-# include	"talk_ctl.h"
+#include <sys/param.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include "hunt.h"
+#include "talk_ctl.h"
 
-static	char	hostname[MAXHOSTNAMELEN + 1];
-char		*my_machine_name;
+static char hostname[MAXHOSTNAMELEN + 1];
+char *my_machine_name;
 
 /*
  * Determine the local user and machine
@@ -57,8 +57,8 @@ char		*my_machine_name;
 void
 get_local_name(char *my_name)
 {
-	struct	hostent	*hp;
-	struct	servent	*sp;
+	struct hostent *hp;
+	struct servent *sp;
 
 	/* Load these useful values into the standard message header */
 	msg.id_num = 0;
@@ -66,14 +66,14 @@ get_local_name(char *my_name)
 	msg.l_name[NAME_SIZE - 1] = '\0';
 	msg.r_tty[0] = '\0';
 	msg.pid = getpid();
-# ifdef TALK_43
+#ifdef TALK_43
 	msg.vers = TALK_VERSION;
 	msg.addr.sa_family = htons(AF_INET);
 	msg.ctl_addr.sa_family = htons(AF_INET);
-# else
+#else
 	msg.addr.sin_family = htons(AF_INET);
 	msg.ctl_addr.sin_family = htons(AF_INET);
-# endif
+#endif
 
 	(void)gethostname(hostname, sizeof (hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
@@ -81,27 +81,27 @@ get_local_name(char *my_name)
 	/* look up the address of the local host */
 	hp = gethostbyname(my_machine_name);
 	if (hp == (struct hostent *) 0) {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR,
 		    "This machine doesn't exist. Boy, am I confused!");
-# else
+#else
 		perror("This machine doesn't exist. Boy, am I confused!");
-# endif
+#endif
 		exit(1);
 	}
 	memcpy(&my_machine_addr, hp->h_addr, hp->h_length);
 	/* find the daemon portal */
-# ifdef TALK_43
+#ifdef TALK_43
 	sp = getservbyname("ntalk", "udp");
-# else
+#else
 	sp = getservbyname("talk", "udp");
-# endif
+#endif
 	if (sp == 0) {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR, "This machine doesn't support talk");
-# else
+#else
 		perror("This machine doesn't support talk");
-# endif
+#endif
 		exit(1);
 	}
 	daemon_port = sp->s_port;
@@ -113,11 +113,10 @@ get_local_name(char *my_name)
 int
 get_remote_name(char *his_address)
 {
-	char		*his_name;
-	char		*his_machine_name;
-	char		*ptr;
-	struct	hostent	*hp;
-
+	char *his_name;
+	char *his_machine_name;
+	char *ptr;
+	struct hostent *hp;
 
 	/* check for, and strip out, the machine name of the target */
 	for (ptr = his_address; *ptr != '\0' && *ptr != '@' && *ptr != ':'

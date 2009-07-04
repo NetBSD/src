@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.14 2009/07/04 02:37:20 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.15 2009/07/04 04:29:54 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,44 +32,45 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.14 2009/07/04 02:37:20 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.15 2009/07/04 04:29:54 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
 #include "hunt.h"
 
-#if	defined(TALK_43) || defined(TALK_42)
+#if defined(TALK_43) || defined(TALK_42)
 
-# include	<sys/time.h>
-# include	<sys/wait.h>
-# include	<ctype.h>
-# include	<netdb.h>
-# include	<signal.h>
-# include	<stdio.h>
-# include	<string.h>
-# include	<unistd.h>
-# include	"talk_ctl.h"
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <ctype.h>
+#include <netdb.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include "talk_ctl.h"
 
-# define	TRUE		1
-# define	FALSE		0
+#define TRUE		1
+#define FALSE		0
 
 /* defines for fake talk message to announce start of game */
-# ifdef TALK_43
-# define	MASQUERADE	"\"Hunt Game\""
-# else
-# define	MASQUERADE	"HuntGame"
-# endif
-# define	RENDEZVOUS	"hunt-players"
-# define	ARGV0		"HUNT-ANNOUNCE"
+#ifdef TALK_43
+#define MASQUERADE	"\"Hunt Game\""
+#else
+#define MASQUERADE	"HuntGame"
+#endif
+#define RENDEZVOUS	"hunt-players"
+#define ARGV0		"HUNT-ANNOUNCE"
 
-extern	char		*my_machine_name;
-extern	char		*First_arg, *Last_arg;
-extern	char		**environ;
+extern char *my_machine_name;
+extern char *First_arg, *Last_arg;
+extern char **environ;
 
-static	void	do_announce(char *);
-SIGNAL_TYPE	exorcise(int);
+static void do_announce(char *);
+SIGNAL_TYPE exorcise(int);
+
 /*
- *	exorcise - disspell zombies
+ * exorcise - disspell zombies
  */
 
 SIGNAL_TYPE
@@ -79,19 +80,19 @@ exorcise(int dummy __unused)
 }
 
 /*
- *	query the local SMTP daemon to expand the RENDEZVOUS mailing list
- *	and fake a talk request to each address thus found.
+ * query the local SMTP daemon to expand the RENDEZVOUS mailing list
+ * and fake a talk request to each address thus found.
  */
 
 void
 faketalk(void)
 {
-	struct	servent		*sp;
-	char			buf[BUFSIZ];
-	FILE			*f;
-	int			service;	/* socket of service */
-	struct	sockaddr_in	des;		/* address of destination */
-	char			*a, *b;
+	struct servent *sp;
+	char buf[BUFSIZ];
+	FILE *f;
+	int service;		/* socket of service */
+	struct sockaddr_in des;	/* address of destination */
+	char *a, *b;
 
 	(void) signal(SIGCHLD, exorcise);
 
@@ -102,7 +103,7 @@ faketalk(void)
 	(void) signal(SIGPIPE, SIG_IGN);
 
 	/*
-	 *	change argv so that a ps shows ARGV0
+	 * change argv so that a ps shows ARGV0
 	 */
 	*environ = NULL;
 	for (a = First_arg, b = ARGV0; a < Last_arg; a++) {
@@ -123,11 +124,11 @@ faketalk(void)
 	 */
 
 	if ((sp = getservbyname("smtp", NULL)) == NULL) {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR, "faketalk: smtp protocol not supported\n");
-# else
+#else
 		warn("faketalk: stmp protocol not supported");
-# endif
+#endif
 		_exit(1);
 	}
 
@@ -137,28 +138,28 @@ faketalk(void)
 	des.sin_port = sp->s_port;
 
 	if ((service = socket(des.sin_family, SOCK_STREAM, 0)) < 0) {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR, "falktalk:  socket");
-# else
+#else
 		warn("falktalk:  socket");
-# endif
+#endif
 		_exit(1);
 	}
 
 	if (connect(service, (struct sockaddr *) &des, sizeof(des)) != 0) {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR, "faketalk:  connect");
-# else
+#else
 		warn("faketalk:  connect");
-# endif
+#endif
 		_exit(1);
 	}
 	if ((f = fdopen(service, "r")) == NULL) {
-# ifdef LOG
+#ifdef LOG
 		syslog(LOG_ERR, "fdopen failed\n");
-# else
+#else
 		warn("faketalk:  fdopen");
-# endif
+#endif
 		_exit(2);
 	}
 
@@ -171,7 +172,7 @@ faketalk(void)
 			"EXPN %s@%s\r\n", RENDEZVOUS, my_machine_name);
 	(void) write(service, buf, strlen(buf));
 	while (fgets(buf, BUFSIZ, f) != NULL) {
-		char	*s, *t;
+		char *s, *t;
 
 		if (buf[0] != '2' || buf[1] != '5' || buf[2] != '0')
 			break;
@@ -208,21 +209,21 @@ faketalk(void)
 static void
 do_announce(char *s)
 {
-	CTL_RESPONSE			response;
+	CTL_RESPONSE response;
 
 	get_remote_name(s);	/* setup his_machine_addr, msg.r_name */
 
-# ifdef TALK_43
-# if BSD_RELEASE >= 44
+#ifdef TALK_43
+#if BSD_RELEASE >= 44
 	msg.ctl_addr = *(struct osockaddr *) &ctl_addr;
-# else
+#else
 	msg.ctl_addr = *(struct sockaddr *) &ctl_addr;
-# endif
+#endif
 	msg.ctl_addr.sa_family = htons(msg.ctl_addr.sa_family);
-# else
+#else
 	msg.ctl_addr = ctl_addr;
 	msg.ctl_addr.sin_family = htons(msg.ctl_addr.sin_family);
-# endif
+#endif
 	msg.id_num = (int) htonl((u_int32_t) -1);	/* an impossible id_num */
 	ctl_transact(his_machine_addr, msg, ANNOUNCE, &response);
 	if (response.answer != SUCCESS)
@@ -242,10 +243,13 @@ do_announce(char *s)
 			!= sizeof(msg))
 		p_error("send delete remote");
 }
+
 #else
+
 void
 faketalk(void)
 {
 	return;
 }
+
 #endif
