@@ -1,4 +1,4 @@
-/*	$NetBSD: makemaze.c,v 1.4 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: makemaze.c,v 1.5 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makemaze.c,v 1.4 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: makemaze.c,v 1.5 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 # include	"hunt.h"
@@ -46,7 +46,7 @@ static	void	dig_maze(int, int);
 static	void	remap(void);
 
 void
-makemaze()
+makemaze(void)
 {
 	char	*sp;
 	int	y, x;
@@ -81,8 +81,7 @@ int	incr[NDIR][2] = {
 	};
 
 static void
-dig(y, x)
-	int	y, x;
+dig(int y, int x)
 {
 	int	*dp;
 	int	*ip;
@@ -106,8 +105,7 @@ dig(y, x)
  *	Is it legal to clear this spot?
  */
 static int
-candig(y, x)
-	int	y, x;
+candig(int y, int x)
 {
 	int	i;
 
@@ -137,8 +135,7 @@ candig(y, x)
 }
 
 void
-dig_maze(x, y)
-	int	x, y;
+dig_maze(int x, int y)
 {
 	int	tx, ty;
 	int	i, j;
@@ -185,7 +182,7 @@ dig_maze(x, y)
 }
 
 void
-remap()
+remap(void)
 {
 	int	y, x;
 	char	*sp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.10 2009/07/04 01:23:55 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.11 2009/07/04 01:58:57 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.10 2009/07/04 01:23:55 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.11 2009/07/04 01:58:57 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
@@ -103,7 +103,7 @@ static	void		send_stuff(void);
  *	the driver.
  */
 void
-playit()
+playit(void)
 {
 	int		ch;
 	int		y, x;
@@ -241,7 +241,7 @@ out:
  *	no characters in the input buffer.
  */
 static unsigned char
-getchr()
+getchr(void)
 {
 	struct	pollfd set[2];
 	int	nfds;
@@ -278,7 +278,7 @@ one_more_time:
  *	Send standard input characters to the driver
  */
 static void
-send_stuff()
+send_stuff(void)
 {
 	int		count;
 	char		*sp, *nsp;
@@ -321,8 +321,7 @@ send_stuff()
  *	Handle the end of the game when the player dies
  */
 int
-quit(old_status)
-	int	old_status;
+quit(int old_status)
 {
 	int	explain, ch;
 
@@ -499,8 +498,7 @@ get_message:
 
 # ifndef USE_CURSES
 void
-put_ch(ch)
-	char	ch;
+put_ch(char ch)
 {
 	if (!isprint(ch)) {
 		fprintf(stderr, "r,c,ch: %d,%d,%d", cur_row, cur_col, ch);
@@ -518,8 +516,7 @@ put_ch(ch)
 }
 
 void
-put_str(s)
-	char	*s;
+put_str(char *s)
 {
 	while (*s)
 		put_ch(*s++);
@@ -527,7 +524,7 @@ put_str(s)
 # endif
 
 void
-clear_the_screen()
+clear_the_screen(void)
 {
 # ifdef USE_CURSES
 	clear();
@@ -563,7 +560,7 @@ clear_the_screen()
 
 #ifndef USE_CURSES
 void
-clear_eol()
+clear_eol(void)
 {
 	if (CE != NULL)
 #if !defined(BSD_RELEASE) || BSD_RELEASE < 44
@@ -585,7 +582,7 @@ clear_eol()
 # endif
 
 void
-redraw_screen()
+redraw_screen(void)
 {
 # ifdef USE_CURSES
 	clearok(stdscr, TRUE);
@@ -640,7 +637,7 @@ redraw_screen()
  *	Send a message to the driver and return
  */
 void
-do_message()
+do_message(void)
 {
 	u_int32_t	version;
 

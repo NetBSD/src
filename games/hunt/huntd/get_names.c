@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.8 2009/07/04 01:01:18 dholland Exp $	*/
+/*	$NetBSD: get_names.c,v 1.9 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.8 2009/07/04 01:01:18 dholland Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.9 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -55,8 +55,7 @@ char		*my_machine_name;
  * Determine the local user and machine
  */
 void
-get_local_name(my_name)
-	char	*my_name;
+get_local_name(char *my_name)
 {
 	struct	hostent	*hp;
 	struct	servent	*sp;
@@ -112,8 +111,7 @@ get_local_name(my_name)
  * Determine the remote user and machine
  */
 int
-get_remote_name(his_address)
-	char	*his_address;
+get_remote_name(char *his_address)
 {
 	char		*his_name;
 	char		*his_machine_name;

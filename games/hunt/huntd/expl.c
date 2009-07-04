@@ -1,4 +1,4 @@
-/*	$NetBSD: expl.c,v 1.5 2009/07/04 01:01:18 dholland Exp $	*/
+/*	$NetBSD: expl.c,v 1.6 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expl.c,v 1.5 2009/07/04 01:01:18 dholland Exp $");
+__RCSID("$NetBSD: expl.c,v 1.6 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 # include	<stdlib.h>
@@ -46,9 +46,7 @@ static	void	remove_wall(int, int);
  *	Show the explosions as they currently are
  */
 void
-showexpl(y, x, type)
-	int	y, x;
-	char	type;
+showexpl(int y, int x, char type)
 {
 	PLAYER	*pp;
 	EXPL	*ep;
@@ -106,7 +104,7 @@ showexpl(y, x, type)
  *	top
  */
 void
-rollexpl()
+rollexpl(void)
 {
 	EXPL	*ep;
 	PLAYER	*pp;
@@ -152,8 +150,7 @@ static	REGEN	*rem_index = removed;
  *		 the location currently pointed at.
  */
 static void
-remove_wall(y, x)
-	int	y, x;
+remove_wall(int y, int x)
 {
 	REGEN	*r;
 # if defined(MONITOR) || defined(FLY)
@@ -240,7 +237,7 @@ found:
  *	Clear out the walls array
  */
 void
-clearwalls()
+clearwalls(void)
 {
 	REGEN	*rp;
 

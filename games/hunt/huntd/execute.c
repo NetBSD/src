@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.7 2009/07/04 01:01:18 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.8 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: execute.c,v 1.7 2009/07/04 01:01:18 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.8 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 # include	<stdlib.h>
@@ -53,8 +53,7 @@ static	void	scan(PLAYER *);
  *	Execute a single monitor command
  */
 void
-mon_execute(pp)
-	PLAYER	*pp;
+mon_execute(PLAYER *pp)
 {
 	char	ch;
 
@@ -75,8 +74,7 @@ mon_execute(pp)
  *	Execute a single command
  */
 void
-execute(pp)
-	PLAYER	*pp;
+execute(PLAYER *pp)
 {
 	char	ch;
 
@@ -192,9 +190,7 @@ execute(pp)
  *	Execute a move in the given direction
  */
 static void
-move_player(pp, dir)
-	PLAYER	*pp;
-	int	dir;
+move_player(PLAYER *pp, int dir)
 {
 	PLAYER	*newp;
 	int	x, y;
@@ -328,9 +324,7 @@ move_player(pp, dir)
  *	Change the direction the player is facing
  */
 static void
-turn_player(pp, dir)
-	PLAYER	*pp;
-	int	dir;
+turn_player(PLAYER *pp, int dir)
 {
 	if (pp->p_face != dir) {
 		pp->p_face = dir;
@@ -343,9 +337,7 @@ turn_player(pp, dir)
  *	Fire a shot of the given type in the given direction
  */
 static void
-fire(pp, req_index)
-	PLAYER	*pp;
-	int	req_index;
+fire(PLAYER *pp, int req_index)
 {
 	if (pp == NULL)
 		return;
@@ -392,9 +384,7 @@ fire(pp, req_index)
  *	Fire a slime shot in the given direction
  */
 static void
-fire_slime(pp, req_index)
-	PLAYER	*pp;
-	int	req_index;
+fire_slime(PLAYER *pp, int req_index)
 {
 	if (pp == NULL)
 		return;
@@ -441,14 +431,8 @@ fire_slime(pp, req_index)
  *	Create a shot with the given properties
  */
 void
-add_shot(type, y, x, face, charge, owner, expl, over)
-int	type;
-int	y, x;
-char	face;
-int	charge;
-PLAYER	*owner;
-int	expl;
-char	over;
+add_shot(int type, int y, int x, char face, int charge,
+	 PLAYER *owner, int expl, char over)
 {
 	BULLET	*bp;
 	int	size;
@@ -483,16 +467,8 @@ char	over;
 }
 
 BULLET *
-create_shot(type, y, x, face, charge, size, owner, score, expl, over)
-	int	type;
-	int	y, x;
-	char	face;
-	int	charge;
-	int	size;
-	PLAYER	*owner;
-	IDENT	*score;
-	int	expl;
-	char	over;
+create_shot(int type, int y, int x, char face, int charge,
+	    int size, PLAYER *owner, IDENT *score, int expl, char over)
 {
 	BULLET	*bp;
 
@@ -523,8 +499,7 @@ create_shot(type, y, x, face, charge, size, owner, score, expl, over)
  *	Turn on or increase length of a cloak
  */
 static void
-cloak(pp)
-	PLAYER	*pp;
+cloak(PLAYER *pp)
 {
 	if (pp->p_ammo <= 0) {
 		message(pp, "No more charges");
@@ -553,8 +528,7 @@ cloak(pp)
  *	Turn on or increase length of a scan
  */
 static void
-scan(pp)
-	PLAYER	*pp;
+scan(PLAYER *pp)
 {
 	if (pp->p_ammo <= 0) {
 		message(pp, "No more charges");
@@ -577,11 +551,7 @@ scan(pp)
  *	check whether the object blew up or whether he picked it up
  */
 void
-pickup(pp, y, x, prob, obj)
-	PLAYER	*pp;
-	int	y, x;
-	int	prob;
-	int	obj;
+pickup(PLAYER *pp, int y, int x, int prob, int obj)
 {
 	int	req;
 
