@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.14 2009/06/28 21:12:35 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.15 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.14 2009/06/28 21:12:35 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.15 2009/07/04 01:01:18 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -145,20 +145,20 @@ again:
 		if (fdset[2].revents & POLLIN) {
 			namelen = DAEMON_SIZE;
 			port_num = htons(sock_port);
-			(void) recvfrom(Test_socket, (char *) &msg, sizeof msg,
+			(void) recvfrom(Test_socket, &msg, sizeof msg,
 				0, (struct sockaddr *) &test, &namelen);
 			switch (ntohs(msg)) {
 			  case C_MESSAGE:
 				if (Nplayer <= 0)
 					break;
 				reply = htons((u_short) Nplayer);
-				(void) sendto(Test_socket, (char *) &reply,
+				(void) sendto(Test_socket, &reply,
 					sizeof reply, 0,
 					(struct sockaddr *) &test, DAEMON_SIZE);
 				break;
 			  case C_SCORES:
 				reply = htons(stat_port);
-				(void) sendto(Test_socket, (char *) &reply,
+				(void) sendto(Test_socket, &reply,
 					sizeof reply, 0,
 					(struct sockaddr *) &test, DAEMON_SIZE);
 				break;
@@ -167,7 +167,7 @@ again:
 				if (msg == C_MONITOR && Nplayer <= 0)
 					break;
 				reply = htons(sock_port);
-				(void) sendto(Test_socket, (char *) &reply,
+				(void) sendto(Test_socket, &reply,
 					sizeof reply, 0,
 					(struct sockaddr *) &test, DAEMON_SIZE);
 				break;
@@ -977,7 +977,7 @@ clear_scores()
 
 	for (ip = Scores; ip != NULL; ip = nextip) {
 		nextip = ip->i_next;
-		(void) free((char *) ip);
+		(void) free(ip);
 	}
 	Scores = NULL;
 }

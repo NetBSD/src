@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.11 2009/06/28 21:12:35 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.12 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.11 2009/06/28 21:12:35 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.12 2009/07/04 01:01:18 dholland Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -90,15 +90,15 @@ answer()
 		machine = gethostid();
 # endif
 	version = htonl((u_int32_t) HUNT_VERSION);
-	(void) write(newsock, (char *) &version, LONGLEN);
-	(void) read(newsock, (char *) &uid, LONGLEN);
+	(void) write(newsock, &version, LONGLEN);
+	(void) read(newsock, &uid, LONGLEN);
 	uid = ntohl(uid);
 	(void) read(newsock, name, NAMELEN);
 	(void) read(newsock, &team, 1);
-	(void) read(newsock, (char *) &enter_status, LONGLEN);
+	(void) read(newsock, &enter_status, LONGLEN);
 	enter_status = ntohl((unsigned long) enter_status);
 	(void) read(newsock, Ttyname, NAMELEN);
-	(void) read(newsock, (char *) &mode, sizeof mode);
+	(void) read(newsock, &mode, sizeof mode);
 	mode = ntohl(mode);
 
 	/*
@@ -161,7 +161,7 @@ answer()
 			i = pp - Monitor + MAXPL + 3;
 		} else {
 			socklen = 0;
-			(void) write(newsock, (char *) &socklen,
+			(void) write(newsock, &socklen,
 				sizeof socklen);
 			(void) close(newsock);
 			return FALSE;
@@ -173,7 +173,7 @@ answer()
 			i = pp - Player + 3;
 		} else {
 			socklen = 0;
-			(void) write(newsock, (char *) &socklen,
+			(void) write(newsock, &socklen,
 				sizeof socklen);
 			(void) close(newsock);
 			return FALSE;
@@ -409,7 +409,7 @@ get_ident(machine, uid, name, team)
 		ip->i_score = ip->i_kills / (double) ip->i_entries;
 	}
 	else {
-		ip = (IDENT *) malloc(sizeof (IDENT));
+		ip = malloc(sizeof(*ip));
 		if (ip == NULL) {
 			/* Fourth down, time to punt */
 			ip = &punt;
