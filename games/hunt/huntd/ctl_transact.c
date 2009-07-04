@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.7 2009/07/04 01:01:18 dholland Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.8 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.7 2009/07/04 01:01:18 dholland Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.8 2009/07/04 02:37:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,11 +57,7 @@ __RCSID("$NetBSD: ctl_transact.c,v 1.7 2009/07/04 01:01:18 dholland Exp $");
  * of time
  */
 void
-ctl_transact(target, msg, type, rp)
-	struct in_addr target;
-	CTL_MSG msg;
-	int type;
-	CTL_RESPONSE *rp;
+ctl_transact(struct in_addr target, CTL_MSG msg, int type, CTL_RESPONSE *rp)
 {
 	struct pollfd set[1];
 	int nready, cc, retries;

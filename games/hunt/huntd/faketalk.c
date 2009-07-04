@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.13 2009/07/04 01:01:18 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.14 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.13 2009/07/04 01:01:18 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.14 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -73,8 +73,7 @@ SIGNAL_TYPE	exorcise(int);
  */
 
 SIGNAL_TYPE
-exorcise(dummy)
-	int dummy __unused;
+exorcise(int dummy __unused)
 {
 	(void) wait(0);
 }
@@ -85,7 +84,7 @@ exorcise(dummy)
  */
 
 void
-faketalk()
+faketalk(void)
 {
 	struct	servent		*sp;
 	char			buf[BUFSIZ];
@@ -207,8 +206,7 @@ faketalk()
  */
 
 static void
-do_announce(s)
-	char	*s;
+do_announce(char *s)
 {
 	CTL_RESPONSE			response;
 
@@ -246,7 +244,7 @@ do_announce(s)
 }
 #else
 void
-faketalk()
+faketalk(void)
 {
 	return;
 }
