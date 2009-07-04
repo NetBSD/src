@@ -1,4 +1,4 @@
-/*	$NetBSD: talk_ctl.h,v 1.6 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: talk_ctl.h,v 1.7 2009/07/04 04:29:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -40,10 +40,10 @@
 
 #include <sys/socket.h>
 
-#define	NAME_SIZE	9
-#define	TTY_SIZE	16
+#define NAME_SIZE	9
+#define TTY_SIZE	16
 #ifndef MAXHOSTNAMELEN
-#define	MAXHOSTNAMELEN	256
+#define MAXHOSTNAMELEN	256
 #endif
 
 #define MAX_LIFE	60	/* max time daemon saves invitations */
@@ -88,19 +88,19 @@ typedef struct ctl_msg {
 #include <syslog.h>
 #endif
 
-extern	struct sockaddr_in daemon_addr;
-extern	struct sockaddr_in ctl_addr;
-extern	struct sockaddr_in my_addr;
-extern	struct in_addr my_machine_addr;
-extern	struct in_addr his_machine_addr;
-extern	u_short daemon_port;
-extern	int ctl_sockt;
-extern	CTL_MSG msg;
+extern struct sockaddr_in daemon_addr;
+extern struct sockaddr_in ctl_addr;
+extern struct sockaddr_in my_addr;
+extern struct in_addr my_machine_addr;
+extern struct in_addr his_machine_addr;
+extern u_short daemon_port;
+extern int ctl_sockt;
+extern CTL_MSG msg;
 
 #ifdef LOG
-#define	p_error(str)	syslog(LOG_WARNING, "faketalk %s: %m", str)
+#define p_error(str)	syslog(LOG_WARNING, "faketalk %s: %m", str)
 #else
-#define	p_error(str)	warn(str)
+#define p_error(str)	warn(str)
 #endif
 
-void	ctl_transact(struct in_addr, CTL_MSG, int, CTL_RESPONSE *);
+void ctl_transact(struct in_addr, CTL_MSG, int, CTL_RESPONSE *);

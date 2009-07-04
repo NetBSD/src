@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.8 2009/07/04 02:37:20 dholland Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.9 2009/07/04 04:29:54 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,14 +32,14 @@
 
 #include "bsd.h"
 
-#if	defined(TALK_43) || defined(TALK_42)
+#if defined(TALK_43) || defined(TALK_42)
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.8 2009/07/04 02:37:20 dholland Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.9 2009/07/04 04:29:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,20 +109,20 @@ ctl_transact(struct in_addr target, CTL_MSG msg, int type, CTL_RESPONSE *rp)
 			/* an immediate poll */
 			nready = poll(set, 1, 0);
 		} while (nready > 0 && (
-#ifdef	TALK_43
+#ifdef TALK_43
 		    rp->vers != TALK_VERSION ||
 #endif
 		    rp->type != type));
 	} while (
-#ifdef	TALK_43
+#ifdef TALK_43
 	    rp->vers != TALK_VERSION ||
 #endif
 	    rp->type != type);
 	rp->id_num = ntohl(rp->id_num);
-#ifdef	TALK_43
+#ifdef TALK_43
 	rp->addr.sa_family = ntohs(rp->addr.sa_family);
-# else
+#else
 	rp->addr.sin_family = ntohs(rp->addr.sin_family);
-# endif
+#endif
 }
 #endif
