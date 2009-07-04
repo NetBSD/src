@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.6 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.7 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl_transact.c,v 1.6 2003/06/11 12:00:22 wiz Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.7 2009/07/04 01:01:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ ctl_transact(target, msg, type, rp)
 	do {
 		/* resend message until a response is obtained */
 		for (retries = MAX_RETRY; retries > 0; retries -= 1) {
-			cc = sendto(ctl_sockt, (char *)&msg, sizeof (msg), 0,
+			cc = sendto(ctl_sockt, &msg, sizeof (msg), 0,
 				&daemon_addr, sizeof (daemon_addr));
 			if (cc != sizeof (msg)) {
 				if (errno == EINTR)
@@ -104,7 +104,7 @@ ctl_transact(target, msg, type, rp)
 		 * request/acknowledgements being sent)
 		 */
 		do {
-			cc = recv(ctl_sockt, (char *)rp, sizeof (*rp), 0);
+			cc = recv(ctl_sockt, rp, sizeof (*rp), 0);
 			if (cc < 0) {
 				if (errno == EINTR)
 					continue;
