@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.28 2009/06/28 21:12:10 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.29 2009/07/04 01:23:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.28 2009/06/28 21:12:10 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.29 2009/07/04 01:23:55 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -365,7 +365,7 @@ main(ac, av)
 		if ((enter_status = quit(enter_status)) == Q_QUIT)
 			break;
 	}
-	leavex(0, (char *) NULL);
+	leavex(0, NULL);
 	/* NOTREACHED */
 	return(0);
 }
@@ -473,7 +473,7 @@ list_drivers()
 		/* favor host of previous session by broadcasting to it first */
 		test.sin_addr = Daemon.sin_addr;
 		msg = htons(C_PLAYER);		/* Must be playing! */
-		(void) sendto(test_socket, (char *) &msg, sizeof msg, 0,
+		(void) sendto(test_socket, &msg, sizeof msg, 0,
 		    (struct sockaddr *) &test, DAEMON_SIZE);
 	}
 
@@ -515,7 +515,7 @@ list_drivers()
 	while (hp = gethostent()) {
 		if (local_net == inet_netof(* ((struct in_addr *) hp->h_addr))){
 			test.sin_addr = * ((struct in_addr *) hp->h_addr);
-			(void) sendto(test_socket, (char *) &msg, sizeof msg, 0,
+			(void) sendto(test_socket, &msg, sizeof msg, 0,
 			    (struct sockaddr *) &test, DAEMON_SIZE);
 		}
 	}
@@ -529,12 +529,11 @@ get_response:
 	for (;;) {
 		if (listc + 1 >= listmax) {
 			listmax += 20;
-			listv = (SOCKET *) realloc((char *) listv,
-						listmax * sizeof(SOCKET));
+			listv = realloc(listv, listmax * sizeof(SOCKET));
 		}
 
 		if (poll(set, 1, 1000) == 1 &&
-		    recvfrom(test_socket, (char *) &port_num, sizeof(port_num),
+		    recvfrom(test_socket, &port_num, sizeof(port_num),
 		    0, (struct sockaddr *) &listv[listc], &namelen) > 0) {
 			/*
 			 * Note that we do *not* convert from network to host
@@ -567,7 +566,7 @@ get_response:
 
 test_one_host:
 	msg = htons(C_TESTMSG());
-	(void) sendto(test_socket, (char *) &msg, sizeof msg, 0,
+	(void) sendto(test_socket, &msg, sizeof msg, 0,
 	    (struct sockaddr *) &test, DAEMON_SIZE);
 	goto get_response;
 }
@@ -757,7 +756,7 @@ SIGNAL_TYPE
 sigterm(dummy)
 	int dummy __unused;
 {
-	leavex(0, (char *) NULL);
+	leavex(0, NULL);
 	/* NOTREACHED */
 }
 
@@ -838,7 +837,7 @@ intr(dummy)
 				(void) write(Socket, "q", 1);
 				(void) close(Socket);
 			}
-			leavex(0, (char *) NULL);
+			leavex(0, NULL);
 		}
 		else if (ch == 'n') {
 			(void) signal(SIGINT, intr);
