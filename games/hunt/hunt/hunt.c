@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.34 2009/07/04 07:10:23 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.35 2009/07/04 07:51:34 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.34 2009/07/04 07:10:23 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.35 2009/07/04 07:51:34 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,13 +50,6 @@ __RCSID("$NetBSD: hunt.c,v 1.34 2009/07/04 07:10:23 dholland Exp $");
 #include <ifaddrs.h>
 
 #include "hunt.h"
-
-/*
- * Some old versions of curses don't have these defined
- */
-#if !defined(cbreak) && (!defined(BSD_RELEASE) || BSD_RELEASE < 44)
-#define cbreak()	crmode()
-#endif
 
 #define clear_eol()	clrtoeol()
 #define put_ch		addch
@@ -338,7 +331,6 @@ main(int ac, char **av)
 }
 
 #ifdef INTERNET
-#ifdef BROADCAST
 int
 broadcast_vec(int s /*socket*/, struct sockaddr **vector)
 {
@@ -368,7 +360,6 @@ broadcast_vec(int s /*socket*/, struct sockaddr **vector)
 	freeifaddrs(ifp);
 	return vec_cnt;
 }
-#endif
 
 SOCKET *
 list_drivers(void)
@@ -383,12 +374,8 @@ list_drivers(void)
 	static int initial = TRUE;
 	static struct in_addr local_address;
 	struct hostent *hp;
-#ifdef BROADCAST
 	static int brdc;
 	static SOCKET *brdv;
-#else
-	u_long local_net;
-#endif
 	int i;
 	unsigned j;
 	static SOCKET *listv;
@@ -397,9 +384,6 @@ list_drivers(void)
 	struct pollfd set[1];
 
 	if (initial) {			/* do one time initialization */
-#ifndef BROADCAST
-		sethostent(1);		/* don't bother to close host file */
-#endif
 		if (gethostname(local_name, sizeof local_name) < 0) {
 			leavex(1, "Sorry, I have no name.");
 			/* NOTREACHED */
@@ -442,7 +426,6 @@ list_drivers(void)
 		    (struct sockaddr *) &test, DAEMON_SIZE);
 	}
 
-#ifdef BROADCAST
 	if (initial)
 		brdc = broadcast_vec(test_socket, (void *) &brdv);
 
@@ -472,19 +455,6 @@ list_drivers(void)
 		leave(1, "sendto");
 		/* NOTREACHED */
 	}
-#else /* !BROADCAST */
-	/* loop thru all hosts on local net and send msg to them. */
-	msg = htons(C_TESTMSG());
-	local_net = inet_netof(local_address);
-	sethostent(0);		/* rewind host file */
-	while (hp = gethostent()) {
-		if (local_net == inet_netof(* ((struct in_addr *) hp->h_addr))){
-			test.sin_addr = * ((struct in_addr *) hp->h_addr);
-			(void) sendto(test_socket, &msg, sizeof msg, 0,
-			    (struct sockaddr *) &test, DAEMON_SIZE);
-		}
-	}
-#endif
 
 get_response:
 	namelen = DAEMON_SIZE;
@@ -810,23 +780,6 @@ leavex(int eval, const char *mesg)
 	fincurs();
 	errx(eval, mesg ? mesg : "");
 }
-
-#if defined(BSD_RELEASE) && BSD_RELEASE < 43
-char *
-strpbrk(char *s, char *brk)
-{
-	char *p;
-	c;
-
-	while (c = *s) {
-		for (p = brk; *p; p++)
-			if (c == *p)
-				return (s);
-		s++;
-	}
-	return (0);
-}
-#endif
 
 long
 env_init(long enter_status)
