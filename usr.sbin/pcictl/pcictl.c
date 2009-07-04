@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.15 2009/07/04 13:54:14 cegger Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.16 2009/07/04 20:34:23 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@ struct command {
 	int open_flags;
 };
 
-void	usage(void);
+static void	usage(void);
 
 int	pcifd;
 
@@ -74,8 +74,8 @@ char	dvname_store[MAXPATHLEN];
 const	char *cmdname;
 int	print_numbers = 0;
 
-void	cmd_list(int, char *[]);
-void	cmd_dump(int, char *[]);
+static void	cmd_list(int, char *[]);
+static void	cmd_dump(int, char *[]);
 
 const struct command commands[] = {
 	{ "list",
@@ -91,12 +91,12 @@ const struct command commands[] = {
 	{ 0, 0, 0, 0 },
 };
 
-int	parse_bdf(const char *);
+static int	parse_bdf(const char *);
 
-void	scan_pci(int, int, int, void (*)(u_int, u_int, u_int));
+static void	scan_pci(int, int, int, void (*)(u_int, u_int, u_int));
 
-void	scan_pci_list(u_int, u_int, u_int);
-void	scan_pci_dump(u_int, u_int, u_int);
+static void	scan_pci_list(u_int, u_int, u_int);
+static void	scan_pci_dump(u_int, u_int, u_int);
 
 int
 main(int argc, char *argv[])
@@ -137,7 +137,7 @@ main(int argc, char *argv[])
 	exit(EXIT_SUCCESS);
 }
 
-void
+static void
 usage(void)
 {
 	int i;
@@ -153,7 +153,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-void
+static void
 cmd_list(int argc, char *argv[])
 {
 	int bus, dev, func;
@@ -189,7 +189,7 @@ cmd_list(int argc, char *argv[])
 	scan_pci(bus, dev, func, scan_pci_list);
 }
 
-void
+static void
 cmd_dump(int argc, char *argv[])
 {
 	int bus, dev, func;
@@ -230,7 +230,7 @@ cmd_dump(int argc, char *argv[])
 	scan_pci(bus, dev, func, scan_pci_dump);
 }
 
-int
+static int
 parse_bdf(const char *str)
 {
 	long value;
@@ -241,13 +241,13 @@ parse_bdf(const char *str)
 		return (-1);
 
 	value = strtol(str, &end, 0);
-	if(*end != '\0') 
+	if (*end != '\0') 
 		errx(EXIT_FAILURE, "\"%s\" is not a number", str);
 
 	return value;
 }
 
-void
+static void
 scan_pci(int busarg, int devarg, int funcarg, void (*cb)(u_int, u_int, u_int))
 {
 	u_int busmin, busmax;
@@ -305,7 +305,7 @@ scan_pci(int busarg, int devarg, int funcarg, void (*cb)(u_int, u_int, u_int))
 	}
 }
 
-void
+static void
 scan_pci_list(u_int bus, u_int dev, u_int func)
 {
 	pcireg_t id, class;
@@ -325,7 +325,7 @@ scan_pci_list(u_int bus, u_int dev, u_int func)
 	}
 }
 
-void
+static void
 scan_pci_dump(u_int bus, u_int dev, u_int func)
 {
 
