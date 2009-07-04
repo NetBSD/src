@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2009/07/04 13:24:09 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.56 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.57 2009/07/04 13:24:09 mbalmer Exp $");
 #endif
 #endif /* not lint */
 
@@ -677,8 +677,7 @@ putf(const char *cp)
 		case 'd':
 			(void)time(&t);
 			(void)strftime(db, sizeof(db),
-			    /* SCCS eats %M% */
-			    "%l:%M" "%p on %A, %d %B %Y", localtime(&t));
+			    "%l:%M%p on %A, %d %B %Y", localtime(&t));
 			xputs(db);
 			break;
 
