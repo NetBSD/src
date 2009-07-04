@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.13 2009/07/04 03:27:57 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.14 2009/07/04 03:29:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -417,8 +417,8 @@ extern FLAG	no_beep;
 
 void		add_shot(int, int, int, char, int, PLAYER *, int, char);
 int		answer(void);
-void		bad_con(void) __attribute__((__noreturn__));
-void		bad_ver(void) __attribute__((__noreturn__));
+void		bad_con(void) __dead;
+void		bad_ver(void) __dead;
 int		broadcast_vec(int, struct	sockaddr **);
 void		ce(PLAYER *);
 void		cgoto(PLAYER *, int, int);
