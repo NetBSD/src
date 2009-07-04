@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.71 2009/07/03 21:17:41 elad Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.72 2009/07/04 00:03:22 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.71 2009/07/03 21:17:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.72 2009/07/04 00:03:22 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,6 +206,7 @@ smbfs_access(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	u_int acc_mode = ap->a_mode;
+	struct smbmount *smp = VTOSMBFS(vp);
 	int error;
 
         SMBVDEBUG("file '%.*s', node mode=%o, acc mode=%x\n",
