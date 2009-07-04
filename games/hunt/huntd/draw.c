@@ -1,4 +1,4 @@
-/*	$NetBSD: draw.c,v 1.5 2009/06/28 21:12:35 dholland Exp $	*/
+/*	$NetBSD: draw.c,v 1.6 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,14 +32,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: draw.c,v 1.5 2009/06/28 21:12:35 dholland Exp $");
+__RCSID("$NetBSD: draw.c,v 1.6 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 # include	"hunt.h"
 
 void
-drawmaze(pp)
-	PLAYER	*pp;
+drawmaze(PLAYER *pp)
 {
 	int	x;
 	char	*sp;
@@ -71,8 +70,7 @@ drawmaze(pp)
  *		size is 80x24 with the maze being 64x24)
  */
 void
-drawstatus(pp)
-	PLAYER	*pp;
+drawstatus(PLAYER *pp)
 {
 	int	i;
 	PLAYER	*np;
@@ -125,8 +123,7 @@ drawstatus(pp)
 }
 
 void
-look(pp)
-	PLAYER	*pp;
+look(PLAYER *pp)
 {
 	int	x, y;
 
@@ -173,9 +170,7 @@ look(pp)
 }
 
 void
-see(pp, face)
-	PLAYER	*pp;
-	int	face;
+see(PLAYER *pp, int face)
 {
 	char	*sp;
 	int	y, x, i, cnt;
@@ -260,9 +255,7 @@ see(pp, face)
 }
 
 void
-check(pp, y, x)
-	PLAYER	*pp;
-	int	y, x;
+check(PLAYER *pp, int y, int x)
 {
 	int	indx;
 	int	ch;
@@ -288,8 +281,7 @@ check(pp, y, x)
  *	Update the status of players
  */
 void
-showstat(pp)
-	PLAYER	*pp;
+showstat(PLAYER *pp)
 {
 	PLAYER	*np;
 	int	y;
@@ -315,9 +307,7 @@ showstat(pp)
  *	unless he is cloaked.
  */
 void
-drawplayer(pp, draw)
-	PLAYER	*pp;
-	FLAG	draw;
+drawplayer(PLAYER *pp, FLAG draw)
 {
 	PLAYER	*newp;
 	int	x, y;
@@ -353,9 +343,7 @@ drawplayer(pp, draw)
 }
 
 void
-message(pp, s)
-	PLAYER	*pp;
-	const char	*s;
+message(PLAYER *pp, const char *s)
 {
 	cgoto(pp, HEIGHT, 0);
 	outstr(pp, s, strlen(s));
@@ -368,8 +356,7 @@ message(pp, s)
  *	looking at the current player.
  */
 char
-translate(ch)
-	char	ch;
+translate(char ch)
 {
 	switch (ch) {
 	  case LEFTS:
@@ -389,9 +376,7 @@ translate(ch)
  *	Return the player symbol
  */
 int
-player_sym(pp, y, x)
-	PLAYER	*pp;
-	int	y, x;
+player_sym(PLAYER *pp, int y, int x)
 {
 	PLAYER	*npp;
 

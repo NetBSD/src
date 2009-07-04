@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.5 2008/01/28 03:23:29 dholland Exp $	*/
+/*	$NetBSD: terminal.c,v 1.6 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: terminal.c,v 1.5 2008/01/28 03:23:29 dholland Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.6 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -45,9 +45,7 @@ __RCSID("$NetBSD: terminal.c,v 1.5 2008/01/28 03:23:29 dholland Exp $");
  *	terminal.
  */
 void
-cgoto(pp, y, x)
-	PLAYER	*pp;
-	int	y, x;
+cgoto(PLAYER *pp, int y, int x)
 {
 	if (x == pp->p_curx && y == pp->p_cury)
 		return;
@@ -61,9 +59,7 @@ cgoto(pp, y, x)
  *	Put out a single character.
  */
 void
-outch(pp, ch)
-	PLAYER	*pp;
-	char	ch;
+outch(PLAYER *pp, int ch)
 {
 	if (++pp->p_curx >= TERM_WIDTH) {
 		pp->p_curx = 0;
@@ -77,10 +73,7 @@ outch(pp, ch)
  *	Put out a string of the given length.
  */
 void
-outstr(pp, str, len)
-	PLAYER	*pp;
-	const char *str;
-	int	len;
+outstr(PLAYER *pp, const char *str, int len)
 {
 	pp->p_curx += len;
 	pp->p_cury += (pp->p_curx / TERM_WIDTH);
@@ -94,8 +87,7 @@ outstr(pp, str, len)
  *	Clear the screen, and reset the current position on the screen.
  */
 void
-clrscr(pp)
-	PLAYER	*pp;
+clrscr(PLAYER *pp)
 {
 	sendcom(pp, CLEAR);
 	pp->p_cury = 0;
@@ -107,8 +99,7 @@ clrscr(pp)
  *	Clear to the end of the line
  */
 void
-ce(pp)
-	PLAYER	*pp;
+ce(PLAYER *pp)
 {
 	sendcom(pp, CLRTOEOL);
 }
@@ -119,8 +110,7 @@ ce(pp)
  *	Refresh the screen
  */
 void
-ref(pp)
-	PLAYER	*pp;
+ref(PLAYER *pp)
 {
 	sendcom(pp, REFRESH);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.6 2009/07/04 01:23:55 dholland Exp $	*/
+/*	$NetBSD: connect.c,v 1.7 2009/07/04 01:58:57 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: connect.c,v 1.6 2009/07/04 01:23:55 dholland Exp $");
+__RCSID("$NetBSD: connect.c,v 1.7 2009/07/04 01:58:57 dholland Exp $");
 #endif /* not lint */
 
 # include	"hunt.h"
@@ -40,10 +40,7 @@ __RCSID("$NetBSD: connect.c,v 1.6 2009/07/04 01:23:55 dholland Exp $");
 # include	<unistd.h>
 
 void
-do_connect(name, team, enter_status)
-	char	*name;
-	char	team;
-	long	enter_status;
+do_connect(char *name, char team, long enter_status)
 {
 	static int32_t	uid;
 	static int32_t	mode;

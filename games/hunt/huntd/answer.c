@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.12 2009/07/04 01:01:18 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.13 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.12 2009/07/04 01:01:18 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.13 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: answer.c,v 1.12 2009/07/04 01:01:18 dholland Exp $");
 static char	Ttyname[NAMELEN];
 
 int
-answer()
+answer(void)
 {
 	PLAYER			*pp;
 	int			newsock;
@@ -204,8 +204,7 @@ answer()
 
 # ifdef MONITOR
 void
-stmonitor(pp)
-	PLAYER	*pp;
+stmonitor(PLAYER *pp)
 {
 	int	line;
 	PLAYER	*npp;
@@ -234,9 +233,7 @@ stmonitor(pp)
 # endif
 
 void
-stplayer(newpp, enter_status)
-	PLAYER	*newpp;
-	int	enter_status;
+stplayer(PLAYER *newpp, int enter_status)
 {
 	int	x, y;
 	PLAYER	*pp;
@@ -363,7 +360,7 @@ stplayer(newpp, enter_status)
  *	Return a random direction
  */
 int
-rand_dir()
+rand_dir(void)
 {
 	switch (rand_num(4)) {
 	  case 0:
@@ -384,11 +381,7 @@ rand_dir()
  *	Get the score structure of a player
  */
 IDENT *
-get_ident(machine, uid, name, team)
-	uint32_t machine;
-	uint32_t uid;
-	char	*name;
-	char	team;
+get_ident(uint32_t machine, uint32_t uid, char *name, char team)
 {
 	IDENT		*ip;
 	static IDENT	punt;

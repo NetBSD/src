@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.15 2009/07/04 01:01:18 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.16 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.15 2009/07/04 01:01:18 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.16 2009/07/04 02:37:20 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -82,9 +82,7 @@ static	void	zap(PLAYER *, FLAG, int);
  *	The main program.
  */
 int
-main(ac, av, ep)
-	int	ac;
-	char	**av, **ep;
+main(int ac, char **av, char **ep)
 {
 	PLAYER	*pp;
 # ifdef INTERNET
@@ -255,7 +253,7 @@ again:
  *	Initialize the global parameters.
  */
 static void
-init()
+init(void)
 {
 	int	i;
 # ifdef	INTERNET
@@ -443,7 +441,7 @@ init()
  *	Put the boots in the maze
  */
 static void
-makeboots()
+makeboots(void)
 {
 	int	x, y;
 	PLAYER	*pp;
@@ -464,11 +462,8 @@ makeboots()
  *	Check the damage to the given player, and see if s/he is killed
  */
 void
-checkdam(ouch, gotcha, credit, amt, this_shot_type)
-	PLAYER	*ouch, *gotcha;
-	IDENT	*credit;
-	int	amt;
-	char	this_shot_type;
+checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
+	 char this_shot_type)
 {
 	const char	*cp;
 
@@ -602,10 +597,7 @@ checkdam(ouch, gotcha, credit, amt, this_shot_type)
  *	Kill off a player and take him out of the game.
  */
 static void
-zap(pp, was_player, i)
-	PLAYER	*pp;
-	FLAG	was_player;
-	int	i;
+zap(PLAYER *pp, FLAG was_player, int i)
 {
 	int	n, len;
 	BULLET	*bp;
@@ -824,8 +816,7 @@ zap(pp, was_player, i)
  *	Return a random number in a given range.
  */
 int
-rand_num(range)
-	int	range;
+rand_num(int range)
 {
 	return (range == 0 ? 0 : RN % range);
 }
@@ -837,9 +828,7 @@ rand_num(range)
  *	FALSE.
  */
 static int
-havechar(pp, i)
-	PLAYER	*pp;
-	int	i;
+havechar(PLAYER *pp, int i)
 {
 
 	if (pp->p_ncount < pp->p_nchar)
@@ -863,8 +852,7 @@ check_again:
  *	Exit with the given value, cleaning up any droppings lying around
  */
 SIGNAL_TYPE
-cleanup(eval)
-	int	eval;
+cleanup(int eval)
 {
 	PLAYER	*pp;
 
@@ -895,7 +883,7 @@ cleanup(eval)
  *	Print stats to requestor
  */
 static void
-send_stats()
+send_stats(void)
 {
 	IDENT	*ip;
 	FILE	*fp;
@@ -971,7 +959,7 @@ send_stats()
  *	Clear out the scores so the next session start clean
  */
 static void
-clear_scores()
+clear_scores(void)
 {
 	IDENT	*ip, *nextip;
 
