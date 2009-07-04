@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2003/06/11 12:10:21 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2009/07/04 06:31:31 dholland Exp $
 #
 #
 #  Hunt
@@ -52,17 +52,14 @@ GAME_PARAM=	-DRANDOM -DREFLECT -DMONITOR -DOOZE -DFLY -DVOLCANO -DBOOTS \
 # System parameter flags are:
 #	DEBUG		Don't trust everything in the code
 #	INTERNET	Use the Internet domain IPC instead of UNIX domain
-#	LOG		Use syslog error-logging in driver (needs SYSLOG_42 or
-#			or SYSLOG_43)
+#	LOG		Use syslog error-logging in driver
 #	OLDIPC		Use 4.1a internet system calls (must also define
 #			INTERNET)
 #	TERMINFO	Use terminfo instead of termcap
-#	SYSLOG_42	Use 4.2 BSD syslog(3)
-#	SYSLOG_43	Use 4.2 BSD syslog(3)
 #	LOG		Use syslog(3) for logging errors
 #	BSD_RELEASE	Which version of BSD distribution
-#			42 is 4.2BSD (implies SYSLOG_42)
-#			43 is 4.3BSD (implies BROADCAST, SYSLOG_43)
+#			42 is 4.2BSD
+#			43 is 4.3BSD (implies BROADCAST)
 #	USE_CURSES	Use curses for everything (automatic w/TERMINFO)
 #	SIGNAL_TYPE	void or int
 #	HPUX		do special HPUX only hacks
@@ -70,9 +67,9 @@ GAME_PARAM=	-DRANDOM -DREFLECT -DMONITOR -DOOZE -DFLY -DVOLCANO -DBOOTS \
 DEFS_BSD43=	-DINTERNET -DLOG -DBSD_RELEASE=43 -DSIGNAL_TYPE=int
 DEFS_BSD44=	-DINTERNET -DLOG -DBSD_RELEASE=44 -DSIGNAL_TYPE=void -DUSE_CURSES
 DEFS_SUN=	-DINTERNET -DLOG -DBSD_RELEASE=42 -DBROADCAST -DSIGNAL_TYPE=int
-DEFS_SUN4_0=	-DINTERNET -DLOG -DSYSLOG_43 -DBROADCAST -DSIGNAL_TYPE=void
+DEFS_SUN4_0=	-DINTERNET -DLOG -DBROADCAST -DSIGNAL_TYPE=void
 DEFS_ULTRIX=	-DINTERNET -DLOG -DBSD_RELEASE=42 -DSIGNAL_TYPE=void
-DEFS_HPUX=	-DHPUX -DINTERNET -DLOG -DSYSLOG_43 -DBROADCAST -DTERMINFO -DSIGNAL_TYPE=void
+DEFS_HPUX=	-DHPUX -DINTERNET -DLOG -DBROADCAST -DTERMINFO -DSIGNAL_TYPE=void
 DEFS_SGI=	-DINTERNET -DLOG -DBSD_RELEASE=43 -DTERMINFO -DSIGNAL_TYPE=void
 DEFS_NEXT=	$(DEFS_BSD43) -bsd -Dconst= -DSIGNAL_TYPE=int
 DEFS_OSF1=	-DINTERNET -DLOG -DBSD_RELEASE=43 -DSIGNAL_TYPE=void -D_BSD
