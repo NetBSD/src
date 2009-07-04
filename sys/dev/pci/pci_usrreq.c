@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.17 2009/07/04 21:01:10 cegger Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.18 2009/07/04 21:20:56 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.17 2009/07/04 21:01:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.18 2009/07/04 21:20:56 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,15 +84,23 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return EINVAL;
 		tag = pci_make_tag(sc->sc_pc, bdfr->bus, bdfr->device,
 		    bdfr->function);
-		if (cmd == PCI_IOC_BDF_CFGREAD)
-			bdfr->cfgreg.val = pci_conf_read(sc->sc_pc, tag,
-			    bdfr->cfgreg.reg);
-		else {
-			if ((flag & FWRITE) == 0)
-				return EBADF;
-			pci_conf_write(sc->sc_pc, tag, bdfr->cfgreg.reg,
-			    bdfr->cfgreg.val);
-		}
+		break;
+
+	default:
+		break;
+	}
+
+	switch (cmd) {
+	case PCI_IOC_BDF_CFGREAD:
+		bdfr->cfgreg.val = pci_conf_read(sc->sc_pc, tag,
+		    bdfr->cfgreg.reg);
+		break;
+
+	case PCI_IOC_BDF_CFGWRITE:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		pci_conf_write(sc->sc_pc, tag, bdfr->cfgreg.reg,
+		    bdfr->cfgreg.val);
 		break;
 
 	case PCI_IOC_BUSINFO:
@@ -145,14 +153,13 @@ pci_devioctl(pci_chipset_tag_t pc, pcitag_t tag, u_long cmd, void *data,
 
 	switch (cmd) {
 	case PCI_IOC_CFGREAD:
+		r->val = pci_conf_read(pc, tag, r->reg);
+		break;
+
 	case PCI_IOC_CFGWRITE:
-		if (cmd == PCI_IOC_CFGREAD)
-			r->val = pci_conf_read(pc, tag, r->reg);
-		else {
-			if ((flag & FWRITE) == 0)
-				return EBADF;
-			pci_conf_write(pc, tag, r->reg, r->val);
-		}
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		pci_conf_write(pc, tag, r->reg, r->val);
 		break;
 
 	default:
