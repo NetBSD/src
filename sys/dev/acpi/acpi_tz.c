@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.44 2009/07/03 21:18:40 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.45 2009/07/04 13:36:49 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.44 2009/07/03 21:18:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.45 2009/07/04 13:36:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,13 @@ static void	acpitz_attach(device_t, device_t, void *);
 
 /*
  * ACPI Temperature Zone information. Note all temperatures are reported
- * in tenths of degrees Kelvin
+ * in tenths of degrees Kelvin, and that the ACPI specification assumes
+ * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4).
+ * So define an appropriate conversion.
  */
+
+#define	ATZ2UKELVIN(t) ((t) * 100000 - 50000)
+
 struct acpitz_zone {
 	/* Active cooling temperature threshold */
 	UINT32 ac[ATZ_NLEVELS];
@@ -238,7 +243,7 @@ acpitz_get_status(void *opaque)
 	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4),
 	 * so we correct for that too.
 	 */
-	sc->sc_sensor.value_cur = sc->sc_zone.tmp * 100000 - 50000;
+	sc->sc_sensor.value_cur = ATZ2UKELVIN(sc->sc_zone.tmp);
 	sc->sc_sensor.state = ENVSYS_SVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
@@ -614,14 +619,14 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (sc->sc_zone.hot != ATZ_TMP_INVALID) {
 		limits->sel_flags |= PROP_CRITMAX;
-		limits->sel_critmax = sc->sc_zone.hot * 100000 - 50000;
+		limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.hot);
 	} else if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
 		limits->sel_flags |= PROP_CRITMAX;
-		limits->sel_critmax = sc->sc_zone.crt * 100000 - 50000;
+		limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.crt);
 	}
 	for (i = 0; i < ATZ_NLEVELS; i++) 
 		if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
-			limits->sel_critmax = sc->sc_zone.ac[i] * 100000 - 50000;
+			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.ac[i]);
 			limits->sel_flags |= PROP_WARNMAX;
 			break;
 		}
