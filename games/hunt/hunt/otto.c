@@ -1,33 +1,33 @@
-/*	$NetBSD: otto.c,v 1.12 2009/07/04 01:58:57 dholland Exp $	*/
-# ifdef OTTO
+/*	$NetBSD: otto.c,v 1.13 2009/07/04 05:01:16 dholland Exp $	*/
+#ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are 
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
  * met:
- * 
- * + Redistributions of source code must retain the above copyright 
+ *
+ * + Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * + Redistributions in binary form must reproduce the above copyright 
- *   notice, this list of conditions and the following disclaimer in the 
+ * + Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
- * + Neither the name of the University of California, San Francisco nor 
- *   the names of its contributors may be used to endorse or promote 
- *   products derived from this software without specific prior written 
+ * + Neither the name of the University of California, San Francisco nor
+ *   the names of its contributors may be used to endorse or promote
+ *   products derived from this software without specific prior written
  *   permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -45,114 +45,114 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.12 2009/07/04 01:58:57 dholland Exp $");
+__RCSID("$NetBSD: otto.c,v 1.13 2009/07/04 05:01:16 dholland Exp $");
 #endif /* not lint */
 
-# include	<sys/time.h>
-# include	<curses.h>
-# include	<ctype.h>
-# include	<signal.h>
-# include	<stdlib.h>
-# include	<unistd.h>
-# include	"hunt.h"
+#include <sys/time.h>
+#include <curses.h>
+#include <ctype.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "hunt.h"
 
-# undef		WALL
-# undef		NORTH
-# undef		SOUTH
-# undef		WEST
-# undef		EAST
-# undef		FRONT
-# undef		LEFT
-# undef		BACK
-# undef		RIGHT
+#undef WALL
+#undef NORTH
+#undef SOUTH
+#undef WEST
+#undef EAST
+#undef FRONT
+#undef LEFT
+#undef BACK
+#undef RIGHT
 
-# ifdef HPUX
-# define	random		rand
-# endif
+#ifdef HPUX
+#define random rand
+#endif
 
-# ifndef USE_CURSES
-extern	char	screen[SCREEN_HEIGHT][SCREEN_WIDTH2];
-# define	SCREEN(y, x)	screen[y][x]
-# else
-# define	SCREEN(y, x)	mvinch(y, x)
-# endif
+#ifndef USE_CURSES
+extern char screen[SCREEN_HEIGHT][SCREEN_WIDTH2];
+#define SCREEN(y, x)	screen[y][x]
+#else
+#define SCREEN(y, x)	mvinch(y, x)
+#endif
 
-# ifndef DEBUG
-# define	STATIC		static
-# else
-# define	STATIC
-# endif
+#ifndef DEBUG
+#define STATIC		static
+#else
+#define STATIC
+#endif
 
-# define	OPPONENT	"{}i!"
-# define	PROPONENT	"^v<>"
-# define	WALL		"+\\/#*-|"
-# define	PUSHOVER	" bg;*#&"
-# define	SHOTS		"$@Oo:"
+#define OPPONENT	"{}i!"
+#define PROPONENT	"^v<>"
+#define WALL		"+\\/#*-|"
+#define PUSHOVER	" bg;*#&"
+#define SHOTS		"$@Oo:"
 
 /* number of "directions" */
-# define	NUMDIRECTIONS	4
+#define NUMDIRECTIONS	4
 
 /* absolute directions (facings) - counterclockwise */
-# define	NORTH		0
-# define	WEST		1
-# define	SOUTH		2
-# define	EAST		3
-# define	ALLDIRS		0xf
+#define NORTH		0
+#define WEST		1
+#define SOUTH		2
+#define EAST		3
+#define ALLDIRS		0xf
 
 /* relative directions - counterclockwise */
-# define	FRONT		0
-# define	LEFT		1
-# define	BACK		2
-# define	RIGHT		3
+#define FRONT		0
+#define LEFT		1
+#define BACK		2
+#define RIGHT		3
 
-# define	ABSCHARS	"NWSE"
-# define	RELCHARS	"FLBR"
-# define	DIRKEYS		"khjl"
+#define ABSCHARS	"NWSE"
+#define RELCHARS	"FLBR"
+#define DIRKEYS		"khjl"
 
-STATIC	char	command[BUFSIZ];
-STATIC	int	comlen;
+STATIC char command[BUFSIZ];
+STATIC int comlen;
 
-# ifdef	DEBUG
-STATIC FILE	*debug = NULL;
-# endif
+#ifdef DEBUG
+STATIC FILE *debug = NULL;
+#endif
 
-# define	DEADEND		0x1
-# define	ON_LEFT		0x2
-# define	ON_RIGHT	0x4
-# define	ON_SIDE		(ON_LEFT|ON_RIGHT)
-# define	BEEN		0x8
-# define	BEEN_SAME	0x10
+#define DEADEND		0x1
+#define ON_LEFT		0x2
+#define ON_RIGHT	0x4
+#define ON_SIDE		(ON_LEFT|ON_RIGHT)
+#define BEEN		0x8
+#define BEEN_SAME	0x10
 
-struct	item	{
-	char	what;
-	int	distance;
-	int	flags;
+struct item {
+	char what;
+	int distance;
+	int flags;
 };
 
-STATIC	struct	item	flbr[NUMDIRECTIONS];
+STATIC struct item flbr[NUMDIRECTIONS];
 
-# define	fitem	flbr[FRONT]
-# define	litem	flbr[LEFT]
-# define	bitem	flbr[BACK]
-# define	ritem	flbr[RIGHT]
+#define fitem flbr[FRONT]
+#define litem flbr[LEFT]
+#define bitem flbr[BACK]
+#define ritem flbr[RIGHT]
 
-STATIC	int		facing;
-STATIC	int		row, col;
-STATIC	int		num_turns;		/* for wandering */
-STATIC	char		been_there[HEIGHT][WIDTH2];
-STATIC	struct itimerval	pause_time	= { { 0, 0 }, { 0, 55000 }};
+STATIC int facing;
+STATIC int row, col;
+STATIC int num_turns;			/* for wandering */
+STATIC char been_there[HEIGHT][WIDTH2];
+STATIC struct itimerval	pause_time = { { 0, 0 }, { 0, 55000 }};
 
-STATIC	void		attack(int, struct item *);
-STATIC	void		duck(int);
-STATIC	void		face_and_move_direction(int, int);
-STATIC	int		go_for_ammo(char);
-STATIC	void		ottolook(int, struct item *);
-STATIC	void		look_around(void);
-STATIC	SIGNAL_TYPE	nothing(int);
-STATIC	int		stop_look(struct item *, char, int, int);
-STATIC	void		wander(void);
+STATIC void attack(int, struct item *);
+STATIC void duck(int);
+STATIC void face_and_move_direction(int, int);
+STATIC int go_for_ammo(char);
+STATIC void ottolook(int, struct item *);
+STATIC void look_around(void);
+STATIC SIGNAL_TYPE nothing(int);
+STATIC int stop_look(struct item *, char, int, int);
+STATIC void wander(void);
 
-extern	int	Otto_count;
+extern int Otto_count;
 
 STATIC SIGNAL_TYPE
 nothing(int dummy __unused)
@@ -162,16 +162,16 @@ nothing(int dummy __unused)
 void
 otto(int y, int x, char face)
 {
-	int		i;
-	int		old_mask;
+	int i;
+	int old_mask;
 
-# ifdef	DEBUG
+#ifdef DEBUG
 	if (debug == NULL) {
 		debug = fopen("bug", "w");
 		setbuf(debug, NULL);
 	}
 	fprintf(debug, "\n%c(%d,%d)", face, y, x);
-# endif
+#endif
 	(void) signal(SIGALRM, nothing);
 	old_mask = sigblock(sigmask(SIGALRM));
 	setitimer(ITIMER_REAL, &pause_time, NULL);
@@ -180,11 +180,11 @@ otto(int y, int x, char face)
 
 	/* save away parameters so other functions may use/update info */
 	switch (face) {
-	case '^':	facing = NORTH; break;
-	case '<':	facing = WEST; break;
-	case 'v':	facing = SOUTH; break;
-	case '>':	facing = EAST; break;
-	default:	abort();
+	case '^': facing = NORTH; break;
+	case '<': facing = WEST; break;
+	case 'v': facing = SOUTH; break;
+	case '>': facing = EAST; break;
+	default: abort();
 	}
 	row = y; col = x;
 	been_there[row][col] |= 1 << facing;
@@ -205,12 +205,12 @@ otto(int y, int x, char face)
 	if (strchr(SHOTS, bitem.what) != NULL && !(bitem.what & ON_SIDE)) {
 		duck(BACK);
 		memset(been_there, 0, sizeof been_there);
-# ifdef BOOTS
+#ifdef BOOTS
 	} else if (go_for_ammo(BOOT_PAIR)) {
 		memset(been_there, 0, sizeof been_there);
 	} else if (go_for_ammo(BOOT)) {
 		memset(been_there, 0, sizeof been_there);
-# endif
+#endif
 	} else if (go_for_ammo(GMINE))
 		memset(been_there, 0, sizeof been_there);
 	else if (go_for_ammo(MINE))
@@ -221,12 +221,12 @@ otto(int y, int x, char face)
 done:
 	(void) write(Socket, command, comlen);
 	Otto_count += comlen;
-# ifdef	DEBUG
+#ifdef	DEBUG
 	(void) fwrite(command, 1, comlen, debug);
-# endif
+#endif
 }
 
-# define	direction(abs,rel)	(((abs) + (rel)) % NUMDIRECTIONS)
+#define direction(abs,rel)	(((abs) + (rel)) % NUMDIRECTIONS)
 
 STATIC int
 stop_look(struct item *itemp, char c, int dist, int side)
@@ -240,10 +240,10 @@ stop_look(struct item *itemp, char c, int dist, int side)
 
 	case MINE:
 	case GMINE:
-# ifdef BOOTS
+#ifdef BOOTS
 	case BOOT:
 	case BOOT_PAIR:
-# endif
+#endif
 		if (itemp->distance == -1) {
 			itemp->distance = dist;
 			itemp->what = c;
@@ -258,9 +258,9 @@ stop_look(struct item *itemp, char c, int dist, int side)
 	case GRENADE:
 	case SATCHEL:
 	case BOMB:
-# ifdef OOZE
+#ifdef OOZE
 	case SLIME:
-# endif
+#endif
 		if (itemp->distance == -1 || (!side
 		    && (itemp->flags & ON_SIDE
 		    || itemp->what == GMINE || itemp->what == MINE))) {
@@ -302,8 +302,8 @@ stop_look(struct item *itemp, char c, int dist, int side)
 STATIC void
 ottolook(int rel_dir, struct item *itemp)
 {
-	int		r, c;
-	char		ch;
+	int r, c;
+	char ch;
 
 	r = 0;
 	itemp->what = 0;
@@ -402,33 +402,33 @@ ottolook(int rel_dir, struct item *itemp)
 STATIC void
 look_around(void)
 {
-	int	i;
+	int i;
 
 	for (i = 0; i < NUMDIRECTIONS; i++) {
 		ottolook(i, &flbr[i]);
-# ifdef	DEBUG
+#ifdef DEBUG
 		fprintf(debug, " ottolook(%c)=%c(%d)(0x%x)",
 			RELCHARS[i], flbr[i].what, flbr[i].distance, flbr[i].flags);
-# endif
+#endif
 	}
 }
 
 /*
- *	as a side effect modifies facing and location (row, col)
+ * as a side effect modifies facing and location (row, col)
  */
 
 STATIC void
 face_and_move_direction(int rel_dir, int distance)
 {
-	int	old_facing;
-	char	cmd;
+	int old_facing;
+	char cmd;
 
 	old_facing = facing;
 	cmd = DIRKEYS[facing = direction(facing, rel_dir)];
 
 	if (rel_dir != FRONT) {
-		int	i;
-		struct	item	items[NUMDIRECTIONS];
+		int i;
+		struct item items[NUMDIRECTIONS];
 
 		command[comlen++] = toupper((unsigned char)cmd);
 		if (distance == 0) {
@@ -443,10 +443,10 @@ face_and_move_direction(int rel_dir, int distance)
 		command[comlen++] = cmd;
 		switch (facing) {
 
-		case NORTH:	row--; break;
-		case WEST:	col--; break;
-		case SOUTH:	row++; break;
-		case EAST:	col++; break;
+		case NORTH: row--; break;
+		case WEST:  col--; break;
+		case SOUTH: row++; break;
+		case EAST:  col++; break;
 		}
 		if (distance == 0)
 			look_around();
@@ -482,7 +482,7 @@ attack(int rel_dir, struct item *itemp)
 STATIC void
 duck(int rel_dir)
 {
-	int	dir;
+	int dir;
 
 	switch (dir = direction(facing, rel_dir)) {
 
@@ -525,13 +525,13 @@ duck(int rel_dir)
 }
 
 /*
- *	go for the closest mine if possible
+ * go for the closest mine if possible
  */
 
 STATIC int
 go_for_ammo(char mine)
 {
-	int	i, rel_dir, dist;
+	int i, rel_dir, dist;
 
 	rel_dir = -1;
 	dist = WIDTH;
@@ -557,7 +557,7 @@ go_for_ammo(char mine)
 STATIC void
 wander(void)
 {
-	int	i, j, rel_dir, dir_mask, dir_count;
+	int i, j, rel_dir, dir_mask, dir_count;
 
 	for (i = 0; i < NUMDIRECTIONS; i++)
 		if (!(flbr[i].flags & BEEN) || flbr[i].distance <= 1)
@@ -579,22 +579,22 @@ wander(void)
 				((flbr[FRONT].flags & BEEN) ? 7 : HEIGHT)))
 			continue;
 		dir_mask |= 1 << j;
-# ifdef notdef
+#ifdef notdef
 		dir_count++;
-# else
+#else
 		dir_count = 1;
 		break;
-# endif
+#endif
 	}
-# ifdef notdef
+#ifdef notdef
 	if (dir_count == 0) {
 		duck(random() % NUMDIRECTIONS);
 		num_turns = 0;
 		return;
 	} else if (dir_count == 1)
-# endif
+#endif
 		rel_dir = ffs(dir_mask) - 1;
-# ifdef notdef
+#ifdef notdef
 	else {
 		rel_dir = ffs(dir_mask) - 1;
 		dir_mask &= ~(1 << rel_dir);
@@ -605,16 +605,16 @@ wander(void)
 			dir_mask &= ~(1 << i);
 		}
 	}
-# endif
+#endif
 	if (rel_dir == FRONT)
 		num_turns++;
 	else
 		num_turns = 0;
 
-# ifdef DEBUG
+#ifdef DEBUG
 	fprintf(debug, " w(%c)", RELCHARS[rel_dir]);
-# endif
+#endif
 	face_and_move_direction(rel_dir, 1);
 }
 
-# endif /* OTTO */
+#endif /* OTTO */
