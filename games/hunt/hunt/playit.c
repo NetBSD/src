@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.12 2009/07/04 05:01:16 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.13 2009/07/04 07:10:23 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.12 2009/07/04 05:01:16 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.13 2009/07/04 07:10:23 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -52,24 +52,11 @@ __RCSID("$NetBSD: playit.c,v 1.12 2009/07/04 05:01:16 dholland Exp $");
 #define FREAD	1
 #endif
 
-#if !defined(USE_CURSES) || !defined(TERMINFO)
-#define beep()		(void) putchar(CTRL('G'))
-#endif
-#if !defined(USE_CURSES)
-#undef refresh
-#define refresh()	(void) fflush(stdout);
-#endif
-#ifdef USE_CURSES
 #define clear_eol()	clrtoeol()
 #define put_ch		addch
 #define put_str		addstr
-#endif
 
 static int nchar_send;
-#ifndef USE_CURSES
-char screen[SCREEN_HEIGHT][SCREEN_WIDTH2], blanks[SCREEN_WIDTH];
-int cur_row, cur_col;
-#endif
 #ifdef OTTO
 int Otto_count;
 int Otto_mode;
@@ -130,13 +117,7 @@ playit(void)
 		  case MOVE:
 			y = GETCHR();
 			x = GETCHR();
-#ifdef USE_CURSES
 			move(y, x);
-#else
-			mvcur(cur_row, cur_col, y, x);
-			cur_row = y;
-			cur_col = x;
-#endif
 			break;
 		  case ADDCH:
 			ch = GETCHR();
@@ -148,12 +129,7 @@ playit(void)
 			case '^':
 			case 'v':
 				otto_face = ch;
-#ifdef USE_CURSES
 				getyx(stdscr, otto_y, otto_x);
-#else
-				otto_y = cur_row;
-				otto_x = cur_col;
-#endif
 				break;
 			}
 #endif
@@ -216,12 +192,7 @@ playit(void)
 			case '^':
 			case 'v':
 				otto_face = ch;
-#ifdef USE_CURSES
 				getyx(stdscr, otto_y, otto_x);
-#else
-				otto_y = cur_row;
-				otto_x = cur_col;
-#endif
 				break;
 			}
 #endif
@@ -331,13 +302,7 @@ quit(int old_status)
 	if (Otto_mode)
 		return Q_CLOAK;
 #endif
-#ifdef USE_CURSES
 	move(HEIGHT, 0);
-#else
-	mvcur(cur_row, cur_col, HEIGHT, 0);
-	cur_row = HEIGHT;
-	cur_col = 0;
-#endif
 	put_str("Re-enter game [ynwo]? ");
 	clear_eol();
 	explain = FALSE;
@@ -353,13 +318,7 @@ quit(int old_status)
 #ifndef INTERNET
 			return Q_QUIT;
 #else
-#ifdef USE_CURSES
 			move(HEIGHT, 0);
-#else
-			mvcur(cur_row, cur_col, HEIGHT, 0);
-			cur_row = HEIGHT;
-			cur_col = 0;
-#endif
 			put_str("Write a parting message [yn]? ");
 			clear_eol();
 			refresh();
@@ -380,13 +339,7 @@ quit(int old_status)
 
 get_message:
 			c = ch;		/* save how we got here */
-#ifdef USE_CURSES
 			move(HEIGHT, 0);
-#else
-			mvcur(cur_row, cur_col, HEIGHT, 0);
-			cur_row = HEIGHT;
-			cur_col = 0;
-#endif
 			put_str("Message: ");
 			clear_eol();
 			refresh();
@@ -395,42 +348,30 @@ get_message:
 				refresh();
 				if ((ch = getchar()) == '\n' || ch == '\r')
 					break;
-#if defined(TERMINFO) || BSD_RELEASE >= 44
+#if BSD_RELEASE >= 44
 				if (ch == erasechar())
 #else
 				if (ch == _tty.sg_erase)
 #endif
 				{
 					if (cp > buf) {
-#ifdef USE_CURSES
 						int y, x;
 						getyx(stdscr, y, x);
 						move(y, x - 1);
-#else
-						mvcur(cur_row, cur_col, cur_row,
-								cur_col - 1);
-						cur_col -= 1;
-#endif
 						cp -= 1;
 						clear_eol();
 					}
 					continue;
 				}
-#if defined(TERMINFO) || BSD_RELEASE >= 44
+#if BSD_RELEASE >= 44
 				else if (ch == killchar())
 #else
 				else if (ch == _tty.sg_kill)
 #endif
 				{
-#ifdef USE_CURSES
 					int y, x;
 					getyx(stdscr, y, x);
 					move(y, x - (cp - buf));
-#else
-					mvcur(cur_row, cur_col, cur_row,
-							cur_col - (cp - buf));
-					cur_col -= cp - buf;
-#endif
 					cp = buf;
 					clear_eol();
 					continue;
@@ -455,13 +396,7 @@ get_message:
 		}
 	}
 
-#ifdef USE_CURSES
 	move(HEIGHT, 0);
-#else
-	mvcur(cur_row, cur_col, HEIGHT, 0);
-	cur_row = HEIGHT;
-	cur_col = 0;
-#endif
 #ifdef FLY
 	put_str("Scan, Cloak, Flying, or Quit? ");
 #else
@@ -496,140 +431,19 @@ get_message:
 	}
 }
 
-#ifndef USE_CURSES
-void
-put_ch(char ch)
-{
-	if (!isprint(ch)) {
-		fprintf(stderr, "r,c,ch: %d,%d,%d", cur_row, cur_col, ch);
-		return;
-	}
-	screen[cur_row][cur_col] = ch;
-	putchar(ch);
-	if (++cur_col >= COLS) {
-		if (!AM || XN)
-			putchar('\n');
-		cur_col = 0;
-		if (++cur_row >= LINES)
-			cur_row = LINES;
-	}
-}
-
-void
-put_str(char *s)
-{
-	while (*s)
-		put_ch(*s++);
-}
-#endif
-
 void
 clear_the_screen(void)
 {
-#ifdef USE_CURSES
 	clear();
 	move(0, 0);
 	refresh();
-#else
-	int i;
-
-	if (blanks[0] == '\0')
-		for (i = 0; i < SCREEN_WIDTH; i++)
-			blanks[i] = ' ';
-
-	if (CL != NULL) {
-#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
-		tputs(CL, LINES, _putchar);
-#else
-		tputs(CL, LINES, __cputchar);
-#endif
-		for (i = 0; i < SCREEN_HEIGHT; i++)
-			memcpy(screen[i], blanks, SCREEN_WIDTH);
-	} else {
-		for (i = 0; i < SCREEN_HEIGHT; i++) {
-			mvcur(cur_row, cur_col, i, 0);
-			cur_row = i;
-			cur_col = 0;
-			clear_eol();
-		}
-		mvcur(cur_row, cur_col, 0, 0);
-	}
-	cur_row = cur_col = 0;
-#endif
 }
-
-#ifndef USE_CURSES
-void
-clear_eol(void)
-{
-	if (CE != NULL)
-#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
-		tputs(CE, 1, _putchar);
-#else
-		tputs(CE, 1, __cputchar);
-#endif
-	else {
-		fwrite(blanks, sizeof (char), SCREEN_WIDTH - cur_col, stdout);
-		if (COLS != SCREEN_WIDTH)
-			mvcur(cur_row, SCREEN_WIDTH, cur_row, cur_col);
-		else if (AM)
-			mvcur(cur_row + 1, 0, cur_row, cur_col);
-		else
-			mvcur(cur_row, SCREEN_WIDTH - 1, cur_row, cur_col);
-	}
-	memcpy(&screen[cur_row][cur_col], blanks, SCREEN_WIDTH - cur_col);
-}
-#endif
 
 void
 redraw_screen(void)
 {
-#ifdef USE_CURSES
 	clearok(stdscr, TRUE);
 	touchwin(stdscr);
-#else
-	int i;
-#ifndef NOCURSES
-	static int first = 1;
-
-	if (first) {
-		curscr = newwin(SCREEN_HEIGHT, SCREEN_WIDTH, 0, 0);
-		if (curscr == NULL)
-			errx(1, "Can't create curscr");
-#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
-		for (i = 0; i < SCREEN_HEIGHT; i++)
-			curscr->_y[i] = screen[i];
-#endif
-		first = 0;
-	}
-#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
-	for (i = 0; i < SCREEN_HEIGHT; i++) {
-		int j;
-
-		for (j = 0; j < SCREEN_WIDTH; j++)
-			curscr->lines[i]->line[j].ch = screen[i][j];
-	}
-	curscr->cury = cur_row;
-	curscr->curx = cur_col;
-#else
-	curscr->_cury = cur_row;
-	curscr->_curx = cur_col;
-#endif
-	clearok(curscr, TRUE);
-	touchwin(curscr);
-	wrefresh(curscr);
-#else
-	mvcur(cur_row, cur_col, 0, 0);
-	for (i = 0; i < SCREEN_HEIGHT - 1; i++) {
-		fwrite(screen[i], sizeof (char), SCREEN_WIDTH, stdout);
-		if (COLS > SCREEN_WIDTH || (COLS == SCREEN_WIDTH && !AM))
-			putchar('\n');
-	}
-	fwrite(screen[SCREEN_HEIGHT - 1], sizeof (char), SCREEN_WIDTH - 1,
-		stdout);
-	mvcur(SCREEN_HEIGHT - 1, SCREEN_WIDTH - 1, cur_row, cur_col);
-#endif
-#endif
 }
 
 /*
