@@ -1,8 +1,7 @@
-/* $NetBSD: siisatareg.h,v 1.3 2009/06/17 04:37:57 jakllsch Exp $ */
-/* Id: siisatareg.h,v 1.10 2008/05/21 15:51:36 jakllsch Exp  */
+/* $NetBSD: siisatareg.h,v 1.4 2009/07/04 20:57:15 jakllsch Exp $ */
 
 /*-
- * Copyright (c) 2007, 2008 Jonathan A. Kollasch.
+ * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

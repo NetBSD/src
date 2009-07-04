@@ -1,4 +1,4 @@
-/* $NetBSD: satafisvar.h,v 1.1 2009/06/17 03:07:51 jakllsch Exp $ */
+/* $NetBSD: satafisvar.h,v 1.2 2009/07/04 20:57:15 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -33,6 +33,6 @@
 void satafis_rhd_construct_cmd(struct ata_command *, uint8_t *);
 void satafis_rhd_construct_bio(struct ata_xfer *, uint8_t *);
 void satafis_rhd_construct_atapi(struct ata_xfer *, uint8_t *);
-void satafis_sdb_parse(struct ata_channel *, uint8_t *);
+void satafis_rdh_parse(struct ata_channel *, uint8_t *);
 
 #endif /* _DEV_ATA_FISVAR_H_ */
