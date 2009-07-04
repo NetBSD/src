@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1 2009/05/12 18:37:50 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.2 2009/07/04 16:01:15 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.1 2009/05/12 18:37:50 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.2 2009/07/04 16:01:15 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -75,6 +75,7 @@ static bool print_service_attribute(uint16_t, sdp_data_t *);
 static void print_bool(sdp_data_t *);
 static void print_uint8x(sdp_data_t *);
 static void print_uint16d(sdp_data_t *);
+static void print_uint16x(sdp_data_t *);
 static void print_uint32x(sdp_data_t *);
 static void print_uint32d(sdp_data_t *);
 static void print_uuid(sdp_data_t *);
@@ -106,6 +107,7 @@ static void print_hf_features(sdp_data_t *);
 static void print_hfag_network(sdp_data_t *);
 static void print_hfag_features(sdp_data_t *);
 static void print_net_access_type(sdp_data_t *);
+static void print_pnp_source(sdp_data_t *);
 
 static void print_rfcomm(sdp_data_t *);
 static void print_bnep(sdp_data_t *);
@@ -258,6 +260,15 @@ attr_t hid_attrs[] = {	/* Human Interface Device */
 	{ 0x020e, "HIDBootDevice",			print_bool },
 };
 
+attr_t pnp_attrs[] = {	/* Device ID */
+	{ 0x0200, "SpecificationID",			print_profile_version },
+	{ 0x0201, "VendorID",				print_uint16x },
+	{ 0x0202, "ProductID",				print_uint16x },
+	{ 0x0203, "Version",				print_hid_version },
+	{ 0x0204, "PrimaryRecord",			print_bool },
+	{ 0x0205, "VendorIDSource",			print_pnp_source },
+};
+
 #define A(a)	a, __arraycount(a)
 service_t service_list[] = {
 	{ 0x1000, "Service Discovery Server",		A(sds_attrs) },
@@ -308,7 +319,7 @@ service_t service_list[] = {
 	{ 0x112b, "UDI TA",				NULL, 0 },
 	{ 0x112c, "Audio/Video",			NULL, 0 },
 	{ 0x112d, "SIM Access",				NULL, 0 },
-	{ 0x1200, "PNP Information",			NULL, 0 },
+	{ 0x1200, "PNP Information",			A(pnp_attrs) },
 	{ 0x1201, "Generic Networking",			NULL, 0 },
 	{ 0x1202, "Generic File Transfer",		NULL, 0 },
 	{ 0x1203, "Generic Audio",			NULL, 0 },
@@ -591,6 +602,17 @@ print_uint16d(sdp_data_t *data)
 		return;
 
 	printf("%d\n", v);
+}
+
+static void
+print_uint16x(sdp_data_t *data)
+{
+	uint16_t v;
+
+	if (!sdp_get_uint16(data, &v))
+		return;
+
+	printf("0x%04x\n", v);
 }
 
 static void
@@ -1229,6 +1251,23 @@ print_net_access_type(sdp_data_t *data)
 	case 0x000d:	printf("3G Cellular");		break;
 	case 0xfffe:	printf("other");		break;
 	default:	printf("0x%04x", v);		break;
+	}
+
+	printf("\n");
+}
+
+static void
+print_pnp_source(sdp_data_t *data)
+{
+	uint16_t v;
+
+	if (!sdp_get_uint16(data, &v))
+		return;
+
+	switch (v) {
+	case 0x0001:	printf("Bluetooth SIG");		break;
+	case 0x0002:	printf("USB Implementers Forum");	break;
+	default:	printf("0x%04x", v);			break;
 	}
 
 	printf("\n");
