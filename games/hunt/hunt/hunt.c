@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.29 2009/07/04 01:23:55 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.30 2009/07/04 01:44:28 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.29 2009/07/04 01:23:55 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.30 2009/07/04 01:44:28 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -495,14 +495,14 @@ list_drivers()
 	msg = htons(C_TESTMSG());
 	for (i = 0; i < brdc; i++) {
 		test.sin_addr = brdv[i].sin_addr;
-		if (sendto(test_socket, (char *) &msg, sizeof msg, 0,
+		if (sendto(test_socket, &msg, sizeof msg, 0,
 		    (struct sockaddr *) &test, DAEMON_SIZE) < 0) {
 			leave(1, "sendto");
 			/* NOTREACHED */
 		}
 	}
 	test.sin_addr = local_address;
-	if (sendto(test_socket, (char *) &msg, sizeof msg, 0,
+	if (sendto(test_socket, &msg, sizeof msg, 0,
 	    (struct sockaddr *) &test, DAEMON_SIZE) < 0) {
 		leave(1, "sendto");
 		/* NOTREACHED */
