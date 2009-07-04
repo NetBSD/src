@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd.h,v 1.4 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: bsd.h,v 1.5 2009/07/04 04:29:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -31,10 +31,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-# if defined(BSD_RELEASE) && BSD_RELEASE >= 43
-# define	BROADCAST
-# define	SYSLOG_43
-# endif
-# if defined(BSD_RELEASE) && BSD_RELEASE == 42
-# define	SYSLOG_42
-# endif
+#if defined(BSD_RELEASE) && BSD_RELEASE >= 43
+#define BROADCAST
+#define SYSLOG_43
+#endif
+
+#if defined(BSD_RELEASE) && BSD_RELEASE == 42
+#define SYSLOG_42
+#endif
