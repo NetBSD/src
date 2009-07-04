@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.7 2009/06/28 21:12:35 dholland Exp $	*/
+/*	$NetBSD: shots.c,v 1.8 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.7 2009/06/28 21:12:35 dholland Exp $");
+__RCSID("$NetBSD: shots.c,v 1.8 2009/07/04 01:01:18 dholland Exp $");
 #endif /* not lint */
 
 # include	<err.h>
@@ -149,7 +149,7 @@ moveshots()
 		}
 
 		chkshot(bp, next);
-		free((char *) bp);
+		free(bp);
 	}
 
 	for (pp = Player; pp < End_player; pp++)
@@ -315,7 +315,7 @@ move_normal_shot(bp)
 					pp->p_ident->i_saved++;
 				message(pp, "Absorbed charge (good shield!)");
 				pp->p_ident->i_absorbed += bp->b_charge;
-				free((char *) bp);
+				free(bp);
 				(void) snprintf(Buf, sizeof(Buf),
 						"%3d", pp->p_ammo);
 				cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
@@ -497,7 +497,7 @@ drone_move:
 			pp = play_at(bp->b_y, bp->b_x);
 			pp->p_ammo += bp->b_charge;
 			message(pp, "**** Absorbed drone ****");
-			free((char *) bp);
+			free(bp);
 			(void) snprintf(Buf, sizeof(buf), "%3d", pp->p_ammo);
 			cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 			outstr(pp, Buf, 3);
@@ -785,7 +785,7 @@ chkslime(bp, next)
 		}
 		break;
 	}
-	nbp = (BULLET *) malloc(sizeof (BULLET));
+	nbp = malloc(sizeof(*nbp));
 	*nbp = *bp;
 # ifdef VOLCANO
 	move_slime(nbp, nbp->b_type == SLIME ? SLIMESPEED : LAVASPEED, next);
@@ -811,7 +811,7 @@ move_slime(bp, speed, next)
 
 	if (speed == 0) {
 		if (bp->b_charge <= 0)
-			free((char *) bp);
+			free(bp);
 		else
 			save_bullet(bp);
 		return;
@@ -847,7 +847,7 @@ move_slime(bp, speed, next)
 	}
 
 	if (--bp->b_charge <= 0) {
-		free((char *) bp);
+		free(bp);
 		return;
 	}
 
@@ -952,7 +952,7 @@ move_slime(bp, speed, next)
 		move_slime(nbp, speed - 1, next);
 	}
 
-	free((char *) bp);
+	free(bp);
 }
 
 /*

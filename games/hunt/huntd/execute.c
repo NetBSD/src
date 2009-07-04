@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.6 2009/06/28 21:12:35 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.7 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: execute.c,v 1.6 2009/06/28 21:12:35 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.7 2009/07/04 01:01:18 dholland Exp $");
 #endif /* not lint */
 
 # include	<stdlib.h>
@@ -496,7 +496,7 @@ create_shot(type, y, x, face, charge, size, owner, score, expl, over)
 {
 	BULLET	*bp;
 
-	bp = (BULLET *) malloc(sizeof (BULLET));	/* NOSTRICT */
+	bp = malloc(sizeof(*bp));
 	if (bp == NULL) {
 		if (owner != NULL)
 			message(owner, "Out of memory");

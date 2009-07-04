@@ -1,4 +1,4 @@
-/*	$NetBSD: expl.c,v 1.4 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: expl.c,v 1.5 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expl.c,v 1.4 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: expl.c,v 1.5 2009/07/04 01:01:18 dholland Exp $");
 #endif /* not lint */
 
 # include	<stdlib.h>
@@ -57,7 +57,7 @@ showexpl(y, x, type)
 		return;
 	if (x < 0 || x >= WIDTH)
 		return;
-	ep = (EXPL *) malloc(sizeof (EXPL));	/* NOSTRICT */
+	ep = malloc(sizeof(*ep));
 	ep->e_y = y;
 	ep->e_x = x;
 	ep->e_char = type;
@@ -132,7 +132,7 @@ rollexpl()
 		for (pp = Monitor; pp < End_monitor; pp++)
 			check(pp, y, x);
 # endif
-		free((char *) ep);
+		free(ep);
 	}
 	for (x = EXPLEN - 1; x > 0; x--)
 		Expl[x] = Expl[x - 1];

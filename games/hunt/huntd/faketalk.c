@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.12 2009/06/28 21:12:35 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.13 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.12 2009/06/28 21:12:35 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.13 2009/07/04 01:01:18 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -123,7 +123,7 @@ faketalk()
 	 *	start fetching addresses
 	 */
 
-	if ((sp = getservbyname("smtp", (char *) NULL)) == NULL) {
+	if ((sp = getservbyname("smtp", NULL)) == NULL) {
 # ifdef LOG
 		syslog(LOG_ERR, "faketalk: smtp protocol not supported\n");
 # else
@@ -239,7 +239,7 @@ do_announce(s)
 	msg.type = DELETE;
 	msg.id_num = (int) htonl(response.id_num);
 	daemon_addr.sin_addr = his_machine_addr;
-	if (sendto(ctl_sockt, (char *) &msg, sizeof (msg), 0,
+	if (sendto(ctl_sockt, &msg, sizeof (msg), 0,
 			(struct sockaddr *) &daemon_addr, sizeof(daemon_addr))
 			!= sizeof(msg))
 		p_error("send delete remote");

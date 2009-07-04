@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.7 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: get_names.c,v 1.8 2009/07/04 01:01:18 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.7 2003/06/11 12:00:22 wiz Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.8 2009/07/04 01:01:18 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -146,7 +146,7 @@ get_remote_name(his_address)
 	msg.r_name[NAME_SIZE - 1] = '\0';
 
 	/* if he is on the same machine, then simply copy */
-	if (memcmp((char *) &his_machine_name, (char *) &my_machine_name,
+	if (memcmp(&his_machine_name, &my_machine_name,
 						sizeof(his_machine_name)) == 0)
 		memcpy(&his_machine_addr, &my_machine_addr,
 						sizeof(his_machine_name));
