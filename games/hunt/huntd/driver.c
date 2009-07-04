@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.17 2009/07/04 04:29:54 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.18 2009/07/04 06:31:31 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.17 2009/07/04 04:29:54 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.18 2009/07/04 06:31:31 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -279,12 +279,7 @@ init(void)
 	(void) signal(SIGPIPE, SIG_IGN);
 
 #ifdef LOG
-#ifdef	SYSLOG_43
 	openlog("huntd", LOG_PID, LOG_DAEMON);
-#endif
-#ifdef	SYSLOG_42
-	openlog("huntd", LOG_PID);
-#endif
 #endif
 
 	/*
