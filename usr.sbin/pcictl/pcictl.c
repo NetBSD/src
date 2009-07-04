@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.13 2009/07/04 09:12:46 cegger Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.14 2009/07/04 13:50:08 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -224,11 +224,11 @@ cmd_dump(int argc, char *argv[])
 		usage();
 
 	if (bus == -1)
-		errx(1, "dump: wildcard bus number not permitted");
+		errx(EXIT_FAILURE, "dump: wildcard bus number not permitted");
 	if (dev == -1)
-		errx(1, "dump: must specify a device number");
+		errx(EXIT_FAILURE, "dump: must specify a device number");
 	if (func == -1)
-		errx(1, "dump: wildcard function number not permitted");
+		errx(EXIT_FAILURE, "dump: wildcard function number not permitted");
 
 	scan_pci(bus, dev, func, scan_pci_dump);
 }
@@ -245,7 +245,7 @@ parse_bdf(const char *str)
 
 	value = strtol(str, &end, 0);
 	if(*end != '\0') 
-		errx(1, "\"%s\" is not a number", str);
+		errx(EXIT_FAILURE, "\"%s\" is not a number", str);
 
 	return value;
 }
