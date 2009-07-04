@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.9 2008/01/28 03:23:29 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.10 2009/07/04 01:23:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.9 2008/01/28 03:23:29 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.10 2009/07/04 01:23:55 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
@@ -109,7 +109,7 @@ playit()
 	int		y, x;
 	u_int32_t	version;
 
-	if (read(Socket, (char *) &version, LONGLEN) != LONGLEN) {
+	if (read(Socket, &version, LONGLEN) != LONGLEN) {
 		bad_con();
 		/* NOTREACHED */
 	}
@@ -644,7 +644,7 @@ do_message()
 {
 	u_int32_t	version;
 
-	if (read(Socket, (char *) &version, LONGLEN) != LONGLEN) {
+	if (read(Socket, &version, LONGLEN) != LONGLEN) {
 		bad_con();
 		/* NOTREACHED */
 	}
