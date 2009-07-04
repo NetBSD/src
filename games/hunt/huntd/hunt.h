@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.16 2009/07/04 06:38:35 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.17 2009/07/04 07:10:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -40,7 +40,7 @@
 #include <syslog.h>
 #endif
 
-#if !defined(TERMINFO) && BSD_RELEASE < 44
+#if BSD_RELEASE < 44
 #include <sgtty.h>
 #else
 #include <sys/ioctl.h>
@@ -79,11 +79,6 @@
 #endif
 #if !defined(REFLECT) && !defined(RANDOM)
 #define RANDOM
-#endif
-#ifdef TERMINFO
-/* mvcur() in terminfo needs the curses library to be initialized to not
- * coredump, so give up and use it. */
-#define USE_CURSES
 #endif
 
 /* decrement version number for each change in startup protocol */

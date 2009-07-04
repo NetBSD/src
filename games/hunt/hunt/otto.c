@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.14 2009/07/04 06:38:34 dholland Exp $	*/
+/*	$NetBSD: otto.c,v 1.15 2009/07/04 07:10:23 dholland Exp $	*/
 #ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.14 2009/07/04 06:38:34 dholland Exp $");
+__RCSID("$NetBSD: otto.c,v 1.15 2009/07/04 07:10:23 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -70,12 +70,7 @@ __RCSID("$NetBSD: otto.c,v 1.14 2009/07/04 06:38:34 dholland Exp $");
 #define random rand
 #endif
 
-#ifndef USE_CURSES
-extern char screen[SCREEN_HEIGHT][SCREEN_WIDTH2];
-#define SCREEN(y, x)	screen[y][x]
-#else
 #define SCREEN(y, x)	mvinch(y, x)
-#endif
 
 #ifndef DEBUG
 #define STATIC		static
