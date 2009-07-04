@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.14 2009/07/04 13:50:08 cegger Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.15 2009/07/04 13:54:14 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -72,7 +72,6 @@ struct pciio_businfo pci_businfo;
 const	char *dvname;
 char	dvname_store[MAXPATHLEN];
 const	char *cmdname;
-const	char *argnames;
 int	print_numbers = 0;
 
 void	cmd_list(int, char *[]);
@@ -120,8 +119,6 @@ main(int argc, char *argv[])
 			break;
 	if (commands[i].cmd_name == NULL)
 		errx(EXIT_FAILURE, "unknown command: %s", cmdname);
-
-	argnames = commands[i].arg_names;
 
 	/* Open the device. */
 	if ((strchr(dvname, '/') == NULL) &&
