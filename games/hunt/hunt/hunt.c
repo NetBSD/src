@@ -1,125 +1,125 @@
-/*	$NetBSD: hunt.c,v 1.31 2009/07/04 01:58:57 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.32 2009/07/04 05:01:16 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are 
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
  * met:
- * 
- * + Redistributions of source code must retain the above copyright 
+ *
+ * + Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * + Redistributions in binary form must reproduce the above copyright 
- *   notice, this list of conditions and the following disclaimer in the 
+ * + Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
- * + Neither the name of the University of California, San Francisco nor 
- *   the names of its contributors may be used to endorse or promote 
- *   products derived from this software without specific prior written 
+ * + Neither the name of the University of California, San Francisco nor
+ *   the names of its contributors may be used to endorse or promote
+ *   products derived from this software without specific prior written
  *   permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
- * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.31 2009/07/04 01:58:57 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.32 2009/07/04 05:01:16 dholland Exp $");
 #endif /* not lint */
 
-# include	<sys/param.h>
-# include	<sys/stat.h>
-# include	<sys/time.h>
-# include	<sys/poll.h>
-# include	<ctype.h>
-# include	<err.h>
-# include	<errno.h>
-# include	<curses.h>
-# include	<signal.h>
-# include	<stdlib.h>
-# include	<string.h>
-# if !defined(USE_CURSES) && defined(BSD_RELEASE) && BSD_RELEASE >= 44
-# include	<termios.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/poll.h>
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <curses.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#if !defined(USE_CURSES) && defined(BSD_RELEASE) && BSD_RELEASE >= 44
+#include <termios.h>
 static struct termios saved_tty;
-# endif
-# include	<unistd.h>
-# include	<ifaddrs.h>
+#endif
+#include <unistd.h>
+#include <ifaddrs.h>
 
-# include	"hunt.h"
+#include "hunt.h"
 
 /*
  * Some old versions of curses don't have these defined
  */
-# if !defined(cbreak) && (!defined(BSD_RELEASE) || BSD_RELEASE < 44)
-# define	cbreak()	crmode()
-# endif
+#if !defined(cbreak) && (!defined(BSD_RELEASE) || BSD_RELEASE < 44)
+#define cbreak()	crmode()
+#endif
 
-# if !defined(USE_CURSES) || !defined(TERMINFO)
-# define	beep()		(void) putchar(CTRL('G'))
-# endif
-# if !defined(USE_CURSES)
-# undef		refresh
-# define	refresh()	(void) fflush(stdout);
-# endif
-# ifdef USE_CURSES
-# define	clear_eol()	clrtoeol()
-# define	put_ch		addch
-# define	put_str		addstr
-# endif
+#if !defined(USE_CURSES) || !defined(TERMINFO)
+#define beep()		(void) putchar(CTRL('G'))
+#endif
+#if !defined(USE_CURSES)
+#undef refresh
+#define refresh()	(void) fflush(stdout);
+#endif
+#ifdef USE_CURSES
+#define clear_eol()	clrtoeol()
+#define put_ch		addch
+#define put_str		addstr
+#endif
 
-FLAG	Last_player = FALSE;
-# ifdef MONITOR
-FLAG	Am_monitor = FALSE;
-# endif
+FLAG Last_player = FALSE;
+#ifdef MONITOR
+FLAG Am_monitor = FALSE;
+#endif
 
-char	Buf[BUFSIZ];
+char Buf[BUFSIZ];
 
-int	Socket;
-# ifdef INTERNET
-char	*Sock_host;
-char	*use_port;
-FLAG	Query_driver = FALSE;
-char	*Send_message = NULL;
-FLAG	Show_scores = FALSE;
-# endif
+int Socket;
+#ifdef INTERNET
+char *Sock_host;
+char *use_port;
+FLAG Query_driver = FALSE;
+char *Send_message = NULL;
+FLAG Show_scores = FALSE;
+#endif
 
-SOCKET	Daemon;
-# ifdef	INTERNET
-# define	DAEMON_SIZE	(sizeof Daemon)
-# else
-# define	DAEMON_SIZE	(sizeof Daemon - 1)
-# endif
+SOCKET Daemon;
+#ifdef INTERNET
+#define DAEMON_SIZE	(sizeof Daemon)
+#else
+#define DAEMON_SIZE	(sizeof Daemon - 1)
+#endif
 
-char	map_key[256];			/* what to map keys to */
-FLAG	no_beep;
+char map_key[256];			/* what to map keys to */
+FLAG no_beep;
 
-static char	name[NAMELEN];
-static char	team = ' ';
+static char name[NAMELEN];
+static char team = ' ';
 
-static int	in_visual;
+static int in_visual;
 
-extern int	cur_row, cur_col;
+extern int cur_row, cur_col;
 
-void	dump_scores(SOCKET);
-long	env_init(long);
-void	fill_in_blanks(void);
-void	leave(int, const char *) __dead;
-void	leavex(int, const char *) __dead;
-void	fincurs(void);
-int	main(int, char *[]);
-# ifdef INTERNET
+void dump_scores(SOCKET);
+long env_init(long);
+void fill_in_blanks(void);
+void leave(int, const char *) __dead;
+void leavex(int, const char *) __dead;
+void fincurs(void);
+int main(int, char *[]);
+#ifdef INTERNET
 SOCKET *list_drivers(void);
-# endif
+#endif
 
-extern int	Otto_mode;
+extern int Otto_mode;
 /*
  * main:
  *	Main program for local process
@@ -127,9 +127,9 @@ extern int	Otto_mode;
 int
 main(int ac, char **av)
 {
-	char		*term;
-	int		c;
-	long		enter_status;
+	char *term;
+	int c;
+	long enter_status;
 
 	enter_status = env_init((long) Q_CLOAK);
 	while ((c = getopt(ac, av, "Sbcfh:l:mn:op:qst:w:")) != -1) {
@@ -146,21 +146,21 @@ main(int ac, char **av)
 			}
 			break;
 		case 'o':
-# ifndef OTTO
+#ifndef OTTO
 			warnx("The -o flag is reserved for future use.");
 			goto usage;
-# else
+#else
 			Otto_mode = TRUE;
 			break;
-# endif
+#endif
 		case 'm':
-# ifdef MONITOR
+#ifdef MONITOR
 			Am_monitor = TRUE;
-# else
+#else
 			warnx("The monitor was not compiled in.");
-# endif
+#endif
 			break;
-# ifdef INTERNET
+#ifdef INTERNET
 		case 'S':
 			Show_scores = TRUE;
 			break;
@@ -177,7 +177,7 @@ main(int ac, char **av)
 			use_port = optarg;
 			Test_port = atoi(use_port);
 			break;
-# else
+#else
 		case 'S':
 		case 'q':
 		case 'w':
@@ -185,16 +185,16 @@ main(int ac, char **av)
 		case 'p':
 			wanrx("Need TCP/IP for S, q, w, h, and p options.");
 			break;
-# endif
+#endif
 		case 'c':
 			enter_status = Q_CLOAK;
 			break;
 		case 'f':
-# ifdef FLY
+#ifdef FLY
 			enter_status = Q_FLY;
-# else
+#else
 			warnx("The flying code was not compiled in.");
-# endif
+#endif
 			break;
 		case 's':
 			enter_status = Q_SCAN;
@@ -210,30 +210,30 @@ main(int ac, char **av)
 			exit(1);
 		}
 	}
-# ifdef INTERNET
+#ifdef INTERNET
 	if (optind + 1 < ac)
 		goto usage;
 	else if (optind + 1 == ac)
 		Sock_host = av[ac - 1];
-# else
+#else
 	if (optind > ac)
 		goto usage;
-# endif
+#endif
 
-# ifdef INTERNET
+#ifdef INTERNET
 	if (Show_scores) {
-		SOCKET	*hosts;
+		SOCKET *hosts;
 
 		for (hosts = list_drivers(); hosts->sin_port != 0; hosts += 1)
 			dump_scores(*hosts);
 		exit(0);
 	}
 	if (Query_driver) {
-		SOCKET	*hosts;
+		SOCKET *hosts;
 
 		for (hosts = list_drivers(); hosts->sin_port != 0; hosts += 1) {
-			struct	hostent	*hp;
-			int	num_players;
+			struct hostent *hp;
+			int num_players;
 
 			hp = gethostbyaddr((char *) &hosts->sin_addr,
 					sizeof hosts->sin_addr, AF_INET);
@@ -245,36 +245,36 @@ main(int ac, char **av)
 		}
 		exit(0);
 	}
-# endif
-# ifdef OTTO
+#endif
+#ifdef OTTO
 	if (Otto_mode)
 		(void) strncpy(name, "otto", NAMELEN);
 	else
-# endif
+#endif
 	fill_in_blanks();
 
 	(void) fflush(stdout);
 	if (!isatty(0) || (term = getenv("TERM")) == NULL)
 		errx(1, "no terminal type");
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 	if (!initscr())
 		errx(0, "couldn't initialize screen");
 	(void) noecho();
 	(void) cbreak();
-# else /* !USE_CURSES */
-# if !defined(BSD_RELEASE) || BSD_RELEASE < 44
+#else /* !USE_CURSES */
+#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
 	_tty_ch = 0;
-# endif
+#endif
 	gettmode();
 	(void) setterm(term);
 	(void) noecho();
 	(void) cbreak();
-# if defined(BSD_RELEASE) && BSD_RELEASE >= 44
+#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
 	tcgetattr(0, &saved_tty);
-# endif
+#endif
 	_puts(TI);
 	_puts(VS);
-# endif /* !USE_CURSES */
+#endif /* !USE_CURSES */
 	in_visual = TRUE;
 	if (LINES < SCREEN_HEIGHT || COLS < SCREEN_WIDTH)
 		leavex(1, "Need a larger window");
@@ -288,7 +288,7 @@ main(int ac, char **av)
 #endif
 
 	for (;;) {
-# ifdef	INTERNET
+#ifdef INTERNET
 		find_driver(TRUE);
 
 		if (Daemon.sin_port == 0)
@@ -296,7 +296,7 @@ main(int ac, char **av)
 
 	jump_in:
 		do {
-			int	option;
+			int option;
 
 			Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0);
 			if (Socket < 0)
@@ -316,7 +316,7 @@ main(int ac, char **av)
 				break;
 			sleep(1);
 		} while (close(Socket) == 0);
-# else /* !INTERNET */
+#else /* !INTERNET */
 		/*
 		 * set up a socket
 		 */
@@ -346,10 +346,10 @@ main(int ac, char **av)
 				sleep(2);
 			} while (connect(Socket, &Daemon, DAEMON_SIZE) < 0);
 		}
-# endif
+#endif
 
 		do_connect(name, team, enter_status);
-# ifdef INTERNET
+#ifdef INTERNET
 		if (Send_message != NULL) {
 			do_message();
 			if (enter_status == Q_MESSAGE)
@@ -358,7 +358,7 @@ main(int ac, char **av)
 			/* don't continue as that will call find_driver */
 			goto jump_in;
 		}
-# endif
+#endif
 		playit();
 		if ((enter_status = quit(enter_status)) == Q_QUIT)
 			break;
@@ -368,13 +368,13 @@ main(int ac, char **av)
 	return(0);
 }
 
-# ifdef INTERNET
-# ifdef BROADCAST
+#ifdef INTERNET
+#ifdef BROADCAST
 int
 broadcast_vec(int s /*socket*/, struct sockaddr **vector)
 {
-	int			vec_cnt;
-	struct ifaddrs		*ifp, *ip;
+	int vec_cnt;
+	struct ifaddrs *ifp, *ip;
 
 	*vector = NULL;
 	if (getifaddrs(&ifp) < 0)
@@ -399,38 +399,38 @@ broadcast_vec(int s /*socket*/, struct sockaddr **vector)
 	freeifaddrs(ifp);
 	return vec_cnt;
 }
-# endif
+#endif
 
-SOCKET	*
+SOCKET *
 list_drivers(void)
 {
-	int			option;
-	u_short			msg;
-	u_short			port_num;
-	static SOCKET		test;
-	int			test_socket;
-	socklen_t		namelen;
-	char			local_name[MAXHOSTNAMELEN + 1];
-	static int		initial = TRUE;
-	static struct in_addr	local_address;
-	struct hostent		*hp;
-# ifdef BROADCAST
-	static	int		brdc;
-	static	SOCKET		*brdv;
-# else
-	u_long			local_net;
-# endif
-	int			i;
-	unsigned		j;
-	static	SOCKET		*listv;
-	static	unsigned int	listmax;
-	unsigned int		listc;
-	struct pollfd		set[1];
+	int option;
+	u_short msg;
+	u_short port_num;
+	static SOCKET test;
+	int test_socket;
+	socklen_t namelen;
+	char local_name[MAXHOSTNAMELEN + 1];
+	static int initial = TRUE;
+	static struct in_addr local_address;
+	struct hostent *hp;
+#ifdef BROADCAST
+	static int brdc;
+	static SOCKET *brdv;
+#else
+	u_long local_net;
+#endif
+	int i;
+	unsigned j;
+	static SOCKET *listv;
+	static unsigned int listmax;
+	unsigned int listc;
+	struct pollfd set[1];
 
 	if (initial) {			/* do one time initialization */
-# ifndef BROADCAST
+#ifndef BROADCAST
 		sethostent(1);		/* don't bother to close host file */
-# endif
+#endif
 		if (gethostname(local_name, sizeof local_name) < 0) {
 			leavex(1, "Sorry, I have no name.");
 			/* NOTREACHED */
@@ -473,11 +473,11 @@ list_drivers(void)
 		    (struct sockaddr *) &test, DAEMON_SIZE);
 	}
 
-# ifdef BROADCAST
+#ifdef BROADCAST
 	if (initial)
 		brdc = broadcast_vec(test_socket, (void *) &brdv);
 
-# ifdef SO_BROADCAST
+#ifdef SO_BROADCAST
 	/* Sun's will broadcast even though this option can't be set */
 	option = 1;
 	if (setsockopt(test_socket, SOL_SOCKET, SO_BROADCAST,
@@ -485,7 +485,7 @@ list_drivers(void)
 		leave(1, "setsockopt broadcast");
 		/* NOTREACHED */
 	}
-# endif
+#endif
 
 	/* send broadcast packets on all interfaces */
 	msg = htons(C_TESTMSG());
@@ -503,7 +503,7 @@ list_drivers(void)
 		leave(1, "sendto");
 		/* NOTREACHED */
 	}
-# else /* !BROADCAST */
+#else /* !BROADCAST */
 	/* loop thru all hosts on local net and send msg to them. */
 	msg = htons(C_TESTMSG());
 	local_net = inet_netof(local_address);
@@ -515,7 +515,7 @@ list_drivers(void)
 			    (struct sockaddr *) &test, DAEMON_SIZE);
 		}
 	}
-# endif
+#endif
 
 get_response:
 	namelen = DAEMON_SIZE;
@@ -570,11 +570,11 @@ test_one_host:
 void
 find_driver(FLAG do_startup)
 {
-	SOCKET	*hosts;
+	SOCKET *hosts;
 
 	hosts = list_drivers();
 	if (hosts[0].sin_port != htons(0)) {
-		int	i, c;
+		int i, c;
 
 		if (hosts[1].sin_port == htons(0)) {
 			Daemon = hosts[0];
@@ -582,26 +582,26 @@ find_driver(FLAG do_startup)
 		}
 		/* go thru list and return host that matches daemon */
 		clear_the_screen();
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 		move(1, 0);
-# else
+#else
 		mvcur(cur_row, cur_col, 1, 0);
 		cur_row = 1;
 		cur_col = 0;
-# endif
+#endif
 		put_str("Pick one:");
 		for (i = 0; i < HEIGHT - 4 && hosts[i].sin_port != htons(0);
 								i += 1) {
-			struct	hostent	*hp;
-			char	buf[80];
+			struct hostent *hp;
+			char buf[80];
 
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 			move(3 + i, 0);
-# else
+#else
 			mvcur(cur_row, cur_col, 3 + i, 0);
 			cur_row = 3 + i;
 			cur_col = 0;
-# endif
+#endif
 			hp = gethostbyaddr((char *) &hosts[i].sin_addr,
 					sizeof hosts[i].sin_addr, AF_INET);
 			(void) snprintf(buf, sizeof(buf),
@@ -610,13 +610,13 @@ find_driver(FLAG do_startup)
 				: inet_ntoa(hosts->sin_addr));
 			put_str(buf);
 		}
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 		move(4 + i, 0);
-# else
+#else
 		mvcur(cur_row, cur_col, 4 + i, 0);
 		cur_row = 4 + i;
 		cur_col = 0;
-# endif
+#endif
 		put_str("Enter letter: ");
 		refresh();
 		while (!islower(c = getchar()) || (c -= 'a') >= i) {
@@ -638,10 +638,10 @@ find_driver(FLAG do_startup)
 void
 dump_scores(SOCKET host)
 {
-	struct	hostent	*hp;
-	int	s;
-	char	buf[BUFSIZ];
-	int	cnt;
+	struct hostent *hp;
+	int s;
+	char buf[BUFSIZ];
+	int cnt;
 
 	hp = gethostbyaddr((char *) &host.sin_addr, sizeof host.sin_addr,
 								AF_INET);
@@ -658,34 +658,34 @@ dump_scores(SOCKET host)
 	(void) close(s);
 }
 
-# endif
+#endif
 
 void
 start_driver(void)
 {
-	int	procid;
+	int procid;
 
-# ifdef MONITOR
+#ifdef MONITOR
 	if (Am_monitor) {
 		leavex(1, "No one playing.");
 		/* NOTREACHED */
 	}
-# endif
+#endif
 
-# ifdef INTERNET
+#ifdef INTERNET
 	if (Sock_host != NULL) {
 		sleep(3);
 		return;
 	}
-# endif
+#endif
 
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 	move(HEIGHT, 0);
-# else
+#else
 	mvcur(cur_row, cur_col, HEIGHT, 0);
 	cur_row = HEIGHT;
 	cur_col = 0;
-# endif
+#endif
 	put_str("Starting...");
 	refresh();
 	procid = fork();
@@ -694,27 +694,27 @@ start_driver(void)
 	}
 	if (procid == 0) {
 		(void) signal(SIGINT, SIG_IGN);
-# ifndef INTERNET
+#ifndef INTERNET
 		(void) close(Socket);
-# else
+#else
 		if (use_port == NULL)
-# endif
+#endif
 			execl(Driver, "HUNT", (char *) NULL);
-# ifdef INTERNET
-		else 
+#ifdef INTERNET
+		else
 			execl(Driver, "HUNT", "-p", use_port, (char *) NULL);
-# endif
+#endif
 		/* only get here if exec failed */
 		(void) kill(getppid(), SIGUSR1);	/* tell mom */
 		_exit(1);
 	}
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 	move(HEIGHT, 0);
-# else
+#else
 	mvcur(cur_row, cur_col, HEIGHT, 0);
 	cur_row = HEIGHT;
 	cur_col = 0;
-# endif
+#endif
 	put_str("Connecting...");
 	refresh();
 }
@@ -765,7 +765,7 @@ sigusr1(int dummy __unused)
 	/* NOTREACHED */
 }
 
-# ifdef INTERNET
+#ifdef INTERNET
 /*
  * sigalrm:
  *	Handle an alarm signal
@@ -775,7 +775,7 @@ sigalrm(int dummy __unused)
 {
 	return;
 }
-# endif
+#endif
 
 /*
  * rmnl:
@@ -784,7 +784,7 @@ sigalrm(int dummy __unused)
 void
 rmnl(char *s)
 {
-	char	*cp;
+	char *cp;
 
 	cp = strrchr(s, '\n');
 	if (cp != NULL)
@@ -798,21 +798,21 @@ rmnl(char *s)
 SIGNAL_TYPE
 intr(int dummy __unused)
 {
-	int	ch;
-	int	explained;
-	int	y, x;
+	int ch;
+	int explained;
+	int y, x;
 
 	(void) signal(SIGINT, SIG_IGN);
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 	getyx(stdscr, y, x);
 	move(HEIGHT, 0);
-# else
+#else
 	y = cur_row;
 	x = cur_col;
 	mvcur(cur_row, cur_col, HEIGHT, 0);
 	cur_row = HEIGHT;
 	cur_col = 0;
-# endif
+#endif
 	put_str("Really quit? ");
 	clear_eol();
 	refresh();
@@ -830,13 +830,13 @@ intr(int dummy __unused)
 		}
 		else if (ch == 'n') {
 			(void) signal(SIGINT, intr);
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 			move(y, x);
-# else
+#else
 			mvcur(cur_row, cur_col, y, x);
 			cur_row = y;
 			cur_col = x;
-# endif
+#endif
 			refresh();
 			return;
 		}
@@ -854,21 +854,21 @@ void
 fincurs(void)
 {
 	if (in_visual) {
-# ifdef USE_CURSES
+#ifdef USE_CURSES
 		move(HEIGHT, 0);
 		refresh();
 		endwin();
-# else /* !USE_CURSES */
+#else /* !USE_CURSES */
 		mvcur(cur_row, cur_col, HEIGHT, 0);
 		(void) fflush(stdout);	/* flush in case VE changes pages */
-# if defined(BSD_RELEASE) && BSD_RELEASE >= 44
+#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
 		tcsetattr(0, TCSADRAIN, &__orig_termios);
-# else
+#else
 		resetty();
-# endif
+#endif
 		_puts(VE);
 		_puts(TE);
-# endif /* !USE_CURSES */
+#endif /* !USE_CURSES */
 	}
 }
 
@@ -906,35 +906,35 @@ leavex(int eval, const char *mesg)
 SIGNAL_TYPE
 tstp(int dummy __unused)
 {
-# if BSD_RELEASE < 44
-	static struct sgttyb	tty;
-# endif
-	int	y, x;
+#if BSD_RELEASE < 44
+	static struct sgttyb tty;
+#endif
+	int y, x;
 
 	y = cur_row;
 	x = cur_col;
 	mvcur(cur_row, cur_col, HEIGHT, 0);
 	cur_row = HEIGHT;
 	cur_col = 0;
-# if !defined(BSD_RELEASE) || BSD_RELEASE < 44
+#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
 	tty = _tty;
-# endif
+#endif
 	_puts(VE);
 	_puts(TE);
 	(void) fflush(stdout);
-# if defined(BSD_RELEASE) && BSD_RELEASE >= 44
+#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
 	tcsetattr(0, TCSADRAIN, &__orig_termios);
-# else
+#else
 	resetty();
-# endif
+#endif
 	(void) kill(getpid(), SIGSTOP);
 	(void) signal(SIGTSTP, tstp);
-# if defined(BSD_RELEASE) && BSD_RELEASE >= 44
+#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
 	tcsetattr(0, TCSADRAIN, &saved_tty);
-# else
+#else
 	_tty = tty;
 	ioctl(_tty_ch, TIOCSETP, &_tty);
-# endif
+#endif
 	_puts(TI);
 	_puts(VS);
 	cur_row = y;
@@ -945,7 +945,7 @@ tstp(int dummy __unused)
 }
 #endif /* !defined(USE_CURSES) && defined(SIGTSTP) */
 
-# if defined(BSD_RELEASE) && BSD_RELEASE < 43
+#if defined(BSD_RELEASE) && BSD_RELEASE < 43
 char *
 strpbrk(char *s, char *brk)
 {
@@ -960,13 +960,13 @@ strpbrk(char *s, char *brk)
 	}
 	return (0);
 }
-# endif
+#endif
 
 long
 env_init(long enter_status)
 {
-	int	i;
-	char	*envp, *envname, *s;
+	int i;
+	char *envp, *envname, *s;
 
 	for (i = 0; i < 256; i++)
 		map_key[i] = (char) i;
@@ -1001,7 +1001,7 @@ env_init(long enter_status)
 				strncpy(name, envname, NAMELEN);
 				envp = s + 1;
 			}
-# ifdef INTERNET
+#ifdef INTERNET
 			else if (strncmp(envp, "port=", s - envp + 1) == 0) {
 				use_port = s + 1;
 				Test_port = atoi(use_port);
@@ -1030,7 +1030,7 @@ env_init(long enter_status)
 				*s = '\0';
 				envp = s + 1;
 			}
-# endif
+#endif
 			else if (strncmp(envp, "team=", s - envp + 1) == 0) {
 				team = *(s + 1);
 				if (!isdigit((unsigned char)team))
@@ -1074,8 +1074,8 @@ env_init(long enter_status)
 void
 fill_in_blanks(void)
 {
-	int	i;
-	char	*cp;
+	int i;
+	char *cp;
 
 again:
 	if (name[0] != '\0') {
