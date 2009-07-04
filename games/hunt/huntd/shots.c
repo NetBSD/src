@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.10 2009/07/04 04:29:55 dholland Exp $	*/
+/*	$NetBSD: shots.c,v 1.11 2009/07/04 06:19:05 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.10 2009/07/04 04:29:55 dholland Exp $");
+__RCSID("$NetBSD: shots.c,v 1.11 2009/07/04 06:19:05 dholland Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -549,7 +549,7 @@ save_bullet(BULLET *bp)
 	  case BOOT_PAIR:
 		mark_boot(bp);
 #endif
-		
+
 	  default:
 		Maze[bp->b_y][bp->b_x] = bp->b_type;
 		break;
