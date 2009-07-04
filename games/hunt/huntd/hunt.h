@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.12 2008/01/28 03:23:29 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.13 2009/07/04 03:27:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -472,10 +472,10 @@ void		start_driver(void);
 void		stmonitor(PLAYER *);
 void		stplayer(PLAYER *, int);
 char		translate(char);
-SIGNAL_TYPE	cleanup(int) __attribute__((__noreturn__));
+SIGNAL_TYPE	cleanup(int) __dead;
 SIGNAL_TYPE	intr(int);
 SIGNAL_TYPE	sigalrm(int);
-SIGNAL_TYPE	sigemt(int) __attribute__((__noreturn__));
-SIGNAL_TYPE	sigterm(int) __attribute__((__noreturn__));
-SIGNAL_TYPE	sigusr1(int) __attribute__((__noreturn__));
+SIGNAL_TYPE	sigemt(int) __dead;
+SIGNAL_TYPE	sigterm(int) __dead;
+SIGNAL_TYPE	sigusr1(int) __dead;
 SIGNAL_TYPE	tstp(int);
