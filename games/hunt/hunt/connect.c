@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.5 2003/06/11 12:00:21 wiz Exp $	*/
+/*	$NetBSD: connect.c,v 1.6 2009/07/04 01:23:55 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: connect.c,v 1.5 2003/06/11 12:00:21 wiz Exp $");
+__RCSID("$NetBSD: connect.c,v 1.6 2009/07/04 01:23:55 dholland Exp $");
 #endif /* not lint */
 
 # include	"hunt.h"
@@ -50,11 +50,11 @@ do_connect(name, team, enter_status)
 
 	if (uid == 0)
 		uid = htonl(getuid());
-	(void) write(Socket, (char *) &uid, LONGLEN);
+	(void) write(Socket, &uid, LONGLEN);
 	(void) write(Socket, name, NAMELEN);
 	(void) write(Socket, &team, 1);
 	enter_status = htonl(enter_status);
-	(void) write(Socket, (char *) &enter_status, LONGLEN);
+	(void) write(Socket, &enter_status, LONGLEN);
 	(void) strcpy(Buf, ttyname(fileno(stderr)));
 	(void) write(Socket, Buf, NAMELEN);
 # ifdef INTERNET
@@ -69,5 +69,5 @@ do_connect(name, team, enter_status)
 # endif
 		mode = C_PLAYER;
 	mode = htonl(mode);
-	(void) write(Socket, (char *) &mode, sizeof mode);
+	(void) write(Socket, &mode, sizeof mode);
 }
