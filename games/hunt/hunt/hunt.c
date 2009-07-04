@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.33 2009/07/04 06:38:34 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.34 2009/07/04 07:10:23 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.33 2009/07/04 06:38:34 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.34 2009/07/04 07:10:23 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,10 +46,6 @@ __RCSID("$NetBSD: hunt.c,v 1.33 2009/07/04 06:38:34 dholland Exp $");
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#if !defined(USE_CURSES) && defined(BSD_RELEASE) && BSD_RELEASE >= 44
-#include <termios.h>
-static struct termios saved_tty;
-#endif
 #include <unistd.h>
 #include <ifaddrs.h>
 
@@ -62,18 +58,9 @@ static struct termios saved_tty;
 #define cbreak()	crmode()
 #endif
 
-#if !defined(USE_CURSES) || !defined(TERMINFO)
-#define beep()		(void) putchar(CTRL('G'))
-#endif
-#if !defined(USE_CURSES)
-#undef refresh
-#define refresh()	(void) fflush(stdout);
-#endif
-#ifdef USE_CURSES
 #define clear_eol()	clrtoeol()
 #define put_ch		addch
 #define put_str		addstr
-#endif
 
 FLAG Last_player = FALSE;
 #ifdef MONITOR
@@ -256,25 +243,10 @@ main(int ac, char **av)
 	(void) fflush(stdout);
 	if (!isatty(0) || (term = getenv("TERM")) == NULL)
 		errx(1, "no terminal type");
-#ifdef USE_CURSES
 	if (!initscr())
 		errx(0, "couldn't initialize screen");
 	(void) noecho();
 	(void) cbreak();
-#else /* !USE_CURSES */
-#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
-	_tty_ch = 0;
-#endif
-	gettmode();
-	(void) setterm(term);
-	(void) noecho();
-	(void) cbreak();
-#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
-	tcgetattr(0, &saved_tty);
-#endif
-	_puts(TI);
-	_puts(VS);
-#endif /* !USE_CURSES */
 	in_visual = TRUE;
 	if (LINES < SCREEN_HEIGHT || COLS < SCREEN_WIDTH)
 		leavex(1, "Need a larger window");
@@ -283,9 +255,6 @@ main(int ac, char **av)
 	(void) signal(SIGTERM, sigterm);
 	(void) signal(SIGUSR1, sigusr1);
 	(void) signal(SIGPIPE, SIG_IGN);
-#if !defined(USE_CURSES) && defined(SIGTSTP)
-	(void) signal(SIGTSTP, tstp);
-#endif
 
 	for (;;) {
 #ifdef INTERNET
@@ -582,26 +551,14 @@ find_driver(FLAG do_startup)
 		}
 		/* go thru list and return host that matches daemon */
 		clear_the_screen();
-#ifdef USE_CURSES
 		move(1, 0);
-#else
-		mvcur(cur_row, cur_col, 1, 0);
-		cur_row = 1;
-		cur_col = 0;
-#endif
 		put_str("Pick one:");
 		for (i = 0; i < HEIGHT - 4 && hosts[i].sin_port != htons(0);
 								i += 1) {
 			struct hostent *hp;
 			char buf[80];
 
-#ifdef USE_CURSES
 			move(3 + i, 0);
-#else
-			mvcur(cur_row, cur_col, 3 + i, 0);
-			cur_row = 3 + i;
-			cur_col = 0;
-#endif
 			hp = gethostbyaddr((char *) &hosts[i].sin_addr,
 					sizeof hosts[i].sin_addr, AF_INET);
 			(void) snprintf(buf, sizeof(buf),
@@ -610,13 +567,7 @@ find_driver(FLAG do_startup)
 				: inet_ntoa(hosts->sin_addr));
 			put_str(buf);
 		}
-#ifdef USE_CURSES
 		move(4 + i, 0);
-#else
-		mvcur(cur_row, cur_col, 4 + i, 0);
-		cur_row = 4 + i;
-		cur_col = 0;
-#endif
 		put_str("Enter letter: ");
 		refresh();
 		while (!islower(c = getchar()) || (c -= 'a') >= i) {
@@ -679,13 +630,7 @@ start_driver(void)
 	}
 #endif
 
-#ifdef USE_CURSES
 	move(HEIGHT, 0);
-#else
-	mvcur(cur_row, cur_col, HEIGHT, 0);
-	cur_row = HEIGHT;
-	cur_col = 0;
-#endif
 	put_str("Starting...");
 	refresh();
 	procid = fork();
@@ -708,13 +653,7 @@ start_driver(void)
 		(void) kill(getppid(), SIGUSR1);	/* tell mom */
 		_exit(1);
 	}
-#ifdef USE_CURSES
 	move(HEIGHT, 0);
-#else
-	mvcur(cur_row, cur_col, HEIGHT, 0);
-	cur_row = HEIGHT;
-	cur_col = 0;
-#endif
 	put_str("Connecting...");
 	refresh();
 }
@@ -803,16 +742,8 @@ intr(int dummy __unused)
 	int y, x;
 
 	(void) signal(SIGINT, SIG_IGN);
-#ifdef USE_CURSES
 	getyx(stdscr, y, x);
 	move(HEIGHT, 0);
-#else
-	y = cur_row;
-	x = cur_col;
-	mvcur(cur_row, cur_col, HEIGHT, 0);
-	cur_row = HEIGHT;
-	cur_col = 0;
-#endif
 	put_str("Really quit? ");
 	clear_eol();
 	refresh();
@@ -830,13 +761,7 @@ intr(int dummy __unused)
 		}
 		else if (ch == 'n') {
 			(void) signal(SIGINT, intr);
-#ifdef USE_CURSES
 			move(y, x);
-#else
-			mvcur(cur_row, cur_col, y, x);
-			cur_row = y;
-			cur_col = x;
-#endif
 			refresh();
 			return;
 		}
@@ -854,21 +779,9 @@ void
 fincurs(void)
 {
 	if (in_visual) {
-#ifdef USE_CURSES
 		move(HEIGHT, 0);
 		refresh();
 		endwin();
-#else /* !USE_CURSES */
-		mvcur(cur_row, cur_col, HEIGHT, 0);
-		(void) fflush(stdout);	/* flush in case VE changes pages */
-#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
-		tcsetattr(0, TCSADRAIN, &__orig_termios);
-#else
-		resetty();
-#endif
-		_puts(VE);
-		_puts(TE);
-#endif /* !USE_CURSES */
 	}
 }
 
@@ -897,53 +810,6 @@ leavex(int eval, const char *mesg)
 	fincurs();
 	errx(eval, mesg ? mesg : "");
 }
-
-#if !defined(USE_CURSES) && defined(SIGTSTP)
-/*
- * tstp:
- *	Handle stop and start signals
- */
-void
-tstp(int dummy __unused)
-{
-#if BSD_RELEASE < 44
-	static struct sgttyb tty;
-#endif
-	int y, x;
-
-	y = cur_row;
-	x = cur_col;
-	mvcur(cur_row, cur_col, HEIGHT, 0);
-	cur_row = HEIGHT;
-	cur_col = 0;
-#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
-	tty = _tty;
-#endif
-	_puts(VE);
-	_puts(TE);
-	(void) fflush(stdout);
-#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
-	tcsetattr(0, TCSADRAIN, &__orig_termios);
-#else
-	resetty();
-#endif
-	(void) kill(getpid(), SIGSTOP);
-	(void) signal(SIGTSTP, tstp);
-#if defined(BSD_RELEASE) && BSD_RELEASE >= 44
-	tcsetattr(0, TCSADRAIN, &saved_tty);
-#else
-	_tty = tty;
-	ioctl(_tty_ch, TIOCSETP, &_tty);
-#endif
-	_puts(TI);
-	_puts(VS);
-	cur_row = y;
-	cur_col = x;
-	_puts(tgoto(CM, cur_row, cur_col));
-	redraw_screen();
-	(void) fflush(stdout);
-}
-#endif /* !defined(USE_CURSES) && defined(SIGTSTP) */
 
 #if defined(BSD_RELEASE) && BSD_RELEASE < 43
 char *
