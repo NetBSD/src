@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.3 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: ctl.c,v 1.4 2009/07/04 02:37:20 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	5.2 (Berkeley) 3/13/86";
 #else
-__RCSID("$NetBSD: ctl.c,v 1.3 2003/06/11 12:00:22 wiz Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.4 2009/07/04 02:37:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ CTL_MSG msg;
 
 /* open the ctl socket */
 void
-open_ctl() 
+open_ctl(void)
 {
 	int length;
 

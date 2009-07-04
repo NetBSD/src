@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.30 2009/07/04 01:44:28 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.31 2009/07/04 01:58:57 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.30 2009/07/04 01:44:28 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.31 2009/07/04 01:58:57 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -125,9 +125,7 @@ extern int	Otto_mode;
  *	Main program for local process
  */
 int
-main(ac, av)
-	int	ac;
-	char	**av;
+main(int ac, char **av)
 {
 	char		*term;
 	int		c;
@@ -373,9 +371,7 @@ main(ac, av)
 # ifdef INTERNET
 # ifdef BROADCAST
 int
-broadcast_vec(s, vector)
-	int			s;		/* socket */
-	struct	sockaddr	**vector;
+broadcast_vec(int s /*socket*/, struct sockaddr **vector)
 {
 	int			vec_cnt;
 	struct ifaddrs		*ifp, *ip;
@@ -406,7 +402,7 @@ broadcast_vec(s, vector)
 # endif
 
 SOCKET	*
-list_drivers()
+list_drivers(void)
 {
 	int			option;
 	u_short			msg;
@@ -572,8 +568,7 @@ test_one_host:
 }
 
 void
-find_driver(do_startup)
-	FLAG	do_startup;
+find_driver(FLAG do_startup)
 {
 	SOCKET	*hosts;
 
@@ -641,8 +636,7 @@ find_driver(do_startup)
 }
 
 void
-dump_scores(host)
-	SOCKET	host;
+dump_scores(SOCKET host)
 {
 	struct	hostent	*hp;
 	int	s;
@@ -667,7 +661,7 @@ dump_scores(host)
 # endif
 
 void
-start_driver()
+start_driver(void)
 {
 	int	procid;
 
@@ -731,7 +725,7 @@ start_driver()
  *	means the game is full.
  */
 void
-bad_con()
+bad_con(void)
 {
 	leavex(1, "The game is full.  Sorry.");
 	/* NOTREACHED */
@@ -742,7 +736,7 @@ bad_con()
  *	version number mismatch.
  */
 void
-bad_ver()
+bad_ver(void)
 {
 	leavex(1, "Version number mismatch. No go.");
 	/* NOTREACHED */
@@ -753,8 +747,7 @@ bad_ver()
  *	Handle a terminate signal
  */
 SIGNAL_TYPE
-sigterm(dummy)
-	int dummy __unused;
+sigterm(int dummy __unused)
 {
 	leavex(0, NULL);
 	/* NOTREACHED */
@@ -766,8 +759,7 @@ sigterm(dummy)
  *	Handle a usr1 signal
  */
 SIGNAL_TYPE
-sigusr1(dummy)
-	int dummy __unused;
+sigusr1(int dummy __unused)
 {
 	leavex(1, "Unable to start driver.  Try again.");
 	/* NOTREACHED */
@@ -779,8 +771,7 @@ sigusr1(dummy)
  *	Handle an alarm signal
  */
 SIGNAL_TYPE
-sigalrm(dummy)
-	int dummy __unused;
+sigalrm(int dummy __unused)
 {
 	return;
 }
@@ -791,8 +782,7 @@ sigalrm(dummy)
  *	Remove a '\n' at the end of a string if there is one
  */
 void
-rmnl(s)
-	char	*s;
+rmnl(char *s)
 {
 	char	*cp;
 
@@ -806,8 +796,7 @@ rmnl(s)
  *	Handle a interrupt signal
  */
 SIGNAL_TYPE
-intr(dummy)
-	int dummy __unused;
+intr(int dummy __unused)
 {
 	int	ch;
 	int	explained;
@@ -861,7 +850,8 @@ intr(dummy)
 	}
 }
 
-void fincurs()
+void
+fincurs(void)
 {
 	if (in_visual) {
 # ifdef USE_CURSES
@@ -914,8 +904,7 @@ leavex(int eval, const char *mesg)
  *	Handle stop and start signals
  */
 SIGNAL_TYPE
-tstp(dummy)
-	int dummy;
+tstp(int dummy __unused)
 {
 # if BSD_RELEASE < 44
 	static struct sgttyb	tty;
@@ -958,8 +947,7 @@ tstp(dummy)
 
 # if defined(BSD_RELEASE) && BSD_RELEASE < 43
 char *
-strpbrk(s, brk)
-	char *s, *brk;
+strpbrk(char *s, char *brk)
 {
 	char *p;
 	c;
@@ -975,8 +963,7 @@ strpbrk(s, brk)
 # endif
 
 long
-env_init(enter_status)
-	long	enter_status;
+env_init(long enter_status)
 {
 	int	i;
 	char	*envp, *envname, *s;
@@ -1085,7 +1072,7 @@ env_init(enter_status)
 }
 
 void
-fill_in_blanks()
+fill_in_blanks(void)
 {
 	int	i;
 	char	*cp;
