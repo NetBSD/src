@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.32 2009/07/05 00:32:47 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.33 2009/07/05 14:21:40 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -573,4 +573,9 @@ crypto/dist/openssl/ssl/ssl_err.c		1.13
 	been addressed: CVE-2009-1377, CVE-2009-1378, CVE-2009-1379,
 	CVE-2009-1386 and CVE-2009-1387.
 	[tonnerre, ticket #850]
+
+crypto/dist/openssl/ssl/d1_both.c		1.5
+
+	Fix build problem from ticket 850 on non-64bit systems.
+	[spz, ticket #851]
 
