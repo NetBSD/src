@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.162 2009/06/30 00:26:38 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.163 2009/07/05 00:55:39 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3534,4 +3534,31 @@ crypto/dist/ssh/packet.c			1.32 via patch
 	from "Drop connection" to "Ignore packets up to 256kB". This
 	affects CBC mode ciphers only.
 	[tonnerre, ticket #1332]
+
+crypto/dist/openssl/apps/speed.c		patch
+crypto/dist/openssl/apps/spkac.c		patch
+crypto/dist/openssl/apps/verify.c		patch
+crypto/dist/openssl/apps/x509.c			patch
+crypto/dist/openssl/crypto/asn1/asn1.h		patch
+crypto/dist/openssl/crypto/asn1/asn1_err.c	patch
+crypto/dist/openssl/crypto/asn1/tasn_dec.c	patch
+crypto/dist/openssl/ssl/s2_clnt.c		patch
+crypto/dist/openssl/ssl/s2_srvr.c		patch
+crypto/dist/openssl/ssl/s3_clnt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssltest.c		patch
+
+	Fixes for CVE-2009-0590, CVE-2009-0789, and CVE-2008-5077.
+	[tonnerre, ticket #1333]
+
+crypto/dist/openssl/crypto/pqueue/pqueue.c	patch
+crypto/dist/openssl/crypto/pqueue/pqueue.h	patch
+crypto/dist/openssl/ssl/d1_both.c		patch
+crypto/dist/openssl/ssl/d1_pkt.c		patch
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+crypto/dist/openssl/ssl/ssl.h			patch
+crypto/dist/openssl/ssl/ssl_err.c		patch
+
+	Another OpenSSL security update.
+	[tonnerre, ticket #1334]
 
