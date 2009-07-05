@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.43 2009/07/02 05:10:46 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.44 2009/07/05 00:35:37 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1487,4 +1487,17 @@ xsrc/external/mit/freetype/dist/src/smooth/ftsmooth.c 1.2
 
 	Apply fixes from CVE-2009-0946.
 	[mrg, ticket #848]
+
+crypto/dist/openssl/crypto/pqueue/pqueue.c	1.2
+crypto/dist/openssl/crypto/pqueue/pqueue.h	1.2
+crypto/dist/openssl/ssl/d1_both.c		1.4
+crypto/dist/openssl/ssl/d1_pkt.c		1.2
+crypto/dist/openssl/ssl/s3_pkt.c		1.10
+crypto/dist/openssl/ssl/ssl.h			1.19
+crypto/dist/openssl/ssl/ssl_err.c		1.13
+
+	Fix various vulnerabilities in OpenSSL which have not previously
+	been addressed: CVE-2009-1377, CVE-2009-1378, CVE-2009-1379,
+	CVE-2009-1386 and CVE-2009-1387.
+	[tonnerre, ticket #850]
 
