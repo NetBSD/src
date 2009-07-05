@@ -598,11 +598,11 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		if (i<=0 || (unsigned long)i!=frag_len)
 			goto err;
 
-		pq_64bit_init(&seq64);
-		pq_64bit_assign_word(&seq64, msg_hdr->seq);
+		memset(seq64be,0,sizeof(seq64be));
+		seq64be[6] = (unsigned char)(msg_hdr->seq>>8);
+		seq64be[7] = (unsigned char)(msg_hdr->seq);
 
 		item = pitem_new(seq64be, frag);
-		pq_64bit_free(&seq64);
 		if ( item == NULL)
 			goto err;
 
