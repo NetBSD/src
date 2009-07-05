@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/06/12 01:59:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2009/07/05 21:30:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h bstore.h \
 	dbestruct.h dgaproc.h dix.h dixevents.h dixfont.h dixfontstr.h \
 	dixgrabs.h dixstruct.h dri.h dristruct.h edid.h exa.h exevents.h \
 	extension.h extinit.h extnsionst.h fb.h fbdevhw.h fboverlay.h \
-	fbrop.h fi1236.h fourcc.h gc.h gcstruct.h globals.h \
+	fbrop.h fi1236.h fourcc.h gc.h gcstruct.h geext.h globals.h \
 	glyphstr.h i2c_def.h input.h inputstr.h \
 	mi.h mibank.h mibstore.h micmap.h micoord.h mifillarc.h mifpoly.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
