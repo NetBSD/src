@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.58 2009/02/23 08:27:13 wiz Exp $
+.\"	$NetBSD: curses.3,v 1.59 2009/07/06 15:19:49 joerg Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,6 +86,7 @@ must be called before any of the other routines that deal with color are used.
 .It box Ta Xr curses_border 3
 .It can_change_color Ta Xr curses_color 3
 .It cbreak Ta Xr curses_tty 3
+.It chgat Ta Xr curses_chgat 3
 .It clear Ta Xr curses_clear 3
 .It clearok Ta Xr curses_clear 3
 .It clrtobot Ta Xr curses_clear 3
@@ -165,6 +166,7 @@ must be called before any of the other routines that deal with color are used.
 .It mvaddchstr Ta Xr curses_addchstr 3
 .It mvaddnstr Ta Xr curses_addstr 3
 .It mvaddstr Ta Xr curses_addstr 3
+.It mvchgat Ta Xr curses_chgat 3
 .It mvcur Ta Xr curses_cursor 3
 .It mvderwin Ta Xr curses_window 3
 .It mvgetnstr Ta Xr curses_input 3
@@ -180,6 +182,7 @@ must be called before any of the other routines that deal with color are used.
 .It mvwaddchstr Ta Xr curses_addchstr 3
 .It mvwaddnstr Ta Xr curses_addstr 3
 .It mvwaddstr Ta Xr curses_addstr 3
+.It mvwchgat Ta Xr curses_chgat 3
 .It mvwgetnstr Ta Xr curses_input 3
 .It mvwgetstr Ta Xr curses_input 3
 .It mvwhline Ta Xr curses_line 3
@@ -255,6 +258,7 @@ must be called before any of the other routines that deal with color are used.
 .It wbkgd Ta Xr curses_background 3
 .It wbkgdset Ta Xr curses_background 3
 .It wborder Ta Xr curses_border 3
+.It wchgat Ta Xr curses_chgat 3
 .It wclear Ta Xr curses_clear 3
 .It wclrtobot Ta Xr curses_clear 3
 .It wclrtoeol Ta Xr curses_clear 3

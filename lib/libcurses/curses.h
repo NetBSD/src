@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.94 2009/04/01 20:59:15 cube Exp $	*/
+/*	$NetBSD: curses.h,v 1.95 2009/07/06 15:19:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -804,6 +804,11 @@ int mvwinsnstr(WINDOW *, int, int, const char *, int);
 int mvwinsstr(WINDOW *, int, int, const char *);
 int winsnstr(WINDOW *, const char *, int);
 int winsstr(WINDOW *, const char *);
+
+int chgat(int, attr_t, short, const void *);
+int wchgat(WINDOW *, int, attr_t, short, const void *);
+int mvchgat(int, int, int, attr_t, short, const void *);
+int mvwchgat(WINDOW *, int, int, int, attr_t, short, const void *);
 
 /* wide character support routines */
 /* return ERR when HAVE_WCHAR is not defined */
