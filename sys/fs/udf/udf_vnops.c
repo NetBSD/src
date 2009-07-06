@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.49 2009/07/03 23:14:11 pgoyette Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.50 2009/07/06 17:06:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.49 2009/07/03 23:14:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.50 2009/07/06 17:06:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -586,8 +586,7 @@ udf_readdir(void *v)
 		while (diroffset < file_size) {
 			DPRINTF(READDIR, ("\tread in fid stream\n"));
 			/* transfer a new fid/dirent */
-			error = udf_read_fid_stream(vp, &diroffset,
-				    fid, dirent);
+			error = udf_read_fid_stream(vp, &diroffset, fid, dirent);
 			DPRINTFIF(READDIR, error, ("read error in read fid "
 			    "stream : %d\n", error));
 			if (error)

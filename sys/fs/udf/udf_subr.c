@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.96 2009/06/25 17:16:33 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.97 2009/07/06 17:06:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.96 2009/06/25 17:16:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.97 2009/07/06 17:06:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -6218,7 +6218,7 @@ udf_update(struct vnode *vp, struct timespec *acc,
 
 int
 udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
-		    struct fileid_desc *fid, struct dirent *dirent)
+		struct fileid_desc *fid, struct dirent *dirent)
 {
 	struct udf_node  *dir_node = VTOI(vp);
 	struct udf_mount *ump = dir_node->ump;
