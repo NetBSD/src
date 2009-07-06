@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.31 2009/07/01 10:01:28 njoly Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.32 2009/07/06 11:46:49 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.31 2009/07/01 10:01:28 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.32 2009/07/06 11:46:49 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,11 +269,9 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	m = m_copym(rqp->sr_rq.mb_top, 0, M_COPYALL, M_WAIT);
 	error = rqp->sr_lerror = (m) ? SMB_TRAN_SEND(vcp, m, l) : ENOBUFS;
 	if (error == 0) {
-		if (rqp->sr_timo > 0) {
-			callout_init(&rqp->sr_timo_ch, 0);
+		if (rqp->sr_timo > 0)
 			callout_reset(&rqp->sr_timo_ch, rqp->sr_timo,
 				smb_iod_rqtimedout, rqp);
-		}
 
 		if (rqp->sr_flags & SMBR_NOWAIT) {
 			/* caller doesn't want to wait, flag as processed */
