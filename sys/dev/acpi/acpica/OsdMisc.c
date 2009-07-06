@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.5 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.6 2009/07/06 12:36:31 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.5 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.6 2009/07/06 12:36:31 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -115,14 +115,16 @@ AcpiOsSignal(UINT32 Function, const void *Info)
 
 	case ACPI_SIGNAL_BREAKPOINT:
 	    {
+#ifdef ACPI_BREAKPOINT
 		const char *info = Info;
 
 		printf("%s\n", info);
-#if defined(DDB)
+#  if defined(DDB)
 		Debugger();
-#else
+#  else
 		printf("ACPI: WARNING: DDB not configured into kernel.\n");
 		return AE_NOT_EXIST;
+#  endif
 #endif
 		break;
 	    }

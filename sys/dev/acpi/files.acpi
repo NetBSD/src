@@ -1,9 +1,9 @@
-#	$NetBSD: files.acpi,v 1.52 2008/05/18 22:05:59 cegger Exp $
+#	$NetBSD: files.acpi,v 1.53 2009/07/06 12:36:31 joerg Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
-			ACPI_DSDT_OVERRIDE ACPI_SCANPCI
+			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
 defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
 
 define	acpiapmbus { }
