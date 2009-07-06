@@ -1,4 +1,4 @@
-/* $Id: ar5312reg.h,v 1.2 2006/09/04 05:17:26 gdamore Exp $ */
+/* $Id: ar5312reg.h,v 1.3 2009/07/06 00:43:23 alc Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -197,11 +197,12 @@
 #define	AR5312_MISC_IRQ_UART0		4
 #define	AR5312_MISC_IRQ_UART0_DMA	5
 #define	AR5312_MISC_IRQ_WDOG		6
+
 /*
  * Board data.  This is located in flash somewhere, ar531x_board_info
  * locates it.
  */
-#include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
+#include <ah_soc.h>	/* XXX really doesn't belong in hal */
 
 /* XXX write-around for now */
 #define	AR5312_BOARD_MAGIC		AR531X_BD_MAGIC
