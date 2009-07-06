@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.80 2009/07/01 13:44:32 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.81 2009/07/06 12:55:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.80 2009/07/01 13:44:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.81 2009/07/06 12:55:24 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -1050,7 +1050,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	 */
 	pg  = (pt_entry_t *)sysptmap_pa;
 	epg = &pg[ptsize >> PGSHIFT];
-	pg_proto = RELOC_PA(kbase + ptpa) | PG_RW | PG_CI | PG_V;
+	pg_proto = RELOC_PA(kbase, ptpa) | PG_RW | PG_CI | PG_V;
 	while (pg < epg) {
 		*pg++ = pg_proto;
 		pg_proto += PAGE_SIZE;
