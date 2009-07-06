@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.247 2009/06/29 05:08:18 dholland Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.248 2009/07/06 16:07:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.247 2009/06/29 05:08:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.248 2009/07/06 16:07:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -520,7 +520,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 #endif /* WAPBL */
 
 		if (args->fspec == NULL)
-			return EINVAL;
+			return 0;
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
