@@ -6,7 +6,9 @@ is get_passphrase_cb needed?
 error logging
 separate from libcrypto?
 64-bit offsets
+thresholds
 default compression when signing?
+elgamal enc/decryption?
 Multiple recipients for encryption
 convert tests from ./tst to the autotest ./tests/
 
