@@ -18,7 +18,7 @@ env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../netpgpverify && \
 	su root -c "make install"'
 
 passed=0
-total=14
+total=18
 echo "======> sign/verify 180938 file"
 cp configure a
 /usr/bin/netpgp --sign a
@@ -69,6 +69,14 @@ echo "======> another verify signature - verified cat command"
 diff a a3 && passed=$(expr $passed + 1)
 echo "======> list keys"
 /usr/bin/netpgpkeys --list-keys && passed=$(expr $passed + 1)
+echo "======> null file to verify"
+/usr/bin/netpgp --verify || passed=$(expr $passed + 1)
+echo "======> null file to sign"
+/usr/bin/netpgp --sign || passed=$(expr $passed + 1)
+echo "======> null file to encrypt"
+/usr/bin/netpgp --encrypt || passed=$(expr $passed + 1)
+echo "======> null file to decrypt"
+/usr/bin/netpgp --decrypt || passed=$(expr $passed + 1)
 echo "======> version information"
 /usr/bin/netpgpverify --version
 rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig a2 a3

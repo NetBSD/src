@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.26 2009/06/13 05:25:08 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.27 2009/07/07 01:13:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -458,6 +458,11 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 	char			 outname[MAXPATHLEN];
 
 	io = netpgp->io;
+	if (f == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_encrypt_file: no filename specified\n");
+		return 0;
+	}
 	if (userid == NULL) {
 		userid = netpgp_getvar(netpgp, "userid");
 	}
@@ -481,7 +486,14 @@ int
 netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 {
 	const unsigned	overwrite = 1;
+	__ops_io_t		*io;
 
+	io = netpgp->io;
+	if (f == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_decrypt_file: no filename specified\n");
+		return 0;
+	}
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
 				(unsigned)armored, overwrite, netpgp->passfp,
 				get_passphrase_cb);
@@ -505,6 +517,11 @@ netpgp_sign_file(netpgp_t *netpgp,
 	int			 ret;
 
 	io = netpgp->io;
+	if (f == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_sign_file: no filename specified\n");
+		return 0;
+	}
 	if (userid == NULL) {
 		userid = netpgp_getvar(netpgp, "userid");
 	}
@@ -549,6 +566,11 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 
 	(void) memset(&result, 0x0, sizeof(result));
 	io = netpgp->io;
+	if (in == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_verify_file: no filename specified\n");
+		return 0;
+	}
 	if (__ops_validate_file(io, &result, in, out, armored,
 						netpgp->pubring)) {
 		resultp(io, in, &result, netpgp->pubring);
