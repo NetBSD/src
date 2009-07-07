@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.20 2009/03/14 00:33:25 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.21 2009/07/07 21:55:17 njoly Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.20 2009/03/14 00:33:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.21 2009/07/07 21:55:17 njoly Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1895,7 +1895,7 @@ video_stream_write(struct video_stream *vs,
 		} else {
 			DPRINTF(("video_stream_write: failed to init scatter io "
 				 "vb=%p buf=%p "
-				 "buf->m.offset=%d buf->bytesused=%zu "
+				 "buf->m.offset=%d buf->bytesused=%u "
 				 "payload->size=%zu\n",
 				 vb, buf,
 				 buf->m.offset, buf->bytesused, payload->size));
