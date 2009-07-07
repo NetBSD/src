@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.993 2009/06/29 11:04:05 hubertf Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.994 2009/07/07 09:46:25 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.993 2009/06/29 11:02:43 hubertf Exp
+ *	NetBSD: pcidevs,v 1.994 2009/07/07 09:45:45 cegger Exp
  */
 
 /*
@@ -1317,22 +1317,22 @@
 #define	PCI_PRODUCT_ATI_RD790_PPB_GFX1_A	0x5980		/* RD790 PCI Bridge GFX1 Port A */
 #define	PCI_PRODUCT_ATI_RD790_PPB_GFX1_B	0x5981		/* RD790 PCI Bridge GFX1 Port B */
 #define	PCI_PRODUCT_ATI_RD790_PPB_NBSB	0x5982		/* RD790 PCI Bridge (NB-SB Link) */
-#define	PCI_PRODUCT_ATI_RD890_NB_DS16	0x5910		/* RD890 North Bridge Dual Slot 2x16 GFX */
-#define	PCI_PRODUCT_ATI_RD890_NB_SS	0x5911		/* RD890 North Bridge Single Slot GFX */
-#define	PCI_PRODUCT_ATI_RD890_NB_DS8	0x5912		/* RD890 North Bridge Dual Slot 2x8 GFX */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_A	0x5913		/* RD890 PCI Bridge GFX0 Port A */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_B	0x5914		/* RD890 PCI Bridge GFX0 Port B */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_A	0x5915		/* RD890 PCI Express Bridge GPP Port A */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_B	0x5916		/* RD890 PCI Express Bridge GPP Port B */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_C	0x5917		/* RD890 PCI Express Bridge GPP Port C */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_D	0x5918		/* RD890 PCI Express Bridge GPP Port D */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_E	0x5919		/* RD890 PCI Express Bridge GPP Port E */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_F	0x591a		/* RD890 PCI Express Bridge GPP Port F */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_G	0x591b		/* RD890 PCI Express Bridge GPP Port G */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_H	0x591c		/* RD890 PCI Express Bridge GPP Port H */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_A	0x591d		/* RD890 PCI Bridge GFX1 Port A */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_B	0x591e		/* RD890 PCI Bridge GFX1 Port B */
-#define	PCI_PRODUCT_ATI_RD890_PPB_NBSB	0x591f		/* RD890 PCI Bridge (NB-SB Link) */
+#define	PCI_PRODUCT_ATI_RD890_NB_DS16	0x5a10		/* RD890 North Bridge Dual Slot 2x16 GFX */
+#define	PCI_PRODUCT_ATI_RD890_NB_SS	0x5a11		/* RD890 North Bridge Single Slot GFX */
+#define	PCI_PRODUCT_ATI_RD890_NB_DS8	0x5a12		/* RD890 North Bridge Dual Slot 2x8 GFX */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_A	0x5a13		/* RD890 PCI Bridge GFX0 Port A */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_B	0x5a14		/* RD890 PCI Bridge GFX0 Port B */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_A	0x5a15		/* RD890 PCI Express Bridge GPP Port A */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_B	0x5a16		/* RD890 PCI Express Bridge GPP Port B */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_C	0x5a17		/* RD890 PCI Express Bridge GPP Port C */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_D	0x5a18		/* RD890 PCI Express Bridge GPP Port D */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_E	0x5a19		/* RD890 PCI Express Bridge GPP Port E */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_F	0x5a1a		/* RD890 PCI Express Bridge GPP Port F */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_G	0x5a1b		/* RD890 PCI Express Bridge GPP Port G */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_H	0x5a1c		/* RD890 PCI Express Bridge GPP Port H */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_A	0x5a1d		/* RD890 PCI Bridge GFX1 Port A */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_B	0x5a1e		/* RD890 PCI Bridge GFX1 Port B */
+#define	PCI_PRODUCT_ATI_RD890_PPB_NBSB	0x5a1f		/* RD890 PCI Bridge (NB-SB Link) */
 #define	PCI_PRODUCT_ATI_RD890_IOMMU	0x5a23		/* RD890 IOMMU */
 #define	PCI_PRODUCT_ATI_RADEON_XPRESS_200	0x5a33		/* Radeon Xpress 200 */
 #define	PCI_PRODUCT_ATI_RS480_XRP	0x5a34		/* RS480 PCI Express Root Port */
