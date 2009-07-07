@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.185 2009/02/16 15:59:41 sketch Exp $
+$NetBSD: acronyms,v 1.186 2009/07/07 10:56:13 tonnerre Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -53,6 +53,7 @@ D/L	download
 DGAS	don't give a shit
 DIY	do it yourself
 DKDC	don't know, don't care
+DOA	dead on arrival
 DRY	don't repeat yourself
 DSTM	don't shoot the messenger
 DTRT	do the right thing
