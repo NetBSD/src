@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.31 2009/03/18 17:06:43 cegger Exp $	*/
+/*	$NetBSD: md_root.c,v 1.32 2009/07/07 15:15:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.31 2009/03/18 17:06:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.32 2009/07/07 15:15:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ static int  md_compressed(void *, int, struct read_info *);
 void
 md_attach_hook(int unit, struct md_conf *md)
 {
+
 	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
 		printf ("md%d: %sauto-load on open. Size %ld bytes.\n", unit,
 		    rd_info[unit].ramd_flag & RAMD_LCOMP ? "decompress/" : "",
@@ -127,7 +128,7 @@ md_open_hook(int unit, struct md_conf *md)
 {
 	struct ramd_info *ri;
 
-	if(unit >= RAMD_NDEV)
+	if (unit >= RAMD_NDEV)
 		return;
 
 	ri = &rd_info[unit];
@@ -135,9 +136,9 @@ md_open_hook(int unit, struct md_conf *md)
 		return;	/* Only configure once */
 	md->md_addr = malloc(ri->ramd_size, M_DEVBUF, M_WAITOK);
 	md->md_size = ri->ramd_size;
-	if(md->md_addr == NULL)
+	if (md->md_addr == NULL)
 		return;
-	if(ri->ramd_flag & RAMD_LOAD) {
+	if (ri->ramd_flag & RAMD_LOAD) {
 		if (loaddisk(md, ri->ramd_dev, curlwp)) {
 			free(md->md_addr, M_DEVBUF);
 			md->md_addr = NULL;
@@ -158,7 +159,7 @@ loaddisk(struct md_conf *md, dev_t ld_dev, struct lwp *lwp)
 
 	bdp = bdevsw_lookup(ld_dev);
 	if (bdp == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	/*
 	 * Initialize our buffer header:
@@ -184,26 +185,26 @@ loaddisk(struct md_conf *md, dev_t ld_dev, struct lwp *lwp)
 	/*
 	 * Open device and try to get some statistics.
 	 */
-	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, lwp)) != 0) {
+	if ((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, lwp)) != 0) {
 		putiobuf(buf);
-		return(error);
+		return error;
 	}
-	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (void *)&dl, FREAD, lwp) == 0) {
+	if (bdp->d_ioctl(ld_dev, DIOCGDINFO, (void *)&dl, FREAD, lwp) == 0) {
 		/* Read on a cylinder basis */
 		rs.chunk    = dl.d_secsize * dl.d_secpercyl;
 		rs.media_sz = dl.d_secperunit * dl.d_secsize;
 	}
 
 #ifdef support_compression
-	if(ri->ramd_flag & RAMD_LCOMP)
+	if (ri->ramd_flag & RAMD_LCOMP)
 		error = decompress(cpy_uncompressed, md_compressed, &rs);
 	else
 #endif /* support_compression */
 		error = ramd_norm_read(&rs);
 
-	bdp->d_close(ld_dev,FREAD | FNONBLOCK, 0, lwp);
+	bdp->d_close(ld_dev, FREAD | FNONBLOCK, 0, lwp);
 	putiobuf(buf);
-	return(error);
+	return error;
 }
 
 static int
@@ -218,7 +219,7 @@ ramd_norm_read(struct read_info *rsp)
 	bp         = rsp->bp;
 	error      = 0;
 
-	while(bytes_left > 0) {
+	while (bytes_left > 0) {
 		bp->b_cflags = BC_BUSY;
 		bp->b_flags  = B_PHYS | B_READ;
 		bp->b_oflags &= ~BO_DONE;
@@ -236,7 +237,7 @@ ramd_norm_read(struct read_info *rsp)
 
 		/* Dot counter */
 		printf(".");
-		if(!(++dotc % 40))
+		if (!(++dotc % 40))
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
@@ -245,10 +246,10 @@ ramd_norm_read(struct read_info *rsp)
 		rsp->offset  += done;
 		rsp->bufp    += done;
 
-		if(error || !done)
+		if (error || !done)
 			break;
 
-		if((rsp->offset == rsp->media_sz) && (bytes_left != 0)) {
+		if ((rsp->offset == rsp->media_sz) && (bytes_left != 0)) {
 			printf("\nInsert next media and hit any key...");
 			cngetc();
 			printf("\n");
@@ -256,7 +257,7 @@ ramd_norm_read(struct read_info *rsp)
 		}
 	}
 	printf("\n");
-	return(error);
+	return error;
 }
 
 #ifdef support_compression
@@ -269,11 +270,12 @@ ramd_norm_read(struct read_info *rsp)
 static int
 cpy_uncompressed(void * buf, int nbyte, struct read_info *rsp)
 {
-	if((rsp->bufp + nbyte) >= rsp->ebufp)
-		return(0);
-	memcpy( rsp->bufp, buf, nbyte);
+
+	if ((rsp->bufp + nbyte) >= rsp->ebufp)
+		return 0;
+	memcpy(rsp->bufp, buf, nbyte);
 	rsp->bufp += nbyte;
-	return(0);
+	return 0;
 }
 
 /*
@@ -292,7 +294,7 @@ md_compressed(void * buf, int nbyte, struct read_info *rsp)
 	bp     = rsp->bp;
 	nbyte &= ~(DEV_BSIZE - 1);
 
-	while(nbyte > 0) {
+	while (nbyte > 0) {
 		bp->b_cflags = BC_BUSY;
 		bp->b_flags  = B_PHYS | B_READ;
 		bp->b_oflags &= ~BO_DONE;
@@ -310,7 +312,7 @@ md_compressed(void * buf, int nbyte, struct read_info *rsp)
 
 		/* Dot counter */
 		printf(".");
-		if(!(++dotc % 40))
+		if (!(++dotc % 40))
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
@@ -319,16 +321,16 @@ md_compressed(void * buf, int nbyte, struct read_info *rsp)
 		nread        += done;
 		rsp->offset  += done;
 
-		if(error || !done)
+		if (error || !done)
 			break;
 
-		if((rsp->offset == rsp->media_sz) && (nbyte != 0)) {
+		if ((rsp->offset == rsp->media_sz) && (nbyte != 0)) {
 			printf("\nInsert next media and hit any key...");
-			if(cngetc() != '\n')
+			if (cngetc() != '\n')
 				printf("\n");
 			rsp->offset = 0;
 		}
 	}
-	return(nread);
+	return nread;
 }
 #endif /* support_compression */
