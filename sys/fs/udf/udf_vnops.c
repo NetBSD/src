@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.50 2009/07/06 17:06:57 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.51 2009/07/07 10:23:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.50 2009/07/06 17:06:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.51 2009/07/07 10:23:36 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -561,7 +561,7 @@ udf_readdir(void *v)
 	if (uio->uio_offset == 0) {
 		DPRINTF(READDIR, ("\t'.' inserted\n"));
 		strcpy(dirent->d_name, ".");
-		dirent->d_fileno = udf_calchash(&udf_node->loc);
+		dirent->d_fileno = udf_get_node_id(&udf_node->loc);
 		dirent->d_type = DT_DIR;
 		dirent->d_namlen = strlen(dirent->d_name);
 		dirent->d_reclen = _DIRENT_SIZE(dirent);
@@ -889,7 +889,7 @@ udf_getattr(void *v)
 	vap->va_uid       = uid;
 	vap->va_gid       = gid;
 	vap->va_fsid      = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
-	vap->va_fileid    = udf_calchash(&udf_node->loc);   /* inode hash XXX */
+	vap->va_fileid    = udf_get_node_id(&udf_node->loc);   /* inode hash XXX */
 	vap->va_size      = filesize;
 	vap->va_blocksize = udf_node->ump->discinfo.sector_size;  /* wise? */
 
@@ -1871,13 +1871,13 @@ udf_on_rootpath(struct udf_node *source, struct udf_node *target)
 	root_icb   = &ump->fileset_desc->rootdir_icb;
 
 	/* if nodes are equal, it is no use looking */
-	if (udf_check_icb_equal(&source->loc, &target->loc)) {
+	if (udf_compare_icb(&source->loc, &target->loc) == 0) {
 		error = EEXIST;
 		goto out;
 	}
 
 	/* nothing can exist before the root */
-	if (udf_check_icb_equal(root_icb, &target->loc)) {
+	if (udf_compare_icb(root_icb, &target->loc) == 0) {
 		error = 0;
 		goto out;
 	}
@@ -1905,13 +1905,13 @@ udf_on_rootpath(struct udf_node *source, struct udf_node *target)
 			goto out;
 
 		/* did we encounter source node? */
-		if (udf_check_icb_equal(&icb_loc, &source->loc)) {
+		if (udf_compare_icb(&icb_loc, &source->loc) == 0) {
 			error = EINVAL;
 			goto out;
 		}
 
 		/* did we encounter the root node? */
-		if (udf_check_icb_equal(&icb_loc, root_icb)) {
+		if (udf_compare_icb(&icb_loc, root_icb) == 0) {
 			error = 0;
 			goto out;
 		}

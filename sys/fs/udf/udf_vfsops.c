@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.59 2009/07/07 10:23:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.59 2009/07/07 10:23:36 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -565,7 +565,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	struct udf_mount     *ump;
 	uint32_t sector_size, lb_size, bshift;
 	uint32_t logvol_integrity;
-	int    num_anchors, error, lst;
+	int    num_anchors, error;
 
 	/* flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
@@ -578,6 +578,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = UDF_MAX_NAMELEN;
 	mp->mnt_flag |= MNT_LOCAL;
+//	mp->mnt_iflag |= IMNT_MPSAFE;
 
 	/* allocate udf part of mount structure; malloc always succeeds */
 	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK | M_ZERO);
@@ -589,10 +590,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mutex_init(&ump->allocate_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ump->dirtynodes_cv, "udfsync2");
 
-	/* init `ino_t' to udf_node hash table and other lists */
-	for (lst = 0; lst < UDF_INODE_HASHSIZE; lst++) {
-		LIST_INIT(&ump->udf_nodes[lst]);
-	}
+	/* init rbtree for nodes, ordered by their icb address (long_ad) */
+	udf_init_nodes_tree(ump);
 
 	/* set up linkage */
 	mp->mnt_data    = ump;
