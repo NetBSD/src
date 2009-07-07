@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.95 2009/07/06 15:19:49 joerg Exp $	*/
+/*	$NetBSD: curses.h,v 1.96 2009/07/07 09:58:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -674,10 +674,8 @@ int	 meta(WINDOW *, bool);
 int	 mvcur(int, int, int, int);
 int      mvderwin(WINDOW *, int, int);
 int	 mvhline(int, int, chtype, int);
-int	 mvprintw(int, int, const char *, ...)
-		__attribute__((__format__(__printf__, 3, 4)));
-int	 mvscanw(int, int, const char *, ...)
-		__attribute__((__format__(__scanf__, 3, 4)));
+int	 mvprintw(int, int, const char *, ...) __printflike(3, 4);
+int	 mvscanw(int, int, const char *, ...) __scanflike(3, 4);
 int	 mvvline(int, int, chtype, int);
 int	 mvwhline(WINDOW *, int, int, chtype, int);
 int	 mvwvline(WINDOW *, int, int, chtype, int);
@@ -686,10 +684,8 @@ int	 mvwinchnstr(WINDOW *, int, int, chtype *, int);
 int	 mvwinchstr(WINDOW *, int, int, chtype *);
 int	 mvwinnstr(WINDOW *, int, int, char *, int);
 int	 mvwinstr(WINDOW *, int, int, char *);
-int	 mvwprintw(WINDOW *, int, int, const char *, ...)
-		__attribute__((__format__(__printf__, 4, 5)));
-int	 mvwscanw(WINDOW *, int, int, const char *, ...)
-		__attribute__((__format__(__scanf__, 4, 5)));
+int	 mvwprintw(WINDOW *, int, int, const char *, ...) __printflike(4, 5);
+int	 mvwscanw(WINDOW *, int, int, const char *, ...) __scanflike(4, 5);
 int	 napms(int);
 WINDOW	*newpad(int, int);
 SCREEN  *newterm(char *, FILE *, FILE *);
@@ -709,8 +705,7 @@ int	 pair_content(short, short *, short *);
 int	 pechochar(WINDOW *, const chtype);
 int	 pnoutrefresh(WINDOW *, int, int, int, int, int, int);
 int	 prefresh(WINDOW *, int, int, int, int, int, int);
-int	 printw(const char *, ...)
-		__attribute__((__format__(__printf__, 1, 2)));
+int	 printw(const char *, ...) __printflike(1, 2);
 int	 putwin(WINDOW *, FILE *);
 void	 qiflush(void);
 int	 raw(void);
@@ -720,8 +715,7 @@ int	 reset_shell_mode(void);
 int	 resetty(void);
 int      resizeterm(int, int);
 int	 savetty(void);
-int	 scanw(const char *, ...)
-		__attribute__((__format__(__scanf__, 1, 2)));
+int	 scanw(const char *, ...) __scanflike(1, 2);
 int	 scroll(WINDOW *);
 int	 scrollok(WINDOW *, bool);
 int	 setterm(char *);
@@ -738,10 +732,8 @@ int	 ungetch(int);
 int	 untouchwin(WINDOW *);
 int	 use_default_colors(void);
 int	 vline(chtype, int);
-int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_)
-		__attribute__((__format__(__printf__, 2, 0)));
-int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_)
-		__attribute__((__format__(__scanf__, 2, 0)));
+int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_) __printflike(2, 0);
+int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_) __scanflike(2, 0);
 int	 waddch(WINDOW *, chtype);
 int	 waddchnstr(WINDOW *, const chtype *, int);
 int	 waddchstr(WINDOW *, const chtype *);
@@ -779,13 +771,11 @@ int	 winsertln(WINDOW *);
 int	 winstr(WINDOW *, char *);
 int	 wmove(WINDOW *, int, int);
 int	 wnoutrefresh(WINDOW *);
-int	 wprintw(WINDOW *, const char *, ...)
-		__attribute__((__format__(__printf__, 2, 3)));
+int	 wprintw(WINDOW *, const char *, ...)  __printflike(2, 3);
 int	 wredrawln(WINDOW *, int, int);
 int	 wrefresh(WINDOW *);
 int      wresize(WINDOW *, int, int);
-int	 wscanw(WINDOW *, const char *, ...)
-		__attribute__((__format__(__scanf__, 2, 3)));
+int	 wscanw(WINDOW *, const char *, ...) __scanflike(2, 3);
 int	 wscrl(WINDOW *, int);
 int	 wsetscrreg(WINDOW *, int, int);
 int	 wstandend(WINDOW *);
