@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.36 2009/06/18 05:57:35 mrg Exp $
+# $NetBSD: md.sparc,v 1.37 2009/07/07 07:53:38 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -410,11 +410,6 @@
 ./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libi2c_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so.0			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libpcidata.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so.0			-unknown-	obsolete
