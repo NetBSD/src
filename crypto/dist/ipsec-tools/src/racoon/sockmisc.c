@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.16 2009/07/03 06:41:47 tteras Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.17 2009/07/07 12:25:22 tteras Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -91,7 +91,8 @@ cmpsaddr(addr1, addr2)
 	const struct sockaddr *addr2;
 {
 	caddr_t sa1, sa2;
-	u_short port1, port2;
+	u_short port1 = IPSEC_PORT_ANY;
+	u_short port2 = IPSEC_PORT_ANY;
 
 	if (addr1 == NULL && addr2 == NULL)
 		return CMPSADDR_MATCH;
