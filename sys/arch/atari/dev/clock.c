@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.48 2009/07/07 15:37:02 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.49 2009/07/07 16:16:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.48 2009/07/07 15:37:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49 2009/07/07 16:16:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,18 +187,18 @@ static int	clk2min;	/* current, from above choices		*/
 int
 clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
-	if(!strcmp("clock", auxp))
-		return(1);
-	return(0);
+
+	if (!strcmp("clock", auxp))
+		return 1;
+	return 0;
 }
 
 /*
  * Start the real-time clock.
  */
-void clockattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
+void clockattach(struct device *pdp, struct device *dp, void *auxp)
 {
+
 	struct clock_softc *sc = (void *)dp;
 	static struct todr_chip_handle	tch;
 
@@ -245,11 +245,11 @@ void		*auxp;
 	profmin  = (CLOCK_HZ/profhz) - (statvar >> 1);
 	clk2min  = statmin;
 #endif /* STATCLOCK */
-
 }
 
 void cpu_initclocks(void)
 {
+
 	MFP->mf_tacr  = T_Q200;		/* Start timer			*/
 	MFP->mf_ipra  = (u_int8_t)~IA_TIMA;/* Clear pending interrupts	*/
 	MFP->mf_iera |= IA_TIMA;	/* Enable timer interrupts	*/
@@ -266,6 +266,7 @@ void cpu_initclocks(void)
 void
 setstatclockrate(int newhz)
 {
+
 #ifdef STATCLOCK
 	if (newhz == stathz)
 		clk2min = statmin;
@@ -282,7 +283,7 @@ statintr(struct clockframe frame)
 	var = statvar - 1;
 	do {
 		r = random() & var;
-	} while(r == 0);
+	} while (r == 0);
 
 	/*
 	 * Note that we are always lagging behind as the new divisor
@@ -374,9 +375,9 @@ delay(unsigned int n)
 		remaining = (unsigned long long) n * TIMB_FREQ / 1000000;
 	}
 
-	while(remaining > 0) {
+	while (remaining > 0) {
 		ticks = MFP->mf_tbdr;
-		if(ticks > otick)
+		if (ticks > otick)
 			remaining -= TIMB_LIMIT - (ticks - otick);
 		else
 			remaining -= otick - ticks;
@@ -391,6 +392,7 @@ delay(unsigned int n)
  */
 profclock(void *pc, int ps)
 {
+
 	/*
 	 * Came from user mode.
 	 * If this process is being profiled record the tick.
@@ -407,7 +409,7 @@ profclock(void *pc, int ps)
 		register int s = pc - s_lowpc;
 
 		if (s < s_textsize)
-			kcount[s / (HISTFRACTION * sizeof (*kcount))]++;
+			kcount[s / (HISTFRACTION * sizeof(*kcount))]++;
 	}
 	/*
 	 * Kernel profiling was on but has been disabled.
@@ -426,18 +428,16 @@ profclock(void *pc, int ps)
  *                   Real Time Clock support                           *
  ***********************************************************************/
 
-u_int mc146818_read(rtc, regno)
-void	*rtc;
-u_int	regno;
+u_int mc146818_read(void *rtc, u_int regno)
 {
+
 	((struct rtc *)rtc)->rtc_regno = regno;
-	return(((struct rtc *)rtc)->rtc_data & 0377);
+	return ((struct rtc *)rtc)->rtc_data & 0377;
 }
 
-void mc146818_write(rtc, regno, value)
-void	*rtc;
-u_int	regno, value;
+void mc146818_write(void *rtc, u_int regno, u_int value)
 {
+
 	((struct rtc *)rtc)->rtc_regno = regno;
 	((struct rtc *)rtc)->rtc_data  = value;
 }
@@ -459,19 +459,19 @@ atari_rtc_get(todr_chip_handle_t todr, struct clock_ymdhms *dtp)
 		printf("Error: Nonstandard RealTimeClock Configuration -"
 			" value ignored\n"
 			"       A write to /dev/rtc will correct this.\n");
-			return(0);
+			return 0;
 	}
-	if(clkregs[MC_SEC] > 59)
+	if (clkregs[MC_SEC] > 59)
 		return -1;
-	if(clkregs[MC_MIN] > 59)
+	if (clkregs[MC_MIN] > 59)
 		return -1;
-	if(clkregs[MC_HOUR] > 23)
+	if (clkregs[MC_HOUR] > 23)
 		return -1;
-	if(range_test(clkregs[MC_DOM], 1, 31))
+	if (range_test(clkregs[MC_DOM], 1, 31))
 		return -1;
 	if (range_test(clkregs[MC_MONTH], 1, 12))
 		return -1;
-	if(clkregs[MC_YEAR] > 99)
+	if (clkregs[MC_YEAR] > 99)
 		return -1;
 
 	dtp->dt_year = clkregs[MC_YEAR] + GEMSTARTOFTIME;
@@ -559,7 +559,7 @@ rtcread(dev_t dev, struct uio *uio, int flags)
 	if (length > uio->uio_resid)
 		length = uio->uio_resid;
 
-	return(uiomove((void *)buffer, length, uio));
+	return uiomove((void *)buffer, length, uio);
 }
 
 static int
@@ -571,7 +571,7 @@ twodigits(char *buffer, int pos)
 		result = (buffer[pos] - '0') * 10;
 	if (buffer[pos+1] >= '0' && buffer[pos+1] <= '9')
 		result += (buffer[pos+1] - '0');
-	return(result);
+	return result;
 }
 
 int
@@ -587,17 +587,17 @@ rtcwrite(dev_t dev, struct uio *uio, int flags)
 	length = uio->uio_resid;
 	if (uio->uio_offset || (length != sizeof(buffer)
 	  && length != sizeof(buffer - 1)))
-		return(EINVAL);
+		return EINVAL;
 	
 	if ((error = uiomove((void *)buffer, sizeof(buffer), uio)))
-		return(error);
+		return error;
 
 	if (length == sizeof(buffer) && buffer[sizeof(buffer) - 1] != '\n')
-		return(EINVAL);
+		return EINVAL;
 
 	s = splclock();
 	mc146818_write(RTC, MC_REGB,
-		mc146818_read(RTC, MC_REGB) | MC_REGB_24HR | MC_REGB_BINARY);
+	    mc146818_read(RTC, MC_REGB) | MC_REGB_24HR | MC_REGB_BINARY);
 	MC146818_GETTOD(RTC, &clkregs);
 	splx(s);
 
@@ -613,5 +613,5 @@ rtcwrite(dev_t dev, struct uio *uio, int flags)
 	MC146818_PUTTOD(RTC, &clkregs);
 	splx(s);
 
-	return(0);
+	return 0;
 }
