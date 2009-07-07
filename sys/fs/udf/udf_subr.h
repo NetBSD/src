@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.16 2009/06/25 17:16:33 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.17 2009/07/07 10:23:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -182,8 +182,9 @@ int  udf_update(struct vnode *node, struct timespec *acc,
 	struct timespec *mod, struct timespec *birth, int updflags);
 
 /* helpers and converters */
-long udf_calchash(struct long_ad *icbptr);    /* for `inode' numbering */
-int udf_check_icb_equal(struct long_ad *a, struct long_ad *b);
+void udf_init_nodes_tree(struct udf_mount *ump);
+long udf_get_node_id(const struct long_ad *icbptr);    /* for `inode' numbering */
+int udf_compare_icb(const struct long_ad *a, const struct long_ad *b);
 uint32_t udf_getaccessmode(struct udf_node *node);
 void udf_setaccessmode(struct udf_node *udf_node, mode_t mode);
 void udf_getownership(struct udf_node *udf_node, uid_t *uidp, gid_t *gidp);
