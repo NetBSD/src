@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.96 2009/07/07 09:58:08 joerg Exp $	*/
+/*	$NetBSD: curses.h,v 1.97 2009/07/07 10:16:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -732,6 +732,8 @@ int	 ungetch(int);
 int	 untouchwin(WINDOW *);
 int	 use_default_colors(void);
 int	 vline(chtype, int);
+int	 vw_printw(WINDOW *, const char *, _BSD_VA_LIST_) __printflike(2, 0);
+int	 vw_scanw(WINDOW *, const char *, _BSD_VA_LIST_) __scanflike(2, 0);
 int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_) __printflike(2, 0);
 int	 vwscanw(WINDOW *, const char *, _BSD_VA_LIST_) __scanflike(2, 0);
 int	 waddch(WINDOW *, chtype);
