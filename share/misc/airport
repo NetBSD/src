@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.34 2009/06/22 19:26:38 tron Exp $
+#	$NetBSD: airport,v 1.35 2009/07/07 10:50:51 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -942,7 +942,7 @@ BSH:Brighton, England
 BSI:Blairsville (Jim Shearer South Airport), PA, USA
 BSJ:Bairnsdale, Victoria, Australia
 BSK:Biskra, Algeria
-BSL:Basel/Mulhouse/Freiburg Euroairport, Switzerland
+BSL:EuroAirport Basel-Mulhouse-Freiburg, Switzerland
 BSM:Bergstrom Air Rescue Service, TX, USA
 BSN:Bossangoa, Central African Republic
 BSO:Basco, Philippines
@@ -1945,7 +1945,7 @@ EAG:Eagle Grove Municipal Airport, IA, USA
 EAH:El Arish, Egypt
 EAM:Nejran, Saudi Arabia
 EAN:Wheatland (Phifer Airfield), WY, USA
-EAP:Basel/Mulhouse (EuroAirport), CH/[80]FR
+EAP:EuroAirport Basel-Mulhouse-Freiburg, Switzerland/France
 EAR:Kearney Municipal Airport, NE, USA
 EAS:San Sebastian, Spain
 EAT:Wenatchee (Pangborn Memorial), WA, USA
@@ -4795,7 +4795,7 @@ MLD:Malad City Airport, ID, USA
 MLE:Male, Hulule, Maldives
 MLF:Milford Municipal Airport, UT, USA
 MLG:Malang, Indonesia
-MLH:Basel/Mulhouse EuroAirport, France
+MLH:EuroAirport Basel-Mulhouse-Freiburg, France
 MLI:Moline Quad City, Alabama, USA
 MLJ:Milledgeville (Baldwin County Airport), GA, USA
 MLK:Malta Airport, MT, USA
