@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.81 2009/07/06 12:55:24 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.82 2009/07/07 15:37:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.81 2009/07/06 12:55:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.82 2009/07/07 15:37:02 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.81 2009/07/06 12:55:24 tsutsui Exp 
 
 #include <atari/atari/intr.h>
 #include <atari/atari/stalloc.h>
+#include <atari/dev/clockvar.h>
 #include <atari/dev/ym2149reg.h>
 
 #include "pci.h"
@@ -706,6 +707,11 @@ atari_hwinit(void)
 #endif
 	}
 #endif /* defined(_ATARIHW_) */
+
+	/*
+	 * Initialize a timer for delay(9).
+	 */
+	init_delay();
 
 #if NPCI > 0
 	if (machineid & (ATARI_HADES|ATARI_MILAN)) {

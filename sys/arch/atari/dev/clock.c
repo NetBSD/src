@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 2009/07/07 15:15:08 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.48 2009/07/07 15:37:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2009/07/07 15:15:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.48 2009/07/07 15:37:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2009/07/07 15:15:08 tsutsui Exp $");
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <atari/dev/clockreg.h>
+#include <atari/dev/clockvar.h>
 #include <atari/atari/device.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
@@ -186,21 +187,6 @@ static int	clk2min;	/* current, from above choices		*/
 int
 clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
-	if (!atari_realconfig) {
-	    /*
-	     * Initialize Timer-B in the ST-MFP. This timer is used by
-	     * the 'delay' function below. This timer is setup to be
-	     * continueously counting from 255 back to zero at a
-	     * frequency of 614400Hz. We do this *early* in the
-	     * initialisation process.
-	     */
-	    MFP->mf_tbcr  = 0;		/* Stop timer			*/
-	    MFP->mf_iera &= ~IA_TIMB;	/* Disable timer interrupts	*/
-	    MFP->mf_tbdr  = 0;	
-	    MFP->mf_tbcr  = T_Q004;	/* Start timer			*/
-
-	    return 0;
-	}
 	if(!strcmp("clock", auxp))
 		return(1);
 	return(0);
@@ -341,6 +327,23 @@ clk_getcounter(struct timecounter *tc)
 
 #define TIMB_FREQ	614400
 #define TIMB_LIMIT	256
+
+void
+init_delay(void)
+{
+
+	/*
+	 * Initialize Timer-B in the ST-MFP. This timer is used by
+	 * the 'delay' function below. This timer is setup to be
+	 * continueously counting from 255 back to zero at a
+	 * frequency of 614400Hz. We do this *early* in the
+	 * initialisation process.
+	 */
+	MFP->mf_tbcr  = 0;		/* Stop timer			*/
+	MFP->mf_iera &= ~IA_TIMB;	/* Disable timer interrupts	*/
+	MFP->mf_tbdr  = 0;	
+	MFP->mf_tbcr  = T_Q004;	/* Start timer			*/
+}
 
 /*
  * Wait "n" microseconds.
