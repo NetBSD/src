@@ -1,4 +1,4 @@
-/*	$NetBSD: chgat.c,v 1.1 2009/07/06 15:19:49 joerg Exp $	*/
+/*	$NetBSD: chgat.c,v 1.2 2009/07/07 13:10:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chgat.c,v 1.1 2009/07/06 15:19:49 joerg Exp $");
+__RCSID("$NetBSD: chgat.c,v 1.2 2009/07/07 13:10:02 joerg Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
@@ -49,49 +49,39 @@ mvchgat(int y, int x, int n, attr_t attr, short color,
 }
 
 int
-mvwchgat(WINDOW *win , int y, int x, int n, attr_t attr, short color,
-    const void *opts)
+wchgat(WINDOW *win, int n, attr_t attr, short color, const void *opts)
 {
-	if (wmove(win, y, x) == ERR)
-		return ERR;
-
-	return wchgat(win, n, attr, color, opts);
+	return mvwchgat(win, win->cury, win->curx, n, attr, color, opts);
 }
 
 int
-wchgat(WINDOW *win, int count, attr_t attr, short color, const void *opts)
+mvwchgat(WINDOW *win , int y, int x, int count, attr_t attr, short color,
+    const void *opts)
 {
 	__LINE *lp;
 	__LDATA *lc;
-	int newx;
 
 	attr = (attr & ~__COLOR) | COLOR_PAIR(color);
 
-	if (count < 0 || count > win->maxx - win->curx)
-		count = win->maxx - win->curx;
+	if (count < 0 || count > win->maxx - x)
+		count = win->maxx - x;
 
-	lp = win->lines[win->cury];
-	lc = &lp->line[win->curx];
-	newx = win->curx + win->ch_off;
-	win->curx += count;
-	if (win->curx == win->maxx) {
-		lp->flags |= __ISPASTEOL;
-		--win->curx;
-	}
+	lp = win->lines[y];
+	lc = &lp->line[x];
+
+	if (x + win->ch_off < *lp->firstchp)
+		*lp->firstchp = x + win->ch_off;
+	if (x + win->ch_off + count > *lp->lastchp)
+		*lp->lastchp = x + win->ch_off + count;
 
 	while (count-- > 0) {
 		lp->flags |= __ISDIRTY;
-		if (newx < *lp->firstchp)
-			*lp->firstchp = newx;
-		if (newx > *lp->lastchp)
-			*lp->lastchp = newx;
 #ifdef HAVE_WCHAR
 		lc->attr = (lc->attr & ~WA_ATTRIBUTES) | attr;
 #else
 		lc->attr = attr;
 #endif
 		++lc;
-		++newx;
 	}
 
 	return OK;
