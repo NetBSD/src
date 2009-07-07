@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.18 2009/07/04 21:20:56 cegger Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.19 2009/07/07 17:08:19 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.18 2009/07/04 21:20:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.19 2009/07/07 17:08:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -70,49 +70,41 @@ pciopen(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct pci_softc *sc =
-	    device_lookup_private(&pci_cd, minor(dev));
-	struct pciio_bdf_cfgreg *bdfr = (void *) data;
-	struct pciio_businfo *binfo = (void *) data;
+	struct pci_softc *sc = device_lookup_private(&pci_cd, minor(dev));
+	struct pciio_bdf_cfgreg *bdfr;
+	struct pciio_businfo *binfo;
 	pcitag_t tag;
 
 	switch (cmd) {
 	case PCI_IOC_BDF_CFGREAD:
 	case PCI_IOC_BDF_CFGWRITE:
+		bdfr = data;
 		if (bdfr->bus > 255 || bdfr->device >= sc->sc_maxndevs ||
 		    bdfr->function > 7)
 			return EINVAL;
 		tag = pci_make_tag(sc->sc_pc, bdfr->bus, bdfr->device,
 		    bdfr->function);
-		break;
 
-	default:
-		break;
-	}
-
-	switch (cmd) {
-	case PCI_IOC_BDF_CFGREAD:
-		bdfr->cfgreg.val = pci_conf_read(sc->sc_pc, tag,
-		    bdfr->cfgreg.reg);
-		break;
-
-	case PCI_IOC_BDF_CFGWRITE:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		pci_conf_write(sc->sc_pc, tag, bdfr->cfgreg.reg,
-		    bdfr->cfgreg.val);
-		break;
+		if (cmd == PCI_IOC_BDF_CFGREAD) {
+			bdfr->cfgreg.val = pci_conf_read(sc->sc_pc, tag,
+			    bdfr->cfgreg.reg);
+		} else {
+			if ((flag & FWRITE) == 0)
+				return EBADF;
+			pci_conf_write(sc->sc_pc, tag, bdfr->cfgreg.reg,
+			    bdfr->cfgreg.val);
+		}
+		return 0;
 
 	case PCI_IOC_BUSINFO:
+		binfo = data;
 		binfo->busno = sc->sc_bus;
 		binfo->maxdevs = sc->sc_maxndevs;
-		break;
+		return 0;
 
 	default:
 		return ENOTTY;
 	}
-
-	return 0;
 }
 
 static paddr_t
