@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.148 2009/05/23 14:44:56 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.149 2009/07/07 14:09:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.148 2009/05/23 14:44:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.149 2009/07/07 14:09:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 		}
 		mel.mel_exports = args;
 
-		error = mountd_set_exports_list(&mel, l);
+		error = mountd_set_exports_list(&mel, l, NULL);
 
 		free(args, M_TEMP);
 	} else {
