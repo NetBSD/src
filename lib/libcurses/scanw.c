@@ -1,4 +1,4 @@
-/*	$NetBSD: scanw.c,v 1.19 2007/05/29 11:10:56 blymn Exp $	*/
+/*	$NetBSD: scanw.c,v 1.20 2009/07/07 10:16:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scanw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scanw.c,v 1.19 2007/05/29 11:10:56 blymn Exp $");
+__RCSID("$NetBSD: scanw.c,v 1.20 2009/07/07 10:16:52 joerg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,7 +57,7 @@ scanw(const char *fmt,...)
 	int     ret;
 
 	va_start(ap, fmt);
-	ret = vwscanw(stdscr, fmt, ap);
+	ret = vw_scanw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
@@ -72,7 +72,7 @@ wscanw(WINDOW *win, const char *fmt,...)
 	int     ret;
 
 	va_start(ap, fmt);
-	ret = vwscanw(win, fmt, ap);
+	ret = vw_scanw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
@@ -90,7 +90,7 @@ mvscanw(int y, int x, const char *fmt,...)
 	if (move(y, x) != OK)
 		return (ERR);
 	va_start(ap, fmt);
-	ret = vwscanw(stdscr, fmt, ap);
+	ret = vw_scanw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
@@ -104,7 +104,7 @@ mvwscanw(WINDOW * win, int y, int x, const char *fmt,...)
 	if (move(y, x) != OK)
 		return (ERR);
 	va_start(ap, fmt);
-	ret = vwscanw(win, fmt, ap);
+	ret = vw_scanw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
@@ -113,7 +113,7 @@ mvwscanw(WINDOW * win, int y, int x, const char *fmt,...)
  *	This routine actually executes the scanf from the window.
  */
 int
-vwscanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_ ap)
+vw_scanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_ ap)
 {
 
 	char    buf[1024];
@@ -121,3 +121,5 @@ vwscanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_ ap)
 	return (wgetnstr(win, buf, (int) sizeof(buf)) == OK ?
 	    vsscanf(buf, fmt, ap) : ERR);
 }
+
+__strong_alias(vwscanw, vw_scanw)
