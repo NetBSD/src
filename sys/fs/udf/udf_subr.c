@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.97 2009/07/06 17:06:57 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.98 2009/07/07 10:23:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.97 2009/07/06 17:06:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.98 2009/07/07 10:23:36 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3366,7 +3366,7 @@ udf_read_rootdirs(struct udf_mount *ump)
 /* To make absolutely sure we are NOT returning zero, add one :) */
 
 long
-udf_calchash(struct long_ad *icbptr)
+udf_get_node_id(const struct long_ad *icbptr)
 {
 	/* ought to be enough since each mountpoint has its own chain */
 	return udf_rw32(icbptr->loc.lb_num) + 1;
@@ -3374,35 +3374,75 @@ udf_calchash(struct long_ad *icbptr)
 
 
 int
-udf_check_icb_equal(struct long_ad *a, struct long_ad *b)
+udf_compare_icb(const struct long_ad *a, const struct long_ad *b)
 {
-	return (a->loc.lb_num   == b->loc.lb_num &&
-	    a->loc.part_num == b->loc.part_num);
+	if (udf_rw16(a->loc.part_num) < udf_rw16(b->loc.part_num))
+		return -1;
+	if (udf_rw16(a->loc.part_num) > udf_rw16(b->loc.part_num))
+		return 1;
+
+	if (udf_rw32(a->loc.lb_num) < udf_rw32(b->loc.lb_num))
+		return -1;
+	if (udf_rw32(a->loc.lb_num) > udf_rw32(b->loc.lb_num))
+		return 1;
+
+	return 0;
+}
+
+
+static int
+udf_compare_rbnodes(const struct rb_node *a, const struct rb_node *b)
+{
+	struct udf_node *a_node = RBTOUDFNODE(a);
+	struct udf_node *b_node = RBTOUDFNODE(b);
+
+	return udf_compare_icb(&a_node->loc, &b_node->loc);
+}
+
+
+static int
+udf_compare_rbnode_icb(const struct rb_node *a, const void *key)
+{
+	struct udf_node *a_node = RBTOUDFNODE(a);
+	const struct long_ad * const icb = key;
+
+	return udf_compare_icb(&a_node->loc, icb);
+}
+
+
+static const struct rb_tree_ops udf_node_rbtree_ops = {
+	.rbto_compare_nodes = udf_compare_rbnodes,
+	.rbto_compare_key   = udf_compare_rbnode_icb,
+};
+
+
+void
+udf_init_nodes_tree(struct udf_mount *ump)
+{
+	rb_tree_init(&ump->udf_node_tree, &udf_node_rbtree_ops);
 }
 
 
 static struct udf_node *
-udf_hash_lookup(struct udf_mount *ump, struct long_ad *icbptr)
+udf_node_lookup(struct udf_mount *ump, struct long_ad *icbptr)
 {
-	struct udf_node *node;
+	struct rb_node  *rb_node;
+	struct udf_node *udf_node;
 	struct vnode *vp;
-	uint32_t hashline;
 
 loop:
 	mutex_enter(&ump->ihash_lock);
 
-	hashline = udf_calchash(icbptr) & UDF_INODE_HASHMASK;
-	LIST_FOREACH(node, &ump->udf_nodes[hashline], hashchain) {
-		assert(node);
-		if (udf_check_icb_equal(&node->loc, icbptr)) {
-			vp = node->vnode;
-			assert(vp);
-			mutex_enter(&vp->v_interlock);
-			mutex_exit(&ump->ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
-				goto loop;
-			return node;
-		}
+	rb_node = rb_tree_find_node(&ump->udf_node_tree, icbptr);
+	if (rb_node) {
+		udf_node = RBTOUDFNODE(rb_node);
+		vp = udf_node->vnode;
+		assert(vp);
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&ump->ihash_lock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			goto loop;
+		return udf_node;
 	}
 	mutex_exit(&ump->ihash_lock);
 
@@ -3411,83 +3451,25 @@ loop:
 
 
 static void
-udf_sorted_list_insert(struct udf_node *node)
+udf_register_node(struct udf_node *udf_node)
 {
-	struct udf_mount *ump;
-	struct udf_node  *s_node, *last_node;
-	uint32_t loc, s_loc;
+	struct udf_mount *ump = udf_node->ump;
 
-	ump = node->ump;
-	last_node = NULL;	/* XXX gcc */
-
-	if (LIST_EMPTY(&ump->sorted_udf_nodes)) {
-		LIST_INSERT_HEAD(&ump->sorted_udf_nodes, node, sortchain);
-		return;
-	}
-
-	/*
-	 * We sort on logical block number here and not on physical block
-	 * number here. Ideally we should go for the physical block nr to get
-	 * better sync performance though this sort will ensure that packets
-	 * won't get spit up unnessisarily.
-	 */
-
-	loc = udf_rw32(node->loc.loc.lb_num);
-	LIST_FOREACH(s_node, &ump->sorted_udf_nodes, sortchain) {
-		s_loc = udf_rw32(s_node->loc.loc.lb_num);
-		if (s_loc > loc) {
-			LIST_INSERT_BEFORE(s_node, node, sortchain);
-			return;
-		}
-		last_node = s_node;
-	}
-	LIST_INSERT_AFTER(last_node, node, sortchain);
-}
-
-
-static void
-udf_register_node(struct udf_node *node)
-{
-	struct udf_mount *ump;
-	struct udf_node *chk;
-	uint32_t hashline;
-
-	ump = node->ump;
+	/* add node to the rb tree */
 	mutex_enter(&ump->ihash_lock);
-
-	/* add to our hash table */
-	hashline = udf_calchash(&node->loc) & UDF_INODE_HASHMASK;
-#ifdef DEBUG
-	LIST_FOREACH(chk, &ump->udf_nodes[hashline], hashchain) {
-		assert(chk);
-		if (chk->loc.loc.lb_num   == node->loc.loc.lb_num &&
-		    chk->loc.loc.part_num == node->loc.loc.part_num)
-			panic("Double node entered\n");
-	}
-#else
-	chk = NULL;
-#endif
-	LIST_INSERT_HEAD(&ump->udf_nodes[hashline], node, hashchain);
-
-	/* add to our sorted list */
-	udf_sorted_list_insert(node);
-
+		rb_tree_insert_node(&ump->udf_node_tree, &udf_node->rbnode);
 	mutex_exit(&ump->ihash_lock);
 }
 
 
 static void
-udf_deregister_node(struct udf_node *node) 
+udf_deregister_node(struct udf_node *udf_node) 
 {
-	struct udf_mount *ump;
+	struct udf_mount *ump = udf_node->ump;
 
-	ump = node->ump;
+	/* remove node from the rb tree */
 	mutex_enter(&ump->ihash_lock);
-
-	/* from hash and sorted list */
-	LIST_REMOVE(node, hashchain);
-	LIST_REMOVE(node, sortchain);
-
+		rb_tree_remove_node(&ump->udf_node_tree, &udf_node->rbnode);
 	mutex_exit(&ump->ihash_lock);
 }
 
@@ -5274,7 +5256,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	/* lookup in hash table */
 	assert(ump);
 	assert(node_icb_loc);
-	udf_node = udf_hash_lookup(ump, node_icb_loc);
+	udf_node = udf_node_lookup(ump, node_icb_loc);
 	if (udf_node) {
 		DPRINTF(NODE, ("\tgot it from the hash!\n"));
 		/* vnode is returned locked */
@@ -6319,7 +6301,7 @@ brokendir:
 	if (fid->file_char & UDF_FILE_CHAR_PAR)
 		strcpy(dirent->d_name, "..");
 
-	dirent->d_fileno = udf_calchash(&fid->icb);	/* inode hash XXX */
+	dirent->d_fileno = udf_get_node_id(&fid->icb);	/* inode hash XXX */
 	dirent->d_namlen = strlen(dirent->d_name);
 	dirent->d_reclen = _DIRENT_SIZE(dirent);
 
@@ -6355,7 +6337,7 @@ derailed:
 	KASSERT(mutex_owned(&mntvnode_lock));
 
 	DPRINTF(SYNC, ("sync_pass %d\n", pass));
-	udf_node = LIST_FIRST(&ump->sorted_udf_nodes);
+	udf_node = RBTOUDFNODE(RB_TREE_MIN(&ump->udf_node_tree));
 	for (;udf_node; udf_node = n_udf_node) {
 		DPRINTF(SYNC, ("."));
 
@@ -6363,7 +6345,10 @@ derailed:
 		vp = udf_node->vnode;
 
 		mutex_enter(&vp->v_interlock);
-		n_udf_node = LIST_NEXT(udf_node, sortchain);
+		n_udf_node = RBTOUDFNODE(rb_tree_iterate(
+			&ump->udf_node_tree, &udf_node->rbnode,
+			RB_DIR_RIGHT));
+
 		if (n_udf_node)
 			n_udf_node->i_flags |= IN_SYNCED;
 
