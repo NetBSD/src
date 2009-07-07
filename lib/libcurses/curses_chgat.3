@@ -81,12 +81,13 @@ functions are the same as the
 .Fn chgat
 and
 .Fn wchgat
-functions, respectively, excepting that
-.Fn wmove
-is called to mvoe the cursor to the position specified by
+functions, respectively, excepting that they operate from the position
+specified by
 .Fa y ,
-.Fa x
-before the attributes are changed.
+.Fa x .
+.Pp
+These functions do not perform wrapping. They do not update
+the cursor position.
 .Sh RETURN VALUES
 The functions that return an int will return one of the following
 values:
