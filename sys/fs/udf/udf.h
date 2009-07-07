@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.35 2009/07/06 17:08:04 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.36 2009/07/07 10:23:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,6 +30,7 @@
 #define _FS_UDF_UDF_H_
 
 #include <sys/queue.h>
+#include <sys/rb.h>
 #include <sys/uio.h>
 #include <sys/mutex.h>
 
@@ -333,8 +334,7 @@ struct udf_mount {
 	/* hash table to lookup icb -> udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
 	kmutex_t	get_node_lock;
-	LIST_HEAD(, udf_node) udf_nodes[UDF_INODE_HASHSIZE];
-	LIST_HEAD(, udf_node) sorted_udf_nodes;		/* sorted sync list  */
+	struct rb_tree	udf_node_tree;
 
 	/* syncing */
 	int		syncing;			/* are we syncing?   */
@@ -354,6 +354,11 @@ struct udf_mount {
 };
 
 
+#define RBTOUDFNODE(node) \
+	((node) ? \
+	 (void *)((uintptr_t)(node) - offsetof(struct udf_node, rbnode)) \
+	 : NULL)
+
 /*
  * UDF node describing a file/directory.
  *
@@ -368,6 +373,9 @@ struct udf_node {
 	kcondvar_t		 node_lock;		/* sleeping lock */
 	char const		*lock_fname;
 	int			 lock_lineno;
+
+	/* rb_node for fast lookup and fast sequentual visiting */
+	struct rb_node		 rbnode;
 
 	/* one of `fe' or `efe' can be set, not both (UDF file entry dscr.)  */
 	struct file_entry	*fe;
