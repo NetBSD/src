@@ -101,12 +101,13 @@ An error occurred in the function.
 .Xr curses_attributes 3
 .Sh STANDARDS
 The
-.Nx
-Curses library complies with the X/Open Curses specification, part of
-the Single Unix Specification.
-The
-.Fn chgat
-family is an extension and compatible with GNU ncurses.
+.Fn chgat ,
+.Fn wchgat ,
+.Fn mvchgat
+and
+.Fn mvwchgat
+functions conform to
+.St -xcurses4.2 .
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
