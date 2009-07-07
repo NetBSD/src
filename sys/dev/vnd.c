@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.202 2009/07/02 02:06:11 dyoung Exp $	*/
+/*	$NetBSD: vnd.c,v 1.203 2009/07/07 19:51:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.202 2009/07/02 02:06:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.203 2009/07/07 19:51:22 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1618,7 +1618,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 #endif /* VND_COMPRESSION */
 	vnd->sc_flags &=
 	    ~(VNF_INITED | VNF_READONLY | VNF_VLABEL
-	      | VNF_VUNCONF | VNF_COMP);
+	      | VNF_VUNCONF | VNF_COMP | VNF_CLEARING);
 	if (vp == NULL)
 		panic("vndclear: null vp");
 	(void) vn_close(vp, fflags, vnd->sc_cred);
