@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.27 2009/06/26 19:30:45 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.28 2009/07/08 18:53:36 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.27 2009/06/26 19:30:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.28 2009/07/08 18:53:36 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,6 +94,11 @@ typedef struct pmf_event_workitem {
 	device_t		pew_device;
 } pmf_event_workitem_t;
 
+static pool_cache_t pew_pc;
+
+static pmf_event_workitem_t *pmf_event_workitem_get(void);
+static void pmf_event_workitem_put(pmf_event_workitem_t *);
+
 
 
 static bool pmf_device_resume_locked(device_t PMF_FN_PROTO);
@@ -116,7 +121,7 @@ pmf_event_worker(struct work *wk, void *dummy)
 			(*event->pmf_handler)(event->pmf_device);
 	}
 
-	kmem_free(pew, sizeof(*pew));
+	pmf_event_workitem_put(pew);
 }
 
 static bool
@@ -555,7 +560,7 @@ pmf_event_inject(device_t dv, pmf_generic_event_t ev)
 {
 	pmf_event_workitem_t *pew;
 
-	pew = kmem_alloc(sizeof(pmf_event_workitem_t), KM_NOSLEEP);
+	pew = pmf_event_workitem_get();
 	if (pew == NULL) {
 		PMF_EVENT_PRINTF(("%s: PMF event %d dropped (no memory)\n",
 		    dv ? device_xname(dv) : "<anonymous>", ev));
@@ -686,10 +691,35 @@ pmf_class_display_register(device_t dv)
 	return true;
 }
 
+static void
+pmf_event_workitem_put(pmf_event_workitem_t *pew)
+{
+	KASSERT(pew != NULL);
+	pool_cache_put(pew_pc, pew);
+}
+
+static pmf_event_workitem_t *
+pmf_event_workitem_get(void)
+{
+	return pool_cache_get(pew_pc, PR_NOWAIT);
+}
+
+static int
+pew_constructor(void *arg, void *obj, int flags)
+{
+	memset(obj, 0, sizeof(pmf_event_workitem_t));
+	return 0;
+}
+
 void
 pmf_init(void)
 {
 	int err;
+
+	pew_pc = pool_cache_init(sizeof(pmf_event_workitem_t), 0, 0, 0,
+	    "pew pool", NULL, IPL_HIGH, pew_constructor, NULL, NULL);
+	pool_cache_setlowat(pew_pc, 16);
+	pool_cache_sethiwat(pew_pc, 256);
 
 	KASSERT(pmf_event_workqueue == NULL);
 	err = workqueue_create(&pmf_event_workqueue, "pmfevent",
