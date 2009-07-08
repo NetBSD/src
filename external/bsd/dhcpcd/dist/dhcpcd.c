@@ -405,7 +405,7 @@ log_dhcp(int lvl, const char *msg,
 		a = xstrdup(inet_ntoa(addr));
 	} else
 		a = NULL;
-	r = get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID);
+	r = get_option_addr(&addr, dhcp, DHO_SERVERID);
 	if (dhcp->servername[0] && r == 0)
 		syslog(lvl, "%s: %s %s from %s `%s'", iface->name, msg, a,
 		    inet_ntoa(addr), dhcp->servername);
@@ -426,6 +426,19 @@ blacklisted_ip(const struct if_options *ifo, in_addr_t addr)
 	
 	for (i = 0; i < ifo->blacklist_len; i += 2)
 		if (ifo->blacklist[i] == (addr & ifo->blacklist[i + 1]))
+			return 1;
+	return 0;
+}
+
+static int
+whitelisted_ip(const struct if_options *ifo, in_addr_t addr)
+{
+	size_t i;
+
+	if (ifo->whitelist_len == 0)
+		return -1;
+	for (i = 0; i < ifo->whitelist_len; i += 2)
+		if (ifo->whitelist[i] == (addr & ifo->whitelist[i + 1]))
 			return 1;
 	return 0;
 }
@@ -451,7 +464,7 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 	if (type == DHCP_NAK) {
 		/* For NAK, only check if we require the ServerID */
 		if (has_option_mask(ifo->requiremask, DHO_SERVERID) &&
-		    get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID) == -1)
+		    get_option_addr(&addr, dhcp, DHO_SERVERID) == -1)
 		{
 			log_dhcp(LOG_WARNING, "reject NAK", iface, dhcp);
 			return;
@@ -497,7 +510,8 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 		lease->addr.s_addr = dhcp->yiaddr;
 		lease->server.s_addr = INADDR_ANY;
 		if (type != 0)
-			get_option_addr(&lease->server.s_addr, dhcp, DHO_SERVERID);
+			get_option_addr(&lease->server,
+			    dhcp, DHO_SERVERID);
 		log_dhcp(LOG_INFO, "offered", iface, dhcp);
 		free(state->offer);
 		state->offer = dhcp;
@@ -551,6 +565,11 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp)
 	lease->frominfo = 0;
 
 	delete_timeout(NULL, iface);
+	/* We now have an offer, so close the DHCP sockets.
+	 * This allows us to safely ARP when broken DHCP servers send an ACK
+	 * follows by an invalid NAK. */
+	close_sockets(iface);
+
 	if (ifo->options & DHCPCD_ARP &&
 	    iface->addr.s_addr != state->offer->yiaddr)
 	{
@@ -579,6 +598,7 @@ handle_dhcp_packet(void *arg)
 	const uint8_t *pp;
 	ssize_t bytes;
 	struct in_addr from;
+	int i;
 
 	/* We loop through until our buffer is empty.
 	 * The benefit is that if we get >1 DHCP packet in our buffer and
@@ -594,7 +614,15 @@ handle_dhcp_packet(void *arg)
 			    iface->name, inet_ntoa(from));
 			continue;
 		}
-		if (blacklisted_ip(iface->state->options, from.s_addr)) {
+		i = whitelisted_ip(iface->state->options, from.s_addr);
+		if (i == 0) {
+			syslog(LOG_WARNING,
+			    "%s: non whitelisted DHCP packet from %s",
+			    iface->name, inet_ntoa(from));
+			continue;
+		} else if (i != 1 &&
+		    blacklisted_ip(iface->state->options, from.s_addr) == 1)
+		{
 			syslog(LOG_WARNING,
 			    "%s: blacklisted DHCP packet from %s",
 			    iface->name, inet_ntoa(from));
@@ -1359,7 +1387,10 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 			iov[0].iov_len = sizeof(ssize_t);
 			iov[1].iov_base = UNCONST(VERSION);
 			iov[1].iov_len = len;
-			writev(fd->fd, iov, 2);
+			if (writev(fd->fd, iov, 2) == -1) {
+				syslog(LOG_ERR, "writev: %m");
+				return -1;
+			}
 			return 0;
 		} else if (strcmp(*argv, "--getconfigfile") == 0) {
 			len = strlen(cffile ? cffile : CONFIG) + 1;
@@ -1367,7 +1398,10 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 			iov[0].iov_len = sizeof(ssize_t);
 			iov[1].iov_base = cffile ? cffile : UNCONST(CONFIG);
 			iov[1].iov_len = len;
-			writev(fd->fd, iov, 2);
+			if (writev(fd->fd, iov, 2) == -1) {
+				syslog(LOG_ERR, "writev: %m");
+				return -1;
+			}
 			return 0;
 		} else if (strcmp(*argv, "--getinterfaces") == 0) {
 			len = 0;
@@ -1640,6 +1674,16 @@ main(int argc, char **argv)
 			syslog(LOG_ERR, ""PACKAGE
 			    " already running on pid %d (%s)",
 			    pid, pidfile);
+			exit(EXIT_FAILURE);
+		}
+
+		/* Ensure we have the needed directories */
+		if (mkdir(RUNDIR, 0755) == -1 && errno != EEXIST) {
+			syslog(LOG_ERR, "mkdir `%s': %m", RUNDIR);
+			exit(EXIT_FAILURE);
+		}
+		if (mkdir(DBDIR, 0755) == -1 && errno != EEXIST) {
+			syslog(LOG_ERR, "mkdir `%s': %m", DBDIR);
 			exit(EXIT_FAILURE);
 		}
 
