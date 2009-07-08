@@ -1,4 +1,4 @@
-/*	$NetBSD: evhttp.h,v 1.1 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: evhttp.h,v 1.2 2009/07/08 21:23:53 tls Exp $	*/
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -210,7 +210,6 @@ struct {
 	char major;			/* HTTP Major number */
 	char minor;			/* HTTP Minor number */
 
-	int got_firstline;
 	int response_code;		/* HTTP Response code */
 	char *response_code_line;	/* Readable response */
 
@@ -261,6 +260,10 @@ void evhttp_connection_free(struct evhttp_connection *evcon);
 /** sets the ip address from which http connections are made */
 void evhttp_connection_set_local_address(struct evhttp_connection *evcon,
     const char *address);
+
+/** sets the local port from which http connections are made */
+void evhttp_connection_set_local_port(struct evhttp_connection *evcon,
+    unsigned short port);
 
 /** Sets the timeout for events related to this connection */
 void evhttp_connection_set_timeout(struct evhttp_connection *evcon,
@@ -326,10 +329,20 @@ char *evhttp_decode_uri(const char *uri);
 
 /**
  * Helper function to parse out arguments in a query.
- * The arguments are separated by key and value.
- * URI should already be decoded.
+ *
+ * Parsing a uri like
+ *
+ *    http://foo.com/?q=test&s=some+thing
+ *
+ * will result in two entries in the key value queue.
+
+ * The first entry is: key="q", value="test"
+ * The second entry is: key="s", value="some thing"
+ *
+ * @param uri the request URI
+ * @param headers the head of the evkeyval queue
  */
-void evhttp_parse_query(const char *uri, struct evkeyvalq *);
+void evhttp_parse_query(const char *uri, struct evkeyvalq *headers);
 
 
 /**

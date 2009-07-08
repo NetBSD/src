@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil.c,v 1.1 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: evutil.c,v 1.2 2009/07/08 21:23:53 tls Exp $	*/
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -25,9 +25,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+#include <stdio.h>
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -74,4 +73,22 @@ evutil_strtoll(const char *s, char **endptr, int base)
 #else
 #error "I don't know how to parse 64-bit integers."
 #endif
+}
+int
+evutil_snprintf(char *buf, size_t buflen, const char *format, ...)
+{
+	int r;
+	va_list ap;
+	va_start(ap, format);
+	r = evutil_vsnprintf(buf, buflen, format, ap);
+	va_end(ap);
+	return r;
+}
+
+int
+evutil_vsnprintf(char *buf, size_t buflen, const char *format, va_list ap)
+{
+	int r = vsnprintf(buf, buflen, format, ap);
+	buf[buflen-1] = '\0';
+	return r;
 }
