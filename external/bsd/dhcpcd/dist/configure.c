@@ -170,7 +170,7 @@ make_env(const struct interface *iface, char ***argv)
 	const struct interface *ifp;
 
 	/* Make our env */
-	elen = 7;
+	elen = 8;
 	env = xmalloc(sizeof(char *) * (elen + 1));
 	e = strlen("interface") + strlen(iface->name) + 2;
 	env[0] = xmalloc(e);
@@ -187,10 +187,12 @@ make_env(const struct interface *iface, char ***argv)
 	snprintf(env[4], e, "ifwireless=%d", iface->wireless);
 	env[5] = xmalloc(e);
 	snprintf(env[5], e, "ifflags=%u", iface->flags);
+	env[6] = xmalloc(e);
+	snprintf(env[6], e, "ifmtu=%d", get_mtu(iface->name));
 	l = e = strlen("interface_order=");
 	for (ifp = ifaces; ifp; ifp = ifp->next)
 		e += strlen(ifp->name) + 1;
-	p = env[6] = xmalloc(e);
+	p = env[7] = xmalloc(e);
 	strlcpy(p, "interface_order=", e);
 	e -= l;
 	p += l;
@@ -342,7 +344,8 @@ run_script(const struct interface *iface)
 				iov[1].iov_base = bigenv;
 				iov[1].iov_len = elen;
 			}
-			writev(fd->fd, iov, 2);
+			if (writev(fd->fd, iov, 2) == -1)
+				syslog(LOG_ERR, "writev: %m");
 		}
 	}
 	free(bigenv);
@@ -480,7 +483,8 @@ d_route(struct rt *rt, const struct interface *iface, int metric)
 static struct rt *
 get_subnet_route(struct dhcp_message *dhcp)
 {
-	in_addr_t addr, net;
+	in_addr_t addr;
+	struct in_addr net;
 	struct rt *rt;
 
 	addr = dhcp->yiaddr;
@@ -488,12 +492,12 @@ get_subnet_route(struct dhcp_message *dhcp)
 		addr = dhcp->ciaddr;
 	/* Ensure we have all the needed values */
 	if (get_option_addr(&net, dhcp, DHO_SUBNETMASK) == -1)
-		net = get_netmask(addr);
-	if (net == INADDR_BROADCAST || net == INADDR_ANY)
+		net.s_addr = get_netmask(addr);
+	if (net.s_addr == INADDR_BROADCAST || net.s_addr == INADDR_ANY)
 		return NULL;
 	rt = malloc(sizeof(*rt));
-	rt->dest.s_addr = addr & net;
-	rt->net.s_addr = net;
+	rt->dest.s_addr = addr & net.s_addr;
+	rt->net.s_addr = net.s_addr;
 	rt->gate.s_addr = 0;
 	return rt;
 }
