@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 2009/07/08 12:23:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2009/07/08 12:23:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2009/03/18 10:22:24 cegger Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <atari/atari/intr.h>
+#include <machine/intr.h>
 
 #define	AVEC_MIN	1
 #define	AVEC_MAX	7

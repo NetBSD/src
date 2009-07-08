@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.43 2009/07/03 17:05:54 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.44 2009/07/08 12:23:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.43 2009/07/03 17:05:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.44 2009/07/08 12:23:10 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -119,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.43 2009/07/03 17:05:54 tsutsui Exp $");
 
 #include <machine/iomap.h>
 #include <machine/mfp.h>
-#include <atari/atari/intr.h>
+#include <machine/intr.h>
 #include <atari/dev/serreg.h>
 
 #if !defined(_MILANHW_)

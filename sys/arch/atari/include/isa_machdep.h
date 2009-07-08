@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.12 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.13 2009/07/08 12:23:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,8 +63,8 @@
 #define _ATARI_ISA_MACHDEP_H_
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <dev/isa/isadmavar.h>
-#include <atari/atari/intr.h>
 
 struct atari_isa_chipset {
 	struct isa_dma_state ic_dmastate;

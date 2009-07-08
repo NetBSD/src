@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.22 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: dma.c,v 1.23 2009/07/08 12:23:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.22 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.23 2009/07/08 12:23:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.22 2009/03/18 10:22:24 cegger Exp $");
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/dma.h>
-
-#include <atari/atari/intr.h>
+#include <machine/intr.h>
 
 #define	NDMA_DEV	10	/* Max 2 floppy's, 8 hard-disks		*/
 typedef struct dma_entry {

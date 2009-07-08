@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.12 2005/12/11 12:16:59 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.13 2009/07/08 12:23:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -34,7 +34,7 @@
 #ifndef _ATARI_PCI_MACHDEP_H_
 #define _ATARI_PCI_MACHDEP_H_
 
-#include <atari/atari/intr.h>
+#include <machine/intr.h>
 
 /*
  * Machine-specific definitions for PCI autoconfiguration.

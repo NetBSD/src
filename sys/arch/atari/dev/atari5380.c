@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.51 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.52 2009/07/08 12:23:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.51 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.52 2009/07/08 12:23:09 tsutsui Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -61,8 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.51 2009/03/18 10:22:24 cegger Exp $"
 #include <machine/stdarg.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
-
-#include <atari/atari/intr.h>
+#include <machine/intr.h>
 
 #if defined(FALCON_SCSI)
 #include <machine/dma.h>
