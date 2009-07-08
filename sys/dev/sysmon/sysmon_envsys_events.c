@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.69 2009/07/08 13:34:11 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.70 2009/07/08 17:28:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.69 2009/07/08 13:34:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.70 2009/07/08 17:28:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -480,6 +480,7 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
+	lims.sel_flags = 0;
 	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS) {
 		if (sed_t->sed_sme->sme_get_limits)
 			(*sed_t->sed_sme->sme_get_limits)(sed_t->sed_sme,
