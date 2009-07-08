@@ -370,25 +370,27 @@ exit:
 }
 
 int
-get_option_addr(uint32_t *a, const struct dhcp_message *dhcp, uint8_t option)
+get_option_addr(struct in_addr *a, const struct dhcp_message *dhcp,
+    uint8_t option)
 {
 	const uint8_t *p = get_option_raw(dhcp, option);
 
 	if (!p)
 		return -1;
-	memcpy(a, p, sizeof(*a));
+	memcpy(&a->s_addr, p, sizeof(a->s_addr));
 	return 0;
 }
 
 int
 get_option_uint32(uint32_t *i, const struct dhcp_message *dhcp, uint8_t option)
 {
-	uint32_t a;
+	const uint8_t *p = get_option_raw(dhcp, option);
+	uint32_t d;
 
-	if (get_option_addr(&a, dhcp, option) == -1)
+	if (!p)
 		return -1;
-
-	*i = ntohl(a);
+	memcpy(&d, p, sizeof(d));
+	*i = ntohl(d);
 	return 0;
 }
 
@@ -1303,14 +1305,14 @@ configure_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 		 * message but are not necessarily in the options */
 		addr.s_addr = dhcp->yiaddr ? dhcp->yiaddr : dhcp->ciaddr;
 		setvar(&ep, prefix, "ip_address", inet_ntoa(addr));
-		if (get_option_addr(&net.s_addr, dhcp, DHO_SUBNETMASK) == -1) {
+		if (get_option_addr(&net, dhcp, DHO_SUBNETMASK) == -1) {
 			net.s_addr = get_netmask(addr.s_addr);
 			setvar(&ep, prefix, "subnet_mask", inet_ntoa(net));
 		}
 		i = inet_ntocidr(net);
 		snprintf(cidr, sizeof(cidr), "%d", inet_ntocidr(net));
 		setvar(&ep, prefix, "subnet_cidr", cidr);
-		if (get_option_addr(&brd.s_addr, dhcp, DHO_BROADCAST) == -1) {
+		if (get_option_addr(&brd, dhcp, DHO_BROADCAST) == -1) {
 			brd.s_addr = addr.s_addr | ~net.s_addr;
 			setvar(&ep, prefix, "broadcast_address", inet_ntoa(brd));
 		}
@@ -1360,9 +1362,9 @@ get_lease(struct dhcp_lease *lease, const struct dhcp_message *dhcp)
 		lease->addr.s_addr = dhcp->yiaddr;
 	else
 		lease->addr.s_addr = dhcp->ciaddr;
-	if (get_option_addr(&lease->net.s_addr, dhcp, DHO_SUBNETMASK) == -1)
+	if (get_option_addr(&lease->net, dhcp, DHO_SUBNETMASK) == -1)
 		lease->net.s_addr = get_netmask(lease->addr.s_addr);
-	if (get_option_addr(&lease->brd.s_addr, dhcp, DHO_BROADCAST) == -1)
+	if (get_option_addr(&lease->brd, dhcp, DHO_BROADCAST) == -1)
 		lease->brd.s_addr = lease->addr.s_addr | ~lease->net.s_addr;
 	if (get_option_uint32(&lease->leasetime, dhcp, DHO_LEASETIME) == 0) {
 		/* Ensure that we can use the lease */
