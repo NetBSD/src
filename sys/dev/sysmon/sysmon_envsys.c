@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.88 2009/06/13 16:08:25 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.89 2009/07/08 17:54:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.88 2009/06/13 16:08:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.89 2009/07/08 17:54:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -560,8 +560,8 @@ sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
 
-	DPRINTF(("%s: (%s) attached #%d (%s), units=%d (%s)\n",
-	    __func__, sme->sme_name, edata->sensor, edata->desc,
+	DPRINTF(("%s: attached #%d (%s), units=%d (%s)\n",
+	    __func__, edata->sensor, edata->desc,
 	    sdt_units[i].type, sdt_units[i].desc));
 
 	return 0;
