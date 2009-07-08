@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.5 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: event.h,v 1.6 2009/07/08 21:23:53 tls Exp $	*/
 /*	$OpenBSD: event.h,v 1.4 2002/07/12 18:50:48 provos Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ int event_base_loop(struct event_base *, int);
   @return 0 if successful, or -1 if an error occurred
   @see event_loop(), event_base_loop(), event_base_loopexit()
   */
-int event_loopexit(struct timeval *);
+int event_loopexit(const struct timeval *);
 
 
 /**
@@ -408,7 +408,7 @@ int event_loopexit(struct timeval *);
   @return 0 if successful, or -1 if an error occurred
   @see event_loopexit()
  */
-int event_base_loopexit(struct event_base *, struct timeval *);
+int event_base_loopexit(struct event_base *, const struct timeval *);
 
 /**
   Abort the active event_loop() immediately.
@@ -550,7 +550,8 @@ void event_set(struct event *, int, short, void (*)(int, short, void *), void *)
   @see event_set()
 
  */
-int event_once(int, short, void (*)(int, short, void *), void *, struct timeval *);
+int event_once(int, short, void (*)(int, short, void *), void *,
+    const struct timeval *);
 
 
 /**
@@ -571,7 +572,9 @@ int event_once(int, short, void (*)(int, short, void *), void *, struct timeval 
   @return 0 if successful, or -1 if an error occurred
   @see event_once()
  */
-int event_base_once(struct event_base *, int, short, void (*)(int, short, void *), void *, struct timeval *);
+int event_base_once(struct event_base *base, int fd, short events,
+    void (*callback)(int, short, void *), void *arg,
+    const struct timeval *timeout);
 
 
 /**
@@ -592,7 +595,7 @@ int event_base_once(struct event_base *, int, short, void (*)(int, short, void *
   @return 0 if successful, or -1 if an error occurred
   @see event_del(), event_set()
   */
-int event_add(struct event *, struct timeval *);
+int event_add(struct event *ev, const struct timeval *timeout);
 
 
 /**
@@ -622,7 +625,7 @@ void event_active(struct event *, int, short);
   @return 1 if the event is pending, or 0 if the event has not occurred
 
  */
-int event_pending(struct event *, short, struct timeval *);
+int event_pending(struct event *ev, short event, struct timeval *tv);
 
 
 /**
@@ -1053,7 +1056,6 @@ int evbuffer_add_vprintf(struct evbuffer *, const char *fmt, va_list ap);
 
   @param buf the evbuffer to be drained
   @param len the number of bytes to drain from the beginning of the buffer
-  @return 0 if successful, or -1 if an error occurred
  */
 void evbuffer_drain(struct evbuffer *, size_t);
 
