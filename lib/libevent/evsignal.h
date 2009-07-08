@@ -1,4 +1,4 @@
-/*	$NetBSD: evsignal.h,v 1.3 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: evsignal.h,v 1.4 2009/07/08 21:23:53 tls Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -35,11 +35,11 @@
 typedef void (*ev_sighandler_t)(int);
 
 struct evsignal_info {
-	struct event_list signalqueue;
 	struct event ev_signal;
 	int ev_signal_pair[2];
 	int ev_signal_added;
 	volatile sig_atomic_t evsignal_caught;
+	struct event_list evsigevents[NSIG];
 	sig_atomic_t evsigcaught[NSIG];
 #ifdef HAVE_SIGACTION
 	struct sigaction **sh_old;
