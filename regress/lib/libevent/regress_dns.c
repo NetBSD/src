@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_dns.c,v 1.1 2008/05/16 20:24:57 peter Exp $	*/
+/*	$NetBSD: regress_dns.c,v 1.2 2009/07/08 21:23:53 tls Exp $	*/
 /*
  * Copyright (c) 2003-2006 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -37,7 +37,7 @@
 #endif
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -83,7 +83,7 @@ dns_gethostbyname_cb(int result, char type, int count, int ttl,
 
 	switch (type) {
 	case DNS_IPv6_AAAA: {
-#if defined(HAVE_STRUCT_IN6_ADDR) && defined(HAVE_INET_NTOP)
+#if defined(HAVE_STRUCT_IN6_ADDR) && defined(HAVE_INET_NTOP) && defined(INET6_ADDRSTRLEN)
 		struct in6_addr *in6_addrs = addresses;
 		char buf[INET6_ADDRSTRLEN+1];
 		int i;
@@ -252,7 +252,7 @@ dns_server_gethostbyname_cb(int result, char type, int count, int ttl,
 		break;
 	}
 	case DNS_IPv6_AAAA: {
-#if defined (HAVE_STRUCT_IN6_ADDR) && defined(HAVE_INET_NTOP)
+#if defined (HAVE_STRUCT_IN6_ADDR) && defined(HAVE_INET_NTOP) && defined(INET6_ADDRSTRLEN)
 		struct in6_addr *in6_addrs = addresses;
 		char buf[INET6_ADDRSTRLEN+1];
 		if (memcmp(&in6_addrs[0].s6_addr, "abcdefghijklmnop", 16)
