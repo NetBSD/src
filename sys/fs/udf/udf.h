@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.36 2009/07/07 10:23:36 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.37 2009/07/08 14:53:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -402,9 +402,6 @@ struct udf_node {
 	struct udf_node		*extattr;
 	struct udf_node		*streamdir;
 	struct udf_node		*my_parent;		/* if extended attr. */
-
-	LIST_ENTRY(udf_node)	 hashchain;		/* inside hash line  */
-	LIST_ENTRY(udf_node)	 sortchain;		/* sorted udf nodes  */
 };
 
 
