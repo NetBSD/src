@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.70 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.70 2009/03/18 16:00:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -120,9 +120,9 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.70 2009/03/18 16:00:10 cegger Exp $");
 #include <machine/bus.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
+#include <machine/intr.h>
 
 #include <atari/dev/hdfdreg.h>
-#include <atari/atari/intr.h>
 #include <atari/atari/device.h>
 
 #include "locators.h"

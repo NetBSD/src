@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.30 2008/06/13 08:50:12 cegger Exp $ */
+/*	$NetBSD: lpt.c,v 1.31 2009/07/08 12:23:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.30 2008/06/13 08:50:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.31 2009/07/08 12:23:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.30 2008/06/13 08:50:12 cegger Exp $");
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
+#include <machine/intr.h>
 
 #include <atari/dev/ym2149reg.h>
-#include <atari/atari/intr.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
