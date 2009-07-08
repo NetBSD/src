@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.51 2009/07/07 10:23:36 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.52 2009/07/08 14:46:55 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.51 2009/07/07 10:23:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.52 2009/07/08 14:46:55 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1081,9 +1081,9 @@ udf_chflags(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;
 
-	/* XXX we can't do this yet XXX */
+	/* XXX we can't do this yet, but erroring out is enoying XXX */
 
-	return EINVAL;
+	return 0;
 }
 
 
