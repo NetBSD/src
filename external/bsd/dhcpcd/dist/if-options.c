@@ -90,6 +90,7 @@ const struct option cf_options[] = {
 	{"static",          required_argument, NULL, 'S'},
 	{"test",            no_argument,       NULL, 'T'},
 	{"variables",       no_argument,       NULL, 'V'},
+	{"whitelist",       required_argument, NULL, 'W'},
 	{"blacklist",       required_argument, NULL, 'X'},
 	{"denyinterfaces",  required_argument, NULL, 'Z'},
 	{"arping",          required_argument, NULL, O_ARPING},
@@ -652,6 +653,16 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			ifo->config[s] = xstrdup(arg);
 			ifo->config[s + 1] = NULL;
 		}
+		break;
+	case 'W':
+		if (parse_addr(&addr, &addr2, arg) != 0)
+			return -1;
+		if (strchr(arg, '/') == NULL)
+			addr2.s_addr = INADDR_BROADCAST;
+		ifo->whitelist = xrealloc(ifo->whitelist,
+		    sizeof(in_addr_t) * (ifo->whitelist_len + 2));
+		ifo->whitelist[ifo->whitelist_len++] = addr.s_addr;
+		ifo->whitelist[ifo->whitelist_len++] = addr2.s_addr;
 		break;
 	case 'X':
 		if (parse_addr(&addr, &addr2, arg) != 0)
