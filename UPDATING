@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.198 2009/07/09 07:31:54 mrg Exp $
+$NetBSD: UPDATING,v 1.199 2009/07/09 07:50:24 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -200,9 +200,10 @@ Recent changes:
 	and userland are from after 20070913.
 
 20070703:
-	nbinstall has been renamed as it calls the target specific and
-	the logic to pass down STRIP from mk been removed.  This forces
-	a re-installation of tools.
+	nbinstall has been renamed ${MACHINE_GNU_ARCH}-install. It
+	calls the target-specific strip program, and the logic to pass
+	down STRIP from make has been removed.  This requires a
+	re-installation of tools.
 
 20070422:
 	The way OS emulations lookup filenames inside the emulation root
