@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.9.4.9 2009/07/09 19:44:34 snj Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.9.4.10 2009/07/09 19:53:49 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.9 2009/07/09 19:44:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.10 2009/07/09 19:53:49 snj Exp $");
 #endif /* not lint */
 
 
@@ -1214,10 +1214,12 @@ udf_discstrat_thread(void *arg)
 			if (eccline == NULL)
 				break;
 
-			/* all others are later, so if not satisfied, abort */
-			if ((eccline->wait_time.tv_sec - now.tv_sec > 0)) {
-				UDF_UNLOCK_ECCLINE(eccline);
-				break;
+			/* if not reading, wait until the time has come */
+			if ((priv->cur_queue != UDF_SHED_READING) &&
+				(eccline->wait_time.tv_sec - now.tv_sec > 0)) {
+					UDF_UNLOCK_ECCLINE(eccline);
+					/* all others are later, so break off */
+					break;
 			}
 
 			/* release */
