@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.30.4.6 2009/03/24 20:29:53 snj Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30.4.7 2009/07/09 19:44:34 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.6 2009/03/24 20:29:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.7 2009/07/09 19:44:34 snj Exp $");
 #endif /* not lint */
 
 
@@ -273,6 +273,7 @@ udf_write(void *v)
 	struct vnode *vp     = ap->a_vp;
 	struct uio   *uio    = ap->a_uio;
 	int           ioflag = ap->a_ioflag;
+	kauth_cred_t  cred   = ap->a_cred;
 	int           advice = IO_ADV_DECODE(ap->a_ioflag);
 	struct uvm_object    *uobj;
 	struct udf_node      *udf_node = VTOI(vp);
@@ -282,6 +283,7 @@ udf_write(void *v)
 	uint64_t file_size, old_size, old_offset;
 	vsize_t len;
 	int async = vp->v_mount->mnt_flag & MNT_ASYNC;
+	int aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	int error;
 	int flags, resid, extended;
 
@@ -353,7 +355,12 @@ udf_write(void *v)
 		/* ubc, here we come, prepare to trap */
 		win = ubc_alloc(uobj, uio->uio_offset, &len,
 				advice, UBC_WRITE);
-		error = uiomove(win, len, uio);
+		genfs_node_wrlock(vp);
+		error = GOP_ALLOC(vp, uio->uio_offset, len, aflag, cred);
+		genfs_node_unlock(vp);
+
+		if (!error)
+			error = uiomove(win, len, uio);
 		ubc_release(win, flags);
 		if (error)
 			break;
@@ -392,7 +399,7 @@ udf_write(void *v)
 	if (error) {
 		/* bring back file size to its former size */
 		/* take notice of its errors? */
-		(void) udf_chsize(vp, (u_quad_t) old_size, NOCRED);
+		(void) udf_chsize(vp, (u_quad_t) old_size, cred);
 
 		/* roll back uio */
 		uio->uio_offset -= resid - uio->uio_resid;
@@ -562,7 +569,7 @@ udf_readdir(void *v)
 	if (uio->uio_offset == 0) {
 		DPRINTF(READDIR, ("\t'.' inserted\n"));
 		strcpy(dirent->d_name, ".");
-		dirent->d_fileno = udf_calchash(&udf_node->loc);
+		dirent->d_fileno = udf_get_node_id(&udf_node->loc);
 		dirent->d_type = DT_DIR;
 		dirent->d_namlen = strlen(dirent->d_name);
 		dirent->d_reclen = _DIRENT_SIZE(dirent);
@@ -587,8 +594,7 @@ udf_readdir(void *v)
 		while (diroffset < file_size) {
 			DPRINTF(READDIR, ("\tread in fid stream\n"));
 			/* transfer a new fid/dirent */
-			error = udf_read_fid_stream(vp, &diroffset,
-				    fid, dirent);
+			error = udf_read_fid_stream(vp, &diroffset, fid, dirent);
 			DPRINTFIF(READDIR, error, ("read error in read fid "
 			    "stream : %d\n", error));
 			if (error)
@@ -891,7 +897,7 @@ udf_getattr(void *v)
 	vap->va_uid       = uid;
 	vap->va_gid       = gid;
 	vap->va_fsid      = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
-	vap->va_fileid    = udf_calchash(&udf_node->loc);   /* inode hash XXX */
+	vap->va_fileid    = udf_get_node_id(&udf_node->loc);   /* inode hash XXX */
 	vap->va_size      = filesize;
 	vap->va_blocksize = udf_node->ump->discinfo.sector_size;  /* wise? */
 
@@ -1114,9 +1120,9 @@ udf_chflags(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;
 
-	/* XXX we can't do this yet XXX */
+	/* XXX we can't do this yet, but erroring out is enoying XXX */
 
-	return EINVAL;
+	return 0;
 }
 
 
@@ -1868,6 +1874,100 @@ udf_readlink(void *v)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Check if source directory is in the path of the target directory.  Target
+ * is supplied locked, source is unlocked. The target is always vput before
+ * returning. Modeled after UFS.
+ *
+ * If source is on the path from target to the root, return error.
+ */
+
+static int
+udf_on_rootpath(struct udf_node *source, struct udf_node *target)
+{
+	struct udf_mount *ump = target->ump;
+	struct udf_node *res_node;
+	struct long_ad icb_loc, *root_icb;
+	const char *name;
+	int namelen;
+	int error, found;
+
+	name     = "..";
+	namelen  = 2;
+	error    = 0;
+	res_node = target;
+
+	root_icb   = &ump->fileset_desc->rootdir_icb;
+
+	/* if nodes are equal, it is no use looking */
+	if (udf_compare_icb(&source->loc, &target->loc) == 0) {
+		error = EEXIST;
+		goto out;
+	}
+
+	/* nothing can exist before the root */
+	if (udf_compare_icb(root_icb, &target->loc) == 0) {
+		error = 0;
+		goto out;
+	}
+
+	for (;;) {
+		DPRINTF(NODE, ("udf_on_rootpath : "
+			"source vp %p, looking at vp %p\n",
+			source->vnode, res_node->vnode));
+
+		/* sanity check */
+		if (res_node->vnode->v_type != VDIR) {
+			error = ENOTDIR;
+			goto out;
+		}
+
+		/* go down one level */
+		error = udf_lookup_name_in_dir(res_node->vnode, name, namelen,
+			&icb_loc, &found);
+		DPRINTF(NODE, ("\tlookup of '..' resulted in error %d, "
+			"found %d\n", error, found));
+
+		if (!found)
+			error = ENOENT;
+		if (error)
+			goto out;
+
+		/* did we encounter source node? */
+		if (udf_compare_icb(&icb_loc, &source->loc) == 0) {
+			error = EINVAL;
+			goto out;
+		}
+
+		/* did we encounter the root node? */
+		if (udf_compare_icb(&icb_loc, root_icb) == 0) {
+			error = 0;
+			goto out;
+		}
+
+		/* push our intermediate node, we're done with it */
+		/* DPRINTF(NODE, ("\tvput %p\n", target->vnode)); */
+		vput(res_node->vnode);
+
+		DPRINTF(NODE, ("\tgetting the .. node\n"));
+		error = udf_get_node(ump, &icb_loc, &res_node);
+
+		if (error) {	/* argh, bail out */
+			KASSERT(res_node == NULL);
+			// res_node = NULL;
+			goto out;
+		}
+	}
+out:
+	DPRINTF(NODE, ("\tresult: %svalid, error = %d\n", error?"in":"", error));
+
+	/* put our last node */
+	if (res_node)
+		vput(res_node->vnode);
+
+	return error;
+}
+
 /* note: i tried to follow the logics of the tmpfs rename code */
 int
 udf_rename(void *v)
@@ -1940,12 +2040,40 @@ udf_rename(void *v)
 		}
 	}
 
-	/* dont allow renaming directories acros directory for now */
-	if (fdnode != tdnode) {
-		if (fvp->v_type == VDIR) {
-			error = EINVAL;
+	/* check if moving a directory to a new parent is allowed */
+	if ((fdnode != tdnode) && (fvp->v_type == VDIR)) {
+		/* release tvp since we might encounter it and lock up */
+		if (tvp)
+			vput(tvp);
+
+		/* vref tdvp since we lose its ref in udf_on_rootpath */
+		vref(tdvp);
+
+		/* search if fnode is a component of tdnode's path to root */
+		error = udf_on_rootpath(fnode, tdnode);
+
+		DPRINTF(NODE, ("Dir rename allowed ? %s\n", error ? "NO":"YES"));
+
+		if (error) {
+			/* compensate for our vref earlier */
+			vrele(tdvp);
 			goto out;
 		}
+
+		/* relock tdvp; its still here due to the vref earlier */
+		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+
+		/*
+		 * re-lookup tvp since the parent has been unlocked, so could
+		 * have changed/removed in the meantime.
+		 */
+		tcnp->cn_flags &= ~SAVESTART;
+		error = relookup(tdvp, &tvp, tcnp);
+		if (error) {
+			vput(tdvp);
+			goto out;
+		}
+		tnode  = (tvp == NULL) ? NULL : VTOI(tvp);
 	}
 
 	/* remove existing entry if present */
@@ -1961,6 +2089,19 @@ udf_rename(void *v)
 	error = udf_dir_detach(tdnode->ump, fdnode, fnode, fcnp);
 	if (error)
 		udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
+	if (error)
+		goto out;
+
+	/* update tnode's '..' if moving directory to new parent */
+	if ((fdnode != tdnode) && (fvp->v_type == VDIR)) {
+		/* update fnode's '..' entry */
+		error = udf_dir_update_rootentry(fnode->ump, fnode, tdnode);
+		if (error) {
+			/* 'try' to recover from this situation */
+			udf_dir_attach(tdnode->ump, fdnode, fnode, &fvap, fcnp);
+			udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
+		}
+	}
 
 out:
         if (fdnode != tdnode)
@@ -2206,9 +2347,8 @@ udf_advlock(void *v)
 
 /* --------------------------------------------------------------------- */
 
-
 /* Global vfs vnode data structures for udfs */
-int (**udf_vnodeop_p) __P((void *));
+int (**udf_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },

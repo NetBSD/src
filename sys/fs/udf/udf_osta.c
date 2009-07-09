@@ -1,8 +1,8 @@
-/* $NetBSD: udf_osta.c,v 1.7 2008/05/19 20:12:36 reinoud Exp $ */
+/* $NetBSD: udf_osta.c,v 1.7.8.1 2009/07/09 19:44:34 snj Exp $ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.7 2008/05/19 20:12:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.7.8.1 2009/07/09 19:44:34 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -175,9 +175,7 @@ static unsigned short crc_table[256] = {
 };
 
 unsigned short
-udf_cksum(s, n)
-	unsigned char *s;
-	int n;
+udf_cksum(unsigned char *s, int n)
 {
 	unsigned short crc=0;
 
@@ -188,9 +186,7 @@ udf_cksum(s, n)
 
 /* UNICODE Checksum */
 unsigned short
-udf_unicode_cksum(s, n)
-	unsigned short *s;
-	int n;
+udf_unicode_cksum(unsigned short *s, int n)
 {
 	unsigned short crc=0;
 
@@ -228,7 +224,7 @@ uint16_t udf_ea_cksum(uint8_t *data) {
 #ifdef MAIN
 unsigned char bytes[] = { 0x70, 0x6A, 0x77 };
 
-main()
+main(void)
 {
 	unsigned short x;
 	x = cksum(bytes, sizeof bytes);
