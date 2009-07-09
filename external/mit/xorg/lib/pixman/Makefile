@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/06/11 05:11:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2009/07/09 02:15:48 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -9,17 +9,31 @@ LIB=		pixman-1
 DIST=	${X11SRCDIR.pixman}/pixman
 .PATH:	${DIST}
 
-SRCS=	pixman-access.c pixman-region16.c pixman-access-accessors.c \
-	pixman-region32.c pixman-image.c pixman-combine32.c \
-	pixman-combine64.c \
-	pixman-pict.c pixman-utils.c \
-	pixman-edge.c \
-	pixman-edge-accessors.c pixman-trap.c pixman-compute-region.c \
-	pixman-general.c pixman-fast-path.c pixman-solid-fill.c \
-	pixman-conical-gradient.c pixman-linear-gradient.c \
-	pixman-radial-gradient.c pixman-bits-image.c \
-	pixman-timer.c pixman-matrix.c pixman-cpu.c \
-	pixman-gradient-walker.c pixman-implementation.c
+SRCS=	\
+	pixman-access.c				\
+	pixman-access-accessors.c		\
+	pixman-cpu.c				\
+	pixman-gradient-walker.c		\
+	pixman-region16.c			\
+	pixman-region32.c			\
+	pixman-image.c				\
+	pixman-implementation.c			\
+	pixman-combine32.c			\
+	pixman-combine64.c			\
+	pixman-general.c			\
+	pixman.c				\
+	pixman-fast-path.c			\
+	pixman-solid-fill.c			\
+	pixman-conical-gradient.c		\
+	pixman-linear-gradient.c		\
+	pixman-radial-gradient.c		\
+	pixman-bits-image.c			\
+	pixman-utils.c				\
+	pixman-edge.c				\
+	pixman-edge-accessors.c			\
+	pixman-trap.c				\
+	pixman-timer.c				\
+	pixman-matrix.c
 
 # XXX
 
