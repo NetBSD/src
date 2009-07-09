@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.18.4.3 2009/06/06 22:04:40 bouyer Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.18.4.4 2009/07/09 19:44:34 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.18.4.3 2009/06/06 22:04:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.18.4.4 2009/07/09 19:44:34 snj Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -365,6 +364,93 @@ udf_node_sanity_check(struct udf_node *udf_node,
 	*cnt_inflen     = inflen;
 }
 #endif
+
+/* --------------------------------------------------------------------- */
+
+void
+udf_calc_freespace(struct udf_mount *ump, uint64_t *sizeblks, uint64_t *freeblks)
+{
+	struct logvol_int_desc *lvid;
+	uint32_t *pos1, *pos2;
+	int vpart, num_vpart;
+
+	lvid = ump->logvol_integrity;
+	*freeblks = *sizeblks = 0;
+
+	/*
+	 * Sequentials media report free space directly (CD/DVD/BD-R), for the
+	 * other media we need the logical volume integrity.
+	 *
+	 * We sum all free space up here regardless of type.
+	 */
+
+	KASSERT(lvid);
+	num_vpart = udf_rw32(lvid->num_part);
+
+	if (ump->discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) {
+		/* use track info directly summing if there are 2 open */
+		/* XXX assumption at most two tracks open */
+		*freeblks = ump->data_track.free_blocks;
+		if (ump->data_track.tracknr != ump->metadata_track.tracknr)
+			*freeblks += ump->metadata_track.free_blocks;
+		*sizeblks = ump->discinfo.last_possible_lba;
+	} else {
+		/* free and used space for mountpoint based on logvol integrity */
+		for (vpart = 0; vpart < num_vpart; vpart++) {
+			pos1 = &lvid->tables[0] + vpart;
+			pos2 = &lvid->tables[0] + num_vpart + vpart;
+			if (udf_rw32(*pos1) != (uint32_t) -1) {
+				*freeblks += udf_rw32(*pos1);
+				*sizeblks += udf_rw32(*pos2);
+			}
+		}
+	}
+	/* adjust for accounted uncommitted blocks */
+	for (vpart = 0; vpart < num_vpart; vpart++)
+		*freeblks -= ump->uncommitted_lbs[vpart];
+
+	if (*freeblks > UDF_DISC_SLACK) {
+		*freeblks -= UDF_DISC_SLACK;
+	} else {
+		*freeblks = 0;
+	}
+}
+
+
+static void
+udf_calc_vpart_freespace(struct udf_mount *ump, uint16_t vpart_num, uint64_t *freeblks)
+{
+	struct logvol_int_desc *lvid;
+	uint32_t *pos1;
+
+	lvid = ump->logvol_integrity;
+	*freeblks = 0;
+
+	/*
+	 * Sequentials media report free space directly (CD/DVD/BD-R), for the
+	 * other media we need the logical volume integrity.
+	 *
+	 * We sum all free space up here regardless of type.
+	 */
+
+	KASSERT(lvid);
+	if (ump->discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) {
+		/* XXX assumption at most two tracks open */
+		if (vpart_num == ump->data_part) {
+			*freeblks = ump->data_track.free_blocks;
+		} else {
+			*freeblks = ump->metadata_track.free_blocks;
+		}
+	} else {
+		/* free and used space for mountpoint based on logvol integrity */
+		pos1 = &lvid->tables[0] + vpart_num;
+		if (udf_rw32(*pos1) != (uint32_t) -1)
+			*freeblks += udf_rw32(*pos1);
+	}
+
+	/* adjust for accounted uncommitted blocks */
+	*freeblks -= ump->uncommitted_lbs[vpart_num];
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -898,11 +984,139 @@ udf_bitmap_free(struct udf_bitmap *bitmap, uint32_t lb_num, uint32_t num_lb)
 	}
 }
 
+/* --------------------------------------------------------------------- */
 
-/* allocate a contiguous sequence of sectornumbers */
-static int
-udf_allocate_space(struct udf_mount *ump, int udf_c_type,
-	uint16_t vpart_num, uint32_t num_lb, uint64_t *lmapping)
+/*
+ * We check for overall disc space with a margin to prevent critical
+ * conditions.  If disc space is low we try to force a sync() to improve our
+ * estimates.  When confronted with meta-data partition size shortage we know
+ * we have to check if it can be extended and we need to extend it when
+ * needed.
+ *
+ * A 2nd strategy we could use when disc space is getting low on a disc
+ * formatted with a meta-data partition is to see if there are sparse areas in
+ * the meta-data partition and free blocks there for extra data.
+ */
+
+void
+udf_do_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
+	uint16_t vpart_num, uint32_t num_lb)
+{
+	ump->uncommitted_lbs[vpart_num] += num_lb;
+	if (udf_node)
+		udf_node->uncommitted_lbs += num_lb;
+}
+
+
+void
+udf_do_unreserve_space(struct udf_mount *ump, struct udf_node *udf_node,
+	uint16_t vpart_num, uint32_t num_lb)
+{
+	ump->uncommitted_lbs[vpart_num] -= num_lb;
+	if (ump->uncommitted_lbs[vpart_num] < 0) {
+		DPRINTF(RESERVE, ("UDF: underflow on partition reservation, "
+			"part %d: %d\n", vpart_num,
+			ump->uncommitted_lbs[vpart_num]));
+		ump->uncommitted_lbs[vpart_num] = 0;
+	}
+	if (udf_node) {
+		udf_node->uncommitted_lbs -= num_lb;
+		if (udf_node->uncommitted_lbs < 0) {
+			DPRINTF(RESERVE, ("UDF: underflow of node "
+				"reservation : %d\n",
+				udf_node->uncommitted_lbs));
+			udf_node->uncommitted_lbs = 0;
+		}
+	}
+}
+
+
+int
+udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
+	int udf_c_type, uint16_t vpart_num, uint32_t num_lb, int can_fail)
+{
+	uint64_t freeblks;
+	uint64_t slack;
+	int i, error;
+
+	slack = 0;
+	if (can_fail)
+		slack = UDF_DISC_SLACK;
+
+	error = 0;
+	mutex_enter(&ump->allocate_mutex);
+
+	/* check if there is enough space available */
+	for (i = 0; i < 16; i++) {	/* XXX arbitrary number */
+		udf_calc_vpart_freespace(ump, vpart_num, &freeblks);
+		if (num_lb + slack < freeblks)
+			break;
+		/* issue SYNC */
+		DPRINTF(RESERVE, ("udf_reserve_space: issuing sync\n"));
+		mutex_exit(&ump->allocate_mutex);
+		udf_do_sync(ump, FSCRED, 0);
+		mutex_enter(&mntvnode_lock);
+		/* 1/4 second wait */
+		cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,
+			hz/4);
+		mutex_exit(&mntvnode_lock);
+		mutex_enter(&ump->allocate_mutex);
+	}
+
+	/* check if there is enough space available now */
+	udf_calc_vpart_freespace(ump, vpart_num, &freeblks);
+	if (num_lb + slack >= freeblks) {
+		DPRINTF(RESERVE, ("udf_reserve_space: try to juggle partitions\n"));
+		/* TODO juggle with data and metadata partitions if possible */
+	}
+
+	/* check if there is enough space available now */
+	udf_calc_vpart_freespace(ump, vpart_num, &freeblks);
+	if (num_lb + slack <= freeblks) {
+		udf_do_reserve_space(ump, udf_node, vpart_num, num_lb);
+	} else {
+		DPRINTF(RESERVE, ("udf_reserve_space: out of disc space\n"));
+		error = ENOSPC;
+	}
+
+	mutex_exit(&ump->allocate_mutex);
+	return error;
+}
+
+
+void
+udf_cleanup_reservation(struct udf_node *udf_node)
+{
+	struct udf_mount *ump = udf_node->ump;
+	int vpart_num;
+
+	mutex_enter(&ump->allocate_mutex);
+
+	/* compensate for overlapping blocks */
+	DPRINTF(RESERVE, ("UDF: overlapped %d blocks in count\n", udf_node->uncommitted_lbs));
+
+	vpart_num = udf_get_record_vpart(ump, udf_get_c_type(udf_node));
+	udf_do_unreserve_space(ump, udf_node, vpart_num, udf_node->uncommitted_lbs);
+
+	DPRINTF(RESERVE, ("\ttotal now %d\n", ump->uncommitted_lbs[vpart_num]));
+
+	/* sanity */
+	if (ump->uncommitted_lbs[vpart_num] < 0)
+		ump->uncommitted_lbs[vpart_num] = 0;
+
+	mutex_exit(&ump->allocate_mutex);
+}
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Allocate an extent of given length on given virt. partition. It doesn't
+ * have to be one stretch.
+ */
+
+int
+udf_allocate_space(struct udf_mount *ump, struct udf_node *udf_node,
+	int udf_c_type, uint16_t vpart_num, uint32_t num_lb, uint64_t *lmapping)
 {
 	struct mmc_trackinfo *alloc_track, *other_track;
 	struct udf_bitmap *bitmap;
@@ -921,8 +1135,6 @@ udf_allocate_space(struct udf_mount *ump, int udf_c_type,
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	KASSERT(lb_size == ump->discinfo.sector_size);
 
-	/* XXX TODO check disc space */
-
 	alloc_type =  ump->vtop_alloc[vpart_num];
 	is_node    = (udf_c_type == UDF_C_NODE);
 
@@ -933,8 +1145,14 @@ udf_allocate_space(struct udf_mount *ump, int udf_c_type,
 		/* search empty slot in VAT file */
 		KASSERT(num_lb == 1);
 		error = udf_search_free_vatloc(ump, &lb_num);
-		if (!error)
+		if (!error) {
 			*lmappos = lb_num;
+
+			/* reserve on the backing sequential partition since
+			 * that partition is credited back later */
+			udf_do_reserve_space(ump, udf_node,
+				ump->vtop[vpart_num], num_lb);
+		}
 		break;
 	case UDF_ALLOC_SEQUENTIAL :
 		/* sequential allocation on recordable media */
@@ -1024,12 +1242,17 @@ udf_allocate_space(struct udf_mount *ump, int udf_c_type,
 		break;
 	}
 
+	if (!error) {
+		/* credit our partition since we have committed the space */
+		udf_do_unreserve_space(ump, udf_node, vpart_num, num_lb);
+	}
+
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_ALLOC) {
 		lmappos = lmapping;
 		printf("udf_allocate_space, allocated logical lba :\n");
 		for (lb_num = 0; lb_num < num_lb; lb_num++) {
-			printf("%s %"PRIu64",", (lb_num > 0)?",":"", 
+			printf("%s %"PRIu64, (lb_num > 0)?",":"", 
 				*lmappos++);
 		}
 		printf("\n");
@@ -1132,24 +1355,6 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
 
 /* --------------------------------------------------------------------- */
 
-int
-udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type,
-	uint32_t num_lb, uint16_t vpartnr, uint64_t *lmapping)
-{
-	/* TODO properly maintain uncomitted_lb per partition */
-
-	/* reserve size for VAT allocated data */
-	if (ump->vtop_alloc[vpartnr] == UDF_ALLOC_VAT) {
-		mutex_enter(&ump->allocate_mutex);
-			ump->uncomitted_lb += num_lb;
-		mutex_exit(&ump->allocate_mutex);
-	}
-
-	return udf_allocate_space(ump, udf_c_type, vpartnr, num_lb, lmapping);
-}
-
-/* --------------------------------------------------------------------- */
-
 /*
  * Allocate a buf on disc for direct write out. The space doesn't have to be
  * contiguous as the caller takes care of this.
@@ -1179,12 +1384,7 @@ udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
 	KASSERT(lb_size == ump->discinfo.sector_size);
 
 	/* select partition to record the buffer on */
-	vpart_num = ump->data_part;
-	if (udf_c_type == UDF_C_NODE)
-		vpart_num = ump->node_part;
-	if (udf_c_type == UDF_C_FIDS)
-		vpart_num = ump->fids_part;
-	*vpart_nump = vpart_num;
+	vpart_num = *vpart_nump = udf_get_record_vpart(ump, udf_c_type);
 
 	if (udf_c_type == UDF_C_NODE) {
 		/* if not VAT, its allready allocated */
@@ -1196,21 +1396,15 @@ udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
 	}
 
 	/* do allocation on the selected partition */
-	error = udf_allocate_space(ump, udf_c_type,
+	error = udf_allocate_space(ump, udf_node, udf_c_type,
 			vpart_num, num_lb, lmapping);
 	if (error) {
-		/* ARGH! we've not done our accounting right! */
+		/*
+		 * ARGH! we haven't done our accounting right! it should
+		 * allways succeed.
+		 */
 		panic("UDF disc allocation accounting gone wrong");
 	}
-
-	/* commit our sector count */
-	mutex_enter(&ump->allocate_mutex);
-		if (num_lb > ump->uncomitted_lb) {
-			ump->uncomitted_lb = 0;
-		} else {
-			ump->uncomitted_lb -= num_lb;
-		}
-	mutex_exit(&ump->allocate_mutex);
 
 	/* If its userdata or FIDs, record its allocation in its node. */
 	if ((udf_c_type == UDF_C_USERDATA) ||
@@ -1608,11 +1802,17 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 		if (ext == NULL) {
 			DPRINTF(ALLOC,("adding allocation extent %d\n", extnr));
 
-			error = udf_pre_allocate_space(ump, UDF_C_NODE, 1,
-					vpart_num, &lmapping);
+			error = udf_reserve_space(ump, NULL, UDF_C_NODE,
+					vpart_num, 1, /* can fail */ false);
+			if (error) {
+				printf("UDF: couldn't reserve space for AED!\n");
+				return error;
+			}
+			error = udf_allocate_space(ump, NULL, UDF_C_NODE,
+					vpart_num, 1, &lmapping);
 			lb_num = lmapping;
 			if (error)
-				return error;
+				panic("UDF: couldn't allocate AED!\n");
 
 			/* initialise pointer to location */
 			memset(&l_icb, 0, sizeof(struct long_ad));
@@ -2151,7 +2351,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	uint8_t *data_pos, *evacuated_data;
 	int addr_type;
 	int slot, cpy_slot;
-	int isdir, eof, error;
+	int eof, error;
 
 	DPRINTF(ALLOC, ("udf_grow_node\n"));
 
@@ -2252,9 +2452,8 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 		}
 
 		/* convert to a normal alloc and select type */
-		isdir    = (vp->v_type == VDIR);
 		my_part  = udf_rw16(udf_node->loc.loc.part_num);
-		dst_part = isdir? ump->fids_part : ump->data_part;
+		dst_part = udf_get_record_vpart(ump, udf_get_c_type(udf_node));
 		addr_type = UDF_ICB_SHORT_ALLOC;
 		if (dst_part != my_part)
 			addr_type = UDF_ICB_LONG_ALLOC;
@@ -2416,7 +2615,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 	uint64_t foffset, end_foffset;
 	uint64_t orig_inflen, orig_lbrec, new_inflen, new_lbrec;
 	uint32_t lb_size, dscr_size, crclen;
-	uint32_t slot_offset;
+	uint32_t slot_offset, slot_offset_lb;
 	uint32_t len, flags, max_len;
 	uint32_t num_lb, lb_num;
 	uint32_t max_l_ad, l_ad, l_ea;
@@ -2562,9 +2761,13 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		vpart_num = udf_rw16(s_ad.loc.part_num);
 
 		if (flags == UDF_EXT_ALLOCATED) {
-			/* note: round DOWN on num_lb */
-			lb_num += (slot_offset + lb_size -1) / lb_size;
-			num_lb  = (len - slot_offset) / lb_size;
+			/* calculate extent in lb, and offset in lb */
+			num_lb = (len + lb_size -1) / lb_size;
+			slot_offset_lb = (slot_offset + lb_size -1) / lb_size;
+
+			/* adjust our slot */
+			lb_num += slot_offset_lb;
+			num_lb -= slot_offset_lb;
 
 			udf_free_allocated_space(ump, lb_num, vpart_num, num_lb);
 		}
