@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.75 2009/06/23 04:40:29 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.76 2009/07/09 07:30:17 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -130,7 +130,7 @@ XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
 
 # XXX oh yeah, fix me later
-XORG_VERSION_CURRENT="(((1) * 10000000) + ((6) * 100000) + ((1) * 1000) + 901)"
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((6) * 100000) + ((2) * 1000) + 0)"
 .endif
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
