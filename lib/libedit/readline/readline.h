@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.26 2009/03/31 17:53:03 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.27 2009/07/09 19:02:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #define _READLINE_H_
 
 #include <sys/types.h>
+#include <stdio.h>
 
 /* list of readline stuff supported by editline library's readline wrapper */
 
