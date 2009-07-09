@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.197 2009/06/21 20:08:36 mrg Exp $
+$NetBSD: UPDATING,v 1.198 2009/07/09 07:31:54 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20090709:
+	Native Xorg was upgraded again.  Builds will probably fail again
+	without a clean objdir, at least for src/external/mit/xorg.
 
 20090616:
 	Native Xorg was upgraded.  Builds will need a clean objdir for
