@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.46 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.47 2009/07/09 21:43:16 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.46 2009/06/28 15:18:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.47 2009/07/09 21:43:16 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -252,6 +252,12 @@ IDTVEC(intr_lapic_tlb_bcast)
 	pushl	%ebx
 	pushl	%ecx
 	pushl	%edx
+	pushl	%ds
+	pushl	%fs
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	$GSEL(GCPU_SEL, SEL_KPL), %edx
+	movl	%eax, %ds
+	movl	%edx, %fs
 	/* Find out what we need to invalidate. */
 	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
 	movl	%ss:_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
@@ -269,6 +275,8 @@ IDTVEC(intr_lapic_tlb_bcast)
 	/* Ack the request, restore state & return. */
 	lock
 	incl	%ss:_C_LABEL(pmap_mbox)+MB_TAIL
+	popl	%fs
+	popl	%ds
 	popl	%edx
 	popl	%ecx
 	popl	%ebx
