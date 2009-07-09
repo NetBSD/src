@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.23 2009/07/03 10:31:19 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.24 2009/07/09 15:39:28 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ struct desc {
 #define  SROM_SR	(1U<<11)	/* SEEPROM select */
 #define PAR0_CSR25	0xa4		/* MAC 3:0 */
 #define PAR1_CSR26	0xa8		/* MAC 5:4 */
+#define AN_OMODE	0xfc		/* operation mode */
 
 #define FRAMESIZE	1536
 
@@ -127,9 +128,9 @@ tlp_match(unsigned tag, void *data)
 void *
 tlp_init(unsigned tag, void *data)
 {
-	unsigned val, i;
 	struct local *l;
 	struct desc *txd, *rxd;
+	unsigned i, val, fdx;
 	uint8_t *en;
 	
 	l = ALLOC(struct local, 2 * sizeof(struct desc)); /* desc alignment */
@@ -164,6 +165,15 @@ tlp_init(unsigned tag, void *data)
 
 	mii_initphy(l);
 	mii_dealan(l, 5);
+
+	val = CSR_READ(l, AN_OMODE);
+	if (val & (1U << 29)) {
+		printf("%s", (val & (1U << 31)) ? "100Mbps" : "10Mbps");
+		fdx = !!(val & (1U << 30));
+		if (fdx)
+			printf("-FDX");
+		printf("\n");
+	}
 
 	txd = &l->txd[0];
 	txd[1].xd1 = htole32(T1_TER);
@@ -302,7 +312,7 @@ mii_read(struct local *l, int phy, int reg)
 	for (i = 0; i < 18; i++) {
 		CSR_WRITE(l, SPR_CSR9, MII_MIDIR);
 		DELAY(1);
-		rv = (data << 1) | !!(CSR_READ(l, SPR_CSR9) & MII_MDI);
+		rv = (rv << 1) | !!(CSR_READ(l, SPR_CSR9) & MII_MDI);
 		CSR_WRITE(l, SPR_CSR9, MII_MIDIR | MII_MDC);
 		DELAY(1);
 	}
