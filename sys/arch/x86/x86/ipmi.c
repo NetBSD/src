@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.36 2009/06/29 12:30:09 pgoyette Exp $ */
+/*	$NetBSD: ipmi.c,v 1.37 2009/07/09 15:50:26 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.36 2009/06/29 12:30:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.37 2009/07/09 15:50:26 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1374,27 +1374,27 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	    data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
 
 	limits->sel_flags = 0;
-	if (data[0] & 0x20) {
+	if (data[0] & 0x20 && data[6] != 0xff) {
 		limits->sel_critmax = ipmi_convert_sensor(&data[6], psensor);
 		limits->sel_flags |= PROP_CRITMAX;
 	}
-	if (data[0] & 0x10) {
+	if (data[0] & 0x10 && data[5] != 0xff) {
 		limits->sel_critmax = ipmi_convert_sensor(&data[5], psensor);
 		limits->sel_flags |= PROP_CRITMAX;
 	}
-	if (data[0] & 0x08) {
+	if (data[0] & 0x08 && data[4] != 0xff) {
 		limits->sel_warnmax = ipmi_convert_sensor(&data[4], psensor);
 		limits->sel_flags |= PROP_WARNMAX;
 	}
-	if (data[0] & 0x04) {
+	if (data[0] & 0x04 && data[3] != 0x00) {
 		limits->sel_critmin = ipmi_convert_sensor(&data[3], psensor);
 		limits->sel_flags |= PROP_CRITMIN;
 	}
-	if (data[0] & 0x02) {
+	if (data[0] & 0x02 && data[2] != 0x00) {
 		limits->sel_critmin = ipmi_convert_sensor(&data[2], psensor);
 		limits->sel_flags |= PROP_CRITMIN;
 	}
-	if (data[0] & 0x01) {
+	if (data[0] & 0x01 && data[1] != 0x00) {
 		limits->sel_warnmin = ipmi_convert_sensor(&data[1], psensor);
 		limits->sel_flags |= PROP_WARNMIN;
 	}
@@ -1428,11 +1428,11 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 			return ENVSYS_SWARNOVER;
 
 		if (psensor->i_limits->sel_flags & PROP_WARNMIN &&
-		    edata->value_cur > psensor->i_limits->sel_warnmin)
+		    edata->value_cur < psensor->i_limits->sel_warnmin)
 			return ENVSYS_SWARNUNDER;
 
 		if (psensor->i_limits->sel_flags & PROP_CRITMIN &&
-		    edata->value_cur > psensor->i_limits->sel_critmin)
+		    edata->value_cur < psensor->i_limits->sel_critmin)
 			return ENVSYS_SCRITUNDER;
 
 		break;
