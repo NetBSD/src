@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.200.4.1 2009/07/09 19:38:27 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200.4.1 2009/07/09 19:38:27 snj Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -671,8 +671,10 @@ skip_ipsec:
 	if (!ipsec_outdone(m)) {
 		s = splsoftnet();
 		if (inp != NULL &&
-				IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+		    IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
+			splx(s);
 			goto spd_done;
+		}
 		sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags,
 				&error, inp);
 		/*
