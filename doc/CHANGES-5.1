@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.45 2009/07/05 14:22:00 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.46 2009/07/09 19:57:47 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1505,4 +1505,43 @@ crypto/dist/openssl/ssl/d1_both.c		1.5
 
 	Fix build problem from ticket 850 on non-64bit systems.
 	[spz, ticket #851]
+
+sys/netinet/ip_output.c				1.203
+
+	Fix PR kern/41659: add missing splx() in FAST_IPSEC code.
+	[martin, ticket #847]
+
+external/mit/xorg/server/drivers/xf86-video-mga/Makefile 1.6
+
+	Enable EXA and XAA support in xf86-video-mga.
+	[mrg, ticket #849]
+
+sys/fs/udf/udf.h				patch
+sys/fs/udf/udf_allocation.c			patch
+sys/fs/udf/udf_osta.c				patch
+sys/fs/udf/udf_readwrite.c			patch
+sys/fs/udf/udf_strat_bootstrap.c		patch
+sys/fs/udf/udf_strat_direct.c			patch
+sys/fs/udf/udf_strat_rmw.c			patch
+sys/fs/udf/udf_strat_sequential.c		patch
+sys/fs/udf/udf_subr.c				patch
+sys/fs/udf/udf_subr.h				patch
+sys/fs/udf/udf_vfsops.c				patch
+sys/fs/udf/udf_vnops.c				patch
+
+	Numerous UDF improvements:
+	- a much saner rmw backend
+	- free space management done right
+	- the high system time usage when encountering huge numbers
+	  of nodes are a thing of the past due to refactoring
+	- various small fixes
+	[reinoud, ticket #852]
+
+sys/fs/udf/udf_strat_rmw.c			1.22
+
+	Fix alternating oddity in RMW strategy. Even when in the reading
+	state it would push out elements to fillup-read only when the
+	time had come for them.  This could then trickle feed the read
+	queue slowly, but fast enough to prevent it from switching state.
+	[reinoud, ticket #853]
 
