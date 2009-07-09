@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.199 2009/07/09 07:50:24 dholland Exp $
+$NetBSD: UPDATING,v 1.200 2009/07/09 08:04:32 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -123,6 +123,20 @@ Recent changes:
 20080813:
 	MKDEBUG build was broken because the .depend files did not know
 	about .go files. You need to remove all .depend files and rebuild.
+
+20080802:
+	A regression in binary compatibility for pthread_mutex_t has
+	been fixed. Unfortunately, the price is breaking compatibility
+	for -current.
+
+	Threaded programs (using libpthread) and C++ programs (using
+	libstdc++) compiled after 20070907 and before 20080802 need to
+	be recompiled.
+
+	One way to find affected pkgsrc packages:
+
+	  $ grep REQUIRES=/usr/lib/libpthread /var/db/pkg/*/+BUILD_INFO
+	  $ grep REQUIRES=/usr/lib/libstdc++ /var/db/pkg/*/+BUILD_INFO
 
 20080731:
 	WAPBL (metadata journaling support) has been added, but at this
