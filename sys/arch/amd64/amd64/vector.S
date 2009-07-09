@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.30 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.31 2009/07/09 21:43:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -524,6 +524,10 @@ IDTVEC(intr_lapic_tlb_mcast)
  * Broadcast TLB shootdown handler for kernel_pmap.
  */
 IDTVEC(intr_lapic_tlb_bcast)
+	testq	$SEL_UPL,8(%rsp)
+	jz	0f
+	swapgs
+0:
 	/* Save state. */
 	pushq	%rax
 	pushq	%rdi
@@ -556,6 +560,10 @@ IDTVEC(intr_lapic_tlb_bcast)
 	popq	%rsi
 	popq	%rdi
 	popq	%rax
+	testq	$SEL_UPL, 8(%rsp)
+	jz	5f
+	swapgs
+5:
 	iretq
 3:
 	testq	%rdi, %rdi

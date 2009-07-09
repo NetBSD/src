@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.1 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.2 2009/07/09 21:43:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.1 2009/06/28 15:18:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.2 2009/07/09 21:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,7 +81,9 @@ static vmem_t *		uvm_emap_vmem;
 void
 uvm_emap_sysinit(void)
 {
+	struct uvm_cpu *ucpu;
 	size_t qmax;
+	u_int i;
 
 	uvm_emap_size = roundup(uvm_emap_size, PAGE_SIZE);
 	qmax = 16 * PAGE_SIZE;
@@ -98,7 +100,12 @@ uvm_emap_sysinit(void)
 		panic("uvm_emap_init: vmem creation failed");
 	}
 
+	/* Initial generation value is 1. */
 	uvm_emap_gen = 1;
+	for (i = 0; i < MAXCPUS; i++) {
+		ucpu = &uvm.cpus[i];
+		ucpu->emap_gen = 1;
+	}
 }
 
 /*
