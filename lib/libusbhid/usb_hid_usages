@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.3 2007/05/24 18:05:11 plunky Exp $
+# $NetBSD: usb_hid_usages,v 1.4 2009/07/10 22:11:58 jakllsch Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -261,7 +261,7 @@
 	0x33	Keyboard ; and :
 	0x34	Keyboard ' and "
 	0x35	Keyboard Grave Accent and Tilde
-	0x36	Keyboard, and <
+	0x36	Keyboard , and <
 	0x37	Keyboard . and >
 	0x38	Keyboard / and ?
 	0x39	Keyboard Caps Lock
@@ -372,6 +372,52 @@
 	0xA2	Keyboard Clear/Again
 	0xA3	Keyboard CrSel/Props
 	0xA4	Keyboard ExSel
+	0xB0	Keypad 00
+	0xB1	Keypad 000
+	0xB2	Thousands Separator
+	0xB3	Decimal Separator
+	0xB4	Currency Unit
+	0xB5	Currency Sub-unit
+	0xB6	Keypad (
+	0xB7	Keypad )
+	0xB8	Keypad {
+	0xB9	Keypad }
+	0xBA	Keypad Tab
+	0xBB	Keypad Backspace
+	0xBC	Keypad A
+	0xBD	Keypad B
+	0xBE	Keypad C
+	0xBF	Keypad D
+	0xC0	Keypad E
+	0xC1	Keypad F
+	0xC2	Keypad XOR
+	0xC3	Keypad ^
+	0xC4	Keypad %
+	0xC5	Keypad <
+	0xC6	Keypad >
+	0xC7	Keypad &
+	0xC8	Keypad &&
+	0xC9	Keypad |
+	0xCA	Keypad ||
+	0xCB	Keypad :
+	0xCC	Keypad #
+	0xCD	Keypad Space
+	0xCE	Keypad @
+	0xCF	Keypad !
+	0xD0	Keypad Memory Store
+	0xD1	Keypad Memory Recall
+	0xD2	Keypad Memory Clear
+	0xD3	Keypad Memory Add
+	0xD4	Keypad Memory Subtract
+	0xD5	Keypad Memory Multiply
+	0xD6	Keypad Memory Divide
+	0xD7	Keypad +/-
+	0xD8	Keypad Clear
+	0xD9	Keypad Clear Entry
+	0xDA	Keypad Binary
+	0xDB	Keypad Octal
+	0xDC	Keypad Decimal
+	0xDD	Keypad Hexadecimal
 	0xE0	Keyboard LeftControl
 	0xE1	Keyboard LeftShift
 	0xE2	Keyboard LeftAlt
@@ -903,8 +949,8 @@
 	0x48	Top Corner Distortion Balance
 	0x4A	Bottom Corner Distortion Control
 	0x4C	Bottom Corner Distortion Balance
-	0x56	Moiré Horizontal
-	0x58	Moiré Vertical
+	0x56	Moire Horizontal
+	0x58	Moire Vertical
 	0x5E	Input Level Select
 	0x60	Input Source Select
 	0x62	Stereo Mode
