@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.70 2009/07/08 17:28:53 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.71 2009/07/10 15:27:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.70 2009/07/08 17:28:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.71 2009/07/10 15:27:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -480,15 +480,30 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
+	/*
+	 * If driver provides method to retrieve its internal limit
+	 * values, call it.  If it returns any values, set the flag
+	 * PROP_DRIVER_LIMITS to indicate that the driver can process
+	 * all the limits we have.  (If userland limits are specified
+	 * later and the driver cannot handle them, this flag will be
+	 * cleared.)
+	 *
+	 * If the driver cannot or does not provide us with limit values
+	 * we cannot monitor limits now;  we get another chance to create
+	 * the FMONLIMITS entry later if userland specifies some limits.
+	 */
 	lims.sel_flags = 0;
-	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS) {
+	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS)
 		if (sed_t->sed_sme->sme_get_limits)
 			(*sed_t->sed_sme->sme_get_limits)(sed_t->sed_sme,
 							  sed_t->sed_edata,
 							  &lims);
-		else
-			sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
-	}
+	if (lims.sel_flags)
+		lims.sel_flags |= PROP_DRIVER_LIMITS;
+	else
+		sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
+
+	/* Register the events that were specified */
 
 	SEE_REGEVENT(ENVSYS_FMONCRITICAL,
 		     PENVSYS_EVENT_CRITICAL,
@@ -645,18 +660,22 @@ sme_events_worker(struct work *wk, void *arg)
 	 */
 	case PENVSYS_EVENT_LIMITS:
 	case PENVSYS_EVENT_CAPACITY:
-#define __EXCEED_LIM(lim, rel) ((lim) && edata->value_cur rel (lim))
+#define	__EXCEED_LIM(valid, lim, rel) \
+		((see->see_lims.sel_flags & (valid)) && \
+		 (edata->value_cur rel (see->see_lims.lim)))
+
 		if ((see->see_lims.sel_flags & PROP_DRIVER_LIMITS) == 0) {
-			if __EXCEED_LIM(see->see_lims.sel_critmin, <)
+			if __EXCEED_LIM(PROP_CRITMIN | PROP_BATTCAP,
+					sel_critmin, <)
 				edata->state = ENVSYS_SCRITUNDER;
-			else if __EXCEED_LIM(see->see_lims.sel_warnmin, <)
+			else if __EXCEED_LIM(PROP_WARNMIN | PROP_BATTWARN, 
+					sel_warnmin, <)
 				edata->state = ENVSYS_SWARNUNDER;
-			else if __EXCEED_LIM(see->see_lims.sel_warnmax, >)
+			else if __EXCEED_LIM(PROP_WARNMAX, sel_warnmax, >)
 				edata->state = ENVSYS_SWARNOVER;
-			else if __EXCEED_LIM(see->see_lims.sel_critmax, >)
+			else if __EXCEED_LIM(PROP_CRITMAX, sel_critmax, >)
 				edata->state = ENVSYS_SCRITOVER;
 		}
-		/* FALLTHROUGH */
 #undef	__EXCEED_LIM
 
 		/*
