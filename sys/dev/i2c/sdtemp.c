@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.6 2009/06/14 19:44:46 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.7 2009/07/10 15:30:45 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.6 2009/06/14 19:44:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.7 2009/07/10 15:30:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	struct sdtemp_softc *sc = sme->sme_cookie;
 	uint16_t lim;
 
-	limits->sel_flags = PROP_DRIVER_LIMITS;
+	limits->sel_flags = 0;
 	iic_acquire_bus(sc->sc_tag, 0);
 	if (sdtemp_read_16(sc, SDTEMP_REG_LOWER_LIM, &lim) == 0 && lim != 0) {
 		limits->sel_warnmin = sdtemp_decode_temp(sc, lim);
