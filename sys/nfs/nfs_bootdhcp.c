@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.49 2009/07/10 01:29:54 roy Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.50 2009/07/10 02:41:39 roy Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.49 2009/07/10 01:29:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.50 2009/07/10 02:41:39 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -747,15 +747,23 @@ bootp_extract(struct bootp *bootp, int replylen,
 #endif
 		switch (tag) {
 		    case TAG_SUBNET_MASK:
+			if (len < 4) {
+				printf("nfs_boot: subnet mask < 4 bytes\n");
+				break;
+			}
 			memcpy(&netmask, p, 4);
 			break;
 		    case TAG_GATEWAY:
 			/* Routers */
+			if (len < 4) {
+				printf("nfs_boot: routers < 4 bytes\n");
+				break;
+			}
 			memcpy(&gateway, p, 4);
 			break;
 		    case TAG_HOST_NAME:
 			if (len >= sizeof(hostname)) {
-				printf("nfs_boot: host name >= %lu bytes",
+				printf("nfs_boot: host name >= %lu bytes\n",
 				       (u_long)sizeof(hostname));
 				break;
 			}
@@ -764,7 +772,7 @@ bootp_extract(struct bootp *bootp, int replylen,
 			break;
 		    case TAG_DOMAIN_NAME:
 			if (len >= sizeof(domainname)) {
-				printf("nfs_boot: domain name >= %lu bytes",
+				printf("nfs_boot: domain name >= %lu bytes\n",
 				       (u_long)sizeof(domainname));
 				break;
 			}
@@ -774,7 +782,7 @@ bootp_extract(struct bootp *bootp, int replylen,
 		    case TAG_ROOT_PATH:
 			/* Leave some room for the server name. */
 			if (len >= (MNAMELEN-10)) {
-				printf("nfs_boot: rootpath >=%d bytes",
+				printf("nfs_boot: rootpath >= %d bytes\n",
 				       (MNAMELEN-10));
 				break;
 			}
@@ -783,6 +791,10 @@ bootp_extract(struct bootp *bootp, int replylen,
 			break;
 		    case TAG_SWAP_SERVER:
 			/* override NFS server address */
+			if (len < 4) {
+				printf("nfs_boot: swap server < 4 bytes\n");
+				break;
+			}
 			memcpy(&rootserver, p, 4);
 			break;
 #ifdef NFS_BOOT_DHCP
