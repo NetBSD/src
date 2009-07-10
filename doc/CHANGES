@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1249 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1250 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -273,6 +273,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	apropos(1): Add -S and -s support, for searching by machine and
 		section [wiz 20090508]
 	file(1): Import 5.03 [christos 20090508]
+	hp700: ucas (CAS for user-space address) support for hp700.
+		[skrll 20090508]
 	dhcpcd(8): Import dhcpcd-5.0.2 [roy 20090510]
 	dhcpcd(8): Import dhcpcd-5.0.3 [roy 20090511]
 	bluetooth: Update the Bluetooth service discovery API and merge it
