@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fsck_root,v 1.2 2009/04/28 13:08:51 apb Exp $
+# $NetBSD: fsck_root,v 1.3 2009/07/10 20:02:21 christos Exp $
 #
 
 # PROVIDE: fsck_root
@@ -32,37 +32,19 @@ fsck_root_start()
 			echo "Not checking /: fs_passno = 0 in ${fstab_file}"
 			return
 			;;
-		*:/:*)	break
+		*:/:*)	case "${fs_spec}" in
+			*:*)
+				echo "Not checking /: nfs mounted"
+				return
+				;;
+			esac
 			;;
 		esac
 	done <"${fstab_file}"
 
 	echo "Starting root file system check:"
 	fsck $fsck_flags /
-	local fsck_error="$?"
-	case $fsck_error in
-	0)	# OK
-		return
-		;;
-	2)	# Needs re-run, still fs errors
-		echo "file system still has errors; re-run fsck manually!"
-		;;
-	4)	# Root modified
-		echo "Root filesystem was modified, rebooting ..."
-		reboot
-		echo "Reboot failed; help!"
-		;;
-	8)	# Check failed
-		echo "Automatic file system check failed; help!"
-		;;
-	12)	# Got signal
-		echo "Boot interrupted."
-		;;
-	*)
-		echo "Unknown error $fsck_error; help!"
-		;;
-	esac
-	stop_boot
+	handle_fsck_error "$?"
 }
 
 load_rc_config $name
