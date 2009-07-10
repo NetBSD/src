@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.89 2009/07/08 17:54:27 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.90 2009/07/10 13:09:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.89 2009/07/08 17:54:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.90 2009/07/10 13:09:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1633,76 +1633,6 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			if (error)
 				break;
 		}
-
-#ifdef NOTYET
-		/*
-		 * Update limits from driver if they've been changed
-		 */
-		if ((edata->flags & ENVSYS_FLIMITS_CHANGED) == 0)
-			continue;
-
-		if (edata->upropset & PROP_DRVR_CRITMAX) {
-			error = sme_sensor_upint32(dict, "critical-max",
-						   edata->lim_critmax);
-			if (error)
-				break;
-			edata->upropset &= ~PROP_USER_CRITMAX;
-		} else if ((edata->upropset & PROP_USER_CRITMAX) == 0)
-			prop_dictionary_remove(dict, "critical-max");
-
-		if (edata->upropset & PROP_DRVR_WARNMAX) {
-			error = sme_sensor_upint32(dict, "warning-max",
-						   edata->lim_warnmax);
-			if (error)
-				break;
-			edata->upropset &= ~PROP_USER_WARNMAX;
-		} else if ((edata->upropset & PROP_USER_WARNMAX) == 0)
-			prop_dictionary_remove(dict, "warning-max");
-
-		if (edata->flags & ENVSYS_FPERCENT) {
-			if (edata->upropset & PROP_DRVR_BATTWARN) {
-				error = sme_sensor_upint32(dict,
-							   "warning-capacity",
-							   edata->lim_warnmin);
-				if (error)
-					break;
-				edata->upropset &= ~PROP_USER_BATTWARN;
-			} else if ((edata->upropset & PROP_USER_BATTWARN) == 0)
-				prop_dictionary_remove(dict,
-						       "warning-capacity");
-
-			if (edata->upropset & PROP_DRVR_BATTCAP) {
-				error = sme_sensor_upint32(dict,
-							   "critical-capacity",
-							   edata->lim_critmin);
-				if (error)
-					break;
-				edata->upropset &= ~PROP_USER_BATTCAP;
-			} else if ((edata->upropset & PROP_USER_BATTCAP) == 0)
-				prop_dictionary_remove(dict,
-						       "critical-capacity");
-		} else {
-			if (edata->upropset & PROP_DRVR_WARNMIN) {
-				error = sme_sensor_upint32(dict,
-							   "warning-min",
-							   edata->lim_warnmin);
-				if (error)
-					break;
-				edata->upropset &= ~PROP_USER_WARNMIN;
-			} else if ((edata->upropset & PROP_USER_WARNMIN) == 0)
-				prop_dictionary_remove(dict, "warning-min");
-
-			if (edata->upropset & PROP_DRVR_CRITMIN) {
-				error = sme_sensor_upint32(dict,
-							   "critical-min",
-							   edata->lim_critmin);
-				if (error)
-					break;
-				edata->upropset &= ~PROP_USER_CRITMIN;
-			} else if ((edata->upropset & PROP_USER_CRITMIN) == 0)
-				prop_dictionary_remove(dict, "critical-min");
-		}
-#endif
 	}
 
 	return error;
