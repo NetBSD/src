@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.75 2009/04/28 03:03:52 reed Exp $
+# $NetBSD: rc.subr,v 1.76 2009/07/10 20:02:21 christos Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -928,6 +928,37 @@ backup_file()
 			;;
 		esac
 	fi
+}
+
+#
+# handle_fsck_error fsck_exit_code
+#	Take action depending on the return code from fsck.
+#
+handle_fsck_error()
+{
+	case $1 in
+	0)	# OK
+		return
+		;;
+	2)	# Needs re-run, still fs errors
+		echo "File system still has errors; re-run fsck manually!"
+		;;
+	4)	# Root modified
+		echo "Root filesystem was modified, rebooting ..."
+		reboot -n
+		echo "Reboot failed; help!"
+		;;
+	8)	# Check failed
+		echo "Automatic file system check failed; help!"
+		;;
+	12)	# Got signal
+		echo "Boot interrupted."
+		;;
+	*)
+		echo "Unknown error $1; help!"
+		;;
+	esac
+	stop_boot
 }
 
 _rc_subr_loaded=:
