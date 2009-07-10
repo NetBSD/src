@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1250 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1251 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -316,3 +316,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[rmind 20090628]
 	dhcpcd(8): Import dhcpcd-5.0.5 [roy 20090704]
 	dhcpcd(8): Import dhcpcd-5.0.6 [roy 20090708]
+	sysmon_envsys(8): Enhancements to allow access to driver-internal  
+		limit values [pgoyette 20090710]
+
