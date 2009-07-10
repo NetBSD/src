@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.50 2009/07/10 02:41:39 roy Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.51 2009/07/10 12:16:31 roy Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.50 2009/07/10 02:41:39 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.51 2009/07/10 12:16:31 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -445,6 +445,34 @@ warn:
 	return (-1);
 }
 
+static void
+bootp_addvend(u_char *area)
+{
+#ifdef NFS_BOOT_DHCP
+	char vci[64];
+	int vcilen;
+	
+	*area++ = TAG_PARAM_REQ;
+	*area++ = 6;
+	*area++ = TAG_SUBNET_MASK;
+	*area++ = TAG_GATEWAY;
+	*area++ = TAG_HOST_NAME;
+	*area++ = TAG_DOMAIN_NAME;
+	*area++ = TAG_ROOT_PATH;
+	*area++ = TAG_SWAP_SERVER;
+
+	/* Insert a NetBSD Vendor Class Identifier option. */
+	snprintf(vci, sizeof(vci), "%s:%s:kernel:%s", ostype, MACHINE,
+	    osrelease);
+	vcilen = strlen(vci);
+	*area++ = TAG_CLASSID;
+	*area++ = vcilen;
+	(void)memcpy(area, vci, vcilen);
+	area += vcilen;
+#endif
+	*area = TAG_END;	
+}
+
 static int
 bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 {
@@ -458,11 +486,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	const u_char *haddr;
 	u_char hafmt, halen;
 	struct bootpcontext bpc;
-#ifdef NFS_BOOT_DHCP
-	char vci[64];
-	int vcilen;
 	unsigned int index;
-#endif
 
 	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp, NULL);
 	if (error) {
@@ -586,34 +610,13 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 #endif
 	/* Fill-in the vendor data. */
 	memcpy(bootp->bp_vend, vm_rfc1048, 4);
-#ifdef NFS_BOOT_DHCP
 	index = 4;
+#ifdef NFS_BOOT_DHCP
 	bootp->bp_vend[index++] = TAG_DHCP_MSGTYPE;
 	bootp->bp_vend[index++] = 1;
 	bootp->bp_vend[index++] = DHCPDISCOVER;
-	/* Request the paramters we need. */
-	bootp->bp_vend[index++] = TAG_PARAM_REQ;
-	bootp->bp_vend[index++] = 6;
-	bootp->bp_vend[index++] = TAG_SUBNET_MASK;
-	bootp->bp_vend[index++] = TAG_GATEWAY;
-	bootp->bp_vend[index++] = TAG_HOST_NAME;
-	bootp->bp_vend[index++] = TAG_DOMAIN_NAME;
-	bootp->bp_vend[index++] = TAG_ROOT_PATH;
-	bootp->bp_vend[index++] = TAG_SWAP_SERVER;
-	/*
-	 * Insert a NetBSD Vendor Class Identifier option.
-	 */
-	snprintf(vci, sizeof(vci), "%s:%s:kernel:%s", ostype, MACHINE,
-	    osrelease);
-	vcilen = strlen(vci);
-	bootp->bp_vend[index++] = TAG_CLASSID;
-	bootp->bp_vend[index++] = vcilen;
-	memcpy(&bootp->bp_vend[index], vci, vcilen);
-	index += vcilen;
-	bootp->bp_vend[index] = TAG_END;
-#else
-	bootp->bp_vend[index] = TAG_END;
 #endif
+	bootp_addvend(&bootp->bp_vend[index]);
 
 	bpc.xid = xid;
 	bpc.haddr = haddr;
@@ -649,23 +652,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 		leasetime = htonl(300);
 		memcpy(&bootp->bp_vend[index], &leasetime, 4);
 		index += 4;
-		/* Request the paramters we need. */
-		bootp->bp_vend[index++] = TAG_PARAM_REQ;
-		bootp->bp_vend[index++] = 6;
-		bootp->bp_vend[index++] = TAG_SUBNET_MASK;
-		bootp->bp_vend[index++] = TAG_GATEWAY;
-		bootp->bp_vend[index++] = TAG_HOST_NAME;
-		bootp->bp_vend[index++] = TAG_DOMAIN_NAME;
-		bootp->bp_vend[index++] = TAG_ROOT_PATH;
-		bootp->bp_vend[index++] = TAG_SWAP_SERVER;
-		/*
-		 * Insert a NetBSD Vendor Class Identifier option.
-		 */
-		bootp->bp_vend[index++] = TAG_CLASSID;
-		bootp->bp_vend[index++] = vcilen;
-		memcpy(&bootp->bp_vend[index], vci, vcilen);
-		index += vcilen;
-		bootp->bp_vend[index] = TAG_END;
+		bootp_addvend(&bootp->bp_vend[index]);
 
 		bpc.expected_dhcpmsgtype = DHCPACK;
 
