@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.1 2005/12/20 19:28:51 christos Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.2 2009/07/11 08:48:51 dsl Exp $")
 #endif
 
 ENTRY(strlen)
@@ -74,9 +74,9 @@ ENTRY(strlen)
 	 * (3)  ((x - 0x01....01) & 0x80....80)
 	 *
 	 * always evaluates to a non-zero value if any of the bytes in
-	 * the original word is zero.  However, in rare cases, it also
-	 * evaluates to a non-zero value when none of the bytes in the
-	 * original word is zero.
+	 * the original word is zero or has the top bit set.
+	 * For strings that are likely to only contain 7-bit ascii these
+	 * false positives will be rare.
 	 *
 	 * To account for possible false positives, each byte of the
 	 * original word must be checked when the expression evaluates to
@@ -110,7 +110,7 @@ ENTRY(strlen)
 	je	.Lloop
 
 	/*
-	 * In rare cases, the above loop may exit prematurely. We must
+	 * For bytes 0x80-0xff the above loop will exit prematurely. We must
 	 * return to the loop if none of the bytes in the word equal 0.
 	 */
 	cmpb	$0,-8(%rax)		/* 1st byte == 0? */
