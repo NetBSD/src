@@ -28,14 +28,34 @@
 
 #include <assert.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <dlfcn.h>
 
 void check_strlen(void);
+
+size_t (*volatile strlen_fn)(const char *s);
+
+static void
+write_num(int val)
+{
+    char buf[20];
+    int i;
+    for (i = sizeof buf; --i >= 0;) {
+	buf[i] = '0' + val % 10;
+	val /= 10;
+	if (val == 0) {
+	    write(2, buf + i, sizeof buf - i);
+	    return;
+	}
+    }
+    write(2, "overflow", 8);
+}
 
 void
 check_strlen(void)
 {
     /* try to trick the compiler */
-    size_t (*f)(const char *s) = strlen;
 
     int a;
     int t;
@@ -102,9 +122,23 @@ check_strlen(void)
 	for (t = 0; t < (sizeof(tab) / sizeof(tab[0])); ++t) {
 	    
 	    memcpy(&buf[a], tab[t].val, tab[t].len + 1);
-	    len = f(&buf[a]);
+	    len = strlen_fn(&buf[a]);
 
-	    assert(len == tab[t].len);
+	    if (len != tab[t].len) {
+		/* Write error without using printf (and strlen) */
+		write(2, "alignment ", 10);
+		write_num(a);
+		write(2, ", test ", 7);
+		write_num(t);
+		write(2, ", got len ", 10);
+		write_num(len);
+		write(2, ", not ", 6);
+		write_num(tab[t].len);
+		write(2, ", for '", 7);
+		write(2, tab[t].val, tab[t].len);
+		write(2, "'\n", 2);
+		exit(1);
+	    }
 	}
     }
 }
@@ -112,6 +146,11 @@ check_strlen(void)
 int
 main(void)
 {
+	/* During testing it is useful have the rest of the program
+	 * use a known good version! */
+	strlen_fn = dlsym(dlopen(NULL, RTLD_LAZY), "test_strlen");
+	if (!strlen_fn)
+		strlen_fn = strlen;
 	check_strlen();
 	return 0;
 }
