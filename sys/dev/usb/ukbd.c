@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.103 2009/03/09 15:59:33 uebayasi Exp $        */
+/*      $NetBSD: ukbd.c,v 1.104 2009/07/11 18:26:58 jakllsch Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.103 2009/03/09 15:59:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.104 2009/07/11 18:26:58 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,10 @@ struct ukbd_data {
  * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 0x80 represent EXTENDED keycodes.
  *
- * See http://www.microsoft.com/whdc/device/input/Scancode.mspx
+ * See http://www.microsoft.com/whdc/archive/scancode.mspx
+ *
+ * Note: a real pckbd(4) has more complexity in it's
+ * protocol for some keys than this translation implements.
  */
 Static const u_int8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
@@ -107,7 +110,7 @@ Static const u_int8_t ukbd_trtab[256] = {
     0x1c, 0x01, 0x0e, 0x0f, 0x39, 0x0c, 0x0d, 0x1a, /* 28 - 2f */
     0x1b, 0x2b, 0x2b, 0x27, 0x28, 0x29, 0x33, 0x34, /* 30 - 37 */
     0x35, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, /* 38 - 3f */
-    0x41, 0x42, 0x43, 0x44, 0x57, 0x58, 0xaa, 0x46, /* 40 - 47 */
+    0x41, 0x42, 0x43, 0x44, 0x57, 0x58, 0xb7, 0x46, /* 40 - 47 */
     0x7f, 0xd2, 0xc7, 0xc9, 0xd3, 0xcf, 0xd1, 0xcd, /* 48 - 4f */
     0xcb, 0xd0, 0xc8, 0x45, 0xb5, 0x37, 0x4a, 0x4e, /* 50 - 57 */
     0x9c, 0x4f, 0x50, 0x51, 0x4b, 0x4c, 0x4d, 0x47, /* 58 - 5f */
@@ -629,9 +632,17 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 			c = ukbd_trtab[key & CODEMASK];
 			if (c == NN)
 				continue;
-			if (c & 0x80)
-				cbuf[j++] = 0xe0;
-			cbuf[j] = c & 0x7f;
+			if (c == 0x7f) {
+				/* pause key */
+				cbuf[j++] = 0xe1;
+				cbuf[j++] = 0x1d;
+				cbuf[j-1] |= (key & RELEASE) ? 0x80 : 0;
+				cbuf[j] = 0x45;
+			} else {
+				if (c & 0x80)
+					cbuf[j++] = 0xe0;
+				cbuf[j] = c & 0x7f;
+			}
 			if (key & RELEASE)
 				cbuf[j] |= 0x80;
 #if defined(UKBD_REPEAT)
