@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.37 2009/07/09 15:50:26 pgoyette Exp $ */
+/*	$NetBSD: ipmi.c,v 1.38 2009/07/11 05:03:11 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.37 2009/07/09 15:50:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.38 2009/07/11 05:03:11 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ struct ipmi_sensor {
 	char		i_envdesc[64];
 	int 		i_envtype; /* envsys compatible type */
 	int		i_envnum; /* envsys index */
-	sysmon_envsys_lim_t *i_limits;
+	sysmon_envsys_lim_t i_limits;
 	SLIST_ENTRY(ipmi_sensor) i_list;
 };
 
@@ -216,9 +216,11 @@ void	ipmi_unmap_regs(struct ipmi_softc *sc);
 void	*scan_sig(long, long, int, int, const void *);
 
 int32_t	ipmi_convert_sensor(uint8_t *, struct ipmi_sensor *);
+void	ipmi_set_limits(struct sysmon_envsys *, envsys_data_t *,
+			sysmon_envsys_lim_t *);
 void	ipmi_get_limits(struct sysmon_envsys *, envsys_data_t *,
 			sysmon_envsys_lim_t *);
-int	ipmi_get_sensor_limits(struct ipmi_softc *, struct ipmi_sensor *,
+void	ipmi_get_sensor_limits(struct ipmi_softc *, struct ipmi_sensor *,
 			       sysmon_envsys_lim_t *);
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
 			   envsys_data_t *, uint8_t *);
@@ -1339,6 +1341,23 @@ ipmi_convert_sensor(uint8_t *reading, struct ipmi_sensor *psensor)
 }
 
 void
+ipmi_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		sysmon_envsys_lim_t *limits)
+{
+	struct ipmi_sensor *ipmi_s;
+
+	/* Find the ipmi_sensor corresponding to this edata */
+	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
+		if (ipmi_s->i_envnum == edata->sensor) {
+			limits->sel_flags |= PROP_DRIVER_LIMITS;
+			ipmi_s->i_limits = *limits;
+			return;
+		}
+	}
+	return;
+}
+
+void
 ipmi_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		sysmon_envsys_lim_t *limits)
 {
@@ -1348,15 +1367,15 @@ ipmi_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	/* Find the ipmi_sensor corresponding to this edata */
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
 		if (ipmi_s->i_envnum == edata->sensor) {
-			(void)ipmi_get_sensor_limits(sc, ipmi_s, limits);
-			ipmi_s->i_limits = limits;
+			ipmi_get_sensor_limits(sc, ipmi_s, limits);
+			ipmi_s->i_limits = *limits;
 			return;
 		}
 	}
 	return;
 }
 
-int
+void
 ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		       sysmon_envsys_lim_t *limits)
 {
@@ -1364,16 +1383,16 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	int	rxlen;
 	uint8_t	data[32];
 
+	limits->sel_flags = 0;
 	data[0] = psensor->i_num;
 	if (ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun,
 			 SE_NETFN, SE_GET_SENSOR_THRESHOLD, 1, data) ||
 	    ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
-		return -1;
+		return;
 
 	dbg_printf(25, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
 	    data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
 
-	limits->sel_flags = 0;
 	if (data[0] & 0x20 && data[6] != 0xff) {
 		limits->sel_critmax = ipmi_convert_sensor(&data[6], psensor);
 		limits->sel_flags |= PROP_CRITMAX;
@@ -1398,7 +1417,7 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		limits->sel_warnmin = ipmi_convert_sensor(&data[1], psensor);
 		limits->sel_flags |= PROP_WARNMIN;
 	}
-	return 0;
+	return;
 }
 
 int
@@ -1416,23 +1435,20 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	case IPMI_SENSOR_TYPE_TEMP:
 	case IPMI_SENSOR_TYPE_VOLT:
 	case IPMI_SENSOR_TYPE_FAN:
-		if (psensor->i_limits == NULL)
-			break;
-
-		if (psensor->i_limits->sel_flags & PROP_CRITMAX &&
-		    edata->value_cur > psensor->i_limits->sel_critmax)
+		if (psensor->i_limits.sel_flags & PROP_CRITMAX &&
+		    edata->value_cur > psensor->i_limits.sel_critmax)
 			return ENVSYS_SCRITOVER;
 
-		if (psensor->i_limits->sel_flags & PROP_WARNMAX &&
-		    edata->value_cur > psensor->i_limits->sel_warnmax)
+		if (psensor->i_limits.sel_flags & PROP_WARNMAX &&
+		    edata->value_cur > psensor->i_limits.sel_warnmax)
 			return ENVSYS_SWARNOVER;
 
-		if (psensor->i_limits->sel_flags & PROP_WARNMIN &&
-		    edata->value_cur < psensor->i_limits->sel_warnmin)
+		if (psensor->i_limits.sel_flags & PROP_WARNMIN &&
+		    edata->value_cur < psensor->i_limits.sel_warnmin)
 			return ENVSYS_SWARNUNDER;
 
-		if (psensor->i_limits->sel_flags & PROP_CRITMIN &&
-		    edata->value_cur < psensor->i_limits->sel_critmin)
+		if (psensor->i_limits.sel_flags & PROP_CRITMIN &&
+		    edata->value_cur < psensor->i_limits.sel_critmin)
 			return ENVSYS_SCRITUNDER;
 
 		break;
@@ -1825,12 +1841,13 @@ ipmi_thread(void *cookie)
 	sc->sc_envsys = sysmon_envsys_create();
 	sc->sc_envsys->sme_cookie = sc;
 	sc->sc_envsys->sme_get_limits = ipmi_get_limits;
+	sc->sc_envsys->sme_set_limits = ipmi_set_limits;
 
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
 		i = current_index_typ[ipmi_s->i_envtype];
 		current_index_typ[ipmi_s->i_envtype]++;
 		ipmi_s->i_envnum = i;
-		ipmi_s->i_limits = NULL;
+		ipmi_s->i_limits.sel_flags = 0;
 		sc->sc_sensor[i].units = ipmi_s->i_envtype;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 		sc->sc_sensor[i].monitor = true;
