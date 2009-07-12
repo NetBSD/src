@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.50 2009/06/28 05:37:22 agc Exp $
+# $NetBSD: md.amd64,v 1.51 2009/07/12 11:00:37 wiz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -340,7 +340,7 @@
 ./usr/lib/i386/libatf-c.a			comp-c-lib		compat
 ./usr/lib/i386/libatf-c_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libatf-c_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libbfd.a				comp-c-lib		compat,pic,obsolete
+./usr/lib/i386/libbfd.a				comp-c-lib		compat,pic
 ./usr/lib/i386/libbfd.so			comp-sys-shlib		compat,pic,bfd
 ./usr/lib/i386/libbfd_p.a			comp-c-proflib		compat,profile,bfd
 ./usr/lib/i386/libbfd_pic.a			comp-c-piclib		compat,pic,bfd
