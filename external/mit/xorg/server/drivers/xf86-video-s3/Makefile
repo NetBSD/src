@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2009/06/05 23:37:55 ahoka Exp $
+#	$NetBSD: Makefile,v 1.5 2009/07/12 23:49:49 ahoka Exp $
 
 DRIVER=		xf86-video-s3
 DRIVER_NAME=	s3_drv
-DRIVER_VERSION= 0.6.1
+DRIVER_VERSION= 0.6.2
 
 SRCS=		s3_bios.c s3_cursor.c s3_dga.c s3_driver.c s3_IBMRGB.c \
 		s3_Ti.c s3_Trio64DAC.c s3_video.c s3_accel.c \
-		s3_accel_newmmio.c
+		s3_accel_newmmio.c s3_shadow.c
 
 # PLEASE NOTE: s3_accel.c is compiled two times with different
 # cpp macros for PIO and NEWMMIO support. Check Makefile.am
