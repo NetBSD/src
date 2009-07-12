@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.3 2009/07/11 11:57:47 dsl Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.4 2009/07/12 21:00:54 dsl Exp $")
 #endif
 
 /*
@@ -104,9 +104,9 @@ ENTRY(strlen)
 	subq	%r8,%rdx		/* alg (3) above first */
 	not	%rcx			/* Invert of data */
 	andq	%r9,%rdx
-	je	1b			/* jump if all 0x01-0x7f */
+	je	1b			/* jump if all 0x01-0x80 */
 
-	/* Do check from alg (2) above - loops for 0x80..0xff bytes */
+	/* Do check from alg (2) above - loops for 0x81..0xff bytes */
 	andq	%rcx,%rdx
 	je	1b
 
