@@ -141,7 +141,7 @@ CONFIGURATION
                  dom-seed flag with this value.  By default, it is set to
                  NetBSD-(majorversion).  Using a fixed value causes C++ bina-
                  ries to be the same when built from the same sources, result-
-                 ing in identical (reproducable) builds.  Additional informa-
+                 ing in identical (reproducible) builds.  Additional informa-
                  tion is available in the GCC documentation of -frandom-seed.
 
      DESTDIR     Directory to contain the built NetBSD system.  If set, spe-
