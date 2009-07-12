@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.72 2009/05/01 19:42:18 snj Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.73 2009/07/12 12:14:51 hubertf Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -311,7 +311,7 @@ This variable seeds the gcc random number generator using
 the -frandom-seed flag with this value.
 By default, it is set to NetBSD-(majorversion).
 Using a fixed value causes C++ binaries to be the same when
-built from the same sources.
+built from the same sources, resulting in identical (reproducable) builds.
 Additional information is available in the GCC
 documentation of -frandom-seed.
 .
