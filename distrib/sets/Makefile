@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2009/04/23 09:37:03 apb Exp $
+#	$NetBSD: Makefile,v 1.68 2009/07/12 12:30:31 apb Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -94,7 +94,7 @@ clean_METALOG: .PHONY
 METALOG.unpriv= -M ${METALOG}.sanitised
 sanitise_METALOG: .PHONY ${METALOG}.sanitised
 ${METALOG}.sanitised: ${METALOG}
-	${TOOL_MTREE} -CS -k all -N ${NETBSDSRCDIR}/etc <${METALOG} \
+	${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc <${METALOG} \
 	    >${METALOG}.new
 	mv ${METALOG}.new ${METALOG}.sanitised
 .if ${MKUPDATE} == "no" || !exists(${METALOG})
