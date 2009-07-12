@@ -140,9 +140,9 @@ CONFIGURATION
                  able seeds the gcc random number generator using the -fran-
                  dom-seed flag with this value.  By default, it is set to
                  NetBSD-(majorversion).  Using a fixed value causes C++ bina-
-                 ries to be the same when built from the same sources.  Addi-
-                 tional information is available in the GCC documentation of
-                 -frandom-seed.
+                 ries to be the same when built from the same sources, result-
+                 ing in identical (reproducable) builds.  Additional informa-
+                 tion is available in the GCC documentation of -frandom-seed.
 
      DESTDIR     Directory to contain the built NetBSD system.  If set, spe-
                  cial options are passed to the compilation tools to prevent
