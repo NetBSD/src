@@ -1,7 +1,7 @@
-/*	$NetBSD: mqueue.h,v 1.7 2009/04/11 15:47:34 christos Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.8 2009/07/13 02:37:13 rmind Exp $	*/
 
 /*
- * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,10 @@ struct mq_attr {
 /* Default size of the message */
 #define	MQ_DEF_MSGSIZE		1024
 
+/* Size/bits and MSB for the queue array */
+#define	MQ_PQSIZE		32
+#define	MQ_PQMSB		0x80000000U
+
 /* Structure of the message queue */
 struct mqueue {
 	char			mq_name[MQ_NAMELEN];
@@ -83,11 +87,13 @@ struct mqueue {
 	mode_t			mq_mode;
 	uid_t			mq_euid;
 	gid_t			mq_egid;
-	/* Reference counter, head of the message queue */
+	/* Reference counter, queue array and bitmap */
 	u_int			mq_refcnt;
-	TAILQ_HEAD(, mq_msg)	mq_head;
+	TAILQ_HEAD(, mq_msg)	mq_head[MQ_PQSIZE + 1];
+	uint32_t		mq_bitmap;
 	/* Entry of the global list */
 	LIST_ENTRY(mqueue)	mq_list;
+	/* Time stamps */
 	struct timespec		mq_atime;
 	struct timespec		mq_mtime;
 	struct timespec		mq_btime;
@@ -98,16 +104,15 @@ struct mq_msg {
 	TAILQ_ENTRY(mq_msg)	msg_queue;
 	size_t			msg_len;
 	u_int			msg_prio;
-	int8_t			msg_ptr[1];
+	uint8_t			msg_ptr[1];
 };
 
 /* Prototypes */
 void	mqueue_sysinit(void);
 void	mqueue_print_list(void (*pr)(const char *, ...));
 int	abstimeout2timo(struct timespec *, int *);
-int	mq_send1(struct lwp *, mqd_t, const char *, size_t, unsigned, int);
-int	mq_receive1(struct lwp *, mqd_t, void *, size_t, unsigned *, int,
-    ssize_t *);
+int	mq_send1(lwp_t *, mqd_t, const char *, size_t, unsigned, int);
+int	mq_receive1(lwp_t *, mqd_t, void *, size_t, unsigned *, int, ssize_t *);
 
 #endif	/* _KERNEL */
 
