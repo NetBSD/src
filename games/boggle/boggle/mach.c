@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.18 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: mach.c,v 1.19 2009/07/13 19:05:39 roy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.18 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: mach.c,v 1.19 2009/07/13 19:05:39 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ prwidth(const char *const base[], int indx)
  * - doesn't accept words longer than MAXWORDLEN or containing caps
  */
 char *
-getline(char *q)
+get_line(char *q)
 {
 	int ch, done;
 	char *p;

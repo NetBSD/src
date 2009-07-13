@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.129 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.130 2009/07/13 19:05:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.129 2009/04/12 10:18:52 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.130 2009/07/13 19:05:41 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ confirm(const char *cmd, const char *file)
 	while (1) {
 		fprintf(ttyout, "%s %s [anpqy?]? ", promptleft, promptright);
 		(void)fflush(ttyout);
-		if (getline(stdin, cline, sizeof(cline), &errormsg) < 0) {
+		if (get_line(stdin, cline, sizeof(cline), &errormsg) < 0) {
 			mflag = 0;
 			fprintf(ttyout, "%s; %s aborted\n", errormsg, cmd);
 			return (0);
@@ -769,7 +769,7 @@ fget(int argc, char *argv[])
 	argv[0] = cmdbuf;
 	gmode = restart_point ? "r+" : "w";
 
-	while (getline(fp, buf, sizeof(buf), NULL) >= 0) {
+	while (get_line(fp, buf, sizeof(buf), NULL) >= 0) {
 		if (buf[0] == '\0')
 			continue;
 		argv[1] = buf;

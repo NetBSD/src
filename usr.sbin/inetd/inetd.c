@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.112 2009/05/23 03:24:51 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.113 2009/07/13 19:05:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.112 2009/05/23 03:24:51 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.113 2009/07/13 19:05:41 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -381,7 +381,7 @@ static int 	dg_broadcast(struct in_addr *);
 static int	my_kevent(const struct kevent *, size_t, struct kevent *,
 		size_t);
 static struct kevent *	allocchange(void);
-static int	getline(int, char *, int);
+static int	get_line(int, char *, int);
 static void	spawn(struct servtab *, int);
 #ifdef MULOG
 static void	dolog(struct servtab *, int);
@@ -2165,7 +2165,7 @@ usage(void)
  */
 
 static int		/* # of characters upto \r,\n or \0 */
-getline(int fd,	char *buf, int len)
+get_line(int fd,	char *buf, int len)
 {
 	int count = 0;
 	ssize_t n;
@@ -2197,7 +2197,7 @@ tcpmux(int ctrl, struct servtab *sep)
 	int len;
 
 	/* Get requested service name */
-	if ((len = getline(ctrl, service, MAX_SERV_LEN)) < 0) {
+	if ((len = get_line(ctrl, service, MAX_SERV_LEN)) < 0) {
 		strwrite(ctrl, "-Error reading service name\r\n");
 		goto reject;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.11 2009/06/04 05:43:29 dholland Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.12 2009/07/13 19:05:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.11 2009/06/04 05:43:29 dholland Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.12 2009/07/13 19:05:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,7 @@ ask(const char *str)
 }
 
 int
-getline(char *buf, int size)
+get_line(char *buf, int size)
 {
 	char *cp, *end;
 	int c;

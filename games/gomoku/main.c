@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2009/06/04 07:01:16 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2009/07/13 19:05:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2009/06/04 07:01:16 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2009/07/13 19:05:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ again:
 		if (inputfp == NULL && test == 0) {
 			for (;;) {
 				ask("black or white? ");
-				getline(buf, sizeof(buf));
+				get_line(buf, sizeof(buf));
 				if (buf[0] == 'b' || buf[0] == 'B') {
 					color = BLACK;
 					break;
@@ -170,7 +170,7 @@ again:
 		}
 	} else {
 		setbuf(stdout, 0);
-		getline(buf, sizeof(buf));
+		get_line(buf, sizeof(buf));
 		if (strcmp(buf, "black") == 0)
 			color = BLACK;
 		else if (strcmp(buf, "white") == 0)
@@ -240,7 +240,7 @@ again:
 		getinput:
 			if (interactive)
 				ask("move? ");
-			if (!getline(buf, sizeof(buf))) {
+			if (!get_line(buf, sizeof(buf))) {
 				curmove = RESIGN;
 				break;
 			}
@@ -252,7 +252,7 @@ again:
 					FILE *fp;
 
 					ask("save file name? ");
-					(void)getline(buf, sizeof(buf));
+					(void)get_line(buf, sizeof(buf));
 					if ((fp = fopen(buf, "w")) == NULL) {
 						misclog("cannot create save file");
 						goto getinput;
@@ -304,14 +304,14 @@ again:
 		if (i != RESIGN) {
 		replay:
 			ask("replay? ");
-			if (getline(buf, sizeof(buf)) &&
+			if (get_line(buf, sizeof(buf)) &&
 			    (buf[0] == 'y' || buf[0] == 'Y'))
 				goto again;
 			if (strcmp(buf, "save") == 0) {
 				FILE *fp;
 
 				ask("save file name? ");
-				(void)getline(buf, sizeof(buf));
+				(void)get_line(buf, sizeof(buf));
 				if ((fp = fopen(buf, "w")) == NULL) {
 					misclog("cannot create save file");
 					goto replay;
@@ -363,7 +363,7 @@ whatsup(int signum)
 		quit();
 top:
 	ask("cmd? ");
-	if (!getline(input, sizeof(input)))
+	if (!get_line(input, sizeof(input)))
 		quit();
 	switch (*input) {
 	case '\0':

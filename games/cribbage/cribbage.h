@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.13 2005/07/02 08:32:32 jmc Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.14 2009/07/13 19:05:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -76,7 +76,7 @@ int	 eq(CARD, CARD);
 int	 fifteens(const CARD [], int);
 void	 game(void);
 void	 gamescore(void);
-char	*getline(void);
+char	*get_line(void);
 int	 getuchar(void);
 int	 incard(CARD *);
 int	 infrom(const CARD [], int, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.76 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.77 2009/07/13 19:05:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ int	ftp_login(const char *, const char *, const char *);
 void	get(int, char **);
 struct cmd *getcmd(const char *);
 int	getit(int, char **, int, const char *);
-int	getline(FILE *, char *, size_t, const char **);
+int	get_line(FILE *, char *, size_t, const char **);
 struct option *getoption(const char *);
 char   *getoptionvalue(const char *);
 void	getremoteinfo(void);

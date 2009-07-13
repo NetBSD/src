@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.14 2009/06/11 03:16:34 ginsbach Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.15 2009/07/13 19:05:41 roy Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -77,7 +77,7 @@ static const char copyright[] =
 #endif
 #ifdef __IDSTRING
 __IDSTRING(Berkeley, "@(#)unifdef.c	8.1 (Berkeley) 6/6/93");
-__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.14 2009/06/11 03:16:34 ginsbach Exp $");
+__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.15 2009/07/13 19:05:41 roy Exp $");
 __IDSTRING(dotat, "$dotat: things/unifdef.c,v 1.161 2003/07/01 15:32:48 fanf2 Exp $");
 #endif
 #endif /* not lint */
@@ -246,7 +246,7 @@ static void             done(void);
 static void             error(const char *);
 static int              findsym(const char *);
 static void             flushline(bool);
-static Linetype         getline(void);
+static Linetype         get_line(void);
 static Linetype         ifeval(const char **);
 static void             ignoreoff(void);
 static void             ignoreon(void);
@@ -572,7 +572,7 @@ process(void)
 
 	for (;;) {
 		linenum++;
-		lineval = getline();
+		lineval = get_line();
 		trans_table[ifstate[depth]][lineval]();
 		debug("process %s -> %s depth %d",
 		    linetype_name[lineval],
@@ -586,7 +586,7 @@ process(void)
  * help from skipcomment().
  */
 static Linetype
-getline(void)
+get_line(void)
 {
 	const char *cp;
 	int cursym;

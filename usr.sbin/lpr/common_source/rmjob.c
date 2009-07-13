@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.24 2009/01/18 09:57:26 lukem Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.25 2009/07/13 19:05:41 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.24 2009/01/18 09:57:26 lukem Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.25 2009/07/13 19:05:41 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ lockchk(const char *s)
 			return(0);
 	}
 	seteuid(uid);
-	if (!getline(fp)) {
+	if (!get_line(fp)) {
 		(void)fclose(fp);
 		return(0);		/* no daemon present */
 	}
@@ -192,7 +192,7 @@ process(const char *file)
 	if ((cfp = fopen(file, "r")) == NULL)
 		fatal("cannot open %s", file);
 	seteuid(uid);
-	while (getline(cfp)) {
+	while (get_line(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
 			if (strchr(line+1, '/') || strncmp(line+1, "df", 2))
@@ -244,7 +244,7 @@ chk(const char *file)
 	if ((cfp = fopen(file, "r")) == NULL)
 		return(0);
 	seteuid(uid);
-	while (getline(cfp)) {
+	while (get_line(cfp)) {
 		if (line[0] == 'P')
 			break;
 	}

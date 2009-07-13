@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.22 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: crib.c,v 1.23 2009/07/13 19:05:40 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.22 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: crib.c,v 1.23 2009/07/13 19:05:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ game(void)
 			if (!rflag) {			/* player cuts deck */
 				msg(quiet ? "Cut for crib? " :
 			    "Cut to see whose crib it is -- low card wins? ");
-				getline();
+				get_line();
 			}
 			i = (rand() >> 4) % CARDS;	/* random cut */
 			do {	/* comp cuts deck */
@@ -389,7 +389,7 @@ cut(BOOLEAN mycrib, int  pos)
 		if (!rflag) {	/* random cut */
 			msg(quiet ? "Cut the deck? " :
 		    "How many cards down do you wish to cut the deck? ");
-			getline();
+			get_line();
 		}
 		i = (rand() >> 4) % (CARDS - pos);
 		turnover = deck[i + pos];

@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.15 2009/06/04 06:47:36 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.16 2009/07/13 19:05:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -262,7 +262,7 @@ extern	int	debug;
 
 void	bdinit(struct spotstr *);
 void	init_overlap(void);
-int	getline(char *, int);
+int	get_line(char *, int);
 void	ask(const char *);
 void	dislog(const char *);
 void	bdump(FILE *);

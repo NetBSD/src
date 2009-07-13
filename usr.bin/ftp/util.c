@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.151 2009/04/15 04:19:39 jld Exp $	*/
+/*	$NetBSD: util.c,v 1.152 2009/07/13 19:05:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.151 2009/04/15 04:19:39 jld Exp $");
+__RCSID("$NetBSD: util.c,v 1.152 2009/07/13 19:05:41 roy Exp $");
 #endif /* not lint */
 
 /*
@@ -408,7 +408,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 		else
 			fprintf(ttyout, "Name (%s): ", host);
 		errormsg = NULL;
-		nlen = getline(stdin, tmp, sizeof(tmp), &errormsg);
+		nlen = get_line(stdin, tmp, sizeof(tmp), &errormsg);
 		if (nlen < 0) {
 			fprintf(ttyout, "%s; %s aborted.\n", errormsg, "login");
 			code = -1;
@@ -516,7 +516,7 @@ another(int *pargc, char ***pargv, const char *aprompt)
 	fprintf(ttyout, "(%s) ", aprompt);
 	line[len++] = ' ';
 	errormsg = NULL;
-	nlen = getline(stdin, line + len, sizeof(line)-len, &errormsg);
+	nlen = get_line(stdin, line + len, sizeof(line)-len, &errormsg);
 	if (nlen < 0) {
 		fprintf(ttyout, "%s; %s aborted.\n", errormsg, "operation");
 		intr(0);
@@ -1248,7 +1248,7 @@ isipv6addr(const char *addr)
  *	-3	line was too long
  */
 int
-getline(FILE *stream, char *buf, size_t buflen, const char **errormsg)
+get_line(FILE *stream, char *buf, size_t buflen, const char **errormsg)
 {
 	int	rv, ch;
 	size_t	len;

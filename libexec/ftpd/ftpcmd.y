@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.89 2009/03/15 07:48:36 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.90 2009/07/13 19:05:40 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.89 2009/03/15 07:48:36 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.90 2009/07/13 19:05:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1356,14 +1356,14 @@ lookup(struct tab *p, const char *cmd)
 #include <arpa/telnet.h>
 
 /*
- * getline - a hacked up version of fgets to ignore TELNET escape codes.
+ * get_line - a hacked up version of fgets to ignore TELNET escape codes.
  *	`s' is the buffer to read into.
  *	`n' is the 1 less than the size of the buffer, to allow trailing NUL
  *	`iop' is the FILE to read from.
  *	Returns 0 on success, -1 on EOF, -2 if the command was too long.
  */
 int
-getline(char *s, int n, FILE *iop)
+get_line(char *s, int n, FILE *iop)
 {
 	int c;
 	char *cs;
@@ -1474,7 +1474,7 @@ ftp_loop(void)
 
 	while (1) {
 		(void) alarm(curclass.timeout);
-		ret = getline(cbuf, sizeof(cbuf)-1, stdin);
+		ret = get_line(cbuf, sizeof(cbuf)-1, stdin);
 		(void) alarm(0);
 		if (ret == -1) {
 			reply(221, "You could at least say goodbye.");

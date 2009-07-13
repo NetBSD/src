@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.2 2008/06/18 09:06:26 yamt Exp $ */
+/*	$NetBSD: ftp-proxy.c,v 1.3 2009/07/13 19:05:39 roy Exp $ */
 /*	$OpenBSD: ftp-proxy.c,v 1.15 2007/08/15 15:18:02 camield Exp $ */
 
 /*
@@ -107,7 +107,7 @@ void	client_read(struct bufferevent *, void *);
 int	drop_privs(void);
 void	end_session(struct session *);
 int	exit_daemon(void);
-int	getline(char *, size_t *);
+int	get_line(char *, size_t *);
 void	handle_connection(const int, short, void *);
 void	handle_signal(int, short, void *);
 struct session * init_session(void);
@@ -257,7 +257,7 @@ client_read(struct bufferevent *bufev, void *arg)
 		    buf_avail);
 		s->cbuf_valid += nread;
 
-		while ((n = getline(s->cbuf, &s->cbuf_valid)) > 0) {
+		while ((n = get_line(s->cbuf, &s->cbuf_valid)) > 0) {
 			logmsg(LOG_DEBUG, "#%d client: %s", s->id, linebuf);
 			if (!client_parse(s)) {
 				end_session(s);
@@ -356,7 +356,7 @@ exit_daemon(void)
 }
 
 int
-getline(char *buf, size_t *valid)
+get_line(char *buf, size_t *valid)
 {
 	size_t i;
 
@@ -1113,7 +1113,7 @@ server_read(struct bufferevent *bufev, void *arg)
 		    buf_avail);
 		s->sbuf_valid += nread;
 
-		while ((n = getline(s->sbuf, &s->sbuf_valid)) > 0) {
+		while ((n = get_line(s->sbuf, &s->sbuf_valid)) > 0) {
 			logmsg(LOG_DEBUG, "#%d server: %s", s->id, linebuf);
 			if (!server_parse(s)) {
 				end_session(s);
