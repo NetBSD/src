@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.73 2008/09/21 16:59:46 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.74 2009/07/13 22:19:24 roy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,6 +45,10 @@
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
+#endif
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
 #endif
 
 #include <sys/null.h>
@@ -236,6 +240,9 @@ long	 ftell(FILE *);
 size_t	 fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 int	 getc(FILE *);
 int	 getchar(void);
+ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
+	    FILE * __restrict);
+ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
 void	 perror(const char *);
 int	 printf(const char * __restrict, ...)
     __attribute__((__format__(__printf__, 1, 2)));
