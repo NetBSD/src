@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 2009/07/13 21:43:24 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 2009/07/13 21:44:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.6 2009/07/13 21:43:24 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 2009/07/13 21:44:32 christos Exp $");
 
+#define _KMEMUSER
 #include <stdbool.h>
 #include <sys/param.h>
-#define _KMEMUSER
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
