@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.1 2009/07/13 22:19:25 roy Exp $
+.\"     $NetBSD: getdelim.3,v 1.2 2009/07/13 22:30:52 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,18 +52,18 @@ until it encounters a character matching the
 character, storing the input in
 .Fa *lineptr .
 The buffer is
-.Dv NULL
-terminated and includes the delimiter.
+.Dv NUL Ns No -terminated
+and includes the delimiter.
 .Pp
 If
 .Fa *n
-is non zero, then
+is non-zero, then
 .Fa *lineptr
 must be pre-allocated to at least
 .Fa *n
 bytes.
 .Fn getdelim
-enures that
+ensures that
 .Fa *lineptr
 is large enough to hold the input, updating
 .Fa *n
@@ -76,8 +76,10 @@ with the delimiter set to the newline character.
 .Sh RETURN VALUES
 The
 .Fn getdelim
-function return the number of characters read, including the delimiter.
-If an error occurs the function return -1 and the global variable
+and
+.Fn getline
+functions return the number of characters read, including the delimiter.
+If an error occurs, the functions return \-1 and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -95,24 +97,25 @@ More than ssize_t characters were read without encountering the delimiter.
 .Pp
 The
 .Fn getdelim
-function may also fail and set
+and
+.Fn getline
+functions may also fail and set
 .Va errno
 for any of the errors specified in the routines
 .Xr fflush 3 ,
 .Xr malloc 3 ,
 .Xr read 2 ,
-.Xr stat 2
+.Xr stat 2 ,
 or
 .Xr realloc 3 .
 .Sh SEE ALSO
 .Xr ferror 3 ,
 .Xr fgets 3 ,
-.Xr fopen 3 .
+.Xr fopen 3
 .Sh STANDARDS
 The
 .Fn getdelim
 and
 .Fn getline
-functions
-conform to 
-.St -p1003.1-2008
+functions conform to
+.St -p1003.1-2008 .
