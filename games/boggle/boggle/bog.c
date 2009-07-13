@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.22 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: bog.c,v 1.23 2009/07/13 19:05:39 roy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.22 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: bog.c,v 1.23 2009/07/13 19:05:39 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,7 +334,7 @@ playgame(void)
 	}
 
 	while (1) {
-		if (getline(buf) == NULL) {
+		if (get_line(buf) == NULL) {
 			if (feof(stdin))
 				clearerr(stdin);
 			break;
