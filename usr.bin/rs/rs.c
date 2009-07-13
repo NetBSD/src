@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.13 2009/04/13 07:06:53 lukem Exp $	*/
+/*	$NetBSD: rs.c,v 1.14 2009/07/13 19:05:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.13 2009/04/13 07:06:53 lukem Exp $");
+__RCSID("$NetBSD: rs.c,v 1.14 2009/07/13 19:05:41 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ void	  usage __P((const char *, ...))
      __attribute__((__format__(__printf__, 1, 2)));
 void	  getargs __P((int, char *[]));
 void	  getfile __P((void));
-int	  getline __P((void));
+int	  get_line __P((void));
 char	 *getlist __P((short **, char *));
 char	 *getnum __P((int *, char *, int));
 char	**getptrs __P((char **));
@@ -139,11 +139,11 @@ getfile()
 	char **padto;
 
 	while (skip--) {
-		getline();
+		get_line();
 		if (flags & SKIPPRINT)
 			puts(curline);
 	}
-	getline();
+	get_line();
 	if (flags & NOARGS && curlen < owidth)
 		flags |= ONEPERLINE;
 	if (flags & ONEPERLINE)
@@ -189,7 +189,7 @@ getfile()
 				INCR(ep);
 			}
 		}
-	} while (getline() != EOF);
+	} while (get_line() != EOF);
 	*ep = 0;				/* mark end of pointers */
 	nelem = ep - elem;
 }
@@ -346,7 +346,7 @@ prepfile()
 char	ibuf[BSIZE];		/* two screenfuls should do */
 
 int
-getline()	/* get line; maintain curline, curlen; manage storage */
+get_line()	/* get line; maintain curline, curlen; manage storage */
 {
 	static	int putlength;
 	static	char *endblock = ibuf + BSIZE;
