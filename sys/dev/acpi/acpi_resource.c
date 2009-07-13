@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.28 2009/05/12 09:50:28 cegger Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.29 2009/07/13 12:55:21 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.28 2009/05/12 09:50:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.29 2009/07/13 12:55:21 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,8 +297,20 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 		break;
 
 	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
-		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
-				     "ExtendedIrq unimplemented\n"));
+		if (res->Data.ExtendedIrq.ProducerConsumer != ACPI_CONSUMER) {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+			    "ignored ExtIRQ producer\n"));
+			break;
+		}
+		for (i = 0; i < res->Data.ExtendedIrq.InterruptCount; i++) {
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "ExtIRQ %d\n",
+				     res->Data.ExtendedIrq.Interrupts[i]));
+			if (ops->irq)
+				(*ops->irq)(arg->dev, arg->context,
+				    res->Data.ExtendedIrq.Interrupts[i],
+				    res->Data.ExtendedIrq.Triggering);
+		}
 		break;
 
 	case ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
