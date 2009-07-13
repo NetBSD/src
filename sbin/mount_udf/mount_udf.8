@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_udf.8,v 1.11 2009/02/08 21:56:57 wiz Exp $
+.\" $NetBSD: mount_udf.8,v 1.12 2009/07/13 17:58:10 reinoud Exp $
 .\"
 .\" Copyright (c) 2006, 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd February 8, 2009
+.Dd July 13, 2009
 .Dt MOUNT_UDF 8
 .Os
 .Sh NAME
@@ -140,9 +140,6 @@ device or the disc sector size will be used.
 .Sh BUGS
 Write support for UDF version 2.50 is not completely mature and UDF version
 2.01 should be used if possible; this is also the default format.
-.Pp
-Disk space accounting is not upto par and care should be taken not to write
-too much on a disk.
 .Pp
 Due to lack of test media and recording devices, BluRay support and in
 particular BluRay-R is still preliminary as of writing.
