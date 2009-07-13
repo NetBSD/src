@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.20 2009/07/03 21:32:09 elad Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.21 2009/07/13 00:41:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.20 2009/07/03 21:32:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.21 2009/07/13 00:41:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -351,7 +351,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 			kmem_free(name, MQ_NAMELEN);
 			return EINVAL;
 		}
-	
+
 		/* Check for mqueue attributes */
 		if (SCARG(uap, attr)) {
 			error = copyin(SCARG(uap, attr), &attr,
@@ -513,11 +513,16 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 
 	/* Get the message queue */
 	error = mqueue_get(mqdes, &fp);
-	if (error)
+	if (error) {
 		return error;
+	}
 	mq = fp->f_data;
-
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto error;
+	}
 	getnanotime(&mq->mq_atime);
+
 	/* Check the message size limits */
 	if (msg_len < mq->mq_attrib.mq_msgsize) {
 		error = EMSGSIZE;
@@ -679,7 +684,10 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 		return error;
 	}
 	mq = fp->f_data;
-
+	if ((fp->f_flag & FWRITE) == 0) {
+		error = EBADF;
+		goto error;
+	}
 	getnanotime(&mq->mq_mtime);
 
 	/* Check the message size limit */
