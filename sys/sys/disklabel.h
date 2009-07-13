@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.103 2008/12/30 19:38:36 reinoud Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.104 2009/07/13 15:40:44 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -348,9 +348,9 @@ x(JFS2,    21, "jfs",        NULL,    NULL)   /* IBM JFS2 */ \
 x(APPLEUFS,22, "Apple UFS", "ffs",   "ffs")   /* Apple UFS */ \
 /* XXX this is not the same as FreeBSD.  How to solve? */ \
 x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
-x(UDF,     24, "UDF",        NULL,   "udf")  /* UDF */ \
+x(UDF,     24, "UDF",        NULL,   "udf")   /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
-x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */
+x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */ \
 
 #ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
