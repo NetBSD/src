@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.175 2009/05/29 04:57:04 darran Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.176 2009/07/13 23:31:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.175 2009/05/29 04:57:04 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.176 2009/07/13 23:31:19 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1129,8 +1129,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if (reg & STATUS_BUS64)
 			sc->sc_flags |= WM_F_BUS64;
-		if (sc->sc_type >= WM_T_82544 &&
-		    (reg & STATUS_PCIX_MODE) != 0) {
+		if ((reg & STATUS_PCIX_MODE) != 0) {
 			pcireg_t pcix_cmd, pcix_sts, bytecnt, maxb;
 
 			sc->sc_flags |= WM_F_PCIX;
