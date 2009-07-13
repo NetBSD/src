@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1277 2009/07/08 21:23:52 tls Exp $
+#	$NetBSD: mi,v 1.1278 2009/07/13 22:19:24 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5557,6 +5557,7 @@
 ./usr/share/man/cat3/getcwd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getdate.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getdate_err.0		comp-c-catman		.cat
+./usr/share/man/cat3/getdelim.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getdevmajor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdirentries.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdiskbyname.0		comp-c-catman		.cat
@@ -5586,6 +5587,7 @@
 ./usr/share/man/cat3/getlabeloffset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getlabelsector.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getlastlogx.0		comp-c-catman		.cat
+./usr/share/man/cat3/getline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getloadavg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getmaxpartitions.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getmaxx.0			comp-c-catman		.cat
@@ -16459,6 +16461,7 @@
 ./usr/share/man/man3/getcwd.3			comp-c-man		.man
 ./usr/share/man/man3/getdate.3			comp-c-man		.man
 ./usr/share/man/man3/getdate_err.3		comp-c-man		.man
+./usr/share/man/man3/getdelim.3			comp-c-man		.man
 ./usr/share/man/man3/getdevmajor.3		comp-c-man		.man
 ./usr/share/man/man3/getdirentries.3		comp-c-man		.man
 ./usr/share/man/man3/getdiskbyname.3		comp-c-man		.man
@@ -16488,6 +16491,7 @@
 ./usr/share/man/man3/getlabeloffset.3		comp-c-man		.man
 ./usr/share/man/man3/getlabelsector.3		comp-c-man		.man
 ./usr/share/man/man3/getlastlogx.3		comp-c-man		.man
+./usr/share/man/man3/getline.3			comp-c-man		.man
 ./usr/share/man/man3/getloadavg.3		comp-c-man		.man
 ./usr/share/man/man3/getmaxpartitions.3		comp-c-man		.man
 ./usr/share/man/man3/getmaxx.3			comp-c-man		.man
