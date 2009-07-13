@@ -398,7 +398,7 @@ Cell *jump(Node **a, int n)	/* break, continue, next, nextfile, return */
 	return 0;	/* not reached */
 }
 
-Cell *getline(Node **a, int n)	/* get next line from specific input */
+Cell *get_line(Node **a, int n)	/* get next line from specific input */
 {		/* a[0] is variable, a[1] is operator, a[2] is filename */
 	Cell *r, *x;
 	extern Cell **fldtab;
@@ -408,11 +408,11 @@ Cell *getline(Node **a, int n)	/* get next line from specific input */
 	int mode;
 
 	if ((buf = (char *) malloc(bufsize)) == NULL)
-		FATAL("out of memory in getline");
+		FATAL("out of memory in get_line");
 
 	fflush(stdout);	/* in case someone is waiting for a prompt */
 	r = gettemp();
-	if (a[1] != NULL) {		/* getline < file */
+	if (a[1] != NULL) {		/* get_line < file */
 		x = execute(a[2]);		/* filename */
 		mode = ptoi(a[1]);
 		if (mode == '|')		/* input pipe */
@@ -425,21 +425,21 @@ Cell *getline(Node **a, int n)	/* get next line from specific input */
 			n = readrec(&buf, &bufsize, fp);
 		if (n <= 0) {
 			;
-		} else if (a[0] != NULL) {	/* getline var <file */
+		} else if (a[0] != NULL) {	/* get_line var <file */
 			x = execute(a[0]);
 			setsval(x, buf);
 			tempfree(x);
-		} else {			/* getline <file */
+		} else {			/* get_line <file */
 			setsval(fldtab[0], buf);
 			if (is_number(fldtab[0]->sval)) {
 				fldtab[0]->fval = atof(fldtab[0]->sval);
 				fldtab[0]->tval |= NUM;
 			}
 		}
-	} else {			/* bare getline; use current input */
-		if (a[0] == NULL)	/* getline */
+	} else {			/* bare get_line; use current input */
+		if (a[0] == NULL)	/* get_line */
 			n = getrec(&record, &recsize, 1);
-		else {			/* getline var */
+		else {			/* get_line var */
 			n = getrec(&buf, &bufsize, 0);
 			x = execute(a[0]);
 			setsval(x, buf);
@@ -1746,7 +1746,7 @@ FILE *openfile(int a, const char *us)
 	FILE *fp = 0;
 
 	if (*s == '\0')
-		FATAL("null file name in print or getline");
+		FATAL("null file name in print or get_line");
 	for (i = 0; i < nfiles; i++)
 		if (files[i].fname && strcmp(s, files[i].fname) == 0) {
 			if (a == files[i].mode || (a==APPEND && files[i].mode==GT))
@@ -1781,7 +1781,7 @@ FILE *openfile(int a, const char *us)
 		fp = popen(s, "w");
 	} else if (a == LE) {	/* input pipe */
 		fp = popen(s, "r");
-	} else if (a == LT) {	/* getline <file */
+	} else if (a == LT) {	/* get_line <file */
 		fp = strcmp(s, "-") == 0 ? stdin : fopen(s, "r");	/* "-" is stdin */
 	} else	/* can't happen */
 		FATAL("illegal redirection %d", a);

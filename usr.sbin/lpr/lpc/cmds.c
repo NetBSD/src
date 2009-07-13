@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.21 2009/01/18 09:57:26 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.22 2009/07/13 19:05:41 roy Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.21 2009/01/18 09:57:26 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.22 2009/07/13 19:05:41 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ abortpr(int dis)
 		printf("\tcannot open lock file\n");
 		goto out;
 	}
-	if (!getline(fp) || flock(fileno(fp), LOCK_SH|LOCK_NB) == 0) {
+	if (!get_line(fp) || flock(fileno(fp), LOCK_SH|LOCK_NB) == 0) {
 		(void)fclose(fp);	/* unlocks as well */
 		printf("\tno daemon to abort\n");
 		goto out;
@@ -992,7 +992,7 @@ doarg(const char *job)
 		seteuid(uid);
 		if (fp == NULL)
 			continue;
-		while (getline(fp) > 0)
+		while (get_line(fp) > 0)
 			if (line[0] == 'P')
 				break;
 		(void)fclose(fp);

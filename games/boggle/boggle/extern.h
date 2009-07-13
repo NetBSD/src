@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2005/07/01 16:38:24 jmc Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2009/07/13 19:05:39 roy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ void	 delay(int);
 long	 dictseek(FILE *, long, int);
 void	 findword(void);
 void	 flushin(FILE *);
-char	*getline(char *);
+char	*get_line(char *);
 void	 getword(char *);
 int	 help(void);
 int	 inputch(void);

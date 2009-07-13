@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.187 2009/04/12 10:18:52 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.188 2009/07/13 19:05:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.187 2009/04/12 10:18:52 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.188 2009/07/13 19:05:41 roy Exp $");
 #endif /* not lint */
 
 /*
@@ -186,7 +186,7 @@ auth_url(const char *challenge, char **response, const char *guser,
 		fprintf(ttyout, "%s\n", uuser);
 	} else {
 		(void)fflush(ttyout);
-		if (getline(stdin, uuser, sizeof(uuser), &errormsg) < 0) {
+		if (get_line(stdin, uuser, sizeof(uuser), &errormsg) < 0) {
 			warnx("%s; can't authenticate", errormsg);
 			goto cleanup_auth_url;
 		}
@@ -834,7 +834,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 
 				/* Read the response */
-		len = getline(fin, buf, sizeof(buf), &errormsg);
+		len = get_line(fin, buf, sizeof(buf), &errormsg);
 		if (len < 0) {
 			if (*errormsg == '\n')
 				errormsg++;
@@ -858,7 +858,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 				/* Read the rest of the header. */
 		while (1) {
-			len = getline(fin, buf, sizeof(buf), &errormsg);
+			len = get_line(fin, buf, sizeof(buf), &errormsg);
 			if (len < 0) {
 				if (*errormsg == '\n')
 					errormsg++;
@@ -1063,7 +1063,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 				fprintf(ttyout,
 				    "Authorization failed. Retry (y/n)? ");
-				if (getline(stdin, reply, sizeof(reply), NULL)
+				if (get_line(stdin, reply, sizeof(reply), NULL)
 				    < 0) {
 					goto cleanup_fetch_url;
 				}

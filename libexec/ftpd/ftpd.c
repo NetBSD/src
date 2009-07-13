@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.193 2009/03/15 07:48:36 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.194 2009/07/13 19:05:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.193 2009/03/15 07:48:36 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.194 2009/07/13 19:05:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -2949,7 +2949,7 @@ handleoobcmd()
 	if (!transflag)
 		return (0);
 	cp = tmpline;
-	ret = getline(cp, sizeof(tmpline)-1, stdin);
+	ret = get_line(cp, sizeof(tmpline)-1, stdin);
 	if (ret == -1) {
 		reply(221, "You could at least say goodbye.");
 		dologout(0);
@@ -3803,7 +3803,7 @@ auth_conv(int num_msg, const struct pam_message **msg,
 			reply(331, "User %s accepted, provide %s.",
 			    cred->uname, pbuf);
 			(void) alarm(curclass.timeout);
-			ret = getline(pbuf, sizeof(pbuf)-1, stdin);
+			ret = get_line(pbuf, sizeof(pbuf)-1, stdin);
 			(void) alarm(0);
 			if (ret == -1) {
 				reply(221, "You could at least say goodbye.");

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.22 2009/06/04 04:48:04 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.23 2009/07/13 19:05:40 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.22 2009/06/04 04:48:04 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.23 2009/07/13 19:05:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ incard(CARD *crd)
 
 	retval = FALSE;
 	rnk = sut = EMPTY;
-	if (!(line = getline()))
+	if (!(line = get_line()))
 		goto gotit;
 	p = p1 = line;
 	while (*p1 != ' ' && *p1 != '\0')
@@ -325,7 +325,7 @@ number(int lo, int hi, const char *prompt)
 
 	for (sum = 0;;) {
 		msg(prompt);
-		if (!(p = getline()) || *p == '\0') {
+		if (!(p = get_line()) || *p == '\0') {
 			msg(quiet ? "Not a number" :
 			    "That doesn't look like a number");
 			continue;
@@ -506,12 +506,12 @@ over:
 }
 
 /*
- * getline:
+ * get_line:
  *      Reads the next line up to '\n' or EOF.  Multiple spaces are
  *	compressed to one space; a space is inserted before a ','
  */
 char *
-getline(void)
+get_line(void)
 {
 	char *sp;
 	int c, oy, ox;

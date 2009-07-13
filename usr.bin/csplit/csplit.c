@@ -1,4 +1,4 @@
-/*	$NetBSD: csplit.c,v 1.4 2007/12/15 19:44:49 perry Exp $	*/
+/*	$NetBSD: csplit.c,v 1.5 2009/07/13 19:05:40 roy Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp$	*/
 
 /*-
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: csplit.c,v 1.4 2007/12/15 19:44:49 perry Exp $");
+__RCSID("$NetBSD: csplit.c,v 1.5 2009/07/13 19:05:40 roy Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: csplit.c,v 1.4 2007/12/15 19:44:49 perry Exp $");
 static void	 cleanup(void);
 static void	 do_lineno(const char *);
 static void	 do_rexp(const char *);
-static char	*getline(void);
+static char	*get_line(void);
 static void	 handlesig(int);
 static FILE	*newfile(void);
 static void	 toomuch(FILE *, long);
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	/* Copy the rest into a new file. */
 	if (!feof(infile)) {
 		ofp = newfile();
-		while ((p = getline()) != NULL && fputs(p, ofp) == 0)
+		while ((p = get_line()) != NULL && fputs(p, ofp) == 0)
 			;
 		if (!sflag)
 			(void)printf("%jd\n", (intmax_t)ftello(ofp));
@@ -281,7 +281,7 @@ cleanup(void)
 
 /* Read a line from the input into a static buffer. */
 static char *
-getline(void)
+get_line(void)
 {
 	static char lbuf[LINE_MAX];
 	FILE *src;
@@ -302,7 +302,7 @@ again: if (fgets(lbuf, sizeof(lbuf), src) == NULL) {
 	return (lbuf);
 }
 
-/* Conceptually rewind the input (as obtained by getline()) back `n' lines. */
+/* Conceptually rewind the input (as obtained by get_line()) back `n' lines. */
 static void
 toomuch(FILE *ofp, long n)
 {
@@ -354,7 +354,7 @@ toomuch(FILE *ofp, long n)
 		err(1, "%s", currfile);
 
 	/*
-	 * getline() will read from here. Next call will truncate to
+	 * get_line() will read from here. Next call will truncate to
 	 * truncofs in this file.
 	 */
 	overfile = ofp;
@@ -402,7 +402,7 @@ do_rexp(const char *expr)
 
 	/* Read and output lines until we get a match. */
 	first = 1;
-	while ((p = getline()) != NULL) {
+	while ((p = get_line()) != NULL) {
 		if (fputs(p, ofp) != 0)
 			break;
 		if (!first && regexec(&cre, p, 0, NULL, 0) == 0)
@@ -428,7 +428,7 @@ do_rexp(const char *expr)
 		 * Positive offset: copy the requested number of lines
 		 * after the match.
 		 */
-		while (--ofs > 0 && (p = getline()) != NULL)
+		while (--ofs > 0 && (p = get_line()) != NULL)
 			if (fputs(p, ofp) != 0)
 				break;
 		toomuch(NULL, 0L);
@@ -463,7 +463,7 @@ do_lineno(const char *expr)
 	while (nfiles < maxfiles - 1) {
 		ofp = newfile();
 		while (lineno + 1 != lastline) {
-			if ((p = getline()) == NULL)
+			if ((p = get_line()) == NULL)
 				errx(1, "%ld: out of range", lastline);
 			if (fputs(p, ofp) != 0)
 				break;

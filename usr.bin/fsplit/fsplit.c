@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.26 2008/11/23 09:13:20 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.27 2009/07/13 19:05:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ static char blkp[] = "blkdta000.f";
 
 static void badparms(void);
 static const char *functs(const char *);
-static int getline(void);
+static int get_line(void);
 static void get_name(char *, int);
 static int lend(void);
 static int lname(char *, size_t);
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 		}
 		nflag = 0;
 		rv = 0;
-		while (getline() > 0) {
+		while (get_line() > 0) {
 			rv = 1;
 			fprintf(ofp, "%s", buf);
 			/* look for an 'end' statement */
@@ -269,7 +269,7 @@ get_name(char *name, int letters)
 }
 
 static int
-getline(void)
+get_line(void)
 {
 	char *ptr;
 
