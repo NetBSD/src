@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.23 2009/04/12 14:17:25 lukem Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.24 2009/07/14 21:02:24 apb Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.23 2009/04/12 14:17:25 lukem Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.24 2009/07/14 21:02:24 apb Exp $");
 #endif
 
 #include <stdio.h>
@@ -364,7 +364,7 @@ main(int argc, char **argv)
     
 	fd = open(file, O_RDWR);
         /* Try with mixer0. */
-        if (fd < 0 && file == _PATH_MIXER) {
+        if (fd < 0 && strcmp(file, _PATH_MIXER) == 0) {
         	file = _PATH_MIXER0;
                 fd = open(file, O_RDWR);
         }
