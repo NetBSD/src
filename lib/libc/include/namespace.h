@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.133 2008/08/04 21:29:27 matt Exp $	*/
+/*	$NetBSD: namespace.h,v 1.133.6.1 2009/07/14 19:35:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -115,6 +115,14 @@
 #define SHA1Init		_SHA1Init
 #define SHA1Transform		_SHA1Transform
 #define SHA1Update		_SHA1Update
+#define SHA224_Data		_SHA224_Data
+#define SHA224_End		_SHA224_End
+#define SHA224_FileChunk	_SHA224_FileChunk
+#define SHA224_File		_SHA224_File
+#define SHA224_Final		_SHA224_Final
+#define SHA224_Init		_SHA224_Init
+#define SHA224_Transform	_SHA224_Transform
+#define SHA224_Update		_SHA224_Update
 #define SHA256_Data		_SHA256_Data
 #define SHA256_End		_SHA256_End
 #define SHA256_FileChunk	_SHA256_FileChunk
