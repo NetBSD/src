@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.178 2009/06/26 19:30:45 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.179 2009/07/14 13:24:00 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.178 2009/06/26 19:30:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.179 2009/07/14 13:24:00 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -356,7 +356,6 @@ config_init(void)
 	cv_init(&config_misc_cv, "cfgmisc");
 
 	callout_init(&config_twiddle_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
 
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
@@ -411,6 +410,14 @@ configure(void)
 {
 	/* Initialize data structures. */
 	config_init();
+	/*
+	 * XXX
+	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
+	 * on amiga and atari which use config_init() and autoconf(9) fucntions
+	 * to initialize console devices.
+	 */
+	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
+
 	pmf_init();
 #if NDRVCTL > 0
 	drvctl_init();
