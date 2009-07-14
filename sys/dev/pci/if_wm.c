@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.176 2009/07/13 23:31:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.177 2009/07/14 00:00:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.176 2009/07/13 23:31:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.177 2009/07/14 00:00:44 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3264,7 +3264,8 @@ wm_init(struct ifnet *ifp)
 	 *
 	 * XXX Values could probably stand some tuning.
 	 */
-	if (sc->sc_type != WM_T_ICH8) {
+	if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
+	    && (sc->sc_type != WM_T_ICH10)) {
 		CSR_WRITE(sc, WMREG_FCAL, FCAL_CONST);
 		CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
 		CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
@@ -3278,7 +3279,11 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_FCRTH, FCRTH_DFLT);
 		CSR_WRITE(sc, WMREG_FCRTL, sc->sc_fcrtl);
 	}
-	CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
+
+	if (sc->sc_type == WM_T_80003)
+		CSR_WRITE(sc, WMREG_FCTTV, 0xffff);
+	else
+		CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
 
 	/* Deal with VLAN enables. */
 	if (VLAN_ATTACHED(&sc->sc_ethercom))
@@ -3288,29 +3293,47 @@ wm_init(struct ifnet *ifp)
 
 	/* Write the control registers. */
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-	if (sc->sc_type >= WM_T_80003 && (sc->sc_flags & WM_F_HAS_MII)) {
-		int val;
-		val = CSR_READ(sc, WMREG_CTRL_EXT);
-		val &= ~CTRL_EXT_LINK_MODE_MASK;
-		CSR_WRITE(sc, WMREG_CTRL_EXT, val);
 
-		/* Bypass RX and TX FIFO's */
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
-		    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS | 
-		    KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
+	if (sc->sc_flags & WM_F_HAS_MII) {
+		int val;
+
+		switch (sc->sc_type) {
+		case WM_T_80003:
+		case WM_T_ICH8:
+		case WM_T_ICH9:
+		case WM_T_ICH10:
+			/*
+			 * Set the mac to wait the maximum time between each
+			 * iteration and increase the max iterations when
+			 * polling the phy; this fixes erroneous timeouts at
+			 * 10Mbps.
+			 */
+			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS,
+			    0xFFFF);
+			val = wm_kmrn_i80003_readreg(sc,
+			    KUMCTRLSTA_OFFSET_INB_PARAM);
+			val |= 0x3F;
+			wm_kmrn_i80003_writereg(sc,
+			    KUMCTRLSTA_OFFSET_INB_PARAM, val);
+			break;
+		default:
+			break;
+		}
+
+		if (sc->sc_type == WM_T_80003) {
+			val = CSR_READ(sc, WMREG_CTRL_EXT);
+			val &= ~CTRL_EXT_LINK_MODE_MASK;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, val);
+
+			/* Bypass RX and TX FIFO's */
+			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
+			    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS | 
+			    KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
 		
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
-		    KUMCTRLSTA_INB_CTRL_DIS_PADDING |
-		    KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT);
-		/*
-		 * Set the mac to wait the maximum time between each
-		 * iteration and increase the max iterations when
-		 * polling the phy; this fixes erroneous timeouts at 10Mbps.
-		 */
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS, 0xFFFF);
-		val = wm_kmrn_i80003_readreg(sc, KUMCTRLSTA_OFFSET_INB_PARAM);
-		val |= 0x3F;
-		wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_PARAM, val);
+			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
+			    KUMCTRLSTA_INB_CTRL_DIS_PADDING |
+			    KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT);
+		}
 	}
 #if 0
 	CSR_WRITE(sc, WMREG_CTRL_EXT, sc->sc_ctrl_ext);
@@ -3341,6 +3364,13 @@ wm_init(struct ifnet *ifp)
 	if ((sc->sc_flags & WM_F_HAS_MII) == 0)
 		sc->sc_icr |= ICR_RXCFG;
 	CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
+
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10)) {
+		reg = CSR_READ(sc, WMREG_KABGTXD);
+		reg |= KABGTXD_BGSQLBIAS;
+		CSR_WRITE(sc, WMREG_KABGTXD, reg);
+	}
 
 	/* Set up the inter-packet gap. */
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
@@ -3384,6 +3414,13 @@ wm_init(struct ifnet *ifp)
 	if (sc->sc_type >= WM_T_80003)
 		sc->sc_tctl |= TCTL_RTLC;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
+
+	if (sc->sc_type == WM_T_80003) {
+		reg = CSR_READ(sc, WMREG_TCTL_EXT);
+		reg &= ~TCTL_EXT_GCEX_MASK;
+		reg |= DEFAULT_80003ES2LAN_TCTL_EXT_GCEX;
+		CSR_WRITE(sc, WMREG_TCTL_EXT, reg);
+	}
 
 	/* Set the media. */
 	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
@@ -4487,7 +4524,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* We have MII. */
 	sc->sc_flags |= WM_F_HAS_MII;
 
-	if (sc->sc_type >= WM_T_80003)
+	if (sc->sc_type == WM_T_80003)
 		sc->sc_tipg =  TIPG_1000T_80003_DFLT;
 	else
 		sc->sc_tipg = TIPG_1000T_DFLT;
