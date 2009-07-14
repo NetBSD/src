@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.50 2008/08/28 21:39:08 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.51 2009/07/14 07:43:16 dholland Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -491,16 +491,18 @@ logs an error message using
 .Xr syslog 3
 and terminates itself.
 .Ss IPv6 TCP/UDP behavior
-If you wish to run a server for IPv4 and IPv6 traffic,
-you'll need to run two separate process for the same server program,
-specified as two separate lines on
-.Pa /etc/inetd.conf ,
-for
+If you wish to run a server for both IPv4 and IPv6 traffic,
+you will need to run two separate processes for the same server program,
+specified as two separate lines in
+.Pa /etc/inetd.conf 
+using
 .Dq tcp4
 and
-.Dq tcp6 .
+.Dq tcp6
+respectively.
+Plain
 .Dq tcp
-means TCP on top of currently-default IP version,
+means TCP on top of the current default IP version,
 which is, at this moment, IPv4.
 .Pp
 Under various combination of IPv4/v6 daemon settings,
