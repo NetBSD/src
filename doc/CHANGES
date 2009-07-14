@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1253 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1254 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -312,6 +312,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	postfix(1): Import version 2.6.2 [tron 20090623]
 	wake(8): New command to send Wake-on-LAN packets to machines on
 		the local Ethernet. [mbalmer 20090625]
+	cpu_reboot(9): tear down stacks of (pseudo-)devices and
+		filesystems in an orderly fashion during shutdown,
+		detaching the devices and unmounting the filesystems.
+		i386 and sparc64 are finished. [dyoung 20090625]
 	kernel: Ephemeral mapping (emap) implementation, i386/amd64 support.
 		[rmind 20090628]
 	dhcpcd(8): Import dhcpcd-5.0.5 [roy 20090704]
