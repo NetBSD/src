@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.7 2009/03/27 06:35:10 pooka Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.8 2009/07/14 21:12:18 apb Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.7 2009/03/27 06:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.8 2009/07/14 21:12:18 apb Exp $");
 
 #include "libhfs.h"
 
@@ -813,7 +813,7 @@ hfslib_get_file_extents(hfs_volume* in_vol,
 	hfs_file_record_t		file;
 	hfs_catalog_key_t		filekey;
 	hfs_thread_record_t	fileparent;
-	hfs_fork_t				fork;
+	hfs_fork_t		fork = {.logical_size = 0};
 	hfs_extent_record_t	nextextentrec;
 	uint32_t	numblocks;
 	uint16_t	numextents, n;
