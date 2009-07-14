@@ -1,3 +1,4 @@
+.\" $NetBSD: accf_http.9,v 1.6 2009/07/14 21:40:02 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Alfred Perlstein
 .\"
@@ -42,14 +43,13 @@ to receive incoming HTTP connections.
 Once installed on a listening socket, this filter is activated when a
 connection becomes ready to receive data (at which point
 .Xr accept 2
-would usually return the connected descriptor to the application).  The
-filter prevents the descriptor from being returned immediately to the
-application via
+would usually return the connected descriptor to the application).
+The filter prevents the descriptor from being returned immediately
+to the application via
 .Xr accept 2 .
 The descriptor is made available to the application via
 .Xr accept 2
-only when
-one of the following conditions is met:
+only when one of the following conditions is met:
 .Bl -enum
 .It
 A complete, syntactically valid HTTP/1.0 or HTTP/1.1 HEAD or GET request has
@@ -81,9 +81,9 @@ on the socket
 .Bd -literal -offset 0i
 	struct accept_filter_arg afa;
 
-	bzero(&afa, sizeof(afa));
+	bzero(\*[Am]afa, sizeof(afa));
 	strcpy(afa.af_name, "httpready");
-	setsockopt(sok, SOL_SOCKET, SO_ACCEPTFILTER, &afa, sizeof(afa));
+	setsockopt(sok, SOL_SOCKET, SO_ACCEPTFILTER, \*[Am]afa, sizeof(afa));
 .Ed
 .Sh SEE ALSO
 .Xr setsockopt 2 ,
