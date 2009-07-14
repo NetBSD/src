@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2009/07/14 21:08:31 apb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.43 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2009/07/14 21:08:31 apb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,9 @@ main(int argc, char **argv)
 {
 	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
+	const char *all;
 
+	all = "all";
 	egid = getegid();
 	(void)setegid(getgid());
 
@@ -153,7 +155,7 @@ main(int argc, char **argv)
 				break;
 			}
 
-			if(strstr("all",argv[0]) == "all"){
+			if (strstr(all, argv[0]) == all) {
 				allcounter=0;
 				allflag=1;
 			}
