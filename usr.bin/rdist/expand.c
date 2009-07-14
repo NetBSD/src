@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.17 2009/04/13 04:35:36 lukem Exp $	*/
+/*	$NetBSD: expand.c,v 1.18 2009/07/14 21:05:34 apb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: expand.c,v 1.17 2009/04/13 04:35:36 lukem Exp $");
+__RCSID("$NetBSD: expand.c,v 1.18 2009/07/14 21:05:34 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,6 @@ static void	expsh(char *);
 static void	expstr(char *);
 static int	match(char *, char *);
 static void	matchdir(char *);
-static int	smatch(char *, char *);
 
 /*
  * Take a list of names and expand any macros, etc.
@@ -516,64 +515,6 @@ slash:
 			pathp = spathp;
 			*pathp = '\0';
 			return (0);
-		}
-	}
-}
-
-static int
-smatch(char *s, char *p)
-{
-	int scc;
-	int ok, lc;
-	int c, cc;
-
-	for (;;) {
-		scc = *s++ & TRIM;
-		switch (c = *p++) {
-
-		case '[':
-			ok = 0;
-			lc = 077777;
-			while ((cc = *p++) != 0) {
-				if (cc == ']') {
-					if (ok)
-						break;
-					return (0);
-				}
-				if (cc == '-') {
-					if (lc <= scc && scc <= *p++)
-						ok++;
-				} else
-					if (scc == (lc = cc))
-						ok++;
-			}
-			if (cc == 0) {
-				yyerror("Missing ']'");
-				return (0);
-			}
-			continue;
-
-		case '*':
-			if (!*p)
-				return (1);
-			for (s--; *s; s++)
-				if (smatch(s, p))
-					return (1);
-			return (0);
-
-		case '\0':
-			return (scc == '\0');
-
-		default:
-			if ((c & TRIM) != scc)
-				return (0);
-			continue;
-
-		case '?':
-			if (scc == 0)
-				return (0);
-			continue;
-
 		}
 	}
 }
