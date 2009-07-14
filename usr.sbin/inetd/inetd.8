@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.51 2009/07/14 07:43:16 dholland Exp $
+.\"	$NetBSD: inetd.8,v 1.52 2009/07/14 08:24:15 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -213,7 +213,8 @@ reliably delivered message, or sequenced packet socket.
 Optionally, an
 .Xr accept_filter 9
 can be specified by appending a colon to the socket-type, followed by
-the name of the desired accept filter.  In this case
+the name of the desired accept filter.
+In this case
 .Nm
 will not see new connections for the specified service until the accept
 filter decides they are ready to be handled.
@@ -494,7 +495,7 @@ and terminates itself.
 If you wish to run a server for both IPv4 and IPv6 traffic,
 you will need to run two separate processes for the same server program,
 specified as two separate lines in
-.Pa /etc/inetd.conf 
+.Pa /etc/inetd.conf
 using
 .Dq tcp4
 and
