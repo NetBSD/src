@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.34 2009/07/09 19:37:59 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.35 2009/07/14 19:54:09 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -583,4 +583,32 @@ sys/netinet/ip_output.c				1.203
 
 	Fix PR kern/41659: add missing splx() in FAST_IPSEC code.
 	[martin, ticket #847]
+
+common/lib/libc/hash/sha2/sha2.c		1.8-1.18 via patch
+crypto/dist/openssl/crypto/evp/m_sha1.c		1.2-1.3 via patch
+distrib/sets/lists/base/md.amd64		1.51 via patch
+distrib/sets/lists/base/md.sparc64		1.46 via patch
+distrib/sets/lists/base/shl.mi			1.474 via patch
+distrib/sets/lists/comp/mi			1.1263 via patch
+lib/libc/hash/sha2/Makefile.inc			1.4 via patch
+lib/libc/hash/sha2/sha2.3			1.5 via patch
+lib/libc/hash/sha2/sha224hl.c			1.1 via patch
+lib/libc/include/namespace.h			1.138 via patch
+lib/libc/shlib_version				patch
+lib/libcrypto/libc-sha256.c			1.1 via patch
+lib/libcrypto/libc-sha512.c			1.1 via patch
+lib/libcrypto/sha.inc				1.10 via patch
+lib/libcrypto/shlib_version			patch
+sys/sys/sha2.h					1.3 via patch
+
+	Add SHA224 implementation to libc.
+	Make libcrypto use the SHA2 implementation of libc.
+	Bump minor versions of libc and libcrypto.
+	[joerg, ticket #855]
+
+dist/dhcp/client/dhclient.c			1.20
+
+	Limit the length of the address mask before we copy it.
+	Fixes CVE-2009-0692.
+	[tonnerre, ticket #856]
 
