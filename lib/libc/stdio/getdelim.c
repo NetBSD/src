@@ -1,4 +1,4 @@
-/* $NetBSD: getdelim.c,v 1.1 2009/07/13 22:19:25 roy Exp $ */
+/* $NetBSD: getdelim.c,v 1.2 2009/07/14 17:04:32 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdelim.c,v 1.1 2009/07/13 22:19:25 roy Exp $");
+__RCSID("$NetBSD: getdelim.c,v 1.2 2009/07/14 17:04:32 christos Exp $");
 
 #include <sys/param.h>
 
@@ -79,7 +79,7 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 		}
 
 		/* Scan through looking for the separator */
-		p = memchr(fp->_p, sep, fp->_r);
+		p = memchr(fp->_p, sep, (size_t)fp->_r);
 		if (p == NULL)
 			len = fp->_r;
 		else
@@ -87,7 +87,7 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 
 		newlen = off + len + 1;
 		/* Ensure that the resultant buffer length fits in ssize_t */
-		if (newlen > (size_t)SSIZE_MAX + 1) {
+		if (newlen >= (size_t)SSIZE_MAX) {
 			errno = EOVERFLOW;
 			goto error;
 		}
@@ -116,8 +116,9 @@ getdelim(char **__restrict buf, size_t *__restrict buflen,
 		}
 
 		(void)memcpy((void *)(*buf + off), (void *)fp->_p, len);
-		fp->_r -= len;
-		fp->_p += len;
+		/* Safe, len is never greater than what fp->_r can fit. */
+		fp->_r -= (int)len;
+		fp->_p += (int)len;
 		off += len;
 		if (p != NULL)
 			break;
