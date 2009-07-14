@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.37 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.38 2009/07/14 21:15:48 apb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.37 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.38 2009/07/14 21:15:48 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -585,7 +585,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 {
 	char *word;
 	char *arglist[MAXARGC];
-	const struct cmd *com = NULL;
+	const struct cmd * volatile com = NULL;
 	char *volatile cp;
 	int retval;
 	int c;
