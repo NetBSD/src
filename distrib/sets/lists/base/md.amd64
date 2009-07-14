@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.25.2.2 2009/01/16 21:41:06 bouyer Exp $
+# $NetBSD: md.amd64,v 1.25.2.3 2009/07/14 19:48:03 snj Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -125,13 +125,13 @@
 ./usr/lib/i386/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/i386/libc.so.12.163			base-compat-shlib	compat,pic
+./usr/lib/i386/libc.so.12.164			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcom_err.so.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcom_err.so.5.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.0.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.4			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.4.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.4.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libp2k.so.0			base-compat-shlib	compat,pic
