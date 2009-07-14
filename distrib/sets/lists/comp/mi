@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1278 2009/07/13 22:19:24 roy Exp $
+#	$NetBSD: mi,v 1.1279 2009/07/14 08:01:02 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11054,6 +11054,7 @@
 ./usr/share/man/html3/getcwd.html		comp-c-htmlman		html
 ./usr/share/man/html3/getdate.html		comp-c-htmlman		html
 ./usr/share/man/html3/getdate_err.html		comp-c-htmlman		html
+./usr/share/man/html3/getdelim.html		comp-c-htmlman		html
 ./usr/share/man/html3/getdevmajor.html		comp-c-htmlman		html
 ./usr/share/man/html3/getdirentries.html	comp-c-htmlman		html
 ./usr/share/man/html3/getdiskbyname.html	comp-c-htmlman		html
@@ -11082,6 +11083,7 @@
 ./usr/share/man/html3/getlabeloffset.html	comp-c-htmlman		html
 ./usr/share/man/html3/getlabelsector.html	comp-c-htmlman		html
 ./usr/share/man/html3/getlastlogx.html		comp-c-htmlman		html
+./usr/share/man/html3/getline.html		comp-c-htmlman		html
 ./usr/share/man/html3/getloadavg.html		comp-c-htmlman		html
 ./usr/share/man/html3/getmaxpartitions.html	comp-c-htmlman		html
 ./usr/share/man/html3/getmaxx.html		comp-c-htmlman		html
