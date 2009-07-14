@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.279 2009/06/23 19:36:40 elad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.280 2009/07/14 20:59:54 apb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.279 2009/06/23 19:36:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.280 2009/07/14 20:59:54 apb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2909,7 +2909,7 @@ nfs_sillyrename(struct vnode *dvp, struct vnode *vp, struct componentname *cnp, 
 	struct sillyrename *sp;
 	struct nfsnode *np;
 	int error;
-	short pid;
+	pid_t pid;
 
 	cache_purge(dvp);
 	np = VTONFS(vp);
