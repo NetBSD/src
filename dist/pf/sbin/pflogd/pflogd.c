@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.5 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.6 2009/07/15 18:05:17 christos Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -204,8 +204,13 @@ int
 if_exists(char *ifname)
 {
 	int s;
+#ifdef SIOCGZIFDATA
+	struct ifdatareq ifr;
+#define ifr_name ifdr_name
+#else
 	struct ifreq ifr;
 	struct if_data ifrdat;
+#endif
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket");
@@ -213,7 +218,9 @@ if_exists(char *ifname)
 	if (strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)) >=
 		sizeof(ifr.ifr_name))
 			errx(1, "main ifr_name: strlcpy");
+#ifndef ifr_name
 	ifr.ifr_data = (caddr_t)&ifrdat;
+#endif
 	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
 		return (0);
 	if (close(s))
