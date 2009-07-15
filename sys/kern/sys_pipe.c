@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.116 2009/07/13 02:49:08 rmind Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.117 2009/07/15 21:09:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.116 2009/07/13 02:49:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.117 2009/07/15 21:09:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.116 2009/07/13 02:49:08 rmind Exp $")
  * Use this to disable direct I/O and decrease the code size:
  * #define PIPE_NODIRECT
  */
+
+/* XXX Disabled for now; rare hangs switching between direct/buffered */
+#define PIPE_NODIRECT
 
 static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
 static int	pipe_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
