@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.25 2009/07/16 01:30:10 dyoung Exp $ */
+/* $NetBSD: mfi.c,v 1.26 2009/07/16 18:10:00 dyoung Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.25 2009/07/16 01:30:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.26 2009/07/16 18:10:00 dyoung Exp $");
 
 #include "bio.h"
 
@@ -635,12 +635,12 @@ mfi_detach(struct mfi_softc *sc, int flags)
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_detach\n", DEVNAME(sc));
 
-	if ((error = config_detach_children(&sc->sc_dev, flags)) != 0)
+	if ((error = config_detach_children(sc->sc_dev, flags)) != 0)
 		return error;
 
 #if NBIO > 0
 	mfi_destroy_sensors(sc);
-	bio_unregister(&sc->sc_dev);
+	bio_unregister(sc->sc_dev);
 #endif /* NBIO > 0 */
 
 	mfi_intr_disable(sc);
@@ -760,7 +760,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		sc->sc_ld[i].ld_present = 1;
 
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = sc->sc_dev;
 	adapt->adapt_nchannels = 1;
 	if (sc->sc_ld_cnt)
 		adapt->adapt_openings = sc->sc_max_cmds / sc->sc_ld_cnt;
@@ -779,13 +779,13 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	chan->chan_ntargets = MFI_MAX_LD;
 	chan->chan_id = MFI_MAX_LD;
 
-	(void)config_found(&sc->sc_dev, &sc->sc_chan, scsiprint);
+	(void)config_found(sc->sc_dev, &sc->sc_chan, scsiprint);
 
 	/* enable interrupts */
 	mfi_intr_enable(sc);
 
 #if NBIO > 0
-	if (bio_register(&sc->sc_dev, mfi_ioctl) != 0)
+	if (bio_register(sc->sc_dev, mfi_ioctl) != 0)
 		panic("%s: controller registration failed", DEVNAME(sc));
 	if (mfi_create_sensors(sc) != 0)
 		aprint_error("%s: unable to create sensors\n", DEVNAME(sc));
@@ -1062,7 +1062,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct scsipi_periph	*periph;
 	struct scsipi_xfer	*xs;
 	struct scsipi_adapter	*adapt = chan->chan_adapter;
-	struct mfi_softc	*sc = (void *) adapt->adapt_dev;
+	struct mfi_softc	*sc = device_private(adapt->adapt_dev);
 	struct mfi_ccb		*ccb;
 	struct scsi_rw_6	*rw;
 	struct scsipi_rw_10	*rwb;
@@ -1146,7 +1146,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case SCSI_TEST_UNIT_READY:
 		/* save off sd? after autoconf */
 		if (!cold)	/* XXX bogus */
-			strlcpy(sc->sc_ld[target].ld_dev, device_xname(&sc->sc_dev),
+			strlcpy(sc->sc_ld[target].ld_dev, device_xname(sc->sc_dev),
 			    sizeof(sc->sc_ld[target].ld_dev));
 		/* FALLTHROUGH */
 
@@ -1377,7 +1377,7 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 int
 mfi_ioctl(device_t dev, u_long cmd, void *addr)
 {
-	struct mfi_softc	*sc = (struct mfi_softc *)dev;
+	struct mfi_softc *sc = device_private(dev);
 	int error = 0;
 	int s = splbio();
 
