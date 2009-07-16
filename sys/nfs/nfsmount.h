@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.46.28.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.46.28.3 2009/07/16 16:43:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -129,7 +129,6 @@ struct nfs_args {
 struct	nfsmount {
 	kmutex_t nm_lock;		/* Lock for this structure */
 	lwp_t	*nm_rcvlwp;
-	lwp_t	*nm_sndlwp;
 	krwlock_t nm_rbtlock;		/* Lock for the rbtree */
 	kcondvar_t nm_rcvcv;
 	kcondvar_t nm_sndcv;
