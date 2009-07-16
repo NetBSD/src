@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.24 2009/07/16 01:01:47 dyoung Exp $ */
+/* $NetBSD: mfi.c,v 1.25 2009/07/16 01:30:10 dyoung Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.24 2009/07/16 01:01:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.25 2009/07/16 01:30:10 dyoung Exp $");
 
 #include "bio.h"
 
@@ -635,15 +635,15 @@ mfi_detach(struct mfi_softc *sc, int flags)
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_detach\n", DEVNAME(sc));
 
+	if ((error = config_detach_children(&sc->sc_dev, flags)) != 0)
+		return error;
+
 #if NBIO > 0
 	mfi_destroy_sensors(sc);
 	bio_unregister(&sc->sc_dev);
 #endif /* NBIO > 0 */
 
 	mfi_intr_disable(sc);
-
-	if ((error = config_detach_children(&sc->sc_dev, flags)) != 0)
-		return error;
 
 	/* TBD: shutdown firmware */
 
