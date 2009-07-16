@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.10 2008/06/24 10:09:24 gmcgarry Exp $ */
+/* $NetBSD: mfivar.h,v 1.11 2009/07/16 01:01:47 dyoung Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -103,6 +103,7 @@ enum mfi_iop {
 
 struct mfi_iop_ops {
 	uint32_t 		(*mio_fw_state)(struct mfi_softc *);
+	void 			(*mio_intr_dis)(struct mfi_softc *);
 	void 			(*mio_intr_ena)(struct mfi_softc *);
 	int 			(*mio_intr)(struct mfi_softc *);
 	void 			(*mio_post)(struct mfi_softc *, struct mfi_ccb *);
@@ -122,6 +123,7 @@ struct mfi_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
+	bus_size_t		sc_size;
 
 	/* save some useful information for logical drives that is missing
 	 * in sc_ld_list
@@ -161,5 +163,6 @@ struct mfi_softc {
 
 };
 
-int	mfi_attach(struct mfi_softc *sc, enum mfi_iop);
+int	mfi_attach(struct mfi_softc *, enum mfi_iop);
+int	mfi_detach(struct mfi_softc *, int);
 int	mfi_intr(void *);

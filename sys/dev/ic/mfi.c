@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.23 2009/05/12 14:25:17 cegger Exp $ */
+/* $NetBSD: mfi.c,v 1.24 2009/07/16 01:01:47 dyoung Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.23 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.24 2009/07/16 01:01:47 dyoung Exp $");
 
 #include "bio.h"
 
@@ -104,17 +104,20 @@ static int		mfi_ioctl_setstate(struct mfi_softc *,
 				struct bioc_setstate *);
 static int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
 static int		mfi_create_sensors(struct mfi_softc *);
+static int		mfi_destroy_sensors(struct mfi_softc *);
 static void		mfi_sensor_refresh(struct sysmon_envsys *,
 				envsys_data_t *);
 #endif /* NBIO > 0 */
 
 static uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
 static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
+static void 		mfi_xscale_intr_dis(struct mfi_softc *sc);
 static int 		mfi_xscale_intr(struct mfi_softc *sc);
 static void 		mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
 			  	 
 static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_fw_state,
+	mfi_xscale_intr_dis,
 	mfi_xscale_intr_ena,
 	mfi_xscale_intr,
 	mfi_xscale_post
@@ -122,11 +125,13 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
  	 
 static uint32_t 	mfi_ppc_fw_state(struct mfi_softc *sc);
 static void 		mfi_ppc_intr_ena(struct mfi_softc *sc);
+static void 		mfi_ppc_intr_dis(struct mfi_softc *sc);
 static int 		mfi_ppc_intr(struct mfi_softc *sc);
 static void 		mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
 		  	 
 static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_fw_state,
+	mfi_ppc_intr_dis,
 	mfi_ppc_intr_ena,
 	mfi_ppc_intr,
 	mfi_ppc_post
@@ -134,6 +139,7 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
  	 
 #define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
 #define mfi_intr_enable(_s) 	((_s)->sc_iop->mio_intr_ena(_s))
+#define mfi_intr_disable(_s) 	((_s)->sc_iop->mio_intr_dis(_s))
 #define mfi_my_intr(_s) 	((_s)->sc_iop->mio_intr(_s))
 #define mfi_post(_s, _c) 	((_s)->sc_iop->mio_post((_s), (_c)))
 
@@ -177,6 +183,28 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_len = 0;
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
+}
+
+static int
+mfi_destroy_ccb(struct mfi_softc *sc)
+{
+	struct mfi_ccb		*ccb;
+	uint32_t		i;
+
+	DNPRINTF(MFI_D_CCB, "%s: mfi_init_ccb\n", DEVNAME(sc));
+
+
+	for (i = 0; (ccb = mfi_get_ccb(sc)) != NULL; i++) {
+		/* create a dma map for transfer */
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	if (i < sc->sc_max_cmds)
+		return EBUSY;
+
+	free(sc->sc_ccb, M_DEVBUF);
+
+	return 0;
 }
 
 static int
@@ -598,6 +626,37 @@ mfiminphys(struct buf *bp)
 	if (bp->b_bcount > MFI_MAXFER)
 		bp->b_bcount = MFI_MAXFER;
 	minphys(bp);
+}
+
+int
+mfi_detach(struct mfi_softc *sc, int flags)
+{
+	int			error;
+
+	DNPRINTF(MFI_D_MISC, "%s: mfi_detach\n", DEVNAME(sc));
+
+#if NBIO > 0
+	mfi_destroy_sensors(sc);
+	bio_unregister(&sc->sc_dev);
+#endif /* NBIO > 0 */
+
+	mfi_intr_disable(sc);
+
+	if ((error = config_detach_children(&sc->sc_dev, flags)) != 0)
+		return error;
+
+	/* TBD: shutdown firmware */
+
+	if ((error = mfi_destroy_ccb(sc)) != 0)
+		return error;
+
+	mfi_freemem(sc, sc->sc_sense);
+
+	mfi_freemem(sc, sc->sc_frames);
+
+	mfi_freemem(sc, sc->sc_pcq);
+
+	return 0;
 }
 
 int
@@ -1879,6 +1938,14 @@ freeme:
 }
 
 static int
+mfi_destroy_sensors(struct mfi_softc *sc)
+{
+	sysmon_envsys_unregister(sc->sc_sme);
+	free(sc->sc_sensor, M_DEVBUF);
+	return 0;
+}
+
+static int
 mfi_create_sensors(struct mfi_softc *sc)
 {
 	int i;
@@ -1976,6 +2043,12 @@ mfi_xscale_fw_state(struct mfi_softc *sc)
 }
  	 
 static void
+mfi_xscale_intr_dis(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, 0);
+}
+
+static void
 mfi_xscale_intr_ena(struct mfi_softc *sc)
 {
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
@@ -2015,6 +2088,14 @@ mfi_ppc_fw_state(struct mfi_softc *sc)
 	return mfi_read(sc, MFI_OSP);
 }
  	 
+static void
+mfi_ppc_intr_dis(struct mfi_softc *sc)
+{
+	/* Taking a wild guess --dyoung */
+	mfi_write(sc, MFI_OMSK, ~(uint32_t)0x0);
+	mfi_write(sc, MFI_ODC, 0xffffffff);
+}
+
 static void
 mfi_ppc_intr_ena(struct mfi_softc *sc)
 {
