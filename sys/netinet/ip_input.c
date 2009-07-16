@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.281 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.282 2009/07/16 04:09:51 minskim Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.281 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.282 2009/07/16 04:09:51 minskim Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -2115,6 +2115,12 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 			: 0,
 			0, NULL, 0, NULL, 0);
 		*mp = sbcreatecontrol(&sdl, sdl.sdl_len, IP_RECVIF, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	if (inp->inp_flags & INP_RECVTTL) {
+		*mp = sbcreatecontrol((void *) &ip->ip_ttl,
+		    sizeof(uint8_t), IP_RECVTTL, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.45 2007/12/16 18:39:57 elad Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.46 2009/07/16 04:09:51 minskim Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -108,8 +108,6 @@ struct inpcb {
 /* XXX should move to an UDP control block */
 #define INP_ESPINUDP		0x100	/* ESP over UDP for NAT-T */
 #define INP_ESPINUDP_NON_IKE	0x200	/* ESP over UDP for NAT-T */
-#define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
-				INP_RECVIF)
 #define INP_ESPINUDP_ALL	(INP_ESPINUDP|INP_ESPINUDP_NON_IKE)
 #define INP_NOHEADER		0x400	/* Kernel removes IP header
 					 * before feeding a packet
@@ -118,6 +116,9 @@ struct inpcb {
 					 * not supply an IP header.
 					 * Cancels INP_HDRINCL.
 					 */
+#define	INP_RECVTTL		0x800	/* receive incoming IP TTL */
+#define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
+				INP_RECVIF|INP_RECVTTL)
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 
