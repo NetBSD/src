@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.12 2009/07/16 18:10:00 dyoung Exp $ */
+/* $NetBSD: mfivar.h,v 1.13 2009/07/16 18:58:38 dyoung Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -161,8 +161,11 @@ struct mfi_softc {
 	struct sysmon_envsys    *sc_sme;
 	envsys_data_t		*sc_sensor;
 
+	device_t		sc_child;
 };
 
+int	mfi_rescan(device_t, const char *, const int *);
+void	mfi_childdetached(device_t, device_t);
 int	mfi_attach(struct mfi_softc *, enum mfi_iop);
 int	mfi_detach(struct mfi_softc *, int);
 int	mfi_intr(void *);
