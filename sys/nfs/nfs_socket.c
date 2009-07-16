@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.170.2.4 2009/05/04 10:48:39 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.170.2.5 2009/07/16 16:43:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.4 2009/05/04 10:48:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.5 2009/07/16 16:43:15 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -185,10 +185,6 @@ static struct evcnt nfs_timer_stop_ev;
 static kmutex_t nfs_timer_lock;
 static bool (*nfs_timer_srvvec)(void);
 
-#ifdef NFS
-static int nfs_sndlock(struct nfsmount *, struct nfsreq *);
-static void nfs_sndunlock(struct nfsmount *);
-#endif
 static int nfs_rcvlock(struct nfsmount *, struct nfsreq *);
 static void nfs_rcvunlock(struct nfsmount *);
 
@@ -373,7 +369,6 @@ bad:
  * - nfs_connect() again
  * - set R_MUSTRESEND for all outstanding requests on mount point
  * If this fails the mount point is DEAD!
- * nb: Must be called with the nfs_sndlock() set on the mount point.
  */
 int
 nfs_reconnect(struct nfsreq *rep)
@@ -381,7 +376,6 @@ nfs_reconnect(struct nfsreq *rep)
 	struct nfsmount *nmp = rep->r_nmp;
 	int error;
 
-	KASSERT(rep->r_nmp->nm_sndlwp == curlwp);
 	KASSERT(rep->r_nmp->nm_rcvlwp == curlwp);
 	if (!rw_tryupgrade(&nmp->nm_solock)) {
 		printf("%s: nmp=%p: upgrade failed\n", __func__, nmp);
@@ -476,8 +470,7 @@ nfs_safedisconnect(struct nfsmount *nmp)
 }
 
 /*
- * This is the nfs send routine. For connection based socket types, it
- * must be called with an nfs_sndlock() on the socket.
+ * This is the nfs send routine.
  * "rep == NULL" indicates that it has been called from a server.
  * For the client side:
  * - return EINTR if the RPC is terminated, 0 otherwise
@@ -497,8 +490,6 @@ nfs_send(struct socket *so, struct mbuf *nam, struct mbuf *top,
 
 	if (rep) {
 		KASSERT(rw_read_held(&rep->r_nmp->nm_solock));
-		KASSERT((rep->r_nmp->nm_soflags & PR_CONNREQUIRED) == 0 ||
-		    rep->r_nmp->nm_sndlwp == curlwp);
 		if (rep->r_flags & R_SOFTTERM) {
 			m_freem(top);
 			return (EINTR);
@@ -613,9 +604,6 @@ nfs_receive(struct nfsreq *rep, struct mbuf **aname, struct mbuf **mp,
 	 * until we have an entire rpc request/reply.
 	 */
 	if (sotype != SOCK_DGRAM) {
-		error = nfs_sndlock(nmp, rep);
-		if (error)
-			return (error);
 tryagain:
 		/*
 		 * Check for fatal errors and resending request.
@@ -627,7 +615,6 @@ tryagain:
 		 * mount point.
 		 */
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM)) {
-			nfs_sndunlock(nmp);
 			return (EINTR);
 		}
 		so = nmp->nm_so;
@@ -635,7 +622,6 @@ tryagain:
 reconnect:
 			error = nfs_reconnect(rep);
 			if (error) {
-				nfs_sndunlock(nmp);
 				return error;
 			}
 			goto tryagain;
@@ -663,13 +649,11 @@ reconnect:
 			}
 			if (error) {
 				if (error == EINTR || error == ERESTART) {
-					nfs_sndunlock(nmp);
 					return error;
 				}
 				goto reconnect;
 			}
 		}
-		nfs_sndunlock(nmp);
 		if (sotype == SOCK_STREAM) {
 			aio.iov_base = (void *) &len;
 			aio.iov_len = sizeof(u_int32_t);
@@ -780,11 +764,7 @@ errout:
 				    "receive error %d from nfs server %s\n",
 				    error,
 				    nmp->nm_mountp->mnt_stat.f_mntfromname);
-			error = nfs_sndlock(nmp, rep);
-			if (error == 0) {
-				goto reconnect;
-			}
-			nfs_sndunlock(nmp);
+			goto reconnect;
 		}
 	} else {
 		if ((so = nmp->nm_so) == NULL)
@@ -1202,13 +1182,9 @@ tryagain:
 		nmp->nm_sent += NFS_CWNDSCALE;
 		rep->r_rflags |= RR_SENT;
 		mutex_exit(&nfs_reqq_lock);
-		if (nmp->nm_soflags & PR_CONNREQUIRED)
-			error = nfs_sndlock(nmp, rep);
 		if (!error) {
 			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
 			error = nfs_send(nmp->nm_so, nmp->nm_nam, m, rep);
-			if (nmp->nm_soflags & PR_CONNREQUIRED)
-				nfs_sndunlock(nmp);
 		}
 		mutex_enter(&nfs_reqq_lock);
 		/*
@@ -1865,64 +1841,6 @@ nfs_sigintr(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 	}
 	return (0);
 }
-
-#ifdef NFS
-/*
- * Lock a socket against others.
- * Necessary for STREAM sockets to ensure you get an entire rpc request/reply
- * and also to avoid race conditions between the processes with nfs requests
- * in progress when a reconnect is necessary.
- */
-static int
-nfs_sndlock(struct nfsmount *nmp, struct nfsreq *rep)
-{
-	struct lwp *l;
-	int timeo = 0;
-	bool catch;
-	int error = 0;
-
-	KASSERT(nmp == rep->r_nmp);
-
-	l = rep->r_lwp;
-	catch = (nmp->nm_flag & NFSMNT_INT) != 0;
-	mutex_enter(&nmp->nm_lock);
-	while (nmp->nm_sndlwp != NULL) {
-		KASSERT(nmp->nm_sndlwp != curlwp);
-		if (rep && nfs_sigintr(rep->r_nmp, rep, l)) {
-			error = EINTR;
-			goto quit;
-		}
-		if (catch) {
-			cv_timedwait_sig(&nmp->nm_sndcv, &nmp->nm_lock, timeo);
-		} else {
-			cv_timedwait(&nmp->nm_sndcv, &nmp->nm_lock, timeo);
-		}
-		if (catch) {
-			catch = false;
-			timeo = 2 * hz;
-		}
-	}
-	nmp->nm_sndlwp = curlwp;
-quit:
-	mutex_exit(&nmp->nm_lock);
-	return error;
-}
-
-/*
- * Unlock the stream socket for others.
- */
-static void
-nfs_sndunlock(struct nfsmount *nmp)
-{
-
-	mutex_enter(&nmp->nm_lock);
-	if (nmp->nm_sndlwp != curlwp)
-		panic("nfs sndunlock");
-	nmp->nm_sndlwp = NULL;
-	cv_signal(&nmp->nm_sndcv);
-	mutex_exit(&nmp->nm_lock);
-}
-#endif /* NFS */
 
 static int
 nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
