@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.10 2006/03/31 17:28:50 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.11 2009/07/16 22:44:27 tonnerre Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1763,6 +1763,8 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 				host_reference (&host, h, MDL);
 		}
 		if (!host) {
+			if (hp)
+				host_dereference (&hp, MDL);
 			find_hosts_by_haddr (&hp,
 					     packet -> raw -> htype,
 					     packet -> raw -> chaddr,
