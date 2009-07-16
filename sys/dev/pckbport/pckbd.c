@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.26 2009/03/08 15:06:56 ad Exp $ */
+/* $NetBSD: pckbd.c,v 1.27 2009/07/16 20:44:54 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.26 2009/03/08 15:06:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.27 2009/07/16 20:44:54 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,6 +457,17 @@ pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 	} else if (datain == KBR_EXTENDED1) {
 		id->t_extended1 = 2;
 		return 0;
+	}
+
+	if (id->t_extended0 == 1) {
+		switch (datain & 0x7f) {
+		case 0x2a:
+		case 0x36:
+			id->t_extended0 = 0;
+			return 0;
+		default:
+			break;
+		}
 	}
 
  	/* map extended keys to (unused) codes 128-254 */
