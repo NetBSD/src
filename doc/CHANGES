@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1254 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1255 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -324,4 +324,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		limit values [pgoyette 20090710]
 	libc: Add getdelim(3) and getline(3) conforming to
 		IEEE Std 1003.1-2008 (``POSIX.1'') [roy 20090713]
-
+	ip(4): Add IP_RECVTTL option. [minskim 20090716]
