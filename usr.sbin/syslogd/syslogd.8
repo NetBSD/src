@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.47 2009/02/01 12:59:05 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.48 2009/07/16 13:33:44 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd February 1, 2009
+.Dd July 16, 2009
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -233,9 +233,8 @@ for details.
 .Nm
 accepts messages in traditional BSD Syslog or in newer Syslog Protocol
 format.
-See RFC 3164 (BSD Syslog) and RFC
-.Em nnnn
-(Syslog Protocol) for detailed description of the message format.
+See RFC 3164 (BSD Syslog) and RFC 5424 (Syslog Protocol) for detailed
+description of the message format.
 .Dv LOG_KERN
 and priority
 .Dv LOG_NOTICE .
@@ -270,10 +269,10 @@ The kernel log device.
 .%T The BSD syslog Protocol
 .Re
 .Rs
-.%R Internet-Draft
-.%N draft-ietf-syslog-protocol-23
-.%D September 2007
-.%T The syslog Protocol
+.%R RFC
+.%N 5424
+.%D March 2009
+.%T The Syslog Protocol
 .Re
 .Sh HISTORY
 The
