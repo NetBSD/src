@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.10 2009/07/16 18:10:00 dyoung Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.11 2009/07/16 18:58:38 dyoung Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.10 2009/07/16 18:10:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.11 2009/07/16 18:58:38 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,9 @@ int	mfi_pci_match(device_t, cfdata_t, void *);
 void	mfi_pci_attach(device_t, device_t, void *);
 int	mfi_pci_detach(device_t, int);
 
-CFATTACH_DECL_NEW(mfi_pci, sizeof(struct mfi_pci_softc),
-    mfi_pci_match, mfi_pci_attach, mfi_pci_detach, NULL);
+CFATTACH_DECL3_NEW(mfi_pci, sizeof(struct mfi_pci_softc),
+    mfi_pci_match, mfi_pci_attach, mfi_pci_detach, NULL, mfi_rescan,
+    mfi_childdetached, DVF_DETACH_SHUTDOWN);
 
 struct mfi_pci_subtype {
 	pcireg_t 	st_vendor;
