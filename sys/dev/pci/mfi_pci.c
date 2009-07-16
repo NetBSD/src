@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.8 2009/05/12 08:23:01 cegger Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.9 2009/07/16 01:01:46 dyoung Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.8 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.9 2009/07/16 01:01:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +40,18 @@ __KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.8 2009/05/12 08:23:01 cegger Exp $");
 #define	MFI_BAR		0x10
 #define	MFI_PCI_MEMSIZE	0x2000 /* 8k */
 
+struct mfi_pci_softc {
+	struct mfi_softc	psc_sc;
+	pci_chipset_tag_t	psc_pc;
+};
+
 const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);
 int	mfi_pci_match(device_t, cfdata_t, void *);
 void	mfi_pci_attach(device_t, device_t, void *);
+int	mfi_pci_detach(device_t, int);
 
-CFATTACH_DECL(mfi_pci, sizeof(struct mfi_softc),
-    mfi_pci_match, mfi_pci_attach, NULL, NULL);
+CFATTACH_DECL(mfi_pci, sizeof(struct mfi_pci_softc),
+    mfi_pci_match, mfi_pci_attach, mfi_pci_detach, NULL);
 
 struct mfi_pci_subtype {
 	pcireg_t 	st_vendor;
@@ -117,24 +123,42 @@ mfi_pci_match(device_t parent, cfdata_t match, void *aux)
 	return (mfi_pci_find_device(aux) != NULL) ? 1 : 0;
 }
 
+int
+mfi_pci_detach(device_t self, int flags)
+{
+	struct mfi_pci_softc	*psc = device_private(self);
+	struct mfi_softc	*sc = &psc->psc_sc;
+	int error;
+
+	if ((error = mfi_detach(sc, flags)) != 0)
+		return error;
+
+	/* xxx */
+	pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
+	return 0;
+}
+
 void
 mfi_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct mfi_softc	*sc = device_private(self);
+	struct mfi_pci_softc	*psc = device_private(self);
+	struct mfi_softc	*sc = &psc->psc_sc;
 	struct pci_attach_args	*pa = aux;
 	const struct mfi_pci_device *mpd;
 	const struct mfi_pci_subtype *st;
 	const char		*intrstr;
 	pci_intr_handle_t	ih;
-	bus_size_t		size;
 	pcireg_t		csr;
 	const char 		*subtype = NULL;
 	uint32_t		subsysid;
 
+	psc->psc_pc = pa->pa_pc;
+
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFI_BAR);
 	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, MFI_BAR, csr, 0,
-	    &sc->sc_iot, &sc->sc_ioh, NULL, &size)) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_size)) {
 		aprint_error(": can't map controller pci space\n");
 		return;
 	}
@@ -143,7 +167,7 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error(": can't map interrupt\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -153,7 +177,7 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 		if (intrstr)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 		return;
 	}
 
@@ -180,6 +204,6 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: can't attach", DEVNAME(sc));
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 	}
 }
