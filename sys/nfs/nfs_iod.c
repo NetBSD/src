@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.3.2.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.3.2.3 2009/07/16 16:32:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.3.2.2 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.3.2.3 2009/07/16 16:32:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,7 @@ nfssvc_iod(void *arg)
 				cv_broadcast(&nmp->nm_aiocv);
 			}
 			mutex_exit(&nmp->nm_lock);
-			KERNEL_LOCK(1, curlwp);
 			(void)nfs_doio(bp);
-			KERNEL_UNLOCK_LAST(curlwp);
 			mutex_enter(&nmp->nm_lock);
 			/*
 			 * If there are more than one iod on this mount, 
