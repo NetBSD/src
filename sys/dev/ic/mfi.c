@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.26 2009/07/16 18:10:00 dyoung Exp $ */
+/* $NetBSD: mfi.c,v 1.27 2009/07/16 18:58:38 dyoung Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.26 2009/07/16 18:10:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.27 2009/07/16 18:58:38 dyoung Exp $");
 
 #include "bio.h"
 
@@ -70,7 +70,7 @@ static void		mfi_put_ccb(struct mfi_ccb *);
 static int		mfi_init_ccb(struct mfi_softc *);
 
 static struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
-static void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
+static void		mfi_freemem(struct mfi_softc *, struct mfi_mem **);
 
 static int		mfi_transition_firmware(struct mfi_softc *);
 static int		mfi_initialize_firmware(struct mfi_softc *);
@@ -345,8 +345,15 @@ amfree:
 }
 
 static void
-mfi_freemem(struct mfi_softc *sc, struct mfi_mem *mm)
+mfi_freemem(struct mfi_softc *sc, struct mfi_mem **mmp)
 {
+	struct mfi_mem *mm = *mmp;
+
+	if (mm == NULL)
+		return;
+
+	*mmp = NULL;
+
 	DNPRINTF(MFI_D_MEM, "%s: mfi_freemem: %p\n", DEVNAME(sc), mm);
 
 	bus_dmamap_unload(sc->sc_dmat, mm->am_map);
@@ -629,6 +636,32 @@ mfiminphys(struct buf *bp)
 }
 
 int
+mfi_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct mfi_softc *sc = device_private(self);
+
+	if (sc->sc_child != NULL)
+		return 0;
+
+	sc->sc_child = config_found_sm_loc(self, ifattr, locators, &sc->sc_chan,
+	    scsiprint, NULL);
+
+	return 0;
+}
+
+void
+mfi_childdetached(device_t self, device_t child)
+{
+	struct mfi_softc *sc = device_private(self);
+
+	KASSERT(self == sc->sc_dev);
+	KASSERT(child == sc->sc_child);
+
+	if (child == sc->sc_child)
+		sc->sc_child = NULL;
+}
+
+int
 mfi_detach(struct mfi_softc *sc, int flags)
 {
 	int			error;
@@ -650,11 +683,11 @@ mfi_detach(struct mfi_softc *sc, int flags)
 	if ((error = mfi_destroy_ccb(sc)) != 0)
 		return error;
 
-	mfi_freemem(sc, sc->sc_sense);
+	mfi_freemem(sc, &sc->sc_sense);
 
-	mfi_freemem(sc, sc->sc_frames);
+	mfi_freemem(sc, &sc->sc_frames);
 
-	mfi_freemem(sc, sc->sc_pcq);
+	mfi_freemem(sc, &sc->sc_pcq);
 
 	return 0;
 }
@@ -779,7 +812,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	chan->chan_ntargets = MFI_MAX_LD;
 	chan->chan_id = MFI_MAX_LD;
 
-	(void)config_found(sc->sc_dev, &sc->sc_chan, scsiprint);
+	mfi_rescan(sc->sc_dev, "scsi", NULL);
 
 	/* enable interrupts */
 	mfi_intr_enable(sc);
@@ -793,11 +826,11 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 
 	return 0;
 noinit:
-	mfi_freemem(sc, sc->sc_sense);
+	mfi_freemem(sc, &sc->sc_sense);
 nosense:
-	mfi_freemem(sc, sc->sc_frames);
+	mfi_freemem(sc, &sc->sc_frames);
 noframe:
-	mfi_freemem(sc, sc->sc_pcq);
+	mfi_freemem(sc, &sc->sc_pcq);
 nopcq:
 	return 1;
 }
@@ -1940,7 +1973,10 @@ freeme:
 static int
 mfi_destroy_sensors(struct mfi_softc *sc)
 {
+	if (sc->sc_sme == NULL)
+		return 0;
 	sysmon_envsys_unregister(sc->sc_sme);
+	sc->sc_sme = NULL;
 	free(sc->sc_sensor, M_DEVBUF);
 	return 0;
 }
