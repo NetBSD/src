@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 2009/07/16 14:18:09 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 2009/07/16 14:21:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2009/07/16 14:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2009/07/16 14:21:12 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -390,6 +390,9 @@ copyfault:
 			ksi.ksi_code = ILL_COPROC;
 			break;
 		default:
+#ifdef DIAGNOSTIC
+			panic("unhandled type %x\n", type);
+#endif
 			break;
 		}
 		goto trapsignal;
@@ -436,6 +439,9 @@ copyfault:
 			ksi.ksi_code = FPE_FLTDIV;
 			break;
 		default:
+#ifdef DIAGNOSTIC
+			panic("unhandled type %x\n", type);
+#endif
 			break;
 		}
 		goto trapsignal;
