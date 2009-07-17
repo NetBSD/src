@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.165 2009/07/14 19:56:28 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.166 2009/07/17 05:49:30 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3572,4 +3572,10 @@ dist/dhcp/client/dhclient.c			1.20
 	Limit the length of the address mask before we copy it.
 	Fixes CVE-2009-0692.
 	[tonnerre, ticket #1336]
+
+dist/dhcp/server/dhcp.c				1.11
+
+	Fix behavior of dhcpd in the case where clientid and hardware
+	ethernet definitions are mixed. Fixes a refcount assertion.
+	[tonnerre, ticket #1337]
 
