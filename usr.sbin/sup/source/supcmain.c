@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.26 2009/01/04 17:10:47 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.27 2009/07/17 20:31:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -627,7 +627,7 @@ init(int argc, char **argv)
 	doswitch(&argc, &argv, &collT, &oflags, &aflags, username,
 	    sizeof(username));
 
-	if (argc == 1 && !sysflag)
+	if (argc == 0 && !sysflag)
 		logquit(1, "Need either -s or supfile");
 #if	MACH
 	oldsigsys = signal(SIGSYS, SIG_IGN);
