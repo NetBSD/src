@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.31 2009/05/19 21:45:14 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.32 2009/07/17 12:28:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.31 2009/05/19 21:45:14 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.32 2009/07/17 12:28:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -992,34 +992,28 @@ re_refresh_cursor(EditLine *el)
 	/* do input buffer to el->el_line.cursor */
 	for (cp = el->el_line.buffer; cp < el->el_line.cursor; cp++) {
 		c = *cp;
-		h++;		/* all chars at least this long */
 
-		if (c == '\n') {/* handle newline in data part too */
+		switch (c) {
+		case '\n':	/* handle newline in data part too */
 			h = 0;
 			v++;
-		} else {
-			if (c == '\t') {	/* if a tab, to next tab stop */
-				while (h & 07) {
-					h++;
-				}
-			} else if (iscntrl((unsigned char) c)) {
-						/* if control char */
+			break;
+		case '\t':	/* if a tab, to next tab stop */
+			while (++h & 07)
+				continue;
+			break;
+		default:
+			if (iscntrl((unsigned char) c))
+				h += 2;	/* ^x */
+			else if (!isprint((unsigned char) c))
+				h += 4; /* octal \xxx */
+			else
 				h++;
-				if (h > th) {	/* if overflow, compensate */
-					h = 1;
-					v++;
-				}
-			} else if (!isprint((unsigned char) c)) {
-				h += 3;
-				if (h > th) {	/* if overflow, compensate */
-					h = h - th;
-					v++;
-				}
-			}
+			break;
 		}
 
 		if (h >= th) {	/* check, extra long tabs picked up here also */
-			h = 0;
+			h -= th;
 			v++;
 		}
 	}
