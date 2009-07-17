@@ -1,4 +1,4 @@
-/*	$NetBSD: tc1.c,v 1.2 2009/03/31 17:38:27 christos Exp $	*/
+/*	$NetBSD: tc1.c,v 1.3 2009/07/17 12:25:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tc1.c,v 1.2 2009/03/31 17:38:27 christos Exp $");
+__RCSID("$NetBSD: tc1.c,v 1.3 2009/07/17 12:25:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 
 	el_set(el, EL_EDITOR, "vi");	/* Default editor is vi		*/
 	el_set(el, EL_SIGNAL, 1);	/* Handle signals gracefully	*/
-	el_set(el, EL_PROMPT, prompt, '\1');/* Set the prompt function	*/
+	el_set(el, EL_PROMPT_ESC, prompt, '\1');/* Set the prompt function */
 
 			/* Tell editline to use this history interface	*/
 	el_set(el, EL_HIST, history, hist);
