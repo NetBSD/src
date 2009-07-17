@@ -6,14 +6,10 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.1 2005/12/20 19:28:51 christos Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.2 2009/07/17 19:37:57 dsl Exp $")
 #endif
 
-#ifdef INDEX
-ENTRY(index)
-#else
 ENTRY(strchr)
-#endif
 	movzbq	%sil,%rcx
 
 	/*
@@ -134,3 +130,4 @@ ENTRY(strchr)
 .Ldone:
 	movq	%rdi,%rax
 	ret
+STRONG_ALIAS(index,strchr)
