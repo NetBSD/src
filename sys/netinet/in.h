@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.84 2009/07/16 04:09:51 minskim Exp $	*/
+/*	$NetBSD: in.h,v 1.85 2009/07/17 22:02:54 minskim Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -283,6 +283,7 @@ struct ip_opts {
 #define	IP_IPSEC_POLICY		22 /* struct; get/set security policy */
 #endif
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
+#define	IP_MINTTL		24   /* minimum TTL for packet or drop */
 
 /*
  * Defaults and limits for options
