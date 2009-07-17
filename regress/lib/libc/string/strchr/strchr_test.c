@@ -29,14 +29,15 @@
 #include <assert.h>
 #include <string.h>
 
+extern char *xstrchr(const char *, int);
 void check_strchr(void);
+
+/* try to trick the compiler */
+char * (*volatile f)((const char *, int);
 
 void
 check_strchr(void)
 {
-    /* try to trick the compiler */
-    char * (*f)(const char *, int) = strchr;
-    
     int a;
     int t;
     char* off;
@@ -234,8 +235,16 @@ check_strchr(void)
 
 
     for (a = 0; a < sizeof(long); ++a) {
+	if (a >= 2) {
+		/* Put char and a \0 before the buffer */
+		buf[a-1] = '/';
+		buf[a-2] = '0';
+	}
 	for (t = 0; t < (sizeof(tab) / sizeof(tab[0])); ++t) {
-	    strcpy(&buf[a], tab[t].val);
+	    int len = strlen(tab[t].val) + 1;
+	    memcpy(&buf[a], tab[t].val, len);
+	    /* Put the char we are looking for after the \0 */
+	    buf[a + len] = '/';
 	    
 	    off = f(&buf[a], '/');
 	    assert((tab[t].match == 0 && off == 0) ||
@@ -252,6 +261,7 @@ check_strchr(void)
 int
 main(void)
 {
+	f = strchr;
 	check_strchr();
 	return 0;
 }
