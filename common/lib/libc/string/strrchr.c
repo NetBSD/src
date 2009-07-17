@@ -1,4 +1,4 @@
-/*	$NetBSD: strrchr.c,v 1.4 2008/01/08 21:57:06 martin Exp $	*/
+/*	$NetBSD: strrchr.c,v 1.5 2009/07/17 19:37:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rindex.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strrchr.c,v 1.4 2008/01/08 21:57:06 martin Exp $");
+__RCSID("$NetBSD: strrchr.c,v 1.5 2009/07/17 19:37:57 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,12 +45,9 @@ __RCSID("$NetBSD: strrchr.c,v 1.4 2008/01/08 21:57:06 martin Exp $");
 #include <lib/libkern/libkern.h>
 #endif
 
+__strong_alias(rindex, strrchr)
 char *
-#ifdef RINDEX
-rindex(const char *p, int ch)
-#else
 strrchr(const char *p, int ch)
-#endif
 {
 	char *save;
 	const char c = ch;
