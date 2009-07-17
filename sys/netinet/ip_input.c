@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.282 2009/07/16 04:09:51 minskim Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.283 2009/07/17 18:09:25 minskim Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.282 2009/07/16 04:09:51 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.283 2009/07/17 18:09:25 minskim Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -2057,9 +2057,9 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
 
-	if (inp->inp_socket->so_options & SO_TIMESTAMP 
+	if (inp->inp_socket->so_options & SO_TIMESTAMP
 #ifdef SO_OTIMESTAMP
-	    || inp->inp_socket->so_options & SO_OTIMESTAMP 
+	    || inp->inp_socket->so_options & SO_OTIMESTAMP
 #endif
 	    ) {
 		struct timeval tv;
@@ -2207,7 +2207,7 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 
 static int
 sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
-{  
+{
 	int error, tmp;
 	struct sysctlnode node;
 
@@ -2235,7 +2235,7 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 		 * EINVAL if not a power of 2
 	         */
 		error = EINVAL;
-	}	
+	}
 
 	return error;
 }
