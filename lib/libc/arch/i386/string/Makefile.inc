@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.3 2003/08/01 17:03:48 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2009/07/17 19:37:54 dsl Exp $
 
 # objects built from assembler sources (need lint stubs)
-SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.S memcmp.S \
-	memcpy.S memmove.S memset.S rindex.S strcat.S strchr.S \
+SRCS+=	bcmp.S bcopy.S bzero.S ffs.S memchr.S memcmp.S \
+	memcpy.S memmove.S memset.S strcat.S strchr.S \
 	strcmp.S strcpy.S strlen.S strncmp.S strrchr.S swab.S
 
 # objects built from C sources
