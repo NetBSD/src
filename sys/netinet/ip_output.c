@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.204 2009/07/16 04:09:51 minskim Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.205 2009/07/17 22:02:54 minskim Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.204 2009/07/16 04:09:51 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.205 2009/07/17 22:02:54 minskim Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1223,6 +1223,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 		case IP_TOS:
 		case IP_TTL:
+		case IP_MINTTL:
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
@@ -1239,6 +1240,13 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_TTL:
 				inp->inp_ip.ip_ttl = optval;
+				break;
+
+			case IP_MINTTL:
+				if (optval > 0 && optval <= MAXTTL)
+					inp->inp_ip_minttl = optval;
+				else
+					error = EINVAL;
 				break;
 #define	OPTSET(bit) \
 	if (optval) \
@@ -1335,6 +1343,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 		case IP_TOS:
 		case IP_TTL:
+		case IP_MINTTL:
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
@@ -1348,6 +1357,10 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_TTL:
 				optval = inp->inp_ip.ip_ttl;
+				break;
+
+			case IP_MINTTL:
+				optval = inp->inp_ip_minttl;
 				break;
 
 			case IP_ERRORMTU:
