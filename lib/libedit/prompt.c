@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.15 2009/04/16 19:39:37 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.16 2009/07/17 12:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.15 2009/04/16 19:39:37 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.16 2009/07/17 12:26:26 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -147,13 +147,13 @@ prompt_set(EditLine *el, el_pfunc_t prf, char c, int op)
 {
 	el_prompt_t *p;
 
-	if (op == EL_PROMPT)
+	if (op == EL_PROMPT || op == EL_PROMPT_ESC)
 		p = &el->el_prompt;
 	else
 		p = &el->el_rprompt;
 
 	if (prf == NULL) {
-		if (op == EL_PROMPT)
+		if (op == EL_PROMPT || op == EL_PROMPT_ESC)
 			p->p_func = prompt_default;
 		else
 			p->p_func = prompt_default_r;
