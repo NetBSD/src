@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.52 2009/03/31 21:33:17 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.53 2009/07/17 12:27:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.52 2009/03/31 21:33:17 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.53 2009/07/17 12:27:57 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -557,9 +557,10 @@ term_move_to_line(EditLine *el, int where)
 			    el->el_display[el->el_cursor.v][0] != '\0') {
 				/* move without newline */
 				term_move_to_char(el, el->el_term.t_size.h - 1);
-				term_overwrite(el,
-				    &el->el_display[el->el_cursor.v][el->el_cursor.h],
-				    (size_t)1);
+				term_overwrite(el, &el->el_display
+				    [el->el_cursor.v][el->el_cursor.h],
+				    (size_t)(el->el_term.t_size.h -
+				    el->el_cursor.h));
 				/* updates Cursor */
 				del--;
 			} else {
@@ -714,7 +715,7 @@ term_overwrite(EditLine *el, const char *cp, size_t n)
 				el->el_cursor.h = 1;
 			}
 		} else		/* no wrap, but cursor stays on screen */
-			el->el_cursor.h = el->el_term.t_size.h;
+			el->el_cursor.h = el->el_term.t_size.h - 1;
 	}
 }
 
