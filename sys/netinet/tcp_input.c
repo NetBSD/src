@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.297 2009/07/17 22:02:54 minskim Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.298 2009/07/18 23:09:53 minskim Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.297 2009/07/17 22:02:54 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.298 2009/07/18 23:09:53 minskim Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1289,10 +1289,6 @@ findpcb:
 #endif
 	}
 
-	/* Check the minimum TTL for socket. */
-	if (ip->ip_ttl < inp->inp_ip_minttl)
-		goto drop;
-
 	/*
 	 * If the state is CLOSED (i.e., TCB does not exist) then
 	 * all data in the incoming segment is discarded.
@@ -1302,6 +1298,10 @@ findpcb:
 	tp = NULL;
 	so = NULL;
 	if (inp) {
+		/* Check the minimum TTL for socket. */
+		if (ip->ip_ttl < inp->inp_ip_minttl)
+			goto drop;
+
 		tp = intotcpcb(inp);
 		so = inp->inp_socket;
 	}
