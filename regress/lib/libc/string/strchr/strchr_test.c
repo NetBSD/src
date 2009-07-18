@@ -33,7 +33,7 @@ extern char *xstrchr(const char *, int);
 void check_strchr(void);
 
 /* try to trick the compiler */
-char * (*volatile f)((const char *, int);
+char * (*volatile f)(const char *, int);
 
 void
 check_strchr(void)
