@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.190 2009/06/26 16:55:46 dyoung Exp $	*/
+/*	$NetBSD: mount.h,v 1.191 2009/07/18 16:31:43 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -91,6 +91,7 @@
 #define MOUNT_HFS	"hfs"		/* Apple HFS+ Filesystem */
 #define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
 #define MOUNT_ZFS	"zfs"		/* Sun ZFS */
+#define MOUNT_NILFS	"nilfs"		/* NTT's NiLFS(2) logging file system */
 
 #ifndef _STANDALONE
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.934 2009/04/21 03:00:29 nonaka Exp $
+# $NetBSD: GENERIC,v 1.935 2009/07/18 16:31:42 reinoud Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.934 $"
+#ident 		"GENERIC-$Revision: 1.935 $"
 
 maxusers	64		# estimated number of users
 
@@ -193,6 +193,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #file-system 	TMPFS		# Efficient memory file-system
 #file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
+#file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
 #options 	QUOTA		# UFS quotas
