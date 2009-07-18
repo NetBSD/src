@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.821 2009/06/25 18:41:22 mbalmer Exp $
+# $NetBSD: mi,v 1.822 2009/07/18 21:32:52 reinoud Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -235,6 +235,7 @@
 ./sbin/mount_mfs				base-sysutil-root
 ./sbin/mount_msdos				base-sysutil-root
 ./sbin/mount_nfs				base-nfsclient-root
+./sbin/mount_nilfs				base-sysutil-root
 ./sbin/mount_ntfs				base-ntfs-root
 ./sbin/mount_null				base-miscfs-root
 ./sbin/mount_overlay				base-miscfs-root
