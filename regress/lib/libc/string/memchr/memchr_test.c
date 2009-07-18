@@ -110,8 +110,9 @@ check_memchr(void)
 	{ "abc" "\xff\xff\xff\xff" "/",	8, 1, 7 },
     };
 
-    for (a = 0; a < sizeof(long); ++a) {
+    for (a = 1; a < 1 + sizeof(long); ++a) {
 	for (t = 0; t < (sizeof(tab) / sizeof(tab[0])); ++t) {
+	    buf[a-1] = '/';
 	    strcpy(&buf[a], tab[t].val);
 	    
 	    off = f(&buf[a], '/', tab[t].len);
