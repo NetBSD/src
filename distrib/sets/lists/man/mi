@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1146 2009/07/01 23:54:48 snj Exp $
+# $NetBSD: mi,v 1.1147 2009/07/18 21:32:53 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2283,6 +2283,7 @@
 ./usr/share/man/cat8/mount_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_mfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_msdos.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_nilfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_nfs.0		man-nfsclient-catman	.cat
 ./usr/share/man/cat8/mount_ntfs.0		man-ntfs-catman		.cat
 ./usr/share/man/cat8/mount_null.0		man-miscfs-catman	.cat
@@ -4686,6 +4687,7 @@
 ./usr/share/man/html8/mount_mfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_msdos.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_nfs.html		man-nfsclient-htmlman	html
+./usr/share/man/html8/mount_nilfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_ntfs.html		man-ntfs-htmlman	html
 ./usr/share/man/html8/mount_null.html		man-miscfs-htmlman	html
 ./usr/share/man/html8/mount_overlay.html	man-miscfs-htmlman	html
@@ -7270,6 +7272,7 @@
 ./usr/share/man/man8/mount_mfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_nfs.8		man-nfsclient-man	.man
+./usr/share/man/man8/mount_nilfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_ntfs.8		man-ntfs-man		.man
 ./usr/share/man/man8/mount_null.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_overlay.8		man-miscfs-man		.man
