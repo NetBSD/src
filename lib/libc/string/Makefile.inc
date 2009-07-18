@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.71 2009/05/01 17:27:01 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.72 2009/07/18 09:41:23 dsl Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -25,8 +25,8 @@ SRCS+=	_strlcat.c _strlcpy.c _strerror_r.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
-#	bcmp() bcopy() bzero() ffs() index() memchr() memcmp() memset()
-#	rindex() strcat() strcmp() strcpy() strcspn() strlen()
+#	bcmp() bcopy() bzero() ffs() memchr() memcmp() memset()
+#	strcat() strcmp() strcpy() strcspn() strlen()
 #	strncat() strncmp() strncpy() strpbrk() strsep()
 #	strspn() strstr() swav()
 # m-d Makefile.inc may include sources for:
