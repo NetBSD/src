@@ -509,7 +509,7 @@ void mach64_dump_ring_info(drm_mach64_private_t *dev_priv)
 
 	DRM_INFO("\n");
 
-	if (ring->head >= 0 && ring->head < ring->size / sizeof(u32)) {
+	if (ring->head < ring->size / sizeof(u32)) {
 		struct list_head *ptr;
 		u32 addr = le32_to_cpu(((u32 *) ring->start)[ring->head + 1]);
 
@@ -834,8 +834,14 @@ static int mach64_bm_dma_test(struct drm_device * dev)
 
 	/* FIXME: get a dma buffer from the freelist here */
 	DRM_DEBUG("Allocating data memory ...\n");
+#ifdef __FreeBSD__
+	DRM_UNLOCK();
+#endif
 	cpu_addr_dmah =
 	    drm_pci_alloc(dev, 0x1000, 0x1000, 0xfffffffful);
+#ifdef __FreeBSD__
+	DRM_LOCK();
+#endif
 	if (!cpu_addr_dmah) {
 		DRM_INFO("data-memory allocation failed!\n");
 		return -ENOMEM;
@@ -1267,7 +1273,7 @@ int mach64_do_dispatch_pseudo_dma(drm_mach64_private_t *dev_priv)
 			entry = list_entry(ptr, drm_mach64_freelist_t, list);
 			buf = entry->buf;
 			offset = buf_addr - GETBUFADDR(buf);
-			if (offset >= 0 && offset < MACH64_BUFFER_SIZE) {
+			if (offset < MACH64_BUFFER_SIZE) {
 				found = 1;
 				break;
 			}

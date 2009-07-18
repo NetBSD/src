@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.937.4.4 2009/06/20 07:20:24 yamt Exp $
+$NetBSD: pcidevs,v 1.937.4.5 2009/07/18 14:53:05 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1310,22 +1310,22 @@ product ATI RD790_PPB_GPP_F	0x597f	RD790 PCI Express Bridge GPP Port F
 product ATI RD790_PPB_GFX1_A	0x5980	RD790 PCI Bridge GFX1 Port A
 product ATI RD790_PPB_GFX1_B	0x5981	RD790 PCI Bridge GFX1 Port B
 product ATI RD790_PPB_NBSB	0x5982	RD790 PCI Bridge (NB-SB Link)
-product ATI RD890_NB_DS16	0x5910	RD890 North Bridge Dual Slot 2x16 GFX
-product ATI RD890_NB_SS		0x5911	RD890 North Bridge Single Slot GFX
-product ATI RD890_NB_DS8	0x5912	RD890 North Bridge Dual Slot 2x8 GFX
-product ATI RD890_PPB_GFX0_A	0x5913	RD890 PCI Bridge GFX0 Port A
-product ATI RD890_PPB_GFX0_B	0x5914	RD890 PCI Bridge GFX0 Port B
-product ATI RD890_PPB_GPP_A	0x5915	RD890 PCI Express Bridge GPP Port A
-product ATI RD890_PPB_GPP_B	0x5916	RD890 PCI Express Bridge GPP Port B
-product ATI RD890_PPB_GPP_C	0x5917	RD890 PCI Express Bridge GPP Port C
-product ATI RD890_PPB_GPP_D	0x5918	RD890 PCI Express Bridge GPP Port D
-product ATI RD890_PPB_GPP_E	0x5919	RD890 PCI Express Bridge GPP Port E
-product ATI RD890_PPB_GPP_F	0x591a	RD890 PCI Express Bridge GPP Port F
-product ATI RD890_PPB_GPP_G	0x591b	RD890 PCI Express Bridge GPP Port G
-product ATI RD890_PPB_GPP_H	0x591c	RD890 PCI Express Bridge GPP Port H
-product ATI RD890_PPB_GFX1_A	0x591d	RD890 PCI Bridge GFX1 Port A
-product ATI RD890_PPB_GFX1_B	0x591e	RD890 PCI Bridge GFX1 Port B
-product ATI RD890_PPB_NBSB	0x591f	RD890 PCI Bridge (NB-SB Link)
+product ATI RD890_NB_DS16	0x5a10	RD890 North Bridge Dual Slot 2x16 GFX
+product ATI RD890_NB_SS		0x5a11	RD890 North Bridge Single Slot GFX
+product ATI RD890_NB_DS8	0x5a12	RD890 North Bridge Dual Slot 2x8 GFX
+product ATI RD890_PPB_GFX0_A	0x5a13	RD890 PCI Bridge GFX0 Port A
+product ATI RD890_PPB_GFX0_B	0x5a14	RD890 PCI Bridge GFX0 Port B
+product ATI RD890_PPB_GPP_A	0x5a15	RD890 PCI Express Bridge GPP Port A
+product ATI RD890_PPB_GPP_B	0x5a16	RD890 PCI Express Bridge GPP Port B
+product ATI RD890_PPB_GPP_C	0x5a17	RD890 PCI Express Bridge GPP Port C
+product ATI RD890_PPB_GPP_D	0x5a18	RD890 PCI Express Bridge GPP Port D
+product ATI RD890_PPB_GPP_E	0x5a19	RD890 PCI Express Bridge GPP Port E
+product ATI RD890_PPB_GPP_F	0x5a1a	RD890 PCI Express Bridge GPP Port F
+product ATI RD890_PPB_GPP_G	0x5a1b	RD890 PCI Express Bridge GPP Port G
+product ATI RD890_PPB_GPP_H	0x5a1c	RD890 PCI Express Bridge GPP Port H
+product ATI RD890_PPB_GFX1_A	0x5a1d	RD890 PCI Bridge GFX1 Port A
+product ATI RD890_PPB_GFX1_B	0x5a1e	RD890 PCI Bridge GFX1 Port B
+product ATI RD890_PPB_NBSB	0x5a1f	RD890 PCI Bridge (NB-SB Link)
 product ATI RD890_IOMMU		0x5a23	RD890 IOMMU
 product ATI RADEON_XPRESS_200	0x5a33	Radeon Xpress 200
 product ATI RS480_XRP		0x5a34	RS480 PCI Express Root Port
@@ -1849,6 +1849,7 @@ product EMULEX LP9802	0xf980	LP9802 FibreChannel Adapter
 
 /* ENE Technology products */
 product ENE MCR510	0x0510	MCR510 PCI Memory Card Reader Controller
+product ENE CB712	0x0550	CB712/714/810 PCI SD Card Reader Controller
 product ENE CB1211	0x1211	CB1211 CardBus Controller
 product ENE CB1225	0x1225	CB1225 CardBus Controller
 product ENE CB1410	0x1410	CB1410 CardBus Controller
@@ -3899,6 +3900,8 @@ product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardB
 product TI	PCI72111CB	0x8031	PCI7x21/7x11 Cardbus Controller
 product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
 product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
+product TI	PCI72111SD	0x8034	PCI7x21/7x11 SD Card Controller
+product TI	PCI72111SM	0x8035	PCI7x21/7x11 SM Card Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
 product TI	PCIXX12CB	0x8039	PCIXX12 Cardbus Controller

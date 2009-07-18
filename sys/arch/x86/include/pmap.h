@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12.10.1 2009/05/04 08:12:09 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12.10.2 2009/07/18 14:52:56 yamt Exp $	*/
 
 /*
  *
@@ -224,10 +224,16 @@ paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
 void		pmap_ldt_sync(struct pmap *);
 
+void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_emap_remove(vaddr_t, vsize_t);
+void		pmap_emap_sync(void);
+
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
 void	pmap_tlb_shootwait(void);
+
+#define	__HAVE_PMAP_EMAP
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 #define PMAP_FORK		/* turn on pmap_fork interface */

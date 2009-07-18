@@ -1,5 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.2.4.3 2009/06/20 07:20:28 yamt Exp $ */
-/* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
+/* $NetBSD: siisata_pci.c,v 1.2.4.4 2009/07/18 14:53:09 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -32,7 +31,7 @@
  */
 
 /*-
- * Copyright (c) 2007, 2008 Jonathan A. Kollasch.
+ * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,44 +83,49 @@ static void siisata_pci_attach(device_t, device_t, void *);
 static int siisata_pci_detach(device_t, int);
 static bool siisata_pci_resume(device_t PMF_FN_PROTO);
 
-static const struct siisata_pci_product {
-	pci_vendor_id_t spp_vendor;
-	pci_product_id_t spp_product;
-	int spp_ports;
-	int spp_chip;
+struct siisata_pci_board {
+	pci_vendor_id_t		spb_vend;
+	pci_product_id_t	spb_prod;
+	uint16_t		spb_port;
+	uint16_t		spb_chip;
+};
 
-}                   siisata_pci_products[] = {
+static const struct siisata_pci_board siisata_pci_boards[] = {
 	{
-		PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3124,
-		4, 3124
+		.spb_vend = PCI_VENDOR_CMDTECH,
+		.spb_prod = PCI_PRODUCT_CMDTECH_3124,
+		.spb_port = 4,
+		.spb_chip = 3124,
 	},
 	{
-		PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3132,
-		2, 3132
+		.spb_vend = PCI_VENDOR_CMDTECH,
+		.spb_prod = PCI_PRODUCT_CMDTECH_3132,
+		.spb_port = 2, 
+		.spb_chip = 3132,
 	},
 	{
-		PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3531,
-		1, 3531
-	},
-	{
-		0, 0,
-		0, 0
+		.spb_vend = PCI_VENDOR_CMDTECH,
+		.spb_prod = PCI_PRODUCT_CMDTECH_3531,
+		.spb_port = 1,
+		.spb_chip = 3531,
 	},
 };
 
 CFATTACH_DECL_NEW(siisata_pci, sizeof(struct siisata_pci_softc),
     siisata_pci_match, siisata_pci_attach, siisata_pci_detach, NULL);
 
-static const struct siisata_pci_product *
+static const struct siisata_pci_board *
 siisata_pci_lookup(const struct pci_attach_args * pa)
 {
-	const struct siisata_pci_product *spp;
+	int i;
 
-	for (spp = siisata_pci_products; spp->spp_ports > 0; spp++) {
-		if (PCI_VENDOR(pa->pa_id) == spp->spp_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == spp->spp_product)
-			return spp;
+	for (i = 0; i < __arraycount(siisata_pci_boards); i++) {
+		if (siisata_pci_boards[i].spb_vend != PCI_VENDOR(pa->pa_id))
+			continue;
+		if (siisata_pci_boards[i].spb_prod == PCI_PRODUCT(pa->pa_id))
+			return &siisata_pci_boards[i];
 	}
+
 	return NULL;
 }
 
@@ -145,7 +149,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	const char *intrstr;
 	pcireg_t csr, memtype;
-	const struct siisata_pci_product *spp;
+	const struct siisata_pci_board *spbp;
 	pci_intr_handle_t intrhandle;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
@@ -162,12 +166,8 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": SATA-II HBA\n");
 	aprint_normal(": %s\n", devinfo);
 
-	/* map bar0 */
-#if 1
+	/* map BAR 0, global registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, SIISATA_PCI_BAR0);
-#else
-	memtype = PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT;
-#endif
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
@@ -182,17 +182,12 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_grh = memh;
 		sc->sc_grs = grsize;
 	} else {
-		aprint_error("%s: unable to map device global registers\n",
-		    SIISATANAME(sc));
+		aprint_error_dev(self, "couldn't map global registers\n");
 		return;
 	}
 
-	/* map bar1 */
-#if 1
+	/* map BAR 1, port registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, SIISATA_PCI_BAR1);
-#else
-	memtype = PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT;
-#endif
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
@@ -208,25 +203,20 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_prs = prsize;
 	} else {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
-		aprint_error("%s: unable to map device port registers\n",
-		    SIISATANAME(sc));
+		aprint_error_dev(self, "couldn't map port registers\n");
 		return;
 	}
 
-	if (pci_dma64_available(pa)) {
+	if (pci_dma64_available(pa))
 		sc->sc_dmat = pa->pa_dmat64;
-		sc->sc_have_dma64 = 1;
-		aprint_debug("64-bit PCI DMA available\n");
-	} else {
+	else
 		sc->sc_dmat = pa->pa_dmat;
-		sc->sc_have_dma64 = 0;
-	}
 
 	/* map interrupt */
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
-		aprint_error("%s: couldn't map interrupt\n", SIISATANAME(sc));
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
@@ -235,21 +225,17 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
-		aprint_error("%s: couldn't establish interrupt"
-		    "at %s\n", SIISATANAME(sc), intrstr);
+		aprint_error_dev(self, "couldn't establish interrupt at %s\n",
+			intrstr);
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", SIISATANAME(sc),
-	    intrstr ? intrstr : "unknown interrupt");
+	aprint_normal_dev(self, "interrupting at %s\n",
+		intrstr ? intrstr : "unknown interrupt");
 
 	/* fill in number of ports on this device */
-	spp = siisata_pci_lookup(pa);
-	if (spp != NULL) {
-		sc->sc_atac.atac_nchannels = spp->spp_ports;
-		sc->sc_chip = spp->spp_chip;
-	} else
-		/* _match() should prevent us from getting here */
-		panic("siisata: the universe might be falling apart!\n");
+	spbp = siisata_pci_lookup(pa);
+	KASSERT(spbp != NULL);
+	sc->sc_atac.atac_nchannels = spbp->spb_port;
 
 	/* set the necessary bits in case the firmware didn't */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -259,34 +245,36 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 
 	gcreg = GRREAD(sc, GR_GC);
 
-	aprint_normal("%s: SiI%d on ", SIISATANAME(sc), sc->sc_chip);
-	if (sc->sc_chip == 3124) {
-		aprint_normal("%d-bit, ", (gcreg & GR_GC_REQ64) ? 64 : 32);
+	aprint_verbose_dev(self, "SiI%d, %sGb/s\n",
+		spbp->spb_chip, (gcreg & GR_GC_3GBPS) ? "3.0" : "1.5" );
+	if (spbp->spb_chip == 3124) {
+		short width;
+		short speed;
+		char pcix = 1;
+
+		width = (gcreg & GR_GC_REQ64) ? 64 : 32;
+
 		switch (gcreg & (GR_GC_DEVSEL | GR_GC_STOP | GR_GC_TRDY)) {
 		case 0:
-			aprint_normal("%d", (gcreg & GR_GC_M66EN) ? 66 : 33);
+			speed = (gcreg & GR_GC_M66EN) ? 66 : 33;
+			pcix = 0;
 			break;
 		case GR_GC_TRDY:
-			aprint_normal("%d", 66);
+			speed = 66;
 			break;
 		case GR_GC_STOP:
-			aprint_normal("%d", 100);
+			speed = 100;
 			break;
 		case GR_GC_STOP | GR_GC_TRDY:
-			aprint_normal("%d", 133);
+			speed = 133;
 			break;
 		default:
+			speed = -1;
 			break;
 		}
-		aprint_normal("MHz PCI%s bus.", (gcreg & (GR_GC_DEVSEL | GR_GC_STOP | GR_GC_TRDY)) ? "-X" : "");
-	} else {
-		/* XXX - but only x1 devices so far */
-		aprint_normal("PCI-Express x1 port.");
+		aprint_verbose_dev(self, "%hd-bit %hdMHz PCI%s\n",
+			width, speed, pcix ? "-X" : "");
 	}
-	if (gcreg & GR_GC_3GBPS)
-		aprint_normal(" 3.0Gb/s capable.\n");
-	else
-		aprint_normal("\n");
 
 	siisata_attach(sc);
 

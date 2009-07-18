@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.353.2.3 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.353.2.4 2009/07/18 14:53:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.3 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.4 2009/07/18 14:53:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -693,13 +693,13 @@ main(void)
 static void
 check_console(struct lwp *l)
 {
-	struct nameidata nd;
+	struct vnode *vp;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console");
-	error = namei(&nd);
+	error = namei_simple_kernel("/dev/console",
+				NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error == 0)
-		vrele(nd.ni_vp);
+		vrele(vp);
 	else if (error == ENOENT)
 		printf("warning: no /dev/console\n");
 	else

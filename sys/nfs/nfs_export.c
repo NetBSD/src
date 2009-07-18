@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.33.4.3 2009/06/20 07:20:34 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.33.4.4 2009/07/18 14:53:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.33.4.3 2009/06/20 07:20:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.33.4.4 2009/07/18 14:53:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,8 @@ netexport_fini(void)
  * command).
  */
 int
-mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
+mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
+    struct mount *nmp)
 {
 	int error;
 #ifdef notyet
@@ -260,6 +261,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		return error;
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
+	KASSERT(nmp == NULL || nmp == mp);
 
 	/*
 	 * Make sure the file system can do vptofh.  If the file system
@@ -278,7 +280,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	vput(vp);
 	if (error != 0)
 		return error;
-	mutex_enter(&mp->mnt_updating);	/* mnt_flag */
+	if (nmp == NULL)
+		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
 	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
@@ -311,15 +314,16 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	else if (mel->mel_nexports == 1)
 		error = export(ne, &mel->mel_exports[0]);
 	else {
-		printf("mountd_set_exports_list: Cannot set more than one "
-		    "entry at once (unimplemented)\n");
+		printf("%s: Cannot set more than one "
+		    "entry at once (unimplemented)\n", __func__);
 		error = EOPNOTSUPP;
 	}
 #endif
 
 out:
 	netexport_wrunlock();
-	mutex_exit(&mp->mnt_updating);	/* mnt_flag */
+	if (nmp == NULL)
+		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
 	vfs_unbusy(mp, false, NULL);
 	return error;
 }
@@ -441,7 +445,7 @@ nfs_export_update_30(struct mount *mp, const char *path, void *data)
 		mel.mel_exports = (void *)&args->eargs;
 	}
 
-	return mountd_set_exports_list(&mel, curlwp);
+	return mountd_set_exports_list(&mel, curlwp, mp);
 }
 
 /*

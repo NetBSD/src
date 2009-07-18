@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.105.4.1 2009/05/16 10:41:35 yamt Exp $ */
+/* $NetBSD: isp_pci.c,v 1.105.4.2 2009/07/18 14:53:05 yamt Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.105.4.1 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.105.4.2 2009/07/18 14:53:05 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -70,12 +70,9 @@ static uint32_t isp_pci_rd_reg_2400(struct ispsoftc *, int);
 static void isp_pci_wr_reg_2400(struct ispsoftc *, int, uint32_t);
 static int
 isp_pci_rd_isr_2400(struct ispsoftc *, uint32_t *, uint16_t *, uint16_t *);
-static int isp2400_pci_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *,
-    uint32_t *, uint32_t);
 #endif
 static int isp_pci_mbxdma(struct ispsoftc *);
-static int isp_pci_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *,
-    uint32_t *, uint32_t);
+static int isp_pci_dmasetup(struct ispsoftc *, XS_T *, void *);
 static void isp_pci_dmateardown(struct ispsoftc *, XS_T *, uint32_t);
 static void isp_pci_reset0(struct ispsoftc *);
 static void isp_pci_reset1(struct ispsoftc *);
@@ -132,9 +129,12 @@ static int isp_pci_intr(void *);
 
 #if	defined(ISP_DISABLE_2400_SUPPORT) || defined(ISP_DISABLE_FW)
 #define	ISP_2400_RISC_CODE	NULL
+#define	ISP_2500_RISC_CODE	NULL
 #else
 #define	ISP_2400_RISC_CODE	(const uint32_t *) isp_2400_risc_code
+#define	ISP_2500_RISC_CODE	(const uint32_t *) isp_2500_risc_code
 #include <dev/microcode/isp/asm_2400.h>
+#include <dev/microcode/isp/asm_2500.h>
 #endif
 
 #ifndef	ISP_DISABLE_1020_SUPPORT
@@ -262,12 +262,26 @@ static struct ispmdvec mdvec_2400 = {
 	isp_pci_rd_reg_2400,
 	isp_pci_wr_reg_2400,
 	isp_pci_mbxdma,
-	isp2400_pci_dmasetup,
+	isp_pci_dmasetup,
 	isp_pci_dmateardown,
 	isp_pci_reset0,
 	isp_pci_reset1,
 	NULL,
 	ISP_2400_RISC_CODE,
+	0,
+	0
+};
+static struct ispmdvec mdvec_2500 = {
+	isp_pci_rd_isr_2400,
+	isp_pci_rd_reg_2400,
+	isp_pci_wr_reg_2400,
+	isp_pci_mbxdma,
+	isp_pci_dmasetup,
+	isp_pci_dmateardown,
+	isp_pci_reset0,
+	isp_pci_reset1,
+	NULL,
+	ISP_2500_RISC_CODE,
 	0,
 	0
 };
@@ -329,6 +343,10 @@ static struct ispmdvec mdvec_2400 = {
 #define	PCI_PRODUCT_QLOGIC_ISP2432	0x2432
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP2532
+#define	PCI_PRODUCT_QLOGIC_ISP2532	0x2532
+#endif
+
 #ifndef	PCI_PRODUCT_QLOGIC_ISP6312
 #define	PCI_PRODUCT_QLOGIC_ISP6312	0x6312
 #endif
@@ -375,6 +393,9 @@ static struct ispmdvec mdvec_2400 = {
 
 #define	PCI_QLOGIC_ISP2432	\
 	((PCI_PRODUCT_QLOGIC_ISP2432 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP2532	\
+	((PCI_PRODUCT_QLOGIC_ISP2532 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP6312	\
 	((PCI_PRODUCT_QLOGIC_ISP6312 << 16) | PCI_VENDOR_QLOGIC)
@@ -447,6 +468,7 @@ isp_pci_probe(device_t parent, cfdata_t match, void *aux)
 #ifndef	ISP_DISABLE_2400_SUPPORT
 	case PCI_QLOGIC_ISP2422:
 	case PCI_QLOGIC_ISP2432:
+	case PCI_QLOGIC_ISP2532:
 		return (1);
 #endif
 	default:
@@ -646,6 +668,15 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		    PCI_MBOX_REGS2400_OFF;
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
 	}
+	if (pa->pa_id == PCI_QLOGIC_ISP2532) {
+		isp->isp_mdvec = &mdvec_2500;
+		dstring = ": QLogic FC-AL and 8Gbps Fabric PCI-E HBA\n";
+		isp->isp_type = ISP_HA_FC_2500;
+		mamt = sizeof (fcparam);
+		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
+		    PCI_MBOX_REGS2400_OFF;
+		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
+	}
 #endif
 	if (mamt == 0) {
 		return;
@@ -743,7 +774,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
 	ISP_LOCK(isp);
-	isp_reset(isp);
+	isp_reset(isp, 1);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		ISP_UNLOCK(isp);
 		free(isp->isp_param, M_DEVBUF);
@@ -1295,266 +1326,63 @@ dmafail:
 }
 
 static int
-isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *rq,
-    uint32_t *nxtip, uint32_t optr)
+isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, void *arg)
 {
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
+	ispreq_t *rq = arg;
 	bus_dmamap_t dmap;
-	uint32_t starti = isp->isp_reqidx, nxti = *nxtip;
-	ispreq_t *qep;
-	int segcnt, seg, error, ovseg, seglim, drq;
+	bus_dma_segment_t *dm_segs;
+	uint32_t nsegs;
+	isp_ddir_t ddir;
 
-	qep = (ispreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, starti);
 	dmap = pcs->pci_xfer_dmap[isp_handle_index(rq->req_handle)];
 	if (xs->datalen == 0) {
-		rq->req_seg_count = 1;
-		goto mbxsync;
-	}
-	if (xs->xs_control & XS_CTL_DATA_IN) {
-		drq = REQFLAG_DATA_IN;
-	} else {
-		drq = REQFLAG_DATA_OUT;
-	}
+		ddir = ISP_NOXFR;
+		nsegs = 0;
+		dm_segs = NULL;
+	 } else {
+		int error;
+		uint32_t flag, flg2;
 
-	if (IS_FC(isp)) {
-		seglim = ISP_RQDSEG_T2;
-		((ispreqt2_t *)rq)->req_totalcnt = xs->datalen;
-		((ispreqt2_t *)rq)->req_flags |= drq;
-	} else {
-		rq->req_flags |= drq;
-		if (XS_CDBLEN(xs) > 12) {
-			seglim = 0;
-		} else {
-			seglim = ISP_RQDSEG;
+		if (sizeof (bus_addr_t) > 4) {
+			if (rq->req_header.rqs_entry_type == RQSTYPE_T2RQS) {
+				rq->req_header.rqs_entry_type = RQSTYPE_T3RQS;
+			} else if (rq->req_header.rqs_entry_type == RQSTYPE_REQUEST) {
+				rq->req_header.rqs_entry_type = RQSTYPE_A64;
+			}
 		}
-	}
-	error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
-	    NULL, ((xs->xs_control & XS_CTL_NOSLEEP) ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
-	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
-	if (error) {
-		isp_prt(isp, ISP_LOGWARN, "unable to load DMA (%d)", error);
-		XS_SETERR(xs, HBA_BOTCH);
-		if (error == EAGAIN || error == ENOMEM)
-			return (CMD_EAGAIN);
-		else
-			return (CMD_COMPLETE);
-	}
 
-	segcnt = dmap->dm_nsegs;
-
-	isp_prt(isp, ISP_LOGDEBUG2, "%d byte %s %p in %d segs",
-	    xs->datalen, (xs->xs_control & XS_CTL_DATA_IN)? "read to" :
-	    "write from", xs->data, segcnt);
-
-	for (seg = 0, rq->req_seg_count = 0;
-	    seglim && seg < segcnt && rq->req_seg_count < seglim;
-	    seg++, rq->req_seg_count++) {
-		if (IS_FC(isp)) {
-			ispreqt2_t *rq2 = (ispreqt2_t *)rq;
-			rq2->req_dataseg[rq2->req_seg_count].ds_count =
-			    dmap->dm_segs[seg].ds_len;
-			rq2->req_dataseg[rq2->req_seg_count].ds_base =
-			    dmap->dm_segs[seg].ds_addr;
+		if (xs->xs_control & XS_CTL_DATA_IN) {
+			flg2 = BUS_DMASYNC_PREREAD;
+			flag = BUS_DMA_READ;
+			ddir = ISP_FROM_DEVICE;
 		} else {
-			rq->req_dataseg[rq->req_seg_count].ds_count =
-			    dmap->dm_segs[seg].ds_len;
-			rq->req_dataseg[rq->req_seg_count].ds_base =
-			    dmap->dm_segs[seg].ds_addr;
+			flg2 = BUS_DMASYNC_PREWRITE;
+			flag = BUS_DMA_WRITE;
+			ddir = ISP_TO_DEVICE;
 		}
-		isp_prt(isp, ISP_LOGDEBUG2, "seg0.[%d]={0x%lx,%lu}",
-		    rq->req_seg_count, (long) dmap->dm_segs[seg].ds_addr,
-		    (unsigned long) dmap->dm_segs[seg].ds_len);
-	}
-
-	if (seg == segcnt) {
-		goto dmasync;
-	}
-
-	do {
-		uint32_t onxti;
-		ispcontreq_t *crq, *cqe, local;
-
-		crq = &local;
-
-		cqe = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, nxti);
-		onxti = nxti;
-		nxti = ISP_NXT_QENTRY(onxti, RQUEST_QUEUE_LEN(isp));
-		if (nxti == optr) {
-			isp_prt(isp, ISP_LOGERR, "Request Queue Overflow++");
-			bus_dmamap_unload(isp->isp_dmatag, dmap);
+		error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
+		    NULL, ((xs->xs_control & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING | flag);
+		if (error) {
+			isp_prt(isp, ISP_LOGWARN, "unable to load DMA (%d)", error);
 			XS_SETERR(xs, HBA_BOTCH);
-			return (CMD_EAGAIN);
+			if (error == EAGAIN || error == ENOMEM) {
+				return (CMD_EAGAIN);
+			} else {
+				return (CMD_COMPLETE);
+			}
 		}
-		rq->req_header.rqs_entry_count++;
-		memset((void *)crq, 0, sizeof (*crq));
-		crq->req_header.rqs_entry_count = 1;
-		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;
-
-		for (ovseg = 0; seg < segcnt && ovseg < ISP_CDSEG;
-		    rq->req_seg_count++, seg++, ovseg++) {
-			crq->req_dataseg[ovseg].ds_count =
-			    dmap->dm_segs[seg].ds_len;
-			crq->req_dataseg[ovseg].ds_base =
-			    dmap->dm_segs[seg].ds_addr;
-			isp_prt(isp, ISP_LOGDEBUG2, "seg%d.[%d]={0x%lx,%lu}",
-			    rq->req_header.rqs_entry_count - 1,
-			    rq->req_seg_count, (long)dmap->dm_segs[seg].ds_addr,
-			    (unsigned long) dmap->dm_segs[seg].ds_len);
-		}
-		isp_put_cont_req(isp, crq, cqe);
-		MEMORYBARRIER(isp, SYNC_REQUEST, onxti, QENTRY_LEN);
-	} while (seg < segcnt);
-
-
-dmasync:
-	bus_dmamap_sync(isp->isp_dmatag, dmap, 0, dmap->dm_mapsize,
-	    (xs->xs_control & XS_CTL_DATA_IN) ?  BUS_DMASYNC_PREREAD :
-	    BUS_DMASYNC_PREWRITE);
-
-mbxsync:
-	switch (rq->req_header.rqs_entry_type) {
-	case RQSTYPE_REQUEST:
-		isp_put_request(isp, rq, qep);
-		break;
-	case RQSTYPE_CMDONLY:
-		isp_put_extended_request(isp, (ispextreq_t *)rq,
-		    (ispextreq_t *)qep);
-		break;
-	case RQSTYPE_T2RQS:
-		if (ISP_CAP_2KLOGIN(isp)) {
-			isp_put_request_t2e(isp,
-			    (ispreqt2e_t *) rq, (ispreqt2e_t *) qep);
-		} else {
-			isp_put_request_t2(isp,
-			    (ispreqt2_t *) rq, (ispreqt2_t *) qep);
-		}
-		break;
-	}
-	*nxtip = nxti;
-	return (CMD_QUEUED);
-}
-
-
-#if !defined(ISP_DISABLE_2400_SUPPORT)
-static int
-isp2400_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs,
-    ispreq_t *ispreq, uint32_t *nxtip, uint32_t optr)
-{
-	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
-	bus_dmamap_t dmap;
-	bus_dma_segment_t *dm_segs, *eseg;
-	uint32_t starti = isp->isp_reqidx, nxti = *nxtip;
-	ispreqt7_t *rq;
-	void *qep;
-	int nseg, datalen, error, seglim;
-
-	rq = (ispreqt7_t *) ispreq;
-	qep = ISP_QUEUE_ENTRY(isp->isp_rquest, starti);
-	dmap = pcs->pci_xfer_dmap[isp_handle_index(rq->req_handle)];
-	if (xs->datalen == 0) {
-		rq->req_seg_count = 1;
-		goto mbxsync;
+		dm_segs = dmap->dm_segs;
+		nsegs = dmap->dm_nsegs;
+		bus_dmamap_sync(isp->isp_dmatag, dmap, 0, dmap->dm_mapsize, flg2);
 	}
 
-	error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
-	    NULL, ((xs->xs_control & XS_CTL_NOSLEEP) ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
-	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
-	if (error) {
-		isp_prt(isp, ISP_LOGWARN, "unable to load DMA (%d)", error);
-		XS_SETERR(xs, HBA_BOTCH);
-		if (error == EAGAIN || error == ENOMEM) {
-			return (CMD_EAGAIN);
-		} else {
-			return (CMD_COMPLETE);
-		}
-	}
-
-	nseg = dmap->dm_nsegs;
-	dm_segs = dmap->dm_segs;
-
-	isp_prt(isp, ISP_LOGDEBUG2, "%d byte %s %p in %d segs",
-	    xs->datalen, (xs->xs_control & XS_CTL_DATA_IN)? "read to" :
-	    "write from", xs->data, nseg);
-
-	/*
-	 * We're passed an initial partially filled in entry that
-	 * has most fields filled in except for data transfer
-	 * related values.
-	 *
-	 * Our job is to fill in the initial request queue entry and
-	 * then to start allocating and filling in continuation entries
-	 * until we've covered the entire transfer.
-	 */
-	rq->req_header.rqs_entry_type = RQSTYPE_T7RQS;
-	rq->req_dl = xs->datalen;
-	datalen = xs->datalen;
-	if (xs->xs_control & XS_CTL_DATA_IN) {
-		rq->req_alen_datadir = 0x2;
+	if (isp_send_cmd(isp, rq, dm_segs, nsegs, xs->datalen, ddir) != CMD_QUEUED) {
+		return (CMD_EAGAIN);
 	} else {
-		rq->req_alen_datadir = 0x1;
+		return (CMD_QUEUED);
 	}
-
-	eseg = dm_segs + nseg;
-
-	rq->req_dataseg.ds_base = DMA_LO32(dm_segs->ds_addr);
-	rq->req_dataseg.ds_basehi = DMA_HI32(dm_segs->ds_addr);
-	rq->req_dataseg.ds_count = dm_segs->ds_len;
-
-	datalen -= dm_segs->ds_len;
-
-	dm_segs++;
-	rq->req_seg_count++;
-
-	while (datalen > 0 && dm_segs != eseg) {
-		uint32_t onxti;
-		ispcontreq64_t local, *crq = &local, *cqe;
-
-		cqe = (ispcontreq64_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, nxti);
-		onxti = nxti;
-		nxti = ISP_NXT_QENTRY(onxti, RQUEST_QUEUE_LEN(isp));
-		if (nxti == optr) {
-			isp_prt(isp, ISP_LOGDEBUG0, "Request Queue Overflow++");
-			return (CMD_EAGAIN);
-		}
-		rq->req_header.rqs_entry_count++;
-		MEMZERO((void *)crq, sizeof (*crq));
-		crq->req_header.rqs_entry_count = 1;
-		crq->req_header.rqs_entry_type = RQSTYPE_A64_CONT;
-
-		seglim = 0;
-		while (datalen > 0 && seglim < ISP_CDSEG64 && dm_segs != eseg) {
-			crq->req_dataseg[seglim].ds_base =
-			    DMA_LO32(dm_segs->ds_addr);
-			crq->req_dataseg[seglim].ds_basehi =
-			    DMA_HI32(dm_segs->ds_addr);
-			crq->req_dataseg[seglim].ds_count =
-			    dm_segs->ds_len;
-			rq->req_seg_count++;
-			dm_segs++;
-			seglim++;
-			datalen -= dm_segs->ds_len;
-		}
-		if (isp->isp_dblev & ISP_LOGDEBUG1) {
-			isp_print_bytes(isp, "Continuation", QENTRY_LEN, crq);
-		}
-		isp_put_cont64_req(isp, crq, cqe);
-		MEMORYBARRIER(isp, SYNC_REQUEST, onxti, QENTRY_LEN);
-	}
-	*nxtip = nxti;
-
-
-	bus_dmamap_sync(isp->isp_dmatag, dmap, 0, dmap->dm_mapsize,
-	    (xs->xs_control & XS_CTL_DATA_IN) ?  BUS_DMASYNC_PREREAD :
-	    BUS_DMASYNC_PREWRITE);
-
-mbxsync:
-	isp_put_request_t7(isp, rq, qep);
-	*nxtip = nxti;
-	return (CMD_QUEUED);
 }
-#endif
 
 static int
 isp_pci_intr(void *arg)

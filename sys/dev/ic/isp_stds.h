@@ -1,4 +1,4 @@
-/* $NetBSD: isp_stds.h,v 1.2 2008/03/11 05:33:30 mjacob Exp $ */
+/* $NetBSD: isp_stds.h,v 1.2.4.1 2009/07/18 14:53:02 yamt Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -52,7 +52,7 @@ typedef struct {
 	uint8_t		cs_ctl;
 	uint8_t		s_id[3];
 	uint8_t		type;
-	uint8_t		f_ctl;
+	uint8_t		f_ctl[3];
 	uint8_t		seq_id;
 	uint8_t		df_ctl;
 	uint16_t	seq_cnt;

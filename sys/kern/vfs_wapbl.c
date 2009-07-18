@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.25.2.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.25.2.3 2009/07/18 14:53:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.3 2009/07/18 14:53:23 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -1175,10 +1175,12 @@ wapbl_biodone(struct buf *bp)
 
 	if (bp->b_error) {
 #ifdef notyet /* Can't currently handle possible dirty buffer reuse */
-		XXXpooka: interfaces not fully updated
-		Note: this was not enabled in the original patch
-		against netbsd4 either.  I don't know if comment
-		above is true or not.
+		/*
+		 * XXXpooka: interfaces not fully updated
+		 * Note: this was not enabled in the original patch
+		 * against netbsd4 either.  I don't know if comment
+		 * above is true or not.
+		 */
 
 		/*
 		 * If an error occurs, report the error and leave the

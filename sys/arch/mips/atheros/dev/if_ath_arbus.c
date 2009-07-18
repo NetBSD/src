@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.12.4.1 2009/05/04 08:11:31 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.12.4.2 2009/07/18 14:52:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.12.4.1 2009/05/04 08:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.12.4.2 2009/07/18 14:52:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.12.4.1 2009/05/04 08:11:31 yamt E
 #include <dev/pci/pcidevs.h>
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ath/ah.h>
-#include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
+
+#include <ah.h>
+#include <ah_soc.h>	/* XXX really doesn't belong in hal */
 
 struct ath_arbus_softc {
 	struct ath_softc	sc_ath;

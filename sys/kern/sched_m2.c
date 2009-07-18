@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.24.4.1 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.24.4.2 2009/07/18 14:53:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,11 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.24.4.1 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.24.4.2 2009/07/18 14:53:23 yamt Exp $");
 
 #include <sys/param.h>
 
-#include <sys/bitops.h>
 #include <sys/cpu.h>
 #include <sys/callout.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.23.4.2 2009/05/16 10:41:34 yamt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.23.4.3 2009/07/18 14:53:04 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.23.4.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.23.4.3 2009/07/18 14:53:04 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -604,10 +604,25 @@ bce_start(struct ifnet *ifp)
 			txsfree--;
 		}
 		/* sync descriptors being used */
-		bus_dmamap_sync(sc->bce_dmatag, sc->bce_ring_map,
-			  sizeof(struct bce_dma_slot) * txstart + PAGE_SIZE,
-			     sizeof(struct bce_dma_slot) * dmamap->dm_nsegs,
-				BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		if ( sc->bce_txsnext > txstart ) {
+			bus_dmamap_sync(sc->bce_dmatag, sc->bce_ring_map,
+			    PAGE_SIZE + sizeof(struct bce_dma_slot) * txstart,
+			    sizeof(struct bce_dma_slot) * dmamap->dm_nsegs,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		} else {
+			bus_dmamap_sync(sc->bce_dmatag, sc->bce_ring_map,
+			    PAGE_SIZE + sizeof(struct bce_dma_slot) * txstart,
+			    sizeof(struct bce_dma_slot) *
+			    (BCE_NTXDESC - txstart),
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			if ( sc->bce_txsnext != 0 ) {
+				bus_dmamap_sync(sc->bce_dmatag,
+				    sc->bce_ring_map, PAGE_SIZE,
+				    sc->bce_txsnext *
+				    sizeof(struct bce_dma_slot),
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			}
+		}
 
 		/* Give the packet to the chip. */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_DPTR,

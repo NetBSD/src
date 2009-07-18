@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.104.10.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.104.10.3 2009/07/18 14:53:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.104.10.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.104.10.3 2009/07/18 14:53:23 yamt Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -98,23 +98,23 @@ pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 	!strncmp((str), &cp[i], VNL(str))
 
 #define	SUBSTITUTE(m, s, sl)					\
-	if ((newlen + (sl)) > MAXPATHLEN)			\
-		return (1);					\
+	if ((newlen + (sl)) >= MAXPATHLEN)			\
+		return 1;					\
 	i += VNL(m);						\
 	if (termchar != '/')					\
 		i++;						\
-	memcpy(&tmp[newlen], (s), (sl));			\
+	(void)memcpy(&tmp[newlen], (s), (sl));			\
 	newlen += (sl);						\
 	change = 1;						\
 	termchar = '/';
 
 static int
-symlink_magic(struct proc *p, char *cp, int *len)
+symlink_magic(struct proc *p, char *cp, size_t *len)
 {
 	char *tmp;
-	int change, i, newlen;
-	int termchar = '/';
-	char uidtmp[11]; /* XXX elad */
+	size_t change, i, newlen, slen;
+	char termchar = '/';
+	char idtmp[11]; /* enough for 32 bit *unsigned* integer */
 
 
 	tmp = PNBUF_GET();
@@ -137,37 +137,43 @@ symlink_magic(struct proc *p, char *cp, int *len)
 		 * to frequency of use.
 		 */
 		if (MATCH("machine_arch")) {
-			SUBSTITUTE("machine_arch", MACHINE_ARCH,
-			    sizeof(MACHINE_ARCH) - 1);
+			slen = VNL(MACHINE_ARCH);
+			SUBSTITUTE("machine_arch", MACHINE_ARCH, slen);
 		} else if (MATCH("machine")) {
-			SUBSTITUTE("machine", MACHINE,
-			    sizeof(MACHINE) - 1);
+			slen = VNL(MACHINE);
+			SUBSTITUTE("machine", MACHINE, slen);
 		} else if (MATCH("hostname")) {
-			SUBSTITUTE("hostname", hostname,
-			    hostnamelen);
+			SUBSTITUTE("hostname", hostname, hostnamelen);
 		} else if (MATCH("osrelease")) {
-			SUBSTITUTE("osrelease", osrelease,
-			    strlen(osrelease));
+			slen = strlen(osrelease);
+			SUBSTITUTE("osrelease", osrelease, slen);
 		} else if (MATCH("emul")) {
-			SUBSTITUTE("emul", p->p_emul->e_name,
-			    strlen(p->p_emul->e_name));
+			slen = strlen(p->p_emul->e_name);
+			SUBSTITUTE("emul", p->p_emul->e_name, slen);
 		} else if (MATCH("kernel_ident")) {
-			SUBSTITUTE("kernel_ident", kernel_ident,
-			    strlen(kernel_ident));
+			slen = strlen(kernel_ident);
+			SUBSTITUTE("kernel_ident", kernel_ident, slen);
 		} else if (MATCH("domainname")) {
-			SUBSTITUTE("domainname", domainname,
-			    domainnamelen);
+			SUBSTITUTE("domainname", domainname, domainnamelen);
 		} else if (MATCH("ostype")) {
-			SUBSTITUTE("ostype", ostype,
-			    strlen(ostype));
+			slen = strlen(ostype);
+			SUBSTITUTE("ostype", ostype, slen);
 		} else if (MATCH("uid")) {
-			(void)snprintf(uidtmp, sizeof(uidtmp), "%u",
+			slen = snprintf(idtmp, sizeof(idtmp), "%u",
 			    kauth_cred_geteuid(kauth_cred_get()));
-			SUBSTITUTE("uid", uidtmp, strlen(uidtmp));
+			SUBSTITUTE("uid", idtmp, slen);
 		} else if (MATCH("ruid")) {
-			(void)snprintf(uidtmp, sizeof(uidtmp), "%u",
+			slen = snprintf(idtmp, sizeof(idtmp), "%u",
 			    kauth_cred_getuid(kauth_cred_get()));
-			SUBSTITUTE("ruid", uidtmp, strlen(uidtmp));
+			SUBSTITUTE("ruid", idtmp, slen);
+		} else if (MATCH("gid")) {
+			slen = snprintf(idtmp, sizeof(idtmp), "%u",
+			    kauth_cred_getegid(kauth_cred_get()));
+			SUBSTITUTE("gid", idtmp, slen);
+		} else if (MATCH("rgid")) {
+			slen = snprintf(idtmp, sizeof(idtmp), "%u",
+			    kauth_cred_getgid(kauth_cred_get()));
+			SUBSTITUTE("rgid", idtmp, slen);
 		} else {
 			tmp[newlen++] = '@';
 			if (termchar == VC)
@@ -176,12 +182,12 @@ symlink_magic(struct proc *p, char *cp, int *len)
 	}
 
 	if (change) {
-		memcpy(cp, tmp, newlen);
+		(void)memcpy(cp, tmp, newlen);
 		*len = newlen;
 	}
 	PNBUF_PUT(tmp);
 
-	return (0);
+	return 0;
 }
 
 #undef VNL
@@ -219,7 +225,8 @@ namei(struct nameidata *ndp)
 	struct iovec aiov;		/* uio for reading symbolic links */
 	struct lwp *l = curlwp;		/* thread doing namei() */
 	struct uio auio;
-	int error, linklen;
+	int error;
+	size_t linklen;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 #ifdef DIAGNOSTIC
@@ -1002,4 +1009,77 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 bad:
 	*vpp = NULL;
 	return (error);
+}
+
+/*
+ * namei_simple - simple forms of namei.
+ *
+ * These are wrappers to allow the simple case callers of namei to be
+ * left alone while everything else changes under them.
+ */
+
+/* Flags */
+struct namei_simple_flags_type {
+	int dummy;
+};
+static const struct namei_simple_flags_type ns_nn, ns_nt, ns_fn, ns_ft;
+const namei_simple_flags_t NSM_NOFOLLOW_NOEMULROOT = &ns_nn;
+const namei_simple_flags_t NSM_NOFOLLOW_TRYEMULROOT = &ns_nt;
+const namei_simple_flags_t NSM_FOLLOW_NOEMULROOT = &ns_fn;
+const namei_simple_flags_t NSM_FOLLOW_TRYEMULROOT = &ns_ft;
+
+static
+int
+namei_simple_convert_flags(namei_simple_flags_t sflags)
+{
+	if (sflags == NSM_NOFOLLOW_NOEMULROOT)
+		return NOFOLLOW | 0;
+	if (sflags == NSM_NOFOLLOW_TRYEMULROOT)
+		return NOFOLLOW | TRYEMULROOT;
+	if (sflags == NSM_FOLLOW_NOEMULROOT)
+		return FOLLOW | 0;
+	if (sflags == NSM_FOLLOW_TRYEMULROOT)
+		return FOLLOW | TRYEMULROOT;
+	panic("namei_simple_convert_flags: bogus sflags\n");
+	return 0;
+}
+
+int
+namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
+			struct vnode **vp_ret)
+{
+	struct nameidata nd;
+	int err;
+
+	NDINIT(&nd,
+		LOOKUP,
+		namei_simple_convert_flags(sflags),
+		UIO_SYSSPACE,
+		path);
+	err = namei(&nd);
+	if (err != 0) {
+		return err;
+	}
+	*vp_ret = nd.ni_vp;
+	return 0;
+}
+
+int
+namei_simple_user(const char *path, namei_simple_flags_t sflags,
+			struct vnode **vp_ret)
+{
+	struct nameidata nd;
+	int err;
+
+	NDINIT(&nd,
+		LOOKUP,
+		namei_simple_convert_flags(sflags),
+		UIO_USERSPACE,
+		path);
+	err = namei(&nd);
+	if (err != 0) {
+		return err;
+	}
+	*vp_ret = nd.ni_vp;
+	return 0;
 }

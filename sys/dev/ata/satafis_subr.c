@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.2.2.2 2009/06/20 07:20:20 yamt Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.2.2.3 2009/07/18 14:53:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.2.2.2 2009/06/20 07:20:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.2.2.3 2009/07/18 14:53:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,11 +148,14 @@ satafis_rhd_construct_atapi(struct ata_xfer *xfer, uint8_t *fis)
 #endif /* NATAPIBUS */
 
 void
-satafis_sdb_parse(struct ata_channel *chp, uint8_t *fis)
+satafis_rdh_parse(struct ata_channel *chp, uint8_t *fis)
 {
-	KASSERT(fis[fis_type] != SDB_FISTYPE);
-	chp->ch_status = fis[sdb_status];
-	chp->ch_error = fis[sdb_error];
+#if 0
+	/* siisata doesn't do enough for this to work */
+	KASSERT(fis[fis_type] == RDH_FISTYPE);
+#endif
+	chp->ch_status = fis[rdh_status];
+	chp->ch_error = fis[rdh_error];
 
 	return;
 }

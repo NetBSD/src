@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.67.44.1 2009/05/04 08:10:46 yamt Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.67.44.2 2009/07/18 14:52:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.1 2009/05/04 08:10:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.2 2009/07/18 14:52:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -68,12 +68,13 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.1 2009/05/04 08:10:46 yamt Ex
 #include <machine/scu.h>
 #include <machine/acia.h>
 #include <machine/kcore.h>
+#include <machine/intr.h>
 
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
 
-#include <atari/atari/intr.h>
 #include <atari/atari/stalloc.h>
+#include <atari/dev/clockvar.h>
 #include <atari/dev/ym2149reg.h>
 
 #include "pci.h"
@@ -152,6 +153,8 @@ u_long	st_pool_virt, st_pool_phys;
 #define	RELOC_KERNEL	0
 #endif
 int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
+
+#define	RELOC_PA(base, pa)	((base) + (pa))	/* used to set up PTE etc. */
 
 /*
  * this is the C-level entry function, it's called from locore.s.
@@ -358,7 +361,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize, char *esym_a
 	 * - Text pages are RO
 	 * - Page zero is invalid
 	 */
-	pg_proto = (0 + kbase) /* relocated PA */ | PG_RO | PG_V;
+	pg_proto = RELOC_PA(kbase, 0) | PG_RO | PG_V;
 	pg       = (pt_entry_t *)ptpa;
 	*pg++    = PG_NV;
 
@@ -705,6 +708,11 @@ atari_hwinit(void)
 	}
 #endif /* defined(_ATARIHW_) */
 
+	/*
+	 * Initialize a timer for delay(9).
+	 */
+	init_delay();
+
 #if NPCI > 0
 	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		/*
@@ -934,8 +942,8 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	sg  = (st_entry_t *)sysseg_pa;
 	pg  = (pt_entry_t *)sysptmap_pa;
 	epg = &pg[ptsize >> PGSHIFT];
-	sg_proto = (ptpa + kbase) /* relocated PA */ | SG_RW | SG_V;
-	pg_proto = (ptpa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
+	sg_proto = RELOC_PA(kbase, ptpa) | SG_RW | SG_V;
+	pg_proto = RELOC_PA(kbase, ptpa) | PG_RW | PG_CI | PG_V;
 	while (pg < epg) {
 		*sg++ = sg_proto;
 		*pg++ = pg_proto;
@@ -962,8 +970,8 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	sg = &sg[256 - 1];			/* XXX should be TIA_SIZE */
 	pg = (pt_entry_t *)sysptmap_pa;
 	pg = &pg[256 - 1];			/* XXX should be TIA_SIZE */
-	*sg = (sysptmap_pa + kbase) /* relocated PA */ | SG_RW | SG_V;
-	*pg = (sysptmap_pa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
+	*sg = RELOC_PA(kbase, sysptmap_pa) | SG_RW | SG_V;
+	*pg = RELOC_PA(kbase, sysptmap_pa) | PG_RW | PG_CI | PG_V;
 }
 
 #if defined(M68040) || defined(M68060)
@@ -1001,7 +1009,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	sg  = (st_entry_t *)sysseg_pa;
 	sg  = &sg[SG4_LEV1SIZE];
 	esg = &sg[nl2desc];
-	sg_proto = (ptpa + kbase) /* relocated PA */ | SG_U | SG_RW | SG_V;
+	sg_proto = RELOC_PA(kbase, ptpa) | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
 		*sg++     = sg_proto;
 		sg_proto += (SG4_LEV3SIZE * sizeof(st_entry_t));
@@ -1015,7 +1023,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
 	sg  = (st_entry_t *)sysseg_pa;
 	esg = &sg[nl1desc];
-	sg_proto = ((paddr_t)&sg[SG4_LEV1SIZE] + kbase) /* relocated PA */
+	sg_proto = RELOC_PA(kbase, (paddr_t)&sg[SG4_LEV1SIZE])
 	    | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
 		*sg++     = sg_proto;
@@ -1034,8 +1042,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	sg  = (st_entry_t *)sysseg_pa;
 	sg  = &sg[i + SG4_LEV2SIZE - (NPTEPG / SG4_LEV3SIZE)];
 	esg = &sg[NPTEPG / SG4_LEV3SIZE];
-	sg_proto = (sysptmap_pa + kbase) /* relocated PA */
-	    | SG_U | SG_RW | SG_V;
+	sg_proto = RELOC_PA(kbase, sysptmap_pa) | SG_U | SG_RW | SG_V;
 	while (sg < esg) {
 		*sg++ = sg_proto;
 		sg_proto += (SG4_LEV3SIZE * sizeof(st_entry_t));
@@ -1049,7 +1056,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	 */
 	pg  = (pt_entry_t *)sysptmap_pa;
 	epg = &pg[ptsize >> PGSHIFT];
-	pg_proto = (ptpa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
+	pg_proto = RELOC_PA(kbase, ptpa) | PG_RW | PG_CI | PG_V;
 	while (pg < epg) {
 		*pg++ = pg_proto;
 		pg_proto += PAGE_SIZE;
@@ -1068,7 +1075,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 	 */
 	pg = (pt_entry_t *)sysptmap_pa;
 	pg = &pg[256 - 1];		/* XXX: should be TIA_SIZE */
-	*pg = (sysptmap_pa + kbase) /* relocated PA */ | PG_RW | PG_CI | PG_V;
+	*pg = RELOC_PA(kbase, sysptmap_pa) | PG_RW | PG_CI | PG_V;
 }
 #endif /* M68040 */
 

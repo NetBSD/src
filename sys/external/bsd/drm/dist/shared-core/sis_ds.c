@@ -57,18 +57,18 @@ set_t *setInit(void)
 
 int setAdd(set_t * set, ITEM_TYPE item)
 {
-	int myfree = set->free;
+	int freeidx = set->free;
 
-	if (myfree != -1) {
-		set->list[myfree].val = item;
-		set->free = set->list[myfree].free_next;
+	if (freeidx != -1) {
+		set->list[freeidx].val = item;
+		set->free = set->list[freeidx].free_next;
 	} else {
 		return 0;
 	}
 
-	set->list[myfree].alloc_next = set->alloc;
-	set->alloc = myfree;
-	set->list[myfree].free_next = -1;
+	set->list[freeidx].alloc_next = set->alloc;
+	set->alloc = freeidx;
+	set->list[freeidx].free_next = -1;
 
 	return 1;
 }

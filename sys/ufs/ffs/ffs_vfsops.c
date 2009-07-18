@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223.4.2 2009/05/04 08:14:37 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223.4.3 2009/07/18 14:53:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.2 2009/05/04 08:14:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.3 2009/07/18 14:53:27 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -310,7 +310,6 @@ int
 ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct vnode *devvp = NULL;
 	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
@@ -337,10 +336,10 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-		if ((error = namei(&nd)) != 0)
+		error = namei_simple_user(args->fspec,
+					NSM_FOLLOW_NOEMULROOT, &devvp);
+		if (error != 0)
 			return (error);
-		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*
@@ -521,7 +520,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 #endif /* WAPBL */
 
 		if (args->fspec == NULL)
-			return EINVAL;
+			return 0;
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,

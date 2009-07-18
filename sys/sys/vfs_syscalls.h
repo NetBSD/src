@@ -1,8 +1,35 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.7.6.1 2009/05/04 08:14:36 yamt Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.7.6.2 2009/07/18 14:53:27 yamt Exp $        */
+
+/*
+ * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
 
+#include <sys/types.h>
 #include <sys/fstypes.h>
 
 struct stat;
@@ -36,5 +63,6 @@ int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
 int	do_sys_unlink(const char *, enum uio_seg);
 int	do_sys_rename(const char *, const char *, enum uio_seg, int);
 int	do_sys_mknod(struct lwp *l, const char *, mode_t, dev_t, register_t *);
+int	do_sys_mkdir(const char *, mode_t);
 
 #endif /* _SYS_VFS_SYSCALLS_H_ */

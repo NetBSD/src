@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.146.2.3 2009/06/20 07:20:31 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.146.2.4 2009/07/18 14:53:23 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.3 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.4 2009/07/18 14:53:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -356,7 +356,6 @@ config_init(void)
 	cv_init(&config_misc_cv, "cfgmisc");
 
 	callout_init(&config_twiddle_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
 
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
@@ -411,6 +410,14 @@ configure(void)
 {
 	/* Initialize data structures. */
 	config_init();
+	/*
+	 * XXX
+	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
+	 * on amiga and atari which use config_init() and autoconf(9) fucntions
+	 * to initialize console devices.
+	 */
+	callout_setfunc(&config_twiddle_ch, config_twiddle_fn, NULL);
+
 	pmf_init();
 #if NDRVCTL > 0
 	drvctl_init();
@@ -1598,6 +1605,7 @@ config_detach(device_t dev, int flags)
 
 out:
 	mutex_enter(&alldevs_mtx);
+	KASSERT(alldevs_nwrite != 0);
 	if (--alldevs_nwrite == 0)
 		alldevs_writer = NULL;
 	cv_signal(&alldevs_cv);
@@ -1621,6 +1629,52 @@ config_detach_children(device_t parent, int flags)
 	}
 	deviter_release(&di);
 	return error;
+}
+
+device_t
+shutdown_first(struct shutdown_state *s)
+{
+	if (!s->initialized) {
+		deviter_init(&s->di, DEVITER_F_SHUTDOWN|DEVITER_F_LEAVES_FIRST);
+		s->initialized = true;
+	}
+	return shutdown_next(s);
+}
+
+device_t
+shutdown_next(struct shutdown_state *s)
+{
+	device_t dv;
+
+	while ((dv = deviter_next(&s->di)) != NULL && !device_is_active(dv))
+		;
+
+	if (dv == NULL)
+		s->initialized = false;
+
+	return dv;
+}
+
+bool
+config_detach_all(int how)
+{
+	static struct shutdown_state s;
+	device_t curdev;
+	bool progress = false;
+
+	if ((how & RB_NOSYNC) != 0)
+		return false;
+
+	for (curdev = shutdown_first(&s); curdev != NULL;
+	     curdev = shutdown_next(&s)) {
+		aprint_debug(" detaching %s, ", device_xname(curdev));
+		if (config_detach(curdev, DETACH_SHUTDOWN) == 0) {
+			progress = true;
+			aprint_debug("success.");
+		} else
+			aprint_debug("failed.");
+	}
+	return progress;
 }
 
 int
@@ -2689,16 +2743,15 @@ deviter_release(deviter_t *di)
 	bool rw = (di->di_flags & DEVITER_F_RW) != 0;
 
 	mutex_enter(&alldevs_mtx);
-	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
-		--alldevs_nwrite;
-	else {
-
-		if (rw) {
-			if (--alldevs_nwrite == 0)
-				alldevs_writer = NULL;
-		} else
-			--alldevs_nread;
-
+	if (!rw) {
+		--alldevs_nread;
+		cv_signal(&alldevs_cv);
+	} else if (alldevs_nwrite > 0 && alldevs_writer == NULL) {
+		--alldevs_nwrite;	/* shutting down: do not signal */
+	} else {
+		KASSERT(alldevs_nwrite != 0);
+		if (--alldevs_nwrite == 0)
+			alldevs_writer = NULL;
 		cv_signal(&alldevs_cv);
 	}
 	mutex_exit(&alldevs_mtx);

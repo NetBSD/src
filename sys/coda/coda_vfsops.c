@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.64.10.2 2009/05/04 08:12:17 yamt Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.64.10.3 2009/07/18 14:52:56 yamt Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.64.10.2 2009/05/04 08:12:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.64.10.3 2009/07/18 14:52:56 yamt Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -175,7 +175,6 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     size_t *data_len)
 {
     struct lwp *l = curlwp;
-    struct nameidata nd;
     struct vnode *dvp;
     struct cnode *cp;
     dev_t dev;
@@ -209,9 +208,8 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
      */
     /* Ensure that namei() doesn't run off the filename buffer */
     ((char *)data)[*data_len - 1] = 0;
-    NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, data);
-    error = namei(&nd);
-    dvp = nd.ni_vp;
+    error = namei_simple_kernel((char *)data, NSM_FOLLOW_NOEMULROOT,
+		&dvp);
 
     if (error) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);

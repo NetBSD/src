@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.51.4.2 2009/05/16 10:41:18 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.51.4.3 2009/07/18 14:52:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51.4.2 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51.4.3 2009/07/18 14:52:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,9 @@ static void acpiec_attach(device_t, device_t, void *);
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
     bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
 
-static bool acpiec_resume(device_t PMF_FN_PROTO);
 static bool acpiec_suspend(device_t PMF_FN_PROTO);
+static bool acpiec_resume(device_t PMF_FN_PROTO);
+static bool acpiec_shutdown(device_t, int);
 
 static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
     ACPI_HANDLE *, uint8_t *);
@@ -377,7 +378,8 @@ acpiec_common_attach(device_t parent, device_t self,
 
 	ec_singleton = self;
 
-	if (!pmf_device_register(self, acpiec_suspend, acpiec_resume))
+	if (!pmf_device_register1(self, acpiec_suspend, acpiec_resume,
+	    acpiec_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
@@ -405,6 +407,14 @@ acpiec_resume(device_t dv PMF_FN_ARGS)
 {
 	acpiec_cold = false;
 
+	return true;
+}
+
+static bool
+acpiec_shutdown(device_t dv, int how)
+{
+
+	acpiec_cold = true;
 	return true;
 }
 

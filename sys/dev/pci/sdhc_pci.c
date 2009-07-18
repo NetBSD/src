@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.1.4.2 2009/05/04 08:13:01 yamt Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.1.4.3 2009/07/18 14:53:09 yamt Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.1.4.2 2009/05/04 08:13:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.1.4.3 2009/07/18 14:53:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,11 +67,6 @@ CFATTACH_DECL_NEW(sdhc_pci, sizeof(struct sdhc_pci_softc),
 #define	DPRINTF(s)	/**/
 #endif
 
-/* XXX */
-#define	PCI_PRODUCT_TI_PCI7XX1_FLASH	0x8033
-#define	PCI_PRODUCT_TI_PCI7XX1_SD	0x8034
-#define	PCI_PRODUCT_ENE_SDCARD		0x0550
-
 static const struct sdhc_pci_quirk {
 	pci_vendor_id_t		vendor;
 	pci_product_id_t	product;
@@ -86,7 +81,7 @@ static const struct sdhc_pci_quirk {
 } sdhc_pci_quirk_table[] = {
 	{
 		PCI_VENDOR_TI,
-		PCI_PRODUCT_TI_PCI7XX1_SD,
+		PCI_PRODUCT_TI_PCI72111SD,
 		0xffff,
 		0xffff,
 		4,
@@ -95,7 +90,7 @@ static const struct sdhc_pci_quirk {
 
 	{
 		PCI_VENDOR_ENE,
-		PCI_PRODUCT_ENE_SDCARD,
+		PCI_PRODUCT_ENE_CB712,
 		0xffff,
 		0xffff,
 		0,
@@ -286,7 +281,7 @@ sdhc_pci_quirk_ti_hack(struct pci_attach_args *pa)
 	/* Look at func 3 for the flash device */
 	tag = pci_make_tag(pc, pa->pa_bus, pa->pa_device, 3);
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
-	if (PCI_PRODUCT(id) != PCI_PRODUCT_TI_PCI7XX1_FLASH)
+	if (PCI_PRODUCT(id) != PCI_PRODUCT_TI_PCI72111FM)
 		return;
 
 	/*

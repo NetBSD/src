@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.35.10.2 2009/05/04 08:13:45 yamt Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.35.10.3 2009/07/18 14:53:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.10.2 2009/05/04 08:13:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.10.3 2009/07/18 14:53:22 yamt Exp $");
 #endif /* not lint */
 
 
@@ -316,7 +316,6 @@ udf_mount(struct mount *mp, const char *path,
 	  void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct udf_args *args = data;
 	struct udf_mount *ump;
 	struct vnode *devvp;
@@ -353,11 +352,10 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-	error = namei(&nd);
+	error = namei_simple_user(args->fspec,
+				NSM_FOLLOW_NOEMULROOT, &devvp);
 	if (error)
 		return error;
-	devvp = nd.ni_vp;
 
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_VOLUMES)
@@ -567,7 +565,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	struct udf_mount     *ump;
 	uint32_t sector_size, lb_size, bshift;
 	uint32_t logvol_integrity;
-	int    num_anchors, error, lst;
+	int    num_anchors, error;
 
 	/* flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
@@ -580,6 +578,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = UDF_MAX_NAMELEN;
 	mp->mnt_flag |= MNT_LOCAL;
+//	mp->mnt_iflag |= IMNT_MPSAFE;
 
 	/* allocate udf part of mount structure; malloc always succeeds */
 	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK | M_ZERO);
@@ -591,10 +590,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mutex_init(&ump->allocate_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ump->dirtynodes_cv, "udfsync2");
 
-	/* init `ino_t' to udf_node hash table and other lists */
-	for (lst = 0; lst < UDF_INODE_HASHSIZE; lst++) {
-		LIST_INIT(&ump->udf_nodes[lst]);
-	}
+	/* init rbtree for nodes, ordered by their icb address (long_ad) */
+	udf_init_nodes_tree(ump);
 
 	/* set up linkage */
 	mp->mnt_data    = ump;
@@ -782,8 +779,7 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
 	struct logvol_int_desc *lvid;
 	struct udf_logvol_info *impl;
 	uint64_t freeblks, sizeblks;
-	uint32_t *pos1, *pos2;
-	int part, num_part;
+	int num_part;
 
 	DPRINTF(CALL, ("udf_statvfs called\n"));
 	sbp->f_flag   = mp->mnt_flag;
@@ -792,36 +788,16 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_iosize = ump->discinfo.sector_size;
 
 	mutex_enter(&ump->allocate_mutex);
-	lvid = ump->logvol_integrity;
-	freeblks = sizeblks = 0;
 
-	/* Sequentials report free space directly (CD/DVD/BD-R) */
-	KASSERT(lvid);
-	num_part = udf_rw32(lvid->num_part);
-	impl = (struct udf_logvol_info *) (lvid->tables + 2*num_part);
-
-	if (ump->discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) {
-		/* XXX assumption at most two tracks open */
-		freeblks = ump->data_track.free_blocks;
-		if (ump->data_track.tracknr != ump->metadata_track.tracknr)
-			freeblks += ump->metadata_track.free_blocks;
-		sizeblks = ump->discinfo.last_possible_lba;
-	} else {
-		/* free and used space for mountpoint based on logvol integrity */
-		for (part=0; part < num_part; part++) {
-			pos1 = &lvid->tables[0] + part;
-			pos2 = &lvid->tables[0] + num_part + part;
-			if (udf_rw32(*pos1) != (uint32_t) -1) {
-				freeblks += udf_rw32(*pos1);
-				sizeblks += udf_rw32(*pos2);
-			}
-		}
-	}
-	freeblks -= ump->uncomitted_lb;
+	udf_calc_freespace(ump, &sizeblks, &freeblks);
 
 	sbp->f_blocks = sizeblks;
 	sbp->f_bfree  = freeblks;
 	sbp->f_files  = 0;
+
+	lvid = ump->logvol_integrity;
+	num_part = udf_rw32(lvid->num_part);
+	impl = (struct udf_logvol_info *) (lvid->tables + 2*num_part);
 	if (impl) {
 		sbp->f_files  = udf_rw32(impl->num_files);
 		sbp->f_files += udf_rw32(impl->num_directories);

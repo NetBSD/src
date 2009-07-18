@@ -163,6 +163,7 @@ extern int mach64_dma_blit(struct drm_device *dev, void *data,
 extern int mach64_get_param(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv);
 
+extern int mach64_driver_load(struct drm_device * dev, unsigned long flags);
 extern u32 mach64_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int mach64_enable_vblank(struct drm_device *dev, int crtc);
 extern void mach64_disable_vblank(struct drm_device *dev, int crtc);
@@ -503,7 +504,7 @@ extern void mach64_driver_irq_uninstall(struct drm_device *dev);
 #define MMREG0		0x0000
 #define MMREG0_END	0x00ff
 
-#define ISMMREG0(r)	(((r) >= MMREG0) && ((r) <= MMREG0_END))
+#define ISMMREG0(r)	((r) <= MMREG0_END)
 #define MMSELECT0(r)	(((r) << 2) + DWMREG0)
 #define MMSELECT1(r)	(((((r) & 0xff) << 2) + DWMREG1))
 #define MMSELECT(r)	(ISMMREG0(r) ? MMSELECT0(r) : MMSELECT1(r))
@@ -775,8 +776,8 @@ do {								\
 
 #define DMAADVANCE( dev_priv, _discard )				\
 	do {								\
-		struct list_head *ptr;					\
-		int myret;						\
+		struct list_head *_ptr;					\
+		int _ret;						\
 									\
 		if ( MACH64_VERBOSE ) {					\
 			DRM_INFO( "DMAADVANCE() in \n" );		\
@@ -789,9 +790,9 @@ do {								\
 		}							\
 		if (_buf->pending) {					\
 			/* This is a resued buffer, so we need to find it in the pending list */ \
-			if ((myret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
+			if ((_ret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
 				DRM_ERROR( "DMAADVANCE(): couldn't find pending buf %d\n", _buf->idx );	\
-				return myret;				\
+				return _ret;				\
 			}						\
 			if (_entry->discard) {				\
 				DRM_ERROR( "DMAADVANCE(): sending discarded pending buf %d\n", _buf->idx ); \
@@ -802,26 +803,26 @@ do {								\
 				DRM_ERROR( "DMAADVANCE(): empty placeholder list\n"); \
 				return -EFAULT;				\
 			}						\
-			ptr = dev_priv->placeholders.next;		\
-			list_del(ptr);					\
-			_entry = list_entry(ptr, drm_mach64_freelist_t, list); \
+			_ptr = dev_priv->placeholders.next;		\
+			list_del(_ptr);					\
+			_entry = list_entry(_ptr, drm_mach64_freelist_t, list); \
 			_buf->pending = 1;				\
 			_entry->buf = _buf;				\
-			list_add_tail(ptr, &dev_priv->pending);		\
+			list_add_tail(_ptr, &dev_priv->pending);	\
 		}							\
 		_entry->discard = (_discard);				\
-		if ((myret = mach64_add_buf_to_ring( dev_priv, _entry ))) \
-			return myret;					\
+		if ((_ret = mach64_add_buf_to_ring( dev_priv, _entry ))) \
+			return _ret;					\
 	} while (0)
 
 #define DMADISCARDBUF()							\
 	do {								\
 		if (_entry == NULL) {					\
-			int myret;					\
-			if ((myret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
+			int _ret;					\
+			if ((_ret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
 				DRM_ERROR( "couldn't find pending buf %d\n", \
 					   _buf->idx );			\
-				return myret;				\
+				return _ret;				\
 			}						\
 		}							\
 		_entry->discard = 1;					\
@@ -830,7 +831,7 @@ do {								\
 #define DMAADVANCEHOSTDATA( dev_priv )					\
 	do {								\
 		struct list_head *ptr;					\
-		int myret;						\
+		int _ret;						\
 									\
 		if ( MACH64_VERBOSE ) {					\
 			DRM_INFO( "DMAADVANCEHOSTDATA() in \n" );	\
@@ -852,8 +853,8 @@ do {								\
 		_entry->buf->pending = 1;				\
 		list_add_tail(ptr, &dev_priv->pending);			\
 		_entry->discard = 1;					\
-		if ((myret = mach64_add_hostdata_buf_to_ring( dev_priv, _entry ))) \
-			return myret;					\
+		if ((_ret = mach64_add_hostdata_buf_to_ring( dev_priv, _entry ))) \
+			return _ret;					\
 	} while (0)
 
 #endif				/* __MACH64_DRV_H__ */

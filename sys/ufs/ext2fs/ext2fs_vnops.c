@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.3 2009/05/16 10:41:53 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.4 2009/07/18 14:53:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.3 2009/05/16 10:41:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.4 2009/07/18 14:53:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,17 +224,9 @@ ext2fs_open(void *v)
 	return (0);
 }
 
-int
-ext2fs_access(void *v)
+static int
+ext2fs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
-	mode_t mode = ap->a_mode;
 
 	/*
 	 * Disallow write attempts on read-only file systems;
@@ -258,8 +250,38 @@ ext2fs_access(void *v)
 	if ((mode & VWRITE) && (ip->i_e2fs_flags & EXT2_IMMUTABLE))
 		return (EPERM);
 
-	return (vaccess(vp->v_type, ip->i_e2fs_mode & ALLPERMS,
-			ip->i_uid, ip->i_gid, mode, ap->a_cred));
+	return 0;
+}
+
+static int
+ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
+    kauth_cred_t cred)
+{
+
+	return genfs_can_access(vp->v_type, ip->i_e2fs_mode & ALLPERMS,
+	    ip->i_uid, ip->i_gid, mode, cred);
+}
+
+int
+ext2fs_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int  a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	mode_t mode = ap->a_mode;
+	int error;
+
+	error = ext2fs_check_possible(vp, ip, mode);
+	if (error)
+		return error;
+
+	error = ext2fs_check_permitted(vp, ip, mode, ap->a_cred);
+
+	return error;
 }
 
 /* ARGSUSED */

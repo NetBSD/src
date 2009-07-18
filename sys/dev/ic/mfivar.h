@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.9.4.1 2009/05/04 08:12:42 yamt Exp $ */
+/* $NetBSD: mfivar.h,v 1.9.4.2 2009/07/18 14:53:02 yamt Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -19,7 +19,7 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <sys/envsys.h>
 
-#define DEVNAME(_s)     (device_xname(&(_s)->sc_dev))
+#define DEVNAME(_s)     (device_xname((_s)->sc_dev))
 
 /* #define MFI_DEBUG */
 #ifdef MFI_DEBUG
@@ -103,13 +103,14 @@ enum mfi_iop {
 
 struct mfi_iop_ops {
 	uint32_t 		(*mio_fw_state)(struct mfi_softc *);
+	void 			(*mio_intr_dis)(struct mfi_softc *);
 	void 			(*mio_intr_ena)(struct mfi_softc *);
 	int 			(*mio_intr)(struct mfi_softc *);
 	void 			(*mio_post)(struct mfi_softc *, struct mfi_ccb *);
 };
 
 struct mfi_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct scsipi_channel	sc_chan;
 	struct scsipi_adapter	sc_adapt;
 
@@ -122,6 +123,7 @@ struct mfi_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
+	bus_size_t		sc_size;
 
 	/* save some useful information for logical drives that is missing
 	 * in sc_ld_list
@@ -159,7 +161,11 @@ struct mfi_softc {
 	struct sysmon_envsys    *sc_sme;
 	envsys_data_t		*sc_sensor;
 
+	device_t		sc_child;
 };
 
-int	mfi_attach(struct mfi_softc *sc, enum mfi_iop);
+int	mfi_rescan(device_t, const char *, const int *);
+void	mfi_childdetached(device_t, device_t);
+int	mfi_attach(struct mfi_softc *, enum mfi_iop);
+int	mfi_detach(struct mfi_softc *, int);
 int	mfi_intr(void *);

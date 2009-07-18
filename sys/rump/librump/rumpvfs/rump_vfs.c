@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.20.2.4 2009/06/20 07:20:36 yamt Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.20.2.5 2009/07/18 14:53:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.4 2009/06/20 07:20:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.5 2009/07/18 14:53:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -363,14 +363,11 @@ rump_vfs_getopsbyname(const char *name)
 int
 rump_vfs_getmp(const char *path, struct mount **mpp)
 {
-	struct nameidata nd;
 	struct vnode *vp;
 	int rv;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, path);
-	if ((rv = namei(&nd)) != 0)
+	if ((rv = namei_simple_user(path, NSM_FOLLOW_TRYEMULROOT, &vp)) != 0)
 		return rv;
-	vp = nd.ni_vp;
 
 	*mpp = vp->v_mount;
 	vrele(vp);

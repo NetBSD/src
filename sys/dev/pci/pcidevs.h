@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.938.4.4 2009/06/20 07:20:24 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.938.4.5 2009/07/18 14:53:05 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.992 2009/06/12 23:00:24 rjs Exp
+ *	NetBSD: pcidevs,v 1.994 2009/07/07 09:45:45 cegger Exp
  */
 
 /*
@@ -1317,22 +1317,22 @@
 #define	PCI_PRODUCT_ATI_RD790_PPB_GFX1_A	0x5980		/* RD790 PCI Bridge GFX1 Port A */
 #define	PCI_PRODUCT_ATI_RD790_PPB_GFX1_B	0x5981		/* RD790 PCI Bridge GFX1 Port B */
 #define	PCI_PRODUCT_ATI_RD790_PPB_NBSB	0x5982		/* RD790 PCI Bridge (NB-SB Link) */
-#define	PCI_PRODUCT_ATI_RD890_NB_DS16	0x5910		/* RD890 North Bridge Dual Slot 2x16 GFX */
-#define	PCI_PRODUCT_ATI_RD890_NB_SS	0x5911		/* RD890 North Bridge Single Slot GFX */
-#define	PCI_PRODUCT_ATI_RD890_NB_DS8	0x5912		/* RD890 North Bridge Dual Slot 2x8 GFX */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_A	0x5913		/* RD890 PCI Bridge GFX0 Port A */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_B	0x5914		/* RD890 PCI Bridge GFX0 Port B */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_A	0x5915		/* RD890 PCI Express Bridge GPP Port A */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_B	0x5916		/* RD890 PCI Express Bridge GPP Port B */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_C	0x5917		/* RD890 PCI Express Bridge GPP Port C */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_D	0x5918		/* RD890 PCI Express Bridge GPP Port D */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_E	0x5919		/* RD890 PCI Express Bridge GPP Port E */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_F	0x591a		/* RD890 PCI Express Bridge GPP Port F */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_G	0x591b		/* RD890 PCI Express Bridge GPP Port G */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_H	0x591c		/* RD890 PCI Express Bridge GPP Port H */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_A	0x591d		/* RD890 PCI Bridge GFX1 Port A */
-#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_B	0x591e		/* RD890 PCI Bridge GFX1 Port B */
-#define	PCI_PRODUCT_ATI_RD890_PPB_NBSB	0x591f		/* RD890 PCI Bridge (NB-SB Link) */
+#define	PCI_PRODUCT_ATI_RD890_NB_DS16	0x5a10		/* RD890 North Bridge Dual Slot 2x16 GFX */
+#define	PCI_PRODUCT_ATI_RD890_NB_SS	0x5a11		/* RD890 North Bridge Single Slot GFX */
+#define	PCI_PRODUCT_ATI_RD890_NB_DS8	0x5a12		/* RD890 North Bridge Dual Slot 2x8 GFX */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_A	0x5a13		/* RD890 PCI Bridge GFX0 Port A */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_B	0x5a14		/* RD890 PCI Bridge GFX0 Port B */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_A	0x5a15		/* RD890 PCI Express Bridge GPP Port A */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_B	0x5a16		/* RD890 PCI Express Bridge GPP Port B */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_C	0x5a17		/* RD890 PCI Express Bridge GPP Port C */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_D	0x5a18		/* RD890 PCI Express Bridge GPP Port D */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_E	0x5a19		/* RD890 PCI Express Bridge GPP Port E */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_F	0x5a1a		/* RD890 PCI Express Bridge GPP Port F */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_G	0x5a1b		/* RD890 PCI Express Bridge GPP Port G */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GPP_H	0x5a1c		/* RD890 PCI Express Bridge GPP Port H */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_A	0x5a1d		/* RD890 PCI Bridge GFX1 Port A */
+#define	PCI_PRODUCT_ATI_RD890_PPB_GFX1_B	0x5a1e		/* RD890 PCI Bridge GFX1 Port B */
+#define	PCI_PRODUCT_ATI_RD890_PPB_NBSB	0x5a1f		/* RD890 PCI Bridge (NB-SB Link) */
 #define	PCI_PRODUCT_ATI_RD890_IOMMU	0x5a23		/* RD890 IOMMU */
 #define	PCI_PRODUCT_ATI_RADEON_XPRESS_200	0x5a33		/* Radeon Xpress 200 */
 #define	PCI_PRODUCT_ATI_RS480_XRP	0x5a34		/* RS480 PCI Express Root Port */
@@ -1856,6 +1856,7 @@
 
 /* ENE Technology products */
 #define	PCI_PRODUCT_ENE_MCR510	0x0510		/* MCR510 PCI Memory Card Reader Controller */
+#define	PCI_PRODUCT_ENE_CB712	0x0550		/* CB712/714/810 PCI SD Card Reader Controller */
 #define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB1211 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1225	0x1225		/* CB1225 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB1410 CardBus Controller */
@@ -3906,6 +3907,8 @@
 #define	PCI_PRODUCT_TI_PCI72111CB	0x8031		/* PCI7x21/7x11 Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI72111FW	0x8032		/* PCI7x21/7x11 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_PCI72111FM	0x8033		/* PCI7x21/7x11 Integrated FlashMedia Controller */
+#define	PCI_PRODUCT_TI_PCI72111SD	0x8034		/* PCI7x21/7x11 SD Card Controller */
+#define	PCI_PRODUCT_TI_PCI72111SM	0x8035		/* PCI7x21/7x11 SM Card Controller */
 #define	PCI_PRODUCT_TI_PCI6515A	0x8036		/* PCI6515A Cardbus Controller */
 #define	PCI_PRODUCT_TI_PCI6515ASM	0x8038		/* PCI6515A Cardbus Controller (Smart Card mode) */
 #define	PCI_PRODUCT_TI_PCIXX12CB	0x8039		/* PCIXX12 Cardbus Controller */

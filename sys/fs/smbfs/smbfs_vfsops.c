@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.78.10.2 2009/05/04 08:13:44 yamt Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.78.10.3 2009/07/18 14:53:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.10.2 2009/05/04 08:13:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.10.3 2009/07/18 14:53:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,17 +231,16 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	struct lwp *l = curlwp;
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_cred scred;
+	struct vnode *smbfs_rootvp = SMBTOV(smp->sm_root);
 	int error, flags;
 
 	SMBVDEBUG("smbfs_unmount: flags=%04x\n", mntflags);
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	/* Drop the extra reference to root vnode. */
-	if (smp->sm_root) {
-		vrele(SMBTOV(smp->sm_root));
-		smp->sm_root = NULL;
-	}
+
+	if (smbfs_rootvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
+		return EBUSY;
 
 	/* Flush all vnodes.
 	 * Keep trying to flush the vnode list for the mount while 
@@ -252,8 +251,12 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	 * sufficient in this case. */
 	do {
 		smp->sm_didrele = 0;
-		error = vflush(mp, NULLVP, flags);
+		error = vflush(mp, smbfs_rootvp, flags);
 	} while (error == EBUSY && smp->sm_didrele != 0);
+	if (error)
+		return error;
+
+	vgone(smbfs_rootvp);
 
 	smb_makescred(&scred, l, l->l_cred);
 	smb_share_lock(smp->sm_share);
@@ -263,7 +266,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	hashdone(smp->sm_hash, HASH_LIST, smp->sm_hashlen);
 	mutex_destroy(&smp->sm_hashlock);
 	free(smp, M_SMBFSDATA);
-	return error;
+	return 0;
 }
 
 /*

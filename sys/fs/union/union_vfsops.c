@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.52.4.2 2009/05/04 08:13:45 yamt Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.52.4.3 2009/07/18 14:53:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52.4.2 2009/05/04 08:13:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52.4.3 2009/07/18 14:53:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,6 @@ int
 union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	int error = 0;
 	struct union_args *args = data;
 	struct vnode *lowerrootvp = NULLVP;
@@ -158,12 +157,10 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Find upper node.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->target);
-
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(args->target,
+				NSM_FOLLOW_NOEMULROOT, &upperrootvp);
+	if (error != 0)
 		goto bad;
-
-	upperrootvp = nd.ni_vp;
 
 	if (upperrootvp->v_type != VDIR) {
 		error = EINVAL;

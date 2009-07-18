@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.h,v 1.5.58.1 2008/05/16 02:22:52 yamt Exp $	*/
+/*	$NetBSD: rambo.h,v 1.5.58.2 2009/07/18 14:52:54 yamt Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,7 +109,7 @@ struct	rambo_ch {
 #define	RB_BOUNDRY	(1<<RB_BSIZE)
 
 /* Rambo cycle counter is fed by 25MHz clock then divided by 4 */
-#define	RB_FREQUENCY		625000L
+#define	RB_FREQUENCY		6250000L
 #define	HZ_TO_TICKS(hz)		(RB_FREQUENCY/(hz))
 #define TICKS_TO_USECS(t)	(((t)*4)/25)
 #endif

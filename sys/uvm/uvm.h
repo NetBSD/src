@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.53.10.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.53.10.2 2009/07/18 14:53:28 yamt Exp $	*/
 
 /*
  *
@@ -84,6 +84,7 @@ struct uvm_cpu {
 	bool page_idle_zero;		/* TRUE if we should try to zero
 					   pages in the idle loop */
 	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
+	u_int emap_gen;			/* emap generation number */
 };
 
 /*

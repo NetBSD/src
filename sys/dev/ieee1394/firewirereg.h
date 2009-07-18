@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.8 2008/03/29 16:22:53 kiyohara Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.8.4.1 2009/07/18 14:53:02 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -63,24 +63,17 @@ struct fw_device{
 };
 
 struct firewire_softc {
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500000
-	fw_dev_t dev;
-	device_t sbp_dev;
-#elif defined(__NetBSD__)
 	device_t dev;
 	SLIST_HEAD(, firewire_dev_list) devlist;
 	void *si_drv1;
 	int si_iosize_max;
-#endif
 	struct firewire_comm *fc;
 };
-#if defined(__NetBSD__)
 struct firewire_dev_list {
 	SLIST_ENTRY(firewire_dev_list) link;
 	device_t dev;
 	struct fw_device *fwdev;
 };
-#endif
 
 #define FW_MAX_DMACH 0x20
 #define FW_MAX_DEVCH FW_MAX_DMACH
@@ -297,26 +290,14 @@ struct fw_bind *fw_bindlookup (struct firewire_comm *, uint16_t, uint32_t);
 void fw_drain_txq (struct firewire_comm *);
 int fwdev_makedev (struct firewire_softc *);
 int fwdev_destroydev (struct firewire_softc *);
-#if defined(__FreeBSD__) && __FreeBSD_version >= 500000
-void fwdev_clone (void *, struct ucred *, char *, int, fw_dev_t *);
-#endif
 int fw_open_isodma(struct firewire_comm *, int);
 
 extern int firewire_debug;
-#if defined(__FreeBSD__)
-extern devclass_t firewire_devclass;
-#elif defined(__NetBSD__)
 extern struct cfdriver ieee1394if_cd;
-#endif
 extern int firewire_phydma_enable;
 
-#ifdef __DragonFly__
-#define		FWPRI		PCATCH
-#else
 #define		FWPRI		((PZERO+8)|PCATCH)
-#endif
 
-#if defined(__DragonFly__) || __FreeBSD_version < 500000 || defined(__NetBSD__)
 /* compatibility shim for 4.X */
 #define bio buf
 #define bio_bcount b_bcount
@@ -326,17 +307,10 @@ extern int firewire_phydma_enable;
 #define bio_dev b_dev
 #define bio_error b_error
 #define bio_flags b_flags
-#if defined(__FreeBSD__)
-#define bio_offset b_offset
-#elif defined(__NetBSD__)
 #define bio_offset b_blkno
-#endif
 #define bio_resid b_resid
 #define BIO_READ B_READ
 #define BIO_WRITE B_WRITE
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)>(b))?(a):(b))
-#endif
 
 MALLOC_DECLARE(M_FW);
 MALLOC_DECLARE(M_FWXFER);

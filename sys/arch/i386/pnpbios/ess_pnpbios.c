@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.16.4.2 2009/05/16 10:41:15 yamt Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.16.4.3 2009/07/18 14:52:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.16.4.2 2009/05/16 10:41:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.16.4.3 2009/07/18 14:52:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ ess_pnpbios_match(device_t parent, cfdata_t match,
 	    strcmp(aa->idstr, "CPQB0AC") && /* 1869 */
 	    strcmp(aa->idstr, "CPQB0AD") && /* 1869 */
 	    strcmp(aa->idstr, "CPQB0F1") && /* 1869 */
+	    strcmp(aa->idstr, "ESS1878") && /* 1878 */
 	    strcmp(aa->idstr, "ESS1879"))   /* 1879 */
 		return (0);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.5 2008/01/23 05:23:59 dyoung Exp $ */
+/* $NetBSD: ar5315.c,v 1.5.10.1 2009/07/18 14:52:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.5 2008/01/23 05:23:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.5.10.1 2009/07/18 14:52:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.5 2008/01/23 05:23:59 dyoung Exp $");
 
 #include <prop/proplib.h>
 
-#include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
+#include <ah_soc.h>	/* XXX really doesn't belong in hal */
 
 #include <mips/atheros/include/ar5315reg.h>
 #include <mips/atheros/include/ar531xvar.h>

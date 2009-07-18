@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.15.2.1 2009/05/04 08:11:16 yamt Exp $ */
+/* $NetBSD: kvm86.c,v 1.15.2.2 2009/07/18 14:52:53 yamt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.15.2.1 2009/05/04 08:11:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.15.2.2 2009/07/18 14:52:53 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -82,7 +82,7 @@ kmutex_t kvm86_mp_lock;
 #define KVM86_IOPL3 /* not strictly necessary, saves a lot of traps */
 
 void
-kvm86_init()
+kvm86_init(void)
 {
 	size_t vmdsize;
 	char *buf;
@@ -93,12 +93,11 @@ kvm86_init()
 
 	vmdsize = round_page(sizeof(struct kvm86_data)) + PAGE_SIZE;
 
-	buf = malloc(vmdsize, M_DEVBUF, M_NOWAIT);
+	buf = malloc(vmdsize, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if ((u_long)buf & (PAGE_SIZE - 1)) {
 		printf("struct kvm86_data unaligned\n");
 		return;
 	}
-	memset(buf, 0, vmdsize);
 	/* first page is stack */
 	vmd = (struct kvm86_data *)(buf + PAGE_SIZE);
 	tss = &vmd->tss;

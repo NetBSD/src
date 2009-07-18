@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.272.4.4 2009/06/20 07:20:29 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.272.4.5 2009/07/18 14:53:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.272.4.4 2009/06/20 07:20:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.272.4.5 2009/07/18 14:53:11 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -322,8 +322,6 @@ sdattach(device_t parent, device_t self, void *aux)
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&sd->sc_dk);
-
-	sd_set_properties(sd);
 }
 
 static int
@@ -2107,6 +2105,9 @@ page0:
 		dp->cyls = dp->disksize / (64 * 32);
 	}
 	dp->rot_rate = 3600;
+
+	sd_set_properties(sd);
+
 	return (SDGP_RESULT_OK);
 }
 

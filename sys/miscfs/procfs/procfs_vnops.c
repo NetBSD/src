@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.168.2.3 2009/06/20 07:20:32 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.168.2.4 2009/07/18 14:53:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.168.2.3 2009/06/20 07:20:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.168.2.4 2009/07/18 14:53:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -909,6 +909,21 @@ procfs_setattr(void *v)
 	return (0);
 }
 
+static int
+procfs_check_possible(struct vnode *vp, mode_t mode)
+{
+
+	return 0;
+}
+
+static int
+procfs_check_permitted(struct vattr *va, mode_t mode, kauth_cred_t cred)
+{
+
+	return genfs_can_access(va->va_type, va->va_mode,
+	    va->va_uid, va->va_gid, mode, cred);
+}
+
 /*
  * implement access checking.
  *
@@ -932,8 +947,13 @@ procfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
-	return (vaccess(va.va_type, va.va_mode,
-	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
+	error = procfs_check_possible(ap->a_vp, ap->a_mode);
+	if (error)
+		return error;
+
+	error = procfs_check_permitted(&va, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 /*
