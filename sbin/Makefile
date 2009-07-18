@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113 2008/11/12 12:35:53 ad Exp $
+#	$NetBSD: Makefile,v 1.114 2009/07/18 16:31:41 reinoud Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -34,6 +34,7 @@ SUBDIR+= mount_lfs
 SUBDIR+= mount_msdos
 SUBDIR+= mount_udf
 SUBDIR+= mount_nfs
+SUBDIR+= mount_nilfs
 SUBDIR+= mount_ntfs
 SUBDIR+= mount_null
 SUBDIR+= mount_overlay

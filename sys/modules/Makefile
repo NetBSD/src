@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2009/03/10 14:56:30 yamt Exp $
+#	$NetBSD: Makefile,v 1.30 2009/07/18 16:31:42 reinoud Exp $
 
 # For all platforms
 
@@ -28,6 +28,7 @@ SUBDIR+=	mfs
 SUBDIR+=	msdos
 SUBDIR+=	nfs
 SUBDIR+=	nfsserver
+SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
