@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.8 2009/03/10 14:59:19 yamt Exp $
+# $NetBSD: module.mi,v 1.9 2009/07/18 21:32:52 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -63,6 +63,8 @@
 ./@MODULEDIR@/nfs/nfs.kmod			base-kernel-modules
 ./@MODULEDIR@/nfsserver				base-kernel-modules
 ./@MODULEDIR@/nfsserver/nfsserver.kmod		base-kernel-modules
+./@MODULEDIR@/nilfs				base-kernel-modules
+./@MODULEDIR@/nilfs/nilfs.kmod			base-kernel-modules
 ./@MODULEDIR@/ntfs				base-kernel-modules
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules
 ./@MODULEDIR@/null				base-kernel-modules

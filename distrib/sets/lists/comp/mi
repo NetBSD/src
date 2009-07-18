@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1279 2009/07/14 08:01:02 wiz Exp $
+#	$NetBSD: mi,v 1.1280 2009/07/18 21:32:52 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -630,6 +630,8 @@
 ./usr/include/fs/hfs/libhfs.h			comp-c-include
 ./usr/include/fs/hfsp/hfsp.h			comp-obsolete		obsolete
 ./usr/include/fs/hfsp/libhfsp.h			comp-obsolete		obsolete
+./usr/include/fs/nilfs/nilfs_fs.h		comp-c-include
+./usr/include/fs/nilfs/nilfs_mount.h		comp-c-include
 ./usr/include/fs/puffs/puffs_msgif.h		comp-puffs-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
 ./usr/include/fs/sysvbfs/sysvbfs_args.h		comp-c-include
@@ -2538,6 +2540,9 @@
 ./usr/lib/librumpfs_nfs.a			comp-c-lib
 ./usr/lib/librumpfs_nfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_nilfs.a			comp-c-lib
+./usr/lib/librumpfs_nilfs_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_nilfs_p.a			-unknown-		debuglib
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib
 ./usr/lib/librumpfs_ntfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile

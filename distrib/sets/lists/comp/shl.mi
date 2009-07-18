@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.81 2009/05/12 18:07:55 plunky Exp $
+# $NetBSD: shl.mi,v 1.82 2009/07/18 21:32:52 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -89,6 +89,7 @@
 ./usr/lib/librumpfs_lfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_msdos_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_nfs_pic.a			comp-c-piclib
+./usr/lib/librumpfs_nilfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ntfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_syspuffs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib
