@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.822 2009/07/18 21:32:52 reinoud Exp $
+# $NetBSD: mi,v 1.823 2009/07/18 22:24:02 reinoud Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1076,6 +1076,7 @@
 ./usr/include/fs/efs				base-c-usr
 ./usr/include/fs/hfs				base-c-usr
 ./usr/include/fs/hfsp				base-obsolete		obsolete
+./usr/include/fs/nilfs				base-c-usr
 ./usr/include/fs/puffs				base-puffs-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr
