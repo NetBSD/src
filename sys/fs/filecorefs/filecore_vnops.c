@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.25.10.2 2009/05/04 08:13:42 yamt Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.25.10.3 2009/07/18 14:53:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.25.10.2 2009/05/04 08:13:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.25.10.3 2009/07/18 14:53:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,29 +91,17 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.25.10.2 2009/05/04 08:13:42 yam
 #include <fs/filecorefs/filecore_extern.h>
 #include <fs/filecorefs/filecore_node.h>
 
-/*
- * Check mode permission on inode pointer. Mode is READ, WRITE or EXEC.
- * The mode is shifted to select the owner/group/other fields. The
- * super user is granted all permissions.
- */
-int
-filecore_access(void *v)
+static int
+filecore_check_possible(struct vnode *vp, struct filecore_node *ip,
+    mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct filecore_node *ip = VTOI(vp);
-	struct filecore_mnt *fcmp = ip->i_mnt;
 
 	/*
 	 * Disallow write attempts unless the file is a socket,
 	 * fifo, or a block or character device resident on the
 	 * file system.
 	 */
-	if (ap->a_mode & VWRITE) {
+	if (mode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -124,8 +112,43 @@ filecore_access(void *v)
 		}
 	}
 
-	return (vaccess(vp->v_type, filecore_mode(ip),
-	    fcmp->fc_uid, fcmp->fc_gid, ap->a_mode, ap->a_cred));
+	return 0;
+}
+
+/*
+ * Check mode permission on inode pointer. Mode is READ, WRITE or EXEC.
+ * The mode is shifted to select the owner/group/other fields. The
+ * super user is granted all permissions.
+ */
+static int
+filecore_check_permitted(struct vnode *vp, struct filecore_node *ip,
+    mode_t mode, kauth_cred_t cred)
+{
+	struct filecore_mnt *fcmp = ip->i_mnt;
+
+	return genfs_can_access(vp->v_type, filecore_mode(ip),
+	    fcmp->fc_uid, fcmp->fc_gid, mode, cred);
+}
+
+int
+filecore_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int  a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct filecore_node *ip = VTOI(vp);
+	int error;
+
+	error = filecore_check_possible(vp, ip, ap->a_mode);
+	if (error)
+		return error;
+
+	error = filecore_check_permitted(vp, ip, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178.10.2 2009/05/04 08:11:31 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.178.10.3 2009/07/18 14:52:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178.10.2 2009/05/04 08:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178.10.3 2009/07/18 14:52:54 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1156,9 +1156,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		/* Set page referenced/modified status based on flags */
 		if (flags & VM_PROT_WRITE)
-			*attrs |= PV_MODIFIED | PV_REFERENCED;
+			*attrs |= PGA_MODIFIED | PGA_REFERENCED;
 		else if (flags & VM_PROT_ALL)
-			*attrs |= PV_REFERENCED;
+			*attrs |= PGA_REFERENCED;
 		if (!(prot & VM_PROT_WRITE))
 			/*
 			 * If page is not yet referenced, we could emulate this
@@ -1171,14 +1171,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		else {
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 			if (cached == 0) {
-				if (*attrs & PV_MODIFIED) {
+				if (*attrs & PGA_MODIFIED) {
 					npte = mips_pg_rwncpage_bit();
 				} else {
 					npte = mips_pg_cwncpage_bit();
 				}
 			} else {
 #endif
-				if (*attrs & PV_MODIFIED) {
+				if (*attrs & PGA_MODIFIED) {
 					npte = mips_pg_rwpage_bit();
 				} else {
 					npte = mips_pg_cwpage_bit();
@@ -1712,8 +1712,8 @@ pmap_clear_reference(struct vm_page *pg)
 		    (u_long)VM_PAGE_TO_PHYS(pg));
 #endif
 	attrp = &pg->mdpage.pvh_attrs;
-	rv = *attrp & PV_REFERENCED;
-	*attrp &= ~PV_REFERENCED;
+	rv = *attrp & PGA_REFERENCED;
+	*attrp &= ~PGA_REFERENCED;
 	return rv;
 }
 
@@ -1727,7 +1727,7 @@ bool
 pmap_is_referenced(struct vm_page *pg)
 {
 
-	return pg->mdpage.pvh_attrs & PV_REFERENCED;
+	return pg->mdpage.pvh_attrs & PGA_REFERENCED;
 }
 
 /*
@@ -1749,8 +1749,8 @@ pmap_clear_modify(struct vm_page *pg)
 		printf("pmap_clear_modify(%lx)\n", (u_long)VM_PAGE_TO_PHYS(pg));
 #endif
 	attrp = &pg->mdpage.pvh_attrs;
-	rv = *attrp & PV_MODIFIED;
-	*attrp &= ~PV_MODIFIED;
+	rv = *attrp & PGA_MODIFIED;
+	*attrp &= ~PGA_MODIFIED;
 	if (!rv) {
 		return rv;
 	}
@@ -1805,7 +1805,7 @@ bool
 pmap_is_modified(struct vm_page *pg)
 {
 
-	return pg->mdpage.pvh_attrs & PV_MODIFIED;
+	return pg->mdpage.pvh_attrs & PGA_MODIFIED;
 }
 
 /*
@@ -1819,7 +1819,7 @@ pmap_set_modified(paddr_t pa)
 	struct vm_page *pg;
 
 	pg = PHYS_TO_VM_PAGE(pa);
-	pg->mdpage.pvh_attrs |= PV_MODIFIED | PV_REFERENCED;
+	pg->mdpage.pvh_attrs |= PGA_MODIFIED | PGA_REFERENCED;
 }
 
 /******************** misc. functions ********************/
@@ -2043,14 +2043,6 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg)
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
 		npv = pv->pv_next;
 		if (npv) {
-
-			/*
-			 * Copy current modified and referenced status to
-			 * the following entry before copying.
-			 */
-
-			npv->pv_flags |=
-			    pv->pv_flags & (PV_MODIFIED | PV_REFERENCED);
 			*pv = *npv;
 			pmap_pv_free(npv);
 		} else {

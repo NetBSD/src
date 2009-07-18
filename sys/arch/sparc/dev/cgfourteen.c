@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.52.20.2 2009/06/20 07:20:08 yamt Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.52.20.3 2009/07/18 14:52:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -157,7 +157,7 @@ static int  cg14_do_cursor(struct cgfourteen_softc *,
 #endif
 
 #if defined(RASTERCONSOLE) && (NWSDISPLAY > 0)
-#error You can't have it both ways - either RASTERCONSOLE or wsdisplay
+#error "You can't have it both ways - either RASTERCONSOLE or wsdisplay"
 #endif
 
 /*

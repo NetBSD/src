@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.65.10.2 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.65.10.3 2009/07/18 14:53:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65.10.2 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65.10.3 2009/07/18 14:53:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,9 +169,7 @@ ntfs_mount (
 	void *data,
 	size_t *data_len)
 {
-	struct nameidata nd;
 	struct lwp *l = curlwp;
-	struct nameidata *ndp = &nd;
 	int		err = 0, flags;
 	struct vnode	*devvp;
 	struct ntfs_args *args = data;
@@ -210,14 +208,12 @@ ntfs_mount (
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-	err = namei(ndp);
+	err = namei_simple_user(args->fspec,
+				NSM_FOLLOW_NOEMULROOT, &devvp);
 	if (err) {
 		/* can't get devvp!*/
 		return (err);
 	}
-
-	devvp = ndp->ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		err = ENOTBLK;

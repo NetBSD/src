@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.10.56.1 2009/05/04 08:11:15 yamt Exp $
+# $NetBSD: XEN3_DOMU,v 1.10.56.2 2009/07/18 14:52:53 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -243,6 +243,8 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
 
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device   drvctl
 
 # PCI pass-through support: 
 #xpci* at xenbus ?			#Xen3 PCI front end driver

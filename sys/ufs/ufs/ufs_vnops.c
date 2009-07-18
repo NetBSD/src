@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.164.10.2 2009/05/16 10:41:54 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.164.10.3 2009/07/18 14:53:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.164.10.2 2009/05/16 10:41:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.164.10.3 2009/07/18 14:53:28 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -272,24 +272,13 @@ ufs_close(void *v)
 	return (0);
 }
 
-int
-ufs_access(void *v)
+static int
+ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode	*a_vp;
-		int		a_mode;
-		kauth_cred_t	a_cred;
-	} */ *ap = v;
-	struct vnode	*vp;
-	struct inode	*ip;
-	mode_t		mode;
 #ifdef QUOTA
-	int		error;
-#endif
+	int error;
+#endif /* QUOTA */
 
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	mode = ap->a_mode;
 	/*
 	 * Disallow write attempts on read-only file systems;
 	 * unless the file is a socket, fifo, or a block or
@@ -328,8 +317,42 @@ ufs_access(void *v)
 	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
 		return (EPERM);
 
-	return (vaccess(vp->v_type, ip->i_mode & ALLPERMS,
-		ip->i_uid, ip->i_gid, mode, ap->a_cred));
+	return 0;
+}
+
+static int
+ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
+    kauth_cred_t cred)
+{
+
+	return genfs_can_access(vp->v_type, ip->i_mode & ALLPERMS, ip->i_uid,
+	    ip->i_gid, mode, cred);
+}
+
+int
+ufs_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode	*a_vp;
+		int		a_mode;
+		kauth_cred_t	a_cred;
+	} */ *ap = v;
+	struct vnode	*vp;
+	struct inode	*ip;
+	mode_t		mode;
+	int		error;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	mode = ap->a_mode;
+
+	error = ufs_check_possible(vp, ip, mode);
+	if (error)
+		return error;
+
+	error = ufs_check_permitted(vp, ip, mode, ap->a_cred);
+
+	return error;
 }
 
 /* ARGSUSED */

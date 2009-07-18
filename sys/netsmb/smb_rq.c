@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.29.10.1 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.29.10.2 2009/07/18 14:53:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.29.10.1 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.29.10.2 2009/07/18 14:53:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ smb_rq_alloc(struct smb_connobj *layer, u_char cmd, struct smb_cred *scred,
 	rqp = pool_get(&smbrq_pool, PR_WAITOK);
 	error = smb_rq_init(rqp, layer, cmd, scred);
 	rqp->sr_flags |= SMBR_ALLOCED;
+	callout_init(&rqp->sr_timo_ch, 0);
 	if (error) {
 		smb_rq_done(rqp);
 		return error;
@@ -166,8 +167,10 @@ smb_rq_done(struct smb_rq *rqp)
 	mb_done(&rqp->sr_rq);
 	md_done(&rqp->sr_rp);
 	smb_sl_destroy(&rqp->sr_slock);
-	if (rqp->sr_flags & SMBR_ALLOCED)
+	if (rqp->sr_flags & SMBR_ALLOCED) {
+		callout_destroy(&rqp->sr_timo_ch);
 		pool_put(&smbrq_pool, rqp);
+	}
 }
 
 /*

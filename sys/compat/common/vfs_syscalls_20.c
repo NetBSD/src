@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.26.4.2 2009/05/04 08:12:17 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.26.4.3 2009/07/18 14:52:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.26.4.2 2009/05/04 08:12:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.26.4.3 2009/07/18 14:52:57 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -140,14 +140,14 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 	struct mount *mp;
 	struct statvfs *sbuf;
 	int error = 0;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+			NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return error;
 
-	mp = nd.ni_vp->v_mount;
+	mp = vp->v_mount;
 
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = dostatvfs(mp, sbuf, l, 0, 1)) != 0)
@@ -155,7 +155,7 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 done:
-	vrele(nd.ni_vp);
+	vrele(vp);
 	free(sbuf, M_TEMP);
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.5.108.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.5.108.2 2009/07/18 14:52:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -44,17 +44,18 @@ struct kbd_softc {
 	int		k_event_mode;	/* if 1, collect events,	*/
 					/*   else pass to ite		*/
 	struct evvar	k_events;	/* event queue state		*/
-	u_char		k_soft_cs;	/* control-reg. copy		*/
-	u_char		k_package[20];	/* XXX package being build	*/
-	u_char		k_pkg_size;	/* Size of the package		*/
-	u_char		k_pkg_idx;	/* Running pkg assembly index	*/
-	u_char		k_pkg_type;	/* Type of package		*/
-	u_char		*k_sendp;	/* Output pointer		*/
+	uint8_t		k_soft_cs;	/* control-reg. copy		*/
+	uint8_t		k_package[20];	/* XXX package being build	*/
+	uint8_t		k_pkg_size;	/* Size of the package		*/
+	uint8_t		k_pkg_idx;	/* Running pkg assembly index	*/
+	uint8_t		k_pkg_type;	/* Type of package		*/
+	const uint8_t	*k_sendp;	/* Output pointer		*/
 	int		k_send_cnt;	/* Chars left for output	*/
 #if NWSKBD>0
 	struct device	*k_wskbddev;	/* pointer to wskbd for sending strokes */
 	int		k_pollingmode;	/* polling mode on? whatever it isss... */
 #endif
+	void		*k_sicookie;	/* softint(9) cookie		*/
 };
 
 /*
@@ -69,11 +70,11 @@ struct kbd_softc {
 #define	KBD_TIMEO_PKG	6		/* Timeout package		*/
 
 #ifdef _KERNEL
-extern	u_char	kbd_modifier;
+extern	uint8_t	kbd_modifier;
 
 void	kbd_bell_gparms(u_int *, u_int *, u_int *);
 void	kbd_bell_sparms(u_int, u_int, u_int);
-void	kbd_write(u_char *, int);
+void	kbd_write(const uint8_t *, int);
 int	kbdgetcn(void);
 void	kbdbell(void);
 void	kbdenable(void);

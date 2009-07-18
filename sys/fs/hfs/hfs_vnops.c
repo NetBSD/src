@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.9.10.2 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.9.10.3 2009/07/18 14:53:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.10.2 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.10.3 2009/07/18 14:53:21 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -517,6 +517,37 @@ hfs_vop_close(void *v)
 	return 0;
 }
 
+static int
+hfs_check_possible(struct vnode *vp, mode_t mode)
+{
+
+	/*
+	 * Disallow writes on files, directories, and symlinks
+	 * since we have no write support yet.
+	 */
+
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			return EROFS;
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static int
+hfs_check_permitted(struct vattr *va, mode_t mode, kauth_cred_t cred)
+{
+
+	return genfs_can_access(va->va_type, va->va_mode, va->va_uid,
+	    va->va_gid, mode, cred);
+}
+
 int
 hfs_vop_access(void *v)
 {
@@ -532,27 +563,16 @@ hfs_vop_access(void *v)
 	printf("VOP = hfs_vop_access()\n");
 #endif /* HFS_DEBUG */
 
-	/*
-	 * Disallow writes on files, directories, and symlinks
-	 * since we have no write support yet.
-	 */
-
-	if (ap->a_mode & VWRITE) {
-		switch (ap->a_vp->v_type) {
-		case VDIR:
-		case VLNK:
-		case VREG:
-			return EROFS;
-		default:
-			break;
-		}
-	}
+	error = hfs_check_possible(ap->a_vp, ap->a_mode);
+	if (error)
+		return error;
 
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
-	return vaccess(va.va_type, va.va_mode, va.va_uid, va.va_gid,
-	    ap->a_mode, ap->a_cred);
+	error = hfs_check_permitted(&va, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 int

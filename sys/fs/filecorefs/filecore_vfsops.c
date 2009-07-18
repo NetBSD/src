@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.49.10.2 2009/05/04 08:13:42 yamt Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.49.10.3 2009/07/18 14:53:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.10.2 2009/05/04 08:13:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.10.3 2009/07/18 14:53:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -240,7 +240,6 @@ int
 filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct vnode *devvp;
 	struct filecore_args *args = data;
 	int error;
@@ -271,10 +270,10 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(args->fspec,
+				NSM_FOLLOW_NOEMULROOT, &devvp);
+	if (error != 0)
 		return (error);
-	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
