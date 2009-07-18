@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.3 2009/07/18 11:41:23 dsl Exp $	*/
+/*	$NetBSD: strchr.S,v 1.4 2009/07/18 16:40:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.3 2009/07/18 11:41:23 dsl Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.4 2009/07/18 16:40:31 dsl Exp $")
 #endif
 
 /*
@@ -56,6 +56,7 @@ ENTRY(strchr)
 	movabsq	$0x0101010101010101,%r8
 
 	movzbq	%sil,%rdx	/* value to search for (c) */
+	/* These imul are 'directpath' on athlons, so are fast */
 	imul	$0x80,%r8,%r9	/* 0x8080808080808080 */
 	imul	%r8,%rdx	/* (c) copied to all bytes */
 	test	$7,%dil
@@ -111,14 +112,13 @@ ENTRY(strchr)
 /* I (dsl) think a _ALIGN_TEXT here will slow things down! */
 20:
 	xor	%rcx,%rcx
-	mov	%rdx,%rsi	/* repeated char pattern (c) */
-	sub	%dil,%cl	/* Convert low address values 1..7 */
-	and	$7,%cl		/* to 7..1 */
+	sub	%dil,%cl	/* Convert low address values 1..7 ... */
+	sbb	%rsi,%rsi	/* carry was set, so %rsi now ~0u! */
+	and	$7,%cl		/* ... to 7..1 */
 	and	$~7,%dil	/* move address to start of word */
 	shl	$3,%cl		/* now 56, 48 ... 16, 8 */
 	movq	(%rdi),%rax	/* aligned word containing first data */
-	neg	%rsi		/* generate ~c (not doesn't set flags) */
-	dec	%rsi
+	xor	%rdx,%rsi	/* invert of search pattern (~c) */
 	je	22f		/* searching for 0xff */
 21:	shr	%cl,%rsi	/* ~c in low bytes */
 	or	%rsi,%rax	/* set some bits making low bytes invalid */
