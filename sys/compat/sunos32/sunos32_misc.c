@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.59.4.2 2009/06/20 07:20:19 yamt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.59.4.3 2009/07/18 14:52:58 yamt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.59.4.2 2009/06/20 07:20:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.59.4.3 2009/07/18 14:52:58 yamt Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1114,18 +1114,18 @@ sunos32_sys_statfs(struct lwp *l, const struct sunos32_sys_statfs_args *uap, reg
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 	struct sys_statvfs1_args ua;
 
 	SUNOS32TOP_UAP(path, const char);
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(&ua, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(&ua, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	mp = nd.ni_vp->v_mount;
+	mp = vp->v_mount;
 	sp = &mp->mnt_stat;
-	vrele(nd.ni_vp);
+	vrele(vp);
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;

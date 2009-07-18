@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.36.4.2 2009/06/20 07:20:20 yamt Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.36.4.3 2009/07/18 14:52:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.36.4.2 2009/06/20 07:20:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.36.4.3 2009/07/18 14:52:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.36.4.2 2009/06/20 07:20:20 yamt Exp $"
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
-#include <sys/mutex.h>
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/acpi/acpica.h>
@@ -73,8 +72,13 @@ static void	acpitz_attach(device_t, device_t, void *);
 
 /*
  * ACPI Temperature Zone information. Note all temperatures are reported
- * in tenths of degrees Kelvin
+ * in tenths of degrees Kelvin, and that the ACPI specification assumes
+ * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4).
+ * So define an appropriate conversion.
  */
+
+#define	ATZ2UKELVIN(t) ((t) * 100000 - 50000)
+
 struct acpitz_zone {
 	/* Active cooling temperature threshold */
 	UINT32 ac[ATZ_NLEVELS];
@@ -106,7 +110,6 @@ struct acpitz_softc {
 	struct callout sc_callout;
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
-	kmutex_t sc_mtx;
 	int sc_active;		/* active cooling level */
 	int sc_flags;
 	int sc_rate;		/* tz poll rate */
@@ -129,6 +132,8 @@ static void	acpitz_notify_handler(ACPI_HANDLE, UINT32, void *);
 static int	acpitz_get_integer(device_t, const char *, UINT32 *);
 static void	acpitz_tick(void *);
 static void	acpitz_init_envsys(device_t);
+static void	acpitz_get_limits(struct sysmon_envsys *, envsys_data_t *,
+				  sysmon_envsys_lim_t *);
 
 CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc), acpitz_match,
     acpitz_attach, NULL, NULL);
@@ -157,8 +162,6 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 	ACPI_INTEGER v;
-
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 #if 0
 	sc->sc_flags = ATZ_F_VERBOSE;
@@ -240,7 +243,7 @@ acpitz_get_status(void *opaque)
 	 * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4),
 	 * so we correct for that too.
 	 */
-	sc->sc_sensor.value_cur = sc->sc_zone.tmp * 100000 - 50000;
+	sc->sc_sensor.value_cur = ATZ2UKELVIN(sc->sc_zone.tmp);
 	sc->sc_sensor.state = ENVSYS_SVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
@@ -262,6 +265,8 @@ acpitz_get_status(void *opaque)
 			if (sc->sc_zone.ac[i] <= tmp)
 				active = i;
 		}
+		if (active != ATZ_ACTIVE_NONE)
+			sc->sc_sensor.state = ENVSYS_SWARNOVER;
 
 		flags = sc->sc_flags &
 		    ~(ATZ_F_CRITICAL|ATZ_F_HOT|ATZ_F_PASSIVE);
@@ -284,7 +289,7 @@ acpitz_get_status(void *opaque)
 				    "zone went critical at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			} else if (changed & ATZ_F_HOT) {
-				sc->sc_sensor.state = ENVSYS_SWARNOVER;
+				sc->sc_sensor.state = ENVSYS_SCRITOVER;
 				aprint_debug_dev(dv,
 				    "zone went hot at temp %sC\n",
 				    acpitz_celcius_string(tmp));
@@ -584,21 +589,45 @@ acpitz_init_envsys(device_t dv)
 	struct acpitz_softc *sc = device_private(dv);
 
 	sc->sc_sme = sysmon_envsys_create();
-	sc->sc_sensor.monitor = true;
-	sc->sc_sensor.flags = ENVSYS_FMONLIMITS;
-	sc->sc_sensor.units = ENVSYS_STEMP;
-	strlcpy(sc->sc_sensor.desc, "temperature", sizeof(sc->sc_sensor.desc));
-	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
-		sysmon_envsys_destroy(sc->sc_sme);
-		return;
-	}
-
-	/* hook into sysmon */
+	sc->sc_sme->sme_get_limits = acpitz_get_limits;
+	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_name = device_xname(dv);
 	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+	sc->sc_sensor.monitor = true;
+	sc->sc_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
+	sc->sc_sensor.units = ENVSYS_STEMP;
+	strlcpy(sc->sc_sensor.desc, "temperature", sizeof(sc->sc_sensor.desc));
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor))
+		goto out;
 
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error_dev(dv, "unable to register with sysmon\n");
-		sysmon_envsys_destroy(sc->sc_sme);
+	/* hook into sysmon */
+	if (sysmon_envsys_register(sc->sc_sme) == 0)
+		return;
+out:
+	aprint_error_dev(dv, "unable to register with sysmon\n");
+	sysmon_envsys_destroy(sc->sc_sme);
+}
+
+static void
+acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		  sysmon_envsys_lim_t *limits)
+{
+	struct acpitz_softc *sc = sme->sme_cookie;
+	int i;
+
+	limits->sel_flags = 0;
+
+	if (sc->sc_zone.hot != ATZ_TMP_INVALID) {
+		limits->sel_flags |= PROP_CRITMAX;
+		limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.hot);
+	} else if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
+		limits->sel_flags |= PROP_CRITMAX;
+		limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.crt);
 	}
+	for (i = 0; i < ATZ_NLEVELS; i++) 
+		if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
+			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.ac[i]);
+			limits->sel_flags |= PROP_WARNMAX;
+			break;
+		}
 }

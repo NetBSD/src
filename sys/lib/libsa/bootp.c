@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.32.4.2 2009/05/16 10:41:49 yamt Exp $	*/
+/*	$NetBSD: bootp.c,v 1.32.4.3 2009/07/18 14:53:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -89,6 +89,33 @@ struct in_addr dhcp_serverip;
  */
 int bootp_flags;
 
+static void
+bootp_addvend(u_char *area)
+{
+#ifdef SUPPORT_DHCP
+	char vci[64];
+	int vcilen;
+	
+	*area++ = TAG_PARAM_REQ;
+	*area++ = 6;
+	*area++ = TAG_SUBNET_MASK;
+	*area++ = TAG_GATEWAY;
+	*area++ = TAG_HOSTNAME;
+	*area++ = TAG_DOMAINNAME;
+	*area++ = TAG_ROOTPATH;
+	*area++ = TAG_SWAPSERVER;
+
+	/* Insert a NetBSD Vendor Class Identifier option. */
+	sprintf(vci, "NetBSD:%s:libsa", MACHINE);
+	vcilen = strlen(vci);
+	*area++ = TAG_CLASSID;
+	*area++ = vcilen;
+	(void)memcpy(area, vci, vcilen);
+	area += vcilen;
+#endif
+	*area = TAG_END;
+}
+
 /* Fetch required bootp information */
 void
 bootp(int sock)
@@ -103,10 +130,7 @@ bootp(int sock)
 		u_char header[HEADER_SIZE];
 		struct bootp rbootp;
 	} rbuf;
-#ifdef SUPPORT_DHCP
-	char vci[64];
-	int vcilen;
-#endif
+	unsigned int index;
 
 #ifdef BOOTP_DEBUG
  	if (debug)
@@ -134,22 +158,13 @@ bootp(int sock)
 	MACPY(d->myea, bp->bp_chaddr);
 	(void)strncpy((char *)bp->bp_file, bootfile, sizeof(bp->bp_file));
 	(void)memcpy(bp->bp_vend, vm_rfc1048, sizeof(vm_rfc1048));
+	index = 4;
 #ifdef SUPPORT_DHCP
-	bp->bp_vend[4] = TAG_DHCP_MSGTYPE;
-	bp->bp_vend[5] = 1;
-	bp->bp_vend[6] = DHCPDISCOVER;
-	/*
-	 * Insert a NetBSD Vendor Class Identifier option.
-	 */
-	sprintf(vci, "NetBSD:%s:libsa", MACHINE);
-	vcilen = strlen(vci);
-	bp->bp_vend[7] = TAG_CLASSID;
-	bp->bp_vend[8] = vcilen;
-	(void)memcpy(&bp->bp_vend[9], vci, vcilen);
-	bp->bp_vend[9 + vcilen] = TAG_END;
-#else
-	bp->bp_vend[4] = TAG_END;
+	bp->bp_vend[index++] = TAG_DHCP_MSGTYPE;
+	bp->bp_vend[index++] = 1;
+	bp->bp_vend[index++] = DHCPDISCOVER;
 #endif
+	bootp_addvend(&bp->bp_vend[index]);
 
 	d->myip.s_addr = INADDR_ANY;
 	d->myport = htons(IPPORT_BOOTPC);
@@ -172,26 +187,22 @@ bootp(int sock)
 #ifdef SUPPORT_DHCP
 	if (dhcp_ok) {
 		u_int32_t leasetime;
-		bp->bp_vend[6] = DHCPREQUEST;
-		bp->bp_vend[7] = TAG_REQ_ADDR;
-		bp->bp_vend[8] = 4;
+		index = 6;
+		bp->bp_vend[index++] = DHCPREQUEST;
+		bp->bp_vend[index++] = TAG_REQ_ADDR;
+		bp->bp_vend[index++] = 4;
 		(void)memcpy(&bp->bp_vend[9], &rbuf.rbootp.bp_yiaddr, 4);
-		bp->bp_vend[13] = TAG_SERVERID;
-		bp->bp_vend[14] = 4;
-		(void)memcpy(&bp->bp_vend[15], &dhcp_serverip.s_addr, 4);
-		bp->bp_vend[19] = TAG_LEASETIME;
-		bp->bp_vend[20] = 4;
+		index += 4;
+		bp->bp_vend[index++] = TAG_SERVERID;
+		bp->bp_vend[index++] = 4;
+		(void)memcpy(&bp->bp_vend[index], &dhcp_serverip.s_addr, 4);
+		index += 4;
+		bp->bp_vend[index++] = TAG_LEASETIME;
+		bp->bp_vend[index++] = 4;
 		leasetime = htonl(300);
-		(void)memcpy(&bp->bp_vend[21], &leasetime, 4);
-		/*
-		 * Insert a NetBSD Vendor Class Identifier option.
-		 */
-		sprintf(vci, "NetBSD:%s:libsa", MACHINE);
-		vcilen = strlen(vci);
-		bp->bp_vend[25] = TAG_CLASSID;
-		bp->bp_vend[26] = vcilen;
-		(void)memcpy(&bp->bp_vend[27], vci, vcilen);
-		bp->bp_vend[27 + vcilen] = TAG_END;
+		(void)memcpy(&bp->bp_vend[index], &leasetime, 4);
+		index += 4;
+		bootp_addvend(&bp->bp_vend[index]);
 
 		expected_dhcpmsgtype = DHCPACK;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.23.4.1 2009/05/04 08:10:51 yamt Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.23.4.2 2009/07/18 14:52:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.23.4.1 2009/05/04 08:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.23.4.2 2009/07/18 14:52:53 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -99,9 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.23.4.1 2009/05/04 08:10:51 yamt Exp 
 #include <machine/bus.h>
 #include <machine/iomap.h>
 #include <machine/scu.h>
+#include <machine/intr.h>
 
 #include <atari/atari/device.h>
-#include <atari/atari/intr.h>
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>

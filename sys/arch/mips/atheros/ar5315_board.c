@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $ */
+/* $NetBSD: ar5315_board.c,v 1.1.62.1 2009/07/18 14:52:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -46,7 +46,7 @@
  * information data in flash for the AR5315.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.1.62.1 2009/07/18 14:52:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
+#include <ah_soc.h>	/* XXX really doesn't belong in hal */
 
 #include <mips/atheros/include/ar5315reg.h>
 #include <mips/atheros/include/ar531xvar.h>

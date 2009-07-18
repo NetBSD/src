@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.2 2009/07/18 14:52:58 yamt Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.1 2009/05/04 08:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.2 2009/07/18 14:52:58 yamt Exp $");
 
 #define	ELFSIZE		32
 
@@ -116,7 +116,7 @@ ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 		if (strcmp(itp, "/usr/libexec/ld.elf_so") == 0 ||
 		    strcmp(itp, "/libexec/ld.elf_so") == 0) {
 			extern const char machine32[];
-			struct nameidata nd;
+			struct vnode *vp;
 			char *path;
 
 			if (epp->ep_interp != NULL)
@@ -124,8 +124,8 @@ ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 			
 			path = PNBUF_GET();
 			snprintf(path, MAXPATHLEN, "%s-%s", itp, machine32);
-			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
-			error = namei(&nd);
+			error = namei_simple_kernel(path,
+					NSM_FOLLOW_NOEMULROOT, &vp);
 			/*
 			 * If that worked, save interpreter in case we
 			 * actually need to load it
@@ -133,7 +133,7 @@ ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 			if (error != 0)
 				epp->ep_interp = NULL;
 			else
-				epp->ep_interp = nd.ni_vp;
+				epp->ep_interp = vp;
 			PNBUF_PUT(path);
 		}
 

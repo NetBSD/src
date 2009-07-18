@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.17.2.2 2009/05/16 10:41:23 yamt Exp $ */
+/* $NetBSD: mfi.c,v 1.17.2.3 2009/07/18 14:53:02 yamt Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.17.2.2 2009/05/16 10:41:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.17.2.3 2009/07/18 14:53:02 yamt Exp $");
 
 #include "bio.h"
 
@@ -70,7 +70,7 @@ static void		mfi_put_ccb(struct mfi_ccb *);
 static int		mfi_init_ccb(struct mfi_softc *);
 
 static struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
-static void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
+static void		mfi_freemem(struct mfi_softc *, struct mfi_mem **);
 
 static int		mfi_transition_firmware(struct mfi_softc *);
 static int		mfi_initialize_firmware(struct mfi_softc *);
@@ -104,17 +104,20 @@ static int		mfi_ioctl_setstate(struct mfi_softc *,
 				struct bioc_setstate *);
 static int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
 static int		mfi_create_sensors(struct mfi_softc *);
+static int		mfi_destroy_sensors(struct mfi_softc *);
 static void		mfi_sensor_refresh(struct sysmon_envsys *,
 				envsys_data_t *);
 #endif /* NBIO > 0 */
 
 static uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
 static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
+static void 		mfi_xscale_intr_dis(struct mfi_softc *sc);
 static int 		mfi_xscale_intr(struct mfi_softc *sc);
 static void 		mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
 			  	 
 static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_fw_state,
+	mfi_xscale_intr_dis,
 	mfi_xscale_intr_ena,
 	mfi_xscale_intr,
 	mfi_xscale_post
@@ -122,11 +125,13 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
  	 
 static uint32_t 	mfi_ppc_fw_state(struct mfi_softc *sc);
 static void 		mfi_ppc_intr_ena(struct mfi_softc *sc);
+static void 		mfi_ppc_intr_dis(struct mfi_softc *sc);
 static int 		mfi_ppc_intr(struct mfi_softc *sc);
 static void 		mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
 		  	 
 static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_fw_state,
+	mfi_ppc_intr_dis,
 	mfi_ppc_intr_ena,
 	mfi_ppc_intr,
 	mfi_ppc_post
@@ -134,6 +139,7 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
  	 
 #define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
 #define mfi_intr_enable(_s) 	((_s)->sc_iop->mio_intr_ena(_s))
+#define mfi_intr_disable(_s) 	((_s)->sc_iop->mio_intr_dis(_s))
 #define mfi_my_intr(_s) 	((_s)->sc_iop->mio_intr(_s))
 #define mfi_post(_s, _c) 	((_s)->sc_iop->mio_post((_s), (_c)))
 
@@ -177,6 +183,28 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_len = 0;
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
+}
+
+static int
+mfi_destroy_ccb(struct mfi_softc *sc)
+{
+	struct mfi_ccb		*ccb;
+	uint32_t		i;
+
+	DNPRINTF(MFI_D_CCB, "%s: mfi_init_ccb\n", DEVNAME(sc));
+
+
+	for (i = 0; (ccb = mfi_get_ccb(sc)) != NULL; i++) {
+		/* create a dma map for transfer */
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	if (i < sc->sc_max_cmds)
+		return EBUSY;
+
+	free(sc->sc_ccb, M_DEVBUF);
+
+	return 0;
 }
 
 static int
@@ -317,8 +345,15 @@ amfree:
 }
 
 static void
-mfi_freemem(struct mfi_softc *sc, struct mfi_mem *mm)
+mfi_freemem(struct mfi_softc *sc, struct mfi_mem **mmp)
 {
+	struct mfi_mem *mm = *mmp;
+
+	if (mm == NULL)
+		return;
+
+	*mmp = NULL;
+
 	DNPRINTF(MFI_D_MEM, "%s: mfi_freemem: %p\n", DEVNAME(sc), mm);
 
 	bus_dmamap_unload(sc->sc_dmat, mm->am_map);
@@ -601,6 +636,63 @@ mfiminphys(struct buf *bp)
 }
 
 int
+mfi_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct mfi_softc *sc = device_private(self);
+
+	if (sc->sc_child != NULL)
+		return 0;
+
+	sc->sc_child = config_found_sm_loc(self, ifattr, locators, &sc->sc_chan,
+	    scsiprint, NULL);
+
+	return 0;
+}
+
+void
+mfi_childdetached(device_t self, device_t child)
+{
+	struct mfi_softc *sc = device_private(self);
+
+	KASSERT(self == sc->sc_dev);
+	KASSERT(child == sc->sc_child);
+
+	if (child == sc->sc_child)
+		sc->sc_child = NULL;
+}
+
+int
+mfi_detach(struct mfi_softc *sc, int flags)
+{
+	int			error;
+
+	DNPRINTF(MFI_D_MISC, "%s: mfi_detach\n", DEVNAME(sc));
+
+	if ((error = config_detach_children(sc->sc_dev, flags)) != 0)
+		return error;
+
+#if NBIO > 0
+	mfi_destroy_sensors(sc);
+	bio_unregister(sc->sc_dev);
+#endif /* NBIO > 0 */
+
+	mfi_intr_disable(sc);
+
+	/* TBD: shutdown firmware */
+
+	if ((error = mfi_destroy_ccb(sc)) != 0)
+		return error;
+
+	mfi_freemem(sc, &sc->sc_sense);
+
+	mfi_freemem(sc, &sc->sc_frames);
+
+	mfi_freemem(sc, &sc->sc_pcq);
+
+	return 0;
+}
+
+int
 mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapt;
@@ -701,7 +793,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		sc->sc_ld[i].ld_present = 1;
 
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = sc->sc_dev;
 	adapt->adapt_nchannels = 1;
 	if (sc->sc_ld_cnt)
 		adapt->adapt_openings = sc->sc_max_cmds / sc->sc_ld_cnt;
@@ -720,13 +812,13 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	chan->chan_ntargets = MFI_MAX_LD;
 	chan->chan_id = MFI_MAX_LD;
 
-	(void)config_found(&sc->sc_dev, &sc->sc_chan, scsiprint);
+	mfi_rescan(sc->sc_dev, "scsi", NULL);
 
 	/* enable interrupts */
 	mfi_intr_enable(sc);
 
 #if NBIO > 0
-	if (bio_register(&sc->sc_dev, mfi_ioctl) != 0)
+	if (bio_register(sc->sc_dev, mfi_ioctl) != 0)
 		panic("%s: controller registration failed", DEVNAME(sc));
 	if (mfi_create_sensors(sc) != 0)
 		aprint_error("%s: unable to create sensors\n", DEVNAME(sc));
@@ -734,11 +826,11 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 
 	return 0;
 noinit:
-	mfi_freemem(sc, sc->sc_sense);
+	mfi_freemem(sc, &sc->sc_sense);
 nosense:
-	mfi_freemem(sc, sc->sc_frames);
+	mfi_freemem(sc, &sc->sc_frames);
 noframe:
-	mfi_freemem(sc, sc->sc_pcq);
+	mfi_freemem(sc, &sc->sc_pcq);
 nopcq:
 	return 1;
 }
@@ -1003,7 +1095,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct scsipi_periph	*periph;
 	struct scsipi_xfer	*xs;
 	struct scsipi_adapter	*adapt = chan->chan_adapter;
-	struct mfi_softc	*sc = (void *) adapt->adapt_dev;
+	struct mfi_softc	*sc = device_private(adapt->adapt_dev);
 	struct mfi_ccb		*ccb;
 	struct scsi_rw_6	*rw;
 	struct scsipi_rw_10	*rwb;
@@ -1087,7 +1179,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case SCSI_TEST_UNIT_READY:
 		/* save off sd? after autoconf */
 		if (!cold)	/* XXX bogus */
-			strlcpy(sc->sc_ld[target].ld_dev, device_xname(&sc->sc_dev),
+			strlcpy(sc->sc_ld[target].ld_dev, device_xname(sc->sc_dev),
 			    sizeof(sc->sc_ld[target].ld_dev));
 		/* FALLTHROUGH */
 
@@ -1318,7 +1410,7 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 int
 mfi_ioctl(device_t dev, u_long cmd, void *addr)
 {
-	struct mfi_softc	*sc = (struct mfi_softc *)dev;
+	struct mfi_softc *sc = device_private(dev);
 	int error = 0;
 	int s = splbio();
 
@@ -1879,6 +1971,17 @@ freeme:
 }
 
 static int
+mfi_destroy_sensors(struct mfi_softc *sc)
+{
+	if (sc->sc_sme == NULL)
+		return 0;
+	sysmon_envsys_unregister(sc->sc_sme);
+	sc->sc_sme = NULL;
+	free(sc->sc_sensor, M_DEVBUF);
+	return 0;
+}
+
+static int
 mfi_create_sensors(struct mfi_softc *sc)
 {
 	int i;
@@ -1976,6 +2079,12 @@ mfi_xscale_fw_state(struct mfi_softc *sc)
 }
  	 
 static void
+mfi_xscale_intr_dis(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, 0);
+}
+
+static void
 mfi_xscale_intr_ena(struct mfi_softc *sc)
 {
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
@@ -2015,6 +2124,14 @@ mfi_ppc_fw_state(struct mfi_softc *sc)
 	return mfi_read(sc, MFI_OSP);
 }
  	 
+static void
+mfi_ppc_intr_dis(struct mfi_softc *sc)
+{
+	/* Taking a wild guess --dyoung */
+	mfi_write(sc, MFI_OMSK, ~(uint32_t)0x0);
+	mfi_write(sc, MFI_ODC, 0xffffffff);
+}
+
 static void
 mfi_ppc_intr_ena(struct mfi_softc *sc)
 {

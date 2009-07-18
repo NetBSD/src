@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24.10.1 2009/05/04 08:12:58 yamt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.24.10.2 2009/07/18 14:53:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -610,8 +610,14 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
 
+#define WMREG_KABGTXD	0x3004	/* AFE and Gap Transmit Ref Data */
+#define	KABGTXD_BGSQLBIAS 0x00050000
+
 #define	WMREG_TSPMT	0x3830	/* TCP Segmentation Pad and Minimum
 				   Threshold (Cordova) */
+
+#define	WMREG_TARC0	0x3840	/* Tx arbitration count */
+
 #define	TSPMT_TSMT(x)	(x)		/* TCP seg min transfer */
 #define	TSPMT_TSPBP(x)	((x) << 16)	/* TCP seg pkt buf padding */
 

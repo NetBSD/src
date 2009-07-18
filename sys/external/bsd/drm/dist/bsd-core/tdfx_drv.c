@@ -43,42 +43,60 @@ static drm_pci_id_list_t tdfx_pciidlist[] = {
 
 static void tdfx_configure(struct drm_device *dev)
 {
-	dev->driver.buf_priv_size	= 1; /* No dev_priv */
+	dev->driver->driver_features =
+	    DRIVER_USE_MTRR;
 
-	dev->driver.max_ioctl		= 0;
+	dev->driver->buf_priv_size	= 1; /* No dev_priv */
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+	dev->driver->max_ioctl		= 0;
 
-	dev->driver.use_mtrr		= 1;
+	dev->driver->name		= DRIVER_NAME;
+	dev->driver->desc		= DRIVER_DESC;
+	dev->driver->date		= DRIVER_DATE;
+	dev->driver->major		= DRIVER_MAJOR;
+	dev->driver->minor		= DRIVER_MINOR;
+	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
+
 static int
-tdfx_probe(device_t dev)
+tdfx_probe(device_t kdev)
 {
-	return drm_probe(dev, tdfx_pciidlist);
+	return drm_probe(kdev, tdfx_pciidlist);
 }
 
 static int
-tdfx_attach(device_t nbdev)
+tdfx_attach(device_t kdev)
 {
-	struct drm_device *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(kdev);
 
-	bzero(dev, sizeof(struct drm_device));
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
 	tdfx_configure(dev);
-	return drm_attach(nbdev, tdfx_pciidlist);
+
+	return drm_attach(kdev, tdfx_pciidlist);
+}
+
+static int
+tdfx_detach(device_t kdev)
+{
+	struct drm_device *dev = device_get_softc(kdev);
+	int ret;
+
+	ret = drm_detach(kdev);
+
+	free(dev->driver, DRM_MEM_DRIVER);
+
+	return ret;
 }
 
 static device_method_t tdfx_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		tdfx_probe),
 	DEVMETHOD(device_attach,	tdfx_attach),
-	DEVMETHOD(device_detach,	drm_detach),
+	DEVMETHOD(device_detach,	tdfx_detach),
 
 	{ 0, 0 }
 };
@@ -97,32 +115,89 @@ DRIVER_MODULE(tdfx, pci, tdfx_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(tdfx, drm, 1, 1, 1);
 
-#elif defined(__OpenBSD__)
-#ifdef _LKM
-CFDRIVER_DECL(tdfx, DV_TTY, NULL);
-#else
-CFATTACH_DECL(tdfx, sizeof(struct drm_device), drm_probe, drm_attach,
-    drm_detach, drm_activate);
-#endif
-#elif defined(__NetBSD__)
+#elif   defined(__NetBSD__)
 
 static int
-tdfxdrm_probe(struct device *parent, struct cfdata *match, void *aux)
+tdfxdrm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+
 	return drm_probe(pa, tdfx_pciidlist);
 }
 
 static void
-tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
+tdfxdrm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = device_private(self);
+	struct drm_device *dev = device_private(self);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
 
 	tdfx_configure(dev);
-	return drm_attach(self, pa, tdfx_pciidlist);
+
+	drm_attach(self, pa, tdfx_pciidlist);
 }
 
-CFATTACH_DECL_NEW(tdfxdrm, sizeof(drm_device_t), tdfxdrm_probe, tdfxdrm_attach,
-	drm_detach, drm_activate);
+CFATTACH_DECL_NEW(tdfxdrm, sizeof(struct drm_device),
+    tdfxdrm_probe, tdfxdrm_attach, drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, tdfxdrm, NULL);
+
+CFDRIVER_DECL(tdfxdrm, DV_DULL, NULL);
+extern struct cfattach tdfxdrm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata tdfxdrm_cfdata[] = {
+	{
+		.cf_name = "tdfxdrm",
+		.cf_atname = "tdfxdrm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+tdfxdrm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&tdfxdrm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("tdfxdrm", &tdfxdrm_ca);
+		if (err) {
+			config_cfdriver_detach(&tdfxdrm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(tdfxdrm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("tdfxdrm", &tdfxdrm_ca);
+			config_cfdriver_detach(&tdfxdrm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(tdfxdrm_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("tdfxdrm", &tdfxdrm_ca);
+		config_cfdriver_detach(&tdfxdrm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _MODULE */
+
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.106.2.3 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.106.2.4 2009/07/18 14:53:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106.2.3 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106.2.4 2009/07/18 14:53:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -606,7 +606,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_fd = p2->p_fd;
 	if (p2->p_nlwps != 0) {
 		KASSERT(l1->l_proc == p2);
-		fd_hold();
+		atomic_inc_uint(&l2->l_fd->fd_refcnt);
 	} else {
 		KASSERT(l1->l_proc != p2);
 	}

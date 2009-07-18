@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.44.10.3 2009/06/20 07:20:30 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44.10.4 2009/07/18 14:53:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.3 2009/06/20 07:20:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.4 2009/07/18 14:53:22 yamt Exp $");
 #endif /* not lint */
 
 
@@ -949,6 +949,38 @@ udf_read_anchors(struct udf_mount *ump)
 	ump->last_possible_vat_location  = track_end + last_track.packet_size;
 
 	return ok;
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+udf_get_c_type(struct udf_node *udf_node)
+{
+	int isdir, what;
+
+	isdir  = (udf_node->vnode->v_type == VDIR);
+	what   = isdir ? UDF_C_FIDS : UDF_C_USERDATA;
+
+	if (udf_node->ump)
+		if (udf_node == udf_node->ump->metadatabitmap_node)
+			what = UDF_C_METADATA_SBM;
+
+	return what;
+}
+
+
+int
+udf_get_record_vpart(struct udf_mount *ump, int udf_c_type)
+{
+	int vpart_num;
+
+	vpart_num = ump->data_part;
+	if (udf_c_type == UDF_C_NODE)
+		vpart_num = ump->node_part;
+	if (udf_c_type == UDF_C_FIDS)
+		vpart_num = ump->fids_part;
+
+	return vpart_num;
 }
 
 /* --------------------------------------------------------------------- */
@@ -2776,7 +2808,7 @@ udf_writeout_vat(struct udf_mount *ump)
 
 	DPRINTF(CALL, ("udf_writeout_vat\n"));
 
-	mutex_enter(&ump->allocate_mutex);
+//	mutex_enter(&ump->allocate_mutex);
 	udf_update_vat_descriptor(ump);
 
 	/* write out the VAT contents ; TODO intelligent writing */
@@ -2789,7 +2821,7 @@ udf_writeout_vat(struct udf_mount *ump)
 		goto out;
 	}
 
-	mutex_exit(&ump->allocate_mutex);
+//	mutex_exit(&ump->allocate_mutex);
 
 	vflushbuf(ump->vat_node->vnode, 1 /* sync */);
 	error = VOP_FSYNC(ump->vat_node->vnode,
@@ -3334,36 +3366,83 @@ udf_read_rootdirs(struct udf_mount *ump)
 /* To make absolutely sure we are NOT returning zero, add one :) */
 
 long
-udf_calchash(struct long_ad *icbptr)
+udf_get_node_id(const struct long_ad *icbptr)
 {
 	/* ought to be enough since each mountpoint has its own chain */
 	return udf_rw32(icbptr->loc.lb_num) + 1;
 }
 
 
-static struct udf_node *
-udf_hash_lookup(struct udf_mount *ump, struct long_ad *icbptr)
+int
+udf_compare_icb(const struct long_ad *a, const struct long_ad *b)
 {
-	struct udf_node *node;
+	if (udf_rw16(a->loc.part_num) < udf_rw16(b->loc.part_num))
+		return -1;
+	if (udf_rw16(a->loc.part_num) > udf_rw16(b->loc.part_num))
+		return 1;
+
+	if (udf_rw32(a->loc.lb_num) < udf_rw32(b->loc.lb_num))
+		return -1;
+	if (udf_rw32(a->loc.lb_num) > udf_rw32(b->loc.lb_num))
+		return 1;
+
+	return 0;
+}
+
+
+static int
+udf_compare_rbnodes(const struct rb_node *a, const struct rb_node *b)
+{
+	struct udf_node *a_node = RBTOUDFNODE(a);
+	struct udf_node *b_node = RBTOUDFNODE(b);
+
+	return udf_compare_icb(&a_node->loc, &b_node->loc);
+}
+
+
+static int
+udf_compare_rbnode_icb(const struct rb_node *a, const void *key)
+{
+	struct udf_node *a_node = RBTOUDFNODE(a);
+	const struct long_ad * const icb = key;
+
+	return udf_compare_icb(&a_node->loc, icb);
+}
+
+
+static const struct rb_tree_ops udf_node_rbtree_ops = {
+	.rbto_compare_nodes = udf_compare_rbnodes,
+	.rbto_compare_key   = udf_compare_rbnode_icb,
+};
+
+
+void
+udf_init_nodes_tree(struct udf_mount *ump)
+{
+	rb_tree_init(&ump->udf_node_tree, &udf_node_rbtree_ops);
+}
+
+
+static struct udf_node *
+udf_node_lookup(struct udf_mount *ump, struct long_ad *icbptr)
+{
+	struct rb_node  *rb_node;
+	struct udf_node *udf_node;
 	struct vnode *vp;
-	uint32_t hashline;
 
 loop:
 	mutex_enter(&ump->ihash_lock);
 
-	hashline = udf_calchash(icbptr) & UDF_INODE_HASHMASK;
-	LIST_FOREACH(node, &ump->udf_nodes[hashline], hashchain) {
-		assert(node);
-		if (node->loc.loc.lb_num   == icbptr->loc.lb_num &&
-		    node->loc.loc.part_num == icbptr->loc.part_num) {
-			vp = node->vnode;
-			assert(vp);
-			mutex_enter(&vp->v_interlock);
-			mutex_exit(&ump->ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
-				goto loop;
-			return node;
-		}
+	rb_node = rb_tree_find_node(&ump->udf_node_tree, icbptr);
+	if (rb_node) {
+		udf_node = RBTOUDFNODE(rb_node);
+		vp = udf_node->vnode;
+		assert(vp);
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&ump->ihash_lock);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			goto loop;
+		return udf_node;
 	}
 	mutex_exit(&ump->ihash_lock);
 
@@ -3372,83 +3451,25 @@ loop:
 
 
 static void
-udf_sorted_list_insert(struct udf_node *node)
+udf_register_node(struct udf_node *udf_node)
 {
-	struct udf_mount *ump;
-	struct udf_node  *s_node, *last_node;
-	uint32_t loc, s_loc;
+	struct udf_mount *ump = udf_node->ump;
 
-	ump = node->ump;
-	last_node = NULL;	/* XXX gcc */
-
-	if (LIST_EMPTY(&ump->sorted_udf_nodes)) {
-		LIST_INSERT_HEAD(&ump->sorted_udf_nodes, node, sortchain);
-		return;
-	}
-
-	/*
-	 * We sort on logical block number here and not on physical block
-	 * number here. Ideally we should go for the physical block nr to get
-	 * better sync performance though this sort will ensure that packets
-	 * won't get spit up unnessisarily.
-	 */
-
-	loc = udf_rw32(node->loc.loc.lb_num);
-	LIST_FOREACH(s_node, &ump->sorted_udf_nodes, sortchain) {
-		s_loc = udf_rw32(s_node->loc.loc.lb_num);
-		if (s_loc > loc) {
-			LIST_INSERT_BEFORE(s_node, node, sortchain);
-			return;
-		}
-		last_node = s_node;
-	}
-	LIST_INSERT_AFTER(last_node, node, sortchain);
-}
-
-
-static void
-udf_register_node(struct udf_node *node)
-{
-	struct udf_mount *ump;
-	struct udf_node *chk;
-	uint32_t hashline;
-
-	ump = node->ump;
+	/* add node to the rb tree */
 	mutex_enter(&ump->ihash_lock);
-
-	/* add to our hash table */
-	hashline = udf_calchash(&node->loc) & UDF_INODE_HASHMASK;
-#ifdef DEBUG
-	LIST_FOREACH(chk, &ump->udf_nodes[hashline], hashchain) {
-		assert(chk);
-		if (chk->loc.loc.lb_num   == node->loc.loc.lb_num &&
-		    chk->loc.loc.part_num == node->loc.loc.part_num)
-			panic("Double node entered\n");
-	}
-#else
-	chk = NULL;
-#endif
-	LIST_INSERT_HEAD(&ump->udf_nodes[hashline], node, hashchain);
-
-	/* add to our sorted list */
-	udf_sorted_list_insert(node);
-
+		rb_tree_insert_node(&ump->udf_node_tree, &udf_node->rbnode);
 	mutex_exit(&ump->ihash_lock);
 }
 
 
 static void
-udf_deregister_node(struct udf_node *node) 
+udf_deregister_node(struct udf_node *udf_node) 
 {
-	struct udf_mount *ump;
+	struct udf_mount *ump = udf_node->ump;
 
-	ump = node->ump;
+	/* remove node from the rb tree */
 	mutex_enter(&ump->ihash_lock);
-
-	/* from hash and sorted list */
-	LIST_REMOVE(node, hashchain);
-	LIST_REMOVE(node, sortchain);
-
+		rb_tree_remove_node(&ump->udf_node_tree, &udf_node->rbnode);
 	mutex_exit(&ump->ihash_lock);
 }
 
@@ -3898,24 +3919,53 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
  */
 
 /*
- * Callback from genfs to allocate len bytes at offset off; only called when
- * filling up gaps in the allocation.
+ * Called for allocating an extent of the file either by VOP_WRITE() or by
+ * genfs filling up gaps.
  */
-/* XXX should we check if there is space enough in udf_gop_alloc? */
 static int
 udf_gop_alloc(struct vnode *vp, off_t off,
     off_t len, int flags, kauth_cred_t cred)
 {
-#if 0
 	struct udf_node *udf_node = VTOI(vp);
 	struct udf_mount *ump = udf_node->ump;
+	uint64_t lb_start, lb_end;
 	uint32_t lb_size, num_lb;
-#endif
+	int udf_c_type, vpart_num, can_fail;
+	int error;
 
-	DPRINTF(NOTIMPL, ("udf_gop_alloc not implemented\n"));
-	DPRINTF(ALLOC, ("udf_gop_alloc called for %"PRIu64" bytes\n", len));
+	DPRINTF(ALLOC, ("udf_gop_alloc called for offset %"PRIu64" for %"PRIu64" bytes, %s\n",
+		off, len, flags? "SYNC":"NONE"));
 
-	return 0;
+	/*
+	 * request the pages of our vnode and see how many pages will need to
+	 * be allocated and reserve that space
+	 */
+	lb_size  = udf_rw32(udf_node->ump->logical_vol->lb_size);
+	lb_start = off / lb_size;
+	lb_end   = (off + len + lb_size -1) / lb_size;
+	num_lb   = lb_end - lb_start;
+
+	udf_c_type = udf_get_c_type(udf_node);
+	vpart_num  = udf_get_record_vpart(ump, udf_c_type);
+
+	/* all requests can fail */
+	can_fail   = true;
+
+	/* fid's (directories) can't fail */
+	if (udf_c_type == UDF_C_FIDS)
+		can_fail   = false;
+
+	/* system files can't fail */
+	if (vp->v_vflag & VV_SYSTEM)
+		can_fail = false;
+
+	error = udf_reserve_space(ump, udf_node, udf_c_type,
+		vpart_num, num_lb, can_fail);
+
+	DPRINTF(ALLOC, ("\tlb_start %"PRIu64", lb_end %"PRIu64", num_lb %d\n",
+		lb_start, lb_end, num_lb));
+
+	return error;
 }
 
 
@@ -4804,6 +4854,123 @@ error_out:
 
 /* --------------------------------------------------------------------- */
 
+int
+udf_dir_update_rootentry(struct udf_mount *ump, struct udf_node *dir_node,
+	struct udf_node *new_parent_node)
+{
+	struct vnode *dvp = dir_node->vnode;
+	struct dirhash       *dirh;
+	struct dirhash_entry *dirh_ep;
+	struct file_entry    *fe;
+	struct extfile_entry *efe;
+	struct fileid_desc *fid;
+	struct dirent *dirent;
+	uint64_t file_size, diroffset;
+	uint64_t new_parent_unique_id;
+	uint32_t lb_size, fidsize;
+	int found, error;
+	char const *name  = "..";
+	int namelen = 2;
+	int hit;
+
+	/* get our dirhash and make sure its read in */
+	dirhash_get(&dir_node->dir_hash);
+	error = dirhash_fill(dir_node);
+	if (error) {
+		dirhash_put(dir_node->dir_hash);
+		return error;
+	}
+	dirh = dir_node->dir_hash;
+
+	/* get new parent's unique ID */
+	fe  = new_parent_node->fe;
+	efe = new_parent_node->efe;
+	if (fe) {
+		new_parent_unique_id = udf_rw64(fe->unique_id);
+	} else {
+		assert(efe);
+		new_parent_unique_id = udf_rw64(efe->unique_id);
+	}
+
+	/* get directory filesize */
+	fe  = dir_node->fe;
+	efe = dir_node->efe;
+	if (fe) {
+		file_size = udf_rw64(fe->inf_len);
+	} else {
+		assert(efe);
+		file_size = udf_rw64(efe->inf_len);
+	}
+
+	/* allocate temporary space for fid */
+	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
+	fid     = malloc(lb_size, M_UDFTEMP, M_WAITOK);
+	dirent  = malloc(sizeof(struct dirent), M_UDFTEMP, M_WAITOK);
+
+	/*
+	 * NOTE the standard does not dictate the FID entry '..' should be
+	 * first, though in practice it will most likely be.
+	 */
+
+	/* search our dirhash hits */
+	found = 0;
+	dirh_ep = NULL;
+	for (;;) {
+		hit = dirhash_lookup(dirh, name, namelen, &dirh_ep);
+		/* if no hit, abort the search */
+		if (!hit)
+			break;
+
+		/* check this hit */
+		diroffset = dirh_ep->offset;
+
+		/* transfer a new fid/dirent */
+		error = udf_read_fid_stream(dvp, &diroffset, fid, dirent);
+		if (error)
+			break;
+
+		/* see if its our entry */
+		KASSERT(dirent->d_namlen == namelen);
+		if (strncmp(dirent->d_name, name, namelen) == 0) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (!found)
+		error = ENOENT;
+	if (error)
+		goto error_out;
+
+	/* update our ICB to the new parent, hit of lower 32 bits of uniqueid */
+	fid->icb = new_parent_node->write_loc;
+	fid->icb.longad_uniqueid = udf_rw32(new_parent_unique_id);
+
+	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
+
+	/* get size of fid and compensate for the read_fid_stream advance */
+	fidsize = udf_fidsize(fid);
+	diroffset -= fidsize;
+
+	/* write out */
+	error = vn_rdwr(UIO_WRITE, dir_node->vnode,
+			fid, fidsize, diroffset, 
+			UIO_SYSSPACE, IO_ALTSEMANTICS | IO_NODELOCKED,
+			FSCRED, NULL, NULL);
+
+	/* nothing to be done in the dirhash */
+
+error_out:
+	free(fid, M_UDFTEMP);
+	free(dirent, M_UDFTEMP);
+
+	dirhash_put(dir_node->dir_hash);
+
+	return error;
+}
+
+/* --------------------------------------------------------------------- */
+
 /*
  * We are not allowed to split the fid tag itself over an logical block so
  * check the space remaining in the logical block.
@@ -5089,7 +5256,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	/* lookup in hash table */
 	assert(ump);
 	assert(node_icb_loc);
-	udf_node = udf_hash_lookup(ump, node_icb_loc);
+	udf_node = udf_node_lookup(ump, node_icb_loc);
 	if (udf_node) {
 		DPRINTF(NODE, ("\tgot it from the hash!\n"));
 		/* vnode is returned locked */
@@ -5138,6 +5305,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	genfs_node_init(nvp, &udf_genfsops);	/* inititise genfs */
 	udf_node->outstanding_bufs = 0;
 	udf_node->outstanding_nodedscr = 0;
+	udf_node->uncommitted_lbs = 0;
 
 	/* check if we're fetching the root */
 	if (ump->fileset_desc)
@@ -5431,11 +5599,15 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 
 	if (udf_node->i_flags & IN_DELETED) {
 		DPRINTF(NODE, ("\tnode deleted; not writing out\n"));
+		udf_cleanup_reservation(udf_node);
 		return 0;
 	}
 
-	/* lock node */
+	/* lock node; unlocked in callback */
 	UDF_LOCK_NODE(udf_node, 0);
+
+	/* remove pending reservations, we're written out */
+	udf_cleanup_reservation(udf_node);
 
 	/* at least one descriptor writeout */
 	udf_node->outstanding_nodedscr = 1;
@@ -5470,6 +5642,7 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 
 	loc = &udf_node->write_loc;
 	error = udf_write_logvol_dscr(udf_node, dscr, loc, waitfor);
+
 	return error;
 }
 
@@ -5494,14 +5667,7 @@ udf_dispose_node(struct udf_node *udf_node)
 				"v_numoutput = %d", udf_node, vp->v_numoutput);
 #endif
 
-	/* wait until out of sync (just in case we happen to stumble over one */
-	KASSERT(!mutex_owned(&mntvnode_lock));
-	mutex_enter(&mntvnode_lock);
-	while (udf_node->i_flags & IN_SYNCED) {
-		cv_timedwait(&udf_node->ump->dirtynodes_cv, &mntvnode_lock,
-			hz/16);
-	}
-	mutex_exit(&mntvnode_lock);
+	udf_cleanup_reservation(udf_node);
 
 	/* TODO extended attributes and streamdir */
 
@@ -5576,22 +5742,22 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 
 	/* lock node */
 	error = vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error) {
-		nvp->v_data = NULL;
-		ungetnewvnode(nvp);
-		return error;
-	}
+	if (error)
+		goto error_out_unget;
 
-	/* get disc allocation for one logical block */
+	/* reserve space for one logical block */
 	vpart_num = ump->node_part;
-	error = udf_pre_allocate_space(ump, UDF_C_NODE, 1,
-			vpart_num, &lmapping);
+	error = udf_reserve_space(ump, NULL, UDF_C_NODE,
+		vpart_num, 1, /* can_fail */ true);
+	if (error)
+		goto error_out_unlock;
+
+	/* allocate node */
+	error = udf_allocate_space(ump, NULL, UDF_C_NODE,
+			vpart_num, 1, &lmapping);
+	if (error)
+		goto error_out_unreserve;
 	lb_num = lmapping;
-	if (error) {
-		vlockmgr(nvp->v_vnlock, LK_RELEASE);
-		ungetnewvnode(nvp);
-		return error;
-	}
 
 	/* initialise pointer to location */
 	memset(&node_icb_loc, 0, sizeof(struct long_ad));
@@ -5615,6 +5781,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	cv_init(&udf_node->node_lock, "udf_nlk");
 	udf_node->outstanding_bufs = 0;
 	udf_node->outstanding_nodedscr = 0;
+	udf_node->uncommitted_lbs = 0;
 
 	/* initialise genfs */
 	genfs_node_init(nvp, &udf_genfsops);
@@ -5681,6 +5848,18 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	*vpp = nvp;
 
 	return 0;
+
+error_out_unreserve:
+	udf_do_unreserve_space(ump, NULL, vpart_num, 1);
+
+error_out_unlock:
+	vlockmgr(nvp->v_vnlock, LK_RELEASE);
+
+error_out_unget:
+	nvp->v_data = NULL;
+	ungetnewvnode(nvp);
+
+	return error;
 }
 
 
@@ -6021,7 +6200,7 @@ udf_update(struct vnode *vp, struct timespec *acc,
 
 int
 udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
-		    struct fileid_desc *fid, struct dirent *dirent)
+		struct fileid_desc *fid, struct dirent *dirent)
 {
 	struct udf_node  *dir_node = VTOI(vp);
 	struct udf_mount *ump = dir_node->ump;
@@ -6122,7 +6301,7 @@ brokendir:
 	if (fid->file_char & UDF_FILE_CHAR_PAR)
 		strcpy(dirent->d_name, "..");
 
-	dirent->d_fileno = udf_calchash(&fid->icb);	/* inode hash XXX */
+	dirent->d_fileno = udf_get_node_id(&fid->icb);	/* inode hash XXX */
 	dirent->d_namlen = strlen(dirent->d_name);
 	dirent->d_reclen = _DIRENT_SIZE(dirent);
 
@@ -6158,7 +6337,7 @@ derailed:
 	KASSERT(mutex_owned(&mntvnode_lock));
 
 	DPRINTF(SYNC, ("sync_pass %d\n", pass));
-	udf_node = LIST_FIRST(&ump->sorted_udf_nodes);
+	udf_node = RBTOUDFNODE(RB_TREE_MIN(&ump->udf_node_tree));
 	for (;udf_node; udf_node = n_udf_node) {
 		DPRINTF(SYNC, ("."));
 
@@ -6166,7 +6345,10 @@ derailed:
 		vp = udf_node->vnode;
 
 		mutex_enter(&vp->v_interlock);
-		n_udf_node = LIST_NEXT(udf_node, sortchain);
+		n_udf_node = RBTOUDFNODE(rb_tree_iterate(
+			&ump->udf_node_tree, &udf_node->rbnode,
+			RB_DIR_RIGHT));
+
 		if (n_udf_node)
 			n_udf_node->i_flags |= IN_SYNCED;
 
@@ -6361,15 +6543,14 @@ udf_read_filebuf(struct udf_node *udf_node, struct buf *buf)
 	uint32_t    from, lblkno;
 	uint32_t    sectors;
 	uint8_t    *buf_pos;
-	int error, run_length, isdir, what;
+	int error, run_length, what;
 
 	sector_size = udf_node->ump->discinfo.sector_size;
 
 	from    = buf->b_blkno;
 	sectors = buf->b_bcount / sector_size;
 
-	isdir   = (udf_node->vnode->v_type == VDIR);
-	what    = isdir ? UDF_C_FIDS : UDF_C_USERDATA;
+	what = udf_get_c_type(udf_node);
 
 	/* assure we have enough translation slots */
 	KASSERT(buf->b_bcount / sector_size <= UDF_MAX_MAPPINGS);
@@ -6490,18 +6671,14 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 	uint32_t    buf_offset, lb_num, rbuflen, rblk;
 	uint32_t    from, lblkno;
 	uint32_t    num_lb;
-	int error, run_length, isdir, what, s;
+	int error, run_length, what, s;
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 
 	from   = buf->b_blkno;
 	num_lb = buf->b_bcount / lb_size;
 
-	isdir  = (udf_node->vnode->v_type == VDIR);
-	what   = isdir ? UDF_C_FIDS : UDF_C_USERDATA;
-
-	if (udf_node == ump->metadatabitmap_node)
-		what = UDF_C_METADATA_SBM;
+	what = udf_get_c_type(udf_node);
 
 	/* assure we have enough translation slots */
 	KASSERT(buf->b_bcount / lb_size <= UDF_MAX_MAPPINGS);
@@ -6550,7 +6727,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 		 */
 
 		/* XXX why not ignore the mapping altogether ? */
-		/* TODO estimate here how much will be late-allocated */
 		DPRINTF(WRITE, ("\twrite lb_num "
 		    "%"PRIu64, mapping[lb_num]));
 
@@ -6569,19 +6745,6 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 		/* nest an iobuf on the master buffer for the extent */
 		rbuflen = run_length * lb_size;
 		rblk = run_start * (lb_size/DEV_BSIZE);
-
-#if 0
-		/* if its zero or unmapped, our blknr gets -1 for unmapped */
-		switch (mapping[lb_num]) {
-		case UDF_TRANS_UNMAPPED:
-		case UDF_TRANS_ZERO:
-			rblk = -1;
-			break;
-		default:
-			rblk = run_start * (lb_size/DEV_BSIZE);
-			break;
-		}
-#endif
 
 		nestbuf = getiobuf(NULL, true);
 		nestiobuf_setup(buf, nestbuf, buf_offset, rbuflen);

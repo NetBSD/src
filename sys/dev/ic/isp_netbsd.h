@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.65.4.1 2008/05/16 02:24:04 yamt Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.65.4.2 2009/07/18 14:53:01 yamt Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -69,7 +69,7 @@
 #define	ISP_SBUS_SUPPORTED	0
 #endif
 
-#define	ISP_PLATFORM_VERSION_MAJOR	4
+#define	ISP_PLATFORM_VERSION_MAJOR	5
 #define	ISP_PLATFORM_VERSION_MINOR	0
 
 struct isposinfo {
@@ -118,16 +118,18 @@ struct isposinfo {
 
 #define	ISP_FC_SCRLEN		0x1000
 
-#define	MEMZERO(dst, amt)	memset((dst), 0, (amt))
-#define	MEMCPY(dst, src, amt)	memcpy((dst), (src), (amt))
-#define	SNPRINTF		snprintf
-#define	USEC_DELAY		DELAY
-#define	USEC_SLEEP(isp, x)		\
+#define	ISP_MEMZERO(dst, a)	memset((dst), 0, (a))
+#define	ISP_MEMCPY(dst, src, a)	memcpy((dst), (src), (a))
+#define	ISP_SNPRINTF		snprintf
+#define	ISP_DELAY		DELAY
+#define	ISP_SLEEP(isp, x)		\
 	if (!ISP_MUSTPOLL(isp))		\
 		ISP_UNLOCK(isp);	\
 	DELAY(x);			\
 	if (!ISP_MUSTPOLL(isp))		\
 		ISP_LOCK(isp)
+
+#define	ISP_INLINE
 
 #define	NANOTIME_T		struct timeval
 #define	GET_NANOTIME		microtime
@@ -194,6 +196,26 @@ default:							\
 
 #define	XS_T			struct scsipi_xfer
 #define	XS_DMA_ADDR_T		bus_addr_t
+#define	XS_DMA_ADDR_T		bus_addr_t
+#define XS_GET_DMA64_SEG(a, b, c)		\
+{						\
+	ispds64_t *d = a;			\
+	bus_dma_segment_t *e = b;		\
+	uint32_t f = c;				\
+	e += f;					\
+        d->ds_base = DMA_LO32(e->ds_addr);	\
+        d->ds_basehi = DMA_HI32(e->ds_addr);	\
+        d->ds_count = e->ds_len;		\
+}
+#define XS_GET_DMA_SEG(a, b, c)			\
+{						\
+	ispds_t *d = a;				\
+	bus_dma_segment_t *e = b;		\
+	uint32_t f = c;				\
+	e += f;					\
+        d->ds_base = DMA_LO32(e->ds_addr);	\
+        d->ds_count = e->ds_len;		\
+}
 #define	XS_CHANNEL(xs)		\
 	((int) (xs)->xs_periph->periph_channel->chan_channel)
 #define	XS_ISP(xs)		\
@@ -204,7 +226,8 @@ default:							\
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
 #define	XS_XFRLEN(xs)		(xs)->datalen
 #define	XS_TIME(xs)		(xs)->timeout
-#define	XS_RESID(xs)		(xs)->resid
+#define	XS_GET_RESID(xs)	(xs)->resid
+#define	XS_SET_RESID(xs, r)	(xs)->resid = r
 #define	XS_STSP(xs)		(&(xs)->status)
 #define	XS_SNSP(xs)		(&(xs)->sense.scsi_sense)
 #define	XS_SNSLEN(xs)		(sizeof (xs)->sense)
@@ -228,9 +251,7 @@ default:							\
 #	define	HBA_ARQFAIL		XS_DRIVER_STUFFUP
 
 #define	XS_ERR(xs)		(xs)->error
-
 #define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
-
 #define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
 
 #define	XS_SAVE_SENSE(xs, ptr, len)				\
@@ -238,8 +259,6 @@ default:							\
 		xs->error = XS_SENSE;				\
 	}							\
 	memcpy(&(xs)->sense, ptr, imin(XS_SNSLEN(xs), len))
-
-#define	XS_SET_STATE_STAT(a, b, c)
 
 #define	DEFAULT_FRAMESIZE(isp)		(isp)->isp_osinfo.framesize
 #define	DEFAULT_EXEC_THROTTLE(isp)	(isp)->isp_osinfo.exec_throttle

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.108.4.1 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.108.4.2 2009/07/18 14:53:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.108.4.1 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.108.4.2 2009/07/18 14:53:23 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1181,20 +1181,19 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 {
 	struct veriexec_table_entry *vte;
 	struct veriexec_file_entry *vfe = NULL, *hh;
-	struct nameidata nid;
+	struct vnode *vp;
 	const char *file, *fp_type;
 	int error;
 
 	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
 		return (EINVAL);
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file);
-	error = namei(&nid);
+	error = namei_simple_kernel(file, NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error)
 		return (error);
 
 	/* Add only regular files. */
-	if (nid.ni_vp->v_type != VREG) {
+	if (vp->v_type != VREG) {
 		log(LOG_ERR, "Veriexec: Not adding `%s': Not a regular file.\n",
 		    file);
 
@@ -1237,7 +1236,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	 * See if we already have an entry for this file. If we do, then
 	 * let the user know and silently pretend to succeed.
 	 */
-	hh = veriexec_get(nid.ni_vp);
+	hh = veriexec_get(vp);
 	if (hh != NULL) {
 		bool fp_mismatch;
 
@@ -1295,13 +1294,13 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	vfe->last_page_size = 0;
 	rw_init(&vfe->lock);
 
-	vte = veriexec_table_lookup(nid.ni_vp->v_mount);
+	vte = veriexec_table_lookup(vp->v_mount);
 	if (vte == NULL)
-		vte = veriexec_table_add(l, nid.ni_vp->v_mount);
+		vte = veriexec_table_add(l, vp->v_mount);
 
 	/* XXX if we bail below this, we might want to gc newly created vtes. */
 
-	error = fileassoc_add(nid.ni_vp, veriexec_hook, vfe);
+	error = fileassoc_add(vp, veriexec_hook, vfe);
 	if (error)
 		goto unlock_out;
 
@@ -1313,7 +1312,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 		digest = kmem_zalloc(vfe->ops->hash_len, KM_SLEEP);
 
-		error = veriexec_fp_calc(l, nid.ni_vp, VERIEXEC_UNLOCKED,
+		error = veriexec_fp_calc(l, vp, VERIEXEC_UNLOCKED,
 					 vfe, digest);
 		if (error) {
 			kmem_free(digest, vfe->ops->hash_len);
@@ -1335,7 +1334,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	rw_exit(&veriexec_op_lock);
 
   out:
-	vrele(nid.ni_vp);
+	vrele(vp);
 	if (error)
 		veriexec_file_free(vfe);
 

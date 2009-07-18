@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.17.10.2 2009/05/04 08:13:44 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.17.10.3 2009/07/18 14:53:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.17.10.2 2009/05/04 08:13:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.17.10.3 2009/07/18 14:53:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.17.10.2 2009/05/04 08:13:44 yamt
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/buf.h>
+
+#include <miscfs/genfs/genfs.h>
 
 #include <fs/sysvbfs/sysvbfs.h>
 #include <fs/sysvbfs/bfs.h>
@@ -228,6 +230,27 @@ sysvbfs_close(void *arg)
 	return 0;
 }
 
+static int
+sysvbfs_check_possible(struct vnode *vp, struct sysvbfs_node *bnode,
+    mode_t mode)
+{
+
+	if ((mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
+		return EROFS;
+
+	return 0;
+}
+
+static int
+sysvbfs_check_permitted(struct vnode *vp, struct sysvbfs_node *bnode,
+    mode_t mode, kauth_cred_t cred)
+{
+	struct bfs_fileattr *attr = &bnode->inode->attr;
+
+	return genfs_can_access(vp->v_type, attr->mode, attr->uid, attr->gid,
+	    mode, cred);
+}
+
 int
 sysvbfs_access(void *arg)
 {
@@ -238,14 +261,17 @@ sysvbfs_access(void *arg)
 	} */ *ap = arg;
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
-	struct bfs_fileattr *attr = &bnode->inode->attr;
+	int error;
 
 	DPRINTF("%s:\n", __func__);
-	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
-		return EROFS;
 
-	return vaccess(vp->v_type, attr->mode, attr->uid, attr->gid,
-	    ap->a_mode, ap->a_cred);
+	error = sysvbfs_check_possible(vp, bnode, ap->a_mode);
+	if (error)
+		return error;
+
+	error = sysvbfs_check_permitted(vp, bnode, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 int

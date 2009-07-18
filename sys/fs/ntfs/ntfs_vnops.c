@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.40.10.2 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.40.10.3 2009/07/18 14:53:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40.10.2 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40.10.3 2009/07/18 14:53:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,19 +395,9 @@ ntfs_write(void *v)
 	return (error);
 }
 
-int
-ntfs_access(void *v)
+static int
+ntfs_check_possible(struct vnode *vp, struct ntnode *ip, mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct ntnode *ip = VTONT(vp);
-	mode_t file_mode, mode = ap->a_mode;
-
-	dprintf(("ntfs_access: %llu\n", (unsigned long long)ip->i_number));
 
 	/*
 	 * Disallow write attempts on read-only file systems;
@@ -425,10 +415,42 @@ ntfs_access(void *v)
 		}
 	}
 
+	return 0;
+}
+
+static int
+ntfs_check_permitted(struct vnode *vp, struct ntnode *ip, mode_t mode,
+    kauth_cred_t cred)
+{
+	mode_t file_mode;
+
 	file_mode = ip->i_mp->ntm_mode | (S_IXUSR|S_IXGRP|S_IXOTH);
 
-	return (vaccess(vp->v_type, file_mode, ip->i_mp->ntm_uid,
-	    ip->i_mp->ntm_gid, mode, ap->a_cred));
+	return genfs_can_access(vp->v_type, file_mode, ip->i_mp->ntm_uid,
+	    ip->i_mp->ntm_gid, mode, cred);
+}
+
+int
+ntfs_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int  a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct ntnode *ip = VTONT(vp);
+	int error;
+
+	dprintf(("ntfs_access: %llu\n", (unsigned long long)ip->i_number));
+
+	error = ntfs_check_possible(vp, ip, ap->a_mode);
+	if (error)
+		return error;
+
+	error = ntfs_check_permitted(vp, ip, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 /*

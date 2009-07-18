@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.23.10.2 2009/05/16 10:41:49 yamt Exp $	*/
+/*	$NetBSD: genfs.h,v 1.23.10.3 2009/07/18 14:53:24 yamt Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -36,6 +36,8 @@ int	genfs_do_putpages(struct vnode *, off_t, off_t, int, struct vm_page **);
 int	genfs_renamelock_enter(struct mount *);
 void	genfs_renamelock_exit(struct mount *);
 
+int	genfs_can_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
+	    kauth_cred_t);
 int	genfs_can_chmod(vnode_t *, kauth_cred_t, uid_t, gid_t, mode_t);
 int	genfs_can_chown(vnode_t *, kauth_cred_t, uid_t, gid_t, uid_t, gid_t);
 int	genfs_can_mount(vnode_t *, mode_t, kauth_cred_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.61.10.2 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.61.10.3 2009/07/18 14:53:21 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.61.10.2 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.61.10.3 2009/07/18 14:53:21 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -285,7 +285,6 @@ int
 msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct vnode *devvp;	  /* vnode for blk device to mount */
 	struct msdosfs_args *args = data; /* holds data from mount request */
 	/* msdosfs specific mount control block */
@@ -379,12 +378,12 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-	if ((error = namei(&nd)) != 0) {
+	error = namei_simple_user(args->fspec,
+				NSM_FOLLOW_NOEMULROOT, &devvp);
+	if (error != 0) {
 		DPRINTF(("namei %d\n", error));
 		return (error);
 	}
-	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		DPRINTF(("not block\n"));

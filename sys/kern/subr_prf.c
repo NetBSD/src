@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.120.2.3 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.120.2.4 2009/07/18 14:53:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120.2.3 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120.2.4 2009/07/18 14:53:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -279,11 +279,13 @@ panic(const char *fmt, ...)
 
 		if (intrace == 0) {
 			intrace = 1;
-			printf("cpu%d: Begin traceback...\n", cpu_number());
+			printf("cpu%u: Begin traceback...\n",
+			    cpu_index(curcpu()));
 			db_stack_trace_print(
 			    (db_expr_t)(intptr_t)__builtin_frame_address(0),
 			    true, 65535, "", printf);
-			printf("cpu%d: End traceback...\n", cpu_number());
+			printf("cpu%u: End traceback...\n",
+			    cpu_index(curcpu()));
 			intrace = 0;
 		} else
 			printf("Faulted in mid-traceback; aborting...");

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.10.1 2009/05/04 08:11:31 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.10.2 2009/07/18 14:52:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,12 +131,13 @@ typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t	pv_va;			/* virtual address for mapping */
-	int		pv_flags;	/* some flags for the mapping */
+	u_int		pv_flags;	/* some flags for the mapping */
+#define	PV_UNCACHED	0x0001		/* page is mapped uncached */
 } *pv_entry_t;
 
-#define	PV_UNCACHED	0x0001		/* page is mapped uncached */
-#define	PV_MODIFIED	0x0002		/* page has been modified */
-#define	PV_REFERENCED	0x0004		/* page has been recently referenced */
+/* pvh_attrs flags in struct vm_page_md */
+#define	PGA_MODIFIED	0x0001		/* page has been modified */
+#define	PGA_REFERENCED	0x0002		/* page has been recently referenced */
 
 
 #ifdef	_KERNEL

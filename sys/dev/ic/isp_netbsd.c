@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.77.4.2 2009/05/16 10:41:23 yamt Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.77.4.3 2009/07/18 14:53:01 yamt Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.77.4.2 2009/05/16 10:41:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.77.4.3 2009/07/18 14:53:01 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -255,7 +255,7 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, void *addr, int flag,
 
 	case ISP_RESETHBA:
 		ISP_LOCK(isp);
-		isp_reinit(isp);
+		isp_reinit(isp, 0);
 		ISP_UNLOCK(isp);
 		retval = 0;
 		break;
@@ -322,7 +322,7 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, void *addr, int flag,
 	{
 		isp_stats_t *sp = (isp_stats_t *) addr;
 
-		MEMZERO(sp, sizeof (*sp));
+		ISP_MEMZERO(sp, sizeof (*sp));
 		sp->isp_stat_version = ISP_STATS_VERSION;
 		sp->isp_type = isp->isp_type;
 		sp->isp_revision = isp->isp_revision;
@@ -741,7 +741,7 @@ isp_polled_cmd_wait(struct ispsoftc *isp, XS_T *xs)
 				break;
 			}
 		}
-		USEC_DELAY(1000);
+		ISP_DELAY(1000);
 		mswait -= 1;
 	}
 
@@ -751,7 +751,7 @@ isp_polled_cmd_wait(struct ispsoftc *isp, XS_T *xs)
 	 */
 	if (XS_CMD_DONE_P(xs) == 0) {
 		if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
-			isp_reinit(isp);
+			isp_reinit(isp, 0);
 		}
 		if (XS_NOERR(xs)) {
 			isp_prt(isp, ISP_LOGERR, "polled command timed out");
@@ -862,25 +862,25 @@ isp_dog(void *arg)
 			XS_CMD_S_CLEAR(xs);
 			isp_done(xs);
 		} else {
-			uint32_t nxti, optr;
 			void *qe;
 			isp_marker_t local, *mp = &local;
 			isp_prt(isp, ISP_LOGDEBUG2,
 			    "possible command timeout on handle %x", handle);
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
-			if (isp_getrqentry(isp, &nxti, &optr, &qe)) {
+			qe = isp_getrqentry(isp);
+			if (qe == NULL) {
 				ISP_UNLOCK(isp);
 				return;
 			}
 			XS_CMD_S_GRACE(xs);
-			MEMZERO((void *) mp, sizeof (*mp));
+			ISP_MEMZERO((void *) mp, sizeof (*mp));
 			mp->mrk_header.rqs_entry_count = 1;
 			mp->mrk_header.rqs_entry_type = RQSTYPE_MARKER;
 			mp->mrk_modifier = SYNC_ALL;
 			mp->mrk_target = XS_CHANNEL(xs) << 7;
 			isp_put_marker(isp, mp, qe);
-			ISP_ADD_REQUEST(isp, nxti);
+			ISP_SYNC_REQUEST(isp);
 		}
 	} else {
 		isp_prt(isp, ISP_LOGDEBUG0, "watchdog with no command");
@@ -913,7 +913,7 @@ isp_gdt(void *arg)
 		if (lp->state != FC_PORTDB_STATE_ZOMBIE) {
 			continue;
 		}
-		if (lp->ini_map_idx == 0) {
+		if (lp->dev_map_idx == 0) {
 			continue;
 		}
 		if (lp->new_reserved == 0) {
@@ -924,9 +924,9 @@ isp_gdt(void *arg)
 			more_to_do++;
 			continue;
 		}
-		tgt = lp->ini_map_idx - 1;
-		FCPARAM(isp, 0)->isp_ini_map[tgt] = 0;
-		lp->ini_map_idx = 0;
+		tgt = lp->dev_map_idx - 1;
+		FCPARAM(isp, 0)->isp_dev_map[tgt] = 0;
+		lp->dev_map_idx = 0;
 		lp->state = FC_PORTDB_STATE_NIL;
 		isp_prt(isp, ISP_LOGCONFIG, prom3, lp->portid, tgt,
 		    "Gone Device Timeout");
@@ -970,7 +970,7 @@ isp_ldt(void *arg)
 		if (lp->state != FC_PORTDB_STATE_PROBATIONAL) {
 			continue;
 		}
-		if (lp->ini_map_idx == 0) {
+		if (lp->dev_map_idx == 0) {
 			continue;
 		}
 
@@ -990,9 +990,9 @@ isp_ldt(void *arg)
 		 * will happen when loop comes back up.
 		 */
 
-		tgt = lp->ini_map_idx - 1;
-		FCPARAM(isp, 0)->isp_ini_map[tgt] = 0;
-		lp->ini_map_idx = 0;
+		tgt = lp->dev_map_idx - 1;
+		FCPARAM(isp, 0)->isp_dev_map[tgt] = 0;
+		lp->dev_map_idx = 0;
 		isp_prt(isp, ISP_LOGCONFIG, prom3, lp->portid, tgt,
 		    "Loop Down Timeout");
 		isp_make_gone(isp, tgt);
@@ -1266,20 +1266,20 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 				if (i >= FL_ID && i <= SNS_ID) {
 					continue;
 				}
-				if (FCPARAM(isp, bus)->isp_ini_map[i] == 0) {
+				if (FCPARAM(isp, bus)->isp_dev_map[i] == 0) {
 					break;
 				}
 			}
 			if (i < MAX_FC_TARG) {
-				FCPARAM(isp, bus)->isp_ini_map[i] = dbidx + 1;
-				lp->ini_map_idx = i + 1;
+				FCPARAM(isp, bus)->isp_dev_map[i] = dbidx + 1;
+				lp->dev_map_idx = i + 1;
 			} else {
 				isp_prt(isp, ISP_LOGWARN, "out of target ids");
 				isp_dump_portdb(isp, bus);
 			}
 		}
-		if (lp->ini_map_idx) {
-			tgt = lp->ini_map_idx - 1;
+		if (lp->dev_map_idx) {
+			tgt = lp->dev_map_idx - 1;
 			isp_prt(isp, ISP_LOGCONFIG, prom2,
 			    lp->portid, lp->handle,
 		            roles[lp->roles], "arrived at", tgt,
@@ -1305,10 +1305,10 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 		va_end(ap);
 		if (isp_change_is_bad) {
 			lp->state = FC_PORTDB_STATE_NIL;
-			if (lp->ini_map_idx) {
-				tgt = lp->ini_map_idx - 1;
-				FCPARAM(isp, bus)->isp_ini_map[tgt] = 0;
-				lp->ini_map_idx = 0;
+			if (lp->dev_map_idx) {
+				tgt = lp->dev_map_idx - 1;
+				FCPARAM(isp, bus)->isp_dev_map[tgt] = 0;
+				lp->dev_map_idx = 0;
 				isp_prt(isp, ISP_LOGCONFIG, prom3,
 				    lp->portid, tgt, "change is bad");
 				isp_make_gone(isp, tgt);
@@ -1325,11 +1325,11 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 		} else {
 			lp->portid = lp->new_portid;
 			lp->roles = lp->new_roles;
-			if (lp->ini_map_idx) {
-				int t = lp->ini_map_idx - 1;
-				FCPARAM(isp, bus)->isp_ini_map[t] =
+			if (lp->dev_map_idx) {
+				int t = lp->dev_map_idx - 1;
+				FCPARAM(isp, bus)->isp_dev_map[t] =
 				    (lp - FCPARAM(isp, bus)->portdb) + 1;
-				tgt = lp->ini_map_idx - 1;
+				tgt = lp->dev_map_idx - 1;
 				isp_prt(isp, ISP_LOGCONFIG, prom2,
 				    lp->portid, lp->handle,
 				    roles[lp->roles], "changed at", tgt,
@@ -1353,8 +1353,8 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 		bus = va_arg(ap, int);
 		lp = va_arg(ap, fcportdb_t *);
 		va_end(ap);
-		if (lp->ini_map_idx) {
-			tgt = lp->ini_map_idx - 1;
+		if (lp->dev_map_idx) {
+			tgt = lp->dev_map_idx - 1;
 			isp_prt(isp, ISP_LOGCONFIG, prom2,
 			    lp->portid, lp->handle,
 		    	    roles[lp->roles], "stayed at", tgt,
@@ -1385,7 +1385,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 		 * If it isn't marked that isp_gdt is going to get rid of it,
 		 * announce that it's gone.
 		 */
-		if (lp->ini_map_idx && lp->reserved == 0) {
+		if (lp->dev_map_idx && lp->reserved == 0) {
 			lp->reserved = 1;
 			lp->new_reserved = isp->isp_osinfo.gone_device_time;
 			lp->state = FC_PORTDB_STATE_ZOMBIE;
@@ -1395,7 +1395,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 				    "starting Gone Device Timer");
 				callout_schedule(&isp->isp_osinfo.gdt, hz);
 			}
-			tgt = lp->ini_map_idx - 1;
+			tgt = lp->dev_map_idx - 1;
 			isp_prt(isp, ISP_LOGCONFIG, prom2,
 			    lp->portid, lp->handle,
 		            roles[lp->roles], "gone zombie at", tgt,
@@ -1486,7 +1486,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 		}
 		mbox1 = isp->isp_osinfo.mbox_sleep_ok;
 		isp->isp_osinfo.mbox_sleep_ok = 0;
-		isp_reinit(isp);
+		isp_reinit(isp, 0);
 		isp->isp_osinfo.mbox_sleep_ok = mbox1;
 		isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
 		break;
@@ -1605,7 +1605,7 @@ isp_mbox_wait_complete(struct ispsoftc *isp, mbreg_t *mbp)
 						break;
 					}
 				}
-				USEC_DELAY(100);
+				ISP_DELAY(100);
 			}
 			if (isp->isp_osinfo.mboxcmd_done) {
 				break;

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.15.4.3 2009/06/20 07:20:08 yamt Exp $ */
+/* $NetBSD: main.c,v 1.15.4.4 2009/07/18 14:52:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ int brdtype;
 char *consname = CONSNAME;
 int consport = CONSPORT;
 int consspeed = CONSSPEED;
+int ticks_per_sec = TICKS_PER_SEC;
 
 void
 main(void)
@@ -135,7 +136,7 @@ main(void)
 	snprintf(bi_cons.devname, sizeof(bi_cons.devname), consname);
 	bi_cons.addr = consport;
 	bi_cons.speed = consspeed;
-	bi_clk.ticks_per_sec = TICKS_PER_SEC;
+	bi_clk.ticks_per_sec = ticks_per_sec;
 	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
 	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), rootdev);
 	bi_rdev.cookie = tag; /* PCI tag for fxp netboot case */

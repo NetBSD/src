@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.37.18.2 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: ser.c,v 1.37.18.3 2009/07/18 14:52:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.2 2009/05/04 08:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.3 2009/07/18 14:52:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -119,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.2 2009/05/04 08:10:47 yamt Exp $");
 
 #include <machine/iomap.h>
 #include <machine/mfp.h>
-#include <atari/atari/intr.h>
+#include <machine/intr.h>
 #include <atari/dev/serreg.h>
 
 #if !defined(_MILANHW_)
@@ -200,6 +200,8 @@ struct ser_softc {
 	int		 sc_heldtbc;
 
 	volatile u_char	 sc_heldchange;
+
+	void		*sc_sicookie;
 };
 
 /*
@@ -234,8 +236,6 @@ static void ser_shutdown(struct ser_softc *);
 static int serspeed(long);
 static void sersoft(void *);
 static void sertxint(struct ser_softc *, struct tty*);
-
-static volatile int ser_softintr_scheduled = 0;
 
 /*
  * Autoconfig stuff
@@ -296,6 +296,8 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 		printf("serattach: Can't establish interrupt (11)\n");
 	if (intr_establish(12, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
 		printf("serattach: Can't establish interrupt (12)\n");
+
+	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, sersoft, sc);
 
 	ym2149_rts(1);
 	ym2149_dtr(1);
@@ -1152,8 +1154,6 @@ sersoft(void *arg)
 	struct ser_softc *sc = arg;
 	struct tty	*tp;
 
-	ser_softintr_scheduled = 0;
-
 	tp = sc->sc_tty;
 	if (tp == NULL)
 		return;
@@ -1205,8 +1205,7 @@ sermintr(void *arg)
 
 		sc->sc_st_check = 1;
 	}
-	if (!ser_softintr_scheduled)
-		add_sicallback((si_farg)sersoft, sc, 0);
+	softint_schedule(sc->sc_sicookie);
 	return 1;
 }
 
@@ -1286,9 +1285,7 @@ sertrintr(void *arg)
 			sc->sc_tx_done = 1;
 		}
 	}
-
-	if (!ser_softintr_scheduled)
-		add_sicallback((si_farg)sersoft, sc, 0);
+	softint_schedule(sc->sc_sicookie);
 	return 1;
 }
 
