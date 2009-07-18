@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.7 2009/07/01 07:49:12 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.8 2009/07/18 08:35:19 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
@@ -70,7 +70,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s interface lladdr\n", getprogname());
-	exit(0);
+	exit(EXIT_FAILURE);
 }
 
 static int
@@ -160,14 +160,14 @@ main(int argc, char *argv[])
 		usage();
 
 	if ((bpf = open(_PATH_BPF, O_RDWR)) == -1)
-		err(1, "Cannot open bpf interface");
+		err(EXIT_FAILURE, "Cannot open bpf interface");
 
 	if (bind_if_to_bpf(argv[1], bpf) == -1)
-		err(1, "Cannot bind to interface `%s'", argv[1]);
+		err(EXIT_FAILURE, "Cannot bind to interface `%s'", argv[1]);
 
 	for (n = 2; n < argc; n++)
 		if (wake(bpf, argv[n]))
 			warn("Cannot send Wake on LAN frame over `%s' to `%s'",
 			    argv[1], argv[n]);
-	return 0;
+	return EXIT_SUCCESS;
 }
