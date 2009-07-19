@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/19 23:30:37 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/07/19 23:33:34 christos Exp $
 
 WARNS?=	2	# XXX -Wcast-qual
 
 NOMAN=	# defined
-
+BINDIR=/usr/bin
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# cryptographic software
 
 # RCSid:
-#	$Id: Makefile,v 1.1 2009/07/19 23:30:37 christos Exp $
+#	$Id: Makefile,v 1.2 2009/07/19 23:33:34 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
