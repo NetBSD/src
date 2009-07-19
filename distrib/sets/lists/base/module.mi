@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.9 2009/07/18 21:32:52 reinoud Exp $
+# $NetBSD: module.mi,v 1.10 2009/07/19 02:50:44 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -57,6 +57,8 @@
 ./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules
 ./@MODULEDIR@/miniroot				base-kernel-modules
 ./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules
+./@MODULEDIR@/mqueue				base-kernel-modules
+./@MODULEDIR@/mqueue/mqueue.kmod		base-kernel-modules
 ./@MODULEDIR@/msdos				base-kernel-modules
 ./@MODULEDIR@/msdos/msdos.kmod			base-kernel-modules
 ./@MODULEDIR@/nfs				base-kernel-modules
