@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.22 2009/06/28 09:25:05 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.23 2009/07/19 10:11:55 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.22 2009/06/28 09:25:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.23 2009/07/19 10:11:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -68,6 +68,7 @@ idle_loop(void *dummy)
 
 	KERNEL_UNLOCK_ALL(l, NULL);
 	l->l_stat = LSONPROC;
+	l->l_pflag |= LP_RUNNING;
 	for (;;) {
 		LOCKDEBUG_BARRIER(NULL, 0);
 		KASSERT((l->l_flag & LW_IDLE) != 0);

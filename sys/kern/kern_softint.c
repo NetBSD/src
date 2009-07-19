@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.28 2009/05/18 21:31:27 bouyer Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.29 2009/07/19 10:11:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.28 2009/05/18 21:31:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.29 2009/07/19 10:11:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -783,6 +783,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	u_int timing;
 	lwp_t *l;
 
+	KASSERT((pinned->l_pflag & LP_RUNNING) != 0);
 	l = curlwp;
 	si = l->l_private;
 
