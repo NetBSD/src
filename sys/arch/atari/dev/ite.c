@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.65 2009/03/18 17:06:43 cegger Exp $	*/
+/*	$NetBSD: ite.c,v 1.66 2009/07/19 05:43:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.65 2009/03/18 17:06:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2009/07/19 05:43:22 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -247,7 +247,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 			 * console reinit copy params over.
 			 * and console always gets keyboard
 			 */
-			memcpy( &ip->grf, &con_itesoftc.grf,
+			memcpy(&ip->grf, &con_itesoftc.grf,
 			    (char *)&ip[1] - (char *)&ip->grf);
 			con_itesoftc.grf = NULL;
 			kbd_ite = ip;
@@ -388,7 +388,7 @@ iteinit(dev_t dev)
 		if (ip->kbdmap && ip->kbdmap != &ascii_kbdmap)
 			free(ip->kbdmap, M_DEVBUF);
 		ip->kbdmap = malloc(sizeof(struct kbdmap), M_DEVBUF, M_WAITOK);
-		memcpy( ip->kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
+		memcpy(ip->kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 	}
 	else ip->kbdmap = &ascii_kbdmap;
 
@@ -554,17 +554,17 @@ iteioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 	case ITEIOCSKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		memcpy( ip->kbdmap, addr, sizeof(struct kbdmap));
+		memcpy(ip->kbdmap, addr, sizeof(struct kbdmap));
 		return 0;
 	case ITEIOCSSKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		memcpy( &ascii_kbdmap, addr, sizeof(struct kbdmap));
+		memcpy(&ascii_kbdmap, addr, sizeof(struct kbdmap));
 		return 0;
 	case ITEIOCGKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		memcpy( addr, ip->kbdmap, sizeof(struct kbdmap));
+		memcpy(addr, ip->kbdmap, sizeof(struct kbdmap));
 		return 0;
 	case ITEIOCGREPT:
 		if (addr == NULL)
@@ -949,7 +949,7 @@ ite_filter(u_int c, enum caller caller)
 	 */
 	if(kbd_modifier == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x3b) {
 		/* ALT + LSHIFT + F1 */
-		memcpy( kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
+		memcpy(kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 		splx(s);
 		return;
 #ifdef DDB

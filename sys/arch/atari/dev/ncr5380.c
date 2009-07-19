@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.63 2009/03/18 17:06:43 cegger Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.64 2009/07/19 05:43:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.63 2009/03/18 17:06:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.64 2009/07/19 05:43:22 tsutsui Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -373,7 +373,7 @@ ncr5380_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 			tmp->xs = reqp->xs;
 			tmp->targ_id = reqp->targ_id;
 			tmp->targ_lun = reqp->targ_lun;
-			memcpy( &tmp->xcmd, sense_cmd, sizeof(sense_cmd));
+			memcpy(&tmp->xcmd, sense_cmd, sizeof(sense_cmd));
 			tmp->xcmd_len = sizeof(sense_cmd);
 			tmp->xdata_ptr = (u_char *)&tmp->xs->sense.scsi_sense;
 			tmp->xdata_len = sizeof(tmp->xs->sense.scsi_sense);
@@ -1019,7 +1019,7 @@ information_transfer(struct ncr_softc *sc)
 		 */
 		if (reqp->xdata_ptr == reqp->xs->data) { /* XXX */
 		    if (reqp->dr_flag & DRIVER_BOUNCING)
-			memcpy( reqp->bounceb, reqp->xdata_ptr, reqp->xdata_len);
+			memcpy(reqp->bounceb, reqp->xdata_ptr, reqp->xdata_len);
 		}
 
 	   case PH_DATAIN:
@@ -1508,7 +1508,7 @@ dma_ready(void)
 		 * before copying.
 		 */
 		PCIA();
-		memcpy( reqp->xdata_ptr, reqp->bouncerp, bytes_done);
+		memcpy(reqp->xdata_ptr, reqp->bouncerp, bytes_done);
 		reqp->bouncerp += bytes_done;
 	}
 
@@ -1594,7 +1594,7 @@ check_autosense(SC_REQ *reqp, int linked)
 	if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
 		switch (reqp->status & SCSMASK) {
 		    case SCSCHKC:
-			memcpy( &reqp->xcmd, sense_cmd, sizeof(sense_cmd));
+			memcpy(&reqp->xcmd, sense_cmd, sizeof(sense_cmd));
 			reqp->xcmd_len = sizeof(sense_cmd);
 			reqp->xdata_ptr = (u_char *)&reqp->xs->sense.scsi_sense;
 			reqp->xdata_len = sizeof(reqp->xs->sense.scsi_sense);
