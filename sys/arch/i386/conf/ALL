@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.199 2009/05/10 15:26:23 elad Exp $
+# $NetBSD: ALL,v 1.200 2009/07/19 06:28:08 kiyohara Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.199 $"
+#ident 		"ALL-$Revision: 1.200 $"
 
 maxusers	32		# estimated number of users
 
@@ -832,6 +832,7 @@ wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
 njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
+siisata* at cardbus? function ?			# SiI SteelVine controllers
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
