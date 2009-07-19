@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.177 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.178 2009/07/19 23:17:33 minskim Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.177 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.178 2009/07/19 23:17:33 minskim Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -835,6 +835,12 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 			}
 		}
 #endif
+
+		/*
+		 * Check the minimum TTL for socket.
+		 */
+		if (mtod(m, struct ip *)->ip_ttl < inp->inp_ip_minttl)
+			goto bad;
 
 		udp4_sendup(m, off, (struct sockaddr *)src, inp->inp_socket);
 		rcvcnt++;
