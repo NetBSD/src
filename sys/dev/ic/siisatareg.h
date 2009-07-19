@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.4 2009/07/04 20:57:15 jakllsch Exp $ */
+/* $NetBSD: siisatareg.h,v 1.5 2009/07/19 06:28:08 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
@@ -95,6 +95,11 @@ struct siisata_prb {
 #define SIISATA_PCI_BAR0 0x10
 #define SIISATA_PCI_BAR1 0x18
 #define SIISATA_PCI_BAR2 0x20
+
+/* Cardbus stuff */
+#define SIISATA_CARDBUS_BAR0 SIISATA_PCI_BAR0
+#define SIISATA_CARDBUS_BAR1 SIISATA_PCI_BAR1
+#define SIISATA_CARDBUS_BAR2 SIISATA_PCI_BAR2
 
 /* BAR 0 */
 
