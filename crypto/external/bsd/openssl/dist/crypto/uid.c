@@ -56,9 +56,9 @@
 #include <openssl/crypto.h>
 #include <openssl/opensslconf.h>
 
-#if defined(__OpenBSD__) || (defined(__FreeBSD__) && __FreeBSD__ > 2)
+#if defined(__OpenBSD__) || (defined(__FreeBSD__) && __FreeBSD__ > 2) || defined(__NetBSD__)
 
-#include OPENSSL_UNISTD
+#include <unistd.h>
 
 int OPENSSL_issetugid(void)
 	{

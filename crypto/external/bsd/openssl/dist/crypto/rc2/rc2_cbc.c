@@ -62,10 +62,10 @@
 void RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     RC2_KEY *ks, unsigned char *iv, int encrypt)
 	{
-	register unsigned long tin0,tin1;
-	register unsigned long tout0,tout1,xor0,xor1;
+	register uint32_t tin0,tin1;
+	register uint32_t tout0,tout1,xor0,xor1;
 	register long l=length;
-	unsigned long tin[2];
+	uint32_t tin[2];
 
 	if (encrypt)
 		{
@@ -133,12 +133,12 @@ void RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	tin[0]=tin[1]=0;
 	}
 
-void RC2_encrypt(unsigned long *d, RC2_KEY *key)
+void RC2_encrypt(uint32_t *d, RC2_KEY *key)
 	{
 	int i,n;
 	register RC2_INT *p0,*p1;
 	register RC2_INT x0,x1,x2,x3,t;
-	unsigned long l;
+	uint32_t l;
 
 	l=d[0];
 	x0=(RC2_INT)l&0xffff;
@@ -174,16 +174,16 @@ void RC2_encrypt(unsigned long *d, RC2_KEY *key)
 			}
 		}
 
-	d[0]=(unsigned long)(x0&0xffff)|((unsigned long)(x1&0xffff)<<16L);
-	d[1]=(unsigned long)(x2&0xffff)|((unsigned long)(x3&0xffff)<<16L);
+	d[0]=(uint32_t)(x0&0xffff)|((uint32_t)(x1&0xffff)<<16L);
+	d[1]=(uint32_t)(x2&0xffff)|((uint32_t)(x3&0xffff)<<16L);
 	}
 
-void RC2_decrypt(unsigned long *d, RC2_KEY *key)
+void RC2_decrypt(uint32_t *d, RC2_KEY *key)
 	{
 	int i,n;
 	register RC2_INT *p0,*p1;
 	register RC2_INT x0,x1,x2,x3,t;
-	unsigned long l;
+	uint32_t l;
 
 	l=d[0];
 	x0=(RC2_INT)l&0xffff;
@@ -220,7 +220,7 @@ void RC2_decrypt(unsigned long *d, RC2_KEY *key)
 			}
 		}
 
-	d[0]=(unsigned long)(x0&0xffff)|((unsigned long)(x1&0xffff)<<16L);
-	d[1]=(unsigned long)(x2&0xffff)|((unsigned long)(x3&0xffff)<<16L);
+	d[0]=(uint32_t)(x0&0xffff)|((uint32_t)(x1&0xffff)<<16L);
+	d[1]=(uint32_t)(x2&0xffff)|((uint32_t)(x3&0xffff)<<16L);
 	}
 

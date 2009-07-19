@@ -131,11 +131,7 @@
 #include <errno.h>
 
 #if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
-# ifdef OPENSSL_UNISTD
-#  include OPENSSL_UNISTD
-# else
 #  include <unistd.h>
-# endif
 /* If unistd.h defines _POSIX_VERSION, we conclude that we
  * are on a POSIX system and have sigaction and termios. */
 # if defined(_POSIX_VERSION)

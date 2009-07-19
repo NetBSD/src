@@ -92,7 +92,7 @@ void idea_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 	int *num,int enc);
 void idea_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 	long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv, int *num);
-void idea_encrypt(unsigned long *in, IDEA_KEY_SCHEDULE *ks);
+void idea_encrypt(IDEA_INT *in, IDEA_KEY_SCHEDULE *ks);
 #ifdef  __cplusplus
 }
 #endif

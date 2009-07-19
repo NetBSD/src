@@ -339,15 +339,15 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			}
 #if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_WIN32_CYGWIN)
 		if (!(num & BIO_FP_TEXT))
-			strcat(p,"b");
+			strlcat(p,"b", sizeof(p));
 		else
-			strcat(p,"t");
+			strlcat(p,"t", sizeof(p));
 #endif
 #if defined(OPENSSL_SYS_NETWARE)
 		if (!(num & BIO_FP_TEXT))
-			strcat(p,"b");
+			strlcat(p,"b", sizeof(p));
 		else
-			strcat(p,"t");
+			strlcat(p,"t", sizeof(p));
 #endif
 		fp=fopen(ptr,p);
 		if (fp == NULL)

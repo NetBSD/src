@@ -61,9 +61,8 @@
 #include <openssl/opensslconf.h>
 #include <openssl/ripemd.h>
 
-#ifndef RIPEMD160_LONG_LOG2
+/* RIPEMD160_LONG is uint32_t, 4 = 2^2 */
 #define RIPEMD160_LONG_LOG2 2 /* default to 32 bits */
-#endif
 
 /*
  * DO EXAMINE COMMENTS IN crypto/md5/md5_locl.h & crypto/md5/md5_dgst.c
