@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.63 2009/07/19 05:43:23 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.64 2009/07/19 05:46:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.63 2009/07/19 05:43:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.64 2009/07/19 05:46:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,8 +761,8 @@ again:
 				c = zc->zc_csr;
 				if((c & ZSRR0_DCD) == 0)
 					cs->cs_preg[3] &= ~ZSWR3_HFC;
-				bcopy((void *)cs->cs_preg,
-				    (void *)cs->cs_creg, 16);
+				memcpy((void *)cs->cs_creg,
+				    (void *)cs->cs_preg, 16);
 				zs_loadchannelregs(zc, cs->cs_creg);
 				splx(sps);
 				cs->cs_heldchange = 0;
