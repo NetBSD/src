@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.127 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: lfs.h,v 1.128 2009/07/19 03:39:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -536,7 +536,7 @@ typedef struct _cleanerinfo {
 
 /*
  * Get the head of the inode free list.
- * Always caled with the segment lock held.
+ * Always called with the segment lock held.
  */
 #define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {			\
 	if ((FS)->lfs_version > 1) {					\
