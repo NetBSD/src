@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.51 2009/07/08 21:23:52 tls Exp $
+# $NetBSD: md.sparc64,v 1.52 2009/07/19 23:38:11 christos Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -69,11 +69,11 @@
 ./usr/lib/sparc/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypto.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libcrypto.so.5.1		base-compat-shlib	compat,pic
+./usr/lib/sparc/libcrypto.so.5.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcurses.so.7.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.8			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdes.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdes.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.3			base-compat-shlib	compat,pic
@@ -183,7 +183,7 @@
 ./usr/lib/sparc/libssh.so.13			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libssh.so.13.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libssl.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libssl.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libssl.so.7.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libsupc++.so.1			base-compat-shlib	compat,pic
