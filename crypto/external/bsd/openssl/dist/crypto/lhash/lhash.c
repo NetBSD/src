@@ -440,8 +440,9 @@ static LHASH_NODE **getrn(_LHASH *lh, const void *data, unsigned long *rhash)
  * no collisions on /usr/dict/words and it distributes on %2^n quite
  * well, not as good as MD5, but still good.
  */
-unsigned long lh_strhash(const char *c)
+unsigned long lh_strhash(const void *arg)
 	{
+	const char *c = (const char *)arg;
 	unsigned long ret=0;
 	long n;
 	unsigned long v;

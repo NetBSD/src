@@ -189,7 +189,7 @@
 #ifdef OPENSSL_SYS_WINDOWS
 #include <winsock.h>
 #else
-#include OPENSSL_UNISTD
+#include <unistd.h>
 #endif
 
 #ifdef OPENSSL_SYS_VMS

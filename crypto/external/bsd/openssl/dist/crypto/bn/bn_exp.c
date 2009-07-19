@@ -561,7 +561,7 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top, unsigned char *buf
 
 /* Given a pointer value, compute the next address that is a cache line multiple. */
 #define MOD_EXP_CTIME_ALIGN(x_) \
-	((unsigned char*)(x_) + (MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH - (((BN_ULONG)(x_)) & (MOD_EXP_CTIME_MIN_CACHE_LINE_MASK))))
+	((unsigned char*)(x_) + (MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH - (((intptr_t)(x_)) & (MOD_EXP_CTIME_MIN_CACHE_LINE_MASK))))
 
 /* This variant of BN_mod_exp_mont() uses fixed windows and the special
  * precomputation memory layout to limit data-dependency to a minimum
