@@ -67,7 +67,7 @@ main()
 	char buf[256];
 	int i;
 
-	conf=lh_new(lh_strhash,strcmp);
+	conf=lh_new(lh_strhash,(int (*)(const void *, const void *))strcmp);
 	for (;;)
 		{
 		char *p;

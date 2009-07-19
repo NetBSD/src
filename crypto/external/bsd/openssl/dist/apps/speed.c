@@ -101,7 +101,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #if !defined(OPENSSL_SYS_MSDOS)
-#include OPENSSL_UNISTD
+#include <unistd.h>
 #endif
 
 #ifndef OPENSSL_SYS_NETWARE

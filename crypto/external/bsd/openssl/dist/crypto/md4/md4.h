@@ -77,6 +77,7 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
+#ifndef __NetBSD__
 #if defined(__LP32__)
 #define MD4_LONG unsigned long
 #elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
@@ -91,6 +92,10 @@ extern "C" {
  */
 #else
 #define MD4_LONG unsigned int
+#endif
+#else
+#include <sys/types.h>
+#define MD4_LONG uint32_t
 #endif
 
 #define MD4_CBLOCK	64

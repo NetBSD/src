@@ -2,6 +2,7 @@
  * Copyright (c) 2002 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2002 Theo de Raadt
  * Copyright (c) 2002 Markus Friedl
+ * Copyright (c) 2008 Coyote Point Systems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +35,7 @@
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
 	(defined(OpenBSD) || defined(__FreeBSD_version))
 #include <sys/param.h>
-# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041)
+# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041) || defined(__NetBSD__)
 #  define HAVE_CRYPTODEV
 # endif
 # if (OpenBSD >= 200110)
@@ -82,7 +83,6 @@ struct dev_crypto_state {
 
 static u_int32_t cryptodev_asymfeat = 0;
 
-static int get_asym_dev_crypto(void);
 static int open_dev_crypto(void);
 static int get_dev_crypto(void);
 static int get_cryptodev_ciphers(const int **cnids);
@@ -188,29 +188,12 @@ open_dev_crypto(void)
 static int
 get_dev_crypto(void)
 {
-	int fd, retfd;
-
-	if ((fd = open_dev_crypto()) == -1)
-		return (-1);
-	if (ioctl(fd, CRIOGET, &retfd) == -1)
-		return (-1);
-
-	/* close on exec */
-	if (fcntl(retfd, F_SETFD, 1) == -1) {
-		close(retfd);
-		return (-1);
-	}
-	return (retfd);
-}
-
-/* Caching version for asym operations */
-static int
-get_asym_dev_crypto(void)
-{
 	static int fd = -1;
 
 	if (fd == -1)
 		fd = get_dev_crypto();
+	if (fd == -1)
+		fd = open_dev_crypto();
 	return fd;
 }
 
@@ -232,7 +215,7 @@ get_cryptodev_ciphers(const int **cnids)
 		return (0);
 	}
 	memset(&sess, 0, sizeof(sess));
-	sess.key = (caddr_t)"123456789abcdefghijklmno";
+	sess.key = (void *)"123456789abcdefghijklmno";
 
 	for (i = 0; ciphers[i].id && count < CRYPTO_ALGORITHM_MAX; i++) {
 		if (ciphers[i].nid == NID_undef)
@@ -244,7 +227,6 @@ get_cryptodev_ciphers(const int **cnids)
 		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = ciphers[i].nid;
 	}
-	close(fd);
 
 	if (count > 0)
 		*cnids = nids;
@@ -271,7 +253,7 @@ get_cryptodev_digests(const int **cnids)
 		return (0);
 	}
 	memset(&sess, 0, sizeof(sess));
-	sess.mackey = (caddr_t)"123456789abcdefghijklmno";
+	sess.mackey = (void *)"123456789abcdefghijklmno";
 	for (i = 0; digests[i].id && count < CRYPTO_ALGORITHM_MAX; i++) {
 		if (digests[i].nid == NID_undef)
 			continue;
@@ -282,7 +264,6 @@ get_cryptodev_digests(const int **cnids)
 		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = digests[i].nid;
 	}
-	close(fd);
 
 	if (count > 0)
 		*cnids = nids;
@@ -363,16 +344,16 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	cryp.ses = sess->ses;
 	cryp.flags = 0;
 	cryp.len = inl;
-	cryp.src = (caddr_t) in;
-	cryp.dst = (caddr_t) out;
+	cryp.src = (void *) in;
+	cryp.dst = (void *) out;
 	cryp.mac = 0;
 
 	cryp.op = ctx->encrypt ? COP_ENCRYPT : COP_DECRYPT;
 
 	if (ctx->cipher->iv_len) {
-		cryp.iv = (caddr_t) ctx->iv;
+		cryp.iv = (void *) ctx->iv;
 		if (!ctx->encrypt) {
-			iiv = (void *) in + inl - ctx->cipher->iv_len;
+			iiv = (char *) in + inl - ctx->cipher->iv_len;
 			memcpy(save_iv, iiv, ctx->cipher->iv_len);
 		}
 	} else
@@ -387,7 +368,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	if (ctx->cipher->iv_len) {
 		if (ctx->encrypt)
-			iiv = (void *) out + inl - ctx->cipher->iv_len;
+			iiv = (char *) out + inl - ctx->cipher->iv_len;
 		else
 			iiv = save_iv;
 		memcpy(ctx->iv, iiv, ctx->cipher->iv_len);
@@ -421,12 +402,11 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if ((state->d_fd = get_dev_crypto()) < 0)
 		return (0);
 
-	sess->key = (caddr_t)key;
+	sess->key = (void *)key;
 	sess->keylen = ctx->key_len;
 	sess->cipher = cipher;
 
 	if (ioctl(state->d_fd, CIOCGSESSION, sess) == -1) {
-		close(state->d_fd);
 		state->d_fd = -1;
 		return (0);
 	}
@@ -463,7 +443,6 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 	} else {
 		ret = 1;
 	}
-	close(state->d_fd);
 	state->d_fd = -1;
 
 	return (ret);
@@ -676,7 +655,6 @@ static int cryptodev_digest_init(EVP_MD_CTX *ctx)
 	sess->mac = digest;
 
 	if (ioctl(state->d_fd, CIOCGSESSION, sess) < 0) {
-		close(state->d_fd);
 		state->d_fd = -1;
 		printf("cryptodev_digest_init: Open session failed\n");
 		return (0);
@@ -721,9 +699,9 @@ static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
 	cryp.ses = sess->ses;
 	cryp.flags = 0;
 	cryp.len = count;
-	cryp.src = (caddr_t) data;
+	cryp.src = (void *) data;
 	cryp.dst = NULL;
-	cryp.mac = (caddr_t) state->digest_res;
+	cryp.mac = (void *) state->digest_res;
 	if (ioctl(state->d_fd, CIOCCRYPT, &cryp) < 0) {
 		printf("cryptodev_digest_update: digest failed\n");
 		return (0);
@@ -754,7 +732,7 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 		cryp.len = state->mac_len;
 		cryp.src = state->mac_data;
 		cryp.dst = NULL;
-		cryp.mac = (caddr_t)md;
+		cryp.mac = (void *)md;
 
 		if (ioctl(state->d_fd, CIOCCRYPT, &cryp) < 0) {
 			printf("cryptodev_digest_final: digest failed\n");
@@ -796,7 +774,6 @@ static int cryptodev_digest_cleanup(EVP_MD_CTX *ctx)
 	} else {
 		ret = 1;
 	}
-	close(state->d_fd);	
 	state->d_fd = -1;
 
 	return (ret);
@@ -899,7 +876,7 @@ bn2crparam(const BIGNUM *a, struct crparam *crp)
 		return (1);
 	memset(b, 0, bytes);
 
-	crp->crp_p = (caddr_t) b;
+	crp->crp_p = (void *) b;
 	crp->crp_nbits = bits;
 
 	for (i = 0, j = 0; i < a->top; i++) {
@@ -1136,7 +1113,7 @@ cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	kop.crk_op = CRK_DSA_SIGN;
 
 	/* inputs: dgst dsa->p dsa->q dsa->g dsa->priv_key */
-	kop.crk_param[0].crp_p = (caddr_t)dgst;
+	kop.crk_param[0].crp_p = (void *)dgst;
 	kop.crk_param[0].crp_nbits = dlen * 8;
 	if (bn2crparam(dsa->p, &kop.crk_param[1]))
 		goto err;
@@ -1176,7 +1153,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 	kop.crk_op = CRK_DSA_VERIFY;
 
 	/* inputs: dgst dsa->p dsa->q dsa->g dsa->pub_key sig->r sig->s */
-	kop.crk_param[0].crp_p = (caddr_t)dgst;
+	kop.crk_param[0].crp_p = (void *)dgst;
 	kop.crk_param[0].crp_nbits = dlen * 8;
 	if (bn2crparam(dsa->p, &kop.crk_param[1]))
 		goto err;
@@ -1233,7 +1210,7 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	int dhret = 1;
 	int fd, keylen;
 
-	if ((fd = get_asym_dev_crypto()) < 0) {
+	if ((fd = get_dev_crypto()) < 0) {
 		const DH_METHOD *meth = DH_OpenSSL();
 
 		return ((meth->compute_key)(key, pub_key, dh));
@@ -1253,7 +1230,7 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		goto err;
 	kop.crk_iparams = 3;
 
-	kop.crk_param[3].crp_p = (caddr_t) key;
+	kop.crk_param[3].crp_p = (void *) key;
 	kop.crk_param[3].crp_nbits = keylen * 8;
 	kop.crk_oparams = 1;
 
@@ -1320,11 +1297,9 @@ ENGINE_load_cryptodev(void)
 	 * find out what asymmetric crypto algorithms we support
 	 */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		close(fd);
 		ENGINE_free(engine);
 		return;
 	}
-	close(fd);
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
 	    !ENGINE_set_name(engine, "BSD cryptodev engine") ||

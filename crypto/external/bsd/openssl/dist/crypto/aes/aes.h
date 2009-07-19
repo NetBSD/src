@@ -68,16 +68,24 @@
 #define AES_MAXNR 14
 #define AES_BLOCK_SIZE 16
 
+#ifdef __NetBSD__
+#include <sys/types.h>
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
 /* This should be a hidden type, but EVP requires that the size be known */
 struct aes_key_st {
+#ifndef __NetBSD__
 #ifdef AES_LONG
     unsigned long rd_key[4 *(AES_MAXNR + 1)];
 #else
     unsigned int rd_key[4 *(AES_MAXNR + 1)];
+#endif
+#else
+    uint32_t rd_key[4 *(AES_MAXNR + 1)];
 #endif
     int rounds;
 };

@@ -29,7 +29,7 @@
 #ifdef OPENSSL_FIPS
 #define OPENSSL_VERSION_TEXT	"OpenSSL 1.1.0-fips-dev xx XXX xxxx"
 #else
-#define OPENSSL_VERSION_TEXT	"OpenSSL 1.1.0-dev xx XXX xxxx"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 1.1.0-dev 10 Jul 2009"
 #endif
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
@@ -85,5 +85,10 @@
 #define SHLIB_VERSION_HISTORY ""
 #define SHLIB_VERSION_NUMBER "1.1.0"
 
+/* The following macro indicates that this version of OpenSSL
+ * contains the security related patch from
+ * http://www.openssl.org/news/patch-CAN-2005-2969.txt
+ */
+#define OPENSSL_HAS_20051011_FIX
 
 #endif /* HEADER_OPENSSLV_H */

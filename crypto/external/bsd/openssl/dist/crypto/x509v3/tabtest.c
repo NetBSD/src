@@ -84,5 +84,9 @@ main()
 		fprintf(stderr, "Extensions out of order!\n");
 		for(i = 0; i < STANDARD_EXTENSION_COUNT; i++, tmp++)
 		printf("%d : %s\n", (*tmp)->ext_nid, OBJ_nid2sn((*tmp)->ext_nid));
-	} else fprintf(stderr, "Order OK\n");
+		exit(1);
+	} else {
+		fprintf(stderr, "Order OK\n");
+		exit(0);
+	}
 }

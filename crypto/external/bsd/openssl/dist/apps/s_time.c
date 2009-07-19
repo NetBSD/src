@@ -82,7 +82,7 @@
 #include "wintext.h"
 #endif
 #if !defined(OPENSSL_SYS_MSDOS)
-#include OPENSSL_UNISTD
+#include <unistd.h>
 #endif
 
 #undef PROG
@@ -171,7 +171,7 @@ static void s_time_init(void)
  */
 static void s_time_usage(void)
 {
-	static char umsg[] = "\
+	static const char umsg[] = "\
 -time arg     - max number of seconds to collect data, default %d\n\
 -verify arg   - turn on peer certificate verification, arg == depth\n\
 -cert arg     - certificate file to use, PEM format assumed\n\

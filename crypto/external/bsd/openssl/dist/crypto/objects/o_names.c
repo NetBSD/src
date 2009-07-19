@@ -90,7 +90,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
 			OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX,ERR_R_MALLOC_FAILURE);
 			return(0);
 			}
-		name_funcs->hash_func = lh_strhash;
+		name_funcs->hash_func = (unsigned long (*)(const char *))lh_strhash;
 		name_funcs->cmp_func = OPENSSL_strcmp;
 		name_funcs->free_func = 0; /* NULL is often declared to
 						* ((void *)0), which according

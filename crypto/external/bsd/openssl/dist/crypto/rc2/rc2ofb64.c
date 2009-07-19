@@ -67,12 +67,12 @@ void RC2_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 		       long length, RC2_KEY *schedule, unsigned char *ivec,
 		       int *num)
 	{
-	register unsigned long v0,v1,t;
+	register uint32_t v0,v1,t;
 	register int n= *num;
 	register long l=length;
 	unsigned char d[8];
 	register char *dp;
-	unsigned long ti[2];
+	uint32_t ti[2];
 	unsigned char *iv;
 	int save=0;
 
@@ -88,7 +88,7 @@ void RC2_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 		{
 		if (n == 0)
 			{
-			RC2_encrypt((unsigned long *)ti,schedule);
+			RC2_encrypt(ti,schedule);
 			dp=(char *)d;
 			t=ti[0]; l2c(t,dp);
 			t=ti[1]; l2c(t,dp);

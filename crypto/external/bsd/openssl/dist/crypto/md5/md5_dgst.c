@@ -65,10 +65,10 @@ const char MD5_version[]="MD5" OPENSSL_VERSION_PTEXT;
 /* Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */
 
-#define INIT_DATA_A (unsigned long)0x67452301L
-#define INIT_DATA_B (unsigned long)0xefcdab89L
-#define INIT_DATA_C (unsigned long)0x98badcfeL
-#define INIT_DATA_D (unsigned long)0x10325476L
+#define INIT_DATA_A (MD5_LONG)0x67452301L
+#define INIT_DATA_B (MD5_LONG)0xefcdab89L
+#define INIT_DATA_C (MD5_LONG)0x98badcfeL
+#define INIT_DATA_D (MD5_LONG)0x10325476L
 
 int MD5_Init(MD5_CTX *c)
 	{
@@ -87,11 +87,11 @@ int MD5_Init(MD5_CTX *c)
 void md5_block_data_order (MD5_CTX *c, const void *data_, size_t num)
 	{
 	const unsigned char *data=data_;
-	register unsigned MD32_REG_T A,B,C,D,l;
+	register MD32_REG_T A,B,C,D,l;
 #ifndef MD32_XARRAY
 	/* See comment in crypto/sha/sha_locl.h for details. */
-	unsigned MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
-				XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
+	MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 # define X(i)	XX##i
 #else
 	MD5_LONG XX[MD5_LBLOCK];

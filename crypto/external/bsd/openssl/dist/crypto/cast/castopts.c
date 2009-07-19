@@ -66,7 +66,7 @@
 #include <stdio.h>
 
 #include <openssl/e_os2.h>
-#include OPENSSL_UNISTD_IO
+#include <unistd.h>
 OPENSSL_DECLARE_EXIT
 
 #ifndef OPENSSL_SYS_NETWARE
@@ -219,7 +219,7 @@ double Time_F(int s)
 	Time_F(START); \
 	for (count=0,run=1; COND(cb); count+=4) \
 		{ \
-		unsigned long d[2]; \
+		CAST_LONG d[2]; \
 		func(d,&sch); \
 		func(d,&sch); \
 		func(d,&sch); \
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 	count=10;
 	do	{
 		long i;
-		unsigned long data[2];
+		CAST_LONG data[2];
 
 		count*=2;
 		Time_F(START);

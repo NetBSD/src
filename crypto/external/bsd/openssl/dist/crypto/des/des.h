@@ -91,6 +91,7 @@ typedef struct DES_ks
 	} ks[16];
     } DES_key_schedule;
 
+#ifndef __NetBSD__
 #ifndef OPENSSL_DISABLE_OLD_DES_SUPPORT
 # ifndef OPENSSL_ENABLE_OLD_DES_SUPPORT
 #  define OPENSSL_ENABLE_OLD_DES_SUPPORT
@@ -103,6 +104,12 @@ typedef struct DES_ks
 
 #define DES_KEY_SZ 	(sizeof(DES_cblock))
 #define DES_SCHEDULE_SZ (sizeof(DES_key_schedule))
+#else
+#include <sys/types.h>
+#define DES_LONG uint32_t
+#define DES_KEY_SZ 	8 /* (sizeof(DES_cblock)) */
+#define DES_SCHEDULE_SZ 128 /* (sizeof(DES_key_schedule)) */
+#endif
 
 #define DES_ENCRYPT	1
 #define DES_DECRYPT	0

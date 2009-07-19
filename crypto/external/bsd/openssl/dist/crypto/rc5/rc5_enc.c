@@ -64,10 +64,10 @@ void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,
 			long length, RC5_32_KEY *ks, unsigned char *iv,
 			int encrypt)
 	{
-	register unsigned long tin0,tin1;
-	register unsigned long tout0,tout1,xor0,xor1;
+	register RC5_32_INT tin0,tin1;
+	register RC5_32_INT tout0,tout1,xor0,xor1;
 	register long l=length;
-	unsigned long tin[2];
+	RC5_32_INT tin[2];
 
 	if (encrypt)
 		{
@@ -135,7 +135,7 @@ void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,
 	tin[0]=tin[1]=0;
 	}
 
-void RC5_32_encrypt(unsigned long *d, RC5_32_KEY *key)
+void RC5_32_encrypt(RC5_32_INT *d, RC5_32_KEY *key)
 	{
 	RC5_32_INT a,b,*s;
 
@@ -174,7 +174,7 @@ void RC5_32_encrypt(unsigned long *d, RC5_32_KEY *key)
 	d[1]=b;
 	}
 
-void RC5_32_decrypt(unsigned long *d, RC5_32_KEY *key)
+void RC5_32_decrypt(RC5_32_INT *d, RC5_32_KEY *key)
 	{
 	RC5_32_INT a,b,*s;
 
