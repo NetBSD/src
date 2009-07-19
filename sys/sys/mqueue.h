@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.9 2009/07/19 02:26:49 rmind Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.10 2009/07/19 02:50:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -108,7 +108,6 @@ struct mq_msg {
 };
 
 /* Prototypes */
-void	mqueue_sysinit(void);
 void	mqueue_print_list(void (*pr)(const char *, ...));
 int	abstimeout2timo(struct timespec *, int *);
 int	mq_send1(lwp_t *, mqd_t, const char *, size_t, unsigned, int);

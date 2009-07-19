@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.392 2009/07/17 23:31:51 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.393 2009/07/19 02:50:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.392 2009/07/17 23:31:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.393 2009/07/19 02:50:44 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -159,7 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.392 2009/07/17 23:31:51 ad Exp $");
 #include <sys/uuid.h>
 #include <sys/extent.h>
 #include <sys/disk.h>
-#include <sys/mqueue.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
 #include <sys/event.h>
@@ -429,9 +428,6 @@ main(void)
 
 	/* Initialize kqueue. */
 	kqueue_init();
-
-	/* Initialize message queues. */
-	mqueue_sysinit();
 
 	/* Initialize the system monitor subsystems. */
 #if NSYSMON_TASKQ > 0
