@@ -86,7 +86,7 @@
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
-#include "../../e_os.h"
+#include "e_os.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 	SSL_CTX *c_ctx=NULL;
 	char *scert=TEST_SERVER_CERT;
 	char *ccert=TEST_CLIENT_CERT;
-	SSL_METHOD *ssl_method=SSLv23_method();
+	const SSL_METHOD *ssl_method=SSLv23_method();
 
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
@@ -937,7 +937,7 @@ void thread_setup(void)
 	int i;
 	char filename[20];
 
-	strcpy(filename,"/tmp/mttest.XXXXXX");
+	strlcpy(filename,"/tmp/mttest.XXXXXX", sizeof(filename));
 	mktemp(filename);
 
 	usconfig(CONF_STHREADIOOFF);
@@ -966,7 +966,7 @@ void thread_cleanup(void)
 		{
 		char buf[10];
 
-		sprintf(buf,"%2d:",i);
+		snprintf(buf, sizeof(buf), "%2d:",i);
 		usdumpsema(lock_cs[i],stdout,buf);
 		usfreesema(lock_cs[i],arena);
 		}

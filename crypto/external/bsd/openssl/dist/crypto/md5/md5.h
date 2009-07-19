@@ -77,6 +77,7 @@ extern "C" {
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
+#ifndef __NetBSD__
 #if defined(__LP32__)
 #define MD5_LONG unsigned long
 #elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
@@ -91,6 +92,10 @@ extern "C" {
  */
 #else
 #define MD5_LONG unsigned int
+#endif
+#else
+#include <sys/types.h>
+#define MD5_LONG uint32_t
 #endif
 
 #define MD5_CBLOCK	64

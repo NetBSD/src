@@ -67,12 +67,12 @@ void RC5_32_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 			  long length, RC5_32_KEY *schedule,
 			  unsigned char *ivec, int *num)
 	{
-	register unsigned long v0,v1,t;
+	register RC5_32_INT v0,v1,t;
 	register int n= *num;
 	register long l=length;
 	unsigned char d[8];
 	register char *dp;
-	unsigned long ti[2];
+	RC5_32_INT ti[2];
 	unsigned char *iv;
 	int save=0;
 
@@ -88,7 +88,7 @@ void RC5_32_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 		{
 		if (n == 0)
 			{
-			RC5_32_encrypt((unsigned long *)ti,schedule);
+			RC5_32_encrypt(ti,schedule);
 			dp=(char *)d;
 			t=ti[0]; l2c(t,dp);
 			t=ti[1]; l2c(t,dp);

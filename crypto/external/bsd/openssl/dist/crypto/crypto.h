@@ -463,12 +463,12 @@ void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */
 int CRYPTO_set_mem_functions(void *(*m)(size_t),void *(*r)(void *,size_t), void (*f)(void *));
-int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*free_func)(void *));
+int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*freefunc)(void *));
 int CRYPTO_set_mem_ex_functions(void *(*m)(size_t,const char *,int),
                                 void *(*r)(void *,size_t,const char *,int),
                                 void (*f)(void *));
 int CRYPTO_set_locked_mem_ex_functions(void *(*m)(size_t,const char *,int),
-                                       void (*free_func)(void *));
+                                       void (*freefunc)(void *));
 int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*r)(void *,void *,int,const char *,int,int),
 				   void (*f)(void *,int),

@@ -68,7 +68,7 @@
 #define HASH_CTX                SHA_CTX
 #define HASH_CBLOCK             SHA_CBLOCK
 #define HASH_MAKE_STRING(c,s)   do {	\
-	unsigned long ll;		\
+	SHA_LONG ll;		\
 	ll=(c)->h0; HOST_l2c(ll,(s));	\
 	ll=(c)->h1; HOST_l2c(ll,(s));	\
 	ll=(c)->h2; HOST_l2c(ll,(s));	\
@@ -208,10 +208,10 @@ int HASH_INIT (SHA_CTX *c)
 static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
-	register unsigned MD32_REG_T A,B,C,D,E,T,l;
+	register MD32_REG_T A,B,C,D,E,T,l;
 #ifndef MD32_XARRAY
-	unsigned MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
-				XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
+	MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 #else
 	SHA_LONG	XX[16];
 #endif
@@ -393,7 +393,7 @@ static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
-	register unsigned MD32_REG_T A,B,C,D,E,T,l;
+	register MD32_REG_T A,B,C,D,E,T,l;
 	int i;
 	SHA_LONG	X[16];
 

@@ -67,12 +67,12 @@ void idea_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 			long length, IDEA_KEY_SCHEDULE *schedule,
 			unsigned char *ivec, int *num)
 	{
-	register unsigned long v0,v1,t;
+	register IDEA_INT v0,v1,t;
 	register int n= *num;
 	register long l=length;
 	unsigned char d[8];
 	register char *dp;
-	unsigned long ti[2];
+	IDEA_INT ti[2];
 	unsigned char *iv;
 	int save=0;
 
@@ -88,7 +88,7 @@ void idea_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 		{
 		if (n == 0)
 			{
-			idea_encrypt((unsigned long *)ti,schedule);
+			idea_encrypt(ti,schedule);
 			dp=(char *)d;
 			t=ti[0]; l2n(t,dp);
 			t=ti[1]; l2n(t,dp);

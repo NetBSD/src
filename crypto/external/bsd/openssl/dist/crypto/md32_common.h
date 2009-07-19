@@ -222,10 +222,10 @@
 #endif
 
 #ifndef HOST_c2l
-#define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))<<24),		\
-			 l|=(((unsigned long)(*((c)++)))<<16),		\
-			 l|=(((unsigned long)(*((c)++)))<< 8),		\
-			 l|=(((unsigned long)(*((c)++)))    ),		\
+#define HOST_c2l(c,l)	(l =(((uint32_t)(*((c)++)))<<24),		\
+			 l|=(((uint32_t)(*((c)++)))<<16),		\
+			 l|=(((uint32_t)(*((c)++)))<< 8),		\
+			 l|=(((uint32_t)(*((c)++)))    ),		\
 			 l)
 #endif
 #ifndef HOST_l2c
@@ -259,10 +259,10 @@
 #endif
 
 #ifndef HOST_c2l
-#define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ),		\
-			 l|=(((unsigned long)(*((c)++)))<< 8),		\
-			 l|=(((unsigned long)(*((c)++)))<<16),		\
-			 l|=(((unsigned long)(*((c)++)))<<24),		\
+#define HOST_c2l(c,l)	(l =(((uint32_t)(*((c)++)))    ),		\
+			 l|=(((uint32_t)(*((c)++)))<< 8),		\
+			 l|=(((uint32_t)(*((c)++)))<<16),		\
+			 l|=(((uint32_t)(*((c)++)))<<24),		\
 			 l)
 #endif
 #ifndef HOST_l2c
@@ -383,7 +383,7 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	}
 
 #ifndef MD32_REG_T
-#define MD32_REG_T long
+#define MD32_REG_T uint32_t
 /*
  * This comment was originaly written for MD5, which is why it
  * discusses A-D. But it basically applies to all 32-bit digests,

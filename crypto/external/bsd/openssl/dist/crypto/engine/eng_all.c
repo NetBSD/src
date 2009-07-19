@@ -111,13 +111,18 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_GMP
 	ENGINE_load_gmp();
 #endif
+#ifndef OPENSSL_NO_HW
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
+	ENGINE_load_cryptodev();
+#endif
+#endif
 #if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
 	ENGINE_load_capi();
 #endif
 #endif
 	}
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 void ENGINE_setup_bsd_cryptodev(void) {
 	static int bsd_cryptodev_default_loaded = 0;
 	if (!bsd_cryptodev_default_loaded) {

@@ -72,8 +72,13 @@ extern "C" {
 #define RC5_ENCRYPT	1
 #define RC5_DECRYPT	0
 
+#ifndef __NetBSD__
 /* 32 bit.  For Alpha, things may get weird */
 #define RC5_32_INT unsigned long
+#else
+#include <sys/types.h>
+#define RC5_32_INT uint32_t
+#endif
 
 #define RC5_32_BLOCK		8
 #define RC5_32_KEY_LENGTH	16 /* This is a default, max is 255 */
@@ -99,8 +104,8 @@ void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
 	int rounds);
 void RC5_32_ecb_encrypt(const unsigned char *in,unsigned char *out,RC5_32_KEY *key,
 	int enc);
-void RC5_32_encrypt(unsigned long *data,RC5_32_KEY *key);
-void RC5_32_decrypt(unsigned long *data,RC5_32_KEY *key);
+void RC5_32_encrypt(RC5_32_INT *data,RC5_32_KEY *key);
+void RC5_32_decrypt(RC5_32_INT *data,RC5_32_KEY *key);
 void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,
 			long length, RC5_32_KEY *ks, unsigned char *iv,
 			int enc);

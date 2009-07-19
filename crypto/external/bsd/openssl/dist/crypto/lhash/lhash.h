@@ -179,7 +179,7 @@ void *lh_delete(_LHASH *lh, const void *data);
 void *lh_retrieve(_LHASH *lh, const void *data);
 void lh_doall(_LHASH *lh, LHASH_DOALL_FN_TYPE func);
 void lh_doall_arg(_LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
-unsigned long lh_strhash(const char *c);
+unsigned long lh_strhash(const void *c);
 unsigned long lh_num_items(const _LHASH *lh);
 
 #ifndef OPENSSL_NO_FP_API

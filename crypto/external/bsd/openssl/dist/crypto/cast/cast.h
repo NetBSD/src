@@ -72,7 +72,12 @@ extern "C" {
 #define CAST_ENCRYPT	1
 #define CAST_DECRYPT	0
 
+#ifndef __NetBSD__
 #define CAST_LONG unsigned int
+#else
+#include <sys/types.h>
+#define CAST_LONG uint32_t
+#endif
 
 #define CAST_BLOCK	8
 #define CAST_KEY_LENGTH	16
