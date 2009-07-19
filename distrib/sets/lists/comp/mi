@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1282 2009/07/18 22:19:40 reinoud Exp $
+#	$NetBSD: mi,v 1.1283 2009/07/19 23:38:11 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1739,6 +1739,7 @@
 ./usr/include/openssl/md4.h			comp-c-include		crypto
 ./usr/include/openssl/md5.h			comp-c-include		crypto
 ./usr/include/openssl/mdc2.h			comp-c-include		crypto
+./usr/include/openssl/modes.h			comp-c-include		crypto
 ./usr/include/openssl/obj_mac.h			comp-c-include		crypto
 ./usr/include/openssl/objects.h			comp-c-include		crypto
 ./usr/include/openssl/ocsp.h			comp-c-include		crypto
