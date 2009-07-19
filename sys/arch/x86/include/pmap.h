@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2009/07/19 15:17:29 rmind Exp $	*/
 
 /*
  *
@@ -226,7 +226,7 @@ void		pmap_ldt_sync(struct pmap *);
 
 void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_emap_remove(vaddr_t, vsize_t);
-void		pmap_emap_sync(void);
+void		pmap_emap_sync(bool);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
