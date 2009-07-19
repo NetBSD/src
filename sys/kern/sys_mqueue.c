@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.23 2009/07/19 02:26:49 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.24 2009/07/19 02:50:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.23 2009/07/19 02:26:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.24 2009/07/19 02:50:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.23 2009/07/19 02:26:49 rmind Exp $"
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/mqueue.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/poll.h>
@@ -66,16 +67,19 @@ __KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.23 2009/07/19 02:26:49 rmind Exp $"
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/unistd.h>
 
 #include <miscfs/genfs/genfs.h>
 
+MODULE(MODULE_CLASS_MISC, mqueue, NULL);
+
 /* System-wide limits. */
 static u_int			mq_open_max = MQ_OPEN_MAX;
 static u_int			mq_prio_max = MQ_PRIO_MAX;
-
 static u_int			mq_max_msgsize = 16 * MQ_DEF_MSGSIZE;
 static u_int			mq_def_maxmsg = 32;
 
@@ -83,6 +87,8 @@ static kmutex_t			mqlist_mtx;
 static pool_cache_t		mqmsg_cache;
 static LIST_HEAD(, mqueue)	mqueue_head;
 
+static int	mqueue_sysinit(void);
+static int	mqueue_sysfini(bool);
 static int	mq_poll_fop(file_t *, int);
 static int	mq_stat_fop(file_t *, struct stat *);
 static int	mq_close_fop(file_t *);
@@ -99,17 +105,86 @@ static const struct fileops mqops = {
 	.fo_drain = fnullop_drain,
 };
 
+static const struct syscall_package mqueue_syscalls[] = {
+	{ SYS_mq_open, 0, (sy_call_t *)sys_mq_open },
+	{ SYS_mq_close, 0, (sy_call_t *)sys_mq_close },
+	{ SYS_mq_unlink, 0, (sy_call_t *)sys_mq_unlink },
+	{ SYS_mq_getattr, 0, (sy_call_t *)sys_mq_getattr },
+	{ SYS_mq_setattr, 0, (sy_call_t *)sys_mq_setattr },
+	{ SYS_mq_notify, 0, (sy_call_t *)sys_mq_notify },
+	{ SYS_mq_send, 0, (sy_call_t *)sys_mq_send },
+	{ SYS_mq_receive, 0, (sy_call_t *)sys_mq_receive },
+	{ SYS___mq_timedsend50, 0, (sy_call_t *)sys___mq_timedsend50 },
+	{ SYS___mq_timedreceive50, 0, (sy_call_t *)sys___mq_timedreceive50 },
+	{ 0, 0, NULL }
+};
+
 /*
- * Initialize POSIX message queue subsystem.
+ * Initialisation and unloading of POSIX message queue subsystem.
  */
-void
+
+static int
 mqueue_sysinit(void)
 {
+	int error;
 
 	mqmsg_cache = pool_cache_init(MQ_DEF_MSGSIZE, coherency_unit,
 	    0, 0, "mqmsgpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	mutex_init(&mqlist_mtx, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&mqueue_head);
+
+	error = syscall_establish(NULL, mqueue_syscalls);
+	if (error) {
+		(void)mqueue_sysfini(false);
+	}
+	return error;
+}
+
+static int
+mqueue_sysfini(bool interface)
+{
+
+	if (interface) {
+		int error;
+		bool inuse;
+
+		/* Stop syscall activity. */
+		error = syscall_disestablish(NULL, mqueue_syscalls);
+		if (error)
+			return error;
+		/*
+		 * Check if there are any message queues in use.
+		 * TODO: We shall support forced unload.
+		 */
+		mutex_enter(&mqlist_mtx);
+		inuse = !LIST_EMPTY(&mqueue_head);
+		mutex_exit(&mqlist_mtx);
+		if (inuse) {
+			error = syscall_establish(NULL, mqueue_syscalls);
+			KASSERT(error == 0);
+			return EBUSY;
+		}
+	}
+	mutex_destroy(&mqlist_mtx);
+	pool_cache_destroy(mqmsg_cache);
+	return 0;
+}
+
+/*
+ * Module interface.
+ */
+static int
+mqueue_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return mqueue_sysinit();
+	case MODULE_CMD_FINI:
+		return mqueue_sysfini(true);
+	default:
+		return ENOTTY;
+	}
 }
 
 /*
