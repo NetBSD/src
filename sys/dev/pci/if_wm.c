@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.3 2009/03/20 13:01:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.3.2.1 2009/07/19 19:48:26 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.3 2009/03/20 13:01:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.3.2.1 2009/07/19 19:48:26 snj Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -256,6 +256,8 @@ typedef enum {
 	WM_T_ICH9,			/* ICH9 LAN */
 } wm_chip_type;
 
+#define WM_LINKUP_TIMEOUT	50
+
 /*
  * Software state per device.
  */
@@ -376,7 +378,10 @@ struct wm_softc {
 	uint32_t sc_pba;		/* prototype PBA register */
 
 	int sc_tbi_linkup;		/* TBI link status */
-	int sc_tbi_anstate;		/* autonegotiation state */
+	int sc_tbi_anegticks;		/* autonegotiation ticks */
+	int sc_tbi_ticks;		/* tbi ticks */
+	int sc_tbi_nrxcfg;		/* count of ICR_RXCFG */
+	int sc_tbi_lastnrxcfg;		/* count of ICR_RXCFG (on last tick) */
 
 	int sc_mchash_type;		/* multicast filter offset */
 
@@ -581,6 +586,7 @@ static int32_t	wm_ich8_flash_cycle(struct wm_softc *, uint32_t);
 static int32_t	wm_read_ich8_data(struct wm_softc *, uint32_t,
 		     uint32_t, uint16_t *);
 static int32_t	wm_read_ich8_word(struct wm_softc *sc, uint32_t, uint16_t *);
+static int	wm_check_for_link(struct wm_softc *);
 
 CFATTACH_DECL_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
@@ -2742,6 +2748,8 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 {
 	uint32_t status;
 
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
+		__func__));
 	/*
 	 * If we get a link status interrupt on a 1000BASE-T
 	 * device, just fall into the normal MII tick path.
@@ -2752,6 +2760,44 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			    ("%s: LINK: LSC -> mii_tick\n",
 			    device_xname(sc->sc_dev)));
 			mii_tick(&sc->sc_mii);
+			if (sc->sc_type == WM_T_82543) {
+				int miistatus, active;
+
+				/*
+				 * With 82543, we need to force speed and
+				 * duplex on the MAC equal to what the PHY
+				 * speed and duplex configuration is.
+				 */
+				miistatus = sc->sc_mii.mii_media_status;
+
+				if (miistatus & IFM_ACTIVE) {
+					active = sc->sc_mii.mii_media_active;
+					sc->sc_ctrl &= ~(CTRL_SPEED_MASK
+					    | CTRL_FD);
+					switch (IFM_SUBTYPE(active)) {
+					case IFM_10_T:
+						sc->sc_ctrl |= CTRL_SPEED_10;
+						break;
+					case IFM_100_TX:
+						sc->sc_ctrl |= CTRL_SPEED_100;
+						break;
+					case IFM_1000_T:
+						sc->sc_ctrl |= CTRL_SPEED_1000;
+						break;
+					default:
+						/*
+						 * fiber?
+						 * Shoud not enter here.
+						 */
+						printf("unknown media (%x)\n",
+						    active);
+						break;
+					}
+					if (active & IFM_FDX)
+						sc->sc_ctrl |= CTRL_FD;
+					CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				}
+			}
 		} else if (icr & ICR_RXSEQ) {
 			DPRINTF(WM_DEBUG_LINK,
 			    ("%s: LINK Receive sequence error\n",
@@ -2760,22 +2806,18 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 		return;
 	}
 
-	/*
-	 * If we are now receiving /C/, check for link again in
-	 * a couple of link clock ticks.
-	 */
-	if (icr & ICR_RXCFG) {
-		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: receiving /C/\n",
-		    device_xname(sc->sc_dev)));
-		sc->sc_tbi_anstate = 2;
-	}
-
+	status = CSR_READ(sc, WMREG_STATUS);
 	if (icr & ICR_LSC) {
-		status = CSR_READ(sc, WMREG_STATUS);
 		if (status & STATUS_LU) {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
 			    device_xname(sc->sc_dev),
 			    (status & STATUS_FD) ? "FDX" : "HDX"));
+			/*
+			 * NOTE: CTRL will update TFCE and RFCE automatically,
+			 * so we should update sc->sc_ctrl
+			 */
+			
+			sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
 			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
@@ -2784,7 +2826,7 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			else
 				sc->sc_tctl |=
 				    TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
-			if (CSR_READ(sc, WMREG_CTRL) & CTRL_TFCE)
+			if (sc->sc_ctrl & CTRL_TFCE)
 				sc->sc_fcrtl |= FCRTL_XONE;
 			CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 			CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
@@ -2796,8 +2838,12 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			    device_xname(sc->sc_dev)));
 			sc->sc_tbi_linkup = 0;
 		}
-		sc->sc_tbi_anstate = 2;
 		wm_tbi_set_linkled(sc);
+	} else if (icr & ICR_RXCFG) {
+		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: receiving /C/\n",
+		    device_xname(sc->sc_dev)));
+		sc->sc_tbi_nrxcfg++;
+		wm_check_for_link(sc);
 	} else if (icr & ICR_RXSEQ) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: Receive sequence error\n",
@@ -3213,6 +3259,9 @@ wm_init(struct ifnet *ifp)
 		reg |= RXCSUM_IPV6OFL | RXCSUM_TUOFL;
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
+	/* Reset TBI's RXCFG count */
+	sc->sc_tbi_nrxcfg = sc->sc_tbi_lastnrxcfg = 0;
+
 	/*
 	 * Set up the interrupt registers.
 	 */
@@ -3371,6 +3420,11 @@ wm_stop(struct ifnet *ifp, int disable)
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		/* Down the MII. */
 		mii_down(&sc->sc_mii);
+	} else {
+#if 0
+		/* Should we clear PHY's status properly? */
+		wm_reset(sc);
+#endif
 	}
 
 	/* Stop the transmit and receive processes. */
@@ -3996,6 +4050,7 @@ wm_set_filter(struct wm_softc *sc)
 static void
 wm_tbi_mediainit(struct wm_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *sep = "";
 
 	if (sc->sc_type < WM_T_82543)
@@ -4003,6 +4058,12 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	else
 		sc->sc_tipg = TIPG_LG_DFLT;
 
+	sc->sc_tbi_anegticks = 5;
+
+	/* Initialize our media structures */
+	sc->sc_mii.mii_ifp = ifp;
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_tbi_mediachange,
 	    wm_tbi_mediastatus);
 
@@ -4044,12 +4105,13 @@ static void
 wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
-	uint32_t ctrl;
+	uint32_t ctrl, status;
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (sc->sc_tbi_linkup == 0) {
+	status = CSR_READ(sc, WMREG_STATUS);
+	if ((status & STATUS_LU) == 0) {
 		ifmr->ifm_active |= IFM_NONE;
 		return;
 	}
@@ -4078,18 +4140,20 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	uint32_t status;
 	int i;
 
-	sc->sc_txcw = ife->ifm_data;
-	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x on entry\n",
-		    device_xname(sc->sc_dev),sc->sc_txcw));
+	sc->sc_txcw = 0;
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
 	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
-		sc->sc_txcw |= ANAR_X_PAUSE_SYM | ANAR_X_PAUSE_ASYM;
+		sc->sc_txcw |= TXCW_SYM_PAUSE | TXCW_ASYM_PAUSE;
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) { 
-		sc->sc_txcw |= TXCW_ANE; 
+		sc->sc_txcw |= TXCW_ANE;
 	} else {
-		/*If autonegotiation is turned off, force link up and turn on full duplex*/
+		/*
+		 * If autonegotiation is turned off, force link up and turn on
+		 * full duplex
+		 */
 		sc->sc_txcw &= ~TXCW_ANE;
 		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
+		sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		delay(1000);
 	}
@@ -4099,10 +4163,6 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 	delay(10000);
 
-	/* NOTE: CTRL will update TFCE and RFCE automatically. */
-
-	sc->sc_tbi_anstate = 0;
-
 	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
 	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", device_xname(sc->sc_dev),i));
 
@@ -4110,7 +4170,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	 * On 82544 chips and later, the CTRL_SWDPIN(1) bit will be set if the
 	 * optics detect a signal, 0 if they don't.
 	 */
-	if (((i != 0) && (sc->sc_type >= WM_T_82544)) || (i == 0)) {
+	if (((i != 0) && (sc->sc_type > WM_T_82544)) || (i == 0)) {
 		/* Have signal; wait for the link to come up. */
 
 		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
@@ -4125,7 +4185,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 			delay(1000);
 		}
 
-		for (i = 0; i < 50; i++) {
+		for (i = 0; i < WM_LINKUP_TIMEOUT; i++) {
 			delay(10000);
 			if (CSR_READ(sc, WMREG_STATUS) & STATUS_LU)
 				break;
@@ -4144,6 +4204,12 @@ wm_tbi_mediachange(struct ifnet *ifp)
 			    ("%s: LINK: set media -> link up %s\n",
 			    device_xname(sc->sc_dev),
 			    (status & STATUS_FD) ? "FDX" : "HDX"));
+
+			/*
+			 * NOTE: CTRL will update TFCE and RFCE automatically,
+			 * so we should update sc->sc_ctrl
+			 */
+			sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
 			sc->sc_fcrtl &= ~FCRTL_XONE;
 			if (status & STATUS_FD)
@@ -4160,6 +4226,8 @@ wm_tbi_mediachange(struct ifnet *ifp)
 				      sc->sc_fcrtl);
 			sc->sc_tbi_linkup = 1;
 		} else {
+			if (i == WM_LINKUP_TIMEOUT)
+				wm_check_for_link(sc);
 			/* Link is down. */
 			DPRINTF(WM_DEBUG_LINK,
 			    ("%s: LINK: set media -> link down\n",
@@ -4191,6 +4259,9 @@ wm_tbi_set_linkled(struct wm_softc *sc)
 	else
 		sc->sc_ctrl &= ~CTRL_SWDPIN(0);
 
+	/* 82540 or newer devices are active low */
+	sc->sc_ctrl ^= (sc->sc_type >= WM_T_82540) ? CTRL_SWDPIN(0) : 0;
+
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 }
 
@@ -4202,47 +4273,56 @@ wm_tbi_set_linkled(struct wm_softc *sc)
 static void
 wm_tbi_check_link(struct wm_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	uint32_t rxcw, ctrl, status;
 
-	if (sc->sc_tbi_anstate == 0)
-		return;
-	else if (sc->sc_tbi_anstate > 1) {
-		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: anstate %d\n", device_xname(sc->sc_dev),
-		    sc->sc_tbi_anstate));
-		sc->sc_tbi_anstate--;
-		return;
-	}
-
-	sc->sc_tbi_anstate = 0;
+	status = CSR_READ(sc, WMREG_STATUS);
 
 	rxcw = CSR_READ(sc, WMREG_RXCW);
 	ctrl = CSR_READ(sc, WMREG_CTRL);
-	status = CSR_READ(sc, WMREG_STATUS);
 
+	/* set link status */
 	if ((status & STATUS_LU) == 0) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: checklink -> down\n", device_xname(sc->sc_dev)));
 		sc->sc_tbi_linkup = 0;
-	} else {
+	} else if (sc->sc_tbi_linkup == 0) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: checklink -> up %s\n", device_xname(sc->sc_dev),
 		    (status & STATUS_FD) ? "FDX" : "HDX"));
-		sc->sc_tctl &= ~TCTL_COLD(0x3ff);
-		sc->sc_fcrtl &= ~FCRTL_XONE;
-		if (status & STATUS_FD)
-			sc->sc_tctl |=
-			    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
-		else
-			sc->sc_tctl |=
-			    TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
-		if (ctrl & CTRL_TFCE)
-			sc->sc_fcrtl |= FCRTL_XONE;
-		CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
-		CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ?
-			      WMREG_OLD_FCRTL : WMREG_FCRTL,
-			      sc->sc_fcrtl);
 		sc->sc_tbi_linkup = 1;
+	}
+
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP)
+	    && ((status & STATUS_LU) == 0)) {
+		sc->sc_tbi_linkup = 0;
+		if (sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg > 100) {
+			/* RXCFG storm! */
+			DPRINTF(WM_DEBUG_LINK, ("RXCFG storm! (%d)\n",
+				sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg));
+			wm_init(ifp);
+			wm_start(ifp);
+		} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			/* If the timer expired, retry autonegotiation */
+			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
+				DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+				sc->sc_tbi_ticks = 0;
+				/*
+				 * Reset the link, and let autonegotiation do
+				 * its thing
+				 */
+				sc->sc_ctrl |= CTRL_LRST;
+				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				delay(1000);
+				sc->sc_ctrl &= ~CTRL_LRST;
+				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+				delay(1000);
+				CSR_WRITE(sc, WMREG_TXCW,
+				    sc->sc_txcw & ~TXCW_ANE);
+				CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
+			}
+		}
 	}
 
 	wm_tbi_set_linkled(sc);
@@ -4632,8 +4712,11 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
 	}
-
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
 	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	delay(200);
+
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 	return (rv);
 }
@@ -4664,8 +4747,11 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 		wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
 	}
-
+	/* Wait more 200us for a bug of the ready bit in the MDIC register */
+	delay(200);
 	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	delay(200);
+
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 }
 
@@ -5165,4 +5251,76 @@ wm_read_ich8_word(struct wm_softc *sc, uint32_t index, uint16_t *data)
 
     status = wm_read_ich8_data(sc, index, 2, data);
     return status;
+}
+
+
+/* XXX Currently TBI only */
+static int
+wm_check_for_link(struct wm_softc *sc)
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	uint32_t rxcw;
+	uint32_t ctrl;
+	uint32_t status;
+	uint32_t sig;
+
+	rxcw = CSR_READ(sc, WMREG_RXCW);
+	ctrl = CSR_READ(sc, WMREG_CTRL);
+	status = CSR_READ(sc, WMREG_STATUS);
+
+	sig = (sc->sc_type > WM_T_82544) ? CTRL_SWDPIN(1) : 0;
+
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s: sig = %d, status_lu = %d, rxcw_c = %d\n",
+		device_xname(sc->sc_dev), __func__,
+		((ctrl & CTRL_SWDPIN(1)) == sig),
+		((status & STATUS_LU) != 0),
+		((rxcw & RXCW_C) != 0)
+		    ));
+
+	/*
+	 * SWDPIN   LU RXCW
+	 *      0    0    0
+	 *      0    0    1	(should not happen)
+	 *      0    1    0	(should not happen)
+	 *      0    1    1	(should not happen)
+	 *      1    0    0	Disable autonego and force linkup
+	 *      1    0    1	got /C/ but not linkup yet
+	 *      1    1    0	(linkup)
+	 *      1    1    1	If IFM_AUTO, back to autonego
+	 *
+	 */
+	if (((ctrl & CTRL_SWDPIN(1)) == sig)
+	    && ((status & STATUS_LU) == 0)
+	    && ((rxcw & RXCW_C) == 0)) {
+		DPRINTF(WM_DEBUG_LINK, ("%s: force linkup and fullduplex\n",
+			__func__));
+		sc->sc_tbi_linkup = 0;
+		/* Disable auto-negotiation in the TXCW register */
+		CSR_WRITE(sc, WMREG_TXCW, (sc->sc_txcw & ~TXCW_ANE));
+
+		/*
+		 * Force link-up and also force full-duplex.
+		 *
+		 * NOTE: CTRL was updated TFCE and RFCE automatically,
+		 * so we should update sc->sc_ctrl
+		 */
+		sc->sc_ctrl = ctrl | CTRL_SLU | CTRL_FD;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	} else if(((status & STATUS_LU) != 0)
+	    && ((rxcw & RXCW_C) != 0)
+	    && (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)) {
+		sc->sc_tbi_linkup = 1;
+		DPRINTF(WM_DEBUG_LINK, ("%s: go back to autonego\n",
+			__func__));
+		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
+		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
+	} else if (((ctrl & CTRL_SWDPIN(1)) == sig)
+	    && ((rxcw & RXCW_C) != 0)) {
+		DPRINTF(WM_DEBUG_LINK, ("/C/"));
+	} else {
+		DPRINTF(WM_DEBUG_LINK, ("%s: %x,%x,%x\n", __func__, rxcw, ctrl,
+			status));
+	}
+
+	return 0;
 }
