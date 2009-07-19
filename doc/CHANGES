@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1257 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1258 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -26,7 +26,7 @@
 
 Changes from NetBSD 5.0 to NetBSD 6.0:
 
-	syslog(3): Import Martin Schuette's Summer of Code project: 
+	syslog(3): Import Martin Schuette's Summer of Code project:
 		Reliable TCP connections, syslog protocol API,
 		encryption. [christos 20081031]
 	agp(4): Add support for Intel G35. [christos 20081108]
@@ -320,11 +320,11 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[rmind 20090628]
 	dhcpcd(8): Import dhcpcd-5.0.5 [roy 20090704]
 	dhcpcd(8): Import dhcpcd-5.0.6 [roy 20090708]
-	sysmon_envsys(8): Enhancements to allow access to driver-internal  
+	sysmon_envsys(8): Enhancements to allow access to driver-internal
 		limit values [pgoyette 20090710]
 	libc: Add getdelim(3) and getline(3) conforming to
 		IEEE Std 1003.1-2008 (``POSIX.1'') [roy 20090713]
 	ip(4): Add IP_RECVTTL option to let recvmsg(2) return the TTL
-	       of the received datagram. [minskim 20090716]
+		of the received datagram. [minskim 20090716]
 	ip(4): Add IP_MINTTL option to discard packets with a TTL
-	       lower than the option value. [minskim 20090717]
+		lower than the option value. [minskim 20090717]
