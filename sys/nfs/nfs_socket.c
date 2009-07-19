@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.170.2.5 2009/07/16 16:43:15 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.170.2.6 2009/07/19 08:21:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.5 2009/07/16 16:43:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.2.6 2009/07/19 08:21:13 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -378,10 +378,8 @@ nfs_reconnect(struct nfsreq *rep)
 
 	KASSERT(rep->r_nmp->nm_rcvlwp == curlwp);
 	if (!rw_tryupgrade(&nmp->nm_solock)) {
-		printf("%s: nmp=%p: upgrade failed\n", __func__, nmp);
 		return EAGAIN;
 	}
-	printf("%s: nmp=%p: upgrade succeeded\n", __func__, nmp);
 	nfs_disconnect(nmp);
 	while ((error = nfs_connect(nmp, rep, &lwp0)) != 0) {
 		if (error == EINTR || error == ERESTART) {
@@ -845,14 +843,15 @@ nfs_reply(struct nfsreq *myrep, struct lwp *lwp)
 		if (error) {
 			nfs_rcvunlock(nmp);
 			if (error == EAGAIN) { /* from nfs_reconnect */
-				printf("%s: nmp=%p: draining\n", __func__, nmp);
+				/*
+				 * drain the lock and try again.
+				 */
 				rw_exit(&nmp->nm_solock);
 				rw_enter(&nmp->nm_solock, RW_WRITER);
 				rw_exit(&nmp->nm_solock);
 				rw_enter(&nmp->nm_solock, RW_READER);
 				continue;
 			}
-
 			if (nmp->nm_iflag & NFSMNT_DISMNT) {
 				/*
 				 * Oops, we're going away now..
@@ -909,9 +908,11 @@ nfsmout:
 			}
 			if (/* nmp->nm_sotype == SOCK_DGRAM && */
 			    (rep->r_rflags & RR_SENT) == 0) {
+#if defined(RPC_DEBUG)
 				printf("%s: got a reply for unsent req:"
 				    " xid=0x%x\n",
 				    __func__, rep->r_xid);
+#endif /* defined(RPC_DEBUG) */
 				continue;
 			}
 			break;
@@ -986,9 +987,11 @@ nfsmout:
 		 * If it's mine, get out.
 		 */
 		if (rep == NULL) {
+#if defined(RPC_DEBUG)
 			printf("%s: unexpected reply: xid=0x%" PRIx32
 			    ", sotype=%d\n",
 			    __func__, rxid, nmp->nm_sotype);
+#endif /* defined(RPC_DEBUG) */
 			nfsstats.rpcunexpected++;
 			m_freem(mrep);
 		} else if (rep == myrep) {
