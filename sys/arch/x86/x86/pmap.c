@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.87 2009/07/19 10:09:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2009/06/28 15:18:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2009/07/19 10:09:11 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -766,7 +766,7 @@ inline void
 pmap_reference(struct pmap *pmap)
 {
 
-	atomic_inc_uint((unsigned *)&pmap->pm_obj[0].uo_refs);
+	atomic_inc_uint(&pmap->pm_obj[0].uo_refs);
 }
 
 /*
@@ -2290,7 +2290,7 @@ pmap_destroy(struct pmap *pmap)
 	 * drop reference count
 	 */
 
-	if (atomic_dec_uint_nv((unsigned *)&pmap->pm_obj[0].uo_refs) > 0) {
+	if (atomic_dec_uint_nv(&pmap->pm_obj[0].uo_refs) > 0) {
 		return;
 	}
 
