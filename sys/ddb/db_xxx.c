@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.61 2009/05/24 21:41:25 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.62 2009/07/19 02:37:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.61 2009/05/24 21:41:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.62 2009/07/19 02:37:33 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
 #include "opt_aio.h"
+#include "opt_mqueue.h"
 #endif
 
 #ifndef _KERNEL
@@ -149,6 +150,7 @@ db_show_aio_jobs(db_expr_t addr, bool haddr,
 }
 #endif
 
+#ifdef MQUEUE
 void
 db_show_mqueue_cmd(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
@@ -158,6 +160,7 @@ db_show_mqueue_cmd(db_expr_t addr, bool haddr,
 	mqueue_print_list(db_printf);
 #endif
 }
+#endif
 
 void
 db_show_module_cmd(db_expr_t addr, bool haddr,
