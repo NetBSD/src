@@ -1,4 +1,4 @@
-/*	$NetBSD: mq_prio_test.c,v 1.1 2009/07/13 02:55:42 rmind Exp $	*/
+/*	$NetBSD: mq_prio_test.c,v 1.2 2009/07/19 02:31:19 rmind Exp $	*/
 
 /*
  * Test for POSIX message queue priority handling.
@@ -28,7 +28,7 @@ send_msgs(mqd_t mqfd)
 		err(EXIT_FAILURE, "mq_send 1");
 
 	msg[0] = 'b';
-	if (mq_send(mqfd, msg, sizeof(msg), 1 + MQ_PRIO_BOUNDARY) == -1)
+	if (mq_send(mqfd, msg, sizeof(msg), MQ_PRIO_BOUNDARY + 1) == -1)
 		err(EXIT_FAILURE, "mq_send 2");
 
 	msg[0] = 'c';
@@ -36,8 +36,16 @@ send_msgs(mqd_t mqfd)
 		err(EXIT_FAILURE, "mq_send 3");
 
 	msg[0] = 'd';
-	if (mq_send(mqfd, msg, sizeof(msg), 1 + MQ_PRIO_BOUNDARY) == -1)
+	if (mq_send(mqfd, msg, sizeof(msg), MQ_PRIO_BOUNDARY - 1) == -1)
 		err(EXIT_FAILURE, "mq_send 4");
+
+	msg[0] = 'e';
+	if (mq_send(mqfd, msg, sizeof(msg), 0) == -1)
+		err(EXIT_FAILURE, "mq_send 5");
+
+	msg[0] = 'f';
+	if (mq_send(mqfd, msg, sizeof(msg), MQ_PRIO_BOUNDARY + 1) == -1)
+		err(EXIT_FAILURE, "mq_send 6");
 }
 
 static void
@@ -60,22 +68,32 @@ receive_msgs(mqd_t mqfd)
 	if (mq_receive(mqfd, m, len, &p) == -1) {
 		err(EXIT_FAILURE, "mq_receive 1");
 	}
-	assert(p == 32 && m[0] == 'b');
+	assert(p == (MQ_PRIO_BOUNDARY + 1) && m[0] == 'b');
 
 	if (mq_receive(mqfd, m, len, &p) == -1) {
 		err(EXIT_FAILURE, "mq_receive 2");
 	}
-	assert(p == 32 && m[0] == 'd');
+	assert(p == (MQ_PRIO_BOUNDARY + 1) && m[0] == 'f');
 
 	if (mq_receive(mqfd, m, len, &p) == -1) {
 		err(EXIT_FAILURE, "mq_receive 3");
 	}
-	assert(p == 31 && m[0] == 'a');
+	assert(p == MQ_PRIO_BOUNDARY && m[0] == 'a');
 
 	if (mq_receive(mqfd, m, len, &p) == -1) {
 		err(EXIT_FAILURE, "mq_receive 4");
 	}
-	assert(p == 31 && m[0] == 'c');
+	assert(p == MQ_PRIO_BOUNDARY && m[0] == 'c');
+
+	if (mq_receive(mqfd, m, len, &p) == -1) {
+		err(EXIT_FAILURE, "mq_receive 5");
+	}
+	assert(p == (MQ_PRIO_BOUNDARY - 1) && m[0] == 'd');
+
+	if (mq_receive(mqfd, m, len, &p) == -1) {
+		err(EXIT_FAILURE, "mq_receive 6");
+	}
+	assert(p == 0 && m[0] == 'e');
 
 	free(m);
 }
