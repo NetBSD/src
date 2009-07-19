@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.30 2009/03/18 17:06:43 cegger Exp $	*/
+/*	$NetBSD: view.c,v 1.31 2009/07/19 05:43:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.30 2009/03/18 17:06:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.31 2009/07/19 05:43:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 	if(cm == NULL)
 		return(ENOMEM);
 
-	memcpy( cm, ucm, sizeof(colormap_t));
+	memcpy(cm, ucm, sizeof(colormap_t));
 	cm->entry = (long *)&cm[1];		 /* table directly after. */
 	if (((error = 
 	    copyin(ucm->entry,cm->entry,sizeof(ucm->entry[0])*ucm->size)) == 0)
@@ -359,14 +359,14 @@ viewioctl (dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 		view_remove(vu);
 		break;
 	case VIOCGSIZE:
-		memcpy( data, &vu->size, sizeof (struct view_size)); 
+		memcpy(data, &vu->size, sizeof (struct view_size)); 
 		break;
 	case VIOCSSIZE:
 		error = view_setsize(vu, (struct view_size *)data);
 		break;
 	case VIOCGBMAP:
 		bm = (bmap_t *)data;
-		memcpy( bm, vu->view->bitmap, sizeof(bmap_t));
+		memcpy(bm, vu->view->bitmap, sizeof(bmap_t));
 		if (l != NOLWP) {
 			bm->plane      = NULL;
 			bm->hw_address = NULL;
