@@ -1,115 +1,111 @@
-/*	$NetBSD: memchr.S,v 1.2 2009/07/18 18:06:56 dsl Exp $	*/
-
-/*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by David Laight.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+/*
+ * Written by J.T. Conklin <jtc@acorntoolworks.com>
+ * Public domain.
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.2 2009/07/18 18:06:56 dsl Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.3 2009/07/19 23:45:29 christos Exp $")
 #endif
 
-/*
- * The instruction sequences used try to avoid data dependencies
- * between adjacent instructions (to allow parallel execution).
- * The 'imul' for %r9 could be put into the delay following the
- * memory read (ie inside the loop) at no obvious cost - except
- * that the loop is currently exactly 32 bytes - 2 fetch blocks!.
- *
- * I don't think aligning any of the other branch targets is useful.
- */
-
 ENTRY(memchr)
+	movzbq	%sil,%rcx
+
+	/*
+	 * Align to word boundary.
+	 * Consider unrolling loop?
+	 */
+	testq	%rdx,%rdx	/* nbytes == 0? */
+	je	.Lzero
+.Lalign:
+	testb	$7,%dil
+	je	.Lword_aligned
+	movq	%rdi,%rax
+	cmpb	(%rdi),%cl
+	je	.Ldone
+	incq	%rdi
+	decq	%rdx
+	jnz	.Lalign
+	jmp	.Lzero
+
+.Lword_aligned:
+	/* copy char to all bytes in word */
+	movb	%cl,%ch
+	movq	%rcx,%rsi
+	salq	$16,%rcx
+	orq	%rsi,%rcx
+	movq	%rcx,%rsi
+	salq	$32,%rcx
+	orq	%rsi,%rcx
+
 	movabsq	$0x0101010101010101,%r8
-	lea	(%rdi,%rdx),%r10	/* limit of buffer to scan */
-	movzbq	%sil,%rsi	/* mask high bits! */
+	movabsq	$0x8080808080808080,%r9
 
-	/* 'directpath' imuls can execute 3 at a time ... (amd) */
-	imul	%r8,%rsi	/* search byte replicated in word */
-	imul	$0x80,%r8,%r9	/* 0x8080808080808080 */
-	test	$7,%dil
-	jnz	20f		/* jump if misaligned */
-	jmp	1f		/* jump to avoid 4 nops (13 bytes) in gap */
-
-	_ALIGN_TEXT		/* entire loop now in 32 aligned bytes */
-1:
-	cmpq	%r10,%rdi	/* end of buffer ? */
-	jae	30f		/* jump if so */
-
-	movq	(%rdi),%rax	/* value to check */
-2:
+	_ALIGN_TEXT
+.Lloop:
+	cmpq	$7,%rdx		/* nbytes > 8 */
+	jbe	.Lbyte
+	movq	(%rdi),%rsi
 	addq	$8,%rdi
-	xorq	%rsi,%rax	/* now looking for zeros */
-	mov	%rax,%rcx
-	subq	%r8,%rax	/* x - 0x10 */
-	not	%rcx
-	andq	%r9,%rax	/* (x - 0x10) & 0x80 */
-	andq	%rcx,%rax	/* ((x - 0x10) & 0x80) ^ ~x */
-	je	1b		/* jump if not found */
+	xorq	%rcx,%rsi
+	subq	$8,%rdx
+	subq	%r8,%rsi
+	testq	%r9,%rsi
+	je	.Lloop
 
-/* Found byte in word, get its address */
-	bsf	%rax,%rax
-	shr	$3,%eax
-	lea	-8(%rax,%rdi),%rax
-	cmpq	%r10,%rax	/* need to check not beyond buffer */
-	jae	30f
-	rep
-	ret			/* amd - no ret after jmp */
+	/*
+	 * In rare cases, the above loop may exit prematurely. We must
+	 * return to the loop if none of the bytes in the word are
+	 * equal to ch.
+	 */
 
-/* Input misaligned, read aligned and kill low bits */
-/* (Getting a -1 is surprisingly hard work!) */
-20:
-	xor	%eax,%eax	/* zeros all 64 bits */
-	mov	%dil,%cl	/* misalignment amount 1..7 (+high bits )*/
-	test	%rdx,%rdx	/* zero length, don't read */
-	jz	30f
+	leaq	-8(%rdi),%rax
+	cmpb	-8(%rdi),%cl	/* 1st byte == ch? */
+	je	.Ldone
 
-	and	$~7,%dil	/* %rdi now start of word */
-	lea	-1(%rax),%r11	/* all 0xff */
-	and	$7,%cl		/* 1..7 */
+	leaq	-7(%rdi),%rax
+	cmpb	-7(%rdi),%cl	/* 2nd byte == ch? */
+	je	.Ldone
 
-	mov	(%rdi),%rax	/* word containing first byte */
-	shl	$3,%cl		/* 8..56 */
-	test	%r11,%rsi	/* searching for 0xff */
-	jz	25f
+	leaq	-6(%rdi),%rax
+	cmpb	-6(%rdi),%cl	/* 3rd byte == ch? */
+	je	.Ldone
 
-	/* Searching for other than 0xff, set low bytes */
-	shl	%cl,%r11	/* 0xff in high (wanted) bytes */
-	not	%r11		/* 0xff in low (unwanted) bytes */
-	or	%r11,%rax	/* low bytes now set */
-	jmp	2b
+	leaq	-5(%rdi),%rax
+	cmpb	-5(%rdi),%cl	/* 4th byte == ch? */
+	je	.Ldone
 
-25:	/* Searching for 0xff, clear low bytes */
-	shl	%cl,%r11	/* 0xff in high (wanted) bytes */
-	and	%r11,%rax	/* low bytes now zero */
-	jmp	2b
+	leaq	-4(%rdi),%rax
+	cmpb	-4(%rdi),%cl	/* 5th byte == ch? */
+	je	.Ldone
 
-/* Not found */
-30:	xorq	%rax,%rax
+	leaq	-3(%rdi),%rax
+	cmpb	-3(%rdi),%cl	/* 6th byte == ch? */
+	je	.Ldone
+
+	leaq	-2(%rdi),%rax
+	cmpb	-2(%rdi),%cl	/* 7th byte == ch? */
+	je	.Ldone
+
+	leaq	-1(%rdi),%rax
+	cmpb	-1(%rdi),%cl	/* 7th byte == ch? */
+	jne	.Lloop
+	ret
+
+.Lbyte:
+	testq	%rdx,%rdx
+	je	.Lzero
+.Lbyte_loop:
+	movq	%rdi,%rax
+	cmpb	(%rdi),%cl
+	je	.Ldone
+	incq	%rdi
+	decq	%rdx
+	jnz	.Lbyte_loop
+
+.Lzero:
+	xorq	%rax,%rax
+
+.Ldone:
 	ret
