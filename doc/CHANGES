@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1258 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1259 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -328,3 +328,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		of the received datagram. [minskim 20090716]
 	ip(4): Add IP_MINTTL option to discard packets with a TTL
 		lower than the option value. [minskim 20090717]
+	openssl: Import SNAP-20090710 under the new crypto/external
+		framework [christos 20090719]
+
