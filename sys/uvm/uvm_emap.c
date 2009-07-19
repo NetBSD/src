@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.2 2009/07/09 21:43:17 rmind Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.3 2009/07/19 15:17:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.2 2009/07/09 21:43:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.3 2009/07/19 15:17:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -225,7 +225,7 @@ uvm_emap_switch(lwp_t *l)
 	 * barriers and race conditions.
 	 */
 	curgen = uvm_emap_gen_return();
-	pmap_emap_sync();
+	pmap_emap_sync(false);
 	ucpu->emap_gen = curgen;
 }
 
@@ -282,7 +282,7 @@ uvm_emap_consume(u_int gen)
 	 *  (3) We will roll the value forward later.
 	 */
 	curgen = uvm_emap_gen_return();
-	pmap_emap_sync();
+	pmap_emap_sync(true);
 	ucpu->emap_gen = curgen;
 	l->l_emap_gen = curgen;
 	KASSERT((signed int)(curgen - gen) >= 0);

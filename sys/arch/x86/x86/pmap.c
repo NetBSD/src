@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2009/07/19 10:09:11 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2009/07/19 15:17:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2009/07/19 10:09:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2009/07/19 15:17:29 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1080,13 +1080,13 @@ pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
  * pmap_emap_sync: perform TLB flush or pmap load, if it was deferred.
  */
 void
-pmap_emap_sync(void)
+pmap_emap_sync(bool canload)
 {
 	struct cpu_info *ci = curcpu();
 	struct pmap *pmap;
 
 	KASSERT(kpreempt_disabled());
-	if (__predict_true(ci->ci_want_pmapload)) {
+	if (__predict_true(ci->ci_want_pmapload && canload)) {
 		/*
 		 * XXX: Hint for pmap_reactivate(), which might suggest to
 		 * not perform TLB flush, if state has not changed.
