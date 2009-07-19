@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140 2009/06/25 13:58:59 agc Exp $
+#	$NetBSD: Makefile,v 1.141 2009/07/19 23:35:02 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -21,21 +21,7 @@ SUBDIR+= libskey
 # XXX Crypto bits must be done before libtelnet.
 
 .if (${MKCRYPTO} != "no")
-# OpenSSL libraries.
-SUBDIR+= libcrypto libdes
-
-.if (${MKCRYPTO_IDEA} != "no")
-SUBDIR+= libcrypto_idea
-.endif	# MKCRYPTO_IDEA != no
-
-.if (${MKCRYPTO_MDC2} != "no")
-SUBDIR+= libcrypto_mdc2
-.endif	# MKCRYPTO_MDC2 != no
-
-.if (${MKCRYPTO_RC5} != "no")
-SUBDIR+= libcrypto_rc5
-.endif	# MKCRYPTO_RC5 != no
-
+SUBDIR+=	../crypto/external/bsd/openssl/lib
 .endif	# MKCRYPTO != no
 
 .if (${MKKERBEROS} != "no")
@@ -65,9 +51,6 @@ SUBDIR+=	libedit		# depends on libterm
 
 SUBDIR+=	libradius	# depends on libcrypto - only if ${MKCRYPTO}
 
-.if (${MKCRYPTO} != "no")
-SUBDIR+=	libssl		# depends on libcrypto
-.endif
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+=	libkrb5		# depends on libcrypto and more
