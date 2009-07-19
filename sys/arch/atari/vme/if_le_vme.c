@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.26 2009/07/08 12:23:10 tsutsui Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.27 2009/07/19 05:43:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.26 2009/07/08 12:23:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.27 2009/07/19 05:43:23 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -428,7 +428,7 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	 */
 	switch (lesc->sc_type) {
 	    case LE_OLD_RIEBL:
-		memcpy( sc->sc_enaddr, riebl_def_mac,
+		memcpy(sc->sc_enaddr, riebl_def_mac,
 					sizeof(sc->sc_enaddr));
 		break;
 	    case LE_NEW_RIEBL:
