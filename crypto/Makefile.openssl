@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.openssl,v 1.8 2005/11/25 20:35:41 christos Exp $
+#	$NetBSD: Makefile.openssl,v 1.9 2009/07/19 23:34:00 christos Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
 
 .include <bsd.own.mk>
 
-OPENSSLSRC=	${CRYPTODIST}/openssl
+OPENSSLSRC=	${CRYPTODIST}/external/bsd/openssl/dist
 CPPFLAGS+=	-DOPENSSLDIR=\"/etc/openssl\"
 CPPFLAGS+=	-DENGINESDIR=\"/usr/lib/openssl\"
 CPPFLAGS+=	-DDSO_DLFCN -DHAVE_DLFCN_H
