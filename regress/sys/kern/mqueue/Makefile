@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/13 02:55:42 rmind Exp $
+#	$NetBSD: Makefile,v 1.2 2009/07/19 02:31:19 rmind Exp $
 #
 PROG=		mq_prio_test
 NOMAN=		# defined
@@ -6,7 +6,7 @@ WARNS=		4
 LDADD=		-lrt
 
 regress:
-	@/sbin/sysctl kern.mqueue.mq_prio_max=33
+	@/sbin/sysctl -w kern.mqueue.mq_prio_max=33
 	@if ./$(PROG); then \
 		echo "PASSED"; \
 	else \
