@@ -1,7 +1,5 @@
-/*	$NetBSD: ssc.c,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
-
 /*-
- * Copyright (c) 2000 Doug Rabson
+ * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,83 +23,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD$
+ * $FreeBSD: src/sys/ia64/include/sapicreg.h,v 1.1 2001/10/05 10:30:08 dfr Exp $
  */
 
-#include <sys/param.h>
+#ifndef _MACHINE_SAPICREG_H_
+#define _MACHINE_SAPICREG_H_
 
-#include <machine/ssc.h>
+/*
+ * Offsets from the SAPIC base in memory. Most registers are accessed
+ * by indexing using the SAPIC_IO_SELECT register.
+ */
+#define SAPIC_IO_SELECT		0x00
+#define SAPIC_IO_WINDOW		0x10
+#define SAPIC_APIC_EOI		0x40
 
-#include <dev/cons.h>
+/*
+ * Indexed registers.
+ */
+#define SAPIC_ID		0x00
+#define SAPIC_VERSION		0x01
+#define SAPIC_ARBITRATION_ID	0x02
+#define SAPIC_RTE_BASE		0x10
 
-
-#define	SSC_POLL_HZ	50
-
-void sscconsattach(struct device *, struct device *, void *);
-
-void ssccnprobe(struct consdev *);
-void ssccninit(struct consdev *);
-void ssccnputc(dev_t, int);
-int ssccngetc(dev_t);
-void ssccnpollc(dev_t, int);
-
-
-uint64_t
-ssc(uint64_t in0, uint64_t in1, uint64_t in2, uint64_t in3, int which)
-{
-	register uint64_t ret0 __asm("r8");
-
-	__asm __volatile("mov r15=%1\n\t"
-			 "break 0x80001"
-			 : "=r"(ret0)
-			 : "r"(which), "r"(in0), "r"(in1), "r"(in2), "r"(in3));
-	return ret0;
-}
-
-
-void
-sscconsattach(struct device *parent, struct device *self, void *aux)
-{
-	/* not yet */
-}
-
-void
-ssccnprobe(struct consdev *cp)
-{
-
-	cp->cn_dev = ~NODEV;		/* XXXX: And already exists */
-	cp->cn_pri = CN_INTERNAL;
-}
-
-void
-ssccninit(struct consdev *cp)
-{
-	/* nothing */
-}
-
-void
-ssccnputc(dev_t dev, int c)
-{
-
-	ssc(c, 0, 0, 0, SSC_PUTCHAR);
-}
-
-int
-ssccngetc(dev_t dev)
-{
-	int c;
-
-	do {
-		c = ssc(0, 0, 0, 0, SSC_GETCHAR);
-	} while (c == 0);
-
-	return c;
-}
-
-void
-ssccnpollc(dev_t dev, int on)
-{
-	/* nothing */
-}
-
-/* XXX: integrate the rest of the ssc.c stuff from FreeBSD to plug into wsdisplay */
+#endif /* ! _MACHINE_SAPICREG_H_ */
