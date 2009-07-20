@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2008/04/13 21:29:15 mlelstv Exp $
+# $NetBSD: Makefile,v 1.41 2009/07/20 12:16:37 skrll Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -14,7 +14,7 @@ WARNS?=		1
 LIB=		krb5
 
 LIBDPLIBS+=	hx509	${.CURDIR}/../libhx509 \
-		crypto	${.CURDIR}/../libcrypto \
+		crypto	${.CURDIR}/../../crypto/external/bsd/openssl/lib/libcrypto \
 		asn1	${.CURDIR}/../libasn1 \
 		com_err	${.CURDIR}/../libcom_err \
 		roken	${.CURDIR}/../libroken
