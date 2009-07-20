@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_console.c,v 1.3 2009/03/18 10:22:31 cegger Exp $	*/
+/*	$NetBSD: efi_console.c,v 1.4 2009/07/20 04:59:03 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -32,6 +32,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 

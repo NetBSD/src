@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: devicename.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -30,6 +30,7 @@
 /* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/devicename.c,v 1.2 2003/09/08 09:11:32 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <sys/disklabel.h>
 
 #include <bootstrap.h>

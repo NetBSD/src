@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2009/07/20 04:59:04 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -30,6 +30,7 @@
 #include <sys/cdefs.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 #include "libski.h"
