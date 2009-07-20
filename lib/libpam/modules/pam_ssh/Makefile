@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2009/07/20 17:29:08 christos Exp $
+# $NetBSD: Makefile,v 1.10 2009/07/20 18:01:41 christos Exp $
 # PAM module for SSH
 # $FreeBSD: src/lib/libpam/modules/pam_ssh/Makefile,v 1.18 2004/08/06 07:27:04 cperciva Exp $
 
@@ -8,7 +8,7 @@ NOPICINSTALL=	# don't install _pic.a library
 
 .include <bsd.own.mk>
 
-SSHSRC=	${NETBSDSRCDIR}/crypto/dist/ssh
+SSHSRC=	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 
 LIB=	pam_ssh
 MAN=	pam_ssh.8
