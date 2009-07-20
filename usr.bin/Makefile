@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176 2009/06/07 22:46:43 christos Exp $
+#	$NetBSD: Makefile,v 1.177 2009/07/20 17:34:41 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -48,7 +48,6 @@ SUBDIR+= ypcat ypmatch ypwhich
 .endif
 
 .if (${MKCRYPTO} != "no")
-SUBDIR+= openssl
 SUBDIR+= bdes
 SUBDIR+= nbsvtool
 .endif
