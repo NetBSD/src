@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.48 2009/03/16 23:11:14 dsl Exp $ */
+/* $NetBSD: dec_3max.c,v 1.49 2009/07/20 16:25:22 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.48 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.49 2009/07/20 16:25:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ dec_3max_init()
 	/* no high resolution timer available */
 
 	/* clear any memory errors */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
 	ipl2spl_table = dec_3max_ipl2spl_table;
@@ -179,9 +179,9 @@ dec_3max_init()
 	 * Enable ECC memory correction, turn off LEDs, and
 	 * disable all TURBOchannel interrupts.
 	 */
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	csr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
 	kn02_wbflush();
 
 	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
@@ -197,10 +197,10 @@ dec_3max_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
 	kn02_wbflush();
 }
 
@@ -263,9 +263,10 @@ found:
 	intrtab[(int)cookie].ih_func = handler;
 	intrtab[(int)cookie].ih_arg = arg;
 
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
+	csr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) &
+	    0x00ffff00;
 	csr |= (kn02intrs[i].intrbit << 16);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
 	kn02_wbflush();
 }
 
@@ -286,7 +287,7 @@ dec_3max_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
-		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+		csr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
 			warned = 1;
 			printf("WARNING: power supply is overheating!\n");
@@ -310,7 +311,7 @@ dec_3max_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (ipending & MIPS_INT_MASK_0) {
-		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+		csr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		csr &= (csr >> KN02_CSR_IOINTEN_SHIFT);
 		if (csr & (KN02_IP_DZ | KN02_IP_LANCE | KN02_IP_SCSI)) {
 			if (csr & KN02_IP_DZ)
@@ -349,11 +350,11 @@ dec_3max_errintr()
 	u_int32_t erradr, errsyn, csr;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
-	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
+	erradr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	csr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */
 	dec_mtasic_err(erradr, errsyn, csr & KN02_CSR_BNK32M);
