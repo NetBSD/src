@@ -1,4 +1,4 @@
-/*	$NetBSD: make_level.c,v 1.8 2009/07/20 05:44:02 dholland Exp $	*/
+/*	$NetBSD: make_level.c,v 1.9 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: make_level.c,v 1.8 2009/07/20 05:44:02 dholland Exp $");
+__RCSID("$NetBSD: make_level.c,v 1.9 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include "robots.h"
 
 /*
  * make_level:
@@ -47,9 +47,9 @@ __RCSID("$NetBSD: make_level.c,v 1.8 2009/07/20 05:44:02 dholland Exp $");
 void
 make_level(void)
 {
-	int	i;
-	COORD	*cp;
-	int	x;
+	int i;
+	COORD *cp;
+	int x;
 
 	reset_count();
 	for (i = 1; i < Y_FIELDSIZE; i++)
