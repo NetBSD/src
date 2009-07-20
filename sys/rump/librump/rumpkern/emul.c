@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.90 2009/06/09 14:30:06 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.91 2009/07/20 17:12:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.90 2009/06/09 14:30:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.91 2009/07/20 17:12:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -292,7 +292,7 @@ void *
 kern_realloc(void *ptr, unsigned long size, struct malloc_type *type, int flags)
 {
 
-	return rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
+	return rumpuser_realloc(ptr, size, (flags & (M_CANFAIL|M_NOWAIT)) != 0);
 }
 
 void
