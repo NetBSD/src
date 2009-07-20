@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.20 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: robots.h,v 1.21 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,20 +31,11 @@
  *	@(#)robots.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <sys/ttydefaults.h>
-#include <sys/endian.h>
-#include <ctype.h>
-#include <curses.h>
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <pwd.h>
+#include <sys/cdefs.h>
+
 #include <setjmp.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 /*
  * miscellaneous constants
@@ -84,14 +75,12 @@ typedef struct {
 } COORD;
 
 typedef struct {
-	u_int32_t s_uid;
-	u_int32_t s_score;
-	u_int32_t s_auto;
-	u_int32_t s_level;
+	uint32_t s_uid;
+	uint32_t s_score;
+	uint32_t s_auto;
+	uint32_t s_level;
 	char s_name[MAXNAME];
 } SCORE;
-
-typedef struct passwd PASSWD;
 
 /*
  * global variables
@@ -110,7 +99,7 @@ extern const char *Next_move, *Move_list;
 extern int Count, Level, Num_robots, Num_scrap, Num_scores,
 	Start_level, Wait_bonus, Num_games;
 
-extern u_int32_t Score;
+extern uint32_t Score;
 
 extern COORD Max, Min, My_pos, Robots[], Scrap[];
 

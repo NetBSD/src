@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.14 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.15 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,10 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.14 2009/07/20 06:00:56 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.15 2009/07/20 06:39:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/ttydefaults.h>  /* for CTRL */
+#include <ctype.h>
+#include <curses.h>
+#include <unistd.h>
 #include "robots.h"
 
 #define ESC	'\033'
@@ -151,7 +156,7 @@ over:
 		  case 'Y': case 'U': case 'H': case 'J':
 		  case 'K': case 'L': case 'B': case 'N':
 		  case '>':
-			Running = TRUE;
+			Running = true;
 			if (c == '>')
 				Run_ch = ' ';
 			else
@@ -166,13 +171,13 @@ over:
 			break;
 		  case 'w':
 		  case 'W':
-			Waiting = TRUE;
+			Waiting = true;
 			leaveok(stdscr, TRUE);
 			goto ret;
 		  case 't':
 		  case 'T':
 teleport:
-			Running = FALSE;
+			Running = false;
 			mvaddch(My_pos.y, My_pos.x, ' ');
 			My_pos = *rnd_pos();
 			telmsg(1);
@@ -215,7 +220,7 @@ must_telep(void)
 
 #ifdef FANCY
 	if (Stand_still && Num_robots > 1 && eaten(&My_pos))
-		return TRUE;
+		return true;
 #endif
 
 	for (y = -1; y <= 1; y++) {
@@ -229,10 +234,10 @@ must_telep(void)
 			if (Field[newpos.y][newpos.x] > 0)
 				continue;
 			if (!eaten(&newpos))
-				return FALSE;
+				return false;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 /*
@@ -250,7 +255,7 @@ do_move(int dy, int dx)
 	    newpos.x <= 0 || newpos.x >= X_FIELDSIZE ||
 	    Field[newpos.y][newpos.x] > 0 || eaten(&newpos)) {
 		if (Running) {
-			Running = FALSE;
+			Running = false;
 			leaveok(stdscr, FALSE);
 			move(My_pos.y, My_pos.x);
 			refresh();
@@ -259,16 +264,16 @@ do_move(int dy, int dx)
 			putchar(CTRL('G'));
 			reset_count();
 		}
-		return FALSE;
+		return false;
 	}
 	else if (dy == 0 && dx == 0)
-		return TRUE;
+		return true;
 	mvaddch(My_pos.y, My_pos.x, ' ');
 	My_pos = newpos;
 	mvaddch(My_pos.y, My_pos.x, PLAYER);
 	if (!jumping())
 		refresh();
-	return TRUE;
+	return true;
 }
 
 /*
@@ -287,10 +292,10 @@ eaten(const COORD *pos)
 			if (x <= 0 || x >= X_FIELDSIZE)
 				continue;
 			if (Field[y][x] == 1)
-				return TRUE;
+				return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 /*
@@ -301,7 +306,7 @@ void
 reset_count(void)
 {
 	Count = 0;
-	Running = FALSE;
+	Running = false;
 	leaveok(stdscr, FALSE);
 	refresh();
 }

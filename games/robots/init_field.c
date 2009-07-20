@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.11 2009/07/20 06:09:29 dholland Exp $	*/
+/*	$NetBSD: init_field.c,v 1.12 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init_field.c,v 1.11 2009/07/20 06:09:29 dholland Exp $");
+__RCSID("$NetBSD: init_field.c,v 1.12 2009/07/20 06:39:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <curses.h>
 #include "robots.h"
 
 static int telx = 0;
@@ -52,7 +53,7 @@ void
 init_field(void)
 {
 	int i;
-	static bool first = TRUE;
+	static bool first = true;
 	static const char *const desc[] = {
 				"Directions:",
 				"",
@@ -79,8 +80,8 @@ init_field(void)
 				NULL
 	};
 
-	Dead = FALSE;
-	Waiting = FALSE;
+	Dead = false;
+	Waiting = false;
 	Score = 0;
 
 	erase();
@@ -115,7 +116,7 @@ init_field(void)
 	tely = i;
 	if (first)
 		refresh();
-	first = FALSE;
+	first = false;
 #ifdef FANCY
 	if (Pattern_roll)
 		Next_move = &Move_list[-1];

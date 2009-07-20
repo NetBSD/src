@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2009/07/20 06:09:29 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,10 +39,18 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2009/07/20 06:09:29 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2009/07/20 06:39:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <ctype.h>
+#include <curses.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "robots.h"
 
 extern const char *Scorefile;
@@ -66,10 +74,10 @@ main(int ac, char **av)
 	/* Revoke setgid privileges */
 	setgid(getgid());
 
-	show_only = FALSE;
+	show_only = false;
 	Num_games = 1;
 	if (ac > 1) {
-		bad_arg = FALSE;
+		bad_arg = false;
 		for (++av; ac > 1 && *av[0]; av++, ac--)
 			if (av[0][0] != '-')
 				if (isdigit((unsigned char)av[0][0]))
@@ -86,24 +94,24 @@ main(int ac, char **av)
 					if (sp == NULL)
 						sp = Scorefile;
 					if (strcmp(sp, "pattern_roll") == 0)
-						Pattern_roll = TRUE;
+						Pattern_roll = true;
 					else if (strcmp(sp, "stand_still") == 0)
-						Stand_still = TRUE;
+						Stand_still = true;
 					if (Pattern_roll || Stand_still)
-						Teleport = TRUE;
+						Teleport = true;
 #endif
 				}
 			else
 				for (sp = &av[0][1]; *sp; sp++)
 					switch (*sp) {
 					  case 'A':
-						Auto_bot = TRUE;
+						Auto_bot = true;
 						break;
 					  case 's':
-						show_only = TRUE;
+						show_only = true;
 						break;
 					  case 'r':
-						Real_time = TRUE;
+						Real_time = true;
 						break;
 					  case 'a':
 						Start_level = 4;
@@ -112,15 +120,15 @@ main(int ac, char **av)
 						Num_games++;
 						break;
 					  case 'j':
-						Jump = TRUE;
+						Jump = true;
 						break;
 					  case 't':
-						Teleport = TRUE;
+						Teleport = true;
 						break;
 
 					  default:
 						fprintf(stderr, "robots: unknown option: %c\n", *sp);
-						bad_arg = TRUE;
+						bad_arg = true;
 						break;
 					}
 		if (bad_arg) {
@@ -211,7 +219,7 @@ another(void)
 
 #ifdef FANCY
 	if ((Stand_still || Pattern_roll) && !Newscore)
-		return TRUE;
+		return true;
 #endif
 
 	if (query("Another game?")) {
@@ -222,7 +230,7 @@ another(void)
 			}
 			refresh();
 		}
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
