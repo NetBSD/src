@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.47 2009/03/16 23:11:14 dsl Exp $ */
+/* $NetBSD: dec_3100.c,v 1.48 2009/07/20 16:25:22 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.47 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.48 2009/07/20 16:25:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,11 +274,11 @@ dec_3100_errintr()
 {
 	u_int16_t csr;
 
-	csr = *(u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
+	csr = *(volatile u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 
 	if (csr & KN01_CSR_MERR) {
 		printf("Memory error at 0x%x\n",
-			*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
+		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
 	csr = (csr & ~KN01_CSR_MBZ) | 0xff;

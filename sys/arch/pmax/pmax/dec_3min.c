@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.63 2009/03/16 23:11:14 dsl Exp $ */
+/* $NetBSD: dec_3min.c,v 1.64 2009/07/20 16:25:22 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.63 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.64 2009/07/20 16:25:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ dec_3min_init()
 	platform.tc_init = dec_3min_tc_init;
 
 	/* clear any memory errors */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
@@ -184,22 +184,22 @@ dec_3min_init()
 	ipl2spl_table = dec_3min_ipl2spl_table;
 
 	/* enable posting of MIPS_INT_MASK_3 to CAUSE register */
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_3);
 
-	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
 #if 0
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
 #endif
 
 	/* sanitize interrupt mask */
 	kmin_tc3_imask = (KMIN_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT);
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
 
 	/*
 	 * The kmin memory hardware seems to wrap memory addresses
@@ -228,10 +228,10 @@ dec_3min_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
 
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn02ba_wbflush();
 }
 
@@ -335,7 +335,7 @@ dec_3min_intr_establish(struct device *dev, void *cookie, int level, int (*handl
 		break;
 	}
 
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
 	kn02ba_wbflush();
 }
 
@@ -356,7 +356,7 @@ dec_3min_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 	u_int32_t old_mask;
 
 	intr_depth++;
-	old_mask = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+	old_mask = *(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK);
 
 	if (ipending & MIPS_INT_MASK_4)
 		prom_haltbutton();
@@ -367,8 +367,8 @@ dec_3min_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 		u_int32_t intr, imsk, can_serve, turnoff;
 
 		turnoff = 0;
-		intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
-		imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+		intr = *(volatile u_int32_t *)(ioasic_base + IOASIC_INTR);
+		imsk = *(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK);
 		can_serve = intr & imsk;
 
 		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
@@ -385,7 +385,7 @@ dec_3min_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 			turnoff |= IOASIC_INTR_LANCE_READ_E;
 
 		if (turnoff)
-			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
+			*(volatile u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
 
 		if (intr & KMIN_INTR_TIMEOUT) {
 			kn02ba_errintr();
@@ -407,7 +407,7 @@ dec_3min_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 		/* If clock interrupts were enabled, re-enable them ASAP. */
 		if (old_mask & KMIN_INTR_CLOCK) {
 			/* ioctl interrupt mask to splclock and higher */
-			*(u_int32_t *)(ioasic_base + IOASIC_IMSK)
+			*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK)
 				= old_mask &
 					~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
 					  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
@@ -465,7 +465,7 @@ done:
 	/* restore entry state */
 	splhigh();
 	intr_depth--;
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
 
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
