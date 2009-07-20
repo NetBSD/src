@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2008/03/20 14:56:06 kochi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2009/07/20 04:41:37 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,7 +76,7 @@
 /*
  * Manipulating region bits of an address.
  */
-#define IA64_RR_BASE(n)         (((u_int64_t) (n)) << 61)
+#define IA64_RR_BASE(n)         (((uint64_t) (n)) << 61)
 #define IA64_RR_MASK(x)         ((x) & ((1L << 61) - 1))
 
 #define IA64_PHYS_TO_RR6(x)     ((x) | IA64_RR_BASE(6))
@@ -128,7 +128,7 @@ struct vm_page_md {
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	TAILQ_INIT(&(pg)->mdpage.pv_list);				\
-	mutex_init(&(pg)->mdpage.pv_mutex, MUTEX_SPIN, IPL_NONE);	\
+	mutex_init(&(pg)->mdpage.pv_mutex, MUTEX_DEFAULT, IPL_NONE);	\
 } while (/*CONSTCOND*/0)
 #endif /*_LOCORE*/
 

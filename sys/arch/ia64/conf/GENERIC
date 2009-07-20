@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.6 2009/07/20 04:41:36 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.1 2009/07/20 04:41:36 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -38,10 +38,11 @@ options 	USERCONF	# userconf(4) support
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# expensive locking checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
-#options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #options		MALLOC_DEBUG
@@ -52,12 +53,13 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 file-system	FFS		# UFS
 #file-system 	MFS		# memory file system
 
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
+
 
 # Kernel root file system and dump configuration.
-#config		netbsd	root on ? type ?
-config		netbsd	root on md0a type ffs
-#config		netbsd	root on sd0a type ffs
-#config		netbsd	root on ? type nfs
+config		netbsd	root on ? type ?
 
 #
 # Device configuration
@@ -67,29 +69,15 @@ mainbus0 at root
 
 cpu* at mainbus?
 
+# Advanced Configuration and Power Interface
+
+acpi0		at mainbus0
+
+# ACPI devices
+com*		at acpi?		# Serial communications interface
+
+# PCI bus support
+#pci*		at mainbus? bus ?
 
 # Pull in optional local configuration
 cinclude "arch/ia64/conf/GENERIC.local"
-
-# Console Devices
-#ssccons*	at mainbus0		# Ski console interface driver
-#wsdisplay*	at ssccons0 console ?
-#wskbd*		at ssccons0 console ?
-
-# Enable the hooks used for initializing the root memory-disk.
-options     MEMORY_DISK_HOOKS
-options     MEMORY_DISK_IS_ROOT         # force root on memory disk
-options     MEMORY_DISK_SERVER=1        # make the ramdisk writeable
-#options    MEMORY_DISK_ROOT_SIZE=2880  # 1.44M, same as a floppy
-options     MEMORY_DISK_ROOT_SIZE=8192  # 4Meg
-
-# Pseudo-Devices
-
-
-# wscons pseudo-devices
-pseudo-device	ssccons			# Ski emulator console
-#pseudo-device	wsmux			# mouse & keyboard multiplexor
-#pseudo-device	wsfont
-pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	md		1
-

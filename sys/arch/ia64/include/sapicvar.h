@@ -1,7 +1,5 @@
-/*	$NetBSD: ssc.c,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
-
 /*-
- * Copyright (c) 2000 Doug Rabson
+ * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,83 +23,43 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD$
+ * $FreeBSD: src/sys/ia64/include/sapicvar.h,v 1.5 2007/07/30 22:29:33 marcel Exp $
  */
 
-#include <sys/param.h>
+#ifndef _MACHINE_SAPICVAR_H_
+#define _MACHINE_SAPICVAR_H_
 
-#include <machine/ssc.h>
+struct sapic {
+	kmutex_t	sa_mtx;
+	vaddr_t		sa_registers;	/* virtual address of sapic */
+	u_int		sa_id;		/* I/O SAPIC Id */
+	u_int		sa_base;	/* ACPI vector base */
+	u_int		sa_limit;	/* last ACPI vector handled here */
+};
 
-#include <dev/cons.h>
+#define SAPIC_TRIGGER_EDGE	0
+#define SAPIC_TRIGGER_LEVEL	1
 
+#define SAPIC_POLARITY_HIGH	0
+#define SAPIC_POLARITY_LOW	1
 
-#define	SSC_POLL_HZ	50
+#define SAPIC_DELMODE_FIXED	0
+#define SAPIC_DELMODE_LOWPRI	1
+#define SAPIC_DELMODE_PMI	2
+#define SAPIC_DELMODE_NMI	4
+#define SAPIC_DELMODE_INIT	5
+#define SAPIC_DELMODE_EXTINT	7
 
-void sscconsattach(struct device *, struct device *, void *);
+int	sapic_config_intr(u_int, int);
+struct	sapic *sapic_create(u_int, u_int, uint64_t);
+int	sapic_enable(struct sapic *, u_int, u_int);
+void	sapic_eoi(struct sapic *, u_int);
+struct	sapic *sapic_lookup(u_int);
+void	sapic_mask(struct sapic *, u_int);
+void	sapic_unmask(struct sapic *, u_int);
 
-void ssccnprobe(struct consdev *);
-void ssccninit(struct consdev *);
-void ssccnputc(dev_t, int);
-int ssccngetc(dev_t);
-void ssccnpollc(dev_t, int);
+#ifdef DDB
+void	sapic_print(struct sapic *, u_int);
+#endif
 
-
-uint64_t
-ssc(uint64_t in0, uint64_t in1, uint64_t in2, uint64_t in3, int which)
-{
-	register uint64_t ret0 __asm("r8");
-
-	__asm __volatile("mov r15=%1\n\t"
-			 "break 0x80001"
-			 : "=r"(ret0)
-			 : "r"(which), "r"(in0), "r"(in1), "r"(in2), "r"(in3));
-	return ret0;
-}
-
-
-void
-sscconsattach(struct device *parent, struct device *self, void *aux)
-{
-	/* not yet */
-}
-
-void
-ssccnprobe(struct consdev *cp)
-{
-
-	cp->cn_dev = ~NODEV;		/* XXXX: And already exists */
-	cp->cn_pri = CN_INTERNAL;
-}
-
-void
-ssccninit(struct consdev *cp)
-{
-	/* nothing */
-}
-
-void
-ssccnputc(dev_t dev, int c)
-{
-
-	ssc(c, 0, 0, 0, SSC_PUTCHAR);
-}
-
-int
-ssccngetc(dev_t dev)
-{
-	int c;
-
-	do {
-		c = ssc(0, 0, 0, 0, SSC_GETCHAR);
-	} while (c == 0);
-
-	return c;
-}
-
-void
-ssccnpollc(dev_t dev, int on)
-{
-	/* nothing */
-}
-
-/* XXX: integrate the rest of the ssc.c stuff from FreeBSD to plug into wsdisplay */
+#endif /* ! _MACHINE_SAPICVAR_H_ */
