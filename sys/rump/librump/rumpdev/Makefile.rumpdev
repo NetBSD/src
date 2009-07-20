@@ -1,0 +1,24 @@
+#	$NetBSD: Makefile.rumpdev,v 1.1 2009/07/20 18:04:13 pooka Exp $
+#
+
+.include "${RUMPTOP}/Makefile.rump"
+
+LIB=	rumpdev
+
+.PATH:	${RUMPTOP}/librump/rumpdev				\
+	${RUMPTOP}/../kern
+
+SRCS=	rump_dev.c autoconf.c devnodes.c
+
+# sys/kern
+SRCS+=	subr_autoconf.c
+
+# automatically in sync src/lib
+SHLIB_MAJOR=    0
+SHLIB_MINOR=    0
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+CPPFLAGS+=	-Wno-pointer-sign
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>
