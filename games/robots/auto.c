@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.10 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: auto.c,v 1.11 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
  *			FI
  *		FI
  */
+#include <curses.h>
+#include <string.h>
 #include "robots.h"
 
 #define ABS(a) (((a)>0)?(a):-(a))

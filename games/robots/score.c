@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.20 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.21 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,10 +34,18 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.20 2009/07/20 06:00:56 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.21 2009/07/20 06:39:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <curses.h>
+#include <err.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "robots.h"
 #include "pathnames.h"
 
@@ -47,10 +55,7 @@ int Max_per_uid = MAX_PER_UID;
 
 static SCORE Top[MAXSCORES];
 
-static u_int32_t numscores, max_uid;
-
-static void read_score(int);
-static void write_score(int);
+static uint32_t numscores, max_uid;
 
 /*
  * read_score:
@@ -114,10 +119,10 @@ score(int score_wfd)
 {
 	int inf = score_wfd;
 	SCORE *scp;
-	u_int32_t uid;
-	bool done_show = FALSE;
+	uint32_t uid;
+	bool done_show = false;
 
-	Newscore = FALSE;
+	Newscore = false;
 	if (inf < 0)
 		return;
 
@@ -135,7 +140,7 @@ score(int score_wfd)
 				scp->s_auto = Auto_bot;
 				scp->s_level = Level;
 				set_name(scp);
-				Newscore = TRUE;
+				Newscore = true;
 				break;
 			}
 		if (scp == &Top[MAXSCORES]) {
@@ -144,19 +149,19 @@ score(int score_wfd)
 			Top[MAXSCORES-1].s_auto = Auto_bot;
 			Top[MAXSCORES-1].s_level = Level;
 			set_name(&Top[MAXSCORES-1]);
-			Newscore = TRUE;
+			Newscore = true;
 		}
 		if (Newscore)
 			qsort(Top, MAXSCORES, sizeof Top[0], cmp_sc);
 	}
 
 	if (!Newscore) {
-		Full_clear = FALSE;
+		Full_clear = false;
 		lseek(inf, 0, SEEK_SET);
 		return;
 	}
 	else
-		Full_clear = TRUE;
+		Full_clear = true;
 
 	move(1, 15);
 	printw("%5.5s %5.5s %-9.9s %-8.8s %5.5s", "Rank", "Score", "User",
@@ -173,7 +178,7 @@ score(int score_wfd)
 		    scp->s_auto ? "(autobot)" : "", scp->s_level);
 		if (!done_show && scp->s_uid == uid && scp->s_score == Score) {
 			standend();
-			done_show = TRUE;
+			done_show = true;
 		}
 	}
 	Num_scores = scp - Top;
@@ -188,7 +193,7 @@ score(int score_wfd)
 void
 set_name(SCORE *scp)
 {
-	PASSWD *pp;
+	struct passwd *pp;
 
 	if ((pp = getpwuid(scp->s_uid)) == NULL)
 		strncpy(scp->s_name, "???", MAXNAME);

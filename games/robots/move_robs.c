@@ -1,4 +1,4 @@
-/*	$NetBSD: move_robs.c,v 1.9 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: move_robs.c,v 1.10 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,10 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move_robs.c,v 1.9 2009/07/20 06:00:56 dholland Exp $");
+__RCSID("$NetBSD: move_robs.c,v 1.10 2009/07/20 06:39:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <curses.h>
+#include <signal.h>
+#include <unistd.h>
 #include "robots.h"
 
 /*
@@ -83,7 +86,7 @@ move_robots(int was_sig)
 		if (rp->y < 0)
 			continue;
 		else if (rp->y == My_pos.y && rp->x == My_pos.x)
-			Dead = TRUE;
+			Dead = true;
 		else if (Field[rp->y][rp->x] > 1) {
 			mvaddch(rp->y, rp->x, HEAP);
 			Scrap[Num_scrap++] = *rp;
