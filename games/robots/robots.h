@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.18 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: robots.h,v 1.19 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -117,7 +117,7 @@ extern COORD	Max, Min, My_pos, Robots[], Scrap[];
 extern jmp_buf	End_move;
 
 /*
- * functions types
+ * functions
  */
 
 void	add_score(int);
@@ -135,7 +135,7 @@ void	move_robots(int);
 bool	must_telep(void);
 void	play_level(void);
 int	query(const char *);
-void	quit(int) __attribute__((__noreturn__));
+void	quit(int) __dead;
 void	reset_count(void);
 int	rnd(int);
 COORD  *rnd_pos(void);

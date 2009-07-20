@@ -1,4 +1,4 @@
-/*	$NetBSD: move_robs.c,v 1.7 2003/08/07 09:37:37 agc Exp $	*/
+/*	$NetBSD: move_robs.c,v 1.8 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move_robs.c,v 1.7 2003/08/07 09:37:37 agc Exp $");
+__RCSID("$NetBSD: move_robs.c,v 1.8 2009/07/20 05:44:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,8 +45,7 @@ __RCSID("$NetBSD: move_robs.c,v 1.7 2003/08/07 09:37:37 agc Exp $");
  *	Move the robots around
  */
 void
-move_robots(was_sig)
-	int	was_sig;
+move_robots(int was_sig)
 {
 	COORD		*rp;
 
@@ -129,8 +128,7 @@ move_robots(was_sig)
  *	Add a score to the overall point total
  */
 void
-add_score(add)
-	int	add;
+add_score(int add)
 {
 	Score += add;
 	move(Y_SCORE, X_SCORE);
@@ -142,8 +140,7 @@ add_score(add)
  *	Return the sign of the number
  */
 int
-sign(n)
-	int	n;
+sign(int n)
 {
 	if (n < 0)
 		return -1;

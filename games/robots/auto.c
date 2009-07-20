@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.8 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: auto.c,v 1.9 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,18 +73,16 @@ static int between(COORD *, COORD *);
  * 	return "move" number distance of the two coordinates
  */
 static int 
-distance(x1, y1, x2, y2)
-	int x1, y1, x2, y2;
+distance(int x1, int y1, int x2, int y2)
 {
 	return MAX(ABS(ABS(x1) - ABS(x2)), ABS(ABS(y1) - ABS(y2)));
-} /* end distance */
+}
 
 /* xinc():
  *	Return x coordinate moves
  */
 static int
-xinc(dir)
-        int dir;
+xinc(int dir)
 {
         switch(dir) {
         case 'b':
@@ -106,8 +104,7 @@ xinc(dir)
  *	Return y coordinate moves
  */
 static int
-yinc(dir)
-        int dir;
+yinc(int dir)
 {
         switch(dir) {
         case 'k':
@@ -129,7 +126,7 @@ yinc(dir)
  *	Find possible moves
  */
 static const char *
-find_moves()
+find_moves(void)
 {
         int x, y;
         COORD test;
@@ -169,8 +166,7 @@ find_moves()
  *	and put in dist its distance
  */
 static COORD *
-closest_robot(dist)
-	int *dist;
+closest_robot(int *dist)
 {
 	COORD *rob, *end, *minrob = NULL;
 	int tdist, mindist;
@@ -186,15 +182,14 @@ closest_robot(dist)
 	}
 	*dist = mindist;
 	return minrob;
-} /* end closest_robot */
+}
 			
 /* closest_heap():
  *	return the heap closest to us
  *	and put in dist its distance
  */
 static COORD *
-closest_heap(dist)
-	int *dist;
+closest_heap(int *dist)
 {
 	COORD *hp, *end, *minhp = NULL;
 	int mindist, tdist;
@@ -212,14 +207,13 @@ closest_heap(dist)
 	}
 	*dist = mindist;
 	return minhp;
-} /* end closest_heap */
+}
 
 /* move_towards():
  *	move as close to the given direction as possible
  */
 static char 
-move_towards(dx, dy)
-	int dx, dy;
+move_towards(int dx, int dy)
 {
 	char ok_moves[10], best_move;
 	char *ptr;
@@ -242,30 +236,27 @@ move_towards(dx, dy)
 		}
 	}
 	return best_move;
-} /* end move_towards */
+}
 
 /* move_away():
  *	move away form the robot given
  */
 static char
-move_away(rob)
-	COORD *rob;
+move_away(COORD *rob)
 {
 	int dx, dy;
 
 	dx = sign(My_pos.x - rob->x);
 	dy = sign(My_pos.y - rob->y);
 	return  move_towards(dx, dy);
-} /* end move_away */
+}
 
 
 /* move_between():
  *	move the closest heap between us and the closest robot
  */
 static char
-move_between(rob, hp)
-	COORD *rob;
-	COORD *hp;
+move_between(COORD *rob, COORD *hp)
 {
 	int dx, dy;
 	float slope, cons;
@@ -314,15 +305,13 @@ move_between(rob, hp)
 	CONSDEBUG(("me (%d,%d) robot(%d,%d) heap(%d,%d) delta(%d,%d)",
 		My_pos.x, My_pos.y, rob->x, rob->y, hp->x, hp->y, dx, dy));
 	return move_towards(dx, dy);
-} /* end move_between */
+}
 		
 /* between():
  * 	Return true if the heap is between us and the robot
  */
 int
-between(rob, hp)
-	COORD *rob;
-	COORD *hp;
+between(COORD *rob, COORD *hp)
 {
 	/* I = @ */
 	if (hp->x > rob->x && My_pos.x < rob->x)
@@ -341,14 +330,14 @@ between(rob, hp)
 	if (hp->y > rob->y && My_pos.y < rob->y)
 		return 0;
 	return 1;
-} /* end between */
+}
 
 /* automove():
  * 	find and do the best move if flag
  *	else get the first move;
  */
 char
-automove() 
+automove(void) 
 {
 #if 0
 	return  find_moves()[0];
@@ -376,4 +365,4 @@ automove()
 	
 	return move_between(robot_close, heap_close);
 #endif
-} /* end automove */
+}

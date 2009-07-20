@@ -1,4 +1,4 @@
-/*	$NetBSD: make_level.c,v 1.7 2003/08/07 09:37:36 agc Exp $	*/
+/*	$NetBSD: make_level.c,v 1.8 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: make_level.c,v 1.7 2003/08/07 09:37:36 agc Exp $");
+__RCSID("$NetBSD: make_level.c,v 1.8 2009/07/20 05:44:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: make_level.c,v 1.7 2003/08/07 09:37:36 agc Exp $");
  *	Make the current level
  */
 void
-make_level()
+make_level(void)
 {
 	int	i;
 	COORD	*cp;

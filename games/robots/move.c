@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.12 2004/08/27 09:07:08 christos Exp $	*/
+/*	$NetBSD: move.c,v 1.13 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.12 2004/08/27 09:07:08 christos Exp $");
+__RCSID("$NetBSD: move.c,v 1.13 2009/07/20 05:44:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: move.c,v 1.12 2004/08/27 09:07:08 christos Exp $");
  *	Get and execute a move from the player
  */
 void
-get_move()
+get_move(void)
 {
 	int		c;
 #ifdef FANCY
@@ -208,7 +208,7 @@ ret:
  * being eaten?
  */
 bool
-must_telep()
+must_telep(void)
 {
 	int		x, y;
 	static COORD	newpos;
@@ -240,8 +240,7 @@ must_telep()
  *	Execute a move
  */
 bool
-do_move(dy, dx)
-	int	dy, dx;
+do_move(int dy, int dx)
 {
 	static COORD	newpos;
 
@@ -277,8 +276,7 @@ do_move(dy, dx)
  *	Player would get eaten at this place
  */
 bool
-eaten(pos)
-	const COORD	*pos;
+eaten(const COORD *pos)
 {
 	int	x, y;
 
@@ -300,7 +298,7 @@ eaten(pos)
  *	Reset the count variables
  */
 void
-reset_count()
+reset_count(void)
 {
 	Count = 0;
 	Running = FALSE;
@@ -313,7 +311,7 @@ reset_count()
  *	See if we are jumping, i.e., we should not refresh.
  */
 bool
-jumping()
+jumping(void)
 {
 	return (Jump && (Count || Running || Waiting));
 }
