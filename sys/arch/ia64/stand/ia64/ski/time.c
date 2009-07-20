@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: time.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -45,6 +45,7 @@
 //#include <time.h>
 #include <sys/time.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 #include "libski.h"
