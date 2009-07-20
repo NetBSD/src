@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2009/02/13 20:58:14 jmmv Exp $
+# $NetBSD: Makefile.inc,v 1.2 2009/07/20 20:41:52 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -18,8 +18,8 @@ DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
 LDADD+=		-lcrypto -lcrypt
 
 CPPFLAGS+=	-DOPENSSL_FIPS
-CPPFLAGS+=	-I${OPENSSLSRC}
-CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
+CPPFLAGS+=	-I${OPENSSLSRC} -I${OPENSSLSRC}/crypto
+CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 .PATH:	${OPENSSLSRC}/crypto/${HELPER_DIR}
 
