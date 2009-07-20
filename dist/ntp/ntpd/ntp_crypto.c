@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.15 2009/05/20 01:37:36 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.16 2009/07/20 18:44:09 christos Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -3024,7 +3024,7 @@ cert_parse(
 	X509_EXTENSION *ext;	/* X509v3 extension */
 	struct cert_info *ret;	/* certificate info/value */
 	BIO	*bp;
-	X509V3_EXT_METHOD *method;
+	const X509V3_EXT_METHOD *method;
 	char	pathbuf[MAXFILENAME];
 	const u_char	*uptr;
 	char	*ptr;
