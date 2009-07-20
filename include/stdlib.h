@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.88 2009/01/20 20:08:12 drochner Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.89 2009/07/20 17:03:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -294,6 +294,9 @@ int	 radixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
 int	 sradixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
+
+void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
+	    uint32_t[3]);
 
 void	 setproctitle(const char *, ...)
 	    __attribute__((__format__(__printf__, 1, 2)));
