@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.4 2008/10/27 07:26:29 mrg Exp $
+#	$NetBSD: Makefile.libldap,v 1.5 2009/07/20 15:41:55 christos Exp $
 
 .include "../../openldap.mk"
 
@@ -26,6 +26,6 @@ CPPFLAGS+=	-DLDAP_LIBRARY
 LIBDPLIBS+=	lber	${.CURDIR}/../liblber
 
 .if ${MKCRYPTO} != "no"
-LIBDPLIBS+=	crypto	${.CURDIR}/../../../../../lib/libcrypto
-LIBDPLIBS+=	ssl	${.CURDIR}/../../../../../lib/libssl
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
 .endif
