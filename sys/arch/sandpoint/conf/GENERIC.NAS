@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.9 2009/01/24 05:06:07 mrg Exp $
+# $NetBSD: GENERIC.NAS,v 1.10 2009/07/20 11:46:17 nisimura Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC.NAS-$Revision: 1.9 $"
+#ident 		"GENERIC.NAS-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -197,6 +197,7 @@ ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 
 # USB bus support
+usb*	at ehci?
 usb*	at ohci?
 
 # USB Hubs
