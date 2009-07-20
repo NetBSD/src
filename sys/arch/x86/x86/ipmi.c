@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.39 2009/07/20 19:11:30 dyoung Exp $ */
+/*	$NetBSD: ipmi.c,v 1.40 2009/07/20 19:25:07 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.39 2009/07/20 19:11:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.40 2009/07/20 19:25:07 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1790,6 +1790,7 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_if->probe(&sc);
 
 	mutex_init(&sc.sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	cv_init(&sc.sc_cmd_sleep, "ipmimatch");
 	mutex_enter(&sc.sc_cmd_mtx);
 	/* Identify BMC device early to detect lying bios */
 	if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
@@ -1809,6 +1810,7 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	dbg_dump(1, "bmc data", len, cmd);
 	rv = 1; /* GETID worked, we got IPMI */
 unmap:
+	cv_destroy(&sc.sc_cmd_sleep);
 	mutex_destroy(&sc.sc_cmd_mtx);
 	ipmi_unmap_regs(&sc);
 
