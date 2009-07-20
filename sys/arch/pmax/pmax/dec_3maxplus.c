@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.61 2009/03/16 23:11:14 dsl Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.62 2009/07/20 16:25:22 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.61 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.62 2009/07/20 16:25:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ dec_3maxplus_init()
 	platform.tc_init = dec_3maxplus_tc_init;
 
 	/* clear any memory errors */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
@@ -189,24 +189,24 @@ dec_3maxplus_init()
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
 
-	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
 #if 0
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
 #endif
 
 	/* XXX hard-reset LANCE */
-	*(u_int32_t *)(ioasic_base + IOASIC_CSR) |= 0x100;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_CSR) |= 0x100;
 
 	/* sanitize interrupt mask */
 	kn03_tc3_imask = KN03_INTR_PSWARN;
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
 	kn03_wbflush();
 
-	prodtype = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
+	prodtype = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
 	prodtype &= KN03_INTR_PROD_JUMPER;
 	/* the bit persists even if INTR register is assigned value 0 */
 	if (prodtype)
@@ -227,10 +227,10 @@ dec_3maxplus_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn03_wbflush();
 }
 
@@ -301,7 +301,7 @@ dec_3maxplus_intr_establish(struct device *dev, void *cookie, int level, int (*h
 	intrtab[(int)cookie].ih_func = handler;
 	intrtab[(int)cookie].ih_arg = arg;
 
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
+	*(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
 	kn03_wbflush();
 }
 
@@ -362,8 +362,10 @@ dec_3maxplus_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipendin
 
 		do {
 			ifound = 0;
-			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
-			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+			imsk =
+			    *(volatile u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			intr =
+			    *(volatile u_int32_t *)(ioasic_base + IOASIC_INTR);
 			can_serve = intr & imsk;
 
 			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
@@ -405,7 +407,8 @@ dec_3maxplus_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipendin
 			xxxintr = can_serve & (ERRORS | PTRLOAD);
 			if (xxxintr) {
 				ifound = 1;
-				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+				*(volatile u_int32_t *)
+				    (ioasic_base + IOASIC_INTR)
 					= intr &~ xxxintr;
 			}
 		} while (ifound);
@@ -429,11 +432,11 @@ dec_3maxplus_errintr()
 	u_int32_t erradr, errsyn, csr;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
-	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
+	erradr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_CSR);
+	csr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */
 	dec_mtasic_err(erradr, errsyn, csr & KN03_CSR_BNK32M);
@@ -453,7 +456,7 @@ kn03_wbflush()
 static unsigned
 dec_3maxplus_get_timecount(struct timecounter *tc)
 {
-	return *(u_int32_t*)(ioasic_base + IOASIC_CTR);
+	return *(volatile u_int32_t *)(ioasic_base + IOASIC_CTR);
 }
 
 static void
