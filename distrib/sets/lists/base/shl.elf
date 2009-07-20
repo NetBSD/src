@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.178 2009/07/18 21:32:52 reinoud Exp $
+# $NetBSD: shl.elf,v 1.179 2009/07/20 17:30:52 christos Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -15,7 +15,7 @@
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.5				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.6				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libedit.so				base-sys-shlib		dynamicroot
@@ -33,7 +33,7 @@
 ./lib/libprop.so				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1				base-sys-shlib		dynamicroot
 ./lib/libradius.so				base-sys-shlib		dynamicroot
-./lib/libradius.so.3				base-sys-shlib		dynamicroot
+./lib/libradius.so.4				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0				base-sys-shlib		dynamicroot
 ./lib/libtermlib.so				base-sys-shlib		dynamicroot
@@ -96,7 +96,7 @@
 ./usr/lib/libasn1.so.8				base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.10				base-sys-shlib		bfd
 ./usr/lib/libbind9.so				base-bind-shlib
-./usr/lib/libbind9.so.3				base-bind-shlib
+./usr/lib/libbind9.so.4				base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbsdmalloc.so			base-sys-shlib
@@ -111,7 +111,7 @@
 ./usr/lib/libcrypt.so				base-sys-shlib
 ./usr/lib/libcrypt.so.1				base-sys-shlib
 ./usr/lib/libcrypto.so				base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.5			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.6			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so				base-sys-shlib
 ./usr/lib/libcurses.so.7			base-sys-shlib
 ./usr/lib/libdes.so				base-crypto-shlib	crypto
@@ -119,13 +119,13 @@
 ./usr/lib/libdevmapper.so			base-lvm-shlib		lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		lvm
 ./usr/lib/libdns.so				base-bind-shlib
-./usr/lib/libdns.so.3				base-bind-shlib
+./usr/lib/libdns.so.4				base-bind-shlib
 ./usr/lib/libedit.so				base-sys-shlib
 ./usr/lib/libedit.so.3				base-sys-shlib
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.3				base-sys-shlib
 ./usr/lib/libfetch.so				base-sys-shlib
-./usr/lib/libfetch.so.2				base-sys-shlib
+./usr/lib/libfetch.so.3				base-sys-shlib
 ./usr/lib/libform.so				base-sys-shlib
 ./usr/lib/libform.so.6				base-sys-shlib
 ./usr/lib/libg2c.so				base-sys-shlib		gcc=3
@@ -135,47 +135,47 @@
 ./usr/lib/libgnumalloc.so			base-sys-shlib
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib
 ./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
-./usr/lib/libgssapi.so.8			base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.9			base-krb5-shlib		kerberos
 ./usr/lib/libhdb.so				base-krb5-shlib		kerberos
-./usr/lib/libhdb.so.12				base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.13				base-krb5-shlib		kerberos
 ./usr/lib/libheimntlm.so			base-krb5-shlib		kerberos
-./usr/lib/libheimntlm.so.2			base-krb5-shlib		kerberos
+./usr/lib/libheimntlm.so.3			base-krb5-shlib		kerberos
 ./usr/lib/libhx509.so				base-krb5-shlib		kerberos
-./usr/lib/libhx509.so.3				base-krb5-shlib		kerberos
+./usr/lib/libhx509.so.4				base-krb5-shlib		kerberos
 ./usr/lib/libintl.so				base-sys-shlib
 ./usr/lib/libintl.so.1				base-sys-shlib
 ./usr/lib/libipsec.so				base-net-shlib
 ./usr/lib/libipsec.so.3				base-net-shlib
 ./usr/lib/libisc.so				base-bind-shlib
-./usr/lib/libisc.so.3				base-bind-shlib
+./usr/lib/libisc.so.4				base-bind-shlib
 ./usr/lib/libisccc.so				base-bind-shlib
-./usr/lib/libisccc.so.3				base-bind-shlib
+./usr/lib/libisccc.so.4				base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
-./usr/lib/libisccfg.so.3			base-bind-shlib
+./usr/lib/libisccfg.so.4			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libkadm.so				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		kerberos
-./usr/lib/libkadm5clnt.so.11			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.12			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so			base-krb5-shlib		kerberos
-./usr/lib/libkadm5srv.so.12			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.13			base-krb5-shlib		kerberos
 ./usr/lib/libkafs.so				base-krb5-shlib		kerberos
-./usr/lib/libkafs.so.10				base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.11				base-krb5-shlib		kerberos
 ./usr/lib/libkdb.so				base-obsolete		obsolete
 ./usr/lib/libkrb.so				base-obsolete		obsolete
 ./usr/lib/libkrb5.so				base-krb5-shlib		kerberos
-./usr/lib/libkrb5.so.23				base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.24				base-krb5-shlib		kerberos
 ./usr/lib/libkstream.so				base-obsolete		obsolete
 ./usr/lib/libkvm.so				base-sys-shlib
 ./usr/lib/libkvm.so.6				base-sys-shlib
 ./usr/lib/liblber.so				base-ldap-shlib		ldap
 ./usr/lib/liblber.so.3				base-ldap-shlib		ldap
 ./usr/lib/libldap.so				base-ldap-shlib		ldap
-./usr/lib/libldap.so.3				base-ldap-shlib		ldap
+./usr/lib/libldap.so.4				base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap
-./usr/lib/libldap_r.so.3			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so				base-bind-shlib
-./usr/lib/liblwres.so.3				base-bind-shlib
+./usr/lib/liblwres.so.4				base-bind-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib
@@ -183,7 +183,7 @@
 ./usr/lib/libmenu.so				base-sys-shlib
 ./usr/lib/libmenu.so.6				base-sys-shlib
 ./usr/lib/libnetpgp.so				base-crypto-shlib	crypto
-./usr/lib/libnetpgp.so.1			base-crypto-shlib	crypto
+./usr/lib/libnetpgp.so.2			base-crypto-shlib	crypto
 ./usr/lib/libobjc.so				base-sys-shlib		gcc
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc
 ./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
@@ -193,7 +193,7 @@
 ./usr/lib/libp2k.so				base-puffs-shlib
 ./usr/lib/libp2k.so.1				base-puffs-shlib
 ./usr/lib/libpam.so				base-sys-shlib		pam
-./usr/lib/libpam.so.2				base-sys-shlib		pam
+./usr/lib/libpam.so.3				base-sys-shlib		pam
 ./usr/lib/libpcap.so				base-net-shlib
 ./usr/lib/libpcap.so.3				base-net-shlib
 ./usr/lib/libpci.so				base-sys-shlib
@@ -209,7 +209,7 @@
 ./usr/lib/libpuffs.so				base-puffs-shlib
 ./usr/lib/libpuffs.so.1				base-puffs-shlib
 ./usr/lib/libradius.so				base-net-shlib
-./usr/lib/libradius.so.3			base-net-shlib
+./usr/lib/libradius.so.4			base-net-shlib
 ./usr/lib/librefuse.so				base-refuse-shlib
 ./usr/lib/librefuse.so.1			base-refuse-shlib
 ./usr/lib/libresolv.so				base-net-shlib
@@ -278,9 +278,9 @@
 ./usr/lib/libss.so				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.6				base-krb5-shlib		kerberos
 ./usr/lib/libssh.so				base-secsh-shlib	crypto
-./usr/lib/libssh.so.13				base-secsh-shlib	crypto
+./usr/lib/libssh.so.14				base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
-./usr/lib/libssl.so.7				base-crypto-shlib	crypto
+./usr/lib/libssl.so.8				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4
