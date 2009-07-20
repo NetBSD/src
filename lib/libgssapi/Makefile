@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2008/08/29 00:02:22 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.22 2009/07/20 17:28:51 christos Exp $
 
 USE_FORT?= yes        # network protocol library
 
@@ -21,7 +21,7 @@ LIBDPLIBS+=	krb5	${.CURDIR}/../libkrb5 \
 		asn1	${.CURDIR}/../libasn1 \
 		com_err	${.CURDIR}/../libcom_err \
 		roken	${.CURDIR}/../libroken \
-		crypto	${.CURDIR}/../libcrypto \
+		crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto \
 		heimntlm	${.CURDIR}/../libheimntlm
 
 .if ${USETOOLS} != "yes"
