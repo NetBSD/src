@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.18 2006/03/17 23:11:47 abs Exp $	*/
+/*	$NetBSD: score.c,v 1.19 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.18 2006/03/17 23:11:47 abs Exp $");
+__RCSID("$NetBSD: score.c,v 1.19 2009/07/20 05:44:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,7 @@ static void write_score(int);
  *	Read the score file in MI format
  */
 static void
-read_score(inf)
-	int inf;
+read_score(int inf)
 {
 	SCORE	*scp;
 
@@ -85,8 +84,7 @@ read_score(inf)
  *	Write the score file in MI format
  */
 static void
-write_score(inf)
-	int inf;
+write_score(int inf)
 {
 	SCORE	*scp;
 
@@ -112,8 +110,7 @@ write_score(inf)
  *	top list.
  */
 void
-score(score_wfd)
-	int score_wfd;
+score(int score_wfd)
 {
 	int			inf = score_wfd;
 	SCORE			*scp;
@@ -189,8 +186,7 @@ score(score_wfd)
 }
 
 void
-set_name(scp)
-	SCORE	*scp;
+set_name(SCORE *scp)
 {
 	PASSWD	*pp;
 
@@ -205,8 +201,7 @@ set_name(scp)
  *	Compare two scores.
  */
 int
-cmp_sc(s1, s2)
-	const void *s1, *s2;
+cmp_sc(const void *s1, const void *s2)
 {
 	return ((const SCORE *)s2)->s_score - ((const SCORE *)s1)->s_score;
 }
@@ -216,7 +211,7 @@ cmp_sc(s1, s2)
  *	Show the score list for the '-s' option.
  */
 void
-show_score()
+show_score(void)
 {
 	SCORE		*scp;
 	int		inf;
