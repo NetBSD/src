@@ -20,8 +20,8 @@ CPPFLAGS+=	-DWITH_SSL
 
 LDADD=		-lssl -lcrypto
 
-LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/lib/libssl \
-		crypto	${NETBSDSRCDIR}/lib/libcrypto
+LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl \
+		crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
 .endif
 
 CLEANFILES+=	ftperr.h httperr.h
