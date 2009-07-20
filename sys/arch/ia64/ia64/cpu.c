@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2009/07/20 04:41:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,26 +41,26 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2009/07/20 04:41:37 kiyohara Exp $");
 
 struct cpu_info cpu_info_primary;
 
-int     cpu_match(struct device *, struct cfdata *, void *);
-void    cpu_attach(struct device *, struct device *, void *);
+int     cpu_match(device_t, cfdata_t, void *);
+void    cpu_attach(device_t, device_t, void *);
 
 struct cpu_softc {
-	struct device sc_dev;		/* device tree glue */
+	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
 
 
 int
-cpu_match(struct device *parent, struct cfdata *match, void *aux)
+cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 
 #if 0	/* not yet */

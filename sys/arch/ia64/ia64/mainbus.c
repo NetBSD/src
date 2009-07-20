@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2009/07/20 05:10:49 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2009/07/20 05:10:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $");
 
 #include "acpi.h"
 
@@ -37,15 +37,14 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2009/07/20 05:10:49 kiyohara Exp $")
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/bus.h>
-
 #include <dev/acpi/acpivar.h>
 
 
-static int mainbus_match(struct device *, struct cfdata *, void *);
-static void mainbus_attach(struct device *, struct device *, void *);
+static int mainbus_match(device_t, cfdata_t, void *);
+static void mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus,
+    /*sizeof(struct device): XXXXX It doesn't use it now*/ 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 
@@ -53,7 +52,7 @@ CFATTACH_DECL_NEW(mainbus, sizeof(struct device),
  * Probe for the mainbus; always succeeds.
  */
 static int
-mainbus_match(device_t parent, struct cfdata *match, void *aux)
+mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
