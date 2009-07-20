@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.71 2008/10/26 07:43:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.72 2009/07/20 17:03:37 joerg Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -9,7 +9,7 @@ SRCS+=	_rand48.c \
 	bsearch.c drand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
-	lcong48.c lrand48.c lsearch.c merge.c mrand48.c \
+	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
 	radixsort.c rand.c rand_r.c random.c remque.c \
 	seed48.c setenv.c srand48.c strsuftoll.c \
@@ -42,7 +42,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	hcreate.3 \
 	imaxabs.3 imaxdiv.3 insque.3 \
 	labs.3 ldiv.3 llabs.3 lldiv.3 lsearch.3 \
-	malloc.3 memory.3 \
+	malloc.3 memory.3 mi_vector_hash.3 \
 	posix_memalign.3 posix_openpt.3 ptsname.3 \
 	qabs.3 qdiv.3 qsort.3 \
 	radixsort.3 rand48.3 rand.3 random.3 \

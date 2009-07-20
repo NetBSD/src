@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1283 2009/07/19 23:38:11 christos Exp $
+#	$NetBSD: mi,v 1.1284 2009/07/20 17:03:36 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6734,6 +6734,7 @@
 ./usr/share/man/cat3/menus.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mergesort.0		comp-c-catman		.cat
 ./usr/share/man/cat3/meta.0			comp-c-catman		.cat
+./usr/share/man/cat3/mi_vector_hash.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mkdtemp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mkstemp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mktemp.0			comp-c-catman		.cat
@@ -12193,6 +12194,7 @@
 ./usr/share/man/html3/menus.html		comp-c-htmlman		html
 ./usr/share/man/html3/mergesort.html		comp-c-htmlman		html
 ./usr/share/man/html3/meta.html			comp-c-htmlman		html
+./usr/share/man/html3/mi_vector_hash.html	comp-c-htmlman		html
 ./usr/share/man/html3/mkdtemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mkstemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktemp.html		comp-c-htmlman		html
@@ -17640,6 +17642,7 @@
 ./usr/share/man/man3/menus.3			comp-c-man		.man
 ./usr/share/man/man3/mergesort.3		comp-c-man		.man
 ./usr/share/man/man3/meta.3			comp-c-man		.man
+./usr/share/man/man3/mi_vector_hash.3		comp-c-man		.man
 ./usr/share/man/man3/mkdtemp.3			comp-c-man		.man
 ./usr/share/man/man3/mkstemp.3			comp-c-man		.man
 ./usr/share/man/man3/mktemp.3			comp-c-man		.man
