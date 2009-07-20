@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2009/07/20 06:39:06 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2009/07/20 06:43:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2009/07/20 06:39:06 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2009/07/20 06:43:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: main.c,v 1.28 2009/07/20 06:39:06 dholland Exp $");
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include "robots.h"
 
@@ -167,7 +168,7 @@ main(int ac, char **av)
 		stdscr = newwin(Y_SIZE, X_SIZE, 0, 0);
 	}
 
-	srand(getpid());
+	srandom(time(NULL));
 	if (Real_time)
 		signal(SIGALRM, move_robots);
 	do {
