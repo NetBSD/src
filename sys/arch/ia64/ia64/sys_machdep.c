@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 2009/07/20 04:41:37 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.6 2009/07/20 04:41:37 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,5 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2008/04/28 20:23:25 martin Exp $
 int
 sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
+printf("%s: not yet\n", __func__);
 	return (EINVAL);
 }
