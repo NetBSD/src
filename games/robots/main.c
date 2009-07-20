@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2009/07/20 06:09:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2009/07/20 06:00:56 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2009/07/20 06:09:29 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(int ac, char **av)
 					score_wfd = open(Scorefile, O_RDWR);
 					if (score_wfd < 0)
 						score_err = errno;
-# ifdef	FANCY
+#ifdef FANCY
 					sp = strrchr(Scorefile, '/');
 					if (sp == NULL)
 						sp = Scorefile;
@@ -91,7 +91,7 @@ main(int ac, char **av)
 						Stand_still = TRUE;
 					if (Pattern_roll || Stand_still)
 						Teleport = TRUE;
-# endif
+#endif
 				}
 			else
 				for (sp = &av[0][1]; *sp; sp++)

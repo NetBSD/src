@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.10 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: init_field.c,v 1.11 2009/07/20 06:09:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init_field.c,v 1.10 2009/07/20 06:00:56 dholland Exp $");
+__RCSID("$NetBSD: init_field.c,v 1.11 2009/07/20 06:09:29 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include "robots.h"
 
 static int telx = 0;
 static int tely = 0;
