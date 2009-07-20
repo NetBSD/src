@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.19 2009/07/20 05:44:02 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.20 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,20 +34,20 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.19 2009/07/20 05:44:02 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.20 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
-# include	"pathnames.h"
+#include "robots.h"
+#include "pathnames.h"
 
-const char	*Scorefile = _PATH_SCORE;
+const char *Scorefile = _PATH_SCORE;
 
-int	Max_per_uid = MAX_PER_UID;
+int Max_per_uid = MAX_PER_UID;
 
-static SCORE	Top[MAXSCORES];
+static SCORE Top[MAXSCORES];
 
-static u_int32_t	numscores, max_uid;
+static u_int32_t numscores, max_uid;
 
 static void read_score(int);
 static void write_score(int);
@@ -59,7 +59,7 @@ static void write_score(int);
 static void
 read_score(int inf)
 {
-	SCORE	*scp;
+	SCORE *scp;
 
 	if (read(inf, &max_uid, sizeof max_uid) == sizeof max_uid) {
 		max_uid = ntohl(max_uid);
@@ -86,7 +86,7 @@ read_score(int inf)
 static void
 write_score(int inf)
 {
-	SCORE	*scp;
+	SCORE *scp;
 
 	lseek(inf, 0L, SEEK_SET);
 
@@ -112,10 +112,10 @@ write_score(int inf)
 void
 score(int score_wfd)
 {
-	int			inf = score_wfd;
-	SCORE			*scp;
-	u_int32_t		uid;
-	bool			done_show = FALSE;
+	int inf = score_wfd;
+	SCORE *scp;
+	u_int32_t uid;
+	bool done_show = FALSE;
 
 	Newscore = FALSE;
 	if (inf < 0)
@@ -188,7 +188,7 @@ score(int score_wfd)
 void
 set_name(SCORE *scp)
 {
-	PASSWD	*pp;
+	PASSWD *pp;
 
 	if ((pp = getpwuid(scp->s_uid)) == NULL)
 		strncpy(scp->s_name, "???", MAXNAME);
@@ -213,8 +213,8 @@ cmp_sc(const void *s1, const void *s2)
 void
 show_score(void)
 {
-	SCORE		*scp;
-	int		inf;
+	SCORE *scp;
+	int inf;
 
 	if ((inf = open(Scorefile, O_RDONLY)) < 0) {
 		warn("opening `%s'", Scorefile);

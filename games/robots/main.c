@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2009/07/20 05:44:02 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,23 +39,23 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2009/07/20 05:44:02 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include "robots.h"
 
-extern const char	*Scorefile;
-extern int	Max_per_uid;
+extern const char *Scorefile;
+extern int Max_per_uid;
 
 int
 main(int ac, char **av)
 {
-	const char	*sp;
-	bool	bad_arg;
-	bool	show_only;
-	int		score_wfd; /* high score writable file descriptor */
-	int		score_err = 0; /* hold errno from score file open */
+	const char *sp;
+	bool bad_arg;
+	bool show_only;
+	int score_wfd; /* high score writable file descriptor */
+	int score_err = 0; /* hold errno from score file open */
 
 	score_wfd = open(Scorefile, O_RDWR);
 	if (score_wfd < 0)
@@ -117,7 +117,7 @@ main(int ac, char **av)
 					  case 't':
 						Teleport = TRUE;
 						break;
-					  
+
 					  default:
 						fprintf(stderr, "robots: unknown option: %c\n", *sp);
 						bad_arg = TRUE;
@@ -207,9 +207,9 @@ quit(int dummy __unused)
 bool
 another(void)
 {
-	int	y;
+	int y;
 
-#ifdef	FANCY
+#ifdef FANCY
 	if ((Stand_still || Pattern_roll) && !Newscore)
 		return TRUE;
 #endif
