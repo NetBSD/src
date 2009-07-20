@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2009/05/27 04:47:08 agc Exp $
+# $NetBSD: Makefile,v 1.7 2009/07/20 15:43:51 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ EXTDIST=${.CURDIR}/../dist
 INCS+= netpgp.h
 INCSDIR=/usr/include
 
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/lib/libcrypto
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
 LIBDPLIBS+=	z	${NETBSDSRCDIR}/lib/libz
 LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2
 
