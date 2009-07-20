@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/04/07 14:21:32 cherry Exp $
+#	$NetBSD: Makefile,v 1.2 2009/07/20 04:59:03 kiyohara Exp $
 
 S?=	${.CURDIR}/../../../../../
 
@@ -18,7 +18,7 @@ CPPFLAGS+= -I${.CURDIR}/../include/${MACHINE_ARCH}
 CPPFLAGS+= -I${.CURDIR}/../../common
 
 SRCS=  copy.c delay.c efi.c efi_console.c devicename.c bootinfo.c
-SRCS+= time.c efifs.c efi_console.c module.c exec.c #efinet.c 
+SRCS+= time.c efifs.c efi_console.c module.c exec.c #efinet.c
 
 .if ${MACHINE_ARCH} == "ia64"
 SRCS+=	efifpswa.c pal.S
