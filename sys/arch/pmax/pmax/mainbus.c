@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.38 2009/03/14 15:36:11 dsl Exp $ */
+/* $NetBSD: mainbus.c,v 1.39 2009/07/20 17:05:13 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.38 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.39 2009/07/20 17:05:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	if (mainbus_found)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 int ncpus = 0;	/* only support uniprocessors, for now */
@@ -90,6 +90,6 @@ mbprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
-		return (QUIET);
-	return (UNCONF);
+		return QUIET;
+	return UNCONF;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.43 2009/03/16 23:11:14 dsl Exp $ */
+/* $NetBSD: dec_5100.c,v 1.44 2009/07/20 17:05:13 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.43 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.44 2009/07/20 17:05:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,9 @@ static const int dec_5100_ipl2spl_table[] = {
 };
 
 void
-dec_5100_init()
+dec_5100_init(void)
 {
+
 	platform.iobus = "baseboard";
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
@@ -98,22 +99,23 @@ dec_5100_init()
  * Initialize the memory system and I/O buses.
  */
 static void
-dec_5100_bus_reset()
+dec_5100_bus_reset(void)
 {
-	u_int32_t icsr;
+	uint32_t icsr;
 
 	/* clear any memory error condition */
-	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr |= KN230_CSR_INTR_WMERR;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
+	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 
 	/* nothing else to do */
 	kn230_wbflush();
 }
 
 static void
-dec_5100_cons_init()
+dec_5100_cons_init(void)
 {
+
 	/*
 	 * Delay to allow PROM putchars to complete.
 	 * FIFO depth * character time,
@@ -126,7 +128,8 @@ dec_5100_cons_init()
 }
 
 static void
-dec_5100_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
+dec_5100_intr_establish(struct device *dev, void *cookie, int level,
+    int (*handler)(void *), void *arg)
 {
 
 	intrtab[(int)cookie].ih_func = handler;
@@ -140,12 +143,12 @@ dec_5100_intr_establish(struct device *dev, void *cookie, int level, int (*handl
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);		\
 		intrtab[vvv].ih_count.ev_count++;			\
 	}								\
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 static void
-dec_5100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
+dec_5100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
-	u_int32_t icsr;
+	uint32_t icsr;
 
 	if (ipending & MIPS_INT_MASK_4) {
 #ifdef DDB
@@ -155,7 +158,7 @@ dec_5100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 #endif
 	}
 
-	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_2) {
@@ -203,14 +206,14 @@ dec_5100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
  * XXX drain writebuffer on contextswitch to avoid panic?
  */
 static void
-dec_5100_memintr()
+dec_5100_memintr(void)
 {
-	u_int32_t icsr;
+	uint32_t icsr;
 
 	/* read icsr and clear error  */
-	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr |= KN230_CSR_INTR_WMERR;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
+	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 	kn230_wbflush();
 
 #ifdef DIAGNOSTIC
@@ -223,8 +226,7 @@ dec_5100_memintr()
 
 	if (icsr & KN230_CSR_INTR_WMERR) {
 		panic("write to non-existent memory");
-	}
-	else {
+	} else {
 		panic("stray memory error interrupt");
 	}
 }
