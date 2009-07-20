@@ -136,7 +136,6 @@ typedef struct SHA256state_st
 	SHA_LONG h[8];
 	SHA_LONG Nl,Nh;
 	SHA_LONG data[SHA_LBLOCK];
-	unsigned int num,md_len;
 	} SHA256_CTX;
 
 #ifndef OPENSSL_NO_SHA256
@@ -182,7 +181,6 @@ typedef struct SHA512state_st
 		SHA_LONG64	d[SHA_LBLOCK];
 		unsigned char	p[SHA512_CBLOCK];
 	} u;
-	unsigned int num,md_len;
 	} SHA512_CTX;
 #endif
 
