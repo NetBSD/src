@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3max.c,v 1.14 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: memc_3max.c,v 1.15 2009/07/20 17:05:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.14 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.15 2009/07/20 17:05:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.14 2009/03/14 21:04:14 dsl Exp $");
 
 
 void
-dec_mtasic_err(u_int32_t erradr, u_int32_t errsyn, u_int32_t bnk32m)
+dec_mtasic_err(uint32_t erradr, uint32_t errsyn, uint32_t bnk32m)
 {
-	u_int32_t physadr;
+	uint32_t physadr;
 	int module;
 
 	if (!(erradr & KN02_ERR_VALID))
@@ -79,8 +79,8 @@ dec_mtasic_err(u_int32_t erradr, u_int32_t errsyn, u_int32_t bnk32m)
 	}
 	printf("\n");
 	if (erradr & KN02_ERR_ECCERR) {
-		u_int32_t errsyn_value = *(u_int32_t *)errsyn;
-		*(u_int32_t *)errsyn = 0;
+		uint32_t errsyn_value = *(uint32_t *)errsyn;
+		*(uint32_t *)errsyn = 0;
 		wbflush();
 		printf("   ECC 0x%08x\n", errsyn_value);
 

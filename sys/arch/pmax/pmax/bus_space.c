@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.7 2009/07/20 17:05:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2009/07/20 17:05:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2009/03/14 21:04:14 dsl Exp $");
 
 /* ARGSUSED */
 int
-bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *bshp)
+bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
 {
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 
@@ -53,25 +54,20 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags, bus
 		*bshp = MIPS_PHYS_TO_KSEG0(bpa);
 	else
 		*bshp = MIPS_PHYS_TO_KSEG1(bpa);
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
 int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
-    bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+    int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 
 	/*
 	 * Not meaningful on any currently-supported DECstation bus.
 	 */
-	return (EINVAL);
+	return EINVAL;
 }
 
 /* ARGSUSED */
@@ -94,9 +90,10 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 
 /* ARGSUSED */
 int
-bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
+bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
-	return (0);
+	return 0;
 }

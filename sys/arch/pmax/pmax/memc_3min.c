@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.11 2009/07/20 16:45:50 tsutsui Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.12 2009/07/20 17:05:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.11 2009/07/20 16:45:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.12 2009/07/20 17:05:13 tsutsui Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -105,12 +105,12 @@ kn02ba_errintr()
 	int mer, adr, siz, err;
 	static int errintr_cnt = 0;
 
-	siz = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
-	mer = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
-	adr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_AER);
+	siz = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
+	mer = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
+	adr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_AER);
 
 	/* clear interrupt bit */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 
 	err = 0;	/* XXX gcc */
 	switch (mer & KMIN_MER_LASTBYTE) {
