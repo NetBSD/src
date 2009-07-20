@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.13 2009/07/20 05:44:02 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.14 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.13 2009/07/20 05:44:02 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.14 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "robots.h"
 
-# define	ESC	'\033'
+#define ESC	'\033'
 
 /*
  * get_move:
@@ -49,15 +49,15 @@ __RCSID("$NetBSD: move.c,v 1.13 2009/07/20 05:44:02 dholland Exp $");
 void
 get_move(void)
 {
-	int		c;
+	int c;
 #ifdef FANCY
-	int		lastmove;
+	int lastmove;
 #endif /*FANCY*/
 
 	if (Waiting)
 		return;
 
-#ifdef	FANCY
+#ifdef FANCY
 	if (Pattern_roll) {
 		if (Next_move >= Move_list)
 			lastmove = *Next_move;
@@ -73,7 +73,7 @@ get_move(void)
 			c = Run_ch;
 		else if (Count != 0)
 			c = Cnt_move;
-#ifdef	FANCY
+#ifdef FANCY
 		else if (Num_robots > 1 && Stand_still)
 			c = '>';
 		else if (Num_robots > 1 && Pattern_roll) {
@@ -210,10 +210,10 @@ ret:
 bool
 must_telep(void)
 {
-	int		x, y;
-	static COORD	newpos;
+	int x, y;
+	static COORD newpos;
 
-#ifdef	FANCY
+#ifdef FANCY
 	if (Stand_still && Num_robots > 1 && eaten(&My_pos))
 		return TRUE;
 #endif
@@ -242,7 +242,7 @@ must_telep(void)
 bool
 do_move(int dy, int dx)
 {
-	static COORD	newpos;
+	static COORD newpos;
 
 	newpos.y = My_pos.y + dy;
 	newpos.x = My_pos.x + dx;
@@ -278,7 +278,7 @@ do_move(int dy, int dx)
 bool
 eaten(const COORD *pos)
 {
-	int	x, y;
+	int x, y;
 
 	for (y = pos->y - 1; y <= pos->y + 1; y++) {
 		if (y <= 0 || y >= Y_FIELDSIZE)

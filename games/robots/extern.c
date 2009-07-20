@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.8 2003/08/07 09:37:36 agc Exp $	*/
+/*	$NetBSD: extern.c,v 1.9 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,49 +34,49 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.8 2003/08/07 09:37:36 agc Exp $");
+__RCSID("$NetBSD: extern.c,v 1.9 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include "robots.h"
 
-bool	Dead;			/* Player is now dead */
-bool	Full_clear = TRUE;	/* Lots of junk for init_field to clear */
-bool	Jump = FALSE;		/* Jump while running, counting, or waiting */
-bool	Newscore;		/* There was a new score added */
-#ifdef	FANCY
-bool	Pattern_roll = FALSE;	/* Auto play for YHBJNLUK pattern */
+bool Dead;			/* Player is now dead */
+bool Full_clear = TRUE;		/* Lots of junk for init_field to clear */
+bool Jump = FALSE;		/* Jump while running, counting, or waiting */
+bool Newscore;			/* There was a new score added */
+#ifdef FANCY
+bool Pattern_roll = FALSE;	/* Auto play for YHBJNLUK pattern */
 #endif
-bool	Real_time = FALSE;	/* Play in real time? */
-bool	Auto_bot = FALSE;	/* Automatic mover */
-bool	Running = FALSE;	/* Currently in the middle of a run */
-#ifdef	FANCY
-bool	Stand_still = FALSE;	/* Auto play for standing still pattern */
+bool Real_time = FALSE;		/* Play in real time? */
+bool Auto_bot = FALSE;		/* Automatic mover */
+bool Running = FALSE;		/* Currently in the middle of a run */
+#ifdef FANCY
+bool Stand_still = FALSE;	/* Auto play for standing still pattern */
 #endif
-bool	Teleport = FALSE;	/* Teleport automatically when player must */
-bool	Waiting;		/* Player is waiting for end */
-bool	Was_bonus = FALSE;	/* Was a bonus last level */
+bool Teleport = FALSE;		/* Teleport automatically when player must */
+bool Waiting;			/* Player is waiting for end */
+bool Was_bonus = FALSE;		/* Was a bonus last level */
 
-char	Cnt_move;		/* Command which has preceded the count */
-char	Field[Y_FIELDSIZE][X_FIELDSIZE];	/* the playing field itslef */
-const char	*Next_move;	/* Next move to be used in the pattern */
-const char	*Move_list = "YHBJNLUK";/* List of moves in the pattern */
-char	Run_ch;			/* Character for the direction we are running */
+char Cnt_move;			/* Command which has preceded the count */
+char Field[Y_FIELDSIZE][X_FIELDSIZE];	/* the playing field itslef */
+const char  *Next_move;		/* Next move to be used in the pattern */
+const char *Move_list = "YHBJNLUK";/* List of moves in the pattern */
+char Run_ch;			/* Character for the direction we are running */
 
-int	Count = 0;		/* Command count */
-int	Level;			/* Current level */
-int	Num_robots;		/* Number of robots left */
-int	Num_scrap;		/* Number of scrap heaps */
-int	Num_scores;		/* Number of scores posted */
-int	Num_games;		/* Number of games to play */
-u_int32_t	Score;		/* Current score */
-int	Start_level = 1;	/* Level on which to start */
-int	Wait_bonus;		/* bonus for waiting */
+int Count = 0;			/* Command count */
+int Level;			/* Current level */
+int Num_robots;			/* Number of robots left */
+int Num_scrap;			/* Number of scrap heaps */
+int Num_scores;			/* Number of scores posted */
+int Num_games;			/* Number of games to play */
+u_int32_t Score;		/* Current score */
+int Start_level = 1;		/* Level on which to start */
+int Wait_bonus;			/* bonus for waiting */
 
-COORD	Max;			/* Max area robots take up */
-COORD	Min;			/* Min area robots take up */
-COORD	My_pos;			/* Player's current position */
-COORD	Robots[MAXROBOTS];	/* Robots' current positions */
-COORD	Scrap[MAXROBOTS];	/* ScrapHeap' current position */
+COORD Max;			/* Max area robots take up */
+COORD Min;			/* Min area robots take up */
+COORD My_pos;			/* Player's current position */
+COORD Robots[MAXROBOTS];	/* Robots' current positions */
+COORD Scrap[MAXROBOTS];		/* ScrapHeap' current position */
 
 jmp_buf	End_move;		/* Jump to on Real_time */
