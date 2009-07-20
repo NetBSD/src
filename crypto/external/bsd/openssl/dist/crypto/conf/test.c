@@ -63,7 +63,7 @@
 
 main()
 	{
-	LHASH *conf;
+	LHASH_OF(CONF_VALUE) *conf;
 	long eline;
 	char *s,*s2;
 
@@ -78,9 +78,9 @@ main()
 		ERR_print_errors_fp(stderr);
 		exit(1);
 		}
-	lh_stats(conf,stdout);
-	lh_node_stats(conf,stdout);
-	lh_node_usage_stats(conf,stdout);
+	lh_stats((_LHASH *)conf,stdout);
+	lh_node_stats((_LHASH *)conf,stdout);
+	lh_node_usage_stats((_LHASH *)conf,stdout);
 
 	s=CONF_get_string(conf,NULL,"init2");
 	printf("init2=%s\n",(s == NULL)?"NULL":s);
