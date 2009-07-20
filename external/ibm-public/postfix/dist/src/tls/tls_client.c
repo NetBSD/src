@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.2 2009/07/20 17:17:56 christos Exp $	*/
 
 /*++
 /* NAME
@@ -727,7 +727,7 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
     int     protomask;
     const char *cipher_list;
     SSL_SESSION *session;
-    SSL_CIPHER *cipher;
+    const SSL_CIPHER *cipher;
     X509   *peercert;
     TLS_SESS_STATE *TLScontext;
     TLS_APPL_STATE *app_ctx = props->ctx;
