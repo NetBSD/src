@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 2009/03/18 10:22:33 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.74 2009/07/20 17:05:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.73 2009/03/18 10:22:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74 2009/07/20 17:05:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ static const char	*booted_protocol;
 void
 cpu_configure(void)
 {
+
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
 
@@ -185,6 +186,7 @@ makebootdev(char *cp)
 void
 cpu_rootconf(void)
 {
+
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
