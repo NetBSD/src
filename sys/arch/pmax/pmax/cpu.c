@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.27 2009/03/14 21:04:14 dsl Exp $ */
+/* $NetBSD: cpu.c,v 1.28 2009/07/20 17:05:13 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2009/07/20 17:05:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,9 +52,9 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	/* make sure that we're looking for a CPU. */
 	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0) {
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 static void
