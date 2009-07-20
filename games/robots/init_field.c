@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.8 2003/08/07 09:37:36 agc Exp $	*/
+/*	$NetBSD: init_field.c,v 1.9 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init_field.c,v 1.8 2003/08/07 09:37:36 agc Exp $");
+__RCSID("$NetBSD: init_field.c,v 1.9 2009/07/20 05:44:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static int tely = 0;
  *	and initialize all the global variables.
  */
 void
-init_field()
+init_field(void)
 {
 	int		i;
 	static bool	first = TRUE;
@@ -123,8 +123,7 @@ init_field()
 }
 
 void
-telmsg(on)
-	int on;
+telmsg(int on)
 {
 	move(tely, telx);
 	addstr(on ? "Teleport!" : "         ");
