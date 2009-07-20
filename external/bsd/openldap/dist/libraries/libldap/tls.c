@@ -2786,9 +2786,9 @@ int
 ldap_pvt_tls_get_strength( void *s )
 {
 #ifdef HAVE_OPENSSL
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 
-	c = SSL_get_current_cipher((SSL *)s);
+	c = SSL_get_current_cipher((const SSL *)s);
 	return SSL_CIPHER_get_bits(c, NULL);
 #elif defined(HAVE_GNUTLS)
 	tls_session *session = s;
