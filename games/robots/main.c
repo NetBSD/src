@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,21 +39,17 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2009/07/20 05:44:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
 # include	"robots.h"
 
-int main(int, char **);
-
 extern const char	*Scorefile;
 extern int	Max_per_uid;
 
 int
-main(ac, av)
-	int	ac;
-	char	**av;
+main(int ac, char **av)
 {
 	const char	*sp;
 	bool	bad_arg;
@@ -197,8 +193,7 @@ main(ac, av)
  *	Leave the program elegantly.
  */
 void
-quit(dummy)
-	int dummy __unused;
+quit(int dummy __unused)
 {
 	endwin();
 	exit(0);
@@ -210,7 +205,7 @@ quit(dummy)
  *	See if another game is desired
  */
 bool
-another()
+another(void)
 {
 	int	y;
 

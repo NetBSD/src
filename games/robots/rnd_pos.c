@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_pos.c,v 1.5 2003/08/07 09:37:37 agc Exp $	*/
+/*	$NetBSD: rnd_pos.c,v 1.6 2009/07/20 05:44:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rnd_pos.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rnd_pos.c,v 1.5 2003/08/07 09:37:37 agc Exp $");
+__RCSID("$NetBSD: rnd_pos.c,v 1.6 2009/07/20 05:44:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: rnd_pos.c,v 1.5 2003/08/07 09:37:37 agc Exp $");
  *	Pick a random, unoccupied position
  */
 COORD *
-rnd_pos()
+rnd_pos(void)
 {
 	static COORD	pos;
 	static int	call = 0;
@@ -62,8 +62,7 @@ rnd_pos()
 }
 
 int
-rnd(range)
-	int	range;
+rnd(int range)
 {
 
 	return rand() % range;
