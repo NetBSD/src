@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2008/03/20 14:56:06 kochi Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -37,10 +37,7 @@
 #include <machine/elf_machdep.h>
 #include <sys/syscall.h>
 
-//XXX:	 ??? why ifndef ???
-//#ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
-//#endif
 
 #include "assym.h"
 

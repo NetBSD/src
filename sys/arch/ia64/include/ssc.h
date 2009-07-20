@@ -1,4 +1,7 @@
-/*	$NetBSD: ssc.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: ssc.h,v 1.2 2009/07/20 04:41:37 kiyohara Exp $	*/
+
+#ifndef _SSC_H_
+#define _SSC_H_
 
 #define SSC_CONSOLE_INIT		20
 #define SSC_GETCHAR			21
@@ -14,5 +17,6 @@
 #define SSC_LOAD_SYMBOLS		69
 #define	SSC_SAL_SET_VECTORS		120
 
-u_int64_t
-ssc(u_int64_t in0, u_int64_t in1, u_int64_t in2, u_int64_t in3, int which);
+uint64_t ssc(uint64_t, uint64_t, uint64_t, uint64_t, int);
+
+#endif	/* _SSC_H_ */

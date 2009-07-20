@@ -1,5 +1,5 @@
-/*	$NetBSD: syscall_stubs.S,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
-	
+/*	$NetBSD: syscall_stubs.S,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
+
 	/*-
  * Copyright (c) 2002, 2003 Marcel Moolenaar
  * All rights reserved.
@@ -31,10 +31,11 @@
 #include <sys/syscall.h>
 #include <sys/errno.h>
 
-	
+
 #include <machine/asm.h>
 #include <machine/vmparam.h>
-	
+#undef VM_MAX_ADDRESS
+
 #include "assym.h"
 
 /*
@@ -79,4 +80,4 @@
 	.global		ia64_gateway_page
 ia64_gateway_page:
 #warning this is a stub!!!
-	
+

@@ -86,7 +86,7 @@ struct pmap {
 	TAILQ_HEAD(,pv_entry)	pm_pvlist;	/* list of mappings in pmap */
 	int			pm_count;	/* pmap reference count */
 	kmutex_t		pm_slock;	/* lock on pmap */
-	u_int32_t		pm_rid[5];	/* base RID for pmap */
+	uint32_t		pm_rid[5];	/* base RID for pmap */
 	int			pm_active;	/* active flag */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
