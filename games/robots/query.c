@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.8 2009/07/20 06:00:56 dholland Exp $	*/
+/*	$NetBSD: query.c,v 1.9 2009/07/20 06:39:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: query.c,v 1.8 2009/07/20 06:00:56 dholland Exp $");
+__RCSID("$NetBSD: query.c,v 1.9 2009/07/20 06:39:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <curses.h>
 #include "robots.h"
 
 /*
