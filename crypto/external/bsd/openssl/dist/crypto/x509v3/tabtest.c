@@ -69,7 +69,7 @@
 main()
 {
 	int i, prev = -1, bad = 0;
-	X509V3_EXT_METHOD **tmp;
+	const X509V3_EXT_METHOD **tmp;
 	i = sizeof(standard_exts) / sizeof(X509V3_EXT_METHOD *);
 	if(i != STANDARD_EXTENSION_COUNT)
 		fprintf(stderr, "Extension number invalid expecting %d\n", i);

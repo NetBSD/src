@@ -63,7 +63,7 @@
 
 main()
 	{
-	LHASH *conf;
+	_LHASH *conf;
 	char buf[256];
 	int i;
 

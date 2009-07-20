@@ -348,11 +348,11 @@ end:
 		if (cache_stats)
 			{
 			fprintf(stderr,"-----\n");
-			lh_stats(SSL_CTX_sessions(s_ctx),stderr);
+			lh_stats((_LHASH *)SSL_CTX_sessions(s_ctx),stderr);
 			fprintf(stderr,"-----\n");
-		/*	lh_node_stats(SSL_CTX_sessions(s_ctx),stderr);
+		/*	lh_node_stats((_LHASH *)SSL_CTX_sessions(s_ctx),stderr);
 			fprintf(stderr,"-----\n"); */
-			lh_node_usage_stats(SSL_CTX_sessions(s_ctx),stderr);
+			lh_node_usage_stats((_LHASH *)SSL_CTX_sessions(s_ctx),stderr);
 			fprintf(stderr,"-----\n");
 			}
 		SSL_CTX_free(s_ctx);
