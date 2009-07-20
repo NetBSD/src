@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.9 2009/03/14 15:36:13 dsl Exp $ */
+/* $NetBSD: devopen.c,v 1.10 2009/07/20 11:43:09 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,34 +31,21 @@
 
 #include <sys/param.h>
 
-#include <sys/disklabel.h>
 #include <netinet/in.h>
-
-#include <dev/ic/wdcreg.h>
-#include <dev/ata/atareg.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/nfs.h>
-#include <lib/libsa/ufs.h>
-#include <lib/libsa/ext2fs.h>
-#include <lib/libsa/dosfs.h>
 #include <lib/libkern/libkern.h>
 
 #include "globals.h"
 
-static void parseunit(const char *, int *, int *, char **);
-
 struct devsw devsw[] = {
 	{ "net", net_strategy, net_open, net_close, noioctl },
-	{ "dsk", wdstrategy, wdopen, wdclose, noioctl },
 };
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 struct fs_ops fssw[] = {
 	FS_OPS(nfs),
-	FS_OPS(ffsv1),
-	FS_OPS(ext2fs),
-	FS_OPS(dosfs),
 };
 struct fs_ops file_system[1];
 int nfsys = 1;
@@ -66,7 +53,7 @@ int nfsys = 1;
 int
 devopen(struct open_file *of, const char *name, char **file)
 {
-	int error, unit, part;
+	int error;
 	extern char bootfile[]; /* handed by DHCP */
 
 	if (of->f_flags != F_READ)
@@ -80,6 +67,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		*file = bootfile;	/* resolved fname */
 		return 0;		/* NFS */
 	}
+#if 0 /* later */
 	if (name[0] == 'w' && name[1] == 'd') {
 		parseunit(&name[2], &unit, &part, file);
 		of->f_dev = &devsw[1];
@@ -96,6 +84,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		}
 		return 0;
 	}
+#endif
 	return ENOENT;
 }
 
@@ -107,6 +96,7 @@ noioctl(struct open_file *f, u_long cmd, void *data)
 	return EINVAL;
 }
 
+#if 0
 static void
 parseunit(const char *name, int *unitp, int *partp, char **pathp)
 {
@@ -125,3 +115,4 @@ parseunit(const char *name, int *unitp, int *partp, char **pathp)
 	*partp = (part == -1) ? 0 : part;
 	*pathp = (*p == ':') ? (char *)p + 1 : NULL;
 }
+#endif
