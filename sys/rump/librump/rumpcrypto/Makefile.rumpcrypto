@@ -1,0 +1,41 @@
+#	$NetBSD: Makefile.rumpcrypto,v 1.1 2009/07/20 18:03:26 pooka Exp $
+#
+
+.include "${RUMPTOP}/Makefile.rump"
+
+LIB=	rumpcrypto
+
+.PATH:	${RUMPTOP}/../crypto/arc4					\
+	${RUMPTOP}/../crypto/blowfish					\
+	${RUMPTOP}/../crypto/cast128					\
+	${RUMPTOP}/../crypto/des					\
+	${RUMPTOP}/../crypto/rijndael					\
+	${RUMPTOP}/../crypto/skipjack
+
+# arc4
+SRCS+=	arc4.c
+
+# blowfish
+SRCS+=	bf_ecb.c bf_enc.c bf_cbc.c bf_skey.c
+
+# cast128
+SRCS+=	cast128.c
+
+# DES
+SRCS+=	des_ecb.c des_setkey.c des_enc.c des_cbc.c
+
+# rijndael
+SRCS+=	rijndael-alg-fst.c rijndael-api-fst.c rijndael.c
+
+# skipjack
+SRCS+=	skipjack.c
+
+# automatically in sync src/lib
+SHLIB_MAJOR=    0
+SHLIB_MINOR=    0
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+CPPFLAGS+=	-Wno-pointer-sign
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>
