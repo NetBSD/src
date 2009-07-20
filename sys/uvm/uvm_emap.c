@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.3 2009/07/19 15:17:29 rmind Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.4 2009/07/20 03:51:42 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.3 2009/07/19 15:17:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.4 2009/07/20 03:51:42 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,7 +71,7 @@ static u_int		_uvm_emap_gen[COHERENCY_UNIT - sizeof(u_int)]
 
 #define	uvm_emap_gen	(_uvm_emap_gen[0])
 
-static u_int		uvm_emap_size = UVM_EMAP_SIZE;
+u_int			uvm_emap_size = UVM_EMAP_SIZE;
 static vaddr_t		uvm_emap_va;
 static vmem_t *		uvm_emap_vmem;
 
