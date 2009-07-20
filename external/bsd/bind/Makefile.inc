@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/04/13 21:20:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2009/07/20 15:40:05 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -75,7 +75,7 @@ CPPFLAGS+=-DOPENSSL
 LDADD+= -lcrypto
 DPADD+= ${LIBCRYPTO}
 .else
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/lib/libcrypto
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
 .endif
 .endif
 
