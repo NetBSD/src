@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 2009/03/18 16:00:12 cegger Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 2009/07/20 04:59:03 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -30,6 +30,7 @@
 /* __FBSDID("$FreeBSD: src/sys/boot/common/misc.c,v 1.8.4.1 2004/09/03 19:25:40 iedowse Exp $"); */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <bootstrap.h>
 
 /*

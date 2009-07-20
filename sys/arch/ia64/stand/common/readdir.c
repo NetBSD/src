@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.2 2006/07/02 17:28:11 cherry Exp $	*/
+/*	$NetBSD: readdir.c,v 1.3 2009/07/20 04:59:03 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@freebsd.org>
@@ -30,6 +30,7 @@
 
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -42,7 +43,7 @@ readdirfd(int fd)
 	static struct dirent dir;		/* XXX not thread safe. eh ??? */
 	struct open_file *f = &files[fd];
 
-	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & O_RDONLY)) {
+	if ((unsigned)fd >= SOPEN_MAX) {
 		errno = EBADF;
 		return (NULL);
 	}
@@ -55,7 +56,6 @@ readdirfd(int fd)
 	errno = FS_READDIR(f, &dir); 
 
 	if (errno)
-	  printf("XXXdebugXXX: FS_READDIR returns NULL\n");
 		return (NULL);
 	return (&dir);
 }

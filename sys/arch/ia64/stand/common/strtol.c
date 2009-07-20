@@ -1,4 +1,4 @@
-/*	$NetBSD: strtol.c,v 1.2 2009/03/14 15:36:08 dsl Exp $	*/
+/*	$NetBSD: strtol.c,v 1.3 2009/07/20 04:59:03 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,6 +40,7 @@ static char sccsid[] = "@(#)strtol.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/limits.h>

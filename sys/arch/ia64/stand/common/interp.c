@@ -1,4 +1,4 @@
-/*	$NetBSD: interp.c,v 1.3 2006/07/02 17:28:11 cherry Exp $	*/
+/*	$NetBSD: interp.c,v 1.4 2009/07/20 04:59:03 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -36,6 +36,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 

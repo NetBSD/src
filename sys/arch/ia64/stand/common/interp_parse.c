@@ -1,4 +1,4 @@
-/*	$NetBSD: interp_parse.c,v 1.3 2009/03/18 17:06:45 cegger Exp $	*/
+/*	$NetBSD: interp_parse.c,v 1.4 2009/07/20 04:59:03 kiyohara Exp $	*/
 
 /*-
  * Redistribution and use in source and binary forms, with or without
@@ -20,6 +20,7 @@
 /* __FBSDID("$FreeBSD: src/sys/boot/common/interp_parse.c,v 1.10 2003/08/25 23:30:41 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
 #include "bootstrap.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.5 2007/03/04 06:00:03 christos Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.6 2009/07/20 04:59:03 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -191,7 +191,7 @@ struct preloaded_file
     vaddr_t			f_addr;		/* load address */
     size_t			f_size;		/* file size */
     struct preloaded_file	*f_next;	/* next file */
-    u_long                      *marks;         /* filled by loadfile() */
+    u_long                      marks[MARK_MAX];/* filled by loadfile() */
 };
 
 struct file_format
