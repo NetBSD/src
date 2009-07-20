@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_pos.c,v 1.6 2009/07/20 05:44:02 dholland Exp $	*/
+/*	$NetBSD: rnd_pos.c,v 1.7 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)rnd_pos.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rnd_pos.c,v 1.6 2009/07/20 05:44:02 dholland Exp $");
+__RCSID("$NetBSD: rnd_pos.c,v 1.7 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include "robots.h"
 
-# define	IS_SAME(p,y,x)	((p).y != -1 && (p).y == y && (p).x == x)
+#define IS_SAME(p,y,x)	((p).y != -1 && (p).y == y && (p).x == x)
 
 /*
  * rnd_pos:
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: rnd_pos.c,v 1.6 2009/07/20 05:44:02 dholland Exp $");
 COORD *
 rnd_pos(void)
 {
-	static COORD	pos;
-	static int	call = 0;
+	static COORD pos;
+	static int call = 0;
 
 	do {
 		pos.y = rnd(Y_FIELDSIZE - 1) + 1;

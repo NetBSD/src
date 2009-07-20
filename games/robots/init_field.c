@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.9 2009/07/20 05:44:02 dholland Exp $	*/
+/*	$NetBSD: init_field.c,v 1.10 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init_field.c,v 1.9 2009/07/20 05:44:02 dholland Exp $");
+__RCSID("$NetBSD: init_field.c,v 1.10 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,9 @@ static int tely = 0;
 void
 init_field(void)
 {
-	int		i;
-	static bool	first = TRUE;
-	static const char	*const desc[] = {
+	int i;
+	static bool first = TRUE;
+	static const char *const desc[] = {
 				"Directions:",
 				"",
 				"y k u",
@@ -116,7 +116,7 @@ init_field(void)
 	if (first)
 		refresh();
 	first = FALSE;
-#ifdef	FANCY
+#ifdef FANCY
 	if (Pattern_roll)
 		Next_move = &Move_list[-1];
 #endif

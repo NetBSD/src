@@ -1,4 +1,4 @@
-/*	$NetBSD: play_level.c,v 1.7 2009/07/20 05:44:02 dholland Exp $	*/
+/*	$NetBSD: play_level.c,v 1.8 2009/07/20 06:00:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)play_level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play_level.c,v 1.7 2009/07/20 05:44:02 dholland Exp $");
+__RCSID("$NetBSD: play_level.c,v 1.8 2009/07/20 06:00:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include "robots.h"
 
 /*
  * play_level:
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: play_level.c,v 1.7 2009/07/20 05:44:02 dholland Exp $");
 void
 play_level(void)
 {
-	COORD	*cp;
+	COORD *cp;
 
 	move(My_pos.y, My_pos.x);
 	addch(PLAYER);
@@ -59,14 +59,14 @@ play_level(void)
 		addch(ROBOT);
 	}
 	refresh();
-# ifdef DEBUG
+#ifdef DEBUG
 	standout();
 	move(Min.y, Min.x);
 	addch(inch());
 	move(Max.y, Max.x);
 	addch(inch());
 	standend();
-# endif /* DEBUG */
+#endif /* DEBUG */
 	setjmp(End_move);
 	flush_in();
 	while (!Dead && Num_robots > 0) {
