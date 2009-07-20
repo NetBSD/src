@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher-3des1.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: cipher-3des1.c,v 1.3 2009/07/20 15:33:44 christos Exp $	*/
 /* $OpenBSD: cipher-3des1.c,v 1.6 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher-3des1.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: cipher-3des1.c,v 1.3 2009/07/20 15:33:44 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -95,7 +95,7 @@ ssh1_3des_init(EVP_CIPHER_CTX *ctx, const u_char *key, const u_char *iv,
 }
 
 static int
-ssh1_3des_cbc(EVP_CIPHER_CTX *ctx, u_char *dest, const u_char *src, u_int len)
+ssh1_3des_cbc(EVP_CIPHER_CTX *ctx, u_char *dest, const u_char *src, size_t len)
 {
 	struct ssh1_3des_ctx *c;
 

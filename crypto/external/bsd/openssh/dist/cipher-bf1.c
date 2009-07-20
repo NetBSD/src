@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher-bf1.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: cipher-bf1.c,v 1.3 2009/07/20 15:33:44 christos Exp $	*/
 /* $OpenBSD: cipher-bf1.c,v 1.5 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher-bf1.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: cipher-bf1.c,v 1.3 2009/07/20 15:33:44 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -60,10 +60,10 @@ swap_bytes(const u_char *src, u_char *dst, int n)
 	}
 }
 
-static int (*orig_bf)(EVP_CIPHER_CTX *, u_char *, const u_char *, u_int) = NULL;
+static int (*orig_bf)(EVP_CIPHER_CTX *, u_char *, const u_char *, size_t) = NULL;
 
 static int
-bf_ssh1_cipher(EVP_CIPHER_CTX *ctx, u_char *out, const u_char *in, u_int len)
+bf_ssh1_cipher(EVP_CIPHER_CTX *ctx, u_char *out, const u_char *in, size_t len)
 {
 	int ret;
 
