@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mi_vector_hash.c,v 1.1 2009/07/20 17:03:38 joerg Exp $	*/
+/*	$NetBSD: t_mi_vector_hash.c,v 1.2 2009/07/20 18:24:01 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_mi_vector_hash.c,v 1.2 2009/07/20 18:24:01 joerg Exp $");
 
 #include <atf-c.h>
 #include <stdlib.h>
