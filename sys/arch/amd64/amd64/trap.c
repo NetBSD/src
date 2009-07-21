@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.52.6.1 2009/07/21 00:37:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.6.1 2009/07/21 00:37:29 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -325,26 +325,35 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): BUS (%x) at rip %lx addr %lx\n",
+		printf("pid %d (%s): BUS/SEGV (%x) at rip %lx addr %lx\n",
 		    p->p_pid, p->p_comm, type, frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		switch (type) {
 		case T_SEGNPFLT|T_USER:
 		case T_STKFLT|T_USER:
+			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_ADRERR;
 			break;
 		case T_TSSFLT|T_USER:
+			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_OBJERR;
 			break;
 		case T_ALIGNFLT|T_USER:
+			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_ADRALN;
 			break;
+		case T_PROTFLT|T_USER:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			break;
 		default:
+#ifdef DIAGNOSTIC
+			panic("unhandled type %x\n", type);
+#endif
 			break;
 		}
 		goto trapsignal;
@@ -368,6 +377,9 @@ copyfault:
 			ksi.ksi_code = ILL_COPROC;
 			break;
 		default:
+#ifdef DIAGNOSTIC
+			panic("unhandled type %x\n", type);
+#endif
 			break;
 		}
 		goto trapsignal;
@@ -414,6 +426,9 @@ copyfault:
 			ksi.ksi_code = FPE_FLTDIV;
 			break;
 		default:
+#ifdef DIAGNOSTIC
+			panic("unhandled type %x\n", type);
+#endif
 			break;
 		}
 		goto trapsignal;
