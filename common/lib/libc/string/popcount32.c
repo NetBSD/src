@@ -1,4 +1,4 @@
-/*	$NetBSD: popcount32.c,v 1.1 2009/07/21 14:55:32 joerg Exp $	*/
+/*	$NetBSD: popcount32.c,v 1.2 2009/07/21 17:37:51 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,12 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcount32.c,v 1.1 2009/07/21 14:55:32 joerg Exp $");
+__RCSID("$NetBSD: popcount32.c,v 1.2 2009/07/21 17:37:51 joerg Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <limits.h>
 #include <strings.h>
 #else
 #include <lib/libkern/libkern.h>
+#include <machine/limits.h>
 #endif
 
 /*
@@ -66,7 +68,7 @@ popcount32(uint32_t v)
 	return c;
 }
 
-#if UINT_MAX == 0xffffffffUL
+#if UINT_MAX == 0xffffffffU
 __strong_alias(popcount, popcount32);
 #endif
 
