@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.28 2009/01/11 02:45:48 christos Exp $ */
+/*	$NetBSD: linux_time.c,v 1.29 2009/07/21 18:42:56 njoly Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.28 2009/01/11 02:45:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.29 2009/07/21 18:42:56 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -181,6 +181,7 @@ linux_to_native_clockid(clockid_t *n, clockid_t l)
 	case LINUX_CLOCK_THREAD_CPUTIME_ID:
 	case LINUX_CLOCK_REALTIME_HR:
 	case LINUX_CLOCK_MONOTONIC_HR:
+	default:
 		return EINVAL;
 	}
 
