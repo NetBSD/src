@@ -1,17 +1,20 @@
-#	$NetBSD: std.amigappc,v 1.6 2005/12/11 12:16:36 christos Exp $
+#	$NetBSD: std.amigappc,v 1.7 2009/07/21 09:49:15 phx Exp $
+#
+# standard, required NetBSD/amigappc 'options'
 
-# standard amiga information
-
-machine amigappc powerpc
+machine		amigappc powerpc
 include		"conf/std"	# MI standard options
 
-mainbus0	at root
-
-clock0	at mainbus0
-kbd0	at mainbus0
-zbus0	at mainbus0
-
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
 options 	PPC_OEA
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
+options		PPC_HIGH_VEC	# Exception vectors at 0xfff00000
+options		DISTANT_KERNEL	# Kernel not in range for ba/bla calls
+
+options		EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+options 	INTSTK=0x2000
+options		MSGBUFADDR=0xfff70000
+options		MSGBUFSIZE=0x10000
+
+makeoptions     TEXTADDR=0x08000000

@@ -1,11 +1,10 @@
-/*	$NetBSD: intr.h,v 1.22 2009/07/21 09:49:16 phx Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1 2009/07/21 09:49:15 phx Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008,2009 Frank Wille.
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Ignatios Souvatzis.
+ * Written by Frank Wille for The NetBSD Project.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,13 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,15 +28,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMIGAPPC_INTR_H_
-#define _AMIGAPPC_INTR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2009/07/21 09:49:15 phx Exp $");
 
-#include <powerpc/intr.h>
-
-#ifndef _LOCORE
-#include <machine/cpu.h>
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
-#endif
+#include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/cpu.h>
 
-#endif /* !_AMIGAPPC_INTR_H_ */
+#include <amiga/amiga/device.h>
+
+int cpu_match(struct device *, struct cfdata *, void *);
+void cpu_attach(struct device *, struct device *, void *);
+
+CFATTACH_DECL(cpu, sizeof(struct device),
+    cpu_match, cpu_attach, NULL, NULL);
+
+extern struct cfdriver cpu_cd;
+
+int
+cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+
+	if (strcmp((char *)aux, cpu_cd.cd_name) != 0)
+		return 0;
+	if (amiga_realconfig == 0 || cpu_info[0].ci_dev != NULL)
+		return 0;
+	return 1;
+}
+
+void
+cpu_attach(struct device *parent, struct device *self, void *aux)
+{
+
+	if (amiga_realconfig)
+		(void)cpu_attach_common(self, 0);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: p5reg.h,v 1.1 2000/05/25 22:12:00 is Exp $ */
+/*	$NetBSD: p5reg.h,v 1.1 2009/07/21 09:49:15 phx Exp $ */
 
 /*
  * Copyright (C) 2000 Adam Ciarcinski.
@@ -40,6 +40,7 @@
 #define	P5_REG_RESET		0x00
 #define	P5_REG_ENABLE		0x08
 #define	P5_REG_WAITSTATE	0x10
+#define P5_BPPC_MAGIC		0x13
 #define	P5_REG_SHADOW		0x18
 #define	P5_REG_LOCK		0x20
 #define	P5_REG_INT		0x28
@@ -92,5 +93,18 @@
 #define	P5_LVL3		0x04
 #define	P5_LVL2		0x02
 #define	P5_LVL1		0x01
+
+/* macros to read and write P5 registers */
+#define P5read(reg, val)						\
+	do {								\
+		(val) = *(volatile unsigned char *)(P5BASE + (reg));	\
+		__asm volatile("sync");					\
+	} while (0);
+
+#define P5write(reg, val)						\
+	do {								\
+		*(volatile unsigned char *)(P5BASE + (reg)) = (val);	\
+		__asm volatile("sync");					\
+	} while (0);
 
 #endif /* _P5REG_H_ */
