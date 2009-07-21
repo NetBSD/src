@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.367 2009/06/23 17:58:23 tron Exp $
+#	$NetBSD: Makefile,v 1.368 2009/07/21 00:28:35 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -347,7 +347,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.sbin/pf configinstall
 .endif
 .if (${MKCRYPTO} != "no")
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/ssh configinstall
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/crypto/external/bsd/openssh/bin/ssh configinstall
 .endif
 .if (${MKPOSTFIX} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/ibm-public/postfix configinstall
