@@ -1,4 +1,4 @@
-/*	$NetBSD: popcountll.c,v 1.1 2009/07/21 13:18:44 joerg Exp $	*/
+/*	$NetBSD: popcount32.c,v 1.1 2009/07/21 14:55:32 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,39 +32,44 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcountll.c,v 1.1 2009/07/21 13:18:44 joerg Exp $");
+__RCSID("$NetBSD: popcount32.c,v 1.1 2009/07/21 14:55:32 joerg Exp $");
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <strings.h>
-
-#if ULONGLONG_MAX > 0xffffffffffffffffULL
-#error "Unsupported architecture"
+#else
+#include <lib/libkern/libkern.h>
 #endif
 
 /*
- * If unsigned long long is larger than size_t, the follow assumes that
- * splitting into 32bit halfes is faster.
- *
- * The native pocountll version is based on the same ideas as popcount(3),
- * see popcount.c for comments.
+ * This a hybrid algorithm for bit counting between parallel counting and
+ * using multiplication.  The idea is to sum up the bits in each Byte, so
+ * that the final accumulation can be done with a single multiplication.
+ * If the platform has a slow multiplication instruction, it can be replaced
+ * by the commented out version below.
  */
 
-#if ULONGLONG_MAX > SIZE_MAX
 unsigned int
-popcountll(unsigned long long v)
-{
-	return popcount(v >> 32) + popcount(v & 0xffffffffU);
-}
-#else
-unsigned int
-popcountll(unsigned long long v)
+popcount32(uint32_t v)
 {
 	unsigned int c;
 
-	v = v - ((v >> 1) & 0x5555555555555555ULL);
-	v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
-	v = ((v + (v >> 4)) & 0x0f0f0f0f0f0f0f0fULL) * 0x0101010101010101ULL;
-	c = v >> 56;
+	v = v - ((v >> 1) & 0x55555555U);
+	v = (v & 0x33333333U) + ((v >> 2) & 0x33333333U);
+	v = (v + (v >> 4)) & 0x0f0f0f0fU;
+	c = (v * 0x01010101U) >> 24;
+	/*
+	 * v = (v >> 16) + v;
+	 * v = (v >> 8) + v;
+	 * c = v & 255;
+	 */
 
 	return c;
 }
+
+#if UINT_MAX == 0xffffffffUL
+__strong_alias(popcount, popcount32);
+#endif
+
+#if ULONG_MAX == 0xffffffffU
+__strong_alias(popcountl, popcount32);
 #endif
