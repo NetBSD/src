@@ -1,10 +1,10 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.73 2009/07/21 13:18:43 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.74 2009/07/21 14:55:33 joerg Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
 
-SRCS+=	bm.c popcountl.c stpcpy.c stpncpy.c \
+SRCS+=	bm.c stpcpy.c stpncpy.c \
 	strcasecmp.c strncasecmp.c strcasestr.c strcoll.c strdup.c \
 	strerror.c strlcat.c strlcpy.c strnlen.c \
 	strmode.c strsignal.c strtok.c \
@@ -55,11 +55,11 @@ SRCS+=	strchr.c
 .if empty(SRCS:Mstrrchr.S)
 SRCS+=	strrchr.c
 .endif
-.if empty(SRCS:Mpopcount.S)
-SRCS+=	popcount.c
+.if empty(SRCS:Mpopcount32.S)
+SRCS+=	popcount32.c
 .endif
-.if empty(SRCS:Mpopcountll.S)
-SRCS+=	popcountll.c
+.if empty(SRCS:Mpopcount64.S)
+SRCS+=	popcount64.c
 .endif
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 \
@@ -74,6 +74,8 @@ MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 \
 MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
 MLINKS+=popcount.3 popcountl.3
 MLINKS+=popcount.3 popcountll.3
+MLINKS+=popcount.3 popcount32.3
+MLINKS+=popcount.3 popcount64.3
 MLINKS+=strcasecmp.3 strncasecmp.3
 MLINKS+=strcat.3 strncat.3
 MLINKS+=strcmp.3 strncmp.3
