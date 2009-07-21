@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.197 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.197.4.1 2009/07/21 00:31:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -247,6 +247,12 @@ typedef struct vnode vnode_t;
     "\28INACTNOW\31DIROP\32SOFTDEP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
+
+/*
+ * v_usecount; see the comment in vfs_subr.c
+ */
+#define	VC_XLOCK	0x80000000
+#define	VC_MASK		0x7fffffff
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
