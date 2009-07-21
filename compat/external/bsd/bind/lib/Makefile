@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2009/04/12 23:04:47 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/07/21 01:00:37 mrg Exp $
 
-# XXX These bind9/ISC libraries should depend on each other but the
-# XXX dependency ordering requires considerable investigation.
-# XXX Please preserve the order below so we know the order ISC links
-# XXX them in in their Makefiles.
-SUBDIR+= libbind9 libdns liblwres libisccfg libisccc libisc
+.include <bsd.own.mk>
 
-.include <bsd.subdir.mk>
+_CURDIR:= ${.CURDIR}
+
+.CURDIR:=${NETBSDSRCDIR}/external/bsd/bind/lib
+
+.include "${.CURDIR}/Makefile"
+
+.CURDIR:= ${_CURDIR}

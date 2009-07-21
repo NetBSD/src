@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/10/26 07:38:29 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2009/07/21 01:00:41 mrg Exp $
+
+.include <bsd.own.mk>
 
 _CURDIR:= ${.CURDIR}
 
