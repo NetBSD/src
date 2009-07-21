@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pcivar.h,v 1.1 2001/10/27 16:19:09 rearnsha Exp $ */
+/*	$NetBSD: ifpga_pcivar.h,v 1.2 2009/07/21 16:04:16 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -30,8 +30,6 @@
  */
 
 struct ifpga_pci_softc {
-	struct device		sc_dev;
-
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_io_ioh;
 	bus_space_handle_t	sc_conf_ioh;
