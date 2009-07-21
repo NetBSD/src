@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.228 2009/07/19 02:50:44 rmind Exp $
+	$NetBSD: syscalls.master,v 1.229 2009/07/21 23:59:00 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -761,9 +761,9 @@
 394	STD	 RUMP	{ int|sys|30|socket(int domain, int type, int protocol); }
 395	STD 	 RUMP	{ int|sys|30|getfh(const char *fname, void *fhp, \
 			    size_t *fh_size); }
-396	STD 		{ int|sys|40|fhopen(const void *fhp, size_t fh_size,\
+396	STD 	 RUMP	{ int|sys|40|fhopen(const void *fhp, size_t fh_size,\
 			    int flags); }
-397	STD 		{ int|sys|40|fhstatvfs1(const void *fhp, \
+397	STD 	 RUMP	{ int|sys|40|fhstatvfs1(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
 398	COMPAT_50 MODULAR { int|sys|40|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat30 *sb); }
