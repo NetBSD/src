@@ -1,4 +1,4 @@
-/*	$NetBSD: t_popcount.c,v 1.1 2009/07/21 13:18:44 joerg Exp $	*/
+/*	$NetBSD: t_popcount.c,v 1.2 2009/07/21 21:45:33 drochner Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_popcount.c,v 1.1 2009/07/21 13:18:44 joerg Exp $");
+__RCSID("$NetBSD: t_popcount.c,v 1.2 2009/07/21 21:45:33 drochner Exp $");
 
 #include <atf-c.h>
 #include <strings.h>
@@ -176,7 +176,7 @@ ATF_TC_BODY(t_popcountll, tc)
 		}
 	}
 
-	ATF_CHECK_EQ(popcountll(0xffffffffffffffff), 64);
+	ATF_CHECK_EQ(popcountll(0xffffffffffffffffULL), 64);
 }
 
 ATF_TP_ADD_TCS(tp)
