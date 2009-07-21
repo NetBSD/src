@@ -1,4 +1,4 @@
-.\"	$NetBSD: popcount.3,v 1.2 2009/07/21 13:21:41 wiz Exp $
+.\"	$NetBSD: popcount.3,v 1.3 2009/07/21 14:55:33 joerg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,9 @@
 .Sh NAME
 .Nm popcount ,
 .Nm popcountl ,
-.Nm popcountll
+.Nm popcountll ,
+.Nm popcount32 ,
+.Nm popcount64
 .Nd count number of bits set in a bit string
 .Sh LIBRARY
 .Lb libc
@@ -45,6 +47,10 @@
 .Fn popcountl "unsigned long value"
 .Ft unsigned int
 .Fn popcountll "unsigned long long value"
+.Ft unsigned int
+.Fn popcount32 "uint32_t value"
+.Ft unsigned int
+.Fn popcount64 "uint64_t value"
 .Sh DESCRIPTION
 The
 .Nm
@@ -56,7 +62,9 @@ functions returns the number of bits set in
 The
 .Fn popcount ,
 .Fn popcountl ,
+.Fn popcountll ,
+.Fn popcount32
 and
-.Fn popcountll
+.Fn popcount64
 functions appeared in
 .Nx 6.0 .

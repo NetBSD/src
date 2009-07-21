@@ -1,4 +1,4 @@
-/*	$NetBSD: popcount.c,v 1.1 2009/07/21 13:18:44 joerg Exp $	*/
+/*	$NetBSD: popcount64.c,v 1.1 2009/07/21 14:55:32 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,37 +32,50 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcount.c,v 1.1 2009/07/21 13:18:44 joerg Exp $");
+__RCSID("$NetBSD: popcount64.c,v 1.1 2009/07/21 14:55:32 joerg Exp $");
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
 #include <strings.h>
-
-#if UINT_MAX > 0xffffffffUL
-#error "Unsupported architecture"
+#else
+#include <lib/libkern/libkern.h>
+#include <machine/limits.h>
 #endif
 
 /*
- * This a hybrid algorithm for bit counting between parallel counting and
- * using multiplication.  The idea is to sum up the bits in each Byte, so
- * that the final accumulation can be done with a single multiplication.
- * If the platform has a slow multiplication instruction, it can be replaced
- * by the commented out version below.
+ * If uint64_t is larger than size_t, the follow assumes that
+ * splitting into 32bit halfes is faster.
+ *
+ * The native pocount64 version is based on the same ideas as popcount64(3),
+ * see popcount64.c for comments.
  */
 
+#if SIZE_MAX < 0xffffffffffffffffULL
 unsigned int
-popcount(unsigned int v)
+popcount64(uint64_t v)
+{
+	return popcount32(v >> 32) + popcount32(v & 0xffffffffU);
+}
+#else
+unsigned int
+popcount64(uint64_t v)
 {
 	unsigned int c;
 
-	v = v - ((v >> 1) & 0x55555555U);
-	v = (v & 0x33333333U) + ((v >> 2) & 0x33333333U);
-	v = ((v + (v >> 4)) & 0x0f0f0f0fU;
-	c = (v * 0x01010101U) >> 24;
-	/*
-	 * v = (v >> 16) + v;
-	 * v = (v >> 8) + v;
-	 * c = v & 255;
-	 */
+	v = v - ((v >> 1) & 0x5555555555555555ULL);
+	v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
+	v = ((v + (v >> 4)) & 0x0f0f0f0f0f0f0f0fULL) * 0x0101010101010101ULL;
+	c = v >> 56;
 
 	return c;
 }
+#endif
+
+#if ULONG_MAX == 0xffffffffffffffffULL
+__strong_alias(popcountl, popcount64);
+#endif
+
+#if ULLONG_MAX == 0xffffffffffffffffULL
+__strong_alias(popcountll, popcount64);
+#endif
+
