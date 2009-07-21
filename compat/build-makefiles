@@ -21,8 +21,13 @@ write_if_new() {
 }
 
 for _dir in ${CHECK_SUBDIRS}; do
+
+	# set this to true if the needs to be no master subdir Makefile
+	_need_no_subdir=false
+
 	if [ ${_dir} = "lib/csu" ]; then
 		_subdirs="i386_elf sparc_elf"
+		_need_no_subdir=true
 	else
 		_subdirs=`cd ${srcdir}/${_dir}; ${MAKE} -V SUBDIR`
 	fi
@@ -40,7 +45,7 @@ for _dir in ${CHECK_SUBDIRS}; do
 		fi
 
 		# skip a bunch of non-lib subdirs --
-		case "$_dir/$_sd" in
+		case "$_dir" in
 		  external/bsd/fetch | \
 		  external/bsd/file | \
 		  external/bsd/iscsi | \
@@ -50,6 +55,7 @@ for _dir in ${CHECK_SUBDIRS}; do
 			if [ "$_sd" != "lib" ]; then
 				continue;
 			fi
+			_need_no_subdir=true
 		esac
 
 		_libdplibs="`cd ${srcdir}/${_dir}/${_sd}; ${MAKE} -V LIBDPLIBS | sed 's,\({NETBSDSRCDIR}\),\1/compat,g'`"
@@ -59,7 +65,7 @@ for _dir in ${CHECK_SUBDIRS}; do
 		(
 		 echo -n '#	$Net'
 		 echo 'BSD$'
-		 echo '#	Generated from: $NetBSD: build-makefiles,v 1.6 2009/07/21 00:12:00 mrg Exp $' | sed -e 's/$//g'
+		 echo '#	Generated from: $NetBSD: build-makefiles,v 1.7 2009/07/21 00:23:02 mrg Exp $' | sed -e 's/\$//g'
 		 cat <<'EOF'
 
 NOLINT= # defined
@@ -125,7 +131,7 @@ EOF
 		) > ${rwsrcdir}/compat/${_dir}/${_sd}/Makefile
 	done
 
-	if [ "${_dir}" != "lib/csu" ]; then
+	if [ "${_need_no_subdir}" != "true" ]; then
 		(printf '#	$'NetBSD'$\n\n'
 		 printf ".include <bsd.own.mk>\n\n"
 		 printf "_CURDIR:= \${.CURDIR}\n\n"
