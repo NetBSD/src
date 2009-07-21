@@ -1,4 +1,4 @@
-/*	$NetBSD: popcount64.c,v 1.1 2009/07/21 14:55:32 joerg Exp $	*/
+/*	$NetBSD: popcount64.c,v 1.2 2009/07/21 16:10:48 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcount64.c,v 1.1 2009/07/21 14:55:32 joerg Exp $");
+__RCSID("$NetBSD: popcount64.c,v 1.2 2009/07/21 16:10:48 joerg Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
@@ -54,7 +54,8 @@ __RCSID("$NetBSD: popcount64.c,v 1.1 2009/07/21 14:55:32 joerg Exp $");
 unsigned int
 popcount64(uint64_t v)
 {
-	return popcount32(v >> 32) + popcount32(v & 0xffffffffU);
+	return popcount32((uint32_t)(v >> 32)) +
+	    popcount32((uint32_t)(v & 0xffffffffU));
 }
 #else
 unsigned int
