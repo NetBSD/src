@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.3 2008/09/04 15:34:55 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.4 2009/07/21 00:37:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include <rump/p2k.h>
+#include <rump/ukfs.h>
 
 #include "mount_lfs.h"
 
@@ -48,6 +49,16 @@ main(int argc, char *argv[])
 	int rv;
 
 	setprogname(argv[0]);
+
+	/*
+	 * Load FFS and LFS already here.  we need both and link set
+	 * lossage does not allow them to be linked on the command line.
+	 */
+	ukfs_init();
+	if (ukfs_modload("/usr/lib/librumpfs_ffs.so") != 1)
+		err(1, "modload ffs");
+	if (ukfs_modload("/usr/lib/librumpfs_lfs.so") != 1)
+		err(1, "modload lfs");
 
 	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
 	rv = p2k_run_fs(MOUNT_LFS, canon_dev, canon_dir, mntflags,
