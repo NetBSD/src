@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.12.4.1.2.2 2009/05/27 21:33:50 snj Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.12.4.1.2.3 2009/07/21 00:21:21 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.4.1.2.2 2009/05/27 21:33:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.4.1.2.3 2009/07/21 00:21:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -482,9 +482,14 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 
 	/* Get the message queue */
 	error = mqueue_get(mqdes, &fp);
-	if (error)
+	if (error) {
 		return error;
+	}
 	mq = fp->f_data;
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto error;
+	}
 
 	/* Check the message size limits */
 	if (msg_len < mq->mq_attrib.mq_msgsize) {
@@ -642,6 +647,10 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 		return error;
 	}
 	mq = fp->f_data;
+	if ((fp->f_flag & FWRITE) == 0) {
+		error = EBADF;
+		goto error;
+	}
 
 	/* Check the message size limit */
 	if (msg_len <= 0 || msg_len > mq->mq_attrib.mq_msgsize) {
