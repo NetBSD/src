@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ffs.3	8.2 (Berkeley) 4/19/94
-.\"	$NetBSD: ffs.3,v 1.10 2003/08/07 16:43:47 agc Exp $
+.\"	$NetBSD: ffs.3,v 1.11 2009/07/21 13:22:15 wiz Exp $
 .\"
-.Dd April 19, 1994
+.Dd July 21, 2009
 .Dt FFS 3
 .Os
 .Sh NAME
@@ -52,7 +52,8 @@ Bits are numbered starting from 1, starting at the right-most
 bit.
 A return value of 0 means that the argument was zero.
 .Sh SEE ALSO
-.Xr bitstring 3
+.Xr bitstring 3 ,
+.Xr popcount 3
 .Sh HISTORY
 The
 .Fn ffs
