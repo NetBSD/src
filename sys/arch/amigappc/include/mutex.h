@@ -1,3 +1,3 @@
-/*	$NetBSD: mutex.h,v 1.2 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3 2009/07/21 09:49:16 phx Exp $	*/
 
 #include <powerpc/mutex.h>

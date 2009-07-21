@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.7 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.8 2009/07/21 09:49:15 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -32,48 +32,97 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.7 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.8 2009/07/21 09:49:15 phx Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <uvm/uvm_extern.h>
-#include <sys/user.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/tty.h>
-#include <sys/buf.h>
-#include <sys/msgbuf.h>
-#include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/domain.h>
-#include <sys/dkbad.h>
-#include <sys/reboot.h>
-#include <sys/exec.h>
 #include <amiga/amiga/cc.h>
+#include <amiga/amiga/cia.h>
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cfdev.h>
+#include <amiga/amiga/memlist.h>
+
+int machineid;
+
+vaddr_t CHIPMEMADDR;
+vaddr_t chipmem_start;
+vaddr_t chipmem_end;
+
+vaddr_t z2mem_start;
+static vaddr_t z2mem_end;
+int use_z2_mem = 0;		/* usually no Z2-mem on A3000/A4000 */
 
 u_long boot_fphystart, boot_fphysize, cphysize;
+u_long boot_flags;
 
-vaddr_t z2mem_start;		/* XXX */
-static vaddr_t z2mem_end;	/* XXX */
-int use_z2_mem = 1;		/* XXX */
+char *esym;			/* start address of cfdev/memlist-area */
 
+struct boot_memlist *memlist;
+
+struct cfdev *cfdev;
+int ncfdev;
+
+u_long scsi_nosync;
+int shift_nosync;
+
+void set_boot_args(int, u_long, u_long, u_long, char *, int, u_long, u_long);
+
+
+/*
+ * called from locore.S, before initppc()
+ */
+void
+set_boot_args(int boot_howto, u_long fstart, u_long fsize, u_long csize,
+              char *esymaddr, int cpuid, u_long flags, u_long inhsync)
+{
+	char *end_loaded;
+
+	boothowto = boot_howto;
+	boot_fphystart = fstart;
+	boot_fphysize = fsize;
+	cphysize = csize;
+	esym = end_loaded = esymaddr;
+	machineid = cpuid;
+	boot_flags = flags;
+	scsi_nosync = inhsync;
+
+	/*
+	 * The kernel ends at end_loaded, plus the cfdev and memlist
+	 * structures we placed there in the loader.
+	 * esym already takes a potential symbol-table into account.
+	 */
+	ncfdev = *(int *)end_loaded;
+	cfdev = (struct cfdev *)(end_loaded + sizeof(int));
+	end_loaded += sizeof(int) + ncfdev * sizeof(struct cfdev);
+	memlist = (struct boot_memlist *)end_loaded;
+
+	CHIPMEMADDR = 0x0;
+	chipmem_start = CHIPMEMADDR;
+	chipmem_end  = (vaddr_t)csize;
+
+	CIAADDR = 0xbfd000;
+	CIAAbase = CIAADDR + 0x1001;
+	CIABbase = CIAADDR;
+
+	CUSTOMADDR = 0xdff000;
+	CUSTOMbase = CUSTOMADDR;
+}
+
+/*
+ * called by cc_init_chipmem() from amiga/amiga/cc.c
+ */
 void *
 chipmem_steal(long amount)
 {
-        /*
-         * steal from top of chipmem, so we don't collide with
-         * the kernel loaded into chipmem in the not-yet-mapped state.
-         */
-        vaddr_t p = chipmem_end - amount;
-        if (p & 1)
-                p = p - 1;
-        chipmem_end = p;
-        if(chipmem_start > chipmem_end)
-                panic("not enough chip memory");
-        return((void *)p);
-}
 
+	/* steal from top of chipmem, as amiga68k does */
+	vaddr_t p = chipmem_end - amount;
+	if (p & 1)
+		p = p - 1;
+	chipmem_end = p;
+	if(chipmem_start > chipmem_end)
+		panic("not enough chip memory");
+	return((void *)p);
+}
 
 /*
  * XXX
@@ -85,6 +134,7 @@ chipmem_steal(long amount)
 void *
 alloc_z2mem(long amount)
 {
+
 	if (use_z2_mem && z2mem_end && (z2mem_end - amount) >= z2mem_start) {
 		z2mem_end -= amount;
 		return ((void *)z2mem_end);

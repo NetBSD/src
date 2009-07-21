@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.15 2009/03/14 14:45:54 dsl Exp $ */
+/*	$NetBSD: cpu.h,v 1.16 2009/07/21 09:49:15 phx Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by TooLs GmbH.
+ *	This product includes software developed by TooLs GmbH.
  * 4. The name of TooLs GmbH may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -30,80 +30,35 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _MACHINE_CPU_H_
-#define _MACHINE_CPU_H_
+#ifndef	_MACHINE_CPU_H_
+#define	_MACHINE_CPU_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
+#if defined(_KERNEL)
+#define	CPU_MAXNUM	1
 
-#include <machine/frame.h>
-#include <machine/psl.h>
-#include <machine/intr.h>
+#define A1200		1200
+#define A3000		3000
+#define A4000		4000
+extern int machineid;
 
-#include <sys/sched.h>
-
-#ifdef _KERNEL
-
-u_long	clkread(void);
-void	physaccess(void *, void *, int, int);
-
-#endif /* _KERNEL */
-
-#define CPU_MAXNUM	1
-
-/* ADAM: taken from macppc/cpu.h */
-#define CLKF_USERMODE(frame)    (((frame)->srr1 & PSL_PR) != 0)
-#define CLKF_PC(frame)          ((frame)->srr0)
-#define CLKF_INTR(frame)        ((frame)->depth > 0)
-
-#define	PROC_PC(p)		(trapframe(p)->srr0)
-
-#define cpu_swapout(p)		/* nothing */
-#define cpu_number()            0
-
-extern void delay(unsigned);
-#define DELAY(n)                delay(n)
-
-extern char bootpath[];
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define CACHELINESIZE   32
-#endif
-
-#include <powerpc/cpu.h>
-
-/* end of ADAM */
-
-
-/* ADAM: maybe we will need this??? */
-/* values for machineid (happen to be AFF_* settings of AttnFlags) */
-/*
-#define AMIGA_68020	(1L<<1)
-#define AMIGA_68030	(1L<<2)
-#define AMIGA_68040	(1L<<3)
-#define AMIGA_68881	(1L<<4)
-#define AMIGA_68882	(1L<<5)
-#define	AMIGA_FPU40	(1L<<6)
-#define AMIGA_68060	(1L<<7)
-*/
-
-#ifdef _KERNEL
-int machineid;
-#endif
-
-#ifdef _KERNEL
 /*
  * Prototypes from amiga_init.c
  */
-void    *alloc_z2mem(long);
+void	*alloc_z2mem (long);
 
 /*
  * Prototypes from autoconf.c
  */
-int     is_a1200(void);
-int     is_a3000(void);
-int     is_a4000(void);
+int     is_a1200 (void);
+int     is_a3000 (void);
+int     is_a4000 (void);
+
+/*
+ * Prototypes from machdep.c
+ */
+int dma_cachectl(void *, int);
 #endif
 
-#endif /* !_MACHINE_CPU_H_ */
+#include <powerpc/cpu.h>
+
+#endif	/* _MACHINE_CPU_H_ */
