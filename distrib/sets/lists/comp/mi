@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1285 2009/07/21 13:18:43 joerg Exp $
+#	$NetBSD: mi,v 1.1286 2009/07/21 14:18:50 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2734,6 +2734,7 @@
 ./usr/libdata/debug/sbin/mount_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_nfs.debug	comp-nfsclient-debug	debug
+./usr/libdata/debug/sbin/mount_nilfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ntfs.debug	comp-ntfs-debug		debug
 ./usr/libdata/debug/sbin/mount_null.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_overlay.debug	comp-miscfs-debug	debug
