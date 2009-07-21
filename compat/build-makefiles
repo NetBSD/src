@@ -7,10 +7,18 @@ srcdir=/usr/src
 rwsrcdir=/home/current/src
 MAKE=${MAKE-make}
 
-CHECK_SUBDIRS="gnu/lib gnu/lib/libgcc4 lib lib/csu lib/i18n_module external/bsd/atf/lib external/bsd/openldap/lib lib/libpam/modules"
+CHECK_SUBDIRS="gnu/lib gnu/lib/libgcc4 lib lib/csu lib/i18n_module external/bsd/atf/lib external/bsd/openldap/lib lib/libpam/modules external/bsd/bind/lib external/ibm-public/postfix/lib external/bsd/iscsi crypto/external/bsd/openssl/lib crypto/external/bsd/netpgp crypto/external/bsd/openssh"
+
 # lib/csu is spsecial
 # lib/libm needs to be special -- i387
 # gnu/lib/libsupc++ -- fails to get NOPROFILE properly
+
+tmpdir=`mktemp -d /var/tmp/build-makefiles-$$.XXXXXX` || exit 1
+
+write_if_new() {
+	_file="$1"
+	_new="$2"
+}
 
 for _dir in ${CHECK_SUBDIRS}; do
 	if [ ${_dir} = "lib/csu" ]; then
@@ -25,17 +33,34 @@ for _dir in ${CHECK_SUBDIRS}; do
 		if [ "$_dir" = "lib" -a "$_sd" = "csu" ]; then
 			continue
 		fi
+
 		# skip .WAIT --
 		if [ "$_sd" = ".WAIT" ]; then
 			continue
 		fi
-		_libdplibs="`cd ${srcdir}/${_dir}/${_sd}; ${MAKE} -V LIBDPLIBS`"
+
+		# skip a bunch of non-lib subdirs --
+		case "$_dir/$_sd" in
+		  external/bsd/fetch | \
+		  external/bsd/file | \
+		  external/bsd/iscsi | \
+		  external/bsd/libarchive | \
+		  crypto/external/bsd/netpgp | \
+		  crypto/external/bsd/openssh )
+			if [ "$_sd" != "lib" ]; then
+				continue;
+			fi
+		esac
+
+		_libdplibs="`cd ${srcdir}/${_dir}/${_sd}; ${MAKE} -V LIBDPLIBS | sed 's,\({NETBSDSRCDIR}\),\1/compat,g'`"
 		echo "creating stuff for subdir: $_sd"
 		echo " - libdplibs = ${_libdplibs}"
 		mkdir -p ${rwsrcdir}/compat/${_dir}/${_sd}
 		(
+		 echo -n '#	$Net'
+		 echo 'BSD$'
+		 echo '#	Generated from: $NetBSD: build-makefiles,v 1.6 2009/07/21 00:12:00 mrg Exp $' | sed -e 's/$//g'
 		 cat <<'EOF'
-#	$NetBSD: build-makefiles,v 1.5 2009/01/19 07:16:38 jmmv Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -77,6 +102,8 @@ _RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS LIB_ROOT_DIR
 ${var}:=        ${${var}}
 .endfor
 
+.include <bsd.own.mk>
+
 _CURDIR:= ${.CURDIR}
 
 EOF
@@ -98,8 +125,9 @@ EOF
 		) > ${rwsrcdir}/compat/${_dir}/${_sd}/Makefile
 	done
 
-	if [ "${_dir}" = "lib" -a "${_sd}" = "csu" ]; then
+	if [ "${_dir}" != "lib/csu" ]; then
 		(printf '#	$'NetBSD'$\n\n'
+		 printf ".include <bsd.own.mk>\n\n"
 		 printf "_CURDIR:= \${.CURDIR}\n\n"
 		 printf ".CURDIR:=\${NETBSDSRCDIR}/${_dir}\n\n"
 		 printf ".include "'"'"\${.CURDIR}/Makefile"'"'"\n\n"
@@ -108,10 +136,12 @@ EOF
 
 		if [ -f "${srcdir}/${_dir}/Makefile.inc" ]; then
 			(printf '#	$'NetBSD'$\n\n'
+			 printf ".include <bsd.own.mk>\n\n"
 			 printf "_CURDIR:= \${.CURDIR}\n\n"
 			 printf ".include "'"'"\${NETBSDSRCDIR}/${_dir}/Makefile.inc"'"'"\n\n"
 			 printf ".CURDIR:= \${_CURDIR}\n"
 			) > ${rwsrcdir}/compat/${_dir}/Makefile.inc
 		fi
 	fi
+
 done
