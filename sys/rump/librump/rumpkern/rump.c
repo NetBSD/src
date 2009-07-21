@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.109 2009/05/22 08:34:15 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.110 2009/07/21 00:33:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.109 2009/05/22 08:34:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.110 2009/07/21 00:33:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -256,7 +256,7 @@ rump__init(int rump_version)
 	/* aieeeedondest */
 	if (rump_threads) {
 		if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-		    rump_aiodone_worker, NULL, 0, 0, 0))
+		    rump_aiodone_worker, NULL, 0, 0, WQ_MPSAFE))
 			panic("aiodoned");
 	}
 
