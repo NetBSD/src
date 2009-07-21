@@ -1,5 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2009/01/19 07:17:19 jmmv Exp $
+#	$NetBSD: Makefile,v 1.2 2009/07/21 01:00:37 mrg Exp $
 
-SUBDIR= libatf-c .WAIT libatf-c++
+.include <bsd.own.mk>
 
-.include <bsd.subdir.mk>
+_CURDIR:= ${.CURDIR}
+
+.CURDIR:=${NETBSDSRCDIR}/external/bsd/atf/lib
+
+.include "${.CURDIR}/Makefile"
+
+.CURDIR:= ${_CURDIR}

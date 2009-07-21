@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2009/06/12 06:40:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/07/21 01:00:49 mrg Exp $
+#	Generated from: NetBSD: build-makefiles,v 1.7 2009/07/21 00:23:02 mrg Exp 
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	ssh	${.CURDIR}/../../../../crypto/external/bsd/openssh/lib  crypt	${.CURDIR}/../../../libcrypt  crypto	${.CURDIR}/../../../libcrypto
+LIBDPLIBS=	ssh	${NETBSDSRCDIR}/compat/crypto/external/bsd/openssh/lib  crypt	${.CURDIR}/../../../libcrypt  crypto	${NETBSDSRCDIR}/compat/crypto/external/bsd/openssl/lib/libcrypto
 
 NOCHECKVER=	# defined
 
@@ -16,6 +17,8 @@ _RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS LIB_ROOT_DIR
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
+
+.include <bsd.own.mk>
 
 _CURDIR:= ${.CURDIR}
 

@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/20 22:49:29 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2009/07/21 01:00:47 mrg Exp $
 
 .include <bsd.own.mk>
 
 _CURDIR:= ${.CURDIR}
 
-.include <bsd.own.mk>
 .CURDIR:=${NETBSDSRCDIR}/lib/libpam/modules
 
 .include "${.CURDIR}/Makefile"
