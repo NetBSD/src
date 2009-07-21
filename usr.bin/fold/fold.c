@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.15 2008/10/29 01:31:09 ahoka Exp $	*/
+/*	$NetBSD: fold.c,v 1.16 2009/07/21 01:35:02 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,20 +42,22 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fold.c,v 1.15 2008/10/29 01:31:09 ahoka Exp $");
+__RCSID("$NetBSD: fold.c,v 1.16 2009/07/21 01:35:02 ahoka Exp $");
 #endif /* not lint */
 
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 #include <err.h>
 
 #define	DEFLINEWIDTH	80
 
 	int	main(int, char **);
 static	void	fold(int);
-static	int	new_column_position(int, int);
+static	int	new_column_position(int, wint_t);
 static	void	usage(void);
 
 int count_bytes = 0;
@@ -67,6 +69,9 @@ main(int argc, char **argv)
 	int ch;
 	int width;
 	char *p;
+
+	setlocale(LC_CTYPE, "");
+	setprogname(argv[0]);
 
 	width = -1;
 	while ((ch = getopt(argc, argv, "0123456789bsw:")) != -1)
@@ -125,41 +130,44 @@ main(int argc, char **argv)
 static void
 fold(int width)
 {
-	static char *buf = NULL;
-	char *nbuf;
+	static wchar_t *buf = NULL;
+	wchar_t *nbuf;
 	static int   buf_max = 0;
-	int ch, col;
-	int indx;
+	wint_t ch;
+	int col, indx, i;
 
 	col = indx = 0;
-	while ((ch = getchar()) != EOF) {
-		if (ch == '\n') {
-			if (indx != 0)
-				fwrite (buf, 1, indx, stdout);
-			putchar('\n');
+	while ((ch = getwchar()) != WEOF) {
+		if (ch == L'\n') {
+			if (indx != 0) {
+				for (i = 0; i < indx; i++)
+					putwchar(buf[i]);
+			}
+			putwchar(L'\n');
 			col = indx = 0;
 			continue;
 		}
 
 		col = new_column_position (col, ch);
 		if (col > width) {
-			int i, last_space;
+			int last_space;
 
 #ifdef __GNUC__
 			last_space = 0;	/* XXX gcc */
 #endif
 			if (split_words) {
 				for (i = 0, last_space = -1; i < indx; i++)
-					if (buf[i] == ' ')
+					if (buf[i] == L' ')
 						last_space = i;
 			}
 
 			if (split_words && last_space != -1) {
-				fwrite (buf, 1, last_space, stdout);
+				for (i = 0; i < last_space; i++)
+					putwchar(buf[i]);
 
 				/* increase last_space here, so we skip trailing whitespace */
 				last_space++;
-				memmove (buf, buf+last_space, indx-last_space);
+				wmemmove (buf, buf+last_space, indx-last_space);
 
 				indx -= last_space;
 				col = 0;
@@ -167,10 +175,11 @@ fold(int width)
 					col = new_column_position (col, buf[i]);
 				}
 			} else {
-				fwrite (buf, 1, indx, stdout);
+				for (i = 0; i < indx; i++)
+					putwchar(buf[i]);
 				col = indx = 0;
 			}
-			putchar('\n');
+			putwchar('\n');
 
 			/* calculate the column position for the next line. */
 			col = new_column_position (col, ch);
@@ -188,34 +197,43 @@ fold(int width)
 		buf[indx++] = ch;
 	}
 
-	if (indx != 0)
-		fwrite (buf, 1, indx, stdout);
+	if (indx != 0) {
+		for (i = 0; i < indx; i++)
+			putwchar(buf[i]);
+	}
 }
 
 /*
  * calculate the column position 
  */
 static int
-new_column_position (int col, int ch)
+new_column_position (int col, wint_t ch)
 {
+	int w;
+	
 	if (!count_bytes) {
 		switch (ch) {
-		case '\b':
+		case L'\b':
 			if (col > 0)
 				--col;
 			break;
-		case '\r':
+		case L'\r':
 			col = 0;
 			break;
-		case '\t':
+		case L'\t':
 			col = (col + 8) & ~7;
 			break;
 		default:
-			++col;
+			w = wcwidth(ch);
+			if (w > 0)
+				col += w;
 			break;
 		}
 	} else {
-		++col;
+		char dummy[MB_LEN_MAX];
+		
+		/* XXX: we assume stateless encoding */
+		col += wcrtomb(dummy, ch, NULL);
 	}
 
 	return col;
@@ -223,9 +241,9 @@ new_column_position (int col, int ch)
 
 static void
 usage(void)
-	{
+{
 	(void)fprintf(stderr,
-		    "usage: fold [-bs] [-w width] [file ...]\n");
+	    "usage: %s [-bs] [-w width] [file ...]\n", getprogname());
 	exit(1);
-	}
+}
 
