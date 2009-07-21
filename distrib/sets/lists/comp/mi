@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1286 2009/07/21 14:18:50 njoly Exp $
+#	$NetBSD: mi,v 1.1287 2009/07/21 14:55:32 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6946,6 +6946,8 @@
 ./usr/share/man/cat3/popcount.0			comp-c-catman		.cat
 ./usr/share/man/cat3/popcountl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popcountll.0		comp-c-catman		.cat
+./usr/share/man/cat3/popcount32.0		comp-c-catman		.cat
+./usr/share/man/cat3/popcount64.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pos_form_cursor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_memalign.0		comp-c-catman		.cat
@@ -12406,6 +12408,8 @@
 ./usr/share/man/html3/popcount.html		comp-c-htmlman		html
 ./usr/share/man/html3/popcountl.html		comp-c-htmlman		html
 ./usr/share/man/html3/popcountll.html		comp-c-htmlman		html
+./usr/share/man/html3/popcount32.html		comp-c-htmlman		html
+./usr/share/man/html3/popcount64.html		comp-c-htmlman		html
 ./usr/share/man/html3/popen.html		comp-c-htmlman		html
 ./usr/share/man/html3/pos_form_cursor.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_memalign.html	comp-c-htmlman		html
@@ -17860,6 +17864,8 @@
 ./usr/share/man/man3/popcount.3			comp-c-man		.man
 ./usr/share/man/man3/popcountl.3		comp-c-man		.man
 ./usr/share/man/man3/popcountll.3		comp-c-man		.man
+./usr/share/man/man3/popcount32.3		comp-c-man		.man
+./usr/share/man/man3/popcount64.3		comp-c-man		.man
 ./usr/share/man/man3/popen.3			comp-c-man		.man
 ./usr/share/man/man3/pos_form_cursor.3		comp-c-man		.man
 ./usr/share/man/man3/posix_memalign.3		comp-c-man		.man
