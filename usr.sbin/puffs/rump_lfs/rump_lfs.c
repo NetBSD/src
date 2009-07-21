@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.4 2009/07/21 00:37:25 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.5 2009/07/21 00:40:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -55,9 +55,9 @@ main(int argc, char *argv[])
 	 * lossage does not allow them to be linked on the command line.
 	 */
 	ukfs_init();
-	if (ukfs_modload("/usr/lib/librumpfs_ffs.so") != 1)
+	if (ukfs_modload("librumpfs_ffs.so") != 1)
 		err(1, "modload ffs");
-	if (ukfs_modload("/usr/lib/librumpfs_lfs.so") != 1)
+	if (ukfs_modload("librumpfs_lfs.so") != 1)
 		err(1, "modload lfs");
 
 	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
