@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2008/11/28 08:57:54 dogcow Exp $
+#	$NetBSD: Makefile,v 1.3 2009/07/21 01:00:47 mrg Exp $
+#	Generated from: NetBSD: build-makefiles,v 1.7 2009/07/21 00:23:02 mrg Exp 
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	rump    ${.CURDIR}/../librump	 ukfs	${.CURDIR}/../libukfs \
-		rumpvfs ${.CURDIR}/../librumpvfs
+LIBDPLIBS=	rump	${.CURDIR}/../librump		 rumpvfs	${.CURDIR}/../librumpvfs	 ukfs	${.CURDIR}/../libukfs
 
 NOCHECKVER=	# defined
 
@@ -17,6 +17,8 @@ _RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS LIB_ROOT_DIR
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
+
+.include <bsd.own.mk>
 
 _CURDIR:= ${.CURDIR}
 

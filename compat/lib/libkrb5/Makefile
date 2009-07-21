@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/27 08:00:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/07/21 01:00:46 mrg Exp $
+#	Generated from: NetBSD: build-makefiles,v 1.7 2009/07/21 00:23:02 mrg Exp 
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	hx509	${.CURDIR}/../libhx509  crypto	${.CURDIR}/../libcrypto  asn1	${.CURDIR}/../libasn1  com_err	${.CURDIR}/../libcom_err  roken	${.CURDIR}/../libroken
+LIBDPLIBS=	hx509	${.CURDIR}/../libhx509  crypto	${.CURDIR}/../../crypto/external/bsd/openssl/lib/libcrypto  asn1	${.CURDIR}/../libasn1  com_err	${.CURDIR}/../libcom_err  roken	${.CURDIR}/../libroken
 
 NOCHECKVER=	# defined
 
@@ -16,6 +17,8 @@ _RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS LIB_ROOT_DIR
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
+
+.include <bsd.own.mk>
 
 _CURDIR:= ${.CURDIR}
 

@@ -1,5 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2009/07/20 20:19:48 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2009/07/21 01:00:37 mrg Exp $
 
-.include "bsd.own.mk"
+.include <bsd.own.mk>
 
-.include "${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/Makefile"
+_CURDIR:= ${.CURDIR}
+
+.CURDIR:=${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib
+
+.include "${.CURDIR}/Makefile"
+
+.CURDIR:= ${_CURDIR}

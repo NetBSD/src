@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/27 08:00:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2009/07/21 01:00:44 mrg Exp $
+#	Generated from: NetBSD: build-makefiles,v 1.7 2009/07/21 00:23:02 mrg Exp 
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -16,6 +17,8 @@ _RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS LIB_ROOT_DIR
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
+
+.include <bsd.own.mk>
 
 _CURDIR:= ${.CURDIR}
 
