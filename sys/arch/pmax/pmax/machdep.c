@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.233 2009/07/21 14:26:48 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234 2009/07/21 15:10:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2009/07/21 14:26:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2009/07/21 15:10:39 tsutsui Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -230,7 +230,9 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 		ssym = (void *)bi_syms->ssym;
 		esym = (void *)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
+#if 0	/* our bootloader clears BSS properly */
 		memset(edata, 0, end - edata);
+#endif
 	} else
 #ifdef EXEC_AOUT
 	/* XXX: Backwards compatibility with old bootblocks - this should
