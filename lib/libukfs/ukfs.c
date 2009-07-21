@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.28 2009/05/22 08:59:53 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.29 2009/07/21 00:19:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -716,11 +716,7 @@ ukfs_modload(const char *fname)
 {
 	void *handle;
 	struct modinfo **mi;
-	struct stat sb;
 	int error;
-
-	if (stat(fname, &sb) == -1)
-		return -1;
 
 	handle = dlopen(fname, RTLD_GLOBAL);
 	if (handle == NULL) {
