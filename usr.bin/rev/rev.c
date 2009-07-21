@@ -1,4 +1,4 @@
-/*	$NetBSD: rev.c,v 1.10 2009/07/21 01:12:55 ahoka Exp $	*/
+/*	$NetBSD: rev.c,v 1.11 2009/07/21 01:25:14 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: rev.c,v 1.10 2009/07/21 01:12:55 ahoka Exp $");
+__RCSID("$NetBSD: rev.c,v 1.11 2009/07/21 01:25:14 ahoka Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,13 +53,11 @@ __RCSID("$NetBSD: rev.c,v 1.10 2009/07/21 01:12:55 ahoka Exp $");
 #include <unistd.h>
 #include <wchar.h>
 
-int	main __P((int, char **));
-void	usage __P((void));
+static void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *filename;
 	wchar_t *p, *t;
@@ -68,6 +66,7 @@ main(argc, argv)
 	int ch, rval;
 
 	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
@@ -109,9 +108,9 @@ main(argc, argv)
 	exit(rval);
 }
 
-void
-usage()
+static void
+usage(void)
 {
-	(void)fprintf(stderr, "usage: rev [file ...]\n");
-	exit(1);
+	(void)fprintf(stderr, "usage: %s [file ...]\n", getprogname());
+	exit(EXIT_FAILURE);
 }
