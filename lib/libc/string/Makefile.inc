@@ -1,10 +1,10 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.72 2009/07/18 09:41:23 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.73 2009/07/21 13:18:43 joerg Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
 
-SRCS+=	bm.c stpcpy.c stpncpy.c \
+SRCS+=	bm.c popcountl.c stpcpy.c stpncpy.c \
 	strcasecmp.c strncasecmp.c strcasestr.c strcoll.c strdup.c \
 	strerror.c strlcat.c strlcpy.c strnlen.c \
 	strmode.c strsignal.c strtok.c \
@@ -55,9 +55,16 @@ SRCS+=	strchr.c
 .if empty(SRCS:Mstrrchr.S)
 SRCS+=	strrchr.c
 .endif
+.if empty(SRCS:Mpopcount.S)
+SRCS+=	popcount.c
+.endif
+.if empty(SRCS:Mpopcountll.S)
+SRCS+=	popcountll.c
+.endif
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 \
 	memccpy.3 memchr.3 memcmp.3 memcpy.3 memmem.3 memmove.3	memset.3 \
+	popcount.3 \
 	rindex.3 strcasecmp.3 strcat.3 strchr.3 strcmp.3 strcoll.3 \
 	strcpy.3 strcspn.3 strdup.3 strerror.3 string.3 strings.3 strlcpy.3 \
 	strlen.3 strmode.3 strpbrk.3 strrchr.3 strsep.3 \
@@ -65,6 +72,8 @@ MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 \
 	swab.3 wcstok.3 wcswidth.3 wmemchr.3 wcsdup.3 wcscasecmp.3
 
 MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
+MLINKS+=popcount.3 popcountl.3
+MLINKS+=popcount.3 popcountll.3
 MLINKS+=strcasecmp.3 strncasecmp.3
 MLINKS+=strcat.3 strncat.3
 MLINKS+=strcmp.3 strncmp.3
