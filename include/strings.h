@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.13 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: strings.h,v 1.14 2009/07/21 13:18:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@ void	 bcopy(const void *, void *, size_t);
 void	 bzero(void *, size_t);
 int	 ffs(int);
 char	*index(const char *, int);
+unsigned int	popcount(unsigned int) __constfunc;
+unsigned int	popcountl(unsigned long) __constfunc;
+unsigned int	popcountll(unsigned long long) __constfunc;
 char	*rindex(const char *, int);
 int	 strcasecmp(const char *, const char *);
 int	 strncasecmp(const char *, const char *, size_t);
