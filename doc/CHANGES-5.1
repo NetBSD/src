@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.49 2009/07/18 21:39:10 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.50 2009/07/21 00:41:04 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1586,4 +1586,22 @@ sys/netinet/tcp_input.c				1.296
 	ack received, but the expected sequence number.  This makes RST
 	handling independent of delayed ACK.
 	[is, ticket #859]
+
+sys/kern/sys_mqueue.c				1.21 via patch
+
+	mq_send/mq_receive: while permission may allow that, return EBADF
+	if sending to read-only queue, or receiving from write-only queue.
+	[rmind, ticket #857]
+
+sys/kern/vfs_subr.c				1.379
+sys/sys/vnode.h					1.207
+
+	Put a flag bit into v_usecount to prevent vtryget during
+	getcleanvnode.  Fixes PR/41374.
+	[rmind, ticket #863]
+
+sys/arch/amd64/amd64/trap.c			1.56, 1.57
+
+	Handle protection fault properly.
+	[rmind, ticket #865]
 
