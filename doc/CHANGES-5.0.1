@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.38 2009/07/19 19:50:36 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.39 2009/07/21 00:38:26 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -637,4 +637,22 @@ sys/dev/pci/if_wmreg.h				1.27
 	Fixes PR#36430.
 	3) Fix many problems and panic on TBI's cards (includes PR#32009).
 	[msaitoh, ticket #862]
+
+sys/kern/sys_mqueue.c				1.21 via patch
+
+	mq_send/mq_receive: while permission may allow that, return EBADF
+	if sending to read-only queue, or receiving from write-only queue.
+	[rmind, ticket #857]
+
+sys/kern/vfs_subr.c				1.379
+sys/sys/vnode.h					1.207
+
+	Put a flag bit into v_usecount to prevent vtryget during
+	getcleanvnode.  Fixes PR/41374.
+	[rmind, ticket #863]
+
+sys/arch/amd64/amd64/trap.c			1.56, 1.57
+
+	Handle protection fault properly.
+	[rmind, ticket #865]
 
