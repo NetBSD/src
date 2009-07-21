@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2009/07/20 17:03:38 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2009/07/21 13:18:44 joerg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+=	stdlib
+SUBDIR+=	stdlib string
 
 TESTSDIR=	${TESTSBASE}/lib/libc
 

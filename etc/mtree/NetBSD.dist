@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.406 2009/07/20 17:03:37 joerg Exp $
+#	$NetBSD: NetBSD.dist,v 1.407 2009/07/21 13:18:43 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1437,6 +1437,7 @@
 ./usr/tests/lib
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/stdlib
+./usr/tests/lib/libc/string
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/sys

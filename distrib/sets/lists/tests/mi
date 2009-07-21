@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2009/07/20 17:03:36 joerg Exp $
+# $NetBSD: mi,v 1.45 2009/07/21 13:18:43 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -136,6 +136,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug	debug
+./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug	debug
+./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug	debug
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
@@ -847,6 +849,9 @@
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests
+./usr/tests/lib/libc/string			tests-lib-tests
+./usr/tests/lib/libc/string/Atffile		tests-lib-tests
+./usr/tests/lib/libc/string/t_popcount		tests-lib-tests
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/modules/Atffile			tests-sys-tests
 ./usr/tests/net					tests-net-tests
