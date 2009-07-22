@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.46 2008/04/14 20:33:15 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.47 2009/07/22 16:57:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.46 2008/04/14 20:33:15 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.47 2009/07/22 16:57:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -148,7 +148,7 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
 #endif
 
 	for (i = 0; i < maxy; i++) {
-		lp = win->lines[i];
+		lp = win->alines[i];
 		if (ispad)
 			lp->flags = __ISDIRTY;
 		else
@@ -232,8 +232,8 @@ __set_subwin(WINDOW *orig, WINDOW *win)
 	win->ch_off = win->begx - orig->begx;
 	/* Point line pointers to line space. */
 	for (lp = win->lspace, i = 0; i < win->maxy; i++, lp++) {
-		win->lines[i] = lp;
-		olp = orig->lines[i + win->begy - orig->begy];
+		win->alines[i] = lp;
+		olp = orig->alines[i + win->begy - orig->begy];
 #ifdef DEBUG
 		lp->sentinel = SENTINEL_VALUE;
 #endif
@@ -294,12 +294,12 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 #endif
 
 	/* Set up line pointer array and line space. */
-	if ((win->lines = malloc(nlines * sizeof(__LINE *))) == NULL) {
+	if ((win->alines = malloc(nlines * sizeof(__LINE *))) == NULL) {
 		free(win);
 		return NULL;
 	}
 	if ((win->lspace = malloc(nlines * sizeof(__LINE))) == NULL) {
-		free(win->lines);
+		free(win->alines);
 		free(win);
 		return NULL;
 	}
@@ -313,7 +313,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		if ((win->wspace =
 			malloc(ncols * nlines * sizeof(__LDATA))) == NULL) {
 			free(win->lspace);
-			free(win->lines);
+			free(win->alines);
 			free(win);
 			return NULL;
 		}
@@ -323,7 +323,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		if ((wlp = malloc(sizeof(struct __winlist))) == NULL) {
 			free(win->wspace);
 			free(win->lspace);
-			free(win->lines);
+			free(win->alines);
 			free(win);
 			return NULL;
 		}
@@ -342,7 +342,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		 * window space.
 		 */
 		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
-			win->lines[i] = lp;
+			win->alines[i] = lp;
 			lp->line = &win->wspace[i * ncols];
 #ifdef DEBUG
 			lp->sentinel = SENTINEL_VALUE;

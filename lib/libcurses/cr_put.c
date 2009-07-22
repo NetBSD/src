@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.27 2008/07/23 13:32:41 tnozaki Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.28 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.27 2008/07/23 13:32:41 tnozaki Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.28 2009/07/22 16:57:14 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -403,19 +403,19 @@ dontcr:while (outline < destline) {
 				plodcnt--;
 			else {
 #ifndef HAVE_WCHAR
-				i = curscr->lines[outline]->line[outcol].ch
+				i = curscr->alines[outline]->line[outcol].ch
 				    & __CHARTEXT;
-				if (curscr->lines[outline]->line[outcol].attr
+				if (curscr->alines[outline]->line[outcol].attr
 				    == curscr->wattr)
 					__cputchar(i);
 #else
-				if ((curscr->lines[outline]->line[outcol].attr
+				if ((curscr->alines[outline]->line[outcol].attr
 				    & WA_ATTRIBUTES)
 				    == curscr->wattr) {
-					switch (WCOL(curscr->lines[outline]->line[outcol])) {
+					switch (WCOL(curscr->alines[outline]->line[outcol])) {
 					case 1:
-						__cputwchar(curscr->lines[outline]->line[outcol].ch);
-						__cursesi_putnsp(curscr->lines[outline]->line[outcol].nsp,
+						__cputwchar(curscr->alines[outline]->line[outcol].ch);
+						__cursesi_putnsp(curscr->alines[outline]->line[outcol].nsp,
 								outline,
 								outcol);
 #ifdef DEBUG
@@ -423,8 +423,8 @@ dontcr:while (outline < destline) {
 						    "plod: (%d,%d)WCOL(%d), "
 						    "putwchar(%x)\n",
 						    outline, outcol,
-						    WCOL(curscr->lines[outline]->line[outcol]),
-						    curscr->lines[outline]->line[outcol].ch);
+						    WCOL(curscr->alines[outline]->line[outcol]),
+						    curscr->alines[outline]->line[outcol].ch);
 #endif /* DEBUG */
 					/*FALLTHROUGH*/
 					case 0:

@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.3 2007/05/29 11:10:56 blymn Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.4 2009/07/22 16:57:15 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.3 2007/05/29 11:10:56 blymn Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.4 2009/07/22 16:57:15 roy Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -163,9 +163,9 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 
 	if (cw > win->maxx - win->curx + 1)
 		return ERR;
-	start = &win->lines[win->cury]->line[win->curx];
+	start = &win->alines[win->cury]->line[win->curx];
 	sx = win->curx;
-	lnp = win->lines[win->cury];
+	lnp = win->alines[win->cury];
 	pcw = WCOL(*start);
 	if (pcw < 0) {
 		sx += pcw;
@@ -186,9 +186,9 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
 			    (int) win->cury, x,
-			    win->lines[win->cury]->line[x].ch,
-			    win->lines[win->cury]->line[x].attr,
-			    win->lines[win->cury]->line[x].nsp);
+			    win->alines[win->cury]->line[x].ch,
+			    win->alines[win->cury]->line[x].attr,
+			    win->alines[win->cury]->line[x].nsp);
 	}
 #endif /* DEBUG */
 
@@ -197,7 +197,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wins_nwstr: shift all characters\n");
 #endif /* DEBUG */
-		temp1 = &win->lines[win->cury]->line[win->maxx - 1];
+		temp1 = &win->alines[win->cury]->line[win->maxx - 1];
 		temp2 = temp1 - width;
 		pcw = WCOL(*(temp2 + 1));
 		if (pcw < 0) {
@@ -231,9 +231,9 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 				__CTRACE(__CTRACE_INPUT,
 				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
 				    (int) win->cury, x,
-				    win->lines[win->cury]->line[x].ch,
-				    win->lines[win->cury]->line[x].attr,
-				    win->lines[win->cury]->line[x].nsp);
+				    win->alines[win->cury]->line[x].ch,
+				    win->alines[win->cury]->line[x].attr,
+				    win->alines[win->cury]->line[x].nsp);
 		}
 #endif /* DEBUG */
 	}
@@ -311,9 +311,9 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
 			    (int) win->cury, x,
-			    win->lines[win->cury]->line[x].ch,
-			    win->lines[win->cury]->line[x].attr,
-			    win->lines[win->cury]->line[x].nsp);
+			    win->alines[win->cury]->line[x].ch,
+			    win->alines[win->cury]->line[x].attr,
+			    win->alines[win->cury]->line[x].nsp);
 	}
 #endif /* DEBUG */
 	newx = win->maxx - 1 + win->ch_off;

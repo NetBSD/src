@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.21 2007/05/28 15:01:56 blymn Exp $	*/
+/*	$NetBSD: insch.c,v 1.22 2009/07/22 16:57:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.21 2007/05/28 15:01:56 blymn Exp $");
+__RCSID("$NetBSD: insch.c,v 1.22 2009/07/22 16:57:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -96,8 +96,8 @@ winsch(WINDOW *win, chtype ch)
 		attr = win->battr & __COLOR;
 	else
 		attr = 0;
-	end = &win->lines[win->cury]->line[win->curx];
-	temp1 = &win->lines[win->cury]->line[win->maxx - 1];
+	end = &win->alines[win->cury]->line[win->curx];
+	temp1 = &win->alines[win->cury]->line[win->maxx - 1];
 	temp2 = temp1 - 1;
 	while (temp1 > end) {
 		(void) memcpy(temp1, temp2, sizeof(__LDATA));
@@ -118,8 +118,8 @@ winsch(WINDOW *win, chtype ch)
 #endif /* HAVE_WCHAR */
 	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
 	if (win->cury == LINES - 1 &&
-	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||
-		win->lines[LINES - 1]->line[COLS - 1].attr != attr)) {
+	    (win->alines[LINES - 1]->line[COLS - 1].ch != ' ' ||
+		win->alines[LINES - 1]->line[COLS - 1].attr != attr)) {
 		if (win->flags & __SCROLLOK) {
 			wrefresh(win);
 			scroll(win);

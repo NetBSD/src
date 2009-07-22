@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.36 2007/08/27 19:54:29 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.37 2009/07/22 16:57:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.36 2007/08/27 19:54:29 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.37 2009/07/22 16:57:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -253,7 +253,7 @@ void
 __restartwin(void)
 {
 	struct winsize win;
-	int lines, cols;
+	int nlines, ncols;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "__restartwin\n");
@@ -287,12 +287,12 @@ __restartwin(void)
 	 * We need to make local copies of LINES and COLS, otherwise we
 	 * could lose if they are changed between wresize() calls.
 	 */
-	lines = LINES;
-	cols = COLS;
-	if (curscr->maxy != lines || curscr->maxx != cols)
-		wresize(curscr, lines, cols);
-	if (stdscr->maxy != lines || stdscr->maxx != cols)
-		wresize(stdscr, lines, cols);
+	nlines = LINES;
+	ncols = COLS;
+	if (curscr->maxy != nlines || curscr->maxx != ncols)
+		wresize(curscr, nlines, ncols);
+	if (stdscr->maxy != nlines || stdscr->maxx != ncols)
+		wresize(stdscr, nlines, ncols);
 
 	/* save the new "default" terminal state */
 	(void) tcgetattr(fileno(_cursesi_screen->infd),
