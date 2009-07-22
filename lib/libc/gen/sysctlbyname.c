@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlbyname.c,v 1.4 2008/04/29 06:53:01 martin Exp $ */
+/*	$NetBSD: sysctlbyname.c,v 1.5 2009/07/22 22:53:41 alc Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlbyname.c,v 1.4 2008/04/29 06:53:01 martin Exp $");
+__RCSID("$NetBSD: sysctlbyname.c,v 1.5 2009/07/22 22:53:41 alc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,8 +46,8 @@ __weak_alias(sysctlbyname,_sysctlbyname)
  * trivial sysctlbyname() function for the "lazy".
  */
 int
-sysctlbyname(const char *gname, void *oldp, size_t *oldlenp, void *newp,
-	     size_t newlen)
+sysctlbyname(const char *gname, void *oldp, size_t *oldlenp,
+	     const void *newp, size_t newlen)
 {
 	int name[CTL_MAXNAME], rc;
 	u_int namelen;
