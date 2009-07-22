@@ -1,4 +1,9 @@
-/* $NetBSD: complex.h,v 1.1 2007/08/20 16:01:29 drochner Exp $ */
+/* $NetBSD: complex.h,v 1.2 2009/07/22 15:09:57 drochner Exp $ */
+
+/*
+ * Written by Matthias Drochner.
+ * Public domain.
+ */
 
 #define complex _Complex
 #define _Complex_I 1.0fi
