@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.19 2009/06/10 12:12:23 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.20 2009/07/22 21:06:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.19 2009/06/10 12:12:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.20 2009/07/22 21:06:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -230,10 +230,13 @@ rump_vop_lookup(void *v)
 	int rv, error, ft;
 
 	/* we handle only some "non-special" cases */
-	KASSERT(((cnp->cn_flags & ISLASTCN) == 0)
-	    || (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE));
-	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
-	KASSERT(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.');
+	if (!(((cnp->cn_flags & ISLASTCN) == 0)
+	    || (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE)))
+		return EOPNOTSUPP;
+	if (!((cnp->cn_flags & ISDOTDOT) == 0))
+		return EOPNOTSUPP;
+	if (!(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.'))
+		return EOPNOTSUPP;
 
 	/* check if we are returning a faked block device */
 	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
