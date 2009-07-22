@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.120 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.121 2009/07/22 19:48:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -327,7 +327,11 @@ int	 setrgid(gid_t);
 int	 setruid(uid_t);
 void	 setusershell(void);
 void	 strmode(mode_t, char *);
+#ifndef __STRSIGNAL_DECLARED
+#define __STRSIGNAL_DECLARED
+/* backwards-compatibility; also in string.h */
 __aconst char *strsignal(int);
+#endif /* __STRSIGNAL_DECLARED */
 int	 swapctl(int, void *, int);
 int	 swapon(const char *);			/* obsoleted by swapctl() */
 int	 syscall(int, ...);
