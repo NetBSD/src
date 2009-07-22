@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.38 2009/05/01 20:01:23 perry Exp $	*/
+/*	$NetBSD: string.h,v 1.39 2009/07/22 19:48:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -84,13 +84,16 @@ char	*strdup(const char *);
 char	*stpcpy(char * __restrict, const char * __restrict);
 char	*stpncpy(char * __restrict, const char * __restrict, size_t);
 size_t	strnlen(const char *, size_t);
+#ifndef __STRSIGNAL_DECLARED
+#define __STRSIGNAL_DECLARED
+/* also in unistd.h */
+__aconst char *strsignal(int);
+#endif /* __STRSIGNAL_DECLARED */
 /*
  * For POSIX compliance, we still need:
  * strcoll_l
  * strerror_l
  * strxfrm_l
- *
- * and strsignal needs to be moved from unistd.h to here.
  */
 #endif
 
