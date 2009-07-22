@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.208 2009/05/15 17:02:54 pooka Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.209 2009/07/22 15:49:29 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.208 2009/05/15 17:02:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.209 2009/07/22 15:49:29 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,7 +702,7 @@ linux_sys_getdents(struct lwp *l, const struct linux_sys_getdents_args *uap, reg
 
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VDIR) {
-		error = EINVAL;
+		error = ENOTDIR;
 		goto out1;
 	}
 
