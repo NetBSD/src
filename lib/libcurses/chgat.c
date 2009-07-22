@@ -1,4 +1,4 @@
-/*	$NetBSD: chgat.c,v 1.3 2009/07/09 22:08:45 joerg Exp $	*/
+/*	$NetBSD: chgat.c,v 1.4 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chgat.c,v 1.3 2009/07/09 22:08:45 joerg Exp $");
+__RCSID("$NetBSD: chgat.c,v 1.4 2009/07/22 16:57:14 roy Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
@@ -71,7 +71,7 @@ mvwchgat(WINDOW *win , int y, int x, int count, attr_t attr, short color,
 	if (count < 0 || count > win->maxx - x)
 		count = win->maxx - x;
 
-	lp = win->lines[y];
+	lp = win->alines[y];
 	lc = &lp->line[x];
 
 	if (x + win->ch_off < *lp->firstchp)

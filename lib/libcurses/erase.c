@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.23 2007/05/28 15:01:55 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.24 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.23 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.24 2009/07/22 16:57:14 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -77,7 +77,7 @@ werase(WINDOW *win)
 	else
 		attr = 0;
 	for (y = 0; y < win->maxy; y++) {
-		start = win->lines[y]->line;
+		start = win->alines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++)
 #ifndef HAVE_WCHAR

@@ -1,4 +1,4 @@
-/*   $NetBSD: inwstr.c,v 1.2 2007/05/28 15:01:56 blymn Exp $ */
+/*   $NetBSD: inwstr.c,v 1.3 2009/07/22 16:57:15 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inwstr.c,v 1.2 2007/05/28 15:01:56 blymn Exp $");
+__RCSID("$NetBSD: inwstr.c,v 1.3 2009/07/22 16:57:15 roy Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -165,7 +165,7 @@ winnwstr(WINDOW *win, wchar_t *wstr, int n)
 	if (wstr == NULL)
 		return ERR;
 
-	start = &win->lines[win->cury]->line[win->curx];
+	start = &win->alines[win->cury]->line[win->curx];
 	x = win->curx;
 	cw = WCOL( *start );
 	if (cw < 0) {
