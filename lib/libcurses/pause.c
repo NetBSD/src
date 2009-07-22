@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.c,v 1.8 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pause.c,v 1.9 2009/07/22 16:57:15 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pause.c,v 1.8 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pause.c,v 1.9 2009/07/22 16:57:15 roy Exp $");
 #endif				/* not lint */
 
 #include <stdarg.h>
@@ -71,7 +71,7 @@ delay_output(int ms)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "delay_output: %d\n", ms);
 #endif
-	if (!_cursesi_screen->pad_char)
+	if (!_cursesi_screen->padchar)
 		return(napms(ms));
 
 	if (asprintf(&delstr, "%d", ms) == -1)

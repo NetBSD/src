@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.3 2007/05/29 11:10:56 blymn Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.4 2009/07/22 16:57:15 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.3 2007/05/29 11:10:56 blymn Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.4 2009/07/22 16:57:15 roy Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -117,9 +117,9 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	__CTRACE(__CTRACE_INPUT, "--before--\n");
 	for ( x = 0; x < win->maxx; x++ )
 		__CTRACE(__CTRACE_INPUT, "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
-		    win->lines[0]->line[x].ch,
-		    win->lines[0]->line[x].attr,
-		    win->lines[0]->line[x].nsp);
+		    win->alines[0]->line[x].ch,
+		    win->alines[0]->line[x].attr,
+		    win->alines[0]->line[x].nsp);
 #endif /* DEBUG */
 	x = win->curx;
 	y = win->cury;
@@ -153,8 +153,8 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	/* locate current cell */
 	x = win->curx;
 	y = win->cury;
-	lnp = win->lines[ y ];
-	start = &win->lines[ y ]->line[ x ];
+	lnp = win->alines[ y ];
+	start = &win->alines[ y ]->line[ x ];
 	sx = x;
 	pcw = WCOL( *start );
 	if (pcw < 0) {
@@ -172,7 +172,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_wch: shift all characters\n");
 #endif /* DEBUG */
-	temp1 = &win->lines[ y ]->line[ win->maxx - 1 ];
+	temp1 = &win->alines[ y ]->line[ win->maxx - 1 ];
 	temp2 = temp1 - cw;
 	pcw = WCOL(*(temp2 + 1));
 	if (pcw < 0) {
@@ -236,9 +236,9 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 		for ( x = 0; x < win->maxx; x++ )
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
-			    win->lines[0]->line[x].ch,
-			    win->lines[0]->line[x].attr,
-			    win->lines[0]->line[x].nsp);
+			    win->alines[0]->line[x].ch,
+			    win->alines[0]->line[x].attr,
+			    win->alines[0]->line[x].nsp);
 	}
 #endif /* DEBUG */
 	newx = win->maxx - 1 + win->ch_off;

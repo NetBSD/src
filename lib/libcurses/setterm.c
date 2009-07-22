@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.44 2009/02/22 20:05:48 christos Exp $	*/
+/*	$NetBSD: setterm.c,v 1.45 2009/07/22 16:57:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.44 2009/02/22 20:05:48 christos Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.45 2009/07/22 16:57:15 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 * set the pad char, only take the first char of the pc capability
 	 * as this is all we can use.
 	 */
-	screen->pad_char = screen->tc_pc ? screen->tc_pc[0] : 0; 
+	screen->padchar = screen->tc_pc ? screen->tc_pc[0] : 0; 
 
 	/* Get full name of terminal */
 	if (unknown) {
@@ -343,7 +343,7 @@ _cursesi_resetterm(SCREEN *screen)
 	__GT = screen->GT;
 	__CA = screen->CA;
 
-	PC = screen->pad_char;
+	PC = screen->padchar;
 
 	__noqch = screen->noqch;
 	__mask_op = screen->mask_op;

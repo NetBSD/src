@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.2 2007/05/28 15:01:53 blymn Exp $ */
+/*   $NetBSD: add_wch.c,v 1.3 2009/07/22 16:57:14 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.2 2007/05/28 15:01:53 blymn Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.3 2009/07/22 16:57:14 roy Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -114,11 +114,11 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 	int i;
 
 	for (i = 0; i < win->maxy; i++) {
-		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
+		assert(win->alines[i]->sentinel == SENTINEL_VALUE);
 	}
 	__CTRACE(__CTRACE_INPUT, "wadd_wch: win(%p)", win);
 #endif
-	lnp = win->lines[y];
+	lnp = win->alines[y];
 	return _cursesi_addwchar(win, &lnp, &y, &x, wch);
 #endif /* HAVE_WCHAR */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.42 2008/04/14 20:34:36 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.43 2009/07/22 16:57:14 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -139,7 +139,7 @@ struct __window {		/* Window structure. */
 	int maxy, maxx;			/* Maximum values for curx, cury. */
 	int reqy, reqx;			/* Size requested when created */
 	int ch_off;			/* x offset for firstch/lastch. */
-	__LINE **lines;			/* Array of pointers to the lines */
+	__LINE **alines;		/* Array of pointers to the lines */
 	__LINE  *lspace;		/* line space (for cleanup) */
 	__LDATA *wspace;		/* window space (for cleanup) */
 
@@ -298,7 +298,7 @@ struct __screen {
 	char *stdbuf;
 	unsigned int len;
 	int meta_state;
-	char pad_char;
+	char padchar;
 	char ttytype[128];
 	int endwin;
 	int notty;

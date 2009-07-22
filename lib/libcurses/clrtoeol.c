@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.24 2007/05/29 11:10:56 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.25 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.24 2007/05/29 11:10:56 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.25 2009/07/22 16:57:14 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -69,9 +69,9 @@ wclrtoeol(WINDOW *win)
 
 	y = win->cury;
 	x = win->curx;
-	if (win->lines[y]->flags & __ISPASTEOL) {
+	if (win->alines[y]->flags & __ISPASTEOL) {
 		if (y < win->maxy - 1) {
-			win->lines[y]->flags &= ~__ISPASTEOL;
+			win->alines[y]->flags &= ~__ISPASTEOL;
 			y++;
 			x = 0;
 			win->cury = y;
@@ -79,9 +79,9 @@ wclrtoeol(WINDOW *win)
 		} else
 			return (OK);
 	}
-	end = &win->lines[y]->line[win->maxx];
+	end = &win->alines[y]->line[win->maxx];
 	minx = -1;
-	maxx = &win->lines[y]->line[x];
+	maxx = &win->alines[y]->line[x];
 	if (__using_color && win != curscr)
 		attr = win->battr & __COLOR;
 	else
@@ -96,7 +96,7 @@ wclrtoeol(WINDOW *win)
 #endif /* HAVE_WCHAR */
 			maxx = sp;
 			if (minx == -1)
-				minx = (int) (sp - win->lines[y]->line);
+				minx = (int) (sp - win->alines[y]->line);
 			sp->attr = attr;
 #ifdef HAVE_WCHAR
 			sp->ch = ( wchar_t )btowc(( int ) win->bch);
@@ -110,8 +110,8 @@ wclrtoeol(WINDOW *win)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: y = %d, minx = %d, maxx = %d, "
 	    "firstch = %d, lastch = %d\n",
-	    y, minx, (int) (maxx - win->lines[y]->line),
-	    *win->lines[y]->firstchp, *win->lines[y]->lastchp);
+	    y, minx, (int) (maxx - win->alines[y]->line),
+	    *win->alines[y]->firstchp, *win->alines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */
 	return (__touchline(win, y, x, (int) win->maxx - 1));

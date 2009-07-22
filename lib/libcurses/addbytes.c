@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.34 2008/07/04 16:52:10 tnozaki Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.35 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.34 2008/07/04 16:52:10 tnozaki Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.35 2009/07/22 16:57:14 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -118,7 +118,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 	int             i;
 
 	for (i = 0; i < win->maxy; i++) {
-		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
+		assert(win->alines[i]->sentinel == SENTINEL_VALUE);
 	}
 
 	__CTRACE(__CTRACE_INPUT, "ADDBYTES: add %d bytes\n", count);
@@ -126,7 +126,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 
 	err = OK;
 	SYNCH_IN;
-	lp = win->lines[y];
+	lp = win->alines[y];
 
 #ifdef HAVE_WCHAR
 	(void)mbrtowc(NULL, NULL, (size_t)0, &st);
@@ -178,7 +178,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 
 #ifdef DEBUG
 	for (i = 0; i < win->maxy; i++) {
-		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
+		assert(win->alines[i]->sentinel == SENTINEL_VALUE);
 	}
 #endif
 
@@ -214,7 +214,7 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 #endif
 
 		if ((*lp)->flags & __ISPASTEOL) {
-		  newline:
+		  new_line:
 			*x = 0;
 			(*lp)->flags &= ~__ISPASTEOL;
 			if (*y == win->scr_b) {
@@ -231,7 +231,7 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 			} else {
 				(*y)++;
 			}
-			*lp = win->lines[*y];
+			*lp = win->alines[*y];
 			if (c == '\n')
 				break;
 		}
@@ -246,8 +246,8 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 		__CTRACE(__CTRACE_INPUT,
 			 "ADDBYTES: 1: y = %d, x = %d, firstch = %d, "
 			 "lastch = %d\n",
-			 *y, *x, *win->lines[*y]->firstchp,
-			 *win->lines[*y]->lastchp);
+			 *y, *x, *win->alines[*y]->firstchp,
+			 *win->alines[*y]->lastchp);
 #endif
 		/*
 		 * Always update the change pointers.  Otherwise,
@@ -290,15 +290,15 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 		__CTRACE(__CTRACE_INPUT,
 			 "ADDBYTES: 2: y = %d, x = %d, firstch = %d, "
 			 "lastch = %d\n",
-			 *y, *x, *win->lines[*y]->firstchp,
-			 *win->lines[*y]->lastchp);
+			 *y, *x, *win->alines[*y]->firstchp,
+			 *win->alines[*y]->lastchp);
 #endif
 		break;
 	case '\n':
 		PSYNCH_OUT;
 		wclrtoeol(win);
 		PSYNCH_IN;
-		goto newline;
+		goto new_line;
 	case '\r':
 		*x = 0;
 		break;
@@ -324,7 +324,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	return (ERR);
 #else
 	int sx = 0, ex = 0, cw = 0, i = 0, newx = 0;
-	__LDATA *lp = &win->lines[*y]->line[*x], *tp = NULL;
+	__LDATA *lp = &win->alines[*y]->line[*x], *tp = NULL;
 	nschar_t *np = NULL;
 	cchar_t cc;
 	attr_t attributes;
@@ -407,8 +407,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		} else {
 			(*y)++;
 		}
-		(*lnp) = win->lines[*y];
-		lp = &win->lines[*y]->line[*x];
+		(*lnp) = win->alines[*y];
+		lp = &win->alines[*y]->line[*x];
 	}
 	/* clear out the current character */
 	cw = WCOL(*lp);
@@ -421,7 +421,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 				 "_cursesi_addwchar: clear current char (%d,%d)\n",
 				 *y, sx);
 #endif /* DEBUG */
-			tp = &win->lines[*y]->line[sx];
+			tp = &win->alines[*y]->line[sx];
 			tp->ch = (wchar_t) btowc((int) win->bch);
 			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 				return ERR;
@@ -469,8 +469,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		} else {
 			(*y)++;
 		}
-		lp = &win->lines[*y]->line[0];
-		(*lnp) = win->lines[*y];
+		lp = &win->alines[*y]->line[0];
+		(*lnp) = win->alines[*y];
 	}
 	win->cury = *y;
 
@@ -553,7 +553,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		/* clear the remining of the current characer */
 		if (*x && *x < win->maxx) {
 			ex = sx + cw;
-			tp = &win->lines[*y]->line[ex];
+			tp = &win->alines[*y]->line[ex];
 			while (ex < win->maxx && WCOL(*tp) < 0) {
 #ifdef DEBUG
 				__CTRACE(__CTRACE_INPUT,

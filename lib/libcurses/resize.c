@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.19 2008/04/29 17:46:39 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.20 2009/07/22 16:57:15 roy Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.19 2008/04/29 17:46:39 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.20 2009/07/22 16:57:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -233,10 +233,10 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		nlines = ncols = 0;
 	else {
 		/* Reallocate line pointer array and line space. */
-		newlines = realloc(win->lines, nlines * sizeof(__LINE *));
+		newlines = realloc(win->alines, nlines * sizeof(__LINE *));
 		if (newlines == NULL)
 			return ERR;
-		win->lines = newlines;
+		win->alines = newlines;
 
 		newlspace = realloc(win->lspace, nlines * sizeof(__LINE));
 		if (newlspace == NULL)
@@ -262,7 +262,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		 * window space.
 		 */
 		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
-			win->lines[i] = lp;
+			win->alines[i] = lp;
 			lp->line = &win->wspace[i * ncols];
 #ifdef DEBUG
 			lp->sentinel = SENTINEL_VALUE;
@@ -278,8 +278,8 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		win->ch_off = win->begx - win->orig->begx;
 		  /* Point line pointers to line space. */
 		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
-			win->lines[i] = lp;
-			olp = win->orig->lines[i + win->begy - win->orig->begy];
+			win->alines[i] = lp;
+			olp = win->orig->alines[i + win->begy - win->orig->begy];
 			lp->line = &olp->line[win->ch_off];
 #ifdef DEBUG
 			lp->sentinel = SENTINEL_VALUE;
@@ -304,7 +304,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	   * so this is no big deal.
 	   */
 	for (i = 0; i < win->maxy; i++) {
-		lp = win->lines[i];
+		lp = win->alines[i];
 		for (sp = lp->line, j = 0; j < win->maxx; j++, sp++) {
 			sp->attr = 0;
 #ifndef HAVE_WCHAR

@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.3 2008/05/24 16:37:49 christos Exp $	*/
+/*	$NetBSD: fileio.c,v 1.4 2009/07/22 16:57:14 roy Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.3 2008/05/24 16:37:49 christos Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.4 2009/07/22 16:57:14 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -111,7 +111,7 @@ putwin(WINDOW *win, FILE *fp)
 
 	/* Lines and line data */
 	for (y = 0; y < win->maxy; y++)
-		for (sp = win->lines[y]->line, x = 0; x < win->maxx;
+		for (sp = win->alines[y]->line, x = 0; x < win->maxx;
 		    x++, sp++) {
 			if (fwrite(&sp->ch, sizeof(wchar_t), 1, fp) != 1)
 				return ERR;
@@ -220,7 +220,7 @@ getwin(FILE *fp)
 
 	/* Lines and line data */
 	for (y = 0; y < win->maxy; y++) {
-		for (sp = win->lines[y]->line, x = 0; x < win->maxx;
+		for (sp = win->alines[y]->line, x = 0; x < win->maxx;
 		    x++, sp++) {
 			if (fread(&sp->ch, sizeof(wchar_t), 1, fp) != 1)
 				goto error1;

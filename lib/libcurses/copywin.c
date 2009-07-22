@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.14 2007/11/08 06:39:31 jdc Exp $	*/
+/*	$NetBSD: copywin.c,v 1.15 2009/07/22 16:57:14 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.14 2007/11/08 06:39:31 jdc Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.15 2009/07/22 16:57:14 roy Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -102,7 +102,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 #endif
 
 	for (; dminrow <= dmaxrow; sminrow++, dminrow++) {
-		sp = &srcwin->lines[sminrow]->line[smincol];
+		sp = &srcwin->alines[sminrow]->line[smincol];
 		end = sp + dmaxcol - dmincol;
 		for (dcol = dmincol; sp <= end; dcol++, sp++) {
 			/* XXX: Perhaps this should check for the

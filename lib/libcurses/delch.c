@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.21 2007/10/06 18:31:33 martin Exp $	*/
+/*	$NetBSD: delch.c,v 1.22 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.21 2007/10/06 18:31:33 martin Exp $");
+__RCSID("$NetBSD: delch.c,v 1.22 2009/07/22 16:57:14 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -90,8 +90,8 @@ wdelch(WINDOW *win)
 	__LDATA *end, *temp1, *temp2;
 
 #ifndef HAVE_WCHAR
-	end = &win->lines[win->cury]->line[win->maxx - 1];
-	temp1 = &win->lines[win->cury]->line[win->curx];
+	end = &win->alines[win->cury]->line[win->maxx - 1];
+	temp1 = &win->alines[win->cury]->line[win->curx];
 	temp2 = temp1 + 1;
 	while (temp1 < end) {
 		(void) memcpy(temp1, temp2, sizeof(__LDATA));
@@ -108,9 +108,9 @@ wdelch(WINDOW *win)
 	int cw, sx;
 	nschar_t *np, *tnp;
 
-	end = &win->lines[win->cury]->line[win->maxx - 1];
+	end = &win->alines[win->cury]->line[win->maxx - 1];
 	sx = win->curx;
-	temp1 = &win->lines[win->cury]->line[win->curx];
+	temp1 = &win->alines[win->cury]->line[win->curx];
 	cw = WCOL( *temp1 );
 	if ( cw < 0 ) {
 		temp1 += cw;

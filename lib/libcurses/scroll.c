@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.19 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: scroll.c,v 1.20 2009/07/22 16:57:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.19 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.20 2009/07/22 16:57:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -58,9 +58,9 @@ scroll(WINDOW *win)
  *	Scroll stdscr n lines - up if n is positive, down if n is negative.
  */
 int
-scrl(int lines)
+scrl(int nlines)
 {
-	return wscrl(stdscr, lines);
+	return wscrl(stdscr, nlines);
 }
 
 /*
@@ -80,7 +80,7 @@ setscrreg(int top, int bottom)
  *	Scroll a window n lines - up if n is positive, down if n is negative.
  */
 int
-wscrl(WINDOW *win, int lines)
+wscrl(WINDOW *win, int nlines)
 {
 	int     oy, ox;
 
@@ -90,7 +90,7 @@ wscrl(WINDOW *win, int lines)
 
 	if (!(win->flags & __SCROLLOK))
 		return (ERR);
-	if (!lines)
+	if (!nlines)
 		return (OK);
 
 	getyx(win, oy, ox);
@@ -103,7 +103,7 @@ wscrl(WINDOW *win, int lines)
 	else
 		/* Inside scrolling region */
 		wmove(win, win->scr_t, 0);
-	winsdelln(win, 0 - lines);
+	winsdelln(win, 0 - nlines);
 	wmove(win, oy, ox);
 
 	if (win == curscr) {

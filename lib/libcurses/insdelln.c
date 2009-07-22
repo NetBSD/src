@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.15 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.16 2009/07/22 16:57:15 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.15 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.16 2009/07/22 16:57:15 roy Exp $");
 #endif				/* not lint */
 
 /*
@@ -53,9 +53,9 @@ __RCSID("$NetBSD: insdelln.c,v 1.15 2008/04/28 20:23:01 martin Exp $");
  *	Insert or delete lines on stdscr, leaving (cury, curx) unchanged.
  */
 int
-insdelln(int lines)
+insdelln(int nlines)
 {
-	return winsdelln(stdscr, lines);
+	return winsdelln(stdscr, nlines);
 }
 
 #endif
@@ -65,7 +65,7 @@ insdelln(int lines)
  *	Insert or delete lines on the window, leaving (cury, curx) unchanged.
  */
 int
-winsdelln(WINDOW *win, int lines)
+winsdelln(WINDOW *win, int nlines)
 {
 	int     y, i, last;
 	__LINE *temp;
@@ -76,10 +76,10 @@ winsdelln(WINDOW *win, int lines)
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_LINE,
-	    "winsdelln: (%p) cury=%d lines=%d\n", win, win->cury, lines);
+	    "winsdelln: (%p) cury=%d lines=%d\n", win, win->cury, nlines);
 #endif
 
-	if (!lines)
+	if (!nlines)
 		return(OK);
 
 	if (__using_color && win != curscr)
@@ -87,42 +87,42 @@ winsdelln(WINDOW *win, int lines)
 	else
 		attr = 0;
 
-	if (lines > 0) {
+	if (nlines > 0) {
 		/* Insert lines */
 		if (win->cury < win->scr_t || win->cury > win->scr_b) {
 			/*  Outside scrolling region */
-			if (lines > win->maxy - win->cury)
-				lines = win->maxy - win->cury;
+			if (nlines > win->maxy - win->cury)
+				nlines = win->maxy - win->cury;
 			last = win->maxy - 1;
 		} else {
 			/* Inside scrolling region */
-			if (lines > win->scr_b + 1 - win->cury)
-				lines = win->scr_b + 1 - win->cury;
+			if (nlines > win->scr_b + 1 - win->cury)
+				nlines = win->scr_b + 1 - win->cury;
 			last = win->scr_b;
 		}
-		for (y = last - lines; y >= win->cury; --y) {
-			win->lines[y]->flags &= ~__ISPASTEOL;
-			win->lines[y + lines]->flags &= ~__ISPASTEOL;
+		for (y = last - nlines; y >= win->cury; --y) {
+			win->alines[y]->flags &= ~__ISPASTEOL;
+			win->alines[y + nlines]->flags &= ~__ISPASTEOL;
 			if (win->orig == NULL) {
-				temp = win->lines[y + lines];
-				win->lines[y + lines] = win->lines[y];
-				win->lines[y] = temp;
+				temp = win->alines[y + nlines];
+				win->alines[y + nlines] = win->alines[y];
+				win->alines[y] = temp;
 			} else {
-				(void) memcpy(win->lines[y + lines]->line,
-				    win->lines[y]->line,
+				(void) memcpy(win->alines[y + nlines]->line,
+				    win->alines[y]->line,
 				    (size_t) win->maxx * __LDATASIZE);
 			}
 		}
-		for (y = win->cury - 1 + lines; y >= win->cury; --y)
+		for (y = win->cury - 1 + nlines; y >= win->cury; --y)
 			for (i = 0; i < win->maxx; i++) {
-				win->lines[y]->line[i].ch = win->bch;
-				win->lines[y]->line[i].attr = attr;
+				win->alines[y]->line[i].ch = win->bch;
+				win->alines[y]->line[i].attr = attr;
 #ifndef HAVE_WCHAR
-				win->lines[y]->line[i].ch = win->bch;
+				win->alines[y]->line[i].ch = win->bch;
 #else
-				win->lines[y]->line[i].ch
+				win->alines[y]->line[i].ch
 					= ( wchar_t )btowc(( int ) win->bch );
-				lp = &win->lines[y]->line[i];
+				lp = &win->alines[y]->line[i];
 				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
 					return ERR;
 				SET_WCOL( *lp, 1 );
@@ -131,42 +131,42 @@ winsdelln(WINDOW *win, int lines)
 		for (y = last; y >= win->cury; --y)
 			__touchline(win, y, 0, (int) win->maxx - 1);
 	} else {
-		/* Delete lines */
-		lines = 0 - lines;
+		/* Delete nlines */
+		nlines = 0 - nlines;
 		if (win->cury < win->scr_t || win->cury > win->scr_b) {
 			/*  Outside scrolling region */
-			if (lines > win->maxy - win->cury)
-				lines = win->maxy - win->cury;
+			if (nlines > win->maxy - win->cury)
+				nlines = win->maxy - win->cury;
 			last = win->maxy;
 		} else {
 			/* Inside scrolling region */
-			if (lines > win->scr_b + 1 - win->cury)
-				lines = win->scr_b + 1 - win->cury;
+			if (nlines > win->scr_b + 1 - win->cury)
+				nlines = win->scr_b + 1 - win->cury;
 			last = win->scr_b + 1;
 		}
-		for (y = win->cury; y < last - lines; y++) {
-			win->lines[y]->flags &= ~__ISPASTEOL;
-			win->lines[y + lines]->flags &= ~__ISPASTEOL;
+		for (y = win->cury; y < last - nlines; y++) {
+			win->alines[y]->flags &= ~__ISPASTEOL;
+			win->alines[y + nlines]->flags &= ~__ISPASTEOL;
 			if (win->orig == NULL) {
-				temp = win->lines[y];
-				win->lines[y] = win->lines[y + lines];
-				win->lines[y + lines] = temp;
+				temp = win->alines[y];
+				win->alines[y] = win->alines[y + nlines];
+				win->alines[y + nlines] = temp;
 			} else {
-				(void) memcpy(win->lines[y]->line,
-				    win->lines[y + lines]->line,
+				(void) memcpy(win->alines[y]->line,
+				    win->alines[y + nlines]->line,
 				    (size_t) win->maxx * __LDATASIZE);
 			}
 		}
-		for (y = last - lines; y < last; y++)
+		for (y = last - nlines; y < last; y++)
 			for (i = 0; i < win->maxx; i++) {
-				win->lines[y]->line[i].ch = win->bch;
-				win->lines[y]->line[i].attr = attr;
+				win->alines[y]->line[i].ch = win->bch;
+				win->alines[y]->line[i].attr = attr;
 #ifndef HAVE_WCHAR
-				win->lines[y]->line[i].ch = win->bch;
+				win->alines[y]->line[i].ch = win->bch;
 #else
-				win->lines[y]->line[i].ch
+				win->alines[y]->line[i].ch
 					= (wchar_t)btowc((int) win->bch);
-				lp = &win->lines[y]->line[i];
+				lp = &win->alines[y]->line[i];
 				SET_WCOL( *lp, 1 );
 				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
 					return ERR;

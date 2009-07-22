@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_color.3,v 1.11 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: curses_color.3,v 1.12 2009/07/22 16:57:14 roy Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 9, 2004
+.Dd July 20, 2009
 .Dt CURSES_COLOR 3
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Nm PAIR_NUMBER ,
 .Nm init_color ,
 .Nm color_content ,
-.Nm no_color_video
+.Nm no_color_attributes
 .Nd curses color manipulation routines
 .Sh LIBRARY
 .Lb libcurses
@@ -64,7 +64,7 @@
 .Ft int
 .Fn color_content "short color" "short *red" "short *green" "short *blue"
 .Ft attr_t
-.Fn no_color_video void
+.Fn no_color_attributes void
 .Pp
 .Va extern int COLOR_PAIRS ;
 .Pp
@@ -202,7 +202,7 @@ and
 respectively.
 .Pp
 The function
-.Fn no_color_video
+.Fn no_color_attributes
 returns those attributes that a terminal is unable to combine with color.
 .Sh RETURN VALUES
 The functions
@@ -224,7 +224,7 @@ Curses library complies with the X/Open Curses specification, part of the
 Single Unix Specification.
 .Pp
 The function
-.Fn no_color_video
+.Fn no_color_attributes
 and the use of negative color numbers
 are extensions to the X/Open Curses specification.
 .Sh HISTORY
