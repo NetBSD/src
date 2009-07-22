@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.33 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: color.c,v 1.34 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.33 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: color.c,v 1.34 2009/07/22 16:57:14 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -244,8 +244,8 @@ start_color(void)
 			win->battr |= __default_color;
 			for (y = 0; y < win->maxy; y++) {
 				for (x = 0; x < win->maxx; x++) {
-					win->lines[y]->line[x].attr &= ~__COLOR;
-					win->lines[y]->line[x].attr |= __default_color;
+					win->alines[y]->line[x].attr &= ~__COLOR;
+					win->alines[y]->line[x].attr |= __default_color;
 				}
 			}
 			__touchwin(win);
@@ -489,12 +489,17 @@ assume_default_colors(short fore, short back)
 	return(OK);
 }
 
+/* no_color_video is a terminfo macro, but we need to retain binary compat */
+#ifdef __strong_alias
+#undef no_color_video
+__strong_alias(no_color_video, no_color_attributes)
+#endif
 /*
- * no_color_video --
+ * no_color_attributes --
  *	Return attributes that cannot be combined with color.
  */
 attr_t
-no_color_video(void)
+no_color_attributes(void)
 {
 	return(_cursesi_screen->nca);
 }
@@ -636,7 +641,7 @@ __change_pair(short pair)
 			    "__change_pair: win == curscr\n");
 #endif
 			for (y = 0; y < curscr->maxy; y++) {
-				lp = curscr->lines[y];
+				lp = curscr->alines[y];
 				for (x = 0; x < curscr->maxx; x++) {
 					if ((lp->line[x].attr & __COLOR) == cl)
 						lp->line[x].attr &= ~__COLOR;
@@ -645,7 +650,7 @@ __change_pair(short pair)
 		} else {
 			/* Mark dirty those positions with colour pair "pair" */
 			for (y = 0; y < win->maxy; y++) {
-				lp = win->lines[y];
+				lp = win->alines[y];
 				for (x = 0; x < win->maxx; x++)
 					if ((lp->line[x].attr &
 					    __COLOR) == cl) {
@@ -662,12 +667,12 @@ __change_pair(short pair)
 							*lp->lastchp = x;
 					}
 #ifdef DEBUG
-				if ((win->lines[y]->flags & __ISDIRTY))
+				if ((win->alines[y]->flags & __ISDIRTY))
 					__CTRACE(__CTRACE_COLOR,
 					    "__change_pair: first = %d, "
 					    "last = %d\n",
-					    *win->lines[y]->firstchp,
-					    *win->lines[y]->lastchp);
+					    *win->alines[y]->firstchp,
+					    *win->alines[y]->lastchp);
 #endif
 			}
 		}

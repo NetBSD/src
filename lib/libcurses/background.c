@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.14 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: background.c,v 1.15 2009/07/22 16:57:14 roy Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.14 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: background.c,v 1.15 2009/07/22 16:57:14 roy Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -103,17 +103,17 @@ wbkgd(WINDOW *win, chtype ch)
 	for (y = 0; y < win->maxy; y++)
 		for (x = 0; x < win->maxx; x++) {
 			/* Copy character if space */
-			if (ch & A_CHARTEXT && win->lines[y]->line[x].ch == ' ')
-				win->lines[y]->line[x].ch = ch & __CHARTEXT;
+			if (ch & A_CHARTEXT && win->alines[y]->line[x].ch == ' ')
+				win->alines[y]->line[x].ch = ch & __CHARTEXT;
 			/* Merge attributes */
-			if (win->lines[y]->line[x].attr & __ALTCHARSET)
-				win->lines[y]->line[x].attr =
+			if (win->alines[y]->line[x].attr & __ALTCHARSET)
+				win->alines[y]->line[x].attr =
 				    (ch & __ATTRIBUTES) | __ALTCHARSET;
 			else
-				win->lines[y]->line[x].attr =
+				win->alines[y]->line[x].attr =
 				    ch & __ATTRIBUTES;
 #ifdef HAVE_WCHAR
-			SET_WCOL(win->lines[y]->line[x], 1);
+			SET_WCOL(win->alines[y]->line[x], 1);
 #endif
 		}
 	__touchwin(win);

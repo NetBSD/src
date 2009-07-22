@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.22 2007/05/28 15:01:55 blymn Exp $	*/
+/*	$NetBSD: curses.c,v 1.23 2009/07/22 16:57:14 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.22 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: curses.c,v 1.23 2009/07/22 16:57:14 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -180,7 +180,7 @@ __cursesi_win_free_nsp(WINDOW *win)
 	__LDATA *sp;
 
 	for (i = 0; i < win->maxy; i++) {
-		for (sp = win->lines[i]->line, j = 0; j < win->maxx;
+		for (sp = win->alines[i]->line, j = 0; j < win->maxx;
 		     j++, sp++) {
 			__cursesi_free_nsp(sp->nsp);
 		}
