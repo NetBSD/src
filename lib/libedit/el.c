@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.53 2009/07/22 15:56:29 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.54 2009/07/22 18:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.53 2009/07/22 15:56:29 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.54 2009/07/22 18:25:26 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -492,7 +492,9 @@ el_source(EditLine *el, const char *fname)
 	FILE *fp;
 	size_t len;
 	char *ptr;
+#ifdef HAVE_ISSETUGID
 	char path[MAXPATHLEN];
+#endif
 
 	fp = NULL;
 	if (fname == NULL) {
