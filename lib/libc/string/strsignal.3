@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strerror.3	6.9 (Berkeley) 6/29/91
-.\"	$NetBSD: strsignal.3,v 1.9 2003/08/07 16:43:52 agc Exp $
+.\"	$NetBSD: strsignal.3,v 1.10 2009/07/22 19:48:27 kleink Exp $
 .\"
-.Dd June 29, 1991
+.Dd July 22, 2009
 .Dt STRSIGNAL 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.In unistd.h
+.In string.h
 .Ft char *
 .Fn strsignal "int sig"
 .Sh DESCRIPTION
@@ -57,3 +57,8 @@ overwritten by subsequent calls to
 .Xr intro 2 ,
 .Xr psignal 3 ,
 .Xr setlocale 3
+.\" .Sh STANDARDS
+.\" The
+.\" .Fn strsignal
+.\" function conforms to
+.\" .St -p1003.1-2008 .
