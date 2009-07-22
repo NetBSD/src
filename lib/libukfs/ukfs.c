@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.30 2009/07/22 20:46:34 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.31 2009/07/22 21:05:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -164,6 +164,7 @@ _ukfs_init(int version)
 	return 0;
 }
 
+/*ARGSUSED*/
 static int
 rumpmkdir(struct ukfs *dummy, const char *path, mode_t mode)
 {
