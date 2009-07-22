@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.14 2009/05/22 10:53:59 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.15 2009/07/22 20:49:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -121,13 +121,7 @@ clearlwp(struct puffs_usermount *pu)
 {
 
 	/*
-	 * XXX: because of the vnode reference counting lossage, we
-	 * can't clear the curlwp if we unmounted succesfully.
-	 * Therefore, don't do it to avoid a diagnostic panic.
-	 * So this currently leaks a process structure in that case,
-	 * but since p2k is rarely used multiple times in a single
-	 * process, it's more like a feature than a bug (yea, I'm
-	 * good at lying to myself).
+	 * XXX: For unmount we release this already in the operation.
 	 */
 	if (__predict_false(puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED))
 		rump_clear_curlwp();
@@ -251,17 +245,18 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	puffs_set_prepost(pu, makelwp, clearlwp);
 	puffs_set_errnotify(pu, p2k_errcatcher);
 
-	puffs_setspecific(pu, ukfs_getmp(ukfs));
+	puffs_setspecific(pu, ukfs);
 	if ((rv = puffs_mount(pu, mountpath, mntflags, rvp))== -1)
 		goto out;
 	rv = puffs_mainloop(pu);
 	puffs_exit(pu, 1);
 	pu = NULL;
+	ukfs = NULL;
 
  out:
 	sverrno = errno;
 	if (ukfs)
-		ukfs_release(ukfs, UKFS_RELFLAG_NOUNMOUNT);
+		ukfs_release(ukfs, UKFS_RELFLAG_FORCE);
 	if (pu)
 		puffs_cancel(pu, sverrno);
 	if (rv) {
@@ -281,52 +276,28 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 int
 p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 {
-	struct mount *mp = puffs_getspecific(pu);
+	struct mount *mp = ukfs_getmp(puffs_getspecific(pu));
 
 	return rump_vfs_statvfs(mp, sbp);
 }
 
+/*ARGSUSED*/
 int
 p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 {
-	struct mount *mp = puffs_getspecific(pu);
-	struct puffs_node *pn_root = puffs_getroot(pu);
-	struct vnode *rvp = pn_root->pn_data, *rvp2;
-	int rv;
+	struct ukfs *fs = puffs_getspecific(pu);
 
-	/*
-	 * We recycle the root node already here (god knows how
-	 * many references it has due to lookup).  This is good
-	 * because VFS_UNMOUNT would do it anyway.  But it is
-	 * very bad if VFS_UNMOUNT fails for a reason or another
-	 * (puffs guards against busy fs, but there might be other
-	 * reasons).
-	 *
-	 * Theoretically we're going south, sinking fast & dying
-	 * out here because the old vnode will be freed and we are
-	 * unlikely to get a vnode at the same address.  But try
-	 * anyway.
-	 *
-	 * XXX: reallyfixmesomeday.  either introduce VFS_ROOT to
-	 * puffs (blah) or check the cookie in every routine
-	 * against the root cookie, which might change (blah2).
-	 */
-	rump_vp_recycle_nokidding(rvp);
-	rv = rump_vfs_unmount(mp, flags);
-	if (rv) {
-		int rv2;
+	rump_clear_curlwp(); /* XXX: ukfs uses curlwp */
+	ukfs_release(fs, UKFS_RELFLAG_FORCE);
 
-		rv2 = rump_vfs_root(mp, &rvp2, 0);
-		assert(rv2 == 0 && rvp == rvp2);
-	}
-	return rv;
+	return 0;
 }
 
 int
 p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
 	const struct puffs_cred *pcr)
 {
-	struct mount *mp = puffs_getspecific(pu);
+	struct mount *mp = ukfs_getmp(puffs_getspecific(pu));
 	kauth_cred_t cred;
 	int rv;
 
@@ -342,7 +313,7 @@ int
 p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct puffs_newinfo *pni)
 {
-	struct mount *mp = puffs_getspecific(pu);
+	struct mount *mp = ukfs_getmp(puffs_getspecific(pu));
 	struct vnode *vp;
 	enum vtype vtype;
 	voff_t vsize;
@@ -410,6 +381,7 @@ static int
 needcompat(void)
 {
 
+	/*LINTED*/
 	return __NetBSD_Version__ < VERS_TIMECHANGE
 	    && rump_getversion() >= VERS_TIMECHANGE;
 }
