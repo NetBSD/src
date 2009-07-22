@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2009/07/21 13:18:43 joerg Exp $
+# $NetBSD: mi,v 1.46 2009/07/22 21:35:38 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -136,7 +136,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug	debug
-./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug	debug
+./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug	debug
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug
