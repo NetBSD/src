@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.29 2009/07/21 00:19:57 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.30 2009/07/22 20:46:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -73,7 +73,12 @@ struct ukfs {
 	pid_t ukfs_nextpid;
 	struct vnode *ukfs_cdir;
 	int ukfs_devfd;
+	char *ukfs_devpath;
+	char *ukfs_mountpath;
 };
+
+static int builddirs(const char *, mode_t,
+    int (*mkdirfn)(struct ukfs *, const char *, mode_t), struct ukfs *);
 
 struct mount *
 ukfs_getmp(struct ukfs *ukfs)
@@ -159,21 +164,21 @@ _ukfs_init(int version)
 	return 0;
 }
 
+static int
+rumpmkdir(struct ukfs *dummy, const char *path, mode_t mode)
+{
+
+	return rump_sys_mkdir(path, mode);
+}
+
 struct ukfs *
 ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen)
 {
 	struct stat sb;
 	struct ukfs *fs = NULL;
-	struct vfsops *vfsops;
-	struct mount *mp = NULL;
 	int rv = 0, devfd = -1, rdonly;
-
-	vfsops = rump_vfs_getopsbyname(vfsname);
-	if (vfsops == NULL) {
-		rv = ENODEV;
-		goto out;
-	}
+	int mounted = 0;
 
 	/*
 	 * Try open and lock the device.  if we can't open it, assume
@@ -224,62 +229,79 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		goto out;
 	}
 	memset(fs, 0, sizeof(struct ukfs));
-	mp = rump_mnt_init(vfsops, mntflags);
+
+	/* create our mountpoint.  this is never removed. */
+	if (builddirs(mountpath, 0777, rumpmkdir, NULL) == -1) {
+		if (errno != EEXIST) {
+			rv = errno;
+			goto out;
+		}
+	}
 
 	rump_fakeblk_register(devpath);
-	rv = rump_mnt_mount(mp, mountpath, arg, &alen);
-	rump_fakeblk_deregister(devpath);
+	rv = rump_sys_mount(vfsname, mountpath, mntflags, arg, alen);
 	if (rv) {
 		goto out;
 	}
-	rv = rump_vfs_root(mp, &fs->ukfs_rvp, 0);
+	mounted = 1;
+	rv = rump_vfs_getmp(mountpath, &fs->ukfs_mp);
 	if (rv) {
 		goto out;
 	}
-	fs->ukfs_cdir = ukfs_getrvp(fs);
+	rv = rump_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
+	if (rv) {
+		goto out;
+	}
 
-	fs->ukfs_mp = mp;
+	fs->ukfs_devpath = strdup(devpath);
+	fs->ukfs_mountpath = strdup(mountpath);
+	fs->ukfs_cdir = ukfs_getrvp(fs);
 	pthread_spin_init(&fs->ukfs_spin, PTHREAD_PROCESS_SHARED);
 	fs->ukfs_devfd = devfd;
 	assert(rv == 0);
 
  out:
 	if (rv) {
-		if (mp)
-			rump_mnt_destroy(mp);
-		if (fs)
+		if (fs) {
+			if (fs->ukfs_rvp)
+				rump_vp_rele(fs->ukfs_rvp);
 			free(fs);
-		errno = rv;
-		fs = NULL;
+			fs = NULL;
+		}
+		if (mounted)
+			rump_sys_unmount(mountpath, MNT_FORCE);
 		if (devfd != -1) {
 			flock(devfd, LOCK_UN);
 			close(devfd);
 		}
+		errno = rv;
 	}
 
 	return fs;
 }
 
-void
+int
 ukfs_release(struct ukfs *fs, int flags)
 {
-	int rv;
 
 	if ((flags & UKFS_RELFLAG_NOUNMOUNT) == 0) {
-		kauth_cred_t cred;
+		int rv, mntflag;
 
-		rump_vp_rele(fs->ukfs_cdir);
-		rump_vp_rele(fs->ukfs_rvp);
-		cred = rump_cred_suserget();
-		rv = rump_vfs_sync(fs->ukfs_mp, 1, cred);
-		rump_cred_suserput(cred);
-		rump_vp_recycle_nokidding(ukfs_getrvp(fs));
-		rv |= rump_vfs_unmount(fs->ukfs_mp, 0);
-		assert(rv == 0);
+		ukfs_chdir(fs, "/");
+		mntflag = 0;
+		if (flags & UKFS_RELFLAG_FORCE)
+			mntflag = MNT_FORCE;
+		rv = rump_sys_unmount(fs->ukfs_mountpath, mntflag);
+		if (rv) {
+			ukfs_chdir(fs, fs->ukfs_mountpath);
+			errno = rv;
+			return -1;
+		}
 	}
 
-	rump_vfs_syncwait(fs->ukfs_mp);
-	rump_mnt_destroy(fs->ukfs_mp);
+	rump_fakeblk_deregister(fs->ukfs_devpath);
+	free(fs->ukfs_devpath);
+	free(fs->ukfs_mountpath);
 
 	pthread_spin_destroy(&fs->ukfs_spin);
 	if (fs->ukfs_devfd != -1) {
@@ -287,6 +309,8 @@ ukfs_release(struct ukfs *fs, int flags)
 		close(fs->ukfs_devfd);
 	}
 	free(fs);
+
+	return 0;
 }
 
 #define STDCALL(ukfs, thecall)						\
@@ -606,6 +630,7 @@ needcompat(void)
 {
 
 #ifdef __NetBSD__
+	/*LINTED*/
 	return __NetBSD_Version__ < VERS_TIMECHANGE
 	    && rump_getversion() >= VERS_TIMECHANGE;
 #else
@@ -884,8 +909,9 @@ ukfs_vfstypes(char *buf, size_t buflen)
 /*
  * Utilities
  */
-int
-ukfs_util_builddirs(struct ukfs *ukfs, const char *pathname, mode_t mode)
+static int
+builddirs(const char *pathname, mode_t mode,
+	int (*mkdirfn)(struct ukfs *, const char *, mode_t), struct ukfs *fs)
 {
 	char *f1, *f2;
 	int rv;
@@ -911,7 +937,7 @@ ukfs_util_builddirs(struct ukfs *ukfs, const char *pathname, mode_t mode)
 		else
 			*f2 = '\0';
 
-		rv = ukfs_mkdir(ukfs, f1, mode & ~mask); 
+		rv = mkdirfn(fs, f1, mode & ~mask); 
 		if (errno == EEXIST)
 			rv = 0;
 
@@ -924,4 +950,11 @@ ukfs_util_builddirs(struct ukfs *ukfs, const char *pathname, mode_t mode)
 	free(f1);
 
 	return rv;
+}
+
+int
+ukfs_util_builddirs(struct ukfs *ukfs, const char *pathname, mode_t mode)
+{
+
+	return builddirs(pathname, mode, ukfs_mkdir, ukfs);
 }
