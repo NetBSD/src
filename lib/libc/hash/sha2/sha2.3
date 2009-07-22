@@ -1,4 +1,4 @@
-.\" $NetBSD: sha2.3,v 1.4 2005/12/26 19:40:15 perry Exp $
+.\" $NetBSD: sha2.3,v 1.4.14.1 2009/07/22 22:39:46 snj Exp $
 .\"	$OpenBSD: sha2.3,v 1.11 2004/06/22 01:57:29 jfb Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd April 24, 2003
+.Dd May 20, 2009
 .Dt SHA2 3
 .Os
 .Sh NAME
@@ -38,6 +38,24 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .In sha2.h
+.Ft void
+.Fn SHA224_Init "SHA224_CTX *context"
+.Ft void
+.Fn SHA224_Update "SHA224_CTX *context" "const uint8_t *data" "size_t len"
+.Ft void
+.Fn SHA224_Pad "SHA224_CTX *context"
+.Ft void
+.Fn SHA224_Final "uint8_t digest[SHA224_DIGEST_LENGTH]" "SHA224_CTX *context"
+.Ft void
+.Fn SHA224_Transform "uint32_t state[8]" "const uint8_t buffer[SHA224_BLOCK_LENGTH]"
+.Ft "char *"
+.Fn SHA224_End "SHA224_CTX *context" "char *buf"
+.Ft "char *"
+.Fn SHA224_File "const char *filename" "char *buf"
+.Ft "char *"
+.Fn SHA224_FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
+.Ft "char *"
+.Fn SHA224_Data "uint8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA256_Init "SHA256_CTX *context"
 .Ft void
@@ -97,9 +115,9 @@ The SHA2 functions implement the NIST Secure Hash Standard,
 FIPS PUB 180-2.
 The SHA2 functions are used to generate a condensed representation of a
 message called a message digest, suitable for use as a digital signature.
-There are three families of functions, with names corresponding to
+There are four families of functions, with names corresponding to
 the number of bits in the resulting message digest.
-The SHA-256 functions are limited to processing a message of less
+The SHA-224 and SHA-256 functions are limited to processing a message of less
 than 2^64 bits as input.
 The SHA-384 and SHA-512 functions can process a message of at most 2^128 - 1
 bits as input.
@@ -107,7 +125,7 @@ bits as input.
 The SHA2 functions are considered to be more secure than the
 .Xr sha1 3
 functions with which they share a similar interface.
-The 256, 384, and 512-bit versions of SHA2 share the same interface.
+The 224, 256, 384, and 512-bit versions of SHA2 share the same interface.
 For brevity, only the 256-bit variants are described below.
 .Pp
 The
@@ -205,6 +223,7 @@ functions the
 .Ar buf
 parameter should either be a string large enough to hold the resulting digest
 (e.g.,
+.Ev SHA224_DIGEST_STRING_LENGTH ,
 .Ev SHA256_DIGEST_STRING_LENGTH ,
 .Ev SHA384_DIGEST_STRING_LENGTH ,
 or
