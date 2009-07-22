@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.83 2009/04/08 21:31:31 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.84 2009/07/22 15:57:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.83 2009/04/08 21:31:31 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.84 2009/07/22 15:57:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -977,15 +977,13 @@ char *
 history_arg_extract(int start, int end, const char *str)
 {
 	size_t  i, len, max;
-	char	**arr, *result;
+	char	**arr, *result = NULL;
 
 	arr = history_tokenize(str);
 	if (!arr)
-		return(NULL);
-	if (arr && *arr == NULL) {
-		free(arr);
-		return(NULL);
-	}
+		return NULL;
+	if (arr && *arr == NULL)
+		goto out;
 
 	for (max = 0; arr[max]; max++)
 		continue;
@@ -1000,15 +998,16 @@ history_arg_extract(int start, int end, const char *str)
 	if (start < 0)
 		start = end;
 
-	if (start < 0 || end < 0 || (size_t)start > max || (size_t)end > max || start > end)
-		return(NULL);
+	if (start < 0 || end < 0 || (size_t)start > max ||
+	    (size_t)end > max || start > end)
+		goto out;
 
 	for (i = start, len = 0; i <= (size_t)end; i++)
 		len += strlen(arr[i]) + 1;
 	len++;
 	result = malloc(len);
 	if (result == NULL)
-		return NULL;
+		goto out;
 
 	for (i = start, len = 0; i <= (size_t)end; i++) {
 		(void)strcpy(result + len, arr[i]);
@@ -1018,11 +1017,12 @@ history_arg_extract(int start, int end, const char *str)
 	}
 	result[len] = '\0';
 
+out:
 	for (i = 0; arr[i]; i++)
 		free(arr[i]);
 	free(arr);
 
-	return(result);
+	return result;
 }
 
 /*
