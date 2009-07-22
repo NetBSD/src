@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.8 2009/04/26 22:23:01 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.9 2009/07/22 20:46:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -43,11 +43,12 @@ struct timeval;
 struct ukfs;
 struct ukfs_dircookie;
 
-#define UKFS_DEFAULTMP "/"
+#define UKFS_DEFAULTMP "/ukfs"
 
 #define UKFS_RELFLAG_NOUNMOUNT	0x01
+#define UKFS_RELFLAG_FORCE	0x02
 
-#define UKFS_VERSION	001 /* sector 001 */
+#define UKFS_VERSION	002 /* secret ukfs 002 */
 #define	ukfs_init()	_ukfs_init(UKFS_VERSION)
 
 __BEGIN_DECLS
@@ -55,7 +56,7 @@ __BEGIN_DECLS
 int		_ukfs_init(int);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
 			  int, void *, size_t);
-void		ukfs_release(struct ukfs *, int);
+int		ukfs_release(struct ukfs *, int);
 
 int		ukfs_opendir(struct ukfs *, const char *,
 			     struct ukfs_dircookie **);
