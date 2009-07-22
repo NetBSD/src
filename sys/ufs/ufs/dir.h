@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.20 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -40,7 +40,7 @@
 #define	_UFS_UFS_DIR_H_
 
 /*
- * Theoretically, directories can be more than 2Gb in length, however, in
+ * Theoretically, directories can be more than 2Gb in length; however, in
  * practice this seems unlikely. So, we define the type doff_t as a 32-bit
  * quantity to keep down the cost of doing lookup on a 32-bit machine.
  */
