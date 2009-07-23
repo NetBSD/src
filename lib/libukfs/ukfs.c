@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.31 2009/07/22 21:05:30 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.32 2009/07/23 01:01:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -263,6 +263,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 
  out:
 	if (rv) {
+		int sverrno = errno;
 		if (fs) {
 			if (fs->ukfs_rvp)
 				rump_vp_rele(fs->ukfs_rvp);
@@ -275,7 +276,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 			flock(devfd, LOCK_UN);
 			close(devfd);
 		}
-		errno = rv;
+		errno = sverrno;
 	}
 
 	return fs;
