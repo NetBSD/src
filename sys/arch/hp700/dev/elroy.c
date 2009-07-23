@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.7 2009/05/07 15:34:49 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.8 2009/07/23 13:34:26 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -77,6 +77,7 @@ void elroy_free(void *, bus_space_handle_t, bus_size_t);
 void elroy_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
 void *elroy_alloc_parent(device_t, struct pci_attach_args *, int);
 void *elroy_vaddr(void *, bus_space_handle_t);
+paddr_t elroy_mmap(void *, bus_addr_t, off_t, int, int);
 
 uint8_t elroy_r1(void *, bus_space_handle_t, bus_size_t);
 uint16_t elroy_r2(void *, bus_space_handle_t, bus_size_t);
@@ -483,6 +484,13 @@ void *
 elroy_vaddr(void *v, bus_space_handle_t h)
 {
 	return ((void *)h);
+}
+
+paddr_t
+elroy_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
+{
+
+	return -1;
 }
 
 uint8_t
@@ -1044,7 +1052,7 @@ const struct hppa_bus_space_tag elroy_iomemt = {
 	NULL,
 
 	NULL, elroy_unmap, elroy_subregion, NULL, elroy_free,
-	elroy_barrier, elroy_vaddr,
+	elroy_barrier, elroy_vaddr, elroy_mmap,
 	elroy_r1,    elroy_r2,    elroy_r4,    elroy_r8,
 	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,
 	elroy_rm_1,  elroy_rm_2,  elroy_rm_4,  elroy_rm_8,
