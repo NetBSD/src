@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.265 2009/06/10 14:17:13 pooka Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.266 2009/07/23 21:58:06 dyoung Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.265 2009/06/10 14:17:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.266 2009/07/23 21:58:06 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -260,6 +260,7 @@ struct raid_softc {
 #define RAIDF_INITED	0x01	/* unit has been initialized */
 #define RAIDF_WLABEL	0x02	/* label area is writable */
 #define RAIDF_LABELLING	0x04	/* unit is currently being labelled */
+#define RAIDF_SHUTDOWN	0x08	/* unit is being shutdown */
 #define RAIDF_WANTED	0x40	/* someone is waiting to obtain a lock */
 #define RAIDF_LOCKED	0x80	/* unit is locked */
 
@@ -267,8 +268,9 @@ struct raid_softc {
 int numraid = 0;
 
 extern struct cfdriver raid_cd;
-CFATTACH_DECL_NEW(raid, sizeof(struct raid_softc),
-    raid_match, raid_attach, raid_detach, NULL);
+CFATTACH_DECL3_NEW(raid, sizeof(struct raid_softc),
+    raid_match, raid_attach, raid_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 /*
  * Allow RAIDOUTSTANDING number of simultaneous IO's to this RAID device.
@@ -304,6 +306,8 @@ static void raidmakedisklabel(struct raid_softc *);
 
 static int raidlock(struct raid_softc *);
 static void raidunlock(struct raid_softc *);
+
+static int raid_detach_unlocked(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
 static void rf_set_properties(struct raid_softc *, RF_Raid_t *);
@@ -729,6 +733,12 @@ raidopen(dev_t dev, int flags, int fmt,
 
 	if ((error = raidlock(rs)) != 0)
 		return (error);
+
+	if ((rs->sc_flags & RAIDF_SHUTDOWN) != 0) {
+		error = EBUSY;
+		goto bad;
+	}
+
 	lp = rs->sc_dkdev.dk_label;
 
 	part = DISKPART(dev);
@@ -797,7 +807,6 @@ int
 raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int     unit = raidunit(dev);
-	cfdata_t cf;
 	struct raid_softc *rs;
 	int     error = 0;
 	int     part;
@@ -833,24 +842,10 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 		rf_update_component_labels(raidPtrs[unit],
 						 RF_FINAL_COMPONENT_UPDATE);
-		if (doing_shutdown) {
-			/* last one, and we're going down, so
-			   lights out for this RAID set too. */
-			error = rf_Shutdown(raidPtrs[unit]);
 
-			/* It's no longer initialized... */
-			rs->sc_flags &= ~RAIDF_INITED;
-
-			/* detach the device */
-			
-			cf = device_cfdata(rs->sc_dev);
-			error = config_detach(rs->sc_dev, DETACH_QUIET);
-			free(cf, M_RAIDFRAME);
-			
-			/* Detach the disk. */
-			disk_detach(&rs->sc_dkdev);
-			disk_destroy(&rs->sc_dkdev);
-		}
+		/* If the kernel is shutting down, it will detach
+		 * this RAID set soon enough.
+		 */
 	}
 
 	raidunlock(rs);
@@ -962,6 +957,35 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 
 	return (physio(raidstrategy, NULL, dev, B_WRITE, minphys, uio));
 
+}
+
+static int
+raid_detach_unlocked(struct raid_softc *rs)
+{
+	int error;
+	RF_Raid_t *raidPtr;
+
+	raidPtr = raidPtrs[device_unit(rs->sc_dev)];
+
+	/*
+	 * If somebody has a partition mounted, we shouldn't
+	 * shutdown.
+	 */
+	if (rs->sc_dkdev.dk_openmask != 0)
+		return EBUSY;
+
+	if ((rs->sc_flags & RAIDF_INITED) == 0)
+		;	/* not initialized: nothing to do */
+	else if ((error = rf_Shutdown(raidPtr)) != 0)
+		return error;
+	else
+		rs->sc_flags &= ~(RAIDF_INITED|RAIDF_SHUTDOWN);
+
+	/* Detach the disk. */
+	disk_detach(&rs->sc_dkdev);
+	disk_destroy(&rs->sc_dkdev);
+
+	return 0;
 }
 
 int
@@ -1173,41 +1197,34 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* shutdown the system */
 	case RAIDFRAME_SHUTDOWN:
 
+		part = DISKPART(dev);
+		pmask = (1 << part);
+
 		if ((error = raidlock(rs)) != 0)
 			return (error);
 
-		/*
-		 * If somebody has a partition mounted, we shouldn't
-		 * shutdown.
-		 */
-
-		part = DISKPART(dev);
-		pmask = (1 << part);
 		if ((rs->sc_dkdev.dk_openmask & ~pmask) ||
 		    ((rs->sc_dkdev.dk_bopenmask & pmask) &&
-			(rs->sc_dkdev.dk_copenmask & pmask))) {
-			raidunlock(rs);
-			return (EBUSY);
+			(rs->sc_dkdev.dk_copenmask & pmask)))
+			retcode = EBUSY;
+		else {
+			rs->sc_flags |= RAIDF_SHUTDOWN;
+			rs->sc_dkdev.dk_copenmask &= ~pmask;
+			rs->sc_dkdev.dk_bopenmask &= ~pmask;
+			rs->sc_dkdev.dk_openmask &= ~pmask;
+			retcode = 0;
 		}
 
-		retcode = rf_Shutdown(raidPtr);
+		raidunlock(rs);
 
-		/* It's no longer initialized... */
-		rs->sc_flags &= ~RAIDF_INITED;
+		if (retcode != 0)
+			return retcode;
 
 		/* free the pseudo device attach bits */
 
 		cf = device_cfdata(rs->sc_dev);
-		/* XXX this causes us to not return any errors
-		   from the above call to rf_Shutdown() */
-		retcode = config_detach(rs->sc_dev, DETACH_QUIET);
-		free(cf, M_RAIDFRAME);
-
-		/* Detach the disk. */
-		disk_detach(&rs->sc_dkdev);
-		disk_destroy(&rs->sc_dkdev);
-
-		raidunlock(rs);
+		if ((retcode = config_detach(rs->sc_dev, DETACH_QUIET)) == 0)
+			free(cf, M_RAIDFRAME);
 
 		return (retcode);
 	case RAIDFRAME_GET_COMPONENT_LABEL:
@@ -3620,12 +3637,17 @@ raid_attach(device_t parent, device_t self, void *aux)
 static int
 raid_detach(device_t self, int flags)
 {
-	struct raid_softc *rs = device_private(self);
+	int error;
+	struct raid_softc *rs = &raid_softc[device_unit(self)];
 
-	if (rs->sc_flags & RAIDF_INITED)
-		return EBUSY;
+	if ((error = raidlock(rs)) != 0)
+		return (error);
 
-	return 0;
+	error = raid_detach_unlocked(rs);
+
+	raidunlock(rs);
+
+	return error;
 }
 
 static void
