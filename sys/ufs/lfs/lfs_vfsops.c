@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.269.4.1 2009/05/13 17:23:07 jym Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.269.4.2 2009/07/23 23:33:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.269.4.1 2009/05/13 17:23:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.269.4.2 2009/07/23 23:33:03 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -553,7 +553,6 @@ int
 lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct vnode *devvp;
 	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
@@ -580,10 +579,10 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-		if ((error = namei(&nd)) != 0)
+		error = namei_simple_user(args->fspec,
+					NSM_FOLLOW_NOEMULROOT, &devvp);
+		if (error != 0)
 			return (error);
-		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*

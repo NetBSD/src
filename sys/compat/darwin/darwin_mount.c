@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.19 2009/01/11 02:45:47 christos Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.19.2.1 2009/07/23 23:31:38 jym Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.19 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.19.2.1 2009/07/23 23:31:38 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,17 +144,17 @@ darwin_sys_statfs(struct lwp *l, const struct darwin_sys_statfs_args *uap, regis
 	struct mount *mp;
 	struct statvfs *bs;
 	struct darwin_statfs ds;
-	struct nameidata nd;
+	struct vnode *vp;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return error;
 
-	mp = nd.ni_vp->v_mount;
+	mp = vp->v_mount;
 	bs = &mp->mnt_stat;
-	vrele(nd.ni_vp);
+	vrele(vp);
 
 	if ((error = VFS_STATVFS(mp, bs)) != 0)
 		return error;

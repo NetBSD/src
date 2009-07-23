@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.5 2008/09/04 17:45:00 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.5.8.1 2009/07/23 23:31:42 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -30,8 +30,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _I386_LINUX32_TYPES_H
-#define _I386_LINUX32_TYPES_H
+#ifndef _AMD64_LINUX32_TYPES_H
+#define _AMD64_LINUX32_TYPES_H
 
 typedef unsigned short linux32_uid_t;
 typedef unsigned short linux32_gid_t;
@@ -93,4 +93,4 @@ struct linux32_utimbuf {
 	linux32_time_t l_modtime;
 };
 
-#endif /* _I386_LINUX32_TYPES_H */
+#endif /* _AMD64_LINUX32_TYPES_H */

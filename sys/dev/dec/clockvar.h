@@ -1,4 +1,4 @@
-/* $NetBSD: clockvar.h,v 1.9.24.1 2009/05/13 17:19:16 jym Exp $ */
+/* $NetBSD: clockvar.h,v 1.9.24.2 2009/07/23 23:31:46 jym Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/device.h>
 
 /*
  * Definitions for CPU-independent clock handling for the alpha and pmax.

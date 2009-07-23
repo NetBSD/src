@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.17.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.17.2.2 2009/07/23 23:32:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.17.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.17.2.2 2009/07/23 23:32:35 jym Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -205,6 +205,16 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS___aio_suspend50, "aio" },
 	    { SYS_aio_write, "aio" },
 	    { SYS_lio_listio, "aio" },
+	    { SYS_mq_open, "mqueue" },
+	    { SYS_mq_close, "mqueue" },
+	    { SYS_mq_unlink, "mqueue" },
+	    { SYS_mq_getattr, "mqueue" },
+	    { SYS_mq_setattr, "mqueue" },
+	    { SYS_mq_notify, "mqueue" },
+	    { SYS_mq_send, "mqueue" },
+	    { SYS_mq_receive, "mqueue" },
+	    { SYS___mq_timedsend50, "mqueue" },
+	    { SYS___mq_timedreceive50, "mqueue" },
 	    { SYS_compat_43_fstat43, "compat" },
 	    { SYS_compat_43_lstat43, "compat" },
 	    { SYS_compat_43_oaccept, "compat" },

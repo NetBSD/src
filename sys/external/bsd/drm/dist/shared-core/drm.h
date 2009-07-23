@@ -69,6 +69,12 @@
 # define DEPRECATED  __attribute__ ((deprecated))
 #else
 # define DEPRECATED
+# ifndef __FUNCTION__
+#  define __FUNCTION__ __func__ /* C99 */
+# endif
+# ifndef __volatile__
+#  define __volatile__ volatile
+# endif
 #endif
 
 #if defined(__linux__)
@@ -92,7 +98,10 @@
 #ifdef __OpenBSD__
 #define DRM_MAJOR       81
 #endif
-#if defined(__linux__) || defined(__NetBSD__)
+#if defined(__NetBSD__)
+#define DRM_MAJOR       180
+#endif
+#if defined(__linux__)
 #define DRM_MAJOR       226
 #endif
 #define DRM_MAX_MINOR   15
@@ -236,7 +245,8 @@ enum drm_map_type {
 	_DRM_AGP = 3,		  /**< AGP/GART */
 	_DRM_SCATTER_GATHER = 4,  /**< Scatter/gather memory for PCI DMA */
 	_DRM_CONSISTENT = 5,	  /**< Consistent memory for PCI DMA */
-	_DRM_TTM = 6
+	_DRM_GEM = 6,
+	_DRM_TTM = 7,
 };
 
 /**
@@ -959,6 +969,33 @@ struct drm_mm_info_arg {
 	uint64_t p_size;
 };
 
+struct drm_gem_close {
+	/** Handle of the object to be closed. */
+	uint32_t handle;
+	uint32_t pad;
+};
+
+struct drm_gem_flink {
+	/** Handle for the object being named */
+	uint32_t handle;
+
+	/** Returned global name */
+	uint32_t name;
+};
+
+struct drm_gem_open {
+	/** Name of object being opened */
+	uint32_t name;
+
+	/** Returned handle for the object */
+	uint32_t handle;
+	
+	/** Returned size of the object */
+	uint64_t size;
+};
+
+#include "drm_mode.h"
+
 /**
  * \name Ioctls Definitions
  */
@@ -978,7 +1015,11 @@ struct drm_mm_info_arg {
 #define DRM_IOCTL_GET_CLIENT            DRM_IOWR(0x05, struct drm_client)
 #define DRM_IOCTL_GET_STATS             DRM_IOR( 0x06, struct drm_stats)
 #define DRM_IOCTL_SET_VERSION		DRM_IOWR(0x07, struct drm_set_version)
-#define DRM_IOCTL_MODESET_CTL           DRM_IOW(0x08, struct drm_modeset_ctl)
+#define DRM_IOCTL_MODESET_CTL           DRM_IOW(0x08,  struct drm_modeset_ctl)
+
+#define DRM_IOCTL_GEM_CLOSE		DRM_IOW (0x09, struct drm_gem_close)
+#define DRM_IOCTL_GEM_FLINK		DRM_IOWR(0x0a, struct drm_gem_flink)
+#define DRM_IOCTL_GEM_OPEN		DRM_IOWR(0x0b, struct drm_gem_open)
 
 #define DRM_IOCTL_SET_UNIQUE		DRM_IOW( 0x10, struct drm_unique)
 #define DRM_IOCTL_AUTH_MAGIC		DRM_IOW( 0x11, struct drm_auth)
@@ -996,6 +1037,9 @@ struct drm_mm_info_arg {
 
 #define DRM_IOCTL_SET_SAREA_CTX		DRM_IOW( 0x1c, struct drm_ctx_priv_map)
 #define DRM_IOCTL_GET_SAREA_CTX		DRM_IOWR(0x1d, struct drm_ctx_priv_map)
+
+#define DRM_IOCTL_SET_MASTER            DRM_IO(0x1e)
+#define DRM_IOCTL_DROP_MASTER           DRM_IO(0x1f)
 
 #define DRM_IOCTL_ADD_CTX		DRM_IOWR(0x20, struct drm_ctx)
 #define DRM_IOCTL_RM_CTX		DRM_IOWR(0x21, struct drm_ctx)
@@ -1052,6 +1096,28 @@ struct drm_mm_info_arg {
 #define DRM_IOCTL_BO_VERSION          DRM_IOR(0xd6, struct drm_bo_version_arg)
 #define DRM_IOCTL_MM_INFO               DRM_IOWR(0xd7, struct drm_mm_info_arg)
 
+#define DRM_IOCTL_MODE_GETRESOURCES     DRM_IOWR(0xA0, struct drm_mode_card_res)
+
+#define DRM_IOCTL_MODE_GETCRTC          DRM_IOWR(0xA1, struct drm_mode_crtc)
+#define DRM_IOCTL_MODE_SETCRTC		DRM_IOWR(0xA2, struct drm_mode_crtc)
+#define DRM_IOCTL_MODE_CURSOR		DRM_IOWR(0xA3, struct drm_mode_cursor)
+#define DRM_IOCTL_MODE_GETGAMMA		DRM_IOWR(0xA4, struct drm_mode_crtc_lut)
+#define DRM_IOCTL_MODE_SETGAMMA		DRM_IOWR(0xA5, struct drm_mode_crtc_lut)
+
+#define DRM_IOCTL_MODE_GETENCODER	DRM_IOWR(0xA6, struct drm_mode_get_encoder)
+
+#define DRM_IOCTL_MODE_GETCONNECTOR	DRM_IOWR(0xA7, struct drm_mode_get_connector)
+#define DRM_IOCTL_MODE_ATTACHMODE	DRM_IOWR(0xA8, struct drm_mode_mode_cmd)
+#define DRM_IOCTL_MODE_DETACHMODE	DRM_IOWR(0xA9, struct drm_mode_mode_cmd)
+#define DRM_IOCTL_MODE_GETPROPERTY	DRM_IOWR(0xAA, struct drm_mode_get_property)
+#define DRM_IOCTL_MODE_SETPROPERTY	DRM_IOWR(0xAB, struct drm_mode_connector_set_property)
+#define DRM_IOCTL_MODE_GETPROPBLOB	DRM_IOWR(0xAC, struct drm_mode_get_blob)
+
+#define DRM_IOCTL_MODE_GETFB		DRM_IOWR(0xAD, struct drm_mode_fb_cmd)
+#define DRM_IOCTL_MODE_ADDFB		DRM_IOWR(0xAE, struct drm_mode_fb_cmd)
+#define DRM_IOCTL_MODE_RMFB		DRM_IOWR(0xAF, uint32_t)
+#define DRM_IOCTL_MODE_REPLACEFB	DRM_IOWR(0xB0, struct drm_mode_fb_cmd)
+
 /*@}*/
 
 /**
@@ -1066,7 +1132,7 @@ struct drm_mm_info_arg {
 #define DRM_COMMAND_END                 0xA0
 
 /* typedef area */
-#if !defined(__KERNEL__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#ifndef __KERNEL__
 typedef struct drm_clip_rect drm_clip_rect_t;
 typedef struct drm_tex_region drm_tex_region_t;
 typedef struct drm_hw_lock drm_hw_lock_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.85.4.1 2009/05/13 17:22:51 jym Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.85.4.2 2009/07/23 23:32:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -300,9 +300,12 @@ int nfs_savenickauth(struct nfsmount *, kauth_cred_t, int, NFSKERBKEY_T,
 
 /* nfs_export.c */
 extern struct nfs_public nfs_pub;
-int mountd_set_exports_list(const struct mountd_exports_list *, struct lwp *);
+int mountd_set_exports_list(const struct mountd_exports_list *, struct lwp *,
+    struct mount *);
 int netexport_check(const fsid_t *, struct mbuf *, struct mount **, int *,
     kauth_cred_t *);
 void netexport_rdlock(void);
 void netexport_rdunlock(void);
+void netexport_init(void);
+void netexport_fini(void);
 #endif /* _KERNEL */

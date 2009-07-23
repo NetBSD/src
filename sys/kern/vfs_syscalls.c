@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.385.2.1 2009/05/13 17:21:58 jym Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.385.2.2 2009/07/23 23:32:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.385.2.1 2009/05/13 17:21:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.385.2.2 2009/07/23 23:32:36 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -444,7 +444,6 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
     size_t data_len, register_t *retval)
 {
 	struct vnode *vp;
-	struct nameidata nd;
 	void *data_buf = data;
 	u_int recurse;
 	int error;
@@ -452,10 +451,9 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	/*
 	 * Get vnode to be covered
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, path);
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(path, NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	vp = nd.ni_vp;
 
 	/*
 	 * A lookup in VFS_MOUNT might result in an attempt to
@@ -811,16 +809,16 @@ sys_quotactl(struct lwp *l, const struct sys_quotactl_args *uap, register_t *ret
 	} */
 	struct mount *mp;
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	mp = nd.ni_vp->v_mount;
+	mp = vp->v_mount;
 	error = VFS_QUOTACTL(mp, SCARG(uap, cmd), SCARG(uap, uid),
 	    SCARG(uap, arg));
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -902,14 +900,14 @@ do_sys_pstatvfs(struct lwp *l, const char *path, int flags, struct statvfs *sb)
 {
 	struct mount *mp;
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, path);
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(path, NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return error;
-	mp = nd.ni_vp->v_mount;
+	mp = vp->v_mount;
 	error = dostatvfs(mp, sb, l, flags, 1);
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return error;
 }
 
@@ -1977,11 +1975,10 @@ sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	vp = nd.ni_vp;
 	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE,
 	    SCARG(uap, link));
 	if ((error = namei(&nd)) != 0)
@@ -2524,13 +2521,11 @@ sys_chflags(struct lwp *l, const struct sys_chflags_args *uap, register_t *retva
 	} */
 	struct vnode *vp;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	vp = nd.ni_vp;
 	error = change_flags(vp, SCARG(uap, flags), l);
 	vput(vp);
 	return (error);
@@ -2574,13 +2569,11 @@ sys_lchflags(struct lwp *l, const struct sys_lchflags_args *uap, register_t *ret
 	} */
 	struct vnode *vp;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_NOFOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	vp = nd.ni_vp;
 	error = change_flags(vp, SCARG(uap, flags), l);
 	vput(vp);
 	return (error);
@@ -2627,16 +2620,16 @@ sys_chmod(struct lwp *l, const struct sys_chmod_args *uap, register_t *retval)
 		syscallarg(int) mode;
 	} */
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
 
-	error = change_mode(nd.ni_vp, SCARG(uap, mode), l);
+	error = change_mode(vp, SCARG(uap, mode), l);
 
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -2674,16 +2667,16 @@ sys_lchmod(struct lwp *l, const struct sys_lchmod_args *uap, register_t *retval)
 		syscallarg(int) mode;
 	} */
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_NOFOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
 
-	error = change_mode(nd.ni_vp, SCARG(uap, mode), l);
+	error = change_mode(vp, SCARG(uap, mode), l);
 
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -2717,16 +2710,16 @@ sys_chown(struct lwp *l, const struct sys_chown_args *uap, register_t *retval)
 		syscallarg(gid_t) gid;
 	} */
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
 
-	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), l, 0);
+	error = change_owner(vp, SCARG(uap, uid), SCARG(uap, gid), l, 0);
 
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -2744,16 +2737,16 @@ sys___posix_chown(struct lwp *l, const struct sys___posix_chown_args *uap, regis
 		syscallarg(gid_t) gid;
 	} */
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
 
-	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), l, 1);
+	error = change_owner(vp, SCARG(uap, uid), SCARG(uap, gid), l, 1);
 
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -2818,16 +2811,16 @@ sys_lchown(struct lwp *l, const struct sys_lchown_args *uap, register_t *retval)
 		syscallarg(gid_t) gid;
 	} */
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_NOFOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
 
-	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), l, 0);
+	error = change_owner(vp, SCARG(uap, uid), SCARG(uap, gid), l, 0);
 
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -2845,16 +2838,16 @@ sys___posix_lchown(struct lwp *l, const struct sys___posix_lchown_args *uap, reg
 		syscallarg(gid_t) gid;
 	} */
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_NOFOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
 
-	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), l, 1);
+	error = change_owner(vp, SCARG(uap, uid), SCARG(uap, gid), l, 1);
 
-	vrele(nd.ni_vp);
+	vrele(vp);
 	return (error);
 }
 
@@ -2979,10 +2972,22 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
     const struct timeval *tptr, enum uio_seg seg)
 {
 	struct vattr vattr;
-	struct nameidata nd;
-	int error;
+	int error, dorele = 0;
+	namei_simple_flags_t sflags;
+
 	bool vanull, setbirthtime;
 	struct timespec ts[2];
+
+	/* 
+	 * I have checked all callers and they pass either FOLLOW,
+	 * NOFOLLOW, or 0 (when they don't pass a path), and NOFOLLOW
+	 * is 0. More to the point, they don't pass anything else.
+	 * Let's keep it that way at least until the namei interfaces
+	 * are fully sanitized.
+	 */
+	KASSERT(flag == NOFOLLOW || flag == FOLLOW);
+	sflags = (flag == FOLLOW) ? 
+		NSM_FOLLOW_TRYEMULROOT : NSM_NOFOLLOW_TRYEMULROOT;
 
 	if (tptr == NULL) {
 		vanull = true;
@@ -3003,12 +3008,12 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	}
 
 	if (vp == NULL) {
-		NDINIT(&nd, LOOKUP, flag | TRYEMULROOT, UIO_USERSPACE, path);
-		if ((error = namei(&nd)) != 0)
+		/* note: SEG describes TPTR, not PATH; PATH is always user */
+		error = namei_simple_user(path, sflags, &vp);
+		if (error != 0)
 			return error;
-		vp = nd.ni_vp;
-	} else
-		nd.ni_vp = NULL;
+		dorele = 1;
+	}
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	setbirthtime = (VOP_GETATTR(vp, &vattr, l->l_cred) == 0 &&
@@ -3023,8 +3028,8 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 
-	if (nd.ni_vp != NULL)
-		vrele(nd.ni_vp);
+	if (dorele != 0)
+		vrele(vp);
 
 	return error;
 }
@@ -3044,13 +3049,11 @@ sys_truncate(struct lwp *l, const struct sys_truncate_args *uap, register_t *ret
 	struct vnode *vp;
 	struct vattr vattr;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	vp = nd.ni_vp;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
@@ -3441,14 +3444,21 @@ sys_mkdir(struct lwp *l, const struct sys_mkdir_args *uap, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */
-	struct proc *p = l->l_proc;
+
+	return do_sys_mkdir(SCARG(uap, path), SCARG(uap, mode));
+}
+
+int
+do_sys_mkdir(const char *path, mode_t mode)
+{
+	struct proc *p = curlwp->l_proc;
 	struct vnode *vp;
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
+	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR | TRYEMULROOT,
+	    UIO_USERSPACE, path);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -3464,8 +3474,7 @@ sys_mkdir(struct lwp *l, const struct sys_mkdir_args *uap, register_t *retval)
 	VATTR_NULL(&vattr);
 	vattr.va_type = VDIR;
 	/* We will read cwdi->cwdi_cmask unlocked. */
-	vattr.va_mode =
-	    (SCARG(uap, mode) & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
+	vattr.va_mode = (mode & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (!error)
 		vput(nd.ni_vp);
@@ -3608,13 +3617,11 @@ sys_revoke(struct lwp *l, const struct sys_revoke_args *uap, register_t *retval)
 	} */
 	struct vnode *vp;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return (error);
-	vp = nd.ni_vp;
 	error = dorevoke(vp, l->l_cred);
 	vrele(vp);
 	return (error);

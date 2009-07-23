@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.c,v 1.2.4.1 2009/05/13 17:22:58 jym Exp $	*/
+/*	$NetBSD: netisr.c,v 1.2.4.2 2009/07/23 23:32:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.2.4.1 2009/05/13 17:22:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.2.4.2 2009/07/23 23:32:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.2.4.1 2009/05/13 17:22:58 jym Exp $");
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
 #include <netinet/if_inarp.h>
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 #include <net/netisr.h>
 
 #include "rump_net_private.h"
@@ -68,6 +70,15 @@ __arpintr_stub(void)
 }
 __weak_alias(arpintr,__arpintr_stub);
 
+void __ip6intr_stub(void);
+void
+__ip6intr_stub(void)
+{
+
+	panic("ip6intr called but networking stack missing");
+}
+__weak_alias(ip6intr,__ip6intr_stub);
+
 void
 rump_netisr_init(void)
 {
@@ -76,4 +87,6 @@ rump_netisr_init(void)
 	    (void (*)(void *))ipintr, NULL);
 	netisrs[NETISR_ARP] = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    (void (*)(void *))arpintr, NULL);
+	netisrs[NETISR_IPV6] = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    (void (*)(void *))ip6intr, NULL);
 }

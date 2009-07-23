@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.6.6.1 2009/05/13 17:19:16 jym Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.6.6.2 2009/07/23 23:31:46 jym Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 
 /* Init function called from dm_table_load_ioctl. */
 int
-dm_target_error_init(dm_dev_t *dmv, void **target_config, char *argv)
+dm_target_error_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dict)
 {
 
 	printf("Error target init function called!!\n");

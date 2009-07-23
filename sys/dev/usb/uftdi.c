@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.39.8.1 2009/05/13 17:21:35 jym Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.39.8.2 2009/07/23 23:32:21 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,12 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * FTDI FT8U100AX serial adapter driver
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.39.8.1 2009/05/13 17:21:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.39.8.2 2009/07/23 23:32:21 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +60,7 @@ int uftdidebug = 0;
 
 #define UFTDI_CONFIG_INDEX	0
 #define UFTDI_IFACE_INDEX	0
-#define UFTDI_MAX_PORTS		2
+#define UFTDI_MAX_PORTS		4
 
 /*
  * These are the maximum number of bytes transferred per frame.
@@ -81,6 +77,7 @@ struct uftdi_softc {
 	enum uftdi_type		sc_type;
 	u_int			sc_hdrlen;
 	u_int			sc_numports;
+	u_int			sc_chiptype;
 
 	u_char			sc_msr;
 	u_char			sc_lsr;
@@ -90,6 +87,7 @@ struct uftdi_softc {
 	u_char			sc_dying;
 
 	u_int			last_lcr;
+
 };
 
 Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
@@ -121,6 +119,7 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_FALCOM, USB_PRODUCT_FALCOM_TWIST },
 	{ USB_VENDOR_FALCOM, USB_PRODUCT_FALCOM_SAMBA },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_2232C },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_4232H },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_8U100AX },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SERIAL_8U232AM },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_KW },
@@ -179,6 +178,7 @@ USB_ATTACH(uftdi)
 	USB_ATTACH_START(uftdi, sc, uaa);
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
+	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -205,24 +205,29 @@ USB_ATTACH(uftdi)
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_numports = 1;
-	switch( uaa->vendor ) {
-	case USB_VENDOR_FTDI:
-		switch (uaa->product) {
-		case USB_PRODUCT_FTDI_SERIAL_8U100AX:
-			sc->sc_type = UFTDI_TYPE_SIO;
-			sc->sc_hdrlen = 1;
-			break;
-		case USB_PRODUCT_FTDI_SERIAL_2232C:
-			sc->sc_numports = 2;
-			/* FALLTHROUGH */
-		default:		/* Most uftdi devices are 8U232AM */
-			sc->sc_type = UFTDI_TYPE_8U232AM;
-			sc->sc_hdrlen = 0;
-		}
+	sc->sc_type = UFTDI_TYPE_8U232AM; /* most devices are post-8U232AM */
+	sc->sc_hdrlen = 0;
+	if (uaa->vendor == USB_VENDOR_FTDI
+	    && uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
+		sc->sc_type = UFTDI_TYPE_SIO;
+		sc->sc_hdrlen = 1;
+	}
+
+	ddesc = usbd_get_device_descriptor(dev);
+	sc->sc_chiptype = UGETW(ddesc->bcdDevice);
+	switch (sc->sc_chiptype) {
+	case 0x500: /* 2232D */
+	case 0x700: /* 2232H */
+		sc->sc_numports = 2;
 		break;
-	default:		/* Most uftdi devices are 8U232AM */
-		sc->sc_type = UFTDI_TYPE_8U232AM;
-		sc->sc_hdrlen = 0;
+	case 0x800: /* 4232H */
+		sc->sc_numports = 4;
+		break;
+	case 0x200: /* 232/245AM */
+	case 0x400: /* 232/245BL */
+	case 0x600: /* 232/245R */
+	default:
+		break;
 	}
 
 	for (idx = UFTDI_IFACE_INDEX; idx < sc->sc_numports; idx++) {
@@ -286,8 +291,8 @@ USB_ATTACH(uftdi)
 		uca.info = NULL;
 
 		DPRINTF(("uftdi: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
-		sc->sc_subdev[idx] = config_found_sm_loc(self, "ucombus", NULL, &uca,
-											ucomprint, ucomsubmatch);
+		sc->sc_subdev[idx] = config_found_sm_loc(self, "ucombus", NULL,
+		    &uca, ucomprint, ucomsubmatch);
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,

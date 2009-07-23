@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.10.2.1 2009/05/13 17:21:57 jym Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.10.2.2 2009/07/23 23:32:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.10.2.1 2009/05/13 17:21:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.10.2.2 2009/07/23 23:32:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.10.2.1 2009/05/13 17:21:57 jym Exp
 #include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_readahead.h>
 
 /*
  * Duplicate a file descriptor.
@@ -356,7 +358,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
-	ff = fdp->fd_ofiles[fd];
+	ff = fdp->fd_dt->dt_ff[fd];
 
 	if ((cmd & F_FSCTL)) {
 		error = fcntl_forfs(fd, fp, cmd, SCARG(uap, arg));
@@ -613,8 +615,20 @@ int
 do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 {
 	file_t *fp;
+	vnode_t *vp;
+	off_t endoffset;
 	int error;
+	CTASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
+	CTASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
+	CTASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
+	if (len == 0) {
+		endoffset = INT64_MAX;
+	} else if (INT64_MAX - offset >= len) {
+		endoffset = offset + len;
+	} else {
+		return EINVAL;
+	}
 	if ((fp = fd_getfile(fd)) == NULL) {
 		return EBADF;
 	}
@@ -629,12 +643,20 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	}
 
 	switch (advice) {
+	case POSIX_FADV_WILLNEED:
+	case POSIX_FADV_DONTNEED:
+		vp = fp->f_data;
+		if (vp->v_type != VREG && vp->v_type != VBLK) {
+			fd_putfile(fd);
+			return 0;
+		}
+		break;
+	}
+
+	switch (advice) {
 	case POSIX_FADV_NORMAL:
 	case POSIX_FADV_RANDOM:
 	case POSIX_FADV_SEQUENTIAL:
-		KASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
-		KASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
-		KASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
 		/*
 		 * We ignore offset and size.  must lock the file to
@@ -647,7 +669,17 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 		break;
 
 	case POSIX_FADV_WILLNEED:
+		vp = fp->f_data;
+		error = uvm_readahead(&vp->v_uobj, offset, endoffset - offset);
+		break;
+
 	case POSIX_FADV_DONTNEED:
+		vp = fp->f_data;
+		mutex_enter(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, round_page(offset),
+		    trunc_page(endoffset), PGO_DEACTIVATE | PGO_CLEANIT);
+		break;
+
 	case POSIX_FADV_NOREUSE:
 		/* Not implemented yet. */
 		error = 0;

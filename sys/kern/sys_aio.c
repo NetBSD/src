@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.22.2.1 2009/05/13 17:21:57 jym Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.22.2.2 2009/07/23 23:32:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.22.2.1 2009/05/13 17:21:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.22.2.2 2009/07/23 23:32:35 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -622,15 +622,16 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap, register_t 
 	struct lio_req *lio;
 	struct filedesc	*fdp = p->p_fd;
 	unsigned int cn, errcnt, fildes;
+	fdtab_t *dt;
 
 	TAILQ_HEAD(, aio_job) tmp_jobs_list;
 
 	/* Check for invalid file descriptor */
 	fildes = (unsigned int)SCARG(uap, fildes);
-	if (fildes >= fdp->fd_nfiles)
+	dt = fdp->fd_dt;
+	if (fildes >= dt->dt_nfiles)
 		return EBADF;
-	membar_consumer();
-	if (fdp->fd_ofiles[fildes] == NULL || fdp->fd_ofiles[fildes]->ff_file == NULL)
+	if (dt->dt_ff[fildes] == NULL || dt->dt_ff[fildes]->ff_file == NULL)
 		return EBADF;
 
 	/* Check if AIO structure is initialized */

@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.30 2009/02/08 19:14:52 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.30.2.1 2009/07/23 23:32:33 jym Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,6 +30,7 @@
 #define _FS_UDF_UDF_H_
 
 #include <sys/queue.h>
+#include <sys/rb.h>
 #include <sys/uio.h>
 #include <sys/mutex.h>
 
@@ -48,30 +49,31 @@ extern int udf_verbose;
 #define UDF_COMPLETE_DELETE
 
 /* debug categories */
-#define UDF_DEBUG_VOLUMES	0x000001
-#define UDF_DEBUG_LOCKING	0x000002
-#define UDF_DEBUG_NODE		0x000004
-#define UDF_DEBUG_LOOKUP	0x000008
-#define UDF_DEBUG_READDIR	0x000010
-#define UDF_DEBUG_FIDS		0x000020
-#define UDF_DEBUG_DESCRIPTOR	0x000040
-#define UDF_DEBUG_TRANSLATE	0x000080
-#define UDF_DEBUG_STRATEGY	0x000100
-#define UDF_DEBUG_READ		0x000200
-#define UDF_DEBUG_WRITE		0x000400
-#define UDF_DEBUG_CALL		0x000800
-#define UDF_DEBUG_ATTR		0x001000
-#define UDF_DEBUG_EXTATTR	0x002000
-#define UDF_DEBUG_ALLOC		0x004000
-#define UDF_DEBUG_ADWLK		0x008000
-#define UDF_DEBUG_DIRHASH	0x010000
-#define UDF_DEBUG_NOTIMPL	0x020000
-#define UDF_DEBUG_SHEDULE	0x040000
-#define UDF_DEBUG_ECCLINE	0x080000
-#define UDF_DEBUG_SYNC		0x100000
-#define UDF_DEBUG_PARANOIA	0x200000
-#define UDF_DEBUG_PARANOIDADWLK	0x400000
-#define UDF_DEBUG_NODEDUMP	0x800000
+#define UDF_DEBUG_VOLUMES	0x0000001
+#define UDF_DEBUG_LOCKING	0x0000002
+#define UDF_DEBUG_NODE		0x0000004
+#define UDF_DEBUG_LOOKUP	0x0000008
+#define UDF_DEBUG_READDIR	0x0000010
+#define UDF_DEBUG_FIDS		0x0000020
+#define UDF_DEBUG_DESCRIPTOR	0x0000040
+#define UDF_DEBUG_TRANSLATE	0x0000080
+#define UDF_DEBUG_STRATEGY	0x0000100
+#define UDF_DEBUG_READ		0x0000200
+#define UDF_DEBUG_WRITE		0x0000400
+#define UDF_DEBUG_CALL		0x0000800
+#define UDF_DEBUG_ATTR		0x0001000
+#define UDF_DEBUG_EXTATTR	0x0002000
+#define UDF_DEBUG_ALLOC		0x0004000
+#define UDF_DEBUG_ADWLK		0x0008000
+#define UDF_DEBUG_DIRHASH	0x0010000
+#define UDF_DEBUG_NOTIMPL	0x0020000
+#define UDF_DEBUG_SHEDULE	0x0040000
+#define UDF_DEBUG_ECCLINE	0x0080000
+#define UDF_DEBUG_SYNC		0x0100000
+#define UDF_DEBUG_PARANOIA	0x0200000
+#define UDF_DEBUG_PARANOIDADWLK	0x0400000
+#define UDF_DEBUG_NODEDUMP	0x0800000
+#define UDF_DEBUG_RESERVE	0x1000000
 
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
@@ -104,7 +106,7 @@ extern int udf_verbose;
 /* DON'T change these: they identify 13thmonkey's UDF implementation */
 #define APP_NAME		"*NetBSD UDF"
 #define APP_VERSION_MAIN	0
-#define APP_VERSION_SUB		4
+#define APP_VERSION_SUB		5
 #define IMPL_NAME		"*NetBSD kernel UDF"
 
 
@@ -116,18 +118,14 @@ extern int udf_verbose;
 #define UDF_ECCBUF_HASHSIZE	(1<<UDF_ECCBUF_HASHBITS)
 #define UDF_ECCBUF_HASHMASK	(UDF_ECCBUF_HASHSIZE -1)
 
-#define UDF_DIRHASH_DEFAULTMEM	(1024*1024)
-#define UDF_DIRHASH_HASHBITS	5
-#define UDF_DIRHASH_HASHSIZE	(1<<UDF_DIRHASH_HASHBITS)
-#define UDF_DIRHASH_HASHMASK	(UDF_DIRHASH_HASHSIZE -1)
-
 #define UDF_ECCLINE_MAXFREE	5			/* picked, needs calculation */
-#define UDF_ECCLINE_MAXBUSY	300			/* picked, needs calculation */
+#define UDF_ECCLINE_MAXBUSY	100			/* picked, needs calculation */
 
 #define UDF_MAX_MAPPINGS	(MAXPHYS/DEV_BSIZE)	/* 128 */
 #define UDF_VAT_CHUNKSIZE	(64*1024)		/* picked */
 #define UDF_SYMLINKBUFLEN	(64*1024)		/* picked */
 
+#define UDF_DISC_SLACK		(128)			/* picked, at least 64 kb or 128 */
 #define UDF_ISO_VRS_SIZE	(32*2048)		/* 32 ISO `sectors' */
 
 
@@ -336,15 +334,14 @@ struct udf_mount {
 	/* hash table to lookup icb -> udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
 	kmutex_t	get_node_lock;
-	LIST_HEAD(, udf_node) udf_nodes[UDF_INODE_HASHSIZE];
-	LIST_HEAD(, udf_node) sorted_udf_nodes;		/* sorted sync list  */
+	struct rb_tree	udf_node_tree;
 
 	/* syncing */
 	int		syncing;			/* are we syncing?   */
 	kcondvar_t 	dirtynodes_cv;			/* sleeping on sync  */
 
 	/* late allocation */
-	uint32_t		 uncomitted_lb;		/* for free space    */
+	int32_t			 uncommitted_lbs[UDF_PARTITIONS];
 	struct long_ad		*la_node_ad_cpy;		/* issue buf */
 	uint64_t		*la_lmapping, *la_pmapping;	/* issue buf */
 
@@ -356,6 +353,11 @@ struct udf_mount {
 	void			*strategy_private;
 };
 
+
+#define RBTOUDFNODE(node) \
+	((node) ? \
+	 (void *)((uintptr_t)(node) - offsetof(struct udf_node, rbnode)) \
+	 : NULL)
 
 /*
  * UDF node describing a file/directory.
@@ -371,6 +373,9 @@ struct udf_node {
 	kcondvar_t		 node_lock;		/* sleeping lock */
 	char const		*lock_fname;
 	int			 lock_lineno;
+
+	/* rb_node for fast lookup and fast sequentual visiting */
+	struct rb_node		 rbnode;
 
 	/* one of `fe' or `efe' can be set, not both (UDF file entry dscr.)  */
 	struct file_entry	*fe;
@@ -391,14 +396,12 @@ struct udf_node {
 	struct lockf		*lockf;			/* lock list         */
 	uint32_t		 outstanding_bufs;	/* file data         */
 	uint32_t		 outstanding_nodedscr;	/* node dscr         */
+	int32_t			 uncommitted_lbs;	/* in UBC            */
 
 	/* references to associated nodes */
 	struct udf_node		*extattr;
 	struct udf_node		*streamdir;
 	struct udf_node		*my_parent;		/* if extended attr. */
-
-	LIST_ENTRY(udf_node)	 hashchain;		/* inside hash line  */
-	LIST_ENTRY(udf_node)	 sortchain;		/* sorted udf nodes  */
 };
 
 

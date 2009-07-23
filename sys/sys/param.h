@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.340.2.1 2009/05/13 17:23:03 jym Exp $	*/
+/*	$NetBSD: param.h,v 1.340.2.2 2009/07/23 23:32:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	599001100	/* NetBSD 5.99.11 */
+#define	__NetBSD_Version__	599001500	/* NetBSD 5.99.15 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -344,8 +344,8 @@
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
-#define	MIN(a,b)	(((a)<(b))?(a):(b))
-#define	MAX(a,b)	(((a)>(b))?(a):(b))
+#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
 /*
  * Constants for setting the parameters of the kernel memory allocator.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.1.6.1 2009/05/13 17:22:15 jym Exp $
+#	$NetBSD: Makefile.libkern,v 1.1.6.2 2009/07/23 23:32:45 jym Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -85,4 +85,14 @@ SRCS+=	strchr.c
 # if no machine specific strrchr(3), build one out of rindex(3) based stub.
 .if empty(SRCS:Mstrrchr.S)
 SRCS+=	strrchr.c
+.endif
+
+# if no machine specific popcount32(3), build generic version
+.if empty(SRCS:Mpopcount32.S)
+SRCS+=	popcount32.c
+.endif
+
+# if no machine specific popcount64(3), build generic version
+.if empty(SRCS:Mpopcount64.S)
+SRCS+=	popcount64.c
 .endif

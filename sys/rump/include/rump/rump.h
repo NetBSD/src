@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.7.2.1 2009/05/13 17:22:57 jym Exp $	*/
+/*	$NetBSD: rump.h,v 1.7.2.2 2009/07/23 23:32:53 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,7 @@ struct componentname;
 struct vfsops;
 struct fid;
 struct statvfs;
+struct stat;
 
 /* yetch */
 #if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
@@ -75,6 +76,8 @@ int	rump_module_init(struct modinfo *, prop_dictionary_t props);
 int	rump_module_fini(struct modinfo *);
 
 int		rump__init(int);
+int		rump_getversion(void);
+
 struct mount	*rump_mnt_init(struct vfsops *, int);
 int		rump_mnt_mount(struct mount *, const char *, void *, size_t *);
 void		rump_mnt_destroy(struct mount *);
@@ -155,6 +158,19 @@ int		rump_sysproxy_socket_setup_client(int);
 int		rump_sysproxy_socket_setup_server(int);
 
 /*
+ * compat syscalls.  these are currently hand-"generated"
+ */
+int		rump_sys___stat30(const char *, struct stat *);
+int		rump_sys___lstat30(const char *, struct stat *);
+
+/*
+ * Other compat glue (for sniffing purposes)
+ * XXX: (lack of) types
+ */
+void		rump_vattr50_to_vattr(const struct vattr *, struct vattr *);
+void		rump_vattr_to_vattr50(const struct vattr *, struct vattr *);
+
+/*
  * Begin rump syscall conditionals.  Yes, something a little better
  * is required here.
  */
@@ -172,6 +188,10 @@ int		rump_sysproxy_socket_setup_server(int);
 #define setsockopt(a,b,c,d,e) rump_sys_setsockopt(a,b,c,d,e)
 #define shutdown(a,b) rump_sys_shutdown(a,b)
 #endif /* RUMP_SYS_NETWORKING */
+
+#ifdef RUMP_SYS_IOCTL
+#define ioctl(...) rump_sys_ioctl(__VA_ARGS__)
+#endif /* RUMP_SYS_IOCTL */
 
 #ifdef RUMP_SYS_CLOSE
 #define close(a) rump_sys_close(a)

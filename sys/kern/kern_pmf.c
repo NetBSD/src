@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.21.2.1 2009/05/13 17:21:56 jym Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.21.2.2 2009/07/23 23:32:34 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.21.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.21.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
@@ -94,13 +94,12 @@ typedef struct pmf_event_workitem {
 	device_t		pew_device;
 } pmf_event_workitem_t;
 
-struct shutdown_state {
-	bool initialized;
-	deviter_t di;
-};
+static pool_cache_t pew_pc;
 
-static device_t shutdown_first(struct shutdown_state *);
-static device_t shutdown_next(struct shutdown_state *);
+static pmf_event_workitem_t *pmf_event_workitem_get(void);
+static void pmf_event_workitem_put(pmf_event_workitem_t *);
+
+
 
 static bool pmf_device_resume_locked(device_t PMF_FN_PROTO);
 static bool pmf_device_suspend_locked(device_t PMF_FN_PROTO);
@@ -122,7 +121,7 @@ pmf_event_worker(struct work *wk, void *dummy)
 			(*event->pmf_handler)(event->pmf_device);
 	}
 
-	free(pew, M_TEMP);
+	pmf_event_workitem_put(pew);
 }
 
 static bool
@@ -270,52 +269,6 @@ pmf_system_suspend(PMF_FN_ARGS1)
 	return true;
 }
 
-static device_t
-shutdown_first(struct shutdown_state *s)
-{
-	if (!s->initialized) {
-		deviter_init(&s->di, DEVITER_F_SHUTDOWN|DEVITER_F_LEAVES_FIRST);
-		s->initialized = true;
-	}
-	return shutdown_next(s);
-}
-
-static device_t
-shutdown_next(struct shutdown_state *s)
-{
-	device_t dv;
-
-	while ((dv = deviter_next(&s->di)) != NULL && !device_is_active(dv))
-		;
-
-	if (dv == NULL)
-		s->initialized = false;
-
-	return dv;
-}
-
-static bool
-detach_all(int how)
-{
-	static struct shutdown_state s;
-	device_t curdev;
-	bool progress = false;
-
-	if ((how & RB_NOSYNC) != 0)
-		return false;
-
-	for (curdev = shutdown_first(&s); curdev != NULL;
-	     curdev = shutdown_next(&s)) {
-		aprint_debug(" detaching %s, ", device_xname(curdev));
-		if (config_detach(curdev, DETACH_SHUTDOWN) == 0) {
-			progress = true;
-			aprint_debug("success.");
-		} else
-			aprint_debug("failed.");
-	}
-	return progress;
-}
-
 static bool
 shutdown_all(int how)
 {
@@ -348,11 +301,6 @@ void
 pmf_system_shutdown(int how)
 {
 	aprint_debug("Shutting down devices:");
-	suspendsched();
-
-	while (detach_all(how))
-		;
-
 	shutdown_all(how);
 }
 
@@ -612,7 +560,7 @@ pmf_event_inject(device_t dv, pmf_generic_event_t ev)
 {
 	pmf_event_workitem_t *pew;
 
-	pew = malloc(sizeof(pmf_event_workitem_t), M_TEMP, M_NOWAIT);
+	pew = pmf_event_workitem_get();
 	if (pew == NULL) {
 		PMF_EVENT_PRINTF(("%s: PMF event %d dropped (no memory)\n",
 		    dv ? device_xname(dv) : "<anonymous>", ev));
@@ -622,7 +570,7 @@ pmf_event_inject(device_t dv, pmf_generic_event_t ev)
 	pew->pew_event = ev;
 	pew->pew_device = dv;
 
-	workqueue_enqueue(pmf_event_workqueue, (void *)pew, NULL);
+	workqueue_enqueue(pmf_event_workqueue, &pew->pew_work, NULL);
 	PMF_EVENT_PRINTF(("%s: PMF event %d injected\n",
 	    dv ? device_xname(dv) : "<anonymous>", ev));
 
@@ -635,7 +583,7 @@ pmf_event_register(device_t dv, pmf_generic_event_t ev,
 {
 	pmf_event_handler_t *event; 
 	
-	event = malloc(sizeof(*event), M_DEVBUF, M_WAITOK);
+	event = kmem_alloc(sizeof(*event), KM_SLEEP);
 	event->pmf_event = ev;
 	event->pmf_handler = handler;
 	event->pmf_device = dv;
@@ -661,7 +609,7 @@ pmf_event_deregister(device_t dv, pmf_generic_event_t ev,
 		if (event->pmf_handler != handler)
 			continue;
 		TAILQ_REMOVE(&pmf_all_events, event, pmf_link);
-		free(event, M_DEVBUF);
+		kmem_free(event, sizeof(*event));
 		return;
 	}
 }
@@ -719,7 +667,7 @@ pmf_class_display_deregister(device_t dv)
 		callout_stop(&global_idle_counter);
 	splx(s);
 
-	free(sc, M_DEVBUF);
+	kmem_free(sc, sizeof(*sc));
 }
 
 bool
@@ -728,7 +676,7 @@ pmf_class_display_register(device_t dv)
 	struct display_class_softc *sc;
 	int s;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
+	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
 
 	s = splsoftclock();
 	if (TAILQ_EMPTY(&all_displays))
@@ -743,10 +691,35 @@ pmf_class_display_register(device_t dv)
 	return true;
 }
 
+static void
+pmf_event_workitem_put(pmf_event_workitem_t *pew)
+{
+	KASSERT(pew != NULL);
+	pool_cache_put(pew_pc, pew);
+}
+
+static pmf_event_workitem_t *
+pmf_event_workitem_get(void)
+{
+	return pool_cache_get(pew_pc, PR_NOWAIT);
+}
+
+static int
+pew_constructor(void *arg, void *obj, int flags)
+{
+	memset(obj, 0, sizeof(pmf_event_workitem_t));
+	return 0;
+}
+
 void
 pmf_init(void)
 {
 	int err;
+
+	pew_pc = pool_cache_init(sizeof(pmf_event_workitem_t), 0, 0, 0,
+	    "pew pool", NULL, IPL_HIGH, pew_constructor, NULL, NULL);
+	pool_cache_setlowat(pew_pc, 16);
+	pool_cache_sethiwat(pew_pc, 256);
 
 	KASSERT(pmf_event_workqueue == NULL);
 	err = workqueue_create(&pmf_event_workqueue, "pmfevent",

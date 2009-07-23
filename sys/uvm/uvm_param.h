@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.21 2006/08/04 22:42:36 he Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.21.74.1 2009/07/23 23:33:04 jym Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -245,6 +245,7 @@
 
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern int		ubc_winshift;	/* shift for a UBC mapping window */
+extern u_int		uvm_emap_size;	/* size of emap */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */

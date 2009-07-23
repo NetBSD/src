@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.3 2009/05/31 20:15:36 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.4 2009/07/23 23:31:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.3 2009/05/31 20:15:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.4 2009/07/23 23:31:37 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -814,7 +814,7 @@ inline void
 pmap_reference(struct pmap *pmap)
 {
 
-	atomic_inc_uint((unsigned *)&pmap->pm_obj[0].uo_refs);
+	atomic_inc_uint(&pmap->pm_obj[0].uo_refs);
 }
 
 /*
@@ -1121,6 +1121,66 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	xen_release_ptom_lock();
 #endif
 
+}
+
+void
+pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
+{
+	pt_entry_t *pte, opte, npte;
+
+	KASSERT((prot & ~VM_PROT_ALL) == 0);
+	pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
+
+#ifdef DOM0OPS
+	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
+		npte = pa;
+	} else
+#endif
+		npte = pmap_pa2pte(pa);
+
+	npte = pmap_pa2pte(pa);
+	npte |= protection_codes[prot] | PG_k | PG_V;
+	opte = pmap_pte_testset(pte, npte);
+}
+
+/*
+ * pmap_emap_sync: perform TLB flush or pmap load, if it was deferred.
+ */
+void
+pmap_emap_sync(bool canload)
+{
+	struct cpu_info *ci = curcpu();
+	struct pmap *pmap;
+
+	KASSERT(kpreempt_disabled());
+	if (__predict_true(ci->ci_want_pmapload && canload)) {
+		/*
+		 * XXX: Hint for pmap_reactivate(), which might suggest to
+		 * not perform TLB flush, if state has not changed.
+		 */
+		pmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
+		if (__predict_false(pmap == ci->ci_pmap)) {
+			const uint32_t cpumask = ci->ci_cpumask;
+			atomic_and_32(&pmap->pm_cpus, ~cpumask);
+		}
+		pmap_load();
+		KASSERT(ci->ci_want_pmapload == 0);
+	} else {
+		tlbflush();
+	}
+
+}
+
+void
+pmap_emap_remove(vaddr_t sva, vsize_t len)
+{
+	pt_entry_t *pte, xpte;
+	vaddr_t va, eva = sva + len;
+
+	for (va = sva; va < eva; va += PAGE_SIZE) {
+		pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
+		xpte |= pmap_pte_testset(pte, 0);
+	}
 }
 
 #ifdef XEN
@@ -1741,7 +1801,7 @@ pmap_free_pvs(struct pv_entry *pve)
 /*
  * main pv_entry manipulation functions:
  *   pmap_enter_pv: enter a mapping onto a pv_head list
- *   pmap_remove_pv: remove a mappiing from a pv_head list
+ *   pmap_remove_pv: remove a mapping from a pv_head list
  *
  * NOTE: Both pmap_enter_pv and pmap_remove_pv expect the caller to lock 
  *       the pvh before calling
@@ -2335,7 +2395,7 @@ pmap_destroy(struct pmap *pmap)
 	 * drop reference count
 	 */
 
-	if (atomic_dec_uint_nv((unsigned *)&pmap->pm_obj[0].uo_refs) > 0) {
+	if (atomic_dec_uint_nv(&pmap->pm_obj[0].uo_refs) > 0) {
 		return;
 	}
 
@@ -2728,6 +2788,7 @@ pmap_load(void)
 
 	if (pmap == oldpmap) {
 		if (!pmap_reactivate(pmap)) {
+			u_int gen = uvm_emap_gen_return();
 
 			/*
 			 * pmap has been changed during deactivated.
@@ -2735,6 +2796,7 @@ pmap_load(void)
 			 */
 
 			tlbflush();
+			uvm_emap_update(gen);
 		}
 
 		ci->ci_want_pmapload = 0;
@@ -2847,7 +2909,11 @@ pmap_load(void)
 	splx(s);
 	}
 #else /* PAE */
+	{
+	u_int gen = uvm_emap_gen_return();
 	lcr3(pcb->pcb_cr3);
+	uvm_emap_update(gen);
+	}
 #endif /* PAE */
 #endif /* XEN && x86_64 */
 
@@ -4919,10 +4985,13 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		return;
 
 	if (sva == (vaddr_t)-1LL) {
-		if (pte != 0)
+		u_int gen = uvm_emap_gen_return();
+		if (pte != 0) {
 			tlbflushg();
-		else
+		} else {
 			tlbflush();
+		}
+		uvm_emap_update(gen);
 	} else {
 		do {
 			pmap_update_pg(sva);

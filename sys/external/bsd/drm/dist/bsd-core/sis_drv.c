@@ -38,46 +38,63 @@ static drm_pci_id_list_t sis_pciidlist[] = {
 
 static void sis_configure(struct drm_device *dev)
 {
-	dev->driver.buf_priv_size	= 1; /* No dev_priv */
-	dev->driver.context_ctor	= sis_init_context;
-	dev->driver.context_dtor	= sis_final_context;
+	dev->driver->driver_features =
+	    DRIVER_USE_AGP | DRIVER_USE_MTRR;
 
-	dev->driver.ioctls		= sis_ioctls;
-	dev->driver.max_ioctl		= sis_max_ioctl;
+	dev->driver->buf_priv_size	= 1; /* No dev_priv */
+	dev->driver->context_ctor	= sis_init_context;
+	dev->driver->context_dtor	= sis_final_context;
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+	dev->driver->ioctls		= sis_ioctls;
+	dev->driver->max_ioctl		= sis_max_ioctl;
 
-	dev->driver.use_agp		= 1;
-	dev->driver.use_mtrr		= 1;
+	dev->driver->name		= DRIVER_NAME;
+	dev->driver->desc		= DRIVER_DESC;
+	dev->driver->date		= DRIVER_DATE;
+	dev->driver->major		= DRIVER_MAJOR;
+	dev->driver->minor		= DRIVER_MINOR;
+	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
+
 static int
-sis_probe(device_t dev)
+sis_probe(device_t kdev)
 {
-	return drm_probe(dev, sis_pciidlist);
+	return drm_probe(kdev, sis_pciidlist);
 }
 
 static int
-sis_attach(device_t nbdev)
+sis_attach(device_t kdev)
 {
-	struct drm_device *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(kdev);
 
-	bzero(dev, sizeof(struct drm_device));
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
 	sis_configure(dev);
-	return drm_attach(nbdev, sis_pciidlist);
+
+	return drm_attach(kdev, sis_pciidlist);
+}
+
+static int
+sis_detach(device_t kdev)
+{
+	struct drm_device *dev = device_get_softc(kdev);
+	int ret;
+
+	ret = drm_detach(kdev);
+
+	free(dev->driver, DRM_MEM_DRIVER);
+
+	return ret;
 }
 
 static device_method_t sis_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		sis_probe),
 	DEVMETHOD(device_attach,	sis_attach),
-	DEVMETHOD(device_detach,	drm_detach),
+	DEVMETHOD(device_detach,	sis_detach),
 
 	{ 0, 0 }
 };
@@ -96,32 +113,89 @@ DRIVER_MODULE(sisdrm, pci, sis_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(sisdrm, drm, 1, 1, 1);
 
-#elif defined(__OpenBSD__)
-#ifdef _LKM
-CFDRIVER_DECL(sis, DV_TTY, NULL);
-#else
-CFATTACH_DECL(sis, sizeof(struct drm_device), drm_probe, drm_attach, drm_detach,
-    drm_activate);
-#endif
-#elif defined(__NetBSD__)
+#elif   defined(__NetBSD__)
 
 static int
-sisdrm_probe(struct device *parent, struct cfdata *match, void *aux)
+sisdrm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+
 	return drm_probe(pa, sis_pciidlist);
 }
 
 static void
-sisdrm_attach(struct device *parent, struct device *self, void *aux)
+sisdrm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = device_private(self);
+	struct drm_device *dev = device_private(self);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
 
 	sis_configure(dev);
-	return drm_attach(self, pa, sis_pciidlist);
+
+	drm_attach(self, pa, sis_pciidlist);
 }
 
-CFATTACH_DECL_NEW(sisdrm, sizeof(drm_device_t), sisdrm_probe, sisdrm_attach,
-	drm_detach, drm_activate);
+CFATTACH_DECL_NEW(sisdrm, sizeof(struct drm_device),
+    sisdrm_probe, sisdrm_attach, drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, sisdrm, NULL);
+
+CFDRIVER_DECL(sisdrm, DV_DULL, NULL);
+extern struct cfattach sisdrm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata sisdrm_cfdata[] = {
+	{
+		.cf_name = "sisdrm",
+		.cf_atname = "sisdrm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+sisdrm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&sisdrm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("sisdrm", &sisdrm_ca);
+		if (err) {
+			config_cfdriver_detach(&sisdrm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(sisdrm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("sisdrm", &sisdrm_ca);
+			config_cfdriver_detach(&sisdrm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(sisdrm_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("sisdrm", &sisdrm_ca);
+		config_cfdriver_detach(&sisdrm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _MODULE */
+
 #endif

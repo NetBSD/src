@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.193.2.1 2009/05/13 17:19:05 jym Exp $	*/
+/*	$NetBSD: vnd.c,v 1.193.2.2 2009/07/23 23:31:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.193.2.1 2009/05/13 17:19:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.193.2.2 2009/07/23 23:31:45 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -356,8 +356,10 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if ((error = vndlock(sc)) != 0)
 		return error;
 
-	if ((sc->sc_flags & VNF_CLEARING) != 0)
-		return ENXIO;
+	if ((sc->sc_flags & VNF_CLEARING) != 0) {
+		error = ENXIO;
+		goto done;
+	}
 
 	lp = sc->sc_dkdev.dk_label;
 
@@ -1616,7 +1618,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 #endif /* VND_COMPRESSION */
 	vnd->sc_flags &=
 	    ~(VNF_INITED | VNF_READONLY | VNF_VLABEL
-	      | VNF_VUNCONF | VNF_COMP);
+	      | VNF_VUNCONF | VNF_COMP | VNF_CLEARING);
 	if (vp == NULL)
 		panic("vndclear: null vp");
 	(void) vn_close(vp, fflags, vnd->sc_cred);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.45.4.1 2009/05/13 17:22:51 jym Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.45.4.2 2009/07/23 23:32:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.45.4.1 2009/05/13 17:22:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.45.4.2 2009/07/23 23:32:53 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -445,6 +445,34 @@ warn:
 	return (-1);
 }
 
+static void
+bootp_addvend(u_char *area)
+{
+#ifdef NFS_BOOT_DHCP
+	char vci[64];
+	int vcilen;
+	
+	*area++ = TAG_PARAM_REQ;
+	*area++ = 6;
+	*area++ = TAG_SUBNET_MASK;
+	*area++ = TAG_GATEWAY;
+	*area++ = TAG_HOST_NAME;
+	*area++ = TAG_DOMAIN_NAME;
+	*area++ = TAG_ROOT_PATH;
+	*area++ = TAG_SWAP_SERVER;
+
+	/* Insert a NetBSD Vendor Class Identifier option. */
+	snprintf(vci, sizeof(vci), "%s:%s:kernel:%s", ostype, MACHINE,
+	    osrelease);
+	vcilen = strlen(vci);
+	*area++ = TAG_CLASSID;
+	*area++ = vcilen;
+	(void)memcpy(area, vci, vcilen);
+	area += vcilen;
+#endif
+	*area = TAG_END;	
+}
+
 static int
 bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 {
@@ -458,10 +486,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	const u_char *haddr;
 	u_char hafmt, halen;
 	struct bootpcontext bpc;
-#ifdef NFS_BOOT_DHCP
-	char vci[64];
-	int vcilen;
-#endif
+	unsigned int index;
 
 	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp, NULL);
 	if (error) {
@@ -585,23 +610,13 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 #endif
 	/* Fill-in the vendor data. */
 	memcpy(bootp->bp_vend, vm_rfc1048, 4);
+	index = 4;
 #ifdef NFS_BOOT_DHCP
-	bootp->bp_vend[4] = TAG_DHCP_MSGTYPE;
-	bootp->bp_vend[5] = 1;
-	bootp->bp_vend[6] = DHCPDISCOVER;
-	/*
-	 * Insert a NetBSD Vendor Class Identifier option.
-	 */
-	snprintf(vci, sizeof(vci), "%s:%s:kernel:%s", ostype, MACHINE,
-	    osrelease);
-	vcilen = strlen(vci);
-	bootp->bp_vend[7] = TAG_CLASSID;
-	bootp->bp_vend[8] = vcilen;
-	memcpy(&bootp->bp_vend[9], vci, vcilen);
-	bootp->bp_vend[9 + vcilen] = TAG_END;
-#else
-	bootp->bp_vend[4] = TAG_END;
+	bootp->bp_vend[index++] = TAG_DHCP_MSGTYPE;
+	bootp->bp_vend[index++] = 1;
+	bootp->bp_vend[index++] = DHCPDISCOVER;
 #endif
+	bootp_addvend(&bootp->bp_vend[index]);
 
 	bpc.xid = xid;
 	bpc.haddr = haddr;
@@ -622,21 +637,22 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 #ifdef NFS_BOOT_DHCP
 	if (bpc.dhcp_ok) {
 		u_int32_t leasetime;
-		bootp->bp_vend[6] = DHCPREQUEST;
-		bootp->bp_vend[7] = TAG_REQ_ADDR;
-		bootp->bp_vend[8] = 4;
-		memcpy(&bootp->bp_vend[9], &bpc.replybuf->bp_yiaddr, 4);
-		bootp->bp_vend[13] = TAG_SERVERID;
-		bootp->bp_vend[14] = 4;
-		memcpy(&bootp->bp_vend[15], &bpc.dhcp_serverip.s_addr, 4);
-		bootp->bp_vend[19] = TAG_LEASETIME;
-		bootp->bp_vend[20] = 4;
+		index = 6;
+		bootp->bp_vend[index++] = DHCPREQUEST;
+		bootp->bp_vend[index++] = TAG_REQ_ADDR;
+		bootp->bp_vend[index++] = 4;
+		memcpy(&bootp->bp_vend[index], &bpc.replybuf->bp_yiaddr, 4);
+		index += 4;
+		bootp->bp_vend[index++] = TAG_SERVERID;
+		bootp->bp_vend[index++] = 4;
+		memcpy(&bootp->bp_vend[index], &bpc.dhcp_serverip.s_addr, 4);
+		index += 4;
+		bootp->bp_vend[index++] = TAG_LEASETIME;
+		bootp->bp_vend[index++] = 4;
 		leasetime = htonl(300);
-		memcpy(&bootp->bp_vend[21], &leasetime, 4);
-		bootp->bp_vend[25] = TAG_CLASSID;
-		bootp->bp_vend[26] = vcilen;
-		memcpy(&bootp->bp_vend[27], vci, vcilen);
-		bootp->bp_vend[27 + vcilen] = TAG_END;
+		memcpy(&bootp->bp_vend[index], &leasetime, 4);
+		index += 4;
+		bootp_addvend(&bootp->bp_vend[index]);
 
 		bpc.expected_dhcpmsgtype = DHCPACK;
 
@@ -718,15 +734,23 @@ bootp_extract(struct bootp *bootp, int replylen,
 #endif
 		switch (tag) {
 		    case TAG_SUBNET_MASK:
+			if (len < 4) {
+				printf("nfs_boot: subnet mask < 4 bytes\n");
+				break;
+			}
 			memcpy(&netmask, p, 4);
 			break;
 		    case TAG_GATEWAY:
 			/* Routers */
+			if (len < 4) {
+				printf("nfs_boot: routers < 4 bytes\n");
+				break;
+			}
 			memcpy(&gateway, p, 4);
 			break;
 		    case TAG_HOST_NAME:
 			if (len >= sizeof(hostname)) {
-				printf("nfs_boot: host name >= %lu bytes",
+				printf("nfs_boot: host name >= %lu bytes\n",
 				       (u_long)sizeof(hostname));
 				break;
 			}
@@ -735,7 +759,7 @@ bootp_extract(struct bootp *bootp, int replylen,
 			break;
 		    case TAG_DOMAIN_NAME:
 			if (len >= sizeof(domainname)) {
-				printf("nfs_boot: domain name >= %lu bytes",
+				printf("nfs_boot: domain name >= %lu bytes\n",
 				       (u_long)sizeof(domainname));
 				break;
 			}
@@ -745,7 +769,7 @@ bootp_extract(struct bootp *bootp, int replylen,
 		    case TAG_ROOT_PATH:
 			/* Leave some room for the server name. */
 			if (len >= (MNAMELEN-10)) {
-				printf("nfs_boot: rootpath >=%d bytes",
+				printf("nfs_boot: rootpath >= %d bytes\n",
 				       (MNAMELEN-10));
 				break;
 			}
@@ -754,6 +778,10 @@ bootp_extract(struct bootp *bootp, int replylen,
 			break;
 		    case TAG_SWAP_SERVER:
 			/* override NFS server address */
+			if (len < 4) {
+				printf("nfs_boot: swap server < 4 bytes\n");
+				break;
+			}
 			memcpy(&rootserver, p, 4);
 			break;
 #ifdef NFS_BOOT_DHCP

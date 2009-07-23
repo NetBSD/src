@@ -1,4 +1,4 @@
-/*	$NetBSD: mp.c,v 1.1.6.2 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: mp.c,v 1.1.6.3 2009/07/23 23:31:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.1.6.2 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.1.6.3 2009/07/23 23:31:37 jym Exp $");
 
 #include "opt_multiprocessor.h"
 #include "pchb.h"
@@ -64,9 +64,10 @@ int
 mp_pci_scan(device_t self, struct pcibus_attach_args *pba,
 	        cfprint_t print)
 {
-	int i;
+	int i, cnt;
 	struct mp_bus *mpb;
 
+	cnt = 0;
 	for (i = 0; i < mp_nbus; i++) {
 		mpb = &mp_busses[i];
 		if (mpb->mb_name == NULL)
@@ -75,9 +76,10 @@ mp_pci_scan(device_t self, struct pcibus_attach_args *pba,
 			pba->pba_bus = i;
 			mpb->mb_dev =
 			    config_found_ia(self, "pcibus", pba, print);
+			cnt++;
 		}
 	}
-	return 0;
+	return cnt;
 }
 
 void

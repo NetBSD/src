@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.77.2.1 2009/05/13 17:22:57 jym Exp $	*/
+/*	$NetBSD: emul.c,v 1.77.2.2 2009/07/23 23:32:54 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.77.2.1 2009/05/13 17:22:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.77.2.2 2009/07/23 23:32:54 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -86,12 +86,6 @@ struct tty *constty;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
-
-u_long	bufmem_valimit;
-u_long	bufmem_hiwater;
-u_long	bufmem_lowater;
-u_long	bufmem;
-u_int	nbuf;
 
 const char *panicstr;
 const char ostype[] = "NetBSD";
@@ -298,7 +292,7 @@ void *
 kern_realloc(void *ptr, unsigned long size, struct malloc_type *type, int flags)
 {
 
-	return rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
+	return rumpuser_realloc(ptr, size, (flags & (M_CANFAIL|M_NOWAIT)) != 0);
 }
 
 void

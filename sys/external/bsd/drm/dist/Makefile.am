@@ -25,6 +25,6 @@ AUTOMAKE_OPTIONS = foreign
 SUBDIRS = libdrm shared-core tests
 
 pkgconfigdir = @pkgconfigdir@
-pkgconfig_DATA = libdrm.pc
+pkgconfig_DATA = libdrm.pc libdrm_intel.pc
 
-EXTRA_DIST = libdrm.pc.in
+EXTRA_DIST = libdrm.pc.in libdrm_intel.pc.in

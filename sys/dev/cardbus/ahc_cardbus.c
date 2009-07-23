@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.25.10.1 2009/05/13 17:19:15 jym Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.25.10.2 2009/07/23 23:31:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.25.10.1 2009/05/13 17:19:15 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.25.10.2 2009/07/23 23:31:46 jym Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -263,7 +263,7 @@ ahc_cardbus_detach(device_t self, int flags)
 
 	int rv;
 
-	rv = ahc_detach((void *)ahc, flags);
+	rv = ahc_detach(ahc, flags);
 	if (rv)
 		return rv;
 

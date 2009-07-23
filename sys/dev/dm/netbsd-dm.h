@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.3 2008/12/22 02:20:04 haad Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.3.6.1 2009/07/23 23:31:46 jym Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -208,6 +208,17 @@
 #define DM_TABLE_STAT         "status"
 #define DM_TABLE_LENGTH       "length"
 #define DM_TABLE_PARAMS       "params"
+
+#define DM_TARGET_LINEAR_DEVICE "device"
+#define DM_TARGET_LINEAR_OFFSET "offset"
+
+#define DM_TARGET_STRIPE_DEVARRAY  "device_array"
+#define DM_TARGET_STRIPE_DEVICE    "device"
+#define DM_TARGET_STRIPE_OFFSET    "offset"
+#define DM_TARGET_STRIPE_STRIPES   "stripes"
+#define DM_TARGET_STRIPE_CHUNKSIZE "chunk_size"
+
+
 //#ifndef __LIB_DEVMAPPER__
 //#define DM_TABLE_DEPS         "deps"
 //#endif
@@ -266,7 +277,7 @@
 
 /* Types for nbsd_get_dm_major */
 #define DM_CHAR_MAJOR 1
-#define DM_BLOCK_MAJOR 2	
+#define DM_BLOCK_MAJOR 2
 
 /* libdm_netbsd.c */
 int nbsd_get_dm_major(uint32_t *, int); /* Get dm device major numbers */
@@ -275,6 +286,8 @@ int nbsd_dmi_add_cmd(const char *, prop_dictionary_t);
 int nbsd_dmi_add_version(const int [3], prop_dictionary_t);
 int nbsd_dm_add_uint(const char *, uint64_t, prop_dictionary_t);
 int nbsd_dm_add_str(const char *, char *, prop_dictionary_t );
+
+prop_dictionary_t nbsd_dm_parse_param(const char *, char *);
 
 struct dm_ioctl* nbsd_dm_dict_to_dmi(prop_dictionary_t, const int);
 

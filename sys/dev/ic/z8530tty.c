@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.123.16.1 2009/05/13 17:19:25 jym Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.123.16.2 2009/07/23 23:31:48 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.123.16.1 2009/05/13 17:19:25 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.123.16.2 2009/07/23 23:31:48 jym Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -930,11 +930,10 @@ void
 zsstop(struct tty *tp, int flag)
 {
 	struct zstty_softc *zst;
-	int s;
 
 	zst = device_lookup_private(&zstty_cd, ZSUNIT(tp->t_dev));
 
-	s = splzs();
+	mutex_spin_enter(&zst->zst_cs->cs_lock);
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
 		zst->zst_tbc = 0;
@@ -942,7 +941,7 @@ zsstop(struct tty *tp, int flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
-	splx(s);
+	mutex_spin_exit(&zst->zst_cs->cs_lock);
 }
 
 /*
@@ -1508,15 +1507,14 @@ zstty_diag(void *arg)
 {
 	struct zstty_softc *zst = arg;
 	int overflows, floods;
-	int s;
 
-	s = splzs();
+	mutex_spin_enter(&zst->zst_cs->cs_lock);
 	overflows = zst->zst_overflows;
 	zst->zst_overflows = 0;
 	floods = zst->zst_floods;
 	zst->zst_floods = 0;
 	zst->zst_errors = 0;
-	splx(s);
+	mutex_spin_exit(&zst->zst_cs->cs_lock);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
 	    device_xname(zst->zst_dev),

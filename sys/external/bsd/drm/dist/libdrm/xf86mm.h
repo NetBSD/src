@@ -94,6 +94,18 @@ typedef struct _drmMMListHead
 #define DRMLISTENTRY(__type, __item, __field)   \
     ((__type *)(((char *) (__item)) - offsetof(__type, __field)))
 
+#define DRMLISTEMPTY(__item) ((__item)->next == (__item))
+
+#define DRMLISTFOREACHSAFE(__item, __temp, __list)			\
+	for ((__item) = (__list)->next, (__temp) = (__item)->next;	\
+	     (__item) != (__list);					\
+	     (__item) = (__temp), (__temp) = (__item)->next)
+
+#define DRMLISTFOREACHSAFEREVERSE(__item, __temp, __list)		\
+	for ((__item) = (__list)->prev, (__temp) = (__item)->prev;	\
+	     (__item) != (__list);					\
+	     (__item) = (__temp), (__temp) = (__item)->prev)
+
 typedef struct _drmFence
 {
     unsigned handle;

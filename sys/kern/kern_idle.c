@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.21 2008/06/11 13:42:02 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.21.10.1 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.21 2008/06/11 13:42:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.21.10.1 2009/07/23 23:32:34 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,7 +48,6 @@ idle_loop(void *dummy)
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc;
 	struct lwp *l = curlwp;
-	int s;
 
 	ci->ci_data.cpu_onproc = l;
 
@@ -57,13 +56,19 @@ idle_loop(void *dummy)
 	binuptime(&l->l_stime);
 	lwp_unlock(l);
 
+	/*
+	 * Use spl0() here to ensure that we have the correct interrupt
+	 * priority.  This may be the first thread running on the CPU,
+	 * in which case we took a dirtbag route to get here.
+	 */
 	spc = &ci->ci_schedstate;
-	s = splsched();
+	(void)splsched();
 	spc->spc_flags |= SPCF_RUNNING;
-	splx(s);
+	spl0();
 
 	KERNEL_UNLOCK_ALL(l, NULL);
 	l->l_stat = LSONPROC;
+	l->l_pflag |= LP_RUNNING;
 	for (;;) {
 		LOCKDEBUG_BARRIER(NULL, 0);
 		KASSERT((l->l_flag & LW_IDLE) != 0);

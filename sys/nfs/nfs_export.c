@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.44 2008/12/17 20:51:38 cegger Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.44.2.1 2009/07/23 23:32:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -72,13 +72,16 @@
 
 /*
  * VFS exports list management.
+ *
+ * Lock order: vfs_busy -> mnt_updating -> netexport_lock.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.44 2008/12/17 20:51:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.44.2.1 2009/07/23 23:32:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -147,6 +150,7 @@ static void netexport_wrlock(void);
 static void netexport_wrunlock(void);
 static int nfs_export_update_30(struct mount *mp, const char *path, void *);
 
+static krwlock_t netexport_lock;
 
 /*
  * PUBLIC INTERFACE
@@ -155,11 +159,11 @@ static int nfs_export_update_30(struct mount *mp, const char *path, void *);
 /*
  * Declare and initialize the file system export hooks.
  */
-static void nfs_export_unmount(struct mount *);
+static void netexport_unmount(struct mount *);
 
 struct vfs_hooks nfs_export_hooks = {
 	{ NULL, NULL },
-	.vh_unmount = nfs_export_unmount,
+	.vh_unmount = netexport_unmount,
 	.vh_reexport = nfs_export_update_30,
 };
 
@@ -171,7 +175,7 @@ struct vfs_hooks nfs_export_hooks = {
  * information, although it theorically should.
  */
 static void
-nfs_export_unmount(struct mount *mp)
+netexport_unmount(struct mount *mp)
 {
 	struct netexport *ne;
 
@@ -189,6 +193,39 @@ nfs_export_unmount(struct mount *mp)
 	kmem_free(ne, sizeof(*ne));
 }
 
+void
+netexport_init(void)
+{
+
+	rw_init(&netexport_lock);
+}
+
+void
+netexport_fini(void)
+{
+	struct netexport *ne;
+	struct mount *mp;
+	int error;
+
+	while (!CIRCLEQ_EMPTY(&netexport_list)) {
+		netexport_wrlock();
+		ne = CIRCLEQ_FIRST(&netexport_list);
+		mp = ne->ne_mount;
+		error = vfs_busy(mp, NULL);
+		netexport_wrunlock();
+		if (error != 0) {
+			kpause("nfsfini", false, hz, NULL);
+			continue;
+		}
+		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
+		netexport_unmount(mp);
+		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
+		vfs_unbusy(mp, false, NULL);
+	}
+	rw_destroy(&netexport_lock);
+}
+
+
 /*
  * Atomically set the NFS exports list of the given file system, replacing
  * it with a new list of entries.
@@ -199,7 +236,8 @@ nfs_export_unmount(struct mount *mp)
  * command).
  */
 int
-mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
+mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
+    struct mount *nmp)
 {
 	int error;
 #ifdef notyet
@@ -223,6 +261,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		return error;
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
+	KASSERT(nmp == NULL || nmp == mp);
 
 	/*
 	 * Make sure the file system can do vptofh.  If the file system
@@ -241,7 +280,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	vput(vp);
 	if (error != 0)
 		return error;
-
+	if (nmp == NULL)
+		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
 	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
@@ -274,14 +314,16 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	else if (mel->mel_nexports == 1)
 		error = export(ne, &mel->mel_exports[0]);
 	else {
-		printf("mountd_set_exports_list: Cannot set more than one "
-		    "entry at once (unimplemented)\n");
+		printf("%s: Cannot set more than one "
+		    "entry at once (unimplemented)\n", __func__);
 		error = EOPNOTSUPP;
 	}
 #endif
 
 out:
 	netexport_wrunlock();
+	if (nmp == NULL)
+		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
 	vfs_unbusy(mp, false, NULL);
 	return error;
 }
@@ -403,7 +445,7 @@ nfs_export_update_30(struct mount *mp, const char *path, void *data)
 		mel.mel_exports = (void *)&args->eargs;
 	}
 
-	return mountd_set_exports_list(&mel, curlwp);
+	return mountd_set_exports_list(&mel, curlwp, mp);
 }
 
 /*
@@ -797,8 +839,6 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 
 	return np;
 }
-
-krwlock_t netexport_lock;
 
 void
 netexport_rdlock(void)

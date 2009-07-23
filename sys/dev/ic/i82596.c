@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.19.18.1 2009/05/13 17:19:23 jym Exp $ */
+/* $NetBSD: i82596.c,v 1.19.18.2 2009/07/23 23:31:47 jym Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.19.18.1 2009/05/13 17:19:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.19.18.2 2009/07/23 23:31:47 jym Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -255,7 +255,7 @@ iee_intr(void *intarg)
 			sc->sc_rx_done = (sc->sc_rx_done + 1) % IEE_NRFD;
 			continue;
 		}
-		bus_dmamap_sync(sc->sc_dmat, rx_map, 0, rx_mbuf->m_ext.ext_size,
+		bus_dmamap_sync(sc->sc_dmat, rx_map, 0, rx_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 		rx_mbuf->m_pkthdr.len = rx_mbuf->m_len =
 		    count & IEE_RBD_COUNT;

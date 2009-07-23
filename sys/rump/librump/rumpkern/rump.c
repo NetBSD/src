@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.93.2.1 2009/05/13 17:22:57 jym Exp $	*/
+/*	$NetBSD: rump.c,v 1.93.2.2 2009/07/23 23:32:54 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93.2.1 2009/05/13 17:22:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.93.2.2 2009/07/23 23:32:54 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -256,7 +256,7 @@ rump__init(int rump_version)
 	/* aieeeedondest */
 	if (rump_threads) {
 		if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-		    rump_aiodone_worker, NULL, 0, 0, 0))
+		    rump_aiodone_worker, NULL, 0, 0, WQ_MPSAFE))
 			panic("aiodoned");
 	}
 
@@ -552,4 +552,11 @@ rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
 	rump_sysproxy = proxy;
 
 	return 0;
+}
+
+int
+rump_getversion()
+{
+
+	return __NetBSD_Version__;
 }

@@ -1,4 +1,4 @@
-/* $Id: isp_library.h,v 1.2 2008/03/11 05:33:30 mjacob Exp $ */
+/* $Id: isp_library.h,v 1.2.18.1 2009/07/23 23:31:48 jym Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -36,24 +36,70 @@
  */
 #ifndef _ISP_LIBRARY_H
 #define _ISP_LIBRARY_H
-extern const char *isp_class3_roles[4];
 
-/* XXXXXX BARF - CLEAN UP THIS MESS XXXXXXXX*/
+/*
+ * Common command shipping routine.
+ *
+ * This used to be platform specific, but basically once you get the segment
+ * stuff figured out, you can make all the code in one spot.
+ */
+typedef enum { ISP_TO_DEVICE, ISP_FROM_DEVICE, ISP_NOXFR} isp_ddir_t;
+int isp_send_cmd(ispsoftc_t *, void *, void *, uint32_t, uint32_t, isp_ddir_t);
+
+/*
+ * Handle management functions.
+ *
+ * These handles are associate with a command.
+ */
 int isp_save_xs(ispsoftc_t *, XS_T *, uint32_t *);
 XS_T * isp_find_xs(ispsoftc_t *, uint32_t);
 uint32_t isp_find_handle(ispsoftc_t *, XS_T *);
 uint32_t isp_handle_index(uint32_t);
 void isp_destroy_handle(ispsoftc_t *, uint32_t);
-int isp_getrqentry(ispsoftc_t *, uint32_t *, uint32_t *, void **);
-void isp_print_qentry (ispsoftc_t *, char *, int, void *);
+
+/*
+ * Request Queue allocation
+ */
+void *isp_getrqentry(ispsoftc_t *);
+
+/*
+ * Queue Entry debug functions
+ */
+void isp_print_qentry (ispsoftc_t *, const char *, int, void *);
 void isp_print_bytes(ispsoftc_t *, const char *, int, void *);
+
+/*
+ * Fibre Channel specific routines and data.
+ */
+extern const char *isp_class3_roles[4];
 int isp_fc_runstate(ispsoftc_t *, int, int);
 void isp_dump_portdb(ispsoftc_t *, int);
+
+const char *isp_fc_fw_statename(int);
+const char *isp_fc_loop_statename(int);
+const char *isp_fc_toponame(fcparam *);
+
+int isp_fc_change_role(ispsoftc_t *, int, int);
+
+
+/*
+ * Cleanup
+ */
+void isp_clear_commands(ispsoftc_t *);
+
+/*
+ * Common chip shutdown function
+ */
 void isp_shutdown(ispsoftc_t *);
+
+/*
+ * Put/Get routines to push from CPU view to device view
+ * or to pull from device view to CPU view for various
+ * data structures (IOCB)
+ */
 void isp_put_hdr(ispsoftc_t *, isphdr_t *, isphdr_t *);
 void isp_get_hdr(ispsoftc_t *, isphdr_t *, isphdr_t *);
 int isp_get_response_type(ispsoftc_t *, isphdr_t *);
-
 void isp_put_request(ispsoftc_t *, ispreq_t *, ispreq_t *);
 void isp_put_marker(ispsoftc_t *, isp_marker_t *, isp_marker_t *);
 void isp_put_marker_24xx(ispsoftc_t *, isp_marker_24xx_t *, isp_marker_24xx_t *);
@@ -116,12 +162,23 @@ void isp_put_ct_hdr(ispsoftc_t *isp, ct_hdr_t *, ct_hdr_t *);
 #include "isp_target.h"
 #endif
 
+int isp_send_tgt_cmd(ispsoftc_t *, void *, void *, uint32_t, uint32_t, isp_ddir_t, void *, uint32_t);
+
 #define IS_TARGET_HANDLE(x)     ((x) & 0x8000)
 
 int isp_save_xs_tgt(ispsoftc_t *, void *, uint32_t *);
 void *isp_find_xs_tgt(ispsoftc_t *, uint32_t);
 uint32_t isp_find_tgt_handle(ispsoftc_t *, void *);
 void isp_destroy_tgt_handle(ispsoftc_t *, uint32_t);
+
+int isp_find_pdb_by_wwn(ispsoftc_t *, int, uint64_t, fcportdb_t **);
+int isp_find_pdb_by_loopid(ispsoftc_t *, int, uint32_t, fcportdb_t **);
+int isp_find_pdb_by_sid(ispsoftc_t *, int, uint32_t, fcportdb_t **);
+void isp_find_chan_by_did(ispsoftc_t *, uint32_t, uint16_t *);
+void isp_add_wwn_entry(ispsoftc_t *, int, uint64_t, uint16_t, uint32_t);
+void isp_del_wwn_entry(ispsoftc_t *, int, uint64_t, uint16_t, uint32_t);
+void isp_del_all_wwn_entries(ispsoftc_t *, int);
+void isp_del_wwn_entries(ispsoftc_t *, isp_notify_t *);
 
 void isp_put_atio(ispsoftc_t *, at_entry_t *, at_entry_t *);
 void isp_get_atio(ispsoftc_t *, at_entry_t *, at_entry_t *);

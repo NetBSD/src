@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.4 2008/09/25 19:34:49 jmcneill Exp $ */
+/* $NetBSD: videoio.h,v 1.4.12.1 2009/07/23 23:32:57 jym Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -659,12 +659,10 @@ struct v4l2_requestbuffers {
 #define V4L2_CAP_ASYNCIO		0x02000000
 #define V4L2_CAP_STREAMING		0x04000000
 #define V4L2_CAP_BITMASK	\
-	"\20\1VIDEO_CAPTURE\2VIDEO_OUTPUT\3VIDEO_OVERLAY"
-#if 0
-	"\5VBI_CAPTURE\6VBI_OUTPUT\9RDS_CAPTURE"		\
-	"\17TUNER\18AUDIO\25READWRITE"				\
-	"\26ASYNCIO\27STREAMING"
-#endif
+	"\20\1VIDEO_CAPTURE\2VIDEO_OUTPUT\3VIDEO_OVERLAY"	\
+	"\5VBI_CAPTURE\6VBI_OUTPUT\10RDS_CAPTURE"		\
+	"\21TUNER\22AUDIO\31READWRITE"				\
+	"\32ASYNCIO\33STREAMING"
 
 /* Device ioctls -- try to keep them the same as Linux for compat_linux */
 #define VIDIOC_QUERYCAP		_IOR('V', 0, struct v4l2_capability)

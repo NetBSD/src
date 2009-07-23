@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.36 2009/01/17 15:48:06 he Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.36.2.1 2009/07/23 23:31:44 jym Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.36 2009/01/17 15:48:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.36.2.1 2009/07/23 23:31:44 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,16 +232,16 @@ ultrix_sys_statfs(struct lwp *l, const struct ultrix_sys_statfs_args *uap, regis
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return error;
 
-	mp = nd.ni_vp->v_mount;
+	mp = vp->v_mount;
 	sp = &mp->mnt_stat;
-	vrele(nd.ni_vp);
+	vrele(vp);
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		return error;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;

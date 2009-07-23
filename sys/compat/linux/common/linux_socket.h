@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.16 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.16.14.1 2009/07/23 23:31:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,16 @@
 #define LINUX_SCM_TIMESTAMP	LINUX_SO_TIMESTAMP
 				/* not actually implemented in Linux 2.5.15? */
 
+struct linux_msghdr {
+	void		*msg_name;
+	int		msg_namelen;
+	struct iovec	*msg_iov;
+	size_t		msg_iovlen;
+	void		*msg_control;
+	size_t		msg_controllen;
+	unsigned int	msg_flags;
+};
+
 /*
  * Message flags (for sendmsg/recvmsg)
  */
@@ -179,6 +189,10 @@ struct linux_cmsghdr {
 	((mhdr)->msg_controllen >= sizeof(struct linux_cmsghdr) ? \
 	(struct linux_cmsghdr *)(mhdr)->msg_control : NULL)
 
+#define LINUX_CMSG_SPACE(l) \
+	(sizeof(struct linux_cmsghdr) + LINUX_CMSG_ALIGN(l))
+#define LINUX_CMSG_LEN(l) \
+	(sizeof(struct linux_cmsghdr) + (l))
 
 /*
  * Machine specific definitions.

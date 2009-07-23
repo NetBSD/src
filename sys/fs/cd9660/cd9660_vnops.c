@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.36 2008/12/17 20:51:35 cegger Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.36.2.1 2009/07/23 23:32:31 jym Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.36 2008/12/17 20:51:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.36.2.1 2009/07/23 23:32:31 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,28 +84,16 @@ struct isoreaddir {
 int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
 int	iso_shipdir(struct isoreaddir *);
 
-/*
- * Check mode permission on inode pointer. Mode is READ, WRITE or EXEC.
- * The mode is shifted to select the owner/group/other fields. The
- * super user is granted all permissions.
- */
-int
-cd9660_access(void *v)
+static int
+cd9660_check_possible(struct vnode *vp, struct iso_node *ip, mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct iso_node *ip = VTOI(vp);
 
 	/*
 	 * Disallow write attempts unless the file is a socket,
 	 * fifo, or a block or character device resident on the
 	 * file system.
 	 */
-	if (ap->a_mode & VWRITE) {
+	if (mode & VWRITE) {
 		switch (vp->v_type) {
 		case VDIR:
 		case VLNK:
@@ -116,8 +104,42 @@ cd9660_access(void *v)
 		}
 	}
 
-	return (vaccess(vp->v_type, ip->inode.iso_mode & ALLPERMS,
-	    ip->inode.iso_uid, ip->inode.iso_gid, ap->a_mode, ap->a_cred));
+	return 0;
+}
+
+/*
+ * Check mode permission on inode pointer. Mode is READ, WRITE or EXEC.
+ * The mode is shifted to select the owner/group/other fields. The
+ * super user is granted all permissions.
+ */
+static int
+cd9660_check_permitted(struct vnode *vp, struct iso_node *ip, mode_t mode,
+    kauth_cred_t cred)
+{
+
+	return genfs_can_access(vp->v_type, ip->inode.iso_mode & ALLPERMS,
+	    ip->inode.iso_uid, ip->inode.iso_gid, mode, cred);
+}
+
+int
+cd9660_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int  a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct iso_node *ip = VTOI(vp);
+	int error;
+
+	error = cd9660_check_possible(vp, ip, ap->a_mode);
+	if (error)
+		return error;
+
+	error = cd9660_check_permitted(vp, ip, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 int

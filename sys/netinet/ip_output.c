@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.200.8.1 2009/05/13 17:22:28 jym Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.200.8.2 2009/07/23 23:32:48 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200.8.1 2009/05/13 17:22:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200.8.2 2009/07/23 23:32:48 jym Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -671,8 +671,10 @@ skip_ipsec:
 	if (!ipsec_outdone(m)) {
 		s = splsoftnet();
 		if (inp != NULL &&
-				IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+		    IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
+			splx(s);
 			goto spd_done;
+		}
 		sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags,
 				&error, inp);
 		/*
@@ -1221,10 +1223,12 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 		case IP_TOS:
 		case IP_TTL:
+		case IP_MINTTL:
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
+		case IP_RECVTTL:
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
@@ -1236,6 +1240,13 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_TTL:
 				inp->inp_ip.ip_ttl = optval;
+				break;
+
+			case IP_MINTTL:
+				if (optval > 0 && optval <= MAXTTL)
+					inp->inp_ip_minttl = optval;
+				else
+					error = EINVAL;
 				break;
 #define	OPTSET(bit) \
 	if (optval) \
@@ -1257,6 +1268,10 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_RECVIF:
 				OPTSET(INP_RECVIF);
+				break;
+
+			case IP_RECVTTL:
+				OPTSET(INP_RECVTTL);
 				break;
 			}
 		break;
@@ -1328,10 +1343,12 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 		case IP_TOS:
 		case IP_TTL:
+		case IP_MINTTL:
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
+		case IP_RECVTTL:
 		case IP_ERRORMTU:
 			switch (sopt->sopt_name) {
 			case IP_TOS:
@@ -1340,6 +1357,10 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_TTL:
 				optval = inp->inp_ip.ip_ttl;
+				break;
+
+			case IP_MINTTL:
+				optval = inp->inp_ip_minttl;
 				break;
 
 			case IP_ERRORMTU:
@@ -1362,6 +1383,10 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_RECVIF:
 				optval = OPTBIT(INP_RECVIF);
+				break;
+
+			case IP_RECVTTL:
+				optval = OPTBIT(INP_RECVTTL);
 				break;
 			}
 			error = sockopt_setint(sopt, optval);

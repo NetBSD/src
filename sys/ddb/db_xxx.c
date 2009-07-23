@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.55.2.1 2009/05/13 17:19:04 jym Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.55.2.2 2009/07/23 23:31:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.55.2.1 2009/05/13 17:19:04 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.55.2.2 2009/07/23 23:31:45 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
 #include "opt_aio.h"
+#include "opt_mqueue.h"
 #endif
 
 #ifndef _KERNEL
@@ -106,6 +107,7 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 	file_t *fp;
 	struct vnode *vn;
 	bool full = false;
+	fdtab_t *dt;
 
 	if (modif[0] == 'f')
 		full = true;
@@ -113,8 +115,9 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 	p = (struct proc *) (uintptr_t) addr;
 
 	fdp = p->p_fd;
-	for (i = 0; i < fdp->fd_nfiles; i++) {
-		if ((ff = fdp->fd_ofiles[i]) == NULL)
+	dt = fdp->fd_dt;
+	for (i = 0; i < dt->dt_nfiles; i++) {
+		if ((ff = dt->dt_ff[i]) == NULL)
 			continue;
 
 		fp = ff->ff_file;
@@ -147,6 +150,7 @@ db_show_aio_jobs(db_expr_t addr, bool haddr,
 }
 #endif
 
+#ifdef MQUEUE
 void
 db_show_mqueue_cmd(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
@@ -156,6 +160,7 @@ db_show_mqueue_cmd(db_expr_t addr, bool haddr,
 	mqueue_print_list(db_printf);
 #endif
 }
+#endif
 
 void
 db_show_module_cmd(db_expr_t addr, bool haddr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.115.12.1 2009/05/13 17:21:35 jym Exp $	*/
+/*	$NetBSD: usb.c,v 1.115.12.2 2009/07/23 23:32:21 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.115.12.1 2009/05/13 17:21:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.115.12.2 2009/07/23 23:32:21 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -166,13 +166,15 @@ CFATTACH_DECL3_NEW(usb, sizeof(struct usb_softc),
     usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet,
     DVF_DETACH_SHUTDOWN);
 
-USB_MATCH(usb)
+int
+usb_match(device_t parent, cfdata_t match, void *aux)
 {
 	DPRINTF(("usbd_match\n"));
 	return (UMATCH_GENERIC);
 }
 
-USB_ATTACH(usb)
+void
+usb_attach(device_t parent, device_t self, void *aux)
 {
 	struct usb_softc *sc = device_private(self);
 	int usbrev;
@@ -853,7 +855,7 @@ usbd_add_dev_event(int type, usbd_device_handle udev)
 }
 
 void
-usbd_add_drv_event(int type, usbd_device_handle udev, device_ptr_t dev)
+usbd_add_drv_event(int type, usbd_device_handle udev, device_t dev)
 {
 	struct usb_event *ue = usb_alloc_event();
 

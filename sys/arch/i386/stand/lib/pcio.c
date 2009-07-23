@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.25 2008/12/14 18:46:33 christos Exp $	 */
+/*	$NetBSD: pcio.c,v 1.25.2.1 2009/07/23 23:31:36 jym Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -323,15 +323,19 @@ awaitkey(int timeout, int tell)
 
 	for (;;) {
 		if (tell && (i % POLL_FREQ) == 0) {
-			char numbuf[20];
-			int len, j;
+			char numbuf[32];
+			int len;
 
-			sprintf(numbuf, "%d ", i/POLL_FREQ);
-			len = strlen(numbuf);
-			for (j = 0; j < len; j++)
-				numbuf[len + j] = '\b';
-			numbuf[len + j] = '\0';
-			printf(numbuf);
+			len = snprintf(numbuf, sizeof(numbuf), "%d seconds. ",
+			    i/POLL_FREQ);
+			if (len > 0 && len < sizeof(numbuf)) {
+				char *p = numbuf;
+
+				printf("%s", numbuf);
+				while (*p)
+					*p++ = '\b';
+				printf("%s", numbuf);
+			}
 		}
 		if (iskey(1)) {
 			/* flush input buffer */
@@ -349,7 +353,7 @@ awaitkey(int timeout, int tell)
 
 out:
 	if (tell)
-		printf("0 \n");
+		printf("0 seconds.     \n");
 
 	return c;
 }

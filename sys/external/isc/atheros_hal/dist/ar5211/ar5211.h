@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211.h,v 1.1.1.1 2008/12/11 04:46:31 alc Exp $
+ * $Id: ar5211.h,v 1.1.1.1.6.1 2009/07/23 23:32:31 jym Exp $
  */
 #ifndef _ATH_AR5211_H_
 #define _ATH_AR5211_H_
@@ -284,7 +284,7 @@ extern	HAL_BOOL ar5211SetKeyCacheEntry(struct ath_hal *, uint16_t entry,
 extern	HAL_BOOL ar5211SetKeyCacheEntryMac(struct ath_hal *,
 			uint16_t, const uint8_t *);
 
-extern	HAL_BOOL ar5211SetPowerMode(struct ath_hal *, uint32_t powerRequest,
+extern	HAL_BOOL ar5211SetPowerMode(struct ath_hal *, HAL_POWER_MODE mode,
 		int setChip);
 extern	HAL_POWER_MODE ar5211GetPowerMode(struct ath_hal *);
 

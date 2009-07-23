@@ -243,9 +243,8 @@ int i915_save_state(struct drm_device *dev)
 
 #if defined(__FreeBSD__)
 	dev_priv->saveLBB = (u8) pci_read_config(dev->device, LBB, 1);
-#elif defined(__NetBSD__)
-	dev_priv->saveLBB = (u8)
-	    pci_conf_read(dev->pa.pa_pc, dev->pa.pa_tag, LBB);
+#elif   defined(__NetBSD__)
+	dev_priv->saveLBB = (u8) pci_conf_read(dev->pa.pa_pc, dev->pa.pa_tag, LBB);
 #else
 	pci_read_config_byte(dev->pdev, LBB, &dev_priv->saveLBB);
 #endif
@@ -375,7 +374,7 @@ int i915_restore_state(struct drm_device *dev)
 
 #if defined(__FreeBSD__)
 	pci_write_config(dev->device, LBB, dev_priv->saveLBB, 1);
-#elif defined(__NetBSD__)
+#elif   defined(__NetBSD__)
 	pci_conf_write(dev->pa.pa_pc, dev->pa.pa_tag, LBB, dev_priv->saveLBB);
 #else
 	pci_write_config_byte(dev->pdev, LBB, dev_priv->saveLBB);

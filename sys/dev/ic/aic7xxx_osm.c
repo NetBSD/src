@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.27.18.1 2009/05/13 17:19:21 jym Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.27.18.2 2009/07/23 23:31:47 jym Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.27.18.1 2009/05/13 17:19:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.27.18.2 2009/07/23 23:31:47 jym Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1037,11 +1037,9 @@ ahc_softc_comp(struct ahc_softc *lahc, struct ahc_softc *rahc)
 }
 
 int
-ahc_detach(device_t self, int flags)
+ahc_detach(struct ahc_softc *ahc, int flags)
 {
 	int rv = 0;
-
-	struct ahc_softc *ahc = (struct ahc_softc*)self;
 
 	ahc_intr_enable(ahc, FALSE);
 	if (ahc->sc_child != NULL)
@@ -1049,7 +1047,7 @@ ahc_detach(device_t self, int flags)
 	if (rv == 0 && ahc->sc_child_b != NULL)
 		rv = config_detach(ahc->sc_child_b, flags);
 
-	pmf_device_deregister(self);
+	pmf_device_deregister(ahc->sc_dev);
 	ahc_free(ahc);
 
 	return (rv);

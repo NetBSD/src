@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.33.2.1 2009/05/13 17:21:57 jym Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.33.2.2 2009/07/23 23:32:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,15 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.33.2.1 2009/05/13 17:21:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.33.2.2 2009/07/23 23:32:35 jym Exp $");
 
 #include "opt_modular.h"
 
-#define	ELFSIZE		ARCH_ELFSIZE
-
-#include <sys/systm.h>
-#include <sys/kobj.h>
-#include <sys/errno.h>
+#include <sys/kobj_impl.h>
 
 #ifdef MODULAR
 
@@ -84,65 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.33.2.1 2009/05/13 17:21:57 jym Exp $
 #include <sys/fcntl.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
-#include <sys/exec.h>
-#include <sys/exec_elf.h>
 
 #include <machine/stdarg.h>
 
 #include <uvm/uvm_extern.h>
-
-typedef struct {
-	void		*addr;
-	Elf_Off		size;
-	int		flags;
-	int		sec;		/* Original section */
-	const char	*name;
-} progent_t;
-
-typedef struct {
-	Elf_Rel		*rel;
-	int 		nrel;
-	int 		sec;
-	size_t		size;
-} relent_t;
-
-typedef struct {
-	Elf_Rela	*rela;
-	int		nrela;
-	int		sec;
-	size_t		size;
-} relaent_t;
-
-typedef enum kobjtype {
-	KT_UNSET,
-	KT_VNODE,
-	KT_MEMORY
-} kobjtype_t;
-
-struct kobj {
-	char		ko_name[MAXMODNAME];
-	kobjtype_t	ko_type;
-	void		*ko_source;
-	ssize_t		ko_memsize;
-	vaddr_t		ko_address;	/* Relocation address */
-	Elf_Shdr	*ko_shdr;
-	progent_t	*ko_progtab;
-	relaent_t	*ko_relatab;
-	relent_t	*ko_reltab;
-	Elf_Sym		*ko_symtab;	/* Symbol table */
-	char		*ko_strtab;	/* String table */
-	char		*ko_shstrtab;	/* Section name string table */
-	size_t		ko_size;	/* Size of text/data/bss */
-	size_t		ko_symcnt;	/* Number of symbols */
-	size_t		ko_strtabsz;	/* Number of bytes in string table */
-	size_t		ko_shstrtabsz;	/* Number of bytes in scn str table */
-	size_t		ko_shdrsz;
-	int		ko_nrel;
-	int		ko_nrela;
-	int		ko_nprogtab;
-	bool		ko_ksyms;
-	bool		ko_loaded;
-};
 
 static int	kobj_relocate(kobj_t, bool);
 static int	kobj_checksyms(kobj_t, bool);
@@ -162,12 +103,10 @@ extern struct vm_map *module_map;
  *	Load an object located in the file system.
  */
 int
-kobj_load_file(kobj_t *kop, const char *filename, const char *base,
-	       bool autoload)
+kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
 {
 	struct nameidata nd;
 	kauth_cred_t cred;
-	char *path;
 	int error;
 	kobj_t ko;
 
@@ -178,25 +117,10 @@ kobj_load_file(kobj_t *kop, const char *filename, const char *base,
 		return ENOMEM;
 	}
 
-	if (autoload) {
-		error = ENOENT;
-	} else {
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
-		error = vn_open(&nd, FREAD, 0);
-	}
-	if (error != 0) {
-		if (error != ENOENT) {
-			goto out;
-		}
-		path = PNBUF_GET();
-		snprintf(path, MAXPATHLEN - 1, "%s/%s/%s.kmod", base,
-		    filename, filename);
-		NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, UIO_SYSSPACE, path);
-		error = vn_open(&nd, FREAD, 0);
-		PNBUF_PUT(path);
-	}
+	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
+	    UIO_SYSSPACE, path);
+	error = vn_open(&nd, FREAD, 0);
 
- out:
  	if (error != 0) {
 	 	kmem_free(ko, sizeof(*ko));
 	 	return error;
@@ -698,7 +622,7 @@ kobj_unload(kobj_t ko)
  *
  *	Return size and load address of an object.
  */
-void
+int
 kobj_stat(kobj_t ko, vaddr_t *address, size_t *size)
 {
 
@@ -708,6 +632,7 @@ kobj_stat(kobj_t ko, vaddr_t *address, size_t *size)
 	if (size != NULL) {
 		*size = ko->ko_size;
 	}
+	return 0; 
 }
 
 /*
@@ -807,25 +732,25 @@ kobj_jettison(kobj_t ko)
 {
 	int i;
 
-	for (i = 0; i < ko->ko_nrel; i++) {
-		if (ko->ko_reltab[i].rel) {
-			kobj_free(ko, ko->ko_reltab[i].rel,
-			    ko->ko_reltab[i].size);
-		}
-	}
-	for (i = 0; i < ko->ko_nrela; i++) {
-		if (ko->ko_relatab[i].rela) {
-			kobj_free(ko, ko->ko_relatab[i].rela,
-			    ko->ko_relatab[i].size);
-		}
-	}
 	if (ko->ko_reltab != NULL) {
+		for (i = 0; i < ko->ko_nrel; i++) {
+			if (ko->ko_reltab[i].rel) {
+				kobj_free(ko, ko->ko_reltab[i].rel,
+				    ko->ko_reltab[i].size);
+			}
+		}
 		kobj_free(ko, ko->ko_reltab, ko->ko_nrel *
 		    sizeof(*ko->ko_reltab));
 		ko->ko_reltab = NULL;
 		ko->ko_nrel = 0;
 	}
 	if (ko->ko_relatab != NULL) {
+		for (i = 0; i < ko->ko_nrela; i++) {
+			if (ko->ko_relatab[i].rela) {
+				kobj_free(ko, ko->ko_relatab[i].rela,
+				    ko->ko_relatab[i].size);
+			}
+		}
 		kobj_free(ko, ko->ko_relatab, ko->ko_nrela *
 		    sizeof(*ko->ko_relatab));
 		ko->ko_relatab = NULL;
@@ -1182,7 +1107,7 @@ kobj_free(kobj_t ko, void *base, size_t size)
 #else	/* MODULAR */
 
 int
-kobj_load_file(kobj_t *kop, const char *name, const char *base, bool autoload)
+kobj_load_file(kobj_t *kop, const char *name, const bool nochroot)
 {
 
 	return ENOSYS;
@@ -1202,11 +1127,11 @@ kobj_unload(kobj_t ko)
 	panic("not modular");
 }
 
-void
+int
 kobj_stat(kobj_t ko, vaddr_t *base, size_t *size)
 {
 
-	panic("not modular");
+	return ENOSYS;
 }
 
 int

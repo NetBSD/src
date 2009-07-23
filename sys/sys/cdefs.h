@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.72.2.1 2009/05/13 17:23:03 jym Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.72.2.2 2009/07/23 23:32:56 jym Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -170,6 +170,19 @@
  * GCC2 uses a new, peculiar __attribute__((attrs)) style.  All of
  * these work for GNU C++ (modulo a slight glitch in the C++ grammar
  * in the distribution version of 2.5.5).
+ *
+ * GCC defines a pure function as depending only on its arguments and
+ * global variables.  Typical examples are strlen and sqrt.
+ *
+ * GCC defines a const function as depending only on its arguments.
+ * Therefore calling a const function again with identical arguments
+ * will always produce the same result.
+ *
+ * Rounding modes for floating point operations are considered global
+ * variables and prevent sqrt from being a const function.
+ *
+ * Calls to const functions can be optimised away and moved around
+ * without limitations.
  */
 #if !__GNUC_PREREQ__(2, 0)
 #define __attribute__(x)
@@ -189,6 +202,12 @@
 #define	__pure		__const
 #else
 #define	__pure
+#endif
+
+#if __GNUC_PREREQ__(2, 5)
+#define	__constfunc	__attribute__((__const__))
+#else
+#define	__constfunc
 #endif
 
 #if __GNUC_PREREQ__(3, 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.8 2007/08/26 22:59:09 dyoung Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.8.40.1 2009/07/23 23:32:47 jym Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.8 2007/08/26 22:59:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.8.40.1 2009/07/23 23:32:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -101,8 +101,16 @@ ieee8023ad_lacp_input(struct ifnet *ifp, struct mbuf *m)
 	if (__predict_false(port->port_flags & AGRPORT_DETACHING)) {
 		goto bad;
 	}
+
 	sc = AGR_SC_FROM_PORT(port);
 	KASSERT(port);
+
+	/* running static config? */
+	if (AGR_STATIC(sc)) {
+		/* static config, no lacp */
+		goto bad;
+	}
+
 
 	if (m->m_pkthdr.len != sizeof(*du)) {
 		goto bad;
@@ -191,6 +199,12 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	struct mbuf *m;
 	struct lacpdu *du;
 	int error;
+
+	/* running static config? */
+	if (AGR_STATIC(AGR_SC_FROM_PORT(port))) {
+		/* static config, no lacp transmit */
+		return 0;
+	}
 
 	KDASSERT(MHLEN >= sizeof(*du));
 

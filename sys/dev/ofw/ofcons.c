@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.35.2.1 2009/05/13 17:20:16 jym Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.35.2.2 2009/07/23 23:31:57 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.35.2.1 2009/05/13 17:20:16 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.35.2.2 2009/07/23 23:31:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -220,7 +220,7 @@ ofcons_start(struct tty *tp)
 	}
 	tp->t_state |= TS_BUSY;
 	splx(s);
-	len = q_to_b(cl, buf, OFBURSTLEN);
+	len = q_to_b(&tp->t_outq, buf, OFBURSTLEN);
 	OF_write(stdout, buf, len);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;

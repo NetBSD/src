@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.976.2.1 2009/05/13 17:20:27 jym Exp $
+$NetBSD: pcidevs,v 1.976.2.2 2009/07/23 23:31:58 jym Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -824,6 +824,8 @@ product ADP2 AIC7899B		0x00c1	AIC-7899B U160
 product ADP2 AIC7899D		0x00c3	AIC-7899D U160
 product ADP2 AIC7899F		0x00c5	AIC-7899F RAID
 product ADP2 AIC7899P		0x00cf	AIC-7899P U160
+product ADP2 1420SA		0x0241	RAID 1420SA
+product ADP2 1430SA		0x0243	RAID 1430SA
 product ADP2 AAC2622		0x0282	AAC-2622
 product ADP2 ASR2200S		0x0285	ASR-2200S
 product ADP2 ASR2120S		0x0286	ASR-2120S
@@ -1290,6 +1292,7 @@ product ATI RS480_HB		0x5950	RS480 Host Bridge
 product ATI RD580		0x5952	RD580 CrossFire Xpress 3200 Host Bridge
 product ATI RADEON_RV370_5954	0x5954	Radeon Xpress 200G Series
 product ATI RD790_NB 		0x5956	RD790 North Bridge (Dual Slot)
+product ATI RX780_790_HB	0x5957	RX780/RX790 Chipset Host Bridge
 product ATI RADEON_RV280_5960	0x5960	Radeon 9200PRO 5960
 product ATI RADEON_RV280_5961	0x5961	Radeon 9200 5961
 product ATI RADEON_RV280_5962	0x5962	Radeon 9200 5962
@@ -1307,22 +1310,22 @@ product ATI RD790_PPB_GPP_F	0x597f	RD790 PCI Express Bridge GPP Port F
 product ATI RD790_PPB_GFX1_A	0x5980	RD790 PCI Bridge GFX1 Port A
 product ATI RD790_PPB_GFX1_B	0x5981	RD790 PCI Bridge GFX1 Port B
 product ATI RD790_PPB_NBSB	0x5982	RD790 PCI Bridge (NB-SB Link)
-product ATI RD890_NB_DS16	0x5910	RD890 North Bridge Dual Slot 2x16 GFX
-product ATI RD890_NB_SS		0x5911	RD890 North Bridge Single Slot GFX
-product ATI RD890_NB_DS8	0x5912	RD890 North Bridge Dual Slot 2x8 GFX
-product ATI RD890_PPB_GFX0_A	0x5913	RD890 PCI Bridge GFX0 Port A
-product ATI RD890_PPB_GFX0_B	0x5914	RD890 PCI Bridge GFX0 Port B
-product ATI RD890_PPB_GPP_A	0x5915	RD890 PCI Express Bridge GPP Port A
-product ATI RD890_PPB_GPP_B	0x5916	RD890 PCI Express Bridge GPP Port B
-product ATI RD890_PPB_GPP_C	0x5917	RD890 PCI Express Bridge GPP Port C
-product ATI RD890_PPB_GPP_D	0x5918	RD890 PCI Express Bridge GPP Port D
-product ATI RD890_PPB_GPP_E	0x5919	RD890 PCI Express Bridge GPP Port E
-product ATI RD890_PPB_GPP_F	0x591a	RD890 PCI Express Bridge GPP Port F
-product ATI RD890_PPB_GPP_G	0x591b	RD890 PCI Express Bridge GPP Port G
-product ATI RD890_PPB_GPP_H	0x591c	RD890 PCI Express Bridge GPP Port H
-product ATI RD890_PPB_GFX1_A	0x591d	RD890 PCI Bridge GFX1 Port A
-product ATI RD890_PPB_GFX1_B	0x591e	RD890 PCI Bridge GFX1 Port B
-product ATI RD890_PPB_NBSB	0x591f	RD890 PCI Bridge (NB-SB Link)
+product ATI RD890_NB_DS16	0x5a10	RD890 North Bridge Dual Slot 2x16 GFX
+product ATI RD890_NB_SS		0x5a11	RD890 North Bridge Single Slot GFX
+product ATI RD890_NB_DS8	0x5a12	RD890 North Bridge Dual Slot 2x8 GFX
+product ATI RD890_PPB_GFX0_A	0x5a13	RD890 PCI Bridge GFX0 Port A
+product ATI RD890_PPB_GFX0_B	0x5a14	RD890 PCI Bridge GFX0 Port B
+product ATI RD890_PPB_GPP_A	0x5a15	RD890 PCI Express Bridge GPP Port A
+product ATI RD890_PPB_GPP_B	0x5a16	RD890 PCI Express Bridge GPP Port B
+product ATI RD890_PPB_GPP_C	0x5a17	RD890 PCI Express Bridge GPP Port C
+product ATI RD890_PPB_GPP_D	0x5a18	RD890 PCI Express Bridge GPP Port D
+product ATI RD890_PPB_GPP_E	0x5a19	RD890 PCI Express Bridge GPP Port E
+product ATI RD890_PPB_GPP_F	0x5a1a	RD890 PCI Express Bridge GPP Port F
+product ATI RD890_PPB_GPP_G	0x5a1b	RD890 PCI Express Bridge GPP Port G
+product ATI RD890_PPB_GPP_H	0x5a1c	RD890 PCI Express Bridge GPP Port H
+product ATI RD890_PPB_GFX1_A	0x5a1d	RD890 PCI Bridge GFX1 Port A
+product ATI RD890_PPB_GFX1_B	0x5a1e	RD890 PCI Bridge GFX1 Port B
+product ATI RD890_PPB_NBSB	0x5a1f	RD890 PCI Bridge (NB-SB Link)
 product ATI RD890_IOMMU		0x5a23	RD890 IOMMU
 product ATI RADEON_XPRESS_200	0x5a33	Radeon Xpress 200
 product ATI RS480_XRP		0x5a34	RS480 PCI Express Root Port
@@ -1347,6 +1350,7 @@ product ATI RADEON_X700		0x5e4b	Radeon X700 Pro
 product ATI RADEON_X700_S	0x5e6b	Radeon X700 Pro Secondary
 product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
 product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
+product ATI RADEON_X1600	0x71c5	Radeon Mobility X1600
 product ATI RADEON_RS300_7834	0x7834	Radeon 9100 PRO IGP
 product ATI RADEON_RS300_7835	0x7835	Radeon 9200 IGP
 product ATI RS690_HB		0x7911	RS690 Host Bridge
@@ -1845,6 +1849,7 @@ product EMULEX LP9802	0xf980	LP9802 FibreChannel Adapter
 
 /* ENE Technology products */
 product ENE MCR510	0x0510	MCR510 PCI Memory Card Reader Controller
+product ENE CB712	0x0550	CB712/714/810 PCI SD Card Reader Controller
 product ENE CB1211	0x1211	CB1211 CardBus Controller
 product ENE CB1225	0x1225	CB1225 CardBus Controller
 product ENE CB1410	0x1410	CB1410 CardBus Controller
@@ -1935,6 +1940,8 @@ product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
 
 /* Marvell products */
 product MARVELL GT64010A	0x0146	GT-64010A System Controller
+product MARVELL 88F1181		0x1181	88F1181
+product MARVELL 88F1281		0x1281	88F1281 SoC Orion2
 product MARVELL 88W8300_1	0x1fa6	Libertas 88W8300
 product MARVELL 88W8310		0x1fa7	Libertas 88W8310
 product MARVELL 88W8335_1	0x1faa	Libertas 88W8335
@@ -1973,15 +1980,30 @@ product MARVELL 88SX5040	0x5040	88SX5040 SATA
 product MARVELL 88SX5041	0x5041	88SX5041 SATA
 product MARVELL 88SX5080	0x5080	88SX5080 SATA
 product MARVELL 88SX5081	0x5081	88SX5081 SATA
-product MARVELL 88SX6041	0x6041	88SX6041 SATA
-product MARVELL 88SX6081	0x6081	88SX6041 SATA
+product MARVELL 88F5082		0x5082	88F5082 SoC Orion1
+product MARVELL 88F5180N	0x5180	88F5180N SoC Orion1
+product MARVELL 88F5181		0x5181	88F5181 SoC Orion1
+product MARVELL 88F5182		0x5182	88F5182 SoC Orion1
+product MARVELL 88F5281		0x5281	88F5281 SoC Orion2
+product MARVELL 88SX6040	0x6040	88SX6040 SATA II
+product MARVELL 88SX6041	0x6041	88SX6041 SATA II
+product MARVELL 88SX6042	0x6042	88SX6042 SATA IIe
+product MARVELL 88SX6080	0x6080	88SX6080 SATA II
+product MARVELL 88SX6081	0x6081	88SX6081 SATA II
+product MARVELL 88F6082		0x6082	88F6082 SoC Orion1
 product MARVELL 88SE6101	0x6101	88SE6101 Single Port PATA133 Controller
 product MARVELL 88SE6121	0x6121	88SE6121 SATA II Controller
 product MARVELL 88SE614X	0x6141	88SE614X SATA II PCI-E Controller
 product MARVELL 88SE6145	0x6145	88SE6145 SATA II PCI-E Controller
+product MARVELL 88F6180		0x6180	88F6180 SoC Kirkwood
+product MARVELL 88F6183		0x6183	88F6183 SoC Orion1
+product MARVELL 88F6192		0x6192	88F6192 SoC Kirkwood
+product MARVELL 88F6281		0x6281	88F6281 SoC Kirkwood
 product MARVELL	GT64130		0x6320	GT-64130 System Controller
 product MARVELL	GT64260		0x6430	GT-64260 System Controller
 product MARVELL	GT64360		0x6460	MV6436x System Controller
+product MARVELL 88SX7042	0x7042	88SX7042 SATA IIe
+product MARVELL 88W8660		0x8660	88W8660 SoC Orion1
 
 /* Global Sun Tech products */
 product GLOBALSUN GL24110P	0x1101	GL24110P PCI IEEE 802.11b
@@ -1997,14 +2019,26 @@ product HAWKING PN672TX		0xab08	PN672TX 10/100 Ethernet
 product HEURICON PMPPC		0x000e	PM/PPC
 
 /* Hewlett-Packard products */
-product HP A4977A		0x1005	A4977A Visualize EG
+product HP VISUALIZE_EG		0x1005	A4977A Visualize EG
+product HP VISUALIZE_FX6	0x1006	Visualize FX6
+product HP VISUALIZE_FX4	0x1008	Visualize FX4
+product HP VISUALIZE_FX2	0x100a	Visualize FX2
 product HP TACHYON_TL		0x1028	Tachyon TL FC Controller
+product HP TACHYON_XL2		0x1029	Tachyon XL2 FC Controller
 product HP TACHYON_TS		0x102A	Tachyon TS FC Controller
-product HP TACHYON_XL2		0x1030	Tachyon XL2 FC Controller
 product HP J2585A		0x1030	J2585A
 product HP J2585B		0x1031	J2585B
-product HP 82557B		0x1200	82557B 10/100 NIC
+product HP DIVA			0x1048	Diva Serial Multiport
+product HP ELROY		0x1054	Elroy Ropes-PCI
+product HP VISUALIZE_FXE	0x108b	Visualize FXe
+product HP TOPTOOLS		0x10c1	TopTools Communications Port
 product HP NETRAID_4M		0x10c2	NetRaid-4M
+product HP SMARTIRQ		0x10ed	NetServer SmartIRQ
+product HP 82557B		0x1200	82557B 10/100 NIC
+product HP PLUTO		0x1229	Pluto MIO
+product HP ZX1_IOC		0x122a	zx1 IOC
+product HP MERCURY		0x122e	Mercury Ropes-PCI
+product HP QUICKSILVER		0x12b4	QuickSilver Ropes-PCI
 
 product HP HPSAV100		0x3210	Smart Array V100
 product HP HPSAE200I_1		0x3211	Smart Array E200i
@@ -2918,9 +2952,10 @@ product NEWBRIDGE CA91L8261		0x8261	PowerSpan II PCI Bridge
 product NATIONALINST MXI3	0x2c30	MXI-3 PCI Extender
 
 /* National Semiconductor products */
+product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS PC87415	0x0002	PC87415 IDE
 product NS PC87560	0x000e	87560 Legacy I/O
-product NS DP83810	0x0001	DP83810 10/100 Ethernet
+product NS USB		0x0012	USB
 product NS DP83815	0x0020	DP83815 10/100 Ethernet
 product NS DP83820	0x0022	DP83820 10/100/1000 Ethernet
 product NS CS5535_HB	0x0028	CS5535 Host-PCI Bridge
@@ -2929,12 +2964,12 @@ product NS CS5535_IDE	0x002d	CS5535 IDE Controller
 product NS CS5535_AUDIO	0x002e	CS5535 Audio Controller
 product NS CS5535_USB	0x002f	CS5535 USB Host Controller
 product NS CS5535_VIDEO	0x0030	CS5535 Video Controller
-product NS NS87410	0xd001	NS87410
 product NS SC1100_IDE	0x0502	SC1100 PCI IDE
 product NS SC1100_AUDIO	0x0503	SC1100 XpressAUDIO
 product NS SC1100_ISA	0x0510	SC1100 PCI-ISA Bridge
 product NS SC1100_ACPI	0x0511	SC1100 SMI/ACPI
 product NS SC1100_XBUS	0x0515	SC1100 X-Bus
+product NS NS87410	0xd001	NS87410
 
 /* Philips products */
 product PHILIPS SAA7130HL	0x7130	SAA7130HL PCI Video Broadcast Decoder
@@ -3865,6 +3900,8 @@ product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardB
 product TI	PCI72111CB	0x8031	PCI7x21/7x11 Cardbus Controller
 product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
 product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
+product TI	PCI72111SD	0x8034	PCI7x21/7x11 SD Card Controller
+product TI	PCI72111SM	0x8035	PCI7x21/7x11 SM Card Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
 product TI	PCIXX12CB	0x8039	PCIXX12 Cardbus Controller
@@ -3967,6 +4004,7 @@ product TRIONES HPT302		0x0006	HPT302 IDE Controller
 product TRIONES HPT371		0x0007	HPT371 IDE Controller
 product TRIONES HPT374		0x0008	HPT374 IDE Controller
 product TRIONES HPT372N		0x0009	HPT372N IDE Controller
+product TRIONES ROCKETRAID_2310	0x2310	RocketRAID 2310 RAID card
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202

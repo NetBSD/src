@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.6.6.1 2009/05/13 17:22:58 jym Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.6.6.2 2009/07/23 23:32:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6.6.1 2009/05/13 17:22:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6.6.2 2009/07/23 23:32:55 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -56,17 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.6.6.1 2009/05/13 17:22:58 jym Exp $");
 static int rump_vop_lookup(void *);
 static int rump_vop_getattr(void *);
 static int rump_vop_mkdir(void *);
+static int rump_vop_mknod(void *);
 static int rump_vop_inactive(void *);
 static int rump_vop_reclaim(void *);
 static int rump_vop_success(void *);
-
-int (**dead_vnodeop_p)(void *);
-const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
-	{ NULL, NULL }
-};
-const struct vnodeopv_desc dead_vnodeop_opv_desc =
-	{ &dead_vnodeop_p, dead_vnodeop_entries };
+static int rump_vop_spec(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -82,6 +76,8 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_lookup_desc, rump_vop_lookup },
 	{ &vop_getattr_desc, rump_vop_getattr },
 	{ &vop_mkdir_desc, rump_vop_mkdir },
+	{ &vop_mknod_desc, rump_vop_mknod },
+	{ &vop_access_desc, rump_vop_success },
 	{ &vop_putpages_desc, genfs_null_putpages },
 	{ &vop_fsync_desc, rump_vop_success },
 	{ &vop_lock_desc, genfs_lock },
@@ -92,8 +88,18 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
 	{ &rump_vnodeop_p, rump_vnodeop_entries };
+
+int (**rump_specop_p)(void *);
+const struct vnodeopv_entry_desc rump_specop_entries[] = {
+	{ &vop_default_desc, rump_vop_spec },
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc rump_specop_opv_desc =
+	{ &rump_specop_p, rump_specop_entries };
+
 const struct vnodeopv_desc * const rump_opv_descs[] = {
 	&rump_vnodeop_opv_desc,
+	&rump_specop_opv_desc,
 	NULL
 };
 
@@ -117,7 +123,7 @@ struct rumpfs_node {
 };
 
 static struct rumpfs_node *
-makeprivate(enum vtype vt)
+makeprivate(enum vtype vt, dev_t rdev, voff_t size)
 {
 	struct rumpfs_node *rn;
 	struct vattr *va;
@@ -138,7 +144,7 @@ makeprivate(enum vtype vt)
 	va->va_gid = 0;
 	va->va_fsid = 
 	va->va_fileid = atomic_inc_uint_nv(&lastino);
-	va->va_size = 512;
+	va->va_size = size;
 	va->va_blocksize = 512;
 	va->va_atime = ts;
 	va->va_mtime = ts;
@@ -146,7 +152,7 @@ makeprivate(enum vtype vt)
 	va->va_birthtime = ts;
 	va->va_gen = 0;
 	va->va_flags = 0;
-	va->va_rdev = -1;
+	va->va_rdev = rdev;
 	va->va_bytes = 512;
 	va->va_filerev = 0;
 	va->va_vaflags = 0;
@@ -155,16 +161,17 @@ makeprivate(enum vtype vt)
 }
 
 static int
-rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
+rump_makevnode(const char *path, voff_t size, enum vtype vt, dev_t rdev,
+	struct vnode **vpp, bool regrumpblk)
 {
 	struct vnode *vp;
 	struct rumpfs_node *rn;
 	int (**vpops)(void *);
 	int rv;
 
-	if (vt == VREG || vt == VCHR) {
+	if (vt == VREG || vt == VCHR || vt == VBLK) {
 		vt = VBLK;
-		vpops = spec_vnodeop_p;
+		vpops = rump_specop_p;
 	} else {
 		vpops = rump_vnodeop_p;
 	}
@@ -179,16 +186,19 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, struct vnode **vpp)
 	vp->v_type = vt;
 
 	if (vp->v_type == VBLK) {
-		rv = rumpblk_register(path);
-		if (rv == -1)
-			panic("rump_makevnode: lazy bum");
-		spec_node_init(vp, makedev(RUMPBLK, rv));
+		if (regrumpblk) {
+			rv = rumpblk_register(path);
+			if (rv == -1)
+				panic("rump_makevnode: lazy bum");
+			rdev = makedev(RUMPBLK, rv);
+			spec_node_init(vp, rdev);
+		} else {
+			spec_node_init(vp, rdev);
+		}
 	}
-	if (vt != VBLK) {
-		rn = makeprivate(vp->v_type);
-		rn->rn_vp = vp;
-		vp->v_data = rn;
-	}
+	rn = makeprivate(vp->v_type, rdev, size);
+	rn->rn_vp = vp;
+	vp->v_data = rn;
 
 	vn_lock(vp, LK_RETRY | LK_EXCLUSIVE);
 	*vpp = vp;
@@ -220,10 +230,13 @@ rump_vop_lookup(void *v)
 	int rv, error, ft;
 
 	/* we handle only some "non-special" cases */
-	KASSERT(((cnp->cn_flags & ISLASTCN) == 0)
-	    || (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE));
-	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
-	KASSERT(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.');
+	if (!(((cnp->cn_flags & ISLASTCN) == 0)
+	    || (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE)))
+		return EOPNOTSUPP;
+	if (!((cnp->cn_flags & ISDOTDOT) == 0))
+		return EOPNOTSUPP;
+	if (!(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.'))
+		return EOPNOTSUPP;
 
 	/* check if we are returning a faked block device */
 	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
@@ -249,7 +262,8 @@ rump_vop_lookup(void *v)
 				vt = VBAD;
 				break;
 			}
-			error = rump_makevnode(cnp->cn_pnbuf, fsize, vt, vpp);
+			error = rump_makevnode(cnp->cn_pnbuf, fsize, vt, -1,
+			    vpp, true);
 			if (error)
 				return error;
 			cnp->cn_consume = strlen(cnp->cn_nameptr
@@ -274,7 +288,6 @@ rump_vop_lookup(void *v)
 		return EJUSTRETURN;
 	}
 	KASSERT(rd);
-	KASSERT(rd->rd_node->rn_va.va_type == VDIR);
 
  retry:
 	mutex_enter(&reclock);
@@ -285,7 +298,8 @@ rump_vop_lookup(void *v)
 			goto retry;
 		*vpp = vp;
 	} else {
-		rv = rump_makevnode(cnp->cn_nameptr, DEV_BSIZE, VDIR, vpp);
+		rv = rump_makevnode(cnp->cn_nameptr, DEV_BSIZE, VDIR, -1,
+		    vpp, false);
 		if (rv)
 			return rv;
 	}
@@ -323,12 +337,47 @@ rump_vop_mkdir(void *v)
 	struct rumpfs_dent *rdent;
 	int rv = 0;
 
-	if ((rv = rump_makevnode(cnp->cn_nameptr, DEV_BSIZE, VDIR, vpp)) != 0)
+	if ((rv = rump_makevnode(cnp->cn_nameptr, DEV_BSIZE, VDIR, -1,
+	    vpp, false)) != 0)
 		goto out;
 
 	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
 	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
 	rdent->rd_node = (*vpp)->v_data;
+	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
+
+	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
+
+ out:
+	vput(dvp);
+	return rv;
+}
+
+static int
+rump_vop_mknod(void *v)
+{
+	struct vop_mknod_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+	}; */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
+	struct vattr *va = ap->a_vap;
+	struct rumpfs_node *rnd = dvp->v_data;
+	struct rumpfs_dent *rdent;
+	int rv;
+
+	if ((rv = rump_makevnode(cnp->cn_nameptr, DEV_BSIZE, va->va_type,
+	    va->va_rdev, vpp, false)) != 0)
+		goto out;
+
+	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
+	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
+	rdent->rd_node = (*vpp)->v_data;
+	rdent->rd_node->rn_va.va_rdev = va->va_rdev;
 	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
 
 	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
@@ -371,6 +420,25 @@ rump_vop_reclaim(void *v)
 	return 0;
 }
 
+static int
+rump_vop_spec(void *v)
+{
+	struct vop_generic_args *ap = v;
+	int (**opvec)(void *);
+
+	switch (ap->a_desc->vdesc_offset) {
+	case VOP_ACCESS_DESCOFFSET:
+	case VOP_GETATTR_DESCOFFSET:
+		opvec = rump_vnodeop_p;
+		break;
+	default:
+		opvec = spec_vnodeop_p;
+		break;
+	}
+
+	return VOCALL(opvec, ap->a_desc->vdesc_offset, v);
+}
+
 void
 rumpfs_init(void)
 {
@@ -385,7 +453,7 @@ rumpfs_init(void)
 	TAILQ_INIT(&rump_mnt.mnt_vnodelist);
 
 	vfs_opv_init(rump_opv_descs);
-	rv = rump_makevnode("/", 0, VDIR, &rootvnode);
+	rv = rump_makevnode("/", 0, VDIR, -1, &rootvnode, false);
 	if (rv)
 		panic("could not create root vnode: %d", rv);
 	rootvnode->v_vflag |= VV_ROOT;

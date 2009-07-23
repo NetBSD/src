@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.18.8.1 2009/05/13 17:19:21 jym Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.18.8.2 2009/07/23 23:31:47 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.18.8.1 2009/05/13 17:19:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.18.8.2 2009/07/23 23:31:47 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.18.8.1 2009/05/13 17:19:21 jym E
 #include <dev/ata/atareg.h>
 #include <dev/ata/satavar.h>
 #include <dev/ata/satareg.h>
+#include <dev/ata/satafisreg.h>
+#include <dev/ata/satafisvar.h>
 #include <dev/ic/ahcisatavar.h>
 
 #include <dev/scsipi/scsi_all.h> /* for SCSI status */
@@ -679,7 +681,6 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	int slot = 0 /* XXX slot */;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
-	u_int8_t *fis;
 	int i;
 	int channel = chp->ch_channel;
 
@@ -689,28 +690,8 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	cmd_tbl = achp->ahcic_cmd_tbl[slot];
 	AHCIDEBUG_PRINT(("%s port %d tbl %p\n", AHCINAME(sc), chp->ch_channel,
 	      cmd_tbl), DEBUG_XFERS);
-	fis = cmd_tbl->cmdt_cfis;
 
-	fis[0] = 0x27;  /* host to device */
-	fis[1] = 0x80;  /* command FIS */
-	fis[2] = ata_c->r_command;
-	fis[3] = ata_c->r_features;
-	fis[4] = ata_c->r_sector;
-	fis[5] = ata_c->r_cyl & 0xff;
-	fis[6] = (ata_c->r_cyl >> 8) & 0xff;
-	fis[7] = ata_c->r_head & 0x0f;
-	fis[8] = 0;
-	fis[9] = 0;
-	fis[10] = 0;
-	fis[11] = 0;
-	fis[12] = ata_c->r_count;
-	fis[13] = 0;
-	fis[14] = 0;
-	fis[15] = WDCTL_4BIT;
-	fis[16] = 0;
-	fis[17] = 0;
-	fis[18] = 0;
-	fis[19] = 0;
+	satafis_rhd_construct_cmd(ata_c, cmd_tbl->cmdt_cfis);
 
 	cmd_h = &achp->ahcic_cmdh[slot];
 	AHCIDEBUG_PRINT(("%s port %d header %p\n", AHCINAME(sc),
@@ -725,7 +706,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	cmd_h->cmdh_flags = htole16(
 	    ((ata_c->flags & AT_WRITE) ? AHCI_CMDH_F_WR : 0) |
-	    20 /* fis lenght */ / 4);
+	    RHD_FISLEN / 4);
 	cmd_h->cmdh_prdbc = 0;
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -909,54 +890,17 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	int slot = 0 /* XXX slot */;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
-	u_int8_t *fis;
-	int i, nblks;
+	int i;
 	int channel = chp->ch_channel;
 
 	AHCIDEBUG_PRINT(("ahci_bio_start CI 0x%x\n",
 	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))), DEBUG_XFERS);
 
-	nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
-
 	cmd_tbl = achp->ahcic_cmd_tbl[slot];
 	AHCIDEBUG_PRINT(("%s port %d tbl %p\n", AHCINAME(sc), chp->ch_channel,
 	      cmd_tbl), DEBUG_XFERS);
-	fis = cmd_tbl->cmdt_cfis;
 
-	fis[0] = 0x27;  /* host to device */
-	fis[1] = 0x80;  /* command FIS */
-	if (ata_bio->flags & ATA_LBA48) {
-		fis[2] = (ata_bio->flags & ATA_READ) ?
-		    WDCC_READDMA_EXT : WDCC_WRITEDMA_EXT;
-	} else {
-		fis[2] =
-		    (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
-	}
-	fis[3] = 0; /* features */
-	fis[4] = ata_bio->blkno & 0xff;
-	fis[5] = (ata_bio->blkno >> 8) & 0xff;
-	fis[6] = (ata_bio->blkno >> 16) & 0xff;
-	if (ata_bio->flags & ATA_LBA48) {
-		fis[7] = WDSD_LBA;
-		fis[8] = (ata_bio->blkno >> 24) & 0xff;
-		fis[9] = (ata_bio->blkno >> 32) & 0xff;
-		fis[10] = (ata_bio->blkno >> 40) & 0xff;
-	} else {
-		fis[7] = ((ata_bio->blkno >> 24) & 0x0f) | WDSD_LBA;
-		fis[8] = 0;
-		fis[9] = 0;
-		fis[10] = 0;
-	}
-	fis[11] = 0; /* ext features */
-	fis[12] = nblks & 0xff;
-	fis[13] = (ata_bio->flags & ATA_LBA48) ?
-	    ((nblks >> 8) & 0xff) : 0;
-	fis[14] = 0;
-	fis[15] = WDCTL_4BIT;
-	fis[16] = 0;
-	fis[17] = 0;
-	fis[18] = 0;
-	fis[19] = 0;
+	satafis_rhd_construct_bio(xfer, cmd_tbl->cmdt_cfis);
 
 	cmd_h = &achp->ahcic_cmdh[slot];
 	AHCIDEBUG_PRINT(("%s port %d header %p\n", AHCINAME(sc),
@@ -970,7 +914,7 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	cmd_h->cmdh_flags = htole16(
 	    ((ata_bio->flags & ATA_READ) ? 0 :  AHCI_CMDH_F_WR) |
-	    20 /* fis lenght */ / 4);
+	    RHD_FISLEN / 4);
 	cmd_h->cmdh_prdbc = 0;
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1326,7 +1270,6 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	int slot = 0 /* XXX slot */;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
-	u_int8_t *fis;
 	int i;
 	int channel = chp->ch_channel;
 
@@ -1336,30 +1279,10 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	cmd_tbl = achp->ahcic_cmd_tbl[slot];
 	AHCIDEBUG_PRINT(("%s port %d tbl %p\n", AHCINAME(sc), chp->ch_channel,
 	      cmd_tbl), DEBUG_XFERS);
-	fis = cmd_tbl->cmdt_cfis;
 
-	fis[0] = 0x27;  /* host to device */
-	fis[1] = 0x80;  /* command FIS */
-	fis[2] = ATAPI_PKT_CMD;
+	satafis_rhd_construct_atapi(xfer, cmd_tbl->cmdt_cfis);
 	memset(&cmd_tbl->cmdt_acmd, 0, sizeof(cmd_tbl->cmdt_acmd));
 	memcpy(cmd_tbl->cmdt_acmd, sc_xfer->cmd, sc_xfer->cmdlen);
-	fis[3] = (sc_xfer->datalen ? ATAPI_PKT_CMD_FTRE_DMA : 0);
-	fis[4] = 0;
-	fis[5] = 0;
-	fis[6] = 0;
-	fis[7] = WDSD_LBA;
-	fis[8] = 0;
-	fis[9] = 0;
-	fis[10] = 0;
-	fis[11] = 0; /* ext features */
-	fis[12] = 0;
-	fis[13] = 0;
-	fis[14] = 0;
-	fis[15] = WDCTL_4BIT;
-	fis[16] = 0;
-	fis[17] = 0;
-	fis[18] = 0;
-	fis[19] = 0;
 
 	cmd_h = &achp->ahcic_cmdh[slot];
 	AHCIDEBUG_PRINT(("%s port %d header %p\n", AHCINAME(sc),
@@ -1374,7 +1297,7 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	cmd_h->cmdh_flags = htole16(
 	    ((sc_xfer->xs_control & XS_CTL_DATA_OUT) ? AHCI_CMDH_F_WR : 0) |
-	    20 /* fis lenght */ / 4 | AHCI_CMDH_F_A);
+	    RHD_FISLEN / 4 | AHCI_CMDH_F_A);
 	cmd_h->cmdh_prdbc = 0;
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.57.2.1 2009/05/13 17:19:05 jym Exp $	*/
+/*	$NetBSD: md.c,v 1.57.2.2 2009/07/23 23:31:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.57.2.1 2009/05/13 17:19:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.57.2.2 2009/07/23 23:31:45 jym Exp $");
 
 #include "opt_md.h"
 #include "opt_tftproot.h"
@@ -95,6 +95,7 @@ struct md_softc {
 void	mdattach(int);
 
 static void	md_attach(device_t, device_t, void *);
+static int	md_detach(device_t, int);
 
 static dev_type_open(mdopen);
 static dev_type_close(mdclose);
@@ -116,8 +117,8 @@ const struct cdevsw md_cdevsw = {
 static struct dkdriver mddkdriver = { mdstrategy, NULL };
 
 extern struct cfdriver md_cd;
-CFATTACH_DECL_NEW(md, sizeof(struct md_softc),
-	0, md_attach, 0, NULL);
+CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),
+	0, md_attach, md_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern size_t md_root_size;
 
@@ -159,8 +160,7 @@ mdattach(int n)
 }
 
 static void
-md_attach(device_t parent, device_t self,
-    void *aux)
+md_attach(device_t parent, device_t self, void *aux)
 {
 	struct md_softc *sc = device_private(self);
 
@@ -184,6 +184,30 @@ md_attach(device_t parent, device_t self,
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static int
+md_detach(device_t self, int flags)
+{
+	struct md_softc *sc = device_private(self);
+	int rc;
+
+	rc = 0;
+	mutex_enter(&sc->sc_dkdev.dk_openlock);
+	if (sc->sc_dkdev.dk_openmask == 0)
+		;	/* nothing to do */
+	else if ((flags & DETACH_FORCE) == 0)
+		rc = EBUSY;
+	mutex_exit(&sc->sc_dkdev.dk_openlock);
+
+	if (rc != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+	disk_detach(&sc->sc_dkdev);
+	disk_destroy(&sc->sc_dkdev);
+	bufq_free(sc->sc_buflist);
+	return 0;
 }
 
 /*

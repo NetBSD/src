@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.1.6.2 2009/05/13 17:21:29 jym Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.1.6.3 2009/07/23 23:32:20 jym Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.1.6.2 2009/05/13 17:21:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.1.6.3 2009/07/23 23:32:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -558,16 +558,22 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	int div;
 	int timo;
 	int error = 0;
-
-	mutex_enter(&hp->host_mtx);
+#ifdef DIAGNOSTIC
+	int ispresent;
+#endif
 
 #ifdef DIAGNOSTIC
+	mutex_enter(&hp->host_mtx);
+	ispresent = ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CMD_INHIBIT_MASK);
+	mutex_exit(&hp->host_mtx);
+
 	/* Must not stop the clock if commands are in progress. */
-	if (ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CMD_INHIBIT_MASK) &&
-	    sdhc_card_detect(hp))
+	if (ispresent && sdhc_card_detect(hp))
 		printf("%s: sdhc_sdclk_frequency_select: command in progress\n",
 		    device_xname(hp->sc->sc_dev));
 #endif
+
+	mutex_enter(&hp->host_mtx);
 
 	/*
 	 * Stop SD clock before changing the frequency.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_locl.h,v 1.4 2005/12/11 12:20:48 christos Exp $	*/
+/*	$NetBSD: bf_locl.h,v 1.4.90.1 2009/07/23 23:31:44 jym Exp $	*/
 /*	$KAME: bf_locl.h,v 1.5 2000/08/31 06:03:48 itojun Exp $	*/
 
 /* crypto/bf/bf_local.h */
@@ -187,15 +187,15 @@
 	v=R>>BF_1; \
 	u&=BF_M; \
 	v&=BF_M; \
-	t=  *(BF_LONG *)((unsigned char *)&(S[  0])+u); \
+	t=  *(const BF_LONG *)((const unsigned char *)&(S[  0])+u); \
 	u=R>>BF_2; \
-	t+= *(BF_LONG *)((unsigned char *)&(S[256])+v); \
+	t+= *(const BF_LONG *)((const unsigned char *)&(S[256])+v); \
 	v=R<<BF_3; \
 	u&=BF_M; \
 	v&=BF_M; \
-	t^= *(BF_LONG *)((unsigned char *)&(S[512])+u); \
+	t^= *(const BF_LONG *)((const unsigned char *)&(S[512])+u); \
 	LL^=P; \
-	t+= *(BF_LONG *)((unsigned char *)&(S[768])+v); \
+	t+= *(const BF_LONG *)((const unsigned char *)&(S[768])+v); \
 	LL^=t; \
 	}
 

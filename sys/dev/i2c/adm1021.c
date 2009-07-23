@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.1.12.1 2009/05/13 17:19:20 jym Exp $ */
+/*	$NetBSD: adm1021.c,v 1.1.12.2 2009/07/23 23:31:47 jym Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.1.12.1 2009/05/13 17:19:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.1.12.2 2009/07/23 23:31:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.1.12.1 2009/05/13 17:19:20 jym Exp $")
 #define ADM1021_CONFIG_WRITE	0x09
 #define ADM1021_CONFIG_RUN	0x40
 #define ADM1021_COMPANY		0xfe	/* contains 0x41 */
-#define ADM1021_STEPPING	0xff	/* contains 0x3? */
+#define ADM1021_DIE_REVISION	0xff
 
 /* Sensors */
 #define ADMTEMP_INT		0

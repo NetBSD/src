@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.143.4.1 2009/05/13 17:22:51 jym Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.143.4.2 2009/07/23 23:32:53 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143.4.1 2009/05/13 17:22:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143.4.2 2009/07/23 23:32:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,6 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 			fd_putfile(nfsdarg.sock);
 			return (ENOTSOCK);
 		}
-		if (error)
-			return (error);
 		/*
 		 * Get the client address for connected sockets.
 		 */
@@ -194,7 +192,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 		}
 		mel.mel_exports = args;
 
-		error = mountd_set_exports_list(&mel, l);
+		error = mountd_set_exports_list(&mel, l, NULL);
 
 		free(args, M_TEMP);
 	} else {

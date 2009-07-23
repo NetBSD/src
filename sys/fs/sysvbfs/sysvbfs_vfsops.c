@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.26.8.1 2009/05/13 17:21:55 jym Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.26.8.2 2009/07/23 23:32:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.26.8.1 2009/05/13 17:21:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.26.8.2 2009/07/23 23:32:33 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,7 +70,6 @@ int
 sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct sysvbfs_args *args = data;
 	struct sysvbfs_mount *bmp = NULL;
 	struct vnode *devvp = NULL;
@@ -100,10 +99,10 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if (args->fspec != NULL) {
 		/* Look up the name and verify that it's sane. */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-		if ((error = namei(&nd)) != 0)
+		error = namei_simple_user(args->fspec,
+					NSM_FOLLOW_NOEMULROOT, &devvp);
+		if (error != 0)
 			return (error);
-		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*

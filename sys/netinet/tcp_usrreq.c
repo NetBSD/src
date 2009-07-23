@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.150.4.1 2009/05/13 17:22:28 jym Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.150.4.2 2009/07/23 23:32:48 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.150.4.1 2009/05/13 17:22:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.150.4.2 2009/07/23 23:32:48 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1544,8 +1544,10 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 		if (len >= elem_size && elem_count > 0) {
 			error = copyout(&pcb, dp, out_size);
-			if (error)
+			if (error) {
+				mutex_exit(softnet_lock);
 				return (error);
+			}
 			dp += elem_size;
 			len -= elem_size;
 		}

@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.89.2.1 2009/05/13 17:19:21 jym Exp $ */
+/*      $NetBSD: ac97.c,v 1.89.2.2 2009/07/23 23:31:47 jym Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.89.2.1 2009/05/13 17:19:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.89.2.2 2009/07/23 23:31:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ static int	ac97_write(struct ac97_softc *, uint8_t, uint16_t);
 
 static void	ac97_ad198x_init(struct ac97_softc *);
 static void	ac97_alc650_init(struct ac97_softc *);
+static void	ac97_ucb1400_init(struct ac97_softc *);
 static void	ac97_vt1616_init(struct ac97_softc *);
 
 static int	ac97_modem_offhook_set(struct ac97_softc *, int, int);
@@ -719,7 +720,7 @@ static const struct ac97_codecid {
 	  AC97_VENDOR_ID_MASK,		"National Semiconductor unknown", NULL, },
 
 	{ AC97_CODEC_ID('P', 'S', 'C', 4),
-	  0xffffffff,			"Philips Semiconductor UCB1400", NULL, },
+	  0xffffffff,			"Philips Semiconductor UCB1400", ac97_ucb1400_init, },
 	{ AC97_CODEC_ID('P', 'S', 'C', 0),
 	  AC97_VENDOR_ID_MASK,		"Philips Semiconductor unknown", NULL, },
 
@@ -2129,6 +2130,42 @@ ac97_alc650_init(struct ac97_softc *as)
 	ac97_add_port(as, &sources[3]);
 	ac97_add_port(as, &sources[4]);
 	ac97_add_port(as, &sources[5]);
+}
+
+#define UCB1400_REG_FEATURE_CSR1	0x6a
+#define		UCB1400_BB(bb)			(((bb) & 0xf) << 11)
+#define		UCB1400_TR(tr)			(((tr) & 0x3) << 9)
+#define		UCB1400_M_MAXIMUM		(3 << 7)
+#define		UCB1400_M_MINIMUM		(1 << 7)
+#define		UCB1400_M_FLAT			(0 << 7)
+#define		UCB1400_HPEN			(1 << 6)
+#define		UCB1400_DE			(1 << 5)
+#define		UCB1400_DC			(1 << 4)
+#define		UCB1400_HIPS			(1 << 3)
+#define		UCB1400_GIEN			(1 << 2)
+#define		UCB1400_OVFL			(1 << 0)
+#define UCB1400_REG_FEATURE_CSR2	0x6c
+#define		UCB1400_SMT			(1 << 15)	/* Must be 0 */
+#define		UCB1400_SUEV1			(1 << 14)	/* Must be 0 */
+#define		UCB1400_SUEV0			(1 << 13)	/* Must be 0 */
+#define		UCB1400_AVE			(1 << 12)
+#define		UCB1400_AVEN1			(1 << 11)	/* Must be 0 */
+#define		UCB1400_AVEN0			(1 << 10)	/* Must be 0 */
+#define		UCB1400_SLP_ON			\
+					(UCB1400_SLP_PLL | UCB1400_SLP_CODEC)
+#define		UCB1400_SLP_PLL			(2 << 4)
+#define		UCB1400_SLP_CODEC		(1 << 4)
+#define		UCB1400_SLP_NO			(0 << 4)
+#define		UCB1400_EV2			(1 << 2)	/* Must be 0 */
+#define		UCB1400_EV1			(1 << 1)	/* Must be 0 */
+#define		UCB1400_EV0			(1 << 0)	/* Must be 0 */
+static void
+ac97_ucb1400_init(struct ac97_softc *as)
+{
+
+	ac97_write(as, UCB1400_REG_FEATURE_CSR1,
+	    UCB1400_HPEN | UCB1400_DC | UCB1400_HIPS | UCB1400_OVFL);
+	ac97_write(as, UCB1400_REG_FEATURE_CSR2, UCB1400_AVE | UCB1400_SLP_ON);
 }
 
 #define VT1616_REG_IO_CONTROL	0x5a

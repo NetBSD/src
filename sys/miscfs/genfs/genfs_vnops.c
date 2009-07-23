@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.167.14.1 2009/05/13 17:22:16 jym Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.167.14.2 2009/07/23 23:32:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.167.14.1 2009/05/13 17:22:16 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.167.14.2 2009/07/23 23:32:46 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,6 +520,66 @@ genfs_node_unlock(struct vnode *vp)
 	struct genfs_node *gp = VTOG(vp);
 
 	rw_exit(&gp->g_glock);
+}
+
+/*
+ * Do the usual access checking.
+ * file_mode, uid and gid are from the vnode in question,
+ * while acc_mode and cred are from the VOP_ACCESS parameter list
+ */
+int
+genfs_can_access(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
+    mode_t acc_mode, kauth_cred_t cred)
+{
+	mode_t mask;
+	int error, ismember;
+
+	/*
+	 * Super-user always gets read/write access, but execute access depends
+	 * on at least one execute bit being set.
+	 */
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
+		if ((acc_mode & VEXEC) && type != VDIR &&
+		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
+			return (EACCES);
+		return (0);
+	}
+
+	mask = 0;
+
+	/* Otherwise, check the owner. */
+	if (kauth_cred_geteuid(cred) == uid) {
+		if (acc_mode & VEXEC)
+			mask |= S_IXUSR;
+		if (acc_mode & VREAD)
+			mask |= S_IRUSR;
+		if (acc_mode & VWRITE)
+			mask |= S_IWUSR;
+		return ((file_mode & mask) == mask ? 0 : EACCES);
+	}
+
+	/* Otherwise, check the groups. */
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
+	if (kauth_cred_getegid(cred) == gid || ismember) {
+		if (acc_mode & VEXEC)
+			mask |= S_IXGRP;
+		if (acc_mode & VREAD)
+			mask |= S_IRGRP;
+		if (acc_mode & VWRITE)
+			mask |= S_IWGRP;
+		return ((file_mode & mask) == mask ? 0 : EACCES);
+	}
+
+	/* Otherwise, check everyone else. */
+	if (acc_mode & VEXEC)
+		mask |= S_IXOTH;
+	if (acc_mode & VREAD)
+		mask |= S_IROTH;
+	if (acc_mode & VWRITE)
+		mask |= S_IWOTH;
+	return ((file_mode & mask) == mask ? 0 : EACCES);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.12.2.1 2009/05/13 17:22:57 jym Exp $	*/
+/*	$NetBSD: pool.c,v 1.12.2.2 2009/07/23 23:32:54 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pool.c,v 1.12.2.1 2009/05/13 17:22:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pool.c,v 1.12.2.2 2009/07/23 23:32:54 jym Exp $");
 
 #ifndef RUMP_USE_REAL_ALLOCATORS
 
@@ -215,5 +215,12 @@ pool_page_free_nointr(struct pool *pp, void *item)
 {
 
 	return pool_put(pp, item);
+}
+
+int
+pool_prime(struct pool *pp, int nitems)
+{
+
+	return 0;
 }
 #endif /* RUMP_USE_REAL_ALLOCATORS */

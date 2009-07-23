@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.h,v 1.7 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: siop_pci_common.h,v 1.7.90.1 2009/07/23 23:32:01 jym Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,18 +33,18 @@
 
 /* structure describing each chip */
 struct siop_product_desc {
-	u_int32_t product;
+	uint32_t product;
 	int	revision;
 	const char *name;
 	int	features; /* features are defined in siopvar.h */
-	u_int8_t maxburst;
-	u_int8_t maxoff;  /* maximum supported offset */
-	u_int8_t clock_div; /* clock divider to use for async. logic */
-	u_int8_t clock_period; /* clock period (ns * 10) */
+	uint8_t maxburst;
+	uint8_t maxoff;  /* maximum supported offset */
+	uint8_t clock_div; /* clock divider to use for async. logic */
+	uint8_t clock_period; /* clock period (ns * 10) */
 	int 	ram_size; /* size of RAM, if appropriate */
 };
 
-const struct siop_product_desc * siop_lookup_product(u_int32_t, int);
+const struct siop_product_desc * siop_lookup_product(uint32_t, int);
 
 /* Driver internal state */
 struct siop_pci_common_softc {
