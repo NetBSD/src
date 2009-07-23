@@ -582,7 +582,7 @@ main(int argc, char **argv)
 			devtype = 'f';
 			break;
 		case 'h':
-			iscsi_initiator_setvar(&ini, "target host", optarg);
+			iscsi_initiator_setvar(&ini, "target hostname", optarg);
 			break;
 		case 'p':
 			iscsi_initiator_setvar(&ini, "target port", optarg);
