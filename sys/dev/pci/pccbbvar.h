@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.37 2008/06/26 20:57:10 drochner Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.38 2009/07/23 21:22:25 dyoung Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -35,6 +35,9 @@
 
 #ifndef _DEV_PCI_PCCBBVAR_H_
 #define	_DEV_PCI_PCCBBVAR_H_
+
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #define	PCIC_FLAG_SOCKETP	0x0001
 #define	PCIC_FLAG_CARDP		0x0002
@@ -133,6 +136,8 @@ struct pccbb_softc {
 #define	PCCBB_PCMCIA_MEM_32	0x02	/* 32-bit memory address ready */
 
 	volatile int sc_pwrcycle;
+	kcondvar_t sc_pwr_cv;
+	kmutex_t sc_pwr_mtx;
 
 	/* interrupt handler list on the bridge */
 	LIST_HEAD(, pccbb_intrhand_list) sc_pil;
