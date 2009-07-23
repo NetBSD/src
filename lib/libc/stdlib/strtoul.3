@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoul.3,v 1.21 2009/05/21 09:13:35 wiz Exp $
+.\"	$NetBSD: strtoul.3,v 1.22 2009/07/23 02:54:27 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -191,17 +191,22 @@ argument is not supported then
 is set to
 .Er EINVAL
 and the functions return 0.
+.Pp
+If no error occurs,
+.Va errno
+is left unchanged.
+This behavior (which is unlike most library functions) is guaranteed
+by the pertinent standards.
 .Sh EXAMPLES
-Ensuring that a string is a valid number (i.e., in range and containing no
-trailing characters) requires clearing
-.Va errno
-beforehand explicitly since
-.Va errno
-is not changed on a successful call to
-.Fn strtoul ,
-and the return value of
+Because the return value of
 .Fn strtoul
-cannot be used unambiguously to signal an error:
+cannot be used unambiguously to detect an error,
+.Va errno
+is left unchanged after a successful call.
+To ensure that a string is a valid number (i.e., in range and containing no
+trailing characters), clear
+.Va errno
+beforehand explicitly, then check it afterwards:
 .Bd -literal -offset indent
 char *ep;
 unsigned long ulval;
