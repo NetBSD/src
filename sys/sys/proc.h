@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.283.4.1 2009/05/13 17:23:03 jym Exp $	*/
+/*	$NetBSD: proc.h,v 1.283.4.2 2009/07/23 23:32:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ struct proc {
 			p_specdataref;	/*    subsystem proc-specific data */
 
 	int		p_exitsig;	/* l: signal to send to parent on exit */
-	int		p_flag;		/* p: P_* flags */
+	int		p_flag;		/* p: PK_* flags */
 	int		p_sflag;	/* p: PS_* flags */
 	int		p_slflag;	/* s, l: PSL_* flags */
 	int		p_lflag;	/* l: PL_* flags */
@@ -556,11 +556,20 @@ void	kstack_check_magic(const struct lwp *);
  * kernel stack paramaters
  * XXX require sizeof(struct user)
  */
-/* the lowest address of kernel stack */
+/*
+ * KSTACK_LOWEST_ADDR: return the lowest address of the lwp's kernel stack,
+ * excluding redzone etc.
+ *
+ * if <machine/proc.h> provides the MD definition, it will be used.
+ */
 #ifndef KSTACK_LOWEST_ADDR
 #define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((l)->l_addr + 1))
 #endif
-/* size of kernel stack */
+/*
+ * KSTACK_SIZE: the size kernel stack for a lwp, excluding redzone etc.
+ *
+ * if <machine/proc.h> provides the MD definition, it will be used.
+ */
 #ifndef KSTACK_SIZE
 #define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif

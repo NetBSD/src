@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.105 2008/12/29 22:21:49 njoly Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.105.2.1 2009/07/23 23:31:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.105 2008/12/29 22:21:49 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.105.2.1 2009/07/23 23:31:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,13 +200,15 @@ linux_sys_nice(struct lwp *l, const struct linux_sys_nice_args *uap, register_t 
 		syscallarg(int) incr;
 	} */
 	struct proc *p = l->l_proc;
-        struct sys_setpriority_args bsa;
+	struct sys_setpriority_args bsa;
+	int error;
 
-        SCARG(&bsa, which) = PRIO_PROCESS;
-        SCARG(&bsa, who) = 0;
+	SCARG(&bsa, which) = PRIO_PROCESS;
+	SCARG(&bsa, who) = 0;
 	SCARG(&bsa, prio) = p->p_nice - NZERO + SCARG(uap, incr);
 
-        return sys_setpriority(l, &bsa, retval);
+	error = sys_setpriority(l, &bsa, retval);
+	return (error) ? EPERM : 0;
 }
 #endif /* !__amd64__ */
 

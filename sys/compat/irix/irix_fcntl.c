@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.25 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.25.14.1 2009/07/23 23:31:38 jym Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.25 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.25.14.1 2009/07/23 23:31:38 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -92,7 +92,7 @@ irix_sys_lseek64(struct lwp *l, const struct irix_sys_lseek64_args *uap, registe
 	    SCARG(uap, pad4));
 #endif
 	SCARG(&cup, fd) = SCARG(uap, fd);
-	SCARG(&cup, pad) = 0;
+	SCARG(&cup, PAD) = 0;
 	SCARG(&cup, offset) = SCARG(uap, offset);
 	SCARG(&cup, whence) = SCARG(uap, whence);
 

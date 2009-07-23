@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.260.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.260.2.2 2009/07/23 23:32:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.260.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.260.2.2 2009/07/23 23:32:35 jym Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -588,6 +588,7 @@ mi_switch(lwp_t *l)
 
 	binuptime(&bt);
 
+	KASSERT((l->l_pflag & LP_RUNNING) != 0);
 	KASSERT(l->l_cpu == curcpu());
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
@@ -722,6 +723,7 @@ mi_switch(lwp_t *l)
 		KASSERT(l->l_ctxswtch == 0);
 		l->l_ctxswtch = 1;
 		l->l_ncsw++;
+		KASSERT((l->l_pflag & LP_RUNNING) != 0);
 		l->l_pflag &= ~LP_RUNNING;
 
 		/*
@@ -767,6 +769,8 @@ mi_switch(lwp_t *l)
 		 * Restore VM context and IPL.
 		 */
 		pmap_activate(l);
+		uvm_emap_switch(l);
+
 		if (prevlwp != NULL) {
 			/* Normalize the count of the spin-mutexes */
 			ci->ci_mtx_count++;
@@ -999,7 +1003,7 @@ setrunnable(struct lwp *l)
 /*
  * suspendsched:
  *
- *	Convert all non-L_SYSTEM LSSLEEP or LSRUN LWPs to LSSUSPENDED. 
+ *	Convert all non-LW_SYSTEM LSSLEEP or LSRUN LWPs to LSSUSPENDED. 
  */
 void
 suspendsched(void)

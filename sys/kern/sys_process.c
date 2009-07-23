@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.146 2009/02/04 21:17:39 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.146.2.1 2009/07/23 23:32:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.146 2009/02/04 21:17:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.146.2.1 2009/07/23 23:32:35 jym Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -319,7 +319,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 *	(3) it's not being traced by _you_, or
 		 */
 		if (t->p_pptr != p) {
-			uprintf("parent %d != %d\n", t->p_pptr->p_pid, p->p_pid);
+			uprintf("parent %d != %d\n", t->p_pptr->p_pid,
+			    p->p_pid);
 			error = EBUSY;
 			break;
 		}

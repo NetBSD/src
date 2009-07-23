@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.28.2.1 2009/05/13 17:22:58 jym Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.28.2.2 2009/07/23 23:32:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.28.2.1 2009/05/13 17:22:58 jym Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.28.2.2 2009/07/23 23:32:55 jym Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -227,7 +227,7 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
 	return rv;
 }
 
-void
+__dead void
 rumpuser_thread_exit(void)
 {
 

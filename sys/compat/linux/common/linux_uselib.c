@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.27 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.27.14.1 2009/07/23 23:31:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.27 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.27.14.1 2009/07/23 23:31:41 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,20 +89,16 @@ linux_sys_uselib(struct lwp *l, const struct linux_sys_uselib_args *uap, registe
 		syscallarg(const char *) path;
 	} */
 	long bsize, dsize, tsize, taddr, baddr, daddr;
-	struct nameidata ni;
 	struct vnode *vp;
 	struct exec hdr;
 	struct exec_vmcmd_set vcset;
 	int i, magic, error;
 	size_t rem;
 
-	NDINIT(&ni, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-
-	if ((error = namei(&ni)))
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
 		return error;
-
-	vp = ni.ni_vp;
 
 	if ((error = vn_rdwr(UIO_READ, vp, (void *) &hdr, LINUX_AOUT_HDR_SIZE,
 			     0, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,

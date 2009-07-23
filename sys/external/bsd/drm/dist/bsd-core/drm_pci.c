@@ -43,7 +43,7 @@ drm_pci_busdma_callback(void *arg, bus_dma_segment_t *segs, int nsegs, int error
 	if (error != 0)
 		return;
 
-	DRM_KASSERT(nsegs == 1, ("drm_pci_busdma_callback: bad dma segment count"));
+	KASSERT(nsegs == 1, ("drm_pci_busdma_callback: bad dma segment count"));
 	dmah->busaddr = segs[0].ds_addr;
 }
 #endif
@@ -58,7 +58,7 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 {
 	drm_dma_handle_t *dmah;
 	int ret;
-#if defined(__NetBSD__)
+#if defined (__NetBSD__)
 	int nsegs;
 #endif
 
@@ -69,89 +69,99 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 		return NULL;
 	}
 
-	dmah = malloc(sizeof(drm_dma_handle_t), M_DRM, M_ZERO | M_NOWAIT);
+	dmah = malloc(sizeof(drm_dma_handle_t), DRM_MEM_DMA, M_ZERO | M_NOWAIT);
 	if (dmah == NULL)
 		return NULL;
 
-#ifdef __FreeBSD__
-	DRM_UNLOCK();
+#if defined__FreeBSD__
+	/* Make sure we aren't holding locks here */
+	mtx_assert(&dev->dev_lock, MA_NOTOWNED);
+	if (mtx_owned(&dev->dev_lock))
+	    DRM_ERROR("called while holding dev_lock\n");
+	mtx_assert(&dev->dma_lock, MA_NOTOWNED);
+	if (mtx_owned(&dev->dma_lock))
+	    DRM_ERROR("called while holding dma_lock\n");
+
 	ret = bus_dma_tag_create(NULL, align, 0, /* tag, align, boundary */
 	    maxaddr, BUS_SPACE_MAXADDR, /* lowaddr, highaddr */
 	    NULL, NULL, /* filtfunc, filtfuncargs */
 	    size, 1, size, /* maxsize, nsegs, maxsegsize */
-	    BUS_DMA_ALLOCNOW, NULL, NULL, /* flags, lockfunc, lockfuncargs */
+	    0, NULL, NULL, /* flags, lockfunc, lockfuncargs */
 	    &dmah->tag);
 	if (ret != 0) {
-		free(dmah, M_DRM);
-		DRM_LOCK();
+		free(dmah, DRM_MEM_DMA);
 		return NULL;
 	}
 
-	ret = bus_dmamem_alloc(dmah->tag, &dmah->vaddr, BUS_DMA_NOWAIT,
-	    &dmah->map);
+	ret = bus_dmamem_alloc(dmah->tag, &dmah->vaddr,
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO, &dmah->map);
 	if (ret != 0) {
 		bus_dma_tag_destroy(dmah->tag);
-		free(dmah, M_DRM);
-		DRM_LOCK();
+		free(dmah, DRM_MEM_DMA);
 		return NULL;
 	}
-	DRM_LOCK();
+
 	ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr, size,
-	    drm_pci_busdma_callback, dmah, 0);
+	    drm_pci_busdma_callback, dmah, BUS_DMA_NOWAIT | BUS_DMA_NOCACHE);
 	if (ret != 0) {
 		bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
 		bus_dma_tag_destroy(dmah->tag);
-		free(dmah, M_DRM);
+		free(dmah, DRM_MEM_DMA);
 		return NULL;
 	}
-
-	return dmah;
-#elif defined(__NetBSD__)
+#elif   defined(__NetBSD__)
 	dmah->tag = dev->pa.pa_dmat;
 
 	if ((ret = bus_dmamem_alloc(dmah->tag, size, align, maxaddr,
-	    dmah->segs, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf("drm: Unable to allocate %ld bytes of DMA, error %d\n",
-		    (long)size, ret);
-		goto fail;
+	    dmah->segs, 1, &nsegs, BUS_DMA_WAITOK)) != 0) {
+		printf("drm: Unable to allocate %zu bytes of DMA, error %d\n",
+		    size, ret);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return NULL;
 	}
 	/* XXX is there a better way to deal with this? */
 	if (nsegs != 1) {
 		printf("drm: bad segment count from bus_dmamem_alloc\n");
-		goto free;
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return NULL;
 	}
 	if ((ret = bus_dmamem_map(dmah->tag, dmah->segs, nsegs, size, 
-	     &dmah->vaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+	     &dmah->vaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_NOCACHE)) != 0) {
 		printf("drm: Unable to map DMA, error %d\n", ret);
-	     	goto free;
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return NULL;
 	}
 	if ((ret = bus_dmamap_create(dmah->tag, size, 1, size, maxaddr,
-	     BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->map)) != 0) {
+	     BUS_DMA_NOWAIT, &dmah->map)) != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", ret);
-		goto unmap;
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return NULL;
 	}
 	if ((ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr, 
-	     size, NULL, BUS_DMA_NOWAIT)) != 0) {
+	     size, NULL, BUS_DMA_NOWAIT | BUS_DMA_NOCACHE)) != 0) {
 		printf("drm: Unable to load DMA map, error %d\n", ret);
-		goto destroy;
+		bus_dmamap_destroy(dmah->tag, dmah->map);
+		bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
+		bus_dmamem_free(dmah->tag, dmah->segs, 1);
+		dmah->tag = NULL;
+		free(dmah, DRM_MEM_DMA);
+		return NULL;
 	}
 	dmah->busaddr = dmah->map->dm_segs[0].ds_addr;
 	dmah->size = size;
+	dmah->nsegs = 1;
+	memset(dmah->vaddr, 0, size);
+#endif
 
 	return dmah;
-
-destroy:
-	bus_dmamap_destroy(dmah->tag, dmah->map);
-unmap:
-	bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
-free:
-	bus_dmamem_free(dmah->tag, dmah->segs, 1);
-fail:
-	dmah->tag = NULL;
-	free(dmah, M_DRM);
-	return NULL;
-	
-#endif
 }
 
 /**
@@ -166,7 +176,7 @@ drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
 #if defined(__FreeBSD__)
 	bus_dmamem_free(dmah->tag, dmah->vaddr, dmah->map);
 	bus_dma_tag_destroy(dmah->tag);
-#elif defined(__NetBSD__)
+#elif   defined(__NetBSD__)
 	bus_dmamap_unload(dmah->tag, dmah->map);
 	bus_dmamap_destroy(dmah->tag, dmah->map);
 	bus_dmamem_unmap(dmah->tag, dmah->vaddr, dmah->size);
@@ -174,7 +184,7 @@ drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
 	dmah->tag = NULL;
 #endif
 
-	free(dmah, M_DRM);
+	free(dmah, DRM_MEM_DMA);
 }
 
 /*@}*/

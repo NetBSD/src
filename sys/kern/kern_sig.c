@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.295.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.295.2.2 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.295.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.295.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -986,6 +986,7 @@ kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 {
 	fdfile_t *ff;
 	file_t *fp;
+	fdtab_t *dt;
 
 	KASSERT(!cpu_intr_p());
 	KASSERT(mutex_owned(proc_lock));
@@ -996,8 +997,9 @@ kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 
 		/* XXXSMP locking */
 		ksi->ksi_fd = -1;
-		for (fd = 0; fd < fdp->fd_nfiles; fd++) {
-			if ((ff = fdp->fd_ofiles[fd]) == NULL)
+		dt = fdp->fd_dt;
+		for (fd = 0; fd < dt->dt_nfiles; fd++) {
+			if ((ff = dt->dt_ff[fd]) == NULL)
 				continue;
 			if ((fp = ff->ff_file) == NULL)
 				continue;

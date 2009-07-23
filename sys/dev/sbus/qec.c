@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.39.14.1 2009/05/13 17:21:22 jym Exp $ */
+/*	$NetBSD: qec.c,v 1.39.14.2 2009/07/23 23:32:20 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.39.14.1 2009/05/13 17:21:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.39.14.2 2009/07/23 23:32:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ qecattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *sc = (void *)self;
+	struct sbus_softc *sbsc = device_private(parent);
 	int node;
 	int sbusburst;
 	bus_space_tag_t sbt;
@@ -150,7 +151,7 @@ qecattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Get transfer burst size from PROM
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	sbusburst = sbsc->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
@@ -205,7 +206,7 @@ qecattach(device_t parent, device_t self, void *aux)
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sax;
-		sbus_setup_attach_args((struct sbus_softc *)parent,
+		sbus_setup_attach_args(sbsc,
 				       sbt, sc->sc_dmatag, node, &sax);
 		(void)config_found(&sc->sc_dev, (void *)&sax, qecprint);
 		sbus_destroy_attach_args(&sax);

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.54.8.1 2009/05/13 17:20:23 jym Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.54.8.2 2009/07/23 23:31:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54.8.1 2009/05/13 17:20:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54.8.2 2009/07/23 23:31:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,7 +169,7 @@ static enum ac97_host_flags emuxki_ac97_flags(void *);
 /*
  * Autoconfig goo.
  */
-CFATTACH_DECL(emuxki, sizeof(struct emuxki_softc),
+CFATTACH_DECL_NEW(emuxki, sizeof(struct emuxki_softc),
     emuxki_match, emuxki_attach, emuxki_detach, NULL);
 
 static const struct audio_hw_if emuxki_hw_if = {
@@ -376,7 +376,7 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 	sc->hostif.write = emuxki_ac97_write;
 	sc->hostif.reset = emuxki_ac97_reset;
 	sc->hostif.flags = emuxki_ac97_flags;
-	return ac97_attach(&sc->hostif, &sc->sc_dev);
+	return ac97_attach(&sc->hostif, sc->sc_dev);
 }
 
 static int
@@ -408,6 +408,7 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = aux;
 	aprint_naive(": Audio controller\n");
 
@@ -427,7 +428,7 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 		(PCI_COMMAND_STATUS_REG) | PCI_COMMAND_MASTER_ENABLE));
 
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
@@ -436,14 +437,14 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, emuxki_intr,
 		sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
  /* XXX it's unknown whether APS is made from Audigy as well */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
@@ -2024,7 +2025,7 @@ emuxki_open(void *addr, int flags)
 
 	sc = addr;
 #ifdef EMUXKI_DEBUG
-	printf("%s: emuxki_open called\n", device_xname(&sc->sc_dev));
+	printf("%s: emuxki_open called\n", device_xname(sc->sc_dev));
 #endif
 
 	/*
@@ -2069,7 +2070,7 @@ emuxki_close(void *addr)
 
 	sc = addr;
 #ifdef EMUXKI_DEBUG
-	printf("%s: emu10K1_close called\n", device_xname(&sc->sc_dev));
+	printf("%s: emu10K1_close called\n", device_xname(sc->sc_dev));
 #endif
 
 	/* No multiple voice support for now */
@@ -2090,7 +2091,7 @@ emuxki_query_encoding(void *addr, struct audio_encoding *fp)
 	struct emuxki_softc *sc;
 
 	sc = addr;
-	printf("%s: emuxki_query_encoding called\n", device_xname(&sc->sc_dev));
+	printf("%s: emuxki_query_encoding called\n", device_xname(sc->sc_dev));
 #endif
 
 	switch (fp->index) {
@@ -2225,7 +2226,7 @@ emuxki_halt_input(void *addr)
 
 	sc = addr;
 #ifdef EMUXKI_DEBUG
-	printf("%s: emuxki_halt_input called\n", device_xname(&sc->sc_dev));
+	printf("%s: emuxki_halt_input called\n", device_xname(sc->sc_dev));
 #endif
 
 	/* No multiple voice support for now */

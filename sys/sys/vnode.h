@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.200.2.1 2009/05/13 17:23:04 jym Exp $	*/
+/*	$NetBSD: vnode.h,v 1.200.2.2 2009/07/23 23:32:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ enum vtagtype	{
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
 	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
-	VT_RUMP
+	VT_RUMP, VT_NILFS
 };
 
 #define	VNODE_TAGS \
@@ -113,8 +113,8 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS","VT_EFS","VT_ZFS",\
-    "VT_RUMP"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", \
+    "VT_ZFS", "VT_RUMP", "VT_NILFS"
 
 struct vnode;
 struct buf;
@@ -248,6 +248,12 @@ typedef struct vnode vnode_t;
     "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
+
+/*
+ * v_usecount; see the comment in vfs_subr.c
+ */
+#define	VC_XLOCK	0x80000000
+#define	VC_MASK		0x7fffffff
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value

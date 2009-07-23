@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.6.4.1 2009/05/13 17:22:58 jym Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.6.4.2 2009/07/23 23:32:55 jym Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.6.4.1 2009/05/13 17:22:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.6.4.2 2009/07/23 23:32:55 jym Exp $");
 
 #include <sys/param.h>
 
@@ -35,17 +35,38 @@ __KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.6.4.1 2009/05/13 17:22:58 jym Exp $")
 #include <sys/socketvar.h>
 
 #include <net/radix.h>
+#include <net/route.h>
 
 #include "rump_net_private.h"
+
+void nocomponent(void);
+void nocomponent() {}
+__weak_alias(rump_net_net_init,nocomponent);
+__weak_alias(rump_net_inet_init,nocomponent);
+__weak_alias(rump_net_local_init,nocomponent);
+__weak_alias(rump_net_sockin_init,nocomponent);
+__weak_alias(rump_net_virtif_init,nocomponent);
 
 void
 rump_net_init(void)
 {
 
 	mbinit();
-	domaininit();
-	rn_init();
+
+	domaininit(false);
+	/*
+	 * Add rest of the domains we failed to add in domaininit()
+	 * due to linkset lossage.
+	 */
+	rump_net_inet_init();
+	rump_net_local_init();
+	rump_net_sockin_init();
+	rump_net_virtif_init();
+	/* Note: should be last due to calling of rn_init() */
+	rump_net_net_init();
+
 	soinit();
 	soinit2();
+
 	rump_netisr_init();
 }

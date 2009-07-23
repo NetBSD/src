@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.20.18.1 2009/05/13 17:19:21 jym Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.20.18.2 2009/07/23 23:31:47 jym Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -526,7 +526,7 @@ void	  ahc_platform_free(struct ahc_softc *);
 int	  ahc_map_int(struct ahc_softc *);
 int	  ahc_attach(struct ahc_softc *);
 int	  ahc_softc_comp(struct ahc_softc *, struct ahc_softc *);
-int	  ahc_detach(device_t, int);
+int	  ahc_detach(struct ahc_softc *, int);
 
 /****************************** Interrupts ************************************/
 void			ahc_platform_intr(void *);

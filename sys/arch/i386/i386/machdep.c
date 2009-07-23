@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.659.2.1 2009/05/13 17:17:49 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.659.2.2 2009/07/23 23:31:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.1 2009/05/13 17:17:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.2 2009/07/23 23:31:36 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -862,29 +862,10 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 }
 
-int	waittime = -1;
-
-void
-cpu_reboot(int howto, char *bootstr)
+static void
+maybe_dump(int howto)
 {
-	int s = 0;	/* XXX gcc */
-
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		if (time_adjusted != 0)
-			resettodr();
-	}
+	int s;
 
 	/* Disable interrupts. */
 	s = splhigh();
@@ -893,16 +874,60 @@ cpu_reboot(int howto, char *bootstr)
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 
-haltsys:
-	doshutdownhooks();
+	splx(s);
+}
 
-	if (!cold) {
-		splx(s);
+void
+cpu_reboot(int howto, char *bootstr)
+{
+	static bool syncdone = false;
+	struct lwp *l;
 
-		pmf_system_shutdown(boothowto);
+	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
-		splhigh();
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
 	}
+
+	boothowto = howto;
+
+	/* XXX used to dump after vfs_shutdown() and before
+	 * detaching devices / shutdown hooks / pmf_system_shutdown().
+	 */
+	maybe_dump(howto);
+
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by syncing or unmounting the file systems.
+	 */
+	if ((howto & RB_NOSYNC) == 0 && panicstr == NULL) {
+		if (!syncdone) {
+			syncdone = true;
+			/* XXX used to force unmount as well, here */
+			vfs_sync_all(l);
+			/*
+			 * If we've been adjusting the clock, the todr
+			 * will be out of synch; adjust it now.
+			 *
+			 * XXX used to do this after unmounting all
+			 * filesystems with vfs_shutdown().
+			 */
+			if (time_adjusted != 0)
+				resettodr();
+		}
+
+		while (vfs_unmountall1(l, false, false) ||
+		       config_detach_all(boothowto) ||
+		       vfs_unmount_forceone(l))
+			;	/* do nothing */
+	} else
+		suspendsched();
+
+	pmf_system_shutdown(boothowto);
+
+	splhigh();
+haltsys:
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XEN

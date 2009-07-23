@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.34.8.1 2009/05/13 17:18:56 jym Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.34.8.2 2009/07/23 23:31:39 jym Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34.8.1 2009/05/13 17:18:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34.8.2 2009/07/23 23:31:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34.8.1 2009/05/13 17:18:56 jym E
 #include <sys/proc.h>
 #include <sys/ptrace.h> /* for process_read_fpregs() */
 #include <sys/user.h>
-#include <sys/wait.h>
 #include <sys/ucontext.h>
 #include <sys/conf.h>
 
@@ -246,20 +245,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		sigframe.info._sifields._sigchld._uid = ksi->ksi_uid;
 		sigframe.info._sifields._sigchld._utime = ksi->ksi_utime;
 		sigframe.info._sifields._sigchld._stime = ksi->ksi_stime;
-
-		if (WCOREDUMP(ksi->ksi_status)) {
-			sigframe.info.lsi_code = LINUX_CLD_DUMPED;
-			sigframe.info._sifields._sigchld._status =
-			    _WSTATUS(ksi->ksi_status);
-		} else if (_WSTATUS(ksi->ksi_status)) {
-			sigframe.info.lsi_code = LINUX_CLD_KILLED;
-			sigframe.info._sifields._sigchld._status =
-			    _WSTATUS(ksi->ksi_status);
-		} else {
-			sigframe.info.lsi_code = LINUX_CLD_EXITED;
-			sigframe.info._sifields._sigchld._status =
-			    ((ksi->ksi_status & 0xff00U) >> 8);
-		}
+		sigframe.info._sifields._sigchld._status =
+		    native_to_linux_si_status(ksi->ksi_code, ksi->ksi_status);
 		break;
 	case LINUX_SIGIO:
 		sigframe.info._sifields._sigpoll._band = ksi->ksi_band;

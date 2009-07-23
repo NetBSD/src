@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.155.2.1 2009/05/13 17:20:24 jym Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.155.2.2 2009/07/23 23:31:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.155.2.1 2009/05/13 17:20:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.155.2.2 2009/07/23 23:31:57 jym Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -499,6 +499,13 @@ static const struct bge_product {
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 || \
 	    (BGE_IS_5750_OR_BEYOND(sc)))
 
+#define BGE_IS_JUMBO_CAPABLE(sc)  \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+
+
 static const struct bge_revision {
 	uint32_t		br_chipid;
 	const char		*br_name;
@@ -576,7 +583,7 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5755, "unknown BCM5755" },
 	{ BGE_ASICREV_BCM5780, "unknown BCM5780" },
 	/* 5754 and 5787 share the same ASIC ID */
-	{ BGE_ASICREV_BCM5787, "unknown BCM5787/5787" },
+	{ BGE_ASICREV_BCM5787, "unknown BCM5754/5787" },
 	{ BGE_ASICREV_BCM5906, "unknown BCM5906" }, 
 	{ 0, NULL }
 };
@@ -1559,43 +1566,17 @@ bge_chipinit(struct bge_softc *sc)
 		BGE_MEMWIN_WRITE(sc->sc_pc, sc->sc_pcitag, i, 0);
 
 	/* Set up the PCI DMA control register. */
+	dma_rw_ctl = BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD;
 	if (sc->bge_flags & BGE_PCIE) {
-	  u_int32_t device_ctl;
-
-		/* From FreeBSD */
+		/* Read watermark not used, 128 bytes for write. */
 		DPRINTFN(4, ("(%s: PCI-Express DMA setting)\n",
 		    device_xname(sc->bge_dev)));
-		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
-		    (0xf << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
-
-		/* jonathan: alternative from Linux driver */
-#define DMA_CTRL_WRITE_PCIE_H20MARK_128         0x00180000
-#define DMA_CTRL_WRITE_PCIE_H20MARK_256         0x00380000
-
-		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
-		device_ctl = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-					   BGE_PCI_CONF_DEV_CTRL);
-		aprint_debug_dev(sc->bge_dev, "pcie mode=0x%x\n", device_ctl);
-
-		if ((device_ctl & 0x00e0) && 0) {
-			/*
-			 * XXX jonathan@NetBSD.org:
-			 * This clause is exactly what the Broadcom-supplied
-			 * Linux does; but given overall register programming
-			 * by if_bge(4), this larger DMA-write watermark
-			 * value causes bcm5721 chips to totally wedge.
-			 */
-			dma_rw_ctl |= BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_256;
-		} else {
-			dma_rw_ctl |= BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128;
-		}
+		dma_rw_ctl |= (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
 	} else if (sc->bge_flags & BGE_PCIX){
 	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n",
 		    device_xname(sc->bge_dev)));
 		/* PCI-X bus */
-		dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
-		    (0x3 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		dma_rw_ctl |= (0x3 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		    (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
 		    (0x0F);
 		/*
@@ -1629,9 +1610,8 @@ bge_chipinit(struct bge_softc *sc)
 		/* Conventional PCI bus */
 	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n",
 		    device_xname(sc->bge_dev)));
-		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
-		   (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
+		dma_rw_ctl = (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
 		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5705 &&
 		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5750)
 			dma_rw_ctl |= 0x0F;
@@ -1829,7 +1809,7 @@ bge_blockinit(struct bge_softc *sc)
 	 * using this ring (i.e. once we set the MTU
 	 * high enough to require it).
 	 */
-	if (!BGE_IS_5705_OR_BEYOND(sc)) {
+	if (BGE_IS_JUMBO_CAPABLE(sc)) {
 		rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
 		bge_set_hostaddr(&rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
@@ -2495,7 +2475,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	memset(sc->bge_rdata, 0, sizeof(struct bge_ring_data));
 
 	/* Try to allocate memory for jumbo buffers. */
-	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
+	if (BGE_IS_JUMBO_CAPABLE(sc)) {
 		if (bge_alloc_jumbo_mem(sc)) {
 			aprint_error_dev(sc->bge_dev,
 			    "jumbo buffer allocation failed\n");

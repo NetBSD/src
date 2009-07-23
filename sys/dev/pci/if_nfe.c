@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.39.2.1 2009/05/13 17:20:26 jym Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.39.2.2 2009/07/23 23:31:58 jym Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.39.2.1 2009/05/13 17:20:26 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.39.2.2 2009/07/23 23:31:58 jym Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -203,7 +203,7 @@ nfe_match(device_t dev, cfdata_t match, void *aux)
 	const struct nfe_product *np;
 	int i;
 
-	for (i = 0; i < sizeof(nfe_devices) / sizeof(nfe_devices[0]); i++) {
+	for (i = 0; i < __arraycount(nfe_devices); i++) {
 		np = &nfe_devices[i];
 		if (PCI_VENDOR(pa->pa_id) == np->vendor &&
 		    PCI_PRODUCT(pa->pa_id) == np->product)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.57.2.1 2009/05/13 17:21:50 jym Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.57.2.2 2009/07/23 23:32:32 jym Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.57.2.1 2009/05/13 17:21:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.57.2.2 2009/07/23 23:32:32 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,18 +217,9 @@ msdosfs_close(void *v)
 	return (0);
 }
 
-int
-msdosfs_access(void *v)
+static int
+msdosfs_check_possible(struct vnode *vp, struct denode *dep, mode_t mode)
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int a_mode;
-		kauth_cred_t a_cred;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct denode *dep = VTODE(vp);
-	struct msdosfsmount *pmp = dep->de_pmp;
-	mode_t mode = ap->a_mode;
 
 	/*
 	 * Disallow write attempts on read-only file systems;
@@ -247,13 +238,45 @@ msdosfs_access(void *v)
 		}
 	}
 
+	return 0;
+}
+
+static int
+msdosfs_check_permitted(struct vnode *vp, struct denode *dep, mode_t mode,
+    kauth_cred_t cred)
+{
+	struct msdosfsmount *pmp = dep->de_pmp;
+	mode_t file_mode;
+
 	if ((dep->de_Attributes & ATTR_READONLY) == 0)
-		mode = S_IRWXU|S_IRWXG|S_IRWXO;
+		file_mode = S_IRWXU|S_IRWXG|S_IRWXO;
 	else
-		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-	return (vaccess(ap->a_vp->v_type,
-	    mode & (vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask),
-	    pmp->pm_uid, pmp->pm_gid, ap->a_mode, ap->a_cred));
+		file_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+
+	return genfs_can_access(vp->v_type,
+	    file_mode & (vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask),
+	    pmp->pm_uid, pmp->pm_gid, mode, cred);
+}
+
+int
+msdosfs_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct denode *dep = VTODE(vp);
+	int error;
+
+	error = msdosfs_check_possible(vp, dep, ap->a_mode);
+	if (error)
+		return error;
+
+	error = msdosfs_check_permitted(vp, dep, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 int

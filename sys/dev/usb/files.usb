@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.90 2008/10/10 16:37:16 joerg Exp $
+#	$NetBSD: files.usb,v 1.90.8.1 2009/07/23 23:32:21 jym Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -250,6 +250,11 @@ file	dev/usb/uplcom.c		uplcom
 device	umct: ucombus
 attach	umct at usbdevif
 file	dev/usb/umct.c			umct
+
+# MOSCHIP MCS7xxx serial driver
+device	moscom: ucombus
+attach	moscom at usbdevif
+file	dev/usb/moscom.c		moscom
 
 # SUNTAC Slipper U VS-10U driver
 device	uvscom: ucombus

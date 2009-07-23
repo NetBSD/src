@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.17 2008/05/11 02:08:11 mjacob Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.17.12.1 2009/07/23 23:31:48 jym Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -44,6 +44,10 @@
 
 #ifndef    _ISP_TPUBLIC_H
 #define    _ISP_TPUBLIC_H    1
+/*
+ * Include general target definitions
+ */
+#include "isp_target.h"
 
 /*
  * Action codes set by the Inner Layer for the outer layer to figure out what to do with.
@@ -54,7 +58,7 @@ typedef enum {
     QOUT_DISABLE,       /* the argument is a pointer to a enadis_t */
     QOUT_TMD_START,     /* the argument is a pointer to a tmd_cmd_t */
     QOUT_TMD_DONE,      /* the argument is a pointer to a tmd_xact_t */
-    QOUT_NOTIFY,        /* the argument is a pointer to a tmd_notify_t */
+    QOUT_NOTIFY,        /* the argument is a pointer to a isp_notify_t */
     QOUT_HBA_UNREG      /* the argument is a pointer to a hba_register_t */
 } tact_e;
 
@@ -71,7 +75,7 @@ typedef enum {
     QIN_DISABLE,        /* the argument is a pointer to a enadis_t */
     QIN_TMD_CONT,       /* the argument is a pointer to a tmd_xact_t */
     QIN_TMD_FIN,        /* the argument is a pointer to a tmd_cmd_t */
-    QIN_NOTIFY_ACK,     /* the argument is a pointer to a tmd_notify_t */
+    QIN_NOTIFY_ACK,     /* the argument is a pointer to a isp_notify_t */
     QIN_HBA_UNREG,      /* the argument is a pointer to a hba_register_t */
 } qact_e;
 
@@ -132,57 +136,6 @@ typedef struct {
     int                     d_count;
     uint64_t *              d_wwpns;
 } fc_dlist_t;
-
-/*
- * Notify structure- these are for asynchronous events that need to be sent
- * as notifications to the outer layer. It should be pretty self-explanatory.
- */
-typedef enum {
-    NT_UNKNOWN=0x999,
-    NT_ABORT_TASK=0x1000,
-    NT_ABORT_TASK_SET,
-    NT_CLEAR_ACA,
-    NT_CLEAR_TASK_SET,
-    NT_LUN_RESET,
-    NT_TARGET_RESET,
-    NT_BUS_RESET,
-    NT_LIP_RESET,
-    NT_LINK_UP,
-    NT_LINK_DOWN,
-    NT_LOGOUT,
-    NT_HBA_RESET
-} tmd_ncode_t;
-
-typedef struct tmd_notify {
-    void *      nt_hba;         /* HBA tag */
-    uint64_t    nt_iid;         /* inititator id */
-    uint64_t    nt_tgt;         /* target id */
-    uint16_t    nt_lun;         /* logical unit */
-    uint16_t                : 15,
-                nt_need_ack : 1;    /* this notify needs an ACK */
-    uint64_t    nt_tagval;      /* tag value */
-    uint32_t    nt_channel;     /* channel id */
-    tmd_ncode_t nt_ncode;       /* action */
-    void *      nt_tmd;         /* TMD for this notify */
-    void *      nt_lreserved;
-    void *      nt_hreserved;
-} tmd_notify_t;
-#define LUN_ANY     0xffff
-#define TGT_ANY     ((uint64_t) -1)
-#ifdef  INI_ANY
-#define INI_ANY     ((uint64_t) -1)
-#endif
-#ifndef INI_NONE
-#define INI_NONE    ((uint64_t) 0)
-#endif
-#define TAG_ANY     ((uint64_t) 0)
-#define MATCH_TMD(tmd, iid, lun, tag)                   \
-    (                                                   \
-        (tmd) &&                                        \
-        (iid == INI_ANY || iid == tmd->cd_iid) &&       \
-        (lun == LUN_ANY || lun == tmd->cd_lun) &&       \
-        (tag == TAG_ANY || tag == tmd->cd_tagval)       \
-    )
 
 /*
  * Lun ENABLE/DISABLE
@@ -263,6 +216,7 @@ typedef struct tmd_xact {
 #define TDFL_SENTSTATUS 0x01    /* this transaction sent status */
 #define TDFL_SENTSENSE  0x02    /* this transaction sent sense data */
 #define TDFL_ERROR      0x04    /* this transaction had an error */
+#define TDFL_SYNCERROR  0x08    /* ... and didn't even start because of it */
 #define TDFL_PRIVATE    0xF0    /* private inner layer usage */
 
 /*
@@ -414,6 +368,7 @@ struct tmd_cmd {
  *
  *    void scsi_target_handler(tact_e, void *arg)
  */
+
 #endif    /* _ISP_TPUBLIC_H */
 /*
  * vim:ts=4:sw=4:expandtab

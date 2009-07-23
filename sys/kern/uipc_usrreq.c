@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.120.2.1 2009/05/13 17:21:58 jym Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.120.2.2 2009/07/23 23:32:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.120.2.1 2009/05/13 17:21:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.120.2.2 2009/07/23 23:32:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1338,7 +1338,7 @@ unp_internalize(struct mbuf **controlp)
 	fdp = (int *)CMSG_DATA(cm) + nfds;
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
-		fp = fdescp->fd_ofiles[*--fdp]->ff_file;
+		fp = fdescp->fd_dt->dt_ff[*--fdp]->ff_file;
 		KASSERT(fp != NULL);
 		mutex_enter(&fp->f_lock);
 		*--rp = fp;

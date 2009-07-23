@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.6.4.1 2009/05/13 17:18:44 jym Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.6.4.2 2009/07/23 23:31:37 jym Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.1 2009/05/13 17:18:44 jym Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.2 2009/07/23 23:31:37 jym Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.1 2009/05/13 17:18:44 jym Exp $ ")
 #include <sys/kmem.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <machine/specialreg.h>
 
 #include <dev/pci/pcireg.h>
@@ -67,8 +67,14 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.6.4.1 2009/05/13 17:18:44 jym Exp $ ")
 /*
  * AMD K8:
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/32559.pdf
+ * AMD K8 Errata: #141
+ * http://support.amd.com/us/Processor_TechDocs/33610_PUB_Rev3%2042v3.pdf
+ *
  * Family10h:
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/31116.PDF
+ *
+ * Family11h:
+ * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41256.pdf
  */
 
 /* AMD Proessors, Function 3 -- Miscellaneous Control

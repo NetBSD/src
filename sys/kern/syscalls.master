@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.222.2.1 2009/05/13 17:21:57 jym Exp $
+	$NetBSD: syscalls.master,v 1.222.2.2 2009/07/23 23:32:35 jym Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -25,6 +25,9 @@
 ;	NOARGS	included, but don't define the syscall args structure
 ;	INDIR	included, but don't define the syscall args structure,
 ;		and allow it to be "really" varargs.
+;
+; arguments:
+;	PAD	argument not part of the C interface, used only for padding
 ;
 ; The compat options are defined in the syscalls.conf file, and the
 ; compat option name is prefixed to the syscall name.  Other than
@@ -336,9 +339,9 @@
 #endif
 172	UNIMPL
 173	STD 	 RUMP	{ ssize_t|sys||pread(int fd, void *buf, \
-			    size_t nbyte, int pad, off_t offset); }
+			    size_t nbyte, int PAD, off_t offset); }
 174	STD 	 RUMP	{ ssize_t|sys||pwrite(int fd, const void *buf, \
-			    size_t nbyte, int pad, off_t offset); }
+			    size_t nbyte, int PAD, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
 175	COMPAT_30	{ int|sys||ntp_gettime(struct ntptimeval30 *ntvp); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
@@ -384,14 +387,14 @@
 196	COMPAT_12 MODULAR { int|sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 197	STD 		{ void *|sys||mmap(void *addr, size_t len, int prot, \
-			    int flags, int fd, long pad, off_t pos); }
+			    int flags, int fd, long PAD, off_t pos); }
 198	INDIR		{ quad_t|sys||__syscall(quad_t code, \
 			    ... register_t args[SYS_MAXSYSARGS]); }
-199	STD 	 RUMP	{ off_t|sys||lseek(int fd, int pad, off_t offset, \
+199	STD 	 RUMP	{ off_t|sys||lseek(int fd, int PAD, off_t offset, \
 			    int whence); }
-200	STD 	 RUMP	{ int|sys||truncate(const char *path, int pad, \
+200	STD 	 RUMP	{ int|sys||truncate(const char *path, int PAD, \
 			    off_t length); }
-201	STD 	 RUMP	{ int|sys||ftruncate(int fd, int pad, off_t length); }
+201	STD 	 RUMP	{ int|sys||ftruncate(int fd, int PAD, off_t length); }
 202	STD	 RUMP 	{ int|sys||__sysctl(const int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, const void *new, \
 			    size_t newlen); }
@@ -498,20 +501,20 @@
 			    unsigned int *value); }
 255	STD MODULAR 	{ int|sys||_ksem_destroy(intptr_t id); }
 256	UNIMPL		sys__ksem_timedwait
-257	STD 		{ mqd_t|sys||mq_open(const char * name, int oflag, \
+257	STD MODULAR	{ mqd_t|sys||mq_open(const char * name, int oflag, \
 			    mode_t mode, struct mq_attr *attr); }
-258	STD 		{ int|sys||mq_close(mqd_t mqdes); }
-259	STD 		{ int|sys||mq_unlink(const char *name); }
-260	STD 		{ int|sys||mq_getattr(mqd_t mqdes, \
+258	STD MODULAR	{ int|sys||mq_close(mqd_t mqdes); }
+259	STD MODULAR	{ int|sys||mq_unlink(const char *name); }
+260	STD MODULAR	{ int|sys||mq_getattr(mqd_t mqdes, \
 			    struct mq_attr *mqstat); }
-261	STD 		{ int|sys||mq_setattr(mqd_t mqdes, \
+261	STD MODULAR	{ int|sys||mq_setattr(mqd_t mqdes, \
 			    const struct mq_attr *mqstat, \
 			    struct mq_attr *omqstat); }
-262	STD 		{ int|sys||mq_notify(mqd_t mqdes, \
+262	STD MODULAR	{ int|sys||mq_notify(mqd_t mqdes, \
 			    const struct sigevent *notification); }
-263	STD 		{ int|sys||mq_send(mqd_t mqdes, const char *msg_ptr, \
+263	STD MODULAR	{ int|sys||mq_send(mqd_t mqdes, const char *msg_ptr, \
 			    size_t msg_len, unsigned msg_prio); }
-264	STD 		{ ssize_t|sys||mq_receive(mqd_t mqdes, char *msg_ptr, \
+264	STD MODULAR	{ ssize_t|sys||mq_receive(mqd_t mqdes, char *msg_ptr, \
 			    size_t msg_len, unsigned *msg_prio); }
 265	COMPAT_50 MODULAR { int|sys||mq_timedsend(mqd_t mqdes, \
 			    const char *msg_ptr, size_t msg_len, \
@@ -554,10 +557,10 @@
 			    int facs, int pid); }
 289	STD 		{ ssize_t|sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
-			    int pad, off_t offset); }
+			    int PAD, off_t offset); }
 290	STD 		{ ssize_t|sys||pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
-			    int pad, off_t offset); }
+			    int PAD, off_t offset); }
 291	COMPAT_16 MODULAR { int|sys|14|sigaction(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
@@ -758,9 +761,9 @@
 394	STD	 RUMP	{ int|sys|30|socket(int domain, int type, int protocol); }
 395	STD 	 RUMP	{ int|sys|30|getfh(const char *fname, void *fhp, \
 			    size_t *fh_size); }
-396	STD 		{ int|sys|40|fhopen(const void *fhp, size_t fh_size,\
+396	STD 	 RUMP	{ int|sys|40|fhopen(const void *fhp, size_t fh_size,\
 			    int flags); }
-397	STD 		{ int|sys|40|fhstatvfs1(const void *fhp, \
+397	STD 	 RUMP	{ int|sys|40|fhstatvfs1(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
 398	COMPAT_50 MODULAR { int|sys|40|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat30 *sb); }
@@ -794,7 +797,7 @@
 			    psetid_t *opsid); }
 415	STD 		{ int|sys||_pset_bind(idtype_t idtype, id_t first_id, \
 			    id_t second_id, psetid_t psid, psetid_t *opsid); }
-416	STD 		{ int|sys|50|posix_fadvise(int fd, int pad, \
+416	STD 		{ int|sys|50|posix_fadvise(int fd, int PAD, \
 			    off_t offset, off_t len, int advice); }
 417	STD  RUMP	{ int|sys|50|select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
@@ -832,11 +835,11 @@
 431	STD 		{ int|sys|50|__sigtimedwait(const sigset_t *set, \
 			    siginfo_t *info, \
 			    struct timespec *timeout); }
-432	STD 		{ int|sys|50|mq_timedsend(mqd_t mqdes, \
+432	STD MODULAR	{ int|sys|50|mq_timedsend(mqd_t mqdes, \
 			    const char *msg_ptr, size_t msg_len, \
 			    unsigned msg_prio, \
 			    const struct timespec *abs_timeout); }
-433	STD 		{ ssize_t|sys|50|mq_timedreceive(mqd_t mqdes, \
+433	STD MODULAR	{ ssize_t|sys|50|mq_timedreceive(mqd_t mqdes, \
 			    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
 			    const struct timespec *abs_timeout); }
 434	STD 		{ int|sys|50|_lwp_park(const struct timespec *ts, \

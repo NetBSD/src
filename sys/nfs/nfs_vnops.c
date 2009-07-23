@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.269.2.1 2009/05/13 17:22:51 jym Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.269.2.2 2009/07/23 23:32:53 jym Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.269.2.1 2009/05/13 17:22:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.269.2.2 2009/07/23 23:32:53 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2909,7 +2909,7 @@ nfs_sillyrename(struct vnode *dvp, struct vnode *vp, struct componentname *cnp, 
 	struct sillyrename *sp;
 	struct nfsnode *np;
 	int error;
-	short pid;
+	pid_t pid;
 
 	cache_purge(dvp);
 	np = VTONFS(vp);
@@ -3408,7 +3408,7 @@ nfsspec_access(void *v)
 		}
 	}
 
-	return (vaccess(va.va_type, va.va_mode,
+	return (genfs_can_access(va.va_type, va.va_mode,
 	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 

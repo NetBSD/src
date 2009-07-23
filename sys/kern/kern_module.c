@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.41.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.41.2.2 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.41.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.41.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -53,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.41.2.1 2009/05/13 17:21:56 jym Exp
 #include <sys/kauth.h>
 #include <sys/kthread.h>
 #include <sys/sysctl.h>
+#include <sys/namei.h>
+#include <sys/lock.h>
+#include <sys/vnode.h>
+#include <sys/stat.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -89,6 +93,9 @@ static void	module_print(const char *, ...)
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
+static int	module_load_plist_file(const char *, const bool, void **,
+		    size_t *);
+static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
 /*
  * module_error:
@@ -558,14 +565,20 @@ module_do_load(const char *name, bool isdep, int flags,
 	const int maxdepth = 6;
 	modinfo_t *mi;
 	module_t *mod, *mod2;
-	char buf[MAXMODNAME];
+	prop_dictionary_t filedict;
+	void *plist;
+	char buf[MAXMODNAME], *path;
 	const char *s, *p;
 	int error;
-	size_t len;
+	size_t len, plistlen;
+	bool nochroot;
 
 	KASSERT(mutex_owned(&module_lock));
 
+	filedict = NULL;
+	path = NULL;
 	error = 0;
+	nochroot = false;
 
 	/*
 	 * Avoid recursing too far.
@@ -616,11 +629,22 @@ module_do_load(const char *name, bool isdep, int flags,
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_load_file(&mod->mod_kobj, name, module_base,
-		    autoload);
+		path = PNBUF_GET();
+		if (!autoload) {
+			nochroot = false;
+			snprintf(path, MAXPATHLEN, "%s", name);
+			error = kobj_load_file(&mod->mod_kobj, path, nochroot);
+		}
+		if (autoload || (error == ENOENT)) {
+			nochroot = true;
+			snprintf(path, MAXPATHLEN, "%s/%s/%s.kmod",
+			    module_base, name, name);
+			error = kobj_load_file(&mod->mod_kobj, path, nochroot);
+		}
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
+			PNBUF_PUT(path);
 			if (autoload) {
 				module_print("Cannot load kernel object `%s'"
 				    " error=%d", name, error);
@@ -761,10 +785,42 @@ module_do_load(const char *name, bool isdep, int flags,
 		goto fail2;
 	}
 
+	/*
+	 * Load and process <module>.prop if it exists.
+	 */
+	if (((flags & MODCTL_NO_PROP) == 0) &&
+	    (mod->mod_source == MODULE_SOURCE_FILESYS)) {
+		error = module_load_plist_file(path, nochroot, &plist,
+		    &plistlen);
+		if (error != 0) {
+			module_print("plist load returned error %d for `%s'",
+			    error, path);
+		} else {
+			filedict = prop_dictionary_internalize(plist);
+			if (filedict == NULL) {
+				error = EINVAL;
+			} else if (!module_merge_dicts(filedict, props)) {
+				error = EINVAL;
+				prop_object_release(filedict);
+				filedict = NULL;
+			}
+		}
+		if (plist != NULL) {
+			kmem_free(plist, PAGE_SIZE);
+		}
+		if ((error != 0) && (error != ENOENT)) {
+			goto fail;
+		}
+	}
+
 	KASSERT(module_active == NULL);
 	module_active = mod;
-	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
+	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, (filedict != NULL) ?
+	    filedict : props);	/* props will have been merged with filedict */
 	module_active = NULL;
+	if (filedict != NULL) {
+		prop_object_release(filedict);
+	}
 	if (error != 0) {
 		module_error("modcmd function returned error %d for `%s'",
 		    error, mi->mi_name);
@@ -789,6 +845,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		module_thread_kick();
 	}
 	depth--;
+	if (path != NULL)
+		PNBUF_PUT(path);
 	return 0;
 
  fail:
@@ -797,6 +855,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	TAILQ_REMOVE(&pending, mod, mod_chain);
 	kmem_free(mod, sizeof(*mod));
 	depth--;
+	if (path != NULL)
+		PNBUF_PUT(path);
 	return error;
 }
 
@@ -1009,7 +1069,11 @@ module_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 	vaddr_t maddr;
 
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
-		kobj_stat(mod->mod_kobj, &maddr, &msize);
+		if (mod->mod_kobj == NULL) {
+			continue;
+		}
+		if (kobj_stat(mod->mod_kobj, &maddr, &msize) != 0)
+			continue;
 		if (addr < maddr || addr >= maddr + msize) {
 			continue;
 		}
@@ -1049,9 +1113,127 @@ module_print_list(void (*pr)(const char *, ...))
 			src = "unknown";
 			break;
 		}
-		kobj_stat(mod->mod_kobj, &maddr, &msize);
+		if (mod->mod_kobj == NULL) {
+			maddr = 0;
+			msize = 0;
+		} else if (kobj_stat(mod->mod_kobj, &maddr, &msize) != 0)
+			continue;
 		(*pr)("%16s %16lx %8ld %8s\n", mod->mod_info->mi_name,
 		    (long)maddr, (long)msize, src);
 	}
 }
 #endif	/* DDB */
+
+/*
+ * module_load_plist_file:
+ *
+ *	Load a plist located in the file system into memory.
+ */
+static int
+module_load_plist_file(const char *modpath, const bool nochroot,
+		       void **basep, size_t *length)
+{
+	struct nameidata nd;
+	struct stat sb;
+	void *base;
+	char *proppath;
+	size_t resid;
+	int error, pathlen;
+
+	base = NULL;
+	*length = 0;
+
+	proppath = PNBUF_GET();
+	strcpy(proppath, modpath);
+	pathlen = strlen(proppath);
+	if ((pathlen >= 5) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
+		strcpy(&proppath[pathlen - 5], ".prop");
+	} else if (pathlen < MAXPATHLEN - 5) {
+			strcat(proppath, ".prop");
+	} else {
+		error = ENOENT;
+		goto out1;
+	}
+
+	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
+	    UIO_SYSSPACE, proppath);
+
+	error = namei(&nd);
+	if (error != 0) {
+		goto out1;
+	}
+
+	error = vn_stat(nd.ni_vp, &sb);
+	if (sb.st_size >= (PAGE_SIZE - 1)) {	/* leave space for term \0 */
+		error = EINVAL;
+	}
+	if (error != 0) {
+		goto out1;
+	}
+
+	error = vn_open(&nd, FREAD, 0);
+ 	if (error != 0) {
+	 	goto out1;
+	}
+
+	base = kmem_alloc(PAGE_SIZE, KM_SLEEP);
+	if (base == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+
+	error = vn_rdwr(UIO_READ, nd.ni_vp, base, sb.st_size, 0,
+	    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid, curlwp);
+	*((uint8_t *)base + sb.st_size) = '\0';
+	if (error == 0 && resid != 0) {
+		error = EINVAL;
+	}
+	if (error != 0) {
+		kmem_free(base, PAGE_SIZE);
+		base = NULL;
+	}
+	*length = sb.st_size;
+
+out:
+	VOP_UNLOCK(nd.ni_vp, 0);
+	vn_close(nd.ni_vp, FREAD, kauth_cred_get());
+
+out1:
+	PNBUF_PUT(proppath);
+	*basep = base;
+	return error;
+}
+
+static bool
+module_merge_dicts(prop_dictionary_t existing_dict,
+		   const prop_dictionary_t new_dict)
+{
+	prop_dictionary_keysym_t props_keysym;
+	prop_object_iterator_t props_iter;
+	prop_object_t props_obj;
+	const char *props_key;
+	bool error;
+
+	error = false;
+	props_iter = prop_dictionary_iterator(new_dict);
+	if (props_iter == NULL) {
+		return false;
+	}
+
+	while ((props_obj = prop_object_iterator_next(props_iter)) != NULL) {
+		props_keysym = (prop_dictionary_keysym_t)props_obj;
+		props_key = prop_dictionary_keysym_cstring_nocopy(props_keysym);
+		props_obj = prop_dictionary_get_keysym(new_dict, props_keysym);
+		if ((props_obj == NULL) || !prop_dictionary_set(existing_dict,
+		    props_key, props_obj)) {
+			error = true;
+			goto out;
+		}
+	}
+	error = false;
+
+out:
+	prop_object_iterator_release(props_iter);
+
+	return !error;
+}

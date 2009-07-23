@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.16.2.1 2009/05/13 17:19:20 jym Exp $ */
+/*	$NetBSD: mt.c,v 1.16.2.2 2009/07/23 23:31:47 jym Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.16.2.1 2009/05/13 17:19:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.16.2.2 2009/07/23 23:31:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -989,8 +989,7 @@ mtread(dev_t dev, struct uio *uio, int flags)
 
 	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 
-	return (physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_READ, minphys, uio));
+	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
@@ -1000,8 +999,7 @@ mtwrite(dev_t dev, struct uio *uio, int flags)
 
 	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 
-	return (physio(mtstrategy, &sc->sc_bufstore,
-	    dev, B_WRITE, minphys, uio));
+	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int

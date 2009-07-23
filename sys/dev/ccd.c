@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.132.2.1 2009/05/13 17:19:05 jym Exp $	*/
+/*	$NetBSD: ccd.c,v 1.132.2.2 2009/07/23 23:31:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.132.2.1 2009/05/13 17:19:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.132.2.2 2009/07/23 23:31:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1562,4 +1562,39 @@ printiinfo(struct ccdiinfo *ii)
 		printf("\n");
 	}
 }
+#endif
+
+#ifdef _MODULE
+
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_DRIVER, ccd, NULL);
+
+static int
+ccd_modcmd(modcmd_t cmd, void *arg)
+{
+	int bmajor = -1, cmajor = -1,  error = 0;
+	
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		ccdattach(4);
+		
+		return devsw_attach("ccd", &ccd_bdevsw, &bmajor,
+		    &ccd_cdevsw, &cmajor);
+		break;
+
+	case MODULE_CMD_FINI:
+		return devsw_detach(&ccd_bdevsw, &ccd_cdevsw);
+		break;
+
+	case MODULE_CMD_STAT:
+		return ENOTTY;
+
+	default:
+		return ENOTTY;
+	}
+
+	return error;
+}
+
 #endif

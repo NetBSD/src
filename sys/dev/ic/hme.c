@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.68.2.1 2009/05/13 17:19:22 jym Exp $	*/
+/*	$NetBSD: hme.c,v 1.68.2.2 2009/07/23 23:31:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.68.2.1 2009/05/13 17:19:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.68.2.2 2009/07/23 23:31:47 jym Exp $");
 
 /* #define HMEDEBUG */
 
@@ -196,7 +196,7 @@ hme_config(struct hme_softc *sc)
 	if ((error = bus_dmamem_alloc(dmatag, size,
 				      2048, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "DMA buffer alloc error %d\n",
+		aprint_error_dev(sc->sc_dev, "DMA buffer alloc error %d\n",
 			error);
 		return;
 	}
@@ -205,7 +205,7 @@ hme_config(struct hme_softc *sc)
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 				    &sc->sc_rb.rb_membase,
 				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "DMA buffer map error %d\n",
+		aprint_error_dev(sc->sc_dev, "DMA buffer map error %d\n",
 			error);
 		bus_dmamap_unload(dmatag, sc->sc_dmamap);
 		bus_dmamem_free(dmatag, &seg, rseg);
@@ -214,7 +214,7 @@ hme_config(struct hme_softc *sc)
 
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "DMA map create error %d\n",
+		aprint_error_dev(sc->sc_dev, "DMA map create error %d\n",
 			error);
 		return;
 	}
@@ -223,18 +223,18 @@ hme_config(struct hme_softc *sc)
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
 	    sc->sc_rb.rb_membase, size, NULL,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "DMA buffer map load error %d\n",
+		aprint_error_dev(sc->sc_dev, "DMA buffer map load error %d\n",
 			error);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
-	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
+	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
 	/* Initialize ifnet structure. */
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = hme_start;
 	ifp->if_ioctl = hme_ioctl;
@@ -263,9 +263,9 @@ hme_config(struct hme_softc *sc)
 	 * the RJ45 (internal) PHY first, so that the MII PHY is always
 	 * instance 1.
 	 */
-	mii_attach(&sc->sc_dev, mii, 0xffffffff,
+	mii_attach(sc->sc_dev, mii, 0xffffffff,
 			HME_PHYAD_INTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
-	mii_attach(&sc->sc_dev, mii, 0xffffffff,
+	mii_attach(sc->sc_dev, mii, 0xffffffff,
 			HME_PHYAD_EXTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
 
 	child = LIST_FIRST(&mii->mii_phys);
@@ -288,7 +288,8 @@ hme_config(struct hme_softc *sc)
 			 * connector.
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
-				aprint_error_dev(&sc->sc_dev, "cannot accommodate MII device %s"
+				aprint_error_dev(sc->sc_dev,
+				    "cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
 				       device_xname(child->mii_dev),
 				       child->mii_phy, child->mii_inst);
@@ -323,7 +324,7 @@ hme_config(struct hme_softc *sc)
 		panic("hme_config: can't establish shutdownhook");
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 
@@ -379,7 +380,7 @@ hme_stop(struct hme_softc *sc, bool chip_only)
 		DELAY(20);
 	}
 
-	printf("%s: hme_stop: reset failed\n", device_xname(&sc->sc_dev));
+	printf("%s: hme_stop: reset failed\n", device_xname(sc->sc_dev));
 }
 
 void
@@ -862,7 +863,7 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 	    ETHERMTU + sizeof(struct ether_header))) {
 #ifdef HMEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
-		    device_xname(&sc->sc_dev), len);
+		    device_xname(sc->sc_dev), len);
 #endif
 		ifp->if_ierrors++;
 		return;
@@ -893,7 +894,7 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 void
 hme_start(struct ifnet *ifp)
 {
-	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
+	struct hme_softc *sc = ifp->if_softc;
 	void *txd = sc->sc_rb.rb_txd;
 	struct mbuf *m;
 	unsigned int txflags;
@@ -1064,7 +1065,7 @@ hme_rint(struct hme_softc *sc)
 
 		if (flags & HME_XD_OFL) {
 			printf("%s: buffer overflow, ri=%d; flags=0x%x\n",
-					device_xname(&sc->sc_dev), ri, flags);
+					device_xname(sc->sc_dev), ri, flags);
 		} else
 			hme_read(sc, ri, flags);
 
@@ -1107,7 +1108,7 @@ hme_eint(struct hme_softc *sc, u_int status)
 		st = bus_space_read_4(t, mif, HME_MIFI_STAT);
 		sm = bus_space_read_4(t, mif, HME_MIFI_SM);
 		printf("%s: XXXlink status changed: cfg=%x, stat %x, sm %x\n",
-			device_xname(&sc->sc_dev), cf, st, sm);
+			device_xname(sc->sc_dev), cf, st, sm);
 		return (1);
 	}
 
@@ -1126,7 +1127,7 @@ hme_eint(struct hme_softc *sc, u_int status)
 		hme_reset(sc);
 
 	snprintb(bits, sizeof(bits), HME_SEB_STAT_BITS, status);
-	printf("%s: status=%s\n", device_xname(&sc->sc_dev), bits);
+	printf("%s: status=%s\n", device_xname(sc->sc_dev), bits);
 		
 	return (1);
 }
@@ -1134,7 +1135,7 @@ hme_eint(struct hme_softc *sc, u_int status)
 int
 hme_intr(void *v)
 {
-	struct hme_softc *sc = (struct hme_softc *)v;
+	struct hme_softc *sc = v;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	uint32_t status;
@@ -1164,7 +1165,7 @@ hme_watchdog(struct ifnet *ifp)
 {
 	struct hme_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
 	++ifp->if_oerrors;
 
 	hme_reset(sc);
@@ -1209,7 +1210,7 @@ hme_mifinit(struct hme_softc *sc)
 static int
 hme_mii_readreg(device_t self, int phy, int reg)
 {
-	struct hme_softc *sc = (void *)self;
+	struct hme_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
@@ -1267,7 +1268,7 @@ hme_mii_readreg(device_t self, int phy, int reg)
 	}
 
 	v = 0;
-	printf("%s: mii_read timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: mii_read timeout\n", device_xname(sc->sc_dev));
 
 out:
 	/* Restore MIFI_CFG register */
@@ -1280,7 +1281,7 @@ out:
 static void
 hme_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct hme_softc *sc = (void *)self;
+	struct hme_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
@@ -1336,7 +1337,7 @@ hme_mii_writereg(device_t self, int phy, int reg, int val)
 			goto out;
 	}
 
-	printf("%s: mii_write timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: mii_write timeout\n", device_xname(sc->sc_dev));
 out:
 	/* Restore MIFI_CFG register */
 	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);
@@ -1347,7 +1348,7 @@ out:
 static void
 hme_mii_statchg(device_t dev)
 {
-	struct hme_softc *sc = (void *)dev;
+	struct hme_softc *sc = device_private(dev);
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
 	uint32_t v;
@@ -1520,8 +1521,10 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 void
 hme_shutdown(void *arg)
 {
+	struct hme_softc *sc;
 
-	hme_stop((struct hme_softc *)arg, false);
+	sc = arg;
+	hme_stop(sc, false);
 }
 
 /*

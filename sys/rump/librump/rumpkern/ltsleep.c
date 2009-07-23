@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.10.2.1 2009/05/13 17:22:57 jym Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.10.2.2 2009/07/23 23:32:54 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.10.2.1 2009/05/13 17:22:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.10.2.2 2009/07/23 23:32:54 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -57,13 +57,12 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 {
 	struct ltsleeper lts;
 
-	if (__predict_false(slock))
-		panic("simplelock not supported by rump, convert code");
-
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
 	mutex_enter(&sleepermtx);
+	if (slock)
+		simple_unlock(slock);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
 
 	/* protected by sleepermtx */
@@ -73,6 +72,9 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	mutex_exit(&sleepermtx);
 
 	cv_destroy(&lts.cv);
+
+	if (slock && (prio & PNORELOCK) == 0)
+		simple_lock(slock);
 
 	return 0;
 }
@@ -113,6 +115,21 @@ wakeup(wchan_t ident)
 	LIST_FOREACH(ltsp, &sleepers, entries)
 		if (ltsp->id == ident)
 			cv_signal(&ltsp->cv);
+	mutex_exit(&sleepermtx);
+}
+
+void
+wakeup_one(wchan_t ident)
+{
+	struct ltsleeper *ltsp;
+
+	mutex_enter(&sleepermtx);
+	LIST_FOREACH(ltsp, &sleepers, entries) {
+		if (ltsp->id == ident) {
+			cv_signal(&ltsp->cv);
+			break;
+		}
+	}
 	mutex_exit(&sleepermtx);
 }
 

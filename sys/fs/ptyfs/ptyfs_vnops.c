@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.27.24.1 2009/05/13 17:21:51 jym Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.27.24.2 2009/07/23 23:32:32 jym Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27.24.1 2009/05/13 17:21:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27.24.2 2009/07/23 23:32:32 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,6 +498,21 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	return 0;
 }
 
+static int
+ptyfs_check_possible(struct vnode *vp, mode_t mode)
+{
+
+	return 0;
+}
+
+static int
+ptyfs_check_permitted(struct vattr *va, mode_t mode, kauth_cred_t cred)
+{
+
+	return genfs_can_access(va->va_type, va->va_mode,
+	    va->va_uid, va->va_gid, mode, cred);
+}
+
 /*
  * implement access checking.
  *
@@ -521,8 +536,13 @@ ptyfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
-	return vaccess(va.va_type, va.va_mode,
-	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred);
+	error = ptyfs_check_possible(ap->a_vp, ap->a_mode);
+	if (error)
+		return error;
+
+	error = ptyfs_check_permitted(&va, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 /*

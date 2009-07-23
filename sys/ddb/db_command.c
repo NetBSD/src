@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.126.2.1 2009/05/13 17:19:04 jym Exp $	*/
+/*	$NetBSD: db_command.c,v 1.126.2.2 2009/07/23 23:31:45 jym Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,12 +60,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.126.2.1 2009/05/13 17:19:04 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.126.2.2 2009/07/23 23:31:45 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_mqueue.h"
 #include "opt_inet.h"
 #include "opt_uvmhist.h"
 #include "opt_ddbparam.h"
@@ -238,7 +239,7 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("buf",	db_buf_print_cmd,	0,
 	    "Print the struct buf at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
-	    "Print all the non-zero evcnt(9) event counters.", "[/f]",NULL) },
+	    "Print all the non-zero evcnt(9) event counters.", "[/fitm]",NULL) },
 	{ DDB_ADD_CMD("files", db_show_files_cmd,	0,
 	    "Print the files open by process at address",
 	    "[/f] address", NULL) },
@@ -250,8 +251,10 @@ static const struct db_command db_show_cmds[] = {
 	    "Print kernel modules", NULL, NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
+#ifdef MQUEUE
 	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
 	    "Print the message queues", NULL, NULL) },
+#endif
 	{ DDB_ADD_CMD("mbuf",	db_mbuf_print_cmd,	0,NULL,NULL,
 	    "-c prints all mbuf chains") },
 	{ DDB_ADD_CMD("ncache",	db_namecache_print_cmd,	0,
@@ -1059,18 +1062,51 @@ static void
 db_event_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool full = false;
+	bool showzero = false;
+	bool showall = true;
+	bool showintr = false;
+	bool showtrap = false;
+	bool showmisc = false;
 	struct evcnt ev, *evp;
 	char buf[80];
+	int i;
 
-	if (modif[0] == 'f')
-		full = true;
+	i = 0;
+	while (modif[i]) {
+		switch (modif[i]) {
+		case 'f':
+			showzero = true;
+			break;
+		case 'i':
+			showintr = true;
+			showall = false;
+			break;
+		case 't':
+			showtrap = true;
+			showall = false;
+			break;
+		case 'm':
+			showmisc = true;
+			showall = false;
+			break;
+		}
+		i++;
+	}
+
+	if (showall)
+		showmisc = showintr = showtrap = true;
 
 	evp = (struct evcnt *)db_read_ptr("allevents");
 	while (evp != NULL) {
 		db_read_bytes((db_addr_t)evp, sizeof(ev), (char *)&ev);
 		evp = ev.ev_list.tqe_next;
-		if (ev.ev_count == 0 && !full)
+		if (ev.ev_count == 0 && !showzero)
+			continue;
+		if (ev.ev_type == EVCNT_TYPE_INTR && !showintr)
+			continue;
+		if (ev.ev_type == EVCNT_TYPE_TRAP && !showtrap)
+			continue;
+		if (ev.ev_type == EVCNT_TYPE_MISC && !showmisc)
 			continue;
 		db_read_bytes((db_addr_t)ev.ev_group, ev.ev_grouplen + 1, buf);
 		db_printf("evcnt type %d: %s ", ev.ev_type, buf);

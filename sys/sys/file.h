@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.65.10.1 2009/05/13 17:23:03 jym Exp $	*/
+/*	$NetBSD: file.h,v 1.65.10.2 2009/07/23 23:32:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -125,9 +125,6 @@ struct file {
 	u_int		f_unpcount;	/* deferred close: see uipc_usrreq.c */
 	SLIST_ENTRY(file) f_unplist;	/* deferred close: see uipc_usrreq.c */
 };
-
-#define FILE_LOCK(fp)	mutex_enter(&(fp)->f_lock)
-#define FILE_UNLOCK(fp)	mutex_exit(&(fp)->f_lock)
 
 /*
  * Flags for fo_read and fo_write and do_fileread/write/v
