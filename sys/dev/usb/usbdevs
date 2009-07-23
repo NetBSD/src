@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.522.2.1 2009/05/13 17:21:35 jym Exp $
+$NetBSD: usbdevs,v 1.522.2.2 2009/07/23 23:32:21 jym Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -343,6 +343,7 @@ vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
 vendor AGILENT		0x0957	Agilent Technologies
+vendor GUDE		0x0959	Gude ADS
 vendor PORTSMITH	0x095a	Portsmith
 vendor ACERW		0x0967	Acer
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
@@ -480,8 +481,9 @@ vendor METAGEEK		0x1781	MetaGeek
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
-vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
+vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
+vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor ERICSSON		0x2282	Ericsson
@@ -1067,7 +1069,8 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
-product FTDI SERIAL_2232C	0x6010	2232C USB FAST SERIAL ADAPTER
+product FTDI SERIAL_2232C	0x6010	2232C USB dual FAST SERIAL ADAPTER
+product FTDI SERIAL_4232H	0x6011	2232H USB quad FAST SERIAL ADAPTER
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
 product FTDI MHAM_KW		0xeee8	KW
@@ -1139,6 +1142,9 @@ product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
+
+/* Gude ADS */
+product	GUDE DCF		0xdcf7	Exper mouseCLOCK USB
 
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
@@ -1491,6 +1497,9 @@ product MCT ML_4500		0x0302	ML-4500
 /* MediaGear products */
 product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
 
+/* Meinberg Funkuhren products */
+product	MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
+
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
@@ -1603,10 +1612,12 @@ product MOBILITY EA		0x0204	Ethernet Adapter
 product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
 
 /* MosChip Semiconductor */
+product MOSCHIP MCS7703		0x7703	MCS7703 USB Serial Adapter
 product MOSCHIP MCS7780		0x7780	Fast IrDA Adapter
 product MOSCHIP MCS7781		0x7781	Fast IrDA Adapter
 product MOSCHIP MCS7784		0x7784	Slow IrDA Adapter
 product MOSCHIP MCS7830		0x7830	Ethernet Adapter
+product MOSCHIP MCS7840		0x7840	MCS7840 USB Serial Adapter
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller

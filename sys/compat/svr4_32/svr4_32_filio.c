@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.16 2008/07/02 16:45:20 matt Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.16.10.1 2009/07/23 23:31:44 jym Exp $	 */
 
 /*-
- * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.16 2008/07/02 16:45:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.16.10.1 2009/07/23 23:31:44 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,7 +72,7 @@ svr4_32_fil_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long 
         if ((fp = fd_getfile(fd)) == NULL)
                 return EBADF;
 	fdp = curlwp->l_fd;
-	ff = fdp->fd_ofiles[fd];
+	ff = fdp->fd_dt->dt_ff[fd];
 	error = 0;
 
 	switch (cmd) {

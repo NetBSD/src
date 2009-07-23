@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.29.12.1 2009/05/13 17:20:29 jym Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.29.12.2 2009/07/23 23:32:01 jym Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.29.12.1 2009/05/13 17:20:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.29.12.2 2009/07/23 23:32:01 jym Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -168,6 +168,9 @@ static int radeonfb_allocattr(void *, int, int, int, long *);
 static int radeonfb_get_backlight(struct radeonfb_display *);
 static int radeonfb_set_backlight(struct radeonfb_display *, int);
 static void radeonfb_lvds_callout(void *);
+
+static void radeonfb_brightness_up(device_t);
+static void radeonfb_brightness_down(device_t);
 
 static struct videomode *radeonfb_best_refresh(struct videomode *,
     struct videomode *);
@@ -431,7 +434,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	const char		*mptr;
 	bus_size_t		bsz;
 	pcireg_t		screg;
-	int			i, j, fg, bg, ul;
+	int			i, j, fg, bg, ul, flags;
 	uint32_t		v;
 
 	sc->sc_id = pa->pa_id;
@@ -528,6 +531,14 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		aprint_error("%s: unable to map registers!\n", XNAME(sc));
 		goto error;
 	}
+
+	if (pci_mapreg_info(sc->sc_pc, sc->sc_pt, PCI_MAPREG_ROM,
+	     PCI_MAPREG_TYPE_ROM, &sc->sc_romaddr, &sc->sc_romsz, &flags) != 0)
+	{
+		aprint_error("%s: unable to find ROM!\n", XNAME(sc));
+		goto error;
+	}
+	sc->sc_romt = sc->sc_memt;
 
 	/* scratch register test... */
 	if (radeonfb_scratch_test(sc, RADEON_BIOS_0_SCRATCH, 0x55555555) ||
@@ -810,7 +821,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 		dp->rd_vd.init_screen = radeonfb_init_screen;
 
-		dp->rd_console = 1;
+		dp->rd_console = 0;
+		prop_dictionary_get_bool(device_properties(&sc->sc_dev),
+		    "is_console", &dp->rd_console);
 
 		dp->rd_vscreen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
@@ -891,6 +904,11 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		callout_setfunc(&dp->rd_bl_lvds_co,
 				radeonfb_lvds_callout, dp);
 	}
+
+	pmf_event_register(dev, PMFE_DISPLAY_BRIGHTNESS_UP,
+	    radeonfb_brightness_up, TRUE);
+	pmf_event_register(dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+	    radeonfb_brightness_down, TRUE);
 
 	config_found_ia(dev, "drm", aux, radeonfb_drm_print);
 
@@ -982,7 +1000,7 @@ radeonfb_ioctl(void *v, void *vs,
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
 				radeonfb_engine_init(dp);
-				radeonfb_modeswitch(dp);
+				//radeonfb_modeswitch(dp);
 				vcons_redraw_screen(dp->rd_vd.active);
 			}
 		}
@@ -1069,7 +1087,6 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	/* XXX: note that we don't allow mapping of registers right now */
 	/* XXX: this means that the XFree86 radeon driver won't work */
-
 	if ((offset >= 0) && (offset < (dp->rd_virty * dp->rd_stride))) {
 		pa = bus_space_mmap(sc->sc_memt,
 		    sc->sc_memaddr + dp->rd_offset + offset, 0,
@@ -1096,6 +1113,12 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	if ((offset >= sc->sc_memaddr) && 
 	    (offset < sc->sc_memaddr + sc->sc_memsz)) {
+		return bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+		    BUS_SPACE_MAP_LINEAR);
+	}
+
+	if ((offset >= sc->sc_romaddr) && 
+	    (offset < sc->sc_romaddr + sc->sc_romsz)) {
 		return bus_space_mmap(sc->sc_memt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);
 	}
@@ -3504,4 +3527,30 @@ static void radeonfb_lvds_callout(void *arg)
 	dp->rd_bl_lvds_val = 0;
 
 	splx(s);
+}
+
+static void
+radeonfb_brightness_up(device_t dev)
+{
+	struct radeonfb_softc *sc = device_private(dev);
+	int level;
+
+	/* we assume the main display is the first one - need a better way */
+	if (sc->sc_ndisplays < 1) return;
+	level = radeonfb_get_backlight(&sc->sc_displays[0]);
+	level = min(RADEONFB_BACKLIGHT_MAX, level + 5);
+	radeonfb_set_backlight(&sc->sc_displays[0], level);
+}
+
+static void
+radeonfb_brightness_down(device_t dev)
+{
+	struct radeonfb_softc *sc = device_private(dev);
+	int level;
+
+	/* we assume the main display is the first one - need a better way */
+	if (sc->sc_ndisplays < 1) return;
+	level = radeonfb_get_backlight(&sc->sc_displays[0]);
+	level = max(0, level - 5);
+	radeonfb_set_backlight(&sc->sc_displays[0], level);
 }

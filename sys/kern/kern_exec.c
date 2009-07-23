@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.284.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.284.2.2 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.284.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.284.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.284.2.1 2009/05/13 17:21:56 jym Exp 
 #include <sys/module.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
@@ -138,10 +139,6 @@ struct exec_entry {
 	SLIST_ENTRY(exec_entry)	ex_slist;
 	const struct execsw	*ex_sw;
 };
-
-#ifdef SYSCALL_DEBUG
-extern const char * const syscallnames[];
-#endif
 
 #ifndef __HAVE_SYSCALL_INTERN
 void	syscall(void);

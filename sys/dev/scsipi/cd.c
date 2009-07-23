@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.287.2.1 2009/05/13 17:21:22 jym Exp $	*/
+/*	$NetBSD: cd.c,v 1.287.2.2 2009/07/23 23:32:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.287.2.1 2009/05/13 17:21:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.287.2.2 2009/07/23 23:32:20 jym Exp $");
 
 #include "rnd.h"
 
@@ -1324,6 +1324,10 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 				return (EIO);
 		}
 	}
+
+	error = disk_ioctl(&cd->sc_dk, cmd, addr, flag, l); 
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (cmd) {
 	case DIOCGDINFO:

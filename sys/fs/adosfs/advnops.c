@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.31.2.1 2009/05/13 17:21:49 jym Exp $	*/
+/*	$NetBSD: advnops.c,v 1.31.2.2 2009/07/23 23:32:31 jym Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31.2.1 2009/05/13 17:21:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31.2.2 2009/07/23 23:32:31 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -747,6 +747,38 @@ reterr:
 	return(error);
 }
 
+static int
+adosfs_check_possible(struct vnode *vp, struct anode *ap, mode_t mode)
+{
+
+	/*
+	 * Disallow write attempts unless the file is a socket,
+	 * fifo, or a block or character device resident on the
+	 * file system.
+	 */
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			return (EROFS);
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static int
+adosfs_check_permitted(struct vnode *vp, struct anode *ap, mode_t mode,
+    kauth_cred_t cred)
+{
+
+	return genfs_can_access(vp->v_type,
+	    adunixprot(ap->adprot) & ap->amp->mask, ap->uid, ap->gid, mode,
+	    cred);
+}
 
 int
 adosfs_access(void *v)
@@ -771,23 +803,13 @@ adosfs_access(void *v)
 		panic("adosfs_access: not locked");
 	}
 #endif
-	/*
-	 * Disallow write attempts unless the file is a socket,
-	 * fifo, or a block or character device resident on the
-	 * file system.
-	 */
-	if (sp->a_mode & VWRITE) {
-		switch (vp->v_type) {
-		case VDIR:
-		case VLNK:
-		case VREG:
-			return (EROFS);
-		default:
-			break;
-		}
-	}
-	error = vaccess(sp->a_vp->v_type, adunixprot(ap->adprot) & ap->amp->mask,
-	    ap->uid, ap->gid, sp->a_mode, sp->a_cred);
+
+	error = adosfs_check_possible(vp, ap, sp->a_mode);
+	if (error)
+		return error;
+
+	error = adosfs_check_permitted(vp, ap, sp->a_mode, sp->a_cred);
+
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif

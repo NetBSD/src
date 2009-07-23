@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.368.2.1 2009/05/13 17:21:58 jym Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.368.2.2 2009/07/23 23:32:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,12 +76,22 @@
  * change from a non-zero value to zero, again the interlock must be
  * held.
  *
- * Changing the usecount from a non-zero value to a non-zero value can
- * safely be done using atomic operations, without the interlock held.
+ * There's a flag bit, VC_XLOCK, embedded in v_usecount.
+ * To raise v_usecount, if the VC_XLOCK bit is set in it, the interlock
+ * must be held.
+ * To modify the VC_XLOCK bit, the interlock must be held.
+ * We always keep the usecount (v_usecount & VC_MASK) non-zero while the
+ * VC_XLOCK bit is set.
+ *
+ * Unless the VC_XLOCK bit is set, changing the usecount from a non-zero
+ * value to a non-zero value can safely be done using atomic operations,
+ * without the interlock held.
+ * Even if the VC_XLOCK bit is set, decreasing the usecount to a non-zero
+ * value can be done using atomic operations, without the interlock held.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.368.2.1 2009/05/13 17:21:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.368.2.2 2009/07/23 23:32:36 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -109,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.368.2.1 2009/05/13 17:21:58 jym Exp $
 #include <sys/kthread.h>
 #include <sys/wapbl.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
@@ -155,6 +166,9 @@ static kmutex_t	vrele_lock;
 static kcondvar_t vrele_cv;
 static lwp_t *vrele_lwp;
 
+static uint64_t mountgen = 0;
+static kmutex_t mountgen_lock;
+
 kmutex_t mountlist_lock;
 kmutex_t mntid_lock;
 kmutex_t mntvnode_lock;
@@ -178,6 +192,7 @@ static void insmntque(vnode_t *, struct mount *);
 static int getdevvp(dev_t, vnode_t **, enum vtype);
 static vnode_t *getcleanvnode(void);
 void vpanic(vnode_t *, const char *);
+static void vfs_shutdown1(struct lwp *);
 
 #ifdef DEBUG 
 void printlockedvnodes(void);
@@ -218,6 +233,7 @@ void
 vntblinit(void)
 {
 
+	mutex_init(&mountgen_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mountlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -361,8 +377,10 @@ try_nextlist:
 	 * before doing this.  If the vnode gains another reference while
 	 * being cleaned out then we lose - retry.
 	 */
-	atomic_inc_uint(&vp->v_usecount);
+	atomic_add_int(&vp->v_usecount, 1 + VC_XLOCK);
 	vclean(vp, DOCLOSE);
+	KASSERT(vp->v_usecount >= 1 + VC_XLOCK);
+	atomic_add_int(&vp->v_usecount, -VC_XLOCK);
 	if (vp->v_usecount == 1) {
 		/* We're about to dirty it. */
 		vp->v_iflag &= ~VI_CLEAN;
@@ -475,6 +493,10 @@ vfs_mountalloc(struct vfsops *vfsops, struct vnode *vp)
 	KASSERT(error == 0);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
+
+	mutex_enter(&mountgen_lock);
+	mp->mnt_gen = mountgen++;
+	mutex_exit(&mountgen_lock);
 
 	return mp;
 }
@@ -1229,7 +1251,7 @@ vtryget(vnode_t *vp)
 		return false;
 	}
 	for (use = vp->v_usecount;; use = next) {
-		if (use == 0) { 
+		if (use == 0 || __predict_false((use & VC_XLOCK) != 0)) {
 			/* Need interlock held if first reference. */
 			return false;
 		}
@@ -1318,9 +1340,10 @@ vtryrele(vnode_t *vp)
 	u_int use, next;
 
 	for (use = vp->v_usecount;; use = next) {
-		if (use == 1) { 
+		if (use == 1) {
 			return false;
 		}
+		KASSERT((use & VC_MASK) > 1);
 		next = atomic_cas_uint(&vp->v_usecount, use, use - 1);
 		if (__predict_true(next == use)) {
 			return true;
@@ -2250,25 +2273,69 @@ vfs_unmountall(struct lwp *l)
 	return vfs_unmountall1(l, true, true);
 }
 
+static void
+vfs_unmount_print(struct mount *mp, const char *pfx)
+{
+	printf("%sunmounted %s on %s type %s\n", pfx,
+	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname,
+	    mp->mnt_stat.f_fstypename);
+}
+
+bool
+vfs_unmount_forceone(struct lwp *l)
+{
+	struct mount *mp, *nmp = NULL;
+	int error;
+
+	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
+		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen)
+			nmp = mp;
+	}
+
+	if (nmp == NULL)
+		return false;
+
+#ifdef DEBUG
+	printf("\nforcefully unmounting %s (%s)...",
+	    nmp->mnt_stat.f_mntonname, nmp->mnt_stat.f_mntfromname);
+#endif
+	atomic_inc_uint(&nmp->mnt_refcnt);
+	if ((error = dounmount(nmp, MNT_FORCE, l)) == 0) {
+		vfs_unmount_print(nmp, "forcefully ");
+		return true;
+	} else
+		atomic_dec_uint(&nmp->mnt_refcnt);
+
+#ifdef DEBUG
+	printf("forceful unmount of %s failed with error %d\n",
+	    nmp->mnt_stat.f_mntonname, error);
+#endif
+
+	return false;
+}
+
 bool
 vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 {
 	struct mount *mp, *nmp;
-	bool any_error, progress;
+	bool any_error = false, progress = false;
 	int error;
 
-	for (any_error = false, mp = CIRCLEQ_LAST(&mountlist);
-	     !CIRCLEQ_EMPTY(&mountlist);
+	for (mp = CIRCLEQ_LAST(&mountlist);
+	     mp != (void *)&mountlist;
 	     mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
 #ifdef DEBUG
-		printf("\nunmounting %s (%s)...",
-		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
+		printf("\nunmounting %p %s (%s)...",
+		    (void *)mp, mp->mnt_stat.f_mntonname,
+		    mp->mnt_stat.f_mntfromname);
 #endif
 		atomic_inc_uint(&mp->mnt_refcnt);
-		if ((error = dounmount(mp, force ? MNT_FORCE : 0, l)) == 0)
+		if ((error = dounmount(mp, force ? MNT_FORCE : 0, l)) == 0) {
+			vfs_unmount_print(mp, "");
 			progress = true;
-		else {
+		} else {
+			atomic_dec_uint(&mp->mnt_refcnt);
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
@@ -2294,6 +2361,12 @@ vfs_shutdown(void)
 	/* XXX we're certainly not running in lwp0's context! */
 	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
+	vfs_shutdown1(l);
+}
+
+void
+vfs_sync_all(struct lwp *l)
+{
 	printf("syncing disks... ");
 
 	/* remove user processes from run queue */
@@ -2314,6 +2387,13 @@ vfs_shutdown(void)
 		return;
 	} else
 		printf("done\n");
+}
+
+static void
+vfs_shutdown1(struct lwp *l)
+{
+
+	vfs_sync_all(l);
 
 	/*
 	 * If we've panic'd, don't make the situation potentially
@@ -2574,64 +2654,17 @@ printlockedvnodes(void)
 }
 #endif
 
-/*
- * Do the usual access checking.
- * file_mode, uid and gid are from the vnode in question,
- * while acc_mode and cred are from the VOP_ACCESS parameter list
- */
+/* Deprecated. Kept for KPI compatibility. */
 int
 vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
     mode_t acc_mode, kauth_cred_t cred)
 {
-	mode_t mask;
-	int error, ismember;
 
-	/*
-	 * Super-user always gets read/write access, but execute access depends
-	 * on at least one execute bit being set.
-	 */
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
-		if ((acc_mode & VEXEC) && type != VDIR &&
-		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
-			return (EACCES);
-		return (0);
-	}
+#ifdef DIAGNOSTIC
+	printf("vaccess: deprecated interface used.\n");
+#endif /* DIAGNOSTIC */
 
-	mask = 0;
-
-	/* Otherwise, check the owner. */
-	if (kauth_cred_geteuid(cred) == uid) {
-		if (acc_mode & VEXEC)
-			mask |= S_IXUSR;
-		if (acc_mode & VREAD)
-			mask |= S_IRUSR;
-		if (acc_mode & VWRITE)
-			mask |= S_IWUSR;
-		return ((file_mode & mask) == mask ? 0 : EACCES);
-	}
-
-	/* Otherwise, check the groups. */
-	error = kauth_cred_ismember_gid(cred, gid, &ismember);
-	if (error)
-		return (error);
-	if (kauth_cred_getegid(cred) == gid || ismember) {
-		if (acc_mode & VEXEC)
-			mask |= S_IXGRP;
-		if (acc_mode & VREAD)
-			mask |= S_IRGRP;
-		if (acc_mode & VWRITE)
-			mask |= S_IWGRP;
-		return ((file_mode & mask) == mask ? 0 : EACCES);
-	}
-
-	/* Otherwise, check everyone else. */
-	if (acc_mode & VEXEC)
-		mask |= S_IXOTH;
-	if (acc_mode & VREAD)
-		mask |= S_IROTH;
-	if (acc_mode & VWRITE)
-		mask |= S_IWOTH;
-	return ((file_mode & mask) == mask ? 0 : EACCES);
+	return genfs_can_access(type, file_mode, uid, gid, acc_mode, cred);
 }
 
 /*

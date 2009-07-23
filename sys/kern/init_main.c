@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.380.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: init_main.c,v 1.380.2.2 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.380.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.380.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -159,7 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.380.2.1 2009/05/13 17:21:56 jym Exp 
 #include <sys/uuid.h>
 #include <sys/extent.h>
 #include <sys/disk.h>
-#include <sys/mqueue.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
 #include <sys/event.h>
@@ -286,6 +285,7 @@ main(void)
 #ifndef LWP0_CPU_INFO
 	l->l_cpu = curcpu();
 #endif
+	l->l_pflag |= LP_RUNNING;
 
 	/*
 	 * Attempt to find console and initialize
@@ -430,9 +430,6 @@ main(void)
 	/* Initialize kqueue. */
 	kqueue_init();
 
-	/* Initialize message queues. */
-	mqueue_sysinit();
-
 	/* Initialize the system monitor subsystems. */
 #if NSYSMON_TASKQ > 0
 	sysmon_task_queue_preinit();
@@ -518,7 +515,7 @@ main(void)
 	 */
 	s = splnet();
 	ifinit();
-	domaininit();
+	domaininit(true);
 	if_attachdomain();
 	splx(s);
 
@@ -693,13 +690,13 @@ main(void)
 static void
 check_console(struct lwp *l)
 {
-	struct nameidata nd;
+	struct vnode *vp;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console");
-	error = namei(&nd);
+	error = namei_simple_kernel("/dev/console",
+				NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error == 0)
-		vrele(nd.ni_vp);
+		vrele(vp);
 	else if (error == ENOENT)
 		printf("warning: no /dev/console\n");
 	else
@@ -934,10 +931,10 @@ banner(void)
 	if ((boothowto & AB_SILENT) != 0) {
 		snprintf(pbuf, sizeof(pbuf), "%s %s (%s)",
 		    ostype, osrelease, kernel_ident);
-		printf("%s", pbuf);
+		printf_nolog("%s", pbuf);
 		for (i = 80 - strlen(pbuf) - sizeof(notice); i > 0; i--)
 			printf(" ");
-		printf("%s\n", notice);
+		printf_nolog("%s\n", notice);
 		pr = aprint_normal;
 	} else {
 		pr = printf;

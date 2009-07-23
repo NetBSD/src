@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.73.18.1 2009/05/13 17:21:22 jym Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.73.18.2 2009/07/23 23:32:20 jym Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.18.1 2009/05/13 17:21:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.18.2 2009/07/23 23:32:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,7 @@ isp_sbus_rd_isr(ispsoftc_t *, uint32_t *, uint16_t *, uint16_t *);
 static uint32_t isp_sbus_rd_reg(ispsoftc_t *, int);
 static void isp_sbus_wr_reg (ispsoftc_t *, int, uint32_t);
 static int isp_sbus_mbxdma(ispsoftc_t *);
-static int isp_sbus_dmasetup(ispsoftc_t *, XS_T *, ispreq_t *, uint32_t *,
-    uint32_t);
+static int isp_sbus_dmasetup(ispsoftc_t *, XS_T *, void *);
 static void isp_sbus_dmateardown(ispsoftc_t *, XS_T *, uint32_t);
 
 #ifndef	ISP_DISABLE_FW
@@ -122,6 +121,7 @@ isp_sbus_attach(device_t parent, device_t self, void *aux)
 	int freq, ispburst, sbusburst;
 	struct sbus_attach_args *sa = aux;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
+	struct sbus_softc *sbsc = device_private(parent);
 	ispsoftc_t *isp = &sbc->sbus_isp;
 
 	printf(" for %s\n", sa->sa_name);
@@ -160,7 +160,7 @@ isp_sbus_attach(device_t parent, device_t self, void *aux)
 	 * walks up the tree finding the limiting burst size node (if
 	 * any).
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	sbusburst = sbsc->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1;
 	ispburst = prom_getpropint(sa->sa_node, "burst-sizes", -1);
@@ -188,7 +188,7 @@ isp_sbus_attach(device_t parent, device_t self, void *aux)
 	isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 	isp->isp_param = &sbc->sbus_dev;
 	isp->isp_dmatag = sa->sa_dmatag;
-	MEMZERO(isp->isp_param, sizeof (sdparam));
+	ISP_MEMZERO(isp->isp_param, sizeof (sdparam));
 	isp->isp_osinfo.chan = &sbc->sbus_chan;
 
 	sbc->sbus_poff[BIU_BLOCK >> _BLK_REG_SHFT] = BIU_REGS_OFF;
@@ -235,7 +235,7 @@ isp_sbus_attach(device_t parent, device_t self, void *aux)
 		SDPARAM(isp, 0)->isp_ptisp = 1;
 	}
 	ISP_LOCK(isp);
-	isp_reset(isp);
+	isp_reset(isp, 1);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		ISP_UNLOCK(isp);
 		return;
@@ -353,7 +353,7 @@ isp_sbus_mbxdma(ispsoftc_t *isp)
 		isp_prt(isp, ISP_LOGERR, "cannot alloc xflist array");
 		return (1);
 	}
-	MEMZERO(isp->isp_xflist, n);
+	ISP_MEMZERO(isp->isp_xflist, n);
 	n = sizeof (bus_dmamap_t) * isp->isp_maxcmds;
 	sbc->sbus_dmamap = (bus_dmamap_t *) malloc(n, M_DEVBUF, M_WAITOK);
 	if (sbc->sbus_dmamap == NULL) {
@@ -480,81 +480,54 @@ dmafail:
  */
 
 static int
-isp_sbus_dmasetup(ispsoftc_t *isp, XS_T *xs, ispreq_t *rq,
-    uint32_t *nxtip, uint32_t optr)
+isp_sbus_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, void *arg)
 {
-	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *)isp;
+	ispreq_t *rq = arg;
 	bus_dmamap_t dmap;
-	ispreq_t *qep;
-	int error, cansleep = (xs->xs_control & XS_CTL_NOSLEEP) == 0;
-	int in = (xs->xs_control & XS_CTL_DATA_IN) != 0;
-
-	qep = (ispreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, isp->isp_reqidx);
-	if (xs->datalen == 0) {
-		rq->req_seg_count = 1;
-		goto mbxsync;
-	}
+	bus_dma_segment_t *dm_segs;
+	uint32_t nsegs;
+	isp_ddir_t ddir;
 
 	dmap = sbc->sbus_dmamap[isp_handle_index(rq->req_handle)];
-	if (dmap->dm_nsegs != 0) {
-		panic("%s: DMA map already allocated", device_xname(&isp->isp_osinfo.dev));
-		/* NOTREACHED */
-	}
-	error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
-	    NULL, (cansleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) |
-	    BUS_DMA_STREAMING);
-	if (error != 0) {
-		XS_SETERR(xs, HBA_BOTCH);
-		if (error == EAGAIN || error == ENOMEM)
-			return (CMD_EAGAIN);
-		else
-			return (CMD_COMPLETE);
-	}
+	if (xs->datalen == 0) {
+		ddir = ISP_NOXFR;
+		nsegs = 0;
+		dm_segs = NULL;
+	 } else {
+		int error;
+		uint32_t flag, flg2;
 
-	bus_dmamap_sync(isp->isp_dmatag, dmap, 0, xs->datalen,
-	    in? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-
-	if (in) {
-		rq->req_flags |= REQFLAG_DATA_IN;
-	} else {
-		rq->req_flags |= REQFLAG_DATA_OUT;
-	}
-
-	if (XS_CDBLEN(xs) > 12) {
-		uint32_t onxti;
-		ispcontreq_t local, *crq = &local, *cqe;
-
-		onxti = *nxtip;
-		cqe = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, onxti);
-		*nxtip = ISP_NXT_QENTRY(onxti, RQUEST_QUEUE_LEN(isp));
-		if (*nxtip == optr) {
-			isp_prt(isp, ISP_LOGDEBUG0, "Request Queue Overflow++");
-			bus_dmamap_unload(isp->isp_dmatag, dmap);
-			XS_SETERR(xs, HBA_BOTCH);
-			return (CMD_EAGAIN);
+		if (xs->xs_control & XS_CTL_DATA_IN) {
+			flg2 = BUS_DMASYNC_PREREAD;
+			flag = BUS_DMA_READ;
+			ddir = ISP_FROM_DEVICE;
+		} else {
+			flg2 = BUS_DMASYNC_PREWRITE;
+			flag = BUS_DMA_WRITE;
+			ddir = ISP_TO_DEVICE;
 		}
-		rq->req_seg_count = 2;
-		MEMZERO((void *)crq, sizeof (*crq));
-		crq->req_header.rqs_entry_count = 1;
-		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;
-		crq->req_dataseg[0].ds_count = xs->datalen;
-		crq->req_dataseg[0].ds_base = dmap->dm_segs[0].ds_addr;
-		isp_put_cont_req(isp, crq, cqe);
-		MEMORYBARRIER(isp, SYNC_REQUEST, onxti, QENTRY_LEN);
-	} else {
-		rq->req_seg_count = 1;
-		rq->req_dataseg[0].ds_count = xs->datalen;
-		rq->req_dataseg[0].ds_base = dmap->dm_segs[0].ds_addr;
+		error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
+		    NULL, ((xs->xs_control & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING | flag);
+		if (error) {
+			isp_prt(isp, ISP_LOGWARN, "unable to load DMA (%d)", error);
+			XS_SETERR(xs, HBA_BOTCH);
+			if (error == EAGAIN || error == ENOMEM) {
+				return (CMD_EAGAIN);
+			} else {
+				return (CMD_COMPLETE);
+			}
+		}
+		dm_segs = dmap->dm_segs;
+		nsegs = dmap->dm_nsegs;
+		bus_dmamap_sync(isp->isp_dmatag, dmap, 0, dmap->dm_mapsize, flg2);
 	}
 
-mbxsync:
-	if (XS_CDBLEN(xs) > 12) {
-		isp_put_extended_request(isp,
-		    (ispextreq_t *)rq, (ispextreq_t *) qep);
+	if (isp_send_cmd(isp, rq, dm_segs, nsegs, xs->datalen, ddir) != CMD_QUEUED) {
+		return (CMD_EAGAIN);
 	} else {
-		isp_put_request(isp, rq, qep);
+		return (CMD_QUEUED);
 	}
-	return (CMD_QUEUED);
 }
 
 static void

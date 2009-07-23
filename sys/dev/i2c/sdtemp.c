@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.1.2.2 2009/05/13 17:19:21 jym Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.1.2.3 2009/07/23 23:31:47 jym Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.1.2.2 2009/05/13 17:19:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.1.2.3 2009/07/23 23:31:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.1.2.2 2009/05/13 17:19:21 jym Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/endian.h>
-#include <sys/sysctl.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -54,7 +53,6 @@ struct sdtemp_softc {
 	envsys_data_t *sc_sensor;
 	int sc_resolution;
 	uint16_t sc_capability;
-	uint16_t sc_low_lim, sc_high_lim, sc_crit_lim;
 };
 
 static int  sdtemp_match(device_t, cfdata_t, void *);
@@ -64,6 +62,10 @@ CFATTACH_DECL_NEW(sdtemp, sizeof(struct sdtemp_softc),
 	sdtemp_match, sdtemp_attach, NULL, NULL);
 
 static void	sdtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void	sdtemp_get_limits(struct sysmon_envsys *, envsys_data_t *,
+				  sysmon_envsys_lim_t *);
+static void	sdtemp_set_limits(struct sysmon_envsys *, envsys_data_t *,
+				  sysmon_envsys_lim_t *);
 #ifdef NOT_YET
 static int	sdtemp_read_8(struct sdtemp_softc *, uint8_t, uint8_t *);
 static int	sdtemp_write_8(struct sdtemp_softc *, uint8_t, uint8_t);
@@ -71,12 +73,8 @@ static int	sdtemp_write_8(struct sdtemp_softc *, uint8_t, uint8_t);
 static int	sdtemp_read_16(struct sdtemp_softc *, uint8_t, uint16_t *);
 static int	sdtemp_write_16(struct sdtemp_softc *, uint8_t, uint16_t);
 static uint32_t	sdtemp_decode_temp(struct sdtemp_softc *, uint16_t);
-static void	sdtemp_set_thresh(struct sdtemp_softc *, int, uint16_t);
 static bool	sdtemp_pmf_suspend(device_t PMF_FN_PROTO);
 static bool	sdtemp_pmf_resume(device_t PMF_FN_PROTO);
-
-SYSCTL_SETUP_PROTO(sysctl_sdtemp_setup);
-static int sdtemp_sysctl_helper(SYSCTLFN_PROTO);
 
 struct sdtemp_dev_entry {
 	const uint16_t sdtemp_mfg_id;
@@ -86,8 +84,9 @@ struct sdtemp_dev_entry {
 	const char    *sdtemp_desc;
 };
 
-/* sysctl stuff */
-static int hw_node = CTL_EOL;
+/* Convert sysmon_envsys uKelvin value to simple degC */
+
+#define	__UK2C(uk) (((uk) - 273150000) / 1000000)
 
 /*
  * List of devices known to conform to JEDEC JC42.4
@@ -172,9 +171,8 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct sdtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	const struct sysctlnode *node = NULL;
+	sysmon_envsys_lim_t limits;
 	uint16_t mfgid, devid;
-	int32_t	dev_sysctl_num;
 	int i, error;
 
 	sc->sc_tag = ia->ia_tag;
@@ -184,7 +182,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 	if ((error = sdtemp_read_16(sc, SDTEMP_REG_MFG_ID,  &mfgid)) != 0 ||
 	    (error = sdtemp_read_16(sc, SDTEMP_REG_DEV_REV, &devid)) != 0) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error(": attach error %d\n", error);
 		return;
 	}
@@ -236,6 +234,12 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 
 	/* Hook us into the sysmon_envsys subsystem */
 	sc->sc_sme = sysmon_envsys_create();
+	sc->sc_sme->sme_name = device_xname(self);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = sdtemp_refresh;
+	sc->sc_sme->sme_get_limits = sdtemp_get_limits;
+	sc->sc_sme->sme_set_limits = sdtemp_set_limits;
+
 	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t), KM_NOSLEEP);
 	if (!sc->sc_sensor) {
 		aprint_error_dev(self, "unable to allocate sc_sensor\n");
@@ -245,12 +249,8 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	/* Initialize sensor data. */
 	sc->sc_sensor->units =  ENVSYS_STEMP;
 	sc->sc_sensor->state = ENVSYS_SINVALID;
-#ifdef ENVSYS_FMONLIMITS
 	sc->sc_sensor->flags |= ENVSYS_FMONLIMITS;
-#else
-	sc->sc_sensor->flags |= ENVSYS_FMONWARNOVER | ENVSYS_FMONWARNUNDER |
-				ENVSYS_FMONCRITOVER;
-#endif
+	sc->sc_sensor->monitor = true;
 	(void)strlcpy(sc->sc_sensor->desc, device_xname(self),
 	    sizeof(sc->sc_sensor->desc));
 
@@ -261,10 +261,6 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Register the device */
-	sc->sc_sme->sme_name = device_xname(self);
-	sc->sc_sme->sme_cookie = sc;
-	sc->sc_sme->sme_refresh = sdtemp_refresh;
-
 	error = sysmon_envsys_register(sc->sc_sme);
 	if (error) {
 		aprint_error_dev(self, "error %d registering with sysmon\n",
@@ -275,73 +271,29 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, sdtemp_pmf_suspend, sdtemp_pmf_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-
 	/* Retrieve and display hardware monitor limits */
-	i = 0;
+	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &limits);
 	aprint_normal_dev(self, "");
-	iic_acquire_bus(sc->sc_tag, 0);
-	if (sdtemp_read_16(sc, SDTEMP_REG_LOWER_LIM, &sc->sc_low_lim) == 0 &&
-	    sc->sc_low_lim != 0) {
-		aprint_normal("low limit %d ", sc->sc_low_lim);
+	i = 0;
+	if (limits.sel_flags & PROP_WARNMIN) {
+		aprint_normal("low limit %dC", __UK2C(limits.sel_warnmin));
 		i++;
 	}
-	if (sdtemp_read_16(sc, SDTEMP_REG_UPPER_LIM, &sc->sc_high_lim) == 0 &&
-	    sc->sc_high_lim != 0) {
-		aprint_normal("high limit %d ", sc->sc_high_lim);
+	if (limits.sel_flags & PROP_WARNMAX) {
+		aprint_normal("%shigh limit %dC ", (i)?", ":"",
+			      __UK2C(limits.sel_warnmax));
 		i++;
 	}
-	if (sdtemp_read_16(sc, SDTEMP_REG_CRIT_LIM, &sc->sc_crit_lim) == 0 &&
-	    sc->sc_crit_lim != 0) {
-		aprint_normal("critical limit %d ", sc->sc_crit_lim);
+	if (limits.sel_flags & PROP_CRITMAX) {
+		aprint_normal("%scritical limit %dC ", (i)?", ":"",
+			      __UK2C(limits.sel_critmax));
 		i++;
 	}
-	iic_release_bus(sc->sc_tag, 0);
 	if (i == 0)
 		aprint_normal("no hardware limits set\n");
 	else
 		aprint_normal("\n");
 
-	/* Create our sysctl tree.  We just store the softc pointer for
-	 * now;  the sysctl_helper function will take care of creating
-	 * a real string on the fly.  We explicitly specify the new nodes'
-	 * sysctl_num in order to identify the specific limit rather than
-	 * using CTL_CREATE;  this is OK since we're the only place that
-	 * touches the sysctl tree for the device.
-	 */
-
-	if (hw_node != CTL_EOL)
-		sysctl_createv(NULL, 0, NULL, &node, 0,
-		    CTLTYPE_NODE, device_xname(self),
-		    NULL, NULL, 0, NULL, 0,
-		    CTL_HW, CTL_CREATE, CTL_EOL);
-	if (node != NULL) {
-		dev_sysctl_num = node->sysctl_num;
-		sysctl_createv(NULL, 0, NULL, &node, 0,
-		    CTLTYPE_NODE, "limits",
-		    SYSCTL_DESCR("temperature limits"),
-		    NULL, 0, NULL, 0, 
-		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
-	}
-	if (node != NULL) {
-		sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-		    CTLTYPE_INT, "low_limit",
-		    SYSCTL_DESCR("alarm window lower limit"),
-		    sdtemp_sysctl_helper, 0, sc, sizeof(int),
-		    CTL_HW, dev_sysctl_num, node->sysctl_num,
-			SDTEMP_REG_LOWER_LIM, CTL_EOL);
-		sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-		    CTLTYPE_INT, "high_limit",
-		    SYSCTL_DESCR("alarm window upper limit"),
-		    sdtemp_sysctl_helper, 0, sc, sizeof(int),
-		    CTL_HW, dev_sysctl_num, node->sysctl_num, 
-			SDTEMP_REG_UPPER_LIM, CTL_EOL);
-		sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-		    CTLTYPE_INT, "crit_limit",
-		    SYSCTL_DESCR("critical alarm limit"),
-		    sdtemp_sysctl_helper, 0, sc, sizeof(int),
-		    CTL_HW, dev_sysctl_num, node->sysctl_num,
-			SDTEMP_REG_CRIT_LIM, CTL_EOL);
-	}
 	return;
 
 bad:
@@ -350,33 +302,68 @@ bad2:
 	sysmon_envsys_destroy(sc->sc_sme);
 }
 
-/* Set up the threshold registers */
+/* Retrieve current limits from device, and encode in uKelvins */
 static void
-sdtemp_set_thresh(struct sdtemp_softc *sc, int reg, uint16_t val)
+sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		  sysmon_envsys_lim_t *limits)
 {
-	int error;
-	uint16_t *valp;
+	struct sdtemp_softc *sc = sme->sme_cookie;
+	uint16_t lim;
 
-	switch (reg) {
-	case SDTEMP_REG_LOWER_LIM:
-		valp = &sc->sc_low_lim;
-		break;
-	case SDTEMP_REG_UPPER_LIM:
-		valp = &sc->sc_high_lim;
-		break;
-	case SDTEMP_REG_CRIT_LIM:
-		valp = &sc->sc_crit_lim;
-		break;
-	default:
-		return;
+	limits->sel_flags = 0;
+	iic_acquire_bus(sc->sc_tag, 0);
+	if (sdtemp_read_16(sc, SDTEMP_REG_LOWER_LIM, &lim) == 0 && lim != 0) {
+		limits->sel_warnmin = sdtemp_decode_temp(sc, lim);
+		limits->sel_flags |= PROP_WARNMIN;
 	}
+	if (sdtemp_read_16(sc, SDTEMP_REG_UPPER_LIM, &lim) == 0 && lim != 0) {
+		limits->sel_warnmax = sdtemp_decode_temp(sc, lim);
+		limits->sel_flags |= PROP_WARNMAX;
+	}
+	if (sdtemp_read_16(sc, SDTEMP_REG_CRIT_LIM, &lim) == 0 && lim != 0) {
+		limits->sel_critmax = sdtemp_decode_temp(sc, lim);
+		limits->sel_flags |= PROP_CRITMAX;
+	}
+	iic_release_bus(sc->sc_tag, 0);
+}
+
+/* Send current limit values to the device */
+static void
+sdtemp_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		  sysmon_envsys_lim_t *limits)
+{
+	uint16_t val;
+	struct sdtemp_softc *sc = sme->sme_cookie;
 
 	iic_acquire_bus(sc->sc_tag, 0);
-	error = sdtemp_write_16(sc, reg, (val << 4) & SDTEMP_TEMP_MASK);
+	if (limits->sel_flags & PROP_WARNMIN) {
+		val = __UK2C(limits->sel_warnmin);
+		(void)sdtemp_write_16(sc, SDTEMP_REG_LOWER_LIM,
+					(val << 4) & SDTEMP_TEMP_MASK);
+	}
+	if (limits->sel_flags & PROP_WARNMAX) {
+		val = __UK2C(limits->sel_warnmax);
+		(void)sdtemp_write_16(sc, SDTEMP_REG_UPPER_LIM,
+					(val << 4) & SDTEMP_TEMP_MASK);
+	}
+	if (limits->sel_flags & PROP_CRITMAX) {
+		val = __UK2C(limits->sel_critmax);
+		(void)sdtemp_write_16(sc, SDTEMP_REG_CRIT_LIM,
+					(val << 4) & SDTEMP_TEMP_MASK);
+	}
 	iic_release_bus(sc->sc_tag, 0);
 
-	if (error == 0)
-		*valp = val;
+	/*
+	 * If at least one limit is set that we can handle, and no
+	 * limits are set that we cannot handle, tell sysmon that
+	 * the driver will take care of monitoring the limits!
+	 */
+	if (limits->sel_flags & (PROP_CRITMIN | PROP_BATTCAP | PROP_BATTWARN))
+		limits->sel_flags &= ~PROP_DRIVER_LIMITS;
+	else if (limits->sel_flags & PROP_LIMITS)
+		limits->sel_flags |= PROP_DRIVER_LIMITS;
+	else
+		limits->sel_flags &= ~PROP_DRIVER_LIMITS;
 }
 
 #ifdef NOT_YET	/* All registers on these sensors are 16-bits */
@@ -472,7 +459,9 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	edata->value_cur = sdtemp_decode_temp(sc, val);
 
 	/* Now check for limits */
-	if (val & SDTEMP_ABOVE_CRIT)
+	if ((edata->upropset & PROP_DRIVER_LIMITS) == 0)
+		edata->state = ENVSYS_SVALID;
+	else if (val & SDTEMP_ABOVE_CRIT)
 		edata->state = ENVSYS_SCRITOVER;
 	else if (val & SDTEMP_ABOVE_UPPER)
 		edata->state = ENVSYS_SWARNOVER;
@@ -480,70 +469,6 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SWARNUNDER;
 	else
 		edata->state = ENVSYS_SVALID;
-}
-
-SYSCTL_SETUP(sysctl_sdtemp_setup, "sysctl hw.sdtemp subtree setup")
-{
-	const struct sysctlnode *node;
-
-	if (sysctl_createv(clog, 0, NULL, &node,
-			   CTLFLAG_PERMANENT,
-			   CTLTYPE_NODE, "hw", NULL,
-			   NULL, 0, NULL, 0,
-			   CTL_HW, CTL_EOL) != 0)
-		return;
-
-	hw_node = node->sysctl_num;
-}
-
-/*
- * The sysctl node actually contains just a pointer to our softc.  We
- * extract the individual limits on the fly, and if necessary replace
- * the value with the new value specified by the user.
- *
- * Inspired by similar code in sys/net/if_tap.c
- */
-static int
-sdtemp_sysctl_helper(SYSCTLFN_ARGS)
-{
-	struct sdtemp_softc *sc;
-	struct sysctlnode node;
-	int error, reg;
-	uint16_t reg_value;
-	int lim_value;
-
-	node = *rnode;
-	sc = node.sysctl_data;
-	reg = node.sysctl_num;
-
-	iic_acquire_bus(sc->sc_tag, 0);
-	error = sdtemp_read_16(sc, reg, &reg_value);
-	iic_release_bus(sc->sc_tag, 0);
-
-#ifdef DEBUG
-	aprint_verbose_dev(sc->sc_dev, "(%s) sc %p reg %d val 0x%04x err %d\n",
-	    __func__, sc, reg, reg_value, error);
-#endif
-
-	if (error == 0) {
-		lim_value = reg_value >> 4;
-		node.sysctl_data = &lim_value;
-		error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	}
-	if (error || newp == NULL)
-		return (error);
-
-	/*
-	 * We're being asked to update the sysctl value, so retrieve
-	 * the new value and check for valid range
-	 */
-	lim_value = *(int *)node.sysctl_data;
-	if (lim_value < -256 || lim_value > 255)
-		return (EINVAL);
-
-	sdtemp_set_thresh(sc, reg, (uint16_t)lim_value);
-
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.6 2007/08/26 22:59:09 dyoung Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.6.40.1 2009/07/23 23:32:47 jym Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.6 2007/08/26 22:59:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.6.40.1 2009/07/23 23:32:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -98,6 +98,19 @@ agrether_ctor(struct agr_softc *sc, struct ifnet *ifp_port)
 	agr_mc_init(sc, &priv->aep_multiaddrs);
 
 	sc->sc_iftprivate = priv;
+	/*
+	 * inherit ports capabilities
+	 * XXX this really needs to be the intersection of all
+	 * ports capabilities, not just the latest port.
+	 * Okay if ports are the same.
+	 */
+	ifp->if_capabilities = ifp_port->if_capabilities &
+			(IFCAP_TSOv4 | IFCAP_TSOv6 |
+			IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+			IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+			IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+			IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
+			IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx);
 
 	ether_ifattach(ifp, CLLADDR(ifp_port->if_sadl));
 	ec->ec_capabilities =
@@ -149,9 +162,30 @@ agrether_portinit(struct agr_softc *sc, struct agr_port *port)
 		}
 		ec->ec_capabilities &=
 		    ec_port->ec_capabilities |
-		    ~(ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_MTU);
+		    ~(ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING);
 	}
 
+	/* Enable vlan support */
+	if ((ec->ec_nvlans > 0) && 
+	     ec_port->ec_nvlans++ == 0 &&
+	    (ec_port->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
+		struct ifnet *p = port->port_ifp;
+		/*
+		 * Enable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
+		if (p->if_flags & IFF_UP) {
+			ifr.ifr_flags = p->if_flags;
+			error = (*p->if_ioctl)(p, SIOCSIFFLAGS,
+			    (void *) &ifr);
+			if (error) {
+				if (ec_port->ec_nvlans-- == 1)
+					ec_port->ec_capenable &=
+					    ~ETHERCAP_VLAN_MTU;
+				return (error);
+			}
+		}
+	}
 	/* XXX ETHERCAP_JUMBO_MTU */
 
 	priv = malloc(sizeof(*priv), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -185,10 +219,25 @@ static int
 agrether_portfini(struct agr_softc *sc, struct agr_port *port)
 {
 	struct ifreq ifr;
+	struct ethercom *ec_port = (void *)port->port_ifp;
 	int error;
 
 	if (port->port_iftprivate == NULL) {
 		return 0;
+	}
+
+	if (ec_port->ec_nvlans > 0) {
+		/* Disable vlan support */
+		ec_port->ec_nvlans = 0;
+		/*
+		 * Disable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+		if (port->port_ifp->if_flags & IFF_UP) {
+			ifr.ifr_flags = port->port_ifp->if_flags;
+			(void) (*port->port_ifp->if_ioctl)(port->port_ifp,
+			    SIOCSIFFLAGS, (void *) &ifr);
+		}
 	}
 
 	memset(&ifr, 0, sizeof(ifr));

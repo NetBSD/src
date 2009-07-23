@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.292.2.1 2009/05/13 17:22:28 jym Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.292.2.2 2009/07/23 23:32:48 jym Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.292.2.1 2009/05/13 17:22:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.292.2.2 2009/07/23 23:32:48 jym Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1298,6 +1298,10 @@ findpcb:
 	tp = NULL;
 	so = NULL;
 	if (inp) {
+		/* Check the minimum TTL for socket. */
+		if (ip->ip_ttl < inp->inp_ip_minttl)
+			goto drop;
+
 		tp = intotcpcb(inp);
 		so = inp->inp_socket;
 	}
@@ -2104,7 +2108,7 @@ after_listen:
 			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
 			TCP_STAT_PUTREF();
 		} else if ((tiflags & TH_RST) &&
-			   th->th_seq != tp->last_ack_sent) {
+			   th->th_seq != tp->rcv_nxt) {
 			/*
 			 * Test for reset before adjusting the sequence
 			 * number for overlapping data.
@@ -2230,7 +2234,7 @@ after_listen:
 	 *	Close the tcb.
 	 */
 	if (tiflags & TH_RST) {
-		if (th->th_seq != tp->last_ack_sent)
+		if (th->th_seq != tp->rcv_nxt)
 			goto dropafterack_ratelim;
 
 		switch (tp->t_state) {

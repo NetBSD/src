@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.29.2.1 2009/05/13 17:18:45 jym Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.29.2.2 2009/07/23 23:31:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.1 2009/05/13 17:18:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.29.2.2 2009/07/23 23:31:37 jym Exp $");
 
 #include "opt_modular.h"
 
@@ -714,9 +714,10 @@ initx86_load_memmap(paddr_t first_avail)
 				if (tmp != seg_start) {
 #ifdef DEBUG_MEMLOAD
 					printf("loading 0x%"PRIx64"-0x%"PRIx64
-					    " (0x%lx-0x%lx)\n",
+					    " (0x%"PRIx64"-0x%"PRIx64")\n",
 					    seg_start, tmp,
-					    atop(seg_start), atop(tmp));
+					    (uint64_t)atop(seg_start),
+					    (uint64_t)atop(tmp));
 #endif
 					uvm_page_physload(atop(seg_start),
 					    atop(tmp), atop(seg_start),
@@ -728,9 +729,10 @@ initx86_load_memmap(paddr_t first_avail)
 			if (seg_start != seg_end) {
 #ifdef DEBUG_MEMLOAD
 				printf("loading 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%lx-0x%lx)\n",
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    seg_start, seg_end,
-				    atop(seg_start), atop(seg_end));
+				    (uint64_t)atop(seg_start),
+				    (uint64_t)atop(seg_end));
 #endif
 				uvm_page_physload(atop(seg_start),
 				    atop(seg_end), atop(seg_start),
@@ -752,9 +754,10 @@ initx86_load_memmap(paddr_t first_avail)
 				if (tmp != seg_start1) {
 #ifdef DEBUG_MEMLOAD
 					printf("loading 0x%"PRIx64"-0x%"PRIx64
-					    " (0x%lx-0x%lx)\n",
+					    " (0x%"PRIx64"-0x%"PRIx64")\n",
 					    seg_start1, tmp,
-					    atop(seg_start1), atop(tmp));
+					    (uint64_t)atop(seg_start1),
+					    (uint64_t)atop(tmp));
 #endif
 					uvm_page_physload(atop(seg_start1),
 					    atop(tmp), atop(seg_start1),
@@ -766,9 +769,10 @@ initx86_load_memmap(paddr_t first_avail)
 			if (seg_start1 != seg_end1) {
 #ifdef DEBUG_MEMLOAD
 				printf("loading 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%lx-0x%lx)\n",
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    seg_start1, seg_end1,
-				    atop(seg_start1), atop(seg_end1));
+				    (uint64_t)atop(seg_start1),
+				    (uint64_t)atop(seg_end1));
 #endif
 				uvm_page_physload(atop(seg_start1),
 				    atop(seg_end1), atop(seg_start1),

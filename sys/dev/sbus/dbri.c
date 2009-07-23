@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.21.2.1 2009/05/13 17:21:22 jym Exp $	*/
+/*	$NetBSD: dbri.c,v 1.21.2.2 2009/07/23 23:32:20 jym Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.21.2.1 2009/05/13 17:21:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.21.2.2 2009/07/23 23:32:20 jym Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2102,7 +2102,19 @@ dbri_malloc(void *v, int dir, size_t s, struct malloc_type *mt, int flags)
 static void
 dbri_free(void *v, void *p, struct malloc_type *mt)
 {
-	free(p, mt);
+	struct dbri_softc *sc = v;
+	struct dbri_desc *dd;
+	int i;
+
+	for (i = 0; i < sc->sc_desc_used; i++) {
+		dd = &sc->sc_desc[i];
+		if (dd->buf == p)
+			break;
+	}
+	if (i >= sc->sc_desc_used)
+		return;
+	bus_dmamap_unload(sc->sc_dmat, dd->dmamap);
+	bus_dmamap_destroy(sc->sc_dmat, dd->dmamap);
 }
 
 static paddr_t

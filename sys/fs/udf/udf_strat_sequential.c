@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.8.2.1 2009/05/13 17:21:55 jym Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.8.2.2 2009/07/23 23:32:33 jym Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.8.2.1 2009/05/13 17:21:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.8.2.2 2009/07/23 23:32:33 jym Exp $");
 #endif /* not lint */
 
 
@@ -125,9 +125,7 @@ udf_wr_nodedscr_callback(struct buf *buf)
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {
 		/* first unlock the node */
-		KASSERT(udf_node->i_flags & IN_CALLBACK_ULK);
-		UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
-
+		UDF_UNLOCK_NODE(udf_node, 0);
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.312.2.1 2009/05/13 17:20:24 jym Exp $
+#	$NetBSD: files.pci,v 1.312.2.2 2009/07/23 23:31:57 jym Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -913,11 +913,6 @@ file	dev/pci/if_msk.c		mskc | msk
 attach sdhc at pci with sdhc_pci
 file	dev/pci/sdhc_pci.c		sdhc_pci
 
-#
-# Direct Rendering Manager
-#
-include "dev/pci/drm/files.pcidrm"
-
 # generic framebuffer console driver, PCI frontend
 attach genfb at pci with genfb_pci
 file	dev/pci/genfb_pci.c	genfb_pci
@@ -959,7 +954,7 @@ file	dev/pci/if_lii.c		lii
 # Silicon Image SteelVine SATA-II controllers
 define siisata
 file dev/ic/siisata.c atapibus & atabus & siisata
-device siisata: ata, ata_dma, ata_udma, sata, siisata
+device siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
 attach siisata at pci with siisata_pci
 file dev/pci/siisata_pci.c siisata_pci
 

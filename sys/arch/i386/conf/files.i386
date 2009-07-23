@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.341.2.1 2009/05/13 17:17:49 jym Exp $
+#	$NetBSD: files.i386,v 1.341.2.2 2009/07/23 23:31:36 jym Exp $
 #
 # new style config file for i386 architecture
 #
@@ -243,6 +243,7 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file	arch/x86/isa/clock.c		isa
+file	arch/x86/isa/rtc.c		isa
 
 # TSC support
 file	arch/x86/x86/tsc.c

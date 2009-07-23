@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.142 2008/12/16 22:35:30 christos Exp $  */
+/*	$NetBSD: atw.c,v 1.142.2.1 2009/07/23 23:31:47 jym Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.142 2008/12/16 22:35:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.142.2.1 2009/07/23 23:31:47 jym Exp $");
 
 #include "bpfilter.h"
 
@@ -574,7 +574,8 @@ atw_attach(struct atw_softc *sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct atw_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
 	    1, &sc->sc_cdnseg, 0)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate control data, error = %d\n",
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate control data, error = %d\n",
 		    error);
 		goto fail_0;
 	}
@@ -582,7 +583,8 @@ atw_attach(struct atw_softc *sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg,
 	    sizeof(struct atw_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n",
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control data, error = %d\n",
 		    error);
 		goto fail_1;
 	}
@@ -590,16 +592,17 @@ atw_attach(struct atw_softc *sc)
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct atw_control_data), 1,
 	    sizeof(struct atw_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control data DMA map, "
-		    "error = %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct atw_control_data), NULL,
 	    0)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load control data DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load control data DMA map, error = %d\n", error);
 		goto fail_3;
 	}
 
@@ -611,8 +614,9 @@ atw_attach(struct atw_softc *sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    sc->sc_ntxsegs, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create tx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_4;
 		}
 	}
@@ -623,8 +627,9 @@ atw_attach(struct atw_softc *sc)
 	for (i = 0; i < ATW_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create rx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_5;
 		}
 	}

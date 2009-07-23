@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.62 2009/01/13 13:35:52 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.62.2.1 2009/07/23 23:31:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.62 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.62.2.1 2009/07/23 23:31:45 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,37 +579,46 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	struct timespec ts;
 	struct partinfo dpart;
 	struct vattr va;
-	struct nameidata nd;
+	/* nd -> nd2 to reduce mistakes while updating only some namei calls */
+	struct nameidata nd2;
+	struct vnode *vp;
 
 	/*
 	 * Get the mounted file system.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount);
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(fss->fss_mount,
+				NSM_FOLLOW_NOEMULROOT, &vp);
+	if (error != 0)
 		return error;
 
-	if ((nd.ni_vp->v_vflag & VV_ROOT) != VV_ROOT) {
-		vrele(nd.ni_vp);
+	if ((vp->v_vflag & VV_ROOT) != VV_ROOT) {
+		vrele(vp);
 		return EINVAL;
 	}
 
-	sc->sc_mount = nd.ni_vp->v_mount;
+	sc->sc_mount = vp->v_mount;
 	memcpy(sc->sc_mntname, sc->sc_mount->mnt_stat.f_mntonname, MNAMELEN);
 
-	vrele(nd.ni_vp);
+	vrele(vp);
 
 	/*
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fss->fss_bstore);
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_user(fss->fss_bstore,
+				NSM_FOLLOW_NOEMULROOT, &vp);
+	if (error != 0)
 		return error;
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0) {
+		vrele(vp);
+		return error;
+	}
 
-	if (nd.ni_vp->v_type == VREG && nd.ni_vp->v_mount == sc->sc_mount) {
+	if (vp->v_type == VREG && vp->v_mount == sc->sc_mount) {
 		sc->sc_flags |= FSS_PERSISTENT;
-		sc->sc_bs_vp = nd.ni_vp;
+		sc->sc_bs_vp = vp;
 
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
 		bits = sizeof(sc->sc_bs_bshift)*NBBY;
@@ -632,24 +641,24 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 		return error;
 	}
-	vput(nd.ni_vp);
+	vput(vp);
 
 	/*
 	 * Get the block device it is mounted on.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    sc->sc_mount->mnt_stat.f_mntfromname);
-	if ((error = namei(&nd)) != 0)
+	error = namei_simple_kernel(sc->sc_mount->mnt_stat.f_mntfromname,
+				NSM_FOLLOW_NOEMULROOT, &vp);
+	if (error != 0)
 		return error;
 
-	if (nd.ni_vp->v_type != VBLK) {
-		vrele(nd.ni_vp);
+	if (vp->v_type != VBLK) {
+		vrele(vp);
 		return EINVAL;
 	}
 
-	sc->sc_bdev = nd.ni_vp->v_rdev;
-	vrele(nd.ni_vp);
+	sc->sc_bdev = vp->v_rdev;
+	vrele(vp);
 
 	/*
 	 * Get the block device size.
@@ -665,14 +674,14 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
-	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
+	NDINIT(&nd2, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
+	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0)
 		return error;
-	VOP_UNLOCK(nd.ni_vp, 0);
+	VOP_UNLOCK(nd2.ni_vp, 0);
 
-	sc->sc_bs_vp = nd.ni_vp;
+	sc->sc_bs_vp = nd2.ni_vp;
 
-	if (nd.ni_vp->v_type != VREG && nd.ni_vp->v_type != VCHR)
+	if (nd2.ni_vp->v_type != VREG && nd2.ni_vp->v_type != VCHR)
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.218.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.218.2.2 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.218.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.218.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -504,7 +504,8 @@ exit1(struct lwp *l, int rv)
 	/* Reload parent pointer, since p may have been reparented above */
 	q = p->p_pptr;
 
-	if (__predict_false((p->p_slflag & PSL_FSTRACE) == 0 && p->p_exitsig != 0)) {
+	if (__predict_false((p->p_slflag & PSL_FSTRACE) == 0 && 
+	    p->p_exitsig != 0)) {
 		exit_psignal(p, q, &ksi);
 		kpsignal(q, &ksi, NULL);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.127.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.127.2.2 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.127.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.127.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -236,6 +236,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.127.2.1 2009/05/13 17:21:56 jym Exp $
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
+#include <sys/filedesc.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -596,8 +597,19 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_inheritedprio = -1;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	l2->l_pflag = LP_MPSAFE;
-	l2->l_fd = p2->p_fd;
 	TAILQ_INIT(&l2->l_ld_locks);
+
+	/*
+	 * If not the first LWP in the process, grab a reference to the
+	 * descriptor table.
+	 */
+	l2->l_fd = p2->p_fd;
+	if (p2->p_nlwps != 0) {
+		KASSERT(l1->l_proc == p2);
+		atomic_inc_uint(&l2->l_fd->fd_refcnt);
+	} else {
+		KASSERT(l1->l_proc != p2);
+	}
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/* Mark it as a system LWP and not a candidate for swapping */
@@ -723,6 +735,7 @@ lwp_exit(struct lwp *l)
 	current = (l == curlwp);
 
 	KASSERT(current || (l->l_stat == LSIDL && l->l_target_cpu == NULL));
+	KASSERT(p == curproc);
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
@@ -751,6 +764,9 @@ lwp_exit(struct lwp *l)
 
 	if (p->p_emul->e_lwp_exit)
 		(*p->p_emul->e_lwp_exit)(l);
+
+	/* Drop filedesc reference. */
+	fd_free();
 
 	/* Delete the specificdata while it's still safe to sleep. */
 	specificdata_fini(lwp_specificdata_domain, &l->l_specdataref);
@@ -1722,6 +1738,18 @@ lwp_ctl_exit(void)
 	mutex_destroy(&lp->lp_lock);
 	kmem_free(lp, sizeof(*lp));
 	p->p_lwpctl = NULL;
+}
+
+/*
+ * Return the current LWP's "preemption counter".  Used to detect
+ * preemption across operations that can tolerate preemption without
+ * crashing, but which may generate incorrect results if preempted.
+ */
+uint64_t
+lwp_pctr(void)
+{
+
+	return curlwp->l_ncsw;
 }
 
 #if defined(DDB)

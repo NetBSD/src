@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.51.8.1 2009/05/13 17:23:07 jym Exp $	*/
+/*	$NetBSD: fs.h,v 1.51.8.2 2009/07/23 23:33:03 jym Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -29,6 +29,10 @@
  * SUCH DAMAGE.
  *
  *	@(#)fs.h	8.13 (Berkeley) 3/21/95
+ */
+
+/*
+ * NOTE: COORDINATE ON-DISK FORMAT CHANGES WITH THE FREEBSD PROJECT.
  */
 
 #ifndef	_UFS_FFS_FS_H_

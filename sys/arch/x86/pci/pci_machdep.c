@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.14.1 2009/05/13 17:18:44 jym Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.2 2009/07/23 23:31:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.1 2009/05/13 17:18:44 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.2 2009/07/23 23:31:37 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,6 +168,8 @@ struct {
 	/* Parallels Desktop for Mac */
 	_qe(0, 2, 0, PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO),
 	_qe(0, 3, 0, PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS),
+	/* SIS 740 */
+	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740),
 	/* SIS 741 */
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	{0, 0xffffffff} /* patchable */

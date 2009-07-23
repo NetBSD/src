@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.20.2.1 2009/05/13 17:21:50 jym Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.20.2.2 2009/07/23 23:32:32 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.20.2.1 2009/05/13 17:21:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.20.2.2 2009/07/23 23:32:32 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -198,7 +198,6 @@ int
 hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	struct nameidata nd;
 	struct hfs_args *args = data;
 	struct vnode *devvp;
 	struct hfsmount *hmp;
@@ -237,10 +236,10 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
-		if ((error = namei(&nd)) != 0)
+		error = namei_simple_user(args->fspec,
+					NSM_FOLLOW_NOEMULROOT, &devvp);
+		if (error != 0)
 			return error;
-		devvp = nd.ni_vp;
 	
 		if (!update) {
 			/*

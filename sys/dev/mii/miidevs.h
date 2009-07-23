@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.84.2.1 2009/05/13 17:20:15 jym Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.84.2.2 2009/07/23 23:31:57 jym Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.87 2009/04/19 11:17:46 msaitoh Exp
+ *	NetBSD: miidevs,v 1.88 2009/06/18 11:32:29 rjs Exp
  */
 
 /*-
@@ -309,6 +309,8 @@
 #define	MII_STR_xxMARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1116R	0x0024
+#define	MII_STR_xxMARVELL_E1116R	"Marvell 88E1116R Gigabit PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000

@@ -1,8 +1,7 @@
-/* $NetBSD: siisatareg.h,v 1.2 2008/09/08 23:36:54 gmcgarry Exp $ */
-/* Id: siisatareg.h,v 1.10 2008/05/21 15:51:36 jakllsch Exp  */
+/* $NetBSD: siisatareg.h,v 1.2.8.1 2009/07/23 23:31:48 jym Exp $ */
 
 /*-
- * Copyright (c) 2007, 2008 Jonathan A. Kollasch.
+ * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +32,7 @@
 
 /* the SiI3124 has 4 ports, all others so far have less */
 #define SIISATA_MAX_PORTS 4
-/* the so far all parts have a full complement of slots */
+/* all parts have a full complement of slots (so far) */
 #define SIISATA_MAX_SLOTS 31
 
 /* structures */
@@ -96,6 +95,11 @@ struct siisata_prb {
 #define SIISATA_PCI_BAR0 0x10
 #define SIISATA_PCI_BAR1 0x18
 #define SIISATA_PCI_BAR2 0x20
+
+/* Cardbus stuff */
+#define SIISATA_CARDBUS_BAR0 SIISATA_PCI_BAR0
+#define SIISATA_CARDBUS_BAR1 SIISATA_PCI_BAR1
+#define SIISATA_CARDBUS_BAR2 SIISATA_PCI_BAR2
 
 /* BAR 0 */
 

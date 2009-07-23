@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.39.10.1 2009/05/13 17:22:41 jym Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.39.10.2 2009/07/23 23:32:52 jym Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.39.10.1 2009/05/13 17:22:41 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.39.10.2 2009/07/23 23:32:52 jym Exp $");
 
 /*
  * IPsec controller part.
@@ -728,8 +728,8 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (*error != 0) {
 		KEY_FREESP(&sp);
 		sp = NULL;
+		DPRINTF(("%s: done, error %d\n", __func__, *error));
 	}
-	DPRINTF(("ipsecpol: done, sp %p error %d, \n", sp, *error));
 	return sp;
 }
 
@@ -778,8 +778,8 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (*error != 0) {
 		KEY_FREESP(&sp);
 		sp = NULL;
+		DPRINTF(("%s: done, error %d\n", __func__, *error));
 	}
-	DPRINTF(("ipsecpol: done, sp %p error %d, \n", sp, *error));
 	return sp;
 }
 #endif /* INET6 */

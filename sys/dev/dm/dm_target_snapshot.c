@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.7.6.1 2009/05/13 17:19:16 jym Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.7.6.2 2009/07/23 23:31:46 jym Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
  *        snapshot_origin device, cow device, persistent flag, chunk size
  */
 int
-dm_target_snapshot_init(dm_dev_t *dmv, void **target_config, char *params)
+dm_target_snapshot_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dict)
 {
 	dm_target_snapshot_config_t *tsc;
 	dm_pdev_t *dmp_snap, *dmp_cow;
@@ -393,7 +393,7 @@ dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
  */
 int
 dm_target_snapshot_orig_init(dm_dev_t *dmv, void **target_config, 
-	char *params)
+	prop_dictionary_t dict)
 {
 	dm_target_snapshot_origin_config_t *tsoc;
 	dm_pdev_t *dmp_real;

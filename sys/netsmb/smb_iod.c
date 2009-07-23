@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.29.10.1 2009/05/13 17:22:51 jym Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.29.10.2 2009/07/23 23:32:53 jym Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.29.10.1 2009/05/13 17:22:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.29.10.2 2009/07/23 23:32:53 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ smb_iod_rqprocessed(struct smb_rq *rqp, int error)
 	rqp->sr_rpgen++;
 	rqp->sr_state = SMBRQ_NOTIFIED;
 	wakeup(&rqp->sr_state);
-	callout_stop(&rqp->sr_timo_ch);
+	if (rqp->sr_timo > 0)
+		callout_stop(&rqp->sr_timo_ch);
 	if (rqp->sr_recvcallback)
 		(*rqp->sr_recvcallback)(rqp->sr_recvarg);
 	SMBRQ_SUNLOCK(rqp);
@@ -268,11 +269,9 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	m = m_copym(rqp->sr_rq.mb_top, 0, M_COPYALL, M_WAIT);
 	error = rqp->sr_lerror = (m) ? SMB_TRAN_SEND(vcp, m, l) : ENOBUFS;
 	if (error == 0) {
-		if (rqp->sr_timo > 0) {
-			callout_init(&rqp->sr_timo_ch, 0);
+		if (rqp->sr_timo > 0)
 			callout_reset(&rqp->sr_timo_ch, rqp->sr_timo,
 				smb_iod_rqtimedout, rqp);
-		}
 
 		if (rqp->sr_flags & SMBR_NOWAIT) {
 			/* caller doesn't want to wait, flag as processed */

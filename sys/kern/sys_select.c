@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.12.2.1 2009/05/13 17:21:57 jym Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.12.2.2 2009/07/23 23:32:35 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.12.2.1 2009/05/13 17:21:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.12.2.2 2009/07/23 23:32:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 			    sizeof(fd_mask) * 6];
 	proc_t		* const p = l->l_proc;
 	char 		*bits;
-	int		ncoll, error, timo;
+	int		ncoll, error, timo, nf;
 	size_t		ni;
 	sigset_t	oldmask;
 	struct timespec sleepts;
@@ -228,9 +228,10 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	error = 0;
 	if (nd < 0)
 		return (EINVAL);
-	if (nd > p->p_fd->fd_nfiles) {
+	nf = p->p_fd->fd_dt->dt_nfiles;
+	if (nd > nf) {
 		/* forgiving; slightly wrong */
-		nd = p->p_fd->fd_nfiles;
+		nd = nf;
 	}
 	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
 	if (ni * 6 > sizeof(smallbits)) {
@@ -427,14 +428,15 @@ pollcommon(lwp_t *l, register_t *retval, struct pollfd *u_fds, u_int nfds,
 	proc_t		* const p = l->l_proc;
 	sigset_t	oldmask;
 	int		ncoll, error, timo;
-	size_t		ni;
+	size_t		ni, nf;
 	struct timespec	sleepts;
 	selcpu_t	*sc;
 	kmutex_t	*lock;
 
-	if (nfds > p->p_fd->fd_nfiles) {
+	nf = p->p_fd->fd_dt->dt_nfiles;
+	if (nfds > nf) {
 		/* forgiving; slightly wrong */
-		nfds = p->p_fd->fd_nfiles;
+		nfds = nf;
 	}
 	ni = nfds * sizeof(struct pollfd);
 	if (ni > sizeof(smallfds)) {

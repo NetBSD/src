@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.61.2.1 2009/05/13 17:21:56 jym Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.61.2.2 2009/07/23 23:32:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.61.2.1 2009/05/13 17:21:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.61.2.2 2009/07/23 23:32:34 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -879,7 +879,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			kmem_free(newkn, sizeof(*newkn));
 			return EBADF;
 		}
-		ff = fdp->fd_ofiles[fd];
+		ff = fdp->fd_dt->dt_ff[fd];
 		if (fd <= fdp->fd_lastkqfile) {
 			SLIST_FOREACH(kn, &ff->ff_knlist, kn_link) {
 				if (kq == kn->kn_kq &&
@@ -944,7 +944,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			} else {
 				/* Otherwise, knote is on an fd. */
 				list = (struct klist *)
-				    &fdp->fd_ofiles[kn->kn_id]->ff_knlist;
+				    &fdp->fd_dt->dt_ff[kn->kn_id]->ff_knlist;
 				if ((int)kn->kn_id > fdp->fd_lastkqfile)
 					fdp->fd_lastkqfile = kn->kn_id;
 			}
@@ -1377,7 +1377,7 @@ kqueue_close(file_t *fp)
 
 	mutex_enter(&fdp->fd_lock);
 	for (i = 0; i <= fdp->fd_lastkqfile; i++) {
-		if ((ff = fdp->fd_ofiles[i]) == NULL)
+		if ((ff = fdp->fd_dt->dt_ff[i]) == NULL)
 			continue;
 		kqueue_doclose(kq, (struct klist *)&ff->ff_knlist, i);
 	}
@@ -1452,7 +1452,7 @@ knote_fdclose(int fd)
 	filedesc_t *fdp;
 
 	fdp = curlwp->l_fd;
-	list = (struct klist *)&fdp->fd_ofiles[fd]->ff_knlist;
+	list = (struct klist *)&fdp->fd_dt->dt_ff[fd]->ff_knlist;
 	mutex_enter(&fdp->fd_lock);
 	while ((kn = SLIST_FIRST(list)) != NULL) {
 		knote_detach(kn, fdp, true);
@@ -1485,7 +1485,7 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 
 	/* Remove from descriptor table. */
 	if (kn->kn_fop->f_isfd)
-		list = (struct klist *)&fdp->fd_ofiles[kn->kn_id]->ff_knlist;
+		list = (struct klist *)&fdp->fd_dt->dt_ff[kn->kn_id]->ff_knlist;
 	else
 		list = &fdp->fd_knhash[KN_HASH(kn->kn_id, fdp->fd_knhashmask)];
 
