@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.13 2009/06/20 10:24:28 cegger Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.14 2009/07/23 15:26:20 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.13 2009/06/20 10:24:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.14 2009/07/23 15:26:20 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -880,7 +880,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	    (int)(PDIR_SLOT_PTE + 3), pde + PAGE_SIZE * 4, (long)addr,
 	    (int64_t)pde[PDIR_SLOT_PTE + 3]));
 #endif
-	/* Mark tables RO, and pin the kenrel's shadow as L2 */
+	/* Mark tables RO, and pin the kernel's shadow as L2 */
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 5; i++, addr += PAGE_SIZE) {
 		xen_bt_set_readonly(((vaddr_t)pde) + PAGE_SIZE * i);
@@ -918,7 +918,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	xen_bt_set_readonly(new_pgd);
 #endif
 	/* Pin the PGD */
-	__PRINTK(("pin PDG\n"));
+	__PRINTK(("pin PGD\n"));
 #ifdef PAE
 	xpq_queue_pin_l3_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #else
@@ -934,7 +934,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif /* PAE */
 #endif /* i386 */
 	/* Switch to new tables */
-	__PRINTK(("switch to PDG\n"));
+	__PRINTK(("switch to PGD\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
 	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry 0x%" PRIx64 "\n",
 	    (int64_t)bt_pgd[PDIR_SLOT_PTE]));
@@ -953,7 +953,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 
 	/* Now we can safely reclaim space taken by old tables */
 	
-	__PRINTK(("unpin old PDG\n"));
+	__PRINTK(("unpin old PGD\n"));
 	/* Unpin old PGD */
 	xpq_queue_unpin_table(xpmap_ptom_masked(old_pgd - KERNBASE));
 	/* Mark old tables RW */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2009/07/19 15:17:29 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2009/07/23 15:26:20 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2009/07/19 15:17:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2009/07/23 15:26:20 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1713,7 +1713,7 @@ pmap_free_pvs(struct pv_entry *pve)
 /*
  * main pv_entry manipulation functions:
  *   pmap_enter_pv: enter a mapping onto a pv_head list
- *   pmap_remove_pv: remove a mappiing from a pv_head list
+ *   pmap_remove_pv: remove a mapping from a pv_head list
  *
  * NOTE: Both pmap_enter_pv and pmap_remove_pv expect the caller to lock 
  *       the pvh before calling
