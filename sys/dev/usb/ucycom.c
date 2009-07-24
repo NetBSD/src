@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.27 2009/07/24 06:54:10 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.28 2009/07/24 06:58:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.27 2009/07/24 06:54:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.28 2009/07/24 06:58:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,7 @@ ucycomstart(struct tty *tp)
 		break;
 
 	default:
-        	DPRINTFN(2,("ucycomstart: unknown output report size (%zd)\n",
+		DPRINTFN(2,("ucycomstart: unknown output report size (%zd)\n",
 		    sc->sc_olen));
 		goto out;
 	}
