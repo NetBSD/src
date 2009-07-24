@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.35 2009/05/02 21:01:01 mlelstv Exp $	*/
+/*	$NetBSD: dump.c,v 1.36 2009/07/24 11:34:03 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.35 2009/05/02 21:01:01 mlelstv Exp $");
+__RCSID("$NetBSD: dump.c,v 1.36 2009/07/24 11:34:03 njoly Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -288,7 +288,7 @@ dumprecord(int trpoints, FILE *fp)
 		ktrcsw(kte);
 		break;
 	case KTR_EMUL:
-		ktremul(kte);
+		putpendq(kte);
 		break;
 	default:
 		/*
@@ -649,6 +649,7 @@ ktrsysret(struct ktr_entry *kte)
 {
 	struct ktr_header *kth = &kte->kte_kth;
 	struct ktr_sysret *ktr = (struct ktr_sysret *)(kth + 1);
+	struct ktr_entry *emul;
 	struct ktr_entry *genio;
 	struct ktr_entry *syscall_ent;
 
@@ -674,6 +675,12 @@ ktrsysret(struct ktr_entry *kte)
 	if (genio != NULL) {
 		genioprint(&genio->kte_kth);
 		free(genio);
+	}
+
+	emul = getpendq(kth, KTR_EMUL, NULL);
+	if (emul != NULL) {
+		newline();
+		ktremul(emul);
 	}
 
 	flushpendq(kte);
