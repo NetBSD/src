@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.26 2009/07/24 06:50:40 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.27 2009/07/24 06:54:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.26 2009/07/24 06:50:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.27 2009/07/24 06:54:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			SET(t.c_cflag, CRTSCTS);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
-		
+
 		tp->t_ospeed = 0;
 		(void) ucycomparam(tp, &t);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -363,7 +363,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		/* Allocate an output report buffer */
 		sc->sc_obuf = malloc(sc->sc_olen, M_USBDEV, M_WAITOK);
-	
+
 		DPRINTF(("ucycomopen: sc->sc_obuf=%p\n", sc->sc_obuf));
 
 #if 0
@@ -475,7 +475,7 @@ ucycomstart(struct tty *tp)
 	}
 
 	SET(tp->t_state, TS_BUSY);
-	
+
 	/*
 	 * The 8 byte output report uses byte 0 for control and byte
 	 * count.
@@ -483,7 +483,7 @@ ucycomstart(struct tty *tp)
 	 * The 32 byte output report uses byte 0 for control. Byte 1
 	 * is used for byte count.
 	 */
-	memset(sc->sc_obuf, 0, sc->sc_olen);	
+	memset(sc->sc_obuf, 0, sc->sc_olen);
 	len = cnt;
 	switch (sc->sc_olen) {
 	case 8:
@@ -491,7 +491,7 @@ ucycomstart(struct tty *tp)
 			DPRINTF(("ucycomstart(8): big buffer %d chars\n", len));
 			len = sc->sc_olen - 1;
 		}
-	
+
 		memcpy(sc->sc_obuf + 1, data, len);
 		sc->sc_obuf[0] = len | sc->sc_mcr;
 
@@ -509,14 +509,14 @@ ucycomstart(struct tty *tp)
 		}
 #endif
 		break;
-	
+
 	case 32:
 		if (cnt > sc->sc_olen - 2) {
 			DPRINTF(("ucycomstart(32): big buffer %d chars\n",
 			    len));
 			len = sc->sc_olen - 2;
 		}
-		
+
 		memcpy(sc->sc_obuf + 2, data, len);
 		sc->sc_obuf[0] = sc->sc_mcr;
 		sc->sc_obuf[1] = len;
@@ -534,7 +534,7 @@ ucycomstart(struct tty *tp)
 		}
 #endif
 		break;
-	
+
 	default:
         	DPRINTFN(2,("ucycomstart: unknown output report size (%zd)\n",
 		    sc->sc_olen));
@@ -799,7 +799,7 @@ ucycompoll(dev_t dev, int events, struct lwp *l)
 	    device_lookup_private(&ucycom_cd, UCYCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int err;
-	
+
 	DPRINTF(("ucycompoll: sc=%p, tp=%p, events=%d, lwp=%p\n", sc, tp,
 	    events, l));
 
@@ -870,7 +870,7 @@ ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 	int (*rint)(int , struct tty *) = tp->t_linesw->l_rint;
 	uint8_t *cp = ibuf;
 	int s, n, st, chg;
-	
+
 	/* We understand 8 byte and 32 byte input records */
 	switch (len) {
 	case 8:
@@ -984,13 +984,13 @@ Static void
 ucycom_dtr(struct ucycom_softc *sc, int set)
 {
 	uint8_t old;
-	
+
 	old = sc->sc_mcr;
 	if (set)
 		SET(sc->sc_mcr, UCYCOM_DTR);
 	else
 		CLR(sc->sc_mcr, UCYCOM_DTR);
-	
+
 	if (old ^ sc->sc_mcr)
 		ucycom_set_status(sc);
 }
@@ -1000,13 +1000,13 @@ Static void
 ucycom_rts(struct ucycom_softc *sc, int set)
 {
 	uint8_t old;
-	
+
 	old = sc->sc_msr;
 	if (set)
 		SET(sc->sc_mcr, UCYCOM_RTS);
 	else
 		CLR(sc->sc_mcr, UCYCOM_RTS);
-	
+
 	if (old ^ sc->sc_mcr)
 		ucycom_set_status(sc);
 }
@@ -1022,7 +1022,7 @@ ucycom_set_status(struct ucycom_softc *sc)
 		    "size (%zd)\n", sc->sc_olen));
 		return;
 	}
-	
+
 	DPRINTF(("ucycom_set_status: %d\n", sc->sc_mcr));
 
 	memset(sc->sc_obuf, 0, sc->sc_olen);
@@ -1040,7 +1040,7 @@ ucycom_get_cfg(struct ucycom_softc *sc)
 {
 	int err, cfg, baud;
 	uint8_t report[5];
-	
+
 	err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
 	    report, sc->sc_flen);
 	cfg = report[4];
