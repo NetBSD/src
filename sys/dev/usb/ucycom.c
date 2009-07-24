@@ -1,11 +1,11 @@
-/*	$NetBSD: ucycom.c,v 1.25 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.26 2009/07/24 06:50:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nick Hudson 
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.25 2009/01/20 18:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.26 2009/07/24 06:50:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("ucycomopen: unit=%d\n", UCYCOMUNIT(dev)));
 	DPRINTF(("ucycomopen: sc=%p\n", sc));
- 
+
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -367,8 +367,9 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		DPRINTF(("ucycomopen: sc->sc_obuf=%p\n", sc->sc_obuf));
 
 #if 0
-		/* XXX Don't do this as for some reason trying to do an interrupt
-		 * XXX out transfer at this point means everything gets stuck!?!
+		/* XXX Don't do this as for some reason trying to do an
+		 * XXX interrupt out transfer at this point means everything
+		 * XXX gets stuck!?!
 		 */
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
@@ -494,7 +495,8 @@ ucycomstart(struct tty *tp)
 		memcpy(sc->sc_obuf + 1, data, len);
 		sc->sc_obuf[0] = len | sc->sc_mcr;
 
-		DPRINTF(("ucycomstart(8): sc->sc_obuf[0] = %d | %d = %d\n", len, sc->sc_mcr, sc->sc_obuf[0]));
+		DPRINTF(("ucycomstart(8): sc->sc_obuf[0] = %d | %d = %d\n", len,
+		    sc->sc_mcr, sc->sc_obuf[0]));
 #ifdef UCYCOM_DEBUG
 		if (ucycomdebug > 10) {
 			u_int32_t i;
@@ -510,14 +512,16 @@ ucycomstart(struct tty *tp)
 	
 	case 32:
 		if (cnt > sc->sc_olen - 2) {
-			DPRINTF(("ucycomstart(32): big buffer %d chars\n", len));
+			DPRINTF(("ucycomstart(32): big buffer %d chars\n",
+			    len));
 			len = sc->sc_olen - 2;
 		}
 		
 		memcpy(sc->sc_obuf + 2, data, len);
 		sc->sc_obuf[0] = sc->sc_mcr;
 		sc->sc_obuf[1] = len;
-		DPRINTF(("ucycomstart(32): sc->sc_obuf[0] = %d\nsc->sc_obuf[1] = %d\n", sc->sc_obuf[0], sc->sc_obuf[1]));
+		DPRINTF(("ucycomstart(32): sc->sc_obuf[0] = %d\n"
+		    "sc->sc_obuf[1] = %d\n", sc->sc_obuf[0], sc->sc_obuf[1]));
 #ifdef UCYCOM_DEBUG
 		if (ucycomdebug > 10) {
 			u_int32_t i;
@@ -543,7 +547,8 @@ ucycomstart(struct tty *tp)
 		int i;
 
 		if (len != 0) {
-			DPRINTF(("ucycomstart: sc->sc_obuf[0..%zd) =", sc->sc_olen));
+			DPRINTF(("ucycomstart: sc->sc_obuf[0..%zd) =",
+			    sc->sc_olen));
 			for (i = 0; i < sc->sc_olen; i++)
 				DPRINTF((" %02x", sc->sc_obuf[i]));
 			DPRINTF(("\n"));
@@ -672,7 +677,8 @@ ucycomread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = sc->sc_tty;
 	int err;
 
-	DPRINTF(("ucycomread: sc=%p, tp=%p, uio=%p, flag=%d\n", sc, tp, uio, flag));
+	DPRINTF(("ucycomread: sc=%p, tp=%p, uio=%p, flag=%d\n", sc, tp, uio,
+	    flag));
 	if (sc->sc_dying)
 		return (EIO);
 
@@ -689,7 +695,8 @@ ucycomwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = sc->sc_tty;
 	int err;
 
-	DPRINTF(("ucycomwrite: sc=%p, tp=%p, uio=%p, flag=%d\n", sc, tp, uio, flag));
+	DPRINTF(("ucycomwrite: sc=%p, tp=%p, uio=%p, flag=%d\n", sc, tp, uio,
+	    flag));
 	if (sc->sc_dying)
 		return (EIO);
 
@@ -793,7 +800,8 @@ ucycompoll(dev_t dev, int events, struct lwp *l)
 	struct tty *tp = sc->sc_tty;
 	int err;
 	
-	DPRINTF(("ucycompoll: sc=%p, tp=%p, events=%d, lwp=%p\n", sc, tp, events, l));
+	DPRINTF(("ucycompoll: sc=%p, tp=%p, events=%d, lwp=%p\n", sc, tp,
+	    events, l));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -1010,8 +1018,8 @@ ucycom_set_status(struct ucycom_softc *sc)
 	int err;
 
 	if (sc->sc_olen != 8 && sc->sc_olen != 32) {
-		DPRINTFN(2,("ucycom_set_status: unknown output report size (%zd)\n",
-		    sc->sc_olen));
+		DPRINTFN(2,("ucycom_set_status: unknown output report "
+		    "size (%zd)\n", sc->sc_olen));
 		return;
 	}
 	
@@ -1036,9 +1044,10 @@ ucycom_get_cfg(struct ucycom_softc *sc)
 	err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
 	    report, sc->sc_flen);
 	cfg = report[4];
-	baud = (report[3] << 24) + (report[2] << 16) + (report[1] << 8) + report[0];
-	DPRINTF(("ucycom_configure: device reports %d baud, %d-%c-%d (%d)\n", baud,
-	    5 + (cfg & UCYCOM_DATA_MASK),
+	baud = (report[3] << 24) + (report[2] << 16) + (report[1] << 8) +
+	    report[0];
+	DPRINTF(("ucycom_configure: device reports %d baud, %d-%c-%d (%d)\n",
+	    baud, 5 + (cfg & UCYCOM_DATA_MASK),
 	    (cfg & UCYCOM_PARITY_MASK) ?
 		((cfg & UCYCOM_PARITY_TYPE_MASK) ? 'O' : 'E') : 'N',
 	    (cfg & UCYCOM_STOP_MASK) ? 2 : 1, cfg));
