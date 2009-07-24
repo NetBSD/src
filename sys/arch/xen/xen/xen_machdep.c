@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.3 2009/05/31 20:15:37 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.4 2009/07/24 11:30:28 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.3 2009/05/31 20:15:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.4 2009/07/24 11:30:28 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -293,6 +293,10 @@ xen_prepare_suspend(void) {
 	 */
 	pmap_unmap_all_apdp_pdes();
 
+#ifdef PAE
+	pmap_unmap_shadow_entries();
+#endif
+
 	/*
 	 * save/restore code does not translate these MFNs to their
 	 * associated PFNs, so we must do it
@@ -325,6 +329,10 @@ xen_prepare_resume(void) {
 		DPRINTK(("could not map new shared info page"));
 		HYPERVISOR_crash();
 	}
+
+#ifdef PAE
+	pmap_map_shadow_entries();
+#endif
 
 	if (xen_start_info.nr_pages != physmem) {
 		/*

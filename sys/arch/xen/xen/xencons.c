@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.31.2.3 2009/07/23 23:31:38 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.31.2.4 2009/07/24 11:30:28 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.3 2009/07/23 23:31:38 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.4 2009/07/24 11:30:28 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.3 2009/07/23 23:31:38 jym Exp $")
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
 
 #include <machine/stdarg.h>
 #include <xen/xen.h>
@@ -228,25 +229,21 @@ xencons_suspend(device_t dev PMF_FN_ARGS) {
 
 	int evtch;
 
-	if (xendomain_is_dom0()) {
-		evtch = unbind_virq_from_evtch(VIRQ_CONSOLE);
-		hypervisor_mask_event(evtch);
-		if (event_remove_handler(evtch, xencons_intr,
-		    xencons_console_device) != 0)
-			aprint_error_dev(dev,
-			    "can't remove handler: xencons_intr\n");
-	} else {
+	/* dom0 console should not be suspended */
+	if (!xendomain_is_dom0()) {
 #ifdef XEN3
 		evtch = xen_start_info.console_evtchn;
 		hypervisor_mask_event(evtch);
 		if (event_remove_handler(evtch, xencons_handler,
-		    xencons_console_device) != 0)
+		    xencons_console_device) != 0) {
 			aprint_error_dev(dev,
 			    "can't remove handler: xencons_handler\n");
+		}
 #endif
+
+		aprint_verbose_dev(dev, "removed event channel %d\n", evtch);
 	}
 
-	aprint_verbose_dev(dev, "removed event channel %d\n", evtch);
 
 	return true;
 }
@@ -257,16 +254,18 @@ xencons_resume(device_t dev PMF_FN_ARGS) {
 	int evtch = -1;
 
 	if (xendomain_is_dom0()) {
-		evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
-		if (event_set_handler(evtch, xencons_intr,
-		    xencons_console_device, IPL_TTY, "xencons") != 0)
-			aprint_error_dev(dev, "can't register xencons_intr\n");
+	/* dom0 console resume is required only during first start-up */
+		if (cold) {
+			evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
+			event_set_handler(evtch, xencons_intr,
+			    xencons_console_device, IPL_TTY, "xencons");
+		}
 	} else {
 #ifdef XEN3
 		evtch = xen_start_info.console_evtchn;
-		if (event_set_handler(evtch, xencons_handler,
-		    xencons_console_device, IPL_TTY, "xencons") != 0)
-			aprint_error_dev(dev, "can't register xencons_handler\n");
+		event_set_handler(evtch, xencons_handler,
+		    xencons_console_device, IPL_TTY, "xencons");
+
 #else
 		(void)ctrl_if_register_receiver(CMSG_CONSOLE,
 		    xencons_rx, 0);
