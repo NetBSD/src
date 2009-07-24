@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.76 2009/07/09 07:30:17 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.77 2009/07/24 04:46:53 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -124,7 +124,7 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .if ${X11FLAVOUR} == "Xorg"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
-XORG_RELEASE=		'"Release 1.4.2"'
+XORG_RELEASE=		'"Release 1.6.2"'
 __XKBDEFRULES__=	'"xorg"'
 XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
