@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2009/07/23 13:34:26 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 2009/07/24 06:57:53 skrll Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -181,8 +181,6 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 
 
 /* bus access routines */
-#define DCIAS(pa)	((void)(pa))
-
 #define	BUS_SPACE_ALIGNED_POINTER(p, t)	ALIGNED_POINTER(p, t)
 
 #define	bus_space_map(t,a,c,ca,hp) \
