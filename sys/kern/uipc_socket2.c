@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.102 2009/04/09 00:43:38 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.103 2009/07/24 01:09:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.102 2009/04/09 00:43:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.103 2009/07/24 01:09:49 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -279,7 +279,8 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
 	so->so_snd.sb_mowner = head->so_snd.sb_mowner;
 #endif
-	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
+	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat) != 0)
+		goto out;
 	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
 	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
@@ -292,6 +293,7 @@ sonewconn(struct socket *head, int connstatus)
 	KASSERT(solocked(so));
 	if (error != 0) {
 		(void) soqremque(so, soqueue);
+out:
 		/*
 		 * Remove acccept filter if one is present.
 		 * XXX Is this really needed?
