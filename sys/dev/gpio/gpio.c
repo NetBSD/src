@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.21 2009/07/25 19:01:55 cegger Exp $ */
+/* $NetBSD: gpio.c,v 1.22 2009/07/25 19:18:01 cegger Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.21 2009/07/25 19:01:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.22 2009/07/25 19:18:01 cegger Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -309,14 +309,14 @@ gpioopen(dev_t dev, int flag, int mode,
 	sc = device_lookup_private(&gpio_cd, minor(dev));
 	if (sc == NULL)
 		return ENXIO;
-	DPRINTF(("%s: opening\n", sc->sc_dev->dv_xname));
+	DPRINTF(("%s: opening\n", device_xname(sc->sc_dev)));
 	if (sc->sc_opened) {
-		DPRINTF(("%s: already opened\n", sc->sc_dev->dv_xname));
+		DPRINTF(("%s: already opened\n", device_xname(sc->sc_dev)));
 		return EBUSY;
 	}
 
 	if ((ret = gpiobus_open(sc->sc_gc, sc->sc_dev))) {
-		DPRINTF(("%s: gpiobus_open returned %d\n", sc->sc_dev->dv_xname,
+		DPRINTF(("%s: gpiobus_open returned %d\n", device_xname(sc->sc_dev),
 		    ret));
 		return ret;
 	}
@@ -333,7 +333,7 @@ gpioclose(dev_t dev, int flag, int mode,
 	struct gpio_softc *sc;
 
 	sc = device_lookup_private(&gpio_cd, minor(dev));
-	DPRINTF(("%s: closing\n", sc->sc_dev->dv_xname));
+	DPRINTF(("%s: closing\n", device_xname(sc->sc_dev)));
 	gpiobus_close(sc->sc_gc, sc->sc_dev);
 	sc->sc_opened = 0;
 
@@ -373,7 +373,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 	gc = sc->sc_gc;
 
 	if (cmd != GPIOINFO && !device_is_active(sc->sc_dev)) {
-		DPRINTF(("%s: device is not active\n", sc->sc_dev->dv_xname));
+		DPRINTF(("%s: device is not active\n", device_xname(sc->sc_dev)));
 		return EBUSY;
 	}
 	
@@ -490,7 +490,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 		ga.ga_offset = attach->ga_offset;
 		ga.ga_mask = attach->ga_mask;
 		DPRINTF(("%s: attach %s with offset %d and mask 0x%02x\n",
-		    sc->sc_dev->dv_xname, ga.ga_dvname, ga.ga_offset,
+		    device_xname(sc->sc_dev), ga.ga_dvname, ga.ga_offset,
 		    ga.ga_mask));
 
 		locs[GPIOCF_OFFSET] = ga.ga_offset;
@@ -512,7 +512,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
                 
 		attach = (struct gpio_attach *)data;
 		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
-			if (strcmp(gdev->sc_dev->dv_xname, attach->ga_dvname)
+			if (strcmp(device_xname(gdev->sc_dev), attach->ga_dvname)
 			    == 0) {
 				if (config_detach(gdev->sc_dev, 0) == 0) {
 					LIST_REMOVE(gdev, sc_next);
@@ -607,7 +607,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 		break;
 	default:
 		/* Try the old API */
-		DPRINTF(("%s: trying the old API\n", sc->sc_dev->dv_xname));
+		DPRINTF(("%s: trying the old API\n", device_xname(sc->sc_dev)));
 		return gpio_ioctl_oapi(sc, cmd, data, flag, cred);
 	}
 	return 0;
