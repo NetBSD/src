@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.6 2009/03/18 16:00:17 cegger Exp $ */
+/* $NetBSD: gpioow.c,v 1.7 2009/07/25 16:17:10 mbalmer Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.6 2009/03/18 16:00:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.7 2009/07/25 16:17:10 mbalmer Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -77,7 +77,12 @@ int
 gpioow_match(device_t parent, cfdata_t cf,
     void *aux)
 {
-	return 1;
+	struct gpio_attach_args *ga = aux;
+
+	if (ga->ga_offset == -1)
+		return 0;
+
+	return strcmp(ga->ga_dvname, cf->cf_name) == 0;
 }
 
 void
@@ -90,7 +95,7 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 
 	/* Check that we have enough pins */
 	if (gpio_npins(ga->ga_mask) != GPIOOW_NPINS) {
-		printf(": invalid pin mask\n");
+		printf(": invalid pin mask 0x%02x\n", ga->ga_mask);
 		return;
 	}
 
@@ -151,10 +156,12 @@ gpioow_detach(device_t self, int flags)
 	struct gpioow_softc *sc = device_private(self);
 	int rv = 0;
 
+	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
+
 	if (sc->sc_ow_dev != NULL)
 		rv = config_detach(sc->sc_ow_dev, flags);
 
-	return (rv);
+	return rv;
 }
 
 int
