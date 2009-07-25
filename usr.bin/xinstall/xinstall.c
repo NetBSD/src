@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.111 2009/06/08 21:58:44 yamt Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.112 2009/07/25 11:45:58 gson Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.111 2009/06/08 21:58:44 yamt Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.112 2009/07/25 11:45:58 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -418,8 +418,7 @@ do_link(char *from_name, char *to_name)
 	int ret;
 
 	if (dorename) {
-		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
-		    xdirname(to_name));
+		(void)snprintf(tmpl, sizeof(tmpl), "%s.inst.XXXXXX", to_name);
 		/* This usage is safe. */
 		if (mktemp(tmpl) == NULL)
 			err(1, "%s: mktemp", tmpl);
@@ -448,8 +447,7 @@ do_symlink(char *from_name, char *to_name)
 	char tmpl[MAXPATHLEN];
 
 	if (dorename) {
-		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
-		    xdirname(to_name));
+		(void)snprintf(tmpl, sizeof(tmpl), "%s.inst.XXXXXX", to_name);
 		/* This usage is safe. */
 		if (mktemp(tmpl) == NULL)
 			err(1, "%s: mktemp", tmpl);
@@ -668,8 +666,7 @@ install(char *from_name, char *to_name, u_int flags)
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
 #endif
 	if (dorename) {
-		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
-		    xdirname(to_name));
+		(void)snprintf(tmpl, sizeof(tmpl), "%s.inst.XXXXXX", to_name);
 		oto_name = to_name;
 		to_name = tmpl;
 	} else {
