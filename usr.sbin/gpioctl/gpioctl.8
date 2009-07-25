@@ -1,6 +1,6 @@
-.\" $NetBSD: gpioctl.8,v 1.4 2008/01/09 15:56:27 xtraeme Exp $
-.\"	$OpenBSD: gpioctl.8,v 1.5 2004/12/02 05:11:40 grange Exp $
+.\" $NetBSD: gpioctl.8,v 1.5 2009/07/25 16:18:09 mbalmer Exp $
 .\"
+.\" Copyright (c) 2009 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,66 +15,71 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 9, 2008
+.Dd July 15, 2009
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
 .Nm gpioctl
 .Nd control GPIO devices
 .Sh SYNOPSIS
-.Nm
-.Op Fl hq
-.Op Fl d Ar device
-.Op Ar pin
-.Op Ar 0 | 1 | 2
-.Nm
-.Op Fl hq
-.Op Fl d Ar device
-.Fl c
+.Nm gpioctl
+.Op Fl q
+.Ar device
+attach
+.Ar device
+.Ar offset
+.Ar mask
+.Nm gpioctl
+.Op Fl q
+.Ar device
+detach
+.Ar device
+.Nm gpioctl
+.Op Fl q
+.Ar device
 .Ar pin
+.Op Ar 0 | 1 | 2
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+.Op Ar on | off | toggle
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+set
 .Op Ar flags
+.Op Ar name
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar pin
+unset
 .Sh DESCRIPTION
 The
 .Nm
-program allows manipulation of
-.Tn GPIO
+program allows manipulation of GPIO
 (General Purpose Input/Output) device pins.
-Such devices can be either part of the chipset or embedded
-.Tn CPU ,
+Such devices can be either part of the chipset or embedded CPU,
 or a separate chip.
-The usual way of using
-.Tn GPIO
-is to connect some simple devices such as LEDs, 1-wire thermal sensors,
-etc., to its pins.
+The usual way of using GPIO
+is to connect some simple devices such as LEDs and 1-wire thermal sensors
+to its pins.
 .Pp
-Each
-.Tn GPIO
-device has an associated device file in the
+Each GPIO device has an associated device file in the
 .Pa /dev
 directory.
-By default
-.Nm
-uses
-.Pa /dev/gpio0 ,
-which corresponds to the first found
-.Tn GPIO
-device in the system.
-If more than one
-.Tn GPIO
-device is present, an alternative device file can be specified with the
-.Fl d
-option in order to access a particular
-.Tn GPIO
-device.
+.Ar device
+can be specified with or without the
+.Pa /dev
+prefix.
+For example,
+.Pa /dev/gpio0
+or
+.Pa gpio0 .
 .Pp
-When executed without any arguments,
-.Nm
-reads information about the
-.Tn GPIO
-device and displays it.
-.Pp
-.Tn GPIO
-pins can be either
+GPIO pins can be either
 .Dq read
 or
 .Dq written
@@ -82,9 +87,7 @@ with the values of logical 0 or 1.
 If only a
 .Ar pin
 number is specified on the command line, the pin state will be read
-from the
-.Tn GPIO
-controller and displayed.
+from the GPIO controller and displayed.
 To write to a pin, a value must be specified after the
 .Ar pin
 number.
@@ -92,15 +95,28 @@ Values can be either 0 or 1.
 A value of 2 has a special meaning: it
 .Dq toggles
 the pin, i.e. changes its state to the opposite.
+Instead of the numerical values, the word
+.Ar on ,
+.Ar off ,
+or
+.Ar toggle
+can be used.
 .Pp
-Each pin can be configured with different flags with the
-.Fl c
-option.
-The following configuration flags are supported by the
-.Tn GPIO
-framework:
+Only pins that have been configured at securelevel 0, typically during system
+startup, are accessible once the securelevel has been raised.
+Pins can be given symbolic names for easier use.
+Besides using individual pins, device drivers that use GPIO pins can be
+attached to a
+.Xr gpio 4
+device using the
+.Nm
+command.
 .Pp
-.Bl -tag -width XXXXXXX -offset indent -compact
+The following configuration
+.Ar flags
+are supported by the GPIO framework:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It in
 input direction
 .It out
@@ -123,31 +139,23 @@ invert input
 invert output
 .El
 .Pp
-Note that not all the flags can be supported by the particular
-.Tn GPIO
-controller.
-The list of supported flags is always displayed when executing
-.Nm
-with the
-.Fl c
-option.
-If only a
-.Ar pin
-number is specified on the command line, the current pin flags will be
-displayed.
-To change pin flags, a new flags set separated by spaces must be
-specified after the
-.Ar pin
-number.
+Note that not all the flags may be supported by the particular GPIO controller.
 .Pp
-The
-.Fl q
-option causes
+When executed with only the
+.Xr gpio 4
+device name as argument,
 .Nm
-to operate quietly i.e. nothing is printed to stdout.
-The
-.Fl h
-option displays a usage summary.
+reads information about the
+.Tn GPIO
+device and displays it.
+At securelevel 0 the number of physically available pins is displayed,
+at higher securelevels the number of configured (set) pins is displayed.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl q
+Operate quietly i.e. nothing is printed to stdout.
+.El
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact
 .It /dev/gpio Ns Ar u
@@ -158,17 +166,33 @@ file.
 .Sh EXAMPLES
 Configure pin 20 to have push-pull output:
 .Pp
-.Dl # gpioctl -c 20 out pp
+.Dl # gpioctl gpio0 20 set out pp
 .Pp
 Write logical 1 to pin 20:
 .Pp
-.Dl # gpioctl 20 1
+.Dl # gpioctl gpio0 20 1
+.Pp
+Attach a
+.Xr onewire 4
+bus on a
+.Xr gpioow 4
+device on pin 4:
+.Pp
+.Dl # gpioctl gpio0 attach gpioow 4 0x01
+.Pp
+Detach the gpioow0 device:
+.Pp
+.Dl # gpioctl gpio0 detach gpioow0
+.Pp
+Configure pin 5 as output and name it error_led:
+.Pp
+.Dl # gpioctl gpio0 5 set out error_led
+.Pp
+Toggle the error_led:
+.Pp
+.Dl # gpioctl gpio0 error_led 2
 .Sh SEE ALSO
-.Xr elansc 4 ,
-.Xr gcscpcib 4 ,
-.Xr gpio 4 ,
-.Xr gscpcib 4 ,
-.Xr nsclpcsio 4
+.Xr gpio 4
 .Sh HISTORY
 The
 .Nm
@@ -181,3 +205,5 @@ The
 .Nm
 program was written by
 .An Alexander Yurchenko Aq grange@openbsd.org .
+Device attachment was added by
+.An Marc Balmer Aq marc@msys.ch .
