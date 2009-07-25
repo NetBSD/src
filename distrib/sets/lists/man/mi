@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1147 2009/07/18 21:32:53 reinoud Exp $
+# $NetBSD: mi,v 1.1148 2009/07/25 16:22:59 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1738,6 +1738,7 @@
 ./usr/share/man/cat5/genassym.cf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/generic.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/gettytab.0			man-sysutil-catman	.cat
+./usr/share/man/cat5/gpio.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/group.0			man-sys-catman		.cat
 ./usr/share/man/cat5/header_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/hesiod.conf.0		man-hesiod-catman	.cat
@@ -4262,6 +4263,7 @@
 ./usr/share/man/html5/genassym.cf.html		man-sys-htmlman		html
 ./usr/share/man/html5/generic.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/gettytab.html		man-sysutil-htmlman	html
+./usr/share/man/html5/gpio.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/group.html		man-sys-htmlman		html
 ./usr/share/man/html5/header_checks.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/hesiod.conf.html		man-hesiod-htmlman	html
@@ -6726,6 +6728,7 @@
 ./usr/share/man/man5/genassym.cf.5		man-sys-man		.man
 ./usr/share/man/man5/generic.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/gettytab.5			man-sysutil-man		.man
+./usr/share/man/man5/gpio.conf.5		man-sys-man		.man
 ./usr/share/man/man5/group.5			man-sys-man		.man
 ./usr/share/man/man5/header_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/hesiod.conf.5		man-hesiod-man		.man
