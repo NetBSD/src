@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1259 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1260 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -330,4 +330,13 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		lower than the option value. [minskim 20090717]
 	openssl: Import SNAP-20090710 under the new crypto/external
 		framework [christos 20090719]
-
+	gpio(4): Complete rework to integrate with kauth(9), allow for
+		runtime driver attachment, naming of individual pins.
+		[mbalmer 20090725]
+	gpiosim(4): New driver for development/testing purposes to simulate
+		a gpio(4) device.
+		[mbalmer 20090725]
+	gpioctl(8): New commandline syntax to reflect gpio(4) changes.
+		[mbalmer 20090725]
+	secmodel_44bsd(9), secmodel_securelevel(9): Add provisions to control
+		acces to gpio(4) pins. [mbalmer 20090725]
