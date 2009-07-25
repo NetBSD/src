@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_securelevel.9,v 1.5 2008/11/11 00:10:39 reed Exp $
+.\" $NetBSD: secmodel_securelevel.9,v 1.6 2009/07/25 16:20:11 mbalmer Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright (c) 2000 Hugh Graham
@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 2008
+.Dd July 10, 2009
 .Dt SECMODEL_SECURELEVEL 9
 .Os
 .Sh NAME
@@ -63,6 +63,8 @@ or procfs.
 Immutable and append-only file flags may be changed
 .It
 All devices may be read or written subject to their permissions
+.It
+GPIO pins can be set and device drivers can be attached to them
 .El
 .It \ 1 Em Secure mode
 .Bl -hyphen -compact
@@ -107,6 +109,8 @@ and
 calls are denied
 .It
 Access to unmanaged memory is denied
+.It
+Only GPIO pins that have been set at securelevel 0 can be accessed
 .El
 .It \ 2 Em Highly secure mode
 .Bl -hyphen -compact

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.78 2009/04/28 23:30:34 roy Exp $
+# $NetBSD: Makefile,v 1.79 2009/07/25 16:20:10 mbalmer Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ CONFIGFILES=\
 		ccd cgd cleartmp cron \
 		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck fsck_root ftp_proxy ftpd \
+		gpio \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \

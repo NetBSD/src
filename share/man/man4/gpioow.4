@@ -1,4 +1,4 @@
-.\"	$NetBSD: gpioow.4,v 1.2 2006/04/08 23:10:40 wiz Exp $
+.\"	$NetBSD: gpioow.4,v 1.3 2009/07/25 16:20:11 mbalmer Exp $
 .\"	$OpenBSD: gpioow.4,v 1.3 2006/03/06 10:24:46 grange Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 4, 2006
+.Dd July 19, 2009
 .Dt GPIOOW 4
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nd 1-Wire bus bit-banging through GPIO pin
 .Sh SYNOPSIS
 .Cd "gpioow* at gpio? offset 0 mask 0x1"
+.Cd "gpioow* at gpio?"
 .Cd "onewire* at gpioow?"
 .Sh DESCRIPTION
 The
@@ -37,6 +38,18 @@ locator.
 The
 .Ar mask
 locator should always be 0x1.
+The
+.Ar offset
+and
+.Ar mask
+can also be specified when
+.Nm
+is attached at runtime using the
+.Dv GPIOATTACH
+.Xr ioctl 2
+on the
+.Xr gpio 4
+device.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr intro 4 ,

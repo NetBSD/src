@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.8 2009/02/27 03:13:55 kenh Exp $
+.\" $NetBSD: gpio.4,v 1.9 2009/07/25 16:20:11 mbalmer Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 9, 2008
+.Dd July 19, 2009
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -50,6 +50,14 @@ directory, e.g.\&
 Access from userland is performed through
 .Xr ioctl 2
 calls on these devices.
+.Pp
+The layout of the GPIO device is defined at a securelevel < 1, i.e. typically
+during system boot, and cannot be changed later.
+GPIO pins can be configured and given a symbolic name and device drivers
+that use GPIO pins can be attached to the
+.Nm
+device at a securelevel < 1.
+All other pins will not be accessible once the runlevel has been raised.
 .Sh IOCTL INTERFACE
 The following structures and constants are defined in the
 .Aq Pa sys/gpio.h
@@ -68,22 +76,27 @@ struct gpio_info {
 };
 .Ed
 .Pp
-.It Dv GPIOPINREAD (struct gpio_pin_op)
+.It Dv GPIOREAD (struct gpio_req)
 Returns the input pin value in the
 .Fa gpio_pin_op
 structure:
 .Bd -literal
-struct gpio_pin_op {
-	int gp_pin;		/* pin number */
-	int gp_value;		/* value */
+#define GPIOMAXNAME		64
+
+struct gpio_req {
+	char gp_name[GPIOMAXNAME];	/* pin name */
+	int gp_pin;			/* pin number */
+	int gp_value;			/* value */
 };
 .Ed
 .Pp
 The
+.Fa gp_name
+or
 .Fa gp_pin
 field must be set before calling.
 .Pp
-.It Dv GPIOPINWRITE (struct gpio_pin_op)
+.It Dv GPIOWRITE (struct gpio_req)
 Writes the output value to the pin.
 The value set in the
 .Fa gp_value
@@ -96,20 +109,24 @@ On return, the
 .Fa gp_value
 field contains the old pin state.
 .Pp
-.It Dv GPIOPINTOGGLE (struct gpio_pin_op)
+.It Dv GPIOTOGGLE (struct gpio_req)
 Toggles the pin output value, i.e. changes it to the opposite.
 .Fa gp_value
 field is ignored and on return contains the old pin state.
 .Pp
-.It Dv GPIOPINCTL (struct gpio_pin_ctl)
+.It Dv GPIOSET (struct gpio_set)
 Changes pin configuration flags with the new ones provided in the
-.Fa gpio_pin_ctl
+.Fa gpio_set
 structure:
 .Bd -literal
-struct gpio_pin_ctl {
-	int gp_pin;		/* pin number */
-	int gp_caps;		/* pin capabilities (read-only) */
-	int gp_flags;		/* pin configuration flags */
+#define GPIOMAXNAME          64
+
+struct gpio_set {
+        char gp_name[GPIOMAXNAME];   /* pin name */
+        int gp_pin;                     /* pin number */
+        int gp_caps;                    /* pin capabilities (ro) */
+        int gp_flags;                   /* pin configuration flags */
+        char gp_name2[GPIOMAXNAME];  /* new name */
 };
 .Ed
 .Pp
@@ -140,14 +157,42 @@ invert input
 invert output
 .El
 .Pp
-Note that the
-.Tn GPIO
-controller
+Note that the GPIO controller
 may not support all of these flags.
 On return the
 .Fa gp_caps
 field contains flags that are supported.
 If no flags are specified, the pin configuration stays unchanged.
+.Pp
+Only GPIO pins that have been set using
+.Ar GPIOSET
+will be accessible at securelevels greater than 0.
+.Pp
+.It Dv GPIOUNSET (struct gpio_set)
+Unset the specified pin, i.e. clear its name and make it unaccessible
+at securelevels greater than 0.
+.It Dv GPIOATTACH (struct gpio_attach)
+Attach the device described in the
+.Fa gpio_attach
+structure on this gpio device.
+.Bd -literal
+struct gpio_attach {
+        char ga_dvname[16];     /* device name */
+        int ga_offset;          /* pin number */
+        u_int32_t ga_mask;      /* binary mask */
+};
+.Ed
+.It Dv GPIODETACH (struct gpio_attach)
+Detach a device from this gpio device that was previously attached using the
+.Dv GPIOATTACH
+.Xr ioctl 2 .
+The
+.Fa ga_offset
+and
+.Fa ga_mask
+fields of the
+.Fa gpio_attach
+structure are ignored.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact
@@ -177,5 +222,7 @@ and was ported to
 .Nx
 by
 .An Jared D. McNeill Aq jmcneill@NetBSD.org .
+Runtime device attachment was added by
+.An Marc Balmer Aq marc@msys.ch .
 .Sh BUGS
 Event capabilities are not supported.
