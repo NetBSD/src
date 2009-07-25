@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.200 2009/07/19 06:28:08 kiyohara Exp $
+# $NetBSD: ALL,v 1.201 2009/07/25 19:04:41 cegger Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.200 $"
+#ident 		"ALL-$Revision: 1.201 $"
 
 maxusers	32		# estimated number of users
 
@@ -1805,6 +1805,7 @@ options GEODE_DEBUG
 options GEOM_DEBUG
 options GE_DEBUG
 options GMAC_DEBUG
+options GPIO_DEBUG
 options GRE_DEBUG
 options GSFB_DEBUG_MONITOR
 options GTFDEBUG
