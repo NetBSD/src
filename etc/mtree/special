@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.128 2009/04/21 16:08:57 joerg Exp $
+#	$NetBSD: special,v 1.129 2009/07/25 16:20:10 mbalmer Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -75,6 +75,7 @@
 ./etc/ftpwelcome		type=file mode=0644 optional
 ./etc/gateways			type=file mode=0644 optional
 ./etc/gettytab			type=file mode=0644
+./etc/gpio.conf			type=file mode=644
 ./etc/group			type=file mode=0644
 ./etc/hesiod.conf		type=file mode=0644 optional
 ./etc/hosts			type=file mode=0644
@@ -206,6 +207,7 @@
 ./etc/rc.d/fsck_root		type=file mode=0555
 ./etc/rc.d/ftp_proxy		type=file mode=0555
 ./etc/rc.d/ftpd			type=file mode=0555
+./etc/rc.d/gpio			type=file mode=0555
 ./etc/rc.d/hostapd		type=file mode=0555
 ./etc/rc.d/httpd		type=file mode=0555
 ./etc/rc.d/identd		type=file mode=0555
