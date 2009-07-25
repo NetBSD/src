@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.394 2009/07/19 10:11:55 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.395 2009/07/25 16:23:39 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.394 2009/07/19 10:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.395 2009/07/25 16:23:39 mbalmer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.394 2009/07/19 10:11:55 yamt Exp $")
 #include "sysmon_taskq.h"
 #include "sysmon_wdog.h"
 #include "veriexec.h"
+#include "gpiosim.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
@@ -472,7 +473,9 @@ main(void)
 	ssp_init();
 
 	configure2();
-
+#if NGPIOSIM > 0
+	config_rootfound("gpiosim", NULL);
+#endif
 	/* Now timer is working.  Enable preemption. */
 	kpreempt_enable();
 
