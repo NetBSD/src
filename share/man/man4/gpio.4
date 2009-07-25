@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.9 2009/07/25 16:20:11 mbalmer Exp $
+.\" $NetBSD: gpio.4,v 1.10 2009/07/25 21:16:35 wiz Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -51,12 +51,12 @@ Access from userland is performed through
 .Xr ioctl 2
 calls on these devices.
 .Pp
-The layout of the GPIO device is defined at a securelevel < 1, i.e. typically
-during system boot, and cannot be changed later.
+The layout of the GPIO device is defined at a securelevel less than
+1, i.e. typically during system boot, and cannot be changed later.
 GPIO pins can be configured and given a symbolic name and device drivers
 that use GPIO pins can be attached to the
 .Nm
-device at a securelevel < 1.
+device at a securelevel less than 1.
 All other pins will not be accessible once the runlevel has been raised.
 .Sh IOCTL INTERFACE
 The following structures and constants are defined in the
