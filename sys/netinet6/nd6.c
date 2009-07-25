@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.131 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.132 2009/07/25 23:12:09 tonnerre Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.131 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.132 2009/07/25 23:12:09 tonnerre Exp $");
 
 #include "opt_ipsec.h"
 
@@ -176,7 +176,8 @@ nd6_ifattach(struct ifnet *ifp)
 	 * we won't accept RAs by default even if we set ND6_IFF_ACCEPT_RTADV
 	 * here.
 	 */
-	nd->flags = (ND6_IFF_PERFORMNUD | ND6_IFF_ACCEPT_RTADV);
+	nd->flags = (ND6_IFF_PERFORMNUD |
+		ip6_accept_rtadv ? ND6_IFF_ACCEPT_RTADV : 0);
 
 	/* XXX: we cannot call nd6_setmtu since ifp is not fully initialized */
 	nd6_setmtu0(ifp, nd);
@@ -710,6 +711,7 @@ regen_tmpaddr(struct in6_ifaddr *ia6)
 void
 nd6_purge(struct ifnet *ifp)
 {
+	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 	struct llinfo_nd6 *ln, *nln;
 	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr, *npr;
@@ -764,7 +766,8 @@ nd6_purge(struct ifnet *ifp)
 	if (nd6_defifindex == ifp->if_index)
 		nd6_setdefaultiface(0);
 
-	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
+	/* XXX: too restrictive? */
+	if (!ip6_forwarding && (ndi->flags & ND6_IFF_ACCEPT_RTADV)) {
 		/* refresh default router list */
 		defrouter_select();
 	}
@@ -1672,6 +1675,7 @@ nd6_cache_lladdr(
     int code	/* type dependent information */
 )
 {
+	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln = NULL;
 	int is_newentry;
@@ -1880,7 +1884,8 @@ fail:
 	 * for those are not autoconfigured hosts, we explicitly avoid such
 	 * cases for safety.
 	 */
-	if (do_update && ln->ln_router && !ip6_forwarding && ip6_accept_rtadv)
+	if (do_update && ln->ln_router && !ip6_forwarding &&
+		(ndi->flags & ND6_IFF_ACCEPT_RTADV))
 		defrouter_select();
 
 	return rt;
