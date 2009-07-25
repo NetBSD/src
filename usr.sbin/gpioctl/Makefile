@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.3 2009/04/22 15:23:03 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2009/07/25 16:18:09 mbalmer Exp $
 
 PROG=	gpioctl
-SRCS=	gpioctl.c
+SRCS=	gpioctl.c strtonum.c
 
 MAN=	gpioctl.8
 
