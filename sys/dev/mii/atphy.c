@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.5 2009/03/27 04:42:50 cegger Exp $ */
+/*	$NetBSD: atphy.c,v 1.6 2009/07/25 16:25:13 cegger Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.5 2009/03/27 04:42:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.6 2009/07/25 16:25:13 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			/*
 			 * XXX
 			 * Due to an unknown reason powering down PHY resulted
-			 * in unexpected results such as inaccessbility of
+			 * in unexpected results such as inaccessibility of
 			 * hardware of freshly rebooted system. Disable
 			 * powering down PHY until I got more information for
 			 * Attansic/Atheros PHY hardwares.
@@ -207,7 +207,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			bmcr |= BMCR_FDX;
 			/* Enable pause. */
 			if (sc->mii_flags & MIIF_DOPAUSE)
-				anar |= (3 << 10);
+				anar |= ANAR_X_PAUSE_TOWARDS;
 		}
 
 		if ((sc->mii_extcapabilities & (EXTSR_1000TFDX |
@@ -379,7 +379,7 @@ atphy_mii_phy_auto(struct mii_softc *sc)
 
 	anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
 	if (sc->mii_flags & MIIF_DOPAUSE)
-		anar |= (3 << 10);
+		anar |= ANAR_X_PAUSE_TOWARDS;
 	PHY_WRITE(sc, MII_ANAR, anar);
 	if (sc->mii_extcapabilities & (EXTSR_1000TFDX | EXTSR_1000THDX))
 		PHY_WRITE(sc, MII_100T2CR, GTCR_ADV_1000TFDX |
