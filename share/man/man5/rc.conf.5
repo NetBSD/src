@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.129 2009/04/10 16:18:04 joerg Exp $
+.\"	$NetBSD: rc.conf.5,v 1.130 2009/07/25 16:20:11 mbalmer Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -318,6 +318,15 @@ from the output of
 .Xr dmesg 8 .
 Passes
 .Sy dmesg_flags .
+.It Sy gpio
+.Sq YES
+or
+.Sq NO .
+Configure
+.Xr gpio 4
+devices .
+See
+.Xr gpio.conf 5 .
 .It Sy mixerctl
 .Sq YES
 or
