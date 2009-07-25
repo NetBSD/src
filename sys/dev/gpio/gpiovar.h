@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.8 2009/07/25 16:17:10 mbalmer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.9 2009/07/25 16:30:44 mbalmer Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct gpio_pinmap {
 };
 
 struct gpio_dev {
-	struct device		*sc_dev;	/* the gpio device */
+	device_t		sc_dev;	/* the gpio device */
 	LIST_ENTRY(gpio_dev)	sc_next;
 };
 
