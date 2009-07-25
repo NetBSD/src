@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.54 2009/07/22 18:25:26 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.55 2009/07/25 21:19:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.54 2009/07/22 18:25:26 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.55 2009/07/25 21:19:23 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: el.c,v 1.54 2009/07/22 18:25:26 christos Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include "el.h"
 
 /* el_init():
@@ -528,6 +529,13 @@ el_source(EditLine *el, const char *fname)
 		if (len > 0 && ptr[len - 1] == '\n')
 			--len;
 		ptr[len] = '\0';
+
+		/* loop until first non-space char or EOL */
+		while (*ptr != '\0' && isspace((unsigned char)*ptr))
+			ptr++;
+		if (*ptr == '#')
+			continue;   /* ignore, this is a comment line */
+
 		if (parse_line(el, ptr) == -1) {
 			(void) fclose(fp);
 			return (-1);
