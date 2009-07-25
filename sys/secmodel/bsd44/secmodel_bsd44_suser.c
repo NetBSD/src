@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.67 2009/05/08 11:09:43 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.68 2009/07/25 16:08:02 mbalmer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.67 2009/05/08 11:09:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.68 2009/07/25 16:08:02 mbalmer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1149,7 +1149,14 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
-
+	case KAUTH_DEVICE_GPIO_PINSET:
+		/*
+		 * root can access gpio pins, secmodel_securlevel can veto
+		 * this decision.
+		 */
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		break;
 	default:
 		result = KAUTH_RESULT_DEFER;
 		break;
