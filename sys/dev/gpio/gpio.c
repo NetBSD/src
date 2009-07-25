@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.20 2009/07/25 16:41:58 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.21 2009/07/25 19:01:55 cegger Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.20 2009/07/25 16:41:58 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.21 2009/07/25 19:01:55 cegger Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.20 2009/07/25 16:41:58 mbalmer Exp $");
 #include "locators.h"
 
 #ifdef GPIO_DEBUG
-#define DPRINTF(n, x)	do { if (gpiodebug > (n)) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (gpiodebug > (n)) printf x; } while (0)
 int gpiodebug = 0;
 #else
 #define DPRINTFN(n, x)
