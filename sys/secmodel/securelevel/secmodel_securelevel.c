@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.11 2009/05/06 21:10:22 elad Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.12 2009/07/25 16:08:02 mbalmer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.11 2009/05/06 21:10:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.12 2009/07/25 16:08:02 mbalmer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -532,6 +532,11 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 				result = KAUTH_RESULT_DENY;
 		}
 
+		break;
+
+	case KAUTH_DEVICE_GPIO_PINSET:
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 
 	default:
