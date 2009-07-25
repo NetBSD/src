@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.19 2009/07/25 16:17:10 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.20 2009/07/25 16:41:58 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.19 2009/07/25 16:17:10 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.20 2009/07/25 16:41:58 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -364,7 +364,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct gpio_req *req;
 	struct gpio_name *nm;
 	struct gpio_set *set;
-	struct device *dv;
+	device_t dv;
 	kauth_cred_t cred;
 	int locs[GPIOCF_NLOCS];
 	int pin, value, flags, npins, found;
