@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.54 2008/09/09 05:54:23 cegger Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.54.6.1 2009/07/26 18:31:39 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.54 2008/09/09 05:54:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.54.6.1 2009/07/26 18:31:39 snj Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1576,7 +1576,8 @@ skc_attach(device_t parent, device_t self, void *aux)
                 return;
 	}
 
-	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase, iosize));
+	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase,
+	    (u_long)iosize));
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
 

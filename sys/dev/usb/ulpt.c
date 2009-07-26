@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.81 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.81.14.1 2009/07/26 18:31:39 snj Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.81 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.81.14.1 2009/07/26 18:31:39 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -760,8 +760,8 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 	else
 		timeout = USBD_NO_TIMEOUT;
 
-	DPRINTFN(3, ("ulptread nonblocking=%d uio_reside=%d timeout=%d\n",
-		     nonblocking, uio->uio_resid, timeout));
+	DPRINTFN(3, ("ulptread nonblocking=%d uio_reside=%ld timeout=%d\n",
+		     nonblocking, (u_long)uio->uio_resid, timeout));
 
 	xfer = sc->sc_in_xfer;
 	bufp = sc->sc_in_buf;
