@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.2,v 1.49 2008/02/13 10:48:18 rillig Exp $
+.\"	$NetBSD: intro.2,v 1.49.10.1 2009/07/26 18:36:43 snj Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)intro.2	8.5 (Berkeley) 2/27/95
 .\"
-.Dd November 4, 2007
+.Dd July 23, 2009
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -64,10 +64,17 @@ a \-1 and to take action accordingly.)
 Successful calls never set
 .Va errno ;
 once set, it remains until another error occurs.
-It should only be examined after an error.
-Note that a number of system calls overload the meanings of these
-error numbers, and that the meanings must be interpreted according
-to the type and circumstances of the call.
+It should only be examined after an error has been reported, because
+otherwise a leftover value from some previous error may be found
+instead.
+.Po
+Many library functions that are not system calls also set
+.Va errno
+on return, in the same fashion.
+In these cases a nonzero value may be left in
+.Va errno
+even upon successful return if some internal action failed.
+.Pc
 .Pp
 The manual page for each system call will list some of the common
 errno codes that system call can return, but that should not be
@@ -77,6 +84,10 @@ any error that a system call might return.
 Documenting all the error codes that a system call can return in
 a more specification-like manner would take more resources than
 this project has available.
+.Pp
+Note also that a number of system calls overload the meanings of these
+error numbers, and that in these cases the meanings must be
+interpreted according to the type and circumstances of the call.
 .Pp
 The following is a complete list of the errors and their
 names as given in
