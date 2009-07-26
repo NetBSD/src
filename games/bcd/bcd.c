@@ -1,4 +1,4 @@
-/*	$NetBSD: bcd.c,v 1.15 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: bcd.c,v 1.16 2009/07/26 03:02:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: bcd.c,v 1.15 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: bcd.c,v 1.16 2009/07/26 03:02:38 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ printcard(char *str)
 {
 	static const char rowchars[] = "   123456789";
 	int i, row;
-	unsigned char *p;
+	char *p;
 
 	/* ruthlessly remove newlines and truncate at 48 characters. */
 	if ((p = strchr(str, '\n')))
@@ -166,8 +166,8 @@ printcard(char *str)
 
 	/* make string upper case. */
 	for (p = str; *p; ++p)
-		if (isascii(*p) && islower(*p))
-			*p = toupper(*p);
+		if (isascii((unsigned char)*p) && islower((unsigned char)*p))
+			*p = toupper((unsigned char) *p);
 
 	 /* top of card */
 	putchar(' ');
@@ -182,7 +182,7 @@ printcard(char *str)
 	p = str;
 	putchar('/');
 	for (i = 1; *p; i++, p++)
-		if (holes[(int)*p])
+		if (holes[(unsigned char)*p])
 			putchar(*p);
 		else
 			putchar(' ');
@@ -200,7 +200,7 @@ printcard(char *str)
 	for (row = 0; row <= 11; ++row) {
 		putchar('|');
 		for (i = 0, p = str; *p; i++, p++) {
-			if (bit(holes[(int)*p], 11 - row))
+			if (bit(holes[(unsigned char)*p], 11 - row))
 				putchar(']');
 			else
 				putchar(rowchars[row]);
