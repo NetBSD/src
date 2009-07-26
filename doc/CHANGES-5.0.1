@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.39 2009/07/21 00:38:26 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.40 2009/07/26 18:54:25 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -655,4 +655,46 @@ sys/arch/amd64/amd64/trap.c			1.56, 1.57
 
 	Handle protection fault properly.
 	[rmind, ticket #865]
+
+sys/dev/ic/ciss.c				1.15
+sys/dev/ic/tcic2.c				1.31
+sys/dev/isa/if_ntwoc_isa.c			1.18
+sys/dev/isa/isadma.c				1.59
+sys/dev/pci/if_sk.c				1.57
+sys/dev/pcmcia/if_cnw.c				1.46
+sys/dev/usb/ulpt.c				1.82
+
+	printf format fixes.
+	[dholland, ticket #874]
+
+lib/libc/sys/intro.2				1.53, 1.54
+
+	Mention, along with the behavior of succeeding system calls, the
+	normal behavior of succeeding library functions regarding errno.
+	(That is, they may leave arbitrary nonzero values in errno.)
+	[dholland, ticket #867]
+
+lib/libc/stdlib/strtol.3			1.25, 1.26
+lib/libc/stdlib/strtoul.3			1.22, 1.23
+
+	Clarify the description of the errno behavior, based on the recent
+	thread in tech-userlevel.
+	[dholland, ticket #868]
+
+sys/arch/pmax/pmax/machdep.c			1.233
+
+	Fix an #ifdef botch in rev 1.214 that causes
+	[ Kernel symbol table invalid! ] message at boot,
+	which means no ksyms(4) support even on GENERIC kernel.
+	[tsutsui, ticket #869]
+
+lib/libc/sys/intro.2				1.50 via patch
+
+	PR/40060 - Bug Hunting -- grammar fix
+	[dholland, ticket #872]
+
+sbin/wsconsctl/wsconsctl.8			1.26
+
+	PR/40059 - Bug Hunting -- add Xref to wscons.conf(5)
+	[dholland, ticket #873]
 
