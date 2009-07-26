@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.30 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.30.14.1 2009/07/26 18:33:35 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.30 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.30.14.1 2009/07/26 18:33:35 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -753,7 +753,8 @@ tcic_chip_mem_alloc(pch, size, pcmhp)
 		i++;
 	sizepg = max(i, TCIC_MEM_SHIFT) - (TCIC_MEM_SHIFT-1);
 
-	DPRINTF(("tcic_chip_mem_alloc: size %ld sizepg %ld\n", size, sizepg));
+	DPRINTF(("tcic_chip_mem_alloc: size %ld sizepg %ld\n", (u_long)size,
+	    (u_long)sizepg));
 
 	/* can't allocate that much anyway */
 	if (sizepg > TCIC_MEM_PAGES)	/* XXX -chb */
