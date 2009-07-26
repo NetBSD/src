@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.19 2009/07/26 01:58:20 dholland Exp $	*/
+/*	$NetBSD: cbc.c,v 1.20 2009/07/26 02:06:37 dholland Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -72,7 +72,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.19 2009/07/26 01:58:20 dholland Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.20 2009/07/26 02:06:37 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,21 +128,29 @@ typedef char Desbuf[8];
  * global variables and related macros
  */
 
-enum { 					/* encrypt, decrypt, authenticate */
+enum {	 				/* encrypt, decrypt, authenticate */
 	MODE_ENCRYPT, MODE_DECRYPT, MODE_AUTHENTICATE
 } mode = MODE_ENCRYPT;
 
-Desbuf ivec;				/* initialization vector */
-Desbuf pvec;				/* padding vector */
-char bits[] = {				/* used to extract bits from a char */
+static Desbuf ivec;			/* initialization vector */
+static Desbuf pvec;			/* padding vector */
+static char bits[] = {			/* used to extract bits from a char */
 	'\200', '\100', '\040', '\020', '\010', '\004', '\002', '\001'
 };
-int pflag;				/* 1 to preserve parity bits */
+static int pflag;			/* 1 to preserve parity bits */
 
-char des_buf[8];	/* shared buffer for get_des_char/put_des_char */
-int des_ct = 0;			/* count for get_des_char/put_des_char */
-int des_n = 0;			/* index for put_des_char/get_des_char */
+static char des_buf[8];	/* shared buffer for get_des_char/put_des_char */
+static int des_ct = 0;		/* count for get_des_char/put_des_char */
+static int des_n = 0;		/* index for put_des_char/get_des_char */
 #endif
+
+
+static void des_error(const char *);
+static int hex_to_binary(int, int);
+static void expand_des_key(char *, char *);
+static void set_des_key(char *);
+static int cbc_decode(char *, FILE *);
+static int cbc_encode(char *, int, FILE *);
 
 
 /* init_des_cipher: initialize DES */
@@ -243,7 +251,7 @@ get_keyword(void)
 /*
  * print a warning message and, possibly, terminate
  */
-void
+static void
 des_error(const char *s /* the message */)
 {
 	(void)sprintf(errmsg, "%s", s ? s : strerror(errno));
@@ -252,7 +260,7 @@ des_error(const char *s /* the message */)
 /*
  * map a hex character to an integer
  */
-int
+static int
 hex_to_binary(int c /* char to be converted */,
 	      int radix /* base (2 to 16) */)
 {
@@ -283,7 +291,7 @@ hex_to_binary(int c /* char to be converted */,
 /*
  * convert the key to a bit pattern
  */
-void
+static void
 expand_des_key(char *obuf /* bit pattern */, char *inbuf /* the key itself */)
 {
 	int i, j;			/* counter in a for loop */
@@ -349,7 +357,7 @@ expand_des_key(char *obuf /* bit pattern */, char *inbuf /* the key itself */)
  * systems set the parity (high) bit of each character to 0, and the
  * DES ignores the low order bit of each character.
  */
-void
+static void
 set_des_key(Desbuf buf /* key block */)
 {
 	int i, j;				/* counter in a for loop */
@@ -378,7 +386,7 @@ set_des_key(Desbuf buf /* key block */)
 /*
  * This encrypts using the Cipher Block Chaining mode of DES
  */
-int
+static int
 cbc_encode(char *msgbuf, int n, FILE *fp)
 {
 	int inverse = 0;	/* 0 to encrypt, 1 to decrypt */
@@ -414,7 +422,7 @@ cbc_encode(char *msgbuf, int n, FILE *fp)
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
-int
+static int
 cbc_decode(char *msgbuf /* I/O buffer */,
 	   FILE *fp /* input file descriptor */)
 {

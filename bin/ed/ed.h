@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.33 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: ed.h,v 1.34 2009/07/26 02:06:37 dholland Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -194,20 +194,16 @@ void add_line_node(line_t *);
 int append_lines(long);
 int apply_subst_template(char *, regmatch_t *, int, int);
 int build_active_list(int);
-int cbc_decode(char *, FILE *);
-int cbc_encode(char *, int, FILE *);
 int check_addr_range(long, long);
 void clear_active_list(void);
 void clear_undo_stack(void);
 int close_sbuf(void);
 int copy_lines(long);
 int delete_lines(long, long);
-void des_error(const char *);
 int display_lines(long, long, int);
 line_t *dup_line_node(line_t *);
 int exec_command(void);
 long exec_global(int, int);
-void expand_des_key(char *, char *);
 int extract_addr_range(void);
 char *extract_pattern(int);
 int extract_subst_tail(int *, long *);
@@ -231,7 +227,6 @@ void handle_hup(int);
 void handle_int(int);
 void handle_winch(int);
 int has_trailing_escape(char *, char *);
-int hex_to_binary(int, int);
 void init_buffers(void);
 void init_des_cipher(void);
 int is_legal_filename(char *);
@@ -253,7 +248,6 @@ long read_file(char *, long);
 long read_stream(FILE *, long);
 int search_and_replace(pattern_t *, int, int);
 int set_active_node(line_t *);
-void set_des_key(char *);
 void signal_hup(int);
 void signal_int(int);
 char *strip_escapes(const char *);
