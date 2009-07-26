@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.1 2009/07/25 16:17:10 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.2 2009/07/26 13:45:20 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -28,30 +28,23 @@
 #include <sys/ioccom.h>
 
 #include <dev/gpio/gpiovar.h>
-#include <dev/biovar.h>
 
 #define	GPIOSIM_NPINS	32
 
 struct gpiosim_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	u_int32_t		sc_state;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[GPIOSIM_NPINS];
-};
 
-struct gpiosim_op {
-	void *cookie;
-	u_int32_t mask;
-	u_int32_t state;
+	const struct sysctlnode *sc_node;
 };
-#define GPIOSIMREAD	_IOWR('G', 0, struct gpiosim_op)
-#define GPIOSIMWRITE	_IOW('G', 1, struct gpiosim_op)
 
 int	gpiosim_match(device_t, cfdata_t, void *);
 void	gpiosim_attach(device_t, device_t, void *);
 int	gpiosim_detach(device_t, int);
-int	gpiosim_ioctl(device_t, u_long cmd, void *);
 int	gpiosim_activate(device_t, enum devact);
+int	gpiosim_sysctl(SYSCTLFN_PROTO);
 
 int	gpiosim_pin_read(void *, int);
 void	gpiosim_pin_write(void *, int, int);
@@ -74,6 +67,8 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 	struct gpiosim_softc *sc = device_private(self);
 	struct gpiobus_attach_args gba;
 	int i;
+
+	sc->sc_dev = self;
 
 	/* initialize pin array */
 	for (i = 0; i < GPIOSIM_NPINS; i++) {
@@ -98,15 +93,48 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 		gba.gba_pins = sc->sc_gpio_pins;
 		gba.gba_npins = GPIOSIM_NPINS;
 	}
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+            CTLFLAG_PERMANENT,
+            CTLTYPE_NODE, "hw", NULL,
+            NULL, 0, NULL, 0,
+            CTL_HW, CTL_EOL);
+        sysctl_createv(NULL, 0, NULL, &sc->sc_node,
+            0,
+            CTLTYPE_NODE, device_xname(sc->sc_dev),
+            SYSCTL_DESCR("GPIO simulator"),
+            NULL, 0, NULL, 0,
+            CTL_HW, CTL_CREATE, CTL_EOL);
+
+        if (sc->sc_node == NULL) {
+		printf(": can't create sysctl node\n");
+                return;
+	}
+
+        sysctl_createv(NULL, 0, &sc->sc_node, NULL,
+            CTLFLAG_READWRITE,
+            CTLTYPE_INT, "value",
+            SYSCTL_DESCR("Current GPIO simulator value"),
+            gpiosim_sysctl, 0, sc, 0,
+	    CTL_CREATE, CTL_EOL);
+
 	printf("\n");
 	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
-	bio_register(&sc->sc_dev, gpiosim_ioctl);
 }
 
 int
 gpiosim_detach(device_t self, int flags)
 {
-	return 1;
+	struct gpiosim_softc *sc = device_private(self);
+	struct sysctlnode node;
+
+	if (sc->sc_node != NULL) {
+		node = *sc->sc_node;
+		sysctl_destroyv(&node, CTL_EOL);
+		sc->sc_node = NULL;
+	}
+
+	return 0;
 }
 
 int
@@ -123,20 +151,23 @@ gpiosim_activate(device_t self, enum devact act)
 }
 
 int
-gpiosim_ioctl(device_t self, u_long cmd, void * data)
+gpiosim_sysctl(SYSCTLFN_ARGS)
 {
-	struct gpiosim_softc *sc = (void *)self;
-	struct gpiosim_op *op = (void *)data;
+	struct sysctlnode node;
+	struct gpiosim_softc *sc;
+	int val, error;
 
-	switch (cmd) {
-		case GPIOSIMREAD:
-			op->state = sc->sc_state;
-			break;
-		case GPIOSIMWRITE:
-			sc->sc_state = (sc->sc_state & ~op->mask) |
-			    (op->state & op->mask);
-			break;
-	}
+	node = *rnode;
+	sc = node.sysctl_data;
+
+	node.sysctl_data = &val;
+
+	val = sc->sc_state;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	sc->sc_state = val;
 	return 0;
 }
 
