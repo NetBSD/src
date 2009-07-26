@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.44 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.44.10.1 2009/07/26 18:33:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.44 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.44.10.1 2009/07/26 18:33:36 snj Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -823,8 +823,8 @@ cnw_read(sc)
 				if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 					printf("%s:   %d bytes @0x%x+0x%lx\n",
 					    device_xname(&sc->sc_dev), bufbytes,
-					    buffer, bufptr - buffer -
-					    sc->sc_memoff);
+					    buffer, (u_long)(bufptr - buffer -
+					    sc->sc_memoff));
 #endif
 			}
 			n = mbytes <= bufbytes ? mbytes : bufbytes;

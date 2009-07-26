@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.17 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.17.14.1 2009/07/26 18:33:35 snj Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.17 2008/04/08 20:08:50 cegger Exp $
+ * $Id: if_ntwoc_isa.c,v 1.17.14.1 2009/07/26 18:33:35 snj Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.14.1 2009/07/26 18:33:35 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,7 +465,7 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	     sca->scu_pagesize, 0, &sca->scu_memh))) {
 		aprint_error_dev(&sc->sc_dev, "can't map mem 0x%x sz %ld, %d\n",
 		    ia->ia_iomem[0].ir_addr,
-		    sca->scu_pagesize, rv);
+		    (u_long)sca->scu_pagesize, rv);
 		return;
 	}
 
@@ -548,7 +548,7 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	    (sca->sc_numports > 1 ? "s" : ""));
 #else
 	printf("%s: dpram %ldk %d serial port%s\n",
-	    device_xname(&sc->sc_dev), pgs * (sca->scu_pagesize / 1024),
+	    device_xname(&sc->sc_dev), (u_long)pgs * (sca->scu_pagesize / 1024),
 	    sca->sc_numports, (sca->sc_numports > 1 ? "s" : ""));
 #endif
 
