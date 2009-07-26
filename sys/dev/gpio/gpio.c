@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.22 2009/07/25 19:18:01 cegger Exp $ */
+/* $NetBSD: gpio.c,v 1.23 2009/07/26 14:06:05 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.22 2009/07/25 19:18:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.23 2009/07/26 14:06:05 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -512,8 +512,8 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
                 
 		attach = (struct gpio_attach *)data;
 		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
-			if (strcmp(device_xname(gdev->sc_dev), attach->ga_dvname)
-			    == 0) {
+			if (strcmp(device_xname(gdev->sc_dev),
+			    attach->ga_dvname) == 0) {
 				if (config_detach(gdev->sc_dev, 0) == 0) {
 					LIST_REMOVE(gdev, sc_next);
 					kmem_free(gdev,
@@ -557,6 +557,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 		}
 
 		/* rename pin or new pin? */
+		/* XXX avoid the creation of duplicates */
 		if (set->gp_name2[0] != '\0') {
 			found = 0;
 			LIST_FOREACH(nm, &sc->sc_names, gp_next)
