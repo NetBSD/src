@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.18 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: cbc.c,v 1.19 2009/07/26 01:58:20 dholland Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -72,7 +72,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.18 2005/06/26 19:10:49 christos Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.19 2009/07/26 01:58:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ char bits[] = {				/* used to extract bits from a char */
 };
 int pflag;				/* 1 to preserve parity bits */
 
-unsigned char des_buf[8];	/* shared buffer for get_des_char/put_des_char */
+char des_buf[8];	/* shared buffer for get_des_char/put_des_char */
 int des_ct = 0;			/* count for get_des_char/put_des_char */
 int des_n = 0;			/* index for put_des_char/get_des_char */
 #endif
@@ -174,7 +174,7 @@ get_des_char(FILE *fp)
 		des_n = 0;
 		des_ct = cbc_decode(des_buf, fp);
 	}
-	return (des_ct > 0) ? des_buf[des_n++] : EOF;
+	return (des_ct > 0) ? (unsigned char) des_buf[des_n++] : EOF;
 #else
 	return EOF;
 #endif
@@ -190,7 +190,7 @@ put_des_char(int c, FILE *fp)
 		des_ct = cbc_encode(des_buf, des_n, fp);
 		des_n = 0;
 	}
-	return (des_ct >= 0) ? (des_buf[des_n++] = c) : EOF;
+	return (des_ct >= 0) ? (unsigned char) (des_buf[des_n++] = c) : EOF;
 #else
 	return EOF;
 #endif
