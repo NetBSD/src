@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.17 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: pom.c,v 1.18 2009/07/26 03:05:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pom.c,v 1.17 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: pom.c,v 1.18 2009/07/26 03:05:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,10 +214,10 @@ parsetime(char *p)
 	int bigyear;
 	int yearset = 0;
 	time_t tval;
-	unsigned char *t;
+	char *t;
 	
 	for (t = p; *t; ++t) {
-		if (isdigit(*t))
+		if (isdigit((unsigned char) *t))
 			continue;
 		badformat();
 	}
