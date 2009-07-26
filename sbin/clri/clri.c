@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.21 2009/03/16 13:01:21 lukem Exp $	*/
+/*	$NetBSD: clri.c,v 1.22 2009/07/26 03:22:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.21 2009/03/16 13:01:21 lukem Exp $");
+__RCSID("$NetBSD: clri.c,v 1.22 2009/07/26 03:22:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 	struct ufs1_dinode *ip1;
 	struct ufs2_dinode *ip2;
 	int fd;
-	char *ibuf[MAXBSIZE];
+	void *ibuf;
 	int32_t generation;
 	off_t offset;
 	size_t bsize;
@@ -150,7 +150,12 @@ main(int argc, char *argv[])
 
 	if (needswap)
 		ffs_sb_swap(sbp, sbp);
+
 	bsize = sbp->fs_bsize;
+	ibuf = malloc(bsize);
+	if (ibuf == NULL) {
+		err(1, "malloc");
+	}
 
 	/* remaining arguments are inode numbers. */
 	while (*++argv) {
@@ -193,6 +198,7 @@ main(int argc, char *argv[])
 			err(1, "%s", fs);
 		(void)fsync(fd);
 	}
+	free(ibuf);
 	(void)close(fd);
 	exit(0);
 }
