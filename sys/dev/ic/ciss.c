@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.14 2008/09/04 19:03:14 he Exp $	*/
+/*	$NetBSD: ciss.c,v 1.14.4.1 2009/07/26 18:33:35 snj Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.14 2008/09/04 19:03:14 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.14.4.1 2009/07/26 18:33:35 snj Exp $");
 
 #include "bio.h"
 
@@ -470,7 +470,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 
 		sgd = dmap->dm_segs;
 		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%u<0x%lx/%lu",
-		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr, sgd->ds_len));
+		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr,
+		    (u_long)sgd->ds_len));
 
 		for (i = 0; i < dmap->dm_nsegs; sgd++, i++) {
 			cmd->sgl[i].addr_lo = htole32(sgd->ds_addr);
@@ -480,7 +481,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			cmd->sgl[i].flags = htole32(0);
 			if (i) {
 				CISS_DPRINTF(CISS_D_DMA,
-				    (",0x%lx/%lu", sgd->ds_addr, sgd->ds_len));
+				    (",0x%lx/%lu", sgd->ds_addr,
+				    (u_long)sgd->ds_len));
 			}
 		}
 
