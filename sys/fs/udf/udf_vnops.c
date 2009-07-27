@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.52 2009/07/08 14:46:55 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.53 2009/07/27 13:20:41 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.52 2009/07/08 14:46:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.53 2009/07/27 13:20:41 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -103,8 +103,11 @@ udf_inactive(void *v)
 		refcnt = udf_rw16(udf_node->efe->link_cnt);
 	}
 
-	if ((refcnt == 0) && (vp->v_vflag & VV_SYSTEM))
+	if ((refcnt == 0) && (vp->v_vflag & VV_SYSTEM)) {
 		DPRINTF(VOLUMES, ("UDF_INACTIVE deleting VV_SYSTEM\n"));
+		/* system nodes are not writen out on inactive, so flush */
+		udf_node->i_flags = 0;
+	}
 
 	*ap->a_recycle = false;
 	if ((refcnt == 0) && ((vp->v_vflag & VV_SYSTEM) == 0)) {
