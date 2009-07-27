@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.40 2009/07/26 18:54:25 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.41 2009/07/27 00:42:41 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -697,4 +697,18 @@ sbin/wsconsctl/wsconsctl.8			1.26
 
 	PR/40059 - Bug Hunting -- add Xref to wscons.conf(5)
 	[dholland, ticket #873]
+
+external/bsd/pkg_install/dist/info/perform.c	pkg_install-20090724
+external/bsd/pkg_install/dist/lib/license.c	pkg_install-20090724
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in pkg_install-20090724
+external/bsd/pkg_install/dist/lib/version.h	pkg_install-20090724
+
+	Import pkg_install-20070724:
+	- license handling: accept upper case letters. Keep license checks
+	 case-sensitive as done in the older pkgsrc logic. Document this.
+	- pkg_info:
+	 - fix handling of non-packages, that are valid archives
+	 - invert order of pkg_info -r to better match the expectations of
+	   make update.
+	[joerg, ticket #877]
 
