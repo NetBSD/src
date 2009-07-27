@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.18 2008/02/01 10:53:25 jdc Exp $ */
+/*	$NetBSD: gemvar.h,v 1.19 2009/07/27 18:10:53 dyoung Exp $ */
 
 /*
  *
@@ -110,11 +110,27 @@ struct gem_rxsoft {
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
 };
 
+enum gem_attach_stage {
+	  GEM_ATT_BACKEND_2 = 0
+	, GEM_ATT_BACKEND_1
+	, GEM_ATT_FINISHED
+	, GEM_ATT_MII
+	, GEM_ATT_7
+	, GEM_ATT_6
+	, GEM_ATT_5
+	, GEM_ATT_4
+	, GEM_ATT_3
+	, GEM_ATT_2
+	, GEM_ATT_1
+	, GEM_ATT_0
+	, GEM_ATT_BACKEND_0
+};
+
 /*
  * Software state per device.
  */
 struct gem_softc {
-	struct device	sc_dev;		/* generic device information */
+	device_t	sc_dev;		/* generic device information */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	struct mii_data	sc_mii;		/* MII media control */
 	struct callout	sc_tick_ch;	/* tick callout */
@@ -125,6 +141,7 @@ struct gem_softc {
 	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
 	bus_space_handle_t sc_h1;	/* bus space handle for bank 1 regs */
 	bus_space_handle_t sc_h2;	/* bus space handle for bank 2 regs */
+	bus_size_t	sc_size;	/* bank 1 size */
 
 	int		sc_phys[2];	/* MII instance -> PHY map */
 
@@ -155,9 +172,6 @@ struct gem_softc {
 #define	GEM_PCI			0x0004	/* XXX PCI busses are little-endian */
 #define	GEM_SERDES		0x0008	/* use the SERDES */
 #define	GEM_SERIAL		0x0010	/* use the serial link */
-
-	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power management hook */
 
 	/*
 	 * Ring buffer DMA stuff.
@@ -214,6 +228,8 @@ struct gem_softc {
 	struct evcnt sc_ev_rxfull;
 	struct evcnt sc_ev_rxhist[9];
 #endif
+
+	enum gem_attach_stage	sc_att_stage;
 };
 
 #ifdef GEM_COUNTERS
@@ -291,8 +307,12 @@ do {									\
 } while (0)
 
 #ifdef _KERNEL
+bool	gem_shutdown(device_t, int);
+bool	gem_suspend(device_t PMF_FN_PROTO);
+bool	gem_resume(device_t PMF_FN_PROTO);
 void	gem_attach(struct gem_softc *, const uint8_t *);
 int	gem_intr(void *);
+int	gem_detach(struct gem_softc *, int);
 
 void	gem_reset(struct gem_softc *);
 #endif /* _KERNEL */

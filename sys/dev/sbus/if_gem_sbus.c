@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.10 2009/05/12 14:43:59 cegger Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.11 2009/07/27 18:10:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.10 2009/05/12 14:43:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.11 2009/07/27 18:10:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,11 @@ void
 gemattach_sbus(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct gem_sbus_softc *gsc = (void *)self;
+	struct gem_sbus_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+
+	sc->sc_dev = self;
 
 	/* Pass on the bus tags */
 	sc->sc_bustag = sa->sa_bustag;
