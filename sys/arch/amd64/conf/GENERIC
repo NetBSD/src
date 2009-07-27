@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.245 2009/07/19 06:28:08 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.246 2009/07/27 12:34:13 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.245 $"
+#ident 		"GENERIC-$Revision: 1.246 $"
 
 maxusers	64		# estimated number of users
 
@@ -541,6 +541,7 @@ iteide* at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* at pci? dev ? function ?	# ATI IXP IDE controllers
 jmide* at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
 ahcisata* at jmide?
+mvsata* at pci? dev ? function ?	# Marvell Hercules-I/II
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers

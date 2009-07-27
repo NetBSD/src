@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.950 2009/07/18 16:31:42 reinoud Exp $
+#	$NetBSD: files,v 1.951 2009/07/27 12:34:13 kiyohara Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -939,6 +939,12 @@ file	dev/ic/lpt_upc.c		lpt_upc
 define ahcisata_core
 file dev/ic/ahcisata_core.c ahcisata_core
 device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, ahcisata_core
+
+# Mervell Serial-ATA Host Controller
+define mvsata
+file dev/ic/mvsata.c			mvsata
+device mvsata: ata, ata_dma, ata_udma, wdc_common, sata, mvsata
+defflag opt_mvsata.h		MVSATA_WITHOUTDMA
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 #

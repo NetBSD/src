@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1148 2009/07/25 16:22:59 mbalmer Exp $
+# $NetBSD: mi,v 1.1149 2009/07/27 12:34:12 kiyohara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1216,6 +1216,7 @@
 ./usr/share/man/cat4/mvme68k/pcctwo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/wdsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/zsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/mvsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nadb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ncr.0			man-obsolete		obsolete
@@ -3782,6 +3783,7 @@
 ./usr/share/man/html4/mvme68k/pcctwo.html	man-sys-htmlman		html
 ./usr/share/man/html4/mvme68k/wdsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/mvme68k/zsc.html		man-sys-htmlman		html
+./usr/share/man/html4/mvsata.html		man-sys-htmlman		html
 ./usr/share/man/html4/nadb.html			man-sys-htmlman		html
 ./usr/share/man/html4/nca.html			man-sys-htmlman		html
 ./usr/share/man/html4/ne.html			man-sys-htmlman		html
@@ -6206,6 +6208,7 @@
 ./usr/share/man/man4/mvme68k/pcctwo.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/wdsc.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/zsc.4		man-sys-man		.man
+./usr/share/man/man4/mvsata.4			man-sys-man		.man
 ./usr/share/man/man4/nadb.4			man-sys-man		.man
 ./usr/share/man/man4/nca.4			man-sys-man		.man
 ./usr/share/man/man4/ncr.4			man-obsolete		obsolete
