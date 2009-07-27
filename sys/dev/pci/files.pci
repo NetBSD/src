@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.316 2009/06/21 20:15:26 mrg Exp $
+#	$NetBSD: files.pci,v 1.317 2009/07/27 15:09:58 kiyohara Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -973,3 +973,7 @@ include "dev/pci/n8/files.n8"
 #
 attach	bwi at pci with bwi_pci
 file	dev/pci/if_bwi_pci.c		bwi_pci
+
+# Marvell Serial-ATA Host Controller
+attach	mvsata at pci with mvsata_pci
+file	dev/pci/mvsata_pci.c		mvsata_pci
