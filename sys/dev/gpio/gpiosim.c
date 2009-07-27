@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.2 2009/07/26 13:45:20 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.3 2009/07/27 17:40:58 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ struct gpiosim_softc {
 };
 
 int	gpiosim_match(device_t, cfdata_t, void *);
+void	gpiosimattach(int);
 void	gpiosim_attach(device_t, device_t, void *);
 int	gpiosim_detach(device_t, int);
 int	gpiosim_activate(device_t, enum devact);
@@ -62,6 +63,26 @@ gpiosim_match(device_t parent, cfdata_t match, void *aux)
 }
 
 void
+gpiosimattach(int num)
+{
+	cfdata_t cf;
+	int n, err;
+
+	err = config_cfattach_attach(gpiosim_cd.cd_name, &gpiosim_ca);
+	if (err)
+		printf("%s: unable to register cfattach\n", gpiosim_cd.cd_name);
+
+	for (n = 0; n < num; n++) {
+		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+		cf->cf_name = "gpiosim";
+		cf->cf_atname = "gpiosim";
+		cf->cf_unit = n;
+		cf->cf_fstate = FSTATE_NOTFOUND;
+		config_attach_pseudo(cf);
+	}
+}
+
+void
 gpiosim_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpiosim_softc *sc = device_private(self);
@@ -69,6 +90,8 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	sc->sc_dev = self;
+
+	printf("%s", device_xname(sc->sc_dev));
 
 	/* initialize pin array */
 	for (i = 0; i < GPIOSIM_NPINS; i++) {
@@ -118,7 +141,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
             gpiosim_sysctl, 0, sc, 0,
 	    CTL_CREATE, CTL_EOL);
 
-	printf("\n");
+	printf(": simulating %d pins\n", GPIOSIM_NPINS);
 	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
 }
 
