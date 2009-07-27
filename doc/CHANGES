@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1260 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1261 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -340,3 +340,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[mbalmer 20090725]
 	secmodel_44bsd(9), secmodel_securelevel(9): Add provisions to control
 		acces to gpio(4) pins. [mbalmer 20090725]
+	mvsata(4): Support Marvell Hercules-I/II SATA Controllers
+		[kiyohara 20090615]
