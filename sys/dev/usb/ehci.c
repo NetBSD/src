@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.157 2009/03/18 10:22:41 cegger Exp $ */
+/*	$NetBSD: ehci.c,v 1.158 2009/07/27 14:41:19 sketch Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.157 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.158 2009/07/27 14:41:19 sketch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1332,7 +1332,7 @@ ehci_device_clear_toggle(usbd_pipe_handle pipe)
 
 	DPRINTF(("ehci_device_clear_toggle: epipe=%p status=0x%x\n",
 		 epipe, epipe->sqh->qh.qh_qtd.qtd_status));
-#ifdef USB_DEBUG
+#ifdef EHCI_DEBUG
 	if (ehcidebug)
 		usbd_dump_pipe(pipe);
 #endif
@@ -3092,7 +3092,7 @@ ehci_timeout(void *addr)
 	ehci_softc_t *sc = epipe->pipe.device->bus->hci_private;
 
 	DPRINTF(("ehci_timeout: exfer=%p\n", exfer));
-#ifdef USB_DEBUG
+#ifdef EHCI_DEBUG
 	if (ehcidebug > 1)
 		usbd_dump_pipe(exfer->xfer.pipe);
 #endif
