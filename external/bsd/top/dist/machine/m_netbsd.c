@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.9 2009/05/05 18:51:22 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.10 2009/07/27 16:26:48 njoly Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.9 2009/05/05 18:51:22 christos Exp $
+ * $Id: m_netbsd.c,v 1.10 2009/07/27 16:26:48 njoly Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.9 2009/05/05 18:51:22 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.10 2009/07/27 16:26:48 njoly Exp $");
 #endif
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ static char Proc_header[] =
 /* 0123456   -- field to fill in starts at header+6 */
 #define PROC_UNAME_START 6
 #define Proc_format \
-	"%5d %-8.8s %3d %4d%7s %5s %-8.8s%7s %5.*f%% %5.2f%% %.12s"
+	"%5d %-8.8s %3d %4d%7s %5s %-8.8s%7s %5.*f%% %5.*f%% %.12s"
 
 static char Thread_header[] =
   "  PID   LID X        PRI STATE      TIME   WCPU    CPU COMMAND      NAME";
@@ -770,7 +770,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 {
 	struct kinfo_proc2 *pp;
 	long cputime;
-	double pct, wcpu;
+	double pct, wcpu, cpu;
 	struct handle *hp;
 	const char *statep;
 #ifdef KI_NOCPU
@@ -839,6 +839,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 	}
 #endif
 	wcpu = 100.0 * weighted_cpu(p_, pct, pp);
+	cpu = 100.0 * pct;
 
 	/* format this entry */
 	sprintf(fmt,
@@ -852,7 +853,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 	    statep,
 	    format_time(cputime),
 	    (wcpu >= 100.0) ? 0 : 2, wcpu,
-	    100.0 * pct,
+	    (cpu >= 100.0) ? 0 : 2, cpu,
 	    printable(pp->p_comm));
 
 	/* return the result */
