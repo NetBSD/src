@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -1041,9 +1042,14 @@ write_lease(const struct interface *iface, const struct dhcp_message *dhcp)
 		return 0;
 	}
 
+	syslog(LOG_DEBUG, "%s: writing lease `%s'",
+	    iface->name, iface->leasefile);
+
 	fd = open(iface->leasefile, O_WRONLY | O_CREAT | O_TRUNC, 0400);
-	if (fd == -1)
+	if (fd == -1) {
+		syslog(LOG_ERR, "%s: open: %m", iface->name);
 		return -1;
+	}
 
 	/* Only write as much as we need */
 	while (p < e) {
@@ -1071,8 +1077,14 @@ read_lease(const struct interface *iface)
 	ssize_t bytes;
 
 	fd = open(iface->leasefile, O_RDONLY);
-	if (fd == -1)
+	if (fd == -1) {
+		if (errno != ENOENT)
+			syslog(LOG_ERR, "%s: open `%s': %m",
+			    iface->name, iface->leasefile);
 		return NULL;
+	}
+	syslog(LOG_DEBUG, "%s: reading lease `%s'",
+	    iface->name, iface->leasefile);
 	dhcp = xmalloc(sizeof(*dhcp));
 	memset(dhcp, 0, sizeof(*dhcp));
 	bytes = read(fd, dhcp, sizeof(*dhcp));

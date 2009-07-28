@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 5, 2009
+.Dd July 26, 2009
 .Dt DHCPCD 8 SMM
 .Os
 .Sh NAME
@@ -30,8 +30,9 @@
 .Nd an RFC 2131 compliant DHCP client
 .Sh SYNOPSIS
 .Nm
-.Op Fl bdeknpqABDEGKLTV
+.Op Fl bdgknpqABDEGKLTV
 .Op Fl c , -script Ar script
+.Op Fl e , -env Ar value
 .Op Fl f , -config Ar file
 .Op Fl h , -hostname Ar hostname
 .Op Fl i , -vendorclassid Ar vendorclassid
@@ -80,7 +81,9 @@ then runs the configuration script which writes DNS information to
 .Xr resolvconf 8 ,
 if available, otherwise directly to
 .Pa /etc/resolv.conf .
-If the hostname is currenly blank, (null) or localhost then
+If the hostname is currenly blank, (null) or localhost, or
+.Va force_hostname
+is YES or TRUE or 1 then
 .Nm
 sets the hostname to the one supplied by the DHCP server.
 .Nm
@@ -126,10 +129,8 @@ metric, otherwise
 .Nm
 changes the routes to use the interface with the same route and the lowest
 metric.
-See options below for controlling what interfaces we allow and deny through
-the use of patterns. Also, see the BUGS section if
-.Nm
-runs on a BSD system.
+See options below for controlling which interfaces we allow and deny through
+the use of patterns.
 .Ss Hooking into DHCP events
 .Nm
 runs
@@ -169,17 +170,27 @@ Use this
 instead of the default
 .Pa @SCRIPT@ .
 .It Fl d , -debug
-Echo debug and informational messages to the console.
+Echo debug messages to the stderr and syslog.
 Subsequent debug options stop
 .Nm
 from daemonising.
-.It Fl e , -reconfigure
+.It Fl e , -env Ar value
+Push
+.Ar value
+to the environment for use in
+.Xr dhcpcd-run-hooks 8 .
+For example, you can force the hostname hook to always set the hostname with
+.Fl e
+.Va force_hostname=YES .
+.It Fl g , -reconfigure
 .Nm
 will re-apply IP address, routing and run
 .Xr dhcpcd-run-hooks 8
 for each interface.
 This is useful so that a 3rd party such as PPP or VPN can change the routing
-table and / or DNS, etc and then instruct dhcpcd to put things back afterwards.
+table and / or DNS, etc and then instruct
+.Nm
+to put things back afterwards.
 .Nm
 does not read a new configuration when this happens - you should rebind if you
 need that functionality.
@@ -189,15 +200,15 @@ Specify a config to load instead of
 .Nm
 always processes the config file before any command line options.
 .It Fl h , -hostname Ar hostname
-By default,
-.Nm
-sends the current hostname to the DHCP server so it can register in DNS.
-You can use this option to specify the
+Sends
 .Ar hostname
-sent, or an empty string to
-stop any
+to the DHCP server so it can be registered in DNS.
+If
 .Ar hostname
-from being sent.
+is an empty string then the current system hostname is sent.
+If
+.Ar hostname
+is a FQDN (ie, contains a .) then it will be encoded as such.
 .It Fl i , -vendorclassid Ar vendorclassid
 Override the
 .Ar vendorclassid
@@ -265,7 +276,7 @@ You can use this option to stop this from happening.
 normally sends a DHCP DISCOVER to find servers to offer an address.
 .Nm
 then requests the address used.
-You can use this option to skip the BROADCAST step and just request the
+You can use this option to skip the DISCOVER phase and just request the
 .Ar address .
 The downside is if you request an
 .Ar address
@@ -347,7 +358,7 @@ This requires persistent storage and not all DHCP servers work with it so it's
 not enabled by default.
 .Nm
 generates the DUID and stores in it
-.Pa @SYSCONFDIR@/dhcpcd.duid
+.Pa @SYSCONFDIR@/dhcpcd.duid .
 This file should not be copied to other hosts.
 .It Fl E , -lastlease
 If
@@ -454,12 +465,15 @@ Here is an example which configures a static address, routes and dns.
 .D1 -S domain_name_servers=192.168.0.1 \e
 .D1 eth0
 .It Fl T, -test
-On receipt of OFFER messages just call
+On receipt of DHCP messages just call
 .Pa @SCRIPT@
 with the reason of TEST which echo's the DHCP variables found in the message
 to the console.
 The interface configuration isn't touched and neither are any configuration
 files.
+To test INFORM the interface needs to be configured with the desired address
+before starting
+.Nm .
 .It Fl V, -variables
 Display a list of option codes and the associated variable for use in
 .Xr dhcpcd-run-hooks 8 .
@@ -536,10 +550,3 @@ RFC 3397, RFC 3442, RFC 3927, RFC 4361, RFC 4390, RFC 4702.
 .An Roy Marples Aq roy@marples.name
 .Sh BUGS
 Please report them to http://roy.marples.name/projects/dhcpcd
-.Pp
-.Nm
-does not wait for commands to complete when sending them to the master
-.Nm
-process, nor does it echo its progress to stderr.
-This is a behaviour change from dhcpcd-4 and may need to be addressed if
-there is sufficient need.
