@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.59 2009/05/19 20:25:41 dyoung Exp $	*/
+/*	$NetBSD: md.c,v 1.60 2009/07/28 17:55:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.59 2009/05/19 20:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.60 2009/07/28 17:55:27 dyoung Exp $");
 
 #include "opt_md.h"
 #include "opt_tftproot.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.59 2009/05/19 20:25:41 dyoung Exp $");
 #include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/stat.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
@@ -243,18 +244,23 @@ static int
 mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit;
+	int part = DISKPART(dev);
+	int pmask = 1 << part;
 	struct md_softc *sc;
+	struct disk *dk;
 
 	unit = MD_UNIT(dev);
 	sc = device_lookup_private(&md_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
+	dk = &sc->sc_dkdev;
+
 	/*
 	 * The raw partition is used for ioctl to configure.
 	 */
-	if (DISKPART(dev) == RAW_PART)
-		return 0;
+	if (part == RAW_PART)
+		goto ok;
 
 #ifdef	MEMORY_DISK_HOOKS
 	/* Call the open hook to allow loading the device. */
@@ -268,13 +274,52 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
 
+ok:
+	/* XXX duplicates code in dk_open().  Call dk_open(), instead? */
+	mutex_enter(&dk->dk_openlock);
+	/* Mark our unit as open. */
+	switch (fmt) {
+	case S_IFCHR:
+		dk->dk_copenmask |= pmask;
+		break;
+	case S_IFBLK:
+		dk->dk_bopenmask |= pmask;
+		break;
+	}
+
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+
+	mutex_exit(&dk->dk_openlock);
 	return 0;
 }
 
 static int
 mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
+	int part = DISKPART(dev);
+	int pmask = 1 << part;
+	struct md_softc *sc;
+	struct disk *dk;
 
+	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	dk = &sc->sc_dkdev;
+
+	mutex_enter(&dk->dk_openlock);
+
+	switch (fmt) {
+	case S_IFCHR:
+		dk->dk_copenmask &= ~pmask;
+		break;
+	case S_IFBLK:
+		dk->dk_bopenmask &= ~pmask;
+		break;
+	}
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+
+	mutex_exit(&dk->dk_openlock);
 	return 0;
 }
 
