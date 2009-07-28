@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.3 2009/04/28 11:49:15 cegger Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.4 2009/07/28 06:02:34 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3 2009/04/28 11:49:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.4 2009/07/28 06:02:34 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -372,6 +372,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	pcireg_t memtype;
 	int error = 0;
 	uint32_t rxf_len, txf_len;
+	const char *chipname;
 
 	aprint_naive("\n");
 	aprint_normal(": Attansic/Atheros L1E Ethernet\n");
@@ -418,7 +419,6 @@ ale_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		goto fail;
 	}
-	aprint_normal_dev(self, "%s\n", intrstr);
 
 	/* Set PHY address. */
 	sc->ale_phyaddr = ALE_PHY_ADDR;
@@ -434,15 +434,19 @@ ale_attach(device_t parent, device_t self, void *aux)
 	if (sc->ale_rev >= 0xF0) {
 		/* L2E Rev. B. AR8114 */
 		sc->ale_flags |= ALE_FLAG_FASTETHER;
+		chipname = "AR8114 (L2E RevB)";
 	} else {
 		if ((CSR_READ_4(sc, ALE_PHY_STATUS) & PHY_STATUS_100M) != 0) {
 			/* L1E AR8121 */
 			sc->ale_flags |= ALE_FLAG_JUMBO;
+			chipname = "AR8121 (L1E)";
 		} else {
 			/* L2E Rev. A. AR8113 */
 			sc->ale_flags |= ALE_FLAG_FASTETHER;
+			chipname = "AR8113 (L2E RevA)";
 		}
 	}
+	aprint_normal_dev(self, "%s, %s\n", chipname, intrstr);
 
 	/*
 	 * All known controllers seems to require 4 bytes alignment
