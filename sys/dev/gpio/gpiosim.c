@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.3 2009/07/27 17:40:58 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.4 2009/07/28 15:28:24 drochner Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -116,6 +116,8 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 		gba.gba_pins = sc->sc_gpio_pins;
 		gba.gba_npins = GPIOSIM_NPINS;
 	}
+
+	pmf_device_register(self, NULL, NULL);
 
 	sysctl_createv(NULL, 0, NULL, NULL,
             CTLFLAG_PERMANENT,
