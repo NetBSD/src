@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.167 2009/07/22 22:33:26 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.168 2009/07/28 22:19:20 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3598,4 +3598,9 @@ sys/sys/sha2.h					patch
 	- Fix Big Endian support in some cases
 	- Use libc support in libcrypto
 	[joerg, ticket #1338]
+
+dist/bind/bin/named/update.c			patch
+
+	Fix CVE-2009-0696.
+	[christos, ticket #1347]
 
