@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.13 2009/07/28 18:22:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.13 2009/07/28 18:22:33 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -140,17 +140,17 @@ setvlanif(prop_dictionary_t env, prop_dictionary_t oenv)
 	if (getvlan(env, &vlr, false) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if (!prop_dictionary_get_int64(env, "vlantag", &tag)) {
-		errno = ENOENT;
-		return -1;
-	}
-
 	if (!prop_dictionary_get_cstring_nocopy(env, "vlanif", &parent)) {
 		errno = ENOENT;
 		return -1;
 	}
 	strlcpy(vlr.vlr_parent, parent, sizeof(vlr.vlr_parent));
-	if (strcmp(parent, "") != 0)
+	if (strcmp(parent, "") == 0)
+		;
+	else if (!prop_dictionary_get_int64(env, "vlantag", &tag)) {
+		errno = ENOENT;
+		return -1;
+	} else
 		vlr.vlr_tag = (unsigned short)tag;
 
 	if (indirect_ioctl(env, SIOCSETVLAN, &vlr) == -1)
