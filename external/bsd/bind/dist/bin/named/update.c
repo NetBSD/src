@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.1 2009/03/22 14:56:11 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.2 2009/07/28 21:10:26 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.151.12.4 2009/01/29 22:40:33 jinmei Exp */
+/* Id: update.c,v 1.151.12.5.12.1 2009/07/28 14:18:08 marka Exp */
 
 #include <config.h>
 
@@ -981,7 +981,11 @@ temp_check(isc_mem_t *mctx, dns_diff_t *temp, dns_db_t *db,
 			if (type == dns_rdatatype_rrsig ||
 			    type == dns_rdatatype_sig)
 				covers = dns_rdata_covers(&t->rdata);
-			else
+			else if (type == dns_rdatatype_any) {
+				dns_db_detachnode(db, &node);
+				dns_diff_clear(&trash);
+				return (DNS_R_NXRRSET);
+			} else
 				covers = 0;
 
 			/*
@@ -2775,26 +2779,36 @@ static isc_result_t
 remove_orphaned_ds(dns_db_t *db, dns_dbversion_t *newver, dns_diff_t *diff) {
 	isc_result_t result;
 	isc_boolean_t ns_exists;
-	dns_difftuple_t *t;
+	dns_difftuple_t *tupple;
+	dns_diff_t temp_diff;
 
-	for (t = ISC_LIST_HEAD(diff->tuples);
-	     t != NULL;
-	     t = ISC_LIST_NEXT(t, link)) {
-		if (!((t->op == DNS_DIFFOP_DEL &&
-		       t->rdata.type == dns_rdatatype_ns) ||
-		      (t->op == DNS_DIFFOP_ADD &&
-		       t->rdata.type == dns_rdatatype_ds)))
+	dns_diff_init(diff->mctx, &temp_diff);
+
+	for (tupple = ISC_LIST_HEAD(diff->tuples);
+	     tupple != NULL;
+	     tupple = ISC_LIST_NEXT(tupple, link)) {
+		if (!((tupple->op == DNS_DIFFOP_DEL &&
+		       tupple->rdata.type == dns_rdatatype_ns) ||
+		      (tupple->op == DNS_DIFFOP_ADD &&
+		       tupple->rdata.type == dns_rdatatype_ds)))
 			continue;
-		CHECK(rrset_exists(db, newver, &t->name, dns_rdatatype_ns, 0,
-				   &ns_exists));
-		if (ns_exists && !dns_name_equal(&t->name, dns_db_origin(db)))
+		CHECK(rrset_exists(db, newver, &tupple->name,
+				   dns_rdatatype_ns, 0, &ns_exists));
+		if (ns_exists &&
+		    !dns_name_equal(&tupple->name, dns_db_origin(db)))
 			continue;
-		CHECK(delete_if(true_p, db, newver, &t->name,
-				dns_rdatatype_ds, 0, NULL, diff));
+		CHECK(delete_if(true_p, db, newver, &tupple->name,
+				dns_rdatatype_ds, 0, NULL, &temp_diff));
 	}
-	return (ISC_R_SUCCESS);
+	result = ISC_R_SUCCESS;
 
  failure:
+	for (tupple = ISC_LIST_HEAD(temp_diff.tuples);
+	     tupple != NULL;
+	     tupple = ISC_LIST_HEAD(temp_diff.tuples)) {
+		ISC_LIST_UNLINK(temp_diff.tuples, tupple, link);
+		dns_diff_appendminimal(diff, &tupple);
+	}
 	return (result);
 }
 

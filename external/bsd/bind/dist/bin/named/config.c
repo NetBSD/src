@@ -1,7 +1,7 @@
-/*	$NetBSD: config.c,v 1.1.1.1 2009/03/22 14:55:58 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.2 2009/07/28 21:10:24 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.93 2008/11/06 05:30:24 marka Exp */
+/* Id: config.c,v 1.93.14.2 2009/03/17 23:47:28 tbox Exp */
 
 /*! \file */
 
@@ -179,7 +179,7 @@ options {\n\
 	sig-validity-interval 30; /* days */\n\
 	sig-signing-nodes 100;\n\
 	sig-signing-signatures 10;\n\
-	sig-signing-type 65535;\n\
+	sig-signing-type 65534;\n\
 	zone-statistics false;\n\
 	max-journal-size unlimited;\n\
 	ixfr-from-differences false;\n\

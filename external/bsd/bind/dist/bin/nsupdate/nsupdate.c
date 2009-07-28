@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.1 2009/03/22 14:56:17 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.1.1.2 2009/07/28 21:10:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsupdate.c,v 1.163.48.2 2009/01/18 23:47:34 tbox Exp */
+/* Id: nsupdate.c,v 1.163.48.3 2009/04/30 07:12:49 marka Exp */
 
 /*! \file */
 
@@ -1543,8 +1543,9 @@ update_addordelete(char *cmdline, isc_boolean_t isdelete) {
 	}
 	region.base = word;
 	region.length = strlen(word);
+	rdataclass = dns_rdataclass_any;
 	result = dns_rdataclass_fromtext(&rdataclass, &region);
-	if (result == ISC_R_SUCCESS) {
+	if (result == ISC_R_SUCCESS && rdataclass != dns_rdataclass_any) {
 		if (!setzoneclass(rdataclass)) {
 			fprintf(stderr, "class mismatch: %s\n", word);
 			goto failure;
