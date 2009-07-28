@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.2 2009/04/12 03:46:08 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.3 2009/07/28 21:17:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.c,v 1.384.14.9 2009/02/27 23:05:22 marka Exp */
+/* Id: resolver.c,v 1.384.14.14 2009/06/02 23:47:13 tbox Exp */
 
 /*! \file */
 
@@ -474,6 +474,30 @@ valcreate(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo, dns_name_t *name,
 }
 
 static isc_boolean_t
+rrsig_fromchildzone(fetchctx_t *fctx, dns_rdataset_t *rdataset) {
+	dns_namereln_t namereln;
+	dns_rdata_rrsig_t rrsig;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	int order;
+	isc_result_t result;
+	unsigned int labels;
+
+	for (result = dns_rdataset_first(rdataset);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(rdataset)) {
+		dns_rdataset_current(rdataset, &rdata);
+		result = dns_rdata_tostruct(&rdata, &rrsig, NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		namereln = dns_name_fullcompare(&rrsig.signer, &fctx->domain,
+						&order, &labels);
+		if (namereln == dns_namereln_subdomain)
+			return (ISC_TRUE);
+		dns_rdata_reset(&rdata);
+	}
+	return (ISC_FALSE);
+}
+
+static isc_boolean_t
 fix_mustbedelegationornxdomain(dns_message_t *message, fetchctx_t *fctx) {
 	dns_name_t *name;
 	dns_name_t *domain = &fctx->domain;
@@ -486,13 +510,43 @@ fix_mustbedelegationornxdomain(dns_message_t *message, fetchctx_t *fctx) {
 		return (ISC_FALSE);
 
 	/*
-	 * Look for BIND 8 style delegations.
-	 * Also look for answers to ANY queries where the duplicate NS RRset
-	 * may have been stripped from the authority section.
+	 * A DS RRset can appear anywhere in a zone, even for a delegation-only
+	 * zone.  So a response to an explicit query for this type should be
+	 * excluded from delegation-only fixup.
+	 *
+	 * SOA, NS, and DNSKEY can only exist at a zone apex, so a postive
+	 * response to a query for these types can never violate the
+	 * delegation-only assumption: if the query name is below a
+	 * zone cut, the response should normally be a referral, which should
+	 * be accepted; if the query name is below a zone cut but the server
+	 * happens to have authority for the zone of the query name, the
+	 * response is a (non-referral) answer.  But this does not violate
+	 * delegation-only because the query name must be in a different zone
+	 * due to the "apex-only" nature of these types.  Note that if the
+	 * remote server happens to have authority for a child zone of a
+	 * delegation-only zone, we may still incorrectly "fix" the response
+	 * with NXDOMAIN for queries for other types.  Unfortunately it's
+	 * generally impossible to differentiate this case from violation of
+	 * the delegation-only assumption.  Once the resolver learns the
+	 * correct zone cut, possibly via a separate query for an "apex-only"
+	 * type, queries for other types will be resolved correctly.
+	 *
+	 * A query for type ANY will be accepted if it hits an exceptional
+	 * type above in the answer section as it should be from a child
+	 * zone.
+	 *
+	 * Also accept answers with RRSIG records from the child zone.
+	 * Direct queries for RRSIG records should not be answered from
+	 * the parent zone.
 	 */
+
 	if (message->counts[DNS_SECTION_ANSWER] != 0 &&
 	    (fctx->type == dns_rdatatype_ns ||
-	     fctx->type == dns_rdatatype_any)) {
+	     fctx->type == dns_rdatatype_ds ||
+	     fctx->type == dns_rdatatype_soa ||
+	     fctx->type == dns_rdatatype_any ||
+	     fctx->type == dns_rdatatype_rrsig ||
+	     fctx->type == dns_rdatatype_dnskey)) {
 		result = dns_message_firstname(message, DNS_SECTION_ANSWER);
 		while (result == ISC_R_SUCCESS) {
 			name = NULL;
@@ -501,10 +555,32 @@ fix_mustbedelegationornxdomain(dns_message_t *message, fetchctx_t *fctx) {
 			for (rdataset = ISC_LIST_HEAD(name->list);
 			     rdataset != NULL;
 			     rdataset = ISC_LIST_NEXT(rdataset, link)) {
-				type = rdataset->type;
-				if (type != dns_rdatatype_ns)
+				if (!dns_name_equal(name, &fctx->name))
 					continue;
-				if (dns_name_issubdomain(name, domain))
+				type = rdataset->type;
+				/*
+				 * RRsig from child?
+				 */
+				if (type == dns_rdatatype_rrsig &&
+				    rrsig_fromchildzone(fctx, rdataset))
+					return (ISC_FALSE);
+				/*
+				 * Direct query for apex records or DS.
+				 */
+				if (fctx->type == type &&
+				    (type == dns_rdatatype_ds ||
+				     type == dns_rdatatype_ns ||
+				     type == dns_rdatatype_soa ||
+				     type == dns_rdatatype_dnskey))
+					return (ISC_FALSE);
+				/*
+				 * Indirect query for apex records or DS.
+				 */
+				if (fctx->type == dns_rdatatype_any &&
+				    (type == dns_rdatatype_ns ||
+				     type == dns_rdatatype_ds ||
+				     type == dns_rdatatype_soa ||
+				     type == dns_rdatatype_dnskey))
 					return (ISC_FALSE);
 			}
 			result = dns_message_nextname(message,
@@ -512,7 +588,14 @@ fix_mustbedelegationornxdomain(dns_message_t *message, fetchctx_t *fctx) {
 		}
 	}
 
-	/* Look for referral. */
+	/*
+	 * A NODATA response to a DS query?
+	 */
+	if (fctx->type == dns_rdatatype_ds &&
+	    message->counts[DNS_SECTION_ANSWER] == 0)
+		return (ISC_FALSE);
+
+	/* Look for referral or indication of answer from child zone? */
 	if (message->counts[DNS_SECTION_AUTHORITY] == 0)
 		goto munge;
 
@@ -527,13 +610,37 @@ fix_mustbedelegationornxdomain(dns_message_t *message, fetchctx_t *fctx) {
 			if (type == dns_rdatatype_soa &&
 			    dns_name_equal(name, domain))
 				keep_auth = ISC_TRUE;
+
 			if (type != dns_rdatatype_ns &&
-			    type != dns_rdatatype_soa)
+			    type != dns_rdatatype_soa &&
+			    type != dns_rdatatype_rrsig)
 				continue;
-			if (dns_name_equal(name, domain))
-				goto munge;
-			if (dns_name_issubdomain(name, domain))
+
+			if (type == dns_rdatatype_rrsig) {
+				if (rrsig_fromchildzone(fctx, rdataset))
+					return (ISC_FALSE);
+				else
+					continue;
+			}
+
+			/* NS or SOA records. */
+			if (dns_name_equal(name, domain)) {
+				/*
+				 * If a query for ANY causes a negative
+				 * response, we can be sure that this is
+				 * an empty node.  For other type of queries
+				 * we cannot differentiate an empty node
+				 * from a node that just doesn't have that
+				 * type of record.  We only accept the former
+				 * case.
+				 */
+				if (message->counts[DNS_SECTION_ANSWER] == 0 &&
+				    fctx->type == dns_rdatatype_any)
+					return (ISC_FALSE);
+			} else if (dns_name_issubdomain(name, domain)) {
+				/* Referral or answer from child zone. */
 				return (ISC_FALSE);
+			}
 		}
 		result = dns_message_nextname(message, DNS_SECTION_AUTHORITY);
 	}
@@ -4232,53 +4339,53 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 			rdataset->trust = dns_trust_pending;
 			if (sigrdataset != NULL)
 				sigrdataset->trust = dns_trust_pending;
-			if (!need_validation)
+			if (!need_validation || !ANSWER(rdataset)) {
 				addedrdataset = ardataset;
-			else
-				addedrdataset = NULL;
-			result = dns_db_addrdataset(fctx->cache, node, NULL,
-						    now, rdataset, 0,
-						    addedrdataset);
-			if (result == DNS_R_UNCHANGED) {
-				result = ISC_R_SUCCESS;
-				if (!need_validation &&
-				    ardataset != NULL &&
-				    ardataset->type == 0) {
-					/*
-					 * The answer in the cache is better
-					 * than the answer we found, and is
-					 * a negative cache entry, so we
-					 * must set eresult appropriately.
-					 */
-					if (NXDOMAIN(ardataset))
-						eresult = DNS_R_NCACHENXDOMAIN;
-					else
-						eresult = DNS_R_NCACHENXRRSET;
-					/*
-					 * We have a negative response from
-					 * the cache so don't attempt to
-					 * add the RRSIG rrset.
-					 */
-					continue;
-				}
-			}
-			if (result != ISC_R_SUCCESS)
-				break;
-			if (sigrdataset != NULL) {
-				if (!need_validation)
-					addedrdataset = asigrdataset;
-				else
-					addedrdataset = NULL;
-				result = dns_db_addrdataset(fctx->cache,
-							    node, NULL, now,
-							    sigrdataset, 0,
-							    addedrdataset);
-				if (result == DNS_R_UNCHANGED)
+				result = dns_db_addrdataset(fctx->cache, node,
+							    NULL, now, rdataset,
+							    0, addedrdataset);
+				if (result == DNS_R_UNCHANGED) {
 					result = ISC_R_SUCCESS;
+					if (!need_validation &&
+					    ardataset != NULL &&
+					    ardataset->type == 0) {
+						/*
+						 * The answer in the cache is
+						 * better than the answer we
+						 * found, and is a negative
+						 * cache entry, so we must set
+						 * eresult appropriately.
+						 */
+						if (NXDOMAIN(ardataset))
+							eresult =
+							   DNS_R_NCACHENXDOMAIN;
+						else
+							eresult =
+							   DNS_R_NCACHENXRRSET;
+						/*
+						 * We have a negative response
+						 * from the cache so don't
+						 * attempt to add the RRSIG
+						 * rrset.
+						 */
+						continue;
+					}
+				}
 				if (result != ISC_R_SUCCESS)
 					break;
-			} else if (!ANSWER(rdataset))
-				continue;
+				if (sigrdataset != NULL) {
+					addedrdataset = asigrdataset;
+					result = dns_db_addrdataset(fctx->cache,
+								node, NULL, now,
+								sigrdataset, 0,
+								addedrdataset);
+					if (result == DNS_R_UNCHANGED)
+						result = ISC_R_SUCCESS;
+					if (result != ISC_R_SUCCESS)
+						break;
+				} else if (!ANSWER(rdataset))
+					continue;
+			}
 
 			if (ANSWER(rdataset) && need_validation) {
 				if (fctx->type != dns_rdatatype_any &&

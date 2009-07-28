@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2009/04/12 03:46:07 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2009/07/28 21:17:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.166.34.2 2009/01/18 23:47:34 tbox Exp */
+/* Id: main.c,v 1.166.34.3 2009/04/03 20:18:59 marka Exp */
 
 /*! \file */
 
@@ -881,10 +881,10 @@ main(int argc, char *argv[]) {
 	 * strings named.core | grep "named version:"
 	 */
 	strlcat(version,
-#if 0
-		"named version: BIND " VERSION " (" __DATE__ ")",
-#else
+#if defined(NO_VERSION_DATE) || !defined(__DATE__)
 		"named version: BIND " VERSION,
+#else
+		"named version: BIND " VERSION " (" __DATE__ ")",
 #endif
 		sizeof(version));
 	result = isc_file_progname(*argv, program_name, sizeof(program_name));
