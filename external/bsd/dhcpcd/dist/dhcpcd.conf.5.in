@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 5, 2009
+.Dd July 26, 2009
 .Dt DHCPCD.CONF 5 SMM
 .Os
 .Sh NAME
@@ -83,6 +83,14 @@ Only accept packets from
 is ignored if
 .Ic whitelist
 is set.
+.It Ic env Ar value
+Push
+.Ar value
+to the environment for use in
+.Xr dhcpcd-run-hooks 8 .
+For example, you can force the hostname hook to always set the hostname with
+.Ic env
+.Va force_hostname=YES .
 .It Ic clientid Ar string
 Send the
 .Ar clientid .
@@ -109,11 +117,15 @@ and should not be copied to other hosts.
 Fallback to using this profile if DHCP fails.
 This allows you to configure a static profile instead of using ZeroConf.
 .It Ic hostname Ar name
-Sends specified
+Sends
 .Ar hostname
-to the DHCP server so it can be registered in DNS. If
+to the DHCP server so it can be registered in DNS.
+If
 .Ar hostname
-if a FQDN (ie, contains a .) then it will be encoded as such.
+is an empty string then the current system hostname is sent.
+If
+.Ar hostname
+is a FQDN (ie, contains a .) then it will be encoded as such.
 .It Ic fqdn Op none | ptr | both
 none disables FQDN encoding, ptr just asks the DHCP server to update the PTR
 record of the host in DNS whereas both also updates the A record.
