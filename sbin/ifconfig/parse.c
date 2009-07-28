@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.13 2009/01/18 00:24:29 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.14 2009/07/28 18:21:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.13 2009/01/18 00:24:29 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.14 2009/07/28 18:21:06 dyoung Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -685,8 +685,7 @@ pkw_match(const struct parser *p, const struct match *im,
 		o = u->u_obj;
 		break;
 	case KW_T_STR:
-		o = (prop_object_t)prop_data_create_data_nocopy(u->u_str,
-		    strlen(u->u_str));
+		o = (prop_object_t)prop_string_create_cstring_nocopy(u->u_str);
 		if (o == NULL)
 			goto err;
 		break;
