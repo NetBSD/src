@@ -1,3 +1,76 @@
+	--- 9.6.1-P1 released ---
+
+2640.	[security]	A specially crafted update packet will cause named
+			to exit. [RT #20000]
+
+	--- 9.6.1 released ---
+
+2607.	[bug]		named could incorrectly delete NSEC3 records for
+			empty nodes when processing a update request.  
+			[RT #19749]
+
+2606.	[bug]		"delegation-only" was not being accepted in
+			delegation-only type zones. [RT #19717]
+
+2605.	[bug]		Accept DS responses from delegation only zones.
+			[RT # 19296]
+
+2603.	[port]		win32: handle .exe extension of named-checkzone and
+			named-comilezone argv[0] names under windows.
+			[RT #19767]
+
+2602.	[port]		win32: fix debugging command line build of libisccfg.
+			[RT #19767]
+
+	--- 9.6.1rc1 released ---
+
+2599.	[bug]		Address rapid memory growth when validation fails.
+			[RT #19654]
+
+2597.	[bug]		Handle a validation failure with a insecure delegation
+			from a NSEC3 signed master/slave zone.  [RT #19464]
+
+2596.	[bug]		Stale tree nodes of cache/dynamic rbtdb could stay
+			long, leading to inefficient memory usage or rejecting
+			newer cache entries in the worst case. [RT #19563]
+
+2595.	[bug]		Fix unknown extended rcodes in dig. [RT #19625]
+
+2592.	[bug]		Treat "any" as a type in nsupdate. [RT #19455]
+
+2591.	[bug]		named could die when processing a update in
+			removed_orphaned_ds(). [RT #19507]
+
+2588.	[bug]		SO_REUSEADDR could be set unconditionally after failure
+			of bind(2) call.  This should be rare and mostly
+			harmless, but may cause interference with other
+			processes that happen to use the same port. [RT #19642]
+
+2586.	[bug]		Missing cleanup of SIG rdataset in searching a DLZ DB
+			or SDB. [RT #19577]
+
+2585.	[bug]		Uninitialized socket name could be referenced via a
+			statistics channel, triggering an assertion failure in
+			XML rendering. [RT #19427]
+
+2584.	[bug]		alpha: gcc optimization could break atomic operations.
+			[RT #19227]
+
+2583.	[port]		netbsd: provide a control to not add the compile
+			date to the version string, -DNO_VERSION_DATE.
+
+2582.	[bug]		Don't emit warning log message when we attempt to
+			remove non-existant journal. [RT #19516]
+
+2579.	[bug]		DNSSEC lookaside validation failed to handle unknown
+			algorithms. [RT #19479]
+
+2578.	[bug]		Changed default sig-signing-type to 65534, because
+			65535 turns out to be reserved.  [RT #19477]
+
+2499.	[port]		solaris: lib/lwres/getaddrinfo.c namespace clash.
+			[RT #18837]
+
 	--- 9.6.1b1 released ---
 
 2577.	[doc]		Clarified some statistics counters. [RT #19454]
@@ -24,6 +97,9 @@
 
 2563.	[bug]		Dig could leak a socket causing it to wait forever
 			to exit. [RT #19359]
+
+2562.	[doc]		ARM: miscellaneous improvements, reorganization,
+			and some new content.
 
 2561.	[doc]		Add isc-config.sh(1) man page. [RT #16378]
 
