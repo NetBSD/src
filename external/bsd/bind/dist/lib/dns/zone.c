@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.1 2009/03/22 15:01:40 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.1.1.2 2009/07/28 21:11:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.c,v 1.483.36.5 2009/03/13 01:38:51 marka Exp */
+/* Id: zone.c,v 1.483.36.6 2009/03/26 22:57:07 marka Exp */
 
 /*! \file */
 
@@ -9562,7 +9562,7 @@ zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump) {
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 				      DNS_LOGMODULE_ZONE, ISC_LOG_DEBUG(3),
 				      "removing journal file");
-			if (remove(zone->journal) < 0) {
+			if (remove(zone->journal) < 0 && errno != ENOENT) {
 				char strbuf[ISC_STRERRORSIZE];
 				isc__strerror(errno, strbuf, sizeof(strbuf));
 				isc_log_write(dns_lctx,
