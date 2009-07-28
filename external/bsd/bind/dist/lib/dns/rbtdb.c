@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.1.1.2 2009/07/28 21:11:10 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.2 2009/07/28 21:51:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -1878,7 +1878,7 @@ prune_tree(isc_task_t *task, isc_event_t *event) {
 	NODE_UNLOCK(&rbtdb->node_locks[locknum].lock, isc_rwlocktype_write);
 	RWUNLOCK(&rbtdb->tree_lock, isc_rwlocktype_write);
 
-	detach((dns_db_t **)&rbtdb);
+	detach((dns_db_t **)(void *)&rbtdb);
 }
 
 static inline void
