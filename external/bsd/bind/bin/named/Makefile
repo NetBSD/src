@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:06 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/07/28 21:18:01 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 
 DIST=${IDIST}/bin/named
 CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include -DCONFIGARGS=\"defaults\"
+CPPFLAGS+=-DNO_VERSION_DATE
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 .for f in client
