@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:29 snj Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.4.4.1.2.2 2009/07/28 22:16:33 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -863,7 +863,11 @@ temp_check(isc_mem_t *mctx, dns_diff_t *temp, dns_db_t *db,
 			if (type == dns_rdatatype_rrsig ||
 			    type == dns_rdatatype_sig)
 				covers = dns_rdata_covers(&t->rdata);
-			else
+			else if (type == dns_rdatatype_any) {
+				dns_db_detachnode(db, &node);
+				dns_diff_clear(&trash);
+				return (DNS_R_NXRRSET);
+			} else
 				covers = 0;
 
 			/*
