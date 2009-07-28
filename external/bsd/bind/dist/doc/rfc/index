@@ -118,3 +118,4 @@
          Dynamic Host Configuration Protocol (DHCP) Information (DHCID RR)
 5155:	DNS Security (DNSSEC) Hashed Authenticated Denial of Existence
 5295:	Host Identity Protocol (HIP) Domain Name System (DNS) Extension
+5507:	Design Choices When Expanding the DNS

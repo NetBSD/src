@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.1 2009/03/22 15:00:55 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.2 2009/07/28 21:11:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.c,v 1.95.12.3 2009/02/17 03:43:07 marka Exp */
+/* Id: check.c,v 1.95.12.4 2009/06/03 00:06:01 marka Exp */
 
 /*! \file */
 
@@ -1052,9 +1052,9 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	{ "notify", MASTERZONE | SLAVEZONE },
 	{ "also-notify", MASTERZONE | SLAVEZONE },
 	{ "dialup", MASTERZONE | SLAVEZONE | STUBZONE },
-	{ "delegation-only", HINTZONE | STUBZONE },
-	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE},
-	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE},
+	{ "delegation-only", HINTZONE | STUBZONE | DELEGATIONZONE },
+	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE },
+	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE | FORWARDZONE },
 	{ "maintain-ixfr-base", MASTERZONE | SLAVEZONE },
 	{ "max-ixfr-log-size", MASTERZONE | SLAVEZONE },
 	{ "notify-source", MASTERZONE | SLAVEZONE },

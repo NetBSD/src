@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.1.1.1 2009/03/22 14:55:48 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.1.1.2 2009/07/28 21:10:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nslookup.c,v 1.117.334.2 2009/01/06 23:47:26 tbox Exp */
+/* Id: nslookup.c,v 1.117.334.4 2009/05/06 11:41:57 fdupont Exp */
 
 #include <config.h>
 
@@ -28,6 +28,7 @@
 #include <isc/commandline.h>
 #include <isc/event.h>
 #include <isc/parseint.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/timer.h>
 #include <isc/util.h>
@@ -130,6 +131,23 @@ static const char *rtypetext[] = {
 
 static void flush_lookup_list(void);
 static void getinput(isc_task_t *task, isc_event_t *event);
+
+static char *
+rcode_totext(dns_rcode_t rcode)
+{
+	static char buf[sizeof("?65535")];
+	union {
+		const char *consttext;
+		char *deconsttext;
+	} totext;
+
+	if (rcode >= (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
+		snprintf(buf, sizeof(buf), "?%u", rcode);
+		totext.deconsttext = buf;
+	} else
+		totext.consttext = rcodetext[rcode];
+	return totext.deconsttext;
+}
 
 void
 dighost_shutdown(void) {
@@ -414,7 +432,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 				nametext, sizeof(nametext));
 		printf("** server can't find %s: %s\n",
 		       (msg->rcode != dns_rcode_nxdomain) ? nametext :
-		       query->lookup->textname, rcodetext[msg->rcode]);
+		       query->lookup->textname, rcode_totext(msg->rcode));
 		debug("returning with rcode == 0");
 		return (ISC_R_SUCCESS);
 	}
