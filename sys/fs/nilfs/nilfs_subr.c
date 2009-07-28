@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.1 2009/07/18 16:31:42 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.2 2009/07/28 15:31:21 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.1 2009/07/18 16:31:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.2 2009/07/28 15:31:21 reinoud Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -284,9 +284,17 @@ nilfs_btree_lookup(struct nilfs_node *node, uint64_t lblocknr,
 			break;
 		selected = i;
 	}
+
+	/* if selected key > lblocknr, its not mapped */
+	if (dkeys[selected] > lblocknr)
+		return 0;
+
 	/* overshooting? then not mapped */
 	if (selected == nilfs_rw16(btree_hdr->bn_nchildren))
 		return 0;
+
+	/* level should be > 1 or otherwise it should be a direct one */
+	assert(btree_hdr->bn_level > 1);
 
 	/* lookup in selected child */
 	assert(dkeys[selected] <= lblocknr);
@@ -407,10 +415,12 @@ nilfs_nvtop(struct nilfs_node *node, uint64_t blks, uint64_t *l2vmap,
 	}
 
 	/* TODO / OPTI more translations in one go */
-	error = EINVAL;
+	error = 0;
 	for (i = 0; i < blks; i++) {
 		vblocknr  = l2vmap[i];
 		pblocknr  = v2pmap + i;
+		*pblocknr = 0;
+
 		/* only translate valid vblocknrs */
 		if (vblocknr == 0)
 			continue;
