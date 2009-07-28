@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.41 2009/07/27 00:42:41 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.42 2009/07/28 22:25:58 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -711,4 +711,9 @@ external/bsd/pkg_install/dist/lib/version.h	pkg_install-20090724
 	 - invert order of pkg_info -r to better match the expectations of
 	   make update.
 	[joerg, ticket #877]
+
+dist/bind/bin/named/update.c			patch
+
+	Fix CVE-2009-0696.
+	[christos, ticket #881]
 
