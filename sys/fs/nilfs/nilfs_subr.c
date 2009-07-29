@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.3 2009/07/29 13:23:23 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.4 2009/07/29 17:06:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.3 2009/07/29 13:23:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4 2009/07/29 17:06:57 reinoud Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -502,13 +502,13 @@ nilfs_load_super_root(struct nilfs_device *nilfsdev,
 	struct nilfs_recover_info *ri)
 {
 	struct nilfs_segment_summary *segsum = &ri->segsum;
+	struct nilfs_super_root *super_root;
 	struct buf *bp;
 	uint64_t blocknr, offset;
 	uint32_t segsum_size, size;
 	uint32_t nsumblk, nfileblk;
-	int error;
-
-	bp = NULL;
+	uint32_t super_root_crc, comp_crc;
+	int off, error;
 
 	/* process segment summary */
 	segsum_size = nilfs_rw32(segsum->ss_sumbytes);
@@ -519,29 +519,39 @@ nilfs_load_super_root(struct nilfs_device *nilfsdev,
 	if ((nilfs_rw16(segsum->ss_flags) & NILFS_SS_SR) == 0) {
 		DPRINTF(VOLUMES, ("nilfs: no super root in pseg %"PRIu64"\n",
 			ri->pseg));
-		error = ENOENT;
-		goto out;
+		return ENOENT;
 	}
 
 	/* get our super root, located at the end of the pseg */
 	blocknr = ri->pseg + nsumblk + nfileblk - 1;
 	offset = 0;
 	size = sizeof(struct nilfs_super_root);
+	bp = NULL;
 	error = nilfs_get_segment_log(nilfsdev,
 			&blocknr, &offset, &bp,
 			size, (void *) &nilfsdev->super_root);
-	if (error) {
-		printf("read in of superroot failed\n");
-		error = EIO;
-	}
-	/* else got our super root! */
-	DPRINTF(VOLUMES, ("    got superroot\n"));
-
-out:
 	if (bp)
 		brelse(bp, BC_AGE);
+	if (error) {
+		printf("read in of superroot failed\n");
+		return EIO;
+	}
 
-	return error;
+	/* check super root crc */
+	super_root = &nilfsdev->super_root;
+	super_root_crc = nilfs_rw32(super_root->sr_sum);
+	off = sizeof(super_root->sr_sum);
+	comp_crc = crc32_le(nilfs_rw32(nilfsdev->super.s_crc_seed),
+		(uint8_t *) super_root + off,
+		NILFS_SR_BYTES - off);
+	if (super_root_crc != comp_crc) {
+		DPRINTF(VOLUMES, ("    invalid superroot, likely from old format\n"));
+		return EINVAL;
+	}
+
+	DPRINTF(VOLUMES, ("    got valid superroot\n"));
+
+	return 0;
 }
 
 /* 
