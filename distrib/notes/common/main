@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.5 2009/04/26 01:35:25 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.5.2.1 2009/07/29 22:28:46 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd April 25, 2009
+.Dd July 29, 2009
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -452,11 +452,213 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 5.0 and 5.0.1 Releases
+.Pp
+The
+.Nx
+\*V
+release is the first security/critical update of the
+.Nx
+5.0 release branch.
+This represents a selected subset of fixes deemed critical in nature for
+stability or security reasons.
+.Pp
+Please note that all fixes in security/critical updates (i.e., NetBSD 5.0.1,
+5.0.2, etc.) are cumulative, so the latest update contains all such fixes
+since the corresponding minor release.
+These fixes will also appear in future minor releases (i.e., NetBSD 5.1, 5.2,
+etc.), together with other less-critical fixes and feature enhancements.
+.Pp
+The complete list of changes can be found in the
+CHANGES-5.0.1:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.0.1/CHANGES-5.0.1
+file in the top level directory of the NetBSD 5.0.1 release tree.
+An abbreviated list is as follows:
+.Ss2 Security Advisory Fixes
+.(bullet
+NetBSD-SA2009-004 (NetBSD OpenPAM passwd(1) changing weakness):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-004.txt.asc
+.It
+NetBSD-SA2009-005 (Plaintext Recovery Attack Against SSH):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-005.txt.asc
+.It
+NetBSD-SA2009-006 (Buffer overflows in ntp):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-006.txt.asc
+.It
+NetBSD-SA2009-007 (Buffer overflows in hack(6)):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-007.txt.asc
+.It
+NetBSD-SA2009-008 (OpenSSL ASN1 parsing denial of service and CMS signature
+verification weakness):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-008.txt.asc
+.It
+NetBSD-SA2009-009 (OpenSSL DTLS Memory Exhaustion and DSA signature
+verification vulnerabilities):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-009.txt.asc
+.It
+NetBSD-SA2009-010 (ISC dhclient subnet-mask flag stack overflow):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-010.txt.asc
+.It
+NetBSD-SA2009-011 (ISC DHCP server Denial of Service vulnerability):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-011.txt.asc
+.It
+NetBSD-SA2009-012 (SHA2 implementation potential buffer overflow):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-012.txt.asc
+.It
+NetBSD-SA2009-013 (BIND named dynamic update Denial of Service vulnerability):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-013.txt.asc
+.bullet)
+.
+.Pp
+Advisories prior to NetBSD-SA2009-004 do not affect
+.Nx
+5.0:
+.Lk http://www.NetBSD.org/support/security/patches-5.0.html
+.Ss2 Kernel
+.(bullet
+Fix random
+.Dq filesystem full
+messages on large FFS file systems.
+.It
+Fix a regression in the 4.4BSD scheduler, improving interactive performance under load.
+.It
+Remove a race where physio_done() may use memory already freed.
+Fixes PR kern/39536.
+.It
+Fix a crash observed when trying to load a corrupted ELF kernel module.
+.It
+Fix PR kern/41566, where writes on the controlling tty were not being awoken from blocks.
+.It
+Various fixes for POSIX message queues.
+.It
+Fix a possible deadlock in the VFS subsystem.
+.It
+Fixes for POSIX advisory locks.
+.It
+A number of other stability fixes.
+.bullet)
+.
+.Ss2 Networking
+.(bullet
+Follow exactly the recommendation of draft-ietf-tcpm-tcpsecure-11.txt: Don't check gainst the last ack received, but the expected sequence number.
+This makes RST handling independent of delayed ACK.
+.It
+Fix a panic when trying to disable IPFilter before enabling it.
+Fixes PR kern/41364.
+.bullet)
+.
+.Ss2 Drivers
+.(bullet
+.Xr ehci 4 :
+Add a workaround for ATI SB600 and SB700 revisions A12 and A13 to avoid a USB subsystem hang when the system has multiple USB devices connected to it or one device is re-connected often.
+.It
+.Xr wm 4 :
+.(bullet
+On i82563, FreeBSD's em driver says that the ready bit in the MDIC register may be incorrectly set.
+Insert delay(200) like the em driver.
+Fixes PR kern/41014.
+.It
+Add workaround for 82543GC.
+We need to force speed and duplex on the MAC equal to what the PHY speed and duplex configuration is.
+Fixes PR kern/36430.
+.It
+Fix many problems and panic on TBI's cards (PR kern/32009).
+.bullet)
+.
+.bullet)
+.
+.Ss2 Platform specific
+.(bullet
+x86 (amd64 and i386): Add a workaround for a bug with some Opteron revisions where locked operations sometimes do not serve as memory barriers, allowing memory references to bleed outside of critical sections.
+.It
+amd64: Handle protection faults properly, returning SIGSEGV instead of SIGBUS.
+.It
+hp300: Make install.md probe
+.Xr cd 4
+devices properly.
+.It
+pmax: Make ksyms(4) actually work.
+.It
+sh3: Fix logic error in copyinstr() when deciding whether to return EFAULT or ENAMETOOLONG.
+.It
+sparc64:
+.(bullet
+Fix long double support in 32bit libc.
+Fixes PR port-sparc64/41406.
+.It
+When preparing the initial trap frame for a new forked lwp, explicitly clear condition code.
+Otherwise we might catch a signal before we ever return to userland.
+Fixes PR port-sparc64/41302.
+.bullet)
+.
+.It
+vax: binutils: Allocate relocation section using bfd_zalloc() to ensure no garbage relocations when not all the entries are used.
+Fixes PR port-vax/39182.
+.bullet)
+.
+.Ss2 Userland
+.(bullet
+Update pkg_install to 20090724.
+.(Note
+pkg_install now depends on the pkgdb cache for automatic conflict detection.
+It is recommended to rebuild the cache with
+.Pp
+.Dl # Ic "pkg_admin rebuild"
+.Pp
+.Xr audit-packages.conf 5
+has been superseded by
+.Xr pkg_install.conf 5 .
+The default configuration is the same.
+.Pp
+Support for
+.Xr pkg_view 1
+has been retired.
+.Pp
+The functionality of
+.Xr audit-packages 1
+and
+.Xr download-vulnerability-list 1
+has moved into
+.Xr pkg_admin 1 .
+However, wrapper scripts that handle the common use cases are provided.
+.Note)
+.It
+Update libfetch to 2.23.
+.It
+.Xr racoonctl 8 :
+Adjust ADMINPORTDIR to match that of racoon (/var/run).
+Fixes PR bin/41376.
+.It
+.Xr schedctl 8 :
+Skip LSIDL and LSZOMB threads when retrieving info.
+.It
+.Xr postinstall 8
+now knows about /etc/dhcpcd.conf.
+.bullet)
+.
+.Ss2 Miscellaneous
+.(bullet
+The X.Org s3 driver now works.
+.It
+Install the Xvidtune app-defaults file.
+.It
+Fixes to Linux compat:
+.(bullet
+In sendmsg(2), do copy the msghdr structure before trying to use it.
+.It
+In linux_sys_sched_getaffinity(), do not leak memory on error.
+.bullet)
+.
+.It
+Various METALOG fixes, including sorting entries.
+Addresses PR toolchain/24457 and PR bin/41155.
+.bullet)
+.
 .Ss Changes Between The NetBSD 4.0 and 5.0 Releases
 .Pp
 The
 .Nx
-\*V release
+5.0 release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many user-land enhancements.
@@ -466,7 +668,7 @@ production use that rivals most commercially available systems.
 It is impossible to completely summarize the massive development that
 went into the
 .Nx
-\*V release.
+5.0 release.
 The complete list of changes can be found in the
 CHANGES:
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.0/CHANGES
@@ -2026,7 +2228,9 @@ can now use functions defined in
 Besides this list, there have also been innumerable bug fixes and miscellaneous enhancements.
 .Ss2 Components removed from NetBSD
 .Pp
-In this release of NetBSD, the following software components have been removed from the system. Some were not useful anymore, or their utility did not justify the maintenance overhead. Others were not working properly and there was a lack of interest in fixing them.
+In 
+.Nx 
+5.0, the following software components were removed from the system. Some were not useful anymore, or their utility did not justify the maintenance overhead. Others were not working properly and there was a lack of interest in fixing them.
 .(bullet
 The pc532 port.
 .It
@@ -2061,21 +2265,6 @@ Workaround: generate a core file from the program using
 and pass the core to gdb, instead of debugging the running program.
 .Pp
 Statically linked binaries using pthreads are currently broken.
-.Pp
-Certain early revision AMD Opteron and Athlon 64 processors contain a bug
-that may cause system instability when running with more than one CPU core
-active.
-An OS-level workaround for this issue has been prepared but was not ready
-in time for inclusion in
-.Nx
-5.0.
-It will be available as part of a later release in the 5.0 series.
-.Pp
-Large filesystems
-.Pq over 2TB
-may sometimes falsely claim to be out of space.
-A fix for this is available, but was not made in time for 5.0.
-It will be available as part of a later release in the 5.0 series.
 .
 .Pp
 The sparc port does not have functional SMP support in this release.
@@ -2106,8 +2295,7 @@ for details.
 .It
 Support for Xen 2.0.x. The Xen-3 and hypervisor interface is diverging
 from Xen-2 as development is ongoing, increasing the maintenance cost
-for NetBSD. It is expected that the netbsd-5 branch will get support for
-PCI pass-though to domUs before the Xen-2 support is removed from HEAD.
+for NetBSD.
 .Pp
 It should be considered as deprecated. Users are expected to not rely
 on it any more beyond this major release.
@@ -2343,6 +2531,28 @@ may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx
 \*V.
+.Pp
+pkg_install now depends on the pkgdb cache for automatic conflict detection.
+It is recommended to rebuild the cache with
+.Pp
+.Dl # Ic "pkg_admin rebuild"
+.Pp
+.Xr audit-packages.conf 5
+has been superseded by
+.Xr pkg_install.conf 5 .
+The default configuration is the same.
+.Pp
+Support for
+.Xr pkg_view 1
+has been retired.
+.Pp
+The functionality of
+.Xr audit-packages 1
+and
+.Xr download-vulnerability-list 1
+has moved into
+.Xr pkg_admin 1 .
+However, wrapper scripts that handle the common use cases are provided.
 .Pp
 The pthread libraries from previous versions of
 .Nx
