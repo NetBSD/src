@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2009/01/18 20:50:43 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2009/07/29 12:02:08 cegger Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2009/01/18 20:50:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2009/07/29 12:02:08 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2009/01/18 20:50:43 bouyer Exp $");
 #include <x86/ipmivar.h>
 #endif
 
-#if defined(XEN3) && NPCI > 0
+#if NPCI > 0
 #include <dev/pci/pcivar.h>
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
@@ -96,7 +96,7 @@ int mp_verbose = 1;
 int mp_verbose = 0;
 #endif /* MPVERBOSE */
 #endif /* defined(MPBIOS) || NACPI > 0 */
-#endif /* defined(XEN3) && NPCI > 0 */
+#endif /* NPCI > 0 */
 
 
 int	mainbus_match(device_t, cfdata_t, void *);
@@ -135,7 +135,7 @@ void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	union mainbus_attach_args mba;
-#if defined(DOM0OPS) && defined(XEN3)
+#if defined(DOM0OPS)
 	int numcpus = 0;
 #ifdef MPBIOS
 	int mpbios_present = 0;
@@ -143,18 +143,11 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #ifdef PCI_BUS_FIXUP
 	int pci_maxbus = 0;
 #endif
-#endif /* defined(DOM0OPS) && defined(XEN3) */
+#endif /* defined(DOM0OPS) */
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-#ifndef XEN3
-	memset(&mba.mba_caa, 0, sizeof(mba.mba_caa));
-	mba.mba_caa.cpu_number = 0;
-	mba.mba_caa.cpu_role = CPU_ROLE_SP;
-	mba.mba_caa.cpu_func = 0;
-	config_found_ia(self, "cpubus", &mba.mba_caa, mainbus_print);
-#else /* XEN3 */
 #ifdef DOM0OPS
 	if (xendomain_is_dom0()) {
 #ifdef MPBIOS
@@ -202,7 +195,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	}
 #endif /* DOM0OPS */
-#endif /* XEN3 */
 
 #if NIPMI > 0
 	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));

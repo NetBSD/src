@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2009/07/23 15:26:20 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2009/07/29 12:02:06 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2009/07/23 15:26:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2009/07/29 12:02:06 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2596,7 +2596,7 @@ pmap_reactivate(struct pmap *pmap)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) 
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 
@@ -2703,7 +2703,7 @@ pmap_load(void)
 	    oldpmap == pmap_kernel());
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN)
 	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
@@ -2870,7 +2870,7 @@ pmap_deactivate(struct lwp *l)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) 
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.47 2009/07/09 21:43:16 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.48 2009/07/29 12:02:06 cegger Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.47 2009/07/09 21:43:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.48 2009/07/29 12:02:06 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -933,92 +933,8 @@ IDTVEC(trap0e)
 	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
 #else /* !XEN */
-#ifdef XEN3
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
-#else /* XEN3 */
-IDTVEC(trap0e)
-	INTRENTRY
-	movl	TF_TRAPNO(%esp),%eax
-	movl	$T_PAGEFLT,TF_TRAPNO(%esp)
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	#pushl	%esp
-	pushl	%eax
-	movl	%esp,%eax
-	addl	$4,%eax
-	incl	CPUVAR(NTRAP)
-	pushl	%eax
-	call	_C_LABEL(trap)
-	addl	$8,%esp
-.Ltrap0e_checkusr:
-	testb	$CHK_UPL,TF_CS(%esp)
-	jnz	trap0e_checkast
-#ifdef VM86
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-	jz	6f
-#else
-	jmp	6f
-#endif
-trap0e_checkast:
-	/* Check for ASTs on exit to user mode. */
-	CLI(%eax)
-	movl	CPUVAR(CURLWP),%eax
-	CHECK_ASTPENDING(%eax)
-	jz	3f
-5:	CLEAR_ASTPENDING(%eax)
-	STI(%eax)
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)
-	incl	CPUVAR(NTRAP)
-	pushl	%esp
-	call	_C_LABEL(trap)
-	addl	$4,%esp
-	jmp	trap0e_checkast		/* re-check ASTs */
-3:	CHECK_DEFERRED_SWITCH
-	jnz	9f
-6:	STIC(%eax)
-    	jz	4f
-	call	_C_LABEL(stipending)
-	testl	%eax,%eax
-	jz	4f
-	/* process for pending interrupts */
-	CLI(%eax)
-	movl	CPUVAR(ILEVEL), %ebx
-	movl	$.Ltrap0e_resume, %esi # address to resume loop at
-.Ltrap0e_resume:
-	movl    %ebx,%eax		# get cpl
-	movl    CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl    CPUVAR(IPENDING),%eax   # any non-masked bits left?
-	jz	7f
-	bsrl    %eax,%eax
-	btrl    %eax,CPUVAR(IPENDING)
-	movl    CPUVAR(ISOURCES)(,%eax,4),%eax
-	jmp     *IS_RESUME(%eax)
-7:	movl	%ebx, CPUVAR(ILEVEL) #restore cpl
-	jmp 	.Ltrap0e_checkusr
-4:
-#ifndef DIAGNOSTIC
-	INTRFASTEXIT
-#else
-	cmpl	CPUVAR(ILEVEL),%ebx
-	jne	3f
-	INTRFASTEXIT
-3:	pushl	$4f
-	call	_C_LABEL(panic)
-	addl	$4,%esp
-#ifdef DDB
-	movl	CPUVAR(ILEVEL), %eax
-	int	$3
-#endif /* DDB */
-	movl	%ebx,CPUVAR(ILEVEL)
-	jmp	trap0e_checkast		/* re-check ASTs */
-4:	.asciz	";SPL NOT LOWERED ON TRAP EXIT\n"
-#endif /* DIAGNOSTIC */
-9:	STI(%eax)
-	call	_C_LABEL(pmap_load)
-	jmp	trap0e_checkast		/* re-check ASTs */
-#endif /* XEN3 */
 #endif /* !XEN */
 
 IDTVEC(intrspurious)

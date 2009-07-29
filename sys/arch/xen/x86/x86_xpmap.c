@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.14 2009/07/23 15:26:20 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.15 2009/07/29 12:02:08 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.14 2009/07/23 15:26:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.15 2009/07/29 12:02:08 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -129,13 +129,8 @@ unsigned long *xpmap_phys_to_machine_mapping;
 
 void xen_failsafe_handler(void);
 
-#ifdef XEN3
 #define HYPERVISOR_mmu_update_self(req, count, success_count) \
 	HYPERVISOR_mmu_update((req), (count), (success_count), DOMID_SELF)
-#else
-#define HYPERVISOR_mmu_update_self(req, count, success_count) \
-	HYPERVISOR_mmu_update((req), (count), (success_count))
-#endif
 
 void
 xen_failsafe_handler(void)
@@ -236,7 +231,6 @@ xpq_queue_pte_update(paddr_t ptr, pt_entry_t val)
 #endif
 }
 
-#ifdef XEN3
 void
 xpq_queue_pt_switch(paddr_t pa)
 {
@@ -368,95 +362,6 @@ xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 		return EFAULT;
 	return (0);
 }
-#else /* XEN3 */
-void
-xpq_queue_pt_switch(paddr_t pa)
-{
-
-	XENPRINTK2(("xpq_queue_pt_switch: %p %p\n", (void *)pa, (void *)pa));
-	xpq_queue[xpq_idx].ptr = pa | MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].val = MMUEXT_NEW_BASEPTR;
-	xpq_increment_idx();
-}
-
-void
-xpq_queue_pin_table(paddr_t pa)
-{
-
-	XENPRINTK2(("xpq_queue_pin_table: %p %p\n", (void *)pa, (void *)pa));
-	xpq_queue[xpq_idx].ptr = pa | MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].val = MMUEXT_PIN_L2_TABLE;
-	xpq_increment_idx();
-}
-
-void
-xpq_queue_unpin_table(paddr_t pa)
-{
-
-	XENPRINTK2(("xpq_queue_unpin_table: %p %p\n", (void *)pa, (void *)pa));
-	xpq_queue[xpq_idx].ptr = pa | MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].val = MMUEXT_UNPIN_TABLE;
-	xpq_increment_idx();
-}
-
-void
-xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
-{
-
-	XENPRINTK2(("xpq_queue_set_ldt\n"));
-	KASSERT(va == (va & ~PAGE_MASK));
-	xpq_queue[xpq_idx].ptr = MMU_EXTENDED_COMMAND | va;
-	xpq_queue[xpq_idx].val = MMUEXT_SET_LDT | (entries << MMUEXT_CMD_SHIFT);
-	xpq_increment_idx();
-}
-
-void
-xpq_queue_tlb_flush(void)
-{
-
-	XENPRINTK2(("xpq_queue_tlb_flush\n"));
-	xpq_queue[xpq_idx].ptr = MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].val = MMUEXT_TLB_FLUSH;
-	xpq_increment_idx();
-}
-
-void
-xpq_flush_cache(void)
-{
-	int s = splvm();
-
-	XENPRINTK2(("xpq_queue_flush_cache\n"));
-	xpq_queue[xpq_idx].ptr = MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].val = MMUEXT_FLUSH_CACHE;
-	xpq_increment_idx();
-	xpq_flush_queue();
-	splx(s);
-}
-
-void
-xpq_queue_invlpg(vaddr_t va)
-{
-
-	XENPRINTK2(("xpq_queue_invlpg %p\n", (void *)va));
-	xpq_queue[xpq_idx].ptr = (va & ~PAGE_MASK) | MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].val = MMUEXT_INVLPG;
-	xpq_increment_idx();
-}
-
-int
-xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
-{
-	mmu_update_t xpq_up[3];
-
-	xpq_up[0].ptr = MMU_EXTENDED_COMMAND;
-	xpq_up[0].val = MMUEXT_SET_FOREIGNDOM | (dom << 16);
-	xpq_up[1].ptr = ptr;
-	xpq_up[1].val = val;
-	if (HYPERVISOR_mmu_update_self(xpq_up, 2, NULL) < 0)
-		return EFAULT;
-	return (0);
-}
-#endif /* XEN3 */
 
 #ifdef XENDEBUG
 void
@@ -785,7 +690,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				    "va 0x%lx pte 0x%" PRIx64 "\n",
 				    HYPERVISOR_shared_info, (int64_t)pte[pl1_pi(page)]));
 			}
-#ifdef XEN3
 			if ((xpmap_ptom_masked(page - KERNBASE) >> PAGE_SHIFT)
 			    == xen_start_info.console.domU.mfn) {
 				xencons_interface = (void *)page;
@@ -804,7 +708,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				    "va 0x%lx pte 0x%" PRIx64 "\n",
 				    xenstore_interface, (int64_t)pte[pl1_pi(page)]));
 			}
-#endif /* XEN3 */
 #ifdef DOM0OPS
 			if (page >= (vaddr_t)atdevbase &&
 			    page < (vaddr_t)atdevbase + IOM_SIZE) {

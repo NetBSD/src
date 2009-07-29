@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.37 2009/03/16 06:18:32 cegger Exp $ */
+/* $NetBSD: privcmd.c,v 1.38 2009/07/29 12:02:09 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.37 2009/03/16 06:18:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.38 2009/07/29 12:02:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ privcmd_ioctl(void *v)
 			"movl 16(%%eax),%%esi ;"
 			"movl 20(%%eax),%%edi ;"
 			"movl   (%%eax),%%eax ;"
-#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+#if !defined(XEN_COMPAT_030001)
 			"shll $5,%%eax ;"
 			"addl $hypercall_page,%%eax ;"
 			"call *%%eax ;"
@@ -335,21 +335,6 @@ privcmd_ioctl(void *v)
 		}
 		break;
 	}
-#ifndef XEN3
-	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
-		{
-		extern int initdom_ctrlif_domcontroller_port;
-		error = initdom_ctrlif_domcontroller_port;
-		}
-		break;
-	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
-		{
-		extern int initdom_ctrlif_domcontroller_port;
-		*(int *)ap->a_data = initdom_ctrlif_domcontroller_port;
-		}
-		error = 0;
-		break;
-#endif /* XEN3 */
 	case IOCTL_PRIVCMD_MMAP:
 	{
 		int i, j;
@@ -460,15 +445,6 @@ privcmd_ioctl(void *v)
 
 		break;
 	}
-#ifndef XEN3
-	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
-		{
-		unsigned long *mfn_start = ap->a_data;
-		*mfn_start = HYPERVISOR_shared_info->arch.mfn_to_pfn_start;
-		error = 0;
-		}
-		break;
-#endif /* !XEN3 */
 	default:
 		error = EINVAL;
 	}
