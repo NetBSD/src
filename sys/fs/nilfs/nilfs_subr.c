@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.2 2009/07/28 15:31:21 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.3 2009/07/29 13:23:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.2 2009/07/28 15:31:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.3 2009/07/29 13:23:23 reinoud Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -535,6 +535,7 @@ nilfs_load_super_root(struct nilfs_device *nilfsdev,
 		error = EIO;
 	}
 	/* else got our super root! */
+	DPRINTF(VOLUMES, ("    got superroot\n"));
 
 out:
 	if (bp)
