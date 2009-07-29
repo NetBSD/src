@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2008/02/27 18:26:16 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2009/07/29 17:45:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -174,7 +174,7 @@ struct clockframe {
  * through trap, marking the proc as needing a profiling tick.
  */
 #define cpu_need_proftick(l)	\
-	do { (l)->l_flag |= LP_OWEUPC; aston(); } while (/* CONSTCOND */0)
+	do { (l)->l_pflag |= LP_OWEUPC; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
