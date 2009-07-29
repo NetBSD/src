@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.245 2009/07/29 12:02:06 cegger Exp $	*/
+/*	$NetBSD: trap.c,v 1.246 2009/07/29 17:16:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.245 2009/07/29 12:02:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.246 2009/07/29 17:16:56 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -483,7 +483,7 @@ copyfault:
 			ksi.ksi_code = BUS_ADRALN;
 			break;
 		default:
-			KASSERT(1);
+			KASSERT(0);
 			break;
 		}
 		goto trapsignal;
