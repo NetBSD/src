@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.246 2009/07/29 17:16:56 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.247 2009/07/29 18:47:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.246 2009/07/29 17:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.247 2009/07/29 18:47:15 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -82,14 +82,14 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.246 2009/07/29 17:16:56 rmind Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/acct.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
-#include <sys/kauth.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
 #include <sys/sa.h>
@@ -224,7 +224,7 @@ xmm_si_code(struct lwp *l)
 	case 0:
 	default:
 		return 0;
-        }
+	}
 }
 
 static void *
@@ -253,26 +253,24 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
 }
 
 /*
- * trap(frame):
- *	Exception, fault, and trap interface to BSD kernel. This
- * common code is called from assembly language IDT gate entry
- * routines that prepare a suitable stack frame, and restore this
- * frame after the exception has been processed. Note that the
- * effect is as if the arguments were passed call by reference.
+ * trap(frame): exception, fault, and trap interface to BSD kernel.
+ *
+ * This common code is called from assembly language IDT gate entry routines
+ * that prepare a suitable stack frame, and restore this frame after the
+ * exception has been processed. Note that the effect is as if the arguments
+ * were passed call by reference.
  */
-/*ARGSUSED*/
 void
 trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p;
-	int type = frame->tf_trapno;
 	struct pcb *pcb;
 	extern char fusubail[], kcopy_fault[], trapreturn[], IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
-	int error;
+	int type, error;
 	uint32_t cr2;
 	bool pfail;
 
@@ -286,17 +284,18 @@ trap(struct trapframe *frame)
 		pcb = NULL;
 		p = NULL;
 	}
+	type = frame->tf_trapno;
+
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %lx cpl %x\n",
-		    frame->tf_trapno, frame->tf_err, frame->tf_eip, frame->tf_cs,
+		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
 		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
 		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
 		if (curlwp)
 			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
 	}
 #endif
-
 	if (type != T_NMI && !KVM86MODE &&
 	    !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
@@ -447,40 +446,44 @@ copyfault:
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
-#ifdef VM86
-		if (frame->tf_eflags & PSL_VM) {
-			vm86_gpfault(l, type & ~T_USER);
-			goto out;
-		}
-#endif
-		/* If pmap_exec_fixup does something, let's retry the trap. */
-		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
-		    &l->l_addr->u_pcb)) {
-			goto out;
-		}
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
-		ksi.ksi_addr = (void *)rcr2();
-		ksi.ksi_code = SEGV_ACCERR;
-		goto trapsignal;
-
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGBUS;
+
 		ksi.ksi_addr = (void *)rcr2();
 		switch (type) {
 		case T_SEGNPFLT|T_USER:
 		case T_STKFLT|T_USER:
+			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_ADRERR;
 			break;
 		case T_TSSFLT|T_USER:
+			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_OBJERR;
 			break;
 		case T_ALIGNFLT|T_USER:
+			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_ADRALN;
+			break;
+		case T_PROTFLT|T_USER:
+#ifdef VM86
+			if (frame->tf_eflags & PSL_VM) {
+				vm86_gpfault(l, type & ~T_USER);
+				goto out;
+			}
+#endif
+			/*
+			 * If pmap_exec_fixup does something,
+			 * let's retry the trap.
+			 */
+			if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
+			    &l->l_addr->u_pcb)) {
+				goto out;
+			}
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
 			break;
 		default:
 			KASSERT(0);
@@ -506,15 +509,17 @@ copyfault:
 		}
 		goto trapsignal;
 
-	case T_ASTFLT|T_USER:		/* Allow process switch */
+	case T_ASTFLT|T_USER:
+		/* Allow process switch. */
 		uvmexp.softs++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched)
+		if (curcpu()->ci_want_resched) {
 			preempt();
+		}
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -554,15 +559,17 @@ copyfault:
 		}
 		goto trapsignal;
 
-	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (l == 0)
+	case T_PAGEFLT:
+		/* Allow page faults in kernel mode. */
+		if (__predict_false(l == NULL))
 			goto we_re_toast;
 
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
 		 */
-		if ((onfault = pcb->pcb_onfault) == fusubail) {
+		onfault = pcb->pcb_onfault;
+		if (onfault == fusubail) {
 			goto copyefault;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
@@ -584,12 +591,13 @@ copyfault:
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
-	faultcommon:
+faultcommon:
 		vm = p->p_vmspace;
-		if (vm == NULL)
+		if (__predict_false(vm == NULL)) {
 			goto we_re_toast;
+		}
 		pcb->pcb_cr2 = cr2;
-		va = trunc_page((vaddr_t)pcb->pcb_cr2);
+		va = trunc_page((vaddr_t)cr2);
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. (type & T_USER) == 0  and
@@ -613,7 +621,6 @@ copyfault:
 			goto we_re_toast;
 		}
 #endif
-
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
@@ -782,32 +789,28 @@ trapsignal:
 	userret(l);
 }
 
+/* 
+ * startlwp: start of a new LWP.
+ */
+void
+startlwp(void *arg)
+{
+	ucontext_t *uc = arg;
+	lwp_t *l = curlwp;
+	int error;
+
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
+	pool_put(&lwp_uc_pool, uc);
+	userret(l);
+}
+
 /*
- * XXX This is a terrible name.
+ * XXX_SA: This is a terrible name.
  */
 void
 upcallret(struct lwp *l)
 {
 	KERNEL_UNLOCK_LAST(l);
-	userret(l);
-}
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	int err;
-	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
-
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
 	userret(l);
 }

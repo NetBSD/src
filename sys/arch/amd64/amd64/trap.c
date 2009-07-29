@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2009/07/29 17:14:38 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.59 2009/07/29 18:47:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2009/07/29 17:14:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2009/07/29 18:47:15 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,12 +81,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2009/07/29 17:14:38 rmind Exp $");
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
+#include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
-#include <sys/ras.h>
-#include <sys/reboot.h>
-#include <sys/pool.h>
 #include <sys/cpu.h>
+#include <sys/ucontext.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2009/07/29 17:14:38 rmind Exp $");
 
 void trap(struct trapframe *);
 
-const char *trap_type[] = {
+const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
@@ -133,11 +133,11 @@ const char *trap_type[] = {
 	"invalid TSS fault",			/* 15 T_TSSFLT */
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
-	"machine check",			/* 18 T_MCA */
+	"machine check fault",			/* 18 T_MCA */
 	"SSE FP exception",			/* 19 T_XMM */
 	"reserved trap",			/* 20 T_RESERVED */
 };
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+int	trap_types = __arraycount(trap_type);
 
 #ifdef DEBUG
 int	trapdebug = 0;
@@ -177,20 +177,18 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
 }
 
 /*
- * trap(frame):
- *	Exception, fault, and trap interface to BSD kernel. This
- * common code is called from assembly language IDT gate entry
- * routines that prepare a suitable stack frame, and restore this
- * frame after the exception has been processed. Note that the
- * effect is as if the arguments were passed call by reference.
+ * trap(frame): exception, fault, and trap interface to BSD kernel.
+ *
+ * This common code is called from assembly language IDT gate entry routines
+ * that prepare a suitable stack frame, and restore this frame after the
+ * exception has been processed. Note that the effect is as if the arguments
+ * were passed call by reference.
  */
-/*ARGSUSED*/
 void
 trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p;
-	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
 	extern char fusuintrfailure[], kcopy_fault[],
 		    resume_iret[];
@@ -199,11 +197,11 @@ trap(struct trapframe *frame)
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
 	struct trapframe *vframe;
+	ksiginfo_t ksi;
 	void *resume;
 	void *onfault;
-	int error;
+	int type, error;
 	uint64_t cr2;
-	ksiginfo_t ksi;
 	bool pfail;
 
 	if (__predict_true(l != NULL)) {
@@ -216,18 +214,19 @@ trap(struct trapframe *frame)
 		pcb = NULL;
 		p = NULL;
 	}
+	type = frame->tf_trapno;
+
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %lx eip %lx cs %lx rflags %lx cr2 %lx "
 		       "cpl %x\n",
 		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curlwp %p\n", curlwp);
+		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
 		if (curlwp)
 			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
 	}
 #endif
-
 	if (type != T_NMI && !KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
@@ -247,6 +246,10 @@ trap(struct trapframe *frame)
 		       " %lx cpl %x rsp %lx\n",
 		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
+#ifdef DDB
+		if (kdb_trap(type, 0, frame))
+			return;
+#endif
 #ifdef KGDB
 		if (kgdb_trap(type, frame))
 			return;
@@ -260,10 +263,6 @@ trap(struct trapframe *frame)
 				return;
 			}
 		}
-#endif
-#ifdef DDB
-		if (kdb_trap(type, 0, frame))
-			return;
 #endif
 		panic("trap");
 		/*NOTREACHED*/
@@ -364,9 +363,7 @@ copyfault:
 			ksi.ksi_code = SEGV_ACCERR;
 			break;
 		default:
-#ifdef DIAGNOSTIC
-			panic("unhandled type %x\n", type);
-#endif
+			KASSERT(0);
 			break;
 		}
 		goto trapsignal;
@@ -390,9 +387,7 @@ copyfault:
 			ksi.ksi_code = ILL_COPROC;
 			break;
 		default:
-#ifdef DIAGNOSTIC
-			panic("unhandled type %x\n", type);
-#endif
+			KASSERT(0);
 			break;
 		}
 		goto trapsignal;
@@ -408,8 +403,9 @@ copyfault:
 			ADDUPROF(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched)
+		if (curcpu()->ci_want_resched) {
 			preempt();
+		}
 		goto out;
 
 #if 0 /* handled by fpudna() */
@@ -447,9 +443,11 @@ copyfault:
 		}
 		goto trapsignal;
 
-	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (l == NULL)
+	case T_PAGEFLT:
+		/* Allow page faults in kernel mode. */
+		if (__predict_false(l == NULL))
 			goto we_re_toast;
+
 		/*
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
@@ -482,8 +480,9 @@ copyfault:
 		}
 faultcommon:
 		vm = p->p_vmspace;
-		if (vm == NULL)
+		if (__predict_false(vm == NULL)) {
 			goto we_re_toast;
+		}
 		pcb->pcb_cr2 = cr2;
 		va = trunc_page((vaddr_t)cr2);
 		/*
@@ -511,7 +510,6 @@ faultcommon:
 			goto we_re_toast;
 		}
 #endif
-
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
@@ -573,12 +571,13 @@ faultcommon:
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_addr = (void *)cr2;
 		if (error == EACCES) {
 			ksi.ksi_code = SEGV_ACCERR;
 			error = EFAULT;
-		} else
+		} else {
 			ksi.ksi_code = SEGV_MAPERR;
+		}
 
 		if (type == T_PAGEFLT) {
 			onfault = onfault_handler(pcb, frame);
@@ -619,6 +618,9 @@ faultcommon:
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
+		/*
+		 * Don't go single-stepping into a RAS.
+		 */
 		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
@@ -671,23 +673,29 @@ trapsignal:
 	userret(l);
 }
 
+/* 
+ * startlwp: start of a new LWP.
+ */
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 	pool_put(&lwp_uc_pool, uc);
 	userret(l);
 }
 
+/*
+ * XXX_SA: This is a terrible name.
+ */
 void
 upcallret(struct lwp *l)
 {
 	KERNEL_UNLOCK_LAST(l);
-
 	userret(l);
 }
 
