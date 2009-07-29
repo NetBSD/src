@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30 2009/03/27 15:47:33 dyoung Exp $	*/
+/*	$NetBSD: intr.h,v 1.31 2009/07/29 12:02:06 cegger Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -71,12 +71,10 @@ struct intrstub {
 	void *ist_resume;
 };
 
-#ifdef XEN3
 /* for x86 compatibility */
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
 extern struct intrstub ioapic_level_stubs[];
-#endif
 
 struct iplsource {
 	struct intrhand *ipl_handlers;   /* handler chain */

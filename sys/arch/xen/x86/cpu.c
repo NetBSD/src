@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.32 2009/06/08 09:32:33 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.33 2009/07/29 12:02:08 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2009/06/08 09:32:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2009/07/29 12:02:08 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -101,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2009/06/08 09:32:33 cegger Exp $");
 #include <machine/mtrr.h>
 #include <machine/pio.h>
 
-#ifdef XEN3
 #include <xen/vcpuvar.h>
-#endif
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -118,10 +116,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2009/06/08 09:32:33 cegger Exp $");
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
-#ifdef XEN3
 int     vcpu_match(device_t, cfdata_t, void *);
 void    vcpu_attach(device_t, device_t, void *);
-#endif
 void    cpu_attach_common(device_t, device_t, void *);
 void	cpu_offline_md(void);
 
@@ -138,10 +134,8 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 
 CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
-#ifdef XEN3
 CFATTACH_DECL_NEW(vcpu, sizeof(struct cpu_softc),
     vcpu_match, vcpu_attach, NULL, NULL);
-#endif
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only
@@ -222,7 +216,6 @@ cpu_match(device_t parent, cfdata_t match, void *aux)
 void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
-#ifdef XEN3
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
@@ -288,12 +281,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 	return;
-#else
-	cpu_attach_common(parent, self, aux);
-#endif
 }
 
-#ifdef XEN3
 int
 vcpu_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -311,7 +300,6 @@ vcpu_attach(device_t parent, device_t self, void *aux)
 
 	cpu_attach_common(parent, self, &vcaa->vcaa_caa);
 }
-#endif
 
 static void
 cpu_vm_init(struct cpu_info *ci)
@@ -1065,7 +1053,6 @@ cpu_resume(device_t dv PMF_FN_ARGS)
 void    
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
-#ifdef XEN3
 	const volatile vcpu_time_info_t *tinfo = &ci->ci_vcpu->time;
 	delay(1000000);
 	uint64_t freq = 1000000000ULL << 32;
@@ -1075,11 +1062,6 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	else
 		freq = freq >> tinfo->tsc_shift;
 	ci->ci_data.cpu_cc_freq = freq;
-#else
-	/* Xen2 */
-	/* XXX this needs to read the shared_info of the CPU being probed.. */
-	ci->ci_data.cpu_cc_freq = HYPERVISOR_shared_info->cpu_freq;
-#endif /* XEN3 */
 }
 
 void

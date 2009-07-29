@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.11 2009/02/13 21:03:59 bouyer Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.12 2009/07/29 12:02:06 cegger Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -75,7 +75,6 @@ extern struct x86_bus_dma_tag pci_bus_dma64_tag;
 #define __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 #define PCI_PREFER_IOSPACE
 
-#ifdef XEN3
 union x86_pci_tag_u {
 	uint32_t mode1;
 	struct {
@@ -92,24 +91,6 @@ int		xpci_enumerate_bus(struct pci_softc *, const int *,
 		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
 #define PCI_MACHDEP_ENUMERATE_BUS xpci_enumerate_bus
 #endif
-
-#else /* XEN3 */
-
-extern uint32_t pci_bus_attached[];
-
-#define PCI_MACHDEP_ENUMERATE_BUS xen_pci_enumerate_bus
-
-/* types provided to MI PCI */
-struct xen_pci_tag {
-	uint8_t bus;
-	uint8_t device;
-	uint8_t function;
-	uint8_t _pad; /* pad to 32bits */
-};
-
-typedef struct xen_pci_tag pcitag_t;
-#endif /* !XEN3 */
-
 typedef void *pci_chipset_tag_t;
 
 typedef struct xen_intr_handle pci_intr_handle_t;

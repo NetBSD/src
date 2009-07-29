@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19 2009/05/01 09:43:11 cegger Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.20 2009/07/29 12:02:09 cegger Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2009/05/01 09:43:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.20 2009/07/29 12:02:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2009/05/01 09:43:11 cegger Exp 
 
 #include <uvm/uvm_extern.h>
 
-#ifdef XEN3
 #include "ioapic.h"
-#endif
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>

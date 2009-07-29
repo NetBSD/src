@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.31 2009/02/13 21:03:59 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.32 2009/07/29 12:02:06 cegger Exp $	*/
 
 /*
  *
@@ -103,7 +103,6 @@ void vprintk(const char *, _BSD_VA_LIST_);
  * a bit more...
  */
 
-#ifdef XEN3
 #ifndef FLAT_RING1_CS
 #define FLAT_RING1_CS 0xe019    /* GDT index 259 */
 #define FLAT_RING1_DS 0xe021    /* GDT index 260 */
@@ -112,14 +111,6 @@ void vprintk(const char *, _BSD_VA_LIST_);
 #define FLAT_RING3_DS 0xe033    /* GDT index 262 */
 #define FLAT_RING3_SS 0xe033    /* GDT index 262 */
 #endif
-#else /* XEN3 */
-#ifndef FLAT_RING1_CS
-#define FLAT_RING1_CS		0x0819
-#define FLAT_RING1_DS		0x0821
-#define FLAT_RING3_CS		0x082b
-#define FLAT_RING3_DS		0x0833
-#endif
-#endif /* XEN3 */
 
 #define __KERNEL_CS        FLAT_RING1_CS
 #define __KERNEL_DS        FLAT_RING1_DS
@@ -189,7 +180,6 @@ do {									\
  */
 #define __LOCK_PREFIX "lock; "
 
-#ifdef XEN3
 #define XATOMIC_T u_long
 #ifdef __x86_64__
 #define LONG_SHIFT 6
@@ -198,11 +188,6 @@ do {									\
 #define LONG_SHIFT 5
 #define LONG_MASK 31
 #endif /* __x86_64__ */
-#else /* XEN3 */
-#define XATOMIC_T uint32_t
-#define LONG_SHIFT 5
-#define LONG_MASK 31
-#endif /* XEN3 */
 
 #define xen_ffs __builtin_ffsl
 

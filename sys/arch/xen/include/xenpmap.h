@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.22 2009/03/10 20:05:31 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.23 2009/07/29 12:02:06 cegger Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
  * starting with xen-3.0.2, we can add notes so that virtual memory starts
  * at KERNBASE for domU as well.
  */  
-#if defined(XEN3) && (defined(DOM0OPS) || !defined(XEN_COMPAT_030001))
+#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
 #define XPMAP_OFFSET	0
 #else
 #define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)
@@ -99,7 +99,6 @@ xpmap_ptom_masked(paddr_t ppa)
 	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT);
 }
 
-#ifdef XEN3
 static inline void
 MULTI_update_va_mapping(
 	multicall_entry_t *mcl, vaddr_t va,
@@ -154,7 +153,5 @@ MULTI_update_va_mapping_otherdomain(
 #if defined(__x86_64__)
 void xen_set_user_pgd(paddr_t);
 #endif
-
-#endif /* XEN3 */
 
 #endif /* _XEN_XENPMAP_H_ */
