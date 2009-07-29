@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.529 2009/06/28 10:45:24 mbalmer Exp $
+$NetBSD: usbdevs,v 1.530 2009/07/29 15:45:17 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -425,6 +425,7 @@ vendor QUALCOMM		0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
+vendor HYUNDAI		0x106c	Hyundai CuriTel
 vendor SILABS2		0x10a6	SILABS2
 vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
@@ -1237,6 +1238,10 @@ product HUAWEI E220  		0x1003	Huawei E220
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
+
+/* Hyundai CuriTel (Audiovox, Pantech) products */
+product HYUNDAI PC5740		0x3701	PC5740 EVDO
+product HYUNDAI UM175		0x3714	UM175 EVDO
 
 /* IBM Corporation */
 product IBM OPTTRAVELMOUSE	0x3107	Optical
