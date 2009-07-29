@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.669 2009/06/26 23:40:27 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.670 2009/07/29 12:02:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.669 2009/06/26 23:40:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.670 2009/07/29 12:02:05 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -563,6 +563,7 @@ i386_switch_context(lwp_t *l)
 {
 	struct cpu_info *ci;
 	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct physdev_op physop;
 
 	ci = curcpu();
 	if (ci->ci_fpused) {
@@ -572,20 +573,9 @@ i386_switch_context(lwp_t *l)
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
-#ifdef XEN3
-	struct physdev_op physop;
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
 	HYPERVISOR_physdev_op(&physop);
-#else
-	if (xendomain_is_privileged()) {
-		dom0_op_t op;
-		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = pcb->pcb_iopl;
-		HYPERVISOR_dom0_op(&op);
-	}
-#endif
 }
 #endif /* XEN */
 
@@ -1189,17 +1179,10 @@ initgdt(union descriptor *tgdt)
 #else /* !XEN */
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
 	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ);
-#ifdef XEN3
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
 		panic("HYPERVISOR_set_gdt failed!\n");
-#else
-	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
-	    LAST_RESERVED_GDT_ENTRY + 1));
-	if (HYPERVISOR_set_gdt(frames, LAST_RESERVED_GDT_ENTRY + 1))
-		panic("HYPERVISOR_set_gdt failed!\n");
-#endif
 	lgdt_finish();
 
 #endif /* !XEN */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.244 2009/03/19 02:59:00 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.245 2009/07/29 12:02:06 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.244 2009/03/19 02:59:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.245 2009/07/29 12:02:06 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -569,17 +569,7 @@ copyfault:
 			goto we_re_toast;
 		}
 
-		/*
-		 * XXXhack: xen2 hypervisor pushes cr2 onto guest's stack
-		 * and Xtrap0e passes it to us as an extra hidden argument.
-		 */
-#if defined(XEN) && !defined(XEN3)
-#define	FETCH_CR2	(((uint32_t *)(void *)&frame)[1])
-#else /* defined(XEN) && !defined(XEN3) */
-#define	FETCH_CR2	rcr2()
-#endif /* defined(XEN) && !defined(XEN3) */
-
-		cr2 = FETCH_CR2;
+		cr2 = rcr2();
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -589,7 +579,7 @@ copyfault:
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 
-		cr2 = FETCH_CR2;
+		cr2 = rcr2();
 		if (l->l_flag & LW_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
 			l->l_pflag |= LP_SA_PAGEFAULT;

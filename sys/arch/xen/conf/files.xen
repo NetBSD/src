@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.101 2009/07/24 21:22:22 dyoung Exp $
+#	$NetBSD: files.xen,v 1.102 2009/07/29 12:02:06 cegger Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -93,11 +93,10 @@ file	arch/xen/xen/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
 
 file	arch/xen/xen/clock.c
-file	arch/x86/isa/rtc.c		xen3 & dom0ops
+file	arch/x86/isa/rtc.c		dom0ops
 file	arch/xen/xen/evtchn.c
-file	arch/xen/xen/ctrl_if.c			!xen3
 
-file	arch/xen/xen/xengnt.c			xen3
+file	arch/xen/xen/xengnt.c
 
 file	dev/cons.c
 
@@ -163,16 +162,16 @@ file	arch/xen/x86/mainbus.c		mainbus
 device	hypervisor { [apid = -1]}: isabus, pcibus, sysmon_power, xendevbus, acpibus
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
-file	arch/xen/xen/shutdown_xenbus.c	hypervisor & xen3
+file	arch/xen/xen/shutdown_xenbus.c	hypervisor
 
-# Xenbus (xen3 only)
+# Xenbus
 device xenbus {[id = -1]}
 attach xenbus at xendevbus
-file arch/xen/xenbus/xenbus_client.c xenbus & xen3 needs-flag
-file arch/xen/xenbus/xenbus_comms.c xenbus & xen3 needs-flag
-file arch/xen/xenbus/xenbus_dev.c xenbus & xen3 & dom0ops needs-flag
-file arch/xen/xenbus/xenbus_probe.c xenbus & xen3 needs-flag
-file arch/xen/xenbus/xenbus_xs.c xenbus & xen3 needs-flag
+file arch/xen/xenbus/xenbus_client.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_comms.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_dev.c xenbus & dom0ops needs-flag
+file arch/xen/xenbus/xenbus_probe.c xenbus needs-flag
+file arch/xen/xenbus/xenbus_xs.c xenbus needs-flag
 
 ifdef i386
 # Numeric Processing Extension; Math Co-processor
@@ -195,19 +194,13 @@ defpseudo xbdback
 
 # Xen Network driver
 device	xennet: arp, ether, ifnet
-attach xennet at xendevbus with xennet_hypervisor
-attach xennet at xenbus with xennet_xenbus
-file	arch/xen/xen/if_xennet_xenbus.c xennet_xenbus needs-flag
-file	arch/xen/xen/if_xennet.c	xennet_hypervisor needs-flag
+attach xennet at xenbus
+file	arch/xen/xen/if_xennet_xenbus.c xennet needs-flag
 
 # Xen Block device driver and wd/sd/cd identities
 device	xbd: disk
-attach	xbd at xendevbus with xbd_hypervisor
-attach	xbd at xenbus with xbd_xenbus
-#file	arch/xen/xen/xbd_hypervisor.c	xbd_hypervisor
-file	arch/xen/xen/xbd_xenbus.c	xbd_xenbus
-#file	arch/xen/xen/xbd.c		xbd | xbd_hypervisor | xbd_xenbus needs-flag
-file	arch/xen/xen/xbd.c		xbd_hypervisor needs-flag
+attach	xbd at xenbus
+file	arch/xen/xen/xbd_xenbus.c	xbd
 
 # PCI frontend
 device xpci: pcibus
@@ -251,7 +244,7 @@ include "dev/acpi/files.acpi"
 file	arch/xen/xen/xen_acpi_machdep.c	acpi
 file	arch/x86/x86/mpacpi.c		acpi
 file	arch/x86/x86/acpi_machdep.c	acpi
-file	arch/x86/x86/i8259.c		xen3
+file	arch/x86/x86/i8259.c
 
 # MP configuration using Intel SMP specification 1.4
 file	arch/x86/x86/mpbios.c		mpbios
@@ -383,17 +376,14 @@ include	"dev/pcmcia/files.pcmcia"
 # Domain-0 operations
 defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
 file	arch/xen/xen/privcmd.c		dom0ops
-file 	arch/xen/x86/xen_shm_machdep.c	dom0ops | xen3
-file	arch/xen/xen/xbdback.c		dom0ops & !xen3
-file	arch/xen/xen/xennetback.c	dom0ops & !xen3
-file	arch/xen/xen/pci_machdep.c	hypervisor & pci & !xen3
-file	arch/x86/pci/pci_machdep.c	hypervisor & pci & xen3 & dom0ops
+file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
+file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
 file	arch/xen/xen/pci_intr_machdep.c	hypervisor & pci
 file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
-file	arch/xen/xen/xennetback_xenbus.c xvif & xen3
-file	arch/xen/xen/xennet_checksum.c	(xvif & xen3) | xennet_xenbus
-file	arch/xen/xen/xbdback_xenbus.c xbdback & xen3
+file	arch/xen/xen/xennetback_xenbus.c xvif
+file	arch/xen/xen/xennet_checksum.c	xvif | xennet
+file	arch/xen/xen/xbdback_xenbus.c xbdback
 
 ifdef i386
 include "arch/i386/conf/majors.i386"
