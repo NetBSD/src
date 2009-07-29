@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2009/06/03 12:43:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2009/07/29 12:02:08 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -126,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2009/06/03 12:43:22 cegger Exp $");
 #include <machine/pio.h>
 #include <xen/evtchn.h>
 
-#ifdef XEN3
 #include "acpi.h"
 #include "ioapic.h"
 #include "opt_mpbios.h"
@@ -152,8 +151,6 @@ int vect2irq[256] = {0};
 #if NPCI > 0
 #include <dev/pci/ppbreg.h>
 #endif
-
-#endif /* XEN3 */
 
 /*
  * Recalculate the interrupt from scratch for an event source.
@@ -215,7 +212,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 	struct pintrhand *ih;
 	int evtchn;
 	char evname[16];
-#ifdef XEN3
 #ifdef DIAGNOSTIC
 	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
 		panic("intr_establish: bad legacy IRQ value");
@@ -234,7 +230,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 		return NULL;
 #endif /* NIOAPIC */
 	} else
-#endif /* XEN3 */
 		snprintf(evname, sizeof(evname), "irq%d", legacy_irq);
 
 	evtchn = xen_intr_map(&legacy_irq, type);
@@ -247,7 +242,6 @@ int
 xen_intr_map(int *pirq, int type)
 {
 	int irq = *pirq;
-#ifdef XEN3
 #if NIOAPIC > 0
 	extern struct cpu_info phycpu_info_primary; /* XXX */
 	/*
@@ -293,7 +287,6 @@ retry:
 		*pirq |= irq;
 	}
 #endif /* NIOAPIC */
-#endif /* XEN3 */
 	return bind_pirq_to_evtch(irq);
 }
 

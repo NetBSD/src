@@ -1,11 +1,9 @@
-/*	 $NetBSD: i82093var.h,v 1.2 2008/04/14 13:38:03 cegger Exp $ */
+/*	 $NetBSD: i82093var.h,v 1.3 2009/07/29 12:02:06 cegger Exp $ */
 
 #include "opt_xen.h"
 #define _IOAPIC_CUSTOM_RW
 #include <x86/i82093var.h>
 #include <hypervisor.h>
-
-#ifdef XEN3
 
 static inline  uint32_t
 ioapic_read_ul(struct ioapic_softc *sc, int regid)
@@ -40,5 +38,3 @@ ioapic_write_ul(struct ioapic_softc *sc, int regid, uint32_t val)
 		panic("PHYSDEVOP_APIC_WRITE");
 	}
 }
-
-#endif

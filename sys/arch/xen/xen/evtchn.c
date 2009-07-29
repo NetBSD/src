@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.43 2009/03/27 15:47:33 dyoung Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.44 2009/07/29 12:02:09 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.43 2009/03/27 15:47:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.44 2009/07/29 12:02:09 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -86,9 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.43 2009/03/27 15:47:33 dyoung Exp $");
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#ifndef XEN3
-#include <xen/ctrl_if.h>
-#endif
 #include <xen/xenfunc.h>
 
 /*
@@ -119,9 +116,6 @@ physdev_op_t physdev_op_notify = {
 #endif
 
 int debug_port = -1;
-#ifndef XEN3
-static int xen_misdirect_handler(void *);
-#endif
 
 // #define IRQ_DEBUG 4
 
@@ -177,20 +171,6 @@ events_default_setup(void)
 void
 events_init(void)
 {
-#ifndef XEN3
-	int evtch;
-
-	evtch = bind_virq_to_evtch(VIRQ_MISDIRECT);
-	aprint_verbose("misdirect virtual interrupt using event channel %d\n",
-	    evtch);
-	event_set_handler(evtch, &xen_misdirect_handler, NULL, IPL_HIGH,
-	    "misdirev");
-	hypervisor_enable_event(evtch);
-
-	/* This needs to be done early, but after the IRQ subsystem is
-	 * alive. */
-	ctrl_if_init();
-#endif
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
 	aprint_verbose("debug virtual interrupt using event channel %d\n",
 	    debug_port);
@@ -336,9 +316,7 @@ bind_virq_to_evtch(int virq)
 	if (evtchn == -1) {
 		op.cmd = EVTCHNOP_bind_virq;
 		op.u.bind_virq.virq = virq;
-#ifdef XEN3
 		op.u.bind_virq.vcpu = 0;
-#endif
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
@@ -366,9 +344,6 @@ unbind_virq_from_evtch(int virq)
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
 		op.cmd = EVTCHNOP_close;
-#ifndef XEN3
-		op.u.close.dom = DOMID_SELF;
-#endif
 		op.u.close.port = evtchn;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to unbind virtual IRQ %d\n", virq);
@@ -431,9 +406,6 @@ unbind_pirq_from_evtch(int pirq)
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
 		op.cmd = EVTCHNOP_close;
-#ifndef XEN3
-		op.u.close.dom = DOMID_SELF;
-#endif
 		op.u.close.port = evtchn;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to unbind physical IRQ %d\n", pirq);
@@ -685,11 +657,7 @@ xen_debug_handler(void *arg)
 	int xci_idepth = ci->ci_idepth;
 	u_long upcall_pending = ci->ci_vcpu->evtchn_upcall_pending;
 	u_long upcall_mask = ci->ci_vcpu->evtchn_upcall_mask;
-#ifdef XEN3
 	u_long pending_sel = ci->ci_vcpu->evtchn_pending_sel;
-#else
-	u_long pending_sel = HYPERVISOR_shared_info->evtchn_pending_sel;
-#endif
 	unsigned long evtchn_mask[sizeof(unsigned long) * 8];
 	unsigned long evtchn_pending[sizeof(unsigned long) * 8];
 
@@ -717,15 +685,3 @@ xen_debug_handler(void *arg)
 	printf("\n");
 	return 0;
 }
-
-#ifndef XEN3
-static int
-xen_misdirect_handler(void *arg)
-{
-#if 0
-	const char *msg = "misdirect\n";
-	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(msg), msg);
-#endif
-	return 0;
-}
-#endif

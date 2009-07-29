@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.40 2009/06/15 21:11:24 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.41 2009/07/29 12:02:10 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.40 2009/06/15 21:11:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.41 2009/07/29 12:02:10 cegger Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -140,7 +140,7 @@ static void xbd_connect(struct xbd_xenbus_softc *);
 static int  xbd_map_align(struct xbd_req *);
 static void xbd_unmap_align(struct xbd_req *);
 
-CFATTACH_DECL_NEW(xbd_xenbus, sizeof(struct xbd_xenbus_softc),
+CFATTACH_DECL_NEW(xbd, sizeof(struct xbd_xenbus_softc),
    xbd_xenbus_match, xbd_xenbus_attach, xbd_xenbus_detach, NULL);
 
 dev_type_open(xbdopen);

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.36 2009/05/02 18:18:44 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.37 2009/07/29 12:02:09 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.36 2009/05/02 18:18:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.37 2009/07/29 12:02:09 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -246,7 +246,7 @@ static void xennet_start(struct ifnet *);
 static int  xennet_ioctl(struct ifnet *, u_long, void *);
 static void xennet_watchdog(struct ifnet *);
 
-CFATTACH_DECL_NEW(xennet_xenbus, sizeof(struct xennet_xenbus_softc),
+CFATTACH_DECL_NEW(xennet, sizeof(struct xennet_xenbus_softc),
    xennet_xenbus_match, xennet_xenbus_attach, xennet_xenbus_detach, NULL);
 
 static int
