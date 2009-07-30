@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.177 2009/07/14 00:00:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.178 2009/07/30 03:46:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.177 2009/07/14 00:00:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.178 2009/07/30 03:46:48 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -566,8 +566,8 @@ static void	wm_gmii_mediainit(struct wm_softc *);
 static int	wm_gmii_mediachange(struct ifnet *);
 static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int	wm_kmrn_i80003_readreg(struct wm_softc *, int);
-static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
+static int	wm_kmrn_readreg(struct wm_softc *, int);
+static void	wm_kmrn_writereg(struct wm_softc *, int, int);
 
 static int	wm_match(device_t, cfdata_t, void *);
 static void	wm_attach(device_t, device_t, void *);
@@ -3308,12 +3308,12 @@ wm_init(struct ifnet *ifp)
 			 * polling the phy; this fixes erroneous timeouts at
 			 * 10Mbps.
 			 */
-			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS,
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS,
 			    0xFFFF);
-			val = wm_kmrn_i80003_readreg(sc,
+			val = wm_kmrn_readreg(sc,
 			    KUMCTRLSTA_OFFSET_INB_PARAM);
 			val |= 0x3F;
-			wm_kmrn_i80003_writereg(sc,
+			wm_kmrn_writereg(sc,
 			    KUMCTRLSTA_OFFSET_INB_PARAM, val);
 			break;
 		default:
@@ -3326,11 +3326,11 @@ wm_init(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_CTRL_EXT, val);
 
 			/* Bypass RX and TX FIFO's */
-			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
 			    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS | 
 			    KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
 		
-			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
 			    KUMCTRLSTA_INB_CTRL_DIS_PADDING |
 			    KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT);
 		}
@@ -3407,12 +3407,11 @@ wm_init(struct ifnet *ifp)
 	 * a collision distance suitable for FDX, but update it whe
 	 * we resolve the media type.
 	 */
-	sc->sc_tctl = TCTL_EN | TCTL_PSP | TCTL_CT(TX_COLLISION_THRESHOLD) |
-	    TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
+	sc->sc_tctl = TCTL_EN | TCTL_PSP | TCTL_RTLC
+	    | TCTL_CT(TX_COLLISION_THRESHOLD)
+	    | TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 	if (sc->sc_type >= WM_T_82571)
 		sc->sc_tctl |= TCTL_MULR;
-	if (sc->sc_type >= WM_T_80003)
-		sc->sc_tctl |= TCTL_RTLC;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
 	if (sc->sc_type == WM_T_80003) {
@@ -5001,15 +5000,15 @@ wm_gmii_statchg(device_t self)
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
 						 : WMREG_FCRTL, sc->sc_fcrtl);
-	if (sc->sc_type >= WM_T_80003) {
+	if (sc->sc_type == WM_T_80003) {
 		switch(IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
 		case IFM_1000_T:
-			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
 			    KUMCTRLSTA_HD_CTRL_1000_DEFAULT);
 			sc->sc_tipg =  TIPG_1000T_80003_DFLT;
 			break;
 		default:
-			wm_kmrn_i80003_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
 			    KUMCTRLSTA_HD_CTRL_10_100_DEFAULT);
 			sc->sc_tipg =  TIPG_10_100_80003_DFLT;
 			break;
@@ -5019,20 +5018,27 @@ wm_gmii_statchg(device_t self)
 }
 
 /*
- * wm_kmrn_i80003_readreg:
+ * wm_kmrn_readreg:
  *
  *	Read a kumeran register
  */
 static int
-wm_kmrn_i80003_readreg(struct wm_softc *sc, int reg)
+wm_kmrn_readreg(struct wm_softc *sc, int reg)
 {
-	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 	int rv;
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
-		return 0;
+	if (sc->sc_flags == WM_F_SWFW_SYNC) {
+		if (wm_get_swfw_semaphore(sc, SWFW_MAC_CSR_SM)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return 0;
+		}
+	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+		if (wm_get_swfwhw_semaphore(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return 0;
+		}
 	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
@@ -5041,30 +5047,46 @@ wm_kmrn_i80003_readreg(struct wm_softc *sc, int reg)
 	delay(2);
 
 	rv = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
-	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+
+	if (sc->sc_flags == WM_F_SWFW_SYNC)
+		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
+	else if (sc->sc_flags == WM_F_SWFWHW_SYNC)
+		wm_put_swfwhw_semaphore(sc);
+
 	return (rv);
 }
 
 /*
- * wm_kmrn_i80003_writereg:
+ * wm_kmrn_writereg:
  *
  *	Write a kumeran register
  */
 static void
-wm_kmrn_i80003_writereg(struct wm_softc *sc, int reg, int val)
+wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 {
-	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 
-	if (wm_get_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
-		return;
+	if (sc->sc_flags == WM_F_SWFW_SYNC) {
+		if (wm_get_swfw_semaphore(sc, SWFW_MAC_CSR_SM)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return;
+		}
+	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+		if (wm_get_swfwhw_semaphore(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n", __func__);
+			return;
+		}
 	}
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
 	    (val & KUMCTRLSTA_MASK));
-	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+
+	if (sc->sc_flags == WM_F_SWFW_SYNC)
+		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
+	else if (sc->sc_flags == WM_F_SWFWHW_SYNC)
+		wm_put_swfwhw_semaphore(sc);
 }
 
 static int
@@ -5192,7 +5214,7 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 			return 0;
 		delay(5000);
 	}
-	printf("%s: failed to get swfwgw semaphore ext_ctrl 0x%x\n",
+	printf("%s: failed to get swfwhw semaphore ext_ctrl 0x%x\n",
 	    device_xname(sc->sc_dev), ext_ctrl);
 	return 1;
 }
