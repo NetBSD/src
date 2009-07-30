@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33 2009/07/29 12:02:08 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.34 2009/07/30 13:56:57 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2009/07/29 12:02:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2009/07/30 13:56:57 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -219,9 +219,15 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
+	uintptr_t ptr;
 	int cpunum = caa->cpu_number;
 
 	sc->sc_dev = self;
+
+	if (cpus_attached == ~0) {
+		aprint_error(": increase MAXCPUS\n");
+		return;
+	}
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
@@ -236,7 +242,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		aprint_naive(": Application Processor\n");
-		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
+		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    KM_SLEEP);
+		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
+		    ~(CACHE_LINE_SIZE - 1));
 		ci->ci_curldt = -1;
 		if (phycpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
@@ -262,12 +271,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
 		printf("(uniprocessor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		break;
 
 	case CPU_ROLE_BP:
 		printf("(boot processor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		break;
 
 	case CPU_ROLE_AP:
@@ -280,6 +289,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	default:
 		panic("unknown processor type??\n");
 	}
+
+	atomic_or_32(&cpus_attached, ci->ci_cpumask);
+
 	return;
 }
 
@@ -490,7 +502,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	}
 	cpu_vm_init(ci);
 
-	cpus_attached |= (1 << ci->ci_cpuid);
+	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 #if 0
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
@@ -552,10 +564,10 @@ cpu_init(struct cpu_info *ci)
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
 
-#ifdef MULTIPROCESSOR
-	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
-#endif
+
+	wbinvd();
+	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 }
 
 
