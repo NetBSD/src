@@ -1,4 +1,4 @@
-/* $NetBSD: com_eumb.c,v 1.4 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: com_eumb.c,v 1.5 2009/07/30 05:57:27 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.4 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.5 2009/07/30 05:57:27 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,10 +89,11 @@ com_eumb_attach(device_t parent, device_t self, void *aux)
 	found = 1;
 
 	comaddr = (eaa->eumb_unit == 1) ? 0x4600 : 0x4500;
-	if (comaddr == cnregs.cr_iobase)
+	if (com_is_console(eaa->eumb_bt, comaddr, &ioh)) {
+		cnregs.cr_ioh = ioh;
 		sc->sc_regs = cnregs;
+	}
 	else {
-		ioh = comaddr;
 		bus_space_map(eaa->eumb_bt, comaddr, COM_NPORTS, 0, &ioh);
 		COM_INIT_REGS(sc->sc_regs, eaa->eumb_bt, ioh, comaddr);
 	}
@@ -116,6 +117,5 @@ eumbcnattach(bus_space_tag_t tag,
 	cnregs.cr_iot = tag;
 	cnregs.cr_iobase = conaddr;
 	cnregs.cr_nports = COM_NPORTS;
-	/* cnregs.ioh is initialized by comcnattach */
 	return comcnattach1(&cnregs, conspeed, confreq, contype, conmode);
 }
