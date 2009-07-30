@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136 2008/10/26 07:43:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.137 2009/07/30 20:57:15 dsl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -90,6 +90,20 @@ COMPATDIR=${.CURDIR}/compat
 .if (${MKYP} != "no")
 .include "${.CURDIR}/yp/Makefile.inc"
 .endif
+
+# Remove from SRCS the .c files for any .S files added by the MD makefiles.
+# Any files added to NO_SRCS will also not be compiled
+# (eg because another file generates the same entry point)
+# Use the .c file to generate the lint library, but don't add to DPSRCS
+# (since it would overwrite the .d file containing the foo.o: foo.S rules).
+.for asm_file in ${SRCS:M*.S} ${NO_SRCS}
+unwanted_file := ${SRCS:M${asm_file:.S=.c}}
+.if "${unwanted_file}" != ""
+SRCS := ${SRCS:N${unwanted_file}}
+LSRCS += ${unwanted_file}
+.endif
+.endfor
+
 
 NLS=	C.msg Pig.msg ca.msg cs.msg de.msg es.msg fi.msg fr.msg nl.msg \
 	no.msg pl.msg sk.msg sv.msg
