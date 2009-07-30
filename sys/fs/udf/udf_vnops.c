@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.53 2009/07/27 13:20:41 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.54 2009/07/30 12:13:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.53 2009/07/27 13:20:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.54 2009/07/30 12:13:51 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -969,9 +969,9 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 		new_gid = gid;
 
 	/* check if we can fit it in an 32 bits */
-	if ((uid_t) ((uint32_t) uid) != uid)
+	if ((uid_t) ((uint32_t) new_uid) != new_uid)
 		return EINVAL;
-	if ((gid_t) ((uint32_t) gid) != gid)
+	if ((gid_t) ((uint32_t) new_gid) != new_gid)
 		return EINVAL;
 
 	/* check permissions */
