@@ -1,4 +1,4 @@
-/* $NetBSD: exec_elf32.c,v 1.10 2009/07/30 15:16:38 tsutsui Exp $ */
+/* $NetBSD: exec_elf32.c,v 1.11 2009/07/30 15:56:01 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.10 2009/07/30 15:16:38 tsutsui Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.11 2009/07/30 15:56:01 tsutsui Exp $");
 #endif /* not lint */
 
 #ifndef ELFSIZE
@@ -89,37 +89,40 @@ ELFNAMEEND(findoff)(mappedfile, mappedsize, vmaddr, fileoffp)
 	u_long vmaddr;
 {
 	const Elf_Ehdr *ehdrp;
-	const Elf_Shdr *shdrp;
-	Elf_Off shdr_off;
-	Elf_Word shdr_size;
+	const Elf_Phdr *phdrp;
+	Elf_Off phdr_off;
+	Elf_Word phdr_size;
 #if (ELFSIZE == 32)
-	Elf32_Half nshdr, i;
+	Elf32_Half nphdr, i;
 #elif (ELFSIZE == 64)
-	Elf64_Half nshdr, i;
+	Elf64_Half nphdr, i;
 #endif
 	int rv;
 
 	rv = 0;
 
 	ehdrp = (const Elf_Ehdr *)&mappedfile[0];
-	nshdr = ehdrp->e_shnum;
-	shdr_off = ehdrp->e_shoff;
-	shdr_size = ehdrp->e_shentsize * nshdr;
+	nphdr = ehdrp->e_phnum;
+	phdr_off = ehdrp->e_phoff;
+	phdr_size = sizeof(Elf_Phdr) * nphdr;
 
-	if (check(0, shdr_size + shdr_off) ||
-	    (sizeof *shdrp != ehdrp->e_shentsize))
+	if (check(0, phdr_off + phdr_size))
 		BAD;
-	shdrp = (const Elf_Shdr *)&mappedfile[shdr_off];
+	phdrp = (const Elf_Phdr *)&mappedfile[phdr_off];
 
-	for (i = 0; i < nshdr; i++) {
-		if (shdrp[i].sh_addr <= vmaddr &&
-		    vmaddr < (shdrp[i].sh_addr + shdrp[i].sh_size)) {
+#define IS_TEXT(p)	(p.p_flags & PF_X)
+#define IS_DATA(p)	(p.p_flags & PF_W)
+
+	for (i = 0; i < nphdr; i++) {
+		if ((IS_TEXT(phdrp[i]) || IS_DATA(phdrp[i])) &&
+		    phdrp[i].p_vaddr <= vmaddr &&
+		    vmaddr < phdrp[i].p_vaddr + phdrp[i].p_filesz) {
 			*fileoffp = vmaddr -
-			    shdrp[i].sh_addr + shdrp[i].sh_offset;
+			    phdrp[i].p_vaddr + phdrp[i].p_offset;
 			break;
 		}
 	}
-	if (i == nshdr)
+	if (i == nphdr)
 		BAD;
 
 out:
