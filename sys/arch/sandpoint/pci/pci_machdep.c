@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2008/05/30 19:26:35 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17 2009/07/30 05:57:27 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2008/05/30 19:26:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2009/07/30 05:57:27 nisimura Exp $");
+
+#include "opt_pci.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -393,6 +395,7 @@ pci_intr_disestablish(void *v, void *cookie)
 	intr_disestablish(cookie);
 }
 
+#if defined(PCI_NETBSD_CONFIGURE)
 void
 pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
     int pin, int swiz, int *iline)
@@ -420,3 +423,4 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
 		*iline = 13 + ((swiz + dev + 3) & 3);
 	}
 }
+#endif
