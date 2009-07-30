@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.81 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.82 2009/07/30 17:28:36 dyoung Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.81 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.82 2009/07/30 17:28:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	    IN6_IFAUPDATE_DADDELAY)) != 0) {
 		/*
 		 * XXX: When the interface does not support IPv6, this call
-		 * would fail in the SIOCSIFADDR ioctl.  I believe the
+		 * would fail in the SIOCINITIFADDR ioctl.  I believe the
 		 * notification is rather confusing in this case, so just
 		 * suppress it.  (jinmei@kame.net 20010130)
 		 */
