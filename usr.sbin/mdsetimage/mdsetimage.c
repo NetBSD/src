@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.18 2008/07/21 13:36:59 lukem Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.19 2009/07/30 15:16:38 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1996\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.18 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.19 2009/07/30 15:16:38 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,10 +60,10 @@ static int	find_md_root __P((const char *, const char *, size_t,
 
 static struct nlist md_root_nlist[] = {
 #define	X_MD_ROOT_IMAGE		0
-	{ "_md_root_image" },
+	{ "_md_root_image", 0, 0, 0, 0 },
 #define	X_MD_ROOT_SIZE		1
-	{ "_md_root_size" },
-	{ NULL }
+	{ "_md_root_size", 0, 0, 0, 0 },
+	{ NULL, 0, 0, 0, 0 }
 };
 
 int	verbose;
@@ -245,7 +245,7 @@ find_md_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
 		fprintf(stderr, "%s is at offset %#lx in %s\n",
 			nl[X_MD_ROOT_SIZE].n_name,
 			(unsigned long)rootsizeoff, fname);
-	*rootsizep = *(u_int32_t *)&mappedfile[rootsizeoff];
+	*rootsizep = *(const u_int32_t *)&mappedfile[rootsizeoff];
 	if (verbose)
 		fprintf(stderr, "%s has value %#x\n",
 		    nl[X_MD_ROOT_SIZE].n_name, *rootsizep);

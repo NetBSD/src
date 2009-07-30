@@ -1,4 +1,4 @@
-/* $NetBSD: exec_aout.c,v 1.6 2001/10/01 23:32:34 cgd Exp $ */
+/* $NetBSD: exec_aout.c,v 1.7 2009/07/30 15:16:37 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_aout.c,v 1.6 2001/10/01 23:32:34 cgd Exp $");
+__RCSID("$NetBSD: exec_aout.c,v 1.7 2009/07/30 15:16:37 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,14 +53,14 @@ check_aout(mappedfile, mappedsize)
 	const char *mappedfile;
 	size_t mappedsize;
 {
-	struct exec *execp;
+	const struct exec *execp;
 	int rv;
 
 	rv = 0;
 
 	if (check(0, sizeof *execp))
 		BAD;
-	execp = (struct exec *)&mappedfile[0];
+	execp = (const struct exec *)&mappedfile[0];
 
 	if (N_BADMAG(*execp))
 		BAD;
@@ -75,11 +75,11 @@ findoff_aout(mappedfile, mappedsize, vmaddr, fileoffp)
 	size_t mappedsize, *fileoffp;
 	u_long vmaddr;
 {
-	struct exec *execp;
+	const struct exec *execp;
 	int rv;
 
 	rv = 0;
-	execp = (struct exec *)&mappedfile[0];
+	execp = (const struct exec *)&mappedfile[0];
 
 	if (N_TXTADDR(*execp) + (execp->a_entry & (N_PAGSIZ(*execp)-1)) !=
 	    execp->a_entry)
