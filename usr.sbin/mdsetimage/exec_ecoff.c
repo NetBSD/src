@@ -1,4 +1,4 @@
-/* $NetBSD: exec_ecoff.c,v 1.5 2001/10/01 23:32:34 cgd Exp $ */
+/* $NetBSD: exec_ecoff.c,v 1.6 2009/07/30 15:16:37 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_ecoff.c,v 1.5 2001/10/01 23:32:34 cgd Exp $");
+__RCSID("$NetBSD: exec_ecoff.c,v 1.6 2009/07/30 15:16:37 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,14 +50,14 @@ check_ecoff(mappedfile, mappedsize)
 	const char *mappedfile;
 	size_t mappedsize;
 {
-	struct ecoff_exechdr *exechdrp;
+	const struct ecoff_exechdr *exechdrp;
 	int rv;
 
 	rv = 0;
 
 	if (check(0, sizeof *exechdrp))
 		BAD;
-	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
+	exechdrp = (const struct ecoff_exechdr *)&mappedfile[0];
 
 	if (ECOFF_BADMAG(exechdrp))
 		BAD;
@@ -72,11 +72,11 @@ findoff_ecoff(mappedfile, mappedsize, vmaddr, fileoffp)
 	size_t mappedsize, *fileoffp;
 	u_long vmaddr;
 {
-	struct ecoff_exechdr *exechdrp;
+	const struct ecoff_exechdr *exechdrp;
 	int rv;
 
 	rv = 0;
-	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
+	exechdrp = (const struct ecoff_exechdr *)&mappedfile[0];
 
 	if (exechdrp->a.text_start <= vmaddr &&
 	    vmaddr < (exechdrp->a.text_start + exechdrp->a.tsize))
