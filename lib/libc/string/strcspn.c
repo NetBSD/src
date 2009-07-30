@@ -1,4 +1,4 @@
-/*	$NetBSD: strcspn.c,v 1.16 2008/07/30 16:13:59 joerg Exp $	*/
+/*	$NetBSD: strcspn.c,v 1.17 2009/07/30 21:42:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,11 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strcspn.c,v 1.16 2008/07/30 16:13:59 joerg Exp $");
+__RCSID("$NetBSD: strcspn.c,v 1.17 2009/07/30 21:42:06 dsl Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <string.h>
+
+/* 64bit version is in strspn.c */
+#if ULONG_MAX != 0xffffffffffffffffull
 
 size_t
 strcspn(const char *s, const char *charset)
@@ -62,3 +66,5 @@ strcspn(const char *s, const char *charset)
 			break;
 	return t - s;
 }
+
+#endif
