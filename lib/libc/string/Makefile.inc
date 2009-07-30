@@ -1,8 +1,12 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.74 2009/07/21 14:55:33 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.75 2009/07/30 20:57:15 dsl Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
+
+# NB: if a .S version of any of these is added in the arch/*/Makefile
+# then the relevant .c file is automatically removed
+# Also adding the .c name to NO_SRCS will have the same effect
 
 SRCS+=	bm.c stpcpy.c stpncpy.c \
 	strcasecmp.c strncasecmp.c strcasestr.c strcoll.c strdup.c \
@@ -10,6 +14,15 @@ SRCS+=	bm.c stpcpy.c stpncpy.c \
 	strmode.c strsignal.c strtok.c \
 	strtok_r.c strxfrm.c __strsignal.c strerror_r.c strndup.c \
 	stresep.c memrchr.c
+
+SRCS+=	bcmp.c bcopy.c bzero.c ffs.c memchr.c memcmp.c memset.c
+SRCS+=	strcat.c strcmp.c strcpy.c strcspn.c strlen.c
+SRCS+=	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c
+SRCS+=	strspn.c strstr.c swab.c
+
+SRCS+=	memccpy.c memcpy.c memmem.c memmove.c
+SRCS+=	strchr.c strrchr.c
+SRCS+=	popcount32.c popcount64.c
 
 # wide char
 SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
@@ -23,44 +36,7 @@ CPPFLAGS.wmemcmp.c+=	-I${LIBCDIR}/locale
 # namespace protection wrappers
 SRCS+=	_strlcat.c _strlcpy.c _strerror_r.c
 
-# machine-dependent net sources
-# m-d Makefile.inc must include sources for:
-#	bcmp() bcopy() bzero() ffs() memchr() memcmp() memset()
-#	strcat() strcmp() strcpy() strcspn() strlen()
-#	strncat() strncmp() strncpy() strpbrk() strsep()
-#	strspn() strstr() swav()
-# m-d Makefile.inc may include sources for:
-#	memcpy() memmem() memmove() strchr() strrchr()
-
 .include "${ARCHDIR}/string/Makefile.inc"
-
-# if no m-d versions of memccpy(), memcpy(), memmove(), strchr(), or strrchr()
-# then use the machine independent versions.
-#
-.if empty(SRCS:Mmemccpy.S)
-SRCS+=	memccpy.c
-.endif
-.if empty(SRCS:Mmemcpy.S)
-SRCS+=	memcpy.c
-.endif
-.if empty(SRCS:Mmemmem.S)
-SRCS+=	memmem.c
-.endif
-.if empty(SRCS:Mmemmove.S)
-SRCS+=	memmove.c
-.endif
-.if empty(SRCS:Mstrchr.S)
-SRCS+=	strchr.c
-.endif
-.if empty(SRCS:Mstrrchr.S)
-SRCS+=	strrchr.c
-.endif
-.if empty(SRCS:Mpopcount32.S)
-SRCS+=	popcount32.c
-.endif
-.if empty(SRCS:Mpopcount64.S)
-SRCS+=	popcount64.c
-.endif
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 \
 	memccpy.3 memchr.3 memcmp.3 memcpy.3 memmem.3 memmove.3	memset.3 \
