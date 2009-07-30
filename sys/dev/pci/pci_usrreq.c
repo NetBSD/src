@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.21 2009/07/14 19:54:40 macallan Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.22 2009/07/30 04:38:24 macallan Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.21 2009/07/14 19:54:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.22 2009/07/30 04:38:24 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -50,13 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.21 2009/07/14 19:54:40 macallan Exp
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciio.h>
 
 #include "opt_pci.h"
-#include "opt_insecure.h"
 
 static int
 pciopen(dev_t dev, int flags, int mode, struct lwp *l)
@@ -113,9 +113,12 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static paddr_t
 pcimmap(dev_t dev, off_t offset, int prot)
 {
-#ifdef INSECURE
 	struct pci_softc *sc = device_lookup_private(&pci_cd, minor(dev));
 
+	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) != 0) {
+		return -1;
+	}
 	/*
 	 * Since we allow mapping of the entire bus, we
 	 * take the offset to be the address on the bus,
@@ -143,9 +146,6 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	}
 #endif /* PCI_MAGIC_IO_RANGE */
 	return bus_space_mmap(sc->sc_memt, offset, 0, prot, 0);
-#else /* INSECURE */
-	return -1;
-#endif /* INSECURE */
 }
 
 const struct cdevsw pci_cdevsw = {
