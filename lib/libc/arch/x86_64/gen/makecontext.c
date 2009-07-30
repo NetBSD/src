@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.4 2009/07/30 20:57:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.3 2008/04/28 20:22:58 martin Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.4 2009/07/30 20:57:17 dsl Exp $");
 #endif
 
 #include <inttypes.h>
@@ -67,7 +67,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	if (stackargs > 0)
 		sp -= stackargs;
 	/* LINTED __greg_t is safe */
-	gr[_REG_URSP] = (__greg_t)sp;
+	gr[_REG_RSP] = (__greg_t)sp;
 	gr[_REG_RBP] = (__greg_t)0;	/* Wipe out frame pointer. */
 
 	/* Put return address on top of stack. */
