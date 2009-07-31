@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.23 2009/07/31 14:56:11 pooka Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.24 2009/07/31 14:58:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.23 2009/07/31 14:56:11 pooka Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.24 2009/07/31 14:58:21 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,8 @@ __RCSID("$NetBSD: mount_fdesc.c,v 1.23 2009/07/31 14:56:11 pooka Exp $");
 #include <string.h>
 
 #include <mntopts.h>
+
+#include "mount_fdesc.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -109,18 +111,18 @@ main(int argc, char **argv)
 }
 #endif
 
-int
-mount_fdesc(int argc, char *argv[])
+void
+mount_fdesc_parseargs(int argc, char *argv[], void *dummy, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	int ch, mntflags;
-	char canon_dir[MAXPATHLEN];
+	int ch;
 	mntoptparse_t mp;
 
-	mntflags = 0;
+	*mntflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
@@ -136,7 +138,7 @@ mount_fdesc(int argc, char *argv[])
 		usage();
 
 	/* getargs is a NULL op and kernel would return EINVAL */
-	if (mntflags & MNT_GETARGS)
+	if (*mntflags & MNT_GETARGS)
 		exit(0);
 
 	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
@@ -145,9 +147,18 @@ mount_fdesc(int argc, char *argv[])
 		warnx("\"%s\" is a relative path.", argv[1]);
 		warnx("using \"%s\" instead.", canon_dir);
 	}
+}
 
+int
+mount_fdesc(int argc, char *argv[])
+{
+	int mntflags;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+
+	mount_fdesc_parseargs(argc, argv, NULL, &mntflags,
+	    canon_dev, canon_dir);
 	if (mount(MOUNT_FDESC, canon_dir, mntflags, NULL, 0) == -1)
-		err(1, "fdesc on %s", argv[1]);
+		err(1, "fdesc on %s", canon_dir);
 	exit(0);
 }
 
