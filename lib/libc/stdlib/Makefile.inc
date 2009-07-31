@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.72 2009/07/20 17:03:37 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.73 2009/07/31 20:39:59 dsl Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -17,6 +17,13 @@ SRCS+=	_rand48.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
 	unsetenv.c strfmon.c
 
+# These are often replaced by MD .S versions
+SRCS+=	abs.c labs.c llabs.c imaxabs.c
+SRCS+=	div.c ldiv.c imaxdiv.c
+
+# This might be replaced by erand48.c
+SRCS+= erand48_ieee754.c
+
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
 .else
@@ -27,10 +34,6 @@ CPPFLAGS.strtoimax.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtoq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
-
-# machine-dependent stdlib sources
-# m-d Makefile.inc must include sources for:
-#       abs() div() labs() ldiv() llabs() imaxabs() imaxdiv()
 
 .include "${ARCHDIR}/stdlib/Makefile.inc"
 
