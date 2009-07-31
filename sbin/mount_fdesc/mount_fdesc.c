@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.22 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.23 2009/07/31 14:56:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.22 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.23 2009/07/31 14:56:11 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,10 @@ mount_fdesc(int argc, char *argv[])
 
 	if (argc != 2)
 		usage();
+
+	/* getargs is a NULL op and kernel would return EINVAL */
+	if (mntflags & MNT_GETARGS)
+		exit(0);
 
 	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
 		err(1, "realpath %s", argv[1]);
