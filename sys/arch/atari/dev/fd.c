@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.70 2009/07/19 05:43:22 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.71 2009/07/31 15:55:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70 2009/07/19 05:43:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.71 2009/07/31 15:55:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ extern inline u_char read_dmastat(void)
 static u_short rd_cfg_switch(void);
 static u_short rd_cfg_switch(void)
 {
-	return(*((u_short*)AD_CFG_SWITCH));
+	return(*((volatile u_short *)AD_CFG_SWITCH));
 }
 
 /*
