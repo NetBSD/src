@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.249 2009/07/23 01:10:02 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.250 2009/07/31 20:58:50 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.249 2009/07/23 01:10:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.250 2009/07/31 20:58:50 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1364,7 +1364,7 @@ ffs_oldfscompat_write(struct fs *fs, struct ufsmount *ump)
 }
 
 /*
- * unmount system call
+ * unmount vfs operation
  */
 int
 ffs_unmount(struct mount *mp, int mntflags)
@@ -1380,12 +1380,6 @@ ffs_unmount(struct mount *mp, int mntflags)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#ifdef UFS_EXTATTR
-	if (ump->um_fstype == UFS1) {
-		ufs_extattr_stop(mp, l);
-		ufs_extattr_uepm_destroy(&ump->um_extattr);
-	}
-#endif /* UFS_EXTATTR */
 	if ((error = ffs_flushfiles(mp, flags, l)) != 0)
 		return (error);
 	error = UFS_WAPBL_BEGIN(mp);
@@ -1412,6 +1406,13 @@ ffs_unmount(struct mount *mp, int mntflags)
 		return error;
 	}
 #endif /* WAPBL */
+#ifdef UFS_EXTATTR
+	if (ump->um_fstype == UFS1) {
+		ufs_extattr_stop(mp, l);
+		ufs_extattr_uepm_destroy(&ump->um_extattr);
+	}
+#endif /* UFS_EXTATTR */
+
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
