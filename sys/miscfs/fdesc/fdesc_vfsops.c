@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.80 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.81 2009/07/31 18:44:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.80 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.81 2009/07/31 18:44:58 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -164,35 +164,6 @@ fdesc_root(struct mount *mp, struct vnode **vpp)
 int
 fdesc_statvfs(struct mount *mp, struct statvfs *sbp)
 {
-	lwp_t *l = curlwp;
-	proc_t *p;
-	int lim;
-	int i;
-	int last;
-	int freefd;
-	fdtab_t *dt;
-
-	/*
-	 * Compute number of free file descriptors.
-	 * [ Strange results will ensue if the open file
-	 * limit is ever reduced below the current number
-	 * of open files... ]
-	 */
-	p = l->l_proc;
-	dt = l->l_fd->fd_dt;
-	lim = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
-	last = min(dt->dt_nfiles, lim);
-	freefd = 0;
-	for (i = l->l_fd->fd_freefile; i < last; i++)
-		if (dt->dt_ff[i]->ff_file == NULL)
-			freefd++;
-
-	/*
-	 * Adjust for the fact that the fdesc array may not
-	 * have been fully allocated yet.
-	 */
-	if (dt->dt_nfiles < lim)
-		freefd += (lim - dt->dt_nfiles);
 
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_frsize = DEV_BSIZE;
@@ -201,9 +172,9 @@ fdesc_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
 	sbp->f_bresvd = 0;
-	sbp->f_files = lim + 1;		/* Allow for "." */
-	sbp->f_ffree = freefd;		/* See comments above */
-	sbp->f_favail = freefd;		/* See comments above */
+	sbp->f_files = 0;
+	sbp->f_ffree = 0;
+	sbp->f_favail = 0;
 	sbp->f_fresvd = 0;
 	copy_statvfs_info(sbp, mp);
 	return (0);
