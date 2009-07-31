@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.19 2008/06/28 01:34:06 rumble Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.20 2009/07/31 19:47:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,9 +37,6 @@
  */
 
 #ifdef _KERNEL
-struct fdescmount {
-	struct vnode	*f_root;	/* Root node */
-};
 
 #define FD_ROOT		2
 #define FD_DEVFD	3
@@ -67,7 +64,6 @@ struct fdescnode {
 	int		fd_ix;		/* filesystem index */
 };
 
-#define VFSTOFDESC(mp)	((struct fdescmount *)((mp)->mnt_data))
 #define	VTOFDESC(vp) ((struct fdescnode *)(vp)->v_data)
 
 extern dev_t devctty;

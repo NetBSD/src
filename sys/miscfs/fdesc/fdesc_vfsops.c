@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.81 2009/07/31 18:44:58 pooka Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.82 2009/07/31 19:47:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.81 2009/07/31 18:44:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.82 2009/07/31 19:47:47 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -79,7 +79,6 @@ fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	int error = 0;
-	struct fdescmount *fmp;
 	struct vnode *rvp;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -96,14 +95,11 @@ fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		return (error);
 
-	fmp = (struct fdescmount *)malloc(sizeof(struct fdescmount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
 	rvp->v_type = VDIR;
 	rvp->v_vflag |= VV_ROOT;
-	fmp->f_root = rvp;
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = fmp;
+	mp->mnt_data = rvp;
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "fdesc", UIO_SYSSPACE,
@@ -123,7 +119,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 {
 	int error;
 	int flags = 0;
-	struct vnode *rtvp = VFSTOFDESC(mp)->f_root;
+	struct vnode *rtvp = mp->mnt_data;
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -137,10 +133,6 @@ fdesc_unmount(struct mount *mp, int mntflags)
 	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
-	/*
-	 * Finally, throw away the fdescmount structure
-	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = NULL;
 
 	return (0);
@@ -154,7 +146,7 @@ fdesc_root(struct mount *mp, struct vnode **vpp)
 	/*
 	 * Return locked reference to root.
 	 */
-	vp = VFSTOFDESC(mp)->f_root;
+	vp = mp->mnt_data;
 	VREF(vp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
