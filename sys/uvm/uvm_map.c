@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.273 2009/08/01 15:32:02 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.274 2009/08/01 15:36:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.273 2009/08/01 15:32:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.274 2009/08/01 15:36:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2704,9 +2704,6 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	    len,0);
 	UVMHIST_LOG(maphist," ...,dstmap=0x%x, flags=0x%x)", dstmap,flags,0,0);
 
-	uvm_map_check(srcmap, "map_extract src enter");
-	uvm_map_check(dstmap, "map_extract dst enter");
-
 	/*
 	 * step 0: sanity check: start must be on a page boundary, length
 	 * must be page sized.  can't ask for CONTIG/QREF if you asked for
@@ -2994,9 +2991,6 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	if (resentry != NULL)
 		uvm_mapent_free(resentry);
 
-	uvm_map_check(srcmap, "map_extract src leave");
-	uvm_map_check(dstmap, "map_extract dst leave");
-
 	return (0);
 
 	/*
@@ -3011,9 +3005,6 @@ bad2:			/* src already unlocked */
 
 	if (resentry != NULL)
 		uvm_mapent_free(resentry);
-
-	uvm_map_check(srcmap, "map_extract src err leave");
-	uvm_map_check(dstmap, "map_extract dst err leave");
 
 	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
 		uvm_unmap(dstmap, dstaddr, dstaddr+len);   /* ??? */
