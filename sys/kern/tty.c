@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.231 2009/04/25 15:06:32 rmind Exp $	*/
+/*	$NetBSD: tty.c,v 1.232 2009/08/01 23:07:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.231 2009/04/25 15:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.232 2009/08/01 23:07:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,9 +1795,11 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			mutex_spin_exit(&tty_lock);
 			return (0);	/* EOF */
 		}
-		if (flag & IO_NDELAY) {
-			mutex_spin_exit(&tty_lock);
-			return (EWOULDBLOCK);
+		if (!has_stime || slp <= 0) {
+			if (flag & IO_NDELAY) {
+				mutex_spin_exit(&tty_lock);
+				return (EWOULDBLOCK);
+			}
 		}
 		error = ttysleep(tp, &tp->t_rawcv, true, slp);
 		mutex_spin_exit(&tty_lock);
