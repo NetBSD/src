@@ -1,43 +1,8 @@
 /*
- * Written by J.T. Conklin <jtc@NetBSD.org>.
- * Public domain.
- * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
+ * Code for bzero() is in memset.S
+ *
+ * This file is left in place so that libc.a doesn't get a duplicate
+ * symbol error on update builds.
+ *
+ * If you are reading this in 2010, delete the file!
  */
-
-#include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bzero.S,v 1.2 2007/11/12 18:41:59 ad Exp $")
-#endif
-
-ENTRY(bzero)
-	movq	%rsi,%rdx
-
-	xorq	%rax,%rax		/* set fill data to 0 */
-
-	/*
-	 * if the string is too short, it's really not worth the overhead
-	 * of aligning to word boundries, etc.  So we jump to a plain
-	 * unaligned set.
-	 */
-	cmpq	$16,%rdx
-	jb	L1
-
-	movq	%rdi,%rcx		/* compute misalignment */
-	negq	%rcx
-	andq	$7,%rcx
-	subq	%rcx,%rdx
-	rep				/* zero until word aligned */
-	stosb
-
-	movq	%rdx,%rcx		/* zero by words */
-	shrq	$3,%rcx
-	andq	$7,%rdx
-	rep
-	stosq
-
-L1:	movq	%rdx,%rcx		/* zero remainder by bytes */
-	rep
-	stosb
-
-	ret
