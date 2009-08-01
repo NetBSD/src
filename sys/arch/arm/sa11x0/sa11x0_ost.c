@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.26 2009/05/29 14:15:44 rjs Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.27 2009/08/01 10:33:58 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.26 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.27 2009/08/01 10:33:58 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,9 @@ struct saost_softc {
 static struct saost_softc *saost_sc = NULL;
 
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
-#error ost needs to dynamically configure the frequency
+#include <arm/xscale/pxa2x0cpu.h> 
+static uint32_t freq;
+#define TIMER_FREQUENCY         freq
 #elif defined(CPU_XSCALE_PXA270)
 #define TIMER_FREQUENCY         3250000         /* PXA270 uses 3.25MHz */
 #else
@@ -223,6 +225,9 @@ cpu_initclocks(void)
 
 	stathz = STATHZ;
 	profhz = stathz;
+#if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
+	TIMER_FREQUENCY = (CPU_IS_PXA250) ? 3686400 : 3250000;
+#endif
 	sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
 
 	aprint_normal("clock: hz=%d stathz=%d\n", hz, stathz);
@@ -258,12 +263,17 @@ saost_tc_init(void)
 {
 	static struct timecounter saost_tc = {
 		.tc_get_timecount = saost_tc_get_timecount,
-		.tc_frequency = TIMER_FREQUENCY,
 		.tc_counter_mask = ~0,
 		.tc_name = "saost_count",
+#if !(defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250))
+		.tc_frequency = TIMER_FREQUENCY,
+#endif
 		.tc_quality = 100,
 	};
 
+#if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
+	saost_tc.tc_frequency = TIMER_FREQUENCY,
+#endif
 	tc_init(&saost_tc);
 }
 
