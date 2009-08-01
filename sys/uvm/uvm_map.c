@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.272 2009/08/01 15:30:33 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.273 2009/08/01 15:32:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.272 2009/08/01 15:30:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.273 2009/08/01 15:32:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -551,7 +551,10 @@ _uvm_tree_sanity(struct vm_map *map)
 		 * If any entries are out of order, tmp->gap will be unsigned
 		 * and will likely exceed the size of the map.
 		 */
-		KASSERT(tmp->gap < map->size);
+		if (tmp->gap >= vm_map_max(map) - vm_map_min(map)) {
+			printf("too large gap %zu\n", (size_t)tmp->gap);
+			goto error;
+		}
 		n++;
 	}
 
