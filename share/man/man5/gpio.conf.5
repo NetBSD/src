@@ -1,4 +1,4 @@
-.\"        $NetBSD: gpio.conf.5,v 1.1 2009/07/25 16:20:11 mbalmer Exp $
+.\"        $NetBSD: gpio.conf.5,v 1.2 2009/08/01 13:14:40 mbalmer Exp $
 .\"
 .\" Copyright (c) 2009 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 16, 2009
+.Dd August 1, 2009
 .Dt GPIO.CONF 5
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ config file is present pin 1 of
 is set as output and named "error_led".
 .Bd -literal -offset indent
 # Program pin 1 of /dev/gpio0 as output and name it "error_led"
-/dev/gpio0 1 set out error_led
+gpio0 1 set out error_led
 .Ed
 .Sh SEE ALSO
 .Xr gpioctl 8 ,
