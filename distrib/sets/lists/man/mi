@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1149 2009/07/27 12:34:12 kiyohara Exp $
+# $NetBSD: mi,v 1.1150 2009/08/01 15:43:01 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -939,6 +939,7 @@
 ./usr/share/man/cat4/gpib.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gpioow.0			man-sys-catman		.cat
+./usr/share/man/cat4/gpiosim.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gre.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gsip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gus.0			man-sys-catman		.cat
@@ -3545,6 +3546,7 @@
 ./usr/share/man/html4/gpib.html			man-sys-htmlman		html
 ./usr/share/man/html4/gpio.html			man-sys-htmlman		html
 ./usr/share/man/html4/gpioow.html		man-sys-htmlman		html
+./usr/share/man/html4/gpiosim.html		man-sys-htmlman		html
 ./usr/share/man/html4/gre.html			man-sys-htmlman		html
 ./usr/share/man/html4/gsip.html			man-sys-htmlman		html
 ./usr/share/man/html4/gus.html			man-sys-htmlman		html
@@ -5931,6 +5933,7 @@
 ./usr/share/man/man4/gpib.4			man-sys-man		.man
 ./usr/share/man/man4/gpio.4			man-sys-man		.man
 ./usr/share/man/man4/gpioow.4			man-sys-man		.man
+./usr/share/man/man4/gpiosim.4			man-sys-man		.man
 ./usr/share/man/man4/gre.4			man-sys-man		.man
 ./usr/share/man/man4/gsip.4			man-sys-man		.man
 ./usr/share/man/man4/gus.4			man-sys-man		.man
