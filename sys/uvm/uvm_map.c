@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.274 2009/08/01 15:36:07 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.275 2009/08/01 16:35:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.274 2009/08/01 15:36:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.275 2009/08/01 16:35:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2557,9 +2557,10 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
  * => note newents is allowed to be NULL
  */
 
-int
+static int
 uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
-    struct vm_map_entry *newents, int nnewents, struct vm_map_entry **oldentryp)
+    struct vm_map_entry *newents, int nnewents, vsize_t nsize,
+    struct vm_map_entry **oldentryp)
 {
 	struct vm_map_entry *oldent, *last;
 
@@ -2594,13 +2595,15 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	{
 		struct vm_map_entry *tmpent = newents;
 		int nent = 0;
+		vsize_t sz = 0;
 		vaddr_t cur = start;
 
 		while (tmpent) {
 			nent++;
+			sz += tmpent->end - tmpent->start;
 			if (tmpent->start < cur)
 				panic("uvm_map_replace1");
-			if (tmpent->start > tmpent->end || tmpent->end > end) {
+			if (tmpent->start >= tmpent->end || tmpent->end > end) {
 		printf("tmpent->start=0x%lx, tmpent->end=0x%lx, end=0x%lx\n",
 			    tmpent->start, tmpent->end, end);
 				panic("uvm_map_replace2");
@@ -2617,6 +2620,8 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 		}
 		if (nent != nnewents)
 			panic("uvm_map_replace5");
+		if (sz != nsize)
+			panic("uvm_map_replace6");
 	}
 #endif
 
@@ -2659,6 +2664,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 		clear_hints(map, oldent);
 		uvm_map_entry_unlink(map, oldent);
 	}
+	map->size -= end - start - nsize;
 
 	uvm_map_check(map, "map_replace leave");
 
@@ -2698,6 +2704,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	struct vm_map_entry *resentry = NULL; /* a dummy reservation entry */
 	vsize_t elen;
 	int nchain, error, copy_ok;
+	vsize_t nsize;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(srcmap=0x%x,start=0x%x, len=0x%x", srcmap, start,
@@ -2738,6 +2745,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	newend = dstaddr + len;
 	chain = endchain = NULL;
 	nchain = 0;
+	nsize = 0;
 	vm_map_lock(srcmap);
 
 	if (uvm_map_lookup_entry(srcmap, start, &entry)) {
@@ -2857,6 +2865,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 		/* now link it on the chain */
 		nchain++;
+		nsize += newentry->end - newentry->start;
 		if (endchain == NULL) {
 			chain = endchain = newentry;
 		} else {
@@ -2892,7 +2901,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	if (srcmap == dstmap || vm_map_lock_try(dstmap) == true) {
 		copy_ok = 1;
 		if (!uvm_map_replace(dstmap, dstaddr, dstaddr+len, chain,
-		    nchain, &resentry)) {
+		    nchain, nsize, &resentry)) {
 			if (srcmap != dstmap)
 				vm_map_unlock(dstmap);
 			error = EIO;
@@ -2979,7 +2988,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	if (copy_ok == 0) {
 		vm_map_lock(dstmap);
 		error = uvm_map_replace(dstmap, dstaddr, dstaddr+len, chain,
-		    nchain, &resentry);
+		    nchain, nsize, &resentry);
 		vm_map_unlock(dstmap);
 
 		if (error == false) {
