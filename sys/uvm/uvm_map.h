@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.63 2009/06/10 01:55:33 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.64 2009/08/01 16:35:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -316,8 +316,6 @@ void		uvm_map_init(void);
 bool		uvm_map_lookup_entry(struct vm_map *, vaddr_t,
 		    struct vm_map_entry **);
 void		uvm_map_reference(struct vm_map *);
-int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
-		    struct vm_map_entry *, int, struct vm_map_entry **);
 int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
 		    vaddr_t *, uvm_flag_t);
 void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
