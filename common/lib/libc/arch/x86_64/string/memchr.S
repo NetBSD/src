@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.S,v 1.4 2009/07/20 15:21:00 christos Exp $	*/
+/*	$NetBSD: memchr.S,v 1.5 2009/08/01 20:47:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.4 2009/07/20 15:21:00 christos Exp $")
+	RCSID("$NetBSD: memchr.S,v 1.5 2009/08/01 20:47:02 dsl Exp $")
 #endif
 
 /*
@@ -63,9 +63,9 @@ ENTRY(memchr)
 	jae	30f		/* jump if so */
 
 	movq	(%rdi),%rax	/* value to check */
-2:
 	addq	$8,%rdi
 	xorq	%rsi,%rax	/* now looking for zeros */
+2:
 	mov	%rax,%rcx
 	subq	%r8,%rax	/* x - 0x01 */
 	not	%rcx
@@ -82,32 +82,25 @@ ENTRY(memchr)
 	rep
 	ret			/* amd - no ret after jmp */
 
-/* Input misaligned, read aligned and kill low bits */
-/* (Getting a -1 is surprisingly hard work!) */
+/* Input misaligned, read aligned and make low bytes invalid */
 20:
-	xor	%eax,%eax	/* zeros all 64 bits */
 	mov	%dil,%cl	/* misalignment amount 1..7 (+high bits )*/
+	and	$~7,%dil	/* %rdi now start of word */
 	test	%rdx,%rdx	/* zero length, don't read */
 	jz	30f
 
-	and	$~7,%dil	/* %rdi now start of word */
-	lea	-1(%rax),%r11	/* all 0xff */
-	and	$7,%cl		/* 1..7 */
-
+	neg	%cl		/* 7..1 (+high bits) */
 	mov	(%rdi),%rax	/* word containing first byte */
-	shl	$3,%cl		/* 8..56 */
-	cmp	%r11,%rsi	/* searching for 0xff */
-	jz	25f
+	addq	$8,%rdi
+	and	$7,%cl		/* 7..1 */
 
-	/* Searching for other than 0xff, set low bytes */
-	shl	%cl,%r11	/* 0xff in high (wanted) bytes */
-	not	%r11		/* 0xff in low (unwanted) bytes */
+	mov	%r8,%r11	/* any value with bits in each byte */
+	shl	$3,%cl		/* 56..8 */
+	xorq	%rsi,%rax	/* now looking for zeros */
+
+	/* Set low bytes non-zero */
+	shr	%cl,%r11	/* non-zero in unwanted bytes */
 	or	%r11,%rax	/* low bytes now set */
-	jmp	2b
-
-25:	/* Searching for 0xff, clear low bytes */
-	shl	%cl,%r11	/* 0xff in high (wanted) bytes */
-	and	%r11,%rax	/* low bytes now zero */
 	jmp	2b
 
 /* Not found */
