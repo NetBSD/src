@@ -1,8 +1,9 @@
-#	$NetBSD: files.mips,v 1.59 2008/11/19 18:35:59 ad Exp $
+#	$NetBSD: files.mips,v 1.60 2009/08/01 22:59:52 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
 				MIPS64_SB1
+				MIPS64_LOONGSON2F
 					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS32 MIPS64
