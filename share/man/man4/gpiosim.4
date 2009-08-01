@@ -1,0 +1,48 @@
+.\" $NetBSD: gpiosim.4,v 1.1 2009/08/01 15:43:01 mbalmer Exp $
+.\"
+.\" Copyright (c) 2009 Marc Balmer <marc@msys.ch>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd August 1, 2009
+.Dt GPIOSIM 4
+.Os
+.Sh NAME
+.Nm gpiosim
+.Nd General Purpose Input/Output Simulator
+.Sh SYNOPSIS
+.Cd "pseudo-device gpiosim"
+.Sh DESCRIPTION
+The
+.Nm
+pseudo-device simulates a 32-bit wide
+.Xr gpio 4
+device.
+The state of the simulated device can be manipulated through the
+.Xr sysctl 8
+interface.
+For this purpose, access the "hw.gpiosim<N>.value"
+.Xr sysctl 8
+variable, where "<N>" denotes the number of the
+.Nm
+instance.
+.Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr sysctl 8
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Marc Balmer Aq marc@msys.ch .
