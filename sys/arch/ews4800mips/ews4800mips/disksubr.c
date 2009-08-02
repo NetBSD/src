@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2009/08/02 12:04:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.7 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.8 2009/08/02 12:04:28 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ writedisklabel(dev_t dev, void (*strategy)(struct buf *), struct disklabel *d,
 	sector_write(rwops, (void *)&ux->vtoc,
 	    ux->pdinfo.logical_sector + VTOC_SECTOR);
 
-	/* 3. Write disklabel to BFS */
+	/* 3. Write disklabel to LABELSECTOR */
 	memset(buf, 0, sizeof buf);
 	memcpy(buf, d, sizeof *d);
 	if (!sector_write(rwops, buf, LABELSECTOR)) {
