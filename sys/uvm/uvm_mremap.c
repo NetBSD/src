@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_mremap.c,v 1.13 2009/03/23 02:12:54 yamt Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.14 2009/08/02 16:03:47 yamt Exp $	*/
 
 /*-
- * Copyright (c)2006 YAMAMOTO Takashi,
+ * Copyright (c)2006,2007,2009 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.13 2009/03/23 02:12:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.14 2009/08/02 16:03:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -54,13 +54,13 @@ uvm_mapent_extend(struct vm_map *map, vaddr_t endva, vsize_t size)
 	if (reserved_entry->start != endva ||
 	    reserved_entry->end != endva + size ||
 	    reserved_entry->object.uvm_obj != NULL ||
-	    reserved_entry->aref.ar_amap != NULL) {
+	    reserved_entry->aref.ar_amap != NULL ||
+	    reserved_entry->protection != VM_PROT_NONE) {
 		error = EINVAL;
 		goto done;
 	}
 	entry = reserved_entry->prev;
-	KASSERT(&map->header != entry);
-	if (entry->end != endva) {
+	if (&map->header == entry || entry->end != endva) {
 		error = EINVAL;
 		goto done;
 	}
@@ -209,7 +209,9 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	    UVM_EXTRACT_RESERVED);
 	KASSERT(dstva == newva);
 	if (error != 0) {
-		/* undo uvm_map_reserve */
+		/*
+		 * undo uvm_map_reserve.
+		 */
 		uvm_unmap(newmap, newva, newva + newsize);
 		return error;
 	}
@@ -218,14 +220,22 @@ extend:
 		error = uvm_mapent_extend(newmap, newva + oldsize,
 		    newsize - oldsize);
 		if (error != 0) {
-			/* undo uvm_map_reserve and uvm_map_extract */
-			uvm_unmap(newmap, newva, newva + newsize);
+			/*
+			 * undo uvm_map_reserve and uvm_map_extract.
+			 */
+			if (newva == oldva && newmap == oldmap) {
+				uvm_unmap(newmap, newva + oldsize,
+				    newva + newsize);
+			} else {
+				uvm_unmap(newmap, newva, newva + newsize);
+			}
 			return error;
 		}
 	}
 
 	/*
-	 * now we won't fail.  remove original entries.
+	 * now we won't fail.
+	 * remove original entries unless we did in-place extend.
 	 */
 
 	if (oldva != newva || oldmap != newmap) {
