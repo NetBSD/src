@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.36 2009/03/18 16:00:08 cegger Exp $	*/
+/*	$NetBSD: boot32.c,v 1.37 2009/08/02 11:20:37 gavan Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -712,9 +712,13 @@ create_configuration(int argc, char **argv, int start_args)
 	strcpy(bconfig->args, "");
 	for (i = start_args; i < argc; i++) {
 		if (strncmp(argv[i], "root=",5) ==0) root_specified = 1;
+		if (i > start_args)
+			strcat(bconfig->args, " ");
 		strcat(bconfig->args, argv[i]);
 	}
 	if (!root_specified) {
+		if (start_args < argc)
+			strcat(bconfig->args, " ");
 		strcat(bconfig->args, "root=");
 		strcat(bconfig->args, DEFAULT_ROOT);
 	}
@@ -766,6 +770,7 @@ int
 main(int argc, char **argv)
 {
 	int howto, start_args, ret;
+	int class;
 
 	printf("\n\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
@@ -855,8 +860,11 @@ main(int argc, char **argv)
 	/* dismount all filesystems */
 	xosfscontrol_shutdown();
 
-	/* reset devices, well they try to anyway */
-	service_pre_reset();
+	os_readsysinfo_platform_class(&class, NULL, NULL);
+	if (class != osreadsysinfo_Platform_Pace) {
+		/* reset devices, well they try to anyway */
+		service_pre_reset();
+	}
 
 	start_kernel(
 		/* r0 relocation code page (V)	*/ relocate_code_page->logical,
