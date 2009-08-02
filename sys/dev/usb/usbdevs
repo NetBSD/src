@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.530 2009/07/29 15:45:17 jakllsch Exp $
+$NetBSD: usbdevs,v 1.531 2009/08/02 20:52:26 tshiozak Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1524,6 +1524,7 @@ product MELCO NINWIFI		0x008b	Nintendo Wi-Fi
 product MELCO SG54HP		0x00d8	WLI-U2-SG54HP
 product MELCO G54HP		0x00d9	WLI-U2-G54HP
 product MELCO KG54L		0x00da	WLI-U2-KG54L
+product MELCO WLIUCG		0x0137	WLI-UC-G
 
 /* Merlin products */
 product MERLIN V620             0x1110  Merlin V620
