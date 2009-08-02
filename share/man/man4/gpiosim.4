@@ -1,4 +1,4 @@
-.\" $NetBSD: gpiosim.4,v 1.1 2009/08/01 15:43:01 mbalmer Exp $
+.\" $NetBSD: gpiosim.4,v 1.2 2009/08/02 22:38:29 wiz Exp $
 .\"
 .\" Copyright (c) 2009 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
@@ -32,9 +32,9 @@ device.
 The state of the simulated device can be manipulated through the
 .Xr sysctl 8
 interface.
-For this purpose, access the "hw.gpiosim<N>.value"
+For this purpose, access the "hw.gpiosim\*[Lt]N\*[Gt].value"
 .Xr sysctl 8
-variable, where "<N>" denotes the number of the
+variable, where "\*[Lt]N\*[Gt]" denotes the number of the
 .Nm
 instance.
 .Sh SEE ALSO
