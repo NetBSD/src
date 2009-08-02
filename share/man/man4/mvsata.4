@@ -1,4 +1,4 @@
-.\" $NetBSD: mvsata.4,v 1.1 2009/07/27 12:34:13 kiyohara Exp $
+.\" $NetBSD: mvsata.4,v 1.2 2009/08/02 22:37:44 wiz Exp $
 .\"
 .\" Copyright (c) 2009 KIYOHARA Takashi
 .\" All rights reserved.
@@ -36,8 +36,7 @@
 The
 .Nm
 driver supports the Marvell Hercules-I and Hercules-II family of SATA
-controllers,
-interfacing the hardware with the
+controllers, interfacing the hardware with the
 .Xr ata 4
 and
 .Xr atapi 4
@@ -48,17 +47,16 @@ The following controllers are supported by the
 driver:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It Adaptec RAID 1420SA
+.It Adaptec RAID 1430SA
 .It Marvell 88SX50xx Hercules-I
 .It Marvell 88SX60xx Hercules-II
-.It Adaptec RAID 1420SA
 .It Marvell 88SX70xx Hercules-II
-.It Adaptec RAID 1430SA
 .It Triones Technologies RocketRAID 2310 RAID card
 .El
 .Pp
-The 88SX60xx and later supports Native Command Queue. Also the 88SX70xx
-supports ATAPI.
-.Pp
+The 88SX60xx and later support Native Command Queue.
+The 88SX70xx also supports ATAPI.
 .Sh SEE ALSO
 .Xr ata 4 ,
 .Xr atapi 4 ,
