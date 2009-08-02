@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.397 2009/08/01 21:17:11 bad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.398 2009/08/02 20:44:55 bad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.397 2009/08/01 21:17:11 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.398 2009/08/02 20:44:55 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1207,6 +1207,7 @@ sys_chroot(struct lwp *l, const struct sys_chroot_args *uap, register_t *retval)
 
 /*
  * Common routine for chroot and fchroot.
+ * NB: callers need to properly authorize the change root operation.
  */
 void
 change_root(struct cwdinfo *cwdi, struct vnode *vp, struct lwp *l)
