@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: obio.c,v 1.7 2009/08/02 00:06:44 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7 2009/08/02 00:06:44 nonaka Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -243,6 +243,8 @@ int obio_iomem_alloc(void *v, bus_addr_t rstart, bus_addr_t rend,
     bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
     bus_addr_t *bpap, bus_space_handle_t *bshp);
 void obio_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size);
+paddr_t obio_iomem_mmap(void *v, bus_addr_t addr, off_t off, int prot,
+    int flags);
 
 static int obio_iomem_add_mapping(bus_addr_t, bus_size_t, int,
     bus_space_handle_t *);
@@ -384,6 +386,13 @@ obio_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
 	obio_iomem_unmap(v, bsh, size);
 }
 
+paddr_t
+obio_iomem_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
+{
+
+	return (paddr_t)-1;
+}
+
 /*
  * on-board I/O bus space read/write
  */
@@ -449,6 +458,8 @@ struct _bus_space obio_bus_io =
 
 	.bs_alloc = obio_iomem_alloc,
 	.bs_free = obio_iomem_free,
+
+	.bs_mmap = obio_iomem_mmap,
 
 	.bs_r_1 = obio_iomem_read_1,
 	.bs_r_2 = obio_iomem_read_2,
