@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.14 2009/08/02 16:03:47 yamt Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.15 2009/08/02 16:07:34 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.14 2009/08/02 16:03:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.15 2009/08/02 16:07:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -116,6 +116,7 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	vaddr_t dstva;
 	vsize_t movesize;
 	vaddr_t newva;
+	int alignshift;
 	vaddr_t align = 0;
 	int error = 0;
 	const bool fixed = (flags & MAP_FIXED) != 0;
@@ -137,25 +138,25 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	}
 
 	/*
-	 * Try to see if any requested alignment can even be attemped.
+	 * Try to see if any requested alignment can even be attempted.
 	 * Make sure we can express the alignment (asking for a >= 4GB
 	 * alignment on an ILP32 architecure make no sense) and the
 	 * alignment is at least for a page sized quanitiy.  If the
 	 * request was for a fixed mapping, make sure supplied address
 	 * adheres to the request alignment.
 	 */
-	align = (flags & MAP_ALIGNMENT_MASK) >> MAP_ALIGNMENT_SHIFT;
-	if (align) {
-		if (align >= sizeof(vaddr_t) * NBBY)
-			return(EINVAL);
-		align = 1L << align;
+	alignshift = (flags & MAP_ALIGNMENT_MASK) >> MAP_ALIGNMENT_SHIFT;
+	if (alignshift != 0) {
+		if (alignshift >= sizeof(vaddr_t) * NBBY)
+			return EINVAL;
+		align = 1L << alignshift;
 		if (align < PAGE_SIZE)
-			return(EINVAL);
+			return EINVAL;
 		if (align >= vm_map_max(oldmap))
-			return(ENOMEM);
-		if (flags & MAP_FIXED) {
-			if ((*newvap & (align-1)) != 0)
-				return(EINVAL);
+			return ENOMEM;
+		if ((flags & MAP_FIXED) != 0) {
+			if ((*newvap & (align - 1)) != 0)
+				return EINVAL;
 			align = 0;
 		}
 	}
