@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.17 2009/02/07 17:13:32 uebayasi Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.18 2009/08/02 18:16:08 spz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.17 2009/02/07 17:13:32 uebayasi Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.18 2009/08/02 18:16:08 spz Exp $");
 #endif
 
 
@@ -583,6 +583,9 @@ disk_addwedge(int argc, char *argv[])
 
 	if (ioctl(fd, DIOCAWEDGE, &dkw) == -1)
 		err(1, "%s: addwedge", dvname);
+	else
+		printf("%s created successfully.\n", dkw.dkw_devname);
+
 }
 
 void
