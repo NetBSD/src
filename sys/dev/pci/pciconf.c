@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.30 2007/05/24 15:57:58 briggs Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.31 2009/08/02 11:25:50 gavan Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.30 2007/05/24 15:57:58 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.31 2009/08/02 11:25:50 gavan Exp $");
 
 #include "opt_pci.h"
 
@@ -974,8 +974,8 @@ configure_bus(pciconf_bus_t *pb)
 	max_ltim = pb->max_mingnt * bus_mhz / 4;	/* cvt to cycle count */
 	band = 4000000;					/* 0.25us cycles/sec */
 	if (band < pb->bandwidth_used) {
-		printf("PCI bus %d: Warning: Total bandwidth exceeded!?\n",
-		    pb->busno);
+		printf("PCI bus %d: Warning: Total bandwidth exceeded!? (%d)\n",
+		    pb->busno, pb->bandwidth_used);
 		def_ltim = -1;
 	} else {
 		def_ltim = (band - pb->bandwidth_used) / pb->ndevs;
