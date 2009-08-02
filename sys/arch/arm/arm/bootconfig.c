@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.5 2006/10/24 20:25:52 bjh21 Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.6 2009/08/02 11:32:05 gavan Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.5 2006/10/24 20:25:52 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.6 2009/08/02 11:32:05 gavan Exp $");
 
 #include <sys/systm.h>
 
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.5 2006/10/24 20:25:52 bjh21 Exp $")
 
 /* 
  * Function to identify and process different types of boot argument
+ * Note, results may contain trailing data, eg:
+ * get_bootconf_option("cow=moo milk=1", "moo", BOOTOPT_TYPE_STRING, &ptr)
+ * will return ptr of "moo milk=1", *not* "moo"
  */
 
 int
