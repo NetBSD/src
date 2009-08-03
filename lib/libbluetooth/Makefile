@@ -1,13 +1,13 @@
-# $NetBSD: Makefile,v 1.4 2009/05/12 10:05:06 plunky Exp $
+# $NetBSD: Makefile,v 1.5 2009/08/03 15:59:42 plunky Exp $
 
 USE_FORT?= yes	# network protocol library
 
 LIB=	bluetooth
 
-SRCS=	bluetooth.c devaddr.c \
+SRCS=	bluetooth.c bt_dev.c \
 	sdp_data.c sdp_get.c sdp_match.c sdp_put.c sdp_record.c \
 	sdp_set.c sdp_uuid.c sdp_service.c sdp_session.c
-MAN=	bluetooth.3 sdp.3 sdp_data.3
+MAN=	bluetooth.3 bt_dev.3 sdp.3 sdp_data.3
 
 CPPFLAGS+=	-I${.CURDIR}
 
@@ -33,8 +33,22 @@ MLINKS+=	bluetooth.3 bt_endprotoent.3
 MLINKS+=	bluetooth.3 bt_ntoa.3
 MLINKS+=	bluetooth.3 bt_aton.3
 
-MLINKS+=	bluetooth.3 bt_devaddr.3
-MLINKS+=	bluetooth.3 bt_devname.3
+MLINKS+=	bt_dev.3 bt_devaddr.3
+MLINKS+=	bt_dev.3 bt_devname.3
+MLINKS+=	bt_dev.3 bt_devenum.3
+MLINKS+=	bt_dev.3 bt_devinfo.3
+MLINKS+=	bt_dev.3 bt_devopen.3
+MLINKS+=	bt_dev.3 bt_devsend.3
+MLINKS+=	bt_dev.3 bt_devrecv.3
+MLINKS+=	bt_dev.3 bt_devreq.3
+MLINKS+=	bt_dev.3 bt_devfilter.3
+MLINKS+=	bt_dev.3 bt_devfilter_pkt_set.3
+MLINKS+=	bt_dev.3 bt_devfilter_pkt_clr.3
+MLINKS+=	bt_dev.3 bt_devfilter_pkt_tst.3
+MLINKS+=	bt_dev.3 bt_devfilter_evt_set.3
+MLINKS+=	bt_dev.3 bt_devfilter_evt_clr.3
+MLINKS+=	bt_dev.3 bt_devfilter_evt_tst.3
+MLINKS+=	bt_dev.3 bt_devinquiry.3
 
 MLINKS+=	sdp.3 sdp_open.3
 MLINKS+=	sdp.3 sdp_open_local.3

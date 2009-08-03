@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.61 2009/07/21 00:49:30 mrg Exp $
+# $NetBSD: md.amd64,v 1.62 2009/08/03 15:59:41 plunky Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -58,7 +58,7 @@
 ./usr/lib/i386/libbind9.so.4			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbind9.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
-./usr/lib/i386/libbluetooth.so.4.1		base-compat-shlib	compat,pic
+./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbz2.so.1			base-compat-shlib	compat,pic
