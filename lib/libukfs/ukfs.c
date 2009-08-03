@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.32 2009/07/23 01:01:31 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.33 2009/08/03 14:24:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -180,6 +180,8 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	struct ukfs *fs = NULL;
 	int rv = 0, devfd = -1, rdonly;
 	int mounted = 0;
+	int regged = 0;
+	int doreg = 0;
 
 	/*
 	 * Try open and lock the device.  if we can't open it, assume
@@ -222,6 +224,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 			close(devfd);
 			devfd = -1;
 		}
+		doreg = 1;
 	}
 
 	fs = malloc(sizeof(struct ukfs));
@@ -239,7 +242,13 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		}
 	}
 
-	rump_fakeblk_register(devpath);
+	if (doreg) {
+		rv = rump_etfs_register(devpath, devpath, RUMP_ETFS_BLK);
+		if (rv) {
+			goto out;
+		}
+		regged = 1;
+	}
 	rv = rump_sys_mount(vfsname, mountpath, mntflags, arg, alen);
 	if (rv) {
 		goto out;
@@ -254,7 +263,9 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		goto out;
 	}
 
-	fs->ukfs_devpath = strdup(devpath);
+	if (regged) {
+		fs->ukfs_devpath = strdup(devpath);
+	}
 	fs->ukfs_mountpath = strdup(mountpath);
 	fs->ukfs_cdir = ukfs_getrvp(fs);
 	pthread_spin_init(&fs->ukfs_spin, PTHREAD_PROCESS_SHARED);
@@ -272,6 +283,8 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		}
 		if (mounted)
 			rump_sys_unmount(mountpath, MNT_FORCE);
+		if (regged)
+			rump_etfs_remove(devpath);
 		if (devfd != -1) {
 			flock(devfd, LOCK_UN);
 			close(devfd);
@@ -301,8 +314,10 @@ ukfs_release(struct ukfs *fs, int flags)
 		}
 	}
 
-	rump_fakeblk_deregister(fs->ukfs_devpath);
-	free(fs->ukfs_devpath);
+	if (fs->ukfs_devpath) {
+		rump_etfs_remove(fs->ukfs_devpath);
+		free(fs->ukfs_devpath);
+	}
 	free(fs->ukfs_mountpath);
 
 	pthread_spin_destroy(&fs->ukfs_spin);
