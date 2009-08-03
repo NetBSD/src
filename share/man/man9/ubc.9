@@ -1,4 +1,4 @@
-.\"	$NetBSD: ubc.9,v 1.1 2009/08/03 19:08:48 rmind Exp $
+.\"	$NetBSD: ubc.9,v 1.2 2009/08/03 19:18:27 rmind Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -111,11 +111,31 @@ and the
 parameter takes the same arguments as
 .Fn ubc_alloc
 and
-.Fn ubc_unmap .
+.Fn ubc_release .
 Additionally, the flag
 .Dv UBC_PARTIALOK
 can be provided to indicate that it is acceptable to return if an error
 occurs mid-transfer.
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing the
+.Nm
+subsystem
+can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The
+.Nm
+subsystem is implemented within the file
+.Pa sys/uvm/uvm_bio.c .
+.Sh SEE ALSO
+.Xr pmap 9 ,
+.Xr uiomove 9 ,
+.Xr uvm 9 ,
+.Xr vnode 9 ,
+.Xr vnodeops 9
 .Sh HISTORY
 UBC first appeared in
 .Nx 1.6 .
