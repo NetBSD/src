@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.21 2009/07/20 06:39:06 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.22 2009/08/03 06:04:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.21 2009/07/20 06:39:06 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.22 2009/08/03 06:04:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,9 @@ read_score(int inf)
 {
 	SCORE *scp;
 
-	if (read(inf, &max_uid, sizeof max_uid) == sizeof max_uid) {
+	if (read(inf, &max_uid, sizeof max_uid) == sizeof max_uid &&
+	    read(inf, Top, sizeof Top) == sizeof Top) {
 		max_uid = ntohl(max_uid);
-
-		read(inf, Top, sizeof Top);
 		for (scp = Top; scp < &Top[MAXSCORES]; scp++) {
 			 scp->s_uid = ntohl(scp->s_uid);
 			 scp->s_score = ntohl(scp->s_score);
