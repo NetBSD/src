@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.23 2009/07/26 14:06:05 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.24 2009/08/03 12:43:56 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.23 2009/07/26 14:06:05 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.24 2009/08/03 12:43:56 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -365,6 +365,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct gpio_name *nm;
 	struct gpio_set *set;
 	device_t dv;
+	cfdata_t cf;
 	kauth_cred_t cred;
 	int locs[GPIOCF_NLOCS];
 	int pin, value, flags, npins, found;
@@ -496,12 +497,17 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 		locs[GPIOCF_OFFSET] = ga.ga_offset;
 		locs[GPIOCF_MASK] = ga.ga_mask;
 
-		dv = config_found_sm_loc(sc->sc_dev, "gpio", locs, &ga,
-		    gpiobus_print, gpio_submatch);
-		if (dv != NULL) {
-			gdev = kmem_alloc(sizeof(struct gpio_dev), KM_SLEEP);
-			gdev->sc_dev = dv;
-			LIST_INSERT_HEAD(&sc->sc_devs, gdev, sc_next);
+		cf = config_search_loc(NULL, sc->sc_dev, "gpio", locs, &ga);
+		if (cf != NULL) {
+			dv = config_attach_loc(sc->sc_dev, cf, locs, &ga,
+			    gpiobus_print);
+			if (dv != NULL) {
+				gdev = kmem_alloc(sizeof(struct gpio_dev),
+				    KM_SLEEP);
+				gdev->sc_dev = dv;
+				LIST_INSERT_HEAD(&sc->sc_devs, gdev, sc_next);
+			} else
+				return EINVAL;
 		} else
 			return EINVAL;
 		break;
