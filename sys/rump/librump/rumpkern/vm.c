@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.58 2009/06/10 11:41:43 he Exp $	*/
+/*	$NetBSD: vm.c,v 1.59 2009/08/03 17:10:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.58 2009/06/10 11:41:43 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.59 2009/08/03 17:10:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -103,6 +103,7 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
+	uobj->uo_npages++;
 
 	return pg;
 }
@@ -120,6 +121,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 
+	uobj->uo_npages--;
 	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	kmem_free((void *)pg->uanon, PAGE_SIZE);
 	kmem_free(pg, sizeof(*pg));
