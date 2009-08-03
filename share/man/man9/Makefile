@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.284 2009/08/03 19:08:48 rmind Exp $
+#       $NetBSD: Makefile,v 1.285 2009/08/03 19:43:58 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -26,8 +26,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	ieee80211_radiotap.9 iic.9 imax.9 \
 	in_getifa.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
-	isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
-	kmem_alloc.9 kmem_free.9 kmem_zalloc.9 \
+	isapnp.9 itimerfix.9 kauth.9 kcopy.9 kmem.9 \
 	kpause.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
@@ -335,6 +334,7 @@ MLINKS+=isapnp.9 isapnp_devmatch.9 \
 	isapnp.9 isapnp_unconfig.9
 MLINKS+=knote.9 KNOTE.9 \
 	kfilter_register.9 kfilter_unregister.9
+MLINKS+=kmem.9 kmem_alloc.9 kmem.9 kmem_free.9 kmem.9 kmem_zalloc.9
 MAN+=	kpreempt.9
 MLINKS+=kpreempt.9 kpreempt_disable.9 \
 	kpreempt.9 kpreempt_disabled.9 \

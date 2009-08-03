@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.11 2009/08/03 19:30:32 rmind Exp $
+.\"	$NetBSD: kmem.9,v 1.1 2009/08/03 19:43:59 rmind Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,13 +25,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd March 29, 2009
-.Dt KMEM_ALLOC 9
+.Dd August 3, 2009
+.Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
 .Sh NAME
-.Nm kmem_alloc
-.Nd allocate kernel wired memory
+.Nm kmem
+.Nd kernel wired memory allocator
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In sys/kmem.h
@@ -39,6 +39,12 @@
 .Ft void *
 .Fn kmem_alloc \
 "size_t size" "km_flag_t kmflags"
+.Ft void *
+.Fn kmem_zalloc \
+"size_t size" "km_flag_t kmflags"
+.Ft void
+.Fn kmem_free \
+"void *p" "size_t size"
 .\" ------------------------------------------------------------
 .Pp
 .Cd "options DEBUG"
@@ -79,6 +85,43 @@ allocation to be made in another place.
 The contents of allocated memory are uninitialized.
 .Pp
 Unlike Solaris, kmem_alloc(0, flags) is illegal.
+.Pp
+.\" ------------------------------------------------------------
+.Fn kmem_zalloc
+is the equivalent of
+.Fn kmem_alloc ,
+except that it initializes the memory to zero.
+.Pp
+.\" ------------------------------------------------------------
+.Fn kmem_free
+frees kernel wired memory allocated by
+.Fn kmem_alloc
+or
+.Fn kmem_zalloc
+so that it can be used for other purposes.
+It takes the following arguments.
+.Bl -tag -width kmflags
+.It Fa p
+The pointer to the memory being freed.
+It must be the one returned by
+.Fn kmem_alloc
+or
+.Fn kmem_zalloc .
+.It Fa size
+The size of the memory being freed, in bytes.
+It must be the same as the
+.Fa size
+argument used for
+.Fn kmem_alloc
+or
+.Fn kmem_zalloc
+when the memory was allocated.
+.El
+.Pp
+Freeing
+.Dv NULL
+is illegal.
+.\" ------------------------------------------------------------
 .Sh NOTES
 Making
 .Dv KM_SLEEP
@@ -183,8 +226,6 @@ Otherwise, it returns
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr intro 9 ,
-.Xr kmem_free 9 ,
-.Xr kmem_zalloc 9 ,
 .Xr malloc 9 ,
 .Xr memoryallocators 9
 .\" ------------------------------------------------------------
