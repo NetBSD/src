@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.10 2009/03/29 11:26:05 wiz Exp $
+.\"	$NetBSD: kmem_alloc.9,v 1.11 2009/08/03 19:30:32 rmind Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -79,7 +79,7 @@ allocation to be made in another place.
 The contents of allocated memory are uninitialized.
 .Pp
 Unlike Solaris, kmem_alloc(0, flags) is illegal.
-.Pp
+.Sh NOTES
 Making
 .Dv KM_SLEEP
 allocations while holding mutexes or reader/writer locks is discouraged, as the
