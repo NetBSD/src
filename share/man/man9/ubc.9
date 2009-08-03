@@ -1,0 +1,126 @@
+.\"	$NetBSD: ubc.9,v 1.1 2009/08/03 19:08:48 rmind Exp $
+.\"
+.\" Copyright (c) 1998 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd August 3, 2009
+.Dt UBC 9
+.Os
+.Sh NAME
+.Nm ubc
+.Nd unified buffer cache
+.Sh SYNOPSIS
+.In uvm/uvm.h
+.Bl -ohang
+.It Ft void *
+.Fn ubc_alloc "struct uvm_object *uobj" "voff_t offset" "vsize_t *lenp" \
+"int advice" "int flags"
+.It Ft void
+.Fn ubc_release "void *va" "int flags"
+.It Ft int
+.Fn ubc_uiomove "struct uvm_object *uobj" "struct uio *uio" "vsize_t todo" \
+"int advice" "int flags"
+.El
+.Sh DESCRIPTION
+.Fn ubc_alloc
+creates a kernel mapping of
+.Fa uobj
+starting at offset
+.Fa offset .
+The desired length of the mapping is pointed to by
+.Fa lenp ,
+but the actual mapping may be smaller than this.
+.Fa lenp
+is updated to contain the actual length mapped.
+.Fa advice
+is the access pattern hint, which must be one of
+.Pp
+.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
+.It UVM_ADV_NORMAL
+No hint
+.It UVM_ADV_RANDOM
+Random access hint
+.It UVM_ADV_SEQUENTIAL
+Sequential access hint (from lower offset to higher offset)
+.El
+.Pp
+The possible
+.Fa flags
+are
+.Pp
+.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
+.It UBC_READ
+Mapping will be accessed for read.
+.It UBC_WRITE
+Mapping will be accessed for write.
+.It UBC_FAULTBUSY
+Fault in window's pages already during mapping operation.
+Makes sense only for write.
+.El
+.Pp
+Once the mapping is created, it must be accessed only by methods that can
+handle faults, such as
+.Fn uiomove
+or
+.Fn kcopy .
+Page faults on the mapping will result in the object's pager
+method being called to resolve the fault.
+.Pp
+.Fn ubc_release
+frees the mapping at
+.Fa va
+for reuse.
+The mapping may be cached to speed future accesses to the same region
+of the object.
+The flags can be any of
+.Pp
+.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
+.It UBC_UNMAP
+Do not cache mapping.
+.El
+.Pp
+.Fn ubc_uiomove
+allocates an UBC memory window, performs I/O on it and unmaps the window.
+The
+.Fa advice
+parameter takes the same values as the respective parameter in
+.Fn ubc_alloc
+and the
+.Fa flags
+parameter takes the same arguments as
+.Fn ubc_alloc
+and
+.Fn ubc_unmap .
+Additionally, the flag
+.Dv UBC_PARTIALOK
+can be provided to indicate that it is acceptable to return if an error
+occurs mid-transfer.
+.Sh HISTORY
+UBC first appeared in
+.Nx 1.6 .
+.Sh AUTHORS
+Chuck Silvers
+.Aq chuq@chuq.com
+designed and implemented the UBC part of UVM, which uses UVM pages
+to cache vnode data rather than the traditional buffer cache buffers.

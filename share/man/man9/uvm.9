@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.97 2009/03/12 13:13:16 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.98 2009/08/03 19:08:48 rmind Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 12, 2009
+.Dd August 3, 2009
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -401,101 +401,6 @@ offset into the map the fault occurred, and
 describing the type of access requested.
 .Fn uvm_fault
 returns a standard UVM return value.
-.Sh MEMORY MAPPING FILES AND DEVICES
-.Bl -ohang
-.It Ft void
-.Fn uvm_vnp_setsize "struct vnode *vp" "voff_t newsize" ;
-.It Ft void *
-.Fn ubc_alloc "struct uvm_object *uobj" "voff_t offset" "vsize_t *lenp" \
-"int advice" "int flags" ;
-.It Ft void
-.Fn ubc_release "void *va" "int flags" ;
-.It Ft int
-.Fn ubc_uiomove "struct uvm_object *uobj" "struct uio *uio" "vsize_t todo" \
-"int advice" "int flags" ;
-.El
-.Pp
-.Fn uvm_vnp_setsize
-sets the size of vnode
-.Fa vp
-to
-.Fa newsize .
-Caller must hold a reference to the vnode.
-If the vnode shrinks, pages no longer used are discarded.
-.Pp
-.Fn ubc_alloc
-creates a kernel mapping of
-.Fa uobj
-starting at offset
-.Fa offset .
-The desired length of the mapping is pointed to by
-.Fa lenp ,
-but the actual mapping may be smaller than this.
-.Fa lenp
-is updated to contain the actual length mapped.
-.Fa advice
-is the access pattern hint, which must be one of
-.Pp
-.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
-.It UVM_ADV_NORMAL
-No hint
-.It UVM_ADV_RANDOM
-Random access hint
-.It UVM_ADV_SEQUENTIAL
-Sequential access hint (from lower offset to higher offset)
-.El
-.Pp
-The possible
-.Fa flags
-are
-.Pp
-.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
-.It UBC_READ
-Mapping will be accessed for read.
-.It UBC_WRITE
-Mapping will be accessed for write.
-.It UBC_FAULTBUSY
-Fault in window's pages already during mapping operation.
-Makes sense only for write.
-.El
-.Pp
-Once the mapping is created, it must be accessed only by methods that can
-handle faults, such as
-.Fn uiomove
-or
-.Fn kcopy .
-Page faults on the mapping will result in the object's pager
-method being called to resolve the fault.
-.Pp
-.Fn ubc_release
-frees the mapping at
-.Fa va
-for reuse.
-The mapping may be cached to speed future accesses to the same region
-of the object.
-The flags can be any of
-.Pp
-.Bl -tag -offset indent -width "UVM_ADV_SEQUENTIAL" -compact
-.It UBC_UNMAP
-Do not cache mapping.
-.El
-.Pp
-.Fn ubc_uiomove
-allocates an UBC memory window, performs I/O on it and unmaps the window.
-The
-.Fa advice
-parameter takes the same values as the respective parameter in
-.Fn ubc_alloc
-and the
-.Fa flags
-parameter takes the same arguments as
-.Fn ubc_alloc
-and
-.Fn ubc_unmap .
-Additionally, the flag
-.Dv UBC_PARTIALOK
-can be provided to indicate that it is acceptable to return if an error
-occurs mid-transfer.
 .Sh VIRTUAL MEMORY I/O
 .Bl -ohang
 .It Ft int
@@ -871,6 +776,8 @@ and should match what was used for previous call to
 .It Ft void
 .Fn uvn_findpages "struct uvm_object *uobj" "voff_t offset" "int *npagesp" "struct vm_page **pps" "int flags" ;
 .It Ft void
+.Fn uvm_vnp_setsize "struct vnode *vp" "voff_t newsize" ;
+.It Ft void
 .Fn uvm_swap_stats "int cmd" "struct swapent *sep" "int sec" "register_t *retval" ;
 .El
 .Pp
@@ -983,6 +890,14 @@ causes any pages which do not already exist to be skipped.
 causes any pages which do already exist to be skipped.
 .Dv UFP_NORDONLY
 causes any pages which are marked PG_READONLY to be skipped.
+.Pp
+.Fn uvm_vnp_setsize
+sets the size of vnode
+.Fa vp
+to
+.Fa newsize .
+Caller must hold a reference to the vnode.
+If the vnode shrinks, pages no longer used are discarded.
 .Pp
 .Fn uvm_swap_stats
 implements the
@@ -1124,7 +1039,8 @@ will be renamed to
 .Xr ddb 4 ,
 .Xr options 4 ,
 .Xr memoryallocators 9 ,
-.Xr pmap 9
+.Xr pmap 9 ,
+.Xr ubc 9
 .Sh HISTORY
 UVM is a new VM system developed at Washington University in St. Louis
 (Missouri).
@@ -1164,5 +1080,3 @@ Chuck Silvers
 .Aq chuq@chuq.com
 implemented the aobj pager, thus allowing UVM to support System V shared
 memory and process swapping.
-He also designed and implemented the UBC part of UVM, which uses UVM pages
-to cache vnode data rather than the traditional buffer cache buffers.
