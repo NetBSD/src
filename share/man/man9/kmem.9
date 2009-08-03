@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.1 2009/08/03 19:43:59 rmind Exp $
+.\"	$NetBSD: kmem.9,v 1.2 2009/08/03 20:10:16 rmind Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -220,14 +220,32 @@ Invalid pointer or size passed, at
 .Sh RETURN VALUES
 On success,
 .Fn kmem_alloc
-returns a pointer to allocated memory.
-Otherwise, it returns
-.Dv NULL .
+and
+.Fn kmem_zalloc
+return a pointer to allocated memory.
+Otherwise,
+.Dv NULL
+is returned.
+.\" ------------------------------------------------------------
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing the
+.Nm
+subsystem
+can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The
+.Nm
+subsystem is implemented within the file
+.Pa sys/kern/subr_kmem.c .
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr intro 9 ,
-.Xr malloc 9 ,
-.Xr memoryallocators 9
+.Xr memoryallocators 9 ,
+.Xr pool_cache 9
 .\" ------------------------------------------------------------
 .Sh CAVEATS
 .Fn kmem_alloc
@@ -238,6 +256,8 @@ Use
 in these situations.
 .\" ------------------------------------------------------------
 .Sh SECURITY CONSIDERATION
-As the allocated memory is uninitialized, it can contain security-sensitive
-data left by its previous user.
-It's the caller's responsibility not to expose it to the world.
+As the memory llocated by
+.Fn kmem_alloc
+is uninitialized, it can contain security-sensitive data left by its
+previous user.
+It is the caller's responsibility not to expose it to the world.
