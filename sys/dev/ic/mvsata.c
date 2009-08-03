@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.1 2009/07/27 12:34:14 kiyohara Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.2 2009/08/03 20:06:36 snj Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.1 2009/07/27 12:34:14 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.2 2009/08/03 20:06:36 snj Exp $");
 
 #include "opt_mvsata.h"
 
@@ -96,7 +96,7 @@ int	mvsata_debug = 3;
 #define ATA_DELAY		10000	/* 10s for a drive I/O */
 #define ATAPI_DELAY		10	/* 10 ms, this is used only before
 					   sending a cmd */
-#define ATAPI_MODE_DELAY	1000	/* 1s, timeout for SET_FEATYRE cmds */
+#define ATAPI_MODE_DELAY	1000	/* 1s, timeout for SET_FEATURE cmds */
 
 #define MVSATA_EPRD_MAX_SIZE	(sizeof(struct eprd) * (MAXPHYS / PAGE_SIZE))
 
