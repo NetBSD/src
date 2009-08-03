@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.10 2009/07/30 20:57:16 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2009/08/03 06:25:34 dsl Exp $
 
 SRCS+=  bzero.S ffs.S strlen.S
+NO_SRCS+= memset.c
 
 # disable the asm versions of these because they break the explora.
 # the special rules here are to override the suffix rules which seem
