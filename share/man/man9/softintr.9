@@ -1,4 +1,4 @@
-.\"	$NetBSD: softintr.9,v 1.19 2009/05/18 14:05:15 wiz Exp $
+.\"	$NetBSD: softintr.9,v 1.20 2009/08/03 23:29:19 rmind Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd October 6, 2008
+.Dd August 3, 2009
 .Dt SOFTINT 9
 .Os
 .Sh NAME
@@ -196,9 +196,13 @@ the same soft interrupt handler can be in flight simultaneously
 (at most one per-CPU).
 .El
 .Sh SEE ALSO
+.Xr callout 9 ,
+.Xr condvar 9 ,
+.Xr kthread 9 ,
 .Xr mutex 9 ,
 .Xr rwlock 9 ,
-.Xr spl 9
+.Xr spl 9 ,
+.Xr workqueue 9
 .Sh HISTORY
 The
 .Nx
