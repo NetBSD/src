@@ -1,9 +1,7 @@
-/*	$NetBSD: bluetooth.h,v 1.3 2006/09/26 19:18:19 plunky Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.4 2009/08/03 15:59:42 plunky Exp $	*/
 
-/*
- * bluetooth.h
- *
- * Copyright (c) 2001-2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
+/*-
+ * Copyright (c) 2001-2009 Maksim Yevmenkin <m_evmenkin@yahoo.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: bluetooth.h,v 1.3 2006/09/26 19:18:19 plunky Exp $
- * $FreeBSD: src/lib/libbluetooth/bluetooth.h,v 1.2 2005/03/17 21:39:44 emax Exp $
+ * $FreeBSD: src/lib/libbluetooth/bluetooth.h,v 1.5 2009/04/22 15:50:03 emax Exp $
  */
 
 #ifndef _BLUETOOTH_H_
@@ -37,11 +34,14 @@
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <sys/socket.h>
-#include <netdb.h>
+
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
 #include <netbt/l2cap.h>
+
+#include <netdb.h>
 #include <stdio.h>
+#include <time.h>
 
 __BEGIN_DECLS
 
@@ -64,8 +64,92 @@ void              bt_endprotoent      (void);
 char const *      bt_ntoa             (bdaddr_t const *, char *);
 int               bt_aton             (char const *, bdaddr_t *);
 
-int               bt_devaddr          (const char *, bdaddr_t *);
-int               bt_devname          (char *, const bdaddr_t *);
+/*
+ * Bluetooth device access API
+ */
+
+struct bt_devinfo {
+	char		devname[HCI_DEVNAME_SIZE];
+	int		enabled;	/* device is enabled */
+
+	/* device information */
+	bdaddr_t	bdaddr;
+	uint8_t		features[HCI_FEATURES_SIZE];
+	uint16_t	acl_size;	/* max ACL data size */
+	uint16_t	acl_pkts;	/* total ACL packet buffers */
+	uint16_t	sco_size;	/* max SCO data size */
+	uint16_t	sco_pkts;	/* total SCO packet buffers */
+
+	/* flow control */
+	uint16_t	cmd_free;	/* available CMD packet buffers */
+	uint16_t	acl_free;	/* available ACL packet buffers */
+	uint16_t	sco_free;	/* available SCO packet buffers */
+
+	/* statistics */
+	uint32_t	cmd_sent;
+	uint32_t	evnt_recv;
+	uint32_t	acl_recv;
+	uint32_t	acl_sent;
+	uint32_t	sco_recv;
+	uint32_t	sco_sent;
+	uint32_t	bytes_recv;
+	uint32_t	bytes_sent;
+
+	/* device settings */
+	uint16_t	link_policy_info;
+	uint16_t	packet_type_info;
+	uint16_t	role_switch_info;
+};
+
+struct bt_devreq {
+	uint16_t	opcode;
+	uint8_t		event;
+	void		*cparam;
+	size_t		clen;
+	void		*rparam;
+	size_t		rlen;
+};
+
+struct bt_devfilter {
+	struct hci_filter	packet_mask;
+	struct hci_filter	event_mask;
+};
+
+struct bt_devinquiry {
+	bdaddr_t        bdaddr;
+	uint8_t         pscan_rep_mode;
+	uint8_t         pscan_period_mode;
+	uint8_t         dev_class[3];
+	uint16_t        clock_offset;
+	int8_t          rssi;
+	uint8_t         data[240];
+};
+
+/* bt_devopen() flags */
+#define	BTOPT_DIRECTION		(1 << 0)
+#define	BTOPT_TIMESTAMP		(1 << 1)
+
+/* compatibility */
+#define	bt_devclose(s)		close(s)
+
+typedef int (bt_devenum_cb_t)(int, const struct bt_devinfo *, void *);
+
+int	bt_devaddr(const char *, bdaddr_t *);
+int	bt_devname(char *, const bdaddr_t *);
+int	bt_devopen(const char *, int);
+ssize_t	bt_devsend(int, uint16_t, void *, size_t);
+ssize_t	bt_devrecv(int, void *, size_t, time_t);
+int	bt_devreq(int, struct bt_devreq *, time_t);
+int	bt_devfilter(int, const struct bt_devfilter *, struct bt_devfilter *);
+void	bt_devfilter_pkt_set(struct bt_devfilter *, uint8_t);
+void	bt_devfilter_pkt_clr(struct bt_devfilter *, uint8_t);
+int	bt_devfilter_pkt_tst(const struct bt_devfilter *, uint8_t);
+void	bt_devfilter_evt_set(struct bt_devfilter *, uint8_t);
+void	bt_devfilter_evt_clr(struct bt_devfilter *, uint8_t);
+int	bt_devfilter_evt_tst(const struct bt_devfilter *, uint8_t);
+int	bt_devinquiry(const char *, time_t, int, struct bt_devinquiry **);
+int	bt_devinfo(const char *, struct bt_devinfo *);
+int	bt_devenum(bt_devenum_cb_t *, void *);
 
 /*
  * bthcid(8) PIN Client API
