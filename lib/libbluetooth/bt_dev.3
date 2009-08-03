@@ -1,0 +1,371 @@
+.\" $NetBSD: bt_dev.3,v 1.1 2009/08/03 15:59:42 plunky Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd August 3, 2009
+.Dt BT_DEV 3
+.Os
+.Sh NAME
+.Nm bt_devaddr,
+.Nm bt_devname,
+.Nm bt_devenum ,
+.Nm bt_devinfo ,
+.Nm bt_devopen ,
+.Nm bt_devsend ,
+.Nm bt_devrecv ,
+.Nm bt_devreq ,
+.Nm bt_devfilter ,
+.Nm bt_devfilter_pkt_set ,
+.Nm bt_devfilter_pkt_clr ,
+.Nm bt_devfilter_pkt_tst ,
+.Nm bt_devfilter_evt_set ,
+.Nm bt_devfilter_evt_clr ,
+.Nm bt_devfilter_evt_tst ,
+.Nm bt_devinquiry ,
+.Nd Bluetooth device access routines
+.Sh LIBRARY
+.Lb libbluetooth
+.Sh SYNOPSIS
+.In bluetooth.h
+.Ft int
+.Fn bt_devaddr "const char *name" "bdaddr_t *bdaddr"
+.Ft int
+.Fn bt_devname "char *name" "const bdaddr_t *bdaddr"
+.Ft int
+.Fn bt_devenum "int (*cb)(int, const struct bt_devinfo *, void *)" "void *arg"
+.Ft int
+.Fn bt_devinfo "const char *name" "struct bt_devinfo *info"
+.Ft int
+.Fn bt_devopen "const char *name" "int flags"
+.Ft ssize_t
+.Fn bt_devsend "int s" "uint16_t opcode" "void *param" "size_t plen"
+.Ft ssize_t
+.Fn bt_devrecv "int s" "void *buf" "size_t size" "time_t timeout"
+.Ft int
+.Fn bt_devreq "int s" "struct bt_devreq *req" "time_t timeout"
+.Ft int
+.Fn bt_devfilter "int s" "const struct bt_devfilter *new" "struct bt_devfilter *old"
+.Ft void
+.Fn bt_devfilter_pkt_set "struct bt_devfilter *filter" "uint8_t type"
+.Ft void
+.Fn bt_devfilter_pkt_clr "struct bt_devfilter *filter" "uint8_t type"
+.Ft int
+.Fn bt_devfilter_pkt_tst "const struct bt_devfilter *filter" "uint8_t type"
+.Ft void
+.Fn bt_devfilter_evt_set "struct bt_devfilter *filter" "uint8_t event"
+.Ft void
+.Fn bt_devfilter_evt_clr "struct bt_devfilter *filter" "uint8_t event"
+.Ft int
+.Fn bt_devfilter_evt_tst "const struct bt_devfilter *filter" "uint8_t event"
+.Ft int
+.Fn bt_devinquiry "const char *name" "time_t timeout" "int max_rsp" "struct bt_devinquiry **iip"
+.Sh DESCRIPTION
+These routines are designed to provide access to locally configured Bluetooth
+devices in an operating system independent manner via a socket providing access
+to Bluetooth HCI packets.
+.Sh FUNCTIONS
+.Bl -tag -width 4n
+.It Fn bt_devaddr "name" "bdaddr"
+Return a Bluetooth device address.
+.Fn bt_devaddr
+will return 1 if the NUL-terminated
+.Fa name
+string refers to a Bluetooth device present in the system, otherwise 0.
+The name may be given as a device name
+.Pq eg Qo ubt0 Qc
+or Bluetooth device address
+.Pq eg Qo 00:11:22:33:44:55 Qc
+and the actual device address will be written to
+.Fa bdaddr
+if not
+.Dv NULL .
+.It Fn bt_devname "name" "bdaddr"
+Return a Bluetooth device name.
+.Fn bt_devname
+returns 1 if the
+.Fa bdaddr
+refers to a Bluetooth device present in the system, otherwise 0.
+The
+.Fa name
+buffer, if given, should have space for at least
+.Dv HCI_DEVNAME_SIZE
+bytes and the string will be NUL-terminated.
+.It Fn bt_devenum "cb" "arg"
+Enumerate Bluetooth devices present in the system.
+For each device found, the
+.Fa cb
+function
+.Pq if not Dv NULL
+will be called with the
+.Fa arg
+argument provided, a fully populated
+.Ft bt_devinfo
+structure and, where the device is enabled, a socket handle as returned by
+.Fn bt_devopen .
+The callback function can halt the enumeration by returning a
+non-zero value, and
+.Fn bt_devenum
+returns the number of successfully enumerated devices.
+.It Fn bt_devinfo "name" "info"
+Obtain information from a Bluetooth device present in the system.
+The
+.Fa info
+argument is a pointer to a
+.Ft bt_devinfo
+structure into which information about device
+.Fa name
+is placed.
+The
+.Ft bt_devinfo
+structure contains at least the following members:
+.Bd -literal
+        char        devname[HCI_DEVNAME_SIZE];
+        int         enabled;    /* device is enabled */
+
+        /* device information */
+        bdaddr_t    bdaddr;
+        uint8_t     features[HCI_FEATURES_SIZE];
+        uint16_t    acl_size;   /* max ACL data size */
+        uint16_t    acl_pkts;   /* total ACL packet buffers */
+        uint16_t    sco_size;   /* max SCO data size */
+        uint16_t    sco_pkts;   /* total SCO packet buffers */
+
+        /* flow control */
+        uint16_t    cmd_free;   /* available CMD packet buffers */
+        uint16_t    acl_free;   /* available ACL packet buffers */
+        uint16_t    sco_free;   /* available ACL packet buffers */
+
+        /* statistics */
+        uint32_t    cmd_sent;
+        uint32_t    evnt_recv;
+        uint32_t    acl_recv;
+        uint32_t    acl_sent;
+        uint32_t    sco_recv;
+        uint32_t    sco_sent;
+        uint32_t    bytes_recv;
+        uint32_t    bytes_sent;
+
+        /* device settings */
+        uint16_t    link_policy_info;
+        uint16_t    packet_type_info;
+        uint16_t    role_switch_info;
+.Ed
+.Lp
+Because a Bluetooth device must be enabled in order to retrieve
+information, the
+.Fa enabled
+flag should be tested to be non-zero before relying on further data.
+.It Fn bt_devopen "name" "flags"
+Return a Bluetooth HCI socket handle bound and connected to the
+named Bluetooth device or, if
+.Fa name
+is
+.Dv NULL ,
+enabled to receive packets from any device.
+The socket should be closed using
+.Xr close 2
+after use.
+Any combination of the following
+.Fa flags
+may be used to pre-set the socket options:
+.Bl -tag -width ".Dv BTOPT_DIRECTION"
+.It Dv BTOPT_DIRECTION
+Enable control messages on each packet indicating the direction of travel.
+.It Dv BTOPT_TIMESTAMP
+Enable control messages providing packet timestamps.
+.El
+.Lp
+The default filter on the socket will only allow the HCI Event packets
+.Qq Command Status
+and
+.Qq Command Complete
+to be received.
+.It Fn bt_devsend "s" "opcode" "param" "plen"
+Send an HCI command packet on the socket
+.Fa s .
+The
+.Fa opcode
+should be in host byte order and the
+.Fa param
+and
+.Fa plen
+arguments can be used to provide command parameter data.
+.Fn bt_devsend
+will return the number of bytes successfully written.
+.It Fn bt_devrecv "s" "buf" "size" "timeout"
+Receive a single HCI packet on the socket
+.Fa s .
+.Fn bt_devrecv
+will return the number of bytes successfully received unless the
+provided buffer could not contain the entire packet, or if a timeout was
+requested with a non-negative
+.Fa timeout
+value.
+.It Fn bt_devreq "s" "req" "timeout"
+Make an HCI request on the socket
+.Fa s .
+The
+.Fa req
+argument is a pointer to a
+.Ft bt_devreq
+structure, defined as:
+.Bd -literal -offset indent
+struct bt_devreq {
+        uint16_t        opcode;
+        uint8_t         event;
+        void           *cparam;
+        size_t          clen;
+        void           *rparam;
+        size_t          rlen;
+};
+.Ed
+.Lp
+.Fn bt_devreq
+sends an HCI command packet with the given
+.Fa opcode
+and command parameters of
+.Fa clen
+bytes at
+.Fa cparam
+then waits up to
+.Fa timeout
+seconds for the command to return a
+.Qq Command Complete
+event.
+In the case where the command returns
+.Qq Command Status
+and an additional event, and where the status indicates
+that the command is in progress,
+.Fn bt_devreq
+will wait for the additional
+.Fa event
+specified in the request.
+If required, any response will be copied into the buffer of
+.Fa rlen
+bytes at
+.Fa rparam ,
+and
+.Fa rlen
+will be adjusted to indicate the number of bytes stored.
+.Fn bt_devreq
+temporarily modifies the socket filter.
+.It Fn bt_devfilter "s" "new" "old"
+Update or extract the packet filter on HCI socket
+.Fa s .
+Filters can be set to indicate packet types
+.Pq Commands, Events, ACL and SCO data ,
+and individual event IDs.
+Where
+.Fa old
+is given, the currently set filter will be extracted first, then if
+.Fa new
+is given, the filter will be updated.
+.It Fn bt_devfilter_pkt_set "filter" "type"
+Set packet
+.Fa type
+in
+.Fa filter .
+.It Fn bt_devfilter_pkt_clr "filter" "type"
+Clear packet
+.Fa type
+from
+.Fa filter .
+.It Fn bt_devfilter_pkt_tst "filter" "type"
+Test if
+.Fa filter
+has packet
+.Fa type
+set.
+.It Fn bt_devfilter_evt_set "filter" "event"
+Set
+.Fa event
+ID in
+.Fa filter .
+.It Fn bt_devfilter_evt_clr "filter" "event"
+Clear
+.Fa event
+ID from
+.Fa filter .
+.It Fn bt_devfilter_evt_tst "filter" "event"
+Test if
+.Fa filter
+has
+.Fa event
+ID set.
+.It Fn bt_devinquiry "name" "timeout" "max_rsp" "iip"
+Perform a Bluetooth Inquiry using the device
+.Fa name ,
+or the first available device if NULL is passed.
+The inquiry length will be
+.Fa timeout
+seconds, and the number of responses
+.Pq up to a limit of Fa max_rsp
+will be returned.
+A pointer to an array of
+.Ft bt_devinquiry
+structures, defined as:
+.Bd -literal -offset indent
+struct bt_devinquiry {
+        bdaddr_t        bdaddr;
+        uint8_t         pscan_rep_mode;
+        uint8_t         pscan_period_mode;
+        uint8_t         dev_class[3];
+        uint16_t        clock_offset;
+        int8_t          rssi;
+        uint8_t         data[240];
+};
+.Ed
+.Lp
+will be stored in the location given by
+.Fa iip
+and this should be released after use with
+.Xr free 3 .
+.El
+.Sh RETURN VALUES
+These Bluetooth device access routines return -1 on failure, and
+.Va errno
+will be set to indicate the error.
+.Sh ERRORS
+In addition to errors returned by the standard C library IO functions,
+the following errors may be indicated by device access routines.
+.Bl -tag -offset indent -width ".Bq Er ETIMEDOUT"
+.It Bq Er EINVAL
+A provided function argument was not valid.
+.It Bq Er EIO
+A device response was not properly understood.
+.It Bq Er ETIMEDOUT
+An operation exceeded the given time limit.
+.El
+.Sh SEE ALSO
+.Xr bluetooth 3
+.Sh HISTORY
+The Bluetooth device access API was created by
+.An Maksim Yevmenkin
+and first appeared in
+.Fx .
+This implementation written for
+.Nx
+by
+.An Iain Hibbert .
