@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/07/20 15:48:16 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2009/08/03 20:56:25 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ LIB=	ssh
 SRCS=	authfd.c authfile.c bufaux.c bufbn.c buffer.c canohost.c channels.c \
 	cipher.c cipher-3des1.c cipher-ctr.c cipher-ctr-mt.c cipher-bf1.c \
 	cleanup.c compat.c compress.c crc32.c deattack.c dns.c fatal.c \
-	hostfile.c log.c match.c md-sha256.c nchan.c packet.c readpass.c \
+	hostfile.c log.c match.c nchan.c packet.c readpass.c \
 	rsa.c strtonum.c ttymodes.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
 	ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
