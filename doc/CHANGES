@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1264 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1265 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -345,3 +345,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.0.7. [roy 20090728]
 	bind: Update to 9.6.1-P1.  [christos 20090728]
 	xen: dropped Xen 2 support. [cegger 20090728]
+	libbluetooth: add device access API bt_dev(3). [plunky 20090803]
