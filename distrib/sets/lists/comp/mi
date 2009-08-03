@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1288 2009/08/03 15:59:41 plunky Exp $
+#	$NetBSD: mi,v 1.1289 2009/08/03 19:08:48 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9161,6 +9161,7 @@
 ./usr/share/man/cat9/uao_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_reference.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ubc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_uiomove.0		comp-sys-catman		.cat
@@ -14525,6 +14526,7 @@
 ./usr/share/man/html9/uao_create.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_detach.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_reference.html	comp-sys-htmlman	html
+./usr/share/man/html9/ubc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_alloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_release.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_uiomove.html		comp-sys-htmlman	html
@@ -20104,6 +20106,7 @@
 ./usr/share/man/man9/uao_create.9		comp-sys-man		.man
 ./usr/share/man/man9/uao_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/uao_reference.9		comp-sys-man		.man
+./usr/share/man/man9/ubc.9			comp-sys-man		.man
 ./usr/share/man/man9/ubc_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_release.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_uiomove.9		comp-sys-man		.man

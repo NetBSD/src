@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.283 2009/06/06 18:48:10 hubertf Exp $
+#       $NetBSD: Makefile,v 1.284 2009/08/03 19:08:48 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -54,7 +54,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
-	usbdi.9 uvm.9 \
+	ubc.9 usbdi.9 uvm.9 \
 	vmem.9 vmem_alloc.9 vmem_create.9 vmem_destroy.9 vmem_free.9 \
 	vmem_xalloc.9 vmem_xfree.9 \
 	wdc.9 \
@@ -648,6 +648,7 @@ MLINKS+=tc.9 tc_intr_establish.9 \
 	tc.9 TC_PHYS_TO_UNCACHED.9
 MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
+MLINKS+=ubc.9 ubc_alloc.9 uvm.9 ubc_release.9 uvm.9 ubc_uiomove.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_unmap.9 \
 	uvm.9 uvm_map_pageable.9 \
@@ -666,9 +667,6 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_kernacc.9 uvm.9 uvm_vslock.9 \
 	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
-	uvm.9 ubc_alloc.9 \
-	uvm.9 ubc_release.9 \
-	uvm.9 ubc_uiomove.9 \
 	uvm.9 uvn_findpages.9 \
 	uvm.9 uvm_loan.9 uvm.9 uvm_unloan.9
 MLINKS+=vme.9 vme_probe.9 \
