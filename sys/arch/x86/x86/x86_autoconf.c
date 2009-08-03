@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.40 2009/05/04 12:48:26 cegger Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.41 2009/08/03 20:15:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.40 2009/05/04 12:48:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.41 2009/08/03 20:15:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ struct genfb_colormap_callback gfb_cb;
 struct disklist *x86_alldisks;
 int x86_ndisks;
 
+#if NPCI > 0
 static void
 x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 {
@@ -77,6 +78,7 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)g >> 2);
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)b >> 2);
 }
+#endif
 
 static void
 handle_wedges(device_t dv, int par)
@@ -502,7 +504,9 @@ cpu_rootconf(void)
 void
 device_register(device_t dev, void *aux)
 {
+#if NPCI > 0
 	static bool found_console = false;
+#endif
 
 	/*
 	 * Handle network interfaces here, the attachment information is
