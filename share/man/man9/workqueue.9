@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue.9,v 1.6 2009/08/03 23:03:05 rmind Exp $
+.\"	$NetBSD: workqueue.9,v 1.7 2009/08/03 23:29:19 rmind Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -144,4 +144,7 @@ subsystem is implemented within the file
 .Pa sys/kern/subr_workqueue.c .
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
-.Xr intro 9
+.Xr callout 9 ,
+.Xr condvar 9 ,
+.Xr kthread 9 ,
+.Xr softint 9
