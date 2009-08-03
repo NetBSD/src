@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.21 2009/04/25 15:46:19 christos Exp $
+# $NetBSD: named,v 1.22 2009/08/03 17:45:48 perry Exp $
 #
 
 # PROVIDE: named
-# REQUIRE: SERVERS
+# REQUIRE: NETWORKING mountcritremote syslogd
 # BEFORE:  DAEMON
 # KEYWORD: chrootdir
 
