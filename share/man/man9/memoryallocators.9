@@ -1,4 +1,4 @@
-.\" $NetBSD: memoryallocators.9,v 1.3 2007/01/09 12:49:36 elad Exp $
+.\" $NetBSD: memoryallocators.9,v 1.4 2009/08/03 20:02:55 rmind Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 7, 2007
+.Dd August 3, 2009
 .Dt MEMORYALLOCATORS 9
 .Os
 .Sh NAME
@@ -37,30 +37,10 @@ The
 kernel provides several memory allocators, each with different characteristics
 and purpose.
 This document summarizes the main differences between them.
-.Ss The Malloc Allocator
-The
-.Xr malloc 9
-allocator can be used for variable-sized allocations in the kernel address
-space.
-It is interrupt-safe, requires no setup (see below), and is considered to be
-stable (given the number of years it has been in the kernel).
-.Pp
-This interface also allows associating a
-.Dq type
-with an allocation to indicate what subsystem is using the memory allocated,
-thus providing statistics as to the memory usage of different kernel subsystems.
-To define a type, one should use the
-.Dv MALLOC_DEFINE
-macro, otherwise, one of the built-in types, like
-.Dv M_TEMP
-can be used.
-.Pp
-See
-.Xr malloc 9
-for more details.
 .Ss The Kmem Allocator
 The kmem allocator is modelled after an interface of similar name implemented in
-Solaris, and is under active development.
+Solaris.
+This is main general purpose allocator in the kernel.
 .Pp
 It is implemented on-top of the
 .Xr vmem 9
@@ -68,15 +48,10 @@ resource allocator (beyond the scope of this document), meaning it will be using
 .Xr pool_cache 9
 internally to speed-up common (small) sized allocations.
 .Pp
-Like
-.Xr malloc 9 ,
-it requires no setup, but can't be used yet from interrupt context.
+It requires no setup, but cannot be used from interrupt context.
 .Pp
 See
-.Xr kmem_alloc 9 ,
-.Xr kmem_zalloc 9 ,
-and
-.Xr kmem_free 9
+.Xr kmem 9
 for more details.
 .Ss The Pool Allocator
 The
@@ -118,12 +93,8 @@ See
 .Xr uvm 9
 for more details.
 .Sh SEE ALSO
-.Xr free 9 ,
 .Xr intro 9 ,
-.Xr kmem_alloc 9 ,
-.Xr kmem_free 9 ,
-.Xr kmem_zalloc 9 ,
-.Xr malloc 9 ,
+.Xr kmem 9 ,
 .Xr pool 9 ,
 .Xr pool_cache 9 ,
 .Xr uvm 9 ,
