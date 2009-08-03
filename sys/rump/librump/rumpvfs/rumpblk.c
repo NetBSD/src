@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.24 2009/08/03 14:23:30 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.25 2009/08/03 16:22:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.24 2009/08/03 14:23:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.25 2009/08/03 16:22:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,7 +89,7 @@ struct blkwin {
 static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
-	int rblk_refcnt;
+	int rblk_opencnt;
 #ifdef HAS_ODIRECT
 	int rblk_dfd;
 #endif
@@ -376,7 +376,8 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	int ft, dummy;
 	int error, fd;
 
-	KASSERT(rblk->rblk_fd == -1); /* XXX */
+	if (rblk->rblk_fd != -1)
+		return 0; /* XXX: refcount, open mode */
 	fd = rumpuser_open(rblk->rblk_path, OFLAGS(flag), &error);
 	if (error)
 		return error;
@@ -492,18 +493,31 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	return 0;
 }
 
+static int
+do_physio(dev_t dev, struct uio *uio, int which)
+{
+	void (*strat)(struct buf *);
+
+	if (blkfail)
+		strat = rumpblk_strategy_fail;
+	else
+		strat = rumpblk_strategy;
+
+	return physio(strat, NULL, dev, which, minphys, uio);
+}
+
 int
 rumpblk_read(dev_t dev, struct uio *uio, int flags)
 {
 
-	panic("%s: unimplemented", __func__);
+	return do_physio(dev, uio, B_READ);
 }
 
 int
 rumpblk_write(dev_t dev, struct uio *uio, int flags)
 {
 
-	panic("%s: unimplemented", __func__);
+	return do_physio(dev, uio, B_WRITE);
 }
 
 static void
