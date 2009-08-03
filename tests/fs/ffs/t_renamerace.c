@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.6 2009/05/03 12:10:00 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.7 2009/08/03 14:25:24 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -61,6 +61,8 @@ w2(void *arg)
 #define IMAGENAME "/tmp/ffsatf.img"
 static char image[MAXPATHLEN];
 
+#define FAKEBLK "/dev/sp00ka"
+
 ATF_TC_BODY(renamerace, tc)
 {
 	struct ufs_args args;
@@ -83,12 +85,12 @@ ATF_TC_BODY(renamerace, tc)
 		atf_tc_fail_errno("newfs failed");
 
 	memset(&args, 0, sizeof(args));
-	args.fspec = image;
+	args.fspec = __UNCONST(FAKEBLK);
 
 	rump_init();
 	if (rump_sys_mkdir("/mp", 0777) == -1)
 		atf_tc_fail_errno("cannot create mountpoint");
-	rump_fakeblk_register(image);
+	rump_etfs_register(FAKEBLK, image, RUMP_ETFS_BLK);
 	if (rump_sys_mount(MOUNT_FFS, "/mp", MNT_LOG, &args, sizeof(args))==-1)
 		atf_tc_fail_errno("rump_sys_mount failed");
 
