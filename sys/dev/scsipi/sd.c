@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.288 2009/06/21 14:06:49 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.289 2009/08/03 09:40:45 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.288 2009/06/21 14:06:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.289 2009/08/03 09:40:45 jnemeth Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -2082,11 +2082,11 @@ sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	if (sd->sc_periph->periph_flags & PERIPH_REMOVABLE) {
 		if (!sd_get_parms_page5(sd, dp, flags) ||
 		    !sd_get_parms_page4(sd, dp, flags))
-			return (SDGP_RESULT_OK);
+			goto setprops;
 	} else {
 		if (!sd_get_parms_page4(sd, dp, flags) ||
 		    !sd_get_parms_page5(sd, dp, flags))
-			return (SDGP_RESULT_OK);
+			goto setprops;
 	}
 
 page0:
@@ -2106,6 +2106,7 @@ page0:
 	}
 	dp->rot_rate = 3600;
 
+setprops:
 	sd_set_properties(sd);
 
 	return (SDGP_RESULT_OK);
