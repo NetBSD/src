@@ -1,4 +1,4 @@
-.\" $NetBSD: bt_dev.3,v 1.1 2009/08/03 15:59:42 plunky Exp $
+.\" $NetBSD: bt_dev.3,v 1.2 2009/08/03 22:13:47 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,8 +28,8 @@
 .Dt BT_DEV 3
 .Os
 .Sh NAME
-.Nm bt_devaddr,
-.Nm bt_devname,
+.Nm bt_devaddr ,
+.Nm bt_devname ,
 .Nm bt_devenum ,
 .Nm bt_devinfo ,
 .Nm bt_devopen ,
@@ -317,7 +317,9 @@ ID set.
 .It Fn bt_devinquiry "name" "timeout" "max_rsp" "iip"
 Perform a Bluetooth Inquiry using the device
 .Fa name ,
-or the first available device if NULL is passed.
+or the first available device if
+.Dv NULL
+is passed.
 The inquiry length will be
 .Fa timeout
 seconds, and the number of responses
@@ -344,7 +346,7 @@ and this should be released after use with
 .Xr free 3 .
 .El
 .Sh RETURN VALUES
-These Bluetooth device access routines return -1 on failure, and
+These Bluetooth device access routines return \-1 on failure, and
 .Va errno
 will be set to indicate the error.
 .Sh ERRORS
