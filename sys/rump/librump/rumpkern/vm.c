@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.59 2009/08/03 17:10:51 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.60 2009/08/03 23:32:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.59 2009/08/03 17:10:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.60 2009/08/03 23:32:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -251,8 +251,6 @@ uao_detach(struct uvm_object *uobj)
  * Misc routines
  */
 
-static kmutex_t cachepgmtx;
-
 void
 rumpvm_init(void)
 {
@@ -263,7 +261,6 @@ rumpvm_init(void)
 
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
-	mutex_init(&cachepgmtx, MUTEX_DEFAULT, 0);
 
 	kernel_map->pmap = pmap_kernel();
 	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
