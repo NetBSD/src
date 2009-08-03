@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1289 2009/08/03 19:08:48 rmind Exp $
+#	$NetBSD: mi,v 1.1290 2009/08/03 19:43:58 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8700,6 +8700,7 @@
 ./usr/share/man/cat9/kfilter_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/killproc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kmem.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
@@ -14093,6 +14094,7 @@
 ./usr/share/man/html9/kfilter_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kfilter_unregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/killproc.html		comp-sys-htmlman	html
+./usr/share/man/html9/kmem.html			comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_alloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_zalloc.html		comp-sys-htmlman	html
@@ -19645,6 +19647,7 @@
 ./usr/share/man/man9/kfilter_register.9		comp-sys-man		.man
 ./usr/share/man/man9/kfilter_unregister.9	comp-sys-man		.man
 ./usr/share/man/man9/killproc.9			comp-sys-man		.man
+./usr/share/man/man9/kmem.9			comp-sys-man		.man
 ./usr/share/man/man9/kmem_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
