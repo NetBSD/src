@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.8 2009/08/03 12:43:46 jmcneill Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.9 2009/08/03 16:33:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.8 2009/08/03 12:43:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.9 2009/08/03 16:33:55 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,6 +134,7 @@ asus_attach(device_t parent, device_t self, void *opaque)
 	aprint_normal("\n");
 
 	asus_init(self);
+	asus_sysctl_setup(sc);
 
 	sc->sc_smpsw_valid = true;
 	sc->sc_smpsw[ASUS_PSW_DISPLAY_CYCLE].smpsw_name =
@@ -263,8 +264,6 @@ asus_init(device_t self)
 		return;
 
 	sc->sc_cfvnum = (cfv >> 8) & 0xff;
-
-	asus_sysctl_setup(sc);
 }
 
 static bool
