@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1287 2009/07/21 14:55:32 joerg Exp $
+#	$NetBSD: mi,v 1.1288 2009/08/03 15:59:41 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4908,8 +4908,23 @@
 ./usr/share/man/cat3/bswap64.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bt_aton.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bt_closeconfig.0		comp-obsolete		obsolete
+./usr/share/man/cat3/bt_dev.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bt_devaddr.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devenum.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devfilter.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devfilter_pkt_clr.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_devfilter_pkt_set.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_devfilter_pkt_tst.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_devfilter_evt_clr.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_devfilter_evt_set.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_devfilter_evt_tst.0	comp-c-catman		.cat
+./usr/share/man/cat3/bt_devinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_devname.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devopen.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devrecv.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devreq.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devsend.0		comp-c-catman		.cat
+./usr/share/man/cat3/bt_devinquiry.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_eachconfig.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/bt_endhostent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bt_endprotoent.0		comp-c-catman		.cat
@@ -10463,8 +10478,23 @@
 ./usr/share/man/html3/bswap32.html		comp-c-htmlman		html
 ./usr/share/man/html3/bswap64.html		comp-c-htmlman		html
 ./usr/share/man/html3/bt_aton.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_dev.html		comp-c-htmlman		html
 ./usr/share/man/html3/bt_devaddr.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devenum.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devfilter.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devfilter_pkt_clr.html	comp-c-htmlman		html
+./usr/share/man/html3/bt_devfilter_pkt_set.html	comp-c-htmlman		html
+./usr/share/man/html3/bt_devfilter_pkt_tst.html	comp-c-htmlman		html
+./usr/share/man/html3/bt_devfilter_evt_clr.html	comp-c-htmlman		html
+./usr/share/man/html3/bt_devfilter_evt_set.html	comp-c-htmlman		html
+./usr/share/man/html3/bt_devfilter_evt_tst.html	comp-c-htmlman		html
+./usr/share/man/html3/bt_devinfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/bt_devname.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devopen.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devrecv.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devreq.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devsend.html		comp-c-htmlman		html
+./usr/share/man/html3/bt_devinquiry.html	comp-c-htmlman		html
 ./usr/share/man/html3/bt_endhostent.html	comp-c-htmlman		html
 ./usr/share/man/html3/bt_endprotoent.html	comp-c-htmlman		html
 ./usr/share/man/html3/bt_gethostbyaddr.html	comp-c-htmlman		html
@@ -15826,8 +15856,23 @@
 ./usr/share/man/man3/bswap64.3			comp-c-man		.man
 ./usr/share/man/man3/bt_aton.3			comp-c-man		.man
 ./usr/share/man/man3/bt_closeconfig.3		comp-obsolete		obsolete
+./usr/share/man/man3/bt_dev.3			comp-c-man		.man
 ./usr/share/man/man3/bt_devaddr.3		comp-c-man		.man
+./usr/share/man/man3/bt_devenum.3		comp-c-man		.man
+./usr/share/man/man3/bt_devfilter.3		comp-c-man		.man
+./usr/share/man/man3/bt_devfilter_pkt_clr.3	comp-c-man		.man
+./usr/share/man/man3/bt_devfilter_pkt_set.3	comp-c-man		.man
+./usr/share/man/man3/bt_devfilter_pkt_tst.3	comp-c-man		.man
+./usr/share/man/man3/bt_devfilter_evt_clr.3	comp-c-man		.man
+./usr/share/man/man3/bt_devfilter_evt_set.3	comp-c-man		.man
+./usr/share/man/man3/bt_devfilter_evt_tst.3	comp-c-man		.man
+./usr/share/man/man3/bt_devinfo.3		comp-c-man		.man
 ./usr/share/man/man3/bt_devname.3		comp-c-man		.man
+./usr/share/man/man3/bt_devopen.3		comp-c-man		.man
+./usr/share/man/man3/bt_devrecv.3		comp-c-man		.man
+./usr/share/man/man3/bt_devreq.3		comp-c-man		.man
+./usr/share/man/man3/bt_devsend.3		comp-c-man		.man
+./usr/share/man/man3/bt_devinquiry.3		comp-c-man		.man
 ./usr/share/man/man3/bt_eachconfig.3		comp-obsolete		obsolete
 ./usr/share/man/man3/bt_endhostent.3		comp-c-man		.man
 ./usr/share/man/man3/bt_endprotoent.3		comp-c-man		.man
