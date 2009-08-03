@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.53 2009/07/06 12:36:31 joerg Exp $
+#	$NetBSD: files.acpi,v 1.54 2009/08/03 10:30:29 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -114,7 +114,7 @@ attach	aiboost at acpinodebus
 file	dev/acpi/aiboost.c		aiboost
 
 # ASUS hotkey device
-device	asus: sysmon_power
+device	asus: sysmon_envsys, sysmon_power
 attach	asus at acpinodebus
 file	dev/acpi/asus_acpi.c		asus
 
