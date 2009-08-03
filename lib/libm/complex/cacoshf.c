@@ -1,4 +1,4 @@
-/* $NetBSD: cacoshf.c,v 1.1 2007/08/20 16:01:31 drochner Exp $ */
+/* $NetBSD: cacoshf.c,v 1.2 2009/08/03 19:41:32 drochner Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@ cacoshf(float complex z)
 {
 	float complex w;
 
+#if 0 /* does not give the principal value */
 	w = I * cacosf(z);
+#else
+	w = clogf(z + csqrtf(z + 1) * csqrtf(z - 1));
+#endif
 	return w;
 }
