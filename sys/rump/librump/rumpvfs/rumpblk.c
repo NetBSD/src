@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.23 2009/04/30 17:43:07 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.24 2009/08/03 14:23:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.23 2009/04/30 17:43:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.24 2009/08/03 14:23:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,6 +89,7 @@ struct blkwin {
 static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
+	int rblk_refcnt;
 #ifdef HAS_ODIRECT
 	int rblk_dfd;
 #endif
@@ -145,6 +146,7 @@ static const struct cdevsw rumpblk_cdevsw = {
 #define BLKFAIL_MAX 10000
 static int blkfail;
 static unsigned randstate;
+static kmutex_t rumpblk_lock;
 
 static struct blkwin *
 getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
@@ -253,6 +255,8 @@ rumpblk_init(void)
 	unsigned tmp;
 	int error, i;
 
+	mutex_init(&rumpblk_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	if (rumpuser_getenv("RUMP_BLKFAIL", buf, sizeof(buf), &error) == 0) {
 		blkfail = strtoul(buf, NULL, 10);
 		/* fail everything */
@@ -321,27 +325,47 @@ rumpblk_init(void)
 	}
 }
 
+/* XXX: no deregister */
 int
-rumpblk_register(const char *path)
+rumpblk_register(const char *path, devminor_t *dmin)
 {
+	uint64_t flen;
 	size_t len;
-	int i;
+	int ftype, error, i;
 
-	for (i = 0; i < RUMPBLK_SIZE; i++)
-		if (minors[i].rblk_path && strcmp(minors[i].rblk_path, path)==0)
-			return i;
+	if (rumpuser_getfileinfo(path, &flen, &ftype, &error))
+		return error;
+	/* verify host file is of supported type */
+	if (!(ftype == RUMPUSER_FT_REG
+	   || ftype == RUMPUSER_FT_BLK
+	   || ftype == RUMPUSER_FT_CHR))
+		return EINVAL;
+
+	mutex_enter(&rumpblk_lock);
+	for (i = 0; i < RUMPBLK_SIZE; i++) {
+		if (minors[i].rblk_path&&strcmp(minors[i].rblk_path, path)==0) {
+			mutex_exit(&rumpblk_lock);
+			*dmin = i;
+			return 0;
+		}
+	}
 
 	for (i = 0; i < RUMPBLK_SIZE; i++)
 		if (minors[i].rblk_path == NULL)
 			break;
-	if (i == RUMPBLK_SIZE)
-		return -1;
+	if (i == RUMPBLK_SIZE) {
+		mutex_exit(&rumpblk_lock);
+		return EBUSY;
+	}
 
 	len = strlen(path);
 	minors[i].rblk_path = malloc(len + 1, M_TEMP, M_WAITOK);
 	strcpy(minors[i].rblk_path, path);
 	minors[i].rblk_fd = -1;
-	return i;
+	mutex_exit(&rumpblk_lock);
+
+	*dmin = i;
+	return 0;
 }
 
 int
@@ -352,7 +376,7 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	int ft, dummy;
 	int error, fd;
 
-	KASSERT(rblk->rblk_fd == -1);
+	KASSERT(rblk->rblk_fd == -1); /* XXX */
 	fd = rumpuser_open(rblk->rblk_path, OFLAGS(flag), &error);
 	if (error)
 		return error;
