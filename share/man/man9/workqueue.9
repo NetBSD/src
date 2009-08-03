@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue.9,v 1.5 2007/07/14 10:52:49 ad Exp $
+.\"	$NetBSD: workqueue.9,v 1.6 2009/08/03 23:03:05 rmind Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd September 15, 2006
+.Dd August 3, 2009
 .Dt WORKQUEUE 9
 .Os
 .\" ------------------------------------------------------------
@@ -33,11 +33,100 @@
 .Nm workqueue
 .Nd simple do-it-in-thread-context framework
 .\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In sys/workqueue.h
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft int
+.Fn workqueue_create \
+"struct workqueue **wqp" "const char *name" \
+"void (*func)(struct work *, void *)" "void *arg" \
+"pri_t prio" "int ipl" "int flags"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft void
+.Fn workqueue_enqueue \
+"struct workqueue *wq" "struct work *wk" "struct cpu_info *ci"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft void
+.Fn workqueue_destroy \
+"struct workqueue *wq"
+.\" ------------------------------------------------------------
 .Sh DESCRIPTION
 The
 .Nm
 utility routines are provided to defer work which is needed to be
 processed in a thread context.
+.Pp
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Fn workqueue_create
+creates a workqueue.
+It takes the following arguments:
+.Bl -tag -width flags
+.It Fa wqp
+Specify where to store the created workqueue.
+.It Fa name
+The name of the workqueue.
+.It Fa func
+The function to be called for each
+.Fa work .
+.It Fa arg
+An argument to be passed as a second argument of
+.Fa func .
+.It Fa prio
+The process priority to be used when sleeping to wait requests.
+.It Fa ipl
+The highest IPL at which this workqueue is used.
+.It Fa flags
+The value of 0 indicates a standard create operation, however the following
+flags may be bitwise ORed together:
+.Bl -tag -width WQ_MPSAFE
+.It Dv WQ_MPSAFE
+Specifies that the workqueue is multiprocessor safe and does its own locking,
+otherwise the kernel lock will be held while work will be processed.
+.It Dv WQ_PERCPU
+Specifies that the workqueue should have a separate queue for each CPU,
+thus the work could be enqueued on concrete CPUs.
+.El
+.El
+.Pp
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Fn workqueue_enqueue
+enqueues the work
+.Fa wk
+into the workqueue
+.Fa wq .
+.Pp
+If the
+.Dv WQ_PERCPU
+flag was set on workqueue creation, the
+.Fa ci
+argument may be used to specify the CPU on which the work should
+be enqueued.
+Also it may be
+.Dv NULL ,
+then work will be enqueued on the current CPU.
+If
+.Dv WQ_PERCPU
+flag was not set,
+.Fa ci
+must be
+.Dv NULL .
+.Pp
+The enqueued work will be processed in a thread context.
+A work must not be enqueued again until the callback is called by
+the
+.Xr workqueue 9
+framework.
+.Pp
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Fn workqueue_destroy
+destroys a workqueue and frees associated resources.
+The caller should ensure that the workqueue has no work enqueued beforehand.
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+.Fn workqueue_create
+returns 0 on success.
+Otherwise, it returns an
+.Xr errno 2 .
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
 This section describes places within the
@@ -55,7 +144,4 @@ subsystem is implemented within the file
 .Pa sys/kern/subr_workqueue.c .
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
-.Xr intro 9 ,
-.Xr workqueue_create 9 ,
-.Xr workqueue_destroy 9 ,
-.Xr workqueue_enqueue 9
+.Xr intro 9

@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.286 2009/08/03 22:16:01 wiz Exp $
+#       $NetBSD: Makefile,v 1.287 2009/08/03 23:03:05 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -56,9 +56,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	ubc.9 usbdi.9 uvm.9 \
 	vmem.9 vmem_alloc.9 vmem_create.9 vmem_destroy.9 vmem_free.9 \
 	vmem_xalloc.9 vmem_xfree.9 \
-	wdc.9 \
-	workqueue.9 workqueue_create.9 workqueue_destroy.9 \
-	workqueue_enqueue.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
+	wdc.9 workqueue.9 \
+	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
 
 MAN+=	dmover.9
 MLINKS+=dmover.9 dmover_backend_register.9 \
@@ -810,6 +809,9 @@ MLINKS+=vnsubr.9 vn_bwrite.9 \
 	vnsubr.9 vn_stat.9 \
 	vnsubr.9 vn_open.9 \
 	vnsubr.9 vn_writechk.9
+MLINKS+=workqueue.9 workqueue_create.9 \
+	workqueue.9 workqueue_enqueue.9 \
+	workqueue.9 workqueue_destroy.9
 MLINKS+=wsdisplay.9 wsdisplay_switchtoconsole.9 \
 	wsdisplay.9 wsdisplay_cnattach.9 \
 	wsdisplay.9 wsdisplaydevprint.9 \
