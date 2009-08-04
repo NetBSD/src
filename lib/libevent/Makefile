@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2008/05/16 20:24:57 peter Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2009/08/04 18:41:57 snj Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 NOLINT=		# Until someone explains to me how to avoid lint stupidity
 USE_SHLIBDIR=	yes
 
-CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}
+CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR} -fno-strict-aliasing
 .include <bsd.own.mk>
 
 LIB=	event
