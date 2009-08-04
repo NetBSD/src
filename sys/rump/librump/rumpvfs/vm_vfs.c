@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.6 2009/08/04 19:54:16 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.7 2009/08/04 20:01:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.6 2009/08/04 19:54:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.7 2009/08/04 20:01:06 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -89,6 +89,7 @@ uvm_aio_biodone(struct buf *bp)
  * release resources held during async io.  this is almost the
  * same as uvm_aio_aiodone() from uvm_pager.c and only lacks the
  * call to uvm_aio_aiodone_pages(): unbusies pages directly here.
+ */
 void
 uvm_aio_aiodone(struct buf *bp)
 {
