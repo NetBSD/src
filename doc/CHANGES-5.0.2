@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.1 2009/08/03 00:32:26 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.2 2009/08/04 20:33:01 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -8,4 +8,28 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.0.1_PATCH.
 	[snj]
+
+lib/libevent/Makefile				1.6 via patch
+
+	Problems have been observed with GCC 4 and strict-aliasing in
+	the libevent code.  Add -fno-strict-aliasing to work around this.
+	[tls, ticket #876]
+
+doc/CHANGES					patch
+doc/3RDPARTY					patch
+external/bsd/dhcpcd/dist/client.c		patch
+external/bsd/dhcpcd/dist/config.h		patch
+external/bsd/dhcpcd/dist/configure.c		patch
+external/bsd/dhcpcd/dist/dhcp.c			patch
+external/bsd/dhcpcd/dist/dhcp.h			patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in	patch
+external/bsd/dhcpcd/dist/dhcpcd.8.in		patch
+external/bsd/dhcpcd/dist/dhcpcd.c		patch
+external/bsd/dhcpcd/dist/dhcpcd.conf.5.in	patch
+external/bsd/dhcpcd/dist/net.c			patch
+external/bsd/dhcpcd/dist/net.h			patch
+external/bsd/dhcpcd/dist/signals.c		patch
+
+	Update dhcpcd to 4.0.14.
+	[roy, ticket #880]
 
