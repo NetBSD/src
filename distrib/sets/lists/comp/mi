@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.10 2009/07/14 19:48:03 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.11 2009/08/04 18:32:08 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -606,6 +606,7 @@
 ./usr/include/eti.h				comp-c-include
 ./usr/include/evdns.h				comp-c-include
 ./usr/include/event.h				comp-c-include
+./usr/include/event-config.h			comp-c-include
 ./usr/include/evhttp.h				comp-c-include
 ./usr/include/evrpc.h				comp-c-include
 ./usr/include/evutil.h				comp-c-include
