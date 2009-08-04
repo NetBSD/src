@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.54 2006/12/19 02:02:03 uwe Exp $	*/
+/*	$NetBSD: termcap.c,v 1.54.18.1 2009/08/04 20:04:39 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.54 2006/12/19 02:02:03 uwe Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.54.18.1 2009/08/04 20:04:39 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,29 +281,32 @@ tgetent(char *bp, const char *name)
 
 	if (i == 1) {
 		/*
+		 * if the termcap entry is larger than 1023 bytes,
 		 * stash the full buffer pointer as the ZZ capability
 		 * in the termcap buffer passed.
 		 */
-                plen = asprintf(&ptrbuf, ":ZZ=%p", fbuf->info);
-		(void)strlcpy(bp, fbuf->info, 1024);
-                elen = strlen(bp);
-		/*
-		 * backup over the entry if the addition of the full
-		 * buffer pointer will overflow the buffer passed.  We
-		 * want to truncate the termcap entry on a capability
-		 * boundary.
-		 */
-                if ((elen + plen) > 1023) {
-			bp[1023 - plen] = '\0';
-			for (c = (elen - plen); c > 0; c--) {
-				if (bp[c] == ':') {
-					bp[c] = '\0';
-					break;
+		if (strlcpy(bp, fbuf->info, 1024) >= 1024) {
+			plen = asprintf(&ptrbuf, ":ZZ=%p", fbuf->info);
+			(void)strlcpy(bp, fbuf->info, 1024);
+			elen = strlen(bp);
+			/*
+			 * backup over the entry if the addition of the full
+			 * buffer pointer will overflow the buffer passed.  We
+			 * want to truncate the termcap entry on a capability
+			 * boundary.
+			 */
+			if ((elen + plen) > 1023) {
+				bp[1023 - plen] = '\0';
+				for (c = (elen - plen); c > 0; c--) {
+					if (bp[c] == ':') {
+						bp[c] = '\0';
+						break;
+					}
 				}
-			}
-		}
 
-		strcat(bp, ptrbuf);
+			}
+			strcat(bp, ptrbuf);
+		}
                 tbuf = bp;
 	}
 
