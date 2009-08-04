@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.11 2009/07/27 18:10:54 dyoung Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.12 2009/08/04 09:26:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.11 2009/07/27 18:10:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.12 2009/08/04 09:26:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ struct gem_sbus_softc {
 int	gemmatch_sbus(device_t, cfdata_t, void *);
 void	gemattach_sbus(device_t, device_t, void *);
 
-CFATTACH_DECL(gem_sbus, sizeof(struct gem_sbus_softc),
-    gemmatch_sbus, gemattach_sbus, NULL, NULL);
+CFATTACH_DECL3_NEW(gem_sbus, sizeof(struct gem_sbus_softc),
+    gemmatch_sbus, gemattach_sbus, NULL, NULL, NULL, NULL, 0);
 
 int
 gemmatch_sbus(device_t parent, cfdata_t cf, void *aux)
