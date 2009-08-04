@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.126 2009/05/12 09:29:46 cegger Exp $	*/
+/*	$NetBSD: acpi.c,v 1.127 2009/08/04 14:20:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.126 2009/05/12 09:29:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.127 2009/08/04 14:20:40 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.126 2009/05/12 09:29:46 cegger Exp $");
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
 #include <dev/acpi/acpi_timer.h>
+#include <dev/acpi/acpi_wakedev.h>
 #ifdef ACPIVERBOSE
 #include <dev/acpi/acpidevs_data.h>
 #endif
@@ -695,6 +696,8 @@ acpi_build_tree(struct acpi_softc *sc)
 	}
 
 	acpi_rescan1(sc, NULL, NULL);
+
+	acpi_wakedev_scan(sc);
 }
 
 static int
@@ -1404,6 +1407,8 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			    "ACPI S%d not available on this platform\n", state);
 			break;
 		}
+
+		acpi_wakedev_commit(sc);
 
 		if (state != ACPI_STATE_S1 && !pmf_system_suspend(PMF_F_NONE)) {
 			aprint_error_dev(sc->sc_dev, "aborting suspend\n");
