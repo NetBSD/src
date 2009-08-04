@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue.9,v 1.7 2009/08/03 23:29:19 rmind Exp $
+.\"	$NetBSD: workqueue.9,v 1.8 2009/08/04 18:59:05 wiz Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -114,7 +114,7 @@ must be
 The enqueued work will be processed in a thread context.
 A work must not be enqueued again until the callback is called by
 the
-.Xr workqueue 9
+.Nm
 framework.
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
