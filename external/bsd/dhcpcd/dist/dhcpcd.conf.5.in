@@ -24,6 +24,7 @@
 .\"
 .Dd November 18, 2008
 .Dt DHCPCD.CONF 5 SMM
+.Os
 .Sh NAME
 .Nm dhcpcd.conf
 .Nd dhcpcd configuration file 

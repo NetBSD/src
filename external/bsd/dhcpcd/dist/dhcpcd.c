@@ -619,7 +619,7 @@ main(int argc, char **argv)
 	closefrom(3);
 	/* Saves calling fflush(stream) in the logger */
 	setlinebuf(stdout);
-	openlog(PACKAGE, LOG_PID, LOG_LOCAL0);
+	openlog(PACKAGE, LOG_PID, LOG_DAEMON);
 	setlogprefix(PACKAGE ": ");
 
 	options = xzalloc(sizeof(*options));

@@ -24,6 +24,7 @@
 .\"
 .Dd November 18, 2008
 .Dt DHCPCD 8 SMM
+.Os
 .Sh NAME
 .Nm dhcpcd
 .Nd an RFC 2131 compliant DHCP client
@@ -335,7 +336,7 @@ sends a default
 .Ar clientid
 of the hardware family and the hardware address.
 .El
-.Ss Restriciting behaviour
+.Ss Restricting behaviour
 .Nm
 will try to do as much as it can by default.
 However, there are sometimes situations where you don't want the things to be

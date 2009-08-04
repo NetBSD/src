@@ -160,7 +160,7 @@ struct dhcp_lease {
 int make_option_mask(uint8_t *, char **, int);
 void print_options(void);
 char *get_option_string(const struct dhcp_message *, uint8_t);
-int get_option_addr(uint32_t *, const struct dhcp_message *, uint8_t);
+int get_option_addr(struct in_addr *, const struct dhcp_message *, uint8_t);
 int get_option_uint32(uint32_t *, const struct dhcp_message *, uint8_t);
 int get_option_uint16(uint16_t *, const struct dhcp_message *, uint8_t);
 int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
