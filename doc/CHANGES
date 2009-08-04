@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1266 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1267 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -346,3 +346,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bind: Update to 9.6.1-P1.  [christos 20090728]
 	xen: dropped Xen 2 support. [cegger 20090728]
 	libbluetooth: add device access API bt_dev(3). [plunky 20090803]
+	acpi(4): It is now possible to configure devices other than the lid
+		switch and sleep/power buttons as a method of waking the
+		machine from sleep. Any ACPI device node with a _PRW method
+		is now a candidate, and the device nodes are listed in the
+		hw.wake namespace. By default, the following device node
+		types are enabled as wakeup devices if the firmware supports
+		it: lid switch, sleep/power button, PC keyboard controller.
