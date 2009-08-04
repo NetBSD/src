@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.1 2009/08/04 14:20:40 jmcneill Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.2 2009/08/04 17:06:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.1 2009/08/04 14:20:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.2 2009/08/04 17:06:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.1 2009/08/04 14:20:40 jmcneill Ex
 struct acpi_wakedev;
 
 static TAILQ_HEAD(, acpi_wakedev) acpi_wakedevlist =
-    TAILQ_HEAD_INITIALIZER(acpi_wakedevlist);;
+    TAILQ_HEAD_INITIALIZER(acpi_wakedevlist);
 static int acpi_wakedev_node = -1;
 
 struct acpi_wakedev {
