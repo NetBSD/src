@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.21 2009/08/03 14:23:30 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.22 2009/08/04 12:40:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.21 2009/08/03 14:23:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.22 2009/08/04 12:40:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -533,6 +533,8 @@ rump_vop_spec(void *v)
 	switch (ap->a_desc->vdesc_offset) {
 	case VOP_ACCESS_DESCOFFSET:
 	case VOP_GETATTR_DESCOFFSET:
+	case VOP_LOCK_DESCOFFSET:
+	case VOP_UNLOCK_DESCOFFSET:
 		opvec = rump_vnodeop_p;
 		break;
 	default:
