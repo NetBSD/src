@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.152.4.3 2009/08/04 19:46:20 snj Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.152.4.4 2009/08/04 19:57:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.152.4.3 2009/08/04 19:46:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.152.4.4 2009/08/04 19:57:24 snj Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2559,6 +2559,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
 	}
 
+	/* set phyflags before mii_attach() */
+	dict = device_properties(self);
+	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_flags);
+
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
@@ -2647,9 +2651,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
-
-	dict = device_properties(self);
-	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_flags);
 }
 
 static void
