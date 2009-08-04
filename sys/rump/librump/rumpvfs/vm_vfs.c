@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.5 2009/03/18 10:22:45 cegger Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.6 2009/08/04 19:54:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.5 2009/03/18 10:22:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.6 2009/08/04 19:54:16 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -85,10 +85,35 @@ uvm_aio_biodone(struct buf *bp)
 	uvm_aio_aiodone(bp);
 }
 
+/*
+ * release resources held during async io.  this is almost the
+ * same as uvm_aio_aiodone() from uvm_pager.c and only lacks the
+ * call to uvm_aio_aiodone_pages(): unbusies pages directly here.
 void
 uvm_aio_aiodone(struct buf *bp)
 {
+	int i, npages = bp->b_bufsize >> PAGE_SHIFT;
+	struct vm_page **pgs;
+	vaddr_t va;
 
+	pgs = kmem_alloc(npages * sizeof(*pgs), KM_SLEEP);
+	for (i = 0; i < npages; i++) {
+		va = (vaddr_t)bp->b_data + (i << PAGE_SHIFT);
+		pgs[i] = uvm_pageratop(va);
+	}
+
+	uvm_pagermapout((vaddr_t)bp->b_data, npages);
+	uvm_page_unbusy(pgs, npages);
+
+	if (BUF_ISWRITE(bp) && (bp->b_cflags & BC_AGE) != 0) {
+		mutex_enter(bp->b_objlock);
+		vwakeup(bp);
+		mutex_exit(bp->b_objlock);
+	}
+
+	putiobuf(bp);
+
+	kmem_free(pgs, npages * sizeof(*pgs));
 }
 
 struct uvm_ractx *
@@ -184,15 +209,21 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	struct vm_page **pgs;
 	int npages = len2npages(uio->uio_offset, todo);
 	size_t pgalloc;
-	int i, rv;
+	int i, rv, pagerflags;
 
 	pgalloc = npages * sizeof(pgs);
 	pgs = kmem_zalloc(pgalloc, KM_SLEEP);
 
+	pagerflags = PGO_SYNCIO | PGO_NOBLOCKALLOC | PGO_NOTIMESTAMP;
+	if (flags & UBC_WRITE)
+		pagerflags |= PGO_PASTEOF;
+	if (flags & UBC_FAULTBUSY)
+		pagerflags |= PGO_OVERWRITE;
+
 	do {
 		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, uio->uio_offset, pgs, &npages,
-		    0, 0, 0, 0);
+		    0, VM_PROT_READ | VM_PROT_WRITE, 0, pagerflags);
 		if (rv)
 			goto out;
 
