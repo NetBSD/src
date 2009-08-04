@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.78.4.1 2009/05/03 23:09:12 snj Exp $
+$NetBSD: miidevs,v 1.78.4.2 2009/08/04 19:46:20 snj Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -142,19 +142,23 @@ model xxBROADCOM BCM4401	0x0036 BCM4401 10/100 media interface
 model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
 model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
 model BROADCOM BCM5411		0x0007 BCM5411 1000BASE-T media interface
+model BROADCOM BCM5462		0x000d BCM5462 1000BASE-T media interface
 model BROADCOM BCM5421		0x000e BCM5421 1000BASE-T media interface
 model BROADCOM BCM5752		0x0010 BCM5752 1000BASE-T media interface
 model BROADCOM BCM5701		0x0011 BCM5701 1000BASE-T media interface
 model BROADCOM BCM5703		0x0016 BCM5703 1000BASE-T media interface
+model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
 model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
 model BROADCOM BCM5705		0x001a BCM5705 1000BASE-T media interface
-model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
+model BROADCOM BCM54K2		0x002e BCM54K2 1000BASE-T media interface
 model BROADCOM BCM5714		0x0034 BCM5714 1000BASE-T media interface
 model BROADCOM BCM5780		0x0035 BCM5780 1000BASE-T media interface
 model BROADCOM BCM5708C		0x0036 BCM5708C 1000BASE-T media interface
+model BROADCOM2 BCM5906		0x0004 BCM5906 10/100baseTX media interface
 model BROADCOM2 BCM5755		0x000c BCM5755 1000BASE-T media interface
 model BROADCOM2 BCM5754		0x000e BCM5754/5787 1000BASE-T media interface
-model xxBROADCOM_ALT1 BCM5906		0x0004 BCM5906 10/100baseTX media interface
+model BROADCOM2 BCM5722		0x002d BCM5722 1000BASE-T media interface
+model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY
