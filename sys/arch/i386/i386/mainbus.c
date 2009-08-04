@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.85 2009/06/13 13:35:11 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.86 2009/08/04 06:55:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.85 2009/06/13 13:35:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.86 2009/08/04 06:55:26 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,9 @@ mainbus_childdetached(device_t self, device_t child)
 	if (sc->sc_pci == child)
 		sc->sc_pci = NULL;
 
+#if NPCI > 0
 	mp_pci_childdetached(self, child);
+#endif
 }
 
 /*
