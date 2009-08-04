@@ -1,4 +1,4 @@
-/*	$NetBSD: evdns.h,v 1.1 2008/05/16 20:24:57 peter Exp $	*/
+/*	$NetBSD: evdns.h,v 1.1.8.1 2009/08/04 18:32:08 snj Exp $	*/
 /*
  * Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -346,7 +346,7 @@ struct in6_addr;
   @return 0 if successful, or -1 if an error occurred
   @see evdns_resolve_reverse_ipv6()
  */
-int evdns_resolve_reverse(struct in_addr *in, int flags, evdns_callback_type callback, void *ptr);
+int evdns_resolve_reverse(const struct in_addr *in, int flags, evdns_callback_type callback, void *ptr);
 
 
 /**
@@ -359,7 +359,7 @@ int evdns_resolve_reverse(struct in_addr *in, int flags, evdns_callback_type cal
   @return 0 if successful, or -1 if an error occurred
   @see evdns_resolve_reverse_ipv6()
  */
-int evdns_resolve_reverse_ipv6(struct in6_addr *in, int flags, evdns_callback_type callback, void *ptr);
+int evdns_resolve_reverse_ipv6(const struct in6_addr *in, int flags, evdns_callback_type callback, void *ptr);
 
 
 /**

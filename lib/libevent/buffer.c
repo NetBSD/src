@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.4 2008/05/16 20:24:57 peter Exp $	*/
+/*	$NetBSD: buffer.c,v 1.4.4.1 2009/08/04 18:32:08 snj Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,10 +26,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
@@ -43,6 +39,8 @@
 #include <unistd.h>
 
 #include "event.h"
+#include "config.h"
+#include "evutil.h"
 
 struct evbuffer *
 evbuffer_new(void)
@@ -131,13 +129,13 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 
 		va_copy(aq, ap);
 
-		sz = vsnprintf(buffer, space, fmt, aq);
+		sz = evutil_vsnprintf(buffer, space, fmt, aq);
 
 		va_end(aq);
 
 		if (sz < 0)
 			return (-1);
-		if (sz < space) {
+		if ((size_t)sz < space) {
 			buf->off += sz;
 			if (buf->cb != NULL)
 				(*buf->cb)(buf, oldoff, buf->off, buf->cbarg);
@@ -340,7 +338,7 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 		 * about it.  If the reader does not tell us how much
 		 * data we should read, we artifically limit it.
 		 */
-		if (n > buf->totallen << 2)
+		if ((size_t)n > buf->totallen << 2)
 			n = buf->totallen << 2;
 		if (n < EVBUFFER_MAX_READ)
 			n = EVBUFFER_MAX_READ;

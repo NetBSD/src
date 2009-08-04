@@ -1,4 +1,4 @@
-/*	$NetBSD: evrpc.h,v 1.1 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: evrpc.h,v 1.1.8.1 2009/08/04 18:32:09 snj Exp $	*/
 /*
  * Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -437,9 +437,18 @@ void evrpc_pool_set_timeout(struct evrpc_pool *pool, int timeout_in_secs);
  */
 
 enum EVRPC_HOOK_TYPE {
-	INPUT,		/**< apply the function to an input hook */
-	OUTPUT		/**< apply the function to an output hook */
+	EVRPC_INPUT,		/**< apply the function to an input hook */
+	EVRPC_OUTPUT		/**< apply the function to an output hook */
 };
+
+#ifndef WIN32
+/** Deprecated alias for EVRPC_INPUT.  Not available on windows, where it
+ * conflicts with platform headers. */
+#define INPUT EVRPC_INPUT
+/** Deprecated alias for EVRPC_OUTPUT.  Not available on windows, where it
+ * conflicts with platform headers. */
+#define OUTPUT EVRPC_OUTPUT
+#endif
 
 /** adds a processing hook to either an rpc base or rpc pool
  *
