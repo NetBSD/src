@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.54 2009/08/03 10:30:29 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.55 2009/08/04 14:20:41 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -19,6 +19,7 @@ file	dev/acpi/acpi_madt.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
 file	dev/acpi/acpi_quirks.c		acpi
 file	dev/acpi/acpi_timer.c		acpi
+file	dev/acpi/acpi_wakedev.c		acpi
 
 # ACPI/apm emulation.
 attach  apm at acpiapmbus with acpiapm: sysmon_envsys
