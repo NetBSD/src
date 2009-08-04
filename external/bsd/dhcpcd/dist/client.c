@@ -368,7 +368,7 @@ get_lease(struct dhcp_lease *lease, const struct dhcp_message *dhcp)
 		return;
 	lease->addr.s_addr = dhcp->yiaddr;
 
-	if (get_option_addr(&lease->net.s_addr, dhcp, DHO_SUBNETMASK) == -1)
+	if (get_option_addr(&lease->net, dhcp, DHO_SUBNETMASK) == -1)
 		lease->net.s_addr = get_netmask(dhcp->yiaddr);
 	if (get_option_uint32(&lease->leasetime, dhcp, DHO_LEASETIME) == 0) {
 		/* Ensure that we can use the lease */
@@ -685,7 +685,9 @@ send_message(struct if_state *state, int type, const struct options *options)
 	if (r == -1) {
 		state->state = STATE_INIT;
 		timerclear(&state->timeout);
-		timerclear(&state->stop);
+		/* We need to set a timeout so we fall through gracefully */
+		state->stop.tv_sec = 1;
+		state->stop.tv_usec = 0;
 		do_socket(state, SOCKET_CLOSED);
 	}
 	return r;
@@ -835,12 +837,24 @@ wait_for_fd(struct if_state *state, int *fd)
 	}
 
 	/* We configured our array in the order we should deal with them */
-	for (i = 0; i < nfds; i++)
-		if (fds[i].revents & POLLIN) {
+	for (i = 0; i < nfds; i++) {
+		if (fds[i].revents & POLLERR) {
+			syslog(LOG_ERR, "poll: POLLERR on fd %d", fds[i].fd);
+			errno = EBADF;
+			return -1;
+		}
+		if (fds[i].revents & POLLNVAL) {
+			syslog(LOG_ERR, "poll: POLLNVAL on fd %d", fds[i].fd);
+			errno = EINVAL;
+			return -1;
+		}
+		if (fds[i].revents & (POLLIN | POLLHUP)) {
 			*fd = fds[i].fd;
 			return r;
 		}
-	return r;
+	}
+	/* We should never get here. */
+	return 0;
 }
 
 static int
@@ -1039,6 +1053,7 @@ handle_timeout_fail(struct if_state *state, const struct options *options)
 		{
 			logger(LOG_INFO, "probing for an IPV4LL address");
 			free(state->offer);
+			lease->frominfo = 0;
 			state->offer = ipv4ll_get_dhcp(0);
 			gotlease = 0;
 		}
@@ -1246,6 +1261,8 @@ handle_timeout(struct if_state *state, const struct options *options)
 		timerclear(&state->stop);
 		/* FALLTHROUGH */
 	case STATE_INIT:
+		if (state->carrier == LINK_DOWN)
+			return 0;
 		do_socket(state, SOCKET_OPEN);
 		state->xid = arc4random();
 		iface->start_uptime = uptime();
@@ -1269,8 +1286,6 @@ handle_timeout(struct if_state *state, const struct options *options)
 		}
 		/* FALLTHROUGH */
 	case STATE_INIT:
-		if (state->carrier == LINK_DOWN)
-			return 0;
 		if (lease->addr.s_addr == 0 ||
 		    IN_LINKLOCAL(ntohl(iface->addr.s_addr)))
 		{
@@ -1346,7 +1361,7 @@ log_dhcp(int lvl, const char *msg, const struct dhcp_message *dhcp)
 		addr.s_addr = dhcp->yiaddr;
 		a = xstrdup(inet_ntoa(addr));
 	}
-	r = get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID);
+	r = get_option_addr(&addr, dhcp, DHO_SERVERID);
 	if (dhcp->servername[0] && r == 0)
 		logger(lvl, "%s %s from %s `%s'", msg, a,
 		       inet_ntoa(addr), dhcp->servername);
@@ -1374,7 +1389,12 @@ handle_dhcp(struct if_state *state, struct dhcp_message **dhcpp,
 
 	/* We have to have DHCP type to work */
 	if (get_option_uint8(&type, dhcp, DHO_MESSAGETYPE) == -1) {
-		log_dhcp(LOG_ERR, "no DHCP type in", dhcp);
+		logger(LOG_ERR, "ignoring message; no DHCP type");
+		return 0;
+	}
+	/* Every DHCP message should include ServerID */
+	if (get_option_addr(&addr, dhcp, DHO_SERVERID) == -1) {
+		logger(LOG_ERR, "ignoring message; no Server ID");
 		return 0;
 	}
 
@@ -1382,7 +1402,7 @@ handle_dhcp(struct if_state *state, struct dhcp_message **dhcpp,
 	 * We should expand this to check IP and/or hardware address
 	 * at the packet level. */
 	if (options->blacklist_len != 0 &&
-	    get_option_addr(&addr.s_addr, dhcp, DHO_SERVERID) == 0)
+	    get_option_addr(&addr, dhcp, DHO_SERVERID) == 0)
 	{
 		for (i = 0; i < options->blacklist_len; i++) {
 			if (options->blacklist[i] != addr.s_addr)
@@ -1434,7 +1454,7 @@ handle_dhcp(struct if_state *state, struct dhcp_message **dhcpp,
 
 	if (type == DHCP_OFFER && state->state == STATE_DISCOVERING) {
 		lease->addr.s_addr = dhcp->yiaddr;
-		get_option_addr(&lease->server.s_addr, dhcp, DHO_SERVERID);
+		get_option_addr(&lease->server, dhcp, DHO_SERVERID);
 		log_dhcp(LOG_INFO, "offered", dhcp);
 		if (state->options & DHCPCD_TEST) {
 			run_script(options, iface->name, "TEST", dhcp, NULL);
@@ -1467,7 +1487,7 @@ handle_dhcp(struct if_state *state, struct dhcp_message **dhcpp,
 	case STATE_RENEWING:
 	case STATE_REBINDING:
 		if (!(state->options & DHCPCD_INFORM)) {
-			get_option_addr(&lease->server.s_addr,
+			get_option_addr(&lease->server,
 					dhcp, DHO_SERVERID);
 			log_dhcp(LOG_INFO, "acknowledged", dhcp);
 		}
@@ -1533,7 +1553,7 @@ handle_dhcp_packet(struct if_state *state, const struct options *options)
 		}
 		if (bytes == -1)
 			break;
-		if (valid_udp_packet(packet) == -1)
+		if (valid_udp_packet(packet, bytes) == -1)
 			continue;
 		bytes = get_udp_data(&pp, packet);
 		if ((size_t)bytes > sizeof(*dhcp)) {
