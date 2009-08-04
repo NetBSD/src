@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.9 2009/08/03 16:33:55 jmcneill Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.10 2009/08/04 23:23:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.9 2009/08/03 16:33:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.10 2009/08/04 23:23:39 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,6 +159,7 @@ asus_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = asus_sensors_refresh;
+	sc->sc_sme->sme_flags = SME_POLL_ONLY;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(self, "couldn't register with envsys\n");
