@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.52 2009/04/23 10:47:44 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.53 2009/08/04 08:49:02 taca Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1353,7 +1353,7 @@
 #define BGE_RDMAMODE_ALL_ATTNS		0x000003FC
 
 /* Alternate encodings for PCI-Express, from Broadcom-supplied Linux driver */
-#define BGE_RDMA_MODE_FIFO_LONG_BURST	((1<<17) || (1 << 16))
+#define BGE_RDMA_MODE_FIFO_LONG_BURST	((1<<17) | (1 << 16))
 #define BGE_RDMA_MODE_FIFO_SIZE_128	(1 << 17)
 
 /* Read DMA status register */
