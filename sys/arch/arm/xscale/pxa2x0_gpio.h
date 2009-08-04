@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.h,v 1.4 2008/06/24 20:19:05 chris Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.h,v 1.5 2009/08/04 12:11:33 kiyohara Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,9 +87,9 @@ extern struct pxa2x0_gpioconf pxa25x_pxamci_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_com_ffuart_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_com_stuart_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_com_btuart_gpioconf[];
-extern struct pxa2x0_gpioconf pxa27x_com_hwuart_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_i2c_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_i2s_gpioconf[];
+extern struct pxa2x0_gpioconf pxa27x_ohci_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_pcic_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_pxaacu_gpioconf[];
 extern struct pxa2x0_gpioconf pxa27x_pxamci_gpioconf[];
