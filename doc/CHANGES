@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1267 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1268 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -339,7 +339,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	gpioctl(8): New commandline syntax to reflect gpio(4) changes.
 		[mbalmer 20090725]
 	secmodel_44bsd(9), secmodel_securelevel(9): Add provisions to control
-		acces to gpio(4) pins. [mbalmer 20090725]
+		access to gpio(4) pins. [mbalmer 20090725]
 	mvsata(4): Support Marvell Hercules-I/II SATA Controllers
 		[kiyohara 20090727]
 	dhcpcd(8): Import dhcpcd-5.0.7. [roy 20090728]
@@ -353,3 +353,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		hw.wake namespace. By default, the following device node
 		types are enabled as wakeup devices if the firmware supports
 		it: lid switch, sleep/power button, PC keyboard controller.
+		[jmcneill 20090804]
