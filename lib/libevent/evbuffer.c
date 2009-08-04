@@ -1,4 +1,4 @@
-/*	$NetBSD: evbuffer.c,v 1.4 2008/05/16 20:24:57 peter Exp $	*/
+/*	$NetBSD: evbuffer.c,v 1.4.4.1 2009/08/04 18:32:08 snj Exp $	*/
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -389,6 +389,11 @@ bufferevent_settimeout(struct bufferevent *bufev,
     int timeout_read, int timeout_write) {
 	bufev->timeout_read = timeout_read;
 	bufev->timeout_write = timeout_write;
+
+	if (event_pending(&bufev->ev_read, EV_READ, NULL))
+		bufferevent_add(&bufev->ev_read, timeout_read);
+	if (event_pending(&bufev->ev_write, EV_WRITE, NULL))
+		bufferevent_add(&bufev->ev_write, timeout_write);
 }
 
 /*
