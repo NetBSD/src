@@ -1,4 +1,4 @@
-.\"	$NetBSD: robots.6,v 1.14 2009/04/09 03:52:54 joerg Exp $
+.\"	$NetBSD: robots.6,v 1.15 2009/08/05 04:03:47 dholland Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)robots.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd May 31, 1993
+.Dd August 4, 2009
 .Dt ROBOTS 6
 .Os
 .Sh NAME
@@ -37,7 +37,8 @@
 .Nd fight off villainous robots
 .Sh SYNOPSIS
 .Nm
-.Op Fl Asjtan
+.Op Fl Aajnrst
+.Op Ar maximum
 .Op Ar scorefile
 .Sh DESCRIPTION
 .Nm
@@ -115,35 +116,47 @@ you take the risk of dying by miscalculation.
 Only five scores are allowed per user on the score file.
 If you make it into the score file, you will be shown the list at the end
 of the game.
-If an alternative score file is specified, that will be used instead of the
-standard file for scores.
+If an alternative score file is named on the command line, that file
+will be used instead of the standard file for scores.
+The score file must be created empty beforehand, e.g. with
+.Xr touch 1 .
+If the argument
+.Ar maximum ,
+which must be a number, is provided when a score file is first used,
+the value given will be used as the maximum number of scores to keep
+per user instead of the default five.
+This value is a property of the score file and cannot be changed later.
 .Pp
 The options are
 .Bl -tag -width indent
-.It Fl s
-Don't play, just show the score file.
+.It Fl A
+Auto-bot mode.
+Lets the game play itself.
+.It Fl a
+Advance into the higher levels directly, skipping the lower, easier levels.
 .It Fl j
 Jump,
 .Em i.e. ,
 when you run, don't show any intermediate positions; only show things at
 the end.
 This is useful on slow terminals.
+.It Fl n
+Increase the number of games played by one; that is, automatically
+choose to play again one time per usage of this option.
+.It Fl r
+Play in real time; that is, if you do nothing for a few seconds the
+game will assume you meant to do nothing and move the robots.
+.It Fl s
+Don't play, just show the score file.
 .It Fl t
 Teleport automatically when you have no other option.
 This is a little disconcerting until you get used to it, and then it is
 very nice.
-.It Fl a
-Advance into the higher levels directly, skipping the lower, easier levels.
-.It Fl A
-Auto-bot mode.
-Lets the game play itself.
-.It Fl n
-Increase the number of games played by one.
 .El
 .Sh FILES
 .Bl -tag -width /var/games/robots_roll -compact
 .It Pa /var/games/robots_roll
-the score file
+The score file.
 .El
 .Sh AUTHORS
 .An Ken Arnold
