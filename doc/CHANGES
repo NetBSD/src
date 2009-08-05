@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1268 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1269 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -354,3 +354,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		types are enabled as wakeup devices if the firmware supports
 		it: lid switch, sleep/power button, PC keyboard controller.
 		[jmcneill 20090804]
+	openssl: Import SNAP-20090805 to fix the namespace issues
+		(BLOCK, CSTRING, etc) [christos 20090805]
