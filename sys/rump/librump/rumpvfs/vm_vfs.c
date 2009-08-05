@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.8 2009/08/05 00:04:08 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.9 2009/08/05 14:05:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.8 2009/08/05 00:04:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.9 2009/08/05 14:05:22 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -55,6 +55,7 @@ uvm_aio_aiodone(struct buf *bp)
 	for (i = 0; i < npages; i++) {
 		va = (vaddr_t)bp->b_data + (i << PAGE_SHIFT);
 		pgs[i] = uvm_pageratop(va);
+		pgs[i]->flags &= ~PG_PAGEOUT;
 	}
 
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
