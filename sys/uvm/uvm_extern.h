@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.155 2009/06/28 15:18:50 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.156 2009/08/05 14:10:33 pooka Exp $	*/
 
 /*
  *
@@ -132,7 +132,9 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_ADV_NORMAL	0x0	/* 'normal' */
 #define UVM_ADV_RANDOM	0x1	/* 'random' */
 #define UVM_ADV_SEQUENTIAL 0x2	/* 'sequential' */
-/* 0x3: will need, 0x4: dontneed */
+#define UVM_ADV_WILLNEED 0x3	/* pages will be needed */
+#define UVM_ADV_DONTNEED 0x4	/* pages won't be needed */
+#define UVM_ADV_NOREUSE	0x5	/* pages will be used only once */
 #define UVM_ADV_MASK	0x7	/* mask */
 
 /* bits 0xffff0000: mapping flags */
