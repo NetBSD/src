@@ -626,7 +626,7 @@ bad:
 		if (!X509_set_subject_name(x,req->req_info->subject)) goto end;
 
 		X509_gmtime_adj(X509_get_notBefore(x),0);
-	        X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days);
+	        X509_time_adj_ex(X509_get_notAfter(x),days, 0, NULL);
 
 		pkey = X509_REQ_get_pubkey(req);
 		X509_set_pubkey(x,pkey);
@@ -738,14 +738,14 @@ bad:
 			else if ((email == i) || (ocsp_uri == i))
 				{
 				int j;
-				STACK_OF(STRING) *emlst;
+				STACK_OF(OPENSSL_STRING) *emlst;
 				if (email == i)
 					emlst = X509_get1_email(x);
 				else
 					emlst = X509_get1_ocsp(x);
-				for (j = 0; j < sk_STRING_num(emlst); j++)
+				for (j = 0; j < sk_OPENSSL_STRING_num(emlst); j++)
 					BIO_printf(STDout, "%s\n",
-						   sk_STRING_value(emlst, j));
+						   sk_OPENSSL_STRING_value(emlst, j));
 				X509_email_free(emlst);
 				}
 			else if (aliasout == i)
@@ -1147,7 +1147,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 		goto end;
 
 	/* hardwired expired */
-	if (X509_gmtime_adj(X509_get_notAfter(x),(long)60*60*24*days) == NULL)
+	if (X509_time_adj_ex(X509_get_notAfter(x),days, 0, NULL) == NULL)
 		goto end;
 
 	if (clrext)
