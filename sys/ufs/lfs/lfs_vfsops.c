@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.276 2009/08/05 14:37:01 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.277 2009/08/05 15:39:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.276 2009/08/05 14:37:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.277 2009/08/05 15:39:57 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1756,6 +1756,15 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			 * converted this to use nestiobuf --pooka
 			 */
 			bp->b_flags &= ~B_ASYNC;
+			/*
+			 * LFS uses VOP_BWRITE instead of VOP_STRATEGY.
+			 * Therefore biodone doesn't get called for
+			 * the buffer.  Therefore decrement the output
+			 * counter that nestiobuf_setup() incremented.
+			 */
+			mutex_enter(&vp->v_interlock);
+			vp->v_numoutput--;
+			mutex_exit(&vp->v_interlock);
 		}
 
 		/* XXX This is silly ... is this necessary? */
