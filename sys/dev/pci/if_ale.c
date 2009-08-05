@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.4 2009/07/28 06:02:34 cegger Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.5 2009/08/05 07:03:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.4 2009/07/28 06:02:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.5 2009/08/05 07:03:04 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -370,7 +370,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp;
 	pcireg_t memtype;
-	int error = 0;
+	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
 	const char *chipname;
 
@@ -542,8 +542,11 @@ ale_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_mii = &sc->sc_miibus;
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, ale_mediachange,
 	    ale_mediastatus);
+	mii_flags = 0;
+	if ((sc->ale_flags & ALE_FLAG_JUMBO) != 0)
+		mii_flags |= MIIF_DOPAUSE;
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -1155,12 +1158,10 @@ ale_mac_config(struct ale_softc *sc)
 	}
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		reg |= MAC_CFG_FULL_DUPLEX;
-#ifdef notyet
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
 			reg |= MAC_CFG_TX_FC;
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE) != 0)
 			reg |= MAC_CFG_RX_FC;
-#endif
 	}
 	CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 }
