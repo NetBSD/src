@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.32 2009/06/20 13:10:14 cegger Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.33 2009/08/05 20:15:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.32 2009/06/20 13:10:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.33 2009/08/05 20:15:36 jym Exp $");
 
 #include "opt_modular.h"
 
@@ -130,9 +130,7 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 void
 x86_init(void)
 {
-#ifndef XEN
 	msr_cpu_broadcast_initmtx();
-#endif
 }
 
 #ifdef MODULAR

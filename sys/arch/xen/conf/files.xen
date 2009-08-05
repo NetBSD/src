@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.102 2009/07/29 12:02:06 cegger Exp $
+#	$NetBSD: files.xen,v 1.103 2009/08/05 20:15:37 jym Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -25,6 +25,18 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
 defparam		PCI_CONF_MODE
+
+# Intel Enhanced Speedstep
+defflag					ENHANCED_SPEEDSTEP
+defflag	opt_est.h			EST_FREQ_USERWRITE
+file	arch/x86/x86/est.c		enhanced_speedstep
+file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
+
+# AMD Powernow/Cool`n'Quiet Technology
+defflag opt_powernow_k8.h	POWERNOW_K8
+# Powernow common functions
+file	arch/x86/x86/powernow_k8.c	powernow_k8
+file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
 
 file	arch/xen/x86/autoconf.c
 ifdef i386
@@ -60,6 +72,11 @@ file	crypto/des/arch/i386/des_cbc.S		des
 
 file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
 file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
+
+# AMD PowerNow K7
+defflag					POWERNOW_K7
+file	arch/i386/i386/powernow_k7.c		powernow_k7
+
 elifdef amd64
 file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpufunc.S
@@ -275,6 +292,8 @@ device vcpu
 attach vcpu at xendevbus
 
 file	arch/xen/x86/cpu.c		cpu | vcpu
+
+file	arch/x86/x86/msr_ipifuncs.c
 
 #
 # Compatibility modules
