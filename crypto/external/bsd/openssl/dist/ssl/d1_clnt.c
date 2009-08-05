@@ -223,6 +223,8 @@ int dtls1_connect(SSL *s)
 			s->init_num=0;
 			/* mark client_random uninitialized */
 			memset(s->s3->client_random,0,sizeof(s->s3->client_random));
+			s->d1->send_cookie = 0;
+			s->hit = 0;
 			break;
 
 		case SSL3_ST_CW_CLNT_HELLO_A:
@@ -1353,7 +1355,7 @@ int dtls1_send_client_verify(SSL *s)
 				SHA_DIGEST_LENGTH,&(p[2]),
 				(unsigned int *)&j,pkey->pkey.ec))
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,
 				    ERR_R_ECDSA_LIB);
 				goto err;
 				}
