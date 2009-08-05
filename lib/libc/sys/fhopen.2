@@ -1,4 +1,4 @@
-.\"	$NetBSD: fhopen.2,v 1.15 2006/08/03 19:17:49 wiz Exp $
+.\"	$NetBSD: fhopen.2,v 1.16 2009/08/05 23:03:08 pooka Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Lb libc
 .Sh SYNOPSIS
 .In sys/types.h
+.In sys/mount.h
 .Ft int
 .Fn fhopen "const void *fhp" "size_t fh_size" "int flags"
 .In sys/stat.h
