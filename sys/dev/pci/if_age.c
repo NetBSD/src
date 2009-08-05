@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.30 2009/08/05 12:07:16 cegger Exp $ */
+/*	$NetBSD: if_age.c,v 1.31 2009/08/05 14:41:12 cegger Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.30 2009/08/05 12:07:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.31 2009/08/05 14:41:12 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -257,7 +257,7 @@ age_attach(device_t parent, device_t self, void *aux)
 #ifdef AGE_CHECKSUM
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 				IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
+				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UCPv4_Rx;
 #endif
 
 #if NVLAN > 0
