@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.107 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: i82365.c,v 1.108 2009/08/05 13:29:16 jun Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.107 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.108 2009/08/05 13:29:16 jun Exp $");
 
 #define	PCICDEBUG
 
@@ -390,7 +390,6 @@ pcic_attach_socket(struct pcic_handle *h)
 	struct pcmciabus_attach_args paa;
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 	int locs[PCMCIABUSCF_NLOCS];
-	char cs[4];
 
 	/* initialize the rest of the handle */
 
@@ -417,21 +416,6 @@ pcic_attach_socket(struct pcic_handle *h)
 		return;
 	}
 
-	/*
-	 * queue creation of a kernel thread to handle insert/removal events.
-	 */
-#ifdef DIAGNOSTIC
-	if (h->event_thread != NULL)
-		panic("pcic_attach_socket: event thread");
-#endif
-	config_pending_incr();
-	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
-
-	if (kthread_create(PRI_NONE, 0, NULL, pcic_event_thread, h,
-	    &h->event_thread, "%s,%s", device_xname(h->ph_parent), cs)) {
-		aprint_error_dev(h->ph_parent, "unable to create event thread for sock 0x%02x\n", h->sock);
-		panic("pcic_attach_socket");
-	}
 }
 
 /*
@@ -457,6 +441,7 @@ pcic_attach_socket_finish(struct pcic_handle *h)
 {
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 	int reg;
+	char cs[4];
 
 	DPRINTF(("%s: attach finish socket %ld\n", device_xname(h->ph_parent),
 	    (long) (h - &sc->handle[0])));
@@ -510,6 +495,22 @@ pcic_attach_socket_finish(struct pcic_handle *h)
 		h->laststate = PCIC_LASTSTATE_PRESENT;
 	} else {
 		h->laststate = PCIC_LASTSTATE_EMPTY;
+	}
+
+	/*
+	 * queue creation of a kernel thread to handle insert/removal events.
+	 */
+#ifdef DIAGNOSTIC
+	if (h->event_thread != NULL)
+		panic("pcic_attach_socket: event thread");
+#endif
+	config_pending_incr();
+	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
+
+	if (kthread_create(PRI_NONE, 0, NULL, pcic_event_thread, h,
+	    &h->event_thread, "%s,%s", device_xname(h->ph_parent), cs)) {
+		aprint_error_dev(h->ph_parent, "unable to create event thread for sock 0x%02x\n", h->sock);
+		panic("pcic_attach_socket");
 	}
 }
 
