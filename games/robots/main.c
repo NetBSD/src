@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2009/08/05 04:03:47 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2009/08/05 19:34:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2009/08/05 04:03:47 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2009/08/05 19:34:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,7 @@ main(int argc, char **argv)
 	int score_wfd; /* high score writable file descriptor */
 	int score_err = 0; /* hold errno from score file open */
 	int maximum = 0;
-	char ch;
-	int i;
+	int ch, i;
 
 	score_wfd = open(Scorefile, O_RDWR);
 	if (score_wfd < 0)
