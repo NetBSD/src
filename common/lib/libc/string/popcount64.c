@@ -1,4 +1,4 @@
-/*	$NetBSD: popcount64.c,v 1.4 2009/07/21 19:56:55 drochner Exp $	*/
+/*	$NetBSD: popcount64.c,v 1.5 2009/08/05 15:04:15 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: popcount64.c,v 1.4 2009/07/21 19:56:55 drochner Exp $");
+__RCSID("$NetBSD: popcount64.c,v 1.5 2009/08/05 15:04:15 joerg Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
@@ -46,8 +46,8 @@ __RCSID("$NetBSD: popcount64.c,v 1.4 2009/07/21 19:56:55 drochner Exp $");
  * If uint64_t is larger than size_t, the follow assumes that
  * splitting into 32bit halfes is faster.
  *
- * The native pocount64 version is based on the same ideas as popcount64(3),
- * see popcount64.c for comments.
+ * The native pocount64 version is based on the same ideas as popcount32(3),
+ * see popcount32.c for comments.
  */
 
 #if SIZE_MAX < 0xffffffffffffffffULL
