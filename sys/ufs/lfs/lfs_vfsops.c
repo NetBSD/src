@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.275 2009/08/05 14:09:26 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.276 2009/08/05 14:37:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.275 2009/08/05 14:09:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.276 2009/08/05 14:37:01 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1775,17 +1775,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			continue;
 	}
 
+	nestiobuf_done(mbp, skipbytes, error);
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
-		mutex_enter(mbp->b_objlock);
-		if (error) {
-			mbp->b_error = error;
-		}
-		mbp->b_resid -= skipbytes;
-		mutex_exit(mbp->b_objlock);
-		if (mbp->b_resid == 0) {
-			biodone(mbp);
-		}
 	}
 	UVMHIST_LOG(ubchist, "returning 0", 0,0,0,0);
 	return (0);
