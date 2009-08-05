@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_rpc.c,v 1.1 2008/05/16 20:24:57 peter Exp $	*/
+/*	$NetBSD: regress_rpc.c,v 1.1.8.1 2009/08/05 18:33:20 snj Exp $	*/
 /*
  * Copyright (c) 2003-2006 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -37,7 +37,7 @@
 #endif
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <fcntl.h>
@@ -444,14 +444,14 @@ rpc_basic_client(void)
 	need_input_hook = 1;
 	need_output_hook = 1;
 
-	assert(evrpc_add_hook(base, INPUT, rpc_hook_add_header, (void*)"input")
+	assert(evrpc_add_hook(base, EVRPC_INPUT, rpc_hook_add_header, (void*)"input")
 	    != NULL);
-	assert(evrpc_add_hook(base, OUTPUT, rpc_hook_add_header, (void*)"output")
+	assert(evrpc_add_hook(base, EVRPC_OUTPUT, rpc_hook_add_header, (void*)"output")
 	    != NULL);
 
 	pool = rpc_pool_with_connection(port);
 
-	assert(evrpc_add_hook(pool, INPUT, rpc_hook_remove_header, (void*)"output"));
+	assert(evrpc_add_hook(pool, EVRPC_INPUT, rpc_hook_remove_header, (void*)"output"));
 
 	/* set up the basic message */
 	msg = msg_new();
