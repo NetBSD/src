@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.156 2009/08/05 14:10:33 pooka Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.157 2009/08/05 14:11:32 pooka Exp $	*/
 
 /*
  *
@@ -721,7 +721,6 @@ void			uvm_page_physload(paddr_t, paddr_t, paddr_t,
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */
-void			uvm_aio_biodone1(struct buf *);
 void			uvm_aio_biodone(struct buf *);
 void			uvm_aio_aiodone(struct buf *);
 void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,
