@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.7 2009/08/04 20:01:06 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.8 2009/08/05 00:04:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.7 2009/08/04 20:01:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.8 2009/08/05 00:04:08 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -38,52 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.7 2009/08/04 20:01:06 pooka Exp $");
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
-
-static int vn_get(struct uvm_object *, voff_t, struct vm_page **,
-	int *, int, vm_prot_t, int, int);
-static int vn_put(struct uvm_object *, voff_t, voff_t, int);
-
-const struct uvm_pagerops uvm_vnodeops = {
-	.pgo_get = vn_get,
-	.pgo_put = vn_put,
-};
-
-/*
- * vnode pager
- */
-
-static int
-vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
-	int *npages, int centeridx, vm_prot_t access_type,
-	int advice, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_GETPAGES(vp, off, pgs, npages, centeridx, access_type,
-	    advice, flags);
-}
-
-static int
-vn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_PUTPAGES(vp, offlo, offhi, flags);
-}
-
-void
-uvm_aio_biodone1(struct buf *bp)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
-void
-uvm_aio_biodone(struct buf *bp)
-{
-
-	uvm_aio_aiodone(bp);
-}
 
 /*
  * release resources held during async io.  this is almost the
@@ -117,11 +71,33 @@ uvm_aio_aiodone(struct buf *bp)
 	kmem_free(pgs, npages * sizeof(*pgs));
 }
 
+void
+uvm_aio_biodone1(struct buf *bp)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+uvm_aio_biodone(struct buf *bp)
+{
+
+	uvm_aio_aiodone(bp);
+}
+
 struct uvm_ractx *
 uvm_ra_allocctx(void)
 {
 
 	return NULL;
+}
+
+void
+uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
+	off_t reqoff, size_t reqsize)
+{
+
+	return;
 }
 
 void
@@ -131,31 +107,9 @@ uvm_ra_freectx(struct uvm_ractx *ra)
 	return;
 }
 
-bool
-uvn_clean_p(struct uvm_object *uobj)
-{
-	struct vnode *vp = (void *)uobj;
-
-	return (vp->v_iflag & VI_ONWORKLST) == 0;
-}
-
-void
-uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_size = vp->v_writesize = newsize;
-	mutex_exit(&vp->v_interlock);
-}
-
-void
-uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_writesize = newsize;
-	mutex_exit(&vp->v_interlock);
-}
+/*
+ * UBC
+ */
 
 void
 uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
@@ -193,10 +147,6 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 
 	return;
 }
-
-/*
- * UBC
- */
 
 /* dumdidumdum */
 #define len2npages(off, len)						\

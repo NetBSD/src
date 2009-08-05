@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.10 2009/08/03 16:22:00 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.11 2009/08/05 00:04:08 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -9,7 +9,7 @@ LIB=	rumpvfs
 	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
-	${RUMPTOP}/../compat/common
+	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -25,6 +25,9 @@ SRCS+=	kern_physio.c
 SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
 	vfs_hooks.c vfs_init.c vfs_lockf.c vfs_lookup.c vfs_subr.c	\
 	vfs_syscalls.c vfs_vnops.c vfs_wapbl.c vfs_xattr.c
+
+# sys/uvm
+SRCS+=	uvm_vnode.c
 
 # sys/miscfs/syncfs
 SRCS+=	sync_subr.c sync_vnops.c
