@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.48 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.49 2009/08/05 13:16:01 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.48 2009/07/03 06:41:46 tteras Exp $ */
+/* $Id: pfkey.c,v 1.49 2009/08/05 13:16:01 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1820,9 +1820,14 @@ pk_recvacquire(mhp)
 		src = (struct sockaddr *) &sp_out->req->saidx.src;
 		dst = (struct sockaddr *) &sp_out->req->saidx.dst;
 	} else {
-		/* Otherwise use requested addresses */
-		src = sp_src;
-		dst = sp_dst;
+		/* Otherwise use requested addresses.
+		 *
+		 * We need to explicitly setup sa_src and sa_dst too,
+		 * since the SA ports are different from IKE port. And
+		 * src/dst ports will be overwritten when the matching
+		 * phase1 is found. */
+		src = sa_src = sp_src;
+		dst = sa_dst = sp_dst;
 	}
 	if (sp_out->local && sp_out->remote) {
 		/* hints available, let's use them */
