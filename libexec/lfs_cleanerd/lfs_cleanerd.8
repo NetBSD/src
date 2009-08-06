@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.17 2006/12/23 07:21:34 wiz Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.18 2009/08/06 21:18:54 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)lfs_cleanerd.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 18, 2006
+.Dd August 6, 2009
 .Dt LFS_CLEANERD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd garbage collect a log-structured file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl bcdfmqs
+.Op Fl bcDdfmqs
 .Op Fl i Ar segment-number
 .Op Fl l Ar load-threshhold
 .Op Fl n Ar number-of-segments
@@ -75,6 +75,10 @@ For each live inode, check to see if it has too many
 blocks that are not contiguous, and if it does, rewrite it.
 After a single pass through the filesystem the cleaner will exit.
 This option has been reported to corrupt file data; do not use it.
+.It Fl D
+Stay in the foreground, do not become a daemon process.
+Does not print additional debugging information (in contrast to
+.Fl d ) .
 .It Fl d
 Run in debug mode.
 Do not become a daemon process, and print debugging information.
@@ -94,7 +98,8 @@ and should not be specified on the command line.
 Clean more aggressively when the system load is below the given threshhold.
 The default threshhold is 0.2.
 .It Fl m
-Does nothing.  This option is present for historical compatibility.
+Does nothing.
+This option is present for historical compatibility.
 .It Fl n Ar number-of-segments
 Clean this number of segments at a time: that is, pass this many
 segments' blocks through a single call to lfs_markv, or, if
