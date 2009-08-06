@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.69 2009/06/09 11:06:09 he Exp $
+#	$NetBSD: INSTALL,v 1.70 2009/08/06 18:28:41 macallan Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -555,8 +555,8 @@ cgsix*		at sbus? slot ? offset ?
 #cgeight0	at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 
 ## Sun "tcx" accelerated color framebuffer.
-#tcx0		at sbus? slot ? offset ?
-#tcx*		at sbus? slot ? offset ?
+# there can be only one
+tcx0		at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
