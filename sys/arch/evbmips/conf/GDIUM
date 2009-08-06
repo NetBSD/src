@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.1 2009/08/06 00:50:25 matt Exp $
+# $NetBSD: GDIUM,v 1.2 2009/08/06 16:13:07 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GLIB1K-$Revision: 1.1 $"
+#ident 		"GDIUM-$Revision: 1.2 $"
 
 maxusers	16
 

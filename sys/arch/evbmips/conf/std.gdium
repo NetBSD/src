@@ -1,4 +1,4 @@
-# $NetBSD: std.gdium,v 1.1 2009/08/06 00:50:25 matt Exp $
+# $NetBSD: std.gdium,v 1.2 2009/08/06 16:13:07 matt Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -6,7 +6,7 @@ include		"conf/std"	# MI standard options
 options 	MIPS3_ENABLE_CLOCK_INTR
 
 # Platform support
-options		MIPS64_LOONGSON2
+options		MIPS3_LOONGSON2
 options		MIPS3
 
 options		EXEC_ELF32	# exec ELF32 binaries
