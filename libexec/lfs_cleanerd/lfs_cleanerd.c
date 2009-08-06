@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.17 2009/03/16 00:08:10 lukem Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.18 2009/08/06 00:05:01 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1533,7 +1533,9 @@ main(int argc, char **argv)
 		} while(cleaned_one);
 		tv.tv_sec = segwait_timeout;
 		tv.tv_usec = 0;
-		fcntl(fsp[0]->clfs_ifilefd, LFCNSEGWAITALL, &tv);
+		error = fcntl(fsp[0]->clfs_ifilefd, LFCNSEGWAITALL, &tv);
+		if (error)
+			err(1, "LFCNSEGWAITALL");
 	}
 
 	/* NOTREACHED */
