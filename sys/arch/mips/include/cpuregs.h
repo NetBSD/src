@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.75 2009/08/01 22:50:41 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.76 2009/08/06 00:42:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -725,7 +725,7 @@
 #define	MIPS_TX7900	0x38	/* Toshiba TX79			ISA III+*/
 #define	MIPS_R5400	0x54	/* NEC VR5400 			ISA IV	*/
 #define	MIPS_R5500	0x55	/* NEC VR5500 			ISA IV	*/
-#define	MIPS_LOONGSON2	0x63	/* ICT Loongson-2		ISA IV	*/
+#define	MIPS_LOONGSON2	0x63	/* ICT Loongson-2		ISA III	*/
 
 /*
  * CPU revision IDs for some prehistoric processors.
