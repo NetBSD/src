@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.212 2009/08/06 00:46:34 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.213 2009/08/06 15:58:12 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.212 2009/08/06 00:46:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.213 2009/08/06 15:58:12 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -449,7 +449,7 @@ static const struct pridtab fputab[] = {
  * Company ID's are not sparse (yet), this array is indexed directly
  * by pridtab->cpu_cid.
  */
-static const char *cidnames[] = {
+static const char * const cidnames[] = {
 	"Prehistoric",
 	"MIPS",		/* or "MIPS Technologies, Inc.	*/
 	"Broadcom",	/* or "Broadcom Corp."		*/
