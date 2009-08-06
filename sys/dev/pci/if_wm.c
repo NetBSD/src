@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.178 2009/07/30 03:46:48 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.179 2009/08/06 03:03:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.178 2009/07/30 03:46:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.179 2009/08/06 03:03:46 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -274,6 +274,7 @@ struct wm_softc {
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
+	int sc_if_flags;		/* last if_flags */
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcix_offset;		/* PCIX capability register offset */
 	int sc_flowflags;		/* 802.3x flow control flags */
@@ -2367,11 +2368,40 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr_dl *sdl;
-	int s, error;
+	int diff, s, error;
 
 	s = splnet();
 
 	switch (cmd) {
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		if (ifp->if_flags & IFF_UP) {
+			diff = (ifp->if_flags ^ sc->sc_if_flags)
+			    & (IFF_PROMISC | IFF_ALLMULTI);
+			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+				/*
+				 * If the difference bettween last flag and
+				 * new flag is only IFF_PROMISC or
+				 * IFF_ALLMULTI, set multicast filter only
+				 * (don't reset to prevent link down).
+				 */
+				wm_set_filter(sc);
+			} else {
+				/*
+				 * Reset the interface to pick up changes in
+				 * any other flags that affect the hardware
+				 * state.
+				 */
+				wm_init(ifp);
+			}
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				wm_stop(ifp, 1);
+		}
+		sc->sc_if_flags = ifp->if_flags;
+		error = 0;
+		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
