@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.13 2009/03/06 11:45:03 tteras Exp $	*/
+/*	$NetBSD: setkey.c,v 1.14 2009/08/06 04:44:43 tteras Exp $	*/
 
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
@@ -314,8 +314,7 @@ stdin_loop()
 #else
 		char rbuf[1024];
 		rbuf[0] = '\0';
-		fgets (rbuf, sizeof(rbuf), stdin);
-		if (!rbuf[0])
+		if (fgets(rbuf, sizeof(rbuf), stdin) == NULL)
 			break;
 		if (rbuf[strlen(rbuf)-1] == '\n')
 			rbuf[strlen(rbuf)-1] = '\0';
