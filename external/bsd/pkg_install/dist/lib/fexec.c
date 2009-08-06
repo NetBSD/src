@@ -1,4 +1,4 @@
-/*	$NetBSD: fexec.c,v 1.1.1.2 2009/02/02 20:44:06 joerg Exp $	*/
+/*	$NetBSD: fexec.c,v 1.1.1.3 2009/08/06 16:55:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include "lib.h"
 
-__RCSID("$NetBSD: fexec.c,v 1.1.1.2 2009/02/02 20:44:06 joerg Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.1.1.3 2009/08/06 16:55:26 joerg Exp $");
 
 static int	vfcexec(const char *, int, const char *, va_list);
 
@@ -80,7 +80,7 @@ pfcexec(const char *path, const char *file, const char **argv)
 		if ((path != NULL) && (chdir(path) < 0))
 			_exit(127);
 
-		(void)execvp(file, (char ** const)argv);
+		(void)execvp(file, __UNCONST(argv));
 		_exit(127);
 		/* NOTREACHED */
 	case -1:

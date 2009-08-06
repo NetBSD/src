@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.3 2009/04/24 14:17:21 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.4 2009/08/06 16:55:27 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
 #endif
-__RCSID("$NetBSD: file.c,v 1.1.1.3 2009/04/24 14:17:21 joerg Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.4 2009/08/06 16:55:27 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -178,7 +178,7 @@ isemptyfile(const char *fname)
 
 /* This struct defines the leading part of a valid URL name */
 typedef struct url_t {
-	char   *u_s;		/* the leading part of the URL */
+	const char *u_s;	/* the leading part of the URL */
 	int     u_len;		/* its length */
 }       url_t;
 
@@ -187,7 +187,7 @@ static const url_t urls[] = {
 	{"file://", 7},
 	{"ftp://", 6},
 	{"http://", 7},
-	{NULL}
+	{NULL, 0}
 };
 
 /*
@@ -219,12 +219,11 @@ URLlength(const char *fname)
 Boolean
 make_preserve_name(char *try, size_t max, const char *name, const char *file)
 {
-	int     len, i;
+	size_t len, i;
 
 	if ((len = strlen(file)) == 0)
 		return FALSE;
-	else
-		i = len - 1;
+	i = len - 1;
 	strncpy(try, file, max);
 	if (try[i] == '/')	/* Catch trailing slash early and save checking in the loop */
 		--i;
@@ -253,6 +252,7 @@ remove_files(const char *path, const char *pattern)
 	char	fpath[MaxPathSize];
 	glob_t	globbed;
 	int	i;
+	size_t  j;
 
 	(void) snprintf(fpath, sizeof(fpath), "%s/%s", path, pattern);
 	if ((i=glob(fpath, GLOB_NOSORT, NULL, &globbed)) != 0) {
@@ -274,9 +274,9 @@ remove_files(const char *path, const char *pattern)
 	}
 
 	/* deleting globbed files */
-	for (i=0; i<globbed.gl_pathc; i++)
-		if (unlink(globbed.gl_pathv[i]) < 0)
-			warn("can't delete ``%s''", globbed.gl_pathv[i]);
+	for (j = 0; j < globbed.gl_pathc; j++)
+		if (unlink(globbed.gl_pathv[j]) < 0)
+			warn("can't delete ``%s''", globbed.gl_pathv[j]);
 
 	return;
 }

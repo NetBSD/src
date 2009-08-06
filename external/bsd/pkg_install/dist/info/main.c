@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.5 2009/05/17 21:21:08 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.6 2009/08/06 16:55:25 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.5 2009/05/17 21:21:08 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.6 2009/08/06 16:55:25 joerg Exp $");
 
 /*
  *
@@ -50,8 +50,8 @@ int     Flags = 0;
 enum which Which = WHICH_LIST;
 Boolean File2Pkg = FALSE;
 Boolean Quiet = FALSE;
-char   *InfoPrefix = "";
-char   *BuildInfoVariable = "";
+const char   *InfoPrefix = "";
+const char   *BuildInfoVariable = "";
 size_t  termwidth = 0;
 lpkg_head_t pkgs;
 

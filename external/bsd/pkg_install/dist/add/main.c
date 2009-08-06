@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.3 2009/02/28 19:33:34 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4 2009/08/06 16:55:16 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.3 2009/02/28 19:33:34 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.4 2009/08/06 16:55:16 joerg Exp $");
 
 /*
  *
@@ -54,6 +54,7 @@ Boolean NoInstall = FALSE;
 Boolean NoRecord = FALSE;
 Boolean Automatic = FALSE;
 
+int	LicenseCheck = 0;
 int     Replace = 0;
 
 static void
@@ -160,6 +161,19 @@ main(int argc, char **argv)
 		warnx("missing package name(s)");
 		usage();
 	}
+
+	if (strcasecmp(do_license_check, "no") == 0)
+		LicenseCheck = 0;
+	else if (strcasecmp(do_license_check, "yes") == 0)
+		LicenseCheck = 1;
+	else if (strcasecmp(do_license_check, "always") == 0)
+		LicenseCheck = 2;
+	else
+		errx(1, "Unknown value of the configuration variable"
+		    "CHECK_LICENSE");
+
+	if (LicenseCheck)
+		load_license_lists();
 
 	/* Get all the remaining package names, if any */
 	for (; argc > 0; --argc, ++argv) {

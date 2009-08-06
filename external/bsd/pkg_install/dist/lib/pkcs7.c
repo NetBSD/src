@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs7.c,v 1.1.1.3 2009/03/02 22:31:17 joerg Exp $	*/
+/*	$NetBSD: pkcs7.c,v 1.1.1.4 2009/08/06 16:55:27 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkcs7.c,v 1.1.1.3 2009/03/02 22:31:17 joerg Exp $");
+__RCSID("$NetBSD: pkcs7.c,v 1.1.1.4 2009/08/06 16:55:27 joerg Exp $");
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -51,15 +51,11 @@ __RCSID("$NetBSD: pkcs7.c,v 1.1.1.3 2009/03/02 22:31:17 joerg Exp $");
 
 #include "lib.h"
 
-#ifndef __UNCONST
-#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
-#endif
-
 #ifndef NS_ANY_CA
 #define NS_ANY_CA		(NS_SSL_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
 #endif
 
-static const int pkg_key_usage = XKU_CODE_SIGN | XKU_SMIME;
+static const unsigned int pkg_key_usage = XKU_CODE_SIGN | XKU_SMIME;
 
 static int
 check_ca(X509 *cert)

@@ -1,4 +1,4 @@
-/*	$NetBSD: iterate.c,v 1.1.1.2 2009/02/02 20:44:06 joerg Exp $	*/
+/*	$NetBSD: iterate.c,v 1.1.1.3 2009/08/06 16:55:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -43,10 +43,6 @@
 #endif
 
 #include "lib.h"
-
-#ifndef __UNCONST
-#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
-#endif
 
 /*
  * Generic iteration function:
@@ -182,7 +178,7 @@ match_by_basename(const char *pkg, void *cookie)
 		return 0;
 	}
 	if (strncmp(pkg, target, pkg_version - pkg) == 0 &&
-	    strlen(target) == pkg_version - pkg)
+	    pkg + strlen(target) == pkg_version)
 		return 1;
 	else
 		return 0;
@@ -198,7 +194,7 @@ match_by_pattern(const char *pkg, void *cookie)
 
 struct add_matching_arg {
 	lpkg_head_t *pkghead;
-	size_t got_match;
+	int got_match;
 	int (*match_fn)(const char *pkg, void *cookie);
 	void *cookie;
 };
@@ -398,6 +394,7 @@ match_best_file(const char *filename, void *cookie)
 		return 0;
 	default:
 		errx(EXIT_FAILURE, "Invalid error from pkg_order");
+		/* NOTREACHED */
 	}
 }
 

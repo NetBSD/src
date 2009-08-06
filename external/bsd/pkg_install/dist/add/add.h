@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.1.1.2 2009/02/02 20:44:00 joerg Exp $ */
+/* $NetBSD: add.h,v 1.1.1.3 2009/08/06 16:55:16 joerg Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -35,6 +35,7 @@ extern Boolean NoInstall;
 extern Boolean NoRecord;
 extern Boolean Force;
 extern Boolean Automatic;
+extern int LicenseCheck;
 extern int Replace;
 
 int     make_hierarchy(char *);

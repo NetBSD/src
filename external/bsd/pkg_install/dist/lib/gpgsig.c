@@ -1,4 +1,4 @@
-/*	$NetBSD: gpgsig.c,v 1.1.1.1 2009/02/02 20:44:06 joerg Exp $	*/
+/*	$NetBSD: gpgsig.c,v 1.1.1.2 2009/08/06 16:55:27 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: gpgsig.c,v 1.1.1.1 2009/02/02 20:44:06 joerg Exp $");
+__RCSID("$NetBSD: gpgsig.c,v 1.1.1.2 2009/08/06 16:55:27 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -52,10 +52,6 @@ __RCSID("$NetBSD: gpgsig.c,v 1.1.1.1 2009/02/02 20:44:06 joerg Exp $");
 
 #include "lib.h"
 
-#ifndef __UNCONST
-#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
-#endif
-
 static void
 verify_signature(const char *input, size_t input_len, const char *keyring,
     const char *detached_signature)
@@ -99,7 +95,7 @@ verify_signature(const char *input, size_t input_len, const char *keyring,
 		_exit(255);
 	}
 	close(fd[0]);
-	if (write(fd[1], input, input_len) != input_len)
+	if (write(fd[1], input, input_len) != (ssize_t)input_len)
 		errx(EXIT_FAILURE, "Short read from GPG");
 	close(fd[1]);
 	waitpid(child, &status, 0);
@@ -223,7 +219,7 @@ detached_gpg_sign(const char *content, size_t len, char **sig, size_t *sig_len,
 		_exit(255);
 	}
 	close(fd_in[0]);
-	if (write(fd_in[1], content, len) != len)
+	if (write(fd_in[1], content, len) != (ssize_t)len)
 		errx(EXIT_FAILURE, "Short read from GPG");
 	close(fd_in[1]);
 
