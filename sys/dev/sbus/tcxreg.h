@@ -1,4 +1,4 @@
-/*	$NetBSD: tcxreg.h,v 1.4 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: tcxreg.h,v 1.5 2009/08/06 18:26:03 macallan Exp $ */
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
  *  All rights reserved.
@@ -64,23 +64,22 @@
 /*
  * The layout of the THC.
  */
-struct tcx_thc {
-	u_int	thc_config;
-	u_int	thc_xxx1[31];
-	u_int	thc_sensebus;
-	u_int	thc_xxx2[3];
-	u_int	thc_delay;
-	u_int	thc_strapping;
-	u_int	thc_xxx3[1];
-	u_int	thc_linecount;
-	u_int	thc_xxx4[478];
-	u_int	thc_hcmisc;
-	u_int	thc_xxx5[56];
-	u_int	thc_cursoraddr;
-	u_int	thc_cursorAdata[32];
-	u_int	thc_cursorBdata[32];
 
-};
+#define THC_CONFIG	0x00000000
+#define THC_SENSEBUS	0x00000080
+#define THC_DELAY	0x00000090
+#define THC_STRAPPING	0x00000094
+#define THC_LINECOUNTER	0x0000009c
+#define THC_HSYNC_START	0x000000a0
+#define THC_HSYNC_END	0x000000a4
+#define THC_HDISP_START	0x000000a8
+#define THC_HDISP_VSYNC	0x000000ac
+#define THC_HDISP_END	0x000000b0
+#define THC_MISC	0x00000818
+#define THC_CURSOR_POS	0x000008fc
+#define THC_CURSOR_1	0x00000900 /* bitmap bit 1 */
+#define THC_CURSOR_0	0x00000980 /* bitmap bit 0 */
+
 /* bits in thc_config ??? */
 #define THC_CFG_FBID		0xf0000000	/* id mask */
 #define THC_CFG_FBID_SHIFT	28
@@ -141,3 +140,15 @@ struct tcx_tec {
 	u_int	tec_vde;	/* */
 };
 
+/* DAC registers */
+#define DAC_ADDRESS	0x00000000
+#define DAC_FB_LUT	0x00000004	/* palette / gamma table */
+#define DAC_CONTROL_1	0x00000008
+#define DAC_CURSOR_LUT	0x0000000c	/* cursor sprite colours */
+#define DAC_CONTROL_2	0x00000018
+
+#define DAC_C1_ID		0
+#define DAC_C1_REVISION		1
+#define DAC_C1_READ_MASK	4
+#define DAC_C1_BLINK_MASK	5
+#define DAC_C1_CONTROL_0	6
