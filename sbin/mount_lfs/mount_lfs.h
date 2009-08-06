@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.h,v 1.1 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: mount_lfs.h,v 1.2 2009/08/06 00:58:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation.  All Rights Reserved.
@@ -33,5 +33,7 @@
 int	mount_lfs(int, char **);
 void	mount_lfs_parseargs(int, char **, struct ufs_args *, int *,
 			    char *, char *);
+
+int	lfs_cleaner_main(int, char **);
 
 #endif /* _SBIN_MOUNT_LFS_MOUNT_LFS_H_ */
