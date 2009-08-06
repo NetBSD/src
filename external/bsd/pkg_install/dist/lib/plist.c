@@ -1,4 +1,4 @@
-/*	$NetBSD: plist.c,v 1.1.1.4 2009/04/24 14:17:53 joerg Exp $	*/
+/*	$NetBSD: plist.c,v 1.1.1.5 2009/08/06 16:55:28 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: plist.c,v 1.1.1.4 2009/04/24 14:17:53 joerg Exp $");
+__RCSID("$NetBSD: plist.c,v 1.1.1.5 2009/08/06 16:55:28 joerg Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -182,7 +182,7 @@ find_plist(package_t *pkg, pl_ent_t type)
  * Look for a specific boolean option argument in the list
  */
 char   *
-find_plist_option(package_t *pkg, char *name)
+find_plist_option(package_t *pkg, const char *name)
 {
 	plist_t *p;
 
@@ -264,6 +264,8 @@ plist_cmd(const char *s, char **arg)
 	const cmd_t *cmdp;
 	const char *cp, *sp;
 	char *sp2;
+
+	sp = NULL; /* Older GCC can't detect that the loop is executed */
 
 	for (cmdp = cmdv; cmdp->c_s; ++cmdp) {
 		for (sp = s, cp = cmdp->c_s; *sp && *cp; ++cp, ++sp)
@@ -463,11 +465,11 @@ stringify_plist(package_t *pkg, char **real_buf, size_t *real_len,
 
 #define	UPDATE_LEN							\
 do {									\
-	if (item_len < 0 || item_len > len)				\
+	if (item_len < 0 || (size_t)item_len > len)			\
 		errx(2, "Size computation failed, aborted.");		\
 	buf += item_len;						\
 	len -= item_len;						\
-} while (0)
+} while (/* CONSTCOND */0)
 
 	for (p = pkg->head; p; p = p->next) {
 		if (p->type == PLIST_FILE) {
@@ -508,7 +510,7 @@ delete_package(Boolean ign_err, package_t *pkg, Boolean NoDeleteFiles,
     const char *destdir)
 {
 	plist_t *p;
-	char   *last_file = "";
+	const char *last_file = "";
 	int     fail = SUCCESS;
 	Boolean preserve;
 	char    tmp[MaxPathSize];
@@ -579,7 +581,6 @@ delete_package(Boolean ign_err, package_t *pkg, Boolean NoDeleteFiles,
 			if (NoDeleteFiles)
 				break;
 			format_cmd(tmp, sizeof(tmp), p->name, prefix, last_file);
-			/* XXX cleanup(0); */
 			printf("Executing `%s'\n", tmp);
 			if (!Fake && system(tmp)) {
 				warnx("unexec command for `%s' failed", tmp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.10 2009/07/26 22:59:33 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.11 2009/08/06 16:55:25 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.10 2009/07/26 22:59:33 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.11 2009/08/06 16:55:25 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -308,7 +308,7 @@ build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta, int limit)
 		if (iter == eol)
 			continue;
 		TAILQ_FOREACH(lpp, reqby, lp_link) {
-			if (strlen(lpp->lp_name) != eol - iter)
+			if (strlen(lpp->lp_name) + iter != eol)
 				continue;
 			if (memcmp(lpp->lp_name, iter, eol - iter) == 0)
 				break;
@@ -596,12 +596,6 @@ CheckForBestPkg(const char *pkgname)
 	return 0;
 }
 
-void
-cleanup(int sig)
-{
-	exit(1);
-}
-
 static int
 perform_single_pkg(const char *pkg, void *cookie)
 {
@@ -617,8 +611,6 @@ int
 pkg_perform(lpkg_head_t *pkghead)
 {
 	int     err_cnt = 0;
-
-	signal(SIGINT, cleanup);
 
 	TAILQ_INIT(&files);
 
@@ -650,7 +642,6 @@ pkg_perform(lpkg_head_t *pkghead)
 	if (Flags & SHOW_BUILD_VERSION)
 		desired_meta_data |= LOAD_BUILD_VERSION;
 
-
 	if (Which != WHICH_LIST) {
 		if (File2Pkg) {
 			/* Show all files with the package they belong to */
@@ -664,7 +655,7 @@ pkg_perform(lpkg_head_t *pkghead)
 		/* Show info on individual pkg(s) */
 		lpkg_t *lpp;
 
-		while ((lpp = TAILQ_FIRST(pkghead))) {
+		while ((lpp = TAILQ_FIRST(pkghead)) != NULL) {
 			TAILQ_REMOVE(pkghead, lpp, lp_link);
 			err_cnt += pkg_do(lpp->lp_name);
 			free_lpkg(lpp);

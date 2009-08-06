@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.7 2009/05/17 21:21:07 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.8 2009/08/06 16:55:19 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.7 2009/05/17 21:21:07 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.8 2009/08/06 16:55:19 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ add_required_by(const char *pattern, const char *required_by)
 	free(path);
 	
 	len = strlen(required_by);
-	if (write(fd, required_by, len) != len ||
+	if (write(fd, required_by, len) != (ssize_t)len ||
 	    write(fd, "\n", 1) != 1 ||
 	    close(fd) == -1)
 		errx(EXIT_FAILURE, "Cannot write to %s", path);
@@ -469,7 +469,7 @@ main(int argc, char *argv[])
 			if (show_basename_only)
 				rc = match_local_files(dir, use_default_sfx, 1, basep, lsbasepattern, NULL);
 			else
-				rc = match_local_files(dir, use_default_sfx, 1, basep, lspattern, (void *)dir);
+				rc = match_local_files(dir, use_default_sfx, 1, basep, lspattern, __UNCONST(dir));
 			if (rc == -1)
 				errx(EXIT_FAILURE, "Error from match_local_files(\"%s\", \"%s\", ...)",
 				     dir, basep);
@@ -711,9 +711,4 @@ set_unset_variable(char **argv, Boolean unset)
 	free(variable);
 
 	return;
-}
-
-void
-cleanup(int signo)
-{
 }
