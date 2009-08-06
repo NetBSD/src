@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.20 2009/08/06 00:23:08 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.21 2009/08/06 00:51:55 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #include "lfs_user.h"
 #include "fdfs.h"
 #include "cleaner.h"
+#include "kernelops.h"
+#include "mount_lfs.h"
 
 /*
  * Global variables.
@@ -134,8 +136,8 @@ reinit_fs(struct clfs *fs)
 	char fsname[MNAMELEN];
 
 	strncpy(fsname, (char *)fs->lfs_fsmnt, MNAMELEN);
-	close(fs->clfs_ifilefd);
-	close(fs->clfs_devfd);
+	kops.ko_close(fs->clfs_ifilefd);
+	kops.ko_close(fs->clfs_devfd);
 	fd_reclaim(fs->clfs_devvp);
 	fd_reclaim(fs->lfs_ivnode);
 	free(fs->clfs_dev);
@@ -157,7 +159,7 @@ init_unmounted_fs(struct clfs *fs, char *fsname)
 	int i;
 	
 	fs->clfs_dev = fsname;
-	if ((fs->clfs_devfd = open(fs->clfs_dev, O_RDWR)) < 0) {
+	if ((fs->clfs_devfd = kops.ko_open(fs->clfs_dev, O_RDWR)) < 0) {
 		syslog(LOG_ERR, "couldn't open device %s read/write",
 		       fs->clfs_dev);
 		return -1;
@@ -207,7 +209,7 @@ init_fs(struct clfs *fs, char *fsname)
 	 * XXX this is ugly.  Is there a way to discover the raw device
 	 * XXX for a given mount point?
 	 */
-	if (statvfs(fsname, &sf) < 0)
+	if (kops.ko_statvfs(fsname, &sf, ST_WAIT) < 0)
 		return -1;
 	fs->clfs_dev = malloc(strlen(sf.f_mntfromname) + 2);
 	if (fs->clfs_dev == NULL) {
@@ -215,24 +217,24 @@ init_fs(struct clfs *fs, char *fsname)
 		return -1;
 	}
 	sprintf(fs->clfs_dev, "/dev/r%s", sf.f_mntfromname + 5);
-	if ((fs->clfs_devfd = open(fs->clfs_dev, O_RDONLY)) < 0) {
+	if ((fs->clfs_devfd = kops.ko_open(fs->clfs_dev, O_RDONLY, 0)) < 0) {
 		syslog(LOG_ERR, "couldn't open device %s for reading",
 			fs->clfs_dev);
 		return -1;
 	}
 
 	/* Find the Ifile and open it */
-	if ((rootfd = open(fsname, O_RDONLY)) < 0)
+	if ((rootfd = kops.ko_open(fsname, O_RDONLY, 0)) < 0)
 		return -2;
-	if (fcntl(rootfd, LFCNIFILEFH, &fs->clfs_ifilefh) < 0)
+	if (kops.ko_fcntl(rootfd, LFCNIFILEFH, &fs->clfs_ifilefh) < 0)
 		return -3;
-	if ((fs->clfs_ifilefd = fhopen(&fs->clfs_ifilefh,
+	if ((fs->clfs_ifilefd = kops.ko_fhopen(&fs->clfs_ifilefh,
 	    sizeof(fs->clfs_ifilefh), O_RDONLY)) < 0)
 		return -4;
-	close(rootfd);
+	kops.ko_close(rootfd);
 
 	/* Load in the superblock */
-	if (pread(fs->clfs_devfd, &(fs->lfs_dlfs), sizeof(struct dlfs),
+	if (kops.ko_pread(fs->clfs_devfd, &(fs->lfs_dlfs), sizeof(struct dlfs),
 		  LFS_LABELPAD) < 0)
 		return -1;
 
@@ -798,7 +800,7 @@ toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic, int *sizep)
 	/* Use bmapv to locate the blocks */
 	lim.blkiov = bip;
 	lim.blkcnt = *bic;
-	if ((r = fcntl(fs->clfs_ifilefd, LFCNBMAPV, &lim)) < 0) {
+	if ((r = kops.ko_fcntl(fs->clfs_ifilefd, LFCNBMAPV, &lim)) < 0) {
 		syslog(LOG_WARNING, "%s: bmapv returned %d (%m)",
 		       fs->lfs_fsmnt, r);
 		return;
@@ -859,7 +861,7 @@ invalidate_segment(struct clfs *fs, int sn)
 	 */
 	lim.blkiov = bip;
 	lim.blkcnt = bic;
-	if ((r = fcntl(fs->clfs_ifilefd, LFCNMARKV, &lim)) < 0) {
+	if ((r = kops.ko_fcntl(fs->clfs_ifilefd, LFCNMARKV, &lim)) < 0) {
 		syslog(LOG_WARNING, "%s: markv returned %d (%m) "
 		       "for seg %d", fs->lfs_fsmnt, r, sn);
 		return r;
@@ -868,7 +870,7 @@ invalidate_segment(struct clfs *fs, int sn)
 	/*
 	 * Finally call invalidate to invalidate the segment.
 	 */
-	if ((r = fcntl(fs->clfs_ifilefd, LFCNINVAL, &sn)) < 0) {
+	if ((r = kops.ko_fcntl(fs->clfs_ifilefd, LFCNINVAL, &sn)) < 0) {
 		syslog(LOG_WARNING, "%s: inval returned %d (%m) "
 		       "for seg %d", fs->lfs_fsmnt, r, sn);
 		return r;
@@ -1129,7 +1131,7 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 		}
 #endif /* TEST_PATTERN */
 		dlog("sending blocks %d-%d", mc, mc + lim.blkcnt - 1);
-		if ((r = fcntl(fs->clfs_ifilefd, LFCNMARKV, &lim)) < 0) {
+		if ((r = kops.ko_fcntl(fs->clfs_ifilefd, LFCNMARKV, &lim))<0) {
 			syslog(LOG_WARNING, "%s: markv returned %d (%m)",
 			       fs->lfs_fsmnt, r);
 			if (errno != EAGAIN && errno != ESHUTDOWN) {
@@ -1158,7 +1160,7 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 	/*
 	 * Finally call reclaim to prompt cleaning of the segments.
 	 */
-	fcntl(fs->clfs_ifilefd, LFCNRECLAIM, NULL);
+	kops.ko_fcntl(fs->clfs_ifilefd, LFCNRECLAIM, NULL);
 
 	fd_release_all(fs->clfs_devvp);
 	return 0;
@@ -1309,11 +1311,20 @@ usage(void)
 	     "[-n nsegs] [-r report_freq] [-t timeout] fs_name ...");
 }
 
+#ifndef LFS_CLEANER_AS_LIB
 /*
  * Main.
  */
 int
 main(int argc, char **argv)
+{
+
+	return lfs_cleaner_main(argc, argv);
+}
+#endif
+
+int
+lfs_cleaner_main(int argc, char **argv)
 {
 	int i, opt, error, r, loopcount, nodetach;
 	struct timeval tv;
@@ -1538,7 +1549,7 @@ main(int argc, char **argv)
 		} while(cleaned_one);
 		tv.tv_sec = segwait_timeout;
 		tv.tv_usec = 0;
-		error = fcntl(fsp[0]->clfs_ifilefd, LFCNSEGWAITALL, &tv);
+		error = kops.ko_fcntl(fsp[0]->clfs_ifilefd,LFCNSEGWAITALL,&tv);
 		if (error)
 			err(1, "LFCNSEGWAITALL");
 	}
