@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.36 2009/08/06 16:13:08 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.37 2009/08/06 22:56:31 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.36 2009/08/06 16:13:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.37 2009/08/06 22:56:31 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -662,6 +662,8 @@ primary_cache_is_2way:
 		mips_picache_line_size = 32;
 		mips_pdcache_line_size = 32;
 
+		mips_cache_virtual_alias = 1;
+
 		mips_cache_ops.mco_icache_sync_all =
 		    r4k_icache_sync_all_32;
 		mips_cache_ops.mco_icache_sync_range =
@@ -680,7 +682,11 @@ primary_cache_is_2way:
 		mips_cache_ops.mco_pdcache_wb_range =
 		    r4k_pdcache_wb_range_32;
 
-		/* Virtually-indexed cache; no use for colors. */
+		/*
+		 * For current version chips, [the] operating system is
+		 * obliged to eliminate the potential for virtual aliasing.
+		 */
+		uvmexp.ncolors = atop(mips_pdcache_size) / mips_pdcache_ways;
 		break;
 #endif
 #endif /* MIPS3 || MIPS4 */
@@ -844,6 +850,10 @@ primary_cache_is_2way:
 		    r4k_sdcache_inv_range_32;
 		mips_cache_ops.mco_sdcache_wb_range =
 		    r4k_sdcache_wb_range_32;
+
+		/*
+		 * The secondary cache is physically indexed and tagged
+		 */
 		break;
 #endif
 #endif /* MIPS3 || MIPS4 */
