@@ -1,0 +1,18 @@
+# $NetBSD: std.gdium,v 1.1 2009/08/06 00:50:25 matt Exp $
+
+machine evbmips mips
+include		"conf/std"	# MI standard options
+
+options 	MIPS3_ENABLE_CLOCK_INTR
+
+# Platform support
+options		MIPS64_LOONGSON2
+options		MIPS3
+
+options		EXEC_ELF32	# exec ELF32 binaries
+options		EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x80200000"
+makeoptions	BOARDTYPE="gdium"
+
+include "arch/evbmips/conf/files.gdium"
