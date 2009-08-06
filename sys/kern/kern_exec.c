@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.289 2009/06/02 23:21:38 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.290 2009/08/06 21:33:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.289 2009/06/02 23:21:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.290 2009/08/06 21:33:54 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -620,6 +620,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			while (*cp)
 				*dp++ = *cp++;
 			*dp++ = '\0';
+			ktrexecarg(tmpfap->fa_arg, cp - tmpfap->fa_arg);
 
 			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++; argc++;
