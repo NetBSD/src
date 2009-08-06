@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.4 2009/04/25 21:38:21 joerg Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.5 2009/08/06 16:55:27 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.4 2009/04/25 21:38:21 joerg Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.5 2009/08/06 16:55:27 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -58,6 +58,7 @@ const char *certs_packages;
 const char *certs_pkg_vulnerabilities;
 const char *check_vulnerabilities;
 const char *config_pkg_path;
+const char *do_license_check;
 const char *verified_installation;
 const char *gpg_cmd;
 const char *gpg_keyring_pkgvuln;
@@ -80,6 +81,7 @@ static struct config_variable {
 	{ "CERTIFICATE_ANCHOR_PKGS", &certs_packages },
 	{ "CERTIFICATE_ANCHOR_PKGVULN", &certs_pkg_vulnerabilities },
 	{ "CERTIFICATE_CHAIN", &cert_chain_file },
+	{ "CHECK_LICENSE", &do_license_check },
 	{ "CHECK_VULNERABILITIES", &check_vulnerabilities },
 	{ "DEFAULT_ACCEPTABLE_LICENSES", &default_acceptable_licenses },
 	{ "GPG", &gpg_cmd },
@@ -122,6 +124,9 @@ pkg_install_config(void)
 
 	if (check_vulnerabilities == NULL)
 		check_vulnerabilities = "never";
+
+	if (do_license_check == NULL)
+		do_license_check = "no";
 
 	if ((value = getenv("PKG_PATH")) != NULL)
 		config_pkg_path = value;
