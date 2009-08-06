@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.47 2009/07/21 19:41:00 dyoung Exp $	*/
+/*	$NetBSD: dk.c,v 1.48 2009/08/06 16:00:49 haad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.47 2009/07/21 19:41:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.48 2009/08/06 16:00:49 haad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -221,6 +221,39 @@ dkwedge_array_expand(void)
 		free(oldarray, M_DKWEDGE);
 }
 
+static void
+dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", dkw->dkw_size);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    DEV_BSIZE /* XXX 512? */);
+
+	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
+
+	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
+
+	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dkw->dkw_size / 2048);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	odisk_info = disk->dk_info;
+
+	disk->dk_info = disk_info;
+
+	if (odisk_info != NULL)
+		prop_object_release(odisk_info);
+}
+
 /*
  * dkwedge_add:		[exported function]
  *
@@ -396,6 +429,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 */
 
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	dkgetproperties(&sc->sc_dk, dkw);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */
@@ -1265,6 +1299,12 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
+	error = disk_ioctl(&sc->sc_dk, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
+
+	error = 0;
+	
 	switch (cmd) {
 	case DIOCCACHESYNC:
 		/*
@@ -1280,7 +1320,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case DIOCGWEDGEINFO:
 	    {
-	    	struct dkwedge_info *dkw = (void *) data;
+		struct dkwedge_info *dkw = (void *) data;
 
 		strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
 			sizeof(dkw->dkw_devname));
