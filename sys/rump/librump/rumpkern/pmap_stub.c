@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.13 2009/04/30 15:31:16 skrll Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.14 2009/08/06 11:50:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.13 2009/04/30 15:31:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.14 2009/08/06 11:50:19 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -95,6 +95,20 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 void
 pmap_kremove(vaddr_t va, vsize_t size)
+{
+
+	panic("%s: unavailable", __func__);
+}
+
+int
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
+{
+
+	panic("%s: unavailable", __func__);
+}
+
+void
+pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 
 	panic("%s: unavailable", __func__);
@@ -238,4 +252,5 @@ void     (*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t) = pmap_kenter_pa;
 void     (*pmap_kremove_p)(vaddr_t, vsize_t) = pmap_kremove;
 void     (*pmap_page_protect_p)(struct vm_page *, vm_prot_t)=pmap_page_protect;
 bool     (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) = pmap_extract;
+int      (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int) = pmap_enter;
 #endif
