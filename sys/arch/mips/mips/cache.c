@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.34 2009/08/06 01:27:47 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.35 2009/08/06 15:58:46 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.34 2009/08/06 01:27:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.35 2009/08/06 15:58:46 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -833,6 +833,7 @@ primary_cache_is_2way:
 		mips_sdcache_ways = 4;
 		mips_sdcache_size = 512*1024;
 		mips_sdcache_line_size = 32;
+		mips_scache_unified = 1;
 
 		mips_cache_ops.mco_sdcache_wbinv_all =
 		    r4k_sdcache_wbinv_all_32;
