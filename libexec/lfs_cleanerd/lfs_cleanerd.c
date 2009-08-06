@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.19 2009/08/06 00:20:45 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.20 2009/08/06 00:23:08 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1336,7 +1336,7 @@ main(int argc, char **argv)
 	/*
 	 * Parse command-line arguments
 	 */
-	while ((opt = getopt(argc, argv, "bC:cdfi:l:mn:qr:st:")) != -1) {
+	while ((opt = getopt(argc, argv, "bC:cdDfi:l:mn:qr:st:")) != -1) {
 		switch (opt) {
 		    case 'b':	/* Use bytes written, not segments read */
 			    use_bytes = 1;
