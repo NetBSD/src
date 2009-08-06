@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.26 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: dm.c,v 1.27 2009/08/06 17:55:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.26 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: dm.c,v 1.27 2009/08/06 17:55:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,8 +316,8 @@ logfile(void)
 		else
 			fprintf(lp, "%u", uid);
 		fprintf(lp, "\t%s\t%s\t%s", game, gametty, ctime(&now));
-		(void)fclose(lp);
 		(void)flock(fileno(lp), LOCK_UN);
+		(void)fclose(lp);
 	}
 }
 #endif /* LOG */
