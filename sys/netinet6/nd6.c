@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.132 2009/07/25 23:12:09 tonnerre Exp $	*/
+/*	$NetBSD: nd6.c,v 1.133 2009/08/06 12:17:11 cegger Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.132 2009/07/25 23:12:09 tonnerre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.133 2009/08/06 12:17:11 cegger Exp $");
 
 #include "opt_ipsec.h"
 
@@ -767,7 +767,7 @@ nd6_purge(struct ifnet *ifp)
 		nd6_setdefaultiface(0);
 
 	/* XXX: too restrictive? */
-	if (!ip6_forwarding && (ndi->flags & ND6_IFF_ACCEPT_RTADV)) {
+	if (!ip6_forwarding && ndi && (ndi->flags & ND6_IFF_ACCEPT_RTADV)) {
 		/* refresh default router list */
 		defrouter_select();
 	}
