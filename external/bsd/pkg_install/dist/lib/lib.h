@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.7 2009/04/25 21:38:21 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.8 2009/08/06 16:55:27 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -65,6 +65,10 @@
 #endif
 
 /* Macros */
+#ifndef __UNCONST
+#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
+#endif
+
 #define SUCCESS	(0)
 #define	FAIL	(-1)
 
@@ -179,7 +183,8 @@ typedef enum bi_ent_t {
 	BI_MACHINE_ARCH,	/*  2 */
 	BI_IGNORE_RECOMMENDED,	/*  3 */
 	BI_USE_ABI_DEPENDS,	/*  4 */
-	BI_ENUM_COUNT		/*  5 */
+	BI_LICENSE,		/*  5 */
+	BI_ENUM_COUNT		/*  6 */
 }	bi_ent_t;
 
 /* Types */
@@ -251,7 +256,6 @@ int	some_installed_package_conflicts_with(const char *, const char *, char **, c
 
 /* Prototypes */
 /* Misc */
-void    cleanup(int);
 void    show_version(void);
 int	fexec(const char *, ...);
 int	fexec_skipempty(const char *, ...);
@@ -325,7 +329,7 @@ void	process_pkg_path(void);
 plist_t *new_plist_entry(void);
 plist_t *last_plist(package_t *);
 plist_t *find_plist(package_t *, pl_ent_t);
-char   *find_plist_option(package_t *, char *);
+char   *find_plist_option(package_t *, const char *);
 void    plist_delete(package_t *, Boolean, pl_ent_t, char *);
 void    free_plist(package_t *);
 void    mark_plist(package_t *);
@@ -422,6 +426,7 @@ extern const char *certs_pkg_vulnerabilities;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
 extern const char *config_pkg_path;
+extern const char *do_license_check;
 extern const char *verified_installation;
 extern const char *gpg_cmd;
 extern const char *gpg_keyring_pkgvuln;

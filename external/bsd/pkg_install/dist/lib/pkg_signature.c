@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.5 2009/04/24 14:17:50 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.6 2009/08/06 16:55:28 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.5 2009/04/24 14:17:50 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.6 2009/08/06 16:55:28 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -201,7 +201,7 @@ retry:
 	*len = archive_entry_size(*entry);
 	*content = xmalloc(*len + 1);
 
-	if (archive_read_data(archive, *content, *len) != *len) {
+	if (archive_read_data(archive, *content, *len) != (ssize_t)*len) {
 		warnx("cannot read complete %s from archive", fname);
 		free(*content);
 		*len = 0;
@@ -262,7 +262,7 @@ parse_hash_file(const char *hash_file, char **pkgname,
 	errno = 0;
 	if (!isdigit((unsigned char)*hash_file))
 		goto cleanup;
-	if (sizeof(off_t) >= sizeof(long long))
+	if (/* CONSTCOND */sizeof(off_t) >= sizeof(long long))
 		state->pkg_size = strtoll(hash_file, &next, 10);
 	else
 		state->pkg_size = strtol(hash_file, &next, 10);
@@ -548,11 +548,11 @@ pkg_sign_x509(const char *name, const char *output, const char *key_file, const 
 	free(pkgname);
 
 	for (i = 0; i < archive_entry_size(entry); i += block_len) {
-		if (i + sizeof(block) < archive_entry_size(entry))
+		if (i + (off_t)sizeof(block) < archive_entry_size(entry))
 			block_len = sizeof(block);
 		else
 			block_len = archive_entry_size(entry) % sizeof(block);
-		if (read(fd, block, block_len) != block_len)
+		if (read(fd, block, block_len) != (ssize_t)block_len)
 			err(2, "short read");
 		hash_block(block, block_len, hash);
 		tmp = xasprintf("%s%s\n", hash_file, hash);
@@ -597,11 +597,11 @@ pkg_sign_x509(const char *name, const char *output, const char *key_file, const 
 	archive_write_header(pkg, entry);
 
 	for (i = 0; i < size; i += block_len) {
-		if (i + sizeof(block) < size)
+		if (i + (off_t)sizeof(block) < size)
 			block_len = sizeof(block);
 		else
 			block_len = size % sizeof(block);
-		if (read(fd, block, block_len) != block_len)
+		if (read(fd, block, block_len) != (ssize_t)block_len)
 			err(2, "short read");
 		archive_write_data(pkg, block, block_len);
 	}
@@ -642,11 +642,11 @@ pkg_sign_gpg(const char *name, const char *output)
 	free(pkgname);
 
 	for (i = 0; i < archive_entry_size(entry); i += block_len) {
-		if (i + sizeof(block) < archive_entry_size(entry))
+		if (i + (off_t)sizeof(block) < archive_entry_size(entry))
 			block_len = sizeof(block);
 		else
 			block_len = archive_entry_size(entry) % sizeof(block);
-		if (read(fd, block, block_len) != block_len)
+		if (read(fd, block, block_len) != (ssize_t)block_len)
 			err(2, "short read");
 		hash_block(block, block_len, hash);
 		tmp = xasprintf("%s%s\n", hash_file, hash);
@@ -691,11 +691,11 @@ pkg_sign_gpg(const char *name, const char *output)
 	archive_write_header(pkg, entry);
 
 	for (i = 0; i < size; i += block_len) {
-		if (i + sizeof(block) < size)
+		if (i + (off_t)sizeof(block) < size)
 			block_len = sizeof(block);
 		else
 			block_len = size % sizeof(block);
-		if (read(fd, block, block_len) != block_len)
+		if (read(fd, block, block_len) != (ssize_t)block_len)
 			err(2, "short read");
 		archive_write_data(pkg, block, block_len);
 	}
