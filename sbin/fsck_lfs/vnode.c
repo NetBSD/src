@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.9 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: vnode.c,v 1.10 2009/08/06 00:51:55 pooka Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -53,6 +53,7 @@
 
 #include "bufcache.h"
 #include "vnode.h"
+#include "kernelops.h"
 
 struct uvnodelst vnodelist;
 struct uvnodelst getvnodelist[VNODE_HASH_MAX];
@@ -73,10 +74,10 @@ int
 raw_vop_strategy(struct ubuf * bp)
 {
 	if (bp->b_flags & B_READ) {
-		return pread(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
+		return kops.ko_pread(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
 		    dbtob(bp->b_blkno));
 	} else {
-		return pwrite(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
+		return kops.ko_pwrite(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
 		    dbtob(bp->b_blkno));
 	}
 }
