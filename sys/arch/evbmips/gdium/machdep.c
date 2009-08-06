@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2009/08/06 00:50:26 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2009/08/06 00:50:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -179,7 +179,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 void	configure(void);
-void	mach_init(int, char **);
+void	mach_init(int, char **, char **, void *);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -193,7 +193,7 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(int argc, char **argv)
+mach_init(int argc, char **argv, char **evnp, void *syms)
 {
 	struct gdium_config *gc = &gdium_configuration;
 	void *kernend, *v;
@@ -201,18 +201,15 @@ mach_init(int argc, char **argv)
 	char *cp;
 	int freqok, i, howto;
 	psize_t memsize;
-#define	FBADDR(y, x) (void*)(0xb4000000 + 2*x + 0x800*y)
 
 	extern char edata[], end[];
 
-	memset(FBADDR(100,480), 0xff, 128);
 	/*
 	 * Clear the BSS segment.
 	 */
 	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, (char *)kernend - edata);
 
-	memset(FBADDR(104,480), 0xff, 128);
 	/*
 	 * Set up the exception vectors and CPU-specific function
 	 * vectors early on.  We need the wbflush() vector set up
@@ -222,23 +219,17 @@ mach_init(int argc, char **argv)
 	 */
 	mips_vector_init();
 
-	memset(FBADDR(108,480), 0xff, 128);
 	/* set the VM page size */
 	uvm_setpagesize();
 
 	memsize = 256*1024*1024;
 	physmem = btoc(memsize);
 
-	memset(FBADDR(112,480), 0xff, 128);
 	bonito_pci_init(&gc->gc_pc, &gc->gc_bonito);
-	memset(FBADDR(116,480), 0xff, 128);
 	gdium_bus_io_init(&gc->gc_iot, gc);
-	memset(FBADDR(120,480), 0xff, 128);
 	gdium_bus_mem_init(&gc->gc_memt, gc);
-	memset(FBADDR(124,480), 0xff, 128);
-	gdium_cnattach(gc);
-	memset(FBADDR(128,480), 0xff, 128);
 	gdium_dma_init(gc);
+	gdium_cnattach(gc);
 
 	/*
 	 * Calibrate the timer if YAMON failed to tell us.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2009/08/06 00:50:26 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2009/08/06 00:50:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -70,7 +70,7 @@ CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
-int	mainbus_found;
+static bool mainbus_found;
 
 const char * const mainbusdevs[] = {
 	"cpu",
@@ -96,7 +96,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	size_t i;
 
-	mainbus_found = 1;
+	mainbus_found = true;
 	aprint_normal("\n");
 
 #if defined(PCI_NETBSD_CONFIGURE)

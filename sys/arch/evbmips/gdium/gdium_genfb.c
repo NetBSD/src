@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_genfb.c,v 1.1 2009/08/06 00:50:26 matt Exp $	*/
+/*	$NetBSD: gdium_genfb.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_genfb.c,v 1.1 2009/08/06 00:50:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_genfb.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -86,6 +86,8 @@ gdium_cnattach(struct gdium_config *gc)
 	ri->ri_bits = (char *)MIPS_PHYS_TO_KSEG1(BONITO_PCILO_BASE + reg);
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
+	memset(ri->ri_bits, 0, 0x200000);
+
 	/* use as much of the screen as the font permits */
 	rasops_init(ri, 30, 80);
 
@@ -97,7 +99,7 @@ gdium_cnattach(struct gdium_config *gc)
 	gdium_stdscreen.textops = &ri->ri_ops;
 	gdium_stdscreen.capabilities = ri->ri_caps;
 
-	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.allocattr(ri, 0, ri->ri_rows - 1, 0, &defattr);
 
 	wsdisplay_preattach(&gdium_stdscreen, ri, 0, 0, defattr);
 	
@@ -105,7 +107,7 @@ gdium_cnattach(struct gdium_config *gc)
 }
 #else	/* NWSDISPLAY > 0 */
 int
-gdium_cnattach(void)
+gdium_cnattach(struct gdium_config *gc)
 {
 	return -1;
 }
