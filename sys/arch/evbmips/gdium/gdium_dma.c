@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_dma.c,v 1.1 2009/08/06 00:50:26 matt Exp $	*/
+/*	$NetBSD: gdium_dma.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_dma.c,v 1.1 2009/08/06 00:50:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_dma.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
 
 #include <sys/param.h>
 
@@ -45,15 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: gdium_dma.c,v 1.1 2009/08/06 00:50:26 matt Exp $");
 #include <evbmips/gdium/gdiumvar.h>
 
 void
-gdium_dma_init(struct gdium_config *acp)
+gdium_dma_init(struct gdium_config *gc)
 {
 	bus_dma_tag_t t;
 
 	/*
 	 * Initialize the DMA tag used for PCI DMA.
 	 */
-	t = &acp->gc_pci_dmat;
-	t->_cookie = acp;
+	t = &gc->gc_pci_dmat;
+	t->_cookie = gc;
 	t->_wbase = GDIUM_DMA_PCI_PCIBASE;
 	t->_physbase = GDIUM_DMA_PCI_PHYSBASE;
 	t->_wsize = GDIUM_DMA_PCI_SIZE;
