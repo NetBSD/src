@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.18 2009/08/06 00:05:01 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.19 2009/08/06 00:20:45 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1315,7 +1315,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int i, opt, error, r, loopcount;
+	int i, opt, error, r, loopcount, nodetach;
 	struct timeval tv;
 	CLEANERINFO ci;
 #ifndef USE_CLIENT_SERVER
@@ -1331,6 +1331,7 @@ main(int argc, char **argv)
 	stat_report	= 0;
 	inval_segment	= -1;
 	copylog_filename = NULL;
+	nodetach        = 0;
 
 	/*
 	 * Parse command-line arguments
@@ -1347,7 +1348,11 @@ main(int argc, char **argv)
 			    do_coalesce++;
 			    break;
 		    case 'd':	/* Debug mode. */
+			    nodetach++;
 			    debug++;
+			    break;
+		    case 'D':	/* stay-on-foreground */
+			    nodetach++;
 			    break;
 		    case 'f':	/* Use fs idle time rather than cpu idle */
 			    use_fs_idle = 1;
@@ -1397,9 +1402,9 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Set up daemon mode or verbose debug mode
+	 * Set up daemon mode or foreground mode
 	 */
-	if (debug) {
+	if (nodetach) {
 		openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID | LOG_PERROR,
 			LOG_DAEMON);
 		signal(SIGINT, sig_report);
