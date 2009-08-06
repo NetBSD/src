@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: bonito_pci.c,v 1.6 2009/08/06 00:42:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.6 2009/08/06 00:42:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ bonito_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 		*fp = (tag >> 8) & 0x7;
 }
 
-static int
+static bool
 bonito_conf_addr(struct bonito_config *bc, pcitag_t tag, int offset,
     u_int32_t *cfgoff, u_int32_t *pcimap_cfg)
 {
@@ -120,16 +120,15 @@ bonito_conf_addr(struct bonito_config *bc, pcitag_t tag, int offset,
 
 	if (b == 0) {
 		if (d > (31 - bc->bc_adbase))
-			return (1);
-		*cfgoff = (1UL << (d + bc->bc_adbase)) | (f << 8) |
-		    offset;
+			return true;
+		*cfgoff = (1UL << (d + bc->bc_adbase)) | (f << 8) | offset;
 		*pcimap_cfg = 0;
 	} else {
 		*cfgoff = tag | offset;
 		*pcimap_cfg = BONITO_PCIMAPCFG_TYPE1;
 	}
 
-	return (0);
+	return false;
 }
 
 pcireg_t
