@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.35 2009/08/06 15:58:46 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.36 2009/08/06 16:13:08 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.35 2009/08/06 15:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.36 2009/08/06 16:13:08 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -651,8 +651,7 @@ primary_cache_is_2way:
 		    r10k_pdcache_wb_range;
 		break;
 #endif /* ENABLE_MIPS4_CACHE_R10K */
-#endif /* MIPS3 || MIPS4 */
-#ifdef MIPS64_LOONGSON2
+#ifdef MIPS3_LOONGSON2
 	case MIPS_LOONGSON2:
 		mips_picache_ways = 4;
 		mips_pdcache_ways = 4;
@@ -684,6 +683,7 @@ primary_cache_is_2way:
 		/* Virtually-indexed cache; no use for colors. */
 		break;
 #endif
+#endif /* MIPS3 || MIPS4 */
 	default:
 		panic("can't handle primary cache on impl 0x%x",
 		    MIPS_PRID_IMPL(cpu_id));
@@ -827,8 +827,7 @@ primary_cache_is_2way:
 		    r10k_sdcache_wb_range;
 		break;
 #endif /* ENABLE_MIPS4_CACHE_R10K */
-#endif /* MIPS3 || MIPS4 */
-#ifdef MIPS64_LOONGSON2
+#ifdef MIPS3_LOONGSON2
 	case MIPS_LOONGSON2:
 		mips_sdcache_ways = 4;
 		mips_sdcache_size = 512*1024;
@@ -847,6 +846,7 @@ primary_cache_is_2way:
 		    r4k_sdcache_wb_range_32;
 		break;
 #endif
+#endif /* MIPS3 || MIPS4 */
 
 	default:
 		panic("can't handle secondary cache on impl 0x%x",
