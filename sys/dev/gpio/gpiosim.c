@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.4 2009/07/28 15:28:24 drochner Exp $ */
+/* $NetBSD: gpiosim.c,v 1.5 2009/08/06 13:16:49 mbalmer Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ gpiosim_detach(device_t self, int flags)
 	struct gpiosim_softc *sc = device_private(self);
 	struct sysctlnode node;
 
+	pmf_device_deregister(self);
 	if (sc->sc_node != NULL) {
 		node = *sc->sc_node;
 		sysctl_destroyv(&node, CTL_EOL);
