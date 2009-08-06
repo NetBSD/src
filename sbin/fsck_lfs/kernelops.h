@@ -17,6 +17,6 @@ struct kernelops {
 	ssize_t (*ko_pread)(int, void *, size_t, off_t);
 	ssize_t (*ko_pwrite)(int, const void *, size_t, off_t);
 };
-extern struct kernelops kops;
+extern const struct kernelops kops;
 
 #endif /* _LFS_KERNEL_OPS_H_ */
