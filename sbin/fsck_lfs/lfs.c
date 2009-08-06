@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.30 2009/02/22 20:28:05 ad Exp $ */
+/* $NetBSD: lfs.c,v 1.31 2009/08/06 00:51:55 pooka Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -90,6 +90,7 @@
 #include "vnode.h"
 #include "lfs_user.h"
 #include "segwrite.h"
+#include "kernelops.h"
 
 #define panic call_panic
 
@@ -117,12 +118,12 @@ lfs_vop_strategy(struct ubuf * bp)
 	int count;
 
 	if (bp->b_flags & B_READ) {
-		count = pread(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
+		count = kops.ko_pread(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
 		    dbtob(bp->b_blkno));
 		if (count == bp->b_bcount)
 			bp->b_flags |= B_DONE;
 	} else {
-		count = pwrite(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
+		count = kops.ko_pwrite(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
 		    dbtob(bp->b_blkno));
 		if (count == 0) {
 			perror("pwrite");
