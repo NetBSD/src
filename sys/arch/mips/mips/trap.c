@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.218 2009/08/06 23:07:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.218 2009/08/06 23:07:55 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -240,7 +240,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			    p->p_pid, p->p_comm, (int)fp->f_regs[_R_SP]);
 		} else
 			printf("curlwp == NULL ");
-		printf("ksp=%p\n", &status);
+		printf("ksp=%p ra=%#x\n", &status, (int)frame->tf_regs[TF_RA]);
 #if defined(DDB)
 		kdb_trap(type, (mips_reg_t *) frame);
 		/* XXX force halt XXX */
