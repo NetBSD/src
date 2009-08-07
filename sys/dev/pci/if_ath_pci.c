@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.31 2008/07/09 19:47:24 joerg Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.31.4.1 2009/08/07 18:25:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.31 2008/07/09 19:47:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.31.4.1 2009/08/07 18:25:33 snj Exp $");
 #endif
 
 /*
@@ -68,9 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.31 2008/07/09 19:47:24 joerg Exp $"
 #include <netinet/in.h>
 #endif
 
+#include <external/isc/atheros_hal/dist/ah.h>
+
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ath/ah.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
