@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.6 2009/07/15 18:05:17 christos Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.7 2009/08/07 16:37:12 minskim Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ int
 if_exists(char *ifname)
 {
 	int s;
-#ifdef SIOCGZIFDATA
+#ifdef SIOCGIFDATA
 	struct ifdatareq ifr;
 #define ifr_name ifdr_name
 #else
