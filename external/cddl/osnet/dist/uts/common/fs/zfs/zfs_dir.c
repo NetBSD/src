@@ -213,7 +213,7 @@ zfs_dirent_lock(zfs_dirlock_t **dlpp, znode_t *dzp, char *name, znode_t **zpp,
 	 * prevent us deadlocking trying to grab the same wide lock
 	 * twice if the two names happen to be case-insensitive
 	 * matches.
-	 *
+	 */
 	if (flag & ZRENAMING)
 		cmpflags = 0;
 	else
@@ -236,9 +236,8 @@ zfs_dirent_lock(zfs_dirlock_t **dlpp, znode_t *dzp, char *name, znode_t **zpp,
 		}
 		for (dl = dzp->z_dirlocks; dl != NULL; dl = dl->dl_next) {
 			if ((u8_strcmp(name, dl->dl_name, 0, cmpflags,
-				    U8_UNICODE_LATEST, &error) == 0) || error != 0){
+				    U8_UNICODE_LATEST, &error) == 0) || error != 0)
 				break;
-			}
 		}
 		if (error != 0) {
 			mutex_exit(&dzp->z_lock);
