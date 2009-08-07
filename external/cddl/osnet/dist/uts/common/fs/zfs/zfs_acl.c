@@ -50,8 +50,8 @@
 #include <sys/dmu.h>
 #include <sys/dnode.h>
 #include <sys/zap.h>
-#include "fs/fs_subr.h"
-#include <acl/acl_common.h>
+#include <sys/fs/fs_subr.h>
+#include <sys/acl/acl_common.h>
 
 #define	ALLOW	ACE_ACCESS_ALLOWED_ACE_TYPE
 #define	DENY	ACE_ACCESS_DENIED_ACE_TYPE

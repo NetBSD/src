@@ -623,8 +623,7 @@ zfs_get_pool_handle(const zfs_handle_t *zhp)
 zfs_handle_t *
 zfs_path_to_zhandle(libzfs_handle_t *hdl, char *path, zfs_type_t argtype)
 {
-	struct stat64 statbuf;
-	struct extmnttab entry;
+	struct statvfs statbuf;
 	int ret;
 
 	if (path[0] != '/' && strncmp(path, "./", strlen("./")) != 0) {
@@ -634,29 +633,18 @@ zfs_path_to_zhandle(libzfs_handle_t *hdl, char *path, zfs_type_t argtype)
 		return (zfs_open(hdl, path, argtype));
 	}
 
-	if (stat64(path, &statbuf) != 0) {
+	if (getstatfs(&statbuf, path) != 0) {
 		(void) fprintf(stderr, "%s: %s\n", path, strerror(errno));
 		return (NULL);
 	}
 
-	rewind(hdl->libzfs_mnttab);
-	while ((ret = getextmntent(hdl->libzfs_mnttab, &entry, 0)) == 0) {
-		if (makedevice(entry.mnt_major, entry.mnt_minor) ==
-		    statbuf.st_dev) {
-			break;
-		}
-	}
-	if (ret != 0) {
-		return (NULL);
-	}
-
-	if (strcmp(entry.mnt_fstype, MNTTYPE_ZFS) != 0) {
+	if (strcmp(statbuf.f_fstypename, MNTTYPE_ZFS) != 0) {
 		(void) fprintf(stderr, gettext("'%s': not a ZFS filesystem\n"),
 		    path);
 		return (NULL);
 	}
 
-	return (zfs_open(hdl, entry.mnt_special, ZFS_TYPE_FILESYSTEM));
+	return (zfs_open(hdl, statbuf.f_mntfromname, ZFS_TYPE_FILESYSTEM));
 }
 
 /*

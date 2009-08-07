@@ -3396,7 +3396,8 @@ share_mount(int op, int argc, char **argv)
 
 		free(dslist);
 	} else if (argc == 0) {
-		struct mnttab entry;
+		struct statvfs *sfs;
+		int i, n;
 
 		if ((op == OP_SHARE) || (options != NULL)) {
 			(void) fprintf(stderr, gettext("missing filesystem "
@@ -3409,14 +3410,17 @@ share_mount(int op, int argc, char **argv)
 		 * display any active ZFS mounts.  We hide any snapshots, since
 		 * they are controlled automatically.
 		 */
-		rewind(mnttab_file);
-		while (getmntent(mnttab_file, &entry) == 0) {
-			if (strcmp(entry.mnt_fstype, MNTTYPE_ZFS) != 0 ||
-			    strchr(entry.mnt_special, '@') != NULL)
+                if ((n = getmntinfo(&sfs, MNT_WAIT)) == 0) {
+			fprintf(stderr, "getmntinfo(): %s\n", strerror(errno));
+                        return (0);
+		}
+		for (i = 0; i < n; i++) {
+			if (strcmp(sfs[i].f_fstypename, MNTTYPE_ZFS) != 0 ||
+			    strchr(sfs[i].f_mntfromname, '@') != NULL)
 				continue;
 
-			(void) printf("%-30s  %s\n", entry.mnt_special,
-			    entry.mnt_mountp);
+			(void) printf("%-30s  %s\n", sfs[i].f_mntfromname,
+			    sfs[i].f_mntonname);
 		}
 
 	} else {
@@ -3495,7 +3499,7 @@ unshare_unmount_path(int op, char *path, int flags, boolean_t is_manual)
 	zfs_handle_t *zhp;
 	int ret;
 	struct stat64 statbuf;
-	struct extmnttab entry;
+	struct mnttab entry, search = { 0 };
 	const char *cmdname = (op == OP_SHARE) ? "unshare" : "unmount";
 	ino_t path_inode;
 
@@ -3516,12 +3520,8 @@ unshare_unmount_path(int op, char *path, int flags, boolean_t is_manual)
 	 * Search for the given (major,minor) pair in the mount table.
 	 */
 	rewind(mnttab_file);
-	while ((ret = getextmntent(mnttab_file, &entry, 0)) == 0) {
-		if (entry.mnt_major == major(statbuf.st_dev) &&
-		    entry.mnt_minor == minor(statbuf.st_dev))
-			break;
-	}
-	if (ret != 0) {
+	search.mnt_mountp = path;
+	if ((ret = getmntany(mnttab_file, &entry, &search)) == 0) {
 		if (op == OP_SHARE) {
 			(void) fprintf(stderr, gettext("cannot %s '%s': not "
 			    "currently mounted\n"), cmdname, path);
@@ -3650,7 +3650,8 @@ unshare_unmount(int op, int argc, char **argv)
 		 * the special type (dataset name), and walk the result in
 		 * reverse to make sure to get any snapshots first.
 		 */
-		struct mnttab entry;
+		struct statvfs *sfs;
+		int i, n;
 		uu_avl_pool_t *pool;
 		uu_avl_t *tree;
 		unshare_unmount_node_t *node;
@@ -3679,17 +3680,22 @@ unshare_unmount(int op, int argc, char **argv)
 		}
 
 		rewind(mnttab_file);
-		while (getmntent(mnttab_file, &entry) == 0) {
+		if ((n = getmntinfo(&sfs, MNT_WAIT)) == 0) {
+			(void) fprintf(stderr, gettext("internal error: "
+			    "getmntinfo() failed\n"));
+			exit(1);
+		}
+                for (i = 0; i < n; i++) {
 
 			/* ignore non-ZFS entries */
-			if (strcmp(entry.mnt_fstype, MNTTYPE_ZFS) != 0)
+			if (strcmp(sfs[i].f_fstypename, MNTTYPE_ZFS) != 0)
 				continue;
 
 			/* ignore snapshots */
-			if (strchr(entry.mnt_special, '@') != NULL)
+			if (strchr(sfs[i].f_mntfromname, '@') != NULL)
 				continue;
 
-			if ((zhp = zfs_open(g_zfs, entry.mnt_special,
+			if ((zhp = zfs_open(g_zfs, sfs[i].f_mntfromname,
 			    ZFS_TYPE_FILESYSTEM)) == NULL) {
 				ret = 1;
 				continue;
@@ -3729,7 +3735,7 @@ unshare_unmount(int op, int argc, char **argv)
 			node = safe_malloc(sizeof (unshare_unmount_node_t));
 			node->un_zhp = zhp;
 
-			if ((node->un_mountp = strdup(entry.mnt_mountp)) ==
+			if ((node->un_mountp = strdup(sfs[i].f_mntonname)) ==
 			    NULL) {
 				(void) fprintf(stderr, gettext("internal error:"
 				    " out of memory\n"));

@@ -63,10 +63,18 @@
 #include <sys/zvol.h>
 #include <sharefs/share.h>
 #include <sys/dmu_objset.h>
+#include <sys/callb.h>
+#include <sys/taskq.h>
 
 #include "zfs_namecheck.h"
 #include "zfs_prop.h"
 #include "zfs_deleg.h"
+
+#ifdef __NetBSD__
+static int	zfs_cmajor = -1;
+static int	zfs_bmajor = -1;
+#define	ddi_driver_major(x)	zfs_cmajor
+#endif
 
 extern struct modlfs zfs_modlfs;
 
@@ -392,6 +400,10 @@ zfs_secpolicy_send(zfs_cmd_t *zc, cred_t *cr)
 int
 zfs_secpolicy_share(zfs_cmd_t *zc, cred_t *cr)
 {
+#ifdef __NetBSD__
+	printf("XXX zfs_secpolicy_share write me\n");
+	return EPERM;
+#else
 	if (!INGLOBALZONE(curproc))
 		return (EPERM);
 
@@ -418,6 +430,7 @@ zfs_secpolicy_share(zfs_cmd_t *zc, cred_t *cr)
 		return (dsl_deleg_access(zc->zc_name,
 		    ZFS_DELEG_PERM_SHARE, cr));
 	}
+#endif	/* __NetBSD__ */
 }
 
 static int
@@ -1690,6 +1703,7 @@ zfs_ioc_pool_get_props(zfs_cmd_t *zc)
 	int error;
 	nvlist_t *nvp = NULL;
 
+	dprintf("zfs_ioc_pool_get_props called %s \n", spa->spa_name);
 	if ((error = spa_open(zc->zc_name, &spa, FTAG)) != 0)
 		return (error);
 
@@ -1704,6 +1718,7 @@ zfs_ioc_pool_get_props(zfs_cmd_t *zc)
 
 	if (nvp)
 		nvlist_free(nvp);
+	dprintf("zfs_ioc_pool_get_props property list set\n");
 	return (error);
 }
 
@@ -1857,21 +1872,9 @@ zfs_ioc_remove_minor(zfs_cmd_t *zc)
 static vfs_t *
 zfs_get_vfs(const char *resource)
 {
-	struct vfs *vfsp;
-	struct vfs *vfs_found = NULL;
 
-	vfs_list_read_lock();
-	vfsp = rootvfs;
-	do {
-		if (strcmp(refstr_value(vfsp->vfs_resource), resource) == 0) {
-			VFS_HOLD(vfsp);
-			vfs_found = vfsp;
-			break;
-		}
-		vfsp = vfsp->vfs_next;
-	} while (vfsp != rootvfs);
-	vfs_list_unlock();
-	return (vfs_found);
+	printf("XXX zfs_get_vfs write me\n");
+	return NULL;
 }
 
 /* ARGSUSED */
@@ -2264,6 +2267,12 @@ zfs_unmount_snap(char *name, void *arg)
 	}
 
 	if (vfsp) {
+#ifdef __NetBSD__
+		int err;
+		if ((err = dounmount(vfsp, MNT_FORCE, curlwp)) != 0)
+			return (err);
+#else
+
 		/*
 		 * Always force the unmount for snapshots.
 		 */
@@ -2277,6 +2286,7 @@ zfs_unmount_snap(char *name, void *arg)
 		VFS_RELE(vfsp);
 		if ((err = dounmount(vfsp, flag, kcred)) != 0)
 			return (err);
+#endif
 	}
 	return (0);
 }
@@ -2473,10 +2483,10 @@ zfs_ioc_recv(zfs_cmd_t *zc)
 		return (error);
 
 	fd = zc->zc_cookie;
-	fp = getf(fd);
-	if (fp == NULL) {
+	error = fd_getvnode(fd, &fp);
+	if (error != 0) {
 		nvlist_free(props);
-		return (EBADF);
+		return (error);
 	}
 
 	if (dmu_objset_open(tofs, DMU_OST_ANY,
@@ -2536,7 +2546,7 @@ zfs_ioc_recv(zfs_cmd_t *zc)
 	}
 
 	off = fp->f_offset;
-	error = dmu_recv_stream(&drc, fp->f_vnode, &off);
+	error = dmu_recv_stream(&drc, fp->f_data, &off);
 
 	if (error == 0 && zfsvfs) {
 		char *osname;
@@ -2560,7 +2570,7 @@ zfs_ioc_recv(zfs_cmd_t *zc)
 	}
 
 	zc->zc_cookie = off - fp->f_offset;
-	if (VOP_SEEK(fp->f_vnode, fp->f_offset, &off, NULL) == 0)
+	if (VOP_SEEK(fp->f_data, fp->f_offset, &off, NULL) == 0)
 		fp->f_offset = off;
 
 	/*
@@ -2577,7 +2587,7 @@ out:
 	}
 	nvlist_free(props);
 	nvlist_free(origprops);
-	releasef(fd);
+	fd_putfile(fd);
 	return (error);
 }
 
@@ -2623,20 +2633,20 @@ zfs_ioc_send(zfs_cmd_t *zc)
 		}
 	}
 
-	fp = getf(zc->zc_cookie);
-	if (fp == NULL) {
+	error = fd_getvnode(zc->zc_cookie, &fp);
+	if (error != 0) {
 		dmu_objset_close(tosnap);
 		if (fromsnap)
 			dmu_objset_close(fromsnap);
-		return (EBADF);
+		return (error);
 	}
 
 	off = fp->f_offset;
-	error = dmu_sendbackup(tosnap, fromsnap, zc->zc_obj, fp->f_vnode, &off);
+	error = dmu_sendbackup(tosnap, fromsnap, zc->zc_obj, fp->f_data, &off);
 
-	if (VOP_SEEK(fp->f_vnode, fp->f_offset, &off, NULL) == 0)
+	if (VOP_SEEK(fp->f_data, fp->f_offset, &off, NULL) == 0)
 		fp->f_offset = off;
-	releasef(zc->zc_cookie);
+	fd_putfile(zc->zc_cookie);
 	if (fromsnap)
 		dmu_objset_close(fromsnap);
 	dmu_objset_close(tosnap);
@@ -2782,6 +2792,17 @@ zfs_ioc_promote(zfs_cmd_t *zc)
  * the first file system is shared.
  * Neither sharefs, nfs or smbsrv are unloadable modules.
  */
+#ifdef __NetBSD__
+
+static int
+zfs_ioc_share(zfs_cmd_t *zc)
+{
+
+	return EOPNOTSUPP;
+}
+
+#else	/* __NetBSD__ */
+
 int (*znfsexport_fs)(void *arg);
 int (*zshare_fs)(enum sharefs_sys_op, share_t *, uint32_t);
 int (*zsmbexport_fs)(void *arg, boolean_t add_share);
@@ -2908,6 +2929,7 @@ zfs_ioc_share(zfs_cmd_t *zc)
 	return (error);
 
 }
+#endif	/* __NetBSD__ */
 
 /*
  * pool create, destroy, and export don't log the history as part of
@@ -2915,56 +2937,56 @@ zfs_ioc_share(zfs_cmd_t *zc)
  * do the logging of those commands.
  */
 static zfs_ioc_vec_t zfs_ioc_vec[] = {
-	{ zfs_ioc_pool_create, zfs_secpolicy_config, POOL_NAME, B_FALSE },
+	{ zfs_ioc_pool_create, zfs_secpolicy_config, POOL_NAME, B_FALSE }, /* 0 */
 	{ zfs_ioc_pool_destroy,	zfs_secpolicy_config, POOL_NAME, B_FALSE },
 	{ zfs_ioc_pool_import, zfs_secpolicy_config, POOL_NAME, B_TRUE },
 	{ zfs_ioc_pool_export, zfs_secpolicy_config, POOL_NAME, B_FALSE },
 	{ zfs_ioc_pool_configs,	zfs_secpolicy_none, NO_NAME, B_FALSE },
-	{ zfs_ioc_pool_stats, zfs_secpolicy_read, POOL_NAME, B_FALSE },
+	{ zfs_ioc_pool_stats, zfs_secpolicy_read, POOL_NAME, B_FALSE }, /* 5 */
 	{ zfs_ioc_pool_tryimport, zfs_secpolicy_config, NO_NAME, B_FALSE },
 	{ zfs_ioc_pool_scrub, zfs_secpolicy_config, POOL_NAME, B_TRUE },
 	{ zfs_ioc_pool_freeze, zfs_secpolicy_config, NO_NAME, B_FALSE },
 	{ zfs_ioc_pool_upgrade,	zfs_secpolicy_config, POOL_NAME, B_TRUE },
-	{ zfs_ioc_pool_get_history, zfs_secpolicy_config, POOL_NAME, B_FALSE },
+       	{ zfs_ioc_pool_get_history, zfs_secpolicy_config, POOL_NAME, B_FALSE }, /* 10 */
 	{ zfs_ioc_vdev_add, zfs_secpolicy_config, POOL_NAME, B_TRUE },
 	{ zfs_ioc_vdev_remove, zfs_secpolicy_config, POOL_NAME, B_TRUE },
 	{ zfs_ioc_vdev_set_state, zfs_secpolicy_config,	POOL_NAME, B_TRUE },
 	{ zfs_ioc_vdev_attach, zfs_secpolicy_config, POOL_NAME, B_TRUE },
-	{ zfs_ioc_vdev_detach, zfs_secpolicy_config, POOL_NAME, B_TRUE },
+	{ zfs_ioc_vdev_detach, zfs_secpolicy_config, POOL_NAME, B_TRUE }, /* 15 */
 	{ zfs_ioc_vdev_setpath,	zfs_secpolicy_config, POOL_NAME, B_FALSE },
 	{ zfs_ioc_objset_stats,	zfs_secpolicy_read, DATASET_NAME, B_FALSE },
 	{ zfs_ioc_objset_zplprops, zfs_secpolicy_read, DATASET_NAME, B_FALSE },
 	{ zfs_ioc_dataset_list_next, zfs_secpolicy_read,
 	    DATASET_NAME, B_FALSE },
 	{ zfs_ioc_snapshot_list_next, zfs_secpolicy_read,
-	    DATASET_NAME, B_FALSE },
+	  DATASET_NAME, B_FALSE }, /* 20*/
 	{ zfs_ioc_set_prop, zfs_secpolicy_none, DATASET_NAME, B_TRUE },
 	{ zfs_ioc_create_minor,	zfs_secpolicy_minor, DATASET_NAME, B_FALSE },
 	{ zfs_ioc_remove_minor,	zfs_secpolicy_minor, DATASET_NAME, B_FALSE },
 	{ zfs_ioc_create, zfs_secpolicy_create, DATASET_NAME, B_TRUE },
-	{ zfs_ioc_destroy, zfs_secpolicy_destroy, DATASET_NAME, B_TRUE },
+	{ zfs_ioc_destroy, zfs_secpolicy_destroy, DATASET_NAME, B_TRUE }, /* 25 */
 	{ zfs_ioc_rollback, zfs_secpolicy_rollback, DATASET_NAME, B_TRUE },
 	{ zfs_ioc_rename, zfs_secpolicy_rename,	DATASET_NAME, B_TRUE },
 	{ zfs_ioc_recv, zfs_secpolicy_receive, DATASET_NAME, B_TRUE },
 	{ zfs_ioc_send, zfs_secpolicy_send, DATASET_NAME, B_TRUE },
-	{ zfs_ioc_inject_fault,	zfs_secpolicy_inject, NO_NAME, B_FALSE },
+	{ zfs_ioc_inject_fault,	zfs_secpolicy_inject, NO_NAME, B_FALSE }, /* 30 */
 	{ zfs_ioc_clear_fault, zfs_secpolicy_inject, NO_NAME, B_FALSE },
 	{ zfs_ioc_inject_list_next, zfs_secpolicy_inject, NO_NAME, B_FALSE },
 	{ zfs_ioc_error_log, zfs_secpolicy_inject, POOL_NAME, B_FALSE },
 	{ zfs_ioc_clear, zfs_secpolicy_config, POOL_NAME, B_TRUE },
-	{ zfs_ioc_promote, zfs_secpolicy_promote, DATASET_NAME, B_TRUE },
+	{ zfs_ioc_promote, zfs_secpolicy_promote, DATASET_NAME, B_TRUE }, /* 35 */
 	{ zfs_ioc_destroy_snaps, zfs_secpolicy_destroy,	DATASET_NAME, B_TRUE },
 	{ zfs_ioc_snapshot, zfs_secpolicy_snapshot, DATASET_NAME, B_TRUE },
 	{ zfs_ioc_dsobj_to_dsname, zfs_secpolicy_config, POOL_NAME, B_FALSE },
 	{ zfs_ioc_obj_to_path, zfs_secpolicy_config, NO_NAME, B_FALSE },
-	{ zfs_ioc_pool_set_props, zfs_secpolicy_config,	POOL_NAME, B_TRUE },
+	{ zfs_ioc_pool_set_props, zfs_secpolicy_config,	POOL_NAME, B_TRUE }, /* 40 */
 	{ zfs_ioc_pool_get_props, zfs_secpolicy_read, POOL_NAME, B_FALSE },
 	{ zfs_ioc_set_fsacl, zfs_secpolicy_fsacl, DATASET_NAME, B_TRUE },
 	{ zfs_ioc_get_fsacl, zfs_secpolicy_read, DATASET_NAME, B_FALSE },
 	{ zfs_ioc_iscsi_perm_check, zfs_secpolicy_iscsi,
 	    DATASET_NAME, B_FALSE },
 	{ zfs_ioc_share, zfs_secpolicy_share, DATASET_NAME, B_FALSE },
-	{ zfs_ioc_inherit_prop, zfs_secpolicy_inherit, DATASET_NAME, B_TRUE },
+	{ zfs_ioc_inherit_prop, zfs_secpolicy_inherit, DATASET_NAME, B_TRUE }, /* 46 */
 };
 
 static int
@@ -2974,9 +2996,11 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	uint_t vec;
 	int error, rc;
 
+	dprintf("zfsdev_ioctl called \n");
+
 	if (getminor(dev) != 0)
 		return (zvol_ioctl(dev, cmd, arg, flag, cr, rvalp));
-
+	dprintf("zfsdev_ioctl -> zvol_ioctl\n");
 	vec = cmd - ZFS_IOC;
 	ASSERT3U(getmajor(dev), ==, ddi_driver_major(zfs_dip));
 
@@ -2986,7 +3010,8 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	zc = kmem_zalloc(sizeof (zfs_cmd_t), KM_SLEEP);
 
 	error = xcopyin((void *)arg, zc, sizeof (zfs_cmd_t));
-
+	dprintf("zfsdev_ioct zc_value %s, zc_string\n", zc->zc_value, zc->zc_string);
+	dprintf("zfsdev_ioctl -> calling zfs_ioc_vec secpolicy function on %d\n", vec);
 	if (error == 0)
 		error = zfs_ioc_vec[vec].zvec_secpolicy(zc, cr);
 
@@ -2995,6 +3020,7 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	 * the lower layers.
 	 */
 	if (error == 0) {
+		dprintf("zfsdev_ioctl, zc->zc_name %s\n", zc->zc_name);
 		zc->zc_name[sizeof (zc->zc_name) - 1] = '\0';
 		switch (zfs_ioc_vec[vec].zvec_namecheck) {
 		case POOL_NAME:
@@ -3012,6 +3038,7 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 		}
 	}
 
+	dprintf("zfsdev_ioctl -> calling zfs_ioc_vec zvec_func on %d\n", vec);
 	if (error == 0)
 		error = zfs_ioc_vec[vec].zvec_func(zc);
 
@@ -3023,6 +3050,193 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	}
 
 	kmem_free(zc, sizeof (zfs_cmd_t));
+	return (error);
+}
+
+#ifdef __NetBSD__
+
+#include <sys/module.h>
+#include <uvm/uvm_extern.h>
+
+MODULE(MODULE_CLASS_VFS, zfs, "solaris");
+
+static int
+nb_zvol_copen(dev_t dev, int flag, int mode, lwp_t *l)
+{
+
+	return zvol_open(&dev, flag, OTYPCHR, kauth_cred_get());
+}
+
+static int
+nb_zvol_cclose(dev_t dev, int flag, int mode, lwp_t *l)
+{
+
+	return zvol_close(dev, flag, OTYPCHR, kauth_cred_get());
+}
+
+static int
+nb_zvol_bopen(dev_t dev, int flag, int mode, lwp_t *l)
+{
+
+	return zvol_open(&dev, flag, OTYPBLK, kauth_cred_get());
+}
+
+static int
+nb_zvol_bclose(dev_t dev, int flag, int mode, lwp_t *l)
+{
+
+	return zvol_close(dev, flag, OTYPBLK, kauth_cred_get());
+}
+
+static int
+nb_zvol_read(dev_t dev, struct uio *uio, int flag)
+{
+
+	return zvol_read(dev, uio, kauth_cred_get());
+}
+
+static int
+nb_zvol_write(dev_t dev, struct uio *uio, int flag)
+{
+
+	return zvol_write(dev, uio, kauth_cred_get());
+}
+
+static int
+nb_zfsdev_ioctl(dev_t dev, u_long cmd, void *argp, int flag, lwp_t *l)
+{
+	int rval;
+
+	return zfsdev_ioctl(dev, cmd, (intptr_t)argp, flag, kauth_cred_get(),
+	    &rval);
+}
+
+const struct bdevsw zfs_bdevsw = {
+	.d_open = nb_zvol_bopen,
+	.d_close = nb_zvol_bclose,
+	.d_strategy = zvol_strategy,
+	.d_ioctl = nb_zfsdev_ioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_flag = D_DISK | D_MPSAFE
+};
+
+const struct cdevsw zfs_cdevsw = {
+	.d_open = nb_zvol_copen,
+	.d_close = nb_zvol_cclose,
+	.d_read = nb_zvol_read,
+	.d_write = nb_zvol_write,
+	.d_ioctl = nb_zfsdev_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK | D_MPSAFE
+};
+
+uint_t zfs_fsyncer_key;
+extern uint_t rrw_tsd_key;
+
+/* ZFS must be used on machines with at least 512Mb. */
+/*#define ZFS_MIN_MEGS 512 */
+#define ZFS_MIN_MEGS 128 /*XXX Use 128Mb for testing only.*/
+
+static int
+zfs_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+	int active, inactive;
+	uint64_t availrmem;
+	
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		printf("WARNING: ZFS on NetBSD is under development\n");
+		availrmem = (uint64_t)physmem * PAGE_SIZE / 1048576;
+		if (availrmem < ZFS_MIN_MEGS * 80 / 100) {
+			printf("ERROR: at least %dMB of memory required to"
+			    "use ZFS\n", ZFS_MIN_MEGS);
+			return ENOMEM;
+		}
+		error = lwp_specific_key_create(&zfs_fsyncer_key, NULL);
+		if (error != 0) {
+			return error;
+		}
+		error = lwp_specific_key_create(&rrw_tsd_key, NULL);
+		if (error != 0) {
+			lwp_specific_key_delete(zfs_fsyncer_key);
+			return error;
+		}
+		spa_init(FREAD | FWRITE);
+		zfs_init();
+		zvol_init();
+		zfs_vfsinit(16, MOUNT_ZFS); /* I need to use well defined args. */
+		error = devsw_attach("zfs", &zfs_bdevsw, &zfs_bmajor,
+		    &zfs_cdevsw, &zfs_cmajor);
+		if (error != 0) {
+			zvol_fini();
+			zfs_fini();
+			spa_fini();
+			lwp_specific_key_delete(zfs_fsyncer_key);
+			lwp_specific_key_delete(rrw_tsd_key);
+		}
+		return error;
+
+	case MODULE_CMD_FINI:
+		if (spa_busy() || zfs_busy() || zvol_busy() ||
+		    zio_injection_enabled)
+			return EBUSY;
+		error = devsw_detach(&zfs_bdevsw, &zfs_cdevsw);
+		zvol_fini();
+		zfs_vfsfini();
+		zfs_fini();
+		spa_fini();
+		lwp_specific_key_delete(zfs_fsyncer_key);
+		lwp_specific_key_delete(rrw_tsd_key);
+		return error;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		/*
+		 * We don't want to be autounloaded because unlike
+		 * other subsystems, we read our own configuration
+		 * from disk and provide things that might be used
+		 * later (zvols).
+		 */
+		return EBUSY;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#else	/* __NetBSD__ */
+
+int
+_fini(void)
+{
+	int error;
+
+	if (spa_busy() || zfs_busy() || zvol_busy() || zio_injection_enabled)
+		return (EBUSY);
+
+	if ((error = mod_remove(&modlinkage)) != 0)
+		return (error);
+
+	zvol_fini();
+	zfs_fini();
+	spa_fini();
+	if (zfs_nfsshare_inited)
+		(void) ddi_modclose(nfs_mod);
+	if (zfs_smbshare_inited)
+		(void) ddi_modclose(smbsrv_mod);
+	if (zfs_nfsshare_inited || zfs_smbshare_inited)
+		(void) ddi_modclose(sharefs_mod);
+
+	tsd_destroy(&zfs_fsyncer_key);
+	ldi_ident_release(zfs_li);
+	zfs_li = NULL;
+	mutex_destroy(&zfs_share_lock);
+
 	return (error);
 }
 
@@ -3199,3 +3413,4 @@ _info(struct modinfo *modinfop)
 {
 	return (mod_info(&modlinkage, modinfop));
 }
+#endif	/* __NetBSD__ */
