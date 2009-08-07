@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_txt.c,v 1.3 2008/12/12 22:55:56 lukem Exp $ */
+/*	$NetBSD: ex_txt.c,v 1.4 2009/08/07 16:19:54 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -407,7 +407,7 @@ txt_dent(SCR *sp, TEXT *tp)
 	 */
 	cno = 0;
 	tabs = 0;
-	if (!O_ISSET(sp, O_EXPANDTABS)) {
+	if (!O_ISSET(sp, O_EXPANDTAB)) {
 		for (; cno + COL_OFF(cno, ts) <= scno; ++tabs)
 			cno += COL_OFF(cno, ts);
 	}
