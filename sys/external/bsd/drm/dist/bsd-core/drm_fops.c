@@ -70,9 +70,7 @@ int drm_open_helper(dev_t kdev, int flags, int fmt, struct proc *p,
 
 	DRM_LOCK();
 	priv = drm_find_file_by_proc(dev, p);
-	if (priv) {
-		priv->refs++;
-	} else {
+	if (!priv) {
 		priv = malloc(sizeof(*priv), DRM_MEM_FILES, M_NOWAIT | M_ZERO);
 		if (priv == NULL) {
 			DRM_UNLOCK();
@@ -81,7 +79,6 @@ int drm_open_helper(dev_t kdev, int flags, int fmt, struct proc *p,
 		priv->uid		= kauth_cred_getsvuid(p->p_cred);
 		priv->pid		= p->p_pid;
 
-		priv->refs		= 1;
 		priv->minor		= m;
 		priv->ioctl_count 	= 0;
 
