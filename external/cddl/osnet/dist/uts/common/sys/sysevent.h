@@ -188,14 +188,14 @@ typedef struct sysevent_value {
 /*
  * Event channel interface definitions
  */
-int sysevent_evc_bind(const char *, evchan_t **, uint32_t);
-void sysevent_evc_unbind(evchan_t *);
+/*int sysevent_evc_bind(const char *, evchan_t **, uint32_t);*/
+/*void sysevent_evc_unbind(evchan_t *);*/
 int sysevent_evc_subscribe(evchan_t *, const char *, const char *,
     int (*)(sysevent_t *, void *), void *, uint32_t);
 void sysevent_evc_unsubscribe(evchan_t *, const char *);
 int sysevent_evc_publish(evchan_t *, const char *, const char *,
     const char *, const char *, nvlist_t *, uint32_t);
-int sysevent_evc_control(evchan_t *, int, ...);
+/*int sysevent_evc_control(evchan_t *, int, ...);*/
 
 #ifdef	_KERNEL
 

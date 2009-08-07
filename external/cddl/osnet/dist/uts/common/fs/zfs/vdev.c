@@ -940,7 +940,7 @@ vdev_open(vdev_t *vd)
 	}
 
 	error = vd->vdev_ops->vdev_op_open(vd, &osize, &ashift);
-
+	dprintf("vdev_op_open size" PRIu64" %d \n", osize, zio_injection_enabled);
 	if (zio_injection_enabled && error == 0)
 		error = zio_handle_device_injection(vd, ENXIO);
 

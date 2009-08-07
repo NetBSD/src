@@ -474,6 +474,12 @@ zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
 
 	VERIFY(type == ZFS_OWNER || type == ZFS_GROUP);
 
+	if (type == ZFS_OWNER)
+		id = crgetuid(cr);
+	else
+		id = crgetgid(cr);
+	
+#ifdef PORT_SOLARIS	
 	ksid = crgetsid(cr, (type == ZFS_OWNER) ? KSID_OWNER : KSID_GROUP);
 	if (ksid) {
 		id = ksid_getid(ksid);
@@ -483,10 +489,12 @@ zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
 		else
 			id = crgetgid(cr);
 	}
+#endif
 
 	if (!zfsvfs->z_use_fuids || (!IS_EPHEMERAL(id)))
 		return ((uint64_t)id);
 
+#ifdef PORT_SOLARIS
 	rid = ksid_getrid(ksid);
 	domain = ksid_getdomain(ksid);
 
@@ -495,6 +503,9 @@ zfs_fuid_create_cred(zfsvfs_t *zfsvfs, zfs_fuid_type_t type,
 	zfs_fuid_node_add(fuidp, kdomain, rid, idx, id, type);
 
 	return (FUID_ENCODE(idx, rid));
+#else
+	panic(__func__);
+#endif	
 }
 
 /*
@@ -543,8 +554,10 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 		 * This is most likely a result of idmap service
 		 * not being available.
 		 */
+		/* XXX NetBSD we need to define UID_NOBODY in
+		   kernel sources otherwise */
 		if (fuidp == NULL)
-			return (UID_NOBODY);
+			return (crgetuid(cr));
 
 		switch (type) {
 		case ZFS_ACE_USER:
@@ -564,6 +577,7 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 		};
 		domain = fuidp->z_domain_table[idx -1];
 	} else {
+#ifdef PORT_SOLARIS
 		if (type == ZFS_OWNER || type == ZFS_ACE_USER)
 			status = kidmap_getsidbyuid(crgetzone(cr), id,
 			    &domain, &rid);
@@ -580,6 +594,9 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 			rid = UID_NOBODY;
 			domain = nulldomain;
 		}
+#else
+		panic(__func__);
+#endif
 	}
 
 	idx = zfs_fuid_find_by_domain(zfsvfs, domain, &kdomain, tx);
@@ -660,7 +677,8 @@ zfs_groupmember(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr)
 {
 	ksid_t		*ksid = crgetsid(cr, KSID_GROUP);
 	uid_t		gid;
-
+	int             resultp;
+#ifdef PORT_SOLARIS
 	if (ksid) {
 		int 		i;
 		ksid_t		*ksid_groups;
@@ -694,7 +712,7 @@ zfs_groupmember(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr)
 			}
 		}
 	}
-
+#endif
 	/*
 	 * Not found in ksidlist, check posix groups
 	 */

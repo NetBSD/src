@@ -83,9 +83,7 @@ spa_config_load(void)
 	 * Open the configuration file.
 	 */
 	pathname = kmem_alloc(MAXPATHLEN, KM_SLEEP);
-
-	(void) snprintf(pathname, MAXPATHLEN, "%s%s",
-	    (rootdir != NULL) ? "./" : "", spa_config_path);
+	(void) snprintf(pathname, MAXPATHLEN, "%s", spa_config_path);
 
 	file = kobj_open_file(pathname);
 
@@ -127,7 +125,7 @@ spa_config_load(void)
 		if (spa_lookup(nvpair_name(nvpair)) != NULL)
 			continue;
 		spa = spa_add(nvpair_name(nvpair), NULL);
-
+		    
 		/*
 		 * We blindly duplicate the configuration here.  If it's
 		 * invalid, we will catch it when the pool is first opened.
@@ -153,7 +151,6 @@ spa_config_write(spa_config_dirent_t *dp, nvlist_t *nvl)
 	vnode_t *vp;
 	int oflags = FWRITE | FTRUNC | FCREAT | FOFFMAX;
 	char *temp;
-
 	/*
 	 * If the nvlist is empty (NULL), then remove the old cachefile.
 	 */
@@ -226,7 +223,6 @@ spa_config_sync(spa_t *target, boolean_t removing, boolean_t postsysevent)
 		while ((spa = spa_next(spa)) != NULL) {
 			if (spa == target && removing)
 				continue;
-
 			mutex_enter(&spa->spa_props_lock);
 			tdp = list_head(&spa->spa_config_list);
 			if (spa->spa_config == NULL ||
@@ -321,7 +317,7 @@ spa_config_generate(spa_t *spa, vdev_t *vd, uint64_t txg, int getstats)
 	vdev_t *rvd = spa->spa_root_vdev;
 	unsigned long hostid = 0;
 	boolean_t locked = B_FALSE;
-
+	
 	if (vd == NULL) {
 		vd = rvd;
 		locked = B_TRUE;

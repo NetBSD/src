@@ -749,7 +749,7 @@ buf_fini(void)
 static int
 hdr_cons(void *vbuf, void *unused, int kmflag)
 {
-	arc_buf_hdr_t *buf = vbuf;
+	arc_buf_hdr_t *buf = unused;
 
 	bzero(buf, sizeof (arc_buf_hdr_t));
 	refcount_create(&buf->b_refcnt);
@@ -764,7 +764,7 @@ hdr_cons(void *vbuf, void *unused, int kmflag)
 static int
 buf_cons(void *vbuf, void *unused, int kmflag)
 {
-	arc_buf_t *buf = vbuf;
+	arc_buf_t *buf = unused;
 
 	bzero(buf, sizeof (arc_buf_t));
 	rw_init(&buf->b_lock, NULL, RW_DEFAULT, NULL);
@@ -779,7 +779,7 @@ buf_cons(void *vbuf, void *unused, int kmflag)
 static void
 hdr_dest(void *vbuf, void *unused)
 {
-	arc_buf_hdr_t *buf = vbuf;
+	arc_buf_hdr_t *buf = unused;
 
 	refcount_destroy(&buf->b_refcnt);
 	cv_destroy(&buf->b_cv);
@@ -792,7 +792,7 @@ hdr_dest(void *vbuf, void *unused)
 static void
 buf_dest(void *vbuf, void *unused)
 {
-	arc_buf_t *buf = vbuf;
+	arc_buf_t *buf = unused;
 
 	rw_destroy(&buf->b_lock);
 }
@@ -1934,7 +1934,7 @@ arc_reclaim_thread(void)
 		/* block until needed, or one second, whichever is shorter */
 		CALLB_CPR_SAFE_BEGIN(&cpr);
 		(void) cv_timedwait(&arc_reclaim_thr_cv,
-		    &arc_reclaim_thr_lock, (lbolt + hz));
+		    &arc_reclaim_thr_lock, (hz));
 		CALLB_CPR_SAFE_END(&cpr, &arc_reclaim_thr_lock);
 	}
 
@@ -3334,6 +3334,20 @@ arc_tempreserve_space(uint64_t reserve, uint64_t txg)
 	return (0);
 }
 
+#if defined(__NetBSD__) && defined(_KERNEL)
+/* Reclaim hook registered to uvm for reclaiming KVM and memory */
+static void
+arc_uvm_reclaim_hook(void)
+{
+
+	if (mutex_tryenter(&arc_reclaim_thr_lock)) {
+		cv_broadcast(&arc_reclaim_thr_cv);
+		mutex_exit(&arc_reclaim_thr_lock);
+	}
+}
+
+#endif /* __NetBSD__ */
+
 void
 arc_init(void)
 {
@@ -3444,7 +3458,15 @@ arc_init(void)
 	}
 
 	(void) thread_create(NULL, 0, arc_reclaim_thread, NULL, 0, &p0,
-	    TS_RUN, minclsyspri);
+	    TS_RUN, maxclsyspri);
+
+#if defined(__NetBSD__) && defined(_KERNEL)
+	static struct uvm_reclaim_hook hook;
+
+	hook.uvm_reclaim_hook = &arc_uvm_reclaim_hook;
+
+	uvm_reclaim_hook_add(&hook);
+#endif
 
 	arc_dead = FALSE;
 	arc_warm = B_FALSE;
@@ -3492,7 +3514,8 @@ arc_fini(void)
 	mutex_destroy(&arc_mru_ghost->arcs_mtx);
 	mutex_destroy(&arc_mfu->arcs_mtx);
 	mutex_destroy(&arc_mfu_ghost->arcs_mtx);
-
+	mutex_destroy(&arc_l2c_only->arcs_mtx);
+	
 	mutex_destroy(&zfs_write_limit_lock);
 
 	buf_fini();
@@ -4251,7 +4274,7 @@ l2arc_feed_thread(void)
 		 */
 		CALLB_CPR_SAFE_BEGIN(&cpr);
 		(void) cv_timedwait(&l2arc_feed_thr_cv, &l2arc_feed_thr_lock,
-		    lbolt + (hz * l2arc_feed_secs));
+		    (hz * l2arc_feed_secs));
 		CALLB_CPR_SAFE_END(&cpr, &l2arc_feed_thr_lock);
 
 		/*

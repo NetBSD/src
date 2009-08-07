@@ -31,7 +31,6 @@
 
 #include <sys/types.h>
 #include <sys/vnode.h>
-#include <sys/vfs_opreg.h>
 #include <sys/mutex.h>
 #include <sys/dirent.h>
 #include <sys/extdirent.h>
@@ -43,6 +42,7 @@
 extern "C" {
 #endif
 
+#ifdef PORT_SOLARIS	
 typedef struct gfs_opsvec {
 	const char		*gfsv_name;	/* vnode description */
 	const fs_operation_def_t *gfsv_template; /* ops template */
@@ -50,7 +50,8 @@ typedef struct gfs_opsvec {
 } gfs_opsvec_t;
 
 int gfs_make_opsvec(gfs_opsvec_t *);
-
+#endif
+	
 #define	GFS_CACHE_VNODE		0x1
 
 typedef struct gfs_dirent {
@@ -160,8 +161,8 @@ extern int gfs_vop_lookup(vnode_t *, char *, vnode_t **, pathname_t *,
     int, vnode_t *, cred_t *, caller_context_t *, int *, pathname_t *);
 extern int gfs_vop_readdir(vnode_t *, uio_t *, cred_t *, int *,
     caller_context_t *, int);
-extern int gfs_vop_map(vnode_t *, offset_t, struct as *, caddr_t *,
-    size_t, uchar_t, uchar_t, uint_t, cred_t *, caller_context_t *);
+//extern int gfs_vop_map(vnode_t *, offset_t, struct as *, caddr_t *,
+//	size_t, uchar_t, uchar_t, uint_t, cred_t *, caller_context_t *);
 extern void gfs_vop_inactive(vnode_t *, cred_t *, caller_context_t *);
 
 

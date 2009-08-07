@@ -44,6 +44,7 @@ extern "C" {
 #define	ZRENAMING	0x0010		/* znode is being renamed */
 #define	ZCILOOK		0x0020		/* case-insensitive lookup requested */
 #define	ZCIEXACT	0x0040		/* c-i requires c-s match (rename) */
+#define	ZSAMEDIR	0x0080		/* already hold z_name_lock */
 
 /* mknode flags */
 #define	IS_ROOT_NODE	0x01		/* create a root node */
@@ -52,7 +53,7 @@ extern "C" {
 
 extern int zfs_dirent_lock(zfs_dirlock_t **, znode_t *, char *, znode_t **,
     int, int *, pathname_t *);
-extern void zfs_dirent_unlock(zfs_dirlock_t *);
+extern void zfs_dirent_unlock(zfs_dirlock_t *, int);
 extern int zfs_link_create(zfs_dirlock_t *, znode_t *, dmu_tx_t *, int);
 extern int zfs_link_destroy(zfs_dirlock_t *, znode_t *, dmu_tx_t *, int,
     boolean_t *);

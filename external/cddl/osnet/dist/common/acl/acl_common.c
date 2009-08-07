@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/sysmacros.h>
 #include <acl/acl_common.h>
+#include <sys/kmem.h>
 #else
 #include <errno.h>
 #include <stdlib.h>

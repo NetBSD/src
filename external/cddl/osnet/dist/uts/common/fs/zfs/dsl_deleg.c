@@ -422,7 +422,7 @@ static int
 dsl_check_user_access(objset_t *mos, uint64_t zapobj, const char *perm,
     int checkflag, cred_t *cr)
 {
-	const	gid_t *gids;
+	gid_t	*gids;
 	int	ngids;
 	int	i;
 	uint64_t id;

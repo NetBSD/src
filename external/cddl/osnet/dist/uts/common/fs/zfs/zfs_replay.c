@@ -31,7 +31,6 @@
 #include <sys/sysmacros.h>
 #include <sys/cmn_err.h>
 #include <sys/kmem.h>
-#include <sys/thread.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
 #include <sys/vfs.h>
@@ -44,10 +43,10 @@
 #include <sys/zil.h>
 #include <sys/byteorder.h>
 #include <sys/stat.h>
-#include <sys/mode.h>
 #include <sys/acl.h>
 #include <sys/atomic.h>
 #include <sys/cred.h>
+#include <sys/namei.h>
 
 /*
  * Functions to replay ZFS intent log (ZIL) records
@@ -59,7 +58,7 @@ static void
 zfs_init_vattr(vattr_t *vap, uint64_t mask, uint64_t mode,
 	uint64_t uid, uint64_t gid, uint64_t rdev, uint64_t nodeid)
 {
-	bzero(vap, sizeof (*vap));
+	VATTR_NULL(vap);
 	vap->va_mask = (uint_t)mask;
 	vap->va_type = IFTOVT(mode);
 	vap->va_mode = mode & MODEMASK;
@@ -348,8 +347,12 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 			    lr->lr_uid, lr->lr_gid);
 		}
 
+#ifdef TODO
 		error = VOP_CREATE(ZTOV(dzp), name, &xva.xva_vattr,
 		    0, 0, &vp, kcred, vflg, NULL, &vsec);
+#else
+		panic("%s:%u: unsupported condition", __func__, __LINE__);
+#endif
 		break;
 	case TX_MKDIR_ACL:
 		aclstart = (caddr_t)(lracl + 1);
@@ -378,8 +381,12 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 			    (void *)&name, lracl->lr_fuidcnt, lracl->lr_domcnt,
 			    lr->lr_uid, lr->lr_gid);
 		}
+#ifdef TODO
 		error = VOP_MKDIR(ZTOV(dzp), name, &xva.xva_vattr,
 		    &vp, kcred, NULL, vflg, &vsec);
+#else
+		panic("%s:%u: unsupported condition", __func__, __LINE__);
+#endif
 		break;
 	default:
 		error = ENOTSUP;
@@ -411,6 +418,7 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 	void *start;
 	size_t xvatlen;
 	uint64_t txtype;
+	struct componentname cn;
 	int error;
 
 	if (byteswap) {
@@ -460,6 +468,10 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 		    lr->lr_uid, lr->lr_gid);
 	}
 
+	cn.cn_cred = kcred;
+	cn.cn_flags = SAVENAME;
+
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	switch ((int)lr->lr_common.lrc_txtype) {
 	case TX_CREATE_ATTR:
 		lrattr = (lr_attr_t *)(caddr_t)(lr + 1);
@@ -476,8 +488,8 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 		if (name == NULL)
 			name = (char *)start;
 
-		error = VOP_CREATE(ZTOV(dzp), name, &xva.xva_vattr,
-		    0, 0, &vp, kcred, vflg, NULL, NULL);
+		cn.cn_nameptr = name;
+		error = VOP_CREATE(ZTOV(dzp), &vp, &cn, &xva.xva_vattr /*,vflg*/);
 		break;
 	case TX_MKDIR_ATTR:
 		lrattr = (lr_attr_t *)(caddr_t)(lr + 1);
@@ -494,8 +506,8 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 		if (name == NULL)
 			name = (char *)(lr + 1);
 
-		error = VOP_MKDIR(ZTOV(dzp), name, &xva.xva_vattr,
-		    &vp, kcred, NULL, vflg, NULL);
+		cn.cn_nameptr = name;
+		error = VOP_MKDIR(ZTOV(dzp), &vp, &cn, &xva.xva_vattr /*,vflg*/);
 		break;
 	case TX_MKXATTR:
 		name = (char *)(lr + 1);
@@ -504,16 +516,19 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 	case TX_SYMLINK:
 		name = (char *)(lr + 1);
 		link = name + strlen(name) + 1;
-		error = VOP_SYMLINK(ZTOV(dzp), name, &xva.xva_vattr,
-		    link, kcred, NULL, vflg);
+		cn.cn_nameptr = name;
+		error = VOP_SYMLINK(ZTOV(dzp), &vp, &cn, &xva.xva_vattr, link /*,vflg*/);
 		break;
 	default:
 		error = ENOTSUP;
 	}
+	VOP_UNLOCK(ZTOV(dzp), 0);
 
 out:
-	if (error == 0 && vp != NULL)
+	if (error == 0 && vp != NULL) {
+		VOP_UNLOCK(vp, 0);
 		VN_RELE(vp);
+	}
 
 	VN_RELE(ZTOV(dzp));
 
@@ -528,6 +543,8 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 {
 	char *name = (char *)(lr + 1);	/* name follows lr_remove_t */
 	znode_t *dzp;
+	struct componentname cn;
+	vnode_t *vp;
 	int error;
 	int vflg = 0;
 
@@ -539,18 +556,32 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
+	cn.cn_nameptr = name;
+	cn.cn_namelen = strlen(name);
+	cn.cn_nameiop = DELETE;
+	cn.cn_flags = ISLASTCN | SAVENAME;
+	//cn.cn_lkflags = LK_EXCLUSIVE | LK_RETRY;
+	cn.cn_cred = kcred;
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LOOKUP(ZTOV(dzp), &vp, &cn);
+	if (error != 0) {
+		VOP_UNLOCK(ZTOV(dzp), 0);
+		goto fail;
+	}
 
 	switch ((int)lr->lr_common.lrc_txtype) {
 	case TX_REMOVE:
-		error = VOP_REMOVE(ZTOV(dzp), name, kcred, NULL, vflg);
+		error = VOP_REMOVE(ZTOV(dzp), vp, &cn /*,vflg*/);
 		break;
 	case TX_RMDIR:
-		error = VOP_RMDIR(ZTOV(dzp), name, NULL, kcred, NULL, vflg);
+		error = VOP_RMDIR(ZTOV(dzp), vp, &cn /*,vflg*/);
 		break;
 	default:
 		error = ENOTSUP;
 	}
-
+	vput(vp);
+	VOP_UNLOCK(ZTOV(dzp), 0);
+fail:
 	VN_RELE(ZTOV(dzp));
 
 	return (error);
@@ -561,6 +592,7 @@ zfs_replay_link(zfsvfs_t *zfsvfs, lr_link_t *lr, boolean_t byteswap)
 {
 	char *name = (char *)(lr + 1);	/* name follows lr_link_t */
 	znode_t *dzp, *zp;
+	struct componentname cn;
 	int error;
 	int vflg = 0;
 
@@ -577,8 +609,15 @@ zfs_replay_link(zfsvfs_t *zfsvfs, lr_link_t *lr, boolean_t byteswap)
 
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
+	cn.cn_nameptr = name;
+	cn.cn_cred = kcred;
+	cn.cn_flags = SAVENAME;
 
-	error = VOP_LINK(ZTOV(dzp), ZTOV(zp), name, kcred, NULL, vflg);
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(ZTOV(zp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LINK(ZTOV(dzp), ZTOV(zp), &cn /*,vflg*/);
+	VOP_UNLOCK(ZTOV(zp), 0);
+	VOP_UNLOCK(ZTOV(dzp), 0);
 
 	VN_RELE(ZTOV(zp));
 	VN_RELE(ZTOV(dzp));
@@ -592,6 +631,9 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	char *sname = (char *)(lr + 1);	/* sname and tname follow lr_rename_t */
 	char *tname = sname + strlen(sname) + 1;
 	znode_t *sdzp, *tdzp;
+	struct componentname scn, tcn;
+	vnode_t *svp, *tvp;
+	kthread_t *td = curthread;
 	int error;
 	int vflg = 0;
 
@@ -608,10 +650,43 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
+	svp = tvp = NULL;
 
-	error = VOP_RENAME(ZTOV(sdzp), sname, ZTOV(tdzp), tname, kcred,
-	    NULL, vflg);
+	scn.cn_nameptr = sname;
+	scn.cn_namelen = strlen(sname);
+	scn.cn_nameiop = DELETE;
+	scn.cn_flags = ISLASTCN | SAVENAME;
+//	scn.cn_lkflags = LK_EXCLUSIVE | LK_RETRY;
+	scn.cn_cred = kcred;
+	vn_lock(ZTOV(sdzp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LOOKUP(ZTOV(sdzp), &svp, &scn);
+	VOP_UNLOCK(ZTOV(sdzp), 0);
+	if (error != 0)
+		goto fail;
+	VOP_UNLOCK(svp, 0);
 
+	tcn.cn_nameptr = tname;
+	tcn.cn_namelen = strlen(tname);
+	tcn.cn_nameiop = RENAME;
+	tcn.cn_flags = ISLASTCN | SAVENAME;
+//	tcn.cn_lkflags = LK_EXCLUSIVE | LK_RETRY;
+	tcn.cn_cred = kcred;
+	vn_lock(ZTOV(tdzp), LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_LOOKUP(ZTOV(tdzp), &tvp, &tcn);
+	if (error == EJUSTRETURN)
+		tvp = NULL;
+	else if (error != 0) {
+		VOP_UNLOCK(ZTOV(tdzp), 0);
+		goto fail;
+	}
+
+	error = VOP_RENAME(ZTOV(sdzp), svp, &scn, ZTOV(tdzp), tvp, &tcn /*,vflg*/);
+	return (error);
+fail:
+	if (svp != NULL)
+		vrele(svp);
+	if (tvp != NULL)
+		vrele(tvp);
 	VN_RELE(ZTOV(tdzp));
 	VN_RELE(ZTOV(sdzp));
 
@@ -651,36 +726,9 @@ zfs_replay_write(zfsvfs_t *zfsvfs, lr_write_t *lr, boolean_t byteswap)
 static int
 zfs_replay_truncate(zfsvfs_t *zfsvfs, lr_truncate_t *lr, boolean_t byteswap)
 {
-	znode_t *zp;
-	flock64_t fl;
-	int error;
 
-	if (byteswap)
-		byteswap_uint64_array(lr, sizeof (*lr));
-
-	if ((error = zfs_zget(zfsvfs, lr->lr_foid, &zp)) != 0) {
-		/*
-		 * As we can log truncates out of order, it's possible the
-		 * file has been removed. In this case just drop the truncate
-		 * and return success.
-		 */
-		if (error == ENOENT)
-			error = 0;
-		return (error);
-	}
-
-	bzero(&fl, sizeof (fl));
-	fl.l_type = F_WRLCK;
-	fl.l_whence = 0;
-	fl.l_start = lr->lr_offset;
-	fl.l_len = lr->lr_length;
-
-	error = VOP_SPACE(ZTOV(zp), F_FREESP, &fl, FWRITE | FOFFMAX,
-	    lr->lr_offset, kcred, NULL);
-
-	VN_RELE(ZTOV(zp));
-
-	return (error);
+	ZFS_LOG(0, "Unexpected code path, report to pjd@FreeBSD.org");
+	return (EOPNOTSUPP);
 }
 
 static int
@@ -689,6 +737,7 @@ zfs_replay_setattr(zfsvfs_t *zfsvfs, lr_setattr_t *lr, boolean_t byteswap)
 	znode_t *zp;
 	xvattr_t xva;
 	vattr_t *vap = &xva.xva_vattr;
+	vnode_t *vp;
 	int error;
 	void *start;
 
@@ -734,11 +783,14 @@ zfs_replay_setattr(zfsvfs_t *zfsvfs, lr_setattr_t *lr, boolean_t byteswap)
 	zfsvfs->z_fuid_replay = zfs_replay_fuid_domain(start, &start,
 	    lr->lr_uid, lr->lr_gid);
 
-	error = VOP_SETATTR(ZTOV(zp), vap, 0, kcred, NULL);
+	vp = ZTOV(zp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_SETATTR(vp, vap, kcred);
+	VOP_UNLOCK(vp, 0);
 
 	zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;
-	VN_RELE(ZTOV(zp));
+	VN_RELE(vp);
 
 	return (error);
 }
@@ -774,7 +826,11 @@ zfs_replay_acl_v0(zfsvfs_t *zfsvfs, lr_acl_v0_t *lr, boolean_t byteswap)
 	vsa.vsa_aclflags = 0;
 	vsa.vsa_aclentp = ace;
 
+#ifdef TODO
 	error = VOP_SETSECATTR(ZTOV(zp), &vsa, 0, kcred, NULL);
+#else
+	panic("%s:%u: unsupported condition", __func__, __LINE__);
+#endif
 
 	VN_RELE(ZTOV(zp));
 
@@ -824,6 +880,7 @@ zfs_replay_acl(zfsvfs_t *zfsvfs, lr_acl_t *lr, boolean_t byteswap)
 		return (error);
 	}
 
+#ifdef TODO
 	bzero(&vsa, sizeof (vsa));
 	vsa.vsa_mask = VSA_ACE | VSA_ACECNT | VSA_ACE_ACLFLAGS;
 	vsa.vsa_aclcnt = lr->lr_aclcnt;
@@ -844,6 +901,9 @@ zfs_replay_acl(zfsvfs_t *zfsvfs, lr_acl_t *lr, boolean_t byteswap)
 
 	if (zfsvfs->z_fuid_replay)
 		zfs_fuid_info_free(zfsvfs->z_fuid_replay);
+#else
+	error = EOPNOTSUPP;
+#endif
 
 	zfsvfs->z_fuid_replay = NULL;
 	VN_RELE(ZTOV(zp));

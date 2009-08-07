@@ -1267,7 +1267,8 @@ int
 zpool_disable_datasets(zpool_handle_t *zhp, boolean_t force)
 {
 	int used, alloc;
-	struct mnttab entry;
+	struct statvfs *sfs;
+	int n;
 	size_t namelen;
 	char **mountpoints = NULL;
 	zfs_handle_t **datasets = NULL;
@@ -1286,21 +1287,23 @@ zpool_disable_datasets(zpool_handle_t *zhp, boolean_t force)
 
 	rewind(hdl->libzfs_mnttab);
 	used = alloc = 0;
-	while (getmntent(hdl->libzfs_mnttab, &entry) == 0) {
+	if ((n = getmntinfo(&sfs, MNT_WAIT)) == 0) {
+		fprintf(stderr, "getmntinfo(): %s\n", strerror(errno));
+		return (-1);
+	}
+	for (i = 0; i < n; i++) {
 		/*
 		 * Ignore non-ZFS entries.
 		 */
-		if (entry.mnt_fstype == NULL ||
-		    strcmp(entry.mnt_fstype, MNTTYPE_ZFS) != 0)
+		if (strcmp(sfs[i].f_fstypename, MNTTYPE_ZFS) != 0)
 			continue;
 
 		/*
 		 * Ignore filesystems not within this pool.
 		 */
-		if (entry.mnt_mountp == NULL ||
-		    strncmp(entry.mnt_special, zhp->zpool_name, namelen) != 0 ||
-		    (entry.mnt_special[namelen] != '/' &&
-		    entry.mnt_special[namelen] != '\0'))
+		if (strncmp(sfs[i].f_mntfromname, zhp->zpool_name, namelen) != 0 ||
+		    (sfs[i].f_mntfromname[namelen] != '/' &&
+		    sfs[i].f_mntfromname[namelen] != '\0'))
 			continue;
 
 		/*
@@ -1338,7 +1341,7 @@ zpool_disable_datasets(zpool_handle_t *zhp, boolean_t force)
 		}
 
 		if ((mountpoints[used] = zfs_strdup(hdl,
-		    entry.mnt_mountp)) == NULL)
+		    sfs[i].f_mntonname)) == NULL)
 			goto out;
 
 		/*
@@ -1346,7 +1349,7 @@ zpool_disable_datasets(zpool_handle_t *zhp, boolean_t force)
 		 * is only used to determine if we need to remove the underlying
 		 * mountpoint, so failure is not fatal.
 		 */
-		datasets[used] = make_dataset_handle(hdl, entry.mnt_special);
+		datasets[used] = make_dataset_handle(hdl, sfs[i].f_mntfromname);
 
 		used++;
 	}
