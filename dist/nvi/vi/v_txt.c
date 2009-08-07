@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.5 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: v_txt.c,v 1.6 2009/08/07 16:19:54 lukem Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1725,16 +1725,16 @@ txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 	/*
 	 * If there are no spaces, or no tabs after spaces and less than
 	 * ts spaces, it's already minimal.
-	 * Keep analysing if expandtabs is set.
+	 * Keep analysing if expandtab is set.
 	 */
 	if ((!spaces || (!tab_after_sp && spaces < ts)) &&
-	    !O_ISSET(sp, O_EXPANDTABS))
+	    !O_ISSET(sp, O_EXPANDTAB))
 		return;
 
 	/* Count up spaces/tabs needed to get to the target. */
 	cno = 0;
 	tabs = 0;
-	if (!O_ISSET(sp, O_EXPANDTABS)) {
+	if (!O_ISSET(sp, O_EXPANDTAB)) {
 		for (; cno + COL_OFF(cno, ts) <= scno; ++tabs)
 			cno += COL_OFF(cno, ts);
 	}
@@ -1962,7 +1962,7 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 	else {
 		cno = current;
 		tabs = 0;
-		if (!O_ISSET(sp, O_EXPANDTABS)) {
+		if (!O_ISSET(sp, O_EXPANDTAB)) {
 			for (; cno + COL_OFF(cno, ts) <= target; ++tabs)
 				cno += COL_OFF(cno, ts);
 		}
