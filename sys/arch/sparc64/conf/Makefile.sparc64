@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.67 2008/08/30 13:23:55 martin Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.67.4.1 2009/08/07 18:33:48 snj Exp $
 
 #=========================================================================
 #
@@ -142,9 +142,6 @@ cpu_in_cksum.o lock_stubs.o: assym.h
 %LOAD
 
 %RULES
-
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

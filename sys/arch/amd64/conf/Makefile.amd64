@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.25 2008/10/30 20:07:01 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.25.2.1 2009/08/07 18:33:48 snj Exp $
 
 # Makefile for NetBSD
 #
@@ -99,31 +99,9 @@ netbsd32_sigcode.o: assym.h
 %LOAD
 
 %RULES
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
+
+## Include rules for ACPI wakecode
 .include "$S/arch/x86/acpi/Makefile.wakecode.inc"
-
-# XXX -	Ugly, but make doesn't easily handle .o.uu (assumes it's a suffix)
-# XXX -	Also, config has no simple was to just add foo.o to the Makefile.
-#	It needs a pathname of some sort for "object"
-.if !empty(OBJS:M\/athhal.o)
-OBJS:=${OBJS:C/\/athhal.o/athhal.o/}
-
-.PATH: $S/contrib/dev/ath/public
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-
-athhal.o: x86_64-elf.hal.o.uu
-	${ATH_UUDEC}
-.if defined(COPTS) && !empty(COPTS:M-fno-asynchronous-unwind-tables)
-	${_MKSHECHO}\
-	${OBJCOPY} -R .eh_frame $@
-	${OBJCOPY} -R .eh_frame $@
-.endif
-.endif
 
 ##
 ## (9) port independent kernel machinery
