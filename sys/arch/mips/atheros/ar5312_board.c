@@ -1,4 +1,4 @@
-/* $Id: ar5312_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $ */
+/* $Id: ar5312_board.c,v 1.1.72.1 2009/08/07 06:50:47 snj Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -40,7 +40,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.1.72.1 2009/08/07 06:50:47 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar5312_board.c,v 1.1 2006/09/26 06:37:32 gdamore Exp
 #include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
 
-#include <contrib/dev/ath/ah_soc.h>
+#include <ah_soc.h>
 
 extern const char *ether_sprintf(const uint8_t *);
 
