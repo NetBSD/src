@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.213 2009/08/06 15:58:12 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.214 2009/08/07 03:33:28 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.213 2009/08/06 15:58:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.214 2009/08/07 03:33:28 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -367,10 +367,12 @@ static const struct pridtab cputab[] = {
 	 * ICT Loongson2 is a MIPS64 CPU with a few quirks.
 	 */
 	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2E, -1, CPU_ARCH_MIPS3, 64,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT |
+	  CPU_MIPS_HAVE_SPECIAL_CCA | (2 << CPU_MIPS_CACHED_CCA_SHIFT),
 						"ICT Loongson 2E CPU"	},
 	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2F, -1, CPU_ARCH_MIPS3, 64,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT |
+	  CPU_MIPS_HAVE_SPECIAL_CCA | (2 << CPU_MIPS_CACHED_CCA_SHIFT),
 						"ICT Loongson 2F CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
