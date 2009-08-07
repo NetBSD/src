@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.203 2009/07/07 19:51:22 dyoung Exp $	*/
+/*	$NetBSD: vnd.c,v 1.204 2009/08/07 00:08:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.203 2009/07/07 19:51:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.204 2009/08/07 00:08:07 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -163,6 +163,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.203 2009/07/07 19:51:22 dyoung Exp $");
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
+#include <dev/dkvar.h>
 #include <dev/vndvar.h>
 
 #include <prop/proplib.h>
@@ -972,9 +973,7 @@ vnddoclear(struct vnd_softc *vnd, int pmask, int minor, bool force)
 	 * or if both the character and block flavors of this
 	 * partition are open.
 	 */
-	if (((vnd->sc_dkdev.dk_openmask & ~pmask) ||
-	    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
-	    (vnd->sc_dkdev.dk_copenmask & pmask))) && !force) {
+	if (DK_BUSY(vnd, pmask) && !force) {
 		vndunlock(vnd);
 		return EBUSY;
 	}
