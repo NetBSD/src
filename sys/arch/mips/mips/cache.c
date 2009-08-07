@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.38 2009/08/06 23:16:39 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.39 2009/08/07 18:39:10 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.38 2009/08/06 23:16:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.39 2009/08/07 18:39:10 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -89,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.38 2009/08/06 23:16:39 matt Exp $");
 #include <mips/cache_r5k.h>
 #ifdef ENABLE_MIPS4_CACHE_R10K
 #include <mips/cache_r10k.h>
+#endif
+#ifdef MIPS3_LOONGSON2
+#include <mips/cache_ls2.h>
 #endif
 #endif
 
@@ -661,28 +664,28 @@ primary_cache_is_2way:
 		mips_cache_virtual_alias = 1;
 
 		mips_cache_ops.mco_icache_sync_all =
-		    r4k_icache_sync_all_32;
+		    ls2_icache_sync_all;
 		mips_cache_ops.mco_icache_sync_range =
-		    r4k_icache_sync_range_32;
+		    ls2_icache_sync_range;
 		mips_cache_ops.mco_icache_sync_range_index =
-		    r4k_icache_sync_range_index_32;
+		    ls2_icache_sync_range_index;
 
 		mips_cache_ops.mco_pdcache_wbinv_all =
-		    r4k_pdcache_wbinv_all_32;
+		    ls2_pdcache_wbinv_all;
 		mips_cache_ops.mco_pdcache_wbinv_range =
-		    r4k_pdcache_wbinv_range_32;
+		    ls2_pdcache_wbinv_range;
 		mips_cache_ops.mco_pdcache_wbinv_range_index =
-		    r4k_pdcache_wbinv_range_index_32;
+		    ls2_pdcache_wbinv_range_index;
 		mips_cache_ops.mco_pdcache_inv_range =
-		    r4k_pdcache_inv_range_32;
+		    ls2_pdcache_inv_range;
 		mips_cache_ops.mco_pdcache_wb_range =
-		    r4k_pdcache_wb_range_32;
+		    ls2_pdcache_wb_range;
 
 		/*
 		 * For current version chips, [the] operating system is
 		 * obliged to eliminate the potential for virtual aliasing.
 		 */
-		uvmexp.ncolors = atop(mips_pdcache_size) / mips_pdcache_ways;
+		uvmexp.ncolors = mips_pdcache_ways;
 		break;
 #endif
 #endif /* MIPS3 || MIPS4 */
@@ -837,15 +840,15 @@ primary_cache_is_2way:
 		mips_scache_unified = 1;
 
 		mips_cache_ops.mco_sdcache_wbinv_all =
-		    r4k_sdcache_wbinv_all_32;
+		    ls2_sdcache_wbinv_all;
 		mips_cache_ops.mco_sdcache_wbinv_range =
-		    r4k_sdcache_wbinv_range_32;
+		    ls2_sdcache_wbinv_range;
 		mips_cache_ops.mco_sdcache_wbinv_range_index =
-		    r4k_sdcache_wbinv_range_index_32;
+		    ls2_sdcache_wbinv_range_index;
 		mips_cache_ops.mco_sdcache_inv_range =
-		    r4k_sdcache_inv_range_32;
+		    ls2_sdcache_inv_range;
 		mips_cache_ops.mco_sdcache_wb_range =
-		    r4k_sdcache_wb_range_32;
+		    ls2_sdcache_wb_range;
 
 		/*
 		 * The secondary cache is physically indexed and tagged
