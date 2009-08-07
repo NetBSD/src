@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.9 2009/04/18 13:02:36 lukem Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.10 2009/08/07 13:55:22 wiz Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -949,7 +949,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 			if (!strstr(buff, "disabled"))
 				*printing = TRUE;
 			if (strstr(buff, "printing"))
-				strlcpy(status, "printing", sizeof9status));
+				strlcpy(status, "printing", sizeof(status));
 			else
 				if (strstr(buff, "idle"))
 					strlcpy(status, "idle", sizeof(status));
