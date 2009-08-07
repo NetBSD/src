@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.1 2009/08/06 00:50:26 matt Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.2 2009/08/07 01:27:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.1 2009/08/06 00:50:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.2 2009/08/07 01:27:14 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.1 2009/08/06 00:50:26 matt Exp $");
 #include <machine/intr.h>
 
 #include <mips/locore.h>
-
-// #include <dev/ic/mc146818reg.h>
 
 #include <mips/bonito/bonitoreg.h>
 #include <evbmips/gdium/gdiumvar.h>
@@ -110,10 +108,10 @@ const struct gdium_irqmap gdium_irqmap[] = {
 
 	{ "denali",	GDIUM_IRQ_DENALI,	IRQ_F_INT1 },
 
-	{ "int0",	GDIUM_IRQ_INT0,		IRQ_F_INT0 },
-	{ "int1",	GDIUM_IRQ_INT1,		IRQ_F_INT1 },
-	{ "int2",	GDIUM_IRQ_INT2,		IRQ_F_INT2 },
-	{ "int3",	GDIUM_IRQ_INT3,		IRQ_F_INT3 },
+	{ "mips int0",	GDIUM_IRQ_INT0,		IRQ_F_INT0 },
+	{ "mips int1",	GDIUM_IRQ_INT1,		IRQ_F_INT1 },
+	{ "mips int2",	GDIUM_IRQ_INT2,		IRQ_F_INT2 },
+	{ "mips int3",	GDIUM_IRQ_INT3,		IRQ_F_INT3 },
 };
 
 struct gdium_intrhead {
@@ -127,12 +125,13 @@ struct gdium_intrhead gdium_intrtab[__arraycount(gdium_irqmap)];
 struct gdium_cpuintr {
 	LIST_HEAD(, evbmips_intrhand) cintr_list;
 	struct evcnt cintr_count;
+	int cintr_refcnt;
 };
 
 struct gdium_cpuintr gdium_cpuintrs[NINTRS];
 const char *gdium_cpuintrnames[NINTRS] = {
 	"int 0 (pci)",
-	"int 1 (?)",
+	"int 1 (errors)",
 };
 
 /*
@@ -143,11 +142,23 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] = 0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
+#if IPL_SOFTCLOCK != IPL_SOFTBIO
+	[IPL_SOFTBIO] =
+	    MIPS_SOFT_INT_MASK_0,
+#endif
 	[IPL_SOFTNET] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+#if IPL_SOFTNET != IPL_SOFTSERIAL
+	[IPL_SOFTSERIAL] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+#endif
 	[IPL_VM] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0,
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3 |
+	    MIPS_INT_MASK_4,
 	[IPL_SCHED] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
@@ -163,13 +174,16 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const uint32_t mips_ipl_si_to_sr[2] = {
-	MIPS_SOFT_INT_MASK_0,
-	MIPS_SOFT_INT_MASK_1, /* XXX is this right with the new softints? */
+const uint32_t mips_ipl_si_to_sr[] = {
+	[IPL_SOFTCLOCK-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+#if IPL_SOFTCLOCK != IPL_SOFTBIO
+	[IPL_SOFTBIO-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+#endif
+	[IPL_SOFTNET-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1,
+#if IPL_SOFTNET != IPL_SOFTSERIAL
+	[IPL_SOFTSERIAL-IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1,
+#endif
 };
-
-void	*gdium_intr_establish(int, int (*)(void *), void *);
-void	gdium_intr_disestablish(void *);
 
 int	gdium_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *gdium_pci_intr_string(void *, pci_intr_handle_t);
@@ -229,83 +243,14 @@ evbmips_intr_init(void)
 
 	/* We let the PCI-ISA bridge code handle this. */
 	gc->gc_pc.pc_pciide_compat_intr_establish = NULL;
-
-	//intr_establish = gdium_intr_establish;
-	//intr_disestablish = gdium_intr_disestablish;
 }
-
-#if 0
-void
-gdium_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
-{
-	u_long ctrdiff[4], startctr, endctr, cps;
-	u_int8_t regc;
-	int i;
-
-	/* Disable interrupts first. */
-	bus_space_write_1(st, sh, 0, MC_REGB);
-	bus_space_write_1(st, sh, 1, MC_REGB_SQWE | MC_REGB_BINARY |
-	    MC_REGB_24HR);
-
-	/* Initialize for 16Hz. */
-	bus_space_write_1(st, sh, 0, MC_REGA);
-	bus_space_write_1(st, sh, 1, MC_BASE_32_KHz | MC_RATE_16_Hz);
-
-	/* Run the loop an extra time to prime the cache. */
-	for (i = 0; i < 4; i++) {
-		led_display('h', 'z', '0' + i, ' ');
-
-		/* Enable the interrupt. */
-		bus_space_write_1(st, sh, 0, MC_REGB);
-		bus_space_write_1(st, sh, 1, MC_REGB_PIE | MC_REGB_SQWE |
-		    MC_REGB_BINARY | MC_REGB_24HR);
-
-		/* Go to REGC. */
-		bus_space_write_1(st, sh, 0, MC_REGC);
-
-		/* Wait for it to happen. */
-		startctr = mips3_cp0_count_read();
-		do {
-			regc = bus_space_read_1(st, sh, 1);
-			endctr = mips3_cp0_count_read();
-		} while ((regc & MC_REGC_IRQF) == 0);
-
-		/* Already ACK'd. */
-
-		/* Disable. */
-		bus_space_write_1(st, sh, 0, MC_REGB);
-		bus_space_write_1(st, sh, 1, MC_REGB_SQWE | MC_REGB_BINARY |
-		    MC_REGB_24HR);
-
-		ctrdiff[i] = endctr - startctr;
-	}
-
-	/* Update CPU frequency values */
-	cps = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16;
-	/* XXX mips_cpu_flags isn't set here; assume CPU_MIPS_DOUBLE_COUNT */
-	curcpu()->ci_cpu_freq = cps * 2;
-	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
-	curcpu()->ci_divisor_delay =
-	    ((curcpu()->ci_cpu_freq + (1000000 / 2)) / 1000000);
-	/* XXX assume CPU_MIPS_DOUBLE_COUNT */
-	curcpu()->ci_cycles_per_hz /= 2;
-	curcpu()->ci_divisor_delay /= 2;
-
-	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
-	    cps, ctrdiff[2], ctrdiff[3]);
-	printf("CPU clock speed = %lu.%02luMHz "
-	    "(hz cycles = %lu, delay divisor = %lu)\n",
-	    curcpu()->ci_cpu_freq / 1000000,
-	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
-	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
-}
-#endif
 
 void *
-gdium_intr_establish(int irq, int (*func)(void *), void *arg)
+evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
 {
 	const struct gdium_irqmap *irqmap;
 	struct evbmips_intrhand *ih;
+	int level;
 	int s;
 
 	irqmap = &gdium_irqmap[irq];
@@ -315,7 +260,7 @@ gdium_intr_establish(int irq, int (*func)(void *), void *arg)
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (ih == NULL)
-		return (NULL);
+		return NULL;
 
 	ih->ih_func = func;
 	ih->ih_arg = arg;
@@ -326,16 +271,15 @@ gdium_intr_establish(int irq, int (*func)(void *), void *arg)
 	/*
 	 * First, link it into the tables.
 	 */
-	if (irqmap->flags & IRQ_F_INT1)
-		LIST_INSERT_HEAD(&gdium_cpuintrs[1].cintr_list, ih, ih_q);
-	else
-		LIST_INSERT_HEAD(&gdium_cpuintrs[0].cintr_list, ih, ih_q);
+	level = (irqmap->flags & IRQ_F_INT1) != 0;
+	LIST_INSERT_HEAD(&gdium_cpuintrs[level].cintr_list, ih, ih_q);
+	gdium_cpuintrs[level].cintr_refcnt++;
 
 	/*
 	 * Now enable it.
 	 */
-	if (gdium_intrtab[irqmap->irqidx].intr_refcnt++ == 0)
-		REGVAL(BONITO_INTENSET) = (1 << irqmap->irqidx);
+	if (gdium_intrtab[ih->ih_irq].intr_refcnt++ == 0)
+		REGVAL(BONITO_INTENSET) = (1 << ih->ih_irq);
 
 	splx(s);
 
@@ -343,7 +287,7 @@ gdium_intr_establish(int irq, int (*func)(void *), void *arg)
 }
 
 void
-gdium_intr_disestablish(void *cookie)
+evbmips_intr_disestablish(void *cookie)
 {
 	const struct gdium_irqmap *irqmap;
 	struct evbmips_intrhand *ih = cookie;
@@ -357,13 +301,14 @@ gdium_intr_disestablish(void *cookie)
 	 * First, remove it from the table.
 	 */
 	LIST_REMOVE(ih, ih_q);
+	gdium_cpuintrs[(irqmap->flags & IRQ_F_INT1) != 0].cintr_refcnt--;
 
 	/*
 	 * Now, disable it, if there is nothing remaining on the
 	 * list.
 	 */
-	if (gdium_intrtab[irqmap->irqidx].intr_refcnt-- == 1)
-		REGVAL(BONITO_INTENCLR) = (1 << irqmap->irqidx);
+	if (gdium_intrtab[ih->ih_irq].intr_refcnt-- == 1)
+		REGVAL(BONITO_INTENCLR) = (1 << ih->ih_irq);
 
 	splx(s);
 
@@ -385,13 +330,11 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc,
 	 * priority.
 	 */
 	isr = REGVAL(BONITO_INTISR) & REGVAL(BONITO_INTEN);
-
 	for (level = 1; level >= 0; level--) {
-		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
+		if ((ipending & (MIPS_INT_MASK_4 << level)) == 0)
 			continue;
 		gdium_cpuintrs[level].cintr_count.ev_count++;
-		for (ih = LIST_FIRST(&gdium_cpuintrs[level].cintr_list);
-		     ih != NULL; ih = LIST_NEXT(ih, ih_q)) {
+		LIST_FOREACH (ih, &gdium_cpuintrs[level].cintr_list, ih_q) {
 			irqmap = &gdium_irqmap[ih->ih_irq];
 			if (isr & (1 << ih->ih_irq)) {
 				gdium_intrtab[ih->ih_irq].intr_count.ev_count++;
@@ -470,16 +413,16 @@ gdium_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 {
 
 	if (ih >= __arraycount(gdium_irqmap))
-		panic("gdium_intr_establish: bogus IRQ %ld", ih);
+		panic("gdium_pci_intr_establish: bogus IRQ %ld", ih);
 
-	return gdium_intr_establish(ih, func, arg);
+	return evbmips_intr_establish(ih, func, arg);
 }
 
 void
 gdium_pci_intr_disestablish(void *v, void *cookie)
 {
 
-	return (gdium_intr_disestablish(cookie));
+	return (evbmips_intr_disestablish(cookie));
 }
 
 void
