@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.55 2009/08/04 20:37:03 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.56 2009/08/07 07:09:48 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1773,4 +1773,197 @@ lib/libterm/termcap.c				1.55
 	because it doesn't know about it and termcap(3) ignores the
 	stringe because of the ZZ.
 	[bad, ticket #875]
+
+sys/ufs/ufs/ufs_quota.c				1.63, 1.64
+
+	Add missing mutex_destroy() before pool_cache_put(). Prevents
+	a "Mutex error: lockdebug_alloc: already initialized" panic.
+	[bouyer, ticket #898]
+
+sys/netipsec/ipsec.c				1.46
+
+	Add a missing splx() call.  Fixes PR kern/41701.
+	[jakllsch, ticket #884]
+
+sys/dev/pci/twa.c				1.32
+
+	Disable completely bogus DIAGNOSTIC check.
+	[bouyer, ticket #886]
+
+sys/gdbscripts/lwps				1.2
+
+	Use the right pointer to traverse the proc's lwp list.
+	Fixes PR kern/41788.
+	[skrll, ticket #893]
+
+share/man/man4/ath.4				1.21-1.24
+sys/arch/amd64/conf/std.amd64			patch
+sys/arch/amd64/conf/std.xen			patch
+sys/arch/evbmips/conf/std.adm5120		patch
+sys/arch/evbmips/conf/std.alchemy		patch
+sys/arch/evbmips/conf/std.atheros		patch
+sys/arch/evbmips/conf/std.malta			patch
+sys/arch/evbmips/conf/std.meraki		patch
+sys/arch/i386/conf/std.i386			patch
+sys/arch/macppc/conf/std.macppc			patch
+sys/arch/macppc/conf/std.macppc.g5		patch
+sys/arch/mips/atheros/ar5312_board.c		1.2
+sys/arch/mips/atheros/ar5315.c			1.6
+sys/arch/mips/atheros/ar5315_board.c		1.2
+sys/arch/mips/atheros/dev/if_ath_arbus.c	1.16
+sys/arch/mips/atheros/include/ar5312reg.h	1.3
+sys/arch/sparc64/conf/std.sparc64		patch
+sys/arch/sparc64/conf/std.sparc64-32		patch
+sys/arch/xen/conf/std.xen			patch
+sys/conf/files					patch
+sys/dev/ic/ath.c				patch, 1.106
+sys/dev/ic/athrate-amrr.c			patch
+sys/dev/ic/athrate-onoe.c			patch
+sys/dev/ic/athrate-sample.c			patch
+sys/dev/ic/athvar.h				patch, 1.28
+sys/external/isc/atheros_hal/conf/files.ath_hal	patch
+sys/external/isc/atheros_hal/conf/std.ath_hal	patch
+sys/external/isc/atheros_hal/dist/ah.c		patch
+sys/external/isc/atheros_hal/dist/ah.h		patch
+sys/external/isc/atheros_hal/dist/ah_debug.h	patch
+sys/external/isc/atheros_hal/dist/ah_decode.h	patch
+sys/external/isc/atheros_hal/dist/ah_desc.h	patch
+sys/external/isc/atheros_hal/dist/ah_devid.h	patch
+sys/external/isc/atheros_hal/dist/ah_eeprom.h	patch
+sys/external/isc/atheros_hal/dist/ah_eeprom_v1.c patch
+sys/external/isc/atheros_hal/dist/ah_eeprom_v1.hc patch
+sys/external/isc/atheros_hal/dist/ah_eeprom_v14.cc patch
+sys/external/isc/atheros_hal/dist/ah_eeprom_v14.hc patch
+sys/external/isc/atheros_hal/dist/ah_eeprom_v3.c patch
+sys/external/isc/atheros_hal/dist/ah_eeprom_v3.h patch
+sys/external/isc/atheros_hal/dist/ah_internal.h	patch
+sys/external/isc/atheros_hal/dist/ah_regdomain.c patch
+sys/external/isc/atheros_hal/dist/ah_soc.h	patch
+sys/external/isc/atheros_hal/dist/ar5210/ar2133.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_attach.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_beacon.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_interrupts.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_keycache.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_misc.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_phy.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_power.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_recv.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_reset.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210_xmit.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210desc.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210phy.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5210reg.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416.ini patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_ani.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_attach.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_beacon.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_cal.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_cal.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_cal_adcdc.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_cal_adcgain.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_cal_iq.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_eeprom.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_gpio.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_interrupts.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_keycache.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_misc.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_phy.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_power.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_recv.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_reset.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416_xmit.c patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416desc.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416phy.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5416reg.h patch
+sys/external/isc/atheros_hal/dist/ar5210/ar5k_0007.ini patch
+sys/external/isc/atheros_hal/dist/ar5210/ar9160.ini patch
+sys/external/isc/atheros_hal/dist/ar5210/ar9160_attach.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211.h patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_attach.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_beacon.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_interrupts.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_keycache.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_misc.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_phy.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_power.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_recv.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_reset.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211_xmit.c patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211desc.h patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211phy.h patch
+sys/external/isc/atheros_hal/dist/ar5211/ar5211reg.h patch
+sys/external/isc/atheros_hal/dist/ar5211/boss.ini patch
+sys/external/isc/atheros_hal/dist/ar5212/ar2316.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar2317.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar2413.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar2425.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5111.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5112.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212.h patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212.ini patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_ani.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_attach.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_beacon.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_eeprom.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_gpio.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_interrupts.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_keycache.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_misc.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_phy.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_power.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_recv.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_reset.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_rfgain.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212_xmit.c patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212desc.h patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212phy.h patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5212reg.h patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5311reg.h patch
+sys/external/isc/atheros_hal/dist/ar5212/ar5413.c patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312.h patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312_attach. patchc
+sys/external/isc/atheros_hal/dist/ar5312/ar5312_eeprom.c patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312_gpio.c patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312_interrupts.c patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312_misc.c patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312_power.c patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312_reset.c patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312phy.h patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5312reg.h patch
+sys/external/isc/atheros_hal/dist/ar5312/ar5315_gpio.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar2133.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416.h patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416.ini patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_ani.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_attach.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_beacon.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_cal.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_cal.h patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_cal_adcdc.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_cal_adcgain.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_cal_iq.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_eeprom.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_gpio.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_interrupts.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_keycache.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_misc.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_phy.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_power.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_recv.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_reset.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416_xmit.c patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416desc.h patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416phy.h patch
+sys/external/isc/atheros_hal/dist/ar5416/ar5416reg.h patch
+sys/external/isc/atheros_hal/dist/ar5416/ar9160.ini patch
+sys/external/isc/atheros_hal/dist/ar5416/ar9160_attach.c patch
+sys/external/isc/atheros_hal/ic/ah_osdep.c	patch
+sys/external/isc/atheros_hal/ic/ah_osdep.h	patch
+sys/external/isc/atheros_hal/ic/opt_ah.h	patch
+sys/net80211/ieee80211_var.h			patch
+
+	Update to the open source atheros HAL.
+	[jmcneill, ticket #775]
 
