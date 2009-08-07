@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.189 2009/07/23 21:22:25 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.190 2009/08/07 12:04:43 blymn Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.189 2009/07/23 21:22:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.190 2009/08/07 12:04:43 blymn Exp $");
 
 /*
 #define CBB_DEBUG
@@ -477,7 +477,7 @@ pccbbattach(device_t parent, device_t self, void *aux)
 			    &sc->sc_base_size)) {
 				aprint_error_dev(self,
 				    "can't map socket base address"
-				    " 0x%lx: io mode\n", 
+				    " 0x%lx: io mode\n",
 				    (unsigned long)sockbase);
 				/* give up... allocate reg space via rbus. */
 				pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
@@ -2377,11 +2377,11 @@ pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
 	 * Vcc Rising Time (Tpr) = 100ms (handled in pccbb_power() above)
 	 * RESET Width (Th (Hi-z RESET)) = 1ms
 	 * RESET Width (Tw (RESET)) = 10us
-	 *      
+	 *
 	 * some machines require some more time to be settled
 	 * for example old toshiba topic bridges!
 	 * (100ms is added here).
-	 */             
+	 */
 	pccbb_pcmcia_delay(sc, 200 + 1, "pccen1");
 
 	/* negate RESET */
