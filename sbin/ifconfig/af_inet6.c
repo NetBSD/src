@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.23 2008/07/15 20:56:13 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.24 2009/08/07 18:53:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.23 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.24 2009/08/07 18:53:37 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -278,7 +278,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	char hbuf[NI_MAXHOST];
 	u_int32_t scopeid;
 	int s;
-	const int niflag = NI_NUMERICHOST;
+	const int niflag = Nflag ? 0 : NI_NUMERICHOST;
 	unsigned short flags;
 
 	/* Get the non-alias address for this interface. */
