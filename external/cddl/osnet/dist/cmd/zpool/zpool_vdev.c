@@ -64,7 +64,6 @@
 #include <devid.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libdiskmgt.h>
 #include <libintl.h>
 #include <libnvpair.h>
 #include <stdio.h>
@@ -126,154 +125,6 @@ libdiskmgt_error(int error)
 }
 
 /*
- * Validate a device, passing the bulk of the work off to libdiskmgt.
- */
-static int
-check_slice(const char *path, int force, boolean_t wholedisk, boolean_t isspare)
-{
-	char *msg;
-	int error = 0;
-	dm_who_type_t who;
-
-	if (force)
-		who = DM_WHO_ZPOOL_FORCE;
-	else if (isspare)
-		who = DM_WHO_ZPOOL_SPARE;
-	else
-		who = DM_WHO_ZPOOL;
-
-	if (dm_inuse((char *)path, &msg, who, &error) || error) {
-		if (error != 0) {
-			libdiskmgt_error(error);
-			return (0);
-		} else {
-			vdev_error("%s", msg);
-			free(msg);
-			return (-1);
-		}
-	}
-
-	/*
-	 * If we're given a whole disk, ignore overlapping slices since we're
-	 * about to label it anyway.
-	 */
-	error = 0;
-	if (!wholedisk && !force &&
-	    (dm_isoverlapping((char *)path, &msg, &error) || error)) {
-		if (error == 0) {
-			/* dm_isoverlapping returned -1 */
-			vdev_error(gettext("%s overlaps with %s\n"), path, msg);
-			free(msg);
-			return (-1);
-		} else if (error != ENODEV) {
-			/* libdiskmgt's devcache only handles physical drives */
-			libdiskmgt_error(error);
-			return (0);
-		}
-	}
-
-	return (0);
-}
-
-
-/*
- * Validate a whole disk.  Iterate over all slices on the disk and make sure
- * that none is in use by calling check_slice().
- */
-static int
-check_disk(const char *name, dm_descriptor_t disk, int force, int isspare)
-{
-	dm_descriptor_t *drive, *media, *slice;
-	int err = 0;
-	int i;
-	int ret;
-
-	/*
-	 * Get the drive associated with this disk.  This should never fail,
-	 * because we already have an alias handle open for the device.
-	 */
-	if ((drive = dm_get_associated_descriptors(disk, DM_DRIVE,
-	    &err)) == NULL || *drive == NULL) {
-		if (err)
-			libdiskmgt_error(err);
-		return (0);
-	}
-
-	if ((media = dm_get_associated_descriptors(*drive, DM_MEDIA,
-	    &err)) == NULL) {
-		dm_free_descriptors(drive);
-		if (err)
-			libdiskmgt_error(err);
-		return (0);
-	}
-
-	dm_free_descriptors(drive);
-
-	/*
-	 * It is possible that the user has specified a removable media drive,
-	 * and the media is not present.
-	 */
-	if (*media == NULL) {
-		dm_free_descriptors(media);
-		vdev_error(gettext("'%s' has no media in drive\n"), name);
-		return (-1);
-	}
-
-	if ((slice = dm_get_associated_descriptors(*media, DM_SLICE,
-	    &err)) == NULL) {
-		dm_free_descriptors(media);
-		if (err)
-			libdiskmgt_error(err);
-		return (0);
-	}
-
-	dm_free_descriptors(media);
-
-	ret = 0;
-
-	/*
-	 * Iterate over all slices and report any errors.  We don't care about
-	 * overlapping slices because we are using the whole disk.
-	 */
-	for (i = 0; slice[i] != NULL; i++) {
-		char *name = dm_get_name(slice[i], &err);
-
-		if (check_slice(name, force, B_TRUE, isspare) != 0)
-			ret = -1;
-
-		dm_free_name(name);
-	}
-
-	dm_free_descriptors(slice);
-	return (ret);
-}
-
-/*
- * Validate a device.
- */
-static int
-check_device(const char *path, boolean_t force, boolean_t isspare)
-{
-	dm_descriptor_t desc;
-	int err;
-	char *dev;
-
-	/*
-	 * For whole disks, libdiskmgt does not include the leading dev path.
-	 */
-	dev = strrchr(path, '/');
-	assert(dev != NULL);
-	dev++;
-	if ((desc = dm_get_descriptor_by_name(DM_ALIAS, dev, &err)) != NULL) {
-		err = check_disk(path, desc, force, isspare);
-		dm_free_descriptor(desc);
-		return (err);
-	}
-
-	return (check_slice(path, force, B_FALSE, isspare));
-}
-
-/*
  * Check that a file is valid.  All we can do in this case is check that it's
  * not in use by another pool, and not in use by swap.
  */
@@ -287,6 +138,7 @@ check_file(const char *file, boolean_t force, boolean_t isspare)
 	pool_state_t state;
 	boolean_t inuse;
 
+#ifndef __NetBSD__
 	if (dm_inuse_swap(file, &err)) {
 		if (err)
 			libdiskmgt_error(err);
@@ -295,6 +147,7 @@ check_file(const char *file, boolean_t force, boolean_t isspare)
 			    "Please see swap(1M).\n"), file);
 		return (-1);
 	}
+#endif
 
 	if ((fd = open(file, O_RDONLY)) < 0)
 		return (0);
@@ -1061,10 +914,8 @@ check_in_use(nvlist_t *config, nvlist_t *nv, int force, int isreplacing,
 				return (0);
 		}
 
-		if (strcmp(type, VDEV_TYPE_DISK) == 0)
-			ret = check_device(path, force, isspare);
-
-		if (strcmp(type, VDEV_TYPE_FILE) == 0)
+		if (strcmp(type, VDEV_TYPE_DISK) == 0 ||
+		    strcmp(type, VDEV_TYPE_FILE) == 0)
 			ret = check_file(path, force, isspare);
 
 		return (ret);

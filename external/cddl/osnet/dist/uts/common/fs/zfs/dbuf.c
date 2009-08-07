@@ -52,7 +52,7 @@ static kmem_cache_t *dbuf_cache;
 static int
 dbuf_cons(void *vdb, void *unused, int kmflag)
 {
-	dmu_buf_impl_t *db = vdb;
+	dmu_buf_impl_t *db = unused;
 	bzero(db, sizeof (dmu_buf_impl_t));
 
 	mutex_init(&db->db_mtx, NULL, MUTEX_DEFAULT, NULL);
@@ -65,7 +65,7 @@ dbuf_cons(void *vdb, void *unused, int kmflag)
 static void
 dbuf_dest(void *vdb, void *unused)
 {
-	dmu_buf_impl_t *db = vdb;
+	dmu_buf_impl_t *db = unused;
 	mutex_destroy(&db->db_mtx);
 	cv_destroy(&db->db_changed);
 	refcount_destroy(&db->db_holds);

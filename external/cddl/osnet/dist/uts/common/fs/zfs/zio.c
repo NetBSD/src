@@ -72,7 +72,7 @@ kmem_cache_t *zio_cache;
 kmem_cache_t *zio_buf_cache[SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT];
 kmem_cache_t *zio_data_buf_cache[SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT];
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(__NetBSD__)
 extern vmem_t *zio_alloc_arena;
 #endif
 
@@ -89,12 +89,13 @@ zio_init(void)
 	size_t c;
 	vmem_t *data_alloc_arena = NULL;
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(__NetBSD__)
 	data_alloc_arena = zio_alloc_arena;
 #endif
 	zio_cache = kmem_cache_create("zio_cache", sizeof (zio_t), 0,
 	    NULL, NULL, NULL, NULL, NULL, 0);
 
+#ifndef __NetBSD__
 	/*
 	 * For small buffers, we want a cache for each multiple of
 	 * SPA_MINBLOCKSIZE.  For medium-size buffers, we want a cache
@@ -139,7 +140,7 @@ zio_init(void)
 		if (zio_data_buf_cache[c - 1] == NULL)
 			zio_data_buf_cache[c - 1] = zio_data_buf_cache[c];
 	}
-
+#endif /* __NetBSD__ */
 	zio_inject_init();
 }
 
@@ -150,6 +151,7 @@ zio_fini(void)
 	kmem_cache_t *last_cache = NULL;
 	kmem_cache_t *last_data_cache = NULL;
 
+#ifndef __NetBSD__	
 	for (c = 0; c < SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT; c++) {
 		if (zio_buf_cache[c] != last_cache) {
 			last_cache = zio_buf_cache[c];
@@ -163,7 +165,8 @@ zio_fini(void)
 		}
 		zio_data_buf_cache[c] = NULL;
 	}
-
+#endif /* __NetBSD__ */
+	
 	kmem_cache_destroy(zio_cache);
 
 	zio_inject_fini();
@@ -185,10 +188,12 @@ void *
 zio_buf_alloc(size_t size)
 {
 	size_t c = (size - 1) >> SPA_MINBLOCKSHIFT;
-
 	ASSERT(c < SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT);
-
+#ifdef __NetBSD__
+	return (kmem_alloc(size, KM_SLEEP));
+#else
 	return (kmem_cache_alloc(zio_buf_cache[c], KM_PUSHPAGE));
+#endif	
 }
 
 /*
@@ -203,8 +208,11 @@ zio_data_buf_alloc(size_t size)
 	size_t c = (size - 1) >> SPA_MINBLOCKSHIFT;
 
 	ASSERT(c < SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT);
-
+#ifdef __NetBSD__
+	return (kmem_alloc(size, KM_SLEEP));
+#else
 	return (kmem_cache_alloc(zio_data_buf_cache[c], KM_PUSHPAGE));
+#endif	
 }
 
 void
@@ -214,7 +222,11 @@ zio_buf_free(void *buf, size_t size)
 
 	ASSERT(c < SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT);
 
+#ifdef __NetBSD__
+	kmem_free(buf, size);
+#else	
 	kmem_cache_free(zio_buf_cache[c], buf);
+#endif	
 }
 
 void
@@ -224,7 +236,11 @@ zio_data_buf_free(void *buf, size_t size)
 
 	ASSERT(c < SPA_MAXBLOCKSIZE >> SPA_MINBLOCKSHIFT);
 
+#ifdef __NetBSD__
+	kmem_free(buf, size);
+#else	
 	kmem_cache_free(zio_data_buf_cache[c], buf);
+#endif	
 }
 
 /*

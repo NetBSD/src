@@ -89,12 +89,12 @@ extern size_t ereport_dumplen;
 extern void fm_init(void);
 extern void fm_nvprint(nvlist_t *);
 extern void fm_panic(const char *, ...);
-extern void fm_banner(void);
+/*extern void fm_banner(void);*/
 
-extern void fm_ereport_dump(void);
+/*extern void fm_ereport_dump(void);*/
 extern void fm_ereport_post(nvlist_t *, int);
 
-extern void fm_payload_stack_add(nvlist_t *, const pc_t *, int);
+/*extern void fm_payload_stack_add(nvlist_t *, const pc_t *, int);*/
 
 #endif  /* _KERNEL */
 

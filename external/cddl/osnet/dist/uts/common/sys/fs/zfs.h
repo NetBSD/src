@@ -505,6 +505,7 @@ typedef struct vdev_stat {
  */
 #define	ZVOL_PSEUDO_DEV		"/devices/pseudo/zvol@0:"
 #define	ZVOL_FULL_DEV_DIR	"/dev/" ZVOL_DEV_DIR "/"
+#define ZVOL_FULL_RDEV_DIR       "/dev/" ZVOL_RDEV_DIR "/"
 
 #define	ZVOL_PROP_NAME		"name"
 
