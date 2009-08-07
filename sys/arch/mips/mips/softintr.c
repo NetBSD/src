@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.7 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: softintr.c,v 1.8 2009/08/07 01:26:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.7 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.8 2009/08/07 01:26:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,16 +43,16 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 
 	switch (level) {
 	case SOFTINT_BIO:
-		*machdep = mips_ipl_si_to_sr[IPL_SOFTBIO];
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTBIO-IPL_SOFTCLOCK];
 		break;
 	case SOFTINT_NET:
-		*machdep = mips_ipl_si_to_sr[IPL_SOFTNET];
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTNET-IPL_SOFTCLOCK];
 		break;
 	case SOFTINT_SERIAL:
-		*machdep = mips_ipl_si_to_sr[IPL_SOFTSERIAL];
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTSERIAL-IPL_SOFTCLOCK];
 		break;
 	case SOFTINT_CLOCK:
-		*machdep = mips_ipl_si_to_sr[IPL_SOFTCLOCK];
+		*machdep = mips_ipl_si_to_sr[IPL_SOFTCLOCK-IPL_SOFTCLOCK];
 		break;
 	default:
 		panic("softint_init_md");
