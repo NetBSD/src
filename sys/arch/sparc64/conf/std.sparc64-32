@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64-32,v 1.1.80.1 2009/08/07 06:43:26 snj Exp $
+#	$NetBSD: std.sparc64-32,v 1.1.80.2 2009/08/07 23:00:02 snj Exp $
 
 #
 # Unneeded NetBSD/sparc64 kernel options when building 32-bit kernels.
@@ -10,6 +10,3 @@ no makeoptions	LP64
 makeoptions	LP64="no"
 
 no options 	EXEC_ELF64
-
-# Atheros HAL options
-include "external/isc/atheros_hal/conf/std.ath_hal"
