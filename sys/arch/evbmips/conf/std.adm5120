@@ -1,4 +1,4 @@
-# $NetBSD: std.adm5120,v 1.1 2007/03/20 08:52:01 dyoung Exp $
+# $NetBSD: std.adm5120,v 1.1.56.1 2009/08/07 06:43:26 snj Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -16,3 +16,6 @@ makeoptions	BOARDTYPE="adm5120"
 
 include 	"arch/evbmips/conf/files.adm5120"
 include 	"arch/mips/conf/files.adm5120"
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"
