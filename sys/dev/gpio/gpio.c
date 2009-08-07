@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.24 2009/08/03 12:43:56 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.25 2009/08/07 08:05:48 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.24 2009/08/03 12:43:56 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.25 2009/08/07 08:05:48 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -316,7 +316,8 @@ gpioopen(dev_t dev, int flag, int mode,
 	}
 
 	if ((ret = gpiobus_open(sc->sc_gc, sc->sc_dev))) {
-		DPRINTF(("%s: gpiobus_open returned %d\n", device_xname(sc->sc_dev),
+		DPRINTF(("%s: gpiobus_open returned %d\n",
+		    device_xname(sc->sc_dev),
 		    ret));
 		return ret;
 	}
