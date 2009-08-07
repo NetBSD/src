@@ -3139,8 +3139,7 @@ uint_t zfs_fsyncer_key;
 extern uint_t rrw_tsd_key;
 
 /* ZFS must be used on machines with at least 512Mb. */
-/*#define ZFS_MIN_MEGS 512 */
-#define ZFS_MIN_MEGS 128 /*XXX Use 128Mb for testing only.*/
+#define ZFS_MIN_MEGS 512 
 
 static int
 zfs_modcmd(modcmd_t cmd, void *arg)
