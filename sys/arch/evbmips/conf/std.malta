@@ -1,4 +1,4 @@
-# $NetBSD: std.malta,v 1.5 2005/12/11 12:17:11 christos Exp $
+# $NetBSD: std.malta,v 1.5.88.1 2009/08/07 06:43:26 snj Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -15,3 +15,6 @@ makeoptions	DEFTEXTADDR="0x80100000"
 makeoptions	BOARDTYPE="malta"
 
 include "arch/evbmips/conf/files.malta"
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

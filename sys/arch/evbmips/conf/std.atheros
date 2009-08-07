@@ -1,4 +1,4 @@
-# $NetBSD: std.atheros,v 1.3 2006/09/26 06:37:32 gdamore Exp $
+# $NetBSD: std.atheros,v 1.3.66.1 2009/08/07 06:43:26 snj Exp $
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
@@ -13,3 +13,6 @@ makeoptions	BOARDTYPE="atheros"
 
 include 	"arch/evbmips/conf/files.atheros"
 include 	"arch/mips/conf/files.atheros"
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

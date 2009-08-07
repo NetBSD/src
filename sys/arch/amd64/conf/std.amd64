@@ -1,4 +1,4 @@
-# $NetBSD: std.amd64,v 1.6 2008/04/30 22:08:18 ad Exp $
+# $NetBSD: std.amd64,v 1.6.10.1 2009/08/07 06:43:25 snj Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
@@ -15,3 +15,5 @@ mainbus0 at root
 cpu* at mainbus?
 ioapic* at mainbus? apid ?
 
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"
