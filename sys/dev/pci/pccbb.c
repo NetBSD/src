@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.190 2009/08/07 12:04:43 blymn Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.191 2009/08/07 12:09:50 blymn Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.190 2009/08/07 12:04:43 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.191 2009/08/07 12:09:50 blymn Exp $");
 
 /*
 #define CBB_DEBUG
@@ -606,6 +606,10 @@ pccbbdetach(device_t self, int flags)
 
 	callout_stop(&sc->sc_insert_ch);
 	callout_destroy(&sc->sc_insert_ch);
+
+	mutex_destroy(&sc->sc_pwr_mtx);
+	cv_destroy(&sc->sc_pwr_cv);
+
 	return 0;
 }
 
