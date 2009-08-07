@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.213 2008/06/02 16:25:34 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.214 2009/08/07 13:58:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.213 2008/06/02 16:25:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.214 2009/08/07 13:58:38 wiz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2150,7 +2150,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		for (byteoffset = 0; byteoffset < (*bpp)->b_bcount;
 		     byteoffset += fs->lfs_bsize) {
 #ifdef LFS_USE_B_INVAL
-			if ((*bpp)->b_cflags & BC_INVAL) != 0 &&
+			if (((*bpp)->b_cflags & BC_INVAL) != 0 &&
 			    (*bpp)->b_iodone != NULL) {
 				if (copyin((void *)(*bpp)->b_saveaddr +
 					   byteoffset, dp, el_size)) {
