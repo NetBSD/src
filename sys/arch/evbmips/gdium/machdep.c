@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2009/08/07 00:11:08 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2009/08/07 00:11:08 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -193,13 +193,13 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(int argc, char **argv, char **evnp, void *syms)
+mach_init(int argc, char **argv, char **envp, void *callvec)
 {
 	struct gdium_config *gc = &gdium_configuration;
 	void *kernend, *v;
         u_long first, last;
 	char *cp;
-	int freqok, i, howto;
+	int i, howto;
 	psize_t memsize;
 
 	extern char edata[], end[];
@@ -232,16 +232,38 @@ mach_init(int argc, char **argv, char **evnp, void *syms)
 	gdium_cnattach(gc);
 
 	/*
-	 * Calibrate the timer if YAMON failed to tell us.
+	 * Get the timer from PMON.
 	 */
-	if (!freqok) {
-#if 0
-		bus_space_handle_t sh;
-		bus_space_map(&gc->gc_iot, MALTA_RTCADR, 2, 0, &sh);
-		malta_cal_timer(&gc->gc_iot, sh);
-		bus_space_unmap(&gc->gc_iot, sh, 2);
-#endif
+	for (i = 0; envp[i] != NULL; i++) {
+		if (!strncmp(envp[i], "cpuclock=", 9)) {
+			curcpu()->ci_cpu_freq =
+			    strtoul(&envp[i][9], NULL, 10);
+			break;
+		}
 	}
+	
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		curcpu()->ci_cpu_freq /= 2;
+
+	/* Compute the number of ticks for hz. */
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+
+	/* Compute the delay divisor. */
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
+
+	/*
+	 * Get correct cpu frequency if the CPU runs at twice the
+	 * external/cp0-count frequency.
+	 */
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		curcpu()->ci_cpu_freq *= 2;
+
+#ifdef DEBUG
+	printf("Timer calibration: %lu cycles/sec\n",
+	    curcpu()->ci_cpu_freq);
+	delay(1000000);
+#endif
 
 #if NCOM > 0
 	/*
