@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.56 2009/08/07 07:09:48 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.57 2009/08/07 18:58:01 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -1966,4 +1966,27 @@ sys/net80211/ieee80211_var.h			patch
 
 	Update to the open source atheros HAL.
 	[jmcneill, ticket #775]
+
+sys/dev/cardbus/if_ath_cardbus.c		1.32
+sys/dev/pci/if_ath_pci.c			1.32
+
+	Convert some stragglers to reference the new ath(4) HAL.
+	[sborrill, ticket #903]
+
+sys/arch/i386/Makefile				1.37 via patch
+
+	For the 'tags' target, use the right path to the Atheros HAL.
+	[sborrill, ticket #904]
+
+sys/arch/alpha/conf/Makefile.alpha		1.81
+sys/arch/amd64/conf/Makefile.amd64		1.26
+sys/arch/i386/conf/Makefile.i386		1.162
+sys/arch/macppc/conf/Makefile.macppc		1.31
+sys/arch/mips/conf/Makefile.mips		1.52
+sys/arch/sparc64/conf/Makefile.sparc64		1.68
+sys/arch/xen/conf/Makefile.xen			1.28
+
+	Clean-up makefile stubs used to include in the build the binary
+	ath(4) HAL object.
+	[sborrill, ticket #905]
 
