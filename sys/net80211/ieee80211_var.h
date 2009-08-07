@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.26 2007/03/04 06:03:19 christos Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.26.52.1 2009/08/07 06:43:50 snj Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -282,7 +282,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_C_BURST	0x02000000	/* CAPABILITY: frame bursting */
 #define	IEEE80211_C_WME		0x04000000	/* CAPABILITY: WME avail */
 #define	IEEE80211_C_WDS		0x08000000	/* CAPABILITY: 4-addr support */
-/* 0x10000000 reserved */
+#define	IEEE80211_C_WME_TKIPMIC	0x10000000 	/* CAPABILITY: TKIP MIC for QoS frame */
 #define	IEEE80211_C_BGSCAN	0x20000000	/* CAPABILITY: bg scanning */
 #define	IEEE80211_C_TXFRAG	0x40000000	/* CAPABILITY: tx fragments */
 /* XXX protection/barker? */

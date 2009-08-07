@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.25 2008/07/09 19:47:24 joerg Exp $	*/
+/*	$NetBSD: athvar.h,v 1.25.4.1 2009/08/07 06:43:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -44,9 +44,11 @@
 #ifndef _DEV_ATH_ATHVAR_H
 #define _DEV_ATH_ATHVAR_H
 
-#include <dev/ic/ath_netbsd.h>
-#include <contrib/dev/ath/ah.h>
 #include <net80211/ieee80211_radiotap.h>
+
+#include <external/isc/atheros_hal/dist/ah.h>
+
+#include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athioctl.h>
 #include <dev/ic/athrate.h>
 
@@ -77,6 +79,12 @@
  */
 #define	ATH_KEYMAX	128		/* max key cache size we handle */
 #define	ATH_KEYBYTES	(ATH_KEYMAX/NBBY)	/* storage space in bytes */
+/*
+ * Convert from net80211 layer values to Ath layer values. Hopefully this will
+ * be optimised away when the two constants are the same.
+ */
+typedef unsigned int ath_keyix_t;
+#define ATH_KEY(_keyix) ((_keyix == IEEE80211_KEYIX_NONE) ? HAL_TXKEYIX_INVALID : _keyix)
 
 /* driver-specific node state */
 struct ath_node {
@@ -454,6 +462,12 @@ extern int ath_txbuf;
 	(*(_pcc) = (_ah)->ah_countryCode)
 #define	ath_hal_tkipsplit(_ah) \
 	(ath_hal_getcapability(_ah, HAL_CAP_TKIP_SPLIT, 0, NULL) == HAL_OK)
+#define ath_hal_settkipmic(_ah, _v) \
+	(ath_hal_setcapability(_ah, HAL_CAP_TKIP_MIC, 1, _v, NULL) == HAL_OK)
+#define ath_hal_settkipsplit(_ah, _v) \
+	(ath_hal_setcapability(_ah, HAL_CAP_TKIP_SPLIT, 1, _v, NULL) == HAL_OK)
+#define ath_hal_wmetkipmic(_ah) \
+	(ath_hal_getcapability(_ah, HAL_CAP_WME_TKIPMIC, 0, NULL) == HAL_OK)
 #define	ath_hal_hwphycounters(_ah) \
 	(ath_hal_getcapability(_ah, HAL_CAP_PHYCOUNTERS, 0, NULL) == HAL_OK)
 #define	ath_hal_hasdiversity(_ah) \
@@ -528,8 +542,8 @@ extern int ath_txbuf;
 
 #define	ath_hal_setuprxdesc(_ah, _ds, _size, _intreq) \
 	((*(_ah)->ah_setupRxDesc)((_ah), (_ds), (_size), (_intreq)))
-#define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext) \
-	((*(_ah)->ah_procRxDesc)((_ah), (_ds), (_dspa), (_dsnext), 0))
+#define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext, tsf, a5) \
+	((*(_ah)->ah_procRxDesc)((_ah), (_ds), (_dspa), (_dsnext), (tsf), (a5)))
 #define	ath_hal_setuptxdesc(_ah, _ds, _plen, _hlen, _atype, _txpow, \
 		_txr0, _txtr0, _keyix, _ant, _flags, \
 		_rtsrate, _rtsdura) \
@@ -542,8 +556,8 @@ extern int ath_txbuf;
 		(_txr1), (_txtr1), (_txr2), (_txtr2), (_txr3), (_txtr3)))
 #define	ath_hal_filltxdesc(_ah, _ds, _l, _first, _last, _ds0) \
 	((*(_ah)->ah_fillTxDesc)((_ah), (_ds), (_l), (_first), (_last), (_ds0)))
-#define	ath_hal_txprocdesc(_ah, _ds) \
-	((*(_ah)->ah_procTxDesc)((_ah), (_ds)))
+#define	ath_hal_txprocdesc(_ah, _ds, _a2) \
+	((*(_ah)->ah_procTxDesc)((_ah), (_ds), (_a2)))
 #define	ath_hal_gettxintrtxqs(_ah, _txqs) \
 	((*(_ah)->ah_getTxIntrQueue)((_ah), (_txqs)))
 
@@ -558,7 +572,5 @@ extern int ath_txbuf;
 	((*(_ah)->ah_processDfs)((_ah), (_chan)))
 #define ath_hal_checknol(_ah, _chan, _nchans) \
 	((*(_ah)->ah_dfsNolCheck)((_ah), (_chan), (_nchans)))
-#define ath_hal_radar_wait(_ah, _chan) \
-	((*(_ah)->ah_radarWait)((_ah), (_chan)))
 
 #endif /* _DEV_ATH_ATHVAR_H */

@@ -1,0 +1,138 @@
+#	$NetBSD: files.ath_hal,v 1.1.10.2 2009/08/07 06:43:28 snj Exp $
+
+defflag opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
+defflag opt_athhal.h	ATHHAL_WRITE_EEPROM ATHHAL_WRITE_REGDOMAIN
+
+define athhal_eeprom_v1
+define athhal_eeprom_v3
+define athhal_eeprom_v14
+
+file	external/isc/atheros_hal/dist/ah.c		ath
+file	external/isc/atheros_hal/dist/ah_eeprom_v1.c	ath & athhal_eeprom_v1
+file	external/isc/atheros_hal/dist/ah_eeprom_v3.c	ath & athhal_eeprom_v3
+file	external/isc/atheros_hal/dist/ah_eeprom_v14.c	ath & athhal_eeprom_v14
+file	external/isc/atheros_hal/dist/ah_regdomain.c	ath
+
+# Atheros HAL's OS dependant code
+#
+file	external/isc/atheros_hal/ic/ah_osdep.c	ath
+
+
+# Atheros AR5210 family
+#
+defflag opt_athhal.h	ATHHAL_AR5210: athhal_eeprom_v1
+
+file	external/isc/atheros_hal/dist/ar5210/ar5210_attach.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_beacon.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_interrupts.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_keycache.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_misc.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_phy.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_power.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_recv.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_reset.c	ath & athhal_ar5210
+file	external/isc/atheros_hal/dist/ar5210/ar5210_xmit.c	ath & athhal_ar5210
+
+# Atheros AR5211 family
+#
+defflag opt_athhal.h	ATHHAL_AR5211: athhal_eeprom_v3
+
+file	external/isc/atheros_hal/dist/ar5211/ar5211_attach.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_beacon.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_interrupts.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_keycache.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_misc.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_phy.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_power.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_recv.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_reset.c	ath & athhal_ar5211
+file	external/isc/atheros_hal/dist/ar5211/ar5211_xmit.c	ath & athhal_ar5211
+
+# Atheros AR5212/AR5312 RF support
+#
+defflag opt_athhal.h	ATHHAL_RF2316
+defflag opt_athhal.h	ATHHAL_RF2317
+defflag opt_athhal.h	ATHHAL_RF2413
+defflag opt_athhal.h	ATHHAL_RF2425
+defflag opt_athhal.h	ATHHAL_RF5111
+defflag opt_athhal.h	ATHHAL_RF5112
+defflag opt_athhal.h	ATHHAL_RF5413
+
+file	external/isc/atheros_hal/dist/ar5212/ar2316.c		ath & athhal_rf2316
+file	external/isc/atheros_hal/dist/ar5212/ar2317.c		ath & athhal_rf2317
+file	external/isc/atheros_hal/dist/ar5212/ar2413.c		ath & athhal_rf2413
+file	external/isc/atheros_hal/dist/ar5212/ar2425.c		ath & athhal_rf2425
+file	external/isc/atheros_hal/dist/ar5212/ar5111.c		ath & athhal_rf5111
+file	external/isc/atheros_hal/dist/ar5212/ar5112.c		ath & athhal_rf5112
+file	external/isc/atheros_hal/dist/ar5212/ar5413.c		ath & athhal_rf5413
+
+# Atheros AR5212 family
+#
+define athhal_ar5212_attach
+define athhal_ar5212_subr
+
+defflag opt_athhal.h	ATHHAL_AR5212: athhal_eeprom_v3,
+			athhal_ar5212_attach, athhal_ar5212_subr
+
+defflag opt_athhal.h	ATHHAL_AR5311: ATHHAL_AR5212
+
+file	external/isc/atheros_hal/dist/ar5212/ar5212_ani.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_attach.c	ath & athhal_ar5212_attach
+file	external/isc/atheros_hal/dist/ar5212/ar5212_beacon.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_eeprom.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_gpio.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_interrupts.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_keycache.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_misc.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_phy.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_power.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_recv.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_reset.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_rfgain.c	ath & athhal_ar5212_subr
+file	external/isc/atheros_hal/dist/ar5212/ar5212_xmit.c	ath & athhal_ar5212_subr
+
+# Atheros AR5312 family
+#
+defflag opt_athhal.h	ATHHAL_AR5312: athhal_eeprom_v3, athhal_ar5212_subr
+
+defflag opt_athhal.h	ATHHAL_AR2316: ATHHAL_AR5312
+defflag opt_athhal.h	ATHHAL_AR2317: ATHHAL_AR5312
+
+file	external/isc/atheros_hal/dist/ar5312/ar5312_attach.c	ath & athhal_ar5312
+file	external/isc/atheros_hal/dist/ar5312/ar5312_eeprom.c	ath & athhal_ar5312
+file	external/isc/atheros_hal/dist/ar5312/ar5312_gpio.c	ath & athhal_ar5312
+file	external/isc/atheros_hal/dist/ar5312/ar5312_interrupts.c	ath & athhal_ar5312
+file	external/isc/atheros_hal/dist/ar5312/ar5312_misc.c	ath & athhal_ar5312
+file	external/isc/atheros_hal/dist/ar5312/ar5312_power.c	ath & athhal_ar5312
+file	external/isc/atheros_hal/dist/ar5312/ar5312_reset.c	ath & athhal_ar5312
+file	external/isc/atheros_hal/dist/ar5312/ar5315_gpio.c	ath & (athhal_ar2316 | athhal_ar2317)
+
+# Atheros AR5416 family
+#
+defflag opt_athhal.h	ATHHAL_AR5416: athhal_eeprom_v14, athhal_ar5212_subr
+defflag opt_athhal.h	ATHHAL_AR9280: ATHHAL_AR5416
+
+file	external/isc/atheros_hal/dist/ar5416/ar2133.c		ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_ani.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_attach.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_beacon.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_cal.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_cal_adcdc.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_cal_adcgain.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_cal_iq.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_eeprom.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_gpio.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_interrupts.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_keycache.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_misc.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_phy.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_power.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_recv.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_reset.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar5416_xmit.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9160_attach.c	ath & athhal_ar5416
+
+#
+#
+makeoptions ath		CPPFLAGS+="-I${S}/external/isc/atheros_hal/dist"
+makeoptions ath		CPPFLAGS+="-I${S}/external/isc/atheros_hal/ic"

@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.22 2007/10/17 19:55:17 garbled Exp $
+#	$NetBSD: std.macppc,v 1.22.30.1 2009/08/07 06:43:26 snj Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -16,3 +16,6 @@ options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
 options 	EXEC_SCRIPT	# shell script support
 
 options 	INTSTK=0x2000
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

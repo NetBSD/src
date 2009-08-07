@@ -1,4 +1,4 @@
-# $NetBSD: std.xen,v 1.3 2008/01/25 21:12:11 joerg Exp $
+# $NetBSD: std.xen,v 1.3.20.1 2009/08/07 06:43:25 snj Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
@@ -13,3 +13,6 @@ options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

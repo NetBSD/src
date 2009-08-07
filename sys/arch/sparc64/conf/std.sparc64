@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64,v 1.17 2008/02/03 13:27:12 martin Exp $
+#	$NetBSD: std.sparc64,v 1.17.20.1 2009/08/07 06:43:26 snj Exp $
 
 #
 # Mandatory NetBSD/sparc64 kernel options when building either 32-bit or
@@ -15,3 +15,6 @@ options 	EXEC_SCRIPT	# execve(2) support for scripts
 options 	EXEC_ELF64	# 64-bit NetBSD and SunOS 5 bins
 
 options		CPU_IN_CKSUM	# use optimized checksum method
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

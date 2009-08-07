@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.16 2008/07/09 19:47:24 joerg Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.16.4.1 2009/08/07 06:43:28 snj Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.16 2008/07/09 19:47:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.16.4.1 2009/08/07 06:43:28 snj Exp $");
 #endif
 
 
@@ -74,9 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.16 2008/07/09 19:47:24 joerg Ex
 #include <netinet/in.h> 
 #endif
 
+#include "ah_desc.h"
 #include <dev/ic/athvar.h>
 #include <dev/ic/athrate-sample.h>
-#include <contrib/dev/ath/ah_desc.h>
 
 #define	SAMPLE_DEBUG
 #ifdef SAMPLE_DEBUG
