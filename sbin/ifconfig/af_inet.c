@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.13 2009/08/07 19:35:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.13 2009/08/07 19:35:55 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -79,6 +79,11 @@ in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	int s;
 	unsigned short flags;
 	struct in_aliasreq in_addreq;
+	const struct sockaddr_in * const asin = &in_addreq.ifra_addr;
+	const struct sockaddr_in * const dsin = &in_addreq.ifra_dstaddr;
+	const struct sockaddr_in * const bsin = &in_addreq.ifra_broadaddr;
+	char hbuf[NI_MAXHOST];
+	const int niflag = Nflag ? 0 : NI_NUMERICHOST;
 
 	if (lflag)
 		return;
@@ -109,20 +114,28 @@ in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 			warn("SIOCGIFALIAS");
 	}
 
-	printf("\tinet %s%s", alias ? "alias " : "",
-	    inet_ntoa(in_addreq.ifra_addr.sin_addr));
+	if (getnameinfo((const struct sockaddr *)asin, asin->sin_len,
+			hbuf, sizeof(hbuf), NULL, 0, niflag))
+		strlcpy(hbuf, "", sizeof(hbuf));	/* some message? */
+	printf("\tinet %s%s", alias ? "alias " : "", hbuf);
 
 	if (getifflags(env, oenv, &flags) == -1)
 		err(EXIT_FAILURE, "%s: getifflags", __func__);
 
-	if (flags & IFF_POINTOPOINT)
-		printf(" -> %s", inet_ntoa(in_addreq.ifra_dstaddr.sin_addr));
+	if (flags & IFF_POINTOPOINT) {
+		if (getnameinfo((const struct sockaddr *)dsin, dsin->sin_len,
+				hbuf, sizeof(hbuf), NULL, 0, niflag))
+			strlcpy(hbuf, "", sizeof(hbuf)); /* some message? */
+		printf(" -> %s", hbuf);
+	}
 
 	printf(" netmask 0x%x", ntohl(in_addreq.ifra_mask.sin_addr.s_addr));
 
 	if (flags & IFF_BROADCAST) {
-		printf(" broadcast %s",
-		    inet_ntoa(in_addreq.ifra_broadaddr.sin_addr));
+		if (getnameinfo((const struct sockaddr *)bsin, bsin->sin_len,
+				hbuf, sizeof(hbuf), NULL, 0, niflag))
+			strlcpy(hbuf, "", sizeof(hbuf)); /* some message? */
+		printf(" broadcast %s", hbuf);
 	}
 }
 
