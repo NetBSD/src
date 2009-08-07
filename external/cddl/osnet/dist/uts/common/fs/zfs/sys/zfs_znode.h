@@ -34,6 +34,12 @@
 #include <sys/dmu.h>
 #include <sys/zfs_vfsops.h>
 #include <sys/rrwlock.h>
+
+#ifdef __NetBSD__
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/genfs/genfs_node.h>
+#endif	
+
 #endif
 #include <sys/zfs_acl.h>
 #include <sys/zil.h>
@@ -171,6 +177,7 @@ typedef struct znode_phys {
 typedef struct zfs_dirlock {
 	char		*dl_name;	/* directory entry being locked */
 	uint32_t	dl_sharecnt;	/* 0 if exclusive, > 0 if shared */
+	uint32_t	dl_refcnt;	/* reference counter for dirlock structure */
 	uint16_t	dl_namesize;	/* set if dl_name was allocated */
 	kcondvar_t	dl_cv;		/* wait for entry to be unlocked */
 	struct znode	*dl_dzp;	/* directory znode */
@@ -178,6 +185,9 @@ typedef struct zfs_dirlock {
 } zfs_dirlock_t;
 
 typedef struct znode {
+#ifdef __NetBSD__
+	struct genfs_node  z_genfs_node;
+#endif	
 	struct zfsvfs	*z_zfsvfs;
 	vnode_t		*z_vnode;
 	uint64_t	z_id;		/* object ID for this znode */
@@ -307,7 +317,7 @@ extern void	zfs_znode_delete(znode_t *, dmu_tx_t *);
 extern void	zfs_znode_free(znode_t *);
 extern void	zfs_remove_op_tables();
 extern int	zfs_create_op_tables();
-extern int	zfs_sync(vfs_t *vfsp, short flag, cred_t *cr);
+extern int	zfs_sync(vfs_t *vfsp, int flag, cred_t *cr);
 extern dev_t	zfs_cmpldev(uint64_t);
 extern int	zfs_get_zplprop(objset_t *os, zfs_prop_t prop, uint64_t *value);
 extern int	zfs_set_version(const char *name, uint64_t newvers);
