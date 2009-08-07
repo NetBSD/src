@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.9 2009/08/03 17:24:40 mbalmer Exp $ */
+/* $NetBSD: gpioow.c,v 1.10 2009/08/07 08:15:52 mbalmer Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.9 2009/08/03 17:24:40 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.10 2009/08/07 08:15:52 mbalmer Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.9 2009/08/03 17:24:40 mbalmer Exp $");
 struct gpioow_softc {
 	void *			sc_gpio;
 	struct gpio_pinmap	sc_map;
-	int			__map[GPIOOW_NPINS];
+	int			_map[GPIOOW_NPINS];
 
 	struct onewire_bus	sc_ow_bus;
 	device_t		sc_ow_dev;
@@ -103,7 +103,7 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 
 	/* Map pins */
 	sc->sc_gpio = ga->ga_gpio;
-	sc->sc_map.pm_map = sc->__map;
+	sc->sc_map.pm_map = sc->_map;
 	if (gpio_pin_map(sc->sc_gpio, ga->ga_offset, ga->ga_mask,
 	    &sc->sc_map)) {
 		aprint_error(": can't map pins\n");
