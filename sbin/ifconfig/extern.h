@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2008/07/15 20:56:13 dyoung Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2009/08/07 18:53:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -88,6 +88,6 @@ int register_usage(usage_func_t *);
 int register_flag(int);
 bool get_flag(int);
 
-extern bool lflag, vflag, zflag;
+extern bool lflag, Nflag, vflag, zflag;
 
 #endif	/* _IFCONFIG_EXTERN_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.219 2009/05/26 16:03:24 pooka Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.220 2009/08/07 18:53:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.219 2009/05/26 16:03:24 pooka Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.220 2009/08/07 18:53:37 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,9 +102,9 @@ __RCSID("$NetBSD: ifconfig.c,v 1.219 2009/05/26 16:03:24 pooka Exp $");
 #include "env.h"
 
 static bool bflag, dflag, hflag, sflag, uflag;
-bool lflag, vflag, zflag;
+bool lflag, Nflag, vflag, zflag;
 
-static char gflags[10 + 26 * 2 + 1] = "AabCdhlsuvz";
+static char gflags[10 + 26 * 2 + 1] = "AabCdhlNsuvz";
 bool gflagset[10 + 26 * 2];
 
 static int carrier(prop_dictionary_t);
@@ -550,7 +550,7 @@ main(int argc, char **argv)
 	start = init_parser();
 
 	/* Parse command-line options */
-	aflag = vflag = zflag = false;
+	aflag = Nflag = vflag = zflag = false;
 	while ((ch = getopt(argc, argv, gflags)) != -1) {
 		switch (ch) {
 		case 'A':
@@ -577,6 +577,9 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			lflag = true;
+			break;
+		case 'N':
+			Nflag = true;
 			break;
 
 		case 's':

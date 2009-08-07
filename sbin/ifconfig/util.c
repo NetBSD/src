@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2009/04/27 20:10:49 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.12 2009/08/07 18:53:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.11 2009/04/27 20:10:49 dyoung Exp $");
+__RCSID("$NetBSD: util.c,v 1.12 2009/08/07 18:53:37 dyoung Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: util.c,v 1.11 2009/04/27 20:10:49 dyoung Exp $");
 #include <netinet/in.h>		/* XXX */
 
 #include "env.h"
+#include "extern.h"
 #include "util.h"
 
 int
@@ -279,7 +280,8 @@ print_link_addresses(prop_dictionary_t env, bool print_active_only)
 			continue;
 
 		if (getnameinfo(ifa->ifa_addr, ifa->ifa_addr->sa_len,
-			hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
+			hbuf, sizeof(hbuf), NULL, 0,
+			Nflag ? 0 : NI_NUMERICHOST) == 0 &&
 		    hbuf[0] != '\0') {
 			printf("\t%s %s\n",
 			    print_active_only ? "address:" : "link", hbuf);
