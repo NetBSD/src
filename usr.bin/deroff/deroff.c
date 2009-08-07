@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.6 2009/04/11 13:01:27 lukem Exp $	*/
+/*	$NetBSD: deroff.c,v 1.7 2009/08/07 14:05:58 wiz Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,7 +74,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.6 2009/04/11 13:01:27 lukem Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.7 2009/08/07 14:05:58 wiz Exp $";
 #endif
 #endif /* not lint */
 
@@ -825,14 +825,14 @@ static int
 _C1(void)
 {
 
-	return C1get);
+	return C1get;
 }
 
 static int
 _C(void)
 {
 
-	return Cget);
+	return Cget;
 }
 #endif /* DEBUG */
 
