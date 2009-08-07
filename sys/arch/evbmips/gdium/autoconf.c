@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2009/08/06 00:50:25 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2009/08/07 19:27:54 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2009/08/06 00:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2009/08/07 19:27:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,22 @@ findroot(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	prop_dictionary_t dict;
+
 	if ((booted_device == NULL) && (netboot == 1))
 		if (device_class(dev) == DV_IFNET)
 			booted_device = dev;
+	if (device_is_a(dev, "genfb")) {
+		dict = device_properties(dev);
+		/*
+		 * this is a hack
+		 * is_console and address need to be checked against reality
+		 */
+		prop_dictionary_set_bool(dict, "is_console", 1);
+		prop_dictionary_set_uint32(dict, "width", 1024);
+		prop_dictionary_set_uint32(dict, "height", 600);
+		prop_dictionary_set_uint32(dict, "depth", 16);
+		prop_dictionary_set_uint32(dict, "linebytes", 2048);
+		prop_dictionary_set_uint32(dict, "address", 0x04000000);
+	}
 }
