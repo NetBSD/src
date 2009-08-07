@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.25.4.1 2009/08/07 06:43:28 snj Exp $	*/
+/*	$NetBSD: athvar.h,v 1.25.4.2 2009/08/07 06:48:09 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -58,7 +58,7 @@
 #define	ATH_RXBUF	40		/* number of RX buffers */
 #endif
 #ifndef ATH_TXBUF
-#define	ATH_TXBUF	100		/* number of TX buffers */
+#define	ATH_TXBUF	200		/* number of TX buffers */
 #endif
 #define	ATH_TXDESC	10		/* number of descriptors per buffer */
 #define	ATH_TXMAXTRY	11		/* max number of transmit attempts */
@@ -128,7 +128,7 @@ struct ath_descdma {
 	const char*		dd_name;
 	struct ath_desc		*dd_desc;	/* descriptors */
 	bus_addr_t		dd_desc_paddr;	/* physical addr of dd_desc */
-	bus_addr_t		dd_desc_len;	/* size of dd_desc */
+	bus_size_t		dd_desc_len;	/* size of dd_desc */
 	bus_dma_segment_t	dd_dseg;
 	int			dd_dnseg;	/* number of segments */
 	bus_dma_tag_t		dd_dmat;	/* bus DMA tag */
@@ -457,16 +457,20 @@ extern int ath_txbuf;
 #define	ath_hal_getregdomain(_ah, _prd) \
 	(ath_hal_getcapability(_ah, HAL_CAP_REG_DMN, 0, (_prd)) == HAL_OK)
 #define	ath_hal_setregdomain(_ah, _rd) \
-	((*(_ah)->ah_setRegulatoryDomain)((_ah), (_rd), NULL))
+	ath_hal_setcapability(_ah, HAL_CAP_REG_DMN, 0, _rd, NULL)
 #define	ath_hal_getcountrycode(_ah, _pcc) \
 	(*(_pcc) = (_ah)->ah_countryCode)
-#define	ath_hal_tkipsplit(_ah) \
+#define	ath_hal_gettkipmic(_ah) \
+	(ath_hal_getcapability(_ah, HAL_CAP_TKIP_MIC, 1, NULL) == HAL_OK)
+#define	ath_hal_settkipmic(_ah, _v) \
+	ath_hal_setcapability(_ah, HAL_CAP_TKIP_MIC, 1, _v, NULL)
+#define	ath_hal_hastkipsplit(_ah) \
 	(ath_hal_getcapability(_ah, HAL_CAP_TKIP_SPLIT, 0, NULL) == HAL_OK)
-#define ath_hal_settkipmic(_ah, _v) \
-	(ath_hal_setcapability(_ah, HAL_CAP_TKIP_MIC, 1, _v, NULL) == HAL_OK)
-#define ath_hal_settkipsplit(_ah, _v) \
-	(ath_hal_setcapability(_ah, HAL_CAP_TKIP_SPLIT, 1, _v, NULL) == HAL_OK)
-#define ath_hal_wmetkipmic(_ah) \
+#define	ath_hal_gettkipsplit(_ah) \
+	(ath_hal_getcapability(_ah, HAL_CAP_TKIP_SPLIT, 1, NULL) == HAL_OK)
+#define	ath_hal_settkipsplit(_ah, _v) \
+	ath_hal_setcapability(_ah, HAL_CAP_TKIP_SPLIT, 1, _v, NULL)
+#define	ath_hal_haswmetkipmic(_ah) \
 	(ath_hal_getcapability(_ah, HAL_CAP_WME_TKIPMIC, 0, NULL) == HAL_OK)
 #define	ath_hal_hwphycounters(_ah) \
 	(ath_hal_getcapability(_ah, HAL_CAP_PHYCOUNTERS, 0, NULL) == HAL_OK)
@@ -530,20 +534,18 @@ extern int ath_txbuf;
 	(ath_hal_getcapability(_ah, HAL_CAP_TPC_CTS, 0, _ptpcts) == HAL_OK)
 #define	ath_hal_settpcts(_ah, _tpcts) \
 	ath_hal_setcapability(_ah, HAL_CAP_TPC_CTS, 0, _tpcts, NULL)
-#if HAL_ABI_VERSION < 0x05120700
-#define	ath_hal_process_noisefloor(_ah)
-#define	ath_hal_getchannoise(_ah, _c)	(-96)
-#define	HAL_CAP_TPC_ACK	99
-#define	HAL_CAP_TPC_CTS	100
-#else
 #define	ath_hal_getchannoise(_ah, _c) \
 	((*(_ah)->ah_getChanNoise)((_ah), (_c)))
-#endif
 
 #define	ath_hal_setuprxdesc(_ah, _ds, _size, _intreq) \
 	((*(_ah)->ah_setupRxDesc)((_ah), (_ds), (_size), (_intreq)))
+#if 0
 #define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext, tsf, a5) \
 	((*(_ah)->ah_procRxDesc)((_ah), (_ds), (_dspa), (_dsnext), (tsf), (a5)))
+#else
+#define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext, _rs) \
+	((*(_ah)->ah_procRxDesc)((_ah), (_ds), (_dspa), (_dsnext), 0, (_rs)))
+#endif
 #define	ath_hal_setuptxdesc(_ah, _ds, _plen, _hlen, _atype, _txpow, \
 		_txr0, _txtr0, _keyix, _ant, _flags, \
 		_rtsrate, _rtsdura) \
@@ -556,8 +558,8 @@ extern int ath_txbuf;
 		(_txr1), (_txtr1), (_txr2), (_txtr2), (_txr3), (_txtr3)))
 #define	ath_hal_filltxdesc(_ah, _ds, _l, _first, _last, _ds0) \
 	((*(_ah)->ah_fillTxDesc)((_ah), (_ds), (_l), (_first), (_last), (_ds0)))
-#define	ath_hal_txprocdesc(_ah, _ds, _a2) \
-	((*(_ah)->ah_procTxDesc)((_ah), (_ds), (_a2)))
+#define	ath_hal_txprocdesc(_ah, _ds, _ts) \
+	((*(_ah)->ah_procTxDesc)((_ah), (_ds), (_ts)))
 #define	ath_hal_gettxintrtxqs(_ah, _txqs) \
 	((*(_ah)->ah_getTxIntrQueue)((_ah), (_txqs)))
 
