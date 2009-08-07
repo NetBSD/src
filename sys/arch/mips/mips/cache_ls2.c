@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_ls2.c,v 1.1 2009/08/07 18:39:10 matt Exp $	*/
+/*	$NetBSD: cache_ls2.c,v 1.2 2009/08/07 23:23:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.1 2009/08/07 18:39:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.2 2009/08/07 23:23:58 matt Exp $");
 
 #include <sys/param.h>
 
@@ -59,24 +59,19 @@ ls2_icache_sync_range(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	if (va + mips_picache_way_size <= eva) {
+	if (va + mips_picache_size <= eva) {
 		ls2_icache_sync_all();
 		return;
 	}
-#if 0
-	mips_dcache_wb_range(va, (eva - va));
-#endif
 
-	while (va + 8 * 32 <= eva) {
-		cache_op_ls2_8line_4way(va, CACHEOP_LS2_D_HIT_WB_INV);
-		cache_op_ls2_8line_4way(va, CACHEOP_LS2_I_INDEX_INV);
-		va += 8 * 32;
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
+		cache_op_ls2_8line(va, CACHEOP_LS2_D_HIT_WB_INV);
+		cache_op_ls2_8line(va, CACHEOP_LS2_I_INDEX_INV);
 	}
 
-	while (va < eva) {
-		cache_op_ls2_line_4way(va, CACHEOP_LS2_D_HIT_WB_INV);
-		cache_op_ls2_line_4way(va, CACHEOP_LS2_I_INDEX_INV);
-		va += 32;
+	for (; va < eva; va += 32) {
+		cache_op_ls2_line(va, CACHEOP_LS2_D_HIT_WB_INV);
+		cache_op_ls2_line(va, CACHEOP_LS2_I_INDEX_INV);
 	}
 
 	__asm volatile("sync");
@@ -103,22 +98,17 @@ ls2_icache_sync_range_index(vaddr_t va, vsize_t size)
 		eva = mips_picache_way_size;
 	}
 
-#if 0
-	mips_dcache_wbinv_range_index(va, (eva - va));
-	__asm volatile("sync");
-#endif
-
-	while (va + 8 * 32 <= eva) {
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
 		cache_op_ls2_8line_4way(va, CACHEOP_LS2_D_INDEX_WB_INV);
-		cache_op_ls2_8line_4way(va, CACHEOP_LS2_I_INDEX_INV);
-		va += 8 * 32;
+		cache_op_ls2_8line(va, CACHEOP_LS2_I_INDEX_INV);
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_ls2_line_4way(va, CACHEOP_LS2_D_INDEX_WB_INV);
-		cache_op_ls2_line_4way(va, CACHEOP_LS2_I_INDEX_INV);
-		va += 32;
+		cache_op_ls2_line(va, CACHEOP_LS2_I_INDEX_INV);
 	}
+
+	__asm volatile("sync");
 }
 
 void
@@ -134,15 +124,15 @@ ls2_pdcache_inv_range(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	while (va + 8 * 32 <= eva) {
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
 		cache_op_ls2_8line(va, CACHEOP_LS2_D_HIT_INV);
-		va += 8 * 32;
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_ls2_line(va, CACHEOP_LS2_D_HIT_INV);
-		va += 32;
 	}
+
+	__asm volatile("sync");
 }
 
 void
@@ -152,15 +142,15 @@ ls2_pdcache_wbinv_range(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	while (va + 8 * 32 <= eva) {
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
 		cache_op_ls2_8line(va, CACHEOP_LS2_D_HIT_WB_INV);
-		va += 8 * 32;
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_ls2_line(va, CACHEOP_LS2_D_HIT_WB_INV);
-		va += 32;
 	}
+
+	__asm volatile("sync");
 }
 
 void
@@ -193,15 +183,15 @@ ls2_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 		eva = mips_pdcache_way_size;
 	}
 
-	while (va + 8 * 32 <= eva) {
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
 		cache_op_ls2_8line_4way(va, CACHEOP_LS2_D_INDEX_WB_INV);
-		va += 8 * 32;
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_ls2_line_4way(va, CACHEOP_LS2_D_INDEX_WB_INV);
-		va += 32;
 	}
+
+	__asm volatile("sync");
 }
 
 void
@@ -226,15 +216,15 @@ ls2_sdcache_inv_range(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	while (va + 8 * 32 <= eva) {
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
 		cache_op_ls2_8line(va, CACHEOP_LS2_S_HIT_INV);
-		va += 8 * 32;
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_ls2_line(va, CACHEOP_LS2_S_HIT_INV);
-		va += 32;
 	}
+
+	__asm volatile("sync");
 }
 
 void
@@ -244,15 +234,15 @@ ls2_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	while (va + 8 * 32 <= eva) {
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
 		cache_op_ls2_8line(va, CACHEOP_LS2_S_HIT_WB_INV);
-		va += 8 * 32;
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_ls2_line(va, CACHEOP_LS2_S_HIT_WB_INV);
-		va += 32;
 	}
+
+	__asm volatile("sync");
 }
 
 void
@@ -285,15 +275,15 @@ ls2_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 		eva = va + mips_sdcache_way_size;
 	}
 
-	while (va + 8 * 32 <= eva) {
+	for (; va + 8 * 32 <= eva; va += 8 * 32) {
 		cache_op_ls2_8line_4way(va, CACHEOP_LS2_S_INDEX_WB_INV);
-		va += 8 * 32;
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_ls2_line_4way(va, CACHEOP_LS2_S_INDEX_WB_INV);
-		va += 32;
 	}
+
+	__asm volatile("sync");
 }
 
 void
