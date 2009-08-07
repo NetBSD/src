@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.2 2009/08/04 20:33:01 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.3 2009/08/07 06:19:14 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -32,4 +32,20 @@ external/bsd/dhcpcd/dist/signals.c		patch
 
 	Update dhcpcd to 4.0.14.
 	[roy, ticket #880]
+
+sys/ufs/ufs/ufs_quota.c				1.63, 1.65
+
+	Add missing mutex_destroy() before pool_cache_put(). Prevents
+	a "Mutex error: lockdebug_alloc: already initialized" panic.
+	[bouyer, ticket #898]
+
+sys/netipsec/ipsec.c				1.46
+
+	Add a missing splx() call. Fixes PR kern/41701.
+	[jakllsch, ticket #884]
+
+sys/dev/pci/twa.c				1.32
+
+	Disable completely bogus DIAGNOSTIC check.
+	[bouyer, ticket #886]
 
