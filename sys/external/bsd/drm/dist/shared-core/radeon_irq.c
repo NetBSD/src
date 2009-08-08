@@ -65,6 +65,9 @@ int radeon_enable_vblank(struct drm_device *dev, int crtc)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
+	if (!dev_priv->mmio)
+		return 0;
+
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS600) {	
 		switch (crtc) {
 		case 0:
@@ -99,6 +102,9 @@ int radeon_enable_vblank(struct drm_device *dev, int crtc)
 void radeon_disable_vblank(struct drm_device *dev, int crtc)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
+
+	if (!dev_priv->mmio)
+		return;
 
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS600) {	
 		switch (crtc) {
@@ -289,6 +295,8 @@ u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)
 		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
+	if (!dev_priv->mmio)
+		return 0;
 
 	if (crtc < 0 || crtc > 1) {
 		DRM_ERROR("Invalid crtc %d\n", crtc);
@@ -322,6 +330,8 @@ int radeon_irq_emit(struct drm_device *dev, void *data, struct drm_file *file_pr
 		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
+	if (!dev_priv->mmio)
+		return 0;
 
 	result = radeon_emit_irq(dev);
 
@@ -344,6 +354,8 @@ int radeon_irq_wait(struct drm_device *dev, void *data, struct drm_file *file_pr
 		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
+	if (!dev_priv->mmio)
+		return 0;
 
 	return radeon_wait_irq(dev, irqwait->irq_seq);
 }
