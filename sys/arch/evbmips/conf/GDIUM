@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.2 2009/08/06 16:13:07 matt Exp $
+# $NetBSD: GDIUM,v 1.3 2009/08/08 20:50:44 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.2 $"
+#ident 		"GDIUM-$Revision: 1.3 $"
 
 maxusers	16
 
@@ -156,7 +156,8 @@ ehci*		at pci0 dev ? function ?
 ohci*		at pci0 dev ? function ?
 #options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
 
-rtk*		at pci0 dev ? function ?
+ral*		at pci0 dev ? function ?	# RL2561S 802.11b/g
+rtk*		at pci0 dev ? function ?	# RTL8139 100/10 Ethernet
 # MII/PHY support
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
