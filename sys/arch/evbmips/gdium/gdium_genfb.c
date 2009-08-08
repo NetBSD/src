@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_genfb.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
+/*	$NetBSD: gdium_genfb.c,v 1.3 2009/08/08 20:48:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_genfb.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_genfb.c,v 1.3 2009/08/08 20:48:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -77,14 +77,13 @@ gdium_cnattach(struct gdium_config *gc)
 	ri->ri_height = 600;
 	ri->ri_depth = 16;
 	ri->ri_stride = 0x800;
-#if 1
-	reg = 0x04000000;
-#else
+
 	/* read the mapping register for the frame buffer */
-	reg = pci_conf_read(&gc->gc_pc, (14 << 11), PCI_MAPREG_START);
-#endif
+	reg = pci_conf_read(&gc->gc_pc, pci_make_tag(&gc->gc_pc, 0, 14, 0),
+	    PCI_MAPREG_START);
+
 	ri->ri_bits = (char *)MIPS_PHYS_TO_KSEG1(BONITO_PCILO_BASE + reg);
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER;
 
 	memset(ri->ri_bits, 0, 0x200000);
 
