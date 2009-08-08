@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.47 2008/08/27 08:58:16 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.48 2009/08/08 22:53:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
-#define	_POSIX_VDISABLE		((unsigned char)'\377')
+#define	_POSIX_VDISABLE		__CAST(unsigned char, '\377')
 				/* file synchronization is available */
 #define	_POSIX_FSYNC		1
 				/* synchronized I/O is available */
