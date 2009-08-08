@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.76 2009/07/20 17:46:04 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.77 2009/08/08 21:23:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -433,5 +433,15 @@
 #define	__SHIFTOUT(__x, __mask)	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 #define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 #define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
+
+/*
+ * Only to be used in other headers that are included from both c or c++
+ * NOT to be used in code.
+ */
+#ifdef __cplusplus
+#define __CAST(__dt, __st)	static_cast<__dt>(__st)
+#else
+#define __CAST(__dt, __st)	((__dt)(__st))
+#endif
 
 #endif /* !_SYS_CDEFS_H_ */
