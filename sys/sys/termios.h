@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.29 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: termios.h,v 1.30 2009/08/08 21:23:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -78,7 +78,7 @@
 #endif
 #define	NCCS		20
 
-#define _POSIX_VDISABLE	((unsigned char)'\377')
+#define _POSIX_VDISABLE	__CAST(unsigned char, '\377')
 
 #if defined(_NETBSD_SOURCE)
 #define CCEQ(val, c)	(c == val ? val != _POSIX_VDISABLE : 0)
