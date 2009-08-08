@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2009/08/07 00:11:08 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2009/08/08 20:49:58 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2009/08/07 00:11:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2009/08/08 20:49:58 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -190,6 +190,44 @@ int	safepri = MIPS1_PSL_LOWIPL;
 extern struct user *proc0paddr;
 
 /*
+ * For some reason, PMON doesn't assign a real address to the Ralink's BAR.
+ * So we have to do it.
+ */
+static void
+gdium_pci_attach_hook(device_t parent, device_t self,
+    struct pcibus_attach_args *pba)
+{
+	const pcitag_t high_dev = pci_make_tag(pba->pba_pc, 0, 17, 1);
+	const pcitag_t ralink_dev = pci_make_tag(pba->pba_pc, 0, 13, 0);
+	bus_size_t high_size, ralink_size;
+	pcireg_t v;
+
+	/*
+	 * Get the highest PCI addr used from the last PCI dev.
+	 */
+	v = pci_conf_read(pba->pba_pc, high_dev, PCI_MAPREG_START);
+	v &= PCI_MAPREG_MEM_ADDR_MASK;
+
+	/*
+	 * Get the sizes of the map registers.
+	 */
+	pci_mapreg_info(pba->pba_pc, high_dev, PCI_MAPREG_START,
+	    PCI_MAPREG_MEM_TYPE_32BIT, NULL, &high_size, NULL);
+	pci_mapreg_info(pba->pba_pc, ralink_dev, PCI_MAPREG_START,
+	    PCI_MAPREG_MEM_TYPE_32BIT, NULL, &ralink_size, NULL);
+
+	/*
+	 * Position the ralink register space after the last device.
+	 */
+	v = (v + high_size + ralink_size - 1) & ~(ralink_size - 1);
+
+	/*
+	 * Set the mapreg.
+	 */
+	pci_conf_write(pba->pba_pc, ralink_dev, PCI_MAPREG_START, v);
+}
+
+/*
  * Do all the stuff that locore normally does before calling main().
  */
 void
@@ -226,6 +264,11 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	physmem = btoc(memsize);
 
 	bonito_pci_init(&gc->gc_pc, &gc->gc_bonito);
+	/*
+	 * Override the null bonito_pci_attach_hook with our own to we can
+	 * fix the ralink (device 13).
+	 */
+	gc->gc_pc.pc_attach_hook = gdium_pci_attach_hook;
 	gdium_bus_io_init(&gc->gc_iot, gc);
 	gdium_bus_mem_init(&gc->gc_memt, gc);
 	gdium_dma_init(gc);
