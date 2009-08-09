@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.248 2009/08/09 20:27:06 christos Exp $
+# $NetBSD: GENERIC,v 1.249 2009/08/09 21:32:16 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.248 $"
+#ident 		"GENERIC-$Revision: 1.249 $"
 
 maxusers	64		# estimated number of users
 
@@ -368,6 +368,16 @@ wsmouse*	at pms? mux 0
 attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
+
+# DRI driver
+i915drm*	at vga?		# Intel i915, i945 DRM driver
+mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
+mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
+r128drm*	at vga?		# ATI Rage 128 DRM driver
+radeondrm*	at vga?		# ATI Radeon DRM driver
+savagedrm*	at vga?		# S3 Savage DRM driver
+sisdrm*		at vga?		# SiS DRM driver
+tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
 
 # Cryptographic Devices
 
