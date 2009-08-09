@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23 2006/08/28 13:43:35 yamt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.24 2009/08/09 04:02:40 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -12,8 +12,15 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define	UPAGES		1		/* pages of u-area */
+#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
+#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
 #define	UPAGES		2		/* pages of u-area */
 #define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
+#else
+#error ENABLE_MIPS_xKB_PAGE not defined
+#endif
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
@@ -34,14 +41,19 @@
 #define	ALIGN(p)	(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t)-1)) == 0)
 
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define	NBPG		16384		/* bytes/page */
+#define	PGSHIFT		14		/* LOG2(NBPG) */
+#else
 #define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
+#endif
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/4)
 
-#define NBSEG		0x400000	/* bytes/segment */
+#define NBSEG		(NBPG*NPTEPG)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define	SEGSHIFT	(2*PGSHIFT-2)	/* LOG2(NBSEG) */
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
