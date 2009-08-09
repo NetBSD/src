@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.55 2009/08/04 14:20:41 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.56 2009/08/09 19:36:28 christos Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -132,6 +132,10 @@ file	dev/acpi/hpqlb_acpi.c		hpqlb
 device	sony: displaydev
 attach	sony at acpinodebus with sony_acpi
 file	dev/acpi/sony_acpi.c		sony_acpi
+
+# Sony SPIC (jog dial etc.)
+attach	spic at acpinodebus with spic_acpi
+file	dev/acpi/spic_acpi.c		spic_acpi
 
 # IBM/Lenovo Thinkpad hotkey device
 device	thinkpad
