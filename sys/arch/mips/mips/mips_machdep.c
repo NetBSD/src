@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.216 2009/08/09 17:53:54 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.217 2009/08/09 22:22:51 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.216 2009/08/09 17:53:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.217 2009/08/09 22:22:51 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -364,15 +364,22 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"Toshiba TX4927 CPU"	},
 	/* 
-	 * ICT Loongson2 is a MIPS64 CPU with a few quirks.
+	 * ICT Loongson2 is a MIPS64 CPU with a few quirks.  For some reason
+	 * the virtual aliases present with 4KB pages make the caches misbehave
+	 * so we make all accesses uncached.  With 16KB pages, no virtual
+	 * aliases are possible so we can use caching.
 	 */
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define	MIPS_LOONGSON2_CCA	0
+#else
+#define	MIPS_LOONGSON2_CCA	(CPU_MIPS_HAVE_SPECIAL_CCA | \
+				(2 << CPU_MIPS_CACHED_CCA_SHIFT))
+#endif
 	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2E, -1, CPU_ARCH_MIPS3, 64,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT |
-	  CPU_MIPS_HAVE_SPECIAL_CCA | (2 << CPU_MIPS_CACHED_CCA_SHIFT),
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | MIPS_LOONGSON2_CCA,
 						"ICT Loongson 2E CPU"	},
 	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2F, -1, CPU_ARCH_MIPS3, 64,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT |
-	  CPU_MIPS_HAVE_SPECIAL_CCA | (2 << CPU_MIPS_CACHED_CCA_SHIFT),
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | MIPS_LOONGSON2_CCA,
 						"ICT Loongson 2F CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
