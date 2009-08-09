@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_udc.c,v 1.2 2009/08/09 06:12:34 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_udc.c,v 1.3 2009/08/09 06:24:03 kiyohara Exp $	*/
 /*	$OpenBSD: pxa27x_udc.c,v 1.5 2005/03/30 14:24:39 dlg Exp $ */
 
 /*
@@ -83,17 +83,9 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, sc->sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
-	pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN); /* USB_P2_1 */
-	pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT); /* USB_P2_8 */
-	pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN); /* USB_P2_7 */
-	pxa2x0_gpio_set_function(89, GPIO_ALT_FN_2_OUT); /* USBHPEN<1> */
-	pxa2x0_gpio_set_function(120, GPIO_ALT_FN_2_OUT); /* USBHPEN<2> */
-
 	pxa2x0_clkman_config(CKEN_USBDC, 1);
 
 	pxaudc_enable(sc);
-
-	pxa2x0_gpio_set_bit(37); /* USB_P2_8 */
 
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
 	    pxaudc_power, sc);
