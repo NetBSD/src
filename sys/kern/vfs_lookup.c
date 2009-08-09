@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.116 2009/06/29 05:00:14 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.117 2009/08/09 03:28:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.116 2009/06/29 05:00:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.117 2009/08/09 03:28:35 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -216,25 +216,61 @@ symlink_magic(struct proc *p, char *cp, size_t *len)
  *		if symbolic link, massage name in buffer and continue
  *	}
  */
-int
-namei(struct nameidata *ndp)
-{
-	struct cwdinfo *cwdi;		/* pointer to cwd state */
-	char *cp;			/* pointer into pathname argument */
+
+/*
+ * Internal state for a namei operation.
+ */
+struct namei_state {
+	struct nameidata *ndp;
+	struct componentname *cnp;
+
 	struct vnode *dp;		/* the directory we are searching */
-	struct iovec aiov;		/* uio for reading symbolic links */
-	struct lwp *l = curlwp;		/* thread doing namei() */
-	struct uio auio;
-	int error;
-	size_t linklen;
-	struct componentname *cnp = &ndp->ni_cnd;
+};
+
+/*
+ * Initialize the namei working state.
+ */
+static void
+namei_init(struct namei_state *state, struct nameidata *ndp)
+{
+	state->ndp = ndp;
+	state->cnp = &ndp->ni_cnd;
+
+	state->dp = NULL;
+}
+
+/*
+ * Clean up the working namei state, leaving things ready for return
+ * from namei.
+ */
+static void
+namei_cleanup(struct namei_state *state)
+{
+	KASSERT(state->cnp == &state->ndp->ni_cnd);
+
+	//KASSERT(state->dp == NULL); 	// not yet
+
+	/* nothing for now */
+	(void)state;
+}
+
+//////////////////////////////
+
+/*
+ * Start up namei. Early portion.
+ *
+ * This is divided from namei_start2 by the emul_retry: point.
+ */
+static void
+namei_start1(struct namei_state *state)
+{
 
 #ifdef DIAGNOSTIC
-	if (!cnp->cn_cred)
+	if (!state->cnp->cn_cred)
 		panic("namei: bad cred/proc");
-	if (cnp->cn_nameiop & (~OPMASK))
+	if (state->cnp->cn_nameiop & (~OPMASK))
 		panic("namei: nameiop contaminated with flags");
-	if (cnp->cn_flags & OPMASK)
+	if (state->cnp->cn_flags & OPMASK)
 		panic("namei: flags contaminated with nameiops");
 #endif
 
@@ -242,9 +278,24 @@ namei(struct nameidata *ndp)
 	 * Get a buffer for the name to be translated, and copy the
 	 * name into the buffer.
 	 */
-	if ((cnp->cn_flags & HASBUF) == 0)
-		cnp->cn_pnbuf = PNBUF_GET();
-    emul_retry:
+	if ((state->cnp->cn_flags & HASBUF) == 0)
+		state->cnp->cn_pnbuf = PNBUF_GET();
+}
+
+/*
+ * Start up namei. Copy the path, find the root dir and cwd, establish
+ * the starting directory for lookup, and lock it.
+ */
+static int
+namei_start2(struct namei_state *state)
+{
+	struct nameidata *ndp = state->ndp;
+	struct componentname *cnp = state->cnp;
+
+	struct cwdinfo *cwdi;		/* pointer to cwd state */
+	struct lwp *self = curlwp;	/* thread doing namei() */
+	int error;
+
 	if (ndp->ni_segflg == UIO_SYSSPACE)
 		error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
@@ -268,12 +319,12 @@ namei(struct nameidata *ndp)
 	/*
 	 * Get root directory for the translation.
 	 */
-	cwdi = l->l_proc->p_cwdi;
+	cwdi = self->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	dp = cwdi->cwdi_rdir;
-	if (dp == NULL)
-		dp = rootvnode;
-	ndp->ni_rootdir = dp;
+	state->dp = cwdi->cwdi_rdir;
+	if (state->dp == NULL)
+		state->dp = rootvnode;
+	ndp->ni_rootdir = state->dp;
 
 	/*
 	 * Check if starting from root directory or current directory.
@@ -282,7 +333,7 @@ namei(struct nameidata *ndp)
 		if (cnp->cn_flags & TRYEMULROOT) {
 			if (cnp->cn_flags & EMULROOTSET) {
 				/* Called from (eg) emul_find_interp() */
-				dp = ndp->ni_erootdir;
+				state->dp = ndp->ni_erootdir;
 			} else {
 				if (cwdi->cwdi_edir == NULL
 				    || (cnp->cn_pnbuf[1] == '.' 
@@ -290,22 +341,25 @@ namei(struct nameidata *ndp)
 					   && cnp->cn_pnbuf[3] == '/')) {
 					ndp->ni_erootdir = NULL;
 				} else {
-					dp = cwdi->cwdi_edir;
-					ndp->ni_erootdir = dp;
+					state->dp = cwdi->cwdi_edir;
+					ndp->ni_erootdir = state->dp;
 				}
 			}
 		} else {
 			ndp->ni_erootdir = NULL;
 			if (cnp->cn_flags & NOCHROOT)
-				dp = ndp->ni_rootdir = rootvnode;
+				state->dp = ndp->ni_rootdir = rootvnode;
 		}
 	} else {
-		dp = cwdi->cwdi_cdir;
+		state->dp = cwdi->cwdi_cdir;
 		ndp->ni_erootdir = NULL;
 	}
-	VREF(dp);
+	VREF(state->dp);
 	rw_exit(&cwdi->cwdi_lock);
- 
+
+	/*
+	 * Ktrace it.
+	 */
 	if (ktrpoint(KTR_NAMEI)) {
 		if (ndp->ni_erootdir != NULL) {
 			/*
@@ -320,26 +374,161 @@ namei(struct nameidata *ndp)
 			if (cnp->cn_flags & EMULROOTSET)
 				emul_path = ndp->ni_next;
 			else
-				emul_path = l->l_proc->p_emul->e_path;
+				emul_path = self->l_proc->p_emul->e_path;
 			ktrnamei2(emul_path, strlen(emul_path),
 			    cnp->cn_pnbuf, ndp->ni_pathlen);
 		} else
 			ktrnamei(cnp->cn_pnbuf, ndp->ni_pathlen);
 	}
 
-	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+
+	return 0;
+}
+
+/*
+ * Undo namei_start: unlock and release the current lookup directory,
+ * and discard the path buffer.
+ */
+static void
+namei_end(struct namei_state *state)
+{
+	vput(state->dp);
+	PNBUF_PUT(state->cnp->cn_pnbuf);
+	//state->cnp->cn_pnbuf = NULL; // not yet (just in case) (XXX)
+}
+
+/*
+ * Check for being at a symlink.
+ */
+static inline int
+namei_atsymlink(struct namei_state *state)
+{
+	return (state->cnp->cn_flags & ISSYMLINK) != 0;
+}
+
+/*
+ * Follow a symlink.
+ */
+static inline int
+namei_follow(struct namei_state *state)
+{
+	struct nameidata *ndp = state->ndp;
+	struct componentname *cnp = state->cnp;
+
+	struct lwp *self = curlwp;	/* thread doing namei() */
+	struct iovec aiov;		/* uio for reading symbolic links */
+	struct uio auio;
+	char *cp;			/* pointer into pathname argument */
+	size_t linklen;
+	int error;
+
+	if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
+		return ELOOP;
+	}
+	if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
+		error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred);
+		if (error != 0)
+			return error;
+	}
+	if (ndp->ni_pathlen > 1)
+		cp = PNBUF_GET();
+	else
+		cp = cnp->cn_pnbuf;
+	aiov.iov_base = cp;
+	aiov.iov_len = MAXPATHLEN;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_offset = 0;
+	auio.uio_rw = UIO_READ;
+	auio.uio_resid = MAXPATHLEN;
+	UIO_SETUP_SYSSPACE(&auio);
+	error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
+	if (error) {
+badlink:
+		if (ndp->ni_pathlen > 1)
+			PNBUF_PUT(cp);
+		return error;
+	}
+	linklen = MAXPATHLEN - auio.uio_resid;
+	if (linklen == 0) {
+		error = ENOENT;
+		goto badlink;
+	}
+
+	/*
+	 * Do symlink substitution, if appropriate, and
+	 * check length for potential overflow.
+	 */
+	if ((vfs_magiclinks &&
+	     symlink_magic(self->l_proc, cp, &linklen)) ||
+	    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
+		error = ENAMETOOLONG;
+		goto badlink;
+	}
+	if (ndp->ni_pathlen > 1) {
+		memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
+		PNBUF_PUT(cnp->cn_pnbuf);
+		cnp->cn_pnbuf = cp;
+	} else
+		cnp->cn_pnbuf[linklen] = '\0';
+	ndp->ni_pathlen += linklen;
+	vput(ndp->ni_vp);
+	state->dp = ndp->ni_dvp;
+
+	/*
+	 * Check if root directory should replace current directory.
+	 */
+	if (cnp->cn_pnbuf[0] == '/') {
+		vput(state->dp);
+		/* Keep absolute symbolic links inside emulation root */
+		state->dp = ndp->ni_erootdir;
+		if (state->dp == NULL || (cnp->cn_pnbuf[1] == '.' 
+					  && cnp->cn_pnbuf[2] == '.'
+					  && cnp->cn_pnbuf[3] == '/')) {
+			ndp->ni_erootdir = NULL;
+			state->dp = ndp->ni_rootdir;
+		}
+		VREF(state->dp);
+		vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	return 0;
+}
+
+//////////////////////////////
+
+static int
+do_namei(struct namei_state *state)
+{
+	int error;
+
+	struct nameidata *ndp = state->ndp;
+	struct componentname *cnp = state->cnp;
+
+	KASSERT(cnp == &ndp->ni_cnd);
+
+	namei_start1(state);
+
+    emul_retry:
+
+	error = namei_start2(state);
+	if (error) {
+		return error;
+	}
+
 	/* Loop through symbolic links */
 	for (;;) {
-		if (!dp->v_mount) {
+		if (!state->dp->v_mount) {
 			/* Give up if the directory is no longer mounted */
-			vput(dp);
-			PNBUF_PUT(cnp->cn_pnbuf);
+			namei_end(state);
 			return (ENOENT);
 		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
-		ndp->ni_startdir = dp;
+		ndp->ni_startdir = state->dp;
 		error = lookup(ndp);
 		if (error != 0) {
+			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
@@ -355,103 +544,56 @@ namei(struct nameidata *ndp)
 		/*
 		 * Check for symbolic link
 		 */
-		if ((cnp->cn_flags & ISSYMLINK) == 0) {
-			if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
-				if (ndp->ni_dvp == ndp->ni_vp) {
-					vrele(ndp->ni_dvp);
-				} else {
-					vput(ndp->ni_dvp);
-				}
-			}
-			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
+		if (namei_atsymlink(state)) {
+			error = namei_follow(state);
+			if (error) {
+				KASSERT(ndp->ni_dvp != ndp->ni_vp);
+				vput(ndp->ni_dvp);
+				vput(ndp->ni_vp);
+				ndp->ni_vp = NULL;
 				PNBUF_PUT(cnp->cn_pnbuf);
-#if defined(DIAGNOSTIC)
-				cnp->cn_pnbuf = NULL;
-#endif /* defined(DIAGNOSTIC) */
-			} else {
-				cnp->cn_flags |= HASBUF;
+				return error;
 			}
-			return (0);
 		}
-
-		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
-			error = ELOOP;
+		else {
 			break;
-		}
-		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
-			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred);
-			if (error != 0)
-				break;
-		}
-		if (ndp->ni_pathlen > 1)
-			cp = PNBUF_GET();
-		else
-			cp = cnp->cn_pnbuf;
-		aiov.iov_base = cp;
-		aiov.iov_len = MAXPATHLEN;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = 0;
-		auio.uio_rw = UIO_READ;
-		auio.uio_resid = MAXPATHLEN;
-		UIO_SETUP_SYSSPACE(&auio);
-		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
-		if (error) {
-badlink:
-			if (ndp->ni_pathlen > 1)
-				PNBUF_PUT(cp);
-			break;
-		}
-		linklen = MAXPATHLEN - auio.uio_resid;
-		if (linklen == 0) {
-			error = ENOENT;
-			goto badlink;
-		}
-
-		/*
-		 * Do symlink substitution, if appropriate, and
-		 * check length for potential overflow.
-		 */
-		if ((vfs_magiclinks &&
-		     symlink_magic(l->l_proc, cp, &linklen)) ||
-		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
-			error = ENAMETOOLONG;
-			goto badlink;
-		}
-		if (ndp->ni_pathlen > 1) {
-			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
-			PNBUF_PUT(cnp->cn_pnbuf);
-			cnp->cn_pnbuf = cp;
-		} else
-			cnp->cn_pnbuf[linklen] = '\0';
-		ndp->ni_pathlen += linklen;
-		vput(ndp->ni_vp);
-		dp = ndp->ni_dvp;
-
-		/*
-		 * Check if root directory should replace current directory.
-		 */
-		if (cnp->cn_pnbuf[0] == '/') {
-			vput(dp);
-			/* Keep absolute symbolic links inside emulation root */
-			dp = ndp->ni_erootdir;
-			if (dp == NULL || (cnp->cn_pnbuf[1] == '.' 
-			    && cnp->cn_pnbuf[2] == '.'
-			    && cnp->cn_pnbuf[3] == '/')) {
-				ndp->ni_erootdir = NULL;
-				dp = ndp->ni_rootdir;
-			}
-			VREF(dp);
-			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
-	/* Failed to process a symbolic link */
-	KASSERT(ndp->ni_dvp != ndp->ni_vp);
-	vput(ndp->ni_dvp);
-	vput(ndp->ni_vp);
-	ndp->ni_vp = NULL;
-	PNBUF_PUT(cnp->cn_pnbuf);
-	return (error);
+
+	/*
+	 * Done
+	 */
+
+	if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
+		if (ndp->ni_dvp == ndp->ni_vp) {
+			vrele(ndp->ni_dvp);
+		} else {
+			vput(ndp->ni_dvp);
+		}
+	}
+	if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
+		PNBUF_PUT(cnp->cn_pnbuf);
+#if defined(DIAGNOSTIC)
+		cnp->cn_pnbuf = NULL;
+#endif /* defined(DIAGNOSTIC) */
+	} else {
+		cnp->cn_flags |= HASBUF;
+	}
+
+	return 0;
+}
+
+int
+namei(struct nameidata *ndp)
+{
+	struct namei_state state;
+	int error;
+
+	namei_init(&state, ndp);
+	error = do_namei(&state);
+	namei_cleanup(&state);
+
+	return error;
 }
 
 /*
