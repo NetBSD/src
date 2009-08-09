@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.7 2008/05/01 16:06:41 simonb Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.8 2009/08/09 17:42:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.7 2008/05/01 16:06:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.8 2009/08/09 17:42:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 
 	(void)snprintf(buf, sizeof(buf), "G%s", rnode->sysctl_name);
 	for (ptr = buf; *ptr; ptr++)
-		*ptr = toupper(*ptr);
+		*ptr = toupper((unsigned char)*ptr);
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, buf, &acpi_val);
 	if (ACPI_FAILURE(rv)) {
@@ -138,7 +138,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	(void)snprintf(buf, sizeof(buf), "S%s", rnode->sysctl_name);
+	buf[0] = 'S';
 	acpi_val = val;
 	rv = sony_acpi_eval_set_integer(sc->sc_node->ad_handle, buf,
 	    acpi_val, NULL);
