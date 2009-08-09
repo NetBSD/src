@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.398 2009/08/02 20:44:55 bad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.399 2009/08/09 22:49:00 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.398 2009/08/02 20:44:55 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.399 2009/08/09 22:49:00 haad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1806,12 +1806,12 @@ sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
 		syscallarg(dev_t) dev;
 	} */
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), retval);
+	    SCARG(uap, dev), retval, UIO_USERSPACE);
 }
 
 int
 do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
-    register_t *retval)
+    register_t *retval, enum uio_seg seg)
 {
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
@@ -1820,7 +1820,6 @@ do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
 	struct nameidata nd;
 	char *path;
 	const char *cpath;
-	enum uio_seg seg = UIO_USERSPACE;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
 	    0, NULL, NULL, NULL)) != 0)
@@ -3430,11 +3429,11 @@ sys_mkdir(struct lwp *l, const struct sys_mkdir_args *uap, register_t *retval)
 		syscallarg(int) mode;
 	} */
 
-	return do_sys_mkdir(SCARG(uap, path), SCARG(uap, mode));
+	return do_sys_mkdir(SCARG(uap, path), SCARG(uap, mode), UIO_USERSPACE);
 }
 
 int
-do_sys_mkdir(const char *path, mode_t mode)
+do_sys_mkdir(const char *path, mode_t mode, enum uio_seg seg)
 {
 	struct proc *p = curlwp->l_proc;
 	struct vnode *vp;
@@ -3443,7 +3442,7 @@ do_sys_mkdir(const char *path, mode_t mode)
 	struct nameidata nd;
 
 	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR | TRYEMULROOT,
-	    UIO_USERSPACE, path);
+	    seg, path);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
