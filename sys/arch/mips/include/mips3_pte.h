@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23 2007/10/17 19:55:37 garbled Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.24 2009/08/09 22:21:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,9 +115,15 @@ struct tlb {
 #define MIPS3_PG_WIRED	0x80000000	/* SW */
 #define MIPS3_PG_RO	0x40000000	/* SW */
 
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define	MIPS3_PG_SVPN	0xffffc000	/* Software page no mask */
+#define	MIPS3_PG_HVPN	0xffff8000	/* Hardware page no mask */
+#define	MIPS3_PG_ODDPG	0x00004000	/* Odd even pte entry */
+#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
 #define	MIPS3_PG_SVPN	0xfffff000	/* Software page no mask */
 #define	MIPS3_PG_HVPN	0xffffe000	/* Hardware page no mask */
 #define	MIPS3_PG_ODDPG	0x00001000	/* Odd even pte entry */
+#endif
 #define	MIPS3_PG_ASID	0x000000ff	/* Address space ID */
 #define	MIPS3_PG_G	0x00000001	/* Global; ignore ASID if in lo0 & lo1 */
 #define	MIPS3_PG_V	0x00000002	/* Valid */
