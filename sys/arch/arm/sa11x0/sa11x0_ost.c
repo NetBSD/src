@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.27 2009/08/01 10:33:58 kiyohara Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.28 2009/08/09 06:12:33 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.27 2009/08/01 10:33:58 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.28 2009/08/09 06:12:33 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,7 +99,10 @@ CFATTACH_DECL_NEW(saost, sizeof(struct saost_softc),
 static int
 saost_match(device_t parent, cfdata_t match, void *aux)
 {
+	struct sa11x0_attach_args *sa = aux;
 
+	if (strcmp(sa->sa_name, match->cf_name) != 0)
+		return 0;
 	return 1;
 }
 

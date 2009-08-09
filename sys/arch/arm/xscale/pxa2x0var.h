@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0var.h,v 1.5 2007/02/21 22:59:39 thorpej Exp $ */
+/* $NetBSD: pxa2x0var.h,v 1.6 2009/08/09 06:12:34 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -48,6 +48,7 @@ struct pxaip_attach_args {
 	bus_dma_tag_t pxa_dmat;
 	int pxa_index;			/* to specify device by index number */
 
+#define pxa_name 	pxa_sa.sa_name
 #define pxa_iot 	pxa_sa.sa_iot
 #define pxa_addr	pxa_sa.sa_addr
 #define pxa_size	pxa_sa.sa_size
