@@ -1,4 +1,4 @@
-/*	$NetBSD: gxmci.c,v 1.1 2009/04/21 03:00:30 nonaka Exp $	*/
+/*	$NetBSD: gxmci.c,v 1.2 2009/08/09 06:12:34 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxmci.c,v 1.1 2009/04/21 03:00:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxmci.c,v 1.2 2009/08/09 06:12:34 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,8 +66,9 @@ static int gxmci_card_detect(void *);
 static int gxmci_write_protect(void *);
 
 static int
-pxamci_match(device_t parent, cfdata_t cf, void *aux)
+pxamci_match(device_t parent, cfdata_t match, void *aux)
 {
+	struct pxaip_attach_args *pxa = aux;
 	static struct pxa2x0_gpioconf pxa25x_gxmci_gpioconf[] = {
 		{  8, GPIO_ALT_FN_1_OUT },	/* MMCCS0 */
 		{ 53, GPIO_ALT_FN_1_OUT },	/* MMCLK */
@@ -76,6 +77,9 @@ pxamci_match(device_t parent, cfdata_t cf, void *aux)
 	struct pxa2x0_gpioconf *gpioconf;
 	u_int reg;
 	int i;
+
+	if (strcmp(pxa->pxa_name, match->cf_name) != 0)
+		return 0;
 
 	/*
 	 * Check GPIO configuration.  If you use these, it is sure already
@@ -89,6 +93,7 @@ pxamci_match(device_t parent, cfdata_t cf, void *aux)
 		    GPIO_FN_IS_OUT(reg) != GPIO_FN_IS_OUT(gpioconf[i].value))
 		return 0;
 	}
+	pxa->pxa_size = PXA2X0_MMC_SIZE;
 
 	return 1;
 }

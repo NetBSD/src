@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_udc.c,v 1.1 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_udc.c,v 1.2 2009/08/09 06:12:34 kiyohara Exp $	*/
 /*	$OpenBSD: pxa27x_udc.c,v 1.5 2005/03/30 14:24:39 dlg Exp $ */
 
 /*
@@ -52,9 +52,12 @@ static void	pxaudc_enable(struct pxaudc_softc *);
 static int
 pxaudc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct pxaip_attach_args *pxa = aux;
 
-	if (CPU_IS_PXA270)
+	if (CPU_IS_PXA270 && strcmp(pxa->pxa_name, cf->cf_name) == 0) {
+		pxa->pxa_size = PXA270_USBDC_SIZE;
 		return 1;
+	}
 	return 0;
 }
 
@@ -68,12 +71,12 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_size = 0;
 	sc->sc_powerhook = NULL;
 
-	if (bus_space_map(sc->sc_iot, PXA2X0_USBDC_BASE, PXA2X0_USBDC_SIZE, 0,
+	if (bus_space_map(sc->sc_iot, pxa->pxa_addr, pxa->pxa_size, 0,
 	    &sc->sc_ioh)) {
 		aprint_error(": couldn't map memory space\n");
 		return;
 	}
-	sc->sc_size = PXA2X0_USBDC_SIZE;
+	sc->sc_size = pxa->pxa_size;
 
 	printf(": PXA2x0 USB Device Controller\n");
 
