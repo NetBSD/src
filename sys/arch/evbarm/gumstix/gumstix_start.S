@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.5 2007/10/17 19:54:12 garbled Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.6 2009/08/09 07:10:13 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -81,7 +81,7 @@
 	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
 	mov	tmp, tmp		/* wait for it to complete */	;\
 	CPWAIT_BRANCH			/* branch to next insn */
-	
+
 /*
  * Kernel start routine for GUMSTIX
  * this code is excuted at the very first after the kernel is loaded
@@ -97,30 +97,53 @@ _C_LABEL(gumstix_start):
 	 *  in VA 0xc0200000..
 	 */
 	/* save u-boot's args */
-	adr	r0, u_boot_args
+	adr	r4, u_boot_args
 	nop
 	nop
 	nop
-	stmia	r0!, {r3, r4, r5, r6}
+	stmia	r4!, {r0, r1, r2, r3}
 	nop
 	nop
 	nop
+
+	/* Calculate RAM size */
+	adr	r4, ram_size
+	ldr	r0, [r4]
+0:
+	add	r3, r4, r0
+	ldr	r1, [r3]
+	cmp	r0, r1
+	beq	2f
+1:
+	add	r0, r0, r0	/* r0 <<= 1 */
+	str	r0, [r4]
+	b	0b
+2:
+	mvn	r1, r1		/* r1 ^= 0xffffffff */
+	str	r1, [r3]
+	ldr	r2, [r4]
+	cmp	r1, r2
+	beq	3f
+	str	r0, [r3]	/* restore */
+	b	1b
+3:
+	str	r0, [r4]
 
 	/* build page table from scratch */
 	ldr	r0, Lstartup_pagetable		/* pagetable */
 	adr	r4, mmu_init_table
-	b	3f
+	b	5f
 
-2:
+4:
 	str	r3, [r0, r2]
 	add	r2, r2, #4
 	add	r3, r3, #(L1_S_SIZE)
 	adds	r1, r1, #-1
-	bhi	2b
-3:	
+	bhi	4b
+5:
 	ldmia	r4!, {r1, r2, r3}	/* # of sections, PA|attr, VA */
 	cmp	r1, #0
-	bne	2b	
+	bne	4b
 
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
@@ -151,7 +174,11 @@ Lstartup_pagetable:
 
 	.globl	_C_LABEL(u_boot_args)
 u_boot_args:
-	.space	16			/* r3, r4, r5, r6 */
+	.space	16			/* r0, r1, r2, r3 */
+
+	.globl	_C_LABEL(ram_size)
+ram_size:
+	.word	0x04000000		/* 64Mbyte */
 
 
 #define MMU_INIT(va,pa,n_sec,attr) \
@@ -159,7 +186,7 @@ u_boot_args:
 	.word	4 * ((va) >> L1_S_SHIFT)		    ; \
 	.word	(pa) | (attr)				    ;
 
-mmu_init_table:	
+mmu_init_table:
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000,
 	    1 << (32 - L1_S_SHIFT), L1_TYPE_S | L1_S_AP(AP_KRW))

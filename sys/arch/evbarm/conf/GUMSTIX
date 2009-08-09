@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.36 2009/04/21 03:00:29 nonaka Exp $
+#	$NetBSD: GUMSTIX,v 1.37 2009/08/09 07:10:13 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -14,7 +14,8 @@ maxusers	32
 # CPU options
 
 # For XScale systems
-options 	CPU_XSCALE_PXA250	# Support the XScale core
+options 	CPU_XSCALE_PXA250	# Support the basix/connex motherboards
+options 	CPU_XSCALE_PXA270	# Support the verdex motherboards
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 # Architecture options
@@ -146,6 +147,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
+#options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
@@ -153,11 +155,12 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=420000
+options 	SYMTAB_SPACE=450000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
 config		netbsd-sm0	root on sm0 type nfs
+config		netbsd-smsh0	root on smsh0 type nfs
 
 # The main bus device
 mainbus0 at root
@@ -172,14 +175,14 @@ pxaintc0 at pxaip?				# interrupt controller
 options 	PXAGPIO_HAS_GPION_INTRS
 
 pxagpio0 at pxaip?				# GPIO
-pxartc0	at pxaip?				# RTC
+pxartc0	at pxaip? addr 0x40900000		# RTC
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
 com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
 com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (console-st)
-com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
-com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART(console-hw, -bt)
+com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older bt)
+com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART(console-hw, bt)
 options 	FFUARTCONSOLE
 #options 	STUARTCONSOLE
 #options 	BTUARTCONSOLE
@@ -193,17 +196,19 @@ options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
 #options 	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
 # AC97 Audio support
-pxaacu0	at pxaip? addr 0x40500000 intr 14
+pxaacu0	at pxaip? addr 0x40500000 intr 14	# Audiostix, Audiostx2, GPSstix
 
 # Audio support
 audio*	at audiobus?
 
 # LCD
-#lcd0	at pxaip?
-#wsdisplay* at lcd? console ?
+lcd0	at pxaip? addr 0x44000000		# consoleLCD-vx,consoleLCD16-vx
+wsdisplay* at lcd? console ?
 
-# USB Controller and Devices
-pxaudc0	at pxaip?				# USB Device Controller
+# USB Host/Device Controller
+ohci0	at pxaip? addr 0x4c000000 intr 3	# consoleLCD-vx,consoleLCD16-vx
+						# ALSO NEEDS pxaudc
+pxaudc0	at pxaip? addr 0x40600000
 
 # integrated MMC/SD contoller
 pxamci0	at pxaip? addr 0x41100000 size 0x48
@@ -217,24 +222,33 @@ ld*	at sdmmc?
 # gumstix device support
 gxio0	at pxaip?
 options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
-options 	GXIO_DEFAULT_EXPANSION="\"netCF\""
+#options 	GXIO_DEFAULT_EXPANSION="\"netCF\""
 
 # gumstix expantion boards
 
 # SMC 91C111
-sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix, net{MMC,CF,DUO}
+sm0	at gxio? addr 0x04000300 gpirq ?
+#sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix,netMMC,netCF,netDUO
+#sm0	at gxio? addr 0x04000300 gpirq 99	# netCF-vx
 sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd NIC)
 
+# SMSC LAN9117
+smsh0	at gxio? addr 0x04000300 gpirq 99	# netmicroSD-vx, netpro-vx
+
 # Inter-Integrated Circuit controller
-gxiic0	at pxaip?
+gxiic0	at pxaip? addr 0x40300000
 iic*	at gxiic?
 #dsrtc*	at iic? addr 0x68		# Can mount DS1307 at console, breakout
 
 # integrated PCMCIA/CF controller
-pxapcic0 at pxaip?				# cfstix, netCF
+pxapcic0 at pxaip? addr 0x20000000		# cfstix, netCF
 
 # PCMCIA bus support
 pcmcia*	at pxapcic?
+
+# Marvell 88W8385
+#malo*	at pcmcia? function ?		# wifistix, netwifimicrosd, netpro-vx
+
 
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
@@ -258,182 +272,61 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
+usb*	at ohci?
 #usb*	at slhci?
 
 # USB Hubs
-#uhub*	at usb?
-#uhub*	at uhub? port ?
+uhub*	at usb?
+uhub*	at uhub? port ?
 
 # USB HID device
-#uhidev*	at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
-# USB Mice
-#ums*	at uhidev? reportid ?
-#wsmouse* at ums? mux 0
+# USB Mice      
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
 
-# USB eGalax touch-panel
-#uep*	at uhub? port ?
-#wsmouse* at uep? mux 0
-
-# USB Keyboards
-#ukbd*	at uhidev? reportid ?
-#wskbd*	at ukbd? console ? mux 1
-
-# USB serial adapter
-#ucycom*	at uhidev? reportid ?
-
-# USB Generic HID devices
-#uhid*	at uhidev? reportid ?
-
-# USB Printer
-#ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Modem
-#umodem*	at uhub? port ? configuration ?
-#ucom*	at umodem?
-
-# Huawei E220 3G/HSDPA modem
-#uhmodem* at uhub? port ? configuration ? interface ?
-#ucom*	at uhmodem? portno ?
+# USB Keyboards 
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
 
 # USB Mass Storage
-#umass*	at uhub? port ? configuration ? interface ?
+umass*	at uhub? port ? configuration ? interface ?
 #wd*	at umass?
 
-# USB audio
-#uaudio*	at uhub? port ? configuration ?
+# SCSI bus support
+scsibus* at scsi?
 
-# USB MIDI
-#umidi* at uhub? port ? configuration ?
-
-# USB IrDA
-# USB-IrDA bridge spec
-#uirda* at uhub? port ? configuration ? interface ?
-#irframe* at uirda?
-
-#stuirda* at uhub? port ? configuration ? interface ?
-#irframe* at stuirda?
-
-# SigmaTel STIr4200 USB/IrDA Bridge
-#ustir* at uhub? port ?
-#irframe* at ustir?
-
-# USB Ethernet adapters
-#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-#axe*	at uhub? port ?		# ASIX AX88172 based adapters
-#cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
-#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-#udav*	at uhub? port ?		# Davicom DM9601 based adapters
-#url*	at uhub? port ?		# Realtek RTL8150L based adapters
-
-# USB 802.11 adapters
-#atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
-#rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
-#zyd*	at uhub? port ?		# Zydas ZD1211
-
-# Prolific PL2301/PL2302 host-to-host adapter
-#upl*	at uhub? port ?
-
-# Serial adapters
-#ubsa*	at uhub? port ?		# Belkin serial adapter
-#ucom*	at ubsa? portno ?
-
-#uchcom*	at uhub? port ?		# WinChipHead CH341/CH340 serial adapter
-#ucom*	at uchcom? portno ?
-
-#uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-#ucom*	at uftdi? portno ?
-
-#uipaq*	at uhub? port ?		# iPAQ PDAs
-#ucom*	at uipaq? portno ?
-
-#umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-#ucom*	at umct? portno ?
-
-#uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-#ucom*	at uplcom? portno ?
-
-#uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-#ucom*	at uslsa? portno ?
-
-#uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-#ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
-
-# USB Handspring Visor
-#uvisor*	at uhub? port ?
-#ucom*	at uvisor?
-
-# Kyocera AIR-EDGE PHONE
-#ukyopon* at uhub? port ?
-#ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-#usscanner* at uhub? port ?
-
-# Topfield TF5000PVR range of DVB recorders
-#utoppy*	at uhub? port ?
-
-# Y@P firmware loader
-#uyap* at uhub? port ?
-
-# D-Link DSB-R100 USB radio
-#udsbr*	at uhub? port ?
-#radio*	at udsbr?
-
-# USB Generic driver
-#ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-#options UGEN_BULK_RA_WB
-
-# USB 3G datacards
-#u3g*	at uhub? port ?
-#ucom*	at u3g?
-
-# USB generic serial port (e.g., data over cellular)
-#ugensa*	at uhub? port ?
-#ucom*	at ugensa?
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
-#bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
 #btbc*	at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
-
-# Bluetooth SDIO Controllers
-#sbt*	at sdmmc?
 
 # Bluetooth USB Controllers
 #ubt*	at uhub? port ?
 
 # Bluetooth Device Hub
-#bthub*	at bcsp?
-#bthub*	at bt3c?
+bthub*	at bcsp?
 #bthub*	at btbc?
 bthub*	at btuart?
-#bthub*	at sbt?
 #bthub*	at ubt?
 
 # Bluetooth HID support
-#bthidev* at bthub?
+bthidev* at bthub?
 
 # Bluetooth Mouse
-#btms*	at bthidev? reportid ?
-#wsmouse* at btms? mux 0
+btms*	at bthidev? reportid ?
+wsmouse* at btms? mux 0
 
 # Bluetooth Keyboard
-#btkbd*	at bthidev? reportid ?
-#wskbd*	at btkbd? console ? mux 1
+btkbd*	at bthidev? reportid ?
+wskbd*	at btkbd? console ? mux 1
 
 # Bluetooth Audio support
-#btsco*	at bthub?
+btsco*	at bthub?
 
 # Pseudo-Devices
 
@@ -456,7 +349,7 @@ pseudo-device	cgd		4	# cryptographic disk devices
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss		4	# file system snapshot device
 
-pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
