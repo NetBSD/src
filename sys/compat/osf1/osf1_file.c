@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.36 2009/05/29 09:32:41 njoly Exp $ */
+/* $NetBSD: osf1_file.c,v 1.37 2009/08/09 22:49:01 haad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.36 2009/05/29 09:32:41 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.37 2009/08/09 22:49:01 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -293,7 +293,7 @@ osf1_sys_mknod(struct lwp *l, const struct osf1_sys_mknod_args *uap, register_t 
 {
 
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
-	    osf1_cvt_dev_to_native(SCARG(uap, dev)), retval);
+	    osf1_cvt_dev_to_native(SCARG(uap, dev)), retval, UIO_USERSPACE);
 }
 
 int

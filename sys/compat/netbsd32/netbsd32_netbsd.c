@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.157 2009/05/17 05:57:01 pooka Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.158 2009/08/09 22:49:01 haad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.157 2009/05/17 05:57:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.158 2009/08/09 22:49:01 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -327,7 +327,7 @@ netbsd32___mknod50(struct lwp *l, const struct netbsd32___mknod50_args *uap, reg
 	} */
 
 	return do_sys_mknod(l, SCARG_P32(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), retval);
+	    SCARG(uap, dev), retval, UIO_USERSPACE);
 }
 
 int

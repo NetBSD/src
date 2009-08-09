@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.97 2009/01/11 02:45:48 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.98 2009/08/09 22:49:01 haad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.97 2009/01/11 02:45:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.98 2009/08/09 22:49:01 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,7 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 		 * upper 16bit to remove any random junk.
 		 */
 		return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
-		    SCARG(uap, dev) & 0xffff, retval);
+		    SCARG(uap, dev) & 0xffff, retval, UIO_USERSPACE);
 	}
 }
 
