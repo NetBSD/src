@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.92 2009/06/06 06:46:42 dholland Exp $
+$NetBSD: acronyms.comp,v 1.93 2009/08/09 14:04:43 jakllsch Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -86,6 +86,7 @@ DHCP	dynamic host configuration protocol
 DIFS	distributed inter-frame space
 DLE	data link escape
 DMA	direct memory access
+DNARD	Digital network appliance reference design
 DNS	domain name system
 DOS	denial of service
 DPCM	differential pulse code modulation
