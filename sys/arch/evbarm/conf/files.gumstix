@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.13 2009/04/21 03:00:29 nonaka Exp $
+#	$NetBSD: files.gumstix,v 1.14 2009/08/09 07:10:13 kiyohara Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
@@ -20,8 +20,8 @@ attach	sm at gxio with sm_gxio
 file	arch/evbarm/gumstix/if_sm_gxio.c		sm_gxio
 
 # PCMCIA/CF socket
-attach	pxapcic at pxaip with pxapcic_gxpcic
-file	arch/evbarm/gumstix/gxpcic.c			pxapcic_gxpcic
+attach	pxapcic at pxaip with gxpcic
+file	arch/evbarm/gumstix/gxpcic.c			gxpcic
 
 # Inter-Integrated Circuit controller
 device	gxiic: pxaiic, i2cbus
@@ -33,3 +33,11 @@ include "dev/sdmmc/files.sdmmc"
 # MMC/SD controller
 attach	pxamci at pxaip with gxmci
 file	arch/evbarm/gumstix/gxmci.c			gxmci
+
+# SMSC LAN9118
+attach	smsh at gxio with smsh_gxio
+file	arch/evbarm/gumstix/if_smsh_gxio.c		smsh_gxio
+
+# LCD frame buffer
+attach	lcd at pxaip with gxlcd
+file	arch/evbarm/gumstix/gxlcd.c			gxlcd

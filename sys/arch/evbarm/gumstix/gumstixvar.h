@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstixvar.h,v 1.3 2008/05/11 08:23:17 kiyohara Exp $ */
+/*	$NetBSD: gumstixvar.h,v 1.4 2009/08/09 07:10:13 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -67,5 +67,17 @@ struct gxio_attach_args {
     pxa2x0_gpio_intr_establish((gpirq), (level), (spl), (func), (arg))
 #define gxio_intr_disestablish(sc, cookie) \
     pxa2x0_gpio_intr_disestablish((cookie))
+
+
+/*
+ * gxpcic
+ */
+struct gxpcic_slot_irqs {
+	int valid;
+	int cd;		/* PCDn */
+	int prdy;	/* PRDYn/~IRQn */
+};
+extern struct gxpcic_slot_irqs gxpcic_slot_irqs[2];
+extern int gxpcic_gpio_reset;
 
 #endif /* _EVBARM_GUMSTIXVAR_H_ */

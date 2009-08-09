@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.6 2008/05/11 08:23:17 kiyohara Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.7 2009/08/09 07:10:13 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.6 2008/05/11 08:23:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.7 2009/08/09 07:10:13 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,18 +114,18 @@ sm_gxio_match(device_t parent, struct cfdata *match, void *aux)
 	struct gxio_attach_args *gxa = aux;
 	bus_space_tag_t iot = gxa->gxa_iot;
 	bus_space_handle_t ioh;
-	u_int16_t tmp;
+	uint16_t tmp;
 	int rv = 0;
 	extern const char *smc91cxx_idstrs[];
 
 	/* Disallow wildcarded values. */
 	if (gxa->gxa_addr == GXIOCF_ADDR_DEFAULT)
-		return (0);
+		return 0;
 	if (gxa->gxa_gpirq == GXIOCF_GPIRQ_DEFAULT)
-		return (0);
+		return 0;
 
 	if (bus_space_map(iot, gxa->gxa_addr, SMC_IOSIZE, 0, &ioh) != 0)
-		return (0);
+		return 0;
 
 	/* Check that high byte of BANK_SELECT is what we expect. */
 	tmp = bus_space_read_2(iot, ioh, BANK_SELECT_REG_W);
@@ -160,21 +160,23 @@ sm_gxio_match(device_t parent, struct cfdata *match, void *aux)
 
  out:
 	bus_space_unmap(iot, ioh, SMC_IOSIZE);
-	return (rv);
+	return rv;
 }
 
 /* ARGSUSED */
-void
+static void
 sm_gxio_attach(device_t parent, device_t self, void *aux)
 {
 	struct sm_gxio_softc *gsc = device_private(self);
 	struct smc91cxx_softc *sc = &gsc->sc_smc;
 	struct gxio_attach_args *gxa = aux;
 	bus_space_handle_t ioh;
-	u_int8_t myea[ETHER_ADDR_LEN];
+	uint8_t myea[ETHER_ADDR_LEN];
 
 	aprint_normal("\n");
 	aprint_naive("\n");
+
+	KASSERT(system_serial_high != 0 || system_serial_low != 0);
 
 	/* Map i/o space. */
 	if (bus_space_map(gxa->gxa_iot, gxa->gxa_addr, SMC_IOSIZE, 0, &ioh))
@@ -186,17 +188,14 @@ sm_gxio_attach(device_t parent, device_t self, void *aux)
 	/* should always be enabled */
 	sc->sc_flags |= SMC_FLAGS_ENABLED;
 
-	if (system_serial_high != 0 || system_serial_low != 0) {
-		myea[0] = ((system_serial_high >> 8) & 0xfe) | 0x02;
-		myea[1] = system_serial_high;
-		myea[2] = system_serial_low >> 24;
-		myea[3] = system_serial_low >> 16;
-		myea[4] = system_serial_low >> 8;
-		myea[5] = (system_serial_low & 0xc0) |
-		    (1 << 4) | ((ether_serial_digit++) & 0x0f);
-		smc91cxx_attach(sc, myea);
-	} else
-		smc91cxx_attach(sc, NULL);
+	myea[0] = ((system_serial_high >> 8) & 0xfe) | 0x02;
+	myea[1] = system_serial_high;
+	myea[2] = system_serial_low >> 24;
+	myea[3] = system_serial_low >> 16;
+	myea[4] = system_serial_low >> 8;
+	myea[5] = (system_serial_low & 0xc0) |
+	    (1 << 4) | ((ether_serial_digit++) & 0x0f);
+	smc91cxx_attach(sc, myea);
 
 	/* Establish the interrupt handler. */
 	gsc->sc_ih = gxio_intr_establish(gxa->gxa_sc,

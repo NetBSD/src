@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstixreg.h,v 1.3 2007/01/18 10:06:47 kiyohara Exp $  */
+/*	$NetBSD: gumstixreg.h,v 1.4 2009/08/09 07:10:13 kiyohara Exp $  */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -48,6 +48,7 @@
 #define GUMSTIX_STUART_VBASE	0xfd400000
 #define GUMSTIX_BTUART_VBASE	0xfd500000
 #define GUMSTIX_HWUART_VBASE	0xfd600000
+#define GUMSTIX_LCDC_VBASE	0xfd700000
 
 
 #define ioreg_read(a)		(*(volatile unsigned *)(a))
