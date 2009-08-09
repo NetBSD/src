@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.28 2009/05/30 18:26:06 martin Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.29 2009/08/09 04:08:14 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -308,15 +308,15 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(segbase)		#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
-	srl	k0, 20				#03: k0=seg offset (almost)
+	srl	k0, (2*PGSHIFT-4)		#03: k0=seg offset (almost)
 	lw	k1, %lo(segbase)(k1)		#04: k1=segment tab base
-	andi	k0, k0, 0xffc			#05: k0=seg offset (mask 0x3)
+	andi	k0, k0, (NBPG-4)		#05: k0=seg offset (mask 0x3)
 	addu	k1, k0, k1			#06: k1=seg entry address
 	lw	k1, 0(k1)			#07: k1=seg entry
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
 	beq	k1, zero, 5f			#09: ==0 -- no page table
-	srl	k0, 10				#0a: k0=VPN (aka va>>10)
-	andi	k0, k0, 0xff8			#0b: k0=page tab offset
+	srl	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
+	andi	k0, k0, (NBPG-8)		#0b: k0=page tab offset
 	addu	k1, k1, k0			#0c: k1=pte address
 	lw	k0, 0(k1)			#0d: k0=lo0 pte
 	lw	k1, 4(k1)			#0e: k1=lo1 pte
@@ -370,15 +370,15 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(segbase)		#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
-	srl	k0, 20				#03: k0=seg offset (almost)
+	srl	k0, (2*PGSHIFT-4)		#03: k0=seg offset (almost)
 	lw	k1, %lo(segbase)(k1)		#04: k1=segment tab base
-	andi	k0, k0, 0xffc			#05: k0=seg offset (mask 0x3)
+	andi	k0, k0, (NBPG-4)		#05: k0=seg offset (mask 0x3)
 	addu	k1, k0, k1			#06: k1=seg entry address
 	lw	k1, 0(k1)			#07: k1=seg entry
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
 	beq	k1, zero, 5f			#09: ==0 -- no page table
-	srl	k0, 10				#0a: k0=VPN (aka va>>10)
-	andi	k0, k0, 0xff8			#0b: k0=page tab offset
+	srl	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
+	andi	k0, k0, (NBPG-8)		#0b: k0=page tab offset
 	addu	k1, k1, k0			#0c: k1=pte address
 	lw	k0, 0(k1)			#0d: k0=lo0 pte
 	lw	k1, 4(k1)			#0e: k1=lo1 pte
@@ -558,12 +558,12 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_S	ta1, TF_BASE+TF_REG_TA1(sp)
 	REG_S	ta2, TF_BASE+TF_REG_TA2(sp)
 	REG_S	ta3, TF_BASE+TF_REG_TA3(sp)
-	mfc0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
+	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	REG_S	t8, TF_BASE+TF_REG_T8(sp)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
 	REG_S	a0, TF_BASE+TF_REG_SR(sp)
-	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
+	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 	REG_S	a3, TF_BASE+TF_REG_EPC(sp)
@@ -869,7 +869,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	s1, FRAME_S1(k1)
 	REG_S	s2, FRAME_S2(k1)
 	REG_S	s3, FRAME_S3(k1)
-	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
+	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
 	REG_S	s4, FRAME_S4(k1)
 	REG_S	s5, FRAME_S5(k1)
 	REG_S	s6, FRAME_S6(k1)
@@ -1077,7 +1077,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	REG_S	ta1, TF_BASE+TF_REG_TA1(sp)
 	REG_S	ta2, TF_BASE+TF_REG_TA2(sp)
 	REG_S	ta3, TF_BASE+TF_REG_TA3(sp)
-	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is exception PC
+	_MFC0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is exception PC
 	REG_S	t8, TF_BASE+TF_REG_T8(sp)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
@@ -1219,7 +1219,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	REG_S	t9, FRAME_T9(k1)
 	REG_S	gp, FRAME_GP(k1)
 	REG_S	sp, FRAME_SP(k1)
-	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
+	_MFC0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
 	REG_S	ra, FRAME_RA(k1)
 	REG_S	a0, FRAME_SR(k1)
 	REG_S	v0, FRAME_MULLO(k1)
@@ -1852,18 +1852,18 @@ END(MIPSX(TLBRead))
  */
 LEAF_NOPROFILE(MIPSX(VCED))
 	.set	noat
-	mfc0	k0, MIPS_COP_0_BAD_VADDR	# fault addr.
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# fault addr.
 	li	k1, -16
 	and	k0, k1
 	cache	(CACHE_R4K_SD | CACHEOP_R4K_HIT_WB_INV), 0(k0)
 	cache	(CACHE_R4K_D | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
-	mfc0	k0, MIPS_COP_0_BAD_VADDR
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR
 	la	k1, VCED_vaddr
-	sw	k0, 0(k1)
-	mfc0	k0, MIPS_COP_0_EXC_PC
+	REG_S	k0, 0(k1)
+	_MFC0	k0, MIPS_COP_0_EXC_PC
 	la	k1, VCED_epc
-	sw	k0, 0(k1)
+	REG_S	k0, 0(k1)
 	la	k1, VCED_count		# count number of exceptions
 	srl	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
@@ -1892,13 +1892,13 @@ END(MIPSX(VCED))
 
 LEAF_NOPROFILE(MIPSX(VCEI))
 	.set	noat
-	mfc0	k0, MIPS_COP_0_BAD_VADDR	# fault addr.
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# fault addr.
 	cache	(CACHE_R4K_SD | CACHEOP_R4K_HIT_WB_INV), 0(k0)
 	cache	(CACHE_R4K_I | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
-	mfc0	k0, MIPS_COP_0_BAD_VADDR
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR
 	la	k1, VCEI_vaddr
-	sw	k0, 0(k1)
+	REG_S	k0, 0(k1)
 	la	k1, VCEI_count		# count number of exceptions
 	srl	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
