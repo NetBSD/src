@@ -1,14 +1,16 @@
-#	$NetBSD: files.mips,v 1.62 2009/08/07 18:39:10 matt Exp $
+#	$NetBSD: files.mips,v 1.63 2009/08/09 04:04:12 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
 				MIPS64_SB1
 				MIPS3_LOONGSON2F
+				ENABLE_MIPS_16KB_PAGE
 					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS32 MIPS64
 					# MIPS3_4100
 					# MIPS3_5900
+					# ENABLE_MIPS_4KB_PAGE
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
