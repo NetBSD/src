@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.107 2009/05/15 16:59:07 pooka Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.108 2009/08/09 22:49:00 haad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.107 2009/05/15 16:59:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.108 2009/08/09 22:49:00 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,7 +634,7 @@ ibcs2_sys_mknod(struct lwp *l, const struct ibcs2_sys_mknod_args *uap, register_
 		return sys_mkfifo(l, &ap, retval);
 	} else {
 		return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
-		    SCARG(uap, dev), retval);
+		    SCARG(uap, dev), retval, UIO_USERSPACE);
 	}
 }
 
