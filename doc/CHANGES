@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1270 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1271 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -357,3 +357,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	openssl: Import SNAP-20090805 to fix the namespace issues
 		(BLOCK, CSTRING, etc) [christos 20090805]
 	tcx(8):	support wsdisplay and acceleration [macallan 20090806]
+	gpioiic(4): New driver to create an I2C bus using GPIO pins in
+		bit-banging mode. [mbalmer 20090809]
