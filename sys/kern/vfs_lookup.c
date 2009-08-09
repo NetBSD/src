@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.117 2009/08/09 03:28:35 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.118 2009/08/09 07:27:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.117 2009/08/09 03:28:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.118 2009/08/09 07:27:54 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -224,8 +224,21 @@ struct namei_state {
 	struct nameidata *ndp;
 	struct componentname *cnp;
 
+	/* used by the pieces of namei */
+	struct vnode *namei_startdir; /* The directory namei() starts from. */
+
+	/* used by the pieces of lookup */
+	int lookup_alldone;
+
+	int docache;			/* == 0 do not cache last component */
+	int rdonly;			/* lookup read-only flag bit */
 	struct vnode *dp;		/* the directory we are searching */
+	int slashes;
 };
+
+/* XXX reorder things to make this decl unnecessary */
+static int do_lookup(struct namei_state *state);
+
 
 /*
  * Initialize the namei working state.
@@ -236,7 +249,14 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 	state->ndp = ndp;
 	state->cnp = &ndp->ni_cnd;
 
+	state->namei_startdir = NULL;
+
+	state->lookup_alldone = 0;
+
+	state->docache = 0;
+	state->rdonly = 0;
 	state->dp = NULL;
+	state->slashes = 0;
 }
 
 /*
@@ -248,7 +268,7 @@ namei_cleanup(struct namei_state *state)
 {
 	KASSERT(state->cnp == &state->ndp->ni_cnd);
 
-	//KASSERT(state->dp == NULL); 	// not yet
+	//KASSERT(state->namei_startdir == NULL); 	// not yet
 
 	/* nothing for now */
 	(void)state;
@@ -321,10 +341,10 @@ namei_start2(struct namei_state *state)
 	 */
 	cwdi = self->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	state->dp = cwdi->cwdi_rdir;
-	if (state->dp == NULL)
-		state->dp = rootvnode;
-	ndp->ni_rootdir = state->dp;
+	state->namei_startdir = cwdi->cwdi_rdir;
+	if (state->namei_startdir == NULL)
+		state->namei_startdir = rootvnode;
+	ndp->ni_rootdir = state->namei_startdir;
 
 	/*
 	 * Check if starting from root directory or current directory.
@@ -333,7 +353,7 @@ namei_start2(struct namei_state *state)
 		if (cnp->cn_flags & TRYEMULROOT) {
 			if (cnp->cn_flags & EMULROOTSET) {
 				/* Called from (eg) emul_find_interp() */
-				state->dp = ndp->ni_erootdir;
+				state->namei_startdir = ndp->ni_erootdir;
 			} else {
 				if (cwdi->cwdi_edir == NULL
 				    || (cnp->cn_pnbuf[1] == '.' 
@@ -341,20 +361,20 @@ namei_start2(struct namei_state *state)
 					   && cnp->cn_pnbuf[3] == '/')) {
 					ndp->ni_erootdir = NULL;
 				} else {
-					state->dp = cwdi->cwdi_edir;
-					ndp->ni_erootdir = state->dp;
+					state->namei_startdir = cwdi->cwdi_edir;
+					ndp->ni_erootdir = state->namei_startdir;
 				}
 			}
 		} else {
 			ndp->ni_erootdir = NULL;
 			if (cnp->cn_flags & NOCHROOT)
-				state->dp = ndp->ni_rootdir = rootvnode;
+				state->namei_startdir = ndp->ni_rootdir = rootvnode;
 		}
 	} else {
-		state->dp = cwdi->cwdi_cdir;
+		state->namei_startdir = cwdi->cwdi_cdir;
 		ndp->ni_erootdir = NULL;
 	}
-	VREF(state->dp);
+	VREF(state->namei_startdir);
 	rw_exit(&cwdi->cwdi_lock);
 
 	/*
@@ -381,7 +401,7 @@ namei_start2(struct namei_state *state)
 			ktrnamei(cnp->cn_pnbuf, ndp->ni_pathlen);
 	}
 
-	vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(state->namei_startdir, LK_EXCLUSIVE | LK_RETRY);
 
 	return 0;
 }
@@ -393,7 +413,7 @@ namei_start2(struct namei_state *state)
 static void
 namei_end(struct namei_state *state)
 {
-	vput(state->dp);
+	vput(state->namei_startdir);
 	PNBUF_PUT(state->cnp->cn_pnbuf);
 	//state->cnp->cn_pnbuf = NULL; // not yet (just in case) (XXX)
 }
@@ -474,23 +494,23 @@ badlink:
 		cnp->cn_pnbuf[linklen] = '\0';
 	ndp->ni_pathlen += linklen;
 	vput(ndp->ni_vp);
-	state->dp = ndp->ni_dvp;
+	state->namei_startdir = ndp->ni_dvp;
 
 	/*
 	 * Check if root directory should replace current directory.
 	 */
 	if (cnp->cn_pnbuf[0] == '/') {
-		vput(state->dp);
+		vput(state->namei_startdir);
 		/* Keep absolute symbolic links inside emulation root */
-		state->dp = ndp->ni_erootdir;
-		if (state->dp == NULL || (cnp->cn_pnbuf[1] == '.' 
+		state->namei_startdir = ndp->ni_erootdir;
+		if (state->namei_startdir == NULL || (cnp->cn_pnbuf[1] == '.' 
 					  && cnp->cn_pnbuf[2] == '.'
 					  && cnp->cn_pnbuf[3] == '/')) {
 			ndp->ni_erootdir = NULL;
-			state->dp = ndp->ni_rootdir;
+			state->namei_startdir = ndp->ni_rootdir;
 		}
-		VREF(state->dp);
-		vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+		VREF(state->namei_startdir);
+		vn_lock(state->namei_startdir, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	return 0;
@@ -519,13 +539,13 @@ do_namei(struct namei_state *state)
 
 	/* Loop through symbolic links */
 	for (;;) {
-		if (!state->dp->v_mount) {
+		if (state->namei_startdir->v_mount == NULL) {
 			/* Give up if the directory is no longer mounted */
 			namei_end(state);
 			return (ENOENT);
 		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
-		ndp->ni_startdir = state->dp;
+		ndp->ni_startdir = state->namei_startdir;
 		error = lookup(ndp);
 		if (error != 0) {
 			/* XXX this should use namei_end() */
@@ -660,30 +680,33 @@ namei_hash(const char *name, const char **ep)
  *	return the answer in ni_vp, locked if LOCKLEAF set
  *	    if LOCKPARENT set, return locked parent in ni_dvp
  */
-int
-lookup(struct nameidata *ndp)
+
+/*
+ * Begin lookup().
+ */
+static int
+lookup_start(struct namei_state *state)
 {
 	const char *cp;			/* pointer into pathname argument */
-	struct vnode *dp = 0;		/* the directory we are searching */
-	struct vnode *tdp;		/* saved dp */
-	struct mount *mp;		/* mount table entry */
-	int docache;			/* == 0 do not cache last component */
-	int rdonly;			/* lookup read-only flag bit */
-	int error = 0;
-	int slashes;
-	struct componentname *cnp = &ndp->ni_cnd;
-	struct lwp *l = curlwp;
+
+	struct componentname *cnp = state->cnp;
+	struct nameidata *ndp = state->ndp;
+
+	KASSERT(cnp == &ndp->ni_cnd);
+
+	state->lookup_alldone = 0;
+	state->dp = NULL;
 
 	/*
 	 * Setup: break out flag bits into variables.
 	 */
-	docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
+	state->docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
 	if (cnp->cn_nameiop == DELETE)
-		docache = 0;
-	rdonly = cnp->cn_flags & RDONLY;
+		state->docache = 0;
+	state->rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
 	cnp->cn_flags &= ~ISSYMLINK;
-	dp = ndp->ni_startdir;
+	state->dp = ndp->ni_startdir;
 	ndp->ni_startdir = NULLVP;
 
 	/*
@@ -698,10 +721,9 @@ lookup(struct nameidata *ndp)
 		ndp->ni_pathlen -= cp - cnp->cn_nameptr;
 		cnp->cn_nameptr = cp;
 
-		if (dp->v_type != VDIR) {
-			error = ENOTDIR;
-			vput(dp);
-			goto bad;
+		if (state->dp->v_type != VDIR) {
+			vput(state->dp);
+			return ENOTDIR;
 		}
 
 		/*
@@ -709,13 +731,28 @@ lookup(struct nameidata *ndp)
 		 * current node.
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
-			ndp->ni_vp = dp;
+			ndp->ni_vp = state->dp;
 			cnp->cn_flags |= ISLASTCN;
-			goto terminal;
+
+			/* bleh */
+			state->lookup_alldone = 1;
+			return 0;
 		}
 	}
 
-dirloop:
+	return 0;
+}
+
+static int
+lookup_parsepath(struct namei_state *state)
+{
+	const char *cp;			/* pointer into pathname argument */
+
+	struct componentname *cnp = state->cnp;
+	struct nameidata *ndp = state->ndp;
+
+	KASSERT(cnp == &ndp->ni_cnd);
+
 	/*
 	 * Search a new directory.
 	 *
@@ -732,10 +769,9 @@ dirloop:
 	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
-		vput(dp);
-		error = ENAMETOOLONG;
+		vput(state->dp);
 		ndp->ni_dvp = NULL;
-		goto bad;
+		return ENAMETOOLONG;
 	}
 #ifdef NAMEI_DIAGNOSTIC
 	{ char c = *cp;
@@ -754,12 +790,12 @@ dirloop:
 		do {
 			cp++;
 		} while (*cp == '/');
-		slashes = cp - ndp->ni_next;
-		ndp->ni_pathlen -= slashes;
+		state->slashes = cp - ndp->ni_next;
+		ndp->ni_pathlen -= state->slashes;
 		ndp->ni_next = cp;
 		cnp->cn_flags |= REQUIREDIR;
 	} else {
-		slashes = 0;
+		state->slashes = 0;
 		cnp->cn_flags &= ~REQUIREDIR;
 	}
 	/*
@@ -767,7 +803,7 @@ dirloop:
 	 * a directory.  Cache all intervening lookups, but not the final one.
 	 */
 	if (*cp == '\0') {
-		if (docache)
+		if (state->docache)
 			cnp->cn_flags |= MAKEENTRY;
 		else
 			cnp->cn_flags &= ~MAKEENTRY;
@@ -781,6 +817,22 @@ dirloop:
 		cnp->cn_flags |= ISDOTDOT;
 	else
 		cnp->cn_flags &= ~ISDOTDOT;
+
+	return 0;
+}
+
+static int
+lookup_once(struct namei_state *state)
+{
+	struct vnode *tdp;		/* saved dp */
+	struct mount *mp;		/* mount table entry */
+	struct lwp *l = curlwp;
+	int error;
+
+	struct componentname *cnp = state->cnp;
+	struct nameidata *ndp = state->ndp;
+
+	KASSERT(cnp == &ndp->ni_cnd);
 
 	/*
 	 * Handle "..": two special cases.
@@ -800,18 +852,18 @@ dirloop:
 		struct proc *p = l->l_proc;
 
 		for (;;) {
-			if (dp == ndp->ni_rootdir || dp == rootvnode) {
-				ndp->ni_dvp = dp;
-				ndp->ni_vp = dp;
-				VREF(dp);
-				goto nextname;
+			if (state->dp == ndp->ni_rootdir || state->dp == rootvnode) {
+				ndp->ni_dvp = state->dp;
+				ndp->ni_vp = state->dp;
+				VREF(state->dp);
+				return 0;
 			}
 			if (ndp->ni_rootdir != rootvnode) {
 				int retval;
 
-				VOP_UNLOCK(dp, 0);
-				retval = vn_isunder(dp, ndp->ni_rootdir, l);
-				vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_UNLOCK(state->dp, 0);
+				retval = vn_isunder(state->dp, ndp->ni_rootdir, l);
+				vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 				if (!retval) {
 				    /* Oops! We got out of jail! */
 				    log(LOG_WARNING,
@@ -820,24 +872,24 @@ dirloop:
 					p->p_pid, kauth_cred_geteuid(l->l_cred),
 					p->p_comm);
 				    /* Put us at the jail root. */
-				    vput(dp);
-				    dp = ndp->ni_rootdir;
-				    ndp->ni_dvp = dp;
-				    ndp->ni_vp = dp;
-				    VREF(dp);
-				    VREF(dp);
-				    vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
-				    goto nextname;
+				    vput(state->dp);
+				    state->dp = ndp->ni_rootdir;
+				    ndp->ni_dvp = state->dp;
+				    ndp->ni_vp = state->dp;
+				    VREF(state->dp);
+				    VREF(state->dp);
+				    vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+				    return 0;
 				}
 			}
-			if ((dp->v_vflag & VV_ROOT) == 0 ||
+			if ((state->dp->v_vflag & VV_ROOT) == 0 ||
 			    (cnp->cn_flags & NOCROSSMOUNT))
 				break;
-			tdp = dp;
-			dp = dp->v_mount->mnt_vnodecovered;
+			tdp = state->dp;
+			state->dp = state->dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			VREF(dp);
-			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+			VREF(state->dp);
+			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
 
@@ -846,9 +898,9 @@ dirloop:
 	 * Again, our only vnode state is that "dp" is held and locked.
 	 */
 unionlookup:
-	ndp->ni_dvp = dp;
+	ndp->ni_dvp = state->dp;
 	ndp->ni_vp = NULL;
-	error = VOP_LOOKUP(dp, &ndp->ni_vp, cnp);
+	error = VOP_LOOKUP(state->dp, &ndp->ni_vp, cnp);
 	if (error != 0) {
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
@@ -858,18 +910,18 @@ unionlookup:
 		printf("not found\n");
 #endif /* NAMEI_DIAGNOSTIC */
 		if ((error == ENOENT) &&
-		    (dp->v_vflag & VV_ROOT) &&
-		    (dp->v_mount->mnt_flag & MNT_UNION)) {
-			tdp = dp;
-			dp = dp->v_mount->mnt_vnodecovered;
+		    (state->dp->v_vflag & VV_ROOT) &&
+		    (state->dp->v_mount->mnt_flag & MNT_UNION)) {
+			tdp = state->dp;
+			state->dp = state->dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			VREF(dp);
-			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+			VREF(state->dp);
+			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 			goto unionlookup;
 		}
 
 		if (error != EJUSTRETURN)
-			goto bad;
+			return error;
 
 		/*
 		 * If this was not the last component, or there were trailing
@@ -877,17 +929,15 @@ unionlookup:
 		 * then the name must exist.
 		 */
 		if ((cnp->cn_flags & (REQUIREDIR | CREATEDIR)) == REQUIREDIR) {
-			error = ENOENT;
-			goto bad;
+			return ENOENT;
 		}
 
 		/*
 		 * If creating and at end of pathname, then can consider
 		 * allowing file to be created.
 		 */
-		if (rdonly) {
-			error = EROFS;
-			goto bad;
+		if (state->rdonly) {
+			return EROFS;
 		}
 
 		/*
@@ -899,6 +949,7 @@ unionlookup:
 			ndp->ni_startdir = ndp->ni_dvp;
 			VREF(ndp->ni_startdir);
 		}
+		state->lookup_alldone = 1;
 		return (0);
 	}
 #ifdef NAMEI_DIAGNOSTIC
@@ -911,17 +962,17 @@ unionlookup:
 	 * the last component consumed.
 	 */
 	if (cnp->cn_consume > 0) {
-		ndp->ni_pathlen -= cnp->cn_consume - slashes;
-		ndp->ni_next += cnp->cn_consume - slashes;
+		ndp->ni_pathlen -= cnp->cn_consume - state->slashes;
+		ndp->ni_next += cnp->cn_consume - state->slashes;
 		cnp->cn_consume = 0;
 		if (ndp->ni_next[0] == '\0')
 			cnp->cn_flags |= ISLASTCN;
 	}
 
-	dp = ndp->ni_vp;
+	state->dp = ndp->ni_vp;
 
 	/*
-	 * "dp" and "ndp->ni_dvp" are both locked and held,
+	 * "state->dp" and "ndp->ni_dvp" are both locked and held,
 	 * and may be the same vnode.
 	 */
 
@@ -929,35 +980,74 @@ unionlookup:
 	 * Check to see if the vnode has been mounted on;
 	 * if so find the root of the mounted file system.
 	 */
-	while (dp->v_type == VDIR && (mp = dp->v_mountedhere) &&
+	while (state->dp->v_type == VDIR && (mp = state->dp->v_mountedhere) &&
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		error = vfs_busy(mp, NULL);
 		if (error != 0) {
-			vput(dp);
-			goto bad;
+			vput(state->dp);
+			return error;
 		}
-		KASSERT(ndp->ni_dvp != dp);
+		KASSERT(ndp->ni_dvp != state->dp);
 		VOP_UNLOCK(ndp->ni_dvp, 0);
-		vput(dp);
+		vput(state->dp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, false, NULL);
 		if (error) {
 			vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
-			goto bad;
+			return error;
 		}
 		VOP_UNLOCK(tdp, 0);
-		ndp->ni_vp = dp = tdp;
+		ndp->ni_vp = state->dp = tdp;
 		vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 		vn_lock(ndp->ni_vp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	return 0;
+}
+
+static int
+do_lookup(struct namei_state *state)
+{
+	int error = 0;
+
+	struct componentname *cnp = state->cnp;
+	struct nameidata *ndp = state->ndp;
+
+	KASSERT(cnp == &ndp->ni_cnd);
+
+	error = lookup_start(state);
+	if (error) {
+		goto bad;
+	}
+	// XXX: this case should not be necessary given proper handling
+	// of slashes elsewhere.
+	if (state->lookup_alldone) {
+		goto terminal;
+	}
+
+dirloop:
+	error = lookup_parsepath(state);
+	if (error) {
+		goto bad;
+	}
+
+	error = lookup_once(state);
+	if (error) {
+		goto bad;
+	}
+	// XXX ought to be able to avoid this case too
+	if (state->lookup_alldone) {
+		/* this should NOT be "goto terminal;" */
+		return 0;
 	}
 
 	/*
 	 * Check for symbolic link.  Back up over any slashes that we skipped,
 	 * as we will need them again.
 	 */
-	if ((dp->v_type == VLNK) && (cnp->cn_flags & (FOLLOW|REQUIREDIR))) {
-		ndp->ni_pathlen += slashes;
-		ndp->ni_next -= slashes;
+	if ((state->dp->v_type == VLNK) && (cnp->cn_flags & (FOLLOW|REQUIREDIR))) {
+		ndp->ni_pathlen += state->slashes;
+		ndp->ni_next -= state->slashes;
 		cnp->cn_flags |= ISSYMLINK;
 		return (0);
 	}
@@ -966,14 +1056,12 @@ unionlookup:
 	 * Check for directory, if the component was followed by a series of
 	 * slashes.
 	 */
-	if ((dp->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
+	if ((state->dp->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
 		error = ENOTDIR;
-		KASSERT(dp != ndp->ni_dvp);
-		vput(dp);
+		KASSERT(state->dp != ndp->ni_dvp);
+		vput(state->dp);
 		goto bad;
 	}
-
-nextname:
 
 	/*
 	 * Not a symbolic link.  If this was not the last component, then
@@ -981,7 +1069,7 @@ nextname:
 	 */
 	if (!(cnp->cn_flags & ISLASTCN)) {
 		cnp->cn_nameptr = ndp->ni_next;
-		if (ndp->ni_dvp == dp) {
+		if (ndp->ni_dvp == state->dp) {
 			vrele(ndp->ni_dvp);
 		} else {
 			vput(ndp->ni_dvp);
@@ -990,7 +1078,7 @@ nextname:
 	}
 
 terminal:
-	if (dp == ndp->ni_erootdir) {
+	if (state->dp == ndp->ni_erootdir) {
 		/*
 		 * We are about to return the emulation root.
 		 * This isn't a good idea because code might repeatedly
@@ -998,17 +1086,17 @@ terminal:
 		 * for "/" and loop forever.
 		 * So convert it to the real root.
 		 */
-		if (ndp->ni_dvp == dp)
-			vrele(dp);
+		if (ndp->ni_dvp == state->dp)
+			vrele(state->dp);
 		else
 			if (ndp->ni_dvp != NULL)
 				vput(ndp->ni_dvp);
 		ndp->ni_dvp = NULL;
-		vput(dp);
-		dp = ndp->ni_rootdir;
-		VREF(dp);
-		vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
-		ndp->ni_vp = dp;
+		vput(state->dp);
+		state->dp = ndp->ni_rootdir;
+		VREF(state->dp);
+		vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+		ndp->ni_vp = state->dp;
 	}
 
 	/*
@@ -1028,7 +1116,7 @@ terminal:
 		default:
 			KASSERT(0);
 		}
-		vput(dp);
+		vput(state->dp);
 		goto bad;
 	}
 
@@ -1036,11 +1124,11 @@ terminal:
 	 * Disallow directory write attempts on read-only lookups.
 	 * Prefers EEXIST over EROFS for the CREATE case.
 	 */
-	if (rdonly &&
+	if (state->rdonly &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
 		error = EROFS;
-		if (dp != ndp->ni_dvp) {
-			vput(dp);
+		if (state->dp != ndp->ni_dvp) {
+			vput(state->dp);
 		}
 		goto bad;
 	}
@@ -1051,13 +1139,30 @@ terminal:
 		}
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0) {
-		VOP_UNLOCK(dp, 0);
+		VOP_UNLOCK(state->dp, 0);
 	}
 	return (0);
 
 bad:
 	ndp->ni_vp = NULL;
 	return (error);
+}
+
+/*
+ * Externally visible interface used by nfsd (bletch, yuk, XXX)
+ */
+int
+lookup(struct nameidata *ndp)
+{
+	struct namei_state state;
+	int error;
+
+	/* For now at least we don't have to frob the state */
+	namei_init(&state, ndp);
+	error = do_lookup(&state);
+	namei_cleanup(&state);
+
+	return error;
 }
 
 /*
