@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.15 2009/08/08 00:46:56 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.16 2009/08/09 09:22:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.15 2009/08/08 00:46:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.16 2009/08/09 09:22:16 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -118,7 +118,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int eger)
 
 	panic("%s: unavailable", __func__);
 }
-#else
+#elif !defined(__vax__)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
