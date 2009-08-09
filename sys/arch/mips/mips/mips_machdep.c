@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.215 2009/08/09 04:06:35 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.216 2009/08/09 17:53:54 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.215 2009/08/09 04:06:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.216 2009/08/09 17:53:54 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -931,7 +931,7 @@ mips_vector_init(void)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
 #if defined(MIPS3_5900)	/* XXX */
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips5900_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -940,10 +940,10 @@ mips_vector_init(void)
 #else /* MIPS3_5900 */
 #if defined(MIPS3_4100)
 		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
-			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
+			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_TO_MASK(PAGE_SIZE));
 		else
 #endif
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -954,7 +954,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips32_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -964,7 +964,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS64)
 	case CPU_ARCH_MIPS64:
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips64_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
