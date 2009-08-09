@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.42 2009/03/06 20:31:50 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.43 2009/08/09 04:02:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,10 +84,16 @@
  */
 
 /*
- * We use a 4K page on MIPS systems.  Override PAGE_* definitions
- * to compile-time constants.
+ * We normally use a 4K page but may use 16K on MIPS systems.
+ * Override PAGE_* definitions to compile-time constants.
  */
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define	PAGE_SHIFT	14
+#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
 #define	PAGE_SHIFT	12
+#else
+#error ENABLE_MIPS_xKB_PAGE not defined
+#endif
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
@@ -98,7 +104,7 @@
  * and some QED CPUs perform some virtual address checks before the
  * offset is calculated.
  */
-#define	USRSTACK	0x7ffff000		/* Start of user stack */
+#define	USRSTACK	(0x7fffffff & ~PAGE_MASK) /* Start of user stack */
 
 /* alignment requirement for u-area space in bytes */
 #define	USPACE_ALIGN	USPACE
