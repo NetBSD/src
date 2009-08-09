@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.249 2009/08/09 14:17:56 pgoyette Exp $
+#	$NetBSD: DEVNAMES,v 1.250 2009/08/09 14:18:46 mbalmer Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -494,6 +494,9 @@ gphyter			MI
 gpib			MI
 gpio			evbppc
 gpio			MI
+gpioiic			MI
+gpioow			MI
+gpiosim			MI
 grackle			macppc
 grf			amiga
 grf			amigappc
