@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.250 2009/08/09 14:18:46 mbalmer Exp $
+#	$NetBSD: DEVNAMES,v 1.251 2009/08/09 14:32:07 haad Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -322,6 +322,7 @@ dh			vax
 dhu			MI
 dio			hp300
 dl			MI
+dm			MI
 dma			MI
 dma			sun3
 dmac			newsmips
