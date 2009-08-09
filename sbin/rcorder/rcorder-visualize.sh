@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: rcorder-visualize.sh,v 1.4 2009/04/15 23:03:34 joerg Exp $
+# $NetBSD: rcorder-visualize.sh,v 1.5 2009/08/09 17:08:53 apb Exp $
 #
 # Written by Joerg Sonnenberger.  You may freely use and redistribute
 # this script.
@@ -9,7 +9,7 @@
 #	sh rcorder-visualize | dot -T svg -o rcorder.svg
 # dot(1) can be found in graphics/graphviz in pkgsrc.
 
-rc_files=/etc/rc.d/*
+rc_files=${*:-/etc/rc.d/*}
 
 {
 echo ' digraph {'
