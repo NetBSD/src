@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.9 2009/03/18 10:22:27 cegger Exp $ */
+/*	$NetBSD: gxio.c,v 1.10 2009/08/09 07:10:13 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,13 +31,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.9 2009/03/18 10:22:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.10 2009/08/09 07:10:13 kiyohara Exp $");
 
 #include "opt_gxio.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 
 #include <sys/systm.h>
 
@@ -57,9 +58,9 @@ struct gxioconf {
 	void (*config)(void);
 };
 
-static int gxiomatch(device_t, struct cfdata *, void *);
+static int gxiomatch(device_t, cfdata_t, void *);
 static void gxioattach(device_t, device_t, void *);
-static int gxiosearch(device_t, struct cfdata *, const int *, void *);
+static int gxiosearch(device_t, cfdata_t, const int *, void *);
 static int gxioprint(void *, const char *);
 
 void gxio_config_pin(void);
@@ -71,7 +72,10 @@ static void etherstix_config(void);
 static void netcf_config(void);
 static void netduommc_config(void);
 static void netduo_config(void);
+static void netmicrosd_config(void);
+static void netwifimicrosd_config(void);
 static void netmmc_config(void);
+static void wifistix_config(void);
 static void wifistix_cf_config(void);
 
 CFATTACH_DECL_NEW(
@@ -79,24 +83,29 @@ CFATTACH_DECL_NEW(
 
 char busheader[MAX_BOOT_STRING];
 
-static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
+#if defined(CPU_XSCALE_PXA250)
+static struct pxa2x0_gpioconf pxa255dep_gpioconf[] = {
 	/* Bluetooth module configuration */
 	{  7, GPIO_OUT | GPIO_SET },	/* power on */
 	{ 12, GPIO_ALT_FN_1_OUT },	/* 32kHz out. required by SingleStone */
 
 	/* AC97 configuration */
-	{ 29, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
+	{ 29, GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
+
+	/* FFUART configuration */
+	{ 35, GPIO_ALT_FN_1_IN },	/* CTS */
+	{ 41, GPIO_ALT_FN_2_OUT },	/* RTS */
 
 #ifndef GXIO_BLUETOOTH_ON_HWUART
 	/* BTUART configuration */
-	{ 44, GPIO_ALT_FN_1_IN },	/* BTCST */
-	{ 45, GPIO_ALT_FN_2_OUT },	/* BTRST */
+	{ 44, GPIO_ALT_FN_1_IN },	/* BTCTS */
+	{ 45, GPIO_ALT_FN_2_OUT },	/* BTRTS */
 #else
 	/* HWUART configuration */
 	{ 42, GPIO_ALT_FN_3_IN },	/* HWRXD */
 	{ 43, GPIO_ALT_FN_3_OUT },	/* HWTXD */
-	{ 44, GPIO_ALT_FN_3_IN },	/* HWCST */
-	{ 45, GPIO_ALT_FN_3_OUT },	/* HWRST */
+	{ 44, GPIO_ALT_FN_3_IN },	/* HWCTS */
+	{ 45, GPIO_ALT_FN_3_OUT },	/* HWRTS */
 #endif
 
 #ifndef GXIO_BLUETOOTH_ON_HWUART
@@ -109,27 +118,64 @@ static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
 
 	{ -1 }
 };
+#endif
+#if defined(CPU_XSCALE_PXA270)
+static struct pxa2x0_gpioconf verdexdep_gpioconf[] = {
+	/* Bluetooth module configuration */
+	{   9, GPIO_ALT_FN_3_OUT },	/* CHOUT<0> */
+
+	/* FFUART configuration */
+	{  27, GPIO_ALT_FN_3_OUT },	/* FFRTS */
+	{  34, GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{  39, GPIO_ALT_FN_2_OUT },	/* FFTXD */
+	{ 100, GPIO_ALT_FN_3_IN },	/* FFCTS */
+
+	/* BTUART configuration */
+	{  42, GPIO_ALT_FN_1_IN },	/* BTRXD */
+	{  43, GPIO_ALT_FN_2_OUT },	/* BTTXD */
+	{  44, GPIO_ALT_FN_1_IN },	/* BTCTS */
+	{  45, GPIO_ALT_FN_2_OUT },	/* BTRTS */
+
+	/* AC97 configuration */
+	{  29, GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
+
+	{ -1 }
+};
+#endif
 
 static const struct gxioconf busheader_conf[] = {
 	{ "basix",		basix_config },
 	{ "cfstix",		cfstix_config },
 	{ "etherstix",		etherstix_config },
 	{ "netcf",		netcf_config },
+	{ "netcf-vx",		netcf_config },
 	{ "netduo-mmc",		netduommc_config },
 	{ "netduo",		netduo_config },
+	{ "netmicrosd",		netmicrosd_config },
+	{ "netmicrosd-vx",	netmicrosd_config },
+	{ "netwifimicrosd",	netwifimicrosd_config },
 	{ "netmmc",		netmmc_config },
+	{ "netpro-vx",		netwifimicrosd_config },
 	{ "wifistix-cf",	wifistix_cf_config },
-	{ "wifistix",		cfstix_config },
+	{ "wifistix",		wifistix_config },
 	{ NULL }
 };
+
+int gxpcic_gpio_reset;
+struct gxpcic_slot_irqs gxpcic_slot_irqs[2] = { { 0, -1, -1 }, { 0, -1, -1 } };
 
 
 /* ARGSUSED */
 static int
-gxiomatch(device_t parent, struct cfdata *match, void *aux)
+gxiomatch(device_t parent, cfdata_t match, void *aux)
 {
+	struct pxaip_attach_args *pxa = aux;
 	bus_space_tag_t iot = &pxa2x0_bs_tag;
 	bus_space_handle_t ioh;
+
+	if (strcmp(pxa->pxa_name, match->cf_name) != 0 ||
+	    pxa->pxa_addr != PXAIPCF_ADDR_DEFAULT)
+		 return 0;
 
 	if (bus_space_map(iot,
 	    PXA2X0_MEMCTL_BASE, PXA2X0_MEMCTL_SIZE, 0, &ioh))
@@ -164,7 +210,7 @@ gxioattach(device_t parent, device_t self, void *aux)
 
 /* ARGSUSED */
 static int
-gxiosearch(device_t parent, struct cfdata *cf, const int *ldesc, void *aux)
+gxiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct gxio_softc *sc = device_private(parent);
 	struct gxio_attach_args gxa;
@@ -200,6 +246,7 @@ gxioprint(void *aux, const char *name)
 void
 gxio_config_pin(void)
 {
+#if defined(CPU_XSCALE_PXA250)
 	struct pxa2x0_gpioconf *gumstix_gpioconf[] = {
 		pxa25x_com_ffuart_gpioconf,
 		pxa25x_com_stuart_gpioconf,
@@ -209,32 +256,52 @@ gxio_config_pin(void)
 		pxa25x_com_hwuart_gpioconf,
 		pxa25x_i2c_gpioconf,
 		pxa25x_pxaacu_gpioconf,
-		boarddep_gpioconf,
+		pxa255dep_gpioconf,
 		NULL
 	};
+#endif
+#if defined(CPU_XSCALE_PXA270)
+	struct pxa2x0_gpioconf *verdex_gpioconf[] = {
+		pxa27x_com_ffuart_gpioconf,
+		pxa27x_com_stuart_gpioconf,
+		pxa27x_com_btuart_gpioconf,
+		pxa27x_i2c_gpioconf,
+		pxa27x_pxaacu_gpioconf,
+		pxa27x_pxamci_gpioconf,
+		pxa27x_ohci_gpioconf,
+		verdexdep_gpioconf,
+		NULL
+	};
+#endif
 
 	/* XXX: turn off for power of bluetooth module */
 	pxa2x0_gpio_set_function(7, GPIO_OUT | GPIO_CLR);
 	delay(100);
 
+#if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
+	pxa2x0_gpio_config(
+	    (CPU_IS_PXA250) ? gumstix_gpioconf : verdex_gpioconf);
+#else
+#if defined(CPU_XSCALE_PXA270)
+	pxa2x0_gpio_config(verdex_gpioconf);
+#else
 	pxa2x0_gpio_config(gumstix_gpioconf);
+#endif
+#endif
 }
 
 void
 gxio_config_expansion(char *expansion)
 {
-#ifdef GXIO_DEFAULT_EXPANSION
-	char default_expansion[] = GXIO_DEFAULT_EXPANSION;
-#endif
 
 	if (expansion == NULL) {
-#ifndef GXIO_DEFAULT_EXPANSION
-		return;
-#else
 		printf("not specified 'busheader=' in the boot args.\n");
+#ifdef GXIO_DEFAULT_EXPANSION
 		printf("configure default expansion (%s)\n",
 		    GXIO_DEFAULT_EXPANSION);
-		expansion = default_expansion;
+		expansion = GXIO_DEFAULT_EXPANSION;
+#else
+		return;
 #endif
 	}
 	gxio_config_gpio(busheader_conf, expansion);
@@ -275,14 +342,35 @@ static void
 cfstix_config(void)
 {
 	u_int gpio, npoe_fn;
+#if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
+	int bvd = (CPU_IS_PXA250) ? 4 : 111;
+#else
+#if defined(CPU_XSCALE_PXA270)
+	const int bvd = 111;
+#else
+	const int bvd = 4;
+#endif
+#endif
+
+	if (CPU_IS_PXA250) {
+		gxpcic_slot_irqs[0].valid = 1;
+		gxpcic_slot_irqs[0].cd = 11;
+		gxpcic_slot_irqs[0].prdy = 26;
+		gxpcic_gpio_reset = 8;
+	} else {
+		gxpcic_slot_irqs[0].valid = 1;
+		gxpcic_slot_irqs[0].cd = 104;
+		gxpcic_slot_irqs[0].prdy = 96;
+		gxpcic_gpio_reset = 97;
+	}
 
 #if 1
-	/* this configuration set by pxa2x0_pcic.c::pxapcic_attach_common() */
+	/* PCD/PRDY set by pxa2x0_pcic.c::pxapcic_attach_common() */
 #else
 	pxa2x0_gpio_set_function(11, GPIO_IN);		/* PCD1 */
 	pxa2x0_gpio_set_function(26, GPIO_IN);		/* PRDY1/~IRQ1 */
 #endif
-	pxa2x0_gpio_set_function(4, GPIO_IN); 		/* BVD1/~STSCHG1 */
+	pxa2x0_gpio_set_function(bvd, GPIO_IN); 	/* BVD1/~STSCHG1 */
 
 	for (gpio = 48, npoe_fn = 0; gpio <= 53 ; gpio++)
 		npoe_fn |= pxa2x0_gpio_get_function(gpio);
@@ -292,9 +380,15 @@ cfstix_config(void)
 	pxa2x0_gpio_set_function(49, GPIO_ALT_FN_2_OUT);	/* nPWE */
 	pxa2x0_gpio_set_function(50, GPIO_ALT_FN_2_OUT);	/* nPIOR */
 	pxa2x0_gpio_set_function(51, GPIO_ALT_FN_2_OUT);	/* nPIOW */
-	pxa2x0_gpio_set_function(52, GPIO_ALT_FN_2_OUT);	/* nPCE1 */
-	pxa2x0_gpio_set_function(53, GPIO_ALT_FN_2_OUT);	/* nPCE2 */
-	pxa2x0_gpio_set_function(54, GPIO_ALT_FN_2_OUT);	/* pSKTSEL */
+	if (CPU_IS_PXA250) {
+		pxa2x0_gpio_set_function(52, GPIO_ALT_FN_2_OUT); /* nPCE1 */
+		pxa2x0_gpio_set_function(53, GPIO_ALT_FN_2_OUT); /* nPCE2 */
+		pxa2x0_gpio_set_function(54, GPIO_ALT_FN_2_OUT); /* pSKTSEL */
+	} else {
+		pxa2x0_gpio_set_function(102, GPIO_ALT_FN_1_OUT); /* nPCE1 */
+		pxa2x0_gpio_set_function(105, GPIO_ALT_FN_1_OUT); /* nPCE2 */
+		pxa2x0_gpio_set_function(79, GPIO_ALT_FN_1_OUT);  /* pSKTSEL */
+	}
 	pxa2x0_gpio_set_function(55, GPIO_ALT_FN_2_OUT);	/* nPREG */
 	pxa2x0_gpio_set_function(56, GPIO_ALT_FN_1_IN);		/* nPWAIT */
 	pxa2x0_gpio_set_function(57, GPIO_ALT_FN_1_IN);		/* nIOIS16 */
@@ -303,13 +397,32 @@ cfstix_config(void)
 static void
 etherstix_config(void)
 {
+	extern struct cfdata cfdata[];
+#if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
+	int rst = (CPU_IS_PXA250) ? 80 : 32;
+	int irq = (CPU_IS_PXA250) ? 36 : 99;
+#else
+#if defined(CPU_XSCALE_PXA270)
+	const int rst = 32, irq = 99;
+#else
+	const int rst = 80, irq = 36;
+#endif
+#endif
+	int i;
 
 	pxa2x0_gpio_set_function(49, GPIO_ALT_FN_2_OUT);	/* nPWE */
 	pxa2x0_gpio_set_function(15, GPIO_ALT_FN_2_OUT);	/* nCS 1 */
-	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);	/* RESET 1 */
+	pxa2x0_gpio_set_function(rst, GPIO_OUT | GPIO_SET);	/* RESET 1 */
 	delay(1);
-	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(rst, GPIO_OUT | GPIO_CLR);
 	delay(50000);
+
+	for (i = 0; cfdata[i].cf_name != NULL; i++)
+		if (strcmp(cfdata[i].cf_name, "sm") == 0 &&
+		    strcmp(cfdata[i].cf_atname, "sm_gxio") == 0 &&
+		    cfdata[i].cf_loc[GXIOCF_ADDR] == 0x04000300 &&
+		    cfdata[i].cf_loc[GXIOCF_GPIRQ] == GXIOCF_GPIRQ_DEFAULT)
+			cfdata[i].cf_loc[GXIOCF_GPIRQ] = irq;
 }
 
 static void
@@ -318,6 +431,12 @@ netcf_config(void)
 
 	etherstix_config();
 	cfstix_config();
+	if (CPU_IS_PXA270) {
+		/* Overwrite */
+		gxpcic_slot_irqs[0].cd = 104;
+		gxpcic_slot_irqs[0].prdy = 109;
+		gxpcic_gpio_reset = 110;
+	};
 }
 
 static void
@@ -342,6 +461,33 @@ netduo_config(void)
 }
 
 static void
+netmicrosd_config(void)
+{
+
+	/* MicroSD(mci) always configure on PXA270 */
+
+	pxa2x0_gpio_set_function(49, GPIO_ALT_FN_2_OUT);	/* nPWE */
+	pxa2x0_gpio_set_function(15, GPIO_ALT_FN_2_OUT);	/* nCS 1 */
+	pxa2x0_gpio_set_function(107, GPIO_OUT | GPIO_CLR);	/* RESET 1 */
+	delay(hz / 2);
+	pxa2x0_gpio_set_function(107, GPIO_OUT | GPIO_SET);
+	delay(50000);
+}
+
+static void
+netwifimicrosd_config(void)
+{
+
+	netmicrosd_config();
+
+	cfstix_config();
+	/* However use pxamci. */
+	pxa2x0_gpio_set_function(111, GPIO_CLR | GPIO_ALT_FN_1_IN);
+	/* XXXX: Power to Marvell 88W8385??? */
+	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);
+}
+
+static void
 netmmc_config(void)
 {
 
@@ -350,8 +496,22 @@ netmmc_config(void)
 }
 
 static void
+wifistix_config(void)
+{
+
+	cfstix_config();
+
+	/* XXXX: Power to Marvell 88W8385??? */
+	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);
+}
+
+static void
 wifistix_cf_config(void)
 {
+
+	gxpcic_slot_irqs[1].valid = 1;
+	gxpcic_slot_irqs[1].cd = 36;
+	gxpcic_slot_irqs[1].prdy = 27;
 
 #if 1
 	/* this configuration set by pxa2x0_pcic.c::pxapcic_attach_common() */
@@ -362,4 +522,7 @@ wifistix_cf_config(void)
 	pxa2x0_gpio_set_function(18, GPIO_IN); 		/* BVD2/~STSCHG2 */
 
 	cfstix_config();
+
+	/* XXXX: Power to Marvell 88W8385??? */
+	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);
 }
