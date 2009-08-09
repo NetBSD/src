@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.5 2009/08/09 04:02:00 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -50,8 +50,8 @@ struct pci_attach_args;
  */
 struct mips_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook)(struct device *,
-			    struct device *, struct pcibus_attach_args *);
+	void		(*pc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
 	int		(*pc_bus_maxdevs)(void *, int);
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
@@ -73,7 +73,7 @@ struct mips_pci_chipset {
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	void		*(*pc_pciide_compat_intr_establish)(void *,
-			    struct device *, struct pci_attach_args *, int,
+			    device_t, struct pci_attach_args *, int,
 			    int (*)(void *), void *);
 #endif
 };
