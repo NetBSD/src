@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.236 2009/04/21 21:30:00 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.237 2009/08/09 13:15:05 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2009/04/21 21:30:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.237 2009/08/09 13:15:05 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2687,9 +2687,9 @@ pmap_is_modified(struct vm_page *pg)
 		if (res)
 			pv->pv_va |= PV_WE;
 #endif
-#endif
 		mutex_exit(&pmap_lock);
 	}
+#endif
 
 	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_is_modified(%p) = %d\n", pg,
 	    res));
