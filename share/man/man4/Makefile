@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.495 2009/08/09 06:40:09 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.496 2009/08/09 08:20:53 mbalmer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 acpidalb.4 \
@@ -86,7 +86,7 @@ MAN+=	acpi.4 acpiacad.4 acpibat.4 acpibut.4 acpiec.4 acpilid.4 \
 MAN+=	radio.4 az.4 mr.4 rt.4 rtii.4 sf2r.4
 
 # machine-independent busses
-MAN+=	eisa.4 isa.4 isapnp.4 ofisa.4 pci.4 pcmcia.4
+MAN+=	eisa.4 gpioiic.4 isa.4 isapnp.4 ofisa.4 pci.4 pcmcia.4
 MAN+=	podulebus.4 ieee1394if.4 spi.4
 
 # machine-independent PCI devices
