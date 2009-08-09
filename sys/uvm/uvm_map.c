@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.275 2009/08/01 16:35:51 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.276 2009/08/09 22:13:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.275 2009/08/01 16:35:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.276 2009/08/09 22:13:07 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1345,6 +1345,7 @@ retry:
 	args->uma_uobj = uobj;
 	args->uma_uoffset = uoffset;
 
+	UVMHIST_LOG(maphist, "<- done!", 0,0,0,0);
 	return 0;
 }
 
@@ -4638,13 +4639,15 @@ static struct vm_map_entry *
 uvm_kmapent_alloc(struct vm_map *map, int flags)
 {
 	struct vm_page *pg;
-	struct uvm_map_args args;
 	struct uvm_kmapent_hdr *ukh;
 	struct vm_map_entry *entry;
+#ifndef PMAP_MAP_POOLPAGE
+	struct uvm_map_args args;
 	uvm_flag_t mapflags = UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 	    UVM_INH_NONE, UVM_ADV_RANDOM, flags | UVM_FLAG_NOMERGE);
-	vaddr_t va;
 	int error;
+#endif
+	vaddr_t va;
 	int i;
 
 	KDASSERT(UVM_KMAPENT_CHUNK > 2);
@@ -4652,7 +4655,9 @@ uvm_kmapent_alloc(struct vm_map *map, int flags)
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	UVMMAP_EVCNT_INCR(uke_alloc);
+#ifndef PMAP_MAP_POOLPAGE
 	entry = NULL;
+#endif
 again:
 	/*
 	 * try to grab an entry from freelist.
@@ -4684,6 +4689,10 @@ again:
 		goto again;
 	}
 
+#ifdef PMAP_MAP_POOLPAGE
+	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
+	KASSERT(va != NULL);
+#else
 	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
 	    0, mapflags, &args);
 	if (error) {
@@ -4697,27 +4706,35 @@ again:
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
 	pmap_update(vm_map_pmap(map));
 
+#endif
 	ukh = (void *)va;
 
 	/*
-	 * use the first entry for ukh itsself.
+	 * use the last entry for ukh itsself.
 	 */
 
-	entry = &ukh->ukh_entries[0];
+	i = UVM_KMAPENT_CHUNK - 1;
+#ifndef PMAP_MAP_POOLPAGE
+	entry = &ukh->ukh_entries[i--];
 	entry->flags = UVM_MAP_KERNEL | UVM_MAP_KMAPENT;
 	error = uvm_map_enter(map, &args, entry);
 	KASSERT(error == 0);
+#endif
 
 	ukh->ukh_nused = UVM_KMAPENT_CHUNK;
 	ukh->ukh_map = map;
 	ukh->ukh_freelist = NULL;
-	for (i = UVM_KMAPENT_CHUNK - 1; i >= 2; i--) {
+	for (; i >= 1; i--) {
 		struct vm_map_entry *xentry = &ukh->ukh_entries[i];
 
 		xentry->flags = UVM_MAP_KERNEL;
 		uvm_kmapent_put(ukh, xentry);
 	}
+#ifdef PMAP_MAP_POOLPAGE
+	KASSERT(ukh->ukh_nused == 1);
+#else
 	KASSERT(ukh->ukh_nused == 2);
+#endif
 
 	mutex_spin_enter(&uvm_kentry_lock);
 	LIST_INSERT_HEAD(&vm_map_to_kernel(map)->vmk_kentry_free,
@@ -4725,12 +4742,13 @@ again:
 	mutex_spin_exit(&uvm_kentry_lock);
 
 	/*
-	 * return second entry.
+	 * return first entry.
 	 */
 
-	entry = &ukh->ukh_entries[1];
+	entry = &ukh->ukh_entries[0];
 	entry->flags = UVM_MAP_KERNEL;
 	UVMMAP_EVCNT_INCR(ukh_alloc);
+
 	return entry;
 }
 
@@ -4744,10 +4762,12 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	struct uvm_kmapent_hdr *ukh;
 	struct vm_page *pg;
 	struct vm_map *map;
+#ifndef PMAP_UNMAP_POOLPAGE
 	struct pmap *pmap;
+	struct vm_map_entry *deadentry;
+#endif
 	vaddr_t va;
 	paddr_t pa;
-	struct vm_map_entry *deadentry;
 
 	UVMMAP_EVCNT_INCR(uke_free);
 	ukh = UVM_KHDR_FIND(entry);
@@ -4755,7 +4775,11 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 
 	mutex_spin_enter(&uvm_kentry_lock);
 	uvm_kmapent_put(ukh, entry);
+#ifdef PMAP_UNMAP_POOLPAGE
+	if (ukh->ukh_nused > 0) {
+#else
 	if (ukh->ukh_nused > 1) {
+#endif
 		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK - 1)
 			LIST_INSERT_HEAD(
 			    &vm_map_to_kernel(map)->vmk_kentry_free,
@@ -4778,13 +4802,19 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	LIST_REMOVE(ukh, ukh_listq);
 	mutex_spin_exit(&uvm_kentry_lock);
 
+	va = (vaddr_t)ukh;
+
+#ifdef PMAP_UNMAP_POOLPAGE
+	KASSERT(ukh->ukh_nused == 0);
+	pa = PMAP_UNMAP_POOLPAGE(va);
+	KASSERT(pa != 0);
+#else
 	KASSERT(ukh->ukh_nused == 1);
 
 	/*
 	 * remove map entry for ukh itsself.
 	 */
 
-	va = (vaddr_t)ukh;
 	KASSERT((va & PAGE_MASK) == 0);
 	vm_map_lock(map);
 	uvm_unmap_remove(map, va, va + PAGE_SIZE, &deadentry, NULL, 0);
@@ -4804,6 +4834,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	pmap_kremove(va, PAGE_SIZE);
 	pmap_update(vm_map_pmap(map));
 	vm_map_unlock(map);
+#endif /* !PMAP_UNMAP_POOLPAGE */
 	pg = PHYS_TO_VM_PAGE(pa);
 	uvm_pagefree(pg);
 	UVMMAP_EVCNT_INCR(ukh_free);
