@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_pci.c,v 1.6 2009/08/06 00:42:22 matt Exp $	*/
+/*	$NetBSD: bonito_pci.c,v 1.7 2009/08/09 04:09:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.6 2009/08/06 00:42:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.7 2009/08/09 04:09:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.6 2009/08/06 00:42:22 matt Exp $");
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()
 #define	PCI_CONF_UNLOCK(s)	splx((s))
 
-void		bonito_attach_hook(struct device *, struct device *,
+void		bonito_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		bonito_bus_maxdevs(void *, int);
 pcitag_t	bonito_make_tag(void *, int, int, int);
@@ -79,7 +79,7 @@ bonito_pci_init(pci_chipset_tag_t pc, struct bonito_config *bc)
 }
 
 void
-bonito_attach_hook(struct device *parent, struct device *self,
+bonito_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }
