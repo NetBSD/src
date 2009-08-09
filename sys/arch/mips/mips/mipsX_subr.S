@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.29 2009/08/09 04:08:14 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.30 2009/08/09 05:36:22 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2070,7 +2070,7 @@ entry0:
 	mfc0	s0, MIPS_COP_0_TLB_INDEX
 	nop
 	bltz	s0, entry0set
-	sll	s0, s0, 13			# PAGE_SHIFT + 1
+	sll	s0, s0, PGSHIFT + 1		# PAGE_SHIFT + 1
 	la	s0, MIPS_KSEG0_START(s0)
 	_MTC0	s0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
@@ -2134,7 +2134,7 @@ LEAF_NOPROFILE(MIPSX(TBIS))
 	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
 	li	t1, MIPS_KSEG0_START		# invalid address
-	sll	v0, v0, 13			# PAGE_SHIFT + 1
+	sll	v0, v0, PGSHIFT + 1		# PAGE_SHIFT + 1
 	addu	t1, t1, v0
 	_MTC0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
@@ -2142,10 +2142,13 @@ LEAF_NOPROFILE(MIPSX(TBIS))
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
 	COP0_SYNC
+#if 0
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
 	COP0_SYNC
+#endif
 	nop
 	nop
+
 	tlbwi
 	COP0_SYNC
 	nop
@@ -2182,7 +2185,7 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	COP0_SYNC
-	sll	ta0, t1, 13			# PAGE_SHIFT + 1
+	sll	ta0, t1, PGSHIFT + 1		# PAGE_SHIFT + 1
 	nop
 	/* XXX simonb: lose this nop for mips32/64? */
 	nop
@@ -2251,7 +2254,7 @@ LEAF_NOPROFILE(MIPSX(TBIA))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
 	COP0_SYNC
-	sll	ta0, t1, 13			# PAGE_SHIFT + 1
+	sll	ta0, t1, PGSHIFT + 1		# PAGE_SHIFT + 1
 	add	ta0, v0, ta0
 	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
