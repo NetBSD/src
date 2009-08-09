@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.214 2009/08/07 03:33:28 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.215 2009/08/09 04:06:35 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.214 2009/08/07 03:33:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.215 2009/08/09 04:06:35 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -895,6 +895,14 @@ mips_vector_init(void)
 		cca = (ct->cpu_flags & CPU_MIPS_CACHED_CCA_MASK) >>
 		    CPU_MIPS_CACHED_CCA_SHIFT;
 		mips3_pg_cached = MIPS3_CCA_TO_PG(cca);
+#ifdef notyet /* MIPS3_PLUS */
+		{
+			uint32_t cfg;
+			cfg = mips3_cp0_config_read();
+			cfg = cca | (cfg & ~MIPS3_CONFIG_K0_MASK);
+			mips3_cp0_config_write(cfg);
+		}
+#endif
 	} else
 		mips3_pg_cached = MIPS3_DEFAULT_PG_CACHED;
 
