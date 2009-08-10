@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/10 07:16:06 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2009/08/10 22:38:59 haad Exp $
 
 .include "../Makefile.inc"
 
@@ -62,7 +62,7 @@ SRCS+=	callb.c
 SRCS+=	ddi.c
 SRCS+=	mod.c
 SRCS+=	printf.c
-SRCS+=	taskq.c
+#SRCS+=	taskq.c
 SRCS+=	vfs.c
 
 WARNS=		0
@@ -79,8 +79,6 @@ CWARNFLAGS+=	-Wno-strict-prototypes
 CWARNFLAGS+=	-Wno-missing-prototypes
 CWARNFLAGS+=	-Wno-format
 
-CPPFLAGS+=	-I${.CURDIR}/../..
-CPPFLAGS+=	-I${.CURDIR}/../../../../include
 CPPFLAGS+=	-I${ZFSDIR}/sys
 CPPFLAGS+=	-I${ZFSDIR}/dist/common/acl
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/zmod
