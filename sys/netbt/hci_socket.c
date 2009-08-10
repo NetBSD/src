@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.17 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.18 2009/08/10 18:25:20 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.17 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.18 2009/08/10 18:25:20 plunky Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.17 2008/08/06 15:01:24 plunky Exp $
  */
 struct hci_pcb {
 	struct socket		*hp_socket;	/* socket */
+	kauth_cred_t		hp_cred;	/* owner credential */
 	unsigned int		hp_flags;	/* flags */
 	bdaddr_t		hp_laddr;	/* local address */
 	bdaddr_t		hp_raddr;	/* remote address */
@@ -73,7 +74,6 @@ struct hci_pcb {
 };
 
 /* hp_flags */
-#define HCI_PRIVILEGED		(1<<0)	/* no security filter for root */
 #define HCI_DIRECTION		(1<<1)	/* direction control messages */
 #define HCI_PROMISCUOUS		(1<<2)	/* listen to all units */
 
@@ -83,55 +83,17 @@ LIST_HEAD(hci_pcb_list, hci_pcb) hci_pcb = LIST_HEAD_INITIALIZER(hci_pcb);
 int hci_sendspace = HCI_CMD_PKT_SIZE;
 int hci_recvspace = 4096;
 
-/* supported commands opcode table */
+/* unprivileged commands opcode table */
 static const struct {
 	uint16_t	opcode;
 	uint8_t		offs;	/* 0 - 63 */
 	uint8_t		mask;	/* bit 0 - 7 */
-	int16_t		length;	/* -1 if privileged */
+	uint8_t		length;	/* approved length */
 } hci_cmds[] = {
 	{ HCI_CMD_INQUIRY,
 	  0,  0x01, sizeof(hci_inquiry_cp) },
-	{ HCI_CMD_INQUIRY_CANCEL,
-	  0,  0x02, -1 },
-	{ HCI_CMD_PERIODIC_INQUIRY,
-	  0,  0x04, -1 },
-	{ HCI_CMD_EXIT_PERIODIC_INQUIRY,
-	  0,  0x08, -1 },
-	{ HCI_CMD_CREATE_CON,
-	  0,  0x10, -1 },
-	{ HCI_CMD_DISCONNECT,
-	  0,  0x20, -1 },
-	{ HCI_CMD_ADD_SCO_CON,
-	  0,  0x40, -1 },
-	{ HCI_CMD_CREATE_CON_CANCEL,
-	  0,  0x80, -1 },
-	{ HCI_CMD_ACCEPT_CON,
-	  1,  0x01, -1 },
-	{ HCI_CMD_REJECT_CON,
-	  1,  0x02, -1 },
-	{ HCI_CMD_LINK_KEY_REP,
-	  1,  0x04, -1 },
-	{ HCI_CMD_LINK_KEY_NEG_REP,
-	  1,  0x08, -1 },
-	{ HCI_CMD_PIN_CODE_REP,
-	  1,  0x10, -1 },
-	{ HCI_CMD_PIN_CODE_NEG_REP,
-	  1,  0x20, -1 },
-	{ HCI_CMD_CHANGE_CON_PACKET_TYPE,
-	  1,  0x40, -1 },
-	{ HCI_CMD_AUTH_REQ,
-	  1,  0x80, -1 },
-	{ HCI_CMD_SET_CON_ENCRYPTION,
-	  2,  0x01, -1 },
-	{ HCI_CMD_CHANGE_CON_LINK_KEY,
-	  2,  0x02, -1 },
-	{ HCI_CMD_MASTER_LINK_KEY,
-	  2,  0x04, -1 },
 	{ HCI_CMD_REMOTE_NAME_REQ,
 	  2,  0x08, sizeof(hci_remote_name_req_cp) },
-	{ HCI_CMD_REMOTE_NAME_REQ_CANCEL,
-	  2,  0x10, -1 },
 	{ HCI_CMD_READ_REMOTE_FEATURES,
 	  2,  0x20, sizeof(hci_read_remote_features_cp) },
 	{ HCI_CMD_READ_REMOTE_EXTENDED_FEATURES,
@@ -142,152 +104,62 @@ static const struct {
 	  3,  0x01, sizeof(hci_read_clock_offset_cp) },
 	{ HCI_CMD_READ_LMP_HANDLE,
 	  3,  0x02, sizeof(hci_read_lmp_handle_cp) },
-	{ HCI_CMD_HOLD_MODE,
-	  4,  0x02, -1 },
-	{ HCI_CMD_SNIFF_MODE,
-	  4,  0x04, -1 },
-	{ HCI_CMD_EXIT_SNIFF_MODE,
-	  4,  0x08, -1 },
-	{ HCI_CMD_PARK_MODE,
-	  4,  0x10, -1 },
-	{ HCI_CMD_EXIT_PARK_MODE,
-	  4,  0x20, -1 },
-	{ HCI_CMD_QOS_SETUP,
-	  4,  0x40, -1 },
 	{ HCI_CMD_ROLE_DISCOVERY,
 	  4,  0x80, sizeof(hci_role_discovery_cp) },
-	{ HCI_CMD_SWITCH_ROLE,
-	  5,  0x01, -1 },
 	{ HCI_CMD_READ_LINK_POLICY_SETTINGS,
 	  5,  0x02, sizeof(hci_read_link_policy_settings_cp) },
-	{ HCI_CMD_WRITE_LINK_POLICY_SETTINGS,
-	  5,  0x04, -1 },
 	{ HCI_CMD_READ_DEFAULT_LINK_POLICY_SETTINGS,
 	  5,  0x08, 0 },
-	{ HCI_CMD_WRITE_DEFAULT_LINK_POLICY_SETTINGS,
-	  5,  0x10, -1 },
-	{ HCI_CMD_FLOW_SPECIFICATION,
-	  5,  0x20, -1 },
-	{ HCI_CMD_SET_EVENT_MASK,
-	  5,  0x40, -1 },
-	{ HCI_CMD_RESET,
-	  5,  0x80, -1 },
-	{ HCI_CMD_SET_EVENT_FILTER,
-	  6,  0x01, -1 },
-	{ HCI_CMD_FLUSH,
-	  6,  0x02, -1 },
 	{ HCI_CMD_READ_PIN_TYPE,
 	  6,  0x04, 0 },
-	{ HCI_CMD_WRITE_PIN_TYPE,
-	  6,  0x08, -1 },
-	{ HCI_CMD_CREATE_NEW_UNIT_KEY,
-	  6,  0x10, -1 },
-	{ HCI_CMD_READ_STORED_LINK_KEY,
-	  6,  0x20, -1 },
-	{ HCI_CMD_WRITE_STORED_LINK_KEY,
-	  6,  0x40, -1 },
-	{ HCI_CMD_DELETE_STORED_LINK_KEY,
-	  6,  0x80, -1 },
-	{ HCI_CMD_WRITE_LOCAL_NAME,
-	  7,  0x01, -1 },
 	{ HCI_CMD_READ_LOCAL_NAME,
 	  7,  0x02, 0 },
 	{ HCI_CMD_READ_CON_ACCEPT_TIMEOUT,
 	  7,  0x04, 0 },
-	{ HCI_CMD_WRITE_CON_ACCEPT_TIMEOUT,
-	  7,  0x08, -1 },
 	{ HCI_CMD_READ_PAGE_TIMEOUT,
 	  7,  0x10, 0 },
-	{ HCI_CMD_WRITE_PAGE_TIMEOUT,
-	  7,  0x20, -1 },
 	{ HCI_CMD_READ_SCAN_ENABLE,
 	  7,  0x40, 0 },
-	{ HCI_CMD_WRITE_SCAN_ENABLE,
-	  7,  0x80, -1 },
 	{ HCI_CMD_READ_PAGE_SCAN_ACTIVITY,
 	  8,  0x01, 0 },
-	{ HCI_CMD_WRITE_PAGE_SCAN_ACTIVITY,
-	  8,  0x02, -1 },
 	{ HCI_CMD_READ_INQUIRY_SCAN_ACTIVITY,
 	  8,  0x04, 0 },
-	{ HCI_CMD_WRITE_INQUIRY_SCAN_ACTIVITY,
-	  8,  0x08, -1 },
 	{ HCI_CMD_READ_AUTH_ENABLE,
 	  8,  0x10, 0 },
-	{ HCI_CMD_WRITE_AUTH_ENABLE,
-	  8,  0x20, -1 },
 	{ HCI_CMD_READ_ENCRYPTION_MODE,
 	  8,  0x40, 0 },
-	{ HCI_CMD_WRITE_ENCRYPTION_MODE,
-	  8,  0x80, -1 },
 	{ HCI_CMD_READ_UNIT_CLASS,
 	  9,  0x01, 0 },
-	{ HCI_CMD_WRITE_UNIT_CLASS,
-	  9,  0x02, -1 },
 	{ HCI_CMD_READ_VOICE_SETTING,
 	  9,  0x04, 0 },
-	{ HCI_CMD_WRITE_VOICE_SETTING,
-	  9,  0x08, -1 },
 	{ HCI_CMD_READ_AUTO_FLUSH_TIMEOUT,
 	  9,  0x10, sizeof(hci_read_auto_flush_timeout_cp) },
-	{ HCI_CMD_WRITE_AUTO_FLUSH_TIMEOUT,
-	  9,  0x20, -1 },
 	{ HCI_CMD_READ_NUM_BROADCAST_RETRANS,
 	  9,  0x40, 0 },
-	{ HCI_CMD_WRITE_NUM_BROADCAST_RETRANS,
-	  9,  0x80, -1 },
 	{ HCI_CMD_READ_HOLD_MODE_ACTIVITY,
 	  10, 0x01, 0 },
-	{ HCI_CMD_WRITE_HOLD_MODE_ACTIVITY,
-	  10, 0x02, -1 },
 	{ HCI_CMD_READ_XMIT_LEVEL,
 	  10, 0x04, sizeof(hci_read_xmit_level_cp) },
 	{ HCI_CMD_READ_SCO_FLOW_CONTROL,
 	  10, 0x08, 0 },
-	{ HCI_CMD_WRITE_SCO_FLOW_CONTROL,
-	  10, 0x10, -1 },
-	{ HCI_CMD_HC2H_FLOW_CONTROL,
-	  10, 0x20, -1 },
-	{ HCI_CMD_HOST_BUFFER_SIZE,
-	  10, 0x40, -1 },
-	{ HCI_CMD_HOST_NUM_COMPL_PKTS,
-	  10, 0x80, -1 },
 	{ HCI_CMD_READ_LINK_SUPERVISION_TIMEOUT,
 	  11, 0x01, sizeof(hci_read_link_supervision_timeout_cp) },
-	{ HCI_CMD_WRITE_LINK_SUPERVISION_TIMEOUT,
-	  11, 0x02, -1 },
 	{ HCI_CMD_READ_NUM_SUPPORTED_IAC,
 	  11, 0x04, 0 },
 	{ HCI_CMD_READ_IAC_LAP,
 	  11, 0x08, 0 },
-	{ HCI_CMD_WRITE_IAC_LAP,
-	  11, 0x10, -1 },
 	{ HCI_CMD_READ_PAGE_SCAN_PERIOD,
 	  11, 0x20, 0 },
-	{ HCI_CMD_WRITE_PAGE_SCAN_PERIOD,
-	  11, 0x40, -1 },
 	{ HCI_CMD_READ_PAGE_SCAN,
 	  11, 0x80, 0 },
-	{ HCI_CMD_WRITE_PAGE_SCAN,
-	  12, 0x01, -1 },
-	{ HCI_CMD_SET_AFH_CLASSIFICATION,
-	  12, 0x02, -1 },
 	{ HCI_CMD_READ_INQUIRY_SCAN_TYPE,
 	  12, 0x10, 0 },
-	{ HCI_CMD_WRITE_INQUIRY_SCAN_TYPE,
-	  12, 0x20, -1 },
 	{ HCI_CMD_READ_INQUIRY_MODE,
 	  12, 0x40, 0 },
-	{ HCI_CMD_WRITE_INQUIRY_MODE,
-	  12, 0x80, -1 },
 	{ HCI_CMD_READ_PAGE_SCAN_TYPE,
 	  13, 0x01, 0 },
-	{ HCI_CMD_WRITE_PAGE_SCAN_TYPE,
-	  13, 0x02, -1 },
 	{ HCI_CMD_READ_AFH_ASSESSMENT,
 	  13, 0x04, 0 },
-	{ HCI_CMD_WRITE_AFH_ASSESSMENT,
-	  13, 0x08, -1 },
 	{ HCI_CMD_READ_LOCAL_VER,
 	  14, 0x08, 0 },
 	{ HCI_CMD_READ_LOCAL_COMMANDS,
@@ -304,8 +176,6 @@ static const struct {
 	  15, 0x02, 0 },
 	{ HCI_CMD_READ_FAILED_CONTACT_CNTR,
 	  15, 0x04, sizeof(hci_read_failed_contact_cntr_cp) },
-	{ HCI_CMD_RESET_FAILED_CONTACT_CNTR,
-	  15, 0x08, -1 },
 	{ HCI_CMD_READ_LINK_QUALITY,
 	  15, 0x10, sizeof(hci_read_link_quality_cp) },
 	{ HCI_CMD_READ_RSSI,
@@ -316,101 +186,112 @@ static const struct {
 	  15, 0x80, sizeof(hci_read_clock_cp) },
 	{ HCI_CMD_READ_LOOPBACK_MODE,
 	  16, 0x01, 0 },
-	{ HCI_CMD_WRITE_LOOPBACK_MODE,
-	  16, 0x02, -1 },
-	{ HCI_CMD_ENABLE_UNIT_UNDER_TEST,
-	  16, 0x04, -1 },
-	{ HCI_CMD_SETUP_SCO_CON,
-	  16, 0x08, -1 },
-	{ HCI_CMD_ACCEPT_SCO_CON_REQ,
-	  16, 0x10, -1 },
-	{ HCI_CMD_REJECT_SCO_CON_REQ,
-	  16, 0x20, -1 },
 	{ HCI_CMD_READ_EXTENDED_INQUIRY_RSP,
 	  17, 0x01, 0 },
-	{ HCI_CMD_WRITE_EXTENDED_INQUIRY_RSP,
-	  17, 0x02, -1 },
-	{ HCI_CMD_REFRESH_ENCRYPTION_KEY,
-	  17, 0x04, -1 },
-	{ HCI_CMD_SNIFF_SUBRATING,
-	  17, 0x10, -1 },
 	{ HCI_CMD_READ_SIMPLE_PAIRING_MODE,
 	  17, 0x20, 0 },
-	{ HCI_CMD_WRITE_SIMPLE_PAIRING_MODE,
-	  17, 0x40, -1 },
-	{ HCI_CMD_READ_LOCAL_OOB_DATA,
-	  17, 0x80, -1 },
 	{ HCI_CMD_READ_INQUIRY_RSP_XMIT_POWER,
 	  18, 0x01, 0 },
-	{ HCI_CMD_WRITE_INQUIRY_RSP_XMIT_POWER,
-	  18, 0x02, -1 },
 	{ HCI_CMD_READ_DEFAULT_ERRDATA_REPORTING,
 	  18, 0x04, 0 },
-	{ HCI_CMD_WRITE_DEFAULT_ERRDATA_REPORTING,
-	  18, 0x08, -1 },
-	{ HCI_CMD_IO_CAPABILITY_REP,
-	  18, 0x80, -1 },
-	{ HCI_CMD_USER_CONFIRM_REP,
-	  19, 0x01, -1 },
-	{ HCI_CMD_USER_CONFIRM_NEG_REP,
-	  19, 0x02, -1 },
-	{ HCI_CMD_USER_PASSKEY_REP,
-	  19, 0x04, -1 },
-	{ HCI_CMD_USER_PASSKEY_NEG_REP,
-	  19, 0x08, -1 },
-	{ HCI_CMD_OOB_DATA_REP,
-	  19, 0x10, -1 },
-	{ HCI_CMD_WRITE_SIMPLE_PAIRING_DEBUG_MODE,
-	  19, 0x20, -1 },
-	{ HCI_CMD_ENHANCED_FLUSH,
-	  19, 0x40, -1 },
-	{ HCI_CMD_OOB_DATA_NEG_REP,
-	  19, 0x80, -1 },
-	{ HCI_CMD_SEND_KEYPRESS_NOTIFICATION,
-	  20, 0x40, -1 },
-	{ HCI_CMD_IO_CAPABILITY_NEG_REP,
-	  20, 0x80, -1 },
 };
 
 /*
- * Security filter routines for unprivileged users.
- *	Allow all but a few critical events, and only permit read commands.
- *	If a unit is given, verify the command is supported.
+ * supply a basic device send/recv policy
  */
-
 static int
-hci_security_check_opcode(struct hci_unit *unit, uint16_t opcode)
+hci_device_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
 {
-	int i;
+	int i, result;
 
-	for (i = 0 ; i < __arraycount(hci_cmds) ; i++) {
-		if (opcode != hci_cmds[i].opcode)
-			continue;
+	result = KAUTH_RESULT_DEFER;
 
-		if (unit == NULL
-		    || (unit->hci_cmds[hci_cmds[i].offs] & hci_cmds[i].mask))
-			return hci_cmds[i].length;
+	switch (action) {
+	case KAUTH_DEVICE_BLUETOOTH_SEND_COMMAND: {
+		struct hci_unit *unit = (struct hci_unit *)arg0;
+		hci_cmd_hdr_t *hdr = (hci_cmd_hdr_t *)arg1;
 
+		/*
+		 * Allow sending unprivileged commands if the packet size
+		 * is correct and the unit claims to support it
+		 */
+
+		for (i = 0; i < __arraycount(hci_cmds); i++) {
+			if (hdr->opcode == hci_cmds[i].opcode
+			    && hdr->length == hci_cmds[i].length
+			    && (unit->hci_cmds[hci_cmds[i].offs] & hci_cmds[i].mask)) {
+				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+		}
+
+		break;
+		}
+
+	case KAUTH_DEVICE_BLUETOOTH_RECV_COMMAND: {
+		uint16_t opcode = (uint16_t)(uintptr_t)arg0;
+
+		/*
+		 * Allow to see any unprivileged command packet
+		 */
+
+		for (i = 0; i < __arraycount(hci_cmds); i++) {
+			if (opcode == hci_cmds[i].opcode) {
+				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+		}
+
+		break;
+		}
+
+	case KAUTH_DEVICE_BLUETOOTH_RECV_EVENT: {
+		uint8_t event = (uint8_t)(uintptr_t)arg0;
+
+		/*
+		 * Allow to receive most events
+		 */
+
+		switch (event) {
+		case HCI_EVENT_RETURN_LINK_KEYS:
+		case HCI_EVENT_LINK_KEY_NOTIFICATION:
+		case HCI_EVENT_USER_CONFIRM_REQ:
+		case HCI_EVENT_USER_PASSKEY_NOTIFICATION:
+		case HCI_EVENT_VENDOR:
+			break;
+
+		default:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		break;
+		}
+
+	case KAUTH_DEVICE_BLUETOOTH_RECV_DATA:	/* arg0 == type */
+		/*
+		 * don't normally allow receiving data packets
+		 */
+		break;
+
+	default:
 		break;
 	}
 
-	return -1;
+	return result;
 }
 
-static int
-hci_security_check_event(uint8_t event)
+/*
+ * HCI protocol init routine,
+ * - set up a kauth listener to provide basic packet access policy
+ */
+void
+hci_init(void)
 {
 
-	switch (event) {
-	case HCI_EVENT_RETURN_LINK_KEYS:
-	case HCI_EVENT_LINK_KEY_NOTIFICATION:
-	case HCI_EVENT_USER_CONFIRM_REQ:
-	case HCI_EVENT_USER_PASSKEY_NOTIFICATION:
-	case HCI_EVENT_VENDOR:
-		return -1;	/* disallowed */
-	}
-
-	return 0;	/* ok */
+	if (kauth_listen_scope(KAUTH_SCOPE_DEVICE, hci_device_cb, NULL) == NULL)
+		panic("Bluetooth HCI: cannot listen on device scope");
 }
 
 /*
@@ -495,8 +376,10 @@ hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 	}
 
 	/* security checks for unprivileged users */
-	if ((pcb->hp_flags & HCI_PRIVILEGED) == 0
-	    && hci_security_check_opcode(unit, hdr.opcode) != hdr.length) {
+	if (pcb->hp_cred != NULL
+	    && kauth_authorize_device(pcb->hp_cred,
+	    KAUTH_DEVICE_BLUETOOTH_SEND_COMMAND,
+	    unit, &hdr, NULL, NULL) != 0) {
 		err = EPERM;
 		goto bad;
 	}
@@ -584,9 +467,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		up->so_pcb = pcb;
 		pcb->hp_socket = up;
 
-		if (l == NULL || kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL) == 0)
-			pcb->hp_flags |= HCI_PRIVILEGED;
+		if (l != NULL)
+			pcb->hp_cred = kauth_cred_dup(l->l_cred);
 
 		/*
 		 * Set default user filter. By default, socket only passes
@@ -626,6 +508,9 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_DETACH:
 		if (up->so_snd.sb_mb != NULL)
 			hci_cmdwait_flush(up);
+
+		if (pcb->hp_cred != NULL)
+			kauth_cred_free(pcb->hp_cred);
 
 		up->so_pcb = NULL;
 		LIST_REMOVE(pcb, hp_next);
@@ -881,9 +766,12 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 			if (hci_filter_test(event, &pcb->hp_efilter) == 0)
 				continue;
 
-			if ((pcb->hp_flags & HCI_PRIVILEGED) == 0
-			    && hci_security_check_event(event) == -1)
+			if (pcb->hp_cred != NULL
+			    && kauth_authorize_device(pcb->hp_cred,
+			    KAUTH_DEVICE_BLUETOOTH_RECV_EVENT,
+			    KAUTH_ARG(event), NULL, NULL, NULL) != 0)
 				continue;
+
 			break;
 
 		case HCI_CMD_PKT:
@@ -891,15 +779,21 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 
 			opcode = le16toh(mtod(m, hci_cmd_hdr_t *)->opcode);
 
-			if ((pcb->hp_flags & HCI_PRIVILEGED) == 0
-			    && hci_security_check_opcode(NULL, opcode) == -1)
+			if (pcb->hp_cred != NULL
+			    && kauth_authorize_device(pcb->hp_cred,
+			    KAUTH_DEVICE_BLUETOOTH_RECV_COMMAND,
+			    KAUTH_ARG(opcode), NULL, NULL, NULL) != 0)
 				continue;
+
 			break;
 
 		case HCI_ACL_DATA_PKT:
 		case HCI_SCO_DATA_PKT:
 		default:
-			if ((pcb->hp_flags & HCI_PRIVILEGED) == 0)
+			if (pcb->hp_cred != NULL
+			    && kauth_authorize_device(pcb->hp_cred,
+			    KAUTH_DEVICE_BLUETOOTH_RECV_DATA,
+			    KAUTH_ARG(type), NULL, NULL, NULL) != 0)
 				continue;
 
 			break;
