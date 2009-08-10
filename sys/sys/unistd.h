@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.48 2009/08/08 22:53:16 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.49 2009/08/10 22:29:29 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -162,6 +162,10 @@
 #define	_PC_FILESIZEBITS	11
 #define	_PC_SYMLINK_MAX		12
 #define	_PC_2_SYMLINKS		13
+#define _PC_ACL_EXTENDED        14
+
+/* From OpenSolaris, used by SEEK_DATA/SEEK_HOLE. */
+#define _PC_MIN_HOLE_SIZE       15
 
 /* configurable system variables; use as argument to sysconf(3) */
 /*
