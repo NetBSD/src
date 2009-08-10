@@ -105,7 +105,7 @@ do_mkdirp(const char *path)
 			break;
 		
 		strlcpy(here, path, e - path + 1);
-		error = do_sys_mkdir(l, (const char *)here, mode, &ret, UIO_SYSSPACE);
+		error = do_sys_mkdir((const char *)here, mode, UIO_SYSSPACE);
 	}
 	PNBUF_PUT(here);
 
