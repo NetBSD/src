@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.49 2009/08/05 13:16:01 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.50 2009/08/10 08:22:13 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.49 2009/08/05 13:16:01 tteras Exp $ */
+/* $Id: pfkey.c,v 1.50 2009/08/10 08:22:13 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -214,6 +214,13 @@ pfkey_handler(ctx, fd)
 	msg = (struct sadb_msg *) pk_recv(fd, &len);
 	if (msg == NULL) {
 		if (len < 0) {
+		        /* do not report EAGAIN as error; well get
+		         * called from main loop later. and it's normal
+		         * when spd dump is received during reload and
+		         * this function is called in loop. */
+		        if (errno == EAGAIN)
+		                goto end;
+
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to recv from pfkey (%s)\n",
 				strerror(errno));
