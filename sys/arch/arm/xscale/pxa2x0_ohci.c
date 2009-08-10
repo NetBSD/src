@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.6 2009/08/09 06:12:34 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.7 2009/08/10 23:08:12 kiyohara Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -70,7 +70,6 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxaohci_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
-	bus_space_handle_t powman_ioh;
 	usbd_status r;
 
 #ifdef USB_DEBUG
