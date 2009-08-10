@@ -41,9 +41,9 @@ extern "C" {
 #endif
 
 typedef struct vdev_disk {
-	ddi_devid_t	vd_devid;
-	char		*vd_minor;
-	ldi_handle_t	vd_lh;
+	char            *vd_minor;
+	vnode_t         *vd_vn;
+	struct workqueue *vd_wq;
 } vdev_disk_t;
 
 #ifdef _KERNEL

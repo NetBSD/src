@@ -35,7 +35,6 @@
 #include <sys/mntent.h>
 #include <sys/mount.h>
 #include <sys/cmn_err.h>
-#include "fs/fs_subr.h"
 #include <sys/zfs_znode.h>
 #include <sys/zfs_dir.h>
 #include <sys/zil.h>
@@ -51,11 +50,9 @@
 #include <sys/atomic.h>
 #include <sys/mkdev.h>
 #include <sys/modctl.h>
-#include <sys/refstr.h>
 #include <sys/zfs_ioctl.h>
 #include <sys/zfs_ctldir.h>
 #include <sys/zfs_fuid.h>
-#include <sys/bootconf.h>
 #include <sys/sunddi.h>
 #include <sys/dnlc.h>
 #include <sys/dmu_objset.h>

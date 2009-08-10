@@ -46,7 +46,6 @@
 #include <sys/zfs_dir.h>
 #include <sys/zfs_acl.h>
 #include <sys/fs/zfs.h>
-#include "fs/fs_subr.h"
 #include <sys/zap.h>
 #include <sys/dmu.h>
 #include <sys/atomic.h>
@@ -777,11 +776,10 @@ zfs_link_destroy(zfs_dirlock_t *dl, znode_t *zp, dmu_tx_t *tx, int flag,
 			return (EEXIST);
 		}
 		if (zp->z_phys->zp_links <= zp_is_dir) {
-			zfs_panic_recover("zfs: link count on %s is %u, "
-			    "should be at least %u",
-			    zp->z_vnode->v_path ? zp->z_vnode->v_path :
-			    "<unknown>", (int)zp->z_phys->zp_links,
-			    zp_is_dir + 1);
+			zfs_panic_recover("zfs: link count on vnode %p is %u, "
+				"should be at least %u",
+				zp->z_vnode, (int)zp->z_phys->zp_links,
+		                zp_is_dir + 1);
 			zp->z_phys->zp_links = zp_is_dir + 1;
 		}
 		if (--zp->z_phys->zp_links == zp_is_dir) {
