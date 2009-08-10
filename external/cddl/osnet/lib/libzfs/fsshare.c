@@ -1,4 +1,4 @@
-/*	$NetBSD: fsshare.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*	$NetBSD: fsshare.c,v 1.2 2009/08/10 22:44:41 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/compat/opensolaris/misc/fsshare.c,v 1.2 2007/04/21 13:17:23 pjd Exp $"); */
-__RCSID("$NetBSD: fsshare.c,v 1.1 2009/08/07 20:57:56 haad Exp $");
+__RCSID("$NetBSD: fsshare.c,v 1.2 2009/08/10 22:44:41 haad Exp $");
 
 #include <sys/param.h>
 #include <stdio.h>
@@ -65,7 +65,7 @@ restart_mountd(void)
  * mountpoint specified in the 'skip' argument.
  */
 static char *
-getline(FILE *fd, const char *skip)
+zgetline(FILE *fd, const char *skip)
 {
 	static char line[MAXLINESIZE];
 	size_t len, skiplen;
@@ -196,7 +196,7 @@ fsshare_main(const char *file, const char *mountpoint, const char *shareopts,
 
 	/* Place big, fat warning at the begining of the file. */
 	fprintf(newfd, "%s", FILE_HEADER);
-	while (oldfd != NULL && (line = getline(oldfd, mountpoint)) != NULL)
+	while (oldfd != NULL && (line = zgetline(oldfd, mountpoint)) != NULL)
 		fprintf(newfd, "%s\n", line);
 	if (oldfd != NULL && ferror(oldfd) != 0) {
 		error = ferror(oldfd);
