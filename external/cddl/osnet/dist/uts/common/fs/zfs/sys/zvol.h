@@ -51,7 +51,7 @@ extern int zvol_set_volblocksize(const char *, uint64_t);
 extern int zvol_open(dev_t *devp, int flag, int otyp, cred_t *cr);
 extern int zvol_dump(dev_t dev, caddr_t addr, daddr_t offset, int nblocks);
 extern int zvol_close(dev_t dev, int flag, int otyp, cred_t *cr);
-extern int zvol_strategy(buf_t *bp);
+extern void zvol_strategy(buf_t *bp);
 extern int zvol_read(dev_t dev, uio_t *uiop, cred_t *cr);
 extern int zvol_write(dev_t dev, uio_t *uiop, cred_t *cr);
 extern int zvol_aread(dev_t dev, struct aio_req *aio, cred_t *cr);

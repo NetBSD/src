@@ -133,6 +133,42 @@
 #include <sys/callb.h>
 #include <sys/kstat.h>
 
+#ifdef __NetBSD__
+#include <uvm/uvm.h>
+#define	btop(x)		((x) / PAGE_SIZE)
+#define	needfree	(uvmexp.free < uvmexp.freetarg ? uvmexp.freetarg : 0)
+#define	buf_init	arc_buf_init
+#define	freemem		uvmexp.free
+#define	minfree		uvmexp.freemin
+#define	desfree		uvmexp.freetarg
+#define	lotsfree	(desfree * 2)
+#define	availrmem	desfree
+#define	swapfs_minfree	0
+#define	swapfs_reserve	0
+#undef curproc
+#define	curproc		curlwp
+#define	proc_pageout	uvm.pagedaemon_lwp
+
+#define	heap_arena	kernel_map
+#define	VMEM_ALLOC	1
+#define	VMEM_FREE	2
+static inline size_t
+vmem_size(struct vm_map *map, int flag)
+{
+	switch (flag) {
+	case VMEM_ALLOC:
+		return map->size;
+	case VMEM_FREE:
+		return vm_map_max(map) - vm_map_min(map) - map->size;
+	case VMEM_FREE|VMEM_ALLOC:
+		return vm_map_max(map) - vm_map_min(map);
+	default:
+		panic("vmem_size");
+	}
+}
+static void	*zio_arena;
+#endif	/* __NetBSD__ */
+
 static kmutex_t		arc_reclaim_thr_lock;
 static kcondvar_t	arc_reclaim_thr_cv;	/* used to signal reclaim thr */
 static uint8_t		arc_thread_exit;
@@ -3233,10 +3269,8 @@ arc_memory_throttle(uint64_t reserve, uint64_t txg)
 	static uint64_t page_load = 0;
 	static uint64_t last_txg = 0;
 
-#if defined(__i386)
 	available_memory =
 	    MIN(available_memory, vmem_size(heap_arena, VMEM_FREE));
-#endif
 	if (available_memory >= zfs_write_limit_max)
 		return (0);
 

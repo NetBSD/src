@@ -122,7 +122,9 @@ extern "C" {
  * Convert mode bits (zp_mode) to BSD-style DT_* values for storing in
  * the directory entries.
  */
+#ifndef __NetBSD__
 #define	IFTODT(mode) (((mode) & S_IFMT) >> 12)
+#endif
 
 /*
  * The directory entry has the type (currently unused on Solaris) in the
