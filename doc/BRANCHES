@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.283 2009/07/23 10:53:19 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.284 2009/08/10 21:27:46 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -421,13 +421,23 @@ Notes:
 
 Branch:		matt-mips64
 Description:	Rototill the mips code to support LP64 mips and N32/N64 ABIs
-Status:		Active
+Status:		Mostly dead
 Start Date:	2007-07-17
 End Date:
 Base Tag:	matt-mips64-base
 Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
-Notes:	
+Notes:		
+
+Branch:		matt-nb5-mips64
+Description:	Rototill the mips code to support LP64 mips and N32/N64 ABIs
+Status:		Mostly dead
+Start Date:	2009-08-01
+End Date:
+Base Tag:	netbsd-5-0-1-RELEASE
+Maintainer:	Matt Thomas <matt@NetBSD.org>
+Scope:		kernel & userland
+Notes:		
 
 Branch:		mjf-devfs2
 Description:	device file system supporting dynamic device nodes
