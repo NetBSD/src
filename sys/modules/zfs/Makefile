@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/10 07:16:06 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2009/08/10 22:39:38 haad Exp $
 
 .include "../Makefile.inc"
 
@@ -112,8 +112,6 @@ CWARNFLAGS+=	-Wno-strict-prototypes
 CWARNFLAGS+=	-Wno-missing-prototypes
 CWARNFLAGS+=	-Wno-format
 
-CPPFLAGS+=	-I${.CURDIR}/../..
-CPPFLAGS+=	-I${.CURDIR}/../../../../include
 CPPFLAGS+=	-I${ZFSDIR}/sys
 CPPFLAGS+=	-I${ZFSDIR}/dist/common/acl
 CPPFLAGS+=	-I${ZFSDIR}/dist/common/zfs
@@ -123,7 +121,7 @@ CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/zfs
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common
 
-CPPFLAGS+=	-Dcaddr_t=__caddr_t "-D__va_list=va_list"
+CPPFLAGS+=	-Dcaddr_t=__caddr_t "-D__va_list=va_list" -D__NetBSD__
 CPPFLAGS+=	-std=c99
 CPPFLAGS+=	-D_NFS_NFS_H_
 CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT 
