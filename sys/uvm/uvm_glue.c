@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.139 2009/08/09 22:19:09 matt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.140 2009/08/10 16:50:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.139 2009/08/09 22:19:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.140 2009/08/10 16:50:18 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -742,7 +742,7 @@ uvm_swapout_threads(void)
 			l = outl2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf(__func__ ": no duds, try procp %p\n", l);
+			printf("%s: no duds, try procp %p\n", __func__, l);
 #endif
 		if (l) {
 			mutex_enter(&l->l_swaplock);
