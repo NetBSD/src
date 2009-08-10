@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.11 2009/08/09 21:58:03 matt Exp $
+# $NetBSD: std,v 1.12 2009/08/10 11:46:42 simonb Exp $
 #
 # standard MI 'options'
 #
@@ -8,7 +8,7 @@
 # the following options are on-by-default to keep
 # kernel config file compatibility.
 options	VMSWAP		# Swap device/file support
-options VMSWAP_UAREA	# Swap uarea's
+options	VMSWAP_UAREA	# Swap uarea's
 options	BUFQ_FCFS	# First-come First-serve strategy
 options	BUFQ_DISKSORT	# Traditional min seek sort strategy
 options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
@@ -20,7 +20,7 @@ options	MQUEUE		# POSIX message queues
 #
 # Security model.
 #
-options secmodel_bsd44	# Traditional 4.4BSD security model
+options	secmodel_bsd44	# Traditional 4.4BSD security model
 
 #
 # Scheduling algorithm
