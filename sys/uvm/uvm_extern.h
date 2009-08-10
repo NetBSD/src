@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.157 2009/08/05 14:11:32 pooka Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.158 2009/08/10 23:17:29 haad Exp $	*/
 
 /*
  *
@@ -532,6 +532,19 @@ struct uvm_coredump_state {
 };
 
 #define	UVM_COREDUMP_STACK	0x01	/* region is user stack */
+
+/*
+ * Structure containig uvm reclaim hooks, uvm_reclaim_list is guarded by
+ * uvm_reclaim_lock.
+ */
+struct uvm_reclaim_hook {
+	void (*uvm_reclaim_hook)(void);
+	SLIST_ENTRY(uvm_reclaim_hook) uvm_reclaim_next;
+};
+
+void    uvm_reclaim_init(void);
+void 	uvm_reclaim_hook_add(struct uvm_reclaim_hook *);
+void    uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
 
 /*
  * the various kernel maps, owned by MD code
