@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.276 2009/08/09 22:13:07 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.277 2009/08/10 16:49:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.276 2009/08/09 22:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.277 2009/08/10 16:49:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4691,7 +4691,7 @@ again:
 
 #ifdef PMAP_MAP_POOLPAGE
 	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
-	KASSERT(va != NULL);
+	KASSERT(va != 0);
 #else
 	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
 	    0, mapflags, &args);
