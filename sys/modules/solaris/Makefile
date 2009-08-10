@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/08/10 22:38:59 haad Exp $
+#	$NetBSD: Makefile,v 1.3 2009/08/10 22:55:08 haad Exp $
 
 .include "../Makefile.inc"
 
@@ -62,7 +62,7 @@ SRCS+=	callb.c
 SRCS+=	ddi.c
 SRCS+=	mod.c
 SRCS+=	printf.c
-#SRCS+=	taskq.c
+SRCS+=	taskq.c
 SRCS+=	vfs.c
 
 WARNS=		0
