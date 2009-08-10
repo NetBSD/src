@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.85 2009/05/08 21:52:20 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.86 2009/08/10 18:25:20 plunky Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -978,6 +978,32 @@ Check if adding and enabling a
 .Xr btuart 4
 device is allowed.
 .El
+.It KAUTH_DEVICE_BLUETOOTH_RECV_COMMAND
+Check if a command packet can be received from the device.
+.Pp
+.Ar arg0
+is the command opcode.
+.It KAUTH_DEVICE_BLUETOOTH_RECV_DATA
+Check if a data packet can be received from the device.
+.Pp
+.Ar arg0
+is the packet type.
+.It KAUTH_DEVICE_BLUETOOTH_RECV_EVENT
+Check if a event packet can be received from the device.
+.Pp
+.Ar arg0
+is the event ID.
+.It KAUTH_DEVICE_BLUETOOTH_SEND_COMMAND
+Check if a command packet can be sent to the device.
+.Pp
+.Ar arg0
+is a
+.Ft struct hci_unit *
+describing the HCI unit,
+.Ar arg1
+is a
+.Ft hci_cmd_hdr_t *
+describing the command packet header.
 .It KAUTH_DEVICE_BLUETOOTH_SETPRIV
 Check if privileged settings can be changed.
 .Pp
