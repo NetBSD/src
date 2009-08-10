@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.69 2009/08/10 18:25:20 plunky Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.70 2009/08/10 20:22:06 plunky Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.69 2009/08/10 18:25:20 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.70 2009/08/10 20:22:06 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1084,10 +1084,8 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 
 	switch (action) {
 	case KAUTH_DEVICE_BLUETOOTH_SETPRIV:
-	case KAUTH_DEVICE_BLUETOOTH_SEND_COMMAND:
-	case KAUTH_DEVICE_BLUETOOTH_RECV_COMMAND:
-	case KAUTH_DEVICE_BLUETOOTH_RECV_EVENT:
-	case KAUTH_DEVICE_BLUETOOTH_RECV_DATA:
+	case KAUTH_DEVICE_BLUETOOTH_SEND:
+	case KAUTH_DEVICE_BLUETOOTH_RECV:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;

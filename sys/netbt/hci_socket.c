@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.18 2009/08/10 18:25:20 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.19 2009/08/10 20:22:06 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.18 2009/08/10 18:25:20 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.19 2009/08/10 20:22:06 plunky Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -208,7 +208,7 @@ hci_device_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
-	case KAUTH_DEVICE_BLUETOOTH_SEND_COMMAND: {
+	case KAUTH_DEVICE_BLUETOOTH_SEND: {
 		struct hci_unit *unit = (struct hci_unit *)arg0;
 		hci_cmd_hdr_t *hdr = (hci_cmd_hdr_t *)arg1;
 
@@ -216,6 +216,9 @@ hci_device_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		 * Allow sending unprivileged commands if the packet size
 		 * is correct and the unit claims to support it
 		 */
+
+		if (hdr->type != HCI_CMD_PKT)
+			break;
 
 		for (i = 0; i < __arraycount(hci_cmds); i++) {
 			if (hdr->opcode == hci_cmds[i].opcode
@@ -229,50 +232,61 @@ hci_device_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		break;
 		}
 
-	case KAUTH_DEVICE_BLUETOOTH_RECV_COMMAND: {
-		uint16_t opcode = (uint16_t)(uintptr_t)arg0;
+	case KAUTH_DEVICE_BLUETOOTH_RECV:
+		switch((uint8_t)(uintptr_t)arg0) {
+		case HCI_CMD_PKT: {
+			uint16_t opcode = (uint16_t)(uintptr_t)arg1;
 
-		/*
-		 * Allow to see any unprivileged command packet
-		 */
+			/*
+			 * Allow to see any unprivileged command packet
+			 */
 
-		for (i = 0; i < __arraycount(hci_cmds); i++) {
-			if (opcode == hci_cmds[i].opcode) {
+			for (i = 0; i < __arraycount(hci_cmds); i++) {
+				if (opcode == hci_cmds[i].opcode) {
+					result = KAUTH_RESULT_ALLOW;
+					break;
+				}
+			}
+
+			break;
+			}
+
+		case HCI_EVENT_PKT: {
+			uint8_t event = (uint8_t)(uintptr_t)arg1;
+
+			/*
+			 * Allow to receive most events
+			 */
+
+			switch (event) {
+			case HCI_EVENT_RETURN_LINK_KEYS:
+			case HCI_EVENT_LINK_KEY_NOTIFICATION:
+			case HCI_EVENT_USER_CONFIRM_REQ:
+			case HCI_EVENT_USER_PASSKEY_NOTIFICATION:
+			case HCI_EVENT_VENDOR:
+				break;
+
+			default:
 				result = KAUTH_RESULT_ALLOW;
 				break;
 			}
-		}
 
-		break;
-		}
+		    	break;
+			}
 
-	case KAUTH_DEVICE_BLUETOOTH_RECV_EVENT: {
-		uint8_t event = (uint8_t)(uintptr_t)arg0;
-
-		/*
-		 * Allow to receive most events
-		 */
-
-		switch (event) {
-		case HCI_EVENT_RETURN_LINK_KEYS:
-		case HCI_EVENT_LINK_KEY_NOTIFICATION:
-		case HCI_EVENT_USER_CONFIRM_REQ:
-		case HCI_EVENT_USER_PASSKEY_NOTIFICATION:
-		case HCI_EVENT_VENDOR:
+		case HCI_ACL_DATA_PKT:
+		case HCI_SCO_DATA_PKT: {
+			/* uint16_t handle = (uint16_t)(uintptr_t)arg1; */
+			/*
+			 * don't normally allow receiving data packets
+			 */
 			break;
+			}
 
 		default:
-			result = KAUTH_RESULT_ALLOW;
 			break;
 		}
 
-		break;
-		}
-
-	case KAUTH_DEVICE_BLUETOOTH_RECV_DATA:	/* arg0 == type */
-		/*
-		 * don't normally allow receiving data packets
-		 */
 		break;
 
 	default:
@@ -378,7 +392,7 @@ hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 	/* security checks for unprivileged users */
 	if (pcb->hp_cred != NULL
 	    && kauth_authorize_device(pcb->hp_cred,
-	    KAUTH_DEVICE_BLUETOOTH_SEND_COMMAND,
+	    KAUTH_DEVICE_BLUETOOTH_SEND,
 	    unit, &hdr, NULL, NULL) != 0) {
 		err = EPERM;
 		goto bad;
@@ -729,7 +743,7 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 	struct sockaddr_bt sa;
 	uint8_t type;
 	uint8_t event;
-	uint16_t opcode;
+	uint16_t arg1;
 
 	KASSERT(m->m_len >= sizeof(type));
 
@@ -766,38 +780,36 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 			if (hci_filter_test(event, &pcb->hp_efilter) == 0)
 				continue;
 
-			if (pcb->hp_cred != NULL
-			    && kauth_authorize_device(pcb->hp_cred,
-			    KAUTH_DEVICE_BLUETOOTH_RECV_EVENT,
-			    KAUTH_ARG(event), NULL, NULL, NULL) != 0)
-				continue;
-
+			arg1 = event;
 			break;
 
 		case HCI_CMD_PKT:
 			KASSERT(m->m_len >= sizeof(hci_cmd_hdr_t));
-
-			opcode = le16toh(mtod(m, hci_cmd_hdr_t *)->opcode);
-
-			if (pcb->hp_cred != NULL
-			    && kauth_authorize_device(pcb->hp_cred,
-			    KAUTH_DEVICE_BLUETOOTH_RECV_COMMAND,
-			    KAUTH_ARG(opcode), NULL, NULL, NULL) != 0)
-				continue;
-
+			arg1 = le16toh(mtod(m, hci_cmd_hdr_t *)->opcode);
 			break;
 
 		case HCI_ACL_DATA_PKT:
-		case HCI_SCO_DATA_PKT:
-		default:
-			if (pcb->hp_cred != NULL
-			    && kauth_authorize_device(pcb->hp_cred,
-			    KAUTH_DEVICE_BLUETOOTH_RECV_DATA,
-			    KAUTH_ARG(type), NULL, NULL, NULL) != 0)
-				continue;
+			KASSERT(m->m_len >= sizeof(hci_acldata_hdr_t));
+			arg1 = le16toh(mtod(m, hci_acldata_hdr_t *)->con_handle);
+			arg1 = HCI_CON_HANDLE(arg1);
+			break;
 
+		case HCI_SCO_DATA_PKT:
+			KASSERT(m->m_len >= sizeof(hci_scodata_hdr_t));
+			arg1 = le16toh(mtod(m, hci_scodata_hdr_t *)->con_handle);
+			arg1 = HCI_CON_HANDLE(arg1);
+			break;
+
+		default:
+			arg1 = 0;
 			break;
 		}
+
+		if (pcb->hp_cred != NULL
+		    && kauth_authorize_device(pcb->hp_cred,
+		    KAUTH_DEVICE_BLUETOOTH_RECV,
+		    KAUTH_ARG(type), KAUTH_ARG(arg1), NULL, NULL) != 0)
+			continue;
 
 		/*
 		 * create control messages
