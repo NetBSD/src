@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_ls2.h,v 1.1 2009/08/07 18:39:10 matt Exp $	*/
+/*	$NetBSD: cache_ls2.h,v 1.2 2009/08/11 00:34:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -51,22 +51,22 @@
 #define cache_op_ls2_8line_4way(va, op)					\
 	__asm volatile(							\
                 ".set noreorder					\n\t"	\
-                "cache %1, 0x00(%0); cache %1, 0x01(%0)		\n\t"	\
-                "cache %1, 0x02(%0); cache %1, 0x03(%0)		\n\t"	\
-                "cache %1, 0x20(%0); cache %1, 0x21(%0)		\n\t"	\
-                "cache %1, 0x22(%0); cache %1, 0x23(%0)		\n\t"	\
-                "cache %1, 0x40(%0); cache %1, 0x41(%0)		\n\t"	\
-                "cache %1, 0x42(%0); cache %1, 0x43(%0)		\n\t"	\
-                "cache %1, 0x60(%0); cache %1, 0x61(%0)		\n\t"	\
-                "cache %1, 0x62(%0); cache %1, 0x63(%0)		\n\t"	\
-                "cache %1, 0x80(%0); cache %1, 0x81(%0)		\n\t"	\
-                "cache %1, 0x82(%0); cache %1, 0x83(%0)		\n\t"	\
-                "cache %1, 0xa0(%0); cache %1, 0xa1(%0)		\n\t"	\
-                "cache %1, 0xa2(%0); cache %1, 0xa3(%0)		\n\t"	\
-                "cache %1, 0xc0(%0); cache %1, 0xc1(%0)		\n\t"	\
-                "cache %1, 0xc2(%0); cache %1, 0xc3(%0)		\n\t"	\
-                "cache %1, 0xe0(%0); cache %1, 0xe1(%0)		\n\t"	\
-                "cache %1, 0xe2(%0); cache %1, 0xe3(%0)		\n\t"	\
+                "cache %1, 0x00(%0); cache %1, 0x20(%0)		\n\t"	\
+                "cache %1, 0x40(%0); cache %1, 0x60(%0)		\n\t"	\
+                "cache %1, 0x80(%0); cache %1, 0xa0(%0)		\n\t"	\
+                "cache %1, 0xc0(%0); cache %1, 0xe0(%0)		\n\t"	\
+                "cache %1, 0x01(%0); cache %1, 0x21(%0)		\n\t"	\
+                "cache %1, 0x41(%0); cache %1, 0x61(%0)		\n\t"	\
+                "cache %1, 0x81(%0); cache %1, 0xa1(%0)		\n\t"	\
+                "cache %1, 0xc1(%0); cache %1, 0xe1(%0)		\n\t"	\
+                "cache %1, 0x02(%0); cache %1, 0x22(%0)		\n\t"	\
+                "cache %1, 0x42(%0); cache %1, 0x62(%0)		\n\t"	\
+                "cache %1, 0x82(%0); cache %1, 0xa2(%0)		\n\t"	\
+                "cache %1, 0xc2(%0); cache %1, 0xe2(%0)		\n\t"	\
+                "cache %1, 0x03(%0); cache %1, 0x23(%0)		\n\t"	\
+                "cache %1, 0x43(%0); cache %1, 0x63(%0)		\n\t"	\
+                "cache %1, 0x83(%0); cache %1, 0xa3(%0)		\n\t"	\
+                "cache %1, 0xc3(%0); cache %1, 0xe3(%0)		\n\t"	\
                 ".set reorder"						\
             :								\
             : "r" (va), "i" (op)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.40 2009/08/09 04:05:03 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.41 2009/08/11 00:34:29 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.40 2009/08/09 04:05:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.41 2009/08/11 00:34:29 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -660,6 +660,8 @@ primary_cache_is_2way:
 		mips_pdcache_ways = 4;
 
 		mips3_get_cache_config(csizebase);
+
+		mips_sdcache_size = 0;	/* don't trust config reg */
 
 		if (mips_picache_size / mips_picache_ways > PAGE_SIZE ||
 		    mips_pdcache_size / mips_pdcache_ways > PAGE_SIZE)

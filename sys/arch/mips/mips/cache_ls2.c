@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_ls2.c,v 1.2 2009/08/07 23:23:58 matt Exp $	*/
+/*	$NetBSD: cache_ls2.c,v 1.3 2009/08/11 00:34:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.2 2009/08/07 23:23:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.3 2009/08/11 00:34:29 matt Exp $");
 
 #include <sys/param.h>
 
@@ -217,10 +217,12 @@ ls2_sdcache_inv_range(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	for (; va + 8 * 32 <= eva; va += 8 * 32) {
+		cache_op_ls2_8line(va, CACHEOP_LS2_D_HIT_INV);
 		cache_op_ls2_8line(va, CACHEOP_LS2_S_HIT_INV);
 	}
 
 	for (; va < eva; va += 32) {
+		cache_op_ls2_line(va, CACHEOP_LS2_D_HIT_INV);
 		cache_op_ls2_line(va, CACHEOP_LS2_S_HIT_INV);
 	}
 
@@ -235,10 +237,12 @@ ls2_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	for (; va + 8 * 32 <= eva; va += 8 * 32) {
+		cache_op_ls2_8line(va, CACHEOP_LS2_D_HIT_WB_INV);
 		cache_op_ls2_8line(va, CACHEOP_LS2_S_HIT_WB_INV);
 	}
 
 	for (; va < eva; va += 32) {
+		cache_op_ls2_line(va, CACHEOP_LS2_D_HIT_WB_INV);
 		cache_op_ls2_line(va, CACHEOP_LS2_S_HIT_WB_INV);
 	}
 
@@ -276,10 +280,12 @@ ls2_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	}
 
 	for (; va + 8 * 32 <= eva; va += 8 * 32) {
+		cache_op_ls2_8line_4way(va, CACHEOP_LS2_D_INDEX_WB_INV);
 		cache_op_ls2_8line_4way(va, CACHEOP_LS2_S_INDEX_WB_INV);
 	}
 
 	for (; va < eva; va += 32) {
+		cache_op_ls2_line_4way(va, CACHEOP_LS2_D_INDEX_WB_INV);
 		cache_op_ls2_line_4way(va, CACHEOP_LS2_S_INDEX_WB_INV);
 	}
 
