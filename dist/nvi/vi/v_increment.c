@@ -1,4 +1,4 @@
-/*	$NetBSD: v_increment.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: v_increment.c,v 1.4 2009/08/11 21:28:02 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,17 +30,17 @@ static const char sccsid[] = "Id: v_increment.c,v 10.16 2001/06/25 15:19:31 skim
 #include "../common/common.h"
 #include "vi.h"
 
-static const char * const fmt[] = {
+static const CHAR_T * const fmt[] = {
 #define	DEC	0
-	"%ld",
+	L("%ld"),
 #define	SDEC	1
-	"%+ld",
+	L("%+ld"),
 #define	HEXC	2
-	"0X%0*lX",
+	L("0X%0*lX"),
 #define	HEXL	3
-	"0x%0*lx",
+	L("0x%0*lx"),
 #define	OCTAL	4
-	"%#0*lo",
+	L("%#0*lo"),
 };
 
 static void inc_err __P((SCR *, enum nresult));
@@ -59,8 +59,8 @@ v_increment(SCR *sp, VICMD *vp)
 	long ltmp, lval;
 	size_t beg, blen, end, len, nlen, wlen;
 	int base, isempty, rval;
-	const char *ntype;
-	char nbuf[100];
+	const CHAR_T *ntype;
+	CHAR_T nbuf[100];
 	CHAR_T *bp, *p, *t;
 
 	/* Validate the operator. */
@@ -102,7 +102,7 @@ v_increment(SCR *sp, VICMD *vp)
 	}
 
 #undef	ishex
-#define	ishex(c)	(isdigit(c) || strchr("abcdefABCDEF", c))
+#define	ishex(c)	(isdigit(c) || STRCHR(L("abcdefABCDEF"), c))
 #undef	isoctal
 #define	isoctal(c)	(isdigit(c) && (c) != '8' && (c) != '9')
 
@@ -206,7 +206,7 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 		/* If we cross 0, signed numbers lose their sign. */
 		if (lval == 0 && ntype == fmt[SDEC])
 			ntype = fmt[DEC];
-		nlen = snprintf(nbuf, sizeof(nbuf), ntype, lval);
+		nlen = SPRINTF(nbuf, sizeof(nbuf), ntype, lval);
 	} else {
 		if ((nret = nget_uslong(sp, &ulval, t, NULL, base)) != NUM_OK)
 			goto err;
@@ -228,7 +228,7 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 		if (base == 16)
 			wlen -= 2;
 
-		nlen = snprintf(nbuf, sizeof(nbuf), ntype, wlen, ulval);
+		nlen = SPRINTF(nbuf, sizeof(nbuf), ntype, wlen, ulval);
 	}
 
 	/* Build the new line. */
