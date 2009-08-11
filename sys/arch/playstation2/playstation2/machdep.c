@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2009/03/18 10:22:33 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2009/08/11 17:04:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2009/03/18 10:22:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2009/08/11 17:04:19 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -77,7 +77,6 @@ struct vm_map *mb_map;
 struct vm_map *phys_map;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
-int physmem;	/* for buffer cache, vnode cache estimation */
 
 #ifdef DEBUG
 static void bootinfo_dump(void);

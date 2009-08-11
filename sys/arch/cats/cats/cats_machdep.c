@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.64 2009/02/13 22:41:01 apb Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.65 2009/08/11 17:04:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.64 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.65 2009/08/11 17:04:15 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -128,7 +128,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;

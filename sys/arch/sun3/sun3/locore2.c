@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.93 2009/02/13 22:41:03 apb Exp $	*/
+/*	$NetBSD: locore2.c,v 1.94 2009/08/11 17:04:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.93 2009/02/13 22:41:03 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.94 2009/08/11 17:04:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -95,8 +95,6 @@ int cpu_has_vme = 0;
  * 2048 / cpuclock	(where cpuclock is in MHz).
  */
 int delay_divisor = 82;		/* assume the fastest (3/260) */
-
-extern int physmem;
 
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;

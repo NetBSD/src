@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.11 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.12 2009/08/11 17:04:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@ extern vaddr_t vmmap;	/* XXX - See mem.c */
 extern vaddr_t virtual_start, virtual_end;
 
 /* Total physical pages, and low reserved physical pages. */
-extern int physmem;
 extern int totalphysmem;
 extern int availphysmem;
 extern int resvmem;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.65 2009/03/15 22:20:09 cegger Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.66 2009/08/11 17:04:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.65 2009/03/15 22:20:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.66 2009/08/11 17:04:14 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.65 2009/03/15 22:20:09 cegger Ex
 
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
-
-extern int physmem;
 
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 extern size_t md_root_size;		/* Memory disc size */

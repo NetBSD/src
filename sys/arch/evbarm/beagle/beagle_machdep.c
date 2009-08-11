@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.3 2008/11/11 06:46:41 dyoung Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.4 2009/08/11 17:04:15 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.3 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.4 2009/08/11 17:04:15 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -203,8 +203,6 @@ char *boot_file = NULL;
 paddr_t physical_start;
 /* Physical address of the first byte after the end of SDRAM. */
 paddr_t physical_end;
-/* Number of pages of memory. */
-int physmem = 0;
 
 /* Same things, but for the free (unused by the kernel) memory. */
 static paddr_t physical_freestart, physical_freeend;

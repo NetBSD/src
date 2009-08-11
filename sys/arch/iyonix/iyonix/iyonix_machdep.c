@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.12 2009/08/02 11:32:05 gavan Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.13 2009/08/11 17:04:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.12 2009/08/02 11:32:05 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.13 2009/08/11 17:04:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -155,7 +155,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S

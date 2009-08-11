@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2008/02/12 17:30:58 joerg Exp $ */
+/* $NetBSD: cpu.c,v 1.3 2009/08/11 17:04:20 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2009/08/11 17:04:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -314,7 +314,6 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
-	extern int physmem;
 	extern struct vm_map *mb_map;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];

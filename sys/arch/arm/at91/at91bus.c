@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.5 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.6 2009/08/11 17:04:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.5 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.6 2009/08/11 17:04:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -114,7 +114,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_freeend_low;
 vm_offset_t physical_end;
 u_int free_pages;
-int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t irqstack;

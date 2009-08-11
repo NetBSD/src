@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2009/04/25 15:32:30 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2009/08/11 17:04:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2009/04/25 15:32:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2009/08/11 17:04:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -136,7 +136,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2009/04/25 15:32:30 tsutsui Exp $");
 
 /* XXX - What headers declare these? */
 extern struct pcb *curpcb;
-extern int physmem;
 
 /* Defined in locore.s */
 extern char kernel_text[];

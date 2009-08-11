@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 2009/03/18 10:22:35 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128 2009/08/11 17:04:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 2009/03/18 10:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2009/08/11 17:04:19 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,7 +124,6 @@ int mach_type = 0;	/* IPxx type */
 int mach_subtype = 0;	/* subtype: eg., Guinness/Fullhouse for IP22 */
 int mach_boardrev = 0;	/* machine board revision, in case it matters */
 
-int physmem;		/* Total physical memory */
 int arcsmem;		/* Memory used by the ARCS firmware */
 
 int ncpus;
