@@ -8,11 +8,9 @@
     *  
     *  SB1250 specification level:  01/02/2002
     *  
-    *  Author:  Mitch Lichtenberg
-    *  
     *********************************************************************  
     *
-    *  Copyright 2000,2001,2002,2003
+    *  Copyright 2000,2001,2002,2003,2004
     *  Broadcom Corporation. All rights reserved.
     *  
     *  This software is furnished under license and may be used and 
@@ -77,6 +75,8 @@
  * XXX: can't remove MC base 0 if 112x, since it's used by other macros,
  * since there is one reg there (but it could get its addr/offset constant).
  */
+
+#if SIBYTE_HDR_FEATURE_1250_112x		/* This MC only on 1250 & 112x */
 #define A_MC_BASE_0                 0x0010051000
 #define A_MC_BASE_1                 0x0010052000
 #define MC_REGISTER_SPACING         0x1000
@@ -117,9 +117,13 @@
 #define R_MC_TEST_ECC               0x0000000420
 #define R_MC_MCLK_CFG               0x0000000500
 
+#endif	/* 1250 & 112x */
+
 /*  ********************************************************************* 
     * L2 Cache Control Registers
     ********************************************************************* */
+
+#if SIBYTE_HDR_FEATURE_1250_112x	/* This L2C only on 1250/112x */
 
 #define A_L2_READ_TAG               0x0010040018
 #define A_L2_ECC_TAG                0x0010040038
@@ -141,13 +145,17 @@
 #define A_L2_READ_ADDRESS           A_L2_READ_TAG
 #define A_L2_EEC_ADDRESS            A_L2_ECC_TAG
 
+#endif
+
 
 /*  ********************************************************************* 
     * PCI Interface Registers
     ********************************************************************* */
 
+#if SIBYTE_HDR_FEATURE_1250_112x	/* This PCI/HT only on 1250/112x */
 #define A_PCI_TYPE00_HEADER         0x00DE000000
 #define A_PCI_TYPE01_HEADER         0x00DE000800
+#endif
 
 
 /*  ********************************************************************* 
@@ -248,14 +256,14 @@
 #define R_MAC_VLANTAG                   0x00000110
 #define R_MAC_FRAMECFG                  0x00000118
 #define R_MAC_EOPCNT                    0x00000120
-#define R_MAC_FIFO_PTRS                 0x00000130
+#define R_MAC_FIFO_PTRS                 0x00000128
 #define R_MAC_ADFILTER_CFG              0x00000200
 #define R_MAC_ETHERNET_ADDR             0x00000208
 #define R_MAC_PKT_TYPE                  0x00000210
-#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 #define R_MAC_ADMASK0			0x00000218
 #define R_MAC_ADMASK1			0x00000220
-#endif /* 1250 PASS3 || 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 || 1480 */
 #define R_MAC_HASH_BASE                 0x00000240
 #define R_MAC_ADDR_BASE                 0x00000280
 #define R_MAC_CHLO0_BASE                0x00000300
@@ -265,9 +273,9 @@
 #define R_MAC_INT_MASK                  0x00000410
 #define R_MAC_TXD_CTL                   0x00000420
 #define R_MAC_MDIO                      0x00000428
-#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 #define R_MAC_STATUS1		        0x00000430
-#endif /* 1250 PASS2 || 112x PASS1 */
+#endif /* 1250 PASS2 || 112x PASS1 || 1480 */
 #define R_MAC_DEBUG_STATUS              0x00000448
 
 #define MAC_HASH_COUNT			8
@@ -280,15 +288,15 @@
     ********************************************************************* */
 
 
+#if SIBYTE_HDR_FEATURE_1250_112x		/* This MC only on 1250 & 112x */
 #define R_DUART_NUM_PORTS           2
 
 #define A_DUART                     0x0010060000
 
-#define A_DUART_REG(r)
-
 #define DUART_CHANREG_SPACING       0x100
 #define A_DUART_CHANREG(chan,reg)   (A_DUART + DUART_CHANREG_SPACING*(chan) + (reg))
 #define R_DUART_CHANREG(chan,reg)   (DUART_CHANREG_SPACING*(chan) + (reg))
+#endif	/* 1250 & 112x */
 
 #define R_DUART_MODE_REG_1	    0x100
 #define R_DUART_MODE_REG_2	    0x110
@@ -298,11 +306,11 @@
 #define R_DUART_RX_HOLD             0x160
 #define R_DUART_TX_HOLD             0x170
 
-#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 #define R_DUART_FULL_CTL	    0x140
 #define R_DUART_OPCR_X		    0x180
 #define R_DUART_AUXCTL_X	    0x190
-#endif /* 1250 PASS2 || 112x PASS1 */
+#endif /* 1250 PASS2 || 112x PASS1 || 1480*/
 
 
 /*
@@ -317,17 +325,20 @@
 #define R_DUART_IMR_B               0x350
 #define R_DUART_OUT_PORT            0x360
 #define R_DUART_OPCR                0x370
+#define R_DUART_IN_PORT             0x380
 
 #define R_DUART_SET_OPR		    0x3B0
 #define R_DUART_CLEAR_OPR	    0x3C0
 
 #define DUART_IMRISR_SPACING        0x20
 
+#if SIBYTE_HDR_FEATURE_1250_112x		/* This MC only on 1250 & 112x */
 #define R_DUART_IMRREG(chan)	    (R_DUART_IMR_A + (chan)*DUART_IMRISR_SPACING)
 #define R_DUART_ISRREG(chan)	    (R_DUART_ISR_A + (chan)*DUART_IMRISR_SPACING)
 
 #define A_DUART_IMRREG(chan)	    (A_DUART + R_DUART_IMRREG(chan))
 #define A_DUART_ISRREG(chan)	    (A_DUART + R_DUART_ISRREG(chan))
+#endif	/* 1250 & 112x */
 
 
 
@@ -383,6 +394,8 @@
     * Synchronous Serial Registers
     ********************************************************************* */
 
+
+#if SIBYTE_HDR_FEATURE_1250_112x	/* sync serial only on 1250/112x */
 
 #define A_SER_BASE_0                0x0010060400
 #define A_SER_BASE_1                0x0010060800
@@ -472,6 +485,8 @@
 #define R_SER_RMON_RX_OVERFLOW      0x000001E8
 #define R_SER_RMON_RX_ERRORS        0x000001F0
 #define R_SER_RMON_RX_BADADDR       0x000001F8
+
+#endif	/* 1250/112x */
 
 /*  ********************************************************************* 
     * Generic Bus Registers
@@ -650,12 +665,13 @@
 
 #if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define A_SCD_SCRATCH		   0x0010020C10
+#endif /* 1250 PASS2 || 112x PASS1 */
 
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 #define A_SCD_ZBBUS_CYCLE_COUNT	   0x0010030000
 #define A_SCD_ZBBUS_CYCLE_CP0	   0x0010020C00
 #define A_SCD_ZBBUS_CYCLE_CP1	   0x0010020C08
-#endif /* 1250 PASS2 || 112x PASS1 */
-
+#endif
 
 /*  ********************************************************************* 
     * System Control Registers
@@ -683,9 +699,15 @@
 #define A_ADDR_TRAP_CFG_1           0x0010020448
 #define A_ADDR_TRAP_CFG_2           0x0010020450
 #define A_ADDR_TRAP_CFG_3           0x0010020458
-#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 #define A_ADDR_TRAP_REG_DEBUG	    0x0010020460
-#endif /* 1250 PASS2 || 112x PASS1 */
+#endif /* 1250 PASS2 || 112x PASS1 || 1480 */
+
+#define ADDR_TRAP_SPACING 8
+#define NUM_ADDR_TRAP 4
+#define A_ADDR_TRAP_UP(n) (A_ADDR_TRAP_UP_0 + ((n) * ADDR_TRAP_SPACING))
+#define A_ADDR_TRAP_DOWN(n) (A_ADDR_TRAP_DOWN_0 + ((n) * ADDR_TRAP_SPACING))
+#define A_ADDR_TRAP_CFG(n) (A_ADDR_TRAP_CFG_0 + ((n) * ADDR_TRAP_SPACING))
 
 
 /*  ********************************************************************* 
@@ -701,6 +723,7 @@
 #define A_IMR_REGISTER(cpu,reg) (A_IMR_MAPPER(cpu)+(reg))
 
 #define R_IMR_INTERRUPT_DIAG            0x0010
+#define R_IMR_INTERRUPT_LDT             0x0018
 #define R_IMR_INTERRUPT_MASK            0x0028
 #define R_IMR_INTERRUPT_TRACE           0x0038
 #define R_IMR_INTERRUPT_SOURCE_STATUS   0x0040
@@ -717,6 +740,14 @@
 #define R_IMR_INTERRUPT_MAP_BASE        0x0200
 #define R_IMR_INTERRUPT_MAP_COUNT       64
 
+/*
+ * these macros work together to build the address of a mailbox
+ * register, e.g., A_MAILBOX_REGISTER(R_IMR_MAILBOX_SET_CPU,1)
+ * for mbox_0_set_cpu2 returns 0x00100240C8
+ */
+#define A_MAILBOX_REGISTER(reg,cpu) \
+    (A_IMR_CPU0_BASE + (cpu * IMR_REGISTER_SPACING) + reg)
+
 /*  ********************************************************************* 
     * System Performance Counter Registers
     ********************************************************************* */
@@ -727,6 +758,10 @@
 #define A_SCD_PERF_CNT_2            0x00100204E0
 #define A_SCD_PERF_CNT_3            0x00100204E8
 
+#define SCD_NUM_PERF_CNT 4
+#define SCD_PERF_CNT_SPACING 8
+#define A_SCD_PERF_CNT(n) (A_SCD_PERF_CNT_0+(n*SCD_PERF_CNT_SPACING))
+
 /*  ********************************************************************* 
     * System Bus Watcher Registers
     ********************************************************************* */
@@ -734,6 +769,7 @@
 #define A_SCD_BUS_ERR_STATUS        0x0010020880
 #if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
 #define A_SCD_BUS_ERR_STATUS_DEBUG  0x00100208D0
+#define A_BUS_ERR_STATUS_DEBUG  0x00100208D0
 #endif /* 1250 PASS2 || 112x PASS1 */
 #define A_BUS_ERR_DATA_0            0x00100208A0
 #define A_BUS_ERR_DATA_1            0x00100208A8
@@ -770,6 +806,15 @@
 #define A_SCD_TRACE_SEQUENCE_5      0x0010020A88
 #define A_SCD_TRACE_SEQUENCE_6      0x0010020A90
 #define A_SCD_TRACE_SEQUENCE_7      0x0010020A98
+
+#define TRACE_REGISTER_SPACING 8
+#define TRACE_NUM_REGISTERS    8
+#define A_SCD_TRACE_EVENT(n) (((n) & 4) ? \
+   (A_SCD_TRACE_EVENT_4 + (((n) & 3) * TRACE_REGISTER_SPACING)) : \
+   (A_SCD_TRACE_EVENT_0 + ((n) * TRACE_REGISTER_SPACING)))
+#define A_SCD_TRACE_SEQUENCE(n) (((n) & 4) ? \
+   (A_SCD_TRACE_SEQUENCE_4 + (((n) & 3) * TRACE_REGISTER_SPACING)) : \
+   (A_SCD_TRACE_SEQUENCE_0 + ((n) * TRACE_REGISTER_SPACING)))
 
 /*  ********************************************************************* 
     * System Generic DMA Registers
@@ -814,6 +859,7 @@
     *  Physical Address Map
     ********************************************************************* */
 
+#if SIBYTE_HDR_FEATURE_1250_112x
 #define A_PHYS_MEMORY_0                 _SB_MAKE64(0x0000000000)
 #define A_PHYS_MEMORY_SIZE              _SB_MAKE64((256*1024*1024))
 #define A_PHYS_SYSTEM_CTL               _SB_MAKE64(0x0010000000)
@@ -847,6 +893,7 @@
 #define A_PHYS_L2CACHE_WAY1             _SB_MAKE64(0x00D01A0000)
 #define A_PHYS_L2CACHE_WAY2             _SB_MAKE64(0x00D01C0000)
 #define A_PHYS_L2CACHE_WAY3             _SB_MAKE64(0x00D01E0000)
+#endif
 
 
 #endif
