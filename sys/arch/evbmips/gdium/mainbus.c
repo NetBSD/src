@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2009/08/11 02:32:38 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2009/08/11 02:32:38 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -79,7 +79,6 @@ const char * const mainbusdevs[] = {
 	"i2c",
 	"gpio",
 #endif
-	NULL,
 };
 
 static int
@@ -118,7 +117,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < __arraycount(mainbusdevs); i++) {
 		struct mainbus_attach_args maa;
 		maa.maa_name = mainbusdevs[i];
-		(void) config_found_ia(self, "mainbus", &maa, mainbus_print);
+		(void) config_found(self, &maa, mainbus_print);
 	}
 }
 
@@ -126,9 +125,6 @@ static int
 mainbus_print(void *aux, const char *pnp)
 {
 	struct mainbus_attach_args *maa = aux;
-
-	if (pnp != 0)
-		return QUIET;
 
 	if (pnp)
 		aprint_normal("%s at %s", maa->maa_name, pnp);
