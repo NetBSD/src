@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.155 2009/05/14 16:23:38 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.156 2009/08/11 19:15:30 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -102,7 +102,7 @@ Shall we continue?
 }
 
 message upgradeusure
-{Ok, lets upgrade NetBSD on your hard disk.  As always, this will
+{Ok, let's upgrade NetBSD on your hard disk.  As always, this will
 change information on your hard disk.  You should have made a full backup
 before this procedure!  Do you really want to upgrade NetBSD?
 (This is your last warning before this procedure starts modifying your
@@ -110,7 +110,7 @@ disks.)
 }
 
 message reinstallusure
-{Ok, lets unpack the NetBSD distribution sets to a bootable hard disk.
+{Ok, let's unpack the NetBSD distribution sets to a bootable hard disk.
 This procedure just fetches and unpacks sets onto an pre-partitioned
 bootable disk. It does not label disks, upgrade bootblocks, or save
 any existing configuration info.  (Quit and choose `install' or
