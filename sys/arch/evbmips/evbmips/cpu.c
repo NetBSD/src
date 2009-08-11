@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2009/08/02 17:12:29 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2009/08/11 02:37:29 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2009/08/02 17:12:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2009/08/11 02:37:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,11 +61,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_info * const ci = curcpu();
 
-	printf(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
+	aprint_normal(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
 	    ci->ci_cpu_freq / 1000000,
 	    (ci->ci_cpu_freq % 1000000) / 10000,
 	    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
 
-	printf("%s: ", device_xname(self));
+	aprint_normal("%s: ", device_xname(self));
 	cpu_identify();
 }
