@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.148 2009/08/11 16:07:24 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.149 2009/08/11 16:27:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.148 2009/08/11 16:07:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.149 2009/08/11 16:27:08 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -119,7 +119,7 @@ int vm_page_reserve_kernel = 5;
 /*
  * physical memory size;
  */
-long physmem;
+int physmem;
 
 /*
  * local variables
