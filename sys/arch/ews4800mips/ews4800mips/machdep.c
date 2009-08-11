@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2009/08/11 17:04:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2009/08/11 17:04:18 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,9 +76,6 @@ struct cpu_info cpu_info_store;
 /* maps for VM objects */
 struct vm_map *mb_map;
 struct vm_map *phys_map;
-
-/* for buffer cache, vnode cache estimation */
-int physmem;		/* max supported memory, changes to actual */
 
 /* referenced by mips_machdep.c:cpu_dump() */
 int mem_cluster_cnt;

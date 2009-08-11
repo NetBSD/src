@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2009/08/04 12:11:33 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2009/08/11 17:04:20 matt Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2009/08/04 12:11:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2009/08/11 17:04:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -211,7 +211,6 @@ paddr_t physical_freestart;
 paddr_t physical_freeend;
 paddr_t physical_end;
 u_int free_pages;
-int physmem = 0;
 
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */

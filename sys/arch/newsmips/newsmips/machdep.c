@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2009/08/11 17:04:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2009/08/11 17:04:19 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -149,7 +149,6 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 char *bootinfo = NULL;		/* pointer to bootinfo structure */
-int physmem;			/* max supported memory, changes to actual */
 int systype;			/* what type of NEWS we are */
 struct apbus_sysinfo *_sip = NULL;
 

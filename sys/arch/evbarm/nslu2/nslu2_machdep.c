@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.11 2009/03/14 14:45:59 dsl Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.12 2009/08/11 17:04:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.11 2009/03/14 14:45:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.12 2009/08/11 17:04:17 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -181,7 +181,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t irqstack;

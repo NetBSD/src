@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.77 2009/01/17 07:17:36 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.78 2009/08/11 17:04:18 matt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.77 2009/01/17 07:17:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.78 2009/08/11 17:04:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.77 2009/01/17 07:17:36 tsutsui 
 extern char *etext;
 extern char *extiobase, *proc0paddr;
 
-extern int physmem;
 extern paddr_t avail_start;
 extern paddr_t avail_end;
 
