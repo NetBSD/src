@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2009/08/11 02:35:15 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2009/08/11 03:56:34 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2009/08/11 02:35:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2009/08/11 03:56:34 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -250,8 +250,11 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	struct gdium_config *gc = &gdium_configuration;
 	void *kernend, *v;
         u_long first, last;
+#ifdef NOTYET
 	char *cp;
-	int i, howto;
+	int howto;
+#endif
+	int i;
 	psize_t memsize;
 
 	extern char edata[], end[];
@@ -355,6 +358,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 	boothowto = RB_AUTOBOOT;
+#ifdef NOTYET
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			/* Ignore superfluous '-', if there is one */
@@ -369,6 +373,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 				boothowto |= howto;
 		}
 	}
+#endif
 
 	/*
 	 * Load the rest of the available pages into the VM system.
