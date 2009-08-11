@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.75 2009/02/13 22:41:00 apb Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.76 2009/08/11 17:04:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.75 2009/02/13 22:41:00 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.76 2009/08/11 17:04:14 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -145,7 +145,6 @@ paddr_t dma_range_begin;
 paddr_t dma_range_end;
 
 u_int free_pages;
-int physmem = 0;
 paddr_t memoryblock_end;
 
 #ifndef PMAP_STATIC_L1S

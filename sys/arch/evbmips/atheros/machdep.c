@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 2009/02/13 22:41:01 apb Exp $ */
+/* $NetBSD: machdep.c,v 1.18 2009/08/11 17:04:18 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2009/02/13 22:41:01 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2009/08/11 17:04:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -193,7 +193,6 @@ struct cpu_info cpu_info_store;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int physmem;		/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
 int mem_cluster_cnt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.21 2009/03/14 14:45:58 dsl Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.22 2009/08/11 17:04:16 matt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.21 2009/03/14 14:45:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.22 2009/08/11 17:04:16 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -151,7 +151,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t irqstack;
