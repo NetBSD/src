@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2009/08/08 20:49:58 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2009/08/11 02:35:15 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2009/08/08 20:49:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2009/08/11 02:35:15 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -225,6 +225,20 @@ gdium_pci_attach_hook(device_t parent, device_t self,
 	 * Set the mapreg.
 	 */
 	pci_conf_write(pba->pba_pc, ralink_dev, PCI_MAPREG_START, v);
+
+#if 0
+	/*
+	 * Why does linux do this?
+	 */
+	for (int dev = 15; dev <= 17; dev +=2) {
+		for (int func = 0; func <= 1; func++) {
+			pcitag_t usb_dev = pci_make_tag(pba->pba_pc, 0, dev, func);
+			v = pci_conf_read(pba->pba_pc, usb_dev, 0xe0);
+			v |= 3;
+			pci_conf_write(pba->pba_pc, usb_dev, 0xe0, v);
+		}
+	}
+#endif
 }
 
 /*
@@ -275,6 +289,13 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	gdium_cnattach(gc);
 
 	/*
+	 * Disable the 2nd PCI window since we don't need it.
+	 */
+	REGVAL(BONITO_REGBASE + 0x158) = 0xe;
+	REGVAL(BONITO_REGBASE + 0x15c) = 0;
+	pci_conf_write(&gc->gc_pc, pci_make_tag(&gc->gc_pc, 0, 0, 0), 18, 0);
+
+	/*
 	 * Get the timer from PMON.
 	 */
 	for (i = 0; envp[i] != NULL; i++) {
@@ -305,7 +326,6 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 #ifdef DEBUG
 	printf("Timer calibration: %lu cycles/sec\n",
 	    curcpu()->ci_cpu_freq);
-	delay(1000000);
 #endif
 
 #if NCOM > 0
