@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.4 2009/08/09 22:25:41 matt Exp $
+# $NetBSD: GDIUM,v 1.5 2009/08/11 02:36:43 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.4 $"
+#ident 		"GDIUM-$Revision: 1.5 $"
 
 maxusers	16
 
@@ -33,7 +33,7 @@ options 	DDB			# in-kernel debugger
 #options 	DDB_ONPANIC=0		# don't enter debugger on panic
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB			# remote debugger
-#options 	DIAGNOSTIC		# extra kernel debugging checks
+options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 makeoptions	DEBUG="-g"
 options 	KTRACE			# system call tracing support
@@ -148,12 +148,14 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
 
 mainbus0	at root
+cpu0		at mainbus0
 bonito0		at mainbus0
 pci0		at bonito0
 #voyagerfb0	at pci0 dev ? function ?
 genfb0		at pci0 dev ? function ?
 wsdisplay0	at genfb0
 ehci*		at pci0 dev ? function ?
+#options 	EHCI_DEBUG
 ohci*		at pci0 dev ? function ?
 #options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
 
