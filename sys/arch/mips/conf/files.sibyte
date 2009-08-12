@@ -3,12 +3,12 @@
 ###
 
 # System Control/Debug
-device	sbscd {[offset = -1], [intr[2] = {-1,-1}]}
+device	sbscd {[addr = -1], [intr[2] = {-1,-1}]}
 attach	sbscd at zbbus
 file	arch/mips/sibyte/dev/sbscd.c		sbscd
 
 # On-board I/O (slow I/O bridge)
-device	sbobio {[offset = -1], [intr[2] = {-1,-1}]}
+device	sbobio {[addr = -1], [intr[2] = {-1,-1}]}
 attach	sbobio at zbbus
 file	arch/mips/sibyte/dev/sbobio.c		sbobio
 
