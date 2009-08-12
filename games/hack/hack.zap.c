@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.zap.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.zap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,13 +63,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.zap.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.zap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 
-const char           *const fl[] = {
+static const char *const fl[] = {
 	"magic missile",
 	"bolt of fire",
 	"sleep ray",
@@ -77,9 +77,17 @@ const char           *const fl[] = {
 	"death ray"
 };
 
+static void bhitm(struct monst *, struct obj *);
+static int bhito(struct obj *, struct obj *);
+static char dirlet(int, int);
+static int zhit(struct monst *, int);
+static int revive(struct obj *);
+static void rloco(struct obj *);
+static void burn_scrolls(void);
+
 /* Routines for IMMEDIATE wands. */
 /* bhitm: monster mtmp was hit by the effect of wand otmp */
-void
+static void
 bhitm(struct monst *mtmp, struct obj *otmp)
 {
 	wakeup(mtmp);
@@ -136,7 +144,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
  * object obj was hit by the effect of wand otmp
  * returns TRUE if sth was done
  */
-int
+static int
 bhito(struct obj *obj, struct obj *otmp)
 {
 	int             res = TRUE;
@@ -475,7 +483,7 @@ boomhit(int dx, int dy)
 	return (0);
 }
 
-char
+static char
 dirlet(int dx, int dy)
 {
 	return
@@ -638,7 +646,7 @@ buzz(int type, xchar sx, xchar sy, int dx, int dy)
 	Tmp_at(-1, -1);
 }
 
-int
+static int
 zhit(struct monst *mon, int type)		/* returns damage to mon */
 {
 	int             tmp = 0;
@@ -678,7 +686,7 @@ zhit(struct monst *mon, int type)		/* returns damage to mon */
 #define	CORPSE_I_TO_C(otyp)	(char) ((otyp >= DEAD_ACID_BLOB)\
 		     ?  'a' + (otyp - DEAD_ACID_BLOB)\
 		     :	'@' + (otyp - DEAD_HUMAN))
-int
+static int
 revive(struct obj *obj)
 {
 	struct monst   *mtmp = NULL;
@@ -695,7 +703,7 @@ revive(struct obj *obj)
 	return (!!mtmp);	/* TRUE if some monster created */
 }
 
-void
+static void
 rloco(struct obj *obj)
 {
 	int tx, ty, otx, oty;
@@ -726,7 +734,7 @@ fracture_rock(struct obj *obj)
 		prl(obj->ox, obj->oy);
 }
 
-void
+static void
 burn_scrolls(void)
 {
 	struct obj     *obj, *obj2;

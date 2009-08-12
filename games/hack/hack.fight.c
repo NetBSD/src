@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.fight.c,v 1.11 2009/06/07 20:31:10 dholland Exp $	*/
+/*	$NetBSD: hack.fight.c,v 1.12 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.fight.c,v 1.11 2009/06/07 20:31:10 dholland Exp $");
+__RCSID("$NetBSD: hack.fight.c,v 1.12 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -71,6 +71,8 @@ __RCSID("$NetBSD: hack.fight.c,v 1.11 2009/06/07 20:31:10 dholland Exp $");
 
 static boolean  far_noise;
 static long     noisetime;
+
+static void monstone(struct monst *);
 
 /* hitmm returns 0 (miss), 1 (hit), or 2 (kill) */
 int
@@ -158,7 +160,7 @@ mondied(struct monst *mdef)
 }
 
 /* drop a rock and remove monster */
-void
+static void
 monstone(struct monst *mdef)
 {
 	if (strchr(mlarge, mdef->data->mlet))

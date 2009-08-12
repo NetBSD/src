@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_name.c,v 1.10 2009/06/29 23:05:33 dholland Exp $	*/
+/*	$NetBSD: hack.do_name.c,v 1.11 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,12 +63,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_name.c,v 1.10 2009/06/29 23:05:33 dholland Exp $");
+__RCSID("$NetBSD: hack.do_name.c,v 1.11 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
+
+static void do_oname(struct obj *);
+static char *xmonnam(struct monst *, int);
+static char *lmonnam(struct monst *);
+static char *visctrl(int);
 
 coord
 getpos(int force, const char *goal)
@@ -164,7 +169,7 @@ do_mname(void)
  * when there might be pointers around in unknown places. For now: only
  * when  obj  is in the inventory.
  */
-void
+static void
 do_oname(struct obj *obj)
 {
 	struct obj     *otmp, *otmp2;
@@ -256,14 +261,15 @@ docall(struct obj *obj)
 	*str1 = str;
 }
 
-const char *const ghostnames[] = {/* these names should have length < PL_NSIZ */
+static const char *const ghostnames[] = {
+	/* these names should have length < PL_NSIZ */
 	"adri", "andries", "andreas", "bert", "david", "dirk", "emile",
 	"frans", "fred", "greg", "hether", "jay", "john", "jon", "kay",
 	"kenny", "maud", "michiel", "mike", "peter", "robert", "ron",
 	"tom", "wilmar"
 };
 
-char           *
+static char *
 xmonnam(struct monst *mtmp, int vb)
 {
 	static char     buf[BUFSZ];	/* %% */
@@ -302,7 +308,7 @@ xmonnam(struct monst *mtmp, int vb)
 	return (buf);
 }
 
-char           *
+static char *
 lmonnam(struct monst *mtmp)
 {
 	return (xmonnam(mtmp, 1));
@@ -355,7 +361,7 @@ Xmonnam(struct monst *mtmp)
 	return (bp);
 }
 
-char           *
+static char *
 visctrl(int c)
 {
 	static char     ccc[3];

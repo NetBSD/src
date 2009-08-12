@@ -1,4 +1,4 @@
-/*	$NetBSD: def.func_tab.h,v 1.7 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: def.func_tab.h,v 1.8 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -68,12 +68,12 @@ struct func_tab {
 	int (*f_funct)(void);
 };
 
-extern const struct func_tab cmdlist[];
+/*extern const struct func_tab cmdlist[];*/
 
 struct ext_func_tab {
 	const char *ef_txt;
 	int (*ef_funct)(void);
 };
 
-extern const struct ext_func_tab extcmdlist[];
+/*extern const struct ext_func_tab extcmdlist[];*/
 #endif /* _DEF_FUNC_TAB_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.17 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.18 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.17 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.18 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -81,6 +81,11 @@ static const char    *VS, *VE;
 static int      SG;
 char           *CD;		/* tested in pri.c: docorner() */
 int             CO, LI;		/* used in pri.c and whatis.c */
+
+static void nocmov(int, int);
+static void cmov(int, int);
+static int xputc(int);
+static void xputs(const char *);
 
 void
 startup(void)
@@ -176,7 +181,7 @@ curs(int x, int y)
 		cmov(x, y);
 }
 
-void
+static void
 nocmov(int x, int y)
 {
 	if (cury > y) {
@@ -224,7 +229,7 @@ nocmov(int x, int y)
 	}
 }
 
-void
+static void
 cmov(int x, int y)
 {
 	char buf[256];
@@ -236,13 +241,13 @@ cmov(int x, int y)
 	}
 }
 
-int
+static int
 xputc(int c)
 {
 	return (fputc(c, stdout));
 }
 
-void
+static void
 xputs(const char *s)
 {
 	tputs(s, 1, xputc);
