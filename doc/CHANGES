@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1273 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1274 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -363,3 +363,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		bit-banging mode. [mbalmer 20090809]
 	voyagerfb(8): a driver for the Gdium Liberty 1000's video controller
 		[macallan 20090812]
+	mips a.out support: removed [matt 20090812]
