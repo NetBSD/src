@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.16 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.17 2009/08/12 06:19:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -261,7 +261,6 @@ extern	int	debug;
 #define ASSERT(x)
 
 void	bdinit(struct spotstr *);
-void	init_overlap(void);
 int	get_line(char *, int);
 void	ask(const char *);
 void	dislog(const char *);
@@ -272,30 +271,12 @@ void	cursfini(void);
 void	cursinit(void);
 void	bdwho(int);
 void	panic(const char *, ...) __printflike(1, 2) __dead;
-void	misclog(const char *, ...) __printflike(1, 2);
 void	debuglog(const char *, ...) __printflike(1, 2);
-void	quit(void) __dead;
-void	quitsig(int) __dead;
 void	whatsup(int);
-int	readinput(FILE *);
 const char   *stoc(int);
-int	lton(int);
 int	ctos(const char *);
-void	update_overlap(struct spotstr *);
 int	makemove(int, int);
 int	list_eq(struct combostr **, struct combostr **, int);
 void	clearcombo(struct combostr *, int);
-void	makeempty(struct combostr *);
-void	appendcombo(struct combostr *, int);
-void	updatecombo(struct combostr *, int);
 void	markcombo(struct combostr *);
-void	printcombo(struct combostr *, char *, size_t);
-void	makecombo(struct combostr *, struct spotstr *, int, int);
-void	makecombo2(struct combostr *, struct spotstr *, int, int);
-int	sortcombo(struct combostr **, struct combostr **, struct combostr *);
-int	checkframes(struct combostr *, struct combostr *, struct spotstr *,
-		    int, struct overlap_info *);
-void	addframes(int);
-void	scanframes(int);
-int	better(const struct spotstr *, const struct spotstr *, int);
 int	pickmove(int);
