@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.13 2009/06/04 04:48:04 dholland Exp $	*/
+/*	$NetBSD: support.c,v 1.14 2009/08/12 05:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.13 2009/06/04 04:48:04 dholland Exp $");
+__RCSID("$NetBSD: support.c,v 1.14 2009/08/12 05:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,11 @@ __RCSID("$NetBSD: support.c,v 1.13 2009/06/04 04:48:04 dholland Exp $");
 #define	NTV	10		/* number scores to test */
 
 /* score to test reachability of, and order to test them in */
-const int tv[NTV] = {8, 7, 9, 6, 11, 12, 13, 14, 10, 5};
+static const int tv[NTV] = {8, 7, 9, 6, 11, 12, 13, 14, 10, 5};
+
+static int anysumto(const CARD[], int, int, int);
+static void prpeg(int, int, BOOLEAN);
+static int numofval(const CARD[], int, int);
 
 /*
  * computer chooses what to play in pegging...
@@ -199,7 +203,7 @@ chkscr(int *scr, int inc)
  *	Put out the peg character on the score board and put the
  *	score up on the board.
  */
-void
+static void
 prpeg(int curscore, int pegc, BOOLEAN myturn)
 {
 	int y, x;
@@ -306,7 +310,7 @@ anymove(const CARD hand[], int n, int sum)
  * anysumto returns the index (0 <= i < n) of the card in hand that brings
  * the s up to t, or -1 if there is none
  */
-int
+static int
 anysumto(const CARD hand[], int n, int s, int t)
 {
 	int i;
@@ -321,7 +325,7 @@ anysumto(const CARD hand[], int n, int s, int t)
 /*
  * return the number of cards in h having the given rank value
  */
-int
+static int
 numofval(const CARD h[], int n, int v)
 {
 	int i, j;

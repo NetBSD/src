@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.23 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: crib.c,v 1.24 2009/08/12 05:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.23 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: crib.c,v 1.24 2009/08/12 05:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,18 @@ __RCSID("$NetBSD: crib.c,v 1.23 2009/07/13 19:05:40 roy Exp $");
 #include "cribbage.h"
 #include "cribcur.h"
 #include "pathnames.h"
+
+static void makeboard(void);
+static void gamescore(void);
+static void game(void);
+static int playhand(BOOLEAN);
+static int deal(BOOLEAN);
+static void discard(BOOLEAN);
+static int cut(BOOLEAN, int);
+static void prcrib(BOOLEAN, BOOLEAN);
+static int peg(BOOLEAN);
+static void prtable(int);
+static int score(BOOLEAN);
 
 int
 main(int argc, char *argv[])
@@ -158,7 +170,7 @@ main(int argc, char *argv[])
  * makeboard:
  *	Print out the initial board on the screen
  */
-void
+static void
 makeboard(void)
 {
 	mvaddstr(SCORE_Y + 0, SCORE_X,
@@ -186,7 +198,7 @@ makeboard(void)
  * gamescore:
  *	Print out the current game score
  */
-void
+static void
 gamescore(void)
 {
 	if (pgames || cgames) {
@@ -202,7 +214,7 @@ gamescore(void)
  *	Play one game up to glimit points.  Actually, we only ASK the
  *	player what card to turn.  We do a random one, anyway.
  */
-void
+static void
 game(void)
 {
 	int i, j;
@@ -296,7 +308,7 @@ game(void)
  * playhand:
  *	Do up one hand of the game
  */
-int
+static int
 playhand(BOOLEAN mycrib)
 {
 	int deckpos;
@@ -327,7 +339,7 @@ playhand(BOOLEAN mycrib)
 /*
  * deal cards to both players from deck
  */
-int
+static int
 deal(BOOLEAN mycrib)
 {
 	int i, j;
@@ -349,7 +361,7 @@ deal(BOOLEAN mycrib)
  *	Handle players discarding into the crib...
  * Note: we call cdiscard() after prining first message so player doesn't wait
  */
-void
+static void
 discard(BOOLEAN mycrib)
 {
 	const char *prompt;
@@ -378,7 +390,7 @@ discard(BOOLEAN mycrib)
  *	Cut the deck and set turnover.  Actually, we only ASK the
  *	player what card to turn.  We do a random one, anyway.
  */
-int
+static int
 cut(BOOLEAN mycrib, int  pos)
 {
 	int i;
@@ -420,7 +432,7 @@ cut(BOOLEAN mycrib, int  pos)
  * prcrib:
  *	Print out the turnover card with crib indicator
  */
-void
+static void
 prcrib(BOOLEAN mycrib, BOOLEAN blank)
 {
 	int y, cardx;
@@ -450,7 +462,7 @@ prcrib(BOOLEAN mycrib, BOOLEAN blank)
 static CARD Table[14];
 static int Tcnt;
 
-int
+static int
 peg(BOOLEAN mycrib)
 {
 	static CARD ch[CINHAND], ph[CINHAND];
@@ -609,7 +621,7 @@ peg(BOOLEAN mycrib)
  * prtable:
  *	Print out the table with the current score
  */
-void
+static void
 prtable(int curscore)
 {
 	prhand(Table, Tcnt, Tablewin, FALSE);
@@ -621,7 +633,7 @@ prtable(int curscore)
  * score:
  *	Handle the scoring of the hands
  */
-int
+static int
 score(BOOLEAN mycrib)
 {
 	sorthand(crib, CINHAND);
