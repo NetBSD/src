@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.11 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: play.c,v 1.12 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play.c,v 1.11 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: play.c,v 1.12 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: play.c,v 1.11 2009/05/24 21:44:56 dholland Exp $");
 #include <setjmp.h>
 #include "trek.h"
 #include "getpar.h"
+
+static void myreset(int) __dead;
 
 /*
 **  INSTRUCTION READ AND MAIN PLAY LOOP
@@ -56,7 +58,7 @@ __RCSID("$NetBSD: play.c,v 1.11 2009/05/24 21:44:56 dholland Exp $");
 
 extern jmp_buf env;
 
-const struct cvntab	Comtab[] = {
+static const struct cvntab Comtab[] = {
 	{ "abandon",		"",		abandon,	0 },
 	{ "ca",			"pture",	capture,	0 },
 	{ "cl",			"oak",		shield,		-1 },
@@ -84,7 +86,7 @@ const struct cvntab	Comtab[] = {
 };
 
 /*ARGSUSED*/
-void
+static void
 myreset(int v __unused)
 {
 

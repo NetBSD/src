@@ -1,4 +1,4 @@
-/*	$NetBSD: capture.c,v 1.11 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: capture.c,v 1.12 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)capture.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: capture.c,v 1.11 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: capture.c,v 1.12 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include "trek.h"
+
+static struct kling *selectklingon(void);
 
 /*
 **  Ask a Klingon To Surrender
@@ -121,7 +123,7 @@ capture(int v __unused)
 **	Cruddy, just takes one at random.  Should ask the captain.
 */
 
-struct kling *
+static struct kling *
 selectklingon(void)
 {
 	int		i;
