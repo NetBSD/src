@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.33 2007/02/18 16:18:25 ad Exp $
+#	$NetBSD: Makefile,v 1.34 2009/08/12 23:29:20 matt Exp $
 
 INCSDIR= /usr/include/pmax
 
-INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
-	bswap.h bsd-aout.h bus.h \
+INCS=	ansi.h asm.h autoconf.h \
+	bswap.h bus.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \

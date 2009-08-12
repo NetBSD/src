@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.10 2007/02/18 16:24:31 ad Exp $
+# $NetBSD: Makefile,v 1.11 2009/08/12 23:29:20 matt Exp $
 
 INCSDIR= /usr/include/sbmips
 
 # XXXcgd need local: bus.h pci_machdep.h
 # XXXcgd need export: intr.h
 
-INCS=	ansi.h aout_machdep.h asm.h \
-	bsd-aout.h bswap.h \
+INCS=	ansi.h asm.h \
+	bswap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \

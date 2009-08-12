@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.55 2009/03/29 01:02:49 mrg Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.56 2009/08/12 23:29:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.55 2009/03/29 01:02:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.56 2009/08/12 23:29:19 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -55,64 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.55 2009/03/29 01:02:49 mrg Exp $");
 #include <sys/exec_ecoff.h>
 #endif
 #include <sys/exec_elf.h>			/* mandatory */
-#include <mips/bsd-aout.h>
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
 int	mips_elf_makecmds(struct lwp *, struct exec_package *);
-
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	int error;
-
-	/* If COMPAT_09 is defined, allow loading of old-style 4.4bsd a.out
-	   executables. */
-	struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp->ep_hdr;
-
-	/* Only handle paged files (laziness). */
-	if (hdr->a_magic != BSD_ZMAGIC)
-	{
-		/* If that failed, try old NetBSD-1.1 elf format */
-		error = mips_elf_makecmds (l, epp);
-		return error;
-	}
-
-	error = vn_marktext(epp->ep_vp);
-	if (error)
-		return (error);
-
-	epp->ep_taddr = 0x1000;
-	epp->ep_entry = hdr->a_entry;
-	epp->ep_tsize = hdr->a_text;
-	epp->ep_daddr = epp->ep_taddr + hdr->a_text;
-	epp->ep_dsize = hdr->a_data + hdr->a_bss;
-
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr->a_text,
-	    epp->ep_taddr, epp->ep_vp, 0, VM_PROT_READ|VM_PROT_EXECUTE);
-
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr->a_data,
-	    epp->ep_daddr, epp->ep_vp, hdr->a_text,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, hdr->a_bss,
-	    epp->ep_daddr + hdr->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return (*epp->ep_esch->es_setup_stack)(l, epp);
-}
 
 #ifdef EXEC_ECOFF
 void
