@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.28 2009/03/14 15:36:10 dsl Exp $ */
+/* $NetBSD: sbscn.c,v 1.29 2009/08/12 12:56:29 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.28 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.29 2009/08/12 12:56:29 simonb Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -276,7 +276,7 @@ sbscn_attach(struct device *parent, struct device *self, void *aux)
 	struct sbobio_attach_args *sap = aux;
 	int i;
 
-	sc->sc_addr = sap->sa_base + sap->sa_locs.sa_offset;
+	sc->sc_addr = sap->sa_locs.sa_addr;
 
 	printf("\n");
 	for (i = 0; i < 2; i++)

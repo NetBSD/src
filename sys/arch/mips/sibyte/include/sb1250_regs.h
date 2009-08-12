@@ -305,6 +305,7 @@
 #define R_DUART_CMD                 0x150
 #define R_DUART_RX_HOLD             0x160
 #define R_DUART_TX_HOLD             0x170
+#define R_DUART_REGBASE	            R_DUART_MODE_REG_1	/* Added for NetBSD */
 
 #if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 #define R_DUART_FULL_CTL	    0x140

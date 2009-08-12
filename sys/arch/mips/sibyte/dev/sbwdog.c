@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.7 2006/01/12 04:40:50 simonb Exp $ */
+/* $NetBSD: sbwdog.c,v 1.8 2009/08/12 12:56:29 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.7 2006/01/12 04:40:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.8 2009/08/12 12:56:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ sbwdog_attach(struct device *parent, struct device *self, void *aux)
 	struct sbscd_attach_args *sa = aux;
 
 	sc->sc_wdog_period = SBWDOG_DEFAULT_PERIOD;
-	sc->sc_addr = MIPS_PHYS_TO_KSEG1(sa->sa_base + sa->sa_locs.sa_offset);
+	sc->sc_addr = MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr);
 
 	printf(": %d second period\n", sc->sc_wdog_period);
 
