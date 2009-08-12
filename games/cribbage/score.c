@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.14 2009/06/04 04:48:04 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.15 2009/08/12 05:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.14 2009/06/04 04:48:04 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.15 2009/08/12 05:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,13 +46,16 @@ __RCSID("$NetBSD: score.c,v 1.14 2009/06/04 04:48:04 dholland Exp $");
 #include "deck.h"
 #include "cribbage.h"
 
+static int fifteens(const CARD [], int);
+static int pairuns(const CARD [], int);
+
 /*
  * the following arrays give the sum of the scores of the (50 2)*48 = 58800
  * hands obtainable for the crib given the two cards whose ranks index the
  * array.  the two arrays are for the case where the suits are equal and
  * not equal respectively
  */
-const long crbescr[169] = {
+static const long crbescr[169] = {
     -10000, 271827, 278883, 332319, 347769, 261129, 250653, 253203, 248259,
     243435, 256275, 237435, 231051, -10000, -10000, 412815, 295707, 349497,
     267519, 262521, 259695, 254019, 250047, 262887, 244047, 237663, -10000,
@@ -74,7 +77,7 @@ const long crbescr[169] = {
     -10000, -10000, -10000, -10000, -10000, -10000, -10000
 };
 
-const long crbnescr[169] = {
+static const long crbnescr[169] = {
     325272, 260772, 267828, 321264, 336714, 250074, 239598, 242148, 237204,
     232380, 246348, 226380, 219996, -10000, 342528, 401760, 284652, 338442,
     256464, 251466, 248640, 242964, 238992, 252960, 232992, 226608, -10000,
@@ -177,7 +180,7 @@ scorehand(const CARD hand[], CARD starter, int n, BOOLEAN crb,
  * fifteens:
  *	Return number of fifteens in hand of n cards
  */
-int
+static int
 fifteens(const CARD hand[], int n)
 {
 	int *sp, *np;
@@ -218,7 +221,7 @@ fifteens(const CARD hand[], int n)
  * this routine only works if n is strictly less than 6
  * sets the globals pairpoints and runpoints appropriately
  */
-int
+static int
 pairuns(const CARD h[], int n)
 {
 	int i;
