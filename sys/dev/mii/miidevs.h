@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.90 2009/06/18 11:33:31 rjs Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.91 2009/08/12 13:33:42 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.88 2009/06/18 11:32:29 rjs Exp
+ *	NetBSD: miidevs,v 1.89 2009/08/12 13:33:02 simonb Exp
  */
 
 /*-
@@ -179,6 +179,8 @@
 #define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5411	0x0007
 #define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5464	0x000b
+#define	MII_STR_BROADCOM_BCM5464	"BCM5464 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5462	0x000d
 #define	MII_STR_BROADCOM_BCM5462	"BCM5462 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5421	0x000e
