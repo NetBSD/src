@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.12 2009/05/25 23:08:45 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.13 2009/08/12 08:21:41 dholland Exp $	*/
 
 /*
  * io.c - input/output routines for Phantasia
@@ -8,6 +8,8 @@
 #undef bool
 #include <sys/cdefs.h>
 #include <curses.h>
+
+static void catchalarm(int) __dead;
 
 void
 getstring(char *cp, int mx)
@@ -234,7 +236,7 @@ getanswer(const char *choices, phbool def)
 	return (*choices);
 }
 
-void
+static void
 catchalarm(int dummy __unused)
 {
 	longjmp(Timeoenv, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pig.c,v 1.13 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: pig.c,v 1.14 2009/08/12 08:22:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: pig.c,v 1.13 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: pig.c,v 1.14 2009/08/12 08:22:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: pig.c,v 1.13 2008/07/20 01:03:21 lukem Exp $");
 #include <unistd.h>
 
 int main(int, char *[]);
-void pigout(char *, int);
-void usage(void) __dead;
+static void pigout(char *, int);
+static void usage(void) __dead;
 
 int
 main(argc, argv)
@@ -90,7 +90,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 pigout(buf, len)
 	char *buf;
 	int len;
@@ -131,7 +131,7 @@ pigout(buf, len)
 	(void)printf("%.*s%s", olen, buf + start, allupper ? "AY" : "ay");
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: pig\n");

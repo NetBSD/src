@@ -1,4 +1,4 @@
-/*	$NetBSD: phantglobs.h,v 1.10 2009/05/25 22:35:01 dholland Exp $	*/
+/*	$NetBSD: phantglobs.h,v 1.11 2009/08/12 08:21:41 dholland Exp $	*/
 
 /*
  * phantglobs.h - global declarations for Phantasia
@@ -66,20 +66,13 @@ const char	*descrtype(struct player *, bool);
 void	activelist(void);
 void	adjuststats(void);
 long	allocrecord(void);
-long	allocvoid(void);
 void	allstatslist(void);
 void	altercoordinates(double, double, int);
-void	awardtreasure(void);
-void	battleplayer(long);
-void	callmonster(int);
-void	cancelmonster(void);
-void	catchalarm(int) __dead;
 void	changestats(bool);
 void	checkbattle(void);
 void	checktampered(void);
 void	cleanup(int);
 void	collecttaxes(double, double);
-void	cursedtreasure(void);
 void	death(const char *);
 void	displaystats(void);
 double	distance(double, double, double, double);
@@ -88,41 +81,23 @@ double	drandom(void);
 void	encounter(int);
 void	enterscore(void);
 void	error(const char *);
-double	explevel(double);
 long	findname(const char *, struct player *);
 void	freerecord(struct player *, long);
-void	genchar(int);
 int	getanswer(const char *, bool);
 void	getstring(char *, int);
-void	hitmonster(double);
 void	ill_sig(int);
 double	infloat(void);
-void	initialstate(void);
 void	initplayer(struct player *);
 int	inputoption(void);
 void	interrupt(void);
 void	leavegame(void);
-void	monsthits(void);
 void	monstlist(void);
 void	more(int);
-void	movelevel(void);
-void	myturn(void);
-void	neatstuff(void);
-int	pickmonster(void);
-void	playerhits(void);
-void	playinit(void);
-void	procmain(void);
 void	purgeoldplayers(void);
 void	readmessage(void);
 void	readrecord(struct player *, long);
-long	recallplayer(void);
-long	rollnewplayer(void);
 void	scorelist(void);
-void	scramblestats(void);
-void	tampered(int, double, double);
 void	throneroom(void);
-void	throwspell(void);
-void	titlelist(void);
 void	tradingpost(void);
 void	truncstring(char *);
 void	userlist(bool);

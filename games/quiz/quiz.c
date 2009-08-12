@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.23 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: quiz.c,v 1.24 2009/08/12 08:26:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.23 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.24 2009/08/12 08:26:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,16 +64,16 @@ static QE qlist;
 static int catone, cattwo, tflag;
 static u_int qsize;
 
-char	*appdstr(char *, const char *, size_t);
-void	 downcase(char *);
-void	 get_cats(char *, char *);
-void	 get_file(const char *);
 int	 main(int, char *[]);
-const char	*next_cat(const char *);
-void	 quiz(void);
-void	 score(u_int, u_int, u_int);
-void	 show_index(void);
-void	 usage(void) __dead;
+static char *appdstr(char *, const char *, size_t);
+static void downcase(char *);
+static void get_cats(char *, char *);
+static void get_file(const char *);
+static const char *next_cat(const char *);
+static void quiz(void);
+static void score(u_int, u_int, u_int);
+static void show_index(void);
+static void usage(void) __dead;
 
 int
 main(argc, argv)
@@ -118,7 +118,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 get_file(file)
 	const char *file;
 {
@@ -158,7 +158,7 @@ get_file(file)
 	(void)fclose(fp);
 }
 
-void
+static void
 show_index()
 {
 	QE *qp;
@@ -191,7 +191,7 @@ show_index()
 	(void)pclose(pf);
 }
 
-void
+static void
 get_cats(cat1, cat2)
 	char *cat1, *cat2;
 {
@@ -224,7 +224,7 @@ get_cats(cat1, cat2)
 	errx(1, "invalid categories");
 }
 
-void
+static void
 quiz()
 {
 	QE *qp;
@@ -307,7 +307,7 @@ quiz()
 	score(rights, wrongs, guesses);
 }
 
-const char *
+static const char *
 next_cat(s)
 	const char *	s;
 {
@@ -331,7 +331,7 @@ next_cat(s)
 	/* NOTREACHED */
 }
 
-char *
+static char *
 appdstr(s, tp, len)
 	char *s;
 	const char *tp;
@@ -358,7 +358,7 @@ appdstr(s, tp, len)
 	return (m);
 }
 
-void
+static void
 score(r, w, g)
 	u_int r, w, g;
 {
@@ -368,7 +368,7 @@ score(r, w, g)
 	(void)printf(" score %d%%\n", (r + w + g) ? r * 100 / (r + w + g) : 0);
 }
 
-void
+static void
 downcase(p)
 	char *p;
 {
@@ -379,7 +379,7 @@ downcase(p)
 			*p = tolower(ch);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr, "quiz [-t] [-i file] category1 category2\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.22 2009/08/03 06:04:12 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.23 2009/08/12 08:30:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.22 2009/08/03 06:04:12 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.23 2009/08/12 08:30:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,9 @@ int Max_per_uid = MAX_PER_UID;
 static SCORE Top[MAXSCORES];
 
 static uint32_t numscores, max_uid;
+
+static int cmp_sc(const void *, const void *);
+static void set_name(SCORE *);
 
 /*
  * read_score:
@@ -189,7 +192,7 @@ score(int score_wfd)
 	lseek(inf, 0, SEEK_SET);
 }
 
-void
+static void
 set_name(SCORE *scp)
 {
 	struct passwd *pp;
@@ -204,7 +207,7 @@ set_name(SCORE *scp)
  * cmp_sc:
  *	Compare two scores.
  */
-int
+static int
 cmp_sc(const void *s1, const void *s2)
 {
 	return ((const SCORE *)s2)->s_score - ((const SCORE *)s1)->s_score;

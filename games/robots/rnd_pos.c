@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_pos.c,v 1.9 2009/07/20 06:43:18 dholland Exp $	*/
+/*	$NetBSD: rnd_pos.c,v 1.10 2009/08/12 08:30:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rnd_pos.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rnd_pos.c,v 1.9 2009/07/20 06:43:18 dholland Exp $");
+__RCSID("$NetBSD: rnd_pos.c,v 1.10 2009/08/12 08:30:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: rnd_pos.c,v 1.9 2009/07/20 06:43:18 dholland Exp $");
 #include "robots.h"
 
 #define IS_SAME(p,y,x)	((p).y != -1 && (p).y == y && (p).x == x)
+
+static int rnd(int);
 
 /*
  * rnd_pos:
@@ -63,7 +65,7 @@ rnd_pos(void)
 	return &pos;
 }
 
-int
+static int
 rnd(int range)
 {
 

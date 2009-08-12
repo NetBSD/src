@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.15 2009/07/20 06:39:06 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.16 2009/08/12 08:30:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.15 2009/07/20 06:39:06 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.16 2009/08/12 08:30:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,10 @@ __RCSID("$NetBSD: move.c,v 1.15 2009/07/20 06:39:06 dholland Exp $");
 #include "robots.h"
 
 #define ESC	'\033'
+
+static bool do_move(int, int);
+static bool eaten(const COORD *);
+static bool must_telep(void);
 
 /*
  * get_move:
@@ -212,7 +216,7 @@ ret:
  *	Must I teleport; i.e., is there anywhere I can move without
  * being eaten?
  */
-bool
+static bool
 must_telep(void)
 {
 	int x, y;
@@ -244,7 +248,7 @@ must_telep(void)
  * do_move:
  *	Execute a move
  */
-bool
+static bool
 do_move(int dy, int dx)
 {
 	static COORD newpos;
@@ -280,7 +284,7 @@ do_move(int dy, int dx)
  * eaten:
  *	Player would get eaten at this place
  */
-bool
+static bool
 eaten(const COORD *pos)
 {
 	int x, y;
