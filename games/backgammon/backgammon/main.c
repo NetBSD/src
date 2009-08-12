@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2008/07/21 13:24:38 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2009/08/12 04:51:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2008/07/21 13:24:38 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2009/08/12 04:51:11 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: main.c,v 1.25 2008/07/21 13:24:38 lukem Exp $");
 
 extern const char   *const instr[];		/* text of instructions */
 extern const char   *const message[];		/* update message */
-short ospeed;			/* tty output speed */
+extern short ospeed;			/* tty output speed */
 
 const char   *const helpm[] = {		/* help message */
 	"Enter a space or newline to roll, or",
