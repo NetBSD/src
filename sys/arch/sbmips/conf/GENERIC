@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.74 2009/03/06 20:31:51 joerg Exp $
+# $NetBSD: GENERIC,v 1.75 2009/08/12 12:56:30 simonb Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.75 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -138,16 +138,16 @@ cpu*		at zbbus? busid ?
 sbscd*		at zbbus? busid ?
 sbobio*		at zbbus? busid ?
 
-#sbicu*		at sbscd? offset ?
-sbwdog*		at sbscd? offset ? intr ?
-sbtimer0	at sbscd? offset ? intr ? flags 0x01		# clock
-#sbtimer1	at sbscd? offset ? intr ? flags 0x02		# statclock
-sbtimer*	at sbscd? offset ? intr ?
+#sbicu*		at sbscd? addr ?
+sbwdog*		at sbscd? addr ? intr ?
+sbtimer0	at sbscd? addr ? intr ? flags 0x01		# clock
+#sbtimer1	at sbscd? addr ? intr ? flags 0x02		# statclock
+sbtimer*	at sbscd? addr ? intr ?
 
-sbmac*		at sbobio? offset ?
-sbscn*		at sbobio? offset ?
-#sbgbus*	at sbobio? offset ?
-smbus*		at sbobio? offset ?
+sbmac*		at sbobio? addr ?
+sbscn*		at sbobio? addr ?
+#sbgbus*	at sbobio? addr ?
+smbus*		at sbobio? addr ?
 
 xirtc*		at smbus? chan ? dev ?		# Xicor X1241 RTC
 m41t81rtc*	at smbus? chan ? dev ?		# ST M41T81 RTC
