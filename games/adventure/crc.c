@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.9 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: crc.c,v 1.10 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,13 @@
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-__RCSID("$NetBSD: crc.c,v 1.9 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: crc.c,v 1.10 2009/08/12 04:28:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
-const unsigned long crctab[] = {
+static const unsigned long crctab[] = {
 	0x7fffffff,
 	0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e,
@@ -106,8 +106,8 @@ const unsigned long crctab[] = {
  *      it.
  */
 
-unsigned long crcval;
-unsigned int step;
+static unsigned long crcval;
+static unsigned int step;
 
 void
 crc_start()

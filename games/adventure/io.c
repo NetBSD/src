@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.20 2006/05/18 18:42:59 mrg Exp $	*/
+/*	$NetBSD: io.c,v 1.21 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.20 2006/05/18 18:42:59 mrg Exp $");
+__RCSID("$NetBSD: io.c,v 1.21 2009/08/12 04:28:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,15 @@ __RCSID("$NetBSD: io.c,v 1.20 2006/05/18 18:42:59 mrg Exp $");
 #include "hdr.h"
 #include "extern.h"
 
+static int next(void);
+static void rdesc(int);
+static void rdflt(void);
+static void rhints(void);
+static void rliq(void);
+static void rlocs(void);
+static int rnum(void);
+static void rtrav(void);
+static void rvoc(void);
 
 /* get command from user        */
 /* no prompt, usually           */
@@ -159,15 +168,15 @@ yesm(int x, int y, int z)
 }
 /* FILE *inbuf,*outbuf; */
 
-char   *inptr;			/* Pointer into virtual disk    */
+static char *inptr;		/* Pointer into virtual disk    */
 
-int     outsw = 0;		/* putting stuff to data file?  */
+static int outsw = 0;		/* putting stuff to data file?  */
 
-const char    iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
-const char   *tape = iotape;		/* pointer to encryption tape   */
+static const char    iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
+static const char   *tape = iotape;	/* pointer to encryption tape   */
 
 /* next virtual char, bump adr  */
-int
+static int
 next(void)
 {	
 	int     ch;
@@ -182,7 +191,7 @@ next(void)
 	return (ch);
 }
 
-char    breakch;		/* tell which char ended rnum   */
+static char breakch;		/* tell which char ended rnum   */
 
 /* "read" data from virtual file */
 void
@@ -259,10 +268,10 @@ rdata(void)
 	}
 }
 
-char    nbf[12];
+static char nbf[12];
 
 /* read initial location num    */
-int
+static int
 rnum(void)
 {	
 	char   *s;
@@ -277,10 +286,10 @@ rnum(void)
 	return (atoi(nbf));	/* convert it to integer        */
 }
 
-char   *seekhere;
+static char *seekhere;
 
 /* read description-format msgs */
-void
+static void
 rdesc(int sect)
 {
 	int     locc;
@@ -343,7 +352,7 @@ rdesc(int sect)
 }
 
 /* read travel table            */
-void
+static void
 rtrav(void)
 {	
 	int     locc;
@@ -424,7 +433,7 @@ twrite(int loq)
 #endif				/* DEBUG */
 
 /* read the vocabulary          */
-void
+static void
 rvoc(void)
 {
 	char   *s;
@@ -449,7 +458,7 @@ rvoc(void)
 }
 
 /* initial object locations     */
-void
+static void
 rlocs(void)
 {	
 	for (;;) {
@@ -464,7 +473,7 @@ rlocs(void)
 }
 
 /* default verb messages        */
-void
+static void
 rdflt(void)
 {	
 	for (;;) {
@@ -475,7 +484,7 @@ rdflt(void)
 }
 
 /* liquid assets &c: cond bits  */
-void
+static void
 rliq(void)
 {	
 	int     bitnum;
@@ -493,7 +502,7 @@ rliq(void)
 	}
 }
 
-void
+static void
 rhints(void)
 {
 	int     hintnum, i;

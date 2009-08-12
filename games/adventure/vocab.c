@@ -1,4 +1,4 @@
-/*	$NetBSD: vocab.c,v 1.13 2006/03/18 23:35:51 christos Exp $	*/
+/*	$NetBSD: vocab.c,v 1.14 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: vocab.c,v 1.13 2006/03/18 23:35:51 christos Exp $");
+__RCSID("$NetBSD: vocab.c,v 1.14 2009/08/12 04:28:27 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -189,8 +189,8 @@ exitloop2:			/* hashed entry does not match  */
 	}
 }
 
-/* print hash table             */
-void
+/* print hash table (for debugging)             */
+static __unused void
 prht(void)
 {	
 	int     i, j, l;

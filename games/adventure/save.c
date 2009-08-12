@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.9 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: save.c,v 1.10 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.9 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: save.c,v 1.10 2009/08/12 04:28:27 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,7 +54,7 @@ struct savestruct {
 	int     width;
 };
 
-struct savestruct save_array[] =
+static const struct savestruct save_array[] =
 {
 	{&abbnum, sizeof(abbnum)},
 	{&attack, sizeof(attack)},
@@ -126,7 +126,7 @@ int
 save(const char *outfile)
 {
 	FILE   *out;
-	struct savestruct *p;
+	const struct savestruct *p;
 	char   *s;
 	long    sum;
 	int     i;
@@ -159,7 +159,7 @@ int
 restore(const char *infile)
 {
 	FILE   *in;
-	struct savestruct *p;
+	const struct savestruct *p;
 	char   *s;
 	long    sum, cksum = 0;
 	int     i;

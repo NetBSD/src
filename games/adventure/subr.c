@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.11 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: subr.c,v 1.12 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.11 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: subr.c,v 1.12 2009/08/12 04:28:27 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,6 +49,14 @@ __RCSID("$NetBSD: subr.c,v 1.11 2005/07/01 00:03:36 jmc Exp $");
 #include <stdlib.h>
 #include "hdr.h"
 #include "extern.h"
+
+static void badmove(void);
+static int bitset(int, int);
+static int dropper(void);
+static int liq2(int);
+static int mback(void);
+static int specials(void);
+static int trbridge(void);
 
 /*              Statement functions     */
 int
@@ -78,7 +86,7 @@ at(int objj)
 		return (FALSE);
 }
 
-int
+static int
 liq2(int pbotl)
 {
 	return ((1 - pbotl) * water + (pbotl / 2) * (water + oil));
@@ -107,7 +115,7 @@ liqloc(int locc)
 	return (liq2(j * l + 1));
 }
 
-int
+static int
 bitset(int l, int n)
 {
 	if (cond[l] & setbit[n])
@@ -373,7 +381,7 @@ l12:				/* alternative to probability move      */
 }
 
 /* 20                   */
-int
+static int
 mback(void)
 {	
 	struct travlist *tk2, *j;
@@ -411,7 +419,7 @@ mback(void)
 }
 
 /* 30000                */
-int
+static int
 specials(void)
 {	
 	switch (newloc -= 300) {
@@ -433,7 +441,7 @@ specials(void)
 }
 
 /* 30300                */
-int
+static int
 trbridge(void)
 {
 	if (prop[troll] == 1) {
@@ -465,7 +473,7 @@ trbridge(void)
 }
 
 /* 20                   */
-void
+static void
 badmove(void)
 {
 	spk = 12;
@@ -616,7 +624,7 @@ l9014:	if ((obj == bird || obj == cage) && prop[bird] != 0)
 }
 
 /* 9021                 */
-int
+static int
 dropper(void)
 {	
 	k = liq();
