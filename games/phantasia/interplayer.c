@@ -1,4 +1,4 @@
-/*	$NetBSD: interplayer.c,v 1.10 2009/05/25 23:08:45 dholland Exp $	*/
+/*	$NetBSD: interplayer.c,v 1.11 2009/08/12 08:21:41 dholland Exp $	*/
 
 /*
  * interplayer.c - player to player routines for Phantasia
@@ -7,6 +7,11 @@
 #include "include.h"
 #undef bool
 #include <curses.h>
+
+static long allocvoid(void);
+static void battleplayer(long);
+static void myturn(void);
+static void tampered(int, double, double);
 
 void
 checkbattle(void)
@@ -45,7 +50,7 @@ checkbattle(void)
 	}
 }
 
-void
+static void
 battleplayer(long foeplace)
 {
 	double  dtemp;		/* for temporary calculations */
@@ -273,7 +278,7 @@ LEAVE:
 		death("Interterminal battle");
 }
 
-void
+static void
 myturn(void)
 {
 	double  dtemp;		/* for temporary calculations */
@@ -384,7 +389,7 @@ checktampered(void)
 		tampered(Other.p_tampered, Other.p_1scratch, Other.p_2scratch);
 }
 
-void
+static void
 tampered(int what, double arg1, double arg2)
 {
 	long    loc;		/* location in file of other players */
@@ -866,7 +871,7 @@ writevoid(struct energyvoid *vp, long loc)
 	fseek(Energyvoidfp, 0L, SEEK_SET);
 }
 
-long
+static long
 allocvoid(void)
 {
 	long    loc = 0L;	/* location of new energy void */

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.17 2009/05/25 23:14:33 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.18 2009/08/12 08:21:41 dholland Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -9,7 +9,9 @@
 #include <curses.h>
 
 
-void
+static double explevel(double);
+
+static void
 movelevel(void)
 {
 	const struct charstats *statptr; /* for pointing into Stattable */
@@ -682,7 +684,7 @@ writerecord(struct player *playerp, long place)
 	fflush(Playersfp);
 }
 
-double
+static double
 explevel(double experience)
 {
 	if (experience < 1.1e7)

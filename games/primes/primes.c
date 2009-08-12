@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.16 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: primes.c,v 1.17 2009/08/12 08:25:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.16 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: primes.c,v 1.17 2009/08/12 08:25:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: primes.c,v 1.16 2008/07/20 01:03:22 lukem Exp $");
  *
  * We make TABSIZE large to reduce the overhead of inner loop setup.
  */
-char table[TABSIZE];	 /* Eratosthenes sieve of odd numbers */
+static char table[TABSIZE];	 /* Eratosthenes sieve of odd numbers */
 
 /*
  * prime[i] is the (i-1)th prime.
@@ -103,12 +103,11 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 extern const char pattern[];
 extern const int pattern_size;	/* length of pattern array */
 
-int	dflag;
+static int dflag;
 
-int	main(int, char *[]);
-void	primes(ubig, ubig);
-ubig	read_num_buf(void);
-void	usage(void) __dead;
+static void primes(ubig, ubig);
+static ubig read_num_buf(void);
+static void usage(void) __dead;
 
 int
 main(int argc, char *argv[])

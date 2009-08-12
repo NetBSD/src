@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.11 2009/05/25 23:08:45 dholland Exp $	*/
+/*	$NetBSD: fight.c,v 1.12 2009/08/12 08:21:41 dholland Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -7,6 +7,17 @@
 #include "include.h"
 #undef bool
 #include <curses.h>
+
+static void awardtreasure(void);
+static void callmonster(int);
+static void cancelmonster(void);
+static void cursedtreasure(void);
+static void hitmonster(double);
+static void monsthits(void);
+static int pickmonster(void);
+static void playerhits(void);
+static void scramblestats(void);
+static void throwspell(void);
 
 void
 encounter(int particular)
@@ -152,7 +163,7 @@ encounter(int particular)
 	clrtobot();
 }
 
-int
+static int
 pickmonster(void)
 {
 	if (Player.p_specialtype == SC_VALAR)
@@ -192,7 +203,7 @@ pickmonster(void)
 						return ((int) ROLL(14.0, 25.0));
 }
 
-void
+static void
 playerhits(void)
 {
 	double  inflict;	/* damage inflicted */
@@ -335,7 +346,7 @@ playerhits(void)
 
 }
 
-void
+static void
 monsthits(void)
 {
 	double  inflict;	/* damage inflicted */
@@ -585,7 +596,7 @@ SPECIALHIT:
 	}
 }
 
-void
+static void
 cancelmonster(void)
 {
 	Curmonster.m_energy = 0.0;
@@ -594,7 +605,7 @@ cancelmonster(void)
 	Curmonster.m_flock = 0.0;
 }
 
-void
+static void
 hitmonster(double inflict)
 {
 	mvprintw(Lines++, 0, "You hit %s %.0f times!", Enemyname, inflict);
@@ -621,7 +632,7 @@ hitmonster(double inflict)
 	}
 }
 
-void
+static void
 throwspell(void)
 {
 	double  inflict;	/* damage inflicted */
@@ -831,7 +842,7 @@ throwspell(void)
 		}
 }
 
-void
+static void
 callmonster(int which)
 {
 	struct monster Othermonster;	/* to find a name for mimics */
@@ -908,7 +919,7 @@ callmonster(int which)
 	Curmonster.m_melee = Curmonster.m_skirmish = 0.0;
 }
 
-void
+static void
 awardtreasure(void)
 {
 	int     whichtreasure;	/* calculated treasure to grant */
@@ -1332,7 +1343,7 @@ awardtreasure(void)
 	}
 }
 
-void
+static void
 cursedtreasure(void)
 {
 	if (Player.p_charms > 0) {
@@ -1349,7 +1360,7 @@ cursedtreasure(void)
 		}
 }
 
-void
+static void
 scramblestats(void)
 {
 	double  dbuf[6];	/* to put statistic in */
