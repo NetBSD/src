@@ -1,4 +1,4 @@
-/*	$NetBSD: iomod.h,v 1.6 2009/05/27 09:30:14 skrll Exp $	*/
+/*	$NetBSD: iomod.h,v 1.7 2009/08/12 20:10:41 skrll Exp $	*/
 
 /*	$OpenBSD: iomod.h,v 1.18 2007/10/20 16:41:45 miod Exp $	*/
 
@@ -124,6 +124,7 @@
 #define	MAXMODBUS	((int)(FPA_IOMOD))	/* maximum modules/bus */
 
 #define	HPPA_FLEX_MASK	0xFFFC0000	/* (see below) */
+#define	HPPA_FLEX_SIZE	(~HPPA_FLEX_MASK + 1)
 #define	HPPA_FLEX(a)	(((a) & HPPA_FLEX_MASK) >> 18)
 
 /* size of HPA space for any device */
