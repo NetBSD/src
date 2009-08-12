@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.200.4.1 2009/07/09 19:38:27 snj Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.200.10.1 2009/07/09 19:35:56 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200.4.1 2009/07/09 19:38:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200.10.1 2009/07/09 19:35:56 snj Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"

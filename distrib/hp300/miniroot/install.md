@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.13.4.1 2009/06/19 21:39:00 snj Exp $
+#	$NetBSD: install.md,v 1.13.8.1 2009/06/19 21:38:04 snj Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.

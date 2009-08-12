@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.137.8.1 2009/05/03 13:34:25 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.137.14.1 2009/05/03 13:36:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.137.8.1 2009/05/03 13:34:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.137.14.1 2009/05/03 13:36:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

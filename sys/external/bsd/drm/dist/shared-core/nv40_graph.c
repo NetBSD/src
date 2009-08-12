@@ -1544,8 +1544,6 @@ nv40_graph_transfer_context(struct drm_device *dev, uint32_t inst, int save)
 	tmp |= NV40_PGRAPH_CTXCTL_0304_XFER_CTX;
 	NV_WRITE(NV40_PGRAPH_CTXCTL_0304, tmp);
 
-	nouveau_wait_for_idle(dev);
-
 	for (i = 0; i < tv; i++) {
 		if (NV_READ(NV40_PGRAPH_CTXCTL_030C) == 0)
 			break;
@@ -1567,7 +1565,9 @@ nv40_graph_transfer_context(struct drm_device *dev, uint32_t inst, int save)
 	return 0;
 }
 
-/* Save current context (from PGRAPH) into the channel's context */
+/* Save current context (from PGRAPH) into the channel's context
+ *XXX: fails sometimes, not sure why..
+ */
 int
 nv40_graph_save_context(struct nouveau_channel *chan)
 {
@@ -1581,7 +1581,9 @@ nv40_graph_save_context(struct nouveau_channel *chan)
 	return nv40_graph_transfer_context(dev, inst, 1);
 }
 
-/* Restore the context for a specific channel into PGRAPH */
+/* Restore the context for a specific channel into PGRAPH
+ * XXX: fails sometimes.. not sure why
+ */
 int
 nv40_graph_load_context(struct nouveau_channel *chan)
 {
@@ -1982,17 +1984,20 @@ nv40_graph_init(struct drm_device *dev)
 	default:
 		DRM_ERROR("Context program for 0x%02x unavailable\n",
 			  dev_priv->chipset);
-		return -EINVAL;
+		ctx_prog = NULL;
+		break;
 	}
 
 	/* Load the context program onto the card */
-	DRM_DEBUG("Loading context program\n");
+	if (ctx_prog) {
+		DRM_DEBUG("Loading context program\n");
+		i = 0;
 
-	i = 0;
-	NV_WRITE(NV40_PGRAPH_CTXCTL_UCODE_INDEX, 0);
-	while (ctx_prog[i] != ~0) {
-		NV_WRITE(NV40_PGRAPH_CTXCTL_UCODE_DATA, ctx_prog[i]);
-		i++;
+		NV_WRITE(NV40_PGRAPH_CTXCTL_UCODE_INDEX, 0);
+		while (ctx_prog[i] != ~0) {
+			NV_WRITE(NV40_PGRAPH_CTXCTL_UCODE_DATA, ctx_prog[i]);
+			i++;
+		}
 	}
 
 	/* No context present currently */

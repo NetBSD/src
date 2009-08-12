@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.12.2.1 2009/05/18 19:53:45 bouyer Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.12.4.1 2009/05/18 19:56:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.12.2.1 2009/05/18 19:53:45 bouyer Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.12.4.1 2009/05/18 19:56:04 bouyer Exp $");
 #endif
 
 #include <stdio.h>

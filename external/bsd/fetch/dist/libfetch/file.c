@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.2.4.1 2009/05/30 16:01:24 snj Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2.8.1 2009/05/30 15:58:17 snj Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>

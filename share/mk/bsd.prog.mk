@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.239.2.2 2009/06/06 22:10:12 bouyer Exp $
+#	$NetBSD: bsd.prog.mk,v 1.239.2.1.2.1 2009/06/06 22:10:49 bouyer Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG

@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.1.1.2.6.1 2009/05/30 16:40:31 snj Exp $	*/
+/*	$NetBSD: audit.c,v 1.1.1.2.8.1 2009/05/30 16:21:35 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: audit.c,v 1.1.1.2.6.1 2009/05/30 16:40:31 snj Exp $");
+__RCSID("$NetBSD: audit.c,v 1.1.1.2.8.1 2009/05/30 16:21:35 snj Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.

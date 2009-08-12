@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2.2.1 2009/05/22 21:47:57 snj Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2008/10/07 09:58:14 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -338,8 +338,7 @@ md_cleanup_install(void)
 int
 md_bios_info(char *dev)
 {
-	int cyl, head;
-	daddr_t sec;
+	int cyl, head, sec;
 
 	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
 	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)

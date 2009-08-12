@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.111.6.2 2009/06/09 17:50:34 snj Exp $	*/
+/*	$NetBSD: zs.c,v 1.111.6.1.2.1 2009/06/09 17:51:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.111.6.2 2009/06/09 17:50:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.111.6.1.2.1 2009/06/09 17:51:15 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

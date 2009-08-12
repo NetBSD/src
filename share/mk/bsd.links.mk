@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.32.24.1 2009/06/06 22:10:12 bouyer Exp $
+#	$NetBSD: bsd.links.mk,v 1.32.28.1 2009/06/06 22:10:49 bouyer Exp $
 
 .include <bsd.init.mk>
 

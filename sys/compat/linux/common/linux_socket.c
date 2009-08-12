@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.98.4.1 2009/06/17 20:15:53 bouyer Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.98.6.1 2009/06/17 20:15:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.98.4.1 2009/06/17 20:15:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.98.6.1 2009/06/17 20:15:56 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"

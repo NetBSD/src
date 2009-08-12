@@ -1,8 +1,5 @@
 # Configure the MTU for the interface
 
-if [ -n "$new_interface_mtu" ]; then
-	# The smalled MTU dhcpcd can work with is 576
-	if [ "$new_interface_mtu" -ge 576 ]; then
-		ifconfig "$interface" mtu "$new_interface_mtu"
-	fi
+if [ -n "${new_interface_mtu}" ]; then
+	ifconfig "${interface}" mtu "${new_interface_mtu}"
 fi

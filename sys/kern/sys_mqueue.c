@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.12.4.4 2009/07/21 00:23:01 snj Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.12.4.1.2.3 2009/07/21 00:21:21 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.4.4 2009/07/21 00:23:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.12.4.1.2.3 2009/07/21 00:21:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.291.4.1 2009/07/18 21:38:09 snj Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.291.8.1 2009/07/18 21:37:34 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.291.4.1 2009/07/18 21:38:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.291.8.1 2009/07/18 21:37:34 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

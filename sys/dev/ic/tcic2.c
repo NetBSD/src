@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.30.14.1 2009/07/26 18:33:35 snj Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.30.20.1 2009/07/26 18:31:38 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.30.14.1 2009/07/26 18:33:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.30.20.1 2009/07/26 18:31:38 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

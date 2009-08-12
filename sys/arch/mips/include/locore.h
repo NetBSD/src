@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.30.1 2009/06/09 17:45:00 snj Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1 2009/06/09 17:48:20 snj Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford

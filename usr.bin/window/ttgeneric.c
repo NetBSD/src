@@ -1,4 +1,4 @@
-/*	$NetBSD: ttgeneric.c,v 1.9.40.1 2009/06/17 20:30:59 bouyer Exp $	*/
+/*	$NetBSD: ttgeneric.c,v 1.9 2003/08/07 11:17:30 agc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttgeneric.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttgeneric.c,v 1.9.40.1 2009/06/17 20:30:59 bouyer Exp $");
+__RCSID("$NetBSD: ttgeneric.c,v 1.9 2003/08/07 11:17:30 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,8 +169,8 @@ gen_setmodes(int new)
 		} else
 			if (gen_SE) {
 				ttxputs(gen_SE);
-				if (gen_UE && gen_US && new & WWM_UL &&
-				    !strcmp(gen_SE->ts_str, gen_UE->ts_str))
+				if (!strcmp(gen_SE->ts_str, gen_UE->ts_str) &&
+				    gen_UE && gen_US && new & WWM_UL)
 					ttxputs(gen_US);
 			}
 	}
@@ -181,8 +181,8 @@ gen_setmodes(int new)
 		} else
 			if (gen_UE) {
 				ttxputs(gen_UE);
-				if (gen_SE && gen_SO && new & WWM_REV &&
-				    !strcmp(gen_UE->ts_str, gen_SE->ts_str))
+				if (!strcmp(gen_UE->ts_str, gen_SE->ts_str) &&
+				    gen_SE && gen_SO && new & WWM_REV)
 					ttxputs(gen_SO);
 			}
 	}

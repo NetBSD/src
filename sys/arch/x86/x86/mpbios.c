@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.47.4.1 2009/06/19 21:33:57 snj Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.47 2008/08/26 12:04:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.47.4.1 2009/06/19 21:33:57 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.47 2008/08/26 12:04:18 cegger Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -1203,7 +1203,7 @@ int
 mpbios_scan_pci(struct device *self, struct pcibus_attach_args *pba,
 	        cfprint_t print)
 {
-	int i, cnt = 0;
+	int i;
 	struct mp_bus *mpb;
 	struct pci_attach_args;
 
@@ -1214,10 +1214,9 @@ mpbios_scan_pci(struct device *self, struct pcibus_attach_args *pba,
 		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
 			pba->pba_bus = i;
 			config_found_ia(self, "pcibus", pba, print);
-			++cnt;
 		}
 	}
-	return cnt;
+	return 0;
 }
 
 #endif

@@ -123,11 +123,6 @@ int main(int argc, char **argv)
 {
 	int fd, ret, d1, d2;
 
-	if (getuid() != 0) {
-		fprintf(stderr, "updatedraw test requires root, skipping\n");
-		return 0;
-	}
-
 	fd = drm_open_any_master();
 
 	d1 = add_drawable(fd);

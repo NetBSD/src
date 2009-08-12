@@ -3,6 +3,7 @@
 .PATH:	${.CURDIR}/..
 KMOD	= drm
 NO_MAN	= YES
+NOMAN	= YES
 SRCS    = \
 	ati_pcigart.c \
 	drm_agpsupport.c \

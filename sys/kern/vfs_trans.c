@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.23.4.1 2009/07/01 22:39:20 snj Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.23.6.1 2009/07/01 22:39:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.23.4.1 2009/07/01 22:39:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.23.6.1 2009/07/01 22:39:28 snj Exp $");
 
 /*
  * File system transaction operations.

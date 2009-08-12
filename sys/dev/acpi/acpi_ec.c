@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.52.8.2 2009/05/01 01:42:33 snj Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.52 2008/06/03 15:12:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.52.8.2 2009/05/01 01:42:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.52 2008/06/03 15:12:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ acpiecdt_attach(device_t parent, device_t self, void *aux)
 	if (!acpiecdt_find(parent, &ec_handle, &cmd_reg, &data_reg, &gpebit))
 		panic("ECDT disappeared");
 
-	aprint_naive("\n");
+	aprint_naive(": ACPI Embedded Controller via ECDT\n");
 	aprint_normal(": ACPI Embedded Controller via ECDT\n");
 
 	acpiec_common_attach(parent, self, ec_handle, cmd_reg, data_reg,
@@ -257,12 +257,15 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 
 	if (ec_singleton != NULL) {
-		aprint_naive(": using %s\n", device_xname(ec_singleton));
-		aprint_normal(": using %s\n", device_xname(ec_singleton));
+		aprint_naive(": ACPI Embedded Controller (disabled)\n");
+		aprint_normal(": ACPI Embedded Controller (disabled)\n");
 		if (!pmf_device_register(self, NULL, NULL))
 			aprint_error_dev(self, "couldn't establish power handler\n");
 		return;
 	}
+
+	aprint_naive(": ACPI Embedded Controller\n");
+	aprint_normal(": ACPI Embedded Controller\n");
 
 	if (!acpiec_parse_gpe_package(self, aa->aa_node->ad_handle,
 				      &gpe_handle, &gpebit))

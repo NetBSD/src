@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.197.4.1 2009/07/21 00:31:58 snj Exp $	*/
+/*	$NetBSD: vnode.h,v 1.197.10.1 2009/07/21 00:29:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.

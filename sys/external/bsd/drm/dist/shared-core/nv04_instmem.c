@@ -17,7 +17,8 @@ nv04_instmem_determine_amount(struct drm_device *dev)
 		 */
 		dev_priv->ramin_rsvd_vram = (1*1024* 1024);
 	} else {
-		/*XXX: what *are* the limits on <NV40 cards?
+		/*XXX: what *are* the limits on <NV40 cards?, and does RAMIN
+		 *     exist in vram on those cards as well?
 		 */
 		dev_priv->ramin_rsvd_vram = (512*1024);
 	}
@@ -40,8 +41,7 @@ nv04_instmem_configure_fixed_tables(struct drm_device *dev)
 	 */
 	dev_priv->ramht_offset = 0x10000;
 	dev_priv->ramht_bits   = 9;
-	dev_priv->ramht_size   = (1 << dev_priv->ramht_bits); /* nr entries */
-	dev_priv->ramht_size  *= 8; /* 2 32-bit values per entry in RAMHT */
+	dev_priv->ramht_size   = (1 << dev_priv->ramht_bits);
 	DRM_DEBUG("RAMHT offset=0x%x, size=%d\n", dev_priv->ramht_offset,
 						  dev_priv->ramht_size);
 

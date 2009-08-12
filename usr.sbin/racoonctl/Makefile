@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.8.1 2009/05/10 20:27:34 snj Exp $
+# $NetBSD: Makefile,v 1.2.12.1 2009/05/10 20:28:58 snj Exp $
 
 WARNS=	0	# Will be fixed later
 

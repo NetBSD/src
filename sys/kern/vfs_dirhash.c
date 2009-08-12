@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.4.2.6 2009/05/03 13:21:36 bouyer Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.4.2.5 2009/01/06 23:01:49 snj Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.4.2.6 2009/05/03 13:21:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.4.2.5 2009/01/06 23:01:49 snj Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -151,16 +151,19 @@ dirhash_purge_entries(struct dirhash *dirh)
 		return;
 
 	for (hashline = 0; hashline < DIRHASH_HASHSIZE; hashline++) {
-		while ((dirh_e =
-		    LIST_FIRST(&dirh->entries[hashline])) != NULL) {
+		dirh_e = LIST_FIRST(&dirh->entries[hashline]);
+		while (dirh_e) {
 			LIST_REMOVE(dirh_e, next);
 			pool_put(&dirhash_entry_pool, dirh_e);
+			dirh_e = LIST_FIRST(&dirh->entries[hashline]);
 		}
 	}
+	dirh_e = LIST_FIRST(&dirh->free_entries);
 
-	while ((dirh_e = LIST_FIRST(&dirh->free_entries)) != NULL) {
+	while (dirh_e) {
 		LIST_REMOVE(dirh_e, next);
 		pool_put(&dirhash_entry_pool, dirh_e);
+		dirh_e = LIST_FIRST(&dirh->entries[hashline]);
 	}
 
 	dirh->flags &= ~DIRH_COMPLETE;
