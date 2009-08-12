@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.12 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: wizard.c,v 1.13 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.12 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.13 2009/08/12 04:28:27 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: wizard.c,v 1.12 2005/07/01 00:03:36 jmc Exp $");
 #include <time.h>
 #include "hdr.h"
 #include "extern.h"
+
+static int wizard(void);
 
 void
 datime(int *d, int *t)
@@ -71,7 +73,7 @@ datime(int *d, int *t)
 }				/* pretty painless              */
 
 
-char    magic[6];
+static char magic[6];
 
 void
 poof(void)
@@ -109,7 +111,7 @@ Start(void)
 }
 
 /* not as complex as advent/10 (for now)        */
-int
+static int
 wizard(void)
 {	
 	char   *word, *x;
