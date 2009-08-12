@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.20 2009/05/26 00:00:56 dholland Exp $	*/
+/*	$NetBSD: log.c,v 1.21 2009/08/12 04:48:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.20 2009/05/26 00:00:56 dholland Exp $");
+__RCSID("$NetBSD: log.c,v 1.21 2009/08/12 04:48:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: log.c,v 1.20 2009/05/26 00:00:56 dholland Exp $");
 
 static FILE *score_fp;
 
-int
+static int
 compar(const void *va, const void *vb)
 {
 	const SCORE	*a, *b;
@@ -78,7 +78,7 @@ compar(const void *va, const void *vb)
 #define MIN(t)		(((t) % SECAHOUR) / SECAMIN)
 #define SEC(t)		((t) % SECAMIN)
 
-const char *
+static const char *
 timestr(int t)
 {
 	static char	s[80];

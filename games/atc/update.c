@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.20 2009/05/26 00:00:56 dholland Exp $	*/
+/*	$NetBSD: update.c,v 1.21 2009/08/12 04:48:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,11 +46,15 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.20 2009/05/26 00:00:56 dholland Exp $");
+__RCSID("$NetBSD: update.c,v 1.21 2009/08/12 04:48:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "include.h"
+
+static int next_plane(void);
+static int too_close(const PLANE *p1, const PLANE *p2, int);
+static int dir_deg(int);
 
 /* ARGSUSED */
 void
@@ -274,7 +278,7 @@ number(int l)
 		return (-1);
 }
 
-int
+static int
 next_plane(void)
 {
 	static int	last_plane = -1;
@@ -390,7 +394,7 @@ findplane(int n)
 	return (NULL);
 }
 
-int
+static int
 too_close(const PLANE *p1, const PLANE *p2, int dist)
 {
 	if (ABS(p1->altitude - p2->altitude) <= dist &&
@@ -401,7 +405,7 @@ too_close(const PLANE *p1, const PLANE *p2, int dist)
 		return (0);
 }
 
-int
+static int
 dir_deg(int d)
 {
 	switch (d) {
