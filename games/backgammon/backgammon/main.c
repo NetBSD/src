@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2009/08/12 04:51:11 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2009/08/12 05:17:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2009/08/12 04:51:11 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2009/08/12 05:17:57 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,14 +54,14 @@ extern const char   *const instr[];		/* text of instructions */
 extern const char   *const message[];		/* update message */
 extern short ospeed;			/* tty output speed */
 
-const char   *const helpm[] = {		/* help message */
+static const char *const helpm[] = {		/* help message */
 	"Enter a space or newline to roll, or",
 	"     R   to reprint the board\tD   to double",
 	"     S   to save the game\tQ   to quit",
 	0
 };
 
-const char   *const contin[] = {		/* pause message */
+static const char *const contin[] = {		/* pause message */
 	"(Type a newline to continue.)",
 	"",
 	0

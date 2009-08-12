@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.19 2008/07/20 01:03:20 lukem Exp $	*/
+/*	$NetBSD: teach.c,v 1.20 2009/08/12 05:17:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,14 +39,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: teach.c,v 1.19 2008/07/20 01:03:20 lukem Exp $");
+__RCSID("$NetBSD: teach.c,v 1.20 2009/08/12 05:17:57 dholland Exp $");
 #endif
 #endif				/* not lint */
 
 #include "back.h"
 #include "tutor.h"
 
-const char   *const helpm[] = {
+static const char *const helpm[] = {
 	"\nEnter a space or newline to roll, or",
 	"     b   to display the board",
 	"     d   to double",
@@ -54,7 +54,7 @@ const char   *const helpm[] = {
 	0
 };
 
-const char   *const contin[] = {
+static const char *const contin[] = {
 	"",
 	0
 };

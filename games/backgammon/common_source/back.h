@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.15 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: back.h,v 1.16 2009/08/12 05:17:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -131,22 +131,17 @@ extern	int	begscr;		/* 'beginning' of screen
 
 int	addbuf(int);
 void	backone(int);
-void	bsect(int, int, int, int);
 void	buflush(void);
 int	canhit(int, int);
-int	checkd(int);
 int	checkmove(int);
 void	clear(void);
 void	clend(void);
 void	cline(void);
 int	count(void);
 void	curmove(int, int);
-int	dotable(int, int);
 void	errexit(const char *) __attribute__((__noreturn__));
 void	fancyc(int);
 void	fboard(void);
-void	fixcol(int, int, int, int, int);
-void	fixpos(int, int, int, int, int);
 void	fixtty(struct termios *);
 void	getarg(char ***);
 int	getcaps(const char *);
@@ -154,17 +149,14 @@ void	getmove(void);
 void	getout(int) __attribute__((__noreturn__));
 void	gwrite(void);
 void	init(void);
-int	last(void);
 int	main(int, char *[]);
 int	makmove(int);
 int	movallow(void);
 void	movback(int);
 void	moverr(int);
 int	movokay(int);
-void	newline(void);
 void	newpos(void);
 void	nexturn(void);
-void	norec(const char *) __attribute__((__noreturn__));
 void	odds(int, int, int);
 void	proll(void);
 int	quit(void);
@@ -172,11 +164,9 @@ int	readc(void);
 void	recover(const char *);
 void	refresh(void);
 void	roll(void);
-int	rsetbrd(void);
 void	save(int);
 int	text(const char *const *);
 void	wrboard(void);
-void	wrbsub(void);
 void	wrhit(int);
 void	wrint(int);
 void	writec(int);

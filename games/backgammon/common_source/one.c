@@ -1,4 +1,4 @@
-/*	$NetBSD: one.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: one.c,v 1.7 2009/08/12 05:17:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)one.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: one.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: one.c,v 1.7 2009/08/12 05:17:57 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
+
+static int checkd(int);
+static int last(void);
 
 int
 makmove(int i)
@@ -115,7 +118,7 @@ moverr(int i)
 }
 
 
-int
+static int
 checkd(int d)
 {
 	if (d0 != d)
@@ -123,7 +126,7 @@ checkd(int d)
 	return (0);
 }
 
-int
+static int
 last(void)
 {
 	int     i;

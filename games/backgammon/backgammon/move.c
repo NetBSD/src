@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.9 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: move.c,v 1.10 2009/08/12 05:17:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.9 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: move.c,v 1.10 2009/08/12 05:17:57 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,8 @@ struct BOARD {			/* structure of game position */
 	struct BOARD *b_next;	/* forward queue pointer */
 };
 
-struct BOARD *freeq = 0;
-struct BOARD *checkq = 0;
+static struct BOARD *freeq = 0;
+static struct BOARD *checkq = 0;
 
  /* these variables are values for the candidate move */
 static int ch;			/* chance of being hit */
@@ -90,6 +90,10 @@ static void boardcopy(struct BOARD *);
 static void makefree(struct BOARD *);
 static void mvcheck(struct BOARD *, struct BOARD *);
 static struct BOARD *nextfree(void);
+static void trymove(int, int);
+static void pickmove(void);
+static void movcmp(void);
+static int movegood(void);
 
 
 /* zero if first move */
@@ -183,7 +187,7 @@ move(int okay)
 
 /* 	mvnum   == number of move (rel zero) */
 /* 	swapped == see if swapped also tested */
-void
+static void
 trymove(int mvnum, int swapped)
 {
 	int     pos;		/* position on board */
@@ -361,7 +365,7 @@ nextfree(void)
 	return (new);
 }
 
-void
+static void
 pickmove(void)
 {
 	/* current game position */
@@ -402,7 +406,7 @@ boardcopy(struct BOARD *s)
 	}
 }
 
-void
+static void
 movcmp(void)
 {
 	int     i;
@@ -476,7 +480,7 @@ movcmp(void)
 #endif
 }
 
-int
+static int
 movegood(void)
 {
 	int     n;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2005/07/01 06:04:54 jmc Exp $ */
+/*	$NetBSD: extern.h,v 1.32 2009/08/12 05:20:38 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -331,7 +331,6 @@ extern const struct objs nightobjs[];
 void bury(void);
 int card(const char *, int);
 void chime(void);
-void convert(int);
 void crash(void);
 int cypher(void);
 void die(void) __attribute__((__noreturn__));
@@ -362,7 +361,6 @@ void news(void);
 void newway(int);
 void open_score_file(void);
 void parse(void);
-void post(int);
 void printobjs(void);
 int put(void);
 int puton(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: command1.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: command1.c,v 1.4 2009/08/12 05:20:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command1.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: command1.c,v 1.4 2009/08/12 05:20:38 dholland Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
+
+static void convert(int);
 
 int
 moveplayer(int thataway, int token)
@@ -70,7 +72,7 @@ moveplayer(int thataway, int token)
 }
 
 /* Converts day to night and vice versa. 	    */
-void
+static void
 convert(int tothis)
 {
 	const struct objs *p;
