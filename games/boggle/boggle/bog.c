@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.23 2009/07/13 19:05:39 roy Exp $	*/
+/*	$NetBSD: bog.c,v 1.24 2009/08/12 05:29:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.23 2009/07/13 19:05:39 roy Exp $");
+__RCSID("$NetBSD: bog.c,v 1.24 2009/08/12 05:29:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,13 @@ __RCSID("$NetBSD: bog.c,v 1.23 2009/07/13 19:05:39 roy Exp $");
 #include "bog.h"
 #include "extern.h"
 
-static	int	compar(const void *, const void *);
-	int	main(int, char *[]);
+static char *batchword(FILE *);
+static void playgame(void);
+static int validword(const char *);
+static void checkdict(void);
+static void newgame(const char *);
+static int compar(const void *, const void *);
+static void usage(void) __attribute__((__noreturn__));
 
 struct dictindex dictindex[26];
 
@@ -99,11 +104,11 @@ int wordlen;		/* Length of last word returned by nextword() */
 int usedbits;
 
 const char *pword[MAXPWORDS];
-char pwords[MAXPSPACE], *pwordsp;
+static char pwords[MAXPSPACE], *pwordsp;
 int npwords;
 
 const char *mword[MAXMWORDS];
-char mwords[MAXMSPACE], *mwordsp;
+static char mwords[MAXMSPACE], *mwordsp;
 int nmwords;
 
 int ngames = 0;
@@ -113,14 +118,13 @@ int tnmwords = 0, tnpwords = 0;
 jmp_buf env;
 
 time_t start_t;
+int debug;
+int tlimit;
 
 static FILE *dictfp;
-
-int batch;
-int debug;
-int minlength;
-int reuse;
-int tlimit;
+static int batch;
+static int minlength;
+static int reuse;
 
 int
 main(int argc, char *argv[])
@@ -279,7 +283,7 @@ main(int argc, char *argv[])
  * Read a line from the given stream and check if it is legal
  * Return a pointer to a legal word or a null pointer when EOF is reached
  */
-char *
+static char *
 batchword(FILE *fp)
 {
 	int *p, *q;
@@ -307,7 +311,7 @@ batchword(FILE *fp)
  * Reset the word lists from last game
  * Keep track of the running stats
  */
-void
+static void
 playgame(void)
 {
 	int i, *p, *q;
@@ -510,7 +514,7 @@ checkword(const char *word, int prev, int *path)
  * At this point it is already known that the word can be formed from
  * the current board
  */
-int
+static int
 validword(const char *word)
 {
 	int j;
@@ -544,7 +548,7 @@ validword(const char *word)
  * Delete words from the machine list that the player has found
  * Assume both the dictionary and the player's words are already sorted
  */
-void
+static void
 checkdict(void)
 {
 	char *p, *w;
@@ -624,7 +628,7 @@ checkdict(void)
  * If the argument is non-null then it is assumed to be a legal board spec
  * in ascending cube order, oth. make a random board
  */
-void
+static void
 newgame(const char *b)
 {
 	int i, p, q;
@@ -693,13 +697,13 @@ newgame(const char *b)
 
 }
 
-int
+static int
 compar(const void *p, const void *q)
 {
 	return (strcmp(*(const char *const *)p, *(const char *const *)q));
 }
 
-void
+static void
 usage(void)
 {
 	(void) fprintf(stderr,

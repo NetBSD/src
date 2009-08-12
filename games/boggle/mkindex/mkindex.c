@@ -1,4 +1,4 @@
-/* $NetBSD: mkindex.c,v 1.10 2005/07/01 16:38:24 jmc Exp $ */
+/* $NetBSD: mkindex.c,v 1.11 2009/08/12 05:29:40 dholland Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@ static char copyright[] = "@(#) Copyright (c) 1993\n\
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
 static char rcsid[] =
-    "$NetBSD: mkindex.c,v 1.10 2005/07/01 16:38:24 jmc Exp $";
+    "$NetBSD: mkindex.c,v 1.11 2009/08/12 05:29:40 dholland Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] =
 
 #include "bog.h"
 
-char *nextword(FILE *, char *, int *, int *);
+static char *nextword(FILE *, char *, int *, int *);
 
 int
 main(void)
@@ -94,7 +94,7 @@ main(void)
  * Also set clen to the length of the compressed word (for mkindex) and
  * rlen to the strlen() of the real word
  */
-char *
+static char *
 nextword(FILE *fp, char *buffer, int *clen, int *rlen)
 {
 	int ch, pcount;
