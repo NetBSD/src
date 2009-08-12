@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.7.10.1 2009/07/14 19:48:03 snj Exp $ */
+/* $NetBSD: sha2.c,v 1.7.14.1 2009/07/14 19:35:22 snj Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.7.10.1 2009/07/14 19:48:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.7.14.1 2009/07/14 19:35:22 snj Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.7.10.1 2009/07/14 19:48:03 snj Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.7.10.1 2009/07/14 19:48:03 snj Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.7.14.1 2009/07/14 19:35:22 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"

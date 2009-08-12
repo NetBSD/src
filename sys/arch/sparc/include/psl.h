@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.44.56.1 2009/05/18 19:54:56 bouyer Exp $ */
+/*	$NetBSD: psl.h,v 1.44.62.1 2009/05/18 19:55:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

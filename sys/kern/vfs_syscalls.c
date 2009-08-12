@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376.4.3 2009/07/01 22:47:05 snj Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.376.4.2.2.1 2009/07/01 22:47:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.3 2009/07/01 22:47:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.2.2.1 2009/07/01 22:47:12 snj Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"

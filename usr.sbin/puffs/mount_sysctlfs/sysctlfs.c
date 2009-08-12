@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.9.4.1 2009/05/30 16:49:35 snj Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.9.6.1 2009/05/30 16:47:30 snj Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.9.4.1 2009/05/30 16:49:35 snj Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.9.6.1 2009/05/30 16:47:30 snj Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>

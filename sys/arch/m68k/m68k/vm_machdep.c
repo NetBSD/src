@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26.30.1 2009/06/05 18:34:47 snj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26.32.1 2009/06/05 18:36:05 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26.30.1 2009/06/05 18:34:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26.32.1 2009/06/05 18:36:05 snj Exp $");
 
 #include "opt_coredump.h"
 

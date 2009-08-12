@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.149.4.1 2009/06/17 20:29:33 bouyer Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.149.6.1 2009/06/17 20:29:37 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.149.4.1 2009/06/17 20:29:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.149.6.1 2009/06/17 20:29:37 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

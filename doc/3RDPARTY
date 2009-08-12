@@ -1,4 +1,4 @@
-#      $NetBSD: 3RDPARTY,v 1.647.2.8 2009/06/28 01:57:51 snj Exp $
+#      $NetBSD: 3RDPARTY,v 1.647.2.6 2009/03/02 20:24:26 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -232,8 +232,8 @@ No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
 
 Package:	dhcpcd
-Version:	5.0.1
-Current Vers:	5.0.1
+Version:	4.0.10
+Current Vers:	4.0.10
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -753,13 +753,13 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
-Version:	2.5.7
-Current Vers:	2.6.2
+Version:	2.5.4
+Current Vers:	2.5.5
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
-Responsible:	christos, tron
+Responsible:	heas
 License:	IBM Public License. See also src/gnu/dist/postfix.
 Notes:
 HTML documentation should be kept in sync with the README_FILES.

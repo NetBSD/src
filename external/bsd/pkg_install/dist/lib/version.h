@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.1.1.2.6.3 2009/07/27 00:40:11 snj Exp $	*/
+/*	$NetBSD: version.h,v 1.1.1.2.8.3 2009/07/27 00:37:08 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Thomas Klausner.  All rights reserved.

@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,10 @@
 static int signal_pipe[2];
 
 static const int handle_sigs[] = {
-	SIGALRM,
 	SIGHUP,
-	SIGINT,
-	SIGPIPE,
+	SIGALRM,
 	SIGTERM,
-	SIGUSR1,
+	SIGINT
 };
 
 static void
@@ -54,9 +52,15 @@ signal_handler(int sig)
 	int serrno = errno;
 
 	if (write(signal_pipe[1], &sig, sizeof(sig)) != sizeof(sig))
-		syslog(LOG_ERR, "failed to write signal %d: %m", sig);
+		syslog(LOG_ERR, "write signal %d: %s", sig, strerror(errno));
 	/* Restore errno */
 	errno = serrno;
+}
+
+int
+signal_fd(void)
+{
+	return (signal_pipe[0]);
 }
 
 /* Read a signal from the signal pipe. Returns 0 if there is
@@ -91,7 +95,7 @@ signal_init(void)
 		return -1;
 	if (set_cloexec(signal_pipe[1]) == -1)
 		return -1;
-	return signal_pipe[0];
+	return 0;
 }
 
 static int
@@ -121,4 +125,3 @@ signal_reset(void)
 {
 	return signal_handle(SIG_DFL);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.100.2.3 2009/05/18 19:35:14 bouyer Exp $ */
+/*	$NetBSD: disks.c,v 1.100.2.2 2009/03/02 19:39:30 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,11 +203,6 @@ find_disks(const char *doingwhat)
 	no_mbr = disk->dd_no_mbr;
 	if (dlsize == 0)
 		dlsize = disk->dd_cyl * disk->dd_head * disk->dd_sec;
-	if (dlsize > UINT32_MAX) {
-		msg_display(MSG_toobigdisklabel);	
-		process_menu(MENU_ok, NULL);
-		return -1;	
-	}
 	dlcylsize = dlhead * dlsec;
 
 	/* Get existing/default label */
@@ -223,7 +218,7 @@ find_disks(const char *doingwhat)
 void
 fmt_fspart(menudesc *m, int ptn, void *arg)
 {
-	unsigned int poffset, psize, pend;
+	int poffset, psize, pend;
 	const char *desc;
 	static const char *Yes, *No;
 	partinfo *p = bsdlabel + ptn;

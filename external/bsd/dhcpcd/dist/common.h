@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -37,35 +37,10 @@
 
 #define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
 
-#define timeval_to_double(tv) ((tv)->tv_sec * 1.0 + (tv)->tv_usec * 1.0e-6)
-#define timernorm(tvp)							\
-	do {								\
-		while ((tvp)->tv_usec >= 1000000) {			\
-			(tvp)->tv_sec++;				\
-			(tvp)->tv_usec -= 1000000;			\
-		}							\
-	} while (0 /* CONSTCOND */);
-
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-# define _noreturn __attribute__((__noreturn__))
-# define _packed   __attribute__((__packed__))
-# define _unused   __attribute__((__unused__))
+# define _unused __attribute__((__unused__))
 #else
-# define _noreturn
-# define _packed
 # define _unused
-#endif
-
-/* We don't really need this as our supported systems define __restrict
- * automatically for us, but it is here for completeness. */
-#ifndef __restrict
-# if defined(__lint__)
-#  define __restrict
-# elif __STDC_VERSION__ >= 199901L
-#  define __restrict restrict
-# elif !(2 < __GNUC__ || (2 == __GNU_C && 95 <= __GNUC_VERSION__))
-#  define __restrict
-# endif
 #endif
 
 #ifndef HAVE_ARC4RANDOM
@@ -96,9 +71,10 @@ size_t strlcpy(char *, const char *, size_t);
 int closefrom(int);
 #endif
 
+int close_fds(void);
 int set_cloexec(int);
 int set_nonblock(int);
-char *get_line(FILE * __restrict);
+ssize_t get_line(char **, size_t *, FILE *);
 extern int clock_monotonic;
 int get_monotonic(struct timeval *);
 time_t uptime(void);

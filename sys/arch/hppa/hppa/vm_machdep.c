@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.4.1 2009/06/05 18:54:58 snj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.6.1 2009/06/05 18:56:01 snj Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.4.1 2009/06/05 18:54:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33.6.1 2009/06/05 18:56:01 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

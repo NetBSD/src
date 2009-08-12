@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.20.1 2009/06/09 17:45:00 snj Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1 2009/06/09 17:48:20 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

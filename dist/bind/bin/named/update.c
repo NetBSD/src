@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.6.4.1 2009/07/28 22:26:56 snj Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.6.8.1 2009/07/28 22:25:09 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")

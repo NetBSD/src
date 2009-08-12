@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.38.10.1 2009/06/17 20:33:39 bouyer Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.38.16.1 2009/06/17 20:33:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38.10.1 2009/06/17 20:33:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.38.16.1 2009/06/17 20:33:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

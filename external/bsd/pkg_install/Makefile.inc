@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1.6.1 2009/05/30 16:40:31 snj Exp $
+# $NetBSD: Makefile.inc,v 1.1.8.1 2009/05/30 16:21:35 snj Exp $
 
 DIST=	${NETBSDSRCDIR}/external/bsd/pkg_install/dist
 

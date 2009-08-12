@@ -121,7 +121,6 @@ nouveau_dma_channel_takedown(struct drm_device *dev)
 	DRM_DEBUG("\n");
 
 	if (dchan->chan) {
-		drm_core_ioremapfree(dchan->chan->pushbuf_mem->map, dev);
 		nouveau_fifo_free(dchan->chan);
 		dchan->chan = NULL;
 	}

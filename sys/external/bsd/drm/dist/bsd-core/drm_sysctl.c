@@ -50,12 +50,11 @@ struct drm_sysctl_list {
 struct drm_sysctl_info {
 #if defined(__FreeBSD__)
 	struct sysctl_ctx_list ctx;
-	char		       name[2];
-#elif   defined(__NetBSD__)
+#elif defined(__NetBSD__)
 	const struct sysctlnode *dri, *dri_card, *dri_debug;
 	const struct sysctlnode *dri_rest[DRM_SYSCTL_ENTRIES];
-	char		       name[7];
 #endif
+	char		       name[7];
 };
 
 int drm_sysctl_init(struct drm_device *dev)
@@ -67,7 +66,7 @@ int drm_sysctl_init(struct drm_device *dev)
 #endif
 	int		  i;
 
-	info = malloc(sizeof *info, DRM_MEM_DRIVER, M_WAITOK | M_ZERO);
+	info = malloc(sizeof *info, M_DRM, M_WAITOK | M_ZERO);
 	if ( !info )
 		return 1;
 	dev->sysctl = info;
@@ -111,12 +110,12 @@ int drm_sysctl_init(struct drm_device *dev)
 	SYSCTL_ADD_INT(&info->ctx, SYSCTL_CHILDREN(top), OID_AUTO, "debug",
 	    CTLFLAG_RW, &drm_debug_flag, sizeof(drm_debug_flag),
 	    "Enable debugging output");
-#elif   defined(__NetBSD__)
+#elif defined(__NetBSD__)
 	sysctl_createv(NULL, 0, NULL, &info->dri,
 			CTLFLAG_READWRITE, CTLTYPE_NODE,
 			"dri", SYSCTL_DESCR("DRI Graphics"), NULL, 0, NULL, 0,
 			CTL_HW, CTL_CREATE);
-	snprintf(info->name, 7, "card%d", minor(dev->kdev));
+	snprintf(info->name, 7, "card%d", dev->unit);
 	sysctl_createv(NULL, 0, NULL, &info->dri_card,
 			CTLFLAG_READWRITE, CTLTYPE_NODE,
 			info->name, NULL, NULL, 0, NULL, 0,
@@ -126,7 +125,7 @@ int drm_sysctl_init(struct drm_device *dev)
 				CTLFLAG_READONLY, CTLTYPE_STRING,
 				drm_sysctl_list[i].name, NULL,
 				drm_sysctl_list[i].f, 0, dev,
-				sizeof(struct drm_device*),
+				sizeof(drm_device_t*),
 				CTL_HW,
 				info->dri->sysctl_num,
 				info->dri_card->sysctl_num, CTL_CREATE);
@@ -145,13 +144,14 @@ int drm_sysctl_cleanup(struct drm_device *dev)
 {
 #if defined(__FreeBSD__)
 	int error;
+
 	error = sysctl_ctx_free( &dev->sysctl->ctx );
 
-	free(dev->sysctl, DRM_MEM_DRIVER);
+	free(dev->sysctl, M_DRM);
 	dev->sysctl = NULL;
 
 	return error;
-#elif   defined(__NetBSD__)
+#elif defined(__NetBSD__)
 	int i;
 
 	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
@@ -167,7 +167,7 @@ int drm_sysctl_cleanup(struct drm_device *dev)
 	                              CTL_DESTROY);
 	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num, CTL_DESTROY);
 
-	free(dev->sysctl, DRM_MEM_DRIVER);
+	free(dev->sysctl, M_DRM);
 	dev->sysctl = NULL;
 
 	return 0;
@@ -191,8 +191,8 @@ static int drm_name_info DRM_SYSCTL_HANDLER_ARGS
 {
 #if defined(__FreeBSD__)
 	struct drm_device *dev = arg1;
-#elif   defined(__NetBSD__)
-	struct drm_device *dev = rnode->sysctl_data;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
 	int len = 0;
 #endif
 	char buf[128];
@@ -200,13 +200,13 @@ static int drm_name_info DRM_SYSCTL_HANDLER_ARGS
 	int hasunique = 0;
 
 #if defined(__FreeBSD__)
-	DRM_SYSCTL_PRINT("%s 0x%x", dev->driver->name, dev2udev(dev->devnode));
-#elif   defined(__NetBSD__)
+	DRM_SYSCTL_PRINT("%s 0x%x", dev->driver.name, dev2udev(dev->devnode));
+#elif defined(__NetBSD__)
 	if (oldp == NULL)
 		return EINVAL;
 	*((char*)oldp) = '\0';
 
-	DRM_SYSCTL_PRINT("%s", dev->driver->name);
+	DRM_SYSCTL_PRINT("%s", dev->driver.name);
 #endif
 	
 	DRM_LOCK();
@@ -229,8 +229,8 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 {
 #if defined(__FreeBSD__)
 	struct drm_device *dev = arg1;
-#elif   defined(__NetBSD__)
-	struct drm_device *dev = rnode->sysctl_data;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
 	int len = 0;
 #endif
 	drm_local_map_t *map, *tempmaps;
@@ -249,8 +249,7 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 	TAILQ_FOREACH(map, &dev->maplist, link)
 		mapcount++;
 
-	tempmaps = malloc(sizeof(drm_local_map_t) * mapcount, DRM_MEM_DRIVER,
-	    M_NOWAIT);
+	tempmaps = malloc(sizeof(drm_local_map_t) * mapcount, M_DRM, M_NOWAIT);
 	if (tempmaps == NULL) {
 		DRM_UNLOCK();
 		return ENOMEM;
@@ -262,13 +261,13 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 
 	DRM_UNLOCK();
 
-	DRM_SYSCTL_PRINT("\nslot offset	        size       "
-	    "type flags address            mtrr\n");
+	DRM_SYSCTL_PRINT("\nslot	 offset	      size type flags	 "
+			 "address mtrr\n");
 
 	for (i = 0; i < mapcount; i++) {
 		map = &tempmaps[i];
 
-		if (map->type > 4)
+		if ((int)map->type < 0 || map->type > 4)
 			type = "??";
 		else
 			type = types[map->type];
@@ -279,14 +278,14 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 			yesno = "yes";
 
 		DRM_SYSCTL_PRINT(
-		    "%4d 0x%016lx 0x%08lx %4.4s  0x%02x 0x%016lx %s\n", i,
+		    "%4d 0x%08lx 0x%08lx %4.4s  0x%02x 0x%08lx %s\n", i,
 		    map->offset, map->size, type, map->flags,
 		    (unsigned long)map->handle, yesno);
 	}
 	SYSCTL_OUT(req, "", 1);
 
 done:
-	free(tempmaps, DRM_MEM_DRIVER);
+	free(tempmaps, M_DRM);
 	return retcode;
 }
 
@@ -294,8 +293,8 @@ static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 {
 #if defined(__FreeBSD__)
 	struct drm_device *dev = arg1;
-#elif   defined(__NetBSD__)
-	struct drm_device *dev = rnode->sysctl_data;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
 	int len = 0;
 #endif
 	drm_device_dma_t *dma = dev->dma;
@@ -315,8 +314,7 @@ static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 	}
 	DRM_SPINLOCK(&dev->dma_lock);
 	tempdma = *dma;
-	templists = malloc(sizeof(int) * dma->buf_count, DRM_MEM_DRIVER,
-	    M_NOWAIT);
+	templists = malloc(sizeof(int) * dma->buf_count, M_DRM, M_NOWAIT);
 	for (i = 0; i < dma->buf_count; i++)
 		templists[i] = dma->buflist[i]->list;
 	dma = &tempdma;
@@ -348,7 +346,7 @@ static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 
 	SYSCTL_OUT(req, "", 1);
 done:
-	free(templists, DRM_MEM_DRIVER);
+	free(templists, M_DRM);
 	return retcode;
 }
 
@@ -356,11 +354,11 @@ static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 {
 #if defined(__FreeBSD__)
 	struct drm_device *dev = arg1;
-#elif   defined(__NetBSD__)
-	struct drm_device *dev = rnode->sysctl_data;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
 	int len = 0;
 #endif
-	struct drm_file *priv, *tempprivs;
+	drm_file_t *priv, *tempprivs;
 	char buf[128];
 	int retcode;
 	int privcount, i;
@@ -371,8 +369,7 @@ static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 	TAILQ_FOREACH(priv, &dev->files, link)
 		privcount++;
 
-	tempprivs = malloc(sizeof(struct drm_file) * privcount, DRM_MEM_DRIVER,
-	    M_NOWAIT);
+	tempprivs = malloc(sizeof(drm_file_t) * privcount, M_DRM, M_NOWAIT);
 	if (tempprivs == NULL) {
 		DRM_UNLOCK();
 		return ENOMEM;
@@ -397,6 +394,6 @@ static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 
 	SYSCTL_OUT(req, "", 1);
 done:
-	free(tempprivs, DRM_MEM_DRIVER);
+	free(tempprivs, M_DRM);
 	return retcode;
 }

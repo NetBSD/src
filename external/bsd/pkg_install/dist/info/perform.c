@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.1.6.2 2009/07/27 00:40:11 snj Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.1.8.2 2009/07/27 00:37:08 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.1.6.2 2009/07/27 00:40:11 snj Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.1.8.2 2009/07/27 00:37:08 snj Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.

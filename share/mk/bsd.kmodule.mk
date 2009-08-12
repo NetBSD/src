@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.13.2.2 2009/06/06 22:10:12 bouyer Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.13.2.1.2.1 2009/06/06 22:10:49 bouyer Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>

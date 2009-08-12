@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357.4.5 2009/07/21 00:31:58 snj Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.4.4.2.1 2009/07/21 00:29:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.5 2009/07/21 00:31:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.4.2.1 2009/07/21 00:29:32 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"

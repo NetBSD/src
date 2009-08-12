@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.1.1.2.4.4 2009/07/27 00:40:11 snj Exp $	*/
+/*	$NetBSD: license.c,v 1.1.1.2.2.4 2009/07/27 00:37:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.

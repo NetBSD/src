@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.21.6.2 2009/05/13 00:35:16 snj Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.21.6.1.2.1 2009/05/13 00:28:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21.6.2 2009/05/13 00:35:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21.6.1.2.1 2009/05/13 00:28:25 snj Exp $");
 
 #include "opt_lockdebug.h"
 

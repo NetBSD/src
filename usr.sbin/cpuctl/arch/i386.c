@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.13.2.3 2009/05/18 19:43:55 bouyer Exp $	*/
+/*	$NetBSD: i386.c,v 1.13.2.2 2009/03/24 20:34:56 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.13.2.3 2009/05/18 19:43:55 bouyer Exp $");
+__RCSID("$NetBSD: i386.c,v 1.13.2.2 2009/03/24 20:34:56 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -122,10 +122,6 @@ struct cpu_nocpuid_nameclass {
 	void (*cpu_info)(struct cpu_info *);
 };
 
-struct cpu_extend_nameclass {
-	int ext_model;
-	const char *cpu_models[CPU_MAXMODEL+1];
-};
 
 struct cpu_cpuid_nameclass {
 	const char *cpu_id;
@@ -137,7 +133,6 @@ struct cpu_cpuid_nameclass {
 		void (*cpu_setup)(struct cpu_info *);
 		void (*cpu_probe)(struct cpu_info *);
 		void (*cpu_info)(struct cpu_info *);
-		struct cpu_extend_nameclass *cpu_extended_names;
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
@@ -242,21 +237,6 @@ const char *modifiers[] = {
 	""
 };
 
-struct cpu_extend_nameclass intel_family6_ext_models[] = {
-	{ /* Extended models 1x */
-	  0x01, { NULL,			NULL,
-		  NULL,			NULL,
-		  NULL,			"EP80579 Integrated Processor",
-		  "Celeron (45nm)",	"Core 2 Extreme",
-		  NULL,			NULL,
-		  "Core i7 (Nehalem)",	NULL,
-		  "Atom",		"XeonMP (Nehalem)",
-		   NULL,		NULL} },
-	{ /* End of list */
-	  0x00, { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-		  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL} }
-};
-
 const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	{
 		"GenuineIntel",
@@ -274,7 +254,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family 5 */
 		{
@@ -287,7 +266,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
-			NULL,
 			NULL,
 			NULL,
 			NULL,
@@ -313,7 +291,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			intel_family_new_probe,
 			NULL,
-			&intel_family6_ext_models[0],
 		},
 		/* Family > 6 */
 		{
@@ -325,7 +302,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			intel_family_new_probe,
-			NULL,
 			NULL,
 		} }
 	},
@@ -348,7 +324,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family 5 */
 		{
@@ -362,7 +337,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			amd_family5_setup,
 			NULL,
 			amd_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family 6 */
 		{
@@ -377,7 +351,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			amd_family6_probe,
 			amd_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family > 6 */
 		{
@@ -390,7 +363,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			amd_family6_probe,
 			amd_cpu_cacheinfo,
-			NULL,
 		} }
 	},
 	{
@@ -409,7 +381,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			cyrix6x86_cpu_setup, /* XXX ?? */
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family 5 */
 		{
@@ -421,7 +392,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86"		/* Default */
 			},
 			cyrix6x86_cpu_setup,
-			NULL,
 			NULL,
 			NULL,
 		},
@@ -436,7 +406,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			cyrix6x86_cpu_setup,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family > 6 */
 		{
@@ -446,7 +415,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown 6x86MX"		/* Default */
 			},
-			NULL,
 			NULL,
 			NULL,
 			NULL,
@@ -467,7 +435,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family 5: Geode family, formerly MediaGX */
 		{
@@ -481,7 +448,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			cyrix6x86_cpu_setup,
 			NULL,
 			amd_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family 6, not yet available from NSC */
 		{
@@ -494,7 +460,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family > 6, not yet available from NSC */
 		{
@@ -504,7 +469,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
-			NULL,
 			NULL,
 			NULL,
 			NULL,
@@ -525,7 +489,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family 5 */
 		{
@@ -536,7 +499,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"WinChip"		/* Default */
 			},
 			winchip_cpu_setup,
-			NULL,
 			NULL,
 			NULL,
 		},
@@ -552,7 +514,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			via_cpu_probe,
 			via_cpu_cacheinfo,
-			NULL,
 		},
 		/* Family > 6, not yet available from VIA */
 		{
@@ -562,7 +523,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
-			NULL,
 			NULL,
 			NULL,
 			NULL,
@@ -583,7 +543,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family 5 */
 		{
@@ -596,7 +555,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			transmeta_cpu_info,
-			NULL,
 		},
 		/* Family 6, not yet available from Transmeta */
 		{
@@ -609,7 +567,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 			NULL,
-			NULL,
 		},
 		/* Family > 6, not yet available from Transmeta */
 		{
@@ -619,7 +576,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
-			NULL,
 			NULL,
 			NULL,
 			NULL,
@@ -1225,10 +1181,9 @@ transmeta_cpu_info(struct cpu_info *ci)
 void
 identifycpu(const char *cpuname)
 {
-	const char *name = "", *modifier, *vendorname, *brand = "";
+	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, i, xmax;
-	int modif, family, model, ext_model;
-	const struct cpu_extend_nameclass *modlist;
+	int modif, family, model;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	const char *feature_str[5];
@@ -1262,7 +1217,6 @@ identifycpu(const char *cpuname)
 		if (family < CPU_MINFAMILY)
 			errx(1, "identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
-		ext_model = CPUID2EXTMODEL(ci->ci_signature);
 
 		for (i = 0; i < xmax; i++) {
 			if (!strncmp((char *)ci->ci_vendor,
@@ -1291,29 +1245,11 @@ identifycpu(const char *cpuname)
 			if (family > CPU_MAXFAMILY) {
 				family = CPU_MAXFAMILY;
 				model = CPU_DEFMODEL;
-			} else if (model > CPU_MAXMODEL) {
+			} else if (model > CPU_MAXMODEL)
 				model = CPU_DEFMODEL;
-				ext_model = 0;
-			}
 			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
-			if (cpufam->cpu_extended_names == NULL ||
-			    ext_model == 0)
-				name = cpufam->cpu_models[model];
-			else {
-				/*
-				 * Scan list(s) of extended model names
-				 */
-				modlist = cpufam->cpu_extended_names;
-				while (modlist->ext_model != 0) {
-					if (modlist->ext_model == ext_model) {
-						name =
-						     modlist->cpu_models[model];
-						break;
-					}
-					modlist++;
-				}
-			}
-			if (name == NULL || *name == '\0')
+			name = cpufam->cpu_models[model];
+			if (name == NULL)
 			    name = cpufam->cpu_models[CPU_DEFMODEL];
 			class = cpufam->cpu_class;
 			ci->ci_info = cpufam->cpu_info;

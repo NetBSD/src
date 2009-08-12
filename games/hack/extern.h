@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8.6.1 2009/06/29 23:31:28 snj Exp $	*/
+/*	$NetBSD: extern.h,v 1.8.8.1 2009/06/29 23:22:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

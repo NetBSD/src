@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.8.4.1 2009/05/03 13:07:39 bouyer Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.8 2008/10/22 11:16:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.8.4.1 2009/05/03 13:07:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.8 2008/10/22 11:16:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.8.4.1 2009/05/03 13:07:39 bouyer Ex
 #include <sys/syscallargs.h>
 
 static int
-handle_modctl_load(modctl_load_t *ml)
+handle_modctl_load(void *arg)
 {
+	modctl_load_t *ml = (modctl_load_t *)arg;
+
 	char *path;
 	char *props;
 	int error;
@@ -109,7 +111,6 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	vaddr_t addr;
 	size_t size;
 	struct iovec iov;
-	modctl_load_t ml;
 	int error;
 	void *arg;
 
@@ -117,10 +118,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 
 	switch (SCARG(uap, cmd)) {
 	case MODCTL_LOAD:
-		error = copyin(arg, &ml, sizeof(ml));
-		if (error != 0)
-			break;
-		error = handle_modctl_load(&ml);
+		error = handle_modctl_load(arg);
 		break;
 
 	case MODCTL_UNLOAD:
