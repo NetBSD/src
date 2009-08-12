@@ -1,4 +1,4 @@
-/*	$NetBSD: lose.c,v 1.9 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: lose.c,v 1.10 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lose.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: lose.c,v 1.10 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: lose.c,v 1.9 2009/05/24 21:44:56 dholland Exp $");
 
 extern jmp_buf	env;
 
-const char	*const Losemsg[] = {
+static const char *const Losemsg[] = {
 	"You ran out of time",
 	"You ran out of energy",
 	"You have been destroyed",

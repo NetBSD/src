@@ -1,4 +1,4 @@
-/*	$NetBSD: shield.c,v 1.12 2009/05/25 00:43:34 dholland Exp $	*/
+/*	$NetBSD: shield.c,v 1.13 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: shield.c,v 1.12 2009/05/25 00:43:34 dholland Exp $");
+__RCSID("$NetBSD: shield.c,v 1.13 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: shield.c,v 1.12 2009/05/25 00:43:34 dholland Exp $");
 **	so you get partial hits.
 */
 
-const struct cvntab Udtab[] = {
+static const struct cvntab Udtab[] = {
 	{ "u",		"p",		(cmdfun)1,	0 },
 	{ "d",		"own",		(cmdfun)0,	0 },
 	{ NULL,		NULL,		NULL,		0 }

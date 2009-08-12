@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.19 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: worms.c,v 1.20 2009/08/12 08:57:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.19 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: worms.c,v 1.20 2009/08/12 08:57:30 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,11 +177,11 @@ static struct	worm {
 	short *xpos, *ypos;
 } *worm;
 
-volatile sig_atomic_t sig_caught = 0;
+static volatile sig_atomic_t sig_caught = 0;
 
 int	 main(int, char **);
-void	 nomem(void) __dead;
-void	 onsig(int);
+static void nomem(void) __dead;
+static void onsig(int);
 
 int
 main(argc, argv)
@@ -339,14 +339,14 @@ main(argc, argv)
 	}
 }
 
-void
+static void
 onsig(signo)
 	int signo __unused;
 {
 	sig_caught = 1;
 }
 
-void
+static void
 nomem()
 {
 	errx(1, "not enough memory.");
