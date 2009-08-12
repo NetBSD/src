@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.26 2009/01/13 01:50:04 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.27 2009/08/12 23:51:23 enami Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.26 2009/01/13 01:50:04 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.27 2009/08/12 23:51:23 enami Exp $");
 
 #ifndef lint
 
@@ -98,6 +98,8 @@ ssize_t	_sys___mq_timedreceive50(mqd_t, char *, size_t, unsigned *,
 ssize_t	_sys_msgrcv(int, void *, size_t, long, int);
 int	_sys_msgsnd(int, const void *, size_t, int);
 int	_sys___msync13(void *, size_t, int);
+int	_sys___nanosleep50(const struct timespec *, struct timespec *);
+int	__nanosleep50(const struct timespec *, struct timespec *);
 int	_sys_open(const char *, int, ...);
 int	_sys_poll(struct pollfd *, nfds_t, int);
 int	_sys___pollts50(struct pollfd *, nfds_t, const struct timespec *,
@@ -357,6 +359,24 @@ open(const char *path, int flags, ...)
 }
 
 int
+__nanosleep50(const struct timespec *rqtp, struct timespec *rmtp)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	/*
+	 * For now, just nanosleep.  In the future, maybe pass a ucontext_t
+	 * to _lwp_nanosleep() and allow it to recycle our kernel stack.
+	 */
+	retval = _sys___nanosleep50(rqtp, rmtp);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
 poll(struct pollfd *fds, nfds_t nfds, int timeout)
 {
 	int retval;
@@ -563,6 +583,7 @@ __strong_alias(_mq_receive, mq_receive)
 __strong_alias(_msgrcv, msgrcv)
 __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)
+__strong_alias(___nanosleep50, __nanosleep50)
 __strong_alias(_open, open)
 __strong_alias(_poll, poll)
 __strong_alias(_pread, pread)
