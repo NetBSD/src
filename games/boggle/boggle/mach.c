@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.19 2009/07/13 19:05:39 roy Exp $	*/
+/*	$NetBSD: mach.c,v 1.20 2009/08/12 05:29:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.19 2009/07/13 19:05:39 roy Exp $");
+__RCSID("$NetBSD: mach.c,v 1.20 2009/08/12 05:29:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,8 @@ __RCSID("$NetBSD: mach.c,v 1.19 2009/07/13 19:05:39 roy Exp $");
 static int ccol, crow, maxw;
 static int colstarts[MAXCOLS], ncolstarts;
 static int lastline;
-int ncols, nlines;
+static int ncols;
+int nlines;
 
 extern const char *pword[], *mword[];
 extern int ngames, nmwords, npwords, tnmwords, tnpwords;
@@ -81,6 +82,10 @@ static void	tty_cleanup(void);
 static int	tty_setup(void);
 static void	tty_showboard(const char *);
 static void	winch_catcher(int);
+static void	getword(char *);
+static void	starttime(void);
+static void	stoptime(void);
+
 
 /*
  * Do system dependent initialization
@@ -281,7 +286,7 @@ static int gone;
 /*
  * Stop the game timer
  */
-void
+static void
 stoptime(void)
 {
 	time_t t;
@@ -293,7 +298,7 @@ stoptime(void)
 /*
  * Restart the game timer
  */
-void
+static void
 starttime(void)
 {
 	time_t t;
@@ -474,16 +479,10 @@ showstr(const char *str, int delaysecs)
 	refresh();
 }
 
-void
-putstr(const char *s)
-{
-	addstr(s);
-}
-
 /*
  * Get a valid word and put it in the buffer
  */
-void
+static void
 getword(char *q)
 {
 	int ch, col, done, i, row;
