@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.21 2009/07/20 06:39:06 dholland Exp $	*/
+/*	$NetBSD: robots.h,v 1.22 2009/08/12 08:30:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -110,26 +110,19 @@ extern jmp_buf End_move;
  */
 
 void add_score(int);
-bool another(void);
 char automove(void);
-int cmp_sc(const void *, const void *);
-bool do_move(int, int);
-bool eaten(const COORD *);
 void flush_in(void);
 void get_move(void);
 void init_field(void);
 bool jumping(void);
 void make_level(void);
 void move_robots(int);
-bool must_telep(void);
 void play_level(void);
 int query(const char *);
 void quit(int) __dead;
 void reset_count(void);
-int rnd(int);
 COORD *rnd_pos(void);
 void score(int);
-void set_name(SCORE *);
 void show_score(void);
 int sign(int);
 void telmsg(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2009/05/26 00:30:16 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2009/08/12 08:21:41 dholland Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -60,6 +60,15 @@
 #include "include.h"
 #undef bool
 #include <curses.h>
+
+static void genchar(int);
+static void initialstate(void);
+static void neatstuff(void);
+static void playinit(void);
+static void procmain(void);
+static long recallplayer(void);
+static long rollnewplayer(void);
+static void titlelist(void);
 
 int	main(int, char **);
 
@@ -268,7 +277,7 @@ main(int argc, char **argv)
 	}
 }
 
-void
+static void
 initialstate(void)
 {
 	struct stat sb;
@@ -325,7 +334,7 @@ initialstate(void)
 	srandom((unsigned) time(NULL));	/* prime random numbers */
 }
 
-long
+static long
 rollnewplayer(void)
 {
 	int     chartype;	/* character type */
@@ -415,7 +424,7 @@ rollnewplayer(void)
 	return (allocrecord());
 }
 
-void
+static void
 procmain(void)
 {
 	int     ch;		/* input */
@@ -625,7 +634,7 @@ procmain(void)
 	}
 }
 
-void
+static void
 titlelist(void)
 {
 	FILE   *fp;		/* used for opening various files */
@@ -735,7 +744,7 @@ titlelist(void)
 	refresh();
 }
 
-long
+static long
 recallplayer(void)
 {
 	long    loc = 0L;	/* location in player file */
@@ -794,7 +803,7 @@ recallplayer(void)
 	return (-1L);
 }
 
-void
+static void
 neatstuff(void)
 {
 	double  temp;		/* for temporary calculations */
@@ -896,7 +905,7 @@ neatstuff(void)
 	}
 }
 
-void
+static void
 genchar(int type)
 {
 	int     subscript;	/* used for subscripting into Stattable */
@@ -932,7 +941,7 @@ genchar(int type)
 		Player.p_experience = ROLL(600.0, 200.0);
 }
 
-void
+static void
 playinit(void)
 {
 	/* catch/ingnore signals */
