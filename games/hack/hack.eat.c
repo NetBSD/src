@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.8 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,12 +63,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.8 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
-char            POISONOUS[] = "ADKSVabhks";
+static char POISONOUS[] = "ADKSVabhks";
 
 /* hunger texts used on bottom line (each 8 chars long) */
 #define	SATIATED	0
@@ -89,6 +89,12 @@ const char           *const hu_stat[] = {
 	"Starved "
 };
 
+static int opentin(void);
+static int Meatdone(void);
+static int unfaint(void);
+static void newuhs(boolean);
+static int eatcorpse(struct obj *);
+
 void
 init_uhunger(void)
 {
@@ -97,7 +103,7 @@ init_uhunger(void)
 }
 
 #define	TTSZ	SIZE(tintxts)
-const struct {
+static const struct {
 	const char           *txt;
 	int             nut;
 }               tintxts[] = {
@@ -114,7 +120,7 @@ static struct {
 	int             usedtime, reqtime;
 }               tin;
 
-int
+static int
 opentin(void)
 {
 	int             r;
@@ -150,7 +156,7 @@ opentin(void)
 	return (0);
 }
 
-int
+static int
 Meatdone(void)
 {
 	u.usym = '@';
@@ -379,7 +385,7 @@ lesshungry(int num)
 	newuhs(FALSE);
 }
 
-int
+static int
 unfaint(void)
 {
 	u.uhs = FAINTING;
@@ -387,7 +393,7 @@ unfaint(void)
 	return 0;
 }
 
-void
+static void
 newuhs(boolean incr)
 {
 	int             newhs, h = u.uhunger;
@@ -453,7 +459,7 @@ poisonous(struct obj *otmp)
 }
 
 /* returns 1 if some text was printed */
-int
+static int
 eatcorpse(struct obj *otmp)
 {
 	char            let = CORPSE_I_TO_C(otmp->otyp);

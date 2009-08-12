@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.dog.c,v 1.10 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.dog.c,v 1.11 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.dog.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.dog.c,v 1.11 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -79,6 +79,8 @@ const struct permonst dog =
 const struct permonst la_dog =
 {"large dog", 'd', 6, 15, 4, 2, 4, sizeof(struct edog)};
 
+static void initedog(struct monst *);
+static int dogfood(struct obj *);
 
 void
 makedog(void)
@@ -89,7 +91,7 @@ makedog(void)
 	initedog(mtmp);
 }
 
-void
+static void
 initedog(struct monst *mtmp)
 {
 	mtmp->mtame = mtmp->mpeaceful = 1;
@@ -159,7 +161,7 @@ fall_down(struct monst *mtmp)
 #define	APPORT	4
 #define	POISON	5
 #define	UNDEF	6
-int
+static int
 dogfood(struct obj *obj)
 {
 	switch (obj->olet) {

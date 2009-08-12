@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,11 +63,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
+
+static void movobj(struct obj *, int, int);
+static int inv_cnt(void);
 
 /*
  * called on movement: 1. when throwing ball+chain far away 2. when
@@ -381,7 +384,7 @@ nodrag:	;
 		read_engr_at(u.ux, u.uy);
 }
 
-void
+static void
 movobj(struct obj *obj, int ox, int oy)
 {
 	/* Some dirty programming to get display right */
@@ -947,7 +950,7 @@ inv_weight(void)
 	return (wt - carrcap);
 }
 
-int
+static int
 inv_cnt(void)
 {
 	struct obj *otmp = invent;

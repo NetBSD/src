@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.do.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.do.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 /* Contains code for 'd', 'D' (drop), '>', '<' (up, down) and 't' (throw) */
@@ -76,6 +76,7 @@ __RCSID("$NetBSD: hack.do.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 
 
 static int drop(struct obj *);
+static void dropy(struct obj *);
 
 int
 dodrop(void)
@@ -127,7 +128,7 @@ dropx(struct obj *obj)
 	dropy(obj);
 }
 
-void
+static void
 dropy(struct obj *obj)
 {
 	if (obj->otyp == CRYSKNIFE)

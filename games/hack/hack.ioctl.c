@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.ioctl.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.ioctl.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.ioctl.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.ioctl.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 /*
@@ -74,7 +74,7 @@ __RCSID("$NetBSD: hack.ioctl.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 #include <termios.h>
 #include "hack.h"
 #include "extern.h"
-struct termios  termios;
+static struct termios termios;
 
 void
 getioctls(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.options.c,v 1.9 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.options.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,13 +63,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.options.c,v 1.9 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.options.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include <unistd.h>
 #include "hack.h"
 #include "extern.h"
+
+static void parseoptions(char *, boolean);
 
 void
 initoptions(void)
@@ -88,7 +90,7 @@ initoptions(void)
 		parseoptions(opts, TRUE);
 }
 
-void
+static void
 parseoptions(char *opts, boolean from_env)
 {
 	char           *op, *op2;

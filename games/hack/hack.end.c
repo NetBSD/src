@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.12 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.13 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.12 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.13 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -74,6 +74,14 @@ __RCSID("$NetBSD: hack.end.c,v 1.12 2009/06/07 20:13:18 dholland Exp $");
 #define	Snprintf	(void) snprintf
 
 xchar           maxdlevel = 1;
+
+struct toptenentry;
+
+static void topten(void);
+static void outheader(void);
+static int outentry(int, struct toptenentry *, int);
+static char *itoa(int);
+static const char *ordin(int);
 
 int
 dodone(void)
@@ -101,11 +109,11 @@ done1(int n __unused)
 	/* NOTREACHED */
 }
 
-int             done_stopprint;
-int             done_hup;
+static int done_stopprint;
+static int done_hup;
 
 /*ARGSUSED*/
-void
+static void
 done_intr(int n __unused)
 {
 	done_stopprint++;
@@ -113,7 +121,7 @@ done_intr(int n __unused)
 	(void) signal(SIGQUIT, SIG_IGN);
 }
 
-void
+static void
 done_hangup(int n)
 {
 	done_hup++;
@@ -309,9 +317,11 @@ struct toptenentry {
 	char            name[NAMSZ + 1];
 	char            death[DTHSZ + 1];
 	char            date[7];/* yymmdd */
-}              *tt_head;
+};
 
-void
+static struct toptenentry *tt_head;
+
+static void
 topten(void)
 {
 	int             uid = getuid();
@@ -478,7 +488,7 @@ unlock:
 	(void) unlink(reclock);
 }
 
-void
+static void
 outheader(void)
 {
 	char            linebuf[BUFSZ];
@@ -492,7 +502,7 @@ outheader(void)
 }
 
 /* so>0: standout line; so=0: ordinary line; so<0: no output, return length */
-int
+static int
 outentry(int rank, struct toptenentry *t1, int so)
 {
 	boolean         quit = FALSE, gotkilled = FALSE, starv = FALSE;
@@ -607,7 +617,7 @@ outentry(int rank, struct toptenentry *t1, int so)
 	return /*(strlen(linebuf))*/ pos;
 }
 
-char           *
+static char *
 itoa(int a)
 {
 	static char     buf[12];
@@ -615,7 +625,7 @@ itoa(int a)
 	return (buf);
 }
 
-const char           *
+static const char *
 ordin(int n)
 {
 	int             dg = n % 10;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkmaze.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.mkmaze.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,14 +63,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkmaze.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.mkmaze.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 #include "def.mkroom.h"		/* not really used */
-const struct permonst hell_hound =
+
+static const struct permonst hell_hound =
 {"hell hound", 'd', 12, 14, 2, 3, 6, 0};
+
+static void walkfrom(int, int);
+static void move(int *, int *, int);
+static int okay(int, int, int);
 
 void
 makemaz(void)
@@ -151,7 +156,7 @@ makemaz(void)
 	xdnstair = ydnstair = 0;
 }
 
-void
+static void
 walkfrom(int x, int y)
 {
 	int             q, a, dir;
@@ -172,7 +177,7 @@ walkfrom(int x, int y)
 	}
 }
 
-void
+static void
 move(int *x, int *y, int dir)
 {
 	switch (dir) {
@@ -191,7 +196,7 @@ move(int *x, int *y, int dir)
 	}
 }
 
-int
+static int
 okay(int x, int y, int dir)
 {
 	move(&x, &y, dir);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.track.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.track.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.track.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.track.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -71,9 +71,9 @@ __RCSID("$NetBSD: hack.track.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
 
 #define	UTSZ	50
 
-coord           utrack[UTSZ];
-int             utcnt = 0;
-int             utpnt = 0;
+static coord utrack[UTSZ];
+static int utcnt = 0;
+static int utpnt = 0;
 
 void
 initrack(void)

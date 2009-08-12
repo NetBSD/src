@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.trap.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.trap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.trap.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.trap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -84,6 +84,10 @@ const char           *const traps[] = {
 	" piercer",
 	" mimic"
 };
+
+static void vtele(void);
+static void teleds(int, int);
+static int teleok(int, int);
 
 struct trap    *
 maketrap(int x, int y, int typ)
@@ -339,7 +343,7 @@ float_down(void)
 	pickup(1);
 }
 
-void
+static void
 vtele(void)
 {
 	struct mkroom  *croom;
@@ -383,7 +387,7 @@ tele(void)
 	teleds(nux, nuy);
 }
 
-void
+static void
 teleds(int nux, int nuy)
 {
 	if (Punished)
@@ -409,7 +413,7 @@ teleds(int nux, int nuy)
 		read_engr_at(u.ux, u.uy);
 }
 
-int
+static int
 teleok(int x, int y)
 {				/* might throw him into a POOL */
 	return (isok(x, y) && !IS_ROCK(levl[x][y].typ) && !m_at(x, y) &&

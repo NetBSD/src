@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.wizard.c,v 1.8 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.wizard.c,v 1.9 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.wizard.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.wizard.c,v 1.9 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
@@ -76,7 +76,11 @@ __RCSID("$NetBSD: hack.wizard.c,v 1.8 2009/06/07 18:30:39 dholland Exp $");
 #define	BOLT_LIM    8		/* from this distance D and 1 will try to hit
 				 * you */
 
-const char            wizapp[] = "@DNPTUVXcemntx";
+static const char wizapp[] = "@DNPTUVXcemntx";
+
+static void aggravate(void);
+static void clonewiz(struct monst *);
+
 
 /* If he has found the Amulet, make the wizard appear after some time */
 void
