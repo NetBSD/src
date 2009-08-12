@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2009/08/12 07:42:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2009/04/30 07:01:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2009/08/12 07:42:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,7 +465,7 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
 				if (!(pde = pmap_pde_get(pd, va))) {
-					va += ~PDE_MASK + 1 - PAGE_SIZE;
+					va = pdemask + PDE_SIZE - PAGE_SIZE;
 					continue;
 				}
 				printf("%x:%8p:\n", sp, pde);
@@ -1368,10 +1368,10 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
+				sva = pdemask + PDE_SIZE - PAGE_SIZE;
 				continue;
 			}
-			batch = pdemask == sva && sva + ~PDE_MASK + 1 <= eva;
+			batch = pdemask == sva && sva + PDE_SIZE <= eva;
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
@@ -1436,7 +1436,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
+				sva = pdemask + PDE_SIZE - PAGE_SIZE;
 				continue;
 			}
 		}
@@ -1883,7 +1883,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		if (pdemask != (va & PDE_MASK)) {
 			pdemask = va & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, va))) {
-				va += ~PDE_MASK + 1 - PAGE_SIZE;
+				va = pdemask + PDE_SIZE - PAGE_SIZE;
 				continue;
 			}
 		}
