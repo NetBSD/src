@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.15 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.16 2009/08/12 05:35:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.15 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.16 2009/08/12 05:35:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,9 @@ struct betinfo {
 	long	worth;		/* net worth after costs */
 };
 
-int dbfd;
+static int dbfd;
 
-void	printuser(const struct passwd *, int);
+static void printuser(const struct passwd *, int);
 
 int
 main(int argc, char *argv[])
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 /*
  * print out info for specified password entry
  */
-void
+static void
 printuser(const struct passwd *pw, int printfail)
 {
 	struct betinfo total;
