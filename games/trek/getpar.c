@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.17 2009/05/25 00:43:34 dholland Exp $	*/
+/*	$NetBSD: getpar.c,v 1.18 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.17 2009/05/25 00:43:34 dholland Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.18 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ getfltpar(const char *s)
  **	get yes/no parameter
  **/
 
-const struct cvntab	Yntab[] = {
+static const struct cvntab Yntab[] = {
 	{ "y",	"es",	(cmdfun)1,	1 },
 	{ "n",	"o",	(cmdfun)0,	0 },
 	{ NULL,	NULL,	NULL,		0 }

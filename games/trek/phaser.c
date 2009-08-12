@@ -1,4 +1,4 @@
-/*	$NetBSD: phaser.c,v 1.14 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: phaser.c,v 1.15 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: phaser.c,v 1.14 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: phaser.c,v 1.15 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: phaser.c,v 1.14 2009/05/24 22:55:03 dholland Exp $");
 **	Uses trace flag 30
 */
 
-struct cvntab	Matab[] = {
+static struct cvntab Matab[] = {
 	{ "m",		"anual",	(cmdfun) 1,	0 },
 	{ "a",		"utomatic",	(cmdfun) 0,	0 },
 	{ NULL,		NULL,		NULL,		0 }

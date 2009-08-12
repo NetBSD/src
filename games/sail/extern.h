@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.34 2009/03/15 03:33:56 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.35 2009/08/12 09:05:08 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -209,7 +209,6 @@ struct shipspecs {
 	int rig4;
 	short pts;
 };
-extern struct shipspecs specs[];
 
 extern struct scenario *cc;		/* the current scenario */
 extern struct ship *ls;		/* &cc->ship[cc->vessels] */
@@ -343,7 +342,6 @@ void Signal(const char *, struct ship *, ...)
 	 __attribute__((__format__(__printf__,1,3)));
 void Msg(const char *, ...)
 	 __attribute__((__format__(__printf__,1,2)));
-void prompt(const char *, struct ship *);
 int sgetch(const char *, struct ship *, int);
 void sgetstr(const char *, char *, int);
 void centerview(void);

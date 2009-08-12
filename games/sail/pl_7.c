@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.37 2009/03/15 22:19:23 dholland Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.38 2009/08/12 09:05:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.37 2009/03/15 22:19:23 dholland Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.38 2009/08/12 09:05:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ static bool dbp[3];
 int done_curses;
 int loaded, fired, changed, repaired;
 int dont_adjust;
-int viewrow, viewcol;
+static int viewrow, viewcol;
 char movebuf[sizeof SHIP(0)->file->movebuf];
 int player;
 struct ship *ms;		/* memorial structure, &cc->ship[player] */
@@ -291,7 +291,7 @@ Msg(const char *fmt, ...)
 	scrollarea_add(buf);
 }
 
-void
+static void
 prompt(const char *p, struct ship *ship)
 {
 	static char buf[BUFSIZ];
