@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.32 2007/02/18 02:45:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.33 2009/08/12 23:29:20 matt Exp $
 
 INCSDIR= /usr/include/newsmips
 
-INCS=	adrsmap.h ansi.h asm.h aout_machdep.h autoconf.h \
-	bswap.h bsd-aout.h \
+INCS=	adrsmap.h ansi.h asm.h autoconf.h \
+	bswap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
