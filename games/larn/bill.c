@@ -1,4 +1,4 @@
-/*	$NetBSD: bill.c,v 1.9 2008/02/03 03:49:15 dholland Exp $	 */
+/*	$NetBSD: bill.c,v 1.10 2009/08/12 08:04:05 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bill.c	5.2 (Berkeley) 5/28/91";
 #else
-__RCSID("$NetBSD: bill.c,v 1.9 2008/02/03 03:49:15 dholland Exp $");
+__RCSID("$NetBSD: bill.c,v 1.10 2009/08/12 08:04:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: bill.c,v 1.9 2008/02/03 03:49:15 dholland Exp $");
 
 /* bill.c		 Larn is copyrighted 1986 by Noah Morgan. */
 
-const char *mail[] = {
+static const char *mail[] = {
 	"From: the LRS (Larn Revenue Service)\n",
 	"~s undeclared income\n",
 	"\n   We have heard you survived the caverns of Larn.  Let me be the",

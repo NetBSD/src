@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.15 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: morse.c,v 1.16 2009/08/12 08:11:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.15 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: morse.c,v 1.16 2009/08/12 08:11:37 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ static const char
 	"--..",
 };
 
-const struct punc {
+static const struct punc {
 	char c;
 	const char *morse;
 } other[] = {
@@ -111,9 +111,9 @@ const struct punc {
 };
 
 int	main(int, char *[]);
-void	morse(int);
-void	decode(const char *);
-void	show(const char *);
+static void morse(int);
+static void decode(const char *);
+static void show(const char *);
 
 static int sflag;
 static int dflag;

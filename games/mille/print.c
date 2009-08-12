@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.14 2009/05/25 23:34:50 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.15 2009/08/12 08:07:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.14 2009/05/25 23:34:50 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.15 2009/08/12 08:07:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: print.c,v 1.14 2009/05/25 23:34:50 dholland Exp $");
 
 #define COMP_STRT	20
 #define CARD_STRT	2
+
+static void show_card(int, int, CARD, CARD *);
+static void show_score(int, int, int, int *);
 
 void
 prboard(void)
@@ -102,7 +105,7 @@ prboard(void)
  * show_card:
  *	Show the given card if it is different from the last one shown
  */
-void
+static void
 show_card(int y, int x, CARD c, CARD *lc)
 {
 	if (c == *lc)
@@ -165,7 +168,7 @@ prscore(for_real)
  *	Show a score value if it is different from the last time we
  *	showed it.
  */
-void
+static void
 show_score(int y, int x, int s, int *ls)
 {
 	if (s == *ls)

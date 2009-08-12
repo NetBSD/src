@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.20 2008/02/24 03:52:09 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.21 2009/08/12 08:10:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.20 2008/02/24 03:52:09 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.21 2009/08/12 08:10:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: misc.c,v 1.20 2008/02/24 03:52:09 christos Exp $");
 #include <errno.h>
 
 #include "monop.h"
+
+static void is_monop(MON *, int);
 
 /*
  *	This routine executes a truncated set of commands until a
@@ -234,7 +236,7 @@ set_ownlist(pl)
 /*
  *	This routine sets things up as if it is a new monopoly
  */
-void
+static void
 is_monop(mp, pl)
 	MON *mp;
 	int pl;

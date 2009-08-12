@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.18 2008/02/24 06:07:06 dholland Exp $	*/
+/*	$NetBSD: monop.h,v 1.19 2009/08/12 08:10:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -131,23 +131,23 @@ typedef struct prp_st	UTIL_S;
 
 extern bool	trading, spec, fixing, told_em;
 
-extern const char	*const yncoms[], *const comlist[], *name_list[], *const lucky_mes[];
+extern const char	*const yncoms[], *name_list[], *const lucky_mes[];
 
 extern int	num_play, player, num_doub, num_luck;
 
 extern void (*const func[])(void);
 
-extern MON	mon[N_MON];
+/*extern MON	mon[N_MON];*/
 
 extern PLAY	*play, *cur_p;
 
 extern PROP	prop[N_PROP];
 
-extern RR_S	rr[N_RR];
+/*extern RR_S	rr[N_RR];*/
 
 extern SQUARE	board[N_SQRS + 1];
 
-extern UTIL_S	util[2];
+/*extern UTIL_S	util[2];*/
 
 
 /* cards.c */
@@ -180,7 +180,6 @@ void notify(void);
 void next_play(void);
 int get_int(const char *);
 void set_ownlist(int);
-void is_monop(MON *, int);
 void is_not_monop(MON *);
 void list(void);
 void list_all(void);

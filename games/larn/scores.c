@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.17 2008/02/03 20:41:53 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.18 2009/08/12 08:04:05 dholland Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.17 2008/02/03 20:41:53 dholland Exp $");
+__RCSID("$NetBSD: scores.c,v 1.18 2009/08/12 08:04:05 dholland Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -102,12 +102,22 @@ static const char *whydead[] = {
 	"died a post mortem death", "wasted by a malloc() failure"
 };
 
+static int readboard(void);
+static int writeboard(void);
+static int winshou(void);
+static int shou(int);
+static int sortboard(void);
+static void newscore(long, char *, int, int);
+static void new1sub(long, int, char *, long);
+static void new2sub(long, int, char *, int);
+static void diedsub(int);
+
 /*
  * readboard() 	Function to read in the scoreboard into a static buffer
  *
  * returns -1 if unable to read in the scoreboard, returns 0 if all is OK
  */
-int
+static int
 readboard()
 {
 	int             i;
@@ -134,7 +144,7 @@ readboard()
  *
  * returns -1 if unable to write the scoreboard, returns 0 if all is OK
  */
-int
+static int
 writeboard()
 {
 	int             i;
@@ -246,7 +256,7 @@ paytaxes(x)
  *
  * Returns the number of players on scoreboard that were shown
  */
-int
+static int
 winshou()
 {
 	struct wscofmt *p;
@@ -285,7 +295,7 @@ winshou()
  * Enter with 0 to list the scores, enter with 1 to list inventories too
  * Returns the number of players on scoreboard that were shown
  */
-int
+static int
 shou(x)
 	int             x;
 {
@@ -390,7 +400,7 @@ showallscores()
  *
  * Returns 0 if no sorting done, else returns 1
  */
-int
+static int
 sortboard()
 {
 	int    i, j = 0, pos;
@@ -429,7 +439,7 @@ sortboard()
  * 	died() reason # in whyded, and TRUE/FALSE in winner if a winner
  * ex.		newscore(1000, "player 1", 32, 0);
  */
-void
+static void
 newscore(score, whoo, whyded, winner)
 	long            score;
 	int             winner, whyded;
@@ -498,7 +508,7 @@ newscore(score, whoo, whyded, winner)
  * 	slot in scoreboard in i, and the tax bill in taxes.
  * Returns nothing of value
  */
-void
+static void
 new1sub(score, i, whoo, taxes)
 	long            score, taxes;
 	int             i;
@@ -525,7 +535,7 @@ new1sub(score, i, whoo, taxes)
  * 	died() reason # in whyded, and slot in scoreboard in i.
  * Returns nothing of value
  */
-void
+static void
 new2sub(score, i, whoo, whyded)
 	long            score;
 	int             i, whyded;
@@ -732,7 +742,7 @@ invalid:
  * diedsub(x) Subroutine to print out the line showing the player when he is killed
  * 	int x;
  */
-void
+static void
 diedsub(int x)
 {
 	char   ch;
