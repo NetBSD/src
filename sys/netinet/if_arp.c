@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.145 2009/01/11 02:45:54 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.146 2009/08/12 22:16:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.145 2009/01/11 02:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.146 2009/08/12 22:16:15 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -459,8 +459,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 	struct in_ifaddr *ia;
 	struct ifaddr *ifa;
 	struct ifnet *ifp = rt->rt_ifp;
-	uint8_t namelen = strlen(ifp->if_xname);
-	uint8_t addrlen = ifp->if_addrlen;
 
 	if (!arpinit_done) {
 		arpinit_done = 1;
@@ -581,7 +579,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
-		    gate->sa_len < sockaddr_dl_measure(namelen, addrlen)) {
+		    gate->sa_len < sockaddr_dl_measure(0, ifp->if_addrlen)) {
 			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
 			break;
 		}
@@ -593,7 +591,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
-		switch (satocsdl(gate)->sdl_type) {
+		switch (ifp->if_type) {
 #if NTOKEN > 0
 		case IFT_ISO88025:
 			allocsize = sizeof(*la) + sizeof(struct token_rif);
@@ -636,8 +634,12 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			 * interface.
 			 */
 			rt->rt_expire = 0;
-			(void)sockaddr_dl_setaddr(satosdl(gate), gate->sa_len,
-			    CLLADDR(ifp->if_sadl), ifp->if_addrlen);
+			if (sockaddr_dl_init(satosdl(gate), gate->sa_len,
+			    ifp->if_index, ifp->if_type, NULL, 0,
+			    CLLADDR(ifp->if_sadl), ifp->if_addrlen) == NULL) {
+				panic("%s(%s): sockaddr_dl_init cannot fail",
+				    __func__, ifp->if_xname);
+			}
 			if (useloopback)
 				ifp = rt->rt_ifp = lo0ifp;
 			/*
