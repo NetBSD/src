@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.timeout.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.timeout.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,11 +63,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.timeout.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.timeout.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
+
+static void stoned_dialogue(void);
 
 void
 timeout(void)
@@ -112,7 +114,7 @@ timeout(void)
 }
 
 /* He is being petrified - dialogue by inmet!tower */
-const char           *const stoned_texts[] = {
+static const char *const stoned_texts[] = {
 	"You are slowing down.",/* 5 */
 	"Your limbs are stiffening.",	/* 4 */
 	"Your limbs have turned to stone.",	/* 3 */
@@ -120,7 +122,7 @@ const char           *const stoned_texts[] = {
 	"You are a statue."	/* 1 */
 };
 
-void
+static void
 stoned_dialogue(void)
 {
 	long            i = (Stoned & TIMEOUT);

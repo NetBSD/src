@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rumors.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.rumors.c,v 1.7 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,17 +63,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rumors.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.rumors.c,v 1.7 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"	/* for RUMORFILE and BSD (strchr) */
 #include "extern.h"
 #define	CHARSZ	8		/* number of bits in a char */
-int             n_rumors = 0;
-int             n_used_rumors = -1;
-char           *usedbits;
 
-void
+static int n_rumors = 0;
+static int n_used_rumors = -1;
+static char *usedbits;
+
+static void init_rumors(FILE *);
+static int skipline(FILE *);
+static void outline(FILE *);
+static int used(int);
+
+static void
 init_rumors(FILE *rumf)
 {
 	int             i;
@@ -87,7 +93,7 @@ init_rumors(FILE *rumf)
 		usedbits[i] = 0;
 }
 
-int
+static int
 skipline(FILE *rumf)
 {
 	char            line[COLNO];
@@ -99,7 +105,7 @@ skipline(FILE *rumf)
 	}
 }
 
-void
+static void
 outline(FILE *rumf)
 {
 	char            line[COLNO];
@@ -139,7 +145,7 @@ none:
 	(void) fclose(rumf);
 }
 
-int
+static int
 used(int i)
 {
 	return (usedbits[i / CHARSZ] & (1 << (i % CHARSZ)));

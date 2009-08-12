@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.13 2009/06/29 23:05:33 dholland Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.14 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.13 2009/06/29 23:05:33 dholland Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.14 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -90,7 +90,8 @@ const char     *catmore;	/* default pager */
 #endif
 char            SAVEF[PL_NSIZ + 11] = "save/";	/* save/99999player */
 char           *hname;		/* name of the game (argv[0] of call) */
-char            obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
+
+static char obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
 
 int main(int, char *[]);
 static void chdirx(const char *, boolean);

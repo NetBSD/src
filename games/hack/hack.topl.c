@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.11 2009/06/29 23:05:33 dholland Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.12 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,21 +63,24 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.11 2009/06/29 23:05:33 dholland Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.12 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
 
-char            toplines[BUFSZ];
-xchar           tlx, tly;	/* set by pline; used by addtopl */
+static char toplines[BUFSZ];
+static xchar tlx, tly;		/* set by pline; used by addtopl */
 
-struct topl {
+static struct topl {
 	struct topl    *next_topl;
 	char           *topl_text;
 }              *old_toplines, *last_redone_topl;
 #define	OTLMAX	20		/* max nr of old toplines remembered */
+
+static void redotoplin(void);
+static void xmore(const char *);
 
 int
 doredotopl(void)
@@ -93,7 +96,7 @@ doredotopl(void)
 	return (0);
 }
 
-void
+static void
 redotoplin(void)
 {
 	home();
@@ -149,7 +152,7 @@ addtopl(const char *s)
 }
 
 /* s = allowed chars besides space/return */
-void
+static void
 xmore(const char *s)
 {
 	if (flags.toplin) {

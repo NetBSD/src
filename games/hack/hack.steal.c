@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.steal.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.steal.c,v 1.7 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,12 +63,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.steal.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.steal.c,v 1.7 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
+
+static int stealarm(void);
 
 /*
  * actually returns something that fits in an int
@@ -107,9 +109,9 @@ stealgold(struct monst *mtmp)
 }
 
 /* steal armor after he finishes taking it off */
-unsigned        stealoid;	/* object to be stolen */
-unsigned        stealmid;	/* monster doing the stealing */
-int
+static unsigned stealoid;	/* object to be stolen */
+static unsigned stealmid;	/* monster doing the stealing */
+static int
 stealarm(void)
 {
 	struct monst   *mtmp;

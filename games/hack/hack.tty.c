@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.tty.c,v 1.13 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.tty.c,v 1.14 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hack.tty.c,v 1.13 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.tty.c,v 1.14 2009/08/12 07:28:41 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -120,7 +120,9 @@ __RCSID("$NetBSD: hack.tty.c,v 1.13 2009/06/07 18:30:39 dholland Exp $");
 
 static char     erase_char, kill_char;
 static boolean  settty_needed = FALSE;
-struct termios  inittyb, curttyb;
+static struct termios  inittyb, curttyb;
+
+static void setctty(void);
 
 /*
  * Get initial state of terminal, set ospeed (for termcap routines)
@@ -162,7 +164,7 @@ settty(const char *s)
 	setioctls();
 }
 
-void
+static void
 setctty(void)
 {
 	if (tcsetattr(0, TCSADRAIN, &curttyb) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.read.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.read.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,12 +63,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.read.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.read.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
+
+static int identify(struct obj *);
+static int monstersym(int);
 
 int
 doread(void)
@@ -527,7 +530,7 @@ doread(void)
 	return (1);
 }
 
-int
+static int
 identify(struct obj *otmp)		/* also called by newmail() */
 {
 	objects[otmp->otyp].oc_name_known = 1;
@@ -624,7 +627,7 @@ do_it:
 }
 
 /* Test whether we may genocide all monsters with symbol  ch  */
-int
+static int
 monstersym(int ch)		/* arnold@ucsfcgl */
 {
 	const struct permonst *mp;
