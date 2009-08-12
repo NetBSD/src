@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2009/08/12 07:46:36 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2009/08/12 10:03:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2009/08/12 07:46:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2009/08/12 10:03:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1730,11 +1730,10 @@ pmap_flush_page(struct vm_page *pg, bool purge)
 void
 pmap_zero_page(paddr_t pa)
 {
-	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%x)\n", __func__, (int)pa));
 
-	KASSERT(pg->mdpage.pvh_list == NULL);
+	KASSERT(PHYS_TO_VM_PAGE(pa)->mdpage.pvh_list == NULL);
 
 	memset((void *)pa, 0, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
@@ -1749,12 +1748,11 @@ void
 pmap_copy_page(paddr_t spa, paddr_t dpa)
 {
 	struct vm_page *srcpg = PHYS_TO_VM_PAGE(spa);
-	struct vm_page *dstpg = PHYS_TO_VM_PAGE(dpa);
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%x, %x)\n", __func__, (int)spa,
 	    (int)dpa));
 
-	KASSERT(dstpg->mdpage.pvh_list == NULL);
+	KASSERT(PHYS_TO_VM_PAGE(dpa)->mdpage.pvh_list == NULL);
 
 	pmap_flush_page(srcpg, false);
 
