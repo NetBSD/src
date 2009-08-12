@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.46 2009/02/11 05:25:17 lukem Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.47 2009/08/12 20:24:30 seanb Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.46 2009/02/11 05:25:17 lukem Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.47 2009/08/12 20:24:30 seanb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -193,21 +193,23 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 		 * servlen == 0 means that the caller does not want the result.
 		 */
 	} else {
+		struct servent_data svd;
+		struct servent sv;
+
 		if (flags & NI_NUMERICSERV)
 			sp = NULL;
 		else {
-			struct servent_data svd;
-			struct servent sv;
-
 			(void)memset(&svd, 0, sizeof(svd));
 			sp = getservbyport_r(port,
 				(flags & NI_DGRAM) ? "udp" : "tcp", &sv, &svd);
-			endservent_r(&svd);
 		}
 		if (sp) {
-			if (strlen(sp->s_name) + 1 > servlen)
+			if (strlen(sp->s_name) + 1 > servlen) {
+				endservent_r(&svd);
 				return EAI_MEMORY;
+			}
 			strlcpy(serv, sp->s_name, servlen);
+			endservent_r(&svd);
 		} else {
 			snprintf(numserv, sizeof(numserv), "%u", ntohs(port));
 			if (strlen(numserv) + 1 > servlen)
