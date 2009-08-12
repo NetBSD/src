@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.17 2007/12/15 19:44:38 perry Exp $	*/
+/*	$NetBSD: init.c,v 1.18 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.17 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: init.c,v 1.18 2009/08/12 04:28:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,12 +55,13 @@ __RCSID("$NetBSD: init.c,v 1.17 2007/12/15 19:44:38 perry Exp $");
 #include "hdr.h"
 #include "extern.h"
 
+static void linkdata(void);
+
 int     blklin = TRUE;
 
 int     setbit[16] = {1, 2, 4, 010, 020, 040, 0100, 0200, 0400, 01000, 02000, 
 		      04000, 010000, 020000, 040000, 0100000};
 
-int     datfd;			/* message file descriptor */
 volatile sig_atomic_t delhit;
 int     yea;
 
@@ -111,8 +112,10 @@ int     keys, lamp, grate, cage, rod, rod2, steps,	/* mnemonics */
         axe, mirror, dragon, chasm, troll, troll2, bear, messag,
         vend, batter, nugget, coins, chest, eggs, tridnt, vase,
         emrald, pyram, pearl, rug, chain, spices, back, look, cave,
-        null, entrnc, dprssn, enter, stream, pour, say, lock, throw,
+        null, entrnc, dprssn, say, lock, throw,
         find, invent;
+
+static int enter, /*stream,*/ pour;
 
 int     chloc, chloc2, dseen[7], dloc[7],	/* dwarf stuff */
         odloc[7], dflag, daltlc;
@@ -148,7 +151,7 @@ decr(int a, int b, int c, int d, int e)
 	return buf;
 }
 
-void
+static void
 linkdata(void)
 {				/* secondary data manipulation */
 	int     i, j;
