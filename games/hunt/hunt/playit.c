@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.14 2009/07/04 07:51:34 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.15 2009/08/12 07:42:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.14 2009/07/04 07:51:34 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.15 2009/08/12 07:42:11 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -77,6 +77,7 @@ static unsigned char ibuf[256], *iptr = ibuf;
 
 static unsigned char getchr(void);
 static void send_stuff(void);
+static void redraw_screen(void);
 
 /*
  * playit:
@@ -415,7 +416,7 @@ clear_the_screen(void)
 	refresh();
 }
 
-void
+static void
 redraw_screen(void)
 {
 	clearok(stdscr, TRUE);

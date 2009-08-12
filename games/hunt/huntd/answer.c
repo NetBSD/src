@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.14 2009/07/04 04:29:54 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.15 2009/08/12 07:42:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.14 2009/07/04 04:29:54 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.15 2009/08/12 07:42:11 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -45,6 +45,10 @@ __RCSID("$NetBSD: answer.c,v 1.14 2009/07/04 04:29:54 dholland Exp $");
 #define SCOREDECAY	15
 
 static char Ttyname[NAMELEN];
+
+static IDENT *get_ident(uint32_t, uint32_t, char *, char);
+static void stmonitor(PLAYER *);
+static void stplayer(PLAYER *, int);
 
 int
 answer(void)
@@ -203,7 +207,7 @@ answer(void)
 }
 
 #ifdef MONITOR
-void
+static void
 stmonitor(PLAYER *pp)
 {
 	int line;
@@ -232,7 +236,7 @@ stmonitor(PLAYER *pp)
 }
 #endif
 
-void
+static void
 stplayer(PLAYER *newpp, int enter_status)
 {
 	int x, y;
@@ -380,7 +384,7 @@ rand_dir(void)
  * get_ident:
  *	Get the score structure of a player
  */
-IDENT *
+static IDENT *
 get_ident(uint32_t machine, uint32_t uid, char *name, char team)
 {
 	IDENT *ip;

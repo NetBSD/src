@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.19 2009/07/04 06:38:35 dholland Exp $	*/
+/*	$NetBSD: driver.c,v 1.20 2009/08/12 07:42:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.19 2009/07/04 06:38:35 dholland Exp $");
+__RCSID("$NetBSD: driver.c,v 1.20 2009/08/12 07:42:11 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -51,19 +51,19 @@ __RCSID("$NetBSD: driver.c,v 1.19 2009/07/04 06:38:35 dholland Exp $");
 #define RN	((Seed = Seed * 11109 + 13849) & 0x7fff)
 #endif
 
-int Seed = 0;
+static int Seed = 0;
 
 
-SOCKET Daemon;
-char *First_arg;		/* pointer to argv[0] */
-char *Last_arg;			/* pointer to end of argv/environ */
+static SOCKET Daemon;
+static char *First_arg;			/* pointer to argv[0] */
+static char *Last_arg;			/* pointer to end of argv/environ */
 
 #ifdef INTERNET
-int Test_socket;		/* test socket to answer datagrams */
-FLAG inetd_spawned;		/* invoked via inetd */
-FLAG standard_port = TRUE;	/* true if listening on standard port */
-u_short	sock_port;		/* port # of tcp listen socket */
-u_short	stat_port;		/* port # of statistics tcp socket */
+static int Test_socket;			/* test socket to answer datagrams */
+static FLAG inetd_spawned;		/* invoked via inetd */
+static FLAG standard_port = TRUE;	/* true if listening on standard port */
+static u_short	sock_port;		/* port # of tcp listen socket */
+static u_short	stat_port;		/* port # of statistics tcp socket */
 #define DAEMON_SIZE	(sizeof Daemon)
 #else
 #define DAEMON_SIZE	(sizeof Daemon - 1)

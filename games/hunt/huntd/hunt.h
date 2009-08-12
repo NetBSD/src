@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.18 2009/07/04 07:51:35 dholland Exp $	*/
+/*	$NetBSD: hunt.h,v 1.19 2009/08/12 07:42:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -412,7 +412,6 @@ void add_shot(int, int, int, char, int, PLAYER *, int, char);
 int answer(void);
 void bad_con(void) __dead;
 void bad_ver(void) __dead;
-int broadcast_vec(int, struct	sockaddr **);
 void ce(PLAYER *);
 void cgoto(PLAYER *, int, int);
 void check(PLAYER *, int, int);
@@ -427,12 +426,9 @@ void do_connect(char *, char, long);
 void do_message(void);
 void drawmaze(PLAYER *);
 void drawplayer(PLAYER *, FLAG);
-void drawstatus(PLAYER *);
 void execute(PLAYER *);
 void faketalk(void);
-void find_driver(FLAG);
 void fixshots(int, int, char);
-IDENT *get_ident(uint32_t, uint32_t, char *, char);
 void get_local_name(char *);
 int get_remote_name(char *);
 BULLET *is_bullet(int, int);
@@ -446,7 +442,6 @@ int opposite(int, char);
 void otto(int, int, char);
 void outch(PLAYER *, int);
 void outstr(PLAYER *, const char *, int);
-int player_sym(PLAYER *, int, int);
 PLAYER *play_at(int, int);
 void playit(void);
 void put_ch(char);
@@ -454,21 +449,10 @@ void put_str(char *);
 int quit(int);
 int rand_dir(void);
 int rand_num(int);
-void redraw_screen(void);
-void rmnl(char *);
 void rollexpl(void);
-void see(PLAYER *, int);
 void sendcom(PLAYER *, int, ...);
 void showexpl(int, int, char);
 void showstat(PLAYER *);
-void start_driver(void);
-void stmonitor(PLAYER *);
-void stplayer(PLAYER *, int);
-char translate(char);
 void cleanup(int) __dead;
 void intr(int);
-void sigalrm(int);
-void sigemt(int) __dead;
-void sigterm(int) __dead;
-void sigusr1(int) __dead;
 void tstp(int);
