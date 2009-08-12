@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.16 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.17 2009/08/12 08:07:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.16 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.17 2009/08/12 08:07:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,11 @@ __RCSID("$NetBSD: move.c,v 1.16 2009/05/25 23:24:54 dholland Exp $");
 
 #undef	CTRL
 #define	CTRL(c)		(c - 'A' + 1)
+
+static void check_go(void);
+static int playcard(PLAY *);
+static void getmove(void);
+static int haspicked(const PLAY *);
 
 void
 domove(void)
@@ -167,7 +172,7 @@ acc:
  *	Check and see if either side can go.  If they cannot,
  * the game is over
  */
-void
+static void
 check_go(void)
 {
 	CARD	card;
@@ -198,7 +203,7 @@ check_go(void)
 	Finished = TRUE;
 }
 
-int
+static int
 playcard(PLAY *pp)
 {
 	int	v;
@@ -347,7 +352,7 @@ protected:
 	return TRUE;
 }
 
-void
+static void
 getmove(void)
 {
 	char	c;
@@ -481,7 +486,7 @@ ret:
 /*
  * return whether or not the player has picked
  */
-int
+static int
 haspicked(const PLAY *pp)
 {
 	int	card;
