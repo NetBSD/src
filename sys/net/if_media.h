@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.51 2008/09/09 20:12:18 mhitch Exp $	*/
+/*	$NetBSD: if_media.h,v 1.52 2009/08/12 11:17:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@ void		ifmedia_removeall(struct ifmedia *);
 #define	IFM_10G_SR	19		/* 10GBase-SR 850nm Multi-mode */
 #define	IFM_10G_CX4	20		/* 10GBase CX4 copper */
 #define	IFM_2500_SX	21		/* 2500baseSX - multi-mode fiber */
+#define	IFM_1000_BX10	22		/* 1000base-BX10 */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -410,6 +411,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_1000_CX,	"1000baseCX" },			\
 	{ IFM_ETHER | IFM_1000_CX,	"1000CX" },			\
 	{ IFM_ETHER | IFM_1000_CX,	"1000BASE-CX" },		\
+	{ IFM_ETHER | IFM_1000_BX10,	"1000BASE-BX10" },		\
 	{ IFM_ETHER | IFM_1000_T,	"1000baseT" },			\
 	{ IFM_ETHER | IFM_1000_T,	"1000T" },			\
 	{ IFM_ETHER | IFM_1000_T,	"1000BASE-T" },			\
