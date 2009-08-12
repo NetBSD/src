@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.11 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: hdr.h,v 1.12 2009/08/12 04:28:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,7 +56,6 @@
 
 #include <signal.h>
 
-extern int     datfd;			/* message file descriptor */
 extern volatile sig_atomic_t delhit;
 extern int     yea;
 extern char data_file[];	/* Virtual data file */
@@ -141,7 +140,7 @@ extern	int     keys, lamp, grate, cage, rod, rod2, steps,	/* mnemonics */
 	        axe, mirror, dragon, chasm, troll, troll2, bear, messag,
 	        vend, batter, nugget, coins, chest, eggs, tridnt, vase,
 	        emrald, pyram, pearl, rug, chain, spices, back, look, cave,
-	        null, entrnc, dprssn, enter, stream, pour, say, lock, throw,
+		null, entrnc, dprssn, /*enter, stream, pour,*/ say, lock, throw,
 	        find, invent;
 
 extern	int     chloc, chloc2, dseen[7], dloc[7],	/* dwarf stuff */
