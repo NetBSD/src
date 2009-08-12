@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.14 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.15 2009/08/12 05:48:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -60,52 +60,30 @@ void	 addmsg(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 int	 adjust(const CARD [], CARD);
 int	 anymove(const CARD [], int, int);
-int	 anysumto(const CARD [], int, int, int);
 void	 bye(void);
 int	 cchose(const CARD [], int, int);
 void	 cdiscard(BOOLEAN);
 int	 chkscr(int *, int);
 int	 comphand(const CARD [], const char *);
 void	 cremove(CARD, CARD [], int);
-int	 cut(BOOLEAN, int);
-int	 deal(BOOLEAN);
-void	 discard(BOOLEAN);
 void	 do_wait(void);
 void	 endmsg(void);
-int	 eq(CARD, CARD);
-int	 fifteens(const CARD [], int);
-void	 game(void);
-void	 gamescore(void);
 char	*get_line(void);
 int	 getuchar(void);
-int	 incard(CARD *);
 int	 infrom(const CARD [], int, const char *);
 void	 instructions(void);
 int	 is_one(CARD, const CARD [], int);
-void	 makeboard(void);
 void	 makedeck(CARD []);
 void	 makeknown(const CARD [], int);
 void	 msg(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 int	 msgcard(CARD, BOOLEAN);
-int	 msgcrd(CARD, BOOLEAN, const char *, BOOLEAN);
 int	 number(int, int, const char *);
-int	 numofval(const CARD [], int, int);
-int	 pairuns(const CARD [], int);
-int	 peg(BOOLEAN);
 int	 pegscore(CARD, const CARD [], int, int);
-int	 playhand(BOOLEAN);
 int	 plyrhand(const CARD [], const char *);
 void	 prcard(WINDOW *, int, int, CARD, BOOLEAN);
-void	 prcrib(BOOLEAN, BOOLEAN);
 void	 prhand(const CARD [], int, WINDOW *, BOOLEAN);
-void	 printcard(WINDOW *, int, CARD, BOOLEAN);
-void	 prpeg(int, int, BOOLEAN);
-void	 prtable(int);
-int	 readchar(void);
 void	 receive_intr(int) __attribute__((__noreturn__));
-int	 score(BOOLEAN);
 int	 scorehand(const CARD [], CARD, int, BOOLEAN, BOOLEAN);
 void	 shuffle(CARD []);
 void	 sorthand(CARD [], int);
-void	 wait_for(int);

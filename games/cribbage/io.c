@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.23 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: io.c,v 1.24 2009/08/12 05:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.23 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: io.c,v 1.24 2009/08/12 05:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,20 +58,28 @@ __RCSID("$NetBSD: io.c,v 1.23 2009/07/13 19:05:40 roy Exp $");
 #endif
 #define	CTRL(X)			(X - 'A' + 1)
 
-char    linebuf[LINESIZE];
+static int msgcrd(CARD, BOOLEAN, const char *, BOOLEAN);
+static void printcard(WINDOW *, int, CARD, BOOLEAN);
+static int incard(CARD *);
+static void wait_for(int);
+static int readchar(void);
 
-const char   *const rankname[RANKS] = {
+static char linebuf[LINESIZE];
+
+static const char *const rankname[RANKS] = {
 	"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 	"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"
 };
 
-const char   *const rankchar[RANKS] = {
+static const char *const rankchar[RANKS] = {
 	"A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"
 };
 
-const char *const suitname[SUITS] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
+static const char *const suitname[SUITS] = {
+	"SPADES", "HEARTS", "DIAMONDS", "CLUBS"
+};
 
-const char   *const suitchar[SUITS] = {"S", "H", "D", "C"};
+static const char *const suitchar[SUITS] = {"S", "H", "D", "C"};
 
 /*
  * msgcard:
@@ -92,7 +100,7 @@ msgcard(c, brief)
  * msgcrd:
  *	Print the value of a card in ascii
  */
-int
+static int
 msgcrd(CARD c, BOOLEAN brfrank, const char *mid, BOOLEAN brfsuit)
 {
 	if (c.rank == EMPTY || c.suit == EMPTY)
@@ -114,7 +122,7 @@ msgcrd(CARD c, BOOLEAN brfrank, const char *mid, BOOLEAN brfsuit)
  * printcard:
  *	Print out a card.
  */
-void
+static void
 printcard(WINDOW *win, int cardno, CARD c, BOOLEAN blank)
 {
 	prcard(win, cardno * 2, cardno, c, blank);
@@ -216,7 +224,7 @@ infrom(const CARD hand[], int n, const char *prompt)
  *	Inputs a card in any format.  It reads a line ending with a CR
  *	and then parses it.
  */
-int
+static int
 incard(CARD *crd)
 {
 	int i;
@@ -357,8 +365,8 @@ number(int lo, int hi, const char *prompt)
  * msg:
  *	Display a message at the top of the screen.
  */
-char    Msgbuf[BUFSIZ] = {'\0'};
-int     Mpos = 0;
+static char Msgbuf[BUFSIZ] = {'\0'};
+static int Mpos = 0;
 static int Newpos = 0;
 
 void
@@ -392,7 +400,7 @@ addmsg(const char *fmt, ...)
  * endmsg:
  *	Display a new msg.
  */
-int     Lineno = 0;
+static int Lineno = 0;
 
 void
 endmsg(void)
@@ -465,7 +473,7 @@ do_wait(void)
  * wait_for
  *	Sit around until the guy types the right key
  */
-void
+static void
 wait_for(int ch)
 {
 	int c;
@@ -482,7 +490,7 @@ wait_for(int ch)
  * readchar:
  *	Reads and returns a character, checking for gross input errors
  */
-int
+static int
 readchar(void)
 {
 	int cnt;

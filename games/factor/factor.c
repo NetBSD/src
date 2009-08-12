@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.18 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: factor.c,v 1.19 2009/08/12 05:54:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.18 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: factor.c,v 1.19 2009/08/12 05:54:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: factor.c,v 1.18 2008/07/20 01:03:21 lukem Exp $");
 #else
 typedef long	BIGNUM;
 typedef u_long	BN_ULONG;
-int	BN_dec2bn(BIGNUM **a, const char *str);
+static int BN_dec2bn(BIGNUM **a, const char *str);
 #define BN_new()		((BIGNUM *)calloc(sizeof(BIGNUM), 1))
 #define BN_is_zero(v)		(*(v) == 0)
 #define BN_is_one(v)		(*(v) == 1)
@@ -102,23 +102,22 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 #define	PRIME_CHECKS	5
 
 #ifdef HAVE_OPENSSL 
-BN_CTX *ctx;				/* just use a global context */
+static BN_CTX *ctx;			/* just use a global context */
 #endif
 
-int	main(int, char *[]);
-void	pr_fact(BIGNUM *);		/* print factors of a value */
-void	BN_print_dec_fp(FILE *, const BIGNUM *);
-void	usage(void) __dead;
+static void pr_fact(BIGNUM *);		/* print factors of a value */
+static void BN_print_dec_fp(FILE *, const BIGNUM *);
+static void usage(void) __dead;
 #ifdef HAVE_OPENSSL
-void	pollard_pminus1(BIGNUM *);	/* print factors for big numbers */
+static void pollard_pminus1(BIGNUM *);	/* print factors for big numbers */
 #else
-char	*BN_bn2dec(const BIGNUM *);
-BN_ULONG BN_div_word(BIGNUM *, BN_ULONG);
+static char *BN_bn2dec(const BIGNUM *);
+static BN_ULONG BN_div_word(BIGNUM *, BN_ULONG);
 #endif
 
 
 #ifndef HAVE_OPENSSL
-int
+static int
 BN_dec2bn(BIGNUM **a, const char *str)
 {
 	char *p;
@@ -196,7 +195,7 @@ main(int argc, char *argv[])
  *
  * Factors are printed with leading tabs.
  */
-void
+static void
 pr_fact(BIGNUM *val)
 {
 	const ubig *fact;		/* The factor found. */
@@ -256,7 +255,7 @@ pr_fact(BIGNUM *val)
 /*
  * Sigh..  No _decimal_ output to file functions in BN.
  */
-void
+static void
 BN_print_dec_fp(FILE *fp, const BIGNUM *num)
 {
 	char *buf;
@@ -281,7 +280,7 @@ usage(void)
 #ifdef HAVE_OPENSSL
 /* pollard p-1, algorithm from Jim Gillogly, May 2000 */
 
-void
+static void
 pollard_pminus1(BIGNUM *val)
 {
 	BIGNUM *base, *rbase, *num, *i, *x;
@@ -344,7 +343,7 @@ BN_bn2dec(const BIGNUM *val)
 	return buf;
 }
 
-BN_ULONG
+static BN_ULONG
 BN_div_word(BIGNUM *a, BN_ULONG b)
 {
 	BN_ULONG mod;
