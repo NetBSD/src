@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.15 2008/08/08 16:10:47 drochner Exp $	*/
+/*	$NetBSD: graphics.c,v 1.16 2009/08/12 04:48:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.15 2008/08/08 16:10:47 drochner Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.16 2009/08/12 04:48:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,9 @@ __RCSID("$NetBSD: graphics.c,v 1.15 2008/08/08 16:10:47 drochner Exp $");
 #define C_BEACON		'*'
 #define C_CREDIT		'*'
 
-WINDOW	*radar, *cleanradar, *credit, *input, *planes;
+static void draw_line(WINDOW *, int, int, int, int, const char *);
+
+static WINDOW *radar, *cleanradar, *credit, *input, *planes;
 
 int
 getAChar(void)
@@ -216,7 +218,7 @@ setup_screen(const C_SCREEN *scp)
 	(void)fflush(stdout);
 }
 
-void
+static void
 draw_line(WINDOW *w, int x, int y, int lx, int ly, const char *s)
 {
 	int	dx, dy;
