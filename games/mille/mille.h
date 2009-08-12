@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.16 2009/05/25 23:44:04 dholland Exp $	*/
+/*	$NetBSD: mille.h,v 1.17 2009/08/12 08:07:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -235,7 +235,6 @@ void	account(CARD);
 void	calcmove(void);
 int	canplay(const PLAY *, const PLAY *, CARD);
 int	check_ext(bool);
-void	check_go(void);
 void	check_more(void);
 void	die(int) __attribute__((__noreturn__));
 void	domove(void);
@@ -243,16 +242,13 @@ bool	error(const char *, ...);
 void	extrapolate(PLAY *);
 void	finalscore(PLAY *);
 CARD	getcard(void);
-void	getmove(void);
 int	getyn(int);
-int	haspicked(const PLAY *);
 void	init(void);
 int	is_repair(CARD);
 int	main(int, char **);
 void	newboard(void);
 void	newscore(void);
 int	onecard(const PLAY *);
-int	playcard(PLAY *);
 void	prboard(void);
 void	prompt(int);
 void	prscore(bool);
@@ -262,8 +258,6 @@ int	roll(int, int);
 void	rub(int);
 int	safety(CARD);
 bool	save(void);
-void	show_card(int, int, CARD, CARD *);
-void	show_score(int, int, int, int *);
 void	shuffle(void);
 void	sort(CARD *);
 void	undoex(int);
