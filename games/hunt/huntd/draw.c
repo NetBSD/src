@@ -1,4 +1,4 @@
-/*	$NetBSD: draw.c,v 1.7 2009/07/04 04:29:54 dholland Exp $	*/
+/*	$NetBSD: draw.c,v 1.8 2009/08/12 07:42:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,10 +32,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: draw.c,v 1.7 2009/07/04 04:29:54 dholland Exp $");
+__RCSID("$NetBSD: draw.c,v 1.8 2009/08/12 07:42:11 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
+
+static void drawstatus(PLAYER *);
+static void see(PLAYER *, int);
+static char translate(char);
+static int player_sym(PLAYER *, int, int);
 
 void
 drawmaze(PLAYER *pp)
@@ -69,7 +74,7 @@ drawmaze(PLAYER *pp)
  * drawstatus - put up the status lines (this assumes the screen
  *		size is 80x24 with the maze being 64x24)
  */
-void
+static void
 drawstatus(PLAYER *pp)
 {
 	int i;
@@ -169,7 +174,7 @@ look(PLAYER *pp)
 	cgoto(pp, y, x);
 }
 
-void
+static void
 see(PLAYER *pp, int face)
 {
 	char *sp;
@@ -355,7 +360,7 @@ message(PLAYER *pp, const char *s)
  *	Turn a character into the right direction character if we are
  *	looking at the current player.
  */
-char
+static char
 translate(char ch)
 {
 	switch (ch) {
@@ -375,7 +380,7 @@ translate(char ch)
  * player_sym:
  *	Return the player symbol
  */
-int
+static int
 player_sym(PLAYER *pp, int y, int x)
 {
 	PLAYER *npp;
