@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.35 2009/07/04 07:51:34 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.36 2009/08/12 07:42:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.35 2009/07/04 07:51:34 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.36 2009/08/12 07:42:11 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,16 +62,16 @@ FLAG Am_monitor = FALSE;
 
 char Buf[BUFSIZ];
 
-int Socket;
+/*static*/ int Socket;
 #ifdef INTERNET
-char *Sock_host;
-char *use_port;
-FLAG Query_driver = FALSE;
+static char *Sock_host;
+static char *use_port;
+static FLAG Query_driver = FALSE;
 char *Send_message = NULL;
-FLAG Show_scores = FALSE;
+static FLAG Show_scores = FALSE;
 #endif
 
-SOCKET Daemon;
+static SOCKET Daemon;
 #ifdef INTERNET
 #define DAEMON_SIZE	(sizeof Daemon)
 #else
@@ -88,15 +88,20 @@ static int in_visual;
 
 extern int cur_row, cur_col;
 
-void dump_scores(SOCKET);
-long env_init(long);
-void fill_in_blanks(void);
-void leave(int, const char *) __dead;
-void leavex(int, const char *) __dead;
-void fincurs(void);
-int main(int, char *[]);
+static void dump_scores(SOCKET);
+static long env_init(long);
+static void fill_in_blanks(void);
+static void leave(int, const char *) __dead;
+static void leavex(int, const char *) __dead;
+static void fincurs(void);
+static void rmnl(char *);
+static void sigterm(int) __dead;
+static void sigusr1(int) __dead;
+static void find_driver(FLAG);
+static void start_driver(void);
+static int broadcast_vec(int, struct sockaddr **);
 #ifdef INTERNET
-SOCKET *list_drivers(void);
+static SOCKET *list_drivers(void);
 #endif
 
 extern int Otto_mode;
@@ -331,7 +336,7 @@ main(int ac, char **av)
 }
 
 #ifdef INTERNET
-int
+static int
 broadcast_vec(int s /*socket*/, struct sockaddr **vector)
 {
 	int vec_cnt;
@@ -506,7 +511,7 @@ test_one_host:
 	goto get_response;
 }
 
-void
+static void
 find_driver(FLAG do_startup)
 {
 	SOCKET *hosts;
@@ -556,7 +561,7 @@ find_driver(FLAG do_startup)
 	find_driver(FALSE);
 }
 
-void
+static void
 dump_scores(SOCKET host)
 {
 	struct hostent *hp;
@@ -581,7 +586,7 @@ dump_scores(SOCKET host)
 
 #endif
 
-void
+static void
 start_driver(void)
 {
 	int procid;
@@ -655,7 +660,7 @@ bad_ver(void)
  * sigterm:
  *	Handle a terminate signal
  */
-void
+static void
 sigterm(int dummy __unused)
 {
 	leavex(0, NULL);
@@ -667,30 +672,18 @@ sigterm(int dummy __unused)
  * sigusr1:
  *	Handle a usr1 signal
  */
-void
+static void
 sigusr1(int dummy __unused)
 {
 	leavex(1, "Unable to start driver.  Try again.");
 	/* NOTREACHED */
 }
 
-#ifdef INTERNET
-/*
- * sigalrm:
- *	Handle an alarm signal
- */
-void
-sigalrm(int dummy __unused)
-{
-	return;
-}
-#endif
-
 /*
  * rmnl:
  *	Remove a '\n' at the end of a string if there is one
  */
-void
+static void
 rmnl(char *s)
 {
 	char *cp;
@@ -745,7 +738,7 @@ intr(int dummy __unused)
 	}
 }
 
-void
+static void
 fincurs(void)
 {
 	if (in_visual) {
@@ -781,7 +774,7 @@ leavex(int eval, const char *mesg)
 	errx(eval, mesg ? mesg : "");
 }
 
-long
+static long
 env_init(long enter_status)
 {
 	int i;
@@ -890,7 +883,7 @@ env_init(long enter_status)
 	return enter_status;
 }
 
-void
+static void
 fill_in_blanks(void)
 {
 	int i;

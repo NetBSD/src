@@ -1,4 +1,4 @@
-/*	$NetBSD: makemaze.c,v 1.6 2009/07/04 04:29:55 dholland Exp $	*/
+/*	$NetBSD: makemaze.c,v 1.7 2009/08/12 07:42:11 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makemaze.c,v 1.6 2009/07/04 04:29:55 dholland Exp $");
+__RCSID("$NetBSD: makemaze.c,v 1.7 2009/08/12 07:42:11 dholland Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -67,7 +67,7 @@ makemaze(void)
 #define NPERM	24
 #define NDIR	4
 
-int dirs[NPERM][NDIR] = {
+static int dirs[NPERM][NDIR] = {
 	{0,1,2,3},	{3,0,1,2},	{0,2,3,1},	{0,3,2,1},
 	{1,0,2,3},	{2,3,0,1},	{0,2,1,3},	{2,3,1,0},
 	{1,0,3,2},	{1,2,0,3},	{3,1,2,0},	{2,0,3,1},
@@ -76,7 +76,7 @@ int dirs[NPERM][NDIR] = {
 	{2,1,3,0},	{3,0,2,1},	{3,2,0,1},	{3,2,1,0}
 };
 
-int incr[NDIR][2] = {
+static int incr[NDIR][2] = {
 	{0, 1}, {1, 0}, {0, -1}, {-1, 0}
 };
 
