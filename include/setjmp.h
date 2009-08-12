@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.24 2007/12/24 17:26:09 perry Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.25 2009/08/12 04:57:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,13 +47,16 @@
 #define _JB_ATTRIBUTES	/**/
 #else
 #endif
+#ifndef _BSD_JBSLOT_T_
+#define	_BSD_JBSLOT_T_	long
+#endif
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
-typedef long sigjmp_buf[_JBLEN + 1] _JB_ATTRIBUTES;
+typedef _BSD_JBSLOT_T_ sigjmp_buf[_JBLEN + 1] _JB_ATTRIBUTES;
 #endif /* not ANSI */
 
-typedef long jmp_buf[_JBLEN] _JB_ATTRIBUTES;
+typedef _BSD_JBSLOT_T_ jmp_buf[_JBLEN] _JB_ATTRIBUTES;
 
 #include <sys/cdefs.h>
 
