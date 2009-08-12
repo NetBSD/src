@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.18 2009/06/04 07:01:16 dholland Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.19 2009/08/12 06:19:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.18 2009/06/04 07:01:16 dholland Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.19 2009/08/12 06:19:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,15 +55,28 @@ __RCSID("$NetBSD: pickmove.c,v 1.18 2009/06/04 07:01:16 dholland Exp $");
 #define BIT_CLR(a, b)	((a)[(b)/BITS_PER_INT] &= ~(1 << ((b) % BITS_PER_INT)))
 #define BIT_TEST(a, b)	((a)[(b)/BITS_PER_INT] & (1 << ((b) % BITS_PER_INT)))
 
-struct	combostr *hashcombos[FAREA];	/* hash list for finding duplicates */
-struct	combostr *sortcombos;		/* combos at higher levels */
-int	combolen;			/* number of combos in sortcombos */
-int	nextcolor;			/* color of next move */
-int	elistcnt;			/* count of struct elist allocated */
-int	combocnt;			/* count of struct combostr allocated */
-int	forcemap[MAPSZ];		/* map for blocking <1,x> combos */
-int	tmpmap[MAPSZ];			/* map for blocking <1,x> combos */
-int	nforce;				/* count of opponent <1,x> combos */
+static struct combostr *hashcombos[FAREA];/* hash list for finding duplicates */
+static struct combostr *sortcombos;	/* combos at higher levels */
+static int combolen;			/* number of combos in sortcombos */
+static int nextcolor;			/* color of next move */
+static int elistcnt;			/* count of struct elist allocated */
+static int combocnt;			/* count of struct combostr allocated */
+static int forcemap[MAPSZ];		/* map for blocking <1,x> combos */
+static int tmpmap[MAPSZ];		/* map for blocking <1,x> combos */
+static int nforce;			/* count of opponent <1,x> combos */
+
+static int better(const struct spotstr *, const struct spotstr *, int);
+static void scanframes(int);
+static void makecombo2(struct combostr *, struct spotstr *, int, int);
+static void addframes(int);
+static void makecombo(struct combostr *, struct spotstr *, int, int);
+static void appendcombo(struct combostr *, int);
+static void updatecombo(struct combostr *, int);
+static void makeempty(struct combostr *);
+static int checkframes(struct combostr *, struct combostr *, struct spotstr *,
+		    int, struct overlap_info *);
+static int sortcombo(struct combostr **, struct combostr **, struct combostr *);
+static void printcombo(struct combostr *, char *, size_t);
 
 int
 pickmove(int us)
@@ -161,7 +174,7 @@ pickmove(int us)
 /*
  * Return true if spot 'sp' is better than spot 'sp1' for color 'us'.
  */
-int
+static int
 better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 {
 	int them, s, s1;
@@ -211,15 +224,15 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 #endif
 }
 
-int	curcolor;	/* implicit parameter to makecombo() */
-int	curlevel;	/* implicit parameter to makecombo() */
+static int curcolor;	/* implicit parameter to makecombo() */
+static int curlevel;	/* implicit parameter to makecombo() */
 
 /*
  * Scan the sorted list of non-empty frames and
  * update the minimum combo values for each empty spot.
  * Also, try to combine frames to find more complex (chained) moves.
  */
-void
+static void
 scanframes(int color)
 {
 	struct combostr *cbp, *ecbp;
@@ -400,7 +413,7 @@ scanframes(int color)
  * Compute all level 2 combos of frames intersecting spot 'osp'
  * within the frame 'ocbp' and combo value 's'.
  */
-void
+static void
 makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 {
 	struct spotstr *fsp;
@@ -530,7 +543,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
  * Scan the sorted list of frames and try to add a frame to
  * combinations of 'level' number of frames.
  */
-void
+static void
 addframes(int level)
 {
 	struct combostr *cbp, *ecbp;
@@ -630,7 +643,7 @@ addframes(int level)
  * Compute all level N combos of frames intersecting spot 'osp'
  * within the frame 'ocbp' and combo value 's'.
  */
-void
+static void
 makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 {
 	struct combostr *cbp, *ncbp;
@@ -643,6 +656,15 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	union comboval ocb;
 	struct overlap_info vertices[1];
 	char tmp[128];
+
+	/*
+	 * XXX: when I made functions static gcc started warning about
+	 * some members of vertices[0] maybe being used uninitialized.
+	 * For now I'm just going to clear it rather than wade through
+	 * the logic to find out whether gcc or the code is wrong. I
+	 * wouldn't be surprised if it were the code though. - dholland
+	 */
+	memset(vertices, 0, sizeof(vertices));
 
 	ocb.s = s;
 	baseB = ocb.c.a + ocb.c.b - 1;
@@ -769,14 +791,14 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 }
 
 #define MAXDEPTH	100
-struct elist	einfo[MAXDEPTH];
-struct combostr	*ecombo[MAXDEPTH];	/* separate from elist to save space */
+static struct elist einfo[MAXDEPTH];
+static struct combostr *ecombo[MAXDEPTH];	/* separate from elist to save space */
 
 /*
  * Add the combostr 'ocbp' to the empty spots list for each empty spot
  * in 'ocbp' that will complete the combo.
  */
-void
+static void
 makeempty(struct combostr *ocbp)
 {
 	struct combostr *cbp, *tcbp, **cbpp;
@@ -933,7 +955,7 @@ makeempty(struct combostr *ocbp)
  * We handle things differently depending on whether the next move
  * would be trying to "complete" the combo or trying to block it.
  */
-void
+static void
 updatecombo(struct combostr *cbp, int color)
 {
 	struct spotstr *sp;
@@ -1022,7 +1044,7 @@ updatecombo(struct combostr *cbp, int color)
 /*
  * Add combo to the end of the list.
  */
-void
+static void
 appendcombo(struct combostr *cbp, int color __unused)
 {
 	struct combostr *pcbp, *ncbp;
@@ -1051,7 +1073,7 @@ appendcombo(struct combostr *cbp, int color __unused)
  * Return -1 if 'fcbp' should not be combined with 'cbp'.
  * 's' is the combo value for frame 'fcpb'.
  */
-int
+static int
 checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	    int s, struct overlap_info *vertices)
 {
@@ -1189,7 +1211,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
  * Return true if this list of frames is already in the hash list.
  * Otherwise, add the new combo to the hash list.
  */
-int
+static int
 sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 	  struct combostr *fcbp)
 {
@@ -1303,7 +1325,7 @@ inserted:
 /*
  * Print the combo into string buffer 'buf'.
  */
-void
+static void
 printcombo(struct combostr *cbp, char *buf, size_t max)
 {
 	struct combostr *tcbp;

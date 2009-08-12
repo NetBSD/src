@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.10 2009/06/04 05:43:29 dholland Exp $	*/
+/*	$NetBSD: makemove.c,v 1.11 2009/08/12 06:19:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.10 2009/06/04 05:43:29 dholland Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.11 2009/08/12 06:19:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,9 @@ const int     dd[4] = {
 	MRIGHT, MRIGHT+MDOWN, MDOWN, MDOWN+MLEFT
 };
 
-const int	weight[5] = { 0, 1, 7, 22, 100 };
+static const int weight[5] = { 0, 1, 7, 22, 100 };
+
+static void update_overlap(struct spotstr *);
 
 /*
  * Return values:
@@ -215,7 +217,7 @@ makemove(int us, int mv)
 /*
  * fix up the overlap array due to updating spot osp.
  */
-void
+static void
 update_overlap(struct spotstr *osp)
 {
 	struct spotstr *sp, *sp1, *sp2;

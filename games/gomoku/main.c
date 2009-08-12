@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2009/08/12 06:19:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2009/08/12 06:19:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,10 +63,10 @@ __RCSID("$NetBSD: main.c,v 1.19 2009/07/13 19:05:40 roy Exp $");
 
 int	interactive = 1;	/* true if interactive */
 int	debug;			/* true if debugging */
-int	test;			/* both moves come from 1: input, 2: computer */
-char	*prog;			/* name of program */
-FILE	*debugfp;		/* file for debug output */
-FILE	*inputfp;		/* file for debug input */
+static int test;		/* both moves come from 1: input, 2: computer */
+static char *prog;		/* name of program */
+static FILE *debugfp;		/* file for debug output */
+static FILE *inputfp;		/* file for debug input */
 
 const char	pdir[4]		= "-\\|/";
 
@@ -79,7 +79,10 @@ int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
 const char	*plyr[2];			/* who's who */
 
-int	main(int, char *[]);
+static int readinput(FILE *);
+static void misclog(const char *, ...) __printflike(1, 2);
+static void quit(void) __dead;
+static void quitsig(int) __dead;
 
 int
 main(int argc, char **argv)
@@ -329,7 +332,7 @@ again:
 	return(0);
 }
 
-int
+static int
 readinput(FILE *fp)
 {
 	int c;
@@ -502,7 +505,7 @@ debuglog(const char *fmt, ...)
 		fprintf(stderr, "%s\n", buf);
 }
 
-void
+static void
 misclog(const char *fmt, ...)
 {
 	va_list ap;
@@ -520,7 +523,7 @@ misclog(const char *fmt, ...)
 		printf("%s\n", buf);
 }
 
-void
+static void
 quit(void)
 {
 	if (interactive) {
@@ -530,7 +533,7 @@ quit(void)
 	exit(0);
 }
 
-void
+static void
 quitsig(int dummy __unused)
 {
 	quit();

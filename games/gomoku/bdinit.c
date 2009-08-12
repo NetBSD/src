@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.7 2009/06/04 05:43:29 dholland Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.8 2009/08/12 06:19:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,12 +37,14 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.7 2009/06/04 05:43:29 dholland Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.8 2009/08/12 06:19:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <string.h>
 #include "gomoku.h"
+
+static void init_overlap(void);
 
 void
 bdinit(struct spotstr *bp)
@@ -170,7 +172,7 @@ bdinit(struct spotstr *bp)
  * As pieces are played, it can make frames not overlap if there are no
  * common open spaces shared between the two frames.
  */
-void
+static void
 init_overlap(void)
 {
 	struct spotstr *sp1, *sp2;
