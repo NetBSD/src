@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.88 2009/06/18 11:32:29 rjs Exp $
+$NetBSD: miidevs,v 1.89 2009/08/12 13:33:02 simonb Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -148,6 +148,7 @@ model xxBROADCOM BCM4401	0x0036 BCM4401 10/100 media interface
 model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
 model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
 model BROADCOM BCM5411		0x0007 BCM5411 1000BASE-T media interface
+model BROADCOM BCM5464		0x000b BCM5464 1000BASE-T media interface
 model BROADCOM BCM5462		0x000d BCM5462 1000BASE-T media interface
 model BROADCOM BCM5421		0x000e BCM5421 1000BASE-T media interface
 model BROADCOM BCM5752		0x0010 BCM5752 1000BASE-T media interface
