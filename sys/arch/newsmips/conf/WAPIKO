@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.38 2007/10/17 19:55:54 garbled Exp $
+# 	$NetBSD: WAPIKO,v 1.39 2009/08/12 23:29:19 matt Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -38,7 +38,6 @@ options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_30		# NetBSD 3.0 binary compatibility
 options 	COMPAT_40		# NetBSD 4.0 binary compatibility
-#options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
