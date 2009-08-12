@@ -1,4 +1,4 @@
-/* $NetBSD: sbobiovar.h,v 1.2 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbobiovar.h,v 1.3 2009/08/12 12:56:29 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -46,13 +46,12 @@ enum sbobio_device_type {
 
 /* autoconfiguration match information for zbbus children */
 struct sbobio_attach_locs {
-	sbobio_offset		sa_offset;
+	sbobio_offset		sa_addr;
 	u_int			sa_intr[2];
 	enum sbobio_device_type	sa_type;
 };
 
+/* XXX can probably just get away without separate sbobio_attach_locs ? */
 struct sbobio_attach_args {
 	struct sbobio_attach_locs sa_locs;
-
-	long			sa_base;
 };
