@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shk.c,v 1.10 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.shk.c,v 1.11 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shk.c,v 1.10 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.shk.c,v 1.11 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -77,6 +77,7 @@ static void findshk(int);
 static struct bill_x *onbill(struct obj *);
 static void pay(long, struct monst *);
 static int dopayobj(struct bill_x *);
+static struct obj *bp_to_obj(struct bill_x *);
 static int getprice(struct obj *);
 static int realhunger(void);
 #endif
@@ -629,7 +630,7 @@ paybill(void)
 }
 
 /* find obj on one of the lists */
-struct obj     *
+static struct obj *
 bp_to_obj(struct bill_x *bp)
 {
 	struct obj     *obj;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkshop.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.mkshop.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkshop.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.mkshop.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -72,8 +72,19 @@ __RCSID("$NetBSD: hack.mkshop.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #include "extern.h"
 #include "def.mkroom.h"
 #include "def.eshk.h"
+
 #define	ESHK	((struct eshk *)(&(shk->mextra[0])))
-const schar shprobs[] = {3, 3, 5, 5, 10, 10, 14, 50}; /* their probabilities */
+
+/* their probabilities */
+static const schar shprobs[] = {3, 3, 5, 5, 10, 10, 14, 50};
+
+static const struct permonst *morguemon(void);
+static int nexttodoor(int, int);
+static int has_dnstairs(struct mkroom *);
+static int has_upstairs(struct mkroom *);
+static int isbig(struct mkroom *);
+static int dist2(int, int, int, int);
+static int sq(int);
 
 void
 mkshop(void)
@@ -273,7 +284,7 @@ mkzoo(int type)
 		}
 }
 
-const struct permonst *
+static const struct permonst *
 morguemon(void)
 {
 	int             i = rn2(100), hd = rn2(dlevel);
@@ -313,7 +324,7 @@ mkswamp(void)
 	}
 }
 
-int
+static int
 nexttodoor(int sx, int sy)
 {
 	int		dx, dy;
@@ -326,34 +337,34 @@ nexttodoor(int sx, int sy)
 	return (0);
 }
 
-int
+static int
 has_dnstairs(struct mkroom *sroom)
 {
 	return (sroom->lx <= xdnstair && xdnstair <= sroom->hx &&
 		sroom->ly <= ydnstair && ydnstair <= sroom->hy);
 }
 
-int
+static int
 has_upstairs(struct mkroom *sroom)
 {
 	return (sroom->lx <= xupstair && xupstair <= sroom->hx &&
 		sroom->ly <= yupstair && yupstair <= sroom->hy);
 }
 
-int
+static int
 isbig(struct mkroom *sroom)
 {
 	int             area = (sroom->hx - sroom->lx) * (sroom->hy - sroom->ly);
 	return (area > 20);
 }
 
-int
+static int
 dist2(int x0, int y0, int x1, int y1)
 {
 	return ((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
 }
 
-int
+static int
 sq(int a)
 {
 	return (a * a);

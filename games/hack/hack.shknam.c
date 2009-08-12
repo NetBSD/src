@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shknam.c,v 1.6 2003/04/02 18:36:40 jsm Exp $	*/
+/*	$NetBSD: hack.shknam.c,v 1.7 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,13 +63,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shknam.c,v 1.6 2003/04/02 18:36:40 jsm Exp $");
+__RCSID("$NetBSD: hack.shknam.c,v 1.7 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 
-const char           *const shkliquors[] = {
+static const char *const shkliquors[] = {
 	/* Ukraine */
 	"Njezjin", "Tsjernigof", "Gomel", "Ossipewsk", "Gorlowka",
 	/* N. Russia */
@@ -84,7 +84,7 @@ const char           *const shkliquors[] = {
 	0
 };
 
-const char           *const shkbooks[] = {
+static const char *const shkbooks[] = {
 	/* Eire */
 	"Skibbereen", "Kanturk", "Rath Luirc", "Ennistymon", "Lahinch",
 	"Loughrea", "Croagh", "Maumakeogh", "Ballyjamesduff",
@@ -96,7 +96,7 @@ const char           *const shkbooks[] = {
 	0
 };
 
-const char           *const shkarmors[] = {
+static const char *const shkarmors[] = {
 	/* Turquie */
 	"Demirci", "Kalecik", "Boyabai", "Yildizeli", "Gaziantep",
 	"Siirt", "Akhalataki", "Tirebolu", "Aksaray", "Ermenak",
@@ -107,7 +107,7 @@ const char           *const shkarmors[] = {
 	0
 };
 
-const char           *const shkwands[] = {
+static const char *const shkwands[] = {
 	/* Wales */
 	"Yr Wyddgrug", "Trallwng", "Mallwyd", "Pontarfynach",
 	"Rhaeader", "Llandrindod", "Llanfair-ym-muallt",
@@ -121,7 +121,7 @@ const char           *const shkwands[] = {
 	0
 };
 
-const char           *const shkrings[] = {
+static const char *const shkrings[] = {
 	/* Hollandse familienamen */
 	"Feyfer", "Flugi", "Gheel", "Havic", "Haynin", "Hoboken",
 	"Imbyze", "Juyn", "Kinsky", "Massis", "Matray", "Moy",
@@ -134,7 +134,7 @@ const char           *const shkrings[] = {
 	0
 };
 
-const char           *const shkfoods[] = {
+static const char *const shkfoods[] = {
 	/* Indonesia */
 	"Djasinga", "Tjibarusa", "Tjiwidej", "Pengalengan",
 	"Bandjar", "Parbalingga", "Bojolali", "Sarangan",
@@ -146,7 +146,7 @@ const char           *const shkfoods[] = {
 	0
 };
 
-const char           *const shkweapons[] = {
+static const char *const shkweapons[] = {
 	/* Perigord */
 	"Voulgezac", "Rouffiac", "Lerignac", "Touverac", "Guizengeard",
 	"Melac", "Neuvicq", "Vanzac", "Picq", "Urignac", "Corignac",
@@ -157,7 +157,7 @@ const char           *const shkweapons[] = {
 	0
 };
 
-const char           *const shkgeneral[] = {
+static const char *const shkgeneral[] = {
 	/* Suriname */
 	"Hebiwerie", "Possogroenoe", "Asidonhopo", "Manlobbi",
 	"Adjama", "Pakka Pakka", "Kabalebo", "Wonotobo",
@@ -175,7 +175,7 @@ const char           *const shkgeneral[] = {
 	0
 };
 
-const struct shk_nx {
+static const struct shk_nx {
 	char            x;
 	const char          *const *xn;
 }               shk_nx[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.13 2009/06/29 23:05:33 dholland Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.14 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.13 2009/06/29 23:05:33 dholland Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.14 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include <assert.h>
@@ -79,8 +79,9 @@ __RCSID("$NetBSD: hack.invent.c,v 1.13 2009/06/29 23:05:33 dholland Exp $");
 
 static int      lastinvnr = 51;	/* 0 ... 51 */
 
-static void assigninvlet(struct obj *);
 static char *xprname(struct obj *, char);
+static void doinv(char *);
+static int merged(struct obj *, struct obj *, int);
 
 static void
 assigninvlet(struct obj *otmp)
@@ -359,7 +360,7 @@ g_at(int x, int y)
 }
 
 /* make dummy object structure containing gold - for temporary use only */
-struct obj     *
+static struct obj *
 mkgoldobj(long q)
 {
 	struct obj     *otmp;
@@ -542,7 +543,7 @@ getobj(const char *let, const char *word)
 	return (otmp);
 }
 
-int
+static int
 ckunpaid(struct obj *otmp)
 {
 	return (otmp->unpaid);
@@ -680,7 +681,7 @@ ret:
 }
 
 /* should of course only be called for things in invent */
-char
+static char
 obj_to_let(struct obj *obj)
 {
 	struct obj     *otmp;
@@ -701,7 +702,7 @@ prinv(struct obj *obj)
 	pline(xprname(obj, obj_to_let(obj)));
 }
 
-static char    *
+static char *
 xprname(struct obj *obj, char let)
 {
 	static char     li[BUFSZ];
@@ -721,7 +722,7 @@ ddoinv(void)
 
 /* called with 0 or "": all objects in inventory */
 /* otherwise: all objects with (serial) letter in lets */
-void
+static void
 doinv(char *lets)
 {
 	struct obj     *otmp;
@@ -901,7 +902,7 @@ stackobj(struct obj *obj)
 }
 
 /* merge obj with otmp and delete obj if types agree */
-int
+static int
 merged(struct obj *otmp, struct obj *obj, int lose)
 {
 	if (obj->otyp == otmp->otyp &&
@@ -928,7 +929,7 @@ static long goldcounted;
  * it may take a while before you have counted it all.
  * [Bug: d$ and pickup still tell you how much it was.]
  */
-int
+static int
 countgold(void)
 {
 	if ((goldcounted += 100 * (u.ulevel + 1)) >= u.ugold) {

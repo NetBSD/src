@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.lev.c,v 1.10 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.lev.c,v 1.11 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.lev.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.lev.c,v 1.11 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -77,6 +77,9 @@ __RCSID("$NetBSD: hack.lev.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
 #endif				/* NOWORM */
 
 boolean         level_exists[MAXLEVEL + 1];
+
+static void savegoldchn(int, struct gold *);
+static void savetrapchn(int, struct trap *);
 
 void
 savelev(int fd, xchar lev)
@@ -176,7 +179,7 @@ savemonchn(int fd, struct monst *mtmp)
 	bwrite(fd, (char *) &minusone, sizeof(int));
 }
 
-void
+static void
 savegoldchn(int fd, struct gold *gold)
 {
 	struct gold    *gold2;
@@ -189,7 +192,7 @@ savegoldchn(int fd, struct gold *gold)
 	bwrite(fd, nul, sizeof(struct gold));
 }
 
-void
+static void
 savetrapchn(int fd, struct trap *trap)
 {
 	struct trap    *trap2;

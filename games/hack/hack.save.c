@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.save.c,v 1.12 2009/06/07 20:25:38 dholland Exp $	*/
+/*	$NetBSD: hack.save.c,v 1.13 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.save.c,v 1.12 2009/06/07 20:25:38 dholland Exp $");
+__RCSID("$NetBSD: hack.save.c,v 1.13 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: hack.save.c,v 1.12 2009/06/07 20:25:38 dholland Exp $");
 #include "hack.h"
 #include "extern.h"
 
+static int dosave0(int);
 
 int
 dosave(void)
@@ -94,7 +95,7 @@ hangup(int n __unused)
 #endif	/* NOSAVEONHANGUP */
 
 /* returns 1 if save successful */
-int
+static int
 dosave0(int hu)
 {
 	int		fd, ofd;

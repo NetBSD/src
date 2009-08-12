@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.12 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.13 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.12 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.13 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -78,6 +78,11 @@ __RCSID("$NetBSD: hack.pager.c,v 1.12 2009/06/07 18:30:39 dholland Exp $");
 #include <unistd.h>
 #include "hack.h"
 #include "extern.h"
+
+static void intruph(int);
+static void page_more(FILE *, int);
+static int page_file(const char *, boolean);
+static int child(int);
 
 int
 dowhatis(void)
@@ -129,7 +134,7 @@ dowhatis(void)
 /* make the paging of a file interruptible */
 static int      got_intrup;
 
-void
+static void
 intruph(int n __unused)
 {
 	got_intrup++;
@@ -137,7 +142,7 @@ intruph(int n __unused)
 
 /* simple pager, also used from dohelp() */
 /* strip: nr of chars to be stripped from each line (0 or 1) */
-void
+static void
 page_more(FILE *fp, int strip)
 {
 	char           *bufr, *ep;
@@ -361,7 +366,7 @@ dohelp(void)
 }
 
 /* return: 0 - cannot open fnam; 1 - otherwise */
-int
+static int
 page_file(const char *fnam, boolean silent)
 {
 #ifdef DEF_PAGER		/* this implies that UNIX is defined */
@@ -452,7 +457,7 @@ union wait {			/* used only for the cast  (union wait *) 0  */
 #endif	/* BSD */
 #endif	/* NOWAITINCLUDE */
 
-int
+static int
 child(int wt)
 {
 	int             status;

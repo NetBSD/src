@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -71,6 +71,9 @@ __RCSID("$NetBSD: hack.o_init.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #include "extern.h"
 #include "def.objects.h"
 #include "hack.onames.h"	/* for LAST_GEM */
+
+static void setgemprobs(void);
+static int interesting_to_discover(int);
 
 int
 letindex(int let)
@@ -148,7 +151,7 @@ probtype(int let)
 	return (i);
 }
 
-void
+static void
 setgemprobs(void)
 {
 	int             j, first;
@@ -232,7 +235,7 @@ dodiscovered(void)
 	return (0);
 }
 
-int
+static int
 interesting_to_discover(int i)
 {
 	return (

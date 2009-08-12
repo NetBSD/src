@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -75,12 +75,19 @@ __RCSID("$NetBSD: hack.mon.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
 #define	NULL	(char *) 0
 #endif
 
-int             warnlevel;	/* used by movemon and dochugw */
-long            lastwarntime;
-int             lastwarnlev;
-const char           *const warnings[] = {
+static int warnlevel;	/* used by movemon and dochugw */
+static long lastwarntime;
+static int lastwarnlev;
+
+static const char *const warnings[] = {
 	"white", "pink", "red", "ruby", "purple", "black"
 };
+
+static int dochugw(struct monst *);
+static void mpickgold(struct monst *);
+static void mpickgems(struct monst *);
+static void dmonsfree(void);
+static int ishuman(struct monst *);
 
 void
 movemon(void)
@@ -206,7 +213,7 @@ youswld(struct monst *mtmp, int dam, int die, const char *name)
 #endif
 }
 
-int
+static int
 dochugw(struct monst *mtmp)
 {
 	int x = mtmp->mx;
@@ -540,7 +547,7 @@ postmov:
 	return (mmoved);
 }
 
-void
+static void
 mpickgold(struct monst *mtmp)
 {
 	struct gold    *gold;
@@ -552,7 +559,7 @@ mpickgold(struct monst *mtmp)
 	}
 }
 
-void
+static void
 mpickgems(struct monst *mtmp)
 {
 	struct obj     *otmp;
@@ -746,7 +753,7 @@ relmon(struct monst *mon)
  * we do not free monsters immediately, in order to have their name available
  * shortly after their demise
  */
-struct monst   *fdmon;		/* chain of dead monsters, need not to be
+static struct monst *fdmon;	/* chain of dead monsters, need not to be
 				 * saved */
 
 void
@@ -756,7 +763,7 @@ monfree(struct monst *mtmp)
 	fdmon = mtmp;
 }
 
-void
+static void
 dmonsfree(void)
 {
 	struct monst   *mtmp;
@@ -986,7 +993,7 @@ mnexto(struct monst *mtmp)
 	pmon(mtmp);
 }
 
-int
+static int
 ishuman(struct monst *mtmp)
 {
 	return (mtmp->data->mlet == '@');

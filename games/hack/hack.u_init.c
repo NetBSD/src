@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.u_init.c,v 1.10 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.u_init.c,v 1.11 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.u_init.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.u_init.c,v 1.11 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -77,15 +77,16 @@ __RCSID("$NetBSD: hack.u_init.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
 #define	UNDEF_TYP	0
 #define	UNDEF_SPE	'\177'
 
-struct you      zerou;
-char            pl_character[PL_CSIZ];
-const char *(roles[]) = {	/* must all have distinct first letter */
+char pl_character[PL_CSIZ];
+
+static const struct you zerou;
+static const char *(roles[]) = {      /* must all have distinct first letter */
 	/* roles[4] may be changed to -woman */
 	"Tourist", "Speleologist", "Fighter", "Knight",
 	"Cave-man", "Wizard"
 };
 #define	NR_OF_ROLES	SIZE(roles)
-char            rolesyms[NR_OF_ROLES + 1];	/* filled by u_init() */
+static char rolesyms[NR_OF_ROLES + 1];	/* filled by u_init() */
 
 struct trobj {
 	uchar           trotyp;
@@ -96,13 +97,13 @@ struct trobj {
 };
 
 #ifdef WIZARD
-struct trobj    Extra_objs[] = {
+static struct trobj Extra_objs[] = {
 	{0, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 #endif	/* WIZARD */
 
-struct trobj    Cave_man[] = {
+static struct trobj Cave_man[] = {
 	{MACE, 1, WEAPON_SYM, 1, 1},
 	{BOW, 1, WEAPON_SYM, 1, 1},
 	{ARROW, 0, WEAPON_SYM, 25, 1},	/* quan is variable */
@@ -110,13 +111,13 @@ struct trobj    Cave_man[] = {
 	{0, 0, 0, 0, 0}
 };
 
-struct trobj    Fighter[] = {
+static struct trobj Fighter[] = {
 	{TWO_HANDED_SWORD, 0, WEAPON_SYM, 1, 1},
 	{RING_MAIL, 0, ARMOR_SYM, 1, 1},
 	{0, 0, 0, 0, 0}
 };
 
-struct trobj    Knight[] = {
+static struct trobj Knight[] = {
 	{LONG_SWORD, 0, WEAPON_SYM, 1, 1},
 	{SPEAR, 2, WEAPON_SYM, 1, 1},
 	{RING_MAIL, 1, ARMOR_SYM, 1, 1},
@@ -126,7 +127,7 @@ struct trobj    Knight[] = {
 	{0, 0, 0, 0, 0}
 };
 
-struct trobj    Speleologist[] = {
+static struct trobj Speleologist[] = {
 	{STUDDED_LEATHER_ARMOR, 0, ARMOR_SYM, 1, 1},
 	{UNDEF_TYP, 0, POTION_SYM, 2, 0},
 	{FOOD_RATION, 0, FOOD_SYM, 3, 1},
@@ -135,12 +136,12 @@ struct trobj    Speleologist[] = {
 	{0, 0, 0, 0, 0}
 };
 
-struct trobj    Tinopener[] = {
+static struct trobj Tinopener[] = {
 	{CAN_OPENER, 0, TOOL_SYM, 1, 1},
 	{0, 0, 0, 0, 0}
 };
 
-struct trobj    Tourist[] = {
+static struct trobj Tourist[] = {
 	{UNDEF_TYP, 0, FOOD_SYM, 10, 1},
 	{POT_EXTRA_HEALING, 0, POTION_SYM, 2, 0},
 	{EXPENSIVE_CAMERA, 0, TOOL_SYM, 1, 1},
@@ -148,7 +149,7 @@ struct trobj    Tourist[] = {
 	{0, 0, 0, 0, 0}
 };
 
-struct trobj    Wizard[] = {
+static struct trobj Wizard[] = {
 	{ELVEN_CLOAK, 0, ARMOR_SYM, 1, 1},
 	{UNDEF_TYP, UNDEF_SPE, WAND_SYM, 2, 0},
 	{UNDEF_TYP, UNDEF_SPE, RING_SYM, 2, 0},
@@ -156,6 +157,10 @@ struct trobj    Wizard[] = {
 	{UNDEF_TYP, UNDEF_SPE, SCROLL_SYM, 3, 0},
 	{0, 0, 0, 0, 0}
 };
+
+static void ini_inv(struct trobj *);
+static void wiz_inv(void);
+static int role_index(int);
 
 void
 u_init(void)

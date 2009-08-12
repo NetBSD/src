@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.cmd.c,v 1.9 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.cmd.c,v 1.10 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,14 +63,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.cmd.c,v 1.9 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.cmd.c,v 1.10 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
 #include	"extern.h"
 #include	"def.func_tab.h"
 
-const struct func_tab cmdlist[] = {
+static int doextcmd(void);
+
+static const struct func_tab cmdlist[] = {
 	{ '\020', doredotopl },
 	{ '\022', doredraw },
 	{ '\024', dotele },
@@ -134,11 +136,14 @@ const struct func_tab cmdlist[] = {
 	{ 0, 0 }
 };
 
-const struct ext_func_tab extcmdlist[] = {
+static const struct ext_func_tab extcmdlist[] = {
 	{ "dip", dodip },
 	{ "pray", dopray },
 	{ (char *) 0, donull }
 };
+
+static char lowc(int);
+static char unctrl(int);
 
 void
 rhack(const char *cmd)
@@ -241,7 +246,7 @@ rush:
 	multi = flags.move = 0;
 }
 
-int
+static int
 doextcmd(void)
 {				/* here after # - now read a full-word
 				 * command */
@@ -262,13 +267,13 @@ doextcmd(void)
 	return (0);
 }
 
-char
+static char
 lowc(int sym)
 {
 	return ((sym >= 'A' && sym <= 'Z') ? sym + 'a' - 'A' : sym);
 }
 
-char
+static char
 unctrl(int sym)
 {
 	return ((sym >= ('A' & 037) && sym <= ('Z' & 037)) ? sym + 0140 : sym);
@@ -278,7 +283,7 @@ unctrl(int sym)
 char            sdir[] = "hykulnjb><";
 schar           xdir[10] = {-1, -1, 0, 1, 1, 1, 0, -1, 0, 0};
 schar           ydir[10] = {0, -1, -1, -1, 0, 1, 1, 1, 0, 0};
-schar           zdir[10] = {0, 0, 0, 0, 0, 0, 0, 0, 1, -1};
+static schar    zdir[10] = {0, 0, 0, 0, 0, 0, 0, 0, 1, -1};
 
 int
 movecmd(int sym)		/* also sets u.dz, but returns false for <> */

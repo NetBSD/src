@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.engrave.c,v 1.8 2009/06/07 20:30:49 dholland Exp $	*/
+/*	$NetBSD: hack.engrave.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.engrave.c,v 1.8 2009/06/07 20:30:49 dholland Exp $");
+__RCSID("$NetBSD: hack.engrave.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -82,9 +82,13 @@ struct engr {
 #define	DUST	1
 #define	ENGRAVE	2
 #define	BURN	3
-}              *head_engr;
+};
 
-struct engr    *
+static struct engr *head_engr;
+
+static void del_engr(struct engr *);
+
+static struct engr *
 engr_at(xchar x, xchar y)
 {
 	struct engr    *ep = head_engr;
@@ -371,7 +375,7 @@ rest_engravings(int fd)
 	}
 }
 
-void
+static void
 del_engr(struct engr *ep)
 {
 	struct engr    *ept;

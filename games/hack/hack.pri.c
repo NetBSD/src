@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pri.c,v 1.11 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.pri.c,v 1.12 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,13 +63,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pri.c,v 1.11 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.pri.c,v 1.12 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
-xchar           scrlx, scrhx, scrly, scrhy;	/* corners of new area on
+
+static xchar scrlx, scrhx, scrly, scrhy;	/* corners of new area on
 						 * screen */
+
+static void cornbot(int);
 
 void
 swallowed(void)
@@ -94,7 +97,7 @@ swallowed(void)
 
 
 /* VARARGS1 */
-boolean         panicking;
+static boolean panicking;
 
 void
 panic(const char *fmt, ...)
@@ -697,7 +700,7 @@ nscr(void)
 }
 
 /* 100 suffices for bot(); no relation with COLNO */
-char            oldbot[100], newbot[100];
+static char oldbot[100], newbot[100];
 void
 cornbot(int lth)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.potion.c,v 1.7 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.potion.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,11 +63,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.potion.c,v 1.7 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.potion.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
+
+static void ghost_from_bottle(void);
 
 int
 dodrink(void)
@@ -290,7 +292,7 @@ strange_feeling(struct obj *obj, const char *txt)
 	useup(obj);
 }
 
-const char           *const bottlenames[] = {
+static const char *const bottlenames[] = {
 	"bottle", "phial", "flagon", "carafe", "flask", "jar", "vial"
 };
 
@@ -445,7 +447,7 @@ dodip(void)
 	return (1);
 }
 
-void
+static void
 ghost_from_bottle(void)
 {
 	struct monst   *mtmp;

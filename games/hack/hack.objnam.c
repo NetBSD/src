@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.objnam.c,v 1.9 2009/06/07 20:13:18 dholland Exp $	*/
+/*	$NetBSD: hack.objnam.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.objnam.c,v 1.9 2009/06/07 20:13:18 dholland Exp $");
+__RCSID("$NetBSD: hack.objnam.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -74,7 +74,10 @@ __RCSID("$NetBSD: hack.objnam.c,v 1.9 2009/06/07 20:13:18 dholland Exp $");
 #define	Strcpy	(void) strcpy
 #define	PREFIX	15
 
-char           *
+static char *strprepend(char *, char *);
+static char *sitoa(int);
+
+static char *
 strprepend(char *s, char *pref)
 {
 	int             i = strlen(pref);
@@ -87,7 +90,7 @@ strprepend(char *s, char *pref)
 	return (s);
 }
 
-char           *
+static char *
 sitoa(int a)
 {
 	static char     buf[13];
@@ -438,8 +441,8 @@ Doname(struct obj *obj)
 	return (s);
 }
 
-const char *const wrp[] = {"wand", "ring", "potion", "scroll", "gem"};
-const char wrpsym[] = {WAND_SYM, RING_SYM, POTION_SYM, SCROLL_SYM, GEM_SYM};
+static const char *const wrp[] = {"wand", "ring", "potion", "scroll", "gem"};
+static const char wrpsym[] = {WAND_SYM, RING_SYM, POTION_SYM, SCROLL_SYM, GEM_SYM};
 
 struct obj     *
 readobjnam(char *bp)

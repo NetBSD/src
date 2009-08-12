@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_wear.c,v 1.6 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.do_wear.c,v 1.7 2009/08/12 07:28:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,13 +63,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_wear.c,v 1.6 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.do_wear.c,v 1.7 2009/08/12 07:28:40 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
 #include "extern.h"
 
-void
+static int dorr(struct obj *);
+static int cursed(struct obj *);
+
+static void
 off_msg(struct obj *otmp)
 {
 	pline("You were wearing %s.", doname(otmp));
@@ -136,7 +139,7 @@ doremring(void)
 	return (0);
 }
 
-int
+static int
 dorr(struct obj *otmp)
 {
 	if (cursed(otmp))
@@ -146,7 +149,7 @@ dorr(struct obj *otmp)
 	return (1);
 }
 
-int
+static int
 cursed(struct obj *otmp)
 {
 	if (otmp->cursed) {

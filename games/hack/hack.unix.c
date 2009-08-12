@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.13 2009/06/29 23:05:33 dholland Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.14 2009/08/12 07:28:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.13 2009/06/29 23:05:33 dholland Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.14 2009/08/12 07:28:41 dholland Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -95,6 +95,9 @@ __RCSID("$NetBSD: hack.unix.c,v 1.13 2009/06/29 23:05:33 dholland Exp $");
 
 extern int locknum;
 
+static struct tm *getlt(void);
+static int veryold(int);
+
 
 void
 setrandom(void)
@@ -102,7 +105,7 @@ setrandom(void)
 	(void) srandom((int) time((time_t *) 0));
 }
 
-struct tm      *
+static struct tm *
 getlt(void)
 {
 	time_t          date;
@@ -159,7 +162,7 @@ midnight(void)
 	return (getlt()->tm_hour == 0);
 }
 
-struct stat     buf, hbuf;
+static struct stat buf, hbuf;
 
 void
 gethdate(char *name)
@@ -224,7 +227,7 @@ uptodate(int fd)
 }
 
 /* see whether we should throw away this xlock file */
-int
+static int
 veryold(int fd)
 {
 	int             i;
