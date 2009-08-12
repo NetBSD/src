@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.16 2007/12/15 19:44:39 perry Exp $	*/
+/*	$NetBSD: subs.c,v 1.17 2009/08/12 05:17:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,20 +34,20 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.16 2007/12/15 19:44:39 perry Exp $");
+__RCSID("$NetBSD: subs.c,v 1.17 2009/08/12 05:17:57 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
 int     buffnum;
-char    outbuff[BUFSIZ];
+static char outbuff[BUFSIZ];
 
 static const char plred[] = "Player is red, computer is white.";
 static const char plwhite[] = "Player is white, computer is red.";
 static const char nocomp[] = "(No computer play.)";
 
-const char   *const descr[] = {
+static const char *const descr[] = {
 	"Usage:  backgammon [-] [n r w b pr pw pb t3a]\n",
 	"\t-\tgets this list\n\tn\tdon't ask for rules or instructions",
 	"\tr\tplayer is red (implies n)\n\tw\tplayer is white (implies n)",

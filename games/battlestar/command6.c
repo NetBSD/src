@@ -1,4 +1,4 @@
-/*	$NetBSD: command6.c,v 1.4 2007/12/15 19:44:39 perry Exp $	*/
+/*	$NetBSD: command6.c,v 1.5 2009/08/12 05:20:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,12 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command6.c,v 1.4 2007/12/15 19:44:39 perry Exp $");
+__RCSID("$NetBSD: command6.c,v 1.5 2009/08/12 05:20:38 dholland Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 #include "pathnames.h"
+
+static void post(int);
 
 int
 launch(void)
@@ -114,7 +116,7 @@ open_score_file(void)
 		exit(1);
 }
 
-void
+static void
 post(int ch)
 {
 	time_t tv;
