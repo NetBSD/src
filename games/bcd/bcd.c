@@ -1,4 +1,4 @@
-/*	$NetBSD: bcd.c,v 1.16 2009/07/26 03:02:38 dholland Exp $	*/
+/*	$NetBSD: bcd.c,v 1.17 2009/08/12 05:21:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: bcd.c,v 1.16 2009/07/26 03:02:38 dholland Exp $");
+__RCSID("$NetBSD: bcd.c,v 1.17 2009/08/12 05:21:28 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: bcd.c,v 1.16 2009/07/26 03:02:38 dholland Exp $");
 #include <ctype.h>
 #include <unistd.h>
 
-const u_short holes[256] = {
+static const u_short holes[256] = {
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
@@ -124,7 +124,7 @@ const u_short holes[256] = {
  */
 #define	bit(w,i)	((w)&(1<<(i)))
 
-void	printcard(char *);
+static void printcard(char *);
 
 int
 main(int argc, char **argv)
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 
 #define	COLUMNS	48
 
-void
+static void
 printcard(char *str)
 {
 	static const char rowchars[] = "   123456789";
