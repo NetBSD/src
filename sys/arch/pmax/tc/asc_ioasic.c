@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.21 2009/08/01 08:20:36 tsutsui Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.22 2009/08/12 14:06:13 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.21 2009/08/01 08:20:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.22 2009/08/12 14:06:13 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,11 +71,11 @@ struct asc_softc {
 };
 
 #define	ASC_READ_REG(asc, reg)						\
-	bus_space_read_4((asc)->sc_bst, (asc)->sc_scsi_bsh,		\
-	    (reg) * sizeof(uint32_t))
+	((uint8_t)bus_space_read_4((asc)->sc_bst, (asc)->sc_scsi_bsh,	\
+	    (reg) * sizeof(uint32_t)))
 #define	ASC_WRITE_REG(asc, reg, val)					\
 	bus_space_write_4((asc)->sc_bst, (asc)->sc_scsi_bsh,		\
-	    (reg) * sizeof(uint32_t), (val))
+	    (reg) * sizeof(uint32_t), (uint8_t)(val))
 
 static int  asc_ioasic_match(device_t, cfdata_t, void *);
 static void asc_ioasic_attach(device_t, device_t, void *);
@@ -421,11 +421,8 @@ static uint8_t
 asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	uint32_t v;
 
-	v = ASC_READ_REG(asc, reg);
-
-	return v & 0xff;
+	return ASC_READ_REG(asc, reg);
 }
 
 static void
