@@ -167,6 +167,12 @@ vmem_size(struct vm_map *map, int flag)
 	}
 }
 static void	*zio_arena;
+
+#include <sys/callback.h>
+/* Structures used for memory and kva space reclaim. */
+static struct callback_entry arc_kva_reclaim_entry;
+static struct uvm_reclaim_hook arc_hook;
+
 #endif	/* __NetBSD__ */
 
 static kmutex_t		arc_reclaim_thr_lock;
@@ -3380,6 +3386,19 @@ arc_uvm_reclaim_hook(void)
 	}
 }
 
+static int
+arc_kva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
+{
+
+	
+	if (mutex_tryenter(&arc_reclaim_thr_lock)) {
+		cv_broadcast(&arc_reclaim_thr_cv);
+		mutex_exit(&arc_reclaim_thr_lock);
+	}
+	
+	return CALLBACK_CHAIN_CONTINUE;
+}
+
 #endif /* __NetBSD__ */
 
 void
@@ -3495,11 +3514,12 @@ arc_init(void)
 	    TS_RUN, maxclsyspri);
 
 #if defined(__NetBSD__) && defined(_KERNEL)
-	static struct uvm_reclaim_hook hook;
+	arc_hook.uvm_reclaim_hook = &arc_uvm_reclaim_hook;
 
-	hook.uvm_reclaim_hook = &arc_uvm_reclaim_hook;
+	uvm_reclaim_hook_add(&arc_hook);
+	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
+	    &arc_kva_reclaim_entry, NULL, arc_kva_reclaim_callback);
 
-	uvm_reclaim_hook_add(&hook);
 #endif
 
 	arc_dead = FALSE;
@@ -3552,6 +3572,12 @@ arc_fini(void)
 	
 	mutex_destroy(&zfs_write_limit_lock);
 
+#if defined(__NetBSD__) && defined(_KERNEL)
+	uvm_reclaim_hook_del(&arc_hook);
+	callback_unregister(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
+	    &arc_kva_reclaim_entry);
+#endif 	
+	
 	buf_fini();
 }
 
