@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.16 2008/02/03 21:24:58 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.17 2009/08/12 08:04:05 dholland Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.16 2008/02/03 21:24:58 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.17 2009/08/12 08:04:05 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -116,9 +116,22 @@ struct isave {			/* used for altar reality */
 };
 
 static int cgood(int, int, int, int);
+static void speldamage(int);
+static void loseint(void);
+static int isconfuse(void);
+static int nospell(int, int);
+static int fullhit(int);
+static void direct(int, int, const char *, int);
+static void ifblind(int, int);
+static void tdirect(int);
+static void omnidirect(int, int, const char *);
 static int dirsub(int *, int *);
+static void dirpoly(int);
+static int hitm(int, int, int);
 static void dropsomething(int);
 static int spattack(int, int, int);
+static void sphboom(int, int);
+static void genmonst(void);
 
 /*
  * createmonster(monstno)	Function to create a monster next to the player
@@ -274,7 +287,7 @@ over:		lprcat(aborted);
  * Enter with the spell number, returns no value.
  * Please insure that there are 2 spaces before all messages here
  */
-void
+static void
 speldamage(int x)
 {
 	int    i, j, clev;
@@ -639,7 +652,7 @@ speldamage(int x)
  *
  * No arguments and no return value
  */
-void
+static void
 loseint()
 {
 	if (--c[INTELLIGENCE] < 3)
@@ -652,7 +665,7 @@ loseint()
  * This routine prints out a message saying "You can't aim your magic!"
  * returns 0 if not confused, non-zero (time remaining confused) if confused
  */
-int
+static int
 isconfuse()
 {
 	if (c[CONFUSE]) {
@@ -670,7 +683,7 @@ isconfuse()
  *   otherwise returns 0
  * Enter with the spell number in x, and the monster number in monst.
  */
-int
+static int
 nospell(x, monst)
 	int             x, monst;
 {
@@ -692,7 +705,7 @@ nospell(x, monst)
  * Function to return hp damage to monster due to a number of full hits
  * Enter with the number of full hits being done
  */
-int
+static int
 fullhit(xx)
 	int             xx;
 {
@@ -715,7 +728,7 @@ fullhit(xx)
  *   lprintf format string in str, and lprintf's argument in arg.
  * Returns no value.
  */
-void
+static void
 direct(spnum, dam, str, arg)
 	int             spnum, dam, arg;
 	const char     *str;
@@ -901,7 +914,7 @@ godirect(spnum, dam, str, delay, cshow)
  * Enter with the coordinates (x,y) of the monster
  * Returns no value.
  */
-void
+static void
 ifblind(int x, int y)
 {
 	const char *p;
@@ -925,7 +938,7 @@ ifblind(int x, int y)
  * Enter with the spell number that wants to teleport away
  * Returns no value.
  */
-void
+static void
 tdirect(spnum)
 	int             spnum;
 {
@@ -960,7 +973,7 @@ tdirect(spnum)
  *   and the lprintf string to identify the spell in str.
  * Returns no value.
  */
-void
+static void
 omnidirect(int spnum, int dam, const char *str)
 {
 	int    x, y, m;
@@ -1068,7 +1081,7 @@ vxy(x, y)
  * Enter with the spell number in spmun.
  * Returns no value.
  */
-void
+static void
 dirpoly(spnum)
 	int             spnum;
 {
@@ -1154,7 +1167,7 @@ hitmonster(x, y)
  * This routine is used to specifically damage a monster at a location (x,y)
  * Called by hitmonster(x,y)
  */
-int
+static int
 hitm(x, y, amt)
 	int x, y;
 	int amt;
@@ -1867,7 +1880,7 @@ rmsphere(x, y)
  *
  * Enter with the coordinates of the blast, Returns no value
  */
-void
+static void
 sphboom(x, y)
 	int             x, y;
 {
@@ -1895,7 +1908,7 @@ sphboom(x, y)
  *
  * This is done by setting a flag in the monster[] structure
  */
-void
+static void
 genmonst()
 {
 	int    i, j;

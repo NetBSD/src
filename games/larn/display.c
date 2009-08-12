@@ -1,9 +1,9 @@
-/*	$NetBSD: display.c,v 1.8 2008/02/03 19:20:41 dholland Exp $	*/
+/*	$NetBSD: display.c,v 1.9 2009/08/12 08:04:05 dholland Exp $	*/
 
 /* display.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.8 2008/02/03 19:20:41 dholland Exp $");
+__RCSID("$NetBSD: display.c,v 1.9 2009/08/12 08:04:05 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -19,7 +19,7 @@ static void seepage(void);
 
 static int      minx, maxx, miny, maxy, k, m;
 static char     bot1f = 0, bot2f = 0, bot3f = 0;
-char            always = 0;
+static char always = 0;
 /*
 	bottomline()
 
@@ -241,7 +241,7 @@ botsub(int idx, const char *str)
  *	If entire lines are being drawn, then they will be cleared first.
  */
 /* for limited screen drawing */
-int             d_xmin = 0, d_xmax = MAXX, d_ymin = 0, d_ymax = MAXY;
+static int d_xmin = 0, d_xmax = MAXX, d_ymin = 0, d_ymax = MAXY;
 
 void
 draws(xmin, xmax, ymin, ymax)
@@ -280,7 +280,8 @@ draws(xmin, xmax, ymin, ymax)
 
 	subroutine to redraw the whole screen as the player knows it
  */
-u_char            screen[MAXX][MAXY], d_flag;	/* template for the screen */
+u_char            screen[MAXX][MAXY];	/* template for the screen */
+static u_char d_flag;
 void
 drawscreen()
 {

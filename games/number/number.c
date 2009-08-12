@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.12 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: number.c,v 1.13 2009/08/12 08:12:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: number.c,v 1.12 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: number.c,v 1.13 2009/08/12 08:12:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,14 +76,14 @@ static const char	*const name1[] = {
 	"novemdecillion",		"vigintillion",
 };
 
-void	convert(char *);
 int	main(int, char *[]);
-int	number(const char *, int);
-void	pfract(int);
-int	unit(int, const char *);
-void	usage(void) __dead;
+static void convert(char *);
+static int number(const char *, int);
+static void pfract(int);
+static int unit(int, const char *);
+static void usage(void) __dead;
 
-int lflag;
+static int lflag;
 
 int
 main(argc, argv)

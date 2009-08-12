@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.23 2008/02/03 21:24:58 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2009/08/12 08:04:05 dholland Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.23 2008/02/03 21:24:58 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2009/08/12 08:04:05 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -15,6 +15,26 @@ __RCSID("$NetBSD: main.c,v 1.23 2008/02/03 21:24:58 dholland Exp $");
 #include "header.h"
 #include "extern.h"
 
+static void showstr(void);
+static void t_setup(int);
+static void t_endup(int);
+static void showwear(void);
+static void showwield(void);
+static void showread(void);
+static void showeat(void);
+static void showquaff(void);
+static void show1(int, const char *[]);
+static void randmonst(void);
+static void parse(void);
+static void run(int);
+static void wield(void);
+static void ydhi(int);
+static void ycwi(int);
+static void wear(void);
+static void dropobj(void);
+static void readscr(void);
+static void eatcookie(void);
+static void quaff(void);
 static int whatitem(const char *);
 
 static char     copyright[] = "\nLarn is copyrighted 1986 by Noah Morgan.\n";
@@ -309,7 +329,7 @@ main(argc, argv)
 
 	show character's inventory
  */
-void
+static void
 showstr()
 {
 	int    i, number;
@@ -348,7 +368,7 @@ qshowstr()
 /*
  *	subroutine to clear screen depending on # lines to display
  */
-void
+static void
 t_setup(count)
 	int    count;
 {
@@ -364,7 +384,7 @@ t_setup(count)
 /*
  *	subroutine to restore normal display screen depending on t_setup()
  */
-void
+static void
 t_endup(count)
 	int    count;
 {
@@ -379,7 +399,7 @@ t_endup(count)
 /*
 	function to show the things player is wearing only
  */
-void
+static void
 showwear()
 {
 	int    i, j, sigsav, count;
@@ -428,7 +448,7 @@ showwear()
 /*
 	function to show the things player can wield only
  */
-void
+static void
 showwield()
 {
 	int    i, j, sigsav, count;
@@ -486,7 +506,7 @@ showwield()
 /*
  *	function to show the things player can read only
  */
-void
+static void
 showread()
 {
 	int    i, j, sigsav, count;
@@ -518,7 +538,7 @@ showread()
 /*
  *	function to show the things player can eat only
  */
-void
+static void
 showeat()
 {
 	int    i, j, sigsav, count;
@@ -548,7 +568,7 @@ showeat()
 /*
 	function to show the things player can quaff only
  */
-void
+static void
 showquaff()
 {
 	int    i, j, sigsav, count;
@@ -575,7 +595,7 @@ showquaff()
 	t_endup(count);
 }
 
-void
+static void
 show1(idx, str2)
 	int    idx;
 	const char  *str2[];
@@ -632,7 +652,7 @@ show3(int indx)
 /*
 	subroutine to randomly create monsters if needed
  */
-void
+static void
 randmonst()
 {
 	if (c[TIMESTOP])
@@ -650,7 +670,7 @@ randmonst()
 
 	get and execute a command
  */
-void
+static void
 parse()
 {
 	int    i, j, k, flag;
@@ -969,7 +989,7 @@ parse2()
 	regen();
 }
 
-void
+static void
 run(dir)
 	int             dir;
 {
@@ -994,7 +1014,7 @@ run(dir)
 /*
 	function to wield a weapon
  */
-void
+static void
 wield()
 {
 	int    i;
@@ -1032,14 +1052,14 @@ wield()
 /*
 	common routine to say you don't have an item
  */
-void
+static void
 ydhi(x)
 	int             x;
 {
 	cursors();
 	lprintf("\nYou don't have item %c!", x);
 }
-void
+static void
 ycwi(x)
 	int             x;
 {
@@ -1050,7 +1070,7 @@ ycwi(x)
 /*
 	function to wear armor
  */
-void
+static void
 wear()
 {
 	int    i;
@@ -1102,7 +1122,7 @@ wear()
 /*
 	function to drop an object
  */
-void
+static void
 dropobj()
 {
 	int    i;
@@ -1166,7 +1186,7 @@ dropobj()
 /*
  *	readscr()		Subroutine to read a scroll one is carrying
  */
-void
+static void
 readscr()
 {
 	int    i;
@@ -1201,7 +1221,7 @@ readscr()
 /*
  *	subroutine to eat a cookie one is carrying
  */
-void
+static void
 eatcookie(void)
 {
 	const char *p;
@@ -1239,7 +1259,7 @@ eatcookie(void)
 /*
  *	subroutine to quaff a potion one is carrying
  */
-void
+static void
 quaff()
 {
 	int    i;

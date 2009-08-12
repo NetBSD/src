@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.24 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: monop.c,v 1.25 2009/08/12 08:10:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.24 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: monop.c,v 1.25 2009/08/12 08:10:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ bool	fixing,			/* set if fixing up debt		*/
 	told_em,		/* set if told user he's out of debt	*/
 	spec;			/* set if moving by card to RR or UTIL	*/
 
-const char	*name_list[MAX_PL+2],	/* list of players' names	*/
-	*const comlist[]	= {	/* list of normal commands 	*/
+const char *name_list[MAX_PL+2];	/* list of players' names	*/
+static const char *const comlist[] = {	/* list of normal commands 	*/
 	"quit",		/*  0 */	"print",	/*  1 */
 	"where",	/*  2 */	"own holdings",	/*  3 */
 	"holdings",	/*  4 */	"mortgage",	/*  5 */
@@ -75,15 +75,15 @@ const char	*name_list[MAX_PL+2],	/* list of players' names	*/
 	"restore",	/* 14 */	"roll",		/* 15 */
 	"",		/* 16 */
 	0
-	},
-	*const yncoms[]	= {	/* list of commands for yes/no answers	*/
+};
+const char *const yncoms[] = {	/* list of commands for yes/no answers	*/
 	"yes",		/*  0 */	"no",		/*  1 */
 	"quit",		/*  2 */	"print",	/*  3 */
 	"where",	/*  4 */	"own holdings",	/*  5 */
 	"holdings",	/*  6 */
 	0
-	},
-	*const lucky_mes[]	= {	/* "got lucky" messages		*/
+};
+const char *const lucky_mes[]	= {	/* "got lucky" messages		*/
 	"You lucky stiff",		"You got lucky",
 	"What a lucky person!",		"You must have a 4-leaf clover",
 	"My, my!  Aren't we lucky!",	"Luck smiles upon you",
@@ -91,7 +91,7 @@ const char	*name_list[MAX_PL+2],	/* list of players' names	*/
 	"Your karma must certainly be together",
 	"How beautifully Cosmic",	"Wow, you must be really with it"
 	/* "I want your autograph",	-- Save for later */
-	};
+};
 
 int	player,			/* current player number		*/
 	num_play,		/* current number of players		*/
@@ -125,15 +125,15 @@ DECK	deck[2];		/* Chance and Community Chest		*/
 PLAY	*play,			/* player structure array ("calloc"ed)	*/
 	*cur_p;			/* pointer to current player's struct	*/
 
-RR_S	rr[N_RR];		/* railroad descriptions		*/
+static RR_S rr[N_RR];		/* railroad descriptions		*/
 
-UTIL_S	util[2];		/* utility descriptions			*/
+static UTIL_S util[2];		/* utility descriptions			*/
 
 #define MONINIT(num_in, h_cost, not_m, mon_n, sq1,sq2,sq3) \
      {0,    -1, num_in, 0,      h_cost, not_m, mon_n, {sq1,sq2,sq3}, {0,0,0}}
 /* name  owner          num_own                                      sq */
 
-MON	mon[N_MON]	= {	/* monopoly descriptions		*/
+static MON mon[N_MON] = {	/* monopoly descriptions		*/
 /*   num_in h_cost  not_m	mon_n	    sqnums */
 MONINIT(2,  1,	"Purple",	"PURPLE",   1,3, 0),
 MONINIT(3,  1,	"Lt. Blue",	"LT. BLUE", 6,8,9),

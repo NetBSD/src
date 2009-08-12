@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.23 2008/02/03 21:24:58 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.24 2009/08/12 08:04:05 dholland Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.23 2008/02/03 21:24:58 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.24 2009/08/12 08:04:05 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -650,8 +650,8 @@ cursors()
  * obvious meanings.
  */
 
-struct tinfo   *info;
-char           *CM, *CE, *CD, *CL, *SO, *SE, *AL, *DL;	/* Termcap capabilities */
+static struct tinfo *info;
+static char *CM, *CE, *CD, *CL, *SO, *SE, *AL, *DL;	/* Termcap capabilities */
 static char    *outbuf = 0;	/* translated output buffer */
 
 /*

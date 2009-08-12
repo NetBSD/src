@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.14 2008/02/03 21:24:59 dholland Exp $	 */
+/*	$NetBSD: store.c,v 1.15 2009/08/12 08:04:05 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.14 2008/02/03 21:24:59 dholland Exp $");
+__RCSID("$NetBSD: store.c,v 1.15 2009/08/12 08:04:05 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,7 +47,9 @@ static void outofstock(void);
 static void nogold(void);
 static void dnditem(int);
 static void banktitle(const char *);
+static void obanksub(void);
 static void otradhead(void);
+static void cnsitm(void);
 
 static int      dndcount = 0, dnditm = 0;
 
@@ -189,16 +191,16 @@ struct _itm     itm[90] = {
 /*
 	function for the dnd store
  */
-void
-dnd_2hed()
+static void
+dnd_2hed(void)
 {
 	lprcat("Welcome to the Larn Thrift Shoppe.  We stock many items explorers find useful\n");
 	lprcat(" in their adventures.  Feel free to browse to your hearts content.\n");
 	lprcat("Also be advised, if you break 'em, you pay for 'em.");
 }
 
-void
-dnd_hed()
+static void
+dnd_hed(void)
 {
 	int    i;
 	for (i = dnditm; i < 26 + dnditm; i++)
@@ -346,12 +348,12 @@ dnditem(i)
 	for the college of larn
  */
 u_char          course[26] = {0};	/* the list of courses taken	 */
-char            coursetime[] = {10, 15, 10, 20, 10, 10, 10, 5};
+static char coursetime[] = {10, 15, 10, 20, 10, 10, 10, 5};
 /*
 	function to display the header info for the school
  */
-void
-sch_hed()
+static void
+sch_hed(void)
 {
 	clear();
 	lprcat("The College of Larn offers the exciting opportunity of higher education to\n");
@@ -699,12 +701,12 @@ obanksub()
 	}
 }
 
+#if 0 /* XXX: apparently unused */
 /*
 	subroutine to appraise any stone for the bank
  */
-void
-appraise(gemstone)
-	int    gemstone;
+static void
+appraise(int gemstone)
 {
 	int    j, amt;
 	for (j = 0; j < 26; j++)
@@ -738,6 +740,8 @@ appraise(gemstone)
 				lprcat("no\nO. K.\n");
 		}
 }
+#endif /* 0 - unused */
+
 /*
 	function for the trading post
  */
@@ -839,8 +843,8 @@ otradepost()
 	}
 }
 
-void
-cnsitm()
+static void
+cnsitm(void)
 {
 	lprcat("\nSorry, we can't accept unidentified objects.");
 }
