@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2008/07/20 01:03:20 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2009/08/12 04:48:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2008/07/20 01:03:20 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2009/08/12 04:48:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,11 @@ __RCSID("$NetBSD: main.c,v 1.19 2008/07/20 01:03:20 lukem Exp $");
 #include "pathnames.h"
 
 extern FILE	*yyin;
+
+static int read_file(const char *);
+static const char *default_game(void);
+static const char *okay_game(const char *);
+static int list_games(void);
 
 int
 main(int argc, char *argv[])
@@ -204,7 +209,7 @@ main(int argc, char *argv[])
 	}
 }
 
-int
+static int
 read_file(const char *s)
 {
 	int		retval;
@@ -224,7 +229,7 @@ read_file(const char *s)
 		return (0);
 }
 
-const char *
+static const char *
 default_game(void)
 {
 	FILE		*fp;
@@ -250,7 +255,7 @@ default_game(void)
 	return (file);
 }
 
-const char *
+static const char *
 okay_game(const char *s)
 {
 	FILE		*fp;
@@ -285,7 +290,7 @@ okay_game(const char *s)
 	return (ret);
 }
 
-int
+static int
 list_games(void)
 {
 	FILE		*fp;
