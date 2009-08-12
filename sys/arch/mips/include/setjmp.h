@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.7 2002/03/05 14:17:16 simonb Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.8 2009/08/12 05:12:58 matt Exp $	*/
 
 /*
  * mips/setjmp.h: machine dependent setjmp-related information.
@@ -7,10 +7,11 @@
  * struct sigcontext to restore it.
  */
 
-#include <machine/cdefs.h>	/* for API selection */
-
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-#define _JBLEN 87		/* XXX Naively 84; 87 for compatibility */
-#else
-#define _JBLEN	120
+#if defined(__mips_n32) || (defined(_MIPS_SIM) && _MIPS_SIM == _ABIN32)
+/*
+ * With the N32 ABI, registers have 64 bits
+ */
+#define	_BSD_JBSLOT_T_		long long
 #endif
+
+#define _JBLEN	87		/* XXX Naively 84; 87 for compatibility */
