@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.13 2009/07/20 05:33:35 dholland Exp $	*/
+/*	$NetBSD: random.c,v 1.14 2009/08/12 08:27:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-__RCSID("$NetBSD: random.c,v 1.13 2009/07/20 05:33:35 dholland Exp $");
+__RCSID("$NetBSD: random.c,v 1.14 2009/08/12 08:27:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: random.c,v 1.13 2009/07/20 05:33:35 dholland Exp $");
 #include <unistd.h>
 #include <limits.h>
 
-void usage(void) __dead;
+static void usage(void) __dead;
 
 int
 main(int argc, char *argv[])
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 

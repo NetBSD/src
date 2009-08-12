@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2009/08/05 19:34:09 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2009/08/12 08:30:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2009/08/05 19:34:09 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2009/08/12 08:30:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: main.c,v 1.31 2009/08/05 19:34:09 christos Exp $");
 
 extern const char *Scorefile;
 extern int Max_per_uid;
+
+static bool another(void);
 
 int
 main(int argc, char **argv)
@@ -210,7 +212,7 @@ quit(int dummy __unused)
  * another:
  *	See if another game is desired
  */
-bool
+static bool
 another(void)
 {
 	int y;
