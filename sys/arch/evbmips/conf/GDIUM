@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.5 2009/08/11 02:36:43 matt Exp $
+# $NetBSD: GDIUM,v 1.6 2009/08/12 19:39:51 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.5 $"
+#ident 		"GDIUM-$Revision: 1.6 $"
 
 maxusers	16
 
@@ -151,9 +151,9 @@ mainbus0	at root
 cpu0		at mainbus0
 bonito0		at mainbus0
 pci0		at bonito0
-#voyagerfb0	at pci0 dev ? function ?
-genfb0		at pci0 dev ? function ?
-wsdisplay0	at genfb0
+voyagerfb0	at pci0 dev ? function ?
+#genfb0		at pci0 dev ? function ?
+wsdisplay0	at wsemuldisplaydev?
 ehci*		at pci0 dev ? function ?
 #options 	EHCI_DEBUG
 ohci*		at pci0 dev ? function ?
