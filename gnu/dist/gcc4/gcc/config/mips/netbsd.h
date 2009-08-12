@@ -29,28 +29,74 @@ Boston, MA 02110-1301, USA.  */
 #define MACHINE_TYPE "NetBSD/mipsel ELF"
 #endif
 
-#define TARGET_OS_CPP_BUILTINS()			\
-  do							\
-    {							\
-      NETBSD_OS_CPP_BUILTINS_ELF();			\
-      builtin_define ("__NO_LEADING_UNDERSCORES__");	\
-      builtin_define ("__GP_SUPPORT__");		\
-      if (TARGET_LONG64)				\
-	builtin_define ("__LONG64");			\
-							\
-      if (TARGET_ABICALLS)				\
-	builtin_define ("__ABICALLS__");		\
-							\
-      if (mips_abi == ABI_EABI)				\
-	builtin_define ("__mips_eabi");			\
-      else if (mips_abi == ABI_N32)			\
-	builtin_define ("__mips_n32");			\
-      else if (mips_abi == ABI_64)			\
-	builtin_define ("__mips_n64");			\
-      else if (mips_abi == ABI_O64)			\
-	builtin_define ("__mips_o64");			\
-    }							\
-  while (0)
+#define TARGET_OS_CPP_BUILTINS()				\
+  do								\
+    {								\
+      NETBSD_OS_CPP_BUILTINS_ELF();				\
+      builtin_define ("__NO_LEADING_UNDERSCORES__");		\
+      builtin_define ("__GP_SUPPORT__");			\
+      if (TARGET_LONG64)					\
+	builtin_define ("__LONG64");				\
+								\
+      if (TARGET_ABICALLS)					\
+	builtin_define ("__ABICALLS__");			\
+								\
+    /* The GNU C++ standard library requires this.  */		\
+    if (c_dialect_cxx ())					\
+      builtin_define ("_GNU_SOURCE");				\
+    								\
+    if (mips_abi == ABI_N32)					\
+      {								\
+	builtin_define ("__mips_n32");				\
+        builtin_define ("_ABIN32=2");				\
+        builtin_define ("_MIPS_SIM=_ABIN32");			\
+        builtin_define ("_MIPS_SZLONG=32");			\
+        builtin_define ("_MIPS_SZPTR=32");			\
+      }								\
+    else if (mips_abi == ABI_64)				\
+      {								\
+	builtin_define ("__mips_n64");				\
+        builtin_define ("_ABI64=3");				\
+        builtin_define ("_MIPS_SIM=_ABI64");			\
+        builtin_define ("_MIPS_SZLONG=64");			\
+        builtin_define ("_MIPS_SZPTR=64");			\
+      }								\
+    else if (mips_abi == ABI_O64)				\
+      {								\
+	builtin_define ("__mips_o64");				\
+        builtin_define ("_ABIO64=4");				\
+        builtin_define ("_MIPS_SIM=_ABIO64");			\
+        builtin_define ("_MIPS_SZLONG=64");			\
+        builtin_define ("_MIPS_SZPTR=64");			\
+      }								\
+    else if (mips_abi == ABI_EABI)				\
+      {								\
+	builtin_define ("__mips_eabi");				\
+        builtin_define ("_ABIEMB=5");				\
+        builtin_define ("_MIPS_SIM=_ABIEMB");			\
+	if (TARGET_LONG64)					\
+          builtin_define ("_MIPS_SZLONG=64");			\
+	else							\
+          builtin_define ("_MIPS_SZLONG=32");			\
+	if (TARGET_64BIT)					\
+          builtin_define ("_MIPS_SZPTR=64");			\
+	else							\
+          builtin_define ("_MIPS_SZPTR=32");			\
+      }								\
+    else							\
+      {								\
+	builtin_define ("_ABIO32=1");				\
+	builtin_define ("_MIPS_SIM=_ABIO32");			\
+        builtin_define ("_MIPS_SZLONG=32");			\
+        builtin_define ("_MIPS_SZPTR=32");			\
+      }								\
+    if (TARGET_FLOAT64)						\
+      builtin_define ("_MIPS_FPSET=32");			\
+    else							\
+      builtin_define ("_MIPS_FPSET=16");			\
+    								\
+    builtin_define ("_MIPS_SZINT=32");				\
+  } while (0)
 
 /* The generic MIPS TARGET_CPU_CPP_BUILTINS are incorrect for NetBSD.
    Specifically, they define too many namespace-invasive macros.  Override
