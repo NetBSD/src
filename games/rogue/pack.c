@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.10 2008/01/14 03:50:02 dholland Exp $	*/
+/*	$NetBSD: pack.c,v 1.11 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pack.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pack.c,v 1.10 2008/01/14 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: pack.c,v 1.11 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,11 @@ __RCSID("$NetBSD: pack.c,v 1.10 2008/01/14 03:50:02 dholland Exp $");
 #include "rogue.h"
 
 const char *curse_message = "you can't, it appears to be cursed";
+
+static object *check_duplicate(object *, object *);
+static boolean is_pack_letter(short *, unsigned short *);
+static boolean mask_pack(const object *, unsigned short);
+static short next_avail_ichar(void);
 
 object *
 add_to_pack(object *obj, object *pack, int condense)
@@ -205,7 +210,7 @@ drop(void)
 	(void)reg_move();
 }
 
-object *
+static object *
 check_duplicate(object *obj, object *pack)
 {
 	object *op;
@@ -238,7 +243,7 @@ check_duplicate(object *obj, object *pack)
 	return(0);
 }
 
-short
+static short
 next_avail_ichar(void)
 {
 	object *obj;
@@ -488,7 +493,7 @@ pack_count(const object *new_obj)
 	return(count);
 }
 
-boolean
+static boolean
 mask_pack(const object *pack, unsigned short mask)
 {
 	while (pack->next_object) {
@@ -500,7 +505,7 @@ mask_pack(const object *pack, unsigned short mask)
 	return(0);
 }
 
-boolean
+static boolean
 is_pack_letter(short *c, unsigned short *mask)
 {
 	if (((*c == '?') || (*c == '!') || (*c == ':') || (*c == '=') ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.13 2008/01/14 03:50:01 dholland Exp $	*/
+/*	$NetBSD: inventory.c,v 1.14 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: inventory.c,v 1.13 2008/01/14 03:50:01 dholland Exp $");
+__RCSID("$NetBSD: inventory.c,v 1.14 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,6 +211,10 @@ static const struct id_com_s com_id_tab[COMS] = {
 	{'q',	"q       quaff potion" }
 };
 
+static int get_com_id(int *, short);
+static int pr_com_id(int);
+static int pr_motion_char(int);
+
 void
 inventory(const object *pack, unsigned short mask)
 {
@@ -355,7 +359,7 @@ MORE:
 	}
 }
 
-int
+static int
 pr_com_id(int ch)
 {
 	int i;
@@ -368,7 +372,7 @@ pr_com_id(int ch)
 	return(1);
 }
 
-int
+static int
 get_com_id(int *indexp, short ch)
 {
 	short i;
@@ -382,7 +386,7 @@ get_com_id(int *indexp, short ch)
 	return(0);
 }
 
-int
+static int
 pr_motion_char(int ch)
 {
 	if (	(ch == 'J') ||
