@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.28 2008/09/29 12:30:12 agc Exp $	*/
+/*	$NetBSD: strfile.c,v 1.29 2009/08/12 06:06:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.28 2008/09/29 12:30:12 agc Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.29 2009/08/12 06:06:28 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -135,24 +135,24 @@ typedef struct {
 	off_t	pos;
 } STR;
 
-char	*Infile		= NULL,		/* input file name */
-	Outfile[MAXPATHLEN] = "",	/* output file name */
-	Delimch		= '%';		/* delimiting character */
+static char *Infile = NULL;		/* input file name */
+static char Outfile[MAXPATHLEN] = "";	/* output file name */
+static char Delimch = '%';		/* delimiting character */
 
-int	Sflag		= FALSE;	/* silent run flag */
-int	Oflag		= FALSE;	/* ordering flag */
-int	Iflag		= FALSE;	/* ignore case flag */
-int	Rflag		= FALSE;	/* randomize order flag */
-int	Xflag		= FALSE;	/* set rotated bit */
-long	Num_pts		= 0;		/* number of pointers/strings */
+static int Sflag	= FALSE;	/* silent run flag */
+static int Oflag	= FALSE;	/* ordering flag */
+static int Iflag	= FALSE;	/* ignore case flag */
+static int Rflag	= FALSE;	/* randomize order flag */
+static int Xflag	= FALSE;	/* set rotated bit */
+static long Num_pts	= 0;		/* number of pointers/strings */
 
-off_t	*Seekpts;
+static off_t *Seekpts;
 
-FILE	*Sort_1, *Sort_2;		/* pointers for sorting */
+static FILE *Sort_1, *Sort_2;		/* pointers for sorting */
 
-STRFILE	Tbl;				/* statistics table */
+static STRFILE Tbl;			/* statistics table */
 
-STR	*Firstch;			/* first chars of each string */
+static STR *Firstch;			/* first chars of each string */
 
 #ifdef __GNUC__
 #define NORETURN	__dead
