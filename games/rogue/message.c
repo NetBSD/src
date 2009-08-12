@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.13 2008/01/14 03:50:01 dholland Exp $	*/
+/*	$NetBSD: message.c,v 1.14 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: message.c,v 1.13 2008/01/14 03:50:01 dholland Exp $");
+__RCSID("$NetBSD: message.c,v 1.14 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,8 @@ static boolean rmsg = 0;
 boolean msg_cleared = 1;
 char hunger_str[HUNGER_STR_LEN] = "";
 const char *more = "-more-";
+
+static void save_screen(void);
 
 static
 void
@@ -316,7 +318,7 @@ print_stats(int stat_mask)
 	refresh();
 }
 
-void
+static void
 save_screen(void)
 {
 	FILE *fp;

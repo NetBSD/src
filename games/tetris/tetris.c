@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.21 2009/05/25 04:33:53 dholland Exp $	*/
+/*	$NetBSD: tetris.c,v 1.22 2009/08/12 08:51:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ cell	board[B_SIZE];		/* 1 => occupied, 0 => empty */
 
 int	Rows, Cols;		/* current screen size */
 
-const struct shape *curshape;
+static const struct shape *curshape;
 const struct shape *nextshape;
 
 long	fallrate;		/* less than 1 million; smaller => faster */
@@ -74,11 +74,10 @@ gid_t	gid, egid;
 char	key_msg[100];
 int	showpreview;
 
-static	void	elide(void);
-static	void	setup_board(void);
-	int	main(int, char **);
-	void	onintr(int) __dead;
-	void	usage(void) __dead;
+static void elide(void);
+static void setup_board(void);
+static void onintr(int) __dead;
+static void usage(void) __dead;
 
 /*
  * Set up the initial board.  The bottom display row is completely set,
@@ -318,7 +317,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 onintr(int signo __unused)
 {
 	scr_clear();
@@ -326,7 +325,7 @@ onintr(int signo __unused)
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: tetris [-ps] [-k keys] [-l level]\n");

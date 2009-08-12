@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 2008/01/14 03:50:03 dholland Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trap.c,v 1.9 2008/01/14 03:50:03 dholland Exp $");
+__RCSID("$NetBSD: trap.c,v 1.10 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ static const char *const trap_strings[TRAPS * 2] = {
 			"a gush of water hits you on the head"
 };
 
-short
+static short
 trap_at(int row, int col)
 {
 	short i;

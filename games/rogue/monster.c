@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.14 2008/01/14 03:50:01 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.15 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.14 2008/01/14 03:50:01 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.15 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,14 @@ static object mon_tab[MONSTERS] = {
 	{(ASLEEP|WANDERS),"3d6",35,'Y',50,11,20,80,0,20,0,0,0},
 	{(ASLEEP|WAKENS|WANDERS),"1d7",21,'Z',8,5,14,69,0,0,0,0,0}
 };
+
+static void aim_monster(object *);
+static int flit(object *);
+static int move_confused(object *);
+static int mtry(object *, short, short);
+static int no_room_for_monster(int);
+static void put_m_at(short, short, object *);
+static int rogue_is_around(int, int);
 
 void
 put_mons(void)
@@ -433,7 +441,7 @@ O:
 	}
 }
 
-int
+static int
 mtry(object *monster, short row, short col)
 {
 	if (mon_can_go(monster, row, col)) {
@@ -591,7 +599,7 @@ mon_name(const object *monster)
 	return(m_names[ch]);
 }
 
-int
+static int
 rogue_is_around(int row, int col)
 {
 	short rdif, cdif, retval;
@@ -694,7 +702,7 @@ create_monster(void)
 	}
 }
 
-void
+static void
 put_m_at(short row, short col, object *monster)
 {
 	monster->row = row;
@@ -705,7 +713,7 @@ put_m_at(short row, short col, object *monster)
 	aim_monster(monster);
 }
 
-void
+static void
 aim_monster(object *monster)
 {
 	short i, rn, d, r;
@@ -738,7 +746,7 @@ rogue_can_see(int row, int col)
 	return(retval);
 }
 
-int
+static int
 move_confused(object *monster)
 {
 	short i, row, col;
@@ -768,7 +776,7 @@ move_confused(object *monster)
 	return(0);
 }
 
-int
+static int
 flit(object *monster)
 {
 	short i, row, col;
@@ -805,7 +813,7 @@ gr_obj_char(void)
 	return(rs[r]);
 }
 
-int
+static int
 no_room_for_monster(int rn)
 {
 	short i, j;

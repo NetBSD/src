@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.13 2008/01/14 03:50:02 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.14 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.13 2008/01/14 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.14 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,17 @@ struct id id_rings[RINGS] = {
 	 {270, "", "of searching ",0},
 };
 
+static void gr_armor(object *);
+static void gr_potion(object *);
+static void gr_scroll(object *);
+static void gr_wand(object *);
+static void gr_weapon(object *, int);
+static unsigned short gr_what_is(void);
+static void make_party(void);
+static void plant_gold(short, short, boolean);
+static void put_gold(void);
+static void rand_place(object *);
+
 void
 put_objects(void)
 {
@@ -185,7 +196,7 @@ put_objects(void)
 	put_gold();
 }
 
-void
+static void
 put_gold(void)
 {
 	short i, j;
@@ -215,7 +226,7 @@ put_gold(void)
 	}
 }
 
-void
+static void
 plant_gold(short row, short col, boolean is_maze)
 {
 	object *obj;
@@ -379,7 +390,7 @@ gr_object(void)
 	return(obj);
 }
 
-unsigned short
+static unsigned short
 gr_what_is(void)
 {
 	short percent;
@@ -405,7 +416,7 @@ gr_what_is(void)
 	return(what_is);
 }
 
-void
+static void
 gr_scroll(object *obj)
 {
 	short percent;
@@ -443,7 +454,7 @@ gr_scroll(object *obj)
 	}
 }
 
-void
+static void
 gr_potion(object *obj)
 {
 	short percent;
@@ -483,7 +494,7 @@ gr_potion(object *obj)
 	}
 }
 
-void
+static void
 gr_weapon(object *obj, int assign_wk)
 {
 	short percent;
@@ -547,7 +558,7 @@ gr_weapon(object *obj, int assign_wk)
 	}
 }
 
-void
+static void
 gr_armor(object *obj)
 {
 	short percent;
@@ -573,7 +584,7 @@ gr_armor(object *obj)
 	}
 }
 
-void
+static void
 gr_wand(object *obj)
 {
 	obj->what_is = WAND;
@@ -640,7 +651,7 @@ free_object(object *obj)
 	free_list = obj;
 }
 
-void
+static void
 make_party(void)
 {
 	short n;
@@ -702,7 +713,7 @@ put_amulet(void)
 	rand_place(obj);
 }
 
-void
+static void
 rand_place(object *obj)
 {
 	short row, col;

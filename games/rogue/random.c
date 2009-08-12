@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.7 2008/01/14 03:50:02 dholland Exp $	*/
+/*	$NetBSD: random.c,v 1.8 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: random.c,v 1.7 2008/01/14 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: random.c,v 1.8 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ static int rand_deg = 31;
 static int rand_sep = 3;
 static long *end_ptr = &rntb[32];
 
+static long rrandom(void);
+
 void
 srrandom(int x)
 {
@@ -91,7 +93,7 @@ srrandom(int x)
 	}
 }
 
-long
+static long
 rrandom(void)
 {
 	long i;

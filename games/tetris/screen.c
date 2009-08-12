@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.23 2009/05/25 04:33:53 dholland Exp $	*/
+/*	$NetBSD: screen.c,v 1.24 2009/08/12 08:51:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ static	void	stopset(int) __dead;
 /*
  * Capabilities from TERMCAP.
  */
-short	ospeed;
+extern short ospeed;
 
 static char
 	*bcstr,			/* backspace char */
@@ -94,7 +94,7 @@ static int
 	MSflag;			/* can move in standout mode */
 
 
-struct tcsinfo {	/* termcap string info; some abbrevs above */
+static struct tcsinfo {	/* termcap string info; some abbrevs above */
 	char tcname[3];
 	char **tcaddr;
 } tcstrings[] = {
@@ -136,7 +136,7 @@ put(int c)
  */
 #define	putstr(s)	(void)fputs(s, stdout)
 
-void
+static void
 moveto(int r, int c)
 {
 	char buf[256];
