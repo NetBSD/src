@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.28 2009/08/12 21:20:40 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2009/08/12 21:24:57 dsl Exp $
 
 SRCS+=	bswap16.S bswap32.S bswap64.S
-SRCS+=	memchr.c memcmp.S memcpy.S memmove.S memset.S
-SRCS+=	strcat.S strchr.S strcmp.S strcasecmp.c
-SRCS+=	strcpy.S strlen.S strncmp.S strncasecmp.c strncpy.S strrchr.S
+SRCS+=	memcmp.S memcpy.S memmove.S memset.S
+SRCS+=	strcat.S strchr.S strcmp.S
+SRCS+=	strcpy.S strlen.S strncmp.S strncpy.S strrchr.S
 SRCS+=	scanc.S skpc.S
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 SRCS+=	ffs.S
