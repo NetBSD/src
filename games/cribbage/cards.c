@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.8 2005/07/02 08:32:32 jmc Exp $	*/
+/*	$NetBSD: cards.c,v 1.9 2009/08/12 05:48:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.8 2005/07/02 08:32:32 jmc Exp $");
+__RCSID("$NetBSD: cards.c,v 1.9 2009/08/12 05:48:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ shuffle(CARD d[])
 /*
  * return true if the two cards are equal...
  */
-int
+static int
 eq(CARD a, CARD b)
 {
 	return ((a.rank == b.rank) && (a.suit == b.suit));
