@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.11 2009/05/25 04:33:53 dholland Exp $	*/
+/*	$NetBSD: tetris.h,v 1.12 2009/08/12 08:51:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -130,7 +130,6 @@ struct shape {
 extern const struct shape shapes[];
 #define	randshape() (&shapes[random() % 7])
 
-extern const struct shape *curshape;
 extern const struct shape *nextshape;
 
 /*

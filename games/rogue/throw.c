@@ -1,4 +1,4 @@
-/*	$NetBSD: throw.c,v 1.10 2008/01/14 03:50:03 dholland Exp $	*/
+/*	$NetBSD: throw.c,v 1.11 2009/08/12 08:44:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: throw.c,v 1.10 2008/01/14 03:50:03 dholland Exp $");
+__RCSID("$NetBSD: throw.c,v 1.11 2009/08/12 08:44:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,10 @@ __RCSID("$NetBSD: throw.c,v 1.10 2008/01/14 03:50:03 dholland Exp $");
  */
 
 #include "rogue.h"
+
+static void flop_weapon(object *, short, short);
+static object *get_thrown_at_monster(object *, short, short *, short *);
+static boolean throw_at_monster(object *, object *);
 
 void
 throw(void)
