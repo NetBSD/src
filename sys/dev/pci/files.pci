@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.317 2009/07/27 15:09:58 kiyohara Exp $
+#	$NetBSD: files.pci,v 1.318 2009/08/12 19:28:00 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -977,3 +977,9 @@ file	dev/pci/if_bwi_pci.c		bwi_pci
 # Marvell Serial-ATA Host Controller
 attach	mvsata at pci with mvsata_pci
 file	dev/pci/mvsata_pci.c		mvsata_pci
+
+# Silicon Motion SM502 / Voyager GX
+device	voyagerfb: wsemuldisplaydev, rasops8, rasops16, rasops32, vcons, videomode, iic, i2c_bitbang
+attach	voyagerfb at pci
+file	dev/pci/voyagerfb.c		voyagerfb
+defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG
