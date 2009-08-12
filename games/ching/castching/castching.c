@@ -1,4 +1,4 @@
-/*	$NetBSD: castching.c,v 1.2 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: castching.c,v 1.3 2009/08/12 05:40:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)ching.cno.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: castching.c,v 1.2 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: castching.c,v 1.3 2009/08/12 05:40:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,17 +60,18 @@ __RCSID("$NetBSD: castching.c,v 1.2 2008/07/20 01:03:21 lukem Exp $");
 #include <unistd.h>
 #include "ching.h"
 
-time_t	now;		/* current time */
+static time_t now;		/* current time */
 
-unsigned seed;		/* seed for random number generator */
-int getquest(void);
-unsigned getrand(void);
-unsigned getrnum(void);
-char *change(void);
+static unsigned seed;		/* seed for random number generator */
 
-char string[6+1];	/* where the actual change string is put */
+static int getquest(void);
+static unsigned getrand(void);
+static unsigned getrnum(void);
+static char *change(void);
 
-int table[2][2][2] = {
+static char string[6+1];	/* where the actual change string is put */
+
+static int table[2][2][2] = {
 	{ { OYIN,  YYANG,}, { YYANG, YYIN,} },
 	{ { YYANG, YYIN,},  { YYIN,  OYANG,} },
 };
@@ -89,7 +90,7 @@ main(int argc, char **argv)
 /*
  * Hash the question by adding all the characters together.
  */
-int
+static int
 getquest(void)
 {
 	int result;
@@ -104,7 +105,7 @@ getquest(void)
 /*
  * Get a set of six lines making up a change.
  */
-char *
+static char *
 change(void)
 {
 	int i;
@@ -118,7 +119,7 @@ change(void)
 /*
  * Get a number more random than what getrand() gives.
  */
-unsigned
+static unsigned
 getrnum(void)
 {
 	return((getrand())>>(getrand()%17));
@@ -127,7 +128,7 @@ getrnum(void)
 /*
  * Get a random number.
  */
-unsigned
+static unsigned
 getrand(void)
 {
 	return(seed = (seed*13077) + 6925);
