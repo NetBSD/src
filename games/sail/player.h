@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.12 2009/03/14 20:10:43 dholland Exp $	*/
+/*	$NetBSD: player.h,v 1.13 2009/08/12 09:05:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -88,7 +88,6 @@
 extern int done_curses;
 extern int loaded, fired, changed, repaired;
 extern int dont_adjust;
-extern int viewrow, viewcol;
 extern char movebuf[sizeof SHIP(0)->file->movebuf];
 extern const char version[];
 extern int player;

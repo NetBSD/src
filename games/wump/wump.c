@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.23 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: wump.c,v 1.24 2009/08/12 09:00:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.23 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: wump.c,v 1.24 2009/08/12 09:00:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ __RCSID("$NetBSD: wump.c,v 1.23 2008/07/20 01:03:22 lukem Exp $");
 #define	plural(n)	(n == 1 ? "" : "s")
 
 /* simple cave data structure; +1 so we can index from '1' not '0' */
-struct room_record {
+static struct room_record {
 	int tunnel[MAX_LINKS_IN_ROOM];
 	int has_a_pit, has_a_bat;
 } cave[MAX_ROOMS_IN_CAVE+1];
@@ -95,47 +95,47 @@ struct room_record {
  * global variables so we can keep track of where the player is, how
  * many arrows they still have, where el wumpo is, and so on...
  */
-int player_loc = -1;			/* player location */
-int wumpus_loc = -1;			/* The Bad Guy location */
-int level = EASY;			/* level of play */
-int arrows_left;			/* arrows unshot */
+static int player_loc = -1;		/* player location */
+static int wumpus_loc = -1;		/* The Bad Guy location */
+static int level = EASY;		/* level of play */
+static int arrows_left;			/* arrows unshot */
 
 #ifdef DEBUG
-int debug = 0;
+static int debug = 0;
 #endif
 
-int pit_num = PIT_COUNT;		/* # pits in cave */
-int bat_num = BAT_COUNT;		/* # bats */
-int room_num = ROOMS_IN_CAVE;		/* # rooms in cave */
-int link_num = LINKS_IN_ROOM;		/* links per room  */
-int arrow_num = NUMBER_OF_ARROWS;	/* arrow inventory */
+static int pit_num = PIT_COUNT;		/* # pits in cave */
+static int bat_num = BAT_COUNT;		/* # bats */
+static int room_num = ROOMS_IN_CAVE;	/* # rooms in cave */
+static int link_num = LINKS_IN_ROOM;	/* links per room  */
+static int arrow_num = NUMBER_OF_ARROWS;/* arrow inventory */
 
-char answer[20];			/* user input */
+static char answer[20];			/* user input */
 
-int	bats_nearby(void);
-void	cave_init(void);
-void	clear_things_in_cave(void);
-void	display_room_stats(void);
-int	gcd(int, int);
-int	getans(const char *);
-void	initialize_things_in_cave(void);
-void	instructions(void);
-int	int_compare(const void *, const void *);
-void	jump(int);
-void	kill_wump(void);
 int	main(int, char **);
-int	move_to(const char *);
-void	move_wump(void);
-void	no_arrows(void);
-void	pit_kill(void);
-int	pit_nearby(void);
-void	pit_survive(void);
-int	shoot(char *);
-void	shoot_self(void);
-int	take_action(void);
-void	usage(void) __dead;
-void	wump_kill(void);
-int	wump_nearby(void);
+static int bats_nearby(void);
+static void cave_init(void);
+static void clear_things_in_cave(void);
+static void display_room_stats(void);
+static int gcd(int, int);
+static int getans(const char *);
+static void initialize_things_in_cave(void);
+static void instructions(void);
+static int int_compare(const void *, const void *);
+static void jump(int);
+static void kill_wump(void);
+static int move_to(const char *);
+static void move_wump(void);
+static void no_arrows(void);
+static void pit_kill(void);
+static int pit_nearby(void);
+static void pit_survive(void);
+static int shoot(char *);
+static void shoot_self(void);
+static int take_action(void);
+static void usage(void) __dead;
+static void wump_kill(void);
+static int wump_nearby(void);
 
 int
 main(argc, argv)
@@ -254,7 +254,7 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 	return (0);
 }
 
-void
+static void
 display_room_stats()
 {
 	int i;
@@ -284,7 +284,7 @@ display_room_stats()
 	(void)printf("and %d.\n", cave[player_loc].tunnel[link_num - 1]);
 }
 
-int
+static int
 take_action()
 {
 	/*
@@ -313,7 +313,7 @@ take_action()
 	return(0);
 }
 
-int
+static int
 move_to(room_number)
 	const char *room_number;
 {
@@ -405,7 +405,7 @@ move_to(room_number)
 	return(0);
 }
 
-int
+static int
 shoot(room_list)
 	char *room_list;
 {
@@ -518,7 +518,7 @@ The arrow is weakly shot and can go no further!\n");
 	return(0);
 }
 
-int
+static int
 gcd(a, b)
 	int a, b;
 {
@@ -530,7 +530,7 @@ gcd(a, b)
 	return (gcd(b, r));
 }
 
-void
+static void
 cave_init()
 {
 	int i, j, k, lnk;
@@ -610,7 +610,7 @@ try_again:		lnk = (random() % room_num) + 1;
 #endif
 }
 
-void
+static void
 clear_things_in_cave()
 {
 	int i;
@@ -623,7 +623,7 @@ clear_things_in_cave()
 		cave[i].has_a_bat = cave[i].has_a_pit = 0;
 }
 
-void
+static void
 initialize_things_in_cave()
 {
 	int i, loc;
@@ -667,7 +667,7 @@ initialize_things_in_cave()
 	    (i > 100 && player_loc != wumpus_loc));
 }
 
-int
+static int
 getans(prompt)
 	const char *prompt;
 {
@@ -693,7 +693,7 @@ getans(prompt)
 	/* NOTREACHED */
 }
 
-int
+static int
 bats_nearby()
 { 
 	int i;
@@ -705,7 +705,7 @@ bats_nearby()
 	return(0);
 }
 
-int
+static int
 pit_nearby()
 { 
 	int i;
@@ -717,7 +717,7 @@ pit_nearby()
 	return(0);
 }
 
-int
+static int
 wump_nearby()
 {
 	int i, j;
@@ -734,20 +734,20 @@ wump_nearby()
 	return(0);
 }
 
-void
+static void
 move_wump()
 {
 	wumpus_loc = cave[wumpus_loc].tunnel[random() % link_num];
 }
 
-int
+static int
 int_compare(a, b)
 	const void *a, *b;
 {
 	return(*(const int *)a < *(const int *)b ? -1 : 1);
 }
 
-void
+static void
 instructions()
 {
 	const char *pager;
@@ -791,7 +791,7 @@ puff of greasy black smoke! (poof)\n");
 	}
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
@@ -801,7 +801,7 @@ usage()
 
 /* messages */
 
-void
+static void
 wump_kill()
 {
 	(void)printf(
@@ -813,7 +813,7 @@ so long since the evil Wumpus cleaned his teeth that you immediately\n\
 passed out from the stench!\n");
 }
 
-void
+static void
 kill_wump()
 {
 	(void)printf(
@@ -825,7 +825,7 @@ dead Wumpus is also quite well known, a stench plenty enough to slay the\n\
 mightiest adventurer at a single whiff!!\n");
 }
 
-void
+static void
 no_arrows()
 {
 	(void)printf(
@@ -835,7 +835,7 @@ with its psychic powers, the evil Wumpus rampagees through the cave, finds\n\
 you, and with a mighty *ROAR* eats you alive!\n");
 }
 
-void
+static void
 shoot_self()
 {
 	(void)printf(
@@ -846,7 +846,7 @@ and immediately rushes to your side, not to help, alas, but to EAT YOU!\n\
 (*CHOMP*)\n");
 }
 
-void
+static void
 jump(where)
 	int where;
 {
@@ -856,7 +856,7 @@ notice that the walls are shimmering and glowing.  Suddenly you feel\n\
 a very curious, warm sensation and find yourself in room %d!!\n", where);
 }
 
-void
+static void
 pit_kill()
 {
 	(void)printf(
@@ -868,7 +868,7 @@ you fall many miles to the core of the earth.  Look on the bright side;\n\
 you can at least find out if Jules Verne was right...\n");
 }
 
-void
+static void
 pit_survive()
 {
 	(void)printf(

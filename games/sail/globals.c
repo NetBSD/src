@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.14 2009/03/14 19:35:13 dholland Exp $	*/
+/*	$NetBSD: globals.c,v 1.15 2009/08/12 09:05:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,13 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.14 2009/03/14 19:35:13 dholland Exp $");
+__RCSID("$NetBSD: globals.c,v 1.15 2009/08/12 09:05:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <setjmp.h>
 #include "extern.h"
+
+static struct shipspecs specs[];
 
 struct scenario scene[] = {
 	/*
@@ -313,7 +315,7 @@ struct scenario scene[] = {
 };
 int nscene = sizeof scene / sizeof (struct scenario);
 
-struct shipspecs specs[] = {
+static struct shipspecs specs[] = {
 /*      bs fs ta guns   hull  crew1   crew3    gunR  carR   rig2  rig4 pts */
 /*                 class   qual   crew2    gunL   carL   rig1  rig3        */
 /*00*/{	4, 7, 3,  19, 5,  5, 4,  2,  2,  2,  2,  2, 0, 0,  4, 4, 4,  4,  7 },

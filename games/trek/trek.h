@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.17 2009/05/25 00:07:14 dholland Exp $	*/
+/*	$NetBSD: trek.h,v 1.18 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -379,7 +379,6 @@ void autover(void);
 
 /* capture.c */
 void capture(int);
-struct kling *selectklingon(void);
 
 /* check_out.c */
 int check_out(int);
@@ -465,7 +464,6 @@ void out(int);
 void phaser(int);
 
 /* play.c */
-void myreset(int) __dead;
 void play(void) __dead;
 
 /* ram.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.15 2009/05/24 23:20:22 dholland Exp $	*/
+/*	$NetBSD: computer.c,v 1.16 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: computer.c,v 1.15 2009/05/24 23:20:22 dholland Exp $");
+__RCSID("$NetBSD: computer.c,v 1.16 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ __RCSID("$NetBSD: computer.c,v 1.15 2009/05/24 23:20:22 dholland Exp $");
 **	command processor.
 */
 
-struct cvntab Cputab[] = {
+static struct cvntab Cputab[] = {
 	{ "ch",		"art",			(cmdfun)1,		0 },
 	{ "t",		"rajectory",		(cmdfun)2,		0 },
 	{ "c",		"ourse",		(cmdfun)3,		0 },

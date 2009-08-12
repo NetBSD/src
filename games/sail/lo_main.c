@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.16 2009/03/14 20:14:56 dholland Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.17 2009/08/12 09:05:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.16 2009/03/14 20:14:56 dholland Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.17 2009/08/12 09:05:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: lo_main.c,v 1.16 2009/03/14 20:14:56 dholland Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-const char *const title[] = {
+static const char *const title[] = {
 	"Admiral", "Commodore", "Captain", "Captain",
 	"Captain", "Captain", "Captain", "Commander",
 	"Commander", "Lieutenant"

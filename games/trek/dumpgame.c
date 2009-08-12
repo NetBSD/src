@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.14 2009/05/24 21:44:56 dholland Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.15 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpgame.c,v 1.14 2009/05/24 21:44:56 dholland Exp $");
+__RCSID("$NetBSD: dumpgame.c,v 1.15 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ struct dump {
 static int readdump(int);
 
 
-struct dump Dump_template[] = {
+static struct dump Dump_template[] = {
 	{ (char *)&Ship,	sizeof (Ship) },
 	{ (char *)&Now,		sizeof (Now) },
 	{ (char *)&Param,	sizeof (Param) },

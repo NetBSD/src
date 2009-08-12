@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.12 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: help.c,v 1.13 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.12 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: help.c,v 1.13 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: help.c,v 1.12 2009/05/24 22:55:03 dholland Exp $");
 **	to drop you.  After that, it's your problem.
 */
 
-const char *const Cntvect[3] = {
+static const char *const Cntvect[3] = {
 	"first", "second", "third"
 };
 

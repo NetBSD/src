@@ -1,4 +1,4 @@
-/*	$NetBSD: srscan.c,v 1.10 2009/05/25 00:39:45 dholland Exp $	*/
+/*	$NetBSD: srscan.c,v 1.11 2009/08/12 08:54:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: srscan.c,v 1.10 2009/05/25 00:39:45 dholland Exp $");
+__RCSID("$NetBSD: srscan.c,v 1.11 2009/08/12 08:54:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: srscan.c,v 1.10 2009/05/25 00:39:45 dholland Exp $");
 **	The current quadrant is filled in on the computer chart.
 */
 
-const char	*const Color[4] = {
+static const char *const Color[4] = {
 	"GREEN",
 	"DOCKED",
 	"YELLOW",
