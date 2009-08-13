@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2009/08/13 17:50:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2004 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.5 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2009/08/13 17:50:41 drochner Exp $");
 
 #include <errno.h>
 #include <grp.h>
@@ -195,6 +195,13 @@ drop_root(char const *user, char const *group)
 
 	if (setgid(gid) < 0) {
 		log_err("Could not setgid(%s). %s (%d)", group,
+		    strerror(errno), errno);
+
+		return false;
+	}
+
+	if (setgroups(0, NULL) < 0) {
+		log_err("Could not setgroups(0). %s (%d)",
 		    strerror(errno), errno);
 
 		return false;
