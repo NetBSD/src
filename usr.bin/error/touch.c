@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.20 2009/08/13 04:09:53 dholland Exp $	*/
+/*	$NetBSD: touch.c,v 1.21 2009/08/13 05:53:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.20 2009/08/13 04:09:53 dholland Exp $");
+__RCSID("$NetBSD: touch.c,v 1.21 2009/08/13 05:53:58 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,8 +61,6 @@ __RCSID("$NetBSD: touch.c,v 1.20 2009/08/13 04:09:53 dholland Exp $");
 	for (fi = lb; fi <= num; fi++)
 
 static int touchstatus = Q_YES;
-
-extern char *suffixlist;
 
 /*
  * codes for probethisfile to return
@@ -102,8 +100,8 @@ findfiles(int my_nerrors, Eptr *my_errors, int *r_nfiles, Eptr ***r_files)
 
 	my_nfiles = countfiles(my_errors);
 
-	my_files = (Eptr**)Calloc(my_nfiles + 3, sizeof (Eptr*));
-	touchedfiles = (boolean *)Calloc(my_nfiles+3, sizeof(boolean));
+	my_files = Calloc(my_nfiles + 3, sizeof (Eptr*));
+	touchedfiles = Calloc(my_nfiles+3, sizeof(boolean));
 	/*
 	 * Now, partition off the error messages
 	 * into those that are synchronization, discarded or
@@ -120,15 +118,15 @@ findfiles(int my_nerrors, Eptr *my_errors, int *r_nfiles, Eptr ***r_files)
 	 * for a given file.
 	 */
 	my_files[1] = &my_errors[ei];
-	touchedfiles[0] = touchedfiles[1] = FALSE;
+	touchedfiles[0] = touchedfiles[1] = false;
 	name = "\1";
 	fi = 1;
 	ECITERATE(ei, errorp, ei, my_errors, my_nerrors) {
-		if ((errorp->error_e_class == C_NULLED)
-		    || (errorp->error_e_class == C_TRUE)) {
+		if (errorp->error_e_class == C_NULLED
+		    || errorp->error_e_class == C_TRUE) {
 			if (strcmp(errorp->error_text[0], name) != 0) {
 				name = errorp->error_text[0];
-				touchedfiles[fi] = FALSE;
+				touchedfiles[fi] = false;
 				my_files[fi] = &my_errors[ei];
 				fi++;
 			}
@@ -235,7 +233,7 @@ nopertain(Eptr **my_files)
 			EITERATE(erpp, my_files, 0) {
 				errorp = *erpp;
 				if (errorp->error_e_class == type) {
-					errorprint(stdout, errorp, TRUE);
+					errorprint(stdout, errorp, true);
 				}
 			}
 		}
@@ -243,9 +241,7 @@ nopertain(Eptr **my_files)
 	return (someerrors);
 }
 
-extern boolean notouch;
-
-boolean
+bool
 touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 {
 	const char *name;
@@ -282,7 +278,7 @@ touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 
 		hackfile(name, my_files, fi, ntrueerrors);
 	}
-	scribbled = FALSE;
+	scribbled = false;
 	n_pissed_on = 0;
 	FILEITERATE(fi, 1, my_nfiles) {
 		scribbled |= touchedfiles[fi];
@@ -293,11 +289,11 @@ touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 		 * Construct an execv argument
 		 */
 		execvarg(n_pissed_on, r_edargc, r_edargv);
-		return (TRUE);
+		return true;
 	} else {
 		if (!terse)
 			fprintf(stdout, "You didn't touch any files.\n");
-		return (FALSE);
+		return false;
 	}
 }
 
@@ -308,7 +304,7 @@ hackfile(const char *name, Eptr **my_files, int ix, int my_nerrors)
 	int errordest;	/* where errors go */
 
 	if (!oktotouch(name)) {
-		previewed = FALSE;
+		previewed = false;
 		errordest = TOSTDOUT;
 	} else {
 		previewed = preview(name, my_nerrors, my_files, ix);
@@ -316,9 +312,9 @@ hackfile(const char *name, Eptr **my_files, int ix, int my_nerrors)
 	}
 
 	if (errordest != TOSTDOUT)
-		touchedfiles[ix] = TRUE;
+		touchedfiles[ix] = true;
 
-	if (previewed && (errordest == TOSTDOUT))
+	if (previewed && errordest == TOSTDOUT)
 		return;
 
 	diverterrors(name, errordest, my_files, ix, previewed, my_nerrors);
@@ -338,17 +334,17 @@ preview(const char *name, int my_nerrors, Eptr **my_files, int ix)
 	Eptr *erpp;
 
 	if (my_nerrors <= 0)
-		return (FALSE);
-	back = FALSE;
+		return false;
+	back = false;
 	if (query) {
 		switch (inquire(terse
 		    ? "Preview? "
 		    : "Do you want to preview the errors first? ")) {
 		case Q_YES:
 		case Q_yes:
-			back = TRUE;
+			back = true;
 			EITERATE(erpp, my_files, ix) {
-				errorprint(stdout, *erpp, TRUE);
+				errorprint(stdout, *erpp, true);
 			}
 			if (!terse)
 				fprintf(stdout, "\n");
@@ -420,8 +416,7 @@ diverterrors(const char *name, int dest, Eptr **my_files, int ix,
 
 	my_nerrors = my_files[ix+1] - my_files[ix];
 
-	if ((my_nerrors != nterrors)
-	    && (!previewed)) {
+	if (my_nerrors != nterrors && !previewed) {
 		fprintf(stdout, terse
 			? "Uninserted errors\n"
 			: ">>Uninserted errors for file \"%s\" follow.\n",
@@ -433,18 +428,18 @@ diverterrors(const char *name, int dest, Eptr **my_files, int ix,
 		if (errorp->error_e_class != C_TRUE) {
 			if (previewed || touchstatus == Q_NO)
 				continue;
-			errorprint(stdout, errorp, TRUE);
+			errorprint(stdout, errorp, true);
 			continue;
 		}
 		switch (dest) {
 		case TOSTDOUT:
 			if (previewed || touchstatus == Q_NO)
 				continue;
-			errorprint(stdout,errorp, TRUE);
+			errorprint(stdout,errorp, true);
 			break;
 		case TOTHEFILE:
 			insert(errorp->error_line);
-			text(errorp, FALSE);
+			text(errorp, false);
 			break;
 		}
 	}
@@ -467,7 +462,7 @@ oktotouch(const char *filename)
 	--pat;		/* point to the period */
 
 	for (src = &filename[strlen(filename)], --src;
-	     (src > filename) && (*src != '.'); --src)
+	     src > filename && *src != '.'; --src)
 		continue;
 	if (*src != '.')
 		return (0);
@@ -510,7 +505,7 @@ execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 	int fi;
 
 	sep = NULL;
-	(*r_argv) = (char **)Calloc(n_pissed_on + 3, sizeof(char *));
+	(*r_argv) = Calloc(n_pissed_on + 3, sizeof(char *));
 	(*r_argc) =  n_pissed_on + 2;
 	(*r_argv)[1] = "+1;/###/";
 	n_pissed_on = 2;
@@ -539,7 +534,7 @@ static const char *o_name;
 static char n_name[MAXPATHLEN];
 static int o_lineno;
 static int n_lineno;
-static boolean tempfileopen = FALSE;
+static boolean tempfileopen = false;
 
 /*
  * open the file; guaranteed to be both readable and writable
@@ -555,7 +550,7 @@ edit(const char *name)
 	if ((o_touchedfile = fopen(name, "r")) == NULL) {
 		fprintf(stderr, "%s: Can't open file \"%s\" to touch (read).\n",
 			processname, name);
-		return (TRUE);
+		return true;
 	}
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
@@ -567,12 +562,12 @@ edit(const char *name)
 			close(fd);
 		fprintf(stderr,"%s: Can't open file \"%s\" to touch (write).\n",
 			processname, name);
-		return (TRUE);
+		return true;
 	}
-	tempfileopen = TRUE;
+	tempfileopen = true;
 	n_lineno = 0;
 	o_lineno = 0;
-	return (FALSE);
+	return false;
 }
 
 /*
@@ -669,8 +664,8 @@ writetouched(int overwrite)
 	 * Kiss the temp file good bye
 	 */
 	unlink(n_name);
-	tempfileopen = FALSE;
-	return (TRUE);
+	tempfileopen = false;
+	return true;
 }
 
 /*

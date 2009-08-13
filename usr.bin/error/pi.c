@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.15 2009/08/13 03:50:02 dholland Exp $	*/
+/*	$NetBSD: pi.c,v 1.16 2009/08/13 05:53:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.15 2009/08/13 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: pi.c,v 1.16 2009/08/13 05:53:58 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -175,9 +175,9 @@ instringset(const char *member, char **set)
 {
 	for (; *set; set++) {
 		if (strcmp(*set, member) == 0)
-			return (TRUE);
+			return true;
 	}
-	return (FALSE);
+	return false;
 }
 
 static boolean
@@ -195,19 +195,16 @@ static boolean
 piptr(const char *string)
 {
 	if (*string != '-')
-		return (FALSE);
+		return false;
 	while (*string && *string == '-')
 		string++;
 	if (*string != '^')
-		return (FALSE);
+		return false;
 	string++;
 	while (*string && *string == '-')
 		string++;
 	return (*string == '\0');
 }
-
-extern int wordc;
-extern char **wordv;
 
 Errorclass
 pi(void)
@@ -215,11 +212,11 @@ pi(void)
 	char **nwordv;
 
 	nwordv = NULL;
-	if (wordc < 2)
+	if (cur_wordc < 2)
 		return (C_UNKNOWN);
-	if (   ( strlen(wordv[1]) == 1)
-	    && ( (wordv[1][0] == 'e') || (wordv[1][0] == 'E') )
-	    && ( piptr(wordv[2]) )
+	if (strlen(cur_wordv[1]) == 1
+	    && ( cur_wordv[1][0] == 'e' || cur_wordv[1][0] == 'E')
+	    && piptr(cur_wordv[2])
 	) {
 		boolean longpiptr = 0;
 
@@ -246,48 +243,48 @@ pi(void)
 		 *	the pointer points into a tab preceded input line.
 		 */
 		language = INPI;
-		(void)substitute(wordv[2], '^', '|');
-		longpiptr = position(wordv[2],'|') > (6+8);
-		nwordv = wordvsplice(longpiptr ? 2 : 4, wordc, wordv+1);
+		(void)substitute(cur_wordv[2], '^', '|');
+		longpiptr = position(cur_wordv[2],'|') > (6+8);
+		nwordv = wordvsplice(longpiptr ? 2 : 4, cur_wordc, cur_wordv+1);
 		nwordv[0] = strdup(currentfilename);
 		nwordv[1] = strdup(c_linenumber);
 		if (!longpiptr) {
 			nwordv[2] = "pascal errortype";
-			nwordv[3] = wordv[1];
+			nwordv[3] = cur_wordv[1];
 			nwordv[4] = strdup("%%%\n");
 			if (strlen(nwordv[5]) > (8-2))	/* this is the pointer */
 				nwordv[5] += (8-2);	/* bump over 6 characters */
 		}
-		wordv = nwordv - 1;		/* convert to 1 based */
-		wordc += longpiptr ? 2 : 4;
+		cur_wordv = nwordv - 1;		/* convert to 1 based */
+		cur_wordc += longpiptr ? 2 : 4;
 		return (C_TRUE);
 	}
-	if ((wordc >= 4)
-	    && (strlen(wordv[1]) == 1)
-	    && ((*wordv[1] == 'E') || (*wordv[1] == 'w') || (*wordv[1] == 'e'))
-	    && (alldigits(wordv[2]))
-	    && (strlen(wordv[3]) == 1)
-	    && (wordv[3][0] == '-')
+	if (cur_wordc >= 4
+	    && strlen(cur_wordv[1]) == 1
+	    && (*cur_wordv[1] == 'E' || *cur_wordv[1] == 'w' || *cur_wordv[1] == 'e')
+	    && alldigits(cur_wordv[2])
+	    && strlen(cur_wordv[3]) == 1
+	    && cur_wordv[3][0] == '-'
 	) {
 		/*
 		 * Message of the form: letter linenumber - message
 		 * Turn into form: filename linenumber letter - message
 		 */
 		language = INPI;
-		nwordv = wordvsplice(1, wordc, wordv + 1);
+		nwordv = wordvsplice(1, cur_wordc, cur_wordv + 1);
 		nwordv[0] = strdup(currentfilename);
-		nwordv[1] = wordv[2];
-		nwordv[2] = wordv[1];
-		c_linenumber = wordv[2];
-		wordc += 1;
-		wordv = nwordv - 1;
+		nwordv[1] = cur_wordv[2];
+		nwordv[2] = cur_wordv[1];
+		c_linenumber = cur_wordv[2];
+		cur_wordc += 1;
+		cur_wordv = nwordv - 1;
 		return (C_TRUE);
 	}
-	if ((wordc >= 3)
-	    && (strlen(wordv[1]) == 1)
-	    && ((*(wordv[1]) == 'E') || (*(wordv[1]) == 'w') || (*(wordv[1]) == 'e'))
-	    && (strlen(wordv[2]) == 1)
-	    && (wordv[2][0] == '-')
+	if (cur_wordc >= 3
+	    && strlen(cur_wordv[1]) == 1
+	    && (*cur_wordv[1] == 'E' || *cur_wordv[1] == 'w' || *cur_wordv[1] == 'e')
+	    && strlen(cur_wordv[2]) == 1
+	    && cur_wordv[2][0] == '-'
 	) {
 		/*
 		 * Message of the form: letter - message
@@ -312,80 +309,81 @@ pi(void)
 		int wordindex;
 
 		language = INPI;
-		if ((undefined = (wordvcmp(wordv+2, 3, pi_und1) == 0))
-		     || (undefined = (wordvcmp(wordv+2, 3, pi_und2) == 0))
-		     || (wordvcmp(wordv+2, 4, pi_imp1) == 0)
-		     || (wordvcmp(wordv+2, 4, pi_imp2) == 0)
+		if ((undefined = (wordvcmp(cur_wordv+2, 3, pi_und1) == 0))
+		     || (undefined = (wordvcmp(cur_wordv+2, 3, pi_und2) == 0))
+		     || wordvcmp(cur_wordv+2, 4, pi_imp1) == 0
+		     || wordvcmp(cur_wordv+2, 4, pi_imp2) == 0
 		) {
-			for (wordindex = undefined ? 5 : 6; wordindex <= wordc;
-			    wordindex++) {
+			for (wordindex = undefined ? 5 : 6;
+			     wordindex <= cur_wordc;
+			     wordindex++) {
 				if (nwordv) {
 					free(nwordv[0]);
 					free(nwordv);
 				}
-				nwordv = wordvsplice(2, undefined ? 2 : 3, wordv+1);
+				nwordv = wordvsplice(2, undefined ? 2 : 3, cur_wordv+1);
 				nwordv[0] = strdup(currentfilename);
-				nwordv[1] = wordv[wordindex];
-				if (wordindex != wordc)
+				nwordv[1] = cur_wordv[wordindex];
+				if (wordindex != cur_wordc)
 					erroradd(undefined ? 4 : 5, nwordv,
 						C_TRUE, C_UNKNOWN);
 			}
-			wordc = undefined ? 4 : 5;
-			wordv = nwordv - 1;
+			cur_wordc = undefined ? 4 : 5;
+			cur_wordv = nwordv - 1;
 			return (C_TRUE);
 		}
 
-		nwordv = wordvsplice(1+3, wordc, wordv+1);
+		nwordv = wordvsplice(1+3, cur_wordc, cur_wordv+1);
 		nwordv[0] = strdup(currentfilename);
 		nwordv[1] = strdup(c_header[0]);
 		nwordv[2] = strdup(c_header[1]);
 		nwordv[3] = strdup(c_header[2]);
-		wordv = nwordv - 1;
-		wordc += 1 + 3;
+		cur_wordv = nwordv - 1;
+		cur_wordc += 1 + 3;
 		return (C_THISFILE);
 	}
-	if (strcmp(wordv[1], "...") == 0) {
+	if (strcmp(cur_wordv[1], "...") == 0) {
 		/*
 		 * have a continuation error message
 		 * of the form: ... message
 		 * Turn into form : filename linenumber message
 		 */
 		language = INPI;
-		nwordv = wordvsplice(1, wordc, wordv+1);
+		nwordv = wordvsplice(1, cur_wordc, cur_wordv+1);
 		nwordv[0] = strdup(currentfilename);
 		nwordv[1] = strdup(c_linenumber);
-		wordv = nwordv - 1;
-		wordc += 1;
+		cur_wordv = nwordv - 1;
+		cur_wordc += 1;
 		return (C_TRUE);
 	}
-	if ((wordc == 6)
-	   && (lastchar(wordv[6]) == ':')
-	   && (isdateformat(5, wordv + 1))
+	if (cur_wordc == 6
+	   && lastchar(cur_wordv[6]) == ':'
+	   && isdateformat(5, cur_wordv + 1)
 	) {
 		/*
 		 * Have message that tells us we have changed files
 		 */
 		language = INPI;
-		currentfilename = strdup(wordv[6]);
+		currentfilename = strdup(cur_wordv[6]);
 		clob_last(currentfilename, '\0');
 		return (C_SYNC);
 	}
-	if ((wordc == 3)
-	   && (strcmp(wordv[1], "In") == 0)
-	   && (lastchar(wordv[3]) == ':')
-	   && (instringset(wordv[2], Piroutines))
+	if (cur_wordc == 3
+	   && strcmp(cur_wordv[1], "In") == 0
+	   && lastchar(cur_wordv[3]) == ':'
+	   && instringset(cur_wordv[2], Piroutines)
 	) {
 		language = INPI;
-		c_header = wordvsplice(0, wordc, wordv+1);
+		c_header = wordvsplice(0, cur_wordc, cur_wordv+1);
 		return (C_SYNC);
 	}
 
 	/*
 	 * now, check for just the line number followed by the text
 	 */
-	if (alldigits(wordv[1])) {
+	if (alldigits(cur_wordv[1])) {
 		language = INPI;
-		c_linenumber = wordv[1];
+		c_linenumber = cur_wordv[1];
 		return (C_IGNORE);
 	}
 
@@ -399,22 +397,22 @@ pi(void)
 	 */
 	multiple = structured = 0;
 	if (
-	       ((wordc == 6) && (wordvcmp(wordv+1, 2, pi_Endmatched) == 0))
-	    || ((wordc == 8) && (wordvcmp(wordv+1, 4, pi_Inserted) == 0))
-	    || (multiple = ((wordc == 9) && (wordvcmp(wordv+1,6, pi_multiple) == 0)))
-	    || (structured = ((wordc == 10) && (wordvcmp(wordv+6,5, pi_structured) == 0 )))
+	       (cur_wordc == 6 && wordvcmp(cur_wordv+1, 2, pi_Endmatched) == 0)
+	    || (cur_wordc == 8 && wordvcmp(cur_wordv+1, 4, pi_Inserted) == 0)
+	    || (multiple = (cur_wordc == 9 && wordvcmp(cur_wordv+1,6, pi_multiple) == 0))
+	    || (structured = (cur_wordc == 10 && wordvcmp(cur_wordv+6,5, pi_structured) == 0))
 	) {
 		language = INPI;
-		nwordv = wordvsplice(2, wordc, wordv+1);
+		nwordv = wordvsplice(2, cur_wordc, cur_wordv+1);
 		nwordv[0] = strdup(currentfilename);
-		nwordv[1] = structured ? wordv [5] : wordv[wordc];
-		wordc += 2;
-		wordv = nwordv - 1;
+		nwordv[1] = structured ? cur_wordv [5] : cur_wordv[cur_wordc];
+		cur_wordc += 2;
+		cur_wordv = nwordv - 1;
 		if (!multiple)
 			return (C_TRUE);
-		erroradd(wordc, nwordv, C_TRUE, C_UNKNOWN);
-		nwordv = wordvsplice(0, wordc, nwordv);
-		nwordv[1] = wordv[wordc - 2];
+		erroradd(cur_wordc, nwordv, C_TRUE, C_UNKNOWN);
+		nwordv = wordvsplice(0, cur_wordc, nwordv);
+		nwordv[1] = cur_wordv[cur_wordc - 2];
 		return (C_TRUE);
 	}
 	return (C_UNKNOWN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.14 2009/08/13 03:50:02 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.15 2009/08/13 05:53:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.14 2009/08/13 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.15 2009/08/13 05:53:58 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -43,8 +43,8 @@ __RCSID("$NetBSD: input.c,v 1.14 2009/08/13 03:50:02 dholland Exp $");
 #include <string.h>
 #include "error.h"
 
-int wordc;		/* how long the current error message is */
-char **wordv;		/* the actual error message */
+int cur_wordc;		/* how long the current error message is */
+char **cur_wordv;	/* the actual error message */
 
 static Errorclass catchall(void);
 static Errorclass cpp(void);
@@ -79,14 +79,14 @@ eaterrors(int *r_errorc, Eptr **r_errorv)
 	line = Calloc(inbuflen + 1, sizeof(char));
 	memcpy(line, inbuffer, inbuflen);
 	line[inbuflen] = '\0';
-	wordvbuild(line, &wordc, &wordv);
+	wordvbuild(line, &cur_wordc, &cur_wordv);
 
 	/*
-	 * for convience, convert wordv to be 1 based, instead
+	 * for convenience, convert cur_wordv to be 1 based, instead
 	 * of 0 based.
 	 */
-	wordv -= 1;
-	if (wordc > 0 &&
+	cur_wordv -= 1;
+	if (cur_wordc > 0 &&
 	   ((( errorclass = onelong() ) != C_UNKNOWN)
 	   || (( errorclass = cpp() ) != C_UNKNOWN)
 	   || (( errorclass = pccccom() ) != C_UNKNOWN)
@@ -104,8 +104,8 @@ eaterrors(int *r_errorc, Eptr **r_errorv)
 	) ;
 	else
 		errorclass = catchall();
-	if (wordc)
-		erroradd(wordc, wordv+1, errorclass, C_UNKNOWN);
+	if (cur_wordc)
+		erroradd(cur_wordc, cur_wordv+1, errorclass, C_UNKNOWN);
     }
 #ifdef FULLDEBUG
     printf("%d errorentrys\n", nerrors);
@@ -135,7 +135,7 @@ erroradd(int errorlength, char **errorv, Errorclass errorclass,
 #endif
 	}
 	if (errorlength > 0) {
-		newerror = (Eptr)Calloc(1, sizeof(Edesc));
+		newerror = Calloc(1, sizeof(Edesc));
 		newerror->error_language = language; /* language is global */
 		newerror->error_text = errorv;
 		newerror->error_lgtext = errorlength;
@@ -164,7 +164,7 @@ onelong(void)
 {
 	char **nwordv;
 
-	if ((wordc == 1) && (language != INLD)) {
+	if (cur_wordc == 1 && language != INLD) {
 		/*
 		 * We have either:
 		 *	a) file name from cc
@@ -172,40 +172,40 @@ onelong(void)
 		 *	c) Noise from make ("Stop.")
 		 *	c) Random noise
 		 */
-		wordc = 0;
-		if (strcmp(wordv[1], "Stop.") == 0) {
+		cur_wordc = 0;
+		if (strcmp(cur_wordv[1], "Stop.") == 0) {
 			language = INMAKE;
 			return (C_SYNC);
 		}
-		if (strcmp(wordv[1], "Assembler:") == 0) {
+		if (strcmp(cur_wordv[1], "Assembler:") == 0) {
 			/* assembler always alerts us to what happened*/
 			language = INAS;
 			return (C_SYNC);
 		} else
-		if (strcmp(wordv[1], "Undefined:") == 0) {
+		if (strcmp(cur_wordv[1], "Undefined:") == 0) {
 			/* loader complains about unknown symbols*/
 			language = INLD;
 			return (C_SYNC);
 		}
-		if (lastchar(wordv[1]) == ':') {
+		if (lastchar(cur_wordv[1]) == ':') {
 			/* cc tells us what file we are in */
-			currentfilename = wordv[1];
+			currentfilename = cur_wordv[1];
 			(void)substitute(currentfilename, ':', '\0');
 			language = INCC;
 			return (C_SYNC);
 		}
 	} else
-	if ((wordc == 1) && (language == INLD)) {
-		nwordv = (char **)Calloc(4, sizeof(char *));
+	if (cur_wordc == 1 && language == INLD) {
+		nwordv = Calloc(4, sizeof(char *));
 		nwordv[0] = "ld:";
-		nwordv[1] = wordv[1];
+		nwordv[1] = cur_wordv[1];
 		nwordv[2] = "is";
 		nwordv[3] = "undefined.";
-		wordc = 4;
-		wordv = nwordv - 1;
+		cur_wordc = 4;
+		cur_wordv = nwordv - 1;
 		return (C_NONSPEC);
 	} else
-	if (wordc == 1) {
+	if (cur_wordc == 1) {
 		return (C_SYNC);
 	}
 	return (C_UNKNOWN);
@@ -222,15 +222,15 @@ cpp(void)
 	 *	morsesend.c: 237: MAGNIBBL: argument mismatch
 	 *	test1.c: 6: undefined control
 	 */
-	if (wordc < 3)
+	if (cur_wordc < 3)
 		return (C_UNKNOWN);
-	if ((language != INLD)		/* loader errors have almost same fmt */
-	    && (lastchar(wordv[1]) == ':')
-	    && (isdigit((unsigned char)firstchar(wordv[2])))
-	    && (lastchar(wordv[2]) == ':')) {
+	if (language != INLD		/* loader errors have almost same fmt */
+	    && lastchar(cur_wordv[1]) == ':'
+	    && isdigit((unsigned char)firstchar(cur_wordv[2]))
+	    && lastchar(cur_wordv[2]) == ':') {
 		language = INCPP;
-		clob_last(wordv[1], '\0');
-		clob_last(wordv[2], '\0');
+		clob_last(cur_wordv[1], '\0');
+		clob_last(cur_wordv[2], '\0');
 		return (C_TRUE);
 	}
 	return (C_UNKNOWN);
@@ -246,22 +246,22 @@ pccccom(void)
 	 *	"test.c", line 7: warning: old-fashioned initialization: use =
 	 *	"subdir.d/foo2.h", line 1: illegal initialization
 	 */
-	if (wordc < 4)
+	if (cur_wordc < 4)
 		return (C_UNKNOWN);
-	if ((firstchar(wordv[1]) == '"')
-	    && (lastchar(wordv[1]) == ',')
-	    && (next_lastchar(wordv[1]) == '"')
-	    && (strcmp(wordv[2],"line") == 0)
-	    && (isdigit((unsigned char)firstchar(wordv[3])))
-	    && (lastchar(wordv[3]) == ':')) {
-		clob_last(wordv[1], '\0');	/* drop last , */
-		clob_last(wordv[1], '\0');	/* drop last " */
-		wordv[1]++;			/* drop first " */
-		clob_last(wordv[3], '\0');	/* drop : on line number */
-		wordv[2] = wordv[1];	/* overwrite "line" */
-		wordv++;		/*compensate*/
-		wordc--;
-		currentfilename = wordv[1];
+	if (firstchar(cur_wordv[1]) == '"'
+	    && lastchar(cur_wordv[1]) == ','
+	    && next_lastchar(cur_wordv[1]) == '"'
+	    && strcmp(cur_wordv[2], "line") == 0
+	    && isdigit((unsigned char)firstchar(cur_wordv[3]))
+	    && lastchar(cur_wordv[3]) == ':') {
+		clob_last(cur_wordv[1], '\0');	/* drop last , */
+		clob_last(cur_wordv[1], '\0');	/* drop last " */
+		cur_wordv[1]++;			/* drop first " */
+		clob_last(cur_wordv[3], '\0');	/* drop : on line number */
+		cur_wordv[2] = cur_wordv[1];	/* overwrite "line" */
+		cur_wordv++;		/*compensate*/
+		cur_wordc--;
+		currentfilename = cur_wordv[1];
 		language = INCC;
 		return (C_TRUE);
 	}
@@ -285,24 +285,24 @@ richieccom(void)
 	char **nwordv;
 	char *file;
 
-	if (wordc < 2)
+	if (cur_wordc < 2)
 		return (C_UNKNOWN);
 
-	if (lastchar(wordv[1]) == ':') {
-		cp = wordv[1] + strlen(wordv[1]) - 1;
+	if (lastchar(cur_wordv[1]) == ':') {
+		cp = cur_wordv[1] + strlen(cur_wordv[1]) - 1;
 		while (isdigit((unsigned char)*--cp))
 			continue;
 		if (*cp == ':') {
-			clob_last(wordv[1], '\0');	/* last : */
+			clob_last(cur_wordv[1], '\0');	/* last : */
 			*cp = '\0';			/* first : */
-			file = wordv[1];
-			nwordv = wordvsplice(1, wordc, wordv+1);
+			file = cur_wordv[1];
+			nwordv = wordvsplice(1, cur_wordc, cur_wordv+1);
 			nwordv[0] = file;
 			nwordv[1] = cp + 1;
-			wordc += 1;
-			wordv = nwordv - 1;
+			cur_wordc += 1;
+			cur_wordv = nwordv - 1;
 			language = INCC;
-			currentfilename = wordv[1];
+			currentfilename = cur_wordv[1];
 			return (C_TRUE);
 		}
 	}
@@ -321,22 +321,22 @@ lint0(void)
 	 *
 	 *	printf("%s(%d): %s\n", filename, linenumber, message);
 	 */
-	if (wordc < 2)
+	if (cur_wordc < 2)
 		return (C_UNKNOWN);
 
-	if ((lastchar(wordv[1]) == ':')
-	    && (next_lastchar(wordv[1]) == ')')) {
-		clob_last(wordv[1], '\0'); /* colon */
-		if (persperdexplode(wordv[1], &line, &file)) {
-			nwordv = wordvsplice(1, wordc, wordv+1);
+	if (lastchar(cur_wordv[1]) == ':'
+	    && next_lastchar(cur_wordv[1]) == ')') {
+		clob_last(cur_wordv[1], '\0'); /* colon */
+		if (persperdexplode(cur_wordv[1], &line, &file)) {
+			nwordv = wordvsplice(1, cur_wordc, cur_wordv+1);
 			nwordv[0] = file;	/* file name */
 			nwordv[1] = line;	/* line number */
-			wordc += 1;
-			wordv = nwordv - 1;
+			cur_wordc += 1;
+			cur_wordv = nwordv - 1;
 			language = INLINT;
 			return (C_TRUE);
 		}
-		wordv[1][strlen(wordv[1])] = ':';
+		cur_wordv[1][strlen(cur_wordv[1])] = ':';
 	}
 	return (C_UNKNOWN);
 }
@@ -354,7 +354,7 @@ lint1(void)
 	 *
 	 * Look first for type 1 lint errors
 	 */
-	if (wordc > 1 && strcmp(wordv[wordc-1], "::") == 0) {
+	if (cur_wordc > 1 && strcmp(cur_wordv[cur_wordc-1], "::") == 0) {
 	 /*
   	  * %.7s, arg. %d used inconsistently %s(%d) :: %s(%d)
   	  * %.7s value used inconsistently %s(%d) :: %s(%d)
@@ -363,16 +363,18 @@ lint1(void)
   	  * %.7s function value type must be declared before use %s(%d) :: %s(%d)
 	  */
 		language = INLINT;
-		if (wordc > 2
-		     && (persperdexplode(wordv[wordc], &line2, &file2))
-		     && (persperdexplode(wordv[wordc-2], &line1, &file1))) {
-			nwordv1 = wordvsplice(2, wordc, wordv+1);
-			nwordv2 = wordvsplice(2, wordc, wordv+1);
-			nwordv1[0] = file1; nwordv1[1] = line1;
-			erroradd(wordc+2, nwordv1, C_TRUE, C_DUPL); /* takes 0 based*/
-			nwordv2[0] = file2; nwordv2[1] = line2;
-			wordc = wordc + 2;
-			wordv = nwordv2 - 1;	/* 1 based */
+		if (cur_wordc > 2
+		    && persperdexplode(cur_wordv[cur_wordc], &line2, &file2)
+		    && persperdexplode(cur_wordv[cur_wordc-2], &line1, &file1)) {
+			nwordv1 = wordvsplice(2, cur_wordc, cur_wordv+1);
+			nwordv2 = wordvsplice(2, cur_wordc, cur_wordv+1);
+			nwordv1[0] = file1;
+			nwordv1[1] = line1;
+			erroradd(cur_wordc+2, nwordv1, C_TRUE, C_DUPL); /* takes 0 based*/
+			nwordv2[0] = file2;
+			nwordv2[1] = line2;
+			cur_wordc = cur_wordc + 2;
+			cur_wordv = nwordv2 - 1;	/* 1 based */
 			return (C_TRUE);
 		}
 	}
@@ -403,17 +405,18 @@ lint2(void)
 	 *
 	 *	bufp defined( "./metric.h"(10) ), but never used
 	 */
-	if (wordc < 5)
+	if (cur_wordc < 5)
 		return (C_UNKNOWN);
 
-	if ((lastchar(wordv[2]) == '(' /* ')' */ )
-	    && (strcmp(wordv[4], "),") == 0)) {
+	if (lastchar(cur_wordv[2]) == '(' /* ')' */
+	    && strcmp(cur_wordv[4], "),") == 0) {
 		language = INLINT;
-		if (persperdexplode(wordv[3], &line, &file)) {
-			nwordv = wordvsplice(2, wordc, wordv+1);
-			nwordv[0] = file; nwordv[1] = line;
-			wordc = wordc + 2;
-			wordv = nwordv - 1;	/* 1 based */
+		if (persperdexplode(cur_wordv[3], &line, &file)) {
+			nwordv = wordvsplice(2, cur_wordc, cur_wordv+1);
+			nwordv[0] = file;
+			nwordv[1] = line;
+			cur_wordc = cur_wordc + 2;
+			cur_wordv = nwordv - 1;	/* 1 based */
 			return (C_TRUE);
 		}
 	}
@@ -426,10 +429,10 @@ static char *Lint32[6] = {"value", "is", "used,", "but", "none", "returned"};
 static Errorclass
 lint3(void)
 {
-	if (wordc < 3)
+	if (cur_wordc < 3)
 		return (C_UNKNOWN);
-	if ((wordvcmp(wordv+2, 4, Lint31) == 0)
-	    || (wordvcmp(wordv+2, 6, Lint32) == 0)) {
+	if (wordvcmp(cur_wordv+2, 4, Lint31) == 0
+	    || wordvcmp(cur_wordv+2, 6, Lint32) == 0) {
 		language = INLINT;
 		return (C_NONSPEC);
 	}
@@ -459,25 +462,26 @@ f77(void)
 	 *	Warning on line %d of %s: %s
 	 *	Error.  No assembly.
 	 */
-	if (wordc == 3 && wordvcmp(wordv+1, 3, F77_no_ass) == 0) {
-		wordc = 0;
+	if (cur_wordc == 3 && wordvcmp(cur_wordv+1, 3, F77_no_ass) == 0) {
+		cur_wordc = 0;
 		return (C_SYNC);
 	}
-	if (wordc < 6)
+	if (cur_wordc < 6)
 		return (C_UNKNOWN);
-	if ((lastchar(wordv[6]) == ':')
+	if (lastchar(cur_wordv[6]) == ':'
 	    && (
-	       (wordvcmp(wordv+1, 3, F77_fatal) == 0)
-	    || (wordvcmp(wordv+1, 3, F77_error) == 0)
-	    || (wordvcmp(wordv+1, 3, F77_warning) == 0))
+		wordvcmp(cur_wordv+1, 3, F77_fatal) == 0
+		|| wordvcmp(cur_wordv+1, 3, F77_error) == 0
+		|| wordvcmp(cur_wordv+1, 3, F77_warning) == 0
+	       )
 	) {
 		language = INF77;
-		nwordv = wordvsplice(2, wordc, wordv+1);
-		nwordv[0] = wordv[6];
+		nwordv = wordvsplice(2, cur_wordc, cur_wordv+1);
+		nwordv[0] = cur_wordv[6];
 		clob_last(nwordv[0],'\0');
-		nwordv[1] = wordv[4];
-		wordc += 2;
-		wordv = nwordv - 1;	/* 1 based */
+		nwordv[1] = cur_wordv[4];
+		cur_wordc += 2;
+		cur_wordv = nwordv - 1;	/* 1 based */
 		return (C_TRUE);
 	}
 	return (C_UNKNOWN);
@@ -489,11 +493,11 @@ static char *Make_NotRemade[5] = {"not", "remade", "because", "of", "errors"};
 static Errorclass
 make(void)
 {
-	if (wordvcmp(wordv+1, 3, Make_Croak) == 0) {
+	if (wordvcmp(cur_wordv+1, 3, Make_Croak) == 0) {
 		language = INMAKE;
 		return (C_SYNC);
 	}
-	if (wordvcmp(wordv+2, 5, Make_NotRemade) == 0) {
+	if (wordvcmp(cur_wordv+2, 5, Make_NotRemade) == 0) {
 		language = INMAKE;
 		return (C_SYNC);
 	}
@@ -523,15 +527,15 @@ ri(void)
  *		synerrs++;
  *	}
  */
-	if (wordc < 3)
+	if (cur_wordc < 3)
 		return (C_UNKNOWN);
-	if ((firstchar(wordv[1]) == '"')
-	    &&(lastchar(wordv[1]) == '"')
-	    &&(lastchar(wordv[2]) == ':')
-	    &&(isdigit((unsigned char)firstchar(wordv[2])))) {
-		clob_last(wordv[1], '\0');	/* drop the last " */
-		wordv[1]++;	/* skip over the first " */
-		clob_last(wordv[2], '\0');
+	if (firstchar(cur_wordv[1]) == '"'
+	    && lastchar(cur_wordv[1]) == '"'
+	    && lastchar(cur_wordv[2]) == ':'
+	    && isdigit((unsigned char)firstchar(cur_wordv[2]))) {
+		clob_last(cur_wordv[1], '\0');	/* drop the last " */
+		cur_wordv[1]++;			/* skip over the first " */
+		clob_last(cur_wordv[2], '\0');
 		language = INRI;
 		return (C_TRUE);
 	}
@@ -555,22 +559,22 @@ troff(void)
 	 * troff source error message, from eqn, bib, tbl...
 	 * Just like pcc ccom, except uses `'
 	 */
-	if (wordc < 4)
+	if (cur_wordc < 4)
 		return (C_UNKNOWN);
 
-	if ((firstchar(wordv[1]) == '`')
-	    && (lastchar(wordv[1]) == ',')
-	    && (next_lastchar(wordv[1]) == '\'')
-	    && (strcmp(wordv[2],"line") == 0)
-	    && (isdigit((unsigned char)firstchar(wordv[3])))
-	    && (lastchar(wordv[3]) == ':')) {
-		clob_last(wordv[1], '\0');	/* drop last , */
-		clob_last(wordv[1], '\0');	/* drop last " */
-		wordv[1]++;			/* drop first " */
-		clob_last(wordv[3], '\0');	/* drop : on line number */
-		wordv[2] = wordv[1];	/* overwrite "line" */
-		wordv++;		/*compensate*/
-		currentfilename = wordv[1];
+	if (firstchar(cur_wordv[1]) == '`'
+	    && lastchar(cur_wordv[1]) == ','
+	    && next_lastchar(cur_wordv[1]) == '\''
+	    && strcmp(cur_wordv[2], "line") == 0
+	    && isdigit((unsigned char)firstchar(cur_wordv[3]))
+	    && lastchar(cur_wordv[3]) == ':') {
+		clob_last(cur_wordv[1], '\0');	/* drop last , */
+		clob_last(cur_wordv[1], '\0');	/* drop last " */
+		cur_wordv[1]++;			/* drop first " */
+		clob_last(cur_wordv[3], '\0');	/* drop : on line number */
+		cur_wordv[2] = cur_wordv[1];	/* overwrite "line" */
+		cur_wordv++;			/*compensate*/
+		currentfilename = cur_wordv[1];
 		language = INTROFF;
 		return (C_TRUE);
 	}
@@ -583,21 +587,21 @@ mod2(void)
 	/*
 	 * for decwrl modula2 compiler (powell)
 	 */
-	if (wordc < 5)
+	if (cur_wordc < 5)
 		return (C_UNKNOWN);
-	if (((strcmp(wordv[1], "!!!") == 0)		/* early version */
-	     || (strcmp(wordv[1], "File") == 0))	/* later version */
-	    && (lastchar(wordv[2]) == ',')		/* file name */
-	    && (strcmp(wordv[3], "line") == 0)
-	    && (isdigit((unsigned char)firstchar(wordv[4])))	/* line number */
-	    && (lastchar(wordv[4]) == ':')	/* line number */
+	if ((strcmp(cur_wordv[1], "!!!") == 0		/* early version */
+	     || strcmp(cur_wordv[1], "File") == 0)	/* later version */
+	    && lastchar(cur_wordv[2]) == ','		/* file name */
+	    && strcmp(cur_wordv[3], "line") == 0
+	    && isdigit((unsigned char)firstchar(cur_wordv[4]))	/* line number */
+	    && lastchar(cur_wordv[4]) == ':'	/* line number */
 	) {
-		clob_last(wordv[2], '\0');	/* drop last , on file name */
-		clob_last(wordv[4], '\0');	/* drop last : on line number */
-		wordv[3] = wordv[2];		/* file name on top of "line" */
-		wordv += 2;
-		wordc -= 2;
-		currentfilename = wordv[1];
+		clob_last(cur_wordv[2], '\0');	/* drop last , on file name */
+		clob_last(cur_wordv[4], '\0');	/* drop last : on line number */
+		cur_wordv[3] = cur_wordv[2];	/* file name on top of "line" */
+		cur_wordv += 2;
+		cur_wordc -= 2;
+		currentfilename = cur_wordv[1];
 		language = INMOD2;
 		return (C_TRUE);
 	}
