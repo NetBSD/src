@@ -1,6 +1,11 @@
 Version history:
 ----------------
 
+0.7.3 - 23 August 2009
+	o Fix a remote crash and a memory leak
+	o Fixed a NAT-T flag check
+	o Some code cleanups/compilation fixes with recent gcc
+
 0.7.2 - 22 April 2009
 	o Fix a remote crash in fragmentation code
 	o Phase2 message identities are phase1 specific (Vista compatibility=
