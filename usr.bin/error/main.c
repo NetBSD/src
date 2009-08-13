@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2009/08/13 03:07:49 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2009/08/13 03:10:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.13 2009/08/13 03:07:49 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2009/08/13 03:10:03 dholland Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -57,7 +57,7 @@ FILE *queryfile;     /* where the query responses from the user come from*/
 int nignored;
 char **names_ignored;
 
-int errors = 0;
+int nerrors = 0;
 Eptr er_head;
 static Eptr *errors;
 
