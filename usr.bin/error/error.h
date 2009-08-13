@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.14 2009/08/13 05:53:58 dholland Exp $	*/
+/*	$NetBSD: error.h,v 1.15 2009/08/13 06:59:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -85,7 +85,7 @@ typedef int Errorclass;
 /*
  * Resources to count and print out the error categories
  */
-extern char *class_table[];
+extern const char *class_table[];
 extern int class_count[];
 
 #define nunknown	class_count[C_UNKNOWN]
@@ -109,7 +109,7 @@ extern FILE *queryfile;	/* where the query responses from the user come from*/
 extern char *processname;
 extern char *scriptname;
 
-extern char *suffixlist;
+extern const char *suffixlist;
 
 extern boolean query;
 extern boolean terse;
@@ -128,7 +128,7 @@ int inquire(const char *, ...);	/* inquire for yes/no */
  * Describes attributes about a language
  */
 struct lang_desc {
-	char *lang_name;
+	const char *lang_name;
 	const char *lang_incomment;	/* one of the following defines */
 	const char *lang_outcomment;	/* one of the following defines */
 };
@@ -204,6 +204,58 @@ extern int language;
 extern char *currentfilename;
 
 /*
+ * Macros for initializing arrays of string constants.
+ * This is a fairly gross set of preprocessor hacks; the idea is
+ * that instead of
+ *     static char *foo[4] = { "alpha", "beta", "gamma", "delta" };
+ * you do
+ *     DECL_STRINGS_4(static, foo, "alpha", "beta", "gamma", "delta");
+ *
+ * and it comes out as
+ *     static char foo_0[] = "delta";
+ *     static char foo_1[] = "gamma";
+ *     static char foo_2[] = "beta";
+ *     static char foo_3[] = "alpha";
+ *     static char *foo[4] = { foo_3, foo_2, foo_1, foo_0 };
+ *
+ * none of which is const.
+ *
+ * Unfortunately, the string arrays this program slings around freely
+ * can't be all const (because it munges some of them) and can't be
+ * all non-const without something like this to initialize the ones
+ * that need to contain string constants. Unfortunately you can't
+ * mix (const char *const *) and (char **) in C, only in C++.
+ */
+
+#define DECL_STR(sym, num, str) static char sym##_##num[] = str
+
+#define DECL_S1(sym, s, ...) __VA_ARGS__ DECL_STR(sym, 0, s)
+#define DECL_S2(sym, s, ...) DECL_STR(sym, 1, s); DECL_S1(sym, __VA_ARGS__)
+#define DECL_S3(sym, s, ...) DECL_STR(sym, 2, s); DECL_S2(sym, __VA_ARGS__)
+#define DECL_S4(sym, s, ...) DECL_STR(sym, 3, s); DECL_S3(sym, __VA_ARGS__)
+#define DECL_S5(sym, s, ...) DECL_STR(sym, 4, s); DECL_S4(sym, __VA_ARGS__)
+#define DECL_S6(sym, s, ...) DECL_STR(sym, 5, s); DECL_S5(sym, __VA_ARGS__)
+
+#define USE_S1(sym) sym##_0
+#define USE_S2(sym) sym##_1, USE_S1(sym)
+#define USE_S3(sym) sym##_2, USE_S2(sym)
+#define USE_S4(sym) sym##_3, USE_S3(sym)
+#define USE_S5(sym) sym##_4, USE_S4(sym)
+#define USE_S6(sym) sym##_5, USE_S5(sym)
+
+#define DECL_STRS(num, class, sym, ...) \
+	DECL_S##num(sym, __VA_ARGS__); \
+	class char *sym[num] = { USE_S##num(sym) }
+
+#define DECL_STRINGS_1(class, sym, ...) DECL_STRS(1, class, sym, __VA_ARGS__)
+#define DECL_STRINGS_2(class, sym, ...) DECL_STRS(2, class, sym, __VA_ARGS__)
+#define DECL_STRINGS_3(class, sym, ...) DECL_STRS(3, class, sym, __VA_ARGS__)
+#define DECL_STRINGS_4(class, sym, ...) DECL_STRS(4, class, sym, __VA_ARGS__)
+#define DECL_STRINGS_5(class, sym, ...) DECL_STRS(5, class, sym, __VA_ARGS__)
+#define DECL_STRINGS_6(class, sym, ...) DECL_STRS(6, class, sym, __VA_ARGS__)
+	
+
+/*
  *	Functional forwards
  */
 void arrayify(int *, Eptr **, Eptr);
@@ -224,6 +276,7 @@ Errorclass pi(void);
 int position(const char *, char);
 void printerrors(bool, int, Eptr []);
 const char *plural(int);
+char *Strdup(const char *);
 char *substitute(char *, char, char);
 bool touchfiles(int, Eptr **, int *, char ***);
 const char *verbform(int);
