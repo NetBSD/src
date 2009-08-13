@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.24 2009/08/09 04:02:40 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.25 2009/08/13 05:15:09 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -69,3 +69,11 @@
 #define mips_trunc_page(x)	((uintptr_t)(x) & ~(NBPG-1))
 #define mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
 #define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)
+
+#ifdef __MIPSEL__
+#define	MID_MACHINE	135	/* MID_PMAX (little-endian) */
+#endif
+#ifdef __MIPSEB__
+#define	MID_MACHINE	152	/* MID_MIPS (big-endian) */
+#endif
+

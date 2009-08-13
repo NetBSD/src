@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2008/02/21 09:32:12 sekiya Exp $	*/
+/*	$NetBSD: param.h,v 1.11 2009/08/13 05:15:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,6 @@
 #define	MACHINE_ARCH	"mipseb"
 #define	_MACHINE	sgimips
 #define	MACHINE		"sgimips"
-#define	MID_MACHINE	MID_MIPS
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
