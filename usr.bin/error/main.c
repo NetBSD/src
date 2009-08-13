@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2009/08/13 02:10:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.11 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2009/08/13 02:10:50 dholland Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -59,7 +59,7 @@ char    **names_ignored;
 
 int	nerrors = 0;
 Eptr	er_head;
-Eptr	*errors;
+static Eptr *errors;
 
 int	nfiles = 0;
 Eptr	**files;	/* array of pointers into errors*/
@@ -68,19 +68,18 @@ int	language = INCC;
 
 char	*currentfilename = "????";
 char	*processname;
-char	im_on[] = _PATH_TTY;	/* my tty name */
 
 boolean	query = FALSE;		/* query the operator if touch files */
-boolean	notouch = FALSE;	/* don't touch ANY files */
-boolean	piflag	= FALSE;	/* this is not pi */
 boolean	terse	= FALSE;	/* Terse output */
+
+static char im_on[] = _PATH_TTY;	/* my tty name */
+static boolean notouch = FALSE;		/* don't touch ANY files */
 
 char	*suffixlist = ".*";	/* initially, can touch any file */
 
-int	errorsort(const void *, const void *);
-void	forkvi(int, char **);
-int	main(int, char **);
-void	try(char *, int, char **);
+static int errorsort(const void *, const void *);
+static void forkvi(int, char **);
+static void try(char *, int, char **);
 
 /*
  *	error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
@@ -226,7 +225,7 @@ main(int argc, char **argv)
 	return (0);
 }
 
-void
+static void
 forkvi(int argc, char **argv)
 {
 	if (query){
@@ -252,7 +251,7 @@ forkvi(int argc, char **argv)
 	fprintf(stdout, "Can't find any editors.\n");
 }
 
-void
+static void
 try(char *name, int argc, char **argv)
 {
 	argv[0] = name;
@@ -268,7 +267,8 @@ try(char *name, int argc, char **argv)
 	execvp(name, argv);
 }
 
-int errorsort(const void *x1, const void *x2)
+static int
+errorsort(const void *x1, const void *x2)
 {
 	Eptr	*epp1 = (Eptr *)x1, *epp2 = (Eptr *)x2;
 	Eptr	ep1, ep2;
