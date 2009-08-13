@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.123 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.124 2009/08/13 08:57:43 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.123 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.124 2009/08/13 08:57:43 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -565,31 +565,40 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		goto out;
 	}
 	memp = NULL;
-	if (size > sizeof(stkbuf)) {
-		memp = kmem_alloc(size, KM_SLEEP);
-		data = memp;
-	} else
-		data = (void *)stkbuf;
-	if (com&IOC_IN) {
-		if (size) {
-			error = copyin(SCARG(uap, data), data, size);
-			if (error) {
-				if (memp)
-					kmem_free(memp, size);
-				goto out;
+	if ((com >> IOCPARM_SHIFT) == 0)  {
+		/* UNIX-style ioctl. */
+		data = SCARG(uap, data);
+	} else {
+		if (size > sizeof(stkbuf)) {
+			memp = kmem_alloc(size, KM_SLEEP);
+			data = memp;
+		} else {
+			data = (void *)stkbuf;
+		}
+		if (com&IOC_IN) {
+			if (size) {
+				error = copyin(SCARG(uap, data), data, size);
+				if (error) {
+					if (memp) {
+						kmem_free(memp, size);
+					}
+					goto out;
+				}
+				ktrgenio(SCARG(uap, fd), UIO_WRITE,
+				    SCARG(uap, data), size, 0);
+			} else {
+				*(void **)data = SCARG(uap, data);
 			}
-			ktrgenio(SCARG(uap, fd), UIO_WRITE, SCARG(uap, data),
-			    size, 0);
-		} else
+		} else if ((com&IOC_OUT) && size) {
+			/*
+			 * Zero the buffer so the user always
+			 * gets back something deterministic.
+			 */
+			memset(data, 0, size);
+		} else if (com&IOC_VOID) {
 			*(void **)data = SCARG(uap, data);
-	} else if ((com&IOC_OUT) && size)
-		/*
-		 * Zero the buffer so the user always
-		 * gets back something deterministic.
-		 */
-		memset(data, 0, size);
-	else if (com&IOC_VOID)
-		*(void **)data = SCARG(uap, data);
+		}
+	}
 
 	switch (com) {
 
