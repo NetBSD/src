@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.21 2009/08/13 05:53:58 dholland Exp $	*/
+/*	$NetBSD: touch.c,v 1.22 2009/08/13 06:59:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.21 2009/08/13 05:53:58 dholland Exp $");
+__RCSID("$NetBSD: touch.c,v 1.22 2009/08/13 06:59:37 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,7 +83,7 @@ static void insert(int);
 static void text(Eptr, boolean);
 static boolean writetouched(int);
 static int mustoverwrite(FILE *, FILE *);
-static int mustwrite(const char *, int, FILE *);
+static int mustwrite(const char *, unsigned, FILE *);
 static void errorprint(FILE *, Eptr, boolean);
 static int probethisfile(const char *);
 
@@ -158,7 +158,7 @@ countfiles(Eptr *errors)
 	return (my_nfiles);
 }
 
-char *class_table[] = {
+const char *class_table[] = {
 	/*C_UNKNOWN	0	*/	"Unknown",
 	/*C_IGNORE	1	*/	"ignore",
 	/*C_SYNC	2	*/	"synchronization",
@@ -449,7 +449,7 @@ static int
 oktotouch(const char *filename)
 {
 	const char *src;
-	char *pat;
+	const char *pat;
 	const char *osrc;
 
 	pat = suffixlist;
@@ -507,7 +507,7 @@ execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 	sep = NULL;
 	(*r_argv) = Calloc(n_pissed_on + 3, sizeof(char *));
 	(*r_argc) =  n_pissed_on + 2;
-	(*r_argv)[1] = "+1;/###/";
+	(*r_argv)[1] = Strdup("+1;/###/"); /* XXX leaked */
 	n_pissed_on = 2;
 	if (!terse) {
 		fprintf(stdout, "You touched file(s):");
@@ -607,7 +607,7 @@ text(Eptr p, boolean use_all)
 static boolean
 writetouched(int overwrite)
 {
-	int nread;
+	unsigned nread;
 	FILE *localfile;
 	FILE *temp;
 	int botch;
@@ -674,7 +674,7 @@ writetouched(int overwrite)
 static int
 mustoverwrite(FILE *preciousfile, FILE *temp)
 {
-	int nread;
+	unsigned nread;
 
 	while ((nread = fread(edbuf, 1, sizeof(edbuf), temp)) != 0) {
 		if (mustwrite(edbuf, nread, preciousfile) == 0)
@@ -687,9 +687,9 @@ mustoverwrite(FILE *preciousfile, FILE *temp)
  * return 0 on catastrophe
  */
 static int
-mustwrite(const char *base, int n, FILE *preciousfile)
+mustwrite(const char *base, unsigned n, FILE *preciousfile)
 {
-	int nwrote;
+	unsigned nwrote;
 
 	if (n <= 0)
 		return (1);

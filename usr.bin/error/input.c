@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.15 2009/08/13 05:53:58 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.16 2009/08/13 06:59:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.15 2009/08/13 05:53:58 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.16 2009/08/13 06:59:37 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -197,10 +197,10 @@ onelong(void)
 	} else
 	if (cur_wordc == 1 && language == INLD) {
 		nwordv = Calloc(4, sizeof(char *));
-		nwordv[0] = "ld:";
+		nwordv[0] = Strdup("ld:");	/* XXX leaked */
 		nwordv[1] = cur_wordv[1];
-		nwordv[2] = "is";
-		nwordv[3] = "undefined.";
+		nwordv[2] = Strdup("is");	/* XXX leaked */
+		nwordv[3] = Strdup("undefined.");/* XXX leaked */
 		cur_wordc = 4;
 		cur_wordv = nwordv - 1;
 		return (C_NONSPEC);
@@ -423,8 +423,15 @@ lint2(void)
 	return (C_UNKNOWN);
 } /* end of lint 2*/
 
+#if 0 /* not const-correct */
 static char *Lint31[4] = {"returns", "value", "which", "is"};
 static char *Lint32[6] = {"value", "is", "used,", "but", "none", "returned"};
+#else
+DECL_STRINGS_4(static, Lint31,
+	       "returns", "value", "which", "is");
+DECL_STRINGS_6(static, Lint32,
+	       "value", "is", "used,", "but", "none", "returned");
+#endif
 
 static Errorclass
 lint3(void)
@@ -442,10 +449,17 @@ lint3(void)
 /*
  * Special word vectors for use by F77 recognition
  */
+#if 0 /* not const-correct */
 static char *F77_fatal[3] = {"Compiler", "error", "line"};
 static char *F77_error[3] = {"Error", "on", "line"};
 static char *F77_warning[3] = {"Warning", "on", "line"};
 static char *F77_no_ass[3] = {"Error.","No","assembly."};
+#else
+DECL_STRINGS_3(static, F77_fatal, "Compiler", "error", "line");
+DECL_STRINGS_3(static, F77_error, "Error", "on", "line");
+DECL_STRINGS_3(static, F77_warning, "Warning", "on", "line");
+DECL_STRINGS_3(static, F77_no_ass, "Error.", "No", "assembly.");
+#endif
 
 static Errorclass
 f77(void)
@@ -487,8 +501,14 @@ f77(void)
 	return (C_UNKNOWN);
 } /* end of f77 */
 
+#if 0 /* not const-correct */
 static char *Make_Croak[3] = {"***", "Error", "code"};
 static char *Make_NotRemade[5] = {"not", "remade", "because", "of", "errors"};
+#else
+DECL_STRINGS_3(static, Make_Croak, "***", "Error", "code");
+DECL_STRINGS_5(static, Make_NotRemade,
+	       "not", "remade", "because", "of", "errors");
+#endif
 
 static Errorclass
 make(void)
