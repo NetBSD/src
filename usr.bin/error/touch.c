@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.18 2009/08/13 03:07:49 dholland Exp $	*/
+/*	$NetBSD: touch.c,v 1.19 2009/08/13 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.18 2009/08/13 03:07:49 dholland Exp $");
+__RCSID("$NetBSD: touch.c,v 1.19 2009/08/13 03:50:02 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,20 +71,20 @@ extern char *suffixlist;
 
 static int countfiles(Eptr *);
 static int nopertain(Eptr **);
-static void hackfile(char *, Eptr **, int, int);
-static boolean preview(char *,  int, Eptr **, int);
-static int settotouch(char *);
-static void diverterrors(char *, int, Eptr **, int, boolean,  int);
-static int oktotouch(char *);
+static void hackfile(const char *, Eptr **, int, int);
+static boolean preview(const char *,  int, Eptr **, int);
+static int settotouch(const char *);
+static void diverterrors(const char *, int, Eptr **, int, boolean,  int);
+static int oktotouch(const char *);
 static void execvarg(int, int *, char ***);
-static boolean edit(char *);
+static boolean edit(const char *);
 static void insert(int);
 static void text(Eptr, boolean);
 static boolean writetouched(int);
 static int mustoverwrite(FILE *, FILE *);
-static int mustwrite(char *, int, FILE *);
+static int mustwrite(const char *, int, FILE *);
 static void errorprint(FILE *, Eptr, boolean);
-static int probethisfile(char *);
+static int probethisfile(const char *);
 
 void
 findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
@@ -92,7 +92,7 @@ findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
 	int nfiles;
 	Eptr **files;
 
-	char *name;
+	const char *name;
 	int ei;
 	int fi;
 	Eptr errorp;
@@ -139,7 +139,7 @@ findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
 static int
 countfiles(Eptr *errors)
 {
-	char *name;
+	const char *name;
 	int ei;
 	Eptr errorp;
 	int nfiles;
@@ -175,7 +175,7 @@ void
 filenames(int nfiles, Eptr **files)
 {
 	int fi;
-	char *sep = " ";
+	const char *sep = " ";
 	int someerrors;
 
 	/*
@@ -245,7 +245,7 @@ extern boolean notouch;
 boolean
 touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 {
-	char *name;
+	const char *name;
 	Eptr errorp;
 	int fi;
 	Eptr *erpp;
@@ -299,7 +299,7 @@ touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 }
 
 static void
-hackfile(char *name, Eptr **files, int ix, int nerrors)
+hackfile(const char *name, Eptr **files, int ix, int nerrors)
 {
 	boolean previewed;
 	int errordest;	/* where errors go */
@@ -329,7 +329,7 @@ hackfile(char *name, Eptr **files, int ix, int nerrors)
 }
 
 static boolean
-preview(char *name, int nerrors, Eptr **files, int ix)
+preview(const char *name, int nerrors, Eptr **files, int ix)
 {
 	int back;
 	Eptr *erpp;
@@ -358,7 +358,7 @@ preview(char *name, int nerrors, Eptr **files, int ix)
 }
 
 static int
-settotouch(char *name)
+settotouch(const char *name)
 {
 	int dest = TOSTDOUT;
 
@@ -408,8 +408,8 @@ settotouch(char *name)
 }
 
 static void
-diverterrors(char *name, int dest, Eptr **files, int ix, boolean previewed,
-	     int nterrors)
+diverterrors(const char *name, int dest, Eptr **files, int ix,
+	     boolean previewed, int nterrors)
 {
 	int nerrors;
 	Eptr *erpp;
@@ -448,11 +448,11 @@ diverterrors(char *name, int dest, Eptr **files, int ix, boolean previewed,
 }
 
 static int
-oktotouch(char *filename)
+oktotouch(const char *filename)
 {
-	char *src;
+	const char *src;
 	char *pat;
-	char *osrc;
+	const char *osrc;
 
 	pat = suffixlist;
 	if (pat == 0)
@@ -503,7 +503,7 @@ static void
 execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 {
 	Eptr p;
-	char *sep;
+	const char *sep;
 	int fi;
 
 	sep = NULL;
@@ -532,7 +532,7 @@ execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 
 static FILE *o_touchedfile;	/* the old file */
 static FILE *n_touchedfile;	/* the new file */
-static char *o_name;
+static const char *o_name;
 static char n_name[MAXPATHLEN];
 static int o_lineno;
 static int n_lineno;
@@ -543,7 +543,7 @@ static boolean tempfileopen = FALSE;
  * Well, if it isn't, then return TRUE if something failed
  */
 static boolean
-edit(char *name)
+edit(const char *name)
 {
 	int fd;
 	const char *tmpdir;
@@ -689,7 +689,7 @@ mustoverwrite(FILE *preciousfile, FILE *tmpfile)
  * return 0 on catastrophe
  */
 static int
-mustwrite(char *base, int n, FILE *preciousfile)
+mustwrite(const char *base, int n, FILE *preciousfile)
 {
 	int nwrote;
 
@@ -761,7 +761,7 @@ errorprint(FILE *place, Eptr errorp, boolean print_all)
 }
 
 int
-inquire(char *fmt, ...)
+inquire(const char *fmt, ...)
 {
 	va_list ap;
 	char buffer[128];
@@ -787,7 +787,7 @@ inquire(char *fmt, ...)
 }
 
 static int
-probethisfile(char *name)
+probethisfile(const char *name)
 {
 	struct stat statbuf;
 
