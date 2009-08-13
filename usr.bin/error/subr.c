@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.18 2009/08/13 05:53:58 dholland Exp $	*/
+/*	$NetBSD: subr.c,v 1.19 2009/08/13 06:59:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.18 2009/08/13 05:53:58 dholland Exp $");
+__RCSID("$NetBSD: subr.c,v 1.19 2009/08/13 06:59:37 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -79,6 +79,18 @@ Calloc(size_t nelements, size_t size)
 	if (back == NULL)
 		errx(1, "Ran out of memory.");
 	return (back);
+}
+
+char *
+Strdup(const char *s)
+{
+	char *ret;
+
+	ret = strdup(s);
+	if (ret == NULL) {
+		errx(1, "Ran out of memory.");
+	}
+	return ret;
 }
 
 /*

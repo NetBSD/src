@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.16 2009/08/13 05:53:58 dholland Exp $	*/
+/*	$NetBSD: pi.c,v 1.17 2009/08/13 06:59:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.16 2009/08/13 05:53:58 dholland Exp $");
+__RCSID("$NetBSD: pi.c,v 1.17 2009/08/13 06:59:37 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -43,13 +43,18 @@ __RCSID("$NetBSD: pi.c,v 1.16 2009/08/13 05:53:58 dholland Exp $");
 #include <stdlib.h>
 #include "error.h"
 
-static char *c_linenumber;
+#if 0 /* not const-correct */
 static char *unk_hdr[] = {"In", "program", "???"};
+#else
+DECL_STRINGS_3(static, unk_hdr, "In", "program", "???");
+#endif
+
+static char *c_linenumber;
 static char **c_header = &unk_hdr[0];
 
 static boolean alldigits(const char *);
 static boolean isdateformat(int, char **);
-static boolean instringset(const char *, char **);
+static boolean instringset(const char *, const char **);
 static boolean piptr(const char *);
 
 
@@ -136,21 +141,22 @@ static boolean piptr(const char *);
  *	  w - function bletch is never used
  *	  E - z undefined on lines 9 13
  */
-static char *Months[] = {
+static const char *Months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 	0
 };
-static char *Days[] = {
+static const char *Days[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", 0
 };
-static char *Piroutines[] = {
+static const char *Piroutines[] = {
 	"program", "function", "procedure", 0
 };
 
 
 static boolean structured, multiple;
 
+#if 0 /* not const-correct */
 static char *pi_Endmatched[] = {"End", "matched"};
 static char *pi_Inserted[] = {"Inserted", "keyword", "end", "matching"};
 
@@ -162,6 +168,22 @@ static char *pi_und2[] = {"undefined", "on", "lines"};
 static char *pi_imp1[] = {"improperly", "used", "on", "line"};
 static char *pi_imp2[] = {"improperly", "used", "on", "lines"};
 
+#else
+DECL_STRINGS_2(static, pi_Endmatched, "End", "matched");
+DECL_STRINGS_4(static, pi_Inserted, "Inserted", "keyword", "end", "matching");
+
+DECL_STRINGS_6(static, pi_multiple,
+	       "Mutiply", "defined", "label", "in", "case,", "line");
+DECL_STRINGS_5(static, pi_structured,
+	       "is", "into", "a", "structured", "statement");
+
+DECL_STRINGS_3(static, pi_und1, "undefined", "on", "line");
+DECL_STRINGS_3(static, pi_und2, "undefined", "on", "lines");
+DECL_STRINGS_4(static, pi_imp1, "improperly", "used", "on", "line");
+DECL_STRINGS_4(static, pi_imp2, "improperly", "used", "on", "lines");
+
+#endif
+
 static boolean
 alldigits(const char *string)
 {
@@ -171,7 +193,7 @@ alldigits(const char *string)
 }
 
 static boolean
-instringset(const char *member, char **set)
+instringset(const char *member, const char **set)
 {
 	for (; *set; set++) {
 		if (strcmp(*set, member) == 0)
@@ -249,7 +271,7 @@ pi(void)
 		nwordv[0] = strdup(currentfilename);
 		nwordv[1] = strdup(c_linenumber);
 		if (!longpiptr) {
-			nwordv[2] = "pascal errortype";
+			nwordv[2] = Strdup("pascal errortype"); /* XXX leaked */
 			nwordv[3] = cur_wordv[1];
 			nwordv[4] = strdup("%%%\n");
 			if (strlen(nwordv[5]) > (8-2))	/* this is the pointer */

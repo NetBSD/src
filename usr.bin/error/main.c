@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2009/08/13 05:53:58 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2009/08/13 06:59:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.16 2009/08/13 05:53:58 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2009/08/13 06:59:37 dholland Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -66,7 +66,8 @@ Eptr **files;		/* array of pointers into errors*/
 boolean *touchedfiles;  /* which files we touched */
 int language = INCC;
 
-char *currentfilename = "????";
+static char default_currentfilename[] = "????";
+char *currentfilename = default_currentfilename;
 char *processname;
 
 boolean query = false;	/* query the operator if touch files */
@@ -75,7 +76,7 @@ boolean terse = false;	/* Terse output */
 static char im_on[] = _PATH_TTY;	/* my tty name */
 static boolean notouch = false;		/* don't touch ANY files */
 
-char *suffixlist = ".*";	/* initially, can touch any file */
+const char *suffixlist = ".*";	/* initially, can touch any file */
 
 static int errorsort(const void *, const void *);
 static void forkvi(int, char **);
