@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.277 2009/08/10 16:49:30 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.278 2009/08/13 03:21:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.277 2009/08/10 16:49:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.278 2009/08/13 03:21:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4821,7 +4821,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	KASSERT(deadentry->flags & UVM_MAP_KERNEL);
 	KASSERT(deadentry->flags & UVM_MAP_KMAPENT);
 	KASSERT(deadentry->next == NULL);
-	KASSERT(deadentry == &ukh->ukh_entries[0]);
+	KASSERT(deadentry == &ukh->ukh_entries[UVM_KMAPENT_CHUNK - 1]);
 
 	/*
 	 * unmap the page from pmap and free it.
