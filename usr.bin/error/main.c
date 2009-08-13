@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2009/08/13 03:50:02 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2009/08/13 05:53:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.15 2009/08/13 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2009/08/13 05:53:58 dholland Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -69,17 +69,17 @@ int language = INCC;
 char *currentfilename = "????";
 char *processname;
 
-boolean query = FALSE;	/* query the operator if touch files */
-boolean terse = FALSE;	/* Terse output */
+boolean query = false;	/* query the operator if touch files */
+boolean terse = false;	/* Terse output */
 
 static char im_on[] = _PATH_TTY;	/* my tty name */
-static boolean notouch = FALSE;		/* don't touch ANY files */
+static boolean notouch = false;		/* don't touch ANY files */
 
 char *suffixlist = ".*";	/* initially, can touch any file */
 
 static int errorsort(const void *, const void *);
 static void forkvi(int, char **);
-static void try(char *, int, char **);
+static void try(const char *, int, char **);
 
 /*
  * error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
@@ -131,16 +131,16 @@ main(int argc, char **argv)
 	char *ignorename = 0;
 	int ed_argc;
 	char **ed_argv;		/* return from touchfiles */
-	boolean show_errors = FALSE;
-	boolean Show_Errors = FALSE;
-	boolean pr_summary = FALSE;
-	boolean edit_files = FALSE;
+	boolean show_errors = false;
+	boolean Show_Errors = false;
+	boolean pr_summary = false;
+	boolean edit_files = false;
 
 	processname = argv[0];
 
 	errorfile = stdin;
 	if (argc > 1)
-		for (; (argc > 1) && (argv[1][0] == '-'); argc--, argv++) {
+		for (; argc > 1 && argv[1][0] == '-'; argc--, argv++) {
 			for (cp = argv[1] + 1; *cp; cp++)
 				switch (*cp) {
 				default:
@@ -148,12 +148,12 @@ main(int argc, char **argv)
 						processname, *cp);
 					break;
 
-				case 'n': notouch = TRUE; break;
-				case 'q': query = TRUE; break;
-				case 'S': Show_Errors = TRUE; break;
-				case 's': pr_summary = TRUE; break;
-				case 'v': edit_files = TRUE; break;
-				case 'T': terse = TRUE; break;
+				case 'n': notouch = true; break;
+				case 'q': query = true; break;
+				case 'S': Show_Errors = true; break;
+				case 's': pr_summary = true; break;
+				case 'v': edit_files = true; break;
+				case 'T': terse = true; break;
 				case 't':
 					*cp-- = 0; argv++; argc--;
 					if (argc > 1) {
@@ -198,10 +198,10 @@ main(int argc, char **argv)
 	getignored(ignorename);
 	eaterrors(&nerrors, &errors);
 	if (Show_Errors)
-		printerrors(TRUE, nerrors, errors);
+		printerrors(true, nerrors, errors);
 	qsort(errors, nerrors, sizeof(Eptr), errorsort);
 	if (show_errors)
-		printerrors(FALSE, nerrors, errors);
+		printerrors(false, nerrors, errors);
 	findfiles(nerrors, errors, &nfiles, &files);
 #define P(msg, arg) fprintf(stdout, msg, arg)
 	if (pr_summary) {
@@ -247,7 +247,7 @@ forkvi(int argc, char **argv)
 	/*
 	 *	ed_agument's first argument is
 	 *	a vi/ex compatible search argument
-	 *	to find the first occurance of ###
+	 *	to find the first occurrence of ###
 	 */
 	try("vi", argc, argv);
 	try("ex", argc, argv);
@@ -256,9 +256,9 @@ forkvi(int argc, char **argv)
 }
 
 static void
-try(char *name, int argc, char **argv)
+try(const char *name, int argc, char **argv)
 {
-	argv[0] = name;
+	argv[0] = __UNCONST(name);
 	wordvprint(stdout, argc, argv);
 	fprintf(stdout, "\n");
 	fflush(stderr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.17 2009/08/13 03:50:02 dholland Exp $	*/
+/*	$NetBSD: subr.c,v 1.18 2009/08/13 05:53:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.17 2009/08/13 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: subr.c,v 1.18 2009/08/13 05:53:58 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -58,7 +58,7 @@ arrayify(int *e_length, Eptr **e_array, Eptr header)
 	for (errorp = header, listlength = 0;
 	     errorp; errorp = errorp->error_next, listlength++)
 		continue;
-	array = (Eptr*)Calloc(listlength+1, sizeof (Eptr));
+	array = Calloc(listlength+1, sizeof (Eptr));
 	for (listindex = 0, errorp = header;
 	    listindex < listlength;
 	    listindex++, errorp = errorp->error_next) {
@@ -70,12 +70,13 @@ arrayify(int *e_length, Eptr **e_array, Eptr header)
 	*e_array = array;
 }
 
-char *
-Calloc(int nelements, int size)
+void *
+Calloc(size_t nelements, size_t size)
 {
-	char *back;
+	void *back;
 
-	if ( (back = (char *)calloc(nelements, size)) == NULL)
+	back = calloc(nelements, size);
+	if (back == NULL)
 		errx(1, "Ran out of memory.");
 	return (back);
 }
@@ -168,7 +169,7 @@ clob_last(char *string, char newstuff)
  * parse a string that is the result of a format %s(%d)
  * return TRUE if this is of the proper format
  */
-boolean
+bool
 persperdexplode(char *string, char **r_perd, char **r_pers)
 {
 	char *cp;
@@ -176,10 +177,9 @@ persperdexplode(char *string, char **r_perd, char **r_pers)
 
 	if (string)
 		length = strlen(string);
-	if ((length >= 4)
-	    && (string[length - 1] == ')')) {
+	if (length >= 4 && string[length - 1] == ')') {
 		for (cp = &string[length - 2];
-		     (isdigit((unsigned char)*cp)) && (*cp != '(');
+		     isdigit((unsigned char)*cp) && *cp != '(';
 		     --cp)
 			continue;
 		if (*cp == '(') {
@@ -189,10 +189,10 @@ persperdexplode(char *string, char **r_perd, char **r_pers)
 			*cp = '\0';			/* clobber the ( */
 			*r_pers = strdup(string);
 			*cp = '(';
-			return (TRUE);
+			return true;
 		}
 	}
-	return (FALSE);
+	return false;
 }
 
 #if 0 /* unused */
@@ -208,10 +208,9 @@ qpersperdexplode(char *string, char **r_perd, char **r_pers)
 
 	if (string)
 		length = strlen(string);
-	if ((length >= 4)
-	    && (string[length - 1] == ')')) {
+	if (length >= 4 && string[length - 1] == ')') {
 		for (cp = &string[length - 2];
-		     (isdigit((unsigned char)*cp)) && (*cp != '(');
+		     isdigit((unsigned char)*cp) && *cp != '(';
 		     --cp)
 			continue;
 		if (*cp == '(' && *(cp - 1) == '"') {
@@ -221,10 +220,10 @@ qpersperdexplode(char *string, char **r_perd, char **r_pers)
 			*(cp - 1) = '\0';		/* clobber the " */
 			*r_pers = strdup(string + 1);
 			*(cp - 1) = '"';
-			return (TRUE);
+			return true;
 		}
 	}
-	return (FALSE);
+	return false;
 }
 #endif /* 0 - unused */
 
@@ -268,7 +267,7 @@ struct lang_desc lang_table[] = {
 };
 
 void
-printerrors(boolean look_at_subclass, int errorc, Eptr errorv[])
+printerrors(bool look_at_subclass, int errorc, Eptr errorv[])
 {
 	int i;
 	Eptr errorp;
@@ -320,7 +319,7 @@ wordvbuild(char *string, int *r_wordc, char ***r_wordv)
 		while (*cp && !isspace((unsigned char)*cp))
 			cp++;
 	}
-	wordv = (char **)Calloc(wordcount + 1, sizeof (char *));
+	wordv = Calloc(wordcount + 1, sizeof (char *));
 	for (cp=string, wordindex=0; wordcount; wordindex++, --wordcount) {
 		while (*cp && isspace((unsigned char)*cp))
 			cp++;
@@ -372,7 +371,7 @@ wordvsplice(int emptyhead, int wordc, char **wordv)
 	int nwordc = emptyhead + wordc;
 	int i;
 
-	nwordv = (char **)Calloc(nwordc, sizeof (char *));
+	nwordv = Calloc(nwordc, sizeof (char *));
 	for (i = 0; i < emptyhead; i++)
 		nwordv[i] = NULL;
 	for (i = emptyhead; i < nwordc; i++) {
@@ -382,7 +381,7 @@ wordvsplice(int emptyhead, int wordc, char **wordv)
 }
 
 /*
- * plural'ize and verb forms
+ * plural and verb forms
  */
 static const char *S = "s";
 static const char *N = "";

@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.14 2009/08/13 04:09:53 dholland Exp $	*/
+/*	$NetBSD: filter.c,v 1.15 2009/08/13 05:53:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.14 2009/08/13 04:09:53 dholland Exp $");
+__RCSID("$NetBSD: filter.c,v 1.15 2009/08/13 05:53:58 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,14 +75,14 @@ getignored(const char *auxname)
 
 	nignored = 0;
 	if (auxname == 0) {	/* use the default */
-		if ((username = (char *)getlogin()) == NULL) {
+		if ((username = getlogin()) == NULL) {
 			username = "Unknown";
 			uid = getuid();
-			if ((passwdentry = (struct passwd *)getpwuid(uid)) == NULL) {
+			if ((passwdentry = getpwuid(uid)) == NULL) {
 				return;
 			}
 		} else {
-			if ((passwdentry = (struct passwd *)getpwnam(username)) == NULL)
+			if ((passwdentry = getpwnam(username)) == NULL)
 				return;
 		}
 		strlcpy(filename, passwdentry->pw_dir, sizeof(filename));
@@ -107,7 +107,7 @@ getignored(const char *auxname)
 	for (nignored = 0;
 	     fgets(inbuffer, sizeof(inbuffer)-1, fyle) != NULL; nignored++)
 		continue;
-	names_ignored = (char **)Calloc(nignored+1, sizeof (char *));
+	names_ignored = Calloc(nignored+1, sizeof (char *));
 	fclose(fyle);
 	if (freopen(filename, "r", fyle) == NULL) {
 #ifdef FULLDEBUG

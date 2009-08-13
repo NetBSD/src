@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.13 2009/08/13 03:50:02 dholland Exp $	*/
+/*	$NetBSD: error.h,v 1.14 2009/08/13 05:53:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,13 +31,9 @@
  *	@(#)error.h	8.1 (Berkeley) 6/6/93
  */
 
+#include <stdbool.h>
+
 typedef int boolean;
-
-#define TRUE	1
-#define FALSE	0
-
-#define true	1
-#define false	0
 
 /*
  * Descriptors for the various languages we know about.
@@ -113,6 +109,8 @@ extern FILE *queryfile;	/* where the query responses from the user come from*/
 extern char *processname;
 extern char *scriptname;
 
+extern char *suffixlist;
+
 extern boolean query;
 extern boolean terse;
 int inquire(const char *, ...);	/* inquire for yes/no */
@@ -187,6 +185,10 @@ struct edesc {
 extern int nerrors;
 extern Eptr er_head;
 
+extern int cur_wordc;
+extern char **cur_wordv;
+
+
 /*
  * Resources for each of the files mentioned
  */
@@ -205,7 +207,7 @@ extern char *currentfilename;
  *	Functional forwards
  */
 void arrayify(int *, Eptr **, Eptr);
-char *Calloc(int, int);
+void *Calloc(size_t, size_t);
 void clob_last(char *,  char);
 Errorclass discardit(Eptr);
 void eaterrors(int *, Eptr **);
@@ -217,13 +219,13 @@ void getignored(const char *);
 char lastchar(const char *);
 char next_lastchar(const char *);
 void onintr(int);
-boolean persperdexplode(char *, char **, char **);
+bool persperdexplode(char *, char **, char **);
 Errorclass pi(void);
 int position(const char *, char);
-void printerrors(boolean, int, Eptr []);
+void printerrors(bool, int, Eptr []);
 const char *plural(int);
 char *substitute(char *, char, char);
-boolean touchfiles(int, Eptr **, int *, char ***);
+bool touchfiles(int, Eptr **, int *, char ***);
 const char *verbform(int);
 void wordvbuild(char *, int*, char ***);
 int wordvcmp(char **, int, char **);
