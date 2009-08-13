@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.13 2009/08/13 03:50:02 dholland Exp $	*/
+/*	$NetBSD: filter.c,v 1.14 2009/08/13 04:09:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.13 2009/08/13 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: filter.c,v 1.14 2009/08/13 04:09:53 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -173,7 +173,6 @@ search_ignore(const char *key)
 Errorclass
 discardit(Eptr errorp)
 {
-	int language;
 	int i;
 	Errorclass errorclass = errorp->error_e_class;
 
@@ -186,8 +185,7 @@ discardit(Eptr errorp)
 	if (errorp->error_lgtext < 2) {
 		return (C_NONSPEC);
 	}
-	language = errorp->error_language;
-	if (language == INLINT) {
+	if (errorp->error_language == INLINT) {
 		if (errorclass != C_NONSPEC) {	/* no file */
 			for (i=0; lint_libs[i] != 0; i++) {
 				if (strcmp(errorp->error_text[0], lint_libs[i]) == 0) {
