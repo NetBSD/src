@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2009/08/13 02:10:50 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2009/08/13 03:07:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.12 2009/08/13 02:10:50 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2009/08/13 03:07:49 dholland Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -51,39 +51,39 @@ __RCSID("$NetBSD: main.c,v 1.12 2009/08/13 02:10:50 dholland Exp $");
 #include "error.h"
 #include "pathnames.h"
 
-FILE    *errorfile;     /* where error file comes from */
-FILE    *queryfile;     /* where the query responses from the user come from*/
+FILE *errorfile;     /* where error file comes from */
+FILE *queryfile;     /* where the query responses from the user come from*/
 
-int     nignored;
-char    **names_ignored;
+int nignored;
+char **names_ignored;
 
-int	nerrors = 0;
-Eptr	er_head;
+int errors = 0;
+Eptr er_head;
 static Eptr *errors;
 
-int	nfiles = 0;
-Eptr	**files;	/* array of pointers into errors*/
+int nfiles = 0;
+Eptr **files;		/* array of pointers into errors*/
 boolean *touchedfiles;  /* which files we touched */
-int	language = INCC;
+int language = INCC;
 
-char	*currentfilename = "????";
-char	*processname;
+char *currentfilename = "????";
+char *processname;
 
-boolean	query = FALSE;		/* query the operator if touch files */
-boolean	terse	= FALSE;	/* Terse output */
+boolean query = FALSE;	/* query the operator if touch files */
+boolean terse = FALSE;	/* Terse output */
 
 static char im_on[] = _PATH_TTY;	/* my tty name */
 static boolean notouch = FALSE;		/* don't touch ANY files */
 
-char	*suffixlist = ".*";	/* initially, can touch any file */
+char *suffixlist = ".*";	/* initially, can touch any file */
 
 static int errorsort(const void *, const void *);
 static void forkvi(int, char **);
 static void try(char *, int, char **);
 
 /*
- *	error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
- *	
+ * error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
+ *
  *	-T:	terse output
  *
  *	-I:	the following name, `ignorename' contains a list of
@@ -127,60 +127,64 @@ static void try(char *, int, char **);
 int
 main(int argc, char **argv)
 {
-	char	*cp;
-	char	*ignorename = 0;
-	int	ed_argc;
-	char	**ed_argv;		/*return from touchfiles*/
-	boolean	show_errors = FALSE;
-	boolean	Show_Errors = FALSE;
-	boolean	pr_summary = FALSE;
-	boolean	edit_files = FALSE;
+	char *cp;
+	char *ignorename = 0;
+	int ed_argc;
+	char **ed_argv;		/* return from touchfiles */
+	boolean show_errors = FALSE;
+	boolean Show_Errors = FALSE;
+	boolean pr_summary = FALSE;
+	boolean edit_files = FALSE;
 
 	processname = argv[0];
 
 	errorfile = stdin;
-	if (argc > 1) for(; (argc > 1) && (argv[1][0] == '-'); argc--, argv++){
-		for (cp = argv[1] + 1; *cp; cp++) switch(*cp){
-		default:
-			fprintf(stderr, "%s: -%c: Unknown flag\n",
-				processname, *cp);
-			break;
+	if (argc > 1)
+		for (; (argc > 1) && (argv[1][0] == '-'); argc--, argv++) {
+			for (cp = argv[1] + 1; *cp; cp++)
+				switch (*cp) {
+				default:
+					fprintf(stderr, "%s: -%c: Unknown flag\n",
+						processname, *cp);
+					break;
 
-		case 'n':	notouch = TRUE;	break;
-		case 'q':	query = TRUE;	break;
-		case 'S':	Show_Errors = TRUE;	break;
-		case 's':	pr_summary = TRUE;	break;
-		case 'v':	edit_files = TRUE;	break;
-		case 'T':	terse = TRUE;	break;
-		case 't':
-			*cp-- = 0; argv++; argc--;
-			if (argc > 1){
-				suffixlist = argv[1];
-			}
-			break;
-		case 'I':	/*ignore file name*/
-			*cp-- = 0; argv++; argc--;
-			if (argc > 1)
-				ignorename = argv[1];
-			break;
+				case 'n': notouch = TRUE; break;
+				case 'q': query = TRUE; break;
+				case 'S': Show_Errors = TRUE; break;
+				case 's': pr_summary = TRUE; break;
+				case 'v': edit_files = TRUE; break;
+				case 'T': terse = TRUE; break;
+				case 't':
+					*cp-- = 0; argv++; argc--;
+					if (argc > 1) {
+						suffixlist = argv[1];
+					}
+					break;
+				case 'I':	/*ignore file name*/
+					*cp-- = 0;
+					argv++;
+					argc--;
+					if (argc > 1)
+						ignorename = argv[1];
+					break;
+				}
 		}
-	}	
 	if (notouch)
 		suffixlist = 0;
-	if (argc > 1){
-		if (argc > 3){
+	if (argc > 1) {
+		if (argc > 3) {
 			fprintf(stderr, "%s: Only takes 0 or 1 arguments\n",
 				processname);
 			exit(3);
 		}
-		if ( (errorfile = fopen(argv[1], "r")) == NULL){
+		if ((errorfile = fopen(argv[1], "r")) == NULL) {
 			fprintf(stderr, "%s: %s: No such file or directory for reading errors.\n",
 				processname, argv[1]);
 			exit(4);
 		}
 	}
-	if ( (queryfile = fopen(im_on, "r")) == NULL){
-		if (query){
+	if ((queryfile = fopen(im_on, "r")) == NULL) {
+		if (query) {
 			fprintf(stderr,
 				"%s: Can't open \"%s\" to query the user.\n",
 				processname, im_on);
@@ -200,7 +204,7 @@ main(int argc, char **argv)
 		printerrors(FALSE, nerrors, errors);
 	findfiles(nerrors, errors, &nfiles, &files);
 #define P(msg, arg) fprintf(stdout, msg, arg)
-	if (pr_summary){
+	if (pr_summary) {
 	    if (nunknown)
 	      P("%d Errors are unclassifiable.\n", nunknown);
 	    if (nignore)
@@ -228,10 +232,10 @@ main(int argc, char **argv)
 static void
 forkvi(int argc, char **argv)
 {
-	if (query){
-		switch(inquire(terse
+	if (query) {
+		switch (inquire(terse
 		    ? "Edit? "
-		    : "Do you still want to edit the files you touched? ")){
+		    : "Do you still want to edit the files you touched? ")) {
 		case Q_error:
 		case Q_NO:
 		case Q_no:
@@ -270,27 +274,28 @@ try(char *name, int argc, char **argv)
 static int
 errorsort(const void *x1, const void *x2)
 {
-	Eptr	*epp1 = (Eptr *)x1, *epp2 = (Eptr *)x2;
-	Eptr	ep1, ep2;
-	int	order;
+	Eptr *epp1 = (Eptr *)x1, *epp2 = (Eptr *)x2;
+	Eptr ep1, ep2;
+	int order;
+
 	/*
-	 *	Sort by:
-	 *	1)	synchronization, non specific, discarded errors first;
-	 *	2)	nulled and true errors last
-	 *		a)	grouped by similar file names
-	 *			1)	grouped in ascending line number
+	 * Sort by:
+	 *	1) synchronization, non specific, discarded errors first;
+	 *	2) nulled and true errors last
+	 *	   a) grouped by similar file names
+	 *	       1) grouped in ascending line number
 	 */
 	ep1 = *epp1; ep2 = *epp2;
 	if (ep1 == 0 || ep2 == 0)
-		return(0);
-	if ( (NOTSORTABLE(ep1->error_e_class)) ^ (NOTSORTABLE(ep2->error_e_class))){
-		return(NOTSORTABLE(ep1->error_e_class) ? -1 : 1);
+		return (0);
+	if ((NOTSORTABLE(ep1->error_e_class)) ^ (NOTSORTABLE(ep2->error_e_class))) {
+		return (NOTSORTABLE(ep1->error_e_class) ? -1 : 1);
 	}
 	if (NOTSORTABLE(ep1->error_e_class))	/* then both are */
-		return(ep1->error_no - ep2->error_no);
+		return (ep1->error_no - ep2->error_no);
 	order = strcmp(ep1->error_text[0], ep2->error_text[0]);
-	if (order == 0){
-		return(ep1->error_line - ep2->error_line);
+	if (order == 0) {
+		return (ep1->error_line - ep2->error_line);
 	}
-	return(order);
+	return (order);
 }
