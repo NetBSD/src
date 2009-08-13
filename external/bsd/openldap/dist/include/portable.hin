@@ -4,7 +4,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation
+ * Copyright 1998-2009 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,9 @@
 
 /* end of portable.h.pre */
 
+
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
 
 /* define to use both <string.h> and <strings.h> */
 #undef BOTH_STRINGS_H
@@ -190,6 +193,9 @@
 /* Define to 1 if you have the `getdtablesize' function. */
 #undef HAVE_GETDTABLESIZE
 
+/* Define to 1 if you have the `geteuid' function. */
+#undef HAVE_GETEUID
+
 /* Define to 1 if you have the `getgrgid' function. */
 #undef HAVE_GETGRGID
 
@@ -210,9 +216,6 @@
 
 /* Define to 1 if you have the <getopt.h> header file. */
 #undef HAVE_GETOPT_H
-
-/* Define to 1 if you have the `getpass' function. */
-#undef HAVE_GETPASS
 
 /* Define to 1 if you have the `getpassphrase' function. */
 #undef HAVE_GETPASSPHRASE
@@ -361,6 +364,9 @@
 /* define this if you have mkversion */
 #undef HAVE_MKVERSION
 
+/* define if you have MozNSS */
+#undef HAVE_MOZNSS
+
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
@@ -369,6 +375,9 @@
 
 /* define if strerror_r returns char* instead of int */
 #undef HAVE_NONPOSIX_STRERROR_R
+
+/* Define to 1 if you have the <nssutil.h> header file. */
+#undef HAVE_NSSUTIL_H
 
 /* if you have NT Event Log */
 #undef HAVE_NT_EVENT_LOG
@@ -795,6 +804,9 @@
 /* define if select implicitly yields */
 #undef HAVE_YIELDING_SELECT
 
+/* Define to 1 if you have the `_vsnprintf' function. */
+#undef HAVE__VSNPRINTF
+
 /* define to 32-bit or greater integer type */
 #undef LBER_INT_T
 
@@ -891,19 +903,19 @@
 /* Define to the type of arg 5 for `select'. */
 #undef SELECT_TYPE_ARG5
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `long long', as computed by sizeof. */
+/* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
-/* The size of a `short', as computed by sizeof. */
+/* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
-/* The size of a `wchar_t', as computed by sizeof. */
+/* The size of `wchar_t', as computed by sizeof. */
 #undef SIZEOF_WCHAR_T
 
 /* define to support per-object ACIs */
@@ -945,6 +957,9 @@
 /* define to support cn=Monitor backend */
 #undef SLAPD_MONITOR
 
+/* define to support NDB backend */
+#undef SLAPD_NDB
+
 /* define to support NULL backend */
 #undef SLAPD_NULL
 
@@ -954,11 +969,17 @@
 /* define for Audit Logging overlay */
 #undef SLAPD_OVER_AUDITLOG
 
+/* define for Collect overlay */
+#undef SLAPD_OVER_COLLECT
+
 /* define for Attribute Constraint overlay */
 #undef SLAPD_OVER_CONSTRAINT
 
 /* define for Dynamic Directory Services overlay */
 #undef SLAPD_OVER_DDS
+
+/* define for Dynamic Directory Services overlay */
+#undef SLAPD_OVER_DEREF
 
 /* define for Dynamic Group overlay */
 #undef SLAPD_OVER_DYNGROUP
@@ -986,6 +1007,9 @@
 
 /* define for Sequential Modify overlay */
 #undef SLAPD_OVER_SEQMOD
+
+/* define for ServerSideSort/VLV overlay */
+#undef SLAPD_OVER_SSSVLV
 
 /* define for Syncrepl Provider overlay */
 #undef SLAPD_OVER_SYNCPROV
@@ -1050,9 +1074,17 @@
 /* define to use 'long long' for MP */
 #undef USE_MP_LONG_LONG
 
-/* Define to 1 if your processor stores words with the most significant byte
-   first (like Motorola and SPARC, unlike Intel and VAX). */
-#undef WORDS_BIGENDIAN
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
 
 /* Define to the type of arg 3 for `accept'. */
 #undef ber_socklen_t
