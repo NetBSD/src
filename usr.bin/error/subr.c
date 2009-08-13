@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.16 2009/08/13 03:07:49 dholland Exp $	*/
+/*	$NetBSD: subr.c,v 1.17 2009/08/13 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.16 2009/08/13 03:07:49 dholland Exp $");
+__RCSID("$NetBSD: subr.c,v 1.17 2009/08/13 03:50:02 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -85,7 +85,7 @@ Calloc(int nelements, int size)
  * (one based)
  */
 int
-position(char *string, char ch)
+position(const char *string, char ch)
 {
 	int i;
 
@@ -117,7 +117,7 @@ substitute(char *string, char chold, char chnew)
 }
 
 char
-lastchar(char *string)
+lastchar(const char *string)
 {
 	int length;
 
@@ -131,7 +131,7 @@ lastchar(char *string)
 }
 
 char
-firstchar(char *string)
+firstchar(const char *string)
 {
 	if (string)
 		return (string[0]);
@@ -140,7 +140,7 @@ firstchar(char *string)
 }
 
 char
-next_lastchar(char *string)
+next_lastchar(const char *string)
 {
 	int length;
 
@@ -291,7 +291,7 @@ void
 wordvprint(FILE *fyle, int wordc, char **wordv)
 {
 	int i;
-	char *sep = "";
+	const char *sep = "";
 
 	for (i = 0; i < wordc; i++)
 		if (wordv[i]) {
@@ -384,16 +384,16 @@ wordvsplice(int emptyhead, int wordc, char **wordv)
 /*
  * plural'ize and verb forms
  */
-static char *S = "s";
-static char *N = "";
+static const char *S = "s";
+static const char *N = "";
 
-char *
+const char *
 plural(int n)
 {
 	return (n > 1 ? S : N);
 }
 
-char *
+const char *
 verbform(int n)
 {
 	return (n > 1 ? N : S);
