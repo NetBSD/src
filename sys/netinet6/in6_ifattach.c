@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.83 2009/08/13 00:34:04 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.84 2009/08/13 09:04:03 cegger Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.83 2009/08/13 00:34:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.84 2009/08/13 09:04:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -899,7 +899,7 @@ getifp(struct ifindexgen *ig)
 	if (ifindex2ifnet == NULL)
 		printf("%s: no ifindices in use\n", __func__);
 	else if (ifindex >= if_indexlim) {
-		printf("%s: ifindex %d >= limit %d\n", __func__, ifindex,
+		printf("%s: ifindex %d >= limit %zu\n", __func__, ifindex,
 		    if_indexlim);
 	} else if ((ifp = ifindex2ifnet[ifindex]) == NULL)
 		printf("%s: ifindex %d not in use\n", __func__, ifindex);
