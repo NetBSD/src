@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.14 2009/08/13 03:07:49 dholland Exp $	*/
+/*	$NetBSD: pi.c,v 1.15 2009/08/13 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.14 2009/08/13 03:07:49 dholland Exp $");
+__RCSID("$NetBSD: pi.c,v 1.15 2009/08/13 03:50:02 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,10 +47,10 @@ static char *c_linenumber;
 static char *unk_hdr[] = {"In", "program", "???"};
 static char **c_header = &unk_hdr[0];
 
-static boolean alldigits(char *);
+static boolean alldigits(const char *);
 static boolean isdateformat(int, char **);
-static boolean instringset(char *, char **);
-static boolean piptr(char *);
+static boolean instringset(const char *, char **);
+static boolean piptr(const char *);
 
 
 /*
@@ -163,7 +163,7 @@ static char *pi_imp1[] = {"improperly", "used", "on", "line"};
 static char *pi_imp2[] = {"improperly", "used", "on", "lines"};
 
 static boolean
-alldigits(char *string)
+alldigits(const char *string)
 {
 	for (; *string && isdigit((unsigned char)*string); string++)
 		continue;
@@ -171,7 +171,7 @@ alldigits(char *string)
 }
 
 static boolean
-instringset(char *member, char **set)
+instringset(const char *member, char **set)
 {
 	for (; *set; set++) {
 		if (strcmp(*set, member) == 0)
@@ -192,7 +192,7 @@ isdateformat(int wordc, char **wordv)
 }
 
 static boolean
-piptr(char *string)
+piptr(const char *string)
 {
 	if (*string != '-')
 		return (FALSE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.12 2009/08/13 03:07:49 dholland Exp $	*/
+/*	$NetBSD: error.h,v 1.13 2009/08/13 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -115,7 +115,7 @@ extern char *scriptname;
 
 extern boolean query;
 extern boolean terse;
-int inquire(char *, ...);	/* inquire for yes/no */
+int inquire(const char *, ...);	/* inquire for yes/no */
 
 /*
  * codes for inquire() to return
@@ -131,8 +131,8 @@ int inquire(char *, ...);	/* inquire for yes/no */
  */
 struct lang_desc {
 	char *lang_name;
-	char *lang_incomment;	/* one of the following defines */
-	char *lang_outcomment;	/* one of the following defines */
+	const char *lang_incomment;	/* one of the following defines */
+	const char *lang_outcomment;	/* one of the following defines */
 };
 extern struct lang_desc lang_table[];
 
@@ -212,19 +212,19 @@ void eaterrors(int *, Eptr **);
 void erroradd(int, char **, Errorclass, Errorclass);
 void filenames(int, Eptr **);
 void findfiles(int, Eptr *, int *, Eptr ***);
-char firstchar(char *);
-void getignored(char *);
-char lastchar(char *);
-char next_lastchar(char *);
+char firstchar(const char *);
+void getignored(const char *);
+char lastchar(const char *);
+char next_lastchar(const char *);
 void onintr(int);
 boolean persperdexplode(char *, char **, char **);
 Errorclass pi(void);
-int position(char *, char);
+int position(const char *, char);
 void printerrors(boolean, int, Eptr []);
-char *plural(int);
+const char *plural(int);
 char *substitute(char *, char, char);
 boolean touchfiles(int, Eptr **, int *, char ***);
-char *verbform(int);
+const char *verbform(int);
 void wordvbuild(char *, int*, char ***);
 int wordvcmp(char **, int, char **);
 void wordvprint(FILE *, int, char **);

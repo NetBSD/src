@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.12 2009/08/13 03:07:49 dholland Exp $	*/
+/*	$NetBSD: filter.c,v 1.13 2009/08/13 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.12 2009/08/13 03:07:49 dholland Exp $");
+__RCSID("$NetBSD: filter.c,v 1.13 2009/08/13 03:50:02 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: filter.c,v 1.12 2009/08/13 03:07:49 dholland Exp $");
 #include "error.h"
 #include "pathnames.h"
 
-static char *lint_libs[] = {
+static const char *lint_libs[] = {
 	IG_FILE1,
 	IG_FILE2,
 	IG_FILE3,
@@ -56,21 +56,21 @@ static char *lint_libs[] = {
 };
 
 static int lexsort(const void *, const void *);
-static int search_ignore(char *);
+static int search_ignore(const char *);
 
 /*
  * Read the file ERRORNAME of the names of functions in lint
  * to ignore complaints about.
  */
 void
-getignored(char *auxname)
+getignored(const char *auxname)
 {
 	int i;
 	FILE *fyle;
 	char inbuffer[256];
 	uid_t uid;
 	char filename[MAXPATHLEN];
-	char *username;
+	const char *username;
 	struct passwd *passwdentry;
 
 	nignored = 0;
@@ -134,15 +134,16 @@ getignored(char *auxname)
 static int
 lexsort(const void *c1, const void *c2)
 {
-	char **cpp1, **cpp2;
+	const char *const *cpp1;
+	const char *const *cpp2;
 
-	cpp1 = (char **)c1;
-	cpp2 = (char **)c2;
+	cpp1 = c1;
+	cpp2 = c2;
 	return (strcmp(*cpp1, *cpp2));
 }
 
 static int
-search_ignore(char *key)
+search_ignore(const char *key)
 {
 	int ub, lb;
 	int halfway;
