@@ -1,4 +1,4 @@
-/*	from $NetBSD: param.h,v 1.16 2007/10/17 19:55:55 garbled Exp $	*/
+/*	from $NetBSD: param.h,v 1.17 2009/08/13 05:15:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,6 @@
 #define	MACHINE_ARCH	"mipseb"
 #define	_MACHINE	newsmips
 #define	MACHINE		"newsmips"
-#define	MID_MACHINE	MID_MIPS
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */
