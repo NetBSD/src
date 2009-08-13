@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.13 2009/08/13 03:07:49 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.14 2009/08/13 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.13 2009/08/13 03:07:49 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.14 2009/08/13 03:50:02 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,7 +70,7 @@ eaterrors(int *r_errorc, Eptr **r_errorv)
 {
 	Errorclass errorclass = C_SYNC;
 	char *line;
-	char *inbuffer;
+	const char *inbuffer;
 	size_t inbuflen;
 
     for (;;) {
@@ -121,7 +121,7 @@ erroradd(int errorlength, char **errorv, Errorclass errorclass,
 	 Errorclass errorsubclass)
 {
 	Eptr newerror;
-	char *cp;
+	const char *cp;
 
 	if (errorclass == C_TRUE) {
 		/* check canonicalization of the second argument*/

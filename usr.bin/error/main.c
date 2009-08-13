@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2009/08/13 03:10:03 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2009/08/13 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.14 2009/08/13 03:10:03 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2009/08/13 03:50:02 dholland Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -274,7 +274,8 @@ try(char *name, int argc, char **argv)
 static int
 errorsort(const void *x1, const void *x2)
 {
-	Eptr *epp1 = (Eptr *)x1, *epp2 = (Eptr *)x2;
+	const Eptr *epp1 = x1;
+	const Eptr *epp2 = x2;
 	Eptr ep1, ep2;
 	int order;
 
