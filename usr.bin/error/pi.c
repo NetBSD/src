@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.12 2006/04/09 19:21:26 christos Exp $	*/
+/*	$NetBSD: pi.c,v 1.13 2009/08/13 02:10:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.12 2006/04/09 19:21:26 christos Exp $");
+__RCSID("$NetBSD: pi.c,v 1.13 2009/08/13 02:10:50 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,11 +47,10 @@ static	char	*c_linenumber;
 static	char	*unk_hdr[] = {"In", "program", "???"};
 static	char	**c_header = &unk_hdr[0];
 
-boolean	alldigits(char *);
-boolean	isdateformat(int, char **);
-boolean	instringset(char *, char **);
-Errorclass pi(void);
-boolean	piptr(char *);
+static boolean alldigits(char *);
+static boolean isdateformat(int, char **);
+static boolean instringset(char *, char **);
+static boolean piptr(char *);
 
 
 /*
@@ -137,33 +136,33 @@ boolean	piptr(char *);
  *	  w - function bletch is never used
  *	  E - z undefined on lines 9 13
  */
-char *Months[] = {
+static char *Months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct","Nov", "Dec",
 	0
 };
-char *Days[] = {
+static char *Days[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", 0
 };
-char *Piroutines[] = {
+static char *Piroutines[] = {
 		"program", "function", "procedure", 0
 };
 
 
 static boolean	structured, multiple;
 
-char *pi_Endmatched[] = {"End", "matched"};
-char *pi_Inserted[] = {"Inserted", "keyword", "end", "matching"};
+static char *pi_Endmatched[] = {"End", "matched"};
+static char *pi_Inserted[] = {"Inserted", "keyword", "end", "matching"};
 
-char *pi_multiple[] = {"Mutiply", "defined", "label", "in", "case,", "line"};
-char *pi_structured[] = {"is", "into", "a", "structured", "statement"};
+static char *pi_multiple[] = {"Mutiply", "defined", "label", "in", "case,", "line"};
+static char *pi_structured[] = {"is", "into", "a", "structured", "statement"};
 
-char *pi_und1[] = {"undefined", "on", "line"};
-char *pi_und2[] = {"undefined", "on", "lines"};
-char *pi_imp1[] = {"improperly", "used", "on", "line"};
-char *pi_imp2[] = {"improperly", "used", "on", "lines"};
+static char *pi_und1[] = {"undefined", "on", "line"};
+static char *pi_und2[] = {"undefined", "on", "lines"};
+static char *pi_imp1[] = {"improperly", "used", "on", "line"};
+static char *pi_imp2[] = {"improperly", "used", "on", "lines"};
 
-boolean
+static boolean
 alldigits(char *string)
 {
 	for (; *string && isdigit((unsigned char)*string); string++)
@@ -171,7 +170,7 @@ alldigits(char *string)
 	return(*string == '\0');
 }
 
-boolean
+static boolean
 instringset(char *member, char **set)
 {
 	for(; *set; set++){
@@ -181,7 +180,7 @@ instringset(char *member, char **set)
 	return(FALSE);
 }
 
-boolean
+static boolean
 isdateformat(int wordc, char **wordv)
 {
 	return(
@@ -192,7 +191,7 @@ isdateformat(int wordc, char **wordv)
 	     && (alldigits(wordv[4])) );
 }
 
-boolean
+static boolean
 piptr(char *string)
 {
 	if (*string != '-')

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.10 2007/07/19 05:43:23 lukem Exp $	*/
+/*	$NetBSD: error.h,v 1.11 2009/08/13 02:10:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -123,15 +123,6 @@ int	inquire(char *, ...);	/* inquire for yes/no */
 #define	Q_YES	3			/* 'Y' */
 #define	Q_yes	4			/* 'y' */
 
-int	probethisfile(char *);
-/*
- *	codes for probethisfile to return
- */
-#define	F_NOTEXIST	1
-#define	F_NOTREAD	2
-#define	F_NOTWRITE	3
-#define	F_TOUCHIT	4
-
 /*
  *	Describes attributes about a language
  */
@@ -189,7 +180,7 @@ struct edesc{
  */
 extern	int	nerrors;
 extern	Eptr	er_head;
-extern	Eptr	*errors;	
+
 /*
  *	Resources for each of the files mentioned
  */
@@ -210,40 +201,25 @@ extern	char	*currentfilename;
 void	arrayify(int *, Eptr **, Eptr);
 char   *Calloc(int, int);
 void	clob_last(char *,  char);
-int	countfiles(Eptr *);
 Errorclass discardit(Eptr);
-void	diverterrors(char *, int, Eptr **, int, boolean,  int);
 void	eaterrors(int *, Eptr **);
-boolean	edit(char *);
 void	erroradd(int, char **, Errorclass, Errorclass);
-void	errorprint(FILE *, Eptr, boolean);
-void	execvarg(int, int *, char ***);
 void	filenames(int, Eptr **);
 void	findfiles(int, Eptr *, int *, Eptr ***);
 char	firstchar(char *);
 void	getignored(char *);
-void	hackfile(char *, Eptr **, int, int);
-void	insert(int);
 char	lastchar(char *);
-int	mustoverwrite(FILE *, FILE *);
-int	mustwrite(char *, int, FILE *);
 char	next_lastchar(char *);
-int	nopertain(Eptr **);
-int	oktotouch(char *);
 void	onintr(int);
 boolean	persperdexplode(char *, char **, char **);
+Errorclass pi(void);
 int	position(char *, char);
-boolean	preview(char *,  int, Eptr **, int);
 void	printerrors(boolean, int, Eptr []);
 char   *plural(int);
-boolean	qpersperdexplode(char *, char **, char **);
-int	settotouch(char *);
 char   *substitute(char *, char, char);
-void	text(Eptr, boolean);
 boolean	touchfiles(int, Eptr **, int *, char ***);
 char   *verbform(int);
 void	wordvbuild(char *, int*, char ***);
 int	wordvcmp(char **, int, char **);
 void	wordvprint(FILE *, int, char **);
 char  **wordvsplice(int, int, char **);
-boolean	writetouched(int);

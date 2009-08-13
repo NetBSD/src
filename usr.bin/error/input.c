@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.11 2006/04/09 19:27:22 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.12 2009/08/13 02:10:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.11 2006/04/09 19:27:22 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.12 2009/08/13 02:10:50 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,21 +46,20 @@ __RCSID("$NetBSD: input.c,v 1.11 2006/04/09 19:27:22 christos Exp $");
 int	wordc;		/* how long the current error message is */
 char	**wordv;	/* the actual error message */
 
-Errorclass	catchall(void);
-Errorclass	cpp(void);
-Errorclass	f77(void);
-Errorclass	lint0(void);
-Errorclass	lint1(void);
-Errorclass	lint2(void);
-Errorclass	lint3(void);
-Errorclass	make(void);
-Errorclass	mod2(void);
-Errorclass	onelong(void);
-Errorclass	pccccom(void);	/* Portable C Compiler C Compiler */
-Errorclass	pi(void);
-Errorclass	ri(void);
-Errorclass	richieccom(void);	/* Richie Compiler for 11 */
-Errorclass	troff(void);
+static Errorclass catchall(void);
+static Errorclass cpp(void);
+static Errorclass f77(void);
+static Errorclass lint0(void);
+static Errorclass lint1(void);
+static Errorclass lint2(void);
+static Errorclass lint3(void);
+static Errorclass make(void);
+static Errorclass mod2(void);
+static Errorclass onelong(void);
+static Errorclass pccccom(void);	/* Portable C Compiler C Compiler */
+static Errorclass ri(void);
+static Errorclass richieccom(void);	/* Richie Compiler for 11 */
+static Errorclass troff(void);
 
 /*
  *	Eat all of the lines in the input file, attempting to categorize
@@ -159,7 +158,7 @@ erroradd(int errorlength, char **errorv, Errorclass errorclass,
 	}	/* length > 0 */
 }
 
-Errorclass
+static Errorclass
 onelong(void)
 {
 	char	**nwordv;
@@ -206,7 +205,7 @@ onelong(void)
 	return(C_UNKNOWN);
 }	/* end of one long */
 
-Errorclass
+static Errorclass
 cpp(void)
 {
 	/* 
@@ -231,7 +230,7 @@ cpp(void)
 	return(C_UNKNOWN);
 }	/*end of cpp*/
 
-Errorclass
+static Errorclass
 pccccom(void)
 {
 	/*
@@ -272,7 +271,7 @@ pccccom(void)
  *
  */
 
-Errorclass
+static Errorclass
 richieccom(void)
 {
 	char	*cp;
@@ -303,7 +302,7 @@ richieccom(void)
 	return(C_UNKNOWN);
 }
 
-Errorclass
+static Errorclass
 lint0(void)
 {
 	char	**nwordv;
@@ -334,7 +333,7 @@ lint0(void)
 	return (C_UNKNOWN);
 }
 
-Errorclass
+static Errorclass
 lint1(void)
 {
 	char	*line1 = NULL, *line2 = NULL;
@@ -380,7 +379,7 @@ lint1(void)
 	return(C_UNKNOWN);
 } /* end of lint 1*/
 
-Errorclass
+static Errorclass
 lint2(void)
 {
 	char	*file;
@@ -412,10 +411,10 @@ lint2(void)
 	return(C_UNKNOWN);
 } /* end of lint 2*/
 
-char	*Lint31[4] = {"returns", "value", "which", "is"};
-char	*Lint32[6] = {"value", "is", "used,", "but", "none", "returned"};
+static char *Lint31[4] = {"returns", "value", "which", "is"};
+static char *Lint32[6] = {"value", "is", "used,", "but", "none", "returned"};
 
-Errorclass
+static Errorclass
 lint3(void)
 {
 	if (wordc < 3)
@@ -431,12 +430,12 @@ lint3(void)
 /*
  *	Special word vectors for use by F77 recognition
  */
-char	*F77_fatal[3] = {"Compiler", "error", "line"};
-char	*F77_error[3] = {"Error", "on", "line"};
-char	*F77_warning[3] = {"Warning", "on", "line"};
-char    *F77_no_ass[3] = {"Error.","No","assembly."};
+static char *F77_fatal[3] = {"Compiler", "error", "line"};
+static char *F77_error[3] = {"Error", "on", "line"};
+static char *F77_warning[3] = {"Warning", "on", "line"};
+static char *F77_no_ass[3] = {"Error.","No","assembly."};
 
-Errorclass 
+static Errorclass 
 f77(void)
 {
 	char	**nwordv;
@@ -474,10 +473,10 @@ f77(void)
 	return(C_UNKNOWN);
 } /* end of f77 */
 
-char	*Make_Croak[3] = {"***", "Error", "code"};
-char	*Make_NotRemade[5] = {"not", "remade", "because", "of", "errors"};
+static char *Make_Croak[3] = {"***", "Error", "code"};
+static char *Make_NotRemade[5] = {"not", "remade", "because", "of", "errors"};
 
-Errorclass
+static Errorclass
 make(void)
 {
 	if (wordvcmp(wordv+1, 3, Make_Croak) == 0){
@@ -491,7 +490,7 @@ make(void)
 	return(C_UNKNOWN);
 }
 
-Errorclass
+static Errorclass
 ri(void)
 {
 /*
@@ -529,7 +528,7 @@ ri(void)
 	return(C_UNKNOWN);
 }
 
-Errorclass
+static Errorclass
 catchall(void)
 {
 	/*
@@ -539,7 +538,7 @@ catchall(void)
 	return(C_NONSPEC);
 } /* end of catch all*/
 
-Errorclass
+static Errorclass
 troff(void)
 {
 	/*
@@ -568,7 +567,7 @@ troff(void)
 	return(C_UNKNOWN);
 }
 
-Errorclass
+static Errorclass
 mod2(void)
 {
 	/*

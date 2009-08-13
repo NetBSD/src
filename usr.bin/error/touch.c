@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.16 2007/10/05 07:27:42 lukem Exp $	*/
+/*	$NetBSD: touch.c,v 1.17 2009/08/13 02:10:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.16 2007/10/05 07:27:42 lukem Exp $");
+__RCSID("$NetBSD: touch.c,v 1.17 2009/08/13 02:10:50 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,9 +57,34 @@ __RCSID("$NetBSD: touch.c,v 1.16 2007/10/05 07:27:42 lukem Exp $");
 #define	ECITERATE(ei, p, lb)	for (ei = lb; p = errors[ei],ei < nerrors; ei++)
 
 #define	FILEITERATE(fi, lb)	for (fi = lb; fi <= nfiles; fi++)
-int	touchstatus = Q_YES;
+static int touchstatus = Q_YES;
 
 extern	char	*suffixlist;
+
+/*
+ *	codes for probethisfile to return
+ */
+#define	F_NOTEXIST	1
+#define	F_NOTREAD	2
+#define	F_NOTWRITE	3
+#define	F_TOUCHIT	4
+
+static int countfiles(Eptr *);
+static int nopertain(Eptr **);
+static void hackfile(char *, Eptr **, int, int);
+static boolean preview(char *,  int, Eptr **, int);
+static int settotouch(char *);
+static void diverterrors(char *, int, Eptr **, int, boolean,  int);
+static int oktotouch(char *);
+static void execvarg(int, int *, char ***);
+static boolean edit(char *);
+static void insert(int);
+static void text(Eptr, boolean);
+static boolean writetouched(int);
+static int mustoverwrite(FILE *, FILE *);
+static int mustwrite(char *, int, FILE *);
+static void errorprint(FILE *, Eptr, boolean);
+static int probethisfile(char *);
 
 void
 findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
@@ -111,7 +136,7 @@ findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
 	*r_files = files;
 }
 
-int
+static int
 countfiles(Eptr *errors)
 {
 	char	*name;
@@ -183,7 +208,7 @@ filenames(int nfiles, Eptr **files)
 /*
  *	Dump out errors that don't pertain to any file
  */
-int
+static int
 nopertain(Eptr **files)
 {
 	int	type;
@@ -273,7 +298,7 @@ touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 	}
 }
 
-void
+static void
 hackfile(char *name, Eptr **files, int ix, int nerrors)
 {
 	boolean	previewed;
@@ -303,7 +328,7 @@ hackfile(char *name, Eptr **files, int ix, int nerrors)
 	}
 }
 
-boolean
+static boolean
 preview(char *name, int nerrors, Eptr **files, int ix)
 {
 	int	back;
@@ -332,7 +357,7 @@ preview(char *name, int nerrors, Eptr **files, int ix)
 	return(back);
 }
 
-int
+static int
 settotouch(char *name)
 {
 	int	dest = TOSTDOUT;
@@ -382,7 +407,7 @@ settotouch(char *name)
 	return(dest);
 }
 
-void
+static void
 diverterrors(char *name, int dest, Eptr **files, int ix, boolean previewed,
 	     int nterrors)
 {
@@ -422,7 +447,7 @@ diverterrors(char *name, int dest, Eptr **files, int ix, boolean previewed,
 	}
 }
 
-int
+static int
 oktotouch(char *filename)
 {
 	char	*src;
@@ -474,7 +499,7 @@ oktotouch(char *filename)
  *	We fill in the initial search string.
  *	We fill in the arguments, and the null.
  */
-void
+static void
 execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 {
 	Eptr	p;
@@ -505,18 +530,18 @@ execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 	(*r_argv)[n_pissed_on] = 0;
 }
 
-FILE	*o_touchedfile;	/* the old file */
-FILE	*n_touchedfile;	/* the new file */
-char	*o_name;
-char	n_name[MAXPATHLEN];
-int	o_lineno;
-int	n_lineno;
-boolean	tempfileopen = FALSE;
+static FILE *o_touchedfile;	/* the old file */
+static FILE *n_touchedfile;	/* the new file */
+static char *o_name;
+static char n_name[MAXPATHLEN];
+static int o_lineno;
+static int n_lineno;
+static boolean tempfileopen = FALSE;
 /*
  *	open the file; guaranteed to be both readable and writable
  *	Well, if it isn't, then return TRUE if something failed
  */
-boolean
+static boolean
 edit(char *name)
 {
 	int fd;
@@ -549,9 +574,9 @@ edit(char *name)
 /*
  *	Position to the line (before, after) the line given by place
  */
-char	edbuf[BUFSIZ];
+static char edbuf[BUFSIZ];
 
-void
+static void
 insert(int place)
 {
 	--place;	/* always insert messages before the offending line*/
@@ -562,7 +587,7 @@ insert(int place)
 	}
 }
 
-void
+static void
 text(Eptr p, boolean use_all)
 {
 	int	offset = use_all ? 0 : 2;
@@ -580,7 +605,7 @@ text(Eptr p, boolean use_all)
  *	write the touched file to its temporary copy,
  *	then bring the temporary in over the local file
  */
-boolean
+static boolean
 writetouched(int overwrite)
 {
 	int	nread;
@@ -646,7 +671,7 @@ writetouched(int overwrite)
 /*
  *	return 1 if the tmpfile can be removed after writing it out
  */
-int
+static int
 mustoverwrite(FILE *preciousfile, FILE *tmpfile)
 {
 	int	nread;
@@ -660,7 +685,7 @@ mustoverwrite(FILE *preciousfile, FILE *tmpfile)
 /*
  *	return 0 on catastrophe
  */
-int
+static int
 mustwrite(char *base, int n, FILE *preciousfile)
 {
 	int	nwrote;
@@ -720,7 +745,7 @@ onintr(int sig)
 	/*NOTREACHED*/
 }
 
-void
+static void
 errorprint(FILE *place, Eptr errorp, boolean print_all)
 {
 	int	offset = print_all ? 0 : 2;
@@ -758,7 +783,7 @@ inquire(char *fmt, ...)
 	}
 }
 
-int
+static int
 probethisfile(char *name)
 {
 	struct stat statbuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.14 2003/08/07 11:13:38 agc Exp $	*/
+/*	$NetBSD: subr.c,v 1.15 2009/08/13 02:10:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.14 2003/08/07 11:13:38 agc Exp $");
+__RCSID("$NetBSD: subr.c,v 1.15 2009/08/13 02:10:50 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: subr.c,v 1.14 2003/08/07 11:13:38 agc Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "error.h"
+
 /*
  *	Arrayify a list of rules
  */
@@ -187,11 +188,12 @@ persperdexplode(char *string, char **r_perd, char **r_pers)
 	return(FALSE);
 }
 
+#if 0 /* unused */
 /*
  *	parse a quoted string that is the result of a format \"%s\"(%d)
  *	return TRUE if this is of the proper format
  */
-boolean
+static boolean
 qpersperdexplode(char *string, char **r_perd, char **r_pers)
 {
 	char	*cp;
@@ -217,6 +219,7 @@ qpersperdexplode(char *string, char **r_perd, char **r_pers)
 	}
 	return(FALSE);
 }
+#endif /* 0 - unused */
 
 static	char	cincomment[] = CINCOMMENT;
 static	char	coutcomment[] = COUTCOMMENT;

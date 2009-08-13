@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.10 2003/08/07 11:13:37 agc Exp $	*/
+/*	$NetBSD: filter.c,v 1.11 2009/08/13 02:10:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.10 2003/08/07 11:13:37 agc Exp $");
+__RCSID("$NetBSD: filter.c,v 1.11 2009/08/13 02:10:50 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,15 +47,16 @@ __RCSID("$NetBSD: filter.c,v 1.10 2003/08/07 11:13:37 agc Exp $");
 #include "error.h"
 #include "pathnames.h"
 
-char	*lint_libs[] = {
+static char *lint_libs[] = {
 	IG_FILE1,
 	IG_FILE2,
 	IG_FILE3,
 	IG_FILE4,
 	0
 };
-int	lexsort(const void *, const void *);
-int	search_ignore(char *);
+
+static int lexsort(const void *, const void *);
+static int search_ignore(char *);
 
 /*
  *	Read the file ERRORNAME of the names of functions in lint
@@ -129,7 +130,7 @@ getignored(char *auxname)
 #endif
 }
 
-int
+static int
 lexsort(const void *c1, const void *c2)
 {
 	char	**cpp1, **cpp2;
@@ -139,7 +140,7 @@ lexsort(const void *c1, const void *c2)
 	return(strcmp(*cpp1, *cpp2));
 }
 
-int
+static int
 search_ignore(char *key)
 {
 	int	ub, lb;
