@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.15 2007/12/08 18:35:53 dsl Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.16 2009/08/13 03:53:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.15 2007/12/08 18:35:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.16 2009/08/13 03:53:13 matt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_execfmt.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.15 2007/12/08 18:35:53 dsl Exp $")
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
 
+#ifdef EXEC_AOUT
 /*
  * exec_aout_prep_oldzmagic():
  *	Prepare the vmcmds to build a vmspace for an old ZMAGIC
@@ -174,3 +179,4 @@ exec_aout_prep_oldomagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
 	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
+#endif /* EXEC_AOUT */
