@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.19 2009/08/13 03:50:02 dholland Exp $	*/
+/*	$NetBSD: touch.c,v 1.20 2009/08/13 04:09:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.19 2009/08/13 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: touch.c,v 1.20 2009/08/13 04:09:53 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,9 +54,12 @@ __RCSID("$NetBSD: touch.c,v 1.19 2009/08/13 03:50:02 dholland Exp $");
  * Iterate through errors
  */
 #define EITERATE(p, fv, i)	for (p = fv[i]; p < fv[i+1]; p++)
-#define ECITERATE(ei, p, lb)	for (ei = lb; p = errors[ei],ei < nerrors; ei++)
+#define ECITERATE(ei, p, lb, errs, nerrs) \
+	for (ei = lb; p = errs[ei],ei < nerrs; ei++)
 
-#define FILEITERATE(fi, lb)	for (fi = lb; fi <= nfiles; fi++)
+#define FILEITERATE(fi, lb, num) \
+	for (fi = lb; fi <= num; fi++)
+
 static int touchstatus = Q_YES;
 
 extern char *suffixlist;
@@ -87,28 +90,28 @@ static void errorprint(FILE *, Eptr, boolean);
 static int probethisfile(const char *);
 
 void
-findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
+findfiles(int my_nerrors, Eptr *my_errors, int *r_nfiles, Eptr ***r_files)
 {
-	int nfiles;
-	Eptr **files;
+	int my_nfiles;
+	Eptr **my_files;
 
 	const char *name;
 	int ei;
 	int fi;
 	Eptr errorp;
 
-	nfiles = countfiles(errors);
+	my_nfiles = countfiles(my_errors);
 
-	files = (Eptr**)Calloc(nfiles + 3, sizeof (Eptr*));
-	touchedfiles = (boolean *)Calloc(nfiles+3, sizeof(boolean));
+	my_files = (Eptr**)Calloc(my_nfiles + 3, sizeof (Eptr*));
+	touchedfiles = (boolean *)Calloc(my_nfiles+3, sizeof(boolean));
 	/*
 	 * Now, partition off the error messages
 	 * into those that are synchronization, discarded or
 	 * not specific to any file, and those that were
 	 * nulled or true errors.
 	 */
-	files[0] = &errors[0];
-	ECITERATE(ei, errorp, 0) {
+	my_files[0] = &my_errors[0];
+	ECITERATE(ei, errorp, 0, my_errors, my_nerrors) {
 		if ( ! (NOTSORTABLE(errorp->error_e_class)))
 			break;
 	}
@@ -116,24 +119,24 @@ findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
 	 * Now, and partition off all error messages
 	 * for a given file.
 	 */
-	files[1] = &errors[ei];
+	my_files[1] = &my_errors[ei];
 	touchedfiles[0] = touchedfiles[1] = FALSE;
 	name = "\1";
 	fi = 1;
-	ECITERATE(ei, errorp, ei) {
+	ECITERATE(ei, errorp, ei, my_errors, my_nerrors) {
 		if ((errorp->error_e_class == C_NULLED)
 		    || (errorp->error_e_class == C_TRUE)) {
 			if (strcmp(errorp->error_text[0], name) != 0) {
 				name = errorp->error_text[0];
 				touchedfiles[fi] = FALSE;
-				files[fi] = &errors[ei];
+				my_files[fi] = &my_errors[ei];
 				fi++;
 			}
 		}
 	}
-	files[fi] = &errors[nerrors];
-	*r_nfiles = nfiles;
-	*r_files = files;
+	my_files[fi] = &my_errors[my_nerrors];
+	*r_nfiles = my_nfiles;
+	*r_files = my_files;
 }
 
 static int
@@ -142,19 +145,19 @@ countfiles(Eptr *errors)
 	const char *name;
 	int ei;
 	Eptr errorp;
-	int nfiles;
+	int my_nfiles;
 
-	nfiles = 0;
+	my_nfiles = 0;
 	name = "\1";
-	ECITERATE(ei, errorp, 0) {
+	ECITERATE(ei, errorp, 0, errors, nerrors) {
 		if (SORTABLE(errorp->error_e_class)) {
 			if (strcmp(errorp->error_text[0],name) != 0) {
-				nfiles++;
+				my_nfiles++;
 				name = errorp->error_text[0];
 			}
 		}
 	}
-	return (nfiles);
+	return (my_nfiles);
 }
 
 char *class_table[] = {
@@ -172,7 +175,7 @@ char *class_table[] = {
 int class_count[C_LAST - C_FIRST] = {0};
 
 void
-filenames(int nfiles, Eptr **files)
+filenames(int my_nfiles, Eptr **my_files)
 {
 	int fi;
 	const char *sep = " ";
@@ -182,20 +185,20 @@ filenames(int nfiles, Eptr **files)
 	 * first, simply dump out errors that
 	 * don't pertain to any file
 	 */
-	someerrors = nopertain(files);
+	someerrors = nopertain(my_files);
 
-	if (nfiles) {
+	if (my_nfiles) {
 		someerrors++;
 		if (terse)
-			fprintf(stdout, "%d file%s", nfiles, plural(nfiles));
+			fprintf(stdout, "%d file%s", my_nfiles, plural(my_nfiles));
 		else
 			fprintf(stdout, "%d file%s contain%s errors",
-				nfiles, plural(nfiles), verbform(nfiles));
+				my_nfiles, plural(my_nfiles), verbform(my_nfiles));
 		if (!terse) {
-			FILEITERATE(fi, 1) {
+			FILEITERATE(fi, 1, my_nfiles) {
 				fprintf(stdout, "%s\"%s\" (%d)",
-					sep, (*files[fi])->error_text[0],
-					(int)(files[fi+1] - files[fi]));
+					sep, (*my_files[fi])->error_text[0],
+					(int)(my_files[fi+1] - my_files[fi]));
 				sep = ", ";
 			}
 		}
@@ -209,14 +212,14 @@ filenames(int nfiles, Eptr **files)
  * Dump out errors that don't pertain to any file
  */
 static int
-nopertain(Eptr **files)
+nopertain(Eptr **my_files)
 {
 	int type;
 	int someerrors = 0;
 	Eptr *erpp;
 	Eptr errorp;
 
-	if (files[1] - files[0] <= 0)
+	if (my_files[1] - my_files[0] <= 0)
 		return (0);
 	for (type = C_UNKNOWN; NOTSORTABLE(type); type++) {
 		if (class_count[type] <= 0)
@@ -229,7 +232,7 @@ nopertain(Eptr **files)
 		} else {
 			fprintf(stdout, "\n\t%d %s errors follow\n",
 				class_count[type], class_table[type]);
-			EITERATE(erpp, files, 0) {
+			EITERATE(erpp, my_files, 0) {
 				errorp = *erpp;
 				if (errorp->error_e_class == type) {
 					errorprint(stdout, errorp, TRUE);
@@ -243,7 +246,7 @@ nopertain(Eptr **files)
 extern boolean notouch;
 
 boolean
-touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
+touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 {
 	const char *name;
 	Eptr errorp;
@@ -254,9 +257,9 @@ touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 	int n_pissed_on;	/* # of file touched*/
 	int spread;
 
-	FILEITERATE(fi, 1) {
-		name = (*files[fi])->error_text[0];
-		spread = files[fi+1] - files[fi];
+	FILEITERATE(fi, 1, my_nfiles) {
+		name = (*my_files[fi])->error_text[0];
+		spread = my_files[fi+1] - my_files[fi];
 		fprintf(stdout, terse
 			? "\"%s\" has %d error%s, "
 			: "\nFile \"%s\" has %d error%s.\n"
@@ -267,7 +270,7 @@ touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 		 * get inserted into the file.
 		 */
 		ntrueerrors = 0;
-		EITERATE(erpp, files, fi) {
+		EITERATE(erpp, my_files, fi) {
 			errorp = *erpp;
 			if (errorp->error_e_class == C_TRUE)
 				ntrueerrors++;
@@ -277,11 +280,11 @@ touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 		  : "\t%d of these errors can be inserted into the file.\n",
 			ntrueerrors);
 
-		hackfile(name, files, fi, ntrueerrors);
+		hackfile(name, my_files, fi, ntrueerrors);
 	}
 	scribbled = FALSE;
 	n_pissed_on = 0;
-	FILEITERATE(fi, 1) {
+	FILEITERATE(fi, 1, my_nfiles) {
 		scribbled |= touchedfiles[fi];
 		n_pissed_on++;
 	}
@@ -299,7 +302,7 @@ touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 }
 
 static void
-hackfile(const char *name, Eptr **files, int ix, int nerrors)
+hackfile(const char *name, Eptr **my_files, int ix, int my_nerrors)
 {
 	boolean previewed;
 	int errordest;	/* where errors go */
@@ -308,7 +311,7 @@ hackfile(const char *name, Eptr **files, int ix, int nerrors)
 		previewed = FALSE;
 		errordest = TOSTDOUT;
 	} else {
-		previewed = preview(name, nerrors, files, ix);
+		previewed = preview(name, my_nerrors, my_files, ix);
 		errordest = settotouch(name);
 	}
 
@@ -318,7 +321,7 @@ hackfile(const char *name, Eptr **files, int ix, int nerrors)
 	if (previewed && (errordest == TOSTDOUT))
 		return;
 
-	diverterrors(name, errordest, files, ix, previewed, nerrors);
+	diverterrors(name, errordest, my_files, ix, previewed, my_nerrors);
 
 	if (errordest == TOTHEFILE) {
 		/*
@@ -329,12 +332,12 @@ hackfile(const char *name, Eptr **files, int ix, int nerrors)
 }
 
 static boolean
-preview(const char *name, int nerrors, Eptr **files, int ix)
+preview(const char *name, int my_nerrors, Eptr **my_files, int ix)
 {
 	int back;
 	Eptr *erpp;
 
-	if (nerrors <= 0)
+	if (my_nerrors <= 0)
 		return (FALSE);
 	back = FALSE;
 	if (query) {
@@ -344,7 +347,7 @@ preview(const char *name, int nerrors, Eptr **files, int ix)
 		case Q_YES:
 		case Q_yes:
 			back = TRUE;
-			EITERATE(erpp, files, ix) {
+			EITERATE(erpp, my_files, ix) {
 				errorprint(stdout, *erpp, TRUE);
 			}
 			if (!terse)
@@ -408,16 +411,16 @@ settotouch(const char *name)
 }
 
 static void
-diverterrors(const char *name, int dest, Eptr **files, int ix,
+diverterrors(const char *name, int dest, Eptr **my_files, int ix,
 	     boolean previewed, int nterrors)
 {
-	int nerrors;
+	int my_nerrors;
 	Eptr *erpp;
 	Eptr errorp;
 
-	nerrors = files[ix+1] - files[ix];
+	my_nerrors = my_files[ix+1] - my_files[ix];
 
-	if ((nerrors != nterrors)
+	if ((my_nerrors != nterrors)
 	    && (!previewed)) {
 		fprintf(stdout, terse
 			? "Uninserted errors\n"
@@ -425,7 +428,7 @@ diverterrors(const char *name, int dest, Eptr **files, int ix,
 			name);
 	}
 
-	EITERATE(erpp, files, ix) {
+	EITERATE(erpp, my_files, ix) {
 		errorp = *erpp;
 		if (errorp->error_e_class != C_TRUE) {
 			if (previewed || touchstatus == Q_NO)
@@ -515,7 +518,7 @@ execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 		fprintf(stdout, "You touched file(s):");
 		sep = " ";
 	}
-	FILEITERATE(fi, 1) {
+	FILEITERATE(fi, 1, nfiles) {
 		if (!touchedfiles[fi])
 			continue;
 		p = *(files[fi]);
@@ -611,7 +614,7 @@ writetouched(int overwrite)
 {
 	int nread;
 	FILE *localfile;
-	FILE *tmpfile;
+	FILE *temp;
 	int botch;
 	int oktorm;
 
@@ -638,24 +641,24 @@ writetouched(int overwrite)
 	if (botch == 0 && overwrite) {
 		botch = 0;
 		localfile = NULL;
-		tmpfile = NULL;
+		temp = NULL;
 		if ((localfile = fopen(o_name, "w")) == NULL) {
 			fprintf(stderr,
 				"%s: Can't open file \"%s\" to overwrite.\n",
 				processname, o_name);
 			botch++;
 		}
-		if ((tmpfile = fopen(n_name, "r")) == NULL) {
+		if ((temp = fopen(n_name, "r")) == NULL) {
 			fprintf(stderr, "%s: Can't open file \"%s\" to read.\n",
 				processname, n_name);
 			botch++;
 		}
 		if (!botch)
-			oktorm = mustoverwrite(localfile, tmpfile);
+			oktorm = mustoverwrite(localfile, temp);
 		if (localfile != NULL)
 			fclose(localfile);
-		if (tmpfile != NULL)
-			fclose(tmpfile);
+		if (temp != NULL)
+			fclose(temp);
 	}
 	if (oktorm == 0) {
 		fprintf(stderr, "%s: Catastrophe: A copy of \"%s\": was saved in \"%s\"\n",
@@ -674,11 +677,11 @@ writetouched(int overwrite)
  * return 1 if the tmpfile can be removed after writing it out
  */
 static int
-mustoverwrite(FILE *preciousfile, FILE *tmpfile)
+mustoverwrite(FILE *preciousfile, FILE *temp)
 {
 	int nread;
 
-	while ((nread = fread(edbuf, 1, sizeof(edbuf), tmpfile)) != 0) {
+	while ((nread = fread(edbuf, 1, sizeof(edbuf), temp)) != 0) {
 		if (mustwrite(edbuf, nread, preciousfile) == 0)
 			return (0);
 	}
