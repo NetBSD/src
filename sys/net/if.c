@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.233 2009/02/12 19:05:36 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.234 2009/08/13 00:23:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.233 2009/02/12 19:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.234 2009/08/13 00:23:31 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -159,11 +159,16 @@ static int	if_clone_list(struct if_clonereq *);
 static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 static int if_cloners_count;
 
+static uint64_t index_gen;
+static kmutex_t index_gen_mtx;
+
 #ifdef PFIL_HOOKS
 struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
 #endif
 
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
+static void sysctl_sndq_setup(struct sysctllog **, const char *,
+    struct ifaltq *);
 
 /*
  * Network interface utility routines.
@@ -175,6 +180,7 @@ void
 ifinit(void)
 {
 
+	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
 }
@@ -447,6 +453,10 @@ if_attach(struct ifnet *ifp)
 	if (ifp->if_ioctl == NULL)
 		ifp->if_ioctl = ifioctl_common;
 
+	mutex_enter(&index_gen_mtx);
+	ifp->if_index_gen = index_gen++;
+	mutex_exit(&index_gen_mtx);
+
 	ifp->if_index = if_index;
 	if (ifindex2ifnet == NULL)
 		if_index++;
@@ -524,6 +534,9 @@ if_attach(struct ifnet *ifp)
 
 	if (ifp->if_snd.ifq_maxlen == 0)
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
+
+	sysctl_sndq_setup(&ifp->if_sysctl_log, ifp->if_xname, &ifp->if_snd);
+
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
@@ -666,6 +679,7 @@ if_detach(struct ifnet *ifp)
 		altq_detach(&ifp->if_snd);
 #endif
 
+	sysctl_teardown(&ifp->if_sysctl_log);
 
 #if NCARP > 0
 	/* Remove the interface from any carp group it is a part of.  */
@@ -1873,6 +1887,73 @@ ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
 	return 0;
 }
 
+
+static void
+sysctl_sndq_setup(struct sysctllog **clog, const char *ifname,
+    struct ifaltq *ifq)
+{
+	const struct sysctlnode *cnode, *rnode;
+
+	if (sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "interfaces",
+		       SYSCTL_DESCR("Per-interface controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, ifname,
+		       SYSCTL_DESCR("Interface controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "sndq",
+		       SYSCTL_DESCR("Interface output queue controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "len",
+		       SYSCTL_DESCR("Current output queue length"),
+		       NULL, 0, &ifq->ifq_len, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxlen",
+		       SYSCTL_DESCR("Maximum allowed output queue length"),
+		       NULL, 0, &ifq->ifq_maxlen, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "drops",
+		       SYSCTL_DESCR("Packets dropped due to full output queue"),
+		       NULL, 0, &ifq->ifq_drops, 0,
+		       CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	return;
+bad:
+	printf("%s: could not attach sysctl nodes\n", ifname);
+	return;
+}
 
 #if defined(INET) || defined(INET6)
 static void
