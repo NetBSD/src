@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2006/09/26 13:11:59 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.15 2009/08/13 05:15:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,6 @@
 #define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	cobalt
 #define	MACHINE		"cobalt"
-#define	MID_MACHINE	MID_MIPS
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */

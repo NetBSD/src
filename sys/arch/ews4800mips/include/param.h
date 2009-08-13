@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2009/08/13 05:15:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,6 @@
 #define	MACHINE_ARCH	"mipseb"
 #define	_MACHINE	ews4800mips
 #define	MACHINE		"ews4800mips"
-#define	MID_MACHINE	MID_MIPS
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
