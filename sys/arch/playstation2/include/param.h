@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2006/09/26 13:11:59 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2009/08/13 05:15:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,6 @@
 #define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	playstation2
 #define	MACHINE		"playstation2"
-#define	MID_MACHINE	MID_PMAX	/* XXX no suitable MID for mipsel */
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
