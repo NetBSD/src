@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 2003/08/07 11:13:37 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 2009/08/13 03:07:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,8 +33,8 @@
 
 #include <paths.h>
 
-#define	IG_FILE1	"llib-lc"
-#define	IG_FILE2	"llib-port"
-#define	IG_FILE3	"/usr/lib/llib-lc"
-#define	IG_FILE4	"/usr/lib/llib-port"
-#define	TMPFILE		"ErrorXXXXXX"
+#define IG_FILE1	"llib-lc"
+#define IG_FILE2	"llib-port"
+#define IG_FILE3	"/usr/lib/llib-lc"
+#define IG_FILE4	"/usr/lib/llib-port"
+#define TMPFILE		"ErrorXXXXXX"
