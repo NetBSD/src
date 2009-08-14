@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10 2008/04/08 06:12:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10.16.1 2009/08/14 21:04:49 snj Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -653,7 +653,8 @@ void ndis_attach_pci(struct device *parent, struct device *self, void *aux)
 	sc->ndis_rl = rl;
 	sc->ndis_rescnt = rl->cprl_count;
 	
-	kthread_create(ndis_attach, (void *)sc);
+	kthread_create(PRI_NONE, 0, NULL, ndis_attach, (void *)sc,
+	    NULL, "ndis_attach");
 }
 #endif /* __NetBSD__ */
 
