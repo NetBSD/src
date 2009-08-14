@@ -1401,6 +1401,12 @@ static int radeon_do_cleanup_cp(struct drm_device * dev)
 			dev_priv->gart_info.addr = 0;
 		}
 	}
+
+	if (dev_priv->mmio)
+		drm_rmmap(dev, dev_priv->mmio);
+	if (dev_priv->fb_map)
+		drm_rmmap(dev, dev_priv->fb_map);
+
 	/* only clear to the start of flags */
 	memset(dev_priv, 0, offsetof(drm_radeon_private_t, flags));
 
@@ -2021,7 +2027,6 @@ int radeon_driver_load(struct drm_device *dev, unsigned long flags)
 int radeon_driver_firstopen(struct drm_device *dev)
 {
 	int ret;
-	drm_local_map_t *map;
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
 	dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;
@@ -2035,7 +2040,7 @@ int radeon_driver_firstopen(struct drm_device *dev)
 	dev_priv->fb_aper_offset = drm_get_resource_start(dev, 0);
 	ret = drm_addmap(dev, dev_priv->fb_aper_offset,
 			 drm_get_resource_len(dev, 0), _DRM_FRAME_BUFFER,
-			 _DRM_WRITE_COMBINING, &map);
+			 _DRM_WRITE_COMBINING, &dev_priv->fb_map);
 	if (ret != 0)
 		return ret;
 
