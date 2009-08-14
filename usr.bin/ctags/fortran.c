@@ -1,4 +1,4 @@
-/*	$NetBSD: fortran.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $	*/
+/*	$NetBSD: fortran.c,v 1.10.38.1 2009/08/14 20:39:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fortran.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: fortran.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $");
+__RCSID("$NetBSD: fortran.c,v 1.10.38.1 2009/08/14 20:39:03 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ PF_funcs(void)
 			continue;
 		*cp = EOS;
 		(void)strlcpy(tok, lbp, sizeof(tok));
-		getline();			/* process line for ex(1) */
+		get_line();			/* process line for ex(1) */
 		pfnote(tok, lineno);
 		pfcnt = YES;
 	}

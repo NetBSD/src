@@ -1,4 +1,4 @@
-/*	$NetBSD: lisp.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $	*/
+/*	$NetBSD: lisp.c,v 1.10.38.1 2009/08/14 20:39:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lisp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: lisp.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $");
+__RCSID("$NetBSD: lisp.c,v 1.10.38.1 2009/08/14 20:39:03 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ l_entries(void)
 		*cp = EOS;
 		(void)strlcpy(tok, lbp, sizeof(tok));
 		*cp = savedc;
-		getline();
+		get_line();
 		pfnote(tok, lineno);
 	}
 	/*NOTREACHED*/

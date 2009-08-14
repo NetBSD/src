@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2005/02/17 17:29:58 xtraeme Exp $	*/
+/*	$NetBSD: print.c,v 1.9.38.1 2009/08/14 20:39:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.3 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: print.c,v 1.9 2005/02/17 17:29:58 xtraeme Exp $");
+__RCSID("$NetBSD: print.c,v 1.9.38.1 2009/08/14 20:39:03 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,12 +51,12 @@ __RCSID("$NetBSD: print.c,v 1.9 2005/02/17 17:29:58 xtraeme Exp $");
 #include "ctags.h"
 
 /*
- * getline --
+ * get_line --
  *	get the line the token of interest occurred on,
  *	prepare it for printing.
  */
 void
-getline(void)
+get_line(void)
 {
 	long	saveftell;
 	int	c;
