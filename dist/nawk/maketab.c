@@ -106,7 +106,7 @@ struct xx
 	{ CALL, "call", "call" },
 	{ ARG, "arg", "arg" },
 	{ VARNF, "getnf", "NF" },
-	{ GETLINE, "getline", "getline" },
+	{ GETLINE, "get_line", "getline" },
 	{ GENSUB, "gensub", "gensub" },
 	{ 0, "", "" },
 };
