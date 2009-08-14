@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.58 2009/08/07 23:00:44 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.59 2009/08/14 22:03:44 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -393,7 +393,7 @@ external/bsd/dhcpcd/dist/if-pref.c		dhcpcd-5-0-1
 external/bsd/dhcpcd/dist/if-pref.h		dhcpcd-5-0-1
 external/bsd/dhcpcd/dist/ipv4ll.c		dhcpcd-5-0-1
 external/bsd/dhcpcd/dist/ipv4ll.h		dhcpcd-5-0-1
-external/bsd/dhcpcd/dist/logger.c		removed            
+external/bsd/dhcpcd/dist/logger.c		removed
 external/bsd/dhcpcd/dist/logger.h		removed
 external/bsd/dhcpcd/dist/net.c			dhcpcd-5-0-1
 external/bsd/dhcpcd/dist/net.h			dhcpcd-5-0-1
@@ -1995,4 +1995,205 @@ sys/arch/sparc64/conf/std.sparc64-32		1.3
 	This file is included after std.sparc64, so no need to include
 	Atheros HAL options in this file.
 	[nakayama, ticket #906]
+
+bin/pax/options.c				1.105
+dist/nawk/maketab.c				1.12
+dist/nawk/proctab.c				1.11
+dist/nawk/proto.h				1.9
+dist/nawk/run.c					1.29
+usr.bin/ctags/C.c				1.19
+usr.bin/ctags/ctags.h				1.9
+usr.bin/ctags/fortran.c				1.11
+usr.bin/ctags/lisp.c				1.11
+usr.bin/ctags/print.c				1.10
+usr.bin/ctags/yacc.c				1.12
+usr.bin/gencat/gencat.c				1.30
+
+	Rename internal getline() function to get_line() so it does
+	conflict with -current's getline(3) libc function.
+	[roy, ticket #885]
+
+sbin/ifconfig/parse.c				1.14
+
+	Both carp.c and vlan.c expect for a keyword with a KW_T_STR-type
+	value to put a prop_string_t into the environment, but the
+	keyword parser put a prop_data_t into the environment, instead.
+	That broke the -vlanif and -carpdev keywords and defied developer
+	expectations.  Let's put a prop_string_t into the environment.
+	[dyoung, ticket #878]
+
+sbin/ifconfig/vlan.c				1.13
+
+	Don't require a "vlan" argument with "-vlanif".  "ifconfig vlan0
+	-vlanif" now works as one would expect.
+	[dyoung, ticket #879]
+
+sbin/dkctl/dkctl.8				1.19, 1.20
+sbin/dkctl/dkctl.c				1.18
+
+	In dkctl(8), list the partition types addwedge understands, so
+	you don't need to utsl to find out what strings to use.
+	Fixes PR 37252
+
+	Make dkctl conform to its man page and print the device name on
+	addwedge when the addition was successful (as well as indicating
+	success).
+	[spz, ticket #887]
+
+sys/dev/if_ndis/if_ndis.c			1.28
+sys/dev/if_ndis/if_ndis_pci.c			1.16
+
+	Make ndis actually compile.  Fixes PR/39034.
+	[dsl, ticket #888]
+
+sys/kern/kern_resource.c			1.152
+
+	PR/41489: setpriority(2) returns EACCES instead of EPERM.
+	Per discussion on the PR's audit trail, put back original checks
+	for now.
+	[dsl, ticket #893]
+
+lib/libc/sys/semctl.2				1.18
+lib/libc/sys/shmctl.2				1.20
+
+	Fix pastos. PR 41605.
+	[dholland, ticket #894]
+
+sys/arch/amd64/amd64/trap.c			1.58
+sys/arch/hp300/include/cpu.h			1.60
+sys/arch/news68k/include/cpu.h			1.34
+sys/arch/powerpc/powerpc/trap.c			1.130 via patch
+
+	amd64: T_ASTFLT|T_USER: check for LP_OWEUPC in l_lpflag, not
+	l_flag.  Also, flag unset was on p->p_flag.  Luckily, it did not
+	corrupt the p_flag, because we don't have LW_ flag matching
+	LP_OWEUPC.
+
+	Fix a few more l_pflag and LP_OWEUPC confusions.
+	[rmind, ticket #897]
+
+sys/dev/ic/i82365.c				1.108
+
+	Fix pcic kthread creation timing.  Fixes PR kern/41791 and
+	PR port-hpcmips/41164.
+	[jun, ticket #899]
+
+sys/external/bsd/drm/dist/bsd-core/drmP.h	1.13
+sys/external/bsd/drm/dist/bsd-core/drm_fops.c	1.6
+sys/external/bsd/drm/dist/shared-core/radeon_cp.c 1.6
+sys/external/bsd/drm/dist/shared-core/radeon_drv.h 1.6
+sys/external/bsd/drm/dist/shared-core/radeon_irq.c 1.3
+
+	Remove some netbsd specific code that does nothing.
+	--
+	- Stash the fbmap into the radeon dev_priv handle so we can ..
+	- Call drm_rmmap() in radeon_do_cleanup_cp on the two maps
+	  created
+	- In several vblank functions, check to make sure we have
+	  mappings enabled before doing something that might blow up.
+	  Fixes PR kern/41715.
+	[mrg, ticket #907]
+
+doc/3RDPARTY					1.713
+
+	Update to reflect new open-source ath hal
+	[sborrill, ticket #908]
+
+sys/arch/macppc/Makefile			1.9
+
+	Update path to the atheros HAL.
+	[sborrill, ticket #909]
+
+sys/external/isc/atheros_hal/ic/ah_osdep.c	1.3
+sys/contrib/dev/ath/COPYRIGHT			removed
+sys/contrib/dev/ath/README			removed
+sys/contrib/dev/ath/ah.h			removed
+sys/contrib/dev/ath/ah_desc.h			removed
+sys/contrib/dev/ath/ah_devid.h			removed
+sys/contrib/dev/ath/ah_soc.h			removed
+sys/contrib/dev/ath/version.h			removed
+sys/contrib/dev/ath/netbsd/Makefile.ath.inc	removed
+sys/contrib/dev/ath/netbsd/ah_if.m		removed
+sys/contrib/dev/ath/netbsd/ah_osdep.c		removed
+sys/contrib/dev/ath/netbsd/ah_osdep.h		removed
+sys/contrib/dev/ath/public/alpha-elf.hal.o.uu	removed
+sys/contrib/dev/ath/public/alpha-elf.inc	removed
+sys/contrib/dev/ath/public/alpha-elf.opt_ah.h	removed
+sys/contrib/dev/ath/public/ap30.hal.o.uu	removed
+sys/contrib/dev/ath/public/ap30.inc		removed
+sys/contrib/dev/ath/public/ap30.opt_ah.h	removed
+sys/contrib/dev/ath/public/ap43.hal.o.uu	removed
+sys/contrib/dev/ath/public/ap43.inc		removed
+sys/contrib/dev/ath/public/ap43.opt_ah.h	removed
+sys/contrib/dev/ath/public/ap51.hal.o.uu	removed
+sys/contrib/dev/ath/public/ap51.inc		removed
+sys/contrib/dev/ath/public/ap51.opt_ah.h	removed
+sys/contrib/dev/ath/public/ap61.hal.o.uu	removed
+sys/contrib/dev/ath/public/ap61.inc		removed
+sys/contrib/dev/ath/public/ap61.opt_ah.h	removed
+sys/contrib/dev/ath/public/arm9-le-thumb-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/arm9-le-thumb-elf.inc removed
+sys/contrib/dev/ath/public/arm9-le-thumb-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/armv4-be-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/armv4-be-elf.inc	removed
+sys/contrib/dev/ath/public/armv4-be-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/armv4-le-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/armv4-le-elf.inc	removed
+sys/contrib/dev/ath/public/armv4-le-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/i386-elf.hal.o.uu	removed
+sys/contrib/dev/ath/public/i386-elf.inc		removed
+sys/contrib/dev/ath/public/i386-elf.opt_ah.h	removed
+sys/contrib/dev/ath/public/mips-be-elf.hal.o.uu	removed
+sys/contrib/dev/ath/public/mips-be-elf.inc	removed
+sys/contrib/dev/ath/public/mips-be-elf.opt_ah.h	removed
+sys/contrib/dev/ath/public/mips-le-elf.hal.o.uu	removed
+sys/contrib/dev/ath/public/mips-le-elf.inc	removed
+sys/contrib/dev/ath/public/mips-le-elf.opt_ah.h	removed
+sys/contrib/dev/ath/public/mips1-be-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/mips1-be-elf.inc	removed
+sys/contrib/dev/ath/public/mips1-be-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/mips1-le-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/mips1-le-elf.inc	removed
+sys/contrib/dev/ath/public/mips1-le-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/mipsisa32-be-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/mipsisa32-be-elf.inc	removed
+sys/contrib/dev/ath/public/mipsisa32-be-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/mipsisa32-le-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/mipsisa32-le-elf.inc	removed
+sys/contrib/dev/ath/public/mipsisa32-le-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/powerpc-be-eabi.hal.o.uu removed
+sys/contrib/dev/ath/public/powerpc-be-eabi.inc	removed
+sys/contrib/dev/ath/public/powerpc-be-eabi.opt_ah.h removed
+sys/contrib/dev/ath/public/powerpc-be-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/powerpc-be-elf.inc removed
+sys/contrib/dev/ath/public/powerpc-be-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/powerpc-le-eabi.hal.o.uu removed
+sys/contrib/dev/ath/public/powerpc-le-eabi.inc	removed
+sys/contrib/dev/ath/public/powerpc-le-eabi.opt_ah.h removed
+sys/contrib/dev/ath/public/sh4-le-elf.hal.o.uu	removed
+sys/contrib/dev/ath/public/sh4-le-elf.inc	removed
+sys/contrib/dev/ath/public/sh4-le-elf.opt_ah.h	removed
+sys/contrib/dev/ath/public/sparc-be-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/sparc-be-elf.inc	removed
+sys/contrib/dev/ath/public/sparc-be-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/sparc64-be-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/sparc64-be-elf.inc	removed
+sys/contrib/dev/ath/public/sparc64-be-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/x86_64-elf.hal.o.uu	removed
+sys/contrib/dev/ath/public/x86_64-elf.inc	removed
+sys/contrib/dev/ath/public/x86_64-elf.opt_ah.h	removed
+sys/contrib/dev/ath/public/xscale-be-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/xscale-be-elf.inc	removed
+sys/contrib/dev/ath/public/xscale-be-elf.opt_ah.h removed
+sys/contrib/dev/ath/public/xscale-le-elf.hal.o.uu removed
+sys/contrib/dev/ath/public/xscale-le-elf.inc	removed
+sys/contrib/dev/ath/public/xscale-le-elf.opt_ah.h removed
+
+	NetBSD doesn't support alq(9) and hence ATHHAL_DEBUG_ALQ is
+	unusable.  Nevertheless, remove reference to old binary HAL
+	header file in the ATHHAL_DEBUG_ALQ section.
+
+	With this final reference to sys/contrib/dev gone, remove
+	the binary atheros HAL.
+	[sborrill, ticket #910]
 
