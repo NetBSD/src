@@ -1,0 +1,5 @@
+# $NetBSD: files.keylock,v 1.1 2009/08/14 21:17:22 mbalmer Exp $
+
+defflag secmodel_keylock
+
+file	secmodel/keylock/secmodel_keylock.c	secmodel_keylock
