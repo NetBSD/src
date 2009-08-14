@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52.6.1 2009/07/21 00:37:29 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.52.6.2 2009/08/14 21:32:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.6.1 2009/07/21 00:37:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.6.2 2009/08/14 21:32:18 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -387,10 +387,11 @@ copyfault:
 	case T_ARITHTRAP|T_USER:
 	case T_XMM|T_USER:
 		/* Already handled by fputrap(), fall through. */
-	case T_ASTFLT|T_USER:		/* Allow process switch */
+	case T_ASTFLT|T_USER:
+		/* Allow process switch. */
 		uvmexp.softs++;
-		if (l->l_flag & LP_OWEUPC) {
-			p->p_flag &= ~LP_OWEUPC;
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
 		/* Allow a forced task switch. */
