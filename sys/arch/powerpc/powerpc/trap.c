@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128 2008/10/25 09:10:07 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.128.8.1 2009/08/14 21:34:32 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2008/10/25 09:10:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.8.1 2009/08/14 21:34:32 snj Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -342,7 +342,7 @@ trap(struct trapframe *frame)
 		ci->ci_astpending = 0;		/* we are about to do it */
 		uvmexp.softs++;
 		if (l->l_pflag & LP_OWEUPC) {
-			l->l_flag &= ~LP_OWEUPC;
+			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(p);
 		}
 		/* Check whether we are being preempted. */
