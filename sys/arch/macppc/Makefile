@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/10/25 22:27:37 apb Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2009/08/14 21:46:15 snj Exp $
 
 # Makefile for macppc tags file
 
@@ -7,9 +7,9 @@ SIMACPPC=	${SYSDIR}/arch/macppc/macppc/*.[ch] \
 		${SYSDIR}/arch/macppc/include/*.h \
 		${SYSDIR}/arch/macppc/dev/*.[ch] \
 		${SYSDIR}/arch/macppc/pci/*.[ch] \
-		${SYSDIR}/contrib/dev/ath/*.[ch] \
-		${SYSDIR}/contrib/dev/ath/netbsd/*.[ch] \
-		${SYSDIR}/contrib/dev/ath/public/*.[ch]
+		${SYSDIR}/external/isc/atheros_hal/dist/*.[ch] \
+		${SYSDIR}/external/isc/atheros_hal/dist/*/*.[ch] \
+		${SYSDIR}/external/isc/atheros_hal/ic/*.[ch]
 SIMACPPC+=	${SYSDIR}/arch/powerpc/powerpc/*.[ch] \
 		${SYSDIR}/arch/powerpc/include/*.h \
 		${SYSDIR}/arch/powerpc/pci/*.[ch]
