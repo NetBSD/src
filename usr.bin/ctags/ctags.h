@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.h,v 1.8 2005/02/17 17:29:58 xtraeme Exp $	*/
+/*	$NetBSD: ctags.h,v 1.8.34.1 2009/08/14 20:32:22 snj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -80,7 +80,7 @@ extern char    *lbp;
 extern char	searchar;		/* ex search character */
 
 extern int	cicmp(const char *);
-extern void	getline(void);
+extern void	get_line(void);
 extern void	pfnote(const char *, int);
 extern int	skip_key(int);
 extern void	put_entries(NODE *);
