@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.3 2009/08/07 06:19:14 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.4 2009/08/14 22:11:37 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -48,4 +48,86 @@ sys/dev/pci/twa.c				1.32
 
 	Disable completely bogus DIAGNOSTIC check.
 	[bouyer, ticket #886]
+
+bin/pax/options.c				1.105
+dist/nawk/maketab.c				1.12
+dist/nawk/proctab.c				1.11
+dist/nawk/proto.h				1.9
+dist/nawk/run.c					1.29
+usr.bin/ctags/C.c				1.19
+usr.bin/ctags/ctags.h				1.9
+usr.bin/ctags/fortran.c				1.11
+usr.bin/ctags/lisp.c				1.11
+usr.bin/ctags/print.c				1.10
+usr.bin/ctags/yacc.c				1.12
+usr.bin/gencat/gencat.c				1.30
+
+	Rename internal getline() function to get_line() so it does
+	conflict with -current's getline(3) libc function.
+	[roy, ticket #885]
+
+sbin/ifconfig/parse.c				1.14
+
+	Both carp.c and vlan.c expect for a keyword with a KW_T_STR-type
+	value to put a prop_string_t into the environment, but the
+	keyword parser put a prop_data_t into the environment, instead.
+	That broke the -vlanif and -carpdev keywords and defied developer
+	expectations.  Let's put a prop_string_t into the environment.
+	[dyoung, ticket #878]
+
+sbin/ifconfig/vlan.c				1.13
+
+	Don't require a "vlan" argument with "-vlanif".  "ifconfig vlan0
+	-vlanif" now works as one would expect.
+	[dyoung, ticket #879]
+
+sbin/dkctl/dkctl.8				1.19, 1.20
+sbin/dkctl/dkctl.c				1.18
+
+	In dkctl(8), list the partition types addwedge understands, so
+	you don't need to utsl to find out what strings to use.  Fixes
+	PR 37252
+
+	Make dkctl conform to its man page and print the device name on
+	addwedge when the addition was successful (as well as indicating
+	success).
+	[spz, ticket #887]
+
+sys/dev/if_ndis/if_ndis.c			1.28
+sys/dev/if_ndis/if_ndis_pci.c			1.16
+
+	Make ndis actually compile.  Fixes PR/39034.
+	[dsl, ticket #888]
+
+sys/kern/kern_resource.c			1.152
+
+	PR/41489: setpriority(2) returns EACCES instead of EPERM.
+	Per discussion on the PR's audit trail, put back original checks
+	for now.
+	[dsl, ticket #893]
+
+lib/libc/sys/semctl.2				1.18
+lib/libc/sys/shmctl.2				1.20
+
+	Fix pastos. PR 41605.
+	[dholland, ticket #894]
+
+sys/arch/amd64/amd64/trap.c			1.58
+sys/arch/hp300/include/cpu.h			1.60
+sys/arch/news68k/include/cpu.h			1.34
+sys/arch/powerpc/powerpc/trap.c			1.130 via patch
+
+	amd64: T_ASTFLT|T_USER: check for LP_OWEUPC in l_lpflag, not
+	l_flag.  Also, flag unset was on p->p_flag.  Luckily, it did
+	not corrupt the p_flag, because we don't have LW_ flag matching
+	LP_OWEUPC.
+
+	Fix a few more l_pflag and LP_OWEUPC confusions.
+	[rmind, ticket #897]
+
+sys/dev/ic/i82365.c				1.108
+
+	Fix pcic kthread creation timing.  Fixes PR kern/41791 and
+	PR port-hpcmips/41164.
+	[jun, ticket #899]
 
