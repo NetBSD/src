@@ -1,17 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.9 2009/08/12 21:20:41 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2009/08/14 19:23:55 dsl Exp $
 
 SRCS+=	ffs.S
 SRCS+=	strlen.S
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 SRCS+=	random.S
 
-SRCS+=  __main.c __assert.c
-SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
-SRCS+=	bswap16.c bswap32.c bswap64.c
-SRCS+=	memchr.c memcmp.c memset.c
-SRCS+=	strcat.c strcmp.c strcpy.c strtoul.c strcasecmp.c
-SRCS+=	strncasecmp.c strncmp.c strncpy.c
-SRCS+=	scanc.c skpc.c
+SRCS+=	bswap16.c bswap32.c
 
 SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S umul.S urem.S
 SRCS+=	mul.S saveregs.S umul.S
