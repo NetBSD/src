@@ -1,4 +1,4 @@
-#      $NetBSD: 3RDPARTY,v 1.647.2.8 2009/06/28 01:57:51 snj Exp $
+#      $NetBSD: 3RDPARTY,v 1.647.2.9 2009/08/14 21:45:15 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -67,16 +67,16 @@ NetBSD, no local changes should be ever needed.  Always direct them to the
 maintainer for integration in official releases.
 
 Package:	ath-hal
-Version:	0.9.17.2
-Current Vers:	0.9.17.2
+Version:	FreeBSD SVN revision number 185521
+Current Vers:	FreeBSD SVN revision number 185521
 Maintainer:	Sam Leffler <sam@errno.com>
 Archive Site:	none
 Home Page:	none
 Mailing List:	none
-Responsible:	sam, dyoung, gdamore
-License:	Redistribution without changes (binary only)
+Responsible:	sam, alc
+License:	BSD-like (2 clause), ISC
 Notes:
-The HAL is binary only, and located in src/sys/contrib/dev/ath
+The HAL is located in src/sys/external/isc/atheros_hal
 
 Package:	bc
 Version:	1.06
