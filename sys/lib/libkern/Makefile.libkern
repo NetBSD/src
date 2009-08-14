@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.4 2009/08/12 21:18:42 dsl Exp $
+#	$NetBSD: Makefile.libkern,v 1.5 2009/08/14 19:23:53 dsl Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -50,17 +50,29 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 .endif
 
 # Other stuff
+SRCS+=	__assert.c __main.c
 SRCS+=	__cmsg_alignbytes.c cpuset.c inet_addr.c intoa.c
+SRCS+=	bswap64.c
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c
 SRCS+=	pmatch.c arc4random.c bcd.c mcount.c mertwist.c crc32.c
 
 SRCS+=	strsep.c strstr.c
 SRCS+=	strlcpy.c strlcat.c
+
+SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
 SRCS+=	memcpy.c memmove.c
 SRCS+=	strchr.c strrchr.c
+SRCS+=	memcmp.c memset.c 
 SRCS+=	popcount32.c popcount64.c
+SRCS+=	strtoul.c strtoll.c strtoull.c strtoumax.c
 
-SRCS+=	strtoll.c strtoull.c strtoumax.c
+SRCS+=	scanc.c skpc.c
+SRCS+=	random.c
+
+SRCS+=	memchr.c
+SRCS+=	strcat.c strcmp.c strcpy.c strlen.c
+SRCS+=	strncmp.c strncpy.c
+SRCS+=	strcasecmp.c strncasecmp.c
 
 SRCS+=	xlat_mbr_fstype.c
 
@@ -70,11 +82,8 @@ SRCS+=	heapsort.c ptree.c rb.c
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
 
 # Remove from SRCS the .c files for any .S files added by the MD makefiles,
-# also remove from SRCS the .c files for the .S and .c files in NO_SRCS.
-#
-# Usage: 
-# Add .S files to NO_SRSC when another .S file provides the entry points.
-# Add .c files to NO_SRSC when another .c file provides the entry points.
+# also remove from SRCS the .c files for the .c files in NO_SRCS.
+# (Unlike libc, we don't worry about lint)
 
 .for check_file in ${SRCS:M*.S} ${NO_SRCS}
 unwanted_file := ${SRCS:M${check_file:.S=.c}}
