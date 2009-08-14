@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.952 2009/08/09 06:40:10 kiyohara Exp $
+#	$NetBSD: files,v 1.953 2009/08/14 21:17:21 mbalmer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -24,6 +24,7 @@ defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
 defflag				MODULAR
+defflag				KEYLOCK
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -1371,6 +1372,7 @@ file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
 file	dev/firmload.c			firmload
 file	dev/fss.c			fss			needs-count
+file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag

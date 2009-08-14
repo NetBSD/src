@@ -1,4 +1,4 @@
-# $NetBSD: files.gpio,v 1.7 2009/08/09 08:18:00 mbalmer Exp $
+# $NetBSD: files.gpio,v 1.8 2009/08/14 21:17:22 mbalmer Exp $
 
 define	gpio {[offset = -1], [mask = 0]}
 
@@ -19,3 +19,8 @@ file	dev/gpio/gpioiic.c			gpioiic
 device	gpioow: onewirebus, onewire_bitbang
 attach	gpioow at gpio
 file	dev/gpio/gpioow.c			gpioow
+
+# Keylock
+device	gpiolock: gpiobus
+attach	gpiolock at gpio
+file	dev/gpio/gpiolock.c			gpiolock
