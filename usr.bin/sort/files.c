@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.30 2009/08/15 16:10:40 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.31 2009/08/15 16:50:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.30 2009/08/15 16:10:40 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.31 2009/08/15 16:50:29 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -278,8 +278,7 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 			if (flno >= 0)
 				fstack[flno].fp = 0;
 		} else {
-			((char *) line->data)[60] = '\000';
-			warnx("makekey: line too long: ignoring %.100s...",
+			warnx("makekey: line too long: ignoring %.60s...",
 			    (char *)line->data);
 		}
 	}
@@ -291,18 +290,22 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 static int
 seq(FILE *fp, DBT *line)
 {
-	static u_char *buf, flag = 1;
+	static u_char *buf;
+	static size_t buf_size = DEFLLEN;
 	u_char *end, *pos;
 	int c;
-	u_char *nlinebuf;
+	u_char *new_buf;
 
-	if (flag) {
+	if (!buf) {
 		/* one-time initialization */
-		flag = 0;
-		buf = linebuf;
+		buf = malloc(buf_size);
+		if (!buf)
+		    err(2, "malloc of linebuf for %zu bytes failed",
+			    buf_size);
 		line->data = buf;
 	}
-	end = buf + linebuf_size;
+
+	end = buf + buf_size;
 	pos = buf;
 	while ((c = getc(fp)) != EOF) {
 		if ((*pos++ = c) == REC_D) {
@@ -310,25 +313,28 @@ seq(FILE *fp, DBT *line)
 			return (0);
 		}
 		if (pos == end) {
-			nlinebuf = realloc(linebuf, linebuf_size * 2);
-			if (!nlinebuf)
-				err(2, "realloc of linebuf to %lu bytes failed",
-					(unsigned long)linebuf_size * 2);
-			linebuf = nlinebuf;
-			linebuf_size *= 2;
+			/* Long line - double size of buffer */
+			buf_size *= 2;
+			new_buf = realloc(buf, buf_size);
+			if (!new_buf)
+				err(2, "realloc of linebuf to %zu bytes failed",
+					buf_size);
 		
-			end = linebuf + linebuf_size;
-			pos = linebuf + (pos - buf);
-			line->data = buf = linebuf;
-			continue;
+			end = new_buf + buf_size;
+			pos = new_buf + (pos - buf);
+			buf = new_buf;
+			line->data = buf;
 		}
 	}
+
 	if (pos != buf) {
+		/* EOF part way through line - add line terminator */
 		*pos++ = REC_D;
 		line->size = pos - buf;
 		return (0);
-	} else
-		return (EOF);
+	}
+
+	return (EOF);
 }
 
 /*

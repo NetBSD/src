@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.19 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.20 2009/08/15 16:50:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.19 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.20 2009/08/15 16:50:29 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -106,12 +106,6 @@ fmerge(int binno, int top, struct filelist *filelist, int nfiles,
 		if (!buffer)
 			err(2, "fmerge(): malloc");
 		memset(buffer, 0, bufsize);
-
-		if (!linebuf && !SINGL_FLD) {
-			linebuf_size = DEFLLEN;
-			linebuf = malloc(linebuf_size);
-			memset(linebuf, 0, linebuf_size);
-		}
 	}
 
 	if (binno >= 0)
@@ -343,8 +337,6 @@ order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 	int c;
 	RECHEADER *crec, *prec, *trec;
 
-	if (!SINGL_FLD)
-		linebuf = malloc(DEFLLEN);
 	buffer = malloc(2 * (DEFLLEN + sizeof(TRECHEADER)));
 	crec = (RECHEADER *) buffer;
 	crec_end = buffer + DEFLLEN + sizeof(TRECHEADER);

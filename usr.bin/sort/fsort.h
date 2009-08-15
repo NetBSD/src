@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.13 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: fsort.h,v 1.14 2009/08/15 16:50:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -84,8 +84,8 @@
  */
 #define MERGE_FNUM	16
 
-extern u_char *buffer, *linebuf;
-extern size_t bufsize, linebuf_size;
+extern u_char *buffer;
+extern size_t bufsize;
 
 /* temp files in the stack have a file descriptor, a largest bin (maxb)
  * which becomes the last non-empty bin (lastb) when the actual largest
