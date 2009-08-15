@@ -1,4 +1,4 @@
-/* $NetBSD: keylock.c,v 1.1 2009/08/14 21:17:22 mbalmer Exp $ */
+/* $NetBSD: keylock.c,v 1.2 2009/08/15 09:43:58 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -31,8 +31,9 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/keylock.h>
 #include <sys/sysctl.h>
+
+#include <dev/keylock.h>
 
 #ifdef secmodel_keylock
 #include <sys/kauth.h>
