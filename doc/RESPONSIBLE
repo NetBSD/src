@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.89 2009/07/26 14:34:10 mbalmer Exp $
+#	$NetBSD: RESPONSIBLE,v 1.90 2009/08/15 08:35:22 mbalmer Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -107,6 +107,7 @@ gpio		mbalmer
 ide/atapi	bouyer
 irda		augustss, kenh
 isdn		martin
+keylock		mbalmer
 mca		jdolecek
 net80211	dyoung
 onewire		riz
