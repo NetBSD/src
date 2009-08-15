@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.330 2009/03/18 17:06:45 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.331 2009/08/15 23:44:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.330 2009/03/18 17:06:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.331 2009/08/15 23:44:59 matt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.330 2009/03/18 17:06:45 cegger Exp $")
 #include <sys/conf.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/extent.h>
 #include <sys/file.h>
 #include <sys/kcore.h>
