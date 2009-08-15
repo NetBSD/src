@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1290 2009/08/03 19:43:58 rmind Exp $
+#	$NetBSD: mi,v 1.1291 2009/08/15 05:50:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1997,6 +1997,7 @@
 ./usr/include/sys/kcore.h			comp-c-include
 ./usr/include/sys/kernel.h			comp-obsolete		obsolete
 ./usr/include/sys/kgdb.h			comp-c-include
+./usr/include/sys/keylock.h			comp-c-include
 ./usr/include/sys/kmem.h			comp-c-include
 ./usr/include/sys/ksem.h			comp-c-include
 ./usr/include/sys/ksyms.h			comp-c-include
