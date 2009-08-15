@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.10 2009/08/09 07:10:13 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.11 2009/08/15 10:18:17 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.10 2009/08/09 07:10:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.11 2009/08/15 10:18:17 kiyohara Exp $");
 
 #include "opt_gxio.h"
 
@@ -299,7 +299,7 @@ gxio_config_expansion(char *expansion)
 #ifdef GXIO_DEFAULT_EXPANSION
 		printf("configure default expansion (%s)\n",
 		    GXIO_DEFAULT_EXPANSION);
-		expansion = GXIO_DEFAULT_EXPANSION;
+		expansion = __UNCONST(GXIO_DEFAULT_EXPANSION);
 #else
 		return;
 #endif
