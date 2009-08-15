@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.20 2009/04/13 11:07:59 lukem Exp $	*/
+/*	$NetBSD: fields.c,v 1.21 2009/08/15 09:48:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.20 2009/04/13 11:07:59 lukem Exp $");
+__RCSID("$NetBSD: fields.c,v 1.21 2009/08/15 09:48:46 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -81,8 +81,8 @@ __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 	while ((*(pos+1) != '\0') && !((FLD_D | REC_D_F) & l_d_mask[*++pos]));\
 }
 		
-static u_char *enterfield __P((u_char *, u_char *, struct field *, int));
-static u_char *number __P((u_char *, u_char *, u_char *, u_char *, int));
+static u_char *enterfield(u_char *, u_char *, struct field *, int);
+static u_char *number(u_char *, u_char *, u_char *, u_char *, int);
 
 #define DECIMAL '.'
 #define OFFSET 128
@@ -97,11 +97,8 @@ u_char fnum[NBINS], rnum[NBINS];
  * followed by the original line.
  */
 length_t
-enterkey(keybuf, line, size, fieldtable)
-	RECHEADER *keybuf;	/* pointer to start of key */
-	DBT *line;
-	int size;
-	struct field fieldtable[];
+enterkey(RECHEADER *keybuf, DBT *line, int size, struct field fieldtable[])
+	/* keybuf:	 pointer to start of key */
 {
 	int i;
 	u_char *l_d_mask;
@@ -168,10 +165,7 @@ enterkey(keybuf, line, size, fieldtable)
  * constructs a field (as defined by -k) within a key
  */
 static u_char *
-enterfield(tablepos, endkey, cur_fld, gflags)
-	struct field *cur_fld;
-	u_char *tablepos, *endkey;
-	int gflags;
+enterfield(u_char *tablepos, u_char *endkey, struct field *cur_fld, int gflags)
 {
 	u_char *start, *end, *lineend, *mask, *lweight;
 	struct column icol, tcol;
@@ -239,9 +233,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
  */
 
 static u_char *
-number(pos, bufend, line, lineend, Rflag)
-	u_char *line, *pos, *bufend, *lineend;
-	int Rflag;
+number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 {
 	int or_sign, parity = 0;
 	int expincr = 1, exponent = -1;
@@ -342,7 +334,7 @@ number(pos, bufend, line, lineend, Rflag)
  * rnum over (0,254) -> (255,REC_D+1),(REC_D-1,0))
  */
 void
-num_init()
+num_init(void)
 {
 	int i;
 	TENS[0] = REC_D <=128 ? 130 - '0' : 2 - '0';

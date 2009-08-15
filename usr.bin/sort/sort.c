@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.48 2009/04/13 11:07:59 lukem Exp $	*/
+/*	$NetBSD: sort.c,v 1.49 2009/08/15 09:48:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.48 2009/04/13 11:07:59 lukem Exp $");
+__RCSID("$NetBSD: sort.c,v 1.49 2009/08/15 09:48:46 dsl Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -110,16 +110,14 @@ static char toutpath[MAXPATHLEN];
 
 const char *tmpdir;	/* where temporary files should be put */
 
-static void cleanup __P((void));
-static void onsignal __P((int));
-static void usage __P((const char *));
+static void cleanup(void);
+static void onsignal(int);
+static void usage(const char *);
 
-int main __P((int argc, char **argv));
+int main(int argc, char **argv);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	get_func_t get;
 	int ch, i, stdinflag = 0, tmp = 0;
@@ -357,22 +355,20 @@ main(argc, argv)
 }
 
 static void
-onsignal(sig)
-	int sig;
+onsignal(int sig)
 {
 	cleanup();
 }
 
 static void
-cleanup()
+cleanup(void)
 {
 	if (toutpath[0])
 		(void)unlink(toutpath);
 }
 
 static void
-usage(msg)
-	const char *msg;
+usage(const char *msg)
 {
 	if (msg != NULL)
 		(void)fprintf(stderr, "%s: %s\n", getprogname(), msg);

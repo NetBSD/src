@@ -1,4 +1,4 @@
-/*	$NetBSD: tmp.c,v 1.13 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: tmp.c,v 1.14 2009/08/15 09:48:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tmp.c,v 1.13 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: tmp.c,v 1.14 2009/08/15 09:48:46 dsl Exp $");
 __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 #define _NAME_TMP "sort.XXXXXXXX"
 
 FILE *
-ftmp()
+ftmp(void)
 {
 	sigset_t set, oset;
 	FILE *fp;
