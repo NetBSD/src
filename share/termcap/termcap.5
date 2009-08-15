@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.5,v 1.34 2003/08/07 10:31:32 agc Exp $
+.\"	$NetBSD: termcap.5,v 1.35 2009/08/15 14:18:05 joerg Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,18 +79,16 @@ in 132-column mode would be
 .Dq vt100-w .
 The following suffixes should be used where possible:
 .Pp
-.Bd -filled -offset indent
 .Bl -column indent "With automatic margins (usually default)xx"
-.Sy Suffix	Meaning	Example
--w	Wide mode (more than 80 columns)	vt100-w
--am	With automatic margins (usually default)	vt100-am
--nam	Without automatic margins	vt100-nam
-.Pf \- Ar n Ta No "Number of lines on screen	aaa-60"
--na	No arrow keys (leave them in local)	concept100-na
-.Pf \- Ar \&np Ta No "Number of pages of memory	concept100-4p"
--rv	Reverse video	concept100-rv
+.It Sy Suffix	Meaning	Example
+.It -w	Wide mode (more than 80 columns)	vt100-w
+.It -am	With automatic margins (usually default)	vt100-am
+.It -nam	Without automatic margins	vt100-nam
+.It \- Ns Ar n Ta No "Number of lines on screen	aaa-60"
+.It -na	No arrow keys (leave them in local)	concept100-na
+.It \- Ns Ar \&np Ta No "Number of pages of memory	concept100-4p"
+.It -rv	Reverse video	concept100-rv
 .El
-.Ed
 .Sh CAPABILITIES
 The characters in the
 .Em Notes
@@ -114,8 +112,7 @@ or are subsumed by other capabilities.
 New software should not rely on them at all.
 .Pp
 .Bl -column indent indent indent
-.Sy Name	Type	Notes	Description
-functions
+.It Sy Name	Type	Notes	Description
 .It "!1	str		Sent by shifted save key."
 .It "!2	str		Sent by shifted suspend key."
 .It "!3	str		Sent by shifted undo key."
@@ -1319,13 +1316,13 @@ If there are function keys such as f0, f1, ..., f9, the codes they send
 can be given as
 .Sy \&k0 ,
 .Sy \&k1 ,
-...,
+\&...,
 .Sy \&k9 .
 If these keys have labels other than the default f0 through f9, the labels
 can be given as
 .Sy \&l0 ,
 .Sy \&l1 ,
-...,
+\&...,
 .Sy \&l9 .
 The codes transmitted by certain other special keys can be given:
 .Sy \&kH
