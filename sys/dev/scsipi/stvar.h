@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.19 2009/05/12 14:44:31 cegger Exp $ */
+/*	$NetBSD: stvar.h,v 1.20 2009/08/15 12:44:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,5 +181,6 @@ struct st_softc {
 void	stattach(device_t, struct st_softc *, void *);
 int	stactivate(device_t, enum devact);
 int	stdetach(device_t, int);
+int	st_mode_select(struct st_softc *, int);
 
 extern struct cfdriver st_cd;
