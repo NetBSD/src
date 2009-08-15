@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.28 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.29 2009/08/15 14:31:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.28 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.29 2009/08/15 14:31:48 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -150,14 +150,14 @@ makeline(int flno, int top, struct filelist *filelist, int nfiles,
 {
 	static u_char *obufend;
 	static size_t osz;
-	char *pos;
+	u_char *pos;
 	static int filenum = 0, overflow = 0;
 	static FILE *fp = 0;
 	int c;
 
 	c = 0;		/* XXXGCC -Wuninitialized [pmppc] */
 
-	pos = (char *) recbuf->data;
+	pos = recbuf->data;
 	if (overflow) {
 		/*
 		 * Buffer shortage is solved by either of two ways:
@@ -184,25 +184,26 @@ makeline(int flno, int top, struct filelist *filelist, int nfiles,
 				err(2, "%s", filelist->names[filenum]);
 			filenum++;
 		}
-		while ((pos < (char *)bufend) && ((c = getc(fp)) != EOF)) {
-			if ((*pos++ = c) == REC_D) {
+		while ((pos < bufend) && ((c = getc(fp)) != EOF)) {
+			*pos++ = c;
+			if (c == REC_D) {
 				recbuf->offset = 0;
-				recbuf->length = pos - (char *) recbuf->data;
+				recbuf->length = pos - recbuf->data;
 				return (0);
 			}
 		}
-		if (pos >= (char *)bufend) {
+		if (pos >= bufend) {
 			if (recbuf->data < bufend) {
 				overflow = 1;
 				obufend = bufend;
-				osz = (pos - (char *) recbuf->data);
+				osz = (pos - recbuf->data);
 			}
 			return (BUFFEND);
 		} else if (c == EOF) {
-			if (recbuf->data != (u_char *) pos) {
+			if (recbuf->data != pos) {
 				*pos++ = REC_D;
 				recbuf->offset = 0;
-				recbuf->length = pos - (char *) recbuf->data;
+				recbuf->length = pos - recbuf->data;
 				return (0);
 			}
 			FCLOSE(fp);
