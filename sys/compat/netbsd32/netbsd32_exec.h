@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.29 2009/03/15 15:54:43 cegger Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.30 2009/08/15 23:39:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,6 +30,10 @@
 #define	_NETBSD32_EXEC_H_
 
 #include <compat/netbsd32/netbsd32.h>
+
+#ifdef EXEC_AOUT
+#include <sys/exec_aout.h>
+#endif
 
 /* from <sys/exec_aout.h> */
 /*
