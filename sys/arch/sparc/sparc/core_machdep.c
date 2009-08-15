@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.2 2009/03/18 16:00:14 cegger Exp $ */
+/*	$NetBSD: core_machdep.c,v 1.3 2009/08/15 23:45:00 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2009/03/18 16:00:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3 2009/08/15 23:45:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2009/03/18 16:00:14 cegger Exp 
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/simplelock.h>
+
+#include <sys/exec_aout.h>
 
 #include <uvm/uvm_extern.h>
 

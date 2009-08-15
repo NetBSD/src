@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 2009/07/21 15:10:39 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.235 2009/08/15 23:44:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2009/07/21 15:10:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2009/08/15 23:44:59 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2009/07/21 15:10:39 tsutsui Exp $"
 #include <machine/bus.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
