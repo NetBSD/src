@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.29 2009/08/15 14:31:48 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.30 2009/08/15 16:10:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,13 +65,13 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.29 2009/08/15 14:31:48 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.30 2009/08/15 16:10:40 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <string.h>
 
-static int	seq(FILE *, DBT *, DBT *);
+static int	seq(FILE *, DBT *);
 
 /*
  * this is the subroutine for file management for fsort().
@@ -235,7 +235,7 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 {
 	static int filenum = 0;
 	static FILE *dbdesc = 0;
-	static DBT dbkey[1], line[1];
+	static DBT line[1];
 	static int overflow = 0;
 	int c;
 
@@ -260,7 +260,7 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 				err(2, "%s", filelist->names[filenum]);
 			filenum++;
 		}
-		if (!(c = seq(dbdesc, line, dbkey))) {
+		if (!(c = seq(dbdesc, line))) {
 			if ((signed)line->size > bufend - recbuf->data) {
 				overflow = 1;
 			} else {
@@ -286,10 +286,10 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 }
 
 /*
- * get a key/line pair from fp
+ * get a line pair from fp
  */
 static int
-seq(FILE *fp, DBT *line, DBT *key)
+seq(FILE *fp, DBT *line)
 {
 	static u_char *buf, flag = 1;
 	u_char *end, *pos;
