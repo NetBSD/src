@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1292 2009/08/15 09:52:57 mbalmer Exp $
+#	$NetBSD: mi,v 1.1293 2009/08/15 16:21:04 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -57,6 +57,7 @@
 ./usr/bin/msgmerge				comp-c-bin
 ./usr/bin/msgunfmt				comp-c-bin
 ./usr/bin/msguniq				comp-c-bin
+./usr/bin/nbperf				comp-util-bin
 ./usr/bin/nm					comp-util-bin		bfd
 ./usr/bin/objcopy				comp-util-bin		bfd
 ./usr/bin/objdump				comp-util-bin		bfd
@@ -2984,6 +2985,7 @@
 ./usr/libdata/debug/usr/bin/msgs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/msgunfmt.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msguniq.debug	comp-c-debug		debug
+./usr/libdata/debug/usr/bin/nbperf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nbsvtool.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netgroup.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/bin/netpgp.debug	comp-crypto-debug	crypto,debug
@@ -3811,6 +3813,7 @@
 ./usr/share/man/cat1/msg_table_add.0		comp-obsolete		obsolete
 ./usr/share/man/cat1/msg_window.0		comp-obsolete		obsolete
 ./usr/share/man/cat1/msgc.0			comp-c-catman		.cat
+./usr/share/man/cat1/nbperf.0			comp-util-catman	.cat
 ./usr/share/man/cat1/nm.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/objcopy.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/objdump.0			comp-util-catman	bfd,.cat
@@ -9406,6 +9409,7 @@
 ./usr/share/man/html1/menuc.html		comp-c-htmlman		html
 ./usr/share/man/html1/mkstr.html		comp-c-htmlman		html
 ./usr/share/man/html1/msgc.html			comp-c-htmlman		html
+./usr/share/man/html1/nbperf.html		comp-util-htmlman	html
 ./usr/share/man/html1/nm.html			comp-util-htmlman	bfd,html
 ./usr/share/man/html1/objcopy.html		comp-util-htmlman	bfd,html
 ./usr/share/man/html1/objdump.html		comp-util-htmlman	bfd,html
@@ -14765,6 +14769,7 @@
 ./usr/share/man/man1/msg_table_add.1		comp-obsolete		obsolete
 ./usr/share/man/man1/msg_window.1		comp-obsolete		obsolete
 ./usr/share/man/man1/msgc.1			comp-c-man		.man
+./usr/share/man/man1/nbperf.1			comp-util-man		.man
 ./usr/share/man/man1/nm.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/objcopy.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/objdump.1			comp-util-man		bfd,.man
