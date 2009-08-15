@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.14 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: append.c,v 1.15 2009/08/15 09:48:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.14 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: append.c,v 1.15 2009/08/15 09:48:46 dsl Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -91,13 +91,8 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
  * copy sorted lines to output; check for uniqueness
  */
 void
-append(keylist, nelem, depth, fp, put, ftbl)
-	const u_char **keylist;
-	int nelem;
-	int depth;
-	FILE *fp;
-	put_func_t put;
-	struct field *ftbl;
+append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
+    struct field *ftbl)
 {
 	u_char *wts, *wts1;
 	int n, odepth = depth;
@@ -192,12 +187,8 @@ append(keylist, nelem, depth, fp, put, ftbl)
  * output the already sorted eol bin.
  */
 void
-rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
-	u_char *buffer;
-	int infl0;
-	int binno, nfiles;
-	FILE *outfp;
-	u_char *bufend;
+rd_append(int binno, int infl0, int nfiles, FILE *outfp, u_char *buffer,
+    u_char *bufend)
 {
 	RECHEADER *rec;
 
@@ -217,8 +208,7 @@ rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
  * append plain text--used after sorting the biggest bin.
  */
 void
-concat(a, b)
-	FILE *a, *b;
+concat(FILE *a, FILE *b)
 {
         int nread;
         char buffer[4096];

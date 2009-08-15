@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.18 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: msort.c,v 1.19 2009/08/15 09:48:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.18 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: msort.c,v 1.19 2009/08/15 09:48:46 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -84,19 +84,13 @@ typedef struct mfile {
 
 static u_char *wts, *wts1 = NULL;
 
-static int cmp __P((RECHEADER *, RECHEADER *));
-static int insert __P((struct mfile **, struct mfile **, int, int));
+static int cmp(RECHEADER *, RECHEADER *);
+static int insert(struct mfile **, struct mfile **, int, int);
 static void merge(int, int, get_func_t, FILE *, put_func_t, struct field *);
 
 void
-fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
-	int binno, top;
-	struct filelist *filelist;
-	int nfiles;
-	get_func_t get;
-	FILE *outfp;
-	put_func_t fput;
-	struct field *ftbl;
+fmerge(int binno, int top, struct filelist *filelist, int nfiles,
+    get_func_t get, FILE *outfp, put_func_t fput, struct field *ftbl)
 {
 	FILE *tout;
 	int i, j, last;
@@ -162,12 +156,8 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 }
 
 static void
-merge(infl0, nfiles, get, outfp, put, ftbl)
-	int infl0, nfiles;
-	get_func_t get;
-	put_func_t put;
-	FILE *outfp;
-	struct field *ftbl;
+merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
+    struct field *ftbl)
 {
 	int c, i, j, nf = nfiles;
 	struct mfile *flistb[MERGE_FNUM], **flist = flistb, *cfile;
@@ -275,9 +265,8 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
  * otherwise just inserts *rec in flist.
  */
 static int
-insert(flist, rec, ttop, delete)
-	struct mfile **flist, **rec;
-	int delete, ttop;			/* delete = 0 or 1 */
+insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
+	/* delete, ttop:			 delete = 0 or 1 */
 {
 	struct mfile *tmprec = *rec;
 	int mid, top = ttop, bot = 0, cmpv = 1;
@@ -348,10 +337,7 @@ insert(flist, rec, ttop, delete)
  * check order on one file
  */
 void
-order(filelist, get, ftbl)
-	struct filelist *filelist;
-	get_func_t get;
-	struct field *ftbl;
+order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 {
 	u_char *crec_end, *prec_end, *trec_end;
 	int c;
@@ -396,8 +382,7 @@ order(filelist, get, ftbl)
 }
 
 static int
-cmp(rec1, rec2)
-	RECHEADER *rec1, *rec2;
+cmp(RECHEADER *rec1, RECHEADER *rec2)
 {
 	int r;
 	u_char *pos1, *pos2, *end;
