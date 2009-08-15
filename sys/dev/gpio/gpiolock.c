@@ -1,4 +1,4 @@
-/* $NetBSD: gpiolock.c,v 1.1 2009/08/14 21:17:22 mbalmer Exp $ */
+/* $NetBSD: gpiolock.c,v 1.2 2009/08/15 09:43:59 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -34,9 +34,9 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
-#include <sys/keylock.h>
 
 #include <dev/gpio/gpiovar.h>
+#include <dev/keylock.h>
 
 #define GPIOLOCK_MAXPINS	4
 #define GPIOLOCK_MINPINS	2
