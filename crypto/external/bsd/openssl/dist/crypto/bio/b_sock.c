@@ -663,6 +663,8 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	    	else if (h[0]=='*' && h[1]=='\0')
 			h=NULL;
 		}
+	/* XXX: below we cast to sockaddr_in! */
+	hint.ai_family = AF_INET;
 
 	if ((*p_getaddrinfo.f)(h,p,&hint,&res)) break;
 	server = *res->ai_addr;
