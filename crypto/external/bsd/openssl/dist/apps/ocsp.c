@@ -226,7 +226,7 @@ int MAIN(int argc, char **argv)
 			if (args[1])
 				{
 				args++;
-				port = *args;
+				port = BUF_strdup(*args);
 				}
 			else badarg = 1;
 			}
