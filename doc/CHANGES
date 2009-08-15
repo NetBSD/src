@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1275 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1276 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -366,3 +366,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mips a.out support: removed [matt 20090812]
 	secmode_keylock, keylock, gpiolock(4): Add support for multi-position
 		keylocks. [mbalmer 20090814]
+	nbperf(1): A minimal perfect hash function generator. [joerg 20090815]
