@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.126 2008/11/19 18:36:10 ad Exp $	*/
+/*	$NetBSD: exec.h,v 1.127 2009/08/15 23:46:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -276,7 +276,5 @@ int	execve1(struct lwp *, const char *, char * const *, char * const *,
 extern int	maxexec;
 
 #endif /* _KERNEL */
-
-#include <sys/exec_aout.h>
 
 #endif /* !_SYS_EXEC_H_ */
