@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2009/02/13 22:41:02 apb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2009/08/15 19:16:45 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2009/02/13 22:41:02 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2009/08/15 19:16:45 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -579,7 +579,7 @@ identifycpu(void)
 	memset(board_str, 0, sizeof(board_str));
 	memset(cpu_str, 0, sizeof(cpu_str));
 	memset(mmu_str, 0, sizeof(mmu_str));
-	memset(fpu_str, 0, sizeof(cpu_str));
+	memset(fpu_str, 0, sizeof(fpu_str));
 
 	/* Fill in the CPU string. */
 	switch (cputype) {
