@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.22 2009/08/15 18:40:01 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.23 2009/08/15 21:26:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.22 2009/08/15 18:40:01 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.23 2009/08/15 21:26:32 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -136,30 +136,32 @@ enterkey(RECHEADER *keybuf, const u_char *keybuf_end, u_char *line_data, size_t 
 	if (clist[0].start < line_data)
 		clist[0].start++;
 
+	/*
+	 * We write the sort keys (concatenated) followed by the
+	 * original line data (for output) as the 'keybuf' data.
+	 * keybuf->length is the number of key bytes + data bytes.
+	 * keybuf->offset is the number of key bytes.
+	 * We add a record separator (usually \n) after the key in case
+	 * (as is usual) we need to preserve the order of equal lines,
+	 * and for 'sort -u'.
+	 */
 	keypos = keybuf->data;
-	endkey = keybuf_end - line_size;
-	for (ftpos = fieldtable + 1; ftpos->icol.num; ftpos++)
+	endkey = keybuf_end - line_size - 1;
+	if (endkey <= keypos)
+		/* No room for any key bytes */
+		return 1;
+
+	for (ftpos = fieldtable + 1; ftpos->icol.num; ftpos++) {
 		if ((keypos = enterfield(keypos, endkey, ftpos,
 		    fieldtable->flags)) == NULL)
 			return (1);
+	}
+	*keypos++ = REC_D;
 
 	keybuf->offset = keypos - keybuf->data;
 	keybuf->length = keybuf->offset + line_size;
-	if (keybuf->data + keybuf->length > keybuf_end) {
-		/* line too long for buffer */
-		return (1);
-	}
 
-	/*
-	 * Make [s]radixsort() only sort by relevant part of key if:
-	 * 1. we want to choose unique items by relevant field[s]
-	 * 2. we want stable sort and so the items should be sorted only by
-	 *    the relevant field[s]
-	 */
-	if (UNIQUE || (stable_sort && keybuf->offset < line_size))
-		keypos[-1] = REC_D;
-
-	memcpy(keybuf->data + keybuf->offset, line_data, line_size);
+	memcpy(keypos, line_data, line_size);
 	return (0);
 }
 
@@ -332,7 +334,7 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend, int Rfl
 }
 
 /* This forces a gap around the record delimiter
- * Thus fnum has vaues over (0,254) -> ((0,REC_D-1),(REC_D+1,255));
+ * Thus fnum has values over (0,254) -> ((0,REC_D-1),(REC_D+1,255));
  * rnum over (0,254) -> (255,REC_D+1),(REC_D-1,0))
  */
 void
