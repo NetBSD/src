@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.16 2009/08/13 03:53:13 matt Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.17 2009/08/15 23:39:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.16 2009/08/13 03:53:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.17 2009/08/15 23:39:35 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.16 2009/08/13 03:53:13 matt Exp $"
 #include <sys/resourcevar.h>
 
 #ifdef EXEC_AOUT
+#include <sys/exec_aout.h>
+
 /*
  * exec_aout_prep_oldzmagic():
  *	Prepare the vmcmds to build a vmspace for an old ZMAGIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.65 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.66 2009/08/15 23:39:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.65 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.66 2009/08/15 23:39:35 matt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_execfmt.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.65 2008/04/28 20:23:43 martin 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_elf.h>
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>

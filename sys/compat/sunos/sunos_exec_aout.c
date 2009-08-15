@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.17 2007/12/08 18:36:23 dsl Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.18 2009/08/15 23:39:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.17 2007/12/08 18:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.18 2009/08/15 23:39:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.17 2007/12/08 18:36:23 dsl Exp
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
 
