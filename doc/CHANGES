@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1274 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1275 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -364,3 +364,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	voyagerfb(8): a driver for the Gdium Liberty 1000's video controller
 		[macallan 20090812]
 	mips a.out support: removed [matt 20090812]
+	secmode_keylock, keylock, gpiolock(4): Add support for multi-position
+		keylocks. [mbalmer 20090814]
