@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 2009/03/22 19:57:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 2009/08/15 23:44:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2009/03/22 19:57:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2009/08/15 23:44:58 matt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2009/03/22 19:57:11 ad Exp $");
 #include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>	/* for MID_* */
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/mbuf.h>

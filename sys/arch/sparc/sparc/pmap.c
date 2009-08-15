@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.331 2009/05/31 20:28:51 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.332 2009/08/15 23:45:00 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.331 2009/05/31 20:28:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.332 2009/08/15 23:45:00 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.331 2009/05/31 20:28:51 mrg Exp $");
 #include <sys/kcore.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
+
+#include <sys/exec_aout.h>		/* for MID_* */
 
 #include <uvm/uvm.h>
 

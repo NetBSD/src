@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.2 2008/11/21 20:21:47 he Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.3 2009/08/15 23:45:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2008/11/21 20:21:47 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3 2009/08/15 23:45:00 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2008/11/21 20:21:47 he Exp $");
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+
+#include <sys/exec_aout.h>
 
 #include <uvm/uvm_extern.h>
 

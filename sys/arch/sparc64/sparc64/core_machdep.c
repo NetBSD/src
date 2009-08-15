@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp $ */
+/*	$NetBSD: core_machdep.c,v 1.2 2009/08/15 23:45:00 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2009/08/15 23:45:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp $");
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
+
+#include <sys/exec_aout.h>
 
 #include <uvm/uvm_extern.h>
 
