@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.31 2009/08/15 16:50:29 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.32 2009/08/15 18:40:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,13 +65,13 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.31 2009/08/15 16:50:29 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.32 2009/08/15 18:40:01 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <string.h>
 
-static int	seq(FILE *, DBT *);
+static ssize_t	seq(FILE *, u_char **);
 
 /*
  * this is the subroutine for file management for fsort().
@@ -174,6 +174,7 @@ makeline(int flno, int top, struct filelist *filelist, int nfiles,
 		pos += osz;
 		overflow = 0;
 	}
+
 	for (;;) {
 		if (flno >= 0 && (fp = fstack[flno].fp) == NULL)
 			return (EOF);
@@ -235,19 +236,17 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 {
 	static int filenum = 0;
 	static FILE *dbdesc = 0;
-	static DBT line[1];
+	static u_char *line_data;
+	static ssize_t line_size;
 	static int overflow = 0;
-	int c;
 
+	/* We get re-entered after returning BUFFEND - save old data */
 	if (overflow) {
-		overflow = enterkey(recbuf, line, bufend - (u_char *)recbuf,
-									ftbl);
-		if (overflow)
-			return (BUFFEND);
-		else
-			return (0);
+		overflow = enterkey(recbuf, bufend, line_data, line_size, ftbl);
+		return overflow ? BUFFEND : 0;
 	}
 
+	/* Loop through files until we find a line of input */
 	for (;;) {
 		if (flno >= 0) {
 			if (!(dbdesc = fstack[flno].fp))
@@ -260,35 +259,31 @@ makekey(int flno, int top, struct filelist *filelist, int nfiles,
 				err(2, "%s", filelist->names[filenum]);
 			filenum++;
 		}
-		if (!(c = seq(dbdesc, line))) {
-			if ((signed)line->size > bufend - recbuf->data) {
-				overflow = 1;
-			} else {
-				overflow = enterkey(recbuf, line,
-				    bufend - (u_char *) recbuf, ftbl);
-			}
-			if (overflow)
-				return (BUFFEND);
-			else
-				return (0);
-		}
-		if (c == EOF) {
-			FCLOSE(dbdesc);
-			dbdesc = 0;
-			if (flno >= 0)
-				fstack[flno].fp = 0;
-		} else {
-			warnx("makekey: line too long: ignoring %.60s...",
-			    (char *)line->data);
-		}
+		line_size = seq(dbdesc, &line_data);
+		if (line_size != 0)
+			/* Got a line */
+			break;
+
+		/* End of file ... */
+		FCLOSE(dbdesc);
+		dbdesc = 0;
+		if (flno >= 0)
+			fstack[flno].fp = 0;
 	}
+
+	if (line_size > bufend - recbuf->data) {
+		overflow = 1;
+	} else {
+		overflow = enterkey(recbuf, bufend, line_data, line_size, ftbl);
+	}
+	return overflow ? BUFFEND : 0;
 }
 
 /*
- * get a line pair from fp
+ * get a line of input from fp
  */
-static int
-seq(FILE *fp, DBT *line)
+static ssize_t
+seq(FILE *fp, u_char **line)
 {
 	static u_char *buf;
 	static size_t buf_size = DEFLLEN;
@@ -302,18 +297,19 @@ seq(FILE *fp, DBT *line)
 		if (!buf)
 		    err(2, "malloc of linebuf for %zu bytes failed",
 			    buf_size);
-		line->data = buf;
 	}
 
 	end = buf + buf_size;
 	pos = buf;
 	while ((c = getc(fp)) != EOF) {
-		if ((*pos++ = c) == REC_D) {
-			line->size = pos - buf;
-			return (0);
+		*pos++ = c;
+		if (c == REC_D) {
+			*line = buf;
+			return pos - buf;
 		}
 		if (pos == end) {
 			/* Long line - double size of buffer */
+			/* XXX: Check here for stupidly long lines */
 			buf_size *= 2;
 			new_buf = realloc(buf, buf_size);
 			if (!new_buf)
@@ -323,18 +319,17 @@ seq(FILE *fp, DBT *line)
 			end = new_buf + buf_size;
 			pos = new_buf + (pos - buf);
 			buf = new_buf;
-			line->data = buf;
 		}
 	}
 
 	if (pos != buf) {
 		/* EOF part way through line - add line terminator */
 		*pos++ = REC_D;
-		line->size = pos - buf;
-		return (0);
+		*line = buf;
+		return pos - buf;
 	}
 
-	return (EOF);
+	return 0;
 }
 
 /*

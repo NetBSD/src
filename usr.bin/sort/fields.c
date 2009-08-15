@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.21 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.22 2009/08/15 18:40:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.21 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.22 2009/08/15 18:40:01 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -81,8 +81,8 @@ __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 	while ((*(pos+1) != '\0') && !((FLD_D | REC_D_F) & l_d_mask[*++pos]));\
 }
 		
-static u_char *enterfield(u_char *, u_char *, struct field *, int);
-static u_char *number(u_char *, u_char *, u_char *, u_char *, int);
+static u_char *enterfield(u_char *, const u_char *, struct field *, int);
+static u_char *number(u_char *, const u_char *, u_char *, u_char *, int);
 
 #define DECIMAL '.'
 #define OFFSET 128
@@ -97,19 +97,21 @@ u_char fnum[NBINS], rnum[NBINS];
  * followed by the original line.
  */
 length_t
-enterkey(RECHEADER *keybuf, DBT *line, int size, struct field fieldtable[])
+enterkey(RECHEADER *keybuf, const u_char *keybuf_end, u_char *line_data, size_t line_size, struct field fieldtable[])
 	/* keybuf:	 pointer to start of key */
 {
 	int i;
 	u_char *l_d_mask;
 	u_char *lineend, *pos;
-	u_char *endkey, *keypos;
+	const u_char *endkey;
+	u_char *keypos;
 	struct coldesc *clpos;
 	int col = 1;
 	struct field *ftpos;
+
 	l_d_mask = d_mask;
-	pos = (u_char *) line->data - 1;
-	lineend = (u_char *) line->data + line->size-1;
+	pos = line_data - 1;
+	lineend = line_data + line_size-1;
 				/* don't include rec_delimiter */
 
 	for (i = 0; i < ncols; i++) {
@@ -131,19 +133,19 @@ enterkey(RECHEADER *keybuf, DBT *line, int size, struct field fieldtable[])
 	}
 	for (; i <= ncols; i++)
 		clist[i].start = clist[i].end = lineend;
-	if (clist[0].start < (u_char *) line->data)
+	if (clist[0].start < line_data)
 		clist[0].start++;
 
 	keypos = keybuf->data;
-	endkey = (u_char *) keybuf + size - line->size;
+	endkey = keybuf_end - line_size;
 	for (ftpos = fieldtable + 1; ftpos->icol.num; ftpos++)
 		if ((keypos = enterfield(keypos, endkey, ftpos,
 		    fieldtable->flags)) == NULL)
 			return (1);
 
 	keybuf->offset = keypos - keybuf->data;
-	keybuf->length = keybuf->offset + line->size;
-	if (keybuf->length + sizeof(TRECHEADER) > (length_t)size) {
+	keybuf->length = keybuf->offset + line_size;
+	if (keybuf->data + keybuf->length > keybuf_end) {
 		/* line too long for buffer */
 		return (1);
 	}
@@ -154,10 +156,10 @@ enterkey(RECHEADER *keybuf, DBT *line, int size, struct field fieldtable[])
 	 * 2. we want stable sort and so the items should be sorted only by
 	 *    the relevant field[s]
 	 */
-	if (UNIQUE || (stable_sort && keybuf->offset < line->size))
+	if (UNIQUE || (stable_sort && keybuf->offset < line_size))
 		keypos[-1] = REC_D;
 
-	memcpy(keybuf->data + keybuf->offset, line->data, line->size);
+	memcpy(keybuf->data + keybuf->offset, line_data, line_size);
 	return (0);
 }
 
@@ -165,7 +167,7 @@ enterkey(RECHEADER *keybuf, DBT *line, int size, struct field fieldtable[])
  * constructs a field (as defined by -k) within a key
  */
 static u_char *
-enterfield(u_char *tablepos, u_char *endkey, struct field *cur_fld, int gflags)
+enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld, int gflags)
 {
 	u_char *start, *end, *lineend, *mask, *lweight;
 	struct column icol, tcol;
@@ -233,7 +235,7 @@ enterfield(u_char *tablepos, u_char *endkey, struct field *cur_fld, int gflags)
  */
 
 static u_char *
-number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
+number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 {
 	int or_sign, parity = 0;
 	int expincr = 1, exponent = -1;
