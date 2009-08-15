@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.20 2009/04/13 11:07:59 lukem Exp $	*/
+/*	$NetBSD: sort.h,v 1.21 2009/08/15 18:40:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@
 
 #include <sys/param.h>
 
-#include <db.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -174,7 +173,7 @@ extern int ncols;
 void	 append(const u_char **, int, int, FILE *,
 	    void (*)(const RECHEADER *, FILE *), struct field *);
 void	 concat(FILE *, FILE *);
-length_t enterkey(RECHEADER *, DBT *, int, struct field *);
+length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);
 void	 fixit(int *, char **);
 void	 fldreset(struct field *);
 FILE	*ftmp(void);
