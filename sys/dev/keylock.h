@@ -1,4 +1,4 @@
-/* $NetBSD: keylock.h,v 1.1 2009/08/14 21:17:22 mbalmer Exp $ */
+/* $NetBSD: keylock.h,v 1.1 2009/08/15 09:43:58 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>

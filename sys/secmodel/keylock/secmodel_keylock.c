@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.1 2009/08/14 21:17:22 mbalmer Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.2 2009/08/15 09:43:59 mbalmer Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,17 +54,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.1 2009/08/14 21:17:22 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.2 2009/08/15 09:43:59 mbalmer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kauth.h>
 
 #include <sys/conf.h>
-#include <sys/keylock.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+
+#include <dev/keylock.h>
 
 #include <miscfs/specfs/specdev.h>
 
