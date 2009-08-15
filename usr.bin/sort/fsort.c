@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.32 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: fsort.c,v 1.33 2009/08/15 09:48:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.32 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.33 2009/08/15 09:48:46 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -95,12 +95,8 @@ struct tempfile fstack[MAXFCT];
 #define SALIGN(n) ((n+sizeof(length_t)-1) & ~(sizeof(length_t)-1))
 
 void
-fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
-	int binno, depth, top;
-	struct filelist *filelist;
-	int nfiles;
-	FILE *outfp;
-	struct field *ftbl;
+fsort(int binno, int depth, int top, struct filelist *filelist, int nfiles,
+    FILE *outfp, struct field *ftbl)
 {
 	const u_char **keypos;
 	u_char *bufend;
@@ -344,12 +340,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
  */
 #define swap(a, b, t) t = a, a = b, b = t
 void
-onepass(a, depth, n, sizes, tr, fp)
-	const u_char **a;
-	int depth;
-	long n, sizes[];
-	u_char *tr;
-	FILE *fp;
+onepass(const u_char **a, int depth, long n, long sizes[], u_char *tr, FILE *fp)
 {
 	size_t tsizes[NBINS + 1];
 	const u_char **bin[257], ***bp, ***bpmax, **top[256], ***tp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.18 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: init.c,v 1.19 2009/08/15 09:48:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,15 +64,15 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.18 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: init.c,v 1.19 2009/08/15 09:48:46 dsl Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <ctype.h>
 #include <string.h>
 
-static void insertcol __P((struct field *));
-static const char *setcolumn __P((const char *, struct field *, int));
+static void insertcol(struct field *);
+static const char *setcolumn(const char *, struct field *, int);
 
 u_char gweights[NBINS];
 
@@ -97,8 +97,7 @@ int ncols = 0;
  * keep clist in order--inserts a column in a sorted array
  */
 static void
-insertcol(field)
-	struct field *field;
+insertcol(struct field *field)
 {
 	int i;
 	struct coldesc *p;
@@ -134,8 +133,7 @@ insertcol(field)
  * matches fields with the appropriate columns--n^2 but who cares?
  */
 void
-fldreset(fldtab)
-	struct field *fldtab;
+fldreset(struct field *fldtab)
 {
 	int i;
 
@@ -156,10 +154,7 @@ fldreset(fldtab)
  * interprets a column in a -k field
  */
 static const char *
-setcolumn(pos, cur_fld, gflag)
-	const char *pos;
-	struct field *cur_fld;
-	int gflag;
+setcolumn(const char *pos, struct field *cur_fld, int gflag)
 {
 	struct column *col;
 	char *npos;
@@ -188,10 +183,7 @@ setcolumn(pos, cur_fld, gflag)
 }
 
 int
-setfield(pos, cur_fld, gflag)
-	const char *pos;
-	struct field *cur_fld;
-	int gflag;
+setfield(const char *pos, struct field *cur_fld, int gflag)
 {
 	int tmp;
 
@@ -241,8 +233,7 @@ setfield(pos, cur_fld, gflag)
 }
 
 int
-optval(desc, tcolflag)
-	int desc, tcolflag;
+optval(int desc, int tcolflag)
 {
 	switch(desc) {
 		case 'b':
@@ -263,9 +254,7 @@ optval(desc, tcolflag)
  * Replace historic +SPEC arguments with appropriate -kSPEC.
  */ 
 void
-fixit(argc, argv)
-	int *argc;
-	char **argv;
+fixit(int *argc, char **argv)
 {
 	int i, j, fplus=0;
 	char *vpos, *tpos, spec[20];
@@ -345,8 +334,7 @@ fixit(argc, argv)
  * all bets are off.  See also num_init in number.c
  */
 void
-settables(gflags)
-	int gflags;
+settables(int gflags)
 {
 	u_char *wts;
 	int i, incr;
