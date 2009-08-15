@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1291 2009/08/15 05:50:49 mrg Exp $
+#	$NetBSD: mi,v 1.1292 2009/08/15 09:52:57 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -436,6 +436,7 @@
 ./usr/include/dev/isapnp/if_levar.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpvar.h		comp-obsolete		obsolete
+./usr/include/dev/keylock.h			comp-c-include
 ./usr/include/dev/kttcpio.h			comp-c-include
 ./usr/include/dev/lockstat.h			comp-c-include
 ./usr/include/dev/md.h				comp-c-include
@@ -1997,7 +1998,7 @@
 ./usr/include/sys/kcore.h			comp-c-include
 ./usr/include/sys/kernel.h			comp-obsolete		obsolete
 ./usr/include/sys/kgdb.h			comp-c-include
-./usr/include/sys/keylock.h			comp-c-include
+./usr/include/sys/keylock.h			comp-obsolete		obsolete
 ./usr/include/sys/kmem.h			comp-c-include
 ./usr/include/sys/ksem.h			comp-c-include
 ./usr/include/sys/ksyms.h			comp-c-include
