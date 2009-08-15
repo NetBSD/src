@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.33 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.34 2009/08/15 16:50:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.33 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.34 2009/08/15 16:50:29 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -80,9 +80,8 @@ __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #include <string.h>
 
 static const u_char **keylist = 0;
-u_char *buffer = 0, *linebuf = 0;
+u_char *buffer = 0;
 size_t bufsize = DEFBUFSIZE;
-size_t linebuf_size;
 #define FSORTMAX 4
 int PANIC = FSORTMAX;
 
@@ -123,11 +122,6 @@ fsort(int binno, int depth, int top, struct filelist *filelist, int nfiles,
 		buffer = malloc(bufsize);
 		keylist = malloc(MAXNUM * sizeof(u_char *));
 		memset(keylist, 0, MAXNUM * sizeof(u_char *));
-		if (!SINGL_FLD) {
-			linebuf_size = DEFLLEN;
-			if ((linebuf = malloc(linebuf_size)) == NULL)
-				errx(2, "cannot allocate memory");
-		}
 	}
 	bufend = buffer + bufsize;
 	if (binno >= 0) {
