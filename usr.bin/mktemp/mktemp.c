@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.10 2007/12/15 19:44:52 perry Exp $ */
+/* $NetBSD: mktemp.c,v 1.11 2009/08/15 20:02:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -50,7 +50,7 @@
 #include <unistd.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: mktemp.c,v 1.10 2007/12/15 19:44:52 perry Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.11 2009/08/15 20:02:28 christos Exp $");
 #endif /* !__lint */
 
 static void usage(void) __dead;
@@ -66,15 +66,20 @@ main(int argc, char **argv)
 
 	setprogname(*argv);
 	ret = dflag = qflag = tflag = uflag = 0;
+	tmpdir = NULL;
 	prefix = "mktemp";
 	name = NULL;
 
-	while ((c = getopt(argc, argv, "dqt:u")) != -1)
+	while ((c = getopt(argc, argv, "dp:qt:u")) != -1)
 		switch (c) {
 		case 'd':
 			dflag++;
 			break;
 
+		case 'p':
+			tmpdir = optarg;
+			break;
+			
 		case 'q':
 			qflag++;
 			break;
@@ -96,7 +101,8 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (tflag) {
-		tmpdir = getenv("TMPDIR");
+		if (tmpdir == NULL)
+			tmpdir = getenv("TMPDIR");
 		if (tmpdir == NULL)
 			(void)asprintf(&name, "%s%s.XXXXXXXX", _PATH_TMP,
 			    prefix);
@@ -116,7 +122,11 @@ main(int argc, char **argv)
 	/* generate all requested files */
 	while (name != NULL || argc > 0) {
 		if (name == NULL) {
-			name = strdup(argv[0]);
+			if (tmpdir)
+				(void)asprintf(&name, "%s/%s",
+				    tmpdir, argv[0]);
+			else
+				name = strdup(argv[0]);
 			argv++;
 			argc--;
 		}
@@ -155,7 +165,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"Usage: %s [-dqu] {-t prefix | template ...}\n",
-		getprogname());
+	    "Usage: %s [-dqu] [-p <tmpdir>] {-t prefix | template ...}\n",
+	    getprogname());
 	exit (1);
 }
