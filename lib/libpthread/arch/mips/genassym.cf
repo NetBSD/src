@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2008/04/28 20:23:02 martin Exp $
+#	$NetBSD: genassym.cf,v 1.7.14.1 2009/08/16 03:30:55 matt Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,19 +28,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-
+include <sys/types.h>
+include <machine/reg.h>
+include <machine/regnum.h>
 include <ucontext.h>
 include <sys/queue.h>
 include "pthread.h"
 include "pthread_int.h"
 include "pthread_md.h"
 
-define PT_UC		offsetof(struct __pthread_st, pt_uc)
-define CONTEXTSIZE	sizeof(ucontext_t)
-define UC_FLAGS		offsetof(ucontext_t, uc_flags)
-define UC_REGS		offsetof(ucontext_t, uc_mcontext.__gregs)
-define UC_EPC		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_EPC])
-define STACKSPACE		STACKSPACE
+define PT_UC			offsetof(struct __pthread_st, pt_uc)
+define UCONTEXT_SIZE		sizeof(ucontext_t)
+define _OFFSETOF_UC_LINK	offsetof(ucontext_t, uc_link)
+define _OFFSETOF_UC_FLAGS	offsetof(ucontext_t, uc_flags)
+define _OFFSETOF_UC_GREGS	offsetof(ucontext_t, uc_mcontext.__gregs[0])
+define _OFFSETOF_UC_GREGS_V0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_V0])
+define _OFFSETOF_UC_GREGS_S0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S0])
+define _OFFSETOF_UC_GREGS_S1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S1])
+define _OFFSETOF_UC_GREGS_S2	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S2])
+define _OFFSETOF_UC_GREGS_S3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S3])
+define _OFFSETOF_UC_GREGS_S4	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S4])
+define _OFFSETOF_UC_GREGS_S5	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S5])
+define _OFFSETOF_UC_GREGS_S6	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S6])
+define _OFFSETOF_UC_GREGS_S7	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S7])
+define _OFFSETOF_UC_GREGS_S8	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_S8])
+define _OFFSETOF_UC_GREGS_GP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_GP])
+define _OFFSETOF_UC_GREGS_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_SP])
+define _OFFSETOF_UC_GREGS_RA	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_RA])
+define _OFFSETOF_UC_GREGS_EPC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_EPC])
+define _OFFSETOF_UC_GREGS_EPC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_EPC])
 
 # uc_flags
 define _UC_CPU		_UC_CPU
