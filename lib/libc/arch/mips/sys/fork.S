@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.11 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: fork.S,v 1.11.46.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,24 +35,19 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)fork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: fork.S,v 1.11 2003/08/07 16:42:17 agc Exp $")
+	/* RCSID("from: @(#)fork.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: fork.S,v 1.11.46.1 2009/08/16 03:36:02 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 LEAF(__fork)
-#ifdef __ABICALLS__
-	.set    noreorder
-	.cpload t9
-	.set    reorder
-#endif
+	PIC_PROLOGUE(__fork)
 	li	v0, SYS_fork	# pid = fork()
 	syscall
 	bne	a3, zero, 2f
 	beq	v1, zero, 1f	# v1 == 0 in parent, 1 in child
 	move	v0, zero
 1:
-	j	ra
+	PIC_RETURN()
 2:
-	la	t9, _C_LABEL(__cerror)
-	jr	t9
+	PIC_TAILCALL(__cerror)
 END(__fork)

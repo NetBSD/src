@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2.14.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,6 +30,12 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
+
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	RCSID("$NetBSD: __sigtramp2.S,v 1.2.14.1 2009/08/16 03:36:02 matt Exp $")
+#endif /* SYSLIBC_SCCS and not lint */
+
 
 /*
  * The MIPS signal trampoline is invoked only to return from
@@ -37,12 +43,12 @@
  *
  * On entry, stack looks like:
  *
- *	sp		->	siginfo_t structure
- *	sp + 128	->	ucontext_t structure
+ *	sp			->	siginfo_t structure
+ *	sp + SIGINFO_SIZE	->	ucontext_t structure
  */
 LEAF_NOPROFILE(__sigtramp_siginfo_2)
-	addu	a0, sp, 128		/* address of ucontext */
-	SYSTRAP(setcontext)		/* and do setcontext */
-	move	a0, v0			/* exit with errno */
-	SYSTRAP(exit)			/* if sigreturn fails */
+	PTR_ADDU	a0, sp, SIGINFO_SIZE	/* address of ucontext */
+	SYSTRAP(setcontext)			/* and do setcontext */
+	move		a0, v0			/* exit with errno */
+	SYSTRAP(exit)				/* if sigreturn fails */
 END(__sigtramp_siginfo_2)
