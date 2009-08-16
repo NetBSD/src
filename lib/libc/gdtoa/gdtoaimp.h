@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.6 2007/02/03 16:44:02 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.6.24.1 2009/08/16 00:13:50 snj Exp $ */
 
 /****************************************************************
 
@@ -489,7 +489,7 @@ extern mutex_t __gdtoa_locks[2];
 	} while (/* CONSTCOND */ 0)
 #endif
 
-#define Kmax 15
+#define Kmax (sizeof(size_t) << 3)
 
  struct
 Bigint {
