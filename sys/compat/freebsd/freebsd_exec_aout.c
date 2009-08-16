@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_aout.c,v 1.8 2007/12/08 18:35:58 dsl Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.9 2009/08/16 15:39:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.8 2007/12/08 18:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.9 2009/08/16 15:39:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 
 #ifndef EXEC_AOUT
 #define EXEC_AOUT	/* to get a.out specific stuff */
