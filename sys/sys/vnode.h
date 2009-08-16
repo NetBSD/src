@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.208 2009/07/18 16:31:44 reinoud Exp $	*/
+/*	$NetBSD: vnode.h,v 1.209 2009/08/16 10:51:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -216,8 +216,6 @@ typedef struct vnode vnode_t;
 #define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
 #define	VV_MPSAFE	0x00000010	/* file system code is MP safe */
 #define	VV_LOCKSWORK	0x00000020	/* FS supports locking discipline */
-
-/* XXXAD ALIASED should be covered by spec lock? */
 
 /*
  * The second set are locked by vp->v_interlock.
