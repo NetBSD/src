@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.21 2009/08/15 18:40:01 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.22 2009/08/16 19:53:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -106,8 +106,12 @@
 /* length of record is currently limited to maximum string length (size_t) */
 typedef size_t length_t;
 
-/* a record is a key/line pair starting at rec.data. It has a total length
+/* A record is a key/line pair starting at rec.data. It has a total length
  * and an offset to the start of the line half of the pair.
+ * In order to use (s)radixsort, the array of pointers often points
+ * to the data field (and sometimes not the first byte even!).
+ * This means the code has to 'back up' by the correct number of bytes
+ * in order to get the actual header.
  */
 typedef struct recheader {
 	length_t length;
@@ -115,10 +119,7 @@ typedef struct recheader {
 	u_char data[1];
 } RECHEADER;
 
-typedef struct trecheader {
-	length_t length;
-	length_t offset;
-} TRECHEADER;
+#define REC_DATA_OFFSET offsetof(RECHEADER, data)
 
 /* This is the column as seen by struct field.  It is used by enterfield.
  * They are matched with corresponding coldescs during initialization.
