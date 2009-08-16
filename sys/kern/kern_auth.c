@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.62 2009/04/05 11:50:51 lukem Exp $ */
+/* $NetBSD: kern_auth.c,v 1.63 2009/08/16 11:01:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.62 2009/04/05 11:50:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.63 2009/08/16 11:01:12 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -189,6 +189,7 @@ kauth_cred_free(kauth_cred_t cred)
 
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
+	ASSERT_SLEEPABLE();
 
 	if (atomic_dec_uint_nv(&cred->cr_refcnt) > 0)
 		return;
