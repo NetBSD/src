@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1 2009/06/09 17:48:20 snj Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.1 2009/08/16 03:33:57 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -138,8 +138,73 @@ uint32_t mips3_cp0_wired_read(void);
 void	mips3_cp0_wired_write(uint32_t);
 void	mips3_cp0_pg_mask_write(uint32_t);
 
-uint64_t mips3_ld(uint64_t *);
+#if defined(__GNUC__) && !defined(__mips_o32)
+static inline uint64_t
+mips3_ld(const uint64_t *va)
+{
+	uint64_t rv;
+#if defined(__mips_o32)
+	uint32_t sr;
+
+	sr = mips_cp0_status_read();
+	mips_cp0_status_write(sr & ~MIPS_SR_INT_IE);
+
+	__asm volatile(
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"ld	%M0,0(%1)	\n\t"
+		"dsll32	%L0,%M0,0	\n\t"
+		"dsra32	%M0,%M0,0	\n\t"		/* high word */
+		"dsra32	%L0,%L0,0	\n\t"		/* low word */
+		"ld	%0,0(%1)	\n\t"
+		".set pop"
+	    : "=d"(rv)
+	    : "r"(va));
+
+	mips_cp0_status_write(sr);
+#elif defined(_LP64)
+	rv = *va;
+#else
+	__asm volatile("ld	%0,0(%1)" : "=d"(rv) : "r"(va));
+#endif
+
+	return rv;
+}
+static inline void
+mips3_sd(uint64_t *va, uint64_t v)
+{
+#if defined(__mips_o32)
+	uint32_t sr;
+
+	sr = mips_cp0_status_read();
+	mips_cp0_status_write(sr & ~MIPS_SR_INT_IE);
+
+	__asm volatile(
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"dsll32	%M0,%M0,0	\n\t"
+		"dsll32	%L0,%L0,0	\n\t"
+		"dsrl32	%L0,%L0,0	\n\t"
+		"or	%0,%L0,%M0	\n\t"
+		"sd	%0,0(%1)	\n\t"
+		".set pop"
+	    : "=d"(v) : "0"(v), "r"(va));
+
+	mips_cp0_status_write(sr);
+#elif defined(_LP64)
+	*va = v;
+#else
+	__asm volatile("sd	%0,0(%1)" :: "r"(v), "r"(va));
+#endif
+}
+#else
+uint64_t mips3_ld(uint64_t *va);
 void	mips3_sd(uint64_t *, uint64_t);
+#endif	/* __GNUC__ */
 #endif	/* MIPS3 || MIPS4 || MIPS32 || MIPS64 */
 
 #if defined(MIPS3) || defined(MIPS4) || defined(MIPS64)
@@ -151,58 +216,66 @@ static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
 static __inline uint32_t
 mips3_lw_a64(uint64_t addr)
 {
-	uint32_t addrlo, addrhi;
 	uint32_t rv;
+#if defined(__mips_o32)
 	uint32_t sr;
 
 	sr = mips_cp0_status_read();
-	mips_cp0_status_write(sr | MIPS3_SR_KX);
+	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
 
-	addrlo = addr & 0xffffffff;
-	addrhi = addr >> 32;
-	__asm volatile ("		\n\
-		.set push		\n\
-		.set mips3		\n\
-		.set noreorder		\n\
-		.set noat		\n\
-		dsll32	$3, %1, 0	\n\
-		dsll32	$1, %2, 0	\n\
-		dsrl32	$3, $3, 0	\n\
-		or	$1, $1, $3	\n\
-		lw	%0, 0($1)	\n\
-		.set pop		\n\
-	" : "=r"(rv) : "r"(addrlo), "r"(addrhi) : "$1", "$3" );
+	__asm volatile (
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"dsll32	%M1,%M1,0	\n\t"
+		"dsll32	%L1,%L1,0	\n\t"
+		"dsrl32	$L1,%L1,0	\n\t"
+		"or	%1,%M1,%L1	\n\t"
+		"lw	%0, 0(%1)	\n\t"
+		".set pop"
+	    : "=r"(rv), "=d"(addr)
+	    : "1"(addr)
+	    );
 
 	mips_cp0_status_write(sr);
-
+#elif defined(_LP64)
+	rv = *(const uint32_t *)addr;
+#else
+	__asm volatile("lw	%0, 0(%1)" : "=r"(rv) : "d"(addr));
+#endif
 	return (rv);
 }
 
 static __inline void
 mips3_sw_a64(uint64_t addr, uint32_t val)
 {
-	uint32_t addrlo, addrhi;
+#if defined(__mips_o32)
 	uint32_t sr;
 
 	sr = mips_cp0_status_read();
-	mips_cp0_status_write(sr | MIPS3_SR_KX);
+	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
 
-	addrlo = addr & 0xffffffff;
-	addrhi = addr >> 32;
-	__asm volatile ("			\n\
-		.set push			\n\
-		.set mips3			\n\
-		.set noreorder			\n\
-		.set noat			\n\
-		dsll32	$3, %1, 0		\n\
-		dsll32	$1, %2, 0		\n\
-		dsrl32	$3, $3, 0		\n\
-		or	$1, $1, $3		\n\
-		sw	%0, 0($1)		\n\
-		.set pop			\n\
-	" : : "r"(val), "r"(addrlo), "r"(addrhi) : "$1", "$3" );
+	__asm volatile (
+		".set push		\n\t"
+		".set mips3		\n\t"
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"dsll32	%M0,%M0,0	\n\t"
+		"dsll32	%L0,%L0,0	\n\t"
+		"dsrl32	$L0,%L0,0	\n\t"
+		"or	%0,%M0,%L0	\n\t"
+		"sw	%1, 0(%0)	\n\t"
+		".set pop"
+	    : "=d"(addr): "r"(val), "0"(addr)
+	    );
 
 	mips_cp0_status_write(sr);
+#elif defined(_LP64)
+	*(uint32_t *)addr = val;
+#else
+	__asm volatile("sw	%1, 0(%0)" :: "d"(addr), "r"(val));
+#endif
 }
 #endif	/* MIPS3 || MIPS4 || MIPS64 */
 
@@ -395,8 +468,15 @@ struct trapframe {
  */
 
 struct kernframe {
+#if defined(__mips_o32) || defined(__mips_o64)
 	register_t cf_args[4 + 1];
+#if defined(__mips_o32)
 	register_t cf_pad;		/* (for 8 word alignment) */
+#endif
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+	register_t cf_args[8 + 1];
+#endif
 	register_t cf_sp;
 	register_t cf_ra;
 	struct trapframe cf_frame;

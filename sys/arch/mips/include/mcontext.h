@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.18.1 2009/08/16 03:33:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -128,15 +128,6 @@ typedef struct {
 #endif /* !__ASSEMBLER__ */
 
 #define _UC_MACHINE_PAD	16	/* Padding appended to ucontext_t */
-
-/*
- * Offsets relative to ucontext_t; intended to be used by assembly stubs.
- */
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-#define _OFFSETOF_UC_GREGS	40
-#else
-#define _OFFSETOF_UC_GREGS	56
-#endif
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000

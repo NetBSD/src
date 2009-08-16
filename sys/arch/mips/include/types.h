@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43 2007/11/29 00:58:03 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.1 2009/08/16 03:33:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,18 +47,18 @@
  * the rest of the operating system as possible.
  */
 
-#if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
-typedef long long	mips_reg_t;
-typedef unsigned long long mips_ureg_t;
-#if _MIPS_BSD_API != _MIPS_BSD_API_LP32 && _MIPS_BSD_API != _MIPS_BSD_API_LP32_64CLEAN
-typedef	long long	mips_fpreg_t;
+#if !defined(__mips_o32)
+typedef long long		mips_reg_t;
+typedef unsigned long long	mips_ureg_t;
+#if defined(__mips_o64)
+typedef	int			mips_fpreg_t;
 #else
-typedef	int		mips_fpreg_t;
+typedef	long long		mips_fpreg_t;
 #endif
 #else
-typedef long		mips_reg_t;
-typedef unsigned long	mips_ureg_t;
-typedef	long		mips_fpreg_t;
+typedef long			mips_reg_t;
+typedef unsigned long		mips_ureg_t;
+typedef	long			mips_fpreg_t;
 #endif
 
 /* NB: This should probably be if defined(_KERNEL) */
@@ -67,11 +67,11 @@ typedef	long		mips_fpreg_t;
 typedef unsigned long long	paddr_t;
 typedef unsigned long long	psize_t;
 #else
-typedef unsigned long	paddr_t;
-typedef unsigned long	psize_t;
+typedef unsigned long		paddr_t;
+typedef unsigned long		psize_t;
 #endif
-typedef unsigned long	vaddr_t;
-typedef unsigned long	vsize_t;
+typedef unsigned long		vaddr_t;
+typedef unsigned long		vsize_t;
 #endif
 
 /* Make sure this is signed; we need pointers to be sign-extended. */
