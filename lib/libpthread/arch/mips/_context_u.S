@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3.14.1 2009/08/16 03:30:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,45 +49,45 @@
 /* Macro to Save the callee-save register set */
 #define GETC(reg)					; \
 	REG_PROLOGUE					; \
-	REG_S	s0, (UC_REGS + _REG_S0 * SZREG)(reg)	; \
-	REG_S	s1, (UC_REGS + _REG_S1 * SZREG)(reg)	; \
-	REG_S	s2, (UC_REGS + _REG_S2 * SZREG)(reg)	; \
-	REG_S	s3, (UC_REGS + _REG_S3 * SZREG)(reg)	; \
-	REG_S	s4, (UC_REGS + _REG_S4 * SZREG)(reg)	; \
-	REG_S	s5, (UC_REGS + _REG_S5 * SZREG)(reg)	; \
-	REG_S	s6, (UC_REGS + _REG_S6 * SZREG)(reg)	; \
-	REG_S	s7, (UC_REGS + _REG_S7 * SZREG)(reg)	; \
-	REG_S	gp, (UC_REGS + _REG_GP * SZREG)(reg)	; \
-	REG_S	sp, (UC_REGS + _REG_SP * SZREG)(reg)	; \
-	REG_S	s8, (UC_REGS + _REG_S8 * SZREG)(reg)	; \
-	REG_S	ra, (UC_REGS + _REG_RA * SZREG)(reg)	; \
-	REG_S	ra, (UC_REGS + _REG_EPC* SZREG)(reg)	; \
+	REG_S	s0, _OFFSETOF_UC_GREGS_S0(reg)		; \
+	REG_S	s1, _OFFSETOF_UC_GREGS_S1(reg)		; \
+	REG_S	s2, _OFFSETOF_UC_GREGS_S2(reg)		; \
+	REG_S	s3, _OFFSETOF_UC_GREGS_S3(reg)		; \
+	REG_S	s4, _OFFSETOF_UC_GREGS_S4(reg)		; \
+	REG_S	s5, _OFFSETOF_UC_GREGS_S5(reg)		; \
+	REG_S	s6, _OFFSETOF_UC_GREGS_S6(reg)		; \
+	REG_S	s7, _OFFSETOF_UC_GREGS_S7(reg)		; \
+	REG_S	gp, _OFFSETOF_UC_GREGS_GP(reg)		; \
+	REG_S	sp, _OFFSETOF_UC_GREGS_SP(reg)		; \
+	REG_S	s8, _OFFSETOF_UC_GREGS_S8(reg)		; \
+	REG_S	ra, _OFFSETOF_UC_GREGS_RA(reg)		; \
+	REG_S	ra, _OFFSETOF_UC_GREGS_EPC(reg)		; \
 	REG_EPILOGUE					; \
 	li	t0, 1					; \
 	sll	t0, t0, _UC_USER_BIT			; \
 	ori	t0, t0, _UC_CPU				; \
-	sw	t0, (UC_FLAGS)(reg)
+	INT_S	t0, UC_FLAGS(reg)
 
 #define SETC(reg)					; \
-	lw	t0, (UC_FLAGS)(reg)			; \
+	INT_L	t0, UC_FLAGS(reg)			; \
 	li	t1, 1					; \
 	sll	t1, t1, _UC_USER_BIT			; \
 	and	t0, t1, t0				; \
 	beq	t0, zero, 1f				; \
 	REG_PROLOGUE					; \
-	REG_L	s0, (UC_REGS + _REG_S0 * SZREG)(reg)	; \
-	REG_L	s1, (UC_REGS + _REG_S1 * SZREG)(reg)	; \
-	REG_L	s2, (UC_REGS + _REG_S2 * SZREG)(reg)	; \
-	REG_L	s3, (UC_REGS + _REG_S3 * SZREG)(reg)	; \
-	REG_L	s4, (UC_REGS + _REG_S4 * SZREG)(reg)	; \
-	REG_L	s5, (UC_REGS + _REG_S5 * SZREG)(reg)	; \
-	REG_L	s6, (UC_REGS + _REG_S6 * SZREG)(reg)	; \
-	REG_L	s7, (UC_REGS + _REG_S7 * SZREG)(reg)	; \
-	REG_L	s8, (UC_REGS + _REG_S8 * SZREG)(reg)	; \
-	REG_L	t9, (UC_REGS + _REG_EPC * SZREG)(reg)	; \
-	REG_L	gp, (UC_REGS + _REG_GP * SZREG)(reg)	; \
-	REG_L	sp, (UC_REGS + _REG_SP * SZREG)(reg)	; \
-	REG_L	ra, (UC_REGS + _REG_RA * SZREG)(reg)	; \
+	REG_L	s0, _OFFSETOF_UC_GREGS_S0(reg)		; \
+	REG_L	s1, _OFFSETOF_UC_GREGS_S1(reg)		; \
+	REG_L	s2, _OFFSETOF_UC_GREGS_S2(reg)		; \
+	REG_L	s3, _OFFSETOF_UC_GREGS_S3(reg)		; \
+	REG_L	s4, _OFFSETOF_UC_GREGS_S4(reg)		; \
+	REG_L	s5, _OFFSETOF_UC_GREGS_S5(reg)		; \
+	REG_L	s6, _OFFSETOF_UC_GREGS_S6(reg)		; \
+	REG_L	s7, _OFFSETOF_UC_GREGS_S7(reg)		; \
+	REG_L	t9, _OFFSETOF_UC_GREGS_EPC(reg)		; \
+	REG_L	gp, _OFFSETOF_UC_GREGS_GP(reg)		; \
+	REG_L	sp, _OFFSETOF_UC_GREGS_SP(reg)		; \
+	REG_L	s8, _OFFSETOF_UC_GREGS_S8(reg)		; \
+	REG_L	ra, _OFFSETOF_UC_GREGS_RA(reg)		; \
 	REG_EPILOGUE					; \
 							; \
 	/* part procedure call, part RET */		; \
@@ -97,25 +97,23 @@
 							; \
 1:							; \
 	move	a0, reg					; \
-	la	t9, _C_LABEL(setcontext)		; \
-	jr	t9					; \
-	nop						; \
+	PIC_TAILCALL(setcontext)
 	/* NOTREACHED */
 
 LEAF(_getcontext_u)
-	PIC_PROLOGUE(_getcontext_u, t9)
+	PIC_PROLOGUE(_getcontext_u)
 	GETC(a0)
-	xor	v0, v0, v0
-	j	ra
+	move	v0, zero
+	PIC_RETURN()
 END(_getcontext_u)
 
 LEAF(_setcontext_u)
-	PIC_PROLOGUE(_setcontext_u, t9)
+	PIC_PROLOGUE(_setcontext_u)
 	SETC(a0)
 END(_setcontext_u)
 
 LEAF(_swapcontext_u)
-	PIC_PROLOGUE(_swapcontext_u, t9)
+	PIC_PROLOGUE(_swapcontext_u)
 	GETC(a0)
 	SETC(a1)
 END(_swapcontext_u)
