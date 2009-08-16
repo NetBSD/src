@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.c,v 1.22 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: shlib.c,v 1.23 2009/08/16 18:01:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ int	isdigit();
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/exec_aout.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>

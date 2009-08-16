@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.45 2009/03/17 00:52:47 lukem Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.46 2009/08/16 18:01:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.45 2009/03/17 00:52:47 lukem Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.46 2009/08/16 18:01:49 martin Exp $");
 #endif
 
 
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: ldconfig.c,v 1.45 2009/03/17 00:52:47 lukem Exp $");
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/exec_aout.h>
 #include <a.out.h>
 #include <ctype.h>
 #include <dirent.h>
