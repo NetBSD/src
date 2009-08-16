@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.34 2009/08/15 16:50:29 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.35 2009/08/16 19:53:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.34 2009/08/15 16:50:29 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.35 2009/08/16 19:53:43 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ fsort(int binno, int depth, int top, struct filelist *filelist, int nfiles,
 					break;
 				}
 				crec =(RECHEADER *)((char *) crec +
-				    SALIGN(crec->length) + sizeof(TRECHEADER));
+				    SALIGN(crec->length) + REC_DATA_OFFSET);
 			}
 
 			if (c == BUFFEND && nelem < MAXNUM
@@ -345,7 +345,7 @@ onepass(const u_char **a, int depth, long n, long sizes[], u_char *tr, FILE *fp)
 	const u_char **ak, *r;
 
 	memset(tsizes, 0, sizeof(tsizes));
-	depth += sizeof(TRECHEADER);
+	depth += REC_DATA_OFFSET;
 	an = &a[n];
 	for (ak = a; ak < an; ak++) {
 		histo[c = tr[**ak]]++;
@@ -368,7 +368,7 @@ onepass(const u_char **a, int depth, long n, long sizes[], u_char *tr, FILE *fp)
 	for (ak = a, c = 0; c < 256; c++) {
 		an = bin[c + 1];
 		n = an - ak;
-		tsizes[c] += n * sizeof(TRECHEADER);
+		tsizes[c] += n * REC_DATA_OFFSET;
 		/* tell getnext how many elements in this bin, this segment. */
 		EWRITE(&tsizes[c], sizeof(size_t), 1, fp);
 		sizes[c] += tsizes[c];

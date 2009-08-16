@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.15 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: append.c,v 1.16 2009/08/16 19:53:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.15 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: append.c,v 1.16 2009/08/16 19:53:43 dsl Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 		else							\
 			radixsort(ppos, n, wts1, REC_D);		\
 		for (; ppos < cpos; ppos++) {				\
-			prec = (const RECHEADER *) (*ppos - sizeof(TRECHEADER));\
+			prec = (const RECHEADER *) (*ppos - REC_DATA_OFFSET);\
 			put(prec, fp);					\
 		}							\
 	} else put(prec, fp);						\
@@ -110,7 +110,7 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
 			wts1 = ascii;
 	}
 	lastkey = keylist + nelem;
-	depth += sizeof(TRECHEADER);
+	depth += REC_DATA_OFFSET;
 	if (SINGL_FLD && (UNIQUE || wts1 != wts)) {
 		ppos = keylist;
 		prec = (const RECHEADER *) (*ppos - depth);
