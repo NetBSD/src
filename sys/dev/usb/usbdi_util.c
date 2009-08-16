@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.51 2008/05/26 18:00:33 drochner Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.52 2009/08/16 13:20:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.51 2008/05/26 18:00:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.52 2009/08/16 13:20:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,8 @@ usbd_get_desc(usbd_device_handle dev, int type, int index, int len, void *desc)
 	USETW2(req.wValue, type, index);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, len);
-	return (usbd_do_request(dev, &req, desc));
+	return (usbd_do_request_flags(dev, &req, desc, 0, 0,
+	    USBD_CONFIG_TIMEOUT));
 }
 
 usbd_status
