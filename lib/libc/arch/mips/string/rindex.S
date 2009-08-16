@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.S,v 1.7 2003/08/07 16:42:16 agc Exp $	*/
+/*	$NetBSD: rindex.S,v 1.7.46.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,22 +35,18 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)rindex.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: rindex.S,v 1.7 2003/08/07 16:42:16 agc Exp $")
+	/* RCSID("from: @(#)rindex.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: rindex.S,v 1.7.46.1 2009/08/16 03:36:02 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __ABICALLS__
-	.abicalls
-#endif
-
 LEAF(rindex)
-	move	v0, zero		# default if not found
+	move		v0, zero		# default if not found
 1:
-	lbu	a3, 0(a0)		# get a byte
-	addu	a0, a0, 1
-	bne	a3, a1, 2f
-	subu	v0, a0, 1		# save address of last match
+	lbu		a3, 0(a0)		# get a byte
+	PTR_ADDU	a0, a0, 1
+	bne		a3, a1, 2f
+	PTR_SUBU	v0, a0, 1		# save address of last match
 2:
-	bne	a3, zero, 1b		# continue if not end
-	j	ra
+	bne		a3, zero, 1b		# continue if not end
+	j		ra
 END(rindex)

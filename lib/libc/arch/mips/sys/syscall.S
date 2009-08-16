@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.5 2003/08/07 16:42:18 agc Exp $	*/
+/*	$NetBSD: syscall.S,v 1.5.46.1 2009/08/16 03:36:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,8 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)syscall.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: syscall.S,v 1.5 2003/08/07 16:42:18 agc Exp $")
+	/* RCSID("from: @(#)syscall.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: syscall.S,v 1.5.46.1 2009/08/16 03:36:03 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 RSYSCALL(syscall)

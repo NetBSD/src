@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.5 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.5.46.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,8 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)Ovfork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __vfork14.S,v 1.5 2003/08/07 16:42:17 agc Exp $")
+	/* RCSID("from: @(#)Ovfork.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: __vfork14.S,v 1.5.46.1 2009/08/16 03:36:02 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -47,19 +47,14 @@
  */
 
 LEAF(__vfork14)
-#ifdef __ABICALLS__
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-#endif
+	PIC_PROLOGUE(__vfork14)
 	li	v0, SYS___vfork14	# system call number for vfork
 	syscall
 	beq	a3, zero, 1f		# jump if no errors
-	la	t9, __cerror
-	jr	t9
+	PIC_TAILCALL(__cerror)
 1:
 	beq	v1, zero, 2f		# parent process ?
 	move	v0, zero		# return zero in child
 2:
-	j	ra
+	PIC_RETURN()
 END(__vfork14)

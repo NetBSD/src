@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.13 2003/08/07 16:42:17 agc Exp $	*/
+/*	$NetBSD: cerror.S,v 1.13.46.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,40 +35,39 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$NetBSD: cerror.S,v 1.13 2003/08/07 16:42:17 agc Exp $")
+	/* RCSID("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93") */
+	RCSID("$NetBSD: cerror.S,v 1.13.46.1 2009/08/16 03:36:02 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _REENTRANT
 	.globl	_C_LABEL(__errno)
 NESTED_NOPROFILE(__cerror, CALLFRAME_SIZ, ra)
-	PIC_PROLOGUE(__cerror, t9)
-	subu	sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
-	sw	ra, CALLFRAME_RA(sp)
-	sw	v0, 12(sp)		# save errno value
+	PIC_PROLOGUE(__cerror)
+	PTR_SUBU	sp, sp, CALLFRAME_SIZ
+	PTR_S		ra, CALLFRAME_RA(sp)
+	INT_S		v0, 3*SZREG(sp)		# save errno value
 
-	la	t9, _C_LABEL(__errno)	# locate address of errno
-	jalr	t9
+	SAVE_GP(CALLFRAME_GP)
 
-	lw	t0, 12(sp)
-	lw	ra, CALLFRAME_RA(sp)
-	sw	t0, 0(v0)		# update errno value
-	addiu	sp, sp, CALLFRAME_SIZ
-	li	v0, -1
-	li	v1, -1
-	j	ra
+	la		t9, _C_LABEL(__errno)	# locate address of errno
+	jalr		t9
+
+	INT_L		t0, 3*SZREG(sp)
+	PTR_L		ra, CALLFRAME_RA(sp)
+	INT_S		t0, 0(v0)		# update errno value
+	PTR_ADDU	sp, sp, CALLFRAME_SIZ
+	li		v0, -1
+	li		v1, -1
+	PIC_RETURN()
 END(__cerror)
 #else		
 	.globl	_C_LABEL(errno)
 LEAF_NOPROFILE(__cerror)
-	.set	noreorder
-#ifdef __ABICALLS__
-	.cpload t9
-#endif
-	sw	v0, _C_LABEL(errno)
-	li	v0, -1
-	j	ra
-	li	v1, -1
+	PIC_PROLOGUE(__cerror)
+	INT_S		v0, _C_LABEL(errno)
+	li		v0, -1
+	li		v1, -1
+	PIC_RETURN()
 END(__cerror)
 #endif /* _REENTRANT */
