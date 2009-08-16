@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.20 2009/08/15 16:50:29 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.21 2009/08/16 19:53:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.20 2009/08/15 16:50:29 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.21 2009/08/16 19:53:43 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -337,11 +337,11 @@ order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 	int c;
 	RECHEADER *crec, *prec, *trec;
 
-	buffer = malloc(2 * (DEFLLEN + sizeof(TRECHEADER)));
+	buffer = malloc(2 * (DEFLLEN + REC_DATA_OFFSET));
 	crec = (RECHEADER *) buffer;
-	crec_end = buffer + DEFLLEN + sizeof(TRECHEADER);
-	prec = (RECHEADER *) (buffer + DEFLLEN + sizeof(TRECHEADER));
-	prec_end = buffer + 2*(DEFLLEN + sizeof(TRECHEADER));
+	crec_end = buffer + DEFLLEN + REC_DATA_OFFSET;
+	prec = (RECHEADER *) (buffer + DEFLLEN + REC_DATA_OFFSET);
+	prec_end = buffer + 2*(DEFLLEN + REC_DATA_OFFSET);
 	wts = ftbl->weights;
 	if (SINGL_FLD && (ftbl->flags & F))
 		wts1 = (ftbl->flags & R) ? Rascii : ascii;

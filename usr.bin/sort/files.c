@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.32 2009/08/15 18:40:01 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.33 2009/08/16 19:53:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.32 2009/08/15 18:40:01 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.33 2009/08/16 19:53:43 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -124,17 +124,17 @@ getnext(int binno, int infl0, struct filelist *filelist, int nfiles,
 			}
 		}
 	}
-	if ((u_char *) pos > end - sizeof(TRECHEADER))
+	if ((u_char *) pos > end - REC_DATA_OFFSET)
 		return (BUFFEND);
-	fread(pos, sizeof(TRECHEADER), 1, fp);
+	fread(pos, REC_DATA_OFFSET, 1, fp);
 	if (end - pos->data < (ptrdiff_t)pos->length) {
-		hp = ((u_char *)pos) + sizeof(TRECHEADER);
-		for (i = sizeof(TRECHEADER); i ;  i--)
+		hp = ((u_char *)pos) + REC_DATA_OFFSET;
+		for (i = REC_DATA_OFFSET; i ;  i--)
 			ungetc(*--hp, fp);
 		return (BUFFEND);
 	}
 	fread(pos->data, pos->length, 1, fp);
-	nleft -= pos->length + sizeof(TRECHEADER);
+	nleft -= pos->length + REC_DATA_OFFSET;
 	if (nleft == 0 && binno == fstack[infl0].maxb)
 		fclose(fp);
 	return (0);
@@ -338,7 +338,7 @@ seq(FILE *fp, u_char **line)
 void
 putrec(const RECHEADER *rec, FILE *fp)
 {
-	EWRITE(rec, 1, rec->length + sizeof(TRECHEADER), fp);
+	EWRITE(rec, 1, rec->length + REC_DATA_OFFSET, fp);
 }
 
 /*
@@ -361,15 +361,15 @@ geteasy(int flno, int top, struct filelist *filelist, int nfiles,
 	FILE *fp;
 
 	fp = fstack[flno].fp;
-	if ((u_char *) rec > end - sizeof(TRECHEADER))
+	if ((u_char *) rec > end - REC_DATA_OFFSET)
 		return (BUFFEND);
-	if (!fread(rec, 1, sizeof(TRECHEADER), fp)) {
+	if (!fread(rec, 1, REC_DATA_OFFSET, fp)) {
 		fclose(fp);
 		fstack[flno].fp = 0;
 		return (EOF);
 	}
 	if (end - rec->data < (ptrdiff_t)rec->length) {
-		for (i = sizeof(TRECHEADER) - 1; i >= 0;  i--)
+		for (i = REC_DATA_OFFSET - 1; i >= 0;  i--)
 			ungetc(*((char *) rec + i), fp);
 		return (BUFFEND);
 	}
