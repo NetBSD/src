@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.1.40.1 2009/08/16 03:02:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,13 +35,9 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)strcmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: strcmp.S,v 1.1 2005/12/20 19:28:50 christos Exp $")
+	/* RCSID("from: @(#)strcmp.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: strcmp.S,v 1.1.40.1 2009/08/16 03:02:47 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef __ABICALLS__
-	.abicalls
-#endif
 
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
@@ -54,9 +50,9 @@ LEAF(strcmp)
 	bne	t0, t1, NotEq
 	lbu	t0, 1(a0)		# unroll loop
 	lbu	t1, 1(a1)
-	add	a0, a0, 2
+	PTR_ADD	a0, a0, 2
 	beq	t0, zero, LessOrEq	# end of first string?
-	add	a1, a1, 2
+	PTR_ADD	a1, a1, 2
 	beq	t0, t1, 1b
 NotEq:
 	subu	v0, t0, t1
