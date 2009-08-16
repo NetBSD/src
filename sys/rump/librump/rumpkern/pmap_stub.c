@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.17 2009/08/10 12:04:17 martin Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.18 2009/08/16 14:02:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.17 2009/08/10 12:04:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.18 2009/08/16 14:02:08 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -58,7 +58,7 @@ bool pmap_clear_modify(struct vm_page *);
 void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
 void pmap_kremove(vaddr_t, vsize_t);
 void pmap_page_protect(struct vm_page *, vm_prot_t);
-bool pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *);
+bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #endif
 
 #if !defined(pmap_is_modified) && !defined(__vax__)
