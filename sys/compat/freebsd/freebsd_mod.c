@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_mod.c,v 1.1 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.1 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.1 2008/11/19 18:36:02 ad Exp $");
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_aout.h>
 #include <sys/signalvar.h>
 
 #include <compat/freebsd/freebsd_exec.h>
