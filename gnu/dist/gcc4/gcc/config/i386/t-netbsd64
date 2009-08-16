@@ -12,4 +12,4 @@ INSTALL_LIBGCC = install-multilib
 # crtend*.o cannot be compiled without -fno-asynchronous-unwind-tables,
 # because then __FRAME_END__ might not be the last thing in .eh_frame
 # section.
-CRTSTUFF_T_CFLAGS = -fno-omit-frame-pointer -fno-asynchronous-unwind-tables
+CRTSTUFF_T_CFLAGS += -fno-omit-frame-pointer -fno-asynchronous-unwind-tables
