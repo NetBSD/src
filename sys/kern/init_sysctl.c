@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.164 2009/05/24 21:41:26 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.165 2009/08/16 20:28:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.164 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.165 2009/08/16 20:28:19 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2865,6 +2865,7 @@ int
 sysctl_consdev(SYSCTLFN_ARGS)
 {
 	dev_t consdev;
+	uint32_t oconsdev;
 	struct sysctlnode node;
 
 	if (cn_tab != NULL)
@@ -2872,8 +2873,19 @@ sysctl_consdev(SYSCTLFN_ARGS)
 	else
 		consdev = NODEV;
 	node = *rnode;
-	node.sysctl_data = &consdev;
-	node.sysctl_size = sizeof(consdev);
+	switch (*oldlenp) {
+	case sizeof(consdev):
+		node.sysctl_data = &consdev;
+		node.sysctl_size = sizeof(consdev);
+		break;
+	case sizeof(oconsdev):
+		oconsdev = (uint32_t)consdev;
+		node.sysctl_data = &oconsdev;
+		node.sysctl_size = sizeof(oconsdev);
+		break;
+	default:
+		return EINVAL;
+	}
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
