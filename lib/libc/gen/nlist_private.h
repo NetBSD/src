@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_private.h,v 1.17 2003/07/26 19:24:43 salo Exp $ */
+/* $NetBSD: nlist_private.h,v 1.18 2009/08/16 03:56:26 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -41,7 +41,6 @@
 #  define	NLIST_ELF64
 #  define	NLIST_ELF32
 #elif defined(__mips__)
-#  define	NLIST_AOUT
 #  define	NLIST_ECOFF
 #  define	NLIST_ELF32
 #elif defined(__arm__) || defined(__i386__) || defined (__m68k__) || \
