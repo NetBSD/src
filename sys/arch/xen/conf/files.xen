@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.103 2009/08/05 20:15:37 jym Exp $
+#	$NetBSD: files.xen,v 1.104 2009/08/16 15:35:52 manu Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -322,6 +322,7 @@ include	"compat/mach/files.mach"
 file	arch/i386/i386/mach_machdep.c		compat_mach | compat_darwin
 file	arch/i386/i386/mach_sigcode.S		compat_mach | compat_darwin
 file	arch/i386/i386/mach_syscall.c		compat_mach | compat_darwin
+file    arch/i386/i386/darwin_commpage_machdep.S compat_darwin
 file	arch/i386/i386/macho_machdep.c		exec_macho
 
 # DARWIN binary compatibility (COMPAT_DARWIN)
