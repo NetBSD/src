@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.86 2009/03/28 21:45:55 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.87 2009/08/16 11:06:37 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.86 2009/03/28 21:45:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.87 2009/08/16 11:06:37 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1381,6 +1381,7 @@ next:
 struct vm_anon *
 amap_lookup(struct vm_aref *aref, vaddr_t offset)
 {
+	struct vm_anon *an;
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_lookup"); UVMHIST_CALLED(maphist);
@@ -1392,7 +1393,9 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 
 	UVMHIST_LOG(maphist, "<- done (amap=0x%x, offset=0x%x, result=0x%x)",
 	    amap, offset, amap->am_anon[slot], 0);
-	return(amap->am_anon[slot]);
+	an = amap->am_anon[slot];
+	KASSERT(an == NULL || an->an_ref != 0);
+	return an;
 }
 
 /*
@@ -1407,6 +1410,9 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
 {
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
+#if defined(DIAGNOSTIC)
+	int i;
+#endif /* defined(DIAGNOSTIC) */
 	UVMHIST_FUNC("amap_lookups"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(&amap->am_l));
 
@@ -1419,6 +1425,15 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
 	KASSERT((slot + (npages - 1)) < amap->am_nslot);
 	memcpy(anons, &amap->am_anon[slot], npages * sizeof(struct vm_anon *));
 
+#if defined(DIAGNOSTIC)
+	for (i = 0; i < npages; i++) {
+		struct vm_anon * const an = anons[i];
+
+		if (an != NULL && an->an_ref == 0) {
+			panic("%s: ref=0 anon", __func__);
+		}
+	}
+#endif /* defined(DIAGNOSTIC) */
 	UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
 	return;
 }
