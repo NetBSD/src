@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.4 2009/08/14 22:11:37 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.5 2009/08/16 00:21:49 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -130,4 +130,19 @@ sys/dev/ic/i82365.c				1.108
 	Fix pcic kthread creation timing.  Fixes PR kern/41791 and
 	PR port-hpcmips/41164.
 	[jun, ticket #899]
+
+lib/libc/gdtoa/gdtoaimp.h			1.7
+
+	Change Kmax so we allocate enough freelist entries to handle
+	large field numbers.
+	[christos, ticket #913]
+
+sys/arch/x86/pci/ichlpcib.c			1.18
+
+	Fix watchdog code:
+	- the timer bound constants are in tick, so convert period to
+	tick before checking it against the bounds
+	- for ICH5 or older, fix code that would have always written a 0
+	period to the register.
+	[bouyer, ticket #912]
 
