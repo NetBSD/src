@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_aout.c,v 1.3 2009/02/03 03:01:02 mrg Exp $	*/
+/*	$NetBSD: ldd_aout.c,v 1.4 2009/08/16 18:43:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_aout.c,v 1.3 2009/02/03 03:01:02 mrg Exp $");
+__RCSID("$NetBSD: ldd_aout.c,v 1.4 2009/08/16 18:43:08 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/exec_aout.h>
 
 #include <a.out.h>
 #include <err.h>
