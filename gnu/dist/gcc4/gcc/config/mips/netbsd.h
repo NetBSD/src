@@ -85,6 +85,7 @@ Boston, MA 02110-1301, USA.  */
       }								\
     else							\
       {								\
+	builtin_define ("__mips_o32");				\
 	builtin_define ("_ABIO32=1");				\
 	builtin_define ("_MIPS_SIM=_ABIO32");			\
         builtin_define ("_MIPS_SZLONG=32");			\
@@ -195,8 +196,8 @@ Boston, MA 02110-1301, USA.  */
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{EL:-m elf32lmip} \
-   %{EB:-m elf32bmip} \
+  "%{EL:-m elf32ltsmip} \
+   %{EB:-m elf32btsmip} \
    %(endian_spec) \
    %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips32r2} %{mips64} \
    %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
