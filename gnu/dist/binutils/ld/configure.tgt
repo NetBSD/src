@@ -419,11 +419,11 @@ mips*-sgi-irix6*)	targ_emul=elf32bmipn32
 mips*-sgi-irix*)	targ_emul=mipsbig ;;
 mips*el-*-ecoff*)	targ_emul=mipsidtl ;;
 mips*-*-ecoff*)		targ_emul=mipsidt ;;
-mips64*el-*-netbsd*)	targ_emul=elf64ltsmip
-			targ_extra_emuls="elf64btsmip elf32ltsmipn32 elf32ltsmip elf32btsmipn32 elf32btsmip"
+mips64*el-*-netbsd*)	targ_emul=elf32ltsmipn32
+			targ_extra_emuls="elf64btsmip elf64ltsmip elf32ltsmip elf32btsmipn32 elf32btsmip"
 			;;
-mips64*-*-netbsd*)	targ_emul=elf64btsmip
-			targ_extra_emuls="elf64ltsmip elf32btsmipn32 elf32btsmip elf32ltsmipn32 elf32ltsmip"
+mips64*-*-netbsd*)	targ_emul=elf32btsmipn32
+			targ_extra_emuls="elf64ltsmip elf64btsmip elf32btsmip elf32ltsmipn32 elf32ltsmip"
 			;;
 mips*el-*-netbsd*)	targ_emul=elf32ltsmip
 			targ_extra_emuls="elf32btsmip elf64ltsmip elf64btsmip"
