@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.35 2009/08/16 19:53:43 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.36 2009/08/16 20:02:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.35 2009/08/16 19:53:43 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.36 2009/08/16 20:02:04 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -341,15 +341,16 @@ onepass(const u_char **a, int depth, long n, long sizes[], u_char *tr, FILE *fp)
 	static int histo[256];
 	int *hp;
 	int c;
+	int hdr_off;
 	const u_char **an, *t, **aj;
 	const u_char **ak, *r;
 
 	memset(tsizes, 0, sizeof(tsizes));
-	depth += REC_DATA_OFFSET;
+	hdr_off = REC_DATA_OFFSET + depth;
 	an = &a[n];
 	for (ak = a; ak < an; ak++) {
 		histo[c = tr[**ak]]++;
-		tsizes[c] += ((const RECHEADER *) (*ak -= depth))->length;
+		tsizes[c] += ((const RECHEADER *) (*ak -= hdr_off))->length;
 	}
 
 	bin[0] = a;
@@ -362,7 +363,7 @@ onepass(const u_char **a, int depth, long n, long sizes[], u_char *tr, FILE *fp)
 			continue;
 	}
 	for (aj = a; aj < an; *aj = r, aj = bin[c + 1]) 
-		for (r = *aj; aj < (ak = --top[c = tr[r[depth]]]) ;)
+		for (r = *aj; aj < (ak = --top[c = tr[r[hdr_off]]]) ;)
 			swap(*ak, r, t);
 
 	for (ak = a, c = 0; c < 256; c++) {
