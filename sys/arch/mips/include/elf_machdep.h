@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.96.1 2009/08/16 03:33:57 matt Exp $	*/
 
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
@@ -62,9 +62,33 @@
 #define R_MIPS_ADD_IMMEDIATE	34
 #define R_MIPS_PJUMP		35
 #define R_MIPS_RELGOT		36
+#define	R_MIPS_JALR		37
+/* TLS relocations */
+#define	R_MIPS_TLS_DTPMOD32	38
+#define	R_MIPS_TLS_DTPREL32	39
+#define	R_MIPS_TLS_DTPMOD64	40
+#define	R_MIPS_TLS_DTPREL64	41
+#define	R_MIPS_TLS_GD		42
+#define	R_MIPS_TLS_LDM		43
+#define	R_MIPS_TLS_DTPREL_HI16	44
+#define	R_MIPS_TLS_DTPREL_LO16	45
+#define	R_MIPS_TLS_GOTTPREL	46
+#define	R_MIPS_TLS_TPREL32	47
+#define	R_MIPS_TLS_TPREL64	48
+#define	R_MIPS_TLS_TPREL_HI16	49
+#define	R_MIPS_TLS_TPREL_LO16	50
 
-#define R_MIPS_max		37
+#define R_MIPS_max		51
 #define R_TYPE(name)		__CONCAT(R_MIPS_,name)
+
+#define	R_MIPS16_min		100
+#define	R_MIPS16_26		100
+#define	R_MIPS16_GPREL		101
+#define	R_MIPS16_GOT16		102
+#define	R_MIPS16_CALL16		103
+#define	R_MIPS16_HI16		104
+#define	R_MIPS16_LO16		105
+#define	R_MIPS16_max		106
 
 
 /* mips dynamic tags */
@@ -85,6 +109,34 @@
 #define	DT_MIPS_GOTSYM		0x70000013	/* first dynamic sym in got */
 #define DT_MIPS_HIPAGENO	0x70000014
 #define	DT_MIPS_RLD_MAP		0x70000016	/* address of loader map */
+
+/*
+ * ELF Flags
+ */
+#define	EF_MIPS_PIC		0x00000002	/* Contains PIC code */
+#define	EF_MIPS_CPIC		0x00000004	/* STD PIC calling sequence */
+#define	EF_MIPS_ABI2		0x00000020	/* N32 */
+
+#define	EF_MIPS_ARCH_ASE	0x0f000000	/* Architectural extensions */
+#define	EF_MIPS_ARCH_MDMX	0x08000000	/* MDMX multimedia extension */
+#define	EF_MIPS_ARCH_M16	0x04000000	/* MIPS-16 ISA extensions */
+
+#define	EF_MIPS_ARCH		0x0f000000	/* Architecture field */
+#define	EF_MIPS_ARCH_1		0x00000000	/* -mips1 code */
+#define	EF_MIPS_ARCH_2		0x01000000	/* -mips2 code */
+#define	EF_MIPS_ARCH_3		0x02000000	/* -mips3 code */
+#define	EF_MIPS_ARCH_4		0x03000000	/* -mips4 code */
+#define	EF_MIPS_ARCH_5		0x04000000	/* -mips5 code */
+#define	EF_MIPS_ARCH_32		0x05000000	/* -mips32 code */
+#define	EF_MIPS_ARCH_64		0x06000000	/* -mips64 code */
+#define	EF_MIPS_ARCH_32R2	0x07000000	/* -mips32r2 code */
+#define	EF_MIPS_ARCH_64R4	0x08000000	/* -mips64r2 code */
+
+#define	EF_MIPS_ABI		0x0000f000
+#define	EF_MIPS_ABI_O32		0x00001000
+#define	EF_MIPS_ABI_O64		0x00002000
+#define	EF_MIPS_ABI_EABI32	0x00003000
+#define	EF_MIPS_ABI_EABI64	0x00004000
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT

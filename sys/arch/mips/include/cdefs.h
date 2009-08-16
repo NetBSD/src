@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.12 2006/08/27 19:04:30 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.12.78.1 2009/08/16 03:33:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -30,6 +30,9 @@
 #ifndef _MIPS_CDEFS_H_
 #define	_MIPS_CDEFS_H_
 
+/*
+ * These are depreciated.  Use __mips_{o32,o64,n32,n64} instead.
+ */
 /*      MIPS Subprogram Interface Model */
 #define _MIPS_SIM_ABIX32	4	/* 64 bit safe, ILP32 o32 model */
 #define _MIPS_SIM_ABI64		3
