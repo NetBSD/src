@@ -1,4 +1,4 @@
-/* $NetBSD: exec_aout.c,v 1.10 2009/04/15 02:07:20 dogcow Exp $ */
+/* $NetBSD: exec_aout.c,v 1.11 2009/08/16 18:15:28 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_aout.c,v 1.10 2009/04/15 02:07:20 dogcow Exp $");
+__RCSID("$NetBSD: exec_aout.c,v 1.11 2009/08/16 18:15:28 martin Exp $");
 #endif
  
 #include <unistd.h>
@@ -39,7 +39,8 @@ __RCSID("$NetBSD: exec_aout.c,v 1.10 2009/04/15 02:07:20 dogcow Exp $");
 #include <errno.h>
 #include <a.out.h>
 #include <sys/types.h>
-#include <sys/stat.h> 
+#include <sys/stat.h>
+#include <sys/exec_aout.h>
 
 #include "extern.h"
 
