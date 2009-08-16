@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.13 2006/07/18 12:05:03 jnemeth Exp $
+/*	$NetBSD: aout2elf.c,v 1.14 2009/08/16 17:12:48 pgoyette Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
