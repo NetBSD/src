@@ -1,4 +1,4 @@
-/*	$NetBSD: a.out.h,v 1.19 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: a.out.h,v 1.20 2009/08/16 17:12:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,7 +60,7 @@
 #ifndef	_AOUT_H_
 #define	_AOUT_H_
 
-#include <sys/exec.h>
+#include <sys/exec_aout.h>
 
 #define	_AOUT_INCLUDE_
 #include <nlist.h>
