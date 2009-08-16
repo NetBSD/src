@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.11 2005/04/22 06:58:01 simonb Exp $	*/
+/*	$NetBSD: pipe.S,v 1.11.34.1 2009/08/16 03:36:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,8 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)pipe.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: pipe.S,v 1.11 2005/04/22 06:58:01 simonb Exp $")
+	/* RCSID("from: @(#)pipe.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: pipe.S,v 1.11.34.1 2009/08/16 03:36:03 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
@@ -44,19 +44,14 @@ WEAK_ALIAS(pipe, _pipe)
 #endif
 
 LEAF(_pipe)
-#ifdef __ABICALLS__
-	.set    noreorder
-	.cpload t9
-	.set    reorder
-#endif
+	PIC_PROLOGUE(_pipe);
 	li	v0, SYS_pipe	# pipe(fildes) int fildes[2];
 	syscall
 	bne	a3, zero, 1f
-	sw	v0, 0(a0)	# store the two file descriptors
-	sw	v1, 4(a0)
+	INT_S	v0, 0(a0)	# store the two file descriptors
+	INT_S	v1, 4(a0)
 	move	v0, zero
-	j	ra
+	PIC_RETURN()
 1:
-	la	t9, _C_LABEL(__cerror)
-	jr	t9
+	PIC_TAILCALL(__cerror)
 END(_pipe)

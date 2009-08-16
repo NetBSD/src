@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.20 2005/10/07 17:16:40 tsutsui Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.20.34.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,14 +38,14 @@
 #include <machine/setjmp.h>
 #include <machine/signal.h>		/* XXX */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: _setjmp.S,v 1.20 2005/10/07 17:16:40 tsutsui Exp $")
-#endif /* LIBC_SCCS and not lint */
+#include "assym.h"
 
-#ifdef __ABICALLS__
-	.abicalls
-#endif
+#include "SYS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
+	RCSID("$NetBSD: _setjmp.S,v 1.20.34.1 2009/08/16 03:36:02 matt Exp $")
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * C library -- _setjmp, _longjmp
@@ -61,91 +61,120 @@
 	.set	noreorder
 
 LEAF(_setjmp)
-#ifdef __ABICALLS__ 
-	#.set noreorder
-	.cpload t9
-	#.set reorder
-#endif
-
 	REG_PROLOGUE
 	REG_LI	v0, 0xACEDBADE			# sigcontext magic number
-	REG_S	ra, (2 * 4)(a0)			# sc_pc = return address
-	REG_S	v0, (_OFFSETOF_SC_REGS)(a0)	#   saved in sc_regs[0]
-	REG_S	s0, (_R_S0 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s1, (_R_S1 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s2, (_R_S2 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s3, (_R_S3 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s4, (_R_S4 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s5, (_R_S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s6, (_R_S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s7, (_R_S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	sp, (_R_SP * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_S	s8, (_R_S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
+	REG_S	ra, _OFFSETOF_SC_PC(a0)		# sc_pc = return address
+	REG_S	v0, _OFFSETOF_SC_REGS(a0)	#   saved in sc_regs[0]
+	REG_S	a1, _OFFSETOF_SC_REGS_V0(a0)	# save return value
+	REG_S	s0, _OFFSETOF_SC_REGS_S0(a0)
+	REG_S	s1, _OFFSETOF_SC_REGS_S1(a0)
+	REG_S	s2, _OFFSETOF_SC_REGS_S2(a0)
+	REG_S	s3, _OFFSETOF_SC_REGS_S3(a0)
+	REG_S	s4, _OFFSETOF_SC_REGS_S4(a0)
+	REG_S	s5, _OFFSETOF_SC_REGS_S5(a0)
+	REG_S	s6, _OFFSETOF_SC_REGS_S6(a0)
+	REG_S	s7, _OFFSETOF_SC_REGS_S7(a0)
+	REG_S	sp, _OFFSETOF_SC_REGS_SP(a0)
+	REG_S	s8, _OFFSETOF_SC_REGS_S8(a0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	gp, _OFFSETOF_SC_REGS_GP(a0)	# newabi gp is callee-saved
+#endif
 	cfc1	v0, $31				# too bad cant check if FP used
-	swc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f22, (22 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f23, (23 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f24, (24 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f25, (25 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f26, (26 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f27, (27 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f28, (28 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f29, (29 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f30, (30 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f31, (31 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	sw	v0, (32 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	/*
+	 * In N32, FP registers F20, F22, F24, F26, F28, F30 are callee-saved.
+	 * In N64, FP registers F23 .. F31 are callee-saved.
+	 * In O32, FP registers F20 .. F23 are callee-saved.
+	 */
+#if defined(__mips_n64) || defined(__mips_n32)
+	FPST	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
+	FPST	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
+	FPST	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
+	FPST	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
+#endif
+#if defined(__mips_n32) || defined(__mips_o32) || defined(__mips_o64)
+	FPST	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
+	FPST	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
+#endif
+#if defined(__mips_o32) || defined(__mips_o64)
+	FPST	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
+	FPST	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
+#endif
+#if defined(__mips_n64)
+	FPST	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
+	FPST	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
+	FPST	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
+	FPST	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
+#endif
+	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	REG_EPILOGUE
+
 	j	ra
 	move	v0, zero
 END(_setjmp)
 
 LEAF(_longjmp)
-#ifdef __ABICALLS__ 
-	.set    noreorder
-	.cpload t9
-	.set    reorder
-	subu	sp, sp, 32
-	.cprestore 16
-	.set    noreorder
-#endif  
-	REG_PROLOGUE
-	REG_L	v0, (_OFFSETOF_SC_REGS)(a0)	# get magic number
-	REG_L	ra, (2 * 4)(a0)
-	REG_LI	t0, 0xACEDBADE
-	bne	v0, t0, botch		# jump if error
-	addu	sp, sp, 32			# does not matter, sanity
-	REG_L	s0, (_R_S0 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s1, (_R_S1 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s2, (_R_S2 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s3, (_R_S3 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s4, (_R_S4 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s5, (_R_S5 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s6, (_R_S6 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s7, (_R_S7 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	lw	v0, (32 * 4 + _OFFSETOF_SC_FPREGS)(a0)	# get fpu status
-	REG_L	sp, (_R_SP * SZREG + _OFFSETOF_SC_REGS)(a0)
-	REG_L	s8, (_R_S8 * SZREG + _OFFSETOF_SC_REGS)(a0)
-	ctc1	v0, $31
-	lwc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f22, (22 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f23, (23 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f24, (24 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f25, (25 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f26, (26 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f27, (27 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f28, (28 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f29, (29 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f30, (30 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	lwc1	$f31, (31 * 4 + _OFFSETOF_SC_FPREGS)(a0)
+	PIC_PROLOGUE(_longjmp)
+	PTR_SUBU	sp, sp, CALLFRAME_SIZ
+	SAVE_GP(CALLFRAME_GP)
 
-	j	ra
-	move	v0, a1
+	REG_PROLOGUE
+	REG_L		v0, _OFFSETOF_SC_REGS(a0)	# get magic number
+	REG_L		ra, _OFFSETOF_SC_PC(a0)
+	REG_LI		t0, 0xACEDBADE
+	bne		v0, t0, botch		# jump if error
+	PTR_ADDU	sp, sp, CALLFRAME_SIZ	# does not matter, sanity
+	REG_L		s0, _OFFSETOF_SC_REGS_S0(a0)
+	REG_L		s1, _OFFSETOF_SC_REGS_S1(a0)
+	REG_L		s2, _OFFSETOF_SC_REGS_S2(a0)
+	REG_L		s3, _OFFSETOF_SC_REGS_S3(a0)
+	REG_L		s4, _OFFSETOF_SC_REGS_S4(a0)
+	REG_L		s5, _OFFSETOF_SC_REGS_S5(a0)
+	REG_L		s6, _OFFSETOF_SC_REGS_S6(a0)
+	REG_L		s7, _OFFSETOF_SC_REGS_S7(a0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_L		gp, _OFFSETOF_SC_REGS_GP(a0)
+#endif
+	# get fpu status
+	INT_L		v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
+	REG_L		sp, _OFFSETOF_SC_REGS_SP(a0)
+	REG_L		s8, _OFFSETOF_SC_REGS_S8(a0)
+	ctc1		v0, $31
+	/*
+	 * In N32, FP registers F20, F22, F24, F26, F28, F30 are callee-saved.
+	 * In N64, FP registers F23 .. F31 are callee-saved.
+	 * In O32, FP registers F20 .. F23 are callee-saved.
+	 */
+#if defined(__mips_n64) || defined(__mips_n32)
+	FPLD	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
+	FPLD	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
+	FPLD	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
+	FPLD	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
+#endif
+#if defined(__mips_n32) || defined(__mips_o32) || defined(__mips_o64)
+	FPLD	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
+	FPLD	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
+#endif
+#if defined(__mips_o32) || defined(__mips_o64)
+	FPLD	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
+	FPLD	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
+#endif
+#if defined(__mips_n64)
+	FPLD	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
+	FPLD	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
+	FPLD	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
+	FPLD	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
+#endif
+
 	REG_EPILOGUE
+	j	ra
+	REG_L	v0, _OFFSETOF_SC_REG_V0(a0)
+
 botch:
+	/*
+	 * We know we aren't returning so we don't care about restoring
+	 * our caller's GP.
+	 */
 	jal	_C_LABEL(longjmperror)
-	nop
-	jal	_C_LABEL(abort)
-	nop
+	
+	PIC_TAILCALL(abort)
 END(_longjmp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.8 2005/04/22 06:59:00 simonb Exp $	*/
+/*	$NetBSD: index.S,v 1.8.34.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,24 +35,20 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)index.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: index.S,v 1.8 2005/04/22 06:59:00 simonb Exp $")
+	/* RCSID("from: @(#)index.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: index.S,v 1.8.34.1 2009/08/16 03:36:02 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef __ABICALLS__
-	.abicalls
-#endif
 
 LEAF(index)
 1:
-	lbu	a2, 0(a0)		# get a byte
-	addu	a0, a0, 1
-	beq	a2, a1, fnd
-	bne	a2, zero, 1b
+	lbu		a2, 0(a0)		# get a byte
+	PTR_ADDU	a0, a0, 1
+	beq		a2, a1, fnd
+	bne		a2, zero, 1b
 notfnd:
-	move	v0, zero
-	j	ra
+	move		v0, zero
+	j		ra
 fnd:
-	subu	v0, a0, 1
-	j	ra
+	PTR_SUBU	v0, a0, 1
+	j		ra
 END(index)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.3 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.3.14.1 2009/08/16 03:36:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: getcontext.S,v 1.3 2008/04/28 20:22:56 martin Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.3.14.1 2009/08/16 03:36:02 matt Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -42,13 +42,14 @@ WEAK_ALIAS(getcontext, _getcontext)
 	.set reorder
 
 LEAF(_getcontext)
+	PIC_PROLOGUE(_getcontext)
 	SYSTRAP(getcontext)
-	bne	a3, zero, 1f
+	bne		a3, zero, 1f
 	REG_PROLOGUE
-	REG_S	zero, (_OFFSETOF_UC_GREGS + _REG_V0 * SZREG)(a0)
-	REG_S	ra, (_OFFSETOF_UC_GREGS + _REG_EPC * SZREG)(a0)
+	REG_S		zero, (_OFFSETOF_UC_GREGS + _REG_V0 * SZREG)(a0)
+	REG_S		ra, (_OFFSETOF_UC_GREGS + _REG_EPC * SZREG)(a0)
 	REG_EPILOGUE
-	j	ra
+	PIC_RETURN()
 1:
-	PIC_CALL(__cerror, t9)
+	PIC_TAILCALL(__cerror)
 END(_getcontext)
