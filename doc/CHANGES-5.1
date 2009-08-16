@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.60 2009/08/16 00:22:12 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.61 2009/08/16 22:41:55 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2211,4 +2211,11 @@ sys/arch/x86/pci/ichlpcib.c			1.18
 	- for ICH5 or older, fix code that would have always written a 0
 	period to the register.
 	[bouyer, ticket #912]
+
+lib/libc/gen/fts.c				1.38
+
+	Avoid possible integer overflow on really deep dirs,
+	and subsequent collateral damage.
+	Received from OpenBSD via US-CERT as VU #590371.
+	[christos, ticket #915]
 
