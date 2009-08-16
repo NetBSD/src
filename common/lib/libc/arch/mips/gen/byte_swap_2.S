@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 2006/02/08 21:52:36 simonb Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2.40.1 2009/08/16 03:02:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,8 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)htons.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: byte_swap_2.S,v 1.2 2006/02/08 21:52:36 simonb Exp $")
+	/* RCSID("from: @(#)htons.s	8.1 (Berkeley) 6/4/93") */
+	RCSID("$NetBSD: byte_swap_2.S,v 1.2.40.1 2009/08/16 03:02:47 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #undef _LOCORE
