@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.84 2008/12/09 20:45:45 pooka Exp $ */
+/*	$NetBSD: pmap.h,v 1.85 2009/08/16 14:06:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -280,7 +280,7 @@ void		pmap_remove_all(struct pmap *pm);
 bool		pmap_clear_modify4_4c(struct vm_page *);
 bool		pmap_clear_reference4_4c(struct vm_page *);
 void		pmap_copy_page4_4c(paddr_t, paddr_t);
-int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
 bool		pmap_is_modified4_4c(struct vm_page *);
 bool		pmap_is_referenced4_4c(struct vm_page *);
@@ -300,7 +300,7 @@ bool		pmap_clear_reference4m(struct vm_page *);
 void		pmap_copy_page4m(paddr_t, paddr_t);
 void		pmap_copy_page_viking_mxcc(paddr_t, paddr_t);
 void		pmap_copy_page_hypersparc(paddr_t, paddr_t);
-int		pmap_enter4m(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+int		pmap_enter4m(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
 bool		pmap_is_modified4m(struct vm_page *);
 bool		pmap_is_referenced4m(struct vm_page *);
@@ -346,7 +346,7 @@ void		pmap_zero_page_hypersparc(paddr_t);
 
 extern bool	(*pmap_clear_modify_p)(struct vm_page *);
 extern bool	(*pmap_clear_reference_p)(struct vm_page *);
-extern int	(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+extern int	(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 extern bool	 (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 extern bool	(*pmap_is_modified_p)(struct vm_page *);
 extern bool	(*pmap_is_referenced_p)(struct vm_page *);
