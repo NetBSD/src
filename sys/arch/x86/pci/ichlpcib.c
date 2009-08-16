@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.14.4.1 2009/04/07 23:28:30 snj Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.14.4.1.2.1 2009/08/16 00:17:46 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14.4.1 2009/04/07 23:28:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14.4.1.2.1 2009/08/16 00:17:46 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -413,6 +413,7 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 	struct lpcib_softc *sc = smw->smw_cookie;
 	unsigned int period;
 	uint16_t ich6period = 0;
+	uint8_t ich5period = 0;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		/* Stop the TCO timer. */
@@ -422,16 +423,16 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		 * ICH6 or newer are limited to 2s min and 613s max.
 		 * ICH5 or older are limited to 4s min and 39s max.
 		 */
+		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
 		if (sc->sc_has_rcba) {
-			if (smw->smw_period < LPCIB_TCOTIMER2_MIN_TICK ||
-			    smw->smw_period > LPCIB_TCOTIMER2_MAX_TICK)
+			if (period < LPCIB_TCOTIMER2_MIN_TICK ||
+			    period > LPCIB_TCOTIMER2_MAX_TICK)
 				return EINVAL;
 		} else {
-			if (smw->smw_period < LPCIB_TCOTIMER_MIN_TICK ||
-			    smw->smw_period > LPCIB_TCOTIMER_MAX_TICK)
+			if (period < LPCIB_TCOTIMER_MIN_TICK ||
+			    period > LPCIB_TCOTIMER_MAX_TICK)
 				return EINVAL;
 		}
-		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
 		
 		/* Stop the TCO timer, */
 		tcotimer_stop(sc);
@@ -446,11 +447,11 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 					  LPCIB_TCO_TMR2, ich6period | period);
 		} else {
 			/* ICH5 or older */
-			period |= bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			ich5period = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 						   LPCIB_TCO_TMR);
-			period &= 0xc0;
+			ich5period &= 0xc0;
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-					  LPCIB_TCO_TMR, period);
+					  LPCIB_TCO_TMR, ich5period | period);
 		}
 
 		/* and start/reload the timer. */
