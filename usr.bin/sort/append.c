@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.16 2009/08/16 19:53:43 dsl Exp $	*/
+/*	$NetBSD: append.c,v 1.17 2009/08/16 20:02:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.16 2009/08/16 19:53:43 dsl Exp $");
+__RCSID("$NetBSD: append.c,v 1.17 2009/08/16 20:02:04 dsl Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #define OUTPUT {							\
 	if ((n = cpos - ppos) > 1) {					\
 		for (; ppos < cpos; ++ppos)				\
-			*ppos -= odepth;				\
+			*ppos -= depth;				\
 		ppos -= n;						\
 		if (stable_sort)					\
 			sradixsort(ppos, n, wts1, REC_D);		\
@@ -95,7 +95,8 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
     struct field *ftbl)
 {
 	u_char *wts, *wts1;
-	int n, odepth = depth;
+	int n;
+	int hdr_off;
 	const u_char **cpos, **ppos, **lastkey;
 	const u_char *cend, *pend, *start;
 	const struct recheader *crec, *prec;
@@ -110,14 +111,14 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
 			wts1 = ascii;
 	}
 	lastkey = keylist + nelem;
-	depth += REC_DATA_OFFSET;
+	hdr_off = REC_DATA_OFFSET + depth;
 	if (SINGL_FLD && (UNIQUE || wts1 != wts)) {
 		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - depth);
+		prec = (const RECHEADER *) (*ppos - hdr_off);
 		if (UNIQUE)
 			put(prec, fp);
 		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - depth);
+			crec = (const RECHEADER *) (*cpos - hdr_off);
 			if (crec->length  == prec->length) {
 				/*
 				 * Set pend and cend so that trailing NUL and
@@ -150,10 +151,10 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
 		if (!UNIQUE)  { OUTPUT; }
 	} else if (UNIQUE) {
 		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - depth);
+		prec = (const RECHEADER *) (*ppos - hdr_off);
 		put(prec, fp);
 		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - depth);
+			crec = (const RECHEADER *) (*cpos - hdr_off);
 			if (crec->offset == prec->offset) {
 				/*
 				 * Set pend and cend so that trailing NUL and
@@ -178,7 +179,7 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
 			}
 		}
 	} else for (cpos = keylist; cpos < lastkey; cpos++) {
-		crec = (const RECHEADER *) (*cpos - depth);
+		crec = (const RECHEADER *) (*cpos - hdr_off);
 		put(crec, fp);
 	}
 }
