@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.27.92.1 2009/08/16 03:33:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,27 +93,12 @@ struct sigcontext {
 	mips_reg_t sc_regs[32];	/* processor regs 0 to 31 */
 	mips_reg_t mullo, mulhi;/* mullo and mulhi registers... */
 	int	sc_fpused;	/* fp has been used */
-	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
+	mips_fpreg_t sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
-	int	sc_xxx[8];	/* XXX reserved */
+	long	sc_xxx[8];	/* XXX reserved */
 	sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
 #endif /* _LIBC || _KERNEL */
 
 #endif	/* !_LANGUAGE_ASSEMBLY */
-#if defined(_LIBC)
-/*
- * Hard code these to make people think twice about breaking compatibility.
- * These macros are generated independently for the kernel.
- */
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-#define _OFFSETOF_SC_REGS	12
-#define _OFFSETOF_SC_FPREGS	152
-#define _OFFSETOF_SC_MASK	320
-#else
-#define _OFFSETOF_SC_REGS	16
-#define _OFFSETOF_SC_FPREGS	292
-#define _OFFSETOF_SC_MASK	460
-#endif
-#endif	/* _LIBC */
 #endif	/* !_MIPS_SIGNAL_H_ */
