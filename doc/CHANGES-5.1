@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.59 2009/08/14 22:03:44 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.60 2009/08/16 00:22:12 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2196,4 +2196,19 @@ sys/contrib/dev/ath/public/xscale-le-elf.opt_ah.h removed
 	With this final reference to sys/contrib/dev gone, remove
 	the binary atheros HAL.
 	[sborrill, ticket #910]
+
+lib/libc/gdtoa/gdtoaimp.h			1.7
+
+	Change Kmax so we allocate enough freelist entries to handle
+	large field numbers.
+	[christos, ticket #913]
+
+sys/arch/x86/pci/ichlpcib.c			1.18
+
+	Fix watchdog code:
+	- the timer bound constants are in tick, so convert period to
+	tick before checking it against the bounds
+	- for ICH5 or older, fix code that would have always written a 0
+	period to the register.
+	[bouyer, ticket #912]
 
