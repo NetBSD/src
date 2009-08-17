@@ -3,7 +3,7 @@
  *
  * Module Name: hwregs - Read/write access functions for the various ACPI
  *                       control and status registers.
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -869,13 +869,12 @@ AcpiHwLowLevelRead (
 
 
     /*
-     * Must have a valid pointer to a GAS structure, and
-     * a non-zero address within. However, don't return an error
-     * because the PM1A/B code must not fail if B isn't present.
+     * Must have a valid pointer to a GAS structure, and a non-zero address
+     * within.
      */
     if (!Reg)
     {
-        return (AE_OK);
+        return (AE_BAD_PARAMETER);
     }
 
     /* Get a local copy of the address. Handles possible alignment issues */
@@ -883,7 +882,7 @@ AcpiHwLowLevelRead (
     ACPI_MOVE_64_TO_64 (&Address, &Reg->Address);
     if (!Address)
     {
-        return (AE_OK);
+        return (AE_BAD_ADDRESS);
     }
     *Value = 0;
 
@@ -949,13 +948,12 @@ AcpiHwLowLevelWrite (
 
 
     /*
-     * Must have a valid pointer to a GAS structure, and
-     * a non-zero address within. However, don't return an error
-     * because the PM1A/B code must not fail if B isn't present.
+     * Must have a valid pointer to a GAS structure, and a non-zero address
+     * within.
      */
     if (!Reg)
     {
-        return (AE_OK);
+        return (AE_BAD_PARAMETER);
     }
 
     /* Get a local copy of the address. Handles possible alignment issues */
@@ -963,7 +961,7 @@ AcpiHwLowLevelWrite (
     ACPI_MOVE_64_TO_64 (&Address, &Reg->Address);
     if (!Address)
     {
-        return (AE_OK);
+        return (AE_BAD_ADDRESS);
     }
 
     /*
