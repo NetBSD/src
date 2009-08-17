@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.190 2009/08/16 02:49:23 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.191 2009/08/17 09:08:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.190 2009/08/16 02:49:23 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.191 2009/08/17 09:08:16 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -374,7 +374,7 @@ parse_url(const char *url, const char *desc, url_t *utype,
 		*path = ftp_strdup(ep);
 	}
 
-	cp = strrchr(thost, '@');	/* look for user[:pass]@ in URLs */
+	cp = strchr(thost, '@');	/* look for user[:pass]@ in URLs */
 	if (cp != NULL) {
 		if (*utype == FTP_URL_T)
 			anonftp = 0;	/* disable anonftp */
