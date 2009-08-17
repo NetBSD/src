@@ -1,4 +1,4 @@
-/*	$NetBSD: gscpcib.c,v 1.12 2009/05/04 12:41:09 cegger Exp $	*/
+/*	$NetBSD: gscpcib.c,v 1.13 2009/08/17 14:18:58 mbalmer Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.12 2009/05/04 12:41:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.13 2009/08/17 14:18:58 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.12 2009/05/04 12:41:09 cegger Exp $");
 #include <dev/gpio/gpiovar.h>
 
 #include <i386/pci/gscpcibreg.h>
+#include <arch/x86/pci/pcibvar.h>
 
 struct gscpcib_softc {
+	struct pcib_softc sc_pcib;
+
 	bool sc_gpio_present;
 
 	/* GPIO interface */
@@ -54,28 +57,18 @@ struct gscpcib_softc {
 int	gscpcib_match(device_t, cfdata_t, void *);
 void	gscpcib_attach(device_t, device_t, void *);
 int	gscpcib_detach(device_t, int);
-void	gscpcib_childdetached(device_t, device_t);
 
 int	gscpcib_gpio_pin_read(void *, int);
 void	gscpcib_gpio_pin_write(void *, int, int);
 void	gscpcib_gpio_pin_ctl(void *, int, int);
 
-/* arch/i386/pci/pcib.c */
+/* arch/x86/pci/pcib.c */
 void    pcibattach(device_t, device_t, void *);
 
-CFATTACH_DECL2_NEW(gscpcib, sizeof(struct gscpcib_softc),
-	gscpcib_match, gscpcib_attach, gscpcib_detach, NULL, NULL,
-	gscpcib_childdetached);
+CFATTACH_DECL_NEW(gscpcib, sizeof(struct gscpcib_softc),
+	gscpcib_match, gscpcib_attach, gscpcib_detach, NULL);
 
 extern struct cfdriver gscpcib_cd;
-
-void
-gscpcib_childdetached(device_t self, device_t child)
-{
-	/* We hold no pointers to child devices, so there is nothing
-	 * to do here.
-	 */
-}
 
 int
 gscpcib_match(device_t parent, cfdata_t match, void *aux)
