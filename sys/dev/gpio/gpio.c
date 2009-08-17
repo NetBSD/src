@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.25 2009/08/07 08:05:48 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.26 2009/08/17 12:44:44 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.25 2009/08/07 08:05:48 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.26 2009/08/17 12:44:44 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -300,8 +300,7 @@ gpio_npins(u_int32_t mask)
 }
 
 int
-gpioopen(dev_t dev, int flag, int mode,
-    struct lwp *l)
+gpioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct gpio_softc *sc;
 	int ret;
@@ -328,8 +327,7 @@ gpioopen(dev_t dev, int flag, int mode,
 }
 
 int
-gpioclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct gpio_softc *sc;
 
@@ -353,8 +351,7 @@ gpio_pinbyname(struct gpio_softc *sc, char *gp_name)
 }
 
 int
-gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l)
+gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct gpio_softc *sc;
 	gpio_chipset_tag_t gc;
@@ -375,7 +372,8 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
 	gc = sc->sc_gc;
 
 	if (cmd != GPIOINFO && !device_is_active(sc->sc_dev)) {
-		DPRINTF(("%s: device is not active\n", device_xname(sc->sc_dev)));
+		DPRINTF(("%s: device is not active\n",
+		    device_xname(sc->sc_dev)));
 		return EBUSY;
 	}
 	
