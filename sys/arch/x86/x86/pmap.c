@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2009/07/29 12:02:06 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2009/08/17 19:33:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2009/07/29 12:02:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2009/08/17 19:33:07 thorpej Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3682,14 +3682,6 @@ pmap_page_remove(struct vm_page *pg)
 	lwp_t *l;
 	int count;
 
-#ifdef DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_page_remove: unmanaged page?");
-#endif
-
 	l = curlwp;
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
@@ -3787,14 +3779,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	pt_entry_t expect;
 	u_int result;
 
-#if DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_test_attrs: unmanaged page?");
-#endif
-
 	pp = VM_PAGE_TO_PP(pg);
 	if ((pp->pp_attrs & testbits) != 0) {
 		return true;
@@ -3838,13 +3822,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	u_int result;
 	pt_entry_t expect;
 	int count;
-#ifdef DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_change_attrs: unmanaged page?");
-#endif
 
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
