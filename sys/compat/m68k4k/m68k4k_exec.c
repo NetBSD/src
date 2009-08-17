@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.21 2008/11/21 19:55:38 he Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.22 2009/08/17 06:00:05 cegger Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.21 2008/11/21 19:55:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.22 2009/08/17 06:00:05 cegger Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.21 2008/11/21 19:55:38 he Exp $");
 #include <sys/module.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/resourcevar.h>
 
 #include <compat/m68k4k/m68k4k_exec.h>
