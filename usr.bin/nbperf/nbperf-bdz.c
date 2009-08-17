@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.1 2009/08/15 16:21:05 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.2 2009/08/17 14:15:07 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.1 2009/08/15 16:21:05 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.2 2009/08/17 14:15:07 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -259,42 +259,44 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output,
 	    "\tswitch ((idx >> 5) & 7) {\n"
 	    "\tcase 0:\n"
-	    "\t	idx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8];\n"
-	    "\t	break;\n"
+	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8];\n"
+	    "\t\tbreak;\n"
 	    "\tcase 1: case 2:\n"
-	    "\t	idx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
-	    "\t	    - holes256_64[idx >> 8];\n"
-	    "\t	break;\n"
+	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
+	    "\t\t    - holes256_64[idx >> 8];\n"
+	    "\t\tbreak;\n"
 	    "\tcase 3: case 4:\n"
-	    "\t	idx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
-	    "\t	    - holes256_128[idx >> 8];\n"
-	    "\t	break;\n"
+	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
+	    "\t\t    - holes256_128[idx >> 8];\n"
+	    "\t\tbreak;\n"
 	    "\tcase 5: case 6:\n"
-	    "\t	idx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
-	    "\t	    - holes256_192[idx >> 8];\n"
-	    "\t	break;\n"
+	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
+	    "\t\t    - holes256_192[idx >> 8];\n"
+	    "\t\tbreak;\n"
 	    "\tcase 7:\n"
-	    "\t	idx2 = idx - holes64k[(idx + 32) >> 16] -\n"
-	    "\t	    holes256[(idx + 32) >> 8];\n"
-	    "\t	break;\n"
+	    "\t\tidx2 = idx - holes64k[(idx + 32) >> 16] -\n"
+	    "\t\t    holes256[(idx + 32) >> 8];\n"
+	    "\t\tbreak;\n"
+	    "\tdefault:\n"
+	    "\t\tabort();\n"
 	    "\t}\n"
 	    "\tswitch ((idx >> 4) & 3) {\n"
 	    "\tcase 1:\n"
-	    "\t	m = (g[(idx >> 4) - 1] & (g[(idx >> 4) - 1] >> 1) & 0x55555555U);\n"
-	    "\t	idx2 -= popcount32(m);\n"
+	    "\t\tm = (g[(idx >> 4) - 1] & (g[(idx >> 4) - 1] >> 1) & 0x55555555U);\n"
+	    "\t\tidx2 -= popcount32(m);\n"
 	    "\tcase 0:\n"
-	    "\t	m = (g[idx >> 4] & (g[idx >> 4] >> 1) & 0x55555555U);\n"
-	    "\t	m &= ((2U << (2 * (idx & 15))) - 1);\n"
-	    "\t	idx2 -= popcount32(m);\n"
-	    "\t	break;\n"
+	    "\t\tm = (g[idx >> 4] & (g[idx >> 4] >> 1) & 0x55555555U);\n"
+	    "\t\tm &= ((2U << (2 * (idx & 15))) - 1);\n"
+	    "\t\tidx2 -= popcount32(m);\n"
+	    "\t\tbreak;\n"
 	    "\tcase 2:\n"
-	    "\t	m = (g[(idx >> 4) + 1] & (g[(idx >> 4) + 1] >> 1) & 0x55555555U);\n"
-	    "\t	idx2 += popcount32(m);\n"
+	    "\t\tm = (g[(idx >> 4) + 1] & (g[(idx >> 4) + 1] >> 1) & 0x55555555U);\n"
+	    "\t\tidx2 += popcount32(m);\n"
 	    "\tcase 3:\n"
-	    "\t	m = (g[idx >> 4] & (g[idx >> 4] >> 1) & 0x55555555U);\n"
-	    "\t	m &= ~((2U << (2 * (idx & 15))) - 1);\n"
-	    "\t	idx2 += popcount32(m);\n"
-	    "\t	break;\n"
+	    "\t\tm = (g[idx >> 4] & (g[idx >> 4] >> 1) & 0x55555555U);\n"
+	    "\t\tm &= ~((2U << (2 * (idx & 15))) - 1);\n"
+	    "\t\tidx2 += popcount32(m);\n"
+	    "\t\tbreak;\n"
 	    "\t}\n\n");
 
 	fprintf(nbperf->output,
