@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.2 2009/06/07 22:38:47 christos Exp $
+#	$NetBSD: sshd_config,v 1.3 2009/08/17 22:58:28 dyoung Exp $
 #	$OpenBSD: sshd_config,v 1.80 2008/07/02 02:24:18 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -37,7 +37,7 @@ Protocol 2
 # Authentication:
 
 LoginGraceTime 600
-#PermitRootLogin no 
+#PermitRootLogin no
 #StrictModes yes
 #MaxAuthTries 6
 #MaxSessions 10
@@ -106,11 +106,11 @@ Subsystem	sftp	/usr/libexec/sftp-server
 # the following are HPN related configuration options
 # tcp receive buffer polling. disable in non autotuning kernels
 #TcpRcvBufPoll yes
- 
+
 # allow the use of the none cipher
 #NoneEnabled no
 
-# disable hpn performance boosts. 
+# disable hpn performance boosts.
 #HPNDisabled no
 
 # buffer size for hpn to non-hpn connections
