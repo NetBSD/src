@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.h,v 1.7 2009/01/23 08:25:07 tteras Exp $	*/
+/*	$NetBSD: schedule.h,v 1.8 2009/08/17 12:00:53 vanhu Exp $	*/
 
 /* Id: schedule.h,v 1.5 2006/05/03 21:53:42 vanhu Exp */
 
@@ -34,6 +34,8 @@
 
 #ifndef _SCHEDULE_H
 #define _SCHEDULE_H
+
+#include <stddef.h>
 
 #include <sys/queue.h>
 #if TIME_WITH_SYS_TIME
