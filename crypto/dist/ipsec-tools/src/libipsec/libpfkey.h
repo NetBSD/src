@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.16 2009/07/03 06:40:10 tteras Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.17 2009/08/17 13:52:14 vanhu Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -161,7 +161,7 @@ int pfkey_send_migrate __P((int, struct sockaddr *, struct sockaddr *,
 
 /* XXX should be somewhere else !!!
  */
-#ifdef SADB_X_NAT_T_NEW_MAPPING
+#ifdef SADB_X_EXT_NAT_T_TYPE
 #define PFKEY_ADDR_X_PORT(ext) (ntohs(((struct sadb_x_nat_t_port *)ext)->sadb_x_nat_t_port_port))
 #define PFKEY_ADDR_X_NATTYPE(ext) ( ext != NULL && ((struct sadb_x_nat_t_type *)ext)->sadb_x_nat_t_type_type )
 #endif
