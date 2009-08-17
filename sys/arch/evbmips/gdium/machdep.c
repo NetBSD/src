@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2009/08/11 04:46:21 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2009/08/17 18:57:34 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2009/08/11 04:46:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2009/08/17 18:57:34 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -293,8 +293,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	/*
 	 * Disable the 2nd PCI window since we don't need it.
 	 */
-	REGVAL(BONITO_REGBASE + 0x158) = 0xe;
-	REGVAL(BONITO_REGBASE + 0x15c) = 0;
+	mips3_sd((uint64_t *)MIPS_PHYS_TO_KSEG1(BONITO_REGBASE + 0x158), 0xe);
 	pci_conf_write(&gc->gc_pc, pci_make_tag(&gc->gc_pc, 0, 0, 0), 18, 0);
 
 	/*
