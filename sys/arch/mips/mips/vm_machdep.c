@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.123 2009/05/30 18:26:06 martin Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.124 2009/08/17 18:56:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.123 2009/05/30 18:26:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.124 2009/08/17 18:56:10 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -128,8 +128,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb;
 	struct frame *f;
-	pt_entry_t *pte;
-	int i, x;
 
 	l2->l_md.md_ss_addr = 0;
 	l2->l_md.md_ss_instr = 0;
@@ -162,12 +160,17 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	l2->l_md.md_regs = (void *)f;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
-	x = (MIPS_HAS_R4K_MMU) ?
-	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
-	    MIPS1_PG_G;
-	pte = kvtopte(l2->l_addr);
-	for (i = 0; i < UPAGES; i++)
-		l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
+#if USPACE > PAGE_SIZE
+	{
+		size_t i;
+		const int x = (MIPS_HAS_R4K_MMU) ?
+		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
+		    MIPS1_PG_G;
+		pt_entry_t *pte = kvtopte(l2->l_addr);
+		for (i = 0; i < UPAGES; i++)
+			l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
+	}
+#endif
 
 	pcb = &l2->l_addr->u_pcb;
 	pcb->pcb_context[0] = (intptr_t)func;		/* S0 */
