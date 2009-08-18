@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.8.34.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.8.34.2 2009/08/18 06:52:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995,
@@ -41,8 +41,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	RCSID("$NetBSD: sigsetjmp.S,v 1.8.34.1 2009/08/16 03:36:02 matt Exp $")
+#else
+	RCSID("$NetBSD: sigsetjmp.S,v 1.8.34.2 2009/08/18 06:52:09 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

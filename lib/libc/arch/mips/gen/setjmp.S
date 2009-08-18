@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.17.34.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.17.34.2 2009/08/18 06:52:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,17 +32,17 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/cdefs.h>
 #include <sys/syscall.h>
 #include <mips/asm.h>
-#include <machine/signal.h>
-#include <machine/setjmp.h>
 
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	RCSID("$NetBSD: setjmp.S,v 1.17.34.1 2009/08/16 03:36:02 matt Exp $")
+#else
+	RCSID("$NetBSD: setjmp.S,v 1.17.34.2 2009/08/18 06:52:09 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -67,33 +67,33 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 
 	REG_S		ra, CALLFRAME_RA(sp)		# save RA
 	REG_S		s0, CALLFRAME_S0(sp)		# save S0
-	move		a0, s0				# squirrel away sc
+	move		s0, a0				# save sigcontext
 
 	/* Get the signal mask. */
 	PTR_ADDU	a2, a0, _OFFSETOF_SC_MASK	# &sc.sc_mask
 	move		a1, zero
 	jal		_C_LABEL(__sigprocmask14)	# get current signal mask
-	move		a0, zero			# (in delay slot)
 
 	/* Get the signal stack. */
 	move		a0, zero
-	PTR_ADDU	a1, sp, CALLFRAME_SIZ	# pointer to struct sigaltstack
+	PTR_ADDU	a1, sp, CALLFRAME_SIZ		# pointer to stack_t
 	jal		_C_LABEL(__sigaltstack14)
-	nop
+
+	move		a0, s0				# restore jmpbuf
 	INT_L		v1, CALLFRAME_SIZ+_OFFSETOF_STACK_T_FLAGS(sp)
 							# get old ss_onstack
 	and		v1, v1, SS_ONSTACK		# extract onstack flag
-	INT_S		v1, _OFFSETOF_SC_ONSTACK(s0)	# save it in sc_onstack
+	INT_S		v1, _OFFSETOF_SC_ONSTACK(a0)	# save it in sc_onstack
 
 	REG_L		s0, CALLFRAME_S0(sp)		# restore S0
 	REG_L		ra, CALLFRAME_RA(sp)		# restore RA
-	blt		v0, zero, botch			# check for sigaltstack() error
+	blt		v0, zero, botch		# check for sigaltstack() error
 	nop
 	/*
 	 * We know we won't need this routine's GP anymore.
 	 */
 	RESTORE_GP64
-	addu		sp, sp, SETJMP_FRAME_SIZE	# pop stack frame
+	PTR_ADDU	sp, sp, SETJMP_FRAME_SIZE	# pop stack frame
 
 
 	REG_PROLOGUE
@@ -115,29 +115,30 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 	INT_S	v0, _OFFSETOF_SC_FPUSED(a0)	# sc_fpused = 1
 	cfc1	v0, $31
 	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
-#if defined(__mips_o32) || defined(__mips_o64)
-	FPST	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
-	FPST	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
-#endif
 #if defined(__mips_o32) || defined(__mips_o64) || defined(__mips_n32)
-	FPST	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
-	FPST	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
+	FP_S	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
+	FP_S	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
+#endif
+#if defined(__mips_o32) || defined(__mips_o64)
+	FP_S	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
+	FP_S	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
 #endif
 #if defined(__mips_n32) || defined(__mips_n64)
-	FPST	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
-	FPST	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
-	FPST	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
-	FPST	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
+	FP_S	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
+	FP_S	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
+	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
+	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 #endif
 #if defined(__mips_n64)
-	FPST	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
-	FPST	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
-	FPST	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
-	FPST	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
+	FP_S	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
+	FP_S	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
+	FP_S	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
+	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
-	move	v0, zero
-	j	ra
 	REG_EPILOGUE
+	j	ra
+	move	v0, zero
+
 botch:
 	jal	_C_LABEL(abort)
 END(__setjmp14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.7.46.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: fabs.S,v 1.7.46.2 2009/08/18 06:52:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,8 +35,11 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	RCSID("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
-	RCSID("$NetBSD: fabs.S,v 1.7.46.1 2009/08/16 03:36:02 matt Exp $")
+#else
+	RCSID("$NetBSD: fabs.S,v 1.7.46.2 2009/08/18 06:52:09 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 
