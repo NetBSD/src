@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.33 2009/08/16 19:53:43 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.34 2009/08/18 18:00:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,80 +65,13 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.33 2009/08/16 19:53:43 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.34 2009/08/18 18:00:28 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <string.h>
 
 static ssize_t	seq(FILE *, u_char **);
-
-/*
- * this is the subroutine for file management for fsort().
- * It keeps the buffers for all temporary files.
- */
-int
-getnext(int binno, int infl0, struct filelist *filelist, int nfiles,
-    RECHEADER *pos, u_char *end, struct field *dummy)
-{
-	int i;
-	u_char *hp;
-	static size_t nleft = 0;
-	static int cnt = 0, flag = -1;
-	static u_char maxb = 0;
-	static FILE *fp;
-
-	if (nleft == 0) {
-		if (binno < 0)	/* reset files. */ {
-			for (i = 0; i < nfiles; i++) {
-				rewind(fstack[infl0 + i].fp);
-				fstack[infl0 + i].max_o = 0;
-			}
-			flag = -1;
-			nleft = cnt = 0;
-			return (-1);
-		}
-		maxb = fstack[infl0].maxb;
-		for (; nleft == 0; cnt++) {
-			if (cnt >= nfiles) {
-				cnt = 0;
-				return (EOF);
-			}
-			fp = fstack[infl0 + cnt].fp;
-			fread(&nleft, sizeof(nleft), 1, fp);
-			if (binno < maxb)
-				fstack[infl0+cnt].max_o
-					+= sizeof(nleft) + nleft;
-			else if (binno == maxb) {
-				if (binno != fstack[infl0].lastb) {
-					fseeko(fp, fstack[infl0+
-						cnt].max_o, SEEK_SET);
-					fread(&nleft, sizeof(nleft), 1, fp);
-				}
-				if (nleft == 0)
-					fclose(fp);
-			} else if (binno == maxb + 1) {		/* skip a bin */
-				fseek(fp, nleft, SEEK_CUR);
-				fread(&nleft, sizeof(nleft), 1, fp);
-				flag = cnt;
-			}
-		}
-	}
-	if ((u_char *) pos > end - REC_DATA_OFFSET)
-		return (BUFFEND);
-	fread(pos, REC_DATA_OFFSET, 1, fp);
-	if (end - pos->data < (ptrdiff_t)pos->length) {
-		hp = ((u_char *)pos) + REC_DATA_OFFSET;
-		for (i = REC_DATA_OFFSET; i ;  i--)
-			ungetc(*--hp, fp);
-		return (BUFFEND);
-	}
-	fread(pos->data, pos->length, 1, fp);
-	nleft -= pos->length + REC_DATA_OFFSET;
-	if (nleft == 0 && binno == fstack[infl0].maxb)
-		fclose(fp);
-	return (0);
-}
 
 /*
  * this is called when there is no special key. It's only called
