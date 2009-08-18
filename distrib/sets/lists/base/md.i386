@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.135 2009/01/11 13:26:29 jnemeth Exp $
+# $NetBSD: md.i386,v 1.136 2009/08/18 23:43:31 jmcneill Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -16,6 +16,7 @@
 ./sbin/ldconfig					base-sysutil-root	pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/fontedit				base-obsolete		obsolete
+./usr/bin/iasl					base-util-bin
 ./usr/bin/pmc					base-util-bin
 ./usr/bin/vttest				base-obsolete		obsolete
 ./usr/lib/libi386.so				base-sys-shlib		pic
