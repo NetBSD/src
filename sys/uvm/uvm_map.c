@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.279 2009/08/18 19:08:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.280 2009/08/18 19:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.279 2009/08/18 19:08:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.280 2009/08/18 19:16:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -5021,84 +5021,6 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	return merged;
 }
 
-#if defined(DDB) || defined(DEBUGPRINT)
-
-/*
- * DDB hooks
- */
-
-/*
- * uvm_map_printit: actually prints the map
- */
-
-void
-uvm_map_printit(struct vm_map *map, bool full,
-    void (*pr)(const char *, ...))
-{
-	struct vm_map_entry *entry;
-
-	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, vm_map_min(map),
-	    vm_map_max(map));
-	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
-	    map->nentries, map->size, map->ref_count, map->timestamp,
-	    map->flags);
-	(*pr)("\tpmap=%p(resident=%ld, wired=%ld)\n", map->pmap,
-	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
-	if (!full)
-		return;
-	for (entry = map->header.next; entry != &map->header;
-	    entry = entry->next) {
-		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%llx, amap=%p/%d\n",
-		    entry, entry->start, entry->end, entry->object.uvm_obj,
-		    (long long)entry->offset, entry->aref.ar_amap,
-		    entry->aref.ar_pageoff);
-		(*pr)(
-		    "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
-		    "wc=%d, adv=%d\n",
-		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
-		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
-		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
-		    entry->protection, entry->max_protection,
-		    entry->inheritance, entry->wired_count, entry->advice);
-	}
-}
-
-/*
- * uvm_object_printit: actually prints the object
- */
-
-void
-uvm_object_printit(struct uvm_object *uobj, bool full,
-    void (*pr)(const char *, ...))
-{
-	struct vm_page *pg;
-	int cnt = 0;
-
-	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
-	    uobj, mutex_owned(&uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
-	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
-		(*pr)("refs=<SYSTEM>\n");
-	else
-		(*pr)("refs=%d\n", uobj->uo_refs);
-
-	if (!full) {
-		return;
-	}
-	(*pr)("  PAGES <pg,offset>:\n  ");
-	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
-		cnt++;
-		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
-		if ((cnt % 3) == 0) {
-			(*pr)("\n  ");
-		}
-	}
-	if ((cnt % 3) != 0) {
-		(*pr)("\n");
-	}
-}
-
-#endif /* DDB || DEBUGPRINT */
-
 /*
  * uvm_map_create: create map
  */
@@ -5230,6 +5152,43 @@ vm_map_starved_p(struct vm_map *map)
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)
+
+/*
+ * uvm_map_printit: actually prints the map
+ */
+
+void
+uvm_map_printit(struct vm_map *map, bool full,
+    void (*pr)(const char *, ...))
+{
+	struct vm_map_entry *entry;
+
+	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, vm_map_min(map),
+	    vm_map_max(map));
+	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
+	    map->nentries, map->size, map->ref_count, map->timestamp,
+	    map->flags);
+	(*pr)("\tpmap=%p(resident=%ld, wired=%ld)\n", map->pmap,
+	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
+	if (!full)
+		return;
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
+		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%llx, amap=%p/%d\n",
+		    entry, entry->start, entry->end, entry->object.uvm_obj,
+		    (long long)entry->offset, entry->aref.ar_amap,
+		    entry->aref.ar_pageoff);
+		(*pr)(
+		    "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
+		    "wc=%d, adv=%d\n",
+		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
+		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
+		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
+		    entry->protection, entry->max_protection,
+		    entry->inheritance, entry->wired_count, entry->advice);
+	}
+}
+
 void
 uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 {
@@ -5250,4 +5209,5 @@ uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 		map = entry->object.sub_map;
 	}
 }
-#endif /* defined(DDB) || defined(DEBUGPRINT) */
+
+#endif /* DDB || DEBUGPRINT */
