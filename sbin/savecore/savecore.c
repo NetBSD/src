@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.80 2009/04/06 12:32:30 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.81 2009/08/18 04:02:39 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.80 2009/04/06 12:32:30 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.81 2009/08/18 04:02:39 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -911,11 +911,9 @@ check_space(void)
 	struct statvfs fsbuf;
 	char mbuf[100], path[MAXPATHLEN];
 
-	if (stat(kernel, &st) < 0) {
-		syslog(LOG_ERR, "%s: %m", kernel);
-		exit(1);
-	}
-	kernelsize = st.st_blocks * S_BLKSIZE;
+	/* XXX assume a reasonable default, unless we find a kernel. */
+	kernelsize = 20 * 1024 * 1024;
+	if (!stat(kernel, &st)) kernelsize = st.st_blocks * S_BLKSIZE;
 	if (statvfs(dirname, &fsbuf) < 0) {
 		syslog(LOG_ERR, "%s: %m", dirname);
 		exit(1);
