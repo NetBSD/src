@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.24 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.25 2009/08/18 16:52:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -97,7 +97,10 @@ struct malloc_type;
 void	   _isa_dmainit(struct isa_dma_state *, bus_space_tag_t,
 	       bus_dma_tag_t, device_t);
 
+void	   _isa_dmadestroy(struct isa_dma_state *);
+
 int	   _isa_dmacascade(struct isa_dma_state *, int);
+int	   _isa_dmacascade_stop(struct isa_dma_state *, int);
 
 bus_size_t _isa_dmamaxsize(struct isa_dma_state *, int);
 
