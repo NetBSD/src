@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.61 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: isadma.c,v 1.62 2009/08/18 16:52:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.61 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.62 2009/08/18 16:52:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,24 @@ _isa_dmainit(struct isa_dma_state *ids, bus_space_tag_t bst, bus_dma_tag_t dmat,
 	}
 }
 
+void
+_isa_dmadestroy(struct isa_dma_state *ids)
+{
+	if (!ids->ids_initialized)
+		return;
+
+	_isa_dmacascade_stop(ids, 4);
+
+	/*
+	 * Unmap the registers used by the ISA DMA controller.
+	 */
+	bus_space_unmap(ids->ids_bst, ids->ids_dmapgh, 0xf);
+	bus_space_unmap(ids->ids_bst, ids->ids_dma2h, DMA2_IOSIZE);
+	bus_space_unmap(ids->ids_bst, ids->ids_dma1h, DMA1_IOSIZE);
+
+	ids->ids_initialized = 0;
+}
+
 /*
  * _isa_dmacascade(): program 8237 DMA controller channel to accept
  * external dma control by a board.
@@ -215,7 +233,7 @@ _isa_dmacascade(struct isa_dma_state *ids, int chan)
 		return (EINVAL);
 	}
 
-	if (ISA_DMA_DRQ_ISFREE(ids, chan) == 0) {
+	if (!ISA_DMA_DRQ_ISFREE(ids, chan)) {
 		printf("%s: DRQ %d is not free\n", device_xname(ids->ids_dev),
 		    chan);
 		return (EAGAIN);
@@ -235,10 +253,32 @@ _isa_dmacascade(struct isa_dma_state *ids, int chan)
 	return (0);
 }
 
+/*
+ * _isa_dmacascade_stop(): turn off cascading on the 8237 DMA controller channel
+ * external dma control by a board.
+ */
+int
+_isa_dmacascade_stop(struct isa_dma_state *ids, int chan)
+{
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", device_xname(ids->ids_dev), chan);
+		return EINVAL;
+	}
+
+	if (ISA_DMA_DRQ_ISFREE(ids, chan))
+		return 0;
+
+	_isa_dmamask(ids, chan);
+
+	ISA_DMA_DRQ_FREE(ids, chan);
+
+	return 0;
+}
+
 int
 _isa_drq_alloc(struct isa_dma_state *ids, int chan)
 {
-	if (ISA_DMA_DRQ_ISFREE(ids, chan) == 0)
+	if (!ISA_DMA_DRQ_ISFREE(ids, chan))
 		return EBUSY;
 	ISA_DMA_DRQ_ALLOC(ids, chan);
 	return 0;
