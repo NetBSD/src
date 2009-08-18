@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.1.34.1 2009/08/18 06:49:17 matt Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.1.34.2 2009/08/18 14:42:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: compat_setjmp.S,v 1.1.34.1 2009/08/18 06:49:17 matt Exp $")
+	RCSID("$NetBSD: compat_setjmp.S,v 1.1.34.2 2009/08/18 14:42:26 uebayasi Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -146,7 +146,7 @@ END(setjmp)
 LEAF(longjmp)
 	SETUP_GP
 	PTR_SUBU	sp, sp, CALLFRAME_SIZ
-	SAVE_GP(s0)
+	SAVE_GP(CALLFRAME_S0)
 	SETUP_GP64(s0, longjmp)
 
 	REG_PROLOGUE
