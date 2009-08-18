@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.9.10.1 2009/08/14 16:57:17 matt Exp $ */
+/* $NetBSD: dot_init.h,v 1.9.10.2 2009/08/18 06:38:17 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -87,7 +87,7 @@
 		"sd	$ra,24($sp)"				"\n\t"	\
 		".set	reorder"				"\n\t"
 #else
-#error ABI not supported
+#error ABI not supported (__ABICALLS)
 #endif
 #else
 #if defined(__mips_o32) || defined(__mips_o64)
@@ -102,9 +102,9 @@
 #define	MD_FUNCTION_PROLOGUE(entry_pt)					\
 		"daddu	$sp,$sp,-32"				"\n\t"	\
 		"sd	$gp,8($sp)"				"\n\t"	\
-		"sd	$ra,24($sp)"				"\n\t"	\
+		"sd	$ra,24($sp)"				"\n\t"
 #else
-#error ABI not supported
+#error ABI not supported (!__ABICALLS)
 #endif
 #endif /* __ABICALLS */
 
