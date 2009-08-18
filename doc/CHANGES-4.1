@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.169 2009/08/18 10:36:15 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.170 2009/08/18 10:59:30 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3718,4 +3718,15 @@ sys/arch/pmax/pmax/machdep.c			1.233
 	[ Kernel symbol table invalid! ] message at boot,
 	which means no ksyms(4) support even on GENERIC kernel.
 	[tsutsui, ticket #1348]
+
+lib/libc/sys/semctl.2				1.18
+lib/libc/sys/shmctl.2				1.20
+
+	Fix pastos. From Jukka Salmi in PR 41605, with a very minor adjustment.
+	[dholland, ticket #1351]
+
+usr.bin/xlint/lint1/init.c			1.22
+
+	pushinit(): fix a use-after-free bug.
+	[msaitoh, ticket #1353]
 
