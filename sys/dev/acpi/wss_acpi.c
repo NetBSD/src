@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.23 2009/05/12 09:50:28 cegger Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.24 2009/08/18 16:41:02 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.23 2009/05/12 09:50:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.24 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ wss_acpi_match(device_t parent, cfdata_t match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE ||
-	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.Value) == -1)
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.String) == -1)
 		return 0;
 
 	return 1;
@@ -124,7 +124,7 @@ wss_acpi_attach(device_t parent, device_t self, void *aux)
 	struct wss_acpi_hint *wah;
 
 	wah = &wss_acpi_hints[
-	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.Value)];
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.String)];
 
 	/* Parse our resources */
 	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.8 2009/08/09 17:42:48 christos Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.9 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.8 2009/08/09 17:42:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.9 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,21 +447,17 @@ static ACPI_STATUS
 sony_acpi_find_pic(ACPI_HANDLE hdl, UINT32 level, void *opaque, void **status)
 {
 	struct sony_acpi_softc *sc = opaque;
-	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
 	ACPI_DEVICE_INFO *devinfo;
 
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
-	rv = AcpiGetObjectInfo(hdl, &buf);
-	if (ACPI_FAILURE(rv) || buf.Pointer == NULL)
+	rv = AcpiGetObjectInfo(hdl, &devinfo);
+	if (ACPI_FAILURE(rv) || devinfo == NULL)
 		return AE_OK;	/* we don't want to stop searching */
 
-	devinfo = buf.Pointer;
-	if (strncmp(devinfo->HardwareId.Value, "SNY6001", 7) == 0)
+	if (strncmp(devinfo->HardwareId.String, "SNY6001", 7) == 0)
 		sc->sc_has_pic = true;
 
-	AcpiOsFree(buf.Pointer);
+	AcpiOsFree(devinfo);
 
 	return AE_OK;
 }
