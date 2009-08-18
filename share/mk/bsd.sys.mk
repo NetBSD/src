@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.179.8.1 2009/08/17 19:14:15 matt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.179.8.2 2009/08/18 06:42:18 matt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -50,7 +50,7 @@ CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "hppa") || \
-	(${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || [
+	(${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
 	(${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
 HAS_SSP=	no
 .else
@@ -90,6 +90,10 @@ CFLAGS+=	-Wa,-Av8plus
 #CFLAGS+=	-mips64 -mtune=sb1
 #.endif
 
+.if (${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb") && \
+    ${MKPIC} == "no"
+COPTS+=		-mno-abicalls -fno-PIC
+.endif
 CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
 
