@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmctl.2,v 1.17 2006/11/25 21:40:05 christos Exp $
+.\"	$NetBSD: shmctl.2,v 1.17.2.1 2009/08/18 10:53:45 bouyer Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -112,7 +112,7 @@ Only the super-user or a process with an effective uid equal to the
 .Va shm_perm.cuid
 or
 .Va shm_perm.uid
-values in the data structure associated with the queue can do this.
+values in the data structure associated with the segment can do this.
 .It Dv SHM_LOCK
 Lock the shared memory segment specified by
 .Fa shmid
