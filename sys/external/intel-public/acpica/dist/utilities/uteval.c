@@ -276,13 +276,14 @@ Exit:
 ACPI_STATUS
 AcpiUtEvaluateObject (
     ACPI_NAMESPACE_NODE     *PrefixNode,
-    char                    *Path,
+    const char              *Path,
     UINT32                  ExpectedReturnBtypes,
     ACPI_OPERAND_OBJECT     **ReturnDesc)
 {
     ACPI_EVALUATE_INFO      *Info;
     ACPI_STATUS             Status;
     UINT32                  ReturnBtype;
+    char                    *UPath = __UNCONST(Path);
 
 
     ACPI_FUNCTION_TRACE (UtEvaluateObject);
@@ -297,7 +298,7 @@ AcpiUtEvaluateObject (
     }
 
     Info->PrefixNode = PrefixNode;
-    Info->Pathname = Path;
+    Info->Pathname = UPath;
 
     /* Evaluate the object/method */
 
@@ -307,7 +308,7 @@ AcpiUtEvaluateObject (
         if (Status == AE_NOT_FOUND)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[%4.4s.%s] was not found\n",
-                AcpiUtGetNodeName (PrefixNode), Path));
+                AcpiUtGetNodeName (PrefixNode), UPath));
         }
         else
         {
@@ -418,7 +419,7 @@ Cleanup:
 
 ACPI_STATUS
 AcpiUtEvaluateNumericObject (
-    char                    *ObjectName,
+    const char              *ObjectName,
     ACPI_NAMESPACE_NODE     *DeviceNode,
     ACPI_INTEGER            *Value)
 {

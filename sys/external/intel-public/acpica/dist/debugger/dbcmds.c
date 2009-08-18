@@ -1770,7 +1770,7 @@ GetCrs:
      * Perform comparison of original AML to newly created AML. This tests both
      * the AML->Resource conversion and the Resource->Aml conversion.
      */
-    Status = AcpiDmTestResourceConversion (Node, METHOD_NAME__CRS);
+    Status = AcpiDmTestResourceConversion (Node, __UNCONST(METHOD_NAME__CRS));
 
     /* Execute _SRS with the resource list */
 

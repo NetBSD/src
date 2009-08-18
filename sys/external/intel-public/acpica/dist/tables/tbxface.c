@@ -323,14 +323,14 @@ ACPI_EXPORT_SYMBOL (AcpiReallocateRootTable)
 
 ACPI_STATUS
 AcpiGetTableHeader (
-    char                    *Signature,
+    ACPI_CONST_STRING       Signature,
     UINT32                  Instance,
     ACPI_TABLE_HEADER       *OutTableHeader)
 {
     UINT32                  i;
     UINT32                  j;
     ACPI_TABLE_HEADER       *Header;
-
+    ACPI_STRING             USignature = __UNCONST(Signature);
 
     /* Parameter validation */
 
@@ -344,7 +344,7 @@ AcpiGetTableHeader (
     for (i = 0, j = 0; i < AcpiGbl_RootTableList.Count; i++)
     {
         if (!ACPI_COMPARE_NAME (&(AcpiGbl_RootTableList.Tables[i].Signature),
-                    Signature))
+                    USignature))
         {
             continue;
         }
@@ -408,14 +408,14 @@ ACPI_EXPORT_SYMBOL (AcpiGetTableHeader)
 
 ACPI_STATUS
 AcpiGetTable (
-    char                    *Signature,
+    ACPI_CONST_STRING       Signature,
     UINT32                  Instance,
     ACPI_TABLE_HEADER       **OutTable)
 {
     UINT32                  i;
     UINT32                  j;
     ACPI_STATUS             Status;
-
+    ACPI_STRING             USignature = __UNCONST(Signature);
 
     /* Parameter validation */
 
@@ -429,7 +429,7 @@ AcpiGetTable (
     for (i = 0, j = 0; i < AcpiGbl_RootTableList.Count; i++)
     {
         if (!ACPI_COMPARE_NAME (&(AcpiGbl_RootTableList.Tables[i].Signature),
-                Signature))
+                USignature))
         {
             continue;
         }
