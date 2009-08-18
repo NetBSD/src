@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.31 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.32 2009/08/18 11:22:09 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.31 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.32 2009/08/18 11:22:09 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -160,7 +160,7 @@ linux_sys_ipc(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *r
 }
 
 #ifdef SYSVSEM
-inline int
+int
 linux_semop(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *retval)
 {
 	/* {
@@ -179,7 +179,7 @@ linux_semop(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *ret
 	return sys_semop(l, &bsa, retval);
 }
 
-inline int
+int
 linux_semget(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *retval)
 {
 	/* {
@@ -202,7 +202,7 @@ linux_semget(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *re
 
 #ifdef SYSVMSG
 
-inline int
+int
 linux_msgsnd(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *retval)
 {
 	struct sys_msgsnd_args bma;
@@ -215,7 +215,7 @@ linux_msgsnd(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *re
 	return sys_msgsnd(l, &bma, retval);
 }
 
-inline int
+int
 linux_msgrcv(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *retval)
 {
 	struct sys_msgrcv_args bma;
@@ -234,7 +234,7 @@ linux_msgrcv(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *re
 	return sys_msgrcv(l, &bma, retval);
 }
 
-inline int
+int
 linux_msgget(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *retval)
 {
 	struct sys_msgget_args bma;
@@ -252,7 +252,7 @@ linux_msgget(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *re
  * shmdt(): this could have been mapped directly, if it wasn't for
  * the extra indirection by the linux_ipc system call.
  */
-inline int
+int
 linux_shmdt(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *retval)
 {
 	struct sys_shmdt_args bsa;
@@ -265,7 +265,7 @@ linux_shmdt(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *ret
 /*
  * Same story as shmdt.
  */
-inline int
+int
 linux_shmget(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *retval)
 {
 	struct linux_sys_shmget_args bsa;

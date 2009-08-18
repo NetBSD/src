@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.14 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.15 2009/08/18 11:22:09 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,27 +59,27 @@
 
 
 #  ifdef SYSVSEM
-__inline int linux_semop(struct lwp *, const struct linux_sys_ipc_args *,
+int linux_semop(struct lwp *, const struct linux_sys_ipc_args *,
     register_t *);
-__inline int linux_semget(struct lwp *, const struct linux_sys_ipc_args *,
+int linux_semget(struct lwp *, const struct linux_sys_ipc_args *,
     register_t *);
 #  endif
 
 
 #  ifdef SYSVMSG
-__inline int linux_msgsnd(struct lwp *, const struct linux_sys_ipc_args *,
+int linux_msgsnd(struct lwp *, const struct linux_sys_ipc_args *,
     register_t *);
-__inline int linux_msgrcv(struct lwp *, const struct linux_sys_ipc_args *,
+int linux_msgrcv(struct lwp *, const struct linux_sys_ipc_args *,
     register_t *);
-__inline int linux_msgget(struct lwp *, const struct linux_sys_ipc_args *,
+int linux_msgget(struct lwp *, const struct linux_sys_ipc_args *,
     register_t *);
 #  endif
 
 
 #  ifdef SYSVSHM
-__inline int linux_shmdt(struct lwp *, const struct linux_sys_ipc_args *,
+int linux_shmdt(struct lwp *, const struct linux_sys_ipc_args *,
     register_t *);
-__inline int linux_shmget(struct lwp *, const struct linux_sys_ipc_args *,
+int linux_shmget(struct lwp *, const struct linux_sys_ipc_args *,
     register_t *);
 #  endif
 
