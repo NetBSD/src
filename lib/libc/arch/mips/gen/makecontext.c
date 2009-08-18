@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.4.14.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.4.14.2 2009/08/18 06:45:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.4.14.1 2009/08/16 03:36:02 matt Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.4.14.2 2009/08/18 06:45:59 matt Exp $");
 #endif
 
 #include <inttypes.h>
@@ -65,10 +65,10 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	      ((uintptr_t)sp & ~0xf);	/* Align on quad-word boundary. */
 #endif
 
-	gr[_REG_SP]  = (__greg_t)sp;
-	gr[_REG_RA]  = (__greg_t)__resumecontext;
-	gr[_REG_T9]  = (__greg_t)func;	/* required for .abicalls */
-	gr[_REG_EPC] = (__greg_t)func;
+	gr[_REG_SP]  = (intptr_t)sp;
+	gr[_REG_RA]  = (intptr_t)__resumecontext;
+	gr[_REG_T9]  = (intptr_t)func;		/* required for .abicalls */
+	gr[_REG_EPC] = (intptr_t)func;
 
 	/* Construct argument list. */
 	va_start(ap, argc);
