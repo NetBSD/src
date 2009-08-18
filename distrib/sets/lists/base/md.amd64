@@ -1,8 +1,9 @@
-# $NetBSD: md.amd64,v 1.63 2009/08/16 19:33:38 christos Exp $
+# $NetBSD: md.amd64,v 1.64 2009/08/18 23:43:31 jmcneill Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/bin/fdformat				base-util-bin
+./usr/bin/iasl					base-util-bin
 ./usr/lib/i386					base-compat-lib		compat
 ./usr/lib/i386/i18n				base-compat-lib		compat
 ./usr/lib/i386/i18n/libBIG5.so.5		base-i18n-shlib		compat,pic
