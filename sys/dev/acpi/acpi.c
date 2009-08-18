@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.128 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.129 2009/08/18 21:38:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.128 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.129 2009/08/18 21:38:41 cegger Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -816,10 +816,10 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	rv = acpi_allocate_resources(handle);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error("acpi: activate failed for %s\n",
-		       (*di)->HardwareId.Value);
+		       (*di)->HardwareId.String);
 	} else {
 		aprint_verbose("acpi: activated %s\n",
-		    (*di)->HardwareId.Value);
+		    (*di)->HardwareId.String);
 	}
 
 	(void)AcpiGetObjectInfo(handle, &newdi);
@@ -914,11 +914,11 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 #ifdef ACPI_EXTRA_DEBUG
 			aprint_normal_dev(sc->sc_dev,
 			    "HID %s found in scope %s level %d\n",
-			    ad->ad_devinfo->HardwareId.Value,
+			    ad->ad_devinfo->HardwareId.String,
 			    as->as_name, ad->ad_level);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
 				aprint_normal("       UID %s\n",
-				    ad->ad_devinfo->UniqueId.Value);
+				    ad->ad_devinfo->UniqueId.String);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
 				aprint_normal("       ADR 0x%016" PRIx64 "\n",
 				    ad->ad_devinfo->Address);
