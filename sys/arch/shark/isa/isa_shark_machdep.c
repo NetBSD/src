@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.12 2009/03/16 23:11:15 dsl Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.13 2009/08/18 17:02:00 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.12 2009/03/16 23:11:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.13 2009/08/18 17:02:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,4 +225,9 @@ isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach
 	 * now.
 	 */
 	iba->iba_ic = &isa_chipset_tag;
+}
+
+void
+isa_detach_hook(device_t self)
+{
 }

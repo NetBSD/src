@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.36 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.37 2009/08/18 17:02:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.36 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.37 2009/08/18 17:02:00 dyoung Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -197,6 +197,11 @@ isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
 {
 
+}
+
+void
+isa_detach_hook(device_t self)
+{
 }
 
 const struct evcnt *

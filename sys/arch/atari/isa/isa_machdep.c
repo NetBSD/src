@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.33 2009/03/14 21:04:06 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.34 2009/08/18 17:02:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.33 2009/03/14 21:04:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.34 2009/08/18 17:02:00 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,6 +151,11 @@ atariisabusprint(void *auxp, const char *name)
 
 void
 isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
+{
+}
+
+void
+isa_detach_hook(device_t self)
 {
 }
 
