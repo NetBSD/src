@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.54 2009/04/17 21:07:59 dyoung Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.55 2009/08/18 16:41:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,9 +96,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.54 2009/04/17 21:07:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.55 2009/08/18 16:41:03 jmcneill Exp $");
 
-#include "acpi.h"
+#include "acpica.h"
 #include "lapic.h"
 #include "ioapic.h"
 #include "opt_acpi.h"
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.54 2009/04/17 21:07:59 dyoung Exp $");
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 extern int mpacpi_ncpu;
 extern int mpacpi_nioapic;
 #endif
@@ -521,7 +521,7 @@ mpbios_scan(device_t self, int *ncpup)
 	 * XXX is this the right place??
 	 */
 
-#if NACPI > 0
+#if NACPICA > 0
 	if (mpacpi_ncpu == 0) {
 #endif
 		lapic_base = LAPIC_BASE;
@@ -531,7 +531,7 @@ mpbios_scan(device_t self, int *ncpup)
 #if NLAPIC > 0
 		lapic_boot_init(lapic_base);
 #endif
-#if NACPI > 0
+#if NACPICA > 0
 	}
 #endif
 
@@ -541,12 +541,12 @@ mpbios_scan(device_t self, int *ncpup)
 		aprint_normal("\n");
 		aprint_normal_dev(self, "MP default configuration %d\n",
 		    mp_fps->mpfb1);
-#if NACPI > 0
+#if NACPICA > 0
 		if (mpacpi_ncpu == 0)
 #endif
 			mpbios_cpus(self);
 
-#if NACPI > 0
+#if NACPICA > 0
 		if (mpacpi_nioapic == 0)
 #endif
 			mpbios_ioapic((uint8_t *)&default_ioapic, self);
@@ -631,7 +631,7 @@ mpbios_scan(device_t self, int *ncpup)
 		while ((count--) && (position < end)) {
 			switch (type = *position) {
 			case MPS_MCT_CPU:
-#if NACPI > 0
+#if NACPICA > 0
 				/* ACPI has done this for us */
 				if (mpacpi_ncpu)
 					break;
@@ -642,7 +642,7 @@ mpbios_scan(device_t self, int *ncpup)
 				mpbios_bus(position, self);
 				break;
 			case MPS_MCT_IOAPIC:
-#if NACPI > 0
+#if NACPICA > 0
 				/* ACPI has done this for us */
 				if (mpacpi_nioapic)
 					break;

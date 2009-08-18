@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 2009/08/15 23:44:58 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2009/08/15 23:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2009/08/18 16:41:02 jmcneill Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -203,9 +203,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2009/08/15 23:44:58 matt Exp $");
 #include <ddb/db_interface.h>
 #endif
 
-#include "acpi.h"
+#include "acpica.h"
 
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
@@ -704,7 +704,7 @@ haltsys:
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
-#if NACPI > 0
+#if NACPICA > 0
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
 #endif
@@ -716,7 +716,7 @@ haltsys:
 	x86_broadcast_ipi(X86_IPI_HALT);
 
 	if (howto & RB_HALT) {
-#if NACPI > 0
+#if NACPICA > 0
 		AcpiDisable();
 #endif
 

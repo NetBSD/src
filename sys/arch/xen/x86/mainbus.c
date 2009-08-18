@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2009/07/29 12:02:08 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2009/08/18 16:41:03 jmcneill Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2009/07/29 12:02:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2009/08/18 16:41:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2009/07/29 12:02:08 cegger Exp $");
 #include "opt_mpbios.h"
 #include "opt_pcifixup.h"
 
-#include "acpi.h"
+#include "acpica.h"
 #include "ioapic.h"
 
 #include "ipmi.h"
@@ -64,11 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2009/07/29 12:02:08 cegger Exp $");
 
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>       
 #include <xen/mpacpi.h>       
-#endif /* NACPI > 0 */
+#endif /* NACPICA > 0 */
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>       
 #endif /* MPBIOS */
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2009/07/29 12:02:08 cegger Exp $");
 #endif  
 #endif
 
-#if defined(MPBIOS) || NACPI > 0
+#if defined(MPBIOS) || NACPICA > 0
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
@@ -95,7 +95,7 @@ int mp_verbose = 1;
 #else /* MPVERBOSE */
 int mp_verbose = 0;
 #endif /* MPVERBOSE */
-#endif /* defined(MPBIOS) || NACPI > 0 */
+#endif /* defined(MPBIOS) || NACPICA > 0 */
 #endif /* NPCI > 0 */
 
 
@@ -168,7 +168,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif /* PCI_ADDR_FIXUP */
 		}
 #endif /* PCI_BUS_FIXUP */
-#if NACPI > 0
+#if NACPICA > 0
 		acpi_present = acpi_probe();
 		if (acpi_present)
 			mpacpi_active = mpacpi_scan_apics(self, &numcpus);

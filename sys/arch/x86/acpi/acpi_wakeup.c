@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.14 2009/03/27 19:53:19 drochner Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.15 2009/08/18 16:41:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.14 2009/03/27 19:53:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.15 2009/08/18 16:41:03 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.14 2009/03/27 19:53:19 drochner Ex
 #endif
 #include <machine/i8259.h>
 
-#include "acpi.h"
+#include "acpica.h"
 
 #include <dev/ic/i8253reg.h>
 #include <dev/acpi/acpica.h>
@@ -203,7 +203,7 @@ enter_s4_with_bios(void)
 
 	/* clear wake status */
 
-	AcpiSetRegister(ACPI_BITREG_WAKE_STATUS, 1);
+	AcpiWriteBitRegister(ACPI_BITREG_WAKE_STATUS, 1);
 
 	AcpiHwDisableAllGpes();
 	AcpiHwEnableAllWakeupGpes();
@@ -219,7 +219,7 @@ enter_s4_with_bios(void)
 		AcpiOsStall(1000000);
 		AcpiOsWritePort(AcpiGbl_FADT.SmiCommand,
 				AcpiGbl_FADT.S4BiosRequest, 8);
-		status = AcpiGetRegister(ACPI_BITREG_WAKE_STATUS, &ret);
+		status = AcpiReadBitRegister(ACPI_BITREG_WAKE_STATUS, &ret);
 		if (ACPI_FAILURE(status))
 			break;
 	} while (!ret);

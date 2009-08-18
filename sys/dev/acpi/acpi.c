@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.127 2009/08/04 14:20:40 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.128 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.127 2009/08/04 14:20:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.128 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -806,10 +806,7 @@ static void
 acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 {
 	ACPI_STATUS rv;
-	ACPI_BUFFER buf;
-
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	ACPI_DEVICE_INFO *newdi;
 
 #ifdef ACPI_DEBUG
 	aprint_normal("acpi_activate_device: %s, old status=%x\n",
@@ -825,9 +822,9 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 		    (*di)->HardwareId.Value);
 	}
 
-	(void)AcpiGetObjectInfo(handle, &buf);
+	(void)AcpiGetObjectInfo(handle, &newdi);
 	AcpiOsFree(*di);
-	*di = buf.Pointer;
+	*di = newdi;
 
 #ifdef ACPI_DEBUG
 	aprint_normal("acpi_activate_device: %s, new status=%x\n",
@@ -852,7 +849,6 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 	struct acpi_scope *as = state->scope;
 	struct acpi_devnode *ad;
 	ACPI_OBJECT_TYPE type;
-	ACPI_BUFFER buf;
 	ACPI_DEVICE_INFO *devinfo;
 	ACPI_STATUS rv;
 	ACPI_NAME_UNION *anu;
@@ -860,9 +856,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 
 	rv = AcpiGetType(handle, &type);
 	if (ACPI_SUCCESS(rv)) {
-		buf.Pointer = NULL;
-		buf.Length = ACPI_ALLOCATE_BUFFER;
-		rv = AcpiGetObjectInfo(handle, &buf);
+		rv = AcpiGetObjectInfo(handle, &devinfo);
 		if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
 			aprint_normal_dev(sc->sc_dev,
@@ -871,8 +865,6 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 #endif
 			goto out; /* XXX why return OK */
 		}
-
-		devinfo = buf.Pointer;
 
 		switch (type) {
 		case ACPI_TYPE_DEVICE:
@@ -954,7 +946,7 @@ acpi_print(void *aux, const char *pnp)
 	if (pnp) {
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
 			char *pnpstr =
-			    aa->aa_node->ad_devinfo->HardwareId.Value;
+			    aa->aa_node->ad_devinfo->HardwareId.String;
 			ACPI_BUFFER buf;
 
 			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
@@ -1006,11 +998,11 @@ acpi_print(void *aux, const char *pnp)
 	} else {
 		aprint_normal(" (%s", aa->aa_node->ad_name);
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
-			aprint_normal(", %s", aa->aa_node->ad_devinfo->HardwareId.Value);
+			aprint_normal(", %s", aa->aa_node->ad_devinfo->HardwareId.String);
 			if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_UID) {
 				const char *uid;
 
-				uid = aa->aa_node->ad_devinfo->UniqueId.Value;
+				uid = aa->aa_node->ad_devinfo->UniqueId.String;
 				if (uid[0] == '\0')
 					uid = "<null>";
 				aprint_normal("-%s", uid);
@@ -1292,13 +1284,13 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 
 	while (*ids) {
 		if (ad->Valid & ACPI_VALID_HID) {
-			if (pmatch(ad->HardwareId.Value, *ids, NULL) == 2)
+			if (pmatch(ad->HardwareId.String, *ids, NULL) == 2)
 				return 1;
 		}
 
 		if (ad->Valid & ACPI_VALID_CID) {
-			for (i = 0; i < ad->CompatibilityId.Count; i++) {
-				if (pmatch(ad->CompatibilityId.Id[i].Value, *ids, NULL) == 2)
+			for (i = 0; i < ad->CompatibleIdList.Count; i++) {
+				if (pmatch(ad->CompatibleIdList.Ids[i].String, *ids, NULL) == 2)
 					return 1;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.7 2007/12/15 00:39:25 perry Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.8 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.7 2007/12/15 00:39:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.8 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -89,16 +89,14 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 	struct acpi_interrupt_handler *aih;
 	ACPI_STATUS rv;
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (InterruptNumber > 255)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	if (ServiceRoutine == NULL)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	aih = malloc(sizeof(*aih), M_ACPI, M_NOWAIT);
 	if (aih == NULL)
-		return_ACPI_STATUS(AE_NO_MEMORY);
+		return AE_NO_MEMORY;
 
 	aih->aih_intrnum = InterruptNumber;
 	aih->aih_func = ServiceRoutine;
@@ -112,7 +110,7 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 	} else
 		free(aih, M_ACPI);
 
-	return_ACPI_STATUS(rv);
+	return rv;
 }
 
 /*
@@ -126,12 +124,10 @@ AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber,
 {
 	struct acpi_interrupt_handler *aih;
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (InterruptNumber > 255)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	if (ServiceRoutine == NULL)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	mutex_enter(&acpi_interrupt_list_mtx);
 	LIST_FOREACH(aih, &acpi_interrupt_list, aih_list) {
@@ -141,9 +137,9 @@ AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber,
 			mutex_exit(&acpi_interrupt_list_mtx);
 			acpi_md_OsRemoveInterruptHandler(aih->aih_ih);
 			free(aih, M_ACPI);
-			return_ACPI_STATUS(AE_OK);
+			return AE_OK;
 		}
 	}
 	mutex_exit(&acpi_interrupt_list_mtx);
-	return_ACPI_STATUS(AE_NOT_EXIST);
+	return AE_NOT_EXIST;
 }

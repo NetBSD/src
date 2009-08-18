@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2009/07/29 12:02:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2009/08/18 16:41:03 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2009/07/29 12:02:08 cegger Exp $");
 #include <machine/pio.h>
 #include <xen/evtchn.h>
 
-#include "acpi.h"
+#include "acpica.h"
 #include "ioapic.h"
 #include "opt_mpbios.h"
 /* for x86/i8259.c */
@@ -140,7 +140,7 @@ struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
 int irq2vect[256] = {0};
 int vect2irq[256] = {0};
 #endif /* NIOAPIC */
-#if NACPI > 0
+#if NACPICA > 0
 #include <machine/mpconfig.h>
 #include <machine/mpacpi.h>
 #endif
@@ -296,7 +296,7 @@ intr_disestablish(struct intrhand *ih)
 	printf("intr_disestablish irq\n");
 }
 
-#if defined(MPBIOS) || NACPI > 0
+#if defined(MPBIOS) || NACPICA > 0
 struct pic *
 intr_findpic(int num)
 {
@@ -314,7 +314,7 @@ intr_findpic(int num)
 }
 #endif
 
-#if NIOAPIC > 0 || NACPI > 0
+#if NIOAPIC > 0 || NACPICA > 0
 struct intr_extra_bus {
 	int bus;
 	pcitag_t *pci_bridge_tag;
@@ -411,7 +411,7 @@ intr_scan_bus(int bus, int pin, struct xen_intr_handle *handle)
 
 	for (mip = intrs; mip != NULL; mip = mip->next) {
 		if (mip->bus_pin == pin) {
-#if NACPI > 0
+#if NACPICA > 0
 			if (mip->linkdev != NULL)
 				if (mpacpi_findintr_linkdev(mip) != 0)
 					continue;
@@ -422,7 +422,7 @@ intr_scan_bus(int bus, int pin, struct xen_intr_handle *handle)
 	}
 	return ENOENT;
 }
-#endif /* NIOAPIC > 0 || NACPI > 0 */
+#endif /* NIOAPIC > 0 || NACPICA > 0 */
 #endif /* NPCI > 0 || NISA > 0 */
 
 

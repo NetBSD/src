@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.670 2009/07/29 12:02:05 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.671 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.670 2009/07/29 12:02:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.671 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -188,7 +188,7 @@ int arch_i386_is_xbox = 0;
 uint32_t arch_i386_xbox_memsize = 0;
 #endif
 
-#include "acpi.h"
+#include "acpica.h"
 #include "apmbios.h"
 #include "bioscall.h"
 
@@ -196,7 +196,7 @@ uint32_t arch_i386_xbox_memsize = 0;
 #include <machine/bioscall.h>
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
@@ -930,7 +930,7 @@ haltsys:
 			for (;;);
 		}
 #endif
-#if NACPI > 0
+#if NACPICA > 0
 		if (acpi_softc != NULL) {
 			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 			printf("WARNING: ACPI powerdown failed!\n");
@@ -958,7 +958,7 @@ haltsys:
 #endif
 
 	if (howto & RB_HALT) {
-#if NACPI > 0
+#if NACPICA > 0
 		AcpiDisable();
 #endif
 

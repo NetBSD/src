@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.3 2007/12/15 00:39:25 perry Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.4 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.3 2007/12/15 00:39:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.4 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -63,16 +63,10 @@ ACPI_MODULE_NAME("ENVIRONMENT");
 ACPI_STATUS
 AcpiOsInitialize(void)
 {
-	ACPI_STATUS rv;
-
-	ACPI_FUNCTION_TRACE(__func__);
-
 	/* Initialize the Osd Scheduler. */
 	acpi_osd_sched_init();
 
-	rv = acpi_md_OsInitialize();
-
-	return_ACPI_STATUS(rv);
+	return acpi_md_OsInitialize();
 }
 
 /*
@@ -83,16 +77,10 @@ AcpiOsInitialize(void)
 ACPI_STATUS
 AcpiOsTerminate(void)
 {
-	ACPI_STATUS rv;
-
-	ACPI_FUNCTION_TRACE(__func__);
-
 	/* Tear down the Osd Scheduler. */
 	acpi_osd_sched_fini();
 
-	rv = acpi_md_OsTerminate();
-
-	return_ACPI_STATUS(rv);
+	return acpi_md_OsTerminate();
 }
 
 /*

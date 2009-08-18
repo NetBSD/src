@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.12 2009/03/31 17:17:47 drochner Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.13 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.12 2009/03/31 17:17:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.13 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,16 +113,14 @@ AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits,
 {
 	struct acpi_semaphore *as;
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (OutHandle == NULL)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	if (InitialUnits > MaxUnits)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	as = malloc(sizeof(*as), M_ACPI, M_NOWAIT);
 	if (as == NULL)
-		return_ACPI_STATUS(AE_NO_MEMORY);
+		return AE_NO_MEMORY;
 
 	mutex_init(&as->as_slock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&as->as_cv, "acpisem");
@@ -134,7 +132,7 @@ AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits,
 	    as, as->as_maxunits, as->as_units));
 
 	*OutHandle = (ACPI_HANDLE) as;
-	return_ACPI_STATUS(AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -147,10 +145,8 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (as == NULL)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	cv_destroy(&as->as_cv);
 	mutex_destroy(&as->as_slock);
@@ -158,7 +154,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "destroyed semaphore %p\n", as));
 
-	return_ACPI_STATUS(AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -179,12 +175,10 @@ AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout)
 	 * would adjust the amount of time left after being awakened.
 	 */
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (as == NULL)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	if (cold || doing_shutdown || acpi_suspended)
-		return_ACPI_STATUS(AE_OK);
+		return AE_OK;
 
 	/* A timeout of 0xFFFF means "forever". */
 	if (Timeout == 0xFFFF)
@@ -221,7 +215,7 @@ AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout)
 
 	mutex_exit(&as->as_slock);
 
-	return_ACPI_STATUS(rv);
+	return rv;
 }
 
 /*
@@ -234,10 +228,8 @@ AcpiOsSignalSemaphore(ACPI_HANDLE Handle, UINT32 Units)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (as == NULL)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	mutex_enter(&as->as_slock);
 
@@ -252,7 +244,7 @@ AcpiOsSignalSemaphore(ACPI_HANDLE Handle, UINT32 Units)
 
 	mutex_exit(&as->as_slock);
 
-	return_ACPI_STATUS(AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -265,14 +257,12 @@ AcpiOsCreateLock(ACPI_HANDLE *OutHandle)
 {
 	struct acpi_lock *al;
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (OutHandle == NULL)
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 
 	al = malloc(sizeof(*al), M_ACPI, M_NOWAIT);
 	if (al == NULL)
-		return_ACPI_STATUS(AE_NO_MEMORY);
+		return AE_NO_MEMORY;
 
 	mutex_init(&al->al_slock, MUTEX_DEFAULT, IPL_VM);
 
@@ -280,7 +270,7 @@ AcpiOsCreateLock(ACPI_HANDLE *OutHandle)
 	    "created lock %p\n", al));
 
 	*OutHandle = (ACPI_HANDLE) al;
-	return_ACPI_STATUS(AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -292,8 +282,6 @@ void
 AcpiOsDeleteLock(ACPI_SPINLOCK Handle)
 {
 	struct acpi_lock *al = (void *) Handle;
-
-	ACPI_FUNCTION_TRACE(__func__);
 
 	if (al == NULL)
 		return;
@@ -311,12 +299,10 @@ AcpiOsDeleteLock(ACPI_SPINLOCK Handle)
  *
  *	Acquire a lock.
  */
-ACPI_NATIVE_UINT
+ACPI_CPU_FLAGS
 AcpiOsAcquireLock(ACPI_SPINLOCK Handle)
 {
 	struct acpi_lock *al = (void *) Handle;
-
-	ACPI_FUNCTION_TRACE(__func__);
 
 	if (al == NULL)
 		return 0;
@@ -332,11 +318,9 @@ AcpiOsAcquireLock(ACPI_SPINLOCK Handle)
  *	Release a lock.
  */
 void
-AcpiOsReleaseLock(ACPI_HANDLE Handle, ACPI_NATIVE_UINT Flags)
+AcpiOsReleaseLock(ACPI_HANDLE Handle, ACPI_CPU_FLAGS Flags)
 {
 	struct acpi_lock *al = (void *) Handle;
-
-	ACPI_FUNCTION_TRACE(__func__);
 
 	if (al == NULL)
 		return;

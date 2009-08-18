@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.11 2009/07/29 12:02:09 cegger Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.12 2009/08/18 16:41:03 jmcneill Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.11 2009/07/29 12:02:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.12 2009/08/18 16:41:03 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.11 2009/07/29 12:02:09 cegger
 #include "locators.h"
 #include "opt_ddb.h"
 #include "ioapic.h"
-#include "acpi.h"
+#include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.11 2009/07/29 12:02:09 cegger
 #include <machine/mpbiosvar.h>
 #endif
 
-#if NACPI > 0
+#if NACPICA > 0
 #include <machine/mpacpi.h>
 #endif
 
