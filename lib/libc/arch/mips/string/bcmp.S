@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.8.46.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.8.46.2 2009/08/18 06:55:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,8 +37,11 @@
 #include <machine/endian.h>	/* LWLO/LWHI, SWLO/SWHI */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)bcmp.s	8.1 (Berkeley) 6/4/93") */
-	RCSID("$NetBSD: bcmp.S,v 1.8.46.1 2009/08/16 03:36:02 matt Exp $")
+#if 0
+	RCSID("from: @(#)bcmp.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: bcmp.S,v 1.8.46.2 2009/08/18 06:55:48 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* bcmp(s1, s2, n) */
