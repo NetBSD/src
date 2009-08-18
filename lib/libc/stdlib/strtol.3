@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.22 2003/09/08 17:54:33 wiz Exp $
+.\"	$NetBSD: strtol.3,v 1.22.16.1 2009/08/18 09:56:43 bouyer Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 11, 2002
+.Dd July 23, 2009
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -186,17 +186,22 @@ In these cases,
 .Va errno
 is set to
 .Er ERANGE .
+.Pp
+If no error occurs,
+.Va errno
+is left unchanged.
+This behavior (which is unlike most library functions) is guaranteed
+by the pertinent standards.
 .Sh EXAMPLES
-Ensuring that a string is a valid number (i.e., in range and containing no
-trailing characters) requires clearing
-.Va errno
-beforehand explicitly since
-.Va errno
-is not changed on a successful call to
-.Fn strtol ,
-and the return value of
+Because the return value of
 .Fn strtol
-cannot be used unambiguously to signal an error:
+cannot be used unambiguously to detect an error,
+.Va errno
+is left unchanged after a successful call.
+To ensure that a string is a valid number (i.e., in range and containing no
+trailing characters), clear
+.Va errno
+beforehand explicitly, then check it afterwards:
 .Bd -literal -offset indent
 char *ep;
 long lval;
