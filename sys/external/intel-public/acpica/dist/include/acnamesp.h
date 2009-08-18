@@ -290,7 +290,7 @@ AcpiNsDumpEntry (
 void
 AcpiNsDumpPathname (
     ACPI_HANDLE             Handle,
-    char                    *Msg,
+    const char              *Msg,
     UINT32                  Level,
     UINT32                  Component);
 

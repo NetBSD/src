@@ -123,7 +123,7 @@
 #define BLOCK_PAREN             1
 #define BLOCK_BRACE             2
 #define BLOCK_COMMA_LIST        4
-#define ACPI_DEFAULT_RESNAME    *(UINT32 *) "__RD"
+#define ACPI_DEFAULT_RESNAME    *(const UINT32 *) "__RD"
 
 typedef struct acpi_external_list
 {
@@ -560,22 +560,22 @@ AcpiDmIsStringBuffer (
 void
 AcpiDmDumpInteger8 (
     UINT8                   Value,
-    char                    *Name);
+    const char              *Name);
 
 void
 AcpiDmDumpInteger16 (
     UINT16                  Value,
-    char                    *Name);
+    const char              *Name);
 
 void
 AcpiDmDumpInteger32 (
     UINT32                  Value,
-    char                    *Name);
+    const char              *Name);
 
 void
 AcpiDmDumpInteger64 (
     UINT64                  Value,
-    char                    *Name);
+    const char              *Name);
 
 void
 AcpiDmResourceTemplate (
@@ -670,7 +670,7 @@ AcpiDmVendorLargeDescriptor (
 
 void
 AcpiDmVendorCommon (
-    char                    *Name,
+    const char              *Name,
     UINT8                   *ByteData,
     UINT32                  Length,
     UINT32                  Level);

@@ -156,12 +156,13 @@ AcpiNsCopyDeviceId (
 ACPI_STATUS
 AcpiGetHandle (
     ACPI_HANDLE             Parent,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_HANDLE             *RetHandle)
 {
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node = NULL;
     ACPI_NAMESPACE_NODE     *PrefixNode = NULL;
+    ACPI_STRING             UPathname = __UNCONST(Pathname);
 
 
     ACPI_FUNCTION_ENTRY ();
@@ -192,13 +193,13 @@ AcpiGetHandle (
      *
      * Error for <null Parent + relative path>
      */
-    if (AcpiNsValidRootPrefix (Pathname[0]))
+    if (AcpiNsValidRootPrefix (UPathname[0]))
     {
         /* Pathname is fully qualified (starts with '\') */
 
         /* Special case for root-only, since we can't search for it */
 
-        if (!ACPI_STRCMP (Pathname, ACPI_NS_ROOT_PATH))
+        if (!ACPI_STRCMP (UPathname, ACPI_NS_ROOT_PATH))
         {
             *RetHandle = AcpiNsConvertEntryToHandle (AcpiGbl_RootNode);
             return (AE_OK);
@@ -213,7 +214,7 @@ AcpiGetHandle (
 
     /* Find the Node and convert to a handle */
 
-    Status = AcpiNsGetNode (PrefixNode, Pathname, ACPI_NS_NO_UPSEARCH, &Node);
+    Status = AcpiNsGetNode (PrefixNode, UPathname, ACPI_NS_NO_UPSEARCH, &Node);
     if (ACPI_SUCCESS (Status))
     {
         *RetHandle = AcpiNsConvertEntryToHandle (Node);

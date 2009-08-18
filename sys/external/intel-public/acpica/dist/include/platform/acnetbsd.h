@@ -1,6 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
+ *       $Revision: 1.2 $
  *
  *****************************************************************************/
 
@@ -8,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -120,6 +121,10 @@
 
 #include "acgcc.h"
 
+#define ACPI_THREAD_ID		uintptr_t
+#define ACPI_UINTPTR_T		uintptr_t
+#define ACPI_USE_LOCAL_CACHE
+
 #ifdef _LP64
 #define ACPI_MACHINE_WIDTH      64
 #else
@@ -129,17 +134,21 @@
 #define COMPILER_DEPENDENT_INT64  int64_t
 #define COMPILER_DEPENDENT_UINT64 uint64_t
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 #ifdef _KERNEL
 #include "opt_acpi.h"           /* collect build-time options here */
+#endif /* _KERNEL */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/stdarg.h>
-#include <machine/acpi_func.h>
+#include <dev/acpi/acpica/acpi_func.h>
 
 #define asm         __asm
 
 #define ACPI_USE_NATIVE_DIVIDE
+
+#define ACPI_ASM_MACROS         /* tell acenv.h */
 
 #define ACPI_SYSTEM_XFACE
 #define ACPI_EXTERNAL_XFACE
@@ -166,7 +175,7 @@ isprint(int ch)
         return(isspace(ch) || isascii(ch));
 }
 
-#else /* _KERNEL */
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
 
 #include <ctype.h>
 
@@ -179,7 +188,7 @@ isprint(int ch)
 /* XXX */
 #define __inline inline
 
-#endif /* _KERNEL */
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
 
 /* Always use NetBSD code over our local versions */
 #define ACPI_USE_SYSTEM_CLIBRARY

@@ -414,7 +414,7 @@ AcpiTbChecksum (
 void
 AcpiTbInstallTable (
     ACPI_PHYSICAL_ADDRESS   Address,
-    char                    *Signature,
+    const char              *Signature,
     UINT32                  TableIndex)
 {
     UINT8                   Flags;

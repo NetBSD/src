@@ -157,14 +157,13 @@ AcpiNsResolveReferences (
 ACPI_STATUS
 AcpiEvaluateObjectTyped (
     ACPI_HANDLE             Handle,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_OBJECT_LIST        *ExternalParams,
     ACPI_BUFFER             *ReturnBuffer,
     ACPI_OBJECT_TYPE        ReturnType)
 {
     ACPI_STATUS             Status;
     BOOLEAN                 MustFree = FALSE;
-
 
     ACPI_FUNCTION_TRACE (AcpiEvaluateObjectTyped);
 
@@ -256,7 +255,7 @@ ACPI_EXPORT_SYMBOL (AcpiEvaluateObjectTyped)
 ACPI_STATUS
 AcpiEvaluateObject (
     ACPI_HANDLE             Handle,
-    ACPI_STRING             Pathname,
+    ACPI_CONST_STRING       Pathname,
     ACPI_OBJECT_LIST        *ExternalParams,
     ACPI_BUFFER             *ReturnBuffer)
 {
@@ -277,7 +276,7 @@ AcpiEvaluateObject (
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
-    Info->Pathname = Pathname;
+    Info->Pathname = __UNCONST(Pathname);
 
     /* Convert and validate the device handle */
 
