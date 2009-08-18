@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.32 2009/07/31 20:47:25 bouyer Exp $ */
+/*	$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.32 2009/07/31 20:47:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1321,7 +1321,7 @@ twa_check_response_q(struct twa_request *tr, int clear)
 		req = tr;
 
 	if ((tr->tr_cmd_pkt_type & TWA_CMD_PKT_TYPE_EXTERNAL) != 0) {
-		XXX this is bogus ! req can't be anything else but tr !
+		/* XXX this is bogus ! req can't be anything else but tr ! */
 		if (req->tr_request_id == tr->tr_request_id) 
 			panic("req id: %d on controller queue twice",
 		    	    tr->tr_request_id);
