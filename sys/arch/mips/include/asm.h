@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.1 2009/08/16 02:52:43 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.2 2009/08/18 14:44:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -300,6 +300,8 @@ _C_LABEL(x):
 #define	FPLD	ldc1
 #define	FPST	sdc1
 #endif
+#define	FP_L	FPLD
+#define	FP_S	FPST
 
 /*
  *  standard callframe {
