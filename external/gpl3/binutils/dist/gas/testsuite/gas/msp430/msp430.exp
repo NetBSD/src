@@ -1,0 +1,7 @@
+#
+# msp430 tests
+#
+
+if [expr [istarget "msp430-*-*"]]  then {
+    run_dump_test "opcode"
+}
