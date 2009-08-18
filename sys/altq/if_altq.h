@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.12 2007/03/04 05:59:03 christos Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.13 2009/08/18 17:20:20 dyoung Exp $	*/
 /*	$KAME: if_altq.h,v 1.12 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -45,9 +45,6 @@ struct	ifaltq {
 	int	ifq_len;
 	int	ifq_maxlen;
 	int	ifq_drops;
-#ifdef __FreeBSD__
-	struct	mtx ifq_mtx;
-#endif
 
 	/* alternate queueing related fields */
 	int	altq_type;		/* discipline type */
