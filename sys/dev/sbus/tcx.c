@@ -1,11 +1,11 @@
-/*	$NetBSD: tcx.c,v 1.32 2009/08/06 18:26:03 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.33 2009/08/18 20:45:42 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
  *  All rights reserved.
  *
  *  This code is derived from software contributed to The NetBSD Foundation
- *  by Paul Kranenburg.
+ *  by Paul Kranenburg and Michael Lorenz.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.32 2009/08/06 18:26:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.33 2009/08/18 20:45:42 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.32 2009/08/06 18:26:03 macallan Exp $");
 
 /* per-display variables */
 struct tcx_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
@@ -146,7 +146,7 @@ static void	tcxattach(device_t, device_t, void *);
 static int	tcxmatch(device_t, cfdata_t, void *);
 static void	tcx_unblank(device_t);
 
-CFATTACH_DECL(tcx, sizeof(struct tcx_softc),
+CFATTACH_DECL_NEW(tcx, sizeof(struct tcx_softc),
     tcxmatch, tcxattach, NULL, NULL);
 
 extern struct cfdriver tcx_cd;
@@ -233,13 +233,14 @@ tcxattach(device_t parent, device_t self, void *args)
 	int isconsole, i, j;
 	uint32_t confreg;
 
+	sc->sc_dev = self;
 	sc->sc_bustag = sa->sa_bustag;
 	node = sa->sa_node;
 
 	fb->fb_driver = &tcx_fbdriver;
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = sc->sc_dev;
 	/* Mask out invalid flags from the user. */
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 	/*
 	 * The onboard framebuffer on the SS4 supports only 8-bit mode;
 	 * it can be distinguished from the S24 card for the SS5 by the
@@ -365,11 +366,7 @@ tcxattach(device_t parent, device_t self, void *args)
 	} else
 		printf("\n");
 
-	bus_space_write_4(sa->sa_bustag, sc->sc_bt, DAC_ADDRESS, 0);
-	printf("DAC ID: %02x %02x\n",
-	    bus_space_read_1(sa->sa_bustag, sc->sc_bt, DAC_CONTROL_1),
-	    bus_space_read_1(sa->sa_bustag, sc->sc_bt, DAC_CONTROL_1));
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbus_establish(&sc->sc_sd, sc->sc_dev);
 	fb_attach(&sc->sc_fb, isconsole);
 
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -542,7 +539,7 @@ tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case FBIOSVIDEO:
 		if (*(int *)data)
-			tcx_unblank(&sc->sc_dev);
+			tcx_unblank(sc->sc_dev);
 		else if (!sc->sc_blanked) {
 			sc->sc_blanked = 1;
 			//sc->sc_thc->thc_hcmisc &= ~THC_MISC_VIDEN;
