@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.150 2009/08/18 18:06:53 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.151 2009/08/18 19:08:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,8 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.150 2009/08/18 18:06:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.151 2009/08/18 19:08:39 thorpej Exp $");
 
+#include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
 
@@ -87,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.150 2009/08/18 18:06:53 thorpej Exp $
 #include <sys/cpu.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_ddb.h>
 #include <uvm/uvm_pdpolicy.h>
 
 /*
@@ -1873,3 +1875,122 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 	KASSERT(lcv != -1);
 	return (vm_physmem[lcv].free_list);
 }
+
+#if defined(DDB) || defined(DEBUGPRINT)
+
+/*
+ * uvm_page_printit: actually print the page
+ */
+
+static const char page_flagbits[] = UVM_PGFLAGBITS;
+static const char page_pqflagbits[] = UVM_PQFLAGBITS;
+
+void
+uvm_page_printit(struct vm_page *pg, bool full,
+    void (*pr)(const char *, ...))
+{
+	struct vm_page *tpg;
+	struct uvm_object *uobj;
+	struct pgflist *pgl;
+	char pgbuf[128];
+	char pqbuf[128];
+
+	(*pr)("PAGE %p:\n", pg);
+	snprintb(pgbuf, sizeof(pgbuf), page_flagbits, pg->flags);
+	snprintb(pqbuf, sizeof(pqbuf), page_pqflagbits, pg->pqflags);
+	(*pr)("  flags=%s, pqflags=%s, wire_count=%d, pa=0x%lx\n",
+	    pgbuf, pqbuf, pg->wire_count, (long)VM_PAGE_TO_PHYS(pg));
+	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
+	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
+#if defined(UVM_PAGE_TRKOWN)
+	if (pg->flags & PG_BUSY)
+		(*pr)("  owning process = %d, tag=%s\n",
+		    pg->owner, pg->owner_tag);
+	else
+		(*pr)("  page not busy, no owner\n");
+#else
+	(*pr)("  [page ownership tracking disabled]\n");
+#endif
+
+	if (!full)
+		return;
+
+	/* cross-verify object/anon */
+	if ((pg->pqflags & PQ_FREE) == 0) {
+		if (pg->pqflags & PQ_ANON) {
+			if (pg->uanon == NULL || pg->uanon->an_page != pg)
+			    (*pr)("  >>> ANON DOES NOT POINT HERE <<< (%p)\n",
+				(pg->uanon) ? pg->uanon->an_page : NULL);
+			else
+				(*pr)("  anon backpointer is OK\n");
+		} else {
+			uobj = pg->uobject;
+			if (uobj) {
+				(*pr)("  checking object list\n");
+				TAILQ_FOREACH(tpg, &uobj->memq, listq.queue) {
+					if (tpg == pg) {
+						break;
+					}
+				}
+				if (tpg)
+					(*pr)("  page found on object list\n");
+				else
+			(*pr)("  >>> PAGE NOT FOUND ON OBJECT LIST! <<<\n");
+			}
+		}
+	}
+
+	/* cross-verify page queue */
+	if (pg->pqflags & PQ_FREE) {
+		int fl = uvm_page_lookup_freelist(pg);
+		int color = VM_PGCOLOR_BUCKET(pg);
+		pgl = &uvm.page_free[fl].pgfl_buckets[color].pgfl_queues[
+		    ((pg)->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN];
+	} else {
+		pgl = NULL;
+	}
+
+	if (pgl) {
+		(*pr)("  checking pageq list\n");
+		LIST_FOREACH(tpg, pgl, pageq.list) {
+			if (tpg == pg) {
+				break;
+			}
+		}
+		if (tpg)
+			(*pr)("  page found on pageq list\n");
+		else
+			(*pr)("  >>> PAGE NOT FOUND ON PAGEQ LIST! <<<\n");
+	}
+}
+
+/*
+ * uvm_pages_printthem - print a summary of all managed pages
+ */
+
+void
+uvm_page_printall(void (*pr)(const char *, ...))
+{
+	unsigned i;
+	struct vm_page *pg;
+
+	(*pr)("%18s %4s %4s %18s %18s"
+#ifdef UVM_PAGE_TRKOWN
+	    " OWNER"
+#endif
+	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
+	for (i = 0; i < vm_nphysseg; i++) {
+		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
+			(*pr)("%18p %04x %04x %18p %18p",
+			    pg, pg->flags, pg->pqflags, pg->uobject,
+			    pg->uanon);
+#ifdef UVM_PAGE_TRKOWN
+			if (pg->flags & PG_BUSY)
+				(*pr)(" %d [%s]", pg->owner, pg->owner_tag);
+#endif
+			(*pr)("\n");
+		}
+	}
+}
+
+#endif /* DDB || DEBUGPRINT */
