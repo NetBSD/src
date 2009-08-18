@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.15 2009/08/13 09:18:28 vanhu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.16 2009/08/18 08:21:12 vanhu Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -2648,7 +2648,7 @@ oakley_compute_enckey(iph1)
 					iph1->approval->encklen);
 	if (keylen == -1) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid encryption algoritym %d, "
+			"invalid encryption algorithm %d, "
 			"or invalid key length %d.\n",
 			iph1->approval->enctype,
 			iph1->approval->encklen);
@@ -2752,7 +2752,7 @@ oakley_compute_enckey(iph1)
 	if (iph1->approval->enctype > ARRAYLEN(oakley_encdef)
 	 || oakley_encdef[iph1->approval->enctype].weakkey == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"encryption algoritym %d isn't supported.\n",
+			"encryption algorithm %d isn't supported.\n",
 			iph1->approval->enctype);
 		goto end;
 	}
