@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.16 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: semctl.2,v 1.16.10.1 2009/08/18 10:53:45 bouyer Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -150,7 +150,7 @@ has an effective user id equal to either
 .Va sem_perm.cuid
 or
 .Va sem_perm.uid
-in the data structure associated with the message queue.
+in the data structure associated with the semaphore.
 .It Dv IPC_RMID
 Remove the semaphores associated with
 .Fa semid
@@ -162,7 +162,7 @@ or
 values in the data structure associated with the semaphore can do this.
 .El
 .Pp
-The permission to read or change a message queue (see
+The permission to read or change a semaphore (see
 .Xr semop 2 )
 is determined by the
 .Va sem_perm.mode
@@ -209,7 +209,7 @@ the effective uid match either the
 .Va sem_perm.uid
 or
 .Va sem_perm.cuid
-fields of the data structure associated with the message queue.
+fields of the data structure associated with the semaphore.
 .It Bq Er EACCES
 The caller has no operation permission for this semaphore.
 .It Bq Er EINVAL
