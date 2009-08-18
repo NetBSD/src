@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.1.34.1 2009/08/18 06:49:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,21 +32,18 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/cdefs.h>
 #include <sys/syscall.h>
-#include <mips/regnum.h>
 #include <mips/asm.h>
-#include <machine/signal.h>
-#include <machine/setjmp.h>
+
+#include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: compat_setjmp.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
-#endif /* LIBC_SCCS and not lint */
-
-#ifdef __ABICALLS__
-	.abicalls
+#if 0
+	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: compat_setjmp.S,v 1.1.34.1 2009/08/18 06:49:17 matt Exp $")
 #endif
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * C library -- setjmp, longjmp
@@ -59,86 +56,107 @@
  * and a struct sigcontext, see <signal.h>
  */
 
-#define SETJMP_FRAME_SIZE	(CALLFRAME_SIZ + 12)
+#define SETJMP_FRAME_SIZE	(CALLFRAME_SIZ + STACK_T_SIZE)
 
 NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
-	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
-#ifdef __ABICALLS__
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-#endif
-	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
-#ifdef __ABICALLS__
-	.cprestore 16
-#endif
-	sw	ra, CALLFRAME_RA(sp)		# save state
-	sw	a0, SETJMP_FRAME_SIZE(sp)
-	move	a0, zero			# get current signal mask
-	jal	_C_LABEL(sigblock)
-	lw	v1, SETJMP_FRAME_SIZE(sp)	# v1 = jmpbuf
-	sw	v0, (1 * 4)(v1)			# save sc_mask = sigblock(0)
-	move	a0, zero
-	addu	a1, sp, CALLFRAME_SIZ	# pointer to struct sigaltstack
-	jal	_C_LABEL(__sigaltstack14)
-	lw	a0, SETJMP_FRAME_SIZE(sp)	# restore jmpbuf
-	lw	v1, CALLFRAME_SIZ+8(sp)	# get old ss_onstack
-	and	v1, v1, 1			# extract onstack flag
-	sw	v1, 0(a0)			# save it in sc_onstack
-	lw	ra, CALLFRAME_RA(sp)
-	addu	sp, sp, SETJMP_FRAME_SIZE
-	blt	v0, zero, botch			# check for sigstack() error
+	.mask	0x80010000, (CALLFRAME_RA - CALLFRAME_SIZ)
+	SETUP_GP
+	PTR_SUBU	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
+	SAVE_GP(CALLFRAME_GP)
+	SETUP_GP64(CALLFRAME_GP, setjmp)
+
+	REG_S		ra, CALLFRAME_RA(sp)		# save RA
+	REG_S		s0, CALLFRAME_S0(sp)		# save S0
+	move		s0, a0				# save sigcontext
+
+	/* Get the signal mask. */
+	move		a0, zero			# get current sigmask
+	jal		_C_LABEL(sigblock)
+	nop
+	INT_S		v0, _OFFSETOF_SC_MASK13(s0)	# save sc_mask13
+
+	/* Get the signal stack. */
+	move		a0, zero
+	PTR_ADDU	a1, sp, CALLFRAME_SIZ		# pointer to stack_t
+	jal		_C_LABEL(__sigaltstack14)
+
+	move		a0, s0				# restore jmpbuf
+	INT_L		v1, CALLFRAME_SIZ+_OFFSETOF_STACK_T_FLAGS(sp)
+							# get old ss_onstack
+	and		v1, v1, SS_ONSTACK		# extract onstack flag
+	INT_S		v1, _OFFSETOF_SC_ONSTACK(a0)	# save it in sc_onstack
+
+	REG_L		s0, CALLFRAME_S0(sp)		# restore S0
+	REG_L		ra, CALLFRAME_RA(sp)		# restore RA
+	blt		v0, zero, botch		# check for sigaltstack() error
+	nop
+	/*
+	 * We know we won't need this routine's GP anymore.
+	 */
+	RESTORE_GP64
+	PTR_ADDU	sp, sp, SETJMP_FRAME_SIZE	# pop stack frame
+
 	REG_PROLOGUE
-	REG_S	ra, (2 * 4)(a0)			# sc_pc = return address
+	REG_S	ra, _OFFSETOF_SC_PC(a0)		# sc_pc = return address
 	REG_LI	v0, 0xACEDBADE			# sigcontext magic number
-	REG_S	v0, (_OFFSETOF_SC_REGS + SZREG * _R_ZERO)(a0) # saved in sc_regs[0]
-	REG_S	s0, (_OFFSETOF_SC_REGS + SZREG * _R_S0)(a0)
-	REG_S	s1, (_OFFSETOF_SC_REGS + SZREG * _R_S1)(a0)
-	REG_S	s2, (_OFFSETOF_SC_REGS + SZREG * _R_S2)(a0)
-	REG_S	s3, (_OFFSETOF_SC_REGS + SZREG * _R_S3)(a0)
-	REG_S	s4, (_OFFSETOF_SC_REGS + SZREG * _R_S4)(a0)
-	REG_S	s5, (_OFFSETOF_SC_REGS + SZREG * _R_S5)(a0)
-	REG_S	s6, (_OFFSETOF_SC_REGS + SZREG * _R_S6)(a0)
-	REG_S	s7, (_OFFSETOF_SC_REGS + SZREG * _R_S7)(a0)
-	REG_S	gp, (_OFFSETOF_SC_REGS + SZREG * _R_GP)(a0)
-	REG_S	sp, (_OFFSETOF_SC_REGS + SZREG * _R_SP)(a0)
-	REG_S	s8, (_OFFSETOF_SC_REGS + SZREG * _R_S8)(a0)
+	REG_S	v0, _OFFSETOF_SC_REGS(a0)	#   saved in sc_regs[0]
+	REG_S	s0, _OFFSETOF_SC_REGS_S0(a0)
+	REG_S	s1, _OFFSETOF_SC_REGS_S1(a0)
+	REG_S	s2, _OFFSETOF_SC_REGS_S2(a0)
+	REG_S	s3, _OFFSETOF_SC_REGS_S3(a0)
+	REG_S	s4, _OFFSETOF_SC_REGS_S4(a0)
+	REG_S	s5, _OFFSETOF_SC_REGS_S5(a0)
+	REG_S	s6, _OFFSETOF_SC_REGS_S6(a0)
+	REG_S	s7, _OFFSETOF_SC_REGS_S7(a0)
+	REG_S	gp, _OFFSETOF_SC_REGS_GP(a0)
+	REG_S	sp, _OFFSETOF_SC_REGS_SP(a0)
+	REG_S	s8, _OFFSETOF_SC_REGS_S8(a0)
 	li	v0, 1				# be nice if we could tell
-	sw	v0, (_OFFSETOF_SC_REGS + 34 * SZREG)(a0)	# sc_fpused = 1
+	INT_S	v0, _OFFSETOF_SC_FPUSED(a0)	# sc_fpused = 1
 	cfc1	v0, $31
-	swc1	$f20, (20 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f21, (21 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f22, (22 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f23, (23 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f24, (24 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f25, (25 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f26, (26 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f27, (27 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f28, (28 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f29, (29 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f30, (30 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	swc1	$f31, (31 * 4 + _OFFSETOF_SC_FPREGS)(a0)
-	sw	v0, ((32 * 4) + _OFFSETOF_SC_FPREGS)(a0)
+	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
+#if defined(__mips_o32) || defined(__mips_o64) || defined(__mips_n32)
+	FP_S	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
+	FP_S	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
+#endif
+#if defined(__mips_o32) || defined(__mips_o64)
+	FP_S	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
+	FP_S	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+	FP_S	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
+	FP_S	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
+	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
+	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
+#endif
+#if defined(__mips_n64)
+	FP_S	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
+	FP_S	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
+	FP_S	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
+	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
+#endif
 	REG_EPILOGUE
-	move	v0, zero
 	j	ra
+	move	v0, zero
+
+botch:
+	jal	_C_LABEL(abort)
 END(setjmp)
 
 LEAF(longjmp)
-#ifdef __ABICALLS__
-	.set	noreorder
-	.cpload	t9
-	.set	reorder
-	subu	sp, sp, 32
-	.cprestore 16
-#endif
+	SETUP_GP
+	PTR_SUBU	sp, sp, CALLFRAME_SIZ
+	SAVE_GP(s0)
+	SETUP_GP64(s0, longjmp)
+
 	REG_PROLOGUE
 	/* save return value in sc_regs[_R_V0] */
-	REG_S	a1, (_OFFSETOF_SC_REGS + _R_V0 * SZREG)(a0)
+	REG_S		a1, _OFFSETOF_SC_REGS_V0(a0)
 	REG_EPILOGUE
-	li	v0, SYS_compat_13_sigreturn13
+
+	li		v0, SYS_compat_13_sigreturn13
 	syscall
-botch:
-	jal	_C_LABEL(longjmperror)
-	jal	_C_LABEL(abort)
+
+	jal		_C_LABEL(longjmperror)
+	jal		_C_LABEL(abort)
 END(longjmp)

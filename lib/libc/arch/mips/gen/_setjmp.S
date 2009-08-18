@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.20.34.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.20.34.2 2009/08/18 06:49:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,8 +43,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	RCSID("$NetBSD: _setjmp.S,v 1.20.34.1 2009/08/16 03:36:02 matt Exp $")
+#else
+	RCSID("$NetBSD: _setjmp.S,v 1.20.34.2 2009/08/18 06:49:17 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -86,24 +89,24 @@ LEAF(_setjmp)
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
 #if defined(__mips_n64) || defined(__mips_n32)
-	FPST	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
-	FPST	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
-	FPST	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
-	FPST	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
+	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
+	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
+	FP_S	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
+	FP_S	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
 #endif
 #if defined(__mips_n32) || defined(__mips_o32) || defined(__mips_o64)
-	FPST	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
-	FPST	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
+	FP_S	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
+	FP_S	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
 #endif
 #if defined(__mips_o32) || defined(__mips_o64)
-	FPST	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
-	FPST	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
+	FP_S	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
+	FP_S	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
 #endif
 #if defined(__mips_n64)
-	FPST	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
-	FPST	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
-	FPST	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
-	FPST	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
+	FP_S	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
+	FP_S	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
+	FP_S	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
+	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
 	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	REG_EPILOGUE
@@ -145,29 +148,30 @@ LEAF(_longjmp)
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
 #if defined(__mips_n64) || defined(__mips_n32)
-	FPLD	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
-	FPLD	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
-	FPLD	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
-	FPLD	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
+	FP_L	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
+	FP_L	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
+	FP_L	$f26, _OFFSETOF_SC_FPREGS_F26(a0)
+	FP_L	$f24, _OFFSETOF_SC_FPREGS_F24(a0)
 #endif
 #if defined(__mips_n32) || defined(__mips_o32) || defined(__mips_o64)
-	FPLD	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
-	FPLD	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
+	FP_L	$f22, _OFFSETOF_SC_FPREGS_F22(a0)
+	FP_L	$f20, _OFFSETOF_SC_FPREGS_F20(a0)
 #endif
 #if defined(__mips_o32) || defined(__mips_o64)
-	FPLD	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
-	FPLD	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
+	FP_L	$f21, _OFFSETOF_SC_FPREGS_F21(a0)
+	FP_L	$f23, _OFFSETOF_SC_FPREGS_F23(a0)
 #endif
 #if defined(__mips_n64)
-	FPLD	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
-	FPLD	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
-	FPLD	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
-	FPLD	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
+	FP_L	$f25, _OFFSETOF_SC_FPREGS_F25(a0)
+	FP_L	$f27, _OFFSETOF_SC_FPREGS_F27(a0)
+	FP_L	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
+	FP_L	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
 
 	REG_EPILOGUE
+	REG_L	v0, _OFFSETOF_SC_REGS_V0(a0)
 	j	ra
-	REG_L	v0, _OFFSETOF_SC_REG_V0(a0)
+	nop
 
 botch:
 	/*
