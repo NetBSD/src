@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.24 2009/08/18 16:41:02 jmcneill Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.25 2009/08/18 21:33:29 cegger Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.24 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.25 2009/08/18 21:33:29 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ static struct wss_acpi_hint wss_acpi_hints[] = {
 	{ "NMX2210", 1, 2, WSS_CODEC },
 	{ "CSC0000", 0, 1, 0 },		/* Dell Latitude CPi */
 	{ "CSC0100", 0, 1, 0 },		/* CS4610 with CS4236 codec */
-	{ { 0 }, 0, 0, 0 }
 };
 
 static int wss_acpi_hints_index (const char *);
@@ -81,9 +80,11 @@ static int wss_acpi_hints_index (const char *);
 static int
 wss_acpi_hints_index(const char *idstr)
 {
-	int idx = 0;
+	int idx;
 
-	while (wss_acpi_hints[idx].idstr[0] != 0) {
+	if (idstr == NULL)
+		return -1;
+	for (idx = 0; idx < __arraycount(wss_acpi_hints); idx++) {
 		if (!strcmp(wss_acpi_hints[idx].idstr, idstr))
 			return idx;
 		++idx;
