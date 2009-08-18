@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.149 2009/08/11 16:27:08 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.150 2009/08/18 18:06:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.149 2009/08/11 16:27:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.150 2009/08/18 18:06:53 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1847,6 +1847,17 @@ uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 
 	dst->flags &= ~PG_CLEAN;
 	pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
+}
+
+/*
+ * uvm_pageismanaged: test it see that a page (specified by PA) is managed.
+ */
+
+bool
+uvm_pageismanaged(paddr_t pa)
+{
+
+	return (vm_physseg_find(atop(pa), NULL) != -1);
 }
 
 /*

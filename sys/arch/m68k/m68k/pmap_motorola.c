@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.44 2009/04/21 21:29:59 cegger Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.45 2009/08/18 18:06:53 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.44 2009/04/21 21:29:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.45 2009/08/18 18:06:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,8 +270,7 @@ struct pv_entry *pmap_alloc_pv(void);
 void	pmap_free_pv(struct pv_entry *);
 void	pmap_collect_pv(void);
 
-#define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
-				 vm_physseg_find(atop((pa)), NULL) != -1)
+#define	PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
 static inline struct pv_entry *pa_to_pvh(paddr_t pa);
 static inline char *pa_to_attribute(paddr_t pa);

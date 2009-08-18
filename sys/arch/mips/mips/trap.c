@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.218 2009/08/06 23:07:55 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.219 2009/08/18 18:06:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.218 2009/08/06 23:07:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.219 2009/08/18 18:06:53 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -289,11 +289,13 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			vaddr &= ~PGOFSET;
 			MachTLBUpdate(vaddr, entry);
 			pa = mips_tlbpfn_to_paddr(entry);
-			if (!IS_VM_PHYSADDR(pa)) {
+#if defined(DIAGNOSTIC)
+			if (!uvm_pageismanaged(pa)) {
 				printf("ktlbmod: va %#lx pa %#llx\n",
 				    vaddr, (long long)pa);
 				panic("ktlbmod: unmanaged page");
 			}
+#endif
 			pmap_set_modified(pa);
 			return; /* KERN */
 		}
@@ -324,11 +326,13 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			(pmap->pm_asid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);
 		pa = mips_tlbpfn_to_paddr(entry);
-		if (!IS_VM_PHYSADDR(pa)) {
+#if defined(DIAGNOSTIC)
+		if (!uvm_pageismanaged(pa)) {
 			printf("utlbmod: va %#lx pa %#llx\n",
 			    vaddr, (long long)pa);
 			panic("utlbmod: unmanaged page");
 		}
+#endif
 		pmap_set_modified(pa);
 		if (type & T_USER)
 			userret(l);

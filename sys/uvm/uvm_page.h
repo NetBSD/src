@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.56 2009/01/16 02:33:14 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.57 2009/08/18 18:06:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -285,6 +285,7 @@ void uvm_pagewait(struct vm_page *, int);
 void uvm_pagewake(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
+bool uvm_pageismanaged(paddr_t);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
@@ -381,12 +382,6 @@ vm_physseg_find(paddr_t pframe, int *offp)
 #endif
 }
 
-
-/*
- * IS_VM_PHYSADDR: only used my mips/pmax/pica trap/pmap.
- */
-
-#define IS_VM_PHYSADDR(PA) (vm_physseg_find(atop(PA), NULL) != -1)
 
 /*
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
