@@ -1,0 +1,51 @@
+# Expect script for .eh_frame entries to a removed section.
+#   Copyright 2008  Free Software Foundation, Inc.
+#
+# This file is part of the GNU Binutils.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+# MA 02110-1301, USA.
+#
+
+#
+# Written by Jan Kratochvil (jan.kratochvil@redhat.com)
+#
+# .eh_frame with relocations to a removed (group) section did result to:
+# error in tmpdir/eh-group.o(.eh_frame); no .eh_frame_hdr table will be created.
+# The purpose of this test is to merge two .o files with -r and then link this
+# merged file (containing a discarded R_X86_64_NONE relocation) to the final
+# executable trying to create .eh_frame_hdr.  It needs a separate .exp file due
+# to the requirement of two `ld' runs.
+
+# Exclude non-CFI (such as ia64) targets.
+
+if {![check_as_cfi]} {
+    return
+}
+
+set build_tests_ld {
+  {"Build eh-group1.o"
+   "-r" ""
+   {eh-group1.s eh-group2.s} {} "eh-group.o"}
+}
+
+run_ld_link_tests $build_tests_ld
+
+set testname "Link eh-group.o to eh-group"
+if [ld_simple_link $ld "tmpdir/eh-group" "-e _start tmpdir/eh-group.o"] {
+    pass $testname
+} else {
+    fail $testname
+}
