@@ -638,7 +638,7 @@ AcpiEvInitializeRegion (
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *MethodNode;
-    ACPI_NAME               *RegNamePtr = (ACPI_NAME *) METHOD_NAME__REG;
+    ACPI_NAME               *RegNamePtr = (ACPI_NAME *) __UNCONST(METHOD_NAME__REG);
     ACPI_OPERAND_OBJECT     *RegionObj2;
 
 
