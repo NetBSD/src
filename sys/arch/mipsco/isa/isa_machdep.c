@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.12 2009/03/16 23:11:12 dsl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13 2009/08/18 17:02:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12 2009/03/16 23:11:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.13 2009/08/18 17:02:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,11 @@ mipscoisabusprint(void *auxp, const char *name)
 
 void
 isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
+{
+}
+
+void
+isa_detach_hook(device_t self)
 {
 }
 

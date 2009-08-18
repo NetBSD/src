@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.20 2009/07/29 12:02:09 cegger Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.21 2009/08/18 17:02:01 dyoung Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.20 2009/07/29 12:02:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21 2009/08/18 17:02:01 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +196,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 	//XXX intr_disestablish(ih);
 }
 
+/* XXX share with x86 */
 void
 isa_attach_hook(device_t parent, device_t self, struct isabus_attach_args *iba)
 {
@@ -216,6 +217,15 @@ isa_attach_hook(device_t parent, device_t self, struct isabus_attach_args *iba)
 	 * now.
 	 */
 	iba->iba_ic = &x86_isa_chipset;
+}
+
+/* XXX share with x86 */
+void
+isa_detach_hook(device_t self)
+{
+	extern int isa_has_been_seen;
+
+	isa_has_been_seen = 0;
 }
 
 int
