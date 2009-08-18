@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.21 2006/10/15 18:18:54 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.21.6.1 2009/08/18 10:58:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.21 2006/10/15 18:18:54 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.21.6.1 2009/08/18 10:58:33 bouyer Exp $");
 #endif
 
 #include <stdlib.h>
@@ -247,7 +247,7 @@ pushinit(void)
 #ifdef DEBUG
 	char	buf[64];
 #endif
-	istk_t	*istk;
+	istk_t	*istk, *inxt;
 	int	cnt;
 	sym_t	*m;
 
@@ -369,8 +369,9 @@ again:
 		if (namedmem) {
 			DPRINTF(("pushinit(): pop\n"));
 	pop:
+			inxt = initstk->i_nxt;
 			free(istk);
-			initstk = initstk->i_nxt;
+			initstk = inxt;
 			goto again;
 		}
 		istk->i_cnt = 1;
