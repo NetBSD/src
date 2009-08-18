@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.9.46.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: exect.S,v 1.9.46.2 2009/08/18 06:56:52 matt Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +34,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)exect.s	8.1 (Berkeley) 6/4/93") */
-	RCSID("$NetBSD: exect.S,v 1.9.46.1 2009/08/16 03:36:02 matt Exp $")
+#if 0
+	RCSID("from: @(#)exect.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: exect.S,v 1.9.46.2 2009/08/18 06:56:52 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 LEAF(exect)
