@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.6 2009/07/06 12:36:31 joerg Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.7 2009/08/18 16:41:02 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.6 2009/07/06 12:36:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.7 2009/08/18 16:41:02 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -58,7 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.6 2009/07/06 12:36:31 joerg Exp $");
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_osd.h>
 
-#include <dist/acpica/acdebug.h>
+#include <external/intel-public/acpica/dist/include/accommon.h>
+#include <external/intel-public/acpica/dist/include/acdebug.h>
 /*
  * for debugging DSDT (try this at your own risk!):
  *
@@ -92,7 +93,7 @@ int acpi_indebugger;
  *	Break to the debugger or display a breakpoint message.
  */
 ACPI_STATUS
-AcpiOsSignal(UINT32 Function, const void *Info)
+AcpiOsSignal(UINT32 Function, void *Info)
 {
 	/*
 	 * the upper layer might call with Info = NULL,
@@ -104,7 +105,7 @@ AcpiOsSignal(UINT32 Function, const void *Info)
 	switch (Function) {
 	case ACPI_SIGNAL_FATAL:
 	    {
-		const ACPI_SIGNAL_FATAL_INFO *info = Info;
+		ACPI_SIGNAL_FATAL_INFO *info = Info;
 
 		panic("ACPI fatal signal: "
 		    "Type 0x%08x, Code 0x%08x, Argument 0x%08x",
@@ -116,7 +117,7 @@ AcpiOsSignal(UINT32 Function, const void *Info)
 	case ACPI_SIGNAL_BREAKPOINT:
 	    {
 #ifdef ACPI_BREAKPOINT
-		const char *info = Info;
+		char *info = Info;
 
 		printf("%s\n", info);
 #  if defined(DDB)

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.47 2009/07/29 12:02:09 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.48 2009/08/18 16:41:03 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.47 2009/07/29 12:02:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.48 2009/08/18 16:41:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.47 2009/07/29 12:02:09 cegger Exp $
 #endif /* __x86_64__ */
 #include "isa.h"
 #include "pci.h"
-#include "acpi.h"
+#include "acpica.h"
 
 #include "opt_xen.h"
 #include "opt_mpbios.h"
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.47 2009/07/29 12:02:09 cegger Exp $
 #include <xen/vcpuvar.h>
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
-#if NACPI > 0
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>       
 #include <machine/mpconfig.h>
@@ -161,7 +161,7 @@ union hypervisor_attach_cookie {
 #if defined(DOM0OPS) && NISA > 0
 	struct isabus_attach_args hac_iba;
 #endif
-#if NACPI > 0
+#if NACPICA > 0
 	struct acpibus_attach_args hac_acpi;
 #endif
 #endif /* NPCI */
@@ -248,7 +248,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 #ifdef DOM0OPS
 #if NPCI > 0
-#if NACPI > 0
+#if NACPICA > 0
 	if (acpi_present) {
 		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
 		hac.hac_acpi.aa_memt = X86_BUS_SPACE_MEM;
@@ -260,7 +260,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_acpi.aa_ic = &x86_isa_chipset;
 		config_found_ia(self, "acpibus", &hac.hac_acpi, 0);
 	}
-#endif /* NACPI */
+#endif /* NACPICA */
 	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
 	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
@@ -272,7 +272,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
-#if NACPI > 0 && defined(ACPI_SCANPCI)
+#if NACPICA > 0 && defined(ACPI_SCANPCI)
 	if (mpacpi_active)
 		mp_pci_scan(self, &hac.hac_pba, pcibusprint);
 	else
@@ -283,7 +283,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	else
 #endif
 	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);
-#if NACPI > 0
+#if NACPICA > 0
 	if (mp_verbose)
 		acpi_pci_link_state();
 #endif
