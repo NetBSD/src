@@ -1,4 +1,4 @@
-.\" $NetBSD: btconfig.8,v 1.7 2007/09/07 18:40:01 plunky Exp $
+.\" $NetBSD: btconfig.8,v 1.8 2009/08/18 17:40:31 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -117,11 +117,12 @@ see bluetooth specifications for more information if you want to change this.
 .It Cm class Ar class
 Set class of device.
 .Ar class
-is a 3 byte hex value the value of which declares the device capabilities.
-See Bluetooth Assigned Numbers documents at
-.Dv https://www.bluetooth.org/
-for details
-of constructing a "Class of Device" value.
+is a 6 digit hex value the value of which declares the device capabilities.
+See the
+.Qq Assigned Numbers - Baseband
+document at
+.Dv http://www.bluetooth.com/
+for details of constructing a Class of Device value.
 As a starter, 0x020104 means Desktop Computer, with Networking
 available.
 .It Cm fixed
