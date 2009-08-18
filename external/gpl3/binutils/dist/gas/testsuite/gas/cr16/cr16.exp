@@ -1,0 +1,14 @@
+#
+# Driver for CR16 assembler testsuite
+#
+
+if ![istarget cr16-*-*] {
+    return
+}
+
+set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
+foreach test $test_list {
+    # We need to strip the ".d", but can leave the dirname.
+    verbose [file rootname $test]
+    run_dump_test [file rootname $test]
+}
