@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.11.34.1 2009/08/16 03:36:03 matt Exp $	*/
+/*	$NetBSD: pipe.S,v 1.11.34.2 2009/08/18 06:56:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)pipe.s	8.1 (Berkeley) 6/4/93") */
-	RCSID("$NetBSD: pipe.S,v 1.11.34.1 2009/08/16 03:36:03 matt Exp $")
+#if 0
+	RCSID("from: @(#)pipe.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: pipe.S,v 1.11.34.2 2009/08/18 06:56:52 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
@@ -45,8 +48,9 @@ WEAK_ALIAS(pipe, _pipe)
 
 LEAF(_pipe)
 	PIC_PROLOGUE(_pipe);
-	li	v0, SYS_pipe	# pipe(fildes) int fildes[2];
-	syscall
+	
+	SYSTRAP(pipe)	# pipe(fildes) int fildes[2];
+
 	bne	a3, zero, 1f
 	INT_S	v0, 0(a0)	# store the two file descriptors
 	INT_S	v1, 4(a0)
