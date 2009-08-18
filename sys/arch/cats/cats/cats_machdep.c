@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.65 2009/08/11 17:04:15 matt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.66 2009/08/18 09:22:47 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.65 2009/08/11 17:04:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.66 2009/08/18 09:22:47 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.65 2009/08/11 17:04:15 matt Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
