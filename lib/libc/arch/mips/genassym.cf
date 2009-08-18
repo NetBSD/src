@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2009/08/16 03:36:02 matt Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2009/08/18 06:57:52 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ define _OFFSETOF_SC_FPREGS_F31	offsetof(struct sigcontext, sc_fpregs[31])
 define _OFFSETOF_SC_FPREGS_FCSR	offsetof(struct sigcontext, sc_fpregs[32])
 define _OFFSETOF_SC_PC		offsetof(struct sigcontext, sc_pc)
 define _OFFSETOF_SC_MASK	offsetof(struct sigcontext, sc_mask)
+define _OFFSETOF_SC_MASK13	offsetof(struct sigcontext, __sc_mask13)
 define _OFFSETOF_SC_ONSTACK	offsetof(struct sigcontext, sc_onstack)
 define _OFFSETOF_SC_FPUSED	offsetof(struct sigcontext, sc_fpused)
 
