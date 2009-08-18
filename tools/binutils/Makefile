@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.12 2007/11/19 05:54:03 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.13 2009/08/18 15:08:51 skrll Exp $
 
 .include <bsd.own.mk>
 
 MODULE=		binutils
+
+.if $(HAVE_BINUTILS) == "219"
+GNUHOSTDIST=	${.CURDIR}/../../external/gpl3/binutils/dist
+.endif
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-,"
