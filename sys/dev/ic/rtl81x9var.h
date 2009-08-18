@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.37.2.2 2009/03/31 18:22:02 bouyer Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.37.2.3 2009/08/18 09:46:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -192,6 +192,8 @@ struct rtk_softc {
 #define RTKQ_DESCV2		0x00000020	/* has V2 TX/RX descriptor */
 #define RTKQ_NOJUMBO		0x00000040	/* no jumbo MTU support */
 #define RTKQ_NOEECMD		0x00000080	/* unusable EEPROM command */
+#define RTKQ_MACSTAT		0x00000100	/* set MACSTAT_DIS on init */
+#define RTKQ_CMDSTOP		0x00000200	/* set STOPREQ on stop */
 
 	bus_dma_tag_t 		sc_dmat;
 

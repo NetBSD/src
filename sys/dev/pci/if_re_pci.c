@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.21.2.5 2009/03/31 18:22:02 bouyer Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.21.2.6 2009/08/18 09:46:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -103,7 +103,7 @@ static const struct rtk_type re_devs[] = {
 	    "RealTek 8100E/8101E/8102E/8102EL PCIe 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
 	    RTK_8168,
-	    "RealTek 8168B/8111B PCIe Gigabit Ethernet" },
+	    "RealTek 8168/8111 PCIe Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
 	    RTK_8169,
 	    "RealTek 8169/8110 Gigabit Ethernet" },
