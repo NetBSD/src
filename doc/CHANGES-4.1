@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.168 2009/07/28 22:19:20 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.169 2009/08/18 10:36:15 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3603,4 +3603,119 @@ dist/bind/bin/named/update.c			patch
 
 	Fix CVE-2009-0696.
 	[christos, ticket #1347]
+
+src/sys/dev/ic/rtl8169.c	1.107, 1.114, 1.115, 1.116, 1.117 (via patch),
+				1.118 (via patch), 1.119, 1.121
+src/sys/dev/ic/rtl81x9reg.h	1.36, 1.37, 1.38, 1.39
+src/sys/dev/ic/rtl81x9var.h	1.47
+src/sys/dev/mii/rgephy.c	1.16, 1.18, 1.19, 1.27 (via patch)
+src/sys/dev/mii/rgephyreg.h	1.3
+src/sys/dev/pci/if_re_pci.c	1.36
+
+	- add support for RTL8211B(L) to rgephy(4)
+	- add a wakeup instruction for rgephy(4) on newer re(4) chips
+	- detect RTL8169CP, RTL8168D/8111D, and RTL8103E variants
+	- fix rgephy(4) problem on RTL8111D reported on current-users:
+	  http://mail-index.NetBSD.org/current-users/2009/04/12/msg008977.html
+	  http://mail-index.NetBSD.org/current-users/2009/04/19/msg009096.html
+	- pull more quirk handling from FreeBSD
+	- fix RX hwcksum for DESCV2 chips for PR kern/40605
+	- remove "B" suffix from RTL8168 device names in attach message 
+	[tsutsui, ticket #1339]
+
+lib/libc/sys/intro.2				1.53, 1.54
+
+	Mention, along with the behavior of succeeding system calls, the
+	normal behavior of succeeding library functions regarding errno.
+	(That is, they may leave arbitrary nonzero values in errno.)
+	Ok kleink@; related to PR lib/41567 as well as a recent thread on
+	tech-userlevel.
+	[dholland, ticket #1340]
+
+lib/libc/stdlib/strtol.3			1.25, 1.26 via patch
+lib/libc/stdlib/strtoul.3			1.22, 1.23 via patch
+
+	Clarify the description of the errno behavior, based on the recent
+	thread in tech-userlevel.
+	[dholland, ticket #1341]
+
+sys/dev/pci/if_bge.c			1.135, 1.146, 1.151-1.152,
+					1.155-1.167 via patch
+sys/dev/pci/if_bgereg.h			1.43, 1.48-1.52
+sys/dev/pci/if_bgevar.h			1.1
+sys/dev/mii/brgphy.c			1.36, 1.40, 1.43-1.44 and
+					1.47-1.48 via patch
+sys/dev/mii/brgphyreg.h			1.3-1.4
+sys/dev/mii/miidevs			1.75, 1.77, 1.85
+sys/dev/mii/miidevs.h			regen
+sys/dev/mii/miidevs_data.h		regen
+sys/dev/mii/miivar.h			1.54
+	For bge:
+	  - Really set Tx threshold.
+	  - Fix the case of setting a flag in BGE_PCI_DMA_RW_CTL on
+	    conventional PCI.
+	  - Fix some bugs that the driver unable to detect link loss
+	    (OpenBSD 1.135, FreeBSD 1.102)
+	  - bge_tick(): fix some extra input error (OpenBSD 1.221 FreeBSD 1.212)
+	  - Acknowledge link change interrupts by setting the 'link changed' bit
+	    in the status register (used to have no effect). FreeBSD 1.44
+	    (OpenBSD 1.21)
+	  - Add some fiber support (OpenBSD 1.220)
+	  - Set BGE_MISCCFG_KEEP_GPHY_POWER as {Open,Free}BSD and linux.
+	  - Add special case code to fix a problem with the BCM5704 in TBI
+	    mode (FreeBSD rev. 1.71, OpenBSD rev. 1.35)
+	  - Force an interrupt in bge_ifmedia_upd (FreeBSD rev. 1.205, OpenBSD  
+	    rev. 1.242)
+	  - Add missing workaround for 5705 (FreeBSD rev. 1.44, OpenBSD rev.
+	    1.21)
+	  - Don't print error message only when the register is BGE_SRS_MODE.
+	    It occurs on some environment (and once after boot?). Other *BSDs
+	    and Linux don't print the error message for all registers.
+	  - Fix comments.
+	  - Remove obsolete codes.
+	  - Add BCM5786 support.
+	for brgphy:
+	  - Add some quirk codes.
+	  - Add support for BCM5462, BCM54K2, BCM5708C, BCM5722, and BCM5906.
+	[msaitoh, ticket #1342]
+
+usr.bin/printenv/printenv.c			1.10
+
+	(1) reject instead of ignore extra arguments;
+	(2) reject requests for environment variables containing '='
+	    (PR 41774, but with different patch)
+	(3) fix capitalization of usage message
+	[dholland, ticket #1343]
+
+lib/libc/sys/intro.2				1.50 via patch
+
+	PR/40060 - Bug Hunting -- grammar fix
+	[dholland, ticket #1344]
+
+sbin/wsconsctl/wsconsctl.8			1.26
+
+	PR/40059 - Bug Hunting -- add Xref to wscons.conf(5)
+	[dholland, ticket #1345]
+
+external/bsd/pkg_install/dist/info/perform.c	 1.1.1.10
+external/bsd/pkg_install/dist/lib/license.c	 1.1.1.4
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in	 1.1.1.5
+external/bsd/pkg_install/dist/lib/version.h	 1.1.1.17
+
+	Import pkg_install-20090724:
+	- license handling: accept upper case letters. Keep license checks
+	  case-sensitive as done in the older pkgsrc logic. Document this.
+	  OK dillo@, schmonz@, wiz@
+	- pkg_info:
+	- fix handling of non-packages, that are valid archives
+	- invert order of pkg_info -r to better match the expectations of
+	  make update.' external/bsd/pkg_install
+	[joerg, ticket #1346]
+
+sys/arch/pmax/pmax/machdep.c			1.233
+
+	Fix an #ifdef botch in rev 1.214 that causes
+	[ Kernel symbol table invalid! ] message at boot,
+	which means no ksyms(4) support even on GENERIC kernel.
+	[tsutsui, ticket #1348]
 
