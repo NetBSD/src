@@ -1,0 +1,158 @@
+#	$NetBSD: files.acpica,v 1.1 2009/08/18 16:38:51 jmcneill Exp $
+
+define		acpica
+makeoptions	acpi	CPPFLAGS+="-I$S/external/intel-public/acpica/dist/include"
+
+# debugger/
+file	external/intel-public/acpica/dist/debugger/dbcmds.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbdisply.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbexec.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbfileio.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbhistry.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbinput.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbstats.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbutils.c		acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/debugger/dbxface.c		acpica & acpi_debug & ddb
+
+# disassembler/
+file	external/intel-public/acpica/dist/disassembler/dmbuffer.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmnames.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmobject.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmopcode.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmresrc.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmresrcl.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmresrcs.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmutils.c	acpica & acpi_debug & ddb
+file	external/intel-public/acpica/dist/disassembler/dmwalk.c		acpica & acpi_debug & ddb
+
+# dispatcher/
+file	external/intel-public/acpica/dist/dispatcher/dsfield.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dsinit.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dsmethod.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dsmthdat.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dsobject.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dsopcode.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dsutils.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dswexec.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dswload.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dswscope.c		acpica
+file	external/intel-public/acpica/dist/dispatcher/dswstate.c		acpica
+
+# events/
+file	external/intel-public/acpica/dist/events/evevent.c		acpica
+file	external/intel-public/acpica/dist/events/evgpe.c		acpica
+file	external/intel-public/acpica/dist/events/evgpeblk.c		acpica
+file	external/intel-public/acpica/dist/events/evmisc.c		acpica
+file	external/intel-public/acpica/dist/events/evregion.c		acpica
+file	external/intel-public/acpica/dist/events/evrgnini.c		acpica
+file	external/intel-public/acpica/dist/events/evsci.c		acpica
+file	external/intel-public/acpica/dist/events/evxface.c		acpica
+file	external/intel-public/acpica/dist/events/evxfevnt.c		acpica
+file	external/intel-public/acpica/dist/events/evxfregn.c		acpica
+
+# executer/
+file	external/intel-public/acpica/dist/executer/exconfig.c		acpica
+file	external/intel-public/acpica/dist/executer/exconvrt.c		acpica
+file	external/intel-public/acpica/dist/executer/excreate.c		acpica
+file	external/intel-public/acpica/dist/executer/exdump.c		acpica
+file	external/intel-public/acpica/dist/executer/exfield.c		acpica
+file	external/intel-public/acpica/dist/executer/exfldio.c		acpica
+file	external/intel-public/acpica/dist/executer/exmisc.c		acpica
+file	external/intel-public/acpica/dist/executer/exmutex.c		acpica
+file	external/intel-public/acpica/dist/executer/exnames.c		acpica
+file	external/intel-public/acpica/dist/executer/exoparg1.c		acpica
+file	external/intel-public/acpica/dist/executer/exoparg2.c		acpica
+file	external/intel-public/acpica/dist/executer/exoparg3.c		acpica
+file	external/intel-public/acpica/dist/executer/exoparg6.c		acpica
+file	external/intel-public/acpica/dist/executer/exprep.c		acpica
+file	external/intel-public/acpica/dist/executer/exregion.c		acpica
+file	external/intel-public/acpica/dist/executer/exresnte.c		acpica
+file	external/intel-public/acpica/dist/executer/exresolv.c		acpica
+file	external/intel-public/acpica/dist/executer/exresop.c		acpica
+file	external/intel-public/acpica/dist/executer/exstore.c		acpica
+file	external/intel-public/acpica/dist/executer/exstoren.c		acpica
+file	external/intel-public/acpica/dist/executer/exstorob.c		acpica
+file	external/intel-public/acpica/dist/executer/exsystem.c		acpica
+file	external/intel-public/acpica/dist/executer/exutils.c		acpica
+
+# hardware/
+file	external/intel-public/acpica/dist/hardware/hwacpi.c		acpica
+file	external/intel-public/acpica/dist/hardware/hwgpe.c		acpica
+file	external/intel-public/acpica/dist/hardware/hwregs.c		acpica
+file	external/intel-public/acpica/dist/hardware/hwsleep.c		acpica
+file	external/intel-public/acpica/dist/hardware/hwtimer.c		acpica
+file	external/intel-public/acpica/dist/hardware/hwvalid.c		acpica
+file	external/intel-public/acpica/dist/hardware/hwxface.c		acpica
+
+# namespace/
+file	external/intel-public/acpica/dist/namespace/nsaccess.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsalloc.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsdump.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsdumpdv.c		acpica
+file	external/intel-public/acpica/dist/namespace/nseval.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsinit.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsload.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsnames.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsobject.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsparse.c		acpica
+file	external/intel-public/acpica/dist/namespace/nspredef.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsrepair.c		acpica
+file	external/intel-public/acpica/dist/namespace/nssearch.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsutils.c		acpica
+file	external/intel-public/acpica/dist/namespace/nswalk.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsxfeval.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsxfname.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsxfobj.c		acpica
+
+# parser/
+file	external/intel-public/acpica/dist/parser/psargs.c		acpica
+file	external/intel-public/acpica/dist/parser/psloop.c		acpica
+file	external/intel-public/acpica/dist/parser/psopcode.c		acpica
+file	external/intel-public/acpica/dist/parser/psparse.c		acpica
+file	external/intel-public/acpica/dist/parser/psscope.c		acpica
+file	external/intel-public/acpica/dist/parser/pstree.c		acpica
+file	external/intel-public/acpica/dist/parser/psutils.c		acpica
+file	external/intel-public/acpica/dist/parser/pswalk.c		acpica
+file	external/intel-public/acpica/dist/parser/psxface.c		acpica
+
+# resources/
+file	external/intel-public/acpica/dist/resources/rsaddr.c		acpica
+file	external/intel-public/acpica/dist/resources/rscalc.c		acpica
+file	external/intel-public/acpica/dist/resources/rscreate.c		acpica
+file	external/intel-public/acpica/dist/resources/rsdump.c		acpica
+file	external/intel-public/acpica/dist/resources/rsinfo.c		acpica
+file	external/intel-public/acpica/dist/resources/rsio.c		acpica
+file	external/intel-public/acpica/dist/resources/rsirq.c		acpica
+file	external/intel-public/acpica/dist/resources/rslist.c		acpica
+file	external/intel-public/acpica/dist/resources/rsmemory.c		acpica
+file	external/intel-public/acpica/dist/resources/rsmisc.c		acpica
+file	external/intel-public/acpica/dist/resources/rsutils.c		acpica
+file	external/intel-public/acpica/dist/resources/rsxface.c		acpica
+
+# tables/
+file	external/intel-public/acpica/dist/tables/tbfadt.c		acpica
+file	external/intel-public/acpica/dist/tables/tbfind.c		acpica
+file	external/intel-public/acpica/dist/tables/tbinstal.c		acpica
+file	external/intel-public/acpica/dist/tables/tbutils.c		acpica
+file	external/intel-public/acpica/dist/tables/tbxface.c		acpica
+file	external/intel-public/acpica/dist/tables/tbxfroot.c		acpica
+
+# utilities/
+file	external/intel-public/acpica/dist/utilities/utalloc.c		acpica
+file	external/intel-public/acpica/dist/utilities/utcache.c		acpica
+file	external/intel-public/acpica/dist/utilities/utcopy.c		acpica
+file	external/intel-public/acpica/dist/utilities/utdebug.c		acpica
+file	external/intel-public/acpica/dist/utilities/utdelete.c		acpica
+file	external/intel-public/acpica/dist/utilities/uteval.c		acpica
+file	external/intel-public/acpica/dist/utilities/utglobal.c		acpica
+file	external/intel-public/acpica/dist/utilities/utinit.c		acpica
+file	external/intel-public/acpica/dist/utilities/utids.c		acpica
+file	external/intel-public/acpica/dist/utilities/utlock.c		acpica
+file	external/intel-public/acpica/dist/utilities/utmath.c		acpica
+file	external/intel-public/acpica/dist/utilities/utmisc.c		acpica
+file	external/intel-public/acpica/dist/utilities/utmutex.c		acpica
+file	external/intel-public/acpica/dist/utilities/utobject.c		acpica
+file	external/intel-public/acpica/dist/utilities/utresrc.c		acpica
+file	external/intel-public/acpica/dist/utilities/utstate.c		acpica
+file	external/intel-public/acpica/dist/utilities/uttrack.c		acpica
+file	external/intel-public/acpica/dist/utilities/utxface.c		acpica
