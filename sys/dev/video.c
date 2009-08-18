@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.21 2009/07/07 21:55:17 njoly Exp $ */
+/* $NetBSD: video.c,v 1.22 2009/08/18 02:17:09 christos Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.21 2009/07/07 21:55:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.22 2009/08/18 02:17:09 christos Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -68,6 +68,8 @@ int	videodebug = VIDEO_DEBUG;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+#define PAGE_ALIGN(a)		(((a) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 
 #define VIDEO_DRIVER_VERSION 1
 
@@ -1237,6 +1239,50 @@ videowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 
+static void
+buf32tobuf(const void *data, struct v4l2_buffer *buf)
+{
+	const struct v4l2_buffer32 *b32 = data;
+
+	buf->index = b32->index;
+	buf->type = b32->type;
+	buf->bytesused = b32->bytesused;
+	buf->flags = b32->flags;
+	buf->field = b32->field;
+	buf->timestamp.tv_sec = b32->timestamp.tv_sec;
+	buf->timestamp.tv_usec = b32->timestamp.tv_usec;
+	buf->timecode = b32->timecode;
+	buf->sequence = b32->sequence;
+	buf->memory = b32->memory;
+	buf->m.offset = b32->m.offset;
+	/* XXX: Handle userptr */
+	buf->length = b32->length;
+	buf->input = b32->input;
+	buf->reserved = b32->reserved;
+}
+
+static void
+buftobuf32(void *data, const struct v4l2_buffer *buf)
+{
+	struct v4l2_buffer32 *b32 = data;
+
+	b32->index = buf->index;
+	b32->type = buf->type;
+	b32->bytesused = buf->bytesused;
+	b32->flags = buf->flags;
+	b32->field = buf->field;
+	b32->timestamp.tv_sec = (uint32_t)buf->timestamp.tv_sec;
+	b32->timestamp.tv_usec = buf->timestamp.tv_usec;
+	b32->timecode = buf->timecode;
+	b32->sequence = buf->sequence;
+	b32->memory = buf->memory;
+	b32->m.offset = buf->m.offset;
+	/* XXX: Handle userptr */
+	b32->length = buf->length;
+	b32->input = buf->input;
+	b32->reserved = buf->reserved;
+}
+
 int
 videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
@@ -1250,10 +1296,10 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct v4l2_control *control;
 	struct v4l2_queryctrl *query;
 	struct v4l2_requestbuffers *reqbufs;
-	struct v4l2_buffer *buf;
+	struct v4l2_buffer *buf, bufspace;
 	v4l2_std_id *stdid;
 	enum v4l2_buf_type *typep;
-	int *ip;
+	int *ip, error;
 
 	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
 
@@ -1354,14 +1400,27 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case VIDIOC_QUERYBUF:
 		buf = data;
 		return video_query_buf(sc, buf);
+	case VIDIOC_QUERYBUF32:
+		buf32tobuf(data, buf = &bufspace);
+		if ((error = video_query_buf(sc, buf)) != 0)
+			return error;
+		buftobuf32(data, buf);
+		return 0;
 	case VIDIOC_QBUF:
 		buf = data;
 		return video_queue_buf(sc, buf);
-		break;
+	case VIDIOC_QBUF32:
+		buf32tobuf(data, buf = &bufspace);
+		return video_queue_buf(sc, buf);
 	case VIDIOC_DQBUF:
 		buf = data;
 		return video_dequeue_buf(sc, buf);
-		break;
+	case VIDIOC_DQBUF32:
+		buf32tobuf(data, buf = &bufspace);
+		if ((error = video_dequeue_buf(sc, buf)) != 0)
+			return error;
+		buftobuf32(data, buf);
+		return 0;
 	case VIDIOC_STREAMON:
 		typep = data;
 		return video_stream_on(sc, *typep);
@@ -1404,6 +1463,9 @@ video_ioctl_str(u_long cmd)
 	case VIDIOC_QUERYBUF:
 		str = "VIDIOC_QUERYBUF";
 		break;
+	case VIDIOC_QUERYBUF32:
+		str = "VIDIOC_QUERYBUF32";
+		break;
 	case VIDIOC_G_FBUF:
 		str = "VIDIOC_G_FBUF";
 		break;
@@ -1416,8 +1478,14 @@ video_ioctl_str(u_long cmd)
 	case VIDIOC_QBUF:
 		str = "VIDIOC_QBUF";
 		break;
+	case VIDIOC_QBUF32:
+		str = "VIDIOC_QBUF32";
+		break;
 	case VIDIOC_DQBUF:
 		str = "VIDIOC_DQBUF";
+		break;
+	case VIDIOC_DQBUF32:
+		str = "VIDIOC_DQBUF32";
 		break;
 	case VIDIOC_STREAMON:
 		str = "VIDIOC_STREAMON";
@@ -1758,7 +1826,7 @@ video_stream_realloc_bufs(struct video_stream *vs, uint8_t nbufs)
 	struct video_buffer **oldbuf;
 	struct v4l2_buffer *buf;
 
-	size = vs->vs_format.sample_size * nbufs;
+	size = PAGE_ALIGN(vs->vs_format.sample_size) * nbufs;
 	err = scatter_buf_set_size(&vs->vs_data, size);
 	if (err != 0)
 		return err;
@@ -1809,7 +1877,7 @@ video_stream_realloc_bufs(struct video_stream *vs, uint8_t nbufs)
 		buf->sequence = 0;
 		buf->memory = V4L2_MEMORY_MMAP;
 		buf->m.offset = offset;
-		buf->length = vs->vs_format.sample_size;
+		buf->length = PAGE_ALIGN(vs->vs_format.sample_size);
 		buf->input = 0;
 		buf->reserved = 0;
 
