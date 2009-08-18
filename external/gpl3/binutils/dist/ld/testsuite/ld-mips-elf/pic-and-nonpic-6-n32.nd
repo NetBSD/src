@@ -1,0 +1,17 @@
+
+Symbol table '\.dynsym' contains .*:
+#...
+.*: 00000000 * 0 * FUNC * GLOBAL * DEFAULT * UND * extf5
+# The index on the next line should correspond to MIPS_GOTSYM,
+# and the remaining symbols should have the same order as the
+# GOT layout given in the *.dd dump.
+#...
+ *7: 0+ * 0 * FUNC * GLOBAL * DEFAULT * UND * extf2
+ *8: 0+ * 0 * * FUNC * GLOBAL * DEFAULT * UND * extf3
+ *9: 0+a2000 * 24 * OBJECT * GLOBAL * DEFAULT * [0-9]+ * extd2
+ *10: 0+440a0 * 0 * FUNC * GLOBAL * DEFAULT * UND * extf1
+ *11: 0+ * 0 * OBJECT * GLOBAL * DEFAULT * UND * extd1
+ *12: 0+ * 0 * FUNC * GLOBAL * DEFAULT * UND * extf4
+ *13: 0+ * 0 * OBJECT * GLOBAL * DEFAULT * UND * extd4
+
+#pass

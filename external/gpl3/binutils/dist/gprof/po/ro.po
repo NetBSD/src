@@ -1,0 +1,548 @@
+# Mesajele în limba românã pentru gprof-2.14rel030712
+# Copyright (C) 2003 Free Software Foundation, Inc.
+# Acest fi?ier este distribuit sub aceea?i licen?? ca pachetul gprof
+# Eugen Hoanca <eugenh@urban-grafx.ro>, 2003.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gprof 2.14rel030712\n"
+"POT-Creation-Date: 2003-07-11 13:58+0930\n"
+"PO-Revision-Date: 2003-08-23 09:02+0300\n"
+"Last-Translator: Eugen Hoanca <eugenh@urban-grafx.ro>\n"
+"Language-Team: Romanian <translation-team-ro@lists.sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: alpha.c:103 mips.c:57
+msgid "<indirect child>"
+msgstr "<copil indirect>"
+
+#: alpha.c:120 mips.c:74
+#, c-format
+msgid "[find_call] %s: 0x%lx to 0x%lx\n"
+msgstr "[find_call] %s: 0x%lx spre 0x%lx\n"
+
+#: alpha.c:142
+#, c-format
+msgid "[find_call] 0x%lx: jsr%s <indirect_child>\n"
+msgstr "[find_call] 0x%lx: jsr%s <copil indirect>\n"
+
+#: alpha.c:152
+#, c-format
+msgid "[find_call] 0x%lx: bsr"
+msgstr "[find_call] 0x%lx: bsr"
+
+#: basic_blocks.c:134 call_graph.c:94 hist.c:98
+#, c-format
+msgid "%s: %s: unexpected end of file\n"
+msgstr "%s: %s: sfârºit brusc de fiºier\n"
+
+#: basic_blocks.c:202
+#, c-format
+msgid "%s: warning: ignoring basic-block exec counts (use -l or --line)\n"
+msgstr "%s: avertisment: se ignorã numãrãtoarea de blocuri executabile de bazã (folosiþi -l or --line)\n"
+
+#. FIXME: This only works if bfd_vma is unsigned long.
+#: basic_blocks.c:295 basic_blocks.c:305
+#, c-format
+msgid "%s:%d: (%s:0x%lx) %lu executions\n"
+msgstr "%s:%d: (%s:0x%lx) %lu execuþii\n"
+
+#: basic_blocks.c:296 basic_blocks.c:306
+msgid "<unknown>"
+msgstr "<necunoscut>"
+
+#: basic_blocks.c:553
+#, c-format
+msgid ""
+"\n"
+"\n"
+"Top %d Lines:\n"
+"\n"
+"     Line      Count\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"Cele mai dese %d linii\n"
+"\n"
+"     Linie      Repetãri\n"
+"\n"
+
+#: basic_blocks.c:577
+msgid ""
+"\n"
+"Execution Summary:\n"
+"\n"
+msgstr ""
+"\n"
+"Cuprins al Execuþiei:\n"
+"\n"
+
+#: basic_blocks.c:578
+#, c-format
+msgid "%9ld   Executable lines in this file\n"
+msgstr "%9ld   Linii executanile în acest fiºier\n"
+
+#: basic_blocks.c:580
+#, c-format
+msgid "%9ld   Lines executed\n"
+msgstr "%9ld   Linii executate\n"
+
+#: basic_blocks.c:581
+#, c-format
+msgid "%9.2f   Percent of the file executed\n"
+msgstr "%9.2f   Procent de fiºier executat\n"
+
+#: basic_blocks.c:585
+#, c-format
+msgid ""
+"\n"
+"%9lu   Total number of line executions\n"
+msgstr ""
+"\n"
+"%9lu   Numãr total de execuþii de linii\n"
+
+#: basic_blocks.c:587
+#, c-format
+msgid "%9.2f   Average executions per line\n"
+msgstr "%9.2f   Mediu de execuþii pe linie\n"
+
+#: call_graph.c:71
+#, c-format
+msgid "[cg_tally] arc from %s to %s traversed %lu times\n"
+msgstr "[cg_tally] arc din %s spre %s a trecut de %lu ori\n"
+
+#: cg_print.c:73
+msgid ""
+"\t\t     Call graph (explanation follows)\n"
+"\n"
+msgstr ""
+"\t\t     Grafic de apelãri (urmeazã explicaþia)\n"
+"\n"
+
+#: cg_print.c:75
+msgid ""
+"\t\t\tCall graph\n"
+"\n"
+msgstr ""
+"\t\t\tGrafic de apelãri\n"
+"\n"
+
+#: cg_print.c:78 hist.c:363
+#, c-format
+msgid ""
+"\n"
+"granularity: each sample hit covers %ld byte(s)"
+msgstr ""
+"\n"
+"granularitate: fiecare exemplu de potrivire(hit) acoperã %ld octet(þi)"
+
+#: cg_print.c:82
+#, c-format
+msgid ""
+" for %.2f%% of %.2f seconds\n"
+"\n"
+msgstr ""
+" pentru %.2f%% din %.2f secunde\n"
+"\n"
+
+#: cg_print.c:86
+msgid ""
+" no time propagated\n"
+"\n"
+msgstr ""
+" nici un timp propagat\n"
+"\n"
+
+#: cg_print.c:95 cg_print.c:98 cg_print.c:100
+msgid "called"
+msgstr "apel"
+
+#: cg_print.c:95 cg_print.c:100
+msgid "total"
+msgstr "total"
+
+#: cg_print.c:95
+msgid "parents"
+msgstr "pãrinþi"
+
+#: cg_print.c:97 cg_print.c:98
+msgid "index"
+msgstr "index"
+
+#: cg_print.c:97
+#, c-format
+msgid "%time"
+msgstr "%timp"
+
+#: cg_print.c:97 cg_print.c:98
+msgid "self"
+msgstr "propriu"
+
+#: cg_print.c:97
+msgid "descendants"
+msgstr "descendenþi"
+
+#: cg_print.c:98 hist.c:389
+msgid "name"
+msgstr "nume"
+
+#: cg_print.c:100
+msgid "children"
+msgstr "copil"
+
+#: cg_print.c:105
+#, c-format
+msgid "index %% time    self  children    called     name\n"
+msgstr "index %% timp    propriu  copil    apel     nume\n"
+
+#: cg_print.c:129
+#, c-format
+msgid " <cycle %d as a whole> [%d]\n"
+msgstr " <trecere prin %d ca un întreg> [%d]\n"
+
+#: cg_print.c:363
+#, c-format
+msgid "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n"
+msgstr "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontan>\n"
+
+#: cg_print.c:364
+#, c-format
+msgid "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"
+msgstr "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontan>\n"
+
+#: cg_print.c:604
+msgid ""
+"Index by function name\n"
+"\n"
+msgstr ""
+"Indexare dupã numele funcþiei\n"
+"\n"
+
+#: cg_print.c:661 cg_print.c:670
+#, c-format
+msgid "<cycle %d>"
+msgstr "<trecere prin %d>"
+
+#: corefile.c:64
+#, c-format
+msgid "%s: could not open %s.\n"
+msgstr "%s: nu am putut deschide %s.\n"
+
+#: corefile.c:78 corefile.c:112
+#, c-format
+msgid "%s: unable to parse mapping file %s.\n"
+msgstr "%s: nu s-a putut analiza(parse) fiºierul de mapping %s.\n"
+
+#: corefile.c:155
+#, c-format
+msgid "%s: %s: not in a.out format\n"
+msgstr "%s: %s: nu este în format a.out\n"
+
+#: corefile.c:166
+#, c-format
+msgid "%s: can't find .text section in %s\n"
+msgstr "%s: nu pot gãsi secþiunea .text %s\n"
+
+#: corefile.c:225
+#, c-format
+msgid "%s: ran out room for %lu bytes of text space\n"
+msgstr "%s: locaþie(room) plinã pentru %lu octeþi de spaþiu de text\n"
+
+#: corefile.c:239
+#, c-format
+msgid "%s: can't do -c\n"
+msgstr "%s: nu pot face -c\n"
+
+#: corefile.c:276
+#, c-format
+msgid "%s: -c not supported on architecture %s\n"
+msgstr "%s: -c nu este suportat pe arhitectura %s\n"
+
+#: corefile.c:447
+#, c-format
+msgid "%s: file `%s' has no symbols\n"
+msgstr "%s: fiºierul `%s' nu are simboluri\n"
+
+#: corefile.c:758
+#, c-format
+msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
+msgstr "%s: cineva a numãrat greºit: ltab.len=%d în loc de %ld\n"
+
+#: gmon_io.c:82
+#, c-format
+msgid "%s: address size has unexpected value of %u\n"
+msgstr "%s: mãrimea adresei are valoarea neaºteptatã de %u\n"
+
+#: gmon_io.c:345 gmon_io.c:440
+#, c-format
+msgid "%s: file too short to be a gmon file\n"
+msgstr "%s: fiºier prea scurt pentru a fi un fiºier gmon\n"
+
+#: gmon_io.c:355 gmon_io.c:483
+#, c-format
+msgid "%s: file `%s' has bad magic cookie\n"
+msgstr "%s: fiºierul `%s' are un magic cookie eronat\n"
+
+#: gmon_io.c:366
+#, c-format
+msgid "%s: file `%s' has unsupported version %d\n"
+msgstr "%s: fiºierul `%s' are versiunea nesuportatã %d\n"
+
+#: gmon_io.c:396
+#, c-format
+msgid "%s: %s: found bad tag %d (file corrupted?)\n"
+msgstr "%s: %s: s-a gãsit marcaj(tag) greºit %d (fiºier corupt?)\n"
+
+#: gmon_io.c:462
+#, c-format
+msgid "%s: profiling rate incompatible with first gmon file\n"
+msgstr "%s: ratã profilatã incompatibilã cu primul fiºier gmon\n"
+
+#: gmon_io.c:510
+#, c-format
+msgid "%s: incompatible with first gmon file\n"
+msgstr "%s: incompatibil cu primul fiºier gmon\n"
+
+#: gmon_io.c:538
+#, c-format
+msgid "%s: file '%s' does not appear to be in gmon.out format\n"
+msgstr "%s: fiºierul '%s' nupare sã fie în format gmon.out\n"
+
+#: gmon_io.c:559
+#, c-format
+msgid "%s: unexpected EOF after reading %d/%d bins\n"
+msgstr "%s: EOF neaºteptat dupã citirea a %d/%d bin-uri\n"
+
+#: gmon_io.c:592
+msgid "time is in ticks, not seconds\n"
+msgstr "timpul este în bãtãi(ticks), nu în secunde\n"
+
+#: gmon_io.c:598 gmon_io.c:775
+#, c-format
+msgid "%s: don't know how to deal with file format %d\n"
+msgstr "%s: nu ºtiu cum sã mã descurc cu formatul de fiºier %d\n"
+
+#: gmon_io.c:605
+#, c-format
+msgid "File `%s' (version %d) contains:\n"
+msgstr "Fiºierul `%s' (versiunea %d) conþine:\n"
+
+#: gmon_io.c:608
+#, c-format
+msgid "\t%d histogram record\n"
+msgstr "\t%d înregistrare histogramã\n"
+
+#: gmon_io.c:609
+#, c-format
+msgid "\t%d histogram records\n"
+msgstr "\t%d înregistrãri histogramã\n"
+
+#: gmon_io.c:611
+#, c-format
+msgid "\t%d call-graph record\n"
+msgstr "\t%d înregistrare grafic apelãri\n"
+
+#: gmon_io.c:612
+#, c-format
+msgid "\t%d call-graph records\n"
+msgstr "\t%d înregistrãri grafic apelãri\n"
+
+#: gmon_io.c:614
+#, c-format
+msgid "\t%d basic-block count record\n"
+msgstr "\t%d înregistrare repetãri de blocuri de bazã\n"
+
+#: gmon_io.c:615
+#, c-format
+msgid "\t%d basic-block count records\n"
+msgstr "\t%d înregistrãri repetãri de blocuri de bazã\n"
+
+#: gprof.c:163
+#, c-format
+msgid ""
+"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n"
+"\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
+"\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
+"\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
+"\t[--[no-]time=name] [--all-lines] [--brief] [--debug[=level]]\n"
+"\t[--function-ordering] [--file-ordering]\n"
+"\t[--directory-path=dirs] [--display-unused-functions]\n"
+"\t[--file-format=name] [--file-info] [--help] [--line] [--min-count=n]\n"
+"\t[--no-static] [--print-path] [--separate-files]\n"
+"\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
+"\t[--version] [--width=n] [--ignore-non-functions]\n"
+"\t[--demangle[=STYLE]] [--no-demangle]\n"
+"\t[image-file] [profile-file...]\n"
+msgstr ""
+"Folosiree: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n"
+"\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
+"\t[--[no-]annotated-source[=nume]] [--[no-]exec-counts[=nume]]\n"
+"\t[--[no-]flat-profile[=nume]] [--[no-]graph[=nume]]\n"
+"\t[--[no-]time=nume] [--all-lines] [--brief] [--debug[=nivel]]\n"
+"\t[--function-ordering] [--file-ordering]\n"
+"\t[--directory-path=dirs] [--display-unused-functions]\n"
+"\t[--file-format=nume] [--file-info] [--help] [--line] [--min-count=n]\n"
+"\t[--no-static] [--print-path] [--separate-files]\n"
+"\t[--static-call-graph] [--sum] [--table-length=lun] [--traditional]\n"
+"\t[--version] [--width=n] [--ignore-non-functions]\n"
+"\t[--demangle[=STIL]] [--no-demangle]\n"
+"\t[image-file] [profile-file...]\n"
+
+#: gprof.c:179
+#, c-format
+msgid "Report bugs to %s\n"
+msgstr "Raportaþi erorile(bugs) la %s\n"
+
+#: gprof.c:253
+#, c-format
+msgid "%s: debugging not supported; -d ignored\n"
+msgstr "%s: debugging nesuportat; -d ignorat\n"
+
+#: gprof.c:333
+#, c-format
+msgid "%s: unknown file format %s\n"
+msgstr "%s: format fiºier necunoscut %s\n"
+
+#. This output is intended to follow the GNU standards document.
+#: gprof.c:417
+#, c-format
+msgid "GNU gprof %s\n"
+msgstr "GNU gprof %s\n"
+
+#: gprof.c:418
+msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
+msgstr "Bazat pe BSD gprof, copyright 1983 Regents of the University of California.\n"
+
+#: gprof.c:419
+msgid "This program is free software.  This program has absolutely no warranty.\n"
+msgstr "Acest program este software liber.  Acest program nu are absolut nici o garanþie.\n"
+
+#: gprof.c:460
+#, c-format
+msgid "%s: unknown demangling style `%s'\n"
+msgstr "%s: stil necunoscut de îmbinare (demangling) `%s'\n"
+
+#: gprof.c:480
+#, c-format
+msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
+msgstr "%s: Doar unul dintre --function-ordering sau --file-ordering poate fi specificat.\n"
+
+#: gprof.c:578
+#, c-format
+msgid "%s: sorry, file format `prof' is not yet supported\n"
+msgstr "%s: nu pare rãu, formatul de fiºier `prof' nu este încã suportat\n"
+
+#: gprof.c:639
+#, c-format
+msgid "%s: gmon.out file is missing histogram\n"
+msgstr "%s: Fiºierului gmon.out îi lipseºte histograma\n"
+
+#: gprof.c:646
+#, c-format
+msgid "%s: gmon.out file is missing call-graph data\n"
+msgstr "%s: Fiºierului gmon.out îi lipsesc datele graficului de apelãri\n"
+
+#: hist.c:127
+#, c-format
+msgid "%s: `%s' is incompatible with first gmon file\n"
+msgstr "%s: `%s' este incompatibil cu primul fiºier gmon\n"
+
+#: hist.c:143
+#, c-format
+msgid "%s: %s: unexpected EOF after reading %d of %d samples\n"
+msgstr "%s: %s: EOF neaºteptat dupã citirea a %d din %d exemple\n"
+
+#: hist.c:359
+#, c-format
+msgid "%c%c/call"
+msgstr "%c%c/apel"
+
+#: hist.c:367
+#, c-format
+msgid ""
+" for %.2f%% of %.2f %s\n"
+"\n"
+msgstr ""
+"pentru %.2f%% din %.2f %s\n"
+"\n"
+
+#: hist.c:373
+#, c-format
+msgid ""
+"\n"
+"Each sample counts as %g %s.\n"
+msgstr ""
+"\n"
+"Fiecare exemplu conteazã ca ºi %g %s.\n"
+
+#: hist.c:378
+msgid ""
+" no time accumulated\n"
+"\n"
+msgstr ""
+" nici un timp acumulat\n"
+"\n"
+
+#: hist.c:385
+msgid "cumulative"
+msgstr "cumulativ"
+
+#: hist.c:385
+msgid "self  "
+msgstr "propriu  "
+
+#: hist.c:385
+msgid "total "
+msgstr "total "
+
+#: hist.c:388
+msgid "time"
+msgstr "timp"
+
+#: hist.c:388
+msgid "calls"
+msgstr "apelãri"
+
+#: hist.c:481
+msgid ""
+"\n"
+"\n"
+"\n"
+"flat profile:\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"profil clar:\n"
+
+#: hist.c:487
+msgid "Flat profile:\n"
+msgstr "Profil clar:\n"
+
+#: mips.c:85
+#, c-format
+msgid "[find_call] 0x%lx: jal"
+msgstr "[find_call] 0x%lx: jal"
+
+#: mips.c:110
+#, c-format
+msgid "[find_call] 0x%lx: jalr\n"
+msgstr "[find_call] 0x%lx: jalr\n"
+
+#: source.c:166
+#, c-format
+msgid "%s: could not locate `%s'\n"
+msgstr "%s: nu am putut localiza `%s'\n"
+
+#: source.c:241
+#, c-format
+msgid "*** File %s:\n"
+msgstr "*** Fiºier %s:\n"
+
+#: utils.c:109
+#, c-format
+msgid " <cycle %d>"
+msgstr " <trecere prin %d>"
