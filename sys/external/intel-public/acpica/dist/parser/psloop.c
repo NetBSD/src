@@ -625,8 +625,8 @@ AcpiPsGetArguments (
                             "Detected an unsupported executable opcode "
                             "at module-level: [0x%.4X] at table offset 0x%.4X",
                             Op->Common.AmlOpcode,
-                            (AmlOpStart - WalkState->ParserState.AmlStart) +
-                                sizeof (ACPI_TABLE_HEADER)));
+                            (UINT16)((AmlOpStart - WalkState->ParserState.AmlStart) +
+                                sizeof (ACPI_TABLE_HEADER))));
                     }
                 }
                 break;
