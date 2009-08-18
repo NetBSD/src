@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.98 2009/08/10 23:17:29 haad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.99 2009/08/18 02:43:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.98 2009/08/10 23:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.99 2009/08/18 02:43:49 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -117,7 +117,6 @@ u_int uvm_extrapages;
 static kmutex_t uvm_reclaim_lock;
 
 SLIST_HEAD(uvm_reclaim_hooks, uvm_reclaim_hook) uvm_reclaim_list;
-
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -352,7 +351,6 @@ uvm_pageout(void *arg)
 			(*hook->uvm_reclaim_hook)();
 		}
 		mutex_exit(&uvm_reclaim_lock);
-		
 		
 		/*
 		 * complete draining the pools.
@@ -1061,7 +1059,6 @@ uvm_reclaim_init(void)
 	/* Initialize UVM reclaim hooks. */
 	mutex_init(&uvm_reclaim_lock, MUTEX_DEFAULT, IPL_NONE);
 	SLIST_INIT(&uvm_reclaim_list);
-
 }
 
 void

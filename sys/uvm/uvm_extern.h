@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.158 2009/08/10 23:17:29 haad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.159 2009/08/18 02:43:49 yamt Exp $	*/
 
 /*
  *
@@ -542,9 +542,9 @@ struct uvm_reclaim_hook {
 	SLIST_ENTRY(uvm_reclaim_hook) uvm_reclaim_next;
 };
 
-void    uvm_reclaim_init(void);
-void 	uvm_reclaim_hook_add(struct uvm_reclaim_hook *);
-void    uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
+void	uvm_reclaim_init(void);
+void	uvm_reclaim_hook_add(struct uvm_reclaim_hook *);
+void	uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
 
 /*
  * the various kernel maps, owned by MD code
