@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.2 2009/08/18 14:44:20 uebayasi Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.3 2009/08/18 15:25:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -291,17 +291,15 @@ _C_LABEL(x):
 #define	ALSK	7		/* stack alignment */
 #define	ALMASK	-7		/* stack alignment */
 #define	SZFPREG	4
-#define	FPLD	lwc1
-#define	FPST	swc1
+#define	FP_L	lwc1
+#define	FP_S	swc1
 #else
 #define	ALSK	15		/* stack alignment */
 #define	ALMASK	-15		/* stack alignment */
 #define	SZFPREG	8
-#define	FPLD	ldc1
-#define	FPST	sdc1
+#define	FP_L	ldc1
+#define	FP_S	sdc1
 #endif
-#define	FP_L	FPLD
-#define	FP_S	FPST
 
 /*
  *  standard callframe {
@@ -576,7 +574,7 @@ _C_LABEL(x):
 #define	SETUP_GPX(r)		/* o32 specific */
 #define	SETUP_GPX_L(r,lbl)	/* o32 specific */
 #define	SAVE_GP(x)		/* o32 specific */
-#define	SETUP_GP64(a,b)		.cpsetup $t9, a, b
+#define	SETUP_GP64(a,b)		.cpsetup $25, a, b
 #define	SETUP_GPX64(a,b)	\
 				move	b,ra;			\
 				.set noreorder;			\
