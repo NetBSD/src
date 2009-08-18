@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsuspend.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
+/*	$NetBSD: compat_sigsuspend.S,v 1.1.34.1 2009/08/18 06:58:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,26 +35,24 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sigsuspend.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: compat_sigsuspend.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
+#if 0
+	RCSID("from: @(#)sigsuspend.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: compat_sigsuspend.S,v 1.1.34.1 2009/08/18 06:58:55 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 WARN_REFERENCES(sigsuspend, \
     "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 LEAF(sigsuspend)
-#ifdef __ABICALLS__
-	.set    noreorder
-	.cpload t9
-	.set    reorder
-#endif
-	lw	a0, 0(a0)		# indirect to mask arg
-	li	v0, SYS_compat_13_sigsuspend13
-	syscall
+	PIC_PROLOGUE(sigsuspend)
+
+	INT_L	a0, 0(a0)		# indirect to mask arg
+	SYSTRAP(compat_13_sigsuspend13)
 	bne	a3, zero, 1f
 	move	v0, zero		# should not happen
-	j	ra
+	PIC_RETURN()
 1:
-	la	t9, _C_LABEL(__cerror)
-	jr	t9
+	PIC_TAILCALL(__cerror)
 END(sigsuspend)
