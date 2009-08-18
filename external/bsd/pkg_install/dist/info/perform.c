@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.9.4.2 2009/06/05 17:19:40 snj Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.9.4.3 2009/08/18 10:33:25 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.9.4.2 2009/06/05 17:19:40 snj Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.9.4.3 2009/08/18 10:33:25 bouyer Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -232,7 +232,7 @@ has_entry:
 	}
 
 	meta->is_installed = 0;
-	if (found_required != 0 && r != ARCHIVE_OK && r != ARCHIVE_EOF) {
+	if (found_required != 0 || (r != ARCHIVE_OK && r != ARCHIVE_EOF)) {
 		free_pkg_meta(meta);
 		meta = NULL;
 	}
@@ -326,7 +326,7 @@ build_full_reqby(lpkg_head_t *reqby, struct pkg_meta *meta, int limit)
 		build_full_reqby(reqby, meta_dep, limit + 1);
 		free_pkg_meta(meta_dep);
 
-		TAILQ_INSERT_TAIL(reqby, lpp, lp_link);
+		TAILQ_INSERT_HEAD(reqby, lpp, lp_link);
 	}
 }
 
