@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.17 2009/08/16 20:02:04 dsl Exp $	*/
+/*	$NetBSD: append.c,v 1.18 2009/08/18 18:00:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.17 2009/08/16 20:02:04 dsl Exp $");
+__RCSID("$NetBSD: append.c,v 1.18 2009/08/18 18:00:28 dsl Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -182,39 +182,4 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
 		crec = (const RECHEADER *) (*cpos - hdr_off);
 		put(crec, fp);
 	}
-}
-
-/*
- * output the already sorted eol bin.
- */
-void
-rd_append(int binno, int infl0, int nfiles, FILE *outfp, u_char *buffer,
-    u_char *bufend)
-{
-	RECHEADER *rec;
-
-	rec = (RECHEADER *) buffer;
-	if (!getnext(binno, infl0, NULL, nfiles,
-			(RECHEADER *) buffer, bufend, 0)) {
-		putline(rec, outfp);
-		while (getnext(binno, infl0, NULL, nfiles, (RECHEADER *) buffer,
-			bufend, 0) == 0) {
-			if (!UNIQUE)
-				putline(rec, outfp);
-		}
-	}
-}
-
-/*
- * append plain text--used after sorting the biggest bin.
- */
-void
-concat(FILE *a, FILE *b)
-{
-        int nread;
-        char buffer[4096];
-
-	rewind(b);
-        while ((nread = fread(buffer, 1, 4096, b)) > 0)
-                EWRITE(buffer, 1, nread, a);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.49 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: sort.c,v 1.50 2009/08/18 18:00:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.49 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: sort.c,v 1.50 2009/08/18 18:00:28 dsl Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -105,6 +105,7 @@ int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0;
  * Default to stable sort.
  */
 int stable_sort = 1;
+int (*radix_sort)(const u_char **, int, const u_char *, u_int) = sradixsort;
 
 static char toutpath[MAXPATHLEN];
 
@@ -169,7 +170,8 @@ main(int argc, char *argv[])
 			fldtab->flags |= tmp;
 			break;
 		case 'H':
-			PANIC = 0;
+			/* -H was ; use merge sort for blocks of large files' */
+			/* That is now the default. */
 			break;
 		case 'k':
 			p = realloc(fldtab, (fldtab_sz + 1) * sizeof(*fldtab));
@@ -191,9 +193,11 @@ main(int argc, char *argv[])
 		case 's':
 			/* for GNU sort compatibility (this is our default) */
 			stable_sort = 1;
+			radix_sort = radixsort;
 			break;
 		case 'S':
 			stable_sort = 0;
+			radix_sort = sradixsort;
 			break;
 		case 't':
 			if (SEP_FLAG)

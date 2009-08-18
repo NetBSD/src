@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.22 2009/08/16 19:53:43 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.23 2009/08/18 18:00:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -160,13 +160,13 @@ typedef int (*get_func_t)(int, int, struct filelist *, int,
 		RECHEADER *, u_char *, struct field *);
 typedef void (*put_func_t)(const struct recheader *, FILE *);
 
-extern int PANIC;	/* maximum depth of fsort before fmerge is called */
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
 extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
 extern const char *tmpdir;
 extern int stable_sort;
+extern int (*radix_sort)(const u_char **, int, const u_char *, u_int);
 extern u_char gweights[NBINS];
 extern struct coldesc *clist;
 extern int ncols;
@@ -183,8 +183,6 @@ void	 fmerge(int, int, struct filelist *, int,
 void	 fsort(int, int, int, struct filelist *, int, FILE *,
 		struct field *);
 int	 geteasy(int, int, struct filelist *,
-	    int, RECHEADER *, u_char *, struct field *);
-int	 getnext(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
 int	 makekey(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
