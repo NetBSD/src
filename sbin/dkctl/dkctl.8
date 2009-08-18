@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.17 2006/01/12 20:28:29 wiz Exp $
+.\"	$NetBSD: dkctl.8,v 1.17.4.1 2009/08/18 11:05:31 bouyer Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -118,6 +118,24 @@ The wedge will have the volume name
 .Ar name
 and the partition type
 .Ar ptype .
+Valid choices for ptype would be
+.Ar unused ,
+.Ar swap ,
+.Ar ffs ,
+.Ar lfs ,
+.Ar ext2fs ,
+.Ar cd9660 ,
+.Ar ados ,
+.Ar hfs ,
+.Ar msdos ,
+.Ar filecore ,
+.Ar raidframe ,
+.Ar ccd ,
+.Ar appleufs ,
+.Ar ntfs 
+and
+.Ar cgd .
+
 The device name of the virtual block device assigned to the wedge will be
 displayed after the wedge has been successfully created.
 See
