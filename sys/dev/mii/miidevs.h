@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.72.2.2 2007/08/31 21:53:39 xtraeme Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.72.2.3 2009/08/18 10:11:04 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.69.2.2 2007/08/31 21:52:40 xtraeme Exp
+ *	NetBSD: miidevs,v 1.69.2.3 2009/08/18 10:10:19 bouyer Exp
  */
 
 /*-
@@ -91,6 +91,7 @@
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
 #define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
+#define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
 #define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
 #define	MII_OUI_yyINTEL	0x005500	/* Intel */
 #define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
@@ -159,6 +160,8 @@
 #define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5411	0x0007
 #define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5462	0x000d
+#define	MII_STR_BROADCOM_BCM5462	"BCM5462 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5421	0x000e
 #define	MII_STR_BROADCOM_BCM5421	"BCM5421 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5752	0x0010
@@ -167,20 +170,30 @@
 #define	MII_STR_BROADCOM_BCM5701	"BCM5701 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5703	0x0016
 #define	MII_STR_BROADCOM_BCM5703	"BCM5703 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5750	0x0018
+#define	MII_STR_BROADCOM_BCM5750	"BCM5750 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5704	0x0019
 #define	MII_STR_BROADCOM_BCM5704	"BCM5704 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5705	0x001a
 #define	MII_STR_BROADCOM_BCM5705	"BCM5705 1000BASE-T media interface"
-#define	MII_MODEL_BROADCOM_BCM5750	0x0018
-#define	MII_STR_BROADCOM_BCM5750	"BCM5750 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM54K2	0x002e
+#define	MII_STR_BROADCOM_BCM54K2	"BCM54K2 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5714	0x0034
 #define	MII_STR_BROADCOM_BCM5714	"BCM5714 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5780	0x0035
 #define	MII_STR_BROADCOM_BCM5780	"BCM5780 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5708C	0x0036
+#define	MII_STR_BROADCOM_BCM5708C	"BCM5708C 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM2_BCM5906	0x0004
+#define	MII_STR_BROADCOM2_BCM5906	"BCM5906 10/100baseTX media interface"
 #define	MII_MODEL_BROADCOM2_BCM5755	0x000c
 #define	MII_STR_BROADCOM2_BCM5755	"BCM5755 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5754	0x000e
 #define	MII_STR_BROADCOM2_BCM5754	"BCM5754/5787 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM2_BCM5722	0x002d
+#define	MII_STR_BROADCOM2_BCM5722	"BCM5722 1000BASE-T media interface"
+#define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
+#define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
