@@ -1,0 +1,46 @@
+# Expect script for export table in executables tests
+#   Copyright 2004, 2006, 2007
+#   Free Software Foundation, Inc.
+#
+# This file is part of the GNU Binutils.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+# MA 02110-1301, USA.
+#
+ 
+# This test can only be run on PE/COFF platforms that support .secrel32.
+if {    ![istarget i*86-*-cygwin*]
+     && ![istarget i*86-*-pe]
+     && ![istarget i*86-*-mingw*]
+     && ![istarget x86_64-*-mingw*]
+     && ![istarget arm-wince-pe] } {
+    return
+}
+
+if {[istarget x86_64-*-mingw*] } {
+  set pe_tests {
+    {".secrel32" "" "" {secrel1.s secrel2.s}
+    {{objdump -s secrel_64.d}} "secrel.x"}
+  }
+} else {
+  set pe_tests {
+    {".secrel32" "" "" {secrel1.s secrel2.s}
+     {{objdump -s secrel.d}} "secrel.x"}
+  }
+}
+
+run_ld_link_tests $pe_tests
+
+run_dump_test "image_size"
