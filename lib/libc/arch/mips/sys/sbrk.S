@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.16.34.1 2009/08/16 03:36:03 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.16.34.2 2009/08/18 06:56:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93") */
-	RCSID("$NetBSD: sbrk.S,v 1.16.34.1 2009/08/16 03:36:03 matt Exp $")
+#if 0
+	RCSID("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: sbrk.S,v 1.16.34.2 2009/08/18 06:56:52 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	_C_LABEL(__curbrk)
@@ -55,9 +58,8 @@ LEAF(_sbrk)
 	PIC_PROLOGUE(_sbrk)
 	la		t0, _C_LABEL(__curbrk)
 	PTR_L		v1, 0(t0)
-	li		v0, SYS_break
 	PTR_ADDU	a0, a0, v1	# compute current break
-	syscall
+	SYSTRAP(break)
 	bne		a3, zero, 1f
 	move		v0, v1		# return old val of curbrk from above
 	PTR_S		a0, 0(t0)	# save current val of curbrk from above

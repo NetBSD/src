@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.13.46.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.13.46.2 2009/08/18 06:56:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93") */
-	RCSID("$NetBSD: cerror.S,v 1.13.46.1 2009/08/16 03:36:02 matt Exp $")
+#if 0
+	RCSID("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
+#else
+	RCSID("$NetBSD: cerror.S,v 1.13.46.2 2009/08/18 06:56:52 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _REENTRANT

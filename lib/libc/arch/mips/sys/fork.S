@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.11.46.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: fork.S,v 1.11.46.2 2009/08/18 06:56:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,14 +35,17 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)fork.s	8.1 (Berkeley) 6/4/93") */
-	RCSID("$NetBSD: fork.S,v 1.11.46.1 2009/08/16 03:36:02 matt Exp $")
+#if 0
+	RCSID("from: @(#)fork.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: fork.S,v 1.11.46.2 2009/08/18 06:56:52 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 LEAF(__fork)
 	PIC_PROLOGUE(__fork)
-	li	v0, SYS_fork	# pid = fork()
-	syscall
+
+	SYSTRAP(fork)		# pid = fork()
 	bne	a3, zero, 2f
 	beq	v1, zero, 1f	# v1 == 0 in parent, 1 in child
 	move	v0, zero
