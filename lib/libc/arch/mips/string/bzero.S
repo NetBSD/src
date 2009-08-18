@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.8.46.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: bzero.S,v 1.8.46.2 2009/08/18 06:55:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,11 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)bzero.s	8.1 (Berkeley) 6/4/93") */
-	RCSID("$NetBSD: bzero.S,v 1.8.46.1 2009/08/16 03:36:02 matt Exp $")
+#if 0
+	RCSID("from: @(#)bzero.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: bzero.S,v 1.8.46.2 2009/08/18 06:55:09 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -51,14 +54,26 @@ LEAF(bzero)
 	PTR_SUBU	a3, zero, a0	# compute # bytes to word align address
 	and		a3, a3, SZREG-1
 	beq		a3, zero, 1f	# skip if word aligned
+#if SZREG == 4
 	PTR_SUBU	a1, a1, a3	# subtract from remaining count
 	SWHI		zero, 0(a0)	# clear 1, 2, or 3 bytes to align
 	PTR_ADDU	a0, a0, a3
+#endif
 #if SZREG == 8
-	andi		a3, a3, 4
-	beq		a3, zero, 1f
-	nop
-	sw		zero, -SZREG(a0)
+	PTR_SUBU	a1, a1, a3	# subtract from remaining count
+	PTR_ADDU	a0, a0, a3	# align dst to next word
+	sll		a3, a3, 3	# bits to bytes
+	li		a2, -1		# make a mask
+#if _BYTE_ORDER == _BIG_ENDIAN
+	REG_SRLV	a2, a2, a3	# we want to keep the MSB bytes
+#endif
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	REG_SLLV	a2, a2, a3	# we want to keep the LSB bytes
+#endif
+	nor		a2, zero, a2	# complement the mask
+	REL_L		v0, -SZREG(a0)	# load the word to partially clear
+	and		v0, v0, a2	# clear the bytes
+	REG_S		v0, -SZREG(a0)	# store it back
 #endif
 1:
 	and		v0, a1, SZREG-1	# compute number of words left
