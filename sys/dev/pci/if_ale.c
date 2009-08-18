@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.5 2009/08/05 07:03:04 cegger Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.6 2009/08/18 05:50:55 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.5 2009/08/05 07:03:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.6 2009/08/18 05:50:55 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -142,6 +142,17 @@ ale_miibus_readreg(device_t dev, int phy, int reg)
 	if (phy != sc->ale_phyaddr)
 		return 0;
 
+	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
+		switch (reg) {
+		case MII_100T2CR:
+		case MII_100T2SR:
+		case MII_EXTSR:
+			return 0;
+		default:
+			break;
+		}
+	}
+
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
 	    MDIO_SUP_PREAMBLE | MDIO_CLK_25_4 | MDIO_REG_ADDR(reg));
 	for (i = ALE_PHY_TIMEOUT; i > 0; i--) {
@@ -157,7 +168,7 @@ ale_miibus_readreg(device_t dev, int phy, int reg)
 		return 0;
 	}
 
-	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
+	return (v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT;
 }
 
 static void
@@ -169,6 +180,17 @@ ale_miibus_writereg(device_t dev, int phy, int reg, int val)
 
 	if (phy != sc->ale_phyaddr)
 		return;
+
+	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
+		switch (reg) {
+		case MII_100T2CR:
+		case MII_100T2SR:
+		case MII_EXTSR:
+			return;
+		default:
+			break;
+		}
+	}
 
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
 	    (val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
