@@ -1,4 +1,4 @@
-/* $NetBSD: hpetvar.h,v 1.2 2008/03/21 13:25:27 xtraeme Exp $ */
+/* $NetBSD: hpetvar.h,v 1.3 2009/08/18 17:06:35 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -35,9 +35,11 @@ struct hpet_softc {
 	bus_space_tag_t	sc_memt;
 	bus_space_handle_t sc_memh;
 
+	uint32_t sc_config;
 	struct timecounter sc_tc;
 };
 
 void	hpet_attach_subr(device_t);
+int	hpet_detach(device_t, int flags);
 
 #endif /* _DEV_IC_HPETVAR_H_ */
