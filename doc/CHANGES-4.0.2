@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.49 2009/08/18 10:37:05 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.50 2009/08/18 10:59:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -779,4 +779,15 @@ sbin/wsconsctl/wsconsctl.8			1.26
 
 	PR/40059 - Bug Hunting -- add Xref to wscons.conf(5)
 	[dholland, ticket #1345]
+
+lib/libc/sys/semctl.2				1.18
+lib/libc/sys/shmctl.2				1.20
+
+	Fix pastos. From Jukka Salmi in PR 41605, with a very minor adjustment.
+	[dholland, ticket #1351]
+
+usr.bin/xlint/lint1/init.c			1.22
+
+	pushinit(): fix a use-after-free bug.
+	[msaitoh, ticket #1353]
 
