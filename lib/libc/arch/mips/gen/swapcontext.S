@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3.14.3 2009/08/18 15:04:23 uebayasi Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3.14.4 2009/08/18 15:16:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.3.14.3 2009/08/18 15:04:23 uebayasi Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3.14.4 2009/08/18 15:16:45 uebayasi Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
@@ -43,13 +43,13 @@ NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	PTR_SUBU	sp, sp, CALLFRAME_SIZ
 	PTR_S		ra, CALLFRAME_RA(sp)	# save ra
 	PTR_S		a0, 0(sp)		# stash away oucp
-	PTR_S		a1, REGSZ(sp)		# stash away ucp
+	PTR_S		a1, SZREG(sp)		# stash away ucp
 	SYSTRAP(getcontext)
 	PTR_L		ra, CALLFRAME_RA(sp)
 	bne		a3, zero, 1f
 
 	PTR_L		v1, 0(sp)		# load oucp again for adjustment
-	PTR_L		a0, REGSZ(sp)		# load ucp
+	PTR_L		a0, SZREG(sp)		# load ucp
 	PTR_ADDIU	v0, sp, CALLFRAME_SIZ
 	REG_PROLOGUE
 	REG_S		zero, _OFFSETOF_UC_GREGS_V0(v1)
