@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.6 2009/08/18 16:53:29 jmcneill Exp $
+$NetBSD: README,v 1.7 2009/08/18 21:30:31 wiz Exp $
 
 Organization of Sources:
 
@@ -50,10 +50,10 @@ The licenses currently used are:
 			restricted to OEM.
 
 	intel-fw-public	Intel firmware license permitting redistribution with
-			terms similiar to BSD licensed software.
+			terms similar to BSD licensed software.
 
 	intel-public	Intel license permitting redistribution with
-			terms similiar to BSD licensed software.
+			terms similar to BSD licensed software.
 
 	mit		MIT (X11) style license.
 
