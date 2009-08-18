@@ -419,11 +419,11 @@ AcpiUtGetRegionName (
 
     if (SpaceId >= ACPI_USER_REGION_BEGIN)
     {
-        return ("UserDefinedRegion");
+        return __UNCONST("UserDefinedRegion");
     }
     else if (SpaceId >= ACPI_NUM_PREDEFINED_REGIONS)
     {
-        return ("InvalidSpaceId");
+        return __UNCONST("InvalidSpaceId");
     }
 
     return (ACPI_CAST_PTR (char, AcpiGbl_RegionTypes[SpaceId]));
@@ -461,7 +461,7 @@ AcpiUtGetEventName (
 
     if (EventId > ACPI_EVENT_MAX)
     {
-        return ("InvalidEventID");
+        return __UNCONST("InvalidEventID");
     }
 
     return (ACPI_CAST_PTR (char, AcpiGbl_EventTypes[EventId]));
@@ -549,7 +549,7 @@ AcpiUtGetObjectTypeName (
 
     if (!ObjDesc)
     {
-        return ("[NULL Object Descriptor]");
+        return __UNCONST("[NULL Object Descriptor]");
     }
 
     return (AcpiUtGetTypeName (ObjDesc->Common.Type));
@@ -579,7 +579,7 @@ AcpiUtGetNodeName (
 
     if (!Object)
     {
-        return ("NULL");
+        return __UNCONST("NULL");
     }
 
     /* Check for Root node */
@@ -587,14 +587,14 @@ AcpiUtGetNodeName (
     if ((Object == ACPI_ROOT_OBJECT) ||
         (Object == AcpiGbl_RootNode))
     {
-        return ("\"\\\" ");
+        return __UNCONST("\"\\\" ");
     }
 
     /* Descriptor must be a namespace node */
 
     if (ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
     {
-        return ("####");
+        return __UNCONST("####");
     }
 
     /*
@@ -651,7 +651,7 @@ AcpiUtGetDescriptorName (
 
     if (!Object)
     {
-        return ("NULL OBJECT");
+        return __UNCONST("NULL OBJECT");
     }
 
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) > ACPI_DESC_TYPE_MAX)
@@ -737,7 +737,7 @@ AcpiUtGetReferenceName (
  *
  ******************************************************************************/
 
-char *
+const char *
 AcpiUtGetMutexName (
     UINT32                  MutexId)
 {

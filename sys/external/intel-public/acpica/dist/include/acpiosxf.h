@@ -289,7 +289,7 @@ AcpiOsGetPhysicalAddress (
  */
 ACPI_STATUS
 AcpiOsCreateCache (
-    char                    *CacheName,
+    const char              *CacheName,
     UINT16                  ObjectSize,
     UINT16                  MaxDepth,
     ACPI_CACHE_T            **ReturnCache);

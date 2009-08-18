@@ -665,7 +665,7 @@ AcpiNsInitOneDevice (
         ACPI_TYPE_METHOD, DeviceNode, METHOD_NAME__INI));
 
     Info->PrefixNode = DeviceNode;
-    Info->Pathname = METHOD_NAME__INI;
+    Info->Pathname = __UNCONST(METHOD_NAME__INI);
     Info->Parameters = NULL;
     Info->Flags = ACPI_IGNORE_RETURN_VALUE;
 
