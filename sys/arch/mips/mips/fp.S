@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33 2007/10/17 19:55:37 garbled Exp $	*/
+/*	$NetBSD: fp.S,v 1.34 2009/08/18 21:28:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -647,7 +647,7 @@ bctrue_l:
 
 bcemul_branch:
 	/* Fetch delay slot instruction */
-	sw	a1, CALLFRAME_SIZ + 4(sp)
+	lw	a1, CALLFRAME_SIZ + 4(sp)
 	REG_PROLOGUE
 	REG_L	a0, FRAME_EPC(a1)
 	REG_EPILOGUE
