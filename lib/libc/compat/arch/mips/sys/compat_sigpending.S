@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigpending.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.1.34.1 2009/08/18 06:58:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,28 +33,28 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sigpending.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: compat_sigpending.S,v 1.1 2005/09/17 11:49:39 tsutsui Exp $")
+#if 0
+	RCSID("from: @(#)sigpending.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: compat_sigpending.S,v 1.1.34.1 2009/08/18 06:58:55 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 WARN_REFERENCES(sigpending, \
     "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 LEAF(sigpending)
-#ifdef __ABICALLS__
-	.set    noreorder
-	.cpload t9
-	.set    reorder
-#endif
-	li	v0, SYS_compat_13_sigpending13
-	syscall
+	PIC_PROLOGUE(sigpending)
+
+	SYSTRAP(compat_13_sigpending13)
 	bne	a3, zero, 1f
-	sw	v0, 0(a0)
+	INT_S	v0, _OFFSETOF_SC_ONSTACK(a0)
 	move	v0, zero
-	j	ra
+	PIC_RETURN()
+
 1:
-	la	t9, _C_LABEL(__cerror)
-	jr	t9
+	PIC_TAILCALL(__cerror)
 END(sigpending)
