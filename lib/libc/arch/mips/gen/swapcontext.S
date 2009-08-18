@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3.14.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3.14.2 2009/08/18 06:52:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,12 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-#include <machine/mcontext.h>
 #include "SYS.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.3.14.1 2009/08/16 03:36:02 matt Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3.14.2 2009/08/18 06:52:09 matt Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
