@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.15 2009/06/11 11:02:11 cegger Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.16 2009/08/19 16:31:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.15 2009/06/11 11:02:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.16 2009/08/19 16:31:28 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -197,8 +197,7 @@ ahci_pci_lookup_quirkdata(pci_vendor_id_t vendor, pci_product_id_t product)
 {
 	int i;
 
-	for (i = 0; i < (sizeof ahci_pci_quirks / sizeof ahci_pci_quirks[0]);
-	     i++)
+	for (i = 0; i < __arraycount(ahci_pci_quirks); i++)
 		if (vendor == ahci_pci_quirks[i].vendor &&
 		    product == ahci_pci_quirks[i].product)
 			return (&ahci_pci_quirks[i]);
