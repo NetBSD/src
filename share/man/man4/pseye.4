@@ -1,4 +1,4 @@
-.\"	$NetBSD: pseye.4,v 1.4 2008/09/06 20:12:04 wiz Exp $
+.\"	$NetBSD: pseye.4,v 1.5 2009/08/19 13:38:26 jmcneill Exp $
 .\"
 .\" Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -29,14 +29,14 @@
 .Os
 .Sh NAME
 .Nm pseye
-.Nd Sony PLAYSTATION(R) Eye webcam device driver
+.Nd Sony PlayStation Eye webcam device driver
 .Sh SYNOPSIS
 .Cd "pseye* at uhub?"
 .Cd "video* at videobus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Sony PLAYSTATION(R) Eye
+driver provides support for the Sony PlayStation Eye
 .Tn USB
 webcam (model SLEH-00201).
 .Pp
@@ -45,7 +45,7 @@ which requires a hi-speed USB host controller (such as
 .Xr ehci 4 )
 to function properly.
 .Pp
-The Sony PLAYSTATION(R) Eye device also has a separate audio interface,
+The Sony PlayStation Eye device also has a separate audio interface,
 which is supported by the
 .Xr uaudio 4
 device driver.
