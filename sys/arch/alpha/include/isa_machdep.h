@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.10 2009/08/19 14:29:53 dyoung Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.11 2009/08/19 15:00:23 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@ struct alpha_isa_chipset {
  */
 #define	isa_attach_hook(p, s, a)					\
     (*(a)->iba_ic->ic_attach_hook)((p), (s), (a))
-#define	isa_detach_hook(s)						\
-    (*(a)->iba_ic->ic_detach_hook)((s))
+#define	isa_detach_hook(c, s)						\
+    (*(c)->ic_detach_hook)((c), (s))
 #define	isa_intr_evcnt(c, i)					\
     (*(c)->ic_intr_evcnt)((c)->ic_v, (i))
 #define	isa_intr_establish(c, i, t, l, f, a)				\
