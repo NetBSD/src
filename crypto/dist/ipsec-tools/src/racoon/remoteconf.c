@@ -1,11 +1,11 @@
-/*	$NetBSD: remoteconf.c,v 1.15 2009/07/03 06:41:47 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.16 2009/08/19 12:20:02 tteras Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -81,7 +81,7 @@
 
 static TAILQ_HEAD(_rmtree, remoteconf) rmtree, rmtree_save, rmtree_tmp;
 
-/* 
+/*
  * Script hook names and script hook paths
  */
 char *script_names[SCRIPT_MAX + 1] = { "phase1_up", "phase1_down" };
@@ -182,6 +182,15 @@ rmconf_match_etype_and_approval(rmconf, etype, approval)
 	return 0;
 }
 
+enum rmconf_match_t {
+	MATCH_NONE = 0,
+	MATCH_ANONYMOUS,
+	MATCH_ADDRESS,
+	MATCH_SA,
+	MATCH_IDENTITY,
+	MATCH_AUTH_IDENTITY,
+};
+
 static int
 rmconf_match_type(rmsel, rmconf)
 	struct rmconfselector *rmsel;
@@ -192,19 +201,19 @@ rmconf_match_type(rmsel, rmconf)
 	/* No match at all: unwanted anonymous */
 	if ((rmsel->flags & GETRMCONF_F_NO_ANONYMOUS) &&
 	    rmconf->remote->sa_family == AF_UNSPEC)
-		return 0;
+		return MATCH_NONE;
 
 	if ((rmsel->flags & GETRMCONF_F_NO_PASSIVE) && rmconf->passive)
-		return 0;
+		return MATCH_NONE;
 
 	/* Check address */
 	if (rmsel->remote != NULL) {
 		if (rmconf->remote->sa_family != AF_UNSPEC) {
 			if (cmpsaddr(rmsel->remote, rmconf->remote) != 0)
-				return 0;
+				return MATCH_NONE;
 
 			/* Address matched */
-			ret = 2;
+			ret = MATCH_ADDRESS;
 		}
 	}
 
@@ -212,22 +221,22 @@ rmconf_match_type(rmsel, rmconf)
 	if (rmsel->etype != ISAKMP_ETYPE_NONE) {
 		if (rmconf_match_etype_and_approval(rmconf, rmsel->etype,
 						    rmsel->approval) != 0)
-			return 0;
-		ret = 3;
+			return MATCH_NONE;
+		ret = MATCH_SA;
 	}
 
 	/* Check identity */
 	if (rmsel->identity != NULL && rmconf->verify_identifier) {
 		if (rmconf_match_identity(rmconf, rmsel->identity) != 0)
-			return 0;
-		ret = 4;
+			return MATCH_NONE;
+		ret = MATCH_IDENTITY;
 	}
 
 	/* Check certificate request */
 	if (rmsel->certificate_request != NULL) {
 		if (oakley_get_certtype(rmsel->certificate_request) !=
 		    oakley_get_certtype(rmconf->mycert))
-			return 0;
+			return MATCH_NONE;
 
 		if (rmsel->certificate_request->l > 1) {
 			vchar_t *issuer;
@@ -237,15 +246,15 @@ rmconf_match_type(rmsel, rmconf)
 			    memcmp(rmsel->certificate_request->v + 1,
 				   issuer->v, issuer->l) != 0) {
 				vfree(issuer);
-				return 0;
+				return MATCH_NONE;
 			}
 			vfree(issuer);
 		} else {
 			if (!rmconf->match_empty_cr)
-				return 0;
+				return MATCH_NONE;
 		}
 
-		ret = 5;
+		ret = MATCH_AUTH_IDENTITY;
 	}
 
 	return ret;
@@ -316,7 +325,7 @@ rmconf_find(rmconf, ctx)
 
 		if (match_type == fctx->match_type) {
 			/* Duplicate exact match, something is wrong */
-			if (match_type >= 5)
+			if (match_type >= MATCH_AUTH_IDENTITY)
 				return 1;
 
 			/* Otherwise just remember that this is ambiguous match */
@@ -615,11 +624,11 @@ dupetypes(orig)
 {
 	struct etypes *new;
 
-	if (!orig) 
+	if (!orig)
 		return NULL;
 
 	new = racoon_malloc(sizeof(struct etypes));
-	if (new == NULL) 
+	if (new == NULL)
 		return NULL;
 
 	new->type = orig->type;
@@ -879,11 +888,11 @@ dump_rmconf_single (struct remoteconf *p, void *data)
 			prop->lifebyte);
 		plog(LLV_INFO, LOCATION, NULL, "\t\tdh_group %s;\n",
 			alg_oakley_dhdef_name(prop->dh_group));
-		plog(LLV_INFO, LOCATION, NULL, "\t\tencryption_algorithm %s;\n", 
+		plog(LLV_INFO, LOCATION, NULL, "\t\tencryption_algorithm %s;\n",
 			alg_oakley_encdef_name(prop->enctype));
-		plog(LLV_INFO, LOCATION, NULL, "\t\thash_algorithm %s;\n", 
+		plog(LLV_INFO, LOCATION, NULL, "\t\thash_algorithm %s;\n",
 			alg_oakley_hashdef_name(prop->hashtype));
-		plog(LLV_INFO, LOCATION, NULL, "\t\tauthentication_method %s;\n", 
+		plog(LLV_INFO, LOCATION, NULL, "\t\tauthentication_method %s;\n",
 			alg_oakley_authdef_name(prop->authmethod));
 		plog(LLV_INFO, LOCATION, NULL, "\t}\n");
 		prop = prop->next;
