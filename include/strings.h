@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.16 2009/07/21 16:27:54 joerg Exp $	*/
+/*	$NetBSD: strings.h,v 1.17 2009/08/19 04:22:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ typedef	_BSD_SIZE_T_	size_t;
 
 #include <sys/cdefs.h>
 
-#include <sys/types.h>
+#include <stdint.h>
 
 __BEGIN_DECLS
 int	 bcmp(const void *, const void *, size_t);
