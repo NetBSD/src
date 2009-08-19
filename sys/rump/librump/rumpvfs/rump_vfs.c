@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.20.2.5 2009/07/18 14:53:26 yamt Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.20.2.6 2009/08/19 18:48:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.5 2009/07/18 14:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.6 2009/08/19 18:48:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -53,12 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.5 2009/07/18 14:53:26 yamt Exp $
 
 #include "rump_private.h"
 #include "rump_vfs_private.h"
-
-struct fakeblk {
-	char path[MAXPATHLEN];
-	LIST_ENTRY(fakeblk) entries;
-};
-static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
 static struct cwdinfo rump_cwdi;
 
@@ -269,66 +263,6 @@ rump_namei(uint32_t op, uint32_t flags, const char *namep,
 	}
 
 	return rv;
-}
-
-static struct fakeblk *
-_rump_fakeblk_find(const char *path)
-{
-	char buf[MAXPATHLEN];
-	struct fakeblk *fblk;
-	int error;
-
-	if (rumpuser_realpath(path, buf, &error) == NULL)
-		return NULL;
-
-	LIST_FOREACH(fblk, &fakeblks, entries)
-		if (strcmp(fblk->path, buf) == 0)
-			return fblk;
-
-	return NULL;
-}
-
-int
-rump_fakeblk_register(const char *path)
-{
-	char buf[MAXPATHLEN];
-	struct fakeblk *fblk;
-	int error;
-
-	if (_rump_fakeblk_find(path))
-		return EEXIST;
-
-	if (rumpuser_realpath(path, buf, &error) == NULL)
-		return error;
-
-	fblk = kmem_alloc(sizeof(struct fakeblk), KM_NOSLEEP);
-	if (fblk == NULL)
-		return ENOMEM;
-
-	strlcpy(fblk->path, buf, MAXPATHLEN);
-	LIST_INSERT_HEAD(&fakeblks, fblk, entries);
-
-	return 0;
-}
-
-int
-rump_fakeblk_find(const char *path)
-{
-
-	return _rump_fakeblk_find(path) != NULL;
-}
-
-void
-rump_fakeblk_deregister(const char *path)
-{
-	struct fakeblk *fblk;
-
-	fblk = _rump_fakeblk_find(path);
-	if (fblk == NULL)
-		return;
-
-	LIST_REMOVE(fblk, entries);
-	kmem_free(fblk, sizeof(*fblk));
 }
 
 void

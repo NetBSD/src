@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3.78.2 2009/05/04 08:11:01 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.3.78.3 2009/08/19 18:46:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3.78.2 2009/05/04 08:11:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3.78.3 2009/08/19 18:46:10 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -193,4 +193,9 @@ isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach
 	 */
 	iba->iba_ic = &isa_chipset_tag;
 	printf(": PC/104 expansion bus");
+}
+
+void
+isa_detach_hook(isa_chipset_tag_t ic, device_t self)
+{
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.101.32.2 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.101.32.3 2009/08/19 18:48:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -351,6 +351,7 @@ x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 x(UDF,     24, "UDF",        NULL,   "udf")   /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
 x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */ \
+x(NILFS,   27, "NiLFS",      NULL,   "nilfs") /* NTT's NiLFS(2) */
 
 #ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),

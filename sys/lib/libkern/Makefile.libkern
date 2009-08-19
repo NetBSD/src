@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.2.2.3 2009/06/20 07:20:32 yamt Exp $
+#	$NetBSD: Makefile.libkern,v 1.2.2.4 2009/08/19 18:48:18 yamt Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -50,13 +50,29 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 .endif
 
 # Other stuff
+SRCS+=	__assert.c __main.c
 SRCS+=	__cmsg_alignbytes.c cpuset.c inet_addr.c intoa.c
+SRCS+=	bswap64.c
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c
 SRCS+=	pmatch.c arc4random.c bcd.c mcount.c mertwist.c crc32.c
 
-SRCS+=	strsep.c strstr.c strlcpy.c strlcat.c
+SRCS+=	strsep.c strstr.c
+SRCS+=	strlcpy.c strlcat.c
 
-SRCS+=	strtoll.c strtoull.c strtoumax.c
+SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
+SRCS+=	memcpy.c memmove.c
+SRCS+=	strchr.c strrchr.c
+SRCS+=	memcmp.c memset.c 
+SRCS+=	popcount32.c popcount64.c
+SRCS+=	strtoul.c strtoll.c strtoull.c strtoumax.c
+
+SRCS+=	scanc.c skpc.c
+SRCS+=	random.c
+
+SRCS+=	memchr.c
+SRCS+=	strcat.c strcmp.c strcpy.c strlen.c
+SRCS+=	strncmp.c strncpy.c
+SRCS+=	strcasecmp.c strncasecmp.c
 
 SRCS+=	xlat_mbr_fstype.c
 
@@ -65,24 +81,14 @@ SRCS+=	heapsort.c ptree.c rb.c rpst.c
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
 
-# XXX these stub builds should be cleaned up even further.
+# Remove from SRCS the .c files for any .S files added by the MD makefiles,
+# also remove from SRCS the .c files for the .c files in NO_SRCS.
+# (Unlike libc, we don't worry about lint)
 
-# if no machine specific memcpy(3), build one out of bcopy(3) based stub.
-.if empty(SRCS:Mmemcpy.S)
-SRCS+=	memcpy.c
+.for check_file in ${SRCS:M*.S} ${NO_SRCS}
+unwanted_file := ${SRCS:M${check_file:.S=.c}}
+.if "${unwanted_file}" != ""
+SRCS := ${SRCS:N${unwanted_file}}
 .endif
+.endfor
 
-# if no machine specific memmove(3), build one out of bcopy(3) based stub.
-.if empty(SRCS:Mmemmove.S)
-SRCS+=	memmove.c
-.endif
-
-# if no machine specific strchr(3), build one out of index(3) based stub.
-.if empty(SRCS:Mstrchr.S)
-SRCS+=	strchr.c
-.endif
-
-# if no machine specific strrchr(3), build one out of rindex(3) based stub.
-.if empty(SRCS:Mstrrchr.S)
-SRCS+=	strrchr.c
-.endif

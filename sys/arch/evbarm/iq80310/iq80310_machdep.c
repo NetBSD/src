@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.69.10.2 2009/05/04 08:10:58 yamt Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.69.10.3 2009/08/19 18:46:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.69.10.2 2009/05/04 08:10:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.69.10.3 2009/08/19 18:46:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -149,7 +149,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S

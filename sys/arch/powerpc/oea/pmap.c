@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58.4.2 2009/05/04 08:11:44 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58.4.3 2009/08/19 18:46:41 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.2 2009/05/04 08:11:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.3 2009/08/19 18:46:41 yamt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -112,7 +112,6 @@ u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_remove_depth;
 #endif
 
-int physmem;
 #ifndef MSGBUFADDR
 extern paddr_t msgbuf_paddr;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.26.52.2 2009/05/16 10:41:44 yamt Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.26.52.3 2009/08/19 18:47:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.26.52.2 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.26.52.3 2009/08/19 18:47:19 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -72,7 +72,6 @@ static void	st_scsibus_attach(device_t, device_t, void *);
 static int	st_scsibus_ops(struct st_softc *, int, int);
 static int	st_scsibus_read_block_limits(struct st_softc *, int);
 static int	st_scsibus_mode_sense(struct st_softc *, int);
-static int	st_scsibus_mode_select(struct st_softc *, int);
 static int	st_scsibus_cmprss(struct st_softc *, int, int);
 
 CFATTACH_DECL(st_scsibus, sizeof(struct st_softc),
@@ -118,7 +117,7 @@ st_scsibus_ops(struct st_softc *st, int op, int flags)
 	case ST_OPS_MODESENSE:
 		return st_scsibus_mode_sense(st, flags);
 	case ST_OPS_MODESELECT:
-		return st_scsibus_mode_select(st, flags);
+		return st_mode_select(st, flags);
 	case ST_OPS_CMPRSS_ON:
 	case ST_OPS_CMPRSS_OFF:
 		return st_scsibus_cmprss(st, flags,
@@ -187,7 +186,9 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 	} scsipi_sense;
 	struct scsipi_periph *periph = st->sc_periph;
 
-	scsipi_sense_len = 12 + st->page_0_size;
+	scsipi_sense_len = sizeof(scsipi_sense.header) +
+			   sizeof(scsipi_sense.blk_desc) +
+			   st->page_0_size;
 
 	/*
 	 * Set up a mode sense
@@ -220,59 +221,6 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 		    st->page_0_size);
 	periph->periph_flags |= PERIPH_MEDIA_LOADED;
 	return (0);
-}
-
-/*
- * Send a filled out parameter structure to the drive to
- * set it into the desire modes etc.
- */
-static int
-st_scsibus_mode_select(struct st_softc *st, int flags)
-{
-	u_int scsi_select_len;
-	struct scsi_select {
-		struct scsi_mode_parameter_header_6 header;
-		struct scsi_general_block_descriptor blk_desc;
-		u_char sense_data[MAX_PAGE_0_SIZE];
-	} scsi_select;
-	struct scsipi_periph *periph = st->sc_periph;
-
-	scsi_select_len = 12 + st->page_0_size;
-
-	/*
-	 * This quirk deals with drives that have only one valid mode
-	 * and think this gives them license to reject all mode selects,
-	 * even if the selected mode is the one that is supported.
-	 */
-	if (st->quirks & ST_Q_UNIMODAL) {
-		SC_DEBUG(periph, SCSIPI_DB3,
-		    ("not setting density 0x%x blksize 0x%x\n",
-		    st->density, st->blksize));
-		return (0);
-	}
-
-	/*
-	 * Set up for a mode select
-	 */
-	memset(&scsi_select, 0, scsi_select_len);
-	scsi_select.header.blk_desc_len = sizeof(struct scsi_general_block_descriptor);
-	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
-	scsi_select.blk_desc.density = st->density;
-	if (st->flags & ST_DONTBUFFER)
-		scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_OFF;
-	else
-		scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
-	if (st->flags & ST_FIXEDBLOCKS)
-		_lto3b(st->blksize, scsi_select.blk_desc.blklen);
-	if (st->page_0_size)
-		memcpy(scsi_select.sense_data, st->sense_data, st->page_0_size);
-
-	/*
-	 * do the command
-	 */
-	return scsipi_mode_select(periph, 0, &scsi_select.header,
-	    scsi_select_len, flags | XS_CTL_DATA_ONSTACK,
-	    ST_RETRIES, ST_CTL_TIME);
 }
 
 static int

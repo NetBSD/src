@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.7.6.2 2009/07/18 14:53:27 yamt Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.7.6.3 2009/08/19 18:48:33 yamt Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -62,7 +62,11 @@ int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
 
 int	do_sys_unlink(const char *, enum uio_seg);
 int	do_sys_rename(const char *, const char *, enum uio_seg, int);
-int	do_sys_mknod(struct lwp *l, const char *, mode_t, dev_t, register_t *);
-int	do_sys_mkdir(const char *, mode_t);
+int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, register_t *,
+    enum uio_seg);
+int	do_sys_mkdir(const char *, mode_t, enum uio_seg);
+
+int	chdir_lookup(const char *, int, struct vnode **, struct lwp *);
+void	change_root(struct cwdinfo *, struct vnode *, struct lwp *);
 
 #endif /* _SYS_VFS_SYSCALLS_H_ */

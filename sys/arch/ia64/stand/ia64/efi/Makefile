@@ -23,13 +23,13 @@ CPPFLAGS+=	-I${S}
 CPPFLAGS+=	-DLOADER
 
 CPPFLAGS+= 	-DLIBKERN_OPTIMISE_SPACE \
-		-DHEAP_VARIABLE  
+		-DHEAP_VARIABLE
 
 
 # Pick up FreeBSD glue
 #CPPFLAGS+= -I${.CURDIR}/../../
 
-# Always add MI sources 
+# Always add MI sources
 .PATH: ${.CURDIR}/../../common
 .include "${.CURDIR}/../../common/Makefile.inc"
 
@@ -42,7 +42,7 @@ LDFLAGS=	-Wl,-T${LDSCRIPT} -shared -symbolic -nostdlib
 
 ${PROG}: ${LDSCRIPT}
 
-CLEANFILES=	vers.c loader.efi ${OBJS}
+CLEANFILES+=	vers.c loader.efi ${OBJS}
 
 NEWVERSWHAT=	"EFI boot" ${MACHINE_ARCH}
 
@@ -65,9 +65,9 @@ all: loader.efi
 .include "${IA64_STAND_DIR}/efi/libefi/Makefile.inc"
 LIBEFI=		${EFILIB}
 
-DPADD=		${LIBEFI} ${LIBLIST}	
+DPADD=		${LIBEFI} ${LIBLIST}
 
 # Cross dependencies between LIBEFI and LIB(SA|KERN). Need to elaborate below.
-LDADD=		${LIBEFI} ${LIBLIST} ${LIBEFI} ${LIBLIST} 
+LDADD=		${LIBEFI} ${LIBLIST} ${LIBEFI} ${LIBLIST}
 
 .include <bsd.prog.mk>

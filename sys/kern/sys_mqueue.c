@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.10.2.3 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.10.2.4 2009/08/19 18:48:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10.2.3 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10.2.4 2009/08/19 18:48:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10.2.3 2009/07/18 14:53:23 yamt Exp
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/mqueue.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/poll.h>
@@ -66,16 +67,19 @@ __KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10.2.3 2009/07/18 14:53:23 yamt Exp
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/unistd.h>
 
 #include <miscfs/genfs/genfs.h>
 
+MODULE(MODULE_CLASS_MISC, mqueue, NULL);
+
 /* System-wide limits. */
 static u_int			mq_open_max = MQ_OPEN_MAX;
 static u_int			mq_prio_max = MQ_PRIO_MAX;
-
 static u_int			mq_max_msgsize = 16 * MQ_DEF_MSGSIZE;
 static u_int			mq_def_maxmsg = 32;
 
@@ -83,6 +87,8 @@ static kmutex_t			mqlist_mtx;
 static pool_cache_t		mqmsg_cache;
 static LIST_HEAD(, mqueue)	mqueue_head;
 
+static int	mqueue_sysinit(void);
+static int	mqueue_sysfini(bool);
 static int	mq_poll_fop(file_t *, int);
 static int	mq_stat_fop(file_t *, struct stat *);
 static int	mq_close_fop(file_t *);
@@ -99,17 +105,86 @@ static const struct fileops mqops = {
 	.fo_drain = fnullop_drain,
 };
 
+static const struct syscall_package mqueue_syscalls[] = {
+	{ SYS_mq_open, 0, (sy_call_t *)sys_mq_open },
+	{ SYS_mq_close, 0, (sy_call_t *)sys_mq_close },
+	{ SYS_mq_unlink, 0, (sy_call_t *)sys_mq_unlink },
+	{ SYS_mq_getattr, 0, (sy_call_t *)sys_mq_getattr },
+	{ SYS_mq_setattr, 0, (sy_call_t *)sys_mq_setattr },
+	{ SYS_mq_notify, 0, (sy_call_t *)sys_mq_notify },
+	{ SYS_mq_send, 0, (sy_call_t *)sys_mq_send },
+	{ SYS_mq_receive, 0, (sy_call_t *)sys_mq_receive },
+	{ SYS___mq_timedsend50, 0, (sy_call_t *)sys___mq_timedsend50 },
+	{ SYS___mq_timedreceive50, 0, (sy_call_t *)sys___mq_timedreceive50 },
+	{ 0, 0, NULL }
+};
+
 /*
- * Initialize POSIX message queue subsystem.
+ * Initialisation and unloading of POSIX message queue subsystem.
  */
-void
+
+static int
 mqueue_sysinit(void)
 {
+	int error;
 
 	mqmsg_cache = pool_cache_init(MQ_DEF_MSGSIZE, coherency_unit,
 	    0, 0, "mqmsgpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	mutex_init(&mqlist_mtx, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&mqueue_head);
+
+	error = syscall_establish(NULL, mqueue_syscalls);
+	if (error) {
+		(void)mqueue_sysfini(false);
+	}
+	return error;
+}
+
+static int
+mqueue_sysfini(bool interface)
+{
+
+	if (interface) {
+		int error;
+		bool inuse;
+
+		/* Stop syscall activity. */
+		error = syscall_disestablish(NULL, mqueue_syscalls);
+		if (error)
+			return error;
+		/*
+		 * Check if there are any message queues in use.
+		 * TODO: We shall support forced unload.
+		 */
+		mutex_enter(&mqlist_mtx);
+		inuse = !LIST_EMPTY(&mqueue_head);
+		mutex_exit(&mqlist_mtx);
+		if (inuse) {
+			error = syscall_establish(NULL, mqueue_syscalls);
+			KASSERT(error == 0);
+			return EBUSY;
+		}
+	}
+	mutex_destroy(&mqlist_mtx);
+	pool_cache_destroy(mqmsg_cache);
+	return 0;
+}
+
+/*
+ * Module interface.
+ */
+static int
+mqueue_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return mqueue_sysinit();
+	case MODULE_CMD_FINI:
+		return mqueue_sysfini(true);
+	default:
+		return ENOTTY;
+	}
 }
 
 /*
@@ -136,7 +211,8 @@ mqueue_destroy(struct mqueue *mq)
 	size_t msz;
 	u_int i;
 
-	for (i = 0; i < (MQ_PQSIZE + 1); i++) {
+	/* Note MQ_PQSIZE + 1. */
+	for (i = 0; i <= MQ_PQSIZE; i++) {
 		while ((msg = TAILQ_FIRST(&mq->mq_head[i])) != NULL) {
 			TAILQ_REMOVE(&mq->mq_head[i], msg, msg_queue);
 			msz = sizeof(struct mq_msg) + msg->msg_len;
@@ -199,20 +275,20 @@ mqueue_get(mqd_t mqd, file_t **fpr)
 
 /*
  * mqueue_linear_insert: perform linear insert according to the message
- * priority into the reserved queue (note MQ_PQSIZE + 1).  Reserved queue
- * is a sorted list used only when mq_prio_max is increased via sysctl.
+ * priority into the reserved queue (MQ_PQRESQ).  Reserved queue is a
+ * sorted list used only when mq_prio_max is increased via sysctl.
  */
 static inline void
 mqueue_linear_insert(struct mqueue *mq, struct mq_msg *msg)
 {
 	struct mq_msg *mit;
 
-	TAILQ_FOREACH(mit, &mq->mq_head[MQ_PQSIZE], msg_queue) {
+	TAILQ_FOREACH(mit, &mq->mq_head[MQ_PQRESQ], msg_queue) {
 		if (msg->msg_prio > mit->msg_prio)
 			break;
 	}
 	if (mit == NULL) {
-		TAILQ_INSERT_TAIL(&mq->mq_head[MQ_PQSIZE], msg, msg_queue);
+		TAILQ_INSERT_TAIL(&mq->mq_head[MQ_PQRESQ], msg, msg_queue);
 	} else {
 		TAILQ_INSERT_BEFORE(mit, msg, msg_queue);
 	}
@@ -543,7 +619,7 @@ mq_receive1(lwp_t *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 	struct mqueue *mq;
 	struct mq_msg *msg = NULL;
 	struct mq_attr *mqattr;
-	u_int prio;
+	u_int idx;
 	int error;
 
 	/* Get the message queue */
@@ -588,22 +664,24 @@ mq_receive1(lwp_t *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 		}
 	}
 
-	/* Find the highest priority message */
-	prio = ffs(mq->mq_bitmap);
-	if (__predict_false(prio == 0)) {
-		/* Must be in reserved queue then */
-		prio = MQ_PQSIZE;
+	/*
+	 * Find the highest priority message, and remove it from the queue.
+	 * At first, reserved queue is checked, bitmap is next.
+	 */
+	msg = TAILQ_FIRST(&mq->mq_head[MQ_PQRESQ]);
+	if (__predict_true(msg == NULL)) {
+		idx = ffs(mq->mq_bitmap);
+		msg = TAILQ_FIRST(&mq->mq_head[idx]);
+		KASSERT(msg != NULL);
+	} else {
+		idx = MQ_PQRESQ;
 	}
+	TAILQ_REMOVE(&mq->mq_head[idx], msg, msg_queue);
 
-	/* Remove it from the queue */
-	msg = TAILQ_FIRST(&mq->mq_head[prio]);
-	KASSERT(msg != NULL);
-	TAILQ_REMOVE(&mq->mq_head[prio], msg, msg_queue);
-
-	/* Unmark the bit, if last message */
-	if (__predict_true(prio != MQ_PQSIZE) &&
-	    TAILQ_EMPTY(&mq->mq_head[prio])) {
-		mq->mq_bitmap &= ~(MQ_PQMSB >> prio);
+	/* Unmark the bit, if last message. */
+	if (__predict_true(idx) && TAILQ_EMPTY(&mq->mq_head[idx])) {
+		KASSERT((MQ_PQSIZE - idx) == msg->msg_prio);
+		mq->mq_bitmap &= ~(1 << --idx);
 	}
 
 	/* Decrement the counter and signal waiter, if any */
@@ -767,10 +845,16 @@ mq_send1(lwp_t *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 	}
 	KASSERT(mqattr->mq_curmsgs < mqattr->mq_maxmsg);
 
-	/* Insert message into the queue, according to the priority */
+	/*
+	 * Insert message into the queue, according to the priority.
+	 * Note the difference between index and priority.
+	 */
 	if (__predict_true(msg_prio < MQ_PQSIZE)) {
-		TAILQ_INSERT_TAIL(&mq->mq_head[msg_prio], msg, msg_queue);
-		mq->mq_bitmap |= (MQ_PQMSB >> msg_prio);
+		u_int idx = MQ_PQSIZE - msg_prio;
+
+		KASSERT(idx != MQ_PQRESQ);
+		TAILQ_INSERT_TAIL(&mq->mq_head[idx], msg, msg_queue);
+		mq->mq_bitmap |= (1 << --idx);
 	} else {
 		mqueue_linear_insert(mq, msg);
 	}

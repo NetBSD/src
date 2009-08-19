@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322.10.2 2009/06/20 07:20:10 yamt Exp $ */
+/*	$NetBSD: pmap.c,v 1.322.10.3 2009/08/19 18:46:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.10.2 2009/06/20 07:20:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.10.3 2009/08/19 18:46:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.10.2 2009/06/20 07:20:10 yamt Exp $")
 #include <sys/kcore.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
+
+#include <sys/exec_aout.h>		/* for MID_* */
 
 #include <uvm/uvm.h>
 
@@ -567,7 +569,7 @@ static void  mmu_setup4m_L3(int, struct segmap *);
 /* from pmap.h: */
 bool		(*pmap_clear_modify_p)(struct vm_page *);
 bool		(*pmap_clear_reference_p)(struct vm_page *);
-int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 bool		(*pmap_is_modified_p)(struct vm_page *);
 bool		(*pmap_is_referenced_p)(struct vm_page *);
@@ -5530,7 +5532,7 @@ pmap_changeprot4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags)
 
 int
 pmap_enter4_4c(struct pmap *pm, vaddr_t va, paddr_t pa,
-	       vm_prot_t prot, int flags)
+	       vm_prot_t prot, u_int flags)
 {
 	struct vm_page *pg;
 	int pteproto, ctx;
@@ -6135,7 +6137,7 @@ pmap_kprotect4_4c(vaddr_t va, vsize_t size, vm_prot_t prot)
 
 int
 pmap_enter4m(struct pmap *pm, vaddr_t va, paddr_t pa,
-	     vm_prot_t prot, int flags)
+	     vm_prot_t prot, u_int flags)
 {
 	struct vm_page *pg;
 	int pteproto;

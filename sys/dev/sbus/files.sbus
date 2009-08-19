@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.31.26.1 2009/05/04 08:13:17 yamt Exp $
+#	$NetBSD: files.sbus,v 1.31.26.2 2009/08/19 18:47:18 yamt Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -115,7 +115,7 @@ attach	cgthree at sbus with cgthree_sbus
 file	dev/sbus/cgthree_sbus.c		cgthree_sbus
 
 # framebuffer devices implemented only on SBus
-device	tcx: bt_dac, fb, rasops8, rasops24
+device	tcx: bt_dac, fb, rasops8, wsemuldisplaydev, vcons
 attach	tcx at sbus
 file	dev/sbus/tcx.c			tcx needs-flag
 
@@ -125,6 +125,7 @@ file	dev/sbus/zx.c			zx
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
 defflag	opt_pnozz.h	PNOZZ_DEBUG
+defflag opt_pnozz.h	PNOZZ_EMUL_CG3
 device	pnozz: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
 attach	pnozz at sbus
 file	dev/sbus/p9100.c		pnozz needs-flag

@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.23.10.2 2009/07/18 14:52:55 yamt Exp $
+# $NetBSD: MRCOFFEE,v 1.23.10.3 2009/08/19 18:46:46 yamt Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.23.10.2 $"
+#ident 		"MRCOFFEE-$Revision: 1.23.10.3 $"
 
 maxusers	32
 
@@ -29,16 +29,21 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 # Blink the power LED on some machines to indicate the system load.
 #options 	BLINK
 
-# XXX: uwe: TCX driver doesn't support RASTERCONSOLE, so don't bother
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE		# fast rasterop console
-#options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
-## default console colors: black-on-white; this can be changed
-## using the following two options.
-#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
+# builtin terminal emulations
+options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSEMUL_DEFAULT="\"vt100\""
+
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_CUSTOM_OUTPUT
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_SCROLLSUPPORT
+options 	FONT_GALLANT12x22	# the console font
+
 
 #### System options that are the same for all ports
 
@@ -156,6 +161,7 @@ options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
+options 	COMPAT_50	# NetBSD 5.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -247,9 +253,14 @@ com0	at obio0                                        # sun4m
 #### Keyboard and mouse
 
 pckbc0	at obio0
-kbd0	at pckbc0
-ms0	at pckbc0
-
+#kbd0	at pckbc0
+#ms0	at pckbc0
+#wskbd* 		at kbd? console ?
+#wsmouse*	at ms? mux 0
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+wskbd* 		at pckbd? console ?
+wsmouse*	at pms? mux 0
 
 #### Disk controllers and disks
 
@@ -313,7 +324,7 @@ audio0		at audiocs0
 
 ## Sun "tcx" accelerated color framebuffer.
 tcx0		at sbus? slot ? offset ?
-
+wsdisplay0	at tcx0
 
 #### Other device configuration
 
@@ -331,3 +342,6 @@ pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+
+pseudo-device	wsmux			# mouse and keyboard multiplexor
+pseudo-device	wsfont

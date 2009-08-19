@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.48.10.1 2009/05/04 08:11:42 yamt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48.10.2 2009/08/19 18:46:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.10.1 2009/05/04 08:11:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.10.2 2009/08/19 18:46:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,8 @@ const char *compat_label(dev_t dev, void (*strat)(struct buf *bp),
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
+readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -107,7 +108,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, st
 		}
 	}
 /* XXX If no NetBSD label or Ultrix label found, generate default label here */
-	return (msg);
+	return msg;
 }
 
 /*
@@ -115,7 +116,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, st
  * putting the partition info into a native NetBSD label
  */
 const char *
-compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
+compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	dec_disklabel *dlp;
 	struct buf *bp = NULL;
@@ -163,8 +165,10 @@ compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, str
 		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
 			    MAXPARTITIONS : DEC_NUM_DISK_PARTS);
 		     part++) {
-			lp->d_partitions[part].p_size = dlp->map[part].num_blocks;
-			lp->d_partitions[part].p_offset = dlp->map[part].start_block;
+			lp->d_partitions[part].p_size =
+			    dlp->map[part].num_blocks;
+			lp->d_partitions[part].p_offset =
+			    dlp->map[part].start_block;
 			lp->d_partitions[part].p_fsize = 1024;
 			lp->d_partitions[part].p_fstype =
 			  (part==1) ? FS_SWAP : FS_BSDFFS;
@@ -182,7 +186,7 @@ compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, str
 
 done:
 	brelse(bp, 0);
-	return (msg);
+	return msg;
 }
 
 /*
@@ -190,23 +194,24 @@ done:
  * before setting it.
  */
 int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, struct cpu_disklabel *osdep)
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
-		return (EINVAL);
+		return EINVAL;
 	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
-			return (EBUSY);
+			return EBUSY;
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
 		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-			return (EBUSY);
+			return EBUSY;
 		/*
 		 * Copy internally-set partition information
 		 * if new label doesn't include it.		XXX
@@ -221,14 +226,15 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
  	nlp->d_checksum = 0;
  	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
-	return (0);
+	return 0;
 }
 
 /*
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -238,7 +244,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, s
 	labelpart = DISKPART(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
 		if (lp->d_partitions[0].p_offset != 0)
-			return (EXDEV);			/* not quite right */
+			return EXDEV;			/* not quite right */
 		labelpart = 0;
 	}
 	bp = geteblk((int)lp->d_secsize);
@@ -267,5 +273,5 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp, s
 	error = ESRCH;
 done:
 	brelse(bp, 0);
-	return (error);
+	return error;
 }

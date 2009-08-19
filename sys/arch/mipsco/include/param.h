@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9.20.1 2009/05/04 08:11:32 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.9.20.2 2009/08/19 18:46:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,6 @@
 #define	MACHINE_ARCH	"mipseb"
 #define	_MACHINE	mipsco
 #define	MACHINE		"mipsco"
-#define	MID_MACHINE	MID_MIPS
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */

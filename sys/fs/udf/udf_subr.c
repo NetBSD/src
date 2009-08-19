@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.44.10.4 2009/07/18 14:53:22 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44.10.5 2009/08/19 18:48:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.4 2009/07/18 14:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.5 2009/08/19 18:48:14 yamt Exp $");
 #endif /* not lint */
 
 
@@ -3808,6 +3808,8 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		error = udf_validate_session_start(ump);
 		if (error)
 			return error;
+
+		(void) udf_synchronise_caches(ump);
 
 		/* close all associated tracks */
 		tracknr = ump->discinfo.first_track_last_session;

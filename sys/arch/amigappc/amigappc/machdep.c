@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.32.44.1 2009/05/04 08:10:36 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.32.44.2 2009/08/19 18:45:56 yamt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,217 +32,563 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32.44.1 2009/05/04 08:10:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32.44.2 2009/08/19 18:45:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 
 #include <sys/param.h>
-#include <sys/buf.h>
-#include <sys/exec.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/syslog.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
+#include <sys/reboot.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/autoconf.h>
 #include <machine/powerpc.h>
-#include <machine/bat.h>
-#include <machine/mtpr.h>
-#include <machine/trap.h>
-#include <machine/hid.h>
-#include <machine/cpu.h>
+#include <machine/stdarg.h>
+
+#include <powerpc/oea/bat.h>
+#include <powerpc/pic/picvar.h>
+
+#include <dev/cons.h>
 
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/cia.h>
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/isr.h>
+#include <amiga/amiga/memlist.h>
+#include <amigappc/amigappc/p5reg.h>
+
+#include "fd.h"
+#include "ser.h"
+
+/* prototypes */
+void show_me_regs(void);
+
+extern void setup_amiga_intr(void);
+#if NSER > 0
+extern void ser_outintr(void);
+extern void serintr(void);
+#endif
+#if NFD > 0
+extern void fdintr(int);
+#endif
+
+/* PIC interrupt handler type */
+typedef int (*ih_t)(void *);
 
 /*
- * Global variables used here and there
- * from macppc/machdep.c
+ * patched by some devices at attach time (currently, only the coms)
  */
-struct pcb *curpcb;
-struct pmap *curpm;
-struct proc *fpuproc;
+int amiga_serialspl = 4;
 
-extern struct user *proc0paddr;
+/*
+ * current open serial device speed;  used by some SCSI drivers to reduce
+ * DMA transfer lengths.
+ */
+int ser_open_speed;
 
-/* from amiga/machdep.c */
+#define AMIGAMEMREGIONS 8
+static struct mem_region physmemr[AMIGAMEMREGIONS], availmemr[AMIGAMEMREGIONS];
 char cpu_model[80];
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
 
-/* XXX: should be in extintr.c */
-volatile int cpl, ipending, astpending, tickspending;
-int imask[NIPL];
+/* interrupt handler chains for level2 and level6 interrupt */
+struct isr *isr_ports;
+struct isr *isr_exter;
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
+extern void *startsym, *endsym;
 
-struct vm_map *mb_map = NULL;
-struct vm_map *phys_map = NULL;
+void
+add_isr(struct isr *isr)
+{
+	struct isr **p, *q;
 
-struct bat battable[16];
-extern int aga_enable, eclockfreq;
+	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
 
-#define PPCMEMREGIONS 32
-static struct mem_region PPCmem[PPCMEMREGIONS + 1], PPCavail[PPCMEMREGIONS + 3];
+	while ((q = *p) != NULL)
+		p = &q->isr_forw;
+	isr->isr_forw = NULL;
+	*p = isr;
+#if 0 /* XXX always enabled */
+	/* enable interrupt */
+	custom.intena = isr->isr_ipl == 2 ?
+	    INTF_SETCLR | INTF_PORTS :
+	    INTF_SETCLR | INTF_EXTER;
+#endif
+}
 
-void show_me_regs(void);
+void
+remove_isr(struct isr *isr)
+{
+	struct isr **p, *q;
+
+	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+
+	while ((q = *p) != NULL && q != isr)
+		p = &q->isr_forw;
+	if (q)
+		*p = q->isr_forw;
+	else
+		panic("remove_isr: handler not registered");
+#if 0 /* XXX always enabled, why disable? */
+	/* disable interrupt if no more handlers */
+	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+	if (*p == NULL) {
+		custom.intena = isr->isr_ipl == 6 ?
+		    INTF_EXTER : INTF_PORTS;
+	}
+#endif
+}
+
+static void
+ports_intr(struct isr **p)
+{
+	struct isr *q;
+
+	while ((q = *p) != NULL) {
+		if ((q->isr_intr)(q->isr_arg))
+			break;
+		p = &q->isr_forw;
+	}
+	if (q == NULL)
+		ciaa_intr();  /* ciaa handles keyboard and parallel port */
+}
+
+static void
+exter_intr(struct isr **p)
+{
+	struct isr *q;
+
+	while ((q = *p) != NULL) {
+		if ((q->isr_intr)(q->isr_arg))
+			break;
+		p = &q->isr_forw;
+	}
+	/*
+	 * XXX ciab_intr() is not needed, neither the timers nor the
+	 * floppy disk FGL interrupt
+	 */
+}
+
+static void
+amigappc_identify(void)
+{
+	extern u_long ticks_per_sec, ns_per_tick;
+	static const char pll603[] = {10, 10, 10, 10, 20, 20, 25, 0,
+			30, 0, 40, 0, 15,0, 35, 0};
+	static const char pll604[] = {10, 10, 70, 10, 20, 65, 25, 45,
+			30, 55, 40, 50, 15, 60, 35, 0};
+	const char *mach, *pup, *cpuname;
+	const char *p5type_p = (const char *)0xf00010;
+	register int pvr, hid1;
+	int cpu = 604;
+	int cpuclock, busclock;
+
+	/*
+	 * PVR holds the CPU-type and version while
+         * HID1 holds the PLL configuration
+	 */
+	__asm ("mfpvr %0; mfspr %1,1009" : "=r"(pvr), "=r"(hid1));
+
+	/* Amiga types which can run a PPC board */
+	if (is_a4000()) {
+		mach = "Amiga 4000";
+	}
+	else if (is_a3000()) {
+		mach = "Amiga 3000";
+	}
+	else {
+		mach = "Amiga 1200";
+	}
+
+	/* find CPU type - BlizzardPPC has 603e, CyberstormPPC has 604e */
+	switch (pvr >> 16) {
+	case 3:
+		cpuname = "603";
+		cpu = 603;
+		break;
+	case 4:
+		cpuname = "604";
+		cpu = 604;
+		break;
+	case 6:
+		cpuname = "603e";
+		cpu = 603;
+		break;
+	case 7:
+		cpuname = "603e+";
+		cpu = 603;
+		break;
+	case 9:
+	case 10:
+		cpuname = "604e";
+		cpu = 604;
+		break;
+	default:
+		cpuname = "unknown";
+		break;
+	}
+
+	switch (p5type_p[0]) {
+	case 'D':
+		pup = "[PowerUP]";
+		break;
+	case 'E':
+		pup = "[CSPPC]";
+		break;
+	case 'F':
+		pup = "[CS Mk.III]";
+		break;
+	case 'I':
+		pup = "[BlizzardPPC]";
+		break;
+	default:
+		pup = "";
+		break;
+	}
+
+	/* XXX busclock can be measured with CIA-timers */
+	switch (p5type_p[1]) {
+	case 'A':
+		busclock = 60000000;
+		break;
+	/* case B, C, D */
+	default:
+		busclock = 66666667;
+		break;
+	}
+
+	/*
+	 * compute cpuclock based on PLL configuration
+	 */
+	if (cpu == 603)
+		cpuclock = busclock * pll603[hid1>>28 & 0xf] / 10;
+	else /* 604 */
+		cpuclock = busclock * pll604[hid1>>28 & 0xf] / 10;
+
+	snprintf(cpu_model, sizeof(cpu_model),
+	    "%s %s (%s v%d.%d %d MHz, busclk %d MHz)", mach, pup, cpuname,
+	    pvr>>8 & 0xff, pvr & 0xff, cpuclock/1000000, busclock/1000000);
+
+	/*
+	 * set timebase
+	 */
+	ticks_per_sec = busclock / 4;
+	ns_per_tick = 1000000000 / ticks_per_sec;
+}
+
+static void
+amigappc_reboot(void)
+{
+
+	/*
+	 * reboot CSPPC/BPPC
+	 */
+	if (!is_a1200()) {
+		P5write(P5_REG_LOCK,0x60);
+		P5write(P5_REG_LOCK,0x50);
+		P5write(P5_REG_LOCK,0x30);
+		P5write(P5_REG_SHADOW,P5_SET_CLEAR|P5_SHADOW);
+		P5write(P5_REG_LOCK,0x00);
+	}
+	else
+		P5write(P5_BPPC_MAGIC,0x00);
+
+	P5write(P5_REG_LOCK,0x60);
+	P5write(P5_REG_LOCK,0x50);
+	P5write(P5_REG_LOCK,0x30);
+	P5write(P5_REG_SHADOW,P5_SELF_RESET);
+	P5write(P5_REG_RESET,P5_AMIGA_RESET);
+}
+
+static void
+amigappc_install_handlers(void)
+{
+
+#if NSER > 0
+	intr_establish(INTB_TBE, IST_LEVEL, IPL_SOFTCLOCK, (ih_t)ser_outintr, NULL);
+	intr_establish(INTB_RBF, IST_LEVEL, IPL_SERIAL, (ih_t)serintr, NULL);
+#endif
+
+#if NFD > 0
+	intr_establish(INTB_DSKBLK, IST_LEVEL, IPL_SOFTCLOCK, (ih_t)fdintr, 0);
+#endif
+
+	intr_establish(INTB_PORTS, IST_LEVEL, IPL_SOFTCLOCK, (ih_t)ports_intr,
+	    &isr_ports);
+
+	intr_establish(INTB_BLIT, IST_LEVEL, IPL_BIO, (ih_t)blitter_handler,
+	    NULL);
+	intr_establish(INTB_COPER, IST_LEVEL, IPL_BIO, (ih_t)copper_handler,
+	    NULL);
+	intr_establish(INTB_VERTB, IST_LEVEL, IPL_BIO, (ih_t)vbl_handler,
+	    NULL);
+
+	intr_establish(INTB_AUD0, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
+	    NULL);
+	intr_establish(INTB_AUD1, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
+	    NULL);
+	intr_establish(INTB_AUD2, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
+	    NULL);
+	intr_establish(INTB_AUD3, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
+	    NULL);
+
+	intr_establish(INTB_EXTER, IST_LEVEL, IPL_CLOCK, (ih_t)exter_intr,
+	    &isr_exter);
+}
+
+static void
+amigappc_bat_add(paddr_t pa, register_t len, register_t prot)
+{
+	static int ni = 0, nd = 0;
+	const u_int i = pa >> 28;
+
+	battable[i].batl = BATL(pa, prot, BAT_PP_RW);
+	battable[i].batu = BATU(pa, len, BAT_Vs);
+
+	/*
+	 * Let's start loading the BAT registers.
+	 */
+	if (!(prot & (BAT_I|BAT_G))) {
+		switch (ni) {
+		case 0:
+			__asm volatile ("isync");
+			__asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
+			    ::	"r"(battable[i].batl),
+				"r"(battable[i].batu));
+			__asm volatile ("isync");
+			ni = 1;
+			break;
+		case 1:
+			__asm volatile ("isync");
+			__asm volatile ("mtibatl 1,%0; mtibatu 1,%1;"
+			    ::	"r"(battable[i].batl),
+				"r"(battable[i].batu));
+			__asm volatile ("isync");
+			ni = 2;
+			break;
+		case 2:
+			__asm volatile ("isync");
+			__asm volatile ("mtibatl 2,%0; mtibatu 2,%1;"
+			    ::	"r"(battable[i].batl),
+				"r"(battable[i].batu));
+			__asm volatile ("isync");
+			ni = 3;
+			break;
+		case 3:
+			__asm volatile ("isync");
+			__asm volatile ("mtibatl 3,%0; mtibatu 3,%1;"
+			    ::	"r"(battable[i].batl),
+				"r"(battable[i].batu));
+			__asm volatile ("isync");
+			ni = 4;
+			break;
+		default:
+			break;
+		}
+	}
+	switch (nd) {
+	case 0:
+		__asm volatile ("isync");
+		__asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1;"
+		    ::	"r"(battable[i].batl),
+			"r"(battable[i].batu));
+		__asm volatile ("isync");
+		nd = 1;
+		break;
+	case 1:
+		__asm volatile ("isync");
+		__asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
+		    ::	"r"(battable[i].batl),
+			"r"(battable[i].batu));
+		__asm volatile ("isync");
+		nd = 2;
+		break;
+	case 2:
+		__asm volatile ("isync");
+		__asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1;"
+		    ::	"r"(battable[i].batl),
+			"r"(battable[i].batu));
+		__asm volatile ("isync");
+		nd = 3;
+		break;
+	case 3:
+		__asm volatile ("isync");
+		__asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1;"
+		    ::	"r"(battable[i].batl),
+			"r"(battable[i].batu));
+		__asm volatile ("isync");
+		nd = 4;
+		break;
+	default:
+		break;
+	}
+}
+
+static void
+amigappc_batinit(paddr_t pa, ...)
+{
+	va_list ap;
+	register_t msr = mfmsr();
+
+	/*
+	 * Set BAT registers to unmapped to avoid overlapping mappings below.
+	 */
+	if ((msr & (PSL_IR|PSL_DR)) == 0) {
+		__asm volatile ("isync");
+		__asm volatile ("mtibatu 0,%0" :: "r"(0));
+		__asm volatile ("mtibatu 1,%0" :: "r"(0));
+		__asm volatile ("mtibatu 2,%0" :: "r"(0));
+		__asm volatile ("mtibatu 3,%0" :: "r"(0));
+		__asm volatile ("mtdbatu 0,%0" :: "r"(0));
+		__asm volatile ("mtdbatu 1,%0" :: "r"(0));
+		__asm volatile ("mtdbatu 2,%0" :: "r"(0));
+		__asm volatile ("mtdbatu 3,%0" :: "r"(0));
+		__asm volatile ("isync");
+	}
+
+	/*
+	 * Setup BATs
+	 */
+	va_start(ap, pa);
+	while (pa != ~0) {
+		register_t len = va_arg(ap, register_t);
+		register_t prot = va_arg(ap, register_t);
+
+		amigappc_bat_add(pa, len, prot);
+		pa = va_arg(ap, paddr_t);
+	}
+	va_end(ap);
+}
+
+#if 0
+/*
+ * customized oea_startup(), supports up to 64k msgbuf at 0xfff70000
+ */
+static void
+amigappc_startup(const char *model)
+{
+	uintptr_t sz;
+	void *v;
+	vaddr_t minaddr, maxaddr;
+	char pbuf[9];
+
+	KASSERT(curcpu() != NULL);
+	KASSERT(lwp0.l_cpu != NULL);
+	KASSERT(curcpu()->ci_intstk != 0);
+	KASSERT(curcpu()->ci_intrdepth == -1);
+
+        sz = round_page(MSGBUFSIZE);
+	v = (void *)0xfff70000;
+	initmsgbuf(v, sz);
+
+	printf("%s%s", copyright, version);
+	if (model != NULL)
+		printf("Model: %s\n", model);
+	cpu_identify(NULL, 0);
+
+	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
+	printf("total memory = %s\n", pbuf);
+
+	/*
+	 * Allocate away the pages that map to 0xDEA[CDE]xxxx.  Do this after
+	 * the bufpages are allocated in case they overlap since it's not
+	 * fatal if we can't allocate these.
+	 */
+	if (KERNEL_SR == 13 || KERNEL2_SR == 14) {
+		int error;
+		minaddr = 0xDEAC0000;
+		error = uvm_map(kernel_map, &minaddr, 0x30000,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
+				UVM_ADV_NORMAL, UVM_FLAG_FIXED));
+		if (error != 0 || minaddr != 0xDEAC0000)
+			printf("oea_startup: failed to allocate DEAD "
+			    "ZONE: error=%d\n", error);
+	}
+ 
+	minaddr = 0;
+
+	/*
+	 * Allocate a submap for physio
+	 */
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 VM_PHYS_SIZE, 0, FALSE, NULL);
+
+#ifndef PMAP_MAP_POOLPAGE
+	/*
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
+	 * are allocated via the pool allocator, and we use direct-mapped
+	 * pool pages.
+	 */
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, FALSE, NULL);
+#endif
+
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+}
+#endif
 
 void
 initppc(u_int startkernel, u_int endkernel)
 {
-	extern void cpu_fail(void);
-	extern adamint, adamintsize;
-	extern extint, extsize;
-	extern trapcode, trapsize;
-	extern alitrap, alisize;
-	extern dsitrap, dsisize;
-	extern isitrap, isisize;
-	extern decrint, decrsize;
-	extern tlbimiss, tlbimsize;
-	extern tlbdlmiss, tlbdlmsize;
-	extern tlbdsmiss, tlbdsmsize;
-#ifdef DDB
-	extern ddblow, ddbsize;
-#endif
-#ifdef IPKDB
-	extern ipkdblow, ipkdbsize;
-#endif
-	int exc, scratch;
-
-	/* force memory mapping */
-	PPCmem[0].start = 0x8000000;
-	PPCmem[0].size  = 0x5f80000;
-	PPCmem[1].start = 0x7c00000;
-	PPCmem[1].size  = 0x0400000;
-	PPCmem[2].start = 0x0;
-	PPCmem[2].size  = 0x0;
-
-	PPCavail[0].start = 0x8000000;
-	PPCavail[0].size  = 0x5f80000;
-	PPCavail[1].start = (0x7c00000 + endkernel + PGOFSET) & ~PGOFSET;
-	PPCavail[1].size  = 0x8000000 - PPCavail[1].start;
-/*
-	PPCavail[1].start = 0x7c00000;
-	PPCavail[1].size  = 0x0400000;
-*/
-	PPCavail[2].start = 0x0;
-	PPCavail[2].size  = 0x0;
-
-	CHIPMEMADDR = 0x0;
-	chipmem_start = 0x0;
-	chipmem_end  = 0x200000;
-
-	CIAADDR = 0xbfd000;
-	CIAAbase = CIAADDR + 0x1001;
-	CIABbase = CIAADDR;
-
-	CUSTOMADDR = 0xdff000;
-	CUSTOMbase = CUSTOMADDR;
-
-	eclockfreq = 709379;
-
-	aga_enable = 1;
-	machineid = 4000 << 16;
-
-	/* Initialize BAT tables */
-	battable[0].batl = BATL(0x00000000, BAT_I|BAT_G, BAT_PP_RW);
-	battable[0].batu = BATU(0x00000000, BAT_BL_16M, BAT_Vs);
-	battable[1].batl = BATL(0x08000000, 0, BAT_PP_RW);
-	battable[1].batu = BATU(0x08000000, BAT_BL_128M, BAT_Vs);
-	battable[2].batl = BATL(0x07000000, 0, BAT_PP_RW);
-	battable[2].batu = BATU(0x07000000, BAT_BL_16M, BAT_Vs);
-	battable[3].batl = BATL(0xfff00000, 0, BAT_PP_RW);
-	battable[3].batu = BATU(0xfff00000, BAT_BL_512K, BAT_Vs);
-
-	/* Load BAT registers */
-	__asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
-		"mtdbatl 0,%0; mtdbatu 0,%1" ::
-		"r"(battable[0].batl), "r"(battable[0].batu));
-	__asm volatile ("mtibatl 1,%0; mtibatu 1,%1;"
-		"mtdbatl 1,%0; mtdbatu 1,%1" ::
-		"r"(battable[1].batl), "r"(battable[1].batu));
-	__asm volatile ("mtibatl 2,%0; mtibatu 2,%1;"
-		"mtdbatl 2,%0; mtdbatu 2,%1" ::
-		"r"(battable[2].batl), "r"(battable[2].batu));
-	__asm volatile ("mtibatl 3,%0; mtibatu 3,%1;"
-		"mtdbatl 3,%0; mtdbatu 3,%1" ::
-		"r"(battable[3].batl), "r"(battable[3].batu));
-
-	proc0.p_addr = proc0paddr;
-	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
-	curpcb = &proc0paddr->u_pcb;
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+	struct boot_memseg *ms;
+	u_int i, r;
 
 	/*
-	 * Set up trap vectors
+	 * amigappc memory region set
 	 */
-	for (exc = EXC_RSVD + EXC_UPPER; exc <= EXC_LAST + EXC_UPPER; exc += 0x100) {
-		switch (exc - EXC_UPPER) {
-		default:
-			memcpy((void *)exc, &trapcode, (size_t)&trapsize);
-			break;
-		case EXC_MCHK:
-			memcpy((void *)exc, &adamint, (size_t)&adamintsize);
-			break;
-		case EXC_EXI:
-			memcpy((void *)exc, &extint, (size_t)&extsize);
+	ms = &memlist->m_seg[0];
+	for (i=0, r=0; i<memlist->m_nseg; i++, ms++) {
+		if (ms->ms_attrib & MEMF_FAST) {
 			/*
-			 * This one is (potentially) installed during autoconf
+			 * XXX Only recognize the memory segment in which
+			 * the kernel resides, for now
 			 */
-			break;
-		case EXC_ALI:
-			memcpy((void *)exc, &alitrap, (size_t)&alisize);
-			break;
-		case EXC_DSI:
-			memcpy((void *)exc, &dsitrap, (size_t)&dsisize);
-			break;
-		case EXC_ISI:
-			memcpy((void *)exc, &isitrap, (size_t)&isisize);
-			break;
-		case EXC_DECR:
-			memcpy((void *)exc, &decrint, (size_t)&decrsize);
-			break;
-		case EXC_IMISS:
-			memcpy((void *)exc, &tlbimiss, (size_t)&tlbimsize);
-			break;
-		case EXC_DLMISS:
-			memcpy((void *)exc, &tlbdlmiss, (size_t)&tlbdlmsize);
-			break;
-		case EXC_DSMISS:
-			memcpy((void *)exc, &tlbdsmiss, (size_t)&tlbdsmsize);
-			break;
-
-#if defined(DDB) || defined(IPKDB)
-		case EXC_PGM:
-		case EXC_TRC:
-		case EXC_BPT:
-#if defined(DDB)
-			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
-#else
-			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
-#endif
-			break;
-#endif /* DDB || IPKDB */
+			if (ms->ms_start <= startkernel &&
+			    ms->ms_start + ms->ms_size > endkernel) {
+				physmemr[r].start = (paddr_t)ms->ms_start;
+				physmemr[r].size = (psize_t)ms->ms_size & ~PGOFSET;
+				availmemr[r].start = (endkernel + PGOFSET) & ~PGOFSET;
+				availmemr[r].size  = (physmemr[0].start +
+						      physmemr[0].size)
+						     - availmemr[0].start;
+			}
+			r++;
 		}
 	}
-
-	/* External interrupt handler install
-	*/
-	__syncicache((void *)(EXC_RST + EXC_UPPER), EXC_LAST - EXC_RST + 0x100);
+	physmemr[r].start = 0;
+	physmemr[r].size = 0;
+	availmemr[r].start = 0;
+	availmemr[r].size = 0;
+	if (r == 0)
+		panic("initppc: no suitable memory segment found");
 
 	/*
-	 * Enable translation and interrupts
+	 * Initialize BAT tables.
 	 */
-	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync" :
-		"=r"(scratch) : "K"(PSL_EE|PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+	if (!is_a1200()) {
+		/* A3000 or A4000 */
+		amigappc_batinit(0x00000000, BAT_BL_16M, BAT_I|BAT_G,
+		    0x08000000, BAT_BL_128M, 0,
+		    0xfff00000, BAT_BL_512K, 0,
+		    0x40000000, BAT_BL_256M, BAT_I|BAT_G,
+		    ~0);
+	}
+	else {
+		panic("A1200 BPPC batinit?");
+	}
+
+	/*
+	 * Set up trap vectors and interrupt handler
+	 */
+	oea_init(NULL);
+
+	/* XXX bus_space_init() not needed here */
 
 	/*
 	 * Set the page size
@@ -253,107 +599,167 @@ initppc(u_int startkernel, u_int endkernel)
 	 * Initialize pmap module
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
+
+	/*
+	 * CPU model, bus clock, timebase
+	 */
+	amigappc_identify();
+
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 }
 
-
-/* XXX: for a while here, from intr.h */
-volatile int
-splraise(int ncpl)
+/*
+ * This is called during initppc, before the system is really initialized.
+ * It shall provide the total and the available regions of RAM.
+ * Both lists must have a zero-size entry as terminator.
+ * The available regions need not take the kernel into account, but needs
+ * to provide space for two additional entry beyond the terminating one.
+ */
+void
+mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
-	int ocpl;
-	volatile unsigned char *p5_ipl = (void *)0xf60030;
 
-	ocpl = ~(*p5_ipl) & 7;
+	*memp = physmemr;
+	*availp = availmemr;
+}
 
-	__asm volatile("sync; eieio\n");	/* don't reorder.... */
+/*
+ * Machine dependent startup code
+ */
+void
+cpu_startup(void)
+{
+	int msr;
 
-	/*custom.intreq = 0x7fff;*/
-	if (ncpl > ocpl) {
-		/* disable int */
-		/*p5_ipl = 0xc0;*/
-		/* clear bits */
-		*p5_ipl = 7;
-		/* set new priority */
-		*p5_ipl = 0x80 | (~ncpl & 7);
-		/* enable int */
-		/*p5_ipl = 0x40;*/
+	/*
+	 * hello world
+	 */
+	oea_startup(cpu_model);
+
+	/* Setup interrupts */
+	pic_init();
+	setup_amiga_intr();
+	amigappc_install_handlers();
+
+	oea_install_extint(pic_ext_intr);
+
+	/*
+	 * Now allow hardware interrupts.
+	 */
+	splhigh();
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+	    :	"=r"(msr)
+	    :	"K"(PSL_EE));
+
+#if 0 /* XXX Not in amiga bus.h - fix it? */
+	/*
+	 * Now that we have VM, malloc's are OK in bus_space.
+	 */
+	bus_space_mallocok();
+#endif
+}
+
+/*
+ * consinit
+ * Initialize system console.
+ */
+void
+consinit(void)
+{
+
+	custom_chips_init();
+	/*
+	** Initialize the console before we print anything out.
+	*/
+	cninit();
+}
+
+/*
+ * Halt or reboot the machine after syncing/dumping according to howto
+ */
+void
+cpu_reboot(int howto, char *what)
+{
+	static int syncing;
+
+	if (cold) {
+		howto |= RB_HALT;
+		goto halt_sys;
 	}
 
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return (ocpl);
-}
-
-volatile void
-splx(int ncpl)
-{
-	volatile unsigned char *p5_ipl = (void *)0xf60030;
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-
-/*	if (ipending & ~ncpl)
-		do_pending_int();*/
-
-	custom.intreq = custom.intreqr;
-	/* disable int */
-	/*p5_ipl = 0xc0;*/
-	/* clear bits */
-	*p5_ipl = 0x07;
-	/* set new priority */
-	*p5_ipl = 0x80 | (~ncpl & 7);
-	/* enable int */
-	/*p5_ipl = 0x40;*/
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-}
-
-volatile int
-spllower(int ncpl)
-{
-	int ocpl;
-	volatile unsigned char *p5_ipl = (void *)0xf60030;
-
-	ocpl = ~(*p5_ipl) & 7;
-
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-
-/*	if (ipending & ~ncpl)
-		do_pending_int();*/
-
-	/*custom.intreq = 0x7fff;*/
-	if (ncpl < ocpl) {
-		/* disable int */
-		/*p5_ipl = 0xc0;*/
-		/* clear bits */
-		*p5_ipl = 7;
-		/* set new priority */
-		*p5_ipl = 0x80 | (~ncpl & 7);
-		/* enable int */
-		/*p5_ipl = 0x40;*/
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && syncing == 0) {
+		syncing = 1;
+		vfs_shutdown();		/* sync */
+		resettodr();		/* set wall clock */
 	}
 
-	__asm volatile("sync; eieio\n");	/* reorder protect */
-	return (ocpl);
+	/* Disable intr */
+	splhigh();
+
+	/* Do dump if requested */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		oea_dumpsys();
+
+halt_sys:
+	doshutdownhooks();
+
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* for proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
+	}
+
+	printf("rebooting...\n\n");
+	delay(1000000);
+	amigappc_reboot();
+
+	for (;;);
+	/* NOTREACHED */
 }
 
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-volatile void
-softintr(int ipl)
+/*
+ * Try to emulate the functionality from m68k/m68k/sys_machdep.c
+ * used by several amiga drivers.
+ */
+int
+dma_cachectl(void *addr, int len)
 {
-	int msrsave;
+#if 0 /* XXX */
+	paddr_t pa, end;
+	int inc = curcpu()->ci_ci.dcache_line_size;
 
-	__asm volatile("mfmsr %0" : "=r"(msrsave));
-	__asm volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-	ipending |= 1 << ipl;
-	__asm volatile("mtmsr %0" :: "r"(msrsave));
+	pa = kvtop(addr);
+	for (end = pa + len; pa < end; pa += inc)
+		__asm volatile("dcbf 0,%0" :: "r"(pa));
+	__asm volatile("sync");
+
+	pa = kvtop(addr);
+	for (end = pa + len; pa < end; pa += inc)
+		__asm volatile("icbi 0,%0" :: "r"(pa));
+	__asm volatile("isync");
+
+#endif
+	return 0;
 }
-/* XXX: end of intr.h */
-
 
 /* show PPC registers */
 void show_me_regs(void)
 {
 	register u_long	scr0, scr1, scr2, scr3;
+
+	__asm volatile ("mfmsr %0" : "=r"(scr0) :);
+	printf("MSR %08lx\n", scr0);
 
 	__asm volatile ("mfspr %0,1; mfspr %1,8; mfspr %2,9; mfspr %3,18"
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
@@ -409,376 +815,4 @@ void show_me_regs(void)
 		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
 	printf("MMCR0 %08lx\tMMCR1 %08lx\tSDA   %08lx\tSIA   %08lx\n",
 		scr0, scr1, scr2, scr3);
-}
-
-
-/*
- * This is called during initppc, before the system is really initialized.
- * It shall provide the total and the available regions of RAM.
- * Both lists must have a zero-size entry as terminator.
- * The available regions need not take the kernel into account, but needs
- * to provide space for two additional entry beyond the terminating one.
- */
-void
-mem_regions(struct mem_region **memp, struct mem_region **availp)
-{
-	*memp = PPCmem;
-	*availp = PPCavail;
-}
-
-
-/* XXX */
-void
-do_pending_int(void)
-{
-	__asm volatile ("sync");
-}
-
-/*
- * Interrupt handler
- */
-void
-intrhand(void)
-{
-	register unsigned short ireq;
-
-	ireq = custom.intreqr;
-
-	/* transmit buffer empty */
-	if (ireq & INTF_TBE) {
-#if NSER > 0
-		ser_outintr();
-#else
-		custom.intreq = INTF_TBE;
-#endif
-	}
-
-	/* disk block */
-	if (ireq & INTF_DSKBLK) {
-#if NFD > 0
-		fdintr(0);
-#endif
-		custom.intreq = INTF_DSKBLK;
-	}
-
-	/* software */
-	if (ireq & INTF_SOFTINT) {
-		custom.intreq = INTF_SOFTINT;
-	}
-
-	/* ports */
-	if (ireq & INTF_PORTS) {
-		ciaa_intr();
-		custom.intreq = INTF_PORTS;
-	}
-
-	/* vertical blank */
-	if (ireq & INTF_VERTB) {
-		vbl_handler();
-	}
-
-	/* blitter */
-	if (ireq & INTF_BLIT) {
-		blitter_handler();
-	}
-
-	/* copper */
-	if (ireq & INTF_COPER) {
-		copper_handler();
-	}
-}
-
-
-struct isr *isr_ports;
-struct isr *isr_exter;
-
-void
-add_isr(struct isr *isr)
-{
-	struct isr **p, *q;
-
-	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
-
-	while ((q = *p) != NULL) {
-		p = &q->isr_forw;
-	}
-	isr->isr_forw = NULL;
-	*p = isr;
-	/* enable interrupt */
-	custom.intena = isr->isr_ipl == 2 ? INTF_SETCLR | INTF_PORTS :
-						INTF_SETCLR | INTF_EXTER;
-}
-
-void
-remove_isr(struct isr *isr)
-{
-	struct isr **p, *q;
-
-	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
-
-	while ((q = *p) != NULL && q != isr) {
-		p = &q->isr_forw;
-	}
-	if (q) {
-		*p = q->isr_forw;
-	}
-	else {
-		panic("remove_isr: handler not registered");
-	}
-
-	/* disable interrupt if no more handlers */
-	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
-	if (*p == NULL) {
-		custom.intena = isr->isr_ipl == 6 ? INTF_EXTER : INTF_PORTS;
-	}
-}
-
-
-/*
- * this is a handy package to have asynchronously executed
- * function calls executed at very low interrupt priority.
- * Example for use is keyboard repeat, where the repeat 
- * handler running at splclock() triggers such a (hardware
- * aided) software interrupt.
- * Note: the installed functions are currently called in a
- * LIFO fashion, might want to change this to FIFO
- * later.
- */
-struct si_callback {
-	struct si_callback *next;
-	void (*function)(void *rock1, void *rock2);
-	void *rock1, *rock2;
-};
-static struct si_callback *si_callbacks;
-static struct si_callback *si_free;
-#ifdef DIAGNOSTIC
-static int ncb;		/* number of callback blocks allocated */
-static int ncbd;	/* number of callback blocks dynamically allocated */
-#endif
-
-void
-alloc_sicallback(void)
-{
-	struct si_callback *si;
-	int s;
-
-	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
-	if (si == NULL)	{
-		return;
-	}
-	s = splhigh();
-	si->next = si_free;
-	si_free = si;
-	splx(s);
-#ifdef DIAGNOSTIC
-	++ncb;
-#endif
-}
-
-
-/*
-int
-sys_sysarch(void)
-{
-return 0;
-}*/
-
-void
-identifycpu(void)
-{
-	register int pvr, hid1;
-	char *mach, *pup, *cpu;
-	static const char pll[] = {10, 10, 70, 0, 20, 65, 25, 45,
-			30, 55, 40, 50, 15, 60, 35, 0};
-	const char *p5type_p = (const char *)0xf00010;
-	int cpuclock, busclock;
-
-	/* Amiga type */
-	if (is_a4000()) {
-		mach = "Amiga 4000";
-	}
-	else if (is_a3000()) {
-		mach = "Amiga 3000";
-	}
-	else {
-		mach = "Amiga 1200";
-	}
-
-	__asm ("mfpvr %0; mfspr %1,1009" : "=r"(pvr), "=r"(hid1));
-
-	/* XXX removethis */printf("p5serial = %8s\n", p5type_p);
-	switch (p5type_p[0]) {
-	case 'D':
-		pup = "[PowerUP]";
-		break;
-	case 'E':
-		pup = "[CSPPC]";
-		break;
-	case 'F':
-		pup = "[CS Mk.III]";
-		break;
-	case 'I':
-		pup = "[BlizzardPPC]";
-		break;
-	default:
-		pup = "";
-		break;
-	}
-
-	switch (p5type_p[1]) {
-	case 'A':
-		busclock = 60000000/4;
-		cpuclock = 600;
-		break;
-	/* case B, C, D */
-	default:
-		busclock = 66000000/4;
-		cpuclock = 666;
-		break;
-	}
-	/*
-	 * compute cpuclock based on PLL configuration in HID1
-	 * XXX: based on 604e, should work for 603e
-	 */
-	hid1 = hid1>>28 & 0xf;
-	cpuclock = cpuclock*pll[hid1]/100;
-
-	/* find CPU type */
-	switch (pvr >> 16) {
-	case 1:
-		cpu = "601";
-		break;
-	case 3:
-		cpu = "603";
-		break;
-	case 4:
-		cpu = "604";
-		break;
-	case 5:
-		cpu = "602";
-		break;
-	case 6:
-		cpu = "603e";
-		break;
-	case 7:
-		cpu = "603e+";
-		break;
-	case 8:
-		cpu = "750";
-		break;
-	case 9:
-	case 10:
-		cpu = "604e";
-		break;
-	case 12:
-		cpu = "7400";
-		break;
-	case 20:
-		cpu = "620";
-		break;
-	default:
-		cpu = "unknown";
-		break;
-	}
-
-	snprintf(cpu_model, sizeof(cpu_model), 
-		"%s %s (%s v%d.%d %d MHz, busclk %d kHz)", mach, pup, cpu,
-		pvr>>8 & 0xff, pvr & 0xff, cpuclock, busclock / 1000);
-	printf("%s\n", cpu_model);
-}
-
-/*
- * Machine dependent startup code
- */
-void
-cpu_startup(void)
-{
-	void *	v;
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	initmsgbuf((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
-
-	proc0.p_addr = proc0paddr;
-	v = (void *)proc0paddr + USPACE;
-
-	printf("%s%s", copyright, version);
-	identifycpu();
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
-}
-
-/*
- * consinit
- * Initialize system console.
- */
-void
-consinit(void)
-{
-	custom_chips_init();
-	/*
-	** Initialize the console before we print anything out.
-	*/
-	cninit();
-}
-
-/*
- * Halt or reboot the machine after syncing/dumping according to howto
- */
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing;
-	static char str[256];
-
-	howto = 0;
-}
-
-int
-lcsplx(int ipl)
-{
-	return spllower(ipl);   /* XXX */
-}
-
-/*
- * Convert kernel VA to physical address
- */
-int
-kvtop(void *addr)
-{
-	vaddr_t va;
-	paddr_t pa;
-	int off;
-	extern char end[];
-
-	if (addr < end)
-		return (int)addr;
-
-	va = trunc_page((vaddr_t)addr);
-	off = (int)addr - va;
-
-	if (pmap_extract(pmap_kernel(), va, &pa) == false) {
-		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
-		return (int)addr;
-	}
-
-	return((int)pa + off);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.4.2.2 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.4.2.3 2009/08/19 18:47:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.4.2.2 2009/05/04 08:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.4.2.3 2009/08/19 18:47:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -113,7 +113,7 @@ compat_50_netbsd32_mknod(struct lwp *l,
 		syscallarg(uint32_t) dev;
 	} */
 	return do_sys_mknod(l, SCARG_P32(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), retval);
+	    SCARG(uap, dev), retval, UIO_USERSPACE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.84.10.2 2009/05/04 08:10:43 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.84.10.3 2009/08/19 18:46:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -290,9 +290,6 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
-#define	PMAP_KMPAGE	0x00000040	/* Make uvm tell us when it allocates
-					 a page to be used for kernel memory */
-
 
 #if ARM_MMU_V6 > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))

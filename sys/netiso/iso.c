@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.49.2.2 2009/05/04 08:14:20 yamt Exp $	*/
+/*	$NetBSD: iso.c,v 1.49.2.3 2009/08/19 18:48:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.49.2.2 2009/05/04 08:14:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.49.2.3 2009/08/19 18:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,7 +733,7 @@ iso_ifwithidi(struct sockaddr *addr)
 				printf(" af same, args to iso_eqtype:\n");
 				printf("0x%x ", satosiso(ifa->ifa_addr)->siso_addr);
 				printf(" 0x%x\n",
-				    &satosiso(addr)->siso_addr));
+				    &satosiso(addr)->siso_addr);
 			}
 #endif
 

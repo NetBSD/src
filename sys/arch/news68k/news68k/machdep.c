@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70.10.1 2009/05/04 08:11:37 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.10.2 2009/08/19 18:46:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.10.1 2009/05/04 08:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.10.2 2009/08/19 18:46:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.10.1 2009/05/04 08:11:37 yamt Exp $
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.66.18.2 2009/05/16 10:41:52 yamt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.66.18.3 2009/08/19 18:48:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -170,6 +170,19 @@
  * GCC2 uses a new, peculiar __attribute__((attrs)) style.  All of
  * these work for GNU C++ (modulo a slight glitch in the C++ grammar
  * in the distribution version of 2.5.5).
+ *
+ * GCC defines a pure function as depending only on its arguments and
+ * global variables.  Typical examples are strlen and sqrt.
+ *
+ * GCC defines a const function as depending only on its arguments.
+ * Therefore calling a const function again with identical arguments
+ * will always produce the same result.
+ *
+ * Rounding modes for floating point operations are considered global
+ * variables and prevent sqrt from being a const function.
+ *
+ * Calls to const functions can be optimised away and moved around
+ * without limitations.
  */
 #if !__GNUC_PREREQ__(2, 0)
 #define __attribute__(x)
@@ -189,6 +202,12 @@
 #define	__pure		__const
 #else
 #define	__pure
+#endif
+
+#if __GNUC_PREREQ__(2, 5)
+#define	__constfunc	__attribute__((__const__))
+#else
+#define	__constfunc
 #endif
 
 #if __GNUC_PREREQ__(3, 0)
@@ -414,5 +433,15 @@
 #define	__SHIFTOUT(__x, __mask)	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 #define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 #define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
+
+/*
+ * Only to be used in other headers that are included from both c or c++
+ * NOT to be used in code.
+ */
+#ifdef __cplusplus
+#define __CAST(__dt, __st)	static_cast<__dt>(__st)
+#else
+#define __CAST(__dt, __st)	((__dt)(__st))
+#endif
 
 #endif /* !_SYS_CDEFS_H_ */

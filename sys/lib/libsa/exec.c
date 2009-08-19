@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.26 2008/03/25 21:23:50 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.26.4.1 2009/08/19 18:48:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,7 +38,7 @@
 #ifndef INSECURE
 #include <sys/stat.h>
 #endif
-#include <sys/exec.h>
+#include <sys/exec_aout.h>
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
 #else

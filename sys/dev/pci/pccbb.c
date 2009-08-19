@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.167.4.3 2009/06/20 07:20:23 yamt Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.167.4.4 2009/08/19 18:47:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167.4.3 2009/06/20 07:20:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167.4.4 2009/08/19 18:47:12 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -89,12 +89,12 @@ int pccbb_burstup = 1;
  * of delay() if you want to wait more than 1 ms.
  */
 static inline void
-delay_ms(int millis, void *param)
+delay_ms(int millis, struct pccbb_softc *sc)
 {
 	if (cold)
 		delay(millis * 1000);
 	else
-		tsleep(param, PWAIT, "pccbb", MAX(2, hz * millis / 1000));
+		kpause("pccbb", false, mstohz(millis), NULL);
 }
 
 int pcicbbmatch(device_t, cfdata_t, void *);
@@ -422,6 +422,9 @@ pccbbattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
+	mutex_init(&sc->sc_pwr_mtx, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_pwr_cv, "pccpwr");
+
 	callout_init(&sc->sc_insert_ch, 0);
 	callout_setfunc(&sc->sc_insert_ch, pci113x_insert, sc);
 
@@ -474,7 +477,7 @@ pccbbattach(device_t parent, device_t self, void *aux)
 			    &sc->sc_base_size)) {
 				aprint_error_dev(self,
 				    "can't map socket base address"
-				    " 0x%lx: io mode\n", 
+				    " 0x%lx: io mode\n",
 				    (unsigned long)sockbase);
 				/* give up... allocate reg space via rbus. */
 				pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
@@ -603,6 +606,10 @@ pccbbdetach(device_t self, int flags)
 
 	callout_stop(&sc->sc_insert_ch);
 	callout_destroy(&sc->sc_insert_ch);
+
+	mutex_destroy(&sc->sc_pwr_mtx);
+	cv_destroy(&sc->sc_pwr_cv);
+
 	return 0;
 }
 
@@ -1069,8 +1076,10 @@ pccbbintr(void *arg)
 	if (sockevent & CB_SOCKET_EVENT_POWER) {
 		DPRINTF(("Powercycling because of socket event\n"));
 		/* XXX: Does not happen when attaching a 16-bit card */
+		mutex_enter(&sc->sc_pwr_mtx);
 		sc->sc_pwrcycle++;
-		wakeup(&sc->sc_pwrcycle);
+		cv_signal(&sc->sc_pwr_cv);
+		mutex_exit(&sc->sc_pwr_mtx);
 	}
 
 	/* Sometimes a change of CSTSCHG# accompanies the first
@@ -1129,7 +1138,7 @@ pccbbintr(void *arg)
 			if (sc->sc_flags & CBB_INSERTING) {
 				callout_stop(&sc->sc_insert_ch);
 			}
-			callout_schedule(&sc->sc_insert_ch, hz / 5);
+			callout_schedule(&sc->sc_insert_ch, mstohz(200));
 			sc->sc_flags |= CBB_INSERTING;
 		}
 	}
@@ -1197,7 +1206,7 @@ pci113x_insert(void *arg)
 			/* who are you? */
 		}
 	} else {
-		callout_schedule(&sc->sc_insert_ch, hz / 10);
+		callout_schedule(&sc->sc_insert_ch, mstohz(100));
 	}
 }
 
@@ -1285,7 +1294,7 @@ pccbb_power(struct pccbb_softc *sc, int command)
 	u_int32_t status, osock_ctrl, sock_ctrl, reg_ctrl;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
-	int on = 0, pwrcycle, s, times;
+	int on = 0, pwrcycle, times;
 	struct timeval before, after, diff;
 
 	DPRINTF(("pccbb_power: %s and %s [0x%x]\n",
@@ -1352,13 +1361,13 @@ pccbb_power(struct pccbb_softc *sc, int command)
 		sock_ctrl |= CB_SOCKET_CTRL_VPP_12V;
 		break;
 	}
-
-	pwrcycle = sc->sc_pwrcycle;
 	aprint_debug_dev(sc->sc_dev, "osock_ctrl %#" PRIx32
 	    " sock_ctrl %#" PRIx32 "\n", osock_ctrl, sock_ctrl);
 
 	microtime(&before);
-	s = splbio();
+	mutex_enter(&sc->sc_pwr_mtx);
+	pwrcycle = sc->sc_pwrcycle;
+
 	bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
 
 	/*
@@ -1380,8 +1389,8 @@ pccbb_power(struct pccbb_softc *sc, int command)
 		if (cold)
 			DELAY(40 * 1000);
 		else {
-			(void)tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr",
-			    hz / 25);
+			(void)cv_timedwait(&sc->sc_pwr_cv, &sc->sc_pwr_mtx,
+			    mstohz(40));
 			if (pwrcycle == sc->sc_pwrcycle)
 				continue;
 		}
@@ -1391,7 +1400,7 @@ pccbb_power(struct pccbb_softc *sc, int command)
 		if ((status & CB_SOCKET_STAT_PWRCYCLE) == 0 && !on)
 			break;
 	}
-	splx(s);
+	mutex_exit(&sc->sc_pwr_mtx);
 	microtime(&after);
 	timersub(&after, &before, &diff);
 	aprint_debug_dev(sc->sc_dev, "wait took%s %lld.%06lds\n",
@@ -2307,7 +2316,7 @@ pccbb_pcmcia_delay(struct pccbb_softc *sc, int timo, const char *wmesg)
 		panic("pccbb_pcmcia_delay: called in interrupt context");
 #endif
 	DPRINTF(("pccbb_pcmcia_delay: \"%s\", sleep %d ms\n", wmesg, timo));
-	tsleep(pccbb_pcmcia_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
+	kpause(wmesg, false, max(mstohz(timo), 1), NULL);
 }
 
 /*
@@ -2372,11 +2381,11 @@ pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
 	 * Vcc Rising Time (Tpr) = 100ms (handled in pccbb_power() above)
 	 * RESET Width (Th (Hi-z RESET)) = 1ms
 	 * RESET Width (Tw (RESET)) = 10us
-	 *      
+	 *
 	 * some machines require some more time to be settled
 	 * for example old toshiba topic bridges!
 	 * (100ms is added here).
-	 */             
+	 */
 	pccbb_pcmcia_delay(sc, 200 + 1, "pccen1");
 
 	/* negate RESET */

@@ -1,18 +1,18 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.10 2007/12/11 04:55:03 lukem Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.10.12.1 2009/08/19 18:47:32 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_rcmd_pxy.c,v 1.41.2.7 2006/07/14 06:12:18 darrenr Exp
+ * Id: ip_rcmd_pxy.c,v 1.41.2.10 2008/11/06 21:18:36 darrenr Exp
  *
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.10 2007/12/11 04:55:03 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.10.12.1 2009/08/19 18:47:32 yamt Exp $");
 
 #define	IPF_RCMD_PROXY
 
@@ -156,8 +156,6 @@ nat_t *nat;
 	 * other way.
 	 */
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
-	fi.fin_state = NULL;
-	fi.fin_nat = NULL;
 	fi.fin_flx |= FI_IGNORE;
 	fi.fin_data[0] = sp;
 	fi.fin_data[1] = 0;
@@ -197,19 +195,21 @@ nat_t *nat;
 			nflags |= NAT_NOTRULEPORT;
 		}
 
+		MUTEX_ENTER(&ipf_nat_new);
 		nat2 = nat_new(&fi, nat->nat_ptr, NULL, nflags, nat->nat_dir);
+		MUTEX_EXIT(&ipf_nat_new);
 
 		if (nat2 != NULL) {
 			(void) nat_proto(&fi, nat2, IPN_TCP);
-			nat_update(&fi, nat2, nat2->nat_ptr);
+			MUTEX_ENTER(&nat2->nat_lock);
+			nat_update(&fi, nat2);
+			MUTEX_EXIT(&nat2->nat_lock);
 			fi.fin_ifp = NULL;
 			if (nat->nat_dir == NAT_INBOUND) {
 				fi.fin_fi.fi_daddr = nat->nat_inip.s_addr;
 				ip->ip_dst = nat->nat_inip;
 			}
 			(void) fr_addstate(&fi, NULL, SI_W_DPORT);
-			if (fi.fin_state != NULL)
-				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_len = slen;
 		ip->ip_src = swip;

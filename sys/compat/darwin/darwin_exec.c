@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.53.10.2 2009/05/04 08:12:18 yamt Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.53.10.3 2009/08/19 18:46:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.53.10.2 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.53.10.3 2009/08/19 18:46:57 yamt Exp $");
 
 #include "opt_syscall_debug.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.53.10.2 2009/05/04 08:12:18 yamt E
 
 #include <machine/darwin_machdep.h>
 
+#if defined(NWSDISPLAY) && NWSDISPLAY > 0
 /* Redefined from sys/dev/wscons/wsdisplay.c */
 extern const struct cdevsw wsdisplay_cdevsw;
+#endif
 
 static void darwin_e_proc_exec(struct proc *, struct exec_package *);
 static void darwin_e_proc_fork(struct proc *, struct proc *, int);
@@ -308,7 +311,6 @@ static void
 darwin_e_proc_exit(struct proc *p)
 {
 	struct darwin_emuldata *ded;
-	int error, mode;
 	struct lwp *l;
 
 	ded = p->p_emuldata;
@@ -332,10 +334,13 @@ darwin_e_proc_exit(struct proc *p)
 		wakeup(ded->ded_hidsystem_finished);
 	}
 
+#if defined(NWSDISPLAY) && NWSDISPLAY > 0
 	/*
 	 * Restore text mode and black and white colormap
 	 */
 	if (ded->ded_wsdev != NODEV) {
+		int error, mode;
+
 		mode = WSDISPLAYIO_MODE_EMUL;
 		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
 		    WSDISPLAYIO_SMODE, (void *)&mode, 0, l);
@@ -381,9 +386,9 @@ darwin_e_proc_exit(struct proc *p)
 			printf("Cannot revert colormap (error %d)\n", error);
 #endif
 	    }
-#endif
-
+#endif /* 0 */
 	}
+#endif /* defined(NWSDISPLAY) && NWSDISPLAY > 0 */
 
 	/*
 	 * Cleanup mach_emuldata part of darwin_emuldata

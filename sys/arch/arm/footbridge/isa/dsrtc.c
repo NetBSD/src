@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.10 2007/01/06 16:18:18 christos Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.10.50.1 2009/08/19 18:45:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.10 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.10.50.1 2009/08/19 18:45:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ dsrtc_read(todr_chip_handle_t tc, struct clock_ymdhms *dt)
 }
 
 /* device and attach structures */
-CFATTACH_DECL(ds1687rtc, sizeof(struct dsrtc_softc),
+CFATTACH_DECL_NEW(ds1687rtc, sizeof(struct dsrtc_softc),
     dsrtcmatch, dsrtcattach, NULL, NULL);
 
 /*
@@ -190,7 +190,7 @@ CFATTACH_DECL(ds1687rtc, sizeof(struct dsrtc_softc),
  */
 
 int
-dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
+dsrtcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -215,15 +215,15 @@ dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 void
-dsrtcattach(struct device *parent, struct device *self, void *aux)
+dsrtcattach(device_t parent, device_t self, void *aux)
 {
-	struct dsrtc_softc *sc = (struct dsrtc_softc *)self;
+	struct dsrtc_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	
 	sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {
-		printf(": cannot map I/O space\n");
+		aprint_error(": cannot map I/O space\n");
 		return;
 	}
 
@@ -231,8 +231,8 @@ dsrtcattach(struct device *parent, struct device *self, void *aux)
 	ds1687_write(sc, RTC_REG_B, RTC_REG_B_BINARY | RTC_REG_B_24_HOUR);
 
 	if (!(ds1687_read(sc, RTC_REG_D) & RTC_REG_D_VRT))
-		printf(": lithium cell is dead, RTC unreliable");
-	printf("\n");
+		aprint_error(": lithium cell is dead, RTC unreliable");
+	aprint_normal("\n");
 
 	sc->sc_todr.todr_gettime_ymdhms = dsrtc_read;
 	sc->sc_todr.todr_settime_ymdhms = dsrtc_write;

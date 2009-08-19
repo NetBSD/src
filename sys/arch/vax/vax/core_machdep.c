@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1.12.2 2009/05/04 08:12:04 yamt Exp $	     */
+/*	$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:46:49 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.2 2009/05/04 08:12:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:46:49 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.2 2009/05/04 08:12:04 yamt E
 #include <sys/core.h>
 #include <sys/mount.h>
 #include <sys/device.h>
+
+#include <sys/exec_aout.h>
 
 #include <uvm/uvm_extern.h>
 

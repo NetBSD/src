@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.4.6.2 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.4.6.3 2009/08/19 18:48:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -67,9 +67,9 @@ struct mq_attr {
 /* Default size of the message */
 #define	MQ_DEF_MSGSIZE		1024
 
-/* Size/bits and MSB for the queue array */
+/* Size/bits and index of reserved queue */
 #define	MQ_PQSIZE		32
-#define	MQ_PQMSB		0x80000000U
+#define	MQ_PQRESQ		0
 
 /* Structure of the message queue */
 struct mqueue {
@@ -89,7 +89,7 @@ struct mqueue {
 	gid_t			mq_egid;
 	/* Reference counter, queue array and bitmap */
 	u_int			mq_refcnt;
-	TAILQ_HEAD(, mq_msg)	mq_head[MQ_PQSIZE + 1];
+	TAILQ_HEAD(, mq_msg)	mq_head[1 + MQ_PQSIZE];
 	uint32_t		mq_bitmap;
 	/* Entry of the global list */
 	LIST_ENTRY(mqueue)	mq_list;
@@ -108,7 +108,6 @@ struct mq_msg {
 };
 
 /* Prototypes */
-void	mqueue_sysinit(void);
 void	mqueue_print_list(void (*pr)(const char *, ...));
 int	abstimeout2timo(struct timespec *, int *);
 int	mq_send1(lwp_t *, mqd_t, const char *, size_t, unsigned, int);

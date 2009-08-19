@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.67.4.3 2009/05/16 10:41:14 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.67.4.4 2009/08/19 18:46:19 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.3 2009/05/16 10:41:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.4 2009/08/19 18:46:19 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -173,7 +173,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.3 2009/05/16 10:41:14 yamt Exp $")
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
-#ifdef XEN3
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
 #if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
 	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
@@ -190,9 +189,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.3 2009/05/16 10:41:14 yamt Exp $")
 #ifdef PAE
 	.ascii  ",PAE=yes[extended-cr3]"
 #endif
-#else /* !XEN3 */
-	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
-#endif /* XEN3 */
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB=yes"
@@ -727,11 +723,7 @@ start:
 	popfl
 
 	cld
-#ifdef XEN3
 	movl	%esp, %ebx		# save start of available space
-#else
-	movl    %esi,%ebx               # save start_info pointer
-#endif
 	movl	$_RELOC(tmpstk),%esp	# bootstrap stack end location
 
         /* Clear BSS first so that there are no surprises... */
@@ -779,13 +771,13 @@ start:
 	addl	$4,%esp
 	call 	_C_LABEL(main)
 
-#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+#if defined(XEN) && !defined(XEN_COMPAT_030001)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .org HYPERCALL_PAGE_OFFSET
 ENTRY(hypercall_page)
 .skip 0x1000
-#endif /* defined(XEN3) && !defined(XEN_COMPAT_030001) */
+#endif /* defined(XEN) && !defined(XEN_COMPAT_030001) */
 
 /*
  * void lgdt_finish(void);

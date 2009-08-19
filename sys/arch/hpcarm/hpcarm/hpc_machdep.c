@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.84.2.2 2009/05/04 08:11:10 yamt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.84.2.3 2009/08/19 18:46:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.84.2.2 2009/05/04 08:11:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.84.2.3 2009/08/19 18:46:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -125,7 +125,6 @@ paddr_t physical_start;
 paddr_t physical_freestart;
 paddr_t physical_freeend;
 paddr_t physical_end;
-int physmem = 0;
 
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */

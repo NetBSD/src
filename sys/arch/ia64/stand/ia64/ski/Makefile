@@ -20,14 +20,14 @@ CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/include
 CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/include/${MACHINE_ARCH}
 
 CPPFLAGS+= 	-DLIBKERN_OPTIMISE_SPACE \
-		-DHEAP_VARIABLE 
+		-DHEAP_VARIABLE
 
-# Always add MI sources 
+# Always add MI sources
 .PATH: ${.CURDIR}/../../common
 .include "${.CURDIR}/../../common/Makefile.inc"
 
 LDSCRIPT=	${.CURDIR}/ldscript.${MACHINE_ARCH}
-LDFLAGS=	-Wl,-T${LDSCRIPT} -symbolic -nostdlib #-shared 
+LDFLAGS=	-Wl,-T${LDSCRIPT} -symbolic -nostdlib #-shared
 
 ${PROG}: ${LDSCRIPT}
 
@@ -38,9 +38,9 @@ NEWVERSWHAT=	"ia64 SKI boot" ${MACHINE_ARCH}
 vers.c: ${VERSIONFILE} ${SOURCES}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
-DPADD=		${LIBLIST}	
+DPADD=		${LIBLIST}
 
 # Cross dependencies between LIB(SA|KERN). Need to elaborate below.
-LDADD=		${LIBLIST} ${LIBLIST} 
+LDADD=		${LIBLIST} ${LIBLIST}
 
 .include <bsd.prog.mk>

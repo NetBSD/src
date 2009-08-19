@@ -1,4 +1,4 @@
-/*	$NetBSD: sal_stub.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: sal_stub.c,v 1.2.74.1 2009/08/19 18:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -33,6 +33,7 @@
 #include <machine/md_var.h>
 #include <machine/sal.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 #include "libski.h"

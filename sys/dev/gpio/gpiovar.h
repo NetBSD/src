@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.4.70.2 2009/05/04 08:12:38 yamt Exp $ */
+/* $NetBSD: gpiovar.h,v 1.4.70.3 2009/08/19 18:47:06 yamt Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -68,12 +68,24 @@ struct gpio_attach_args {
 	void *			ga_gpio;
 	int			ga_offset;
 	u_int32_t		ga_mask;
+	char			*ga_dvname;
 };
 
 /* GPIO pin map */
 struct gpio_pinmap {
 	int *	pm_map;			/* pin map */
 	int	pm_size;		/* map size */
+};
+
+struct gpio_dev {
+	device_t		sc_dev;	/* the gpio device */
+	LIST_ENTRY(gpio_dev)	sc_next;
+};
+
+struct gpio_name {
+	char			gp_name[GPIOMAXNAME];
+	int			gp_pin;
+	LIST_ENTRY(gpio_name)	gp_next;
 };
 
 int	gpio_pin_map(void *, int, u_int32_t, struct gpio_pinmap *);

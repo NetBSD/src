@@ -9,11 +9,9 @@
     *  SB1250 specification level:  10/21/02
     *  BCM1280 specification level:  11/24/03
     *  
-    *  Author:  Mitch Lichtenberg
-    *  
     *********************************************************************  
     *
-    *  Copyright 2000,2001,2002,2003
+    *  Copyright 2000,2001,2002,2003,2004
     *  Broadcom Corporation. All rights reserved.
     *  
     *  This software is furnished under license and may be used and 
@@ -94,12 +92,12 @@
 #define M_SMB_ERROR                 _SB_MAKEMASK1(1)
 #define M_SMB_ERROR_TYPE            _SB_MAKEMASK1(2)
 
-#if SIBYTE_HDR_FEATURE_CHIP(1280) || SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS3) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 #define S_SMB_SCL_IN                5
 #define M_SMB_SCL_IN                _SB_MAKEMASK1(S_SMB_SCL_IN)
 #define V_SMB_SCL_IN(x)             _SB_MAKEVALUE(x,S_SMB_SCL_IN)
 #define G_SMB_SCL_IN(x)             _SB_GETVALUE(x,S_SMB_SCL_IN,M_SMB_SCL_IN)
-#endif /* 1280 || 1250 PASS3 || 112x PASS1 */
+#endif /* 1250 PASS3 || 112x PASS1 || 1480 */
 
 #define S_SMB_REF                   6
 #define M_SMB_REF                   _SB_MAKEMASK1(S_SMB_REF)
@@ -169,11 +167,11 @@
 #define V_SPEC_MB(x)                _SB_MAKEVALUE(x,S_SPEC_PEC)
 
 
-#if SIBYTE_HDR_FEATURE_CHIP(1280) || SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1) || SIBYTE_HDR_FEATURE_CHIP(1480)
 
 #define S_SMB_CMDH                  8
-#define M_SMB_CMDH                  _SB_MAKEMASK(8,S_SMBH_CMD)
-#define V_SMB_CMDH(x)               _SB_MAKEVALUE(x,S_SMBH_CMD)
+#define M_SMB_CMDH                  _SB_MAKEMASK(8,S_SMB_CMDH)
+#define V_SMB_CMDH(x)               _SB_MAKEVALUE(x,S_SMB_CMDH)
 
 #define M_SMB_EXTEND		    _SB_MAKEMASK1(14)
 
@@ -212,11 +210,11 @@
 
 #define V_SMB_AFMT_NONE		    V_SMB_AFMT(K_SMB_AFMT_NONE)
 #define V_SMB_AFMT_ADDR		    V_SMB_AFMT(K_SMB_AFMT_ADDR)
-#define V_SMB_AFMT_ADDR_1BYTE	    V_SMB_AFMT(K_SMB_AFMT_ADDR_1BYTE)
-#define V_SMB_AFMT_ADDR_2BYTE	    V_SMB_AFMT(K_SMB_AFMT_ADDR_2BYTE)
+#define V_SMB_AFMT_ADDR_CMD1BYTE    V_SMB_AFMT(K_SMB_AFMT_ADDR_CMD1BYTE)
+#define V_SMB_AFMT_ADDR_CMD2BYTE    V_SMB_AFMT(K_SMB_AFMT_ADDR_CMD2BYTE)
 
 #define M_SMB_DIR		    _SB_MAKEMASK1(13)
 
-#endif /* 1280 || 1250 PASS2 || 112x PASS1 */
+#endif /* 1250 PASS2 || 112x PASS1 || 1480 */
 
 #endif

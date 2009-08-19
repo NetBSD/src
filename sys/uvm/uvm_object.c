@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.5.10.1 2008/05/16 02:26:01 yamt Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.5.10.2 2009/08/19 18:48:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,13 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.5.10.1 2008/05/16 02:26:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.5.10.2 2009/08/19 18:48:36 yamt Exp $");
 
+#include "opt_ddb.h"
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_ddb.h>
 
 /* We will fetch this page count per step */
 #define	FETCH_PAGECOUNT	16
@@ -159,3 +161,41 @@ uobj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 	mutex_exit(&uvm_pageqlock);
 	mutex_exit(&uobj->vmobjlock);
 }
+
+#if defined(DDB) || defined(DEBUGPRINT)
+
+/*
+ * uvm_object_printit: actually prints the object
+ */
+
+void
+uvm_object_printit(struct uvm_object *uobj, bool full,
+    void (*pr)(const char *, ...))
+{
+	struct vm_page *pg;
+	int cnt = 0;
+
+	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
+	    uobj, mutex_owned(&uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
+		(*pr)("refs=<SYSTEM>\n");
+	else
+		(*pr)("refs=%d\n", uobj->uo_refs);
+
+	if (!full) {
+		return;
+	}
+	(*pr)("  PAGES <pg,offset>:\n  ");
+	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
+		cnt++;
+		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
+		if ((cnt % 3) == 0) {
+			(*pr)("\n  ");
+		}
+	}
+	if ((cnt % 3) != 0) {
+		(*pr)("\n");
+	}
+}
+
+#endif /* DDB || DEBUGPRINT */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.13 2006/06/12 15:39:01 tsutsui Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.13.64.1 2009/08/19 18:45:58 yamt Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -57,6 +57,7 @@ struct arc_isa_bus {
         void    *(*ic_intr_establish)(isa_chipset_tag_t, int, int, int,
                     int (*)(void *), void *);
         void    (*ic_intr_disestablish)(isa_chipset_tag_t, void *);
+	void	(*ic_detach_hook)(isa_chipset_tag_t, device_t);
 };
 
 
@@ -65,6 +66,8 @@ struct arc_isa_bus {
  */
 #define isa_attach_hook(p, s, a)                             /*           \
     (*(a)->iba_ic->ic_attach_hook)((p), (s), (a)) */
+#define	isa_detach_hook(c, s)						\
+    (*(c)->ic_detach_hook)((c), (s))
 #define	isa_intr_evcnt(c, i)					\
     (*(c)->ic_intr_evcnt)((c)->ic_data, (i))
 #define isa_intr_establish(c, i, t, l, f, a)                         \
@@ -74,6 +77,8 @@ struct arc_isa_bus {
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
+#define	isa_dmadestroy(ic)						\
+	_isa_dmadestroy(&(ic)->ic_dmastate)
 #define	isa_dmacascade(ic, c)						\
 	_isa_dmacascade(&(ic)->ic_dmastate, (c))
 #define	isa_dmamaxsize(ic, c)						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.90.10.1 2009/08/19 18:48:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,11 +50,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.90.10.1 2009/08/19 18:48:36 yamt Exp $");
 
-#include "fs_nfs.h"
 #include "opt_uvmhist.h"
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,34 +370,6 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 	KASSERT(vp->v_size <= newsize);
 	vp->v_writesize = newsize;
 	mutex_exit(&vp->v_interlock);
-}
-
-/*
- * uvm_vnp_zerorange:  set a range of bytes in a file to zero.
- */
-
-void
-uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
-{
-	void *win;
-	int flags;
-
-	/*
-	 * XXXUBC invent kzero() and use it
-	 */
-
-	while (len) {
-		vsize_t bytelen = len;
-
-		win = ubc_alloc(&vp->v_uobj, off, &bytelen, UVM_ADV_NORMAL,
-		    UBC_WRITE);
-		memset(win, 0, bytelen);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
-
-		off += bytelen;
-		len -= bytelen;
-	}
 }
 
 bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.10.2.1 2009/05/04 08:10:45 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.10.2.2 2009/08/19 18:46:00 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.10.2.1 2009/05/04 08:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.10.2.2 2009/08/19 18:46:00 yamt Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -850,10 +850,6 @@ struct pxa2x0_gpioconf pxa27x_com_ffuart_gpioconf[] = {
 	{  -1 }
 };
 
-struct pxa2x0_gpioconf pxa27x_com_hwuart_gpioconf[] = {
-	{  -1 }
-};
-
 struct pxa2x0_gpioconf pxa27x_com_stuart_gpioconf[] = {
 	{  46, GPIO_CLR | GPIO_ALT_FN_2_IN },	/* STD_RXD */
 	{  47, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* STD_TXD */
@@ -875,6 +871,16 @@ struct pxa2x0_gpioconf pxa27x_i2s_gpioconf[] = {
 	{  -1 }
 };
 
+struct pxa2x0_gpioconf pxa27x_ohci_gpioconf[] = {
+#if 0	/* We can select and/or. */
+	{  88, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* USBHPWR1 */
+	{  89, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* USBHPEN1 */
+	{ 119, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* USBHPWR2 */
+	{ 120, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* USBHPEN2 */
+#endif
+	{  -1 }
+};
+
 struct pxa2x0_gpioconf pxa27x_pcic_gpioconf[] = {
 	{  48, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPOE */
 	{  49, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPWE */
@@ -883,7 +889,6 @@ struct pxa2x0_gpioconf pxa27x_pcic_gpioconf[] = {
 	{  55, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPREG */
 	{  56, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* nPWAIT */
 	{  57, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* nIOIS16 */
-	{ 104, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* pSKTSEL */
 
 #if 0	/* We can select and/or. */
 	{  85, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE1 */
@@ -893,6 +898,9 @@ struct pxa2x0_gpioconf pxa27x_pcic_gpioconf[] = {
 	{  54, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* nPCE2 */
 	{  78, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE2 */
 	{ 105, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* nPCE2 */
+
+	{  79, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* pSKTSEL */
+	{ 104, GPIO_CLR | GPIO_ALT_FN_1_OUT },	/* pSKTSEL */
 #endif
 
 	{  -1 }
@@ -921,14 +929,11 @@ struct pxa2x0_gpioconf pxa27x_pxaacu_gpioconf[] = {
 
 struct pxa2x0_gpioconf pxa27x_pxamci_gpioconf[] = {
 	{  32, GPIO_CLR | GPIO_ALT_FN_2_OUT },	/* MMCLK */
-	{ 112, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMCMD */
 	{  92, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<0> */
-
-#if 0	/* optional */
 	{ 109, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<1> */
 	{ 110, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<2>/MMCCS<0> */
 	{ 111, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMDAT<3>/MMCCS<1> */
-#endif
+	{ 112, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* MMCMD */
 
 	{  -1 }
 };

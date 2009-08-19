@@ -1,4 +1,4 @@
-/*	$NetBSD: plumisa_machdep.c,v 1.8.78.1 2008/05/16 02:22:29 yamt Exp $ */
+/*	$NetBSD: plumisa_machdep.c,v 1.8.78.2 2009/08/19 18:46:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumisa_machdep.c,v 1.8.78.1 2008/05/16 02:22:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumisa_machdep.c,v 1.8.78.2 2009/08/19 18:46:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,11 @@ isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
 {
 
+}
+
+void
+isa_detach_hook(isa_chipset_tag_t, device_t self)
+{
 }
 
 void *

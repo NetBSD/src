@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.24 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.algor,v 1.24.10.1 2009/08/19 18:45:52 yamt Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -101,11 +101,7 @@ file	arch/algor/pci/vtpbc.c			vtpbc
 attach	vtpbc at mainbus with vtpbc_mainbus
 file	arch/algor/dev/vtpbc_mainbus.c		vtpbc_mainbus
 
-device	bonito: pcibus
-file	arch/mips/bonito/bonito_pci.c		bonito
-file	arch/mips/bonito/bonito_iobc.c		bonito
-
-attach	bonito at mainbus with bonito_mainbus
+include "arch/mips/conf/files.bonito"
 file	arch/algor/dev/bonito_mainbus.c		bonito_mainbus
 
 device	pcib: isabus

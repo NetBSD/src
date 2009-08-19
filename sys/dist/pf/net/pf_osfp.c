@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_osfp.c,v 1.7.12.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: pf_osfp.c,v 1.7.12.2 2009/08/19 18:47:34 yamt Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.12 2006/12/13 18:14:10 itojun Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_osfp.c,v 1.7.12.1 2009/05/04 08:13:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_osfp.c,v 1.7.12.2 2009/08/19 18:47:34 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -314,17 +314,6 @@ pf_osfp_initialize(void)
 #endif /* !__NetBSD__ */
 	SLIST_INIT(&pf_osfp_list);
 }
-
-#ifdef _LKM
-void
-pf_osfp_destroy(void)
-{
-	pf_osfp_flush();
-
-	pool_destroy(&pf_osfp_pl);
-	pool_destroy(&pf_osfp_entry_pl);
-}
-#endif /* _LKM */
 
 /* Flush the fingerprint list */
 void

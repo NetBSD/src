@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.8.62.1 2009/05/04 08:13:19 yamt Exp $ */
+/*	$NetBSD: fbio.h,v 1.8.62.2 2009/08/19 18:47:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -73,8 +73,9 @@
 #define FBTYPE_CREATOR		22	/* ffb creator or elite */
 #define FBTYPE_GENERIC_PCI	23	/* machfb, ofb and so on */
 #define FBTYPE_AG10E		24	/* Fujitsu AG-10e */
+#define FBTYPE_SUNTCX		25	/* Sun TCX, S24  */
 
-#define	FBTYPE_LASTPLUSONE	25	/* max number of fbs (change as add) */
+#define	FBTYPE_LASTPLUSONE	26	/* max number of fbs (change as add) */
 
 /*
  * XXX These really shouldn't be here, but this is what the pmax

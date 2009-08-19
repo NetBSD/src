@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.17.4.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.17.4.3 2009/08/19 18:48:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.17.4.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.17.4.3 2009/08/19 18:48:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -461,7 +461,7 @@ devsw_blk2name(devmajor_t bmajor)
 /*
  * Convert char major number to device driver name.
  */
-const char*
+const char *
 cdevsw_getname(devmajor_t major)
 {
 	const char *name;
@@ -486,7 +486,7 @@ cdevsw_getname(devmajor_t major)
 /*
  * Convert block major number to device driver name.
  */
-const char*
+const char *
 bdevsw_getname(devmajor_t major)
 {
 	const char *name;

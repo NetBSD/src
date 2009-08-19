@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.44.1 2008/05/16 02:22:42 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.44.2 2009/08/19 18:46:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -129,6 +129,9 @@ struct _bus_space {
 
 	/* get kernel virtual address */
 	void *		(*bs_vaddr)(void *, bus_space_handle_t);
+
+	/* mmap bus space for user */
+	paddr_t		(*bs_mmap)(void *, bus_addr_t, off_t, int, int);
 
 	/* read (single) */
 	uint8_t	(*bs_r_1)(void *, bus_space_handle_t,
@@ -290,6 +293,12 @@ do {									\
  */
 #define bus_space_vaddr(t, h) \
 	(*(t)->bs_vaddr)((t)->bs_cookie, (h))
+
+/*
+ * MMap bus space for a user application.
+ */
+#define bus_space_mmap(t, a, o, p, f)					\
+	(*(t)->bs_mmap)((t)->bs_cookie, (a), (o), (p), (f))
 
 /*
  * Bus barrier operations.  The SH3 does not currently require

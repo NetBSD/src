@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.12.4.2 2009/05/04 08:11:21 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.12.4.3 2009/08/19 18:46:21 yamt Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.4.2 2009/05/04 08:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.4.3 2009/08/19 18:46:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ bool		pmap_initialized;	/* Has pmap_init completed? */
 u_long		pmap_pages_stolen;	/* instrumentation */
 
 static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
-struct pmap *const kernel_pmap_ptr = &kernel_map_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 
 static vaddr_t	kernel_vm_end;	/* VA of last avail page ( end of kernel Address Space ) */
 
@@ -287,7 +287,7 @@ static void
 pmap_remove_page(pmap_t pmap, vaddr_t va);
 
 
-static u_int32_t pmap_allocate_rid(void);
+static uint32_t pmap_allocate_rid(void);
 static void pmap_free_rid(uint32_t rid);
 
 static vaddr_t
@@ -556,7 +556,7 @@ pmap_bootstrap(void)
 		       pmap_ptc_e_count2,
 		       pmap_ptc_e_stride1,
 		       pmap_ptc_e_stride2);
-	mutex_init(&pmap_ptc_lock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&pmap_ptc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Setup RIDs. RIDs 0..7 are reserved for the kernel.
@@ -604,7 +604,7 @@ pmap_bootstrap(void)
 	 *      mtx_init(&pmap_ridmutex, "RID allocator lock", NULL, MTX_DEF);
 	 *	MTX_DEF can *sleep*.
 	 */
-	mutex_init(&pmap_rid_lock, MUTEX_ADAPTIVE, IPL_VM);
+	mutex_init(&pmap_rid_lock, MUTEX_DEFAULT, IPL_VM);
 
 
 	/*
@@ -622,7 +622,7 @@ pmap_bootstrap(void)
 	bufsz = buf_memcalc();
 	buf_setvalimit(bufsz);
 
-	nkpt = (((ubc_nwins << ubc_winshift) +
+	nkpt = (((ubc_nwins << ubc_winshift) + uvm_emap_size +
 		bufsz + 16 * NCARGS + pager_map_size) / PAGE_SIZE +
 		USRIOSIZE + (maxproc * UPAGES) + nkmempages) / NKPTEPG;
 
@@ -708,7 +708,7 @@ pmap_bootstrap(void)
 	if (bootverbose)
 		printf("Putting VHPT at 0x%lx\n", base);
 
-	mutex_init(&pmap_vhptlock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&pmap_vhptlock, MUTEX_DEFAULT, IPL_VM);
 
 	__asm __volatile("mov cr.pta=%0;; srlz.i;;" ::
 	    "r" (vhpt_base + (1<<8) + (pmap_vhpt_log2size<<2) + 1));
@@ -735,22 +735,22 @@ pmap_bootstrap(void)
 		pte[i].tag = 1UL << 63;	/* Invalid tag */
 		pte[i].chain = (uintptr_t)(pmap_vhpt_bucket + i);
 		/* Stolen memory is zeroed! */
-		mutex_init(&pmap_vhpt_bucket[i].lock, MUTEX_SPIN,
+		mutex_init(&pmap_vhpt_bucket[i].lock, MUTEX_DEFAULT,
 		    IPL_VM);
 	}
 
 	/*
 	 * Initialize the locks.
 	 */
-	mutex_init(&pmap_main_lock, MUTEX_ADAPTIVE, IPL_VM);
-	mutex_init(&pmap_all_pmaps_slock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&pmap_main_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&pmap_all_pmaps_slock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Initialize the kernel pmap (which is statically allocated).
 	 */
 	memset(pmap_kernel(), 0, sizeof(struct pmap));
 
-	mutex_init(&pmap_kernel()->pm_slock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&pmap_kernel()->pm_slock, MUTEX_DEFAULT, IPL_VM);
 	for (i = 0; i < 5; i++)
 		pmap_kernel()->pm_rid[i] = 0;
 	pmap_kernel()->pm_active = 1;
@@ -772,11 +772,12 @@ pmap_bootstrap(void)
 	 */
 	ia64_set_rr(IA64_RR_BASE(6), (6 << 8) | (IA64_ID_PAGE_SHIFT << 2));
 	ia64_set_rr(IA64_RR_BASE(7), (7 << 8) | (IA64_ID_PAGE_SHIFT << 2));
+	ia64_srlz_d();
 
 	/*
 	 * Clear out any random TLB entries left over from booting.
 	 */
-	/*XXX: look into API related stuff here */ pmap_invalidate_all(pmap_kernel());
+	pmap_invalidate_all(pmap_kernel());
 
 	map_gateway_page();
 }
@@ -1102,7 +1103,7 @@ pmap_create(void)
         TAILQ_INIT(&pmap->pm_pvlist);
         memset(&pmap->pm_stats, 0, sizeof (pmap->pm_stats) );
 
-	mutex_init(&pmap->pm_slock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&pmap->pm_slock, MUTEX_DEFAULT, IPL_VM);
 
 	mutex_enter(&pmap_all_pmaps_slock);
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
@@ -1252,8 +1253,10 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
         pte = pmap_find_vhpt(va);
         if (pte != NULL && pmap_present(pte))
                 pap = (paddr_t *) pmap_ppn(pte);
-	else
+	else {
+        	mutex_exit(&pmap->pm_slock);
 		return false;	
+	}
         pmap_install(oldpmap);
         mutex_exit(&pmap->pm_slock);
         return true;
@@ -1340,7 +1343,7 @@ pmap_reference(pmap_t pmap)
 {
 
 #ifdef DEBUG
-		printf("pmap_reference(%p)\n", pmap);
+	printf("pmap_reference(%p)\n", pmap);
 #endif
 
 	PMAP_LOCK(pmap);
@@ -1400,8 +1403,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
         bool managed, wired;
 	struct vm_page *pg;
 	int error = 0;
-
-	printf("Entered pmap_enter() \n");
 
         PMAP_MAP_TO_HEAD_LOCK();
         PMAP_LOCK(pmap);
@@ -1590,7 +1591,7 @@ pmap_switch(pmap_t pm)
 //                atomic_set_32(&pm->pm_active, PCPU_GET(cpumask));
         }
         curcpu()->ci_pmap = pm;
-        __asm __volatile("srlz.d");
+	ia64_srlz_d();
         return prevpm;
 }
 
@@ -1668,7 +1669,7 @@ pmap_invalidate_page(pmap_t pmap, vaddr_t va)
 static void
 pmap_invalidate_all_1(void *arg)
 {
-	u_int64_t addr;
+	uint64_t addr;
 	int i, j;
 	register_t psr;
 

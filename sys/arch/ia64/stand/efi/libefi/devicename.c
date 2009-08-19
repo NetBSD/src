@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.3 2006/11/24 19:38:55 christos Exp $	*/
+/*	$NetBSD: devicename.c,v 1.3.56.1 2009/08/19 18:46:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -31,6 +31,7 @@
 /* __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/devicename.c,v 1.3 2004/01/04 23:28:16 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <sys/disklabel.h>
 
 #include <bootstrap.h>

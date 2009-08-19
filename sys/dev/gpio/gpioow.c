@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.3.52.2 2009/05/04 08:12:38 yamt Exp $ */
+/* $NetBSD: gpioow.c,v 1.3.52.3 2009/08/19 18:47:05 yamt Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3.52.2 2009/05/04 08:12:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3.52.3 2009/08/19 18:47:05 yamt Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3.52.2 2009/05/04 08:12:38 yamt Exp $")
 struct gpioow_softc {
 	void *			sc_gpio;
 	struct gpio_pinmap	sc_map;
-	int			__map[GPIOOW_NPINS];
+	int			_map[GPIOOW_NPINS];
 
 	struct onewire_bus	sc_ow_bus;
 	device_t		sc_ow_dev;
@@ -74,9 +74,22 @@ static const struct onewire_bbops gpioow_bbops = {
 };
 
 int
-gpioow_match(device_t parent, cfdata_t cf,
-    void *aux)
+gpioow_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct gpio_attach_args *ga = aux;
+
+	if (strcmp(ga->ga_dvname, cf->cf_name))
+		return 0;
+
+	if (ga->ga_offset == -1)
+		return 0;
+
+	/* Check that we have enough pins */
+	if (gpio_npins(ga->ga_mask) != GPIOOW_NPINS) {
+		aprint_debug("%s: invalid pin mask 0x%02x/n", cf->cf_name,
+		    ga->ga_mask);
+		return 0;
+	}
 	return 1;
 }
 
@@ -88,47 +101,41 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 	struct onewirebus_attach_args oba;
 	int caps;
 
-	/* Check that we have enough pins */
-	if (gpio_npins(ga->ga_mask) != GPIOOW_NPINS) {
-		printf(": invalid pin mask\n");
-		return;
-	}
-
 	/* Map pins */
 	sc->sc_gpio = ga->ga_gpio;
-	sc->sc_map.pm_map = sc->__map;
+	sc->sc_map.pm_map = sc->_map;
 	if (gpio_pin_map(sc->sc_gpio, ga->ga_offset, ga->ga_mask,
 	    &sc->sc_map)) {
-		printf(": can't map pins\n");
+		aprint_error(": can't map pins\n");
 		return;
 	}
 
 	/* Configure data pin */
 	caps = gpio_pin_caps(sc->sc_gpio, &sc->sc_map, GPIOOW_PIN_DATA);
 	if (!(caps & GPIO_PIN_OUTPUT)) {
-		printf(": data pin is unable to drive output\n");
+		aprint_error(": data pin is unable to drive output\n");
 		goto fail;
 	}
 	if (!(caps & GPIO_PIN_INPUT)) {
-		printf(": data pin is unable to read input\n");
+		aprint_error(": data pin is unable to read input\n");
 		goto fail;
 	}
-	printf(": DATA[%d]", sc->sc_map.pm_map[GPIOOW_PIN_DATA]);
+	aprint_normal(": DATA[%d]", sc->sc_map.pm_map[GPIOOW_PIN_DATA]);
 	sc->sc_data = GPIO_PIN_OUTPUT;
 	if (caps & GPIO_PIN_OPENDRAIN) {
-		printf(" open-drain");
+		aprint_normal(" open-drain");
 		sc->sc_data |= GPIO_PIN_OPENDRAIN;
 	} else if ((caps & GPIO_PIN_PUSHPULL) && (caps & GPIO_PIN_TRISTATE)) {
-		printf(" push-pull tri-state");
+		aprint_normal(" push-pull tri-state");
 		sc->sc_data |= GPIO_PIN_PUSHPULL;
 	}
 	if (caps & GPIO_PIN_PULLUP) {
-		printf(" pull-up");
+		aprint_normal(" pull-up");
 		sc->sc_data |= GPIO_PIN_PULLUP;
 	}
 	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOOW_PIN_DATA, sc->sc_data);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Attach 1-Wire bus */
 	sc->sc_ow_bus.bus_cookie = sc;
@@ -139,6 +146,9 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 	oba.oba_bus = &sc->sc_ow_bus;
 	sc->sc_ow_dev = config_found(self, &oba, onewirebus_print);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error("%s: could not establish power handler\n",
+		    device_xname(self));
 	return;
 
 fail:
@@ -154,7 +164,11 @@ gpioow_detach(device_t self, int flags)
 	if (sc->sc_ow_dev != NULL)
 		rv = config_detach(sc->sc_ow_dev, flags);
 
-	return (rv);
+	if (!rv) {
+		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
+		pmf_device_deregister(self);
+	}
+	return rv;
 }
 
 int
@@ -165,15 +179,14 @@ gpioow_activate(device_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
 		if (sc->sc_ow_dev != NULL)
 			rv = config_deactivate(sc->sc_ow_dev);
 		break;
 	}
-
-	return (rv);
+	return rv;
 }
 
 int

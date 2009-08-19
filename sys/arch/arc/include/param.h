@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.24.78.1 2009/08/19 18:45:58 yamt Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -94,7 +94,6 @@
 #define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	arc
 #define	MACHINE		"arc"
-#define	MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)

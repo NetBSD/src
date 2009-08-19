@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.177.2.4 2009/07/18 14:53:22 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.177.2.5 2009/08/19 18:48:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.177.2.4 2009/07/18 14:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.177.2.5 2009/08/19 18:48:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1263,6 +1263,7 @@ fd_init(filedesc_t *fdp)
 #endif	/* DIAGNOSTIC */
 
 	fdp->fd_refcnt = 1;
+	fd_checkmaps(fdp);
 
 	return fdp;
 }

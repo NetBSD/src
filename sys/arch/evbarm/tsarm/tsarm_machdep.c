@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.6.10.2 2009/05/04 08:11:00 yamt Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.6.10.3 2009/08/19 18:46:10 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.6.10.2 2009/05/04 08:11:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.6.10.3 2009/08/19 18:46:10 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,7 +162,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_freeend_low;
 vm_offset_t physical_end;
 u_int free_pages;
-int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t irqstack;

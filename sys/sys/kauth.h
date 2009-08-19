@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.52.4.2 2009/05/16 10:41:53 yamt Exp $ */
+/* $NetBSD: kauth.h,v 1.52.4.3 2009/08/19 18:48:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -258,6 +258,9 @@ enum {
 	KAUTH_DEVICE_RND_SETPRIV,
 	KAUTH_DEVICE_BLUETOOTH_BCSP,
 	KAUTH_DEVICE_BLUETOOTH_BTUART,
+	KAUTH_DEVICE_GPIO_PINSET,
+	KAUTH_DEVICE_BLUETOOTH_SEND,
+	KAUTH_DEVICE_BLUETOOTH_RECV
 };
 
 /*

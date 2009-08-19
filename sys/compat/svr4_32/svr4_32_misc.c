@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.61.2.2 2009/05/04 08:12:28 yamt Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.61.2.3 2009/08/19 18:47:01 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.61.2.2 2009/05/04 08:12:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.61.2.3 2009/08/19 18:47:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,7 @@ svr4_32_mknod(struct lwp *l, register_t *retval, const char *path, svr4_32_mode_
 		SCARG(&ap, mode) = mode;
 		return sys_mkfifo(l, &ap, retval);
 	} else {
-		return do_sys_mknod(l, path, mode, dev, retval);
+		return do_sys_mknod(l, path, mode, dev, retval, UIO_USERSPACE);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.4.16.3 2009/06/20 07:20:38 yamt Exp $ */
+/* $NetBSD: videoio.h,v 1.4.16.4 2009/08/19 18:48:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -153,6 +153,28 @@ struct v4l2_buffer {
 	uint32_t	reserved;
 };
 
+struct v4l2_buffer32 {
+	uint32_t	index;
+	enum v4l2_buf_type type;
+	uint32_t	bytesused;
+	uint32_t	flags;
+	enum v4l2_field	field;
+	struct {
+		uint32_t tv_sec;
+		uint32_t tv_usec;
+	} timestamp;
+	struct v4l2_timecode timecode;
+	uint32_t	sequence;
+	enum v4l2_memory memory;
+	union {
+		uint32_t offset;
+		uint32_t userptr;
+	} m;
+	uint32_t	length;
+	uint32_t	input;
+	uint32_t	reserved;
+};
+
 struct v4l2_rect {
 	int32_t		left;
 	int32_t		top;
@@ -301,7 +323,7 @@ struct v4l2_format {
 		struct v4l2_vbi_format vbi;
 		uint8_t		raw_data[200];
 	} fmt;
-};
+} __attribute__((__packed__));
 
 struct v4l2_frequency {
 	uint32_t	tuner;
@@ -673,11 +695,14 @@ struct v4l2_requestbuffers {
 /* 6 and 7 are VIDIOC_[SG]_COMP, which are unsupported */
 #define VIDIOC_REQBUFS		_IOWR('V', 8, struct v4l2_requestbuffers)
 #define VIDIOC_QUERYBUF		_IOWR('V', 9, struct v4l2_buffer)
+#define VIDIOC_QUERYBUF32	_IOWR('V', 9, struct v4l2_buffer32)
 #define VIDIOC_G_FBUF		_IOR('V', 10, struct v4l2_framebuffer)
 #define VIDIOC_S_FBUF		_IOW('V', 11, struct v4l2_framebuffer)
 #define VIDIOC_OVERLAY		_IOW('V', 14, int)
 #define VIDIOC_QBUF		_IOWR('V', 15, struct v4l2_buffer)
+#define VIDIOC_QBUF32		_IOWR('V', 15, struct v4l2_buffer32)
 #define VIDIOC_DQBUF		_IOWR('V', 17, struct v4l2_buffer)
+#define VIDIOC_DQBUF32		_IOWR('V', 17, struct v4l2_buffer32)
 #define VIDIOC_STREAMON		_IOW('V', 18, int)
 #define VIDIOC_STREAMOFF	_IOW('V', 19, int)
 #define VIDIOC_G_PARM		_IOWR('V', 21, struct v4l2_streamparm)

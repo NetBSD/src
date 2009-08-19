@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1.12.2 2009/05/04 08:10:38 yamt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:45:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.2 2009/05/04 08:10:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:45:58 yamt Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.2 2009/05/04 08:10:38 yamt E
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+
+#include <sys/exec_aout.h>	/* for MID_* */
 
 #include <machine/reg.h>
 

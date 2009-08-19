@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_time_50.c,v 1.1.6.1 2009/05/04 08:12:17 yamt Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,10 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.6.1 2009/05/04 08:12:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_aio.h"
 #include "opt_ntp.h"
+#include "opt_mqueue.h"
 #endif
 
 #include <sys/param.h>
@@ -373,7 +368,7 @@ compat_50_sys_aio_suspend(struct lwp *l,
 		syscallarg(int) nent;
 		syscallarg(const struct timespec50 *) timeout;
 	} */
-#ifdef notyet
+#ifdef AIO
 	struct aiocb **list;
 	struct timespec ts;
 	struct timespec50 ts50;
@@ -542,6 +537,7 @@ compat_50_sys_mq_timedsend(struct lwp *l,
 		syscallarg(unsigned) msg_prio;
 		syscallarg(const struct timespec50 *) abs_timeout;
 	} */
+#ifdef MQUEUE
 	int t;
 	int error;
 	struct timespec50 ts50;
@@ -561,6 +557,9 @@ compat_50_sys_mq_timedsend(struct lwp *l,
 
 	return mq_send1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
 	    SCARG(uap, msg_len), SCARG(uap, msg_prio), t);
+#else
+	return ENOSYS;
+#endif
 }
 
 int
@@ -574,6 +573,7 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 		syscallarg(unsigned *) msg_prio;
 		syscallarg(const struct timespec50 *) abs_timeout;
 	} */
+#ifdef MQUEUE
 	int error, t;
 	ssize_t mlen;
 	struct timespec ts;
@@ -598,6 +598,9 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 		*retval = mlen;
 
 	return error;
+#else
+	return ENOSYS;
+#endif
 }
 
 static int

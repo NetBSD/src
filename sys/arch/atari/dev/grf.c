@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.36.44.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: grf.c,v 1.36.44.2 2009/08/19 18:46:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36.44.1 2009/05/04 08:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36.44.2 2009/08/19 18:46:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -240,10 +240,10 @@ grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 	switch (cmd) {
 	case OGRFIOCGINFO:
 	        /* argl.. no bank-member.. */
-	  	memcpy( data, (void *)&gp->g_display, sizeof(struct grfinfo)-4);
+	  	memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo)-4);
 		break;
 	case GRFIOCGINFO:
-		memcpy( data, (void *)&gp->g_display, sizeof(struct grfinfo));
+		memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo));
 		break;
 	case GRFIOCON:
 		error = grfon(dev);

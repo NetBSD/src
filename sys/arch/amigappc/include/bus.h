@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.72.1 2009/05/04 08:10:36 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.72.2 2009/08/19 18:45:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -35,6 +35,8 @@
 
 #include <sys/types.h>
 
+/* for public use: */
+
 /*
  * Memory addresses (in bus space)
  */
@@ -48,44 +50,30 @@ typedef u_int32_t bus_size_t;
 typedef struct bus_space_tag *bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
 
+/* unpublic, but needed by method implementors */
+
 /*
  * Lazyness macros for function declarations.
  */
 
 #define bsr(what, typ) \
-	typ (what)(bus_space_tag_t, bus_space_handle_t, bus_size_t)
+	typ (what)(bus_space_handle_t, bus_addr_t)
 
 #define bsw(what, typ) \
-	void (what)(bus_space_tag_t, bus_space_handle_t, bus_size_t, typ)
+	void (what)(bus_space_handle_t, bus_addr_t, unsigned)
 
 #define bsrm(what, typ) \
-	void (what)(bus_space_tag_t, bus_space_handle_t, bus_size_t, \
-		typ *, bus_size_t)
+	void (what)(bus_space_handle_t, bus_size_t, typ *, bus_size_t)
 
 #define bswm(what, typ) \
-	void (what)(bus_space_tag_t, bus_space_handle_t, bus_size_t, \
-		const typ *, bus_size_t)
+	void (what)(bus_space_handle_t, bus_size_t, const typ *, bus_size_t)
 
 #define bssr(what, typ) \
-	void (what)(bus_space_tag_t, bus_space_handle_t, bus_size_t, \
-		typ, bus_size_t)
+	void (what)(bus_space_handle_t, bus_size_t, unsigned, bus_size_t)
 
 #define bscr(what, typ) \
-	void (what)(bus_space_tag_t, \
-		bus_space_handle_t, bus_size_t, \
-		bus_space_handle_t, bus_size_t, \
-		bus_size_t)
-
-/* declarations for _1 functions */
-
-bsrm(bus_space_read_multi_1, u_int8_t);
-bswm(bus_space_write_multi_1, u_int8_t);
-bsrm(bus_space_read_region_1, u_int8_t);
-bswm(bus_space_write_region_1, u_int8_t);
-bsrm(bus_space_read_region_stream_1, u_int8_t);
-bswm(bus_space_write_region_stream_1, u_int8_t);
-bssr(bus_space_set_region_1, u_int8_t);
-bscr(bus_space_copy_region_1, u_int8_t);
+	void (what)(bus_space_handle_t, bus_size_t, \
+		    bus_space_handle_t, bus_size_t, bus_size_t)
 
 /*
  * Implementation specific structures.
@@ -95,19 +83,47 @@ bscr(bus_space_copy_region_1, u_int8_t);
 
 struct bus_space_tag {
 	bus_addr_t	base;
-	u_int8_t	stride;
-	u_int8_t	dum[3];
 	const struct amiga_bus_space_methods *absm;
 };
 
 struct amiga_bus_space_methods {
 
+	/* map, unmap, etc */
+
+	int (*bsm)(bus_space_tag_t,
+		bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+
+	int (*bsms)(bus_space_handle_t,
+		bus_size_t, bus_size_t, bus_space_handle_t *);
+
+	void (*bsu)(bus_space_handle_t, bus_size_t);
+
+	/* placeholders for currently not implemented alloc and free */
+
+	void *bsa;
+	void *bsf;
+
+	/* 8 bit methods */
+
+	bsr(*bsr1, u_int8_t);
+	bsw(*bsw1, u_int8_t);
+	bsrm(*bsrm1, u_int8_t);
+	bswm(*bswm1, u_int8_t);
+	bsrm(*bsrr1, u_int8_t);
+	bswm(*bswr1, u_int8_t);
+	bssr(*bssr1, u_int8_t);
+	bscr(*bscr1, u_int8_t);
+
 	/* 16bit methods */
 
 	bsr(*bsr2, u_int16_t);
 	bsw(*bsw2, u_int16_t);
+	bsr(*bsrs2, u_int16_t);
+	bsw(*bsws2, u_int16_t);
 	bsrm(*bsrm2, u_int16_t);
 	bswm(*bswm2, u_int16_t);
+	bsrm(*bsrms2, u_int16_t);
+	bswm(*bswms2, u_int16_t);
 	bsrm(*bsrr2, u_int16_t);
 	bswm(*bswr2, u_int16_t);
 	bsrm(*bsrrs2, u_int16_t);
@@ -118,164 +134,112 @@ struct amiga_bus_space_methods {
 	/* add 32bit methods here */
 };
 
-const struct amiga_bus_space_methods amiga_contiguous_methods;
-const struct amiga_bus_space_methods amiga_interleaved_methods;
-const struct amiga_bus_space_methods amiga_interleaved_wordaccess_methods;
-
 /*
  * Macro definition of map, unmap, etc.
  */
 
-#define bus_space_map(tag,off,size,cache,handle) 			\
-	(*(handle) = (tag)->base + ((off)<<(tag)->stride), 0)
+#define bus_space_map(t, o, s, f, hp) \
+	((t)->absm->bsm)((t), (o), (s), (f), (hp))
 
-#define bus_space_subregion(tag, handle, offset, size, nhandlep) \
-	(*(nhandlep) = (handle) + ((offset)<<(tag)->stride), 0)
+#define bus_space_subregion(t, h, o, s, hp) \
+	((t)->absm->bsms)((h), (o), (s), (hp))
 
-#define bus_space_unmap(tag,handle,size)	(void)0
-
-/*
- * Macro definition of some _1 functions:
- */
-
-#define	bus_space_read_1(t, h, o) \
-    ((void) t, (*(volatile u_int8_t *)((h) + ((o)<<(t)->stride))))
-
-#define	bus_space_write_1(t, h, o, v) \
-    ((void) t, ((void)(*(volatile u_int8_t *)((h) + ((o)<<(t)->stride)) = (v))))
-
-/*
- * Inline definition of other _1 functions:
- */
-
-extern __inline void
-bus_space_read_multi_1(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	u_int8_t		*a;
-{
-	for (; c; a++, c--)
-		*a = bus_space_read_1(t, h, o);
-}
-
-extern __inline void
-bus_space_write_multi_1(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	const u_int8_t		*a;
-{
-	for (; c; a++, c--)
-		bus_space_write_1(t, h, o, *a);
-}
-
-extern __inline void
-bus_space_read_region_1(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	u_int8_t		*a;
-{
-	for (; c; a++, c--)
-		*a = bus_space_read_1(t, h, o++);
-}
-
-extern __inline void
-bus_space_write_region_1(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	const u_int8_t		*a;
-{
-	for (; c; a++, c--)
-		 bus_space_write_1(t, h, o++, *a);
-}
-
-extern __inline void
-bus_space_set_region_1(t, h, o, v, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	u_int8_t		v;
-{
-	while (c--)
-		 bus_space_write_1(t, h, o++, v);
-}
-
-extern __inline void
-bus_space_copy_region_1(t, srch, srco, dsth, dsto, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	srch, dsth;
-	bus_size_t		srco, dsto, c;
-{
-	u_int8_t		v;
-
-	while (c--) {
-		 v = bus_space_read_1(t, srch, srco++);
-		 bus_space_write_1(t, dsth, dsto++, v);
-	}
-}
-
-extern __inline void
-bus_space_read_region_stream_1(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	u_int8_t		*a;
-{
-	for (; c; a++, c--)
-		*a = bus_space_read_1(t, h, o++);
-}
-
-extern __inline void
-bus_space_write_region_stream_1(t, h, o, a, c)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o, c;
-	const u_int8_t		*a;
-{
-	for (; c; a++, c--)
-		 bus_space_write_1(t, h, o++, *a);
-}
+#define bus_space_unmap(t, h, s) \
+	((t)->absm->bsu)((h), (s))
 
 /*
  * Macro definition of _2 functions as indirect method array calls
  */
 
-#define bus_space_read_2(t, h, o)	((t)->absm->bsr2)((t), (h), (o))
-#define bus_space_write_2(t, h, o, v)	((t)->absm->bsw2)((t), (h), (o), (v))
+/* 0: Helper macros */
 
-#define bus_space_read_multi_2(t, h, o, p, c) \
-	((t)->absm->bsrm2)((t), (h), (o), (p), (c))
+#define dbsdr(n, t, h, o)	((t)->absm->n)((h), (o))
+#define dbsdw(n, t, h, o, v)	((t)->absm->n)((h), (o), (v))
+#define dbsm(n, t, h, o, p, c)	((t)->absm->n)((h), (o), (p), (c))
+#define dbss(n, t, h, o, v, c)	((t)->absm->n)((h), (o), (v), (c))
+#define dbsc(n, t, h, o, v, c)	((t)->absm->n)((h), (o), (v), (c))
 
-#define bus_space_write_multi_2(t, h, o, p, c) \
-	((t)->absm->bswm2)((t), (h), (o), (p), (c))
+/* 1: byte-wide "functions" */
 
-#define bus_space_read_region_2(t, h, o, p, c) \
-	((t)->absm->bsrr2)((t), (h), (o), (p), (c))
+#define bus_space_read_1(t, h, o)		  dbsdr(bsr1, t, h, o)
+#define bus_space_write_1(t, h, o, v)		  dbsdw(bsw1, t, h, o, v)
 
-#define bus_space_write_region_2(t, h, o, p, c) \
-	((t)->absm->bswr2)((t), (h), (o), (p), (c))
+#define bus_space_read_multi_1(t, h, o, p, c)	  dbsm(bsrm1, t, h, o, p, c)
+#define bus_space_write_multi_1(t, h, o, p, c)	  dbsm(bswm1, t, h, o, p, c)
+
+#define bus_space_read_region_1(t, h, o, p, c)	  dbsm(bsrr1, t, h, o, p, c)
+#define bus_space_write_region_1(t, h, o, p, c)	  dbsm(bswr1, t, h, o, p, c)
+
+#define bus_space_set_region_1(t, h, o, v, c)	  dbss(bssr1, t, h, o, v, c)
+#define bus_space_copy_region_1(t, h, o, g, q, c) dbss(bscr1, t, h, o, g, q, c)
+
+
+/* 2: word-wide "functions" */
+
+#define bus_space_read_2(t, h, o)		  dbsdr(bsr2, t, h, o)
+#define bus_space_write_2(t, h, o, v)		  dbsdw(bsw2, t, h, o, v)
+#define bus_space_read_stream_2(t, h, o)	  dbsdr(bsrs2, t, h, o)
+#define bus_space_write_stream_2(t, h, o, v)	  dbsdw(bsws2, t, h, o, v)
+
+#define bus_space_read_multi_2(t, h, o, p, c)	  dbsm(bsrm2, t, h, o, p, c)
+#define bus_space_write_multi_2(t, h, o, p, c)	  dbsm(bswm2, t, h, o, p, c)
+
+#define bus_space_read_multi_stream_2(t, h, o, p, c) \
+						  dbsm(bsrms2, t, h, o, p, c)
+
+#define bus_space_write_multi_stream_2(t, h, o, p, c) \
+						  dbsm(bswms2, t, h, o, p, c)
+
+#define bus_space_read_region_2(t, h, o, p, c)	  dbsm(bsrr2, t, h, o, p, c)
+#define bus_space_write_region_2(t, h, o, p, c)	  dbsm(bswr2, t, h, o, p, c)
 
 #define bus_space_read_region_stream_2(t, h, o, p, c) \
-	((t)->absm->bsrrs2)((t), (h), (o), (p), (c))
+						  dbsm(bsrrs2, t, h, o, p, c)
 
 #define bus_space_write_region_stream_2(t, h, o, p, c) \
-	((t)->absm->bswrs2)((t), (h), (o), (p), (c))
+						  dbsm(bswrs2, t, h, o, p, c)
 
-#define bus_space_set_region_2(t, h, o, v, c) \
-	((t)->absm->bssr2)((t), (h), (o), (v), (c))
+#define bus_space_set_region_2(t, h, o, v, c)	  dbss(bssr2, t, h, o, v, c)
+#define bus_space_copy_region_2(t, h, o, g, q, c) dbss(bscr2, t, h, o, g, q, c)
 
-#define bus_space_copy_region_2(t, srch, srco, dsth, dsto, c) \
-	((t)->absm->bscr2)((t), (srch), (srco), (dsth), (dsto), (c))
+/* 4: Fake 32-bit macros */
+
+#define bus_space_read_4(t, h, o) \
+	(panic("bus_space_read_4 not implemented"), 0)
+
+#define bus_space_write_4(t, h, o, v) \
+	panic("bus_space_write_4 not implemented")
+
+#define bus_space_read_stream_4(t, h, o) \
+	(panic("bus_space_read_stream_4 not implemented"), 0)
+
+#define bus_space_write_stream_4(t, h, o, v) \
+	panic("bus_space_read_stream_4 not implemented")
+
+#define bus_space_read_multi_4(t, h, o, p, c) \
+	panic("bus_space_read_multi_4 not implemented")
+
+#define bus_space_write_multi_4(t, h, o, p, c) \
+	panic("bus_space_write_multi_4 not implemented")
+
+#define bus_space_read_multi_stream_4(t, h, o, p, c) \
+	panic("bus_space_read_multi_stream_4 not implemented")
+
+#define bus_space_write_multi_stream_4(t, h, o, p, c) \
+	panic("bus_space_write_multi_stream_4 not implemented")
+
+#define bus_space_read_region_stream_4(t, h, o, p, c) \
+	panic("bus_space_read_region_stream_4 not implemented")
+
+#define bus_space_write_region_stream_4(t, h, o, p, c) \
+	panic("bus_space_write_region_stream_4 not implemented")
 
 /* 
  * Bus read/write barrier methods.
  * 
- *      void bus_space_barrier(bus_space_tag_t tag,
+ *      void bus_space_barrier __P((bus_space_tag_t tag,
  *          bus_space_handle_t bsh, bus_size_t offset,
- *          bus_size_t len, int flags);
+ *          bus_size_t len, int flags));
  *    
  * Note: the 680x0 does not currently require barriers, but we must
  * provide the flags to MI code.
@@ -286,4 +250,13 @@ bus_space_write_region_stream_1(t, h, o, a, c)
 #define BUS_SPACE_BARRIER_WRITE 0x02            /* force write barrier */
  
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+
+#define __BUS_SPACE_HAS_STREAM_METHODS
+
+extern const struct amiga_bus_space_methods amiga_bus_stride_1;
+extern const struct amiga_bus_space_methods amiga_bus_stride_2;
+extern const struct amiga_bus_space_methods amiga_bus_stride_4;
+extern const struct amiga_bus_space_methods amiga_bus_stride_4swap;
+extern const struct amiga_bus_space_methods amiga_bus_stride_16;
+
 #endif /* _AMIGA_BUS_H_ */

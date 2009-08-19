@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.235.4.2 2009/05/04 08:10:28 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.235.4.3 2009/08/19 18:45:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.2 2009/05/04 08:10:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.3 2009/08/19 18:45:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,8 +434,6 @@ static struct pmap_tlb_shootdown_q {
 
 static struct pool_cache pmap_tlb_shootdown_job_cache;
 #endif /* MULTIPROCESSOR */
-
-#define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
 
 /*
  * Internal routines
@@ -1306,7 +1304,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
 			l3pte = PMAP_KERNEL_PTE(sva);
 			if (pmap_pte_v(l3pte)) {
 #ifdef DIAGNOSTIC
-				if (PAGE_IS_MANAGED(pmap_pte_pa(l3pte)) &&
+				if (uvm_pageismanaged(pmap_pte_pa(l3pte)) &&
 				    pmap_pte_pv(l3pte) == 0)
 					panic("pmap_remove: managed page "
 					    "without PG_PVLIST for 0x%lx",
@@ -2760,7 +2758,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 		printf("\tpa = 0x%lx\n", pa);
 #endif
 #ifdef DIAGNOSTIC
-	if (!PAGE_IS_MANAGED(pa))
+	if (!uvm_pageismanaged(pa))
 		panic("pmap_emulate_reference(%p, 0x%lx, %d, %d): "
 		      "pa 0x%lx not managed", l, v, user, type, pa);
 #endif

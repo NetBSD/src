@@ -11,7 +11,8 @@ options 	EXEC_SCRIPT	# exec #! scripts
 options 	COREDUMP
 
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-options 	AIO		# POSIX AIO, built as a module
+options 	AIO		# POSIX asynchronous I/O, built as a module
+options 	MQUEUE		# POSIX messsage queues, built as a module
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_SVR4	# binary compatibility with SVR4

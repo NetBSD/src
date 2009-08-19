@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.10.22.3 2009/07/18 14:53:22 yamt Exp $ */
+/* $NetBSD: udf.h,v 1.10.22.4 2009/08/19 18:48:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -331,7 +331,7 @@ struct udf_mount {
 	struct space_bitmap_desc*metadata_unalloc_dscr;
 	struct udf_bitmap	 metadata_unalloc_bits;
 
-	/* hash table to lookup icb -> udf_node and sorted list for sync */
+	/* rb tree for lookup icb to udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
 	kmutex_t	get_node_lock;
 	struct rb_tree	udf_node_tree;
@@ -374,7 +374,7 @@ struct udf_node {
 	char const		*lock_fname;
 	int			 lock_lineno;
 
-	/* rb_node for fast lookup and fast sequentual visiting */
+	/* rb_node for fast lookup and fast sequential visiting */
 	struct rb_node		 rbnode;
 
 	/* one of `fe' or `efe' can be set, not both (UDF file entry dscr.)  */

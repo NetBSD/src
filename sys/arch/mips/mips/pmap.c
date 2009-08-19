@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178.10.3 2009/07/18 14:52:54 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.178.10.4 2009/08/19 18:46:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178.10.3 2009/07/18 14:52:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178.10.4 2009/08/19 18:46:31 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -210,8 +210,7 @@ int		pmap_pv_lowat = PMAP_PV_LOWAT;
 
 bool		pmap_initialized = false;
 
-#define PAGE_IS_MANAGED(pa)	\
-	(pmap_initialized == true && vm_physseg_find(atop(pa), NULL) != -1)
+#define PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
 #define PMAP_IS_ACTIVE(pm)						\
 	((pm) == pmap_kernel() || 					\

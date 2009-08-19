@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2008/01/08 14:38:48 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.5.10.1 2009/08/19 18:46:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,6 @@
 
 #define	_MACHINE	sbmips
 #define	MACHINE		"sbmips"
-#define	MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */

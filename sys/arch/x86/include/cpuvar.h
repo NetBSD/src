@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.23.4.2 2009/05/04 08:12:09 yamt Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.23.4.3 2009/08/19 18:46:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -88,8 +88,8 @@ struct cpu_attach_args {
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#ifndef XEN
 #include "opt_enhanced_speedstep.h"
+#ifndef XEN
 #include "opt_intel_coretemp.h"
 #include "opt_intel_odcm.h"
 #endif

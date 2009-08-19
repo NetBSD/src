@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.7 2006/06/25 15:18:53 bouyer Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.7.62.1 2009/08/19 18:46:53 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -41,13 +41,8 @@
  * space, do I/O to it, and unmap it.
  */
 
-#ifdef XEN3
 int  xen_shm_map(int, int, grant_ref_t *, vaddr_t *, grant_handle_t *, int);
 void xen_shm_unmap(vaddr_t, int, grant_handle_t *);
-#else
-int  xen_shm_map(paddr_t *, int, int, vaddr_t *, int);
-void xen_shm_unmap(vaddr_t, paddr_t *, int, int);
-#endif
 int xen_shm_callback(int (*)(void *), void *);
 
 /* flags for xen_shm_map() */
