@@ -42,12 +42,14 @@ i18 text ipf
 i19 text ipf
 i20 text ipf
 i21 text ipf
+i23 test ipf
 in1 text text
 in2 text text
 in3 text text
 in4 text text
 in5 text text
 in6 text text
+in7 text text
 ip1 text text
 ip2 text text
 ipv6.1 hex hex
@@ -98,3 +100,4 @@ n16 hex hex -D
 n17 hex hex -D
 f24 hex text
 ipv6.6 hex text
+n18 text text -D

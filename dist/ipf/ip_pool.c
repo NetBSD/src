@@ -1,9 +1,11 @@
-/*	$NetBSD: ip_pool.c,v 1.1.1.8 2008/05/20 06:44:17 darrenr Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.1.1.9 2009/08/19 08:29:00 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Copyright 2008 Sun Microsystems, Inc.
  */
 #if defined(KERNEL) || defined(_KERNEL)
 # undef KERNEL
@@ -35,15 +37,10 @@ struct file;
 # endif
 #endif
 #include <sys/time.h>
-#if !defined(linux)
-# include <sys/protosw.h>
-#endif
-#include <sys/socket.h>
-#if defined(_KERNEL) && (!defined(__SVR4) && !defined(__svr4__))
+#if defined(_KERNEL) && !defined(SOLARIS2)
 # include <sys/mbuf.h>
 #endif
 #if defined(__SVR4) || defined(__svr4__)
-# include <sys/filio.h>
 # include <sys/byteorder.h>
 # ifdef _KERNEL
 #  include <sys/dditypes.h>
@@ -63,6 +60,7 @@ struct file;
 # include "radix_ipf_local.h"
 # define _RADIX_H_
 #endif
+#include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
 
@@ -80,7 +78,7 @@ static int rn_freenode __P((struct radix_node *, void *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.26 2007/11/25 09:20:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.31 2009/07/18 19:05:39 darrenr Exp";
 #endif
 
 #ifdef IPFILTER_LOOKUP
@@ -232,7 +230,7 @@ int ip_pool_init()
 
 	bzero((char *)&ipoolstat, sizeof(ipoolstat));
 
-#if (!defined(_KERNEL) || (BSD < 199306))
+#if (!defined(_KERNEL) || !defined(BSD) || (BSD < 199306))
 	rn_init();
 #endif
 	return 0;
@@ -260,7 +258,7 @@ void ip_pool_fini()
 		}
 	}
 
-#if (!defined(_KERNEL) || (BSD < 199306))
+#if (!defined(_KERNEL) || !defined(BSD) || (BSD < 199306))
 	rn_fini();
 #endif
 }
@@ -801,7 +799,7 @@ ip_pool_node_t *ipn;
 /* Function:    ip_pool_getnext                                             */
 /* Returns:     void                                                        */
 /* Parameters:  token(I) - pointer to pool structure                        */
-/* Parameters:  ilp(IO)   - pointer to pool iterating structure             */
+/*              ilp(IO)  - pointer to pool iterating structure              */
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
 int ip_pool_getnext(token, ilp)
@@ -820,6 +818,10 @@ ipflookupiter_t *ilp;
 
 	READ_ENTER(&ip_poolrw);
 
+	/*
+	 * Get "previous" entry from token.  Find next entry to process,
+	 * and add reference to it and update the token.
+	 */
 	switch (ilp->ili_otype)
 	{
 	case IPFLOOKUPITER_LIST :
@@ -863,38 +865,53 @@ ipflookupiter_t *ilp;
 			token->ipt_data = NULL;
 		}
 		break;
+
 	default :
 		err = EINVAL;
 		break;
 	}
 
+	/*
+	 * Now that we have ref, it's save to give up lock.
+	 */
 	RWLOCK_EXIT(&ip_poolrw);
 
 	if (err != 0)
 		return err;
 
+	/*
+	 * Copy out the data and update the references and token as needed.
+	 */
 	switch (ilp->ili_otype)
 	{
 	case IPFLOOKUPITER_LIST :
-		if (ipo != NULL) {
-			WRITE_ENTER(&ip_poolrw);
-			ip_pool_deref(ipo);
-			RWLOCK_EXIT(&ip_poolrw);
-		}
 		err = COPYOUT(nextipo, ilp->ili_data, sizeof(*nextipo));
 		if (err != 0)
 			err = EFAULT;
+		if (token->ipt_data != NULL) {
+			if (ipo != NULL) {
+				WRITE_ENTER(&ip_poolrw);
+				ip_pool_deref(ipo);
+				RWLOCK_EXIT(&ip_poolrw);
+			}
+			if (nextipo->ipo_next == NULL)
+				token->ipt_data = NULL;
+		}
 		break;
 
 	case IPFLOOKUPITER_NODE :
-		if (node != NULL) {
-			WRITE_ENTER(&ip_poolrw);
-			ip_pool_node_deref(node);
-			RWLOCK_EXIT(&ip_poolrw);
-		}
 		err = COPYOUT(nextnode, ilp->ili_data, sizeof(*nextnode));
 		if (err != 0)
 			err = EFAULT;
+		if (token->ipt_data != NULL) {
+			if (node != NULL) {
+				WRITE_ENTER(&ip_poolrw);
+				ip_pool_node_deref(node);
+				RWLOCK_EXIT(&ip_poolrw);
+			}
+			if (nextnode->ipn_next == NULL)
+				token->ipt_data = NULL;
+		}
 		break;
 	}
 
@@ -940,8 +957,8 @@ void *data;
 }
 
 
-# if defined(_KERNEL) && ((BSD >= 198911) && !defined(__osf__) && \
-      !defined(__hpux) && !defined(__sgi))
+# if defined(_KERNEL) && (defined(BSD) && (BSD >= 198911) && \
+      !defined(__osf__) && !defined(__hpux) && !defined(__sgi))
 static int
 rn_freenode(struct radix_node *n, void *p)
 {

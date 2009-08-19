@@ -1,11 +1,11 @@
-/*	$NetBSD: load_hash.c,v 1.1.1.4 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: load_hash.c,v 1.1.1.5 2009/08/19 08:29:30 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_hash.c,v 1.11.2.5 2006/07/14 06:12:25 darrenr Exp
+ * Id: load_hash.c,v 1.11.2.6 2009/01/01 03:48:21 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -36,6 +36,7 @@ ioctlfunc_t iocfunc;
 	for (n = 0, a = list; a != NULL; a = a->ipe_next)
 		n++;
 
+	bzero((char *)&iph, sizeof(iph));
 	op.iplo_arg = 0;
 	op.iplo_type = IPLT_HASH;
 	op.iplo_unit = iphp->iph_unit;
