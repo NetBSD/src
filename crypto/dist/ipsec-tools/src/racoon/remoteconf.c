@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.16 2009/08/19 12:20:02 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.17 2009/08/19 13:54:07 vanhu Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -209,7 +209,7 @@ rmconf_match_type(rmsel, rmconf)
 	/* Check address */
 	if (rmsel->remote != NULL) {
 		if (rmconf->remote->sa_family != AF_UNSPEC) {
-			if (cmpsaddr(rmsel->remote, rmconf->remote) != 0)
+			if (cmpsaddr(rmsel->remote, rmconf->remote) == CMPSADDR_MISMATCH)
 				return MATCH_NONE;
 
 			/* Address matched */
