@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.1 2009/08/19 07:41:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.1 2009/08/19 07:41:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((uintptr_t)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 		if (map->dm_maxsegsz < sgsize)
@@ -693,7 +693,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if ((uintptr_t)kva & PGOFSET)
 		panic("_bus_dmamem_unmap: bad alignment on %p", kva);
 #endif
 
