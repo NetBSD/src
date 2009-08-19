@@ -1139,7 +1139,7 @@ option also implies @option{--unresolved-symbols=report-all}.  This
 option can be used with @option{-shared}.  Doing so means that a
 shared library is being created but that all of the library's external
 references must be resolved by pulling in entries from static
-libraries.
+libraries. 
 
 @kindex -Bsymbolic
 @item -Bsymbolic

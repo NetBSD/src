@@ -1809,6 +1809,8 @@ bootstrap: ld3$(EXEEXT)
 # because almost all configs use "gen" version of manual.
 #  Set DOCVER above to change.
 configdoc.texi:	${DOCVER}-doc.texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_configdoc.texi:
 	cp ${srcdir}/${DOCVER}-doc.texi ./configdoc.texi
 	chmod u+w ./configdoc.texi
 
@@ -1816,6 +1818,8 @@ configdoc.texi:	${DOCVER}-doc.texi
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 ld.1: $(srcdir)/ld.texinfo configdoc.texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_ld.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/ld.texinfo > ld.pod
 	-($(POD2MAN) ld.pod | \
@@ -1966,17 +1970,17 @@ dep.sed: dep-in.sed config.status
 dep: DEP
 	sed -e '/^..DO NOT DELETE THIS LINE/,$$d' < Makefile > tmp-Makefile
 	cat DEP >> tmp-Makefile
-	$(srcdir)/../move-if-change tmp-Makefile Makefile
+	$(SHELL) $(srcdir)/../move-if-change tmp-Makefile Makefile
 
 dep-in: DEP
 	sed -e '/^..DO NOT DELETE THIS LINE/,$$d' < $(srcdir)/Makefile.in > tmp-Makefile.in
 	cat DEP >> tmp-Makefile.in
-	$(srcdir)/../move-if-change tmp-Makefile.in $(srcdir)/Makefile.in
+	$(SHELL) $(srcdir)/../move-if-change tmp-Makefile.in $(srcdir)/Makefile.in
 
 dep-am: DEP
 	sed -e '/^..DO NOT DELETE THIS LINE/,$$d' < $(srcdir)/Makefile.am > tmp-Makefile.am
 	cat DEP >> tmp-Makefile.am
-	$(srcdir)/../move-if-change tmp-Makefile.am $(srcdir)/Makefile.am
+	$(SHELL) $(srcdir)/../move-if-change tmp-Makefile.am $(srcdir)/Makefile.am
 
 .PHONY: dep dep-in dep-am
 
