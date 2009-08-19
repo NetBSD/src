@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.12 2006/05/12 10:58:12 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13 2009/08/19 15:13:56 dyoung Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12 2006/05/12 10:58:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13 2009/08/19 15:13:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,7 @@ static void	*pcib_isa_intr_establish(void *, int, int, int,
 static void	pcib_isa_intr_disestablish(void *, void *);
 static void	pcib_isa_attach_hook(struct device *, struct device *,
 		    struct isabus_attach_args *);
+static void	pcib_isa_detach_hook(isa_chipset_tag_t, device_t);
 static int	pcib_isa_intr_alloc(void *, int, int, int *);
 static const char *
 		pcib_isa_intr_string(void *, int);
@@ -324,6 +325,7 @@ pcib_bridge_callback(struct device *self)
 
 	iba.iba_ic = &sc->sc_ic;
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
+	iba.iba_ic->ic_detach_hook = pcib_isa_detach_hook;
 
 	config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
 }
@@ -331,6 +333,13 @@ pcib_bridge_callback(struct device *self)
 static void
 pcib_isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
+{
+
+	/* Nothing to do. */
+}
+
+static void
+pcib_isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 
 	/* Nothing to do. */
