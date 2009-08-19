@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.3 2009/08/18 15:25:30 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.4 2009/08/19 07:40:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -423,6 +423,7 @@ _C_LABEL(x):
 #define	INT_SRAV	srav
 #define	INT_LL		ll
 #define	INT_SC		sc
+#define	INT_SCALESHIFT	2
 #else
 #define	INT_ADD		dadd
 #define	INT_ADDI	daddi
@@ -443,6 +444,7 @@ _C_LABEL(x):
 #define	INT_SRAV	dsrav
 #define	INT_LL		lld
 #define	INT_SC		scd
+#define	INT_SCALESHIFT	3
 #endif
 
 #if _MIPS_SZLONG == 32
@@ -465,6 +467,7 @@ _C_LABEL(x):
 #define	LONG_SRAV	srav
 #define	LONG_LL		ll
 #define	LONG_SC		sc
+#define	LONG_SCALESHIFT	2
 #else
 #define	LONG_ADD	dadd
 #define	LONG_ADDI	daddi
@@ -485,6 +488,7 @@ _C_LABEL(x):
 #define	LONG_SRAV	dsrav
 #define	LONG_LL		lld
 #define	LONG_SC		scd
+#define	LONG_SCALESHIFT	3
 #endif
 
 #if SZREG == 4
@@ -497,6 +501,7 @@ _C_LABEL(x):
 #define	REG_SRLV	srlv
 #define	REG_SRA		sra
 #define	REG_SRAV	srav
+#define	REG_SCALESHIFT	2
 #else
 #define	REG_L		ld
 #define	REG_S		sd
@@ -507,19 +512,16 @@ _C_LABEL(x):
 #define	REG_SRLV	dsrlv
 #define	REG_SRA		dsra
 #define	REG_SRAV	dsrav
+#define	REG_SCALESHIFT	3
 #endif
 
-#define	REG_PROLOGUE	.set push
-#define	REG_EPILOGUE	.set pop
-
 #if _MIPS_ISA == _MIPS_ISA_MIPS1 || _MIPS_ISA == _MIPS_ISA_MIPS2 || \
-    _MIPS_ISA == _MIPS_ISA_MIPS32 || _MIPS_ISA == _MIPS_ISA_MIPS32R2
+    _MIPS_ISA == _MIPS_ISA_MIPS32
 #define	MFC0		mfc0
 #define	MTC0		mtc0
 #endif
 #if _MIPS_ISA == _MIPS_ISA_MIPS3 || _MIPS_ISA == _MIPS_ISA_MIPS4 || \
-    _MIPS_ISA == _MIPS_ISA_MIPS5 || _MIPS_ISA == _MIPS_ISA_MIPS64 || \
-    _MIPS_ISA == _MIPS_ISA_MIPS64R2
+    _MIPS_ISA == _MIPS_ISA_MIPS64
 #define	MFC0		dmfc0
 #define	MTC0		dmtc0
 #endif
@@ -564,6 +566,10 @@ _C_LABEL(x):
 #define	USE_ALT_CP(a)		/* n32/n64 specific */
 #endif /* __mips_o32 || __mips_o64 */
 
+#if defined(__mips_o32) || defined(__mips_o64)
+#define	REG_PROLOGUE	.set push
+#define	REG_EPILOGUE	.set pop
+#endif
 #if defined(__mips_n32) || defined(__mips_n64)
 #define	REG_PROLOGUE	.set push ; .set mips3
 #define	REG_EPILOGUE	.set pop
