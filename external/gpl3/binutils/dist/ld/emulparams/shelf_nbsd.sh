@@ -9,7 +9,11 @@ MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 
 DATA_START_SYMBOLS='PROVIDE (__data_start = .);';
 
-ENTRY=_start
+ENTRY=__start
 
 unset EMBEDDED
 unset OTHER_SECTIONS
+
+OTHER_READWRITE_SECTIONS='
+  .note.ABI-tag : { *(.note.ABI-tag) }
+'

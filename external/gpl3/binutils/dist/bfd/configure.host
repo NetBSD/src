@@ -56,6 +56,18 @@ mips*-*-riscos*)	HDEFINES="-G 4" ;;
 
 m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
 
+sparc64*-*-netbsd*)	host64=true; HOST_64BIT_TYPE=long ;;
+
+x86_64*-*-netbsd*)	host64=true; HOST_64BIT_TYPE=long ;;
+
+*-*-aix*)		HOST_64BIT_TYPE="long long"
+			HOST_U_64BIT_TYPE="unsigned long long"
+			;;
+
+*-*-solaris*)		HOST_64BIT_TYPE="long long"
+			HOST_U_64BIT_TYPE="unsigned long long"
+			;;
+
 *-*-windows*)
 			HOST_64BIT_TYPE=__int64
 			HOST_U_64BIT_TYPE="unsigned __int64"

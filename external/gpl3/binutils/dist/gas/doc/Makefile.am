@@ -24,6 +24,8 @@ TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \
 		   -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
 
 asconfig.texi: $(CONFIG).texi
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_asconfig.text:
 	rm -f asconfig.texi
 	cp $(srcdir)/$(CONFIG).texi ./asconfig.texi
 	chmod u+w ./asconfig.texi
@@ -111,6 +113,8 @@ info-local: $(MANS)
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
 as.1: $(srcdir)/as.texinfo asconfig.texi $(CPU_DOCS)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_as.1:
 	touch $@
 	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
 	-($(POD2MAN) as.pod | \

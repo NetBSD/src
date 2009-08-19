@@ -99,6 +99,11 @@ int newer_only = 0;
    if any of the members are object files.  */
 int write_armap = 0;
 
+/* Operate in deterministic mode: write zero for timestamps, uids,
+   and gids for archive members and the archive symbol table, and write
+   consistent file modes.  */
+int deterministic = 0;
+
 /* Nonzero means it's the name of an existing member; position new or moved
    files with respect to this one.  */
 char *posname = NULL;
@@ -240,6 +245,7 @@ usage (int help)
       fprintf (s, _(" command specific modifiers:\n"));
       fprintf (s, _("  [a]          - put file(s) after [member-name]\n"));
       fprintf (s, _("  [b]          - put file(s) before [member-name] (same as [i])\n"));
+      fprintf (s, _("  [D]          - use zero for timestamps and uids/gids\n"));
       fprintf (s, _("  [N]          - use instance [count] of name\n"));
       fprintf (s, _("  [f]          - truncate inserted file names\n"));
       fprintf (s, _("  [P]          - use full path names when matching\n"));
@@ -569,6 +575,9 @@ main (int argc, char **argv)
 	    case 'P':
 	      full_pathname = TRUE;
 	      break;
+	    case 'D':
+	      deterministic = TRUE;
+	      break;
 	    case 'T':
 	      make_thin_archive = TRUE;
 	      break;
@@ -621,6 +630,9 @@ main (int argc, char **argv)
 
       if (newer_only && operation != replace)
 	fatal (_("`u' is only meaningful with the `r' option."));
+
+      if (newer_only && deterministic)
+	fatal (_("`u' is not meaningful with the `D' option."));
 
       if (postype != pos_default)
 	posname = argv[arg_index++];
@@ -971,6 +983,9 @@ write_archive (bfd *iarch)
          archives.  */
       obfd->flags |= BFD_TRADITIONAL_FORMAT;
     }
+
+  if (deterministic)
+    obfd->flags |= BFD_DETERMINISTIC_OUTPUT;
 
   if (make_thin_archive || bfd_is_thin_archive (iarch))
     bfd_is_thin_archive (obfd) = 1;

@@ -11869,6 +11869,14 @@ if test x${all_targets} = xfalse ; then
 	  # specified, as in sh3-elf, sh3b-linux-gnu, etc.
 	  # Include it just for ELF targets, since the SH5 bfd:s are ELF only.
 	  for t in $target $canon_targets; do
+	    # For NetBSD we do NOT want SH5 support unless sh5 or sh64
+	    # is specified
+	    case $t in
+	      sh5*-* | sh64*-*) # let the case below handle it
+				;;
+	      sh*-*-netbsd* | sh*l*-*-netbsd*)
+				continue ;;
+	      esac
 	    case $t in
 	      all |  sh5*-* | sh64*-* | sh-*-*elf* | shl*-*-*elf* | \
 	      sh-*-linux* | shl-*-linux*)
