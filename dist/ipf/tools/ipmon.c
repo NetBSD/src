@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.15 2008/12/29 04:08:56 christos Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.16 2009/08/19 08:35:32 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -78,7 +78,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 1.33.2.23 2008/02/03 19:48:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 1.33.2.24 2009/07/21 22:32:53 darrenr Exp";
 #endif
 
 
@@ -1048,10 +1048,16 @@ int	blen;
 	(void) sprintf(t, "%s", ifname);
 	t += strlen(t);
 # if defined(MENTAT) || defined(linux)
-	if (ISALPHA(*(t - 1))) {
-		sprintf(t, "%d", ipf->fl_unit);
-		t += strlen(t);
-	}
+#  if defined(linux)
+	/*
+	 * On Linux, the loopback interface is just "lo", not "lo0".
+	 */
+	if (strcmp(ifname, "lo") != 0)
+#  endif
+		if (ISALPHA(*(t - 1))) {
+			sprintf(t, "%d", ipf->fl_unit);
+			t += strlen(t);
+		}
 # endif
 	}
 #else

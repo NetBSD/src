@@ -1,9 +1,11 @@
-/*	$NetBSD: ip_htable.c,v 1.9 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.10 2009/08/19 08:36:11 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Copyright 2008 Sun Microsystems, Inc.
  */
 #if defined(KERNEL) || defined(_KERNEL)
 # undef KERNEL
@@ -60,9 +62,9 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.9 2008/05/20 07:08:07 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.10 2009/08/19 08:36:11 darrenr Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_htable.c,v 2.34.2.9 2007/02/02 23:06:16 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_htable.c,v 2.34.2.13 2009/05/13 19:13:36 darrenr Exp";
 #endif
 #endif
 
@@ -539,6 +541,12 @@ ipflookupiter_t *ilp;
 
 	READ_ENTER(&ip_poolrw);
 
+	/*
+	 * Get "previous" entry from the token and find the next entry.
+	 *
+	 * If we found an entry, add a reference to it and update the token.
+	 * Otherwise, zero out data to be returned and NULL out token.
+	 */
 	switch (ilp->ili_otype)
 	{
 	case IPFLOOKUPITER_LIST :
@@ -581,37 +589,52 @@ ipflookupiter_t *ilp;
 			token->ipt_data = NULL;
 		}
 		break;
+
 	default :
 		err = EINVAL;
 		break;
 	}
 
+	/*
+	 * Now that we have ref, it's save to give up lock.
+	 */
 	RWLOCK_EXIT(&ip_poolrw);
 	if (err != 0)
 		return err;
 
+	/*
+	 * Copy out data and clean up references and token as needed.
+	 */
 	switch (ilp->ili_otype)
 	{
 	case IPFLOOKUPITER_LIST :
-		if (iph != NULL) {
-			WRITE_ENTER(&ip_poolrw);
-			fr_derefhtable(iph);
-			RWLOCK_EXIT(&ip_poolrw);
-		}
 		err = COPYOUT(nextiph, ilp->ili_data, sizeof(*nextiph));
 		if (err != 0)
 			err = EFAULT;
+		if (token->ipt_data != NULL) {
+			if (iph != NULL) {
+				WRITE_ENTER(&ip_poolrw);
+				fr_derefhtable(iph);
+				RWLOCK_EXIT(&ip_poolrw);
+			}
+			if (nextiph->iph_next == NULL)
+				token->ipt_data = NULL;
+		}
 		break;
 
 	case IPFLOOKUPITER_NODE :
-		if (node != NULL) {
-			WRITE_ENTER(&ip_poolrw);
-			fr_derefhtent(node);
-			RWLOCK_EXIT(&ip_poolrw);
-		}
 		err = COPYOUT(nextnode, ilp->ili_data, sizeof(*nextnode));
 		if (err != 0)
 			err = EFAULT;
+		if (token->ipt_data != NULL) {
+			if (node != NULL) {
+				WRITE_ENTER(&ip_poolrw);
+				fr_derefhtent(node);
+				RWLOCK_EXIT(&ip_poolrw);
+			}
+			if (nextnode->ipe_next == NULL)
+				token->ipt_data = NULL;
+		}
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.c,v 1.13 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: lexer.c,v 1.14 2009/08/19 08:35:33 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2006 by Darren Reed.
@@ -246,7 +246,7 @@ nextchar:
 		}
 		yyswallow('\n');
 		rval = YY_COMMENT;
-		goto nextchar;
+		goto done;
 
 	case '$' :
 		if (isbuilding == 1) {

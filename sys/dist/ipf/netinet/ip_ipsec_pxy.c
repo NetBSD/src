@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.7 2007/12/11 04:55:01 lukem Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.8 2009/08/19 08:36:11 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -8,12 +8,12 @@
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ipsec_pxy.c,v 2.20.2.8 2006/07/14 06:12:14 darrenr Exp
+ * Id: ip_ipsec_pxy.c,v 2.20.2.11 2008/11/06 21:18:34 darrenr Exp
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.7 2007/12/11 04:55:01 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.8 2009/08/19 08:36:11 darrenr Exp $");
 
 #define	IPF_IPSEC_PROXY
 
@@ -149,8 +149,6 @@ nat_t *nat;
 	ipn->in_p = IPPROTO_ESP;
 
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
-	fi.fin_state = NULL;
-	fi.fin_nat = NULL;
 	fi.fin_fi.fi_p = IPPROTO_ESP;
 	fi.fin_fr = &ipsecfr;
 	fi.fin_data[0] = 0;
@@ -172,18 +170,20 @@ nat_t *nat;
 	if ((ipsec->ipsc_rcookie[0]|ipsec->ipsc_rcookie[1]) != 0)
 		ipsec->ipsc_rckset = 1;
 
+	MUTEX_ENTER(&ipf_nat_new);
 	ipsec->ipsc_nat = nat_new(&fi, ipn, &ipsec->ipsc_nat,
 				  NAT_SLAVE|SI_WILDP, NAT_OUTBOUND);
+	MUTEX_EXIT(&ipf_nat_new);
 	if (ipsec->ipsc_nat != NULL) {
 		(void) nat_proto(&fi, ipsec->ipsc_nat, 0);
-		nat_update(&fi, ipsec->ipsc_nat, ipn);
+		MUTEX_ENTER(&ipsec->ipsc_nat->nat_lock);
+		nat_update(&fi, ipsec->ipsc_nat);
+		MUTEX_EXIT(&ipsec->ipsc_nat->nat_lock);
 
 		fi.fin_data[0] = 0;
 		fi.fin_data[1] = 0;
 		ipsec->ipsc_state = fr_addstate(&fi, &ipsec->ipsc_state,
 						SI_WILDP);
-		if (fi.fin_state != NULL)
-			fr_statederef((ipstate_t **)&fi.fin_state);
 	}
 	ip->ip_p = p & 0xff;
 	return 0;
@@ -218,8 +218,6 @@ nat_t *nat;
 
 		if ((ipsec->ipsc_nat == NULL) || (ipsec->ipsc_state == NULL)) {
 			bcopy((char *)fin, (char *)&fi, sizeof(fi));
-			fi.fin_state = NULL;
-			fi.fin_nat = NULL;
 			fi.fin_fi.fi_p = IPPROTO_ESP;
 			fi.fin_fr = &ipsecfr;
 			fi.fin_data[0] = 0;
@@ -235,14 +233,17 @@ nat_t *nat;
 		if (ipsec->ipsc_nat != NULL)
 			fr_queueback(&ipsec->ipsc_nat->nat_tqe);
 		else {
+			MUTEX_ENTER(&ipf_nat_new);
 			ipsec->ipsc_nat = nat_new(&fi, &ipsec->ipsc_rule,
 						  &ipsec->ipsc_nat,
 						  NAT_SLAVE|SI_WILDP,
 						  nat->nat_dir);
+			MUTEX_EXIT(&ipf_nat_new);
 			if (ipsec->ipsc_nat != NULL) {
 				(void) nat_proto(&fi, ipsec->ipsc_nat, 0);
-				nat_update(&fi, ipsec->ipsc_nat,
-					   &ipsec->ipsc_rule);
+				MUTEX_ENTER(&ipsec->ipsc_nat->nat_lock);
+				nat_update(&fi, ipsec->ipsc_nat);
+				MUTEX_EXIT(&ipsec->ipsc_nat->nat_lock);
 			}
 		}
 
@@ -261,8 +262,6 @@ nat_t *nat;
 			ipsec->ipsc_state = fr_addstate(&fi,
 							&ipsec->ipsc_state,
 							SI_WILDP);
-			if (fi.fin_state != NULL)
-				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_p = p;
 	}

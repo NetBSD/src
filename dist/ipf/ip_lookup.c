@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.6 2008/05/20 07:08:06 darrenr Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.7 2009/08/19 08:35:30 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -60,7 +60,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.20 2007/10/26 12:15:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.21 2009/05/13 18:31:15 darrenr Exp";
 #endif
 
 #ifdef	IPFILTER_LOOKUP
@@ -615,6 +615,9 @@ void *ctx;
 		err = EINVAL;
 		break;
 	}
+
+	WRITE_ENTER(&ipf_tokens);
+	ipf_dereftoken(token);
 	RWLOCK_EXIT(&ipf_tokens);
 	SPL_X(s);
 

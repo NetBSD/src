@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.5 2007/12/11 04:55:03 lukem Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.6 2009/08/19 08:36:12 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_raudio_pxy.c,v 1.40.2.4 2006/07/14 06:12:17 darrenr Exp
+ * Id: ip_raudio_pxy.c,v 1.40.2.7 2008/11/06 21:18:36 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.5 2007/12/11 04:55:03 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.6 2009/08/19 08:36:12 darrenr Exp $");
 
 #define	IPF_RAUDIO_PROXY
 
@@ -280,8 +280,6 @@ nat_t *nat;
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
 	bzero((char *)tcp2, sizeof(*tcp2));
 	TCP_OFF_A(tcp2, 5);
-	fi.fin_state = NULL;
-	fi.fin_nat = NULL;
 	fi.fin_flx |= FI_IGNORE;
 	fi.fin_dp = (char *)tcp2;
 	fi.fin_fr = &raudiofr;
@@ -300,16 +298,18 @@ nat_t *nat;
 		fi.fin_data[0] = dp;
 		fi.fin_data[1] = sp;
 		fi.fin_out = 0;
+		MUTEX_ENTER(&ipf_nat_new);
 		nat2 = nat_new(&fi, nat->nat_ptr, NULL,
 			       NAT_SLAVE|IPN_UDP | (sp ? 0 : SI_W_SPORT),
 			       NAT_OUTBOUND);
+		MUTEX_EXIT(&ipf_nat_new);
 		if (nat2 != NULL) {
 			(void) nat_proto(&fi, nat2, IPN_UDP);
-			nat_update(&fi, nat2, nat2->nat_ptr);
+			MUTEX_ENTER(&nat2->nat_lock);
+			nat_update(&fi, nat2);
+			MUTEX_EXIT(&nat2->nat_lock);
 
 			(void) fr_addstate(&fi, NULL, (sp ? 0 : SI_W_SPORT));
-			if (fi.fin_state != NULL)
-				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 	}
 
@@ -320,16 +320,18 @@ nat_t *nat;
 		fi.fin_data[0] = sp;
 		fi.fin_data[1] = 0;
 		fi.fin_out = 1;
+		MUTEX_ENTER(&ipf_nat_new);
 		nat2 = nat_new(&fi, nat->nat_ptr, NULL,
 			       NAT_SLAVE|IPN_UDP|SI_W_DPORT,
 			       NAT_OUTBOUND);
+		MUTEX_EXIT(&ipf_nat_new);
 		if (nat2 != NULL) {
 			(void) nat_proto(&fi, nat2, IPN_UDP);
-			nat_update(&fi, nat2, nat2->nat_ptr);
+			MUTEX_ENTER(&nat2->nat_lock);
+			nat_update(&fi, nat2);
+			MUTEX_EXIT(&nat2->nat_lock);
 
 			(void) fr_addstate(&fi, NULL, SI_W_DPORT);
-			if (fi.fin_state != NULL)
-				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 	}
 

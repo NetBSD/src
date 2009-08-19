@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.24 2008/12/17 20:51:35 cegger Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.25 2009/08/19 08:36:10 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.142.2.61 2008/04/09 10:54:03 darrenr Exp
+ * Id: ip_compat.h,v 2.142.2.77 2009/08/16 07:03:04 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -178,9 +178,12 @@ struct file;
 # else
 #  include "radix_ipf_local.h"
 # endif
+# include <inet/mib2.h>
 # include <inet/ip.h>
 # undef COPYOUT
-# include <inet/ip_ire.h>
+# if !defined(_SYS_NETI_H)
+#  include <inet/ip_ire.h>
+# endif
 # ifndef	KERNEL
 #  undef	_KERNEL
 # endif
@@ -206,6 +209,10 @@ typedef	uint32_t	u_32_t;
 typedef unsigned int	u_32_t;
 # endif
 # define	U_32_T	1
+# if SOLARIS2 >= 7
+#  define	U_QUAD_T	uint64_t
+#  define	QUAD_T		int64_t
+# endif
 
 # ifdef _KERNEL
 #  define	NEED_LOCAL_RAND	1
@@ -219,8 +226,9 @@ typedef unsigned int	u_32_t;
 #  else
 #   include <sys/neti.h>
 
-extern net_data_t ipfipv4;
-extern net_data_t ipfipv6;
+extern net_handle_t ipfipv4;
+extern net_handle_t ipfipv6;
+
 
 typedef struct qpktinfo {
         void		*qpi_data;
@@ -305,7 +313,8 @@ extern	void	*get_unit __P((char *, int));
 					} \
 				} while (0)
 #  else
-#   define	 COPYIFNAME(v, x, b) \
+#   define	FASTROUTE_RECURSION	1
+#   define	COPYIFNAME(v, x, b) \
 				(void) strncpy(b, ((qif_t *)x)->qf_name, \
 					       LIFNAMSIZ)
 #  endif
@@ -363,6 +372,7 @@ typedef	struct	ip6_hdr	ip6_t;
 # endif
 
 # ifdef _KERNEL
+#  define	FASTROUTE_RECURSION	1
 #  define SNPRINTF	sprintf
 #  if (HPUXREV >= 1111)
 #   define	IPL_SELECT
@@ -690,16 +700,16 @@ typedef struct mbuf mb_t;
 #  define	ATOMIC_DEC64(x)		atomic_decq((uint64_t*)&(x))
 #  define	ATOMIC_INC32(x)		atomic_incl((uint32_t*)&(x))
 #  define	ATOMIC_DEC32(x)		atomic_decl((uint32_t*)&(x))
-#  define	ATOMIC_INC16(x)		{ simple_lock(&ipf_rw); (x)++; \
-					  simple_unlock(&ipf_rw); }
-#  define	ATOMIC_DEC16(x)		{ simple_lock(&ipf_rw); (x)--; \
-					  simple_unlock(&ipf_rw); }
+#  define	ATOMIC_INC16(x)		{ simple_lock(&ipf_rw.ipf_lk); (x)++; \
+					  simple_unlock(&ipf_rw.ipf_lk); }
+#  define	ATOMIC_DEC16(x)		{ simple_lock(&ipf_rw.ipf_lk); (x)--; \
+					  simple_unlock(&ipf_rw.ipf_lk); }
 #  define	ATOMIC_INCL(x)		atomic_incl((uint32_t*)&(x))
 #  define	ATOMIC_DECL(x)		atomic_decl((uint32_t*)&(x))
-#  define	ATOMIC_INC(x)		{ simple_lock(&ipf_rw); (x)++; \
-					  simple_unlock(&ipf_rw); }
-#  define	ATOMIC_DEC(x)		{ simple_lock(&ipf_rw); (x)--; \
-					  simple_unlock(&ipf_rw); }
+#  define	ATOMIC_INC(x)		{ simple_lock(&ipf_rw.ipf_lk); (x)++; \
+					  simple_unlock(&ipf_rw.ipf_lk); }
+#  define	ATOMIC_DEC(x)		{ simple_lock(&ipf_rw.ipf_lk); (x)--; \
+					  simple_unlock(&ipf_rw.ipf_lk); }
 #  define	SPL_SCHED(x)		;
 #  define	SPL_NET(x)		;
 #  define	SPL_IMP(x)		;
@@ -794,9 +804,7 @@ typedef unsigned int    u_32_t;
 
 # define	ipf_random	arc4random
 
-# ifdef _KERNEL
 # if (__NetBSD_Version__ >= 499000000)
-typedef	char *	caddr_t;
 #  ifdef _KERNEL
 #   include <sys/rwlock.h>
 #   define	USE_MUTEXES		1
@@ -820,6 +828,9 @@ typedef	char *	caddr_t;
 #   define	SPL_X(x)		;
 #  endif
 # endif
+
+# ifdef _KERNEL
+#  define	ipf_random	arc4random
 #  if (__NetBSD_Version__ >= 399001400)
 #   define	KMALLOCS(a, b, c)	(a) = (b)malloc((c), _M_IPF, M_NOWAIT)
 #  endif
@@ -828,8 +839,8 @@ typedef	char *	caddr_t;
 #  define	M_DUPLICATE(x)	m_copy((x), 0, M_COPYALL)
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
 #  define	BCOPYIN(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
 #  define	BCOPYOUT(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
 #  if (defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499005500))
@@ -865,16 +876,12 @@ typedef	u_int32_t	u_32_t;
 #ifdef __FreeBSD__
 # if  (__FreeBSD_version < 400000)
 #  define	NEED_LOCAL_RAND	1
-# else
-#  define	ipf_random	arc4random
 # endif
 # if defined(_KERNEL)
 #  if (__FreeBSD_version >= 500000)
 #   include "opt_bpf.h"
-#  else
-#   include "bpf.h"
 #  endif
-#  if defined(__FreeBSD_version) && (__FreeBSD_version >= 400000)
+#  if defined(__FreeBSD_version) && (__FreeBSD_version >= 500000)
 #   include "opt_inet6.h"
 #  endif
 #  if defined(INET6) && !defined(USE_INET6)
@@ -884,6 +891,7 @@ typedef	u_int32_t	u_32_t;
 
 # if defined(_KERNEL)
 #  if (__FreeBSD_version >= 400000)
+#   define	ipf_random	arc4random
 /*
  * When #define'd, the 5.2.1 kernel panics when used with the ftp proxy.
  * There may be other, safe, kernels but this is not extensively tested yet.
@@ -1170,12 +1178,12 @@ typedef	unsigned int	u_32_t;
 /*                            L I N U X                                    */
 /* ----------------------------------------------------------------------- */
 #if defined(linux) && !defined(OS_RECOGNISED)
-#include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
-# include <linux/autoconf.h>
-#else
-# include <linux/config.h>
-#endif
+
+# include <linux/version.h>
+# if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
+#  include <linux/config.h>
+# endif
+
 # if (LINUX >= 20600) && defined(_KERNEL)
 #  define	 HDR_T_PRIVATE	1
 # endif
@@ -1188,6 +1196,16 @@ struct ip6_ext {
 # endif
 
 # ifdef _KERNEL
+#  include <asm/byteorder.h>
+#  ifdef __LITTLE_ENDIAN
+#   define	LITTLE_ENDIAN	1
+#   define	BIG_ENDIAN	0
+#   define	BYTE_ORDER	LITTLE_ENDIAN
+#  else
+#   define	LITTLE_ENDIAN	0
+#   define	BIG_ENDIAN	1
+#   define	BYTE_ORDER	BIG_ENDIAN
+#  endif
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
 #  define	COPYIN(a,b,c)	copy_from_user((caddr_t)(b), (caddr_t)(a), (c))
 #  define	COPYOUT(a,b,c)	copy_to_user((caddr_t)(b), (caddr_t)(a), (c))
@@ -1205,8 +1223,8 @@ struct ip6_ext {
 #  define	KRWLOCK_T		rwlock_t
 #  define	KMUTEX_T		spinlock_t
 #  define	MUTEX_INIT(x,y)		spin_lock_init(&(x)->ipf_lk)
-#  define	MUTEX_ENTER(x)		spin_lock(&(x)->ipf_lk)
-#  define	MUTEX_EXIT(x)		spin_unlock(&(x)->ipf_lk)
+#  define	MUTEX_ENTER(x)		spin_lock_bh(&(x)->ipf_lk)
+#  define	MUTEX_EXIT(x)		spin_unlock_bh(&(x)->ipf_lk)
 #  define	MUTEX_DESTROY(x)	do { } while (0)
 #  define	MUTEX_NUKE(x)		bzero(&(x)->ipf_lk, sizeof((x)->ipf_lk))
 #  define	READ_ENTER(x)		ipf_read_enter(x)
@@ -1246,6 +1264,7 @@ extern	mb_t	*m_pullup __P((mb_t *, int));
 #  define	mbuf	sk_buff
 
 #  define	mtod(m, t)	((t)(m)->data)
+#  define	m_adj(m, x)	skb_trim((m), (m)->len + (x))
 #  define	m_data		data
 #  define	m_len		len
 #  define	m_next		next
@@ -1259,6 +1278,14 @@ extern	mb_t	*m_pullup __P((mb_t *, int));
 #  define	bcopy(s,d,z)	memmove(d, s, z)
 #  define	bzero(s,z)	memset(s, 0, z)
 #  define	bcmp(a,b,z)	memcmp(a, b, z)
+#  if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+#   define	ipf_random	random32
+#   define	arc4random	random32
+#  else
+#   include <linux/random.h>
+#   define	ipf_random	get_random_int
+#   define	arc4random	get_random_int
+#  endif
 
 #  define	ifnet		net_device
 #  define	if_xname	name
@@ -1271,8 +1298,12 @@ extern	mb_t	*m_pullup __P((mb_t *, int));
 				    in_interrupt() ? GFP_ATOMIC : GFP_KERNEL)
 #  define	KFREES(x,s)	kfree(x)
 
-#  define GETIFP(n,v)	dev_get_by_name(n)
-
+#  if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+#   define	f_uid		f_owner.uid
+#   define	GETIFP(n,v)	dev_get_by_name(&init_net,n)
+#  else
+#   define	GETIFP(n,v)	dev_get_by_name(n)
+#  endif
 # else
 #  include <net/ethernet.h>
 
@@ -1320,6 +1351,10 @@ extern	int	uiomove __P((void *, size_t, int, struct uio *));
 
 # define	UIO_READ	1
 # define	UIO_WRITE	2
+
+# if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)) && !defined(_KERNEL)
+typedef int		fmode_t;
+# endif
 
 typedef	u_long		ioctlcmd_t;
 typedef	int		minor_t;
@@ -1629,13 +1664,15 @@ extern void eMrwlock_downgrade __P((eMrwlock_t *, char *, int));
  * On BSD's use quad_t as a guarantee for getting at least a 64bit sized
  * object.
  */
-#if defined(BSD) && (BSD > 199306)
+#if !defined(__amd64__) && defined(BSD) && (BSD > 199306)
 # define	USE_QUAD_T
 # define	U_QUAD_T	u_quad_t
 # define	QUAD_T		quad_t
 #else /* BSD > 199306 */
-# define	U_QUAD_T	u_long
-# define	QUAD_T		long
+# if !defined(U_QUAD_T)
+#  define	U_QUAD_T	u_long
+#  define	QUAD_T		long
+# endif
 #endif /* BSD > 199306 */
 
 
@@ -2462,6 +2499,25 @@ typedef	struct	tcpiphdr	tcpiphdr_t;
 #endif
 #ifndef	ICMP6_NI_SUBJ_IPV4
 # define	ICMP6_NI_SUBJ_IPV4	2
+#endif
+
+#if !defined(IPV6_FLOWINFO_MASK)
+# if (BYTE_ORDER == BIG_ENDIAN) || defined(_BIG_ENDIAN)
+#  define IPV6_FLOWINFO_MASK	0x0fffffff	/* flow info (28 bits) */
+# else
+#  if(BYTE_ORDER == LITTLE_ENDIAN) || !defined(_BIG_ENDIAN)
+#   define IPV6_FLOWINFO_MASK	0xffffff0f	/* flow info (28 bits) */
+#  endif /* LITTLE_ENDIAN */
+# endif
+#endif
+#if !defined(IPV6_FLOWLABEL_MASK)
+# if (BYTE_ORDER == BIG_ENDIAN) || defined(_BIG_ENDIAN)
+#  define IPV6_FLOWLABEL_MASK	0x000fffff	/* flow label (20 bits) */
+# else
+#  if (BYTE_ORDER == LITTLE_ENDIAN) || !defined(_BIG_ENDIAN)
+#   define IPV6_FLOWLABEL_MASK	0xffff0f00	/* flow label (20 bits) */
+#  endif /* LITTLE_ENDIAN */
+# endif
 #endif
 
 /*
