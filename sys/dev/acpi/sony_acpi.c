@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.9 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.10 2009/08/19 00:19:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.9 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.10 2009/08/19 00:19:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,8 @@ sony_acpi_find_pic(ACPI_HANDLE hdl, UINT32 level, void *opaque, void **status)
 	if (ACPI_FAILURE(rv) || devinfo == NULL)
 		return AE_OK;	/* we don't want to stop searching */
 
-	if (strncmp(devinfo->HardwareId.String, "SNY6001", 7) == 0)
+	if (devinfo->HardwareId.String &&
+	    strncmp(devinfo->HardwareId.String, "SNY6001", 7) == 0)
 		sc->sc_has_pic = true;
 
 	AcpiOsFree(devinfo);
