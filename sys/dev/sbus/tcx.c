@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.34 2009/08/19 03:35:32 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.35 2009/08/19 03:45:51 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.34 2009/08/19 03:35:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.35 2009/08/19 03:45:51 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -178,6 +178,7 @@ static void	tcx_clearscreen(struct tcx_softc *);
 static void	tcx_copyrows(void *, int, int, int);
 static void	tcx_eraserows(void *, int, int, long);
 static void	tcx_putchar(void *, int, int, u_int, long);
+static void	tcx_set_video(struct tcx_softc *, int);
 
 struct wsdisplay_accessops tcx_accessops = {
 	tcx_ioctl,
@@ -425,7 +426,6 @@ int
 tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
-	//int error;
 
 	switch (cmd) {
 
@@ -476,20 +476,7 @@ tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		break;
 
 	case FBIOSVIDEO:
-		if (*(int *)data)
-			tcx_unblank(sc->sc_dev);
-		else if (!sc->sc_blanked) {
-			uint32_t reg;
-			sc->sc_blanked = 1;
-			reg = bus_space_read_4(sc->sc_bustag, sc->sc_thc,
-			    THC_MISC);
-			reg &= ~THC_MISC_VIDEN;
-			/* Put monitor in `power-saving mode' */
-			reg |= THC_MISC_VSYNC_DISABLE;
-			reg |= THC_MISC_HSYNC_DISABLE;
-			bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_MISC,
-			    reg);
-		}
+		tcx_set_video(sc, *(int *)data);
 		break;
 
 	default:
@@ -548,6 +535,27 @@ tcx_unblank(device_t dev)
 		reg &= ~THC_MISC_VSYNC_DISABLE;
 		reg &= ~THC_MISC_HSYNC_DISABLE;
 		reg |= THC_MISC_VIDEN;
+		bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_MISC, reg);
+	}
+}
+
+static void
+tcx_set_video(struct tcx_softc *sc, int unblank)
+{
+	uint32_t reg;
+	if (unblank) {
+		sc->sc_blanked = 0;
+		reg = bus_space_read_4(sc->sc_bustag, sc->sc_thc, THC_MISC);
+		reg &= ~THC_MISC_VSYNC_DISABLE;
+		reg &= ~THC_MISC_HSYNC_DISABLE;
+		reg |= THC_MISC_VIDEN;
+		bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_MISC, reg);
+	} else {
+		sc->sc_blanked = 1;
+		reg = bus_space_read_4(sc->sc_bustag, sc->sc_thc, THC_MISC);
+		reg |= THC_MISC_VSYNC_DISABLE;
+		reg |= THC_MISC_HSYNC_DISABLE;
+		reg &= ~THC_MISC_VIDEN;
 		bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_MISC, reg);
 	}
 }
@@ -674,17 +682,16 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			*(u_int *)data = WSDISPLAY_TYPE_SUNTCX;
 			return 0;
 
-#if 0
 		case FBIOGVIDEO:
 		case WSDISPLAYIO_GVIDEO:
-			*(int *)data = tcx_get_video(sc);
+			*(int *)data = !sc->sc_blanked;
 			return 0;
 
 		case WSDISPLAYIO_SVIDEO:
 		case FBIOSVIDEO:
 			tcx_set_video(sc, *(int *)data);
 			return 0;
-#endif
+
 		case WSDISPLAYIO_GINFO:
 			wdf = (void *)data;
 			wdf->height = ms->scr_ri.ri_height;
