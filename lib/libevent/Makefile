@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/07/26 21:33:46 tls Exp $
+#	$NetBSD: Makefile,v 1.7 2009/08/19 01:38:39 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 NOLINT=		# Until someone explains to me how to avoid lint stupidity
@@ -11,11 +11,8 @@ LIB=	event
 SRCS=	buffer.c evbuffer.c evdns.c event.c event_tagging.c evrpc.c evutil.c \
 	http.c kqueue.c log.c poll.c signal.c
 
-INCS=	evdns.h event.h evhttp.h evrpc.h evutil.h
+INCS=	evdns.h event.h evhttp.h evrpc.h evutil.h event_config.h
 INCSDIR=/usr/include
-
-INCS+=	config.h
-INCSNAME_config.h=	event-config.h
 
 MAN=	evdns.3 event.3
 
@@ -91,5 +88,8 @@ MLINKS+=evdns.3 evdns_search_clear.3
 MLINKS+=evdns.3 evdns_search_add.3
 MLINKS+=evdns.3 evdns_search_ndots_set.3
 MLINKS+=evdns.3 evdns_set_log_fn.3
+
+event_config.h:	config.h
+	sed -e 's/#define /#define _EVENT_/' ${.ALLSRC} > ${.OBJDIR}/${.TARGET}
 
 .include <bsd.lib.mk>
