@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.9 2007/06/16 10:33:09 martin Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.10 2009/08/19 08:28:58 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -204,8 +204,13 @@ static int ipl_remove()
         for (i = 0; (name = ipf_devfiles[i]); i++) {
 #if (__NetBSD_Version__ > 106009999)
 # if (__NetBSD_Version__ > 399001400)
+#  if (__NetBSD_Version__ > 499001400)
+		NDINIT(&nd, DELETE, LOCKPARENT|LOCKLEAF, UIO_SYSSPACE,
+		       name);
+#  else
 		NDINIT(&nd, DELETE, LOCKPARENT|LOCKLEAF, UIO_SYSSPACE,
 		       name, curlwp);
+#  endif
 # else
 		NDINIT(&nd, DELETE, LOCKPARENT|LOCKLEAF, UIO_SYSSPACE,
 		       name, curproc);
@@ -217,7 +222,9 @@ static int ipl_remove()
 			return (error);
 #if (__NetBSD_Version__ > 399001400)
 # if (__NetBSD_Version__ > 399002000)
+#  if (__NetBSD_Version__ < 499001400)
 		VOP_LEASE(nd.ni_dvp, curlwp, curlwp->l_cred, LEASE_WRITE);
+#  endif
 # else
 		VOP_LEASE(nd.ni_dvp, curlwp, curlwp->l_proc->p_ucred, LEASE_WRITE);
 # endif
@@ -228,8 +235,10 @@ static int ipl_remove()
 		vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 #endif
 #if (__NetBSD_Version__ >= 399002000)
+# if (__NetBSD_Version__ < 499001400)
 		VOP_LEASE(nd.ni_vp, curlwp, curlwp->l_cred, LEASE_WRITE);
-# else
+# endif
+#else
 # if (__NetBSD_Version__ > 399001400)
 		VOP_LEASE(nd.ni_vp, curlwp, curlwp->l_proc->p_ucred, LEASE_WRITE);
 # else
@@ -282,7 +291,11 @@ static int ipl_load()
 
 	for (i = 0; (error == 0) && (name = ipf_devfiles[i]); i++) {
 #if (__NetBSD_Version__ > 399001400)
+# if (__NetBSD_Version__ > 499001400)
+		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name);
+# else
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curlwp);
+# endif
 #else
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
 #endif
@@ -304,7 +317,9 @@ static int ipl_load()
 		vattr.va_rdev = (ipl_major << 8) | i;
 #if (__NetBSD_Version__ > 399001400)
 # if (__NetBSD_Version__ >= 399002000)
+#  if (__NetBSD_Version__ < 499001400)
 		VOP_LEASE(nd.ni_dvp, curlwp, curlwp->l_cred, LEASE_WRITE);
+#  endif
 # else
 		VOP_LEASE(nd.ni_dvp, curlwp, curlwp->l_proc->p_ucred, LEASE_WRITE);
 # endif

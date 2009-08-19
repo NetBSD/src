@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_linux.c,v 1.1.1.7 2008/05/20 06:44:04 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_linux.c,v 1.1.1.8 2009/08/19 08:29:20 darrenr Exp $	*/
 
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -17,7 +17,9 @@
 #include <linux/timer.h>
 #include <asm/ioctls.h>
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 extern int sysctl_ip_default_ttl;
+#endif
 
 static	int	fr_send_ip __P((fr_info_t *, struct sk_buff *, struct sk_buff **));
 
@@ -27,7 +29,15 @@ ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag, ipf_frcache, ipf_tokens;
 ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 struct timer_list	ipf_timer;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+extern int ip_finish_output(struct sk_buff *);
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+static u_int ipf_linux_inout __P((u_int, struct sk_buff *, const struct net_device *, const struct net_device *, int (*okfn)(struct sk_buff *)));
+#else
 static u_int ipf_linux_inout __P((u_int, struct sk_buff **, const struct net_device *, const struct net_device *, int (*okfn)(struct sk_buff *)));
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 static struct nf_hook_ops ipf_hooks[] = {
@@ -35,14 +45,22 @@ static struct nf_hook_ops ipf_hooks[] = {
 		.hook		= ipf_linux_inout,
 		.owner		= THIS_MODULE,
 		.pf		= PF_INET,
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+		.hooknum	= NF_INET_PRE_ROUTING,
+# else
 		.hooknum	= NF_IP_PRE_ROUTING,
+# endif
 		.priority	= 200,
 	},
 	{
 		.hook		= ipf_linux_inout,
 		.owner		= THIS_MODULE,
 		.pf		= PF_INET,
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+		.hooknum	= NF_INET_POST_ROUTING,
+# else
 		.hooknum	= NF_IP_POST_ROUTING,
+# endif
 		.priority	= 200,
 	},
 # ifdef USE_INET6
@@ -50,14 +68,22 @@ static struct nf_hook_ops ipf_hooks[] = {
 		.hook		= ipf_linux_inout,
 		.owner		= THIS_MODULE,
 		.pf		= PF_INET6,
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+		.hooknum	= NF_INET_PRE_ROUTING,
+# else
 		.hooknum	= NF_IP_PRE_ROUTING,
+# endif
 		.priority	= 200,
 	},
 	{
 		.hook		= ipf_linux_inout,
 		.owner		= THIS_MODULE,
 		.pf		= PF_INET6,
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+		.hooknum	= NF_INET_POST_ROUTING,
+# else
 		.hooknum	= NF_IP_POST_ROUTING,
+# endif
 		.priority	= 200,
 	}
 # endif
@@ -125,7 +151,7 @@ int ipfattach()
 		for (i = 0; i < sizeof(ipf_hooks)/sizeof(ipf_hooks[0]); i++)
 			nf_unregister_hook(&ipf_hooks[i]);
 		SPL_X(s);
-		return EIO;
+		return -EIO;
 	}
 
 	bzero((char *)frcache, sizeof(frcache));
@@ -137,8 +163,13 @@ int ipfattach()
 	SPL_X(s);
 	/* timeout(fr_slowtimer, NULL, (hz / IPF_HZ_DIVIDE) * IPF_HZ_MULT); */
 	init_timer(&ipf_timer);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+	ipf_timer.function = (void (*)(unsigned long))fr_slowtimer;
+	ipf_timer.data = 0;
+#else
 	ipf_timer.function = fr_slowtimer;
 	ipf_timer.data = NULL;
+#endif
 	ipf_timer.expires = (HZ / IPF_HZ_DIVIDE) * IPF_HZ_MULT;
 	add_timer(&ipf_timer);
 	mod_timer(&ipf_timer, HZ/2 + jiffies);
@@ -225,8 +256,18 @@ fr_info_t *fin;
 {
 	u_32_t isn;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+	i6addr_t dst, src;
+
+	bcopy(&fin->fin_dst, &dst, sizeof(dst));
+	bcopy(&fin->fin_src, &src, sizeof(src));
+
+	isn = secure_tcpv6_sequence_number(&dst.in4.s_addr, &src.in4.s_addr,
+					   fin->fin_dport, fin->fin_sport);
+#else
 	isn = secure_tcp_sequence_number(fin->fin_daddr, fin->fin_saddr,
 					 fin->fin_dport, fin->fin_sport);
+#endif
 	return isn;
 }
 
@@ -321,7 +362,11 @@ struct sk_buff *sk, **skp;
 		ip->ip_hl = sizeof(*oip) >> 2;
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_id = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 		ip->ip_ttl = sysctl_ip_default_ttl;
+#else
+		ip->ip_ttl = IPDEFTTL;
+#endif
 		ip->ip_sum = 0;
 		ip->ip_off = 0x4000;
 		hlen = sizeof(*ip);
@@ -416,12 +461,24 @@ int isdst;
 
 	bzero(MTOD(m, char *), (size_t)sz);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+	skb_put(m, hlen);
+	skb_set_network_header(m,hlen);
+	ip = (ip_t *)ip_hdr(m);
+#else
 	m->nh.iph = (struct iphdr *)skb_put(m, hlen);
 	ip = (ip_t *)m->nh.iph;
+#endif
 	ip->ip_v = fin->fin_v;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+	skb_put(m, hlen + 4 + dlen);
+	skb_set_transport_header(m, hlen + 4 + dlen);
+	icmp = (icmphdr_t *)icmp_hdr(m);
+#else
 	m->h.icmph = (struct icmphdr *)skb_put(m, hlen + 4 + dlen);
 	icmp = (icmphdr_t *)m->h.icmph;
+#endif
 	icmp->icmp_type = type & 0xff;
 	icmp->icmp_code = code & 0xff;
 #ifdef	icmp_nextmtu
@@ -596,8 +653,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -605,7 +661,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -641,8 +696,13 @@ frdest_t *fdp;
 		ip->ip_sum = ip_fast_csum((u_char *)ip, ip->ip_hl);
 
 		/*dumpskbuff(xmin);*/
-		NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, xmin, NULL,
-			ifp, ip_finish_output);
+		NF_HOOK(PF_INET,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+			NF_INET_LOCAL_OUT,
+#else
+			NF_IP_LOCAL_OUT,
+#endif
+			xmin, NULL, ifp, ip_finish_output);
 		err = 0;
 		break;
 
@@ -674,7 +734,11 @@ struct in_addr *inp, *inpmask;
 		return -1;
 
 	dev = ifptr;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
+	ifp = __in_dev_get_rtnl(dev);
+#else
 	ifp = __in_dev_get(dev);
+#endif
 
 	if (v == 4)
 		inp->s_addr = 0;
@@ -718,7 +782,11 @@ caddr_t cp;
 
 static u_int ipf_linux_inout(hooknum, skbp, inifp, outifp, okfn)
 u_int hooknum;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+struct sk_buff *skbp;
+#else
 struct sk_buff **skbp;
+#endif
 const struct net_device *inifp, *outifp;
 int (*okfn)(struct sk_buff *);
 {
@@ -736,7 +804,11 @@ int (*okfn)(struct sk_buff *);
 	} else
 		return NF_DROP;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
+	sk = skbp;
+#else
 	sk = *skbp;
+#endif
 	ip = MTOD(sk, ip_t *);
 	if (ip->ip_v == 4) {
 		hlen = ip->ip_hl << 2;
@@ -748,13 +820,16 @@ int (*okfn)(struct sk_buff *);
 #endif
 	} else
 		return NF_DROP;
-	result = fr_check(ip, hlen, (struct net_device *)ifp, dir, skbp);
+	result = fr_check(ip, hlen, (struct net_device *)ifp, dir, &sk);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
+	*skbp = sk;
+#endif
 
 	/*
-	 * This is kind of not always right...*skbp == NULL might really be
+	 * This is kind of not always right...sk == NULL might really be
 	 * a drop but Linux expects *skbp != NULL for NF_DROP.
 	 */
-	if (*skbp == NULL)
+	if (sk == NULL)
 		return NF_STOLEN;
 
 	if (result != 0)
@@ -782,7 +857,7 @@ ipfrwlock_t *rwlk;
 		*((int *)rwlk->ipf_magic) = 1;
 	}
 #endif
-	read_lock(&rwlk->ipf_lk);
+	read_lock_bh(&rwlk->ipf_lk);
 	ATOMIC_INC32(rwlk->ipf_isr);
 }
 
@@ -798,7 +873,7 @@ ipfrwlock_t *rwlk;
 		*((int *)rwlk->ipf_magic) = 1;
 	}
 #endif
-	write_lock(&rwlk->ipf_lk);
+	write_lock_bh(&rwlk->ipf_lk);
 	rwlk->ipf_isw = 1;
 }
 
@@ -819,10 +894,10 @@ ipfrwlock_t *rwlk;
 #endif
 	if (rwlk->ipf_isw > 0) {
 		rwlk->ipf_isw = 0;
-		write_unlock(&rwlk->ipf_lk);
+		write_unlock_bh(&rwlk->ipf_lk);
 	} else if (rwlk->ipf_isr > 0) {
 		ATOMIC_DEC32(rwlk->ipf_isr);
-		read_unlock(&rwlk->ipf_lk);
+		read_unlock_bh(&rwlk->ipf_lk);
 	} else {
 		panic("rwlk->ipf_isw %d isr %d rwlk %p name [%s]\n",
 		      rwlk->ipf_isw, rwlk->ipf_isr, rwlk, rwlk->ipf_lname);
@@ -1003,4 +1078,60 @@ mb_t *m;
 	fin->fin_ip = NULL;
 
 	return EINVAL;
+}
+
+
+/*
+ * Copy data from a buffer back into the indicated mbuf chain,
+ * starting "off" bytes from the beginning, extending the mbuf
+ * chain if necessary.
+ */
+void
+m_copyback(m0, off0, len0, cp)
+	mb_t *m0;
+	int off0;
+	int len0;
+	caddr_t cp;
+{
+	mb_t *m = m0, *n;
+	int totlen = 0;
+	int mlen;
+	int off = off0;
+	int len = len0;
+
+	if (m0 == 0)
+		return;
+	while (off > (mlen = m->len)) {
+		off -= mlen;
+		totlen += mlen;
+		if (m->next == 0) {
+			n = alloc_skb(off, in_interrupt() ? GFP_ATOMIC :
+							    GFP_KERNEL);
+			if (n == 0)
+				return;
+			n->len = off;
+			m->next = n;
+		}
+		m = m->next;
+	}
+	while (len > 0) {
+		mlen = MIN(m->len - off, len);
+		bcopy(cp, off + mtod(m, caddr_t), (unsigned)mlen);
+		cp += mlen;
+		len -= mlen;
+		mlen += off;
+		off = 0;
+		totlen += mlen;
+		if (len == 0)
+			break;
+		if (m->next == 0) {
+			n = alloc_skb(len, in_interrupt() ? GFP_ATOMIC :
+							    GFP_KERNEL);
+			if (n == 0)
+				return;
+			n->len = len;
+			m->next = n;
+		}
+		m = m->next;
+	}
 }

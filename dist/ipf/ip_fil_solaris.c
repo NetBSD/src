@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.9 2008/05/20 06:44:08 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.10 2009/08/19 08:28:41 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.47 2008/02/05 20:56:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.51 2009/06/03 12:39:14 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -34,7 +34,6 @@ static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.47 2008/02/05 20:
 #include <sys/cmn_err.h>
 #include <net/if.h>
 #include <net/af.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -885,14 +884,11 @@ fr_info_t *fin;
 	u_short id;
 
 	MUTEX_ENTER(&ipf_rw);
-	if (fin->fin_state != NULL) {
-		is = fin->fin_state;
-		id = (u_short)(is->is_pkts[(fin->fin_rev << 1) + 1] & 0xffff);
-	} else if (fin->fin_nat != NULL) {
-		nat = fin->fin_nat;
-		id = (u_short)(nat->nat_pkts[fin->fin_out] & 0xffff);
-	} else
+	if (fin->fin_pktnum != 0) {
+		id = fin->fin_pktnum & 0xffff;
+	} else {
 		id = ipid++;
+	}
 	MUTEX_EXIT(&ipf_rw);
 
 	return id;
@@ -983,7 +979,9 @@ void fr_slowtimer __P((void *ptr))
 	if (fr_running <= 0) {
 		if (fr_running >= -1) {
 			fr_timer_id = timeout(fr_slowtimer, NULL,
-					      drv_usectohz(500000));
+					      drv_usectohz(1000000 *
+							   IPF_HZ_MULT /
+							   IPF_HZ_DIVIDE));
 		} else {
 			fr_timer_id = NULL;
 		}
@@ -1119,8 +1117,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -1128,7 +1125,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1346,13 +1342,14 @@ static void *qif_illrouteto(int v, void *dst)
 
 		sin6.sin6_family = AF_INET6;
 		memcpy(&sin6.sin6_addr, dst, sizeof(sin6.sin6_addr));
-		return (void *)net_routeto(ipfipv6, (struct sockaddr *)&sin6);
+		return (void *)net_routeto(ipfipv6, NULL,
+					   (struct sockaddr *)&sin6);
 	}
 # endif
 
 	sin.sin_family = AF_INET;
 	sin.sin_addr = *(struct in_addr *)dst;
-	return (void *)net_routeto(ipfipv4, (struct sockaddr *)&sin);
+	return (void *)net_routeto(ipfipv4, NULL, (struct sockaddr *)&sin);
 }
 
 

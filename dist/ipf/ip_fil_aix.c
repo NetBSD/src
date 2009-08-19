@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_aix.c,v 1.1.1.4 2008/05/20 06:44:02 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_aix.c,v 1.1.1.5 2009/08/19 08:29:19 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #define	__FULL_PROTO
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_aix.c,v 2.1.2.14 2007/11/08 08:12:41 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_aix.c,v 2.1.2.16 2009/03/29 00:02:24 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -973,8 +973,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -982,7 +981,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1200,8 +1198,8 @@ frdest_t *fdp;
 
 		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
+			error = nd6_output(ifp, ifp, *mpp, dst6, rt);
 			*mpp = NULL;
-			error = nd6_output(ifp, ifp, m0, dst6, rt);
 		} else {
 			error = EMSGSIZE;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.1.1.20 2008/05/20 06:44:01 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.1.1.21 2009/08/19 08:29:01 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.170.2.54 2008/04/09 10:54:03 darrenr Exp
+ * Id: ip_fil.h,v 2.170.2.62 2009/07/22 01:46:42 darrenr Exp
  */
 
 #ifndef	__IP_FIL_H__
@@ -270,6 +270,7 @@ typedef	struct	fr_ip	{
 #define	FI_V6EXTHDR	0x10000
 #define	FI_COALESCE	0x20000
 #define	FI_NEWNAT	0x40000
+#define	FI_MOREFRAG	0x80000
 #define	FI_NOCKSUM	0x20000000	/* don't do a L4 checksum validation */
 #define	FI_DONTCACHE	0x40000000	/* don't cache the result */
 #define	FI_IGNORE	0x80000000
@@ -330,8 +331,7 @@ typedef	struct	fr_info	{
 	int	fin_depth;		/* Group nesting depth */
 	int	fin_error;		/* Error code to return */
 	int	fin_cksum;		/* -1 bad, 1 good, 0 not done */
-	void	*fin_nat;
-	void	*fin_state;
+	u_int	fin_pktnum;
 	void	*fin_nattag;
 	void	*fin_exthdr;
 	ip_t	*fin_ip;
@@ -629,7 +629,7 @@ typedef	struct	frentry {
 #define	FR_NOLOGTAG	0
 
 #ifndef	offsetof
-#define	offsetof(t,m)	(int)((&((t *)0L)->m))
+#define	offsetof(t,m)	(size_t)((&((t *)0L)->m))
 #endif
 #define	FR_CMPSIZ	(sizeof(struct frentry) - \
 			 offsetof(struct frentry, fr_func))
@@ -877,7 +877,7 @@ typedef	struct	friostat	{
 	struct	frgroup		*f_groups[IPL_LOGSIZE][2];
 	u_long	f_froute[2];
 	u_long	f_ticks;
-	int	f_locks[IPL_LOGMAX];
+	int	f_locks[IPL_LOGSIZE];
 	size_t	f_kmutex_sz;
 	size_t	f_krwlock_sz;
 	int	f_defpass;	/* default pass - from fr_pass */
@@ -1223,7 +1223,7 @@ typedef struct ipftoken {
 	int		ipt_type;
 	int		ipt_uid;
 	int		ipt_subtype;
-	int		ipt_alive;
+	int		ipt_ref;
 } ipftoken_t;
 
 
@@ -1448,7 +1448,7 @@ extern	void	*fr_resolvenic __P((char *, int));
 extern	int	fr_send_icmp_err __P((int, fr_info_t *, int));
 extern	int	fr_send_reset __P((fr_info_t *));
 #if  (defined(__FreeBSD_version) && (__FreeBSD_version < 501000)) || \
-    !defined(_KERNEL)
+    !defined(_KERNEL) || defined(linux)
 extern	int	ppsratecheck __P((struct timeval *, int *, int));
 #endif
 extern	ipftq_t	*fr_addtimeoutqueue __P((ipftq_t **, u_int));
@@ -1511,19 +1511,25 @@ extern	int		fr_matchicmpqueryreply __P((int, icmpinfo_t *,
 extern	u_32_t		fr_newisn __P((fr_info_t *));
 extern	u_short		fr_nextipid __P((fr_info_t *));
 extern	int	ipf_queueflush __P((ipftq_delete_fn_t, ipftq_t *, ipftq_t *));
-extern	int		fr_rulen __P((int, frentry_t *));
 extern	int		fr_scanlist __P((fr_info_t *, u_32_t));
 extern	frentry_t 	*fr_srcgrpmap __P((fr_info_t *, u_32_t *));
 extern	int		fr_tcpudpchk __P((fr_info_t *, frtuc_t *));
 extern	int		fr_verifysrc __P((fr_info_t *fin));
 extern	int		fr_zerostats __P((void *));
 extern	ipftoken_t	*ipf_findtoken __P((int, int, void *));
+extern	void		ipf_dereftoken __P((ipftoken_t *));
 extern	int		ipf_getnextrule __P((ipftoken_t *, void *));
 extern	void		ipf_expiretokens __P((void));
 extern	void		ipf_freetoken __P((ipftoken_t *));
 extern	int		ipf_deltoken __P((int,int, void *));
 extern	int		ipfsync __P((void));
 extern	int		ipf_genericiter __P((void *, int, void *));
+#ifndef ipf_random
+extern	u_32_t		ipf_random __P((void));
+#endif
+#ifdef NEED_LOCAL_RAND
+extern	void		ipf_rand_push __P((void *, int));
+#endif
 
 extern	int	fr_running;
 extern	u_long	fr_frouteok[2];
@@ -1544,7 +1550,7 @@ extern	int	ipl_logsize;
 extern	u_long	fr_ticks;
 extern	fr_info_t	frcache[2][8];
 extern	char	ipfilter_version[];
-extern	iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
+extern	iplog_t	**iplh[IPL_LOGSIZE], *iplt[IPL_LOGSIZE];
 extern	int	iplused[IPL_LOGMAX + 1];
 extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
 #ifdef	USE_INET6

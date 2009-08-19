@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.21 2008/05/20 06:44:00 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.1.1.22 2009/08/19 08:28:43 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.18 2007/09/09 11:32:05 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.20 2008/07/27 08:27:04 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -800,4 +800,62 @@ struct in_addr *inp, *inpmask;
 int ipfsync()
 {
 	return 0;
+}
+
+
+/*    
+ * This function is not meant to be random, rather just produce a
+ * sequence of numbers that isn't linear to show "randomness".
+ */
+u_32_t
+ipf_random() 
+{
+	static int last = 0xa5a5a5a5;
+	static int calls = 0;
+	int number;
+
+	calls++;
+
+	/*
+	 * These are deliberately chosen to ensure that there is some
+	 * attempt to test whether the output covers the range in test n18.
+	 */
+	switch (calls)
+	{
+	case 1 :
+		number = 0;
+		break;
+	case 2 :
+		number = 4;
+		break;
+	case 3 :
+		number = 3999;
+		break;
+	case 4 :
+		number = 4000;
+		break;
+	case 5 :
+		number = 48999;
+		break;
+	case 6 :
+		number = 49000;
+		break;
+	default :
+		/*
+		 * So why not use srand/rand/srandom/random?  Because the
+		 * actual values returned vary from platform to platform
+		 * and what is needed is seomthing that is the same everywhere
+		 * so that regression tests can work.  Well, they could be
+		 * built on each platform to suit but that's a whole lot of
+		 * work for little gain given that we don't actually need
+		 * random numbers here, just a spread to test the NAT code
+		 * with.
+		 */
+		number = last;
+		last *= calls;
+		last++;
+		number ^= last;
+		break;
+	}
+	return number;
 }

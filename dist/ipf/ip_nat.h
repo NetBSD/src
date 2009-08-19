@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.1.1.19 2008/05/20 06:44:16 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.1.1.20 2009/08/19 08:29:02 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.20 2007/09/25 08:27:32 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.23 2008/11/06 21:18:36 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -255,9 +255,11 @@ typedef	struct	ipnat	{
 #define	IPN_FIXEDDPORT	0x200000
 #define	IPN_FINDFORWARD	0x400000
 #define	IPN_IN		0x800000
+#define	IPN_SEQUENTIAL	0x1000000
 #define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_IPRANGE|IPN_SPLIT|\
 			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST|\
-			 IPN_FRAG|IPN_STICKY|IPN_FIXEDDPORT|IPN_ICMPQUERY)
+			 IPN_FRAG|IPN_STICKY|IPN_FIXEDDPORT|IPN_ICMPQUERY|\
+			 IPN_SEQUENTIAL)
 
 /*
  * Values for in_redir
@@ -364,6 +366,7 @@ typedef	struct	natstat	{
 	u_long	*ns_bucketlen[2];
 	u_long	ns_ticks;
 	u_int	ns_orphans;
+	u_long	ns_uncreate[2][2];
 } natstat_t;
 
 typedef	struct	natlog {
@@ -451,6 +454,7 @@ extern	nat_t	*nat_icmperrorlookup __P((fr_info_t *, int));
 extern	nat_t	*nat_icmperror __P((fr_info_t *, u_int *, int));
 extern	void	nat_delete __P((struct nat *, int));
 extern	int	nat_insert __P((nat_t *, int));
+extern	void	nat_uncreate __P((fr_info_t *));
 
 extern	int	fr_checknatout __P((fr_info_t *, u_32_t *));
 extern	int	fr_natout __P((fr_info_t *, nat_t *, int, u_32_t));
@@ -464,7 +468,7 @@ extern	void	fix_outcksum __P((fr_info_t *, u_short *, u_32_t));
 extern	void	fr_ipnatderef __P((ipnat_t **));
 extern	void	fr_natderef __P((nat_t **));
 extern	u_short	*nat_proto __P((fr_info_t *, nat_t *, u_int));
-extern	void	nat_update __P((fr_info_t *, nat_t *, ipnat_t *));
+extern	void	nat_update __P((fr_info_t *, nat_t *));
 extern	void	fr_setnatqueue __P((nat_t *, int));
 extern	void	fr_hostmapdel __P((hostmap_t **));
 

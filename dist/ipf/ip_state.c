@@ -1,9 +1,11 @@
-/*	$NetBSD: ip_state.c,v 1.1.1.23 2008/05/20 06:44:23 darrenr Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.1.1.24 2009/08/19 08:28:55 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Copyright 2008 Sun Microsystems, Inc.
  */
 #if defined(KERNEL) || defined(_KERNEL)
 # undef KERNEL
@@ -72,7 +74,6 @@ struct file;
 #ifdef sun
 # include <net/af.h>
 #endif
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -113,7 +114,7 @@ struct file;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.85 2008/03/16 06:44:52 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.98 2009/07/21 09:40:56 darrenr Exp";
 #endif
 
 static	ipstate_t **ips_table = NULL;
@@ -128,7 +129,6 @@ static ipstate_t *fr_checkicmp6matchingstate __P((fr_info_t *));
 static ipstate_t *fr_matchsrcdst __P((fr_info_t *, ipstate_t *, i6addr_t *,
 				      i6addr_t *, tcphdr_t *, u_32_t));
 static ipstate_t *fr_checkicmpmatchingstate __P((fr_info_t *));
-static int fr_state_flush __P((int, int));
 static int fr_state_flush_entry __P((void *));
 static ips_stat_t *fr_statetstats __P((void));
 static int fr_delstate __P((ipstate_t *, int));
@@ -201,6 +201,9 @@ ipstate_t *ips_list = NULL;
 /* ------------------------------------------------------------------------ */
 int fr_stateinit()
 {
+#if defined(NEED_LOCAL_RAND) || !defined(_KERNEL)
+	struct timeval tv;
+#endif
 	int i;
 
 	KMALLOCS(ips_table, ipstate_t **, fr_statesize * sizeof(ipstate_t *));
@@ -211,20 +214,27 @@ int fr_stateinit()
 	KMALLOCS(ips_seed, u_long *, fr_statesize * sizeof(*ips_seed));
 	if (ips_seed == NULL)
 		return -2;
+#if defined(NEED_LOCAL_RAND) || !defined(_KERNEL)
+	tv.tv_sec = 0;
+	GETKTIME(&tv);
+#endif
 	for (i = 0; i < fr_statesize; i++) {
 		/*
 		 * XXX - ips_seed[X] should be a random number of sorts.
 		 */
-#if  (__FreeBSD_version >= 400000)
+#if !defined(NEED_LOCAL_RAND) && defined(_KERNEL)
 		ips_seed[i] = arc4random();
 #else
 		ips_seed[i] = ((u_long)ips_seed + i) * fr_statesize;
-		ips_seed[i] ^= 0xa5a55a5a;
+		ips_seed[i] += tv.tv_sec;
 		ips_seed[i] *= (u_long)ips_seed;
 		ips_seed[i] ^= 0x5a5aa5a5;
 		ips_seed[i] *= fr_statemax;
 #endif
 	}
+#if defined(NEED_LOCAL_RAND) && defined(_KERNEL)
+	ipf_rand_push(ips_seed, fr_statesize * sizeof(*ips_seed));
+#endif
 
 	/* fill icmp reply type table */
 	for (i = 0; i <= ICMP_MAXTYPE; i++)
@@ -603,11 +613,17 @@ void *ctx;
 
 		SPL_SCHED(s);
 		token = ipf_findtoken(IPFGENITER_STATE, uid, ctx);
-		if (token != NULL)
+		if (token != NULL) {
 			error = fr_stateiter(token, &iter);
-		else
+			WRITE_ENTER(&ipf_tokens);
+			if (token->ipt_data == NULL)
+				ipf_freetoken(token);
+			else
+				ipf_dereftoken(token);
+			RWLOCK_EXIT(&ipf_tokens);
+		} else {
 			error = ESRCH;
-		RWLOCK_EXIT(&ipf_tokens);
+		}
 		SPL_X(s);
 		break;
 	    }
@@ -1038,7 +1054,6 @@ ipf_state_matchisps(is1, is2)
 		{
 		case IPPROTO_TCP :
 		case IPPROTO_UDP :
-		case IPPROTO_GRE :
 			/* greinfo_t can be also interprted as port pair */
 			rv = ipf_state_matchports(&is1->is_ps.is_us,
 						  &is2->is_ps.is_us);
@@ -1072,21 +1087,20 @@ ipf_state_matchisps(is1, is2)
 /* Parameters:  is1, is2 - states we want to match                          */
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
-static int
-ipf_state_match(is1, is2)
-	ipstate_t *is1, *is2;
+static int ipf_state_match(is1, is2)
+ipstate_t *is1, *is2;
 {
 	int	rv;
-	int	amatch;
-	int	pmatch;
+	int	addrmatch;
+	int	portmatch;
 
 	if (bcmp(&is1->is_pass, &is2->is_pass,
 		 offsetof(struct ipstate, is_authmsk) -
 		 offsetof(struct ipstate, is_pass)) == 0) {
 
-		pmatch = ipf_state_matchisps(is1, is2);
-		amatch = ipf_state_matchaddresses(is1, is2);
-		rv = (amatch != 0) && (amatch == pmatch);
+		portmatch = ipf_state_matchisps(is1, is2);
+		addrmatch = ipf_state_matchaddresses(is1, is2);
+		rv = (addrmatch != 0) && (addrmatch == portmatch);
 	} else {
 		rv = 0;
 	}
@@ -1126,8 +1140,19 @@ u_int flags;
 	grehdr_t *gre;
 	int out;
 
-	if (fr_state_lock ||
-	    (fin->fin_flx & (FI_SHORT|FI_STATE|FI_FRAGBODY|FI_BAD)))
+	/*
+	 * If a packet that was created locally is trying to go out but we
+	 * do not match here here because of this lock, it is likely that
+	 * the policy will block it and return network unreachable back up
+	 * the stack. To mitigate this error, EAGAIN is returned instead,
+	 * telling the IP stack to try sending this packet again later.
+	 */
+	if (fr_state_lock) {
+		fin->fin_error = EAGAIN;
+		return NULL;
+	}
+
+	if (fin->fin_flx & (FI_SHORT|FI_STATE|FI_FRAGBODY|FI_BAD))
 		return NULL;
 
 	if ((fin->fin_flx & FI_OOW) && !(fin->fin_tcpf & TH_SYN))
@@ -1435,12 +1460,7 @@ u_int flags;
 		}
 	}
 
-	/*
-	 * It may seem strange to set is_ref to 2, but fr_check() will call
-	 * fr_statederef() after calling fr_addstate() and the idea is to
-	 * have it exist at the end of fr_check() with is_ref == 1.
-	 */
-	is->is_ref = 2;
+	is->is_ref = 1;
 	is->is_pass = pass;
 	is->is_pkts[0] = 0, is->is_bytes[0] = 0;
 	is->is_pkts[1] = 0, is->is_bytes[1] = 0;
@@ -1514,7 +1534,6 @@ u_int flags;
 		ipstate_log(is, ISL_NEW);
 
 	RWLOCK_EXIT(&ipf_state);
-	fin->fin_state = is;
 	fin->fin_rev = IP6_NEQ(&is->is_dst, &fin->fin_daddr);
 	fin->fin_flx |= FI_STATE;
 	if (fin->fin_flx & FI_FRAG)
@@ -1966,6 +1985,14 @@ ipstate_t *is;
 	bcopy((char *)is, (char *)clone, sizeof(*clone));
 
 	MUTEX_NUKE(&clone->is_lock);
+	/*
+	 * It has not yet been placed on any timeout queue, so make sure
+	 * all of that data is zero'd out.
+	 */     
+	clone->is_sti.tqe_pnext = NULL;
+	clone->is_sti.tqe_next = NULL;
+	clone->is_sti.tqe_ifq = NULL;
+	clone->is_sti.tqe_parent = clone;
 
 	clone->is_die = ONE_DAY + fr_ticks;
 	clone->is_state[0] = 0;
@@ -1995,7 +2022,7 @@ ipstate_t *is;
 	clone->is_flags &= ~SI_CLONE;
 	clone->is_flags |= SI_CLONED;
 	fr_stinsert(clone, fin->fin_rev);
-	clone->is_ref = 2;
+	clone->is_ref = 1;
 	if (clone->is_p == IPPROTO_TCP) {
 		(void) fr_tcp_age(&clone->is_sti, fin, ips_tqtqb,
 				  clone->is_flags);
@@ -2036,6 +2063,13 @@ u_32_t cmask;
 	u_short sp, dp;
 	u_32_t cflx;
 	void *ifp;
+
+	/*
+	 * If a connection is about to be deleted, no packets
+	 * are allowed to match it.
+	 */
+	if (is->is_sti.tqe_ifq == &ips_deletetq)
+		return NULL;
 
 	rev = IP6_NEQ(&is->is_dst, dst);
 	ifp = fin->fin_ifp;
@@ -2630,13 +2664,6 @@ icmp6again:
 		hvm = DOUBLE_HASH(hv);
 		for (isp = &ips_table[hvm]; ((is = *isp) != NULL); ) {
 			isp = &is->is_hnext;
-			/*
-			 * If a connection is about to be deleted, no packets
-			 * are allowed to match it.
-			 */
-			if (is->is_sti.tqe_ifq == &ips_deletetq)
-				continue;
-
 			if ((is->is_p != pr) || (is->is_v != v))
 				continue;
 			is = fr_matchsrcdst(fin, is, &src, &dst, NULL, FI_CMP);
@@ -2859,6 +2886,7 @@ ipftq_t *ifq;
 		fr_movequeue(tqe, tqe->tqe_ifq, ifq);
 
 	is->is_pkts[i]++;
+	fin->fin_pktnum = is->is_pkts[i] + is->is_icmppkts[i];
 	is->is_bytes[i] += fin->fin_plen;
 	MUTEX_EXIT(&is->is_lock);
 
@@ -2919,9 +2947,7 @@ u_32_t *passp;
 	 * Search the hash table for matching packet header info.
 	 */
 	ifq = NULL;
-	is = fin->fin_state;
-	if (is == NULL)
-		is = fr_stlookup(fin, tcp, &ifq);
+	is = fr_stlookup(fin, tcp, &ifq);
 	switch (fin->fin_p)
 	{
 #ifdef	USE_INET6
@@ -2986,11 +3012,6 @@ matched:
 	pass = is->is_pass;
 	fr_updatestate(fin, is, ifq);
 
-	fin->fin_state = is;
-	is->is_touched = fr_ticks;
-	MUTEX_ENTER(&is->is_lock);
-	is->is_ref++;
-	MUTEX_EXIT(&is->is_lock);
 	RWLOCK_EXIT(&ipf_state);
 	fin->fin_flx |= FI_STATE;
 	if ((pass & FR_LOGFIRST) != 0)
@@ -3232,6 +3253,10 @@ int why;
 		(void) fr_derefrule(&is->is_rule);
 	}
 
+#if defined(NEED_LOCAL_RAND) && defined(_KERNEL)
+	ipf_rand_push(is, sizeof(*is));
+#endif
+
 	MUTEX_DESTROY(&is->is_lock);
 	KFREE(is);
 	ips_num--;
@@ -3314,7 +3339,7 @@ void fr_timeoutstate()
 /*            If that too fails, then work backwards in 30 second intervals */
 /*            for the last 30 minutes to at worst 30 seconds idle.          */
 /* ------------------------------------------------------------------------ */
-static int fr_state_flush(which, proto)
+int fr_state_flush(which, proto)
 int which, proto;
 {
 	ipftq_t *ifq, *ifqnext;
@@ -3532,17 +3557,20 @@ int flags;
 	dir = fin->fin_rev;
 	tcpflags = tcp->th_flags;
 	dlen = fin->fin_dlen - (TCP_OFF(tcp) << 2);
+	ostate = tqe->tqe_state[1 - dir];
+	nstate = tqe->tqe_state[dir];
 
 	if (tcpflags & TH_RST) {
 		if (!(tcpflags & TH_PUSH) && !dlen)
 			nstate = IPF_TCPS_CLOSED;
 		else
 			nstate = IPF_TCPS_CLOSE_WAIT;
+
+		if (ostate <= IPF_TCPS_ESTABLISHED) {
+			tqe->tqe_state[1 - dir] = IPF_TCPS_CLOSE_WAIT;
+		}
 		rval = 1;
 	} else {
-		ostate = tqe->tqe_state[1 - dir];
-		nstate = tqe->tqe_state[dir];
-
 		switch (nstate)
 		{
 		case IPF_TCPS_LISTEN: /* 0 */
@@ -4203,12 +4231,6 @@ ipstate_t **isp;
 	if (is->is_ref > 1) {
 		is->is_ref--;
 		MUTEX_EXIT(&is->is_lock);
-#ifndef	_KERNEL
-		if ((is->is_sti.tqe_state[0] > IPF_TCPS_ESTABLISHED) ||
-		   (is->is_sti.tqe_state[1] > IPF_TCPS_ESTABLISHED)) {
-			fr_delstate(is, ISL_ORPHAN);
-		}
-#endif
 		return;
 	}
 	MUTEX_EXIT(&is->is_lock);
@@ -4314,63 +4336,69 @@ ipfgeniter_t *itp;
 	if (itp->igi_type != IPFGENITER_STATE)
 		return EINVAL;
 
-	is = token->ipt_data;
-	if (is == (void *)-1) {
-		ipf_freetoken(token);
-		return ESRCH;
-	}
-
 	error = 0;
-	dst = itp->igi_data;
 
 	READ_ENTER(&ipf_state);
+
+	/*
+	 * Get "previous" entry from the token, and find the next entry
+	 * to be processed.
+	 */
+	is = token->ipt_data;
 	if (is == NULL) {
 		next = ips_list;
 	} else {
 		next = is->is_next;
 	}
 
-	count = itp->igi_nitems;
-	for (;;) {
+	dst = itp->igi_data;
+	for (count = itp->igi_nitems; count > 0; count--) {
+		/*
+		 * If we found an entry, add a reference and update the token.
+		 * Otherwise, zero out data to be returned and NULL out token.
+		 */
 		if (next != NULL) {
-			/*
-			 * If we find a state entry to use, bump its
-			 * reference count so that it can be used for
-			 * is_next when we come back.
-			 */
-			if (count == 1) {
-				MUTEX_ENTER(&next->is_lock);
-				next->is_ref++;
-				MUTEX_EXIT(&next->is_lock);
-				token->ipt_data = next;
-			}
+			MUTEX_ENTER(&next->is_lock);
+			next->is_ref++;
+			MUTEX_EXIT(&next->is_lock);
+			token->ipt_data = next;
 		} else {
 			bzero(&zero, sizeof(zero));
 			next = &zero;
-			count = 1;
 			token->ipt_data = NULL;
 		}
+
+		/*
+		 * Safe to release lock now the we have a reference.
+		 */
 		RWLOCK_EXIT(&ipf_state);
 
 		/*
-		 * This should arguably be via fr_outobj() so that the state
-		 * structure can (if required) be massaged going out.
+		 * Copy out data and clean up references and tokens.
 		 */
 		error = COPYOUT(next, dst, sizeof(*next));
 		if (error != 0)
 			error = EFAULT;
+
+		if (is != NULL)
+			fr_statederef(&is);
+
+		if (token->ipt_data != NULL) {
+			break;
+		} else {
+			if (next->is_next == NULL) {
+				token->ipt_data = NULL;
+				break;
+			}
+		}
+
 		if ((count == 1) || (error != 0))
 			break;
 
-		dst += sizeof(*next);
-		count--;
-
 		READ_ENTER(&ipf_state);
-		next = next->is_next;
-	}
-
-	if (is != NULL) {
-		fr_statederef(&is);
+		dst += sizeof(*next);
+		is = next;
+		next = is->is_next;
 	}
 
 	return error;

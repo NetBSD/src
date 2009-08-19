@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.8 2008/05/20 06:45:22 darrenr Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.1.1.9 2009/08/19 08:29:48 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -887,7 +887,7 @@ addr:	pool '/' YY_NUMBER		{ pooled = 1;
 					  $$.a.iplookuptype = IPLT_HASH;
 					  $$.a.iplookupsubtype = 0;
 					  $$.a.iplookupnum = $3; }
-	| hash '/' YY_STR		{ pooled = 1;
+	| hash '/' YY_STR		{ hashed = 1;
 					  $$.a.iplookuptype = IPLT_HASH;
 					  $$.a.iplookupsubtype = 1;
 					  strncpy($$.a.iplookupname, $3,

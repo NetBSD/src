@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.7 2008/05/20 06:44:03 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.8 2009/08/19 08:28:58 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.24 2008/02/05 20:56:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.26 2009/07/22 01:46:43 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -586,7 +586,7 @@ struct in_addr *inp, *inpmask;
 
 
 #ifdef	IPL_SELECT
-extern	iplog_select_t	iplog_ss[IPL_LOGMAX+1];
+extern	iplog_select_t	iplog_ss[IPL_LOGSIZE];
 extern	int		selwait;
 
 /*
@@ -897,8 +897,7 @@ frdest_t *fdp;
 				u_32_t pass;
 
 				fin->fin_flx &= ~FI_STATE;
-				if (fr_checkstate(fin, &pass) != NULL)
-					fr_statederef((ipstate_t **)&fin->fin_state);
+				(void) fr_checkstate(fin, &pass);
 			}
 
 			switch (fr_checknatout(fin, NULL))
@@ -906,7 +905,6 @@ frdest_t *fdp;
 			case 0 :
 				break;
 			case 1 :
-				fr_natderef((nat_t **)&fin->fin_nat);
 				break;
 			case -1 :
 				goto bad_fastroute;

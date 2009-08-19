@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_openbsd.c,v 1.1.1.7 2008/05/20 06:44:06 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_openbsd.c,v 1.1.1.8 2009/08/19 08:29:14 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_openbsd.c,v 2.50.2.38 2008/02/05 20:56:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_openbsd.c,v 2.50.2.40 2009/03/29 00:02:26 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -787,8 +787,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -796,7 +795,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1008,9 +1006,9 @@ frdest_t *fdp;
 			mtu = nd_ifinfo[ifp->if_index].linkmtu;
 #endif
 			if (m0->m_pkthdr.len <= mtu) {
-				*mpp = NULL;
-				error = nd6_output(ifp, fin->fin_ifp, m0,
+				error = nd6_output(ifp, fin->fin_ifp, *mpp,
 						   dst6, ro->ro_rt);
+				*mpp = NULL;
 			} else {
 				error = EMSGSIZE;
 			}

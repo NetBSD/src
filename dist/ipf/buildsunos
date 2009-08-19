@@ -3,7 +3,7 @@ if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.20.2.6 2007/10/26 12:18:48 darrenr Exp
+# Id: buildsunos,v 2.20.2.8 2008/11/06 21:01:39 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then
@@ -77,7 +77,7 @@ __EOF__
 			esac
 		fi
 	fi
-	v=`echo '__GNUC__' | 2>&1 ${CC} -E - | 2>&1 sed -ne '/^[0-9]* *$/p'`
+	v=`echo '__GNUC__' 2>&1 | ${CC} -E - 2>&1 | sed -ne '/^[0-9]* *$/p'`
 	if [ x$v != x ] ; then
 		CC=gcc
 	fi
@@ -92,8 +92,13 @@ __EOF__
 	*)	# Sun C
 		XARCH32_i386="-Xa -xildoff"
 		XARCH32_sparc="-Xa -xildoff -xarch=v8 -xmemalign=8s"
-		XARCH64_sparc="-Xa -xildoff -xarch=v9 -xchip=ultra -xmemalign=8s -xcode=abs32"
-		XARCH64_i386="$XARCH32 -xarch=amd64 -xcode=abs32"
+		if [ `cc -xarch=amd64 -xarch=v9 2>&1 | grep -c deprec` -eq 1 ] ; then
+			XARCH64_sparc="-Xa -xildoff -m64 -xmemalign=8s"
+			XARCH64_i386="$XARCH32 -m64"
+		else
+			XARCH64_sparc="-Xa -xildoff -xarch=v9 -xchip=ultra -xmemalign=8s -xcode=abs32"
+			XARCH64_i386="$XARCH32 -xarch=amd64 -xcode=abs32"
+		fi
 		;;
 	esac
 	XARCH32="`eval echo '$XARCH32_'$cpu`"

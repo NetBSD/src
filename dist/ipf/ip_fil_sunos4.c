@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.7 2008/05/20 06:44:08 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.8 2009/08/19 08:28:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -22,6 +22,8 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <net/if.h>
 #include <net/af.h>
@@ -56,7 +58,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.32 2008/02/05 20:56:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.34 2008/11/06 21:18:33 darrenr Exp";
 #endif
 
 extern	struct	protosw	inetsw[];
@@ -163,7 +165,8 @@ int mode;
 
 	SPL_NET(s);
 
-	error = fr_ioctlswitch(unit, data, cmd, mode, curproc->p_uid, curproc);
+	error = fr_ioctlswitch(unit, data, cmd, mode, u.u_procp->p_uid,
+			       u.u_procp);
 	if (error != -1) {
 		SPL_X(s);
 		return error;
@@ -596,8 +599,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -605,7 +607,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :

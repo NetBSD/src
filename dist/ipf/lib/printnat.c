@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.1.1.7 2008/05/20 06:45:03 darrenr Exp $	*/
+/*	$NetBSD: printnat.c,v 1.1.1.8 2009/08/19 08:29:32 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
@@ -13,7 +13,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.14 2007/09/06 16:40:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.15 2008/07/24 09:30:35 darrenr Exp";
 #endif
 
 /*
@@ -217,6 +217,8 @@ int opts;
 			putchar(' ');
 			printproto(pr, np->in_p, np);
 		}
+		if (np->in_flags & IPN_SEQUENTIAL)
+			printf(" sequential");
 		printf("\n");
 		if (opts & OPT_DEBUG) {
 			struct in_addr nip;

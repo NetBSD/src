@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsyncm.c,v 1.1.1.4 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: ipsyncm.c,v 1.1.1.5 2009/08/19 08:29:49 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsyncm.c,v 1.4.2.5 2006/08/26 11:21:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipsyncm.c,v 1.4.2.6 2009/03/29 01:17:53 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/time.h>
@@ -129,7 +129,7 @@ char *argv[];
 			n1 = read(lfd, buff+inbuf, BUFFERLEN-inbuf);
 		
 			printf("header : %d bytes read (header = %d bytes)\n",
-			       n1, sizeof(*sh));
+			       n1, (int) sizeof(*sh));
 	
 			if (n1 < 0) {
 				syslog(LOG_ERR, "Read error (header): %m");

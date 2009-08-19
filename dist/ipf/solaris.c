@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.16 2008/05/20 06:44:28 darrenr Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.17 2009/08/19 08:29:10 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.73.2.16 2007/10/26 12:15:15 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.73.2.20 2009/06/15 20:39:49 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -194,9 +194,9 @@ static	size_t	hdrsizes[57][2] = {
 static dev_info_t *ipf_dev_info = NULL;
 
 #if defined(_INET_IP_STACK_H)
-static hook_t ipfhook;
-static int ipf_hook(hook_event_token_t, hook_data_t, netstack_t *);
-net_data_t ipfipv4, ipfipv6;
+static hook_t *ipfhook;
+static int ipf_hook(hook_event_token_t, hook_data_t, void *);
+net_handle_t ipfipv4, ipfipv6;
 #endif
 
 
@@ -328,26 +328,30 @@ ddi_attach_cmd_t cmd;
 			cmn_err(CE_WARN, "IP Filter: %s(pfh_sync) failed",
 				"pfil_add_hook");
 #else
-		HOOK_INIT(&ipfhook, ipf_hook, "ipf_v4");
+		HOOK_INIT(ipfhook, ipf_hook, "ipf_v4", NULL);
 
-		if (!(ipfipv4 = net_lookup(NHF_INET, GLOBAL_NETSTACKID)))
+		ipfipv4 = net_protocol_lookup(0, NHF_INET);
+		if (ipfipv4 == NULL)
 			goto attach_failed;
-		if (net_register_hook(ipfipv4, NH_PHYSICAL_IN, &ipfhook))
+		if (net_hook_register(ipfipv4, NH_PHYSICAL_IN, ipfhook))
 			goto attach_failed;
-		if (net_register_hook(ipfipv4, NH_PHYSICAL_OUT, &ipfhook))
+		if (net_hook_register(ipfipv4, NH_PHYSICAL_OUT, ipfhook))
 			goto attach_failed;
 # ifdef USE_INET6
-		if (!(ipfipv6 = net_lookup(NHF_INET6, GLOBAL_NETSTACKID)))
+		ipfipv6 = net_protocol_lookup(0, NHF_INET6);
+		if (ipfipv6 == NULL)
 			goto attach_failed;
-		if (net_register_hook(ipfipv6, NH_PHYSICAL_IN, &ipfhook))
+		if (net_hook_register(ipfipv6, NH_PHYSICAL_IN, ipfhook))
 			goto attach_failed;
-		if (net_register_hook(ipfipv6, NH_PHYSICAL_OUT, &ipfhook))
+		if (net_hook_register(ipfipv6, NH_PHYSICAL_OUT, ipfhook))
 			goto attach_failed;
 # endif
 #endif
 
 		fr_timer_id = timeout(fr_slowtimer, NULL,
-				      drv_usectohz(500000));
+				      drv_usectohz(1000000 * IPF_HZ_MULT /
+						   IPF_HZ_DIVIDE));
+
 
 		fr_running = 1;
 
@@ -414,19 +418,21 @@ ddi_detach_cmd_t cmd;
 			cmn_err(CE_WARN, "IP Filter: %s(pfh_sync) failed",
 				"pfil_remove_hook");
 #else
-		if (net_unregister_hook(ipfipv4, NH_PHYSICAL_IN, &ipfhook))
+		if (net_hook_unregister(ipfipv4, NH_PHYSICAL_IN, ipfhook))
 			cmn_err(CE_WARN, "IP Filter: v4-IN unregister failed");
-		if (net_unregister_hook(ipfipv4, NH_PHYSICAL_OUT, &ipfhook))
+		if (net_hook_unregister(ipfipv4, NH_PHYSICAL_OUT, ipfhook))
 			cmn_err(CE_WARN, "IP Filter: v4-OUT unregister failed");
-		if (net_release(ipfipv4))
-			cmn_err(CE_WARN, "IP Filter: v4 net_release failed");
+		if (net_protocol_release(ipfipv4))
+			cmn_err(CE_WARN,
+				"IP Filter: v4 net_protocol_release failed");
 # ifdef USE_INET6
-		if (net_unregister_hook(ipfipv6, NH_PHYSICAL_IN, &ipfhook))
+		if (net_hook_unregister(ipfipv6, NH_PHYSICAL_IN, ipfhook))
 			cmn_err(CE_WARN, "IP Filter: v6-IN unregister failed");
-		if (net_unregister_hook(ipfipv6, NH_PHYSICAL_OUT, &ipfhook))
+		if (net_hook_unregister(ipfipv6, NH_PHYSICAL_OUT, ipfhook))
 			cmn_err(CE_WARN, "IP Filter: v6-OUT unregister failed");
-		if (net_release(ipfipv6))
-			cmn_err(CE_WARN, "IP Filter: v6 net_release failed");
+		if (net_protocol_release(ipfipv6))
+			cmn_err(CE_WARN,
+				"IP Filter: v6 net_protocol_release failed");
 # endif
 #endif
 
@@ -543,7 +549,7 @@ static int ipf_property_update(dip)
 dev_info_t *dip;
 {
 	ipftuneable_t *ipft;
-	int64_t *i64p;
+	u_long i64;
 	char *name;
 	u_int one;
 	int *i32p;
@@ -565,55 +571,22 @@ dev_info_t *dip;
 
 	err = DDI_SUCCESS;
 	ipft = ipf_tuneables;
-	for (ipft = ipf_tuneables; (name = ipft->ipft_name) != NULL; ipft++) {
+	for (ipft = ipf_tuneables; (name = (char *)ipft->ipft_name) != NULL;
+	     ipft++) {
 		one = 1;
-		switch (ipft->ipft_sz)
-		{
-		case 4 :
-			i32p = NULL;
-			err = ddi_prop_lookup_int_array(DDI_DEV_T_ANY, dip,
-							0, name, &i32p, &one);
-			if (err == DDI_PROP_NOT_FOUND)
-				continue;
-#ifdef	IPFDEBUG
-			cmn_err(CE_CONT, "IP Filter: lookup_int(%s) = %d\n",
-				name, err);
-#endif
-			if (err != DDI_PROP_SUCCESS)
-				return err;
-			if (*i32p >= ipft->ipft_min && *i32p <= ipft->ipft_max)
+		i32p = NULL;
+		err = ddi_prop_lookup_int_array(DDI_DEV_T_ANY, dip,
+						0, name, &i32p, &one);
+		if (err == DDI_PROP_NOT_FOUND)
+			continue;
+		if (*i32p >= ipft->ipft_min && *i32p <= ipft->ipft_max) {
+			if (ipft->ipft_sz == sizeof(int)) {
 				*ipft->ipft_pint = *i32p;
-			else
-				err = DDI_PROP_CANNOT_DECODE;
-			ddi_prop_free(i32p);
-			break;
-
-#if SOLARIS2 > 8
-		case 8 :
-			i64p = NULL;
-			err = ddi_prop_lookup_int64_array(DDI_DEV_T_ANY, dip,
-							  0, name, &i64p, &one);
-			if (err == DDI_PROP_NOT_FOUND)
-				continue;
-# ifdef	IPFDEBUG
-			cmn_err(CE_CONT, "IP Filter: lookup_int64(%s) = %d\n",
-				name, err);
-# endif
-			if (err != DDI_PROP_SUCCESS)
-				return err;
-			if (*i64p >= ipft->ipft_min && *i64p <= ipft->ipft_max)
-				*ipft->ipft_pint = *i64p;
-			else
-				err = DDI_PROP_CANNOT_DECODE;
-			ddi_prop_free(i64p);
-			break;
-#endif
-
-		default :
-			break;
+			} else {
+				i64 = *(u_int *)i32p;
+				*(u_long *)ipft->ipft_pint = i64;
+			}
 		}
-		if (err != DDI_SUCCESS)
-			break;
 	}
 
 	return err;
@@ -674,7 +647,7 @@ struct pollhead **phpp;
 
 #if defined(_INET_IP_STACK_H)
 static int
-ipf_hook(hook_event_token_t event, hook_data_t data, netstack_t *stp)
+ipf_hook(hook_event_token_t event, hook_data_t data, void *stp)
 {
 	hook_pkt_event_t *hpe;
 	qpktinfo_t qpi;

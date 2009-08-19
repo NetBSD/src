@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_osf.c,v 1.1.1.7 2008/05/20 06:44:07 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_osf.c,v 1.1.1.8 2009/08/19 08:28:49 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_osf.c,v 2.44.2.34 2007/11/08 08:12:43 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_osf.c,v 2.44.2.37 2009/07/05 19:52:41 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -710,33 +710,35 @@ frdest_t *fdp;
 
 #if 0 /* ifdef	USE_INET6 */
 	if (fin->fin_v == 6) {
-                dst6->sin6_family = AF_INET6;
+		dst6->sin6_family = AF_INET6;
 
-                fr = fin->fin_fr;
-                if (fdp != NULL)
-                        ifp = fdp->fd_ifp;
-                else {
-                        ifp = fin->fin_ifp;
-                        dst->sin6_addr = fin->fin_daddr6;
-                }
+		fr = fin->fin_fr;
+		if (fdp != NULL)
+			ifp = fdp->fd_ifp;
+		else {
+			ifp = fin->fin_ifp;
+			dst->sin6_addr = fin->fin_daddr6;
+		}
 
-                ip6tx.tx_mbuf = m0;
-                ip6tx.tx_ip6 = (ip6_t *)ip;
-                ip6tx.tx_ro = ro;
-                ip6tx.tx_if6 = NULL;
-                ip6tx.tx_nexthop = dst6;
-                ip6tx.tx_imo6 = NULL;
-                ip6tx.tx_pmtudisc = 0;
-                ip6tx.tx_dontroute = 0;
-                ip6tx.tx_rawoutput = 0;
-                ip6tx.tx_mtu = ifp->if_mtu;
-                ip6tx.tx_opt = NULL;
+		ip6tx.tx_mbuf = *mpp;
+		ip6tx.tx_ip6 = (ip6_t *)ip;
+		ip6tx.tx_ro = ro;
+		ip6tx.tx_if6 = NULL;
+		ip6tx.tx_nexthop = dst6;
+		ip6tx.tx_imo6 = NULL;
+		ip6tx.tx_pmtudisc = 0;
+		ip6tx.tx_dontroute = 0;
+		ip6tx.tx_rawoutput = 0;
+		ip6tx.tx_mtu = ifp->if_mtu;
+		ip6tx.tx_opt = NULL;
 
-                /*
-                 * currently "to <if>" and "to <if>:ip#" are not supported
-                 * for IPv6
-                 */
-                return ip6_output(&ip6tx);
+		*mpp = NULL;
+
+		/*
+		 * currently "to <if>" and "to <if>:ip#" are not supported
+		 * for IPv6
+		 */
+		return ip6_output(&ip6tx);
 	}
 # endif
 	/*
@@ -797,8 +799,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -806,7 +807,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1086,7 +1086,7 @@ fr_info_t *fin;
 /* ------------------------------------------------------------------------ */
 void fr_slowtimer __P((void *ptr))
 {
-        READ_ENTER(&ipf_global);
+	READ_ENTER(&ipf_global);
 
 	if (fr_running == 1) {
 		fr_fragexpire();
@@ -1296,7 +1296,7 @@ int len;
 			return NULL;
 		}
 
-		if (ms == n || n == NULL)
+		if (n == NULL)
 			*fin->fin_mp = m;
 
 		while (M_LEN(m) == 0) {

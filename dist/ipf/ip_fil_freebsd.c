@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.8 2008/05/20 06:43:48 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.9 2009/08/19 08:28:39 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.56 2008/02/05 20:56:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.58 2009/03/29 00:02:24 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -952,10 +952,11 @@ frdest_t *fdp;
 		 * currently "to <if>" and "to <if>:ip#" are not supported
 		 * for IPv6
 		 */
+		*mpp = NULL;
 #if  (__FreeBSD_version >= 490000)
-		return ip6_output(m0, NULL, NULL, 0, NULL, NULL, NULL);
+		return ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
 #else
-		return ip6_output(m0, NULL, NULL, 0, NULL, NULL);
+		return ip6_output(m, NULL, NULL, 0, NULL, NULL);
 #endif
 	}
 #endif
@@ -1020,8 +1021,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -1029,7 +1029,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :

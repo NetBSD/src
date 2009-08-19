@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.9 2008/05/20 06:45:47 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.10 2009/08/19 08:31:46 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -70,7 +70,6 @@ struct file;
 #ifdef sun
 # include <net/af.h>
 #endif
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -90,6 +89,8 @@ struct file;
 # include <sys/malloc.h>
 #endif
 
+/* END OF INCLUDES */
+
 #include "netinet/ip_ftp_pxy.c"
 #include "netinet/ip_rcmd_pxy.c"
 # include "netinet/ip_pptp_pxy.c"
@@ -102,10 +103,8 @@ struct file;
 #include "netinet/ip_ipsec_pxy.c"
 #include "netinet/ip_rpcb_pxy.c"
 
-/* END OF INCLUDES */
-
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.21 2007/06/02 21:22:28 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.23 2009/07/22 01:41:14 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));

@@ -1,11 +1,16 @@
-/*	$NetBSD: linux.c,v 1.1.1.5 2008/05/20 06:44:24 darrenr Exp $	*/
+/*	$NetBSD: linux.c,v 1.1.1.6 2009/08/19 08:28:39 darrenr Exp $	*/
 
 
 #include "ipf-linux.h"
-#include <linux/devfs_fs_kernel.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
+# include <linux/devfs_fs_kernel.h>
+#endif
 
 #ifdef CONFIG_PROC_FS
-#include <linux/proc_fs.h>
+# include <linux/proc_fs.h>
+# if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
+#  define USE_PROC_FS		1
+# endif
 #endif
 
 extern wait_queue_head_t	iplh_linux[IPL_LOGSIZE];
@@ -16,6 +21,17 @@ MODULE_AUTHOR("Darren Reed");
 MODULE_DESCRIPTION("IP-Filter Firewall");
 MODULE_LICENSE("(C)Copyright 2003-2004 Darren Reed");
 
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10)
+module_param(fr_flags, int, 0);
+module_param(fr_control_forwarding, int, 0);
+module_param(fr_update_ipid, int, 0);
+module_param(fr_chksrc, int, 0);
+module_param(fr_pass, int, 0);
+module_param(ipstate_logging, int, 0);
+module_param(nat_logging, int, 0);
+module_param(ipl_suppress, int, 0);
+module_param(ipl_logall, int, 0);
+# else
 MODULE_PARM(fr_flags, "i");
 MODULE_PARM(fr_control_forwarding, "i");
 MODULE_PARM(fr_update_ipid, "i");
@@ -25,6 +41,7 @@ MODULE_PARM(ipstate_logging, "i");
 MODULE_PARM(nat_logging, "i");
 MODULE_PARM(ipl_suppress, "i");
 MODULE_PARM(ipl_logall, "i");
+# endif
 #endif
 
 static int ipf_open(struct inode *, struct file *);
@@ -83,7 +100,7 @@ uio_t *uiop;
 		}
 	}
 	if (err)
-		return EFAULT;
+		return -EFAULT;
 	return 0;
 }
 
@@ -238,7 +255,7 @@ static u_int ipf_poll(struct file *fp, poll_table *wait)
 #endif
 
 
-#ifdef	CONFIG_PROC_FS
+#if defined(USE_PROC_FS)
 static int ipf_proc_info(char *buffer, char **start, off_t offset, int len)
 {
 	snprintf(buffer, len, "ipfmajor %d", ipfmajor);
@@ -281,16 +298,19 @@ static int ipfilter_init(void)
 
 	i = ipfattach();
 
-#ifdef	CONFIG_PROC_FS
 	if (i == 0) {
-		struct proc_dir_entry *ipfproc;
 		char *defpass;
+#if defined(USE_PROC_FS)
+		struct proc_dir_entry *ipfproc;
 
 		ipfproc = proc_net_create("ipfilter", 0, ipf_proc_info);
 # ifndef __GENKSYMS__
 		if (ipfproc != NULL)
 			ipfproc->owner = THIS_MODULE;
 # endif
+#else
+		printf("IPFilter: device major number: %d\n", ipfmajor);
+#endif /* USE_PROC_FS */
 		if (FR_ISPASS(fr_pass))
 			defpass = "pass";
 		else if (FR_ISBLOCK(fr_pass))
@@ -315,9 +335,6 @@ static int ipfilter_init(void)
 
 		fr_running = 1;
 	}
-#else
-	printf("IPFilter: device major number: %d\n", ipfmajor);
-#endif /* CONFIG_PROC_FS */
 
 	if (i != 0) {
 		RW_DESTROY(&ipf_global);
@@ -338,7 +355,7 @@ static int ipfilter_fini(void)
 #endif
 
 	if (fr_refcnt)
-		return EBUSY;
+		return -EBUSY;
 
 	if (fr_running >= 0) {
 		result = ipfdetach();
@@ -354,7 +371,7 @@ static int ipfilter_fini(void)
 	RW_DESTROY(&ipf_frcache);
 
 	fr_running = -2;
-#ifdef CONFIG_PROC_FS
+#if defined(USE_PROC_FS)
 	proc_net_remove("ipfilter");
 #endif
 

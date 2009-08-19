@@ -1,4 +1,4 @@
-/*	$NetBSD: tru64.c,v 1.1.1.6 2008/05/20 06:44:28 darrenr Exp $	*/
+/*	$NetBSD: tru64.c,v 1.1.1.7 2009/08/19 08:29:11 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.7 2008/02/05 20:56:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.8 2009/08/16 07:03:05 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -74,7 +74,7 @@ void	ipfilter_clock(void *arg);
 int	ipfilteropen(dev_t, int, int);
 int	ipfilterread(dev_t, struct uio *, int);
 int	ipfilterclose(dev_t, int, int);
-int	ipfilterwrite(dev_t, int, int);
+int	ipfilterwrite(dev_t, struct uio *);
 int	ipfilterioctl(dev_t, u_int, caddr_t, int);
 
 extern	int	nodev(), nulldev();

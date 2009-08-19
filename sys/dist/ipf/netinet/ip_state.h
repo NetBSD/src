@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.1.1.7 2008/05/20 06:45:52 darrenr Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1.1.8 2009/08/19 08:31:47 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.11 2008/04/14 12:19:27 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.12 2008/11/06 21:18:38 darrenr Exp
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -257,5 +257,6 @@ extern	void	fr_sttab_destroy __P((struct ipftq *));
 extern	void	fr_updatestate __P((fr_info_t *, ipstate_t *, ipftq_t *));
 extern	void	fr_statederef __P((ipstate_t **));
 extern	void	fr_setstatequeue __P((ipstate_t *, int));
+extern	int	fr_state_flush __P((int, int));
 
 #endif /* __IP_STATE_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.5 2008/05/20 06:45:38 darrenr Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.6 2009/08/19 08:31:49 darrenr Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -20,15 +20,6 @@
  *      by xtang@canada.com
  *	ported to ipfilter 3.4.20 by Michael Grant mg-ipf@grant.org
  */
-
-#if __FreeBSD_version >= 220000 && defined(_KERNEL)
-# include <sys/fcntl.h>
-# include <sys/filio.h>
-#else
-# ifndef linux
-#  include <sys/ioctl.h>
-# endif
-#endif
 
 #define IPF_H323_PROXY
 
@@ -159,7 +150,7 @@ nat_t *nat;
 	int ipaddr, off, datlen;
 	unsigned short port;
 	tcphdr_t *tcp;
-	void * data;
+	void *data;
 	ip_t *ip;
 
 	ip = fin->fin_ip;
@@ -258,7 +249,7 @@ nat_t *nat;
 				    ip->ip_src, ip->ip_dst);
 		if (nat2 == NULL) {
 			struct ip newip;
-			struct udphdr udp;
+			udphdr_t udp;
 
 			bcopy((caddr_t)ip, (caddr_t)&newip, sizeof(newip));
 			newip.ip_len = fin->fin_hlen + sizeof(udp);
@@ -269,19 +260,21 @@ nat_t *nat;
 			udp.uh_sport = port;
 
 			bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
-			fi.fin_state = NULL;
-			fi.fin_nat = NULL;
 			fi.fin_fi.fi_p = IPPROTO_UDP;
 			fi.fin_data[0] = port;
 			fi.fin_data[1] = 0;
 			fi.fin_dp = (char *)&udp;
 
+			MUTEX_ENTER(&ipf_nat_new);
 			nat2 = nat_new(&fi, nat->nat_ptr, NULL,
 				       NAT_SLAVE|IPN_UDP|SI_W_DPORT,
 				       NAT_OUTBOUND);
+			MUTEX_EXIT(&ipf_nat_new);
 			if (nat2 != NULL) {
 				(void) nat_proto(&fi, nat2, IPN_UDP);
-				nat_update(&fi, nat2, nat2->nat_ptr);
+				MUTEX_ENTER(&nat2->nat_lock);
+				nat_update(&fi, nat2);
+				MUTEX_EXIT(&nat2->nat_lock);
 
 				nat2->nat_ptr->in_hits++;
 #ifdef	IPFILTER_LOG
