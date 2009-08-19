@@ -1,10 +1,12 @@
-# $NetBSD: md.pmax,v 1.60 2009/08/12 23:38:20 matt Exp $
+# $NetBSD: md.pmax,v 1.61 2009/08/19 08:24:44 he Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
 ./usr/include/pmax/ansi.h			comp-c-include
+./usr/include/pmax/aout_machdep.h		comp-obsolete		obsolete
 ./usr/include/pmax/asm.h			comp-c-include
 ./usr/include/pmax/autoconf.h			comp-c-include
+./usr/include/pmax/bsd-aout.h			comp-obsolete		obsolete
 ./usr/include/pmax/bswap.h			comp-c-include
 ./usr/include/pmax/bus.h			comp-c-include
 ./usr/include/pmax/cdefs.h			comp-c-include
