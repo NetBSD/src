@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.47 2009/08/19 14:29:54 dyoung Exp $ */
+/* $NetBSD: sio.c,v 1.48 2009/08/19 15:00:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.47 2009/08/19 14:29:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.48 2009/08/19 15:00:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ union sio_attach_args {
 
 void	sio_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
-void	sio_isa_detach_hook(device_t);
+void	sio_isa_detach_hook(isa_chipset_tag_t, device_t);
 #if NPCEB > 0
 void	sio_eisa_attach_hook(struct device *, struct device *,
 	    struct eisabus_attach_args *);
@@ -294,7 +294,7 @@ sio_isa_attach_hook(struct device *parent, struct device *self, struct isabus_at
 }
 
 void
-sio_isa_detach_hook(device_t self)
+sio_isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 
 	/* Nothing to do. */
