@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2.12.1 2008/05/16 02:22:41 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2.12.2 2009/08/19 18:46:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,28 +32,21 @@
 #ifndef _IA64_MUTEX_H_
 #define	_IA64_MUTEX_H_
 
+#ifndef __MUTEX_PRIVATE
+
 struct kmutex {
-	union {
-		volatile uintptr_t	mtxa_owner;
-#ifdef __MUTEX_PRIVATE
-		struct {
-			volatile uint8_t	mtxs_dummy;
-			ipl_cookie_t		mtxs_ipl;
-			__cpu_simple_lock_t	mtxs_lock;
-			volatile uint8_t	mtxs_unused;
-		} s;
-#endif
-	} u;
+	uintptr_t	mtx_pad1;
+	uint32_t	mtx_pad2[2];
 };
 
-#ifdef __MUTEX_PRIVATE
+#else
 
-/* uintptr_t */
-#define	mtx_owner	u.mtxa_owner
-/* ipl_cookie_t */
-#define	mtx_ipl		u.s.mtxs_ipl
-/* __cpu_simple_lock_t */
-#define	mtx_lock	u.s.mtxs_lock
+struct kmutex {
+	volatile uintptr_t	mtx_owner;
+	ipl_cookie_t		mtx_ipl;
+	__cpu_simple_lock_t	mtx_lock;
+};
+
 
 /* XXX when we implement mutex_enter()/mutex_exit(), uncomment this
 #define __HAVE_MUTEX_STUBS		1

@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.12.12.2 2009/05/04 08:14:35 yamt Exp $ */
+/* $NetBSD: rb.h,v 1.12.12.3 2009/08/19 18:48:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -121,6 +121,18 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 #define	RB_TAILQ_INSERT_BEFORE(a, b, c)		do { } while (/*CONSTCOND*/0)
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (/*CONSTCOND*/0)
 #endif /* RBDEBUG */
+
+/*
+ * rbto_compare_nodes_fn:
+ *	return a positive value if the first node < the second node.
+ *	return a negative value if the first node > the second node.
+ *	return 0 if they are considered same.
+ *
+ * rbto_compare_key_fn:
+ *	return a positive value if the node < the key.
+ *	return a negative value if the node > the key.
+ *	return 0 if they are considered same.
+ */
 
 typedef signed int (*const rbto_compare_nodes_fn)(const struct rb_node *,
     const struct rb_node *);

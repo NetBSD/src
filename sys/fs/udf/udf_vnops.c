@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.17.10.4 2009/07/18 14:53:22 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.17.10.5 2009/08/19 18:48:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.17.10.4 2009/07/18 14:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.17.10.5 2009/08/19 18:48:15 yamt Exp $");
 #endif /* not lint */
 
 
@@ -103,8 +103,11 @@ udf_inactive(void *v)
 		refcnt = udf_rw16(udf_node->efe->link_cnt);
 	}
 
-	if ((refcnt == 0) && (vp->v_vflag & VV_SYSTEM))
+	if ((refcnt == 0) && (vp->v_vflag & VV_SYSTEM)) {
 		DPRINTF(VOLUMES, ("UDF_INACTIVE deleting VV_SYSTEM\n"));
+		/* system nodes are not writen out on inactive, so flush */
+		udf_node->i_flags = 0;
+	}
 
 	*ap->a_recycle = false;
 	if ((refcnt == 0) && ((vp->v_vflag & VV_SYSTEM) == 0)) {
@@ -966,9 +969,9 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 		new_gid = gid;
 
 	/* check if we can fit it in an 32 bits */
-	if ((uid_t) ((uint32_t) uid) != uid)
+	if ((uid_t) ((uint32_t) new_uid) != new_uid)
 		return EINVAL;
-	if ((gid_t) ((uint32_t) gid) != gid)
+	if ((gid_t) ((uint32_t) new_gid) != new_gid)
 		return EINVAL;
 
 	/* check permissions */

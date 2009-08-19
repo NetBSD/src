@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.13.12.1 2009/05/04 08:13:26 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.13.12.2 2009/08/19 18:47:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -67,9 +67,9 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.13.12.1 2009/05/04 08:13:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.13.12.2 2009/08/19 18:47:31 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.15 2007/05/26 13:05:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.21 2009/05/13 18:31:15 darrenr Exp";
 #endif
 #endif
 
@@ -141,7 +141,7 @@ void ip_lookup_unload()
 /* command.                                                                 */
 /* ------------------------------------------------------------------------ */
 int ip_lookup_ioctl(data, cmd, mode, uid, ctx)
-caddr_t data;
+void * data;
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;
@@ -625,6 +625,9 @@ void *ctx;
 		err = EINVAL;
 		break;
 	}
+
+	WRITE_ENTER(&ipf_tokens);
+	ipf_dereftoken(token);
 	RWLOCK_EXIT(&ipf_tokens);
 	SPL_X(s);
 
@@ -697,7 +700,7 @@ void *ctx;
 
 /*ARGSUSED*/
 int ip_lookup_ioctl(data, cmd, mode, uid, ctx)
-caddr_t data;
+void * data;
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;

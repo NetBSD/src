@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.10.2 2009/05/04 08:12:16 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.10.3 2009/08/19 18:46:57 yamt Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.10.2 2009/05/04 08:12:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.10.3 2009/08/19 18:46:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -211,7 +211,6 @@ paddr_t physical_freestart;
 paddr_t physical_freeend;
 paddr_t physical_end;
 u_int free_pages;
-int physmem = 0;
 
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
@@ -310,9 +309,7 @@ static struct pxa2x0_gpioconf pxa27x_boarddep_gpioconf[] = {
 	{  44, GPIO_ALT_FN_1_IN },	/* BTCST */
 	{  45, GPIO_ALT_FN_2_OUT },	/* BTRST */
 
-	{ 109, GPIO_ALT_FN_1_IN },	/* MMDAT<1> */
-	{ 110, GPIO_ALT_FN_1_IN },	/* MMDAT<2>/MMCCS<0> */
-	{ 111, GPIO_ALT_FN_1_IN },	/* MMDAT<3>/MMCCS<1> */
+	{ 104, GPIO_ALT_FN_1_OUT },	/* pSKTSEL */
 
 	{ -1 }
 };

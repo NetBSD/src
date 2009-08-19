@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.12.10.1 2009/05/04 08:10:58 yamt Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.12.10.2 2009/08/19 18:46:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.12.10.1 2009/05/04 08:10:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.12.10.2 2009/08/19 18:46:07 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,6 +99,7 @@ static struct timecounter ifpga_timecounter = {
 static volatile uint32_t ifpga_base;
 
 extern struct ifpga_softc *ifpga_sc;
+extern device_t ifpga_dev;
 
 static int clock_started = 0;
 
@@ -287,7 +288,7 @@ cpu_initclocks(void)
 	    IPL_CLOCK, clockhandler, 0);
 	if (ifpga_sc->sc_clockintr == NULL)
 		panic("%s: Cannot install timer 1 interrupt handler",
-		    ifpga_sc->sc_dev.dv_xname);
+		    device_xname(ifpga_dev));
 
 	ifpga_sc->sc_clock_count
 	    = load_timer(IFPGA_TIMER1_BASE, intvl);
@@ -306,7 +307,7 @@ cpu_initclocks(void)
 	    IPL_HIGH, statclockhandler, 0);
 	if (ifpga_sc->sc_statclockintr == NULL)
 		panic("%s: Cannot install timer 2 interrupt handler",
-		    ifpga_sc->sc_dev.dv_xname);
+		    device_xname(ifpga_dev));
 	load_timer(IFPGA_TIMER2_BASE, statint);
 
 	tc_init(&ifpga_timecounter);

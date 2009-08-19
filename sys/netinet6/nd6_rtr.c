@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.75.4.1 2009/05/04 08:14:19 yamt Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.75.4.2 2009/08/19 18:48:25 yamt Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.75.4.1 2009/05/04 08:14:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.75.4.2 2009/08/19 18:48:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ void
 nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 {
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_solicit *nd_rs;
 	struct in6_addr saddr6 = ip6->ip6_src;
@@ -121,7 +122,7 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 
 	/* If I'm not a router, ignore it. */
-	if (ip6_accept_rtadv != 0 || !ip6_forwarding)
+	if ((ndi->flags & ND6_IFF_ACCEPT_RTADV) || !ip6_forwarding)
 		goto freeit;
 
 	/* Sanity checks */
@@ -209,8 +210,6 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	 * the system-wide variable allows the acceptance, and
 	 * per-interface variable allows RAs on the receiving interface.
 	 */
-	if (ip6_accept_rtadv == 0)
-		goto freeit;
 	if (!(ndi->flags & ND6_IFF_ACCEPT_RTADV))
 		goto freeit;
 
@@ -482,6 +481,7 @@ defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
 void
 defrtrlist_del(struct nd_defrouter *dr)
 {
+	struct nd_ifinfo *ndi = ND_IFINFO(dr->ifp);
 	struct nd_defrouter *deldr = NULL;
 	struct nd_prefix *pr;
 
@@ -489,7 +489,8 @@ defrtrlist_del(struct nd_defrouter *dr)
 	 * Flush all the routing table entries that use the router
 	 * as a next hop.
 	 */
-	if (!ip6_forwarding && ip6_accept_rtadv) /* XXX: better condition? */
+	/* XXX: better condition? */
+	if (!ip6_forwarding && (ndi->flags & ND6_IFF_ACCEPT_RTADV))
 		rt6_flush(&dr->rtaddr, dr->ifp);
 
 	if (dr->installed) {
@@ -608,6 +609,7 @@ defrouter_reset(void)
 void
 defrouter_select(void)
 {
+	struct nd_ifinfo *ndi;
 	int s = splsoftnet();
 	struct nd_defrouter *dr, *selected_dr = NULL, *installed_dr = NULL;
 	struct rtentry *rt = NULL;
@@ -619,7 +621,7 @@ defrouter_select(void)
 	 * if the node is not an autoconfigured host, we explicitly exclude
 	 * such cases here for safety.
 	 */
-	if (ip6_forwarding || !ip6_accept_rtadv) {
+	if (ip6_forwarding) {
 		nd6log((LOG_WARNING,
 		    "defrouter_select: called unexpectedly (forwarding=%d, "
 		    "accept_rtadv=%d)\n", ip6_forwarding, ip6_accept_rtadv));
@@ -643,6 +645,10 @@ defrouter_select(void)
 	 */
 	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
 	     dr = TAILQ_NEXT(dr, dr_entry)) {
+		ndi = ND_IFINFO(dr->ifp);
+		if ((ndi->flags & ND6_IFF_ACCEPT_RTADV))
+			continue;
+
 		if (selected_dr == NULL &&
 		    (rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp)) != NULL &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) != NULL &&

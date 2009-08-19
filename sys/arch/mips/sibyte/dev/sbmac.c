@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.28.10.1 2009/05/04 08:11:32 yamt Exp $ */
+/* $NetBSD: sbmac.c,v 1.28.10.2 2009/08/19 18:46:32 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.10.1 2009/05/04 08:11:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.10.2 2009/08/19 18:46:32 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2284,7 +2284,7 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Determine controller base address */
 
-	sc->sbm_base = (sbmac_port_t) sap->sa_base + sap->sa_locs.sa_offset;
+	sc->sbm_base = sap->sa_locs.sa_addr;
 
 	eaddr = sc->sbm_hwaddr;
 

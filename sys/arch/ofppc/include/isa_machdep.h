@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4.10.1 2008/05/16 02:22:58 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.4.10.2 2009/08/19 18:46:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@ void isa_outb(uint32_t, uint8_t);
 /* function mappings */
 #define isa_attach_hook(p, s, iaa)					\
 	genppc_isa_attach_hook(p, s, iaa)
+#define isa_detach_hook(c, s)						\
+	genppc_isa_detach_hook(c, s)
 #define isa_intr_evcnt(ic, irq)						\
 	genppc_isa_intr_evcnt(ic, irq)
 #define isa_intr_establish(ic, irq, type, level, fun, arg)		\

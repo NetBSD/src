@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.11.12.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.11.12.2 2009/08/19 18:47:33 yamt Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.24 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.11.12.1 2009/05/04 08:13:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.11.12.2 2009/08/19 18:47:33 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.11.12.1 2009/05/04 08:13:27 yamt Exp 
 #endif
 
 void	pflogattach(int);
-#ifdef _LKM
-void	pflogdetach(void);
-#endif /* _LKM */
 int	pflogoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	    	       struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, void *);
@@ -109,20 +106,6 @@ pflogattach(int npflog)
 		pflogifs[i] = NULL;
 	if_clone_attach(&pflog_cloner);
 }
-
-#ifdef _LKM
-void
-pflogdetach(void)
-{
-	int i;
-
-	for (i = 0; i < PFLOGIFS_MAX; i++) {
-		if (pflogifs[i] != NULL)
-			pflog_clone_destroy(pflogifs[i]);
-	}
-	if_clone_detach(&pflog_cloner);
-}
-#endif /* _LKM */
 
 int
 pflog_clone_create(struct if_clone *ifc, int unit)

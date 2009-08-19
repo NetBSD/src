@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.12.74.1 2008/05/16 02:23:39 yamt Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.12.74.2 2009/08/19 18:46:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,9 @@
 #ifndef _MIPS_LINUX_EXEC_H
 #define _MIPS_LINUX_EXEC_H
 
+#ifdef EXEC_AOUT
 #include <sys/exec_aout.h>
+#endif
 #include <sys/exec_elf.h>
 #include <sys/types.h>
 
@@ -41,11 +43,13 @@
  */
 #define LINUX_ELF_HWCAP (0)
 
+#ifdef EXEC_AOUT
 /*
  * Linux a.out format parameters
  */
 #define LINUX_M_MIPS		MID_MIPS
 #define LINUX_MID_MACHINE	LINUX_M_MIPS
+#endif
 
 /*
  * Linux Elf32 format parameters

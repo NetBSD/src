@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.203.10.3 2009/07/18 14:52:55 yamt Exp $
+# $NetBSD: GENERIC,v 1.203.10.4 2009/08/19 18:46:46 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.203.10.3 $"
+#ident 		"GENERIC-$Revision: 1.203.10.4 $"
 
 maxusers	32
 
@@ -687,9 +687,8 @@ cgsix0		at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 #cgeight0	at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 
 ## Sun "tcx" accelerated color framebuffer.
-# XXX no wsdisplay support
-#tcx0		at sbus? slot ? offset ?
-#tcx*		at sbus? slot ? offset ?
+# there can be only one
+tcx0		at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m

@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.6 2008/01/19 13:11:14 chris Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.6.10.1 2009/08/19 18:46:05 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.6 2008/01/19 13:11:14 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.6.10.1 2009/08/19 18:46:05 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -96,7 +96,6 @@ vm_offset_t msgbufphys;
 vm_offset_t physical_start;
 vm_offset_t physical_end;
 pv_addr_t systempage;
-int physmem = 0;
 
 struct user *proc0paddr;
 

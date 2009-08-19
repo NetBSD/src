@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.92.4.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.92.4.2 2009/08/19 18:48:36 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.4.1 2009/05/04 08:14:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.4.2 2009/08/19 18:48:36 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -251,28 +251,6 @@ uvm_pagermapout(vaddr_t kva, int npages)
 		uvm_unmap_detach(entries, 0);
 	pmap_update(pmap_kernel());
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
-}
-
-/*
- * interrupt-context iodone handler for nested i/o bufs.
- *
- * => the buffer is private so need not be locked here
- */
-
-void
-uvm_aio_biodone1(struct buf *bp)
-{
-	struct buf *mbp = bp->b_private;
-
-	KASSERT(mbp != bp);
-	if (bp->b_error != 0) {
-		mbp->b_error = bp->b_error;
-	}
-	mbp->b_resid -= bp->b_bcount;
-	putiobuf(bp);
-	if (mbp->b_resid == 0) {
-		biodone(mbp);
-	}
 }
 
 /*

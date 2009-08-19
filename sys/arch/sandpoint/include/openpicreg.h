@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.4 2007/10/17 19:56:56 garbled Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.4.20.1 2009/08/19 18:46:43 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,17 +34,5 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * This file provides an interface between OPENPIC code and
- * MPC107/MPC824x EPIC register definition.  Consult machdep.c
- * to see EPIC register location.
- */
-
-/* XXX XXX XXX */
-extern unsigned epicsteer[];
-
-#define OPENPIC_SRC_VECTOR(irq)		(epicsteer[(irq)])
-#define OPENPIC_IDEST(irq)		(epicsteer[(irq)] + 0x10)
 
 #include <powerpc/openpicreg.h>

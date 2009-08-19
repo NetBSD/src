@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13.2.3 2009/06/20 07:20:13 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13.2.4 2009/08/19 18:46:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.2.3 2009/06/20 07:20:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.2.4 2009/08/19 18:46:52 yamt Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -407,22 +407,12 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 		iopl = SEL_KPL;
 	l->l_addr->u_pcb.pcb_iopl = iopl;
 	/* Force the change at ring 0. */
-#ifdef XEN3
 	{
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
 		physop.u.set_iopl.iopl = iopl;
 		HYPERVISOR_physdev_op(&physop);
 	}
-#else /* XEN3 */
-	{
-		dom0_op_t op;
-		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = iopl;
-		HYPERVISOR_dom0_op(&op);
-	}
-#endif /* XEN3 */
 #elif defined(__x86_64__)
 	if (ua.iopl)
 		tf->tf_rflags |= PSL_IOPL;

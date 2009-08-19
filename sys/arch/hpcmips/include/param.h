@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2006/09/26 13:11:59 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.12.56.1 2009/08/19 18:46:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,8 +94,6 @@
 
 #define	_MACHINE	hpcmips
 #define	MACHINE		"hpcmips"
-#define MID_HPCMIPS MID_PMAX /* XXX For the moment */
-#define MID_MACHINE MID_HPCMIPS
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */

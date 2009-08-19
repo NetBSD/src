@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.2.74.1 2009/08/19 18:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -37,7 +37,6 @@
 #include <sys/boot_flag.h>
 #include <sys/exec_elf.h>
 #include <sys/lock.h>
-#include <sys/lkm.h>
 
 #include <machine/vmparam.h>
 #include <machine/elf_machdep.h>

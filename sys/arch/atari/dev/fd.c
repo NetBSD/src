@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61.20.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.61.20.2 2009/08/19 18:46:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61.20.1 2009/05/04 08:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61.20.2 2009/08/19 18:46:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ extern inline u_char read_dmastat(void)
 static u_short rd_cfg_switch(void);
 static u_short rd_cfg_switch(void)
 {
-	return(*((u_short*)AD_CFG_SWITCH));
+	return(*((volatile u_short *)AD_CFG_SWITCH));
 }
 
 /*
@@ -893,7 +893,7 @@ fd_xfer(struct fd_softc *sc)
 		 */
 		phys_addr = (u_long)kvtop(sc->bounceb);
 		if(sc->io_dir == B_WRITE)
-			memcpy( sc->bounceb, sc->io_data, SECTOR_SIZE);
+			memcpy(sc->bounceb, sc->io_data, SECTOR_SIZE);
 		sc->flags |= FLPF_BOUNCE;
 	}
 	st_dmaaddr_set((void *)phys_addr);	/* DMA address setup */
@@ -994,7 +994,7 @@ fdcint(struct fd_softc *sc)
 			}
 
 			if((sc->flags & FLPF_BOUNCE) && (sc->io_dir == B_READ))
-				memcpy( sc->io_data, sc->bounceb, SECTOR_SIZE);
+				memcpy(sc->io_data, sc->bounceb, SECTOR_SIZE);
 			sc->flags &= ~FLPF_BOUNCE;
 
 			sc->sector++;

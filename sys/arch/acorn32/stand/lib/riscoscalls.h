@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.10 2007/03/04 05:59:07 christos Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.10.46.1 2009/08/19 18:45:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -194,10 +194,20 @@ extern os_error *xosfind_open(int, char const *, char const *, int *);
 #define OSReadSysInfo_ReadMonitorInfo		0x01
 #define OSReadSysInfo_ReadChipPresenceAndId	0x02
 #define OSReadSysInfo_ReadSuperIOFeatures	0x03
+#define OSReadSysInfo_ReadPlatformClass		0x08
 
 #define osreadsysinfo_IOEB_ASIC_PRESENT		0x01
 #define osreadsysinfo_SUPERIO_PRESENT		0x02
 #define osreadsysinfo_LCD_ASIC_PRESENT		0x04
+
+#define osreadsysinfo_Platform_Unknown		0x00
+#define osreadsysinfo_Platform_RiscPC		0x01
+#define osreadsysinfo_Platform_A7000		0x02
+#define osreadsysinfo_Platform_A7000Plus	0x03
+#define osreadsysinfo_Platform_Phoebe		0x04
+#define osreadsysinfo_Platform_Pace		0x05
+#define osreadsysinfo_Platform_VirtualRPC	0x06
+#define osreadsysinfo_Platform_A9		0x07
 
 #ifndef __ASSEMBLER__
 extern void os_readsysinfo(int what, int *r0, int *r1, int *r2, int *r3, int *r4);
@@ -215,6 +225,9 @@ extern void os_readsysinfo(int what, int *r0, int *r1, int *r2, int *r3, int *r4
 
 #define os_readsysinfo_superio_features(basic, extra) \
 	os_readsysinfo(OSReadSysInfo_ReadSuperIOFeatures, (basic), (extra), 0, 0, 0)
+
+#define os_readsysinfo_platform_class(class, flags, feature) \
+	os_readsysinfo(OSReadSysInfo_ReadPlatformClass, (class), (flags), (feature), 0, 0)
 
 #endif
 

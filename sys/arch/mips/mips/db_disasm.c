@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19 2007/02/28 04:21:53 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19.44.1 2009/08/19 18:46:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2007/02/28 04:21:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.44.1 2009/08/19 18:46:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -393,6 +393,30 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 		case OP_CF:
 			db_printf("cfc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_DMT:
+			db_printf("dmtc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_DMF:
+			db_printf("dmfc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_MTH:
+			db_printf("mthc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_MFH:
+			db_printf("mfhc1\t%s,f%d",
 			    reg_name[i.RType.rt],
 			    i.RType.rd);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.17.12.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.17.12.2 2009/08/19 18:47:32 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -70,7 +70,6 @@ struct file;
 #ifdef sun
 # include <net/af.h>
 #endif
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -90,6 +89,8 @@ struct file;
 # include <sys/malloc.h>
 #endif
 
+/* END OF INCLUDES */
+
 #include "netinet/ip_ftp_pxy.c"
 #include "netinet/ip_rcmd_pxy.c"
 # include "netinet/ip_pptp_pxy.c"
@@ -102,14 +103,12 @@ struct file;
 #include "netinet/ip_ipsec_pxy.c"
 #include "netinet/ip_rpcb_pxy.c"
 
-/* END OF INCLUDES */
-
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.17.12.1 2009/05/04 08:13:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.17.12.2 2009/08/19 18:47:32 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.20 2007/05/31 12:27:36 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.23 2009/07/22 01:41:14 darrenr Exp";
 #endif
 #endif
 
@@ -298,7 +297,7 @@ ipnat_t *nat;
 
 
 int appr_ioctl(data, cmd, mode, ctx)
-caddr_t data;
+void * data;
 ioctlcmd_t cmd;
 int mode;
 void *ctx;

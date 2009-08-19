@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.2 2007/12/09 20:27:54 jmcneill Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.2.14.1 2009/08/19 18:47:04 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.2 2007/12/09 20:27:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.2.14.1 2009/08/19 18:47:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -149,12 +149,4 @@ AcpiOsValidateInterface(char *Interface)
 {
 
 	return AE_SUPPORT;
-}
-
-ACPI_STATUS
-AcpiOsValidateAddress(UINT8 SpaceId, ACPI_PHYSICAL_ADDRESS Address,
-    ACPI_SIZE Length)
-{
-
-	return AE_OK;
 }

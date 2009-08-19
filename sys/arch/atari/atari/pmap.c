@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102.20.2 2009/05/04 08:10:46 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102.20.3 2009/08/19 18:46:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102.20.2 2009/05/04 08:10:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102.20.3 2009/08/19 18:46:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,8 +316,7 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 #define		PRM_CFLUSH	0x02
 #define		PRM_KEEPPTPAGE	0x04
 
-#define	PAGE_IS_MANAGED(pa)	(pmap_initialized			\
-				 && vm_physseg_find(atop((pa)), NULL) != -1)
+#define	PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
 static inline struct pv_entry *pa_to_pvh(paddr_t pa);
 static inline char *pa_to_attribute(paddr_t pa);

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2.74.1 2009/08/19 18:46:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -30,6 +30,7 @@
 /* __FBSDID("$FreeBSD: src/sys/boot/common/devopen.c,v 1.4 2003/08/25 23:30:41 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 

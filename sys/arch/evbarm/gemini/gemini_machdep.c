@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.11.8.2 2009/05/04 08:10:58 yamt Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.11.8.3 2009/08/19 18:46:06 yamt Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.11.8.2 2009/05/04 08:10:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.11.8.3 2009/08/19 18:46:06 yamt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -217,8 +217,6 @@ char *boot_file = NULL;
 paddr_t physical_start;
 /* Physical address of the first byte after the end of SDRAM. */
 paddr_t physical_end;
-/* Number of pages of memory. */
-int physmem = 0;
 
 /* Same things, but for the free (unused by the kernel) memory. */
 static paddr_t physical_freestart, physical_freeend;

@@ -1,15 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.25.74.1 2009/05/04 08:13:50 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.25.74.2 2009/08/19 18:48:18 yamt Exp $
 
-SRCS+=	__main.c __assert.c _mcount.S \
-	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
-	byte_swap_2.S byte_swap_4.S bswap64.c \
-	ffs.S \
-	memchr.c memcmp.c memcpy.S memmove.S memset.c \
-	softfloat.c \
-	strcat.c strcmp.c strcpy.c strlen.c strcasecmp.c \
-	strncasecmp.c strncmp.c strncpy.c strtoul.c \
-	scanc.c skpc.c \
-	random.c
+SRCS+=	_mcount.S
+SRCS+=	byte_swap_2.S byte_swap_4.S
+SRCS+=	ffs.S
+SRCS+=	memcpy.S memmove.S
+
+SRCS+=	softfloat.c
 
 # `source' files built from m4 source
 SRCS+=	__divqu.S __divq.S __divlu.S __divl.S

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.9.2.2 2009/05/04 08:12:36 yamt Exp $      */
+/*        $NetBSD: dm_target.c,v 1.9.2.3 2009/08/19 18:47:05 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ TAILQ_HEAD_INITIALIZER(dm_target_list);
 kmutex_t dm_target_mutex;
 
 /*
- * Called indirectly from dm_table_load_ioct to mark target as used.
+ * Called indirectly from dm_table_load_ioctl to mark target as used.
  */
 void
 dm_target_busy(dm_target_t *target)

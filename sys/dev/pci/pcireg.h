@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.57.10.1 2009/05/04 08:13:01 yamt Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.57.10.2 2009/08/19 18:47:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -39,6 +39,13 @@
  *
  * XXX This is not complete.
  */
+
+/*
+ * Size of each function's configuration space.
+ */
+
+#define	PCI_CONF_SIZE			0x100
+#define	PCI_EXTCONF_SIZE		0x1000
 
 /*
  * Device identification register; contains a vendor ID and a device ID.
@@ -742,6 +749,7 @@ struct pci_rom {
 #define	PCI_ROM_CODE_TYPE_X86	0		/* Intel x86 BIOS */
 #define	PCI_ROM_CODE_TYPE_OFW	1		/* Open Firmware */
 #define	PCI_ROM_CODE_TYPE_HPPA	2		/* HP PA/RISC */
+#define	PCI_ROM_CODE_TYPE_EFI	3		/* EFI Image */
 
 #define	PCI_ROM_INDICATOR_LAST	0x80
 
@@ -755,5 +763,15 @@ struct pci_rom {
  */
 #define	PCI_RETRY_TIMEOUT_REG		0x40
 #define		PCI_RETRY_TIMEOUT_REG_MASK	0x0000ff00
+
+/*
+ * PCI-X 2.0 Extended Capability List
+ */
+
+#define	PCI_EXTCAPLIST_BASE		0x100
+
+#define	PCI_EXTCAPLIST_CAP(ecr)		((ecr) & 0xffff)
+#define	PCI_EXTCAPLIST_VERSION(ecr)	(((ecr) >> 16) & 0xf)
+#define	PCI_EXTCAPLIST_NEXT(ecr)	(((ecr) >> 20) & 0xfff)
 
 #endif /* _DEV_PCI_PCIREG_H_ */

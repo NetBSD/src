@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.937.4.5 2009/07/18 14:53:05 yamt Exp $
+$NetBSD: pcidevs,v 1.937.4.6 2009/08/19 18:47:12 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3794,6 +3794,7 @@ product SIS 7016		0x7016	7016 10/100 Ethernet
 product SIS 7018		0x7018	7018 Sound
 
 /* Silicon Motion products */
+product SILMOTION SM502		0x0501	Voyager GX
 product SILMOTION SM710		0x0710	LynxEM
 product SILMOTION SM712		0x0712	LynxEM+
 product SILMOTION SM720		0x0720	Lynx3DM

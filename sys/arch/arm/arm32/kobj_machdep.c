@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.1.22.1 2008/05/16 02:21:56 yamt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.1.22.2 2009/08/19 18:45:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1.22.1 2008/05/16 02:21:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1.22.2 2009/08/19 18:45:58 yamt Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -91,44 +91,64 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	switch (rtype) {
 	case R_ARM_NONE:	/* none */
-		break;
+		return 0;
 
 	case R_ARM_ABS32:
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
-			return -1;
-		if (*where != addr)
-			*where = addr;
-
-		break;
+			break;
+		*where = addr + addend;
+		return 0;
 
 	case R_ARM_COPY:	/* none */
-		/*
-		 * There shouldn't be copy relocations in kernel
-		 * objects.
-		 */
-		printf("kobj_reloc: unexpected R_COPY relocation\n");
-		return -1;
+		/* There shouldn't be copy relocations in kernel objects. */
+		break;
 
 	case R_ARM_JUMP_SLOT:
 		addr = kobj_sym_lookup(ko, symidx);
-		if (addr) {
-			*where = addr;
-			return 0;
-		}
-		return -1;
+		if (addr == 0)
+			break;
+		*where = addr;
+		return 0;
 
 	case R_ARM_RELATIVE:	/* A + B */
 		addr = relocbase + addend;
 		if (*where != addr)
 			*where = addr;
-		break;
+		return 0;
+
+	case R_ARM_PC24:
+		if (local)
+			return 0;
+
+		/* Remove the instruction from the 24 bit offset */
+		addend &= 0x00ffffff;
+
+		/* Sign extend if necessary */
+		if (addend & 0x00800000)
+			addend |= 0xff000000;
+
+		addr = kobj_sym_lookup(ko, symidx);
+		if (addr == 0)
+			break;
+
+		addend += ((uint32_t *)addr - (uint32_t *)where);
+
+		if ((addend & 0xff800000) != 0x00000000 &&
+		    (addend & 0xff800000) != 0xff800000) {
+			printf ("Relocation %x too far @ %p\n", addend, where);
+			return -1;
+		}
+		*where = (*where & 0xff000000) | (addend & 0x00ffffff);
+		return 0;
 
 	default:
-		printf("kobj_reloc: unexpected relocation type %d\n", rtype);
-		return -1;
+		break;
 	}
-	return 0;
+
+	printf("kobj_reloc: unexpected/invalid relocation type %d @ %p symidx %u\n",
+	    rtype, where, symidx);
+	return -1;
 }
 
 int

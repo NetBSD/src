@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.24.4.1 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.24.4.2 2009/08/19 18:48:17 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24.4.1 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24.4.2 2009/08/19 18:48:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -52,7 +52,7 @@ struct workqueue_queue {
 	kmutex_t q_mutex;
 	kcondvar_t q_cv;
 	struct workqhead q_queue;
-	struct lwp *q_worker;
+	lwp_t *q_worker;
 };
 
 struct workqueue {

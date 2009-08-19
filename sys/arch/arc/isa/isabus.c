@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.43.4.1 2009/05/04 08:10:37 yamt Exp $	*/
+/*	$NetBSD: isabus.c,v 1.43.4.2 2009/08/19 18:45:58 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.43.4.1 2009/05/04 08:10:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.43.4.2 2009/08/19 18:45:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -166,6 +166,7 @@ extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 
 static void isabr_attach_hook(device_t , device_t,
     struct isabus_attach_args *);
+static void isabr_detach_hook(isa_chipset_tag_t, device_t);
 static const struct evcnt *isabr_intr_evcnt(isa_chipset_tag_t, int);
 static void *isabr_intr_establish(isa_chipset_tag_t, int, int, int,
     int (*)(void *), void *);
@@ -193,6 +194,7 @@ isabrattach(struct isabr_softc *sc)
 	isabr_initicu();
 
 	sc->arc_isa_cs.ic_attach_hook = isabr_attach_hook;
+	sc->arc_isa_cs.ic_detach_hook = isabr_detach_hook;
 	sc->arc_isa_cs.ic_intr_evcnt = isabr_intr_evcnt;
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
@@ -309,6 +311,13 @@ intr_calculatemasks(void)
 static void
 isabr_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
+{
+
+	/* Nothing to do. */
+}
+
+static void
+isabr_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 
 	/* Nothing to do. */

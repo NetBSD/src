@@ -1,4 +1,4 @@
-# $NetBSD: SANDPOINT,v 1.3.4.1 2009/05/04 08:11:46 yamt Exp $
+# $NetBSD: SANDPOINT,v 1.3.4.2 2009/08/19 18:46:42 yamt Exp $
 #
 # Sandpoint X3/X2 machine description file
 # 
@@ -19,10 +19,11 @@
 # device.
 
 include 	"arch/sandpoint/conf/std.sandpoint"
+options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SANDPOINT-$Revision: 1.3.4.1 $"
+#ident 		"SANDPOINT-$Revision: 1.3.4.2 $"
 
 maxusers	32
 

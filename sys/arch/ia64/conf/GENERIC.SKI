@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.4.4.1 2009/05/04 08:11:20 yamt Exp $
+# $NetBSD: GENERIC.SKI,v 1.4.4.2 2009/08/19 18:46:20 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4.4.1 $"
+#ident 		"GENERIC-$Revision: 1.4.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -66,7 +66,6 @@ config		netbsd	root on md0a type ffs
 mainbus0 at root
 
 cpu* at mainbus?
-#ioapic* at mainbus?
 
 
 # Pull in optional local configuration

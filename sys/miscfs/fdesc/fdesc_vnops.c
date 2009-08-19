@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.102.4.3 2009/06/20 07:20:32 yamt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.102.4.4 2009/08/19 18:48:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.102.4.3 2009/06/20 07:20:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.102.4.4 2009/08/19 18:48:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,6 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 const struct vnodeopv_desc fdesc_vnodeop_opv_desc =
 	{ &fdesc_vnodeop_p, fdesc_vnodeop_entries };
 
-extern const struct cdevsw ctty_cdevsw;
-
 /*
  * Initialise cache headers
  */
@@ -187,7 +185,7 @@ fdesc_init(void)
 	int cttymajor;
 
 	/* locate the major number */
-	cttymajor = cdevsw_lookup_major(&ctty_cdevsw);
+	cttymajor = devsw_name2chr("ctty", NULL, 0);
 	devctty = makedev(cttymajor, 0);
 	fdhashtbl = hashinit(NFDCACHE, HASH_LIST, true, &fdhash);
 }

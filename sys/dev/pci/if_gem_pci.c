@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.29.4.2 2009/05/16 10:41:34 yamt Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.29.4.3 2009/08/19 18:47:11 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29.4.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29.4.3 2009/08/19 18:47:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,20 +91,28 @@ __KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29.4.2 2009/05/16 10:41:34 yamt Exp
 struct gem_pci_softc {
 	struct	gem_softc	gsc_gem;	/* GEM device */
 	void			*gsc_ih;
+	pci_chipset_tag_t	gsc_pc;
+	pci_intr_handle_t	gsc_handle;
 };
 
-int	gem_match_pci(device_t, cfdata_t, void *);
-void	gem_attach_pci(device_t, device_t, void *);
+static bool	gem_pci_estintr(struct gem_pci_softc *);
+static bool	gem_pci_suspend(device_t PMF_FN_PROTO);
+static bool	gem_pci_resume(device_t PMF_FN_PROTO);
+static int	gem_pci_detach(device_t, int);
 
-CFATTACH_DECL(gem_pci, sizeof(struct gem_pci_softc),
-    gem_match_pci, gem_attach_pci, NULL, NULL);
+int	gem_pci_match(device_t, cfdata_t, void *);
+void	gem_pci_attach(device_t, device_t, void *);
+
+CFATTACH_DECL3_NEW(gem_pci, sizeof(struct gem_pci_softc),
+    gem_pci_match, gem_pci_attach, gem_pci_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 /*
  * Attach routines need to be split out to different bus-specific files.
  */
 
 int
-gem_match_pci(device_t parent, cfdata_t cf, void *aux)
+gem_pci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -157,13 +165,11 @@ isserdes(u_int8_t* buf)
 }
 
 void
-gem_attach_pci(device_t parent, device_t self, void *aux)
+gem_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
-	pci_intr_handle_t ih;
-	const char *intrstr;
 	char devinfo[256];
 	uint8_t enaddr[ETHER_ADDR_LEN];
 #if GEM_USE_LOCAL_MAC_ADDRESS
@@ -192,6 +198,7 @@ gem_attach_pci(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": Ethernet controller\n");
 
+	sc->sc_dev = self;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	sc->sc_chiprev = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_chiprev);
@@ -226,7 +233,7 @@ gem_attach_pci(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_variant == GEM_UNKNOWN) {
-		aprint_error_dev(&sc->sc_dev, "unknown adaptor\n");
+		aprint_error_dev(sc->sc_dev, "unknown adaptor\n");
 		return;
 	}
 
@@ -235,14 +242,14 @@ gem_attach_pci(device_t parent, device_t self, void *aux)
 	/* XXX Need to check for a 64-bit mem BAR? */
 	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_bustag, &sc->sc_h1, NULL, NULL) != 0)
+	    &sc->sc_bustag, &sc->sc_h1, NULL, &sc->sc_size) != 0)
 	{
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 	if (bus_space_subregion(sc->sc_bustag, sc->sc_h1,
 	    GEM_PCI_BANK2_OFFSET, GEM_PCI_BANK2_SIZE, &sc->sc_h2)) {
-		aprint_error_dev(&sc->sc_dev, "unable to create bank 2 subregion\n");
+		aprint_error_dev(sc->sc_dev, "unable to create bank 2 subregion\n");
 		return;
 	}
 
@@ -285,7 +292,7 @@ gem_attach_pci(device_t parent, device_t self, void *aux)
 		}
 #ifdef GEM_DEBUG
 		/* PROM dump */
-		printf("%s: PROM dump (0x0000 to %04lx)\n", device_xname(&sc->sc_dev),
+		printf("%s: PROM dump (0x0000 to %04lx)\n", device_xname(sc->sc_dev),
 		    (sizeof buf) - 1);
 		i = 0;
 		j = 0;
@@ -368,7 +375,7 @@ gem_attach_pci(device_t parent, device_t self, void *aux)
 
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 		if (node == 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to locate OpenFirmware node\n");
+			aprint_error_dev(sc->sc_dev, "unable to locate OpenFirmware node\n");
 			return;
 		}
 
@@ -378,25 +385,94 @@ gem_attach_pci(device_t parent, device_t self, void *aux)
 		OF_getprop(node, "local-mac-address", enaddr, sizeof(enaddr));
 	}
 #else
-		printf("%s: no Ethernet address found\n", device_xname(&sc->sc_dev));
+		printf("%s: no Ethernet address found\n", device_xname(sc->sc_dev));
 #endif /* macppc */
 #endif /* __sparc__ */
 
-	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
+	if (pci_intr_map(pa, &gsc->gsc_handle) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	gsc->gsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, gem_intr, sc);
-	if (gsc->gsc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
-		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
-		return;
-	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	gsc->gsc_pc = pa->pa_pc;
+	gem_pci_estintr(gsc);
 
 	/* Finish off the attach. */
 	gem_attach(sc, enaddr);
+
+	if (!pmf_device_register1(sc->sc_dev, gem_pci_suspend, gem_pci_resume,
+	                          gem_shutdown)) {
+		aprint_error_dev(sc->sc_dev,
+		    "could not establish power handlers\n");
+	} else
+		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
+}
+
+static bool
+gem_pci_suspend(device_t self PMF_FN_ARGS)
+{
+	struct gem_pci_softc *gsc = device_private(self);
+
+	if (gsc->gsc_ih != NULL) {
+		pci_intr_disestablish(gsc->gsc_pc, gsc->gsc_ih);
+		gsc->gsc_ih = NULL;
+	}
+
+	return true;
+}
+
+static bool
+gem_pci_estintr(struct gem_pci_softc *gsc)
+{
+	struct gem_softc *sc = &gsc->gsc_gem;
+	const char *intrstr;
+
+	intrstr = pci_intr_string(gsc->gsc_pc, gsc->gsc_handle);
+	gsc->gsc_ih = pci_intr_establish(gsc->gsc_pc, gsc->gsc_handle, IPL_NET,
+	    gem_intr, sc);
+	if (gsc->gsc_ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
+		if (intrstr != NULL)
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
+		return false;
+	}
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+	return true;
+}
+
+static bool
+gem_pci_resume(device_t self PMF_FN_ARGS)
+{
+	struct gem_pci_softc *gsc = device_private(self);
+
+	return gem_pci_estintr(gsc);
+}
+
+static int
+gem_pci_detach(device_t self, int flags)
+{
+	int rc;
+	struct gem_pci_softc *gsc = device_private(self);
+	struct gem_softc *sc = &gsc->gsc_gem;
+
+	switch (sc->sc_att_stage) {
+	case GEM_ATT_BACKEND_2:
+		pmf_device_deregister(self);
+		sc->sc_att_stage = GEM_ATT_FINISHED;
+		/*FALLTHROUGH*/
+	default:
+		if ((rc = gem_detach(sc, flags)) != 0)
+			return rc;
+		/*FALLTHROUGH*/
+	case GEM_ATT_BACKEND_1:
+		if (gsc->gsc_ih != NULL)
+			pci_intr_disestablish(gsc->gsc_pc, gsc->gsc_ih);
+
+		bus_space_unmap(sc->sc_bustag, sc->sc_h1, sc->sc_size);
+		/*FALLTHROUGH*/
+	case GEM_ATT_BACKEND_0:
+		sc->sc_att_stage = GEM_ATT_BACKEND_0;
+		break;
+	}
+	return 0;
 }

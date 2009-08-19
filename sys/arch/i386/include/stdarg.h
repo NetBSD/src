@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.21.106.1 2009/05/04 08:11:17 yamt Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.21.106.2 2009/08/19 18:46:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,12 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__builtin_va_copy(d, s)		((d) = (s))
 #endif
 
-#if __GNUC_PREREQ__(2, 96)
+#if __GNUC_PREREQ__(4, 1)
+#define va_start(ap, last)	__builtin_va_start((ap), (last))
+#define va_arg			__builtin_va_arg
+#define va_end			__builtin_va_end
+#define __va_copy(dest, src)	__builtin_va_copy((dest), (src))
+#elif __GNUC_PREREQ__(2, 96)
 #define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
 #define	va_arg			__builtin_va_arg
 #define	va_end			__builtin_va_end

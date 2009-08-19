@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.200.2.3 2009/06/20 07:20:07 yamt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.200.2.4 2009/08/19 18:46:31 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.200.2.3 2009/06/20 07:20:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.200.2.4 2009/08/19 18:46:31 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -363,9 +363,24 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_TX4900, MIPS_REV_TX4927, -1,	CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
 						"Toshiba TX4927 CPU"	},
-	{ 0, MIPS_TX4900, -1, -1,		CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
-						"Toshiba TX4900 CPU"	},
+	/* 
+	 * ICT Loongson2 is a MIPS64 CPU with a few quirks.  For some reason
+	 * the virtual aliases present with 4KB pages make the caches misbehave
+	 * so we make all accesses uncached.  With 16KB pages, no virtual
+	 * aliases are possible so we can use caching.
+	 */
+#ifdef ENABLE_MIPS_16KB_PAGE
+#define	MIPS_LOONGSON2_CCA	0
+#else
+#define	MIPS_LOONGSON2_CCA	(CPU_MIPS_HAVE_SPECIAL_CCA | \
+				(2 << CPU_MIPS_CACHED_CCA_SHIFT))
+#endif
+	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2E, -1, CPU_ARCH_MIPS3, 64,
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | MIPS_LOONGSON2_CCA,
+						"ICT Loongson 2E CPU"	},
+	{ 0, MIPS_LOONGSON2, MIPS_REV_LOONGSON2F, -1, CPU_ARCH_MIPS3, 64,
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT | MIPS_LOONGSON2_CCA,
+						"ICT Loongson 2F CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
 	{ 0, MIPS_R3SONY, -1, -1,		CPU_ARCH_MIPS1, -1,
@@ -443,7 +458,7 @@ static const struct pridtab fputab[] = {
  * Company ID's are not sparse (yet), this array is indexed directly
  * by pridtab->cpu_cid.
  */
-static const char *cidnames[] = {
+static const char * const cidnames[] = {
 	"Prehistoric",
 	"MIPS",		/* or "MIPS Technologies, Inc.	*/
 	"Broadcom",	/* or "Broadcom Corp."		*/
@@ -887,6 +902,14 @@ mips_vector_init(void)
 		cca = (ct->cpu_flags & CPU_MIPS_CACHED_CCA_MASK) >>
 		    CPU_MIPS_CACHED_CCA_SHIFT;
 		mips3_pg_cached = MIPS3_CCA_TO_PG(cca);
+#ifdef notyet /* MIPS3_PLUS */
+		{
+			uint32_t cfg;
+			cfg = mips3_cp0_config_read();
+			cfg = cca | (cfg & ~MIPS3_CONFIG_K0_MASK);
+			mips3_cp0_config_write(cfg);
+		}
+#endif
 	} else
 		mips3_pg_cached = MIPS3_DEFAULT_PG_CACHED;
 
@@ -915,7 +938,7 @@ mips_vector_init(void)
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
 #if defined(MIPS3_5900)	/* XXX */
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips5900_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -924,10 +947,10 @@ mips_vector_init(void)
 #else /* MIPS3_5900 */
 #if defined(MIPS3_4100)
 		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
-			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_4K);
+			mips3_cp0_pg_mask_write(MIPS4100_PG_SIZE_TO_MASK(PAGE_SIZE));
 		else
 #endif
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -938,7 +961,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips32_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
@@ -948,7 +971,7 @@ mips_vector_init(void)
 #endif
 #if defined(MIPS64)
 	case CPU_ARCH_MIPS64:
-		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
 		mips64_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);

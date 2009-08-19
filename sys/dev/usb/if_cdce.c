@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.15.10.1 2009/05/04 08:13:20 yamt Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.15.10.2 2009/08/19 18:47:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.10.1 2009/05/04 08:13:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.10.2 2009/08/19 18:47:20 yamt Exp $");
 #include "bpfilter.h"
 #ifdef	__NetBSD__
 #include "opt_inet.h"
@@ -154,8 +154,9 @@ USB_ATTACH(cdce)
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	const usb_cdc_union_descriptor_t *ud;
+	usb_config_descriptor_t		*cd;
 	int				 data_ifcno;
-	int				 i;
+	int				 i, j, numalts;
 	u_char				 eaddr[ETHER_ADDR_LEN];
 	const usb_cdc_ethernet_descriptor_t *ue;
 	char				 eaddr_str[USB_MAX_ENCODED_STRING_LEN];
@@ -202,29 +203,61 @@ USB_ATTACH(cdce)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	/* Find endpoints. */
+	/*
+	 * <quote>
+	 *  The Data Class interface of a networking device shall have a minimum
+	 *  of two interface settings. The first setting (the default interface
+	 *  setting) includes no endpoints and therefore no networking traffic is
+	 *  exchanged whenever the default interface setting is selected. One or
+	 *  more additional interface settings are used for normal operation, and
+	 *  therefore each includes a pair of endpoints (one IN, and one OUT) to
+	 *  exchange network traffic. Select an alternate interface setting to
+	 *  initialize the network aspects of the device and to enable the
+	 *  exchange of network traffic.
+	 * </quote>
+	 *
+	 * Some devices, most notably cable modems, include interface settings
+	 * that have no IN or OUT endpoint, therefore loop through the list of all
+	 * available interface settings looking for one with both IN and OUT
+	 * endpoints.
+	 */
 	id = usbd_get_interface_descriptor(sc->cdce_data_iface);
-	sc->cdce_bulkin_no = sc->cdce_bulkout_no = -1;
-	for (i = 0; i < id->bNumEndpoints; i++) {
-		ed = usbd_interface2endpoint_descriptor(sc->cdce_data_iface, i);
-		if (!ed) {
-			aprint_error_dev(self,
-			    "could not read endpoint descriptor\n");
+	cd = usbd_get_config_descriptor(sc->cdce_udev);
+	numalts = usbd_get_no_alts(cd, id->bInterfaceNumber);
+
+	for (j = 0; j < numalts; j++) {
+		if (usbd_set_interface(sc->cdce_data_iface, j)) {
+			aprint_error_dev(sc->cdce_dev,
+					"setting alternate interface failed\n");
 			USB_ATTACH_ERROR_RETURN;
 		}
-		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			sc->cdce_bulkin_no = ed->bEndpointAddress;
-		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			sc->cdce_bulkout_no = ed->bEndpointAddress;
-		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			/* XXX: CDC spec defines an interrupt pipe, but it is not
-			 * needed for simple host-to-host applications. */
-		} else {
-			aprint_error_dev(self, "unexpected endpoint\n");
+		/* Find endpoints. */
+		id = usbd_get_interface_descriptor(sc->cdce_data_iface);
+		sc->cdce_bulkin_no = sc->cdce_bulkout_no = -1;
+		for (i = 0; i < id->bNumEndpoints; i++) {
+			ed = usbd_interface2endpoint_descriptor(sc->cdce_data_iface, i);
+			if (!ed) {
+				aprint_error_dev(self,
+						"could not read endpoint descriptor\n");
+				USB_ATTACH_ERROR_RETURN;
+			}
+			if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
+					UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
+				sc->cdce_bulkin_no = ed->bEndpointAddress;
+			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
+					UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
+				sc->cdce_bulkout_no = ed->bEndpointAddress;
+			} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
+					UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
+				/* XXX: CDC spec defines an interrupt pipe, but it is not
+				 * needed for simple host-to-host applications. */
+			} else {
+				aprint_error_dev(self, "unexpected endpoint\n");
+			}
 		}
+		/* If we found something, try and use it... */
+		if ((sc->cdce_bulkin_no != -1) && (sc->cdce_bulkout_no != -1))
+			break;
 	}
 
 	if (sc->cdce_bulkin_no == -1) {

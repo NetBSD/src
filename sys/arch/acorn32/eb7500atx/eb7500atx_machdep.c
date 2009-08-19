@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.9.10.1 2009/05/04 08:10:25 yamt Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.9.10.2 2009/08/19 18:45:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.9.10.1 2009/05/04 08:10:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.9.10.2 2009/08/19 18:45:52 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -148,7 +148,6 @@ paddr_t dma_range_begin;
 paddr_t dma_range_end;
 
 u_int free_pages;
-int physmem = 0;
 paddr_t memoryblock_end;
 
 #ifndef PMAP_STATIC_L1S

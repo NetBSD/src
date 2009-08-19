@@ -1,13 +1,16 @@
-#	$NetBSD: files.mips,v 1.58.10.1 2009/05/04 08:11:31 yamt Exp $
+#	$NetBSD: files.mips,v 1.58.10.2 2009/08/19 18:46:29 yamt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
 				MIPS64_SB1
+				MIPS3_LOONGSON2F
+				ENABLE_MIPS_16KB_PAGE
 					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
 					# MIPS32 MIPS64
 					# MIPS3_4100
 					# MIPS3_5900
+					# ENABLE_MIPS_4KB_PAGE
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
@@ -47,6 +50,7 @@ file	arch/mips/mips/cache_r3k.c		mips1
 file	arch/mips/mips/cache_r3k_subr.S		mips1
 file	arch/mips/mips/cache_tx39.c		mips1 & enable_mips_tx3900
 file	arch/mips/mips/cache_tx39_subr.S	mips1 & enable_mips_tx3900
+file	arch/mips/mips/cache_ls2.c		mips3_loongson2
 file	arch/mips/mips/cache_r4k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ia64,v 1.4 2007/10/17 19:54:59 garbled Exp $
+#	$NetBSD: files.ia64,v 1.4.20.1 2009/08/19 18:46:20 yamt Exp $
 #
 # new style config file for ia64 architecture
 #
@@ -41,15 +41,22 @@ file	arch/ia64/ia64/syscall_stubs.S
 file	arch/ia64/ia64/support.S
 file	arch/ia64/ia64/setjmp.S
 file	arch/ia64/ia64/pal.S
+file	arch/ia64/ia64/consinit.c
+file	arch/ia64/ia64/bus_space.c
+file	arch/ia64/ia64/sapic.c
+file	arch/ia64/acpi/madt.c
 file	dev/cons.c
 file	dev/cninit.c
+
+file	arch/ia64/acpi/acpi_machdep.c		acpi
+file	arch/ia64/pci/pci_machdep.c		acpi | pci
 
 # XXX: TODO: file	kern/kern_cctr.c
 
 #
 # System bus types
 #
-device	mainbus: cpubus
+device	mainbus: cpubus, acpibus
 attach	mainbus at root
 file	arch/ia64/ia64/mainbus.c	mainbus
 
@@ -65,6 +72,18 @@ file	dev/md_root.c			memory_disk_hooks
 
 # console: XXX: Figure out how to make this conditional.
 defpseudo ssccons
-file   arch/ia64/ia64/ssc.c		ssccons
+file	arch/ia64/ia64/ssc.c		ssccons			needs-flag
+
+
+include "dev/isa/files.isa"		# XXXXXXX: Oops, required by acpi
+include "dev/apm/files.apm"		# XXXXXXX: Oops, required by acpi
+
+# Floppy disk controller
+device	fdc {drive = -1}		# XXXXXXX: Oops, required by acpi
+
+# PCI fixup options			# XXXXXX: Oops, required by acpi.c
+defflag opt_pcifixup.h			ACPI_PCI_FIXUP
+
+include "dev/acpi/files.acpi"
 
 include "arch/ia64/conf/majors.ia64"

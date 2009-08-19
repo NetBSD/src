@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.12.10.1 2008/05/16 02:25:36 yamt Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.12.10.2 2009/08/19 18:48:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #endif
 
 #include <sys/param.h>
-#include <sys/exec.h>
+#include <sys/exec_aout.h>
 
 #include "loadfile.h"
 

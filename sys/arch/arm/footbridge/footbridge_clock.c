@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.24.18.1 2009/05/04 08:10:40 yamt Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.24.18.2 2009/08/19 18:45:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.24.18.1 2009/05/04 08:10:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.24.18.2 2009/08/19 18:45:59 yamt Exp $");
 
 /* Include header files */
 
@@ -78,20 +78,20 @@ int statprev;			/* last value of we set statclock to */
 void footbridge_tc_init(void);
 
 #if 0
-static int clockmatch(struct device *parent, struct cfdata *cf, void *aux);
-static void clockattach(struct device *parent, struct device *self, void *aux);
+static int clockmatch(device_t parent, cfdata_t cf, void *aux);
+static void clockattach(device_t parent, device_t self, void *aux);
 
-CFATTACH_DECL(footbridge_clock, sizeof(struct clock_softc),
+CFATTACH_DECL_NEW(footbridge_clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
 
 /*
- * int clockmatch(struct device *parent, void *match, void *aux)
+ * int clockmatch(device_t parent, cfdata_t cf, void *aux);
  *
  * Just return ok for this if it is device 0
  */ 
  
 static int
-clockmatch(struct device *parent, struct cfdata *cf, void *aux)
+clockmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	union footbridge_attach_args *fba = aux;
 
@@ -102,16 +102,17 @@ clockmatch(struct device *parent, struct cfdata *cf, void *aux)
 
 
 /*
- * void clockattach(struct device *parent, struct device *dev, void *aux)
+ * void clockattach(device_t parent, device_t self, void *aux)
  *
  */
   
 static void
-clockattach(struct device *parent, struct device *self, void *aux)
+clockattach(device_t parent, device_t self, void *aux)
 {
-	struct clock_softc *sc = (struct clock_softc *)self;
+	struct clock_softc *sc = device_private(self);
 	union footbridge_attach_args *fba = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = fba->fba_ca.ca_iot;
 	sc->sc_ioh = fba->fba_ca.ca_ioh;
 
@@ -119,7 +120,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 
 	/* Cannot do anything until cpu_initclocks() has been called */
 	
-	printf("\n");
+	aprint_normal("\n");
 }
 #endif
 
@@ -275,7 +276,7 @@ cpu_initclocks(void)
 		profhz = stathz * 5;
 
 	/* Report the clock frequencies */
-	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
+	aprint_debug("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
 	/* Setup timer 1 and claim interrupt */
 	clock_sc->sc_clock_count = load_timer(TIMER_1_BASE, hz);
@@ -291,7 +292,7 @@ cpu_initclocks(void)
 
 	if (clock_sc->sc_clockintr == NULL)
 		panic("%s: Cannot install timer 1 interrupt handler",
-		    clock_sc->sc_dev.dv_xname);
+		    device_xname(clock_sc->sc_dev));
 
 	/* If stathz is non-zero then setup the stat clock */
 	if (stathz) {
@@ -301,7 +302,7 @@ cpu_initclocks(void)
        		    "tmr2 stat clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
 			panic("%s: Cannot install timer 2 interrupt handler",
-			    clock_sc->sc_dev.dv_xname);
+			    device_xname(clock_sc->sc_dev));
 	}
 
 	footbridge_tc_init();

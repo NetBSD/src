@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.191.4.3 2009/05/16 10:41:53 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.191.4.4 2009/08/19 18:48:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ enum vtagtype	{
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
 	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS, VT_ZFS,
-	VT_RUMP
+	VT_RUMP, VT_NILFS
 };
 
 #define	VNODE_TAGS \
@@ -113,8 +113,8 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS","VT_EFS","VT_ZFS",\
-    "VT_RUMP"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS", \
+    "VT_ZFS", "VT_RUMP", "VT_NILFS"
 
 struct vnode;
 struct buf;
@@ -216,8 +216,6 @@ typedef struct vnode vnode_t;
 #define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
 #define	VV_MPSAFE	0x00000010	/* file system code is MP safe */
 #define	VV_LOCKSWORK	0x00000020	/* FS supports locking discipline */
-
-/* XXXAD ALIASED should be covered by spec lock? */
 
 /*
  * The second set are locked by vp->v_interlock.

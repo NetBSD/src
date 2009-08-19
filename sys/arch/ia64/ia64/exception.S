@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.3 2008/03/20 14:56:06 kochi Exp $ */
+/*	$NetBSD: exception.S,v 1.3.4.1 2009/08/19 18:46:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -940,11 +940,13 @@ IVT_ENTRY(Dirty_Bit, 0x2000)
 	ttag	r19=r16
 	add	r20=24,r18		// collision chain
 	;; 
-	ld8	r20=[r20]		// first entry
-	;; 
+	ld8	r20=[r20]		// bucket head
+	;;
 	rsm	psr.dt			// turn off data translations
+	dep	r20=0,r20,61,3		// convert vhpt ptr to physical
 	;;
 	srlz.d				// serialize
+	ld8	r20=[r20]		// first entry
 	;;
 1:	cmp.eq	p15,p0=r0,r20		// done?
 (p15)	br.cond.spnt.few 9f		// bail if done
@@ -984,16 +986,22 @@ IVT_ENTRY(Dirty_Bit, 0x2000)
 	st8.rel	[r18]=r19		// store new tag
 	;;
 	itc.d	r21			// and place in TLB
-	;; 
+	ssm	psr.dt
+	;;
+	srlz.d
 	mov	pr=r17,0x1ffff		// restore predicates
 	rfi
-
+	;;
 2:	add	r20=24,r20		// next in chain
 	;;
 	ld8	r20=[r20]		// read chain
 	br.cond.sptk.few 1b		// loop
-
-9:	mov	pr=r17,0x1ffff		// restore predicates
+	;;
+9:	ssm	psr.dt
+	mov	pr=r17,0x1ffff		// restore predicates
+	;;
+	srlz.d
+	;;
 	CALL(trap, 8, cr.ifa)			// die horribly
 IVT_END(Dirty_Bit)
 
@@ -1068,15 +1076,17 @@ IVT_ENTRY(Data_Access_Bit, 0x2800)
 	mov	r17=pr
 	;;
 	thash	r18=r16
-	;;
 	ttag	r19=r16
+	;;
 	add	r20=24,r18		// collision chain
 	;;
-	ld8	r20=[r20]		// first entry
+	ld8	r20=[r20]		// bucket head
 	;;
 	rsm	psr.dt			// turn off data translations
+	dep	r20=0,r20,61,3		// convert vhpt ptr to physical
 	;;
 	srlz.d				// serialize
+	ld8	r20=[r20]		// first entry
 	;;
 1:	cmp.eq	p15,p0=r0,r20		// done?
 (p15)	br.cond.spnt.few 9f		// bail if done
@@ -1116,6 +1126,7 @@ IVT_ENTRY(Data_Access_Bit, 0x2800)
 	st8.rel	[r18]=r19		// store new tag
 	;;
 	itc.d	r21			// and place in TLB
+	ssm	psr.dt
 	;; 
 	mov	pr=r17,0x1ffff		// restore predicates
 	rfi				// walker will retry the access
@@ -1125,7 +1136,8 @@ IVT_ENTRY(Data_Access_Bit, 0x2800)
 	ld8	r20=[r20]		// read chain
 	br.cond.sptk.few 1b		// loop
 
-9:	mov	pr=r17,0x1ffff		// restore predicates
+9:	ssm	psr.dt
+	mov	pr=r17,0x1ffff		// restore predicates
 	CALL(trap, 10, cr.ifa)
 IVT_END(Data_Access_Bit)
 

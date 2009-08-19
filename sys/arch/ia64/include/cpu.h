@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5.4.2 2009/05/04 08:11:21 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5.4.3 2009/08/19 18:46:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
-	struct cpu_info *ci_self;	/* self-pointer */
+
 	/*
 	 * Public members.
 	 */
@@ -103,10 +103,11 @@ struct cpu_info {
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
-	struct cpu_softc *ci_softc;	/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
+	uint64_t ci_clock;		/* clock counter */
+	uint64_t ci_clockadj;		/* clock adjust */
 };
 
 
@@ -120,6 +121,7 @@ extern struct cpu_info cpu_info_primary;
 #else
 #define	curcpu() (&cpu_info_primary)
 #endif /* MULTIPROCESSOR */
+#define curlwp	(curcpu()->ci_curlwp)
 
 #define cpu_number() 0              /*XXX: FIXME */
 
@@ -131,9 +133,9 @@ struct clockframe {
 	struct trapframe cf_tf;
 };
 
-#define	CLKF_PC(cf)		((cf)->cf_tf.tf_special.iip)
-#define	CLKF_CPL(cf)		((cf)->cf_tf.tf_special.psr & IA64_PSR_CPL)
-#define	CLKF_USERMODE(cf)	(CLKF_CPL(cf) != IA64_PSR_CPL_KERN)
+#define	CLKF_PC(cf)		(TRAPF_PC(&(cf)->cf_tf))
+#define	CLKF_CPL(cf)		(TRAPF_CPL(&(cf)->cf_tf))
+#define	CLKF_USERMODE(cf)	(TRAPF_USERMODE(&(cf)->cf_tf))
 #define	CLKF_INTR(frame)	(curcpu()->ci_intrdepth)
 
 #define	TRAPF_PC(tf)		((tf)->tf_special.iip)

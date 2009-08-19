@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.92.4.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.92.4.2 2009/08/19 18:48:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92.4.1 2009/05/04 08:14:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92.4.2 2009/08/19 18:48:36 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -113,6 +113,10 @@ unsigned int uvm_pagedaemon_waiters;
  * XXX hack to avoid hangs when large processes fork.
  */
 u_int uvm_extrapages;
+
+static kmutex_t uvm_reclaim_lock;
+
+SLIST_HEAD(uvm_reclaim_hooks, uvm_reclaim_hook) uvm_reclaim_list;
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -233,6 +237,8 @@ uvm_pageout(void *arg)
 	int extrapages = 0;
 	struct pool *pp;
 	uint64_t where;
+	struct uvm_reclaim_hook *hook;
+	
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
@@ -340,6 +346,12 @@ uvm_pageout(void *arg)
 		buf_drain(bufcnt << PAGE_SHIFT);
 		mutex_exit(&bufcache_lock);
 
+		mutex_enter(&uvm_reclaim_lock);
+		SLIST_FOREACH(hook, &uvm_reclaim_list, uvm_reclaim_next) {
+			(*hook->uvm_reclaim_hook)();
+		}
+		mutex_exit(&uvm_reclaim_lock);
+		
 		/*
 		 * complete draining the pools.
 		 */
@@ -1038,4 +1050,45 @@ uvm_estimatepageable(int *active, int *inactive)
 {
 
 	uvmpdpol_estimatepageable(active, inactive);
+}
+
+void
+uvm_reclaim_init(void)
+{
+	
+	/* Initialize UVM reclaim hooks. */
+	mutex_init(&uvm_reclaim_lock, MUTEX_DEFAULT, IPL_NONE);
+	SLIST_INIT(&uvm_reclaim_list);
+}
+
+void
+uvm_reclaim_hook_add(struct uvm_reclaim_hook *hook)
+{
+
+	KASSERT(hook != NULL);
+	
+	mutex_enter(&uvm_reclaim_lock);
+	SLIST_INSERT_HEAD(&uvm_reclaim_list, hook, uvm_reclaim_next);
+	mutex_exit(&uvm_reclaim_lock);
+}
+
+void
+uvm_reclaim_hook_del(struct uvm_reclaim_hook *hook_entry)
+{
+	struct uvm_reclaim_hook *hook;
+
+	KASSERT(hook_entry != NULL);
+	
+	mutex_enter(&uvm_reclaim_lock);
+	SLIST_FOREACH(hook, &uvm_reclaim_list, uvm_reclaim_next) {
+		if (hook != hook_entry) {
+			continue;
+		}
+
+		SLIST_REMOVE(&uvm_reclaim_list, hook, uvm_reclaim_hook,
+		    uvm_reclaim_next);
+		break;
+	}
+
+	mutex_exit(&uvm_reclaim_lock);
 }

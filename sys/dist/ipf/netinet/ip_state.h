@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.10.24.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.10.24.2 2009/08/19 18:47:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.11 2008/04/14 12:19:27 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.12 2008/11/06 21:18:38 darrenr Exp
  */
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
@@ -250,12 +250,13 @@ extern	int	fr_tcpinwindow __P((struct fr_info *, struct tcpdata *,
 				    struct tcpdata *, tcphdr_t *, int));
 extern	void	fr_stateunload __P((void));
 extern	void	ipstate_log __P((struct ipstate *, u_int));
-extern	int	fr_state_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
+extern	int	fr_state_ioctl __P((void *, ioctlcmd_t, int, int, void *));
 extern	void	fr_stinsert __P((struct ipstate *, int));
 extern	void	fr_sttab_init __P((struct ipftq *));
 extern	void	fr_sttab_destroy __P((struct ipftq *));
 extern	void	fr_updatestate __P((fr_info_t *, ipstate_t *, ipftq_t *));
 extern	void	fr_statederef __P((ipstate_t **));
 extern	void	fr_setstatequeue __P((ipstate_t *, int));
+extern	int	fr_state_flush __P((int, int));
 
 #endif /* _NETINET_IP_STATE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.272.2.2 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.272.2.3 2009/08/19 18:48:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.2.2 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.2.3 2009/08/19 18:48:16 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -620,6 +620,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			while (*cp)
 				*dp++ = *cp++;
 			*dp++ = '\0';
+			ktrexecarg(tmpfap->fa_arg, cp - tmpfap->fa_arg);
 
 			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++; argc++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.99.4.2 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.99.4.3 2009/08/19 18:47:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.99.4.2 2009/05/04 08:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.99.4.3 2009/08/19 18:47:06 yamt Exp $");
 #endif
 
 /*
@@ -520,28 +520,40 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		 * separate key cache entries are required to
 		 * handle both tx+rx MIC keys.
 		 */
-		if (ath_hal_ciphersupported(ah, HAL_CIPHER_MIC)) {
+		if (ath_hal_ciphersupported(ah, HAL_CIPHER_MIC))
 			ic->ic_caps |= IEEE80211_C_TKIPMIC;
-			/*
-			 * Check if h/w does MIC correctly when
-			 * WMM is turned on.
-			 */
-			if (ath_hal_wmetkipmic(ah))
-				ic->ic_caps |= IEEE80211_C_WME_TKIPMIC;
-		}
 
 		/*
 		 * If the h/w supports storing tx+rx MIC keys
 		 * in one cache slot automatically enable use.
 		 */
-		if (ath_hal_tkipsplit(ah) ||
+		if (ath_hal_hastkipsplit(ah) ||
 		    !ath_hal_settkipsplit(ah, AH_FALSE))
 			sc->sc_splitmic = 1;
+
+		/*
+		 * If the h/w can do TKIP MIC together with WME then
+		 * we use it; otherwise we force the MIC to be done
+		 * in software by the net80211 layer.
+		 */
+		if (ath_hal_haswmetkipmic(ah))
+			ic->ic_caps |= IEEE80211_C_WME_TKIPMIC;
 	}
 	sc->sc_hasclrkey = ath_hal_ciphersupported(ah, HAL_CIPHER_CLR);
-#if 0
 	sc->sc_mcastkey = ath_hal_getmcastkeysearch(ah);
-#endif
+	/*
+	 * Mark key cache slots associated with global keys
+	 * as in use.  If we knew TKIP was not to be used we
+	 * could leave the +32, +64, and +32+64 slots free.
+	 */
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		setbit(sc->sc_keymap, i);
+		setbit(sc->sc_keymap, i+64);
+		if (sc->sc_splitmic) {
+			setbit(sc->sc_keymap, i+32);
+			setbit(sc->sc_keymap, i+32+64);
+		}
+	}
 	/*
 	 * TPC support can be done either with a global cap or
 	 * per-packet support.  The latter is not available on
@@ -948,6 +960,24 @@ ath_ifinit(struct ifnet *ifp)
 	return ath_init(sc);
 }
 
+static void
+ath_settkipmic(struct ath_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ath_hal *ah = sc->sc_ah;
+
+	if ((ic->ic_caps & IEEE80211_C_TKIP) &&
+	    !(ic->ic_caps & IEEE80211_C_WME_TKIPMIC)) {
+		if (ic->ic_flags & IEEE80211_F_WME) {
+			(void)ath_hal_settkipmic(ah, AH_FALSE);
+			ic->ic_caps &= ~IEEE80211_C_TKIPMIC;
+		} else {
+			(void)ath_hal_settkipmic(ah, AH_TRUE);
+			ic->ic_caps |= IEEE80211_C_TKIPMIC;
+		}
+	}
+}
+
 static int
 ath_init(struct ath_softc *sc)
 {
@@ -973,17 +1003,6 @@ ath_init(struct ath_softc *sc)
 	 */
 	ath_stop_locked(ifp, 0);
 
-	int dummy;	/* XXX: gcc */
-	/* Whether we should enable h/w TKIP MIC */
-	if ((ic->ic_caps & IEEE80211_C_WME) &&
-	    ((ic->ic_caps & IEEE80211_C_WME_TKIPMIC) ||
-	    !(ic->ic_flags & IEEE80211_F_WME))) {
-		dummy = ath_hal_settkipmic(ah, AH_TRUE);
-	} else {
-		dummy = ath_hal_settkipmic(ah, AH_FALSE);
-	}
-
-
 	/*
 	 * The basic interface to setting the hardware in a good
 	 * state is ``reset''.  On return the hardware is known to
@@ -991,6 +1010,7 @@ ath_init(struct ath_softc *sc)
 	 * be followed by initialization of the appropriate bits
 	 * and then setup of the interrupt mask.
 	 */
+	ath_settkipmic(sc);
 	sc->sc_curchan.channel = ic->ic_curchan->ic_freq;
 	sc->sc_curchan.channelFlags = ath_chan2flags(ic, ic->ic_curchan);
 	if (!ath_hal_reset(ah, ic->ic_opmode, &sc->sc_curchan, AH_FALSE, &status)) {
@@ -1170,6 +1190,7 @@ ath_reset(struct ifnet *ifp)
 	ath_hal_intrset(ah, 0);		/* disable interrupts */
 	ath_draintxq(sc);		/* stop xmit side */
 	ath_stoprecv(sc);		/* stop recv side */
+	ath_settkipmic(sc);		/* configure TKIP MIC handling */
 	/* NB: indicate channel change so we do a full reset */
 	if (!ath_hal_reset(ah, ic->ic_opmode, &sc->sc_curchan, AH_TRUE, &status))
 		if_printf(ifp, "%s: unable to reset hardware; hal status %u\n",
@@ -1512,21 +1533,25 @@ ath_keyset_tkip(struct ath_softc *sc, const struct ieee80211_key *k,
 			 * will handle the reset.
 			 */
 			memcpy(hk->kv_mic, k->wk_rxmic, sizeof(hk->kv_mic));
-#if HAL_ABI_VERSION > 0x06052200
 			memcpy(hk->kv_txmic, k->wk_txmic, sizeof(hk->kv_txmic));
-#endif
 			KEYPRINTF(sc, k->wk_keyix, hk, mac);
 			return ath_hal_keyset(ah, ATH_KEY(k->wk_keyix), hk, mac);
 		}
-	} else if (k->wk_flags & IEEE80211_KEY_XR) {
-		/*
-		 * TX/RX key goes at first index.
-		 * The hal handles the MIC keys are index+64.
-		 */
-		memcpy(hk->kv_mic, k->wk_flags & IEEE80211_KEY_XMIT ?
-			k->wk_txmic : k->wk_rxmic, sizeof(hk->kv_mic));
+	} else if (k->wk_flags & IEEE80211_KEY_XMIT) {
+		if (sc->sc_splitmic) {
+			/*
+			 * NB: must pass MIC key in expected location when
+			 * the keycache only holds one MIC key per entry.
+			 */
+			memcpy(hk->kv_mic, k->wk_txmic, sizeof(hk->kv_txmic));
+		} else
+			memcpy(hk->kv_txmic, k->wk_txmic, sizeof(hk->kv_txmic));
 		KEYPRINTF(sc, k->wk_keyix, hk, mac);
 		return ath_hal_keyset(ah, ATH_KEY(k->wk_keyix), hk, mac);
+	} else if (k->wk_flags & IEEE80211_KEY_RECV) {
+		memcpy(hk->kv_mic, k->wk_rxmic, sizeof(hk->kv_mic));
+		KEYPRINTF(sc, k->wk_keyix, hk, mac);
+		return ath_hal_keyset(ah, k->wk_keyix, hk, mac);
 	}
 	return 0;
 #undef IEEE80211_KEY_XR
@@ -1586,7 +1611,7 @@ ath_keyset(struct ath_softc *sc, const struct ieee80211_key *k,
 		mac = mac0;
 
 	if ((hk.kv_type == HAL_CIPHER_TKIP &&
-	    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0) && sc->sc_splitmic) {
+	    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0)) {
 		return ath_keyset_tkip(sc, k, &hk, mac);
 	} else {
 		KEYPRINTF(sc, k->wk_keyix, &hk, mac);
@@ -1647,6 +1672,54 @@ key_alloc_2pair(struct ath_softc *sc,
 	}
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: out of pair space\n", __func__);
 	return IEEE80211_KEYIX_NONE;
+#undef N
+}
+
+/*
+ * Allocate tx/rx key slots for TKIP.  We allocate two slots for
+ * each key, one for decrypt/encrypt and the other for the MIC.
+ */
+static int
+key_alloc_pair(struct ath_softc *sc, ieee80211_keyix *txkeyix,
+    ieee80211_keyix *rxkeyix)
+{
+#define N(a)	(sizeof(a)/sizeof(a[0]))
+	u_int i, keyix;
+
+	KASSERT(!sc->sc_splitmic, ("key cache split"));
+	/* XXX could optimize */
+	for (i = 0; i < N(sc->sc_keymap)/4; i++) {
+		uint8_t b = sc->sc_keymap[i];
+		if (b != 0xff) {
+			/*
+			 * One or more slots in this byte are free.
+			 */
+			keyix = i*NBBY;
+			while (b & 1) {
+		again:
+				keyix++;
+				b >>= 1;
+			}
+			if (isset(sc->sc_keymap, keyix+64)) {
+				/* full pair unavailable */
+				/* XXX statistic */
+				if (keyix == (i+1)*NBBY) {
+					/* no slots were appropriate, advance */
+					continue;
+				}
+				goto again;
+			}
+			setbit(sc->sc_keymap, keyix);
+			setbit(sc->sc_keymap, keyix+64);
+			DPRINTF(sc, ATH_DEBUG_KEYCACHE,
+				"%s: key pair %u,%u\n",
+				__func__, keyix, keyix+64);
+			*txkeyix = *rxkeyix = keyix;
+			return 1;
+		}
+	}
+	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: out of pair space\n", __func__);
+	return 0;
 #undef N
 }
 
@@ -1735,8 +1808,11 @@ ath_key_alloc(struct ieee80211com *ic, const struct ieee80211_key *k,
 	if (k->wk_flags & IEEE80211_KEY_SWCRYPT) {
 		return key_alloc_single(sc, keyix, rxkeyix);
 	} else if (k->wk_cipher->ic_cipher == IEEE80211_CIPHER_TKIP &&
-	    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0 && sc->sc_splitmic) {
-		return key_alloc_2pair(sc, keyix, rxkeyix);
+	    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0) {
+		if (sc->sc_splitmic)
+			return key_alloc_2pair(sc, keyix, rxkeyix);
+		else
+			return key_alloc_pair(sc, keyix, rxkeyix);
 	} else {
 		return key_alloc_single(sc, keyix, rxkeyix);
 	}
@@ -1774,11 +1850,13 @@ ath_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 		 */
 		clrbit(sc->sc_keymap, keyix);
 		if (cip->ic_cipher == IEEE80211_CIPHER_TKIP &&
-		    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0 &&
-		    sc->sc_splitmic) {
+		    (k->wk_flags & IEEE80211_KEY_SWMIC) == 0) {
 			clrbit(sc->sc_keymap, keyix+64);	/* TX key MIC */
-			clrbit(sc->sc_keymap, keyix+32);	/* RX key */
-			clrbit(sc->sc_keymap, keyix+32+64);	/* RX key MIC */
+			if (sc->sc_splitmic) {
+				/* +32 for RX key, +32+64 for RX key MIC */
+				clrbit(sc->sc_keymap, keyix+32);
+				clrbit(sc->sc_keymap, keyix+32+64);
+			}
 		}
 	}
 	return 1;
@@ -2982,7 +3060,7 @@ ath_rx_proc(void *arg, int npending)
 		 */
 		status = ath_hal_rxprocdesc(ah, ds,
 				bf->bf_daddr, PA2DESC(sc, ds->ds_link),
-				tsf, &ds->ds_rxstat);
+				&ds->ds_rxstat);
 #ifdef AR_DEBUG
 		if (sc->sc_debug & ATH_DEBUG_RECV_DESC)
 			ath_printrxbuf(bf, status == HAL_OK);
@@ -4301,7 +4379,7 @@ ath_stoprecv(struct ath_softc *sc)
 			tsf = ath_hal_gettsf64(sc->sc_ah);
 			HAL_STATUS status = ath_hal_rxprocdesc(ah, ds,
 				bf->bf_daddr, PA2DESC(sc, ds->ds_link),
-				tsf, &ds->ds_rxstat);
+				&ds->ds_rxstat);
 			if (status == HAL_OK || (sc->sc_debug & ATH_DEBUG_FATAL))
 				ath_printrxbuf(bf, status == HAL_OK);
 		}

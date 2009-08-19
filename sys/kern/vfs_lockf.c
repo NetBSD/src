@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.64.2.2 2009/06/20 07:20:32 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.64.2.3 2009/08/19 18:48:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.64.2.2 2009/06/20 07:20:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.64.2.3 2009/08/19 18:48:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -835,6 +835,18 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	default:
 		return EINVAL;
 	}
+
+	if (fl->l_len == 0)
+		end = -1;
+	else {
+		if (fl->l_len > 0)
+			end = start + fl->l_len - 1;
+		else {
+			/* lockf() allows -ve lengths */
+			end = start - 1;
+			start += fl->l_len;
+		}
+	}
 	if (start < 0)
 		return EINVAL;
 
@@ -868,11 +880,6 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	default:
 		return EINVAL;
 	}
-
-	if (fl->l_len == 0)
-		end = -1;
-	else
-		end = start + fl->l_len - 1;
 
 	switch (ap->a_op) {
 	case F_SETLK:
@@ -922,7 +929,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	if (lock->lf_flags & F_POSIX) {
 		KASSERT(curproc == (struct proc *)ap->a_id);
 	}
-	lock->lf_id = (struct proc *)ap->a_id;
+	lock->lf_id = ap->a_id;
 
 	/*
 	 * Do the requested operation.

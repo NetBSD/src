@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.277.2.3 2009/06/20 07:20:10 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.277.2.4 2009/08/19 18:46:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.3 2009/06/20 07:20:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.4 2009/08/19 18:46:46 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.3 2009/06/20 07:20:10 yamt Exp $
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/ucontext.h>
 #include <sys/simplelock.h>
 #include <sys/module.h>

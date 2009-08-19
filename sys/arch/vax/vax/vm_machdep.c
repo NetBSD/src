@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.102.4.1 2009/05/04 08:12:05 yamt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.102.4.2 2009/08/19 18:46:49 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,8 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102.4.1 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102.4.2 2009/08/19 18:46:49 yamt Exp $");
 
+#include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
@@ -43,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102.4.1 2009/05/04 08:12:05 yamt Ex
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
 #include <sys/mount.h>
@@ -199,11 +201,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 }
 #endif
 
+#ifdef EXEC_AOUT
 int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
 }
+#endif
 
 int
 sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)

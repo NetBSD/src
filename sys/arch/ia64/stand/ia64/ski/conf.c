@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.78.1 2009/08/19 18:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997
@@ -30,12 +30,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: conf.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	 
+ *	$NetBSD: conf.c,v 1.1.78.1 2009/08/19 18:46:26 yamt Exp $	 
  */
 
 #include <sys/cdefs.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include <bootstrap.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.19.4.3 2009/05/16 10:41:40 yamt Exp $ */
+/*	$NetBSD: twa.c,v 1.19.4.4 2009/08/19 18:47:17 yamt Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.19.4.3 2009/05/16 10:41:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.19.4.4 2009/08/19 18:47:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1300,7 +1300,7 @@ out:
 }
 
 
-#ifdef		DIAGNOSTIC
+#if 0
 static void
 twa_check_response_q(struct twa_request *tr, int clear)
 {
@@ -1321,6 +1321,7 @@ twa_check_response_q(struct twa_request *tr, int clear)
 		req = tr;
 
 	if ((tr->tr_cmd_pkt_type & TWA_CMD_PKT_TYPE_EXTERNAL) != 0) {
+		/* XXX this is bogus ! req can't be anything else but tr ! */
 		if (req->tr_request_id == tr->tr_request_id) 
 			panic("req id: %d on controller queue twice",
 		    	    tr->tr_request_id);
@@ -1353,7 +1354,7 @@ twa_done(struct twa_softc *sc)
 		/* Response queue is not empty. */
 		rq.value = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 		tr = sc->sc_twa_request + rq.u.response_id;
-#ifdef		DIAGNOSTIC
+#if 0
 		twa_check_response_q(tr, 0);
 #endif
 		/* Unmap the command packet, and any associated data buffer. */
@@ -1367,7 +1368,7 @@ twa_done(struct twa_softc *sc)
 	}
 	(void)twa_drain_pending_queue(sc);
 	
-#ifdef		DIAGNOSTIC	
+#if 0
 	twa_check_response_q(NULL, 1);
 #endif
 	return(rv);

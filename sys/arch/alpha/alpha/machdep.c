@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.304.2.2 2009/05/04 08:10:28 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.304.2.3 2009/08/19 18:45:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304.2.2 2009/05/04 08:10:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304.2.3 2009/08/19 18:45:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304.2.2 2009/05/04 08:10:28 yamt Exp $
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/exec_ecoff.h>
 #include <sys/core.h>
 #include <sys/kcore.h>

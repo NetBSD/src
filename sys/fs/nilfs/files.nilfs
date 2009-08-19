@@ -1,0 +1,10 @@
+#	$NetBSD: files.nilfs,v 1.1.4.2 2009/08/19 18:48:13 yamt Exp $
+
+deffs	fs_nilfs.h			NILFS
+
+file	fs/nilfs/nilfs_vfsops.c		nilfs
+file	fs/nilfs/nilfs_vnops.c		nilfs
+file	fs/nilfs/nilfs_subr.c		nilfs
+#file	fs/nilfs/nilfs_readwrite.c		nilfs
+#file	fs/nilfs/nilfs_allocation.c		nilfs
+

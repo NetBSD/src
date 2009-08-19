@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.3.4.1 2009/05/04 08:10:45 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.3.4.2 2009/08/19 18:46:01 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -56,9 +56,12 @@ static void	pxaohci_disable(struct pxaohci_softc *);
 static int
 pxaohci_match(device_t parent, struct cfdata *cf, void *aux)
 {
+	struct pxaip_attach_args *pxa = aux;
 
-	if (CPU_IS_PXA270)
+	if (CPU_IS_PXA270 && strcmp(pxa->pxa_name, cf->cf_name) == 0) {
+		pxa->pxa_size = PXA2X0_USBHC_SIZE;
 		return 1;
+	}
 	return 0;
 }
 
@@ -87,12 +90,12 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, PXA2X0_USBHC_BASE, PXA2X0_USBHC_SIZE, 0,
+	if (bus_space_map(sc->sc.iot, pxa->pxa_addr, pxa->pxa_size, 0,
 	    &sc->sc.ioh)) {
 		aprint_error_dev(sc->sc.sc_dev, "couldn't map memory space\n");
 		return;
 	}
-	sc->sc.sc_size = PXA2X0_USBHC_SIZE;
+	sc->sc.sc_size = pxa->pxa_size;
 
 	/* XXX copied from ohci_pci.c. needed? */
 	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
@@ -235,7 +238,11 @@ pxaohci_enable(struct pxaohci_softc *sc)
 	hr = HREAD4(sc, USBHC_HR);
 	HWRITE4(sc, USBHC_HR, (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSE));
 	hr = HREAD4(sc, USBHC_HR);
-	HWRITE4(sc, USBHC_HR, (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSEP2));
+	HWRITE4(sc, USBHC_HR, (hr & USBHC_HR_MASK) &
+			~(USBHC_HR_SSEP1 | USBHC_HR_SSEP2 | USBHC_HR_SSEP3));
+	HWRITE4(sc, USBHC_HIE, USBHC_HIE_RWIE | USBHC_HIE_UPRIE);
+
+	hr = HREAD4(sc, USBHC_UHCRHDA);
 }
 
 static void

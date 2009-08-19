@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_stat.c,v 1.13.6.2 2009/05/04 08:12:18 yamt Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.13.6.3 2009/08/19 18:46:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.13.6.2 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.13.6.3 2009/08/19 18:46:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,5 +131,5 @@ darwin_sys_mknod(struct lwp *l, const struct darwin_sys_mknod_args *uap, registe
 	} */
 
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
-	    darwin_to_native_dev(SCARG(uap, dev)), retval);
+	    darwin_to_native_dev(SCARG(uap, dev)), retval, UIO_USERSPACE);
 }

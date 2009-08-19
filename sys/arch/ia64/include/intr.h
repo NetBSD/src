@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2008/03/20 09:09:20 kochi Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.4.1 2009/08/19 18:46:23 yamt Exp $	*/
 
 /* XXX: cherry: To Be fixed when we switch on interrupts. */
 
@@ -46,5 +46,28 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return splraise(icookie._ipl);
 }
+
+
+/*
+ * Layout of the Processor Interrupt Block.
+ */
+struct ia64_interrupt_block
+{
+	uint64_t ib_ipi[0x20000];	/* 1Mb of IPI interrupts */
+	uint8_t ib_reserved1[0xe0000];
+	uint8_t ib_inta;		/* Generate INTA cycle */
+	uint8_t ib_reserved2[7];
+	uint8_t ib_xtp;			/* XTP cycle */
+	uint8_t ib_reserved3[7];
+	uint8_t ib_reserved4[0x1fff0];
+};
+
+extern uint64_t ia64_lapic_address;
+
+#define IA64_INTERRUPT_BLOCK \
+	(struct ia64_interrupt_block *)IA64_PHYS_TO_RR6(ia64_lapic_address)
+
+void *intr_establish(int, int, int, int (*)(void *), void *);
+void intr_disestablish(void *);
 
 #endif /* ! _IA64_INTR_H_ */

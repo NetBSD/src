@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38.58.1 2009/05/04 08:11:41 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.38.58.2 2009/08/19 18:46:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,6 @@
 #define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	pmax
 #define	MACHINE		"pmax"
-#define	MID_MACHINE	MID_PMAX
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.79.4.2 2009/05/16 10:41:49 yamt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.79.4.3 2009/08/19 18:48:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -339,4 +339,9 @@ int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
 		   void *);
 uint32_t crc32(uint32_t, const uint8_t *, size_t);
+unsigned int	popcount(unsigned int) __constfunc;
+unsigned int	popcountl(unsigned long) __constfunc;
+unsigned int	popcountll(unsigned long long) __constfunc;
+unsigned int	popcount32(uint32_t) __constfunc;
+unsigned int	popcount64(uint64_t) __constfunc;
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

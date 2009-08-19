@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.137.4.3 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.137.4.4 2009/08/19 18:48:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.137.4.3 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.137.4.4 2009/08/19 18:48:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,7 +71,7 @@ assert_sleepable(void)
 
 	/*
 	 * Avoid disabling/re-enabling preemption here since this
-	 * routine may be called in delicate situatations.
+	 * routine may be called in delicate situations.
 	 */
 	do {
 		pctr = lwp_pctr();

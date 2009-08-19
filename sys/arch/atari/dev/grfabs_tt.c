@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.15.78.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.15.78.2 2009/08/19 18:46:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.15.78.1 2009/05/04 08:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.15.78.2 2009/08/19 18:46:02 yamt Exp $");
 
 #ifdef TT_VIDEO
 /*
@@ -314,7 +314,7 @@ init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 	v->bitmap = bm;
 	v->mode   = mode;
 	v->flags  = 0;
-	memcpy( &v->display, dbox, sizeof(box_t));
+	memcpy(&v->display, dbox, sizeof(box_t));
 }
 
 /* bitmap functions */

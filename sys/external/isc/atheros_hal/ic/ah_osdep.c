@@ -26,11 +26,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.2.2.2 2009/05/04 08:13:42 yamt Exp $
+ * $Id: ah_osdep.c,v 1.2.2.3 2009/08/19 18:48:12 yamt Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.2.2.2 2009/05/04 08:13:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.2.2.3 2009/08/19 18:48:12 yamt Exp $");
 
 #include "opt_athhal.h"
 
@@ -208,7 +208,6 @@ HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...)
  */
 #include <sys/alq.h>
 #include <sys/pcpu.h>
-#include <contrib/dev/ath/ah_decode.h>
 
 static	struct alq *ath_hal_alq;
 static	int ath_hal_alq_emitdev;	/* need to emit DEVICE record */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.15.26.1 2009/05/04 08:13:28 yamt Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.15.26.2 2009/08/19 18:47:34 yamt Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.254 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -1641,9 +1641,6 @@ int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
 int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
 void	pf_normalize_init(void);
-#ifdef _LKM
-void	pf_normalize_destroy(void);
-#endif /* _LKM */
 int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *,
 	    struct pf_pdesc *);
 int	pf_normalize_ip6(struct mbuf **, int, struct pfi_kif *, u_short *,
@@ -1665,9 +1662,6 @@ int	pf_socket_lookup(int, struct pf_pdesc *);
 struct pf_state_key *
 	pf_alloc_state_key(struct pf_state *);
 void	pfr_initialize(void);
-#ifdef _LKM
-void	pfr_destroy(void);
-#endif /* _LKM */
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
@@ -1707,9 +1701,6 @@ int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 extern struct pfi_kif		*pfi_all;
 
 void		 pfi_initialize(void);
-#ifdef _LKM
-void		 pfi_destroy(void);
-#endif /* _LKM */
 struct pfi_kif	*pfi_kif_get(const char *);
 void		 pfi_kif_ref(struct pfi_kif *, enum pfi_kif_refs);
 void		 pfi_kif_unref(struct pfi_kif *, enum pfi_kif_refs);
@@ -1812,9 +1803,6 @@ struct pf_osfp_enlist *
 void	pf_osfp_flush(void);
 int	pf_osfp_get(struct pf_osfp_ioctl *);
 void	pf_osfp_initialize(void);
-#ifdef _LKM
-void	pf_osfp_destroy(void);
-#endif /* _LKM */
 int	pf_osfp_match(struct pf_osfp_enlist *, pf_osfp_t);
 struct pf_os_fingerprint *
 	pf_osfp_validate(void);

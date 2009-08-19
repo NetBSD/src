@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.28 2007/02/09 21:55:06 ad Exp $
+#	$NetBSD: Makefile,v 1.28.48.1 2009/08/19 18:46:29 yamt Exp $
 
 INCSDIR= /usr/include/mips
 
-INCS=	ansi.h aout_machdep.h asm.h \
-	bswap.h bsd-aout.h \
+INCS=	ansi.h asm.h \
+	bswap.h \
 	cachectl.h cdefs.h cpu.h cpuregs.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \

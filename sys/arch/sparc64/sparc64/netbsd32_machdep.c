@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.79.2.1 2009/05/04 08:11:58 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.79.2.2 2009/08/19 18:46:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,17 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79.2.1 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79.2.2 2009/08/19 18:46:47 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_modular.h"
+#include "opt_execfmt.h"
 #include "firm_events.h"
 #endif
 
 #include <sys/param.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/proc.h>

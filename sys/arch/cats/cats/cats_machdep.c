@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.59.10.2 2009/05/04 08:10:53 yamt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.59.10.3 2009/08/19 18:46:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59.10.2 2009/05/04 08:10:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59.10.3 2009/08/19 18:46:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59.10.2 2009/05/04 08:10:53 yamt 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
@@ -128,7 +129,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.4.2.3 2009/06/20 07:20:21 yamt Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.4.2.4 2009/08/19 18:47:05 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  * Allocate target specific config data, and link them to table.
  * This function is called only when, flags is not READONLY and
  * therefore we can add things to pdev list. This should not a 
- * problem because this routine is called onyl from dm_table_load_ioctl.
+ * problem because this routine is called only from dm_table_load_ioctl.
  * @argv[0] is name,
  * @argv[1] is physical data offset.
  */

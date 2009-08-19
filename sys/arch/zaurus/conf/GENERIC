@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11.10.1 2009/05/04 08:12:15 yamt Exp $
+#	$NetBSD: GENERIC,v 1.11.10.2 2009/08/19 18:46:57 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -240,8 +240,8 @@ wd* at atabus? drive ? flags 0x0000
 
 # USB Controller and Devices
 zusb* at pxaip?
-#pxaudc0 at pxaip?	# USB Device Controller
-ohci0 at pxaip?	# USB Host Controller
+#pxaudc0 at pxaip? addr 0x40600000	# USB Device Controller
+ohci0 at pxaip? addr 0x4c000000 intr 3	# USB Host Controller
 
 # PCMCIA USB controllers
 #slhci* at pcmcia? function ?	# ScanLogic SL811HS

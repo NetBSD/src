@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.25.4.1 2009/05/04 08:12:12 yamt Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.25.4.2 2009/08/19 18:46:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,6 @@ struct xen_npx_attach_args {
 #define	s32 int32_t
 #define	s64 int64_t
 
-#ifdef XEN3
 #include <xen/xen3-public/xen.h>
 #include <xen/xen3-public/sched.h>
 #include <xen/xen3-public/platform.h>
@@ -96,15 +95,6 @@ struct xen_npx_attach_args {
 #include <xen/xen3-public/memory.h>
 #include <xen/xen3-public/io/netif.h>
 #include <xen/xen3-public/io/blkif.h>
-#else
-#include <xen/xen-public/xen.h>
-#include <xen/xen-public/dom0_ops.h>
-#include <xen/xen-public/event_channel.h>
-#include <xen/xen-public/physdev.h>
-#include <xen/xen-public/io/domain_controller.h>
-#include <xen/xen-public/io/netif.h>
-#include <xen/xen-public/io/blkif.h>
-#endif
 
 #include <machine/hypercalls.h>
 
@@ -161,11 +151,7 @@ void hypervisor_machdep_attach(void);
  */
 static __inline void hypervisor_force_callback(void)
 {
-#ifdef XEN3
 	(void)HYPERVISOR_xen_version(0, (void*)0);
-#else
-	(void)HYPERVISOR_xen_version(0);
-#endif
 } __attribute__((no_instrument_function)) /* used by mcount */
 
 static __inline void
@@ -174,11 +160,7 @@ hypervisor_notify_via_evtchn(unsigned int port)
 	evtchn_op_t op;
 
 	op.cmd = EVTCHNOP_send;
-#ifdef XEN3
 	op.u.send.port = port;
-#else
-	op.u.send.local_port = port;
-#endif
 	(void)HYPERVISOR_event_channel_op(&op);
 }
 

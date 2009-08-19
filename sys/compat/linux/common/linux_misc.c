@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.197.2.3 2009/05/16 10:41:17 yamt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.197.2.4 2009/08/19 18:46:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197.2.3 2009/05/16 10:41:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197.2.4 2009/08/19 18:46:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,7 +702,7 @@ linux_sys_getdents(struct lwp *l, const struct linux_sys_getdents_args *uap, reg
 
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VDIR) {
-		error = EINVAL;
+		error = ENOTDIR;
 		goto out1;
 	}
 

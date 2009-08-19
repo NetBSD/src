@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.55.10.2 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.55.10.3 2009/08/19 18:46:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.55.10.2 2009/05/04 08:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.55.10.3 2009/08/19 18:46:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,8 +761,8 @@ again:
 				c = zc->zc_csr;
 				if((c & ZSRR0_DCD) == 0)
 					cs->cs_preg[3] &= ~ZSWR3_HFC;
-				bcopy((void *)cs->cs_preg,
-				    (void *)cs->cs_creg, 16);
+				memcpy((void *)cs->cs_creg,
+				    (void *)cs->cs_preg, 16);
 				zs_loadchannelregs(zc, cs->cs_creg);
 				splx(sps);
 				cs->cs_heldchange = 0;
@@ -1133,7 +1133,7 @@ zsparam(register struct tty *tp, register struct termios *t)
 			cs->cs_tbc = 0;
 			cs->cs_heldchange = 1;
 		} else {
-			memcpy( (void *)cs->cs_creg, (void *)cs->cs_preg, 16);
+			memcpy((void *)cs->cs_creg, (void *)cs->cs_preg, 16);
 			zs_loadchannelregs(cs->cs_zc, cs->cs_creg);
 		}
 	}

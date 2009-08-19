@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.21.32.1 2009/05/04 08:14:40 yamt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.21.32.2 2009/08/19 18:48:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -96,19 +96,16 @@ typedef struct pmap_statistics	*pmap_statistics_t;
  * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
  * bits, used to indicate the access type that was made (to seed modified
  * and referenced information).
+ *
+ * Flags marked [PA] are for pmap_kenter_pa() only.  Flags marked [BOTH]
+ * apply to pmap_kenter_pa() and pmap_enter().  All other flags are valid
+ * for pmap_enter() only.
  */
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
+#define	PMAP_KMPAGE	0x00000040	/* [PA] page used for kernel memory */
 
 #define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
-
-/*
- * Flags passed to pmap_kenter_pa().  Note the bottom 3 bits are VM_PROT_*
- * bits, used to indicate the access type.
- */
-#ifndef PMAP_KMPAGE
-#define	PMAP_KMPAGE	0x00000000	/* this is from the kmem allocator */
-#endif
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL

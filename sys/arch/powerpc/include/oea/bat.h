@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.11.4.1 2008/05/16 02:23:01 yamt Exp $	*/
+/*	$NetBSD: bat.h,v 1.11.4.2 2009/08/19 18:46:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef	_POWERPC_OEA_BAT_H_
 #define	_POWERPC_OEA_BAT_H_
 
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
 struct bat {
 	register_t batu;
 	register_t batl;
@@ -196,8 +196,7 @@ struct bat {
 
 #define	BAT_VA2IDX(va)	((va) >> ADDR_SR_SHFT)
 
-#ifdef	_KERNEL
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
 void oea_batinit(paddr_t, ...);
 void oea_iobat_add(paddr_t, register_t);
 void oea_iobat_remove(paddr_t);
@@ -205,7 +204,6 @@ void oea_iobat_remove(paddr_t);
 #if !defined (PPC_OEA64)
 extern struct bat battable[];
 #endif /* PPC_OEA */
-#endif
 #endif
 
 #endif	/* _POWERPC_OEA_BAT_H_ */

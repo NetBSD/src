@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222.10.1 2009/05/04 08:11:42 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.222.10.2 2009/08/19 18:46:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222.10.1 2009/05/04 08:11:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222.10.2 2009/08/19 18:46:39 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222.10.1 2009/05/04 08:11:42 yamt Exp 
 #include <machine/bus.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -230,14 +229,16 @@ mach_init(int argc, char *argv[], int code, int cv, u_int bim, char *bip)
 		ssym = (void *)bi_syms->ssym;
 		esym = (void *)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
+#if 0	/* our bootloader clears BSS properly */
 		memset(edata, 0, end - edata);
-	}
+#endif
+	} else
+#ifdef EXEC_AOUT
 	/* XXX: Backwards compatibility with old bootblocks - this should
 	 * go soon...
 	 */
-#ifdef EXEC_AOUT
 	/* Exec header and symbols? */
-	else if (aout->a_midmag == 0x07018b00 && (i = aout->a_syms) != 0) {
+	if (aout->a_midmag == 0x07018b00 && (i = aout->a_syms) != 0) {
 		ssym = end;
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.938.4.5 2009/07/18 14:53:05 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.938.4.6 2009/08/19 18:47:13 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.994 2009/07/07 09:45:45 cegger Exp
+ *	NetBSD: pcidevs,v 1.995 2009/08/01 21:34:21 matt Exp
  */
 
 /*
@@ -3801,6 +3801,7 @@
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* 7018 Sound */
 
 /* Silicon Motion products */
+#define	PCI_PRODUCT_SILMOTION_SM502	0x0501		/* Voyager GX */
 #define	PCI_PRODUCT_SILMOTION_SM710	0x0710		/* LynxEM */
 #define	PCI_PRODUCT_SILMOTION_SM712	0x0712		/* LynxEM+ */
 #define	PCI_PRODUCT_SILMOTION_SM720	0x0720		/* Lynx3DM */

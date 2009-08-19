@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.23.10.3 2009/06/20 07:20:12 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.23.10.4 2009/08/19 18:46:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -246,13 +246,14 @@
 #define	CPUID2_SSE41	0x00080000	/* Streaming SIMD Extensions 4.1 */
 #define	CPUID2_SSE42	0x00100000	/* Streaming SIMD Extensions 4.2 */
 #define	CPUID2_X2APIC	0x00200000	/* xAPIC Extensions */
-#define	CPUID2_POPCNT	0x00800000	
+#define	CPUID2_POPCNT	0x00800000	/* popcount instruction available */
+#define	CPUID2_RAZ	0x80000000	/* RAZ. Indicates guest state. */
 
 #define CPUID2_FLAGS1	"\20\1SSE3\2B01\3DTES64\4MONITOR\5DS-CPL\6VMX\7SMX" \
 			    "\10EST\11TM2\12SSSE3\13CID\14B11\15B12\16CX16" \
 			    "\17xTPR\20PDCM\21B16\22B17\23DCA\24SSE41\25SSE42" \
 			    "\26X2APIC\27MOVBE\30POPCNT\31B24\32B25\33XSAVE" \
-			    "\34OSXSAVE\35B28\36B29\37B30\40B31"
+			    "\34OSXSAVE\35B28\36B29\37B30\40RAZ"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)

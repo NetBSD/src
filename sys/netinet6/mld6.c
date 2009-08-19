@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.45.2.1 2009/05/04 08:14:19 yamt Exp $	*/
+/*	$NetBSD: mld6.c,v 1.45.2.2 2009/08/19 18:48:25 yamt Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.45.2.1 2009/05/04 08:14:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.45.2.2 2009/08/19 18:48:25 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -637,14 +637,13 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 * and link it into the interface's multicast list.
 		 */
 		in6m = (struct in6_multi *)
-			malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT);
+			malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT|M_ZERO);
 		if (in6m == NULL) {
 			splx(s);
 			*errorp = ENOBUFS;
 			return (NULL);
 		}
 
-		memset(in6m, 0, sizeof(*in6m));
 		in6m->in6m_addr = *maddr6;
 		in6m->in6m_ifp = ifp;
 		in6m->in6m_refcount = 1;
@@ -754,13 +753,12 @@ in6_joingroup(struct ifnet *ifp, struct in6_addr *addr,
 {
 	struct in6_multi_mship *imm;
 
-	imm = malloc(sizeof(*imm), M_IPMADDR, M_NOWAIT);
-	if (!imm) {
+	imm = malloc(sizeof(*imm), M_IPMADDR, M_NOWAIT|M_ZERO);
+	if (imm == NULL) {
 		*errorp = ENOBUFS;
 		return NULL;
 	}
 
-	memset(imm, 0, sizeof(*imm));
 	imm->i6mm_maddr = in6_addmulti(addr, ifp, errorp, timer);
 	if (!imm->i6mm_maddr) {
 		/* *errorp is already set */
@@ -870,9 +868,8 @@ in6_createmkludge(struct ifnet *ifp)
 			return;
 	}
 
-	mk = malloc(sizeof(*mk), M_IPMADDR, M_WAITOK);
+	mk = malloc(sizeof(*mk), M_IPMADDR, M_ZERO|M_WAITOK);
 
-	memset(mk, 0, sizeof(*mk));
 	LIST_INIT(&mk->mk_head);
 	mk->mk_ifp = ifp;
 	LIST_INSERT_HEAD(&in6_mk, mk, mk_entry);

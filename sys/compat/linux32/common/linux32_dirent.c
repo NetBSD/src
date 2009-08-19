@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.5.10.1 2009/05/04 08:12:23 yamt Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.5.10.2 2009/08/19 18:46:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.5.10.1 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.5.10.2 2009/08/19 18:46:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,7 +126,7 @@ linux32_sys_getdents(struct lwp *l, const struct linux32_sys_getdents_args *uap,
 
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VDIR) {
-		error = EINVAL;
+		error = ENOTDIR;
 		goto out1;
 	}
 

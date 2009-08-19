@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.75.4.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.75.4.3 2009/08/19 18:47:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.75.4.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.75.4.3 2009/08/19 18:47:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1086,7 +1086,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	err = ucomstartread(sc);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "read start failed\n");
-		/* XXX what should we dow now? */
+		/* XXX what should we do now? */
 	}
 }
 

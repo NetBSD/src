@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep_common.c,v 1.2.26.1 2008/05/16 02:23:01 yamt Exp $	*/
+/*	$NetBSD: isa_machdep_common.c,v 1.2.26.2 2009/08/19 18:46:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.2.26.1 2008/05/16 02:23:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.2.26.2 2009/08/19 18:46:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,13 @@ genppc_isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 void
 genppc_isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
+{
+
+	/* Nothing to do. */
+}
+
+void
+genppc_isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 
 	/* Nothing to do. */

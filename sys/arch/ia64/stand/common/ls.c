@@ -1,5 +1,5 @@
 /*
- * $NetBSD: ls.c,v 1.2 2006/04/22 07:58:53 cherry Exp $
+ * $NetBSD: ls.c,v 1.2.74.1 2009/08/19 18:46:24 yamt Exp $
  */
 
 /*-
@@ -47,6 +47,7 @@
 #include <sys/dirent.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 

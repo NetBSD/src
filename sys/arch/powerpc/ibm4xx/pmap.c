@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.20.2 2009/05/16 10:41:15 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.20.3 2009/08/19 18:46:40 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.20.2 2009/05/16 10:41:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.20.3 2009/08/19 18:46:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -130,7 +130,6 @@ struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 struct pmap kernel_pmap_;
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
 
-int physmem;
 static int npgs;
 static u_int nextavail;
 #ifndef MSGBUFADDR
@@ -813,7 +812,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int s;
 	u_int tte;
-	int managed;
+	bool managed;
 
 	/*
 	 * Have to remove any existing mapping first.
@@ -823,9 +822,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (flags & PMAP_WIRED)
 		flags |= prot;
 
-	managed = 0;
-	if (vm_physseg_find(atop(pa), NULL) != -1)
-		managed = 1;
+	managed = uvm_pageismanaged(pa);
 
 	/*
 	 * Generate TTE.

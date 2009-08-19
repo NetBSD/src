@@ -1,0 +1,8 @@
+# $NetBSD: files.bonito,v 1.1.2.2 2009/08/19 18:46:29 yamt Exp $
+
+device	bonito: pcibus
+file	arch/mips/bonito/bonito_pci.c		bonito
+file	arch/mips/bonito/bonito_iobc.c		bonito
+
+attach	bonito at mainbus with bonito_mainbus
+#file	arch/algor/dev/bonito_mainbus.c		bonito_mainbus

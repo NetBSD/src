@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.4.20.2 2009/05/04 08:11:47 yamt Exp $ */
+/* $NetBSD: nif.c,v 1.4.20.3 2009/08/19 18:46:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,14 +54,7 @@ static struct iodesc netdesc;
 static struct nifdv vnifdv[] = {
 	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
 	{ "tlp", tlp_match, tlp_init, tlp_send, tlp_recv },
-	{ "nvt", nvt_match, nvt_init, nvt_send, nvt_recv },
-	{ "sip", sip_match, sip_init, sip_send, sip_recv },
-	{ "pcn", pcn_match, pcn_init, pcn_send, pcn_recv },
-	{ "kse", kse_match, kse_init, kse_send, kse_recv },
-	{ "sme", sme_match, sme_init, sme_send, sme_recv },
-	{ "vge", vge_match, vge_init, vge_send, vge_recv },
-	{ "rge", rge_match, rge_init, rge_send, rge_recv },
-	{ "wm",  wm_match, wm_init,  wm_send,  wm_recv  }
+	{ "re",  rge_match, rge_init, rge_send, rge_recv },
 };
 static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
 

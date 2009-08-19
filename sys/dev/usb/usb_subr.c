@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.152.4.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.152.4.3 2009/08/19 18:47:21 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.152.4.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.152.4.3 2009/08/19 18:47:21 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1059,7 +1059,10 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	dev->def_ep_desc.bDescriptorType = UDESC_ENDPOINT;
 	dev->def_ep_desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->def_ep_desc.bmAttributes = UE_CONTROL;
-	USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+	if (speed == USB_SPEED_HIGH)
+		USETW(dev->def_ep_desc.wMaxPacketSize, 64);
+	else
+		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
 	dev->def_ep_desc.bInterval = 0;
 
 	dev->quirks = &usbd_no_quirk;
@@ -1105,7 +1108,11 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
 	for (i = 0; i < 10; i++) {
 		/* Get the first 8 bytes of the device descriptor. */
-		err = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, dd);
+		err = usbd_get_desc(dev, UDESC_DEVICE, 0, 
+			(speed == USB_SPEED_HIGH) ? USB_DEVICE_DESCRIPTOR_SIZE
+						  : USB_MAX_IPACKET,
+			 dd);
+
 		if (!err)
 			break;
 		usbd_delay_ms(dev, 200);

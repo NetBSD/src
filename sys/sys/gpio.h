@@ -1,5 +1,5 @@
-/* $NetBSD: gpio.h,v 1.3 2008/01/09 15:11:30 xtraeme Exp $ */
-/*	$OpenBSD: gpio.h,v 1.1 2004/06/03 18:08:00 grange Exp $	*/
+/* $NetBSD */
+/*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -23,6 +23,9 @@
 #define GPIO_PIN_LOW		0x00	/* low level (logical 0) */
 #define GPIO_PIN_HIGH		0x01	/* high level (logical 1) */
 
+/* Max name length of a pin */
+#define GPIOMAXNAME		64
+
 /* GPIO pin configuration flags */
 #define GPIO_PIN_INPUT		0x0001	/* input direction */
 #define GPIO_PIN_OUTPUT		0x0002	/* output direction */
@@ -32,31 +35,67 @@
 #define GPIO_PIN_TRISTATE	0x0020	/* output disabled */
 #define GPIO_PIN_PULLUP		0x0040	/* internal pull-up enabled */
 #define GPIO_PIN_PULLDOWN	0x0080	/* internal pull-down enabled */
-#define GPIO_PIN_INVIN 		0x0100	/* invert input */
-#define GPIO_PIN_INVOUT 	0x0200	/* invert output */
+#define GPIO_PIN_INVIN		0x0100	/* invert input */
+#define GPIO_PIN_INVOUT		0x0200	/* invert output */
+#define GPIO_PIN_USER		0x0400	/* user != 0 can access */
+#define GPIO_PIN_SET		0x8000	/* set for securelevel access */
 
 /* GPIO controller description */
 struct gpio_info {
 	int gpio_npins;		/* total number of pins available */
 };
 
-/* GPIO pin operation (read/write/toggle) */
-struct gpio_pin_op {
-	int gp_pin;		/* pin number */
-	int gp_value;		/* value */
+/* GPIO pin request (read/write/toggle) */
+struct gpio_req {
+	char gp_name[GPIOMAXNAME];	/* pin name */
+	int gp_pin;			/* pin number */
+	int gp_value;			/* value */
 };
 
-/* GPIO pin control */
+/* GPIO pin configuration */
+struct gpio_set {
+	char gp_name[GPIOMAXNAME];
+	int gp_pin;
+	int gp_caps;
+	int gp_flags;
+	char gp_name2[GPIOMAXNAME];	/* new name */
+};
+
+/* Attach/detach device drivers that use GPIO pins */
+struct gpio_attach {
+	char ga_dvname[16];	/* device name */
+	int ga_offset;		/* pin number */
+	u_int32_t ga_mask;	/* binary mask */
+};
+
+/* GPIO pin control (old API) */
 struct gpio_pin_ctl {
 	int gp_pin;		/* pin number */
 	int gp_caps;		/* pin capabilities (read-only) */
 	int gp_flags;		/* pin configuration flags */
 };
 
+/* GPIO pin operation (read/write/toggle) (old API) */
+struct gpio_pin_op {
+	int gp_pin;			/* pin number */
+	int gp_value;			/* value */
+};
+
 #define GPIOINFO		_IOR('G', 0, struct gpio_info)
+
+/* the old API, kept for backwards compatibility */
 #define GPIOPINREAD		_IOWR('G', 1, struct gpio_pin_op)
 #define GPIOPINWRITE		_IOWR('G', 2, struct gpio_pin_op)
 #define GPIOPINTOGGLE		_IOWR('G', 3, struct gpio_pin_op)
 #define GPIOPINCTL		_IOWR('G', 4, struct gpio_pin_ctl)
+
+/* the new API */
+#define GPIOSET			_IOWR('G', 5, struct gpio_set)
+#define GPIOUNSET		_IOWR('G', 6, struct gpio_set)
+#define GPIOREAD		_IOWR('G', 7, struct gpio_req)
+#define GPIOWRITE		_IOWR('G', 8, struct gpio_req)
+#define GPIOTOGGLE		_IOWR('G', 9, struct gpio_req)
+#define GPIOATTACH		_IOWR('G', 10, struct gpio_attach)
+#define GPIODETACH		_IOWR('G', 11, struct gpio_attach)
 
 #endif	/* !_SYS_GPIO_H_ */

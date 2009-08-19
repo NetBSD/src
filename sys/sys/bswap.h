@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.12.60.2 2009/07/18 14:53:26 yamt Exp $      */
+/*      $NetBSD: bswap.h,v 1.12.60.3 2009/08/19 18:48:32 yamt Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -14,13 +14,13 @@
 __BEGIN_DECLS
 /* Always declare the functions in case their address is taken (etc) */
 #if defined(_KERNEL) || defined(_STANDALONE) || !defined(__BSWAP_RENAME)
-uint16_t bswap16(uint16_t) __attribute__((__const__));
-uint32_t bswap32(uint32_t) __attribute__((__const__));
+uint16_t bswap16(uint16_t) __constfunc;
+uint32_t bswap32(uint32_t) __constfunc;
 #else
-uint16_t bswap16(uint16_t) __RENAME(__bswap16) __attribute__((__const__));
-uint32_t bswap32(uint32_t) __RENAME(__bswap32) __attribute__((__const__));
+uint16_t bswap16(uint16_t) __RENAME(__bswap16) __constfunc;
+uint32_t bswap32(uint32_t) __RENAME(__bswap32) __constfunc;
 #endif
-uint64_t bswap64(uint64_t) __attribute__((__const__));
+uint64_t bswap64(uint64_t) __constfunc;
 __END_DECLS
 
 #if defined(__GNUC__) && defined(__OPTIMIZE__) && !defined(__lint__)
@@ -39,7 +39,7 @@ __END_DECLS
 #endif
 
 #define	__byte_swap_u64_constant(x) \
-	((uint64_t) \
+	(__CAST(uint64_t, \
 	 ((((x) & 0xff00000000000000ull) >> 56) | \
 	  (((x) & 0x00ff000000000000ull) >> 40) | \
 	  (((x) & 0x0000ff0000000000ull) >> 24) | \
@@ -47,19 +47,19 @@ __END_DECLS
 	  (((x) & 0x00000000ff000000ull) <<  8) | \
 	  (((x) & 0x0000000000ff0000ull) << 24) | \
 	  (((x) & 0x000000000000ff00ull) << 40) | \
-	  (((x) & 0x00000000000000ffull) << 56)))
+	  (((x) & 0x00000000000000ffull) << 56))))
 
 #define	__byte_swap_u32_constant(x) \
-	((uint32_t) \
+	(__CAST(uint32_t, \
 	((((x) & 0xff000000) >> 24) | \
 	 (((x) & 0x00ff0000) >>  8) | \
 	 (((x) & 0x0000ff00) <<  8) | \
-	 (((x) & 0x000000ff) << 24)))
+	 (((x) & 0x000000ff) << 24))))
 
 #define	__byte_swap_u16_constant(x) \
-	((uint16_t) \
+	(__CAST(uint16_t, \
 	((((x) & 0xff00) >> 8) | \
-	 (((x) & 0x00ff) << 8)))
+	 (((x) & 0x00ff) << 8))))
 
 #define	bswap64(x) \
 	(__builtin_constant_p((x)) ? \

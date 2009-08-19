@@ -1,4 +1,4 @@
-#	$NetBSD: std.sandpoint,v 1.13 2007/10/27 15:36:29 nisimura Exp $
+#	$NetBSD: std.sandpoint,v 1.13.20.1 2009/08/19 18:46:42 yamt Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
@@ -12,8 +12,7 @@ makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
-options 	PIC_OPENPIC
-options 	PIC_I8259
+options 	PIC_MPCSOC
 
 options 	INTSTK=0x2000
 

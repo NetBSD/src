@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.10.10.1 2009/05/04 08:12:23 yamt Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.10.10.2 2009/08/19 18:46:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.10.10.1 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.10.10.2 2009/08/19 18:46:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
+#include <sys/ioctl.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -102,6 +103,23 @@ linux32_sys_ioctl(struct lwp *l, const struct linux32_sys_ioctl_args *uap, regis
 			break;
 		}
 		break;
+	case 'V':	/* video4linux2 */
+	case 'd':	/* drm */
+	{
+		struct sys_ioctl_args ua;
+		u_long com = 0;
+		if (SCARG(uap, com) & IOC_IN)
+			com |= IOC_OUT;
+		if (SCARG(uap, com) & IOC_OUT)
+			com |= IOC_IN;
+		SCARG(&ua, fd) = SCARG(uap, fd);
+		SCARG(&ua, com) = SCARG(uap, com);
+		SCARG(&ua, com) &= ~IOC_DIRMASK;
+		SCARG(&ua, com) |= com;
+		SCARG(&ua, data) = SCARG_P32(uap, data);
+		error = sys_ioctl(l, (const void *)&ua, retval);
+		break;
+	}
 	case 0x89:
 		error = linux32_ioctl_socket(l, uap, retval);
 		break;

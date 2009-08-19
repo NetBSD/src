@@ -1,4 +1,4 @@
-#	$NetBSD: lwps,v 1.1 2008/02/20 20:56:35 ad Exp $
+#	$NetBSD: lwps,v 1.1.14.1 2009/08/19 18:48:15 yamt Exp $
 
 define lwps
 	set $i = 0
@@ -19,7 +19,7 @@ define lwps
 				if ($l->l_wmesg)
 					printf " (%s)", (char *)$l->l_wmesg
 				end
-				set $l = $l->l_list.le_next
+				set $l = $l->l_sibling.le_next
 				printf "\n"
 				set $j++
 			end

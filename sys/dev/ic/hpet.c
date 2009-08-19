@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.6 2008/03/21 13:25:27 xtraeme Exp $ */
+/* $NetBSD: hpet.c,v 1.6.4.1 2009/08/19 18:47:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6 2008/03/21 13:25:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6.4.1 2009/08/19 18:47:06 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -49,6 +49,22 @@ __KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6 2008/03/21 13:25:27 xtraeme Exp $");
 
 static u_int	hpet_get_timecount(struct timecounter *);
 static bool	hpet_resume(device_t PMF_FN_PROTO);
+
+int
+hpet_detach(device_t dv, int flags)
+{
+	struct hpet_softc *sc = device_private(dv);
+	int rc;
+
+	if ((rc = tc_detach(&sc->sc_tc)) != 0)
+		return rc;
+
+	pmf_device_deregister(dv);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG, sc->sc_config);
+
+	return 0;
+}
 
 void
 hpet_attach_subr(device_t dv)
@@ -71,6 +87,7 @@ hpet_attach_subr(device_t dv)
 
 	/* Enable timer */
 	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG);
+	sc->sc_config = val;
 	if ((val & HPET_CONFIG_ENABLE) == 0) {
 		val |= HPET_CONFIG_ENABLE;
 		bus_space_write_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG, val);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.4.2 2009/06/20 07:20:30 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.4.3 2009/08/19 18:47:33 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.2 2009/06/20 07:20:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.3 2009/08/19 18:47:33 yamt Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -922,24 +922,12 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 	return (0);
 }
 
-#ifdef _LKM
-volatile int pf_purge_thread_stop;
-volatile int pf_purge_thread_running;
-#endif
-
 void
 pf_purge_thread(void *v)
 {
 	int nloops = 0, s;
 
-#ifdef _LKM
-	pf_purge_thread_running = 1;
-	pf_purge_thread_stop = 0;
-
-	while (!pf_purge_thread_stop) {
-#else
 	for (;;) {
-#endif /* !_LKM */
 		tsleep(pf_purge_thread, PWAIT, "pftm", 1 * hz);
 
 		s = splsoftnet();
@@ -957,12 +945,6 @@ pf_purge_thread(void *v)
 
 		splx(s);
 	}
-
-#ifdef _LKM
-	pf_purge_thread_running = 0;
-	wakeup(&pf_purge_thread_running);
-	kthread_exit(0);
-#endif /* _LKM */
 }
 
 u_int32_t

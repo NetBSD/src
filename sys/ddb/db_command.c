@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.114.10.3 2009/06/20 07:20:19 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.114.10.4 2009/08/19 18:47:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,12 +60,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.114.10.3 2009/06/20 07:20:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.114.10.4 2009/08/19 18:47:01 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_mqueue.h"
 #include "opt_inet.h"
 #include "opt_uvmhist.h"
 #include "opt_ddbparam.h"
@@ -250,8 +251,10 @@ static const struct db_command db_show_cmds[] = {
 	    "Print kernel modules", NULL, NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
+#ifdef MQUEUE
 	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
 	    "Print the message queues", NULL, NULL) },
+#endif
 	{ DDB_ADD_CMD("mbuf",	db_mbuf_print_cmd,	0,NULL,NULL,
 	    "-c prints all mbuf chains") },
 	{ DDB_ADD_CMD("ncache",	db_namecache_print_cmd,	0,

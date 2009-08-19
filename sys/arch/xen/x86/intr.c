@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.3 2009/06/20 07:20:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.4 2009/08/19 18:46:54 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -126,8 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.3 2009/06/20 07:20:13 yamt Exp $");
 #include <machine/pio.h>
 #include <xen/evtchn.h>
 
-#ifdef XEN3
-#include "acpi.h"
+#include "acpica.h"
 #include "ioapic.h"
 #include "opt_mpbios.h"
 /* for x86/i8259.c */
@@ -141,7 +140,7 @@ struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
 int irq2vect[256] = {0};
 int vect2irq[256] = {0};
 #endif /* NIOAPIC */
-#if NACPI > 0
+#if NACPICA > 0
 #include <machine/mpconfig.h>
 #include <machine/mpacpi.h>
 #endif
@@ -152,8 +151,6 @@ int vect2irq[256] = {0};
 #if NPCI > 0
 #include <dev/pci/ppbreg.h>
 #endif
-
-#endif /* XEN3 */
 
 /*
  * Recalculate the interrupt from scratch for an event source.
@@ -215,7 +212,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 	struct pintrhand *ih;
 	int evtchn;
 	char evname[16];
-#ifdef XEN3
 #ifdef DIAGNOSTIC
 	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
 		panic("intr_establish: bad legacy IRQ value");
@@ -234,7 +230,6 @@ intr_establish(int legacy_irq, struct pic *pic, int pin,
 		return NULL;
 #endif /* NIOAPIC */
 	} else
-#endif /* XEN3 */
 		snprintf(evname, sizeof(evname), "irq%d", legacy_irq);
 
 	evtchn = xen_intr_map(&legacy_irq, type);
@@ -247,7 +242,6 @@ int
 xen_intr_map(int *pirq, int type)
 {
 	int irq = *pirq;
-#ifdef XEN3
 #if NIOAPIC > 0
 	extern struct cpu_info phycpu_info_primary; /* XXX */
 	/*
@@ -293,7 +287,6 @@ retry:
 		*pirq |= irq;
 	}
 #endif /* NIOAPIC */
-#endif /* XEN3 */
 	return bind_pirq_to_evtch(irq);
 }
 
@@ -303,7 +296,7 @@ intr_disestablish(struct intrhand *ih)
 	printf("intr_disestablish irq\n");
 }
 
-#if defined(MPBIOS) || NACPI > 0
+#if defined(MPBIOS) || NACPICA > 0
 struct pic *
 intr_findpic(int num)
 {
@@ -321,7 +314,7 @@ intr_findpic(int num)
 }
 #endif
 
-#if NIOAPIC > 0 || NACPI > 0
+#if NIOAPIC > 0 || NACPICA > 0
 struct intr_extra_bus {
 	int bus;
 	pcitag_t *pci_bridge_tag;
@@ -418,7 +411,7 @@ intr_scan_bus(int bus, int pin, struct xen_intr_handle *handle)
 
 	for (mip = intrs; mip != NULL; mip = mip->next) {
 		if (mip->bus_pin == pin) {
-#if NACPI > 0
+#if NACPICA > 0
 			if (mip->linkdev != NULL)
 				if (mpacpi_findintr_linkdev(mip) != 0)
 					continue;
@@ -429,7 +422,7 @@ intr_scan_bus(int bus, int pin, struct xen_intr_handle *handle)
 	}
 	return ENOENT;
 }
-#endif /* NIOAPIC > 0 || NACPI > 0 */
+#endif /* NIOAPIC > 0 || NACPICA > 0 */
 #endif /* NPCI > 0 || NISA > 0 */
 
 

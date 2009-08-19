@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.83.10.1 2009/07/18 14:53:25 yamt Exp $	*/
+/*	$NetBSD: in.h,v 1.83.10.2 2009/08/19 18:48:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -283,6 +283,7 @@ struct ip_opts {
 #define	IP_IPSEC_POLICY		22 /* struct; get/set security policy */
 #endif
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
+#define	IP_MINTTL		24   /* minimum TTL for packet or drop */
 
 /*
  * Defaults and limits for options

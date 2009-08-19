@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.4.4.3 2009/05/16 10:41:43 yamt Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.4.4.4 2009/08/19 18:47:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.4.4.3 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.4.4.4 2009/08/19 18:47:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ struct gem_sbus_softc {
 int	gemmatch_sbus(device_t, cfdata_t, void *);
 void	gemattach_sbus(device_t, device_t, void *);
 
-CFATTACH_DECL(gem_sbus, sizeof(struct gem_sbus_softc),
-    gemmatch_sbus, gemattach_sbus, NULL, NULL);
+CFATTACH_DECL3_NEW(gem_sbus, sizeof(struct gem_sbus_softc),
+    gemmatch_sbus, gemattach_sbus, NULL, NULL, NULL, NULL, 0);
 
 int
 gemmatch_sbus(device_t parent, cfdata_t cf, void *aux)
@@ -85,9 +85,11 @@ void
 gemattach_sbus(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct gem_sbus_softc *gsc = (void *)self;
+	struct gem_sbus_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+
+	sc->sc_dev = self;
 
 	/* Pass on the bus tags */
 	sc->sc_bustag = sa->sa_bustag;

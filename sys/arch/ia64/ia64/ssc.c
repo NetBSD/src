@@ -1,4 +1,4 @@
-/*	$NetBSD: ssc.c,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
+/*	$NetBSD: ssc.c,v 1.2.78.1 2009/08/19 18:46:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,43 +29,27 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/kernel.h>
-#include <sys/lock.h>
-#include <sys/proc.h>
-#include <sys/systm.h>
-#include <sys/tty.h>
-#include <sys/device.h>
 
-#include <machine/md_var.h>
 #include <machine/ssc.h>
 
 #include <dev/cons.h>
 
 
-#define SSC_GETCHAR			21
-#define SSC_PUTCHAR			31
-
 #define	SSC_POLL_HZ	50
 
-void sscconsattach(struct device *, struct device *, void *); 
+void sscconsattach(struct device *, struct device *, void *);
 
-static void ssccnprobe(struct consdev *);
-static void ssccninit(struct consdev *);
-static void ssccnputc(dev_t, int);
-static int  ssccngetc(dev_t);
-
-struct consdev constab[] = {
-	{ ssccnprobe, ssccninit, ssccngetc, ssccnputc, nullcnpollc, 
-	  NULL, NULL, NULL, NODEV, CN_NORMAL },
-	{ NULL }
-};
+void ssccnprobe(struct consdev *);
+void ssccninit(struct consdev *);
+void ssccnputc(dev_t, int);
+int ssccngetc(dev_t);
+void ssccnpollc(dev_t, int);
 
 
-u_int64_t
-ssc(u_int64_t in0, u_int64_t in1, u_int64_t in2, u_int64_t in3, int which)
+uint64_t
+ssc(uint64_t in0, uint64_t in1, uint64_t in2, uint64_t in3, int which)
 {
-	register u_int64_t ret0 __asm("r8");
+	register uint64_t ret0 __asm("r8");
 
 	__asm __volatile("mov r15=%1\n\t"
 			 "break 0x80001"
@@ -74,42 +58,39 @@ ssc(u_int64_t in0, u_int64_t in1, u_int64_t in2, u_int64_t in3, int which)
 	return ret0;
 }
 
-void sscconsattach(struct device *parent, struct device *self, void *aux) 
-{ 
+
+void
+sscconsattach(struct device *parent, struct device *self, void *aux)
+{
+	/* not yet */
 }
 
-static void
+void
 ssccnprobe(struct consdev *cp)
 {
+
+	cp->cn_dev = ~NODEV;		/* XXXX: And already exists */
 	cp->cn_pri = CN_INTERNAL;
 }
 
-static void
+void
 ssccninit(struct consdev *cp)
 {
+	/* nothing */
 }
 
-/* void */
-/* ssccnattach(void *arg) */
-/* { */
-/* 	static struct consdev ssccons = { */
-/* 		ssccnprobe, ssccninit, ssccngetc, ssccnputc, nullcnpollc, */
-/* 		NULL, NULL, NULL, NODEV, CN_NORMAL */
-/* 	}; */
-
-/* 	cn_tab = &ssccons; */
-/* } */
-
-static void
+void
 ssccnputc(dev_t dev, int c)
 {
+
 	ssc(c, 0, 0, 0, SSC_PUTCHAR);
 }
 
-static int
+int
 ssccngetc(dev_t dev)
 {
 	int c;
+
 	do {
 		c = ssc(0, 0, 0, 0, SSC_GETCHAR);
 	} while (c == 0);
@@ -117,5 +98,10 @@ ssccngetc(dev_t dev)
 	return c;
 }
 
-/* XXX: integrate the rest of the ssc.c stuff from FreeBSD to plug into wsdisplay */
+void
+ssccnpollc(dev_t dev, int on)
+{
+	/* nothing */
+}
 
+/* XXX: integrate the rest of the ssc.c stuff from FreeBSD to plug into wsdisplay */

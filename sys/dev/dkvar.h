@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.12.4.1 2008/05/16 02:23:48 yamt Exp $ */
+/* $NetBSD: dkvar.h,v 1.12.4.2 2009/08/19 18:47:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,9 +85,9 @@ struct dk_intf {
 };
 
 #define DK_BUSY(_dksc, _pmask)				\
-	((_dksc)->sc_dkdev.dk_openmask & ~(_pmask)) ||	\
+	(((_dksc)->sc_dkdev.dk_openmask & ~(_pmask)) ||	\
 	((_dksc)->sc_dkdev.dk_bopenmask & (_pmask)  &&	\
-	((_dksc)->sc_dkdev.dk_copenmask & (_pmask)))
+	((_dksc)->sc_dkdev.dk_copenmask & (_pmask))))
 
 /*
  * Functions that are exported to the pseudo disk implementations:

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3.44.1 2008/05/16 02:22:41 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3.44.2 2009/08/19 18:46:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.3.44.1 2008/05/16 02:22:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.3.44.2 2009/08/19 18:46:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ptrace.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.3.44.1 2008/05/16 02:22:41 yam
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
+printf("%s: not yet\n", __func__);
 	return 0;
 }
 
@@ -46,6 +47,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
+printf("%s: not yet\n", __func__);
 	return 0;
 }
 
@@ -53,6 +55,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 {
+printf("%s: not yet\n", __func__);
 	return 0;
 }
 
@@ -60,6 +63,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 {
+printf("%s: not yet\n", __func__);
 	return 0;
 }
 
@@ -69,6 +73,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 int
 process_set_pc(struct lwp *l, void *addr)
 {
+printf("%s: not yet\n", __func__);
 	return 0;
 }
 
@@ -76,6 +81,7 @@ process_set_pc(struct lwp *l, void *addr)
 int
 process_sstep(struct lwp *l, int sstep)
 {
+printf("%s: not yet\n", __func__);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.80.2.1 2009/05/04 08:14:18 yamt Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.80.2.2 2009/08/19 18:48:25 yamt Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.80.2.1 2009/05/04 08:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.80.2.2 2009/08/19 18:48:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -42,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.80.2.1 2009/05/04 08:14:18 yamt E
 #include <sys/syslog.h>
 #include <sys/md5.h>
 #include <sys/socketvar.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -60,12 +62,41 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.80.2.1 2009/05/04 08:14:18 yamt E
 
 #include <net/net_osdep.h>
 
+/* Record of an interface to add a link-local and possibly a loopback
+ * IPv6 address to, processed on a workqueue(9) by in6_ifaddrs_worker.
+ */
+struct in6_ifaddr_work {
+	struct work	iw_work;
+	struct ifindexgen {
+		int	ig_idx;		/* Interface index */
+		int	ig_gen;		/* Interface index generation */
+	}		iw_idxgen,	/* Identify of the interface
+					 * to receive a link-local and
+					 * possibly a loopback address.
+					 */
+			iw_alt_idxgen;	/* Optional identity of a second
+					 * interface. If iw_alt_present
+					 * is true, this field
+					 * identifies a second interface
+					 * whose EUI64 we use to derive
+					 * the link-local address for
+					 * the interface indicated by
+					 * iw_idxgen.
+					 */
+	bool		iw_alt_present;	/* iff true, iw_alt_idxgen is valid. */ 
+};
+
 unsigned long in6_maxmtu = 0;
 
 int ip6_auto_linklocal = 1;	/* enable by default */
 
 callout_t in6_tmpaddrtimer_ch;
 
+static struct workqueue *in6_ifaddrs_wq = NULL;
+
+static void in6_ifaddrs_schedule(struct ifnet *, struct ifnet *);
+static void in6_ifaddrs_init(struct ifnet *, struct ifnet *);
+static void in6_ifaddrs_worker(struct work *, void *);
 
 #if 0
 static int get_hostid_ifid(struct ifnet *, struct in6_addr *);
@@ -579,7 +610,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	    IN6_IFAUPDATE_DADDELAY)) != 0) {
 		/*
 		 * XXX: When the interface does not support IPv6, this call
-		 * would fail in the SIOCSIFADDR ioctl.  I believe the
+		 * would fail in the SIOCINITIFADDR ioctl.  I believe the
 		 * notification is rather confusing in this case, so just
 		 * suppress it.  (jinmei@kame.net 20010130)
 		 */
@@ -751,8 +782,6 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 void
 in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 {
-	struct in6_ifaddr *ia;
-	struct in6_addr in6;
 
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
@@ -811,6 +840,26 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 		return;
 	}
 
+	/* Assign addresses to ifp in another thread in order to
+	 * avoid re-entering ifp->if_ioctl().
+	 */
+	in6_ifaddrs_schedule(ifp, altifp);
+}
+
+/* in6_ifaddrs_init
+ *
+ * Add a link-local address to ifp, and if ifp is a loopback address,
+ * add a loopback address to it, too.
+ *
+ * If altifp is not NULL, derive the link-local address of ifp from the
+ * EUI64 of altifp.
+ */
+void
+in6_ifaddrs_init(struct ifnet *ifp, struct ifnet *altifp)
+{
+	struct in6_addr in6;
+	struct in6_ifaddr *ia;
+
 	/*
 	 * assign loopback address for loopback interface.
 	 * XXX multiple loopback interface case.
@@ -833,6 +882,95 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 			    ifp->if_xname);
 		}
 	}
+}
+
+/* getifp: helper for in6_ifaddrs_worker().
+ *
+ * Lookup an ifnet by ifindexgen, a pair consisting of an interface
+ * index (if_index) and an interface-index generation number.
+ */
+static struct ifnet *
+getifp(struct ifindexgen *ig)
+{
+	int ifindex = ig->ig_idx;
+	uint64_t ifindex_gen = ig->ig_gen;
+	struct ifnet *ifp;
+
+	if (ifindex2ifnet == NULL)
+		printf("%s: no ifindices in use\n", __func__);
+	else if (ifindex >= if_indexlim) {
+		printf("%s: ifindex %d >= limit %zu\n", __func__, ifindex,
+		    if_indexlim);
+	} else if ((ifp = ifindex2ifnet[ifindex]) == NULL)
+		printf("%s: ifindex %d not in use\n", __func__, ifindex);
+	else if (ifp->if_index_gen != ifindex_gen)
+		printf("%s: ifindex %d recycled\n", __func__, ifindex);
+	else
+		return ifp;
+	return NULL;
+}
+
+static void
+in6_ifaddrs_worker(struct work *wk, void *arg)
+{
+	struct in6_ifaddr_work *iw = (struct in6_ifaddr_work *)wk;
+	struct ifnet *altifp = NULL, *ifp;
+
+	if ((ifp = getifp(&iw->iw_idxgen)) != NULL &&
+	    (!iw->iw_alt_present ||
+	     (altifp = getifp(&iw->iw_alt_idxgen)) != NULL))
+		in6_ifaddrs_init(ifp, altifp);
+
+	kmem_free(iw, sizeof(*iw));
+}
+
+int
+in6_ifaddrs_wq_establish(void)
+{
+	int rc;
+
+	rc = workqueue_create(&in6_ifaddrs_wq, "in6ifaddr", in6_ifaddrs_worker,
+	    NULL, PRI_KERNEL, IPL_NET, 0);
+
+	if (rc != 0) {
+		printf("%s: could not create inet6 ifaddrs workqueue.\n",
+		    __func__);
+	}
+	return rc;
+}
+
+/* in6_ifaddrs_schedule
+ *
+ * Schedule ifp for a kernel thread to add addresses.
+ *
+ * The kernel thread will assign a link-local address to ifp, and if ifp
+ * is a loopback address, add a loopback address to it, too.
+ *
+ * If altifp is not NULL, derive the link-local address of ifp from the
+ * EUI64 of altifp.
+ */
+void
+in6_ifaddrs_schedule(struct ifnet *ifp, struct ifnet *altifp)
+{
+	struct in6_ifaddr_work *iw;
+	struct ifindexgen *ig, *alt_ig;
+
+	iw = kmem_zalloc(sizeof(*iw), KM_SLEEP);
+
+	ig = &iw->iw_idxgen;
+	alt_ig = &iw->iw_alt_idxgen;
+
+	KASSERT(ifp->if_index < if_indexlim);
+	ig->ig_idx = ifp->if_index;
+	ig->ig_gen = ifp->if_index_gen;
+	if (altifp != NULL) {
+		KASSERT(altifp->if_index < if_indexlim);
+		alt_ig->ig_idx = altifp->if_index;
+		alt_ig->ig_gen = altifp->if_index_gen;
+		iw->iw_alt_present = true;
+	}
+
+	workqueue_enqueue(in6_ifaddrs_wq, &iw->iw_work, NULL);
 }
 
 /*

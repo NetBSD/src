@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24.78.1 2009/05/04 08:11:41 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.24.78.2 2009/08/19 18:46:39 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.78.1 2009/05/04 08:11:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.78.2 2009/08/19 18:46:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,29 +38,30 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.78.1 2009/05/04 08:11:41 yamt Exp $");
 
 #include <machine/autoconf.h>
 
-static int	cpumatch(struct device *, struct cfdata *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+#include "ioconf.h"
 
-CFATTACH_DECL(cpu, sizeof (struct device),
+static int	cpumatch(device_t, cfdata_t, void *);
+static void	cpuattach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(cpu, 0,
     cpumatch, cpuattach, NULL, NULL);
-extern struct cfdriver cpu_cd;
 
 static int
-cpumatch(struct device *parent, struct cfdata *cf, void *aux)
+cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	/* make sure that we're looking for a CPU. */
 	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0) {
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 static void
-cpuattach(struct device *parent, struct device *dev, void *aux)
+cpuattach(device_t parent, device_t self, void *aux)
 {
 
-	printf(": ");
+	aprint_normal(": ");
 	cpu_identify();
 }

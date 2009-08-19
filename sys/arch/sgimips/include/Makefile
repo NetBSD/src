@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.17.46.1 2009/05/04 08:11:50 yamt Exp $
+#	$NetBSD: Makefile,v 1.17.46.2 2009/08/19 18:46:45 yamt Exp $
 
 INCSDIR= /usr/include/sgimips
 
-INCS=	asm.h ansi.h aout_machdep.h autoconf.h \
-	bsd-aout.h bswap.h \
+INCS=	asm.h ansi.h autoconf.h \
+	bswap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \

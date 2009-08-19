@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.33 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: cache.c,v 1.33.78.1 2009/08/19 18:46:30 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.78.1 2009/08/19 18:46:30 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -89,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33 2005/12/24 23:24:01 perry Exp $");
 #include <mips/cache_r5k.h>
 #ifdef ENABLE_MIPS4_CACHE_R10K
 #include <mips/cache_r10k.h>
+#endif
+#ifdef MIPS3_LOONGSON2
+#include <mips/cache_ls2.h>
 #endif
 #endif
 
@@ -651,8 +654,45 @@ primary_cache_is_2way:
 		    r10k_pdcache_wb_range;
 		break;
 #endif /* ENABLE_MIPS4_CACHE_R10K */
-#endif /* MIPS3 || MIPS4 */
+#ifdef MIPS3_LOONGSON2
+	case MIPS_LOONGSON2:
+		mips_picache_ways = 4;
+		mips_pdcache_ways = 4;
 
+		mips3_get_cache_config(csizebase);
+
+		mips_sdcache_line_size = 32;	/* don't trust config reg */
+
+		if (mips_picache_size / mips_picache_ways > PAGE_SIZE ||
+		    mips_pdcache_size / mips_pdcache_ways > PAGE_SIZE)
+			mips_cache_virtual_alias = 1;
+
+		mips_cache_ops.mco_icache_sync_all =
+		    ls2_icache_sync_all;
+		mips_cache_ops.mco_icache_sync_range =
+		    ls2_icache_sync_range;
+		mips_cache_ops.mco_icache_sync_range_index =
+		    ls2_icache_sync_range_index;
+
+		mips_cache_ops.mco_pdcache_wbinv_all =
+		    ls2_pdcache_wbinv_all;
+		mips_cache_ops.mco_pdcache_wbinv_range =
+		    ls2_pdcache_wbinv_range;
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    ls2_pdcache_wbinv_range_index;
+		mips_cache_ops.mco_pdcache_inv_range =
+		    ls2_pdcache_inv_range;
+		mips_cache_ops.mco_pdcache_wb_range =
+		    ls2_pdcache_wb_range;
+
+		/*
+		 * For current version chips, [the] operating system is
+		 * obliged to eliminate the potential for virtual aliasing.
+		 */
+		uvmexp.ncolors = mips_pdcache_ways;
+		break;
+#endif
+#endif /* MIPS3 || MIPS4 */
 	default:
 		panic("can't handle primary cache on impl 0x%x",
 		    MIPS_PRID_IMPL(cpu_id));
@@ -796,6 +836,28 @@ primary_cache_is_2way:
 		    r10k_sdcache_wb_range;
 		break;
 #endif /* ENABLE_MIPS4_CACHE_R10K */
+#ifdef MIPS3_LOONGSON2
+	case MIPS_LOONGSON2:
+		mips_sdcache_ways = 4;
+		mips_sdcache_size = 512*1024;
+		mips_scache_unified = 1;
+
+		mips_cache_ops.mco_sdcache_wbinv_all =
+		    ls2_sdcache_wbinv_all;
+		mips_cache_ops.mco_sdcache_wbinv_range =
+		    ls2_sdcache_wbinv_range;
+		mips_cache_ops.mco_sdcache_wbinv_range_index =
+		    ls2_sdcache_wbinv_range_index;
+		mips_cache_ops.mco_sdcache_inv_range =
+		    ls2_sdcache_inv_range;
+		mips_cache_ops.mco_sdcache_wb_range =
+		    ls2_sdcache_wb_range;
+
+		/*
+		 * The secondary cache is physically indexed and tagged
+		 */
+		break;
+#endif
 #endif /* MIPS3 || MIPS4 */
 
 	default:

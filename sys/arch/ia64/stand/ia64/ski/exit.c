@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: exit.c,v 1.2.74.1 2009/08/19 18:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include <bootstrap.h>
 

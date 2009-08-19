@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.12.58.1 2009/05/04 08:11:42 yamt Exp $	*/
+/*	$NetBSD: promcall.c,v 1.12.58.2 2009/08/19 18:46:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.12.58.1 2009/05/04 08:11:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.12.58.2 2009/08/19 18:46:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -194,15 +194,16 @@ prom_findcons(int *kbdslot, int *crtslot, int *prom_using_screen)
 char *
 prom_getenv(const char *name)
 {
+
 	return (*callv->_getenv)(name);
 }
 
 /*
  * Get 32bit system type of Digital hardware.
- *	cputype,		u_int8_t [3]
- *	systype,		u_int8_t [2]
- *	firmware revision,	u_int8_t [1]
- *	hardware revision.	u_int8_t [0]
+ *	cputype,		uint8_t [3]
+ *	systype,		uint8_t [2]
+ *	firmware revision,	uint8_t [1]
+ *	hardware revision.	uint8_t [0]
  */
 int
 prom_systype(void)
@@ -221,19 +222,21 @@ prom_systype(void)
 void
 prom_haltbutton(void)
 {
+
 	(*callv->_halt)((int *)0, 0);
 }
 
 /*
  * Halt/reboot machine.
  */
-void __attribute__((__noreturn__))
+void __dead
 prom_halt(int howto, char *bootstr)
 {
+
 	if (callv != &callvec)
 		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
 	else {
-		void __attribute__((__noreturn__)) (*f)(void);
+		void __dead (*f)(void);
 
 		f = (howto & RB_HALT)
 			? (void *)DEC_PROM_REINIT
@@ -269,18 +272,18 @@ prom_getbitmap(struct memmap *map)
 	int len;
 
 	if (callv->_getbitmap != NULL)
-		return (callv->_getbitmap(map));
+		return callv->_getbitmap(map);
 	/*
 	 * See if we can get the bitmap from the environment variables
 	 */
 	cp = prom_getenv("bitmaplen");
 	if (cp == NULL)
-		return (0);
+		return 0;
 	len = (int)strtoul(cp, NULL, 0) * 4;
 	cp = prom_getenv("bitmap");
 	if (cp == NULL)
-		return (0);
-	memcpy( &map->bitmap, (char *)strtoul(cp, NULL, 0), len);
+		return 0;
+	memcpy(&map->bitmap, (char *)strtoul(cp, NULL, 0), len);
 	map->pagesize = 4096;
-	return (len);
+	return len;
 }

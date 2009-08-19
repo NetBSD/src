@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.1.6.1 2009/05/04 08:12:18 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.6.1 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,5 +309,5 @@ compat_50_sys_mknod(struct lwp *l,
 		syscallarg(uint32_t) dev;
 	} */
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), retval);
+	    SCARG(uap, dev), retval, UIO_USERSPACE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.57.10.2 2009/05/04 08:10:58 yamt Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.57.10.3 2009/08/19 18:46:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.57.10.2 2009/05/04 08:10:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.57.10.3 2009/08/19 18:46:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -138,7 +138,6 @@ char *boot_file = NULL;
 vm_offset_t physical_start;
 vm_offset_t physical_end;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S

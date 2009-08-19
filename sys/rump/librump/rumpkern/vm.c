@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.30.4.2 2009/06/20 07:20:35 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.30.4.3 2009/08/19 18:48:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.2 2009/06/20 07:20:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.3 2009/08/19 18:48:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -103,8 +103,21 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
+	uobj->uo_npages++;
 
 	return pg;
+}
+
+/* these are going away very soon */
+void rumpvm_enterva(vaddr_t addr, struct vm_page *pg) {}
+void rumpvm_flushva(struct uvm_object *uobj) {}
+
+struct vm_page *
+uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
+	int flags, int strat, int free_list)
+{
+
+	return rumpvm_makepage(uobj, off);
 }
 
 /*
@@ -120,48 +133,18 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 
+	uobj->uo_npages--;
 	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	kmem_free((void *)pg->uanon, PAGE_SIZE);
 	kmem_free(pg, sizeof(*pg));
 }
 
-struct rumpva {
-	vaddr_t addr;
-	struct vm_page *pg;
-
-	LIST_ENTRY(rumpva) entries;
-};
-static LIST_HEAD(, rumpva) rvahead = LIST_HEAD_INITIALIZER(rvahead);
-static kmutex_t rvamtx;
-
 void
-rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
+uvm_pagezero(struct vm_page *pg)
 {
-	struct rumpva *rva;
 
-	rva = kmem_alloc(sizeof(struct rumpva), KM_SLEEP);
-	rva->addr = addr;
-	rva->pg = pg;
-	mutex_enter(&rvamtx);
-	LIST_INSERT_HEAD(&rvahead, rva, entries);
-	mutex_exit(&rvamtx);
-}
-
-void
-rumpvm_flushva(struct uvm_object *uobj)
-{
-	struct rumpva *rva, *rva_next;
-
-	mutex_enter(&rvamtx);
-	for (rva = LIST_FIRST(&rvahead); rva; rva = rva_next) {
-		rva_next = LIST_NEXT(rva, entries);
-		if (rva->pg->uobject == uobj) {
-			LIST_REMOVE(rva, entries);
-			uvm_page_unbusy(&rva->pg, 1);
-			kmem_free(rva, sizeof(*rva));
-		}
-	}
-	mutex_exit(&rvamtx);
+	pg->flags &= ~PG_CLEAN;
+	memset((void *)pg->uanon, 0, PAGE_SIZE);
 }
 
 /*
@@ -249,7 +232,7 @@ uao_detach(struct uvm_object *uobj)
  * Misc routines
  */
 
-static kmutex_t cachepgmtx;
+static kmutex_t pagermtx;
 
 void
 rumpvm_init(void)
@@ -259,9 +242,8 @@ rumpvm_init(void)
 	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
 	rump_vmspace.vm_map.pmap = pmap_kernel();
 
-	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
+	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
-	mutex_init(&cachepgmtx, MUTEX_DEFAULT, 0);
 
 	kernel_map->pmap = pmap_kernel();
 	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
@@ -269,12 +251,7 @@ rumpvm_init(void)
 	callback_head_init(&kmem_map_store.vmk_reclaim_callback, IPL_VM);
 }
 
-void
-uvm_pageactivate(struct vm_page *pg)
-{
 
-	/* nada */
-}
 
 void
 uvm_pagewire(struct vm_page *pg)
@@ -298,11 +275,119 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	panic("%s: unimplemented", __func__);
 }
 
-vaddr_t
-uvm_pagermapin(struct vm_page **pps, int npages, int flags)
-{
+struct pagerinfo {
+	vaddr_t pgr_kva;
+	int pgr_npages;
+	struct vm_page **pgr_pgs;
+	bool pgr_read;
 
-	panic("%s: unimplemented", __func__);
+	LIST_ENTRY(pagerinfo) pgr_entries;
+};
+static LIST_HEAD(, pagerinfo) pagerlist = LIST_HEAD_INITIALIZER(pagerlist);
+
+/*
+ * Pager "map" in routine.  Instead of mapping, we allocate memory
+ * and copy page contents there.  Not optimal or even strictly
+ * correct (the caller might modify the page contents after mapping
+ * them in), but what the heck.  Assumes UVMPAGER_MAPIN_WAITOK.
+ */
+vaddr_t
+uvm_pagermapin(struct vm_page **pgs, int npages, int flags)
+{
+	struct pagerinfo *pgri;
+	vaddr_t curkva;
+	int i;
+
+	/* allocate structures */
+	pgri = kmem_alloc(sizeof(*pgri), KM_SLEEP);
+	pgri->pgr_kva = (vaddr_t)kmem_alloc(npages * PAGE_SIZE, KM_SLEEP);
+	pgri->pgr_npages = npages;
+	pgri->pgr_pgs = kmem_alloc(sizeof(struct vm_page *) * npages, KM_SLEEP);
+	pgri->pgr_read = (flags & UVMPAGER_MAPIN_READ) != 0;
+
+	/* copy contents to "mapped" memory */
+	for (i = 0, curkva = pgri->pgr_kva;
+	    i < npages;
+	    i++, curkva += PAGE_SIZE) {
+		/*
+		 * We need to copy the previous contents of the pages to
+		 * the window even if we are reading from the
+		 * device, since the device might not fill the contents of
+		 * the full mapped range and we will end up corrupting
+		 * data when we unmap the window.
+		 */
+		memcpy((void*)curkva, pgs[i]->uanon, PAGE_SIZE);
+		pgri->pgr_pgs[i] = pgs[i];
+	}
+
+	mutex_enter(&pagermtx);
+	LIST_INSERT_HEAD(&pagerlist, pgri, pgr_entries);
+	mutex_exit(&pagermtx);
+
+	return pgri->pgr_kva;
+}
+
+/*
+ * map out the pager window.  return contents from VA to page storage
+ * and free structures.
+ *
+ * Note: does not currently support partial frees
+ */
+void
+uvm_pagermapout(vaddr_t kva, int npages)
+{
+	struct pagerinfo *pgri;
+	vaddr_t curkva;
+	int i;
+
+	mutex_enter(&pagermtx);
+	LIST_FOREACH(pgri, &pagerlist, pgr_entries) {
+		if (pgri->pgr_kva == kva)
+			break;
+	}
+	KASSERT(pgri);
+	if (pgri->pgr_npages != npages)
+		panic("uvm_pagermapout: partial unmapping not supported");
+	LIST_REMOVE(pgri, pgr_entries);
+	mutex_exit(&pagermtx);
+
+	if (pgri->pgr_read) {
+		for (i = 0, curkva = pgri->pgr_kva;
+		    i < pgri->pgr_npages;
+		    i++, curkva += PAGE_SIZE) {
+			memcpy(pgri->pgr_pgs[i]->uanon,(void*)curkva,PAGE_SIZE);
+		}
+	}
+
+	kmem_free(pgri->pgr_pgs, npages * sizeof(struct vm_page *));
+	kmem_free((void*)pgri->pgr_kva, npages * PAGE_SIZE);
+	kmem_free(pgri, sizeof(*pgri));
+}
+
+/*
+ * convert va in pager window to page structure.
+ * XXX: how expensive is this (global lock, list traversal)?
+ */
+struct vm_page *
+uvm_pageratop(vaddr_t va)
+{
+	struct pagerinfo *pgri;
+	struct vm_page *pg = NULL;
+	int i;
+
+	mutex_enter(&pagermtx);
+	LIST_FOREACH(pgri, &pagerlist, pgr_entries) {
+		if (pgri->pgr_kva <= va
+		    && va < pgri->pgr_kva + pgri->pgr_npages*PAGE_SIZE)
+			break;
+	}
+	if (pgri) {
+		i = (va - pgri->pgr_kva) >> PAGE_SHIFT;
+		pg = pgri->pgr_pgs[i];
+	}
+	mutex_exit(&pagermtx);
+
+	return pg;
 }
 
 /* Called with the vm object locked */
@@ -318,23 +403,6 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	}
 
 	return NULL;
-}
-
-struct vm_page *
-uvm_pageratop(vaddr_t va)
-{
-	struct rumpva *rva;
-
-	mutex_enter(&rvamtx);
-	LIST_FOREACH(rva, &rvahead, entries)
-		if (rva->addr == va)
-			break;
-	mutex_exit(&rvamtx);
-
-	if (rva == NULL)
-		panic("%s: va %llu", __func__, (unsigned long long)va);
-
-	return rva->pg;
 }
 
 void
@@ -607,4 +675,43 @@ vunmapbuf(struct buf *bp, vsize_t len)
 
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
+}
+
+void
+uvm_wait(const char *msg)
+{
+
+	/* nothing to wait for */
+}
+
+/*
+ * page life cycle stuff.  it really doesn't exist, so just stubs.
+ */
+
+void
+uvm_pageactivate(struct vm_page *pg)
+{
+
+	/* nada */
+}
+
+void
+uvm_pagedeactivate(struct vm_page *pg)
+{
+
+	/* nada */
+}
+
+void
+uvm_pagedequeue(struct vm_page *pg)
+{
+
+	/* nada*/
+}
+
+void
+uvm_pageenqueue(struct vm_page *pg)
+{
+
+	/* nada */
 }

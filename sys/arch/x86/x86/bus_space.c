@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.17.4.2 2009/05/04 08:12:10 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.17.4.3 2009/08/19 18:46:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.17.4.2 2009/05/04 08:12:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.17.4.3 2009/08/19 18:46:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,22 +120,12 @@ x86_bus_space_init(void)
 #ifdef XEN
 	/* We are privileged guest os - should have IO privileges. */
 	if (xendomain_is_privileged()) {
-#ifdef XEN3
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
 		physop.u.set_iopl.iopl = 1;
 		if (HYPERVISOR_physdev_op(&physop) != 0)
 			panic("Unable to obtain IOPL, "
 			    "despite being SIF_PRIVILEGED");
-#else
-		dom0_op_t op;
-		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = DOMID_SELF;
-		op.u.iopl.iopl = 1;
-		if (HYPERVISOR_dom0_op(&op) != 0)
-			panic("Unable to obtain IOPL, "
-			    "despite being SIF_PRIVILEGED");
-#endif
 	}
 #endif	/* XEN */
 }

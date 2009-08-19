@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.7.10.1 2009/05/04 08:11:31 yamt Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.7.10.2 2009/08/19 18:46:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.7.10.1 2009/05/04 08:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.7.10.2 2009/08/19 18:46:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ void
 mips3_initclocks(void)
 {
 	evcnt_attach_static(&mips_int5_evcnt);
+	evcnt_attach_static(&mips_int5_missed_evcnt);
 
 	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
 	mips3_cp0_compare_write(next_cp0_clk_intr);

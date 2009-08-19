@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc.h,v 1.4.78.1 2009/05/04 08:10:36 yamt Exp $	*/
+/*	$NetBSD: powerpc.h,v 1.4.78.2 2009/08/19 18:45:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -38,18 +38,6 @@ struct mem_region {
 	psize_t size;
 };
 
-void mem_regions(struct mem_region **, struct mem_region **);
-
-/*
- * These two functions get used solely in boot() in machdep.c.
- *
- * Not sure whether boot itself should be implementation dependent instead.	XXX
- */
-void ppc_exit(void) __attribute__((__noreturn__));
-void ppc_boot(char *bootspec) __attribute__((__noreturn__));
-
-int dk_match(char *name);
-
-void ofrootfound(void);
+void mem_regions __P((struct mem_region **, struct mem_region **));
 
 #endif	/* _MACHINE_POWERPC_H_ */

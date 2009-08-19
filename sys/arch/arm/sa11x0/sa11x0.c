@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.21.64.3 2009/06/20 07:20:01 yamt Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.21.64.4 2009/08/19 18:46:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.21.64.3 2009/06/20 07:20:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.21.64.4 2009/08/19 18:46:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,10 +203,11 @@ sa11x0_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct sa11x0_attach_args sa;
 
 	sa.sa_sc = sc;
-        sa.sa_iot = sc->sc_iot;
-        sa.sa_addr = cf->cf_loc[SAIPCF_ADDR];
-        sa.sa_size = cf->cf_loc[SAIPCF_SIZE];
-        sa.sa_intr = cf->cf_loc[SAIPCF_INTR];
+	sa.sa_iot = sc->sc_iot;
+	sa.sa_name = cf->cf_name;
+	sa.sa_addr = cf->cf_loc[SAIPCF_ADDR];
+	sa.sa_size = cf->cf_loc[SAIPCF_SIZE];
+	sa.sa_intr = cf->cf_loc[SAIPCF_INTR];
 	sa.sa_gpio = cf->cf_loc[SAIPCF_GPIO];
 
         if (config_match(parent, cf, &sa) > 0)

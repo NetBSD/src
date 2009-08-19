@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.4 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.4.78.1 2009/08/19 18:46:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -45,7 +45,6 @@
 typedef paddr_t ifpga_addr_t;
 
 struct ifpga_softc {
-	struct device		sc_dev;		/* Device node */
 	bus_space_tag_t		sc_iot;		/* Bus tag */
 	bus_space_handle_t	sc_sc_ioh;	/* System Controller handle */
 	bus_space_handle_t	sc_cm_ioh;	/* Core Module handle */

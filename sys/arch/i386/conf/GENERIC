@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.890.2.2 2009/05/04 08:11:15 yamt Exp $
+# $NetBSD: GENERIC,v 1.890.2.3 2009/08/19 18:46:18 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.890.2.2 $"
+#ident 		"GENERIC-$Revision: 1.890.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -97,7 +97,8 @@ options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-no options	AIO		# POSIX AIO, built as a module
+no options	AIO		# POSIX asynchronous I/O, built as a module
+no options	MQUEUE		# POSIX messsage queues, built as a module
 
 options		MODULAR		# new style module framework
 
@@ -193,6 +194,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #file-system 	TMPFS		# Efficient memory file-system
 #file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
+#file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -301,6 +303,10 @@ options 	WSDISPLAY_SCROLLSUPPORT
 # enable splash screen support; requires hw driver support
 #options 	SPLASHSCREEN
 #options 	SPLASHSCREEN_PROGRESS
+
+# Keylock support
+#options	KEYLOCK
+#options	secmodel_keylock	# Requires options KEYLOCK
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -670,13 +676,18 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 
 # GPIO devices
 #gpio*	at gscpcib?
+#gpio*	at gpiosim?
 
 # 1-Wire support
-#gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio
+#gpioow* 	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
+#gpioow* 	at gpio?
 #onewire*	at gpioow?
 
 # 1-Wire devices
 #owtemp* 	at onewire?			# Temperature sensors
+
+# Keylock support
+#gpiolock*	at gpio?
 
 # SCSI Controllers and Devices
 
@@ -796,6 +807,7 @@ iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
 jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
 ahcisata* 	at jmide?
+mvsata*		at pci? dev ? function ?	# Marvell Hercules-I/II
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -817,6 +829,7 @@ wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
 njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
+siisata* at cardbus? function ?			# SiI SteelVine controllers
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -1514,6 +1527,7 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+#pseudo-device	gpiosim		1	# GPIO simulator
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

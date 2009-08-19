@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibvar.h,v 1.1.20.2 2009/05/04 08:12:10 yamt Exp $	*/
+/*	$NetBSD: pcibvar.h,v 1.1.20.3 2009/08/19 18:46:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,10 @@
 struct pcib_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
+	device_t		sc_isabus;
 };
 
-extern void	pcibattach(device_t, device_t, void *);
-
+void	pcibattach(device_t, device_t, void *);
+void	pcibchilddet(device_t, device_t);
+int	pcibdetach(device_t, int);
+int	pcibrescan(device_t, const char *, const int *);

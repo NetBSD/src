@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47.10.1 2009/05/04 08:11:23 yamt Exp $
+#	$NetBSD: GENERIC,v 1.47.10.2 2009/08/19 18:46:26 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47.10.1 $"
+#ident 		"GENERIC-$Revision: 1.47.10.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -87,7 +87,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=400000
 options 	PERFCTRS	# performance counters
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -211,14 +211,26 @@ iic1            at iopiic?
 iopwdog*        at iopxs?               # Watchdog timer
 pci0            at iopxs? bus ?         # PCI/PCI-X support
 
+# The curious can see their RAM timings.
+spdmem* at iic1 addr 0x56
+
 # PCI bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
+#options COMCONSOLE
+
 # VGA
 #vga*            at pci? dev ? function ?
+genfb*		at pci? dev ? function ?
+
+# Display
+wsdisplay0      at wsemuldisplaydev? console 1
+wsdisplay*      at wsemuldisplaydev?
+
+options 	WSEMUL_VT100			# VT100 / VT220 emulation
 
 # CardBus bridge support
 #cbb*		at pci? dev ? function ?
@@ -831,7 +843,7 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
-#pseudo-device	wsfont
+pseudo-device	wsfont
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 

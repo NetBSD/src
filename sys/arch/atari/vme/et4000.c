@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.13.44.2 2009/05/04 08:10:51 yamt Exp $	*/
+/*	$NetBSD: et4000.c,v 1.13.44.3 2009/08/19 18:46:03 yamt Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.13.44.2 2009/05/04 08:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.13.44.3 2009/08/19 18:46:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -432,7 +432,7 @@ etioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		g_display.gd_dx = 0;
 		g_display.gd_dy = 0;
 		g_display.gd_bank_size = 0;
-		memcpy( data, (void *)&g_display, sizeof(struct grfinfo));
+		memcpy(data, (void *)&g_display, sizeof(struct grfinfo));
 		break;
 	case GRFIOCMAP:
 		return(EINVAL);

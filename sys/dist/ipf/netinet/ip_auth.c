@@ -1,9 +1,11 @@
-/*	$NetBSD: ip_auth.c,v 1.11.32.1 2009/05/04 08:13:26 yamt Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.11.32.2 2009/08/19 18:47:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Copyright 2008 Sun Microsystems, Inc.
  */
 #if defined(KERNEL) || defined(_KERNEL)
 # undef KERNEL
@@ -63,10 +65,10 @@ struct file;
 # include <sys/proc.h>
 #endif
 #include <net/if.h>
+#include <net/route.h>
 #ifdef sun
 # include <net/af.h>
 #endif
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -122,9 +124,9 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.11.32.1 2009/05/04 08:13:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.11.32.2 2009/08/19 18:47:29 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.20 2007/05/29 13:48:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.33 2009/05/13 18:31:14 darrenr Exp";
 #endif
 #endif
 
@@ -431,11 +433,17 @@ void *ctx;
 
 		SPL_SCHED(s);
 		token = ipf_findtoken(IPFGENITER_AUTH, uid, ctx);
-		if (token != NULL)
+		if (token != NULL) {
 			error = fr_authgeniter(token, &iter);
-		else
+			WRITE_ENTER(&ipf_tokens);
+			if (token->ipt_data == NULL)
+				ipf_freetoken(token);
+			else
+				ipf_dereftoken(token);
+			RWLOCK_EXIT(&ipf_tokens);
+		} else {
 			error = ESRCH;
-		RWLOCK_EXIT(&ipf_tokens);
+		}
 		SPL_X(s);
 
 		break;
@@ -762,49 +770,55 @@ ipfgeniter_t *itp;
 	if (itp->igi_type != IPFGENITER_AUTH)
 		return EINVAL;
 
-	fae = token->ipt_data;
 	READ_ENTER(&ipf_auth);
+
+	/*
+	 * Retrieve "previous" entry from token and find the next entry.
+	 */
+	fae = token->ipt_data;
 	if (fae == NULL) {
 		next = fae_list;
 	} else {
 		next = fae->fae_next;
 	}
 
+	/*
+	 * If we found an entry, add reference to it and update token.
+	 * Otherwise, zero out data to be returned and NULL out token.
+	 */
 	if (next != NULL) {
-		/*
-		 * If we find an auth entry to use, bump its reference count
-		 * so that it can be used for is_next when we come back.
-		 */
 		ATOMIC_INC(next->fae_ref);
-		if (next->fae_next == NULL) {
-			ipf_freetoken(token);
-			token = NULL;
-		} else {
-			token->ipt_data = next;
-		}
+		token->ipt_data = next;
 	} else {
 		bzero(&zero, sizeof(zero));
 		next = &zero;
+		token->ipt_data = NULL;
 	}
+
+	/*
+	 * Safe to release the lock now that we have a reference.
+	 */
 	RWLOCK_EXIT(&ipf_auth);
 
 	/*
-	 * If we had a prior pointer to an auth entry, release it.
-	 */
-	if (fae != NULL) {
-		WRITE_ENTER(&ipf_auth);
-		fr_authderef(&fae);
-		RWLOCK_EXIT(&ipf_auth);
-	}
-
-	/*
-	 * This should arguably be via fr_outobj() so that the auth
-	 * structure can (if required) be massaged going out.
+	 * Copy out the data and clean up references and token as needed.
 	 */
 	error = COPYOUT(next, itp->igi_data, sizeof(*next));
 	if (error != 0)
 		error = EFAULT;
 
+	/*
+	 * Clean up reference and token.
+	 */
+	if (token->ipt_data != NULL) {
+		if (fae != NULL) {
+			WRITE_ENTER(&ipf_auth);
+			fr_authderef(&fae);
+			RWLOCK_EXIT(&ipf_auth);
+		}
+		if (next->fae_next == NULL)
+			token->ipt_data = NULL;
+	}
 	return error;
 }
 

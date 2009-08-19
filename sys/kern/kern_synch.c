@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.230.2.3 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.230.2.4 2009/08/19 18:48:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.230.2.3 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.230.2.4 2009/08/19 18:48:16 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -588,6 +588,7 @@ mi_switch(lwp_t *l)
 
 	binuptime(&bt);
 
+	KASSERT((l->l_pflag & LP_RUNNING) != 0);
 	KASSERT(l->l_cpu == curcpu());
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
@@ -722,6 +723,7 @@ mi_switch(lwp_t *l)
 		KASSERT(l->l_ctxswtch == 0);
 		l->l_ctxswtch = 1;
 		l->l_ncsw++;
+		KASSERT((l->l_pflag & LP_RUNNING) != 0);
 		l->l_pflag &= ~LP_RUNNING;
 
 		/*

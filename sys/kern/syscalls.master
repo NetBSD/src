@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.200.2.2 2009/05/16 10:41:48 yamt Exp $
+	$NetBSD: syscalls.master,v 1.200.2.3 2009/08/19 18:48:17 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -501,20 +501,20 @@
 			    unsigned int *value); }
 255	STD MODULAR 	{ int|sys||_ksem_destroy(intptr_t id); }
 256	UNIMPL		sys__ksem_timedwait
-257	STD 		{ mqd_t|sys||mq_open(const char * name, int oflag, \
+257	STD MODULAR	{ mqd_t|sys||mq_open(const char * name, int oflag, \
 			    mode_t mode, struct mq_attr *attr); }
-258	STD 		{ int|sys||mq_close(mqd_t mqdes); }
-259	STD 		{ int|sys||mq_unlink(const char *name); }
-260	STD 		{ int|sys||mq_getattr(mqd_t mqdes, \
+258	STD MODULAR	{ int|sys||mq_close(mqd_t mqdes); }
+259	STD MODULAR	{ int|sys||mq_unlink(const char *name); }
+260	STD MODULAR	{ int|sys||mq_getattr(mqd_t mqdes, \
 			    struct mq_attr *mqstat); }
-261	STD 		{ int|sys||mq_setattr(mqd_t mqdes, \
+261	STD MODULAR	{ int|sys||mq_setattr(mqd_t mqdes, \
 			    const struct mq_attr *mqstat, \
 			    struct mq_attr *omqstat); }
-262	STD 		{ int|sys||mq_notify(mqd_t mqdes, \
+262	STD MODULAR	{ int|sys||mq_notify(mqd_t mqdes, \
 			    const struct sigevent *notification); }
-263	STD 		{ int|sys||mq_send(mqd_t mqdes, const char *msg_ptr, \
+263	STD MODULAR	{ int|sys||mq_send(mqd_t mqdes, const char *msg_ptr, \
 			    size_t msg_len, unsigned msg_prio); }
-264	STD 		{ ssize_t|sys||mq_receive(mqd_t mqdes, char *msg_ptr, \
+264	STD MODULAR	{ ssize_t|sys||mq_receive(mqd_t mqdes, char *msg_ptr, \
 			    size_t msg_len, unsigned *msg_prio); }
 265	COMPAT_50 MODULAR { int|sys||mq_timedsend(mqd_t mqdes, \
 			    const char *msg_ptr, size_t msg_len, \
@@ -761,9 +761,9 @@
 394	STD	 RUMP	{ int|sys|30|socket(int domain, int type, int protocol); }
 395	STD 	 RUMP	{ int|sys|30|getfh(const char *fname, void *fhp, \
 			    size_t *fh_size); }
-396	STD 		{ int|sys|40|fhopen(const void *fhp, size_t fh_size,\
+396	STD 	 RUMP	{ int|sys|40|fhopen(const void *fhp, size_t fh_size,\
 			    int flags); }
-397	STD 		{ int|sys|40|fhstatvfs1(const void *fhp, \
+397	STD 	 RUMP	{ int|sys|40|fhstatvfs1(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
 398	COMPAT_50 MODULAR { int|sys|40|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat30 *sb); }
@@ -835,11 +835,11 @@
 431	STD 		{ int|sys|50|__sigtimedwait(const sigset_t *set, \
 			    siginfo_t *info, \
 			    struct timespec *timeout); }
-432	STD 		{ int|sys|50|mq_timedsend(mqd_t mqdes, \
+432	STD MODULAR	{ int|sys|50|mq_timedsend(mqd_t mqdes, \
 			    const char *msg_ptr, size_t msg_len, \
 			    unsigned msg_prio, \
 			    const struct timespec *abs_timeout); }
-433	STD 		{ ssize_t|sys|50|mq_timedreceive(mqd_t mqdes, \
+433	STD MODULAR	{ ssize_t|sys|50|mq_timedreceive(mqd_t mqdes, \
 			    char *msg_ptr, size_t msg_len, unsigned *msg_prio, \
 			    const struct timespec *abs_timeout); }
 434	STD 		{ int|sys|50|_lwp_park(const struct timespec *ts, \

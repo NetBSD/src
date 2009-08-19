@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.1.86.1 2009/05/04 08:10:40 yamt Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.1.86.2 2009/08/19 18:45:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.1.86.1 2009/05/04 08:10:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.1.86.2 2009/08/19 18:45:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.1.86.1 2009/05/04 08:10:40 yamt Exp $")
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
 #include <arm/ep93xx/ep93xxvar.h> 
 #include <arm/ep93xx/epsocvar.h> 
@@ -41,9 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.1.86.1 2009/05/04 08:10:40 yamt Exp $")
 #include <arm/ep93xx/epgpiovar.h>
 #include "opt_ep93xx_gpio_mask.h"
 #include "gpio.h"
-#if NGPIO > 0
-#include <sys/gpio.h>
-#endif
 #include "locators.h"
 
 #ifdef EPGPIO_DEBUG

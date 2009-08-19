@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.25.4.1 2009/05/04 08:12:33 yamt Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.25.4.2 2009/08/19 18:47:03 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.25.4.1 2009/05/04 08:12:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.25.4.2 2009/08/19 18:47:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,6 @@ acpilid_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	acpi_set_wake_gpe(sc->sc_node->ad_handle);
-
 	if (!pmf_device_register(self, acpilid_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
@@ -135,8 +133,6 @@ acpilid_detach(device_t self, int flags)
 {
 	struct acpilid_softc *sc = device_private(self);
 	ACPI_STATUS rv;
-
-	acpi_clear_wake_gpe(sc->sc_node->ad_handle);
 
 	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler);

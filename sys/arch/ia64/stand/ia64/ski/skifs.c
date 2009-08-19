@@ -1,4 +1,4 @@
-/*	$NetBSD: skifs.c,v 1.2.74.1 2009/05/04 08:11:22 yamt Exp $	*/
+/*	$NetBSD: skifs.c,v 1.2.74.2 2009/08/19 18:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include "bootstrap.h"
 #include "libski.h"

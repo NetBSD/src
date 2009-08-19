@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52.2.3 2009/07/18 14:52:56 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52.2.4 2009/08/19 18:46:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52.2.3 2009/07/18 14:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52.2.4 2009/08/19 18:46:51 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -766,7 +766,7 @@ inline void
 pmap_reference(struct pmap *pmap)
 {
 
-	atomic_inc_uint((unsigned *)&pmap->pm_obj[0].uo_refs);
+	atomic_inc_uint(&pmap->pm_obj[0].uo_refs);
 }
 
 /*
@@ -1080,13 +1080,13 @@ pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
  * pmap_emap_sync: perform TLB flush or pmap load, if it was deferred.
  */
 void
-pmap_emap_sync(void)
+pmap_emap_sync(bool canload)
 {
 	struct cpu_info *ci = curcpu();
 	struct pmap *pmap;
 
 	KASSERT(kpreempt_disabled());
-	if (__predict_true(ci->ci_want_pmapload)) {
+	if (__predict_true(ci->ci_want_pmapload && canload)) {
 		/*
 		 * XXX: Hint for pmap_reactivate(), which might suggest to
 		 * not perform TLB flush, if state has not changed.
@@ -1713,7 +1713,7 @@ pmap_free_pvs(struct pv_entry *pve)
 /*
  * main pv_entry manipulation functions:
  *   pmap_enter_pv: enter a mapping onto a pv_head list
- *   pmap_remove_pv: remove a mappiing from a pv_head list
+ *   pmap_remove_pv: remove a mapping from a pv_head list
  *
  * NOTE: Both pmap_enter_pv and pmap_remove_pv expect the caller to lock 
  *       the pvh before calling
@@ -2290,7 +2290,7 @@ pmap_destroy(struct pmap *pmap)
 	 * drop reference count
 	 */
 
-	if (atomic_dec_uint_nv((unsigned *)&pmap->pm_obj[0].uo_refs) > 0) {
+	if (atomic_dec_uint_nv(&pmap->pm_obj[0].uo_refs) > 0) {
 		return;
 	}
 
@@ -2596,7 +2596,7 @@ pmap_reactivate(struct pmap *pmap)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) 
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 
@@ -2703,7 +2703,7 @@ pmap_load(void)
 	    oldpmap == pmap_kernel());
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN)
 	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
@@ -2870,7 +2870,7 @@ pmap_deactivate(struct lwp *l)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) 
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
@@ -3682,14 +3682,6 @@ pmap_page_remove(struct vm_page *pg)
 	lwp_t *l;
 	int count;
 
-#ifdef DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_page_remove: unmanaged page?");
-#endif
-
 	l = curlwp;
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
@@ -3787,14 +3779,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	pt_entry_t expect;
 	u_int result;
 
-#if DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_test_attrs: unmanaged page?");
-#endif
-
 	pp = VM_PAGE_TO_PP(pg);
 	if ((pp->pp_attrs & testbits) != 0) {
 		return true;
@@ -3838,13 +3822,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	u_int result;
 	pt_entry_t expect;
 	int count;
-#ifdef DIAGNOSTIC
-	int bank, off;
-
-	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
-	if (bank == -1)
-		panic("pmap_change_attrs: unmanaged page?");
-#endif
 
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;

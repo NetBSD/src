@@ -1,4 +1,4 @@
-/*	$NetBSD: strdup.c,v 1.1.78.1 2009/05/04 08:11:21 yamt Exp $	*/
+/*	$NetBSD: strdup.c,v 1.1.78.2 2009/08/19 18:46:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,6 +40,7 @@ static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
 #include "bootstrap.h"

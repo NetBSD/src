@@ -582,9 +582,6 @@ struct drm_file {
 	int		  minor;
 	pid_t		  pid;
 	uid_t		  uid;
-#if defined(__NetBSD__)
-	int refs;
-#endif
 	drm_magic_t	  magic;
 	unsigned long	  ioctl_count;
 	void		 *driver_priv;

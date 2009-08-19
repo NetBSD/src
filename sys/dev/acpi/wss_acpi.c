@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.19.4.2 2009/05/16 10:41:18 yamt Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.19.4.3 2009/08/19 18:47:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.19.4.2 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.19.4.3 2009/08/19 18:47:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ static struct wss_acpi_hint wss_acpi_hints[] = {
 	{ "NMX2210", 1, 2, WSS_CODEC },
 	{ "CSC0000", 0, 1, 0 },		/* Dell Latitude CPi */
 	{ "CSC0100", 0, 1, 0 },		/* CS4610 with CS4236 codec */
-	{ { 0 }, 0, 0, 0 }
 };
 
 static int wss_acpi_hints_index (const char *);
@@ -81,9 +80,11 @@ static int wss_acpi_hints_index (const char *);
 static int
 wss_acpi_hints_index(const char *idstr)
 {
-	int idx = 0;
+	int idx;
 
-	while (wss_acpi_hints[idx].idstr[0] != 0) {
+	if (idstr == NULL)
+		return -1;
+	for (idx = 0; idx < __arraycount(wss_acpi_hints); idx++) {
 		if (!strcmp(wss_acpi_hints[idx].idstr, idstr))
 			return idx;
 		++idx;
@@ -101,7 +102,7 @@ wss_acpi_match(device_t parent, cfdata_t match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE ||
-	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.Value) == -1)
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.String) == -1)
 		return 0;
 
 	return 1;
@@ -124,7 +125,7 @@ wss_acpi_attach(device_t parent, device_t self, void *aux)
 	struct wss_acpi_hint *wah;
 
 	wah = &wss_acpi_hints[
-	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.Value)];
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.String)];
 
 	/* Parse our resources */
 	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,

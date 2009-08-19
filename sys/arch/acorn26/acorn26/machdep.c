@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22.20.1 2009/05/04 08:10:23 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.22.20.2 2009/08/19 18:45:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.20.1 2009/05/04 08:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.20.2 2009/08/19 18:45:51 yamt Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.20.1 2009/05/04 08:10:23 yamt Exp $
 #include <machine/machdep.h>
 #include <machine/memcreg.h>
 
-int physmem;
 char cpu_model[] = "Archimedes";
 
 struct vm_map *phys_map = NULL;

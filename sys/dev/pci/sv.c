@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.38.4.2 2009/05/16 10:41:40 yamt Exp $ */
+/*      $NetBSD: sv.c,v 1.38.4.3 2009/08/19 18:47:17 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.38.4.2 2009/05/16 10:41:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.38.4.3 2009/08/19 18:47:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1358,7 +1358,7 @@ sv_init_mixer(struct sv_softc *sc)
 	sv_mixer_set_port(sc, &cp);
 
 	for (i = 0; i < ARRAY_SIZE(ports); i++) {
-		if (ports[i].audio == AudioNdac) {
+		if (!strcmp(ports[i].audio, AudioNdac)) {
 			cp.type = AUDIO_MIXER_ENUM;
 			cp.dev = SV_FIRST_MIXER + i * SV_DEVICES_PER_PORT + 1;
 			cp.un.ord = 0;
