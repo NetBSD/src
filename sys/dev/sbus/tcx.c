@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.33 2009/08/18 20:45:42 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.34 2009/08/19 03:35:32 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.33 2009/08/18 20:45:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.34 2009/08/19 03:35:32 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -87,7 +87,7 @@ struct tcx_softc {
 	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	struct openprom_addr sc_physadr[TCX_NREG];/* phys addr of h/w */
+	struct openprom_addr sc_physaddr[TCX_NREG];/* phys addr of h/w */
 
 	bus_space_handle_t sc_bt;	/* Brooktree registers */
 	bus_space_handle_t sc_thc;	/* THC registers */
@@ -251,11 +251,11 @@ tcxattach(device_t parent, device_t self, void *args)
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
 	if (sc->sc_8bit) {
-		printf(" {8bit only TCX)");
+		printf(" (8bit only TCX)");
 		ramsize = 1024 * 1024;
 		/* XXX - fix THC and TEC offsets */
-		sc->sc_physadr[TCX_REG_TEC].oa_base += 0x1000;
-		sc->sc_physadr[TCX_REG_THC].oa_base += 0x1000;
+		sc->sc_physaddr[TCX_REG_TEC].oa_base += 0x1000;
+		sc->sc_physaddr[TCX_REG_THC].oa_base += 0x1000;
 	} else {
 		printf(" (S24)\n");
 		ramsize = 4 * 1024 * 1024;
@@ -275,13 +275,13 @@ tcxattach(device_t parent, device_t self, void *args)
 			device_xname(self), sa->sa_nreg);
 		return;
 	}
-	memcpy(sc->sc_physadr, sa->sa_reg,
+	memcpy(sc->sc_physaddr, sa->sa_reg,
 	      sa->sa_nreg * sizeof(struct openprom_addr));
 
 	/* Map the register banks we care about */
 	if (sbus_bus_map(sa->sa_bustag,
-			 sc->sc_physadr[TCX_REG_THC].oa_space,
-			 sc->sc_physadr[TCX_REG_THC].oa_base,
+			 sc->sc_physaddr[TCX_REG_THC].oa_space,
+			 sc->sc_physaddr[TCX_REG_THC].oa_base,
 			 0x1000,
 			 BUS_SPACE_MAP_LINEAR, &sc->sc_thc) != 0) {
 		printf("tcxattach: cannot map thc registers\n");
@@ -289,8 +289,8 @@ tcxattach(device_t parent, device_t self, void *args)
 	}
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 sc->sc_physadr[TCX_REG_CMAP].oa_space,
-			 sc->sc_physadr[TCX_REG_CMAP].oa_base,
+			 sc->sc_physaddr[TCX_REG_CMAP].oa_space,
+			 sc->sc_physaddr[TCX_REG_CMAP].oa_base,
 			 0x1000,
 			 BUS_SPACE_MAP_LINEAR, &sc->sc_bt) != 0) {
 		printf("tcxattach: cannot map bt registers\n");
@@ -299,8 +299,8 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	/* map the 8bit dumb FB for the console */
 	if (sbus_bus_map(sa->sa_bustag,
-		 sc->sc_physadr[TCX_REG_DFB8].oa_space,
-		 sc->sc_physadr[TCX_REG_DFB8].oa_base,
+		 sc->sc_physaddr[TCX_REG_DFB8].oa_space,
+		 sc->sc_physaddr[TCX_REG_DFB8].oa_base,
 			 1024 * 1024,
 			 BUS_SPACE_MAP_LINEAR,
 			 &bh) != 0) {
@@ -311,8 +311,8 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	/* RBLIT space */
 	if (sbus_bus_map(sa->sa_bustag,
-		 sc->sc_physadr[TCX_REG_RBLIT].oa_space,
-		 sc->sc_physadr[TCX_REG_RBLIT].oa_base,
+		 sc->sc_physaddr[TCX_REG_RBLIT].oa_space,
+		 sc->sc_physaddr[TCX_REG_RBLIT].oa_base,
 			 8 * 1024 * 1024,
 			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
 			 &bh) != 0) {
@@ -323,8 +323,8 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	/* RSTIP space */
 	if (sbus_bus_map(sa->sa_bustag,
-		 sc->sc_physadr[TCX_REG_RSTIP].oa_space,
-		 sc->sc_physadr[TCX_REG_RSTIP].oa_base,
+		 sc->sc_physaddr[TCX_REG_RSTIP].oa_space,
+		 sc->sc_physaddr[TCX_REG_RSTIP].oa_base,
 			 8 * 1024 * 1024,
 			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
 			 &bh) != 0) {
@@ -405,46 +405,9 @@ tcxattach(device_t parent, device_t self, void *args)
 	tcx_loadcmap(sc, 0, 256);
 }
 
-#ifdef TCX_CG8
-/*
- * keep track of the number of opens, so we can switch to 24-bit mode
- * when the device is first opened, and return to 8-bit mode on the
- * last close.  (stolen from cgfourteen driver...)  There can only be
- * one TCX per system, so we only need one flag.
- */
-static int tcx_opens = 0;
-#endif
-
 int
 tcxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-#ifdef TCX_CG8
-	int unit = minor(dev);
-	struct tcx_softc *sc;
-	int i, s, oldopens;
-	volatile ulong *cptr;
-	struct fbdevice *fb;
-
-	sc = device_lookup_private(&tcx_cd, unit);
-	if (!sc)
-		return (ENXIO);
-	if (!sc->sc_8bit) {
-		s = splhigh();
-		oldopens = tcx_opens++;
-		splx(s);
-		if (oldopens == 0) {
-			/*
-			 * rewrite the control planes to select 24-bit mode
-			 * and clear the screen
-			 */
-			fb = &sc->sc_fb;
-			i = fb->fb_type.fb_height * fb->fb_type.fb_width;
-			cptr = sc->sc_cplane;
-			while (--i >= 0)
-				*cptr++ = TCX_CTL_24_LEVEL;
-		}
-	}
-#endif
 	return (0);
 }
 
@@ -452,34 +415,9 @@ int
 tcxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
-#ifdef TCX_CG8
-	int i, s, opens;
-	volatile ulong *cptr;
-	struct fbdevice *fb;
-#endif
 
 	tcx_reset(sc);
-#ifdef TCX_CG8
-	if (!sc->sc_8bit) {
-		s = splhigh();
-		opens = --tcx_opens;
-		if (tcx_opens <= 0)
-			opens = tcx_opens = 0;
-		splx(s);
-		if (opens == 0) {
-			/*
-			 * rewrite the control planes to select 8-bit mode,
-			 * preserving the contents of the screen.
-			 * (or we could just bzero the whole thing...)
-			 */
-			fb = &sc->sc_fb;
-			i = fb->fb_type.fb_height * fb->fb_type.fb_width;
-			cptr = sc->sc_cplane;
-			while (--i >= 0)
-				*cptr++ &= TCX_CTL_PIXELMASK;
-		}
-	}
-#endif
+	/* we may want to clear and redraw the console here */
 	return (0);
 }
 
@@ -508,31 +446,31 @@ tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		fba->emu_types[2] = -1;
 #undef fba
 		break;
-#if 0
+
 	case FBIOGETCMAP:
 #define	p ((struct fbcmap *)data)
-		return (bt_getcmap(p, &sc->sc_cmap, 256, 1));
+		if (copyout(&sc->sc_cmap_red[p->index], p->red, p->count) != 0)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_green[p->index], p->green, p->count)
+		    != 0)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_blue[p->index], p->blue, p->count)
+		    != 0)
+			return EINVAL;
+		return 0;
 
 	case FBIOPUTCMAP:
 		/* copy to software map */
-#ifdef TCX_CG8
-		if (!sc->sc_8bit) {
-			/*
-			 * cg8 has extra bits in high-order byte of the index
-			 * that bt_putcmap doesn't recognize
-			 */
-			p->index &= 0xffffff;
-		}
-#endif
-		error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
-		if (error)
-			return (error);
-		/* now blast them into the chip */
-		/* XXX should use retrace interrupt */
+		if (copyin(p->red, &sc->sc_cmap_red[p->index], p->count) != 0)
+			return EINVAL;
+		if (copyin(p->green, &sc->sc_cmap_green[p->index], p->count)
+		    != 0)
+			return EINVAL;
+		if (copyin(p->blue, &sc->sc_cmap_blue[p->index], p->count) != 0)
+			return EINVAL;
 		tcx_loadcmap(sc, p->index, p->count);
 #undef p
 		break;
-#endif
 	case FBIOGVIDEO:
 		*(int *)data = sc->sc_blanked;
 		break;
@@ -541,11 +479,16 @@ tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		if (*(int *)data)
 			tcx_unblank(sc->sc_dev);
 		else if (!sc->sc_blanked) {
+			uint32_t reg;
 			sc->sc_blanked = 1;
-			//sc->sc_thc->thc_hcmisc &= ~THC_MISC_VIDEN;
+			reg = bus_space_read_4(sc->sc_bustag, sc->sc_thc,
+			    THC_MISC);
+			reg &= ~THC_MISC_VIDEN;
 			/* Put monitor in `power-saving mode' */
-			//sc->sc_thc->thc_hcmisc |= THC_MISC_VSYNC_DISABLE;
-			//sc->sc_thc->thc_hcmisc |= THC_MISC_HSYNC_DISABLE;
+			reg |= THC_MISC_VSYNC_DISABLE;
+			reg |= THC_MISC_HSYNC_DISABLE;
+			bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_MISC,
+			    reg);
 		}
 		break;
 
@@ -566,10 +509,10 @@ static void
 tcx_reset(struct tcx_softc *sc)
 {
 
-	/* Enable cursor in Brooktree DAC. */
-	/* TODO: bus_spacify */
-//	bt->bt_addr = 0x06 << 24;
-//	bt->bt_ctrl |= 0x03 << 24;
+	/* Disable cursor in Brooktree DAC. */
+	bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_ADDRESS,
+	    DAC_C1_CONTROL_0);
+	bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_CONTROL_1, 0);
 }
 
 /*
@@ -599,11 +542,13 @@ tcx_unblank(device_t dev)
 	struct tcx_softc *sc = device_private(dev);
 
 	if (sc->sc_blanked) {
-	
+		uint32_t reg;
 		sc->sc_blanked = 0;
-		//sc->sc_thc->thc_hcmisc &= ~THC_MISC_VSYNC_DISABLE;
-		//sc->sc_thc->thc_hcmisc &= ~THC_MISC_HSYNC_DISABLE;
-		//sc->sc_thc->thc_hcmisc |= THC_MISC_VIDEN;
+		reg = bus_space_read_4(sc->sc_bustag, sc->sc_thc, THC_MISC);
+		reg &= ~THC_MISC_VSYNC_DISABLE;
+		reg &= ~THC_MISC_HSYNC_DISABLE;
+		reg |= THC_MISC_VIDEN;
+		bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_MISC, reg);
 	}
 }
 
@@ -643,7 +588,7 @@ paddr_t
 tcxmmap(dev_t dev, off_t off, int prot)
 {
 	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
-	struct openprom_addr *rr = sc->sc_physadr;
+	struct openprom_addr *rr = sc->sc_physaddr;
 	struct mmo *mo, *mo_end;
 	u_int u, sz;
 	static struct mmo mmo[] = {
@@ -664,20 +609,6 @@ tcxmmap(dev_t dev, off_t off, int prot)
 		{ TCX_USER_ROM, 65536, TCX_REG_ROM },
 	};
 #define NMMO (sizeof mmo / sizeof *mmo)
-#ifdef TCX_CG8
-	/*
-	 * alternate mapping for CG8 emulation:
-	 * map part of the 8-bit-deep framebuffer into the cg8 overlay
-	 * space, just so there's something there, and map the 32-bit-deep
-	 * framebuffer where cg8 users expect to find it.
-	 */
-	static struct mmo mmo_cg8[] = {
-		{ TCX_USER_RAM, TCX_CG8OVERLAY, TCX_REG_DFB8 },
-		{ TCX_CG8OVERLAY, TCX_SIZE_DFB32, TCX_REG_DFB24 },
-		{ TCX_USER_RAM_COMPAT, TCX_SIZE_DFB32, TCX_REG_DFB24 }
-	};
-#define NMMO_CG8 (sizeof mmo_cg8 / sizeof *mmo_cg8)
-#endif
 
 	if (off & PGOFSET)
 		panic("tcxmmap");
@@ -691,18 +622,10 @@ tcxmmap(dev_t dev, off_t off, int prot)
 	 * sizes are sometimes bizarre (e.g., 1) is effectively ignored:
 	 * one byte is as good as one page.
 	 */
-#ifdef TCX_CG8
-	if (sc->sc_8bit) {
-		mo = mmo;
-		mo_end = &mmo[NMMO];
-	} else {
-		mo = mmo_cg8;
-		mo_end = &mmo_cg8[NMMO_CG8];
-	}
-#else
+
 	mo = mmo;
 	mo_end = &mmo[NMMO];
-#endif
+
 	for (; mo < mo_end; mo++) {
 		if ((u_int)off < mo->mo_uaddr)
 			continue;
@@ -766,8 +689,19 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf = (void *)data;
 			wdf->height = ms->scr_ri.ri_height;
 			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
+			if (sc->sc_8bit) {
+				wdf->depth = 8;
+			} else {
+				wdf->depth = 32;
+			}
 			wdf->cmsize = 256;
+			return 0;
+		case WSDISPLAYIO_LINEBYTES:
+			{
+				int *ret = (int *)data;
+				*ret = sc->sc_8bit ? ms->scr_ri.ri_width :
+				    ms->scr_ri.ri_width << 2;
+			}
 			return 0;
 #if 0
 		case WSDISPLAYIO_GETCMAP:
@@ -784,10 +718,8 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					sc->sc_mode = new_mode;
 					if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
-#if 0
-						tcxloadcmap(sc, 0, 256);
+						tcx_loadcmap(sc, 0, 256);
 						tcx_clearscreen(sc);
-#endif
 						vcons_redraw_screen(ms);
 					}
 				}
@@ -799,32 +731,25 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 static paddr_t
 tcx_mmap(void *v, void *vs, off_t offset, int prot)
 {
-#if 0
 	struct vcons_data *vd = v;
 	struct tcx_softc *sc = vd->cookie;
-	paddr_t pa;
 
 	/* 'regular' framebuffer mmap()ing */
-	if (offset < sc->sc_fb_psize) {
-		pa = bus_space_mmap(sc->sc_bustag, sc->sc_fb_paddr + offset, 0,
-		    prot, BUS_SPACE_MAP_LINEAR);
-		return pa;
-	}
-
-	if ((offset >= sc->sc_fb_paddr) && (offset < (sc->sc_fb_paddr +
-	    sc->sc_fb_psize))) {
-		pa = bus_space_mmap(sc->sc_bustag, offset, 0, prot,
+	if (sc->sc_8bit) {
+		/* on 8Bit boards hand over the 8 bit aperture */
+		if (offset > 1024 * 1024)
+			return -1;
+		return bus_space_mmap(sc->sc_bustag,
+		    sc->sc_physaddr[TCX_REG_DFB8].oa_base + offset, 0, prot,
 		    BUS_SPACE_MAP_LINEAR);
-		return pa;
-	}
-
-	if ((offset >= sc->sc_ctl_paddr) && (offset < (sc->sc_ctl_paddr +
-	    sc->sc_ctl_psize))) {
-		pa = bus_space_mmap(sc->sc_bustag, offset, 0, prot,
+	} else {
+		/* ... but if we have a 24bit aperture we use it */
+		if (offset > 1024 * 1024 * 4)
+			return -1;
+		return bus_space_mmap(sc->sc_bustag,
+		    sc->sc_physaddr[TCX_REG_DFB24].oa_base + offset, 0, prot,
 		    BUS_SPACE_MAP_LINEAR);
-		return pa;
 	}
-#endif
 	return -1;
 }
 
