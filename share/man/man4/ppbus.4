@@ -1,4 +1,4 @@
-.\" $NetBSD: ppbus.4,v 1.14 2009/08/19 20:45:23 mbalmer Exp $
+.\" $NetBSD: ppbus.4,v 1.15 2009/08/19 23:17:25 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Nicolas Souchu
 .\" All rights reserved.
@@ -403,15 +403,17 @@ level for efficiency.
 .Ss GPIO interface
 Pins 1 through 17 of the parallel port can be controlled through the
 .Xr gpio 4
-interface, pins 18 through 25 are hardwired to ground. Pins 10 through
-13 and pin 15 are input pins, the others are output pins. Some of the
-pins are inverted by the hardware, the values read or written are
-adjusted accordingly. Note that the
+interface, pins 18 through 25 are hardwired to ground.
+Pins 10 through 13 and pin 15 are input pins, the others are output
+pins.
+Some of the pins are inverted by the hardware, the values read or
+written are adjusted accordingly.
+Note that the
 .Xr gpio 4
 interface starts at 0 when numbering pins.
 .Sh SEE ALSO
 .Xr atppc 4 ,
-.Xr gpio 4,
+.Xr gpio 4 ,
 .Xr lpt 4 ,
 .Xr plip 4 ,
 .Xr ppi 4 ,
