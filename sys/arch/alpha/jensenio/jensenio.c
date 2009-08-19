@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.17 2008/07/09 21:19:23 joerg Exp $ */
+/* $NetBSD: jensenio.c,v 1.18 2009/08/19 14:29:53 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.17 2008/07/09 21:19:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.18 2009/08/19 14:29:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,8 @@ static int	jensenio_eisa_maxslots(void *);
 
 static void	jensenio_isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
+
+static void	jensenio_isa_detach_hook(device_t);
 
 /*
  * Set up the Jensen's function pointers.
@@ -203,6 +205,7 @@ jensenio_attach(device_t parent, device_t self, void *aux)
 	 * Attach the ISA bus.
 	 */
 	jcp->jc_ic.ic_attach_hook = jensenio_isa_attach_hook;
+	jcp->jc_ic.ic_detach_hook = jensenio_isa_detach_hook;
 
 	ja.ja_isa.iba_iot = &jcp->jc_eisa_iot;
 	ja.ja_isa.iba_memt = &jcp->jc_eisa_memt;
@@ -250,6 +253,13 @@ jensenio_eisa_maxslots(void *v)
 static void
 jensenio_isa_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
+{
+
+	/* Nothing to do. */
+}
+
+static void
+jensenio_isa_detach_hook(device_t self)
 {
 
 	/* Nothing to do. */

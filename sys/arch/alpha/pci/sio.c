@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.46 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: sio.c,v 1.47 2009/08/19 14:29:54 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.46 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.47 2009/08/19 14:29:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ union sio_attach_args {
 
 void	sio_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
+void	sio_isa_detach_hook(device_t);
 #if NPCEB > 0
 void	sio_eisa_attach_hook(struct device *, struct device *,
 	    struct eisabus_attach_args *);
@@ -258,6 +259,7 @@ sio_bridge_callback(struct device *self)
 
 	sc->sc_ic->ic_v = NULL;
 	sc->sc_ic->ic_attach_hook = sio_isa_attach_hook;
+	sc->sc_ic->ic_detach_hook = sio_isa_detach_hook;
 
 	/*
 	 * Deal with platforms that hook up ISA interrupts differently.
@@ -286,6 +288,13 @@ sio_bridge_callback(struct device *self)
 
 void
 sio_isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
+{
+
+	/* Nothing to do. */
+}
+
+void
+sio_isa_detach_hook(device_t self)
 {
 
 	/* Nothing to do. */
