@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43 2009/01/24 05:06:07 mrg Exp $
+# $NetBSD: GENERIC,v 1.44 2009/08/19 06:28:06 nisimura Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,10 +19,11 @@
 # device.
 
 include 	"arch/sandpoint/conf/std.sandpoint"
+options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32
 
@@ -238,32 +239,12 @@ com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
 #lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
-
 #fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fd*	at fdc? drive ?			# the drives themselves
 
-#adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
-#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
-siop*	at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
-
-#scsibus* at adw?
-#scsibus* at dpt?
-scsibus* at siop?
 scsibus* at umass?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
-#st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-#ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-#uk*	at scsibus? target ? lun ?	# SCSI unknown
-
-#atapibus* at atapi?
-#cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
-#sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
-#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # Veriexec
 #

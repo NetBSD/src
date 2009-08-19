@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2009/07/03 10:35:31 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2009/08/19 06:28:07 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2009/07/03 10:35:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2009/08/19 06:28:07 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_modular.h"
+#include "opt_interrupt.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -239,16 +240,20 @@ cpu_startup(void)
 	 */
 	baseaddr = (void *)(SANDPOINT_BUS_SPACE_EUMB + 0x40000);
 	pic_init();
-	isa_pic = setup_i8259();
-	(void)setup_openpic(baseaddr, 0);
-	primary_pic = 1;
 
-#if (NPCIB > 0)
+#ifdef PIC_I8259
+	isa_pic = setup_i8259();
+	(void)setup_mpcpic(baseaddr);
+	primary_pic = 1;
 	/*
 	 * set up i8259 as a cascade on EPIC irq 0.
 	 * XXX exceptional SP2 has 17
 	 */
 	intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
+#else
+	mpcpic_reserv16();
+	(void)setup_mpcpic(baseaddr);
+	primary_pic = 0;
 #endif
 
 	oea_install_extint(pic_ext_intr);
@@ -488,37 +493,6 @@ mpc107memsize(void)
 
 	return (end + 1); /* recongize this as the amount of SDRAM */
 }
-
-/* XXX needs to make openpic.c implementation-neutral XXX */
-
-unsigned epicsteer[] = {
-	0x10200,	/* external irq 0 direct/serial */
-	0x10220,	/* external irq 1 direct/serial */
-	0x10240,	/* external irq 2 direct/serial */
-	0x10260,	/* external irq 3 direct/serial */
-	0x10280,	/* external irq 4 direct/serial */
-	0x102a0,	/* external irq 5 serial mode */
-	0x102c0,	/* external irq 6 serial mode */
-	0x102e0,	/* external irq 7 serial mode */
-	0x10300,	/* external irq 8 serial mode */
-	0x10320,	/* external irq 9 serial mode */
-	0x10340,	/* external irq 10 serial mode */
-	0x10360,	/* external irq 11 serial mode */
-	0x10380,	/* external irq 12 serial mode */
-	0x103a0,	/* external irq 13 serial mode */
-	0x103c0,	/* external irq 14 serial mode */
-	0x103e0,	/* external irq 15 serial mode */
-	0x11020,	/* I2C */
-	0x11040,	/* DMA 0 */
-	0x11060,	/* DMA 1 */
-	0x110c0,	/* MU/I2O */
-	0x01120,	/* Timer 0 */
-	0x01160,	/* Timer 1 */
-	0x011a0,	/* Timer 2 */
-	0x011e0,	/* Timer 3 */
-	0x11120,	/* DUART 0, MPC8245 */
-	0x11140,	/* DUART 1, MPC8245 */
-};
 
 /* XXX XXX debug purpose only XXX XXX */
 
