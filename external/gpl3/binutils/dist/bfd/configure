@@ -10837,10 +10837,10 @@ if test "${with_pkgversion+set}" = set; then
 echo "$as_me: error: package version not specified" >&2;}
    { (exit 1); exit 1; }; } ;;
       no)  PKGVERSION= ;;
-      *)   PKGVERSION="($withval) " ;;
+      *)   PKGVERSION="($withval)\ " ;;
      esac
 else
-  PKGVERSION="(GNU Binutils) "
+  PKGVERSION="(GNU Binutils)\ "
 
 fi;
 
