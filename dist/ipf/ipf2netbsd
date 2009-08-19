@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.21 2008/04/30 13:10:47 martin Exp $
+#	$NetBSD: ipf2netbsd,v 1.22 2009/08/19 18:51:24 darrenr Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -103,6 +103,22 @@ pax -rvw \
 pax -rvw mln_ipl.c $dlkm
 cd $r/test
 pax -rvw * $dregress
+
+### Remove uninteresting bits
+echo "removing extraneous files and directiones."
+(
+	cd ${dest}/src/dist/ipf
+	find . -name .cvsignore | xargs /bin/rm -f
+	for i in 4bsd AIX BSD BSDOS BSDOS3 BSDOS4 COMPILE.2.5 COMPILE.Solaris2 \
+		 FAQ.FreeBSD FreeBSD FreeBSD-2.2 FreeBSD-3 FreeBSD-4.0 HPUX \
+		 INST.FreeBSD-2.2 INSTALL.BSDOS INSTALL.FreeBSD INSTALL.IRIX \
+		 INSTALL.Sol2 INSTALL.SunOS INSTALL.Tru64 Linux IRIX OSF \
+		 INSTALL.NetBSD INSTALL.Linux INSTALL.xBSD INSTALL.BSDOS3 NAT.FreeBSD OpenBSD OpenBSD-2 OpenBSD-3 SunOS4 SunOS5 ipsend/.OLD; do
+		echo "removing $i";
+		/bin/rm -rf "$i"
+	done
+)
+echo done
 
 ### Remove the $'s around various RCSIDs
 find $dest -type f -print | while read f; do
