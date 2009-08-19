@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.29 2009/08/19 14:58:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.30 2009/08/19 23:54:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -103,7 +103,11 @@ typedef struct pmap_statistics	*pmap_statistics_t;
  */
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
+#if defined(PMAP_ENABLE_PMAP_KMPAGE)
 #define	PMAP_KMPAGE	0x00000040	/* [PA] page used for kernel memory */
+#else
+#define	PMAP_KMPAGE	0x00000000
+#endif /* PMAP_ENABLE_PMAP_KMPAGE */
 
 #define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
 
