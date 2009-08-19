@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.1.1.5 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.1.1.6 2009/08/19 08:29:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2006 by Darren Reed.
@@ -12,7 +12,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipftest.c,v 1.44.2.13 2006/12/12 16:13:01 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipftest.c,v 1.44.2.14 2008/11/06 21:18:20 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -78,8 +78,8 @@ int main(argc,argv)
 int argc;
 char *argv[];
 {
+	int	fd, i, dir, c, loaded, dump, hlen, eol;
 	char	*datain, *iface, *ifname, *logout;
-	int	fd, i, dir, c, loaded, dump, hlen;
 	struct	in_addr	sip;
 	struct	ifnet	*ifp;
 	struct	ipread	*r;
@@ -234,7 +234,7 @@ char *argv[];
 		m = &mb;
 		m->mb_len = i;
 		i = fr_check(ip, hlen, ifp, dir, &m);
-		if ((opts & OPT_NAT) == 0)
+		if ((opts & OPT_NAT) == 0) {
 			switch (i)
 			{
 			case -4 :
@@ -271,17 +271,30 @@ char *argv[];
 				(void)printf("recognised return %#x\n", i);
 				break;
 			}
+		} else {
+			if (i == -1) {
+				(void)printf("block ");
+			}
+		}
+
 		if (!use_inet6) {
 			ip->ip_off = htons(ip->ip_off);
 			ip->ip_len = htons(ip->ip_len);
 		}
 
+		eol = 0;
 		if (!(opts & OPT_BRIEF)) {
 			putchar(' ');
 			printpacket(ip);
 			printf("--------------");
-		} else if ((opts & (OPT_BRIEF|OPT_NAT)) == (OPT_NAT|OPT_BRIEF))
-			printpacket(ip);
+			eol = 1;
+		} else {
+			if (opts & OPT_NAT) {
+				printpacket(ip);
+				eol = 1;
+			}
+		}
+
 		if (dir && (ifp != NULL) && IP_V(ip) && (m != NULL))
 #if  defined(__sgi) && (IRIX < 60500)
 			(*ifp->if_output)(ifp, (void *)m, NULL);
@@ -292,7 +305,18 @@ char *argv[];
 			(*ifp->if_output)(ifp, (void *)m, NULL, 0);
 # endif
 #endif
-		if ((opts & (OPT_BRIEF|OPT_NAT)) != (OPT_NAT|OPT_BRIEF))
+
+		/*
+		 * Because we have no timers to clear out a state entry, we
+		 * do a flush call after every packet. Thus once an entry
+		 * is recorded as starting to close (TCP), it will be flushed.
+		 * This allows verification that flushing does work and that a
+		 * packet arriving late will not match, along with the state
+		 * table being empty when state is dumped at the end.
+		 */
+		fr_state_flush(1, 0);
+
+		if (eol == 0)
 			putchar('\n');
 		dir = 0;
 		if (iface != ifname) {

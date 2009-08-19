@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.6 2007/04/14 20:17:22 martin Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.7 2009/08/19 08:28:42 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
@@ -6,7 +6,7 @@
  * Simple PPTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_pptp_pxy.c,v 2.10.2.15 2006/10/31 12:11:23 darrenr Exp
+ * Id: ip_pptp_pxy.c,v 2.10.2.18 2008/11/06 21:18:36 darrenr Exp
  *
  */
 #define	IPF_PPTP_PROXY
@@ -167,8 +167,6 @@ pptp_pxy_t *pptp;
 	if ((nat2 == NULL) || (pptp->pptp_state == NULL)) {
 		bcopy((char *)fin, (char *)&fi, sizeof(fi));
 		bzero((char *)&gre, sizeof(gre));
-		fi.fin_state = NULL;
-		fi.fin_nat = NULL;
 		fi.fin_fi.fi_p = IPPROTO_GRE;
 		fi.fin_fr = &pptpfr;
 		if ((nat->nat_dir == NAT_OUTBOUND && fin->fin_out) ||
@@ -200,12 +198,16 @@ pptp_pxy_t *pptp;
 	if (nat2 != NULL)
 		fr_queueback(&nat2->nat_tqe);
 	else {
+		MUTEX_ENTER(&ipf_nat_new);
 		nat2 = nat_new(&fi, &pptp->pptp_rule, &pptp->pptp_nat,
 			       NAT_SLAVE, nat->nat_dir);
+		MUTEX_EXIT(&ipf_nat_new);
 		pptp->pptp_nat = nat2;
 		if (nat2 != NULL) {
 			(void) nat_proto(&fi, nat2, 0);
-			nat_update(&fi, nat2, nat2->nat_ptr);
+			MUTEX_ENTER(&nat2->nat_lock);
+			nat_update(&fi, nat2);
+			MUTEX_EXIT(&nat2->nat_lock);
 		}
 	}
 
@@ -224,8 +226,6 @@ pptp_pxy_t *pptp;
 		fi.fin_ifp = NULL;
 		pptp->pptp_state = fr_addstate(&fi, &pptp->pptp_state,
 					       0);
-		if (fi.fin_state != NULL)
-			fr_statederef((ipstate_t **)&fi.fin_state);
 	}
 	ip->ip_p = p;
 	return;

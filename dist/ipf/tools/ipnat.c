@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.6 2008/05/20 06:45:25 darrenr Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.7 2009/08/19 08:29:55 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.11 2007/09/25 08:27:34 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.12 2008/11/06 21:18:20 darrenr Exp";
 #endif
 
 
@@ -362,6 +362,10 @@ int fd, opts, alive;
 			nsp->ns_memfail, nsp->ns_badnat);
 		printf("inuse\t%lu\norphans\t%u\nrules\t%lu\n",
 			nsp->ns_inuse, nsp->ns_orphans, nsp->ns_rules);
+		printf("in-uncreates succeed\t%lu\tfailed\t%lu\n",
+			nsp->ns_uncreate[0][0], nsp->ns_uncreate[0][1]);
+		printf("out-uncreates succeed\t%lu\tfailed\t%lu\n",
+			nsp->ns_uncreate[1][0], nsp->ns_uncreate[1][1]);
 		printf("wilds\t%u\n", nsp->ns_wilds);
 		dotable(nsp, fd, alive);
 		if (opts & OPT_VERBOSE)
