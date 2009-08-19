@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2001/08/19 14:21:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/08/19 20:32:58 asau Exp $
 
-FILES=		c89.sh
-FILESNAME=	c89
-FILESDIR=	/usr/bin
-FILESMODE=	${BINMODE}
+SCRIPTS=       c89.sh
+SCRIPTSDIR=    /usr/bin
 
 MAN=		c89.1
 
