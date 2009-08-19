@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.91 2009/08/19 14:58:48 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.92 2009/08/19 23:54:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -290,6 +290,7 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+#define	PMAP_ENABLE_PMAP_KMPAGE	/* enable the PMAP_KMPAGE flag */
 
 #if ARM_MMU_V6 > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
