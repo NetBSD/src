@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.50 2009/05/08 05:18:34 kefren Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.51 2009/08/19 08:36:10 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,10 +8,10 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.50 2009/05/08 05:18:34 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.51 2009/08/19 08:36:10 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.59 2008/03/01 23:16:38 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.66 2009/05/17 17:45:26 darrenr Exp";
 #endif
 #endif
 
@@ -101,7 +101,11 @@ int		ipf_locks_done = 0;
 #endif
 
 #ifdef IPFILTER_M_IPFILTER
+# ifdef MALLOC_DEFINE
 MALLOC_DEFINE(M_IPFILTER, "IP Filter", "IP Filter packet filter data structures");
+# else
+MALLOC_DECLARE(M_IPFILTER);
+# endif
 #endif
 
 #if __NetBSD_Version__ >= 105009999
@@ -371,6 +375,7 @@ int ipfattach(void)
 	    && ph_ifsync == NULL
 #   endif
 	   ) {
+		SPL_X(s);
 		printf("pfil_head_get failed\n");
 		return ENODEV;
 	}
@@ -517,8 +522,10 @@ int ipfdetach(void)
 	error = pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
 #  endif
-	if (error)
+	if (error) {
+		SPL_X(s);
 		return error;
+	}
 # else
 	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 # endif
@@ -533,8 +540,10 @@ int ipfdetach(void)
 	error = pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
 				 &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
 #  endif
-	if (error)
+	if (error) {
+		SPL_X(s);
 		return error;
+	}
 # endif
 #endif
 	fr_deinitialise();
@@ -1268,8 +1277,7 @@ frdest_t *fdp;
 		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
 			u_32_t pass;
 
-			if (fr_checkstate(fin, &pass) != NULL)
-				fr_statederef((ipstate_t **)&fin->fin_state);
+			(void) fr_checkstate(fin, &pass);
 		}
 
 		switch (fr_checknatout(fin, NULL))
@@ -1277,7 +1285,6 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
@@ -1563,12 +1570,12 @@ frdest_t *fdp;
 #  endif
 # endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
-			*mpp = NULL;
 # if __NetBSD_Version__ >= 499001100
 			error = nd6_output(ifp, ifp, m0, satocsin6(dst), rt);
 # else
 			error = nd6_output(ifp, ifp, m0, dst6, rt);
 # endif
+			*mpp = NULL;
 		} else {
 			error = EMSGSIZE;
 		}

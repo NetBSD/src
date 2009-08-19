@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.13 2008/05/20 07:08:08 darrenr Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.14 2009/08/19 08:36:12 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -39,11 +39,11 @@
  *   o The enclosed hack of STREAMS support is pretty sick and most likely
  *     broken.
  *
- *	Id: ip_rpcb_pxy.c,v 2.25.2.8 2007/10/26 12:15:13 darrenr Exp
+ *	Id: ip_rpcb_pxy.c,v 2.25.2.12 2008/11/06 21:18:36 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.13 2008/05/20 07:08:08 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.14 2009/08/19 08:36:12 darrenr Exp $");
 
 #define	IPF_RPCB_PROXY
 
@@ -1166,8 +1166,6 @@ ippr_rpcb_getnat(fin, nat, proto, port)
 
 	/* Generate dummy fr_info */
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
-	fi.fin_state = NULL;
-	fi.fin_nat = NULL;
 	fi.fin_out = 0;
 	fi.fin_src = fin->fin_dst;
 	fi.fin_dst = nat->nat_outip;
@@ -1248,8 +1246,10 @@ ippr_rpcb_getnat(fin, nat, proto, port)
 		*ipn->in_plabel = '\0';
 
 		/* Create NAT entry.  return NULL if this fails. */
+		MUTEX_ENTER(&ipf_nat_new);
 		natl = nat_new(&fi, ipn, NULL, nflags|SI_CLONE|NAT_SLAVE,
 			       NAT_INBOUND);
+		MUTEX_EXIT(&ipf_nat_new);
 
 		bcopy((char *)&ipnat, (char *)ipn, sizeof(ipnat));
 
@@ -1260,14 +1260,15 @@ ippr_rpcb_getnat(fin, nat, proto, port)
 
 		ipn->in_use++;
 		(void) nat_proto(&fi, natl, nflags);
-		nat_update(&fi, natl, natl->nat_ptr);
+		MUTEX_ENTER(&natl->nat_lock);
+		nat_update(&fi, natl);
+		MUTEX_EXIT(&natl->nat_lock);
 	}
 	MUTEX_DOWNGRADE(&ipf_nat);
 
 	if (is == NULL) {
 		/* Create state entry.  Return NULL if this fails. */
 		fi.fin_dst = nat->nat_inip;
-		fi.fin_nat = (void *)natl;
 		fi.fin_flx |= FI_NATED;
 		fi.fin_flx &= ~FI_STATE;
 		nflags &= NAT_TCPUDP;
@@ -1283,8 +1284,6 @@ ippr_rpcb_getnat(fin, nat, proto, port)
 			 */
 			return(-1);
 		}
-		if (fi.fin_state != NULL)
-			fr_statederef((ipstate_t **)&fi.fin_state);
 	}
 
 	return(0);

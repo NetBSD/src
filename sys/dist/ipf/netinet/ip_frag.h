@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.h,v 1.5 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.6 2009/08/19 08:36:10 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.23.2.6 2008/04/09 10:54:03 darrenr Exp
+ * Id: ip_frag.h,v 2.23.2.7 2009/01/01 03:53:17 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FRAG_H_
@@ -29,14 +29,14 @@ typedef	struct	ipfr	{
 	 * therefore important for this set to remain together.
 	 */
 	void	*ipfr_ifp;
-	struct	in_addr	ipfr_src;
-	struct	in_addr	ipfr_dst;
+	i6addr_t ipfr_src;
+	i6addr_t ipfr_dst;
 	u_32_t	ipfr_optmsk;
 	u_short	ipfr_secmsk;
 	u_short	ipfr_auth;
-	u_short	ipfr_id;
-	u_char	ipfr_p;
-	u_char	ipfr_tos;
+	u_32_t	ipfr_id;
+	u_32_t	ipfr_p;
+	u_32_t	ipfr_tos;
 	u_32_t	ipfr_pass;
 } ipfr_t;
 
