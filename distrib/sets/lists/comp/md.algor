@@ -1,9 +1,11 @@
-# $NetBSD: md.algor,v 1.13 2009/08/12 23:38:20 matt Exp $
+# $NetBSD: md.algor,v 1.14 2009/08/19 08:24:43 he Exp $
 ./usr/include/algor				comp-c-include
 ./usr/include/algor/_G_config.h			comp-obsolete		obsolete
 ./usr/include/algor/ansi.h			comp-c-include
+./usr/include/algor/aout_machdep.h		comp-obsolete		obsolete
 ./usr/include/algor/asm.h			comp-c-include
 ./usr/include/algor/autoconf.h			comp-c-include
+./usr/include/algor/bsd-aout.h			comp-obsolete		obsolete
 ./usr/include/algor/bswap.h			comp-c-include
 ./usr/include/algor/bus.h			comp-c-include
 ./usr/include/algor/cdefs.h			comp-c-include
