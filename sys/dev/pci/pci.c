@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.123 2009/07/04 21:01:10 cegger Exp $	*/
+/*	$NetBSD: pci.c,v 1.124 2009/08/19 21:36:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.123 2009/07/04 21:01:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.124 2009/08/19 21:36:47 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -276,7 +276,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pcireg_t id, csr, class, intr, bhlcr;
 	int ret, pin, bus, device, function;
 	int locs[PCICF_NLOCS];
-	device_t subdev;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
@@ -363,17 +362,17 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		locs[PCICF_DEV] = device;
 		locs[PCICF_FUNCTION] = function;
 
-		subdev = config_found_sm_loc(sc->sc_dev, "pci", locs, &pa,
-					     pciprint, config_stdsubmatch);
-
 		c = &sc->PCI_SC_DEVICESC(device, function);
-		c->c_dev = subdev;
 		pci_conf_capture(pc, tag, &c->c_conf);
 		if (pci_get_powerstate(pc, tag, &c->c_powerstate) == 0)
 			c->c_psok = true;
 		else
 			c->c_psok = false;
-		ret = (subdev != NULL);
+
+		c->c_dev = config_found_sm_loc(sc->sc_dev, "pci", locs, &pa,
+					     pciprint, config_stdsubmatch);
+
+		ret = (c->c_dev != NULL);
 	}
 
 	return ret;
