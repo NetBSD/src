@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.5 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: picvar.h,v 1.6 2009/08/19 06:22:54 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.5 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.6 2009/08/19 06:22:54 nisimura Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -113,6 +113,8 @@ struct pic_ops *setup_openpic(void *, int);
 struct pic_ops *setup_distributed_openpic(void *, int, void **, int *);
 struct pic_ops *setup_prepivr(int);
 struct pic_ops *setup_i8259(void);
+struct pic_ops *setup_mpcpic(void *);
+void mpcpic_reserv16(void);
 
 /* i8259 common decls */
 void i8259_initialize(void);  
