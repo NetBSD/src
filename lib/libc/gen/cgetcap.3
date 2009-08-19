@@ -1,4 +1,4 @@
-.\"	$NetBSD: cgetcap.3,v 1.5 2008/08/26 05:04:19 lukem Exp $
+.\"	$NetBSD: cgetcap.3,v 1.6 2009/08/19 15:43:02 joerg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -534,17 +534,17 @@ Non-printable
 codes, new lines, and colons may be conveniently represented by the use
 of escape sequences:
 .Bl -column "\e\|X,X\e\|X" "(ASCII octal nnn)"
-^X	('\fIX\fP' \*[Am] 037)	control-\fIX\fP
-\e\|b, \e\|B	(ASCII 010)	backspace
-\e\|t, \e\|T	(ASCII 011)	tab
-\e\|n, \e\|N	(ASCII 012)	line feed (newline)
-\e\|f, \e\|F	(ASCII 014)	form feed
-\e\|r, \e\|R	(ASCII 015)	carriage return
-\e\|e, \e\|E	(ASCII 027)	escape
-\e\|c, \e\|C	(:)	colon
-\e\|\e	(\e\|)	back slash
-\e\|^	(^)	caret
-\e\|\fInnn\fP	(ASCII octal \fInnn\fP)
+.It ^X	('\fIX\fP' \*[Am] 037)	control-\fIX\fP
+.It \e\|b, \e\|B	(ASCII 010)	backspace
+.It \e\|t, \e\|T	(ASCII 011)	tab
+.It \e\|n, \e\|N	(ASCII 012)	line feed (newline)
+.It \e\|f, \e\|F	(ASCII 014)	form feed
+.It \e\|r, \e\|R	(ASCII 015)	carriage return
+.It \e\|e, \e\|E	(ASCII 027)	escape
+.It \e\|c, \e\|C	(:)	colon
+.It \e\|\e	(\e\|)	back slash
+.It \e\|^	(^)	caret
+.It \e\|\fInnn\fP	(ASCII octal \fInnn\fP)
 .El
 .Pp
 A
