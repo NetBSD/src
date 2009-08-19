@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.7.14.1 2009/08/16 03:36:02 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.7.14.2 2009/08/19 06:54:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "SYS.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __clone.S,v 1.7.14.1 2009/08/16 03:36:02 matt Exp $");
+	RCSID("$NetBSD: __clone.S,v 1.7.14.2 2009/08/19 06:54:49 matt Exp $");
 #endif /* SYSLIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
@@ -60,8 +60,8 @@ LEAF(__clone)
 	 * do this: the child's stack.
 	 */
 	PTR_SUBU	a1, a1, CALLFRAME_SIZ
-	REG_S		a3, 0(a1)
-	REG_S		a0, SZREG(a1)
+	REG_S		a0, 0(a1)
+	REG_S		a3, SZREG(a1)
 
 	/*
 	 * The system call expects (flags, stack).
@@ -78,25 +78,26 @@ LEAF(__clone)
 	/* NOTREACHED */
 
 9:	/*
-	 * Child: Fetch the function and argument from the new stack,
-	 * and create a frame so that the child can be safely called.
+	 * Child: Fetch the function and argument from the new stack and create
+	 a frame so that the child can be safely called.
 	 *
 	 * There are already register slots on the stack from above.
-	 * We take 4 register slots more.  The lower 4 accommodate o32
-	 * argument save area.  The next higher is used to save GP (if
-	 * ABICALLS).  The highest is unused.
+	 * They already include the o32 argument save area.  The
+	 * highest is unused.  a1 should equal sp now.
 	 */
-	REG_L		a0, 0(sp)
-	REG_L		t9, SZREG(sp)
 
-	SAVE_GP(4 * SZREG)
+	REG_L		t9, 0(sp)
+	REG_L		a0, SZREG(sp)
+
+	REG_S		zero, CALLFRAME_RA(sp)	/* make sure stack frame ends */
 
 	/* Call the clone's entry point. */
+	SAVE_GP(CALLFRAME_GP)
 	jal		t9
 
-	/* Pass the return value to SYS_exit. */
+	/* Pass the return value to _exit. */
 	move		a0, v0
-	SYSTRAP(exit)
+	PIC_TAILCALL(_exit)
 
 	/* NOTREACHED */
 END(__clone)
