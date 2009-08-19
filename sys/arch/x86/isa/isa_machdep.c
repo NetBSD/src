@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.27 2009/08/18 17:02:00 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.28 2009/08/19 15:04:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27 2009/08/18 17:02:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.28 2009/08/19 15:04:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ isa_attach_hook(device_t parent, device_t self,
 }
 
 void
-isa_detach_hook(device_t self)
+isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 	extern int isa_has_been_seen;
 
