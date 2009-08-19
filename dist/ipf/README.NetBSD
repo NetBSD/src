@@ -1,5 +1,5 @@
 #
-# $NetBSD: README.NetBSD,v 1.2 2008/10/20 12:09:15 martti Exp $
+# $NetBSD: README.NetBSD,v 1.3 2009/08/19 09:35:01 martti Exp $
 #
 # Author: Martti Kuparinen <martti@NetBSD.org>
 #
@@ -34,9 +34,9 @@
 ###############################################################################
 
 export NETBSDUSERNAME="fixthis"
-export VERSION="4.1.31"
-export VEROLD="v4-1-29"
-export VERNEW="v4-1-31"
+export VERSION="4.1.34"
+export VEROLD="v4-1-33"
+export VERNEW="v4-1-34"
 export VERTAG="`echo ${VERSION} | sed 's+\.+_+g'`"
 export ORIG="${HOME}/netbsd/orig"
 export WORK="${HOME}/netbsd/work"
