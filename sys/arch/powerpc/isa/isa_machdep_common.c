@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep_common.c,v 1.4 2009/08/19 14:44:48 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep_common.c,v 1.5 2009/08/19 15:02:47 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.4 2009/08/19 14:44:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.5 2009/08/19 15:02:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ genppc_isa_attach_hook(struct device *parent, struct device *self,
 }
 
 void
-genppc_isa_detach_hook(device_t self)
+genppc_isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 
 	/* Nothing to do. */
