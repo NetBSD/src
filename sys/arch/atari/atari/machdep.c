@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160 2009/03/05 13:42:59 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.161 2009/08/19 23:46:52 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2009/03/05 13:42:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2009/08/19 23:46:52 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2009/03/05 13:42:59 tsutsui Exp $"
 #include <sys/ksyms.h>
 #include <sys/intr.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/cpu.h>
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
