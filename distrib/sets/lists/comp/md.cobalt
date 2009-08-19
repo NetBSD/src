@@ -1,9 +1,11 @@
-# $NetBSD: md.cobalt,v 1.22 2009/08/12 23:38:20 matt Exp $
+# $NetBSD: md.cobalt,v 1.23 2009/08/19 08:24:44 he Exp $
 ./usr/include/cobalt				comp-c-include
 ./usr/include/cobalt/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cobalt/ansi.h			comp-c-include
+./usr/include/cobalt/aout_machdep.h		comp-obsolete		obsolete
 ./usr/include/cobalt/asm.h			comp-c-include
 ./usr/include/cobalt/autoconf.h			comp-c-include
+./usr/include/cobalt/bsd-aout.h			comp-obsolete		obsolete
 ./usr/include/cobalt/bswap.h			comp-c-include
 ./usr/include/cobalt/cdefs.h			comp-c-include
 ./usr/include/cobalt/conf.h			comp-obsolete		obsolete

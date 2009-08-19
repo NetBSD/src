@@ -1,10 +1,12 @@
-# $NetBSD: md.mipsco,v 1.17 2009/08/12 23:38:20 matt Exp $
+# $NetBSD: md.mipsco,v 1.18 2009/08/19 08:24:44 he Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
 ./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete
 ./usr/include/mipsco/ansi.h			comp-c-include
+./usr/include/mipsco/aout_machdep.h		comp-obsolete		obsolete
 ./usr/include/mipsco/asm.h			comp-c-include
 ./usr/include/mipsco/autoconf.h			comp-c-include
+./usr/include/mipsco/bsd-aout.h			comp-obsolete		obsolete
 ./usr/include/mipsco/bswap.h			comp-c-include
 ./usr/include/mipsco/bus.h			comp-c-include
 ./usr/include/mipsco/cdefs.h			comp-c-include
