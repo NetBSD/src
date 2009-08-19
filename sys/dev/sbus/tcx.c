@@ -1,7 +1,7 @@
-/*	$NetBSD: tcx.c,v 1.35 2009/08/19 03:45:51 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.36 2009/08/19 20:51:47 macallan Exp $ */
 
 /*
- *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
+ *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
  *  All rights reserved.
  *
  *  This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.35 2009/08/19 03:45:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.36 2009/08/19 20:51:47 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -174,7 +174,7 @@ static int	tcx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	tcx_mmap(void *, void *, off_t, int);
 
 static void	tcx_init_screen(void *, struct vcons_screen *, int, long *);
-static void	tcx_clearscreen(struct tcx_softc *);
+static void	tcx_clearscreen(struct tcx_softc *, int);
 static void	tcx_copyrows(void *, int, int, int);
 static void	tcx_eraserows(void *, int, int, long);
 static void	tcx_putchar(void *, int, int, u_int, long);
@@ -380,7 +380,7 @@ tcxattach(device_t parent, device_t self, void *args)
 	tcx_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 	sc->sc_bg = (defattr >> 16) & 0xff;
-	tcx_clearscreen(sc);
+	tcx_clearscreen(sc, 0);
 
 	ri = &tcx_console_screen.scr_ri;
 
@@ -502,9 +502,6 @@ tcx_reset(struct tcx_softc *sc)
 	bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_CONTROL_1, 0);
 }
 
-/*
- * Load a subset of the current (new) colormap into the color DAC.
- */
 static void
 tcx_loadcmap(struct tcx_softc *sc, int start, int ncolors)
 {
@@ -726,9 +723,10 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
 						tcx_loadcmap(sc, 0, 256);
-						tcx_clearscreen(sc);
+						tcx_clearscreen(sc, 0);
 						vcons_redraw_screen(ms);
-					}
+					} else if (!sc->sc_8bit)
+						tcx_clearscreen(sc, 3);
 				}
 			}
 	}
@@ -792,13 +790,17 @@ tcx_init_screen(void *cookie, struct vcons_screen *scr,
 }
 
 static void
-tcx_clearscreen(struct tcx_softc *sc)
+tcx_clearscreen(struct tcx_softc *sc, int spc)
 {
 	uint64_t bg = ((uint64_t)sc->sc_bg << 32) | 0xffffffffLL;
+	uint64_t spc64;
 	int i;
 
+	spc64 = spc & 3;
+	spc64 = spc64 << 56;
+
 	for (i = 0; i < 1024 * 1024; i += 32)
-		sc->sc_rstip[i] = bg;
+		sc->sc_rstip[i] = bg | spc64;
 }
 
 static void
