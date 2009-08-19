@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.11 2009/08/19 15:00:23 dyoung Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.12 2009/08/19 15:09:56 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ struct alpha_isa_chipset {
 		    int (*)(void *), void *);
 	void	(*ic_intr_disestablish)(void *, void *);
 	int	(*ic_intr_alloc)(void *, int, int, int *);
+	void	(*ic_detach_hook)(isa_chipset_tag_t, device_t);
 };
 
 
