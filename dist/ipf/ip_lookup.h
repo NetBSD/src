@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.3 2008/05/20 07:08:06 darrenr Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.4 2009/08/19 08:35:31 darrenr Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -42,7 +42,7 @@ typedef	struct	iplookupflush	{
 	int	iplf_type;	/* IPLT_* */
 	int	iplf_unit;	/* IPL_LOG* */
 	u_int	iplf_arg;
-	size_t	iplf_count;
+	u_int	iplf_count;
 	char	iplf_name[FR_GROUPLEN];
 } iplookupflush_t;
 

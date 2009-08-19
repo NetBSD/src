@@ -10,6 +10,146 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+4.1.33 - Release 16 August 2009
+
+2838417 tru64 compile is not error free
+
+2837931 wrong mode selected in ipf program for hash-entries
+
+2828188 soft lockups on Linux
+
+2826168 load_http can make ippool core dump
+
+2825150 IPL_LOGMAX used to index some arrays
+
+2825084 ipv6 fragments should not be allowed past 64k
+
+2824713 ipfstat top output alternates between entries and nothing
+
+2824712 ipfstat top output is shows negative ttl
+
+2820965 a single bad ipv6 extension header should not impact others
+
+2818197 ignored fragment bits defined as being reserved
+
+2817667 IPv6 fragment header verification needs attention
+
+2817098 fr_getrulen() finds the wrong rule
+
+2817096 fr_rulen is unused
+
+2814988 4.1.32 RC5 does not compile on Tru64 5.1B-5
+
+2825387 ipfilter 4-1-RELEASE won't build on RHEL 5.3 kernel 2.6.18..
+
+2792185 no proxy modules are built on linux
+
+2787359 ipmon prints loopback name incorrectly for linux
+
+4.1.32 - Release 20 June 2009
+
+2741019 Lingering states (Established/Listen - 5/0) in state table
+
+2790920 Solaris U7 breaks ipfilter compilation
+
+2790910 OOW issue on Solaris 10 v4.1.9
+
+2706155 Reference to .symbol file missing in ipf.ko on FreeBSD/AMD64
+
+2787870 4.1.32rc2 ipfstat -nio causes oops on Fedora 10
+
+2785189 Networking stops on x86_64 RHEL ES4 U6 (2.6.9-67.ELsmp)
+
+2706137 FreeBSD/AMD64 build is still broken in 4.1.32 RC5
+
+2702887 use of PBR/fastroute causes panic with ipv6
+
+2657365 IPFilter 4.1.32 RC4 fails to compile on FreeBSD7/AMD64
+
+2671913 regression test in7 fails to execute
+
+2650040 cannot compile updated kernel source for 4.10
+
+2598625 parsing empty config file results in an error
+
+2698656 test parsing empty config files
+
+2597956 not all pointers in a clone are reset
+
+2543934 nat_t gets assigned ifp too early
+
+2539808 Compiling with Solaris10 patch 138889-03 fails
+
+2535795 No need to always bump fr_ref
+
+2535778 Bad IPv6 packets droped by default
+
+4.1.32 RC1 - Release 1 January 2009
+
+2031730 4.1.31 Nat drops fragmented packets after the first
+
+2214661 ipf doesn't handle IPv6 fragments
+
+2473273 NAT removed before RST/ICMP sent
+
+2216500 fin_state serves no purpose
+
+2424604 adding random MD5 data causes panic
+
+2304435 Ineffecient lock usage in logging
+
+2216491 fin_nat serves little purpose
+
+1859718 IPF 4.1.28 repeated kernel panic Solaris 9 32bit
+
+2055619 duplicating a free'd packet will fail
+
+2042949 Excessive locking when creating nat_t
+
+2035610 nat_update does not need to get locks
+
+2214658 ipf mostly ignores locking in NetBSD
+
+1979427 Memory leak in user utilities - token never freed (rel br)
+
+* try to guess if SUNWspro wants -m64
+
+2063742 4.1.30 breaks builds on Solaris 8
+
+4.1.31 - Release 27 July 2008
+
+* compiling arc4random.c is challenging on solaris 10 or solaris without gcc
+
+* SunOS4 doesn't have a curproc, but it does have u.
+
+* The fix for 2020447 generated random port numbers but not within the
+  range specified in the map rule.  Add in a regression test to verify
+  that the "random" part works.
+
+4.1.30 - Release 24 July 2008
+
+2022104 solaris's driver.conf cannot set timeout values
+
+2020447 IPFilter's NAT can undo name server random port selection
+
+1988795 NetBSD doesn't build with kernel malloc stats
+
+1988782 fr_movequeue can take a short cut
+
+1988669 first nat creation failure prevents further success
+
+1988668 hostmap searching does not work properly
+
+* on some 64bit architectures (such as alpha), the addrfamily_t is packed
+  differently, throwing off the calculations for adf_len
+
+* one too many READ_ENTERs in ip_sync code.
+
+* clean up fr_fastroute a little by removing some #ifdefs and pushing the
+  code around a bit to use the same variables (NetBSD)
+
+* more recent NetBSDs use VOP related macros differently
+
 4.1.29 - Release 14 April 2008
 
 * #ifdef warning fixes from Victor M Blood (FreeBSD) - #1821249

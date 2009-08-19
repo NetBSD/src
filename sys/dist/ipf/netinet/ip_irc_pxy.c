@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.10 2007/12/11 04:55:01 lukem Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.11 2009/08/19 08:36:11 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.39.2.6 2006/07/14 06:12:14 darrenr Exp
+ * Id: ip_irc_pxy.c,v 2.39.2.9 2008/11/06 21:18:34 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.10 2007/12/11 04:55:01 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.11 2009/08/19 08:36:11 darrenr Exp $");
 
 #define	IPF_IRC_PROXY
 
@@ -402,8 +402,6 @@ nat_t *nat;
 		tcp2->th_win = htons(8192);
 		tcp2->th_sport = sp;
 		tcp2->th_dport = 0; /* XXX - don't specify remote port */
-		fi.fin_state = NULL;
-		fi.fin_nat = NULL;
 		fi.fin_data[0] = ntohs(sp);
 		fi.fin_data[1] = 0;
 		fi.fin_dp = (char *)tcp2;
@@ -412,15 +410,17 @@ nat_t *nat;
 		fi.fin_plen = fi.fin_hlen + sizeof(*tcp2);
 		swip = ip->ip_src;
 		ip->ip_src = nat->nat_inip;
+		MUTEX_ENTER(&ipf_nat_new);
 		nat2 = nat_new(&fi, nat->nat_ptr, NULL,
 			       NAT_SLAVE|IPN_TCP|SI_W_DPORT, NAT_OUTBOUND);
+		MUTEX_EXIT(&ipf_nat_new);
 		if (nat2 != NULL) {
 			(void) nat_proto(&fi, nat2, 0);
-			nat_update(&fi, nat2, nat2->nat_ptr);
+			MUTEX_ENTER(&nat2->nat_lock);
+			nat_update(&fi, nat2);
+			MUTEX_EXIT(&nat2->nat_lock);
 
 			(void) fr_addstate(&fi, NULL, SI_W_DPORT);
-			if (fi.fin_state != NULL)
-				fr_statederef((ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_src = swip;
 	}
