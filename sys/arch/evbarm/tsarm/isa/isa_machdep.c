@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9 2009/08/18 17:02:00 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.10 2009/08/19 15:14:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2009/08/18 17:02:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2009/08/19 15:14:59 dyoung Exp $");
 
 #include "opt_irqstats.h"
 
@@ -196,6 +196,6 @@ isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach
 }
 
 void
-isa_detach_hook(device_t self)
+isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 }
