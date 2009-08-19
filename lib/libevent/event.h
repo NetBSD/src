@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.6 2009/07/08 21:23:53 tls Exp $	*/
+/*	$NetBSD: event.h,v 1.7 2009/08/19 15:18:05 tls Exp $	*/
 /*	$OpenBSD: event.h,v 1.4 2002/07/12 18:50:48 provos Exp $	*/
 
 /*
@@ -165,6 +165,7 @@
 extern "C" {
 #endif
 
+#include <event-config.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdint.h>
