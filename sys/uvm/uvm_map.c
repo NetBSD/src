@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.280 2009/08/18 19:16:09 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.281 2009/08/19 04:53:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.280 2009/08/18 19:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.281 2009/08/19 04:53:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4655,9 +4655,7 @@ uvm_kmapent_alloc(struct vm_map *map, int flags)
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	UVMMAP_EVCNT_INCR(uke_alloc);
-#ifndef PMAP_MAP_POOLPAGE
 	entry = NULL;
-#endif
 again:
 	/*
 	 * try to grab an entry from freelist.
