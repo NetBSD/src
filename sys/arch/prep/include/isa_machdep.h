@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.11 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.12 2009/08/19 14:41:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ extern int isa_pcmciamask;
 /* function mappings */
 #define isa_attach_hook(p, s, iaa)					\
 	genppc_isa_attach_hook(p, s, iaa)
+#define isa_detach_hook(s)						\
+	genppc_isa_detach_hook(s)
 #define isa_intr_evcnt(ic, irq)						\
 	genppc_isa_intr_evcnt(ic, irq)
 #define isa_intr_establish(ic, irq, type, level, fun, arg)		\
