@@ -1,0 +1,48 @@
+#	$NetBSD: files.gdium,v 1.1.2.2 2009/08/19 18:46:11 yamt Exp $
+
+file	arch/evbmips/gdium/gdium_bus_io.c
+file	arch/evbmips/gdium/gdium_bus_mem.c
+file	arch/evbmips/gdium/gdium_dma.c
+file	arch/evbmips/gdium/gdium_genfb.c	wsdisplay
+file	arch/evbmips/gdium/gdium_intr.c
+
+file	arch/evbmips/gdium/autoconf.c
+file	arch/evbmips/gdium/machdep.c
+
+file	arch/mips/mips/bus_dma.c
+file	arch/evbmips/evbmips/disksubr.c
+file	arch/evbmips/evbmips/interrupt.c
+
+file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
+file	arch/mips/mips/softintr.c
+
+# The autoconfiguration root.
+device	mainbus { [addr = -1] }
+attach	mainbus at root
+file	arch/evbmips/gdium/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/evbmips/cpu.c		cpu
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Machine-independent SCSI drivers
+include "dev/scsipi/files.scsipi"
+
+# Machine-independent USB device support
+include "dev/usb/files.usb"
+include "dev/ata/files.ata"			# to make umass happy
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks
+
+#
+# PCI bus support.
+#
+include "dev/pci/files.pci"
+include "arch/mips/conf/files.bonito"
+
+file	arch/evbmips/gdium/bonito_mainbus.c	bonito_mainbus

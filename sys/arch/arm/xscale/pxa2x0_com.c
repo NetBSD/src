@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.10 2008/03/14 15:09:09 cube Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.10.4.1 2009/08/19 18:46:00 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.10 2008/03/14 15:09:09 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.10.4.1 2009/08/19 18:46:00 yamt Exp $");
 
 #include "opt_com.h"
 
@@ -103,8 +103,9 @@ pxauart_match(device_t parent, cfdata_t cf, void *aux)
 	case PXA2X0_HWUART_BASE:
 		if (pxa->pxa_intr != PXA2X0_INT_HWUART)
 			return (0);
-		gpioconf = CPU_IS_PXA250 ? pxa25x_com_hwuart_gpioconf :
-			    pxa27x_com_hwuart_gpioconf;
+		if (CPU_IS_PXA270)
+			return (0);
+		gpioconf = pxa25x_com_hwuart_gpioconf;
 		break;
 
 	default:

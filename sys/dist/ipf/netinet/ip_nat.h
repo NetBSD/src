@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.13.22.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.13.22.2 2009/08/19 18:47:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.13.22.1 2009/05/04 08:13:27 yamt Exp $
+ * Id: ip_nat.h,v 2.90.2.23 2008/11/06 21:18:36 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -366,6 +366,7 @@ typedef	struct	natstat	{
 	u_long	*ns_bucketlen[2];
 	u_long	ns_ticks;
 	u_int	ns_orphans;
+	u_long	ns_uncreate[2][2];
 } natstat_t;
 
 typedef	struct	natlog {
@@ -437,7 +438,7 @@ extern	natstat_t	nat_stats;
 #if defined(__OpenBSD__)
 extern	void	nat_ifdetach __P((void *));
 #endif
-extern	int	fr_nat_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
+extern	int	fr_nat_ioctl __P((void *, ioctlcmd_t, int, int, void *));
 extern	int	fr_natinit __P((void));
 extern	nat_t	*nat_new __P((fr_info_t *, ipnat_t *, nat_t **, u_int, int));
 extern	nat_t	*nat_outlookup __P((fr_info_t *, u_int, u_int, struct in_addr,
@@ -453,6 +454,7 @@ extern	nat_t	*nat_icmperrorlookup __P((fr_info_t *, int));
 extern	nat_t	*nat_icmperror __P((fr_info_t *, u_int *, int));
 extern	void	nat_delete __P((struct nat *, int));
 extern	int	nat_insert __P((nat_t *, int));
+extern	void	nat_uncreate __P((fr_info_t *));
 
 extern	int	fr_checknatout __P((fr_info_t *, u_32_t *));
 extern	int	fr_natout __P((fr_info_t *, nat_t *, int, u_32_t));
@@ -466,7 +468,7 @@ extern	void	fix_outcksum __P((fr_info_t *, u_short *, u_32_t));
 extern	void	fr_ipnatderef __P((ipnat_t **));
 extern	void	fr_natderef __P((nat_t **));
 extern	u_short	*nat_proto __P((fr_info_t *, nat_t *, u_int));
-extern	void	nat_update __P((fr_info_t *, nat_t *, ipnat_t *));
+extern	void	nat_update __P((fr_info_t *, nat_t *));
 extern	void	fr_setnatqueue __P((nat_t *, int));
 extern	void	fr_hostmapdel __P((hostmap_t **));
 

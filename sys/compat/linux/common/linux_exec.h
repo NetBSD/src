@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.42.16.2 2009/05/04 08:12:22 yamt Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.42.16.3 2009/08/19 18:46:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _LINUX_EXEC_H
 #define _LINUX_EXEC_H
+
+#if defined(EXEC_AOUT)
+#include <sys/exec_aout.h>
+#endif
 
 #if defined(EXEC_ELF32) || defined(EXEC_ELF64)
 #include <sys/exec_elf.h>
@@ -125,9 +129,11 @@ extern struct emul emul_linux;
 int linux_sysctl(int *, u_int, void *, size_t *, void *, size_t,
     struct lwp *);
 void linux_setregs(struct lwp *, struct exec_package *, u_long);
+#ifdef EXEC_AOUT
 int exec_linux_aout_makecmds(struct lwp *, struct exec_package *);
 int linux_aout_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
+#endif
 void linux_trapsignal(struct lwp *, ksiginfo_t *);
 int linux_usertrap(struct lwp *, vaddr_t, void *);
 #ifdef LINUX_NPTL

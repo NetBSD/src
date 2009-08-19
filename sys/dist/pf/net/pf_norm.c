@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.18.10.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.18.10.2 2009/08/19 18:47:33 yamt Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.18.10.1 2009/05/04 08:13:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.18.10.2 2009/08/19 18:47:33 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,18 +176,6 @@ pf_normalize_init(void)
 	TAILQ_INIT(&pf_fragqueue);
 	TAILQ_INIT(&pf_cachequeue);
 }
-
-#ifdef _LKM
-void
-pf_normalize_destroy(void)
-{
-	pool_destroy(&pf_state_scrub_pl);
-	pool_destroy(&pf_cent_pl);
-	pool_destroy(&pf_cache_pl);
-	pool_destroy(&pf_frag_pl);
-	pool_destroy(&pf_frent_pl);
-}
-#endif /* _LKM */
 
 static __inline int
 pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)

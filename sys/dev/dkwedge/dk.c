@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.37.4.4 2009/07/18 14:53:00 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.37.4.5 2009/08/19 18:47:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.4 2009/07/18 14:53:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.5 2009/08/19 18:47:05 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -95,6 +95,7 @@ static void	dkiodone(struct buf *);
 static void	dkrestart(void *);
 
 static int	dklastclose(struct dkwedge_softc *);
+static int	dkwedge_detach(device_t, int);
 
 static dev_type_open(dkopen);
 static dev_type_close(dkclose);
@@ -149,23 +150,10 @@ dkwedge_attach(device_t parent, device_t self,
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-/*
- * dkwedge_detach:
- *
- *	Autoconfiguration detach function for pseudo-device glue.
- */
-static int
-dkwedge_detach(device_t self, int flags)
-{
-
-	pmf_device_deregister(self);
-	/* Always succeeds. */
-	return (0);
-}
-
 CFDRIVER_DECL(dk, DV_DISK, NULL);
-CFATTACH_DECL_NEW(dk, 0,
-	      dkwedge_match, dkwedge_attach, dkwedge_detach, NULL);
+CFATTACH_DECL3_NEW(dk, 0,
+    dkwedge_match, dkwedge_attach, dkwedge_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 /*
  * dkwedge_wait_drain:
@@ -231,6 +219,39 @@ dkwedge_array_expand(void)
 	ndkwedges = newcnt;
 	if (oldarray != NULL)
 		free(oldarray, M_DKWEDGE);
+}
+
+static void
+dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", dkw->dkw_size);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    DEV_BSIZE /* XXX 512? */);
+
+	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
+
+	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
+
+	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dkw->dkw_size / 2048);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	odisk_info = disk->dk_info;
+
+	disk->dk_info = disk_info;
+
+	if (odisk_info != NULL)
+		prop_object_release(odisk_info);
 }
 
 /*
@@ -408,6 +429,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 */
 
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	dkgetproperties(&sc->sc_dk, dkw);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */
@@ -423,6 +445,43 @@ dkwedge_add(struct dkwedge_info *dkw)
 }
 
 /*
+ * dkwedge_find:
+ *
+ *	Lookup a disk wedge based on the provided information.
+ *	NOTE: We look up the wedge based on the wedge devname,
+ *	not wname.
+ *
+ *	Return NULL if the wedge is not found, otherwise return
+ *	the wedge's softc.  Assign the wedge's unit number to unitp
+ *	if unitp is not NULL.
+ */
+static struct dkwedge_softc *
+dkwedge_find(struct dkwedge_info *dkw, u_int *unitp)
+{
+	struct dkwedge_softc *sc = NULL;
+	u_int unit;
+
+	/* Find our softc. */
+	dkw->dkw_devname[sizeof(dkw->dkw_devname) - 1] = '\0';
+	rw_enter(&dkwedges_lock, RW_READER);
+	for (unit = 0; unit < ndkwedges; unit++) {
+		if ((sc = dkwedges[unit]) != NULL &&
+		    strcmp(device_xname(sc->sc_dev), dkw->dkw_devname) == 0 &&
+		    strcmp(sc->sc_parent->dk_name, dkw->dkw_parent) == 0) {
+			break;
+		}
+	}
+	rw_exit(&dkwedges_lock);
+	if (unit == ndkwedges)
+		return NULL;
+
+	if (unitp != NULL)
+		*unitp = unit;
+
+	return sc;
+}
+
+/*
  * dkwedge_del:		[exported function]
  *
  *	Delete a disk wedge based on the provided information.
@@ -433,26 +492,64 @@ int
 dkwedge_del(struct dkwedge_info *dkw)
 {
 	struct dkwedge_softc *sc = NULL;
-	u_int unit;
-	int bmaj, cmaj, s;
 
 	/* Find our softc. */
-	dkw->dkw_devname[sizeof(dkw->dkw_devname) - 1] = '\0';
-	rw_enter(&dkwedges_lock, RW_WRITER);
-	for (unit = 0; unit < ndkwedges; unit++) {
-		if ((sc = dkwedges[unit]) != NULL &&
-		    strcmp(device_xname(sc->sc_dev), dkw->dkw_devname) == 0 &&
-		    strcmp(sc->sc_parent->dk_name, dkw->dkw_parent) == 0) {
-			/* Mark the wedge as dying. */
-			sc->sc_state = DKW_STATE_DYING;
-			break;
-		}
-	}
-	rw_exit(&dkwedges_lock);
-	if (unit == ndkwedges)
+	if ((sc = dkwedge_find(dkw, NULL)) == NULL)
 		return (ESRCH);
 
-	KASSERT(sc != NULL);
+	return config_detach(sc->sc_dev, DETACH_FORCE | DETACH_QUIET);
+}
+
+static int
+dkwedge_begindetach(struct dkwedge_softc *sc, int flags)
+{
+	struct disk *dk = &sc->sc_dk;
+	int rc;
+
+	rc = 0;
+	mutex_enter(&dk->dk_openlock);
+	mutex_enter(&sc->sc_parent->dk_rawlock);
+	if (dk->dk_openmask == 0)
+		;	/* nothing to do */
+	else if ((flags & DETACH_FORCE) == 0)
+		rc = EBUSY;
+	else
+		rc = dklastclose(sc);
+	mutex_exit(&sc->sc_parent->dk_rawlock);
+	mutex_exit(&dk->dk_openlock);
+
+	return rc;
+}
+
+/*
+ * dkwedge_detach:
+ *
+ *	Autoconfiguration detach function for pseudo-device glue.
+ */
+static int
+dkwedge_detach(device_t self, int flags)
+{
+	struct dkwedge_softc *sc = NULL;
+	u_int unit;
+	int bmaj, cmaj, rc, s;
+
+	rw_enter(&dkwedges_lock, RW_WRITER);
+	for (unit = 0; unit < ndkwedges; unit++) {
+		if ((sc = dkwedges[unit]) != NULL && sc->sc_dev == self)
+			break;
+	}
+	if (unit == ndkwedges)
+		rc = ENXIO;
+	else if ((rc = dkwedge_begindetach(sc, flags)) == 0) {
+		/* Mark the wedge as dying. */
+		sc->sc_state = DKW_STATE_DYING;
+	}
+	rw_exit(&dkwedges_lock);
+
+	if (rc != 0)
+		return rc;
+
+	pmf_device_deregister(self);
 
 	/* Locate the wedge major numbers. */
 	bmaj = bdevsw_lookup_major(&dk_bdevsw);
@@ -495,9 +592,6 @@ dkwedge_del(struct dkwedge_info *dkw)
 	    sc->sc_parent->dk_name,
 	    sc->sc_wname);	/* XXX Unicode */
 
-	/* Delete our pseudo-device. */
-	(void) config_detach(sc->sc_dev, DETACH_FORCE | DETACH_QUIET);
-
 	mutex_enter(&sc->sc_parent->dk_openlock);
 	sc->sc_parent->dk_nwedges--;
 	LIST_REMOVE(sc, sc_plink);
@@ -518,7 +612,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 
 	free(sc, M_DKWEDGE);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1205,6 +1299,12 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
+	error = disk_ioctl(&sc->sc_dk, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
+
+	error = 0;
+	
 	switch (cmd) {
 	case DIOCCACHESYNC:
 		/*
@@ -1220,7 +1320,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case DIOCGWEDGEINFO:
 	    {
-	    	struct dkwedge_info *dkw = (void *) data;
+		struct dkwedge_info *dkw = (void *) data;
 
 		strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
 			sizeof(dkw->dkw_devname));

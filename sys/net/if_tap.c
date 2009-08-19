@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.42.2.2 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.42.2.3 2009/08/19 18:48:23 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.2 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.3 2009/08/19 18:48:23 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -658,7 +658,7 @@ tap_clone_creator(int unit)
 		cf->cf_fstate = FSTATE_STAR;
 	} else {
 		cf->cf_unit = unit;
-		cf->cf_fstate = FSTATE_FOUND;
+		cf->cf_fstate = FSTATE_NOTFOUND;
 	}
 
 	return device_private(config_attach_pseudo(cf));

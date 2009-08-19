@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.16 2005/11/11 06:27:09 simonb Exp $ */
+/* $NetBSD: sbobio.c,v 1.16.80.1 2009/08/19 18:46:32 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.16 2005/11/11 06:27:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.16.80.1 2009/08/19 18:46:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
 #include <machine/locore.h>
+#include <mips/sibyte/include/sb1250_int.h>
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/include/zbbusvar.h>
@@ -56,49 +57,115 @@ CFATTACH_DECL(sbobio, sizeof(struct device),
 static int	sbobio_print(void *, const char *);
 static const char *sbobio_device_type_name(enum sbobio_device_type type);
 
+/*
+ * XXXsimonb:
+ *	DUART register addresses seem to offset by 0x100 for some
+ *	reason I can't fathom so we just can't use A_DUART for the
+ *	address of the DUART.  Eg,
+ *		A_DUART_CHANREG(0, 0) = 0x0010060000
+ *	   and	R_DUART_MODE_REG_1 = 0x100 (first reg in the duart)
+ *	but the 1125/1250 manual says the DUART starts at
+ *	0x0010060100.
+ *	We define our own R_DUART_REGBASE to R_DUART_MODE_REG_1
+ *	so that we can use a symbolic name to refer to the start
+ *	of the duart register space.
+ */
+
 static const struct sbobio_attach_locs sb1250_rev1_sbobio_devs[] = {
-	{ 0x0000, {6,-1},	SBOBIO_DEVTYPE_SMBUS		},
-	{ 0x0008, {7,-1},	SBOBIO_DEVTYPE_SMBUS		},
-	{ 0x0100, {8,9},	SBOBIO_DEVTYPE_DUART		},
-	{ 0x0400, {10,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
-	{ 0x0800, {11,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
+	{ A_SMB_0,
+	  { K_INT_SMB_0, -1 },
+	  SBOBIO_DEVTYPE_SMBUS },
+	{ A_SMB_1,
+	  { K_INT_SMB_1, -1 },
+	  SBOBIO_DEVTYPE_SMBUS },
+	{ A_DUART_CHANREG(0, R_DUART_REGBASE),
+	  { K_INT_UART_0, K_INT_UART_1 },
+	  SBOBIO_DEVTYPE_DUART },
+	{ A_SER_BASE_0,
+	  { K_INT_SER_0, -1 },
+	  SBOBIO_DEVTYPE_SYNCSERIAL },
+	{ A_SER_BASE_1,
+	  { K_INT_SER_1, -1 },
+	  SBOBIO_DEVTYPE_SYNCSERIAL },
 #if 0
-	{ 0x1000, {-1,-1},	SBOBIO_DEVTYPE_GBUS,		}, /* XXXCGD ??? */
+	{ A_IO_EXT_BASE,
+	  { -1, -1 },
+	  SBOBIO_DEVTYPE_GBUS },
 #endif
-	{ 0x4000, {19,-1},	SBOBIO_DEVTYPE_MAC,		},
-	{ 0x5000, {20,-1},	SBOBIO_DEVTYPE_MAC,		},
-	{ 0x6000, {21,-1},	SBOBIO_DEVTYPE_MAC,		},
+	{ A_MAC_BASE_0,
+	  { K_INT_MAC_0, -1 },
+	  SBOBIO_DEVTYPE_MAC },
+	{ A_MAC_BASE_1,
+	  { K_INT_MAC_1, -1 },
+	  SBOBIO_DEVTYPE_MAC },
+	{ A_MAC_BASE_2,
+	  { K_INT_MAC_2, -1 },
+	  SBOBIO_DEVTYPE_MAC },
 };
 static const int sb1250_rev1_sbobio_dev_count =
     sizeof sb1250_rev1_sbobio_devs / sizeof sb1250_rev1_sbobio_devs[0];
 
 static const struct sbobio_attach_locs sb1250_sbobio_devs[] = {
-	{ 0x0000, {6,-1},	SBOBIO_DEVTYPE_SMBUS		},
-	{ 0x0008, {7,-1},	SBOBIO_DEVTYPE_SMBUS		},
-	{ 0x0100, {8,9},	SBOBIO_DEVTYPE_DUART		},
-	{ 0x0400, {10,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
-	{ 0x0800, {11,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
+	{ A_SMB_0,
+	  { K_INT_SMB_0, -1 },
+	  SBOBIO_DEVTYPE_SMBUS },
+	{ A_SMB_1,
+	  { K_INT_SMB_1, -1 },
+	  SBOBIO_DEVTYPE_SMBUS },
+	{ A_DUART_CHANREG(0, R_DUART_REGBASE),
+	  { K_INT_UART_0, K_INT_UART_1},
+	  SBOBIO_DEVTYPE_DUART },
+	{ A_SER_BASE_0,
+	  { K_INT_SER_0, -1 },
+	  SBOBIO_DEVTYPE_SYNCSERIAL },
+	{ A_SER_BASE_1,
+	  { K_INT_SER_1, -1 },
+	  SBOBIO_DEVTYPE_SYNCSERIAL },
 #if 0
-	{ 0x1000, {-1,-1},	SBOBIO_DEVTYPE_GBUS,		}, /* XXXCGD ??? */
+	{ A_IO_EXT_BASE,
+	  { -1, -1 },
+	  SBOBIO_DEVTYPE_GBUS },
 #endif
-	{ 0x4000, {19,61},	SBOBIO_DEVTYPE_MAC,		},
-	{ 0x5000, {20,62},	SBOBIO_DEVTYPE_MAC,		},
-	{ 0x6000, {21,63},	SBOBIO_DEVTYPE_MAC,		},
+	{ A_MAC_BASE_0,
+	  { K_INT_MAC_0, K_INT_MAC_0_CH1 },
+	  SBOBIO_DEVTYPE_MAC },
+	{ A_MAC_BASE_1,
+	  { K_INT_MAC_1, K_INT_MAC_1_CH1 },
+	  SBOBIO_DEVTYPE_MAC },
+	{ A_MAC_BASE_2,
+	  { K_INT_MAC_2, K_INT_MAC_2_CH1 },
+	  SBOBIO_DEVTYPE_MAC },
 };
 static const int sb1250_sbobio_dev_count =
     sizeof sb1250_sbobio_devs / sizeof sb1250_sbobio_devs[0];
 
 static const struct sbobio_attach_locs sb112x_sbobio_devs[] = {
-	{ 0x0000, {6,-1},	SBOBIO_DEVTYPE_SMBUS		},
-	{ 0x0008, {7,-1},	SBOBIO_DEVTYPE_SMBUS		},
-	{ 0x0100, {8,9},	SBOBIO_DEVTYPE_DUART		},
-	{ 0x0400, {10,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
-	{ 0x0800, {11,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
+	{ A_SMB_0,
+	  { K_INT_SMB_0, -1 },
+	  SBOBIO_DEVTYPE_SMBUS },
+	{ A_SMB_1,
+	  { K_INT_SMB_1, -1 },
+	  SBOBIO_DEVTYPE_SMBUS },
+	{ A_DUART_CHANREG(0, R_DUART_REGBASE),
+	  { K_INT_UART_0, K_INT_UART_1 },
+	  SBOBIO_DEVTYPE_DUART },
+	{ A_SER_BASE_0,
+	  { K_INT_SER_0, -1 },
+	  SBOBIO_DEVTYPE_SYNCSERIAL },
+	{ A_SER_BASE_1,
+	  { K_INT_SER_1, -1 },
+	  SBOBIO_DEVTYPE_SYNCSERIAL },
 #if 0
-	{ 0x1000, {-1,-1},	SBOBIO_DEVTYPE_GBUS,		}, /* XXXCGD ??? */
+	{ A_IO_EXT_BASE,
+	  { -1, -1 },
+	  SBOBIO_DEVTYPE_GBUS },
 #endif
-	{ 0x4000, {19,61},	SBOBIO_DEVTYPE_MAC,		},
-	{ 0x5000, {20,62},	SBOBIO_DEVTYPE_MAC,		},
+	{ A_MAC_BASE_0,
+	  { K_INT_MAC_0, K_INT_MAC_0_CH1 },
+	  SBOBIO_DEVTYPE_MAC },
+	{ A_MAC_BASE_1,
+	  { K_INT_MAC_1, K_INT_MAC_1_CH1 },
+	  SBOBIO_DEVTYPE_MAC },
 };
 static const int sb112x_sbobio_dev_count =
     sizeof sb112x_sbobio_devs / sizeof sb112x_sbobio_devs[0];
@@ -167,10 +234,9 @@ sbobio_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < devcount; i++) {
 		memset(&sa, 0, sizeof sa);
-		sa.sa_base = A_PHYS_IO_SYSTEM;
 		sa.sa_locs = devs[i];
 
-		locs[SBOBIOCF_OFFSET] = devs[i].sa_offset;
+		locs[SBOBIOCF_ADDR] = devs[i].sa_addr;
 		locs[SBOBIOCF_INTR + 0] = devs[i].sa_intr[0];
 		locs[SBOBIOCF_INTR + 1] = devs[i].sa_intr[1];
 
@@ -189,11 +255,11 @@ sbobio_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s",
 		    sbobio_device_type_name(sap->sa_locs.sa_type), pnp);
-	aprint_normal(" offset 0x%lx", (long)sap->sa_locs.sa_offset);
+	aprint_normal(" addr 0x%x", sap->sa_locs.sa_addr);
 	for (i = 0; i < 2; i++) {
 		if (sap->sa_locs.sa_intr[i] != SBOBIOCF_INTR_DEFAULT)
-			aprint_normal("%s%ld", i == 0 ? " intr " : ",",
-			    (long)sap->sa_locs.sa_intr[i]);
+			aprint_normal("%s%d", i == 0 ? " intr " : ",",
+			    sap->sa_locs.sa_intr[i]);
 	}
 	return (UNCONF);
 }

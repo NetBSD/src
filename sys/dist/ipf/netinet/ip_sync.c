@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.9.12.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.9.12.2 2009/08/19 18:47:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -68,7 +68,6 @@ struct file;
 #ifdef sun
 # include <net/af.h>
 #endif
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -104,9 +103,9 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.9.12.1 2009/05/04 08:13:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.9.12.2 2009/08/19 18:47:33 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.8 2006/07/14 06:12:20 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.16 2009/01/27 08:33:23 darrenr Exp";
 #endif
 #endif
 
@@ -765,7 +764,6 @@ void *data;
 	case SMC_UPDATE :
 		bcopy(data, &su, sizeof(su));
 
-		READ_ENTER(&ipf_syncnat);
 		for (sl = syncnattab[hv]; (sl != NULL); sl = sl->sl_next)
 			if (sl->sl_hdr.sm_num == sp->sm_num)
 				break;
@@ -920,7 +918,7 @@ void *ptr;
 # else
 	MUTEX_EXIT(&ipsl_mutex);
 #  ifdef _KERNEL
-	WAKEUP(&sl_tail);
+	WAKEUP(&sl_tail, 0);
 	POLLWAKEUP(IPL_LOGSYNC);
 #  endif
 # endif
@@ -1010,7 +1008,7 @@ synclist_t *sl;
 # else
 	MUTEX_EXIT(&ipsl_mutex);
 #  ifdef _KERNEL
-	WAKEUP(&sl_tail);
+	WAKEUP(&sl_tail, 0);
 	POLLWAKEUP(IPL_LOGSYNC);
 #  endif
 # endif
@@ -1028,7 +1026,7 @@ synclist_t *sl;
 /* EINVAL on all occasions.                                                 */
 /* ------------------------------------------------------------------------ */
 int fr_sync_ioctl(data, cmd, mode, uid, ctx)
-caddr_t data;
+void * data;
 ioctlcmd_t cmd;
 int mode, uid;
 void *ctx;

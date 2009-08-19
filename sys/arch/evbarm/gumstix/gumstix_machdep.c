@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.8.10.2 2009/05/04 08:10:58 yamt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.8.10.3 2009/08/19 18:46:06 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -220,7 +220,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
@@ -259,6 +258,7 @@ struct user *proc0paddr;
 /* Prototypes */
 static void	read_system_serial(void);
 static void	process_kernel_args(int, char *[]);
+static void	process_kernel_args_line(char *);
 #ifdef KGDB
 static void	kgdb_port_init(void);
 #endif
@@ -270,6 +270,8 @@ bs_protos(bs_notimpl);
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
+
+#include "lcd.h"
 
 #ifndef CONSPEED
 #define CONSPEED B115200	/* It's a setting of the default of u-boot */
@@ -423,6 +425,12 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		_S(4 * COM_NPORTS),
 		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
 	},
+	{
+		GUMSTIX_LCDC_VBASE,
+		_A(PXA2X0_LCDC_BASE),
+		_S(4 * COM_NPORTS),
+		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	},
 	{0, 0, 0, 0, 0}
 };
 
@@ -448,7 +456,8 @@ initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
 	extern uint32_t *u_boot_args[];
-	enum { r3 = 0, r4 = 1, r5 = 2, r6 = 3 };	/* args from u-boot */
+	extern uint32_t ram_size;
+	enum { r0 = 0, r1 = 1, r2 = 2, r3 = 3 }; /* args from u-boot */
 	int loop;
 	int loop1;
 	u_int l1pagetable;
@@ -506,10 +515,20 @@ initarm(void *arg)
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
-	process_kernel_args((int)u_boot_args[r6], (char **)u_boot_args[r5]);
+#define SDRAM_START	0xa0000000UL
+	if (((uint32_t)u_boot_args[r0] & 0xf0000000) != SDRAM_START)
+		/* Maybe r0 is 'argc'.  We are booted by command 'go'. */
+		process_kernel_args((int)u_boot_args[r0],
+		    (char **)u_boot_args[r1]);
+	else
+		/*
+		 * Maybe r3 is 'boot args string' of 'bootm'.  This string is
+		 * linely.
+		 */
+		process_kernel_args_line((char *)u_boot_args[r3]);
 
-	memstart = 0xa0000000UL;
-	memsize = 0x04000000UL;		/* 64MB */
+	memstart = SDRAM_START;
+	memsize = ram_size;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
@@ -920,20 +939,13 @@ read_system_serial(void)
 	printf("\n");
 }
 
+static const char busheader_name[] = "busheader=";
 static void
 process_kernel_args(int argc, char *argv[])
 {
-	static const char busheader_name[] = "busheader=";
 	int gxio_configured = 0, i, j;
 
 	boothowto = 0;
-
-	/*
-	 * XXXXX: The value of argc is wrong.  The number of arguments is
-	 * corrected in the do_go() of u-boot.  However, it is not actually
-	 * corrected. 
-	 */
-	argc --;
 
 	for (i = 1, j = 0; i < argc; i++) {
 		if (!strncmp(argv[i], busheader_name, strlen(busheader_name))) {
@@ -957,6 +969,34 @@ process_kernel_args(int argc, char *argv[])
 
 	if (!gxio_configured)
 		gxio_config_expansion(NULL);
+}
+
+static void
+process_kernel_args_line(char *args)
+{
+	int i;
+	char expansion[256], *p, c;
+
+	boothowto = 0;
+
+	strncpy(bootargs, args, sizeof(bootargs));
+	p = strstr(bootargs, busheader_name);
+	if (p == NULL)
+		gxio_config_expansion(NULL);
+	else {
+		i = 0;
+		do {
+			c = *(p + strlen(busheader_name) + i);
+			if (c == ' ')
+				c = '\0';
+			expansion[i++] = c;
+		} while (c != '\0');
+		gxio_config_expansion(expansion);
+		strcpy(p, p + i);
+	}
+	boot_args = bootargs;
+
+	parse_mi_bootargs(boot_args);
 }
 
 #ifdef KGDB
@@ -1060,6 +1100,13 @@ consinit(void)
 
 #endif /* NCOM */
 
+#if NLCD > 0
+	{
+		extern void gxlcd_cnattach(void);
+
+		gxlcd_cnattach();
+	}
+#endif
 }
 
 #ifdef KGDB

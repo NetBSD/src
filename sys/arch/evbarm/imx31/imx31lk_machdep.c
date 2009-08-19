@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.1.24.2 2009/05/04 08:10:58 yamt Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.1.24.3 2009/08/19 18:46:07 yamt Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.1.24.2 2009/05/04 08:10:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.1.24.3 2009/08/19 18:46:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -195,7 +195,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S

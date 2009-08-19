@@ -1,4 +1,4 @@
-/*	$NetBSD: acpica.h,v 1.2 2006/03/23 13:46:13 kochi Exp $	*/
+/*	$NetBSD: acpica.h,v 1.2.62.1 2009/08/19 18:47:03 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,4 +40,5 @@
  * headers.
  */
 
-#include <dist/acpica/acpi.h>
+#include <external/intel-public/acpica/dist/include/acpi.h>
+#include <external/intel-public/acpica/dist/include/accommon.h>

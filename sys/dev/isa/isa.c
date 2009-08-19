@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.133.4.2 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: isa.c,v 1.133.4.3 2009/08/19 18:47:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133.4.2 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133.4.3 2009/08/19 18:47:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,12 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133.4.2 2009/05/04 08:12:48 yamt Exp $");
 
 int	isamatch(device_t, cfdata_t, void *);
 void	isaattach(device_t, device_t, void *);
+int	isadetach(device_t, int);
 int	isarescan(device_t, const char *, const int *);
 void	isachilddetached(device_t, device_t);
 int	isaprint(void *, const char *);
 
 CFATTACH_DECL2_NEW(isa, sizeof(struct isa_softc),
-    isamatch, isaattach, NULL, NULL, isarescan, isachilddetached);
+    isamatch, isaattach, isadetach, NULL, isarescan, isachilddetached);
 
 void	isa_attach_knowndevs(struct isa_softc *);
 void	isa_free_knowndevs(struct isa_softc *);
@@ -138,6 +139,27 @@ isaattach(device_t parent, device_t self, void *aux)
 }
 
 int
+isadetach(device_t self, int flags)
+{
+	struct isa_softc *sc = device_private(self);
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+
+	isa_free_knowndevs(sc);
+
+#if NISADMA > 0
+	isa_dmadestroy(sc->sc_ic);
+#endif
+	isa_detach_hook(self);
+
+	return 0;
+}
+
+int
 isarescan(device_t self, const char *ifattr, const int *locators)
 {
 	int locs[ISACF_NLOCS];
@@ -162,7 +184,13 @@ isarescan(device_t self, const char *ifattr, const int *locators)
 void
 isachilddetached(device_t self, device_t child)
 {
-	/* nothing to do */
+	struct isa_knowndev *ik;
+	struct isa_softc *sc = device_private(self);
+
+	TAILQ_FOREACH(ik, &sc->sc_knowndevs, ik_list) {
+		if (ik->ik_claimed == child)
+			ik->ik_claimed = NULL;
+	}
 }
 
 void

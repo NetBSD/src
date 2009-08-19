@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.134.12.2 2009/05/04 08:14:14 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.134.12.3 2009/08/19 18:48:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -282,6 +282,21 @@ struct ifnet {				/* and the entries */
 	 */
 	void	*if_pf_kif;		/* pf interface abstraction */
 	void	*if_pf_groups;		/* pf interface groups */
+	/*
+	 * During an ifnet's lifetime, it has only one if_index, but
+	 * and if_index is not sufficient to identify an ifnet
+	 * because during the lifetime of the system, many ifnets may occupy a
+	 * given if_index.  Let us tell different ifnets at the same
+	 * if_index apart by their if_index_gen, a unique number that each ifnet
+	 * is assigned when it if_attach()s.  Now, the kernel can use the
+	 * pair (if_index, if_index_gen) as a weak reference to an ifnet.
+	 */
+	uint64_t if_index_gen;		/* generation number for the ifnet
+					 * at if_index: if two ifnets' index
+					 * and generation number are both the
+					 * same, they are the same ifnet.
+					 */
+	struct sysctllog	*if_sysctl_log;
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type

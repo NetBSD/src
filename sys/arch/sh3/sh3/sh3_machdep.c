@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.71.2.2 2009/05/04 08:11:52 yamt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.71.2.3 2009/08/19 18:46:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.71.2.2 2009/05/04 08:11:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.71.2.3 2009/08/19 18:46:45 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -114,7 +114,6 @@ char cpu_model[120];
 struct vm_map *mb_map;
 struct vm_map *phys_map;
 
-int physmem;
 struct user *proc0paddr;	/* init_main.c use this. */
 struct pcb *curpcb;
 

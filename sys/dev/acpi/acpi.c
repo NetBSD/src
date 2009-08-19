@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.114.2.3 2009/05/16 10:41:18 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.114.2.4 2009/08/19 18:47:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.3 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.4 2009/08/19 18:47:03 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.3 2009/05/16 10:41:18 yamt Exp $");
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
 #include <dev/acpi/acpi_timer.h>
+#include <dev/acpi/acpi_wakedev.h>
 #ifdef ACPIVERBOSE
 #include <dev/acpi/acpidevs_data.h>
 #endif
@@ -695,6 +696,8 @@ acpi_build_tree(struct acpi_softc *sc)
 	}
 
 	acpi_rescan1(sc, NULL, NULL);
+
+	acpi_wakedev_scan(sc);
 }
 
 static int
@@ -803,10 +806,7 @@ static void
 acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 {
 	ACPI_STATUS rv;
-	ACPI_BUFFER buf;
-
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	ACPI_DEVICE_INFO *newdi;
 
 #ifdef ACPI_DEBUG
 	aprint_normal("acpi_activate_device: %s, old status=%x\n",
@@ -816,15 +816,15 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	rv = acpi_allocate_resources(handle);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error("acpi: activate failed for %s\n",
-		       (*di)->HardwareId.Value);
+		       (*di)->HardwareId.String);
 	} else {
 		aprint_verbose("acpi: activated %s\n",
-		    (*di)->HardwareId.Value);
+		    (*di)->HardwareId.String);
 	}
 
-	(void)AcpiGetObjectInfo(handle, &buf);
+	(void)AcpiGetObjectInfo(handle, &newdi);
 	AcpiOsFree(*di);
-	*di = buf.Pointer;
+	*di = newdi;
 
 #ifdef ACPI_DEBUG
 	aprint_normal("acpi_activate_device: %s, new status=%x\n",
@@ -849,7 +849,6 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 	struct acpi_scope *as = state->scope;
 	struct acpi_devnode *ad;
 	ACPI_OBJECT_TYPE type;
-	ACPI_BUFFER buf;
 	ACPI_DEVICE_INFO *devinfo;
 	ACPI_STATUS rv;
 	ACPI_NAME_UNION *anu;
@@ -857,9 +856,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 
 	rv = AcpiGetType(handle, &type);
 	if (ACPI_SUCCESS(rv)) {
-		buf.Pointer = NULL;
-		buf.Length = ACPI_ALLOCATE_BUFFER;
-		rv = AcpiGetObjectInfo(handle, &buf);
+		rv = AcpiGetObjectInfo(handle, &devinfo);
 		if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
 			aprint_normal_dev(sc->sc_dev,
@@ -868,8 +865,6 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 #endif
 			goto out; /* XXX why return OK */
 		}
-
-		devinfo = buf.Pointer;
 
 		switch (type) {
 		case ACPI_TYPE_DEVICE:
@@ -919,11 +914,11 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 #ifdef ACPI_EXTRA_DEBUG
 			aprint_normal_dev(sc->sc_dev,
 			    "HID %s found in scope %s level %d\n",
-			    ad->ad_devinfo->HardwareId.Value,
+			    ad->ad_devinfo->HardwareId.String,
 			    as->as_name, ad->ad_level);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
 				aprint_normal("       UID %s\n",
-				    ad->ad_devinfo->UniqueId.Value);
+				    ad->ad_devinfo->UniqueId.String);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
 				aprint_normal("       ADR 0x%016" PRIx64 "\n",
 				    ad->ad_devinfo->Address);
@@ -951,7 +946,7 @@ acpi_print(void *aux, const char *pnp)
 	if (pnp) {
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
 			char *pnpstr =
-			    aa->aa_node->ad_devinfo->HardwareId.Value;
+			    aa->aa_node->ad_devinfo->HardwareId.String;
 			ACPI_BUFFER buf;
 
 			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
@@ -1003,11 +998,11 @@ acpi_print(void *aux, const char *pnp)
 	} else {
 		aprint_normal(" (%s", aa->aa_node->ad_name);
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
-			aprint_normal(", %s", aa->aa_node->ad_devinfo->HardwareId.Value);
+			aprint_normal(", %s", aa->aa_node->ad_devinfo->HardwareId.String);
 			if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_UID) {
 				const char *uid;
 
-				uid = aa->aa_node->ad_devinfo->UniqueId.Value;
+				uid = aa->aa_node->ad_devinfo->UniqueId.String;
 				if (uid[0] == '\0')
 					uid = "<null>";
 				aprint_normal("-%s", uid);
@@ -1289,13 +1284,13 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 
 	while (*ids) {
 		if (ad->Valid & ACPI_VALID_HID) {
-			if (pmatch(ad->HardwareId.Value, *ids, NULL) == 2)
+			if (pmatch(ad->HardwareId.String, *ids, NULL) == 2)
 				return 1;
 		}
 
 		if (ad->Valid & ACPI_VALID_CID) {
-			for (i = 0; i < ad->CompatibilityId.Count; i++) {
-				if (pmatch(ad->CompatibilityId.Id[i].Value, *ids, NULL) == 2)
+			for (i = 0; i < ad->CompatibleIdList.Count; i++) {
+				if (pmatch(ad->CompatibleIdList.Ids[i].String, *ids, NULL) == 2)
 					return 1;
 			}
 		}
@@ -1404,6 +1399,8 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			    "ACPI S%d not available on this platform\n", state);
 			break;
 		}
+
+		acpi_wakedev_commit(sc);
 
 		if (state != ACPI_STATE_S1 && !pmf_system_suspend(PMF_F_NONE)) {
 			aprint_error_dev(sc->sc_dev, "aborting suspend\n");

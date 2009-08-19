@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.273.4.3 2009/06/20 07:20:29 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.273.4.4 2009/08/19 18:47:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.273.4.3 2009/06/20 07:20:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.273.4.4 2009/08/19 18:47:19 yamt Exp $");
 
 #include "rnd.h"
 
@@ -3598,7 +3598,7 @@ mmc_doclose(struct scsipi_periph *periph, int param, int func) {
 	error = scsipi_command(periph,
 		(void *) &close_cmd, sizeof(close_cmd),
 		NULL, 0,
-		CDRETRIES, 30000, NULL, flags);
+		CDRETRIES, 120000, NULL, flags);
 
 	return error;
 }

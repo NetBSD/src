@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.9.4.2 2009/05/04 08:11:47 yamt Exp $ */
+/* $NetBSD: rge.c,v 1.9.4.3 2009/08/19 18:46:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,30 +64,17 @@ struct desc {
 #define T0_EOR		0x40000000	/* end of ring */
 #define T0_FS		0x20000000	/* first descriptor */
 #define T0_LS		0x10000000	/* last descriptor */
-#define T0_LSGEN	0x08000000	/* TCP segmentation offload */
-#define T0_IPCS		0x00040000	/* generate IP checksum */
-#define T0_UDPCS	0x00020000	/* generate UDP checksum */
-#define T0_TCPCS	0x00010000	/* generate TCP checksum */
 #define T0_FRMASK	0x0000ffff
-#define T1_TAGC		0x00020000	/* insert VTAG */
-#define T1_VTAG		0x0000ffff	/* VTAG value */
 
 #define R0_OWN		0x80000000	/* empty for HW to load anew */
 #define R0_EOR		0x40000000	/* end mark to form a ring */
 #define R0_BUFLEN	0x00003ff8	/* max frag. size to receive */
-/* RX status upon Rx completed */
 #define R0_FS		0x20000000	/* start of frame */
 #define R0_LS		0x10000000	/* end of frame */
 #define R0_RES		0x00200000	/* Rx error summary */
 #define R0_RUNT		0x00100000	/* runt frame received */
 #define R0_CRC		0x00080000	/* CRC error found */
-#define R0_PID		0x00060000	/* protocol type; 1:TCP, 2:UDP, 3:IP */
-#define R0_IPF		0x00010000	/* IP checksum bad */
-#define R0_UDPF		0x00008000	/* UDP checksum bad */
-#define R0_TCPF		0x00004000	/* TCP checksum bad */
 #define R0_FRMASK	0x00003fff	/* 13:0 frame length */
-#define R1_TAVA		0x00010000	/* VTAG exists */
-#define R1_VTAG		0x0000ffff	/* TAG value */
 
 #define RGE_IDR0	0x00		/* MAC address [0] */
 #define RGE_IDR1	0x01		/* MAC address [1] */
@@ -95,49 +82,41 @@ struct desc {
 #define RGE_IDR3	0x03		/* MAC address [3] */
 #define RGE_IDR4	0x04		/* MAC address [4] */
 #define RGE_IDR5	0x05		/* MAC address [5] */
-#define RGE_MAR0	0x08		/* multicast filter [31:00] */
-#define RGE_MAR1	0x0c		/* multicast filter [63:32] */
 #define RGE_TNPDS	0x20		/* Tx descriptor base paddr */
 #define RGE_THPDS	0x28		/* high pro. Tx des. base paddr */
 #define RGE_CR		0x37		/* command */
-#define  CR_RESET	(1U << 4)	/* reset S1C */
-#define  CR_RXEN	(1U << 3)	/* Rx enable */
-#define  CR_TXEN	(1U << 2)	/* Tx enable */
+#define	 CR_RESET	(1U << 4)	/* reset S1C */
+#define	 CR_RXEN	(1U << 3)	/* Rx enable */
+#define	 CR_TXEN	(1U << 2)	/* Tx enable */
 #define RGE_TPPOLL	0x38		/* activate desc polling */
 #define RGE_IMR		0x3c		/* interrupt mask */
 #define RGE_ISR		0x3e		/* interrupt status */
-#define  ISR_TXERR	0x0088		/* Tx error conditions */
-#define  ISR_RXERR	0x0072		/* Rx error conditions */
-#define  ISR_LNKCHG	(1U << 5)	/* link status change found */
-#define  ISR_TXOK	(1U << 2)	/* Tx done */
-#define  ISR_RXOK	(1U << 0)	/* Rx frame available */
 #define RGE_TCR		0x40		/* Tx control */
-#define  TCR_MAXDMA	0x0700		/* 10:8 Tx DMA burst size */
+#define	 TCR_MAXDMA	0x0700		/* 10:8 Tx DMA burst size */
 #define RGE_RCR		0x44		/* Rx control */
-#define  RCR_RXTFH	0xe000		/* 15:13 Rx FIFO threshold */
-#define  RCR_MAXDMA	0x0700		/* 10:8 Rx DMA burst size */
-#define  RCR_AE		(1U << 5)	/* accept error frame */
-#define  RCR_RE		(1U << 4)	/* accept runt frame */
-#define  RCR_AB		(1U << 3)	/* accept broadcast frame */
-#define  RCR_AM		(1U << 2)	/* accept multicast frame */
-#define  RCR_APM	(1U << 1)	/* accept unicast frame */
-#define  RCR_AAP	(1U << 0)	/* promiscuous */
+#define	 RCR_RXTFH	0xe000		/* 15:13 Rx FIFO threshold */
+#define	 RCR_MAXDMA	0x0700		/* 10:8 Rx DMA burst size */
+#define	 RCR_AE		(1U << 5)	/* accept error frame */
+#define	 RCR_RE		(1U << 4)	/* accept runt frame */
+#define	 RCR_AB		(1U << 3)	/* accept broadcast frame */
+#define	 RCR_AM		(1U << 2)	/* accept multicast frame */
+#define	 RCR_APM	(1U << 1)	/* accept unicast frame */
+#define	 RCR_AAP	(1U << 0)	/* promiscuous */
 #define RGE_PHYAR	0x60		/* PHY access */
 #define RGE_PHYSR	0x6c		/* PHY status */
 #define RGE_RMS		0xda		/* Rx maximum frame size */
-#define RGE_CCCR	0xe0		/* C+CR */
-#define  CCCR_VLAN	(1U << 6)	/* Rx VTAG removal */
-#define  CCCR_CSUM	(1U << 5)	/* Rx checksum offload */
 #define RGE_RDSAR	0xe4		/* Rx descriptor base paddr */
 #define RGE_ETTHR	0xec		/* Tx threshold */
 
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc txd;
-	struct desc rxd[2];
+	struct desc txd[2]; /* 256B align */
+	  uint8_t _hole0[256 - 2 * sizeof(struct desc)];
+	struct desc rxd[2]; /* 256B align */
+	  uint8_t _hole1[256 - 2 * sizeof(struct desc)];
 	uint8_t rxstore[2][FRAMESIZE];
-	unsigned csr, rx;
+	unsigned csr, tx, rx;
 	unsigned phy, bmsr, anlpar;
 	unsigned tcr, rcr;
 };
@@ -168,10 +147,6 @@ rge_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en = data;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x10ec, 0x8169) != val)
-		return NULL;
-
 	l = ALLOC(struct local, 256);	/* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
@@ -200,25 +175,31 @@ rge_init(unsigned tag, void *data)
 
 	/* speed and duplexity can be seen in PHYSR */
 	val = CSR_READ_1(l, RGE_PHYSR);
-	if (val & (1U << 4)) printf("1000Mbps");
-	if (val & (1U << 3)) printf("100Mbps");
-	if (val & (1U << 2)) printf("10Mbps");
-	if (val & (1U << 0)) printf("-FDX\n");
+	if (val & (1U << 4))
+		printf("1000Mbps");
+	if (val & (1U << 3))
+		printf("100Mbps");
+	if (val & (1U << 2))
+		printf("10Mbps");
+	if (val & (1U << 0))
+		printf("-FDX");
+	printf("\n");
 
-	txd = &l->txd;
+	txd = &l->txd[0];
+	txd[1].xd0 = htole32(T0_EOR);
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(R0_OWN | FRAMESIZE);
 	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
 	rxd[1].xd0 = htole32(R0_OWN | R0_EOR | FRAMESIZE);
 	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
 	wbinv(l, sizeof(struct local));
-	l->rx = 0;
+	l->tx = l->rx = 0;
 
 	l->tcr = (03 << 24) | (07 << 8);
 	l->rcr = (07 << 13) | (07 << 8) | RCR_APM;
 	CSR_WRITE_1(l, RGE_CR, CR_TXEN | CR_RXEN);
 	CSR_WRITE_1(l, RGE_ETTHR, 0x3f);
-	CSR_WRITE_2(l, RGE_RMS, 0x8000);
+	CSR_WRITE_2(l, RGE_RMS, FRAMELEN);
 	CSR_WRITE_4(l, RGE_TCR, l->tcr);
 	CSR_WRITE_4(l, RGE_RCR, l->rcr);
 	CSR_WRITE_4(l, RGE_TNPDS, VTOPHYS(txd));
@@ -239,10 +220,10 @@ rge_send(void *dev, char *buf, unsigned len)
 	unsigned loop;
 
 	wbinv(buf, len);
-	txd = &l->txd;
+	txd = &l->txd[l->tx];
 	txd->xd2 = htole32(VTOPHYS(buf));
-	txd->xd1 = 0;
-	txd->xd0 = htole32(T0_OWN|T0_EOR|T0_FS|T0_LS| (len & T0_FRMASK));
+	txd->xd0 &= htole32(T0_EOR);
+	txd->xd0 |= htole32(T0_OWN | T0_FS | T0_LS | (len & T0_FRMASK));
 	wbinv(txd, sizeof(struct desc));
 	CSR_WRITE_1(l, RGE_TPPOLL, 0x40);
 	loop = 100;
@@ -255,6 +236,7 @@ rge_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 
@@ -267,7 +249,9 @@ rge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 	uint8_t *ptr;
 
 	bound = 1000 * timo;
+#if 0
 printf("recving with %u sec. timeout\n", timo);
+#endif
   again:
 	rxd = &l->rxd[l->rx];
 	do {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.254.2.2 2009/06/20 07:20:38 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.254.2.3 2009/08/19 18:48:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.2 2009/06/20 07:20:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.3 2009/08/19 18:48:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -502,6 +502,7 @@ _uvm_map_sanity(struct vm_map *map)
 	bool first_free_found = false;
 	bool hint_found = false;
 	const struct vm_map_entry *e;
+	struct vm_map_entry *hint = map->hint;
 
 	e = &map->header; 
 	for (;;) {
@@ -512,7 +513,7 @@ _uvm_map_sanity(struct vm_map *map)
 			    map->first_free, e);
 			return -1;
 		}
-		if (map->hint == e) {
+		if (hint == e) {
 			hint_found = true;
 		}
 
@@ -550,7 +551,10 @@ _uvm_tree_sanity(struct vm_map *map)
 		 * If any entries are out of order, tmp->gap will be unsigned
 		 * and will likely exceed the size of the map.
 		 */
-		KASSERT(tmp->gap < map->size);
+		if (tmp->gap >= vm_map_max(map) - vm_map_min(map)) {
+			printf("too large gap %zu\n", (size_t)tmp->gap);
+			goto error;
+		}
 		n++;
 	}
 
@@ -1341,6 +1345,7 @@ retry:
 	args->uma_uobj = uobj;
 	args->uma_uoffset = uoffset;
 
+	UVMHIST_LOG(maphist, "<- done!", 0,0,0,0);
 	return 0;
 }
 
@@ -2553,9 +2558,10 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
  * => note newents is allowed to be NULL
  */
 
-int
+static int
 uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
-    struct vm_map_entry *newents, int nnewents, struct vm_map_entry **oldentryp)
+    struct vm_map_entry *newents, int nnewents, vsize_t nsize,
+    struct vm_map_entry **oldentryp)
 {
 	struct vm_map_entry *oldent, *last;
 
@@ -2590,13 +2596,15 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	{
 		struct vm_map_entry *tmpent = newents;
 		int nent = 0;
+		vsize_t sz = 0;
 		vaddr_t cur = start;
 
 		while (tmpent) {
 			nent++;
+			sz += tmpent->end - tmpent->start;
 			if (tmpent->start < cur)
 				panic("uvm_map_replace1");
-			if (tmpent->start > tmpent->end || tmpent->end > end) {
+			if (tmpent->start >= tmpent->end || tmpent->end > end) {
 		printf("tmpent->start=0x%lx, tmpent->end=0x%lx, end=0x%lx\n",
 			    tmpent->start, tmpent->end, end);
 				panic("uvm_map_replace2");
@@ -2613,6 +2621,8 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 		}
 		if (nent != nnewents)
 			panic("uvm_map_replace5");
+		if (sz != nsize)
+			panic("uvm_map_replace6");
 	}
 #endif
 
@@ -2655,6 +2665,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 		clear_hints(map, oldent);
 		uvm_map_entry_unlink(map, oldent);
 	}
+	map->size -= end - start - nsize;
 
 	uvm_map_check(map, "map_replace leave");
 
@@ -2694,14 +2705,12 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	struct vm_map_entry *resentry = NULL; /* a dummy reservation entry */
 	vsize_t elen;
 	int nchain, error, copy_ok;
+	vsize_t nsize;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(srcmap=0x%x,start=0x%x, len=0x%x", srcmap, start,
 	    len,0);
 	UVMHIST_LOG(maphist," ...,dstmap=0x%x, flags=0x%x)", dstmap,flags,0,0);
-
-	uvm_map_check(srcmap, "map_extract src enter");
-	uvm_map_check(dstmap, "map_extract dst enter");
 
 	/*
 	 * step 0: sanity check: start must be on a page boundary, length
@@ -2737,6 +2746,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	newend = dstaddr + len;
 	chain = endchain = NULL;
 	nchain = 0;
+	nsize = 0;
 	vm_map_lock(srcmap);
 
 	if (uvm_map_lookup_entry(srcmap, start, &entry)) {
@@ -2856,6 +2866,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 		/* now link it on the chain */
 		nchain++;
+		nsize += newentry->end - newentry->start;
 		if (endchain == NULL) {
 			chain = endchain = newentry;
 		} else {
@@ -2891,7 +2902,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	if (srcmap == dstmap || vm_map_lock_try(dstmap) == true) {
 		copy_ok = 1;
 		if (!uvm_map_replace(dstmap, dstaddr, dstaddr+len, chain,
-		    nchain, &resentry)) {
+		    nchain, nsize, &resentry)) {
 			if (srcmap != dstmap)
 				vm_map_unlock(dstmap);
 			error = EIO;
@@ -2978,7 +2989,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	if (copy_ok == 0) {
 		vm_map_lock(dstmap);
 		error = uvm_map_replace(dstmap, dstaddr, dstaddr+len, chain,
-		    nchain, &resentry);
+		    nchain, nsize, &resentry);
 		vm_map_unlock(dstmap);
 
 		if (error == false) {
@@ -2989,9 +3000,6 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 	if (resentry != NULL)
 		uvm_mapent_free(resentry);
-
-	uvm_map_check(srcmap, "map_extract src leave");
-	uvm_map_check(dstmap, "map_extract dst leave");
 
 	return (0);
 
@@ -3007,9 +3015,6 @@ bad2:			/* src already unlocked */
 
 	if (resentry != NULL)
 		uvm_mapent_free(resentry);
-
-	uvm_map_check(srcmap, "map_extract src err leave");
-	uvm_map_check(dstmap, "map_extract dst err leave");
 
 	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
 		uvm_unmap(dstmap, dstaddr, dstaddr+len);   /* ??? */
@@ -4634,13 +4639,15 @@ static struct vm_map_entry *
 uvm_kmapent_alloc(struct vm_map *map, int flags)
 {
 	struct vm_page *pg;
-	struct uvm_map_args args;
 	struct uvm_kmapent_hdr *ukh;
 	struct vm_map_entry *entry;
+#ifndef PMAP_MAP_POOLPAGE
+	struct uvm_map_args args;
 	uvm_flag_t mapflags = UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 	    UVM_INH_NONE, UVM_ADV_RANDOM, flags | UVM_FLAG_NOMERGE);
-	vaddr_t va;
 	int error;
+#endif
+	vaddr_t va;
 	int i;
 
 	KDASSERT(UVM_KMAPENT_CHUNK > 2);
@@ -4680,6 +4687,10 @@ again:
 		goto again;
 	}
 
+#ifdef PMAP_MAP_POOLPAGE
+	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
+	KASSERT(va != 0);
+#else
 	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
 	    0, mapflags, &args);
 	if (error) {
@@ -4693,27 +4704,35 @@ again:
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
 	pmap_update(vm_map_pmap(map));
 
+#endif
 	ukh = (void *)va;
 
 	/*
-	 * use the first entry for ukh itsself.
+	 * use the last entry for ukh itsself.
 	 */
 
-	entry = &ukh->ukh_entries[0];
+	i = UVM_KMAPENT_CHUNK - 1;
+#ifndef PMAP_MAP_POOLPAGE
+	entry = &ukh->ukh_entries[i--];
 	entry->flags = UVM_MAP_KERNEL | UVM_MAP_KMAPENT;
 	error = uvm_map_enter(map, &args, entry);
 	KASSERT(error == 0);
+#endif
 
 	ukh->ukh_nused = UVM_KMAPENT_CHUNK;
 	ukh->ukh_map = map;
 	ukh->ukh_freelist = NULL;
-	for (i = UVM_KMAPENT_CHUNK - 1; i >= 2; i--) {
+	for (; i >= 1; i--) {
 		struct vm_map_entry *xentry = &ukh->ukh_entries[i];
 
 		xentry->flags = UVM_MAP_KERNEL;
 		uvm_kmapent_put(ukh, xentry);
 	}
+#ifdef PMAP_MAP_POOLPAGE
+	KASSERT(ukh->ukh_nused == 1);
+#else
 	KASSERT(ukh->ukh_nused == 2);
+#endif
 
 	mutex_spin_enter(&uvm_kentry_lock);
 	LIST_INSERT_HEAD(&vm_map_to_kernel(map)->vmk_kentry_free,
@@ -4721,12 +4740,13 @@ again:
 	mutex_spin_exit(&uvm_kentry_lock);
 
 	/*
-	 * return second entry.
+	 * return first entry.
 	 */
 
-	entry = &ukh->ukh_entries[1];
+	entry = &ukh->ukh_entries[0];
 	entry->flags = UVM_MAP_KERNEL;
 	UVMMAP_EVCNT_INCR(ukh_alloc);
+
 	return entry;
 }
 
@@ -4740,10 +4760,12 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	struct uvm_kmapent_hdr *ukh;
 	struct vm_page *pg;
 	struct vm_map *map;
+#ifndef PMAP_UNMAP_POOLPAGE
 	struct pmap *pmap;
+	struct vm_map_entry *deadentry;
+#endif
 	vaddr_t va;
 	paddr_t pa;
-	struct vm_map_entry *deadentry;
 
 	UVMMAP_EVCNT_INCR(uke_free);
 	ukh = UVM_KHDR_FIND(entry);
@@ -4751,7 +4773,11 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 
 	mutex_spin_enter(&uvm_kentry_lock);
 	uvm_kmapent_put(ukh, entry);
+#ifdef PMAP_UNMAP_POOLPAGE
+	if (ukh->ukh_nused > 0) {
+#else
 	if (ukh->ukh_nused > 1) {
+#endif
 		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK - 1)
 			LIST_INSERT_HEAD(
 			    &vm_map_to_kernel(map)->vmk_kentry_free,
@@ -4774,20 +4800,26 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	LIST_REMOVE(ukh, ukh_listq);
 	mutex_spin_exit(&uvm_kentry_lock);
 
+	va = (vaddr_t)ukh;
+
+#ifdef PMAP_UNMAP_POOLPAGE
+	KASSERT(ukh->ukh_nused == 0);
+	pa = PMAP_UNMAP_POOLPAGE(va);
+	KASSERT(pa != 0);
+#else
 	KASSERT(ukh->ukh_nused == 1);
 
 	/*
 	 * remove map entry for ukh itsself.
 	 */
 
-	va = (vaddr_t)ukh;
 	KASSERT((va & PAGE_MASK) == 0);
 	vm_map_lock(map);
 	uvm_unmap_remove(map, va, va + PAGE_SIZE, &deadentry, NULL, 0);
 	KASSERT(deadentry->flags & UVM_MAP_KERNEL);
 	KASSERT(deadentry->flags & UVM_MAP_KMAPENT);
 	KASSERT(deadentry->next == NULL);
-	KASSERT(deadentry == &ukh->ukh_entries[0]);
+	KASSERT(deadentry == &ukh->ukh_entries[UVM_KMAPENT_CHUNK - 1]);
 
 	/*
 	 * unmap the page from pmap and free it.
@@ -4800,6 +4832,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	pmap_kremove(va, PAGE_SIZE);
 	pmap_update(vm_map_pmap(map));
 	vm_map_unlock(map);
+#endif /* !PMAP_UNMAP_POOLPAGE */
 	pg = PHYS_TO_VM_PAGE(pa);
 	uvm_pagefree(pg);
 	UVMMAP_EVCNT_INCR(ukh_free);
@@ -4986,199 +5019,6 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	return merged;
 }
 
-#if defined(DDB) || defined(DEBUGPRINT)
-
-/*
- * DDB hooks
- */
-
-/*
- * uvm_map_printit: actually prints the map
- */
-
-void
-uvm_map_printit(struct vm_map *map, bool full,
-    void (*pr)(const char *, ...))
-{
-	struct vm_map_entry *entry;
-
-	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, vm_map_min(map),
-	    vm_map_max(map));
-	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
-	    map->nentries, map->size, map->ref_count, map->timestamp,
-	    map->flags);
-	(*pr)("\tpmap=%p(resident=%ld, wired=%ld)\n", map->pmap,
-	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
-	if (!full)
-		return;
-	for (entry = map->header.next; entry != &map->header;
-	    entry = entry->next) {
-		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%llx, amap=%p/%d\n",
-		    entry, entry->start, entry->end, entry->object.uvm_obj,
-		    (long long)entry->offset, entry->aref.ar_amap,
-		    entry->aref.ar_pageoff);
-		(*pr)(
-		    "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
-		    "wc=%d, adv=%d\n",
-		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
-		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
-		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
-		    entry->protection, entry->max_protection,
-		    entry->inheritance, entry->wired_count, entry->advice);
-	}
-}
-
-/*
- * uvm_object_printit: actually prints the object
- */
-
-void
-uvm_object_printit(struct uvm_object *uobj, bool full,
-    void (*pr)(const char *, ...))
-{
-	struct vm_page *pg;
-	int cnt = 0;
-
-	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
-	    uobj, mutex_owned(&uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
-	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
-		(*pr)("refs=<SYSTEM>\n");
-	else
-		(*pr)("refs=%d\n", uobj->uo_refs);
-
-	if (!full) {
-		return;
-	}
-	(*pr)("  PAGES <pg,offset>:\n  ");
-	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
-		cnt++;
-		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
-		if ((cnt % 3) == 0) {
-			(*pr)("\n  ");
-		}
-	}
-	if ((cnt % 3) != 0) {
-		(*pr)("\n");
-	}
-}
-
-/*
- * uvm_page_printit: actually print the page
- */
-
-static const char page_flagbits[] = UVM_PGFLAGBITS;
-static const char page_pqflagbits[] = UVM_PQFLAGBITS;
-
-void
-uvm_page_printit(struct vm_page *pg, bool full,
-    void (*pr)(const char *, ...))
-{
-	struct vm_page *tpg;
-	struct uvm_object *uobj;
-	struct pgflist *pgl;
-	char pgbuf[128];
-	char pqbuf[128];
-
-	(*pr)("PAGE %p:\n", pg);
-	snprintb(pgbuf, sizeof(pgbuf), page_flagbits, pg->flags);
-	snprintb(pqbuf, sizeof(pqbuf), page_pqflagbits, pg->pqflags);
-	(*pr)("  flags=%s, pqflags=%s, wire_count=%d, pa=0x%lx\n",
-	    pgbuf, pqbuf, pg->wire_count, (long)VM_PAGE_TO_PHYS(pg));
-	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
-	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
-#if defined(UVM_PAGE_TRKOWN)
-	if (pg->flags & PG_BUSY)
-		(*pr)("  owning process = %d, tag=%s\n",
-		    pg->owner, pg->owner_tag);
-	else
-		(*pr)("  page not busy, no owner\n");
-#else
-	(*pr)("  [page ownership tracking disabled]\n");
-#endif
-
-	if (!full)
-		return;
-
-	/* cross-verify object/anon */
-	if ((pg->pqflags & PQ_FREE) == 0) {
-		if (pg->pqflags & PQ_ANON) {
-			if (pg->uanon == NULL || pg->uanon->an_page != pg)
-			    (*pr)("  >>> ANON DOES NOT POINT HERE <<< (%p)\n",
-				(pg->uanon) ? pg->uanon->an_page : NULL);
-			else
-				(*pr)("  anon backpointer is OK\n");
-		} else {
-			uobj = pg->uobject;
-			if (uobj) {
-				(*pr)("  checking object list\n");
-				TAILQ_FOREACH(tpg, &uobj->memq, listq.queue) {
-					if (tpg == pg) {
-						break;
-					}
-				}
-				if (tpg)
-					(*pr)("  page found on object list\n");
-				else
-			(*pr)("  >>> PAGE NOT FOUND ON OBJECT LIST! <<<\n");
-			}
-		}
-	}
-
-	/* cross-verify page queue */
-	if (pg->pqflags & PQ_FREE) {
-		int fl = uvm_page_lookup_freelist(pg);
-		int color = VM_PGCOLOR_BUCKET(pg);
-		pgl = &uvm.page_free[fl].pgfl_buckets[color].pgfl_queues[
-		    ((pg)->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN];
-	} else {
-		pgl = NULL;
-	}
-
-	if (pgl) {
-		(*pr)("  checking pageq list\n");
-		LIST_FOREACH(tpg, pgl, pageq.list) {
-			if (tpg == pg) {
-				break;
-			}
-		}
-		if (tpg)
-			(*pr)("  page found on pageq list\n");
-		else
-			(*pr)("  >>> PAGE NOT FOUND ON PAGEQ LIST! <<<\n");
-	}
-}
-
-/*
- * uvm_pages_printthem - print a summary of all managed pages
- */
-
-void
-uvm_page_printall(void (*pr)(const char *, ...))
-{
-	unsigned i;
-	struct vm_page *pg;
-
-	(*pr)("%18s %4s %4s %18s %18s"
-#ifdef UVM_PAGE_TRKOWN
-	    " OWNER"
-#endif
-	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
-	for (i = 0; i < vm_nphysseg; i++) {
-		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
-			(*pr)("%18p %04x %04x %18p %18p",
-			    pg, pg->flags, pg->pqflags, pg->uobject,
-			    pg->uanon);
-#ifdef UVM_PAGE_TRKOWN
-			if (pg->flags & PG_BUSY)
-				(*pr)(" %d [%s]", pg->owner, pg->owner_tag);
-#endif
-			(*pr)("\n");
-		}
-	}
-}
-
-#endif
-
 /*
  * uvm_map_create: create map
  */
@@ -5310,6 +5150,43 @@ vm_map_starved_p(struct vm_map *map)
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)
+
+/*
+ * uvm_map_printit: actually prints the map
+ */
+
+void
+uvm_map_printit(struct vm_map *map, bool full,
+    void (*pr)(const char *, ...))
+{
+	struct vm_map_entry *entry;
+
+	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, vm_map_min(map),
+	    vm_map_max(map));
+	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
+	    map->nentries, map->size, map->ref_count, map->timestamp,
+	    map->flags);
+	(*pr)("\tpmap=%p(resident=%ld, wired=%ld)\n", map->pmap,
+	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
+	if (!full)
+		return;
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
+		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%llx, amap=%p/%d\n",
+		    entry, entry->start, entry->end, entry->object.uvm_obj,
+		    (long long)entry->offset, entry->aref.ar_amap,
+		    entry->aref.ar_pageoff);
+		(*pr)(
+		    "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
+		    "wc=%d, adv=%d\n",
+		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
+		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
+		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
+		    entry->protection, entry->max_protection,
+		    entry->inheritance, entry->wired_count, entry->advice);
+	}
+}
+
 void
 uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 {
@@ -5330,4 +5207,5 @@ uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 		map = entry->object.sub_map;
 	}
 }
-#endif /* defined(DDB) || defined(DEBUGPRINT) */
+
+#endif /* DDB || DEBUGPRINT */

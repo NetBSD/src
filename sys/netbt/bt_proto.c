@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.10 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.10.2.1 2009/08/19 18:48:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.10 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.10.2.1 2009/08/19 18:48:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -78,6 +78,7 @@ const struct protosw btsw[] = {
 		.pr_domain = &btdomain,
 		.pr_protocol = BTPROTO_HCI,
 		.pr_flags = (PR_ADDR | PR_ATOMIC),
+		.pr_init = hci_init,
 		.pr_ctloutput = hci_ctloutput,
 		.pr_usrreq = hci_usrreq,
 	},

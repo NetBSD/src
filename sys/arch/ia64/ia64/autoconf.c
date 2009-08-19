@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.58.2 2009/05/04 08:11:21 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.58.3 2009/08/19 18:46:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,4 +52,9 @@ cpu_rootconf(void)
 void
 cpu_configure(void)
 {
+
+	if (config_rootfound("mainbus", NULL) == NULL)
+		panic("configure: mainbus not configured");
+
+	spl0();
 }

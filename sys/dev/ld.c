@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.57.4.3 2009/05/16 10:41:18 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.57.4.4 2009/08/19 18:47:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57.4.3 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57.4.4 2009/08/19 18:47:02 yamt Exp $");
 
 #include "rnd.h"
 
@@ -71,6 +71,7 @@ static bool	ld_shutdown(device_t, int);
 static void	ldstart(struct ld_softc *, struct buf *);
 static void	ld_set_properties(struct ld_softc *);
 static void	ld_config_interrupts (device_t);
+static int	ldlastclose(device_t);
 
 extern struct	cfdriver ld_cd;
 
@@ -183,8 +184,10 @@ ldbegindetach(struct ld_softc *sc, int flags)
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (0);
 
-	if ((flags & DETACH_FORCE) == 0 && sc->sc_dk.dk_openmask != 0)
-		return (EBUSY);
+	rv = disk_begindetach(&sc->sc_dk, ldlastclose, sc->sc_dv, flags);
+
+	if (rv != 0)
+		return rv;
 
 	s = splbio();
 	sc->sc_maxqueuecnt = 0;
@@ -321,6 +324,19 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	return (error);
 }
 
+static int
+ldlastclose(device_t self)
+{
+	struct ld_softc *sc = device_private(self);
+
+	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, 0) != 0)
+		aprint_error_dev(self, "unable to flush cache\n");
+	if ((sc->sc_flags & LDF_KLABEL) == 0)
+		sc->sc_flags &= ~LDF_VLABEL;
+
+	return 0;
+}
+
 /* ARGSUSED */
 static int
 ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
@@ -345,12 +361,8 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	if (sc->sc_dk.dk_openmask == 0) {
-		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, 0) != 0)
-			aprint_error_dev(sc->sc_dv, "unable to flush cache\n");
-		if ((sc->sc_flags & LDF_KLABEL) == 0)
-			sc->sc_flags &= ~LDF_VLABEL;
-	}
+	if (sc->sc_dk.dk_openmask == 0)
+		ldlastclose(sc->sc_dv);
 
 	mutex_exit(&sc->sc_dk.dk_openlock);
 	return (0);

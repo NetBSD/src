@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.255.10.4 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.255.10.5 2009/08/19 18:48:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255.10.4 2009/07/18 14:53:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255.10.5 2009/08/19 18:48:34 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1748,11 +1748,23 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			bp = getiobuf(NULL, true);
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
-			bp->b_data = (char *)kva +
-			    (vaddr_t)(offset - pg->offset);
-			bp->b_resid = bp->b_bcount = iobytes;
-			bp->b_cflags = BC_BUSY;
-			bp->b_iodone = uvm_aio_biodone1;
+			nestiobuf_setup(mbp, bp, offset - pg->offset, iobytes);
+			/*
+			 * LFS doesn't like async I/O here, dies with
+			 * and assert in lfs_bwrite().  Is that assert
+			 * valid?  I retained non-async behaviour when
+			 * converted this to use nestiobuf --pooka
+			 */
+			bp->b_flags &= ~B_ASYNC;
+			/*
+			 * LFS uses VOP_BWRITE instead of VOP_STRATEGY.
+			 * Therefore biodone doesn't get called for
+			 * the buffer.  Therefore decrement the output
+			 * counter that nestiobuf_setup() incremented.
+			 */
+			mutex_enter(&vp->v_interlock);
+			vp->v_numoutput--;
+			mutex_exit(&vp->v_interlock);
 		}
 
 		/* XXX This is silly ... is this necessary? */
@@ -1772,17 +1784,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			continue;
 	}
 
+	nestiobuf_done(mbp, skipbytes, error);
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
-		mutex_enter(mbp->b_objlock);
-		if (error) {
-			mbp->b_error = error;
-		}
-		mbp->b_resid -= skipbytes;
-		mutex_exit(mbp->b_objlock);
-		if (mbp->b_resid == 0) {
-			biodone(mbp);
-		}
 	}
 	UVMHIST_LOG(ubchist, "returning 0", 0,0,0,0);
 	return (0);

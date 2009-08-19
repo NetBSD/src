@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	 */
+/*	$NetBSD: conf.c,v 1.2.74.1 2009/08/19 18:46:25 yamt Exp $	 */
 
 /*
  * Copyright (c) 2004
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 
 #include <bootstrap.h>
 

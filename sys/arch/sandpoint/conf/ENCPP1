@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.4.4.1 2009/05/04 08:11:46 yamt Exp $
+# $NetBSD: ENCPP1,v 1.4.4.2 2009/08/19 18:46:42 yamt Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -19,10 +19,11 @@
 # device.
 
 include 	"arch/sandpoint/conf/std.sandpoint"
+options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.4.4.1 $"
+#ident 		"ENCPP1-$Revision: 1.4.4.2 $"
 
 maxusers	32
 

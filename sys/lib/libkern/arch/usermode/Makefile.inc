@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2007/12/29 14:39:33 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.1.18.1 2009/08/19 18:48:20 yamt Exp $
 #
 #	There are likely more that we will notice when we go native
 
-SRCS+=	__assert.c bswap64.c memchr.c memcmp.c memset.c random.c scanc.c \
-	skpc.c strcat.c strcpy.c strcasecmp.c \
-	strncasecmp.c strncmp.c strncpy.c strtoul.c
+NO_SRCS+= imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
+NO_SRCS+= __main.c strlen.c strcmp.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: efifs.c,v 1.2.74.1 2009/05/04 08:11:21 yamt Exp $	*/
+/*	$NetBSD: efifs.c,v 1.2.74.2 2009/08/19 18:46:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <sys/dirent.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 #include <machine/stdarg.h>
 

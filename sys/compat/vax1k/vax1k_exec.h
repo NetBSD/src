@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.h,v 1.6.10.1 2008/05/16 02:23:48 yamt Exp $	*/
+/*	$NetBSD: vax1k_exec.h,v 1.6.10.2 2009/08/19 18:47:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _VAX1K_EXEC_H_
 #define _VAX1K_EXEC_H_
+
+#include <sys/exec_aout.h>
 
 #define VAX1K_LDPGSZ		1024
 #define VAX1K_USRTEXT		VAX1K_LDPGSZ

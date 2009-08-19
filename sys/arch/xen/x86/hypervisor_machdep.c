@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.8.2.1 2009/05/04 08:12:14 yamt Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.8.2.2 2009/08/19 18:46:54 yamt Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.8.2.1 2009/05/04 08:12:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.8.2.2 2009/08/19 18:46:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.8.2.1 2009/05/04 08:12:14 y
 
 #include "opt_xen.h"
 
-#ifdef XEN3
 /*
  * arch-dependent p2m frame lists list (L3 and L2)
  * used by Xen for save/restore mappings
@@ -88,7 +87,6 @@ static int l2_p2m_page_size; /* size of L2 page, in pages */
 
 static void build_p2m_frame_list_list(void);
 static void update_p2m_frame_list_list(void);
-#endif /* XEN3 */
 
 // #define PORT_DEBUG 4
 // #define EARLY_DEBUG_EVENT
@@ -132,11 +130,7 @@ stipending(void)
 		vci->evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
-#ifdef XEN3
 		l1 = xen_atomic_xchg(&vci->evtchn_pending_sel, 0);
-#else
-		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
-#endif
 		while ((l1i = xen_ffs(l1)) != 0) {
 			l1i--;
 			l1 &= ~(1UL << l1i);
@@ -212,11 +206,7 @@ do_hypervisor_callback(struct intrframe *regs)
 		vci->evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
-#ifdef XEN3
 		l1 = xen_atomic_xchg(&vci->evtchn_pending_sel, 0);
-#else
-		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
-#endif
 		while ((l1i = xen_ffs(l1)) != 0) {
 			l1i--;
 			l1 &= ~(1UL << l1i);
@@ -264,11 +254,7 @@ do_hypervisor_callback(struct intrframe *regs)
 #ifdef DIAGNOSTIC
 	if (level != ci->ci_ilevel)
 		printf("hypervisor done %08x level %d/%d ipending %08x\n",
-#ifdef XEN3
 		    (uint)vci->evtchn_pending_sel,
-#else
-		    (uint)HYPERVISOR_shared_info->evtchn_pending_sel,
-#endif
 		    level, ci->ci_ilevel, ci->ci_ipending);
 #endif
 }
@@ -291,11 +277,7 @@ hypervisor_unmask_event(unsigned int ev)
 	 * interrupt edge' if the channel is masked.
 	 */
 	if (xen_atomic_test_bit(&s->evtchn_pending[0], ev) && 
-#ifdef XEN3
 	    !xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel, ev>>LONG_SHIFT)) {
-#else
-	    !xen_atomic_test_and_set_bit(&s->evtchn_pending_sel, ev>>LONG_SHIFT)) {
-#endif
 		xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
 		if (!vci->evtchn_upcall_mask)
 			hypervisor_force_callback();
@@ -380,25 +362,21 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 }
 
 void
-hypervisor_machdep_attach(void) {
-
-#ifdef XEN3
+hypervisor_machdep_attach(void)
+{
  	/* dom0 does not require the arch-dependent P2M translation table */
 	if ( !xendomain_is_dom0() ) {
 		build_p2m_frame_list_list();
 	}
-#endif
-
 }
 
-#ifdef XEN3
 /*
  * Generate the p2m_frame_list_list table,
  * needed for guest save/restore
  */
 static void
-build_p2m_frame_list_list(void) {
-
+build_p2m_frame_list_list(void)
+{
         int fpp; /* number of page (frame) pointer per page */
         unsigned long max_pfn;
         /*
@@ -438,8 +416,8 @@ build_p2m_frame_list_list(void) {
  * Update the L1 p2m_frame_list_list mapping (during guest boot or resume)
  */
 static void
-update_p2m_frame_list_list(void) {
-
+update_p2m_frame_list_list(void)
+{
         int i;
         int fpp; /* number of page (frame) pointer per page */
         unsigned long max_pfn;
@@ -472,4 +450,3 @@ update_p2m_frame_list_list(void) {
         HYPERVISOR_shared_info->arch.max_pfn = max_pfn;
 
 }
-#endif /* XEN3 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.350.2.4 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.350.2.5 2009/08/19 18:48:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350.2.4 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350.2.5 2009/08/19 18:48:18 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350.2.4 2009/07/18 14:53:23 yamt 
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 
-static int change_dir(struct nameidata *, struct lwp *);
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
@@ -1126,7 +1125,6 @@ int
 sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi;
 	struct vnode	*vp;
 	file_t	*fp;
 	int		 error, fd = SCARG(uap, fd);
@@ -1135,7 +1133,7 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
  	    KAUTH_REQ_SYSTEM_CHROOT_FCHROOT, NULL, NULL, NULL)) != 0)
 		return error;
 	/* fd_getvnode() will use the descriptor for us */
-	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(fd, &fp)) != 0)
 		return error;
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -1148,27 +1146,7 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
 		goto out;
 	VREF(vp);
 
-	/*
-	 * Prevent escaping from chroot by putting the root under
-	 * the working directory.  Silently chdir to / if we aren't
-	 * already there.
-	 */
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	if (!vn_isunder(cwdi->cwdi_cdir, vp, l)) {
-		/*
-		 * XXX would be more failsafe to change directory to a
-		 * deadfs node here instead
-		 */
-		vrele(cwdi->cwdi_cdir);
-		VREF(vp);
-		cwdi->cwdi_cdir = vp;
-	}
-
-	if (cwdi->cwdi_rdir != NULL)
-		vrele(cwdi->cwdi_rdir);
-	cwdi->cwdi_rdir = vp;
-	rw_exit(&cwdi->cwdi_lock);
+	change_root(p->p_cwdi, vp, l);
 
  out:
 	fd_putfile(fd);
@@ -1188,16 +1166,15 @@ sys_chdir(struct lwp *l, const struct sys_chdir_args *uap, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdi;
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = change_dir(&nd, l)) != 0)
+	if ((error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE,
+				  &vp, l)) != 0)
 		return (error);
 	cwdi = p->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	vrele(cwdi->cwdi_cdir);
-	cwdi->cwdi_cdir = nd.ni_vp;
+	cwdi->cwdi_cdir = vp;
 	rw_exit(&cwdi->cwdi_lock);
 	return (0);
 }
@@ -1213,24 +1190,32 @@ sys_chroot(struct lwp *l, const struct sys_chroot_args *uap, register_t *retval)
 		syscallarg(const char *) path;
 	} */
 	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi;
-	struct vnode *vp;
 	int error;
-	struct nameidata nd;
+	struct vnode *vp;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHROOT,
 	    KAUTH_REQ_SYSTEM_CHROOT_CHROOT, NULL, NULL, NULL)) != 0)
 		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = change_dir(&nd, l)) != 0)
+	if ((error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE,
+				  &vp, l)) != 0)
 		return (error);
 
-	cwdi = p->p_cwdi;
+	change_root(p->p_cwdi, vp, l);
+
+	return (0);
+}
+
+/*
+ * Common routine for chroot and fchroot.
+ * NB: callers need to properly authorize the change root operation.
+ */
+void
+change_root(struct cwdinfo *cwdi, struct vnode *vp, struct lwp *l)
+{
+
 	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	if (cwdi->cwdi_rdir != NULL)
 		vrele(cwdi->cwdi_rdir);
-	vp = nd.ni_vp;
 	cwdi->cwdi_rdir = vp;
 
 	/*
@@ -1248,31 +1233,31 @@ sys_chroot(struct lwp *l, const struct sys_chroot_args *uap, register_t *retval)
 		cwdi->cwdi_cdir = vp;
 	}
 	rw_exit(&cwdi->cwdi_lock);
-
-	return (0);
 }
 
 /*
  * Common routine for chroot and chdir.
  */
-static int
-change_dir(struct nameidata *ndp, struct lwp *l)
+int
+chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
 {
-	struct vnode *vp;
+	struct nameidata nd;
 	int error;
 
-	if ((error = namei(ndp)) != 0)
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, where,
+	    path);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-	vp = ndp->ni_vp;
-	if (vp->v_type != VDIR)
+	*vpp = nd.ni_vp;
+	if ((*vpp)->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VEXEC, l->l_cred);
+		error = VOP_ACCESS(*vpp, VEXEC, l->l_cred);
 
 	if (error)
-		vput(vp);
+		vput(*vpp);
 	else
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(*vpp, 0);
 	return (error);
 }
 
@@ -1821,12 +1806,12 @@ sys___mknod50(struct lwp *l, const struct sys___mknod50_args *uap,
 		syscallarg(dev_t) dev;
 	} */
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
-	    SCARG(uap, dev), retval);
+	    SCARG(uap, dev), retval, UIO_USERSPACE);
 }
 
 int
 do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
-    register_t *retval)
+    register_t *retval, enum uio_seg seg)
 {
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
@@ -1835,7 +1820,6 @@ do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
 	struct nameidata nd;
 	char *path;
 	const char *cpath;
-	enum uio_seg seg = UIO_USERSPACE;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
 	    0, NULL, NULL, NULL)) != 0)
@@ -3447,11 +3431,11 @@ sys_mkdir(struct lwp *l, const struct sys_mkdir_args *uap, register_t *retval)
 		syscallarg(int) mode;
 	} */
 
-	return do_sys_mkdir(SCARG(uap, path), SCARG(uap, mode));
+	return do_sys_mkdir(SCARG(uap, path), SCARG(uap, mode), UIO_USERSPACE);
 }
 
 int
-do_sys_mkdir(const char *path, mode_t mode)
+do_sys_mkdir(const char *path, mode_t mode, enum uio_seg seg)
 {
 	struct proc *p = curlwp->l_proc;
 	struct vnode *vp;
@@ -3460,7 +3444,7 @@ do_sys_mkdir(const char *path, mode_t mode)
 	struct nameidata nd;
 
 	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR | TRYEMULROOT,
-	    UIO_USERSPACE, path);
+	    seg, path);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2.4.2 2009/05/04 08:11:21 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2.4.3 2009/08/19 18:46:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,14 +34,22 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/user.h>
+
+#include <machine/frame.h>
+#include <machine/md_var.h>
+#include <machine/pcb.h>
 
 #include <uvm/uvm_extern.h>
+
+void lwp_trampoline(void);
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+printf("%s: not yet\n", __func__);
 }
 
 /*
@@ -66,12 +74,56 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	return;
-}
+	struct pcb *pcb;
+	struct trapframe *tf;
 
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
+        /* Copy pcb from lwp l1 to l2. */
+	if (l1 == curlwp) {
+		/* Sync the PCB before we copy it. */
+		savectx(&l1->l_addr->u_pcb);
+#if 0
+//		ia64_highfp_save(???);
+#endif
+	}
+#ifdef DIAGNOSTIC
+	else if (l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
+#endif
+	pcb = &l2->l_addr->u_pcb;
+	*pcb = l1->l_addr->u_pcb;
+
+	l2->l_md.md_flags = l1->l_md.md_flags;
+	l2->l_md.md_tf = (struct trapframe *)((vaddr_t)l2->l_addr + USPACE) - 1;
+	l2->l_md.md_astpending = 0;
+
+        /*
+	 * Copy the trapframe.
+	 */
+	tf = l2->l_md.md_tf;
+	*tf = *l1->l_md.md_tf;
+
+        /*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_special.sp = (unsigned long)stack + stacksize;
+
+	/* Set-up the return values as expected by the fork() libc stub. */
+	if (tf->tf_special.psr & IA64_PSR_IS) {
+		tf->tf_scratch.gr8 = 0;
+		tf->tf_scratch.gr10 = 1;
+	} else {
+		tf->tf_scratch.gr8 = 0;
+		tf->tf_scratch.gr9 = 1;
+		tf->tf_scratch.gr10 = 0;
+	}
+
+	tf->tf_scratch.gr2 = (unsigned long)FDESC_FUNC(func);
+	tf->tf_scratch.gr3 = (unsigned long)arg;
+	pcb->pcb_special.sp = (unsigned long)tf - 16;
+	pcb->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
+	pcb->pcb_special.pfs = 0;
+
 	return;
 }
 
@@ -84,6 +136,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_swapin(struct lwp *l)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }
 
@@ -97,6 +150,7 @@ cpu_swapin(struct lwp *l)
 void
 cpu_swapout(struct lwp *l)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }
 
@@ -108,6 +162,7 @@ cpu_swapout(struct lwp *l)
 void
 vmapbuf(struct buf *bp, vsize_t len)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }
 
@@ -117,5 +172,6 @@ vmapbuf(struct buf *bp, vsize_t len)
 void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.11.4.2 2009/05/04 08:13:20 yamt Exp $ */
+/* $NetBSD: pseye.c,v 1.11.4.3 2009/08/19 18:47:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 /*
- * Sony PLAYSTATION(R) Eye Driver
+ * Sony PlayStation Eye Driver
  *
  * The only documentation we have for this part is based on a series
  * of forum postings by Jim Paris on ps2dev.org. Many thanks for
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.11.4.2 2009/05/04 08:13:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.11.4.3 2009/08/19 18:47:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,7 +707,7 @@ pseye_close(void *opaque)
 static const char *
 pseye_get_devname(void *opaque)
 {
-	return "PLAYSTATION(R) Eye";
+	return "PlayStation Eye";
 }
 
 static int

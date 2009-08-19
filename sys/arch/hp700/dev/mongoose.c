@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.11.78.2 2009/06/20 07:20:02 yamt Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.11.78.3 2009/08/19 18:46:15 yamt Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.11.78.2 2009/06/20 07:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.11.78.3 2009/08/19 18:46:15 yamt Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -213,6 +213,7 @@ void mg_eisa_attach_hook(device_t, device_t, struct eisabus_attach_args *);
 int mg_intr_map(void *, u_int, eisa_intr_handle_t *);
 const char *mg_intr_string(void *, int);
 void mg_isa_attach_hook(device_t, device_t, struct isabus_attach_args *);
+void mg_isa_detach_hook(isa_chipset_tag_t, device_t);
 void *mg_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void mg_intr_disestablish(void *, void *);
 int mg_intr_check(void *, int, int);
@@ -271,6 +272,12 @@ mg_intr_string(void *v, int irq)
 void
 mg_isa_attach_hook(device_t parent, device_t self,
 	struct isabus_attach_args *iba)
+{
+
+}
+
+void
+mg_isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 
 }
@@ -676,6 +683,7 @@ mgattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ic.ic_v = sc;
 	sc->sc_ic.ic_attach_hook = mg_isa_attach_hook;
+	sc->sc_ic.ic_detach_hook = mg_isa_detach_hook;
 	sc->sc_ic.ic_intr_establish = mg_intr_establish;
 	sc->sc_ic.ic_intr_disestablish = mg_intr_disestablish;
 	sc->sc_ic.ic_intr_check = mg_intr_check;

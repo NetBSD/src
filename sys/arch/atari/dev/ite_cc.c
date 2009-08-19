@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.27.44.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.27.44.2 2009/08/19 18:46:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.27.44.1 2009/05/04 08:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.27.44.2 2009/08/19 18:46:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -238,7 +238,7 @@ grfccattach(struct device *pdp, struct device *dp, void *auxp)
 		 * We inited earlier just copy the info, take care
 		 * not to copy the device struct though.
 		 */
-		memcpy( &gp->g_display, &congrf.g_display,
+		memcpy(&gp->g_display, &congrf.g_display,
 			(char *)&gp[1] - (char *)&gp->g_display);
 	}
 	else {

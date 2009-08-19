@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.44.18.1 2009/05/04 08:11:41 yamt Exp $ */
+/* $NetBSD: dec_3100.c,v 1.44.18.2 2009/08/19 18:46:39 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44.18.1 2009/05/04 08:11:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44.18.2 2009/08/19 18:46:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ static const int dec_3100_ipl2spl_table[] = {
 };
 
 void
-dec_3100_init()
+dec_3100_init(void)
 {
 	const char *submodel;
 
@@ -180,14 +180,15 @@ dec_3100_init()
  * Initialize the memory system and I/O buses.
  */
 static void
-dec_3100_bus_reset()
+dec_3100_bus_reset(void)
 {
+
 	/* nothing to do */
 	kn01_wbflush();
 }
 
 static void
-dec_3100_cons_init()
+dec_3100_cons_init(void)
 {
 	int kbd, crt, screen;
 
@@ -222,11 +223,12 @@ dec_3100_cons_init()
 		intrtab[vvv].ih_count.ev_count++;		\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	}							\
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 static void
-dec_3100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
+dec_3100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
+
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_3) {
 		struct clockframe cf;
@@ -258,7 +260,8 @@ dec_3100_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 
 
 static void
-dec_3100_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
+dec_3100_intr_establish(struct device *dev, void *cookie, int level,
+    int (*handler)(void *), void *arg)
 {
 
 	intrtab[(int)cookie].ih_func = handler;
@@ -270,17 +273,17 @@ dec_3100_intr_establish(struct device *dev, void *cookie, int level, int (*handl
  * Handle memory errors.
  */
 static void
-dec_3100_errintr()
+dec_3100_errintr(void)
 {
-	u_int16_t csr;
+	uint16_t csr;
 
-	csr = *(u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
+	csr = *(volatile uint16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
 
 	if (csr & KN01_CSR_MERR) {
 		printf("Memory error at 0x%x\n",
-			*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
+		    *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
 	csr = (csr & ~KN01_CSR_MBZ) | 0xff;
-	*(volatile u_int16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR) = csr;
+	*(volatile uint16_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR) = csr;
 }

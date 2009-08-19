@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.286.2.3 2009/07/18 14:53:25 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.286.2.4 2009/08/19 18:48:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.286.2.3 2009/07/18 14:53:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.286.2.4 2009/08/19 18:48:24 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1298,6 +1298,10 @@ findpcb:
 	tp = NULL;
 	so = NULL;
 	if (inp) {
+		/* Check the minimum TTL for socket. */
+		if (ip->ip_ttl < inp->inp_ip_minttl)
+			goto drop;
+
 		tp = intotcpcb(inp);
 		so = inp->inp_socket;
 	}

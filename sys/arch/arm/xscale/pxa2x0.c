@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.16.48.1 2008/05/16 02:22:04 yamt Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.16.48.2 2009/08/19 18:46:00 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.16.48.1 2008/05/16 02:22:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.16.48.2 2009/08/19 18:46:00 yamt Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -242,6 +242,7 @@ pxaip_search(struct device *parent, struct cfdata *cf,
 
 	aa.pxa_iot = sc->sc_bust;
 	aa.pxa_dmat = sc->sc_dmat;
+	aa.pxa_name = cf->cf_name;
 	aa.pxa_addr = cf->cf_loc[PXAIPCF_ADDR];
 	aa.pxa_size = cf->cf_loc[PXAIPCF_SIZE];
 	aa.pxa_index = cf->cf_loc[PXAIPCF_INDEX];
@@ -260,6 +261,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 
 	aa.pxa_iot = sc->sc_bust;
 	aa.pxa_dmat = sc->sc_dmat;
+	aa.pxa_name = "pxaintc";
 	aa.pxa_addr = PXA2X0_INTCTL_BASE;
 	aa.pxa_size = PXA2X0_INTCTL_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
@@ -269,6 +271,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 #if NPXAGPIO > 0
 	aa.pxa_iot = sc->sc_bust;
 	aa.pxa_dmat = sc->sc_dmat;
+	aa.pxa_name = "pxagpio";
 	aa.pxa_addr = PXA2X0_GPIO_BASE;
 	aa.pxa_size = PXA2X0_GPIO_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
@@ -279,6 +282,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 #if NPXADMAC > 0
 	aa.pxa_iot = sc->sc_bust;
 	aa.pxa_dmat = sc->sc_dmat;
+	aa.pxa_name = "pxaidmac";
 	aa.pxa_addr = PXA2X0_DMAC_BASE;
 	aa.pxa_size = PXA2X0_DMAC_SIZE;
 	aa.pxa_intr = PXA2X0_INT_DMA;

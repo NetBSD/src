@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.19.2.1 2009/05/04 08:12:24 yamt Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.19.2.2 2009/08/19 18:46:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.2.1 2009/05/04 08:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.2.2 2009/08/19 18:46:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -349,8 +349,6 @@ linux32_sys_clock_getres(struct lwp *l,
 	ts.tv_nsec = 1000000000 / tc_getfrequency();
 	native_to_linux32_timespec(&lts, &ts);
 	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
-
-	return 0;
 }
 
 int

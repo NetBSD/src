@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223.4.3 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223.4.4 2009/08/19 18:48:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.3 2009/07/18 14:53:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.4 2009/08/19 18:48:34 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -385,14 +385,16 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * updating the mount is okay (for example, as far as securelevel goes)
 	 * which leaves us with the normal check.
 	 */
-	accessmode = VREAD;
-	if (update ?
-	    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-	    (mp->mnt_flag & MNT_RDONLY) == 0)
-		accessmode |= VWRITE;
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	if (error == 0) {
+		accessmode = VREAD;
+		if (update ?
+		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+		    (mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		VOP_UNLOCK(devvp, 0);
+	}
 
 	if (error) {
 		vrele(devvp);
@@ -1362,7 +1364,7 @@ ffs_oldfscompat_write(struct fs *fs, struct ufsmount *ump)
 }
 
 /*
- * unmount system call
+ * unmount vfs operation
  */
 int
 ffs_unmount(struct mount *mp, int mntflags)
@@ -1378,12 +1380,6 @@ ffs_unmount(struct mount *mp, int mntflags)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#ifdef UFS_EXTATTR
-	if (ump->um_fstype == UFS1) {
-		ufs_extattr_stop(mp, l);
-		ufs_extattr_uepm_destroy(&ump->um_extattr);
-	}
-#endif /* UFS_EXTATTR */
 	if ((error = ffs_flushfiles(mp, flags, l)) != 0)
 		return (error);
 	error = UFS_WAPBL_BEGIN(mp);
@@ -1410,6 +1406,13 @@ ffs_unmount(struct mount *mp, int mntflags)
 		return error;
 	}
 #endif /* WAPBL */
+#ifdef UFS_EXTATTR
+	if (ump->um_fstype == UFS1) {
+		ufs_extattr_stop(mp, l);
+		ufs_extattr_uepm_destroy(&ump->um_extattr);
+	}
+#endif /* UFS_EXTATTR */
+
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);

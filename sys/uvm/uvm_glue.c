@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.126.2.2 2009/07/18 14:53:28 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.126.2.3 2009/08/19 18:48:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.126.2.2 2009/07/18 14:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.126.2.3 2009/08/19 18:48:35 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.126.2.2 2009/07/18 14:53:28 yamt Exp 
  * local prototypes
  */
 
-static void uvm_swapout(struct lwp *);
 static int uarea_swapin(vaddr_t);
+static void uvm_swapout(struct lwp *);
 
 /*
  * XXXCDC: do these really belong here?
@@ -229,7 +229,6 @@ void
 uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	int error;
 
 	/*
 	 * Wire down the U-area for the process, which contains the PCB
@@ -242,7 +241,9 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 
 	if ((l2->l_flag & LW_INMEM) == 0) {
+#ifdef VMSWAP_UAREA
 		vaddr_t uarea = USER_TO_UAREA(l2->l_addr);
+		int error;
 
 		if ((error = uarea_swapin(uarea)) != 0)
 			panic("%s: uvm_fault_wire failed: %d", __func__, error);
@@ -250,6 +251,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		/* Tell the pmap this is a u-area mapping */
 		PMAP_UAREA(uarea);
 #endif
+#endif /* VMSWAP_UAREA */
 		l2->l_flag |= LW_INMEM;
 	}
 
@@ -277,12 +279,14 @@ uarea_swapin(vaddr_t addr)
 	    VM_PROT_READ | VM_PROT_WRITE, 0);
 }
 
+#ifdef VMSWAP_UAREA
 static void
 uarea_swapout(vaddr_t addr)
 {
 
 	uvm_fault_unwire(kernel_map, addr, addr + USPACE);
 }
+#endif /* VMSWAP_UAREA */
 
 #ifndef USPACE_ALIGN
 #define	USPACE_ALIGN	0
@@ -293,7 +297,10 @@ static pool_cache_t uvm_uarea_cache;
 static int
 uarea_ctor(void *arg, void *obj, int flags)
 {
-
+#if defined(PMAP_MAP_POOLPAGE) && !defined(VMSWAP_UAREA)
+	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0)
+		return 0;
+#endif
 	KASSERT((flags & PR_WAITOK) != 0);
 	return uarea_swapin((vaddr_t)obj);
 }
@@ -301,7 +308,21 @@ uarea_ctor(void *arg, void *obj, int flags)
 static void *
 uarea_poolpage_alloc(struct pool *pp, int flags)
 {
+#if defined(PMAP_MAP_POOLPAGE) && !defined(VMSWAP_UAREA)
+	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
+		struct vm_page *pg;
+		vaddr_t va;
 
+		pg = uvm_pagealloc(NULL, 0, NULL,
+		   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
+		if (pg == NULL)
+			return NULL;
+		va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
+		if (va == 0)
+			uvm_pagefree(pg);
+		return (void *)va;
+	}
+#endif
 	return (void *)uvm_km_alloc(kernel_map, pp->pr_alloc->pa_pagesz,
 	    USPACE_ALIGN, UVM_KMF_PAGEABLE |
 	    ((flags & PR_WAITOK) != 0 ? UVM_KMF_WAITVA :
@@ -311,7 +332,16 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 static void
 uarea_poolpage_free(struct pool *pp, void *addr)
 {
+#if defined(PMAP_MAP_POOLPAGE) && !defined(VMSWAP_UAREA)
+	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
+		paddr_t pa;
 
+		pa = PMAP_UNMAP_POOLPAGE((vaddr_t) addr);
+		KASSERT(pa != 0);
+		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+		return;
+	}
+#endif
 	uvm_km_free(kernel_map, (vaddr_t)addr, pp->pr_alloc->pa_pagesz,
 	    UVM_KMF_PAGEABLE);
 }
@@ -447,11 +477,14 @@ int	swapdebug = 0;
 void
 uvm_swapin(struct lwp *l)
 {
+#ifdef VMSWAP_UAREA
 	int error;
+#endif
 
 	KASSERT(mutex_owned(&l->l_swaplock));
 	KASSERT(l != curlwp);
 
+#ifdef VMSWAP_UAREA
 	error = uarea_swapin(USER_TO_UAREA(l->l_addr));
 	if (error) {
 		panic("%s: rewiring stack failed: %d", __func__, error);
@@ -462,6 +495,7 @@ uvm_swapin(struct lwp *l)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(l);
+#endif
 	lwp_lock(l);
 	if (l->l_stat == LSRUN)
 		sched_enqueue(l, false);
@@ -763,6 +797,7 @@ uvm_swapout(struct lwp *l)
 	l->l_ru.ru_nswap++;
 	++uvmexp.swapouts;
 
+#ifdef VMSWAP_UAREA
 	/*
 	 * Do any machine-specific actions necessary before swapout.
 	 * This can include saving floating point state, etc.
@@ -773,6 +808,7 @@ uvm_swapout(struct lwp *l)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	uarea_swapout(USER_TO_UAREA(l->l_addr));
+#endif
 	map = &l->l_proc->p_vmspace->vm_map;
 	if (vm_map_lock_try(map)) {
 		pmap_collect(vm_map_pmap(map));

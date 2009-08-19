@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.6.4.4 2009/07/18 14:52:55 yamt Exp $ */
+/* $NetBSD: globals.h,v 1.6.4.5 2009/08/19 18:46:44 yamt Exp $ */
 
 /* clock feed */
 #ifndef TICKS_PER_SEC
@@ -88,64 +88,4 @@ int netif_close(int);
 
 NIF_DECL(fxp);
 NIF_DECL(tlp);
-NIF_DECL(nvt);
-NIF_DECL(sip);
-NIF_DECL(pcn);
-NIF_DECL(kse);
-NIF_DECL(sme);
-NIF_DECL(vge);
 NIF_DECL(rge);
-NIF_DECL(wm);
-
-#ifdef LABELSECTOR
-/* IDE/SATA and disk */
-int wdopen(struct open_file *, ...);
-int wdclose(struct open_file *);
-int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int parsefstype(void *);
-
-struct atac_channel {
-	volatile uint8_t *c_cmdbase;
-	volatile uint8_t *c_ctlbase;
-	volatile uint8_t *c_cmdreg[8 + 2];
-	volatile uint16_t *c_data;
-	int compatchan;
-#define WDC_READ_CMD(chp, reg)		*(chp)->c_cmdreg[(reg)]
-#define WDC_WRITE_CMD(chp, reg, val)	*(chp)->c_cmdreg[(reg)] = (val)
-#define WDC_READ_CTL(chp, reg)		(chp)->c_ctlbase[(reg)]
-#define WDC_WRITE_CTL(chp, reg, val)	(chp)->c_ctlbase[(reg)] = (val)
-#define WDC_READ_DATA(chp)		*(chp)->c_data
-};
-
-struct atac_command {
-	uint8_t drive;		/* drive id */
-	uint8_t r_command;	/* Parameters to upload to registers */
-	uint8_t r_head;
-	uint16_t r_cyl;
-	uint8_t r_sector;
-	uint8_t r_count;
-	uint8_t r_precomp;
-	uint16_t bcount;
-	void *data;
-	uint64_t r_blkno;
-};
-
-struct atac_softc {
-	unsigned tag;
-	unsigned chvalid;
-	struct atac_channel channel[4];
-};
-
-struct wd_softc {
-#define WDF_LBA		0x0001
-#define WDF_LBA48	0x0002
-	int sc_flags;
-	int sc_unit, sc_part;
-	uint64_t sc_capacity;
-	struct atac_channel *sc_channel;
-	struct atac_command sc_command;
-	struct ataparams sc_params;
-	struct disklabel sc_label;
-	uint8_t sc_buf[DEV_BSIZE];
-};
-#endif

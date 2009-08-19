@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3.64.1 2009/05/04 08:11:21 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.64.2 2009/08/19 18:46:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -35,6 +35,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
 #include "bootstrap.h"
@@ -106,7 +107,6 @@ command_boot(int argc, char *argv[])
 	return(CMD_ERROR);
 
     /* Call the exec handler from the loader matching the kernel */
-    file_formats[fp->f_loader]->l_exec(fp);
     command_errmsg = strerror(file_formats[fp->f_loader]->l_exec(fp));
     return(CMD_ERROR);
 }

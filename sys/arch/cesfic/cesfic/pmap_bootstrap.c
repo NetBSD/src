@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12.20.1 2009/05/04 08:10:53 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12.20.2 2009/08/19 18:46:04 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12.20.1 2009/05/04 08:10:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12.20.2 2009/08/19 18:46:04 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 
@@ -55,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12.20.1 2009/05/04 08:10:53 yam
 extern char *etext;
 extern char *proc0paddr;
 extern paddr_t avail_start, avail_end;
-
-extern int physmem;
 
 void	pmap_bootstrap(vm_offset_t, vm_offset_t);
 

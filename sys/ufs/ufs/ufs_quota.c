@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.59.4.3 2009/05/16 10:41:54 yamt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.59.4.4 2009/08/19 18:48:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.59.4.3 2009/05/16 10:41:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.59.4.4 2009/08/19 18:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -889,6 +889,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 		KASSERT(dq->dq_cnt > 0);
 		dqref(dq);
 		mutex_exit(&dqlock);
+		mutex_destroy(&ndq->dq_interlock);
 		pool_cache_put(dquot_cache, ndq);
 		*dqp = dq;
 		return 0;

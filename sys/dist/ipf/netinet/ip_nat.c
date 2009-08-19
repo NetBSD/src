@@ -1,9 +1,11 @@
-/*	$NetBSD: ip_nat.c,v 1.35.10.1 2009/05/04 08:13:27 yamt Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.35.10.2 2009/08/19 18:47:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Copyright 2008 Sun Microsystems, Inc.
  */
 #if defined(KERNEL) || defined(_KERNEL)
 # undef KERNEL
@@ -80,7 +82,6 @@ struct file;
 #ifdef sun
 # include <net/af.h>
 #endif
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -118,10 +119,10 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.35.10.1 2009/05/04 08:13:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.35.10.2 2009/08/19 18:47:31 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.35.10.1 2009/05/04 08:13:27 yamt Exp $";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.127 2009/07/21 09:40:55 darrenr Exp";
 #endif
 #endif
 
@@ -194,9 +195,9 @@ static	void	nat_addnat __P((struct ipnat *));
 static	void	nat_addrdr __P((struct ipnat *));
 static	void	nat_delrdr __P((struct ipnat *));
 static	void	nat_delnat __P((struct ipnat *));
-static	int	fr_natgetent __P((caddr_t, int));
-static	int	fr_natgetsz __P((caddr_t, int));
-static	int	fr_natputent __P((caddr_t, int));
+static	int	fr_natgetent __P((void *, int));
+static	int	fr_natgetsz __P((void *, int));
+static	int	fr_natputent __P((void *, int));
 static	int	nat_extraflush __P((int));
 static	int	nat_gettable __P((char *));
 static	void	nat_tabmove __P((nat_t *));
@@ -460,7 +461,7 @@ u_32_t port;
 	hv += src.s_addr;
 	hv += dst.s_addr;
 	hv %= HOSTMAP_SIZE;
-	for (hm = ipf_hm_maptable[hv]; hm; hm = hm->hm_next)
+	for (hm = ipf_hm_maptable[hv]; hm; hm = hm->hm_hnext)
 		if ((hm->hm_srcip.s_addr == src.s_addr) &&
 		    (hm->hm_dstip.s_addr == dst.s_addr) &&
 		    ((np == NULL) || (np == hm->hm_ipnat)) &&
@@ -648,7 +649,7 @@ u_32_t n;
 /* ------------------------------------------------------------------------ */
 int fr_nat_ioctl(data, cmd, mode, uid, ctx)
 ioctlcmd_t cmd;
-caddr_t data;
+void * data;
 int mode, uid;
 void *ctx;
 {
@@ -657,7 +658,7 @@ void *ctx;
 	ipnat_t natd;
 	SPL_INT(s);
 
-#if (BSD >= 199306) && defined(_KERNEL)
+#if defined(BSD) && (BSD >= 199306) && defined(_KERNEL)
 # if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 399002000)
 	if ((mode & FWRITE) &&
 	     kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_FIREWALL,
@@ -917,16 +918,21 @@ void *ctx;
 		if (error == 0) {
 			token = ipf_findtoken(iter.igi_type, uid, ctx);
 			if (token != NULL) {
-				error  = nat_iterator(token, &iter);
+				error = nat_iterator(token, &iter);
+				WRITE_ENTER(&ipf_tokens);
+				if (token->ipt_data == NULL)
+					ipf_freetoken(token);
+				else
+					ipf_dereftoken(token);
+				RWLOCK_EXIT(&ipf_tokens);
 			}
-			RWLOCK_EXIT(&ipf_tokens);
 		}
 		SPL_X(s);
 		break;
 	    }
 
 	case SIOCIPFDELTOK :
-		error = BCOPYIN((caddr_t)data, (caddr_t)&arg, sizeof(arg));
+		error = BCOPYIN((void *)data, (void *)&arg, sizeof(arg));
 		if (error == 0) {
 			SPL_SCHED(s);
 			error = ipf_deltoken(arg, uid, ctx);
@@ -1198,7 +1204,7 @@ int getlock;
 /* structure is copied back to the user.                                    */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetsz(data, getlock)
-caddr_t data;
+void * data;
 int getlock;
 {
 	ap_session_t *aps;
@@ -1275,7 +1281,7 @@ int getlock;
 /* proxy is also copied, as to is the NAT rule which was responsible for it */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetent(data, getlock)
-caddr_t data;
+void * data;
 int getlock;
 {
 	int error, outsize;
@@ -1399,7 +1405,7 @@ finished:
 /* firewall rule data structures, if pointers to them indicate so.          */
 /* ------------------------------------------------------------------------ */
 static int fr_natputent(data, getlock)
-caddr_t data;
+void * data;
 int getlock;
 {
 	nat_save_t *ipn, *ipnn;
@@ -2143,8 +2149,8 @@ natinfo_t *ni;
 		((icmphdr_t *)fin->fin_dp)->icmp_id = port;
 		nat->nat_inport = port;
 		nat->nat_outport = port;
-	} else if (fin->fin_p == IPPROTO_GRE) {
 #if 0
+	} else if (fin->fin_p == IPPROTO_GRE) {
 		nat->nat_gre.gs_flags = ((grehdr_t *)fin->fin_dp)->gr_flags;
 		if (GRE_REV(nat->nat_gre.gs_flags) == 1) {
 			nat->nat_oport = 0;/*fin->fin_data[1];*/
@@ -2335,8 +2341,8 @@ natinfo_t *ni;
 		((icmphdr_t *)fin->fin_dp)->icmp_id = nport;
 		nat->nat_inport = nport;
 		nat->nat_outport = nport;
-	} else if (fin->fin_p == IPPROTO_GRE) {
 #if 0
+	} else if (fin->fin_p == IPPROTO_GRE) {
 		nat->nat_gre.gs_flags = ((grehdr_t *)fin->fin_dp)->gr_flags;
 		if (GRE_REV(nat->nat_gre.gs_flags) == 1) {
 			nat->nat_call[0] = fin->fin_data[0];
@@ -2455,10 +2461,6 @@ int direction;
 	nat->nat_flags = flags;
 	nat->nat_redir = np->in_redir;
 
-	if ((flags & NAT_SLAVE) == 0) {
-		MUTEX_ENTER(&ipf_nat_new);
-	}
-
 	/*
 	 * Search the current table for a match.
 	 */
@@ -2572,9 +2574,8 @@ badnat:
 	KFREE(nat);
 	nat = NULL;
 done:
-	if ((flags & NAT_SLAVE) == 0) {
-		MUTEX_EXIT(&ipf_nat_new);
-	}
+	if (nat != NULL && np != NULL)
+		np->in_hits++;
 	return nat;
 }
 
@@ -2624,7 +2625,7 @@ static int nat_finalise(
 	nat->nat_ptr = np;
 	nat->nat_p = fin->fin_p;
 	nat->nat_mssclamp = np->in_mssclamp;
-	if (nat->nat_p == IPPROTO_TCP)
+	if (nat->nat_flags & IPN_TCP)
 		nat->nat_seqnext[0] = ntohl(tcp->th_seq);
 
 	if ((np->in_apr != NULL) && ((ni->nai_flags & NAT_SLAVE) == 0))
@@ -2701,10 +2702,6 @@ int	rev;
 
 	nat->nat_rev = rev;
 	nat->nat_ref = 1;
-	nat->nat_bytes[0] = 0;
-	nat->nat_pkts[0] = 0;
-	nat->nat_bytes[1] = 0;
-	nat->nat_pkts[1] = 0;
 
 	nat->nat_ifnames[0][LIFNAMSIZ - 1] = '\0';
 	nat->nat_ifps[0] = fr_resolvenic(nat->nat_ifnames[0], 4);
@@ -2725,25 +2722,29 @@ int	rev;
 		nat_instances->nat_pnext = &nat->nat_next;
 	nat_instances = nat;
 
+	/*
+	 * Bump this before the hash table inserts.
+	 */
+	nat_stats.ns_added++;
+
 	natp = &nat_table[0][hv1];
-	if (*natp)
-		(*natp)->nat_phnext[0] = &nat->nat_hnext[0];
 	nat->nat_phnext[0] = natp;
 	nat->nat_hnext[0] = *natp;
+	if (*natp)
+		(*natp)->nat_phnext[0] = &nat->nat_hnext[0];
 	*natp = nat;
 	nat_stats.ns_bucketlen[0][hv1]++;
 
 	natp = &nat_table[1][hv2];
-	if (*natp)
-		(*natp)->nat_phnext[1] = &nat->nat_hnext[1];
 	nat->nat_phnext[1] = natp;
 	nat->nat_hnext[1] = *natp;
+	if (*natp)
+		(*natp)->nat_phnext[1] = &nat->nat_hnext[1];
 	*natp = nat;
 	nat_stats.ns_bucketlen[1][hv2]++;
 
 	fr_setnatqueue(nat, rev);
 
-	nat_stats.ns_added++;
 	nat_stats.ns_inuse++;
 	return 0;
 }
@@ -3204,8 +3205,7 @@ struct in_addr src , mapdst;
 		if (nat->nat_ifps[0] != NULL) {
 			if ((ifp != NULL) && (ifp != nat->nat_ifps[0]))
 				continue;
-		} else if (ifp != NULL)
-			nat->nat_ifps[0] = ifp;
+		}
 
 		nflags = nat->nat_flags;
 
@@ -3246,6 +3246,8 @@ struct in_addr src , mapdst;
 			if ((ipn != NULL) && (nat->nat_aps != NULL))
 				if (appr_match(fin, nat) != 0)
 					continue;
+			if ((nat->nat_ifps[0] == NULL) && (ifp != NULL))
+				nat->nat_ifps[0] = ifp;
 			return nat;
 		}
 	}
@@ -3275,8 +3277,7 @@ find_in_wild_ports:
 		if (nat->nat_ifps[0] != NULL) {
 			if ((ifp != NULL) && (ifp != nat->nat_ifps[0]))
 				continue;
-		} else if (ifp != NULL)
-			nat->nat_ifps[0] = ifp;
+		}
 
 		if (nat->nat_p != fin->fin_p)
 			continue;
@@ -3301,6 +3302,8 @@ find_in_wild_ports:
 				nat_stats.ns_wilds--;
 				MUTEX_EXIT(&ipf_nat_new);
 			}
+			if ((nat->nat_ifps[0] == NULL) && (ifp != NULL))
+				nat->nat_ifps[0] = ifp;
 			nat->nat_oport = sport;
 			nat->nat_outport = dport;
 			nat->nat_flags &= ~(SI_W_DPORT|SI_W_SPORT);
@@ -3446,8 +3449,7 @@ struct in_addr src , dst;
 		if (nat->nat_ifps[1] != NULL) {
 			if ((ifp != NULL) && (ifp != nat->nat_ifps[1]))
 				continue;
-		} else if (ifp != NULL)
-			nat->nat_ifps[1] = ifp;
+		}
 
 		nflags = nat->nat_flags;
 
@@ -3478,6 +3480,8 @@ struct in_addr src , dst;
 			if ((ipn != NULL) && (nat->nat_aps != NULL))
 				if (appr_match(fin, nat) != 0)
 					continue;
+			if ((nat->nat_ifps[1] == NULL) && (ifp != NULL))
+				nat->nat_ifps[1] = ifp;
 			return nat;
 		}
 	}
@@ -3507,8 +3511,7 @@ find_out_wild_ports:
 		if (nat->nat_ifps[1] != NULL) {
 			if ((ifp != NULL) && (ifp != nat->nat_ifps[1]))
 				continue;
-		} else if (ifp != NULL)
-			nat->nat_ifps[1] = ifp;
+		}
 
 		if (nat->nat_p != fin->fin_p)
 			continue;
@@ -3533,6 +3536,8 @@ find_out_wild_ports:
 				nat_stats.ns_wilds--;
 				MUTEX_EXIT(&ipf_nat_new);
 			}
+			if ((nat->nat_ifps[1] == NULL) && (ifp != NULL))
+				nat->nat_ifps[1] = ifp;
 			nat->nat_inport = sport;
 			nat->nat_oport = dport;
 			if (nat->nat_outport == 0)
@@ -3688,19 +3693,21 @@ ipnat_t *np;
 /* Returns:     Nil                                                         */
 /* Parameters:  nat(I)    - pointer to NAT structure                        */
 /*              np(I)     - pointer to NAT rule                             */
+/* Locks:       nat_lock                                                    */
 /*                                                                          */
 /* Updates the lifetime of a NAT table entry for non-TCP packets.  Must be  */
 /* called with fin_rev updated - i.e. after calling nat_proto().            */
+/*                                                                          */
+/* This must be called *after* nat_proto() because we need fin_rev set.     */
 /* ------------------------------------------------------------------------ */
-void nat_update(fin, nat, np)
+void nat_update(fin, nat)
 fr_info_t *fin;
 nat_t *nat;
-ipnat_t *np;
 {
 	ipftq_t *ifq, *ifq2;
 	ipftqent_t *tqe;
+	ipnat_t *np = nat->nat_ptr;
 
-	MUTEX_ENTER(&nat->nat_lock);
 	tqe = &nat->nat_tqe;
 	ifq = tqe->tqe_ifq;
 
@@ -3748,7 +3755,6 @@ ipnat_t *np;
 
 		fr_movequeue(tqe, ifq, ifq2);
 	}
-	MUTEX_EXIT(&nat->nat_lock);
 }
 
 
@@ -3782,7 +3788,9 @@ u_32_t *passp;
 	frentry_t *fr;
 	nat_t *nat;
 
-	if (nat_stats.ns_rules == 0 || fr_nat_lock != 0)
+	if (fr_nat_lock != 0)
+		return 0;
+	if (nat_stats.ns_rules == 0 && nat_instances == NULL)
 		return 0;
 
 	natfailed = 0;
@@ -3874,31 +3882,14 @@ maskloop:
 					continue;
 			}
 
-			ATOMIC_INC32(np->in_use);
-			RWLOCK_EXIT(&ipf_nat);
-			WRITE_ENTER(&ipf_nat);
-			/*
-			 * If we've matched a round-robin rule but it has
-			 * moved in the list since we got it, start over as
-			 * this is now no longer correct.
-			 */
-			if (npnext != np->in_mnext) {
-				if (np->in_flags & IPN_ROUNDR) {
-					MUTEX_DOWNGRADE(&ipf_nat);
-					goto maskloop;
-				}
-				npnext = np->in_mnext;
-			}
+			MUTEX_ENTER(&ipf_nat_new);
 			nat = nat_new(fin, np, NULL, nflags, NAT_OUTBOUND);
+			MUTEX_EXIT(&ipf_nat_new);
 			if (nat != NULL) {
-				np->in_hits++;
-				np->in_use--;
-				MUTEX_DOWNGRADE(&ipf_nat);
+				natfailed = 0;
 				break;
 			}
 			natfailed = -1;
-			fr_ipnatderef(&np);
-			MUTEX_DOWNGRADE(&ipf_nat);
 		}
 		if ((np == NULL) && (nmsk != 0)) {
 			while (nmsk) {
@@ -3918,12 +3909,11 @@ maskloop:
 		rval = fr_natout(fin, nat, natadd, nflags);
 		if (rval == 1) {
 			MUTEX_ENTER(&nat->nat_lock);
-			nat->nat_ref++;
+			nat_update(fin, nat);
 			nat->nat_bytes[1] += fin->fin_plen;
 			nat->nat_pkts[1]++;
+			fin->fin_pktnum = nat->nat_pkts[1];
 			MUTEX_EXIT(&nat->nat_lock);
-			nat->nat_touched = fr_ticks;
-			fin->fin_nat = nat;
 		}
 	} else
 		rval = natfailed;
@@ -3956,14 +3946,12 @@ int natadd;
 u_32_t nflags;
 {
 	icmphdr_t *icmp;
-	u_short *csump;
 	tcphdr_t *tcp;
 	ipnat_t *np;
 	int i;
 
 	tcp = NULL;
 	icmp = NULL;
-	csump = NULL;
 	np = nat->nat_ptr;
 
 	if ((natadd != 0) && (fin->fin_flx & FI_FRAG) && (np != NULL))
@@ -4006,6 +3994,8 @@ u_32_t nflags;
 	}
 
 	if (!(fin->fin_flx & FI_SHORT) && (fin->fin_off == 0)) {
+		u_short *csump;
+
 		if ((nat->nat_outport != 0) && (nflags & IPN_TCPUDP)) {
 			tcp = fin->fin_dp;
 
@@ -4019,21 +4009,20 @@ u_32_t nflags;
 		}
 
 		csump = nat_proto(fin, nat, nflags);
+
+		/*
+		 * The above comments do not hold for layer 4 (or higher)
+		 * checksums...
+		 */
+		if (csump != NULL) {
+			if (nat->nat_dir == NAT_OUTBOUND)
+				fix_outcksum(fin, csump, nat->nat_sumd[1]);
+			else
+				fix_incksum(fin, csump, nat->nat_sumd[1]);
+		}
 	}
 
 	fin->fin_ip->ip_src = nat->nat_outip;
-
-	nat_update(fin, nat, np);
-
-	/*
-	 * The above comments do not hold for layer 4 (or higher) checksums...
-	 */
-	if (csump != NULL) {
-		if (nat->nat_dir == NAT_OUTBOUND)
-			fix_outcksum(fin, csump, nat->nat_sumd[1]);
-		else
-			fix_incksum(fin, csump, nat->nat_sumd[1]);
-	}
 #ifdef	IPFILTER_SYNC
 	ipfsync_update(SMC_NAT, fin, nat->nat_sync);
 #endif
@@ -4089,7 +4078,9 @@ u_32_t *passp;
 	nat_t *nat;
 	u_32_t iph;
 
-	if (nat_stats.ns_rules == 0 || fr_nat_lock != 0)
+	if (fr_nat_lock != 0)
+		return 0;
+	if (nat_stats.ns_rules == 0 && nat_instances == NULL)
 		return 0;
 
 	tcp = NULL;
@@ -4183,29 +4174,24 @@ maskloop:
 				}
 			}
 
-			ATOMIC_INC32(np->in_use);
-			RWLOCK_EXIT(&ipf_nat);
-			WRITE_ENTER(&ipf_nat);
 			/*
 			 * If we've matched a round-robin rule but it has
 			 * moved in the list since we got it, start over as
 			 * this is now no longer correct.
 			 */
+			MUTEX_ENTER(&ipf_nat_new);
 			if ((npnext != np->in_rnext) &&
 			    (np->in_flags & IPN_ROUNDR)) {
-				MUTEX_DOWNGRADE(&ipf_nat);
+				MUTEX_EXIT(&ipf_nat_new);
 				goto maskloop;
 			}
 			nat = nat_new(fin, np, NULL, nflags, NAT_INBOUND);
+			MUTEX_EXIT(&ipf_nat_new);
 			if (nat != NULL) {
-				np->in_hits++;
-				np->in_use--;
-				MUTEX_DOWNGRADE(&ipf_nat);
+				natfailed = 0;
 				break;
 			}
 			natfailed = -1;
-			fr_ipnatderef(&np);
-			MUTEX_DOWNGRADE(&ipf_nat);
 		}
 
 		if ((np == NULL) && (rmsk != 0)) {
@@ -4226,12 +4212,11 @@ maskloop:
 		rval = fr_natin(fin, nat, natadd, nflags);
 		if (rval == 1) {
 			MUTEX_ENTER(&nat->nat_lock);
-			nat->nat_ref++;
+			nat_update(fin, nat);
 			nat->nat_bytes[0] += fin->fin_plen;
 			nat->nat_pkts[0]++;
+			fin->fin_pktnum = nat->nat_pkts[0];
 			MUTEX_EXIT(&nat->nat_lock);
-			nat->nat_touched = fr_ticks;
-			fin->fin_nat = nat;
 		}
 	} else
 		rval = natfailed;
@@ -4265,13 +4250,11 @@ int natadd;
 u_32_t nflags;
 {
 	icmphdr_t *icmp;
-	u_short *csump;
 	tcphdr_t *tcp;
 	ipnat_t *np;
 	int i;
 
 	tcp = NULL;
-	csump = NULL;
 	np = nat->nat_ptr;
 	fin->fin_fr = nat->nat_fr;
 
@@ -4325,6 +4308,8 @@ u_32_t nflags;
 #endif
 
 	if (!(fin->fin_flx & FI_SHORT) && (fin->fin_off == 0)) {
+		u_short *csump;
+
 		if ((nat->nat_inport != 0) && (nflags & IPN_TCPUDP)) {
 			tcp->th_dport = nat->nat_inport;
 			fin->fin_data[1] = ntohs(nat->nat_inport);
@@ -4338,18 +4323,17 @@ u_32_t nflags;
 		}
 
 		csump = nat_proto(fin, nat, nflags);
-	}
 
-	nat_update(fin, nat, np);
-
-	/*
-	 * The above comments do not hold for layer 4 (or higher) checksums...
-	 */
-	if (csump != NULL) {
-		if (nat->nat_dir == NAT_OUTBOUND)
-			fix_incksum(fin, csump, nat->nat_sumd[0]);
-		else
-			fix_outcksum(fin, csump, nat->nat_sumd[0]);
+		/*
+		 * The above comments do not hold for layer 4 (or higher)
+		 * checksums...
+		 */
+		if (csump != NULL) {
+			if (nat->nat_dir == NAT_OUTBOUND)
+				fix_incksum(fin, csump, nat->nat_sumd[0]);
+			else
+				fix_outcksum(fin, csump, nat->nat_sumd[0]);
+		}
 	}
 	ATOMIC_INCL(nat_stats.ns_mapped[0]);
 	fin->fin_flx |= FI_NATED;
@@ -5099,11 +5083,8 @@ int rev;
 /*              itp(I) - pointer to ipfgeniter_t structure                  */
 /*                                                                          */
 /* Fetch the next nat/ipnat structure pointer from the linked list and      */
-/* copy it out to the storage space pointed to by itp_data.  The next item  */
+/* copy it out to the storage space pointed to by itp.  The next item       */
 /* in the list to look at is put back in the ipftoken struture.             */
-/* If we call ipf_freetoken, the accompanying pointer is set to NULL because*/
-/* ipf_freetoken will call a deref function for us and we dont want to call */
-/* that twice (second time would be in the second switch statement below.   */
 /* ------------------------------------------------------------------------ */
 static int nat_getnext(t, itp)
 ipftoken_t *t;
@@ -5115,12 +5096,14 @@ ipfgeniter_t *itp;
 	int error = 0, count;
 	char *dst;
 
-	count = itp->igi_nitems;
-	if (count < 1)
+	if (itp->igi_nitems < 1)
 		return ENOSPC;
 
 	READ_ENTER(&ipf_nat);
 
+	/*
+	 * Get "previous" entry from the token and find the next entry.
+	 */
 	switch (itp->igi_type)
 	{
 	case IPFGENITER_HOSTMAP :
@@ -5149,67 +5132,63 @@ ipfgeniter_t *itp;
 			nextnat = nat->nat_next;
 		}
 		break;
+
 	default :
 		RWLOCK_EXIT(&ipf_nat);
 		return EINVAL;
 	}
 
 	dst = itp->igi_data;
-	for (;;) {
+	for (count = itp->igi_nitems; count > 0; count--) {
+		/*
+		 * If we found an entry, add a reference and update the token.
+		 * Otherwise, zero out data to be returned and NULL out token.
+		 */
 		switch (itp->igi_type)
 		{
 		case IPFGENITER_HOSTMAP :
 			if (nexthm != NULL) {
-				if (count == 1) {
-					ATOMIC_INC32(nexthm->hm_ref);
-					t->ipt_data = nexthm;
-				}
+				ATOMIC_INC32(nexthm->hm_ref);
+				t->ipt_data = nexthm;
 			} else {
 				bzero(&zerohm, sizeof(zerohm));
 				nexthm = &zerohm;
-				count = 1;
 				t->ipt_data = NULL;
 			}
 			break;
 
 		case IPFGENITER_IPNAT :
 			if (nextipnat != NULL) {
-				if (count == 1) {
-					MUTEX_ENTER(&nextipnat->in_lock);
-					nextipnat->in_use++;
-					MUTEX_EXIT(&nextipnat->in_lock);
-					t->ipt_data = nextipnat;
-				}
+				ATOMIC_INC32(nextipnat->in_use);
+				t->ipt_data = nextipnat;
 			} else {
 				bzero(&zeroipn, sizeof(zeroipn));
 				nextipnat = &zeroipn;
-				count = 1;
 				t->ipt_data = NULL;
 			}
 			break;
 
 		case IPFGENITER_NAT :
 			if (nextnat != NULL) {
-				if (count == 1) {
-					MUTEX_ENTER(&nextnat->nat_lock);
-					nextnat->nat_ref++;
-					MUTEX_EXIT(&nextnat->nat_lock);
-					t->ipt_data = nextnat;
-				}
+				MUTEX_ENTER(&nextnat->nat_lock);
+				nextnat->nat_ref++;
+				MUTEX_EXIT(&nextnat->nat_lock);
+				t->ipt_data = nextnat;
 			} else {
 				bzero(&zeronat, sizeof(zeronat));
 				nextnat = &zeronat;
-				count = 1;
 				t->ipt_data = NULL;
 			}
 			break;
-		default :
-			break;
 		}
+
+		/*
+		 * Now that we have ref, it's save to give up lock.
+		 */
 		RWLOCK_EXIT(&ipf_nat);
 
 		/*
-		 * Copying out to user space needs to be done without the lock.
+		 * Copy out data and clean up references and token as needed.
 		 */
 		switch (itp->igi_type)
 		{
@@ -5217,74 +5196,65 @@ ipfgeniter_t *itp;
 			error = COPYOUT(nexthm, dst, sizeof(*nexthm));
 			if (error != 0)
 				error = EFAULT;
-			else
+			if (hm != NULL) {
+				WRITE_ENTER(&ipf_nat);
+				fr_hostmapdel(&hm);
+				RWLOCK_EXIT(&ipf_nat);
+			}
+			if (t->ipt_data != NULL) {
+				if (nexthm->hm_next == NULL) {
+					t->ipt_data = NULL;
+					break;
+				}
 				dst += sizeof(*nexthm);
+				hm = nexthm;
+				nexthm = nexthm->hm_next;
+			}
 			break;
 
 		case IPFGENITER_IPNAT :
 			error = COPYOUT(nextipnat, dst, sizeof(*nextipnat));
 			if (error != 0)
 				error = EFAULT;
-			else
+			if (ipn != NULL) {
+				WRITE_ENTER(&ipf_nat);
+				fr_ipnatderef(&ipn);
+				RWLOCK_EXIT(&ipf_nat);
+			}
+			if (t->ipt_data != NULL) {
+				if (nextipnat->in_next == NULL) {
+					t->ipt_data = NULL;
+					break;
+				}
 				dst += sizeof(*nextipnat);
+				ipn = nextipnat;
+				nextipnat = nextipnat->in_next;
+			}
 			break;
 
 		case IPFGENITER_NAT :
 			error = COPYOUT(nextnat, dst, sizeof(*nextnat));
 			if (error != 0)
 				error = EFAULT;
-			else
+			if (nat != NULL) {
+				fr_natderef(&nat);
+			}
+			if (t->ipt_data != NULL) {
+				if (nextnat->nat_next == NULL) {
+					t->ipt_data = NULL;
+					break;
+				}	
 				dst += sizeof(*nextnat);
+				nat = nextnat;
+				nextnat = nextnat->nat_next;
+			}
 			break;
 		}
 
 		if ((count == 1) || (error != 0))
 			break;
 
-		count--;
-
 		READ_ENTER(&ipf_nat);
-
-		/*
-		 * We need to have the lock again here to make sure that
-		 * using _next is consistent.
-		 */
-		switch (itp->igi_type)
-		{
-		case IPFGENITER_HOSTMAP :
-			nexthm = nexthm->hm_next;
-			break;
-		case IPFGENITER_IPNAT :
-			nextipnat = nextipnat->in_next;
-			break;
-		case IPFGENITER_NAT :
-			nextnat = nextnat->nat_next;
-			break;
-		}
-	}
-
-
-	switch (itp->igi_type)
-	{
-	case IPFGENITER_HOSTMAP :
-		if (hm != NULL) {
-			WRITE_ENTER(&ipf_nat);
-			fr_hostmapdel(&hm);
-			RWLOCK_EXIT(&ipf_nat);
-		}
-		break;
-	case IPFGENITER_IPNAT :
-		if (ipn != NULL) {
-			fr_ipnatderef(&ipn);
-		}
-		break;
-	case IPFGENITER_NAT :
-		if (nat != NULL) {
-			fr_natderef(&nat);
-		}
-		break;
-	default :
-		break;
 	}
 
 	return error;
@@ -5535,4 +5505,57 @@ char *data;
 		error = EFAULT;
 	}
 	return error;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    nat_uncreate                                                */
+/* Returns:     Nil                                                         */
+/* Parameters:  fin(I) - pointer to packet information                      */
+/*                                                                          */
+/* This function is used to remove a NAT entry from the NAT table when we   */
+/* decide that the create was actually in error. It is thus assumed that    */
+/* fin_flx will have both FI_NATED and FI_NATNEW set. Because we're dealing */
+/* with the translated packet (not the original), we have to reverse the    */
+/* lookup. Although doing the lookup is expensive (relatively speaking), it */
+/* is not anticipated that this will be a frequent occurance for normal     */
+/* traffic patterns.                                                        */
+/* ------------------------------------------------------------------------ */
+void nat_uncreate(fin)
+fr_info_t *fin;
+{
+	int nflags;
+	nat_t *nat;
+
+	switch (fin->fin_p)
+	{
+	case IPPROTO_TCP :
+		nflags = IPN_TCP;
+		break;
+	case IPPROTO_UDP :
+		nflags = IPN_UDP;
+		break;
+	default :
+		nflags = 0;
+		break;
+	}
+
+	WRITE_ENTER(&ipf_nat);
+
+	if (fin->fin_out == 0) {
+		nat = nat_outlookup(fin, nflags, (u_int)fin->fin_p,
+				    fin->fin_dst, fin->fin_src);
+	} else {
+		nat = nat_inlookup(fin, nflags, (u_int)fin->fin_p,
+				   fin->fin_src, fin->fin_dst);
+	}
+
+	if (nat != NULL) {
+		nat_stats.ns_uncreate[fin->fin_out][0]++;
+		nat_delete(nat, NL_DESTROY);
+	} else {
+		nat_stats.ns_uncreate[fin->fin_out][1]++;
+	}
+
+	RWLOCK_EXIT(&ipf_nat);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.8.10.2 2009/05/04 08:11:15 yamt Exp $
+#	$NetBSD: XEN3_DOM0,v 1.8.10.3 2009/08/19 18:46:19 yamt Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -14,7 +14,6 @@ maxusers	32		# estimated number of users
 
 #
 options 	XEN
-options 	XEN3	#Xen 3.x support
 #options         __XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
@@ -29,6 +28,16 @@ makeoptions 	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
+
+# Enhanced SpeedStep Technology in the Pentium M
+options		ENHANCED_SPEEDSTEP
+#options	EST_FREQ_USERWRITE	# any user can set frequency
+
+# AMD PowerNow! K7
+options		POWERNOW_K7
+
+# AMD PowerNow! and Cool`n'Quiet technology
+options		POWERNOW_K8
 
 #options 	MTRR		# memory-type range register syscall support
 

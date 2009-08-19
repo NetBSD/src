@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.18.66.2 2009/05/04 08:10:27 yamt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.18.66.3 2009/08/19 18:45:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18.66.2 2009/05/04 08:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18.66.3 2009/08/19 18:45:53 yamt Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -119,6 +119,7 @@ CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
 
 void	pcib_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
+void	pcib_isa_detach_hook(isa_chipset_tag_t, device_t);
 
 int	pcib_intr(void *);
 
@@ -316,6 +317,7 @@ pcib_bridge_callback(struct device *self)
 
 	iba.iba_ic = &sc->sc_ic;
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
+	iba.iba_ic->ic_detach_hook = pcib_isa_detach_hook;
 
 	(void) config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
 }
@@ -323,6 +325,13 @@ pcib_bridge_callback(struct device *self)
 void
 pcib_isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
+{
+
+	/* Nothing to do. */
+}
+
+void
+pcib_isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 
 	/* Nothing to do. */

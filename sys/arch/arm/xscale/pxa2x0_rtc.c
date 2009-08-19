@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_rtc.c,v 1.1 2007/02/25 13:46:40 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_rtc.c,v 1.1.52.1 2009/08/19 18:46:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.1 2007/02/25 13:46:40 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.1.52.1 2009/08/19 18:46:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,14 +72,10 @@ pxartc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 
-	if (pxa->pxa_size == PXA270_RTC_SIZE) {
-		if (!CPU_IS_PXA270) {
-			return 0;
-		}
-	} else {
-		pxa->pxa_size = PXA250_RTC_SIZE;
-	}
+	if (strcmp(pxa->pxa_name, cf->cf_name) != 0)
+		return 0;
 
+	pxa->pxa_size = CPU_IS_PXA270 ? PXA270_RTC_SIZE : PXA250_RTC_SIZE;
 	return 1;
 }
 
@@ -93,7 +89,7 @@ pxartc_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": PXA2x0 Real-time Clock\n");
 
-	if (bus_space_map(sc->sc_iot, PXA2X0_RTC_BASE, pxa->pxa_size, 0,
+	if (bus_space_map(sc->sc_iot, pxa->pxa_addr, pxa->pxa_size, 0,
 	    &sc->sc_ioh)) {
 		aprint_error("%s: couldn't map registers\n",
 		    sc->sc_dev.dv_xname);

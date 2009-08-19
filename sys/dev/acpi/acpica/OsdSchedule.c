@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.7.2.1 2009/05/04 08:12:34 yamt Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.7.2.2 2009/08/19 18:47:04 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.7.2.1 2009/05/04 08:12:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.7.2.2 2009/08/19 18:47:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -74,14 +74,9 @@ static kmutex_t		acpi_osd_sleep_mtx;
 void
 acpi_osd_sched_init(void)
 {
-
-	ACPI_FUNCTION_TRACE(__func__);
-
 	sysmon_task_queue_init();
 	mutex_init(&acpi_osd_sleep_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&acpi_osd_sleep_cv, "acpislp");
-
-	return_VOID;
 }
 
 /*
@@ -92,12 +87,7 @@ acpi_osd_sched_init(void)
 void
 acpi_osd_sched_fini(void)
 {
-
-	ACPI_FUNCTION_TRACE(__func__);
-
 	sysmon_task_queue_fini();
-
-	return_VOID;
 }
 
 /*
@@ -122,8 +112,6 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 {
 	int pri;
 
-	ACPI_FUNCTION_TRACE(__func__);
-
 	switch (Type) {
 	case OSL_GPE_HANDLER:
 		pri = 10;
@@ -140,18 +128,18 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 		pri = 0;
 		break;
 	default:
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
 	switch (sysmon_task_queue_sched(pri, Function, Context)) {
 	case 0:
-		return_ACPI_STATUS(AE_OK);
+		return AE_OK;
 
 	case ENOMEM:
-		return_ACPI_STATUS(AE_NO_MEMORY);
+		return AE_NO_MEMORY;
 
 	default:
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 }
 
@@ -163,8 +151,6 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 void
 AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
-	ACPI_FUNCTION_TRACE(__func__);
-
 	if (cold || doing_shutdown || acpi_suspended)
 		DELAY(Milliseconds * 1000);
 	else {
@@ -183,9 +169,6 @@ AcpiOsSleep(ACPI_INTEGER Milliseconds)
 void
 AcpiOsStall(UINT32 Microseconds)
 {
-
-	ACPI_FUNCTION_TRACE(__func__);
-
 	/*
 	 * sleep(9) isn't safe because AcpiOsStall may be called
 	 * with interrupt-disabled. (eg. by AcpiEnterSleepState)
@@ -198,9 +181,6 @@ AcpiOsStall(UINT32 Microseconds)
 #endif
 
 	delay(Microseconds);
-
-	return_VOID;
-
 }
 
 /*
@@ -222,5 +202,5 @@ AcpiOsGetTimer(void)
 	t = (UINT64)10 * tv.tv_usec;
 	t += (UINT64)10000000 * tv.tv_sec;
 
-	return (t);
+	return t;
 }

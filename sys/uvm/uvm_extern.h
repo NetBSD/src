@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.145.4.2 2009/07/18 14:53:28 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.145.4.3 2009/08/19 18:48:35 yamt Exp $	*/
 
 /*
  *
@@ -132,7 +132,9 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_ADV_NORMAL	0x0	/* 'normal' */
 #define UVM_ADV_RANDOM	0x1	/* 'random' */
 #define UVM_ADV_SEQUENTIAL 0x2	/* 'sequential' */
-/* 0x3: will need, 0x4: dontneed */
+#define UVM_ADV_WILLNEED 0x3	/* pages will be needed */
+#define UVM_ADV_DONTNEED 0x4	/* pages won't be needed */
+#define UVM_ADV_NOREUSE	0x5	/* pages will be used only once */
 #define UVM_ADV_MASK	0x7	/* mask */
 
 /* bits 0xffff0000: mapping flags */
@@ -532,6 +534,19 @@ struct uvm_coredump_state {
 #define	UVM_COREDUMP_STACK	0x01	/* region is user stack */
 
 /*
+ * Structure containig uvm reclaim hooks, uvm_reclaim_list is guarded by
+ * uvm_reclaim_lock.
+ */
+struct uvm_reclaim_hook {
+	void (*uvm_reclaim_hook)(void);
+	SLIST_ENTRY(uvm_reclaim_hook) uvm_reclaim_next;
+};
+
+void	uvm_reclaim_init(void);
+void	uvm_reclaim_hook_add(struct uvm_reclaim_hook *);
+void	uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
+
+/*
  * the various kernel maps, owned by MD code
  */
 extern struct vm_map *kernel_map;
@@ -719,7 +734,6 @@ void			uvm_page_physload(paddr_t, paddr_t, paddr_t,
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */
-void			uvm_aio_biodone1(struct buf *);
 void			uvm_aio_biodone(struct buf *);
 void			uvm_aio_aiodone(struct buf *);
 void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,

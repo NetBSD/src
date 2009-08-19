@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.335.4.3 2009/06/20 07:20:05 yamt Exp $
+#	$NetBSD: files.i386,v 1.335.4.4 2009/08/19 18:46:19 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -481,10 +481,6 @@ file	arch/i386/acpi/acpi_wakeup_low.S	acpi
 device	vald
 attach	vald at acpinodebus with vald_acpi
 file	arch/i386/acpi/vald_acpi.c		vald_acpi
-
-# Sony SPIC (jog dial etc.)
-attach	spic at acpinodebus with spic_acpi
-file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi

@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.20.52.1 2009/05/16 10:41:44 yamt Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.20.52.2 2009/08/19 18:47:19 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.20.52.1 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.20.52.2 2009/08/19 18:47:19 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -51,7 +51,6 @@ static int	st_atapibus_match(device_t, cfdata_t, void *);
 static void	st_atapibus_attach(device_t, device_t, void *);
 static int	st_atapibus_ops(struct st_softc *, int, int);
 static int	st_atapibus_mode_sense(struct st_softc *, int);
-static int	st_atapibus_mode_select(struct st_softc *, int);
 
 CFATTACH_DECL(st_atapibus, sizeof(struct st_softc),
     st_atapibus_match, st_atapibus_attach, stdetach, stactivate);
@@ -122,7 +121,7 @@ st_atapibus_ops(struct st_softc *st, int op, int flags)
 	case ST_OPS_MODESENSE:
 		return st_atapibus_mode_sense(st, flags);
 	case ST_OPS_MODESELECT:
-		return st_atapibus_mode_select(st, flags);
+		return st_mode_select(st, flags);
 	case ST_OPS_CMPRSS_ON:
 	case ST_OPS_CMPRSS_OFF:
 		return ENODEV;
@@ -175,10 +174,4 @@ st_atapibus_mode_sense(struct st_softc *st, int flags)
 		}
 	}
 	return error;
-}
-
-static int
-st_atapibus_mode_select(struct st_softc *st, int flags)
-{
-	return ENODEV; /* for now ... */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.19.4.1 2008/05/16 02:22:59 yamt Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.19.4.2 2009/08/19 18:46:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.19.4.1 2008/05/16 02:22:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.19.4.2 2009/08/19 18:46:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +69,13 @@ struct asc_softc {
 #define	ASC_DMAACTIVE		0x0002
 #define	ASC_MAPLOADED		0x0004
 };
+
+#define	ASC_READ_REG(asc, reg)						\
+	((uint8_t)bus_space_read_4((asc)->sc_bst, (asc)->sc_scsi_bsh,	\
+	    (reg) * sizeof(uint32_t)))
+#define	ASC_WRITE_REG(asc, reg, val)					\
+	bus_space_write_4((asc)->sc_bst, (asc)->sc_scsi_bsh,		\
+	    (reg) * sizeof(uint32_t), (uint8_t)(val))
 
 static int  asc_ioasic_match(device_t, cfdata_t, void *);
 static void asc_ioasic_attach(device_t, device_t, void *);
@@ -333,8 +340,8 @@ asc_ioasic_intr(struct ncr53c9x_softc *sc)
 
 	if (asc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		tcl = NCR_READ_REG(sc, NCR_TCL); 
-		tcm = NCR_READ_REG(sc, NCR_TCM);
+		tcl = ASC_READ_REG(asc, NCR_TCL); 
+		tcm = ASC_READ_REG(asc, NCR_TCM);
 		NCR_DMA(("ioasic_intr: discarded %d bytes (tcl=%d, tcm=%d)\n",
 		    tcl | (tcm << 8), tcl, tcm));
 		return 0;
@@ -342,13 +349,13 @@ asc_ioasic_intr(struct ncr53c9x_softc *sc)
 
 	resid = 0;
 	if ((asc->sc_flags & ASC_ISPULLUP) == 0 &&
-	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+	    (resid = (ASC_READ_REG(asc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("ioasic_intr: empty FIFO of %d ", resid));
 		DELAY(1);
 	}
 
-	resid += (tcl = NCR_READ_REG(sc, NCR_TCL));
-	resid += (tcm = NCR_READ_REG(sc, NCR_TCM)) << 8;
+	resid += (tcl = ASC_READ_REG(asc, NCR_TCL));
+	resid += (tcm = ASC_READ_REG(asc, NCR_TCM)) << 8;
 
 	trans = asc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
@@ -414,12 +421,8 @@ static uint8_t
 asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	uint32_t v;
 
-	v = bus_space_read_4(asc->sc_bst, asc->sc_scsi_bsh,
-	    reg * sizeof(uint32_t));
-
-	return v & 0xff;
+	return ASC_READ_REG(asc, reg);
 }
 
 static void
@@ -427,15 +430,15 @@ asc_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	bus_space_write_4(asc->sc_bst, asc->sc_scsi_bsh,
-	    reg * sizeof(uint32_t), val);
+	ASC_WRITE_REG(asc, reg, val);
 }
 
 static int
 asc_dma_isintr(struct ncr53c9x_softc *sc)
 {
+	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	return (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) != 0;
+	return (ASC_READ_REG(asc, NCR_STAT) & NCRSTAT_INT) != 0;
 }
 
 static int

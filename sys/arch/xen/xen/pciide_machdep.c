@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.9.4.1 2009/05/04 08:12:14 yamt Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.9.4.2 2009/08/19 18:46:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.9.4.1 2009/05/04 08:12:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.9.4.2 2009/08/19 18:46:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.9.4.1 2009/05/04 08:12:14 yamt 
 
 #include <xen/evtchn.h>
 
-#ifdef XEN3
 #include "ioapic.h"
-#endif
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
@@ -76,16 +74,7 @@ pciide_machdep_compat_intr_establish(device_t dev,
 #endif
 	int evtch;
 
-#ifndef XEN3
-	physdev_op_t physdev_op;
-
-	physdev_op.cmd = PHYSDEVOP_PCI_INITIALISE_DEVICE;
-	physdev_op.u.pci_cfgreg_read.bus = pa->pa_bus;
-	physdev_op.u.pci_cfgreg_read.dev = pa->pa_device;
-	physdev_op.u.pci_cfgreg_read.func = pa->pa_function;
-	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
-		panic("HYPERVISOR_physdev_op(PHYSDEVOP_PCI_INITIALISE_DEVICE)");
-#endif /* !XEN3 */
+	xenih.pirq = PCIIDE_COMPAT_IRQ(chan);
 	xenih.pirq = 0;
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {

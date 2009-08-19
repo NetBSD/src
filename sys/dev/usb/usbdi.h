@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.75.26.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.75.26.3 2009/08/19 18:47:22 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
+#define	USBD_CONFIG_TIMEOUT  (3*USBD_DEFAULT_TIMEOUT)
 
 #if defined(__FreeBSD__)
 #define USB_CDEV_MAJOR 108

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.8 2007/02/19 02:08:12 briggs Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.8.46.1 2009/08/19 18:46:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.8 2007/02/19 02:08:12 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.8.46.1 2009/08/19 18:46:07 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,16 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.8 2007/02/19 02:08:12 briggs Exp $")
 #define PL030_RTC_SIZE	0x14
 
 struct plrtc_softc {
-	struct device		    sc_dev;
 	bus_space_tag_t		    sc_iot;
 	bus_space_handle_t	    sc_ioh;
 	struct todr_chip_handle     sc_todr;
 };
 
-static int  plrtc_probe  (struct device *, struct cfdata *, void *);
-static void plrtc_attach (struct device *, struct device *, void *);
+static int  plrtc_probe  (device_t, cfdata_t, void *);
+static void plrtc_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(plrtc, sizeof(struct plrtc_softc),
+CFATTACH_DECL_NEW(plrtc, sizeof(struct plrtc_softc),
     plrtc_probe, plrtc_attach, NULL, NULL);
 
 static int
@@ -86,21 +85,21 @@ plrtc_settime(todr_chip_handle_t todr, volatile struct timeval *tv)
 }
 
 static int
-plrtc_probe(struct device *parent, struct cfdata *cf, void *aux)
+plrtc_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 static void
-plrtc_attach(struct device *parent, struct device *self, void *aux)
+plrtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct ifpga_attach_args *ifa = aux;
-	struct plrtc_softc *sc = (struct plrtc_softc *)self;
+	struct plrtc_softc *sc = device_private(self);
 
 	sc->sc_iot = ifa->ifa_iot;
 	if (bus_space_map(ifa->ifa_iot, ifa->ifa_addr, PL030_RTC_SIZE, 0,
 	    &sc->sc_ioh)) {
-		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
+		printf("%s: unable to map device\n", device_xname(self));
 		return;
 	}
 

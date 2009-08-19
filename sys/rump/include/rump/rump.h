@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.16.2.4 2009/06/20 07:20:35 yamt Exp $	*/
+/*	$NetBSD: rump.h,v 1.16.2.5 2009/08/19 18:48:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -93,9 +93,9 @@ int			rump_namei(uint32_t, uint32_t, const char *,
 
 void 	rump_getvninfo(struct vnode *, enum vtype *, off_t * /*XXX*/, dev_t *);
 
-int	rump_fakeblk_register(const char *);
-int	rump_fakeblk_find(const char *);
-void	rump_fakeblk_deregister(const char *);
+enum rump_etfs_type { RUMP_ETFS_REG, RUMP_ETFS_BLK, RUMP_ETFS_CHR };
+int	rump_etfs_register(const char *, const char *, enum rump_etfs_type);
+int	rump_etfs_remove(const char *);
 
 struct vfsops	*rump_vfslist_iterate(struct vfsops *);
 struct vfsops	*rump_vfs_getopsbyname(const char *);

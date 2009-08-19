@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42.10.2 2009/05/04 08:11:13 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42.10.3 2009/08/19 18:46:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.10.2 2009/05/04 08:11:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.10.3 2009/08/19 18:46:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,7 +465,7 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
 				if (!(pde = pmap_pde_get(pd, va))) {
-					va += ~PDE_MASK + 1 - PAGE_SIZE;
+					va = pdemask + PDE_SIZE - PAGE_SIZE;
 					continue;
 				}
 				printf("%x:%8p:\n", sp, pde);
@@ -1368,10 +1368,10 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
+				sva = pdemask + PDE_SIZE - PAGE_SIZE;
 				continue;
 			}
-			batch = pdemask == sva && sva + ~PDE_MASK + 1 <= eva;
+			batch = pdemask == sva && sva + PDE_SIZE <= eva;
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
@@ -1436,7 +1436,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
+				sva = pdemask + PDE_SIZE - PAGE_SIZE;
 				continue;
 			}
 		}
@@ -1730,13 +1730,11 @@ pmap_flush_page(struct vm_page *pg, bool purge)
 void
 pmap_zero_page(paddr_t pa)
 {
-	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%x)\n", __func__, (int)pa));
 
-	KASSERT(pg->mdpage.pvh_list == NULL);
+	KASSERT(PHYS_TO_VM_PAGE(pa)->mdpage.pvh_list == NULL);
 
-	pmap_flush_page(pg, true);
 	memset((void *)pa, 0, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
 }
@@ -1750,15 +1748,13 @@ void
 pmap_copy_page(paddr_t spa, paddr_t dpa)
 {
 	struct vm_page *srcpg = PHYS_TO_VM_PAGE(spa);
-	struct vm_page *dstpg = PHYS_TO_VM_PAGE(dpa);
 
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("%s(%x, %x)\n", __func__, (int)spa,
 	    (int)dpa));
 
-	KASSERT(dstpg->mdpage.pvh_list == NULL);
+	KASSERT(PHYS_TO_VM_PAGE(dpa)->mdpage.pvh_list == NULL);
 
 	pmap_flush_page(srcpg, false);
-	pmap_flush_page(dstpg, true);
 
 	memcpy((void *)dpa, (void *)spa, PAGE_SIZE);
 
@@ -1883,7 +1879,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		if (pdemask != (va & PDE_MASK)) {
 			pdemask = va & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, va))) {
-				va += ~PDE_MASK + 1 - PAGE_SIZE;
+				va = pdemask + PDE_SIZE - PAGE_SIZE;
 				continue;
 			}
 		}

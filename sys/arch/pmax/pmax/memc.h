@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.h,v 1.3.136.1 2009/05/04 08:11:42 yamt Exp $	*/
+/*	$NetBSD: memc.h,v 1.3.136.2 2009/08/19 18:46:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -35,8 +35,7 @@
 #ifndef __PMAX_MEMC_H
 #define __PMAX_MEMC_H
 
-void	dec_mtasic_err(u_int32_t erradr, u_int32_t errsyn,
-	    u_int32_t bnk32m);
+void	dec_mtasic_err(uint32_t erradr, uint32_t errsyn, uint32_t bnk32m);
 void	kn02ba_errintr(void);
 
 #endif

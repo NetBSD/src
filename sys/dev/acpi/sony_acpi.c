@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.4.1 2008/05/16 02:23:53 yamt Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.4.2 2009/08/19 18:47:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.4.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.4.2 2009/08/19 18:47:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 
 	(void)snprintf(buf, sizeof(buf), "G%s", rnode->sysctl_name);
 	for (ptr = buf; *ptr; ptr++)
-		*ptr = toupper(*ptr);
+		*ptr = toupper((unsigned char)*ptr);
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, buf, &acpi_val);
 	if (ACPI_FAILURE(rv)) {
@@ -138,7 +138,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	(void)snprintf(buf, sizeof(buf), "S%s", rnode->sysctl_name);
+	buf[0] = 'S';
 	acpi_val = val;
 	rv = sony_acpi_eval_set_integer(sc->sc_node->ad_handle, buf,
 	    acpi_val, NULL);
@@ -447,21 +447,18 @@ static ACPI_STATUS
 sony_acpi_find_pic(ACPI_HANDLE hdl, UINT32 level, void *opaque, void **status)
 {
 	struct sony_acpi_softc *sc = opaque;
-	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
 	ACPI_DEVICE_INFO *devinfo;
 
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
-	rv = AcpiGetObjectInfo(hdl, &buf);
-	if (ACPI_FAILURE(rv) || buf.Pointer == NULL)
+	rv = AcpiGetObjectInfo(hdl, &devinfo);
+	if (ACPI_FAILURE(rv) || devinfo == NULL)
 		return AE_OK;	/* we don't want to stop searching */
 
-	devinfo = buf.Pointer;
-	if (strncmp(devinfo->HardwareId.Value, "SNY6001", 7) == 0)
+	if (devinfo->HardwareId.String &&
+	    strncmp(devinfo->HardwareId.String, "SNY6001", 7) == 0)
 		sc->sc_has_pic = true;
 
-	AcpiOsFree(buf.Pointer);
+	AcpiOsFree(devinfo);
 
 	return AE_OK;
 }

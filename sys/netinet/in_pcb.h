@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.45.10.1 2009/07/18 14:53:25 yamt Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.45.10.2 2009/08/19 18:48:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,6 +91,7 @@ struct inpcb {
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
 	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
+	uint8_t	  inp_ip_minttl;
 };
 
 #define	inp_faddr	inp_ip.ip_dst

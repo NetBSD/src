@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.40.10.2 2009/05/04 08:12:18 yamt Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.40.10.3 2009/08/19 18:46:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.40.10.2 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.40.10.3 2009/08/19 18:46:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.40.10.2 2009/05/04 08:12:
 #include <compat/darwin/darwin_ioframebuffer.h>
 
 #include "ioconf.h"
+#include "wsdisplay.h"
 
 /* Redefined from sys/dev/wscons/wsdisplay.c */
 extern const struct cdevsw wsdisplay_cdevsw;
@@ -803,6 +804,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(struct mach_trap_args *args)
 static int
 darwin_findscreen(dev_t *dev, int unit, int screen)
 {
+#if defined(NWSDISPLAY) && NWSDISPLAY > 0
 	struct device *dv;
 	struct wsdisplay_softc *sc;
 	int major, minor;
@@ -820,6 +822,9 @@ darwin_findscreen(dev_t *dev, int unit, int screen)
 
 #ifdef DEBUG_DARWIN
 	printf("ioframebuffer uses major = %d, minor = %d\n", major, minor);
-#endif
+#endif /* DEBUG_DARWIN */
 	return 0;
+#else /* defined(NWSDISPLAY) && NWSDISPLAY > 0 */
+	return ENODEV;
+#endif /* defined(NWSDISPLAY) && NWSDISPLAY > 0 */
 }

@@ -1,15 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.25.4.1 2009/05/04 08:13:51 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.25.4.2 2009/08/19 18:48:19 yamt Exp $
 
-SRCS+=	__main.c __assert.c \
-	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
-	bswap16.c bswap32.c bswap64.c \
-	memchr.c memcmp.c \
-	strcat.c strcmp.c strcpy.c strcasecmp.c \
-	strncasecmp.c strncmp.c strncpy.c \
-	scanc.c skpc.c \
-	htonl.c htons.c ntohl.c ntohs.c \
-	random.c strtoul.c \
-	syncicache.c
+SRCS+=	bswap16.c bswap32.c
+SRCS+=	htonl.c htons.c ntohl.c ntohs.c
+SRCS+=	syncicache.c
 
 SRCS+=	ffs.S memset.S strlen.S
 

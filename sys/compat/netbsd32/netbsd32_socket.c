@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.31.4.2 2009/06/20 07:20:18 yamt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.31.4.3 2009/08/19 18:47:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.31.4.2 2009/06/20 07:20:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.31.4.3 2009/08/19 18:47:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,10 +238,8 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 		iov = (struct iovec *)malloc(
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
 		       M_WAITOK);
-	} else if ((u_int)msg.msg_iovlen > 0)
+	} else
 		iov = aiov;
-	else
-		return (EMSGSIZE);
 
 	iov32 = NETBSD32PTR64(msg32.msg_iov);
 	error = netbsd32_to_iovecin(iov32, iov, msg.msg_iovlen);

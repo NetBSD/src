@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.175.6.2 2009/05/04 08:14:36 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.175.6.3 2009/08/19 18:48:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1205,7 +1205,7 @@ typedef void *sysctlfn;
 
 __BEGIN_DECLS
 int	sysctl(const int *, u_int, void *, size_t *, const void *, size_t);
-int	sysctlbyname(const char *, void *, size_t *, void *, size_t);
+int	sysctlbyname(const char *, void *, size_t *, const void *, size_t);
 int	sysctlgetmibinfo(const char *, int *, u_int *,
 			 char *, size_t *, struct sysctlnode **, int);
 int	sysctlnametomib(const char *, int *, size_t *);

@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.106.10.2 2009/05/04 08:14:34 yamt Exp $ */
+/*     $NetBSD: buf.h,v 1.106.10.3 2009/08/19 18:48:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -83,23 +83,6 @@ struct vnode;
 struct kauth_cred;
 
 #define NOLIST ((struct buf *)0x87654321)
-
-/*
- * These are currently used only by the soft dependency code, hence
- * are stored once in a global variable. If other subsystems wanted
- * to use these hooks, a pointer to a set of bio_ops could be added
- * to each buffer.
- */
-struct bio_ops {
- 	void	(*io_start)(struct buf *);
- 	void	(*io_complete)(struct buf *);
- 	void	(*io_deallocate)(struct buf *);
- 	int	(*io_fsync)(struct vnode *, int);
- 	int	(*io_sync)(struct mount *);
-	void	(*io_movedeps)(struct buf *, struct buf *);
-	int	(*io_countdeps)(struct buf *, int);
-	void	(*io_pageiodone)(struct buf *);
-};
 
 extern kmutex_t bufcache_lock;
 extern kmutex_t buffer_lock;

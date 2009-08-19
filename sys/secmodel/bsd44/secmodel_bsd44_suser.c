@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.57.4.2 2009/05/16 10:41:52 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.57.4.3 2009/08/19 18:48:31 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.57.4.2 2009/05/16 10:41:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.57.4.3 2009/08/19 18:48:31 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1084,6 +1084,8 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 
 	switch (action) {
 	case KAUTH_DEVICE_BLUETOOTH_SETPRIV:
+	case KAUTH_DEVICE_BLUETOOTH_SEND:
+	case KAUTH_DEVICE_BLUETOOTH_RECV:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
@@ -1149,7 +1151,14 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 		break;
-
+	case KAUTH_DEVICE_GPIO_PINSET:
+		/*
+		 * root can access gpio pins, secmodel_securlevel can veto
+		 * this decision.
+		 */
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		break;
 	default:
 		result = KAUTH_RESULT_DEFER;
 		break;

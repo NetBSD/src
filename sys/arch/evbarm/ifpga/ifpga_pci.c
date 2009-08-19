@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.12 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.12.78.1 2009/08/19 18:46:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.12 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.12.78.1 2009/08/19 18:46:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.12 2005/12/11 12:17:09 christos Exp 
 #include <evbarm/dev/v360reg.h>
 
 
-void		ifpga_pci_attach_hook (struct device *, struct device *,
+void		ifpga_pci_attach_hook (device_t, device_t,
 		    struct pcibus_attach_args *);
 int		ifpga_pci_bus_maxdevs (void *, int);
 pcitag_t	ifpga_pci_make_tag (void *, int, int, int);
@@ -156,7 +156,7 @@ pci_intr(void *arg)
 
 
 void
-ifpga_pci_attach_hook(struct device *parent, struct device *self,
+ifpga_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 #ifdef PCI_DEBUG

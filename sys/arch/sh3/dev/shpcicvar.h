@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcicvar.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: shpcicvar.h,v 1.6.78.1 2009/08/19 18:46:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -57,6 +57,8 @@ int shpcic_iomem_alloc(void *v, bus_addr_t rstart, bus_addr_t rend,
     bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
     bus_addr_t *bpap, bus_space_handle_t *bshp);
 void shpcic_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size);
+paddr_t shpcic_iomem_mmap(void *v, bus_addr_t addr, off_t off, int prot,
+    int flags);
 
 /* read single */
 uint8_t shpcic_io_read_1(void *v, bus_space_handle_t bsh, bus_size_t offset);

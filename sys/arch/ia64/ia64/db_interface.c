@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.4.20.1 2009/05/04 08:11:21 yamt Exp $ */
+/* $NetBSD: db_interface.c,v 1.4.20.2 2009/08/19 18:46:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -28,28 +28,28 @@
  * SUCH DAMAGE.
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992,1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.20.1 2009/05/04 08:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.20.2 2009/08/19 18:46:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -110,8 +110,13 @@ int	db_active = 0;
 
 db_regs_t *ddb_regp;
 
+static void db_show_vector(db_expr_t, bool, db_expr_t, const char *);
+
+
 const struct db_command db_machine_command_table[] = {
-	{  DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) },
+	{  DDB_ADD_CMD("vector", db_show_vector, 0, NULL,NULL,NULL) },
+
+	{  DDB_ADD_CMD(NULL, NULL, 0, NULL,NULL,NULL) },
 };
 
 static int
@@ -494,4 +499,24 @@ out:
 	if (slot > 2)
 		slot = 16;
 	return (loc + slot);
+}
+
+
+static void
+db_show_vector(db_expr_t addr, bool have_addr, db_expr_t count,
+	       const char *modif)
+{
+	extern void db_print_vector(u_int, int);
+	u_int vector;
+
+	if (have_addr) {
+		vector = ((addr >> 4) % 16) * 10 + (addr % 16);
+		if (vector >= 256)
+			db_printf("error: vector %u not in range [0..255]\n",
+			    vector);
+		else
+			db_print_vector(vector, 1);
+	} else
+		for (vector = 0; vector < 256; vector++)
+			db_print_vector(vector, 0);
 }

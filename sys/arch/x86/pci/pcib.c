@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3.4.2 2009/05/04 08:12:10 yamt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.3.4.3 2009/08/19 18:46:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3.4.2 2009/05/04 08:12:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3.4.3 2009/08/19 18:46:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,12 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3.4.2 2009/05/04 08:12:10 yamt Exp $");
 #include "pcibvar.h"
 
 int	pcibmatch(device_t, cfdata_t, void *);
-void	pcibattach(device_t, device_t, void *);
-int	pcibdetach(device_t, int);
-void	pcibchilddet(device_t, device_t);
 
 CFATTACH_DECL3_NEW(pcib, sizeof(struct pcib_softc),
-    pcibmatch, pcibattach, pcibdetach, NULL, NULL, pcibchilddet,
+    pcibmatch, pcibattach, pcibdetach, NULL, pcibrescan, pcibchilddet,
     DVF_DETACH_SHUTDOWN);
 
 void	pcib_callback(device_t);
@@ -229,22 +226,43 @@ pcibdetach(device_t self, int flags)
 void
 pcibchilddet(device_t self, device_t child)
 {
-	/* we keep no references to children, so do nothing */
+	struct pcib_softc *sc = device_private(self);
+
+	if (sc->sc_isabus == child)
+		sc->sc_isabus = NULL;
+}
+
+/* XXX share this with sys/arch/i386/pci/elan520.c */
+static bool
+ifattr_match(const char *snull, const char *t)
+{
+	return (snull == NULL) || strcmp(snull, t) == 0;
+}
+
+int
+pcibrescan(device_t self, const char *ifattr, const int *loc)
+{
+	struct pcib_softc *sc = device_private(self);
+	struct isabus_attach_args iba;
+
+	if (ifattr_match(ifattr, "isabus") && sc->sc_isabus == NULL) {
+		/*
+		 * Attach the ISA bus behind this bridge.
+		 */
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_iot = X86_BUS_SPACE_IO;
+		iba.iba_memt = X86_BUS_SPACE_MEM;
+#if NISA > 0
+		iba.iba_dmat = &isa_bus_dma_tag;
+#endif
+		sc->sc_isabus =
+		    config_found_ia(self, "isabus", &iba, isabusprint);
+	}
+	return 0;
 }
 
 void
 pcib_callback(device_t self)
 {
-	struct isabus_attach_args iba;
-
-	/*
-	 * Attach the ISA bus behind this bridge.
-	 */
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_iot = X86_BUS_SPACE_IO;
-	iba.iba_memt = X86_BUS_SPACE_MEM;
-#if NISA > 0
-	iba.iba_dmat = &isa_bus_dma_tag;
-#endif
-	config_found_ia(self, "isabus", &iba, isabusprint);
+	pcibrescan(self, "isabus", NULL);
 }

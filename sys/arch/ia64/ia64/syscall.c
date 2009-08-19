@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.2.78.1 2008/05/16 02:22:41 yamt Exp $ */
+/* $NetBSD: syscall.c,v 1.2.78.2 2009/08/19 18:46:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2.78.1 2008/05/16 02:22:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2.78.2 2009/08/19 18:46:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ void	syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 void
 syscall_intern(struct proc *p)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }
 
@@ -56,12 +57,14 @@ syscall_intern(struct proc *p)
 void
 syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }
 
 void
 syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }
 
@@ -71,5 +74,6 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 void
 child_return(void *arg)
 {
+printf("%s: not yet\n", __func__);
 	return;
 }

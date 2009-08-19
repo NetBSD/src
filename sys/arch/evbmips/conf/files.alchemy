@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.9 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.alchemy,v 1.9.10.1 2009/08/19 18:46:11 yamt Exp $
 
 # Platform support - select just one, please
 defflag		opt_alchemy.h	ALCHEMY_GENERIC
@@ -35,7 +35,7 @@ file	arch/evbmips/alchemy/mainbus.c		mainbus
 
 device	cpu
 attach	cpu at mainbus
-file	arch/evbmips/alchemy/cpu.c		cpu
+file	arch/evbmips/evbmips/cpu.c		cpu
 
 # Alchemy on-board devices
 device	obio { [addr=-1] }

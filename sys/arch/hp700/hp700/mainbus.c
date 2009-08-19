@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.42.4.4 2009/06/20 07:20:03 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.42.4.5 2009/08/19 18:46:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.4 2009/06/20 07:20:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.5 2009/08/19 18:46:15 yamt Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -154,6 +154,7 @@ void mbus_free(void *, bus_space_handle_t, bus_size_t);
 int mbus_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
 void mbus_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
 void *mbus_vaddr(void *, bus_space_handle_t);
+paddr_t mbus_mmap(void *, bus_addr_t, off_t, int, int);
 
 int mbus_dmamap_create(void *, bus_size_t, int, bus_size_t, bus_size_t, int, bus_dmamap_t *);
 void mbus_dmamap_destroy(void *, bus_dmamap_t);
@@ -450,6 +451,13 @@ mbus_vaddr(void *v, bus_space_handle_t h)
 	 */
 	KASSERT(h >= HPPA_IOSPACE);
 	return (void*)h;
+}
+
+paddr_t
+mbus_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
+{
+
+	return -1;
 }
 
 u_int8_t
@@ -806,7 +814,7 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	NULL,
 
 	mbus_map, mbus_unmap, mbus_subregion, mbus_alloc, mbus_free,
-	mbus_barrier, mbus_vaddr,
+	mbus_barrier, mbus_vaddr, mbus_mmap,
 	mbus_r1,    mbus_r2,   mbus_r4,   mbus_r8,
 	mbus_w1,    mbus_w2,   mbus_w4,   mbus_w8,
 	mbus_rm_1,  mbus_rm_2, mbus_rm_4, mbus_rm_8,

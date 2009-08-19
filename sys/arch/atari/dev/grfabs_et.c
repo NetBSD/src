@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.27.44.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.27.44.2 2009/08/19 18:46:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.27.44.1 2009/05/04 08:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.27.44.2 2009/08/19 18:46:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -375,7 +375,7 @@ init_view(view_t *v, bmap_t *bm, dmode_t *mode, box_t *dbox)
 	v->bitmap    = bm;
 	v->mode      = mode;
 	v->flags     = 0;
-	memcpy( &v->display, dbox, sizeof(box_t));
+	memcpy(&v->display, dbox, sizeof(box_t));
 }
 
 /* XXX: No more than a stub... */

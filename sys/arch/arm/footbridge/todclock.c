@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.11.10.1 2009/05/04 08:10:40 yamt Exp $	*/
+/*	$NetBSD: todclock.c,v 1.11.10.2 2009/08/19 18:45:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.11.10.1 2009/05/04 08:10:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.11.10.2 2009/08/19 18:45:59 yamt Exp $");
 
 /* Include header files */
 
@@ -81,10 +81,8 @@ struct todclock_softc {
 
 /* prototypes for functions */
 
-static void todclockattach(struct device *parent, struct device *self,
-				void *aux);
-static int  todclockmatch(struct device *parent, struct cfdata *cf,
-				void *aux);
+static void todclockattach(device_t parent, device_t self, void *aux);
+static int todclockmatch(device_t parent, cfdata_t cf, void *aux);
 
 /*
  * We need to remember our softc for functions like inittodr()
@@ -97,18 +95,18 @@ static struct todclock_softc *todclock_sc = NULL;
 
 /* driver and attach structures */
 
-CFATTACH_DECL(todclock, sizeof(struct todclock_softc),
+CFATTACH_DECL_NEW(todclock, sizeof(struct todclock_softc),
     todclockmatch, todclockattach, NULL, NULL);
 
 /*
- * int todclockmatch(struct device *parent, struct cfdata *cf, void *aux)
+ * int todclockmatch(device_t parent, cfdata_t cf, void *aux)
  *
  * todclock device probe function.
  * just validate the attach args
  */
 
 int
-todclockmatch(struct device *parent, struct cfdata *cf, void *aux)
+todclockmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct todclock_attach_args *ta = aux;
 
@@ -123,14 +121,14 @@ todclockmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 /*
- * void todclockattach(struct device *parent, struct device *self, void *aux)
+ * void todclockattach(device_t parent, device_t self, void *aux)
  *
  * todclock device attach function.
  * Initialise the softc structure and do a search for children
  */
 
 void
-todclockattach(struct device *parent, struct device *self, void *aux)
+todclockattach(device_t parent, device_t self, void *aux)
 {
 	static struct todr_chip_handle	tch;
 
@@ -139,6 +137,7 @@ todclockattach(struct device *parent, struct device *self, void *aux)
 
 	/* set up our softc */
 	todclock_sc = sc;
+	todclock_sc->sc_dev = self;
 	todclock_sc->sc_rtc_arg = ta->ta_rtc_arg;
 	todclock_sc->sc_rtc_write = ta->ta_rtc_write;
 	todclock_sc->sc_rtc_read = ta->ta_rtc_read;
@@ -149,7 +148,7 @@ todclockattach(struct device *parent, struct device *self, void *aux)
 
 	todr_attach(&tch);
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 static int
@@ -168,7 +167,7 @@ tod_set_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	rtc.rtc_centi = 0;
 	rtc.rtc_micro = 0;
 
-	printf("resettod: %02d/%02d/%02d%02d %02d:%02d:%02d\n", rtc.rtc_day,
+	aprint_normal("resettod: %02d/%02d/%02d%02d %02d:%02d:%02d\n", rtc.rtc_day,
 	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
 	    rtc.rtc_min, rtc.rtc_sec);
 

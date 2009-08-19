@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.5.2.2 2009/05/04 08:14:31 yamt Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.5.2.3 2009/08/19 18:48:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.5.2.2 2009/05/04 08:14:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.5.2.3 2009/08/19 18:48:30 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -39,43 +39,37 @@ __KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.5.2.2 2009/05/04 08:14:31 yamt Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
 
-static int vn_get(struct uvm_object *, voff_t, struct vm_page **,
-	int *, int, vm_prot_t, int, int);
-static int vn_put(struct uvm_object *, voff_t, voff_t, int);
-
-const struct uvm_pagerops uvm_vnodeops = {
-	.pgo_get = vn_get,
-	.pgo_put = vn_put,
-};
-
 /*
- * vnode pager
+ * release resources held during async io.  this is almost the
+ * same as uvm_aio_aiodone() from uvm_pager.c and only lacks the
+ * call to uvm_aio_aiodone_pages(): unbusies pages directly here.
  */
-
-static int
-vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
-	int *npages, int centeridx, vm_prot_t access_type,
-	int advice, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_GETPAGES(vp, off, pgs, npages, centeridx, access_type,
-	    advice, flags);
-}
-
-static int
-vn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_PUTPAGES(vp, offlo, offhi, flags);
-}
-
 void
-uvm_aio_biodone1(struct buf *bp)
+uvm_aio_aiodone(struct buf *bp)
 {
+	int i, npages = bp->b_bufsize >> PAGE_SHIFT;
+	struct vm_page **pgs;
+	vaddr_t va;
 
-	panic("%s: unimplemented", __func__);
+	pgs = kmem_alloc(npages * sizeof(*pgs), KM_SLEEP);
+	for (i = 0; i < npages; i++) {
+		va = (vaddr_t)bp->b_data + (i << PAGE_SHIFT);
+		pgs[i] = uvm_pageratop(va);
+		pgs[i]->flags &= ~PG_PAGEOUT;
+	}
+
+	uvm_pagermapout((vaddr_t)bp->b_data, npages);
+	uvm_page_unbusy(pgs, npages);
+
+	if (BUF_ISWRITE(bp) && (bp->b_cflags & BC_AGE) != 0) {
+		mutex_enter(bp->b_objlock);
+		vwakeup(bp);
+		mutex_exit(bp->b_objlock);
+	}
+
+	putiobuf(bp);
+
+	kmem_free(pgs, npages * sizeof(*pgs));
 }
 
 void
@@ -83,12 +77,6 @@ uvm_aio_biodone(struct buf *bp)
 {
 
 	uvm_aio_aiodone(bp);
-}
-
-void
-uvm_aio_aiodone(struct buf *bp)
-{
-
 }
 
 struct uvm_ractx *
@@ -99,37 +87,23 @@ uvm_ra_allocctx(void)
 }
 
 void
+uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
+	off_t reqoff, size_t reqsize)
+{
+
+	return;
+}
+
+void
 uvm_ra_freectx(struct uvm_ractx *ra)
 {
 
 	return;
 }
 
-bool
-uvn_clean_p(struct uvm_object *uobj)
-{
-	struct vnode *vp = (void *)uobj;
-
-	return (vp->v_iflag & VI_ONWORKLST) == 0;
-}
-
-void
-uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_size = vp->v_writesize = newsize;
-	mutex_exit(&vp->v_interlock);
-}
-
-void
-uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_writesize = newsize;
-	mutex_exit(&vp->v_interlock);
-}
+/*
+ * UBC
+ */
 
 void
 uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
@@ -168,10 +142,6 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	return;
 }
 
-/*
- * UBC
- */
-
 /* dumdidumdum */
 #define len2npages(off, len)						\
   (((((len) + PAGE_MASK) & ~(PAGE_MASK)) >> PAGE_SHIFT)			\
@@ -184,15 +154,21 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	struct vm_page **pgs;
 	int npages = len2npages(uio->uio_offset, todo);
 	size_t pgalloc;
-	int i, rv;
+	int i, rv, pagerflags;
 
 	pgalloc = npages * sizeof(pgs);
 	pgs = kmem_zalloc(pgalloc, KM_SLEEP);
 
+	pagerflags = PGO_SYNCIO | PGO_NOBLOCKALLOC | PGO_NOTIMESTAMP;
+	if (flags & UBC_WRITE)
+		pagerflags |= PGO_PASTEOF;
+	if (flags & UBC_FAULTBUSY)
+		pagerflags |= PGO_OVERWRITE;
+
 	do {
 		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, uio->uio_offset, pgs, &npages,
-		    0, 0, 0, 0);
+		    0, VM_PROT_READ | VM_PROT_WRITE, 0, pagerflags);
 		if (rv)
 			goto out;
 

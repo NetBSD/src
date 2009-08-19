@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2006/08/28 13:43:35 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.2.62.1 2009/08/19 18:46:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -145,6 +145,8 @@
 #ifndef _LOCORE
 
 #include <machine/intr.h>
+
+static __inline void delay(unsigned int us) {}	/* XXXXX */
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */

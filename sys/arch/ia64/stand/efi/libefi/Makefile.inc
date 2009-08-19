@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2006/04/07 14:21:32 cherry Exp $
+#	$NetBSD: Makefile.inc,v 1.1.78.1 2009/08/19 18:46:25 yamt Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -43,6 +43,7 @@ cleandir distclean:	.NOTMAIN cleandirefilib
 cleandirefilib:		.NOTMAIN
 	@echo cleandiring the efi library objects
 	@if [ -d "${EFIDST}" ]; then ${EFIMAKE} cleandir; fi
+	-rm -rf efi
 
 dependall depend:	.NOTMAIN dependefilib
 dependefilib:		.NOTMAIN __always_make_efilib

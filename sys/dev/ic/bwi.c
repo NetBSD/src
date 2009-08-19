@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.10.2.2 2009/05/04 08:12:40 yamt Exp $	*/
+/*	$NetBSD: bwi.c,v 1.10.2.3 2009/08/19 18:47:06 yamt Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.10.2.2 2009/05/04 08:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.10.2.3 2009/08/19 18:47:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -2636,17 +2636,15 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	/*
 	 * Test whether the revision of this MAC is supported
 	 */
-#define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
-	for (i = 0; i < N(bwi_sup_macrev); ++i) {
+	for (i = 0; i < __arraycount(bwi_sup_macrev); ++i) {
 		if (bwi_sup_macrev[i] == rev)
 			break;
 	}
-	if (i == N(bwi_sup_macrev)) {
+	if (i == __arraycount(bwi_sup_macrev)) {
 		aprint_error_dev(sc->sc_dev, "MAC rev %u is not supported\n",
 		    rev);
 		return (ENXIO);
 	}
-#undef N
 
 	BWI_CREATE_MAC(mac, sc, id, rev);
 	sc->sc_nmac++;
@@ -3005,20 +3003,18 @@ bwi_phy_attach(struct bwi_mac *mac)
 		phy->phy_tbl_data_hi = BWI_PHYR_TBL_DATA_HI_11A;
 		break;
 	case BWI_PHYINFO_TYPE_11B:
-#define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
-		for (i = 0; i < N(bwi_sup_bphy); ++i) {
+		for (i = 0; i < __arraycount(bwi_sup_bphy); ++i) {
 			if (phyrev == bwi_sup_bphy[i].rev) {
 				phy->phy_init = bwi_sup_bphy[i].init;
 				break;
 			}
 		}
-		if (i == N(bwi_sup_bphy)) {
+		if (i == __arraycount(bwi_sup_bphy)) {
 			aprint_error_dev(sc->sc_dev,
 			    "unsupported 11B PHY, rev %u\n",
 			    phyrev);
 			return (ENXIO);
 		}
-#undef N
 		phy->phy_mode = IEEE80211_MODE_11B;
 		break;
 	case BWI_PHYINFO_TYPE_11G:
@@ -3561,7 +3557,6 @@ bwi_phy_init_11b_rev6(struct bwi_mac *mac)
 		CSR_WRITE_2(sc, BWI_BBP_ATTEN, 0);
 }
 
-#define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
 static void
 bwi_phy_config_11g(struct bwi_mac *mac)
 {
@@ -3578,19 +3573,19 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 		PHY_WRITE(mac, 0x427, 0x1a);
 
 		/* Fill frequency table */
-		for (i = 0; i < N(bwi_phy_freq_11g_rev1); ++i) {
+		for (i = 0; i < __arraycount(bwi_phy_freq_11g_rev1); ++i) {
 			bwi_tbl_write_2(mac, BWI_PHYTBL_FREQ + i,
 			    bwi_phy_freq_11g_rev1[i]);
 		}
 
 		/* Fill noise table */
-		for (i = 0; i < N(bwi_phy_noise_11g_rev1); ++i) {
+		for (i = 0; i < __arraycount(bwi_phy_noise_11g_rev1); ++i) {
 			bwi_tbl_write_2(mac, BWI_PHYTBL_NOISE + i,
 			    bwi_phy_noise_11g_rev1[i]);
 		}
 
 		/* Fill rotor table */
-		for (i = 0; i < N(bwi_phy_rotor_11g_rev1); ++i) {
+		for (i = 0; i < __arraycount(bwi_phy_rotor_11g_rev1); ++i) {
 			/* NB: data length is 4 bytes */
 			bwi_tbl_write_4(mac, BWI_PHYTBL_ROTOR + i,
 			    bwi_phy_rotor_11g_rev1[i]);
@@ -3624,13 +3619,13 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 	 */
 	if (phy->phy_rev <= 2) {
 		tbl = bwi_phy_noise_scale_11g_rev2;
-		n = N(bwi_phy_noise_scale_11g_rev2);
+		n = __arraycount(bwi_phy_noise_scale_11g_rev2);
 	} else if (phy->phy_rev >= 7 && (PHY_READ(mac, 0x449) & 0x200)) {
 		tbl = bwi_phy_noise_scale_11g_rev7;
-		n = N(bwi_phy_noise_scale_11g_rev7);
+		n = __arraycount(bwi_phy_noise_scale_11g_rev7);
 	} else {
 		tbl = bwi_phy_noise_scale_11g;
-		n = N(bwi_phy_noise_scale_11g);
+		n = __arraycount(bwi_phy_noise_scale_11g);
 	}
 	for (i = 0; i < n; ++i)
 		bwi_tbl_write_2(mac, BWI_PHYTBL_NOISE_SCALE + i, tbl[i]);
@@ -3640,10 +3635,10 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 	 */
 	if (phy->phy_rev == 2) {
 		tbl = bwi_phy_sigma_sq_11g_rev2;
-		n = N(bwi_phy_sigma_sq_11g_rev2);
+		n = __arraycount(bwi_phy_sigma_sq_11g_rev2);
 	} else if (phy->phy_rev > 2 && phy->phy_rev <= 8) {
 		tbl = bwi_phy_sigma_sq_11g_rev7;
-		n = N(bwi_phy_sigma_sq_11g_rev7);
+		n = __arraycount(bwi_phy_sigma_sq_11g_rev7);
 	} else {
 		tbl = NULL;
 		n = 0;
@@ -3653,7 +3648,7 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 
 	if (phy->phy_rev == 1) {
 		/* Fill delay table */
-		for (i = 0; i < N(bwi_phy_delay_11g_rev1); ++i) {
+		for (i = 0; i < __arraycount(bwi_phy_delay_11g_rev1); ++i) {
 			bwi_tbl_write_4(mac, BWI_PHYTBL_DELAY + i,
 			    bwi_phy_delay_11g_rev1[i]);
 		}
@@ -3691,7 +3686,6 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 	if (sc->sc_card_flags & BWI_CARD_F_PA_GPIO9)
 		PHY_WRITE(mac, 0x46e, 0x3cf);
 }
-#undef N
 
 /*
  * Configure Automatic Gain Controller
@@ -4840,7 +4834,6 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	}
 
 #define IS_VALID_PA_PARAM(p)	((p) != 0 && (p) != -1)
-#define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
 	/*
 	 * Extract PA parameters
 	 */
@@ -4848,10 +4841,10 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 		sprom_ofs = BWI_SPROM_PA_PARAM_11A;
 	else
 		sprom_ofs = BWI_SPROM_PA_PARAM_11BG;
-	for (i = 0; i < N(pa_params); ++i)
+	for (i = 0; i < __arraycount(pa_params); ++i)
 		pa_params[i] = (int16_t)bwi_read_sprom(sc, sprom_ofs + (i * 2));
 
-	for (i = 0; i < N(pa_params); ++i) {
+	for (i = 0; i < __arraycount(pa_params); ++i) {
 		/*
 		 * If one of the PA parameters from SPROM is not valid,
 		 * fall back to the default values, if there are any.
@@ -4885,7 +4878,6 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			goto back;
 		}
 	}
-#undef N
 
 	/*
 	 * All of the PA parameters from SPROM are valid.
@@ -6542,8 +6534,7 @@ bwi_led_attach(struct bwi_softc *sc)
 	uint16_t gpio, val[BWI_LED_MAX];
 	int i;
 
-#define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
-	for (i = 0; i < N(bwi_vendor_led_act); ++i) {
+	for (i = 0; i < __arraycount(bwi_vendor_led_act); ++i) {
 		if (sc->sc_pci_subvid == bwi_vendor_led_act[i].vid) {
 			led_act = bwi_vendor_led_act[i].led_act;
 			break;
@@ -6551,7 +6542,6 @@ bwi_led_attach(struct bwi_softc *sc)
 	}
 	if (led_act == NULL)
 		led_act = bwi_default_led_act;
-#undef N
 
 	gpio = bwi_read_sprom(sc, BWI_SPROM_GPIO01);
 	val[0] = __SHIFTOUT(gpio, BWI_SPROM_GPIO_0);
@@ -6751,7 +6741,6 @@ bwi_led_blink_end(void *xsc)
 static int
 bwi_bbp_attach(struct bwi_softc *sc)
 {
-#define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
 	uint16_t bbp_id, rw_type;
 	uint8_t rw_rev;
 	uint32_t info;
@@ -6784,7 +6773,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		uint16_t did = sc->sc_pci_did;
 		uint8_t revid = sc->sc_pci_revid;
 
-		for (i = 0; i < N(bwi_bbpid_map); ++i) {
+		for (i = 0; i < __arraycount(bwi_bbpid_map); ++i) {
 			if (did >= bwi_bbpid_map[i].did_min &&
 			    did <= bwi_bbpid_map[i].did_max) {
 				bbp_id = bwi_bbpid_map[i].bbp_id;
@@ -6808,7 +6797,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	if (rw_type == BWI_REGWIN_T_COM && rw_rev >= 4) {
 		nregwin = __SHIFTOUT(info, BWI_INFO_NREGWIN_MASK);
 	} else {
-		for (i = 0; i < N(bwi_regwin_count); ++i) {
+		for (i = 0; i < __arraycount(bwi_regwin_count); ++i) {
 			if (bwi_regwin_count[i].bbp_id == bbp_id) {
 				nregwin = bwi_regwin_count[i].nregwin;
 				break;
@@ -6890,7 +6879,6 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		return (error);
 
 	return (0);
-#undef N
 }
 
 static int

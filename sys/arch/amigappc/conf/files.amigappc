@@ -1,9 +1,11 @@
-#	$NetBSD: files.amigappc,v 1.19 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.amigappc,v 1.19.10.1 2009/08/19 18:45:56 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
 maxusers 2 8 64
+
+include "arch/powerpc/pic/files.pic"
 
 defflag	opt_amigaccgrf.h	GRF_NTSC
 defflag	opt_amigaccgrf.h	GRF_PAL	:GRF_NTSC	# temporary workaround
@@ -16,6 +18,10 @@ defflag	opt_amigaccgrf.h	USE_C_BFOPS
 defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defflag	opt_amigacons.h		CV3DONZORRO2
+defflag	opt_amigacons.h		SERCONSOLE
+
+defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
+defflag	opt_kfont.h		KFONT_CONS_ISO8859_2
 
 defparam opt_retina.h		RH_MEMCLK
 defflag	opt_retina.h		RH_64BIT_SPRITE RH_HARDWARECURSOR
@@ -23,14 +29,47 @@ defflag	opt_retina.h		RETINA_SPEED_HACK
 
 defflag				BB060STUPIDROM
 defflag				P5PPC68KBOARD
-
 defflag				LEV6_DEFER
+
+file	dev/cons.c				ite | ser
+file	dev/cninit.c				ite | ser
+file	arch/amigappc/amigappc/amiga_init.c
+file	arch/amigappc/amigappc/autoconf.c
+file	arch/amigappc/amigappc/machdep.c
+file	arch/amigappc/amigappc/pic_amiga.c
+file	arch/powerpc/powerpc/clock.c
+file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+file	arch/amiga/amiga/cc.c
+file	arch/amiga/amiga/cia.c
+file	arch/amiga/amiga/conf.c
+file	arch/amiga/amiga/disksubr.c
+file	arch/amiga/amiga/dkbad.c
+file	arch/amiga/dev/md_root.c		memory_disk_hooks
+
+# for bus_space
+
+define	amibus_bl
+file	arch/amiga/amiga/amiga_bus_simple_4.c
+
+define	amibus_ww
+file	arch/amiga/amiga/amiga_bus_simple_2word.c
+
+define amibus_wb
+file	arch/amiga/amiga/amiga_bus_simple_1word.c
+
+define	amibus_b16
+file	arch/amiga/amiga/amiga_bus_simple_16.c	amibus_b16
+
+define	amibus_b800
+file	arch/amiga/amiga/amiga_bus_simple_0x800.c	amibus_b800
 
 device	mainbus {}
 attach	mainbus at root
+file	arch/amigappc/amigappc/mainbus.c	mainbus
 
 device	cpu
 attach	cpu at mainbus
+file	arch/amigappc/amigappc/cpu.c		cpu
 
 # zorro expansion bus.
 device	zbus {}
@@ -40,14 +79,9 @@ file	arch/amiga/dev/zbus.c		zbus
 define	event {}
 file	arch/amiga/dev/event.c		event
 
-device	clock
-attach	clock at mainbus
-file	arch/amiga/dev/clock.c
-
-# A2000 internal hwc
-device	a2kbbc
-attach	a2kbbc at mainbus
-file	arch/amiga/dev/a2kbbc.c		a2kbbc
+#device	clock
+#attach	clock at mainbus
+#file	arch/amiga/dev/clock.c
 
 # A3000/4000 internal hwc
 device	a34kbbc
@@ -78,6 +112,14 @@ file	arch/amiga/dev/aucc.c		aucc needs-flag
 device	melody: audiobus, tms320av110
 attach	melody at zbus
 file	arch/amiga/dev/melody.c		melody
+
+device repulse: audiobus, ac97, mulaw
+attach	repulse at zbus
+file	arch/amiga/dev/repulse.c	repulse
+
+device toccata: audiobus, ad1848, auconv
+attach	toccata at zbus
+file	arch/amiga/dev/toccata.c	toccata
 
 # mouse
 device	ms: event
@@ -219,12 +261,6 @@ file	arch/amiga/dev/mfc.c		mfcs | mfcp needs-count
 
 # direct bus ISA-chip i/o
 define	supio {port = -1}
-
-# DraCo superio chip
-
-device	drsupio: supio
-attach	drsupio at mainbus
-file	arch/amiga/dev/drsupio.c	drsupio
 
 # ZBus HyperComs: HyperCom Z3, HyperCom 4
 device	hyper: supio
@@ -369,39 +405,28 @@ device	idesc: scsi
 attach	idesc at mainbus
 file	arch/amiga/dev/idesc.c		idesc needs-flag
 
-# MacroSystem DraCo internal
-device	drsc: scsi, asiop
-attach	drsc at mainbus
-file	arch/amiga/dev/drsc.c		drsc needs-flag
-
-# MacroSystem DraCo internal DS2404 hwc
-device	drbbc
-attach	drbbc at mainbus
-file	arch/amiga/dev/drbbc.c		drbbc
-
-# list of standard files...
-
-file	dev/cons.c			ite | ser
-file	dev/cninit.c			ite | ser
-file	arch/amigappc/amigappc/amiga_init.c
-file	arch/amiga/amiga/autoconf.c
-file	arch/amiga/amiga/busfuncs.c
-file	arch/amiga/amiga/cia.c
-file	arch/amiga/amiga/conf.c
-file	arch/amiga/amiga/disksubr.c
-file	arch/amiga/amiga/dkbad.c
-file	arch/amigappc/amigappc/machdep.c
-file	arch/amiga/amiga/cc.c
-file	arch/amiga/dev/md_root.c		memory_disk_hooks
-#file	arch/m68k/m68k/cacheops.c
-
 define	gayle
 file	arch/amiga/amiga/gayle.c		gayle
+
+file	arch/amiga/dev/gayle_pcmcia.c		pccard
+device	pccard: pcmciabus, gayle
+attach	pccard at mainbus
+
+include "dev/pcmcia/files.pcmcia"
 
 include "dev/ata/files.ata"
 
 # Amiga 4000/1200 IDE using MI wdc
 attach	wdc at mainbus with wdc_amiga: gayle
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
+
+# Buddha wdc
+attach	wdc at zbus with wdc_buddha
+file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
+
+# Compatibility modules
+
+# OSS audio driver compatibility
+#include "compat/ossaudio/files.ossaudio"
 
 include "arch/amiga/conf/majors.amiga"

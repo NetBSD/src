@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.40.10.1 2009/05/04 08:14:36 yamt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.40.10.2 2009/08/19 18:48:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
-#define	_POSIX_VDISABLE		((unsigned char)'\377')
+#define	_POSIX_VDISABLE		__CAST(unsigned char, '\377')
 				/* file synchronization is available */
 #define	_POSIX_FSYNC		1
 				/* synchronized I/O is available */
@@ -162,6 +162,10 @@
 #define	_PC_FILESIZEBITS	11
 #define	_PC_SYMLINK_MAX		12
 #define	_PC_2_SYMLINKS		13
+#define	_PC_ACL_EXTENDED	14
+
+/* From OpenSolaris, used by SEEK_DATA/SEEK_HOLE. */
+#define	_PC_MIN_HOLE_SIZE	15
 
 /* configurable system variables; use as argument to sysconf(3) */
 /*

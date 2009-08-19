@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102.10.1 2009/05/04 08:11:38 yamt Exp $
+# $NetBSD: GENERIC,v 1.102.10.2 2009/08/19 18:46:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102.10.1 $"
+#ident 		"GENERIC-$Revision: 1.102.10.2 $"
 
 maxusers	16
 
@@ -69,7 +69,6 @@ options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-#options 	EXEC_AOUT	# exec a.out binaries
 #options 	EXEC_ECOFF	# exec ecoff binaries
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

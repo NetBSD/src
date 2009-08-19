@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.203.4.3 2009/05/16 10:41:44 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.203.4.4 2009/08/19 18:47:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.203.4.3 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.203.4.4 2009/08/19 18:47:19 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -306,6 +306,13 @@ static const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0},			       /* minor 8-11 */
 		{0, 0, 0}			       /* minor 12-15 */
 	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "Seagate STT3401A", "hp0atxa", ""},	{0, 0, {
+		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
+		{ST_Q_FORCE_BLKSIZE, 1024, 0},		/* minor 4-7 */
+		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 8-11 */
+		{ST_Q_FORCE_BLKSIZE, 512, 0}		/* minor 12-15 */
+	}}},
 };
 
 #define NOEJECT 0
@@ -488,6 +495,7 @@ st_identify_drive(struct st_softc *st, struct scsipi_inquiry_pattern *inqbuf)
 		st->drive_quirks = finger->quirkdata.quirks;
 		st->quirks = finger->quirkdata.quirks;	/* start value */
 		st->page_0_size = finger->quirkdata.page_0_size;
+		KASSERT(st->page_0_size <= MAX_PAGE_0_SIZE);
 		st_loadquirks(st);
 	}
 }
@@ -2400,4 +2408,58 @@ stdump(dev_t dev, daddr_t blkno, void *va,
 
 	/* Not implemented. */
 	return (ENXIO);
+}
+
+/*
+ * Send a filled out parameter structure to the drive to
+ * set it into the desire modes etc.
+ */
+int
+st_mode_select(struct st_softc *st, int flags)
+{
+	u_int select_len;
+	struct select {
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
+		u_char sense_data[MAX_PAGE_0_SIZE];
+	} select;
+	struct scsipi_periph *periph = st->sc_periph;
+
+	select_len = sizeof(select.header) + sizeof(select.blk_desc) +
+		     st->page_0_size;
+
+	/*
+	 * This quirk deals with drives that have only one valid mode
+	 * and think this gives them license to reject all mode selects,
+	 * even if the selected mode is the one that is supported.
+	 */
+	if (st->quirks & ST_Q_UNIMODAL) {
+		SC_DEBUG(periph, SCSIPI_DB3,
+		    ("not setting density 0x%x blksize 0x%x\n",
+		    st->density, st->blksize));
+		return (0);
+	}
+
+	/*
+	 * Set up for a mode select
+	 */
+	memset(&select, 0, sizeof(select));
+	select.header.blk_desc_len = sizeof(struct scsi_general_block_descriptor);
+	select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
+	select.blk_desc.density = st->density;
+	if (st->flags & ST_DONTBUFFER)
+		select.header.dev_spec |= SMH_DSP_BUFF_MODE_OFF;
+	else
+		select.header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
+	if (st->flags & ST_FIXEDBLOCKS)
+		_lto3b(st->blksize, select.blk_desc.blklen);
+	if (st->page_0_size)
+		memcpy(select.sense_data, st->sense_data, st->page_0_size);
+
+	/*
+	 * do the command
+	 */
+	return scsipi_mode_select(periph, 0, &select.header, select_len,
+				  flags | XS_CTL_DATA_ONSTACK, ST_RETRIES,
+				  ST_CTL_TIME);
 }

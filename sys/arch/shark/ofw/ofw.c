@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.42.20.2 2009/05/04 08:11:53 yamt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.42.20.3 2009/08/19 18:46:46 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.42.20.2 2009/05/04 08:11:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.42.20.3 2009/08/19 18:46:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ paddr_t physical_freestart;
 paddr_t physical_freeend;
 paddr_t physical_end;
 u_int free_pages;
-int physmem;
 #ifndef	OFWGENCFG
 pv_addr_t irqstack;
 #endif
