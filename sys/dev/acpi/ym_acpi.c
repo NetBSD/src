@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.9 2009/08/18 16:41:02 jmcneill Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.10 2009/08/19 00:31:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.9 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.10 2009/08/19 00:31:16 jmcneill Exp $");
 
 #include "mpu_ym.h"
 
@@ -63,6 +63,8 @@ ym_acpi_match(device_t parent, cfdata_t match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
+		return 0;
+	if (!aa->aa_node->ad_devinfo->HardwareId.String)
 		return 0;
 	/* Yamaha OPL3-SA2 or OPL3-SA3 */
 	if (strcmp("YMH0021", aa->aa_node->ad_devinfo->HardwareId.String))
