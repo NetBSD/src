@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_quirks.c,v 1.8 2007/01/06 00:08:20 jmcneill Exp $	*/
+/*	$NetBSD: pci_quirks.c,v 1.9 2009/08/19 16:31:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.8 2007/01/06 00:08:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.9 2009/08/19 16:31:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,7 @@ pci_lookup_quirkdata(pci_vendor_id_t vendor, pci_product_id_t product)
 {
 	int i;
 
-	for (i = 0; i < (sizeof pci_quirks / sizeof pci_quirks[0]); i++)
+	for (i = 0; i < __arraycount(pci_quirks); i++)
 		if (vendor == pci_quirks[i].vendor &&
 		    product == pci_quirks[i].product)
 			return (&pci_quirks[i]);
