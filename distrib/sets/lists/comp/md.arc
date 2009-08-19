@@ -1,9 +1,11 @@
-# $NetBSD: md.arc,v 1.22 2009/08/12 23:38:20 matt Exp $
+# $NetBSD: md.arc,v 1.23 2009/08/19 08:24:44 he Exp $
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include
+./usr/include/arc/aout_machdep.h		comp-obsolete		obsolete
 ./usr/include/arc/asm.h				comp-c-include
 ./usr/include/arc/autoconf.h			comp-obsolete		obsolete
+./usr/include/arc/bsd-aout.h			comp-obsolete		obsolete
 ./usr/include/arc/bswap.h			comp-c-include
 ./usr/include/arc/cdefs.h			comp-c-include
 ./usr/include/arc/cpu.h				comp-c-include
