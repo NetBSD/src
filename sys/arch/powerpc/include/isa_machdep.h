@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.5 2009/08/19 14:44:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,8 @@ int	genppc_isa_intr_alloc(isa_chipset_tag_t, struct pic_ops *, int,
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
+#define	isa_dmadestroy(ic)						\
+	_isa_dmadestroy(&(ic)->ic_dmastate)
 #define	isa_dmacascade(ic, c)						\
 	_isa_dmacascade(&(ic)->ic_dmastate, (c))
 #define	isa_dmamaxsize(ic, c)						\
