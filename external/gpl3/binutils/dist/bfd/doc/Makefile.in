@@ -390,7 +390,9 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 
-bfd.info: bfd.texinfo $(bfd_TEXINFOS)
+bfd.info:
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_bfd.info: bfd.texinfo $(bfd_TEXINFOS)
 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \

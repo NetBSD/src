@@ -31,6 +31,7 @@
 #include "fnmatch.h"
 #include "elf-bfd.h"
 #include <sys/stat.h>
+#include <ctype.h>
 #include "libbfd.h"
 
 struct is_specified_symbol_predicate_data

@@ -29,6 +29,8 @@
 #include "corefile.h"
 #include "safe-ctype.h"
 
+#include <stdlib.h>
+
 bfd *core_bfd;
 static int core_num_syms;
 static asymbol **core_syms;
