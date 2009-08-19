@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2.40.1 2009/08/16 03:02:47 matt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2.40.2 2009/08/19 06:56:13 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* RCSID("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93") */
-	RCSID("$NetBSD: bcopy.S,v 1.2.40.1 2009/08/16 03:02:47 matt Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.2.40.2 2009/08/19 06:56:13 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -176,10 +176,10 @@ LEAF(FUNCTION)
 	REG_S		v1,(1*SZREG)(DSTREG)
 	REG_S		t0,(2*SZREG)(DSTREG)
 	REG_S		t1,(3*SZREG)(DSTREG)
-	REG_L		t3,(-4*SZREG)(SRCREG)
-	REG_L		v1,(-3*SZREG)(SRCREG)
-	REG_L		t0,(-2*SZREG)(SRCREG)
 	REG_L		t1,(-1*SZREG)(SRCREG)
+	REG_L		t0,(-2*SZREG)(SRCREG)
+	REG_L		v1,(-3*SZREG)(SRCREG)
+	REG_L		t3,(-4*SZREG)(SRCREG)
 	PTR_ADDU	DSTREG,SZREG*8
 	REG_S		t1,(-1*SZREG)(DSTREG)
 	REG_S		t0,(-2*SZREG)(DSTREG)
@@ -192,7 +192,7 @@ LEAF(FUNCTION)
 	 */
 2:	# wordcopy
 	andi		t2,SIZEREG,(SZREG-1)	# get byte count / SZREG
-	xor		t2,SIZEREG,t2		# t2 = words to copy * SZREG
+	PTR_SUBU	t2,SIZEREG,t2		# t2 = words to copy * SZREG
 	beq		t2,zero,3f
 	PTR_ADDU	t0,SRCREG,t2		# stop at t0
 	PTR_SUBU	SIZEREG,SIZEREG,t2
@@ -270,10 +270,10 @@ LEAF(FUNCTION)
 	REG_S		v1,(-3*SZREG)(DSTREG)
 	REG_S		t0,(-2*SZREG)(DSTREG)
 	REG_S		t1,(-1*SZREG)(DSTREG)
-	REG_L		t3,(0*SZREG)(SRCREG)
-	REG_L		v1,(1*SZREG)(SRCREG)
-	REG_L		t0,(2*SZREG)(SRCREG)
 	REG_L		t1,(3*SZREG)(SRCREG)
+	REG_L		t0,(2*SZREG)(SRCREG)
+	REG_L		v1,(1*SZREG)(SRCREG)
+	REG_L		t3,(0*SZREG)(SRCREG)
 	PTR_SUBU	DSTREG,8*SZREG
 	REG_S		t1,(3*SZREG)(DSTREG)
 	REG_S		t0,(2*SZREG)(DSTREG)
@@ -286,7 +286,7 @@ LEAF(FUNCTION)
 	 */
 2:	# wordcopy
 	andi		t2,SIZEREG,SZREG-1	# get byte count / 4
-	xor		t2,SIZEREG,t2		# t2 = number of words to copy
+	PTR_SUBU	t2,SIZEREG,t2		# t2 = number of words to copy
 	beq		t2,zero,3f
 	PTR_SUBU	t0,SRCREG,t2		# stop at t0
 	PTR_SUBU	SIZEREG,SIZEREG,t2
