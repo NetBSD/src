@@ -1,4 +1,4 @@
-.\" $NetBSD: btconfig.8,v 1.9 2009/08/18 21:31:51 wiz Exp $
+.\" $NetBSD: btconfig.8,v 1.10 2009/08/20 11:45:51 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 18, 2009
+.Dd August 20, 2009
 .Dt BTCONFIG 8
 .Os
 .Sh NAME
@@ -91,6 +91,11 @@ for all baseband connections.
 Disable authentication.
 .It Cm switch
 Enable Role Switching.
+In a Bluetooth piconet there is one Master and up to seven Slaves, and
+normally the device that initiates a connection will take the Master role.
+Enabling this option allows remote devices to switch connection roles
+and become the Master rather than needing to form another piconet
+which may cause problems.
 .It Cm -switch
 Disable Role Switching.
 .It Cm hold
