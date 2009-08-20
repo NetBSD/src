@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.18 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.19 2009/08/20 21:40:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.18 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.19 2009/08/20 21:40:59 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -653,7 +653,7 @@ hci_event_con_req(struct hci_unit *unit, struct mbuf *m)
 	} else {
 		memset(&ap, 0, sizeof(ap));
 		bdaddr_copy(&ap.bdaddr, &ep.bdaddr);
-		if (unit->hci_link_policy & HCI_LINK_POLICY_ENABLE_ROLE_SWITCH)
+		if (unit->hci_flags & BTF_MASTER)
 			ap.role = HCI_ROLE_MASTER;
 		else
 			ap.role = HCI_ROLE_SLAVE;

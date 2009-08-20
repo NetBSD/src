@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.30 2009/08/10 18:25:20 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.31 2009/08/20 21:40:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.30 2009/08/10 18:25:20 plunky Exp $
+ * $Id: hci.h,v 1.31 2009/08/20 21:40:59 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2346,6 +2346,7 @@ struct btreq {
 #define BTF_INIT_FEATURES	(1<<7)	/* waiting for features */
 #define BTF_POWER_UP_NOOP	(1<<8)	/* should wait for No-op on power up */
 #define BTF_INIT_COMMANDS	(1<<9)	/* waiting for supported commands */
+#define BTF_MASTER		(1<<10) /* request Master role */
 
 #define BTF_INIT		(BTF_INIT_BDADDR	\
 				| BTF_INIT_BUFFER_SIZE	\
