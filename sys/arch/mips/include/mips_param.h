@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23 2006/08/28 13:43:35 yamt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.1 2009/08/20 07:47:52 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -57,3 +57,36 @@
 #define mips_trunc_page(x)	((uintptr_t)(x) & ~(NBPG-1))
 #define mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
 #define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)
+
+/*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#ifndef MSIZE
+#ifdef _LP64
+#define	MSIZE		512		/* size of an mbuf */
+#else
+#define	MSIZE		256		/* size of an mbuf */
+#endif
+
+#ifndef MCLSHIFT
+# define MCLSHIFT	11		/* convert bytes to m_buf clusters */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#ifndef NMBCLUSTERS
+#if defined(_KERNEL_OPT)
+#include "opt_gateway.h"
+#endif
+
+#ifdef GATEWAY
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
+#else
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
+#endif
+#endif
+#endif
