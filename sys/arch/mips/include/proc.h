@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21 2007/11/16 07:36:11 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.1 2009/08/20 07:52:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,9 +44,10 @@ struct lwp;
 /*
  * Machine-dependent part of the lwp structure for MIPS
  */
+struct frame;
 
 struct mdlwp {
-	void	*md_regs;		/* registers on current frame */
+	struct frame *md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */
@@ -56,7 +57,9 @@ struct mdlwp {
 
 struct mdproc {
 					/* syscall entry for this process */
-	void	(*md_syscall)(struct lwp *, u_int, u_int, u_int);
+	void	(*md_syscall)(struct lwp *, u_int, u_int, vaddr_t);
+	int	md_abi;			/* which ABI is this process using? */
+	int	md_fancy;		
 };
 
 /* md_flags */
