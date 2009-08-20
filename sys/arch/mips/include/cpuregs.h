@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74 2008/02/19 11:26:40 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.1 2009/08/20 07:49:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,9 +94,14 @@
 #define	MIPS3_VA_TO_CINDEX(x) \
 		((uintptr_t)(x) & 0xffffff | MIPS_KSEG0_START)
 
+#define	MIPS_XSEG_MASK		(0x3fffffffffffffffULL)
+#define	MIPS_XKSEG_BASE		(0x3ULL << 62)
+#define	MIPS_XKSEG_P(x)		(((uint64_t)(x) >> 62) == 3)
+
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
-	((0x2ULL << 62) | ((unsigned long long)(cca) << 59) | (x))
+	((0x2ULL << 62) | ((uint64_t)(cca) << 59) | (x))
 #define	MIPS_XKPHYS_TO_PHYS(x)	((x) & 0x0effffffffffffffULL)
+#define	MIPS_XKPHYS_P(x)	(((uint64_t)(x) >> 62) == 2)
 
 /* CPU dependent mtc0 hazard hook */
 #define	COP0_SYNC		/* nothing */
