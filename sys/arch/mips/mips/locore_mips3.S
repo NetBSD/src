@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93 2007/10/17 19:55:38 garbled Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.1 2009/08/20 04:43:34 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -348,11 +348,6 @@ LEAF(mips3_cp0_pg_mask_write)
 	nop
 END(mips3_cp0_pg_mask_write)
 
-#if defined(_MIPS_BSD_API) && \
-    (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
-#error mips3_ld and mips3_sd should be adjusted for N32 or LP64
-#endif
-
 LEAF(mips3_ld)
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
 	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
@@ -365,6 +360,10 @@ LEAF(mips3_ld)
 #endif
 
 	ld	v0, 0(a0)
+#if defined(_MIPS_BSD_API) && \
+    (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
+	# nothing to do
+#else
 #if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	v1, v0, 32
 	dsra	v1, v1, 32			# low word in v1
@@ -373,6 +372,7 @@ LEAF(mips3_ld)
 	dsra	v1, v0, 32			# high word in v1
 	dsll	v0, v0, 32
 	dsra	v0, v0, 32			# low word in v0
+#endif
 #endif
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
@@ -396,6 +396,10 @@ LEAF(mips3_sd)
 	nop
 #endif
 
+#if defined(_MIPS_BSD_API) && \
+    (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
+	# nothing to do
+#else
 	# NOTE: a1 is padding!
 
 #if _BYTE_ORDER == _BIG_ENDIAN
@@ -408,6 +412,7 @@ LEAF(mips3_sd)
 	dsll	a3, a3, 32			# high word in a3
 #endif
 	or	a1, a2, a3
+#endif
 	sd	a1, 0(a0)
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
