@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.14 2009/08/15 16:50:29 dsl Exp $	*/
+/*	$NetBSD: fsort.h,v 1.15 2009/08/20 06:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -87,16 +87,8 @@
 extern u_char *buffer;
 extern size_t bufsize;
 
-/* temp files in the stack have a file descriptor, a largest bin (maxb)
- * which becomes the last non-empty bin (lastb) when the actual largest
- * bin is smaller than max(half the total file, BUFSIZE)
- * Max_o is the offset of maxb so it can be sought after the other bins
- * are sorted.
-*/
+/* Temporary files contian data (with record headers) in sorted order */
 struct tempfile {
 	FILE *fp;
-	u_char maxb;
-	u_char lastb;
-	off_t max_o;
 };
 extern struct tempfile fstack[MAXFCT];

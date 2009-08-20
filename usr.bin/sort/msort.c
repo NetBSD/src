@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.21 2009/08/16 19:53:43 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.22 2009/08/20 06:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.21 2009/08/16 19:53:43 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.22 2009/08/20 06:36:25 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -89,13 +89,12 @@ static int insert(struct mfile **, struct mfile **, int, int);
 static void merge(int, int, get_func_t, FILE *, put_func_t, struct field *);
 
 void
-fmerge(int binno, int top, struct filelist *filelist, int nfiles,
+fmerge(int binno, struct filelist *filelist, int nfiles,
     get_func_t get, FILE *outfp, put_func_t fput, struct field *ftbl)
 {
 	FILE *tout;
 	int i, j, last;
 	put_func_t put;
-	struct tempfile *l_fstack;
 
 	wts = ftbl->weights;
 	if (!UNIQUE && SINGL_FLD && ftbl->flags & F)
@@ -107,11 +106,6 @@ fmerge(int binno, int top, struct filelist *filelist, int nfiles,
 			err(2, "fmerge(): malloc");
 		memset(buffer, 0, bufsize);
 	}
-
-	if (binno >= 0)
-		l_fstack = fstack + top;
-	else
-		l_fstack = fstack;
 
 	while (nfiles) {
 		put = putrec;
@@ -125,18 +119,18 @@ fmerge(int binno, int top, struct filelist *filelist, int nfiles,
 			last = min(MERGE_FNUM, nfiles - j);
 			if (binno < 0) {
 				for (i = 0; i < last; i++)
-					if (!(l_fstack[i+MAXFCT-1-MERGE_FNUM].fp =
+					if (!(fstack[i+MAXFCT-1-MERGE_FNUM].fp =
 					    fopen(filelist->names[j+i], "r")))
 						err(2, "%s",
 							filelist->names[j+i]);
 				merge(MAXFCT-1-MERGE_FNUM, last, get, tout, put, ftbl);
 			} else {
 				for (i = 0; i< last; i++)
-					rewind(l_fstack[i+j].fp);
-				merge(top+j, last, get, tout, put, ftbl);
+					rewind(fstack[i+j].fp);
+				merge(j, last, get, tout, put, ftbl);
 			}
 			if (nfiles > MERGE_FNUM)
-				l_fstack[j/MERGE_FNUM].fp = tout;
+				fstack[j/MERGE_FNUM].fp = tout;
 		}
 		nfiles = (nfiles + (MERGE_FNUM - 1)) / MERGE_FNUM;
 		if (nfiles == 1)
@@ -144,7 +138,6 @@ fmerge(int binno, int top, struct filelist *filelist, int nfiles,
 		if (binno < 0) {
 			binno = 0;
 			get = geteasy;
-			top = 0;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.23 2009/08/15 21:26:32 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.24 2009/08/20 06:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.23 2009/08/15 21:26:32 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.24 2009/08/20 06:36:25 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -97,7 +97,8 @@ u_char fnum[NBINS], rnum[NBINS];
  * followed by the original line.
  */
 length_t
-enterkey(RECHEADER *keybuf, const u_char *keybuf_end, u_char *line_data, size_t line_size, struct field fieldtable[])
+enterkey(RECHEADER *keybuf, const u_char *keybuf_end, u_char *line_data,
+    size_t line_size, struct field fieldtable[])
 	/* keybuf:	 pointer to start of key */
 {
 	int i;
@@ -169,7 +170,8 @@ enterkey(RECHEADER *keybuf, const u_char *keybuf_end, u_char *line_data, size_t 
  * constructs a field (as defined by -k) within a key
  */
 static u_char *
-enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld, int gflags)
+enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
+    int gflags)
 {
 	u_char *start, *end, *lineend, *mask, *lweight;
 	struct column icol, tcol;

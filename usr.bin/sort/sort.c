@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.50 2009/08/18 18:00:28 dsl Exp $	*/
+/*	$NetBSD: sort.c,v 1.51 2009/08/20 06:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.50 2009/08/18 18:00:28 dsl Exp $");
+__RCSID("$NetBSD: sort.c,v 1.51 2009/08/20 06:36:25 dsl Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -127,6 +127,7 @@ main(int argc, char *argv[])
 	struct field *fldtab, *p;
 	size_t fldtab_sz = 3, fidx = 0;
 	struct filelist filelist;
+	int num_input_files;
 	FILE *outfp = NULL;
 	struct rlimit rl;
 	struct stat st;
@@ -146,6 +147,7 @@ main(int argc, char *argv[])
 	fldtab = malloc(fldtab_sz * sizeof(*fldtab));
 	memset(fldtab, 0, fldtab_sz * sizeof(*fldtab));
 
+	/* Convert "+field" args to -f format */
 	fixit(&argc, argv);
 
 	if (!(tmpdir = getenv("TMPDIR")))
@@ -240,6 +242,7 @@ main(int argc, char *argv[])
 			usage(NULL);
 		}
 	}
+
 	if (cflag && argc > optind+1)
 		errx(2, "too many input files for -c option");
 	if (argc - 2 > optind && !strcmp(argv[argc-2], "-o")) {
@@ -248,6 +251,7 @@ main(int argc, char *argv[])
 	}
 	if (mflag && argc - optind > (MAXFCT - (16+1))*16)
 		errx(2, "too many input files for -m option");
+
 	for (i = optind; i < argc; i++) {
 		/* allow one occurrence of /dev/stdin */
 		if (!strcmp(argv[i], "-") || !strcmp(argv[i], _PATH_STDIN)) {
@@ -258,12 +262,15 @@ main(int argc, char *argv[])
 				stdinflag = 1;
 
 			/* change to /dev/stdin if '-' */
-			if (argv[i][0] == '-')
-				argv[i] = __UNCONST(_PATH_STDIN);
+			if (argv[i][0] == '-') {
+				static char path_stdin[] = _PATH_STDIN;
+				argv[i] = path_stdin;
+			}
 
 		} else if ((ch = access(argv[i], R_OK)))
 			err(2, "%s", argv[i]);
 	}
+
 	if (!(fldtab->flags & (I|D|N) || fldtab[1].icol.num)) {
 		SINGL_FLD = 1;
 		fldtab[0].icol.num = 1;
@@ -278,13 +285,15 @@ main(int argc, char *argv[])
 	settables(fldtab[0].flags);
 	num_init();
 	fldtab->weights = gweights;
+
 	if (optind == argc) {
 		static const char * const names[] = { _PATH_STDIN, NULL };
-
 		filelist.names = names;
-		optind--;
-	} else
+		num_input_files = 1;
+	} else {
 		filelist.names = (const char * const *) &argv[optind];
+		num_input_files = argc - optind;
+	}
 
 	if (SINGL_FLD)
 		get = makeline;
@@ -313,15 +322,15 @@ main(int argc, char *argv[])
 		    outpath);
 		if ((outfd = mkstemp(toutpath)) == -1)
 			err(2, "Cannot create temporary file `%s'", toutpath);
-		if ((outfp = fdopen(outfd, "w")) == NULL)
-			err(2, "Cannot open temporary file `%s'", toutpath);
-		outfile = toutpath;
 		(void)atexit(cleanup);
 		act.sa_handler = onsignal;
 		(void) sigemptyset(&act.sa_mask);
 		act.sa_flags = SA_RESTART | SA_RESETHAND;
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
 			sigaction(sigtable[i], &act, 0);
+		outfile = toutpath;
+		if ((outfp = fdopen(outfd, "w")) == NULL)
+			err(2, "Cannot open temporary file `%s'", toutpath);
 	} else {
 		outfile = outpath;
 
@@ -330,10 +339,10 @@ main(int argc, char *argv[])
 	}
 
 	if (mflag) {
-		fmerge(-1, 0, &filelist, argc-optind, get, outfp, putline,
+		fmerge(-1, &filelist, num_input_files, get, outfp, putline,
 			fldtab);
 	} else
-		fsort(-1, 0, 0, &filelist, argc-optind, outfp, fldtab);
+		fsort(&filelist, num_input_files, outfp, fldtab);
 
 	if (outfile != outpath) {
 		if (access(outfile, F_OK))
@@ -354,6 +363,7 @@ main(int argc, char *argv[])
 			err(2, "cannot link %s: output left in %s",
 			    outpath, outfile);
 		(void)unlink(outfile);
+		toutpath[0] = 0;
 	}
 	exit(0);
 }

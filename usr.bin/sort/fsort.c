@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.37 2009/08/18 18:00:28 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.38 2009/08/20 06:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.37 2009/08/18 18:00:28 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.38 2009/08/20 06:36:25 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -82,148 +82,112 @@ __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 static const u_char **keylist = 0;
 u_char *buffer = 0;
 size_t bufsize = DEFBUFSIZE;
-#define FSORTMAX 4
-int PANIC = FSORTMAX;
 
 struct tempfile fstack[MAXFCT];
-#define MSTART		(MAXFCT - MERGE_FNUM)
-#define	CHECKFSTACK(n)					\
-	if (n >= MAXFCT)				\
-		errx(2, "fstack: too many temporary files; use -H or sort in pieces")
-	
+
 #define SALIGN(n) ((n+sizeof(length_t)-1) & ~(sizeof(length_t)-1))
 
 void
-fsort(int binno, int depth, int top, struct filelist *filelist, int nfiles,
-    FILE *outfp, struct field *ftbl)
+fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 {
-	const u_char **keypos;
+	const u_char **keypos, **keyp;
 	u_char *bufend;
-	u_char *weights;
-	int ntfiles, mfct = 0;
+	int mfct = 0;
 	int c, nelem;
 	get_func_t get;
 	struct recheader *crec;
-	struct field tfield[2];
 	u_char *nbuffer;
 
-	memset(tfield, 0, sizeof(tfield));
-	if (ftbl[0].flags & R)
-		tfield[0].weights = Rascii;
-	else
-		tfield[0].weights = ascii;
-	tfield[0].icol.num = 1;
-	weights = ftbl[0].weights;
 	if (!buffer) {
 		buffer = malloc(bufsize);
 		keylist = malloc(MAXNUM * sizeof(u_char *));
 		memset(keylist, 0, MAXNUM * sizeof(u_char *));
 	}
 	bufend = buffer + bufsize;
+
 	if (SINGL_FLD)
+		/* Key and data are one! */
 		get = makeline;
 	else
+		/* Key (merged key fields) added before data */
 		get = makekey;
 
-	c = nelem = ntfiles = 0; /* XXXGCC -Wuninitialized m68k */
-	keypos = keylist;	     /* XXXGCC -Wuninitialized m68k */
-	crec = (RECHEADER *) buffer; /* XXXGCC -Wuninitialized m68k */
-	while (c != EOF) {
+	/* Loop through reads of chunk of input files that get sorted
+	 * and then merged together. */
+	for (;;) {
 		keypos = keylist;
 		nelem = 0;
 		crec = (RECHEADER *) buffer;
 
-	   do_read:
-		while ((c = get(-1, top, filelist, nfiles, crec,
-		    bufend, ftbl)) == 0) {
-			*keypos++ = crec->data + depth;
-			if (++nelem == MAXNUM) {
-				c = BUFFEND;
+		/* Loop reading records */
+		for (;;) {
+			c = get(-1, 0, filelist, nfiles, crec, bufend, ftbl);
+			/* 'c' is 0, EOF or BUFFEND */
+			if (c == 0) {
+				/* Save start of key in input buffer */
+				*keypos++ = crec->data;
+				if (++nelem == MAXNUM) {
+					c = BUFFEND;
+					break;
+				}
+				crec = (RECHEADER *)((char *) crec +
+				    SALIGN(crec->length) + REC_DATA_OFFSET);
+				continue;
+			}
+			if (c == EOF)
 				break;
-			}
-			crec =(RECHEADER *)((char *) crec +
-			    SALIGN(crec->length) + REC_DATA_OFFSET);
-		}
+			if (nelem >= MAXNUM || bufsize >= MAXBUFSIZE)
+				/* Need to sort and save this lot of data */
+				break;
 
-		if (c == BUFFEND && nelem < MAXNUM
-		    && bufsize < MAXBUFSIZE) {
-			const u_char **keyp;
-			u_char *oldb = buffer;
-
-			/* buffer was too small for data, allocate
-			 * bigger buffer */
-			nbuffer = realloc(buffer, bufsize * 2);
-			if (!nbuffer) {
-				err(2, "failed to realloc buffer to %lu bytes",
-					(unsigned long) bufsize * 2);
-			}
-			buffer = nbuffer;
+			/* c == BUFFEND, and we can process more data */
+			/* Allocate a larger buffer for this lot of data */
 			bufsize *= 2;
-			bufend = buffer + bufsize;
+			nbuffer = realloc(buffer, bufsize);
+			if (!nbuffer) {
+				err(2, "failed to realloc buffer to %zu bytes",
+					bufsize);
+			}
 
 			/* patch up keylist[] */
 			for (keyp = &keypos[-1]; keyp >= keylist; keyp--)
-				*keyp = buffer + (*keyp - oldb);
+				*keyp = nbuffer + (*keyp - buffer);
 
-			crec = (RECHEADER *) (buffer + ((u_char *)crec - oldb));
-			goto do_read;
+			crec = (RECHEADER *) (nbuffer + ((u_char *)crec - buffer));
+			buffer = nbuffer;
+			bufend = buffer + bufsize;
 		}
 
-		if (c != BUFFEND && !ntfiles && !mfct) {
-			/* do not push */
-			continue;
-		}
-
-		/* push */
-		fstack[MSTART + mfct].fp = ftmp();
-		if (radix_sort(keylist, nelem, weights, REC_D))
+		/* Sort this set of records */
+		if (radix_sort(keylist, nelem, ftbl[0].weights, REC_D))
 			err(2, NULL);
-		append(keylist, nelem, depth, fstack[MSTART + mfct].fp, putrec,
-		    ftbl);
+
+		if (c == EOF && mfct == 0) {
+			/* all the data is (sorted) in the buffer */
+			append(keylist, nelem, outfp, putline, ftbl);
+			break;
+		}
+
+		/* Save current data to a temporary file for a later merge */
+		fstack[mfct].fp = ftmp();
+		append(keylist, nelem, fstack[mfct].fp, putrec, ftbl);
 		mfct++;
-		/* reduce number of open files */
-		if (mfct == MERGE_FNUM ||(c == EOF && ntfiles)) {
-			/*
-			 * Only copy extra incomplete crec
-			 * data if there are any.
-			 */
-			int nodata = (bufend >= (u_char *)crec
-			    && bufend <= crec->data);
-			size_t sz=0;
-			u_char *tmpbuf=NULL;
 
-			if (!nodata) {
-				sz = bufend - crec->data;
-				tmpbuf = malloc(sz);
-				memmove(tmpbuf, crec->data, sz);
-			}
+		if (c == EOF) {
+			/* merge to output file */
+			fmerge(0, filelist, mfct, geteasy, outfp, putline,
+			    ftbl);
+			break;
+		}
 
-			CHECKFSTACK(ntfiles);
-			fstack[ntfiles].fp = ftmp();
-			fmerge(0, MSTART, filelist, mfct, geteasy,
-			    fstack[ntfiles].fp, putrec, ftbl);
-			ntfiles++;
-			mfct = 0;
-
-			if (!nodata) {
-				memmove(crec->data, tmpbuf, sz);
-				free(tmpbuf);
-			}
+		if (mfct == MERGE_FNUM) {
+			/* Merge the files we have */
+			FILE *fp = ftmp();
+			fmerge(0, filelist, mfct, geteasy, fp, putrec, ftbl);
+			mfct = 1;
+			fstack[0].fp = fp;
 		}
 	}
-
-	if (!ntfiles && !mfct) {	/* everything in memory--pop */
-		if (nelem > 1 && radix_sort(keylist, nelem, weights, REC_D))
-			err(2, NULL);
-		if (nelem > 0)
-			append(keylist, nelem, depth, outfp, putline, ftbl);
-	}
-	if (!ntfiles)
-		fmerge(0, MSTART, filelist, mfct, geteasy,
-		    outfp, putline, ftbl);
-	else
-		fmerge(0, 0, filelist, ntfiles, geteasy,
-		    outfp, putline, ftbl);
 
 	free(keylist);
 	keylist = NULL;
