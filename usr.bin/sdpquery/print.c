@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.3 2009/07/25 17:32:47 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.4 2009/08/20 11:07:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.3 2009/07/25 17:32:47 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.4 2009/08/20 11:07:42 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -110,6 +110,7 @@ static void print_hfag_features(sdp_data_t *);
 static void print_net_access_type(sdp_data_t *);
 static void print_pnp_source(sdp_data_t *);
 static void print_mas_types(sdp_data_t *);
+static void print_supported_repositories(sdp_data_t *);
 
 static void print_rfcomm(sdp_data_t *);
 static void print_bnep(sdp_data_t *);
@@ -278,6 +279,10 @@ attr_t mas_attrs[] = {	/* Message Access Server */
 	{ 0x0316, "SupportedMessageTypes",		print_mas_types },
 };
 
+attr_t pse_attrs[] = {	/* Phonebook Access Server */
+	{ 0x0314, "SupportedRepositories",		print_supported_repositories },
+};
+
 #define A(a)	a, __arraycount(a)
 service_t service_list[] = {
 	{ 0x1000, "Service Discovery Server",		A(sds_attrs) },
@@ -328,8 +333,8 @@ service_t service_list[] = {
 	{ 0x112b, "UDI TA",				NULL, 0 },
 	{ 0x112c, "Audio/Video",			NULL, 0 },
 	{ 0x112d, "SIM Access",				NULL, 0 },
-	{ 0x112e, "Phonebook Access PCE",		NULL, 0 },
-	{ 0x112f, "Phonebook Access PSE",		NULL, 0 },
+	{ 0x112e, "Phonebook Access Client",		NULL, 0 },
+	{ 0x112f, "Phonebook Access Server",		A(pse_attrs) },
 	{ 0x1130, "Phonebook Access",			NULL, 0 },
 	{ 0x1131, "Headset HS",				NULL, 0 },
 	{ 0x1132, "Message Access Server",		A(mas_attrs) },
@@ -1322,6 +1327,22 @@ print_mas_types(sdp_data_t *data)
 	if (v & (1<<1))	printf("    SMS_GSM\n");
 	if (v & (1<<2))	printf("    SMS_CDMA\n");
 	if (v & (1<<3))	printf("    MMS\n");
+}
+
+static void
+print_supported_repositories(sdp_data_t *data)
+{
+	uint8_t v;
+
+	if (!sdp_get_uint8(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%02x)", v);
+
+	printf("\n");
+	if (v & (1<<0))	printf("    Local Phonebook\n");
+	if (v & (1<<1))	printf("    SIM Card\n");
 }
 
 static void
