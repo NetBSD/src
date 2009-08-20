@@ -1,4 +1,4 @@
-/* $NetBSD: crunchide.c,v 1.12 2004/08/24 12:25:26 wiz Exp $ */
+/* $NetBSD: crunchide.c,v 1.13 2009/08/20 17:39:51 he Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 /*
- * crunchide.c - tiptoes through an a.out symbol table, hiding all defined
+ * crunchide.c - tiptoes through a symbol table, hiding all defined
  *	global symbols.  Allows the user to supply a "keep list" of symbols
  *	that are not to be hidden.  This program relies on the use of the
  * 	linker's -dc flag to actually put global bss data into the file's
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchide.c,v 1.12 2004/08/24 12:25:26 wiz Exp $");
+__RCSID("$NetBSD: crunchide.c,v 1.13 2009/08/20 17:39:51 he Exp $");
 #endif
 
 #include <unistd.h>
@@ -72,7 +72,6 @@ __RCSID("$NetBSD: crunchide.c,v 1.12 2004/08/24 12:25:26 wiz Exp $");
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <a.out.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
