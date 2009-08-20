@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.13 2008/07/21 13:36:57 lukem Exp $ */
+/* $NetBSD: btconfig.c,v 1.14 2009/08/20 21:40:59 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.13 2008/07/21 13:36:57 lukem Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.14 2009/08/20 21:40:59 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -106,6 +106,7 @@ int opt_reset = 0;
 			"\010INIT_FEATURES"	\
 			"\011POWER_UP_NOOP"	\
 			"\012INIT_COMMANDS"	\
+			"\013MASTER"		\
 			""
 
 /* authorisation (flag) */
@@ -117,6 +118,9 @@ int opt_encrypt = 0;
 /* scan enable options (flags) */
 int opt_pscan = 0;
 int opt_iscan = 0;
+
+/* master role option */
+int opt_master = 0;
 
 /* link policy options (flags) */
 int opt_switch = 0;
@@ -172,6 +176,8 @@ struct parameter {
 	{ "-pscan",	P_CLR,	&opt_pscan,	NULL	},
 	{ "iscan",	P_SET,	&opt_iscan,	NULL	},
 	{ "-iscan",	P_CLR,	&opt_iscan,	NULL	},
+	{ "master",	P_SET,	&opt_master,	NULL	},
+	{ "-master",	P_CLR,	&opt_master,	NULL	},
 	{ "switch",	P_SET,	&opt_switch,	NULL	},
 	{ "-switch",	P_CLR,	&opt_switch,	NULL	},
 	{ "hold",	P_SET,	&opt_hold,	NULL	},
@@ -504,6 +510,16 @@ config_unit(void)
 
 		if (set_unit(SIOCGBTINFO) < 0)
 			err(EXIT_FAILURE, "%s", btr.btr_name);
+	}
+
+	if (opt_master) {
+		if (opt_master > 0)
+			btr.btr_flags |= BTF_MASTER;
+		else
+			btr.btr_flags &= ~BTF_MASTER;
+
+		if (ioctl(hci, SIOCSBTFLAGS, &btr) < 0)
+			err(EXIT_FAILURE, "SIOCSBTFLAGS");
 	}
 
 	if (opt_switch || opt_hold || opt_sniff || opt_park) {
