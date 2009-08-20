@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.46 2009/06/03 16:25:22 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.47 2009/08/20 02:29:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.46 2009/06/03 16:25:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.47 2009/08/20 02:29:16 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,6 +460,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 
 	if(isconsole) {
 		wsdisplay_cnattach(&p9100_defscreendesc, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&p9100_console_screen);
 	}
 
 	aa.console = isconsole;
@@ -1083,7 +1084,7 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	int fg, bg, uc, i;
 	uint8_t *data;
-	int x, y, wi,he;
+	int x, y, wi, he;
 
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
