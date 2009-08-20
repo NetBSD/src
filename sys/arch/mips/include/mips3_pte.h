@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23 2007/10/17 19:55:37 garbled Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23.38.1 2009/08/20 07:44:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,6 +126,7 @@ struct tlb {
 #define	MIPS3_PG_ATTR	0x0000003f
 
 #define	MIPS3_CCA_TO_PG(cca)	((cca) << 3)
+#define	MIPS3_PG_TO_CCA(cca)	(((cca) >> 3) & 7)
 
 #define	MIPS3_PG_UNCACHED	MIPS3_CCA_TO_PG(2)
 #ifdef HPCMIPS_L1CACHE_DISABLE		/* MIPS3_L1CACHE_DISABLE */
