@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.4 2009/08/19 07:40:10 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.5 2009/08/20 07:45:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,13 +251,13 @@ _C_LABEL(x):
  * Macros to panic and printf from assembly language.
  */
 #define	PANIC(msg)			\
-	la	a0, 9f;			\
+	PTR_LA	a0, 9f;			\
 	jal	_C_LABEL(panic);	\
 	nop;				\
 	MSG(msg)
 
 #define	PRINTF(msg)			\
-	la	a0, 9f;			\
+	PTR_LA	a0, 9f;			\
 	jal	_C_LABEL(printf);	\
 	nop;				\
 	MSG(msg)
@@ -423,6 +423,7 @@ _C_LABEL(x):
 #define	INT_SRAV	srav
 #define	INT_LL		ll
 #define	INT_SC		sc
+#define	INT_WORD	.word
 #define	INT_SCALESHIFT	2
 #else
 #define	INT_ADD		dadd
@@ -444,6 +445,7 @@ _C_LABEL(x):
 #define	INT_SRAV	dsrav
 #define	INT_LL		lld
 #define	INT_SC		scd
+#define	INT_WORD	.dword
 #define	INT_SCALESHIFT	3
 #endif
 
@@ -467,6 +469,7 @@ _C_LABEL(x):
 #define	LONG_SRAV	srav
 #define	LONG_LL		ll
 #define	LONG_SC		sc
+#define	LONG_WORD	.word
 #define	LONG_SCALESHIFT	2
 #else
 #define	LONG_ADD	dadd
@@ -488,6 +491,7 @@ _C_LABEL(x):
 #define	LONG_SRAV	dsrav
 #define	LONG_LL		lld
 #define	LONG_SC		scd
+#define	LONG_WORD	.dword
 #define	LONG_SCALESHIFT	3
 #endif
 
