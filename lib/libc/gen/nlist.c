@@ -1,4 +1,4 @@
-/* $NetBSD: nlist.c,v 1.21 2003/08/07 16:42:54 agc Exp $ */
+/* $NetBSD: nlist.c,v 1.22 2009/08/20 08:30:04 he Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.21 2003/08/07 16:42:54 agc Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.22 2009/08/20 08:30:04 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: nlist.c,v 1.21 2003/08/07 16:42:54 agc Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <a.out.h>			/* for 'struct nlist' declaration */
+#include <nlist.h>
 
 #if 0
 #ifdef __weak_alias
