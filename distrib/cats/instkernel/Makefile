@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2008/06/09 20:05:12 he Exp $
+#	$NetBSD: Makefile,v 1.18 2009/08/20 14:43:06 skrll Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,6 +17,7 @@ MDSET_POST.netbsd.aout-INSTALL= \
 	-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
 	-R .debug_frame -R .debug_loc -R .debug_pubnames -R .debug_aranges \
 	-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
+	-R .ARM.attributes \
 	${.TARGET} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
