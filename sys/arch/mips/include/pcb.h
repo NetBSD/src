@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.20 2007/03/04 06:00:11 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.20.62.1 2009/08/20 07:50:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@ struct pcb
 	struct fpreg pcb_fpregs;	/* saved floating point registers */
 	mips_reg_t pcb_context[12];	/* kernel context for resume */
 	void *	pcb_onfault;		/* for copyin/copyout faults */
-	u_int32_t pcb_ppl;		/* previous priority level */
+	uint32_t pcb_ppl;		/* previous priority level */
 };
 
 /*
