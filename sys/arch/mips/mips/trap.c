@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.1 2009/08/20 04:36:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.1 2009/08/20 04:36:05 uebayasi Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -563,7 +563,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGFPE;
 		fp = (struct frame *)l->l_md.md_regs;
-		ksi.ksi_addr = (void *)fp->f_regs[_R_PC];
+		ksi.ksi_addr = (void *)(intptr_t)fp->f_regs[_R_PC];
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}

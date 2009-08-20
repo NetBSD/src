@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1 2009/06/09 17:48:20 snj Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.1 2009/08/20 04:36:05 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1 2009/06/09 17:48:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.1 2009/08/20 04:36:05 uebayasi Exp $");
 
 #include "opt_cputype.h"
 
@@ -1750,8 +1750,8 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_EPC]   = f->f_regs[_R_PC];
 	gr[_REG_SR]    = f->f_regs[_R_SR];
 
-	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (void *) gr[_REG_EPC])) != -1)
+	if ((ras_pc = (__greg_t)(intptr_t)ras_lookup(l->l_proc,
+	    (void *)(intptr_t)gr[_REG_EPC])) != -1)
 		gr[_REG_EPC] = ras_pc;
 
 	*flags |= _UC_CPU;
