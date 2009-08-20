@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.26 2009/02/21 17:24:47 christos Exp $ */
+/*	$NetBSD: genfb.c,v 1.27 2009/08/20 02:51:27 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.26 2009/02/21 17:24:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.27 2009/08/20 02:51:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
 
 	j = 0;
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
+	for (i = 0; i < min(1 << sc->sc_depth, 256); i++) {
 
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
@@ -220,6 +220,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		    rasops_cmap[j + 2]);
 		j += 3;
 	}
+
+	vcons_replay_msgbuf(&sc->sc_console_screen);
 
 	if (genfb_softc == NULL)
 		genfb_softc = sc;
@@ -338,6 +340,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
+	/* TODO: actually center output */
 	ri->ri_hw = scr;
 }
 
@@ -410,9 +413,11 @@ genfb_restore_palette(struct genfb_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
-		genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
-		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+	if (sc->sc_depth <= 8) {
+		for (i = 0; i < (1 << sc->sc_depth); i++) {
+			genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
+			    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+		}
 	}
 }
 
