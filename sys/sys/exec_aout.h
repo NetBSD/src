@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.38 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.39 2009/08/20 22:07:49 he Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -59,41 +59,7 @@ struct exec {
 #define	ZMAGIC		0413	/* demand load format */
 #define	QMAGIC		0314	/* "compact" demand load format; deprecated */
 
-/*
- * a_mid - keep sorted in numerical order for sanity's sake
- * ensure that: 0 < mid < 0x3ff
- */
-#define	MID_ZERO	0	/* unknown - implementation dependent */
-#define	MID_SUN010	1	/* sun 68010/68020 binary */
-#define	MID_SUN020	2	/* sun 68020-only binary */
-#define	MID_PC386	100	/* 386 PC binary. (so quoth BFD) */
-#define	MID_HP200	200	/* hp200 (68010) BSD binary */
-#define	MID_I386	134	/* i386 BSD binary */
-#define	MID_M68K	135	/* m68k BSD binary with 8K page sizes */
-#define	MID_M68K4K	136	/* m68k BSD binary with 4K page sizes */
-#define	MID_NS32532	137	/* ns32532 */
-#define	MID_SPARC	138	/* sparc */
-#define	MID_PMAX	139	/* pmax */
-#define	MID_VAX1K	140	/* VAX 1K page size binaries */
-#define	MID_ALPHA	141	/* Alpha BSD binary */
-#define	MID_MIPS	142	/* big-endian MIPS */
-#define	MID_ARM6	143	/* ARM6 */
-#define	MID_M680002K	144	/* m68000 with 2K page sizes */
-#define	MID_SH3		145	/* SH3 */
-#define	MID_POWERPC	149	/* big-endian PowerPC */
-#define	MID_VAX		150	/* VAX */
-				/* 151 - MIPS1 */
-				/* 152 - MIPS2 */
-#define	MID_M88K	153	/* m88k BSD */
-#define	MID_HPPA	154	/* HP PARISC */
-#define	MID_SH5_64	155	/* LP64 SH5 */
-#define	MID_SPARC64	156	/* LP64 sparc */
-#define	MID_X86_64	157	/* AMD x86-64 */
-#define	MID_SH5_32	158	/* ILP32 SH5 */
-#define	MID_HP200	200	/* hp200 (68010) BSD binary */
-#define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
-#define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
-#define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */
+#include <sys/aout_mids.h>
 
 /*
  * a_flags

@@ -1,4 +1,4 @@
-/*	$NetBSD: core.h,v 1.11 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: core.h,v 1.12 2009/08/20 22:07:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@
 #define CORE_CPU	1
 #define CORE_DATA	2
 #define CORE_STACK	4
+
+#include <sys/aout_mids.h>
 
 /*
  * A core file consists of a header followed by a number of segments.
