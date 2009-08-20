@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.11 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: debug.s,v 1.12 2009/08/20 21:34:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.11 2008/04/28 20:23:10 martin Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.12 2009/08/20 21:34:03 skrll Exp $")
 
 #include "opt_multiprocessor.h"
 #include "opt_kgdb.h"
@@ -47,7 +47,8 @@ inc6:	.stabs	__FILE__,132,0,0,inc6; .loc	1 __LINE__
  */
 #define	DEBUG_STACK_SIZE	8192
 BSS(debug_stack_bottom, DEBUG_STACK_SIZE)
-ABS(debug_stack_top, debug_stack_bottom + DEBUG_STACK_SIZE)
+
+#define debug_stack_top		(debug_stack_bottom + DEBUG_STACK_SIZE)
 
 /*
  * alpha_debug:
