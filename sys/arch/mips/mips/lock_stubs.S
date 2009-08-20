@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.1 2009/08/20 04:19:15 uebayasi Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.2 2009/08/20 22:11:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,18 +42,6 @@
 #define	FULL
 #endif
 
-#if defined(__mips_n32) || defined(_LP64)
-#define	LL	lld
-#define	SC	scd
-#define	LDPTR	ld
-#define	STPTR	sd
-#else /* !(n32 || LP64) */
-#define	LL	ll
-#define	SC	sc
-#define	LDPTR	lw
-#define	STPTR	sw
-#endif /* !(n32 || LP64) */
-
 #if MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR)
 #define	SYNC		sync
 #define	BDSYNC		sync
@@ -85,10 +73,10 @@ END(mb_memory)
  */
 LEAF(_atomic_cas_ulong)
 1:
-	LL	t0, (a0)
+	LONG_LL	t0, (a0)
 	bne	t0, a1, 2f
 	 addu	t1, zero, a2
-	SC	t1, (a0)
+	LONG_SC	t1, (a0)
 	beq	t1, zero, 1b
 	 nop
 	j	ra
@@ -107,7 +95,7 @@ STRONG_ALIAS(atomic_cas_ulong_ni,_atomic_cas_ulong)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_ulong)
 
-#if defined(__mips_n32) || defined(_LP64)
+#if defined(_LP64)
 STRONG_ALIAS(_atomic_cas_64,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_64,_atomic_cas_ulong)
 
@@ -121,10 +109,10 @@ STRONG_ALIAS(atomic_cas_64_ni,_atomic_cas_ulong)
  */
 LEAF(_atomic_cas_uint)
 1:
-	ll	t0, (a0)
+	INT_LL	t0, (a0)
 	bne	t0, a1, 2f
 	 addu	t1, zero, a2
-	sc	t1, (a0)
+	INT_SC	t1, (a0)
 	beq	t1, zero, 1b
 	 nop
 	j	ra
@@ -149,13 +137,13 @@ STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_uint)
  * void	mutex_enter(kmutex_t *mtx);
  */
 LEAF(mutex_enter)
-	LL	t0, MTX_OWNER(a0)
+	PTR_LL	t0, MTX_OWNER(a0)
 1:
 	bne	t0, zero, 2f
 	 addu	t2, zero, MIPS_CURLWP
-	SC	t2, MTX_OWNER(a0)
+	PTR_SC	t2, MTX_OWNER(a0)
 	beq	t2, zero, 1b
-	 LL	t0, MTX_OWNER(a0)
+	 PTR_LL	t0, MTX_OWNER(a0)
 	j	ra
 	 BDSYNC
 2:
@@ -167,14 +155,14 @@ END(mutex_enter)
  * void	mutex_exit(kmutex_t *mtx);
  */
 LEAF(mutex_exit)
-	LL	t0, MTX_OWNER(a0)
+	PTR_LL	t0, MTX_OWNER(a0)
 	BDSYNC
 1:
 	bne	t0, MIPS_CURLWP, 2f
 	 addu	t2, zero, zero
-	SC	t2, MTX_OWNER(a0)
+	PTR_SC	t2, MTX_OWNER(a0)
 	beq	t2, zero, 1b
-	 LL	t0, MTX_OWNER(a0)
+	 PTR_LL	t0, MTX_OWNER(a0)
 	j	ra
 	 nop
 2:
@@ -186,12 +174,12 @@ END(mutex_exit)
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
 LEAF(mutex_spin_enter)
-	lw	t2, L_CPU(MIPS_CURLWP)
-	li	t9, -1
-	lw	t8, CPU_INFO_MTX_COUNT(t2)
-	lw	t1, MTX_IPL(a0)
-	addu	t8, t8, t9
-	sw	t8, CPU_INFO_MTX_COUNT(t2)
+	PTR_L	t2, L_CPU(MIPS_CURLWP)
+	li	ta3, -1
+	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
+	INT_L	t1, MTX_IPL(a0)
+	addu	ta2, ta2, ta3
+	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
 	nor	t1, zero, t1
@@ -201,17 +189,17 @@ LEAF(mutex_spin_enter)
 	COP0_SYNC
 	bne	t8, t9, 1f
 	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
+	INT_S	v0, CPU_INFO_MTX_OLDSPL(t2)
 1:
 #if defined(FULL)
-	ll	t0, MTX_LOCK(a0)
+	INT_LL	t0, MTX_LOCK(a0)
 	nop
 2:
 	bne	t0, zero, 3f
 	 li	t1, 1
-	sc	t1, MTX_LOCK(a0)
+	INT_SC	t1, MTX_LOCK(a0)
 	beq	t1, zero, 2b
-	 ll	t0, MTX_LOCK(a0)
+	 INT_LL	t0, MTX_LOCK(a0)
 	j	ra
 	 BDSYNC
 3:
@@ -272,12 +260,12 @@ EXPORT(_lock_ras_start)
 	.space	12
 
 LEAF_NOPROFILE(_atomic_cas_ulong)
-	LDPTR	t0, (a0)	/* <- critical section start */
+	PTR_L	t0, (a0)	/* <- critical section start */
 _atomic_cas_start:
 	 nop
 	bne	t0, a1, 1f
  	 nop
-	STPTR	a2, (a0)	/* <- critical section end */
+	PTR_S	a2, (a0)	/* <- critical section end */
 	j	ra
 	 addu	v0, zero, a1
 1:
@@ -310,12 +298,12 @@ STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_ulong)
 	nop
 	nop
 LEAF_NOPROFILE(mutex_enter)
-	LDPTR	t0, (a0)	/* <- critical section start */
+	PTR_L	t0, (a0)	/* <- critical section start */
 _mutex_enter_start:
 	nop
 	bne	t0, zero, 1f
 	 nop			
-	STPTR	MIPS_CURLWP, (a0)/* <- critical section end */
+	PTR_S	MIPS_CURLWP, (a0)/* <- critical section end */
 	j	ra
 	 nop
 1:	j	_C_LABEL(mutex_vector_enter)
@@ -329,12 +317,12 @@ END(mutex_enter)
 	nop
 	nop
 LEAF_NOPROFILE(mutex_exit)
-	LDPTR	t0, (a0)	/* <- critical section start */
+	PTR_L	t0, (a0)	/* <- critical section start */
 _mutex_exit_start:
 	 nop
 	bne	t0, MIPS_CURLWP, 1f
 	 nop			
-	STPTR	zero, (a0)	/* <- critical section end */
+	PTR_S	zero, (a0)	/* <- critical section end */
 	j	ra
 	 nop
 1:	j	_C_LABEL(mutex_vector_exit)
@@ -347,12 +335,12 @@ END(mutex_exit)
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
 LEAF(mutex_spin_enter)
-	lw	t2, L_CPU(MIPS_CURLWP)
-	li	t9, -1
-	lw	t8, CPU_INFO_MTX_COUNT(t2)
-	lw	t1, MTX_IPL(a0)
-	addu	t8, t8, t9
-	sw	t8, CPU_INFO_MTX_COUNT(t2)
+	PTR_L	t2, L_CPU(MIPS_CURLWP)
+	li	ta3, -1
+	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
+	INT_L	t1, MTX_IPL(a0)
+	addu	ta2, ta2, ta3
+	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
 	nor	t1, zero, t1
@@ -360,17 +348,17 @@ LEAF(mutex_spin_enter)
 	DYNAMIC_STATUS_MASK(t1,t0)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	bne	t8, t9, 1f
+	bne	ta2, ta3, 1f
 	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
+	INT_S	v0, CPU_INFO_MTX_OLDSPL(t2)
 1:
 #if defined(DIAGNOSTIC)
-	lw	t0, MTX_LOCK(a0)
+	INT_L	t0, MTX_LOCK(a0)
 	li	t1, 1
 	bne	t0, zero, 2f
 	 nop
 	j	ra
-	 sw	t1, MTX_LOCK(a0)
+	 INT_S	t1, MTX_LOCK(a0)
 2:
 	j	_C_LABEL(mutex_spin_retry)
 	 nop
@@ -435,23 +423,23 @@ END(_lock_ras)
  */
 LEAF(mutex_spin_exit)
 #if defined(DIAGNOSTIC)
-	lw	t0, MTX_LOCK(a0)
+	INT_L	t0, MTX_LOCK(a0)
 	SYNC
 	beq	t0, zero, 2f
-	 lw	t1, L_CPU(MIPS_CURLWP)
-	sw	zero, MTX_LOCK(a0)
+	 PTR_L	t1, L_CPU(MIPS_CURLWP)
+	INT_S	zero, MTX_LOCK(a0)
 #elif defined(MULTIPROCESSOR)
 	SYNC
-	lw	t1, L_CPU(MIPS_CURLWP)
-	sw      zero, MTX_LOCK(a0)
+	PTR_L	t1, L_CPU(MIPS_CURLWP)
+	INT_S	zero, MTX_LOCK(a0)
 #else
-	lw	t1, L_CPU(MIPS_CURLWP)
+	PTR_L	t1, L_CPU(MIPS_CURLWP)
 	nop
 #endif
-	lw	t0, CPU_INFO_MTX_COUNT(t1)
-	lw	a0, CPU_INFO_MTX_OLDSPL(t1)
+	INT_L	t0, CPU_INFO_MTX_COUNT(t1)
+	INT_L	a0, CPU_INFO_MTX_OLDSPL(t1)
 	addiu	t0, t0, 1
-	sw	t0, CPU_INFO_MTX_COUNT(t1)
+	INT_S	t0, CPU_INFO_MTX_COUNT(t1)
 	bne	t0, zero, 1f
 	 mfc0	v0, MIPS_COP_0_STATUS
 	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
