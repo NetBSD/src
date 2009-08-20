@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.37 2009/08/20 00:59:28 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.38 2009/08/20 02:01:55 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.37 2009/08/20 00:59:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.38 2009/08/20 02:01:55 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -402,6 +402,8 @@ tcxattach(device_t parent, device_t self, void *args)
 	if(isconsole) {
 		wsdisplay_cnattach(&tcx_defscreendesc, ri, 0, 0, defattr);
 	}
+
+	vcons_replay_msgbuf(&tcx_console_screen);
 
 	aa.console = isconsole;
 	aa.scrdata = &tcx_screenlist;
@@ -1079,6 +1081,10 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
 #if 0
+	/*
+	 * apparently we're not writing in the right register here - if we do
+	 * this the screen goes all funky
+	 */
 		int i;
 	
 		for (i = 0; i < cur->cmap.count; i++) {
@@ -1094,7 +1100,6 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 #endif
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
-#if 1
 		int i;
 		uint32_t temp, poof;
 
@@ -1125,7 +1130,6 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 			    THC_CURSOR_0 + i, poof);
 		}
 	}
-#endif
 	return 0;
 }
 
