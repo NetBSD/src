@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.12 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.12.14.1 2009/08/20 21:45:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12 2008/04/28 20:23:28 martin Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.1 2009/08/20 21:45:59 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -89,10 +89,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	struct sigacts *ps = p->p_sigacts;
 	int onstack, error;
 	struct sigcontext *scp = getframe(l, sig, &onstack), ksc;
-	struct frame *f;
+	struct frame *f = l->l_md.md_regs;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	f = (struct frame *)l->l_md.md_regs;
 
 	scp--;
 
@@ -243,7 +242,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		return (EINVAL);
 
 	/* Restore the register context. */
-	f = (struct frame *)l->l_md.md_regs;
+	f = l->l_md.md_regs;
 	f->f_regs[_R_PC] = ksc.sc_pc;
 	f->f_regs[_R_MULLO] = ksc.mullo;
 	f->f_regs[_R_MULHI] = ksc.mulhi;
