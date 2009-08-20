@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/04/14 22:15:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2009/08/20 19:17:19 he Exp $
 
 WARNS?=	3	# XXX: -Wsign-compare issues ld.elf_so source
 
@@ -8,9 +8,14 @@ PROG=	ldd
 SRCS=	ldd.c
 MAN=	ldd.1
 
-SUBDIR=	aout elf32 elf64
+
+.if (${MACHINE_ARCH} != "mips")
+SUBDIR=		aout
 LIB_AOUTDIR!=	cd ${.CURDIR}/aout && ${PRINTOBJDIR}
 EXTRA_LIBS+=	${LIB_AOUTDIR}/libldd_aout.a
+.endif
+
+SUBDIR+= 	elf32 elf64
 
 .if (${MACHINE_ARCH} != "alpha")
 LIB_ELF32DIR!=	cd ${.CURDIR}/elf32 && ${PRINTOBJDIR}
