@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14 2006/08/26 20:15:28 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.1 2009/08/20 04:36:05 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14 2006/08/26 20:15:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.1 2009/08/20 04:36:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = cause;
 		ksi.ksi_code = SEGV_MAPERR;
-		ksi.ksi_addr = (void *)frame->f_regs[_R_PC];
+		ksi.ksi_addr = (void *)(intptr_t)frame->f_regs[_R_PC];
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
 		break;
 	}
