@@ -1,4 +1,4 @@
-/*	$NetBSD: ippool.c,v 1.6 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: ippool.c,v 1.7 2009/08/20 08:12:05 he Exp $	*/
 
 /*
  * Copyright (C) 2002-2006 by Darren Reed.
@@ -499,7 +499,7 @@ char *argv[];
 		}
 
 	}
-	printf("%zu object%s flushed\n", flush.iplf_count,
+	printf("%u object%s flushed\n", flush.iplf_count,
 	       (flush.iplf_count == 1) ? "" : "s");
 
 	return 0;
