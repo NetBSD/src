@@ -1,4 +1,4 @@
-.\" $NetBSD: sdpd.8,v 1.7 2009/08/20 15:51:28 joerg Exp $
+.\" $NetBSD: sdpd.8,v 1.8 2009/08/20 15:59:57 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
@@ -49,7 +49,8 @@ Bluetooth devices.
 .Pp
 In order to discover services, remote Bluetooth devices send Service
 Search and Service Attribute or Service Search Attribute requests over
-Bluetooth L2CAP connections on the SDP PSM (0x0001).  The
+Bluetooth L2CAP connections on the SDP PSM (0x0001).
+The
 .Nm
 daemon will try to find matching Service Records in its Service Database
 and will return the requested record extracts for the remote device to
