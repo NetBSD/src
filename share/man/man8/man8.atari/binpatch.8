@@ -1,4 +1,4 @@
-.\"	$NetBSD: binpatch.8,v 1.5 2001/12/26 01:26:44 wiz Exp $
+.\"	$NetBSD: binpatch.8,v 1.6 2009/08/20 15:14:49 tsutsui Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -28,22 +28,24 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 2, 1994
+.Dd August 20, 2009
 .Dt BINPATCH 8 atari
 .Os
 .Sh NAME
 .Nm binpatch
-.Nd "examine and or modify initialized data in a binary file"
+.Nd "examine and or modify initialized data in an executable binary"
 .Sh SYNOPSIS
 .Nm binpatch
-.Op Fl b | Fl w | Fl l
+.Op Fl b | Fl w | Fl l | Fl d
 .Op Fl o Ar offset
+.Op Fl T Ar saddr
 .Fl s Ar symname
 .Op Fl r Ar value
 .Ar binfile
 .Nm binpatch
-.Op Fl b | Fl w | Fl l
+.Op Fl b | Fl w | Fl l | Fl d
 .Op Fl o Ar offset
+.Op Fl T Ar saddr
 .Fl a Ar addr
 .Op Fl r Ar value
 .Ar binfile
@@ -52,20 +54,39 @@
 is used to modify or examine the data associated with a symbol in a binary
 file
 .Ar binfile .
+.Pp
 The flags
 .Fl b ,
-.Fl w
+.Fl w ,
+.Fl l ,
 and
+.Fl d
+specify the size of the data to be modified or examined.
+.Fl b
+is for 8bit
+.Pq Li int8_t ,
+.Fl w
+is for 16bit
+.Pq Li int16_t ,
 .Fl l
-specify the size of the data to be modified or examined
-(byte, word and long respectively.) The
+is for 32bit
+.Pq Li int32_t ,
+and
+.Fl d
+is for 64bit
+.Pq Li int64_t
+variables.
+.Pp
+The
 .Ar binfile
 is scanned in search of the symbol
 .Ar symname
 (specified with the
 .Fl s
 flag.)
-If the symbol is found the current data and address are printed.  Next if the
+If the symbol is found the current data and address are printed.
+.Pp
+Next if the
 .Fl r
 flag has been given, the current data is replaced with that of
 .Ar value .
@@ -79,11 +100,17 @@ no symbol search is performed.
 .Pp
 The
 .Fl o
-flag specifies an offset in byte, word or long
+flag specifies an offset in
+.Li int8_t ,
+.Li int16_t ,
+.Li int32_t ,
+and
+.Li int64_t
 .Fl ( b ,
 .Fl w ,
+.Fl l ,
 or
-.Fl l )
+.Fl d )
 units from the given locator
 .Fl ( s
 or
@@ -91,3 +118,28 @@ or
 for
 .Nm
 to perform its described actions.
+This might be useful to patch a member of array or structure.
+.Pp
+The
+.Fl T
+flag is used to specify the starting address of a.out binary text segment.
+Ignored for other binary executable formats.
+.Sh SEE ALSO
+.Xr gdb 1 ,
+.Xr mdsetimage 8
+.Sh BUGS
+The
+.Nm
+command doesn't check if size of specified symbol is same with the
+specified size by
+.Fl b ,
+.Fl w ,
+.Fl l ,
+or
+.Fl d
+flag.
+.Pp
+The
+.Nm
+command doesn't check if specified address or symbol is a patchable variable
+and it might corrupts the specified executable binary.
