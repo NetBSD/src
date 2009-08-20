@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.38 2009/08/20 02:01:55 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.39 2009/08/20 02:29:16 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.38 2009/08/20 02:01:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.39 2009/08/20 02:29:16 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -401,9 +401,8 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	if(isconsole) {
 		wsdisplay_cnattach(&tcx_defscreendesc, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&tcx_console_screen);
 	}
-
-	vcons_replay_msgbuf(&tcx_console_screen);
 
 	aa.console = isconsole;
 	aa.scrdata = &tcx_screenlist;
