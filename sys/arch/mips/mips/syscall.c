@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37 2008/10/25 10:41:05 tsutsui Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.1 2009/08/20 04:22:54 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37 2008/10/25 10:41:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.1 2009/08/20 04:22:54 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -260,7 +260,7 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			args[2] = frame->f_regs[_R_A2];
 			args[3] = frame->f_regs[_R_A3];
 #else
-# error syscall not implemented for current MIPS ABI
+			panic("syscall not implemented for current MIPS ABI\n");
 #endif
 		} else {
 			args = copyargs;
@@ -408,7 +408,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			args[2] = frame->f_regs[_R_A2];
 			args[3] = frame->f_regs[_R_A3];
 #else
-# error syscall not implemented for current MIPS ABI
+			panic("syscall not implemented for current MIPS ABI\n");
 #endif
 		} else {
 			args = copyargs;
