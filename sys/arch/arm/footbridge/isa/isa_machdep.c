@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.15 2009/08/19 15:01:07 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.16 2009/08/20 12:51:28 he Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2009/08/19 15:01:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2009/08/20 12:51:28 he Exp $");
 
 #include "opt_irqstats.h"
 
@@ -504,7 +504,7 @@ void
 isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 {
 #if NISADMA > 0
-	isa_dma_destroy();
+	isa_dmadestroy(ic);
 #endif
 }
 
