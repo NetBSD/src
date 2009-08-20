@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.1 2009/08/20 04:43:34 uebayasi Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.2 2009/08/20 22:21:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -176,7 +176,7 @@ END(mips_wait_idle)
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 
 /*
- * u_int32_t mips3_cp0_compare_read(void)
+ * uint32_t mips3_cp0_compare_read(void)
  *
  *	Return the current value of the CP0 Compare register.
  */
@@ -187,7 +187,7 @@ LEAF(mips3_cp0_compare_read)
 END(mips3_cp0_compare_read)
 
 /*
- * void mips3_cp0_compare_write(u_int32_t)
+ * void mips3_cp0_compare_write(uint32_t)
  *
  *	Set the value of the CP0 Compare register.
  */
@@ -201,7 +201,7 @@ LEAF(mips3_cp0_compare_write)
 END(mips3_cp0_compare_write)
 
 /*
- * u_int32_t mips3_cp0_config_read(void)
+ * uint32_t mips3_cp0_config_read(void)
  *
  *	Return the current value of the CP0 Config register.
  */
@@ -212,7 +212,7 @@ LEAF(mips3_cp0_config_read)
 END(mips3_cp0_config_read)
 
 /*
- * void mips3_cp0_config_write(u_int32_t)
+ * void mips3_cp0_config_write(uint32_t)
  *
  *	Set the value of the CP0 Config register.
  */
@@ -227,7 +227,7 @@ END(mips3_cp0_config_write)
 
 #if defined(MIPS32) || defined(MIPS64)
 /*
- * u_int32_t mipsNN_cp0_config1_read(void)
+ * uint32_t mipsNN_cp0_config1_read(void)
  *
  *	Return the current value of the CP0 Config (Select 1) register.
  */
@@ -241,7 +241,7 @@ LEAF(mipsNN_cp0_config1_read)
 END(mipsNN_cp0_config1_read)
 
 /*
- * u_int32_t mipsNN_cp0_config1_write(u_int32_t)
+ * uint32_t mipsNN_cp0_config1_write(uint32_t)
  *
  *	Return the current value of the CP0 Config (Select 1) register.
  */
@@ -256,7 +256,7 @@ LEAF(mipsNN_cp0_config1_write)
 END(mipsNN_cp0_config1_write)
 
 /*
- * u_int32_t mipsNN_cp0_config2_read(void)
+ * uint32_t mipsNN_cp0_config2_read(void)
  *
  *	Return the current value of the CP0 Config (Select 2) register.
  */
@@ -270,7 +270,7 @@ LEAF(mipsNN_cp0_config2_read)
 END(mipsNN_cp0_config2_read)
 
 /*
- * u_int32_t mipsNN_cp0_config3_read(void)
+ * uint32_t mipsNN_cp0_config3_read(void)
  *
  *	Return the current value of the CP0 Config (Select 3) register.
  */
@@ -285,7 +285,7 @@ END(mipsNN_cp0_config3_read)
 #endif /* MIPS32 || MIPS64 */
 
 /*
- * u_int32_t mips3_cp0_count_read(void)
+ * uint32_t mips3_cp0_count_read(void)
  *
  *	Return the current value of the CP0 Count register.
  */
@@ -296,7 +296,7 @@ LEAF(mips3_cp0_count_read)
 END(mips3_cp0_count_read)
 
 /*
- * void mips3_cp0_count_write(u_int32_t)
+ * void mips3_cp0_count_write(uint32_t)
  *
  *	Set the value of the CP0 Count register.
  */
@@ -310,7 +310,7 @@ LEAF(mips3_cp0_count_write)
 END(mips3_cp0_count_write)
 
 /*
- * u_int32_t mips3_cp0_wired_read(void)
+ * uint32_t mips3_cp0_wired_read(void)
  *
  *	Return the current value of the CP0 Wired register.
  */
@@ -321,7 +321,7 @@ LEAF(mips3_cp0_wired_read)
 END(mips3_cp0_wired_read)
 
 /*
- * void mips3_cp0_wired_write(u_int32_t)
+ * void mips3_cp0_wired_write(uint32_t)
  *
  *	Set the value of the CP0 Wired register.
  */
@@ -335,7 +335,7 @@ LEAF(mips3_cp0_wired_write)
 END(mips3_cp0_wired_write)
 
 /*
- * void mips3_cp0_pg_mask_write(u_int32_t)
+ * void mips3_cp0_pg_mask_write(uint32_t)
  *
  *	Set the value of the CP0 PG_MASK register.
  */
@@ -349,7 +349,7 @@ LEAF(mips3_cp0_pg_mask_write)
 END(mips3_cp0_pg_mask_write)
 
 LEAF(mips3_ld)
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#if defined(__mips_o32)
 	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
@@ -357,7 +357,6 @@ LEAF(mips3_ld)
 	nop
 	nop
 	nop
-#endif
 
 	ld	v0, 0(a0)
 #if defined(_MIPS_BSD_API) && \
@@ -375,18 +374,19 @@ LEAF(mips3_ld)
 #endif
 #endif
 
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
 	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
 	COP0_SYNC
 	nop
-#endif
+#else /* !__mips_o32 */
+	ld	v0, 0(a0)
+#endif /* !__mips_o32 */
 
 	jr	ra
 	nop
 END(mips3_ld)
 
 LEAF(mips3_sd)
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#if defined(__mips_o32)
 	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
@@ -394,7 +394,6 @@ LEAF(mips3_sd)
 	nop
 	nop
 	nop
-#endif
 
 #if defined(_MIPS_BSD_API) && \
     (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
@@ -415,11 +414,12 @@ LEAF(mips3_sd)
 #endif
 	sd	a1, 0(a0)
 
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
 	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
 	COP0_SYNC
 	nop
-#endif
+#else /* !__mips_o32 */
+	sd	a1, 0(a0)
+#endif /* !__mips_o32 */
 
 	jr	ra
 	nop
@@ -430,10 +430,10 @@ END(mips3_sd)
  * See if access to addr with a len type instruction causes a machine check.
  * len is length of access in bytes (can be 1, 2, 4, or 8).
  */
-#if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
+#if !defined(__mips_o32)
 LEAF(badaddr64)
-	lw	v1, L_ADDR(MIPS_CURLWP)
-	la	v0, _C_LABEL(baderr64)
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_LA	v0, _C_LABEL(baderr64)
 
 	/* Enable KX */
 	mfc0	t0, MIPS_COP_0_STATUS
@@ -441,37 +441,26 @@ LEAF(badaddr64)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
 
-#if _BYTE_ORDER == _BIG_ENDIAN
-	dsll	a0, a0, 32			# high word in a0
-	dsll	a1, a1, 32			# low word in a1
-	dsrl	a1, a1, 32
-#else
-	dsll	a0, a0, 32			# low word in a2
-	dsrl	a0, a0, 32
-	dsll	a1, a1, 32			# high word in a3
-#endif
-	or	a0, a0, a1
-
-	bne	a2, 1, 2f
-	sw	v0, U_PCB_ONFAULT(v1)
+	bne	a1, 1, 2f
+	PTR_S	v0, U_PCB_ONFAULT(v1)
 	b	9f
 	lbu	v0, (a0)
 2:
-	bne	a2, 2, 4f
+	bne	a1, 2, 4f
 	nop
 	b	9f
 	lhu	v0, (a0)
 4:
-	bne	a2, 4, 8f
+	bne	a1, 4, 8f
 	nop
 	b	9f
-	lw	v0, (a0)
+	INT_L	v0, (a0)
 8:
-	ld	v0, (a0)
+	REG_L	v0, (a0)
 9:
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
 	COP0_SYNC
-	sw	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# made it w/o errors
 END(badaddr64)
@@ -479,7 +468,7 @@ END(badaddr64)
 LEAF(baderr64)
 	mtc0	t0, MIPS_COP_0_STATUS		# Restore KX
 	COP0_SYNC
-	sw	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
 END(baderr64)
