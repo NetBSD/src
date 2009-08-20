@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/10/25 22:27:39 apb Exp $
+#	$NetBSD: Makefile,v 1.14 2009/08/20 21:59:12 he Exp $
 
 LIBISPRIVATE=	yes
 
@@ -6,6 +6,12 @@ LIB=	common
 SRCS=	cmp.c device.c dl.c file.c get.c log.c loop-bsd.c mopdef.c nma.c pf.c \
 	print.c put.c rc.c version.c
 CLEANFILES= version.c
+
+.include <bsd.own.mk>
+
+.if ${MACHINE_CPU} == "mips"
+CFLAGS+= -DNOAOUT
+.endif
 
 version.c: VERSION
 	${_MKTARGET_CREATE}
