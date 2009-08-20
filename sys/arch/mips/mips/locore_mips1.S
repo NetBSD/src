@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1 2009/06/09 17:48:20 snj Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.1 2009/08/20 22:37:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1257,7 +1257,7 @@ LEAF(mips1_TBIA)
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips1_TBIA)
 
-	.data
+	.rdata
 
 	.globl _C_LABEL(mips1_locoresw)
 _C_LABEL(mips1_locoresw):
