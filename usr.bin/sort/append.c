@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.18 2009/08/18 18:00:28 dsl Exp $	*/
+/*	$NetBSD: append.c,v 1.19 2009/08/20 06:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.18 2009/08/18 18:00:28 dsl Exp $");
+__RCSID("$NetBSD: append.c,v 1.19 2009/08/20 06:36:25 dsl Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -73,13 +73,8 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 
 #define OUTPUT {							\
 	if ((n = cpos - ppos) > 1) {					\
-		for (; ppos < cpos; ++ppos)				\
-			*ppos -= depth;				\
 		ppos -= n;						\
-		if (stable_sort)					\
-			sradixsort(ppos, n, wts1, REC_D);		\
-		else							\
-			radixsort(ppos, n, wts1, REC_D);		\
+		radix_sort(ppos, n, wts1, REC_D);			\
 		for (; ppos < cpos; ppos++) {				\
 			prec = (const RECHEADER *) (*ppos - REC_DATA_OFFSET);\
 			put(prec, fp);					\
@@ -91,35 +86,36 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
  * copy sorted lines to output; check for uniqueness
  */
 void
-append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
+append(const u_char **keylist, int nelem, FILE *fp, put_func_t put,
     struct field *ftbl)
 {
 	u_char *wts, *wts1;
 	int n;
-	int hdr_off;
 	const u_char **cpos, **ppos, **lastkey;
 	const u_char *cend, *pend, *start;
 	const struct recheader *crec, *prec;
 
 	if (*keylist == '\0' && UNIQUE)
 		return;
+
 	wts1 = wts = ftbl[0].weights;
-	if ((!UNIQUE) && SINGL_FLD) {
-		if ((ftbl[0].flags & F) && (ftbl[0].flags & R))
+	if ((!UNIQUE) && SINGL_FLD && ftbl[0].flags & F) {
+		/* Folding case */
+		if (ftbl[0].flags & R)
 			wts1 = Rascii;
-		else if (ftbl[0].flags & F)
+		else
 			wts1 = ascii;
 	}
+
 	lastkey = keylist + nelem;
-	hdr_off = REC_DATA_OFFSET + depth;
 	if (SINGL_FLD && (UNIQUE || wts1 != wts)) {
 		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - hdr_off);
+		prec = (const RECHEADER *) (*ppos - REC_DATA_OFFSET);
 		if (UNIQUE)
 			put(prec, fp);
 		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - hdr_off);
-			if (crec->length  == prec->length) {
+			crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
+			if (crec->length == prec->length) {
 				/*
 				 * Set pend and cend so that trailing NUL and
 				 * record separator is ignored.
@@ -151,10 +147,10 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
 		if (!UNIQUE)  { OUTPUT; }
 	} else if (UNIQUE) {
 		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - hdr_off);
+		prec = (const RECHEADER *) (*ppos - REC_DATA_OFFSET);
 		put(prec, fp);
 		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - hdr_off);
+			crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
 			if (crec->offset == prec->offset) {
 				/*
 				 * Set pend and cend so that trailing NUL and
@@ -179,7 +175,7 @@ append(const u_char **keylist, int nelem, int depth, FILE *fp, put_func_t put,
 			}
 		}
 	} else for (cpos = keylist; cpos < lastkey; cpos++) {
-		crec = (const RECHEADER *) (*cpos - hdr_off);
+		crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
 		put(crec, fp);
 	}
 }
