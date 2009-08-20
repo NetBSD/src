@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.20 2009/08/20 08:30:04 he Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.21 2009/08/20 10:19:36 he Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.20 2009/08/20 08:30:04 he Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.21 2009/08/20 10:19:36 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,11 +82,11 @@ __RCSID("$NetBSD: nlist_aout.c,v 1.20 2009/08/20 08:30:04 he Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <nlist.h>
 
 #include "nlist_private.h"
 
 #ifdef NLIST_AOUT
+#include <a.out.h>
 #include <sys/exec_aout.h>
 
 int
