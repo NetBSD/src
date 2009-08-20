@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.19 2009/05/26 03:32:51 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.20 2009/08/20 02:29:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.19 2009/05/26 03:32:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.20 2009/08/20 02:29:16 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -314,6 +314,7 @@ agten_attach(device_t parent, device_t dev, void *aux)
 		i128_rectfill(sc->sc_bustag, sc->sc_i128_regh, 0, 0,
 		    sc->sc_width, sc->sc_height,
 		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+		vcons_replay_msgbuf(&sc->sc_console_screen);
 	} else {
 		/*
 		 * since we're not the console we can postpone the rest
