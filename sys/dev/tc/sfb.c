@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.78 2008/12/17 20:51:35 cegger Exp $ */
+/* $NetBSD: sfb.c,v 1.79 2009/08/20 12:55:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.78 2008/12/17 20:51:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.79 2009/08/20 12:55:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,8 +330,8 @@ sfb_common_init(struct rasops_info *ri)
 
 	base = (void *)ri->ri_hw;
 	asic = base + SFB_ASIC_OFFSET;
-	hsetup = *(u_int32_t *)(asic + SFB_ASIC_VIDEO_HSETUP);
-	vsetup = *(u_int32_t *)(asic + SFB_ASIC_VIDEO_VSETUP);
+	hsetup = *(volatile u_int32_t *)(asic + SFB_ASIC_VIDEO_HSETUP);
+	vsetup = *(volatile u_int32_t *)(asic + SFB_ASIC_VIDEO_VSETUP);
 
 	vbase = 1;
 	SFBWRITE32(asic, SFB_ASIC_VIDEO_BASE, vbase);
