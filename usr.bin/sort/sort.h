@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.23 2009/08/18 18:00:28 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.24 2009/08/20 06:36:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -171,17 +171,16 @@ extern u_char gweights[NBINS];
 extern struct coldesc *clist;
 extern int ncols;
 
-void	 append(const u_char **, int, int, FILE *,
+void	 append(const u_char **, int, FILE *,
 	    void (*)(const RECHEADER *, FILE *), struct field *);
 void	 concat(FILE *, FILE *);
 length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);
 void	 fixit(int *, char **);
 void	 fldreset(struct field *);
 FILE	*ftmp(void);
-void	 fmerge(int, int, struct filelist *, int,
+void	 fmerge(int, struct filelist *, int,
 		get_func_t, FILE *, put_func_t, struct field *);
-void	 fsort(int, int, int, struct filelist *, int, FILE *,
-		struct field *);
+void	 fsort(struct filelist *, int, FILE *, struct field *);
 int	 geteasy(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
 int	 makekey(int, int, struct filelist *,
@@ -189,7 +188,6 @@ int	 makekey(int, int, struct filelist *,
 int	 makeline(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
 void	 num_init(void);
-void	 onepass(const u_char **, int, long, long *, u_char *, FILE *);
 int	 optval(int, int);
 void	 order(struct filelist *, get_func_t, struct field *);
 void	 putline(const RECHEADER *, FILE *);
