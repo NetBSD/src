@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64 2008/05/23 17:01:32 tsutsui Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.1 2009/08/20 21:49:24 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2008/05/23 17:01:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.1 2009/08/20 21:49:24 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -176,7 +176,7 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 	db_active--;
 
 	if (type & T_USER)
-		*(struct frame *)curlwp->l_md.md_regs = *f;
+		*curlwp->l_md.md_regs = *f;
 	else {
 		/* Synthetic full scale register context when trap happens */
 		tfp[TF_AST] = f->f_regs[_R_AST];
@@ -233,7 +233,7 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 	/* Should switch to kdb`s own stack here. */
 
 	if (type & T_USER)
-		*f = *(struct frame *)curlwp->l_md.md_regs;
+		*f = *curlwp->l_md.md_regs;
 	else {
 		/* Synthetic full scale register context when trap happens */
 		f->f_regs[_R_AST] = tfp[TF_AST];
