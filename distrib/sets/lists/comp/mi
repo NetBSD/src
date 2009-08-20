@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1293 2009/08/15 16:21:04 joerg Exp $
+#	$NetBSD: mi,v 1.1294 2009/08/20 22:07:49 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1921,6 +1921,7 @@
 ./usr/include/sys/agpio.h			comp-c-include
 ./usr/include/sys/aio.h				comp-c-include
 ./usr/include/sys/ansi.h			comp-c-include
+./usr/include/sys/aout_mids.h			comp-c-include
 ./usr/include/sys/ataio.h			comp-c-include
 ./usr/include/sys/atomic.h			comp-c-include
 ./usr/include/sys/audioio.h			comp-c-include
