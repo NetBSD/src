@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.35 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: bus.c,v 1.36 2009/08/20 11:50:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.36 2009/08/20 11:50:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,15 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 
 	*nbshp = bsh + offset;
 	return 0;
+}
+
+paddr_t
+bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+    int flags)
+{
+
+	/* XXX not implemented */
+	return -1;
 }
 
 /*
