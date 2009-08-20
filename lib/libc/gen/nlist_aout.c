@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.19 2009/08/16 03:56:26 matt Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.20 2009/08/20 08:30:04 he Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.19 2009/08/16 03:56:26 matt Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.20 2009/08/20 08:30:04 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: nlist_aout.c,v 1.19 2009/08/16 03:56:26 matt Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <a.out.h>			/* for 'struct nlist' declaration */
+#include <nlist.h>
 
 #include "nlist_private.h"
 
