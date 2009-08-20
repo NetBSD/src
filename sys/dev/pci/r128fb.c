@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.8 2009/05/06 18:41:54 elad Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.9 2009/08/20 02:40:57 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.8 2009/05/06 18:41:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.9 2009/08/20 02:40:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,25 +265,6 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-	if (is_console) {
-		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-		    &defattr);
-		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-
-		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
-		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
-		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
-		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
-		    defattr);
-	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-	}
-
 	j = 0;
 	for (i = 0; i < (1 << sc->sc_depth); i++) {
 
@@ -295,8 +276,27 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		j += 3;
 	}
 
-	r128fb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+	if (is_console) {
+		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
+		    &defattr);
+		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+
+		r128fb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
+		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
+		    defattr);
+		vcons_replay_msgbuf(&sc->sc_console_screen);
+	} else {
+		/*
+		 * since we're not the console we can postpone the rest
+		 * until someone actually allocates a screen for us
+		 */
+		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+	}
 
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
