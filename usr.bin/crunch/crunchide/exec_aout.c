@@ -1,4 +1,4 @@
-/* $NetBSD: exec_aout.c,v 1.11 2009/08/16 18:15:28 martin Exp $ */
+/* $NetBSD: exec_aout.c,v 1.12 2009/08/20 17:40:26 he Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_aout.c,v 1.11 2009/08/16 18:15:28 martin Exp $");
+__RCSID("$NetBSD: exec_aout.c,v 1.12 2009/08/20 17:40:26 he Exp $");
 #endif
  
 #include <unistd.h>
@@ -37,14 +37,15 @@ __RCSID("$NetBSD: exec_aout.c,v 1.11 2009/08/16 18:15:28 martin Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <a.out.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/exec_aout.h>
 
 #include "extern.h"
 
 #if defined(NLIST_AOUT)
+
+#include <a.out.h>
+#include <sys/exec_aout.h>
 
 int nsyms, ntextrel, ndatarel;
 struct exec *hdrp;
