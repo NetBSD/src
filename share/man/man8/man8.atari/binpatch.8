@@ -1,4 +1,4 @@
-.\"	$NetBSD: binpatch.8,v 1.6 2009/08/20 15:14:49 tsutsui Exp $
+.\"	$NetBSD: binpatch.8,v 1.7 2009/08/20 15:58:31 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -130,7 +130,7 @@ Ignored for other binary executable formats.
 .Sh BUGS
 The
 .Nm
-command doesn't check if size of specified symbol is same with the
+command doesn't check if size of specified symbol is the same as the
 specified size by
 .Fl b ,
 .Fl w ,
@@ -142,4 +142,4 @@ flag.
 The
 .Nm
 command doesn't check if specified address or symbol is a patchable variable
-and it might corrupts the specified executable binary.
+and it might corrupt the specified executable binary.
