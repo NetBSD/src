@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.1 2009/08/20 04:19:15 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -187,11 +187,11 @@ END(mutex_exit)
  */
 LEAF(mutex_spin_enter)
 	lw	t2, L_CPU(MIPS_CURLWP)
-	li	t7, -1
-	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	li	t9, -1
+	lw	t8, CPU_INFO_MTX_COUNT(t2)
 	lw	t1, MTX_IPL(a0)
-	addu	t6, t6, t7
-	sw	t6, CPU_INFO_MTX_COUNT(t2)
+	addu	t8, t8, t9
+	sw	t8, CPU_INFO_MTX_COUNT(t2)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
 	nor	t1, zero, t1
@@ -199,7 +199,7 @@ LEAF(mutex_spin_enter)
 	DYNAMIC_STATUS_MASK(t1,t0)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	bne	t6, t7, 1f
+	bne	t8, t9, 1f
 	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
 1:
@@ -348,11 +348,11 @@ END(mutex_exit)
  */
 LEAF(mutex_spin_enter)
 	lw	t2, L_CPU(MIPS_CURLWP)
-	li	t7, -1
-	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	li	t9, -1
+	lw	t8, CPU_INFO_MTX_COUNT(t2)
 	lw	t1, MTX_IPL(a0)
-	addu	t6, t6, t7
-	sw	t6, CPU_INFO_MTX_COUNT(t2)
+	addu	t8, t8, t9
+	sw	t8, CPU_INFO_MTX_COUNT(t2)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
 	nor	t1, zero, t1
@@ -360,7 +360,7 @@ LEAF(mutex_spin_enter)
 	DYNAMIC_STATUS_MASK(t1,t0)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	bne	t6, t7, 1f
+	bne	t8, t9, 1f
 	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
 1:
