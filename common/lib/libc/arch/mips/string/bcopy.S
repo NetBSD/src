@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2.40.2 2009/08/19 06:56:13 matt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2.40.3 2009/08/20 10:03:43 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* RCSID("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93") */
-	RCSID("$NetBSD: bcopy.S,v 1.2.40.2 2009/08/19 06:56:13 matt Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.2.40.3 2009/08/20 10:03:43 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -99,61 +99,13 @@ LEAF(FUNCTION)
 	 *	copy is alignable.  eg if src and dest are both
 	 *	on a halfword boundary.
 	 */
-#if 1
 	andi		t1,DSTREG,(SZREG-1)	# get last bits of dest
 	bne		t1,zero,3f		# dest unaligned
 	andi		t0,SRCREG,(SZREG-1)	# get last bits of src
 	bne		t0,zero,5f
-#else
-	andi		t1,DSTREG,(SZREG-1)	# get last bits of dest
-	andi		t0,SRCREG,(SZREG-1)	# get last bits of src
-	beq		t1,t0,97f		# aligned on non-word
-	nop;
-	bne		t1,zero,3f		# dest unaligned
-	nop
-	b		5f			# source unaligned
-	nop
-
-97:
-	sltiu		t1,SIZEREG,SZREG
-	bne		t1,zero,3f
-	nop
-	subu		t2,zero,t2		# t2 = -t0
-	andi		t2,t2,(SZREG-1)		# t2 &= (SZREG-1)
-						# t0 + t2 == SZREG
-	PTR_SUBU	SIZEREG,SIZEREG,t2	# retreat to word boundary
-	PTR_ADDU	DSTREG,DSTREG,t2	# advance to word boundary
-	PTR_ADDU	SRCREG,SRCREG,t2	# advance to word boundary
-	REG_L		a3,-SZREG(DSTREG)
-	REG_L		v1,-SZREG(SRCREG)
-	sll		t0,t0,3			# bits to clear in dest
-	sll		t1,t1,3			# bits to clear in source
-/*
- * DST = 01 23 45 67 BE: 01234567 LE: 67452301
- *			 01000000     00000001
- * SRC = 89 ab cd ef BE: 89abcdef LE: efcdab89
- *			 00abcdef     efcdab00
- *			 01abcdef
- */
-#if _BYTE_ORDER == _BIG_ENDIAN
-	REG_SRLV	a3,a3,t1		# clear lsb dest bits
-	REG_SLLV	a3,a3,t1
-	REG_SLLV	v1,v1,t0		# clear msb source bits
-	REG_SRLV	v1,v1,t0
-#endif
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	REG_SLLV	a3,a3,t1		# clear msb dest bits
-	REG_SRLV	a3,a3,t1
-	REG_SRLV	v1,v1,t0		# clear lsb source bits
-	REG_SLLV	v1,v1,t0
-#endif
-	or		a3,a3,v1		# merge
-	REG_S		a3,-SZREG(DSTREG)	# and save
-99:
-#endif
 
 	/*
-	 *	Forward aligned->aligned copy, 8*4 bytes at a time.
+	 *	Forward aligned->aligned copy, 8 words at a time.
 	 */
 98:
 	li		AT,-(SZREG*8)
@@ -230,22 +182,22 @@ LEAF(FUNCTION)
 	PTR_ADDU	a3,SRCREG,a3		# stop point
 
 1:
-	LWHI		t3,0(SRCREG)
-	LWLO		t3,3(SRCREG)
+	REG_LHI		t3,0(SRCREG)
+	REG_LLO		t3,SZREG-1(SRCREG)
 	PTR_ADDI	SRCREG,SZREG
-	sw		t3,0(DSTREG)
+	REG_S		t3,0(DSTREG)
 	bne		SRCREG,a3,1b
 	PTR_ADDI	DSTREG,SZREG
 
-	j		3b
+	b		3b
 	nop
 
 6:	# backcopy -- based on above
 	PTR_ADDU	SRCREG,SIZEREG
 	PTR_ADDU	DSTREG,SIZEREG
-	andi		t1,DSTREG,3		# get last 3 bits of dest
+	andi		t1,DSTREG,SZREG-1	# get last 3 bits of dest
 	bne		t1,zero,3f
-	andi		t0,SRCREG,3		# get last 3 bits of src
+	andi		t0,SRCREG,SZREG-1	# get last 3 bits of src
 	bne		t0,zero,5f
 
 	/*
@@ -316,7 +268,7 @@ LEAF(FUNCTION)
 	 *	Copy from unaligned source to aligned dest.
 	 */
 5:	# destaligned
-	andi		t0,SIZEREG,3		# t0 = bytecount mod 4
+	andi		t0,SIZEREG,SZREG-1	# t0 = bytecount mod 4
 	PTR_SUBU	a3,SIZEREG,t0		# number of words to transfer
 	beq		a3,zero,3b
 	nop
@@ -324,14 +276,14 @@ LEAF(FUNCTION)
 	PTR_SUBU	a3,SRCREG,a3		# stop point
 
 1:
-	LWHI		t3,-4(SRCREG)
-	LWLO		t3,-1(SRCREG)
-	PTR_SUBU	SRCREG,4
-	sw		t3,-4(DSTREG)
+	REG_LHI		t3,-SZREG(SRCREG)
+	REG_LLO		t3,-1(SRCREG)
+	PTR_SUBU	SRCREG,SZREG
+	REG_S		t3,-SZREG(DSTREG)
 	bne		SRCREG,a3,1b
-	PTR_SUBU	DSTREG,4
+	PTR_SUBU	DSTREG,SZREG
 
-	j		3b
+	b		3b
 	nop
 
 	.set	reorder
