@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.222 2009/04/15 20:44:25 elad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.223 2009/08/21 22:43:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.222 2009/04/15 20:44:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.223 2009/08/21 22:43:32 dyoung Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1143,8 +1143,8 @@ sysctl_create(SYSCTLFN_ARGS)
 		 * and...reparent any children of any moved nodes
 		 */
 		for (ni = at; ni <= pnode->sysctl_clen; ni++)
-			if (SYSCTL_TYPE(node[ni].sysctl_flags) == CTLTYPE_NODE)
-				for (t = 0; t < node[ni].sysctl_clen; t++)
+			if (node[ni].sysctl_child != NULL)
+				for (t = 0; t < node[ni].sysctl_csize; t++)
 					node[ni].sysctl_child[t].sysctl_parent =
 						&node[ni];
 	}
