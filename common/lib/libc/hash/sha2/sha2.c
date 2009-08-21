@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.18 2009/06/25 14:05:18 joerg Exp $ */
+/* $NetBSD: sha2.c,v 1.19 2009/08/21 09:40:51 skrll Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.18 2009/06/25 14:05:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.19 2009/08/21 09:40:51 skrll Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.18 2009/06/25 14:05:18 joerg Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.18 2009/06/25 14:05:18 joerg Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.19 2009/08/21 09:40:51 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -282,7 +282,8 @@ static const uint64_t sha512_initial_hash_value[8] = {
 	0x5be0cd19137e2179ULL
 };
 
-#if !defined(_KERNEL) && defined(__weak_alias)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(__weak_alias)
 __weak_alias(SHA224_Init,_SHA224_Init) 
 __weak_alias(SHA224_Update,_SHA224_Update)
 __weak_alias(SHA224_Final,_SHA224_Final)
@@ -302,6 +303,7 @@ __weak_alias(SHA512_Init,_SHA512_Init)
 __weak_alias(SHA512_Update,_SHA512_Update)
 __weak_alias(SHA512_Final,_SHA512_Final)
 __weak_alias(SHA512_Transform,_SHA512_Transform)
+#endif
 #endif
 
 /*** SHA-256: *********************************************************/
