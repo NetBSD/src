@@ -207,7 +207,9 @@
 #include <net/slip.h>
 #include <net/zlib.h>
 
+#if !defined(__mips__)
 #include <a.out.h>
+#endif
 #include <ar.h>
 #include <assert.h>
 #include <bitstring.h>
@@ -253,7 +255,9 @@
 #include <libintl.h>
 #include <limits.h>
 #include <link.h>
+#if !defined(__mips__)
 #include <link_aout.h>
+#endif
 #include <link_elf.h>
 #include <locale.h>
 #include <login_cap.h>
