@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.223 2009/08/21 22:43:32 dyoung Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.224 2009/08/21 22:51:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.223 2009/08/21 22:43:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.224 2009/08/21 22:51:00 dyoung Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -2313,9 +2313,43 @@ sysctl_free(struct sysctlnode *rnode)
 	rw_exit(&sysctl_treelock);
 }
 
+void
+sysctl_log_print(const struct sysctllog *slog)
+{
+	int i, len;
+
+	printf("root %p left %d size %d content", (const void *)slog->log_root,
+	    slog->log_left, slog->log_size);
+
+	for (len = 0, i = slog->log_left; i < slog->log_size; i++) {
+		switch (len) {
+		case 0:
+			len = -1;
+			printf(" version %d", slog->log_num[i]);
+			break;
+		case -1:
+			len = -2;
+			printf(" type %d", slog->log_num[i]);
+			break;
+		case -2:
+			len =  slog->log_num[i];
+			printf(" len %d:", slog->log_num[i]);
+			if (len <= 0)
+				len = -1;
+			break;
+		default:
+			len--;
+			printf(" %d", slog->log_num[i]);
+			break;
+		}
+	}
+	printf(" end\n");
+}
+
 int
 sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 {
+	const int size0 = 16;
 	int name[CTL_MAXNAME], namelen, i;
 	const struct sysctlnode *pnode;
 	struct sysctllog *log;
@@ -2333,17 +2367,17 @@ sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 			/* XXX print error message? */
 			return (-1);
 		}
-		log->log_num = malloc(16 * sizeof(int),
+		log->log_num = malloc(size0 * sizeof(int),
 		       M_SYSCTLDATA, M_WAITOK|M_CANFAIL);
 		if (log->log_num == NULL) {
 			/* XXX print error message? */
 			free(log, M_SYSCTLDATA);
 			return (-1);
 		}
-		memset(log->log_num, 0, 16 * sizeof(int));
+		memset(log->log_num, 0, size0 * sizeof(int));
 		log->log_root = NULL;
-		log->log_size = 16;
-		log->log_left = 16;
+		log->log_size = size0;
+		log->log_left = size0;
 		*logp = log;
 	} else
 		log = *logp;
@@ -2578,7 +2612,7 @@ sysctl_alloc(struct sysctlnode *p, int x)
 static int
 sysctl_realloc(struct sysctlnode *p)
 {
-	int i, j;
+	int i, j, olen;
 	struct sysctlnode *n;
 
 	assert(p->sysctl_csize == p->sysctl_clen);
@@ -2586,8 +2620,8 @@ sysctl_realloc(struct sysctlnode *p)
 	/*
 	 * how many do we have...how many should we make?
 	 */
-	i = p->sysctl_clen;
-	n = malloc(2 * i * sizeof(struct sysctlnode), M_SYSCTLNODE,
+	olen = p->sysctl_clen;
+	n = malloc(2 * olen * sizeof(struct sysctlnode), M_SYSCTLNODE,
 		   M_WAITOK|M_CANFAIL);
 	if (n == NULL)
 		return (ENOMEM);
@@ -2595,9 +2629,9 @@ sysctl_realloc(struct sysctlnode *p)
 	/*
 	 * move old children over...initialize new children
 	 */
-	memcpy(n, p->sysctl_child, i * sizeof(struct sysctlnode));
-	memset(&n[i], 0, i * sizeof(struct sysctlnode));
-	p->sysctl_csize = 2 * i;
+	memcpy(n, p->sysctl_child, olen * sizeof(struct sysctlnode));
+	memset(&n[olen], 0, olen * sizeof(struct sysctlnode));
+	p->sysctl_csize = 2 * olen;
 
 	/*
 	 * reattach moved (and new) children to parent; if a moved
