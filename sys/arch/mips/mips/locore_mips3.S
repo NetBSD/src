@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.2 2009/08/20 22:21:55 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.3 2009/08/21 17:50:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -166,7 +166,13 @@ END(mips3_wbflush)
  *	mips_wait_idle to save power.
  */
 LEAF(mips_wait_idle)
-	wait
+	mfc0	v0, MIPS_COP_0_STATUS
+	andi	v0, v0, MIPS_SR_INT_IE
+	bne	v0, zero, 1f
+	nop
+	PANIC("mips_wait_idle: interrupts disabled")
+
+1:	wait
 	nop
 	nop
 	nop
