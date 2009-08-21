@@ -875,12 +875,12 @@ case "${targ}" in
     ;;
 #ifdef BFD64
   mips64*el-*-netbsd*)
-    targ_defvec=bfd_elf64_tradlittlemips_vec
-    targ_selvecs="bfd_elf64_tradbigmips_vec bfd_elf32_nbigmips_vec bfd_elf32_nlittlemips_vec bfd_elf32_ntradlittlemips_vec bfd_elf32_ntradbigmips_vec bfd_elf32_tradlittlemips_vec bfd_elf32_tradbigmips_vec ecoff_little_vec ecoff_big_vec"
+    targ_defvec=bfd_elf32_nlittlemips_vec
+    targ_selvecs="bfd_elf64_tradbigmips_vec bfd_elf64_tradlittlemips_vec bfd_elf32_nbigmips_vec bfd_elf32_ntradlittlemips_vec bfd_elf32_ntradbigmips_vec bfd_elf32_tradlittlemips_vec bfd_elf32_tradbigmips_vec ecoff_little_vec ecoff_big_vec"
     ;;
   mips64*-*-netbsd*)
-    targ_defvec=bfd_elf64_tradbigmips_vec
-    targ_selvecs="bfd_elf64_tradlittlemips_vec bfd_elf32_nbigmips_vec bfd_elf32_nlittlemips_vec bfd_elf32_ntradlittlemips_vec bfd_elf32_ntradbigmips_vec bfd_elf32_tradlittlemips_vec bfd_elf32_tradbigmips_vec ecoff_little_vec ecoff_big_vec"
+    targ_defvec=bfd_elf32_nbigmips_vec
+    targ_selvecs="bfd_elf64_tradbigmips_vec bfd_elf64_tradlittlemips_vec bfd_elf32_nlittlemips_vec bfd_elf32_ntradlittlemips_vec bfd_elf32_ntradbigmips_vec bfd_elf32_tradlittlemips_vec bfd_elf32_tradbigmips_vec ecoff_little_vec ecoff_big_vec"
     ;;
 #endif
   mips*el-*-netbsd*)
