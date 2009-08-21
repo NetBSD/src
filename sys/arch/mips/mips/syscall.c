@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.1 2009/08/20 04:22:54 uebayasi Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.2 2009/08/21 17:46:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.1 2009/08/20 04:22:54 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.2 2009/08/21 17:46:23 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -140,21 +140,16 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.1 2009/08/20 04:22:54 uebayasi E
 #endif
 
 void	EMULNAME(syscall_intern)(struct proc *);
-void	EMULNAME(syscall_plain)(struct lwp *, u_int, u_int, u_int);
-void	EMULNAME(syscall_fancy)(struct lwp *, u_int, u_int, u_int);
+static void EMULNAME(syscall)(struct lwp *, uint32_t, uint32_t, vaddr_t);
 
-vaddr_t MachEmulateBranch(struct frame *, vaddr_t, u_int, int);
+register_t MachEmulateBranch(struct frame *, register_t, u_int, int);
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 
 void
 EMULNAME(syscall_intern)(struct proc *p)
 {
-
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = EMULNAME(syscall_fancy);
-	else
-		p->p_md.md_syscall = EMULNAME(syscall_plain);
+	p->p_md.md_syscall = EMULNAME(syscall);
 }
 
 /*
@@ -164,25 +159,35 @@ EMULNAME(syscall_intern)(struct proc *p)
  * in v0, and the arguments in the registers (as normal).  They return
  * an error flag in a3 (if a3 != 0 on return, the syscall had an error),
  * and the return value (if any) in v0 and possibly v1.
- *
- * XXX Needs to be heavily rototilled for N32 or LP64 support.
  */
 
 void
-EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
+EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 {
 	struct proc *p = l->l_proc;
-	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	register_t *args, copyargs[8];
-	register_t *rval = NULL;	/* XXX gcc */
-#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-	register_t copyrval[2];
+	struct frame *frame = l->l_md.md_regs;
+	mips_reg_t *fargs = &frame->f_regs[_R_A0];
+	void *args = NULL;
+	void *rval = NULL;	/* XXX gcc */
+#if !defined(__mips_o32)
+	register32_t copy32args[2+SYS_MAXSYSARGS];
+	register_t copy32rval[2];
 #endif
-	mips_reg_t ov0;
-	size_t nsaved, nargs;
+	register_t copyargs[2+SYS_MAXSYSARGS];
+	mips_reg_t saved_v0;
+	vaddr_t usp;
+	size_t nargs;
 	const struct sysent *callp;
-	int error;
-	u_int code;
+	int code, error;
+#if defined(__mips_o32)
+	const int abi = _MIPS_BSD_API_O32;
+	KASSERTMSG(p->p_md.md_abi != abi, ("pid %d(%p): md_abi(%d) != abi(%d)", p->p_pid, p, p->p_md.md_abi, abi));
+	size_t nregs = 4;
+#else
+	const int abi = p->p_md.md_abi;
+	size_t nregs = _MIPS_SIM_NEWABI_P(abi) ? 8 : 4;
+	size_t i;
+#endif
 
 	LWP_CACHE_CREDS(l, p);
 
@@ -191,10 +196,10 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	if (DELAYBRANCH(cause))
 		frame->f_regs[_R_PC] = MachEmulateBranch(frame, opc, 0, 0);
 	else
-		frame->f_regs[_R_PC] = opc + sizeof(int);
+		frame->f_regs[_R_PC] = opc + sizeof(uint32_t);
 
 	callp = p->p_emul->e_sysent;
-	ov0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
+	saved_v0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
 
 #ifdef KERN_SA
 	if (__predict_false((l->l_savp)
@@ -202,255 +207,110 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
-	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		args = copyargs;
-		if (code == SYS_syscall) {
-			/*
-			 * Code is first argument, followed by actual args.
-			 */
-			code = frame->f_regs[_R_A0] - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[_R_A1];
-			args[1] = frame->f_regs[_R_A2];
-			args[2] = frame->f_regs[_R_A3];
-			nsaved = 3;
-		} else {
-			/*
-			 * Like syscall, but code is a quad, so as to maintain
-			 * quad alignment for the rest of the arguments.
-			 */
-			code = frame->f_regs[_R_A0 + _QUAD_LOWWORD] 
-			    - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[_R_A2];
-			args[1] = frame->f_regs[_R_A3];
-			nsaved = 2;
-		}
-
-		if (code >= p->p_emul->e_nsysent)
-			callp += p->p_emul->e_nosys;
-		else
-			callp += code;
-		nargs = callp->sy_argsize / sizeof(register_t);
-
-		if (nargs > nsaved) {
-			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
-			    (args + nsaved),
-			    (nargs - nsaved) * sizeof(register_t));
-			if (error)
-				goto bad;
-		}
-		break;
-
-	default:
-		if (code >= p->p_emul->e_nsysent)
-			callp += p->p_emul->e_nosys;
-		else
-			callp += code;
-		nargs = callp->sy_narg;
-
-		if (nargs < 5) {
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-			args = (register_t *)&frame->f_regs[_R_A0];
-#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-			args = copyargs;
-			args[0] = frame->f_regs[_R_A0];
-			args[1] = frame->f_regs[_R_A1];
-			args[2] = frame->f_regs[_R_A2];
-			args[3] = frame->f_regs[_R_A3];
-#else
-			panic("syscall not implemented for current MIPS ABI\n");
-#endif
-		} else {
-			args = copyargs;
-			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
-			    (&copyargs[4]),
-			    (nargs - 4) * sizeof(register_t));
-			if (error)
-				goto bad;
-			args[0] = frame->f_regs[_R_A0];
-			args[1] = frame->f_regs[_R_A1];
-			args[2] = frame->f_regs[_R_A2];
-			args[3] = frame->f_regs[_R_A3];
-		}
-		break;
+	if (code == SYS_syscall
+	    || (code == SYS___syscall && abi != _MIPS_BSD_API_O32)) {
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
+		code = *fargs++ - SYSCALL_SHIFT;
+		nregs--;
+	} else if (code == SYS___syscall) {
+		/*
+		 * Like syscall, but code is a quad, so as to maintain
+		 * quad alignment for the rest of the arguments.
+		 */
+		code = fargs[_QUAD_LOWWORD] - SYSCALL_SHIFT;
+		fargs += 2;
+		nregs -= 2;
 	}
 
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-	rval = (register_t *)&frame->f_regs[_R_V0];
-	rval[0] = 0;
-	/* rval[1] already has V1 */
-#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-	rval = copyrval;
-	rval[0] = 0;
-	rval[1] = frame->f_regs[_R_V1];
-#endif
-
-	error = sy_call(callp, l, args, rval);
-
-	switch (error) {
-	case 0:
-#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-		frame->f_regs[_R_V0] = rval[0];
-		frame->f_regs[_R_V1] = rval[1];
-#endif
-		frame->f_regs[_R_A3] = 0;
-		break;
-	case ERESTART:
-		frame->f_regs[_R_V0] = ov0;	/* restore syscall code */
-		frame->f_regs[_R_PC] = opc;
-		break;
-	case EJUSTRETURN:
-		break;	/* nothing to do */
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		frame->f_regs[_R_V0] = error;
-		frame->f_regs[_R_A3] = 1;
-		break;
-	}
-
-	userret(l);
-}
-
-void
-EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
-{
-	struct proc *p = l->l_proc;
-	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	register_t *args, copyargs[8];
-	register_t *rval = NULL;	/* XXX gcc */
-#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-	register_t copyrval[2];
-#endif
-	mips_reg_t ov0;
-	size_t nsaved, nargs;
-	const struct sysent *callp;
-	int error;
-	u_int code;
-
-	LWP_CACHE_CREDS(l, p);
-
-	uvmexp.syscalls++;
-
-	if (DELAYBRANCH(cause))
-		frame->f_regs[_R_PC] = MachEmulateBranch(frame, opc, 0, 0);
+	if (code >= p->p_emul->e_nsysent)
+		callp += p->p_emul->e_nosys;
 	else
-		frame->f_regs[_R_PC] = opc + sizeof(int);
+		callp += code;
 
-	callp = p->p_emul->e_sysent;
-	ov0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#if !defined(__mips_o32)
+	if (abi != _MIPS_BSD_API_O32) {
 #endif
-
-	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		args = copyargs;
-		if (code == SYS_syscall) {
+		CTASSERT(sizeof(copyargs[0]) == sizeof(fargs[0]));
+		nargs = callp->sy_argsize / sizeof(copyargs[0]);
+		rval = &frame->f_regs[_R_V0];
+		frame->f_regs[_R_V0] = 0;
+		/* rval[1] already is V1 */
+		if (nargs <= nregs) {
 			/*
-			 * Code is first argument, followed by actual args.
+			 * Just use the frame for the source of arguments
 			 */
-			code = frame->f_regs[_R_A0] - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[_R_A1];
-			args[1] = frame->f_regs[_R_A2];
-			args[2] = frame->f_regs[_R_A3];
-			nsaved = 3;
+			args = fargs;
 		} else {
+			const size_t nsaved = _MIPS_SIM_NEWABI_P(abi) ? 0 : 4;
+			args = copyargs;
 			/*
-			 * Like syscall, but code is a quad, so as to maintain
-			 * quad alignment for the rest of the arguments.
+			 * Copy the arguments passed via register from the				 * trap frame to our argument array
 			 */
-			code = frame->f_regs[_R_A0 + _QUAD_LOWWORD] 
-			    - SYSCALL_SHIFT;
-			args[0] = frame->f_regs[_R_A2];
-			args[1] = frame->f_regs[_R_A3];
-			nsaved = 2;
-		}
-
-		if (code >= p->p_emul->e_nsysent)
-			callp += p->p_emul->e_nosys;
-		else
-			callp += code;
-		nargs = callp->sy_argsize / sizeof(register_t);
-
-		if (nargs > nsaved) {
-			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
-			    (args + nsaved),
-			    (nargs - nsaved) * sizeof(register_t));
+			memcpy(copyargs, fargs, nregs * sizeof(register_t));
+			/*
+			 * Start copying args skipping the register slots
+			 * slots on the stack.
+			 */
+			usp = frame->f_regs[_R_SP] + nsaved*sizeof(register_t);
+			error = copyin((register_t *)usp, &copyargs[nregs],
+			    (nargs - nregs) * sizeof(copyargs[0]));
 			if (error)
 				goto bad;
 		}
-		break;
-
-	default:
-		if (code >= p->p_emul->e_nsysent)
-			callp += p->p_emul->e_nosys;
-		else
-			callp += code;
-		nargs = callp->sy_narg;
-
-		if (nargs < 5) {
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-			args = (register_t *)&frame->f_regs[_R_A0];
-#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-			args = copyargs;
-			args[0] = frame->f_regs[_R_A0];
-			args[1] = frame->f_regs[_R_A1];
-			args[2] = frame->f_regs[_R_A2];
-			args[3] = frame->f_regs[_R_A3];
-#else
-			panic("syscall not implemented for current MIPS ABI\n");
-#endif
-		} else {
-			args = copyargs;
-			error = copyin(
-			    ((register_t *)(vaddr_t)frame->f_regs[_R_SP] + 4),
-			    (&copyargs[4]),
-			    (nargs - 4) * sizeof(register_t));
+#if !defined(__mips_o32)
+	} else {
+		/*
+		 * All arguments are 32bits wide and 64bit arguments use
+		 * two 32bit registers or stack slots.
+		 */
+		nargs = callp->sy_argsize / sizeof(copy32args[0]);
+		rval = copy32rval;
+		args = copy32args;
+		copy32rval[0] = 0;
+		copy32rval[1] = frame->f_regs[_R_V1];
+		CTASSERT(sizeof(copy32args[0]) != sizeof(fargs[0]));
+		/*
+		 * Copy the register passed arguments from the trapframe to
+		 * the set of 32bit copies.
+		 */
+		for (i = 0; i < 4  && i < nargs; i++)
+			copy32args[i] = fargs[i];
+		if (nargs > nregs) {
+			/*
+			 * Copy the remainder of the arguments from the stack
+			 * after skipped the slots for the 4 register passed
+			 * arguments.
+			 */
+			usp = frame->f_regs[_R_SP] + 4*sizeof(register32_t);
+			error = copyin((register32_t *)usp, &copy32args[nregs],
+			    (nargs - nregs) * sizeof(copy32args[0]));
 			if (error)
 				goto bad;
-			args[0] = frame->f_regs[_R_A0];
-			args[1] = frame->f_regs[_R_A1];
-			args[2] = frame->f_regs[_R_A2];
-			args[3] = frame->f_regs[_R_A3];
 		}
-		break;
 	}
+#endif
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
+	if (__predict_false(p->p_trace_enabled)
+	    && (error = trace_enter(code, args, nargs)) != 0)
 		goto out;
 
-#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-	rval = (register_t *)&frame->f_regs[_R_V0];
-	rval[0] = 0;
-	/* rval[1] already has V1 */
-#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-	rval = copyrval;
-	rval[0] = 0;
-	rval[1] = frame->f_regs[_R_V1];
-#endif
+	error = (*callp->sy_call)(l, args, rval);
 
-	error = sy_call(callp, l, args, rval);
-out:
+    out:
 	switch (error) {
 	case 0:
-#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
-		frame->f_regs[_R_V0] = rval[0];
-		frame->f_regs[_R_V1] = rval[1];
+#if !defined(__mips_o32)
+		if (abi == _MIPS_BSD_API_O32) {
+			frame->f_regs[_R_V0] = copy32rval[0];
+			frame->f_regs[_R_V1] = copy32rval[1];
+		}
 #endif
 		frame->f_regs[_R_A3] = 0;
 		break;
 	case ERESTART:
-		frame->f_regs[_R_V0] = ov0;	/* restore syscall code */
+		frame->f_regs[_R_V0] = saved_v0; /* restore syscall code */
 		frame->f_regs[_R_PC] = opc;
 		break;
 	case EJUSTRETURN:
@@ -464,7 +324,8 @@ out:
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled))
+		trace_exit(code, &frame->f_regs[_R_V0], error);
 
 	userret(l);
 }
