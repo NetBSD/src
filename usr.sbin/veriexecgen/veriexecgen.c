@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.16 2008/04/29 06:53:04 martin Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.17 2009/08/21 04:09:41 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: veriexecgen.c,v 1.16 2008/04/29 06:53:04 martin Exp $");
+__RCSID("$NetBSD: veriexecgen.c,v 1.17 2009/08/21 04:09:41 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage:  %s [-AaDrSvW] [-d dir] [-o fingerprintdb] [-p prefix]\n"
+	    "usage:  %s [-AaDrSTvW] [-d dir] [-o fingerprintdb] [-p prefix]\n"
 	    "\t\t    [-t algorithm]\n"
 	    "\t%s [-h]\n", getprogname(), getprogname());
 }
@@ -389,7 +389,7 @@ main(int argc, char **argv)
 	/* error out if we have a dangling symlink or other fs problem */
 	v.exit_on_error = 1;
 
-	while ((ch = getopt(argc, argv, "AaDd:ho:p:rSt:vW")) != -1) {
+	while ((ch = getopt(argc, argv, "AaDd:ho:p:rSTt:vW")) != -1) {
 		switch (ch) {
 		case 'A':
 			v.append_output = 1;
