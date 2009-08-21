@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.1.1.6 2009/04/04 23:26:05 joerg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.1.1.7 2009/08/21 15:12:52 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -584,6 +584,7 @@ ftp_closefn(void *v)
 	}
 	fetch_close(io->dconn);
 	io->dir = -1;
+	io->dconn->is_active = 0;
 	io->dconn = NULL;
 	r = ftp_chkerr(io->cconn);
 	if (io->cconn == cached_connection && io->cconn->ref == 1)
@@ -607,6 +608,7 @@ ftp_setup(conn_t *cconn, conn_t *dconn, int mode)
 	io->dconn = dconn;
 	io->dir = mode;
 	io->eof = io->err = 0;
+	io->cconn->is_active = 1;
 	f = fetchIO_unopen(io, ftp_readfn, ftp_writefn, ftp_closefn);
 	if (f == NULL)
 		free(io);
@@ -620,9 +622,12 @@ static fetchIO *
 ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_arg,
     int mode, off_t offset, const char *flags)
 {
-	struct sockaddr_storage sa;
-	struct sockaddr_in6 *sin6;
-	struct sockaddr_in *sin4;
+	union anonymous {
+		struct sockaddr_storage ss;
+		struct sockaddr sa;
+		struct sockaddr_in6 sin6;
+		struct sockaddr_in sin4;
+	} u;
 	const char *bindaddr;
 	const char *filename;
 	int filenamelen, type;
@@ -650,16 +655,16 @@ ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_ar
 		goto ouch;
 
 	/* find our own address, bind, and listen */
-	l = sizeof(sa);
-	if (getsockname(conn->sd, (struct sockaddr *)&sa, &l) == -1)
+	l = sizeof(u.ss);
+	if (getsockname(conn->sd, &u.sa, &l) == -1)
 		goto sysouch;
-	if (sa.ss_family == AF_INET6)
-		unmappedaddr((struct sockaddr_in6 *)&sa, &l);
+	if (u.ss.ss_family == AF_INET6)
+		unmappedaddr(&u.sin6, &l);
 
 retry_mode:
 
 	/* open data socket */
-	if ((sd = socket(sa.ss_family, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+	if ((sd = socket(u.ss.ss_family, SOCK_STREAM, IPPROTO_TCP)) == -1) {
 		fetch_syserr();
 		return (NULL);
 	}
@@ -673,7 +678,7 @@ retry_mode:
 		/* send PASV command */
 		if (verbose)
 			fetch_info("setting passive mode");
-		switch (sa.ss_family) {
+		switch (u.ss.ss_family) {
 		case AF_INET:
 			if ((e = ftp_cmd(conn, "PASV")) != FTP_PASSIVE_MODE)
 				goto ouch;
@@ -746,28 +751,26 @@ retry_mode:
 				goto sysouch;
 
 		/* construct sockaddr for data socket */
-		l = sizeof(sa);
-		if (getpeername(conn->sd, (struct sockaddr *)&sa, &l) == -1)
+		l = sizeof(u.ss);
+		if (getpeername(conn->sd, &u.sa, &l) == -1)
 			goto sysouch;
-		if (sa.ss_family == AF_INET6)
-			unmappedaddr((struct sockaddr_in6 *)&sa, &l);
-		switch (sa.ss_family) {
+		if (u.ss.ss_family == AF_INET6)
+			unmappedaddr(&u.sin6, &l);
+		switch (u.ss.ss_family) {
 		case AF_INET6:
-			sin6 = (struct sockaddr_in6 *)&sa;
 			if (e == FTP_EPASSIVE_MODE)
-				sin6->sin6_port = htons(port);
+				u.sin6.sin6_port = htons(port);
 			else {
-				memcpy(&sin6->sin6_addr, addr + 2, 16);
-				memcpy(&sin6->sin6_port, addr + 19, 2);
+				memcpy(&u.sin6.sin6_addr, addr + 2, 16);
+				memcpy(&u.sin6.sin6_port, addr + 19, 2);
 			}
 			break;
 		case AF_INET:
-			sin4 = (struct sockaddr_in *)&sa;
 			if (e == FTP_EPASSIVE_MODE)
-				sin4->sin_port = htons(port);
+				u.sin4.sin_port = htons(port);
 			else {
-				memcpy(&sin4->sin_addr, addr, 4);
-				memcpy(&sin4->sin_port, addr + 4, 2);
+				memcpy(&u.sin4.sin_addr, addr, 4);
+				memcpy(&u.sin4.sin_port, addr + 4, 2);
 			}
 			break;
 		default:
@@ -780,9 +783,9 @@ retry_mode:
 			fetch_info("opening data connection");
 		bindaddr = getenv("FETCH_BIND_ADDRESS");
 		if (bindaddr != NULL && *bindaddr != '\0' &&
-		    fetch_bind(sd, sa.ss_family, bindaddr) != 0)
+		    fetch_bind(sd, u.ss.ss_family, bindaddr) != 0)
 			goto sysouch;
-		if (connect(sd, (struct sockaddr *)&sa, l) == -1)
+		if (connect(sd, &u.sa, l) == -1)
 			goto sysouch;
 
 		/* make the server initiate the transfer */
@@ -806,9 +809,9 @@ retry_mode:
 		char *ap;
 		char hname[INET6_ADDRSTRLEN];
 
-		switch (sa.ss_family) {
+		switch (u.ss.ss_family) {
 		case AF_INET6:
-			((struct sockaddr_in6 *)&sa)->sin6_port = 0;
+			u.sin6.sin6_port = 0;
 #ifdef IPV6_PORTRANGE
 			arg = low ? IPV6_PORTRANGE_DEFAULT : IPV6_PORTRANGE_HIGH;
 			if (setsockopt(sd, IPPROTO_IPV6, IPV6_PORTRANGE,
@@ -817,7 +820,7 @@ retry_mode:
 #endif
 			break;
 		case AF_INET:
-			((struct sockaddr_in *)&sa)->sin_port = 0;
+			u.sin4.sin_port = 0;
 #ifdef IP_PORTRANGE
 			arg = low ? IP_PORTRANGE_DEFAULT : IP_PORTRANGE_HIGH;
 			if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
@@ -828,19 +831,18 @@ retry_mode:
 		}
 		if (verbose)
 			fetch_info("binding data socket");
-		if (bind(sd, (struct sockaddr *)&sa, l) == -1)
+		if (bind(sd, &u.sa, l) == -1)
 			goto sysouch;
 		if (listen(sd, 1) == -1)
 			goto sysouch;
 
 		/* find what port we're on and tell the server */
-		if (getsockname(sd, (struct sockaddr *)&sa, &l) == -1)
+		if (getsockname(sd, &u.sa, &l) == -1)
 			goto sysouch;
-		switch (sa.ss_family) {
+		switch (u.ss.ss_family) {
 		case AF_INET:
-			sin4 = (struct sockaddr_in *)&sa;
-			a = ntohl(sin4->sin_addr.s_addr);
-			p = ntohs(sin4->sin_port);
+			a = ntohl(u.sin4.sin_addr.s_addr);
+			p = ntohs(u.sin4.sin_port);
 			e = ftp_cmd(conn, "PORT %d,%d,%d,%d,%d,%d",
 			    (a >> 24) & 0xff, (a >> 16) & 0xff,
 			    (a >> 8) & 0xff, a & 0xff,
@@ -849,18 +851,17 @@ retry_mode:
 		case AF_INET6:
 #define UC(b)	(((int)b)&0xff)
 			e = -1;
-			sin6 = (struct sockaddr_in6 *)&sa;
-			sin6->sin6_scope_id = 0;
-			if (getnameinfo((struct sockaddr *)&sa, l,
+			u.sin6.sin6_scope_id = 0;
+			if (getnameinfo(&u.sa, l,
 				hname, sizeof(hname),
 				NULL, 0, NI_NUMERICHOST) == 0) {
 				e = ftp_cmd(conn, "EPRT |%d|%s|%d|", 2, hname,
-				    htons(sin6->sin6_port));
+				    htons(u.sin6.sin6_port));
 				if (e == -1)
 					goto ouch;
 			}
 			if (e != FTP_OK) {
-				ap = (char *)&sin6->sin6_addr;
+				ap = (char *)&u.sin6.sin6_addr;
 				e = ftp_cmd(conn,
 				    "LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
 				    6, 16,
@@ -869,8 +870,8 @@ retry_mode:
 				    UC(ap[8]), UC(ap[9]), UC(ap[10]), UC(ap[11]),
 				    UC(ap[12]), UC(ap[13]), UC(ap[14]), UC(ap[15]),
 				    2,
-				    (ntohs(sin6->sin6_port) >> 8) & 0xff,
-				    ntohs(sin6->sin6_port)        & 0xff);
+				    (ntohs(u.sin6.sin6_port) >> 8) & 0xff,
+				    ntohs(u.sin6.sin6_port)        & 0xff);
 			}
 			break;
 		default:
@@ -1049,6 +1050,7 @@ static int
 ftp_isconnected(struct url *url)
 {
 	return (cached_connection
+	    && (cached_connection->is_active == 0)
 	    && (strcmp(url->host, cached_host.host) == 0)
 	    && (strcmp(url->user, cached_host.user) == 0)
 	    && (strcmp(url->pwd, cached_host.pwd) == 0)
