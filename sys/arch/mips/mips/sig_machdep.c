@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16.14.1 2009/08/19 07:36:56 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16.14.2 2009/08/21 17:40:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.1 2009/08/19 07:36:56 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.2 2009/08/21 17:40:22 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -88,7 +88,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	size_t ucsz;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = (struct frame *)l->l_md.md_regs;
+	tf = l->l_md.md_regs;
 	fp--;
 
         /* Build stack frame for signal trampoline. */
