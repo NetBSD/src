@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35 2007/10/17 19:55:37 garbled Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.35.38.1 2009/08/21 17:44:08 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2007/10/17 19:55:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.1 2009/08/21 17:44:08 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,7 +69,8 @@ db_sym_t localsym(db_sym_t sym, bool isreg, int *lex_level);
 struct mips_saved_state *db_cur_exc_frame = 0;
 
 /*XXX*/
-void	stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
+void	stacktrace_subr(mips_reg_t, mips_reg_t, mips_reg_t, mips_reg_t,
+	    vaddr_t, vaddr_t, vaddr_t, vaddr_t,
 	    void (*)(const char*, ...));
 
 /*
@@ -173,7 +174,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	(*pr)("at %p\n", pcb);
 
 	stacktrace_subr(0,0,0,0,	/* no args known */
-			(int)cpu_switchto,
+			(vaddr_t)cpu_switchto,
 			pcb->pcb_context[8],
 			pcb->pcb_context[9],
 			pcb->pcb_context[10],
