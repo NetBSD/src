@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.8 2009/03/06 20:31:48 joerg Exp $
+#	$NetBSD: PMPPC,v 1.9 2009/08/21 16:54:20 tsutsui Exp $
 #
 #	PMPPC
 #
@@ -33,7 +33,7 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=510000	# size for embedded symbol table
+options 	SYMTAB_SPACE=524288	# size for embedded symbol table
 
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0xff600400,KGDB_DEVRATE=9600
