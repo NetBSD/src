@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.32 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.32.16.1 2009/08/21 18:00:36 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.32 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.32.16.1 2009/08/21 18:00:36 matt Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -156,6 +156,10 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	ehdr.e_shentsize = 0;
 	ehdr.e_shnum = 0;
 	ehdr.e_shstrndx = 0;
+
+#ifdef ELF_MD_COREDUMP_SETUP
+	ELF_MD_COREDUMP_SETUP(l, &ehdr);
+#endif
 
 	/* Write out the ELF header. */
 	error = coredump_write(cookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
