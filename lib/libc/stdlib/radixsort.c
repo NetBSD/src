@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.17 2009/02/12 03:34:33 lukem Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.18 2009/08/21 20:49:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.17 2009/02/12 03:34:33 lukem Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.18 2009/08/21 20:49:50 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,7 +110,6 @@ radixsort(a, n, tab, endch)
 	u_char tr0[256];
 
 	_DIAGASSERT(a != NULL);
-	_DIAGASSERT(tab != NULL);
 
 	SETUP;
 	r_sort_a(a, n, 0, tr, endch);
@@ -128,8 +127,7 @@ sradixsort(a, n, tab, endch)
 	u_char tr0[256];
 
 	_DIAGASSERT(a != NULL);
-	_DIAGASSERT(tab != NULL);
-	if (a == NULL || tab == NULL) {
+	if (a == NULL) {
 		errno = EFAULT;
 		return (-1);
 	}
