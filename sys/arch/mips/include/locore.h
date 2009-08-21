@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.1 2009/08/16 03:33:57 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.2 2009/08/21 17:32:00 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -300,11 +300,18 @@ void	mips_wait_idle(void);
 void	stacktrace(void);
 void	logstacktrace(void);
 
+struct locoresw {
+	uintptr_t lsw_cpu_switch_resume;
+	uintptr_t lsw_lwp_trampoline;
+	void (*lsw_cpu_idle)(void);
+	uintptr_t lsw_setfunc_trampoline;
+};
+
 /*
  * The "active" locore-fuction vector, and
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
-extern long *mips_locoresw[];
+extern struct locoresw mips_locoresw;
 
 #if    defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
 #define MachSetPID		mips1_SetPID
@@ -357,11 +364,11 @@ extern long *mips_locoresw[];
 #define MIPS_TBIS		(*(mips_locore_jumpvec.TBIS))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
-#define lwp_trampoline		(mips_locoresw[1])
-#define setfunc_trampoline	(mips_locoresw[3])
+#define lwp_trampoline		mips_locoresw.lsw_lwp_trampoline
+#define setfunc_trampoline	mips_locoresw.lsw_setfunc_trampoline
 #endif
 
-#define CPU_IDLE		(mips_locoresw[2])
+#define CPU_IDLE		mips_locoresw.lsw_cpu_idle
 
 /* cpu_switch_resume is called inside locore.S */
 
@@ -457,8 +464,8 @@ void mips_machdep_cache_config(void);
 
 struct trapframe {
 	mips_reg_t tf_regs[TF_NREGS];
-	u_int32_t  tf_ppl;		/* previous priority level */
-	int32_t    tf_pad;		/* for 8 byte aligned */
+	uint32_t   tf_ppl;		/* previous priority level */
+	mips_reg_t tf_pad;		/* for 8 byte aligned */
 };
 
 /*
@@ -475,7 +482,7 @@ struct kernframe {
 #endif
 #endif
 #if defined(__mips_n32) || defined(__mips_n64)
-	register_t cf_args[8 + 1];
+	register_t cf_pad;
 #endif
 	register_t cf_sp;
 	register_t cf_ra;
