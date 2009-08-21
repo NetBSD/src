@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.12.78.1 2009/08/16 03:33:57 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.12.78.2 2009/08/21 17:18:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -41,17 +41,34 @@
 
 #define _MIPS_BSD_API_LP32	_MIPS_SIM_ABI32
 #define	_MIPS_BSD_API_LP32_64CLEAN	_MIPS_SIM_ABIX32
-#define	_MIPS_BSD_API_N32	_MIPS_SIM_NABI32
 #define	_MIPS_BSD_API_LP64	_MIPS_SIM_ABI64
 
+#define _MIPS_BSD_API_O32	_MIPS_SIM_ABI32
+#define	_MIPS_BSD_API_O64	_MIPS_SIM_ABIX32
+#define	_MIPS_BSD_API_N32	_MIPS_SIM_NABI32
+#define	_MIPS_BSD_API_N64	_MIPS_SIM_ABI64
+
+#define	_MIPS_SIM_NEWABI_P(abi)	((abi) == _MIPS_SIM_NABI32 || \
+				 (abi) == _MIPS_SIM_ABI64)
+
+#define	_MIPS_SIM_LP64_P(abi)	((abi) == _MIPS_SIM_ABIX32 || \
+				 (abi) == _MIPS_SIM_ABI64)
+
 #if __mips_n64
-#define	_MIPS_BSD_API		_MIPS_BSD_API_LP64
+#define	_MIPS_BSD_API		_MIPS_BSD_API_N64
 #elif __mips_n32
 #define	_MIPS_BSD_API		_MIPS_BSD_API_N32
 #elif __mips_o64
-#define	_MIPS_BSD_API		_MIPS_BSD_API_LP32_64CLEAN
+#define	_MIPS_BSD_API		_MIPS_BSD_API_O64
 #else
-#define	_MIPS_BSD_API		_MIPS_BSD_API_LP32
+#define	_MIPS_BSD_API		_MIPS_BSD_API_O32
 #endif
+
+#define	_MIPS_ISA_MIPS1		1
+#define	_MIPS_ISA_MIPS2		2
+#define	_MIPS_ISA_MIPS3		3
+#define	_MIPS_ISA_MIPS4		4
+#define	_MIPS_ISA_MIPS32	5
+#define	_MIPS_ISA_MIPS64	6
 
 #endif /* !_MIPS_CDEFS_H_ */
