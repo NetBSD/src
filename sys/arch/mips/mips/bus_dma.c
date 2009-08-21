@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.1 2009/08/19 07:41:47 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.2 2009/08/21 17:35:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.1 2009/08/19 07:41:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.2 2009/08/21 17:35:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,7 +586,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%llx\n", (uint64_t)curaddr);
+			    " address 0x%"PRIxPADDR"\n", curaddr);
 			panic("_bus_dmamem_alloc");
 		}
 #endif
