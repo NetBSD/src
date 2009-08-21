@@ -1,6 +1,6 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.6 2009/04/06 18:49:13 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.1.1.7 2009/08/21 15:19:19 joerg Exp $	*/
 /*-
- * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
+ * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.6 2009/04/06 18:49:13 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.1.1.7 2009/08/21 15:19:19 joerg Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -161,7 +161,8 @@ strip_suffix(char *filename)
 }
 
 static int
-find_best_package(struct url *url, const char *pattern, struct url **best_url)
+find_best_package_int(struct url *url, const char *pattern,
+    struct url **best_url)
 {
 	char *cur_match, *url_pattern, *best_match = NULL;
 	struct url_list ue;
@@ -260,12 +261,40 @@ process_pkg_path(void)
 	}
 }
 
+struct url *
+find_best_package(const char *toplevel, const char *pattern, int do_path)
+{
+	struct url *url, *best_match = NULL;
+	struct pkg_path *pl;
+
+	if (toplevel) {
+		url = fetchParseURL(last_toplevel);
+		if (url != NULL) {
+			find_best_package_int(url, pattern, &best_match);
+			/* XXX Check return value and complain */
+			fetchFreeURL(url);
+		}
+	}
+	if (!do_path)
+		return best_match;
+
+	TAILQ_FOREACH(pl, &pkg_path, pl_link) {
+		url = fetchParseURL(pl->pl_path);
+		if (url != NULL) {
+			find_best_package_int(url, pattern, &best_match);
+			/* XXX Check return value and complain */
+			fetchFreeURL(url);
+		}
+	}
+
+	return best_match;
+}
+
 struct archive *
 find_archive(const char *fname, int top_level)
 {
 	struct archive *a;
-	struct pkg_path *pl;
-	struct url *url, *best_match;
+	struct url *best_match;
 	char *full_fname, *last_slash;
 	int search_path;
 
@@ -295,32 +324,10 @@ find_archive(const char *fname, int top_level)
 	fname = last_slash + 1;
 	*last_slash = '\0';
 
-	best_match = NULL;
-	url = fetchParseURL(full_fname);
-	if (url != NULL) {
-		find_best_package(url, fname, &best_match);
-		/* XXX Check return value and complain */
-		fetchFreeURL(url);
-	}
+	best_match = find_best_package(full_fname, fname, 0);
 
-	if (search_path && best_match == NULL) {
-		if (last_toplevel) {
-			url = fetchParseURL(last_toplevel);
-			if (url != NULL) {
-				find_best_package(url, fname, &best_match);
-				/* XXX Check return value and complain */
-				fetchFreeURL(url);
-			}
-		}
-		TAILQ_FOREACH(pl, &pkg_path, pl_link) {
-			url = fetchParseURL(pl->pl_path);
-			if (url != NULL) {
-				find_best_package(url, fname, &best_match);
-				/* XXX Check return value and complain */
-				fetchFreeURL(url);
-			}
-		}
-	}	
+	if (search_path && best_match == NULL)
+		best_match = find_best_package(last_toplevel, fname, 1);
 
 	free(full_fname);
 
