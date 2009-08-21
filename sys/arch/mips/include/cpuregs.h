@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.1 2009/08/20 07:49:52 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.2 2009/08/21 17:26:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,31 +76,36 @@
  * Caching of mapped addresses is controlled by bits in the TLB entry.
  */
 
-#define	MIPS_KUSEG_START		0x0
-#define	MIPS_KSEG0_START		0x80000000
-#define	MIPS_KSEG1_START		0xa0000000
-#define	MIPS_KSEG2_START		0xc0000000
-#define	MIPS_MAX_MEM_ADDR		0xbe000000
-#define	MIPS_RESERVED_ADDR		0xbfc80000
+#define	MIPS_KUSEG_START		0x0L
+
+/*
+ * MIPS addresses are signed and we defining as negative so that
+ * in LP64 kern they get sign-extended correctly.
+ */
+#define	MIPS_KSEG0_START		(-0x7fffffff-1)	/* 0x80000000 */
+#define	MIPS_KSEG1_START		-0x60000000	/* 0xa0000000 */
+#define	MIPS_KSEG2_START		-0x40000000	/* 0xc0000000 */
+#define	MIPS_MAX_MEM_ADDR		-0x42000000	/* 0xbe000000 */
+#define	MIPS_RESERVED_ADDR		-0x40380000	/* 0xbfc80000 */
 
 #define	MIPS_PHYS_MASK			0x1fffffff
 
 #define	MIPS_KSEG0_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG0(x)	((uintptr_t)(x) | MIPS_KSEG0_START)
+#define	MIPS_PHYS_TO_KSEG0(x)	((uintptr_t)(x) | (intptr_t)MIPS_KSEG0_START)
 #define	MIPS_KSEG1_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG1(x)	((uintptr_t)(x) | MIPS_KSEG1_START)
+#define	MIPS_PHYS_TO_KSEG1(x)	((uintptr_t)(x) | (intptr_t)MIPS_KSEG1_START)
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
 #define	MIPS3_VA_TO_CINDEX(x) \
-		((uintptr_t)(x) & 0xffffff | MIPS_KSEG0_START)
-
-#define	MIPS_XSEG_MASK		(0x3fffffffffffffffULL)
-#define	MIPS_XKSEG_BASE		(0x3ULL << 62)
+		(((intptr_t)(x) & 0xffffff) | MIPS_KSEG0_START) 
+#define	MIPS_XSEG_MASK		(0x3fffffffffffffffLL)
+#define	MIPS_XKSEG_START	(0x3ULL << 62)
 #define	MIPS_XKSEG_P(x)		(((uint64_t)(x) >> 62) == 3)
 
+#define	MIPS_XKPHYS_START	(0x2ULL << 62)
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
-	((0x2ULL << 62) | ((uint64_t)(cca) << 59) | (x))
-#define	MIPS_XKPHYS_TO_PHYS(x)	((x) & 0x0effffffffffffffULL)
+	(MIPS_XKPHYS_START | ((uint64_t)(cca) << 59) | (x))
+#define	MIPS_XKPHYS_TO_PHYS(x)	((x) & 0x0effffffffffffffLL)
 #define	MIPS_XKPHYS_P(x)	(((uint64_t)(x) >> 62) == 2)
 
 /* CPU dependent mtc0 hazard hook */
@@ -399,31 +404,31 @@
  *
  * Common vectors:  reset and UTLB miss.
  */
-#define	MIPS_RESET_EXC_VEC	0xBFC00000
-#define	MIPS_UTLB_MISS_EXC_VEC	0x80000000
+#define	MIPS_RESET_EXC_VEC	MIPS_PHYS_TO_KSEG1(0x1FC00000)
+#define	MIPS_UTLB_MISS_EXC_VEC	MIPS_PHYS_TO_KSEG0(0)
 
 /*
  * MIPS-1 general exception vector (everything else)
  */
-#define	MIPS1_GEN_EXC_VEC	0x80000080
+#define	MIPS1_GEN_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0080)
 
 /*
  * MIPS-III exception vectors
  */
-#define	MIPS3_XTLB_MISS_EXC_VEC 0x80000080
-#define	MIPS3_CACHE_ERR_EXC_VEC 0x80000100
-#define	MIPS3_GEN_EXC_VEC	0x80000180
+#define	MIPS3_XTLB_MISS_EXC_VEC MIPS_PHYS_TO_KSEG0(0x0080)
+#define	MIPS3_CACHE_ERR_EXC_VEC MIPS_PHYS_TO_KSEG0(0x0100)
+#define	MIPS3_GEN_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0180)
 
 /*
  * TX79 (R5900) exception vectors
  */
-#define MIPS_R5900_COUNTER_EXC_VEC		0x80000080
-#define MIPS_R5900_DEBUG_EXC_VEC		0x80000100
+#define MIPS_R5900_COUNTER_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0080)
+#define MIPS_R5900_DEBUG_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0100)
 
 /*
  * MIPS32/MIPS64 (and some MIPS3) dedicated interrupt vector.
  */
-#define	MIPS3_INTR_EXC_VEC	0x80000200
+#define	MIPS3_INTR_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0200)
 
 /*
  * Coprocessor 0 registers:
