@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.7 2009/02/16 10:40:45 lukem Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.8 2009/08/21 08:42:02 he Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.7 2009/02/16 10:40:45 lukem Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.8 2009/08/21 08:42:02 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: nlist_coff.c,v 1.7 2009/02/16 10:40:45 lukem Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <a.out.h>			/* for 'struct nlist' declaration */
+#include <nlist.h>
 
 #include "nlist_private.h"
 #ifdef NLIST_COFF
@@ -151,7 +151,7 @@ __fdnlist_coff(fd, list)
 
 	for (i = 0; i < nesyms; i++) {
 		char *symtabname;
-		char *nlistname;
+		const char *nlistname;
 		struct coff_extsym esym;
 		char name[10];
 
@@ -171,7 +171,7 @@ __fdnlist_coff(fd, list)
 			continue;
 
 		for (p = list; !ISLAST(p); p++) {
-			nlistname = p->n_un.n_name;
+			nlistname = N_NAME(p);
 			if (!strcmp(symtabname, nlistname)) {
 				/*
 				 * Translate (roughly) from COFF to nlist
