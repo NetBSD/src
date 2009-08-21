@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2008/06/30 19:03:59 matt Exp $
+#	$NetBSD: Makefile,v 1.89.10.1 2009/08/21 18:02:35 matt Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -91,12 +91,12 @@ libinstall::
 lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
-	@${LD} -r -o lib${LIB}.o `NM=${NM} ${LORDER} ${OBJS} | ${TSORT}`
+	@${LD} ${LDFLAGS} -r -o lib${LIB}.o `NM=${NM} ${LORDER} ${OBJS} | ${TSORT}`
 
 lib${LIB}.po:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
-	@${LD} -r -o lib${LIB}.po `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
+	@${LD} ${LDFLAGS} -r -o lib${LIB}.po `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
 
 showsources: ${SRCS}
 	@echo ${.ALLSRC}
