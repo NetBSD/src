@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.136 2008/09/15 18:12:56 rmind Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.136.8.1 2009/08/21 18:00:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.136 2008/09/15 18:12:56 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.136.8.1 2009/08/21 18:00:36 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -913,6 +913,10 @@ netbsd_elf_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
 
 	if ((error = netbsd_elf_signature(l, epp, eh)) != 0)
 		return error;
+#ifdef ELF_MD_PROBE_FUNC
+	if ((error = ELF_MD_PROBE_FUNC(l, epp, eh, itp, pos)) != 0)
+		return error;
+#endif
 #ifdef ELF_INTERP_NON_RELOCATABLE
 	*pos = ELF_LINK_ADDR;
 #endif
