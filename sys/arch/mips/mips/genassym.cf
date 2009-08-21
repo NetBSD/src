@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.1 2009/08/21 13:12:22 uebayasi Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,7 @@ define	MIPS3_PG_ASID		MIPS3_PG_ASID
 define	MIPS3_PG_ODDPG		MIPS3_PG_ODDPG
 
 define	FRAME_SIZ		sizeof(struct frame)
-define	FRAME_ZERO		offsetof(struct frame, f_regs[_R_ZERO])
+define	FRAME_RZERO		offsetof(struct frame, f_regs[_R_ZERO])
 define	FRAME_AST		offsetof(struct frame, f_regs[_R_AST])
 define	FRAME_V0		offsetof(struct frame, f_regs[_R_V0])
 define	FRAME_V1		offsetof(struct frame, f_regs[_R_V1])
