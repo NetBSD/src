@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.h,v 1.6 2006/07/13 21:06:18 gdamore Exp $	*/
+/*	$NetBSD: yamon.h,v 1.6.80.1 2009/08/21 17:52:16 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
 #define	YAMON_GETCHAR_OFS	(YAMON_FUNCTION_BASE + 0x50)
 #define	YAMON_SYSCON_READ_OFS	(YAMON_FUNCTION_BASE + 0x54)
 
-#define	YAMON_FUNC(ofs)		(*(uint32_t *)(MIPS_PHYS_TO_KSEG0(ofs)))
+#define	YAMON_FUNC(ofs)		((intptr_t)*(int32_t *)(MIPS_PHYS_TO_KSEG0(ofs)))
 
 typedef void (*t_yamon_print_count)(uint32_t port, char *s, uint32_t count);
 #define	YAMON_PRINT_COUNT(s, count) \

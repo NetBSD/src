@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.10.1 2009/08/21 17:52:16 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.1 2009/08/21 17:52:16 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -201,11 +201,12 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	bus_space_handle_t sh;
 	void *kernend, *v;
         u_long first, last;
-	char *cp;
-	int freqok, i, howto;
+	int freqok;
 	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 
 	extern char edata[], end[];
+
+	CTASSERT((intptr_t)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES) < 0);
 
 	*brkres = 0;	/* Disable BREAK==reset on console */
 
@@ -286,8 +287,10 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 	boothowto = RB_AUTOBOOT;
-	for (i = 1; i < argc; i++) {
-		for (cp = argv[i]; *cp; cp++) {
+#ifndef _LP64
+	for (int i = 1; i < argc; i++) {
+		for (char *cp = argv[i]; *cp; cp++) {
+			int howto;
 			/* Ignore superfluous '-', if there is one */
 			if (*cp == '-')
 				continue;
@@ -300,6 +303,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 				boothowto |= howto;
 		}
 	}
+#endif
 
 	/*
 	 * Load the rest of the available pages into the VM system.
