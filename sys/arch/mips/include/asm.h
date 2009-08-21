@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.5 2009/08/20 07:45:40 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.6 2009/08/21 17:33:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -303,22 +303,23 @@ _C_LABEL(x):
 
 /*
  *  standard callframe {
- *	register_t cf_pad[N];		o32 (N=2), n32/n64=(N=1)
+ *	register_t cf_pad[N];		o32/64 (N=0), n32 (N=1) n64 (N=1)
  *  	register_t cf_args[4];		arg0 - arg3 (only on o32 and o64)
  *  	register_t cf_gp;		global pointer (only on n32 and n64)
  *  	register_t cf_sp;		frame pointer
  *  	register_t cf_ra;		return address
  *  };
  */
-#if defined(__mips_o32)
-#define	CALLFRAME_SIZ	(SZREG * (4 + 4))
-#elif defined(__mips_o64)
-#define	CALLFRAME_SIZ	(SZREG * (4 + 4))
+#if defined(__mips_o32) || defined(__mips_o64)
+#define	CALLFRAME_SIZ	(SZREG * (4 + 2))
+#define	CALLFRAME_S0	0
 #elif defined(__mips_n32) || defined(__mips_n64)
 #define	CALLFRAME_SIZ	(SZREG * 4)
-#endif
 #define	CALLFRAME_S0	(CALLFRAME_SIZ - 4 * SZREG)
+#endif
+#ifndef _KERNEL
 #define	CALLFRAME_GP	(CALLFRAME_SIZ - 3 * SZREG)
+#endif
 #define	CALLFRAME_SP	(CALLFRAME_SIZ - 2 * SZREG)
 #define	CALLFRAME_RA	(CALLFRAME_SIZ - 1 * SZREG)
 
