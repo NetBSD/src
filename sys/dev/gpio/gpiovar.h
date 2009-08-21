@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.9 2009/07/25 16:30:44 mbalmer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.10 2009/08/21 12:53:42 mbalmer Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ struct gpio_name {
 	LIST_ENTRY(gpio_name)	gp_next;
 };
 
+int	gpio_pin_can_map(void *, int, u_int32_t);
 int	gpio_pin_map(void *, int, u_int32_t, struct gpio_pinmap *);
 void	gpio_pin_unmap(void *, struct gpio_pinmap *);
 int	gpio_pin_read(void *, struct gpio_pinmap *, int);
