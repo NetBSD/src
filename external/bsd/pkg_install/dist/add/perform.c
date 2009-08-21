@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.10 2009/08/06 16:55:18 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.11 2009/08/21 15:19:00 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.10 2009/08/06 16:55:18 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.11 2009/08/21 15:19:00 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -1322,14 +1322,12 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		pkg->logdir = xstrdup(pkg->prefix);
 		_pkgdb_setPKGDB_DIR(dirname_of(pkg->logdir));
 	} else {
-		pkg->logdir = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(),
-		    pkg->pkgname);
+		pkg->logdir = xasprintf("%s/%s", PlainPkgdb, pkg->pkgname);
 	}
 
-	if (Destdir != NULL) {
+	if (Destdir != NULL)
 		pkg->install_logdir = xasprintf("%s/%s", Destdir, pkg->logdir);
-		_pkgdb_setPKGDB_DIR(dirname_of(pkg->install_logdir));
-	} else
+	else
 		pkg->install_logdir = xstrdup(pkg->logdir);
 
 	if (NoRecord && !Fake) {

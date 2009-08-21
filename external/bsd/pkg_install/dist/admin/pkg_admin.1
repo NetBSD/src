@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.1.1.7 2009/06/14 23:30:57 joerg Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.1.1.8 2009/08/21 15:19:05 joerg Exp $
 .\"
 .\" Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 25, 2009
+.Dd August 16, 2009
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -205,6 +205,14 @@ If
 .Fl u
 is given, the fetch is conditional and the file transfer is only done if
 the remote version is newer than the one in pkgdb.
+.It Cm findbest Ar pattern ...
+Search the entries of
+.Ev PKG_PATH
+for packages matching
+.Ar pattern .
+Print the URL of the best matching package to stdout for each pattern.
+If a pattern is not matched, it is skipped and the command will return
+a failure.
 .It Cm lsall Ar /dir/pkgpattern
 .It Cm lsbest Ar /dir/pkgpattern
 List all/best package matching pattern in the given directory

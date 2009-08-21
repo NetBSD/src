@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.5 2009/08/06 16:55:25 joerg Exp $
+.\" $NetBSD: pkg_delete.1,v 1.1.1.6 2009/08/21 15:19:09 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd April 24, 2009
+.Dd August 16, 2009
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -127,6 +127,9 @@ Force removal of the package, even if the package is marked as a
 .Cm preserved
 package.
 Note that this is a dangerous operation.
+See also the
+.Fl k
+option.
 .It Fl K Ar pkg_dbdir
 Set
 .Ar pkg_dbdir
@@ -136,6 +139,9 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR
 if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
+.It Fl k
+Silently skip all packages that are marked as
+.Cm preserved .
 .It Fl N
 Remove the package's registration and its entries from the package database,
 but leave the files installed.
