@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.185 2009/07/22 22:53:41 alc Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.186 2009/08/21 22:51:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1164,6 +1164,7 @@ int	sysctl_destroyv(struct sysctlnode *, ...);
 void	sysctl_dump(const struct sysctlnode *);
 void	sysctl_free(struct sysctlnode *);
 void	sysctl_teardown(struct sysctllog **);
+void	sysctl_log_print(const struct sysctllog *);
 
 #ifdef SYSCTL_INCLUDE_DESCR
 #define SYSCTL_DESCR(s) s
