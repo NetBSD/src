@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.1 2009/08/20 07:52:38 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.2 2009/08/21 17:20:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,6 @@ struct mdproc {
 					/* syscall entry for this process */
 	void	(*md_syscall)(struct lwp *, u_int, u_int, vaddr_t);
 	int	md_abi;			/* which ABI is this process using? */
-	int	md_fancy;		
 };
 
 /* md_flags */
