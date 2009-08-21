@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.30 2009/02/16 10:40:45 lukem Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.31 2009/08/21 08:42:02 he Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.30 2009/02/16 10:40:45 lukem Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.31 2009/08/21 08:42:02 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.30 2009/02/16 10:40:45 lukem Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <a.out.h>			/* for 'struct nlist' declaration */
+#include <nlist.h>
 
 #include "nlist_private.h"
 #if defined(NLIST_ELF32) || defined(NLIST_ELF64)
@@ -150,7 +150,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 
 			p->n_other = 0;
 			p->n_desc = 0;
-			nlistname = p->n_un.n_name;
+			nlistname = N_NAME(p);
 			if (*nlistname == '_')
 				nlistname++;
 
@@ -258,7 +258,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 			char *symtabname;
 
 			/* This may be incorrect */
-			nlistname = p->n_un.n_name;
+			nlistname = N_NAME(p);
 			if (*nlistname == '_')
 				nlistname++;
 
