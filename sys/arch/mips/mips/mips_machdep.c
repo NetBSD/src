@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.1 2009/08/20 04:36:05 uebayasi Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.2 2009/08/21 17:48:57 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.1 2009/08/20 04:36:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.2 2009/08/21 17:48:57 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -168,32 +168,32 @@ int	cpu_dump(void);
 
 #if defined(MIPS1)
 static void	mips1_vector_init(void);
-extern long	*mips1_locoresw[];
+extern const struct locoresw mips1_locoresw;
 #endif
 
 #if defined(MIPS3)
 #if defined(MIPS3_5900)
 static void	r5900_vector_init(void);
-extern long	*mips5900_locoresw[];
+extern const struct locoresw mips5900_locoresw;
 #else
 static void	mips3_vector_init(void);
-extern long	*mips3_locoresw[];
+extern const struct locoresw mips3_locoresw;
 #endif
 #endif
 
 #if defined(MIPS32)
 static void	mips32_vector_init(void);
-extern long	*mips32_locoresw[];
+extern const struct locoresw mips32_locoresw;
 #endif
 
 #if defined(MIPS64)
 static void	mips64_vector_init(void);
-extern long	*mips64_locoresw[];
+extern const struct locoresw mips64_locoresw;
 #endif
 
 mips_locore_jumpvec_t mips_locore_jumpvec;
 
-long *mips_locoresw[4];
+struct locoresw mips_locoresw;
 
 int cpu_arch;
 int cpu_mhz;
@@ -443,7 +443,7 @@ static const struct pridtab fputab[] = {
  * Company ID's are not sparse (yet), this array is indexed directly
  * by pridtab->cpu_cid.
  */
-static const char *cidnames[] = {
+static const char * const cidnames[] = {
 	"Prehistoric",
 	"MIPS",		/* or "MIPS Technologies, Inc.	*/
 	"Broadcom",	/* or "Broadcom Corp."		*/
@@ -457,8 +457,7 @@ static const char *cidnames[] = {
 /*
  * MIPS-I locore function vector
  */
-static const mips_locore_jumpvec_t mips1_locore_vec =
-{
+static const mips_locore_jumpvec_t mips1_locore_vec = {
 	mips1_SetPID,
 	mips1_TBIAP,
 	mips1_TBIS,
@@ -488,8 +487,7 @@ mips1_vector_init(void)
 	/*
 	 * Copy locore-function vector.
 	 */
-	memcpy(&mips_locore_jumpvec, &mips1_locore_vec,
-		sizeof(mips_locore_jumpvec_t));
+	mips_locore_jumpvec = mips1_locore_vec;
 
 	/*
 	 * Clear out the I and D caches.
@@ -504,8 +502,7 @@ mips1_vector_init(void)
 /*
  * MIPS III locore function vector
  */
-static const mips_locore_jumpvec_t mips3_locore_vec =
-{
+static const mips_locore_jumpvec_t mips3_locore_vec = {
 	mips3_SetPID,
 	mips3_TBIAP,
 	mips3_TBIS,
@@ -553,8 +550,7 @@ mips3_vector_init(void)
 	/*
 	 * Copy locore-function vector.
 	 */
-	memcpy(&mips_locore_jumpvec, &mips3_locore_vec,
-	      sizeof(mips_locore_jumpvec_t));
+	mips_locore_jumpvec = mips3_locore_vec;
 
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
@@ -569,8 +565,7 @@ mips3_vector_init(void)
  * MIPS R5900 locore function vector.
  * Same as MIPS32 - all MMU registers are 32bit.
  */
-static const mips_locore_jumpvec_t r5900_locore_vec =
-{
+static const mips_locore_jumpvec_t r5900_locore_vec = {
 	mips5900_SetPID,
 	mips5900_TBIAP,
 	mips5900_TBIS,
@@ -600,8 +595,7 @@ r5900_vector_init(void)
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips5900_exception, esz);
 	memcpy((void *)MIPS3_INTR_EXC_VEC, mips5900_exception, esz);
 
-	memcpy(&mips_locore_jumpvec, &r5900_locore_vec,
-	    sizeof(mips_locore_jumpvec_t));
+	mips_locore_jumpvec = r5900_locore_vec;
 
 	mips_config_cache();
 
@@ -618,8 +612,7 @@ r5900_vector_init(void)
 /*
  * MIPS32 locore function vector
  */
-static const mips_locore_jumpvec_t mips32_locore_vec =
-{
+static const mips_locore_jumpvec_t mips32_locore_vec = {
 	mips32_SetPID,
 	mips32_TBIAP,
 	mips32_TBIS,
@@ -674,8 +667,7 @@ mips32_vector_init(void)
 	/*
 	 * Copy locore-function vector.
 	 */
-	memcpy(&mips_locore_jumpvec, &mips32_locore_vec,
-		      sizeof(mips_locore_jumpvec_t));
+	mips_locore_jumpvec = mips32_locore_vec;
 
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
@@ -689,8 +681,7 @@ mips32_vector_init(void)
 /*
  * MIPS64 locore function vector
  */
-const mips_locore_jumpvec_t mips64_locore_vec =
-{
+const mips_locore_jumpvec_t mips64_locore_vec = {
 	mips64_SetPID,
 	mips64_TBIAP,
 	mips64_TBIS,
@@ -751,8 +742,7 @@ mips64_vector_init(void)
 	/*
 	 * Copy locore-function vector.
 	 */
-	memcpy(&mips_locore_jumpvec, &mips64_locore_vec,
-	      sizeof(mips_locore_jumpvec_t));
+	mips_locore_jumpvec = mips64_locore_vec;
 
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
@@ -908,7 +898,7 @@ mips_vector_init(void)
 	case CPU_ARCH_MIPS1:
 		mips1_TBIA(mips_num_tlb_entries);
 		mips1_vector_init();
-		memcpy(mips_locoresw, mips1_locoresw, sizeof(mips_locoresw));
+		mips_locoresw = mips1_locoresw;
 		break;
 #endif
 #if defined(MIPS3)
@@ -920,7 +910,7 @@ mips_vector_init(void)
 		mips5900_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		r5900_vector_init();
-		memcpy(mips_locoresw, mips5900_locoresw, sizeof(mips_locoresw));
+		mips_locoresw = mips5900_locoresw;
 #else /* MIPS3_5900 */
 #if defined(MIPS3_4100)
 		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
@@ -932,7 +922,7 @@ mips_vector_init(void)
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips3_vector_init();
-		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
+		mips_locoresw = mips3_locoresw;
 #endif /* MIPS3_5900 */
 		break;
 #endif
@@ -943,7 +933,7 @@ mips_vector_init(void)
 		mips32_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips32_vector_init();
-		memcpy(mips_locoresw, mips32_locoresw, sizeof(mips_locoresw));
+		mips_locoresw = mips32_locoresw;
 		break;
 #endif
 #if defined(MIPS64)
@@ -953,7 +943,7 @@ mips_vector_init(void)
 		mips64_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips64_vector_init();
-		memcpy(mips_locoresw, mips64_locoresw, sizeof(mips_locoresw));
+		mips_locoresw = mips64_locoresw;
 		break;
 #endif
 	default:
@@ -968,7 +958,7 @@ mips_vector_init(void)
 	 */
 	if ((mips_cpu_flags & CPU_MIPS_USE_WAIT) &&
 	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT))
-		CPU_IDLE = (long *)mips_wait_idle;
+		mips_locoresw.lsw_cpu_idle = mips_wait_idle;
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 }
 
@@ -1120,12 +1110,9 @@ cpu_identify(void)
  * code by the MIPS elf abi).
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct frame *f = (struct frame *)l->l_md.md_regs;
+	struct frame *f = l->l_md.md_regs;
 
 	memset(f, 0, sizeof(struct frame));
 	f->f_regs[_R_SP] = (int)stack;
@@ -1510,7 +1497,8 @@ savefpregs(l)
 	struct lwp *l;
 {
 #ifndef NOFPU
-	u_int32_t status, fpcsr, *fp;
+	u_int32_t status, fpcsr;
+	mips_fpreg_t *fp;
 	struct frame *f;
 
 	if (l == NULL)
@@ -1533,49 +1521,57 @@ savefpregs(l)
 	/*
 	 * this process yielded FPA.
 	 */
-	f = (struct frame *)l->l_md.md_regs;
+	f = l->l_md.md_regs;
 	f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 
 	/*
-	 * save FPCSR and 32bit FP register values.
+	 * save FPCSR and FP register values.
 	 */
-	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
+	fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	fp[32] = fpcsr;
+#if defined(__mips_o32) || defined(__mips_o64)
+#define	LXC1	"lwc1"
+#define	SXC1	"swc1"
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	LXC1	"ldc1"
+#define	SXC1	"sdc1"
+#endif
 	__asm volatile (
 		".set noreorder		;"
-		"swc1	$f0, 0(%0)	;"
-		"swc1	$f1, 4(%0)	;"
-		"swc1	$f2, 8(%0)	;"
-		"swc1	$f3, 12(%0)	;"
-		"swc1	$f4, 16(%0)	;"
-		"swc1	$f5, 20(%0)	;"
-		"swc1	$f6, 24(%0)	;"
-		"swc1	$f7, 28(%0)	;"
-		"swc1	$f8, 32(%0)	;"
-		"swc1	$f9, 36(%0)	;"
-		"swc1	$f10, 40(%0)	;"
-		"swc1	$f11, 44(%0)	;"
-		"swc1	$f12, 48(%0)	;"
-		"swc1	$f13, 52(%0)	;"
-		"swc1	$f14, 56(%0)	;"
-		"swc1	$f15, 60(%0)	;"
-		"swc1	$f16, 64(%0)	;"
-		"swc1	$f17, 68(%0)	;"
-		"swc1	$f18, 72(%0)	;"
-		"swc1	$f19, 76(%0)	;"
-		"swc1	$f20, 80(%0)	;"
-		"swc1	$f21, 84(%0)	;"
-		"swc1	$f22, 88(%0)	;"
-		"swc1	$f23, 92(%0)	;"
-		"swc1	$f24, 96(%0)	;"
-		"swc1	$f25, 100(%0)	;"
-		"swc1	$f26, 104(%0)	;"
-		"swc1	$f27, 108(%0)	;"
-		"swc1	$f28, 112(%0)	;"
-		"swc1	$f29, 116(%0)	;"
-		"swc1	$f30, 120(%0)	;"
-		"swc1	$f31, 124(%0)	;"
-		".set reorder" :: "r"(fp));
+		SXC1"	$f0, (0*%d1)(%0)	;"
+		SXC1"	$f1, (1*%d1)(%0)	;"
+		SXC1"	$f2, (2*%d1)(%0)	;"
+		SXC1"	$f3, (3*%d1)(%0)	;"
+		SXC1"	$f4, (4*%d1)(%0)	;"
+		SXC1"	$f5, (5*%d1)(%0)	;"
+		SXC1"	$f6, (6*%d1)(%0)	;"
+		SXC1"	$f7, (7*%d1)(%0)	;"
+		SXC1"	$f8, (8*%d1)(%0)	;"
+		SXC1"	$f9, (9*%d1)(%0)	;"
+		SXC1"	$f10, (10*%d1)(%0)	;"
+		SXC1"	$f11, (11*%d1)(%0)	;"
+		SXC1"	$f12, (12*%d1)(%0)	;"
+		SXC1"	$f13, (13*%d1)(%0)	;"
+		SXC1"	$f14, (14*%d1)(%0)	;"
+		SXC1"	$f15, (15*%d1)(%0)	;"
+		SXC1"	$f16, (16*%d1)(%0)	;"
+		SXC1"	$f17, (17*%d1)(%0)	;"
+		SXC1"	$f18, (18*%d1)(%0)	;"
+		SXC1"	$f19, (19*%d1)(%0)	;"
+		SXC1"	$f20, (20*%d1)(%0)	;"
+		SXC1"	$f21, (21*%d1)(%0)	;"
+		SXC1"	$f22, (22*%d1)(%0)	;"
+		SXC1"	$f23, (23*%d1)(%0)	;"
+		SXC1"	$f24, (24*%d1)(%0)	;"
+		SXC1"	$f25, (25*%d1)(%0)	;"
+		SXC1"	$f26, (26*%d1)(%0)	;"
+		SXC1"	$f27, (27*%d1)(%0)	;"
+		SXC1"	$f28, (28*%d1)(%0)	;"
+		SXC1"	$f29, (29*%d1)(%0)	;"
+		SXC1"	$f30, (30*%d1)(%0)	;"
+		SXC1"	$f31, (31*%d1)(%0)	;"
+		".set reorder" :: "r"(fp), "i"(sizeof(fp[0])));
 	/*
 	 * stop CP1, enable interrupts.
 	 */
@@ -1589,7 +1585,8 @@ loadfpregs(l)
 	struct lwp *l;
 {
 #ifndef NOFPU
-	u_int32_t status, *fp;
+	uint32_t status;
+	mips_fpreg_t *fp;
 	struct frame *f;
 
 	if (l == NULL)
@@ -1608,46 +1605,47 @@ loadfpregs(l)
 		".set reorder					\n\t"
 		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
 
-	f = (struct frame *)l->l_md.md_regs;
-	fp = (int *)l->l_addr->u_pcb.pcb_fpregs.r_regs;
+	f = l->l_md.md_regs;
+	fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	/*
-	 * load 32bit FP registers and establish processes' FP context.
+	 * load FP registers and establish processes' FP context.
 	 */
-	__asm volatile(
+	__asm volatile (
 		".set noreorder		;"
-		"lwc1	$f0, 0(%0)	;"
-		"lwc1	$f1, 4(%0)	;"
-		"lwc1	$f2, 8(%0)	;"
-		"lwc1	$f3, 12(%0)	;"
-		"lwc1	$f4, 16(%0)	;"
-		"lwc1	$f5, 20(%0)	;"
-		"lwc1	$f6, 24(%0)	;"
-		"lwc1	$f7, 28(%0)	;"
-		"lwc1	$f8, 32(%0)	;"
-		"lwc1	$f9, 36(%0)	;"
-		"lwc1	$f10, 40(%0)	;"
-		"lwc1	$f11, 44(%0)	;"
-		"lwc1	$f12, 48(%0)	;"
-		"lwc1	$f13, 52(%0)	;"
-		"lwc1	$f14, 56(%0)	;"
-		"lwc1	$f15, 60(%0)	;"
-		"lwc1	$f16, 64(%0)	;"
-		"lwc1	$f17, 68(%0)	;"
-		"lwc1	$f18, 72(%0)	;"
-		"lwc1	$f19, 76(%0)	;"
-		"lwc1	$f20, 80(%0)	;"
-		"lwc1	$f21, 84(%0)	;"
-		"lwc1	$f22, 88(%0)	;"
-		"lwc1	$f23, 92(%0)	;"
-		"lwc1	$f24, 96(%0)	;"
-		"lwc1	$f25, 100(%0)	;"
-		"lwc1	$f26, 104(%0)	;"
-		"lwc1	$f27, 108(%0)	;"
-		"lwc1	$f28, 112(%0)	;"
-		"lwc1	$f29, 116(%0)	;"
-		"lwc1	$f30, 120(%0)	;"
-		"lwc1	$f31, 124(%0)	;"
-		".set reorder" :: "r"(fp));
+		LXC1"	$f0, (0*%d1)(%0)	;"
+		LXC1"	$f1, (1*%d1)(%0)	;"
+		LXC1"	$f2, (2*%d1)(%0)	;"
+		LXC1"	$f3, (3*%d1)(%0)	;"
+		LXC1"	$f4, (4*%d1)(%0)	;"
+		LXC1"	$f5, (5*%d1)(%0)	;"
+		LXC1"	$f6, (6*%d1)(%0)	;"
+		LXC1"	$f7, (7*%d1)(%0)	;"
+		LXC1"	$f8, (8*%d1)(%0)	;"
+		LXC1"	$f9, (9*%d1)(%0)	;"
+		LXC1"	$f10, (10*%d1)(%0)	;"
+		LXC1"	$f11, (11*%d1)(%0)	;"
+		LXC1"	$f12, (12*%d1)(%0)	;"
+		LXC1"	$f13, (13*%d1)(%0)	;"
+		LXC1"	$f14, (14*%d1)(%0)	;"
+		LXC1"	$f15, (15*%d1)(%0)	;"
+		LXC1"	$f16, (16*%d1)(%0)	;"
+		LXC1"	$f17, (17*%d1)(%0)	;"
+		LXC1"	$f18, (18*%d1)(%0)	;"
+		LXC1"	$f19, (19*%d1)(%0)	;"
+		LXC1"	$f20, (20*%d1)(%0)	;"
+		LXC1"	$f21, (21*%d1)(%0)	;"
+		LXC1"	$f22, (22*%d1)(%0)	;"
+		LXC1"	$f23, (23*%d1)(%0)	;"
+		LXC1"	$f24, (24*%d1)(%0)	;"
+		LXC1"	$f25, (25*%d1)(%0)	;"
+		LXC1"	$f26, (26*%d1)(%0)	;"
+		LXC1"	$f27, (27*%d1)(%0)	;"
+		LXC1"	$f28, (28*%d1)(%0)	;"
+		LXC1"	$f29, (29*%d1)(%0)	;"
+		LXC1"	$f30, (30*%d1)(%0)	;"
+		LXC1"	$f31, (31*%d1)(%0)	;"
+		".set reorder" :: "r"(fp), "i"(sizeof(fp[0])));
+
 	/*
 	 * load FPCSR and stop CP1 again while enabling interrupts.
 	 */
@@ -1698,9 +1696,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct saframe *sf, frame;
-	struct frame *f;
-
-	f = (struct frame *)l->l_md.md_regs;
+	struct frame *f = l->l_md.md_regs;
 
 #if 0 /* First 4 args in regs (see below). */
 	frame.sa_type = type;
@@ -1737,7 +1733,7 @@ cpu_getmcontext(l, mcp, flags)
 	mcontext_t *mcp;
 	unsigned int *flags;
 {
-	const struct frame *f = (struct frame *)l->l_md.md_regs;
+	const struct frame *f = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
 	__greg_t ras_pc;
 
@@ -1750,8 +1746,8 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_EPC]   = f->f_regs[_R_PC];
 	gr[_REG_SR]    = f->f_regs[_R_SR];
 
-	if ((ras_pc = (__greg_t)(intptr_t)ras_lookup(l->l_proc,
-	    (void *)(intptr_t)gr[_REG_EPC])) != -1)
+	if ((ras_pc = (intptr_t)ras_lookup(l->l_proc,
+	    (void *) (intptr_t)gr[_REG_EPC])) != -1)
 		gr[_REG_EPC] = ras_pc;
 
 	*flags |= _UC_CPU;
@@ -1783,7 +1779,7 @@ cpu_setmcontext(l, mcp, flags)
 	const mcontext_t *mcp;
 	unsigned int flags;
 {
-	struct frame *f = (struct frame *)l->l_md.md_regs;
+	struct frame *f = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
 
@@ -1838,7 +1834,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 void
 cpu_idle(void)
 {
-	void (*mach_idle)(void) = (void (*)(void))CPU_IDLE;
+	void (*mach_idle)(void) = mips_locoresw.lsw_cpu_idle;
 
 	while (!curcpu()->ci_want_resched)
 		(*mach_idle)();
