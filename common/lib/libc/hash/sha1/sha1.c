@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.4 2009/03/16 05:59:21 cegger Exp $	*/
+/*	$NetBSD: sha1.c,v 1.5 2009/08/21 09:40:51 skrll Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -20,14 +20,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha1.c,v 1.4 2009/03/16 05:59:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha1.c,v 1.5 2009/08/21 09:40:51 skrll Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1.c,v 1.4 2009/03/16 05:59:21 cegger Exp $");
+__RCSID("$NetBSD: sha1.c,v 1.5 2009/08/21 09:40:51 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -71,11 +71,13 @@ __RCSID("$NetBSD: sha1.c,v 1.4 2009/03/16 05:59:21 cegger Exp $");
 #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
 
-#if !defined(_KERNEL) && defined(__weak_alias)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(__weak_alias)
 __weak_alias(SHA1Transform,_SHA1Transform)
 __weak_alias(SHA1Init,_SHA1Init)
 __weak_alias(SHA1Update,_SHA1Update)
 __weak_alias(SHA1Final,_SHA1Final)
+#endif
 #endif
 
 typedef union {
