@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/18 20:42:11 he Exp $
+#	$NetBSD: Makefile,v 1.4 2009/08/21 14:41:22 skrll Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,6 +19,9 @@ LDADD+= 	-lrumpfs_nfs -lrumpnet -lrumpnet_sockin
 .endif
 #LDADD+= 	-lrumpfs_nfs -lrumpnet -lrumpnet_net -lrumpnet_netinet	\
 		-lrumpnet_virtif
+
+LDFLAGS+=      -Wl,--ignore-unresolved-symbol,__start_link_set_domains
+LDFLAGS+=      -Wl,--ignore-unresolved-symbol,__stop_link_set_domains
 
 ISRUMP=		# gives me nightmares
 #CPPFLAGS+=	-DINET6 # for getnfsargs?
