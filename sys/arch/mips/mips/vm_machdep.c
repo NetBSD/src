@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1 2009/06/09 17:48:20 snj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.1 2009/08/21 17:43:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1 2009/06/09 17:48:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.1 2009/08/21 17:43:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,16 +106,16 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1 2009/06/09 17:48:20 snj Exp
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * lwp_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the process being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -147,13 +147,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		savefpregs(l1);
 
 	/*
-	 * Copy pcb from proc p1 to p2.
-	 * Copy p1 trapframe atop on p2 stack space, so return to user mode
+	 * Copy pcb from lwp l1 to l2.
+	 * Copy l1 trapframe atop on l2 stack space, so return to user mode
 	 * will be to right address, with correct registers.
 	 */
 	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
 	f = (struct frame *)((char *)l2->l_addr + USPACE) - 1;
-	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
+	*f = *l1->l_md.md_regs;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -161,7 +161,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (stack != NULL)
 		f->f_regs[_R_SP] = (uintptr_t)stack + stacksize;
 
-	l2->l_md.md_regs = (void *)f;
+	l2->l_md.md_regs = f;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 	x = (MIPS_HAS_R4K_MMU) ?
 	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
@@ -269,7 +269,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
-	cpustate.frame = *(struct frame *)l->l_md.md_regs;
+	cpustate.frame = *l->l_md.md_regs;
 	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
@@ -361,24 +361,34 @@ kvtophys(vaddr_t kva)
 			goto overrun;
 
 		pte = kvtopte(kva);
-		if ((size_t) (pte - Sysmap) > Sysmapsize)  {
+		if ((size_t) (pte - Sysmap) >= Sysmapsize)  {
 			printf("oops: Sysmap overrun, max %d index %zd\n",
 			       Sysmapsize, pte - Sysmap);
 		}
 		if (!mips_pg_v(pte->pt_entry)) {
-			printf("kvtophys: pte not valid for %lx\n", kva);
+			printf("kvtophys: pte not valid for %#"PRIxVADDR"\n",
+			    kva);
 		}
 		phys = mips_tlbpfn_to_paddr(pte->pt_entry) | (kva & PGOFSET);
 		return phys;
 	}
-	if (kva >= MIPS_KSEG1_START)
+	if (kva >= (vaddr_t)MIPS_KSEG1_START)
 		return MIPS_KSEG1_TO_PHYS(kva);
 
-	if (kva >= MIPS_KSEG0_START)
+	if (kva >= (vaddr_t)MIPS_KSEG0_START)
 		return MIPS_KSEG0_TO_PHYS(kva);
+#ifdef _LP64
+#if 0
+	if (kva >= (vaddr_t)MIPS_XKSEG_START)
+		return MIPS_XKPHYS_TO_PHYS(kva);
+#endif
 
+	if (kva >= (vaddr_t)MIPS_XKPHYS_START
+	    && kva < (vaddr_t)MIPS_XKSEG_START)
+		return MIPS_XKPHYS_TO_PHYS(kva);
+#endif
 overrun:
-	printf("Virtual address %lx: cannot map to physical\n", kva);
+	printf("Virtual address %#"PRIxVADDR": cannot map to physical\n", kva);
 #ifdef DDB
 	Debugger();
 	return 0;	/* XXX */
