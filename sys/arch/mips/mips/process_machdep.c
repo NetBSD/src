@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.29 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.29.62.1 2009/08/21 17:40:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.1 2009/08/21 17:40:22 matt Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -108,21 +108,22 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2007/03/04 06:00:12 christo
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
+CTASSERT(sizeof(struct reg) == sizeof(((struct frame *)0)->f_regs));
+
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
 
-	memcpy(regs, l->l_md.md_regs, sizeof(struct reg));
+	memcpy(regs, l->l_md.md_regs->f_regs, sizeof(struct reg));
 	return 0;
 }
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct frame *f;
+	struct frame *f = l->l_md.md_regs;
 	mips_reg_t sr;
 
-	f = (struct frame *) l->l_md.md_regs;
 	sr = f->f_regs[_R_SR];
 	memcpy(l->l_md.md_regs, regs, sizeof(struct reg));
 	f->f_regs[_R_SR] = sr;
