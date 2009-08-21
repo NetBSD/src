@@ -1,16 +1,24 @@
-/*	$NetBSD: elf_machdep.h,v 1.10.96.2 2009/08/20 07:48:43 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.96.3 2009/08/21 17:17:01 matt Exp $	*/
 
+#ifndef _MIPS_ELF_MACHDEP_H_
+#define  _MIPS_ELF_MACHDEP_H_
+
+#if defined(ELFSIZE)
+#if ELFSIZE == 32
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
 
+#define	ELF32_MACHDEP_ID	EM_MIPS
+#endif
+#if ELFSIZE == 64
 #define	ELF64_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
 
-
-#define	ELF32_MACHDEP_ID	EM_MIPS
 #define	ELF64_MACHDEP_ID	EM_MIPS
+#endif
+#endif /* defined(ELFSIZE) */
 
 #ifdef _LP64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
@@ -155,4 +163,23 @@
  */
 #define ELF_INTERP_NON_RELOCATABLE
 #endif /* COMPAT_16 */
+
+/*
+ * We need to be able to include the ELF header so we can pick out the
+ * ABI being used.
+ */
+#ifdef ELFSIZE
+#define	ELF_MD_PROBE_FUNC	ELFNAME2(mips_netbsd,probe)
+#define	ELF_MD_COREDUMP_SETUP	ELFNAME2(coredump,setup)
+#endif
+
+int mips_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *, char *,
+	vaddr_t *);
+void coredump_elf32_setup(struct lwp *, void *);
+
+int mips_netbsd_elf64_probe(struct lwp *, struct exec_package *, void *, char *,
+	vaddr_t *);
+void coredump_elf64_setup(struct lwp *, void *);
 #endif /* _KERNEL */
+
+#endif /* _MIPS_ELF_MACHDEP_H_ */
