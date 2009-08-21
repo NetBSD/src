@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.26 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.newsmips,v 1.27 2009/08/21 04:03:01 thorpej Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -95,6 +95,8 @@ file arch/newsmips/newsmips/disksubr.c
 file arch/newsmips/newsmips/mainbus.c
 file arch/newsmips/newsmips/cpu_cons.c
 file dev/cons.c
+
+file common/bus_dma/bus_dmamem_common.c
 
 file arch/mips/mips/softintr.c
 
