@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.1 2009/08/20 04:36:05 uebayasi Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.2 2009/08/21 17:45:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.1 2009/08/20 04:36:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.2 2009/08/21 17:45:19 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.1 2009/08/20 04:36:05 uebayasi Exp
 #include <sys/kgdb.h>
 #endif
 
-const char *trap_type[] = {
+const char * const trap_type[] = {
 	"external interrupt",
 	"TLB modification",
 	"TLB miss (load or instr. fetch)",
@@ -161,8 +161,8 @@ void trap(unsigned int, unsigned int, vaddr_t, vaddr_t, struct trapframe *);
 void ast(unsigned int);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned int, int);	/* XXX */
-void MachEmulateInst(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
-void MachFPTrap(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
+void MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
+void MachFPTrap(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 
@@ -174,7 +174,7 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	struct frame *frame = l->l_md.md_regs;
 
 	frame->f_regs[_R_V0] = 0;
 	frame->f_regs[_R_V1] = 1;
@@ -232,17 +232,15 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		printf("trap: %s in %s mode\n",
 			trap_type[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
-		printf("status=0x%x, cause=0x%x, epc=%#lx, vaddr=%#lx\n",
-			status, cause, opc, vaddr);
-		if (curlwp != NULL) {
-			fp = (struct frame *)l->l_md.md_regs;
-			printf("pid=%d cmd=%s usp=0x%x ",
-			    p->p_pid, p->p_comm, (int)fp->f_regs[_R_SP]);
-		} else
-			printf("curlwp == NULL ");
-		printf("ksp=%p\n", &status);
+		printf("status=0x%x, cause=0x%x, epc=%#" PRIxVADDR
+			", vaddr=%#" PRIxVADDR "\n", status, cause, opc, vaddr);
+		fp = l->l_md.md_regs;
+		printf("pid=%d cmd=%s usp=%#" PRIxREGISTER
+		    " ksp=%p ra=%#" PRIxREGISTER "\n",
+		    p->p_pid, p->p_comm, fp->f_regs[_R_SP],
+		    &status, fp->f_regs[_R_RA]);
 #if defined(DDB)
-		kdb_trap(type, (mips_reg_t *) frame);
+		kdb_trap(type, frame->tf_regs);
 		/* XXX force halt XXX */
 #elif defined(KGDB)
 		{
@@ -260,7 +258,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			db_set_ddb_regs(type, (mips_reg_t *) frame);
 			PC_BREAK_ADVANCE(f);
 			if (kgdb_trap(type, &ddb_regs)) {
-				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
+				frame->tf_regs[TF_EPC] = f->f_regs[_R_PC];
 				return;
 			}
 		}
@@ -290,9 +288,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			MachTLBUpdate(vaddr, entry);
 			pa = mips_tlbpfn_to_paddr(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
-				printf("ktlbmod: va %#lx pa %#llx\n",
-				    vaddr, (long long)pa);
-				panic("ktlbmod: unmanaged page");
+				panic("ktlbmod: unmanaged page:"
+				    " va %#" PRIxVADDR " pa %#"PRIxPADDR,
+				    vaddr, pa);
 			}
 			pmap_set_modified(pa);
 			return; /* KERN */
@@ -325,9 +323,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		MachTLBUpdate(vaddr, entry);
 		pa = mips_tlbpfn_to_paddr(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
-			printf("utlbmod: va %#lx pa %#llx\n",
-			    vaddr, (long long)pa);
-			panic("utlbmod: unmanaged page");
+			panic("utlbmod: unmanaged page:"
+			    " va %#"PRIxVADDR" pa %#"PRIxPADDR,
+			    vaddr, pa);
 		}
 		pmap_set_modified(pa);
 		if (type & T_USER)
@@ -347,7 +345,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (l->l_addr->u_pcb.pcb_onfault == (void *)fswintrberr) {
-			frame->tf_regs[TF_EPC] = (int)fswintrberr;
+			frame->tf_regs[TF_EPC] = (intptr_t)fswintrberr;
 			return; /* KERN */
 		}
 		goto pagefault;
@@ -378,8 +376,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			rv = uvm_fault(map, va, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
-	    "uvm_fault(%p (pmap %p), %lx (0x%x), %d) -> %d at pc %p\n",
-		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
+		    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
+		    " (0x%x), %d) -> %d at pc %#"PRIxVADDR"\n",
+		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, opc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -522,8 +521,9 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		mips_dcache_wbinv_all();	/* XXXJRT -- necessary? */
 
 		if (rv < 0)
-			printf("Warning: can't restore instruction at 0x%lx: 0x%x\n",
-				l->l_md.md_ss_addr, l->l_md.md_ss_instr);
+			printf("Warning: can't restore instruction"
+			    " at %#"PRIxVADDR": 0x%x\n",
+			    l->l_md.md_ss_addr, l->l_md.md_ss_instr);
 		l->l_md.md_ss_addr = 0;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGTRAP;
@@ -537,7 +537,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
 			struct frame *f;
 
-			f = (struct frame *)l->l_md.md_regs;
+			f = l->l_md.md_regs;
 			savefpregs(fpcurlwp);	  	/* yield FPA */
 			loadfpregs(l);          	/* load FPA */
 			fpcurlwp = l;
@@ -562,12 +562,12 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_TRAP+T_USER:
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGFPE;
-		fp = (struct frame *)l->l_md.md_regs;
+		fp = l->l_md.md_regs;
 		ksi.ksi_addr = (void *)(intptr_t)fp->f_regs[_R_PC];
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
-	fp = (struct frame *)l->l_md.md_regs;
+	fp = l->l_md.md_regs;
 	fp->f_regs[_R_CAUSE] = cause;
 	fp->f_regs[_R_BADVADDR] = vaddr;
 	(*p->p_emul->e_trapsignal)(l, &ksi);
@@ -616,13 +616,13 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 int
 mips_singlestep(struct lwp *l)
 {
-	struct frame *f = (struct frame *)l->l_md.md_regs;
+	struct frame *f = l->l_md.md_regs;
 	struct proc *p = l->l_proc;
 	vaddr_t pc, va;
 	int rv;
 
 	if (l->l_md.md_ss_addr) {
-		printf("SS %s (%d): breakpoint already set at %lx\n",
+		printf("SS %s (%d): breakpoint already set at %#"PRIxVADDR"\n",
 			p->p_comm, p->p_pid, l->l_md.md_ss_addr);
 		return EFAULT;
 	}
@@ -676,7 +676,7 @@ kdbpeek(vaddr_t addr)
 	int rc;
 
 	if (addr & 3) {
-		printf("kdbpeek: unaligned address %lx\n", addr);
+		printf("kdbpeek: unaligned address %#"PRIxVADDR"\n", addr);
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
@@ -695,7 +695,7 @@ kdbrpeek(vaddr_t addr)
 	mips_reg_t rc;
 
 	if (addr & (sizeof(mips_reg_t) - 1)) {
-		printf("kdbrpeek: unaligned address %lx\n", addr);
+		printf("kdbrpeek: unaligned address %#"PRIxVADDR"\n", addr);
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
@@ -727,8 +727,8 @@ int main(void *);	/* XXX */
 
 /* forward */
 const char *fn_name(vaddr_t addr);
-void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
-	    void (*)(const char*, ...));
+void stacktrace_subr(mips_reg_t, mips_reg_t, mips_reg_t, mips_reg_t,
+	vaddr_t, vaddr_t, vaddr_t, vaddr_t, void (*)(const char*, ...));
 
 #define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
@@ -740,8 +740,8 @@ void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
  * the console, or both.
  */
 void
-stacktrace_subr(int a0, int a1, int a2, int a3,
-    u_int pc, u_int sp, u_int fp, u_int ra,
+stacktrace_subr(mips_reg_t a0, mips_reg_t a1, mips_reg_t a2, mips_reg_t a3,
+    vaddr_t pc, vaddr_t sp, vaddr_t fp, vaddr_t ra,
     void (*printfn)(const char*, ...))
 {
 	vaddr_t va, subr;
@@ -1008,7 +1008,7 @@ fn_name(vaddr_t addr)
 	for (i = 0; names[i].name; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	sprintf(buf, "%lx", addr);
+	sprintf(buf, "%#"PRIxVADDR, addr);
 	return (buf);
 }
 
