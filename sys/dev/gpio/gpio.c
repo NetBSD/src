@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.26 2009/08/17 12:44:44 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.27 2009/08/21 12:53:42 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.26 2009/08/17 12:44:44 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.27 2009/08/21 12:53:42 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -215,6 +215,30 @@ gpiobus_print(void *aux, const char *pnp)
 		printf("gpiobus at %s", pnp);
 
 	return UNCONF;
+}
+
+/* return 1 if all pins can be mapped, 0 if not */
+
+int
+gpio_pin_can_map(void *gpio, int offset, u_int32_t mask)
+{
+	struct gpio_softc *sc = gpio;
+	int npins, pin, i;
+
+	npins = gpio_npins(mask);
+	if (npins > sc->sc_npins)
+		return 0;
+
+	for (npins = 0, i = 0; i < 32; i++)
+		if (mask & (1 << i)) {
+			pin = offset + i;
+			if (pin < 0 || pin >= sc->sc_npins)
+				return 0;
+			if (sc->sc_pins[pin].pin_mapped)
+				return 0;
+		}
+
+	return 1;
 }
 
 int
@@ -483,8 +507,13 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
 		    NULL, NULL, NULL, NULL))
 			return EPERM;
-                        
+
 		attach = (struct gpio_attach *)data;
+
+		/* do not try to attach if the pins are already mapped */
+		if (!gpio_pin_can_map(sc, attach->ga_offset, attach->ga_mask))
+			return EBUSY;
+
 		ga.ga_gpio = sc;
 		ga.ga_dvname = attach->ga_dvname;
 		ga.ga_offset = attach->ga_offset;
