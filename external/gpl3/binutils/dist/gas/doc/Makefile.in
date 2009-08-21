@@ -330,6 +330,8 @@ distclean-libtool:
 	-rm -f libtool
 
 as.info: as.texinfo $(as_TEXINFOS)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_as.info: as.texinfo $(as_TEXINFOS)
 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \
