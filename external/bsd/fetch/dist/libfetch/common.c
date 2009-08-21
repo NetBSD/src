@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.5 2009/04/04 23:26:03 joerg Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.6 2009/08/21 15:12:24 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -237,6 +237,7 @@ fetch_reopen(int sd)
 	conn->next_buf = NULL;
 	conn->next_len = 0;
 	conn->sd = sd;
+	conn->is_active = 0;
 	++conn->ref;
 	return (conn);
 }
@@ -261,17 +262,17 @@ int
 fetch_bind(int sd, int af, const char *addr)
 {
 	struct addrinfo hints, *res, *res0;
-	int error;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = af;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
-	if ((error = getaddrinfo(addr, NULL, &hints, &res0)) != 0)
+	if (getaddrinfo(addr, NULL, &hints, &res0))
 		return (-1);
-	for (res = res0; res; res = res->ai_next)
+	for (res = res0; res; res = res->ai_next) {
 		if (bind(sd, res->ai_addr, res->ai_addrlen) == 0)
 			return (0);
+	}
 	return (-1);
 }
 
@@ -475,18 +476,22 @@ fetch_getln(conn_t *conn)
 	ssize_t len;
 
 	if (conn->buf == NULL) {
-		if ((conn->buf = malloc(MIN_BUF_SIZE + 1)) == NULL) {
+		if ((conn->buf = malloc(MIN_BUF_SIZE)) == NULL) {
 			errno = ENOMEM;
 			return (-1);
 		}
 		conn->bufsize = MIN_BUF_SIZE;
 	}
 
-	conn->buf[0] = '\0';
 	conn->buflen = 0;
 	next = NULL;
 
 	do {
+		/*
+		 * conn->bufsize != conn->buflen at this point,
+		 * so the buffer can be NUL-terminated below for
+		 * the case of len == 0.
+		 */
 		len = fetch_read(conn, conn->buf + conn->buflen,
 		    conn->bufsize - conn->buflen);
 		if (len == -1)
@@ -495,10 +500,13 @@ fetch_getln(conn_t *conn)
 			break;
 		next = memchr(conn->buf + conn->buflen, '\n', len);
 		conn->buflen += len;
-		if (conn->buflen == conn->bufsize &&
-		    (next == NULL || next[1] == '\0')) {
+		if (conn->buflen == conn->bufsize && next == NULL) {
 			tmp = conn->buf;
-			tmpsize = conn->bufsize * 2 + 1;
+			tmpsize = conn->bufsize * 2;
+			if (tmpsize < conn->bufsize) {
+				errno = ENOMEM;
+				return (-1);
+			}
 			if ((tmp = realloc(tmp, tmpsize)) == NULL) {
 				errno = ENOMEM;
 				return (-1);
@@ -509,11 +517,14 @@ fetch_getln(conn_t *conn)
 	} while (next == NULL);
 
 	if (next != NULL) {
+		*next = '\0';
 		conn->next_buf = next + 1;
 		conn->next_len = conn->buflen - (conn->next_buf - conn->buf);
 		conn->buflen = next - conn->buf;
+	} else {
+		conn->buf[conn->buflen] = '\0';
+		conn->next_len = 0;
 	}
-	conn->buf[conn->buflen] = '\0';
 	return (0);
 }
 
@@ -614,7 +625,7 @@ int
 fetch_putln(conn_t *conn, const char *str, size_t len)
 {
 	struct iovec iov[2];
-	int ret;
+	ssize_t ret;
 
 	iov[0].iov_base = DECONST(char *, str);
 	iov[0].iov_len = len;
