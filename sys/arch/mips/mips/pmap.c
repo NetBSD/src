@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.1 2009/08/21 17:37:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.1 2009/08/21 17:37:30 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -135,6 +135,19 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2008/04/28 20:23:28 martin Exp $");
 #include <mips/locore.h>
 #include <mips/pte.h>
 
+CTASSERT(MIPS_KSEG0_START < 0);
+CTASSERT((intptr_t)MIPS_PHYS_TO_KSEG0(0x1000) < 0);
+CTASSERT(MIPS_KSEG1_START < 0);
+CTASSERT((intptr_t)MIPS_PHYS_TO_KSEG1(0x1000) < 0);
+CTASSERT(MIPS_KSEG2_START < 0);
+CTASSERT(MIPS_MAX_MEM_ADDR < 0);
+CTASSERT(MIPS_RESERVED_ADDR < 0);
+CTASSERT((uint32_t)MIPS_KSEG0_START == 0x80000000);
+CTASSERT((uint32_t)MIPS_KSEG1_START == 0xa0000000);
+CTASSERT((uint32_t)MIPS_KSEG2_START == 0xc0000000);
+CTASSERT((uint32_t)MIPS_MAX_MEM_ADDR == 0xbe000000);
+CTASSERT((uint32_t)MIPS_RESERVED_ADDR == 0xbfc80000);
+
 #ifdef DEBUG
 struct {
 	int kernel;	/* entering kernel mapping */
@@ -189,7 +202,7 @@ int		 pv_table_npages;
 
 struct segtab	*free_segtab;		/* free list kept locally */
 pt_entry_t	*Sysmap;		/* kernel pte table */
-unsigned	Sysmapsize;		/* number of pte's in Sysmap */
+unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
 
 unsigned pmap_max_asid;			/* max ASID supported by the system */
 unsigned pmap_next_asid;		/* next free ASID to use */
@@ -461,7 +474,16 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			}
 		}
 
-		va = MIPS_PHYS_TO_KSEG0(pa);
+		if (pa <= MIPS_PHYS_MASK)
+			va = MIPS_PHYS_TO_KSEG0(pa);
+		else
+#ifdef _LP64
+			va = MIPS_PHYS_TO_XKPHYS(
+			    MIPS3_PG_TO_CCA(mips3_pg_cached), pa);
+#else
+			panic("pmap_steal_memory: "
+			      "pa can not be mapped into K0");
+#endif
 		memset((void *)va, 0, size);
 		return va;
 	}
@@ -1504,12 +1526,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		printf("pmap_extract(%p, 0x%lx) -> ", pmap, va);
 #endif
 	if (pmap == pmap_kernel()) {
-		if (va >= MIPS_KSEG0_START && va < MIPS_KSEG1_START) {
+		if (va >= (uintptr_t)MIPS_KSEG0_START && va < (uintptr_t)MIPS_KSEG1_START) {
 			pa = MIPS_KSEG0_TO_PHYS(va);
 			goto done;
 		}
+#ifdef _LP64
+		if (va >= (uintptr_t)MIPS_XKPHYS_START && va < (uintptr_t)MIPS_XKSEG_START) {
+			pa = MIPS_XKPHYS_TO_PHYS(va);
+			goto done;
+		}
+#endif
 #ifdef DIAGNOSTIC
-		else if (va >= MIPS_KSEG1_START && va < MIPS_KSEG2_START)
+		else if (va >= (uintptr_t)MIPS_KSEG1_START && va < (uintptr_t)MIPS_KSEG2_START)
 			panic("pmap_extract: kseg1 address 0x%lx", va);
 #endif
 		else
@@ -2188,7 +2216,15 @@ mips_pmap_map_poolpage(paddr_t pa)
 	pv_entry_t pv;
 #endif
 
-	va = MIPS_PHYS_TO_KSEG0(pa);
+	if (pa <= MIPS_PHYS_MASK)
+		va = MIPS_PHYS_TO_KSEG0(pa);
+	else
+#ifdef _LP64
+		va = MIPS_PHYS_TO_XKPHYS(MIPS3_PG_TO_CCA(mips3_pg_cached), pa);
+#else
+		panic("mips_pmap_map_poolpage: "
+		    "pa #%"PRIxPADDR" can not be mapped into KSEG0", pa);
+#endif
 #if defined(MIPS3_PLUS)
 	if (mips_cache_virtual_alias) {
 		pg = PHYS_TO_VM_PAGE(pa);
@@ -2206,7 +2242,12 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 {
 	paddr_t pa;
 
-	pa = MIPS_KSEG0_TO_PHYS(va);
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(va))
+		pa = MIPS_XKPHYS_TO_PHYS(va);
+	else
+#endif
+		pa = MIPS_KSEG0_TO_PHYS(va);
 #if defined(MIPS3_PLUS)
 	if (mips_cache_virtual_alias) {
 		mips_dcache_inv_range(va, PAGE_SIZE);
