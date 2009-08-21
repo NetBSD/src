@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.13 2006/09/01 13:28:17 cube Exp $
+#	$NetBSD: files.mipsco,v 1.14 2009/08/21 04:00:56 thorpej Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -60,6 +60,8 @@ file arch/mipsco/mipsco/bus_space.c
 file arch/mipsco/mipsco/bus_dma.c
 file arch/mipsco/mipsco/prom.c
 file dev/cons.c
+
+file common/bus_dma/bus_dmamem_common.c
 
 # Memory Disk
 file dev/md_root.c			memory_disk_hooks
