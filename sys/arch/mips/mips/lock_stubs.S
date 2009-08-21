@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.2 2009/08/20 22:11:36 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.3 2009/08/21 13:04:55 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ LEAF(mutex_spin_enter)
 	DYNAMIC_STATUS_MASK(t1,t0)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	bne	t8, t9, 1f
+	bne	ta2, ta3, 1f
 	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	INT_S	v0, CPU_INFO_MTX_OLDSPL(t2)
 1:
