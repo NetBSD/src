@@ -1,4 +1,4 @@
-.\" $NetBSD: strip.4,v 1.13 2004/12/05 13:24:10 peter Exp $
+.\" $NetBSD: strip.4,v 1.14 2009/08/21 23:55:13 joerg Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -156,11 +156,9 @@ address 10.11.12.13, reachable via the
 .Em strip0
 interface:
 .Pp
-.br
-.in 10
-route add -host 10.11.12.13 -link strip0:1:2:3:4:5:6:7:8
-.br
-.in 5
+.Bd -literal -offset indent
+.Ic route add -host 10.11.12.13 -link strip0:1:2:3:4:5:6:7:8
+.Ed
 .Pp
 Generalising from this example to other
 .Tn IP
