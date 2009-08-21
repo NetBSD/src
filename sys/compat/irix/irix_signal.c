@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.48 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.48.18.1 2009/08/21 17:58:58 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.48 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.48.18.1 2009/08/21 17:58:58 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -245,20 +245,19 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	void *sp;
-	struct frame *f;
+	struct frame *f = l->l_md.md_regs;
 	int onstack;
 	int error;
 	sig_t catcher = SIGACTION(p, ksi->ksi_signo).sa_handler;
 	struct irix_sigframe sf;
 
-	f = (struct frame *)l->l_md.md_regs;
 #ifdef DEBUG_IRIX
 	printf("irix_sendsig()\n");
 	printf("catcher = %p, sig = %d, code = 0x%x\n",
 	    (void *)catcher, ksi->ksi_signo, ksi->ksi_trap);
-	printf("irix_sendsig(): starting [PC=%p SP=%p SR=0x%08lx]\n",
-	    (void *)f->f_regs[_R_PC], (void *)f->f_regs[_R_SP],
-	    f->f_regs[_R_SR]);
+	printf("irix_sendsig(): starting [PC=0x%#"PRIxREGISTER
+	    " SP=%#"PRIxREGISTER" SR=0x%08lx]\n",
+	    f->f_regs[_R_PC], f->f_regs[_R_SP], f->f_regs[_R_SR]);
 #endif /* DEBUG_IRIX */
 
 	/*
@@ -278,7 +277,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		sp = (void *)((char *)l->l_sigstk.ss_sp
 		    + l->l_sigstk.ss_size);
 	else
-		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
+		/* cast for O64 case */
 		sp = (void *)(u_int32_t)f->f_regs[_R_SP];
 
 	/*
