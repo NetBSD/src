@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.1 2009/08/16 03:33:58 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.2 2009/08/21 17:29:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,18 +47,18 @@
  * the rest of the operating system as possible.
  */
 
-#if !defined(__mips_o32)
+#if defined(__mips_n32)
 typedef long long		mips_reg_t;
 typedef unsigned long long	mips_ureg_t;
-#if defined(__mips_o64)
+typedef	long long		mips_fpreg_t;
+#else
+#if defined(__mips_o64) || defined(__mips_o32)
 typedef	int			mips_fpreg_t;
 #else
-typedef	long long		mips_fpreg_t;
+typedef	long			mips_fpreg_t;
 #endif
-#else
 typedef long			mips_reg_t;
 typedef unsigned long		mips_ureg_t;
-typedef	long			mips_fpreg_t;
 #endif
 
 /* NB: This should probably be if defined(_KERNEL) */
@@ -66,18 +66,32 @@ typedef	long			mips_fpreg_t;
 #if defined(_MIPS_PADDR_T_64BIT) && !defined(_LP64)
 typedef unsigned long long	paddr_t;
 typedef unsigned long long	psize_t;
+#define PRIxPADDR	"llx"
+#define PRIxPSIZE	"llx"
 #else
 typedef unsigned long		paddr_t;
 typedef unsigned long		psize_t;
+#define PRIxPADDR	"lx"
+#define PRIxPSIZE	"lx"
 #endif
 typedef unsigned long		vaddr_t;
 typedef unsigned long		vsize_t;
+#define PRIxVADDR	"lx"
+#define PRIxVSIZE	"lx"
 #endif
 
 /* Make sure this is signed; we need pointers to be sign-extended. */
 #if defined(__mips_n32)
+typedef long		register32_t;
 typedef long long	register_t;
+#define PRIxREGISTER32	"lx"
+#define PRIxREGISTER	"llx"
 #else
+#if !defined(__mips_o32)
+typedef int		register32_t;
+#define PRIxREGISTER32	"x"
+#endif
+#define PRIxREGISTER	"lx"
 typedef long		register_t;
 #endif /* __mips_n32 */
 
