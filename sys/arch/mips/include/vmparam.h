@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41 2007/12/26 16:01:34 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.1 2009/08/21 17:26:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,15 +142,18 @@
  * Mach derived constants
  */
 
-/* user/kernel map constants */
+/*
+ * user/kernel map constants
+ * These are negative addresses since MIPS addresses are signed.
+ */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000)
-#define VM_MAX_ADDRESS		((vaddr_t)0x80000000)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xC0000000)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define VM_MAX_ADDRESS		((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xFFFFFFFFC0000000 */
 #ifdef ENABLE_MIPS_TX3900
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF000000)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x01000000)	/* 0xFFFFFFFFFF000000 */
 #else
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFC000)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
 #endif
 
 /*
