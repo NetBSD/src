@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.1 2009/08/21 13:12:22 uebayasi Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.2 2009/08/21 17:47:08 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -130,8 +130,8 @@ define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 #				/* XXX */
 define	MIPSX_FLUSHICACHE	0
-define	MIPSX_CPU_SWITCH_RESUME	sizeof(long *) * 0
-define	MIPSX_CPU_IDLE		sizeof(long *) * 2
+define	MIPSX_CPU_SWITCH_RESUME	offsetof(struct locoresw, lsw_cpu_switch_resume)
+define	MIPSX_CPU_IDLE		offsetof(struct locoresw, lsw_cpu_idle)
 
 define	MIPS1_PG_G		MIPS1_PG_G
 define	MIPS1_PG_V		MIPS1_PG_V
@@ -232,8 +232,10 @@ define	FRAME_FP31		sizeof(mips_fpreg_t) * 31
 
 #define	KERNFRAME_SIZ	(sizeof(register_t) * (6 + 2 ) + sizeof(mips_reg_t) * (17 + 5))
 define	KERNFRAME_SIZ	sizeof(struct kernframe)
+if defined(__mips_o32) || defined(__mips_o64)
 define	KERNFRAME_ARG5	offsetof(struct kernframe, cf_args[4])
 define	KERNFRAME_ARG6	offsetof(struct kernframe, cf_args[5])
+endif
 define	KERNFRAME_SP	offsetof(struct kernframe, cf_sp)
 define	KERNFRAME_RA	offsetof(struct kernframe, cf_ra)
 
