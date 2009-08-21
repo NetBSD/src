@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.1.10.2 2009/08/18 10:10:19 bouyer Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.1.10.3 2009/08/21 09:41:19 bouyer Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -186,8 +186,8 @@ struct bge_chain_data {
 	bus_dmamap_t		bge_rx_std_map[BGE_STD_RX_RING_CNT];
 	bus_dmamap_t		bge_rx_jumbo_map;
 	/* Stick the jumbo mem management stuff here too. */
-	void *			bge_jslots[BGE_JSLOTS];
-	void *			bge_jumbo_buf;
+	caddr_t			bge_jslots[BGE_JSLOTS];
+	caddr_t			bge_jumbo_buf;
 };
 
 #define BGE_JUMBO_DMA_ADDR(sc, m) \
@@ -219,14 +219,12 @@ struct txdmamap_pool_entry {
 };
 
 struct bge_softc {
-	device_t		bge_dev;
+	struct device		bge_dev;
 	struct ethercom		ethercom;		/* interface info */
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;
 	void			*bge_intrhand;
-	pci_chipset_tag_t	sc_pc;
-	pcitag_t		sc_pcitag;
-
+	struct pci_attach_args	bge_pa;
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int8_t		bge_extram;	/* has external SSRAM */
@@ -259,7 +257,7 @@ struct bge_softc {
 #define BGE_STS_SETBIT(sc, x)	((sc)->bge_sts |= (x))
 #define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
 	int			bge_if_flags;
-	uint32_t		bge_flags;
+	int			bge_flags;
 	int			bge_flowflags;
 #ifdef BGE_EVENT_COUNTERS
 	/*
@@ -280,10 +278,8 @@ struct bge_softc {
 	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
-
-#if NRND > 0
-	rndsource_element_t	rnd_source;	/* random source */
-#endif
+	void			*bge_powerhook;
+	struct pci_conf_state	bge_pciconf;
 };
 
 #endif /* _DEV_PCI_IF_BGEVAR_H_ */
