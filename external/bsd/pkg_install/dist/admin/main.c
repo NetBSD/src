@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.8 2009/08/06 16:55:19 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.9 2009/08/21 15:19:05 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,10 +7,10 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.8 2009/08/06 16:55:19 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.9 2009/08/21 15:19:05 joerg Exp $");
 
 /*-
- * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,6 +74,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.8 2009/08/06 16:55:19 joerg Exp $");
 
 #ifndef BOOTSTRAP
 #include <archive.h>
+#include <fetch.h>
 #endif
 
 #include "admin.h"
@@ -500,7 +501,6 @@ main(int argc, char *argv[])
 			
 			argv++;
 		}
-
 	} else if (strcasecmp(argv[0], "list") == 0 ||
 	    strcasecmp(argv[0], "dump") == 0) {
 
@@ -559,7 +559,28 @@ main(int argc, char *argv[])
 		}
 	}
 #ifndef BOOTSTRAP
-	else if (strcasecmp(argv[0], "fetch-pkg-vulnerabilities") == 0) {
+	else if (strcasecmp(argv[0], "findbest") == 0) {
+		struct url *url;
+		char *output;
+		int rc;
+
+		process_pkg_path();
+
+		rc = 0;
+		for (++argv; *argv != NULL; ++argv) {
+			url = find_best_package(NULL, *argv, 1);
+			if (url == NULL) {
+				rc = 1;
+				continue;
+			}
+			output = fetchStringifyURL(url);
+			puts(output);
+			fetchFreeURL(url);
+			free(output);
+		}		
+
+		return rc;
+	} else if (strcasecmp(argv[0], "fetch-pkg-vulnerabilities") == 0) {
 		fetch_pkg_vulnerabilities(--argc, ++argv);
 	} else if (strcasecmp(argv[0], "check-pkg-vulnerabilities") == 0) {
 		check_pkg_vulnerabilities(--argc, ++argv);
