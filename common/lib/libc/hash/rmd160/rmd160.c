@@ -1,4 +1,4 @@
-/* 	$NetBSD: rmd160.c,v 1.4 2008/02/16 17:37:13 apb Exp $ */
+/* 	$NetBSD: rmd160.c,v 1.5 2009/08/21 09:40:51 skrll Exp $ */
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -33,14 +33,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.4 2008/02/16 17:37:13 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.5 2009/08/21 09:40:51 skrll Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rmd160.c,v 1.4 2008/02/16 17:37:13 apb Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.5 2009/08/21 09:40:51 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -111,11 +111,13 @@ static const u_char PADDING[64] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-#if !defined(_KERNEL) && defined(__weak_alias)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(__weak_alias)
 __weak_alias(RMD160Init,_RMD160Init) 
 __weak_alias(RMD160Update,_RMD160Update)
 __weak_alias(RMD160Final,_RMD160Final)
 __weak_alias(RMD160Transform,_RMD160Transform)
+#endif
 #endif
 
 void
