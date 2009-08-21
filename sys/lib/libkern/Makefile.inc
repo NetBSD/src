@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2005/12/20 19:35:26 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.40.94.1 2009/08/21 18:01:18 matt Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -40,7 +40,8 @@ KERNMAKE= \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LORDER=${LORDER:Q} \
 	    TSORT=${TSORT:Q} \
-	    LD=${LD:Q} STRIP=${STRIP:Q} \
+	    LD=${LD:Q} LDFLAGS=${LDFLAGS:Q} \
+	    STRIP=${STRIP:Q} \
 	    AR=${AR:Q} NM=${NM:Q} \
 	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
