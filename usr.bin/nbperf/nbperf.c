@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.1 2009/08/15 16:21:05 joerg Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.2 2009/08/22 17:52:17 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.1 2009/08/15 16:21:05 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.2 2009/08/22 17:52:17 joerg Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -87,6 +87,8 @@ set_hash(struct nbperf *nbperf, const char *arg)
 		nbperf->print_hash = mi_vector_hash_print_hash;
 		return;
 	}
+	if (nbperf->hash_size > NBPERF_MAX_HASH_SIZE)
+		errx(1, "Hash function creates too many output values");
 	errx(1, "Unknown hash function: %s", arg);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.h,v 1.1 2009/08/15 16:21:05 joerg Exp $	*/
+/*	$NetBSD: nbperf.h,v 1.2 2009/08/22 17:52:17 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,8 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#define	NBPERF_MAX_HASH_SIZE	3
 
 struct nbperf {
 	FILE *output;
