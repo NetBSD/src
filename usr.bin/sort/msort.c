@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.23 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.24 2009/08/22 15:16:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.23 2009/08/22 10:53:28 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.24 2009/08/22 15:16:50 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
 {
 	int c, i, j, nf = nfiles;
 	struct mfile *flistb[MERGE_FNUM], **flist = flistb, *cfile;
-	size_t availsz = bufsize;
+	size_t availsz;
 	static void *bufs[MERGE_FNUM + 1];
 	static size_t bufs_sz[MERGE_FNUM + 1];
 
@@ -191,47 +191,65 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
 		}
 	}
 
+	/*
+	 * We now loop reading a new record from the file with the
+	 * 'sorted first' existing record.
+	 * As each record is added, the 'first' record is written to the
+	 * output file - maintaining one record from each file in the sorted
+	 * list.
+	 */
 	cfile = (struct mfile *) bufs[nf];
-	cfile->flno = flist[0]->flno;
 	cfile->end = (u_char *) cfile + bufs_sz[nf];
-	while (nfiles) {
-		for (c = 1; c == 1;) {
-			c = get(cfile->flno, 0, NULL, nfiles, cfile->rec,
-			    cfile->end, ftbl);
-			if (c == EOF) {
-				put(flist[0]->rec, outfp);
-				if (--nfiles > 0) {
-					flist++;
-					cfile->flno = flist[0]->flno;
-				}
+	cfile->flno = flist[0]->flno;
+	for (;;) {
+		c = get(cfile->flno, 0, NULL, nfiles, cfile->rec,
+		    cfile->end, ftbl);
+		if (c == EOF) {
+			/* Write out last record from now-empty input */
+			put(flist[0]->rec, outfp);
+			if (--nfiles == 0)
 				break;
-			}
-			if (c == BUFFEND) {
-				char *oldbuf = (char *) cfile;
-				availsz = (char *) cfile->end - oldbuf;
-				availsz *= 2;
-				cfile = realloc(oldbuf, availsz);
-				if (!cfile)
-					err(2, "merge: realloc");
-
-				for (i = 0; i < nf + 1; i++) {
-					if (bufs[i] == oldbuf) {
-						bufs[i] = (char *)cfile;
-						bufs_sz[i] = availsz;
-						break;
-					}
-				}
-
-				cfile->end = (u_char *)cfile + availsz;
-				c = 1;
-				continue;
-			}
-				
-			c = insert(flist, &cfile, nfiles, DELETE);
-			if (c == 0)
-				put(cfile->rec, outfp);
+			/* Replace from file with now-first sorted record. */
+			/* (Moving base 'flist' saves copying everything!) */
+			flist++;
+			cfile->flno = flist[0]->flno;
+			continue;
 		}
-	}	
+		if (c == BUFFEND) {
+			/* Buffer not large enough - double in size */
+			char *oldbuf = (char *) cfile;
+			availsz = (char *) cfile->end - oldbuf;
+			availsz *= 2;
+			cfile = realloc(oldbuf, availsz);
+			if (!cfile)
+				err(2, "merge: realloc");
+			cfile->end = (u_char *)cfile + availsz;
+
+			/* Update pointers we'll use for next merge */
+			for (i = 0; i < nf + 1; i++) {
+				if (bufs[i] == oldbuf) {
+					bufs[i] = (char *)cfile;
+					bufs_sz[i] = availsz;
+					break;
+				}
+			}
+			/* Read again from same file into same buffer */
+			continue;
+		}
+			
+		/* Add into sort, removing the original first entry */
+		c = insert(flist, &cfile, nfiles, DELETE);
+
+		/*
+		 * 'cfile' is now the buffer from the old record from the
+		 * file we just read, but with the file number of the
+		 * current 'first record.
+		 * (Unless we are rejecting a duplicate, when c == 1 and
+		 * it is unchanged!)
+		 */
+		if (c == 0)
+			put(cfile->rec, outfp);
+	}
 }
 
 /*
@@ -240,67 +258,64 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
  */
 static int
 insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
-	/* delete, ttop:			 delete = 0 or 1 */
 {
 	struct mfile *tmprec = *rec;
 	int mid, top = ttop, bot = 0, cmpv = 1;
 
 	for (mid = top / 2; bot + 1 != top; mid = (bot + top) / 2) {
 		cmpv = cmp(tmprec->rec, flist[mid]->rec);
+		if (cmpv == 0 ) {
+			if (UNIQUE)
+				/* Duplicate key, read another record */
+				return 1;
+			/*
+			 * Apply sort by fileno, to give priority to earlier
+			 * specified files, hence providing a stable sort.
+			 * We could truncate the sort is the fileno are
+			 * adjacent - but that is all too hard!
+			 * The fileno cannot be equal, since we only have one
+			 * record from each file (+ flist[0] which never
+			 * comes here).
+			 */
+			cmpv = tmprec->flno - flist[mid]->flno;
+		}
 		if (cmpv < 0)
 			top = mid;
-		else if (cmpv > 0)
+		else
 			bot = mid;
-		else {
-			if (UNIQUE)
-				break;
-
-			/*
-			 * Apply sort by fileno, to give priority
-			 * to earlier specified files, hence providing
-			 * more stable sort.
-			 * If fileno is same, the new record should
-			 * be put _after_ the previous entry.
-			 */
-			/* XXX (dsl) this doesn't seem right */
-			cmpv = tmprec->flno - flist[mid]->flno;
-			if (cmpv >= 0)
-				bot = mid;
-			else
-				bot = mid - 1;
-
-			break;
-		}
 	}
 
+	/* At this point we haven't yet compared against flist[0] */
+
 	if (delete) {
-		if (UNIQUE) {
-			if (!bot && cmpv)
-				cmpv = cmp(tmprec->rec, flist[0]->rec);
-			if (!cmpv)
-				return (1);
-		}
+		/* flist[0] came from the same file, it cannot be earlier. */
+		if (UNIQUE && bot == 0 && cmp(tmprec->rec, flist[0]->rec) == 0)
+			/* Duplicate record (key) in original file */
+			return 1;
 		tmprec = flist[0];
 		if (bot)
 			memmove(flist, flist + 1, bot * sizeof(MFILE **));
 		flist[bot] = *rec;
+		tmprec->flno = flist[0]->flno;
 		*rec = tmprec;
-		(*rec)->flno = flist[0]->flno;
-		return (0);
-	} else {
-		if (!bot && !(UNIQUE && !cmpv)) {
-			cmpv = cmp(tmprec->rec, flist[0]->rec);
-			if (cmpv < 0)
-				bot = -1;
-		}
-		if (UNIQUE && !cmpv)
-			return (1);
-		bot++;
-		memmove(flist + bot + 1, flist + bot,
-		    (ttop - bot) * sizeof(MFILE **));
-		flist[bot] = *rec;
-		return (0);
+		return 0;
 	}
+
+	/* Inserting original set of records */
+
+	if (bot == 0 && cmpv != 0) {
+		/* Doesn't match flist[1], must compare with flist[0] */
+		cmpv = cmp(tmprec->rec, flist[0]->rec);
+		if (cmpv == 0 && UNIQUE)
+			return 1;
+		/* Add matching keys in file order (ie new is later) */
+		if (cmpv < 0)
+			bot = -1;
+	}
+	bot++;
+	memmove(flist + bot + 1, flist + bot, (ttop - bot) * sizeof(MFILE **));
+	flist[bot] = *rec;
+	return 0;
 }
 
 /*
