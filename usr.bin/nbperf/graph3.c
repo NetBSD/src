@@ -1,4 +1,4 @@
-/*	$NetBSD: graph3.c,v 1.1 2009/08/15 16:21:05 joerg Exp $	*/
+/*	$NetBSD: graph3.c,v 1.2 2009/08/22 17:52:17 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph3.c,v 1.1 2009/08/15 16:21:05 joerg Exp $");
+__RCSID("$NetBSD: graph3.c,v 1.2 2009/08/22 17:52:17 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -75,7 +75,7 @@ int
 graph3_hash(struct nbperf *nbperf, struct graph3 *graph)
 {
 	struct vertex3 *v;
-	uint32_t hashes[nbperf->hash_size];
+	uint32_t hashes[NBPERF_MAX_HASH_SIZE];
 	size_t i;
 
 	for (i = 0; i < graph->e; ++i) {
