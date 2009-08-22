@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.3 2009/08/22 00:28:42 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.4 2009/08/22 16:55:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.3 2009/08/22 00:28:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.4 2009/08/22 16:55:19 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -227,13 +227,12 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	else
 		callp += code;
 
-	nargs = callp->sy_argsize;
+	nargs = callp->sy_narg;
 	frame->f_regs[_R_V0] = 0;
 #if !defined(__mips_o32)
 	if (abi != _MIPS_BSD_API_O32) {
 #endif
 		CTASSERT(sizeof(copyargs[0]) == sizeof(fargs[0]));
-		/* rval[1] already is V1 */
 		if (nargs <= nregs) {
 			/*
 			 * Just use the frame for the source of arguments
@@ -241,6 +240,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			args = fargs;
 		} else {
 			const size_t nsaved = _MIPS_SIM_NEWABI_P(abi) ? 0 : 4;
+			KASSERT(nargs <= __arraycount(copyargs));
 			args = copyargs;
 			/*
 			 * Copy the arguments passed via register from the				 * trap frame to our argument array
@@ -350,6 +350,22 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			}
 		}
 	} while (/*CONSTCOND*/ 0);	/* avoid a goto */
+#endif
+
+#if 0
+	if (p->p_emul->e_syscallnames)
+		printf("syscall %s:", p->p_emul->e_syscallnames[code]);
+	else
+		printf("syscall %u:", code);
+	if (nargs == 0)
+		printf(" <no args>");
+	else for (size_t j = 0; j < nargs; j++) {
+		if (j == nregs) printf(" *");
+		printf(" [%s%zu]=%#"PRIxREGISTER,
+		    SYCALL_ARG_64_P(callp, j) ? "+" : "",
+		    j, args[j]);
+	}
+	printf("\n");
 #endif
 
 	if (__predict_false(p->p_trace_enabled)
