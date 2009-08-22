@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.52 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: sort.c,v 1.53 2009/08/22 21:43:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.52 2009/08/22 10:53:28 dsl Exp $");
+__RCSID("$NetBSD: sort.c,v 1.53 2009/08/22 21:43:53 dsl Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -196,10 +196,10 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			/* for GNU sort compatibility (this is our default) */
-			radix_sort = radixsort;
+			radix_sort = sradixsort;
 			break;
 		case 'S':
-			radix_sort = sradixsort;
+			radix_sort = radixsort;
 			break;
 		case 't':
 			if (SEP_FLAG)
