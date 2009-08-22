@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.24.96.1 2009/08/22 06:45:28 matt Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -90,8 +90,6 @@
  *	Deskstation Tyne
  *	Etc
  */
-#define	_MACHINE_ARCH	mipsel
-#define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	arc
 #define	MACHINE		"arc"
 #define	MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
@@ -116,34 +114,6 @@
 #define USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
 #define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
 #define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		256		/* size of an mbuf */
-
-#ifndef MCLSHIFT
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-					/* 2K cluster can hold Ether frame */
-#endif	/* MCLSHIFT */
-
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
-#endif
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)

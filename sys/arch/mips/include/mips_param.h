@@ -1,7 +1,30 @@
-/*	$NetBSD: mips_param.h,v 1.23.78.1 2009/08/20 07:47:52 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.2 2009/08/22 06:45:30 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
+#endif
+
+/*
+ * No reason this can't be common
+ */
+#if defined(__MIPSEB__)
+# if defined(__mips_n32) || defined(__mips_n64)
+#  define	_MACHINE_ARCH	mips64eb
+#  define	MACHINE_ARCH	"mips64eb"
+# else
+#  define	_MACHINE_ARCH	mipseb
+#  define	MACHINE_ARCH	"mipseb"
+# endif
+#elif defined(__MIPSEL__)
+# if defined(__mips_n32) || defined(__mips_n64)
+#  define	_MACHINE_ARCH	mips64el
+#  define	MACHINE_ARCH	"mips64el"
+# else
+#  define	_MACHINE_ARCH	mipsel
+#  define	MACHINE_ARCH	"mipsel"
+#endif
+#else
+#error neither __MIPSEL__ nor __MIPSEB__ are defined.
 #endif
 
 /*
