@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/06/12 01:59:05 mrg Exp $
+# $NetBSD: Makefile,v 1.3 2009/08/22 02:40:27 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 
@@ -35,6 +35,8 @@ CPPFLAGS+=	-DXF86DRI \
 		${X11FLAGS.DIX}
 
 LIBDPLIBS=	drm ${.CURDIR}/../../../../../lib/libdrm
+
+COPTS.dri2ext.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

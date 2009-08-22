@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.2 2009/06/12 01:59:04 mrg Exp $
+#	$NetBSD: Makefile.glx,v 1.3 2009/08/22 02:40:27 mrg Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/glx
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
@@ -39,6 +39,8 @@ SRCS.glx= \
 COPTS.glxcmds.c=		-Wno-error
 COPTS.indirect_dispatch.c=	-Wno-error
 COPTS.indirect_dispatch_swap.c=	-Wno-error
+COPTS.glxscreens.c=		-Wno-error
+COPTS.xfont.c=			-Wno-error
 
 CPPFLAGS+= \
 	-I${X11SRCDIR.xorg-server}/include \

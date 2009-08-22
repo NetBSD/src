@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/28 07:34:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/08/22 02:40:28 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -20,6 +20,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 
 # XXX
 COPTS.cursor.c+=	-Wno-error
+COPTS.region.c+=	-Wno-error
+COPTS.select.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

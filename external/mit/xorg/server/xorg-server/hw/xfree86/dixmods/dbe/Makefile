@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/09 09:08:25 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2009/08/22 02:40:27 mrg Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
@@ -14,5 +14,7 @@ SRCS=	${SRCS.dbe} dbemodule.c
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${X11SRCDIR.xorg-server}/../include
 CPPFLAGS+=	-DHAVE_XORG_CONFIG_H
+
+COPTS.dbe.c+=		-Wno-error
 
 .include "../../../../dbe/Makefile.dbe"
