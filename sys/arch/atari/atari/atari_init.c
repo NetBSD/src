@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.84 2009/08/19 19:39:05 he Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.85 2009/08/22 18:26:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.84 2009/08/19 19:39:05 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.85 2009/08/22 18:26:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -178,9 +178,10 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
 int kernel_copyback = 1;
 
 void
-start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize, char *esym_addr)
+start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
+    char *esym_addr)
 	/* id:			 Machine id			*/
-	/* ttphystart, ttphysize:	 Start address and size of TT-ram */
+	/* ttphystart, ttphysize: Start address and size of TT-ram */
 	/* stphysize:		 Size of ST-ram 		*/
 	/* esym_addr:		 Address of kernel '_esym' symbol */
 {
@@ -732,7 +733,7 @@ atari_hwinit(void)
  */
 static void
 map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
-	/* ptsize:		 Size of 'pt' in bytes	*/
+	/* ptsize:	 Size of 'pt' in bytes		*/
 	/* ptextra:	 #of additional I/O pte's	*/
 {
 	extern void	bootm_init(vaddr_t, pt_entry_t *, u_long);
@@ -872,7 +873,7 @@ cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	extern char end[];
-	int	i;
+	int i;
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
@@ -926,11 +927,12 @@ cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 }
 
 void
-mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, paddr_t sysptmap_pa, paddr_t kbase)
+mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
+    paddr_t sysptmap_pa, paddr_t kbase)
 	/* sysseg_pa:	 System segment table		*/
 	/* kstsize:	 size of 'sysseg' in pages	*/
-	/* ptpa:		 Kernel page table		*/
-	/* ptsize:		 size	of 'pt' in bytes	*/
+	/* ptpa:	 Kernel page table		*/
+	/* ptsize:	 size	of 'pt' in bytes	*/
 	/* sysptmap_pa:	 System page table		*/
 {
 	st_entry_t	sg_proto, *sg, *esg;
@@ -977,11 +979,12 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, pad
 
 #if defined(M68040) || defined(M68060)
 void
-mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize, paddr_t sysptmap_pa, paddr_t kbase)
+mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
+    paddr_t sysptmap_pa, paddr_t kbase)
 	/* sysseg_pa:	 System segment table		*/
 	/* kstsize:	 size of 'sysseg' in pages	*/
-	/* ptpa:		 Kernel page table		*/
-	/* ptsize:		 size	of 'pt' in bytes	*/
+	/* ptpa:	 Kernel page table		*/
+	/* ptsize:	 size	of 'pt' in bytes	*/
 	/* sysptmap_pa:	 System page table		*/
 {
 	int		nl1desc, nl2desc, i;
