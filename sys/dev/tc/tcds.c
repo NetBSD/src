@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.24 2009/03/18 16:00:20 cegger Exp $ */
+/* $NetBSD: tcds.c,v 1.25 2009/08/22 17:38:06 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.24 2009/03/18 16:00:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.25 2009/08/22 17:38:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -363,7 +363,7 @@ tcds_intrnull(void *val)
 void
 tcds_scsi_reset(struct tcds_slotconfig *sc)
 {
-	u_int32_t cir;
+	uint32_t cir;
 
 	tcds_dma_enable(sc, 0);
 	tcds_scsi_enable(sc, 0);
@@ -385,7 +385,7 @@ tcds_scsi_reset(struct tcds_slotconfig *sc)
 void
 tcds_scsi_enable(struct tcds_slotconfig *sc, int on)
 {
-	u_int32_t imer;
+	uint32_t imer;
 
 	imer = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_IMER);
 
@@ -400,7 +400,7 @@ tcds_scsi_enable(struct tcds_slotconfig *sc, int on)
 void
 tcds_dma_enable(struct tcds_slotconfig *sc, int on)
 {
-	u_int32_t cir;
+	uint32_t cir;
 
 	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
 
@@ -416,7 +416,7 @@ tcds_dma_enable(struct tcds_slotconfig *sc, int on)
 int
 tcds_scsi_isintr(struct tcds_slotconfig *sc, int clear)
 {
-	u_int32_t cir;
+	uint32_t cir;
 
 	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
 
@@ -434,7 +434,7 @@ tcds_scsi_isintr(struct tcds_slotconfig *sc, int clear)
 int
 tcds_scsi_iserr(struct tcds_slotconfig *sc)
 {
-	u_int32_t cir;
+	uint32_t cir;
 
 	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
 	return ((cir & sc->sc_errorbits) != 0);
@@ -444,7 +444,7 @@ int
 tcds_intr(void *arg)
 {
 	struct tcds_softc *sc = arg;
-	u_int32_t ir, ir0;
+	uint32_t ir, ir0;
 
 	/*
 	 * XXX
@@ -510,11 +510,11 @@ static void
 tcds_params(struct tcds_softc *sc, int chip, int *idp, int *fastp)
 {
 	int id, fast;
-	u_int32_t ids;
+	uint32_t ids;
 
 #ifdef __alpha__
 	if (sc->sc_flags & TCDSF_BASEBOARD) {
-		extern u_int8_t dec_3000_scsiid[], dec_3000_scsifast[];
+		extern uint8_t dec_3000_scsiid[], dec_3000_scsifast[];
 
 		id = dec_3000_scsiid[chip];
 		fast = dec_3000_scsifast[chip];
