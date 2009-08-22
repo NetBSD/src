@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.228.4.2.4.1 2009/08/22 00:13:24 matt Exp $	*/
+/*	$NetBSD: systm.h,v 1.228.4.2.4.2 2009/08/22 17:05:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -141,7 +141,7 @@ extern int nsysent;
 #define SYCALL_ARG7_64  0x1000000
 #define SYCALL_RET_64_P(sy)	((sy)->sy_flags & SYCALL_RET_64)
 #define SYCALL_ARG_64_P(sy, n)	((sy)->sy_flags & (SYCALL_ARG0_64 << (n)))
-#define	SYCALL_ARG_64_MASK(sy)	(((sy)->sy_flags >> 16) & 0xff)
+#define	SYCALL_ARG_64_MASK(sy)	(((sy)->sy_flags >> 17) & 0xff)
 #define	SYCALL_NARGS64(sy)	(((sy)->sy_flags >> 12) & 0x0f)
 #define	SYCALL_NARGS64_VAL(n)	((n) << 12)
 
