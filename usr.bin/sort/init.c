@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.20 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: init.c,v 1.21 2009/08/22 21:50:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.20 2009/08/22 10:53:28 dsl Exp $");
+__RCSID("$NetBSD: init.c,v 1.21 2009/08/22 21:50:32 dsl Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -338,20 +338,16 @@ settables(int gflags)
 	int i;
 	int next_weight = SINGL_FLD ? 1 : 2;
 	int rev_weight = SINGL_FLD ? 255 : 254;
-	int had_field_sep = 0;
+	int had_field_sep = SINGL_FLD;
 
 	for (i = 0; i < 256; i++) {
 		unweighted[i] = i;
 		if (d_mask[i] & REC_D_F)
 			continue;
-		if (d_mask[i] & FLD_D && !SINGL_FLD) {
+		if (!had_field_sep && d_mask[i] & FLD_D) {
+			/* First/only separator sorts before any data */
 			ascii[i] = 1;
 			Rascii[i] = 255;
-			if (had_field_sep) {
-				/* avoid confusion in key dumps */
-				next_weight++;
-				rev_weight--;
-			}
 			had_field_sep = 1;
 			continue;
 		}
