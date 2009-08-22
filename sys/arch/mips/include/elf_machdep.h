@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10.96.3 2009/08/21 17:17:01 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.96.4 2009/08/22 06:46:45 matt Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
@@ -150,6 +150,16 @@
 #define	EF_MIPS_ABI_O64		0x00002000
 #define	EF_MIPS_ABI_EABI32	0x00003000
 #define	EF_MIPS_ABI_EABI64	0x00004000
+
+#if defined(__MIPSEB__)
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#elif defined(__MIPSEL__)
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#elif !defined(HAVE_NBTOOL_CONFIG_H)
+#error neither __MIPSEL__ nor __MIPSEB__ are defined.
+#endif
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
