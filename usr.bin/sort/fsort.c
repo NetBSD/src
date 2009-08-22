@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.38 2009/08/20 06:36:25 dsl Exp $	*/
+/*	$NetBSD: fsort.c,v 1.39 2009/08/22 10:53:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.38 2009/08/20 06:36:25 dsl Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.39 2009/08/22 10:53:28 dsl Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -97,6 +97,7 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 	get_func_t get;
 	struct recheader *crec;
 	u_char *nbuffer;
+	FILE *fp;
 
 	if (!buffer) {
 		buffer = malloc(bufsize);
@@ -159,30 +160,37 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 		}
 
 		/* Sort this set of records */
-		if (radix_sort(keylist, nelem, ftbl[0].weights, REC_D))
-			err(2, NULL);
+		if (SINGL_FLD) {
+			if (radix_sort(keylist, nelem, ftbl[0].weights, REC_D))
+				err(2, "single field radix_sort");
+		} else {
+			if (radix_sort(keylist, nelem, unweighted, 0))
+				err(2, "unweighted radix_sort");
+		}
 
 		if (c == EOF && mfct == 0) {
 			/* all the data is (sorted) in the buffer */
-			append(keylist, nelem, outfp, putline, ftbl);
+			append(keylist, nelem, outfp,
+			    DEBUG('k') ? putkeydump : putline, ftbl->weights);
 			break;
 		}
 
 		/* Save current data to a temporary file for a later merge */
-		fstack[mfct].fp = ftmp();
-		append(keylist, nelem, fstack[mfct].fp, putrec, ftbl);
+		fp = ftmp();
+		fstack[mfct].fp = fp;
+		append(keylist, nelem, fp, putrec, NULL);
 		mfct++;
 
 		if (c == EOF) {
 			/* merge to output file */
-			fmerge(0, filelist, mfct, geteasy, outfp, putline,
-			    ftbl);
+			fmerge(0, filelist, mfct, geteasy, outfp,
+			    DEBUG('k') ? putkeydump : putline, ftbl);
 			break;
 		}
 
 		if (mfct == MERGE_FNUM) {
 			/* Merge the files we have */
-			FILE *fp = ftmp();
+			fp = ftmp();
 			fmerge(0, filelist, mfct, geteasy, fp, putrec, ftbl);
 			mfct = 1;
 			fstack[0].fp = fp;
