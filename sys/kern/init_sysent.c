@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.229 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: init_sysent.c,v 1.229.8.1 2009/08/22 00:22:40 matt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.229 2008/10/16 20:12:23 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.229.8.1 2009/08/22 00:22:40 matt Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -489,9 +489,9 @@ struct sysent sysent[] = {
 #endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 172 = unimplemented */
-	{ ns(struct sys_pread_args), 0,
+	{ ns(struct sys_pread_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)sys_pread },		/* 173 = pread */
-	{ ns(struct sys_pwrite_args), 0,
+	{ ns(struct sys_pwrite_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)sys_pwrite },		/* 174 = pwrite */
 	{ ns(struct compat_30_sys_ntp_gettime_args), 0,
 	    (sy_call_t *)compat_30(sys_ntp_gettime) },/* 175 = compat_30_ntp_gettime */
@@ -553,15 +553,15 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_setrlimit },	/* 195 = setrlimit */
 	{ ns(struct compat_12_sys_getdirentries_args), 0,
 	    (sy_call_t *)compat_12(sys_getdirentries) },/* 196 = compat_12_getdirentries */
-	{ ns(struct sys_mmap_args), 0,
+	{ ns(struct sys_mmap_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG6_64,
 	    (sy_call_t *)sys_mmap },		/* 197 = mmap */
-	{ ns(struct sys___syscall_args), SYCALL_INDIRECT,
+	{ ns(struct sys___syscall_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG0_64 | SYCALL_RET_64 | SYCALL_INDIRECT,
 	    (sy_call_t *)sys___syscall },	/* 198 = __syscall */
-	{ ns(struct sys_lseek_args), 0,
+	{ ns(struct sys_lseek_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64 | SYCALL_RET_64,
 	    (sy_call_t *)sys_lseek },		/* 199 = lseek */
-	{ ns(struct sys_truncate_args), 0,
+	{ ns(struct sys_truncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_truncate },	/* 200 = truncate */
-	{ ns(struct sys_ftruncate_args), 0,
+	{ ns(struct sys_ftruncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_ftruncate },	/* 201 = ftruncate */
 	{ ns(struct sys___sysctl_args), 0,
 	    (sy_call_t *)sys___sysctl },	/* 202 = __sysctl */
@@ -816,9 +816,9 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys___clone },		/* 287 = __clone */
 	{ ns(struct sys_fktrace_args), 0,
 	    (sy_call_t *)sys_fktrace },		/* 288 = fktrace */
-	{ ns(struct sys_preadv_args), 0,
+	{ ns(struct sys_preadv_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)sys_preadv },		/* 289 = preadv */
-	{ ns(struct sys_pwritev_args), 0,
+	{ ns(struct sys_pwritev_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 	    (sy_call_t *)sys_pwritev },		/* 290 = pwritev */
 	{ ns(struct compat_16_sys___sigaction14_args), 0,
 	    (sy_call_t *)compat_16(sys___sigaction14) },/* 291 = compat_16___sigaction14 */
@@ -961,7 +961,7 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 352 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 353 = unimplemented */
-	{ ns(struct sys_fsync_range_args), 0,
+	{ ns(struct sys_fsync_range_args), SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_fsync_range },	/* 354 = fsync_range */
 	{ ns(struct sys_uuidgen_args), 0,
 	    (sy_call_t *)sys_uuidgen },		/* 355 = uuidgen */
@@ -1085,7 +1085,7 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_pset_assign },	/* 414 = pset_assign */
 	{ ns(struct sys__pset_bind_args), 0,
 	    (sy_call_t *)sys__pset_bind },	/* 415 = _pset_bind */
-	{ ns(struct sys___posix_fadvise50_args), 0,
+	{ ns(struct sys___posix_fadvise50_args), SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 	    (sy_call_t *)sys___posix_fadvise50 },/* 416 = __posix_fadvise50 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 417 = filler */
