@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2009/08/22 01:02:47 mrg Exp $
 
 .include <bsd.own.mk>
 
-SCRIPTS=bdftruncate.pl
-MAN=	bdftruncate.1
+PROG=	bdftruncate
 
 .PATH:	${X11SRCDIR.font-util}
 
