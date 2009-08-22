@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/06/11 05:43:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2009/08/22 02:40:27 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -30,6 +30,14 @@ CPPFLAGS.main.c=	-DVENDOR_STRING="\"The Xorg Group\"" \
 			-DVENDOR_NAME="\"The Xorg Foundation\""
 
 COPTS.dixutils.c=	-Wno-error
+COPTS.colormap.c=	-Wno-error
+COPTS.cursor.c=		-Wno-error
+COPTS.deprecated.c=	-Wno-error
+COPTS.dispatch.c=	-Wno-error
+COPTS.dixfonts.c=	-Wno-error
+COPTS.events.c=		-Wno-error
+COPTS.resource.c=	-Wno-error
+COPTS.window.c=		-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
