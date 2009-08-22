@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.228.4.2 2009/03/15 19:43:48 snj Exp $	*/
+/*	$NetBSD: systm.h,v 1.228.4.2.4.1 2009/08/22 00:13:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -128,7 +128,22 @@ extern int nsysent;
 #error	"what byte order is this machine?"
 #endif
 
-#define	SYCALL_INDIRECT	0x0002	/* indirect (ie syscall() or __syscall()) */
+#define	SYCALL_INDIRECT	0x0000002 /* indirect (ie syscall() or __syscall()) */
+#define	SYCALL_NARGS64_MASK	0x000f000 /* count of 64bit args */
+#define SYCALL_RET_64	0x0010000 /* retval is a 64bit integer value */
+#define SYCALL_ARG0_64  0x0020000
+#define SYCALL_ARG1_64  0x0040000
+#define SYCALL_ARG2_64  0x0080000
+#define SYCALL_ARG3_64  0x0100000
+#define SYCALL_ARG4_64  0x0200000
+#define SYCALL_ARG5_64  0x0400000
+#define SYCALL_ARG6_64  0x0800000
+#define SYCALL_ARG7_64  0x1000000
+#define SYCALL_RET_64_P(sy)	((sy)->sy_flags & SYCALL_RET_64)
+#define SYCALL_ARG_64_P(sy, n)	((sy)->sy_flags & (SYCALL_ARG0_64 << (n)))
+#define	SYCALL_ARG_64_MASK(sy)	(((sy)->sy_flags >> 16) & 0xff)
+#define	SYCALL_NARGS64(sy)	(((sy)->sy_flags >> 12) & 0x0f)
+#define	SYCALL_NARGS64_VAL(n)	((n) << 12)
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 #define	bootverbose	(boothowto & AB_VERBOSE)
