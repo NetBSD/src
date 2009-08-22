@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.2 2009/08/22 02:19:42 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.3 2009/08/22 17:19:11 joerg Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.2 2009/08/22 02:19:42 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.3 2009/08/22 17:19:11 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -57,17 +57,18 @@ __RCSID("$NetBSD: unzip.c,v 1.2 2009/08/22 02:19:42 joerg Exp $");
 
 /* command-line options */
 static int		 a_opt;		/* convert EOL */
+static int		 c_opt;		/* extract to stoud */
 static const char	*d_arg;		/* directory */
 static int		 f_opt;		/* update existing files only */
 static int		 j_opt;		/* junk directories */
 static int		 L_opt;		/* lowercase names */
 static int		 n_opt;		/* never overwrite */
 static int		 o_opt;		/* always overwrite */
-static int		 p_opt;		/* extract to stdout */
+static int		 p_opt;		/* extract to stdout, quiet */
 static int		 q_opt;		/* quiet */
 static int		 t_opt;		/* test */
 static int		 u_opt;		/* update */
-static int		 v_opt;		/* verbose */
+static int		 v_opt;		/* verbose/list */
 
 /* time when unzip started */
 static time_t		 now;
@@ -666,6 +667,9 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 		return;
 	}
 
+	if (c_opt)
+		info("x %s\n", pathname);
+
 	text = a_opt;
 	warn = 0;
 	cr = 0;
@@ -677,9 +681,10 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 
 		/* left over CR from previous buffer */
 		if (a_opt && cr) {
-			if (len == 0 || buffer[0] != '\n')
-				if (write(STDOUT_FILENO, "\r", 1) != 1)
+			if (len == 0 || buffer[0] != '\n') {
+				if (fwrite("\r", 1, 1, stderr) != 1)
 					error("write('%s')", pathname);
+			}
 			cr = 0;
 		}
 
@@ -709,7 +714,7 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 
 		/* simple case */
 		if (!a_opt || !text) {
-			if (write(STDOUT_FILENO, buffer, len) != len)
+			if (fwrite(buffer, 1, len, stdout) != (size_t)len)
 				error("write('%s')", pathname);
 			continue;
 		}
@@ -732,7 +737,7 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 				if (q[1] == '\n')
 					break;
 			}
-			if (write(STDOUT_FILENO, p, q - p) != q - p)
+			if (fwrite(p, 1, q - p, stdout) != (size_t)(q - p))
 				error("write('%s')", pathname);
 		}
 	}
@@ -746,27 +751,23 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 static void
 list(struct archive *a, struct archive_entry *e)
 {
-	static int printed_header;
 	char buf[20];
 	time_t mtime;
 
-	if (!printed_header && !q_opt) {
-		printed_header = 1;
-		printf(" Length   Method    Size  Ratio   Date   Time  CRC-32    Name\n");
-		printf("--------  ------  ------- -----   ----   ----  ------    ----\n");
-	}
+	mtime = archive_entry_mtime(e);
+	strftime(buf, sizeof(buf), "%m-%d-%g %R", localtime(&mtime));
 
-	if (v_opt == 2) {
-		mtime = archive_entry_mtime(e);
-		strftime(buf, sizeof(buf), "%m-%d-%g %R", localtime(&mtime));
+	if (v_opt == 1) {
+		printf(" %8ju  %s   %s\n",
+		    (uintmax_t)archive_entry_size(e),
+		    buf, archive_entry_pathname(e));
+	} else if (v_opt == 2) {
 		printf("%8ju  Stored  %7ju   0%%  %s %08x  %s\n",
 		    (uintmax_t)archive_entry_size(e),
 		    (uintmax_t)archive_entry_size(e),
 		    buf,
 		    0U,
 		    archive_entry_pathname(e));
-	} else {
-		printf("%s\n", archive_entry_pathname(e));
 	}
 	ac(archive_read_data_skip(a));
 }
@@ -807,6 +808,7 @@ unzip(const char *fn)
 	struct archive *a;
 	struct archive_entry *e;
 	int fd, ret;
+	uintmax_t total_size, file_count;
 
 	if ((fd = open(fn, O_RDONLY)) < 0)
 		error("%s", fn);
@@ -815,6 +817,16 @@ unzip(const char *fn)
 	ac(archive_read_support_format_zip(a));
 	ac(archive_read_open_fd(a, fd, 8192));
 
+	if (v_opt == 1) {
+		printf("  Length     Date   Time   Name\n");
+		printf(" --------    ----   ----   ----\n");
+	} else if (v_opt == 2) {
+		printf(" Length   Method    Size  Ratio   Date   Time  CRC-32    Name\n");
+		printf("--------  ------  ------- -----   ----   ----  ------    ----\n");
+	}
+
+	total_size = 0;
+	file_count = 0;
 	for (;;) {
 		ret = archive_read_next_header(a, &e);
 		if (ret == ARCHIVE_EOF)
@@ -824,10 +836,24 @@ unzip(const char *fn)
 			test(a, e);
 		else if (v_opt)
 			list(a, e);
-		else if (p_opt)
+		else if (p_opt || c_opt)
 			extract_stdout(a, e);
 		else
 			extract(a, e);
+
+		total_size += archive_entry_size(e);
+		++file_count;
+	}
+
+	if (v_opt == 1) {
+		printf(" --------                   -------\n");
+		printf(" %8ju                   %ju file%s\n",
+		    total_size, file_count, file_count != 1 ? "s" : "");
+	} else if (v_opt == 2) {
+		printf("--------          ------- ---                            -------\n");
+		printf("%8ju          %7ju   0%%                            %8ju file%s\n",
+		    total_size, total_size, file_count,
+		    file_count != 1 ? "s" : "");
 	}
 
 	ac(archive_read_close(a));
@@ -853,10 +879,13 @@ getopts(int argc, char *argv[])
 	int opt;
 
 	optreset = optind = 1;
-	while ((opt = getopt(argc, argv, "ad:fjLlnopqtuvx:")) != -1)
+	while ((opt = getopt(argc, argv, "acd:fjLlnopqtuvx:")) != -1)
 		switch (opt) {
 		case 'a':
 			a_opt = 1;
+			break;
+		case 'c':
+			c_opt = 1;
 			break;
 		case 'd':
 			d_arg = optarg;
