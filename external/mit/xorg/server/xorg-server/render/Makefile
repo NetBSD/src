@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/06/11 05:43:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2009/08/22 02:40:28 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -17,6 +17,8 @@ CPPFLAGS+=      ${X11FLAGS.DIX}
 
 COPTS.miglyph.c=-Wno-error	# XXX gcc 3.3
 COPTS.mirect.c=	-Wno-error	# XXX gcc 3.3
+COPTS.picture.c=	-Wno-error
+COPTS.render.c=		-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
