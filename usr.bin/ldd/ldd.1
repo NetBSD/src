@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldd.1,v 1.14 2008/04/30 13:11:01 martin Exp $
+.\"	$NetBSD: ldd.1,v 1.15 2009/08/22 06:52:16 mrg Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,26 +53,10 @@ options may be given. The argument is a format string passed to
 and allows customization of
 .Nm ldd Ns 's
 output.
-The first format argument is used for library objects and is equivalent
-to the
-.Xr ld.aout_so 1
-environment variable
-.Ev LD_TRACE_LOADED_OBJECTS_FMT1 .
-It defaults to
-.Qq "\et-l%o.%m =\*[Gt] %p\en"
-for elf and
-.Qq "\et-l%o.%m =\*[Gt] %p (%x)\en"
-for a.out.
-The second format argument is used for non-library objects and it is equivalent
-to the
-.Xr ld.aout_so 1
-environment variable
-.Ev LD_TRACE_LOADED_OBJECTS_FMT2 .
-It defaults to
-.Qq "\et%o =\*[Gt] %p\en"
-for elf and
-.Qq "\et%o (%x)\en"
-for a.out.
+The first format argument is used for library objects and defaults to
+.Qq "\et-l%o.%m =\*[Gt] %p\en" .
+The second format argument is used for non-library objects defaults to
+.Qq "\et%o =\*[Gt] %p\en" .
 .Pp
 These arguments are interpreted as format strings a la
 .Xr printf 3
@@ -111,7 +95,6 @@ and
 are recognized and have their usual meaning.
 .Sh SEE ALSO
 .Xr ld 1 ,
-.Xr ld.aout_so 1 ,
 .Xr ld.elf_so 1 ,
 .Xr nm 1 ,
 .Xr rtld 1
