@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2008/02/21 09:32:12 sekiya Exp $	*/
+/*	$NetBSD: param.h,v 1.10.28.1 2009/08/22 06:45:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,8 +77,6 @@
 
 #include <mips/mips_param.h>
 
-#define	_MACHINE_ARCH	mipseb
-#define	MACHINE_ARCH	"mipseb"
 #define	_MACHINE	sgimips
 #define	MACHINE		"sgimips"
 #define	MID_MACHINE	MID_MIPS
@@ -87,35 +85,6 @@
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* Maximum raw I/O transfer size */
-
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		256		/* size of an mbuf */
-
-#ifndef MCLSHIFT
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-					/* 2K cluster can hold Ether frame */
-#endif	/* MCLSHIFT */
-
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* Map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* Map size, max cluster allocation */
-#endif
-#endif
 
 #ifdef _KERNEL
 #ifndef _LOCORE
