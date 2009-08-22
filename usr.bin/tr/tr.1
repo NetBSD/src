@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.1,v 1.16 2006/09/17 12:19:01 wiz Exp $
+.\"	$NetBSD: tr.1,v 1.17 2009/08/22 00:23:02 joerg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,7 @@ the octal sequence to the full 3 octal digits.
 A backslash followed by certain special characters maps to special
 values.
 .sp
-.Bl -column
+.Bl -column cc
 .It \ea	\*[Lt]alert character\*[Gt]
 .It \eb	\*[Lt]backspace\*[Gt]
 .It \ef	\*[Lt]form-feed\*[Gt]
@@ -159,7 +159,7 @@ Represents the range of characters between the range endpoints, inclusively.
 Represents all characters belonging to the defined character class.
 Class names are:
 .sp
-.Bl -column
+.Bl -column xdigit
 .It alnum	\*[Lt]alphanumeric characters\*[Gt]
 .It alpha	\*[Lt]alphabetic characters\*[Gt]
 .It blank	\*[Lt]blank characters\*[Gt]
