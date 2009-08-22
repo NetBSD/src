@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.26 2009/08/22 21:19:40 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.27 2009/08/22 21:28:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.26 2009/08/22 21:19:40 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.27 2009/08/22 21:28:55 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ enterfield(u_char *tablepos, const u_char *endkey, struct field *cur_fld,
 	mask = cur_fld->mask;
 	lweight = cur_fld->weights;	
 	for (; start < end; start++) {
-		if (mask && mask[*start]) {
+		if (!mask || mask[*start]) {
 			*tablepos++ = lweight[*start];
 		}
 	}
