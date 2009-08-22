@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.27 2009/03/11 13:58:30 joerg Exp $
+.\"	$NetBSD: sort.1,v 1.28 2009/08/22 21:55:08 dsl Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 13, 2001
+.Dd August 22, 2009
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -97,6 +97,9 @@ produces the appropriate error messages and exits with code 1; otherwise,
 .Nm
 returns 0.
 .Nm
+.It Fl H
+Ignored for compatibility with earlier versions of
+.Nm .
 .Fl c
 produces no output.
 .It Fl m
@@ -106,6 +109,15 @@ The argument given is the name of an
 .Ar output
 file to be used instead of the standard output.
 This file can be the same as one of the input files.
+.It Fl S
+Don't use stable sort.
+Default is to use stable sort.
+.It Fl s
+Use stable sort, keeps records with equal keys in their original order.
+This is the default.
+Provided for compatibility with other
+.Nm
+implementations only.
 .It Fl T Ar dir
 Use
 .Ar dir
@@ -158,18 +170,6 @@ option no longer implies the
 option.)
 .It Fl r
 Reverse the sense of comparisons.
-.It Fl S
-Don't use stable sort.
-Default is to use stable sort.
-.It Fl s
-Use stable sort.
-This is the default.
-Provided for compatibility with other
-.Nm
-implementations only.
-.It Fl H
-Use a merge sort instead of a radix sort.
-This option should be used for files larger than 60Mb.
 .El
 .Pp
 The treatment of field separators can be altered using these options:
@@ -416,10 +416,9 @@ implementation appeared in
 and is used since
 .Nx 1.6 .
 .Sh BUGS
-To sort files larger than 60Mb, use
-.Nm
-.Fl H ;
-files larger than 704Mb must be sorted in smaller pieces, then merged.
+Posix requires the locale's thousands separator be ignored in numbers.
+It may be faster to sort very large files in pieces and then explicitly
+merge them.
 .Sh NOTES
 This
 .Nm
