@@ -1,8 +1,7 @@
-#	$NetBSD: list.ldd,v 1.1 2009/01/07 00:39:24 mrg Exp $
+#	$NetBSD: list.ldd,v 1.2 2009/08/22 06:52:15 mrg Exp $
 
 PROG	ldd
 
-LIBS	${LDD_AOUTDIR}/libldd_aout.a
 LIBS	${LDD_ELF32DIR}/libldd_elf32.a
 LIBS	${LDD_ELF64DIR}/libldd_elf64.a
 

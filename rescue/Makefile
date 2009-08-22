@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2009/08/21 15:16:45 he Exp $
+#	$NetBSD: Makefile,v 1.24 2009/08/22 06:52:15 mrg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -35,13 +35,7 @@ LISTS+=		${.CURDIR}/list.crypto
 CRUNCHENV+=	MKKERBEROS=no		# for ssh
 .endif
 
-.if ${MACHINE_CPU} != "mips"
 LISTS+=		${.CURDIR}/list.ldd
-LDD_AOUTDIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/aout && ${PRINTOBJDIR}
-PARSELISTENV+=	LDD_AOUTDIR=${LDD_AOUTDIR}
-.else
-LISTS+=		${.CURDIR}/list.ldd.noaout
-.endif
 LDD_ELF32DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf32 && ${PRINTOBJDIR}
 LDD_ELF64DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf64 && ${PRINTOBJDIR}
 PARSELISTENV+=	LDD_ELF32DIR=${LDD_ELF32DIR} LDD_ELF64DIR=${LDD_ELF64DIR}
