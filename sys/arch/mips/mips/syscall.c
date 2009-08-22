@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.2 2009/08/21 17:46:23 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.3 2009/08/22 00:28:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.2 2009/08/21 17:46:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.3 2009/08/22 00:28:42 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.2 2009/08/21 17:46:23 matt Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/endian.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
@@ -167,12 +168,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	struct proc *p = l->l_proc;
 	struct frame *frame = l->l_md.md_regs;
 	mips_reg_t *fargs = &frame->f_regs[_R_A0];
-	void *args = NULL;
-	void *rval = NULL;	/* XXX gcc */
-#if !defined(__mips_o32)
-	register32_t copy32args[2+SYS_MAXSYSARGS];
-	register_t copy32rval[2];
-#endif
+	register_t *args = NULL;
 	register_t copyargs[2+SYS_MAXSYSARGS];
 	mips_reg_t saved_v0;
 	vaddr_t usp;
@@ -199,7 +195,9 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 		frame->f_regs[_R_PC] = opc + sizeof(uint32_t);
 
 	callp = p->p_emul->e_sysent;
-	saved_v0 = code = frame->f_regs[_R_V0] - SYSCALL_SHIFT;
+	saved_v0 = code = frame->f_regs[_R_V0];
+
+	code -= SYSCALL_SHIFT;
 
 #ifdef KERN_SA
 	if (__predict_false((l->l_savp)
@@ -229,13 +227,12 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	else
 		callp += code;
 
+	nargs = callp->sy_argsize;
+	frame->f_regs[_R_V0] = 0;
 #if !defined(__mips_o32)
 	if (abi != _MIPS_BSD_API_O32) {
 #endif
 		CTASSERT(sizeof(copyargs[0]) == sizeof(fargs[0]));
-		nargs = callp->sy_argsize / sizeof(copyargs[0]);
-		rval = &frame->f_regs[_R_V0];
-		frame->f_regs[_R_V0] = 0;
 		/* rval[1] already is V1 */
 		if (nargs <= nregs) {
 			/*
@@ -260,51 +257,124 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 				goto bad;
 		}
 #if !defined(__mips_o32)
-	} else {
+	} else do {
+		/*
+		 * The only difference between O32 and N32 is the calling
+		 * sequence.  If you make O32 
+		 */
+		int32_t copy32args[SYS_MAXSYSARGS];
+		int32_t *cargs = copy32args; 
+		unsigned int arg64mask = SYCALL_ARG_64_MASK(callp);
+		bool doing_arg64;
+		size_t narg64 = SYCALL_NARGS64(callp);
 		/*
 		 * All arguments are 32bits wide and 64bit arguments use
-		 * two 32bit registers or stack slots.
+		 * two 32bit registers or stack slots.  We need to remarshall
+		 * them into 64bit slots
 		 */
-		nargs = callp->sy_argsize / sizeof(copy32args[0]);
-		rval = copy32rval;
-		args = copy32args;
-		copy32rval[0] = 0;
-		copy32rval[1] = frame->f_regs[_R_V1];
+		args = copyargs;
 		CTASSERT(sizeof(copy32args[0]) != sizeof(fargs[0]));
+
 		/*
-		 * Copy the register passed arguments from the trapframe to
-		 * the set of 32bit copies.
+		 * If there are no 64bit arguments and all arguments were in
+		 * registers, just use the frame for the source of arguments
 		 */
-		for (i = 0; i < 4  && i < nargs; i++)
-			copy32args[i] = fargs[i];
-		if (nargs > nregs) {
+		if (nargs <= nregs && narg64 == 0) {
+			args = fargs;
+			break;
+		}
+
+		if (nregs <= nargs + narg64) {
 			/*
-			 * Copy the remainder of the arguments from the stack
-			 * after skipped the slots for the 4 register passed
+			 * Grab the non-register arguments from the stack
+			 * after skipping the slots for the 4 register passed
 			 * arguments.
 			 */
 			usp = frame->f_regs[_R_SP] + 4*sizeof(register32_t);
-			error = copyin((register32_t *)usp, &copy32args[nregs],
-			    (nargs - nregs) * sizeof(copy32args[0]));
+			error = copyin((register32_t *)usp, copy32args,
+			    (nargs + narg64 - nregs) * sizeof(copy32args[0]));
 			if (error)
 				goto bad;
 		}
-	}
+		/*
+		 * Copy all the arguments to copyargs, starting with the ones
+		 * in registers.  Using the hints in the 64bit argmask,
+		 * we marshall the passed 32bit values into 64bit slots.  If we
+		 * encounter a 64 bit argument, we grab two adjacent 32bit
+		 * values and synthesize the 64bit argument.
+		 */
+		for (i = 0, doing_arg64 = false; i < nargs + narg64;) {
+			register_t arg;
+			if (nregs > 0) {
+				arg = (int32_t) *fargs++; 
+				nregs--;
+			} else {
+				arg = *cargs++;
+			}
+			if (__predict_true((arg64mask & 1) == 0)) {
+				/*
+				 * Just copy it with sign extension on
+				 */
+				copyargs[i++] = (int32_t) arg;
+				arg64mask >>= 1;
+				continue;
+			}
+			/*
+			 * 64bit arg.  grab the low 32 bits, discard the high.
+			 */
+			arg = (uint32_t)arg;
+			if (!doing_arg64) {
+				/*
+				 * Pick up the 1st word of a 64bit arg.
+				 * If lowword == 1 then highword == 0,
+				 * so this is the highword and thus
+				 * shifted left by 32, otherwise
+				 * lowword == 0 and highword == 1 so
+				 * it isn't shifted at all.  Remember
+				 * we still need another word.
+				 */
+				doing_arg64 = true;
+				copyargs[i] = arg << (_QUAD_LOWWORD*32);
+				narg64--;	/* one less 64bit arg */
+			} else {
+				/*
+				 * Pick up the 2nd word of a 64bit arg.
+				 * if highword == 1, it's shifted left
+				 * by 32, otherwise lowword == 1 and
+				 * highword == 0 so it isn't shifted at
+				 * all.  And now head to the next argument.
+				 */
+				doing_arg64 = false;
+				copyargs[i++] |= arg << (_QUAD_HIGHWORD*32);
+				arg64mask >>= 1;
+			}
+		}
+	} while (/*CONSTCOND*/ 0);	/* avoid a goto */
 #endif
 
 	if (__predict_false(p->p_trace_enabled)
 	    && (error = trace_enter(code, args, nargs)) != 0)
 		goto out;
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = (*callp->sy_call)(l, args, &frame->f_regs[_R_V0]);
 
     out:
 	switch (error) {
 	case 0:
 #if !defined(__mips_o32)
-		if (abi == _MIPS_BSD_API_O32) {
-			frame->f_regs[_R_V0] = copy32rval[0];
-			frame->f_regs[_R_V1] = copy32rval[1];
+		if (abi == _MIPS_BSD_API_O32 && SYCALL_RET_64_P(callp)) {
+			/*
+			 * If this is from O32 and it's a 64bit quantity,
+			 * split it into 2 32bit values in adjacent registers.
+			 */
+#if BYTE_ORDER == BIG_ENDIAN
+			frame->f_regs[_R_V1] = (int32_t) frame->f_regs[_R_V0];
+			frame->f_regs[_R_V0] >>= 32; 
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+			frame->f_regs[_R_V1] = frame->f_regs[_R_V0] >> 32; 
+			frame->f_regs[_R_V0] = (int32_t) frame->f_regs[_R_V0];
+#endif
 		}
 #endif
 		frame->f_regs[_R_A3] = 0;
