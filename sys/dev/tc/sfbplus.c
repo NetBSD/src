@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.31 2008/07/09 13:19:33 joerg Exp $ */
+/* $NetBSD: sfbplus.c,v 1.32 2009/08/22 17:36:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.31 2008/07/09 13:19:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.32 2009/08/22 17:36:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,8 +263,7 @@ sfbpattach(device_t parent, device_t self, void *aux)
 		sc->nscreens = 1;
 	}
 	else {
-		MALLOC(ri, struct rasops_info *, sizeof(struct rasops_info),
-			M_DEVBUF, M_NOWAIT);
+		ri = malloc(sizeof(struct rasops_info), M_DEVBUF, M_NOWAIT);
 		if (ri == NULL) {
 			printf(": can't alloc memory\n");
 			return;
