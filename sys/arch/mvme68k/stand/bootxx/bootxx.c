@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.15 2008/04/28 20:23:29 martin Exp $ */
+/*	$NetBSD: bootxx.c,v 1.16 2009/08/22 10:02:21 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/time.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_aout.h>
 #include <machine/prom.h>
 
 #include <lib/libsa/stand.h>
