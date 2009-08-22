@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.24 2009/08/20 06:36:25 dsl Exp $	*/
+/*	$NetBSD: sort.h,v 1.25 2009/08/22 10:53:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -77,18 +77,19 @@
 #define NBINS		256
 
 /* values for masks, weights, and other flags. */
-#define I 1		/* mask out non-printable characters */
-#define D 2		/* sort alphanumeric characters only */
-#define N 4		/* Field is a number */
-#define F 8		/* weight lower and upper case the same */
-#define R 16		/* Field is reversed with respect to the global weight */
+/* R and F get used to index weight_tables[] */
+#define R 1		/* Field is reversed */
+#define F 2		/* weight lower and upper case the same */
+#define I 4		/* mask out non-printable characters */
+#define D 8		/* sort alphanumeric characters only */
+#define N 16		/* Field is a number */
 #define BI 32		/* ignore blanks in icol */
 #define BT 64		/* ignore blanks in tcol */
 
 /* masks for delimiters: blanks, fields, and termination. */
-#define BLANK 1		/* ' ', '\t'; '\n' if -T is invoked */
+#define BLANK 1		/* ' ', '\t'; '\n' if -R is invoked */
 #define FLD_D 2		/* ' ', '\t' default; from -t otherwise */
-#define REC_D_F 4	/* '\n' default; from -T otherwise */
+#define REC_D_F 4	/* '\n' default; from -R otherwise */
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -143,6 +144,9 @@ typedef struct coldesc {
  * implies the end of the line.  Flags regulate omission of blanks and
  * numerical sorts; mask determines which characters are ignored (from -i, -d);
  * weights determines the sort weights of a character (from -f, -r).
+ *
+ * The first field contain the global flags etc.
+ * The list terminates when icol = 0.
  */
 struct field {
 	struct column icol;
@@ -161,18 +165,21 @@ typedef int (*get_func_t)(int, int, struct filelist *, int,
 typedef void (*put_func_t)(const struct recheader *, FILE *);
 
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
+extern u_char *const weight_tables[4];   /* ascii, Rascii, Ftable, RFtable */
 extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
 extern const char *tmpdir;
-extern int stable_sort;
 extern int (*radix_sort)(const u_char **, int, const u_char *, u_int);
-extern u_char gweights[NBINS];
+extern u_char unweighted[NBINS];
 extern struct coldesc *clist;
 extern int ncols;
 
+#define DEBUG(ch) (debug_flags & (1 << ((ch) & 31)))
+extern unsigned int debug_flags;
+
 void	 append(const u_char **, int, FILE *,
-	    void (*)(const RECHEADER *, FILE *), struct field *);
+	    void (*)(const RECHEADER *, FILE *), u_char *);
 void	 concat(FILE *, FILE *);
 length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);
 void	 fixit(int *, char **);
@@ -187,11 +194,11 @@ int	 makekey(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
 int	 makeline(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
-void	 num_init(void);
 int	 optval(int, int);
 void	 order(struct filelist *, get_func_t, struct field *);
 void	 putline(const RECHEADER *, FILE *);
 void	 putrec(const RECHEADER *, FILE *);
+void	 putkeydump(const RECHEADER *, FILE *);
 void	 rd_append(int, int, int, FILE *, u_char *, u_char *);
 int	 setfield(const char *, struct field *, int);
 void	 settables(int);

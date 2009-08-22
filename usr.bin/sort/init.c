@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.19 2009/08/15 09:48:46 dsl Exp $	*/
+/*	$NetBSD: init.c,v 1.20 2009/08/22 10:53:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.19 2009/08/15 09:48:46 dsl Exp $");
+__RCSID("$NetBSD: init.c,v 1.20 2009/08/22 10:53:28 dsl Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -74,12 +74,10 @@ __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 static void insertcol(struct field *);
 static const char *setcolumn(const char *, struct field *, int);
 
-u_char gweights[NBINS];
-
 /*
- * masks of ignored characters.  Alltable is 256 ones.
+ * masks of ignored characters.
  */
-static u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
+static u_char dtable[NBINS], itable[NBINS];
 
 /*
  * parsed key options
@@ -187,8 +185,7 @@ setfield(const char *pos, struct field *cur_fld, int gflag)
 {
 	int tmp;
 
-	cur_fld->weights = ascii;
-	cur_fld->mask = alltable;
+	cur_fld->mask = NULL;
 
 	pos = setcolumn(pos, cur_fld, gflag);
 	if (*pos == '\0')			/* key extends to EOL. */
@@ -202,18 +199,8 @@ setfield(const char *pos, struct field *cur_fld, int gflag)
 		cur_fld->flags = gflag;
 	tmp = cur_fld->flags;
 
-	/*
-	 * Assign appropriate mask table and weight table.
-	 * If the global weights are reversed, the local field
-	 * must be "re-reversed".
-	 */
-	if (((tmp & R) ^ (gflag & R)) && (tmp & F))
-		cur_fld->weights = RFtable;
-	else if (tmp & F)
-		cur_fld->weights = Ftable;
-	else if ((tmp & R) ^ (gflag & R))
-		cur_fld->weights = Rascii;
-
+	/* Assign appropriate mask table and weight table. */
+	cur_fld->weights = weight_tables[tmp & (R | F)];
 	if (tmp & I)
 		cur_fld->mask = itable;
 	else if (tmp & D)
@@ -325,71 +312,64 @@ fixit(int *argc, char **argv)
 
 /*
  * ascii, Rascii, Ftable, and RFtable map
- * REC_D -> REC_D;  {not REC_D} -> {not REC_D}.
- * gweights maps REC_D -> (0 or 255); {not REC_D} -> {not gweights[REC_D]}.
- * Note: when sorting in forward order, to encode character zero in a key,
- * use \001\001; character 1 becomes \001\002.  In this case, character 0
- * is reserved for the field delimiter.  Analagously for -r (fld_d = 255).
+ *
+ * Sorting 'weight' tables.
+ * Convert 'ascii' characters into their sort order.
+ * The 'F' variants fold lower case to upper equivalent
+ * The 'R' variants are for reverse sorting.
+ * The record separator (REC_D) always maps to 0.
+ * One is reserved for field separators (added when key is generated)
+ * The field separator (from -t<ch>) map to 1 or 255 (unless SINGL_FLD)
+ * All other bytes map to the appropriate value for the sort order.
+ * Numeric sorts don't need any tables, they are reversed by negation.
+ *
  * Note: this is only good for ASCII sorting.  For different LC 's,
- * all bets are off.  See also num_init in number.c
+ * all bets are off.
+ *
+ * If SINGL_FLD then the weights have to be applied during the actual sort.
+ * Otherwise they are applied when the key bytes are built.
+ *
+ * itable[] and dtable[] are the masks for -i (ignore non-printables)
+ * and -d (only sort blank and alphanumerics).
  */
 void
 settables(int gflags)
 {
-	u_char *wts;
-	int i, incr;
-	for (i=0; i < 256; i++) {
-		ascii[i] = i;
-		if (i > REC_D && i < 255 - REC_D+1)
-			Rascii[i] = 255 - i + 1;
-		else
-			Rascii[i] = 255 - i;
-		if (islower(i)) {
-			Ftable[i] = Ftable[toupper(i)];
-			RFtable[i] = RFtable[toupper(i)];
-		} else if (REC_D>= 'A' && REC_D < 'Z' && i < 'a' && i > REC_D) {
-			Ftable[i] = i + 1;
-			RFtable[i] = Rascii[i] - 1;
-		} else {
-			Ftable[i] = i;
-			RFtable[i] = Rascii[i];
+	int i;
+	int next_weight = SINGL_FLD ? 1 : 2;
+	int rev_weight = SINGL_FLD ? 255 : 254;
+	int had_field_sep = 0;
+
+	for (i = 0; i < 256; i++) {
+		unweighted[i] = i;
+		if (d_mask[i] & REC_D_F)
+			continue;
+		if (d_mask[i] & FLD_D && !SINGL_FLD) {
+			ascii[i] = 1;
+			Rascii[i] = 255;
+			if (had_field_sep) {
+				/* avoid confusion in key dumps */
+				next_weight++;
+				rev_weight--;
+			}
+			had_field_sep = 1;
+			continue;
 		}
-		alltable[i] = 1;
+		ascii[i] = next_weight;
+		Rascii[i] = rev_weight;
+		if (Ftable[i] == 0) {
+			Ftable[i] = next_weight;
+			RFtable[i] = rev_weight;
+			Ftable[tolower(i)] = next_weight;
+			RFtable[tolower(i)] = rev_weight;
+		}
+		next_weight++;
+		rev_weight--;
 
 		if (i == '\n' || isprint(i))
 			itable[i] = 1;
-		else
-			itable[i] = 0;
 
 		if (i == '\n' || i == '\t' || i == ' ' || isalnum(i))
 			dtable[i] = 1;
-		else
-			dtable[i] = 0;
-	}
-
-	Rascii[REC_D] = RFtable[REC_D] = REC_D;
-	if (isupper(REC_D))
-		Ftable[tolower(REC_D)]++;
-
-	if ((gflags & R) && !((gflags & F) && SINGL_FLD))
-		wts = Rascii;
-	else if (!((gflags & F) && SINGL_FLD))
-		wts = ascii;
-	else if (gflags & R)
-		wts = RFtable;
-	else
-		wts = Ftable;
-
-	memmove(gweights, wts, sizeof(gweights));
-	incr = (gflags & R) ? -1 : 1;
-	for (i = 0; i < REC_D; i++)
-		gweights[i] += incr;
-	gweights[REC_D] = ((gflags & R) ? 255 : 0);
-	if (SINGL_FLD && (gflags & F)) {
-		for (i = 0; i < REC_D; i++) {
-			ascii[i] += incr;
-			Rascii[i] += incr;
-		}
-		ascii[REC_D] = Rascii[REC_D] = gweights[REC_D];
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.51 2009/08/20 06:36:25 dsl Exp $	*/
+/*	$NetBSD: sort.c,v 1.52 2009/08/22 10:53:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.51 2009/08/20 06:36:25 dsl Exp $");
+__RCSID("$NetBSD: sort.c,v 1.52 2009/08/22 10:53:28 dsl Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -98,14 +98,17 @@ u_char d_mask[NBINS];		/* flags for rec_d, field_d, <blank> */
  * weight tables.  Gweights is one of ascii, Rascii..
  * modified to weight rec_d = 0 (or 255)
  */
+u_char *const weight_tables[4] = { ascii, Rascii, Ftable, RFtable };
 u_char ascii[NBINS], Rascii[NBINS], RFtable[NBINS], Ftable[NBINS];
+u_char unweighted[NBINS];
 int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0;
 
 /*
  * Default to stable sort.
  */
-int stable_sort = 1;
 int (*radix_sort)(const u_char **, int, const u_char *, u_int) = sradixsort;
+
+unsigned int debug_flags = 0;
 
 static char toutpath[MAXPATHLEN];
 
@@ -153,7 +156,7 @@ main(int argc, char *argv[])
 	if (!(tmpdir = getenv("TMPDIR")))
 		tmpdir = _PATH_TMP;
 
-	while ((ch = getopt(argc, argv, "bcdfik:mHno:rR:sSt:T:ux")) != -1) {
+	while ((ch = getopt(argc, argv, "bcdD:fik:mHno:rR:sSt:T:ux")) != -1) {
 		switch (ch) {
 		case 'b':
 			fldtab->flags |= BI | BT;
@@ -161,14 +164,13 @@ main(int argc, char *argv[])
 		case 'c':
 			cflag = 1;
 			break;
+		case 'D': /* Debug flags */
+			for (i = 0; optarg[i]; i++)
+			    debug_flags |= 1 << (optarg[i] & 31);
+			break;
 		case 'd': case 'f': case 'i': case 'n': case 'r':
 			tmp |= optval(ch, 0);
-			if ((tmp & R) && (tmp & F))
-				fldtab->weights = RFtable;
-			else if (tmp & F)
-				fldtab->weights = Ftable;
-			else if (tmp & R)
-				fldtab->weights = Rascii;
+			fldtab->weights = weight_tables[tmp & (R | F)];
 			fldtab->flags |= tmp;
 			break;
 		case 'H':
@@ -194,11 +196,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			/* for GNU sort compatibility (this is our default) */
-			stable_sort = 1;
 			radix_sort = radixsort;
 			break;
 		case 'S':
-			stable_sort = 0;
 			radix_sort = sradixsort;
 			break;
 		case 't':
@@ -214,7 +214,8 @@ main(int argc, char *argv[])
 		case 'R':
 			if (REC_D != '\n')
 				usage("multiple record delimiters");
-			if ('\n' == (REC_D = *optarg))
+			REC_D = *optarg;
+			if (REC_D == '\n')
 				break;
 			if (optarg[1] != '\0') {
 				char *ep;
@@ -280,11 +281,10 @@ main(int argc, char *argv[])
 			setfield("1", &fldtab[++fidx], fldtab->flags);
 		}
 		fldreset(fldtab);
-		fldtab[0].flags &= ~F;
+		// fldtab[0].flags &= ~F;
 	}
 	settables(fldtab[0].flags);
-	num_init();
-	fldtab->weights = gweights;
+	fldtab->weights = weight_tables[fldtab->flags & (R | F)];
 
 	if (optind == argc) {
 		static const char * const names[] = { _PATH_STDIN, NULL };

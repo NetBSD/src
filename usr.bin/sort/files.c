@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.34 2009/08/18 18:00:28 dsl Exp $	*/
+/*	$NetBSD: files.c,v 1.35 2009/08/22 10:53:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.34 2009/08/18 18:00:28 dsl Exp $");
+__RCSID("$NetBSD: files.c,v 1.35 2009/08/22 10:53:28 dsl Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -281,6 +281,15 @@ void
 putline(const RECHEADER *rec, FILE *fp)
 {
 	EWRITE(rec->data+rec->offset, 1, rec->length - rec->offset, fp);
+}
+
+/*
+ * write dump of key to output (for -Dk)
+ */
+void
+putkeydump(const RECHEADER *rec, FILE *fp)
+{
+	EWRITE(rec, 1, rec->offset + REC_DATA_OFFSET, fp);
 }
 
 /*

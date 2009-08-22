@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.22 2009/08/20 06:36:25 dsl Exp $	*/
+/*	$NetBSD: msort.c,v 1.23 2009/08/22 10:53:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.22 2009/08/20 06:36:25 dsl Exp $");
+__RCSID("$NetBSD: msort.c,v 1.23 2009/08/22 10:53:28 dsl Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ typedef struct mfile {
 	struct recheader rec[1];
 } MFILE;
 
-static u_char *wts, *wts1 = NULL;
+static u_char *wts;
 
 static int cmp(RECHEADER *, RECHEADER *);
 static int insert(struct mfile **, struct mfile **, int, int);
@@ -97,15 +97,6 @@ fmerge(int binno, struct filelist *filelist, int nfiles,
 	put_func_t put;
 
 	wts = ftbl->weights;
-	if (!UNIQUE && SINGL_FLD && ftbl->flags & F)
-		wts1 = (ftbl->flags & R) ? Rascii : ascii;
-
-	if (!buffer) {
-		buffer = malloc(bufsize);
-		if (!buffer)
-			err(2, "fmerge(): malloc");
-		memset(buffer, 0, bufsize);
-	}
 
 	while (nfiles) {
 		put = putrec;
@@ -153,12 +144,9 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
 	static size_t bufs_sz[MERGE_FNUM + 1];
 
 	/*
-	 * We need nfiles + 1 buffers. One is 'buffer', the
-	 * rest needs to be allocated.
+	 * We need nfiles + 1 buffers.
 	 */
-	bufs[0] = buffer;
-	bufs_sz[0] = bufsize;
-	for (i = 1; i < nfiles + 1; i++) {
+	for (i = 0; i < nfiles + 1; i++) {
 		if (bufs[i])
 			continue;
 
@@ -169,25 +157,27 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
 		bufs_sz[i] = DEFLLEN;
 	}
 
+	/* Read one record from each file (read again if a duplicate) */
 	for (i = j = 0; i < nfiles; i++, j++) {
 		cfile = (struct mfile *) bufs[j];
 		cfile->flno = infl0 + j;
 		cfile->end = (u_char *) bufs[j] + bufs_sz[j];
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(cfile->flno, 0, NULL, nfiles,
-			   cfile->rec, cfile->end, ftbl))) {
+			c = get(cfile->flno, 0, NULL, nfiles, cfile->rec,
+			    cfile->end, ftbl);
+			if (c == EOF) {
 				--i;
 				--nfiles;
 				break;
 			}
 
 			if (c == BUFFEND) {
+				bufs_sz[j] *= 2;
 				cfile = realloc(bufs[j], bufs_sz[j]);
 				if (!cfile)
 					err(2, "merge: realloc");
 
 				bufs[j] = (void *) cfile;
-				bufs_sz[j] *= 2;
 				cfile->end = (u_char *)cfile + bufs_sz[j];
 
 				c = 1;
@@ -206,8 +196,9 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
 	cfile->end = (u_char *) cfile + bufs_sz[nf];
 	while (nfiles) {
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(cfile->flno, 0, NULL, nfiles,
-			   cfile->rec, cfile->end, ftbl))) {
+			c = get(cfile->flno, 0, NULL, nfiles, cfile->rec,
+			    cfile->end, ftbl);
+			if (c == EOF) {
 				put(flist[0]->rec, outfp);
 				if (--nfiles > 0) {
 					flist++;
@@ -236,15 +227,11 @@ merge(int infl0, int nfiles, get_func_t get, FILE *outfp, put_func_t put,
 				continue;
 			}
 				
-			if (!(c = insert(flist, &cfile, nfiles, DELETE)))
+			c = insert(flist, &cfile, nfiles, DELETE);
+			if (c == 0)
 				put(cfile->rec, outfp);
 		}
 	}	
-
-	if (bufs_sz[0] > bufsize) {
-		buffer = bufs[0];
-		bufsize = bufs_sz[0];
-	}
 }
 
 /*
@@ -268,23 +255,19 @@ insert(struct mfile **flist, struct mfile **rec, int ttop, int delete)
 			if (UNIQUE)
 				break;
 
-			if (stable_sort) {
-				/*
-				 * Apply sort by fileno, to give priority
-				 * to earlier specified files, hence providing
-				 * more stable sort.
-				 * If fileno is same, the new record should
-				 * be put _after_ the previous entry.
-				 */
-				cmpv = tmprec->flno - flist[mid]->flno;
-				if (cmpv >= 0)
-					bot = mid;
-				else /* cmpv == 0 */
-					bot = mid - 1;
-			} else {
-				/* non-stable sort */
+			/*
+			 * Apply sort by fileno, to give priority
+			 * to earlier specified files, hence providing
+			 * more stable sort.
+			 * If fileno is same, the new record should
+			 * be put _after_ the previous entry.
+			 */
+			/* XXX (dsl) this doesn't seem right */
+			cmpv = tmprec->flno - flist[mid]->flno;
+			if (cmpv >= 0)
+				bot = mid;
+			else
 				bot = mid - 1;
-			}
 
 			break;
 		}
@@ -336,12 +319,11 @@ order(struct filelist *filelist, get_func_t get, struct field *ftbl)
 	prec = (RECHEADER *) (buffer + DEFLLEN + REC_DATA_OFFSET);
 	prec_end = buffer + 2*(DEFLLEN + REC_DATA_OFFSET);
 	wts = ftbl->weights;
-	if (SINGL_FLD && (ftbl->flags & F))
-		wts1 = (ftbl->flags & R) ? Rascii : ascii;
-	else
-		wts1 = NULL;
-	if (0 == get(-1, 0, filelist, 1, prec, prec_end, ftbl))
-	while (0 == get(-1, 0, filelist, 1, crec, crec_end, ftbl)) {
+
+	/* XXX this does exit(0) for overlong lines */
+	if (get(-1, 0, filelist, 1, prec, prec_end, ftbl) != 0)
+		exit(0);
+	while (get(-1, 0, filelist, 1, crec, crec_end, ftbl) == 0) {
 		if (0 < (c = cmp(prec, crec))) {
 			crec->data[crec->length-1] = 0;
 			errx(1, "found disorder: %s", crec->data+crec->offset);
@@ -370,20 +352,26 @@ static int
 cmp(RECHEADER *rec1, RECHEADER *rec2)
 {
 	int r;
-	u_char *pos1, *pos2, *end;
+	size_t len, i;
+	u_char *pos1, *pos2;
 	u_char *cwts;
-	for (cwts = wts; cwts; cwts = (cwts == wts1 ? NULL : wts1)) {
-		pos1 = rec1->data;
-		pos2 = rec2->data;
-		if (!SINGL_FLD && (UNIQUE || stable_sort))
-			end = pos1 + min(rec1->offset, rec2->offset);
-		else
-			end = pos1 + min(rec1->length, rec2->length);
 
-		for (; pos1 < end; ) {
-			if ((r = cwts[*pos1++] - cwts[*pos2++]))
-				return (r);
-		}
+	if (!SINGL_FLD)
+		/* key is weights, and is 0x00 terminated */
+		return memcmp(rec1->data, rec2->data, rec1->offset);
+
+	/* We have to apply the weights ourselves */
+	cwts = wts;
+
+	pos1 = rec1->data;
+	pos2 = rec2->data;
+	len = rec1->length;
+
+	for (i = 0; i < len; i++) {
+		r = cwts[pos1[i]] - cwts[pos2[i]];
+		if (r)
+			return r;
 	}
+
 	return (0);
 }

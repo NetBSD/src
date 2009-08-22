@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.19 2009/08/20 06:36:25 dsl Exp $	*/
+/*	$NetBSD: append.c,v 1.20 2009/08/22 10:53:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,118 +64,82 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.19 2009/08/20 06:36:25 dsl Exp $");
+__RCSID("$NetBSD: append.c,v 1.20 2009/08/22 10:53:28 dsl Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
 
-#define OUTPUT {							\
-	if ((n = cpos - ppos) > 1) {					\
-		ppos -= n;						\
-		radix_sort(ppos, n, wts1, REC_D);			\
-		for (; ppos < cpos; ppos++) {				\
-			prec = (const RECHEADER *) (*ppos - REC_DATA_OFFSET);\
-			put(prec, fp);					\
-		}							\
-	} else put(prec, fp);						\
+static int
+wt_cmp(const u_char *a, const u_char *b, size_t len, u_char *wts)
+{
+    size_t i;
+
+    for (i = 0; i < len; i++) {
+	    if (wts[*a++] != wts[*b++])
+		return 1;
+    }
+
+    return 0;
 }
 
 /*
  * copy sorted lines to output; check for uniqueness
  */
 void
-append(const u_char **keylist, int nelem, FILE *fp, put_func_t put,
-    struct field *ftbl)
+append(const u_char **keylist, int nelem, FILE *fp, put_func_t put, u_char *wts)
 {
-	u_char *wts, *wts1;
-	int n;
-	const u_char **cpos, **ppos, **lastkey;
-	const u_char *cend, *pend, *start;
+	const u_char **cpos, **lastkey;
 	const struct recheader *crec, *prec;
-
-	if (*keylist == '\0' && UNIQUE)
-		return;
-
-	wts1 = wts = ftbl[0].weights;
-	if ((!UNIQUE) && SINGL_FLD && ftbl[0].flags & F) {
-		/* Folding case */
-		if (ftbl[0].flags & R)
-			wts1 = Rascii;
-		else
-			wts1 = ascii;
-	}
+	size_t plen;
 
 	lastkey = keylist + nelem;
-	if (SINGL_FLD && (UNIQUE || wts1 != wts)) {
-		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - REC_DATA_OFFSET);
-		if (UNIQUE)
-			put(prec, fp);
-		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
-			if (crec->length == prec->length) {
-				/*
-				 * Set pend and cend so that trailing NUL and
-				 * record separator is ignored.
-				 */
-				pend = (const u_char *) &prec->data + prec->length - 2;
-				cend = (const u_char *) &crec->data + crec->length - 2;
-				for (start = *cpos; cend >= start; cend--) {
-					if (wts[*cend] != wts[*pend])
-						break;
-					pend--;
-				}
-				if (pend + 1 != *ppos) {
-					if (!UNIQUE) {
-						OUTPUT;
-					} else
-						put(crec, fp);
-					ppos = cpos;
-					prec = crec;
-				}
-			} else {
-				if (!UNIQUE) {
-					OUTPUT;
-				} else
-					put(crec, fp);
-				ppos = cpos;
-				prec = crec;
-			}
-		}
-		if (!UNIQUE)  { OUTPUT; }
-	} else if (UNIQUE) {
-		ppos = keylist;
-		prec = (const RECHEADER *) (*ppos - REC_DATA_OFFSET);
-		put(prec, fp);
-		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
-			crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
-			if (crec->offset == prec->offset) {
-				/*
-				 * Set pend and cend so that trailing NUL and
-				 * record separator is ignored.
-				 */
-				pend = (const u_char *) &prec->data + prec->offset - 2;
-				cend = (const u_char *) &crec->data + crec->offset - 2;
-				for (start = *cpos; cend >= start; cend--) {
-					if (wts[*cend] != wts[*pend])
-						break;
-					pend--;
-				}
-				if (pend + 1 != *ppos) {
-					ppos = cpos;
-					prec = crec;
-					put(prec, fp);
-				}
-			} else {
-				ppos = cpos;
-				prec = crec;
-				put(prec, fp);
-			}
-		}
-	} else for (cpos = keylist; cpos < lastkey; cpos++) {
-		crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
-		put(crec, fp);
+	if (!UNIQUE || wts == NULL) {
+		for (cpos = keylist; cpos < lastkey; cpos++)
+			put((const RECHEADER *)(*cpos - REC_DATA_OFFSET), fp);
+		return;
 	}
+
+	if (nelem == 0)
+		return;
+
+	cpos = keylist;
+	prec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
+
+	if (!SINGL_FLD) {
+		/* Key for each line is already in adjacent bytes */
+		plen = prec->offset;
+		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
+			crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
+			if (crec->offset == plen
+			    && memcmp(crec->data, prec->data, plen) == 0) {
+				/* Duplicate key */
+				continue;
+			}
+			put(prec, fp);
+			prec = crec;
+			plen = prec->offset;
+		}
+		put(prec, fp);
+		return;
+	}
+
+	/* We have to compare the raw data - which means applying weight */
+
+	/* Key for each line is already in adjacent bytes */
+	plen = prec->length;
+	for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
+		crec = (const RECHEADER *) (*cpos - REC_DATA_OFFSET);
+		if (crec->length == plen
+		    && wt_cmp(crec->data, prec->data, plen, wts) == 0) {
+			/* Duplicate key */
+			continue;
+		}
+		put(prec, fp);
+		prec = crec;
+		plen = prec->length;
+	}
+	put(prec, fp);
+	return;
 }
