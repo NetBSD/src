@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5.96.1 2009/08/21 17:52:16 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.5.96.2 2009/08/22 06:45:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,26 +80,6 @@
 /*
  * Machine dependent constants for MIPS evaluation boards.
  */
-
-#if defined(__MIPSEB__)
-# if defined(__mips_n32) || defined(__mips_n64)
-#  define	_MACHINE_ARCH	mips64eb
-#  define	MACHINE_ARCH	"mips64eb"
-# else
-#  define	_MACHINE_ARCH	mipseb
-#  define	MACHINE_ARCH	"mipseb"
-# endif
-#elif defined(__MIPSEL__)
-# if defined(__mips_n32) || defined(__mips_n64)
-#  define	_MACHINE_ARCH	mips64el
-#  define	MACHINE_ARCH	"mips64el"
-# else
-#  define	_MACHINE_ARCH	mipsel
-#  define	MACHINE_ARCH	"mipsel"
-#endif
-#else
-#error neither __MIPSEL__ nor __MIPSEB__ are defined.
-#endif
 
 #define	_MACHINE	evbmips
 #define	MACHINE		"evbmips"
