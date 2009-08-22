@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.7 2009/08/22 02:40:27 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -40,6 +40,9 @@ CPPFLAGS.miinitext.c+=   -UXF86MISC -UXINPUT -UXF86VIDMODE -UXFreeXDGA
 CPPFLAGS.miscrinit.c+=   -UXF86MISC -UXINPUT -UXF86VIDMODE -UXFreeXDGA
 .endif
 .endif
+
+COPTS.micmap.c+=	-Wno-error
+COPTS.miexpose.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

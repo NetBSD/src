@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/06/12 01:59:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2009/08/22 02:40:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \
 
 CPPFLAGS.Events.c=	-Wno-error
 CPPFLAGS.Screen.c=	-Wno-error
+CPPFLAGS.Color.c=	-Wno-error
+CPPFLAGS.Window.c=	-Wno-error
 CPPFLAGS.miinitext.c=	-UDPMSExtension
 
 .include "../../Makefile.Xserver"
