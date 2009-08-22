@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.25 2009/08/22 10:53:28 dsl Exp $	*/
+/*	$NetBSD: fields.c,v 1.26 2009/08/22 21:19:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.25 2009/08/22 10:53:28 dsl Exp $");
+__RCSID("$NetBSD: fields.c,v 1.26 2009/08/22 21:19:40 dsl Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ number(u_char *pos, const u_char *bufend, u_char *line, u_char *lineend,
 	for (last_nz_pos = pos; line < lineend; ) {
 		if (pos >= bufend)
 			return NULL;
-		ch = *line;
+		ch = *line++;
 		val = (ch - '0') * 10;
 		if (val > 90) {
 			if (ch == DECIMAL_POINT && !had_dp) {
