@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.1 2009/08/21 17:43:14 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.2 2009/08/23 04:06:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.1 2009/08/21 17:43:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.2 2009/08/23 04:06:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 {
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = NULL;
+		fpcurlwp = &lwp0;	/* save some NULL checks */
+	KASSERT(fpcurlwp != l);
 }
 
 void

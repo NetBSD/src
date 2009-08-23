@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.2 2009/08/21 17:45:19 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.3 2009/08/23 04:06:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.2 2009/08/21 17:45:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.3 2009/08/23 04:06:01 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -454,7 +454,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 
 	case T_BREAK:
 #if defined(DDB)
-		kdb_trap(type, (mips_reg_t *) frame);
+		kdb_trap(type, frame->tf_regs);
 		return;	/* KERN */
 #elif defined(KGDB)
 		{
@@ -469,13 +469,13 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			 * that db_machdep.h macros will work with it, and
 			 * allow gdb to alter the PC.
 			 */
-			db_set_ddb_regs(type, (mips_reg_t *) frame);
+			db_set_ddb_regs(type, frame->f_regs);
 			PC_BREAK_ADVANCE(f);
 			if (!kgdb_trap(type, &ddb_regs))
 				printf("kgdb: ignored %s\n",
 				       trap_type[TRAPTYPE(cause)]);
 			else
-				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
+				frame->tf_regs[TF_EPC] = f->f_regs[_R_PC];
 
 			return;
 		}
@@ -535,14 +535,10 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_COP_UNUSABLE+T_USER:
 #if !defined(SOFTFLOAT) && !defined(NOFPU)
 		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
-			struct frame *f;
-
-			f = l->l_md.md_regs;
-			savefpregs(fpcurlwp);	  	/* yield FPA */
+			savefpregs(fpcurlwp);		/* yield FPA */
 			loadfpregs(l);          	/* load FPA */
 			fpcurlwp = l;
 			l->l_md.md_flags |= MDP_FPUSED;
-			f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
 		} else
 #endif
 		{
