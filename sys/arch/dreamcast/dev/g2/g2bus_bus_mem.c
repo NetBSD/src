@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.14 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.15 2009/08/23 14:28:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.14 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.15 2009/08/23 14:28:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.14 2008/04/28 20:23:16 martin Ex
 int	g2bus_bus_mem_map(void *, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 void	g2bus_bus_mem_unmap(void *, bus_space_handle_t, bus_size_t);
+paddr_t	g2bus_bus_mem_mmap(void *, bus_addr_t, off_t, int, int);
 
 uint8_t g2bus_bus_mem_read_1(void *, bus_space_handle_t, bus_size_t);
 uint16_t g2bus_bus_mem_read_2(void *, bus_space_handle_t, bus_size_t);
@@ -114,6 +115,7 @@ g2bus_bus_mem_init(struct g2bus_softc *sc)
 
 	t->dbs_map = g2bus_bus_mem_map;
 	t->dbs_unmap = g2bus_bus_mem_unmap;
+	t->dbs_mmap = g2bus_bus_mem_mmap;
 
 	t->dbs_r_1 = g2bus_bus_mem_read_1;
 	t->dbs_r_2 = g2bus_bus_mem_read_2;
@@ -151,6 +153,14 @@ g2bus_bus_mem_unmap(void *v, bus_space_handle_t sh, bus_size_t size)
 
 	KASSERT(sh >= SH3_P2SEG_BASE && sh <= SH3_P2SEG_END);
 	/* Nothing to do. */
+}
+
+paddr_t
+g2bus_bus_mem_mmap(void *v, bus_addr_t addr, off_t offset, int prot, int flags)
+{
+
+	/* XXX not implemented */
+	return -1;
 }
 
 /*
