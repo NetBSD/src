@@ -770,13 +770,13 @@ namespace std
 #define _GLIBCXX_HOSTED 1
 
 /* Define if ptrdiff_t is int. */
-#define _GLIBCXX_PTRDIFF_T_IS_INT 1
+/* #undef _GLIBCXX_PTRDIFF_T_IS_INT */
 
 /* Define if using setrlimit to set resource limits during "make check" */
 /* #undef _GLIBCXX_RES_LIMITS */
 
 /* Define if size_t is unsigned int. */
-#define _GLIBCXX_SIZE_T_IS_UINT 1
+/* #undef _GLIBCXX_SIZE_T_IS_UINT */
 
 /* Define if the compiler is configured for setjmp/longjmp exceptions. */
 /* #undef _GLIBCXX_SJLJ_EXCEPTIONS */
