@@ -53,7 +53,7 @@
 #endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.1.2.2 2009/08/23 06:40:49 matt Exp $");    
+__RCSID("$NetBSD: memset2.c,v 1.1.2.3 2009/08/23 20:06:13 matt Exp $");    
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -71,7 +71,9 @@ static
 #define memset test_memset
 #endif
 
+#ifdef CTASSERT
 CTASSERT((~(memword_t)0U >> 1) != ~(memword_t)0U);
+#endif
 
 void *
 memset(void *addr, int c, size_t len)
