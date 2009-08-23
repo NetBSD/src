@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.18 2009/04/07 17:52:36 dyoung Exp $ */
+/*	$NetBSD: pchb.c,v 1.19 2009/08/23 15:37:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.18 2009/04/07 17:52:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.19 2009/08/23 15:37:51 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,6 @@ pchbattach(device_t parent, device_t self, void *aux)
 	int doattach, attachflags, has_agp;
 
 	aprint_naive("\n");
-	aprint_normal("\n");
 
 	doattach = 0;
 	has_agp = 0;
@@ -176,7 +175,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	 */
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	switch (PCI_VENDOR(pa->pa_id)) {
