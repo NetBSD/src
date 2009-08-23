@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.4 2009/08/22 16:55:19 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.5 2009/08/23 03:52:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.4 2009/08/22 16:55:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.5 2009/08/23 03:52:52 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -383,15 +383,18 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			 * If this is from O32 and it's a 64bit quantity,
 			 * split it into 2 32bit values in adjacent registers.
 			 */
-#if BYTE_ORDER == BIG_ENDIAN
-			frame->f_regs[_R_V1] = (int32_t) frame->f_regs[_R_V0];
-			frame->f_regs[_R_V0] >>= 32; 
-#endif
-#if BYTE_ORDER == LITTLE_ENDIAN
-			frame->f_regs[_R_V1] = frame->f_regs[_R_V0] >> 32; 
-			frame->f_regs[_R_V0] = (int32_t) frame->f_regs[_R_V0];
-#endif
+			mips_reg_t tmp = frame->f_regs[_R_V0];
+			frame->f_regs[_R_V0 + _QUAD_LOWWORD] = (int32_t) tmp;
+			frame->f_regs[_R_V0 + _QUAD_HIGHWORD] = tmp >> 32; 
 		}
+#endif
+#if 0
+	if (p->p_emul->e_syscallnames)
+		printf("syscall %s:", p->p_emul->e_syscallnames[code]);
+	else
+		printf("syscall %u:", code);
+	printf(" return v0=%#"PRIxREGISTER" v1=%#"PRIxREGISTER"\n",
+	    frame->f_regs[_R_V0], frame->f_regs[_R_V1]);
 #endif
 		frame->f_regs[_R_A3] = 0;
 		break;
