@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.179.8.3 2009/08/18 16:10:44 uebayasi Exp $
+#	$NetBSD: bsd.sys.mk,v 1.179.8.4 2009/08/23 23:12:39 matt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -86,13 +86,17 @@ FFLAGS+=	-mieee
 CFLAGS+=	-Wa,-Av8plus
 .endif
 
+.if (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
+CFLAGS+=	-Wa,--fatal-warnings
+.endif
+
 #.if ${MACHINE} == "sbmips"
 #CFLAGS+=	-mips64 -mtune=sb1
 #.endif
 
 .if (${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb") && \
     (defined(MKPIC) && ${MKPIC} == "no")
-COPTS+=		-mno-abicalls -fno-PIC
+CPUFLAGS+=	-mno-abicalls -fno-PIC
 .endif
 CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
