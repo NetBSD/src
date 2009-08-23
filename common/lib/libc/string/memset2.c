@@ -42,24 +42,36 @@
 #include <sys/endian.h>
 #include <machine/types.h>
 
+#ifdef TEST
+#include <assert.h>
+#define _DIAGASSERT(a)		assert(a)
+#endif
+
 #ifdef _FORTIFY_SOURCE
 #undef bzero
 #undef memset
 #endif
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.1.2.1 2009/08/17 17:24:25 matt Exp $");    
+__RCSID("$NetBSD: memset2.c,v 1.1.2.2 2009/08/23 06:40:49 matt Exp $");    
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * Assume register_t is the widest non-synthetic type.
+ * Assume uregister_t is the widest non-synthetic unsigned type.
  */
-typedef register_t memword_t;
+typedef uregister_t memword_t;
 
 #ifdef BZERO
 static inline
 #define	memset memset0
 #endif
+
+#ifdef TEST
+static
+#define memset test_memset
+#endif
+
+CTASSERT((~(memword_t)0U >> 1) != ~(memword_t)0U);
 
 void *
 memset(void *addr, int c, size_t len)
@@ -104,7 +116,7 @@ memset(void *addr, int c, size_t len)
 		keep_mask = ~(memword_t)0U << (fill_count * 8);
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
-		keep_mask = ~(memword_t)0U << (fill_count * 8);
+		keep_mask = ~(memword_t)0U >> (fill_count * 8);
 #endif
 		/*
 		 * Make sure dstp is aligned to a memword_t boundary.
@@ -133,14 +145,19 @@ memset(void *addr, int c, size_t len)
 			 */
 			dstp++;
 			keep_mask = 0;
+		} else {
+			len += (uintptr_t)addr & (sizeof(memword_t) - 1);
 		}
 #else /* __OPTIMIZE_SIZE__ */
 		uint8_t *dp, *ep;
+		if (len < fill_count)
+			fill_count = len;
 		for (dp = (uint8_t *)dstp, ep = dp + fill_count;
 		     dp != ep; dp++)
 			*dp = fill;
+		if ((len -= fill_count) == 0)
+			return addr;
 		dstp = (memword_t *)ep;
-		len -= fill_count;
 #endif /* __OPTIMIZE_SIZE__ */
 	}
 
@@ -172,10 +189,10 @@ memset(void *addr, int c, size_t len)
 		 * space in the first word.
 		 */
 #if BYTE_ORDER == BIG_ENDIAN
-		keep_mask |= ~(~(memword_t)0U >> (len * 8));
+		keep_mask |= ~(memword_t)0U >> (len * 8);
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
-		keep_mask |= ~(~(memword_t)0U << (len * 8));
+		keep_mask |= ~(memword_t)0U << (len * 8);
 #endif
 		/*
 		 * Now we mask off the bytes we are filling and then fill in
@@ -206,3 +223,53 @@ bzero(void *addr, size_t len)
 	memset(addr, 0, len);
 }
 #endif
+
+#ifdef TEST
+#include <stdbool.h>
+#include <stdio.h>
+
+#undef memset
+
+static union {
+	uint8_t bytes[sizeof(memword_t) * 4];
+	memword_t words[4];
+} testmem;
+
+int
+main(int argc, char **argv)
+{
+	size_t start;
+	size_t len;
+	bool failed = false;
+
+	for (start = 1; start < sizeof(testmem) - 1; start++) {
+		for (len = 1; start + len < sizeof(testmem) - 1; len++) {
+			bool ok = true;
+			size_t i;
+			uint8_t check_value;
+			memset(testmem.bytes, 0xff, sizeof(testmem));
+			test_memset(testmem.bytes + start, 0x00, len);
+			for (i = 0; i < sizeof(testmem); i++) {
+				if (i == 0 || i == start + len)
+					check_value = 0xff;
+				else if (i == start)
+					check_value = 0x00;
+				if (testmem.bytes[i] != check_value) {
+					if (ok)
+						printf("pass @ %zu .. %zu failed",
+						    start, start + len - 1);
+					ok = false;
+					printf(" [%zu]=0x%02x(!0x%02x)",
+					    i, testmem.bytes[i], check_value);
+				}
+			}
+			if (!ok) {
+				printf("\n");
+				failed = 1;
+			}
+		}
+	}
+
+	return failed ? 1 : 0;
+}
+#endif /* TEST */
