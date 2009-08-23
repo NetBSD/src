@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.28 2009/06/18 05:57:34 mrg Exp $
+# $NetBSD: md.shark,v 1.29 2009/08/23 09:05:45 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -398,6 +398,7 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	obsolete
+./usr/X11R7/lib/xorg/protocol.txt			-unknown-	xorg
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
