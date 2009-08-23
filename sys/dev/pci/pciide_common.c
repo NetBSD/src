@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.41 2009/03/15 21:28:09 cegger Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.42 2009/08/23 16:21:36 jmcneill Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.41 2009/03/15 21:28:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.42 2009/08/23 16:21:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -132,7 +132,6 @@ pciide_common_attach(struct pciide_softc *sc, struct pci_attach_args *pa, const 
 	const char *displaydev;
 
 	aprint_naive(": disk controller\n");
-	aprint_normal("\n");
 
 	sc->sc_pci_id = pa->pa_id;
 	if (pp == NULL) {
@@ -147,9 +146,10 @@ pciide_common_attach(struct pciide_softc *sc, struct pci_attach_args *pa, const 
 
 	/* if displaydev == NULL, printf is done in chip-specific map */
 	if (displaydev)
-		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-		    "%s (rev. 0x%02x)\n", displaydev,
+		aprint_normal(": %s (rev. 0x%02x)\n", displaydev,
 		    PCI_REVISION(pa->pa_class));
+	else
+		aprint_normal("\n");
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
