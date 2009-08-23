@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.157 2009/04/04 11:24:24 ad Exp $	*/
+/*	$NetBSD: util.c,v 1.158 2009/08/23 21:16:17 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -607,23 +607,6 @@ customise_sets(void)
 	free_menu(menu_no);
 }
 
-static int
-ask_verbose_dist(msg setup_done)
-{
-	int verbose = 0;
-
-	wclear(stdscr);
-	wrefresh(stdscr);
-	if (setup_done != NULL)
-		msg_display(setup_done);
-	msg_display_add(MSG_verboseextract);
-	process_menu(MENU_extract, &verbose);
-	wclear(stdscr);
-	wrefresh(stdscr);
-
-	return verbose;
-}
-
 /*
  * Extract_file **REQUIRES** an absolute path in ext_dir.  Any code
  * that sets up xfer_dir for use by extract_file needs to put in the
@@ -631,7 +614,7 @@ ask_verbose_dist(msg setup_done)
  */
 
 static int
-extract_file(distinfo *dist, int update, int verbose)
+extract_file(distinfo *dist, int update)
 {
 	char path[STRSIZE];
 	char *owd;
@@ -685,15 +668,8 @@ extract_file(distinfo *dist, int update, int verbose)
 		target_chdir_or_die("/");
 
 	/* now extract set files into "./". */
-	if (verbose == 0)
-		rval = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-				"progress -zf %s tar --chroot -xhepf -", path);
-	else if (verbose == 1)
-		rval = run_program(RUN_DISPLAY, 
-				"tar --chroot -zxhepf %s", path);
-	else
-		rval = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-				"tar --chroot -zxhvepf %s", path);
+	rval = run_program(RUN_DISPLAY | RUN_PROGRESS, 
+			"progress -zf %s tar --chroot -xhepf -", path);
 
 	chdir(owd);
 	free(owd);
@@ -765,7 +741,6 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 {
 	distinfo *dist;
 	int status;
-	int verbose;
 	int set;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
@@ -777,9 +752,6 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	memset(&tarstats, 0, sizeof(tarstats));
 
 	/* Find out which files to "get" if we get files. */
-
-	/* ask user whether to do normal or verbose extraction */
-	verbose = ask_verbose_dist(setupdone_msg);
 
 	/* Accurately count selected sets */
 	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
@@ -830,7 +802,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 		}
 
 		/* Try to extract this set */
-		status = extract_file(dist, update, verbose);
+		status = extract_file(dist, update);
 		if (status == SET_RETRY)
 			dist--;
 	}

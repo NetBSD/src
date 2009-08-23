@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.157 2009/08/23 20:58:05 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.158 2009/08/23 21:16:17 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -594,14 +594,6 @@ message realdir
 message delete_xfer_file
 {Delete after install}
 
-message verboseextract
-{
-The next step is to fetch and unpack the distribution filesets. 
-
-During the extraction process, what do you want to see as
-each file is extracted?
-}
-
 message notarfile
 {Release set %s does not exist.}
 
@@ -948,10 +940,6 @@ message other {other }
 message Perform_IPv6_autoconfiguration {Perform IPv6 autoconfiguration?}
 message Perform_DHCP_autoconfiguration {Perform DHCP autoconfiguration?}
 message Root_shell {Root shell}
-message Select_set_extraction_verbosity {Select set extraction verbosity}
-message Progress_bar {Progress bar (recommended)}
-message Silent {Silent}
-message Verbose {Verbose file name listing (slow)}
 
 .if AOUT2ELF
 message aoutfail

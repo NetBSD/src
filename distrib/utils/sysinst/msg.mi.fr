@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.106 2009/05/14 16:23:38 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.107 2009/08/23 21:16:17 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -619,15 +619,6 @@ message delete_xfer_file
 Effacer après l'installation
 }
 
-message verboseextract
-{
-L'étape suivante consiste à installer les composants de
-NetBSD.
-
-Souhaitez-vous voir s'afficher les noms de fichiers au fur et
-à mesure de leur installation ?
-}
-
 message notarfile
 {Le composant %s n'existe pas.}
 
@@ -1039,10 +1030,6 @@ message other {autre }
 message Perform_IPv6_autoconfiguration {Configurer automatiquement l'IPv6 ?}
 message Perform_DHCP_autoconfiguration {Configurer automatiquement via DHCP ?}
 message Root_shell {Shell du compte root}
-message Select_set_extraction_verbosity {Degré d'information lors des extractions ?}
-message Progress_bar {Barre de progression (recommendeé)}
-message Silent {Silencieux}
-message Verbose {Détails maximum d'extraction (plus lent)}
 
 .if AOUT2ELF
 message aoutfail

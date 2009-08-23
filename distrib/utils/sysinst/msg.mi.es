@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.26 2009/05/14 16:23:38 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.27 2009/08/23 21:16:17 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -609,15 +609,6 @@ interrumpida.
 message delete_xfer_file
 {A eliminar después de la instalación}
 
-message verboseextract
-{
-El siguiente paso es descargar y desempaquetar los conjuntos de
-ficheros de la distribución.
-
-Durante el proceso de extracción, ¿qué desea ver según se vaya
-extrayendo cada uno de los ficheros?
-}
-
 message notarfile
 {El conjunto %s no existe.}
 
@@ -975,10 +966,6 @@ message other {otro }
 message Perform_IPv6_autoconfiguration {¿Realizar autoconfiguración IPv6?}
 message Perform_DHCP_autoconfiguration {¿Realizar autoconfiguración DHCP ?}
 message Root_shell {Shell de root}
-message Select_set_extraction_verbosity {Seleccione la prolijidad de la extracción de conjuntos}
-message Progress_bar {Barra de progreso (recomendado)}
-message Silent {Silencioso}
-message Verbose {Listado de nombres de ficheros detallado (lento)}
 
 .if AOUT2ELF
 message aoutfail

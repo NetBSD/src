@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.35 2009/02/27 22:51:33 hubertf Exp $	*/
+/*	$NetBSD: menus.mi,v 1.36 2009/08/23 21:16:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -371,9 +371,3 @@ menu rootsh, title MSG_Root_shell;
 	option "/bin/sh",  exit, action {*(const char **)arg = "/bin/sh";}; 
 	option "/bin/ksh", exit, action {*(const char **)arg = "/bin/ksh";};
 	option "/bin/csh", exit, action {*(const char **)arg = "/bin/csh";};
-
-menu extract, title MSG_Select_set_extraction_verbosity;
-	display action { menu->cursel = *(int *)arg; };
-	option MSG_Progress_bar, exit, action { *(int *)arg = 0; };
-	option MSG_Silent,       exit, action { *(int *)arg = 1; };
-	option MSG_Verbose,      exit, action { *(int *)arg = 2; };
