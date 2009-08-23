@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.408 2009/07/22 14:24:01 njoly Exp $
+#	$NetBSD: NetBSD.dist,v 1.409 2009/08/23 09:05:44 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -392,6 +392,7 @@
 ./usr/X11R7/lib/modules/drivers
 ./usr/X11R7/lib/modules/input
 ./usr/X11R7/lib/pkgconfig
+./usr/X11R7/lib/xorg
 ./usr/X11R7/libexec
 ./usr/X11R7/man
 ./usr/X11R7/man/cat1

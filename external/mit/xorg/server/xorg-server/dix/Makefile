@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2009/08/22 02:40:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2009/08/23 09:05:44 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
 .include "Makefile.common"
 
 LIB=		dix
-
 
 .PATH:		${X11SRCDIR.xorg-server}/dix
 SRCS=		atom.c colormap.c cursor.c devices.c dispatch.c dixfonts.c \
@@ -28,6 +27,9 @@ CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11DEFAULTFONTPATH:ts,}\" \
 CPPFLAGS.main.c=	-DVENDOR_STRING="\"The Xorg Group\"" \
 			-DVENDOR_RELEASE=${XORG_VERSION_CURRENT} \
 			-DVENDOR_NAME="\"The Xorg Foundation\""
+
+FILES=		protocol.txt
+FILESDIR=	${X11ROOTDIR}/lib/xorg
 
 COPTS.dixutils.c=	-Wno-error
 COPTS.colormap.c=	-Wno-error
