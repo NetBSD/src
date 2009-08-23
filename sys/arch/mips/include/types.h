@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.4 2009/08/23 06:38:07 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.5 2009/08/23 07:49:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,11 +63,19 @@ typedef __uint32_t	psize_t;
 #define PRIxPSIZE	PRIx32
 #define PRIdPSIZE	PRId32
 #endif
+#ifdef _LP64
+typedef __uint64_t	vaddr_t;
+typedef __uint64_t	vsize_t;
+#define PRIxVADDR	PRIx64
+#define PRIxVSIZE	PRIx64
+#define PRIdVSIZE	PRId64
+#else
 typedef __uint32_t	vaddr_t;
 typedef __uint32_t	vsize_t;
 #define PRIxVADDR	PRIx32
 #define PRIxVSIZE	PRIx32
 #define PRIdVSIZE	PRId32
+#endif
 #endif
 
 /* Make sure this is signed; we need pointers to be sign-extended. */
