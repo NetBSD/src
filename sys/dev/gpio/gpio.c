@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.27 2009/08/21 12:53:42 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.28 2009/08/23 12:08:56 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.27 2009/08/21 12:53:42 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.28 2009/08/23 12:08:56 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -390,7 +390,7 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	cfdata_t cf;
 	kauth_cred_t cred;
 	int locs[GPIOCF_NLOCS];
-	int pin, value, flags, npins, found;
+	int pin, value, flags, npins;
 
 	sc = device_lookup_private(&gpio_cd, minor(dev));
 	gc = sc->sc_gc;
@@ -591,17 +591,21 @@ gpioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		/* rename pin or new pin? */
-		/* XXX avoid the creation of duplicates */
 		if (set->gp_name2[0] != '\0') {
-			found = 0;
-			LIST_FOREACH(nm, &sc->sc_names, gp_next)
-				if (nm->gp_pin == pin) {
-					strlcpy(nm->gp_name, set->gp_name2,
-					    sizeof(nm->gp_name));
-					found = 1;
-					break;
-				}
-			if (!found) {
+			struct gpio_name *gnm;
+
+			gnm = NULL;
+			LIST_FOREACH(nm, &sc->sc_names, gp_next) {
+				if (!strcmp(nm->gp_name, set->gp_name2) &&
+				    nm->gp_pin != pin)
+					return EINVAL;	/* duplicate name */
+				if (nm->gp_pin == pin)
+					gnm = nm;
+			}
+			if (gnm != NULL)
+				strlcpy(gnm->gp_name, set->gp_name2,
+				    sizeof(gnm->gp_name));
+			else  {
 				nm = kmem_alloc(sizeof(struct gpio_name),
 				    KM_SLEEP);
 				strlcpy(nm->gp_name, set->gp_name2,
