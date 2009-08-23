@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.12 2009/08/01 15:52:55 mbalmer Exp $
+.\" $NetBSD: gpio.4,v 1.13 2009/08/23 10:20:41 mbalmer Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August 1, 2009
+.Dd August 23, 2009
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -52,8 +52,15 @@ Access from userland is performed through
 .Xr ioctl 2
 calls on these devices.
 .Pp
-The layout of the GPIO device is defined at a securelevel less than
-1, i.e. typically during system boot, and cannot be changed later.
+Whether the layout of the GPIO device can be configured is subject to
+authorization by the
+.Xr kauth 9
+framework.
+.Pp
+If the
+.Xr secmodel_securelevel 9
+is active, e.g., the layout of the GPIO device is defined at a securelevel
+less than 1, i.e. typically during system boot, and cannot be changed later.
 GPIO pins can be configured and given a symbolic name and device drivers
 that use GPIO pins can be attached to the
 .Nm
