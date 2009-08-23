@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.58 2008/12/21 16:27:57 nonaka Exp $	*/
+/*	$NetBSD: viaide.c,v 1.59 2009/08/23 16:21:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.58 2008/12/21 16:27:57 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.59 2009/08/23 16:21:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,27 +75,27 @@ CFATTACH_DECL_NEW(viaide, sizeof(struct pciide_softc),
 static const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC756_IDE,
 	  0,
-	  "Advanced Micro Devices AMD756 IDE Controller",
+	  "AMD AMD756 IDE Controller",
 	  via_chip_map
 	},
 	{ PCI_PRODUCT_AMD_PBC766_IDE,
 	  0,
-	  "Advanced Micro Devices AMD766 IDE Controller",
+	  "AMD AMD766 IDE Controller",
 	  via_chip_map
 	},
 	{ PCI_PRODUCT_AMD_PBC768_IDE,
 	  0,
-	  "Advanced Micro Devices AMD768 IDE Controller",
+	  "AMD AMD768 IDE Controller",
 	  via_chip_map
 	},
 	{ PCI_PRODUCT_AMD_PBC8111_IDE,
 	  0,
-	  "Advanced Micro Devices AMD8111 IDE Controller",
+	  "AMD AMD8111 IDE Controller",
 	  via_chip_map
 	},
 	{ PCI_PRODUCT_AMD_CS5536_IDE,
 	  0,
-	  "Advanced Micro Devices CS5536 IDE Controller",
+	  "AMD CS5536 IDE Controller",
 	  via_chip_map
 	},
 	{ 0,
