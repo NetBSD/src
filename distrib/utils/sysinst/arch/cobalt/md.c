@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2009/05/16 10:40:16 nonaka Exp $	*/
+/*	$NetBSD: md.c,v 1.4 2009/08/23 13:36:54 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,6 +112,7 @@ md_post_newfs(void)
 		    target_expand(PART_BOOT_EXT2FS_PI_MOUNT));
 		run_program(0, "/bin/mkdir -p %s", bootdir);
 		run_program(0, "/bin/cp /usr/mdec/boot %s", bootdir); 
+		run_program(0, "/bin/rm -f %s/%s", bootdir, bootfile); 
 		run_program(0, "/usr/bin/gzip -9 %s/boot", bootdir);
 		for (i = 0; i < __arraycount(kernels); i++)
 			run_program(0, "/bin/ln -fs %s %s/%s",
