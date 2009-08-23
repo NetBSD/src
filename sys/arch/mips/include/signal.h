@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27.92.1 2009/08/16 03:33:58 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.27.92.2 2009/08/23 04:04:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,18 +86,22 @@ struct sigcontext13 {
 #endif /* _KERNEL && COMPAT_13 */
 
 #if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16) || defined(COMPAT_ULTRIX)))
+/*
+ * Only need an O32 version.
+ */
 struct sigcontext {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	__sc_mask13;	/* signal mask to restore (old style) */
-	mips_reg_t sc_pc;	/* pc at time of signal */
-	mips_reg_t sc_regs[32];	/* processor regs 0 to 31 */
-	mips_reg_t mullo, mulhi;/* mullo and mulhi registers... */
+	int	sc_pc;		/* pc at time of signal */
+	int	sc_regs[32];	/* processor regs 0 to 31 */
+	int	mullo, mulhi;	/* mullo and mulhi registers... */
 	int	sc_fpused;	/* fp has been used */
-	mips_fpreg_t sc_fpregs[33];	/* fp regs 0 to 31 and csr */
+	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
-	long	sc_xxx[8];	/* XXX reserved */
+	int	sc_xxx[8];	/* XXX reserved */
 	sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
+
 #endif /* _LIBC || _KERNEL */
 
 #endif	/* !_LANGUAGE_ASSEMBLY */
