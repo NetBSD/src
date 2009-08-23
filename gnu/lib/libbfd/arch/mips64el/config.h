@@ -275,7 +275,7 @@
 #define PACKAGE_VERSION ""
 
 /* The number of bytes in type long */
-#define SIZEOF_LONG 4
+#define SIZEOF_LONG 8
 
 /* The number of bytes in type long long */
 #define SIZEOF_LONG_LONG 8
