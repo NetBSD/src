@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.49 2009/05/14 16:23:38 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.50 2009/08/23 21:16:16 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -616,12 +616,6 @@ message realdir
 message delete_xfer_file
 {Nach der Installation löschen}
 
-message verboseextract
-{
-Im nächsten Schritt werden nun die Distributionssets (Basissystem + Kernel)
-geladen und auf die Festplatte kopiert.
-}
-
 message notarfile
 {Das Release-Paket %s existiert nicht.}
 
@@ -1004,10 +998,6 @@ message other {andere }
 message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
 message Perform_DHCP_autoconfiguration {Konfiguration per DHCP ermitteln?}
 message Root_shell {Root-Shell}
-message Select_set_extraction_verbosity {Bitte wählen Sie die Fortschrittsanzeige während des Extrahierens}
-message Progress_bar {Fortschrittsbalken (empfohlen)}
-message Silent {Keine (schnell)}
-message Verbose {Alle installierten Dateien anzeigen (langsam))}
 
 .if AOUT2ELF
 message aoutfail

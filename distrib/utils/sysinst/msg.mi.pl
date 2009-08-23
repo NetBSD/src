@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.65 2009/05/14 16:23:38 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.66 2009/08/23 21:16:17 jmcneill Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -592,14 +592,6 @@ message realdir
 message delete_xfer_file
 {Usun po zakonczeniu instalacji}
 
-message verboseextract
-{
-Kolejny krok to sciagniecie i rozpakowanie pakietow dystrybucji. 
-
-Czy w trakcie rozpakowywania plikow, chcesz widziec nazwe aktualnie
-wypakowywanego pliku ?
-}
-
 message notarfile
 {Pakiet %s nie istnieje.}
 
@@ -941,10 +933,6 @@ message other {inny  }
 message Perform_IPv6_autoconfiguration {Wykonac autokonfiguracje IPv6?}
 message Perform_DHCP_autoconfiguration {Wykonac autkonfiguracje DHCP?}
 message Root_shell {Powloka root'a}
-message Select_set_extraction_verbosity {Wybierz gadatliwosc procesu rozpakowywania pakietow}
-message Progress_bar {Pasek postepu (zalecany)}
-message Silent {Cichy}
-message Verbose {Lista plikow (wolne)}
 
 .if AOUT2ELF
 message aoutfail
