@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.12.78.2 2009/08/21 17:18:32 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.12.78.3 2009/08/23 03:57:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -54,11 +54,11 @@
 #define	_MIPS_SIM_LP64_P(abi)	((abi) == _MIPS_SIM_ABIX32 || \
 				 (abi) == _MIPS_SIM_ABI64)
 
-#if __mips_n64
+#if defined(__mips_n64)
 #define	_MIPS_BSD_API		_MIPS_BSD_API_N64
-#elif __mips_n32
+#elif defined(__mips_n32)
 #define	_MIPS_BSD_API		_MIPS_BSD_API_N32
-#elif __mips_o64
+#elif defined(__mips_o64)
 #define	_MIPS_BSD_API		_MIPS_BSD_API_O64
 #else
 #define	_MIPS_BSD_API		_MIPS_BSD_API_O32
