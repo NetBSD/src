@@ -932,7 +932,17 @@ drm_close(dev_t kdev, int flags, int fmt, struct lwp *l)
 #if defined(__NetBSD__)
 	/* On NetBSD, close will only be called once */
 	DRM_DEBUG("setting open_count %d to 1\n", (int)dev->open_count);
-	dev->open_count = 1;
+	while (dev->open_count != 1) {
+		/*
+		 * XXXMRG probably should assert that we are freeing
+		 * one of these each time.  i think.
+		 */
+		if (!TAILQ_EMPTY(&dev->files)) {
+			file_priv = TAILQ_FIRST(&dev->files);
+			TAILQ_REMOVE(&dev->files, file_priv, link);
+		}
+		dev->open_count--;
+	}
 #endif
 	if (--dev->open_count == 0) {
 		retcode = drm_lastclose(dev);
