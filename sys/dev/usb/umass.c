@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.131 2009/03/17 19:12:17 dyoung Exp $	*/
+/*	$NetBSD: umass.c,v 1.132 2009/08/23 19:03:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.131 2009/03/17 19:12:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.132 2009/08/23 19:03:18 jmcneill Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -312,8 +312,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_naive("\n");
-	aprint_normal("\n");
-	aprint_normal_dev(self, "%s\n", devinfop);
+	aprint_normal(": %s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
@@ -418,7 +417,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	aprint_normal_dev(self, "using %s over %s\n", sCommand, sWire);
+	aprint_verbose_dev(self, "using %s over %s\n", sCommand, sWire);
 
 	if (quirk != NULL && quirk->uq_init != NULL) {
 		err = (*quirk->uq_init)(sc);
