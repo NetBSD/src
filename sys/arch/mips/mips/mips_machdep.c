@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.2 2009/08/21 17:48:57 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.3 2009/08/23 03:38:19 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.2 2009/08/21 17:48:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.3 2009/08/23 03:38:19 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -783,6 +783,7 @@ mips_vector_init(void)
 	 */
 	lwp0.l_cpu = &cpu_info_store;
 	cpu_info_store.ci_curlwp = &lwp0;
+	cpu_info_store.ci_fpcurlwp = &lwp0;
 	curlwp = &lwp0;
 
 	mycpu = NULL;
@@ -1119,6 +1120,15 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	f->f_regs[_R_PC] = (int)pack->ep_entry & ~3;
 	f->f_regs[_R_T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
 	f->f_regs[_R_SR] = PSL_USERSET;
+#if !defined(__mips_o32)
+	/*
+	 * allow 64bit ops in userland for non-O32 ABIs
+	 */
+	if (l->l_proc->p_md.md_abi != _MIPS_BSD_API_O32)
+		f->f_regs[_R_SR] |= MIPS_SR_UX;
+	if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi))
+		f->f_regs[_R_SR] |= MIPS3_SR_FR;
+#endif
 	/*
 	 * Set up arguments for _start():
 	 *	_start(stack, obj, cleanup, ps_strings);
@@ -1134,7 +1144,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	f->f_regs[_R_A3] = (intptr_t)l->l_proc->p_psstr;
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = NULL;
+		fpcurlwp = &lwp0;
 	memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
 	l->l_md.md_flags &= ~MDP_FPUSED;
 	l->l_md.md_ss_addr = 0;
@@ -1493,171 +1503,273 @@ mips_init_msgbuf(void)
 }
 
 void
-savefpregs(l)
-	struct lwp *l;
+savefpregs(struct lwp *l)
 {
 #ifndef NOFPU
-	u_int32_t status, fpcsr;
-	mips_fpreg_t *fp;
-	struct frame *f;
-
-	if (l == NULL)
+	struct frame * const f = l->l_md.md_regs;
+	mips_fpreg_t * const fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
+	uint32_t status, fpcsr;
+	
+	/*
+	 * Don't do anything if the FPU is already off.
+	 */
+	if ((f->f_regs[_R_SR] & MIPS_SR_COP_1_BIT) == 0)
 		return;
+
+	/*
+	 * this process yielded FPA.
+	 */
+	KASSERT(f->f_regs[_R_SR] & MIPS_SR_COP_1_BIT);	/* it should be on */
+
 	/*
 	 * turnoff interrupts enabling CP1 to read FPCSR register.
 	 */
 	__asm volatile (
-		".set noreorder					\n\t"
-		".set noat					\n\t"
-		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
-		"li	$1, %2					\n\t"
-		"mtc0	$1, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
+		".set noreorder"				"\n\t"
+		".set noat"					"\n\t"
+		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) 	"\n\t"
+		"mtc0	%2, $" ___STRING(MIPS_COP_0_STATUS)	"\n\t"
 		___STRING(COP0_HAZARD_FPUENABLE)
-		"cfc1	%1, $31					\n\t"
-		"cfc1	%1, $31					\n\t"
-		".set reorder					\n\t"
+		"cfc1	%1, $31"				"\n\t"
+		"cfc1	%1, $31"				"\n\t"
+		".set reorder"					"\n\t"
 		".set at" 
-		: "=r" (status), "=r"(fpcsr) : "i"(MIPS_SR_COP_1_BIT));
+		: "=r" (status), "=r"(fpcsr)
+		: "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR)));
+
 	/*
-	 * this process yielded FPA.
+	 * Make sure we don't reenable FP when we return to userspace.
 	 */
-	f = l->l_md.md_regs;
-	f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
+	f->f_regs[_R_SR] ^= MIPS_SR_COP_1_BIT;
 
 	/*
 	 * save FPCSR and FP register values.
 	 */
-	fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
-	fp[32] = fpcsr;
-#if defined(__mips_o32) || defined(__mips_o64)
-#define	LXC1	"lwc1"
-#define	SXC1	"swc1"
-#endif
-#if defined(__mips_n32) || defined(__mips_n64)
-#define	LXC1	"ldc1"
-#define	SXC1	"sdc1"
-#endif
-	__asm volatile (
-		".set noreorder		;"
-		SXC1"	$f0, (0*%d1)(%0)	;"
-		SXC1"	$f1, (1*%d1)(%0)	;"
-		SXC1"	$f2, (2*%d1)(%0)	;"
-		SXC1"	$f3, (3*%d1)(%0)	;"
-		SXC1"	$f4, (4*%d1)(%0)	;"
-		SXC1"	$f5, (5*%d1)(%0)	;"
-		SXC1"	$f6, (6*%d1)(%0)	;"
-		SXC1"	$f7, (7*%d1)(%0)	;"
-		SXC1"	$f8, (8*%d1)(%0)	;"
-		SXC1"	$f9, (9*%d1)(%0)	;"
-		SXC1"	$f10, (10*%d1)(%0)	;"
-		SXC1"	$f11, (11*%d1)(%0)	;"
-		SXC1"	$f12, (12*%d1)(%0)	;"
-		SXC1"	$f13, (13*%d1)(%0)	;"
-		SXC1"	$f14, (14*%d1)(%0)	;"
-		SXC1"	$f15, (15*%d1)(%0)	;"
-		SXC1"	$f16, (16*%d1)(%0)	;"
-		SXC1"	$f17, (17*%d1)(%0)	;"
-		SXC1"	$f18, (18*%d1)(%0)	;"
-		SXC1"	$f19, (19*%d1)(%0)	;"
-		SXC1"	$f20, (20*%d1)(%0)	;"
-		SXC1"	$f21, (21*%d1)(%0)	;"
-		SXC1"	$f22, (22*%d1)(%0)	;"
-		SXC1"	$f23, (23*%d1)(%0)	;"
-		SXC1"	$f24, (24*%d1)(%0)	;"
-		SXC1"	$f25, (25*%d1)(%0)	;"
-		SXC1"	$f26, (26*%d1)(%0)	;"
-		SXC1"	$f27, (27*%d1)(%0)	;"
-		SXC1"	$f28, (28*%d1)(%0)	;"
-		SXC1"	$f29, (29*%d1)(%0)	;"
-		SXC1"	$f30, (30*%d1)(%0)	;"
-		SXC1"	$f31, (31*%d1)(%0)	;"
-		".set reorder" :: "r"(fp), "i"(sizeof(fp[0])));
+#if !defined(__mips_o32)
+	if (f->f_regs[_R_SR] & MIPS3_SR_FR) {
+		KASSERT(_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
+		fp[32] = fpcsr;
+		__asm volatile (
+			".set noreorder			;"
+			"sdc1	$f0, (0*%d1)(%0)	;"
+			"sdc1	$f1, (1*%d1)(%0)	;"
+			"sdc1	$f2, (2*%d1)(%0)	;"
+			"sdc1	$f3, (3*%d1)(%0)	;"
+			"sdc1	$f4, (4*%d1)(%0)	;"
+			"sdc1	$f5, (5*%d1)(%0)	;"
+			"sdc1	$f6, (6*%d1)(%0)	;"
+			"sdc1	$f7, (7*%d1)(%0)	;"
+			"sdc1	$f8, (8*%d1)(%0)	;"
+			"sdc1	$f9, (9*%d1)(%0)	;"
+			"sdc1	$f10, (10*%d1)(%0)	;"
+			"sdc1	$f11, (11*%d1)(%0)	;"
+			"sdc1	$f12, (12*%d1)(%0)	;"
+			"sdc1	$f13, (13*%d1)(%0)	;"
+			"sdc1	$f14, (14*%d1)(%0)	;"
+			"sdc1	$f15, (15*%d1)(%0)	;"
+			"sdc1	$f16, (16*%d1)(%0)	;"
+			"sdc1	$f17, (17*%d1)(%0)	;"
+			"sdc1	$f18, (18*%d1)(%0)	;"
+			"sdc1	$f19, (19*%d1)(%0)	;"
+			"sdc1	$f20, (20*%d1)(%0)	;"
+			"sdc1	$f21, (21*%d1)(%0)	;"
+			"sdc1	$f22, (22*%d1)(%0)	;"
+			"sdc1	$f23, (23*%d1)(%0)	;"
+			"sdc1	$f24, (24*%d1)(%0)	;"
+			"sdc1	$f25, (25*%d1)(%0)	;"
+			"sdc1	$f26, (26*%d1)(%0)	;"
+			"sdc1	$f27, (27*%d1)(%0)	;"
+			"sdc1	$f28, (28*%d1)(%0)	;"
+			"sdc1	$f29, (29*%d1)(%0)	;"
+			"sdc1	$f30, (30*%d1)(%0)	;"
+			"sdc1	$f31, (31*%d1)(%0)	;"
+			".set reorder" :: "r"(fp), "i"(sizeof(fp[0])));
+	} else
+#endif /* !defined(__mips_o32) */
+	{
+		KASSERT(!_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
+		((int *)fp)[32] = fpcsr;
+		__asm volatile (
+			".set noreorder			;"
+			"swc1	$f0, (0*%d1)(%0)	;"
+			"swc1	$f1, (1*%d1)(%0)	;"
+			"swc1	$f2, (2*%d1)(%0)	;"
+			"swc1	$f3, (3*%d1)(%0)	;"
+			"swc1	$f4, (4*%d1)(%0)	;"
+			"swc1	$f5, (5*%d1)(%0)	;"
+			"swc1	$f6, (6*%d1)(%0)	;"
+			"swc1	$f7, (7*%d1)(%0)	;"
+			"swc1	$f8, (8*%d1)(%0)	;"
+			"swc1	$f9, (9*%d1)(%0)	;"
+			"swc1	$f10, (10*%d1)(%0)	;"
+			"swc1	$f11, (11*%d1)(%0)	;"
+			"swc1	$f12, (12*%d1)(%0)	;"
+			"swc1	$f13, (13*%d1)(%0)	;"
+			"swc1	$f14, (14*%d1)(%0)	;"
+			"swc1	$f15, (15*%d1)(%0)	;"
+			"swc1	$f16, (16*%d1)(%0)	;"
+			"swc1	$f17, (17*%d1)(%0)	;"
+			"swc1	$f18, (18*%d1)(%0)	;"
+			"swc1	$f19, (19*%d1)(%0)	;"
+			"swc1	$f20, (20*%d1)(%0)	;"
+			"swc1	$f21, (21*%d1)(%0)	;"
+			"swc1	$f22, (22*%d1)(%0)	;"
+			"swc1	$f23, (23*%d1)(%0)	;"
+			"swc1	$f24, (24*%d1)(%0)	;"
+			"swc1	$f25, (25*%d1)(%0)	;"
+			"swc1	$f26, (26*%d1)(%0)	;"
+			"swc1	$f27, (27*%d1)(%0)	;"
+			"swc1	$f28, (28*%d1)(%0)	;"
+			"swc1	$f29, (29*%d1)(%0)	;"
+			"swc1	$f30, (30*%d1)(%0)	;"
+			"swc1	$f31, (31*%d1)(%0)	;"
+		".set reorder" :: "r"(fp), "i"(4));
+	}
 	/*
 	 * stop CP1, enable interrupts.
 	 */
 	__asm volatile ("mtc0 %0, $" ___STRING(MIPS_COP_0_STATUS)
 	    :: "r"(status));
-#endif
+#endif /* !defined(NOFPU) */
 }
 
 void
-loadfpregs(l)
-	struct lwp *l;
+loadfpregs(struct lwp *l)
 {
 #ifndef NOFPU
+	struct frame * const f = l->l_md.md_regs;
+	mips_fpreg_t * const fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	uint32_t status;
-	mips_fpreg_t *fp;
-	struct frame *f;
+	uint32_t fpcsr;
 
-	if (l == NULL)
-		panic("loading fpregs for NULL proc");
+	/*
+	 * Got turned, maybe due to savefpregs.
+	 */
+	if (fpcurlwp == l) {
+		f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
+		return;
+	} else {
+		savefpregs(fpcurlwp);
+		fpcurlwp = l;
+	}
+
+	/*
+	 * Enable the FP when this lwp return to userspace.
+	 */
+	f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
 
 	/*
 	 * turnoff interrupts enabling CP1 to load FP registers.
 	 */
 	__asm volatile(
-		".set noreorder					\n\t"
-		".set noat					\n\t"
-		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
-		"li	$1, %1					\n\t"
-		"mtc0	$1, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
+		".set noreorder"				"\n\t"
+		".set noat"					"\n\t"
+		"mfc0	%0, $" ___STRING(MIPS_COP_0_STATUS)	"\n\t"
+		"mtc0	%1, $" ___STRING(MIPS_COP_0_STATUS)	"\n\t"
 		___STRING(COP0_HAZARD_FPUENABLE)
-		".set reorder					\n\t"
-		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
+		".set reorder"					"\n\t"
+		".set at"
+	    : "=r"(status)
+	    : "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR)));
 
-	f = l->l_md.md_regs;
-	fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	/*
 	 * load FP registers and establish processes' FP context.
 	 */
-	__asm volatile (
-		".set noreorder		;"
-		LXC1"	$f0, (0*%d1)(%0)	;"
-		LXC1"	$f1, (1*%d1)(%0)	;"
-		LXC1"	$f2, (2*%d1)(%0)	;"
-		LXC1"	$f3, (3*%d1)(%0)	;"
-		LXC1"	$f4, (4*%d1)(%0)	;"
-		LXC1"	$f5, (5*%d1)(%0)	;"
-		LXC1"	$f6, (6*%d1)(%0)	;"
-		LXC1"	$f7, (7*%d1)(%0)	;"
-		LXC1"	$f8, (8*%d1)(%0)	;"
-		LXC1"	$f9, (9*%d1)(%0)	;"
-		LXC1"	$f10, (10*%d1)(%0)	;"
-		LXC1"	$f11, (11*%d1)(%0)	;"
-		LXC1"	$f12, (12*%d1)(%0)	;"
-		LXC1"	$f13, (13*%d1)(%0)	;"
-		LXC1"	$f14, (14*%d1)(%0)	;"
-		LXC1"	$f15, (15*%d1)(%0)	;"
-		LXC1"	$f16, (16*%d1)(%0)	;"
-		LXC1"	$f17, (17*%d1)(%0)	;"
-		LXC1"	$f18, (18*%d1)(%0)	;"
-		LXC1"	$f19, (19*%d1)(%0)	;"
-		LXC1"	$f20, (20*%d1)(%0)	;"
-		LXC1"	$f21, (21*%d1)(%0)	;"
-		LXC1"	$f22, (22*%d1)(%0)	;"
-		LXC1"	$f23, (23*%d1)(%0)	;"
-		LXC1"	$f24, (24*%d1)(%0)	;"
-		LXC1"	$f25, (25*%d1)(%0)	;"
-		LXC1"	$f26, (26*%d1)(%0)	;"
-		LXC1"	$f27, (27*%d1)(%0)	;"
-		LXC1"	$f28, (28*%d1)(%0)	;"
-		LXC1"	$f29, (29*%d1)(%0)	;"
-		LXC1"	$f30, (30*%d1)(%0)	;"
-		LXC1"	$f31, (31*%d1)(%0)	;"
-		".set reorder" :: "r"(fp), "i"(sizeof(fp[0])));
+#if !defined(__mips_o32)
+	if (f->f_regs[_R_SR] & MIPS3_SR_FR) {
+		KASSERT(_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
+		__asm volatile (
+			".set noreorder			;"
+			"ldc1	$f0, (0*%d1)(%0)	;"
+			"ldc1	$f1, (1*%d1)(%0)	;"
+			"ldc1	$f2, (2*%d1)(%0)	;"
+			"ldc1	$f3, (3*%d1)(%0)	;"
+			"ldc1	$f4, (4*%d1)(%0)	;"
+			"ldc1	$f5, (5*%d1)(%0)	;"
+			"ldc1	$f6, (6*%d1)(%0)	;"
+			"ldc1	$f7, (7*%d1)(%0)	;"
+			"ldc1	$f8, (8*%d1)(%0)	;"
+			"ldc1	$f9, (9*%d1)(%0)	;"
+			"ldc1	$f10, (10*%d1)(%0)	;"
+			"ldc1	$f11, (11*%d1)(%0)	;"
+			"ldc1	$f12, (12*%d1)(%0)	;"
+			"ldc1	$f13, (13*%d1)(%0)	;"
+			"ldc1	$f14, (14*%d1)(%0)	;"
+			"ldc1	$f15, (15*%d1)(%0)	;"
+			"ldc1	$f16, (16*%d1)(%0)	;"
+			"ldc1	$f17, (17*%d1)(%0)	;"
+			"ldc1	$f18, (18*%d1)(%0)	;"
+			"ldc1	$f19, (19*%d1)(%0)	;"
+			"ldc1	$f20, (20*%d1)(%0)	;"
+			"ldc1	$f21, (21*%d1)(%0)	;"
+			"ldc1	$f22, (22*%d1)(%0)	;"
+			"ldc1	$f23, (23*%d1)(%0)	;"
+			"ldc1	$f24, (24*%d1)(%0)	;"
+			"ldc1	$f25, (25*%d1)(%0)	;"
+			"ldc1	$f26, (26*%d1)(%0)	;"
+			"ldc1	$f27, (27*%d1)(%0)	;"
+			"ldc1	$f28, (28*%d1)(%0)	;"
+			"ldc1	$f29, (29*%d1)(%0)	;"
+			"ldc1	$f30, (30*%d1)(%0)	;"
+			"ldc1	$f31, (31*%d1)(%0)	;"
+			".set reorder" :: "r"(fp), "i"(sizeof(fp[0])));
+		fpcsr = fp[32];
+	} else
+#endif
+	{
+		KASSERT(!_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
+		__asm volatile (
+			".set noreorder			;"
+			"lwc1	$f0, (0*%d1)(%0)	;"
+			"lwc1	$f1, (1*%d1)(%0)	;"
+			"lwc1	$f2, (2*%d1)(%0)	;"
+			"lwc1	$f3, (3*%d1)(%0)	;"
+			"lwc1	$f4, (4*%d1)(%0)	;"
+			"lwc1	$f5, (5*%d1)(%0)	;"
+			"lwc1	$f6, (6*%d1)(%0)	;"
+			"lwc1	$f7, (7*%d1)(%0)	;"
+			"lwc1	$f8, (8*%d1)(%0)	;"
+			"lwc1	$f9, (9*%d1)(%0)	;"
+			"lwc1	$f10, (10*%d1)(%0)	;"
+			"lwc1	$f11, (11*%d1)(%0)	;"
+			"lwc1	$f12, (12*%d1)(%0)	;"
+			"lwc1	$f13, (13*%d1)(%0)	;"
+			"lwc1	$f14, (14*%d1)(%0)	;"
+			"lwc1	$f15, (15*%d1)(%0)	;"
+			"lwc1	$f16, (16*%d1)(%0)	;"
+			"lwc1	$f17, (17*%d1)(%0)	;"
+			"lwc1	$f18, (18*%d1)(%0)	;"
+			"lwc1	$f19, (19*%d1)(%0)	;"
+			"lwc1	$f20, (20*%d1)(%0)	;"
+			"lwc1	$f21, (21*%d1)(%0)	;"
+			"lwc1	$f22, (22*%d1)(%0)	;"
+			"lwc1	$f23, (23*%d1)(%0)	;"
+			"lwc1	$f24, (24*%d1)(%0)	;"
+			"lwc1	$f25, (25*%d1)(%0)	;"
+			"lwc1	$f26, (26*%d1)(%0)	;"
+			"lwc1	$f27, (27*%d1)(%0)	;"
+			"lwc1	$f28, (28*%d1)(%0)	;"
+			"lwc1	$f29, (29*%d1)(%0)	;"
+			"lwc1	$f30, (30*%d1)(%0)	;"
+			"lwc1	$f31, (31*%d1)(%0)	;"
+			".set reorder"
+		    :
+		    : "r"(fp), "i"(4));
+		fpcsr = ((int *)fp)[32];
+	}
 
 	/*
 	 * load FPCSR and stop CP1 again while enabling interrupts.
 	 */
 	__asm volatile(
-		".set noreorder					\n\t"
-		".set noat					\n\t"
-		"ctc1	%0, $31					\n\t"
-		"mtc0	%1, $" ___STRING(MIPS_COP_0_STATUS) "	\n\t"
-		".set reorder					\n\t"
+		".set noreorder"				"\n\t"
+		".set noat"					"\n\t"
+		"ctc1	%0, $31"				"\n\t"
+		"mtc0	%1, $" ___STRING(MIPS_COP_0_STATUS)	"\n\t"
+		".set reorder"					"\n\t"
 		".set at"
-		:: "r"(fp[32] &~ MIPS_FPU_EXCEPTION_BITS), "r"(status));
-#endif
+		:: "r"(fpcsr &~ MIPS_FPU_EXCEPTION_BITS), "r"(status));
+#endif /* !defined(NOFPU) */
 }
 
 /* 
@@ -1801,8 +1913,7 @@ cpu_setmcontext(l, mcp, flags)
 	if (flags & _UC_FPU) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
-		if (l == fpcurlwp)
-			fpcurlwp = NULL;
+		fpcurlwp = &lwp0;
 
 		/*
 		 * The PCB FP regs struct includes the FP CSR, so use the
