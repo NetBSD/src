@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.36 2008/11/17 03:04:27 dyoung Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.37 2009/08/23 15:26:42 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.36 2008/11/17 03:04:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.37 2009/08/23 15:26:42 jmcneill Exp $");
 
 #include "opt_mii.h"
 
@@ -126,20 +126,18 @@ ukphyattach(device_t parent, device_t self, void *aux)
 	int i;
 #endif
 
-	aprint_naive(": Media interface\n");
-	aprint_normal(": Generic IEEE 802.3u media interface\n");
 #ifdef MIIVERBOSE
 	for (i = 0; mii_knowndevs[i].descr != NULL; i++)
 		if (mii_knowndevs[i].oui == oui &&
 		    mii_knowndevs[i].model == model)
 			break;
 	if (mii_knowndevs[i].descr != NULL)
-		aprint_normal_dev(self, "%s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+		aprint_normal(": %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
 		       mii_knowndevs[i].descr,
 		       oui, model, rev);
 	else
 #endif
-		aprint_normal_dev(self, "OUI 0x%06x, model 0x%04x, rev. %d\n",
+		aprint_normal(": OUI 0x%06x, model 0x%04x, rev. %d\n",
 		       oui, model, rev);
 
 	sc->mii_dev = self;
