@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.16.20.1 2009/08/20 21:49:24 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.16.20.2 2009/08/23 04:04:35 matt Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16.20.1 2009/08/20 21:49:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.16.20.2 2009/08/23 04:04:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,10 @@ extern int sigdebug;
 #define SDB_FPSTATE	0x04
 #endif
 
+#if !defined(__mips_o32)
+#define	fpreg		fpreg_oabi
+#endif
+
 int
 compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
 {
@@ -50,6 +54,11 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	int error;
 	struct frame *f;
 	sigset_t mask;
+
+#if !defined(__mips_o32)
+	if (p->p_md.md_abi != _MIPS_BSD_ABI_O32)
+		return ENOSYS;
+#endif
 
 	/*
 	 * The trampoline code hands us the context.
@@ -64,7 +73,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if ((u_int)ksc.sc_regs[_R_ZERO] != 0xacedbadeU)/* magic number */
+	if ((uint32_t)ksc.sc_regs[_R_ZERO] != 0xacedbadeU)/* magic number */
 		return (EINVAL);
 
 	/* Resture the register context. */
@@ -72,10 +81,16 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	f->f_regs[_R_PC] = ksc.sc_pc;
 	f->f_regs[_R_MULLO] = ksc.mullo;
 	f->f_regs[_R_MULHI] = ksc.mulhi;
+#if defined(__mips_o32)
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
+#else
+	for (size_t i = 1; i < __arraycount(scp->sc_regs); i++)
+		f->f_regs[i] = scp->sc_regs[i];
+#endif
 	if (scp->sc_fpused)
-		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+		*(struct fpreg *)&l->l_addr->u_pcb.pcb_fpregs =
+		    *(struct fpreg *)scp->sc_fpregs;
 
 	mutex_enter(p->p_lock);
 

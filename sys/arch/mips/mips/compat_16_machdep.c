@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.12.14.1 2009/08/20 21:45:59 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.12.14.2 2009/08/23 04:04:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.1 2009/08/20 21:45:59 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.2 2009/08/23 04:04:35 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -69,6 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.1 2009/08/20 21:45:59 
 #include <mips/regnum.h>
 #include <mips/frame.h>
 
+#if !defined(__mips_o32)
+#define	fpreg		fpreg_oabi
+#endif
+
 #ifdef DEBUG
 int sigdebug = 0;
 int sigpid = 0;
@@ -88,10 +92,15 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	int onstack, error;
-	struct sigcontext *scp = getframe(l, sig, &onstack), ksc;
+	struct sigcontext *scp = getframe(l, sig, &onstack);
+	struct sigcontext ksc;
 	struct frame *f = l->l_md.md_regs;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
+#if !defined(__mips_o32)
+	if (p->p_md.md_abi != _MIPS_BSD_API_O32)
+		sigexit(l, SIGILL);
+#endif
 
 	scp--;
 
@@ -109,21 +118,23 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 
 	/* Save register context. */
 	ksc.sc_regs[_R_ZERO] = 0xACEDBADE;		/* magic number */
+#if defined(__mips_o32)
 	memcpy(&ksc.sc_regs[1], &f->f_regs[1],
 	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
+#else
+	for (size_t i = 1; i < 32; i++)
+		ksc.sc_regs[i] = f->f_regs[i];
+#endif
 
 	/* Save the FP state, if necessary, then copy it. */
 #ifndef SOFTFLOAT
 	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
-		if (l == fpcurlwp)
-			savefpregs(l);
-		*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
+		savefpregs(l);
 	}
-#else
-	*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 #endif
+	*(struct fpreg *)ksc.sc_fpregs = *(struct fpreg *)&l->l_addr->u_pcb.pcb_fpregs;
 
 	/* Save signal stack. */
 	ksc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
@@ -225,6 +236,11 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	struct proc *p = l->l_proc;
 	int error;
 
+#if !defined(__mips_o32)
+	if (p->p_md.md_abi != _MIPS_BSD_API_O32)
+		return ENOSYS;
+#endif
+
 	/*
 	 * The trampoline code hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
@@ -246,19 +262,21 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	f->f_regs[_R_PC] = ksc.sc_pc;
 	f->f_regs[_R_MULLO] = ksc.mullo;
 	f->f_regs[_R_MULHI] = ksc.mulhi;
+#if defined(__mips_o32)
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
+#else
+	for (size_t i = 1; i < __arraycount(f->f_regs); i++)
+		f->f_regs[i] = ksc.sc_regs[i];
+#endif
 #ifndef	SOFTFLOAT
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
-		if (l == fpcurlwp)
-			fpcurlwp = NULL;
-		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+		fpcurlwp = &lwp0;
 	}
-#else
-	l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 #endif
+	*(struct fpreg *)&l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 
 	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
