@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.3 2009/08/23 04:06:01 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.4 2009/08/23 04:38:34 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.3 2009/08/23 04:06:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.4 2009/08/23 04:38:34 uebayasi Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -664,7 +664,7 @@ mips_singlestep(struct lwp *l)
 #ifndef DDB_TRACE
 
 #if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
-mips_reg_t kdbrpeek(vaddr_t);
+mips_reg_t kdbrpeek(vaddr_t, size_t);
 
 int
 kdbpeek(vaddr_t addr)
@@ -686,11 +686,11 @@ kdbpeek(vaddr_t addr)
 }
 
 mips_reg_t
-kdbrpeek(vaddr_t addr)
+kdbrpeek(vaddr_t addr, size_t n)
 {
 	mips_reg_t rc;
 
-	if (addr & (sizeof(mips_reg_t) - 1)) {
+	if (addr & (n - 1)) {
 		printf("kdbrpeek: unaligned address %#"PRIxVADDR"\n", addr);
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
@@ -699,7 +699,10 @@ kdbrpeek(vaddr_t addr)
 		printf("kdbrpeek: NULL\n");
 		rc = 0xdeadfeed;
 	} else {
-		rc = *(mips_reg_t *)addr;
+		if (sizeof(mips_reg_t) == 8 && n == 8)
+			rc = *(int64_t *)addr;
+		else
+			rc = *(int32_t *)addr;
 	}
 	return rc;
 }
@@ -762,7 +765,7 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || sp < 0x80000000) {
+	if (sp & 3 || (intptr_t)sp >= 0) {
 		(*printfn)("SP 0x%x: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -770,7 +773,7 @@ loop:
 	}
 
 	/* Check for bad PC */
-	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
+	if (pc & 3 || (intptr_t)pc >= 0 || (intptr_t)pc >= (intptr_t)edata) {
 		(*printfn)("PC 0x%x: not in kernel space\n", pc);
 		ra = 0;
 		goto done;
@@ -811,7 +814,7 @@ loop:
 	va = pc;
 	do {
 		va -= sizeof(int);
-		if (va <= (unsigned)verylocore)
+		if (va <= (vaddr_t)verylocore)
 			goto finish;
 		instr = kdbpeek(va);
 		if (instr == MIPS_ERET)
@@ -875,6 +878,12 @@ mips3_eret:
 			break;
 
 		case OP_SW:
+#if !defined(__mips_o32)
+		case OP_SD:
+#endif
+		{
+			size_t size = (i.JType.op == OP_SW) ? 4 : 8;
+
 			/* look for saved registers on the stack */
 			if (i.IType.rs != 29)
 				break;
@@ -884,32 +893,37 @@ mips3_eret:
 			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
 			case 4: /* a0 */
-				a0 = kdbpeek(sp + (short)i.IType.imm);
+				a0 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 5: /* a1 */
-				a1 = kdbpeek(sp + (short)i.IType.imm);
+				a1 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 6: /* a2 */
-				a2 = kdbpeek(sp + (short)i.IType.imm);
+				a2 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 7: /* a3 */
-				a3 = kdbpeek(sp + (short)i.IType.imm);
+				a3 = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 30: /* fp */
-				fp = kdbpeek(sp + (short)i.IType.imm);
+				fp = kdbrpeek(sp + (short)i.IType.imm, size);
 				break;
 
 			case 31: /* ra */
-				ra = kdbpeek(sp + (short)i.IType.imm);
+				ra = kdbrpeek(sp + (short)i.IType.imm, size);
 			}
 			break;
+		}
 
 		case OP_ADDI:
 		case OP_ADDIU:
+#if !defined(__mips_o32)
+		case OP_DADDI:
+		case OP_DADDIU:
+#endif
 			/* look for stack pointer adjustment */
 			if (i.IType.rs != 29 || i.IType.rt != 29)
 				break;
