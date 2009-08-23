@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.8.34.2 2009/08/18 06:52:09 matt Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.8.34.3 2009/08/23 23:17:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995,
@@ -44,7 +44,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: sigsetjmp.S,v 1.8.34.2 2009/08/18 06:52:09 matt Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.8.34.3 2009/08/23 23:17:55 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,7 @@
 
 LEAF(__sigsetjmp14)
 	PIC_PROLOGUE(__sigsetjmp14)
-	INT_S	a1, _OFFSETOF_SC_MASK(a0)	# save "savemask"
+	REG_S	a1, _JBLEN*SZREG(a0)		# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
 	PIC_TAILCALL(_setjmp)
 
@@ -71,7 +71,7 @@ END(__sigsetjmp14)
 
 LEAF(__siglongjmp14)
 	PIC_PROLOGUE(__siglongjmp14)
-	INT_L	t0, _OFFSETOF_SC_MASK(a0)	# get "savemask"
+	REG_L	t0, _JBLEN*SZREG(a0)		# get "savemask"
 	bne	t0, 0x0, 1f			# restore signal mask?
 	PIC_TAILCALL(_longjmp)
 
