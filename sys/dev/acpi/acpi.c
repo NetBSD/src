@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.129 2009/08/18 21:38:41 cegger Exp $	*/
+/*	$NetBSD: acpi.c,v 1.130 2009/08/23 15:16:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.129 2009/08/18 21:38:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.130 2009/08/23 15:16:16 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -244,8 +244,11 @@ acpi_probe(void)
 
 	rv = AcpiInitializeTables(acpi_initial_tables, 128, 0);
 	if (ACPI_FAILURE(rv)) {
+#ifdef ACPI_DEBUG
 		printf("ACPI: unable to initialize ACPI tables: %s\n",
 		    AcpiFormatException(rv));
+#endif
+		AcpiTerminate();
 		return 0;
 	}
 
@@ -253,6 +256,7 @@ acpi_probe(void)
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to reallocate root table: %s\n",
 		    AcpiFormatException(rv));
+		AcpiTerminate();
 		return 0;
 	}
 
@@ -265,12 +269,14 @@ acpi_probe(void)
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to load tables: %s\n",
 		    AcpiFormatException(rv));
+		AcpiTerminate();
 		return 0;
 	}
 
 	rsdt = acpi_map_rsdt();
 	if (rsdt == NULL) {
 		printf("ACPI: unable to map RSDT\n");
+		AcpiTerminate();
 		return 0;
 	}
 
@@ -284,6 +290,7 @@ acpi_probe(void)
 		        rsdt->AslCompilerRevision);
 		printf("ACPI: not used. set acpi_force_load to use anyway.\n");
 		acpi_unmap_rsdt(rsdt);
+		AcpiTerminate();
 		return 0;
 	}
 
@@ -296,6 +303,7 @@ acpi_probe(void)
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to initialise SystemMemory handler: %s\n",
 		    AcpiFormatException(rv));
+		AcpiTerminate();
 		return 0;
 	}
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
@@ -303,6 +311,7 @@ acpi_probe(void)
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to initialise SystemIO handler: %s\n",
 		     AcpiFormatException(rv));
+		AcpiTerminate();
 		return 0;
 	}
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
@@ -310,6 +319,7 @@ acpi_probe(void)
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unabled to initialise PciConfig handler: %s\n",
 		    AcpiFormatException(rv));
+		AcpiTerminate();
 		return 0;
 	}
 #endif
@@ -317,6 +327,7 @@ acpi_probe(void)
 	rv = AcpiEnableSubsystem(~(ACPI_NO_HARDWARE_INIT|ACPI_NO_ACPI_ENABLE));
 	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to enable: %s\n", AcpiFormatException(rv));
+		AcpiTerminate();
 		return 0;
 	}
 

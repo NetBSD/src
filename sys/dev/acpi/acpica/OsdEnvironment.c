@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.4 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.5 2009/08/23 15:16:16 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.4 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.5 2009/08/23 15:16:16 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -77,9 +77,6 @@ AcpiOsInitialize(void)
 ACPI_STATUS
 AcpiOsTerminate(void)
 {
-	/* Tear down the Osd Scheduler. */
-	acpi_osd_sched_fini();
-
 	return acpi_md_OsTerminate();
 }
 
