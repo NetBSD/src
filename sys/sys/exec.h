@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.124 2008/07/02 17:28:57 ad Exp $	*/
+/*	$NetBSD: exec.h,v 1.124.10.1 2009/08/23 06:35:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -150,7 +150,7 @@ struct execsw {
 	int	(*es_copyargs)(struct lwp *, struct exec_package *,
 			struct ps_strings *, char **, void *);
 					/* Set registers before execution */
-	void	(*es_setregs)(struct lwp *, struct exec_package *, u_long);
+	void	(*es_setregs)(struct lwp *, struct exec_package *, vaddr_t);
 					/* Dump core */
 	int	(*es_coredump)(struct lwp *, void *);
 	int	(*es_setup_stack)(struct lwp *, struct exec_package *);
@@ -178,14 +178,14 @@ struct exec_package {
 	struct	exec_vmcmd_set ep_vmcmds;  /* vmcmds used to build vmspace */
 	struct	vnode *ep_vp;		/* executable's vnode */
 	struct	vattr *ep_vap;		/* executable's attributes */
-	u_long	ep_taddr;		/* process's text address */
-	u_long	ep_tsize;		/* size of process's text */
-	u_long	ep_daddr;		/* process's data(+bss) address */
-	u_long	ep_dsize;		/* size of process's data(+bss) */
-	u_long	ep_maxsaddr;		/* proc's max stack addr ("top") */
-	u_long	ep_minsaddr;		/* proc's min stack addr ("bottom") */
-	u_long	ep_ssize;		/* size of process's stack */
-	u_long	ep_entry;		/* process's entry point */
+	vaddr_t	ep_taddr;		/* process's text address */
+	vsize_t	ep_tsize;		/* size of process's text */
+	vaddr_t	ep_daddr;		/* process's data(+bss) address */
+	vsize_t	ep_dsize;		/* size of process's data(+bss) */
+	vaddr_t	ep_maxsaddr;		/* proc's max stack addr ("top") */
+	vaddr_t	ep_minsaddr;		/* proc's min stack addr ("bottom") */
+	vsize_t	ep_ssize;		/* size of process's stack */
+	vaddr_t	ep_entry;		/* process's entry point */
 	vaddr_t	ep_vm_minaddr;		/* bottom of process address space */
 	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
@@ -212,10 +212,10 @@ struct exec_package {
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);
 				/* procedure to run for region of vmspace */
-	u_long	ev_len;		/* length of the segment to map */
-	u_long	ev_addr;	/* address in the vmspace to place it at */
+	vsize_t	ev_len;		/* length of the segment to map */
+	vaddr_t	ev_addr;	/* address in the vmspace to place it at */
 	struct	vnode *ev_vp;	/* vnode pointer for the file w/the data */
-	u_long	ev_offset;	/* offset in the file for the data */
+	vsize_t	ev_offset;	/* offset in the file for the data */
 	u_int	ev_prot;	/* protections for segment */
 	int	ev_flags;
 #define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
