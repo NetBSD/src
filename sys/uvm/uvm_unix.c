@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.40 2008/01/02 11:49:21 ad Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.40.28.1 2009/08/23 06:38:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.40 2008/01/02 11:49:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.40.28.1 2009/08/23 06:38:07 matt Exp $");
 
 #include "opt_pax.h"
 
@@ -117,7 +117,10 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 				UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 				UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
-			uprintf("sbrk: grow %ld failed, error = %d\n",
+#ifndef PRIdVSIZE
+#define	PRIdVSIZE	"%ld"
+#endif
+			uprintf("sbrk: grow %"PRIdVSIZE" failed, error = %d\n",
 				new - old, error);
 			mutex_exit(&p->p_auxlock);
 			return (error);

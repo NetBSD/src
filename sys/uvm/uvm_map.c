@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263.4.3 2009/04/19 15:43:14 snj Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.4.3.4.1 2009/08/23 06:38:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3 2009/04/19 15:43:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3.4.1 2009/08/23 06:38:07 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -98,6 +98,16 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3 2009/04/19 15:43:14 snj Exp $"
 
 #ifdef DDB
 #include <uvm/uvm_ddb.h>
+#endif
+
+#ifndef PRIxPADDR
+#define PRIxPADDR	"%lx"
+#endif
+#ifndef PRIxVADDR
+#define PRIxVADDR	"%lx"
+#endif
+#ifndef PRIxVSIZE
+#define PRIxVSIZE	"%lx"
 #endif
 
 #if !defined(UVMMAP_COUNTERS)
@@ -567,7 +577,7 @@ _uvm_tree_sanity(struct vm_map *map)
 			goto error;
 		}
 		if (trtmp != NULL && trtmp->start >= tmp->start) {
-			printf("corrupt: 0x%lx >= 0x%lx\n",
+			printf("corrupt: %#"PRIxVADDR" >= %#"PRIxVADDR"\n",
 			    trtmp->start, tmp->start);
 			goto error;
 		}
@@ -2593,7 +2603,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 			if (tmpent->start < cur)
 				panic("uvm_map_replace1");
 			if (tmpent->start > tmpent->end || tmpent->end > end) {
-		printf("tmpent->start=0x%lx, tmpent->end=0x%lx, end=0x%lx\n",
+		printf("tmpent->start=%#"PRIxVADDR", tmpent->end=%#"PRIxVADDR", end=%#"PRIxVADDR"\n",
 			    tmpent->start, tmpent->end, end);
 				panic("uvm_map_replace2");
 			}

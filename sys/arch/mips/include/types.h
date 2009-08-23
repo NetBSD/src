@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.3 2009/08/23 03:38:19 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.4 2009/08/23 06:38:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,53 +47,56 @@
  * the rest of the operating system as possible.
  */
 
-#if defined(__mips_n32)
-typedef long long		mips_reg_t;
-typedef unsigned long long	mips_ureg_t;
-typedef	long long		mips_fpreg_t;
-#else
-#if defined(__mips_o64) || defined(__mips_o32)
-typedef	int			mips_fpreg_t;
-#else
-typedef	long			mips_fpreg_t;
-#endif
-typedef long			mips_reg_t;
-typedef unsigned long		mips_ureg_t;
-#endif
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if defined(_NETBSD_SOURCE)
-#if defined(_MIPS_PADDR_T_64BIT) && !defined(_LP64)
-typedef unsigned long long	paddr_t;
-typedef unsigned long long	psize_t;
-#define PRIxPADDR	"llx"
-#define PRIxPSIZE	"llx"
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+typedef __uint64_t	paddr_t;
+typedef __uint64_t	psize_t;
+#define PRIxPADDR	PRIx64
+#define PRIxPSIZE	PRIx64
+#define PRIdPSIZE	PRId64
 #else
-typedef unsigned long		paddr_t;
-typedef unsigned long		psize_t;
-#define PRIxPADDR	"lx"
-#define PRIxPSIZE	"lx"
+typedef __uint32_t	paddr_t;
+typedef __uint32_t	psize_t;
+#define PRIxPADDR	PRIx32
+#define PRIxPSIZE	PRIx32
+#define PRIdPSIZE	PRId32
 #endif
-typedef unsigned long		vaddr_t;
-typedef unsigned long		vsize_t;
-#define PRIxVADDR	"lx"
-#define PRIxVSIZE	"lx"
+typedef __uint32_t	vaddr_t;
+typedef __uint32_t	vsize_t;
+#define PRIxVADDR	PRIx32
+#define PRIxVSIZE	PRIx32
+#define PRIdVSIZE	PRId32
 #endif
 
 /* Make sure this is signed; we need pointers to be sign-extended. */
-#if defined(__mips_n32)
-typedef long		register32_t;
-typedef long long	register_t;
-#define PRIxREGISTER32	"lx"
-#define PRIxREGISTER	"llx"
+#if defined(__mips_o64) || defined(__mips_o32)
+typedef	__uint32_t	fpregister_t;
+typedef	__uint32_t	mips_fpreg_t;		/* do not use */
 #else
-#if !defined(__mips_o32)
-typedef int		register32_t;
-#define PRIxREGISTER32	"x"
+typedef	__uint64_t	fpregister_t;
+typedef	__uint64_t	mips_fpreg_t;		/* do not use */
 #endif
-#define PRIxREGISTER	"lx"
-typedef long		register_t;
-#endif /* __mips_n32 */
+#if defined(__mips_o32)
+typedef __int32_t	register_t;
+typedef __uint32_t	uregister_t;
+typedef __int32_t	mips_reg_t;		/* do not use */
+typedef __uint32_t	mips_ureg_t;		/* do not use */
+#define PRIxREGISTER	PRIx32
+#define PRIxUREGISTER	PRIx32
+#else
+typedef __int64_t	register_t;
+typedef __uint64_t	uregister_t;
+typedef __int64_t	mips_reg_t;		/* do not use */
+typedef __uint64_t	mips_ureg_t;		/* do not use */
+typedef __int32_t	register32_t;
+typedef __uint32_t	uregister32_t;
+#define PRIxREGISTER32	PRIx32
+#define PRIxUREGISTER32	PRIx32
+#define PRIxREGISTER	PRIx64
+#define PRIxUREGISTER	PRIx64
+#endif /* __mips_o32 */
 
 #if defined(_KERNEL)
 typedef struct label_t {
