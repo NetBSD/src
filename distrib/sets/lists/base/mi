@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.823 2009/07/18 22:24:02 reinoud Exp $
+# $NetBSD: mi,v 1.824 2009/08/23 09:05:44 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -645,6 +645,7 @@
 ./usr/X11R7/lib/modules/fonts			base-x11-root
 ./usr/X11R7/lib/modules/input			base-x11-root
 ./usr/X11R7/lib/pkgconfig			base-x11-root
+./usr/X11R7/lib/xorg				base-x11-root
 ./usr/X11R7/libexec				base-x11-root
 ./usr/X11R7/man					base-x11-root
 ./usr/X11R7/man/cat1				base-x11-root
