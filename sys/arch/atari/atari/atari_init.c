@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.85 2009/08/22 18:26:42 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.86 2009/08/23 01:27:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.85 2009/08/22 18:26:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.86 2009/08/23 01:27:13 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -324,7 +324,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * If present, add pci areas
 	 */
 	if (machineid & ATARI_HADES)
-		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_MEM_SIZE);
+		ptextra += btoc(PCI_CONFIG_SIZE + PCI_IO_SIZE + PCI_MEM_SIZE);
 	if (machineid & ATARI_MILAN)
 		ptextra += btoc(PCI_IO_SIZE + PCI_MEM_SIZE);
 	ptextra += btoc(BOOTM_VA_POOL);
@@ -776,9 +776,9 @@ map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
 		 * Only Hades maps the PCI-config space!
 		 */
 		pci_conf_addr = ioaddr;
-		ioaddr       += PCI_CONF_SIZE;
+		ioaddr       += PCI_CONFIG_SIZE;
 		pg            = &pt[pci_conf_addr / PAGE_SIZE];
-		epg           = &pg[btoc(PCI_CONF_SIZE)];
+		epg           = &pg[btoc(PCI_CONFIG_SIZE)];
 		mask          = PCI_CONFM_PHYS;
 		pg_proto      = PCI_CONFB_PHYS | PG_RW | PG_CI | PG_V;
 		for (; pg < epg; mask <<= 1)
