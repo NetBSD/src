@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.58 2009/04/07 10:45:05 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.59 2009/08/23 20:57:40 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,8 @@
 /* MD Message catalog -- English, i386 version */
 
 message md_hello
-{If you booted from a floppy, you may now remove the disk.
+{If you booted from removable media such as a USB drive or floppy disk, you
+may now remove the device.
 
 }
 
