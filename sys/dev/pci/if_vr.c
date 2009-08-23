@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.96 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.97 2009/08/23 16:11:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.96 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.97 2009/08/23 16:11:48 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -150,19 +150,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.96 2009/05/06 09:25:16 cegger Exp $");
 static const struct vr_type {
 	pci_vendor_id_t		vr_vid;
 	pci_product_id_t	vr_did;
-	const char		*vr_name;
 } vr_devs[] = {
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
-		"VIA VT3043 (Rhine) 10/100" },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
-		"VIA VT6102 (Rhine II) 10/100" },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
-		"VIA VT6105 (Rhine III) 10/100" },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
-		"VIA VT6105M (Rhine III) 10/100" },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
-		"VIA VT86C100A (Rhine-II) 10/100" },
-	{ 0, 0, NULL }
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A }
 };
 
 /*
@@ -1407,8 +1400,10 @@ static const struct vr_type *
 vr_lookup(struct pci_attach_args *pa)
 {
 	const struct vr_type *vrt;
+	int i;
 
-	for (vrt = vr_devs; vrt->vr_name != NULL; vrt++) {
+	for (i = 0; i < __arraycount(vr_devs); i++) {
+		vrt = &vr_devs[i];
 		if (PCI_VENDOR(pa->pa_id) == vrt->vr_vid &&
 		    PCI_PRODUCT(pa->pa_id) == vrt->vr_did)
 			return (vrt);
@@ -1449,11 +1444,11 @@ vr_attach(device_t parent, device_t self, void *aux)
 	struct vr_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
-	const struct vr_type *vrt;
 	uint32_t reg;
 	struct ifnet *ifp;
 	uint8_t eaddr[ETHER_ADDR_LEN], mac;
 	int i, rseg, error;
+	char devinfo[256];
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(sc->vr_pc, sc->vr_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(sc->vr_pc, sc->vr_tag, (r))
@@ -1463,13 +1458,10 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_tag = pa->pa_tag;
 	callout_init(&sc->vr_tick_ch, 0);
 
-	vrt = vr_lookup(pa);
-	if (vrt == NULL) {
-		printf("\n");
-		panic("vr_attach: impossible");
-	}
-
-	printf(": %s Ethernet\n", vrt->vr_name);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_naive("\n");
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	/*
 	 * Handle power management nonsense.
