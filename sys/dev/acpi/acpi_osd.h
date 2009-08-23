@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_osd.h,v 1.1 2001/09/28 02:09:23 thorpej Exp $	*/
+/*	$NetBSD: acpi_osd.h,v 1.2 2009/08/23 15:16:16 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -45,4 +45,3 @@ void	acpi_osd_debugger(void);
 
 /* Osd/OsdSchedule.c */
 void	acpi_osd_sched_init(void);
-void	acpi_osd_sched_fini(void);
