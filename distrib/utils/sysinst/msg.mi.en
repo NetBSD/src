@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.156 2009/08/11 19:15:30 snj Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.157 2009/08/23 20:58:05 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,7 +71,8 @@ message upgrade
 {upgrade}
 
 message hello
-{Welcome to sysinst, the NetBSD-@@VERSION@@ system installation tool.
+{NetBSD/@@MACHINE@@ @@VERSION@@
+
 This menu-driven tool is designed to help you install NetBSD to a hard
 disk, or upgrade an existing NetBSD system, with a minimum of work. 
 In the following menus type the reference letter (a, b, c, ...) to
