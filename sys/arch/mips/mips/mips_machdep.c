@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.3 2009/08/23 03:38:19 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.4 2009/08/23 06:38:07 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.3 2009/08/23 03:38:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.4 2009/08/23 06:38:07 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -1498,8 +1498,8 @@ mips_init_msgbuf(void)
 
 	/* warn if the message buffer had to be shrunk */
 	if (sz != reqsz)
-		printf("WARNING: %ld bytes not available for msgbuf "
-		    "in last cluster (%ld used)\n", reqsz, sz);
+		printf("WARNING: %"PRIdVSIZE" bytes not available for msgbuf "
+		    "in last cluster (%"PRIdVSIZE" used)\n", reqsz, sz);
 }
 
 void
