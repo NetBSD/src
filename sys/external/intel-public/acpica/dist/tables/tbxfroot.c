@@ -306,7 +306,7 @@ AcpiFindRootPointer (
 
     /* A valid RSDP was not found */
 
-    ACPI_ERROR ((AE_INFO, "A valid RSDP was not found"));
+    ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "A valid RSDP was not found"));
     return_ACPI_STATUS (AE_NOT_FOUND);
 }
 
