@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.13 2009/08/23 10:20:41 mbalmer Exp $
+.\" $NetBSD: gpio.4,v 1.14 2009/08/23 15:41:28 wiz Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -57,9 +57,9 @@ authorization by the
 .Xr kauth 9
 framework.
 .Pp
-If the
+If for example
 .Xr secmodel_securelevel 9
-is active, e.g., the layout of the GPIO device is defined at a securelevel
+is active, the layout of the GPIO device is defined at a securelevel
 less than 1, i.e. typically during system boot, and cannot be changed later.
 GPIO pins can be configured and given a symbolic name and device drivers
 that use GPIO pins can be attached to the
