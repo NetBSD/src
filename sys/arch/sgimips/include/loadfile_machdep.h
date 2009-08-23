@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.6 2008/04/28 20:23:34 martin Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.7 2009/08/23 08:32:22 he Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #ifndef _SGIMIPS_LOADFILE_MACHDEP_H_
 #define _SGIMIPS_LOADFILE_MACHDEP_H_
 
-#define BOOT_AOUT
 #define BOOT_ECOFF
 #define BOOT_ELF32
 
