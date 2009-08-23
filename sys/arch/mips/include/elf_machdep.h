@@ -1,23 +1,31 @@
-/*	$NetBSD: elf_machdep.h,v 1.10.96.4 2009/08/22 06:46:45 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.96.5 2009/08/23 03:40:14 matt Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
 
 #if defined(ELFSIZE)
 #if ELFSIZE == 32
+#ifdef _LP64
+#define	ELF32_MACHDEP_ID_CASES		/* xxx */
+#else
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
+#endif /* _LP64 */
 
 #define	ELF32_MACHDEP_ID	EM_MIPS
-#endif
+#endif /* ELFSIZE == 32 */
 #if ELFSIZE == 64
+#ifdef _LP64
 #define	ELF64_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
+#else
+#define	ELF64_MACHDEP_ID_CASES		/* xxx */
+#endif /* _LP64 */
 
 #define	ELF64_MACHDEP_ID	EM_MIPS
-#endif
+#endif /* ELFSIZE == 64 */
 #endif /* defined(ELFSIZE) */
 
 #ifdef _LP64
