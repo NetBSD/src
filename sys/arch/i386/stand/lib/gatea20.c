@@ -1,4 +1,4 @@
-/*	$NetBSD: gatea20.c,v 1.11 2008/10/14 14:18:11 ad Exp $	*/
+/*	$NetBSD: gatea20.c,v 1.12 2009/08/23 12:31:05 jmcneill Exp $	*/
 
 /* extracted from freebsd:sys/i386/boot/biosboot/io.c */
 
@@ -67,12 +67,10 @@ gateA20(void)
 
 		outb(K_CMD, KC_CMD_WOUT);
 
-		delay(100);
 		while (inb(K_STATUS) & K_IBUF_FUL);
 
 		outb(K_RDWR, x_20);
 
-		delay(100);
 		while (inb(K_STATUS) & K_IBUF_FUL);
 
 		while (inb(K_STATUS) & K_OBUF_FUL)
