@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.11 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.12 2009/08/23 15:16:16 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.11 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.12 2009/08/23 15:16:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -77,17 +77,6 @@ acpi_osd_sched_init(void)
 	sysmon_task_queue_init();
 	mutex_init(&acpi_osd_sleep_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&acpi_osd_sleep_cv, "acpislp");
-}
-
-/*
- * acpi_osd_sched_fini:
- *
- *	Clean up the ACPICA Osd scheduler.  Called from AcpiOsdTerminate().
- */
-void
-acpi_osd_sched_fini(void)
-{
-	sysmon_task_queue_fini();
 }
 
 /*
