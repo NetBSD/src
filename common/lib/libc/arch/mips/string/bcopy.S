@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2.40.3 2009/08/20 10:03:43 matt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2.40.4 2009/08/23 23:14:42 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -43,8 +43,11 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93") */
-	RCSID("$NetBSD: bcopy.S,v 1.2.40.3 2009/08/20 10:03:43 matt Exp $")
+#if 0
+	RCSID("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93")
+#else
+	RCSID("$NetBSD: bcopy.S,v 1.2.40.4 2009/08/23 23:14:42 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
