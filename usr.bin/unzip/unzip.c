@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.3 2009/08/22 17:19:11 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.4 2009/08/23 15:50:35 wiz Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.3 2009/08/22 17:19:11 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.4 2009/08/23 15:50:35 wiz Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: unzip.c,v 1.3 2009/08/22 17:19:11 joerg Exp $");
 
 /* command-line options */
 static int		 a_opt;		/* convert EOL */
-static int		 c_opt;		/* extract to stoud */
+static int		 c_opt;		/* extract to stdout */
 static const char	*d_arg;		/* directory */
 static int		 f_opt;		/* update existing files only */
 static int		 j_opt;		/* junk directories */
