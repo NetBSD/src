@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.1 2009/08/20 22:55:42 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.2 2009/08/23 13:29:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -5072,7 +5072,6 @@ bcemul_sltu:
 	sltu	v0, v0, v1
 	REG_S	v0, FRAME_RZERO(t2)
 	REG_EPILOGUE
-	sw	v0, FRAME_RZERO(t2)
 #	b	bcemul_done		# fall through to bcemul_done
 
 bcemul_done:
