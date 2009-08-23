@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.143.4.1 2009/02/06 01:54:09 snj Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.143.4.1.4.1 2009/08/23 03:38:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.143.4.1 2009/02/06 01:54:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.143.4.1.4.1 2009/08/23 03:38:19 matt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -838,7 +838,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	int error;
 	struct fpreg r;
 	char *kv;
-	int kl;
+	size_t kl;
 
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
@@ -853,14 +853,22 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 
 	uvm_lwp_hold(l);
 
+#ifdef __HAVE_PROCESS_XFPREGS
+	error = process_read_xfpregs(l, &r, &kl);
+#else
 	error = process_read_fpregs(l, &r);
+#endif
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
 		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
+#ifdef __HAVE_PROCESS_XFPREGS
+			error = process_write_xfpregs(l, &r, kl);
+#else
 			error = process_write_fpregs(l, &r);
+#endif
 	}
 
 	uvm_lwp_rele(l);
