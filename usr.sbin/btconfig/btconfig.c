@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.14 2009/08/20 21:40:59 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.15 2009/08/24 20:43:35 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.14 2009/08/20 21:40:59 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.15 2009/08/24 20:43:35 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -60,9 +60,11 @@ struct result {
 int main(int, char *[]);
 void badarg(const char *);
 void badparam(const char *);
+void badval(const char *, const char *);
 void usage(void);
 int set_unit(unsigned long);
 void config_unit(void);
+void print_val(const char *, const char **, int);
 void print_info(int);
 void print_stats(void);
 void print_class(const char *);
@@ -144,10 +146,12 @@ char name[MAX_STR_SIZE];
 int opt_pin = 0;
 
 /* Inquiry */
-int opt_rssi = 0;			/* inquiry_with_rssi (flag) */
+int opt_rssi = 0;			/* inquiry_with_rssi (obsolete flag) */
+int opt_imode = 0;			/* inquiry mode */
 int opt_inquiry = 0;
 #define INQUIRY_LENGTH		10	/* about 12 seconds */
 #define INQUIRY_MAX_RESPONSES	10
+const char *imodes[] = { "std", "rssi", "ext", NULL };
 
 /* Voice Settings */
 int opt_voice = 0;
@@ -163,7 +167,7 @@ uint32_t scomtu;
 
 struct parameter {
 	const char	*name;
-	enum { P_SET, P_CLR, P_STR, P_HEX, P_NUM } type;
+	enum { P_SET, P_CLR, P_STR, P_HEX, P_NUM, P_VAL } type;
 	int		*opt;
 	void		*val;
 } parameters[] = {
@@ -196,6 +200,7 @@ struct parameter {
 	{ "variable",	P_CLR,	&opt_pin,	NULL	},
 	{ "inq",	P_SET,	&opt_inquiry,	NULL	},
 	{ "inquiry",	P_SET,	&opt_inquiry,	NULL	},
+	{ "imode",	P_VAL,	&opt_imode,	imodes	},
 	{ "rssi",	P_SET,	&opt_rssi,	NULL	},
 	{ "-rssi",	P_CLR,	&opt_rssi,	NULL	},
 	{ "reset",	P_SET,	&opt_reset,	NULL	},
@@ -299,6 +304,17 @@ main(int ac, char *av[])
 				*(uint32_t *)(p->val) = strtoul(*++av, NULL, 10);
 				*(p->opt) = 1;
 				break;
+
+			case P_VAL:
+				if (--ac < 1) badarg(p->name);
+				++av;
+				ch = 0;
+				do {
+					if (((char **)(p->val))[ch] == NULL)
+						badval(p->name, *av);
+				} while (strcmp(((char **)(p->val))[ch++], *av));
+				*(p->opt) = ch;
+				break;
 			}
 
 			av++, ac--;
@@ -327,6 +343,14 @@ badarg(const char *param)
 {
 
 	fprintf(stderr, "parameter '%s' needs argument\n", param);
+	exit(EXIT_FAILURE);
+}
+
+void
+badval(const char *param, const char *value)
+{
+
+	fprintf(stderr, "bad value '%s' for parameter '%s'\n", value, param);
 	exit(EXIT_FAILURE);
 }
 
@@ -615,11 +639,28 @@ config_unit(void)
 		}
 	}
 
-	if (opt_rssi) {
+	if (opt_imode | opt_rssi) {
 		uint8_t val = (opt_rssi > 0 ? 1 : 0);
+
+		if (opt_imode)
+			val = opt_imode - 1;
 
 		save_value(HCI_CMD_WRITE_INQUIRY_MODE, &val, sizeof(val));
 	}
+}
+
+/*
+ * print value from NULL terminated array given index
+ */
+void
+print_val(const char *hdr, const char **argv, int idx)
+{
+	int i = 0;
+
+	while (i < idx && *argv != NULL)
+		i++, argv++;
+
+	printf("\t%s: %s\n", hdr, *argv == NULL ? "unknown" : *argv);
 }
 
 /*
@@ -682,6 +723,12 @@ print_info(int level)
 	load_value(HCI_CMD_READ_PIN_TYPE, &val, sizeof(val));
 	printf("\tpin: %s\n", val ? "fixed" : "variable");
 
+	val = 0;
+	if (version >= HCI_SPEC_V12)
+		load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
+
+	print_val("inquiry mode", imodes, val);
+
 	width = printf("\toptions:");
 
 	load_value(HCI_CMD_READ_SCAN_ENABLE, &val, sizeof(val));
@@ -708,13 +755,6 @@ print_info(int level)
 	else if (level > 0)				tag("-sniff");
 	if (val & HCI_LINK_POLICY_ENABLE_PARK_MODE)	tag("park");
 	else if (level > 0)				tag("-park");
-
-	val = 0;
-	if (version >= HCI_SPEC_V12)
-		load_value(HCI_CMD_READ_INQUIRY_MODE, &val, sizeof(val));
-
-	if (val)				tag("rssi");
-	else if (level > 0)			tag("-rssi");
 
 	tag(NULL);
 
