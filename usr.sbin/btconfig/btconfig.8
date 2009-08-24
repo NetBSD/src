@@ -1,4 +1,4 @@
-.\" $NetBSD: btconfig.8,v 1.11 2009/08/20 21:40:59 plunky Exp $
+.\" $NetBSD: btconfig.8,v 1.12 2009/08/24 20:43:35 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -138,12 +138,26 @@ Set fixed pin type.
 Set variable pin type.
 .It Cm inquiry
 Perform device Discovery from the specified device and print details.
-.It Cm rssi
+.It Cm imode Ar type
+Set inquiry mode type to control which event formats are generated during
+a device inquiry.
+The
+.Ar type
+can be:
+.Bl -tag -width xxxxxx
+.It std
+Standard Inquiry Result Event format.
+.It rssi
 Enable Remote Signal Strength Indicator (RSSI) in inquiry results.
 This will only work if the device features indicate
 .Aq RSSI with inquiry result .
-.It Cm -rssi
-Disable Remote Signal Strength Indicator (RSSI) in inquiry results.
+.It ext
+Inquiry Result with RSSI format or Extended Inquiry Result fomat.
+This will only work where the device features indicate
+.Aq extended inquiry ,
+and the Extended Inquiry Result will only occur when the remote device
+provides the extended information.
+.El
 .It Cm reset
 Perform a hard reset on the device and re-initialise system state.
 .It Cm voice
