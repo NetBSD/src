@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.3 2009/08/24 02:19:30 uebayasi Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.4 2009/08/24 12:08:01 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.3 2009/08/24 02:19:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.4 2009/08/24 12:08:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,35 +52,35 @@ static inline void	update_pc(struct frame *, uint32_t);
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
 void	MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);
 
-void	MachEmulateLWC0(uint32_t inst, struct frame *, uint32_t);
-void	MachEmulateSWC0(uint32_t inst, struct frame *, uint32_t);
-void	MachEmulateSpecial(uint32_t inst, struct frame *, uint32_t);
-void	MachEmulateLWC1(uint32_t inst, struct frame *, uint32_t);
-void	MachEmulateLDC1(uint32_t inst, struct frame *, uint32_t);
-void	MachEmulateSWC1(uint32_t inst, struct frame *, uint32_t);
-void	MachEmulateSDC1(uint32_t inst, struct frame *, uint32_t);
+void	MachEmulateLWC0(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSWC0(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSpecial(uint32_t, struct frame *, uint32_t);
+void	MachEmulateLWC1(uint32_t, struct frame *, uint32_t);
+void	MachEmulateLDC1(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSWC1(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSDC1(uint32_t, struct frame *, uint32_t);
 
-void	bcemul_lb(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_lbu(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_lh(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_lhu(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_lw(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_lwl(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_lwr(uint32_t inst, struct frame *, uint32_t);
+void	bcemul_lb(uint32_t, struct frame *, uint32_t);
+void	bcemul_lbu(uint32_t, struct frame *, uint32_t);
+void	bcemul_lh(uint32_t, struct frame *, uint32_t);
+void	bcemul_lhu(uint32_t, struct frame *, uint32_t);
+void	bcemul_lw(uint32_t, struct frame *, uint32_t);
+void	bcemul_lwl(uint32_t, struct frame *, uint32_t);
+void	bcemul_lwr(uint32_t, struct frame *, uint32_t);
 #if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
-void	bcemul_ld(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_ldl(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_ldr(uint32_t inst, struct frame *, uint32_t);
+void	bcemul_ld(uint32_t, struct frame *, uint32_t);
+void	bcemul_ldl(uint32_t, struct frame *, uint32_t);
+void	bcemul_ldr(uint32_t, struct frame *, uint32_t);
 #endif
-void	bcemul_sb(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_sh(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_sw(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_swl(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_swr(uint32_t inst, struct frame *f, uint32_t);
+void	bcemul_sb(uint32_t, struct frame *, uint32_t);
+void	bcemul_sh(uint32_t, struct frame *, uint32_t);
+void	bcemul_sw(uint32_t, struct frame *, uint32_t);
+void	bcemul_swl(uint32_t, struct frame *, uint32_t);
+void	bcemul_swr(uint32_t, struct frame *f, uint32_t);
 #if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
-void	bcemul_sd(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_sdl(uint32_t inst, struct frame *, uint32_t);
-void	bcemul_sdr(uint32_t inst, struct frame *f, uint32_t);
+void	bcemul_sd(uint32_t, struct frame *, uint32_t);
+void	bcemul_sdl(uint32_t, struct frame *, uint32_t);
+void	bcemul_sdr(uint32_t, struct frame *f, uint32_t);
 #endif
 
 /*
@@ -96,11 +96,8 @@ struct {
  * Analyse 'next' PC address taking account of branch/jump instructions
  */
 vaddr_t
-MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
-	struct frame *f;
-	vaddr_t instpc;
-	unsigned fpuCSR;
-	int allowNonBranch;
+MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
+    int allowNonBranch)
 {
 #define	BRANCHTARGET(i) (4 + ((i).word) + ((short)(i).IType.imm << 2))
 	InstFmt inst;
@@ -218,7 +215,7 @@ MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
  */
 void
 MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
-	struct frame *frame)
+    struct frame *frame)
 {
 	uint32_t inst;
 	ksiginfo_t ksi;
