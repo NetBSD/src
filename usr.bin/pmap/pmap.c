@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2008/04/28 20:24:14 martin Exp $ */
+/*	$NetBSD: pmap.c,v 1.41.10.1 2009/08/24 04:05:56 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.41 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.41.10.1 2009/08/24 04:05:56 matt Exp $");
 #endif
 
 #include <string.h>
@@ -136,7 +136,7 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		printf("%*s    lock = <struct lock>,", indent(2), "");
 		printf(" header = <struct vm_map_entry>,");
 		printf(" nentries = %d,\n", D(vm_map, vm_map)->nentries);
-		printf("%*s    size = %lx,", indent(2), "",
+		printf("%*s    size = %#"PRIxVSIZE",", indent(2), "",
 		       D(vm_map, vm_map)->size);
 		printf(" ref_count = %d,", D(vm_map, vm_map)->ref_count);
 		printf("%*s    hint = %p,", indent(2), "",
@@ -161,11 +161,11 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 	if (print_ddb) {
 		const char *name = mapname(P(vm_map));
 
-		printf("%*s%s %p: [0x%lx->0x%lx]\n", indent(2), "",
+		printf("%*s%s %p: [0x%#"PRIxVADDR"->0x%#"PRIxVADDR"]\n", indent(2), "",
 		       recurse < 2 ? "MAP" : "SUBMAP", P(vm_map),
 		       vm_map_min(D(vm_map, vm_map)),
 		       vm_map_max(D(vm_map, vm_map)));
-		printf("\t%*s#ent=%d, sz=%ld, ref=%d, version=%d, flags=0x%x\n",
+		printf("\t%*s#ent=%d, sz=%"PRIdVSIZE", ref=%d, version=%d, flags=0x%x\n",
 		       indent(2), "", D(vm_map, vm_map)->nentries,
 		       D(vm_map, vm_map)->size, D(vm_map, vm_map)->ref_count,
 		       D(vm_map, vm_map)->timestamp, D(vm_map, vm_map)->flags);
@@ -284,8 +284,8 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		       P(vm_map_entry));
 		printf(" prev = %p,", vme->prev);
 		printf(" next = %p,\n", vme->next);
-		printf("%*s    start = %lx,", indent(2), "", vme->start);
-		printf(" end = %lx,", vme->end);
+		printf("%*s    start = %#"PRIxVADDR",", indent(2), "", vme->start);
+		printf(" end = %#"PRIxVADDR",", vme->end);
 		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
 		printf("%*s    offset = %" PRIx64 ",", indent(2), "",
 		       vme->offset);
@@ -384,7 +384,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	name = findname(kd, vmspace, vm_map_entry, vp, vfs, uvm_obj);
 
 	if (print_map) {
-		printf("%*s0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d",
+		printf("%*s0x%#"PRIxVADDR" 0x%#"PRIxVADDR" %c%c%c %c%c%c %s %s %d %d %d",
 		       indent(2), "",
 		       vme->start, vme->end,
 		       (vme->protection & VM_PROT_READ) ? 'r' : '-',
@@ -408,7 +408,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	}
 
 	if (print_maps) {
-		printf("%*s%0*lx-%0*lx %c%c%c%c %0*" PRIx64 " %02x:%02x %llu     %s\n",
+		printf("%*s%0*"PRIxVADDR"-%0*"PRIxVADDR" %c%c%c%c %0*" PRIx64 " %02x:%02x %llu     %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2, vme->start,
 		       (int)sizeof(void *) * 2, vme->end,
@@ -423,7 +423,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	}
 
 	if (print_ddb) {
-		printf("%*s - %p: 0x%lx->0x%lx: obj=%p/0x%" PRIx64 ", amap=%p/%d\n",
+		printf("%*s - %p: 0x%"PRIxVADDR"->0x%"PRIxVADDR": obj=%p/0x%" PRIx64 ", amap=%p/%d\n",
 		       indent(2), "",
 		       P(vm_map_entry), vme->start, vme->end,
 		       vme->object.uvm_obj, vme->offset,
@@ -475,8 +475,8 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 	if (print_all) {
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf(A(vp) ?
-		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s [%p]\n" :
-		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s\n",
+		       "%*s%0*"PRIxVADDR"-%0*"PRIxVADDR" %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s [%p]\n" :
+		       "%*s%0*"PRIxVADDR"-%0*"PRIxVADDR" %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2,
 		       vme->start,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2008/04/28 20:24:14 martin Exp $ */
+/*	$NetBSD: pmap.h,v 1.7.12.1 2009/08/24 04:05:56 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -102,6 +102,13 @@
 /* suck the data using the structure */
 #define KDEREFOK(kd, item) _KDEREFOK((kd), A(item), D(item, data), S(item))
 #define KDEREF(kd, item) _KDEREF((kd), A(item), D(item, data), S(item))
+
+#ifndef PRIxVADDR
+#define	PRIxVADDR	"lx"
+#endif
+#ifndef PRIxVSIZE
+#define	PRIxVSIZE	"lx"
+#endif
 
 struct kbit {
 	/*
