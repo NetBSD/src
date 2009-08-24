@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3.14.1 2009/08/16 03:30:55 matt Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3.14.2 2009/08/24 02:35:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,10 +66,10 @@
 	li	t0, 1					; \
 	sll	t0, t0, _UC_USER_BIT			; \
 	ori	t0, t0, _UC_CPU				; \
-	INT_S	t0, UC_FLAGS(reg)
+	INT_S	t0, _OFFSETOF_UC_FLAGS(reg)
 
 #define SETC(reg)					; \
-	INT_L	t0, UC_FLAGS(reg)			; \
+	INT_L	t0, _OFFSETOF_UC_FLAGS(reg)		; \
 	li	t1, 1					; \
 	sll	t1, t1, _UC_USER_BIT			; \
 	and	t0, t1, t0				; \
