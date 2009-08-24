@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.27 2009/08/20 02:51:27 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.28 2009/08/24 11:03:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.27 2009/08/20 02:51:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.28 2009/08/24 11:03:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ static void	genfb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static int	genfb_putcmap(struct genfb_softc *, struct wsdisplay_cmap *);
 static int 	genfb_getcmap(struct genfb_softc *, struct wsdisplay_cmap *);
-static void	genfb_restore_palette(struct genfb_softc *);
 static int 	genfb_putpalreg(struct genfb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
@@ -90,7 +89,7 @@ void
 genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
-	uint64_t cmap_cb;
+	uint64_t cmap_cb, pmf_cb;
 	uint32_t fboffset;
 
 	dict = device_properties(&sc->sc_dev);
@@ -135,6 +134,12 @@ genfb_init(struct genfb_softc *sc)
 	if (prop_dictionary_get_uint64(dict, "cmap_callback", &cmap_cb)) {
 		if (cmap_cb != 0)
 			sc->sc_cmcb = (void *)(vaddr_t)cmap_cb;
+	}
+	/* optional pmf callback */
+	sc->sc_pmfcb = NULL;
+	if (prop_dictionary_get_uint64(dict, "pmf_callback", &pmf_cb)) {
+		if (pmf_cb != 0)
+			sc->sc_pmfcb = (void *)(vaddr_t)pmf_cb;
 	}
 }
 
@@ -408,7 +413,7 @@ genfb_getcmap(struct genfb_softc *sc, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-static void
+void
 genfb_restore_palette(struct genfb_softc *sc)
 {
 	int i;
