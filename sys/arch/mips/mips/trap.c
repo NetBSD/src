@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.4 2009/08/23 04:38:34 uebayasi Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.5 2009/08/24 12:38:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.4 2009/08/23 04:38:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.5 2009/08/24 12:38:13 uebayasi Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -163,8 +163,6 @@ void ast(unsigned int);
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned int, int);	/* XXX */
 void MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
 void MachFPTrap(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
-
-#define DELAYBRANCH(x) ((int)(x)<0)
 
 /*
  * fork syscall returns directly to user process via lwp_trampoline(),
@@ -489,7 +487,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		int rv;
 
 		/* compute address of break instruction */
-		va = (DELAYBRANCH(cause)) ? opc + sizeof(int) : opc;
+		va = (cause & MIPS_CR_BR_DELAY) ? opc + sizeof(int) : opc;
 
 		/* read break instruction */
 		instr = fuiword((void *)va);
