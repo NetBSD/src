@@ -1,4 +1,4 @@
-.\"	$NetBSD: genfb.4,v 1.2 2007/12/02 19:03:16 wiz Exp $
+.\"	$NetBSD: genfb.4,v 1.3 2009/08/24 02:25:18 jmcneill Exp $
 .\"
 .\" Copyright (c) 2007 Michael Lorenz
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 12, 2007
+.Dd August 23, 2009
 .Dt GENFB 4
 .Os
 .Sh NAME
@@ -74,6 +74,6 @@ all those parameters are retrieved from the firmware.
 There is no way to change the color map even when the firmware supports it.
 The
 .Xr pci 4
-bus frontend has only been tested on macppc and requires machine
-dependent code to pass the properties mentioned above.
-So far only macppc provides them.
+bus frontend has only been tested on macppc, i386, and amd64 and requires
+machine dependent code to pass the properties mentioned above.
+So far only macppc, i386, and amd64 provides them.
