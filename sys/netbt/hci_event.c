@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.19 2009/08/20 21:40:59 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.20 2009/08/24 20:37:36 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.19 2009/08/20 21:40:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.20 2009/08/24 20:37:36 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.19 2009/08/20 21:40:59 plunky Exp $"
 
 static void hci_event_inquiry_result(struct hci_unit *, struct mbuf *);
 static void hci_event_rssi_result(struct hci_unit *, struct mbuf *);
+static void hci_event_extended_result(struct hci_unit *, struct mbuf *);
 static void hci_event_command_status(struct hci_unit *, struct mbuf *);
 static void hci_event_command_compl(struct hci_unit *, struct mbuf *);
 static void hci_event_con_compl(struct hci_unit *, struct mbuf *);
@@ -193,6 +194,10 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 
 	case HCI_EVENT_RSSI_RESULT:
 		hci_event_rssi_result(unit, m);
+		break;
+
+	case HCI_EVENT_EXTENDED_RESULT:
+		hci_event_extended_result(unit, m);
 		break;
 
 	case HCI_EVENT_CON_COMPL:
@@ -488,6 +493,36 @@ hci_event_rssi_result(struct hci_unit *unit, struct mbuf *m)
 			memo->page_scan_mode = 0;
 			memo->clock_offset = rr.clock_offset;
 		}
+	}
+}
+
+/*
+ * Extended Inquiry Result
+ *
+ * as above but provides only one response and extended service info
+ */
+static void
+hci_event_extended_result(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_extended_result_ep ep;
+	struct hci_memo *memo;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	m_copydata(m, 0, sizeof(ep), &ep);
+	m_adj(m, sizeof(ep));
+
+	if (ep.num_responses != 1)
+		return;
+
+	DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
+		ep.bdaddr.b[5], ep.bdaddr.b[4], ep.bdaddr.b[3],
+		ep.bdaddr.b[2], ep.bdaddr.b[1], ep.bdaddr.b[0]);
+
+	memo = hci_memo_new(unit, &ep.bdaddr);
+	if (memo != NULL) {
+		memo->page_scan_rep_mode = ep.page_scan_rep_mode;
+		memo->page_scan_mode = 0;
+		memo->clock_offset = ep.clock_offset;
 	}
 }
 
