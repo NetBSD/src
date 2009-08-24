@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.224 2009/08/21 22:51:00 dyoung Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.225 2009/08/24 20:53:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.224 2009/08/21 22:51:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.225 2009/08/24 20:53:00 dyoung Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -693,7 +693,7 @@ sysctl_create(SYSCTLFN_ARGS)
 #endif
 {
 	struct sysctlnode nnode, *node, *pnode;
-	int error, ni, at, nm, type, sz, flags, anum, v;
+	int error, ni, at, nm, type, nsz, sz, flags, anum, v;
 	void *own;
 
 	KASSERT(rw_write_held(&sysctl_treelock));
@@ -775,33 +775,33 @@ sysctl_create(SYSCTLFN_ARGS)
 #endif /* NKSYMS > 0 */
 	if (nm < 0 && nm != CTL_CREATE)
 		return (EINVAL);
-	sz = 0;
 
 	/*
 	 * the name can't start with a digit
 	 */
-	if (nnode.sysctl_name[sz] >= '0' &&
-	    nnode.sysctl_name[sz] <= '9')
+	if (nnode.sysctl_name[0] >= '0' &&
+	    nnode.sysctl_name[0] <= '9')
 		return (EINVAL);
 
 	/*
 	 * the name must be only alphanumerics or - or _, longer than
 	 * 0 bytes and less that SYSCTL_NAMELEN
 	 */
-	while (sz < SYSCTL_NAMELEN && nnode.sysctl_name[sz] != '\0') {
-		if ((nnode.sysctl_name[sz] >= '0' &&
-		     nnode.sysctl_name[sz] <= '9') ||
-		    (nnode.sysctl_name[sz] >= 'A' &&
-		     nnode.sysctl_name[sz] <= 'Z') ||
-		    (nnode.sysctl_name[sz] >= 'a' &&
-		     nnode.sysctl_name[sz] <= 'z') ||
-		    nnode.sysctl_name[sz] == '-' ||
-		    nnode.sysctl_name[sz] == '_')
-			sz++;
+	nsz = 0;
+	while (nsz < SYSCTL_NAMELEN && nnode.sysctl_name[nsz] != '\0') {
+		if ((nnode.sysctl_name[nsz] >= '0' &&
+		     nnode.sysctl_name[nsz] <= '9') ||
+		    (nnode.sysctl_name[nsz] >= 'A' &&
+		     nnode.sysctl_name[nsz] <= 'Z') ||
+		    (nnode.sysctl_name[nsz] >= 'a' &&
+		     nnode.sysctl_name[nsz] <= 'z') ||
+		    nnode.sysctl_name[nsz] == '-' ||
+		    nnode.sysctl_name[nsz] == '_')
+			nsz++;
 		else
 			return (EINVAL);
 	}
-	if (sz == 0 || sz == SYSCTL_NAMELEN)
+	if (nsz == 0 || nsz == SYSCTL_NAMELEN)
 		return (EINVAL);
 
 	/*
