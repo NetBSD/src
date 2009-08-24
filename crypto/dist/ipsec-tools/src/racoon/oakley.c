@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.16 2009/08/18 08:21:12 vanhu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.17 2009/08/24 09:33:03 vanhu Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -468,7 +468,7 @@ oakley_hash(buf, iph1)
 	res = alg_oakley_hashdef_one(type, buf);
 	if (res == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid hash algoriym %d.\n", type);
+			"invalid hash algorithm %d.\n", type);
 		return NULL;
 	}
 
@@ -2826,7 +2826,7 @@ oakley_newiv(iph1)
 	newivm->iv->l = alg_oakley_encdef_blocklen(iph1->approval->enctype);
 	if (newivm->iv->l == -1) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid encryption algoriym %d.\n",
+			"invalid encryption algorithm %d.\n",
 			iph1->approval->enctype);
 		vfree(buf);
 		oakley_delivm(newivm);
@@ -2908,7 +2908,7 @@ oakley_newiv2(iph1, msgid)
 	newivm->iv->l = alg_oakley_encdef_blocklen(iph1->approval->enctype);
 	if (newivm->iv->l == -1) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid encryption algoriym %d.\n",
+			"invalid encryption algorithm %d.\n",
 			iph1->approval->enctype);
 		goto end;
 	}
@@ -2972,7 +2972,7 @@ oakley_do_decrypt(iph1, msg, ivdp, ivep)
 	blen = alg_oakley_encdef_blocklen(iph1->approval->enctype);
 	if (blen == -1) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid encryption algoriym %d.\n",
+			"invalid encryption algorithm %d.\n",
 			iph1->approval->enctype);
 		goto end;
 	}
@@ -3094,7 +3094,7 @@ oakley_do_encrypt(iph1, msg, ivep, ivp)
 	blen = alg_oakley_encdef_blocklen(iph1->approval->enctype);
 	if (blen == -1) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid encryption algoriym %d.\n",
+			"invalid encryption algorithm %d.\n",
 			iph1->approval->enctype);
 		goto end;
 	}
