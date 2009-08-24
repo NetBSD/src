@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.7 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.8 2009/08/24 13:03:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -38,4 +38,4 @@ struct fs_ops file_system[] = {
 	FS_OPS(ufs),
 };
 
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+int nfsys = __arraycount(file_system);
