@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.2 2009/02/17 02:21:13 jmcneill Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.3 2009/08/24 02:15:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2 2009/02/17 02:21:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.3 2009/08/24 02:15:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,9 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2 2009/02/17 02:21:13 jmcneill E
 
 #include "wsdisplay.h"
 #include "genfb.h"
+#include "acpica.h"
 
 #if NWSDISPLAY > 0 && NGENFB > 0
 struct vcons_screen x86_genfb_console_screen;
+
+#if NACPICA > 0
+extern int acpi_md_vesa_modenum;
+#endif
 
 static struct wsscreen_descr x86_genfb_stdscreen = {
 	"std",
@@ -103,6 +108,10 @@ x86_genfb_cnattach(void)
 		aprint_error("x86_genfb_cnattach: couldn't get fb vaddr\n");
 		return 0;
 	}
+
+#if NACPICA > 0
+	acpi_md_vesa_modenum = fbinfo->vbemode;
+#endif
 
 	wsfont_init();
 
