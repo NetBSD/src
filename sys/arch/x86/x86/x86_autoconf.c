@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.41 2009/08/03 20:15:14 dsl Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.42 2009/08/24 11:04:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.41 2009/08/03 20:15:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.42 2009/08/24 11:04:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.41 2009/08/03 20:15:14 dsl Exp $"
 #include <dev/wsfb/genfbvar.h>
 #include <dev/ic/vgareg.h>
 
-struct genfb_colormap_callback gfb_cb;
+static struct genfb_colormap_callback gfb_cb;
+static struct genfb_pmf_callback pmf_cb;
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
@@ -77,6 +78,22 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)r >> 2);
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)g >> 2);
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)b >> 2);
+}
+
+static bool
+x86_genfb_suspend(device_t dev PMF_FN_ARGS)
+{
+	return true;
+}
+
+static bool
+x86_genfb_resume(device_t dev PMF_FN_ARGS)
+{
+	struct genfb_softc *sc = device_private(dev);
+
+	genfb_restore_palette(sc);
+
+	return true;
 }
 #endif
 
@@ -597,6 +614,10 @@ device_register(device_t dev, void *aux)
 				prop_dictionary_set_uint64(dict,
 				    "cmap_callback", (uint64_t)&gfb_cb);
 			}
+			pmf_cb.gpc_suspend = x86_genfb_suspend;
+			pmf_cb.gpc_resume = x86_genfb_resume;
+			prop_dictionary_set_uint64(dict,
+			    "pmf_callback", (uint64_t)&pmf_cb);
 			found_console = true;
 			return;
 		}
