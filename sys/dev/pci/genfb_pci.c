@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.20 2009/05/12 08:23:00 cegger Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.21 2009/08/24 02:10:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.20 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.21 2009/08/24 02:10:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,9 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_want_wsfb = 0;
+
+	/* firmware / MD code responsible for restoring the display */
+	pmf_device_register(self, NULL, NULL);
 
 	genfb_init(&sc->sc_gen);
 
