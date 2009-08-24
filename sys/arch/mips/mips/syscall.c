@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.5 2009/08/23 03:52:52 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.6 2009/08/24 12:38:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.5 2009/08/23 03:52:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.6 2009/08/24 12:38:13 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -144,8 +144,6 @@ void	EMULNAME(syscall_intern)(struct proc *);
 static void EMULNAME(syscall)(struct lwp *, uint32_t, uint32_t, vaddr_t);
 
 register_t MachEmulateBranch(struct frame *, register_t, u_int, int);
-
-#define DELAYBRANCH(x) ((int)(x)<0)
 
 void
 EMULNAME(syscall_intern)(struct proc *p)
@@ -189,7 +187,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 
 	uvmexp.syscalls++;
 
-	if (DELAYBRANCH(cause))
+	if (cause & MIPS_CR_BR_DELAY)
 		frame->f_regs[_R_PC] = MachEmulateBranch(frame, opc, 0, 0);
 	else
 		frame->f_regs[_R_PC] = opc + sizeof(uint32_t);
