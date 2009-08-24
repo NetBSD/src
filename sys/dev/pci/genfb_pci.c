@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.22 2009/08/24 11:03:44 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.23 2009/08/24 11:32:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.22 2009/08/24 11:03:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.23 2009/08/24 11:32:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.22 2009/08/24 11:03:44 jmcneill Exp 
 
 #include <dev/wsfb/genfbvar.h>
 
+#include <dev/pci/genfb_pcivar.h>
+
 #include "opt_wsfb.h"
 #include "opt_genfb.h"
 
@@ -55,26 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.22 2009/08/24 11:03:44 jmcneill Exp 
 #else
 # define DPRINTF while (0) printf
 #endif
-
-struct range {
-	bus_addr_t offset;
-	bus_size_t size;
-	int flags;
-};
-
-struct pci_genfb_softc {
-	struct genfb_softc sc_gen;
-
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_pcitag;
-	bus_space_tag_t sc_memt;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_memh;
-	pcireg_t sc_bars[9];
-	struct range sc_ranges[8];
-	int sc_ranges_used;
-	int sc_want_wsfb;
-};
 
 static int	pci_genfb_match(device_t, cfdata_t, void *);
 static void	pci_genfb_attach(device_t, device_t, void *);
