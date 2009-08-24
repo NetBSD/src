@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9 2009/08/24 10:16:12 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.10 2009/08/24 22:06:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -265,6 +265,8 @@ WAKEUP_restorecpu:	.quad 0
 
 	.global WAKEUP_vbios_reset
 WAKEUP_vbios_reset:	.byte 0
+	.global WAKEUP_vesa_modenum
+WAKEUP_vesa_modenum:    .word 0
 	.global WAKEUP_beep_on_reset
 WAKEUP_beep_on_reset:	.byte 0
 
