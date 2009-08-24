@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.h,v 1.2 2008/03/29 17:40:22 jmcneill Exp $ */
+/* $NetBSD: vga_post.h,v 1.3 2009/08/24 11:33:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -38,5 +38,6 @@ struct vga_post;
 struct vga_post	*vga_post_init(int, int, int);
 void		vga_post_free(struct vga_post *);
 void		vga_post_call(struct vga_post *);
+void		vga_post_set_vbe(struct vga_post *, uint16_t);
 #endif
 #endif
