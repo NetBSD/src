@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.1 2009/08/21 17:50:35 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.2 2009/08/24 04:04:53 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -861,15 +861,15 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a3, FRAME_A3(k1)
 	PTR_L	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
 	mfhi	v1
-	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
-	#REG_S	t1, FRAME_T1(k1)
-	#REG_S	t2, FRAME_T2(k1)
-	#REG_S	t3, FRAME_T3(k1)
+	REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
+	REG_S	t1, FRAME_T1(k1)
+	REG_S	t2, FRAME_T2(k1)
+	REG_S	t3, FRAME_T3(k1)
 	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
-	#REG_S	ta0, FRAME_TA0(k1)
-	#REG_S	ta1, FRAME_TA1(k1)
-	#REG_S	ta2, FRAME_TA2(k1)
-	#REG_S	ta3, FRAME_TA3(k1)
+	REG_S	ta0, FRAME_TA0(k1)
+	REG_S	ta1, FRAME_TA1(k1)
+	REG_S	ta2, FRAME_TA2(k1)
+	REG_S	ta3, FRAME_TA3(k1)
 	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
 	REG_S	s0, FRAME_S0(k1)
 	REG_S	s1, FRAME_S1(k1)
