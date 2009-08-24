@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1278 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1279 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -372,3 +372,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	iasl(1): The ACPICA ASL (ACPI Source Language) compiler/decompiler
 		is now included with i386 and amd64 installations.
 		[jmcneill 20090818]
+	amd64, i386: Suspend and resume is now supported when using the
+		genfb(4) display driver. [jmcneill 20090823]
