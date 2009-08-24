@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-chm.c,v 1.1 2009/08/15 16:21:05 joerg Exp $	*/
+/*	$NetBSD: nbperf-chm.c,v 1.2 2009/08/24 17:12:46 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-chm.c,v 1.1 2009/08/15 16:21:05 joerg Exp $");
+__RCSID("$NetBSD: nbperf-chm.c,v 1.2 2009/08/24 17:12:46 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -133,8 +133,9 @@ assign_nodes(struct state *state)
 static void
 print_hash(struct nbperf *nbperf, struct state *state)
 {
-	uint32_t i;
+	uint32_t i, per_line;
 	const char *g_type;
+	int g_width;
 
 	fprintf(nbperf->output, "#include <stdlib.h>\n\n");
 
@@ -144,21 +145,28 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "%s(const void * __restrict key, size_t keylen)\n",
 	    nbperf->hash_name);
 	fprintf(nbperf->output, "{\n");
-	if (state->graph.v >= 65536)
+	if (state->graph.v >= 65536) {
 		g_type = "uint32_t";
-	else if (state->graph.v >= 256)
+		g_width = 8;
+		per_line = 4;
+	} else if (state->graph.v >= 256) {
 		g_type = "uint16_t";
-	else
+		g_width = 4;
+		per_line = 8;
+	} else {
 		g_type = "uint8_t";
+		g_width = 2;
+		per_line = 10;
+	}
 	fprintf(nbperf->output, "\tstatic const %s g[%" PRId32 "] = {\n",
 	    g_type, state->graph.v);
 	for (i = 0; i < state->graph.v; ++i) {
-		fprintf(nbperf->output, "%s0x%08" PRIx32 ",%s",
-		    (i % 4 == 0 ? "\t    " : " "),
-		    state->g[i],
-		    (i % 4 == 3 ? "\n" : ""));
+		fprintf(nbperf->output, "%s0x%0*" PRIx32 ",%s",
+		    (i % per_line == 0 ? "\t    " : " "),
+		    g_width, state->g[i],
+		    (i % per_line == per_line - 1 ? "\n" : ""));
 	}
-	if (i / 16 % 4 == 3)
+	if (i % per_line != 0)
 		fprintf(nbperf->output, "\n\t};\n");
 	else
 		fprintf(nbperf->output, "\t};\n");
