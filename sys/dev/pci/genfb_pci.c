@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.21 2009/08/24 02:10:41 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.22 2009/08/24 11:03:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.21 2009/08/24 02:10:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.22 2009/08/24 11:03:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,15 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_want_wsfb = 0;
 
-	/* firmware / MD code responsible for restoring the display */
-	pmf_device_register(self, NULL, NULL);
-
 	genfb_init(&sc->sc_gen);
+
+	/* firmware / MD code responsible for restoring the display */
+	if (sc->sc_gen.sc_pmfcb == NULL)
+		pmf_device_register(self, NULL, NULL);
+	else
+		pmf_device_register(self,
+		    sc->sc_gen.sc_pmfcb->gpc_suspend,
+		    sc->sc_gen.sc_pmfcb->gpc_resume);
 
 	if ((sc->sc_gen.sc_width == 0) || (sc->sc_gen.sc_fbsize == 0)) {
 		aprint_debug_dev(self, "not configured by firmware\n");
