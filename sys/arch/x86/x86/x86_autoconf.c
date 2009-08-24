@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.43 2009/08/24 11:35:27 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.44 2009/08/24 23:48:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.43 2009/08/24 11:35:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.44 2009/08/24 23:48:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ x86_genfb_suspend(device_t dev PMF_FN_ARGS)
 static bool
 x86_genfb_resume(device_t dev PMF_FN_ARGS)
 {
+#if NGENFB > 0
 	struct pci_genfb_softc *psc = device_private(dev);
 #if NACPICA > 0 && defined(VGA_POST)
 	extern int acpi_md_vbios_reset;
@@ -112,6 +113,7 @@ x86_genfb_resume(device_t dev PMF_FN_ARGS)
 	}
 #endif
 	genfb_restore_palette(&psc->sc_gen);
+#endif
 
 	return true;
 }
