@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.16 2009/04/07 10:45:05 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.17 2009/08/24 09:46:24 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,8 @@
 /* MD Message catalog -- German, i386 version */
 
 message md_hello
-{Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
-entfernen.
+{Wenn Sie von einer Diskette oder einem USB Laufwerk gebootet haben,
+können Sie diese(s) jetzt entfernen.
 
 }
 
