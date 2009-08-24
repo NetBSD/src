@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.14 2009/03/18 16:00:10 cegger Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.15 2009/08/24 13:04:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -61,7 +61,7 @@ bootxx(void *readsector, void *disklabel, int autoboot)
 	setheap(end, (void*)(LOADADDR3 - 4));
 
 	printf("\033v\nNetBSD/atari secondary bootloader"
-						" ($Revision: 1.14 $)\n\n");
+						" ($Revision: 1.15 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return -1;
@@ -191,7 +191,7 @@ load_booter(osdsc_t *od)
 	}
 	if (fd < 0)
 		return -1;
-	while((bsize = read(fd, bstart, 1024)) > 0) {
+	while ((bsize = read(fd, bstart, 1024)) > 0) {
 		bstart += bsize;
 	}
 	close(fd);
@@ -201,7 +201,8 @@ load_booter(osdsc_t *od)
 void
 _rtt(void)
 {
+
 	printf("Halting...\n");
-	for(;;)
+	for (;;)
 		;
 }
