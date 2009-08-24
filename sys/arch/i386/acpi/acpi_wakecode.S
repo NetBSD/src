@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.13 2009/08/24 02:15:46 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.14 2009/08/24 10:16:12 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,15 +111,6 @@ wakeup_16:
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
-1:
-
-	/* Disable beep again if machdep.acpi_beep_on_reset=1 */
-	cmpb	$1,WAKEUP_beep_on_reset
-	jne	1f
-	inb	$0x61,%al
-	andb	$0xfc,%al
-	outb	%al,$0x61
-1:
 
 	/* If we need to restore a VESA VBE mode, do it now */
 	cmpb	$0,WAKEUP_vesa_modenum
@@ -129,10 +120,17 @@ wakeup_16:
 	movw	$0x4f02,%ax
 	int	$0x10
 
-	/* paranoia */
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
+1:
+
+	/* Disable beep again if machdep.acpi_beep_on_reset=1 */
+	cmpb	$1,WAKEUP_beep_on_reset
+	jne	1f
+	inb	$0x61,%al
+	andb	$0xfc,%al
+	outb	%al,$0x61
 1:
 
 	/* Load GDT while non-paging */
