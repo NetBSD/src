@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.2 2009/08/24 04:04:53 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.3 2009/08/24 05:18:03 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -861,15 +861,6 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a3, FRAME_A3(k1)
 	PTR_L	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
 	mfhi	v1
-	REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
-	REG_S	t1, FRAME_T1(k1)
-	REG_S	t2, FRAME_T2(k1)
-	REG_S	t3, FRAME_T3(k1)
-	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
-	REG_S	ta0, FRAME_TA0(k1)
-	REG_S	ta1, FRAME_TA1(k1)
-	REG_S	ta2, FRAME_TA2(k1)
-	REG_S	ta3, FRAME_TA3(k1)
 	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
 	REG_S	s0, FRAME_S0(k1)
 	REG_S	s1, FRAME_S1(k1)
@@ -880,6 +871,15 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	s5, FRAME_S5(k1)
 	REG_S	s6, FRAME_S6(k1)
 	REG_S	s7, FRAME_S7(k1)
+	move	s0, t0				# since the saved registers
+	move	s1, t1				# saved been saved we can
+	move	s2, t2				# use them to stash most of
+	move	s3, t3				# temporary registers
+	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
+	move	s4, ta0
+	move	s5, ta1
+	move	s6, ta2
+	move	s7, ta3
 	#REG_S	t8, FRAME_T8(k1)
 	#REG_S	t9, FRAME_T9(k1)
 	REG_S	gp, FRAME_GP(k1)
@@ -978,14 +978,14 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_L	a1, FRAME_A1(k1)
 	REG_L	a2, FRAME_A2(k1)
 	REG_L	a3, FRAME_A3(k1)
-	REG_L	t0, FRAME_T0(k1)
-	REG_L	t1, FRAME_T1(k1)
-	REG_L	t2, FRAME_T2(k1)
-	REG_L	t3, FRAME_T3(k1)
-	REG_L	ta0, FRAME_TA0(k1)
-	REG_L	ta1, FRAME_TA1(k1)
-	REG_L	ta2, FRAME_TA2(k1)
-	REG_L	ta3, FRAME_TA3(k1)
+	move	t0, s0			# restore the temps
+	move	t1, s1
+	move	t2, s2
+	move	t3, s3
+	move	ta0, s4
+	move	ta1, s5
+	move	ta2, s6
+	move	ta3, s7
 	REG_L	s0, FRAME_S0(k1)
 	REG_L	s1, FRAME_S1(k1)
 	REG_L	s2, FRAME_S2(k1)
