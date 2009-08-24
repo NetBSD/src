@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.2 2009/02/17 23:17:39 jmcneill Exp $ */
+/* $NetBSD: vbe.c,v 1.3 2009/08/24 02:15:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -166,6 +166,7 @@ vbe_set_mode(int modenum)
 	fb.gpos = mi.GreenFieldPosition;
 	fb.bnum = mi.BlueMaskSize;
 	fb.bpos = mi.BlueFieldPosition;
+	fb.vbemode = modenum;
 
 	framebuffer_configure(&fb);
 

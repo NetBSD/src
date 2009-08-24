@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.15 2009/08/18 16:41:03 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.16 2009/08/24 02:15:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.15 2009/08/18 16:41:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2009/08/24 02:15:46 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -111,6 +111,7 @@ static vaddr_t acpi_wakeup_vaddr;
 
 static int acpi_md_node = CTL_EOL;
 int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
+int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
@@ -150,9 +151,11 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 	memcpy( (void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
 
 	if (CPU_IS_PRIMARY(ci)) {
+		WAKECODE_FIXUP(WAKEUP_vesa_modenum, uint16_t, acpi_md_vesa_modenum);
 		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, acpi_md_vbios_reset);
 		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, acpi_md_beep_on_reset);
 	} else {
+		WAKECODE_FIXUP(WAKEUP_vesa_modenum, uint16_t, 0);
 		WAKECODE_FIXUP(WAKEUP_vbios_reset, uint8_t, 0);
 		WAKECODE_FIXUP(WAKEUP_beep_on_reset, uint8_t, 0);
 	}

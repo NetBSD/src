@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.7 2008/05/25 17:20:29 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.8 2009/08/24 02:15:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -123,6 +123,20 @@ wakeup_16:
 	inb	$0x61,%al
 	andb	$0xfc,%al
 	outb	%al,$0x61
+1:
+
+	/* If we need to restore a VESA VBE mode, do it now */
+	cmpb	$0,WAKEUP_vesa_modenum
+	je	1f
+	movw	WAKEUP_vesa_modenum,%bx
+	orw	$0x4000,%bx
+	movw	$0x4f02,%ax
+	int	$0x10
+
+	/* paranoia */
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	%ax,%ss
 1:
 
 	/* Load temporary 32bit GDT */
