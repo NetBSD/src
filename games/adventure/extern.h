@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2009/08/12 04:28:27 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2009/08/25 06:56:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -89,7 +89,7 @@ void closing(void);
 void caveclose(void);
 
 /* vocab.c */
-void dstroy(int);
+void destroy(int);
 void juggle(int);
 void move(int, int);
 int put(int, int, int);

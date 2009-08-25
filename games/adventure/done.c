@@ -1,4 +1,4 @@
-/*	$NetBSD: done.c,v 1.9 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: done.c,v 1.10 2009/08/25 06:56:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)done.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: done.c,v 1.9 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: done.c,v 1.10 2009/08/25 06:56:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,9 @@ __RCSID("$NetBSD: done.c,v 1.9 2005/07/01 00:03:36 jmc Exp $");
 int
 score(void)
 {				/* sort of like 20000 */
-	int     scor, i;
-	mxscor = scor = 0;
+	int     myscore, i;
+
+	maxscore = myscore = 0;
 	for (i = 50; i <= maxtrs; i++) {
 		if (ptext[i].txtlen == 0)
 			continue;
@@ -64,42 +65,42 @@ score(void)
 		if (i > chest)
 			k = 16;
 		if (prop[i] >= 0)
-			scor += 2;
+			myscore += 2;
 		if (place[i] == 3 && prop[i] == 0)
-			scor += k - 2;
-		mxscor += k;
+			myscore += k - 2;
+		maxscore += k;
 	}
-	scor += (maxdie - numdie) * 10;
-	mxscor += maxdie * 10;
-	if (!(scorng || gaveup))
-		scor += 4;
-	mxscor += 4;
+	myscore += (maxdie - numdie) * 10;
+	maxscore += maxdie * 10;
+	if (!(scoring || gaveup))
+		myscore += 4;
+	maxscore += 4;
 	if (dflag != 0)
-		scor += 25;
-	mxscor += 25;
-	if (closng)
-		scor += 25;
-	mxscor += 25;
+		myscore += 25;
+	maxscore += 25;
+	if (isclosing)
+		myscore += 25;
+	maxscore += 25;
 	if (closed) {
 		if (bonus == 0)
-			scor += 10;
+			myscore += 10;
 		if (bonus == 135)
-			scor += 25;
+			myscore += 25;
 		if (bonus == 134)
-			scor += 30;
+			myscore += 30;
 		if (bonus == 133)
-			scor += 45;
+			myscore += 45;
 	}
-	mxscor += 45;
-	if (place[magzin] == 108)
-		scor++;
-	mxscor++;
-	scor += 2;
-	mxscor += 2;
-	for (i = 1; i <= hntmax; i++)
+	maxscore += 45;
+	if (place[magazine] == 108)
+		myscore++;
+	maxscore++;
+	myscore += 2;
+	maxscore += 2;
+	for (i = 1; i <= hintmax; i++)
 		if (hinted[i])
-			scor -= hints[i][2];
-	return (scor);
+			myscore -= hints[i][2];
+	return myscore;
 }
 
 /* entry=1 means goto 13000 */	/* game is over */
@@ -113,11 +114,11 @@ done(int entry)
 	if (entry == 3)
 		rspeak(136);
 	printf("\n\n\nYou scored %d out of a ", (sc = score()));
-	printf("possible %d using %d turns.\n", mxscor, turns);
-	for (i = 1; i <= clsses; i++)
+	printf("possible %d using %d turns.\n", maxscore, turns);
+	for (i = 1; i <= classes; i++)
 		if (cval[i] >= sc) {
 			speak(&ctext[i]);
-			if (i == clsses - 1) {
+			if (i == classes - 1) {
 				printf("To achieve the next higher rating");
 				printf(" would be a neat trick!\n\n");
 				printf("Congratulations!!\n");
@@ -143,9 +144,9 @@ die(int entry)
 	int     i;
 	if (entry != 99) {
 		rspeak(23);
-		oldlc2 = loc;
+		oldloc2 = loc;
 	}
-	if (closng) {		/* 99 */
+	if (isclosing) {		/* 99 */
 		rspeak(131);
 		numdie++;
 		done(2);
@@ -161,7 +162,7 @@ die(int entry)
 	for (i = 100; i >= 1; i--) {
 		if (!toting(i))
 			continue;
-		k = oldlc2;
+		k = oldloc2;
 		if (i == lamp)
 			k = 1;
 		drop(i, k);
