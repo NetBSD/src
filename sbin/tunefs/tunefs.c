@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.37.6.1 2009/08/25 18:36:08 snj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.37.6.1 2009/08/25 18:36:08 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ show_log_info(void)
 		printf("\n");
 		printf("\tjournal log flags:");
 		if (sblock.fs_journal_flags & UFS_WAPBL_FLAGS_CREATE_LOG)
-			printf(" clear-log");
+			printf(" create-log");
 		if (sblock.fs_journal_flags & UFS_WAPBL_FLAGS_CLEAR_LOG)
 			printf(" clear-log");
 		printf("\n");
