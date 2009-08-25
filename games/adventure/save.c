@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.10 2009/08/12 04:28:27 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.11 2009/08/25 06:56:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.10 2009/08/12 04:28:27 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.11 2009/08/25 06:56:52 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -65,8 +65,8 @@ static const struct savestruct save_array[] =
 	{&clock1, sizeof(clock1)},
 	{&clock2, sizeof(clock2)},
 	{&closed, sizeof(closed)},
-	{&closng, sizeof(closng)},
-	{&daltlc, sizeof(daltlc)},
+	{&isclosing, sizeof(isclosing)},
+	{&daltloc, sizeof(daltloc)},
 	{&demo, sizeof(demo)},
 	{&detail, sizeof(detail)},
 	{&dflag, sizeof(dflag)},
@@ -74,27 +74,27 @@ static const struct savestruct save_array[] =
 	{&dtotal, sizeof(dtotal)},
 	{&foobar, sizeof(foobar)},
 	{&gaveup, sizeof(gaveup)},
-	{&holdng, sizeof(holdng)},
+	{&holding, sizeof(holding)},
 	{&iwest, sizeof(iwest)},
 	{&k, sizeof(k)},
 	{&k2, sizeof(k2)},
 	{&knfloc, sizeof(knfloc)},
 	{&kq, sizeof(kq)},
-	{&latncy, sizeof(latncy)},
+	{&latency, sizeof(latency)},
 	{&limit, sizeof(limit)},
 	{&lmwarn, sizeof(lmwarn)},
 	{&loc, sizeof(loc)},
 	{&maxdie, sizeof(maxdie)},
-	{&mxscor, sizeof(mxscor)},
+	{&maxscore, sizeof(maxscore)},
 	{&newloc, sizeof(newloc)},
 	{&numdie, sizeof(numdie)},
 	{&obj, sizeof(obj)},
-	{&oldlc2, sizeof(oldlc2)},
+	{&oldloc2, sizeof(oldloc2)},
 	{&oldloc, sizeof(oldloc)},
 	{&panic, sizeof(panic)},
 	{&saveday, sizeof(saveday)},
 	{&savet, sizeof(savet)},
-	{&scorng, sizeof(scorng)},
+	{&scoring, sizeof(scoring)},
 	{&spk, sizeof(spk)},
 	{&stick, sizeof(stick)},
 	{&tally, sizeof(tally)},
@@ -104,7 +104,7 @@ static const struct savestruct save_array[] =
 	{&verb, sizeof(verb)},
 	{&wd1, sizeof(wd1)},
 	{&wd2, sizeof(wd2)},
-	{&wzdark, sizeof(wzdark)},
+	{&wasdark, sizeof(wasdark)},
 	{&yea, sizeof(yea)},
 	{atloc, sizeof(atloc)},
 	{dloc, sizeof(dloc)},

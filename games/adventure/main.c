@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2008/07/20 01:03:20 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2009/08/25 06:56:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2008/07/20 01:03:20 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2009/08/25 06:56:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	startup();			/* prepare for a user */
 
 	for (;;) {			/* main command loop (label 2) */
-		if (newloc < 9 && newloc != 0 && closng) {
+		if (newloc < 9 && newloc != 0 && isclosing) {
 			rspeak(130);	/* if closing leave only by */
 			newloc = loc;	/* main office */
 			if (!panic)
@@ -108,7 +108,7 @@ l2000:		if (loc == 0)
 		if ((abb[loc] % abbnum) == 0 || kk->seekadr == 0)
 			kk = &ltext[loc];
 		if (!forced(loc) && dark()) {
-			if (wzdark && pct(35)) {
+			if (wasdark && pct(35)) {
 				die(90);
 				goto l2000;
 			}
@@ -123,7 +123,7 @@ l2001:
 		k = 1;
 		if (forced(loc))
 			goto l8;
-		if (loc == 33 && pct(25) && !closng)
+		if (loc == 33 && pct(25) && !isclosing)
 			rspeak(8);
 		if (!dark()) {
 			abb[loc]++;
@@ -164,7 +164,7 @@ l2600:		checkhints();	/* to 2600-2602 */
 				if (toting(i) && prop[i] < 0)	/* 2604 */
 					prop[i] = -1 - prop[i];
 		}
-		wzdark = dark();	/* 2605 */
+		wasdark = dark();	/* 2605 */
 		if (knfloc > 0 && knfloc != loc)
 			knfloc = 1;
 		getin(&wd1, &wd2);
@@ -288,7 +288,7 @@ l2800:		copystr(wd2, wd1);
 		goto l2610;
 
 l4000:		verb = k;
-		spk = actspk[verb];
+		spk = actspeak[verb];
 		if (*wd2 != 0 && verb != say)
 			goto l2800;
 		if (verb == say)
@@ -353,7 +353,7 @@ l4080:
 		case 14:		/* eat: 8140 */
 			if (!here(food))
 				goto l8000;
-	l8142:		dstroy(food);
+	l8142:		destroy(food);
 			spk = 72;
 			goto l2011;
 		case 15:
@@ -383,11 +383,11 @@ l4080:
 		case 23:
 			goto l9230;	/* blast */
 		case 24:		/* score: 8240 */
-			scorng = TRUE;
+			scoring = TRUE;
 			printf("If you were to quit now, you would score");
 			printf(" %d out of a possible ", score());
-			printf("%d.", mxscor);
-			scorng = FALSE;
+			printf("%d.", maxscore);
+			scoring = FALSE;
 			gaveup = yes(143, 54, 54);
 			if (gaveup)
 				done(2);
@@ -424,12 +424,12 @@ l4080:
 			detail = 3;
 			goto l2011;
 		case 27:	/* read=8270 */
-			if (here(magzin))
-				obj = magzin;
+			if (here(magazine))
+				obj = magazine;
 			if (here(tablet))
 				obj = obj * 100 + tablet;
-			if (here(messag))
-				obj = obj * 100 + messag;
+			if (here(message))
+				obj = obj * 100 + message;
 			if (closed && toting(oyster))
 				obj = oyster;
 			if (obj > 100 || obj == 0 || dark())
@@ -442,7 +442,7 @@ l4080:
 			printf("I can suspend your adventure for you so");
 			printf(" you can resume later, but\n");
 			printf("you will have to wait at least");
-			printf(" %d minutes before continuing.", latncy);
+			printf(" %d minutes before continuing.", latency);
 			if (!yes(200, 54, 54))
 				goto l2012;
 			datime(&saveday, &savet);
@@ -514,7 +514,7 @@ l4090:
 				goto l2011;
 			prop[lamp] = 1;
 			rspeak(39);
-			if (wzdark)
+			if (wasdark)
 				goto l2000;
 			goto l2012;
 
@@ -530,10 +530,10 @@ l4090:
 		case 9:	/* wave */
 			if ((!toting(obj)) && (obj != rod || !toting(rod2)))
 				spk = 29;
-			if (obj != rod || !at(fissur) || !toting(obj) || closng)
+			if (obj != rod || !at(fissure) || !toting(obj) || isclosing)
 				goto l2011;
-			prop[fissur] = 1 - prop[fissur];
-			pspeak(fissur, 2 - prop[fissur]);
+			prop[fissure] = 1 - prop[fissure];
+			pspeak(fissure, 2 - prop[fissure]);
 			goto l2012;
 		case 10:
 		case 11:
@@ -673,11 +673,11 @@ l4090:
 		l9270: case 27:/* read */
 			if (dark())
 				goto l5190;
-			if (obj == magzin)
+			if (obj == magazine)
 				spk = 190;
 			if (obj == tablet)
 				spk = 196;
-			if (obj == messag)
+			if (obj == message)
 				spk = 191;
 			if (obj == oyster && hinted[2] && toting(oyster))
 				spk = 194;
@@ -730,9 +730,9 @@ l5010:		if (*wd2 != 0)
 l5100:		if (k != grate)
 			goto l5110;
 		if (loc == 1 || loc == 4 || loc == 7)
-			k = dprssn;
+			k = depression;
 		if (loc > 9 && loc < 15)
-			k = entrnc;
+			k = entrance;
 		if (k != grate)
 			goto l8;
 l5110:		if (k != dwarf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.13 2009/08/12 04:28:27 dholland Exp $	*/
+/*	$NetBSD: wizard.c,v 1.14 2009/08/25 06:56:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.13 2009/08/12 04:28:27 dholland Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.14 2009/08/25 06:56:52 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -79,7 +79,7 @@ void
 poof(void)
 {
 	strcpy(magic, DECR('d', 'w', 'a', 'r', 'f'));
-	latncy = 45;
+	latency = 45;
 }
 
 int
@@ -91,13 +91,13 @@ Start(void)
 	delay = (d - saveday) * 1440 + (t - savet);	/* good for about a
 							 * month     */
 
-	if (delay >= latncy) {
+	if (delay >= latency) {
 		saved = -1;
 		return (FALSE);
 	}
 	printf("This adventure was suspended a mere %d minute%s ago.",
 	    delay, delay == 1 ? "" : "s");
-	if (delay <= latncy / 3) {
+	if (delay <= latency / 3) {
 		mspeak(2);
 		exit(0);
 	}

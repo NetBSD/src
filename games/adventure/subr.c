@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.12 2009/08/12 04:28:27 dholland Exp $	*/
+/*	$NetBSD: subr.c,v 1.13 2009/08/25 06:56:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.12 2009/08/12 04:28:27 dholland Exp $");
+__RCSID("$NetBSD: subr.c,v 1.13 2009/08/25 06:56:52 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -182,7 +182,7 @@ fdwarf(void)
 		}
 		for (i = 1; i <= 5; i++) {
 			if (dloc[i] == loc)
-				dloc[i] = daltlc;
+				dloc[i] = daltloc;
 			odloc[i] = dloc[i];	/* 6002 */
 		}
 		rspeak(3);
@@ -220,8 +220,8 @@ fdwarf(void)
 				continue;
 			k = 0;
 			for (j = 50; j <= maxtrs; j++) { /* loop to 6020 */
-				if (j == pyram && (loc == plac[pyram]
-					|| loc == plac[emrald]))
+				if (j == pyramid && (loc == plac[pyramid]
+					|| loc == plac[emerald]))
 					goto l6020;
 				if (toting(j))
 					goto l6022;
@@ -235,12 +235,12 @@ fdwarf(void)
 				rspeak(127);
 			continue;	/* to 6030 */
 	l6022:		rspeak(128);
-			if (place[messag] == 0)
+			if (place[message] == 0)
 				move(chest, chloc);
-			move(messag, chloc2);
+			move(message, chloc2);
 			for (j = 50; j <= maxtrs; j++) { /* loop to 6023 */
-				if (j == pyram && (loc == plac[pyram]
-					|| loc == plac[emrald]))
+				if (j == pyramid && (loc == plac[pyramid]
+					|| loc == plac[emerald]))
 					continue;
 				if (at(j) && fixed[j] == 0)
 					carry(j, loc);
@@ -252,7 +252,7 @@ fdwarf(void)
 			continue;
 	l6025:		rspeak(186);
 			move(chest, chloc);
-			move(messag, chloc2);
+			move(message, chloc2);
 			goto l6024;
 		}
 		dtotal++;	/* 6027 */
@@ -286,7 +286,7 @@ l82:		if (stick <= 1) {	/* 82 */
 				return (2000);
 		} else
 			printf("%d of them get you!\n", stick);	/* 83 */
-		oldlc2 = loc;
+		oldloc2 = loc;
 		return (99);
 	}
 	rspeak(5);
@@ -315,7 +315,7 @@ march(void)
 	if (k == look) {	/* 30                   */
 		if (detail++ < 3)
 			rspeak(15);
-		wzdark = FALSE;
+		wasdark = FALSE;
 		abb[loc] = 0;
 		return (2);
 	}
@@ -329,7 +329,7 @@ march(void)
 			bug(100);
 		}
 	}
-	oldlc2 = oldloc;
+	oldloc2 = oldloc;
 	oldloc = loc;
 l9:
 	for (; tkk != 0; tkk = tkk->next)
@@ -387,8 +387,8 @@ mback(void)
 	struct travlist *tk2, *j;
 	int     ll;
 	if (forced(k = oldloc))
-		k = oldlc2;	/* k=location           */
-	oldlc2 = oldloc;
+		k = oldloc2;	/* k=location           */
+	oldloc2 = oldloc;
 	oldloc = loc;
 	tk2 = 0;
 	if (k == loc) {
@@ -425,13 +425,13 @@ specials(void)
 	switch (newloc -= 300) {
 		case 1:		/* 30100                */
 		newloc = 99 + 100 - loc;
-		if (holdng == 0 || (holdng == 1 && toting(emrald)))
+		if (holding == 0 || (holding == 1 && toting(emerald)))
 			return (2);
 		newloc = loc;
 		rspeak(117);
 		return (2);
 	case 2:		/* 30200                */
-		drop(emrald, loc);
+		drop(emerald, loc);
 		return (12);
 	case 3:		/* to 30300             */
 		return (trbridge());
@@ -468,7 +468,7 @@ trbridge(void)
 	prop[bear] = 3;
 	if (prop[spices] < 0)
 		tally2++;
-	oldlc2 = newloc;
+	oldloc2 = newloc;
 	return (99);
 }
 
@@ -506,7 +506,7 @@ void
 checkhints(void)
 {	
 	int     hint;
-	for (hint = 4; hint <= hntmax; hint++) {
+	for (hint = 4; hint <= hintmax; hint++) {
 		if (hinted[hint])
 			continue;
 		if (!bitset(loc, hint))
@@ -529,11 +529,11 @@ checkhints(void)
 			goto l40020;
 		case 7:	/* 40700 */
 			if (atloc[loc] == 0 && atloc[oldloc] == 0
-			    && atloc[oldlc2] == 0 && holdng > 1)
+			    && atloc[oldloc2] == 0 && holding > 1)
 				goto l40010;
 			goto l40020;
 		case 8:	/* 40800 */
-			if (prop[emrald] != -1 && prop[pyram] == -1)
+			if (prop[emerald] != -1 && prop[pyramid] == -1)
 				goto l40010;
 			goto l40020;
 		case 9:
@@ -597,7 +597,7 @@ trtake(void)
 			spk = 104;
 		return (2011);
 	}
-l9017:	if (holdng >= 7) {
+l9017:	if (holding >= 7) {
 		rspeak(92);
 		return (2012);
 	}
@@ -652,19 +652,19 @@ trdrop(void)
 		rspeak(30);
 		if (closed)
 			return (19000);
-		dstroy(snake);
+		destroy(snake);
 		prop[snake] = 1;
 		return (dropper());
 	}
 	if (obj == coins && here(vend)) {	/* 9024                 */
-		dstroy(coins);
+		destroy(coins);
 		drop(batter, loc);
 		pspeak(batter, 0);
 		return (2012);
 	}
 	if (obj == bird && at(dragon) && prop[dragon] == 0) {	/* 9025 */
 		rspeak(154);
-		dstroy(bird);
+		destroy(bird);
 		prop[bird] = 0;
 		if (place[snake] == plac[snake])
 			tally2--;
@@ -704,13 +704,13 @@ tropen(void)
 		spk = 124 + k;
 		if (toting(obj))
 			spk = 120 + k;
-		if (!toting(tridnt))
+		if (!toting(trident))
 			spk = 122 + k;
 		if (verb == lock)
 			spk = 61;
 		if (spk != 124)
 			return (2011);
-		dstroy(clam);
+		destroy(clam);
 		drop(oyster, loc);
 		drop(pearl, 105);
 		return (2011);
@@ -756,7 +756,7 @@ tropen(void)
 		fixed[bear] = 2 - prop[bear];
 		return (2011);
 	}
-	if (closng) {
+	if (isclosing) {
 		k = 130;
 		if (!panic)
 			clock2 = 15;
@@ -807,7 +807,7 @@ trkill(void)
 		spk = 137;
 		if (closed)
 			return (2011);
-		dstroy(bird);
+		destroy(bird);
 		prop[bird] = 0;
 		if (place[snake] == plac[snake])
 			tally2++;
@@ -932,7 +932,7 @@ trfeed(void)
 		if (obj != snake || closed || !here(bird))
 			return (2011);
 		spk = 101;
-		dstroy(bird);
+		destroy(bird);
 		prop[bird] = 0;
 		tally2++;
 		return (2011);
@@ -951,7 +951,7 @@ trfeed(void)
 			spk = 110;
 		if (!here(food))
 			return (2011);
-		dstroy(food);
+		destroy(food);
 		prop[bear] = 1;
 		fixed[axe] = 0;
 		prop[axe] = 0;
@@ -1003,7 +1003,7 @@ closing(void)
 {	
 	int     i;
 
-	prop[grate] = prop[fissur] = 0;
+	prop[grate] = prop[fissure] = 0;
 	for (i = 1; i <= 6; i++) {
 		dseen[i] = FALSE;
 		dloc[i] = 0;
@@ -1014,14 +1014,14 @@ closing(void)
 	move(troll2 + 100, fixd[troll]);
 	juggle(chasm);
 	if (prop[bear] != 3)
-		dstroy(bear);
+		destroy(bear);
 	prop[chain] = 0;
 	fixed[chain] = 0;
 	prop[axe] = 0;
 	fixed[axe] = 0;
 	rspeak(129);
 	clock1 = -1;
-	closng = TRUE;
+	isclosing = TRUE;
 }
 
 /* 11000 */
@@ -1051,7 +1051,7 @@ caveclose(void)
 
 	for (i = 1; i <= 100; i++)
 		if (toting(i))
-			dstroy(i);
+			destroy(i);
 	rspeak(132);
 	closed = TRUE;
 }
