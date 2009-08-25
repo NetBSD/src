@@ -1,4 +1,4 @@
-.\" $NetBSD: bcsp.4,v 1.3.10.1 2009/08/25 19:03:39 snj Exp $
+.\" $NetBSD: bcsp.4,v 1.3.10.2 2009/08/25 19:04:27 snj Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 2, 2007
+.Dd August 23, 2009
 .Dt BCSP 4
 .Os
 .Sh NAME
@@ -47,6 +47,12 @@ Moreover, the
 supports BCSP Link Establishment Protocol, as described in the
 .Qq BCSP Link Establishment Protocol
 specification.
+.Pp
+The
+.Xr btattach 8
+program is used to configure the tty line and create the
+.Nm
+driver instance.
 .Sh SEE ALSO
 .Xr bluetooth 4 ,
 .Xr btuart 4 ,
@@ -59,6 +65,5 @@ device appeared in
 .Sh AUTHORS
 .An KIYOHARA Takashi Aq kiyohara@kk.iij4u.or.jp
 .Sh BUGS
-The
 .Nm
-not support configuration for baud rate yet.
+does not support configuration for baud rate yet.
