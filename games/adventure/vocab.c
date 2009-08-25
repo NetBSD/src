@@ -1,4 +1,4 @@
-/*	$NetBSD: vocab.c,v 1.14 2009/08/12 04:28:27 dholland Exp $	*/
+/*	$NetBSD: vocab.c,v 1.15 2009/08/25 06:56:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: vocab.c,v 1.14 2009/08/12 04:28:27 dholland Exp $");
+__RCSID("$NetBSD: vocab.c,v 1.15 2009/08/25 06:56:52 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: vocab.c,v 1.14 2009/08/12 04:28:27 dholland Exp $");
 #include "extern.h"
 
 void
-dstroy(int object)
+destroy(int object)
 {
 	move(object, 0);
 }
@@ -98,7 +98,7 @@ carry(int object, int where)
 		if (place[object] == -1)
 			return;
 		place[object] = -1;
-		holdng++;
+		holding++;
 	}
 	if (atloc[where] == object) {
 		atloc[where] = links[object];
@@ -116,7 +116,7 @@ drop(int object, int where)
 		fixed[object - 100] = where;
 	else {
 		if (place[object] == -1)
-			holdng--;
+			holding--;
 		place[object] = where;
 	}
 	if (where <= 0)
