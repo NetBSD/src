@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.47 2009/06/20 16:19:46 christos Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.48 2009/08/25 09:27:25 enami Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.47 2009/06/20 16:19:46 christos Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.48 2009/08/25 09:27:25 enami Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -475,8 +475,7 @@ main(int argc, char *argv[])
 		if (newuser) {
 			if (rv == 0)
 				inconsistency();
-		} else if (rv == -1 ||
-			strcmp(username, tpwd->pw_name) != 0)
+		} else if (rv == 1 || strcmp(username, tpwd->pw_name) != 0)
 			inconsistency();
 		else if ((uid_t)olduid != pwd.pw_uid) {
 			/*
@@ -852,7 +851,7 @@ putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
 	if (lorder != BYTE_ORDER)
 		x = SWAP(x);
 	(void)memmove(p, &x, sizeof(x));
-	p += sizeof(flags);
+	p += sizeof(x);
 	data.size = p - buf;
 
 	/* Store insecure by name. */
