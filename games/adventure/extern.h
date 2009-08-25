@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2009/08/25 06:56:52 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2009/08/25 06:58:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -37,7 +37,7 @@ unsigned long crc(const char *, int);
 
 /* done.c */
 int score(void);
-void done(int) __attribute__((__noreturn__));
+void done(int) __dead;
 void die(int);
 
 /* init.c */
@@ -75,7 +75,7 @@ int dark(void);
 int pct(int);
 int fdwarf(void);
 int march(void);
-void bug(int) __attribute__((__noreturn__));
+void bug(int) __dead;
 void checkhints(void);
 int trsay(void);
 int trtake(void);
