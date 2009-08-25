@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.172 2009/08/18 11:14:52 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.173 2009/08/25 18:07:47 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3740,4 +3740,17 @@ sbin/dkctl/dkctl.c				1.18
 	addwedge when the addition was successful (as well as indicating
 	success).
 	[spz, ticket #1350]
+
+bin/pax/options.c				1.105 via patch
+usr.bin/ctags/C.c				1.19
+usr.bin/ctags/ctags.h				1.9
+usr.bin/ctags/fortran.c				1.11
+usr.bin/ctags/lisp.c				1.11
+usr.bin/ctags/print.c				1.10
+usr.bin/ctags/yacc.c				1.12
+usr.bin/gencat/gencat.c				1.30 via patch
+
+	Rename internal getline() function to get_line() so it does
+	not conflict with -current's getline(3) libc function.
+	[plunky, ticket #1354]
 
