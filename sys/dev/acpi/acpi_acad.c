@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.34 2009/05/12 09:29:46 cegger Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.35 2009/08/25 10:34:08 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.34 2009/05/12 09:29:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.35 2009/08/25 10:34:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	device_t dv = context;
 	struct acpiacad_softc *sc = device_private(dv);
-	int rv;
+	ACPI_STATUS rv;
 
 	switch (notify) {
 	/*

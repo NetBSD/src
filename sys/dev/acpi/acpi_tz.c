@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.45 2009/07/04 13:36:49 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.46 2009/08/25 10:34:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.45 2009/07/04 13:36:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.46 2009/08/25 10:34:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	device_t dv = opaque;
 	ACPI_OSD_EXEC_CALLBACK func = NULL;
 	const char *name;
-	int rv;
+	ACPI_STATUS rv;
 
 	switch (notify) {
 	case ACPI_NOTIFY_ThermalZoneStatusChanged:
@@ -538,7 +538,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	KASSERT(func != NULL);
 
 	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, func, dv);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		aprint_debug_dev(dv, "unable to queue %s\n", name);
 }
 
