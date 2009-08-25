@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.20 2006/03/30 20:32:10 dsl Exp $	*/
+/*	$NetBSD: gencat.c,v 1.20.6.1 2009/08/25 18:07:09 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.20 2006/03/30 20:32:10 dsl Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.20.6.1 2009/08/25 18:07:09 snj Exp $");
 #endif
 
 /***********************************************************
@@ -126,7 +126,7 @@ static	void	corrupt __P((void));
 static	char   *cskip __P((char *));
 static	void	error __P((char *, char *));
 static	void	nomem __P((void));
-static	char   *getline __P((int));
+static	char   *get_line __P((int));
 static	char   *getmsg __P((int, char *, char));
 static	void	warning __P((char *, char *));
 static	char   *wskip __P((char *));
@@ -262,7 +262,7 @@ xstrdup(str)
 }
 
 static char *
-getline(fd)
+get_line(fd)
 	int     fd;
 {
 	static long curlen = BUFSIZ;
@@ -371,7 +371,7 @@ getmsg(fd, cptr, quote)
 				++cptr;
 				switch (*cptr) {
 				case '\0':
-					cptr = getline(fd);
+					cptr = get_line(fd);
 					if (!cptr)
 						error(NULL, "premature end of file");
 					msglen += strlen(cptr);
@@ -444,7 +444,7 @@ MCParse(fd)
 
 	/* XXX: init sethead? */
 
-	while ((cptr = getline(fd))) {
+	while ((cptr = get_line(fd))) {
 		if (*cptr == '$') {
 			++cptr;
 			if (strncmp(cptr, "set", 3) == 0) {
