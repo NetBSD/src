@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.51 2008/04/04 12:36:06 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.51.14.1 2009/08/25 18:40:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51 2008/04/04 12:36:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.14.1 2009/08/25 18:40:32 snj Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -428,6 +428,7 @@ vr_cons_init()
 			printf("%s(%d): can't init kgdb's serial port",
 			    __FILE__, __LINE__);
 		}
+	}
 #else /* KGDB */
 	if (com_info->attach != NULL && (bootinfo->bi_cnuse&BI_CNUSE_SERIAL)) {
 		/* Serial console */
