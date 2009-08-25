@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.6 2009/08/16 22:42:16 bouyer Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.7 2009/08/25 19:11:24 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -63,7 +63,7 @@ usr.bin/ctags/yacc.c				1.12
 usr.bin/gencat/gencat.c				1.30
 
 	Rename internal getline() function to get_line() so it does
-	conflict with -current's getline(3) libc function.
+	not conflict with -current's getline(3) libc function.
 	[roy, ticket #885]
 
 sbin/ifconfig/parse.c				1.14
@@ -152,4 +152,34 @@ lib/libc/gen/fts.c				1.38
 	and subsequent collateral damage.
 	Received from OpenBSD via US-CERT as VU #590371.
 	[christos, ticket #915]
+
+sys/arch/macppc/dev/pbms.c			1.8
+
+	- Use device_private() (led to immediate crash during attach)
+	- While there, fix the aspect ratio of the trackpad on the
+	geyser2 model
+	[aymeric, ticket #916]
+
+sbin/tunefs/tunefs.c				1.40
+
+	Fix pasto: UFS_WAPBL_FLAGS_CREATE_LOG is "create-log" not
+	"clear-log"
+	[bouyer, ticket #917]
+
+sys/arch/hpcmips/vr/vr.c			1.54
+
+	Fix PR port-hpcmips/41863, Missing "}".
+	[jun, ticket #918]
+
+usr.bin/mixerctl/mixerctl.1			1.24
+
+	Fix markup.
+	[joerg, ticket #919]
+
+share/man/man4/bcsp.4				1.4, 1.5
+share/man/man4/btuart.4				1.7-1.9
+
+	Fix some small nits and mention how to configure the tty line
+	as a bluetooth device
+	[plunky, ticket #926]
 
