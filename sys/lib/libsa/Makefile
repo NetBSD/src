@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2009/08/21 21:12:02 he Exp $
+#	$NetBSD: Makefile,v 1.70 2009/08/25 14:10:54 he Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -29,7 +29,7 @@ SRCS+=	alloc.c errno.c exit.c files.c \
 	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
 
 .if (${MACHINE_CPU} != "mips")
-SRCS+=	exec.c loadfile_aout.c
+SRCS+=	exec.c
 .endif
 
 # string routines
@@ -47,6 +47,9 @@ SRCS+=	cread.c
 .if (${SA_USE_LOADFILE} == "yes")
 SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c \
 	loadfile_elf64.c
+.if (${MACHINE_CPU} != "mips")
+SRCS+=	loadfile_aout.c
+.endif
 .endif
 
 .if (${SA_INCLUDE_NET} == "yes")
