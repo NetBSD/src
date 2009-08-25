@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.130 2009/08/23 15:16:16 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.131 2009/08/25 10:34:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.130 2009/08/23 15:16:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.131 2009/08/25 10:34:08 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1104,7 +1104,7 @@ static UINT32
 acpi_fixed_button_handler(void *context)
 {
 	struct sysmon_pswitch *smpsw = context;
-	int rv;
+	ACPI_STATUS rv;
 
 #ifdef ACPI_BUT_DEBUG
 	printf("%s: fixed button handler\n", smpsw->smpsw_name);
