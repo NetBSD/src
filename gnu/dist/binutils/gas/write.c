@@ -847,9 +847,10 @@ adjust_reloc_syms (bfd *abfd ATTRIBUTE_UNUSED,
 	      continue;
 	  }
 
-	/* Never adjust a reloc against local symbol in a merge section
-	   with non-zero addend.  */
+	/* Never adjust a reloc against local symbol in a non-string merge
+	   section with non-zero addend.  */
 	if ((symsec->flags & SEC_MERGE) != 0
+	    && (symsec->flags & SEC_STRINGS) == 0
 	    && (fixp->fx_offset != 0 || fixp->fx_subsy != NULL))
 	  continue;
 
