@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.53 2009/08/25 18:13:01 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.54 2009/08/25 18:21:50 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -814,4 +814,9 @@ usr.bin/gencat/gencat.c				1.30 via patch
 	Rename internal getline() function to get_line() so it does
 	not conflict with -current's getline(3) libc function.
 	[plunky, ticket #1354]
+
+sys/dev/pci/twa.c				1.32
+
+	Disable completely bogus DIAGNOSTIC check.
+	[bouyer, ticket #1349]
 
