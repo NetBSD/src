@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.7 2007/10/17 19:55:19 garbled Exp $ */
+/* $Id: pbms.c,v 1.7.36.1 2009/08/25 18:29:14 snj Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -243,7 +243,7 @@ static struct pbms_dev pbms_devices[] =
        /* 15 inch PowerBooks */
        POWERBOOK_TOUCHPAD(15, 0x020e, 85, 16, 57), /* XXX Not tested. */
        POWERBOOK_TOUCHPAD(15, 0x020f, 85, 16, 57),
-       POWERBOOK_TOUCHPAD(15, 0x0215, 64, 16, 43),
+       POWERBOOK_TOUCHPAD(15, 0x0215, 90, 15, 107),
        /* 17 inch PowerBooks */
        POWERBOOK_TOUCHPAD(17, 0x020d, 71, 26, 68)  /* XXX Not tested. */
 #undef POWERBOOK_TOUCHPAD
@@ -348,7 +348,7 @@ pbms_attach(struct device *parent, struct device *self, void *aux)
 	struct wsmousedev_attach_args a;
 	struct uhidev_attach_arg *uha = aux;
 	struct pbms_dev *pd;
-	struct pbms_softc *sc = (struct pbms_softc *)self;
+	struct pbms_softc *sc = device_private(self);
 	usb_device_descriptor_t *udd;
 	int i;
 	uint16_t vendor, product;
@@ -374,11 +374,10 @@ pbms_attach(struct device *parent, struct device *self, void *aux)
 				sc->sc_x_sensors = pd->x_sensors;
 				sc->sc_y_factor = pd->y_factor;
 				sc->sc_y_sensors = pd->y_sensors;
-				if (product == 0x215) {
+				if (product == 0x0215) {
 					sc->is_geyser2 = 1;
-					sc->sc_x_sensors = 15;
-					sc->sc_y_sensors = 9;
 					sc->sc_datalen = 64;
+					sc->sc_y_sensors = 9;
 				}
 				break;
 			}
