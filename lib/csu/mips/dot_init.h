@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.9.10.2 2009/08/18 06:38:17 matt Exp $ */
+/* $NetBSD: dot_init.h,v 1.9.10.3 2009/08/26 14:35:38 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -59,7 +59,7 @@
 #define	sREG_L			"ld"
 #define	sREG_S			"sd"
 #if defined(__mips_n32) || defined(__mips_n64)
-#define	MD_GPRESTORE		".cpreturn"		"\n\t"
+#define	MD_GPRESTORE		"ld	$gp,8($sp)"		"\n\t"
 #define sRAOFF			"24"
 #define sFRAMESZ		"32"
 #elif defined(__mips_o64)
