@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.5 2007/02/22 05:09:01 thorpej Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.5.64.1 2009/08/26 03:46:38 matt Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.5 2007/02/22 05:09:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.5.64.1 2009/08/26 03:46:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,7 @@ arc_contiguously_wired_mapped(paddr_t pa, vsize_t size)
 }
 
 /* Allocate new wired entries */
+CTASSERT(sizeof(vaddr_t) == sizeof(u_long));
 vaddr_t
 arc_map_wired(paddr_t pa, vsize_t size)
 {
@@ -191,7 +192,7 @@ arc_map_wired(paddr_t pa, vsize_t size)
 	}
 
 	error = extent_alloc(arc_wired_map_ex, size, MIPS3_WIRED_SIZE,
-	    0, EX_NOWAIT, &va);
+	    0, EX_NOWAIT, (u_long *)&va);
 	if (error) {
 #ifdef DIAGNOSTIC
 		printf("arc_map_wired: can't allocate region\n");

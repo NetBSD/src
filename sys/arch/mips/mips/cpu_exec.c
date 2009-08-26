@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.3 2009/08/23 03:24:08 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.4 2009/08/26 03:46:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.3 2009/08/23 03:24:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.4 2009/08/26 03:46:39 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -127,7 +127,7 @@ void
 cpu_exec_ecoff_setregs(l, epp, stack)
 	struct lwp *l;
 	struct exec_package *epp;
-	u_long stack;
+	vaddr_t stack;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct frame *f = l->l_md.md_regs;

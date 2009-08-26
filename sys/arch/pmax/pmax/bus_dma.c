@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.49 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49.16.1 2009/08/26 03:46:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.16.1 2009/08/26 03:46:40 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -169,6 +169,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, vm, flags,
 	int first;
 {
 	bus_size_t sgsize;
+	paddr_t pa;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
@@ -182,14 +183,15 @@ _bus_dmamap_load_buffer(map, buf, buflen, vm, flags,
 		 */
 		if (!VMSPACE_IS_KERNEL_P(vm))
 			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
-			    vaddr, &curaddr);
+			    vaddr, &pa);
 		else
-			curaddr = kvtophys(vaddr);
+			pa = kvtophys(vaddr);
+		curaddr = pa;
 
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - (vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
