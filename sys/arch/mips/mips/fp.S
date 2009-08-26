@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.2 2009/08/23 13:29:09 uebayasi Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.3 2009/08/26 03:46:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1645,6 +1645,7 @@ neg_d:
 	xor	t0, t0, 1			# reverse sign
 	b	result_fs_d
 
+#ifdef MIPS3_PLUS
 /*
  * Single precision mips2 rounding.  Explicit case of cvt_w_s.
  */
@@ -1676,6 +1677,7 @@ ceil_w_d:
 floor_w_d:
 	li	v1,3
 	b	_cvt_w_d
+#endif /* MIPS3_PLUS */
 
 /*
  * Convert double to single.

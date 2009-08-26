@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.44 2008/07/05 08:46:25 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.44.14.1 2009/08/26 03:46:38 matt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.44 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.44.14.1 2009/08/26 03:46:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -215,7 +215,7 @@ isabrprint(void *aux, const char *pnp)
 
         if (pnp)
                 aprint_normal("isa at %s", pnp);
-        aprint_verbose(" isa_io_base 0x%lx isa_mem_base 0x%lx",
+        aprint_verbose(" isa_io_base %#"PRIxVADDR" isa_mem_base %#"PRIxVADDR,
 	    arc_bus_io.bs_vbase, arc_bus_mem.bs_vbase);
         return UNCONF;
 }
