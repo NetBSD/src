@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2002/10/05 11:59:05 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9.44.1 2009/08/26 03:32:53 matt Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -35,71 +35,101 @@
 
 LEAF(rtld_start)
 	.set	noreorder
+	SETUP_GP
+	PTR_SUBU sp, 2*SZREG		# adjust stack pointer
+	SETUP_GP64(s4, rtld_start)
+	SAVE_GP(s4)
+					# -> 0*SZREG(sp) for atexit
+					# -> 1*SZREG(sp) for obj_main
+	move	s0, a0			# save stack pointer from a0
+	move	s3, a3			# save ps_strings pointer
 
-	.cpload t9
-	addu	sp, sp, -12		# adjust stack pointer
-	.cprestore 0			# -> 0(sp) for gp
-					# -> 4(sp) for atexit
-					# -> 8(sp) for obj_main
-	move	s0,a0			# save stack pointer from a0
-	move	s1,a3			# save ps_strings pointer
-
-	la	a1, 1f
+	PTR_LA	a1, 1f
 	bal	1f
-	 la	t9,_C_LABEL(_rtld_relocate_nonplt_self)
-1:	subu	a1, ra, a1		# relocbase
+	 PTR_LA	t9, _C_LABEL(_rtld_relocate_nonplt_self)
+1:	PTR_SUBU a1, ra, a1		# relocbase
 	move	s2,a1
-	la	a0,_DYNAMIC
-	addu	t9, a1, t9
-	jalr	t9
-	 addu	a0, a1, a0		# &_DYNAMIC
+	PTR_LA	a0,_DYNAMIC
+	PTR_ADDU t9, a1, t9
+	jalr	t9			# _rtld_relocate_nonplt_self(dynp, relocabase)
+	 PTR_ADDU a0, a1, a0		# &_DYNAMIC
 
-	move	a1,s2			# relocbase
-	addu	a0, sp, 4		# sp
+	move	a1, s2			# relocbase
+	move	a0, sp			# sp
 	jal	_C_LABEL(_rtld)		# v0 = _rtld(sp, relocbase)
 	 nop
 
-	lw	a1, 4(sp)		# our atexit function
-	lw	a2, 8(sp)		# obj_main entry
-	addu	sp, sp,12		# readjust stack
-	move	a0,s0			# stack pointer
-	move	t9,v0
+	PTR_L	a1, 0*SZREG(sp)		# our atexit function
+	PTR_L	a2, 1*SZREG(sp)		# obj_main entry
+	PTR_ADDU sp, 3*SZREG		# readjust stack
+	move	a0, s0			# stack pointer
+	move	t9, v0
 	jr	t9			# _start(sp, cleanup, obj);
-	move	a3,s1			# restore ps_strings
+	 move	a3, s3			# restore ps_strings
 
 END(rtld_start)
+
+#define	XCALLFRAME_SIZ		(11*SZREG)
+#define	XCALLFRAME_RA		(10*SZREG)
+#define	XCALLFRAME_GP		(9*SZREG)
+#define	XCALLFRAME_S0		(8*SZREG)
+#define	XCALLFRAME_A3		(7*SZREG)
+#define	XCALLFRAME_A2		(6*SZREG)
+#define	XCALLFRAME_A1		(5*SZREG)
+#define	XCALLFRAME_A0		(4*SZREG)
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	XCALLFRAME_A7		(3*SZREG)
+#define	XCALLFRAME_A6		(2*SZREG)
+#define	XCALLFRAME_A5		(1*SZREG)
+#define	XCALLFRAME_A4		(0*SZREG)
+#endif
 
 	.globl	_rtld_bind_start
 	.ent	_rtld_bind_start
 _rtld_bind_start:
-
-	move	v1,gp			# save old GP
-	add	t9,8			# modify T9 to point at .cpload
-	.cpload	t9
-	subu	sp,44			# save arguments and sp value in stack
-	.cprestore 36
-	sw	t7,40(sp)
-	sw	a0,16(sp)
-	sw	a1,20(sp)
-	sw	a2,24(sp)
-	sw	a3,28(sp)
-	sw	s0,32(sp)
-	move	s0,sp
-	move	a0,t8			# symbol index
-	move	a1,t7			# old RA
-	move	a2,v1			# old GP
-	move	a3,ra			# current RA
+#if defined(__mips_o32) || defined(__mips_o64)
+	move	v1, gp			# save old GP
+	PTR_ADDU t9, 8			# modify T9 to point at .cpload
+#endif
+	SETUP_GP
+	PTR_SUBU sp, XCALLFRAME_SIZ	# save arguments and sp value in stack
+	SETUP_GP64(XCALLFRAME_GP, _rtld_bind_start)
+	SAVE_GP(XCALLFRAME_GP)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	a4,  XCALLFRAME_A4(sp)
+	REG_S	a5,  XCALLFRAME_A5(sp)
+	REG_S	a6,  XCALLFRAME_A6(sp)
+	REG_S	a7,  XCALLFRAME_A7(sp)
+#endif
+	REG_S	a0,  XCALLFRAME_A0(sp)
+	REG_S	a1,  XCALLFRAME_A1(sp)
+	REG_S	a2,  XCALLFRAME_A2(sp)
+	REG_S	a3,  XCALLFRAME_A3(sp)
+	REG_S	$15,  XCALLFRAME_RA(sp)	# ra is in t7/t3
+	REG_S	s0,  XCALLFRAME_SP(sp)
+	move	s0, sp
+	move	a0, t8			# symbol index
+	move	a1, $15			# old RA
+	move	a2, v1			# old GP
+	move	a3, ra			# current RA
 	jal	_C_LABEL(_rtld_bind)
-	nop
-	move	sp,s0
-	lw	ra,40(sp)
-	lw	a0,16(sp)
-	lw	a1,20(sp)
-	lw	a2,24(sp)
-	lw	a3,28(sp)
-	lw	s0,32(sp)
-	addu	sp,44
-	move	t9,v0
+	 nop
+	move	sp, s0
+	REG_L	ra, XCALLFRAME_RA(sp)		
+	REG_L	s0, XCALLFRAME_S0(sp)
+	REG_L	a0, XCALLFRAME_A0(sp)
+	REG_L	a1, XCALLFRAME_A1(sp)
+	REG_L	a2, XCALLFRAME_A2(sp)
+	REG_L	a3, XCALLFRAME_A3(sp)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_L	a4, XCALLFRAME_A4(sp)
+	REG_L	a5, XCALLFRAME_A5(sp)
+	REG_L	a6, XCALLFRAME_A6(sp)
+	REG_L	a7, XCALLFRAME_A7(sp)
+#endif
+	RESTORE_GP64
+	PTR_ADDU sp, XCALLFRAME_SIZ
+	move	t9, v0
 	jr	t9
-	nop
-	.end	_rtld_bind_start
+	 nop
+END(_rtld_bind_start)

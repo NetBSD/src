@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.15 2005/06/04 16:17:17 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.15.32.1 2009/08/26 03:32:53 matt Exp $
 
 SRCS+=		rtld_start.S mips_reloc.c
 
 # XXX Should not be in CPPFLAGS!
-CPPFLAGS+=	-mabicalls -G0 -fPIC
+CPUFLAGS+=	-G0
 
 CPPFLAGS+=	-DELFSIZE=32
 CPPFLAGS+=	-DRTLD_INHIBIT_COPY_RELOCS
+AFLAGS+=	-Wa,--fatal-warnings
 
 LDFLAGS+=	-Wl,-e,.rtld_start
