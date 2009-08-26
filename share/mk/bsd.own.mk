@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.542.2.9.4.1 2009/08/18 06:42:17 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.542.2.9.4.2 2009/08/26 03:34:20 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -643,9 +643,9 @@ MKCOMPAT:=	no
 .for var in \
 	MKATF \
 	MKBFD MKBINUTILS \
-	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS \
+	MKCATPAGES MKCOMPLEX MKCRYPTO MKCVS MKCXX \
 	MKDOC \
-	MKGCC MKGCCCMDS MKGDB \
+	MKGCC MKGCCCMDS MKGDB MKGROFF \
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
@@ -686,6 +686,11 @@ X11FLAVOUR?=	XFree86
 #
 # Force some options off if their dependencies are off.
 #
+
+.if ${MKCXX} == "no"
+MKATF:=		no
+MKGROFF:=	no
+.endif
 
 .if ${MKCRYPTO} == "no"
 MKKERBEROS:=	no
