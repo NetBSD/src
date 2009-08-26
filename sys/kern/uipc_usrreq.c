@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.126 2009/05/24 21:41:26 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.127 2009/08/26 22:34:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.126 2009/05/24 21:41:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.127 2009/08/26 22:34:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,6 +252,11 @@ unp_setpeerlocks(struct socket *so, struct socket *so2)
 	unp->unp_streamlock = NULL;
 	mutex_obj_hold(lock);
 	membar_exit();
+	/*
+	 * possible race if lock is not held - see comment in
+	 * uipc_usrreq(PRU_ACCEPT).
+	 */
+	KASSERT(mutex_owned(lock));
 	solockreset(so, lock);
 	solockreset(so2, lock);
 }
@@ -328,6 +333,7 @@ unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
 	struct unpcb *unp;
 	bool ext;
 
+	KASSERT(solocked(so));
 	unp = sotounpcb(so);
 	ext = false;
 
@@ -444,7 +450,17 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * If the connection is fully established, break the
 		 * association with uipc_lock and give the connected
 		 * pair a seperate lock to share.
+		 * There is a race here: sotounpcb(so2)->unp_streamlock
+		 * is not locked, so when changing so2->so_lock
+		 * another thread can grab it while so->so_lock is still
+		 * pointing to the (locked) uipc_lock.
+		 * this should be harmless, exept that this makes
+		 * solocked2() and solocked() unreliable.
+		 * Another problem is that unp_setaddr() expects the
+		 * the socket locked. Grabing sotounpcb(so2)->unp_streamlock
+		 * fixes both issues.
 		 */
+		mutex_enter(sotounpcb(so2)->unp_streamlock);
 		unp_setpeerlocks(so2, so);
 		/*
 		 * Only now return peer's address, as we may need to
@@ -455,6 +471,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * error == 0 and sun_noname as the peer address.
 		 */
 		unp_setaddr(so, nam, true);
+		/* so_lock now points to unp_streamlock */
+		mutex_exit(so2->so_lock);
 		break;
 
 	case PRU_SHUTDOWN:
