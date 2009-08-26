@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.20 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20.16.1 2009/08/26 03:46:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20.16.1 2009/08/26 03:46:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	paddr_t pa;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 
@@ -135,9 +136,10 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 */
 		if (!VMSPACE_IS_KERNEL_P(vm))
 			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
-			    vaddr, &curaddr);
+			    vaddr, &pa);
 		else
-			curaddr = kvtophys(vaddr);
+			pa = kvtophys(vaddr);
+		curaddr = pa;
 
 		/*
 		 * If we're beyond the current DMA window, indicate
@@ -585,7 +587,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%lx\n", curaddr);
+			    " address %#"PRIxPADDR"\n", curaddr);
 			panic("_bus_dmamem_alloc");
 		}
 #endif

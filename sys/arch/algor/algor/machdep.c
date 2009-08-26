@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2008/07/02 17:28:54 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.10.1 2009/08/26 03:46:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.1 2009/08/26 03:46:38 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -214,7 +214,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	const char *cp;
 	char *cp0;
 	void *v;
-	int i;
+	size_t i;
 
 	/* Disable interrupts. */
 	(void) splhigh();
@@ -473,11 +473,11 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * it's already in bytes, not megabytes.
 	 */
 	if (size < 1024) {
-		printf("Memory size: 0x%08lx (0x%08lx)\n", size * 1024 * 1024,
-		    size);
+		printf("Memory size: %#"PRIxVSIZE" (%"PRIxVSIZE")\n",
+		    size * 1024 * 1024, size);
 		size *= 1024 * 1024;
 	} else
-		printf("Memory size: 0x%08lx\n", size);
+		printf("Memory size: %#"PRIxVSIZE"\n", size);
 
 	mem_clusters[mem_cluster_cnt].start = PAGE_SIZE;
 	mem_clusters[mem_cluster_cnt].size =
@@ -508,7 +508,7 @@ mach_init(int argc, char *argv[], char *envp[])
 			 * within the segment.
 			 */
 #if 1
-			printf("Cluster %d contains kernel\n", i);
+			printf("Cluster %zu contains kernel\n", i);
 #endif
 			if (pfn0 < kernstartpfn) {
 				/*
@@ -516,7 +516,8 @@ mach_init(int argc, char *argv[], char *envp[])
 				 */
 #if 1
 				printf("Loading chunk before kernel: "
-				    "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
+				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
+				    pfn0, kernstartpfn);
 #endif
 				uvm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
@@ -527,7 +528,8 @@ mach_init(int argc, char *argv[], char *envp[])
 				 */
 #if 1
 				printf("Loading chunk after kernel: "
-				    "0x%lx / 0x%lx\n", kernendpfn, pfn1);
+				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
+				    kernendpfn, pfn1);
 #endif
 				uvm_page_physload(kernendpfn, pfn1,
 				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
@@ -537,8 +539,8 @@ mach_init(int argc, char *argv[], char *envp[])
 			 * Just load this cluster as one chunk.
 			 */
 #if 1
-			printf("Loading cluster %d: 0x%lx / 0x%lx\n", i,
-			    pfn0, pfn1);
+			printf("Loading cluster %zu: %#"PRIxPADDR
+			    " / %#"PRIxPADDR"\n", i, pfn0, pfn1);
 #endif
 			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
 			    VM_FREELIST_DEFAULT);
