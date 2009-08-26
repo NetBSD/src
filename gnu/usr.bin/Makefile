@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2008/09/24 02:19:45 dogcow Exp $
+#	$NetBSD: Makefile,v 1.128.10.1 2009/08/26 03:37:45 matt Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -12,7 +12,11 @@ SUBDIR+=	c89 c99
 SUBDIR+=	xcvs
 .endif
 SUBDIR+=	dc diffutils gkermit grep
-SUBDIR+=	groff rcs send-pr texinfo
+SUBDIR+=	rcs send-pr texinfo
+
+.if ${MKGROFF} != "no"
+SUBDIR+=	groff
+.endif
 
 SUBDIR+=	gettext
 
