@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.38 2009/08/23 09:05:45 mrg Exp $
+# $NetBSD: md.sparc,v 1.39 2009/08/26 22:38:22 macallan Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -316,6 +316,8 @@
 ./usr/X11R7/lib/modules/drivers/mga_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/pnozz_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/pnozz_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
@@ -324,6 +326,8 @@
 ./usr/X11R7/lib/modules/drivers/suncg6_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sunffb_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sunffb_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/suntcx_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/suntcx_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
@@ -475,10 +479,12 @@
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/pnozz.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/r128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/suncg6.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/sunffb.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/suntcx.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
@@ -496,10 +502,12 @@
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/pnozz.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/r128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/suncg6.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/sunffb.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/suntcx.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
@@ -517,10 +525,12 @@
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/pnozz.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/r128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/suncg6.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/sunffb.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/suntcx.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
