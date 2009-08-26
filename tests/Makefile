@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.9 2008/08/16 23:51:51 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.9.8.1 2009/08/26 04:02:14 matt Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	fs games modules net util
+SUBDIR=	fs games modules util
 
 .if ${MKATF} != "no"
-SUBDIR+= atf
+SUBDIR+= atf net 
 .endif
 
 TESTSDIR=	${TESTSBASE}
