@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.5.66.1 2009/08/26 14:32:53 matt Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.5.66.2 2009/08/26 14:33:59 matt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -96,7 +96,7 @@ fpemul_trapsignal(struct lwp *l, unsigned int sig, unsigned int code)
 	ksiginfo_t ksi;
 
 #if DEBUG
-	printf("emul_trapsignal(%x,%x,%#"PRIxREGISTER")\n",
+	printf("fpemul_trapsignal(%x,%x,%#"PRIxREGISTER")\n",
 	   sig, code, l->l_md.md_regs->f_regs[_R_PC]);
 #endif
 
