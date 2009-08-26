@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2003/05/18 07:57:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.46.1 2009/08/26 03:35:41 matt Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
 .include <bsd.own.mk>
 
 # Build ELF to {ecoff, aout} tools on mips, for old bootblocks/PROMs.
-.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
+.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
+     ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb")
 
 PROG=	elf2ecoff
 
