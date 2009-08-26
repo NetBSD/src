@@ -1,6 +1,12 @@
-#	$NetBSD: Makefile,v 1.15 2007/09/17 17:37:48 drochner Exp $
+#	$NetBSD: Makefile,v 1.15.18.1 2009/08/26 03:34:33 matt Exp $
 
-SUBDIR+= basename bzip2 c++ config cut dirname grep gzip m4 make rtld
+.include <bsd.own.mk>
+
+SUBDIR+= basename bzip2
+.if ${MKCXX} != "no"
+SUBDIR+= c++
+.endif
+SUBDIR+= config cut dirname grep gzip m4 make rtld
 SUBDIR+= sdiff sort xlint
 
 .include <bsd.subdir.mk>
