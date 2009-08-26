@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.10 2009/08/15 11:33:49 macallan Exp $ */
+/*	$NetBSD: fbio.h,v 1.11 2009/08/26 22:34:50 macallan Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -73,7 +73,7 @@
 #define FBTYPE_CREATOR		22	/* ffb creator or elite */
 #define FBTYPE_GENERIC_PCI	23	/* machfb, ofb and so on */
 #define FBTYPE_AG10E		24	/* Fujitsu AG-10e */
-#define FBTYPE_SUNTCX		25	/* Sun TCX, S24  */
+#define FBTYPE_TCXCOLOR		25	/* Sun TCX, S24  */
 
 #define	FBTYPE_LASTPLUSONE	26	/* max number of fbs (change as add) */
 
