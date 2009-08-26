@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2006/11/20 17:08:35 skrll Exp $
+#	$NetBSD: Makefile,v 1.42.30.1 2009/08/26 03:37:08 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,10 @@ SUBDIR+= libopcodes libbfd libiberty
 .endif
 
 .if ${MKGCC} != "no"
-SUBDIR+= crtstuff4 libgcc4 libobjc4 libsupc++4 libstdc++-v3_4
+SUBDIR+= crtstuff4 libgcc4 libobjc4
+.if ${MKCXX} != "no"
+SUBDIR+= libsupc++4 libstdc++-v3_4
+.endif
 .endif
 
 SUBDIR+= libmalloc
