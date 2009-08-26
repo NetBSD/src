@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.3 2009/08/26 03:46:39 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.4 2009/08/26 14:29:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,18 +74,24 @@
 #define COND_SIGNAL	0x8
 
 #if defined(__mips_o32) || defined(__mips_o64)
-#define FPX_L	INT_L
-#define FPX_S	INT_S
-#define	FPX_SCALESHIFT	INT_SCALESHIFT
+#define FPX_L			INT_L
+#define FPX_S			INT_S
+#define	FPX_SCALESHIFT		INT_SCALESHIFT
 #else
-#define FPX_L	LONG_L
-#define FPX_S	LONG_S
-#define	FPX_SCALESHIFT	LONG_SCALESHIFT
+#define FPX_L			LONG_L
+#define FPX_S			LONG_S
+#define	FPX_SCALESHIFT		LONG_SCALESHIFT
+#define DFPX_L			REG_L
+#define DFPX_S			REG_S
+#define	DFPX_SCALESHIFT		REG_SCALESHIFT
+#define	SZDFREG			SZREG
+#define	DFPX_REGMASK		(0x1F << DFPX_SCALESHIFT)
+#define	DFPX_REGEVENMASK	(0x1E << DFPX_SCALESHIFT)
 #endif
-#define	SZFREG	(1 << FPX_SCALESHIFT)
-#define	FPX_REGMASK	(0x1F << FPX_SCALESHIFT)
-#define	FPX_REGEVENMASK	(0x1E << FPX_SCALESHIFT)
-#define	REG_REGMASK	(0x1F << REG_SCALESHIFT)
+#define	SZFREG			(1 << FPX_SCALESHIFT)
+#define	FPX_REGMASK		(0x1F << FPX_SCALESHIFT)
+#define	FPX_REGEVENMASK		(0x1E << FPX_SCALESHIFT)
+#define	REG_REGMASK		(0x1F << REG_SCALESHIFT)
 
 /* insns are reordered in the way as MIPS architecture imposes */
 	.set	reorder
@@ -172,10 +178,15 @@ paired_single_op:
 
 #ifndef SOFTFLOAT
 #define	mfromc1		ill
+#define	dmfromc1	ill
 #define	cfromc1		ill
 #define	mtoc1		ill
+#define	dmtoc1		ill
 #define	ctoc1		ill
 #define	branchc1	ill
+#elif !defined(MIPS3_PLUS)
+#define	dmfromc1	ill
+#define	dmtoc1		ill
 #endif
 #define	branchc1any2	ill
 #define	branchc1any4	ill
@@ -265,11 +276,11 @@ paired_single_op:
 	.rdata
 fmt_tbl:
 	PTR_WORD mfromc1	# sub 0		mfc1
-	PTR_WORD ill		# sub 1		dmfc1
+	PTR_WORD dmfromc1	# sub 1		dmfc1
 	PTR_WORD cfromc1	# sub 2		cfc1
 	PTR_WORD ill		# sub 3		mfhc1
 	PTR_WORD mtoc1		# sub 4		mtc1
-	PTR_WORD ill		# sub 5		dmtc1
+	PTR_WORD dmtoc1		# sub 5		dmtc1
 	PTR_WORD ctoc1		# sub 6		ctc1
 	PTR_WORD ill		# sub 7		mthc1
 	PTR_WORD branchc1	# sub 8		bc1
@@ -650,26 +661,6 @@ mfromc1:
 
 	b	done
 
-#if defined(MIPS3_PLUS) && 0
-dmfromc1:
-	srl	t1, a0, 11-FPX_SCALESHIFT	# fs is in bits 15:11
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
-	andi	t1, t1,  FPX_REGMASK
-	PTR_ADDU t0, t0, t1
-
-	FPX_L	v0, U_PCB_FPREGS+FRAME_FP0(t0)
-
-	srl	t0, a0, 16-REG_SCALESHIFT
-	andi	t0, t0, REG_REGMASK
-	PTR_ADDU t0, t0, a1
-
-	REG_PROLOGUE
-	REG_S	v0, FRAME_RZERO(t0)
-	REG_EPILOGUE
-
-	b	done
-#endif /* MIPS3_PLUS */
-
 mtoc1:
 	REG_PROLOGUE
 	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
@@ -687,6 +678,44 @@ mtoc1:
 	FPX_S	v0, U_PCB_FPREGS+FRAME_FP0(t0)
 
 	b	done
+
+#if defined(MIPS3_PLUS) && defined(SOFTFLOAT)
+dmfromc1:
+	srl	t1, a0, 11-DFPX_SCALESHIFT	# fs is in bits 15:11
+	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1,  DFPX_REGMASK
+	PTR_ADDU t0, t0, t1
+
+	DFPX_L	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU t0, t0, a1
+
+	REG_PROLOGUE
+	REG_S	v0, FRAME_RZERO(t0)
+	REG_EPILOGUE
+
+	b	done
+
+dmtoc1:
+	REG_PROLOGUE
+	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
+	srl	t0, a0, 16-REG_SCALESHIFT
+	andi	t0, t0, REG_REGMASK
+	PTR_ADDU v0, a1, t0
+	REG_L	v0, FRAME_RZERO(v0)
+	REG_EPILOGUE
+
+	srl	t1, a0, 11-DFPX_SCALESHIFT
+	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	andi	t1, t1, DFPX_REGMASK
+	PTR_ADDU t0, t0, t1
+
+	DFPX_S	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+
+	b	done
+#endif /* MIPS3_PLUS && SOFTFLOAT */
 
 cfromc1:
 	srl	t1, a0, 11
