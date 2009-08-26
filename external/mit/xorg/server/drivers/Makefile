@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2009/06/23 04:39:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2009/08/26 22:33:38 macallan Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -41,6 +41,11 @@ SUBDIR+= \
 	xf86-video-suncg6 \
 	xf86-video-sunffb \
 	xf86-video-wsfb
+.if ${MACHINE} == "sparc"
+SUBDIR+= \
+	xf86-video-pnozz \
+	xf86-video-suntcx
+.endif
 .elif ${MACHINE} == "shark"
 SUBDIR+= \
 	xf86-video-chips \
