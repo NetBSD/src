@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.6.2.1 2009/05/30 16:21:34 snj Exp $
+# $NetBSD: mi,v 1.780.2.6.2.1.2.1 2009/08/26 03:43:22 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -648,10 +648,10 @@
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
 ./usr/bin/at					base-cron-bin
-./usr/bin/atf-config				base-atf-bin
-./usr/bin/atf-report				base-atf-bin
-./usr/bin/atf-run				base-atf-bin
-./usr/bin/atf-version				base-atf-bin
+./usr/bin/atf-config				base-atf-bin		atf
+./usr/bin/atf-report				base-atf-bin		atf
+./usr/bin/atf-run				base-atf-bin		atf
+./usr/bin/atf-version				base-atf-bin		atf
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
 ./usr/bin/audioctl				base-audio-bin
@@ -1184,10 +1184,10 @@
 ./usr/libdata/ldscripts				base-c-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
-./usr/libexec/atf-cleanup			base-atf-bin
-./usr/libexec/atf-exec				base-atf-bin
-./usr/libexec/atf-format			base-atf-bin
-./usr/libexec/atf-killpg			base-atf-bin
+./usr/libexec/atf-cleanup			base-atf-bin		atf
+./usr/libexec/atf-exec				base-atf-bin		atf
+./usr/libexec/atf-format			base-atf-bin		atf
+./usr/libexec/atf-killpg			base-atf-bin		atf
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
@@ -1618,8 +1618,8 @@
 ./usr/sbin/zdump				base-sysutil-bin
 ./usr/sbin/zic					base-sysutil-bin
 ./usr/share					base-sys-share
-./usr/share/atf					base-atf-share
-./usr/share/atf/atf-run.hooks			base-atf-bin		share
+./usr/share/atf					base-atf-share		
+./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf
 ./usr/share/atf/atf.config.subr			base-atf-share		share,obsolete
 ./usr/share/atf/atf.footer.subr			base-atf-share		share
 ./usr/share/atf/atf.header.subr			base-atf-share		share
