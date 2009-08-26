@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.23.8.1 2009/08/26 03:43:24 matt Exp $
+# $NetBSD: mi,v 1.23.8.2 2009/08/26 04:41:37 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -394,11 +394,11 @@
 ./usr/tests/modules/t_modctl			tests-sys-tests		modular
 ./usr/tests/modules/t_modload			tests-sys-tests		modular
 ./usr/tests/net					tests-net-tests
-./usr/tests/net/Atffile				tests-net-tests
+./usr/tests/net/Atffile				tests-net-tests		atf
 ./usr/tests/net/sys				tests-net-tests
-./usr/tests/net/sys/Atffile			tests-net-tests
-./usr/tests/net/sys/t_connect			tests-net-tests
-./usr/tests/net/sys/t_listen			tests-net-tests
+./usr/tests/net/sys/Atffile			tests-net-tests		atf
+./usr/tests/net/sys/t_connect			tests-net-tests		atf
+./usr/tests/net/sys/t_listen			tests-net-tests		atf
 ./usr/tests/util				tests-util-tests
 ./usr/tests/util/Atffile			tests-util-tests
 ./usr/tests/util/df				tests-util-tests

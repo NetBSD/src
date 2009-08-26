@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.70.2.1.4.1 2009/08/26 03:43:24 matt Exp $
+# $NetBSD: shl.mi,v 1.70.2.1.4.2 2009/08/26 04:41:37 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6,8 +6,8 @@
 ./usr/lib/libarchive_pic.a			comp-c-piclib
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libatf_pic.a				comp-obsolete		obsolete
-./usr/lib/libatf-c_pic.a			comp-atf-piclib
-./usr/lib/libatf-c++_pic.a			comp-atf-piclib
+./usr/lib/libatf-c_pic.a			comp-atf-piclib		atf
+./usr/lib/libatf-c++_pic.a			comp-atf-piclib		atf
 ./usr/lib/libbind9_pic.a			comp-bind-piclib
 ./usr/lib/libbluetooth_pic.a			comp-c-piclib
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
