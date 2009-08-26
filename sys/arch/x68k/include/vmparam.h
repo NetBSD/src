@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.29 2009/03/06 20:31:54 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.30 2009/08/26 00:30:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -164,8 +164,7 @@
  * pmap-specific data stored in the vm_physmem[] array.
  */
 struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv table for this seg */
-	char *attrs;			/* page attributes for this seg */
+	struct pv_header *pvheader;	/* pv table for this seg */
 };
 
 #endif /* _X68K_VMPARAM_H_ */
