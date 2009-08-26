@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.27 2009/07/16 18:58:38 dyoung Exp $ */
+/* $NetBSD: mfi.c,v 1.28 2009/08/26 21:41:05 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.27 2009/07/16 18:58:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.28 2009/08/26 21:41:05 bouyer Exp $");
 
 #include "bio.h"
 
@@ -2032,18 +2032,21 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct mfi_softc	*sc = sme->sme_cookie;
 	struct bioc_vol		bv;
 	int s;
+	int error;
 
 	if (edata->sensor >= sc->sc_ld_cnt)
 		return;
 
 	memset(&bv, 0, sizeof(bv));
 	bv.bv_volid = edata->sensor;
+	KERNEL_LOCK(1, curlwp);
 	s = splbio();
-	if (mfi_ioctl_vol(sc, &bv)) {
-		splx(s);
-		return;
+	error = mfi_ioctl_vol(sc, &bv);
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
+	if (error)
+		return;
 
 	switch(bv.bv_status) {
 	case BIOC_SVOFFLINE:
