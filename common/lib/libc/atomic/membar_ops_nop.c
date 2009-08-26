@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops_nop.c,v 1.4 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: membar_ops_nop.c,v 1.4.12.1 2009/08/26 03:44:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,4 +54,4 @@ atomic_op_alias(membar_consumer,_membar_sync)
 __strong_alias(_membar_consumer,_membar_sync)
 #undef membar_sync
 atomic_op_alias(membar_sync,_membar_sync)
-__strong_alias(_membar_sync,_membar_sync)
+//__strong_alias(_membar_sync,_membar_sync)
