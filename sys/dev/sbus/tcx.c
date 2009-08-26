@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.39 2009/08/20 02:29:16 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.40 2009/08/26 22:36:07 macallan Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.39 2009/08/20 02:29:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.40 2009/08/26 22:36:07 macallan Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -273,11 +273,11 @@ tcxattach(device_t parent, device_t self, void *args)
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", OBPNAME,
+	printf("%s: %s, %d x %d", device_xname(self), OBPNAME,
 		fb->fb_type.fb_width,
 		fb->fb_type.fb_height);
 
-	fb->fb_type.fb_type = FBTYPE_SUNTCX;
+	fb->fb_type.fb_type = FBTYPE_TCXCOLOR;
 
 
 	if (sa->sa_nreg != TCX_NREG) {
@@ -619,7 +619,7 @@ tcxmmap(dev_t dev, off_t off, int prot)
 		{ TCX_USER_RBLIT, 1, TCX_REG_RBLIT },
 		{ TCX_USER_TEC, 1, TCX_REG_TEC },
 		{ TCX_USER_BTREGS, 8192 /* XXX */, TCX_REG_CMAP },
-		{ TCX_USER_THC, 0x1000, TCX_REG_THC },
+		{ TCX_USER_THC, 0x2000, TCX_REG_THC },
 		{ TCX_USER_DHC, 1, TCX_REG_DHC },
 		{ TCX_USER_ALT, 1, TCX_REG_ALT },
 		{ TCX_USER_ROM, 65536, TCX_REG_ROM },
@@ -645,8 +645,10 @@ tcxmmap(dev_t dev, off_t off, int prot)
 	for (; mo < mo_end; mo++) {
 		if ((u_int)off < mo->mo_uaddr)
 			continue;
+
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size;
+
 		if (sz == 0) {
 			sz = sc->sc_fb.fb_type.fb_size;
 			/*
@@ -664,6 +666,9 @@ tcxmmap(dev_t dev, off_t off, int prot)
 				sz *= 4;
 			}
 		}
+		if (sz == 1)
+			sz = rr[mo->mo_bank].oa_size;
+
 		if (u < sz) {
 			return (bus_space_mmap(sc->sc_bustag,
 				BUS_ADDR(rr[mo->mo_bank].oa_space,
