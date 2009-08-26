@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.158 2009/06/01 23:28:39 sjg Exp $
+.\"	$NetBSD: make.1,v 1.159 2009/08/26 23:17:11 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl BeikNnqrstWX
+.Bk -words
+.Op Fl C Ar directory
+.Ek
 .Bk -words
 .Op Fl D Ar variable
 .Ek
@@ -104,6 +107,16 @@ The options are as follows:
 .It Fl B
 Try to be backwards compatible by executing a single shell per command and
 by executing the commands to make the sources of a dependency line in sequence.
+.It Fl C Ar directory
+Change to
+.Ar directory
+before reading the makefiles or doing anything else.
+If multiple
+.Fl C
+options are specified, each is interpreted relative to the previous one:
+.Fl C Pa / Fl C Pa etc
+is equivalent to
+.Fl C Pa /etc .
 .It Fl D Ar variable
 Define
 .Ar variable

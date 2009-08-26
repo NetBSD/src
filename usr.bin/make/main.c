@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.170 2009/03/24 13:53:21 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.171 2009/08/26 23:17:11 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.170 2009/03/24 13:53:21 perry Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.171 2009/08/26 23:17:11 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.170 2009/03/24 13:53:21 perry Exp $");
+__RCSID("$NetBSD: main.c,v 1.171 2009/08/26 23:17:11 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -333,7 +333,7 @@ MainParseArgs(int argc, char **argv)
 	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
-#define OPTFLAGS "BD:I:J:NST:V:WXd:ef:ij:km:nqrst"
+#define OPTFLAGS "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrst"
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 	getopt_def = OPTFLAGS;
@@ -383,6 +383,15 @@ rearg:
 		case 'B':
 			compatMake = TRUE;
 			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
+			break;
+		case 'C':
+			if (chdir(argvalue) == -1) {
+				(void)fprintf(stderr,
+					      "%s: chdir %s: %s\n",
+					      progname, argvalue,
+					      strerror(errno));
+				exit(1);
+			}
 			break;
 		case 'D':
 			if (argvalue == NULL || argvalue[0] == 0) goto noarg;
@@ -1773,7 +1782,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"usage: %s [-BeikNnqrstWX] [-D variable] [-d flags] [-f makefile]\n\
+"usage: %s [-BeikNnqrstWX] \n\
+            [-C directory] [-D variable] [-d flags] [-f makefile]\n\
             [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n\
             [-V variable] [variable=value] [target ...]\n", progname);
 	exit(2);
