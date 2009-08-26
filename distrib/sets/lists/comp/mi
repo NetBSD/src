@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.9.2.1 2009/07/14 19:35:22 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.9.2.1.2.1 2009/08/26 03:43:23 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,7 +7,7 @@
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
 ./usr/bin/asa					comp-fortran-bin
-./usr/bin/atf-compile				comp-atf-bin
+./usr/bin/atf-compile				comp-atf-bin		cxx
 ./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		bfd
 ./usr/bin/c89					comp-c-bin
@@ -2537,10 +2537,10 @@
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssp.a				comp-obsolete		obsolete
 ./usr/lib/libssp_p.a				comp-obsolete		obsolete
-./usr/lib/libstdc++.a				comp-cxx-lib
+./usr/lib/libstdc++.a				comp-cxx-lib		cxx
 ./usr/lib/libstdc++_g.a		-unknown-	debuglib
-./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile
-./usr/lib/libsupc++.a				comp-cxx-lib
+./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile,cxx
+./usr/lib/libsupc++.a				comp-cxx-lib		cxx
 ./usr/lib/libsupc++_g.a		-unknown-	debuglib
 ./usr/lib/libtelnet.a				comp-obsolete		obsolete
 ./usr/lib/libtelnet.so				comp-obsolete		obsolete
@@ -2573,8 +2573,8 @@
 ./usr/lib/libz.a				comp-c-lib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
 ./usr/lib/pkgconfig				comp-c-lib
-./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
-./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf
+./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.3.2.1 2009/05/30 16:21:35 snj Exp $
+# $NetBSD: mi,v 1.1109.2.3.2.1.2.1 2009/08/26 03:43:24 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -24,7 +24,7 @@
 ./usr/share/info/gettext.info			man-sys-info		info
 ./usr/share/info/gprof.info			man-debug-info		bfd,info
 ./usr/share/info/grep.info			man-util-info		info
-./usr/share/info/groff.info			man-groff-info		info
+./usr/share/info/groff.info			man-groff-info		info,groff
 ./usr/share/info/gzip.info			man-obsolete		obsolete
 ./usr/share/info/heimdal.info			man-krb5-info		kerberos,info
 ./usr/share/info/info-stnd.info			man-texinfo-info	info
@@ -48,16 +48,16 @@
 ./usr/share/man/cat1/at.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atari/edahdi.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/atari/msconfig.0		man-sysutil-catman	.cat
-./usr/share/man/cat1/atf-cleanup.0		man-atf-catman		.cat
-./usr/share/man/cat1/atf-compile.0		man-atf-catman		.cat
-./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat
-./usr/share/man/cat1/atf-exec.0			man-atf-catman		.cat
-./usr/share/man/cat1/atf-format.0		man-atf-catman		.cat
-./usr/share/man/cat1/atf-killpg.0		man-atf-catman		.cat
-./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat
-./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat
+./usr/share/man/cat1/atf-cleanup.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-compile.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-exec.0			man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-format.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-killpg.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-test-program.0		man-atf-catman		.cat
-./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
 ./usr/share/man/cat1/audioctl.0			man-audio-catman	.cat
@@ -1859,7 +1859,7 @@
 ./usr/share/man/cat7/lint.0			man-reference-catman	.cat
 ./usr/share/man/cat7/mailaddr.0			man-reference-catman	.cat
 ./usr/share/man/cat7/mandoc.0			man-obsolete		obsolete
-./usr/share/man/cat7/mdoc.0			man-groff-catman	.cat
+./usr/share/man/cat7/mdoc.0			man-groff-catman	.cat,groff
 ./usr/share/man/cat7/miscellaneous.0		man-obsolete		obsolete
 ./usr/share/man/cat7/msafer.0			man-obsolete		obsolete
 ./usr/share/man/cat7/nls.0			man-reference-catman	.cat
@@ -2660,16 +2660,16 @@
 ./usr/share/man/html1/at.html			man-cron-htmlman	html
 ./usr/share/man/html1/atari/edahdi.html		man-sysutil-htmlman	html
 ./usr/share/man/html1/atari/msconfig.html	man-sysutil-htmlman	html
-./usr/share/man/html1/atf-cleanup.html		man-atf-htmlman		html
-./usr/share/man/html1/atf-compile.html		man-atf-htmlman		html
-./usr/share/man/html1/atf-config.html		man-atf-htmlman		html
-./usr/share/man/html1/atf-exec.html		man-atf-htmlman		html
-./usr/share/man/html1/atf-format.html		man-atf-htmlman		html
-./usr/share/man/html1/atf-killpg.html		man-atf-htmlman		html
-./usr/share/man/html1/atf-report.html		man-atf-htmlman		html
-./usr/share/man/html1/atf-run.html		man-atf-htmlman		html
+./usr/share/man/html1/atf-cleanup.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-compile.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-exec.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-format.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-killpg.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-report.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-run.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-test-program.html	man-atf-htmlman		html
-./usr/share/man/html1/atf-version.html		man-atf-htmlman		html
+./usr/share/man/html1/atf-version.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atq.html			man-cron-htmlman	html
 ./usr/share/man/html1/atrm.html			man-cron-htmlman	html
 ./usr/share/man/html1/audioctl.html		man-audio-htmlman	html
@@ -4290,7 +4290,7 @@
 ./usr/share/man/html7/intro.html		man-reference-htmlman	html
 ./usr/share/man/html7/lint.html			man-reference-htmlman	html
 ./usr/share/man/html7/mailaddr.html		man-reference-htmlman	html
-./usr/share/man/html7/mdoc.html			man-groff-htmlman	html
+./usr/share/man/html7/mdoc.html			man-groff-htmlman	html,groff
 ./usr/share/man/html7/nls.html			man-reference-htmlman	html
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
@@ -4888,16 +4888,16 @@
 ./usr/share/man/man1/at.1			man-cron-man		.man
 ./usr/share/man/man1/atari/edahdi.1		man-sysutil-man		.man
 ./usr/share/man/man1/atari/msconfig.1		man-sysutil-man		.man
-./usr/share/man/man1/atf-cleanup.1		man-atf-man		.man
-./usr/share/man/man1/atf-compile.1		man-atf-man		.man
-./usr/share/man/man1/atf-config.1		man-atf-man		.man
-./usr/share/man/man1/atf-exec.1			man-atf-man		.man
-./usr/share/man/man1/atf-format.1		man-atf-man		.man
-./usr/share/man/man1/atf-killpg.1		man-atf-man		.man
-./usr/share/man/man1/atf-report.1		man-atf-man		.man
-./usr/share/man/man1/atf-run.1			man-atf-man		.man
+./usr/share/man/man1/atf-cleanup.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-compile.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-exec.1			man-atf-man		.man,atf
+./usr/share/man/man1/atf-format.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-killpg.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-report.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-run.1			man-atf-man		.man,atf
 ./usr/share/man/man1/atf-test-program.1		man-atf-man		.man
-./usr/share/man/man1/atf-version.1		man-atf-man		.man
+./usr/share/man/man1/atf-version.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
 ./usr/share/man/man1/audioctl.1			man-audio-man		.man
@@ -6699,7 +6699,7 @@
 ./usr/share/man/man7/lint.7			man-reference-man	.man
 ./usr/share/man/man7/mailaddr.7			man-reference-man	.man
 ./usr/share/man/man7/mandoc.7			man-obsolete		obsolete
-./usr/share/man/man7/mdoc.7			man-groff-man		.man
+./usr/share/man/man7/mdoc.7			man-groff-man		.man,groff
 ./usr/share/man/man7/msafer.7			man-obsolete		obsolete
 ./usr/share/man/man7/nls.7			man-reference-man	.man
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete

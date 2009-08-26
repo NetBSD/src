@@ -1,5 +1,5 @@
-# $NetBSD: ad.mips,v 1.34 2008/08/22 13:42:19 lukem Exp $
-./usr/bin/elf2aout				comp-sysutil-bin
+# $NetBSD: ad.mips,v 1.34.8.1 2009/08/26 03:43:23 matt Exp $
+./usr/bin/elf2aout				comp-sysutil-bin	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
