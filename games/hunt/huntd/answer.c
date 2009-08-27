@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.15 2009/08/12 07:42:11 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.16 2009/08/27 00:36:32 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.15 2009/08/12 07:42:11 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.16 2009/08/27 00:36:32 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -65,7 +65,7 @@ answer(void)
 	static SOCKET sockstruct;
 	char *cp1, *cp2;
 	int flags;
-	u_int32_t version;
+	uint32_t version;
 	int i;
 
 #ifdef INTERNET
@@ -93,7 +93,7 @@ answer(void)
 	if (machine == 0)
 		machine = gethostid();
 #endif
-	version = htonl((u_int32_t) HUNT_VERSION);
+	version = htonl((uint32_t) HUNT_VERSION);
 	(void) write(newsock, &version, LONGLEN);
 	(void) read(newsock, &uid, LONGLEN);
 	uid = ntohl(uid);
