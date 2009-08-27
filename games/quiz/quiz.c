@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.24 2009/08/12 08:26:49 dholland Exp $	*/
+/*	$NetBSD: quiz.c,v 1.25 2009/08/27 00:24:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.24 2009/08/12 08:26:49 dholland Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.25 2009/08/27 00:24:11 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: quiz.c,v 1.24 2009/08/12 08:26:49 dholland Exp $");
 
 static QE qlist;
 static int catone, cattwo, tflag;
-static u_int qsize;
+static unsigned qsize;
 
 int	 main(int, char *[]);
 static char *appdstr(char *, const char *, size_t);
@@ -71,7 +71,7 @@ static void get_cats(char *, char *);
 static void get_file(const char *);
 static const char *next_cat(const char *);
 static void quiz(void);
-static void score(u_int, u_int, u_int);
+static void score(unsigned, unsigned, unsigned);
 static void show_index(void);
 static void usage(void) __dead;
 
@@ -230,7 +230,7 @@ quiz()
 	QE *qp;
 	int i;
 	size_t len;
-	u_int guesses, rights, wrongs;
+	unsigned guesses, rights, wrongs;
 	int next;
 	char *answer, *t, question[LINE_SZ];
 	const char *s;
@@ -360,7 +360,7 @@ appdstr(s, tp, len)
 
 static void
 score(r, w, g)
-	u_int r, w, g;
+	unsigned r, w, g;
 {
 	(void)printf("Rights %d, wrongs %d,", r, w);
 	if (g)
