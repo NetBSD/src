@@ -1,4 +1,4 @@
-# $NetBSD: dri.mk,v 1.6 2009/06/16 00:26:11 mrg Exp $
+# $NetBSD: dri.mk,v 1.7 2009/08/27 04:36:13 mrg Exp $
 
 # XXX DRI_LIB_DEPS
 
@@ -29,11 +29,12 @@ CPPFLAGS+=	-Wno-stack-protector
 # Common sources
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common \
 	${X11SRCDIR.MesaLib}/src/mesa/drivers/common
-.if (${MODULE} != "swrast")
-SRCS+=	dri_util.c
+.if (${MODULE} == "swrast")
+SRCS+=	driverfuncs.c utils.c
+.else
+SRCS+=	dri_util.c drirenderbuffer.c driverfuncs.c texmem.c
+SRCS+=	utils.c vblank.c xmlconfig.c
 .endif
-SRCS+=	drirenderbuffer.c driverfuncs.c texmem.c utils.c vblank.c \
-	xmlconfig.c
 
 .include <bsd.x11.mk>
 
