@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.59 2009/08/27 02:03:22 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.60 2009/08/27 02:21:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.59 2009/08/27 02:03:22 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.60 2009/08/27 02:21:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,11 @@ __RCSID("$NetBSD: fortune.c,v 1.59 2009/08/27 02:03:22 dholland Exp $");
 #include <string.h>
 #include <err.h>
 #include <time.h>
+
+#ifndef NO_REGEX
+#include <regex.h>
+#endif
+
 #include "strfile.h"
 #include "pathnames.h"
 
@@ -107,9 +112,16 @@ static bool Long_only	= FALSE;	/* long fortune desired */
 static bool Offend	= FALSE;	/* offensive fortunes only */
 static bool All_forts	= FALSE;	/* any fortune allowed */
 static bool Equal_probs	= FALSE;	/* scatter un-allocted prob equally */
+
 #ifndef NO_REGEX
 static bool Match	= FALSE;	/* dump fortunes matching a pattern */
+static regex_t *Re_pat = NULL;
+static regex_t *Re_pat13 = NULL;
+static regex_t *Re_use = NULL;
+static int  Re_code;
+static char Re_error[1024];
 #endif
+
 #ifdef DEBUG
 static bool Debug = FALSE;		/* print debug messages */
 #endif
@@ -161,52 +173,22 @@ static void zero_tbl(STRFILE *);
 int main(int, char *[]);
 
 #ifndef NO_REGEX
+
 static char *conv_pat(char *);
 static int find_matches(void);
 static void matches_in_list(FILEDESC *);
 static size_t maxlen_in_list(FILEDESC *);
-#endif
 
-#ifndef NO_REGEX
-# if HAVE_REGCMP
-#  define	RE_INIT(re)
-#  define	RE_COMP(re, p)	((re) = regcmp((p), NULL))
-#  define	RE_ERROR(re)	"Invalid pattern"
-#  define	RE_OK(re)	((re) != NULL)
-#  define	RE_EXEC(re, p)	regex((re), (p))
-#  define	RE_FREE(re)
-
-char	*Re_pat, *Re_pat13, *Re_use;
-char	*regcmp(), *regex();
-
-# elif HAVE_RE_COMP
-char	*Re_pat, *Re_pat13, *Re_use;
-char	*Re_error;
-
-#  define	RE_INIT(re)
-#  define	RE_COMP(re, p)	(Re_error = re_comp(p))
-#  define	RE_ERROR(re)	Re_error
-#  define	RE_OK(re)	(Re_error == NULL)
-#  define	RE_EXEC(re, p)	re_exec(p)
-#  define	RE_FREE(re)
-# elif HAVE_REGCOMP
-#  include <regex.h>
-static regex_t *Re_pat = NULL, *Re_pat13 = NULL, *Re_use = NULL;
-static int  Re_code;
-static char Re_error[1024];
-#  define	RE_INIT(re)	if ((re) == NULL && \
-				    ((re) = calloc(sizeof(*(re)), 1)) \
-				    == NULL) err(1, NULL)
-#  define	RE_COMP(re, p)	(Re_code = regcomp((re), (p), REG_EXTENDED))
-#  define	RE_OK(re)	(Re_code == 0)
-#  define	RE_EXEC(re, p)	(!regexec((re), (p), 0, NULL, 0))
-#  define	RE_ERROR(re)	(regerror(Re_code, (re), Re_error, \
-				    sizeof(Re_error)), Re_error)
-#  define	RE_FREE(re)	if ((re) != NULL) do { regfree((re)); \
+#define RE_INIT(re)	if ((re) == NULL && \
+			    ((re) = calloc(sizeof(*(re)), 1)) \
+			    == NULL) err(1, NULL)
+#define RE_COMP(re, p)	(Re_code = regcomp((re), (p), REG_EXTENDED))
+#define RE_OK(re)	(Re_code == 0)
+#define RE_EXEC(re, p)	(!regexec((re), (p), 0, NULL, 0))
+#define RE_ERROR(re)	(regerror(Re_code, (re), Re_error, \
+			    sizeof(Re_error)), Re_error)
+#define RE_FREE(re)	if ((re) != NULL) do { regfree((re)); \
 				    (re) = NULL; } while (0)
-# else
-	#error "Need to define HAVE_REGCMP, HAVE_RE_COMP, or HAVE_REGCOMP"
-# endif
 #endif
 
 #ifndef NAMLEN
