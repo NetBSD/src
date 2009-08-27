@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.57 2009/08/27 01:40:27 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.58 2009/08/27 01:42:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.57 2009/08/27 01:40:27 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.58 2009/08/27 01:42:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -843,7 +843,7 @@ is_fortfile(const char *file, char **datp, char **posp, int check_for_offend)
 	}
 #else
 	if (posp != NULL) {
-		/*  *posp = NULL; -- not quite yet */
+		*posp = NULL;
 	}
 #endif	/* OK_TO_WRITE_DISK */
 	DPRINTF(2, (stderr, "TRUE\n"));
