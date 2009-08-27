@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.121 2009/05/31 05:10:47 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.122 2009/08/27 16:02:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.121 2009/05/31 05:10:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.122 2009/08/27 16:02:26 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1636,12 +1636,9 @@ re_start(struct ifnet *ifp)
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
 		if (__predict_false(pad)) {
-			bus_addr_t paddaddr;
-
 			d = &sc->re_ldata.re_tx_list[curdesc];
 			d->re_vlanctl = htole32(vlanctl);
-			paddaddr = RE_TXPADDADDR(sc);
-			re_set_bufaddr(d, paddaddr);
+			re_set_bufaddr(d, RE_TXPADDADDR(sc));
 			cmdstat = re_flags |
 			    RE_TDESC_CMD_OWN | RE_TDESC_CMD_EOF |
 			    (RE_IP4CSUMTX_PADLEN + 1 - m->m_pkthdr.len);
