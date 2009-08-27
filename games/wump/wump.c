@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.24 2009/08/12 09:00:10 dholland Exp $	*/
+/*	$NetBSD: wump.c,v 1.25 2009/08/27 00:19:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.24 2009/08/12 09:00:10 dholland Exp $");
+__RCSID("$NetBSD: wump.c,v 1.25 2009/08/27 00:19:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -596,7 +596,7 @@ try_again:		lnk = (random() % room_num) + 1;
 	 * make it easier on the intrepid adventurer.
 	 */
 	for (i = 1; i <= room_num; ++i)
-		qsort(cave[i].tunnel, (u_int)link_num,
+		qsort(cave[i].tunnel, link_num,
 		    sizeof(cave[i].tunnel[0]), int_compare);
 
 #ifdef DEBUG
