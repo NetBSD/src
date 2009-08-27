@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.7 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: sti.c,v 1.8 2009/08/27 19:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sti.c,v 1.7 2008/04/28 20:24:17 martin Exp $");
+#ifdef __RCSID
+__RCSID("$NetBSD: sti.c,v 1.8 2009/08/27 19:40:06 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -40,14 +42,21 @@ __RCSID("$NetBSD: sti.c,v 1.7 2008/04/28 20:24:17 martin Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
-#include <vis.h>
 #include <errno.h>
+#ifdef __RCSID
+#include <vis.h>
+#else
+#define setprogname(a)
+extern const char *__progname;
+#define getprogname() __progname
+#endif
 
 static int
 unescape(const char **pp, int *state)
 {
 	char ch, out;
 
+#ifdef __RCSID
 	while ((ch = *(*pp)++) != '\0') {
 		switch(unvis(&out, ch, state, 0)) {
 		case 0:
@@ -65,6 +74,48 @@ unescape(const char **pp, int *state)
 	}
 	if (unvis(&out, '\0', state, UNVIS_END) == UNVIS_VALID)
 		return out;
+#else
+	switch ((ch = *(*pp)++)) {
+	case '\0':
+		goto out;
+	case '^':
+		ch = *(*pp)++;
+		return CTRL(ch);
+	case '\\':
+		switch (ch = *(*pp)++) {
+		case 'a': return '\a';
+		case 'b': return '\b';
+		case 'e': return '\e';
+		case 'f': return '\f';
+		case 't': return '\t';
+		case 'n': return '\n';
+		case 'r': return '\r';
+		case 'v': return '\v';
+		case '\\': return '\\';
+
+		case '0': case '1': case '2': case '3':
+		case '4': case '5': case '6': case '7':
+			out = 0;
+			if (ch >= '0' && ch < '8') {
+				out = out * 8 + ch - '0';
+				ch = *(*pp)++;
+				if (ch >= '0' && ch < '8') {
+					out = out * 8 + ch - '0';
+					ch = *(*pp)++;
+					if (ch >= '0' && ch < '8')
+						out = out * 8 + ch - '0';
+				}
+			}
+			return out;
+		default:
+		    break;
+		}
+		break;
+	default:
+		return ch;
+	}
+out:
+#endif
 	errno = ENODATA;
 	return -1;
 }
@@ -127,10 +178,21 @@ main(int argc, char *argv[])
 
 	if (argc == 0) {
 		char *line;
+#ifndef __RCSID
+		line = malloc(10240);
+		while (fgets(line, 10240, stdin) != NULL) {
+			char *p;
+			if ((p = strrchr(line, '\n')) != NULL)
+				*p = '\0';
+			sendstr(fd, line);
+		}
+		free(line);
+#else
 		while ((line = fparseln(stdin, NULL, NULL, NULL, 0)) != NULL) {
 			sendstr(fd, line);
 			free(line);
 		}
+#endif
 	} else {
 		for (; argc--; argv++) {
 			sendstr(fd, *argv);
