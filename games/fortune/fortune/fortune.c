@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.55 2009/08/27 00:43:31 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.56 2009/08/27 01:19:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.55 2009/08/27 00:43:31 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.56 2009/08/27 01:19:38 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ static bool Debug = FALSE;		/* print debug messages */
 
 static char *Fortbuf = NULL;		/* fortune buffer for -m */
 
-static int Fort_len = 0;
+static size_t Fort_len = 0;
 
 static off_t Seekpts[2];		/* seek pointers to fortunes */
 
@@ -136,7 +136,7 @@ static void display(FILEDESC *);
 static void do_free(void *);
 static void *do_malloc(size_t);
 static int form_file_list(char **, int);
-static int fortlen(void);
+static size_t fortlen(void);
 static void get_fort(void);
 static void get_pos(FILEDESC *);
 static void get_tbl(FILEDESC *);
@@ -164,7 +164,7 @@ int main(int, char *[]);
 static char *conv_pat(char *);
 static int find_matches(void);
 static void matches_in_list(FILEDESC *);
-static int maxlen_in_list(FILEDESC *);
+static size_t maxlen_in_list(FILEDESC *);
 #endif
 
 #ifndef NO_REGEX
@@ -265,7 +265,7 @@ main(ac, av)
 	if (Wait) {
 		if (Fort_len == 0)
 			(void) fortlen();
-		sleep((unsigned int) max(Fort_len / CPERS, MINW));
+		sleep(max(Fort_len / CPERS, MINW));
 	}
 	return(0);
 }
@@ -308,10 +308,10 @@ display(fp)
  * fortlen:
  *	Return the length of the fortune.
  */
-static int
+static size_t
 fortlen()
 {
-	int	nchar;
+	size_t	nchar;
 	char	line[BUFSIZ];
 
 	if (!(Fortfile->tbl.str_flags & (STR_RANDOM | STR_ORDERED)))
@@ -1330,12 +1330,12 @@ find_matches()
  * maxlen_in_list
  *	Return the maximum fortune len in the file list.
  */
-static int
+static size_t
 maxlen_in_list(list)
 	FILEDESC	*list;
 {
 	FILEDESC	*fp;
-	int		 len, maxlen;
+	size_t len, maxlen;
 
 	maxlen = 0;
 	for (fp = list; fp != NULL; fp = fp->next) {
@@ -1345,7 +1345,7 @@ maxlen_in_list(list)
 		}
 		else {
 			get_tbl(fp);
-			if (fp->tbl.str_longlen > (u_int32_t)maxlen)
+			if (fp->tbl.str_longlen > maxlen)
 				maxlen = fp->tbl.str_longlen;
 		}
 	}
