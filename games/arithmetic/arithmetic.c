@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.24 2009/08/12 04:30:21 dholland Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.25 2009/08/27 00:21:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.24 2009/08/12 04:30:21 dholland Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.25 2009/08/27 00:21:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ penalise(value, op, operand)
 	struct penalty *p;
 
 	op = opnum(op);
-	if ((p = (struct penalty *)malloc((u_int)sizeof(*p))) == NULL)
+	if ((p = malloc(sizeof(*p))) == NULL)
 		return;
 	p->next = penlist[op][operand];
 	penlist[op][operand] = p;
