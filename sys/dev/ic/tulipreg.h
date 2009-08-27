@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.34 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.35 2009/08/27 20:23:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ struct tulip_desc {
 	volatile u_int32_t td_ctl;	  /* Control and Byte Counts */
 	volatile u_int32_t td_bufaddr1; /* Buffer Address 1 */
 	volatile u_int32_t td_bufaddr2; /* Buffer Address 2 */
-};
+} __packed __aligned(4);
 
 /*
  * Descriptor Status bits common to transmit and receive.
