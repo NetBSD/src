@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.52 2009/08/12 06:06:28 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.53 2009/08/27 00:40:44 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.52 2009/08/12 06:06:28 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.53 2009/08/27 00:40:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,7 +514,7 @@ add_file(percent, file, dir, head, tail, parent)
 		tpath = NULL;
 	}
 	else {
-		tpath = do_malloc((unsigned int) (strlen(dir) + strlen(file) + 2));
+		tpath = do_malloc(strlen(dir) + strlen(file) + 2);
 		(void) strcat(strcat(strcpy(tpath, dir), "/"), file);
 		path = tpath;
 	}
@@ -644,7 +644,7 @@ new_fp()
 {
 	FILEDESC	*fp;
 
-	fp = (FILEDESC *) do_malloc(sizeof *fp);
+	fp = do_malloc(sizeof *fp);
 	fp->datfd = -1;
 	fp->pos = POS_UNKNOWN;
 	fp->inf = NULL;
@@ -1319,7 +1319,7 @@ find_matches()
 	Fort_len = maxlen_in_list(File_list);
 	DPRINTF(2, (stderr, "Maximum length is %d\n", Fort_len));
 	/* extra length, "%\n" is appended */
-	Fortbuf = do_malloc((unsigned int) Fort_len + 10);
+	Fortbuf = do_malloc(Fort_len + 10);
 
 	Found_one = FALSE;
 	matches_in_list(File_list);
