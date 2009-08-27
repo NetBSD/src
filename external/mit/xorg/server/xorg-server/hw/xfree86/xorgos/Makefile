@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2009/07/07 07:58:46 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2009/08/27 04:34:13 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -33,14 +33,14 @@ CPPFLAGS.${_FN}+=	-DUSE_I386_IOPL -DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .endif
 
 .if ${MACHINE} == "macppc"
-SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c lnx_agp.c
+SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
 .if ${MACHINE_ARCH} == "alpha"
-SRCS.bsd+=	alpha_video.c bsd_ev56.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	alpha_video.c bsd_ev56.c stdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_ALPHA_PIO
 .endfor
@@ -55,7 +55,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE} == "sgimips"
-SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -64,7 +64,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .if ${MACHINE} == "cats" || \
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder"
-SRCS.bsd+=      ppc_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=      ppc_video.c stdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
