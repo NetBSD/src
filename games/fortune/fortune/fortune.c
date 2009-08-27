@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.54 2009/08/27 00:42:11 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.55 2009/08/27 00:43:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.54 2009/08/27 00:42:11 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.55 2009/08/27 00:43:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -670,7 +670,7 @@ off_name(file)
 {
 	char	*new;
 
-	new = copy(file, (unsigned int) (strlen(file) + 2));
+	new = copy(file, strlen(file) + 2);
 	return strcat(new, "-o");
 }
 
@@ -851,7 +851,7 @@ is_fortfile(file, datp, posp, check_for_offend)
 			}
 	}
 
-	datfile = copy(file, (unsigned int) (strlen(file) + 4)); /* +4 for ".dat" */
+	datfile = copy(file, strlen(file) + 4); /* +4 for ".dat" */
 	strcat(datfile, ".dat");
 	if (access(datfile, R_OK) < 0) {
 		free(datfile);
@@ -864,7 +864,7 @@ is_fortfile(file, datp, posp, check_for_offend)
 		free(datfile);
 #ifdef	OK_TO_WRITE_DISK
 	if (posp != NULL) {
-		*posp = copy(file, (unsigned int) (strlen(file) + 4)); /* +4 for ".dat" */
+		*posp = copy(file, strlen(file) + 4); /* +4 for ".dat" */
 		(void) strcat(*posp, ".pos");
 	}
 #endif	/* OK_TO_WRITE_DISK */
