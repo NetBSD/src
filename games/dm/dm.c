@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.28 2009/08/12 05:51:59 dholland Exp $	*/
+/*	$NetBSD: dm.c,v 1.29 2009/08/27 00:22:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.28 2009/08/12 05:51:59 dholland Exp $");
+__RCSID("$NetBSD: dm.c,v 1.29 2009/08/27 00:22:28 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,7 +314,7 @@ logfile(void)
 				(void)fclose(lp);
 				return;
 			}
-			sleep((u_int)1);
+			sleep(1);
 		}
 		if (pw = getpwuid(uid = getuid()))
 			fputs(pw->pw_name, lp);
