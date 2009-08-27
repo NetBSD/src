@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.56 2009/08/27 01:19:38 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.57 2009/08/27 01:40:27 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.56 2009/08/27 01:19:38 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.57 2009/08/27 01:40:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,9 +214,7 @@ static char Re_error[1024];
 #endif
 
 int
-main(ac, av)
-	int	ac;
-	char	*av[];
+main(int ac, char *av[])
 {
 	struct timeval tv;
 #ifdef	OK_TO_WRITE_DISK
@@ -271,9 +269,7 @@ main(ac, av)
 }
 
 static void
-rot13(line, len)
-	char *line;
-	int len;
+rot13(char *line, int len)
 {
 	char	*p, ch;
 
@@ -288,8 +284,7 @@ rot13(line, len)
 }
 
 static void
-display(fp)
-	FILEDESC	*fp;
+display(FILEDESC *fp)
 {
 	char	line[BUFSIZ];
 
@@ -309,7 +304,7 @@ display(fp)
  *	Return the length of the fortune.
  */
 static size_t
-fortlen()
+fortlen(void)
 {
 	size_t	nchar;
 	char	line[BUFSIZ];
@@ -332,9 +327,7 @@ fortlen()
  *	This routine evaluates the arguments on the command line
  */
 static void
-getargs(argc, argv)
-	int	argc;
-	char	**argv;
+getargs(int argc, char **argv)
 {
 	int	ignore_case;
 # ifndef NO_REGEX
@@ -435,9 +428,7 @@ getargs(argc, argv)
  *	Form the file list from the file specifications.
  */
 static int
-form_file_list(files, file_cnt)
-	char	**files;
-	int	file_cnt;
+form_file_list(char **files, int file_cnt)
 {
 	int	i, percent;
 	const char	*sp;
@@ -496,12 +487,8 @@ form_file_list(files, file_cnt)
  *	Add a file to the file list.
  */
 static int
-add_file(percent, file, dir, head, tail, parent)
-	int		 percent;
-	const char	*file;
-	const char	*dir;
-	FILEDESC	**head, **tail;
-	FILEDESC	*parent;
+add_file(int percent, const char *file, const char *dir,
+	 FILEDESC **head, FILEDESC **tail, FILEDESC *parent)
 {
 	FILEDESC	*fp;
 	int		fd;
@@ -640,7 +627,7 @@ over:
  *	Return a pointer to an initialized new FILEDESC.
  */
 static FILEDESC *
-new_fp()
+new_fp(void)
 {
 	FILEDESC	*fp;
 
@@ -665,8 +652,7 @@ new_fp()
  *	Return a pointer to the offensive version of a file of this name.
  */
 static char *
-off_name(file)
-	const char	*file;
+off_name(const char *file)
 {
 	char	*new;
 
@@ -679,8 +665,7 @@ off_name(file)
  *	Is the file an offensive-style name?
  */
 static int
-is_off_name(file)
-	const char	*file;
+is_off_name(const char *file)
 {
 	int	len;
 
@@ -694,9 +679,7 @@ is_off_name(file)
  *	there are two children to be a parent of.
  */
 static void
-all_forts(fp, offensive)
-	FILEDESC	*fp;
-	const char	*offensive;
+all_forts(FILEDESC *fp, const char *offensive)
 {
 	char		*sp;
 	FILEDESC	*scene, *obscene;
@@ -746,8 +729,7 @@ all_forts(fp, offensive)
  *	Add the contents of an entire directory.
  */
 static int
-add_dir(fp)
-	FILEDESC	*fp;
+add_dir(FILEDESC *fp)
 {
 	DIR		*dir;
 	struct dirent	*dirent;
@@ -784,8 +766,7 @@ add_dir(fp)
  *	Return TRUE if the file is a directory, FALSE otherwise.
  */
 static int
-is_dir(file)
-	const char	*file;
+is_dir(const char *file)
 {
 	struct stat	sbuf;
 
@@ -803,14 +784,7 @@ is_dir(file)
  */
 /* ARGSUSED */
 static int
-is_fortfile(file, datp, posp, check_for_offend)
-	const char	*file;
-	char		**datp, **posp
-# ifndef OK_TO_WRITE_DISK
-	__unused
-# endif
-	;
-	int	check_for_offend;
+is_fortfile(const char *file, char **datp, char **posp, int check_for_offend)
 {
 	int	i;
 	const char	*sp;
@@ -867,6 +841,10 @@ is_fortfile(file, datp, posp, check_for_offend)
 		*posp = copy(file, strlen(file) + 4); /* +4 for ".dat" */
 		(void) strcat(*posp, ".pos");
 	}
+#else
+	if (posp != NULL) {
+		/*  *posp = NULL; -- not quite yet */
+	}
 #endif	/* OK_TO_WRITE_DISK */
 	DPRINTF(2, (stderr, "TRUE\n"));
 	return TRUE;
@@ -877,9 +855,7 @@ is_fortfile(file, datp, posp, check_for_offend)
  *	Return a malloc()'ed copy of the string
  */
 static char *
-copy(str, len)
-	const char	*str;
-	size_t	len;
+copy(const char *str, size_t len)
 {
 	char	*new, *sp;
 
@@ -910,8 +886,7 @@ do_malloc(size_t size)
  *	Free malloc'ed space, if any.
  */
 static void
-do_free(ptr)
-	void	*ptr;
+do_free(void *ptr)
 {
 	if (ptr != NULL)
 		free(ptr);
@@ -922,7 +897,7 @@ do_free(ptr)
  *	Initialize the fortune probabilities.
  */
 static void
-init_prob()
+init_prob(void)
 {
 	FILEDESC	*fp, *last;
 	int		percent, num_noprob, frac;
@@ -985,7 +960,7 @@ init_prob()
  *	Get the fortune data file's seek pointer for the next fortune.
  */
 static void
-get_fort()
+get_fort(void)
 {
 	FILEDESC	*fp;
 	int		choice;
@@ -1048,8 +1023,7 @@ get_fort()
  *	Pick a child from a chosen parent.
  */
 static FILEDESC *
-pick_child(parent)
-	FILEDESC	*parent;
+pick_child(FILEDESC *parent)
 {
 	FILEDESC	*fp;
 	int		 choice;
@@ -1085,8 +1059,7 @@ pick_child(parent)
  *	Sum up all the noprob probabilities, starting with fp.
  */
 static void
-sum_noprobs(fp)
-	FILEDESC	*fp;
+sum_noprobs(FILEDESC *fp)
 {
 	static bool	did_noprobs = FALSE;
 
@@ -1102,8 +1075,7 @@ sum_noprobs(fp)
 }
 
 static int
-max(i, j)
-	int	i, j;
+max(int i, int j)
 {
 	return (i >= j ? i : j);
 }
@@ -1113,8 +1085,7 @@ max(i, j)
  *	Assocatiate a FILE * with the given FILEDESC.
  */
 static void
-open_fp(fp)
-	FILEDESC	*fp;
+open_fp(FILEDESC *fp)
 {
 	if (fp->inf == NULL && (fp->inf = fdopen(fp->fd, "r")) == NULL)
 		err(1, "Cannot open `%s'", fp->path);
@@ -1138,8 +1109,7 @@ open_dat(fp)
  *	return a random number.
  */
 static void
-get_pos(fp)
-	FILEDESC	*fp;
+get_pos(FILEDESC *fp)
 {
 #ifdef	OK_TO_WRITE_DISK
 	int	fd;
@@ -1170,8 +1140,7 @@ get_pos(fp)
  *	Get the tbl data file the datfile.
  */
 static void
-get_tbl(fp)
-	FILEDESC	*fp;
+get_tbl(FILEDESC *fp)
 {
 	int	 	fd;
 	FILEDESC	*child;
@@ -1206,8 +1175,7 @@ get_tbl(fp)
  *	Zero out the fields we care about in a tbl structure.
  */
 static void
-zero_tbl(tp)
-	STRFILE	*tp;
+zero_tbl(STRFILE *tp)
 {
 	tp->str_numstr = 0;
 	tp->str_longlen = 0;
@@ -1219,8 +1187,7 @@ zero_tbl(tp)
  *	Merge the tbl data of t2 into t1.
  */
 static void
-sum_tbl(t1, t2)
-	STRFILE	*t1, *t2;
+sum_tbl(STRFILE *t1, STRFILE *t2)
 {
 	t1->str_numstr += t2->str_numstr;
 	if (t1->str_longlen < t2->str_longlen)
@@ -1236,7 +1203,7 @@ sum_tbl(t1, t2)
  *	Print out the file list
  */
 static void
-print_file_list()
+print_file_list(void)
 {
 	print_list(File_list, 0);
 }
@@ -1246,9 +1213,7 @@ print_file_list()
  *	Print out the actual list, recursively.
  */
 static void
-print_list(list, lev)
-	FILEDESC	*list;
-	int		 lev;
+print_list(FILEDESC *list, int lev)
 {
 	while (list != NULL) {
 		fprintf(stderr, "%*s", lev * 4, "");
@@ -1272,8 +1237,7 @@ print_list(list, lev)
  *	Convert the pattern to an ignore-case equivalent.
  */
 static char *
-conv_pat(orig)
-	char	*orig;
+conv_pat(char *orig)
 {
 	char		*sp;
 	unsigned int	 cnt;
@@ -1313,7 +1277,7 @@ conv_pat(orig)
  *	Find all the fortunes which match the pattern we've been given.
  */
 static int
-find_matches()
+find_matches(void)
 {
 	Fort_len = maxlen_in_list(File_list);
 	DPRINTF(2, (stderr, "Maximum length is %d\n", Fort_len));
@@ -1331,8 +1295,7 @@ find_matches()
  *	Return the maximum fortune len in the file list.
  */
 static size_t
-maxlen_in_list(list)
-	FILEDESC	*list;
+maxlen_in_list(FILEDESC *list)
 {
 	FILEDESC	*fp;
 	size_t len, maxlen;
@@ -1357,8 +1320,7 @@ maxlen_in_list(list)
  *	Print out the matches from the files in the list.
  */
 static void
-matches_in_list(list)
-	FILEDESC	*list;
+matches_in_list(FILEDESC *list)
 {
 	char		*sp;
 	FILEDESC	*fp;
@@ -1407,7 +1369,7 @@ matches_in_list(list)
 # endif	/* NO_REGEX */
 
 static void
-usage()
+usage(void)
 {
 
 	(void) fprintf(stderr, "Usage: %s [-ae", getprogname());
