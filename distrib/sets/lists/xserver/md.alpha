@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.22 2009/08/23 09:05:45 mrg Exp $
+# $NetBSD: md.alpha,v 1.23 2009/08/27 04:59:15 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -15,8 +15,6 @@
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mach64_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	xorg
@@ -33,8 +31,6 @@
 ./usr/X11R7/lib/modules/dri/savage_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/trident_dri.so		-unknown-	xorg
@@ -61,8 +57,8 @@
 ./usr/X11R7/lib/modules/drivers/i128_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i740_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i740_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/imstt_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/imstt_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so		-unknown-	xorg
@@ -172,10 +168,10 @@
 ./usr/X11R7/lib/modules/libi2c.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so.0			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	xorg
+./usr/X11R7/lib/modules/libint10.a			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10.so.0			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so.0			-unknown-	obsolete
@@ -308,7 +304,7 @@
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/i128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/i740.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/imstt.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/imstt.html			-unknown-	obsolete
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
@@ -363,7 +359,7 @@
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i740.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/imstt.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/imstt.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg

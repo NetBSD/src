@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.68 2009/08/23 09:05:45 mrg Exp $
+# $NetBSD: md.i386,v 1.69 2009/08/27 04:59:15 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -435,8 +435,6 @@
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
@@ -451,8 +449,6 @@
 ./usr/X11R7/lib/modules/dri/savage_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/sis_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/trident_dri.so		-unknown-	xorg
