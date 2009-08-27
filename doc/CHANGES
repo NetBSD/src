@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1280 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1281 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -277,7 +277,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[skrll 20090508]
 	dhcpcd(8): Import dhcpcd-5.0.2 [roy 20090510]
 	dhcpcd(8): Import dhcpcd-5.0.3 [roy 20090511]
-	bluetooth: Update the Bluetooth service discovery API and merge it
+	bluetooth(3): Update the Bluetooth service discovery API and merge it
 		into libbluetooth, retiring the separate libsdp.
 		[plunky 20090512]
 	dhcpcd(8): Import dhcpcd-5.0.4 [roy 20090514]
@@ -328,7 +328,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		of the received datagram. [minskim 20090716]
 	ip(4): Add IP_MINTTL option to discard packets with a TTL
 		lower than the option value. [minskim 20090717]
-	openssl: Import SNAP-20090710 under the new crypto/external
+	openssl(1): Import SNAP-20090710 under the new crypto/external
 		framework [christos 20090719]
 	gpio(4): Complete rework to integrate with kauth(9), allow for
 		runtime driver attachment, naming of individual pins.
@@ -354,16 +354,16 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		types are enabled as wakeup devices if the firmware supports
 		it: lid switch, sleep/power button, PC keyboard controller.
 		[jmcneill 20090804]
-	openssl: Import SNAP-20090805 to fix the namespace issues
+	openssl(1): Import SNAP-20090805 to fix the namespace issues
 		(BLOCK, CSTRING, etc) [christos 20090805]
 	tcx(8):	support wsdisplay and acceleration [macallan 20090806]
 	zfs: Import OpenSolaris zfs source code to NetBSD, add NetBSD
-	        patches. [haad 20090808]
+		patches. [haad 20090808]
 	gpioiic(4): New driver to create an I2C bus using GPIO pins in
 		bit-banging mode. [mbalmer 20090809]
 	voyagerfb(8): a driver for the Gdium Liberty 1000's video controller
 		[macallan 20090812]
-	mips a.out support: removed [matt 20090812]
+	mips: removed a.out support [matt 20090812]
 	secmode_keylock, keylock, gpiolock(4): Add support for multi-position
 		keylocks. [mbalmer 20090814]
 	nbperf(1): A minimal perfect hash function generator. [joerg 20090815]
