@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.61 2009/08/27 03:04:58 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.62 2009/08/27 03:09:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.61 2009/08/27 03:04:58 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.62 2009/08/27 03:09:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,9 +176,8 @@ static void zero_tbl(STRFILE *);
 int main(int, char *[]);
 
 #ifndef NO_REGEX
-static void re_setup(struct re *rx, const char *pattern);
+static void re_setup(struct re *rx, const char *pattern, bool ignore_case);
 static void re_cleanup(struct re *rx);
-static char *conv_pat(char *);
 static int find_matches(void);
 static void matches_in_list(FILEDESC *);
 static size_t maxlen_in_list(FILEDESC *);
@@ -379,11 +378,9 @@ getargs(int argc, char **argv)
 
 #ifndef NO_REGEX
 	if (pat != NULL) {
-		if (ignore_case)
-			pat = conv_pat(pat);
-		re_setup(&Re_pat, pat);
+		re_setup(&Re_pat, pat, ignore_case);
 		rot13(pat, 0);
-		re_setup(&Re_pat13, pat);
+		re_setup(&Re_pat13, pat, ignore_case);
 	}
 #endif /* NO_REGEX */
 }
@@ -1204,13 +1201,18 @@ print_list(FILEDESC *list, int lev)
  *	Initialize regular expression pattern.
  */
 static void
-re_setup(struct re *rx, const char *pattern)
+re_setup(struct re *rx, const char *pattern, bool ignore_case)
 {
-	int code;
+	int code, flags;
 	char errbuf[1024];
 
 	assert(!rx->valid);
-	code = regcomp(&rx->regex, pattern, REG_EXTENDED);
+
+	flags = REG_EXTENDED | REG_NOSUB;
+	if (ignore_case) {
+		flags |= REG_ICASE;
+	}
+	code = regcomp(&rx->regex, pattern, flags);
 
 	if (code != 0) {
 		regerror(code, &rx->regex, errbuf, sizeof(errbuf));
@@ -1238,46 +1240,6 @@ static bool
 re_match(struct re *rx, const char *string)
 {
 	return regexec(&rx->regex, string, 0, NULL, 0) == 0;
-}
-
-/*
- * conv_pat:
- *	Convert the pattern to an ignore-case equivalent.
- */
-static char *
-conv_pat(char *orig)
-{
-	char *sp;
-	unsigned int  cnt;
-	char *new;
-
-	cnt = 1;	/* allow for '\0' */
-	for (sp = orig; *sp != '\0'; sp++)
-		if (isalpha((unsigned char)*sp))
-			cnt += 4;
-		else
-			cnt++;
-	if ((new = malloc(cnt)) == NULL)
-		err(1, NULL);
-
-	for (sp = new; *orig != '\0'; orig++) {
-		if (islower((unsigned char)*orig)) {
-			*sp++ = '[';
-			*sp++ = *orig;
-			*sp++ = toupper((unsigned char)*orig);
-			*sp++ = ']';
-		}
-		else if (isupper((unsigned char)*orig)) {
-			*sp++ = '[';
-			*sp++ = *orig;
-			*sp++ = tolower((unsigned char)*orig);
-			*sp++ = ']';
-		}
-		else
-			*sp++ = *orig;
-	}
-	*sp = '\0';
-	return new;
 }
 
 /*
