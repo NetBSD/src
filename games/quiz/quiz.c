@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.25 2009/08/27 00:24:11 dholland Exp $	*/
+/*	$NetBSD: quiz.c,v 1.26 2009/08/27 00:31:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.25 2009/08/27 00:24:11 dholland Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.26 2009/08/27 00:31:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,6 @@ static QE qlist;
 static int catone, cattwo, tflag;
 static unsigned qsize;
 
-int	 main(int, char *[]);
 static char *appdstr(char *, const char *, size_t);
 static void downcase(char *);
 static void get_cats(char *, char *);
@@ -76,9 +75,7 @@ static void show_index(void);
 static void usage(void) __dead;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	const char *indexfile;
@@ -119,8 +116,7 @@ main(argc, argv)
 }
 
 static void
-get_file(file)
-	const char *file;
+get_file(const char *file)
 {
 	FILE *fp;
 	QE *qp;
@@ -159,7 +155,7 @@ get_file(file)
 }
 
 static void
-show_index()
+show_index(void)
 {
 	QE *qp;
 	const char *p, *s;
@@ -192,8 +188,7 @@ show_index()
 }
 
 static void
-get_cats(cat1, cat2)
-	char *cat1, *cat2;
+get_cats(char *cat1, char *cat2)
 {
 	QE *qp;
 	int i;
@@ -225,7 +220,7 @@ get_cats(cat1, cat2)
 }
 
 static void
-quiz()
+quiz(void)
 {
 	QE *qp;
 	int i;
@@ -308,8 +303,7 @@ quiz()
 }
 
 static const char *
-next_cat(s)
-	const char *	s;
+next_cat(const char *s)
 {
 	int esc;
 
@@ -332,10 +326,7 @@ next_cat(s)
 }
 
 static char *
-appdstr(s, tp, len)
-	char *s;
-	const char *tp;
-	size_t len;
+appdstr(char *s, const char *tp, size_t len)
 {
 	char *mp;
 	const char *sp;
@@ -359,8 +350,7 @@ appdstr(s, tp, len)
 }
 
 static void
-score(r, w, g)
-	unsigned r, w, g;
+score(unsigned r, unsigned w, unsigned g)
 {
 	(void)printf("Rights %d, wrongs %d,", r, w);
 	if (g)
@@ -369,8 +359,7 @@ score(r, w, g)
 }
 
 static void
-downcase(p)
-	char *p;
+downcase(char *p)
 {
 	int ch;
 
@@ -380,7 +369,7 @@ downcase(p)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "quiz [-t] [-i file] category1 category2\n");
 	exit(1);
