@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.60 2009/08/27 02:21:36 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.61 2009/08/27 03:04:58 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.60 2009/08/27 02:21:36 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.61 2009/08/27 03:04:58 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,12 +114,15 @@ static bool All_forts	= FALSE;	/* any fortune allowed */
 static bool Equal_probs	= FALSE;	/* scatter un-allocted prob equally */
 
 #ifndef NO_REGEX
+struct re {
+	bool valid;
+	regex_t regex;
+};
+
 static bool Match	= FALSE;	/* dump fortunes matching a pattern */
-static regex_t *Re_pat = NULL;
-static regex_t *Re_pat13 = NULL;
-static regex_t *Re_use = NULL;
-static int  Re_code;
-static char Re_error[1024];
+struct re Re_pat;
+struct re Re_pat13;
+static struct re *Re_use = NULL;
 #endif
 
 #ifdef DEBUG
@@ -173,22 +176,12 @@ static void zero_tbl(STRFILE *);
 int main(int, char *[]);
 
 #ifndef NO_REGEX
-
+static void re_setup(struct re *rx, const char *pattern);
+static void re_cleanup(struct re *rx);
 static char *conv_pat(char *);
 static int find_matches(void);
 static void matches_in_list(FILEDESC *);
 static size_t maxlen_in_list(FILEDESC *);
-
-#define RE_INIT(re)	if ((re) == NULL && \
-			    ((re) = calloc(sizeof(*(re)), 1)) \
-			    == NULL) err(1, NULL)
-#define RE_COMP(re, p)	(Re_code = regcomp((re), (p), REG_EXTENDED))
-#define RE_OK(re)	(Re_code == 0)
-#define RE_EXEC(re, p)	(!regexec((re), (p), 0, NULL, 0))
-#define RE_ERROR(re)	(regerror(Re_code, (re), Re_error, \
-			    sizeof(Re_error)), Re_error)
-#define RE_FREE(re)	if ((re) != NULL) do { regfree((re)); \
-				    (re) = NULL; } while (0)
 #endif
 
 #ifndef NAMLEN
@@ -388,19 +381,9 @@ getargs(int argc, char **argv)
 	if (pat != NULL) {
 		if (ignore_case)
 			pat = conv_pat(pat);
-		RE_INIT(Re_pat);
-		RE_COMP(Re_pat, pat);
-		if (!RE_OK(Re_pat)) {
-			warnx("%s: `%s'", RE_ERROR(Re_pat), pat);
-			RE_FREE(Re_pat);
-		}
+		re_setup(&Re_pat, pat);
 		rot13(pat, 0);
-		RE_INIT(Re_pat13);
-		RE_COMP(Re_pat13, pat);
-		if (!RE_OK(Re_pat13)) {
-			warnx("%s: `%s'", RE_ERROR(Re_pat13), pat);
-			RE_FREE(Re_pat13);
-		}
+		re_setup(&Re_pat13, pat);
 	}
 #endif /* NO_REGEX */
 }
@@ -1215,6 +1198,48 @@ print_list(FILEDESC *list, int lev)
 }
 
 #ifndef NO_REGEX
+
+/*
+ * re_setup:
+ *	Initialize regular expression pattern.
+ */
+static void
+re_setup(struct re *rx, const char *pattern)
+{
+	int code;
+	char errbuf[1024];
+
+	assert(!rx->valid);
+	code = regcomp(&rx->regex, pattern, REG_EXTENDED);
+
+	if (code != 0) {
+		regerror(code, &rx->regex, errbuf, sizeof(errbuf));
+		warnx("%s: `%s'", errbuf, pattern);
+		regfree(&rx->regex);
+		rx->valid = FALSE;
+	}
+	rx->valid = TRUE;
+}
+
+/*
+ * re_cleanup:
+ *	Undo re_setup.
+ */
+static void
+re_cleanup(struct re *rx)
+{
+	if (rx->valid) {
+		regfree(&rx->regex);
+		rx->valid = FALSE;
+	}
+}
+
+static bool
+re_match(struct re *rx, const char *string)
+{
+	return regexec(&rx->regex, string, 0, NULL, 0) == 0;
+}
+
 /*
  * conv_pat:
  *	Convert the pattern to an ignore-case equivalent.
@@ -1309,7 +1334,7 @@ matches_in_list(FILEDESC *list)
 	FILEDESC *fp;
 	int in_file;
 
-	if (!RE_OK(Re_pat) || !RE_OK(Re_pat13))
+	if (!Re_pat.valid || !Re_pat13.valid)
 		return;
 
 	for (fp = list; fp != NULL; fp = fp->next) {
@@ -1327,10 +1352,10 @@ matches_in_list(FILEDESC *list)
 			else {
 				*sp = '\0';
 				if (fp->tbl.str_flags & STR_ROTATED)
-					Re_use = Re_pat13;
+					Re_use = &Re_pat13;
 				else
-					Re_use = Re_pat;
-				if (RE_EXEC(Re_use, Fortbuf)) {
+					Re_use = &Re_pat;
+				if (re_match(Re_use, Fortbuf)) {
 					printf("%c%c", fp->tbl.str_delim,
 					    fp->tbl.str_delim);
 					if (!in_file) {
@@ -1346,8 +1371,8 @@ matches_in_list(FILEDESC *list)
 				sp = Fortbuf;
 			}
 	}
-	RE_FREE(Re_pat);
-	RE_FREE(Re_pat13);
+	re_cleanup(&Re_pat);
+	re_cleanup(&Re_pat13);
 }
 #endif /* NO_REGEX */
 
