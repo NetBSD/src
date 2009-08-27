@@ -1,4 +1,4 @@
-.\"	$NetBSD: calendar.1,v 1.22 2008/03/07 19:22:22 christos Exp $
+.\"	$NetBSD: calendar.1,v 1.23 2009/08/27 04:18:29 dholland Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd December 6, 2004
+.Dd August 27, 2009
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -74,10 +74,11 @@ By default, the following filenames are checked for:
 .El
 and the first which is found is used.
 The filename may be absolute.
-If not absolute, it is taken relative to the current directory or the
+If not absolute, it is taken relative to the
 directory specified by the
 .Ev CALENDAR_DIR
-environment variable.
+environment variable, if set; otherwise, it is taken relative to the
+user's home directory.
 Or, if the
 .Fl a
 flag is given, a non-absolute filename is taken relative to each user's
