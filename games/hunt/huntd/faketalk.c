@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.17 2009/07/04 07:51:35 dholland Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.18 2009/08/27 00:36:33 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.17 2009/07/04 07:51:35 dholland Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.18 2009/08/27 00:36:33 dholland Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -220,7 +220,7 @@ do_announce(char *s)
 	msg.ctl_addr = ctl_addr;
 	msg.ctl_addr.sin_family = htons(msg.ctl_addr.sin_family);
 #endif
-	msg.id_num = (int) htonl((u_int32_t) -1);	/* an impossible id_num */
+	msg.id_num = (int) htonl((uint32_t) -1);	/* an impossible id_num */
 	ctl_transact(his_machine_addr, msg, ANNOUNCE, &response);
 	if (response.answer != SUCCESS)
 		return;
