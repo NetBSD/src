@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2009/08/26 22:33:38 macallan Exp $
+#	$NetBSD: Makefile,v 1.31 2009/08/27 04:35:57 mrg Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -18,7 +18,6 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
-	xf86-video-imstt \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -26,6 +25,7 @@ SUBDIR+= \
 	xf86-video-r128 \
 	xf86-video-tdfx \
 	xf86-video-wsfb
+#	xf86-video-imstt
 .elif ${MACHINE} == "netwinder"
 SUBDIR+= \
 	xf86-video-wsfb
@@ -68,7 +68,6 @@ SUBDIR+= \
 	xf86-video-glint \
 	xf86-video-i128 \
 	xf86-video-i740 \
-	xf86-video-imstt \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -85,6 +84,7 @@ SUBDIR+= \
 	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-wsfb
+#	xf86-video-imstt
 .elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
 	xf86-video-apm \
