@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.169 2009/04/17 15:22:35 cegger Exp $	*/
+/*	$NetBSD: tulip.c,v 1.170 2009/08/27 20:24:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.169 2009/04/17 15:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.170 2009/08/27 20:24:16 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -4033,8 +4033,7 @@ tlp_print_media(struct tulip_softc *sc)
 #define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	printf("%s: ", device_xname(sc->sc_dev));
-	for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
-	     ife != NULL; ife = TAILQ_NEXT(ife, ifm_list)) {
+	TAILQ_FOREACH(ife, &sc->sc_mii.mii_media.ifm_list, ifm_list) {
 		tm = ife->ifm_aux;
 		if (tm == NULL) {
 #ifdef DIAGNOSTIC
@@ -4211,8 +4210,7 @@ tlp_sia_fixup(struct tulip_softc *sc)
 		return;
 	}
 
-	for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
-	     ife != NULL; ife = TAILQ_NEXT(ife, ifm_list)) {
+	TAILQ_FOREACH(ife, &sc->sc_mii.mii_media.ifm_list, ifm_list) {
 		tm = ife->ifm_aux;
 		if (tm == NULL)
 			continue;
@@ -4833,11 +4831,10 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			 * kernel, we lose.  The PHY's default media always
 			 * takes priority.
 			 */
-			for (phy = LIST_FIRST(&sc->sc_mii.mii_phys);
-			     phy != NULL;
-			     phy = LIST_NEXT(phy, mii_list))
+			LIST_FOREACH(phy, &sc->sc_mii.mii_phys, mii_list) {
 				if (phy->mii_offset == tm->tm_phyno)
 					break;
+			}
 			if (phy == NULL) {
 				aprint_error_dev(sc->sc_dev, "unable to configure MII\n");
 				break;
@@ -4858,9 +4855,8 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			 * We do this by looking for media with our
 			 * PHY's `instance'.
 			 */
-			for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
-			     ife != NULL;
-			     ife = TAILQ_NEXT(ife, ifm_list)) {
+			TAILQ_FOREACH(ife, &sc->sc_mii.mii_media.ifm_list,
+			      ifm_list) {
 				if (IFM_INST(ife->ifm_media) != phy->mii_inst)
 					continue;
 				ife->ifm_aux = tm;
@@ -4990,11 +4986,10 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			 * kernel, we lose.  The PHY's default media always
 			 * takes priority.
 			 */
-			for (phy = LIST_FIRST(&sc->sc_mii.mii_phys);
-			     phy != NULL;
-			     phy = LIST_NEXT(phy, mii_list))
+			LIST_FOREACH(phy, &sc->sc_mii.mii_phys, mii_list) {
 				if (phy->mii_offset == tm->tm_phyno)
 					break;
+			}
 			if (phy == NULL) {
 				aprint_error_dev(sc->sc_dev, "unable to configure MII\n");
 				break;
@@ -5015,9 +5010,8 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			 * We do this by looking for media with our
 			 * PHY's `instance'.
 			 */
-			for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
-			     ife != NULL;
-			     ife = TAILQ_NEXT(ife, ifm_list)) {
+			TAILQ_FOREACH(ife, &sc->sc_mii.mii_media.ifm_list,
+			      ifm_list) {
 				if (IFM_INST(ife->ifm_media) != phy->mii_inst)
 					continue;
 				ife->ifm_aux = tm;
