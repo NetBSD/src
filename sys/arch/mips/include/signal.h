@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27.92.2 2009/08/23 04:04:35 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.27.92.3 2009/08/27 17:47:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,9 +75,9 @@ typedef int sig_atomic_t;
 struct sigcontext13 {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	sc_mask;	/* signal mask to restore (old style) */
-	mips_reg_t sc_pc;	/* pc at time of signal */
-	mips_reg_t sc_regs[32];	/* processor regs 0 to 31 */
-	mips_reg_t mullo, mulhi;/* mullo and mulhi registers... */
+	int	sc_pc;		/* pc at time of signal */
+	int	sc_regs[32];	/* processor regs 0 to 31 */
+	int	mullo, mulhi;	/* mullo and mulhi registers... */
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
@@ -89,18 +89,32 @@ struct sigcontext13 {
 /*
  * Only need an O32 version.
  */
-struct sigcontext {
-	int	sc_onstack;	/* sigstack state to restore */
-	int	__sc_mask13;	/* signal mask to restore (old style) */
-	int	sc_pc;		/* pc at time of signal */
-	int	sc_regs[32];	/* processor regs 0 to 31 */
-	int	mullo, mulhi;	/* mullo and mulhi registers... */
-	int	sc_fpused;	/* fp has been used */
-	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
-	int	sc_fpc_eir;	/* floating point exception instruction reg */
-	int	sc_xxx[8];	/* XXX reserved */
-	sigset_t sc_mask;	/* signal mask to restore (new style) */
-};
+#define	_SIGCONTEXT_DEFINE(_name, _reg_t, _fp_t) \
+struct sigcontext { \
+	int	sc_onstack;	/* sigstack state to restore */ \
+	int	__sc_mask13;	/* signal mask to restore (old style) */ \
+	_reg_t	sc_pc;		/* pc at time of signal */ \
+	_reg_t	sc_regs[32];	/* processor regs 0 to 31 */ \
+	_reg_t	mullo, mulhi;	/* mullo and mulhi registers... */ \
+	int	sc_fpused;	/* fp has been used */ \
+	_fp_t	sc_fpregs[33];	/* fp regs 0 to 31 and csr */ \
+	int	sc_fpc_eir;	/* floating point exception instruction reg */ \
+	int	sc_xxx[8];	/* XXX reserved */ \
+	sigset_t sc_mask;	/* signal mask to restore (new style) */ \
+}
+
+/*
+ * These will be identical in O32
+ */
+#ifdef _KERNEL
+/*
+ * We need this only compatibility.
+ */
+_SIGCONTEXT_DEFINE(sigcontext, int, int);
+#endif
+#ifdef _LIBC
+_SIGCONTEXT_DEFINE(sigcontext, register_t, fpregister_t);
+#endif
 
 #endif /* _LIBC || _KERNEL */
 
