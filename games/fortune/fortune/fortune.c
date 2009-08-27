@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.58 2009/08/27 01:42:08 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.59 2009/08/27 02:03:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,46 +42,46 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.58 2009/08/27 01:42:08 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.59 2009/08/27 02:03:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
-# include	<sys/param.h>
-# include	<sys/stat.h>
-# include	<sys/time.h>
-# include	<sys/endian.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/endian.h>
 
-# include	<dirent.h>
-# include	<fcntl.h>
-# include	<assert.h>
-# include	<unistd.h>
-# include	<stdio.h>
-# include	<ctype.h>
-# include	<stdlib.h>
-# include	<string.h>
-# include	<err.h>
-# include	<time.h>
-# include	"strfile.h"
-# include	"pathnames.h"
+#include <dirent.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include <err.h>
+#include <time.h>
+#include "strfile.h"
+#include "pathnames.h"
 
-# define	TRUE	1
-# define	FALSE	0
-# define	bool	short
+#define TRUE	1
+#define FALSE	0
+#define bool	short
 
-# define	MINW	6		/* minimum wait if desired */
-# define	CPERS	20		/* # of chars for each sec */
-# define	SLEN	160		/* # of chars in short fortune */
+#define MINW	6		/* minimum wait if desired */
+#define CPERS	20		/* # of chars for each sec */
+#define SLEN	160		/* # of chars in short fortune */
 
-# define	POS_UNKNOWN	((off_t) -1)	/* pos for file unknown */
-# define	NO_PROB		(-1)		/* no prob specified for file */
+#define POS_UNKNOWN	((off_t) -1)	/* pos for file unknown */
+#define NO_PROB		(-1)		/* no prob specified for file */
 
-# ifdef DEBUG
-# define	DPRINTF(l,x)	if (Debug >= l) fprintf x; else
-# undef		NDEBUG
-# else
-# define	DPRINTF(l,x)
-# define	NDEBUG	1
-# endif
+#ifdef DEBUG
+#define DPRINTF(l,x)	if (Debug >= l) fprintf x; else
+#undef NDEBUG
+#else
+#define DPRINTF(l,x)
+#define NDEBUG		1
+#endif
 
 typedef struct fd {
 	int		percent;
@@ -160,7 +160,7 @@ static void zero_tbl(STRFILE *);
 
 int main(int, char *[]);
 
-#ifndef	NO_REGEX
+#ifndef NO_REGEX
 static char *conv_pat(char *);
 static int find_matches(void);
 static void matches_in_list(FILEDESC *);
@@ -217,9 +217,9 @@ int
 main(int ac, char *av[])
 {
 	struct timeval tv;
-#ifdef	OK_TO_WRITE_DISK
-	int	fd;
-#endif	/* OK_TO_WRITE_DISK */
+#ifdef OK_TO_WRITE_DISK
+	int fd;
+#endif /* OK_TO_WRITE_DISK */
 
 	getargs(ac, av);
 
@@ -242,24 +242,24 @@ main(int ac, char *av[])
 
 	display(Fortfile);
 
-#ifdef	OK_TO_WRITE_DISK
+#ifdef OK_TO_WRITE_DISK
 	if ((fd = creat(Fortfile->posfile, 0666)) < 0)
 		err(1, "Can't create `%s'", Fortfile->posfile);
-#ifdef	LOCK_EX
+#ifdef LOCK_EX
 	/*
 	 * if we can, we exclusive lock, but since it isn't very
 	 * important, we just punt if we don't have easy locking
 	 * available.
 	 */
 	(void) flock(fd, LOCK_EX);
-#endif	/* LOCK_EX */
+#endif /* LOCK_EX */
 	write(fd, (char *) &Fortfile->pos, sizeof Fortfile->pos);
 	if (!Fortfile->was_pos_file)
 		(void) chmod(Fortfile->path, 0666);
-#ifdef	LOCK_EX
+#ifdef LOCK_EX
 	(void) flock(fd, LOCK_UN);
-#endif	/* LOCK_EX */
-#endif	/* OK_TO_WRITE_DISK */
+#endif /* LOCK_EX */
+#endif /* OK_TO_WRITE_DISK */
 	if (Wait) {
 		if (Fort_len == 0)
 			(void) fortlen();
@@ -271,7 +271,7 @@ main(int ac, char *av[])
 static void
 rot13(char *line, int len)
 {
-	char	*p, ch;
+	char *p, ch;
 
 	if (len == 0)
 		len = strlen(line);
@@ -286,7 +286,7 @@ rot13(char *line, int len)
 static void
 display(FILEDESC *fp)
 {
-	char	line[BUFSIZ];
+	char line[BUFSIZ];
 
 	open_fp(fp);
 	(void) fseek(fp->inf, (long)Seekpts[0], SEEK_SET);
@@ -306,8 +306,8 @@ display(FILEDESC *fp)
 static size_t
 fortlen(void)
 {
-	size_t	nchar;
-	char	line[BUFSIZ];
+	size_t nchar;
+	char line[BUFSIZ];
 
 	if (!(Fortfile->tbl.str_flags & (STR_RANDOM | STR_ORDERED)))
 		nchar = Seekpts[1] - Seekpts[0];
@@ -329,15 +329,15 @@ fortlen(void)
 static void
 getargs(int argc, char **argv)
 {
-	int	ignore_case;
-# ifndef NO_REGEX
-	char	*pat = NULL;
-# endif	/* NO_REGEX */
+	int ignore_case;
+#ifndef NO_REGEX
+	char *pat = NULL;
+#endif /* NO_REGEX */
 	int ch;
 
 	ignore_case = FALSE;
 
-# ifdef DEBUG
+#ifdef DEBUG
 	while ((ch = getopt(argc, argv, "aDefilm:osw")) != -1)
 #else
 	while ((ch = getopt(argc, argv, "aefilm:osw")) != -1)
@@ -346,11 +346,11 @@ getargs(int argc, char **argv)
 		case 'a':		/* any fortune */
 			All_forts++;
 			break;
-# ifdef DEBUG
+#ifdef DEBUG
 		case 'D':
 			Debug++;
 			break;
-# endif /* DEBUG */
+#endif /* DEBUG */
 		case 'e':
 			Equal_probs++;	/* scatter un-allocted prob equally */
 			break;
@@ -371,11 +371,11 @@ getargs(int argc, char **argv)
 		case 'w':		/* give time to read */
 			Wait++;
 			break;
-# ifdef	NO_REGEX
+#ifdef NO_REGEX
 		case 'i':			/* case-insensitive match */
 		case 'm':			/* dump out the fortunes */
 			errx(1, "Can't match fortunes on this system (Sorry)");
-# else	/* NO_REGEX */
+#else /* NO_REGEX */
 		case 'm':			/* dump out the fortunes */
 			Match++;
 			pat = optarg;
@@ -383,7 +383,7 @@ getargs(int argc, char **argv)
 		case 'i':			/* case-insensitive match */
 			ignore_case++;
 			break;
-# endif	/* NO_REGEX */
+#endif /* NO_REGEX */
 		case '?':
 		default:
 			usage();
@@ -402,7 +402,7 @@ getargs(int argc, char **argv)
 		exit(0);
 	}
 
-# ifndef NO_REGEX
+#ifndef NO_REGEX
 	if (pat != NULL) {
 		if (ignore_case)
 			pat = conv_pat(pat);
@@ -420,7 +420,7 @@ getargs(int argc, char **argv)
 			RE_FREE(Re_pat13);
 		}
 	}
-# endif	/* NO_REGEX */
+#endif /* NO_REGEX */
 }
 
 /*
@@ -430,8 +430,8 @@ getargs(int argc, char **argv)
 static int
 form_file_list(char **files, int file_cnt)
 {
-	int	i, percent;
-	const char	*sp;
+	int i, percent;
+	const char *sp;
 
 	if (file_cnt == 0) {
 		if (All_forts)
@@ -490,11 +490,11 @@ static int
 add_file(int percent, const char *file, const char *dir,
 	 FILEDESC **head, FILEDESC **tail, FILEDESC *parent)
 {
-	FILEDESC	*fp;
-	int		fd;
-	const char	*path;
-	char		*tpath, *offensive, *tfile = strdup(file), *tf;
-	bool		isdir;
+	FILEDESC *fp;
+	int fd;
+	const char *path;
+	char *tpath, *offensive, *tfile = strdup(file), *tf;
+	bool isdir;
 
 	if (dir == NULL) {
 		path = tfile;
@@ -615,9 +615,9 @@ over:
 		fp->next = *head;
 		*head = fp;
 	}
-#ifdef	OK_TO_WRITE_DISK
+#ifdef OK_TO_WRITE_DISK
 	fp->was_pos_file = (access(fp->posfile, W_OK) >= 0);
-#endif	/* OK_TO_WRITE_DISK */
+#endif /* OK_TO_WRITE_DISK */
 
 	return TRUE;
 }
@@ -629,7 +629,7 @@ over:
 static FILEDESC *
 new_fp(void)
 {
-	FILEDESC	*fp;
+	FILEDESC *fp;
 
 	fp = do_malloc(sizeof *fp);
 	fp->datfd = -1;
@@ -654,7 +654,7 @@ new_fp(void)
 static char *
 off_name(const char *file)
 {
-	char	*new;
+	char *new;
 
 	new = copy(file, strlen(file) + 2);
 	return strcat(new, "-o");
@@ -667,7 +667,7 @@ off_name(const char *file)
 static int
 is_off_name(const char *file)
 {
-	int	len;
+	int len;
 
 	len = strlen(file);
 	return (len >= 3 && file[len - 2] == '-' && file[len - 1] == 'o');
@@ -681,10 +681,10 @@ is_off_name(const char *file)
 static void
 all_forts(FILEDESC *fp, const char *offensive)
 {
-	char		*sp;
-	FILEDESC	*scene, *obscene;
-	int		 fd;
-	char		*datfile, *posfile;
+	char *sp;
+	FILEDESC *scene, *obscene;
+	int fd;
+	char *datfile, *posfile;
 
 	posfile = NULL;
 
@@ -719,9 +719,9 @@ all_forts(FILEDESC *fp, const char *offensive)
 	obscene->datfile = datfile;
 	obscene->posfile = posfile;
 	obscene->read_tbl = FALSE;
-#ifdef	OK_TO_WRITE_DISK
+#ifdef OK_TO_WRITE_DISK
 	obscene->was_pos_file = (access(obscene->posfile, W_OK) >= 0);
-#endif	/* OK_TO_WRITE_DISK */
+#endif /* OK_TO_WRITE_DISK */
 }
 
 /*
@@ -731,10 +731,10 @@ all_forts(FILEDESC *fp, const char *offensive)
 static int
 add_dir(FILEDESC *fp)
 {
-	DIR		*dir;
-	struct dirent	*dirent;
-	FILEDESC	*tailp;
-	char		*name;
+	DIR *dir;
+	struct dirent *dirent;
+	FILEDESC *tailp;
+	char *name;
 
 	(void) close(fp->fd);
 	fp->fd = -1;
@@ -768,7 +768,7 @@ add_dir(FILEDESC *fp)
 static int
 is_dir(const char *file)
 {
-	struct stat	sbuf;
+	struct stat sbuf;
 
 	if (stat(file, &sbuf) < 0)
 		return FALSE;
@@ -786,15 +786,16 @@ is_dir(const char *file)
 static int
 is_fortfile(const char *file, char **datp, char **posp, int check_for_offend)
 {
-	int	i;
-	const char	*sp;
-	char	*datfile;
-	static const char	*const suflist[] = {	/* list of "illegal" suffixes" */
-				"dat", "pos", "c", "h", "p", "i", "f",
-				"pas", "ftn", "ins.c", "ins,pas",
-				"ins.ftn", "sml",
-				NULL
-			};
+	int i;
+	const char *sp;
+	char *datfile;
+	static const char *const suflist[] = {
+		/* list of "illegal" suffixes" */
+		"dat", "pos", "c", "h", "p", "i", "f",
+		"pas", "ftn", "ins.c", "ins,pas",
+		"ins.ftn", "sml",
+		NULL
+	};
 
 	DPRINTF(2, (stderr, "is_fortfile(%s) returns ", file));
 
@@ -836,7 +837,7 @@ is_fortfile(const char *file, char **datp, char **posp, int check_for_offend)
 		*datp = datfile;
 	else
 		free(datfile);
-#ifdef	OK_TO_WRITE_DISK
+#ifdef OK_TO_WRITE_DISK
 	if (posp != NULL) {
 		*posp = copy(file, strlen(file) + 4); /* +4 for ".dat" */
 		(void) strcat(*posp, ".pos");
@@ -845,7 +846,7 @@ is_fortfile(const char *file, char **datp, char **posp, int check_for_offend)
 	if (posp != NULL) {
 		*posp = NULL;
 	}
-#endif	/* OK_TO_WRITE_DISK */
+#endif /* OK_TO_WRITE_DISK */
 	DPRINTF(2, (stderr, "TRUE\n"));
 	return TRUE;
 }
@@ -857,7 +858,7 @@ is_fortfile(const char *file, char **datp, char **posp, int check_for_offend)
 static char *
 copy(const char *str, size_t len)
 {
-	char	*new, *sp;
+	char *new, *sp;
 
 	new = do_malloc(len + 1);
 	sp = new;
@@ -874,7 +875,7 @@ copy(const char *str, size_t len)
 static void *
 do_malloc(size_t size)
 {
-	void	*new;
+	void *new;
 
 	if ((new = malloc(size)) == NULL)
 		err(1, NULL);
@@ -899,8 +900,8 @@ do_free(void *ptr)
 static void
 init_prob(void)
 {
-	FILEDESC	*fp, *last;
-	int		percent, num_noprob, frac;
+	FILEDESC *fp, *last;
+	int percent, num_noprob, frac;
 
 	last = NULL;
 	/*
@@ -962,8 +963,8 @@ init_prob(void)
 static void
 get_fort(void)
 {
-	FILEDESC	*fp;
-	int		choice;
+	FILEDESC *fp;
+	int choice;
 
 	if (File_list->next == NULL || File_list->percent == NO_PROB)
 		fp = File_list;
@@ -1025,8 +1026,8 @@ get_fort(void)
 static FILEDESC *
 pick_child(FILEDESC *parent)
 {
-	FILEDESC	*fp;
-	int		 choice;
+	FILEDESC *fp;
+	int  choice;
 
 	if (Equal_probs) {
 		choice = random() % parent->num_children;
@@ -1061,7 +1062,7 @@ pick_child(FILEDESC *parent)
 static void
 sum_noprobs(FILEDESC *fp)
 {
-	static bool	did_noprobs = FALSE;
+	static bool did_noprobs = FALSE;
 
 	if (did_noprobs)
 		return;
@@ -1111,13 +1112,13 @@ open_dat(fp)
 static void
 get_pos(FILEDESC *fp)
 {
-#ifdef	OK_TO_WRITE_DISK
-	int	fd;
+#ifdef OK_TO_WRITE_DISK
+	int fd;
 #endif /* OK_TO_WRITE_DISK */
 
 	assert(fp->read_tbl);
 	if (fp->pos == POS_UNKNOWN) {
-#ifdef	OK_TO_WRITE_DISK
+#ifdef OK_TO_WRITE_DISK
 		if ((fd = open(fp->posfile, O_RDONLY)) < 0 ||
 		    read(fd, &fp->pos, sizeof fp->pos) != sizeof fp->pos)
 			fp->pos = random() % fp->tbl.str_numstr;
@@ -1142,8 +1143,8 @@ get_pos(FILEDESC *fp)
 static void
 get_tbl(FILEDESC *fp)
 {
-	int	 	fd;
-	FILEDESC	*child;
+	int fd;
+	FILEDESC *child;
 
 	if (fp->read_tbl)
 		return;
@@ -1231,7 +1232,7 @@ print_list(FILEDESC *list, int lev)
 	}
 }
 
-#ifndef	NO_REGEX
+#ifndef NO_REGEX
 /*
  * conv_pat:
  *	Convert the pattern to an ignore-case equivalent.
@@ -1239,9 +1240,9 @@ print_list(FILEDESC *list, int lev)
 static char *
 conv_pat(char *orig)
 {
-	char		*sp;
-	unsigned int	 cnt;
-	char		*new;
+	char *sp;
+	unsigned int  cnt;
+	char *new;
 
 	cnt = 1;	/* allow for '\0' */
 	for (sp = orig; *sp != '\0'; sp++)
@@ -1297,7 +1298,7 @@ find_matches(void)
 static size_t
 maxlen_in_list(FILEDESC *list)
 {
-	FILEDESC	*fp;
+	FILEDESC *fp;
 	size_t len, maxlen;
 
 	maxlen = 0;
@@ -1322,9 +1323,9 @@ maxlen_in_list(FILEDESC *list)
 static void
 matches_in_list(FILEDESC *list)
 {
-	char		*sp;
-	FILEDESC	*fp;
-	int		 in_file;
+	char *sp;
+	FILEDESC *fp;
+	int in_file;
 
 	if (!RE_OK(Re_pat) || !RE_OK(Re_pat13))
 		return;
@@ -1366,24 +1367,24 @@ matches_in_list(FILEDESC *list)
 	RE_FREE(Re_pat);
 	RE_FREE(Re_pat13);
 }
-# endif	/* NO_REGEX */
+#endif /* NO_REGEX */
 
 static void
 usage(void)
 {
 
 	(void) fprintf(stderr, "Usage: %s [-ae", getprogname());
-#ifdef	DEBUG
+#ifdef DEBUG
 	(void) fprintf(stderr, "D");
-#endif	/* DEBUG */
+#endif /* DEBUG */
 	(void) fprintf(stderr, "f");
-#ifndef	NO_REGEX
+#ifndef NO_REGEX
 	(void) fprintf(stderr, "i");
-#endif	/* NO_REGEX */
+#endif /* NO_REGEX */
 	(void) fprintf(stderr, "losw]");
-#ifndef	NO_REGEX
+#ifndef NO_REGEX
 	(void) fprintf(stderr, " [-m pattern]");
-#endif	/* NO_REGEX */
+#endif /* NO_REGEX */
 	(void) fprintf(stderr, "[ [#%%] file/directory/all]\n");
 	exit(1);
 }
