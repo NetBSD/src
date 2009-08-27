@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.28 2009/08/26 21:41:05 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.29 2009/08/27 09:40:39 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.28 2009/08/26 21:41:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.29 2009/08/27 09:40:39 bouyer Exp $");
 
 #include "bio.h"
 
@@ -2042,7 +2042,6 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	KERNEL_LOCK(1, curlwp);
 	s = splbio();
 	error = mfi_ioctl_vol(sc, &bv);
-	}
 	splx(s);
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (error)
