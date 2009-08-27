@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.50 2009/08/23 09:05:45 mrg Exp $
+# $NetBSD: md.macppc,v 1.51 2009/08/27 04:59:15 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -321,8 +321,6 @@
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
@@ -331,16 +329,14 @@
 ./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/imstt_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/imstt_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so           -unknown-       xorg
@@ -531,7 +527,7 @@
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/imstt.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/imstt.html			-unknown-	obsolete
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
@@ -552,7 +548,7 @@
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/imstt.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/imstt.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
