@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.53 2009/08/27 00:40:44 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.54 2009/08/27 00:42:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.53 2009/08/27 00:40:44 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.54 2009/08/27 00:42:11 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,11 +130,11 @@ static int add_dir(FILEDESC *);
 static int add_file(int,
 	    const char *, const char *, FILEDESC **, FILEDESC **, FILEDESC *);
 static void all_forts(FILEDESC *, const char *);
-static char *copy(const char *, u_int);
+static char *copy(const char *, size_t);
 static void rot13(char *line, int len);
 static void display(FILEDESC *);
 static void do_free(void *);
-static void *do_malloc(u_int);
+static void *do_malloc(size_t);
 static int form_file_list(char **, int);
 static int fortlen(void);
 static void get_fort(void);
@@ -879,7 +879,7 @@ is_fortfile(file, datp, posp, check_for_offend)
 static char *
 copy(str, len)
 	const char	*str;
-	unsigned int	len;
+	size_t	len;
 {
 	char	*new, *sp;
 
@@ -896,8 +896,7 @@ copy(str, len)
  *	Do a malloc, checking for NULL return.
  */
 static void *
-do_malloc(size)
-	unsigned int	size;
+do_malloc(size_t size)
 {
 	void	*new;
 
