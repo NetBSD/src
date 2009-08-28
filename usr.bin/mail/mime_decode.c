@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.15 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.16 2009/08/28 14:26:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.15 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.16 2009/08/28 14:26:50 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -266,8 +266,15 @@ get_content(struct mime_info *mip)
 		filename = savestr(filename);	/* save it! */
 	}
 	mip->mi_filename = filename;
-}
 
+	/*
+	 * XXX: If we have a "Content-Type" in the header, then assume
+	 * we also have a "MIME-Version: 1.0".  This fixes some broken
+	 * MIME headers that I have seen occasionally.
+	 */
+	if (mip->mi_version == NULL && mip->mi_type != NULL)
+		mip->mi_version = MIME_VERSION;
+}
 
 static struct message *
 salloc_message(int flag, long block, short offset)
