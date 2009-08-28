@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.30 2009/08/23 09:05:45 mrg Exp $
+# $NetBSD: md.cats,v 1.31 2009/08/28 17:20:07 ahoka Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -577,6 +577,7 @@
 ./usr/X11R7/man/cat4/nv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeonhd.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/s3.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/s3virge.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/savage.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/siliconmotion.0			-unknown-	.cat,xorg
@@ -613,6 +614,7 @@
 ./usr/X11R7/man/html4/nv.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeonhd.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/s3.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/s3virge.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/savage.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/siliconmotion.html		-unknown-	html,xorg
@@ -649,6 +651,7 @@
 ./usr/X11R7/man/man4/nv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeonhd.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/s3.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/s3virge.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/savage.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/siliconmotion.4			-unknown-	.man,xorg
