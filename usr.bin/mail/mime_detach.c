@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_detach.c,v 1.4 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: mime_detach.c,v 1.5 2009/08/28 14:26:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_detach.c,v 1.4 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: mime_detach.c,v 1.5 2009/08/28 14:26:50 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -178,26 +178,36 @@ detach_open_target(struct mime_info *mip)
 {
 	char *pathname;
 	char *prompt;
+	const char *partstr;
+	const char *subtype;
+
+	/*
+	 * XXX: If partstr == NULL, we probably shouldn't be detaching
+	 * anything, but let's be liberal and try to do something with
+	 * the block anyway.
+	 */
+	partstr = mip->mi_partstr && mip->mi_partstr[0] ? mip->mi_partstr : "0";
+	subtype = mip->mi_subtype ? mip->mi_subtype : "unknown";
 
 	/*
 	 * Get the suggested target pathname.
 	 */
 	if (mip->mi_filename != NULL)
-		(void)sasprintf(&pathname, "%s/%s", mip->mi_detachdir, mip->mi_filename);
+		(void)sasprintf(&pathname, "%s/%s", mip->mi_detachdir,
+		    mip->mi_filename);
 	else {
 		if (mip->mi_detachall == 0)
 			return NULL;
 
 		(void)sasprintf(&pathname, "%s/msg-%s.part-%s.%s",
 		    mip->mi_detachdir, mip->mi_msgstr,
-		    mip->mi_partstr[0] ? mip->mi_partstr : "0",
-		    mip->mi_subtype ? mip->mi_subtype : "unknown");
+		    partstr, subtype);
 	}
 
 	/*
 	 * Make up the prompt
 	 */
-	(void)sasprintf(&prompt, "%-7s filename: ", mip->mi_partstr);
+	(void)sasprintf(&prompt, "%-7s filename: ", partstr);
 
 	/*
 	 * The main loop.
@@ -218,7 +228,7 @@ detach_open_target(struct mime_info *mip)
 				return NULL;
 			continue;
 		}
-		switch (detach_open_core(fname, mip->mi_partstr)) {
+		switch (detach_open_core(fname, partstr)) {
 		case DETACH_OPEN_OK:
 			return fname;
 		case DETACH_NEXT:
