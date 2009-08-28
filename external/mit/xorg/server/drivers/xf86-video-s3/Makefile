@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/08/28 14:13:24 ahoka Exp $
+#	$NetBSD: Makefile,v 1.7 2009/08/28 14:39:39 ahoka Exp $
 
 DRIVER=		xf86-video-s3
 DRIVER_NAME=	s3_drv
@@ -15,6 +15,7 @@ SRCS=		s3_bios.c s3_cursor.c s3_dga.c s3_driver.c s3_IBMRGB.c \
 BUILDSYMLINKS=	s3_accel.c s3_accel_newmmio.c
 CPPFLAGS.s3_accel_newmmio.c+=	-DS3_NEWMMIO=1 \
 				-I${X11SRCDIR.xf86-video-s3}/src
+CPPFLAGS.s3_video.c+=		-DS3_NEWMMIO=1 \
 
 CPPFLAGS+=	-DPACKAGE_VERSION=\"${PACKAGE_VERSION}\"
 
