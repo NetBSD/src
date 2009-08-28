@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.35 2009/08/27 20:23:32 dyoung Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.36 2009/08/28 15:29:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,10 +154,10 @@
  * be a multiple of 4.
  */
 struct tulip_desc {
-	volatile u_int32_t td_status;	  /* Status */
-	volatile u_int32_t td_ctl;	  /* Control and Byte Counts */
-	volatile u_int32_t td_bufaddr1; /* Buffer Address 1 */
-	volatile u_int32_t td_bufaddr2; /* Buffer Address 2 */
+	volatile uint32_t td_status;	  /* Status */
+	volatile uint32_t td_ctl;	  /* Control and Byte Counts */
+	volatile uint32_t td_bufaddr1; /* Buffer Address 1 */
+	volatile uint32_t td_bufaddr2; /* Buffer Address 2 */
 } __packed __aligned(4);
 
 /*
