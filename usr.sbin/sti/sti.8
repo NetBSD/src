@@ -1,4 +1,4 @@
-.\" $NetBSD: sti.8,v 1.5 2008/04/30 13:11:03 martin Exp $
+.\" $NetBSD: sti.8,v 1.6 2009/08/28 21:19:13 hubertf Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,9 +46,9 @@ to the
 specified in the command line using
 .Xr ioctl 2
 .Dv TIOCSTI ,
-or send the standard input if a
+or send the standard input if no
 .Ar string
-is not supplied.
+is supplied.
 This
 .Xr ioctl 2
 is limited to the superuser.
