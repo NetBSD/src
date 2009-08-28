@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.29 2009/08/15 23:39:35 matt Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.30 2009/08/28 01:39:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.29 2009/08/15 23:39:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.30 2009/08/28 01:39:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,17 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.29 2009/08/15 23:39:35 matt Exp $
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
 
 #include <sys/cpu.h>
 #include <machine/reg.h>
-
-#ifndef EXEC_AOUT
-/* define EXEC_AOUT to get prototype from linux_syscall.h */
-#define EXEC_AOUT
-#endif
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
@@ -60,6 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.29 2009/08/15 23:39:35 matt Exp $
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
+
+#ifndef EXEC_AOUT
+/* define EXEC_AOUT to get prototype from linux_syscall.h */
+#define EXEC_AOUT
+#endif
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
