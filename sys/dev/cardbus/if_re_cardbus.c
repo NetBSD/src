@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.18 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.19 2009/08/29 14:18:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,38 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.18 2008/06/24 19:44:52 drochner Exp $");
-
-#include "opt_inet.h"
-#include "bpfilter.h"
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.19 2009/08/29 14:18:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/device.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_arp.h>
 #include <net/if_ether.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -76,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.18 2008/06/24 19:44:52 drochner 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
