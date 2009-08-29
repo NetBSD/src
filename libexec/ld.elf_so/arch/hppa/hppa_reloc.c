@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.28 2009/05/23 17:50:34 mjf Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.29 2009/08/29 13:46:54 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.28 2009/05/23 17:50:34 mjf Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.29 2009/08/29 13:46:54 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -483,7 +483,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    (void *)load_ptr(where),
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
-			    "in non-PLT relocations\n",
+			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
 			return -1;
 		}

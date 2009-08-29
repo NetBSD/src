@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.54 2009/05/20 22:31:46 christos Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.55 2009/08/29 13:46:55 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.54 2009/05/20 22:31:46 christos Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.55 2009/08/29 13:46:55 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -312,7 +312,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    (void *)rel->r_offset, (void *)load_ptr(where),
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
-			    "in non-PLT relocations\n",
+			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
 			return -1;
 		}

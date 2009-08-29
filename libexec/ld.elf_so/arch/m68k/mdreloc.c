@@ -1,13 +1,13 @@
-/*	$NetBSD: mdreloc.c,v 1.23 2009/03/16 02:46:47 lukem Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.24 2009/08/29 13:46:55 jmmv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.23 2009/03/16 02:46:47 lukem Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.24 2009/08/29 13:46:55 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.23 2009/03/16 02:46:47 lukem Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.24 2009/08/29 13:46:55 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    (void *)*where,
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
-			    "in non-PLT relocations\n",
+			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
 			return -1;
 		}
