@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.172 2009/04/15 11:45:18 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.173 2009/08/29 00:09:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.172 2009/04/15 11:45:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.173 2009/08/29 00:09:02 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.172 2009/04/15 11:45:18 yamt Exp $")
  */
 
 /* List of all pools */
-TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
+static TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 #define	PHPOOL_MAX	8
