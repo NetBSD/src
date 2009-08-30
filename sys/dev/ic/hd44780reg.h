@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780reg.h,v 1.3 2005/12/11 12:21:26 christos Exp $ */
+/* $NetBSD: hd44780reg.h,v 1.4 2009/08/30 02:07:05 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -55,24 +55,24 @@
 /*
  * 'Initialize by instruction'	8bit=1/0 8-bit/4-bit operation
  */
-#define cmd_init(mode)	((u_int8_t)(mode ? 0x3f : 0x03))
+#define cmd_init(mode)	((uint8_t)(mode ? 0x3f : 0x03))
 
 /*
  * 'Clear display'
  */
-#define cmd_clear()	((u_int8_t)0x01)
+#define cmd_clear()	((uint8_t)0x01)
 
 /*
  * 'Return home'
  */
-#define cmd_rethome()	((u_int8_t)0x03)
+#define cmd_rethome()	((uint8_t)0x03)
 
 /*
  * 'Entry mode set'		id=1/0 increment/decrement
  * 				s=1  display shift
  */
 #define cmd_modset(id, s) \
-	((u_int8_t)(0x04 | bset(id, 0x2) | bset(s, 0x1)))
+	((uint8_t)(0x04 | bset(id, 0x2) | bset(s, 0x1)))
 
 /*
  * 'Display on/off control'	d=1/0 display on/off
@@ -80,14 +80,14 @@
  * 				b=1/0 blinking of cursor position on/off
  */
 #define cmd_dispctl(d, c, b) \
-	((u_int8_t)(0x08 | bset(d, 0x04) | bset(c, 0x02) | bset(b, 0x01)))
+	((uint8_t)(0x08 | bset(d, 0x04) | bset(c, 0x02) | bset(b, 0x01)))
 
 /*
  * 'Cursor or display shift'	sc=1/0 display shift/cursor move
  * 				rl=1/0 shift to the right/left
  */
 #define cmd_shift(sc, rl) \
-	((u_int8_t)(0x13 | bset(sc, 0x08) | bset(rl, 0x04)))
+	((uint8_t)(0x13 | bset(sc, 0x08) | bset(rl, 0x04)))
 
 /*
  * 'Function set'		dl=1/0 8 bits/4 bits operation
@@ -95,18 +95,18 @@
  * 				f=1/0  5x10/5x8 dots font
  */
 #define cmd_funcset(dl, n, f) \
-	 ((u_int8_t)(0x23 | bset(dl, 0x10) | bset(n, 0x08) | bset(f, 0x04)))
+	 ((uint8_t)(0x23 | bset(dl, 0x10) | bset(n, 0x08) | bset(f, 0x04)))
 
 /*
  * 'Set CGRAM address'
  */
 #define cmd_cgramset(acg) \
-	((u_int8_t)(0x40 | ((acg) & 0x3f)))
+	((uint8_t)(0x40 | ((acg) & 0x3f)))
 
 /*
  * 'Set DDRAM address'
  */
 #define cmd_ddramset(add) \
-	((u_int8_t)(0x80 | ((add) & 0x7f)))
+	((uint8_t)(0x80 | ((add) & 0x7f)))
 
 #endif /* _DEV_IC_HD44780REG_H_ */
