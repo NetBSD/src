@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.6.4.1 2009/08/30 03:01:26 snj Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.6.4.2 2009/08/30 03:02:32 snj Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.6.4.1 2009/08/30 03:01:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.6.4.2 2009/08/30 03:02:32 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -391,6 +391,7 @@ asus_sysctl_setup(struct asus_softc *sc)
 		goto sysctl_err;
 	sc->sc_cfv_mib = node_cfv->sysctl_num;
 
+	return;
 sysctl_err:
 	aprint_error_dev(sc->sc_dev, "failed to add sysctl nodes. (%d)\n", err);
 }
