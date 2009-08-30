@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.7 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: lint.c,v 1.8 2009/08/30 21:07:41 cube Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -124,9 +124,9 @@ do_emit_instances(struct devbase *d, struct attr *at)
 		da->d_isdef = 2;
 	}
 
-	if (at == NULL && !d->d_ispseudo)
+	if (at == NULL && !d->d_ispseudo && d->d_ihead == NULL)
 		printf("%s0\tat\troot\n", d->d_name);
-	else if (!d->d_ispseudo) {
+	else if (at != NULL && !d->d_ispseudo && da->d_ihead == NULL) {
 		printf("%s0\tat\t%s?", d->d_name, at->a_name);
 
 		for (nv = at->a_locs; nv != NULL; nv = nv->nv_next) {
@@ -165,7 +165,7 @@ emit_pseudo_instance(const char *name, void *value, void *v)
 {
 	struct devbase *d = value;
 
-	if (d->d_ispseudo)
+	if (d->d_ispseudo && d->d_ihead == NULL)
 		printf("pseudo-device\t%s\n", d->d_name);
 	return 0;
 }
