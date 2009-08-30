@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.90 2009/08/15 08:35:22 mbalmer Exp $
+#	$NetBSD: RESPONSIBLE,v 1.91 2009/08/30 01:54:33 dyoung Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -27,6 +27,7 @@ gpioctl		mbalmer
 grep		simonb, wiz
 groff		wiz
 gzip		mrg, atatat
+ifconfig	dyoung
 hostapd		none
 installboot(mi)	core
 kerberos	lha, joda
@@ -56,8 +57,7 @@ top		simonb
 user		agc
 vi		aymeric
 wake		mbalmer
-wpa_supplicant	scw, dyoung
-
+wpa_supplicant	scw
 
 Userland Libraries:
 
@@ -156,6 +156,12 @@ pcscp		tsutsui
 siop		bouyer
 spc		tsutsui
 trm		tsutsui
+
+system controller device drivers:
+
+elansc		dyoung
+elanpar		dyoung
+elanpex		dyoung
 
 file systems:
 
