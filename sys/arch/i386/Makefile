@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2009/05/28 18:13:46 dyoung Exp $
+#	$NetBSD: Makefile,v 1.38 2009/08/30 02:00:56 dyoung Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -13,8 +13,7 @@ SI386=	${SYSDIR}/arch/i386/acpi/*.[ch] \
 	${SYSDIR}/arch/i386/pnpbios/*.[ch] \
 	${SYSDIR}/external/isc/atheros_hal/dist/*.[ch] \
 	${SYSDIR}/external/isc/atheros_hal/dist/*/*.[ch] \
-	${SYSDIR}/external/isc/atheros_hal/ic/*.[ch] \
-	${SYSDIR}/dist/acpica/*.[ch]
+	${SYSDIR}/external/isc/atheros_hal/ic/*.[ch]
 SI386+=	${SYSDIR}/arch/x86/x86/*.[ch] \
 	${SYSDIR}/arch/x86/acpi/*.[ch] \
 	${SYSDIR}/arch/x86/include/*.h \
@@ -30,6 +29,8 @@ DI386=	i386 eisa isa include pci
 tags:
 	-rm -f ${TI386}
 	-echo ${SI386} | xargs ctags -wadtf ${TI386}
+	-find -H ${SYSDIR}/external/intel-public/acpica/dist/ -name '*.[ch]' | \
+	    sort -t / -u | xargs ctags -wadtf ${TI386}
 	-${FINDCOMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
 	    ${TOOL_SED} -e \
