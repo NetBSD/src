@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
+/*	$NetBSD: ubt.c,v 1.36 2009/08/30 18:35:53 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.36 2009/08/30 18:35:53 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -734,6 +734,8 @@ ubt_abortdealloc(struct ubt_softc *sc)
 	DPRINTFN(1, "sc=%p\n", sc);
 
 	/* Abort all pipes */
+	usbd_abort_default_pipe(sc->sc_udev);
+
 	if (sc->sc_evt_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_evt_pipe);
 		usbd_close_pipe(sc->sc_evt_pipe);
