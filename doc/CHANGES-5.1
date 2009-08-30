@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.62 2009/08/25 19:12:43 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.63 2009/08/30 03:08:11 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2248,4 +2248,41 @@ share/man/man4/btuart.4				1.7-1.9
 	Fix some small nits and mention how to configure the tty line
 	as a bluetooth device
 	[plunky, ticket #926]
+
+etc/ssh/ssh_known_hosts				1.5
+
+	Update and add some TNF ssh keys.
+	[spz, ticket #930]
+
+sys/external/bsd/drm/dist/bsd-core/drm_drv.c	1.15
+
+	On netbsd with the single final close() action, make sure we
+	clean up all the files attached to dev->files.  we check for
+	one per "open_count" that is above 1.  This fixes restarting
+	X + drm after actually using drm.
+	[mrg, ticket #927]
+
+sys/external/bsd/drm/dist/bsd-core/drm_drv.c	1.16
+
+	Introduce an ugly but simple hack to work around external
+	software requirements: set the drm pci "domain" to the pci bus
+	unit number.  this matches what libpciaccess does for netbsd and
+	now drm is much happier again.
+	[mrg, ticket #935]
+
+sys/external/bsd/drm/dist/bsd-core/drm_drv.c	1.14
+
+	Convert a DRM_ERROR() to DRM_DEBUG().  Its failure is not fatal
+	and it tends to trigger on almost all cards.
+	[mrg, ticket #936]
+
+sys/dev/acpi/asus_acpi.c			1.7-1.10
+sys/dev/acpi/files.acpi				1.54
+
+	- Add experimental cpu fan/voltage switching support
+	  (sysctl hw.asus0.*)
+	- Add fan sensor
+	- Rename asus_softc_t -> struct asus_softc
+	- Add detach method
+	[jmcneill, ticket #891]
 
