@@ -1,23 +1,23 @@
-# $NetBSD: module.i386,v 1.2 2009/03/10 14:59:19 yamt Exp $
-./@MODULEDIR@/azalia				base-kernel-modules
-./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules
-./@MODULEDIR@/compat_freebsd			base-kernel-modules
-./@MODULEDIR@/compat_freebsd/compat_freebsd.kmod	base-kernel-modules
-./@MODULEDIR@/compat_ibcs2			base-kernel-modules
-./@MODULEDIR@/compat_ibcs2/compat_ibcs2.kmod	base-kernel-modules
-./@MODULEDIR@/compat_linux			base-kernel-modules
-./@MODULEDIR@/compat_linux/compat_linux.kmod	base-kernel-modules
-./@MODULEDIR@/compat_svr4			base-kernel-modules
-./@MODULEDIR@/compat_svr4/compat_svr4.kmod	base-kernel-modules
-./@MODULEDIR@/drm				base-kernel-modules
-./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
-./@MODULEDIR@/exec_aout				base-kernel-modules
-./@MODULEDIR@/exec_aout/exec_aout.kmod		base-kernel-modules
-./@MODULEDIR@/exec_elf32			base-kernel-modules
-./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
-./@MODULEDIR@/i915drm				base-kernel-modules
-./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules
-./@MODULEDIR@/radeondrm				base-kernel-modules
-./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules
-./@MODULEDIR@/tprof_pmi				base-kernel-modules
-./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules
+# $NetBSD: module.i386,v 1.3 2009/08/30 01:49:42 dyoung Exp $
+./@MODULEDIR@/azalia				base-kernel-modules	kmod
+./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/compat_freebsd			base-kernel-modules	kmod
+./@MODULEDIR@/compat_freebsd/compat_freebsd.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/compat_ibcs2			base-kernel-modules	kmod
+./@MODULEDIR@/compat_ibcs2/compat_ibcs2.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/compat_linux			base-kernel-modules	kmod
+./@MODULEDIR@/compat_linux/compat_linux.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/compat_svr4			base-kernel-modules	kmod
+./@MODULEDIR@/compat_svr4/compat_svr4.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/drm				base-kernel-modules	kmod
+./@MODULEDIR@/drm/drm.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/exec_aout				base-kernel-modules	kmod
+./@MODULEDIR@/exec_aout/exec_aout.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/i915drm				base-kernel-modules	kmod
+./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/radeondrm				base-kernel-modules	kmod
+./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/tprof_pmi				base-kernel-modules	kmod
+./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod

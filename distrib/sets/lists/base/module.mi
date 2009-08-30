@@ -1,105 +1,105 @@
-# $NetBSD: module.mi,v 1.10 2009/07/19 02:50:44 rmind Exp $
+# $NetBSD: module.mi,v 1.11 2009/08/30 01:49:42 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./stand/@MACHINE@				base-kernel-modules
-./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules
-./@MODULEDIR@					base-kernel-modules
-./@MODULEDIR@/accf_dataready			base-kernel-modules
-./@MODULEDIR@/accf_dataready/accf_dataready.kmod	base-kernel-modules
-./@MODULEDIR@/accf_httpready			base-kernel-modules
-./@MODULEDIR@/accf_httpready/accf_httpready.kmod	base-kernel-modules
-./@MODULEDIR@/adosfs				base-kernel-modules
-./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
-./@MODULEDIR@/aio				base-kernel-modules
-./@MODULEDIR@/aio/aio.kmod			base-kernel-modules
-./@MODULEDIR@/cd9660				base-kernel-modules
-./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules
-./@MODULEDIR@/coda				base-kernel-modules
-./@MODULEDIR@/coda/coda.kmod			base-kernel-modules
-./@MODULEDIR@/coda5				base-kernel-modules
-./@MODULEDIR@/coda5/coda5.kmod			base-kernel-modules
-./@MODULEDIR@/compat				base-kernel-modules
-./@MODULEDIR@/compat/compat.kmod		base-kernel-modules
-./@MODULEDIR@/compat_ossaudio			base-kernel-modules
-./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules
-./@MODULEDIR@/coredump				base-kernel-modules
-./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules
+./stand/@MACHINE@				base-kernel-modules	kmod
+./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules	kmod
+./@MODULEDIR@					base-kernel-modules	kmod
+./@MODULEDIR@/accf_dataready			base-kernel-modules	kmod
+./@MODULEDIR@/accf_dataready/accf_dataready.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/accf_httpready			base-kernel-modules	kmod
+./@MODULEDIR@/accf_httpready/accf_httpready.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/adosfs				base-kernel-modules	kmod
+./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/aio				base-kernel-modules	kmod
+./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/cd9660				base-kernel-modules	kmod
+./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/coda				base-kernel-modules	kmod
+./@MODULEDIR@/coda/coda.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/coda5				base-kernel-modules	kmod
+./@MODULEDIR@/coda5/coda5.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/compat				base-kernel-modules	kmod
+./@MODULEDIR@/compat/compat.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/compat_ossaudio			base-kernel-modules	kmod
+./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/coredump				base-kernel-modules	kmod
+./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
-./@MODULEDIR@/dm				base-kernel-modules	lvm
-./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm
-./@MODULEDIR@/efs				base-kernel-modules
-./@MODULEDIR@/efs/efs.kmod			base-kernel-modules
-./@MODULEDIR@/exec_script			base-kernel-modules
-./@MODULEDIR@/exec_script/exec_script.kmod	base-kernel-modules
-./@MODULEDIR@/ext2fs				base-kernel-modules
-./@MODULEDIR@/ext2fs/ext2fs.kmod		base-kernel-modules
-./@MODULEDIR@/fdesc				base-kernel-modules
-./@MODULEDIR@/fdesc/fdesc.kmod			base-kernel-modules
-./@MODULEDIR@/ffs				base-kernel-modules
-./@MODULEDIR@/ffs/ffs.kmod			base-kernel-modules
-./@MODULEDIR@/filecore				base-kernel-modules
-./@MODULEDIR@/filecore/filecore.kmod		base-kernel-modules
-./@MODULEDIR@/fss				base-kernel-modules
-./@MODULEDIR@/fss/fss.kmod			base-kernel-modules
-./@MODULEDIR@/hfs				base-kernel-modules
-./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules
-./@MODULEDIR@/kernfs				base-kernel-modules
-./@MODULEDIR@/kernfs/kernfs.kmod		base-kernel-modules
-./@MODULEDIR@/ksem				base-kernel-modules
-./@MODULEDIR@/ksem/ksem.kmod			base-kernel-modules
-./@MODULEDIR@/layerfs				base-kernel-modules
-./@MODULEDIR@/layerfs/layerfs.kmod		base-kernel-modules
-./@MODULEDIR@/lfs				base-kernel-modules
-./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules
-./@MODULEDIR@/mfs				base-kernel-modules
-./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules
-./@MODULEDIR@/miniroot				base-kernel-modules
-./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules
-./@MODULEDIR@/mqueue				base-kernel-modules
-./@MODULEDIR@/mqueue/mqueue.kmod		base-kernel-modules
-./@MODULEDIR@/msdos				base-kernel-modules
-./@MODULEDIR@/msdos/msdos.kmod			base-kernel-modules
-./@MODULEDIR@/nfs				base-kernel-modules
-./@MODULEDIR@/nfs/nfs.kmod			base-kernel-modules
-./@MODULEDIR@/nfsserver				base-kernel-modules
-./@MODULEDIR@/nfsserver/nfsserver.kmod		base-kernel-modules
-./@MODULEDIR@/nilfs				base-kernel-modules
-./@MODULEDIR@/nilfs/nilfs.kmod			base-kernel-modules
-./@MODULEDIR@/ntfs				base-kernel-modules
-./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules
-./@MODULEDIR@/null				base-kernel-modules
-./@MODULEDIR@/null/null.kmod			base-kernel-modules
-./@MODULEDIR@/overlay				base-kernel-modules
-./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules
-./@MODULEDIR@/portal				base-kernel-modules
-./@MODULEDIR@/portal/portal.kmod		base-kernel-modules
-./@MODULEDIR@/ppp_bsdcomp			base-kernel-modules
-./@MODULEDIR@/ppp_bsdcomp/ppp_bsdcomp.kmod	base-kernel-modules
-./@MODULEDIR@/ppp_deflate			base-kernel-modules
-./@MODULEDIR@/ppp_deflate/ppp_deflate.kmod	base-kernel-modules
-./@MODULEDIR@/procfs				base-kernel-modules
-./@MODULEDIR@/procfs/procfs.kmod		base-kernel-modules
-./@MODULEDIR@/ptyfs				base-kernel-modules
-./@MODULEDIR@/ptyfs/ptyfs.kmod			base-kernel-modules
-./@MODULEDIR@/puffs				base-kernel-modules
-./@MODULEDIR@/puffs/puffs.kmod			base-kernel-modules
-./@MODULEDIR@/putter				base-kernel-modules
-./@MODULEDIR@/putter/putter.kmod		base-kernel-modules
-./@MODULEDIR@/smbfs				base-kernel-modules
-./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules
-./@MODULEDIR@/sysvbfs				base-kernel-modules
-./@MODULEDIR@/sysvbfs/sysvbfs.kmod		base-kernel-modules
-./@MODULEDIR@/tmpfs				base-kernel-modules
-./@MODULEDIR@/tmpfs/tmpfs.kmod			base-kernel-modules
-./@MODULEDIR@/tprof				base-kernel-modules
-./@MODULEDIR@/tprof/tprof.kmod			base-kernel-modules
-./@MODULEDIR@/udf				base-kernel-modules
-./@MODULEDIR@/udf/udf.kmod			base-kernel-modules
-./@MODULEDIR@/umap				base-kernel-modules
-./@MODULEDIR@/umap/umap.kmod			base-kernel-modules
-./@MODULEDIR@/union				base-kernel-modules
-./@MODULEDIR@/union/union.kmod			base-kernel-modules
-./@MODULEDIR@/vnd 				base-kernel-modules
-./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules
+./@MODULEDIR@/dm				base-kernel-modules	lvm,kmod
+./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm,kmod
+./@MODULEDIR@/efs				base-kernel-modules	kmod
+./@MODULEDIR@/efs/efs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/exec_script			base-kernel-modules	kmod
+./@MODULEDIR@/exec_script/exec_script.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/ext2fs				base-kernel-modules	kmod
+./@MODULEDIR@/ext2fs/ext2fs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/fdesc				base-kernel-modules	kmod
+./@MODULEDIR@/fdesc/fdesc.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ffs				base-kernel-modules	kmod
+./@MODULEDIR@/ffs/ffs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/filecore				base-kernel-modules	kmod
+./@MODULEDIR@/filecore/filecore.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/fss				base-kernel-modules	kmod
+./@MODULEDIR@/fss/fss.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/hfs				base-kernel-modules	kmod
+./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/kernfs				base-kernel-modules	kmod
+./@MODULEDIR@/kernfs/kernfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ksem				base-kernel-modules	kmod
+./@MODULEDIR@/ksem/ksem.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/layerfs				base-kernel-modules	kmod
+./@MODULEDIR@/layerfs/layerfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/lfs				base-kernel-modules	kmod
+./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/mfs				base-kernel-modules	kmod
+./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/miniroot				base-kernel-modules	kmod
+./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mqueue				base-kernel-modules	kmod
+./@MODULEDIR@/mqueue/mqueue.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/msdos				base-kernel-modules	kmod
+./@MODULEDIR@/msdos/msdos.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/nfs				base-kernel-modules	kmod
+./@MODULEDIR@/nfs/nfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/nfsserver				base-kernel-modules	kmod
+./@MODULEDIR@/nfsserver/nfsserver.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/nilfs				base-kernel-modules	kmod
+./@MODULEDIR@/nilfs/nilfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ntfs				base-kernel-modules	kmod
+./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/null				base-kernel-modules	kmod
+./@MODULEDIR@/null/null.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/overlay				base-kernel-modules	kmod
+./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/portal				base-kernel-modules	kmod
+./@MODULEDIR@/portal/portal.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ppp_bsdcomp			base-kernel-modules	kmod
+./@MODULEDIR@/ppp_bsdcomp/ppp_bsdcomp.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/ppp_deflate			base-kernel-modules	kmod
+./@MODULEDIR@/ppp_deflate/ppp_deflate.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/procfs				base-kernel-modules	kmod
+./@MODULEDIR@/procfs/procfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ptyfs				base-kernel-modules	kmod
+./@MODULEDIR@/ptyfs/ptyfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/puffs				base-kernel-modules	kmod
+./@MODULEDIR@/puffs/puffs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/putter				base-kernel-modules	kmod
+./@MODULEDIR@/putter/putter.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/smbfs				base-kernel-modules	kmod
+./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod
+./@MODULEDIR@/sysvbfs/sysvbfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/tmpfs				base-kernel-modules	kmod
+./@MODULEDIR@/tmpfs/tmpfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/tprof				base-kernel-modules	kmod
+./@MODULEDIR@/tprof/tprof.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/udf				base-kernel-modules	kmod
+./@MODULEDIR@/udf/udf.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/umap				base-kernel-modules	kmod
+./@MODULEDIR@/umap/umap.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/union				base-kernel-modules	kmod
+./@MODULEDIR@/union/union.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/vnd 				base-kernel-modules	kmod
+./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules	kmod
