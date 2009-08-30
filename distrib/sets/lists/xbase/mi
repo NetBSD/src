@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.77 2009/06/18 05:59:43 mrg Exp $
+# $NetBSD: mi,v 1.78 2009/08/30 21:27:35 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2064,6 +2064,7 @@
 ./usr/X11R7/lib/X11/xkb/types/pc			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/xkbcomp				-unknown-	xorg
 ./usr/X11R7/lib/X11/xman.help				-unknown-	xorg
+./usr/X11R7/lib/xorg/protocol.txt			-unknown-	xorg
 ./usr/X11R7/libexec/chooser				-unknown-	xorg
 ./usr/X11R7/man/cat1/appres.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/atobm.0				-unknown-	.cat,xorg
