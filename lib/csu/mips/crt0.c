@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.19 2005/12/24 22:02:10 perry Exp $ */
+/* $NetBSD: crt0.c,v 1.19.32.1 2009/08/30 09:59:26 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -86,10 +86,15 @@ __start(u_long sp,
 	 */
 
 #ifndef DYNAMIC
+#ifdef _LP64
+	__asm volatile("dla $28,_gp");
+#else
 	__asm volatile("la $28,_gp");
+#endif
 #endif
 
 	ksp = (char**)sp;
+#if defined(__mips_n32) || defined(__mips_n64)
 	if (ksp == 0) {
 		/*
 		 * Uh, oh. We're running on a old kernel that passed
@@ -110,6 +115,7 @@ __start(u_long sp,
 		__asm volatile("	addiu	%0,$29,64" : "=r" (ksp));
 #endif
 	}
+#endif
 
 
 	argc = *(int *)ksp;
@@ -157,7 +163,7 @@ __start(u_long sp,
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.19 2005/12/24 22:02:10 perry Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.19.32.1 2009/08/30 09:59:26 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
