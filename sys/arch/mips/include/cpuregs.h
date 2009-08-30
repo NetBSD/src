@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.3 2009/08/30 10:01:03 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.4 2009/08/30 13:03:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -451,7 +451,7 @@
  * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
  * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
  * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
- * 15/1	MIPS_COP_0_EBASE	3333 Exception Base
+ * 15/1	MIPS_COP_0_EBASE	..33 Exception Base
  * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
