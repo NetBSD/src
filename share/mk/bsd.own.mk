@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.569 2009/08/20 03:49:34 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.570 2009/08/30 01:49:42 dyoung Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -661,6 +661,7 @@ MKCOMPAT:=	no
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
+	MKKMOD \
 	MKLDAP MKLINKLIB MKLINT \
 	MKMAN \
 	MKNLS \

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.84 2009/06/18 21:05:35 mrg Exp $
+#	$NetBSD: sets.subr,v 1.85 2009/08/30 01:49:41 dyoung Exp $
 #
 
 #
@@ -44,6 +44,7 @@ MKVARS="\
 	MKIPFILTER	\
 	MKISCSI		\
 	MKKERBEROS	\
+	MKKMOD		\
 	MKLDAP		\
 	MKLINT		\
 	MKLVM		\
@@ -228,7 +229,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.84 2009/06/18 21:05:35 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.85 2009/08/30 01:49:41 dyoung Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -270,6 +271,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	ipfilter		${MKIPFILTER} != no
 #	iscsi			${MKISCSI} != no
 #	kerberos		${MKKERBEROS} != no
+#	kmod			${MKKMOD} != no
 #	ldap			${MKLDAP} != no
 #	lint			${MKLINT} != no
 #	lvm			${MKLVM} != no
