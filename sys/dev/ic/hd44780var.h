@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.6 2009/05/12 14:25:17 cegger Exp $ */
+/* $NetBSD: hd44780var.h,v 1.7 2009/08/30 02:07:05 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -49,29 +49,29 @@
 #define	HLCD_WRITE_INST		_IOW('h',  16, struct hd44780_io)
 #define	HLCD_WRITE_DATA		_IOW('h',  17, struct hd44780_io)
 #define HLCD_GET_INFO		_IOR('h',  18, struct hd44780_info)
-#define HLCD_GET_CHIPNO		_IOR('h',  19, u_int8_t)
-#define HLCD_SET_CHIPNO		_IOW('h',  20, u_int8_t)
+#define HLCD_GET_CHIPNO		_IOR('h',  19, uint8_t)
+#define HLCD_SET_CHIPNO		_IOW('h',  20, uint8_t)
 
 struct hd44780_dispctl {
-	u_int8_t chip;
-	u_char	display_on:1,
+	uint8_t chip;
+	uint8_t	display_on:1,
 		blink_on:1,
 		cursor_on:1;
 };
 
 struct hd44780_io {
-	u_int8_t chip;
-	u_int8_t dat;
-	u_int8_t len;
-	u_int8_t buf[HD_MAX_CHARS];
+	uint8_t chip;
+	uint8_t dat;
+	uint8_t len;
+	uint8_t buf[HD_MAX_CHARS];
 };
 
 struct hd44780_info {
-	u_char	lines;
-	u_char	phys_rows;
-	u_char	virt_rows;
+	uint8_t	lines;
+	uint8_t	phys_rows;
+	uint8_t	virt_rows;
 
-	u_char	is_wide:1,
+	uint8_t	is_wide:1,
 		is_bigfont:1,
 		kp_present:1;
 };
@@ -82,7 +82,7 @@ struct  hlcd_screen {
 	int hlcd_curon;
 	int hlcd_curx;
 	int hlcd_cury;
-	u_char *image;			/* characters of screen */
+	uint8_t *image;			/* characters of screen */
 	struct hd44780_chip *hlcd_sc;
 };
 
@@ -95,12 +95,12 @@ struct hd44780_chip {
 #define HD_UP			0x10	/* if set, lcd has been initialized */
 #define HD_TIMEDOUT		0x20	/* lcd has recently stopped talking */
 #define HD_MULTICHIP		0x40	/* two HD44780 controllers (4-line) */
-	u_char sc_flags;
+	uint8_t sc_flags;
 
-	u_char sc_cols;			/* visible columns */
-	u_char sc_vcols;		/* virtual columns (normally 40) */
-	u_char sc_dev_ok;
-	u_char sc_curchip;
+	uint8_t sc_cols;		/* visible columns */
+	uint8_t sc_vcols;		/* virtual columns (normally 40) */
+	uint8_t sc_dev_ok;
+	uint8_t sc_curchip;
 
 	bus_space_tag_t sc_iot;
 
@@ -113,9 +113,9 @@ struct hd44780_chip {
 	struct callout redraw;		/* wsdisplay refresh/redraw timer */
 
 	/* Generic write/read byte entries. */
-	void     (* sc_writereg)(struct hd44780_chip *, u_int32_t, u_int32_t,
-	  u_int8_t);
-	u_int8_t (* sc_readreg)(struct hd44780_chip *, u_int32_t, u_int32_t);
+	void     (* sc_writereg)(struct hd44780_chip *, uint32_t, uint32_t,
+	  uint8_t);
+	uint8_t (* sc_readreg)(struct hd44780_chip *, uint32_t, uint32_t);
 };
 
 #define hd44780_ir_write(sc, en, dat) \
@@ -134,19 +134,20 @@ struct hd44780_chip {
 	(sc)->sc_readreg((sc), (en), 1)
 
 void hd44780_attach_subr(struct hd44780_chip *);
-void hd44780_busy_wait(struct hd44780_chip *, u_int32_t);
+void hd44780_busy_wait(struct hd44780_chip *, uint32_t);
 int  hd44780_init(struct hd44780_chip *);
-int  hd44780_chipinit(struct hd44780_chip *, u_int32_t);
+int  hd44780_chipinit(struct hd44780_chip *, uint32_t);
 int  hd44780_ioctl_subr(struct hd44780_chip *, u_long, void *);
-void hd44780_ddram_redraw(struct hd44780_chip *, u_int32_t, struct hd44780_io *);
+void hd44780_ddram_redraw(struct hd44780_chip *, uint32_t, struct hd44780_io *);
 
 #define HD_DDRAM_READ	0x0
 #define HD_DDRAM_WRITE	0x1
-int  hd44780_ddram_io(struct hd44780_chip *, u_int32_t, struct hd44780_io *, u_char);
+int  hd44780_ddram_io(struct hd44780_chip *, uint32_t, struct hd44780_io *,
+    uint8_t);
 
 #if defined(HD44780_STD_WIDE) || defined(HD44780_STD_SHORT)
-void     hd44780_writereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
-u_int8_t hd44780_readreg(struct hd44780_chip *, u_int32_t, u_int32_t);
+void     hd44780_writereg(struct hd44780_chip *, uint32_t, uint32_t, uint8_t);
+uint8_t hd44780_readreg(struct hd44780_chip *, uint32_t, uint32_t);
 #endif
 
 #endif /* _KERNEL */
