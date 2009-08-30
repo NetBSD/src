@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.2 2009/08/21 17:32:00 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.3 2009/08/30 10:01:03 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -399,6 +399,7 @@ typedef int mips_prid_t;
 				/*	0x09	unannounced */
 				/*	0x0a	unannounced */
 #define     MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
+#define     MIPS_PRID_CID_RMI		0x0c	/* RMI / NetLogic */
 #define MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
 #ifdef _KERNEL

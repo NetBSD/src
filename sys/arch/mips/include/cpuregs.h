@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.2 2009/08/21 17:26:23 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.3 2009/08/30 10:01:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -451,6 +451,7 @@
  * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
  * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
  * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
+ * 15/1	MIPS_COP_0_EBASE	3333 Exception Base
  * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
@@ -804,6 +805,27 @@
  * CPU processor revision IDs for company ID == 5 (SandCraft)
  */
 #define	MIPS_SR7100	0x04	/* SandCraft SR7100 		ISA 64  */
+
+/*
+ * CPU processor revision IDs for company ID == 12 (RMI)
+ */
+#define	MIPS_XLR732	0x00	/* RMI XLS732-C	 		ISA 64  */
+#define	MIPS_XLR716	0x02	/* RMI XLS716-C	 		ISA 64  */
+#define	MIPS_XLR532	0x08	/* RMI XLS532-C	 		ISA 64  */
+#define	MIPS_XLR516	0x0a	/* RMI XLS516-C	 		ISA 64  */
+#define	MIPS_XLR508	0x0b	/* RMI XLS508-C	 		ISA 64  */
+#define	MIPS_XLR308	0x0f	/* RMI XLS308-C	 		ISA 64  */
+#define	MIPS_XLS616	0x40	/* RMI XLS616	 		ISA 64  */
+#define	MIPS_XLS416	0x44	/* RMI XLS416	 		ISA 64  */
+#define	MIPS_XLS608	0x4A	/* RMI XLS608	 		ISA 64  */
+#define	MIPS_XLS408	0x4E	/* RMI XLS406	 		ISA 64  */
+#define	MIPS_XLS404	0x4F	/* RMI XLS404	 		ISA 64  */
+#define	MIPS_XLS408LITE	0x88	/* RMI XLS408-Lite		ISA 64  */
+#define	MIPS_XLS404LITE	0x8C	/* RMI XLS404-Lite	 	ISA 64  */
+#define	MIPS_XLS208	0x8E	/* RMI XLS208	 		ISA 64  */
+#define	MIPS_XLS204	0x8F	/* RMI XLS204	 		ISA 64  */
+#define	MIPS_XLS108	0xCE	/* RMI XLS108	 		ISA 64  */
+#define	MIPS_XLS104	0xCF	/* RMI XLS104	 		ISA 64  */
 
 /*
  * FPU processor revision ID
