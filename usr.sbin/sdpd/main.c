@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2009/08/13 17:50:41 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2009/08/30 19:24:40 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2004 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.6 2009/08/13 17:50:41 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2009/08/30 19:24:40 plunky Exp $");
 
 #include <errno.h>
 #include <grp.h>
@@ -131,10 +131,10 @@ main(int argc, char *argv[])
 	}
 
 	/* Initialize server */
-	if (server_init(&server, control, sgroup) < 0)
+	if (!server_init(&server, control, sgroup))
 		exit(EXIT_FAILURE);
 
-	if ((user != NULL || group != NULL) && drop_root(user, group) < 0)
+	if ((user != NULL || group != NULL) && !drop_root(user, group))
 		exit(EXIT_FAILURE);
 
 	for (done = 0; !done; ) {
