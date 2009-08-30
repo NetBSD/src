@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.53 2009/07/17 12:27:57 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.54 2009/08/30 15:41:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.53 2009/07/17 12:27:57 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.54 2009/08/30 15:41:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -60,7 +60,8 @@ __RCSID("$NetBSD: term.c,v 1.53 2009/07/17 12:27:57 christos Exp $");
 #include <ncurses.h>
 #endif
 /* Solaris's term.h does horrid things. */
-#if (defined(HAVE_TERM_H) && !defined(__SunOS))
+
+#if defined(HAVE_TERM_H) && !defined(sun) && !defined(__sun)
 #include <term.h>
 #endif
 #include <sys/types.h>
