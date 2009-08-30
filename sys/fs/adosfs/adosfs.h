@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.10 2009/03/14 14:46:09 dsl Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.11 2009/08/30 12:36:38 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -177,6 +177,9 @@ void adosfs_aremhash(struct anode *);
 int adosfs_lookup(void *);
 
 extern int (**adosfs_vnodeop_p)(void *);
+
+/* Should print a vnode or the vnode-op's arguments? */
+#define advopprint(p) /* XXX */
 
 #endif /* _KERNEL */
 #endif /* _ADOSFS_ADOSFS_H_ */
