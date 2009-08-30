@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.59 2009/08/30 12:36:38 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.58 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.59 2009/08/30 12:36:38 phx Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -673,7 +673,7 @@ adosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		return EINVAL;
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
+	printf("adfhtovp(%p, %p, %p)\n", mp, fhp, vpp);
 #endif
 
 	memcpy(&ifh, fhp, sizeof(ifh));
@@ -713,7 +713,7 @@ adosfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	memcpy(fhp, &ifh, sizeof(ifh));
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("advptofh(%x, %x)\n", vp, fhp);
+	printf("advptofh(%p, %p)\n", vp, fhp);
 #endif
 	return(0);
 }
@@ -722,7 +722,7 @@ int
 adosfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc)
 {
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("ad_sync(%x, %x)\n", mp, waitfor);
+	printf("ad_sync(%p, %d)\n", mp, waitfor);
 #endif
 	return(0);
 }
