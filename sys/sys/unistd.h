@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.51 2009/08/28 15:15:03 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.52 2009/08/30 16:38:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
 #endif
 
 #define	_POSIX_VERSION			200112L
-#define	_POSIX2_VERSION			199212L
+#define	_POSIX2_VERSION			200112L
 
 /* execution-time symbolic constants */
 
