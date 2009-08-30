@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.11 2009/03/07 20:19:45 christos Exp $
+# $NetBSD: Makefile.cdrom,v 1.12 2009/08/30 22:30:30 hubertf Exp $
 
 .include <bsd.own.mk>
 
@@ -46,6 +46,7 @@ CDRUNTIME+=	./usr/sbin/wiconfig
 CDRUNTIME+=	./usr/share/misc/termcap
 
 image_md_pre:
+	${MKDIR} cdrom/etc
 	${CP} ${.CURDIR}/../../ramdisks/common/dot.profile cdrom/etc/rc
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
 	${CP} ${SYSINSTDIR}/sysinst cdrom
