@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.51 2009/08/27 04:59:15 mrg Exp $
+# $NetBSD: md.macppc,v 1.52 2009/08/30 21:27:35 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -495,7 +495,6 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	obsolete
-./usr/X11R7/lib/xorg/protocol.txt			-unknown-	xorg
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/dga.0				-unknown-	.cat,xorg
