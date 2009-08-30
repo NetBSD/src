@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.2.40.1 2009/08/16 03:02:47 matt Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2.40.2 2009/08/30 20:59:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,11 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	/* RCSID("from: @(#)htonl.s	8.1 (Berkeley) 6/4/93") */
-	RCSID("$NetBSD: byte_swap_4.S,v 1.2.40.1 2009/08/16 03:02:47 matt Exp $")
+#if 0
+	RCSID("from: @(#)htonl.s	8.1 (Berkeley) 6/4/93")
+#else
+	RCSID("$NetBSD: byte_swap_4.S,v 1.2.40.2 2009/08/30 20:59:34 matt Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #undef _LOCORE
@@ -46,9 +49,6 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define	BSWAP32_NAME	bswap32
 #else
-#ifdef __ABICALLS__
-	.abicalls
-#endif
 #define	BSWAP32_NAME	__bswap32
 #endif
 
@@ -57,6 +57,14 @@ NLEAF(BSWAP32_NAME)			# a0 = 0x11223344, return 0x44332211
 ALEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
 #endif
+#if (__mips == 32 || __mips == 64) && __mips_isa_rev == 2
+	/*
+	 * If we are on MIPS32R2 or MIPS64R2 it's much easier
+	 */
+	wsbh	a0, a0			# word swap bytes within halfwords
+	rotr	v0, a0, 16		# rotate word 16bits
+	j	ra
+#else
 	srl	v1, a0, 24		# v1 = 0x00000011
 	sll	v0, a0, 24		# v0 = 0x44000000
 	or	v0, v0, v1
@@ -67,6 +75,7 @@ ALEAF(ntohl)
 	and	v1, v1, 0xff00		# v1 = 0x00002200
 	or	v0, v0, v1
 	j	ra
+#endif
 END(BSWAP32_NAME)
 
 #if BYTE_ORDER == BIG_ENDIAN
