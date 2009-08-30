@@ -334,14 +334,27 @@ drm_probe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 void
 drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 {
+	device_t parent_dev;
 	struct drm_device *dev;
-	int unit;
+	int unit, parent_unit;
 
 	unit = device_unit(kdev);
 	if (unit < 0 || unit >= DRM_MAXUNITS)
-	panic("drm_attach: device unit %d invalid", unit);
+		panic("drm_attach: device unit %d invalid", unit);
 	if (drm_units[unit] != NULL)
-	panic("drm_attach: unit %d already attached", unit);
+		panic("drm_attach: unit %d already attached", unit);
+
+	/*
+	 * this is kind of ugly but we fake up the pci "domain" by using
+	 * our pci unit number, so, find our parent pci device's unit...
+	 */
+	parent_dev = kdev;
+	do {
+		parent_dev = device_parent(parent_dev);
+	} while (parent_dev && !device_is_a(parent_dev, "pci"));
+	parent_unit = device_unit(parent_dev);
+	if (parent_unit < 0)
+		panic("drm_attach: device parent_unit %d invalid", parent_unit);
 
 	dev = device_private(kdev);
 	dev->device = kdev;
@@ -389,8 +402,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
 
 	dev->irq = pa->pa_intrline;
-	/* XXX this needs to be deal with for other platforms, e.g. alpha */
-	dev->pci_domain = 0;
+	dev->pci_domain = parent_unit;
 	dev->pci_bus = pa->pa_bus;
 	dev->pci_slot = pa->pa_device;
 	dev->pci_func = pa->pa_function;
