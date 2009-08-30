@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_8.S,v 1.1.2.1 2009/08/30 20:58:24 matt Exp $	*/
+/*	$NetBSD: byte_swap_8.S,v 1.1.2.2 2009/08/30 23:27:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
 #include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: byte_swap_8.S,v 1.1.2.1 2009/08/30 20:58:24 matt Exp $")
+	RCSID("$NetBSD: byte_swap_8.S,v 1.1.2.2 2009/08/30 23:27:35 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #undef _LOCORE
@@ -55,7 +55,7 @@ NLEAF(BSWAP64_NAME)	# a0 = 0xffeeddccbbaa9988 return 0x8899aabbccddeeff
 	 * If we are on MIPS32r2 or MIPS64r2 use the new instructions.
 	 */
 	dsbh	v0, a0			# dwords swap bytes within halfwords
-	dsbd	v0, v0			# dwords swap halwords within dwords
+	dshd	v0, v0			# dwords swap halwords within dwords
 	j	ra
 #else /* defined(__mips_o32) */
 	/*
