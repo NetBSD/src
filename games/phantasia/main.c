@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2009/08/12 08:21:41 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2009/08/31 08:27:16 dholland Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -27,10 +27,25 @@
  * AT&T is in no way connected with this game.
  */
 
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <err.h>
+#include <math.h>
 #include <pwd.h>
+#include <setjmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "macros.h"
+#include "phantdefs.h"
+#include "phantstruct.h"
+#include "phantglobs.h"
+#include "pathnames.h"
+
+#undef bool
+#include <curses.h>
 
 /*
  * The program allocates as much file space as it needs to store characters,
@@ -56,10 +71,6 @@
 /*
  * main.c	Main routines for Phantasia
  */
-
-#include "include.h"
-#undef bool
-#include <curses.h>
 
 static void genchar(int);
 static void initialstate(void);
