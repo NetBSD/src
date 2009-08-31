@@ -10657,11 +10657,15 @@ of time where it is not allowed, or when the client sends SMTP
 commands ahead of time without knowing that Postfix actually supports
 ESMTP command pipelining. This stops mail from bulk mail software
 that improperly uses ESMTP command pipelining in order to speed up
-deliveries. <br> Note: <a href="postconf.5.html#reject_unauth_pipelining">reject_unauth_pipelining</a> is not useful
-outside <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> when 1) the client uses ESMTP (EHLO
-instead of HELO) and 2) with "<a href="postconf.5.html#smtpd_delay_reject">smtpd_delay_reject</a> = yes" (the
-default).  The use of <a href="postconf.5.html#reject_unauth_pipelining">reject_unauth_pipelining</a> in the other
-restriction contexts is therefore not recommended.  </dd>
+deliveries.
+<br> With Postfix 2.6 and later, the SMTP server sets a per-session
+flag whenever it detects illegal pipelining, including pipelined
+EHLO or HELO commands. The <a href="postconf.5.html#reject_unauth_pipelining">reject_unauth_pipelining</a> feature simply
+tests whether the flag was set at any point in time during the
+session.
+<br> With older Postfix versions, <a href="postconf.5.html#reject_unauth_pipelining">reject_unauth_pipelining</a> checks
+the current status of the input read queue, and its usage is not
+recommended in contexts other than <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a>.  </dd>
 
 <dt><b><a name="reject">reject</a></b></dt>
 
