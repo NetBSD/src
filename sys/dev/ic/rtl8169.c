@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.123 2009/08/29 14:06:22 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.124 2009/08/31 13:05:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.123 2009/08/29 14:06:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.124 2009/08/31 13:05:30 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -585,6 +585,7 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8168C_SPIN2:
 		case RTK_HWREV_8168CP:
 		case RTK_HWREV_8168D:
+		case RTK_HWREV_8168DP:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP;
 			/*
