@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.20 2009/05/27 17:44:38 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.21 2009/08/31 08:27:16 dholland Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -8,10 +8,23 @@
 #include <sys/cdefs.h>
 #endif
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "include.h"
+#include <setjmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#ifndef __dead /* Not NetBSD */
+#define __dead
+#endif
+
+#include "phantdefs.h"
+#include "phantstruct.h"
+#include "phantglobs.h"
+#include "pathnames.h"
 
 int main(int, char *[]);
 void Error(const char *, const char *) __dead;

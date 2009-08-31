@@ -1,10 +1,24 @@
-/*	$NetBSD: misc.c,v 1.18 2009/08/12 08:21:41 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.19 2009/08/31 08:27:16 dholland Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
  */
 
-#include "include.h"
+#include <errno.h>
+#include <math.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "macros.h"
+#include "phantdefs.h"
+#include "phantstruct.h"
+#include "phantglobs.h"
+#include "pathnames.h"
+
 #undef bool
 #include <curses.h>
 

@@ -1,10 +1,19 @@
-/*	$NetBSD: gamesupport.c,v 1.10 2009/05/25 23:08:45 dholland Exp $	*/
+/*	$NetBSD: gamesupport.c,v 1.11 2009/08/31 08:27:16 dholland Exp $	*/
 
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
  */
 
-#include "include.h"
+#include <setjmp.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
+#include "phantdefs.h"
+#include "phantstruct.h"
+#include "phantglobs.h"
+#include "pathnames.h"
+
 #undef bool
 #include <curses.h>
 
