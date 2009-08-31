@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.1 2009/06/23 10:08:50 tron Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.2 2009/08/31 17:54:04 tron Exp $	*/
 
 /*++
 /* NAME
@@ -1298,7 +1298,8 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    /*
 	     * Decision: quarantine. In Sendmail 8.13 this does not imply a
 	     * transition in the receiver state (reply, reject, tempfail,
-	     * accept, discard).
+	     * accept, discard). We should not transition, either, otherwise
+	     * we get out of sync.
 	     */
 	case SMFIR_QUARANTINE:
 	    /* XXX What to do with the "reason" text? */
@@ -1306,7 +1307,8 @@ static const char *milter8_event(MILTER8 *milter, int event,
 				  MILTER8_DATA_BUFFER, milter->buf,
 				  MILTER8_DATA_END) != 0)
 		MILTER8_EVENT_BREAK(milter->def_reply);
-	    MILTER8_EVENT_BREAK("H");
+	    milter8_def_reply(milter, "H");
+	    continue;
 
 	    /*
 	     * Decision: skip further events of this type.
