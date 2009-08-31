@@ -1,10 +1,19 @@
-/*	$NetBSD: fight.c,v 1.12 2009/08/12 08:21:41 dholland Exp $	*/
+/*	$NetBSD: fight.c,v 1.13 2009/08/31 08:27:16 dholland Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
  */
 
-#include "include.h"
+#include <math.h>
+#include <setjmp.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "macros.h"
+#include "phantdefs.h"
+#include "phantstruct.h"
+#include "phantglobs.h"
+
 #undef bool
 #include <curses.h>
 

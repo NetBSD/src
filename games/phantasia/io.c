@@ -1,12 +1,26 @@
-/*	$NetBSD: io.c,v 1.13 2009/08/12 08:21:41 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.14 2009/08/31 08:27:16 dholland Exp $	*/
 
 /*
  * io.c - input/output routines for Phantasia
  */
 
-#include "include.h"
-#undef bool
 #include <sys/cdefs.h>
+
+#include <ctype.h>
+#include <math.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "macros.h"
+#include "phantdefs.h"
+#include "phantstruct.h"
+#include "phantglobs.h"
+//#include "pathnames.h"
+
+#undef bool
 #include <curses.h>
 
 static void catchalarm(int) __dead;
