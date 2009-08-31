@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.2 2009/06/23 11:41:06 tron Exp $
+.\"	$NetBSD: postconf.5,v 1.3 2009/08/31 17:57:09 tron Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -6521,11 +6521,15 @@ ESMTP command pipelining. This stops mail from bulk mail software
 that improperly uses ESMTP command pipelining in order to speed up
 deliveries.
 .br
-Note: reject_unauth_pipelining is not useful
-outside smtpd_data_restrictions when 1) the client uses ESMTP (EHLO
-instead of HELO) and 2) with "smtpd_delay_reject = yes" (the
-default).  The use of reject_unauth_pipelining in the other
-restriction contexts is therefore not recommended.
+With Postfix 2.6 and later, the SMTP server sets a per-session
+flag whenever it detects illegal pipelining, including pipelined
+EHLO or HELO commands. The reject_unauth_pipelining feature simply
+tests whether the flag was set at any point in time during the
+session.
+.br
+With older Postfix versions, reject_unauth_pipelining checks
+the current status of the input read queue, and its usage is not
+recommended in contexts other than smtpd_data_restrictions.
 .IP "\fBreject\fR"
 Reject the request. This restriction is useful at the end of
 a restriction list, to make the default policy explicit.  The
