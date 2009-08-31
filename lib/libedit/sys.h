@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.11 2009/08/30 15:41:05 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.12 2009/08/31 00:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ char	*fgetln(FILE *fp, size_t *len);
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
 
-#if defined(sun) || defined(__sun)
+#if defined(__sun)
 extern int tgetent(char *, const char *);
 extern int tgetflag(char *);
 extern int tgetnum(char *);
