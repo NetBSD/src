@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.47 2008/07/20 00:52:40 lukem Exp $	*/
+/*	$NetBSD: rcp.c,v 1.48 2009/08/31 07:11:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.47 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.48 2009/08/31 07:11:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -583,15 +583,22 @@ sink(int argc, char *argv[])
 			SCREWUP("size not delimited");
 		if (targisdir) {
 			static char *namebuf;
-			static int cursize;
+			static size_t cursize;
+			char *newnamebuf;
 			size_t need;
 
 			need = strlen(targ) + strlen(cp) + 250;
 			if (need > cursize) {
-				if (!(namebuf = malloc(need)))
+				newnamebuf = realloc(namebuf, need);
+				if (newnamebuf != NULL) {
+					namebuf = newnamebuf;
+					cursize = need;
+				} else {
+					/* note: run_err is not fatal */
 					run_err("%s", strerror(errno));
+				}
 			}
-			(void)snprintf(namebuf, need, "%s%s%s", targ,
+			(void)snprintf(namebuf, cursize, "%s%s%s", targ,
 			    *targ ? "/" : "", cp);
 			np = namebuf;
 		} else
