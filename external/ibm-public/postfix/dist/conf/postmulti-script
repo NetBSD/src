@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: postmulti-script,v 1.1.1.1 2009/06/23 10:08:23 tron Exp $
+#	$NetBSD: postmulti-script,v 1.1.1.2 2009/08/31 17:53:37 tron Exp $
 #
 
 umask 022
@@ -230,6 +230,17 @@ deport)
     ;;
 
 destroy)
+
+    # "postmulti -e destroy" will remove an entire instance only when
+    # invoked immediately after "postmulti -e create" (i.e. before
+    # other files are added to the instance). We delete only known
+    # safe names without "/".
+    #
+    QUEUE_SUBDIRS="active bounce corrupt defer deferred flush hold \
+    incoming maildrop pid private public saved trace"
+    #DEBUG=echo
+    WARN="postlog -p warn -t $TAG"
+
     # Locate the target instance
     #
     [ -f "$config_directory/main.cf" ] ||
@@ -238,57 +249,36 @@ destroy)
     postfix -c "$config_directory" status >/dev/null 2>&1 &&
     	fatal "Instance '$config_directory' is not stopped"
 
-    # XXX: Internal "postfix /some/cmd" interface via /bin/env for execvp().
-    #
-    for q in maildrop incoming active deferred hold
-    do
-	postfix -c "$config_directory" /bin/env \
-	    find "$q" ! -name "$q" ! -name "?" -perm 0700 -print |
-	    grep "^" >/dev/null &&
-	    fatal "Instance '$config_directory' $q queue is not empty"
-    done
-
     # Update multi_instance directories
     # and also (just in case) drop from alternate_config_directories
     #
-    update_cfdirs del $config_directory || exit 1
+    $DEBUG update_cfdirs del "$config_directory" || exit 1
 
-    # Change default personalities:
-    MAIL_CONFIG="$config_directory"; export MAIL_CONFIG
-
-    # Full steam ahead, instance will be at least partly destroyed!
-
-    # Try to remove data_directory, but not sub-directories.
-    # Note: care with "$TAG" insertion into sh -c 'script'.
+    # XXX: Internal "postfix /some/cmd" interface.
     #
-    postfix /bin/sh -c \
-    	'cd $data_directory; rm -f -- *; cd ..; rmdir $data_directory; \
-         PATH=$command_directory:$PATH; export PATH; \
-	 test -d $data_directory && \
-	     postlog -p warn -t "'"$TAG"'" \
-	     	"$data_directory partly removed" 2>&1' 2>/dev/null
+    postfix -c "$config_directory" /bin/sh -c "
+    for q in $QUEUE_SUBDIRS
+    do
+	$DEBUG rmdir -- \$q || 
+	    $WARN \`pwd\`/\$q: please verify contents and remove by hand
+    done
+    "
 
-    # Remove Postfix-owned files in the queue directory.
-    # Remove all files in the "pid" sub-directory.
-    # Remove empty directories.
-    # Note: care with "$TAG" insertion into sh -c 'script'.
-    postfix /bin/sh -c \
-    	'find . -user $mail_owner ! -type d -exec rm -f -- "{}" ";"; \
-    	 find . -depth -user $mail_owner -type d -exec rmdir -- "{}" ";"; \
-	 rm -f -- pid/*; rmdir *; cd ..; rmdir $queue_directory; \
-         PATH=$command_directory:$PATH; export PATH; \
-	 test -d $queue_directory && \
-	     postlog -p warn -t "'"$TAG"'" \
-	     	"$queue_directory partly removed" 2>&1' 2>/dev/null
+    postfix -c "$config_directory" /bin/sh -c "
+    for dir in \$data_directory \$queue_directory
+    do
+	$DEBUG rmdir -- \$dir || 
+	    $WARN \$dir: please verify contents and remove by hand
+    done
+    "
 
     # In the configuration directory remove just the main.cf and master.cf
     # files.
-    rm -f -- "$MAIL_CONFIG/master.cf" "$MAIL_CONFIG/main.cf" 2>/dev/null
-    rmdir -- "$MAIL_CONFIG" 2>/dev/null
-    test -d "$MAIL_CONFIG" && \
-	 postlog -p warn -t "$TAG" \
-	    "$MAIL_CONFIG partly removed" 2>&1
+    $DEBUG rm -f -- "$config_directory/master.cf" "$config_directory/main.cf" 2>/dev/null
+    $DEBUG rmdir -- "$config_directory" || 
+	$WARN $config_directory: please verify contents and remove by hand
     ;;
+
 enable)
     postconf -c "$config_directory" -e \
     	"multi_instance_enable = yes" || exit 1;;
