@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_task.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mail_task.c,v 1.1.1.2 2009/08/31 17:54:01 tron Exp $	*/
 
 /*++
 /* NAME
@@ -61,7 +61,8 @@ const char *mail_task(const char *argv0)
     /* Setenv()-ed from main.cf, or inherited from master. */
     if ((tag = safe_getenv(CONF_ENV_LOGTAG)) == 0)
 	/* Check main.cf settings directly, in case set-gid. */
-	tag = var_syslog_name ? var_syslog_name : DEF_SYSLOG_NAME;
+	tag = var_syslog_name ? var_syslog_name :
+	    mail_conf_eval(DEF_SYSLOG_NAME);
     vstring_sprintf(canon_name, "%s/%s", tag, argv0);
     return (vstring_str(canon_name));
 }
