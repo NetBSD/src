@@ -1,10 +1,21 @@
-/*	$NetBSD: interplayer.c,v 1.11 2009/08/12 08:21:41 dholland Exp $	*/
+/*	$NetBSD: interplayer.c,v 1.12 2009/08/31 08:27:16 dholland Exp $	*/
 
 /*
  * interplayer.c - player to player routines for Phantasia
  */
 
-#include "include.h"
+#include <math.h>
+#include <setjmp.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "macros.h"
+#include "phantdefs.h"
+#include "phantstruct.h"
+#include "phantglobs.h"
+#include "pathnames.h"
+
 #undef bool
 #include <curses.h>
 
