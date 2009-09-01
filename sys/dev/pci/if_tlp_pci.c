@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.114 2009/05/06 09:25:16 cegger Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.115 2009/09/01 21:46:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.114 2009/05/06 09:25:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.115 2009/09/01 21:46:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1208,7 +1208,7 @@ tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 	case 0x2b:	/* ZX244 */
 	case 0x2c:	/* ZX424 */
 	case 0x2e:	/* ZX422 */
-		printf("%s: QS6611 PHY\n", device_xname(sc->sc_dev));
+		aprint_normal_dev(sc->sc_dev, "QS6611 PHY\n");
 		sc->sc_reset = tlp_pci_znyx_21142_qs6611_reset;
 		break;
 	}
@@ -1402,14 +1402,14 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	printf("%s: ", device_xname(sc->sc_dev));
+	aprint_normal_dev(sc->sc_dev, "");
 
 #define	ADD(m, c) \
 	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);		\
 	tm->tm_opmode = (c);						\
 	tm->tm_gpdata = GPP_SMC9332DST_INIT;				\
 	ifmedia_add(&sc->sc_mii.mii_media, (m), 0, tm)
-#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
+#define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0), OPMODE_TTM);
 	PRINT("10baseT");
@@ -1429,7 +1429,7 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 #undef ADD
 #undef PRINT
 
-	printf("\n");
+	aprint_normal("\n");
 
 	tlp_reset(sc);
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode | OPMODE_PCS | OPMODE_SCR);
@@ -1611,14 +1611,14 @@ tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	printf("%s: ", device_xname(sc->sc_dev));
+	aprint_normal_dev(sc->sc_dev, "");
 
 #define	ADD(m, c) \
 	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);		\
 	tm->tm_opmode = (c);						\
 	tm->tm_gpdata = GPP_COGENT_EM1x0_INIT;				\
 	ifmedia_add(&sc->sc_mii.mii_media, (m), 0, tm)
-#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
+#define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
 	if (sc->sc_srom[32] == 0x15) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, 0, 0),
@@ -1628,7 +1628,7 @@ tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, IFM_FDX, 0),
 		    OPMODE_PS | OPMODE_PCS | OPMODE_FD);
 		PRINT("100baseFX-FDX");
-		printf("\n");
+		aprint_normal("\n");
 
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_FX);
 	} else {
@@ -1639,7 +1639,7 @@ tlp_cogent_em1x0_tmsw_init(struct tulip_softc *sc)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, IFM_FDX, 0),
 		    OPMODE_PS | OPMODE_PCS | OPMODE_SCR | OPMODE_FD);
 		PRINT("100baseTX-FDX");
-		printf("\n");
+		aprint_normal("\n");
 
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_TX);
 	}
