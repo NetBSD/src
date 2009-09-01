@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.30 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.31 2009/09/01 12:23:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.30 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.31 2009/09/01 12:23:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -152,7 +152,7 @@ nsmbattach(int num)
 
 	if (num <= 0) {
 #ifdef DIAGNOSTIC
-		panic("nsmbattach: cound <= 0");
+		panic("nsmbattach: count <= 0");
 #endif
 		return;
 	}
