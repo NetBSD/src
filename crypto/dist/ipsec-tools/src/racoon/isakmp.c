@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.58 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.59 2009/09/01 09:24:21 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -3136,6 +3136,16 @@ script_hook(iph1, script)
 		    "REMOTE_PORT", portstr) != 0) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Cannot set REMOTEL_PORT\n");
+			goto out;
+		}
+	}
+
+	/* Peer identity. */
+	if (iph1->id_p != NULL) {
+		if (script_env_append(&envp, &envc, "REMOTE_ID",
+				      ipsecdoi_id2str(iph1->id_p)) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "Cannot set REMOTE_ID\n");
 			goto out;
 		}
 	}
