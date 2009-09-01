@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.32 2009/08/30 21:27:35 mrg Exp $	x11
+# $NetBSD: md.sgimips,v 1.33 2009/09/01 19:46:56 macallan Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -401,7 +401,7 @@
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
-./usr/X11R7/bin/xorgconfig				-unknown-	xorg
+./usr/X11R7/bin/xorgconfig				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Cards				-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
@@ -501,11 +501,11 @@
 ./usr/X11R7/lib/modules/libi2c.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libi2c_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libi2c_pic.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.so.0			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10_g.a			-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	xorg
+./usr/X11R7/lib/modules/libint10.a			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10.so.0			-unknown-	obsolete
+./usr/X11R7/lib/modules/libint10_g.a			-unknown-	obsolete,xorg
+./usr/X11R7/lib/modules/libint10_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libpcidata.so.0			-unknown-	obsolete
@@ -559,7 +559,7 @@
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xorgconfig.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xorgconfig.0			-unknown-	obsolete
 ./usr/X11R7/man/cat4/crime.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
@@ -571,7 +571,7 @@
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
-./usr/X11R7/man/html1/xorgconfig.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xorgconfig.html			-unknown-	obslete
 ./usr/X11R7/man/html4/crime.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
@@ -583,7 +583,7 @@
 ./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xorgconfig.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/xorgconfig.1			-unknown-	obsolete
 ./usr/X11R7/man/man4/crime.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
