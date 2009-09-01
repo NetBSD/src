@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.170 2009/08/27 20:24:16 dyoung Exp $	*/
+/*	$NetBSD: tulip.c,v 1.171 2009/09/01 21:46:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.170 2009/08/27 20:24:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.171 2009/09/01 21:46:52 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -490,7 +490,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	tlp_reset(sc);
 
 	/* Announce ourselves. */
-	printf("%s: %s%sEthernet address %s\n", device_xname(self),
+	aprint_normal_dev(self, "%s%sEthernet address %s\n",
 	    sc->sc_name[0] != '\0' ? sc->sc_name : "",
 	    sc->sc_name[0] != '\0' ? ", " : "",
 	    ether_sprintf(enaddr));
@@ -752,8 +752,8 @@ tlp_start(struct ifnet *ifp)
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					    "cluster\n", device_xname(sc->sc_dev));
+					aprint_error_dev(sc->sc_dev,
+					    "unable to allocate Tx cluster\n");
 					m_freem(m);
 					break;
 				}
@@ -763,8 +763,9 @@ tlp_start(struct ifnet *ifp)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(sc->sc_dev), error);
+				aprint_error_dev(sc->sc_dev,
+				    "unable to load Tx buffer, error = %d",
+				    error);
 				break;
 			}
 		}
@@ -4030,9 +4031,9 @@ tlp_print_media(struct tulip_softc *sc)
 	struct tulip_21x4x_media *tm;
 	const char *sep = "";
 
-#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
+#define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
-	printf("%s: ", device_xname(sc->sc_dev));
+	aprint_normal_dev(sc->sc_dev, "");
 	TAILQ_FOREACH(ife, &sc->sc_mii.mii_media.ifm_list, ifm_list) {
 		tm = ife->ifm_aux;
 		if (tm == NULL) {
@@ -4046,7 +4047,7 @@ tlp_print_media(struct tulip_softc *sc)
 			PRINT(tm->tm_name);
 		}
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 #undef PRINT
 }
@@ -4534,8 +4535,8 @@ tlp_21041_tmsw_init(struct tulip_softc *sc)
 			break;
 
 		default:
-			printf("%s: unknown media code 0x%02x\n",
-			    device_xname(sc->sc_dev),
+			aprint_error_dev(sc->sc_dev,
+			    "unknown media code 0x%02x\n",
 			    mb & TULIP_ROM_MB_MEDIA_CODE);
 			free(tm, M_DEVBUF);
 		}
@@ -5066,12 +5067,12 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 			break;
 
 		case TULIP_ROM_MB_21143_RESET:
-			printf("%s: 21143 reset block\n", device_xname(sc->sc_dev));
+			aprint_normal_dev(sc->sc_dev, "21143 reset block\n");
 			break;
 
 		default:
-			printf("%s: unknown ISV media block type 0x%02x\n",
-			    device_xname(sc->sc_dev), type);
+			aprint_error_dev(sc->sc_dev,
+			    "unknown ISV media block type 0x%02x\n", type);
 		}
 	}
 
@@ -5079,7 +5080,7 @@ tlp_2114x_isv_tmsw_init(struct tulip_softc *sc)
 	 * Deal with the case where no media is configured.
 	 */
 	if (TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list) == NULL) {
-		printf("%s: no media found!\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "no media found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 		return;
@@ -5489,7 +5490,7 @@ tlp_pnic_tmsw_init(struct tulip_softc *sc)
 	const char *sep = "";
 
 #define	ADD(m, c)	ifmedia_add(&sc->sc_mii.mii_media, (m), (c), NULL)
-#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
+#define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_pnic_mii_readreg;
@@ -5501,7 +5502,7 @@ tlp_pnic_tmsw_init(struct tulip_softc *sc)
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		/* XXX What about AUI/BNC support? */
-		printf("%s: ", device_xname(sc->sc_dev));
+		aprint_normal_dev(sc->sc_dev, "");
 
 		tlp_pnic_nway_reset(sc);
 
@@ -5528,7 +5529,7 @@ tlp_pnic_tmsw_init(struct tulip_softc *sc)
 		    PNIC_NWAY_CAP100TXFDX|PNIC_NWAY_CAP100TX);
 		PRINT("auto");
 
-		printf("\n");
+		aprint_normal("\n");
 
 		sc->sc_statchg = tlp_pnic_nway_statchg;
 		sc->sc_tick = tlp_pnic_nway_tick;
