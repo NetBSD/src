@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.15 2009/08/24 20:43:35 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.16 2009/09/01 18:04:33 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.15 2009/08/24 20:43:35 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.16 2009/09/01 18:04:33 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -701,11 +701,12 @@ print_info(int level)
 	load_value(HCI_CMD_READ_LOCAL_VER, &version, sizeof(version));
 	printf("\tHCI version: ");
 	switch(version) {
-	case HCI_SPEC_V10:	printf("1.0\n");	break;
-	case HCI_SPEC_V11:	printf("1.0b\n");	break;
+	case HCI_SPEC_V10:	printf("1.0b\n");	break;
+	case HCI_SPEC_V11:	printf("1.1\n");	break;
 	case HCI_SPEC_V12:	printf("1.2\n");	break;
-	case HCI_SPEC_V20:	printf("2.0\n");	break;
-	case HCI_SPEC_V21:	printf("2.1\n");	break;
+	case HCI_SPEC_V20:	printf("2.0 + EDR\n");	break;
+	case HCI_SPEC_V21:	printf("2.1 + EDR\n");	break;
+	case HCI_SPEC_V30:	printf("3.0 + HS\n");	break;
 	default:		printf("unknown\n");	break;
 	}
 
