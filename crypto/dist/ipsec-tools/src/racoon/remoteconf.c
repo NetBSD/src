@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.17 2009/08/19 13:54:07 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.18 2009/09/01 09:49:59 tteras Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -183,12 +183,12 @@ rmconf_match_etype_and_approval(rmconf, etype, approval)
 }
 
 enum rmconf_match_t {
-	MATCH_NONE = 0,
-	MATCH_ANONYMOUS,
-	MATCH_ADDRESS,
-	MATCH_SA,
-	MATCH_IDENTITY,
-	MATCH_AUTH_IDENTITY,
+	MATCH_NONE		= 0,
+	MATCH_BASIC		= 0x0000001,
+	MATCH_ADDRESS		= 0x0000002,
+	MATCH_SA		= 0x0000004,
+	MATCH_IDENTITY		= 0x0000008,
+	MATCH_AUTH_IDENTITY	= 0x0000010,
 };
 
 static int
@@ -196,7 +196,7 @@ rmconf_match_type(rmsel, rmconf)
 	struct rmconfselector *rmsel;
 	struct remoteconf *rmconf;
 {
-	int ret = 1;
+	int ret = MATCH_NONE;
 
 	/* No match at all: unwanted anonymous */
 	if ((rmsel->flags & GETRMCONF_F_NO_ANONYMOUS) &&
@@ -206,6 +206,8 @@ rmconf_match_type(rmsel, rmconf)
 	if ((rmsel->flags & GETRMCONF_F_NO_PASSIVE) && rmconf->passive)
 		return MATCH_NONE;
 
+	ret |= MATCH_BASIC;
+
 	/* Check address */
 	if (rmsel->remote != NULL) {
 		if (rmconf->remote->sa_family != AF_UNSPEC) {
@@ -213,7 +215,7 @@ rmconf_match_type(rmsel, rmconf)
 				return MATCH_NONE;
 
 			/* Address matched */
-			ret = MATCH_ADDRESS;
+			ret |= MATCH_ADDRESS;
 		}
 	}
 
@@ -222,14 +224,14 @@ rmconf_match_type(rmsel, rmconf)
 		if (rmconf_match_etype_and_approval(rmconf, rmsel->etype,
 						    rmsel->approval) != 0)
 			return MATCH_NONE;
-		ret = MATCH_SA;
+		ret |= MATCH_SA;
 	}
 
 	/* Check identity */
 	if (rmsel->identity != NULL && rmconf->verify_identifier) {
 		if (rmconf_match_identity(rmconf, rmsel->identity) != 0)
 			return MATCH_NONE;
-		ret = MATCH_IDENTITY;
+		ret |= MATCH_IDENTITY;
 	}
 
 	/* Check certificate request */
@@ -254,7 +256,7 @@ rmconf_match_type(rmsel, rmconf)
 				return MATCH_NONE;
 		}
 
-		ret = MATCH_AUTH_IDENTITY;
+		ret |= MATCH_AUTH_IDENTITY;
 	}
 
 	return ret;
@@ -284,7 +286,7 @@ enumrmconf(rmsel, enum_func, enum_arg)
 
 	RACOON_TAILQ_FOREACH_REVERSE(p, &rmtree, _rmtree, chain) {
 		if (rmsel != NULL) {
-			if (rmconf_match_type(rmsel, p) == 0)
+			if (rmconf_match_type(rmsel, p) == MATCH_NONE)
 				continue;
 		}
 
@@ -324,11 +326,7 @@ rmconf_find(rmconf, ctx)
 			return 0;
 
 		if (match_type == fctx->match_type) {
-			/* Duplicate exact match, something is wrong */
-			if (match_type >= MATCH_AUTH_IDENTITY)
-				return 1;
-
-			/* Otherwise just remember that this is ambiguous match */
+			/* Ambiguous match */
 			fctx->num_found++;
 			return 0;
 		}
