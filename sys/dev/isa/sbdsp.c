@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.131 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.132 2009/09/01 21:47:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.131 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.132 2009/09/01 21:47:30 jmcneill Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -401,7 +401,8 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		sc->in_filter = 0;	/* no filters turned on, please */
 	}
 
-	printf(": dsp v%d.%02d%s\n",
+	aprint_naive("\n");
+	aprint_normal(": dsp v%d.%02d%s\n",
 	       SBVER_MAJOR(sc->sc_version), SBVER_MINOR(sc->sc_version),
 	       sc->sc_model == SB_JAZZ ? ": <Jazz16>" : "");
 
