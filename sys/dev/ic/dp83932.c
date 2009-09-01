@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.27 2008/08/23 15:46:47 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.28 2009/09/01 15:20:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.27 2008/08/23 15:46:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.28 2009/09/01 15:20:53 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -71,7 +71,7 @@ int	sonic_ioctl(struct ifnet *, u_long, void *);
 int	sonic_init(struct ifnet *);
 void	sonic_stop(struct ifnet *, int);
 
-void	sonic_shutdown(void *);
+bool	sonic_shutdown(device_t, int);
 
 void	sonic_reset(struct sonic_softc *);
 void	sonic_rxdrain(struct sonic_softc *);
@@ -222,8 +222,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(sonic_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
+	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, sonic_shutdown))
 		aprint_error_dev(sc->sc_dev,
 		    "WARNING: unable to establish shutdown hook\n");
 	return;
@@ -262,12 +261,14 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
  *
  *	Make sure the interface is stopped at reboot.
  */
-void
-sonic_shutdown(void *arg)
+bool
+sonic_shutdown(device_t self, int howto)
 {
-	struct sonic_softc *sc = arg;
+	struct sonic_softc *sc = device_private(self);
 
 	sonic_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.35 2009/05/09 18:31:46 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.36 2009/09/01 15:19:20 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.35 2009/05/09 18:31:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.36 2009/09/01 15:19:20 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -293,7 +293,6 @@ struct mec_softc {
 	bus_space_tag_t sc_st;		/* bus_space tag */
 	bus_space_handle_t sc_sh;	/* bus_space handle */
 	bus_dma_tag_t sc_dmat;		/* bus_dma tag */
-	void *sc_sdhook;		/* shutdown hook */
 
 	struct ethercom sc_ethercom;	/* Ethernet common part */
 
@@ -416,7 +415,7 @@ static void	mec_rxintr(struct mec_softc *);
 static void	mec_rxcsum(struct mec_softc *, struct mbuf *, uint16_t,
 		    uint32_t);
 static void	mec_txintr(struct mec_softc *, uint32_t);
-static void	mec_shutdown(void *);
+static bool	mec_shutdown(device_t, int);
 
 CFATTACH_DECL_NEW(mec, sizeof(struct mec_softc),
     mec_match, mec_attach, NULL, NULL);
@@ -727,7 +726,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* set shutdown hook to reset interface on powerdown */
-	sc->sc_sdhook = shutdownhook_establish(mec_shutdown, sc);
+	pmf_device_register1(self, NULL, NULL, mec_shutdown);
 
 	return;
 
@@ -1952,12 +1951,14 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 		ifp->if_flags &= ~IFF_OACTIVE;
 }
 
-static void
-mec_shutdown(void *arg)
+static bool
+mec_shutdown(device_t self, int howto)
 {
-	struct mec_softc *sc = arg;
+	struct mec_softc *sc = device_private(self);
 
 	mec_stop(&sc->sc_ethercom.ec_if, 1);
 	/* make sure to stop DMA etc. */
 	mec_reset(sc);
+
+	return true;
 }
