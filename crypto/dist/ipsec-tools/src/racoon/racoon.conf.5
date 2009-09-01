@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.56 2009/05/04 22:28:30 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.57 2009/09/01 09:24:21 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -625,6 +625,8 @@ The local port used for IKE for the phase 1 SA.
 The remote address of the phase 1 SA.
 .It Ev REMOTE_PORT
 The remote port used for IKE for the phase 1 SA.
+.It Ev REMOTE_ID
+The remote identity received in IKE for the phase 1 SA.
 .El
 The following variables are only set if
 .Ic mode_cfg
