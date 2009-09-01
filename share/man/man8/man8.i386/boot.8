@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.50 2009/05/18 12:26:15 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.51 2009/09/01 21:30:17 ahoka Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd October 30, 2008
+.Dd September 1, 2009
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -350,6 +350,20 @@ See
 .Sx Console Selection Policy
 in
 .Xr boot_console 8 .
+.It Ic vesa Va modenum | on | off | enabled | disabled | list
+Initialise the video card to the specified resolution and bit depth.
+The
+.Va modenum
+should be in the form of
+.Ar 0x100 , 800x600 , 800x600x32 .
+The values
+.Ar enabled , on
+put the display into the default mode, and
+.Ar disabled , off
+returns the display into standard vga mode.
+The value
+.Ar list
+lists all supported modes.
 .It Ic dev Op Va device
 Set the default drive and partition for subsequent filesystem
 operations.
