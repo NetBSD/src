@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.198 2009/04/18 06:27:17 cegger Exp $	*/
+/*	$NetBSD: ohci.c,v 1.199 2009/09/01 21:46:07 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.198 2009/04/18 06:27:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.199 2009/09/01 21:46:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,11 +688,8 @@ ohci_init(ohci_softc_t *sc)
 	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca, descb;
 
 	DPRINTF(("ohci_init: start\n"));
-#if defined(__OpenBSD__)
-	printf(",");
-#else
-	printf("%s:", device_xname(sc->sc_dev));
-#endif
+	aprint_normal_dev(sc->sc_dev, "");
+
 	sc->sc_hcca = NULL;
 	usb_callout_init(sc->sc_tmo_rhsc);
 
@@ -704,12 +701,12 @@ ohci_init(ohci_softc_t *sc)
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
 	rev = OREAD4(sc, OHCI_REVISION);
-	printf(" OHCI version %d.%d%s\n", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
-	       OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
+	aprint_normal(" OHCI version %d.%d%s\n",
+	    OHCI_REV_HI(rev), OHCI_REV_LO(rev),
+	    OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
 
 	if (OHCI_REV_HI(rev) != 1 || OHCI_REV_LO(rev) != 0) {
-		printf("%s: unsupported OHCI revision\n",
-		       device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "unsupported OHCI revision\n");
 		sc->sc_bus.usbrev = USBREV_UNKNOWN;
 		return (USBD_INVAL);
 	}
@@ -827,8 +824,8 @@ ohci_init(ohci_softc_t *sc)
 		}
 		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE);
 		if ((ctl & OHCI_IR) == 0) {
-			printf("%s: SMM does not respond, resetting\n",
-			       device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "SMM does not respond, resetting\n");
 			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
 			goto reset;
 		}
@@ -868,7 +865,7 @@ ohci_init(ohci_softc_t *sc)
 			break;
 	}
 	if (hcr) {
-		printf("%s: reset timeout\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "reset timeout\n");
 		err = USBD_IOERROR;
 		goto bad5;
 	}
