@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.28 2009/09/01 15:20:53 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.29 2009/09/01 17:12:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.28 2009/09/01 15:20:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.29 2009/09/01 17:12:42 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -224,7 +224,10 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	 */
 	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, sonic_shutdown))
 		aprint_error_dev(sc->sc_dev,
-		    "WARNING: unable to establish shutdown hook\n");
+		    "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
+
 	return;
 
 	/*
