@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.22 2009/03/12 10:16:37 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.23 2009/09/01 22:01:48 elad Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd February 4, 2003
+.Dd September 1, 2009
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -478,6 +478,76 @@ will be set to indicate the error condition.
 If the time limit expires, then
 .Fn kevent
 returns 0.
+.Sh EXAMPLES
+The following example program monitors a file (provided to it as the first
+argument) and prints information about some common events it receives
+notifications for:
+.Bd -literal -offset indent
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <err.h>
+
+int
+main(int argc, char *argv[])
+{
+        int fd, kq, nev;
+        struct kevent ev, ch;
+        static const struct timespec tout = { 1, 0 };
+
+        if ((fd = open(argv[1], O_RDONLY)) == -1)
+                err(1, "Cannot open `%s'", argv[1]);
+
+        if ((kq = kqueue()) == -1)
+                err(1, "Cannot create kqueue");
+
+        EV_SET(&ch, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR, 
+            NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
+            NOTE_RENAME|NOTE_REVOKE, 0, 0);
+        for (;;) {
+                nev = kevent(kq, &ch, 1, &ev, 1, &tout);
+                if (nev == -1)
+                        err(1, "kevent");
+                if (nev == 0)
+                        continue;
+                if (ev.fflags & NOTE_DELETE) {
+                        printf("deleted ");
+                        ev.fflags &= ~NOTE_DELETE;
+                }
+                if (ev.fflags & NOTE_WRITE) {
+                        printf("written ");
+                        ev.fflags &= ~NOTE_WRITE;
+                }
+                if (ev.fflags & NOTE_EXTEND) {
+                        printf("extended ");
+                        ev.fflags &= ~NOTE_EXTEND;
+                }
+                if (ev.fflags & NOTE_ATTRIB) {
+                        printf("chmod/chown ");
+                        ev.fflags &= ~NOTE_ATTRIB;
+                }
+                if (ev.fflags & NOTE_LINK) {
+                        printf("hardlinked ");
+                        ev.fflags &= ~NOTE_LINK;
+                }
+                if (ev.fflags & NOTE_RENAME) {
+                        printf("renamed ");
+                        ev.fflags &= ~NOTE_RENAME;
+                }
+                if (ev.fflags & NOTE_REVOKE) {
+                        printf("revoked ");
+                        ev.fflags &= ~NOTE_REVOKE;
+                }
+                printf("\\n");
+                if (ev.fflags)
+                        warnx("unknown event 0x%x\\n", ev.fflags);
+        }
+}
+.Ed
 .Sh ERRORS
 The
 .Fn kqueue
