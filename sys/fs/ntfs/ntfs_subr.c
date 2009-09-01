@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.42 2009/03/18 16:00:21 cegger Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.43 2009/09/01 15:16:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.42 2009/03/18 16:00:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.43 2009/09/01 15:16:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1036,6 +1036,7 @@ ntfs_ntlookupfile(
 				nfp->f_size = iep->ie_fsize;
 				nfp->f_allocated = iep->ie_fallocated;
 				nfp->f_flag |= FN_PRELOADED;
+				uvm_vnp_setsize(nvp, iep->ie_fsize);
 			} else {
 				error = ntfs_filesize(ntmp, nfp,
 					    &nfp->f_size, &nfp->f_allocated);
@@ -1043,6 +1044,7 @@ ntfs_ntlookupfile(
 					vput(nvp);
 					goto fail;
 				}
+				uvm_vnp_setsize(nvp, nfp->f_size);
 			}
 
 			nfp->f_flag &= ~FN_VALID;
