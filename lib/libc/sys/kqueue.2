@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.23 2009/09/01 22:01:48 elad Exp $
+.\"	$NetBSD: kqueue.2,v 1.24 2009/09/01 22:12:05 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -483,14 +483,14 @@ The following example program monitors a file (provided to it as the first
 argument) and prints information about some common events it receives
 notifications for:
 .Bd -literal -offset indent
-#include <sys/types.h>
-#include <sys/event.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <err.h>
+#include \*[Lt]sys/types.h\*[Gt]
+#include \*[Lt]sys/event.h\*[Gt]
+#include \*[Lt]sys/time.h\*[Gt]
+#include \*[Lt]stdio.h\*[Gt]
+#include \*[Lt]unistd.h\*[Gt]
+#include \*[Lt]stdlib.h\*[Gt]
+#include \*[Lt]fcntl.h\*[Gt]
+#include \*[Lt]err.h\*[Gt]
 
 int
 main(int argc, char *argv[])
@@ -505,42 +505,42 @@ main(int argc, char *argv[])
         if ((kq = kqueue()) == -1)
                 err(1, "Cannot create kqueue");
 
-        EV_SET(&ch, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR, 
+        EV_SET(\*[Am]ch, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
             NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
             NOTE_RENAME|NOTE_REVOKE, 0, 0);
         for (;;) {
-                nev = kevent(kq, &ch, 1, &ev, 1, &tout);
+                nev = kevent(kq, \*[Am]ch, 1, \*[Am]ev, 1, \*[Am]tout);
                 if (nev == -1)
                         err(1, "kevent");
                 if (nev == 0)
                         continue;
-                if (ev.fflags & NOTE_DELETE) {
+                if (ev.fflags \*[Am] NOTE_DELETE) {
                         printf("deleted ");
-                        ev.fflags &= ~NOTE_DELETE;
+                        ev.fflags \*[Am]= ~NOTE_DELETE;
                 }
-                if (ev.fflags & NOTE_WRITE) {
+                if (ev.fflags \*[Am] NOTE_WRITE) {
                         printf("written ");
-                        ev.fflags &= ~NOTE_WRITE;
+                        ev.fflags \*[Am]= ~NOTE_WRITE;
                 }
-                if (ev.fflags & NOTE_EXTEND) {
+                if (ev.fflags \*[Am] NOTE_EXTEND) {
                         printf("extended ");
-                        ev.fflags &= ~NOTE_EXTEND;
+                        ev.fflags \*[Am]= ~NOTE_EXTEND;
                 }
-                if (ev.fflags & NOTE_ATTRIB) {
+                if (ev.fflags \*[Am] NOTE_ATTRIB) {
                         printf("chmod/chown ");
-                        ev.fflags &= ~NOTE_ATTRIB;
+                        ev.fflags \*[Am]= ~NOTE_ATTRIB;
                 }
-                if (ev.fflags & NOTE_LINK) {
+                if (ev.fflags \*[Am] NOTE_LINK) {
                         printf("hardlinked ");
-                        ev.fflags &= ~NOTE_LINK;
+                        ev.fflags \*[Am]= ~NOTE_LINK;
                 }
-                if (ev.fflags & NOTE_RENAME) {
+                if (ev.fflags \*[Am] NOTE_RENAME) {
                         printf("renamed ");
-                        ev.fflags &= ~NOTE_RENAME;
+                        ev.fflags \*[Am]= ~NOTE_RENAME;
                 }
-                if (ev.fflags & NOTE_REVOKE) {
+                if (ev.fflags \*[Am] NOTE_REVOKE) {
                         printf("revoked ");
-                        ev.fflags &= ~NOTE_REVOKE;
+                        ev.fflags \*[Am]= ~NOTE_REVOKE;
                 }
                 printf("\\n");
                 if (ev.fflags)
