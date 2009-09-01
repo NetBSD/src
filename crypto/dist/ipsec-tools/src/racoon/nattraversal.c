@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.12 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.13 2009/09/01 12:22:09 tteras Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -308,9 +308,28 @@ natt_float_ports (struct ph1handle *iph1)
 	natt_keepalive_add_ph1 (iph1);
 }
 
+static int
+natt_is_enabled (struct remoteconf *rmconf, void *args)
+{
+  if (rmconf->nat_traversal)
+    return 1;
+  return 0;
+}
+
 void
 natt_handle_vendorid (struct ph1handle *iph1, int vid_numeric)
 {
+  if (iph1->rmconf == NULL) {
+    /* Check if any candidate remote conf allows nat-t */
+    struct rmconfselector rmconf;
+    rmconf_selector_from_ph1(&rmconf, iph1);
+    if (enumrmconf(&rmconf, natt_is_enabled, NULL) == 0)
+      return;
+  } else {
+    if (!iph1->rmconf->nat_traversal)
+      return;
+  }
+
   if (! iph1->natt_options)
     iph1->natt_options = racoon_calloc (1, sizeof (*iph1->natt_options));
 

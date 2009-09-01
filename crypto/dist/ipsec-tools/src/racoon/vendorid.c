@@ -1,4 +1,4 @@
-/*	$NetBSD: vendorid.c,v 1.7 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: vendorid.c,v 1.8 2009/09/01 12:22:09 tteras Exp $	*/
 
 /* Id: vendorid.c,v 1.10 2006/02/22 16:10:21 vanhu Exp */
 
@@ -260,8 +260,7 @@ handle_vendorid(struct ph1handle *iph1, struct isakmp_gen *gen)
 	iph1->vendorid_mask |= BIT(vid_numeric);
 
 #ifdef ENABLE_NATT
-	if ((iph1->rmconf == NULL || iph1->rmconf->nat_traversal) &&
-	    natt_vendorid(vid_numeric))
+	if (natt_vendorid(vid_numeric))
 		natt_handle_vendorid(iph1, vid_numeric);
 #endif
 #ifdef ENABLE_HYBRID

@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.57 2009/09/01 09:24:21 tteras Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.58 2009/09/01 12:22:09 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -419,6 +419,9 @@ If certificate request without issuer name was sent, the
 .Ic match_empty_cr
 parameter specifies whether or not remote block matches.
 .El
+.Pp
+Similarly, NAT-T is enabled if any of the initial remote configuration
+candidates allow NAT-T.
 .Pp
 Sections with
 .Ic inherit Ar parent
