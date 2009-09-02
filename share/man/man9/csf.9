@@ -1,4 +1,4 @@
-.\"     $NetBSD: csf.9,v 1.5 2009/03/15 14:05:18 joerg Exp $
+.\"     $NetBSD: csf.9,v 1.6 2009/09/02 10:54:20 ahoka Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 14, 2007
+.Dd September 2, 2009
 .Dt CSF 9
 .Os
 .Sh NAME
@@ -88,9 +88,11 @@ common scheduler framework
 provides a modular and self-contained interface for
 implementing different thread scheduling algorithms.
 The different schedulers can be selected at compile-time.
-Currently, the only scheduler available is
+Currently, the schedulers available are
 .Xr sched_4bsd 9 ,
-the traditional 4.4BSD thread scheduler.
+the traditional 4.4BSD thread scheduler, and
+.Xr sched_m2 9
+which implements a SVR4/Solaris like apporach.
 .Pp
 The interface is divided into two parts: A set of functions each
 scheduler needs to implement and common functions used by all
@@ -199,10 +201,14 @@ Functions common to all scheduler implementations are in
 .Pp
 The traditional 4.4BSD scheduler is implemented in
 .Pa sys/kern/sched_4bsd.c .
+.Pp
+The M2 scheduler is implemented in
+.Pa sys/kern/sched_m2.c .
 .Sh SEE ALSO
 .Xr mi_switch 9 ,
 .Xr preempt 9 ,
-.Xr sched_4bsd 9
+.Xr sched_4bsd 9 ,
+.Xr sched_m2 9
 .Sh HISTORY
 The
 .Nm
