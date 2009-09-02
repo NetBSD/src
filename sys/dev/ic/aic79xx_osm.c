@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.22 2009/09/02 16:38:17 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.23 2009/09/02 17:08:12 tsutsui Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.22 2009/09/02 16:38:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.23 2009/09/02 17:08:12 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -74,13 +74,13 @@ static bool	ahd_pmf_shutdown(device_t, int);
 int
 ahd_attach(struct ahd_softc *ahd)
 {
-	int 	s;
+	int	s;
 	char	ahd_info[256];
 
 	ahd_controller_info(ahd, ahd_info, sizeof(ahd_info));
-        printf("%s: %s\n", device_xname(&ahd->sc_dev), ahd_info);
+	printf("%s: %s\n", device_xname(&ahd->sc_dev), ahd_info);
 
-        ahd_lock(ahd, &s);
+	ahd_lock(ahd, &s);
 
 	ahd->sc_adapter.adapt_dev = &ahd->sc_dev;
 	ahd->sc_adapter.adapt_nchannels = 1;
@@ -93,12 +93,12 @@ ahd_attach(struct ahd_softc *ahd)
 	ahd->sc_adapter.adapt_request = ahd_action;
 
 	ahd->sc_channel.chan_adapter = &ahd->sc_adapter;
-        ahd->sc_channel.chan_bustype = &scsi_bustype;
-        ahd->sc_channel.chan_channel = 0;
-        ahd->sc_channel.chan_ntargets = AHD_NUM_TARGETS;
-        ahd->sc_channel.chan_nluns = 8 /*AHD_NUM_LUNS*/;
-        ahd->sc_channel.chan_id = ahd->our_id;
-        ahd->sc_channel.chan_flags |= SCSIPI_CHAN_CANGROW;
+	ahd->sc_channel.chan_bustype = &scsi_bustype;
+	ahd->sc_channel.chan_channel = 0;
+	ahd->sc_channel.chan_ntargets = AHD_NUM_TARGETS;
+	ahd->sc_channel.chan_nluns = 8 /*AHD_NUM_LUNS*/;
+	ahd->sc_channel.chan_id = ahd->our_id;
+	ahd->sc_channel.chan_flags |= SCSIPI_CHAN_CANGROW;
 
 	ahd->sc_child = config_found((void *)ahd, &ahd->sc_channel, scsiprint);
 
@@ -112,7 +112,7 @@ ahd_attach(struct ahd_softc *ahd)
 		aprint_error_dev(&ahd->sc_dev,
 		    "couldn't establish power handler\n");
 
-        ahd_unlock(ahd, &s);
+	ahd_unlock(ahd, &s);
 
 	return (1);
 }
@@ -156,21 +156,21 @@ static int
 ahd_ioctl(struct scsipi_channel *channel, u_long cmd,
 	  void *addr, int flag, struct proc *p)
 {
-        struct ahd_softc *ahd = (void *)channel->chan_adapter->adapt_dev;
-        int s, ret = ENOTTY;
+	struct ahd_softc *ahd = (void *)channel->chan_adapter->adapt_dev;
+	int s, ret = ENOTTY;
 
-        switch (cmd) {
-        case SCBUSIORESET:
-                s = splbio();
-                ahd_reset_channel(ahd, channel->chan_channel == 1 ? 'B' : 'A', TRUE);
-                splx(s);
-                ret = 0;
-                break;
-        default:
-                break;
-        }
+	switch (cmd) {
+	case SCBUSIORESET:
+		s = splbio();
+		ahd_reset_channel(ahd, channel->chan_channel == 1 ? 'B' : 'A', TRUE);
+		splx(s);
+		ret = 0;
+		break;
+	default:
+		break;
+	}
 
-        return ret;
+	return ret;
 }
 
 /*
@@ -210,14 +210,14 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		int op;
 
 		if (xs->xs_control & XS_CTL_DATA_IN)
-		  op = BUS_DMASYNC_POSTREAD;
+			op = BUS_DMASYNC_POSTREAD;
 		else
-		  op = BUS_DMASYNC_POSTWRITE;
+			op = BUS_DMASYNC_POSTWRITE;
 
 		bus_dmamap_sync(ahd->parent_dmat, scb->dmamap, 0,
 				scb->dmamap->dm_mapsize, op);
-                bus_dmamap_unload(ahd->parent_dmat, scb->dmamap);
-        }
+		bus_dmamap_unload(ahd->parent_dmat, scb->dmamap);
+	}
 
 	/*
 	 * If the recovery SCB completes, we have to be
@@ -235,46 +235,46 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 			struct scsipi_xfer	*txs = list_scb->xs;
 
 			if (!(txs->xs_control & XS_CTL_POLL)) {
-                                callout_reset(&txs->xs_callout,
-                                    (txs->timeout > 1000000) ?
-                                    (txs->timeout / 1000) * hz :
-                                    (txs->timeout * hz) / 1000,
-                                    ahd_timeout, list_scb);
-                        }
+				callout_reset(&txs->xs_callout,
+				    (txs->timeout > 1000000) ?
+				    (txs->timeout / 1000) * hz :
+				    (txs->timeout * hz) / 1000,
+				    ahd_timeout, list_scb);
+			}
 		}
 
 		if (ahd_get_transaction_status(scb) != XS_NOERROR)
-		  ahd_set_transaction_status(scb, XS_TIMEOUT);
-                scsipi_printaddr(xs->xs_periph);
+			ahd_set_transaction_status(scb, XS_TIMEOUT);
+		scsipi_printaddr(xs->xs_periph);
 		printf("%s: no longer in timeout, status = %x\n",
 		       ahd_name(ahd), xs->status);
 	}
 
 	if (xs->error != XS_NOERROR) {
-                /* Don't clobber any existing error state */
+		/* Don't clobber any existing error state */
 	} else if ((xs->status == SCSI_STATUS_BUSY) ||
 		   (xs->status == SCSI_STATUS_QUEUE_FULL)) {
-	  	ahd_set_transaction_status(scb, XS_BUSY);
+		ahd_set_transaction_status(scb, XS_BUSY);
 		printf("%s: drive (ID %d, LUN %d) queue full (SCB 0x%x)\n",
 		       ahd_name(ahd), SCB_GET_TARGET(ahd,scb), SCB_GET_LUN(scb), SCB_GET_TAG(scb));
-        } else if ((scb->flags & SCB_SENSE) != 0) {
-                /*
-                 * We performed autosense retrieval.
-                 *
-                 * zero the sense data before having
-                 * the drive fill it.  The SCSI spec mandates
-                 * that any untransferred data should be
-                 * assumed to be zero.  Complete the 'bounce'
-                 * of sense information through buffers accessible
-                 * via bus-space by copying it into the clients
-                 * csio.
-                 */
-                memset(&xs->sense.scsi_sense, 0, sizeof(xs->sense.scsi_sense));
-                memcpy(&xs->sense.scsi_sense, ahd_get_sense_buf(ahd, scb),
+	} else if ((scb->flags & SCB_SENSE) != 0) {
+		/*
+		 * We performed autosense retrieval.
+		 *
+		 * zero the sense data before having
+		 * the drive fill it.  The SCSI spec mandates
+		 * that any untransferred data should be
+		 * assumed to be zero.  Complete the 'bounce'
+		 * of sense information through buffers accessible
+		 * via bus-space by copying it into the clients
+		 * csio.
+		 */
+		memset(&xs->sense.scsi_sense, 0, sizeof(xs->sense.scsi_sense));
+		memcpy(&xs->sense.scsi_sense, ahd_get_sense_buf(ahd, scb),
 		       sizeof(struct scsi_sense_data));
 
-                ahd_set_transaction_status(scb, XS_SENSE);
-        } else if ((scb->flags & SCB_PKT_SENSE) != 0) {
+		ahd_set_transaction_status(scb, XS_SENSE);
+	} else if ((scb->flags & SCB_PKT_SENSE) != 0) {
 		struct scsi_status_iu_header *siu;
 		u_int sense_len;
 #ifdef AHD_DEBUG
@@ -296,28 +296,28 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 			printf(" 0x%x", ((uint8_t *)&xs->sense.scsi_sense)[i]);
 		printf("\n");
 #endif
-                ahd_set_transaction_status(scb, XS_SENSE);
+		ahd_set_transaction_status(scb, XS_SENSE);
 	}
 
 	if (scb->flags & SCB_FREEZE_QUEUE) {
-	        scsipi_periph_thaw(periph, 1);
-                scb->flags &= ~SCB_FREEZE_QUEUE;
-        }
+		scsipi_periph_thaw(periph, 1);
+		scb->flags &= ~SCB_FREEZE_QUEUE;
+	}
 
-        if (scb->flags & SCB_REQUEUE)
-                ahd_set_transaction_status(scb, XS_REQUEUE);
+	if (scb->flags & SCB_REQUEUE)
+		ahd_set_transaction_status(scb, XS_REQUEUE);
 
-        ahd_lock(ahd, &s);
-        ahd_free_scb(ahd, scb);
-        ahd_unlock(ahd, &s);
+	ahd_lock(ahd, &s);
+	ahd_free_scb(ahd, scb);
+	ahd_unlock(ahd, &s);
 
-        scsipi_done(xs);
+	scsipi_done(xs);
 }
 
 static void
 ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
-        struct ahd_softc *ahd;
+	struct ahd_softc *ahd;
 	struct ahd_initiator_tinfo *tinfo;
 	struct ahd_tmode_tstate *tstate;
 
@@ -328,25 +328,25 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	case ADAPTER_REQ_RUN_XFER:
 	  {
 		struct scsipi_xfer *xs;
-        	struct scsipi_periph *periph;
-	        struct scb *scb;
-        	struct hardware_scb *hscb;
+		struct scsipi_periph *periph;
+		struct scb *scb;
+		struct hardware_scb *hscb;
 		u_int target_id;
 		u_int our_id;
 		u_int col_idx;
 		char channel;
 		int s;
 
-	  	xs = arg;
-                periph = xs->xs_periph;
+		xs = arg;
+		periph = xs->xs_periph;
 
-                SC_DEBUG(periph, SCSIPI_DB3, ("ahd_action\n"));
+		SC_DEBUG(periph, SCSIPI_DB3, ("ahd_action\n"));
 
 		target_id = periph->periph_target;
-                our_id = ahd->our_id;
-                channel = (chan->chan_channel == 1) ? 'B' : 'A';
+		our_id = ahd->our_id;
+		channel = (chan->chan_channel == 1) ? 'B' : 'A';
 
-                /*
+		/*
 		 * get an scb to use.
 		 */
 		ahd_lock(ahd, &s);
@@ -526,11 +526,11 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 {
 	struct scb *scb;
 	struct scsipi_xfer *xs;
-        struct ahd_softc *ahd;
+	struct ahd_softc *ahd;
 	struct ahd_initiator_tinfo *tinfo;
 	struct ahd_tmode_tstate *tstate;
 	u_int  mask;
-        int    s;
+	int    s;
 
 	scb = (struct scb*)arg;
 	xs = scb->xs;
@@ -609,7 +609,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	} else
 #endif
 	if ((tstate->auto_negotiate & mask) != 0) {
-	  	scb->flags |= SCB_AUTO_NEGOTIATE;
+		scb->flags |= SCB_AUTO_NEGOTIATE;
 		scb->hscb->control |= MK_MESSAGE;
 	}
 
@@ -635,21 +635,21 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	}
 
 	if (!(xs->xs_control & XS_CTL_POLL)) {
-                ahd_unlock(ahd, &s);
-                return;
-        }
-        /*
-         * If we can't use interrupts, poll for completion
-         */
-        SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("cmd_poll\n"));
-        do {
-                if (ahd_poll(ahd, xs->timeout)) {
-                        if (!(xs->xs_control & XS_CTL_SILENT))
-                                printf("cmd fail\n");
-                        ahd_timeout(scb);
-                        break;
-                }
-        } while (!(xs->xs_status & XS_STS_DONE));
+		ahd_unlock(ahd, &s);
+		return;
+	}
+	/*
+	 * If we can't use interrupts, poll for completion
+	 */
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("cmd_poll\n"));
+	do {
+		if (ahd_poll(ahd, xs->timeout)) {
+			if (!(xs->xs_control & XS_CTL_SILENT))
+				printf("cmd fail\n");
+			ahd_timeout(scb);
+			break;
+		}
+	} while (!(xs->xs_status & XS_STS_DONE));
 
 	ahd_unlock(ahd, &s);
 }
@@ -659,18 +659,18 @@ ahd_poll(struct ahd_softc *ahd, int wait)
 {
 
 	while (--wait) {
-                DELAY(1000);
-                if (ahd_inb(ahd, INTSTAT) & INT_PEND)
-                        break;
-        }
+		DELAY(1000);
+		if (ahd_inb(ahd, INTSTAT) & INT_PEND)
+			break;
+	}
 
-        if (wait == 0) {
-                printf("%s: board is not responding\n", ahd_name(ahd));
-                return (EIO);
-        }
+	if (wait == 0) {
+		printf("%s: board is not responding\n", ahd_name(ahd));
+		return (EIO);
+	}
 
-        ahd_intr((void *)ahd);
-        return (0);
+	ahd_intr((void *)ahd);
+	return (0);
 }
 
 
@@ -702,10 +702,10 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 	memcpy(hscb->shared_data.idata.cdb, xs->cmd, hscb->cdb_len);
 
 	/* Only use S/G if there is a transfer */
-        if (xs->datalen) {
-                int error;
+	if (xs->datalen) {
+		int error;
 
-                error = bus_dmamap_load(ahd->parent_dmat,
+		error = bus_dmamap_load(ahd->parent_dmat,
 					scb->dmamap, xs->data,
 					xs->datalen, NULL,
 					((xs->xs_control & XS_CTL_NOSLEEP) ?
@@ -713,22 +713,22 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 					BUS_DMA_STREAMING |
 					((xs->xs_control & XS_CTL_DATA_IN) ?
 					 BUS_DMA_READ : BUS_DMA_WRITE));
-                if (error) {
+		if (error) {
 #ifdef AHD_DEBUG
-                        printf("%s: in ahc_setup_data(): bus_dmamap_load() "
+			printf("%s: in ahc_setup_data(): bus_dmamap_load() "
 			       "= %d\n",
 			       ahd_name(ahd), error);
 #endif
-                        xs->error = XS_RESOURCE_SHORTAGE;
-                        scsipi_done(xs);
-                        return;
-                }
-                ahd_execute_scb(scb,
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			return;
+		}
+		ahd_execute_scb(scb,
 				scb->dmamap->dm_segs,
 				scb->dmamap->dm_nsegs);
-        } else {
-                ahd_execute_scb(scb, NULL, 0);
-        }
+	} else {
+		ahd_execute_scb(scb, NULL, 0);
+	}
 }
 
 void
@@ -821,15 +821,15 @@ void
 ahd_platform_set_tags(struct ahd_softc *ahd,
 		      struct ahd_devinfo *devinfo, ahd_queue_alg alg)
 {
-        struct ahd_tmode_tstate *tstate;
+	struct ahd_tmode_tstate *tstate;
 
-        ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
-                            devinfo->target, &tstate);
+	ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
+			    devinfo->target, &tstate);
 
-        if (alg != AHD_QUEUE_NONE)
-                tstate->tagenable |= devinfo->target_mask;
+	if (alg != AHD_QUEUE_NONE)
+		tstate->tagenable |= devinfo->target_mask;
 	else
-	  	tstate->tagenable &= ~devinfo->target_mask;
+		tstate->tagenable &= ~devinfo->target_mask;
 }
 
 void
