@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.66 2009/05/06 09:25:14 cegger Exp $
+ * $Id: ahc_pci.c,v 1.67 2009/09/02 11:10:37 tsutsui Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.66 2009/05/06 09:25:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.67 2009/09/02 11:10:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -709,9 +709,6 @@ static void ahc_probe_ext_scbram(struct ahc_softc *ahc);
 
 static void ahc_pci_intr(struct ahc_softc *);
 
-static bool ahc_pci_suspend(device_t PMF_FN_PROTO);
-static bool ahc_pci_resume(device_t PMF_FN_PROTO);
-
 static const struct ahc_pci_identity *
 ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
 {
@@ -1102,7 +1099,6 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	if (ahc_init(ahc))
 		goto error_out;
 
-	pmf_device_register(self, ahc_pci_suspend, ahc_pci_resume);
 	ahc_attach(ahc);
 
 	return;
@@ -1110,35 +1106,6 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
  error_out:
 	ahc_free(ahc);
 	return;
-}
-
-/*
- * XXX we should call the real suspend and resume functions here
- * but for some reason ahc_suspend() panics on shutdown
- */
-
-static bool
-ahc_pci_suspend(device_t dev PMF_FN_ARGS)
-{
-	struct ahc_softc *sc = device_private(dev);
-#if 0
-	return (ahc_suspend(sc) == 0);
-#else
-	ahc_shutdown(sc);
-	return true;
-#endif
-}
-
-static bool
-ahc_pci_resume(device_t dev PMF_FN_ARGS)
-{
-#if 0
-	struct ahc_softc *sc = device_private(dev);
-
-	return (ahc_resume(sc) == 0);
-#else
-	return true;
-#endif
 }
 
 CFATTACH_DECL_NEW(ahc_pci, sizeof(struct ahc_softc),

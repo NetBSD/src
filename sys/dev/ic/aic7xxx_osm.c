@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.31 2009/05/16 06:44:05 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.32 2009/09/02 11:10:37 tsutsui Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.31 2009/05/16 06:44:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.32 2009/09/02 11:10:37 tsutsui Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -58,6 +58,8 @@ static void	ahc_set_recoveryscb(struct ahc_softc *ahc, struct scb *scb);
 static int	ahc_ioctl(struct scsipi_channel *channel, u_long cmd,
 			  void *addr, int flag, struct proc *p);
 
+static bool	ahc_pmf_suspend(device_t PMF_FN_PROTO);
+static bool	ahc_pmf_resume(device_t PMF_FN_PROTO);
 
 
 /*
@@ -124,8 +126,41 @@ ahc_attach(struct ahc_softc *ahc)
 	if ((ahc->features & AHC_TWIN) && ahc->flags & AHC_RESET_BUS_B)
 		ahc_reset_channel(ahc, 'B', TRUE);
 
+	if (!pmf_device_register(ahc->sc_dev, ahc_pmf_suspend, ahc_pmf_resume))
+		aprint_error_dev(ahc->sc_dev,
+		    "couldn't establish power handler\n");
+
 	ahc_unlock(ahc, &s);
 	return (1);
+}
+
+/*
+ * XXX we should call the real suspend and resume functions here
+ * but for some reason ahc_suspend() panics on shutdown
+ */
+
+static bool
+ahc_pmf_suspend(device_t dev PMF_FN_ARGS)
+{
+	struct ahc_softc *sc = device_private(dev);
+#if 0
+	return (ahc_suspend(sc) == 0);
+#else
+	ahc_shutdown(sc);
+	return true;
+#endif
+}
+
+static bool
+ahc_pmf_resume(device_t dev PMF_FN_ARGS)
+{
+#if 0
+	struct ahc_softc *sc = device_private(dev);
+
+	return (ahc_resume(sc) == 0);
+#else
+	return true;
+#endif
 }
 
 /*
