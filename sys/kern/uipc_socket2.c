@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.103 2009/07/24 01:09:49 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.104 2009/09/02 14:56:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.103 2009/07/24 01:09:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.104 2009/09/02 14:56:57 tls Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -190,7 +190,8 @@ soisconnected(struct socket *so)
 			so->so_upcallarg = head->so_accf->so_accept_filter_arg;
 			so->so_rcv.sb_flags |= SB_UPCALL;
 			so->so_options &= ~SO_ACCEPTFILTER;
-			(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
+			(*so->so_upcall)(so, so->so_upcallarg,
+					 POLLIN|POLLRDNORM, M_DONTWAIT);
 		}
 	} else {
 		cv_broadcast(&so->so_cv);
@@ -472,7 +473,7 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 	if (sb->sb_flags & SB_ASYNC)
 		fownsignal(so->so_pgid, SIGIO, code, band, so);
 	if (sb->sb_flags & SB_UPCALL)
-		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
+		(*so->so_upcall)(so, so->so_upcallarg, band, M_DONTWAIT);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.119 2009/04/04 10:12:52 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.120 2009/09/02 14:56:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ struct socket {
 	struct sockbuf	so_rcv;		/* receive buffer */
 
 	void		*so_internal;	/* Space for svr4 stream data */
-	void		(*so_upcall) (struct socket *, void *, int);
+	void		(*so_upcall) (struct socket *, void *, int, int);
 	void *		so_upcallarg;	/* Arg for above */
 	int		(*so_send) (struct socket *, struct mbuf *,
 					struct uio *, struct mbuf *,
@@ -214,11 +214,11 @@ do {									\
 struct accept_filter {
 	char	accf_name[16];
 	void	(*accf_callback)
-		(struct socket *so, void *arg, int waitflag);
+		(struct socket *, void *, int, int);
 	void *	(*accf_create)
-		(struct socket *so, char *arg);
+		(struct socket *, char *);
 	void	(*accf_destroy)
-		(struct socket *so);
+		(struct socket *);
 	LIST_ENTRY(accept_filter) accf_next;
 	u_int	accf_refcnt;
 };
