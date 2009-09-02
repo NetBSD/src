@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.16 2009/08/24 02:15:46 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.17 2009/09/02 15:25:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2009/08/24 02:15:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.17 2009/09/02 15:25:07 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16 2009/08/24 02:15:46 jmcneill Ex
 
 #include <x86/cpuvar.h>
 #include <x86/x86/tsc.h>
+
+#include "opt_vga.h"
 
 #include "acpi_wakecode.h"
 
@@ -462,6 +464,11 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 
 	if (t < 0 || t > 2)
 		return EINVAL;
+
+#ifndef VGA_POST
+	if (t == 2)
+		return EINVAL;
+#endif
 
 	acpi_md_vbios_reset = t;
 
