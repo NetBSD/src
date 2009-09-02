@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.7 2009/09/02 01:36:31 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.8 2009/09/02 07:44:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.7 2009/09/02 01:36:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.8 2009/09/02 07:44:28 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -415,7 +415,6 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			printf("syscall %u:", code);
 		printf(" return error=%d\n", error);
 #endif
-		frame->f_regs[_R_A3] = 0;
 		break;
 	}
 
