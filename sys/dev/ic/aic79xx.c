@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.41 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.42 2009/09/02 16:38:17 tsutsui Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.41 2009/03/18 16:00:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.42 2009/09/02 16:38:17 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -6176,9 +6176,6 @@ init_done:
 	ahd_restart(ahd);
 	ahd_timer_reset(&ahd->stat_timer, AHD_STAT_UPDATE_US,
 			ahd_stat_timer, ahd);
-
-	/* We have to wait until after any system dumps... */
-	ahd->shutdown_hook = shutdownhook_establish(ahd_shutdown, ahd);
 
 	return (0);
 }
