@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.6 2009/08/30 10:04:23 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.7 2009/09/02 01:35:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.6 2009/08/30 10:04:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.7 2009/09/02 01:35:22 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -564,11 +564,11 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	fp = l->l_md.md_regs;
 	fp->f_regs[_R_CAUSE] = cause;
 	fp->f_regs[_R_BADVADDR] = vaddr;
-#ifdef DBEUG
-	printf("trap: pid %d: sig %d, cause %#x pc %#"PRIxREGISTER
-	    " ra %#"PRIxREGISTER" va %#"PRIxVADDR"\n",
-	    p->p_pid, ksi.ksi_signo, cause, fp->f_regs[_R_PC],
-	    fp->f_regs[_R_RA], vaddr);
+#if defined(DEBUG)
+	printf("trap: pid %d(%s): sig %d: cause=%#x pc=%#"PRIxREGISTER
+	    " ra=%#"PRIxREGISTER" va=%#"PRIxVADDR " gp=%#"PRIxREGISTER"\n",
+	    p->p_pid, p->p_comm, ksi.ksi_signo, cause, fp->f_regs[_R_PC],
+	    fp->f_regs[_R_RA], vaddr, fp->f_regs[_R_GP]);
 #endif
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	if ((type & T_USER) == 0)
