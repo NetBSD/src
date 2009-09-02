@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.124 2009/08/31 13:05:30 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.125 2009/09/02 15:11:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.124 2009/08/31 13:05:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.125 2009/09/02 15:11:13 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -833,6 +833,12 @@ re_attach(struct rtk_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
+	if (pmf_device_register(sc->sc_dev, NULL, NULL))
+		pmf_class_network_register(sc->sc_dev, ifp);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+
 	return;
 
  fail_8:
@@ -955,6 +961,8 @@ re_detach(struct rtk_softc *sc)
 	    (void *)sc->re_ldata.re_tx_list, RE_TX_LIST_SZ(sc));
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_tx_listseg, sc->re_ldata.re_tx_listnseg);
+
+	pmf_device_deregister(sc->sc_dev);
 
 	return 0;
 }
