@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2009/04/03 22:36:35 perry Exp $
+#	$NetBSD: Makefile,v 1.18 2009/09/02 07:48:50 skrll Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,6 +11,7 @@ MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_POST= \
 	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment \
+	    -R .note.netbsd.ident -R .ARM.attributes \
 	    ${.TARGET} ${.TARGET}.aout; \
 	gzip -9nc ${.TARGET}.aout >${.TARGET}.aout.gz
 
