@@ -167,12 +167,14 @@ drm_ati_alloc_pcigart_table(struct drm_device *dev,
 	dmah->busaddr = dmah->map->dm_segs[0].ds_addr;
 	dmah->size = gart_info->table_size;
 	dmah->nsegs = 1;
+#if 0
 	/*
-	* Mirror here FreeBSD doing BUS_DMA_ZERO.
-	* But I see this same memset() is done in drm_ati_pcigart_init(),
-	* so maybe this is not needed.
-	*/
+	 * Mirror here FreeBSD doing BUS_DMA_ZERO.
+	 * But I see this same memset() is done in drm_ati_pcigart_init(),
+	 * so maybe this is not needed.
+	 */
 	memset(dmah->vaddr, 0, gart_info->table_size);
+#endif
 #endif
 
 	dev->sg->dmah = dmah;
