@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.139 2009/08/29 06:05:39 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.140 2009/09/02 10:34:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.139 2009/08/29 06:05:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.140 2009/09/02 10:34:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,6 @@ static void	ncr53c9x_msgin(struct ncr53c9x_softc *);
 static void	ncr53c9x_msgout(struct ncr53c9x_softc *);
 static void	ncr53c9x_timeout(void *arg);
 static void	ncr53c9x_watch(void *arg);
-static void	ncr53c9x_abort(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
 static void	ncr53c9x_dequeue(struct ncr53c9x_softc *,
 				 struct ncr53c9x_ecb *);
 static int	ncr53c9x_ioctl(struct scsipi_channel *, u_long,

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.57 2008/12/16 22:35:24 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.58 2009/09/02 10:34:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.57 2008/12/16 22:35:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.58 2009/09/02 10:34:05 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -649,7 +649,6 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 				}
 				xfer_len = esc->sc_dmasize - resid;
 			} else {
-extern void	ncr53c9x_abort(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
 #define ncr53c9x_sched_msgout(m) \
 	do {							\
 		NCR_MISC(("ncr53c9x_sched_msgout %x %d", m, __LINE__));	\
