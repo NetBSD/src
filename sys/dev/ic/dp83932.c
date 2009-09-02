@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.30 2009/09/02 10:43:25 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.31 2009/09/02 14:58:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.30 2009/09/02 10:43:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.31 2009/09/02 14:58:38 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -65,21 +65,21 @@ __KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.30 2009/09/02 10:43:25 tsutsui Exp $")
 #include <dev/ic/dp83932reg.h>
 #include <dev/ic/dp83932var.h>
 
-void	sonic_start(struct ifnet *);
-void	sonic_watchdog(struct ifnet *);
-int	sonic_ioctl(struct ifnet *, u_long, void *);
-int	sonic_init(struct ifnet *);
-void	sonic_stop(struct ifnet *, int);
+static void	sonic_start(struct ifnet *);
+static void	sonic_watchdog(struct ifnet *);
+static int	sonic_ioctl(struct ifnet *, u_long, void *);
+static int	sonic_init(struct ifnet *);
+static void	sonic_stop(struct ifnet *, int);
 
-bool	sonic_shutdown(device_t, int);
+static bool	sonic_shutdown(device_t, int);
 
-void	sonic_reset(struct sonic_softc *);
-void	sonic_rxdrain(struct sonic_softc *);
-int	sonic_add_rxbuf(struct sonic_softc *, int);
-void	sonic_set_filter(struct sonic_softc *);
+static void	sonic_reset(struct sonic_softc *);
+static void	sonic_rxdrain(struct sonic_softc *);
+static int	sonic_add_rxbuf(struct sonic_softc *, int);
+static void	sonic_set_filter(struct sonic_softc *);
 
-uint16_t sonic_txintr(struct sonic_softc *);
-void	sonic_rxintr(struct sonic_softc *);
+static uint16_t sonic_txintr(struct sonic_softc *);
+static void	sonic_rxintr(struct sonic_softc *);
 
 int	sonic_copy_small = 0;
 
