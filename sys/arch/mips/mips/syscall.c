@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.6 2009/08/24 12:38:13 uebayasi Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.7 2009/09/02 01:36:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.6 2009/08/24 12:38:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.7 2009/09/02 01:36:31 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -387,12 +387,12 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 		}
 #endif
 #if 0
-	if (p->p_emul->e_syscallnames)
-		printf("syscall %s:", p->p_emul->e_syscallnames[code]);
-	else
-		printf("syscall %u:", code);
-	printf(" return v0=%#"PRIxREGISTER" v1=%#"PRIxREGISTER"\n",
-	    frame->f_regs[_R_V0], frame->f_regs[_R_V1]);
+		if (p->p_emul->e_syscallnames)
+			printf("syscall %s:", p->p_emul->e_syscallnames[code]);
+		else
+			printf("syscall %u:", code);
+		printf(" return v0=%#"PRIxREGISTER" v1=%#"PRIxREGISTER"\n",
+		    frame->f_regs[_R_V0], frame->f_regs[_R_V1]);
 #endif
 		frame->f_regs[_R_A3] = 0;
 		break;
@@ -408,6 +408,14 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			error = p->p_emul->e_errno[error];
 		frame->f_regs[_R_V0] = error;
 		frame->f_regs[_R_A3] = 1;
+#if 0
+		if (p->p_emul->e_syscallnames)
+			printf("syscall %s:", p->p_emul->e_syscallnames[code]);
+		else
+			printf("syscall %u:", code);
+		printf(" return error=%d\n", error);
+#endif
+		frame->f_regs[_R_A3] = 0;
 		break;
 	}
 
