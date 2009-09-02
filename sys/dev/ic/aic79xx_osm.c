@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.23 2009/09/02 17:08:12 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.24 2009/09/02 17:11:26 tsutsui Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.23 2009/09/02 17:08:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.24 2009/09/02 17:11:26 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -715,7 +715,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 					 BUS_DMA_READ : BUS_DMA_WRITE));
 		if (error) {
 #ifdef AHD_DEBUG
-			printf("%s: in ahc_setup_data(): bus_dmamap_load() "
+			printf("%s: in ahd_setup_data(): bus_dmamap_load() "
 			       "= %d\n",
 			       ahd_name(ahd), error);
 #endif
@@ -833,7 +833,7 @@ ahd_platform_set_tags(struct ahd_softc *ahd,
 }
 
 void
-ahd_send_async(struct ahd_softc *ahc, char channel, u_int target, u_int lun,
+ahd_send_async(struct ahd_softc *ahd, char channel, u_int target, u_int lun,
 	       ac_code code, void *opt_arg)
 {
 	struct ahd_tmode_tstate *tstate;
@@ -846,12 +846,12 @@ ahd_send_async(struct ahd_softc *ahc, char channel, u_int target, u_int lun,
 	if (channel != 'A')
 		panic("ahd_send_async: not channel A");
 #endif
-	chan = &ahc->sc_channel;
+	chan = &ahd->sc_channel;
 	switch (code) {
 	case AC_TRANSFER_NEG:
-		tinfo = ahd_fetch_transinfo(ahc, channel, ahc->our_id, target,
+		tinfo = ahd_fetch_transinfo(ahd, channel, ahd->our_id, target,
 			    &tstate);
-		ahd_compile_devinfo(&devinfo, ahc->our_id, target, lun,
+		ahd_compile_devinfo(&devinfo, ahd->our_id, target, lun,
 		    channel, ROLE_UNKNOWN);
 		/*
 		 * Don't bother if negotiating. XXX?
