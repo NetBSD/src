@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.2 2009/08/21 17:47:08 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.3 2009/09/02 15:55:17 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -169,6 +169,11 @@ define	FRAME_T4		offsetof(struct frame, f_regs[_R_T4])
 define	FRAME_T5		offsetof(struct frame, f_regs[_R_T5])
 define	FRAME_T6		offsetof(struct frame, f_regs[_R_T6])
 define	FRAME_T7		offsetof(struct frame, f_regs[_R_T7])
+else
+define	FRAME_A4		offsetof(struct frame, f_regs[_R_A4])
+define	FRAME_A5		offsetof(struct frame, f_regs[_R_A5])
+define	FRAME_A6		offsetof(struct frame, f_regs[_R_A6])
+define	FRAME_A7		offsetof(struct frame, f_regs[_R_A7])
 endif
 
 define	FRAME_S0		offsetof(struct frame, f_regs[_R_S0])
