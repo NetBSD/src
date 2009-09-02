@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.67 2008/12/17 20:51:37 cegger Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.68 2009/09/02 22:03:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.67 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.68 2009/09/02 22:03:08 joerg Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -710,6 +710,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 	struct ether_header *eh = mtod(m, struct ether_header *);
 	struct ifnet *ifp = ic->ic_ifp;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
+	int error;
 
 	/* perform as a bridge within the AP */
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
@@ -756,9 +757,11 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 			}
 #endif
 			len = m1->m_pkthdr.len;
-			IF_ENQUEUE(&ifp->if_snd, m1);
-			if (m != NULL)
+			IFQ_ENQUEUE(&ifp->if_snd, m1, &pktattr, error);
+			if (error) {
 				ifp->if_omcasts++;
+				m = NULL;
+			}
 			ifp->if_obytes += len;
 		}
 	}
