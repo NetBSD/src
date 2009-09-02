@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_http.c,v 1.6 2008/11/21 16:08:57 joerg Exp $	*/
+/*	$NetBSD: accf_http.c,v 1.7 2009/09/02 14:56:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.6 2008/11/21 16:08:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.7 2009/09/02 14:56:57 tls Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.6 2008/11/21 16:08:57 joerg Exp $");
 MODULE(MODULE_CLASS_MISC, accf_httpready, NULL);
 
 /* check for GET/HEAD */
-static void sohashttpget(struct socket *so, void *arg, int waitflag);
+static void sohashttpget(struct socket *so, void *arg, int events, int waitflag);
 /* check for HTTP/1.0 or HTTP/1.1 */
-static void soparsehttpvers(struct socket *so, void *arg, int waitflag);
+static void soparsehttpvers(struct socket *so, void *arg, int events, int waitflag);
 /* check for end of HTTP/1.x request */
-static void soishttpconnected(struct socket *so, void *arg, int waitflag);
+static void soishttpconnected(struct socket *so, void *arg, int events, int waitflag);
 /* strcmp on an mbuf chain */
 static int mbufstrcmp(struct mbuf *m, struct mbuf *npkt, int offset, const char *cmp);
 /* strncmp on an mbuf chain */
@@ -221,7 +221,7 @@ mbufstrncmp(struct mbuf *m, struct mbuf *npkt, int offset, int len, const char *
 	} while(0)
 
 static void
-sohashttpget(struct socket *so, void *arg, int waitflag)
+sohashttpget(struct socket *so, void *arg, int events, int waitflag)
 {
 
 	if ((so->so_state & SS_CANTRCVMORE) == 0 && !sbfull(&so->so_rcv)) {
@@ -255,9 +255,9 @@ sohashttpget(struct socket *so, void *arg, int waitflag)
 		if (mbufstrcmp(m, m->m_nextpkt, 1, cmp) == 1) {
 			DPRINT("mbufstrcmp ok");
 			if (parse_http_version == 0)
-				soishttpconnected(so, arg, waitflag);
+				soishttpconnected(so, arg, events, waitflag);
 			else
-				soparsehttpvers(so, arg, waitflag);
+				soparsehttpvers(so, arg, events, waitflag);
 			return;
 		}
 		DPRINT("mbufstrcmp bad");
@@ -272,7 +272,7 @@ fallout:
 }
 
 static void
-soparsehttpvers(struct socket *so, void *arg, int waitflag)
+soparsehttpvers(struct socket *so, void *arg, int events, int waitflag)
 {
 	struct mbuf *m, *n;
 	int	i, cc, spaces, inspaces;
@@ -325,7 +325,7 @@ soparsehttpvers(struct socket *so, void *arg, int waitflag)
 					    mbufstrcmp(m, n, i, "HTTP/1.1")) {
 						DPRINT("ok");
 						soishttpconnected(so,
-						    arg, waitflag);
+						    arg, events, waitflag);
 						return;
 					} else {
 						DPRINT("bad");
@@ -357,7 +357,7 @@ fallout:
 #define NCHRS 3
 
 static void
-soishttpconnected(struct socket *so, void *arg, int waitflag)
+soishttpconnected(struct socket *so, void *arg, int events, int waitflag)
 {
 	char a, b, c;
 	struct mbuf *m, *n;
