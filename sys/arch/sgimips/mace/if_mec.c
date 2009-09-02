@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.38 2009/09/02 10:43:24 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.39 2009/09/02 17:22:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.38 2009/09/02 10:43:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.39 2009/09/02 17:22:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -727,7 +727,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 
 	/* set shutdown hook to reset interface on powerdown */
 	if (pmf_device_register1(self, NULL, NULL, mec_shutdown))
-		pmf_class_network_register(self, &sc->sc_ethercom.ec_if);
+		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
