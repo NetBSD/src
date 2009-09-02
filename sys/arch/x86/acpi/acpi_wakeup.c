@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.17 2009/09/02 15:25:07 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.18 2009/09/02 15:42:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.17 2009/09/02 15:25:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.18 2009/09/02 15:42:31 joerg Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -466,8 +466,11 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 		return EINVAL;
 
 #ifndef VGA_POST
-	if (t == 2)
+	if (t == 2) {
+		aprint_error("WARNING: machdep.acpi_vbios_reset=2 "
+		    "unsupported (no option VGA_POST in kernel config)\n");
 		return EINVAL;
+	}
 #endif
 
 	acpi_md_vbios_reset = t;
