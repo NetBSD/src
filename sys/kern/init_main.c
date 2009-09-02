@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.396 2009/07/27 17:40:57 mbalmer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.397 2009/09/02 08:07:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.396 2009/07/27 17:40:57 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.397 2009/09/02 08:07:05 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -297,6 +297,9 @@ main(void)
 	once_init();
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	/* Initialize the device switch tables. */
+	devsw_init();
+
 	uvm_init();
 
 #if ((NKSYMS > 0) || (NDDB > 0) || (NMODULAR > 0))
@@ -449,9 +452,6 @@ main(void)
 
 	inittimecounter();
 	ntp_init();
-
-	/* Initialize the device switch tables. */
-	devsw_init();
 
 	/* Initialize tty subsystem. */
 	tty_init();
