@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.32 2009/09/02 11:10:37 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.33 2009/09/02 11:44:11 tsutsui Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.32 2009/09/02 11:10:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.33 2009/09/02 11:44:11 tsutsui Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -60,6 +60,7 @@ static int	ahc_ioctl(struct scsipi_channel *channel, u_long cmd,
 
 static bool	ahc_pmf_suspend(device_t PMF_FN_PROTO);
 static bool	ahc_pmf_resume(device_t PMF_FN_PROTO);
+static bool	ahc_pmf_shutdown(device_t, int);
 
 
 /*
@@ -126,7 +127,8 @@ ahc_attach(struct ahc_softc *ahc)
 	if ((ahc->features & AHC_TWIN) && ahc->flags & AHC_RESET_BUS_B)
 		ahc_reset_channel(ahc, 'B', TRUE);
 
-	if (!pmf_device_register(ahc->sc_dev, ahc_pmf_suspend, ahc_pmf_resume))
+	if (!pmf_device_register1(ahc->sc_dev,
+	    ahc_pmf_suspend, ahc_pmf_resume, ahc_pmf_shutdown))
 		aprint_error_dev(ahc->sc_dev,
 		    "couldn't establish power handler\n");
 
@@ -136,7 +138,7 @@ ahc_attach(struct ahc_softc *ahc)
 
 /*
  * XXX we should call the real suspend and resume functions here
- * but for some reason ahc_suspend() panics on shutdown
+ *     but pmf(9) stuff on cardbus backend is untested yet
  */
 
 static bool
@@ -161,6 +163,17 @@ ahc_pmf_resume(device_t dev PMF_FN_ARGS)
 #else
 	return true;
 #endif
+}
+
+static bool
+ahc_pmf_shutdown(device_t dev, int howto)
+{
+	struct ahc_softc *sc = device_private(dev);
+
+	/* Disable all interrupt sources by resetting the controller */
+	ahc_shutdown(sc);
+
+	return true;
 }
 
 /*
