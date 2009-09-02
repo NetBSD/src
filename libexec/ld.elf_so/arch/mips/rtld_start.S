@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9.44.2 2009/09/02 15:49:42 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9.44.3 2009/09/02 17:46:48 matt Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -33,14 +33,18 @@
 .globl _C_LABEL(_rtld_relocate_nonplt_self)
 .globl _C_LABEL(_rtld)
 
+#define	PTR_SIZE	(1<<PTR_SCALESHIFT)
+
 LEAF(rtld_start)
+	.frame	sp, 4*PTR_SIZE, ra
+	.mask	0x10090000,-PTR_SIZE
 	.set	noreorder
 	SETUP_GP
-	PTR_SUBU sp, 2*SZREG		# adjust stack pointer
+	PTR_SUBU sp, 4*PTR_SIZE		# adjust stack pointer
 	SETUP_GP64(s4, rtld_start)
-	SAVE_GP(s4)
-					# -> 0*SZREG(sp) for atexit
-					# -> 1*SZREG(sp) for obj_main
+	SAVE_GP(0)
+					# -> 1*PTR_SIZE(sp) for atexit
+					# -> 2*PTR_SIZE(sp) for obj_main
 	move	s0, a0			# save stack pointer from a0
 	move	s3, a3			# save ps_strings pointer
 
@@ -48,20 +52,20 @@ LEAF(rtld_start)
 	bal	1f
 	 PTR_LA	t9, _C_LABEL(_rtld_relocate_nonplt_self)
 1:	PTR_SUBU a1, ra, a1		# relocbase
-	move	s2,a1
+	move	s2, a1			# save for _rtld
 	PTR_LA	a0,_DYNAMIC
 	PTR_ADDU t9, a1, t9
 	jalr	t9			# _rtld_relocate_nonplt_self(dynp, relocabase)
 	 PTR_ADDU a0, a1, a0		# &_DYNAMIC
 
 	move	a1, s2			# relocbase
-	move	a0, sp			# sp
+	PTR_ADDU a0, sp, 2*PTR_SIZE	# sp
 	jal	_C_LABEL(_rtld)		# v0 = _rtld(sp, relocbase)
 	 nop
 
-	PTR_L	a1, 0*SZREG(sp)		# our atexit function
-	PTR_L	a2, 1*SZREG(sp)		# obj_main entry
-	PTR_ADDU sp, 2*SZREG		# readjust stack
+	PTR_L	a1, 2*PTR_SIZE(sp)	# our atexit function
+	PTR_L	a2, 3*PTR_SIZE(sp)	# obj_main entry
+	PTR_ADDU sp, 4*PTR_SIZE		# readjust stack
 	move	a0, s0			# stack pointer
 	move	t9, v0
 	jr	t9			# _start(sp, cleanup, obj);
@@ -87,8 +91,9 @@ END(rtld_start)
 	.globl	_rtld_bind_start
 	.ent	_rtld_bind_start
 _rtld_bind_start:
-#if defined(__mips_o32) || defined(__mips_o64)
+	.frame	sp, XCALLFRAME_SIZ, $15
 	move	v1, gp			# save old GP
+#if defined(__mips_o32) || defined(__mips_o64)
 	PTR_ADDU t9, 8			# modify T9 to point at .cpload
 #endif
 	SETUP_GP
@@ -106,7 +111,7 @@ _rtld_bind_start:
 	REG_S	a2,  XCALLFRAME_A2(sp)
 	REG_S	a3,  XCALLFRAME_A3(sp)
 	REG_S	$15,  XCALLFRAME_RA(sp)	# ra is in t7/t3
-	REG_S	s0,  XCALLFRAME_SP(sp)
+	REG_S	s0,  XCALLFRAME_S0(sp)
 	move	s0, sp
 	move	a0, t8			# symbol index
 	move	a1, $15			# old RA
