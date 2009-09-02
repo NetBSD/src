@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.52 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.53 2009/09/02 10:34:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -443,5 +443,6 @@ void	ncr53c9x_scsipi_request(struct scsipi_channel *chan,
 void	ncr53c9x_reset(struct ncr53c9x_softc *);
 int	ncr53c9x_intr(void *);
 void	ncr53c9x_init(struct ncr53c9x_softc *, int);
+void	ncr53c9x_abort(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
 
 #endif /* _DEV_IC_NCR53C9XVAR_H_ */
