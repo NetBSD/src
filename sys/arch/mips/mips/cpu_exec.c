@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.4 2009/08/26 03:46:39 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.5 2009/09/02 01:36:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.4 2009/08/26 03:46:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.5 2009/09/02 01:36:03 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -352,13 +352,13 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case EF_MIPS_ABI2:
 		p->p_md.md_abi = _MIPS_BSD_API_N32;
 		if (old_abi != p->p_md.md_abi)
-			printf("pid %d(%p): ABI set to N32 (e_flags=%#x)\n", p->p_pid, p, eh->e_flags);
+			printf("pid %d(%s): ABI set to N32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
 		return 0;
 #endif
 	case EF_MIPS_ABI_O32:
 		p->p_md.md_abi = _MIPS_BSD_API_O32;
 		if (old_abi != p->p_md.md_abi)
-			printf("pid %d(%p): ABI set to O32 (e_flags=%#x)\n", p->p_pid, p, eh->e_flags);
+			printf("pid %d(%s): ABI set to O32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
 		return 0;
 	default:
 		return ENOEXEC;
@@ -441,12 +441,12 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case 0:
 		p->p_md.md_abi = _MIPS_BSD_API_N64;
 		if (old_abi != p->p_md.md_abi)
-			printf("pid %d(%p): ABI set to N64 (e_flags=%#x)\n", p->p_pid, p, eh->e_flags);
+			printf("pid %d(%s): ABI set to N64 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
 		return 0;
 	case EF_MIPS_ABI_O64:
 		p->p_md.md_abi = _MIPS_BSD_API_O64;
 		if (old_abi != p->p_md.md_abi)
-			printf("pid %d(%p): ABI set to O64 (e_flags=%#x)\n", p->p_pid, p, eh->e_flags);
+			printf("pid %d(%s): ABI set to O64 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
 		return 0;
 	default:
 		return ENOEXEC;
