@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.4 2009/09/02 01:34:55 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.5 2009/09/02 15:56:52 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -876,10 +876,17 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	move	s2, t2				# stash most of temporary regs
 	REG_S	t3, FRAME_T3(k1)		# syscall saved gp for fork
 	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	a4, FRAME_A4(k1)
+	REG_S	a5, FRAME_A5(k1)
+	REG_S	a6, FRAME_A6(k1)
+	REG_S	a7, FRAME_A7(k1)
+#else
 	move	s4, ta0
 	move	s5, ta1
 	move	s6, ta2
 	move	s7, ta3
+#endif
 	#REG_S	t8, FRAME_T8(k1)
 	#REG_S	t9, FRAME_T9(k1)
 	REG_S	gp, FRAME_GP(k1)
@@ -982,10 +989,17 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	move	t1, s1
 	move	t2, s2
 	REG_L	t3, FRAME_T3(k1)	# restore the syscall saved gp
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_L	a4, FRAME_A4(k1)
+	REG_L	a5, FRAME_A5(k1)
+	REG_L	a6, FRAME_A6(k1)
+	REG_L	a7, FRAME_A7(k1)
+#else
 	move	ta0, s4
 	move	ta1, s5
 	move	ta2, s6
 	move	ta3, s7
+#endif
 	REG_L	s0, FRAME_S0(k1)
 	REG_L	s1, FRAME_S1(k1)
 	REG_L	s2, FRAME_S2(k1)
