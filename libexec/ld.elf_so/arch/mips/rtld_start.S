@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9.44.1 2009/08/26 03:32:53 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9.44.2 2009/09/02 15:49:42 matt Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -61,7 +61,7 @@ LEAF(rtld_start)
 
 	PTR_L	a1, 0*SZREG(sp)		# our atexit function
 	PTR_L	a2, 1*SZREG(sp)		# obj_main entry
-	PTR_ADDU sp, 3*SZREG		# readjust stack
+	PTR_ADDU sp, 2*SZREG		# readjust stack
 	move	a0, s0			# stack pointer
 	move	t9, v0
 	jr	t9			# _start(sp, cleanup, obj);
