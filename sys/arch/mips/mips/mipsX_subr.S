@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.3 2009/08/24 05:18:03 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.4 2009/09/02 01:34:55 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -871,10 +871,10 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	s5, FRAME_S5(k1)
 	REG_S	s6, FRAME_S6(k1)
 	REG_S	s7, FRAME_S7(k1)
-	move	s0, t0				# since the saved registers
-	move	s1, t1				# saved been saved we can
-	move	s2, t2				# use them to stash most of
-	move	s3, t3				# temporary registers
+	move	s0, t0				# since the saved registers have
+	move	s1, t1				# been saved we can use them to
+	move	s2, t2				# stash most of temporary regs
+	REG_S	t3, FRAME_T3(k1)		# syscall saved gp for fork
 	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
 	move	s4, ta0
 	move	s5, ta1
@@ -981,7 +981,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	move	t0, s0			# restore the temps
 	move	t1, s1
 	move	t2, s2
-	move	t3, s3
+	REG_L	t3, FRAME_T3(k1)	# restore the syscall saved gp
 	move	ta0, s4
 	move	ta1, s5
 	move	ta2, s6
