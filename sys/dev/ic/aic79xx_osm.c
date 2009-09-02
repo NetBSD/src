@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.21 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.22 2009/09/02 16:38:17 tsutsui Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.21 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.22 2009/09/02 16:38:17 tsutsui Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -63,6 +63,10 @@ static void	ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 #if NOT_YET
 static void	ahd_set_recoveryscb(struct ahd_softc *ahd, struct scb *scb);
 #endif
+
+static bool	ahd_pmf_suspend(device_t PMF_FN_PROTO);
+static bool	ahd_pmf_resume(device_t PMF_FN_PROTO);
+static bool	ahd_pmf_shutdown(device_t, int);
 
 /*
  * Attach all the sub-devices we can find
@@ -103,9 +107,49 @@ ahd_attach(struct ahd_softc *ahd)
 	if (ahd->flags & AHD_RESET_BUS_A)
 		ahd_reset_channel(ahd, 'A', TRUE);
 
+	if (!pmf_device_register1(&ahd->sc_dev,
+	    ahd_pmf_suspend, ahd_pmf_resume, ahd_pmf_shutdown))
+		aprint_error_dev(&ahd->sc_dev,
+		    "couldn't establish power handler\n");
+
         ahd_unlock(ahd, &s);
 
 	return (1);
+}
+
+static bool
+ahd_pmf_suspend(device_t dev PMF_FN_ARGS)
+{
+	struct ahd_softc *sc = device_private(dev);
+#if 0
+	return (ahd_suspend(sc) == 0);
+#else
+	ahd_shutdown(sc);
+	return true;
+#endif
+}
+
+static bool
+ahd_pmf_resume(device_t dev PMF_FN_ARGS)
+{
+#if 0
+	struct ahd_softc *sc = device_private(dev);
+
+	return (ahd_resume(sc) == 0);
+#else
+	return true;
+#endif
+}
+
+static bool
+ahd_pmf_shutdown(device_t dev, int howto)
+{
+	struct ahd_softc *sc = device_private(dev);
+
+	/* Disable all interrupt sources by resetting the controller */
+	ahd_shutdown(sc);
+
+	return true;
 }
 
 static int
@@ -766,7 +810,7 @@ ahd_detach(device_t self, int flags)
 	if (ahd->sc_child != NULL)
 		rv = config_detach((void *)ahd->sc_child, flags);
 
-	shutdownhook_disestablish(ahd->shutdown_hook);
+	pmf_device_deregister(&ahd->sc_dev);
 
 	ahd_free(ahd);
 
