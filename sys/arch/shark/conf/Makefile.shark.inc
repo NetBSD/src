@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.11 2008/06/07 18:47:41 he Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.12 2009/09/02 07:48:50 skrll Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -22,13 +22,13 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 		-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
 		-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
 		-R .debug_frame -R .debug_loc -R .debug_pubnames \
-		-R .debug_aranges \
+		-R .debug_aranges -R .ARM.attributes \
 		$@ $@.aout"; \
 	${OBJCOPY} -O a.out-arm-netbsd \
 		-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
 		-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
 		-R .debug_frame -R .debug_loc -R .debug_pubnames \
-		-R .debug_aranges \
+		-R .debug_aranges -R .ARM.attributes \
 		$@ $@.aout
 
 KERNIMAGES=	netbsd netbsd.aout
