@@ -75,8 +75,10 @@ struct drm_file;
 #endif
 #include <machine/pmap.h>
 #include <machine/bus.h>
+#if defined(__i386__) || defined(__x86_64__)
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
+#endif
 #include <sys/endian.h>
 #include <sys/mman.h>
 #if defined( __FreeBSD__)
@@ -94,7 +96,9 @@ struct drm_file;
 #include <sys/selinfo.h>
 #include <sys/bus.h>
 #elif   defined(__NetBSD__)
+#if defined(__i386__) || defined(__x86_64__)
 #include <machine/mtrr.h>
+#endif
 #include <sys/vnode.h>
 #include <sys/select.h>
 #include <sys/device.h>
@@ -293,7 +297,11 @@ enum {
 #define PAGE_ALIGN(addr)    ALIGN(addr)
 #define DRM_SUSER(p)    (kauth_cred_getsvuid((p)->p_cred) == 0)
 #define DRM_AGP_FIND_DEVICE()	agp_find_device(0)
+#ifdef MTRR_TYPE_WC
 #define DRM_MTRR_WC		MTRR_TYPE_WC
+#else
+#define DRM_MTRR_WC		0
+#endif
 #define jiffies			hardclock_ticks
 
 #define DRM_MAXUNITS    128
@@ -968,13 +976,8 @@ void	drm_mem_uninit(void);
 void	*drm_ioremap_wc(struct drm_device *dev, drm_local_map_t *map);
 void	*drm_ioremap(struct drm_device *dev, drm_local_map_t *map);
 void	drm_ioremapfree(drm_local_map_t *map);
-#if defined(__FreeBSD__)
 int	drm_mtrr_add(unsigned long offset, size_t size, int flags);
 int	drm_mtrr_del(int handle, unsigned long offset, size_t size, int flags);
-#elif   defined(__NetBSD__)
-int	drm_mtrr_add(unsigned long offset, size_t size, int flags);
-int	drm_mtrr_del(unsigned long offset, size_t size, int flags);
-#endif
 
 int	drm_context_switch(struct drm_device *dev, int old, int new);
 int	drm_context_switch_complete(struct drm_device *dev, int new);
