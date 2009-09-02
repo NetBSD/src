@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.1 2009/07/20 18:04:13 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.2 2009/09/02 16:55:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1 2009/07/20 18:04:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.2 2009/09/02 16:55:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/filedesc.h>
 #include <sys/kmem.h>
 #include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
@@ -46,7 +47,7 @@ rump_dev_makenodes(dev_t devtype, const char *basename, char minchar,
 	size_t devlen;
 	register_t retval;
 
-	error = do_sys_mkdir("/dev", 0777);
+	error = do_sys_mkdir("/dev", 0777, UIO_SYSSPACE);
 	if (error != 0 && error != EEXIST)
 		return error;
 
@@ -61,7 +62,7 @@ rump_dev_makenodes(dev_t devtype, const char *basename, char minchar,
 		*p = minchar;
 
 		if ((error = do_sys_mknod(curlwp, devname, 0666 | devtype,
-		    makedev(maj, minnum), &retval)))
+		    makedev(maj, minnum), &retval, UIO_SYSSPACE)))
 			goto out;
 	}
 
