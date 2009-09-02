@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.19 2009/08/29 14:18:34 tsutsui Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.20 2009/09/02 15:11:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.19 2009/08/29 14:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.20 2009/09/02 15:11:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,11 +207,6 @@ re_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	re_attach(sc);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
-		pmf_class_network_register(self, &sc->ethercom.ec_if);
-
 	/*
 	 * Power down the socket.
 	 */
@@ -235,8 +230,6 @@ re_cardbus_detach(device_t self, int flags)
 	rv = re_detach(sc);
 	if (rv)
 		return rv;
-
-	pmf_device_deregister(self);
 
 	/*
 	 * Unhook the interrupt handler.
