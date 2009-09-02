@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.17 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.18 2009/09/02 17:08:12 tsutsui Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.17 2009/05/12 14:25:17 cegger Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.18 2009/09/02 17:08:12 tsutsui Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.17 2009/05/12 14:25:17 cegger Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.18 2009/09/02 17:08:12 tsutsui Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -86,7 +86,7 @@
 #define	SIM_PATH(ahd, sim)	\
 	(ahd->platform_data->path)
 #define BUILD_SCSIID(ahd, sim, target_id, our_id) \
-        ((((target_id) << TID_SHIFT) & TID) | (our_id))
+	((((target_id) << TID_SHIFT) & TID) | (our_id))
 
 
 #define SCB_GET_SIM(ahd, scb) \
@@ -390,7 +390,7 @@ void ahd_set_residual(struct scb *scb, u_long resid)
 static __inline
 void ahd_set_sense_residual(struct scb *scb, u_long resid)
 {
-  //scb->xs->sense.scsi_sense.extra_len = resid; /* ??? */
+	//scb->xs->sense.scsi_sense.extra_len = resid; /* ??? */
 }
 
 
@@ -427,7 +427,7 @@ ahd_release_simq(struct ahd_softc *ahd)
 static __inline void
 ahd_freeze_scb(struct scb *scb)
 {
-  	struct scsipi_xfer *xs = scb->xs;
+	struct scsipi_xfer *xs = scb->xs;
 
 	if (!(scb->flags & SCB_FREEZE_QUEUE)) {
 	 	scsipi_periph_freeze(xs->xs_periph, 1);
