@@ -385,7 +385,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 			dev->pci_map_data[unit].flags |= BUS_SPACE_MAP_LINEAR;
 		DRM_DEBUG("pci resource %d: type=%d, base=%lx, size=%zx, flags=%x\n",
 			unit, dev->pci_map_data[unit].maptype,
-			dev->pci_map_data[unit].base,
+			(unsigned long)dev->pci_map_data[unit].base,
 			dev->pci_map_data[unit].size,
 			dev->pci_map_data[unit].flags);
 	}
@@ -710,10 +710,7 @@ static void drm_unload(struct drm_device *dev)
 	if (dev->agp && dev->agp->mtrr) {
 		int __unused retcode;
 
-		retcode = drm_mtrr_del(
-#if defined(__FreeBSD__)
-		    0,
-#endif
+		retcode = drm_mtrr_del(0,
 		    dev->agp->info.ai_aperture_base,
 		    dev->agp->info.ai_aperture_size, DRM_MTRR_WC);
 		DRM_DEBUG("mtrr_del = %d", retcode);
