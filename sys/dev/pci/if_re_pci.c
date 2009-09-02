@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.37 2009/08/29 14:18:34 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.38 2009/09/02 15:11:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.37 2009/08/29 14:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.38 2009/09/02 15:11:13 tsutsui Exp $");
 
 #include <sys/types.h>
 
@@ -286,9 +286,4 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 				bus_space_unmap(memt, memh, memsize);
 		}
 	}
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-	else
-		pmf_class_network_register(self, &sc->ethercom.ec_if);
 }
