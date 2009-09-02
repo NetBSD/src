@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.4 2009/08/26 14:29:11 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.5 2009/09/02 13:00:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@
 #define COND_LESS	0x4
 #define COND_SIGNAL	0x8
 
+#if defined(SOFTFLOAT)
 #if defined(__mips_o32) || defined(__mips_o64)
 #define FPX_L			INT_L
 #define FPX_S			INT_S
@@ -92,6 +93,7 @@
 #define	FPX_REGMASK		(0x1F << FPX_SCALESHIFT)
 #define	FPX_REGEVENMASK		(0x1E << FPX_SCALESHIFT)
 #define	REG_REGMASK		(0x1F << REG_SCALESHIFT)
+#endif
 
 /* insns are reordered in the way as MIPS architecture imposes */
 	.set	reorder
@@ -166,7 +168,7 @@ long_fixed_op:
 	sll	v0, v0, PTR_SCALESHIFT
 	PTR_L	v0, func_long_fixed_tbl(v0)
 	j	v0
-#if defined(MIPS3_PLUS) && 0
+#if (defined(__mips_n32) || defined(__mips_n64)) && 0
 paired_single_op:
 	andi	v0, a0, 0x3F		# get FUNC field
 	sll	v0, v0, PTR_SCALESHIFT
@@ -184,7 +186,7 @@ paired_single_op:
 #define	dmtoc1		ill
 #define	ctoc1		ill
 #define	branchc1	ill
-#elif !defined(MIPS3_PLUS)
+#elif !(defined(__mips_n32) || defined(__mips_n64))
 #define	dmfromc1	ill
 #define	dmtoc1		ill
 #endif
@@ -679,7 +681,7 @@ mtoc1:
 
 	b	done
 
-#if defined(MIPS3_PLUS) && defined(SOFTFLOAT)
+#if defined(SOFTFLOAT) && (defined(__mips_n32) || defined(__mips_n64))
 dmfromc1:
 	srl	t1, a0, 11-DFPX_SCALESHIFT	# fs is in bits 15:11
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
@@ -715,7 +717,7 @@ dmtoc1:
 	DFPX_S	v0, U_PCB_FPREGS+FRAME_FP0(t0)
 
 	b	done
-#endif /* MIPS3_PLUS && SOFTFLOAT */
+#endif /* SOFTFLOAT && (__mips_n32 || __mips_n64) */
 
 cfromc1:
 	srl	t1, a0, 11
