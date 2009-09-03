@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.11 2008/01/14 21:33:04 martin Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.12 2009/09/03 14:29:42 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -85,6 +85,10 @@
 #define		 ICH_PCM2	0x000000 /* 2ch output */
 #define		 ICH_PCM4	0x100000 /* 4ch output */
 #define		 ICH_PCM6	0x200000 /* 6ch output */
+#define		ICH_SIS_PCM246_MASK	0x0000c0
+#define		 ICH_SIS_PCM2	0x000000 /* 2ch output */
+#define		 ICH_SIS_PCM4	0x000040 /* 4ch output */
+#define		 ICH_SIS_PCM6	0x000080 /* 6ch output */
 #define		ICH_S2RIE	0x40	/* int when tertiary codec resume */
 #define		ICH_SRIE	0x20	/* int when 2ndary codec resume */
 #define		ICH_PRIE	0x10	/* int when primary codec resume */
