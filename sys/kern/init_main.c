@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.397 2009/09/02 08:07:05 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.398 2009/09/03 15:20:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.397 2009/09/02 08:07:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.398 2009/09/03 15:20:08 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -233,6 +233,13 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.397 2009/09/02 08:07:05 pooka Exp $"
 struct timeval50 boottime50;
 #endif
 
+#ifdef _KERNEL_OPT
+#include "opt_userconf.h"
+#endif
+#ifdef USERCONF
+#include <sys/userconf.h>
+#endif
+
 extern struct proc proc0;
 extern struct lwp lwp0;
 extern struct cwdinfo cwdi0;
@@ -252,6 +259,8 @@ int	start_init_exec;		/* semaphore for start_init() */
 
 static void check_console(struct lwp *l);
 static void start_init(void *);
+static void configure(void);
+static void configure2(void);
 void main(void);
 
 void __secmodel_none(void);
@@ -684,6 +693,93 @@ main(void)
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */
+}
+
+/*
+ * Configure the system's hardware.
+ */
+static void
+configure(void)
+{
+
+	/* Initialize autoconf data structures. */
+	config_init();
+	/*
+	 * XXX
+	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
+	 * on amiga and atari which use config_init() and autoconf(9) fucntions
+	 * to initialize console devices.
+	 */
+	config_twiddle_init();
+
+	pmf_init();
+#if NDRVCTL > 0
+	drvctl_init();
+#endif
+
+#ifdef USERCONF
+	if (boothowto & RB_USERCONF)
+		user_config();
+#endif
+
+	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
+		printf_nolog("Detecting hardware...");
+	}
+
+	/*
+	 * Do the machine-dependent portion of autoconfiguration.  This
+	 * sets the configuration machinery here in motion by "finding"
+	 * the root bus.  When this function returns, we expect interrupts
+	 * to be enabled.
+	 */
+	cpu_configure();
+}
+
+static void
+configure2(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int s;
+
+	/*
+	 * Now that we've found all the hardware, start the real time
+	 * and statistics clocks.
+	 */
+	initclocks();
+
+	cold = 0;	/* clocks are running, we're warm now! */
+	s = splsched();
+	curcpu()->ci_schedstate.spc_flags |= SPCF_RUNNING;
+	splx(s);
+
+	/* Boot the secondary processors. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		uvm_cpu_attach(ci);
+	}
+	mp_online = true;
+#if defined(MULTIPROCESSOR)
+	cpu_boot_secondary_processors();
+#endif
+
+	/* Setup the runqueues and scheduler. */
+	runq_init();
+	sched_init();
+
+	/*
+	 * Bus scans can make it appear as if the system has paused, so
+	 * twiddle constantly while config_interrupts() jobs are running.
+	 */
+	config_twiddle_fn(NULL);
+
+	/*
+	 * Create threads to call back and finish configuration for
+	 * devices that want interrupts enabled.
+	 */
+	config_create_interruptthreads();
+
+	/* Get the threads going and into any sleeps before continuing. */
+	yield();
 }
 
 static void
