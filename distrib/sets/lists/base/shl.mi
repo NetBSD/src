@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.485 2009/08/16 19:33:38 christos Exp $
+# $NetBSD: shl.mi,v 1.486 2009/09/03 12:33:54 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -118,6 +118,7 @@
 ./usr/lib/librpcsvc.so.1.0			base-net-shlib
 ./usr/lib/librt.so.1.0				base-sys-shlib
 ./usr/lib/librump.so.0.0			base-rump-shlib
+./usr/lib/librumpcrypto.so.0.0			base-rump-shlib
 ./usr/lib/librumpfs_cd9660.so.0.0		base-rump-shlib
 ./usr/lib/librumpfs_efs.so.0.0			base-rump-shlib
 ./usr/lib/librumpfs_ext2fs.so.0.0		base-rump-shlib
