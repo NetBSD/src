@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.6 2009/09/02 17:52:10 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.7 2009/09/03 00:08:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.6 2009/09/02 17:52:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.7 2009/09/03 00:08:19 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -357,6 +357,9 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 #endif
 	case EF_MIPS_ABI_O32:
 		p->p_md.md_abi = _MIPS_BSD_API_O32;
+#ifdef COMPAT_16
+		*start_p = ELF32_LINK_ADDR;
+#endif
 		if (old_abi != p->p_md.md_abi)
 			printf("pid %d(%s): ABI set to O32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
 		return 0;
