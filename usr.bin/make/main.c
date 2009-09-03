@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.171 2009/08/26 23:17:11 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.172 2009/09/03 06:45:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.171 2009/08/26 23:17:11 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.172 2009/09/03 06:45:23 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.171 2009/08/26 23:17:11 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.172 2009/09/03 06:45:23 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1557,7 +1557,9 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	if (cc == 0)
 	    *errnum = "Couldn't read shell's output for \"%s\"";
 
-	if (status)
+	if (WIFSIGNALED(status))
+	    *errnum = "\"%s\" exited on a signal";
+	else if (WEXITSTATUS(status) != 0)
 	    *errnum = "\"%s\" returned non-zero status";
 
 	/*
