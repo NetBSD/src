@@ -1,11 +1,11 @@
-/*	$NetBSD: isakmp_var.h,v 1.15 2009/04/20 13:24:36 tteras Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.16 2009/09/03 09:29:07 tteras Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -87,7 +87,7 @@ extern void isakmp_ph2delete_stub __P((struct sched *));
 extern void isakmp_ph2delete __P((struct ph2handle *));
 
 extern int isakmp_get_sainfo __P((struct ph2handle *, struct secpolicy *, struct secpolicy *));
-extern int isakmp_post_acquire __P((struct ph2handle *));
+extern int isakmp_post_acquire __P((struct ph2handle *, struct ph1handle *));
 extern int isakmp_post_getspi __P((struct ph2handle *));
 extern void isakmp_chkph1there_stub __P((struct sched *));
 extern void isakmp_chkph1there __P((struct ph2handle *));
@@ -131,7 +131,7 @@ extern int copy_ph1addresses __P(( struct ph1handle *,
 	struct remoteconf *, struct sockaddr *, struct sockaddr *));
 extern void log_ph1established __P((const struct ph1handle *));
 
-extern void script_hook __P((struct ph1handle *, int)); 
+extern void script_hook __P((struct ph1handle *, int));
 extern int script_env_append __P((char ***, int *, char *, char *));
 extern int script_exec __P((char *, int, char * const *));
 

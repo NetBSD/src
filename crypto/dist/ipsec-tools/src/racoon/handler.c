@@ -1,11 +1,11 @@
-/*	$NetBSD: handler.c,v 1.29 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.30 2009/09/03 09:29:07 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -17,7 +17,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -64,7 +64,7 @@
 #include "evt.h"
 #include "isakmp.h"
 #ifdef ENABLE_HYBRID
-#include "isakmp_xauth.h"  
+#include "isakmp_xauth.h"
 #include "isakmp_cfg.h"
 #endif
 #include "isakmp_inf.h"
@@ -177,8 +177,8 @@ getph1byindex0(index)
  * with phase 2's destinaion.
  */
 struct ph1handle *
-getph1(rmconf, local, remote, flags)
-	struct remoteconf *rmconf;
+getph1(ph1hint, local, remote, flags)
+	struct ph1handle *ph1hint;
 	struct sockaddr *local, *remote;
 	int flags;
 {
@@ -202,11 +202,29 @@ getph1(rmconf, local, remote, flags)
 			continue;
 		}
 
-		if (local != NULL && cmpsaddr(local, p->local) != 0)
+		if (local != NULL && cmpsaddr(local, p->local) == CMPSADDR_MISMATCH)
 			continue;
 
-		if (remote != NULL && cmpsaddr(remote, p->remote) != 0)
+		if (remote != NULL && cmpsaddr(remote, p->remote) == CMPSADDR_MISMATCH)
 			continue;
+
+		if (ph1hint != NULL) {
+			if (ph1hint->id && ph1hint->id->l && p->id && p->id->l &&
+			    (ph1hint->id->l != p->id->l ||
+			     memcmp(ph1hint->id->v, p->id->v, p->id->l) != 0)) {
+				plog(LLV_DEBUG2, LOCATION, NULL,
+				     "local identity does match hint\n");
+				continue;
+			}
+			if (ph1hint->id_p && ph1hint->id_p->l &&
+			    p->id_p && p->id_p->l &&
+			    (ph1hint->id_p->l != p->id_p->l ||
+			     memcmp(ph1hint->id_p->v, p->id_p->v, p->id_p->l) != 0)) {
+				plog(LLV_DEBUG2, LOCATION, NULL,
+				     "remote identity does match hint\n");
+				continue;
+			}
+		}
 
 		plog(LLV_DEBUG2, LOCATION, NULL, "matched\n");
 		return p;
@@ -1155,7 +1173,7 @@ init_recvdpkt()
 }
 
 #ifdef ENABLE_HYBRID
-/* 
+/*
  * Retruns 0 if the address was obtained by ISAKMP mode config, 1 otherwise
  * This should be in isakmp_cfg.c but ph1tree being private, it must be there
  */
@@ -1182,7 +1200,7 @@ exclude_cfg_addr(addr)
 
 
 
-/* 
+/*
  * Reload conf code
  */
 static int revalidate_ph2(struct ph2handle *iph2){
@@ -1192,11 +1210,11 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	struct saprop *approval;
 	struct ph1handle *iph1;
 
-	/* 
+	/*
 	 * Get the new sainfo using values of the old one
 	 */
 	if (iph2->sainfo != NULL) {
-		iph2->sainfo = getsainfo(iph2->sainfo->idsrc, 
+		iph2->sainfo = getsainfo(iph2->sainfo->idsrc,
 					  iph2->sainfo->iddst, iph2->sainfo->id_i,
 					  NULL, iph2->sainfo->remoteid);
 	}
@@ -1204,7 +1222,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	sainfo = iph2->sainfo;
 
 	if (sainfo == NULL) {
-		/* 
+		/*
 		 * Sainfo has been removed
 		 */
 		plog(LLV_DEBUG, LOCATION, NULL,
@@ -1219,7 +1237,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 		plog(LLV_DEBUG, LOCATION, NULL,
 			 "No approval found !\n");
 		return 0;
-	}	
+	}
 
 	/*
 	 * Don't care about proposals, should we do something ?
@@ -1318,7 +1336,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	}
 
 	found = 0;
-	for (alg = sainfo->algs[algclass_ipsec_enc]; 
+	for (alg = sainfo->algs[algclass_ipsec_enc];
 	    (found == 0 && alg != NULL); alg = alg->next) {
 		plog(LLV_DEBUG, LOCATION, NULL,
 			 "Reload: next ph2 enc alg...\n");
@@ -1351,7 +1369,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 			break;
 
 		default:
-			plog(LLV_ERROR, LOCATION, NULL, 
+			plog(LLV_ERROR, LOCATION, NULL,
 			    "unexpected check_level\n");
 			continue;
 			break;
@@ -1375,7 +1393,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 }
 
 
-static void 
+static void
 remove_ph2(struct ph2handle *iph2)
 {
 	u_int32_t spis[2];
@@ -1467,7 +1485,7 @@ static int revalidate_ph2tree(void){
 	return 1;
 }
 
-int 
+int
 revalidate_ph12(void)
 {
 
