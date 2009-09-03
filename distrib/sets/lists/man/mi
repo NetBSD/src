@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1153 2009/08/14 21:17:21 mbalmer Exp $
+# $NetBSD: mi,v 1.1154 2009/09/03 01:17:30 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -507,6 +507,7 @@
 ./usr/share/man/cat1/uniq.0			man-util-catman		.cat
 ./usr/share/man/cat1/units.0			man-util-catman		.cat
 ./usr/share/man/cat1/unvis.0			man-util-catman		.cat
+./usr/share/man/cat1/unzip.0			man-util-catman		.cat
 ./usr/share/man/cat1/uptime.0			man-util-catman		.cat
 ./usr/share/man/cat1/usbhidaction.0		man-util-catman		.cat
 ./usr/share/man/cat1/usbhidctl.0		man-util-catman		.cat
@@ -3176,6 +3177,7 @@
 ./usr/share/man/html1/uniq.html			man-util-htmlman	html
 ./usr/share/man/html1/units.html		man-util-htmlman	html
 ./usr/share/man/html1/unvis.html		man-util-htmlman	html
+./usr/share/man/html1/unzip.html		man-util-htmlman	html
 ./usr/share/man/html1/uptime.html		man-util-htmlman	html
 ./usr/share/man/html1/usbhidaction.html		man-util-htmlman	html
 ./usr/share/man/html1/usbhidctl.html		man-util-htmlman	html
@@ -5507,6 +5509,7 @@
 ./usr/share/man/man1/uniq.1			man-util-man		.man
 ./usr/share/man/man1/units.1			man-util-man		.man
 ./usr/share/man/man1/unvis.1			man-util-man		.man
+./usr/share/man/man1/unzip.1			man-util-man		.man
 ./usr/share/man/man1/uptime.1			man-util-man		.man
 ./usr/share/man/man1/usbhidaction.1		man-util-man		.man
 ./usr/share/man/man1/usbhidctl.1		man-util-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1294 2009/08/20 22:07:49 he Exp $
+#	$NetBSD: mi,v 1.1295 2009/09/03 01:17:29 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3111,6 +3111,7 @@
 ./usr/libdata/debug/usr/bin/units.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unprotoize.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/unvis.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/unzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/usbhidaction.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/usbhidctl.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/users.debug		comp-util-debug		debug
